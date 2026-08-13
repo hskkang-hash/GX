@@ -1,0 +1,26 @@
+# 시크릿 스캔 (W0-1a / D-001)
+#
+# GitHub Actions 와 함께 선제 배치한다. 둘 다 두어도 무해하며 비용은 0이다.
+# 어느 플랫폼으로 원격을 만들든(W0-6) 즉시 동작한다.
+
+stages:
+  - security
+
+include:
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
+secret_detection:
+  stage: security
+  variables:
+    SECRET_DETECTION_HISTORIC_SCAN: "true"    # 히스토리 전체 스캔
+
+# GitLab 내장 secret_detection 은 두 파일의 '값이 같은지'를 보지 못한다.
+# D-003(서버 키 ≠ 클라이언트 키)은 별도 잡으로 검사한다.
+key-divergence:
+  stage: security
+  image: python:3.11-alpine
+  script:
+    - python scripts/check_key_divergence.py
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH

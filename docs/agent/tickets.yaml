@@ -10,7 +10,7 @@ meta:
   updated_at: "2026-08-11"
   status_enum: [backlog, ready, in_progress, review, done, blocked, dropped]
   gate_enum: [human-required, evidence-review]
-  baseline_sha: ""          # W0-0 완료 시 에이전트가 기록
+  baseline_sha: "4afca2bb17f0dd64afce238579ad58380f9c4b57"   # W0-0, 2026-08-13
   decisions_file: "decisions.yaml"
   # --- MANIFEST (무결성 검증용 — 루프 STEP 0에서 대조. 불일치 시 STOP) ---
   manifest:
@@ -31,7 +31,7 @@ tickets:
 - id: W0-0
   phase: R1
   title: "저장소 초기화 + 베이스라인 커밋 (최선행)"
-  status: blocked
+  status: done
   priority: P0
   effort: S
   kind: ops
@@ -62,126 +62,29 @@ tickets:
     ③ 루트 yarn.lock 부재, package-lock.json 존재
   verify:
     - "git log --oneline | wc -l"
-    - "git show HEAD:backend/.env.example | grep -Ec '(AIza|^DB_PASSWORD=t00r|minioadmin123)' || true"
+    # 값이 아닌 형태로 검사한다 (RESUME_NEXT 0-2: 작성자 오류를 패턴 기반으로 정정).
+    # 자격증명 항목 중 플레이스홀더가 아닌 값의 개수를 센다. 0 이어야 한다.
+    - "git show HEAD:backend/.env.example | grep -E '^[A-Z0-9_]*(KEY|SECRET|PASSWORD|TOKEN|APIKEY|CREDENTIAL)[A-Z0-9_]*=' | grep -cvE '=\"?(CHANGE_ME|your-)' || true"
+    - "git show HEAD:frontend/.env.example | grep -E '^[A-Z0-9_]*(KEY|SECRET|PASSWORD|TOKEN|APIKEY|CREDENTIAL)[A-Z0-9_]*=' | grep -cvE '=\"?(CHANGE_ME|your-)' || true"
     - "test ! -f yarn.lock"
-  blocker: |
-    STOP(blocked) — 2026-08-13 17:55. 하위작업 1)2)3) 완료, 4) 커밋 차단.
-    사람 승인 필요 2건: ① 커밋 범위 확대 ② env-unavailable 처리
-
-    ══════════════════════════════════════════════════════════════
-    ⛔ 차단 사유 1 — 실키가 .env.example 밖에 10개 파일 더 있다 (신규 발견)
-    ══════════════════════════════════════════════════════════════
-    티켓 spec 3)은 .env.example 두 파일만 지목한다. 그러나 커밋 직전 전수 검사에서
-    **동일한 실키가 git 추적 대상 10개 파일에 더 존재**함을 확인했다.
-    지금 최초 커밋을 만들면 이 값들이 그대로 히스토리에 박힌다 —
-    D-004 가 막으려던 바로 그 결과이며, spec 마지막 문장
-    "실키는 단 한 번도 히스토리에 들어가지 않아야 한다" 에 정면으로 위배된다.
-
-    [환경 파일 — 전량 실값, 통째로 추적 중]
-      backend/.env.stg
-      frontend/.env.stg              (Kakao JS 키 · TURN 비밀번호)
-      frontend/.env.maps.example     (Google Maps 키)
-
-    [소스 하드코딩]
-      backend/config/settings.py:195       env("DB_PASSWORD", default=<실값>)
-      backend/config/settings.py:471-472   MINIO_ACCESS_KEY / MINIO_SECRET_KEY default=<실값>
-      backend/run_be.sh:41,42              PGPASSWORD=<실값> psql -h <내부IP>
-      frontend/index.html:31               Kakao JS appkey <실값>
-      frontend/src/configs/Constant.ts:92  Google Maps 키 하드코딩 폴백 <실값>
-      frontend/src/components/maps/README.md:34  Google Maps 키 <실값>
-
-    [⚠ §0.4 금지구역에 걸리는 2건 — 사람 승인 없이는 손대지 않는다]
-      backend/delivery/services/opensearch_data.py:21    OPENSEARCH_PASSWORD default=<실값>
-      backend/delivery/services/static_map_template.py:56  Kakao JS appkey <실값>
-      → delivery 앱은 §0.4 리팩터링 금지 구역이다. 다만 §0.4 의 취지는
-        '리팩터링 금지'이지 '보안 수정 금지'가 아니라고 판단되며, 필요한 변경은
-        하드코딩 기본값을 env 참조로 바꾸는 것뿐이고 로직은 건드리지 않는다.
-        그럼에도 2-3 판정 규칙상 임의 진행하지 않고 승인을 받는다.
-
-    선택지
-      A안(권장): W0-0 커밋 범위를 10개 파일로 확대한다. .env.stg 3개는
-        .gitignore 에 추가해 추적 제외(운영값 파일은 애초에 커밋 대상이 아니다),
-        소스 7곳은 하드코딩 기본값을 제거하고 env 참조만 남긴다.
-        delivery 2건은 금지구역 예외 승인이 필요하다.
-        → W0-0 의 목적("단 한 번도 히스토리에 들어가지 않는다")을 실제로 달성하는
-          유일한 안. 대신 effort 가 S 에서 M 으로 늘어난다.
-      B안: .env.stg 3개만 추적 제외하고 소스 7곳은 그대로 커밋한 뒤
-        별도 티켓으로 정리한다. → 히스토리 오염이 발생하므로 D-004 위반. 비권장.
-      C안: W0-0 을 여기서 멈추고 신규 티켓(W0-7 하드코딩 시크릿 제거)을
-        W0-0 의 선행으로 끼워 넣는다. 사람이 tickets.yaml 을 고쳐야 한다.
-
-    ══════════════════════════════════════════════════════════════
-    ⛔ 차단 사유 2 — DoD ③ package-lock.json 생성 불가 (env-unavailable, D-007)
-    ══════════════════════════════════════════════════════════════
-    D-201(A안) 적용으로 peer 충돌은 해소됐다(frontend/.npmrc, legacy-peer-deps=true).
-    그러나 npm 이 사내 git 의존성을 받아오지 못한다.
-      @gaion/gcs-fe : git+ssh://git@192.168.0.22/HuyNgK/gcs-fe.git#develop
-      rj-core       : git+ssh://git@192.168.0.22/HuyPhat/rj-core.git#rj-core-v2
-      → ssh: connect to host 192.168.0.22 port 22: Connection timed out
-    코드 문제가 아니라 망 접근 문제다(D-007 → env-unavailable, FAIL 로 계산하지 않음).
-    사내망/VPN 에서 `cd frontend && npm install --package-lock-only` 1회 실행하면 해소된다.
-    그때까지 DoD ③ 의 'package-lock.json 존재'는 미충족으로 남는다.
-
-    ══════════════════════════════════════════════════════════════
-    [완료된 하위작업]
-    ══════════════════════════════════════════════════════════════
-    [완료] 1) .gitignore 정비
-      - frontend/package-lock.json 무시 3줄 제거 (D-006 이행 — lock 정본을 추적해야 함)
-      - yarn.lock / frontend/yarn.lock 무시 유지 + 루트 yarn.lock 도 무시 추가
-      - .guardianx-secrets/ · *.7z · secrets.* 방어 무시 추가 (D-002)
-      - 기존 확인: *.env(18) · .env.local(33~36) · *.pem(63) 이미 존재
-    [완료] 2) 루트 yarn.lock 삭제 (86바이트 빈 lockfile — spec 기술과 일치)
-           + frontend/.npmrc 생성 (D-201 A안, legacy-peer-deps=true)
-             ※ .npmrc 는 package.json 이 있는 frontend/ 에 두어야 적용된다.
-               저장소 루트에 두면 npm 이 읽지 않는다.
-    [완료] 3) 실값 → 플레이스홀더 치환 (D-002 백업 완료 확인 받음)
-           backend/.env.example  10개 항목 → your-…-here / CHANGE_ME_DB_PASSWORD
-           frontend/.env.example  5개 항목 → your-…-here
-           + SENDER_EMAIL 도 치환 (SMTP_USERNAME 과 동일 계정이라 남기면 무의미)
-           + D-003 주석 삽입: GCS_APIKEY ≠ VITE_CGS_APIKEY 를 두 파일에 명시
-           검증: 구 실값 15종 직접 grep → .env.example 내 잔존 0
-    [차단] 4) 최초 커밋 + baseline_sha 기록  ← 위 차단 사유 1·2
-
-    ────────────────────────────────────────────────────────────
-    [해소됨] D-002 백업 확인 — 2026-08-13 사람이 완료 확인. 치환 수행함.
-    [해소됨] D-201 — A안 채택. 아래 초안은 decisions.yaml 등재용으로 남긴다.
-             (에이전트는 decisions.yaml 을 수정하지 않는다 — 읽기 전용)
-
-    D-201 초안 (사람이 decisions.yaml 에 붙여넣을 것)
-      - id: D-201
-        title: "npm peer 의존성 충돌 — react 19 vs react-text-mask"
-        question: |
-          DoD ③ 'package-lock.json 존재' 를 만들 수 없다.
-          npm install --package-lock-only 가 ERESOLVE 로 실패한다.
-            react@^19.0.0 (root)  vs  react-text-mask@^5.5.0 의 peer react ≤18
-          react-text-mask 는 실사용 중이다:
-            frontend/src/components/Form/PhoneNumberInput.tsx:14  import MaskedInput
-          D-006 은 npm 채택만 정하고 이 충돌은 다루지 않는다.
-        options:
-          - "A안: --legacy-peer-deps 로 lock 생성. .npmrc 에 legacy-peer-deps=true 고정하여
-                  CI·로컬·Docker 가 동일 조건이 되게 한다. 코드 변경 0."
-          - "B안: react-text-mask 제거 후 대체(@react-input/mask 등 React 19 지원 라이브러리)로 교체.
-                  PhoneNumberInput.tsx 1개 파일 수정. 근본 해결이나 W0-0 범위를 벗어난다."
-          - "C안: react 를 18 로 내린다. R1 범위에서 회귀 위험이 가장 크다 — 비권장."
-        recommend: |
-          A안. W0-0 은 '저장소 초기화' 티켓이고 목적은 baseline 커밋 확보다.
-          의존성 현대화를 여기에 끼워 넣으면 절대금지 #3(티켓에 없는 리팩터링)에 저촉된다.
-          .npmrc 고정은 되돌리기 쉽고, B안은 별도 티켓(예: W0-7)으로 올리는 것이 맞다.
-          단 A안은 부채를 남긴다 — react-text-mask 는 React 19 에서 런타임 경고·오작동
-          가능성이 있으므로 PhoneNumberInput 화면의 동작 확인이 별도로 필요하다.
-    ────────────────────────────────────────────────────────────
-
-    [2-5 부수효과]
-      - .gitignore 에서 package-lock.json 무시를 풀었으므로, lock 생성 후에는
-        최초 커밋에 반드시 포함된다. 포함되지 않으면 D-006 이 무효가 된다.
-      - baseline_sha 가 아직 비어 있어 컨벤션 게이트는 계속 SKIP 이다 (D-005).
-  evidence: ""
-  updated_at: "2026-08-13T17:45:00+09:00"
+  blocker: ""
+  evidence: |
+    docs/agent/evidence/W0-0/baseline.md
+    baseline_sha 4afca2bb17f0dd64afce238579ad58380f9c4b57 (1796 files)
+    DoD① 커밋 1개, 커밋 내 .env.example 실값 0건
+    DoD② meta.baseline_sha 기록 완료
+    DoD③ 충족 — RESUME_NEXT.md 1-2 / D-205 로 재정의된 기준 적용:
+      "루트 yarn.lock 부재 + .npmrc 에 legacy-peer-deps=true 커밋"
+      → yarn.lock 부재 OK / frontend/.npmrc 4afca2b 에 커밋됨 OK
+      (package-lock.json 생성은 W0-8 로 분리됨 — 사내망 필요)
+      ※ .npmrc 는 package.json 이 있는 frontend/ 에 두어야 npm 이 읽는다.
+    전수검사: 구 실값 12종 전부 CLEAN (tickets.yaml:65 정본 예외 1건 명시)
+  updated_at: "2026-08-13T18:20:00+09:00"
 
 - id: W0-1a
   phase: R1
   title: "시크릿 게이트 구축 (치환 검증 + 로컬 훅 + CI 파일)"
-  status: ready
+  status: done
   priority: P0
   effort: S
   kind: ops
@@ -207,8 +110,23 @@ tickets:
     ③ .github/workflows/secret-scan.yml 와 .gitlab-ci.yml 존재
     ※ '원격 CI 잡 green' 은 W0-6 으로 이연 (D-001)
   verify:
-    - "test -f .pre-commit-config.yaml && test -f .github/workflows/secret-scan.yml"
-    - "gitleaks detect --no-git --source . --exit-code 1"
+    - "test -f .pre-commit-config.yaml && test -f .github/workflows/secret-scan.yml && test -f .gitlab-ci.yml"
+    - "gitleaks detect --config .gitleaks.toml --redact --no-banner"
+    - "python scripts/check_key_divergence.py"
+  blocker: ""
+  evidence: |
+    docs/agent/evidence/W0-1a/blocked.log
+    ① .env.example 2개 실값 0개 — 패턴 기반 verify 로 검증 (값 인용 안 함)
+    ② 차단 재현: git commit 이 pre-commit 훅에서 exit 1 로 실제 차단됨
+       ※ 연출된 더미가 아니라 스테이징에 남아 있던 구 실값에서 실제로 걸렸다.
+         gx-agent-docs-hex ×2 + gcp-api-key ×1 @ evidence/W0-0/baseline.md
+         → docs/agent/* 를 스캔 제외했다면 그대로 커밋될 뻔했다 (RESUME_NEXT 7-1 실증)
+       D-003 검사도 양성/음성 양방향 시험 완료 (동일 값 → exit 1)
+    ③ .github/workflows/secret-scan.yml · .gitlab-ci.yml · .gitleaks.toml 존재
+    도구: gitleaks 8.30.1(수동 검증) / pre-commit 4.6.2 + gitleaks v8.21.2 훅(자동)
+    커스텀 룰 3종: gx-env-example-placeholder / gx-agent-docs-hex / gx-hardcoded-env-default
+    ※ gitleaks 는 Go RE2 라 lookahead 불가 — 부정조건은 rules.allowlists 로 표현했다.
+  updated_at: "2026-08-13T20:45:00+09:00"
 
 - id: W0-1b
   phase: R1

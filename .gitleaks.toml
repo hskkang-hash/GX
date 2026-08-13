@@ -1,0 +1,86 @@
+# GuardianX 시크릿 스캔 설정 (W0-1a)
+#
+# 원칙 — RESUME_NEXT.md §7
+#   1. docs/agent/* 를 제외하지 않는다. 정본·증거 파일도 스캔한다.
+#      실제로 blocker 인용문과 verify 정규식에 실값이 들어갈 뻔했다.
+#   2. 룰은 '값'이 아니라 '형태'로 쓴다. 이 파일에 실제 시크릿을 적지 않는다.
+#
+# ⚠ gitleaks 정규식 엔진은 Go RE2 다. lookahead/lookbehind `(?!` `(?=` 를 쓸 수 없다.
+#   "플레이스홀더는 제외" 같은 부정 조건은 rules.allowlists 로 표현한다.
+
+title = "GuardianX"
+
+[extend]
+useDefault = true          # gitleaks 기본 룰셋(AWS/GCP/Slack/…) 위에 아래를 얹는다
+
+# ── 커스텀 룰 1: .env*.example 의 플레이스홀더 위반 ────────────────────────────
+# 비밀번호·키류 값이 CHANGE_ME / your- 형태가 아니면 실값으로 간주한다.
+[[rules]]
+id = "gx-env-example-placeholder"
+description = "env example 에 플레이스홀더가 아닌 값 (W0-0 형식 위반)"
+path = '''\.env.*\.example$'''
+regex = '''(?i)^[A-Z0-9_]*(?:KEY|SECRET|PASSWORD|TOKEN|APIKEY|CREDENTIAL)[A-Z0-9_]*\s*=\s*["']?([^\s"'#]{6,})'''
+secretGroup = 1
+
+  [[rules.allowlists]]
+  regexTarget = "match"
+  regexes = [
+    '''(?i)CHANGE_ME''',
+    '''(?i)your[-_]''',
+    '''(?i)[-_]here''',
+  ]
+
+# ── 커스텀 룰 2: 에이전트 산출물에 섞인 hex 시크릿 ────────────────────────────
+# 티켓·결정·증거 문서에 32자 이상 hex 가 있으면 실값 인용 의심.
+[[rules]]
+id = "gx-agent-docs-hex"
+description = "docs/agent 문서에 32자 이상 hex 문자열 (실값 인용 의심)"
+path = '''^docs[/\\]agent[/\\].*\.(ya?ml|md|log)$'''
+regex = '''\b([0-9a-fA-F]{32,})\b'''
+secretGroup = 1
+
+  [[rules.allowlists]]
+  # 커밋 SHA(40자)는 정상이다. baseline_sha 기록·증거 문서의 SHA 인용을 허용한다.
+  regexTarget = "line"
+  regexes = [
+    '''(?i)baseline_sha''',
+    '''(?i)sha256''',
+  ]
+
+# ── 커스텀 룰 3: 하드코딩된 자격증명 기본값 ──────────────────────────────────
+# env("X", default="...") / os.environ.get('X', '...') 형태로 비밀값을 박는 것을 막는다.
+# W0-0 에서 제거한 패턴이 되살아나는 것을 잡는다.
+[[rules]]
+id = "gx-hardcoded-env-default"
+description = "코드에 자격증명 기본값 하드코딩 (W0-0 에서 제거한 패턴)"
+path = '''\.(py|sh|ts|tsx|js|jsx|html)$'''
+regex = '''(?i)(?:env|environ|getenv)(?:\.get)?\s*\(\s*["'][A-Z0-9_]*(?:KEY|SECRET|PASSWORD|TOKEN|APIKEY)[A-Z0-9_]*["']\s*,\s*(?:default\s*=\s*)?["']([^"']{4,})["']'''
+secretGroup = 1
+
+  [[rules.allowlists]]
+  regexTarget = "match"
+  regexes = [
+    '''(?i)CHANGE_ME''',
+    '''(?i)your[-_]''',
+    # KEY 로 끝나지만 자격증명이 아닌 이름들 (Redis 키 이름·캐시 키·인덱스 필드 등).
+    # 예: REDIS_RECORDING_STATUS_KEY = "recording_status"
+    '''(?i)["'][A-Z0-9_]*(?:STATUS|CACHE|PREFIX|SUFFIX|NAME|FIELD|SORT|GROUP|INDEX|LOCK|QUEUE|CHANNEL)_KEY["']''',
+  ]
+
+# ── 전역 allowlist ───────────────────────────────────────────────────────────
+[[allowlists]]
+description = "오탐 제외 — 경로"
+paths = [
+  '''(^|[/\\])node_modules[/\\]''',
+  '''(^|[/\\])package-lock\.json$''',
+  '''\.(png|jpg|jpeg|gif|svg|ico|ttf|woff2?|pdf|mp4)$''',
+]
+
+[[allowlists]]
+description = "오탐 제외 — 플레이스홀더 값"
+regexTarget = "match"
+regexes = [
+  '''(?i)your[-_][a-z0-9_-]+[-_]here''',
+  '''(?i)CHANGE_ME''',
+  '''(?i)example\.com''',
+]
