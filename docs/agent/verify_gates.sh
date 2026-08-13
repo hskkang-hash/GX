@@ -220,9 +220,9 @@ gate_isolation() {
   [ $rc -eq 0 ] && pass "5시나리오 전부 존재"
 
   # 스킵·비활성화 탐지 (절대금지 #4)
-  if grep -nE '@(unittest\.)?skip|pytest\.mark\.skip|xfail|return  *# *TODO' "$f" >/dev/null 2>&1; then
+  if grep -nE '@(unittest\.)?(skip|expectedFailure)|@pytest\.mark\.(skip|xfail)|return  *# *TODO' "$f" >/dev/null 2>&1; then
     fail "격리 테스트에 skip/xfail 발견 ← 절대금지 #4"
-    grep -nE '@(unittest\.)?skip|pytest\.mark\.skip|xfail' "$f" | sed 's/^/        /'
+    grep -nE '@(unittest\.)?(skip|expectedFailure)|@pytest\.mark\.(skip|xfail)' "$f" | sed 's/^/        /'
     rc=1
   fi
   return $rc

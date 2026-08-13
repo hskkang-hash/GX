@@ -203,7 +203,7 @@ tickets:
 - id: W0-2
   phase: R1
   title: "멀티테넌트 권한 우회 목록 제거"
-  status: ready
+  status: verify-pending
   priority: P0
   effort: M
   kind: reuse
@@ -222,11 +222,43 @@ tickets:
   dod: "W0-3 격리 테스트가 전부 통과하고, 목록에서 업무 모델 7종이 사라짐."
   verify:
     - "python manage.py test tests.test_tenant_isolation"
+  blocker: |
+    verify-pending — 코드 변경 완료, 성능 측정만 대기 (D-007).
+    측정 불가 사유: dj-core 미설치로 Django 앱 로드가 안 된다. 코드 문제 아님.
+
+    ⚠ 이 티켓의 전제가 부분적으로 틀렸다 (W0-3 실측).
+      BaseModelWithGroup 이 두 개이고, spec 이 지목한 common/base_model.py 의
+      우회 목록은 dashboard.Dashboard / dashboard.DashboardPanel 에만 적용된다.
+      목록이 나열했던 order/terminal/coreuser 는 전부 dj-core 쪽(core.base)을 쓴다.
+      → 목록을 지운 것은 옳지만, 실제 SaaS 격리 위험은 아직 해소되지 않았다.
+
+      사람이 결정할 것 (docs/agent/evidence/W0-2/README.md 에 상세):
+        A안 dj-core 소스를 받아 동일 목록 유무 확인 → 있으면 별도 PR (§0.4 예외 필요)
+        B안 8개 앱 모델을 common 쪽 베이스로 이전 — R1 회귀 위험 큼, 비권장
+        C안 뷰/서비스 레벨 필터를 전 엔드포인트에 강제 (tenant_filters.py 신설 완료)
+      권장: A안 확인 후 C안 병행. B안은 R1 에서 하지 않는다.
+
+    [범위 밖 발견 — 별도 티켓 필요]
+      handover_document_service.py:608 / handover_notice_service.py:96
+        UserGroup.objects.first() 로 group 을 임의 선택한다. 테넌트가 둘 이상이면
+        남의 group 이 붙는 교차 테넌트 버그다.
+      CoreUser.objects.get(id=user_id) 형태로 호출자 id 를 그대로 믿는 곳 30개소.
+        get_scoped_or_404 로 치환 필요하나 W0-2 범위를 넘는다.
+  evidence: |
+    docs/agent/evidence/W0-2/README.md
+    backend/common/base_model.py — 업무 모델 7종 제거 (order·orderitem·orderhistory·
+      payment·ordercomment·orderassignment·terminal). 프레임워크 7종은 §0.4 로 잔존.
+    backend/common/tenant_filters.py — 뷰 레벨 강제 헬퍼 신설
+      filter_users_by_group / filter_by_group_field / get_scoped_or_404(IDOR 차단)
+    재발 방지: tests/test_tenant_isolation.py::test_bypass_list_does_not_grow
+    검증: verify_gates.sh --gate bypass → PASS 업무 데이터 모델 우회 0건
+    미측정: 제거 전후 쿼리 수·p95 (사내망 필요)
+  updated_at: "2026-08-13T21:25:00+09:00"
 
 - id: W0-3
   phase: R1
   title: "테넌트 격리 회귀 테스트 신설"
-  status: ready
+  status: verify-pending
   priority: P0
   effort: M
   kind: new-s
@@ -246,6 +278,44 @@ tickets:
   dod: "9모델 × 5시나리오 green, CI 필수 잡으로 등록됨."
   verify:
     - "python manage.py test tests.test_tenant_isolation -v 2"
+  blocker: |
+    verify-pending (D-202) — 테스트 작성 완료, 실행만 대기.
+    사유: core.base / core.user.models 가 dj-core 사내 패키지(git+ssh://192.168.0.22)에 있어
+          import 자체가 불가능하다. 코드 문제가 아니라 망 접근 문제다 (D-007).
+    사내망 명령:
+      docker compose up -d backend redis
+      docker compose exec -T backend python manage.py test tests.test_tenant_isolation -v 2
+
+    ⚠ 실행하면 전부 green 이 아니다. 아래를 실증하도록 썼다.
+      1. test_bypass_list_does_not_grow 는 FAIL 한다 — W0-2 미완이 정상 신호다.
+      2. test_null_created_by_is_not_globally_visible 는 FAIL 예상 —
+         CustomManagerGroup 필터가 Q(created_by__isnull=True) 를 OR 로 포함해
+         생성자 없는 레코드가 전 테넌트에 노출된다.
+      3. API 5시나리오의 Target.api_base 는 config/urls.py 의 앱 접두사에서 유도했다.
+         ninja_extra 컨트롤러의 실제 하위 경로는 컨테이너에서 확인해 보정해야 한다.
+
+    ⚠ status_enum 불일치: verify-pending 은 현재 정본 meta.status_enum 에 없다.
+      RESUME_NEXT 1-1 이 지시한 tickets.yaml v2.2 정본이 전달되지 않아 v2.0 을 쓰고 있다.
+      meta 는 에이전트 수정 권한 밖이므로 enum 은 그대로 두었다. v2.2 수령 시 해소된다.
+  evidence: |
+    docs/agent/evidence/W0-3/README.md
+    backend/tests/test_tenant_isolation.py — 9모델 등록 · 5시나리오 · skip/xfail 0건
+    .github/PULL_REQUEST_TEMPLATE.md — 격리 테스트 등록 체크박스
+    정적검증: py_compile OK / verify_gates.sh --gate isolation PASS(9모델·5시나리오)
+
+    [구조적 발견 — W0-2 에 직결]
+    BaseModelWithGroup 이 두 개다.
+      core.base.*   (dj-core, §0.4 금지구역) : orders·terminals·stream_monitors·
+                     surveillance·checklist_setting·delivery·partner·drone_communication
+      common.base_model.* (이 저장소)        : dashboard.Dashboard, dashboard.DashboardPanel 뿐
+    W0-2 가 지목한 performance_bypass_models 는 common 쪽에 있는데,
+    목록이 나열한 order/terminal/coreuser 는 전부 dj-core 쪽을 쓴다.
+    → common 목록을 고쳐도 해당 모델의 필터링은 바뀌지 않는다.
+
+    지시서 9모델 중 4종은 groups M2M 자체가 없어 격리 대상이 아니다:
+      orders.Order · devices.Device · report_template.ReportTemplate · handover.HandoverDocument
+    또한 'Handover' 라는 모델은 존재하지 않는다 (실제: HandoverDocument 외 4종).
+  updated_at: "2026-08-13T21:10:00+09:00"
 
 - id: W0-4
   phase: R1
