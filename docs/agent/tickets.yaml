@@ -434,7 +434,7 @@ tickets:
 - id: W2-1
   phase: R1
   title: "DetectionEvent 모델 신설"
-  status: ready
+  status: verify-pending
   priority: P0
   effort: M
   kind: new-s
@@ -454,7 +454,23 @@ tickets:
   verify:
     - "python manage.py makemigrations --check --dry-run"
     - "python manage.py test tests.test_tenant_isolation"
-
+  blocker: |
+    verify-pending — 모델 작성 완료, 마이그레이션 생성·적용만 대기 (D-007).
+    사유: core.base 가 dj-core 사내 패키지라 Django 앱 로드가 안 된다. 코드 문제 아님.
+    사내망 명령:
+      docker compose exec -T backend python manage.py makemigrations stream_monitors
+      docker compose exec -T backend python manage.py migrate
+      docker compose exec -T backend python manage.py test tests.test_tenant_isolation -v 2
+  evidence: |
+    docs/agent/evidence/W2-1/README.md
+    backend/stream_monitors/models.py — DetectionEvent(BaseModelWithGroup) 신규 앱 없이 추가
+    backend/tests/test_tenant_isolation.py — MODELS 레지스트리 등록 (같은 커밋, D-108)
+    계약 대조: docs/contracts/detection-event.md 와 필드 19/19 일치
+    인덱스 4종: 타임라인 / 미처리우선 / 중복억제조회(W2-2) / 임무집계(W1-1)
+      중복 억제는 매 검출마다 조회하므로 인덱스 없이는 검출 경로가 느려진다 —
+      그 지점이 권한 우회 유혹이 생기는 곳이라 선제 배치했다 (D-103).
+    정적검증: py_compile OK / verify_gates.sh --gate isolation PASS (10모델 등록)
+  updated_at: "2026-08-13T21:40:00+09:00"
 - id: W2-2
   phase: R1
   title: "검출 결과 → 이벤트 수집 (중복 억제 포함)"
@@ -754,7 +770,7 @@ tickets:
 - id: W6-2
   phase: R2
   title: "파이프라인 인터페이스 계약 고정"
-  status: ready       # R1에서 미리 확정 (구현은 R2)
+  status: done       # R1에서 미리 확정 (구현은 R2)
   priority: P0
   effort: S
   kind: doc
@@ -770,7 +786,18 @@ tickets:
     FE는 절대 gRPC 서비스를 직접 호출하지 않는다.
   dod: "OpenAPI/AsyncAPI 스펙 문서가 존재하고 FE가 이 계약만 사용한다."
   verify: ["npm run type-check"]
-
+  blocker: ""
+  evidence: |
+    docs/agent/evidence/W6-2/README.md
+    docs/contracts/detection-event.md          — DetectionEvent 스키마 (W2-1 과 19/19 일치)
+    docs/contracts/stream-ws.asyncapi.yaml     — AsyncAPI 3.0.0, YAML 파싱 OK
+    docs/contracts/stream-control.openapi.yaml — OpenAPI 3.0.3, YAML 파싱 OK
+    DoD: FE 의 gRPC 직접 호출 0건 확인 (grep frontend/src/ → 0)
+    설계 판단: bbox 는 정규화 좌표(0~1)로 고정 — 픽셀 좌표를 계약에 넣으면
+      W6-1 DeepStream 전환에서 입력 해상도가 바뀌며 FE 가 깨진다.
+      WebSocket 은 좌표·메타만 전송(렌더 프레임 금지). pipeline 필드는 진단용이며
+      FE 분기 금지 — 분기하면 '구현체 교체 가능'이라는 계약 목적이 사라진다.
+  updated_at: "2026-08-13T21:40:00+09:00"
 - id: W7-1
   phase: R2
   title: "DJI Cloud API(Dock-to-Cloud) 어댑터"

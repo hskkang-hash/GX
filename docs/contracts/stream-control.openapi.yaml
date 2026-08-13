@@ -1,0 +1,172 @@
+# 계약 3 — 스트림 시작/중지 API (W6-2)
+#
+# 목적: 백엔드 구현체를 교체할 수 있게 추상화한다.
+#   R1 현재 : gRPC dual stream (cv2 디코드 → JPEG → gRPC 왕복)
+#   R2 목표 : DeepStream nvurisrcbin → nvinferserver(Triton) → nvtracker
+# FE 는 아래 4개 엔드포인트만 안다. 어느 구현이 돌고 있는지 알 필요가 없다.
+#
+# 고정일 2026-08-13. 기존 경로(/start-ai-dual-stream 등)는 구현 상세이며,
+# 이 계약이 그 위의 안정 계층이다. 기존 경로는 R2 에서 제거될 수 있다.
+
+openapi: 3.0.3
+
+info:
+  title: GuardianX 스트림 제어
+  version: "1.0.0"
+  description: |
+    스트림 세션의 생명주기를 다룬다. **파이프라인 구현에 중립적이다.**
+
+    설계 원칙
+      - 시작은 멱등이 아니다. 이미 running 이면 409 를 준다(중복 세션 방지).
+      - 중지는 멱등이다. 이미 멈춰 있어도 204 를 준다.
+      - 무거운 기동은 비동기다. 202 + task_id 를 주고 완료는 WebSocket 으로 알린다.
+
+servers:
+  - url: /api/v1
+    description: OpenAPI 스펙 우선 · /api/v1/ prefix (부록 A)
+
+paths:
+  /streams/{stream_id}/start:
+    post:
+      summary: 스트림 분석 시작
+      operationId: startStream
+      parameters:
+        - $ref: "#/components/parameters/StreamId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartOptions"
+      responses:
+        "202":
+          description: 기동 요청 접수. 완료는 WebSocket stream_state=running 으로 통지된다.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskAccepted"
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: 이미 running. 중복 세션을 만들지 않는다.
+        "429":
+          description: 라이선스 한도 초과 (W4-2). 기본은 차단이 아니라 경고이므로 정책에 따른다.
+
+  /streams/{stream_id}/stop:
+    post:
+      summary: 스트림 분석 중지 (멱등)
+      operationId: stopStream
+      parameters:
+        - $ref: "#/components/parameters/StreamId"
+      responses:
+        "204": { description: 중지됨. 이미 멈춰 있었어도 204. }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /streams/{stream_id}/state:
+    get:
+      summary: 현재 상태 조회
+      operationId: getStreamState
+      parameters:
+        - $ref: "#/components/parameters/StreamId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamStateBody"
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /streams:
+    get:
+      summary: 내 테넌트의 스트림 목록
+      operationId: listStreams
+      description: |
+        group 격리 대상이다. 다른 테넌트의 스트림은 목록에 나오지 않는다.
+        tests/test_tenant_isolation.py 가 이것을 검증한다.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StreamStateBody"
+
+components:
+  parameters:
+    StreamId:
+      name: stream_id
+      in: path
+      required: true
+      schema: { type: integer }
+      description: StreamMonitor 의 id
+
+  schemas:
+    StartOptions:
+      type: object
+      additionalProperties: false
+      description: 전부 선택이다. 생략하면 StreamMonitor 에 저장된 설정을 쓴다.
+      properties:
+        ai_model_ids:
+          type: array
+          items: { type: integer }
+          description: 적용할 AIModel. 라이선스(W4)의 enabled_ai_models 로 검증된다.
+        frame_gate:
+          type: integer
+          minimum: 1
+          description: |
+            N 프레임당 1회 추론. 원가 조절 손잡이다(W6-1).
+            현재 구현은 batch_interval 로 근사한다.
+        roi:
+          type: object
+          description: 정규화 좌표 관심영역. 없으면 전체 프레임.
+          properties:
+            x: { type: number, minimum: 0, maximum: 1 }
+            y: { type: number, minimum: 0, maximum: 1 }
+            w: { type: number, minimum: 0, maximum: 1 }
+            h: { type: number, minimum: 0, maximum: 1 }
+        record:
+          type: boolean
+          default: false
+          description: 녹화 동시 시작. 녹화는 remux 이며 재인코딩하지 않는다.
+
+    TaskAccepted:
+      type: object
+      required: [task_id, stream_id]
+      properties:
+        task_id: { type: string, description: Celery task id }
+        stream_id: { type: integer }
+        ws_channel:
+          type: string
+          example: /ws/stream/12/detections
+          description: 완료 통지와 탐지 결과를 받을 채널
+
+    StreamStateBody:
+      type: object
+      required: [stream_id, state]
+      properties:
+        stream_id: { type: integer }
+        state:
+          type: string
+          enum: [stopped, starting, running, degraded, error]
+        detail: { type: string }
+        started_at: { type: string, format: date-time, nullable: true }
+        ai_model_ids:
+          type: array
+          items: { type: integer }
+        pipeline:
+          type: string
+          enum: [grpc-dual-stream, deepstream]
+          description: |
+            진단용이다. FE 는 이 값으로 분기하지 않는다.
+            분기하는 순간 이 계약의 목적(구현체 교체 가능)이 깨진다.
+
+  responses:
+    Forbidden:
+      description: 다른 테넌트의 스트림이거나 권한 없음
+    NotFound:
+      description: |
+        존재하지 않거나, 요청자의 group 소유가 아님.
+        존재 여부를 흘리지 않기 위해 403 대신 404 를 줄 수 있다.

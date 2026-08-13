@@ -74,10 +74,8 @@ MODELS: tuple[Target, ...] = (
     Target("HandoverDocument",    "handover",          "HandoverDocument",    "/api/handover/"),
     Target("ReportTemplate",      "report_template",   "ReportTemplate",      "/api/report-template/"),
 
-    # ── W2-1 완료 시 주석을 푼다 ──────────────────────────────────────────
-    # DetectionEvent 는 BaseModelWithGroup 을 상속하고 group 격리를 받아야 한다.
-    # W2-1 이 모델을 만들면 아래 한 줄만 활성화하면 된다.
-    # Target("DetectionEvent",    "stream_monitors",   "DetectionEvent",      "/api/stream-monitors/"),
+    # W2-1 에서 신설. BaseModelWithGroup 상속 — group 격리 대상이다.
+    Target("DetectionEvent",      "stream_monitors",   "DetectionEvent",      "/api/stream-monitors/"),
 )
 
 #: 격리 메커니즘이 **아직 없는** 모델 (2026-08-13 실측).

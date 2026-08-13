@@ -1,0 +1,127 @@
+# 계약 2 — 스트림 WebSocket 메시지 포맷 (W6-2)
+# FE 는 gRPC 서비스를 직접 호출하지 않는다. 이 채널과 stream-control.openapi.yaml 만 쓴다.
+asyncapi: 3.0.0
+
+info:
+  title: GuardianX 스트림 WebSocket
+  version: "1.0.0"
+  description: |
+    탐지 결과를 **좌표·메타만** 브라우저로 보낸다. bbox 렌더는 브라우저가 한다.
+
+    현재 구현(R1)은 gRPC 로 렌더링된 프레임을 받아 되돌려주지만,
+    R2 의 W6-1(DeepStream 전환)에서 서버는 좌표만 보내게 바뀐다.
+    **이 계약을 지금 고정하면 그 교체가 FE 를 깨뜨리지 않는다.**
+
+    고정일 2026-08-13. 변경 시 W2-3(이벤트 센터)·W6-1 영향 평가 필수.
+
+servers:
+  production:
+    host: streaming.internal.example
+    protocol: wss
+    description: 배포 환경. 실제 호스트는 VITE_AI_STREAM_WS_URL 로 주입한다.
+
+channels:
+  detections:
+    address: /ws/stream/{stream_id}/detections
+    title: 탐지 결과 스트림
+    parameters:
+      stream_id:
+        description: StreamMonitor 의 id
+    messages:
+      detectionFrame:
+        $ref: "#/components/messages/DetectionFrame"
+      streamState:
+        $ref: "#/components/messages/StreamState"
+
+operations:
+  receiveDetections:
+    action: receive
+    channel:
+      $ref: "#/channels/detections"
+    summary: 브라우저가 탐지 프레임을 수신한다
+
+components:
+  messages:
+    DetectionFrame:
+      name: detectionFrame
+      title: 한 프레임의 탐지 결과
+      contentType: application/json
+      payload:
+        type: object
+        required: [stream_id, ts, detections]
+        additionalProperties: false
+        properties:
+          type:
+            type: string
+            const: detections
+            description: 기존 consumer 들이 최상위 `type` 으로 분기한다. 관례를 따른다.
+          stream_id:
+            type: integer
+            description: StreamMonitor id
+          ts:
+            type: string
+            format: date-time
+            description: 프레임 타임스탬프 (ISO 8601, UTC). 서버 수신 시각이 아니라 프레임 시각이다.
+          seq:
+            type: integer
+            description: 단조 증가 시퀀스. 유실·순서뒤바뀜 판정용.
+          detections:
+            type: array
+            items:
+              type: object
+              required: [type, bbox, conf]
+              additionalProperties: false
+              properties:
+                type:
+                  type: string
+                  enum: [person, vehicle, fire, smoke, intrusion, sos]
+                  description: DetectionEvent.event_type 과 같은 열거를 쓴다
+                bbox:
+                  type: object
+                  required: [x, y, w, h]
+                  additionalProperties: false
+                  description: 정규화 좌표 0.0~1.0. 픽셀 좌표를 쓰지 않는다.
+                  properties:
+                    x: { type: number, minimum: 0, maximum: 1 }
+                    y: { type: number, minimum: 0, maximum: 1 }
+                    w: { type: number, minimum: 0, maximum: 1 }
+                    h: { type: number, minimum: 0, maximum: 1 }
+                conf:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                track_id:
+                  type: string
+                  description: |
+                    nvtracker 등이 부여하는 추적 id. R1 구현에는 없을 수 있다(null 허용).
+                    같은 대상의 프레임 간 연결에 쓴다.
+                event_id:
+                  type: integer
+                  description: DetectionEvent 가 생성된 경우 그 id. 중복 억제 중이면 기존 id.
+
+    StreamState:
+      name: streamState
+      title: 스트림 상태 변화
+      contentType: application/json
+      payload:
+        type: object
+        required: [type, stream_id, state]
+        properties:
+          type:
+            type: string
+            const: stream_state
+          stream_id: { type: integer }
+          state:
+            type: string
+            enum: [starting, running, degraded, stopped, error]
+          detail:
+            type: string
+            description: degraded/error 사유. 사용자에게 그대로 보여도 되는 문장.
+
+# ── 불변 규칙 ────────────────────────────────────────────────────────────────
+# 1. FE 는 gRPC 서비스(media-ai-svc 등)를 직접 호출하지 않는다. 이 채널만 쓴다.
+# 2. 서버는 렌더링된 이미지 프레임을 이 채널로 보내지 않는다. 좌표·메타만 보낸다.
+#    (영상 자체는 RTSP/WebRTC 별도 경로)
+# 3. 필드 추가는 하위 호환. 삭제·의미 변경은 버전을 올리고 W2-3 영향 평가.
+# 4. 기존 consumer 관례에 맞춰 최상위 `type` 으로 메시지 종류를 구분한다.
+#    (stream_monitors/consumers.py 가 이미 이 방식이다)
