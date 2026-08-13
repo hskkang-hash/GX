@@ -1,0 +1,368 @@
+{
+  "apps": {
+    "order": {
+      "name": "Order Management",
+      "description": "APIs for order creation and management",
+      "menu_path": "/order",
+      "has_tabs": false,
+      "apis": {
+        "receive_order": {
+          "name": "Receive Order",
+          "type": "receive",
+          "description": "Nhận order từ hệ thống bên ngoài để tạo order trong hệ thống",
+          "path": "/order/receive-order",
+          "method": "POST",
+          "sample_request": {
+            "external_order_id": "EXT_ORD_001",
+            "customer_info": {
+              "name": "Nguyen Van A",
+              "phone": "0123456789",
+              "email": "customer@example.com",
+              "address": "123 Main St, District 1, Ho Chi Minh City"
+            },
+            "items": [
+              {
+                "product_id": 101,
+                "name": "Smartphone Samsung Galaxy",
+                "quantity": 1,
+                "unit_price": 15000000,
+                "total_price": 15000000
+              },
+              {
+                "product_id": 102,
+                "name": "Phone Case",
+                "quantity": 2,
+                "unit_price": 200000,
+                "total_price": 400000
+              }
+            ],
+            "delivery_info": {
+              "delivery_type": "standard",
+              "delivery_address": "123 Main St, District 1, Ho Chi Minh City",
+              "preferred_time": "2024-01-15 14:00:00",
+              "special_instructions": "Gọi trước khi giao hàng"
+            },
+            "payment_info": {
+              "method": "COD",
+              "total_amount": 15400000,
+              "currency": "VND"
+            },
+            "source_system": "External ERP",
+            "created_at": "2024-01-10 10:30:00"
+          },
+          "sample_response": {
+            "success": true,
+            "message": "Order created successfully",
+            "internal_order_id": 1001,
+            "external_order_id": "EXT_ORD_001",
+            "status": "pending",
+            "estimated_processing_time": "2024-01-11 10:00:00"
+          }
+        },
+        "send_order": {
+          "name": "Send Order",
+          "type": "send",
+          "description": "Gửi order từ hệ thống ra bên ngoài khi user tạo order",
+          "path": "/order/send-order",
+          "method": "POST",
+          "external_endpoint": "http://localhost:8001/api/orders/receive",
+          "sample_request": {
+            "internal_order_id": 1001,
+            "customer_info": {
+              "name": "Tran Thi B",
+              "phone": "0987654321",
+              "email": "customer2@example.com", 
+              "address": "456 Second St, District 3, Ho Chi Minh City"
+            },
+            "items": [
+              {
+                "product_id": 201,
+                "name": "Laptop Dell Inspiron",
+                "quantity": 1,
+                "unit_price": 20000000,
+                "total_price": 20000000
+              }
+            ],
+            "delivery_info": {
+              "delivery_type": "express",
+              "delivery_address": "456 Second St, District 3, Ho Chi Minh City",
+              "preferred_time": "2024-01-12 09:00:00"
+            },
+            "payment_info": {
+              "method": "Bank Transfer",
+              "total_amount": 20000000,
+              "currency": "VND",
+              "paid": true
+            },
+            "created_by_user": "admin@guardianx.com",
+            "created_at": "2024-01-10 15:45:00"
+          },
+          "sample_response": {
+            "success": true,
+            "external_order_id": "EXT_RECEIVED_1001",
+            "tracking_number": "TRK_20240110_001",
+            "message": "Order sent successfully to external system"
+          }
+        }
+      }
+    },
+    "delivery_operation": {
+      "name": "Delivery Operations",
+      "description": "APIs for delivery process management across different stages",
+      "menu_path": "/delivery-operation",
+      "has_tabs": true,
+      "tabs": {
+        "inquiry": {
+          "name": "Inquiry",
+          "path": "/delivery-operation/inquiry",
+          "enabled": true,
+          "use_external_api": false,
+          "description": "Xử lý các yêu cầu tìm hiểu và báo giá",
+          "apis": {
+            "receive_inquiry_update": {
+              "name": "Receive Inquiry Update",
+              "type": "receive",
+              "description": "Nhận cập nhật trạng thái inquiry từ hệ thống bên ngoài",
+              "path": "/delivery-operation/inquiry/receive-update",
+              "method": "POST",
+              "sample_request": {
+                "order_id": 1001,
+                "inquiry_status": "quoted",
+                "quote_amount": 500000,
+                "quote_details": {
+                  "delivery_fee": 300000,
+                  "handling_fee": 200000
+                },
+                "estimated_delivery_time": "2024-01-15 16:00:00",
+                "notes": "Đã báo giá cho khách hàng",
+                "updated_by": "external_system",
+                "updated_at": "2024-01-10 11:30:00"
+              },
+              "sample_response": {
+                "success": true,
+                "message": "Inquiry updated successfully",
+                "order_id": 1001,
+                "new_status": "quoted",
+                "next_action": "waiting_customer_approval"
+              }
+            },
+            "send_inquiry_data": {
+              "name": "Send Inquiry Data",
+              "type": "send",
+              "description": "Gửi thông tin inquiry ra hệ thống bên ngoài",
+              "path": "/delivery-operation/inquiry/send-data",
+              "method": "POST",
+              "external_endpoint": "http://localhost:8001/api/delivery/inquiry/receive",
+              "sample_request": {
+                "order_id": 1001,
+                "customer_inquiry": {
+                  "delivery_address": "789 Third St, District 7, Ho Chi Minh City",
+                  "package_details": {
+                    "weight": 2.5,
+                    "dimensions": "30x20x10 cm",
+                    "fragile": true
+                  },
+                  "service_type": "same_day_delivery",
+                  "special_requirements": "Cần giao trong giờ hành chính"
+                },
+                "customer_info": {
+                  "name": "Le Van C",
+                  "phone": "0912345678",
+                  "email": "customer3@example.com"
+                },
+                "requested_at": "2024-01-10 09:15:00"
+              }
+            }
+          }
+        },
+        "verification": {
+          "name": "Verification",
+          "path": "/delivery-operation/verification",
+          "enabled": true,
+          "use_external_api": false,
+          "description": "Xác minh thông tin và tài liệu",
+          "apis": {
+            "receive_verification_result": {
+              "name": "Receive Verification Result",
+              "type": "receive",
+              "description": "Nhận kết quả xác minh từ hệ thống bên ngoài",
+              "path": "/delivery-operation/verification/receive-result",
+              "method": "POST",
+              "sample_request": {
+                "order_id": 1001,
+                "verification_status": "verified",
+                "verification_details": {
+                  "identity_verified": true,
+                  "address_verified": true,
+                  "payment_verified": true,
+                  "document_status": "approved"
+                },
+                "verifier": "external_verification_service",
+                "verified_at": "2024-01-10 12:45:00",
+                "notes": "Tất cả tài liệu đã được xác minh thành công"
+              }
+            },
+            "send_verification_request": {
+              "name": "Send Verification Request",
+              "type": "send",
+              "description": "Gửi yêu cầu xác minh ra hệ thống bên ngoài",
+              "path": "/delivery-operation/verification/send-request",
+              "method": "POST",
+              "external_endpoint": "http://localhost:8001/api/delivery/verification/process"
+            }
+          }
+        },
+        "processing": {
+          "name": "Processing",
+          "path": "/delivery-operation/processing",
+          "enabled": false,
+          "use_external_api": true,
+          "description": "Xử lý và chuẩn bị đơn hàng - TAB BỊ TẮT, DÙNG API EXTERNAL",
+          "external_config": {
+            "send_endpoint": "http://localhost:8001/api/delivery/processing/receive",
+            "receive_endpoint": "/delivery-operation/processing/receive-update",
+            "auto_forward": true,
+            "skip_internal_processing": true
+          },
+          "apis": {
+            "receive_processing_update": {
+              "name": "Receive Processing Update",
+              "type": "receive",
+              "description": "Nhận cập nhật từ hệ thống external khi processing hoàn thành",
+              "path": "/delivery-operation/processing/receive-update",
+              "method": "POST",
+              "sample_request": {
+                "order_id": 1001,
+                "processing_status": "completed",
+                "processing_details": {
+                  "packed": true,
+                  "labeled": true,
+                  "quality_checked": true,
+                  "ready_for_shipment": true
+                },
+                "processing_time": 45,
+                "completed_at": "2024-01-10 14:30:00",
+                "next_status": "ready_for_delivery"
+              }
+            },
+            "send_to_processing": {
+              "name": "Send to Processing",
+              "type": "send",
+              "description": "Tự động gửi order đến hệ thống external khi đến tab processing",
+              "path": "/delivery-operation/processing/send-order",
+              "method": "POST",
+              "external_endpoint": "http://localhost:8001/api/delivery/processing/receive",
+              "auto_trigger": true,
+              "sample_request": {
+                "order_id": 1001,
+                "order_details": {
+                  "items": [
+                    {
+                      "product_id": 101,
+                      "name": "Smartphone Samsung Galaxy",
+                      "quantity": 1
+                    }
+                  ],
+                  "packaging_requirements": {
+                    "fragile": true,
+                    "special_handling": true
+                  }
+                },
+                "deadline": "2024-01-11 12:00:00",
+                "priority": "high"
+              }
+            }
+          }
+        },
+        "completed": {
+          "name": "Completed",
+          "path": "/delivery-operation/completed",
+          "enabled": true,
+          "use_external_api": false,
+          "description": "Đơn hàng đã hoàn thành",
+          "apis": {
+            "receive_completion_confirmation": {
+              "name": "Receive Completion Confirmation",
+              "type": "receive",
+              "description": "Nhận xác nhận hoàn thành từ hệ thống bên ngoài",
+              "path": "/delivery-operation/completed/receive-confirmation",
+              "method": "POST"
+            },
+            "send_completion_notice": {
+              "name": "Send Completion Notice",
+              "type": "send",
+              "description": "Gửi thông báo hoàn thành ra hệ thống bên ngoài",
+              "path": "/delivery-operation/completed/send-notice",
+              "method": "POST",
+              "external_endpoint": "http://localhost:8001/api/delivery/completed/notify"
+            }
+          }
+        },
+        "returned": {
+          "name": "Returned",
+          "path": "/delivery-operation/returned",
+          "enabled": true,
+          "use_external_api": false,
+          "description": "Xử lý đơn hàng trả lại",
+          "apis": {
+            "receive_return_request": {
+              "name": "Receive Return Request",
+              "type": "receive",
+              "description": "Nhận yêu cầu trả hàng từ hệ thống bên ngoài",
+              "path": "/delivery-operation/returned/receive-request",
+              "method": "POST"
+            },
+            "send_return_confirmation": {
+              "name": "Send Return Confirmation",
+              "type": "send",
+              "description": "Gửi xác nhận trả hàng ra hệ thống bên ngoài",
+              "path": "/delivery-operation/returned/send-confirmation",
+              "method": "POST",
+              "external_endpoint": "http://localhost:8001/api/delivery/returned/confirm"
+            }
+          }
+        },
+        "cancelled": {
+          "name": "Cancelled",
+          "path": "/delivery-operation/cancelled",
+          "enabled": true,
+          "use_external_api": false,
+          "description": "Xử lý đơn hàng bị hủy",
+          "apis": {
+            "receive_cancellation": {
+              "name": "Receive Cancellation",
+              "type": "receive",
+              "description": "Nhận thông báo hủy đơn từ hệ thống bên ngoài",
+              "path": "/delivery-operation/cancelled/receive-cancellation",
+              "method": "POST"
+            },
+            "send_cancellation_notice": {
+              "name": "Send Cancellation Notice",
+              "type": "send",
+              "description": "Gửi thông báo hủy đơn ra hệ thống bên ngoài",
+              "path": "/delivery-operation/cancelled/send-notice",
+              "method": "POST",
+              "external_endpoint": "http://localhost:8001/api/delivery/cancelled/notify"
+            }
+          }
+        }
+      }
+    }
+  },
+  "global_config": {
+    "default_external_host": "localhost:8001",
+    "api_version": "v1",
+    "timeout_seconds": 30,
+    "retry_attempts": 3,
+    "authentication": {
+      "type": "api_key",
+      "header_name": "X-API-Key",
+      "default_key": "sandbox_test_key_2024"
+    },
+    "webhooks": {
+      "enabled": true,
+      "base_url": "http://localhost:8001/webhooks",
+      "events": ["order_created", "status_changed", "processing_completed"]
+    }
+  }
+} 

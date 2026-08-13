@@ -1,0 +1,107 @@
+.custom-slider {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding-right: 14px;
+
+  &__label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--primary-text);
+
+    &--required {
+      color: #ef4444;
+    }
+
+    .dark & {
+      color: var(--ga-dark-theme-font-color);
+    }
+  }
+
+  .ant-tooltip {
+    .ant-tooltip-inner {
+      background-color: var(--ga-light-bg-accordion);
+
+      .dark & {
+        background-color: var(--ga-dark-bg-accordion);
+      }
+    }
+  }
+
+  .ant-slider-rail {
+    height: 10px !important;
+  }
+
+  .ant-slider-track {
+    height: 10px !important;
+  }
+
+  .ant-slider-handle {
+    margin-top: 2px;
+    // background-color: #ef4444;
+  }
+
+  .ant-slider-handle::after {
+    box-shadow: 0 0 0 2px var(--ga-primary);
+    background-color: var(--ga-primary);
+    outline: none;
+  }
+
+  .ant-tooltip-inner {
+    height: 20px;
+    background-color: transparent !important;
+    color: var(--ga-dark-theme-font-color);
+    box-shadow: none;
+    border: 1px solid var(--ga-light-line-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .dark & {
+      color: var(--ga-dark-theme-font-color);
+      box-shadow: none;
+      border: 1px solid var(--ga-dark-line-color) !important;
+    }
+  }
+}
+
+.light {
+  .ant-slider-tooltip {
+    .ant-tooltip-content {
+      .ant-tooltip-inner {
+        background-color: #ffffff;
+        color: var(--ga-light-theme-font-color);
+        max-height: 2rem;
+        font-size: 0.75rem;
+        min-height: 2rem;
+        align-items: center;
+      }
+    }
+  }
+
+  .ant-tooltip-arrow:before,
+  .ant-tooltip-arrow:after {
+    display: none;
+  }
+}
+
+.dark {
+  .ant-slider-tooltip {
+    .ant-tooltip-content {
+      .ant-tooltip-inner {
+        background-color: #2d2e30;
+        color: var(--ga-dark-theme-font-color);
+        max-height: 2rem;
+        font-size: 0.75rem;
+        min-height: 2rem;
+        align-items: center;
+      }
+    }
+  }
+
+  .ant-tooltip-arrow:before,
+  .ant-tooltip-arrow:after {
+    display: none;
+  }
+}

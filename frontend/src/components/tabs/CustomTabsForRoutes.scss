@@ -1,0 +1,23 @@
+#custom-tabs-for-routes {
+  .command-textarea {
+    height: 13.5rem;
+    .unit-input__input {
+      resize: none;
+      height: 13.5rem !important;
+      &:focus {
+        background-color: #ffffff !important;
+      }
+
+      &.errorUnitInput {
+        height: 12.5rem !important;
+      }
+    }
+
+    &.dark {
+      .unit-input__input {
+        border: 1px solid #444646 !important;
+        background-color: transparent !important;
+      }
+    }
+  }
+}

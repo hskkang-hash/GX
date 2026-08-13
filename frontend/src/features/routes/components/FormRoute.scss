@@ -1,0 +1,98 @@
+.form-route {
+  .ant-switch-checked {
+    background-color: var(--ga-primary) !important;
+
+    .dark & {
+      background-color: var(--ga-primary-dark) !important;
+    }
+  }
+
+  .ant-switch-disabled.ant-switch-checked {
+    // background-color: #9c9d9d !important;
+
+    // &:hover {
+    //   background-color: #9c9d9d !important;
+    // }
+
+    // .dark & {
+    //   background-color: #9c9d9d !important;
+    // }
+  }
+
+  .ant-switch {
+    height: 16px;
+    width: 40px;
+    min-width: 40px !important;
+  }
+
+  .ant-switch .ant-switch-handle {
+    height: 10px;
+    width: 10px;
+    top: 3px;
+  }
+
+  .ant-switch-checked .ant-switch-handle {
+    inset-inline-start: calc(100% - 13px) !important;
+    /* 40 - 10 (handle) - 3 (padding) */
+  }
+
+  .ant-switch-checked:hover {
+    background-color: #248bc5 !important;
+  }
+
+  /* Switch chưa checked */
+  .ant-switch:not(.ant-switch-checked) {
+    background-color: #dddfe2 !important;
+    /* Màu nền khi OFF */
+    border-color: #dddfe2 !important;
+    /* Màu viền khi OFF */
+
+    .dark & {
+      background-color: #444646 !important;
+      border-color: #444646 !important;
+    }
+  }
+
+  /* Khi Switch chưa được check và hover vào */
+  .ant-switch:not(.ant-switch-checked):hover {
+    background-color: #c3c3c3 !important;
+    border-color: #c3c3c3 !important;
+
+    .dark & {
+      background-color: #4f4f4f !important;
+      border-color: #4f4f4f !important;
+    }
+  }
+
+  .dropdown-terminal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    cursor: pointer;
+
+    &__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      cursor: pointer;
+      padding: 8px 10px;
+    }
+
+    &__icon {
+      transition: transform 0.3s;
+      margin-right: 1.25rem;
+    }
+
+    &__content {
+      border-bottom-left-radius: 11px;
+      border-bottom-right-radius: 11px;
+      padding: 12px 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+  }
+
+
+}

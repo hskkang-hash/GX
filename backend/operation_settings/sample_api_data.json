@@ -1,0 +1,590 @@
+{
+  "operation_settings_samples": [
+    {
+      "menu": "/delivery-operation",
+      "tab": "/delivery-operation/inquiry",
+      "group": "Group 1",
+      "name": "New Order Inquiry",
+      "send_data": true,
+      "receive_data": false,
+      "api_url": "https://lotte.dev/api/v1/delivery/new_order",
+      "http_method": "GET",
+      "api_params": {
+        "customer_id": "string",
+        "order_id": "string",
+        "inquiry_type": "string"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "message": "Order inquiry retrieved successfully",
+        "data": {
+          "inquiry_id": "string",
+          "status": "pending",
+          "estimated_cost": "number"
+        },
+        "success": true,
+        "another_info": {
+          "external_tracking_id": "string",
+          "partner_reference": "string",
+          "custom_metadata": "object",
+          "integration_version": "string"
+        }
+      },
+      "timeout_seconds": 30,
+      "retry_count": 3,
+      "description": "API for handling new order inquiries",
+      "notes": "Used for initial order processing",
+      "created_on": "2024-03-04T11:24:20Z",
+      "updated_on": "2024-03-04T11:24:20Z",
+      "updated_by": "Jin Soo"
+    },
+    {
+      "menu": "/delivery-operation",
+      "tab": "/delivery-operation/verification",
+      "group": "Group 1",
+      "name": "Order Verification",
+      "send_data": true,
+      "receive_data": true,
+      "api_url": "/api/delivery/change-order-status",
+      "http_method": "POST",
+      "api_params": {
+        "order_id": "integer"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "message": "Order status changed successfully",
+        "data": {
+          "order_id": "integer",
+          "delivery_operation_id": "integer",
+          "old_status": "string",
+          "new_status": "string",
+          "current_tab": "string",
+          "action": "string"
+        },
+        "success": true,
+        "another_info": {
+          "verification_timestamp": "datetime",
+          "verifier_system": "string",
+          "compliance_score": "number",
+          "additional_checks": "array"
+        }
+      },
+      "timeout_seconds": 45,
+      "retry_count": 2,
+      "description": "API for order verification process",
+      "notes": "Handles document verification and compliance check",
+      "created_on": "2024-03-04T11:24:20Z",
+      "updated_on": "2024-03-04T11:24:20Z",
+      "updated_by": "Jin Soo"
+    },
+    {
+      "menu": "/delivery-operation",
+      "tab": "/delivery-operation/processing",
+      "group": "Group 1",
+      "name": "Order Processing",
+      "send_data": true,
+      "receive_data": true,
+      "api_url": "/api/delivery/change-order-status",
+      "http_method": "POST",
+      "api_params": {
+        "order_id": "integer"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "message": "Order status changed successfully",
+        "data": {
+          "order_id": "integer",
+          "delivery_operation_id": "integer",
+          "old_status": "string",
+          "new_status": "string",
+          "current_tab": "string",
+          "action": "string"
+        },
+        "success": true,
+        "another_info": {
+          "processing_engine_version": "string",
+          "optimization_score": "number",
+          "resource_allocation": "object",
+          "performance_metrics": "object"
+        }
+      },
+      "timeout_seconds": 60,
+      "retry_count": 3,
+      "description": "API for processing delivery orders",
+      "notes": "Manages the actual delivery process including route and drone assignment",
+      "created_on": "2024-03-04T11:24:20Z",
+      "updated_on": "2024-03-04T11:24:20Z",
+      "updated_by": "Jin Soo"
+    },
+    {
+      "menu": "/delivery-operation",
+      "tab": "/delivery-operation/completed",
+      "group": "Group 1",
+      "name": "Order Completion",
+      "send_data": true,
+      "receive_data": true,
+      "api_url": "/api/delivery/change-order-status",
+      "http_method": "POST",
+      "api_params": {
+        "order_id": "integer"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "message": "Order status changed successfully",
+        "data": {
+          "order_id": "integer",
+          "delivery_operation_id": "integer",
+          "old_status": "string",
+          "new_status": "string",
+          "current_tab": "string",
+          "action": "string"
+        },
+        "success": true,
+        "another_info": {
+          "delivery_proof_url": "string",
+          "customer_satisfaction": "number",
+          "completion_metrics": "object",
+          "post_delivery_actions": "array"
+        }
+      },
+      "timeout_seconds": 30,
+      "retry_count": 2,
+      "description": "API for marking orders as completed",
+      "notes": "Final step in delivery process with confirmation",
+      "created_on": "2024-03-04T11:24:20Z",
+      "updated_on": "2024-03-04T11:24:20Z",
+      "updated_by": "Jin Soo"
+    },
+    {
+      "menu": "/delivery-operation",
+      "tab": "/delivery-operation/returned",
+      "group": "Group 1",
+      "name": "Order Return",
+      "send_data": true,
+      "receive_data": false,
+      "api_url": "https://guardianx.gaion.dev/api/v1/delivery/return_order",
+      "http_method": "POST",
+      "api_params": {
+        "operation_ids": "array",
+        "return_reason": "string",
+        "return_terminal_id": "integer"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "message": "Orders returned successfully",
+        "data": {
+          "processed_operations": "array",
+          "return_status": "returned",
+          "return_details": "object"
+        },
+        "success": true,
+        "another_info": {
+          "return_processing_time": "datetime",
+          "return_cost": "number",
+          "refund_details": "object",
+          "return_tracking": "string"
+        }
+      },
+      "timeout_seconds": 45,
+      "retry_count": 3,
+      "description": "API for handling returned orders",
+      "notes": "Manages order returns and processing",
+      "created_on": "2024-03-04T11:24:20Z",
+      "updated_on": "2024-03-04T11:24:20Z",
+      "updated_by": "Jin Soo"
+    },
+    {
+      "menu": "/delivery-operation",
+      "tab": "/delivery-operation/cancelled",
+      "group": "Group 1",
+      "name": "Order Cancellation",
+      "send_data": true,
+      "receive_data": false,
+      "api_url": "https://guardianx.gaion.dev/api/v1/delivery/cancel_order",
+      "http_method": "POST",
+      "api_params": {
+        "operation_id": "integer",
+        "cancellation_reason": "string",
+        "is_system": "boolean"
+      },
+      "expected_response": {
+        "status_code": 200,
+        "message": "Order cancelled successfully",
+        "data": {
+          "operation_id": "integer",
+          "cancellation_status": "cancelled",
+          "cancellation_details": "object"
+        },
+        "success": true,
+        "another_info": {
+          "cancellation_timestamp": "datetime",
+          "refund_amount": "number",
+          "cancellation_fee": "number",
+          "partner_notification": "object"
+        }
+      },
+      "timeout_seconds": 30,
+      "retry_count": 2,
+      "description": "API for handling cancelled orders",
+      "notes": "Manages order cancellations with proper status updates",
+      "created_on": "2024-03-04T11:24:20Z",
+      "updated_on": "2024-03-04T11:24:20Z",
+      "updated_by": "Jin Soo"
+    }
+  ],
+  "api_endpoints": {
+    "list_operation_settings": {
+      "method": "GET",
+      "url": "/api/operation-settings/",
+      "description": "Get all operation settings with pagination",
+      "auth_required": true,
+      "response_example": {
+        "status_code": 200,
+        "message": "Operation settings retrieved successfully",
+        "data": [
+          {
+            "id": 1,
+            "name": "New Order Inquiry",
+            "menu": "/delivery-operation",
+            "tab": "/delivery-operation/inquiry",
+            "group": "Group 1",
+            "send_data": true,
+            "receive_data": false,
+            "api_url": "https://lotte.dev/api/v1/delivery/new_order",
+            "http_method": "GET",
+            "created_on": "2024-03-04T11:24:20Z",
+            "updated_on": "2024-03-04T11:24:20Z"
+          }
+        ],
+        "total_pages": 1,
+        "total_items": 1,
+        "current_page": 1,
+        "success": true
+      }
+    },
+    "get_operation_setting": {
+      "method": "GET",
+      "url": "/api/operation-settings/{setting_id}",
+      "description": "Get single operation setting by ID",
+      "auth_required": true,
+      "path_params": {
+        "setting_id": "integer"
+      },
+      "response_example": {
+        "status_code": 200,
+        "message": "Operation setting retrieved successfully",
+        "data": {
+          "id": 1,
+          "name": "New Order Inquiry",
+          "menu_id": 1,
+          "tab_id": 1,
+          "group_id": 1,
+          "send_data": true,
+          "receive_data": false,
+          "api_url": "https://lotte.dev/api/v1/delivery/new_order",
+          "http_method": "GET",
+          "api_params": {},
+          "expected_response": {},
+          "timeout_seconds": 30,
+          "retry_count": 3,
+          "description": "API for handling new order inquiries",
+          "notes": "Used for initial order processing"
+        },
+        "success": true
+      }
+    },
+    "get_settings_by_menu": {
+      "method": "GET",
+      "url": "/api/operation-settings/menu/{menu_id}",
+      "description": "Get operation settings by menu",
+      "auth_required": true,
+      "path_params": {
+        "menu_id": "integer"
+      }
+    },
+    "get_settings_by_tab": {
+      "method": "GET",
+      "url": "/api/operation-settings/tab/{tab_id}",
+      "description": "Get operation settings by tab",
+      "auth_required": true,
+      "path_params": {
+        "tab_id": "integer"
+      }
+    },
+    "get_settings_by_group": {
+      "method": "GET",
+      "url": "/api/operation-settings/group/{group_id}",
+      "description": "Get operation settings by group",
+      "auth_required": true,
+      "path_params": {
+        "group_id": "integer"
+      }
+    },
+    "get_settings_by_menu_and_tab": {
+      "method": "GET",
+      "url": "/api/operation-settings/menu/{menu_id}/tab/{tab_id}",
+      "description": "Get operation settings by menu and tab",
+      "auth_required": true,
+      "path_params": {
+        "menu_id": "integer",
+        "tab_id": "integer"
+      }
+    },
+    "create_operation_setting": {
+      "method": "POST",
+      "url": "/api/operation-settings/",
+      "description": "Create new operation setting",
+      "auth_required": true,
+      "request_body": {
+        "menu_id": "integer",
+        "tab_id": "integer (optional)",
+        "group_id": "integer",
+        "name": "string",
+        "send_data": "boolean",
+        "receive_data": "boolean",
+        "api_url": "string (URL format)",
+        "http_method": "string",
+        "api_params": "object (optional)",
+        "expected_response": "object (optional)",
+        "timeout_seconds": "integer",
+        "retry_count": "integer",
+        "description": "string (optional)",
+        "notes": "string (optional)"
+      },
+      "response_example": {
+        "status_code": 200,
+        "message": "Operation setting created successfully",
+        "data": {
+          "id": 1,
+          "name": "New Operation Setting"
+        },
+        "success": true
+      }
+    },
+    "update_operation_setting": {
+      "method": "PUT",
+      "url": "/api/operation-settings/{setting_id}",
+      "description": "Update existing operation setting",
+      "auth_required": true,
+      "path_params": {
+        "setting_id": "integer"
+      },
+      "request_body": {
+        "menu_id": "integer (optional)",
+        "tab_id": "integer (optional)",
+        "group_id": "integer (optional)",
+        "name": "string (optional)",
+        "send_data": "boolean (optional)",
+        "receive_data": "boolean (optional)",
+        "api_url": "string (optional)",
+        "http_method": "string (optional)",
+        "api_params": "object (optional)",
+        "expected_response": "object (optional)",
+        "timeout_seconds": "integer (optional)",
+        "retry_count": "integer (optional)",
+        "description": "string (optional)",
+        "notes": "string (optional)"
+      },
+      "response_example": {
+        "status_code": 200,
+        "message": "Operation setting updated successfully",
+        "data": {
+          "id": 1,
+          "name": "Updated Operation Setting"
+        },
+        "success": true
+      }
+    },
+    "delete_operation_setting": {
+      "method": "DELETE",
+      "url": "/api/operation-settings/{setting_id}",
+      "description": "Delete operation setting",
+      "auth_required": true,
+      "path_params": {
+        "setting_id": "integer"
+      },
+      "response_example": {
+        "status_code": 200,
+        "message": "Operation setting deleted successfully",
+        "data": {},
+        "success": true
+      }
+    }
+  },
+  "menu_integration_endpoints": {
+    "get_available_menus": {
+      "method": "GET",
+      "url": "/api/operation-settings/menu-integration/menus",
+      "description": "Get all available menus for operation settings",
+      "response_example": {
+        "status_code": 200,
+        "message": "Menus retrieved successfully",
+        "data": [
+          {
+            "id": 1,
+            "name": "Delivery Operation",
+            "path": "/delivery-operation"
+          }
+        ],
+        "success": true
+      }
+    },
+    "get_available_tabs": {
+      "method": "GET",
+      "url": "/api/operation-settings/menu-integration/tabs?menu_id={menu_id}",
+      "description": "Get all available tabs for operation settings",
+      "response_example": {
+        "status_code": 200,
+        "message": "Tabs retrieved successfully",
+        "data": [
+          {
+            "id": 1,
+            "name": "Inquiry",
+            "path": "/delivery-operation/inquiry"
+          }
+        ],
+        "success": true
+      }
+    },
+    "get_available_groups": {
+      "method": "GET",
+      "url": "/api/operation-settings/menu-integration/groups",
+      "description": "Get all available user groups for operation settings",
+      "response_example": {
+        "status_code": 200,
+        "message": "Groups retrieved successfully",
+        "data": [
+          {
+            "id": 1,
+            "name": "Group 1"
+          }
+        ],
+        "success": true
+      }
+    },
+    "get_menu_tab_structure": {
+      "method": "GET",
+      "url": "/api/operation-settings/menu-integration/structure",
+      "description": "Get hierarchical menu/tab structure with operation settings info",
+      "response_example": {
+        "status_code": 200,
+        "message": "Menu structure retrieved successfully",
+        "data": {
+          "menus": [
+            {
+              "id": 1,
+              "name": "Delivery Operation",
+              "path": "/delivery-operation",
+              "tabs": [
+                {
+                  "id": 1,
+                  "name": "Inquiry",
+                  "path": "/delivery-operation/inquiry",
+                  "operation_settings_count": 1
+                }
+              ]
+            }
+          ]
+        },
+        "success": true
+      }
+    },
+    "create_default_settings": {
+      "method": "POST",
+      "url": "/api/operation-settings/menu-integration/create-defaults/{menu_id}?include_tabs=true&group_id={group_id}",
+      "description": "Create default operation settings for a menu and its tabs",
+      "response_example": {
+        "status_code": 200,
+        "message": "Default settings created successfully",
+        "data": {
+          "created_settings": "array",
+          "menu_id": "integer",
+          "group_id": "integer"
+        },
+        "success": true
+      }
+    },
+    "validate_combination": {
+      "method": "GET",
+      "url": "/api/operation-settings/menu-integration/validate/{menu_id}?tab_id={tab_id}&group_id={group_id}",
+      "description": "Validate menu/tab/group combination",
+      "response_example": {
+        "status_code": 200,
+        "message": "Combination validated successfully",
+        "data": {
+          "is_valid": true,
+          "validation_details": "object"
+        },
+        "success": true
+      }
+    },
+    "get_summary": {
+      "method": "GET",
+      "url": "/api/operation-settings/menu-integration/summary",
+      "description": "Get summary statistics of operation settings",
+      "response_example": {
+        "status_code": 200,
+        "message": "Summary retrieved successfully",
+        "data": {
+          "total_settings": "integer",
+          "active_settings": "integer",
+          "inactive_settings": "integer",
+          "by_menu": "object",
+          "by_group": "object"
+        },
+        "success": true
+      }
+    }
+  },
+  "error_responses": {
+    "validation_error": {
+      "status_code": 400,
+      "message": "Validation failed",
+      "success": false,
+      "errors": [
+        {
+          "field": "field_name",
+          "message": "Error message"
+        }
+      ]
+    },
+    "not_found": {
+      "status_code": 404,
+      "message": "Resource not found",
+      "success": false,
+      "data": {}
+    },
+    "unauthorized": {
+      "status_code": 401,
+      "message": "Authentication required",
+      "success": false,
+      "data": {}
+    },
+    "forbidden": {
+      "status_code": 403,
+      "message": "Access forbidden",
+      "success": false,
+      "data": {}
+    },
+    "internal_error": {
+      "status_code": 500,
+      "message": "Internal server error",
+      "success": false,
+      "data": {}
+    }
+  },
+  "notes": {
+    "authentication": "All endpoints require JWT authentication via CustomJWTAuth()",
+    "pagination": "List endpoints support pagination via Paginator with total_pages, total_items, current_page",
+    "validation": "Input validation is handled by Pydantic schemas",
+    "permissions": "Based on user roles and menu/tab permissions",
+    "unique_constraint": "Combination of menu_id, tab_id, name, and group_id must be unique",
+    "menu_tab_group_integration": "Links directly to core Menu, Tab, and UserGroup system for maximum flexibility",
+    "response_format": "All responses follow BaseResponse format with status_code, message, data, success fields",
+    "error_handling": "Errors include ValidationError with detailed field-level messages",
+    "multilingual_support": "Messages support multiple languages via MESSAGE_ENUM constants",
+    "data_flow": "send_data=true means system sends data to external API, receive_data=true means system receives data from external API",
+    "another_info": "Field for storing additional information from external APIs that don't have corresponding keys in the system",
+    "internal_api_urls": "Operation settings with receive_data=true use only /api/delivery/change-order-status and /api/delivery/order-inquiry endpoints"
+  }
+} 

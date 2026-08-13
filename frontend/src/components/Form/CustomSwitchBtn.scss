@@ -1,0 +1,30 @@
+@import '../../index.css';
+
+.custom-switch-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  &__label {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+    color: var(--ga-light-theme-font-color);
+
+    .dark & {
+      color: var(--ga-dark-theme-font-color) !important;
+    }
+  }
+
+  &--horizontal {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+
+    .custom-switch-btn__label {
+      margin-bottom: 0 !important;
+      font-weight: 400;
+      font-size: 1rem;
+    }
+  }
+}

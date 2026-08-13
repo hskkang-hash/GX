@@ -1,0 +1,16 @@
+.list-device {
+  &__image {
+    width: 107px;
+    height: 60px;
+    border-radius: 0.5rem;
+    object-fit: cover;
+  }
+
+  &__active-icon {
+    padding: 0.75rem;
+  }
+
+  &__table-container {
+    margin-top: 0.5rem;
+  }
+}

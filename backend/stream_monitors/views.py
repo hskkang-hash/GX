@@ -1,0 +1,2 @@
+from django.shortcuts import render
+from stream_monitors.views.stream_monitors import StreamMonitorsAPI

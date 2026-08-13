@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-time Drawing Example</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f0f0;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 15px;
+      }
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        font-size: 14px;
+        transition: background-color 0.3s;
+      }
+      .btn:hover {
+        background-color: #0056b3;
+      }
+      .btn.active {
+        background-color: #28a745;
+      }
+      .btn.danger {
+        background-color: #dc3545;
+      }
+      .btn.danger:hover {
+        background-color: #c82333;
+      }
+      .drawing-area {
+        display: flex;
+        gap: 20px;
+      }
+      .canvas-container {
+        flex: 1;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        position: relative;
+        background-color: #fafafa;
+      }
+      #drawingCanvas {
+        display: block;
+        cursor: crosshair;
+        background-color: white;
+      }
+      .sidebar {
+        width: 250px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        padding: 15px;
+      }
+      .participants {
+        margin-bottom: 20px;
+      }
+      .participants h3,
+      .status h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #333;
+      }
+      .participant {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+      .participant-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #28a745;
+        margin-right: 8px;
+      }
+      .status-item {
+        margin-bottom: 5px;
+        font-size: 14px;
+      }
+      .color-picker {
+        margin-right: 10px;
+      }
+      .width-slider {
+        margin-right: 10px;
+      }
+      .connection-status {
+        font-weight: bold;
+        padding: 5px 10px;
+        border-radius: 4px;
+      }
+      .connected {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .disconnected {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .cursors {
+        position: absolute;
+        pointer-events: none;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .cursor {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+      }
+      .cursor-pointer {
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 12px solid;
+        margin-bottom: 2px;
+      }
+      .cursor-label {
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .config-section {
+        margin-bottom: 20px;
+      }
+      .config-input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Real-time Drawing Collaboration</h1>
+        <div class="connection-status" id="connectionStatus">Disconnected</div>
+      </div>
+
+      <div class="config-section">
+        <h3>Authentication</h3>
+        <div id="authSection">
+          <input
+            type="text"
+            id="username"
+            class="config-input"
+            placeholder="Username"
+          />
+          <input
+            type="password"
+            id="password"
+            class="config-input"
+            placeholder="Password"
+          />
+          <button class="btn" onclick="loginUser()">🔑 Login</button>
+          <button class="btn" onclick="checkAuth()">👤 Check Status</button>
+          <button class="btn" onclick="openAdminLogin()">
+            🔗 Open Admin Login
+          </button>
+        </div>
+        <div
+          id="authStatus"
+          style="
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f8d7da;
+            color: #721c24;
+          "
+        >
+          ❌ Not logged in
+        </div>
+
+        <h3>Session Configuration</h3>
+        <input
+          type="text"
+          id="sessionId"
+          class="config-input"
+          placeholder="Session ID"
+          value="1"
+        />
+        <button
+          class="btn"
+          onclick="connectToSession()"
+          id="connectBtn"
+          disabled
+        >
+          Connect to Session
+        </button>
+        <button class="btn" onclick="testApiConnection()">
+          Test API Connection
+        </button>
+        <button class="btn danger" onclick="disconnect()">Disconnect</button>
+
+        <div style="margin-top: 10px; font-size: 12px; color: #666">
+          <strong>Note:</strong> You must be logged in to Django to connect to
+          WebSocket sessions. <br />Create a session with:
+          <code>python manage.py create_test_session</code>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button
+          class="btn active"
+          data-tool="line"
+          onclick="selectTool('line')"
+        >
+          Line
+        </button>
+        <button
+          class="btn"
+          data-tool="rectangle"
+          onclick="selectTool('rectangle')"
+        >
+          Rectangle
+        </button>
+        <button class="btn" data-tool="circle" onclick="selectTool('circle')">
+          Circle
+        </button>
+        <button class="btn" data-tool="text" onclick="selectTool('text')">
+          Text
+        </button>
+
+        <input
+          type="color"
+          id="colorPicker"
+          class="color-picker"
+          value="#000000"
+          onchange="updateColor()"
+        />
+
+        <label>Width: </label>
+        <input
+          type="range"
+          id="widthSlider"
+          class="width-slider"
+          min="1"
+          max="10"
+          value="2"
+          onchange="updateWidth()"
+        />
+        <span id="widthValue">2px</span>
+
+        <button class="btn danger" onclick="clearAll()">Clear All</button>
+      </div>
+
+      <div class="drawing-area">
+        <div class="canvas-container">
+          <canvas id="drawingCanvas" width="800" height="600"></canvas>
+          <div class="cursors" id="cursors"></div>
+        </div>
+
+        <div class="sidebar">
+          <div class="participants">
+            <h3>Participants (<span id="participantCount">0</span>)</h3>
+            <div id="participantsList"></div>
+          </div>
+
+          <div class="status">
+            <h3>Status</h3>
+            <div class="status-item">
+              Elements: <span id="elementCount">0</span>
+            </div>
+            <div class="status-item">
+              Tool: <span id="currentTool">line</span>
+            </div>
+            <div class="status-item">
+              Color: <span id="currentColor">#000000</span>
+            </div>
+            <div class="status-item">
+              Width: <span id="currentWidth">2px</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      class DrawingClient {
+        constructor() {
+          this.ws = null;
+          this.canvas = document.getElementById("drawingCanvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.elements = [];
+          this.participants = [];
+          this.currentTool = "line";
+          this.currentColor = "#000000";
+          this.currentWidth = 2;
+          this.isDrawing = false;
+          this.startPos = null;
+          this.currentPath = [];
+          this.cursors = new Map();
+
+          this.setupEventListeners();
+        }
+
+        setupEventListeners() {
+          this.canvas.addEventListener(
+            "mousedown",
+            this.onMouseDown.bind(this)
+          );
+          this.canvas.addEventListener(
+            "mousemove",
+            this.onMouseMove.bind(this)
+          );
+          this.canvas.addEventListener("mouseup", this.onMouseUp.bind(this));
+          this.canvas.addEventListener(
+            "mouseleave",
+            this.onMouseLeave.bind(this)
+          );
+        }
+
+        testApiConnection() {
+          const apiUrl = `http://localhost:8000/api/config-management/list-optimized?current_page=1&page_size=25`;
+          console.log("Attempting to connect to:", apiUrl);
+          // get all stream monitors
+          fetch(apiUrl)
+            .then((response) => response.json())
+            .then((data) => console.log("📨 Received message:", data))
+            .catch((error) => console.error("🚨 Error:", error));
+        }
+
+        connect(sessionId) {
+          if (this.ws) {
+            this.ws.close();
+          }
+
+          const wsUrl = `ws://localhost:8000/ws/drawing/session/${sessionId}/`;
+          console.log("Attempting to connect to:", wsUrl);
+          this.ws = new WebSocket(wsUrl);
+
+          this.ws.onopen = () => {
+            console.log("✅ Connected to drawing session successfully");
+            this.updateConnectionStatus(true);
+          };
+
+          this.ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log("📨 Received message:", data);
+            this.handleMessage(data);
+          };
+
+          this.ws.onclose = (event) => {
+            console.log(
+              "❌ WebSocket connection closed:",
+              event.code,
+              event.reason
+            );
+            this.updateConnectionStatus(false);
+
+            // Show user-friendly error messages
+            if (event.code === 1006) {
+              alert(
+                "Connection failed. Please check:\n1. You are logged in to Django\n2. Django server is running with ASGI (daphne)\n3. Session ID exists\n4. Redis is running"
+              );
+            }
+          };
+
+          this.ws.onerror = (error) => {
+            console.error("🚨 WebSocket error:", error);
+            this.updateConnectionStatus(false);
+            alert("WebSocket connection failed. Check console for details.");
+          };
+        }
+
+        disconnect() {
+          if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+          }
+        }
+
+        updateConnectionStatus(connected) {
+          const statusElement = document.getElementById("connectionStatus");
+          statusElement.textContent = connected ? "Connected" : "Disconnected";
+          statusElement.className = `connection-status ${
+            connected ? "connected" : "disconnected"
+          }`;
+        }
+
+        handleMessage(data) {
+          switch (data.type) {
+            case "initial_state":
+              this.elements = []; // Always start fresh in real-time mode
+              this.participants = data.participants;
+              this.renderAllElements();
+              this.updateParticipantsList();
+              break;
+            case "element_added":
+              // Store temporarily for current session rendering
+              this.elements.push(data.element);
+              this.renderElement(data.element);
+              this.updateElementCount();
+              break;
+            case "drawing_cleared":
+              this.elements = [];
+              this.renderAllElements();
+              this.updateElementCount();
+              break;
+            case "cursor_position":
+              this.updateCursor(data.user, data.cursor_data);
+              break;
+            case "participant_joined":
+            case "participant_left":
+              this.participants = data.participants;
+              this.updateParticipantsList();
+              break;
+            case "error":
+              console.error("Server error:", data.message);
+              alert("Error: " + data.message);
+              break;
+          }
+        }
+
+        onMouseDown(e) {
+          const rect = this.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          this.isDrawing = true;
+          this.startPos = { x, y };
+
+          if (this.currentTool === "line") {
+            this.currentPath = [{ x, y }];
+          }
+        }
+
+        onMouseMove(e) {
+          const rect = this.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          // Send cursor position
+          this.sendCursorPosition(x, y);
+
+          if (!this.isDrawing) return;
+
+          if (this.currentTool === "line") {
+            this.currentPath.push({ x, y });
+            this.drawPreview();
+          }
+        }
+
+        onMouseUp(e) {
+          if (!this.isDrawing) return;
+
+          const rect = this.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          this.isDrawing = false;
+
+          let elementData = {};
+
+          switch (this.currentTool) {
+            case "line":
+              if (this.currentPath.length > 1) {
+                elementData = {
+                  points: this.currentPath.map((p) => [p.x, p.y]),
+                  color: this.currentColor,
+                  width: this.currentWidth,
+                };
+              }
+              break;
+            case "rectangle":
+              const width = x - this.startPos.x;
+              const height = y - this.startPos.y;
+              elementData = {
+                x: Math.min(this.startPos.x, x),
+                y: Math.min(this.startPos.y, y),
+                width: Math.abs(width),
+                height: Math.abs(height),
+                color: this.currentColor,
+                width: this.currentWidth,
+              };
+              break;
+            case "circle":
+              const radius = Math.sqrt(
+                Math.pow(x - this.startPos.x, 2) +
+                  Math.pow(y - this.startPos.y, 2)
+              );
+              elementData = {
+                cx: this.startPos.x,
+                cy: this.startPos.y,
+                radius: radius,
+                color: this.currentColor,
+                width: this.currentWidth,
+              };
+              break;
+            case "text":
+              const text = prompt("Enter text:");
+              if (text) {
+                elementData = {
+                  x: this.startPos.x,
+                  y: this.startPos.y,
+                  text: text,
+                  font_size: 16,
+                  font_family: "Arial",
+                  color: this.currentColor,
+                };
+              }
+              break;
+          }
+
+          if (Object.keys(elementData).length > 0) {
+            this.sendDrawElement(this.currentTool, elementData);
+          }
+
+          this.currentPath = [];
+        }
+
+        onMouseLeave(e) {
+          this.isDrawing = false;
+          this.currentPath = [];
+        }
+
+        drawPreview() {
+          this.renderAllElements();
+
+          if (this.currentTool === "line" && this.currentPath.length > 1) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.currentPath[0].x, this.currentPath[0].y);
+            for (let i = 1; i < this.currentPath.length; i++) {
+              this.ctx.lineTo(this.currentPath[i].x, this.currentPath[i].y);
+            }
+            this.ctx.strokeStyle = this.currentColor;
+            this.ctx.lineWidth = this.currentWidth;
+            this.ctx.stroke();
+          }
+        }
+
+        renderAllElements() {
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          this.elements.forEach((element) => this.renderElement(element));
+        }
+
+        renderElement(element) {
+          const data = element.data;
+
+          switch (element.type) {
+            case "line":
+              if (data.points && data.points.length > 1) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(data.points[0][0], data.points[0][1]);
+                for (let i = 1; i < data.points.length; i++) {
+                  this.ctx.lineTo(data.points[i][0], data.points[i][1]);
+                }
+                this.ctx.strokeStyle = data.color || "#000000";
+                this.ctx.lineWidth = data.width || 2;
+                this.ctx.stroke();
+              }
+              break;
+            case "rectangle":
+              this.ctx.beginPath();
+              this.ctx.rect(data.x, data.y, data.width, data.height);
+              if (data.fill) {
+                this.ctx.fillStyle = data.fill;
+                this.ctx.fill();
+              }
+              this.ctx.strokeStyle = data.color || "#000000";
+              this.ctx.lineWidth = data.width || 2;
+              this.ctx.stroke();
+              break;
+            case "circle":
+              this.ctx.beginPath();
+              this.ctx.arc(data.cx, data.cy, data.radius, 0, 2 * Math.PI);
+              if (data.fill) {
+                this.ctx.fillStyle = data.fill;
+                this.ctx.fill();
+              }
+              this.ctx.strokeStyle = data.color || "#000000";
+              this.ctx.lineWidth = data.width || 2;
+              this.ctx.stroke();
+              break;
+            case "text":
+              this.ctx.font = `${data.font_size || 16}px ${
+                data.font_family || "Arial"
+              }`;
+              this.ctx.fillStyle = data.color || "#000000";
+              this.ctx.fillText(data.text, data.x, data.y);
+              break;
+          }
+        }
+
+        sendDrawElement(elementType, elementData) {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            const message = {
+              type: "draw_element",
+              element_type: elementType,
+              element_data: elementData,
+            };
+            this.ws.send(JSON.stringify(message));
+          }
+        }
+
+        sendCursorPosition(x, y) {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            const message = {
+              type: "cursor_position",
+              cursor_data: { x, y },
+            };
+            this.ws.send(JSON.stringify(message));
+          }
+        }
+
+        clearAll() {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            const message = { type: "clear_all" };
+            this.ws.send(JSON.stringify(message));
+          }
+        }
+
+        updateCursor(username, position) {
+          const cursorsContainer = document.getElementById("cursors");
+          let cursor = this.cursors.get(username);
+
+          if (!cursor) {
+            cursor = document.createElement("div");
+            cursor.className = "cursor";
+            cursor.innerHTML = `
+                        <div class="cursor-pointer" style="border-bottom-color: ${this.getRandomColor()}"></div>
+                        <div class="cursor-label">${username}</div>
+                    `;
+            cursorsContainer.appendChild(cursor);
+            this.cursors.set(username, cursor);
+          }
+
+          cursor.style.left = position.x + "px";
+          cursor.style.top = position.y + "px";
+        }
+
+        getRandomColor() {
+          const colors = [
+            "#ff0000",
+            "#00ff00",
+            "#0000ff",
+            "#ffff00",
+            "#ff00ff",
+            "#00ffff",
+          ];
+          return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        updateParticipantsList() {
+          const list = document.getElementById("participantsList");
+          list.innerHTML = "";
+          this.participants.forEach((participant) => {
+            const div = document.createElement("div");
+            div.className = "participant";
+            div.innerHTML = `
+                        <div class="participant-indicator"></div>
+                        <span>${participant}</span>
+                    `;
+            list.appendChild(div);
+          });
+          document.getElementById("participantCount").textContent =
+            this.participants.length;
+        }
+
+        updateElementCount() {
+          document.getElementById("elementCount").textContent =
+            this.elements.length;
+        }
+
+        setTool(tool) {
+          this.currentTool = tool;
+          document.getElementById("currentTool").textContent = tool;
+        }
+
+        setColor(color) {
+          this.currentColor = color;
+          document.getElementById("currentColor").textContent = color;
+        }
+
+        setWidth(width) {
+          this.currentWidth = width;
+          document.getElementById("currentWidth").textContent = width + "px";
+        }
+      }
+
+      // Global instance
+      const drawingClient = new DrawingClient();
+
+      // UI Functions
+      async function checkAuth() {
+        try {
+          console.log("👤 Checking authentication status...");
+
+          // Try multiple endpoints to check authentication
+          let isAuthenticated = false;
+
+          // Method 1: Try Django admin page
+          try {
+            const adminResponse = await fetch("http://localhost:8000/admin/", {
+              credentials: "include",
+              redirect: "manual",
+            });
+
+            if (adminResponse.status === 200) {
+              console.log("✅ User is authenticated (admin accessible)");
+              isAuthenticated = true;
+            }
+          } catch (e) {
+            console.log("Admin check failed:", e.message);
+          }
+
+          // Method 2: Try stream monitors auth status endpoint
+          if (!isAuthenticated) {
+            try {
+              const authResponse = await fetch(
+                "http://localhost:8000/api/stream_monitors/auth/status/",
+                {
+                  credentials: "include",
+                }
+              );
+
+              if (authResponse.ok) {
+                const authData = await authResponse.json();
+                if (authData.authenticated) {
+                  console.log(
+                    `✅ User is authenticated as: ${authData.username}`
+                  );
+                  isAuthenticated = true;
+                }
+              }
+            } catch (e) {
+              console.log("Stream monitors auth check failed:", e.message);
+            }
+          }
+
+          // Method 3: Try main API endpoint as fallback
+          if (!isAuthenticated) {
+            try {
+              const apiResponse = await fetch(
+                "http://localhost:8000/api/config-management/list-optimized?current_page=1&page_size=1",
+                {
+                  credentials: "include",
+                }
+              );
+
+              if (apiResponse.ok) {
+                console.log("✅ User is authenticated (main API accessible)");
+                isAuthenticated = true;
+              }
+            } catch (e) {
+              console.log("Main API check failed:", e.message);
+            }
+          }
+
+          updateAuthStatus(isAuthenticated);
+          return isAuthenticated;
+        } catch (error) {
+          console.error(`❌ Auth check error: ${error}`);
+          updateAuthStatus(false);
+          return false;
+        }
+      }
+
+      function openAdminLogin() {
+        // Open Django admin login in a new tab
+        window.open("http://localhost:8000/admin/", "_blank");
+        // Check auth status after a short delay
+        setTimeout(() => {
+          checkAuth();
+        }, 2000);
+      }
+
+      async function loginUser() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        if (!username || !password) {
+          alert("Username and password required");
+          return;
+        }
+
+        try {
+          // Try multiple sources for CSRF token
+          let csrfToken = "pX8n6oSuKeY2cwlGr3l73cGPLx31KiIO";
+
+          // Method 2: Try to get from meta tag or cookies if admin failed
+          if (!csrfToken) {
+            // Check if CSRF token is in cookies
+            const cookies = document.cookie.split(";");
+            for (let cookie of cookies) {
+              const [name, value] = cookie.trim().split("=");
+              if (name === "csrftoken") {
+                csrfToken = value;
+                break;
+              }
+            }
+          }
+
+          // Method 3: Try the stream monitors CSRF endpoint
+          if (!csrfToken) {
+            try {
+              const csrfResponse = await fetch(
+                "http://localhost:8000/api/stream_monitors/auth/csrf-token/",
+                {
+                  credentials: "include",
+                }
+              );
+              if (csrfResponse.ok) {
+                const csrfData = await csrfResponse.json();
+                csrfToken = csrfData.csrf_token || "";
+                console.log("✅ Got CSRF token from stream_monitors API");
+              }
+            } catch (e) {
+              console.log("Stream monitors CSRF endpoint not available");
+            }
+          }
+
+          if (!csrfToken) {
+            console.log(
+              "Could not get CSRF token from any source, trying without it"
+            );
+            // We'll try to login without CSRF for testing
+          }
+
+          console.log("🔑 Attempting login...");
+
+          // Prepare login payload
+          const loginPayload = {
+            username: username,
+            password: password,
+            remember_me: false,
+            otp_code: "",
+            end_previous_session: false,
+          };
+
+          // Login request
+          const loginResponse = await fetch(
+            "http://localhost:8000/api/v1/auth/login",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken || "", // Also try header-based CSRF
+              },
+              credentials: "include",
+              body: JSON.stringify(loginPayload),
+            }
+          );
+
+          if (loginResponse.ok) {
+            console.log("✅ Login successful!");
+            updateAuthStatus(true, username);
+          } else {
+            console.log("❌ Login failed - check credentials");
+            updateAuthStatus(false);
+            alert("Login failed. Check your credentials.");
+          }
+        } catch (error) {
+          console.error(`❌ Login error: ${error}`);
+          updateAuthStatus(false);
+          alert("Login error: " + error.message);
+        }
+      }
+
+      function updateAuthStatus(loggedIn, user = null) {
+        const statusDiv = document.getElementById("authStatus");
+        const connectBtn = document.getElementById("connectBtn");
+
+        if (loggedIn) {
+          statusDiv.style.backgroundColor = "#d4edda";
+          statusDiv.style.color = "#155724";
+          statusDiv.textContent = `✅ Logged in ${user ? "as: " + user : ""}`;
+          connectBtn.disabled = false;
+        } else {
+          statusDiv.style.backgroundColor = "#f8d7da";
+          statusDiv.style.color = "#721c24";
+          statusDiv.textContent = "❌ Not logged in";
+          connectBtn.disabled = true;
+        }
+      }
+
+      function connectToSession() {
+        const sessionId = document.getElementById("sessionId").value;
+
+        if (!sessionId) {
+          alert("Please enter a Session ID");
+          return;
+        }
+
+        drawingClient.connect(sessionId);
+      }
+
+      function testApiConnection() {
+        drawingClient.testApiConnection();
+      }
+
+      function disconnect() {
+        drawingClient.disconnect();
+      }
+
+      function selectTool(tool) {
+        // Remove active class from all tool buttons
+        document.querySelectorAll("[data-tool]").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+
+        // Add active class to selected tool
+        document.querySelector(`[data-tool="${tool}"]`).classList.add("active");
+
+        drawingClient.setTool(tool);
+      }
+
+      function updateColor() {
+        const color = document.getElementById("colorPicker").value;
+        drawingClient.setColor(color);
+      }
+
+      function updateWidth() {
+        const width = parseInt(document.getElementById("widthSlider").value);
+        document.getElementById("widthValue").textContent = width + "px";
+        drawingClient.setWidth(width);
+      }
+
+      function clearAll() {
+        if (confirm("Are you sure you want to clear all drawings?")) {
+          drawingClient.clearAll();
+        }
+      }
+
+      // Initialize UI
+      updateWidth();
+      updateColor();
+
+      // Check authentication status on page load
+      checkAuth();
+    </script>
+  </body>
+</html>

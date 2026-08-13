@@ -1,0 +1,46 @@
+.action-btns {
+  padding: 1.5em 0;
+  gap: 1.5em;
+  display: flex;
+  margin-bottom: 0 !important;
+  justify-content: center !important;
+  /* Center content horizontally */
+  // width: 50%; /* Set container width to 50% */
+  margin: 0 auto;
+
+  .action-btn {
+    flex: 1;
+  }
+
+  button {
+    width: 100%;
+    white-space: nowrap;
+  }
+}
+
+.action-btns.btn-black {
+  .outline-btn {
+    background-color: #2d2e30 !important;
+    color: var(--ga-primary) !important;
+    border: 0.0625em solid var(--ga-primary) !important;
+  }
+}
+
+.space-btns {
+  gap: 1.5em;
+  padding: 1.5em 0;
+  display: flex;
+  justify-content: space-between;
+
+  button {
+    white-space: nowrap;
+  }
+}
+
+.space-btns.btn-black {
+  .outline-btn {
+    background-color: #2d2e30 !important;
+    color: var(--ga-primary) !important;
+    border: 0.0625em solid var(--ga-primary) !important;
+  }
+}

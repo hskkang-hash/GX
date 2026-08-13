@@ -1,0 +1,12 @@
+.multi-language-input {
+  .custom-input {
+    input {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      background-color: transparent;
+      &::placeholder {
+        color: #9c9d9d;
+      }
+    }
+  }
+}

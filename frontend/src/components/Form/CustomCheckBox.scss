@@ -1,0 +1,45 @@
+.custom-checkbox-label {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ga-light-theme-font-color);
+  margin-bottom: 0.4rem;
+
+  &.dark {
+    color: var(--ga-dark-theme-font-color);
+  }
+}
+
+.custom-checkbox__checkbox {
+  color: var(--ga-light-theme-font-color);
+
+  &.dark {
+    color: var(--ga-dark-line-color);
+  }
+
+  &.MuiRadio-root {
+    color: var(--ga-light-theme-font-color);
+
+    &.dark {
+      color: var(--ga-dark-line-color);
+
+      &.Mui-checked {
+        color: var(--ga-primary-dark);
+      }
+    }
+  }
+
+  &.Mui-checked {
+    color: var(--ga-primary) !important;
+  }
+
+
+  &.Mui-disabled {
+    color: gray !important;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &.Mui-disabled.dark {
+    color: var(--ga-dark-line-color) !important;
+  }
+}

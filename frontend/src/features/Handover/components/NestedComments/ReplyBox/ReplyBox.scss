@@ -1,0 +1,65 @@
+.reply-box {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.form-label {
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  .send-button {
+    position: absolute;
+    right: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    z-index: 999999;
+  }
+}
+
+textarea.form-control {
+  width: 100%;
+  padding-right: 40px;
+  height: 40px;
+  resize: none;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+  margin-top: 5px;
+}
+
+.reply-box-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+textarea.is-invalid {
+  border-color: #dc3545;
+}
+
+.input-wrapper.focused textarea {
+  border-color: #007bff;
+}
+
+.input-wrapper.error textarea {
+  border-color: #dc3545;
+}
+
+textarea::placeholder {
+  color: #6c757d;
+}

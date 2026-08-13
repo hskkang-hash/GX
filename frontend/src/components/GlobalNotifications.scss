@@ -1,0 +1,72 @@
+// Global new order notification styles
+.new-order-notification {
+  .notification-title {
+    color: #0cba47 !important;
+  }
+
+  .notification-label {
+    color: #0cba47 !important;
+  }
+
+  // Light theme (default)
+  .notification-time {
+    color: #333 !important;
+  }
+
+  .notification-text {
+    color: #333 !important;
+  }
+
+  // Dark theme
+  &.theme-dark {
+    .notification-time {
+      color: #fff !important;
+    }
+
+    .notification-text {
+      color: #dddfe2 !important;
+    }
+  }
+
+  .ant-notification-notice-description {
+    div::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    div::-webkit-scrollbar-track {
+      background: #f0f0f0;
+      border-radius: 4px;
+    }
+
+    div::-webkit-scrollbar-thumb {
+      background: #0cba47;
+      border-radius: 4px;
+      opacity: 0.8;
+    }
+
+    div::-webkit-scrollbar-thumb:hover {
+      background: #0a9d3c;
+    }
+  }
+
+  // Smooth scroll behavior
+  div[style*='overflowY'] {
+    scroll-behavior: smooth;
+  }
+
+  // Animation for new notifications
+  .ant-notification-notice {
+    animation: slideInFromRight 0.3s ease-out;
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

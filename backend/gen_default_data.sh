@@ -1,0 +1,6 @@
+python manage.py create_default_delivery_options
+python manage.py create_sample_order_item_types
+python manage.py create_default_payment_types
+python manage.py create_default_order_status
+python manage.py create_sample_terminals
+python manage.py create_sample_banks

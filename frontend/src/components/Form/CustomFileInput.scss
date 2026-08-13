@@ -1,0 +1,138 @@
+@import '../../index.css';
+
+.custom-file-input {
+  display: flex;
+  flex-direction: column;
+  color: var(--ga-light-theme-font-color);
+
+  .dark & {
+    color: var(--ga-dark-theme-font-color);
+  }
+
+  &__label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--ga-light-theme-font-color);
+
+    .dark & {
+      color: var(--ga-dark-theme-font-color);
+    }
+  }
+
+  &__input-container {
+    display: flex;
+    height: 2.975em;
+  }
+
+  &__input-container-left {
+    flex: 1;
+    display: flex;
+    height: 2.975em;
+  }
+
+  &__text-input {
+    height: 2.975em;
+    flex: 1;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--ga-light-line-color);
+    border-right: 0;
+    border-radius: 0.571rem 0 0 0.571rem;
+
+    &:focus {
+      outline: none;
+    }
+
+    .dark & {
+      color: var(--ga-dark-theme-font-color);
+      border-color: var(--ga-dark-line-color);
+      background-color: var(--ga-dark-outline-dark-bg);
+    }
+  }
+
+  &__browse-button {
+    height: 2.975em;
+    padding: 0.5rem 1rem;
+    color: var(--ga-primary);
+    border: 1px solid var(--ga-primary);
+    border-radius: 0 0.375rem 0.375rem 0;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    background-color: white;
+
+    &:hover {
+      background-color: rgba(59, 130, 246, 0.1);
+
+      .dark & {
+        // border-color: var(--ga-primary-dark);
+        background-color: #293438;
+      }
+    }
+
+    .dark & {
+      border-color: var(--ga-primary-dark);
+      background-color: var(--ga-dark-outline-dark-bg);
+    }
+  }
+
+  &__file-input {
+    display: none;
+    height: 2.975em;
+  }
+
+  &__preview {
+    position: relative;
+    margin-top: 0.5rem;
+    height: 2.975em;
+    width: 5.3125rem;
+
+    &.full-width-preview {
+      width: 100%;
+      height: auto;
+      img {
+        border-radius: 8px;
+        border: none !important;
+      }
+    }
+
+    &-image {
+      height: 100%;
+      width: 100%;
+      object-fit: contain;
+      border: 1px solid var(--ga-light-line-color);
+      border-radius: 0.25rem;
+
+      .dark & {
+        border-color: var(--ga-dark-line-color);
+      }
+    }
+
+    &-overlay {
+      display: none;
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      border-radius: 0.25rem;
+      justify-content: center;
+      align-items: center;
+
+      .custom-file-input__preview:hover & {
+        display: flex;
+      }
+    }
+
+    &-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    &-icon {
+      color: white;
+      cursor: pointer;
+    }
+  }
+}

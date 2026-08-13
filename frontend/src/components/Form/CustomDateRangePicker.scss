@@ -1,0 +1,63 @@
+.react-daterange-picker {
+  width: 100%;
+}
+
+.react-daterange-picker__wrapper {
+  display: flex;
+  justify-content: space-evenly;
+  flex-grow: 1;
+  flex-shrink: 0;
+  align-items: center;
+  border: 0.0625em solid #dddfe2 !important;
+  border-radius: 8px;
+  padding: 0.65em 0.5em;
+  height: 3rem;
+  width: 100%;
+
+  .react-daterange-picker__inputGroup {
+    height: fit-content;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+  }
+
+  .react-daterange-picker__inputGroup__input {
+    height: fit-content;
+    border: none;
+    padding: 0.25em;
+  }
+}
+
+.react-daterange-picker__clear-button.react-daterange-picker__button {
+  display: none;
+}
+
+.react-daterange-picker__button {
+  width: auto;
+}
+
+span.react-daterange-picker__range-divider {
+  padding: 0 2rem 0 0;
+}
+
+.react-calendar__tile {
+  color: black;
+}
+
+.react-calendar__month-view__days__day--weekend {
+  color: #d10000 !important;
+}
+
+.react-calendar__tile--now {
+  background-color: transparent;
+  color: var(--ga-primary);
+}
+
+.react-calendar__tile--active {
+  background: var(--ga-primary);
+  color: #fff;
+}
+
+.react-datetimerange-picker__inputGroup__input:invalid {
+  background: none !important;
+}

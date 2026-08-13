@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Operational Data Notifications Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f0f0;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 15px;
+      }
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        font-size: 14px;
+        transition: background-color 0.3s;
+      }
+      .btn:hover {
+        background-color: #0056b3;
+      }
+      .btn.success {
+        background-color: #28a745;
+      }
+      .btn.danger {
+        background-color: #dc3545;
+      }
+      .btn.warning {
+        background-color: #ffc107;
+        color: #212529;
+      }
+      .btn:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+      .config-input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      .connection-status {
+        font-weight: bold;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+      }
+      .connected {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .disconnected {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .section {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+      }
+      .section h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+      .log {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        height: 300px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+        margin-top: 15px;
+      }
+      .log-entry {
+        margin-bottom: 2px;
+        padding: 2px 0;
+      }
+      .timestamp {
+        color: #666;
+      }
+      .success {
+        color: #28a745;
+      }
+      .error {
+        color: #dc3545;
+      }
+      .info {
+        color: #17a2b8;
+      }
+      .warning {
+        color: #ffc107;
+      }
+      .notification {
+        background-color: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 4px;
+      }
+      .notification.operational_video_upload {
+        background-color: #e8f5e8;
+        border-left-color: #4caf50;
+      }
+      .notification.operational_data_processing {
+        background-color: #fff3e0;
+        border-left-color: #ff9800;
+      }
+      .notification.operational_data_error {
+        background-color: #ffebee;
+        border-left-color: #f44336;
+      }
+      .notification.operational_data_download {
+        background-color: #f3e5f5;
+        border-left-color: #9c27b0;
+      }
+      .notification.operational_log_download {
+        background-color: #e8f5e8;
+        border-left-color: #4caf50;
+      }
+      .notification.success {
+        background-color: #e8f5e8;
+        border-left-color: #4caf50;
+      }
+      .notification.failed {
+        background-color: #ffebee;
+        border-left-color: #f44336;
+      }
+      .notification.partial_success {
+        background-color: #fff8e1;
+        border-left-color: #ffc107;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      .stat-item {
+        background: white;
+        padding: 10px;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 20px;
+        font-weight: bold;
+        color: #007bff;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: #666;
+      }
+      .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .device-type-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+      .device-type-badge.drone {
+        background-color: #e3f2fd;
+        color: #1976d2;
+      }
+      .device-type-badge.robot {
+        background-color: #f3e5f5;
+        color: #7b1fa2;
+      }
+      .device-type-badge.bulk {
+        background-color: #e8eaf6;
+        color: #3f51b5;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+      .status-badge.success {
+        background-color: #e8f5e8;
+        color: #2e7d32;
+      }
+      .status-badge.failed {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+      .status-badge.partial_success {
+        background-color: #fff8e1;
+        color: #f57c00;
+      }
+      .status-badge.pending {
+        background-color: #e3f2fd;
+        color: #1976d2;
+      }
+      .status-badge.processing {
+        background-color: #fff3e0;
+        color: #f57c00;
+      }
+      .file-list {
+        background-color: #f5f5f5;
+        padding: 8px;
+        border-radius: 4px;
+        margin-top: 5px;
+        font-size: 11px;
+      }
+      .file-item {
+        margin: 2px 0;
+        padding: 2px 0;
+      }
+      .file-item.success {
+        color: #2e7d32;
+      }
+      .file-item.failed {
+        color: #c62828;
+      }
+      .progress-bar {
+        background-color: #e0e0e0;
+        border-radius: 10px;
+        height: 8px;
+        margin: 5px 0;
+        overflow: hidden;
+      }
+      .progress-fill {
+        background-color: #4caf50;
+        height: 100%;
+        transition: width 0.3s ease;
+      }
+      .download-link {
+        display: inline-block;
+        background-color: #2196f3;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 12px;
+        margin-top: 5px;
+      }
+      .download-link:hover {
+        background-color: #1976d2;
+      }
+      .task-id {
+        font-size: 10px;
+        color: #888;
+        font-family: 'Courier New', monospace;
+        background-color: #f5f5f5;
+        padding: 2px 4px;
+        border-radius: 3px;
+        border: 1px solid #ddd;
+        display: inline-block;
+        margin-top: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🔧 Operational Data Notifications Test</h1>
+        <div class="connection-status disconnected" id="connectionStatus">
+          ❌ Disconnected
+        </div>
+      </div>
+
+      <!-- WebSocket Configuration -->
+      <div class="section">
+        <h3>📡 WebSocket Configuration</h3>
+        <div style="display: flex; gap: 10px; align-items: end">
+          <div style="flex: 1">
+            <label>WebSocket URL:</label>
+            <input
+              type="text"
+              id="wsUrl"
+              class="config-input"
+              value="ws://localhost:8000/ws/operational-data/notifications/"
+              placeholder="WebSocket URL"
+            />
+          </div>
+          <button class="btn" onclick="connectWebSocket()">🔗 Connect</button>
+          <button class="btn danger" onclick="disconnectWebSocket()">
+            ❌ Disconnect
+          </button>
+        </div>
+      </div>
+
+      <div class="two-column">
+        <div>
+          <!-- Connection Stats -->
+          <div class="stats">
+            <div class="stat-item">
+              <div class="stat-value" id="sentCount">0</div>
+              <div class="stat-label">Messages Sent</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="receivedCount">0</div>
+              <div class="stat-label">Messages Received</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="notificationCount">0</div>
+              <div class="stat-label">Notifications</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="subscribedCount">0</div>
+              <div class="stat-label">Subscriptions</div>
+            </div>
+          </div>
+
+          <!-- Test Controls -->
+          <div class="section">
+            <h3>🧪 Test Controls</h3>
+            <div style="margin-bottom: 10px">
+              <label>Order Item ID to Subscribe:</label>
+              <input
+                type="number"
+                id="orderItemIdInput"
+                placeholder="Enter order item ID"
+                style="width: 100%; padding: 5px; margin: 5px 0"
+              />
+            </div>
+            <button
+              class="btn success"
+              onclick="subscribeToOrderItem()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              🔔 Subscribe to Order Item
+            </button>
+            <button
+              class="btn warning"
+              onclick="sendPing()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              🏓 Send Ping
+            </button>
+            <button class="btn danger" onclick="clearLog()" style="width: 100%">
+              🗑️ Clear Log
+            </button>
+          </div>
+
+          <!-- Upload Simulation -->
+          <div class="section">
+            <h3>🎭 Upload Simulation</h3>
+            <p style="font-size: 12px; color: #666; margin-bottom: 10px">
+              These buttons simulate upload notifications (for testing UI only)
+            </p>
+            <button
+              class="btn success"
+              onclick="simulateUploadSuccess()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              ✅ Simulate Success Upload
+            </button>
+            <button
+              class="btn danger"
+              onclick="simulateUploadFailed()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              ❌ Simulate Failed Upload
+            </button>
+            <button
+              class="btn warning"
+              onclick="simulatePartialSuccess()"
+              style="width: 100%"
+            >
+              ⚠️ Simulate Partial Success
+            </button>
+          </div>
+
+          <!-- Download Simulation -->
+          <div class="section">
+            <h3>📥 Download Simulation</h3>
+            <p style="font-size: 12px; color: #666; margin-bottom: 10px">
+              These buttons simulate download notifications (for testing UI only)
+            </p>
+            <button
+              class="btn"
+              onclick="simulateDownloadPending()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              ⏳ Simulate Download Pending
+            </button>
+            <button
+              class="btn warning"
+              onclick="simulateDownloadProcessing()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              🔄 Simulate Download Processing
+            </button>
+            <button
+              class="btn success"
+              onclick="simulateDownloadSuccess()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              ✅ Simulate Download Success
+            </button>
+            <button
+              class="btn danger"
+              onclick="simulateDownloadFailed()"
+              style="width: 100%"
+            >
+              ❌ Simulate Download Failed
+            </button>
+          </div>
+
+          <!-- Log Download Simulation -->
+          <div class="section">
+            <h3>📄 Log Download Simulation</h3>
+            <p style="font-size: 12px; color: #666; margin-bottom: 10px">
+              These buttons simulate log download notifications (for testing UI only)
+            </p>
+            <button
+              class="btn"
+              onclick="simulateLogDownloadPending()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              ⏳ Simulate Log Pending (Drone)
+            </button>
+            <button
+              class="btn warning"
+              onclick="simulateLogDownloadProcessing()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              🔄 Simulate Log Processing (Robot)
+            </button>
+            <button
+              class="btn success"
+              onclick="simulateLogDownloadSuccess()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              ✅ Simulate Log Success (Drone)
+            </button>
+            <button
+              class="btn danger"
+              onclick="simulateLogDownloadFailed()"
+              style="width: 100%"
+            >
+              ❌ Simulate Log Failed (Robot)
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <!-- Notifications Display -->
+          <div class="section">
+            <h3>📬 Real-time Notifications</h3>
+            <div
+              id="notificationsDisplay"
+              style="max-height: 350px; overflow-y: auto"
+            >
+              <div style="text-align: center; color: #666; padding: 20px">
+                No notifications yet. Connect and wait for operational data changes...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Log -->
+      <div class="section">
+        <h3>📝 Message Log</h3>
+        <div class="log" id="messageLog"></div>
+      </div>
+    </div>
+
+    <script>
+      class OperationalDataNotificationTest {
+        constructor() {
+          this.ws = null;
+          this.sentCount = 0;
+          this.receivedCount = 0;
+          this.notificationCount = 0;
+          this.subscribedOrderItems = new Set();
+        }
+
+        connect(wsUrl) {
+          if (this.ws) {
+            this.ws.close();
+          }
+
+          this.log(`🔗 Connecting to: ${wsUrl}`, "info");
+          this.ws = new WebSocket(wsUrl);
+
+          this.ws.onopen = () => {
+            this.log("✅ WebSocket connected successfully!", "success");
+            this.updateConnectionStatus(true);
+          };
+
+          this.ws.onmessage = (event) => {
+            this.receivedCount++;
+            this.updateStats();
+
+            try {
+              const data = JSON.parse(event.data);
+              this.log(`📨 Received: ${data.type}`, "info");
+              this.handleMessage(data);
+            } catch (e) {
+              this.log(`📨 Received (raw): ${event.data}`, "info");
+            }
+          };
+
+          this.ws.onclose = (event) => {
+            this.log(
+              `❌ WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`,
+              "error"
+            );
+            this.updateConnectionStatus(false);
+          };
+
+          this.ws.onerror = (error) => {
+            this.log(`🚨 WebSocket error: ${error}`, "error");
+            this.updateConnectionStatus(false);
+          };
+        }
+
+        disconnect() {
+          if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+            this.log("🔌 Manual disconnect", "info");
+          }
+        }
+
+        send(data) {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify(data));
+            this.sentCount++;
+            this.updateStats();
+            this.log(`📤 Sent: ${data.type}`, "success");
+            return true;
+          } else {
+            this.log("❌ WebSocket not connected", "error");
+            return false;
+          }
+        }
+
+        handleMessage(data) {
+          switch (data.type) {
+            case "connected":
+              this.log(`🎉 Welcome: ${data.message}`, "success");
+              if (data.subscribed_to) {
+                this.log(
+                  `📂 Subscribed to: ${data.subscribed_to.join(", ")}`,
+                  "info"
+                );
+              }
+              break;
+            case "operational_video_upload":
+              this.handleVideoUploadNotification(data);
+              break;
+            case "operational_log_upload":
+              this.handleLogUploadNotification(data);
+              break;
+            case "operational_data_processing":
+              this.handleDataProcessingNotification(data);
+              break;
+            case "operational_data_error":
+              this.handleErrorNotification(data);
+              break;
+            case "operational_data_download":
+              this.handleDownloadNotification(data);
+              break;
+            case "operational_log_download":
+              this.handleLogDownloadNotification(data);
+              break;
+            case "subscribed":
+              this.log(`🔔 ${data.message}`, "success");
+              if (data.order_item_id) {
+                this.subscribedOrderItems.add(data.order_item_id);
+                this.updateStats();
+              }
+              break;
+            case "pong":
+              this.log(`🏓 Pong received: ${data.message}`, "success");
+              break;
+            case "error":
+              this.log(`❌ Error: ${data.message}`, "error");
+              break;
+            default:
+              this.log(`❓ Unknown message type: ${data.type}`, "warning");
+          }
+        }
+
+        handleVideoUploadNotification(data) {
+          this.notificationCount++;
+          this.updateStats();
+
+          const deviceIcon = data.device_type === 'drone' ? '🚁' : '🤖';
+          const statusIcon = this.getStatusIcon(data.status);
+          
+          const notification = this.createNotification(
+            `operational_video_upload ${data.status}`,
+            `${deviceIcon} ${data.device_type.toUpperCase()} Video Upload ${statusIcon}`,
+            data.message,
+            data.timestamp,
+            data
+          );
+          this.displayNotification(notification);
+
+          this.log(
+            `📹 Video Upload - ${data.device_type}: ${data.status} - ${data.message}${data.task_id ? ` [Task: ${data.task_id}]` : ''}`,
+            this.getLogType(data.status)
+          );
+          
+          if (data.data && (data.data.uploaded_files || data.data.failed_files)) {
+            this.log(
+              `📊 Files: ${data.data.uploaded_files?.length || 0} uploaded, ${data.data.failed_files?.length || 0} failed`,
+              "info"
+            );
+          }
+        }
+
+        handleLogUploadNotification(data) {
+          this.notificationCount++;
+          this.updateStats();
+
+          const deviceIcon = data.device_type === 'drone' ? '🚁' : '🤖';
+          const statusIcon = this.getStatusIcon(data.status);
+          
+          const notification = this.createNotification(
+            `operational_log_upload ${data.status}`,
+            `${deviceIcon} ${data.device_type.toUpperCase()} Log Upload ${statusIcon}`,
+            data.message,
+            data.timestamp,
+            data
+          );
+          this.displayNotification(notification);
+
+          this.log(
+            `📄 Log Upload - ${data.device_type}: ${data.status} - ${data.message}${data.task_id ? ` [Task: ${data.task_id}]` : ''}`,
+            this.getLogType(data.status)
+          );
+          
+          if (data.data && (data.data.uploaded_files || data.data.failed_files)) {
+            this.log(
+              `📊 Files: ${data.data.uploaded_files?.length || 0} uploaded, ${data.data.failed_files?.length || 0} failed`,
+              "info"
+            );
+          }
+        }
+
+        handleDataProcessingNotification(data) {
+          this.notificationCount++;
+          this.updateStats();
+
+          const notification = this.createNotification(
+            "operational_data_processing",
+            `🔄 Data Processing: ${data.operation_type}`,
+            data.message,
+            data.timestamp,
+            data
+          );
+          this.displayNotification(notification);
+
+          this.log(
+            `🔄 Data Processing - ${data.operation_type}: ${data.status} - ${data.message}`,
+            this.getLogType(data.status)
+          );
+        }
+
+        handleErrorNotification(data) {
+          this.notificationCount++;
+          this.updateStats();
+
+          const notification = this.createNotification(
+            "operational_data_error",
+            `🚨 Error: ${data.error_type}`,
+            data.message,
+            data.timestamp,
+            data
+          );
+          this.displayNotification(notification);
+
+          this.log(
+            `🚨 Error - ${data.error_type}: ${data.message}`,
+            "error"
+          );
+        }
+
+        handleDownloadNotification(data) {
+          this.notificationCount++;
+          this.updateStats();
+
+          const statusIcon = this.getDownloadStatusIcon(data.status);
+          
+          const notification = this.createNotification(
+            `operational_data_download ${data.status}`,
+            `📥 Bulk Download ${statusIcon}`,
+            data.message,
+            data.timestamp,
+            data
+          );
+          this.displayNotification(notification);
+
+          this.log(
+            `📥 Download: ${data.status} - ${data.message}`,
+            this.getLogType(data.status)
+          );
+          
+          if (data.data && data.data.progress) {
+            this.log(
+              `📊 Progress: ${data.data.progress.toFixed(1)}%`,
+              "info"
+            );
+          }
+
+          if (data.data && data.data.download_url) {
+            this.log(
+              `🔗 Download URL: ${data.data.download_url}`,
+              "success"
+            );
+          }
+        }
+
+        handleLogDownloadNotification(data) {
+          this.notificationCount++;
+          this.updateStats();
+
+          const deviceIcon = data.device_type === 'drone' ? '🚁' : '🤖';
+          const statusIcon = this.getDownloadStatusIcon(data.status);
+          
+          const notification = this.createNotification(
+            `operational_log_download ${data.status}`,
+            `📄 ${deviceIcon} ${data.device_type.toUpperCase()} Log Download ${statusIcon}`,
+            data.message,
+            data.timestamp,
+            data
+          );
+          this.displayNotification(notification);
+
+          this.log(
+            `📄 Log Download - ${data.device_type}: ${data.status} - ${data.message}`,
+            this.getLogType(data.status)
+          );
+
+          if (data.data && data.data.download_url) {
+            this.log(
+              `🔗 Log Download URL: ${data.data.download_url}`,
+              "success"
+            );
+          }
+
+          if (data.data && data.data.files_count) {
+            this.log(
+              `📊 Files processed: ${data.data.files_count}`,
+              "info"
+            );
+          }
+        }
+
+        createNotification(type, title, description, timestamp, data = null) {
+          return {
+            type,
+            title,
+            description,
+            timestamp: new Date(timestamp).toLocaleTimeString(),
+            data
+          };
+        }
+
+        displayNotification(notification) {
+          const container = document.getElementById("notificationsDisplay");
+
+          // Clear the "no notifications" message
+          if (container.querySelector('[style*="text-align: center"]')) {
+            container.innerHTML = "";
+          }
+
+          const notificationEl = document.createElement("div");
+          notificationEl.className = `notification ${notification.type}`;
+          
+          let content = `
+            <div style="font-weight: bold; margin-bottom: 5px;">${notification.title}</div>
+            <div style="margin-bottom: 5px;">${notification.description}</div>
+          `;
+
+          // Add device type and status badges for video uploads
+          if (notification.data && notification.data.device_type) {
+            content += `
+              <div style="margin-bottom: 5px;">
+                <span class="device-type-badge ${notification.data.device_type}">${notification.data.device_type}</span>
+                <span class="status-badge ${notification.data.status}">${notification.data.status}</span>
+                <span style="font-size: 11px; color: #666;">Order Item: ${notification.data.order_item_id}</span>
+              </div>
+            `;
+            
+            // Add task ID if available
+            if (notification.data.task_id) {
+              content += `
+                <div style="margin-bottom: 5px;">
+                  <span class="task-id">Task ID: ${notification.data.task_id}</span>
+                </div>
+              `;
+            }
+          }
+
+          // Add order item IDs and status for download notifications
+          if (notification.data && notification.data.order_item_ids) {
+            content += `
+              <div style="margin-bottom: 5px;">
+                <span class="device-type-badge bulk">bulk</span>
+                <span class="status-badge ${notification.data.status}">${notification.data.status}</span>
+                <span style="font-size: 11px; color: #666;">Items: ${notification.data.order_item_ids.join(', ')}</span>
+              </div>
+            `;
+          }
+
+          // Add order item ID and device type for log download notifications
+          if (notification.data && notification.data.order_item_id && notification.data.device_type && !notification.data.order_item_ids) {
+            content += `
+              <div style="margin-bottom: 5px;">
+                <span class="device-type-badge ${notification.data.device_type}">${notification.data.device_type}</span>
+                <span class="status-badge ${notification.data.status}">${notification.data.status}</span>
+                <span style="font-size: 11px; color: #666;">Order Item: ${notification.data.order_item_id}</span>
+              </div>
+            `;
+          }
+
+          // Add progress bar for processing downloads
+          if (notification.data && notification.data.data && notification.data.data.progress) {
+            const progress = notification.data.data.progress;
+            content += `
+              <div style="margin-bottom: 5px;">
+                <div style="font-size: 11px; color: #666; margin-bottom: 2px;">Progress: ${progress.toFixed(1)}%</div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: ${progress}%"></div>
+                </div>
+              </div>
+            `;
+          }
+
+          // Add file details for video uploads
+          if (notification.data && notification.data.data) {
+            const uploadedFiles = notification.data.data.uploaded_files || [];
+            const failedFiles = notification.data.data.failed_files || [];
+            
+            if (uploadedFiles.length > 0 || failedFiles.length > 0) {
+              content += '<div class="file-list">';
+              
+              uploadedFiles.forEach(file => {
+                content += `<div class="file-item success">✅ ${file.file_name}</div>`;
+              });
+              
+              failedFiles.forEach(file => {
+                content += `<div class="file-item failed">❌ ${file.file_name}: ${file.error}</div>`;
+              });
+              
+              content += '</div>';
+            }
+          }
+
+          // Add download link for successful downloads
+          if (notification.data && notification.data.data && notification.data.data.download_url) {
+            content += `
+              <div style="margin-top: 5px;">
+                <a href="${notification.data.data.download_url}" class="download-link" target="_blank">
+                  📥 Download ${notification.data.data.filename || 'File'}
+                </a>
+              </div>
+            `;
+          }
+
+          content += `<div style="font-size: 11px; color: #666; margin-top: 5px;">${notification.timestamp}</div>`;
+          
+          notificationEl.innerHTML = content;
+          container.insertBefore(notificationEl, container.firstChild);
+
+          // Keep only last 15 notifications
+          while (container.children.length > 15) {
+            container.removeChild(container.lastChild);
+          }
+        }
+
+        subscribeToOrderItem() {
+          const orderItemId = document.getElementById("orderItemIdInput").value;
+          if (!orderItemId) {
+            this.log("❌ Please enter an order item ID", "error");
+            return;
+          }
+
+          this.send({
+            type: "subscribe_to_order_item",
+            order_item_id: parseInt(orderItemId),
+          });
+        }
+
+        sendPing() {
+          this.send({
+            type: "ping"
+          });
+        }
+
+        // Simulation functions for testing UI
+        simulateUploadSuccess() {
+          const mockData = {
+            type: "operational_video_upload",
+            notification_type: "operational_video_upload",
+            order_item_id: 123,
+            device_type: "drone",
+            status: "success",
+            message: "Successfully uploaded 3 drone video files",
+            timestamp: new Date().toISOString(),
+            task_id: "abc123-def456-ghi789-jkl012",
+            data: {
+              uploaded_files: [
+                { file_name: "drone_video_1.mp4", file_id: 456, operational_data_id: 789 },
+                { file_name: "drone_video_2.mp4", file_id: 457, operational_data_id: 790 },
+                { file_name: "drone_video_3.mp4", file_id: 458, operational_data_id: 791 }
+              ],
+              failed_files: []
+            }
+          };
+          this.handleVideoUploadNotification(mockData);
+        }
+
+        simulateUploadFailed() {
+          const mockData = {
+            type: "operational_video_upload",
+            notification_type: "operational_video_upload",
+            order_item_id: 124,
+            device_type: "robot",
+            status: "failed",
+            message: "Upload failed: insufficient storage space",
+            timestamp: new Date().toISOString(),
+            task_id: "xyz789-uvw456-rst123-opq012",
+            data: {
+              uploaded_files: [],
+              failed_files: [
+                { file_name: "robot_video_1.mp4", error: "Insufficient storage space" },
+                { file_name: "robot_video_2.mp4", error: "Network timeout" }
+              ]
+            }
+          };
+          this.handleVideoUploadNotification(mockData);
+        }
+
+        simulatePartialSuccess() {
+          const mockData = {
+            type: "operational_video_upload",
+            notification_type: "operational_video_upload",
+            order_item_id: 125,
+            device_type: "drone",
+            status: "partial_success",
+            message: "Upload completed with 2 successful and 1 failed files",
+            timestamp: new Date().toISOString(),
+            task_id: "mno345-pqr678-stu901-vwx234",
+            data: {
+              uploaded_files: [
+                { file_name: "drone_video_1.mp4", file_id: 459, operational_data_id: 792 },
+                { file_name: "drone_video_2.mp4", file_id: 460, operational_data_id: 793 }
+              ],
+              failed_files: [
+                { file_name: "drone_video_3.mp4", error: "File corrupted" }
+              ]
+            }
+          };
+          this.handleVideoUploadNotification(mockData);
+        }
+
+        getStatusIcon(status) {
+          switch (status) {
+            case 'success': return '✅';
+            case 'failed': return '❌';
+            case 'partial_success': return '⚠️';
+            default: return '📋';
+          }
+        }
+
+        getDownloadStatusIcon(status) {
+          switch (status) {
+            case 'pending': return '⏳';
+            case 'processing': return '🔄';
+            case 'success': return '✅';
+            case 'failed': return '❌';
+            default: return '📥';
+          }
+        }
+
+        getLogType(status) {
+          switch (status) {
+            case 'success': return 'success';
+            case 'failed': return 'error';
+            case 'partial_success': return 'warning';
+            case 'pending': return 'info';
+            case 'processing': return 'warning';
+            default: return 'info';
+          }
+        }
+
+        updateConnectionStatus(connected) {
+          const statusElement = document.getElementById("connectionStatus");
+          statusElement.textContent = connected
+            ? "✅ Connected"
+            : "❌ Disconnected";
+          statusElement.className = `connection-status ${
+            connected ? "connected" : "disconnected"
+          }`;
+        }
+
+        updateStats() {
+          document.getElementById("sentCount").textContent = this.sentCount;
+          document.getElementById("receivedCount").textContent = this.receivedCount;
+          document.getElementById("notificationCount").textContent = this.notificationCount;
+          document.getElementById("subscribedCount").textContent = this.subscribedOrderItems.size;
+        }
+
+        log(message, type = "info") {
+          const logDiv = document.getElementById("messageLog");
+          const timestamp = new Date().toLocaleTimeString();
+          const logEntry = document.createElement("div");
+          logEntry.className = "log-entry";
+          logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> <span class="${type}">${message}</span>`;
+          logDiv.appendChild(logEntry);
+          logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // Download simulation functions
+        simulateDownloadPending() {
+          const mockData = {
+            type: "operational_data_download",
+            notification_type: "operational_data_download",
+            order_item_ids: [101, 102, 103],
+            status: "pending",
+            message: "Download request received and queued for processing",
+            timestamp: new Date().toISOString(),
+            data: {}
+          };
+          this.handleDownloadNotification(mockData);
+        }
+
+        simulateDownloadProcessing() {
+          const mockData = {
+            type: "operational_data_download",
+            notification_type: "operational_data_download",
+            order_item_ids: [101, 102, 103],
+            status: "processing",
+            message: "Processing order item 2 of 3",
+            timestamp: new Date().toISOString(),
+            data: {
+              progress: 66.7,
+              processed_items: 2,
+              total_items: 3
+            }
+          };
+          this.handleDownloadNotification(mockData);
+        }
+
+        simulateDownloadSuccess() {
+          const mockData = {
+            type: "operational_data_download",
+            notification_type: "operational_data_download",
+            order_item_ids: [101, 102, 103],
+            status: "success",
+            message: "Download completed successfully. 3 order items processed.",
+            timestamp: new Date().toISOString(),
+            data: {
+              download_url: "https://example.com/downloads/operational_data_bulk_download.zip",
+              filename: "operational_data_bulk_download.zip",
+              file_id: 789,
+              processed_items: 3,
+              total_items: 3
+            }
+          };
+          this.handleDownloadNotification(mockData);
+        }
+
+        simulateDownloadFailed() {
+          const mockData = {
+            type: "operational_data_download",
+            notification_type: "operational_data_download",
+            order_item_ids: [101, 102, 103],
+            status: "failed",
+            message: "Download failed: Insufficient storage space",
+            timestamp: new Date().toISOString(),
+            data: {
+              error: "Insufficient storage space"
+            }
+          };
+          this.handleDownloadNotification(mockData);
+        }
+
+        // Log download simulation functions
+        simulateLogDownloadPending() {
+          const mockData = {
+            type: "operational_log_download",
+            notification_type: "operational_log_download",
+            order_item_id: 456,
+            device_type: "drone",
+            status: "pending",
+            message: "Drone log download request received and queued for processing",
+            timestamp: new Date().toISOString(),
+            data: {}
+          };
+          this.handleLogDownloadNotification(mockData);
+        }
+
+        simulateLogDownloadProcessing() {
+          const mockData = {
+            type: "operational_log_download",
+            notification_type: "operational_log_download",
+            order_item_id: 789,
+            device_type: "robot",
+            status: "processing",
+            message: "Robot log download processing started...",
+            timestamp: new Date().toISOString(),
+            data: {}
+          };
+          this.handleLogDownloadNotification(mockData);
+        }
+
+        simulateLogDownloadSuccess() {
+          const mockData = {
+            type: "operational_log_download",
+            notification_type: "operational_log_download",
+            order_item_id: 456,
+            device_type: "drone",
+            status: "success",
+            message: "Drone log download completed successfully. 3 files processed.",
+            timestamp: new Date().toISOString(),
+            data: {
+              download_url: "https://example.com/downloads/operational_logs_drone_456.zip",
+              filename: "operational_logs_drone_456.zip",
+              file_id: 123,
+              files_count: 3
+            }
+          };
+          this.handleLogDownloadNotification(mockData);
+        }
+
+        simulateLogDownloadFailed() {
+          const mockData = {
+            type: "operational_log_download",
+            notification_type: "operational_log_download",
+            order_item_id: 789,
+            device_type: "robot",
+            status: "failed",
+            message: "Robot log download failed: No log files found",
+            timestamp: new Date().toISOString(),
+            data: {
+              error: "No log files found"
+            }
+          };
+          this.handleLogDownloadNotification(mockData);
+        }
+
+        clearLog() {
+          document.getElementById("messageLog").innerHTML = "";
+          document.getElementById("notificationsDisplay").innerHTML = `
+            <div style="text-align: center; color: #666; padding: 20px;">
+              No notifications yet. Connect and wait for operational data changes...
+            </div>
+          `;
+          this.notificationCount = 0;
+          this.updateStats();
+        }
+      }
+
+      // Global instance
+      const operationalTest = new OperationalDataNotificationTest();
+
+      // UI Functions
+      function connectWebSocket() {
+        const wsUrl = document.getElementById("wsUrl").value;
+        if (!wsUrl) {
+          alert("Please enter a WebSocket URL");
+          return;
+        }
+        operationalTest.connect(wsUrl);
+      }
+
+      function disconnectWebSocket() {
+        operationalTest.disconnect();
+      }
+
+      function subscribeToOrderItem() {
+        operationalTest.subscribeToOrderItem();
+      }
+
+      function sendPing() {
+        operationalTest.sendPing();
+      }
+
+      function simulateUploadSuccess() {
+        operationalTest.simulateUploadSuccess();
+      }
+
+      function simulateUploadFailed() {
+        operationalTest.simulateUploadFailed();
+      }
+
+      function simulatePartialSuccess() {
+        operationalTest.simulatePartialSuccess();
+      }
+
+      function clearLog() {
+        operationalTest.clearLog();
+      }
+
+      // Download simulation functions
+      function simulateDownloadPending() {
+        operationalTest.simulateDownloadPending();
+      }
+
+      function simulateDownloadProcessing() {
+        operationalTest.simulateDownloadProcessing();
+      }
+
+      function simulateDownloadSuccess() {
+        operationalTest.simulateDownloadSuccess();
+      }
+
+      function simulateDownloadFailed() {
+        operationalTest.simulateDownloadFailed();
+      }
+
+      // Log download simulation functions
+      function simulateLogDownloadPending() {
+        operationalTest.simulateLogDownloadPending();
+      }
+
+      function simulateLogDownloadProcessing() {
+        operationalTest.simulateLogDownloadProcessing();
+      }
+
+      function simulateLogDownloadSuccess() {
+        operationalTest.simulateLogDownloadSuccess();
+      }
+
+      function simulateLogDownloadFailed() {
+        operationalTest.simulateLogDownloadFailed();
+      }
+
+      // Initialize
+      operationalTest.log("🔧 Operational Data Notifications Test initialized", "success");
+      operationalTest.log("💡 Enter WebSocket URL and click Connect to start", "info");
+      operationalTest.log("🎭 Use simulation buttons to test notification UI", "info");
+      operationalTest.log("📥 New: Download notifications with progress tracking", "info");
+      operationalTest.log("📄 New: Log download notifications for drone/robot logs", "info");
+    </script>
+  </body>
+</html>

@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Frontend service
+  frontend:
+    build:
+      context: ./frontend
+      ssh:
+        - default=${SSH_AUTH_SOCK}
+    ports:
+      # - "0.0.0.0:3002:80"
+      - "0.0.0.0:3002:3002"
+    volumes:
+      - ~/.ssh:/root/.ssh:ro  # Mounting host SSH directory
+    environment:
+      - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - guardianx-network
+
+  # Backend service
+  backend:
+    build:
+      context: ./backend
+      ssh:
+        - default=${SSH_AUTH_SOCK}
+    volumes:
+      - ./backend:/app
+      - ./sourcedemo:/sourcedemo
+      - ~/.ssh:/root/.ssh:ro  # Mounting host SSH directory
+    ports:
+      - "0.0.0.0:8000:8000"
+    environment:
+      - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+    networks:
+      - guardianx-network
+    depends_on:
+      - redis
+
+  # Celery service
+  celery:
+    build:
+      context: ./backend
+      ssh:
+        - default=${SSH_AUTH_SOCK}
+    command: python -m celery -A config worker -l INFO
+    volumes:
+      - ./backend:/app
+      - ./sourcedemo:/sourcedemo
+      - ~/.ssh:/root/.ssh:ro  # Mounting host SSH directory
+    environment:
+      - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+    networks:
+      - guardianx-network
+    depends_on:
+      - redis
+      - backend
+
+  # Redis service
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - guardianx-network
+
+networks:
+  guardianx-network:
+    driver: bridge

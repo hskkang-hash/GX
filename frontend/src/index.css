@@ -1,0 +1,100 @@
+:root {
+  --ga-primary: #1d9be2;
+  --ga-primary-dark: #1ea1eb;
+  --ga-primary-1: #248bc5;
+  --ga-primary-2: #d3efff;
+  --ga-primary-3: #eef9ff;
+  --ga-primary-4: #eef9ff;
+
+  --ga-dark-line-color: #444646;
+  --ga-light-line-color: #dddfe2;
+  --ga-light-font-color: #9c9d9d;
+  --ga-dark-bg-input-disabled: #2d2e30;
+  --ga-light-theme-font-color: #2d2e30;
+  --ga-dark-theme-font-color: #ececef;
+  --ga-hover-1: #f2f2f2;
+  --ga-white-input-color: #f2f2f2;
+  --ga-btn-primary: var(--ga-primary);
+  --ga-btn-primary-dark: var(--ga-primary-dark);
+  --ga-btn-primary-hover: #248bc5;
+  --ga-btn-primary-outline-hover: #248bc5;
+  --ga-btn-secondary: #dddfe2;
+  --ga-btn-secondary-hover: #dddfe2;
+  --ga-btn-outline-dark-bg: #1f1f20;
+
+  --ga-light-bg-btn-disabled: #ffffff;
+  --ga-dark-bg-btn-disabled: #1f1f20;
+  --ga-bg-btn-disabled: #dddfe2;
+  --ga-color-btn-disabed: #9c9d9d;
+
+  --ga-light-bg-accordion: #f6f7f8;
+  --ga-dark-bg-accordion: #2d2e30;
+  --ga-notice-bg-light: #fbebdd;
+  --ga-notice-bg-dark: #513d2b;
+
+  --bs-primary-text-emphasis: var(--ga-primary) !important;
+  --jer-expand-transition-time: 0s !important;
+
+  --ant-date-picker-text-height: 2rem;
+  --ant-date-picker-cell-width: 4em;
+  --ant-padding: 1rem;
+  --ant-padding-xxs: 0.5rem;
+  --ant-line-width: 1px;
+  --ant-control-height-lg: 2.5rem;
+  --bs-accordion-active-bg: var(--ga-primary-3) !important;
+  --bs-btn-color: var(--ga-primary-1) !important;
+  --bs-btn-border-color: var(--ga-primary-2) !important;
+  --bs-link-color: var(--ga-primary) !important;
+
+  --ant-font-size: 1em !important;
+
+  --ant-control-height: 2em;
+  --ant-control-height-lg: 2.5rem;
+  --ant-button-default-hover-color: var(--ga-primary) !important;
+  --ant-button-group-border-color: var(--ga-primary) !important;
+  --ant-button-default-hover-border-color: var(--ga-primary) !important;
+  --ant-button-default-active-color: var(--ga-primary) !important;
+  --ant-button-default-active-border-color: var(--ga-primary) !important;
+
+  --ga-gray-2: #f2f2f2;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src:
+    local('Inter'),
+    url('/fonts/Inter-Variable.ttf') format('truetype');
+  font-display: swap;
+}
+
+html {
+  font-size: calc((0.1250000000000001rem + 0.7333333333333333vw) * 0.8) !important;
+}
+
+@media screen and (min-width: 2560px) {
+  html {
+    font-size: 18px !important;
+  }
+}
+
+@media screen and (min-width: 480px) and (max-width: 1910px) {
+  html {
+    font-size: calc(0.5626951092611863rem + 0.20811654526534862vw) !important;
+  }
+}
+
+@media screen and (max-width: 479px) {
+  html {
+    font-size: calc(0.4997384937238494rem + 0.41841004184100417vw) !important;
+  }
+}
+
+.custom-datepicker {
+  /* height: 40px; */
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.143rem 1.429rem;
+}

@@ -1,0 +1,76 @@
+/* Font declarations for GuardianX Report Template */
+@font-face {
+    font-family: 'Noto Sans KR';
+    src: url('./NotoSansKR-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Noto Sans KR';
+    src: url('./NotoSansKR-Bold.woff2') format('woff2');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nanum Gothic';
+    src: url('./NanumGothic-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nanum Gothic';
+    src: url('./NanumGothic-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nanum Myeongjo';
+    src: url('./NanumMyeongjo-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nanum Myeongjo';
+    src: url('./NanumMyeongjo-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'DejaVu Sans';
+    src: url('./DejaVuSans.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'DejaVu Sans';
+    src: url('./DejaVuSans-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Liberation Sans';
+    src: url('./LiberationSans-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Font family classes */
+.korean-sans {
+    font-family: "Noto Sans KR", "Nanum Gothic", sans-serif;
+}
+
+.korean-serif {
+    font-family: "Nanum Myeongjo", serif;
+}
+
+.fallback-font {
+    font-family: "DejaVu Sans", "Liberation Sans", "Arial", sans-serif;
+}

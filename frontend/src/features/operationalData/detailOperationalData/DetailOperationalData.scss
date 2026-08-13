@@ -1,0 +1,52 @@
+@import '../../../index.css';
+
+.table-operational-data {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  // border-spacing: 1;
+  border: 1px solid var(--ga-light-line-color);
+
+  .operation-log-check {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  th {
+    background-color: #ececef;
+    padding: 10px;
+    text-align: left;
+    border: 1px solid var(--ga-light-line-color);
+  }
+
+  th[data-bs-theme='dark'] {
+    background-color: #2a2a2b;
+  }
+
+  td {
+    padding: 10px;
+    border-bottom: 1px solid var(--ga-light-line-color);
+  }
+
+  .route-td {
+    color: var(--ga-primary);
+    text-decoration: none;
+  }
+}
+
+.dark .table-operational-data {
+  border: 1px solid #444646;
+  background-color: #2a2a2b;
+}
+
+.dark .table-operational-data th {
+  background-color: #2d2e30;
+  border: 1px solid #444646;
+}
+
+.dark .table-operational-data td {
+  background-color: #1f1f20;
+  border-bottom: 1px solid #444646;
+}

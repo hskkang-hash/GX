@@ -1,0 +1,22 @@
+.search-card {
+  // padding-top: 24px;
+  #search-card-btns {
+    button {
+      padding: 0.625em 1em;
+      // min-width: 9.7em;
+    }
+  }
+
+  .ant-picker {
+    width: 12em;
+    font-size: 0.75em;
+    padding: 0.188em 1.25em;
+    border-radius: 0.5em;
+  }
+
+  #btn-refresh:active {
+    .bi-arrow-repeat {
+      color: var(--ga-primary) !important;
+    }
+  }
+}

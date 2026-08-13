@@ -1,0 +1,94 @@
+.notam-detail-modal {
+  max-height: 60vh;
+  overflow-y: auto;
+  width: 65vw;
+  scrollbar-width: 8px;
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #c1c1c1;
+    border-radius: 99px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .notam-raw-text {
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    border: 1px solid #e0e0e0;
+
+    [data-bs-theme='dark'] &,
+    .dark & {
+      background-color: #1f1f20;
+      border-color: #444646;
+    }
+
+    .notam-raw-content {
+      margin: 0;
+      font-size: 0.875rem;
+      line-height: 1.2;
+      font-weight: 300;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      color: #000000;
+
+      [data-bs-theme='dark'] &,
+      .dark & {
+        color: #ffffff;
+      }
+    }
+  }
+
+  .notam-details-table {
+    &__table {
+      width: 100%;
+      border-collapse: collapse;
+
+      tbody {
+        tr {
+          border-bottom: 1px solid #e0e0e0;
+
+          [data-bs-theme='dark'] &,
+          .dark & {
+            border-bottom-color: #444646;
+          }
+
+          &:last-child {
+            border-bottom: none;
+          }
+        }
+      }
+    }
+
+    &__label {
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #000000;
+      vertical-align: top;
+      width: 200px;
+      background-color: #f9f9f9;
+
+      [data-bs-theme='dark'] &,
+      .dark & {
+        color: #ffffff;
+        background-color: #2d2e30;
+      }
+    }
+
+    &__value {
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      color: #000000;
+      vertical-align: top;
+
+      [data-bs-theme='dark'] &,
+      .dark & {
+        color: #ffffff;
+      }
+    }
+  }
+}

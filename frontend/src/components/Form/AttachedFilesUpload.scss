@@ -1,0 +1,128 @@
+.attached-files-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &__label {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  &__container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__input {
+    display: none;
+  }
+
+  &__button {
+    width: fit-content;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #90caf9;
+    background-color: #e3f2fd;
+    color: #1976d2;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: #bbdefb;
+      border-color: #64b5f6;
+      color: #1565c0;
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  &__files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  &__file-item {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f2f2f2;
+    border: 1px solid #dddfe2;
+    border-radius: 8px;
+    padding: 8px 12px;
+    gap: 8px;
+    min-width: 150px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: var(--ga-primary);
+      background-color: #e8f4f8;
+    }
+  }
+
+  &__file-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__file-name {
+    font-size: 0.875rem;
+    color: var(--ga-primary-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__trash-icon {
+    cursor: pointer;
+    color: var(--ga-gray-7);
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--ga-error);
+    }
+  }
+
+  &__preview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // Dark mode styles
+  .dark & {
+    &__button {
+      background-color: #1e3a5f;
+      border-color: #2e5984;
+      color: #64b5f6;
+
+      &:hover {
+        background-color: #2e5984;
+        border-color: #3d7ba8;
+        color: #90caf9;
+      }
+    }
+
+    &__file-item {
+      background-color: #2d2e30;
+      border-color: #444646;
+
+      &:hover {
+        border-color: var(--ga-primary-dark);
+        background-color: #3a3b3d;
+      }
+    }
+  }
+}

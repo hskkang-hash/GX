@@ -1,0 +1,11 @@
+.custom-collapse-antd {
+  &.light {
+    background-color: transparent;
+  }
+  &.dark {
+    background-color: transparent;
+  }
+  .ant-collapse-header-text {
+    font-weight: 600;
+  }
+}

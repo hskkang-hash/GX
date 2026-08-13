@@ -1,0 +1,81 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+**/env/
+**/core/*
+**/staticfiles/
+!**/core/advanced_table/
+!**/core/advanced_table/**
+!**/core/data/
+!**/core/data/**
+**/.env/
+**/__pycache__/
+**/logs/
+**/media/
+**/sourcedemo/
+**/sourcedemo_stg/
+*.yarn.lock
+*.pyc
+*.env
+# dependencies
+**/node_modules/
+.pnp
+.pnp.js
+.celerybeat-schedule
+
+# testing
+**/coverage/
+
+# production
+**/build/
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+venv/
+dist/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+**/frontend/src/bootstrap/
+**/.vscode/
+frontend/src/index.js
+
+backend/report/views.py
+backend/celerybeat-schedule
+
+# 패키지 매니저: npm 정본 (D-006). package-lock.json 은 추적하고 yarn.lock 은 막는다.
+frontend/yarn.lock
+/frontend/yarn.lock
+yarn.lock
+.package-lock.json
+backend/celery_beat.log
+backend/celery_worker.log
+backend/scripts/processed_raw_data.json
+gateway/build_gateway.sh
+
+*.log
+*.coverage
+*.pem
+
+# 환경 파일 (W0-0) — *.env 패턴은 .env.stg 를 잡지 못한다(접미사 불일치).
+# 스테이징/운영 실값 파일은 애초에 커밋 대상이 아니다. 템플릿은 .env*.example 만 추적한다.
+.env
+.env.*
+**/.env.*
+!.env*.example
+!**/.env*.example
+
+# 시크릿 (D-002) — 실키 백업은 저장소 밖 ~/.guardianx-secrets/ 에 둔다.
+# 아래는 실수로 저장소 안에 만들었을 때를 대비한 방어선이다.
+.guardianx-secrets/
+**/.guardianx-secrets/
+*.7z
+secrets.*
+!secrets.example.*
+
+

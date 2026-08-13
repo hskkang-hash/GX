@@ -1,0 +1,86 @@
+@import '../../../../index.css';
+
+.device-status-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+
+  // border-spacing: 1;
+  // border: 1px solid var(--ga-light-line-color);
+  th {
+    background-color: #ececef;
+    padding: 10px;
+    text-align: left;
+    border: 1px solid var(--ga-light-line-color);
+    font-size: 1.02rem;
+    font-weight: 400;
+    border-top: 0;
+
+    &:first-child {
+      border-left: none;
+    }
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  // th[data-bs-theme='dark'] {
+  //   background-color: #2a2a2b;
+  //   border: 1px solid #3C3D3E;
+
+  // }
+
+  td {
+    padding: 10px;
+    border: 1px solid var(--ga-light-line-color);
+
+    &:first-child {
+      border-left: none;
+    }
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  .route-td {
+    color: var(--ga-primary);
+    text-decoration: none;
+  }
+}
+
+.dark .device-status-table {
+  // border: 1px solid #3C3D3E;
+  background-color: #2a2a2b;
+}
+
+.dark .device-status-table th {
+  background-color: #2d2e30;
+  border: 1px solid #3C3D3E;
+  border-top: 0;
+
+  &:first-child {
+    border-left: none;
+  }
+
+  &:last-child {
+    border-right: none;
+  }
+
+}
+
+.dark .device-status-table td {
+  background-color: #1f1f20;
+  border: 1px solid #3C3D3E;
+  border-bottom: 0;
+
+  &:first-child {
+    border-left: none;
+  }
+
+  &:last-child {
+    border-right: none;
+  }
+
+}

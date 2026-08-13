@@ -1,0 +1,105 @@
+#file-management {
+  width: fit-content;
+  height: fit-content;
+  position: absolute;
+  right: 1rem;
+  z-index: 999;
+  bottom: 1rem;
+
+  .ant-collapse-content-box {
+    padding: 0;
+  }
+
+  .ant-upload-list {
+    max-height: 15rem;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      -webkit-appearance: none;
+      width: 5px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 4px;
+      background-color: #c1c1c1;
+    }
+  }
+
+  .dark & {
+    .ant-upload-list {
+      &::-webkit-scrollbar-thumb {
+        background-color: #444646;
+      }
+    }
+  }
+
+  .custom-item-render {
+    position: relative;
+    margin-bottom: 0.5em;
+    border: 1px solid var(--ga-primary);
+    border-radius: 0.5rem;
+    button[title='Remove file'] {
+      display: none;
+    }
+
+    .custom-actions {
+      position: relative;
+      display: flex;
+
+      .done-status {
+        font-size: 1em;
+        margin-right: 0.5rem;
+        align-content: center;
+        color: green;
+      }
+
+      button {
+        border: none;
+        background: none;
+        font-size: 1rem;
+        &:disabled {
+          color: gray !important; // Style for disabled state
+        }
+        &#download-file {
+          color: var(--ga-primary); // Adjust color
+        }
+        &#delete-file {
+          color: red; // Adjust color
+        }
+
+        &:active {
+          color: #ffffff !important;
+        }
+      }
+    }
+
+    .ant-upload-list-item-uploading .ant-upload-list-item-name {
+      margin-bottom: 0;
+      font-size: 1rem;
+    }
+
+    .ant-upload-list-item {
+      display: contents;
+
+      .ant-upload-list-item-thumbnail {
+        pointer-events: none;
+        width: 52px;
+        height: 42px;
+        line-height: 52px;
+      }
+
+      .ant-upload-list-item-file {
+        pointer-events: none;
+        width: 52px;
+        height: 42px;
+        line-height: 52px;
+      }
+      .ant-upload-list-item-name {
+        pointer-events: none;
+        text-decoration: none;
+        align-content: center;
+        font-size: 1rem;
+      }
+    }
+  }
+}

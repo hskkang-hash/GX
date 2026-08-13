@@ -1,0 +1,71 @@
+@import '../../index.css';
+
+.custom-radio {
+  color: var(--ga-light-theme-font-color) !important;
+
+  &__label {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+
+    // [data-theme="dark"] {
+    //     color: var(--ga-dark-theme-font-color) !important;
+    // }
+
+    .dark & {
+      color: var(--ga-dark-theme-font-color) !important;
+    }
+  }
+
+  &__required {
+    color: var(--error);
+    margin-left: 4px;
+  }
+
+  &__form-control {
+    .dark & {
+      color: var(--ga-dark-theme-font-color) !important;
+    }
+    & .MuiFormControlLabel-label {
+      font-size: 1rem;
+    }
+    .MuiFormControlLabel-label.Mui-disabled {
+      color: var(--ga-light-font-color) !important;
+    }
+  }
+
+  &__radio {
+    &.MuiRadio-root {
+      padding-top: 0.25rem;
+      padding-bottom: 0.25rem;
+      color: var(--ga-light-theme-font-color) !important;
+
+      .dark & {
+        color: var(--ga-dark-line-color) !important;
+
+        &.Mui-checked {
+          color: var(--ga-primary-dark) !important;
+        }
+      }
+    }
+    &.Mui-checked {
+      color: var(--ga-primary) !important;
+
+      &.Mui-disabled {
+        color: var(--ga-light-font-color) !important;
+
+        .dark & {
+          color: var(--ga-light-font-color) !important;
+        }
+      }
+    }
+
+    &.Mui-disabled {
+      color: var(--ga-light-font-color) !important;
+
+      .dark & {
+        color: var(--ga-light-font-color) !important;
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+.custom-btn {
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  gap: 0.5rem;
+  padding: 0.429rem 1.643rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  outline: none;
+
+  border: 0;
+
+  &.with-icon {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  &.outlined {
+    background-color: transparent;
+    border: 1px solid #1d9be2;
+    color: #1d9be2;
+  }
+
+  &.contained {
+    background-color: #1d9be2;
+    color: white;
+  }
+
+  &.transparent {
+    background-color: transparent;
+    color: #1d9be2;
+  }
+
+  &.cancel {
+    border: 1px solid var(--ga-light-line-color);
+    background-color: white;
+    color: var(--color-text-light-mode);
+
+    &:hover {
+      background-color: var(--ga-white-input-color);
+    }
+
+    &:focus {
+      border-color: var(--ga-primary);
+      background-color: white;
+    }
+  }
+
+  .dark & {
+    border-color: var(--ga-primary-dark);
+    background-color: var(--ga-dark-outline-dark-bg);
+  }
+}

@@ -1,0 +1,5 @@
+from ninja_extra import NinjaExtraAPI
+from report_template.views import ReportTemplateController
+
+report_template_api = NinjaExtraAPI(urls_namespace="report_template")
+report_template_api.register_controllers(ReportTemplateController)

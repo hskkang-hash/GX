@@ -1,0 +1,297 @@
+# ============================================================================
+# GuardianX 사전 결정 레지스트리 (Decision Registry) v1.0
+# ----------------------------------------------------------------------------
+# 목적: 에이전트가 STEP 2에서 CLARIFY로 멈추는 것을 줄인다.
+#       "사람만 답할 수 있는 질문"을 미리 답해 둔 파일이다.
+#
+# 규칙:
+#  - 에이전트는 CLARIFY 판정 직전에 이 파일을 먼저 검색한다.
+#    해당 결정이 status=decided 로 존재하면 CLARIFY 하지 않고 그 결정을 따른다.
+#  - 여기에 없는 새 결정이 필요하면 CLARIFY 하되, 질문을 D-XXX 형식 초안으로 제안한다.
+#  - 에이전트는 이 파일을 수정하지 않는다. (제안만 하고 사람이 확정)
+# ============================================================================
+meta:
+  version: "1.0"
+  updated_at: "2026-08-13"
+  status_enum: [decided, pending, superseded]
+
+decisions:
+
+# --- 2026-08-13 W0-1 STOP(clarify) 대응으로 확정된 결정 ---------------------
+- id: D-001
+  title: "CI 플랫폼 및 시크릿 스캔 게이트"
+  status: decided
+  raised_by: "agent (W0-1 STEP 2-4)"
+  question: "DoD의 'CI에서 시크릿 스캔 잡 통과'를 재현할 CI가 저장소에 없다. 어느 CI인가?"
+  decision: |
+    A안(GitHub Actions) + C안(로컬 pre-commit) 병행으로 확정한다.
+      1) 로컬 게이트를 즉시 활성화한다 — 이것이 실효 차단선이다.
+         .pre-commit-config.yaml 에 gitleaks protect --staged 추가.
+      2) CI 설정 파일은 지금 커밋해 둔다 — 원격 저장소가 생기는 즉시 자동 동작한다.
+         .github/workflows/secret-scan.yml (gitleaks-action)
+         .gitlab-ci.yml 의 secret_detection 도 함께 둔다(둘 다 두어도 무해, 비용 0)
+      3) Jenkins/CircleCI 는 사용하지 않는다.
+  rationale: |
+    현재 저장소에 git remote 가 없어 원격 CI 를 지금 통과시킬 수 없다.
+    그러나 '시크릿이 커밋되는 것을 막는다'는 목적은 로컬 훅으로 100% 달성된다.
+    CI 는 나중에 원격이 생겼을 때 이중 안전망으로 작동하면 된다.
+  affects: [W0-1a, W0-1b]
+  dod_override:
+    ticket: W0-1a
+    new_dod: |
+      ① .env.example 두 파일에 실값 0개
+      ② pre-commit 훅이 실제로 시크릿 포함 커밋을 차단하는 것을 1회 재현(로그 증거)
+      ③ .github/workflows/secret-scan.yml 와 .gitlab-ci.yml 이 저장소에 존재
+      ※ '원격 CI 잡 green' 은 원격 저장소 생성 시점으로 이연한다(W0-6).
+
+- id: D-002
+  title: "실키 백업 위치"
+  status: decided
+  raised_by: "agent (W0-1 재개 조건)"
+  question: "플레이스홀더 치환 전, 현재 실값을 어디에 백업하나?"
+  decision: |
+    저장소 **바깥**에 암호화해 보관한다. 저장소 내부(어떤 경로든) 금지.
+      경로: ~/.guardianx-secrets/2026-08-13-rotation.7z   (7z AES-256, 비밀번호는 사내 Vault)
+      대안: 사내 1Password/Vault 항목 "GuardianX .env rotation 2026-08"
+    백업 파일에는 '어느 콘솔의 어떤 항목인지' 매핑표를 함께 넣는다(폐기 대조용).
+      예) VITE_KAKAO_API_KEY → Kakao Developers > 앱 A > JavaScript 키
+  rationale: "저장소 안에 두면 백업 자체가 다음 유출 경로가 된다. 이 티켓이 막으려던 문제가 반복된다."
+  affects: [W0-1a, W0-1b]
+
+- id: D-003
+  title: "GCS_APIKEY / VITE_CGS_APIKEY 동일 UUID 문제"
+  status: decided
+  raised_by: "agent (W0-1 STEP 2-5, 위험 1순위)"
+  question: "서버 키와 클라이언트 키가 같은 값이다. 재발급만 하면 같은 상태가 반복된다."
+  decision: |
+    3단계로 처리한다.
+      1) [W0-1b, 즉시] 서버 전용 키와 클라이언트 키를 **다른 값으로 분리 발급**한다.
+         GCS_APIKEY(backend)  = 서버 전용, 권한 최대
+         VITE_CGS_APIKEY(FE)  = 클라이언트 전용, 권한 최소 + Referer/도메인 제한
+      2) [W0-1a] 두 값이 같으면 CI/로컬 훅이 실패하도록 검사 룰을 추가한다.
+      3) [W0-5, 신규 티켓] 클라이언트에서 키를 **제거**한다.
+         backend/proxy/ 앱이 이미 존재하므로 FE → 자사 백엔드 → GCS 로 프록시한다.
+         이후 VITE_CGS_APIKEY 는 삭제한다.
+    ⚠️ 원칙: 브라우저 번들에 실리는 값은 '비밀'이 아니다. 재발급으로 해결되지 않는다.
+  rationale: "에이전트 지적이 정확하다. 값 교체는 증상 치료이고, 구조 분리가 원인 치료다."
+  affects: [W0-1a, W0-1b, W0-5]
+
+- id: D-004
+  title: "최초 커밋 순서 (히스토리 오염 방지)"
+  status: decided
+  raised_by: "agent (W0-1 STEP 2, 순서 제약 발견)"
+  question: "저장소에 커밋이 하나도 없다. 지금 최초 커밋을 만들면 실키 15개가 히스토리에 박힌다."
+  decision: |
+    W0-0(저장소 초기화)을 신설하고 **모든 작업의 최선행**으로 둔다. 순서를 고정한다.
+      1. W0-0  : .gitignore 정비 → **플레이스홀더 치환 상태에서** 최초 커밋 → 이 커밋이 baseline
+      2. W0-1a : 치환 검증 + 로컬 훅 + CI 파일 (에이전트)
+      3. W0-1b : 실키 폐기·재발급 (사람)
+      4. 이후 나머지 티켓
+    ⚠️ 실키가 단 한 번도 히스토리에 들어가지 않는 것이 이 순서의 목적이다.
+       이미 들어갔다면 filter-repo 가 아니라 **키 무효화**로 대응한다(히스토리 세탁은 신뢰할 수 없다).
+  rationale: "에이전트가 발견한 제약이 옳다. 티켓 설계 시 저장소가 이미 git 이력을 가진다고 가정한 것이 오류였다."
+  affects: [W0-0, W0-1a, W0-1b]
+
+- id: D-005
+  title: "베이스라인(신규/기존 파일 판정 기준)"
+  status: decided
+  raised_by: "agent (verify_ticket.sh 오탐 — 기존 45개 앱이 통째로 위반으로 잡힘)"
+  question: "커밋이 없어 전체 파일이 '신규'로 잡힌다. 컨벤션 검사 기준이 무엇인가?"
+  decision: |
+    **W0-0의 최초 커밋을 baseline 으로 한다.**
+      - baseline 에 존재하는 파일 = '기존' → 신규 컨벤션(AntD 전용, BaseModelWithGroup 등) 미적용
+      - baseline 이후 추가/변경된 파일 = '신규' → 신규 컨벤션 전면 적용
+      - 판정: git diff --name-only <BASELINE_SHA>..HEAD
+      - baseline SHA 는 W0-0 완료 시 tickets.yaml meta.baseline_sha 에 기록한다.
+    baseline 이 없으면 컨벤션 검사는 FAIL 이 아니라 **SKIP + 사유 출력**이다(에이전트가 이미 수정함 — 유지).
+  rationale: "'전부 신규' 오탐은 검사를 무력화시킨다. 기준선을 명시적으로 못박는다."
+  affects: [모든 티켓의 컨벤션 게이트]
+
+- id: D-006
+  title: "패키지 매니저 — npm 확정 (yarn 아님)"
+  status: decided
+  raised_by: "agent (verify 결과: yarn 미설치로 FAIL)"
+  question: "yarn.lock 이 있는데 스크립트는 npm 기준이다. 무엇을 쓰나?"
+  decision: |
+    **npm 을 사용한다.** 근거: 루트 yarn.lock 은 86바이트로 사실상 빈 파일이고,
+    frontend/package.json 의 scripts 는 npm 실행을 전제한다.
+      - 조치: 루트 yarn.lock 삭제, package-lock.json 을 정본으로 커밋
+      - verify_ticket.sh 에서 yarn 참조를 제거한다(에이전트가 이미 수정 — 유지)
+      - CI/문서 전부 npm 으로 통일
+  affects: [W0-0, verify_ticket.sh]
+
+- id: D-007
+  title: "테스트·검증 실행 환경"
+  status: decided
+  raised_by: "agent (verify 결과: celery 미설치 — 로컬 환경)"
+  question: "로컬에 celery 등이 없어 백엔드 검증이 실패한다."
+  decision: |
+    백엔드 검증은 **컨테이너에서** 실행한다. 로컬 파이썬 환경을 전제하지 않는다.
+      docker compose up -d backend redis
+      docker compose exec -T backend python manage.py test <target>
+    프론트엔드는 로컬 npm 으로 실행한다(Node 20+).
+    verify_ticket.sh 는 컨테이너 가용성을 먼저 확인하고, 불가 시 FAIL 이 아니라
+    **BLOCKED(env-unavailable)** 로 보고한다 — 코드 문제와 환경 문제를 구분한다.
+  affects: [verify_ticket.sh, 모든 백엔드 티켓]
+
+- id: D-008
+  title: "브랜치·머지 전략"
+  status: decided
+  question: "티켓별로 어떻게 작업하나?"
+  decision: |
+    trunk 기반. 티켓당 브랜치 1개: w/<TICKET_ID>-<slug>  (예: w/W0-2-bypass-removal)
+    커밋: Conventional Commits + 티켓 ID.  예) fix(W0-2): 권한 우회 목록에서 업무 모델 제거
+    머지: squash. main 직접 푸시 금지.
+    에이전트는 브랜치 생성·커밋까지 하고 **머지는 하지 않는다**(사람 또는 CI가 한다).
+  affects: [모든 티켓]
+
+- id: D-009
+  title: "파괴적 마이그레이션 정책"
+  status: decided
+  question: "컬럼/테이블 삭제가 필요한 경우?"
+  decision: |
+    **1릴리스 지연 삭제**를 원칙으로 한다.
+      1단계: 새 컬럼 추가 + 이중 기록 + 코드가 새 컬럼을 읽음 (구 컬럼 유지)
+      2단계: 다음 릴리스에서 구 컬럼 제거
+    에이전트가 단일 마이그레이션에서 DROP COLUMN/DROP TABLE 을 생성해야 한다면
+    **STOP(destructive-migration)** 하고 영향 행 수를 보고한다.
+  affects: [모든 모델 변경 티켓]
+
+- id: D-010
+  title: "human_gate 재분류 — 사전 위임(Pre-authorization)"
+  status: decided
+  raised_by: "cowork (최종 Phase까지 무인 주행 요구)"
+  question: "human_gate 22개 때문에 루프가 계속 멈춘다. 줄일 수 있나?"
+  decision: |
+    human_gate 를 두 종류로 분리한다.
+      gate: "human-required"  — 사람이 물리적으로 해야 함(외부 콘솔·결제·파트너 환경·계약)
+                                → 에이전트는 STOP 한다. 대체 불가.
+      gate: "evidence-review" — 육안 확인이 목적. **증거 제출로 자동 통과**시킨다.
+                                → evidence(스크린샷 경로·로그·측정값)를 남기면 status=done 으로 진행.
+                                → evidence 가 없으면 통과 불가(그때만 STOP).
+    분류 결과: human-required 8건 / evidence-review 14건 → **STOP 지점이 22 → 8로 감소**
+    human-required 목록:
+      W0-1b(실키 재발급) W5-3(이노뎁 연동) W6-0(H100 임대) W11-1(CSAP 신청)
+      W13-1(에스엘즈 공동개발) W16-1(파일럿앱 사업판단) B-07(AI 소유권 실사) B-08(상표 출원)
+  rationale: |
+    '사람이 봐야 한다'와 '사람만 할 수 있다'는 다르다.
+    전자는 증거를 남기면 나중에 몰아서 검토할 수 있고, 그 편이 루프를 훨씬 멀리 보낸다.
+  affects: [전 티켓]
+
+- id: D-011
+  title: "Phase 자동 승격 조건"
+  status: decided
+  raised_by: "cowork (최종 phase까지 주행)"
+  question: "R1 → R2 → R3 승격을 사람이 매번 해야 하나?"
+  decision: |
+    **조건부 자동 승격을 허용한다.**
+      승격 조건: 해당 phase 의 P0 티켓이 전부 done 이고,
+                 미완 티켓이 human-required 뿐이며,
+                 Phase Exit 체크리스트의 '코드로 검증 가능한 항목'이 전부 green
+      이때 에이전트는:
+        1) meta.active_phase 를 다음 phase 로 변경하고
+        2) 해당 phase 티켓 status 를 backlog → ready 로 승격하고
+        3) **승격 사실과 미완 human-required 목록을 보고한 뒤 계속 진행**한다.
+      단, 승격 보고는 반드시 남긴다. 조용히 넘어가지 않는다.
+    ⚠️ 예외: R2 승격 전에 반드시 W6-0(H100 실측) 결과가 있어야 한다.
+       없으면 R2 의 W6-1(GPU 파이프라인)만 blocked 로 두고 나머지는 진행한다.
+  affects: [meta.active_phase]
+
+- id: D-012
+  title: "tickets.yaml 재현 금지 — 정본 관리"
+  status: decided
+  raised_by: "agent (부록 E는 54개인데 복원본은 48개)"
+  question: "PDF에서 tickets.yaml 을 역복원했더니 R2 4건·R3 3건이 누락됐다."
+  decision: |
+    **PDF·문서에서 tickets.yaml 을 재구성하는 것을 금지한다.**
+    정본은 agent/tickets.yaml 파일 하나뿐이며, 파일 상단 manifest 의 id 목록과
+    SHA256 으로 무결성을 확인한다.
+      에이전트는 루프 시작 시 manifest.total 과 실제 티켓 수를 대조하고,
+      불일치하면 즉시 STOP(registry-mismatch) 한다.
+    문서(PDF/MD)는 사람이 읽는 요약이며 기계 판독 소스가 아니다.
+  affects: [AGENT_LOOP.md STEP 0]
+
+# --- 선제 결정 (아직 발생하지 않았으나 나올 것이 확실한 질문) ----------------
+- id: D-101
+  title: "기존 구현과 티켓이 충돌할 때"
+  status: decided
+  question: "티켓이 요구하는 기능이 이미 다른 방식으로 구현되어 있으면?"
+  decision: |
+    **새로 만들지 않는다.** 기존 구현을 확장하거나 어댑터를 씌운다.
+    기존 구현을 대체해야 한다고 판단되면 CLARIFY 하고 다음을 보고한다:
+      기존 구현 위치 / 티켓 요구와의 차이 / 확장안 A / 대체안 B / 각각의 영향 범위
+    ⚠️ '나란히 하나 더 만들기'는 어떤 경우에도 금지한다(데이터 이원화).
+
+- id: D-102
+  title: "DoD의 정량 기준이 모호할 때"
+  status: decided
+  question: "'빠르게', '충분히' 같은 표현이 DoD에 있으면?"
+  decision: |
+    아래 기본값을 적용하고 evidence 에 측정값을 남긴다. CLARIFY 하지 않는다.
+      화면 응답      : p95 < 500ms
+      API 응답       : p95 < 300ms (목록), < 1s (집계)
+      비동기 완료    : 1분 이내
+      실시간 표출    : 3초 이내
+      영상 지연      : LAN 2초 / LTE 4초 이내
+      가동률         : 99.5%
+    기본값으로 불충분하다고 판단되면 그때 CLARIFY 한다.
+
+- id: D-103
+  title: "성능 저하가 발생했을 때"
+  status: decided
+  question: "권한 필터 복원 후 쿼리가 느려지면?"
+  decision: |
+    해결 순서를 고정한다. **1→4 순으로 시도하고, 5는 금지한다.**
+      1) 인덱스 추가 (가장 먼저)
+      2) select_related / prefetch_related
+      3) 쿼리 분할 · 페이지네이션
+      4) 캐시(django-cacheops 이미 도입됨)
+      5) ❌ 권한 필터 우회 — 절대 금지. 이것이 W0-2가 생긴 원인이다.
+    4까지 해도 목표 미달이면 STOP(perf-blocked) 하고 측정치를 보고한다.
+
+- id: D-104
+  title: "외부 AI 서비스(3종) 인터페이스 변경이 필요할 때"
+  status: decided
+  question: "guardianx-ai / media-ai-svc / gx-ai-analysis-vn 은 별도 리포지토리다."
+  decision: |
+    **이 저장소에서 외부 AI 서비스의 코드를 수정하지 않는다.**
+    필요하면 이 저장소 쪽에 어댑터를 두고, 외부 서비스 변경 요구사항은
+    '외부 변경 요청서' 형식으로 보고한다(엔드포인트/스키마/기대 동작).
+    W6-2(인터페이스 계약 고정)가 이 경계를 지키기 위한 티켓이다.
+
+- id: D-105
+  title: "테스트가 기존 기능을 깨뜨린다고 나올 때"
+  status: decided
+  question: "격리 테스트를 켰더니 기존 화면이 데이터를 못 불러온다."
+  decision: |
+    **테스트를 고치지 말고 코드를 고친다.** 격리 테스트는 요구사항이지 참고가 아니다.
+    기존 화면이 남의 데이터에 의존하고 있었다면 그것이 버그다.
+    정말 테스트가 틀렸다고 판단되면 STOP 하고 근거를 보고한다(자의로 수정 금지).
+
+- id: D-106
+  title: "i18n 문자열 추가 시"
+  status: decided
+  question: "새 화면의 텍스트를 어떻게 넣나?"
+  decision: |
+    ko/en/th 3개 로케일에 **동시에** 키를 추가한다(en/th 는 초벌 번역 허용, TODO 주석 표기).
+    한국어만 추가하고 나머지를 비우면 태국어 배포가 깨진다.
+    파일: frontend/src/i18n/locales/{ko,en,th}.json
+
+- id: D-107
+  title: "신규 화면의 라우트 네이밍"
+  status: decided
+  question: "기존에 오타 라우트(intergrated, disabillity)가 있는데 신규는?"
+  decision: |
+    신규 라우트는 **kebab-case 정자법**으로 만든다. 기존 오타는 W3-1에서 일괄 정리하며
+    그때까지 301 리다이렉트로 호환을 유지한다. 신규가 기존 오타를 따라가지 않는다.
+
+- id: D-108
+  title: "커밋 단위"
+  status: decided
+  question: "티켓 하나를 몇 개 커밋으로 나누나?"
+  decision: |
+    티켓당 1커밋을 기본으로 한다(squash merge 전제).
+    단 아래는 반드시 같은 커밋에 포함한다:
+      - 새 Django 모델 + 격리 테스트 등록
+      - 기능 변경 + 사용자매뉴얼 항목 갱신
+      - 신규 화면 + i18n 3종 키

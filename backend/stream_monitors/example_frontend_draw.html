@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket Drawing Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f0f0;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 15px;
+      }
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        font-size: 14px;
+        transition: background-color 0.3s;
+      }
+      .btn:hover {
+        background-color: #0056b3;
+      }
+      .btn.success {
+        background-color: #28a745;
+      }
+      .btn.danger {
+        background-color: #dc3545;
+      }
+      .btn:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+      .drawing-area {
+        display: flex;
+        gap: 20px;
+      }
+      .canvas-container {
+        flex: 1;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        position: relative;
+        background-color: #fafafa;
+      }
+      #drawingCanvas {
+        display: block;
+        cursor: crosshair;
+        background-color: white;
+      }
+      .sidebar {
+        width: 300px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        padding: 15px;
+      }
+      .connection-status {
+        font-weight: bold;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+      }
+      .connected {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .disconnected {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .config-input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      .log {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        height: 200px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+        margin-top: 15px;
+      }
+      .log-entry {
+        margin-bottom: 2px;
+      }
+      .timestamp {
+        color: #666;
+      }
+      .success {
+        color: #28a745;
+      }
+      .error {
+        color: #dc3545;
+      }
+      .info {
+        color: #17a2b8;
+      }
+      .section {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+      }
+      .section h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      .stat-item {
+        background: white;
+        padding: 10px;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #007bff;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: #666;
+      }
+      .participants-list {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        max-height: 150px;
+        overflow-y: auto;
+      }
+      .participant-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 8px;
+        margin-bottom: 2px;
+        border-radius: 3px;
+        background-color: #f8f9fa;
+      }
+      .participant-name {
+        font-weight: 500;
+        color: #333;
+      }
+      .participant-status {
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        color: white;
+      }
+      .status-online {
+        background-color: #28a745;
+      }
+      .status-offline {
+        background-color: #6c757d;
+      }
+      .no-participants {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        padding: 10px;
+      }
+      .participant-count {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 8px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎨 WebSocket Drawing Test</h1>
+        <div class="connection-status disconnected" id="connectionStatus">
+          ❌ Disconnected
+        </div>
+      </div>
+
+      <!-- WebSocket Configuration -->
+      <div class="section">
+        <h3>📡 WebSocket Configuration</h3>
+        <div style="display: flex; gap: 10px; align-items: end">
+          <div style="flex: 1">
+            <label>WebSocket URL:</label>
+            <input
+              type="text"
+              id="wsUrl"
+              class="config-input"
+              value="https://guardianx-api.gaion.dev/ws/drawing/session/1/"
+              placeholder="WebSocket URL"
+            />
+          </div>
+          <button class="btn" onclick="connectWebSocket()">🔗 Connect</button>
+          <button class="btn danger" onclick="disconnectWebSocket()">
+            ❌ Disconnect
+          </button>
+        </div>
+      </div>
+
+      <!-- Drawing Controls -->
+      <div class="controls">
+        <label>Color:</label>
+        <input
+          type="color"
+          id="colorPicker"
+          value="#000000"
+          onchange="updateColor()"
+        />
+
+        <label>Width:</label>
+        <input
+          type="range"
+          id="widthSlider"
+          min="1"
+          max="10"
+          value="2"
+          onchange="updateWidth()"
+        />
+        <span id="widthValue">2px</span>
+
+        <button class="btn success" onclick="sendTestDraw()">
+          🎨 Send Test Draw
+        </button>
+        <button class="btn danger" onclick="clearCanvas()">
+          🗑️ Clear Canvas
+        </button>
+        <button class="btn" onclick="sendCursorTest()">👆 Send Cursor</button>
+      </div>
+
+      <div class="drawing-area">
+        <div class="canvas-container">
+          <canvas id="drawingCanvas" width="800" height="600"></canvas>
+        </div>
+
+        <div class="sidebar">
+          <!-- Connection Stats -->
+          <div class="stats">
+            <div class="stat-item">
+              <div class="stat-value" id="sentCount">0</div>
+              <div class="stat-label">Messages Sent</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="receivedCount">0</div>
+              <div class="stat-label">Messages Received</div>
+            </div>
+          </div>
+
+          <!-- Participants -->
+          <div class="section">
+            <h3>👥 Participants</h3>
+            <button
+              class="btn"
+              onclick="requestParticipants()"
+              style="
+                width: 100%;
+                margin-bottom: 10px;
+                background-color: #28a745;
+              "
+            >
+              👀 Check Participants
+            </button>
+            <div id="participantsList" class="participants-list">
+              <div class="no-participants">No participants data</div>
+            </div>
+          </div>
+
+          <!-- Test Controls -->
+          <div class="section">
+            <h3>🧪 Test Controls</h3>
+            <button
+              class="btn"
+              onclick="sendDrawLine()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              📏 Send Random Line
+            </button>
+            <button
+              class="btn"
+              onclick="sendDrawCircle()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              ⭕ Send Random Circle
+            </button>
+            <button
+              class="btn"
+              onclick="sendDrawRect()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              ⬜ Send Random Rectangle
+            </button>
+            <button
+              class="btn"
+              onclick="testBurst()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              🚀 Test Burst (10 msgs)
+            </button>
+            <button
+              class="btn"
+              onclick="requestDrawing()"
+              style="width: 100%; margin-bottom: 5px; background-color: #17a2b8"
+            >
+              📥 Request Drawing
+            </button>
+            <button
+              class="btn"
+              onclick="sendCurrentDrawings()"
+              style="width: 100%; margin-bottom: 5px; background-color: #6f42c1"
+            >
+              📤 Send My Drawings
+            </button>
+            <button
+              class="btn danger"
+              onclick="testDisconnection()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              🔌 Test Disconnection
+            </button>
+          </div>
+
+          <!-- Message Log -->
+          <div class="section">
+            <h3>📝 Message Log</h3>
+            <button
+              class="btn"
+              onclick="clearLog()"
+              style="margin-bottom: 10px"
+            >
+              Clear Log
+            </button>
+            <div class="log" id="messageLog"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      class DrawingWebSocketTest {
+        constructor() {
+          this.ws = null;
+          this.canvas = document.getElementById("drawingCanvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.sentCount = 0;
+          this.receivedCount = 0;
+          this.currentColor = "#000000";
+          this.currentWidth = 2;
+          this.isDrawing = false;
+
+          // Store drawing elements for synchronization
+          this.drawingElements = [];
+          this.pendingRequests = new Map(); // Track pending drawing requests
+          this.participants = []; // Store participants data
+
+          this.setupCanvas();
+        }
+
+        setupCanvas() {
+          this.canvas.addEventListener(
+            "mousedown",
+            this.onMouseDown.bind(this)
+          );
+          this.canvas.addEventListener(
+            "mousemove",
+            this.onMouseMove.bind(this)
+          );
+          this.canvas.addEventListener("mouseup", this.onMouseUp.bind(this));
+          this.canvas.addEventListener(
+            "mouseleave",
+            this.onMouseLeave.bind(this)
+          );
+        }
+
+        connect(wsUrl) {
+          if (this.ws) {
+            this.ws.close();
+          }
+
+          this.log(`🔗 Connecting to: ${wsUrl}`, "info");
+          this.ws = new WebSocket(wsUrl);
+
+          this.ws.onopen = () => {
+            this.log("✅ WebSocket connected successfully!", "success");
+            this.updateConnectionStatus(true);
+          };
+
+          this.ws.onmessage = (event) => {
+            this.receivedCount++;
+            this.updateStats();
+
+            try {
+              const data = JSON.parse(event.data);
+              this.log(`📨 Received: ${data.type}`, "info");
+              this.handleMessage(data);
+            } catch (e) {
+              this.log(`📨 Received (raw): ${event.data}`, "info");
+            }
+          };
+
+          this.ws.onclose = (event) => {
+            this.log(
+              `❌ WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`,
+              "error"
+            );
+            this.updateConnectionStatus(false);
+          };
+
+          this.ws.onerror = (error) => {
+            this.log(`🚨 WebSocket error: ${error}`, "error");
+            this.updateConnectionStatus(false);
+          };
+        }
+
+        disconnect() {
+          if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+            this.log("🔌 Manual disconnect", "info");
+          }
+        }
+
+        send(data) {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            const jsonData = JSON.stringify(data);
+            // Send 3 times to ensure websocket receives the message
+            for (let i = 0; i < 3; i++) {
+              this.ws.send(jsonData);
+            }
+            this.sentCount++;
+            this.updateStats();
+            this.log(`📤 Sent: ${data.type} (x3)`, "success");
+            return true;
+          } else {
+            this.log("❌ WebSocket not connected", "error");
+            return false;
+          }
+        }
+
+        handleMessage(data) {
+          switch (data.type) {
+            case "connected":
+              this.log(`🎉 Welcome: ${data.message}`, "success");
+              break;
+            case "element_added":
+              this.renderElement(data.element);
+              // Store the element for future synchronization
+              this.drawingElements.push(data.element);
+              this.log(
+                `🎨 Drawing received from: ${data.element.created_by}`,
+                "info"
+              );
+              break;
+            case "drawing_cleared":
+              this.clearCanvasLocal();
+              this.drawingElements = []; // Clear stored elements
+              this.log(`🗑️ Canvas cleared by: ${data.cleared_by}`, "info");
+              break;
+            case "cursor_position":
+              this.log(
+                `👆 Cursor from ${data.user}: (${data.cursor_data.x}, ${data.cursor_data.y})`,
+                "info"
+              );
+              break;
+            case "drawing_request":
+              this.log(`📥 Drawing request from: ${data.requested_by}`, "info");
+              // Automatically respond with current drawings
+              this.sendDrawingsToRequester(data.requester_channel);
+              break;
+            case "drawings_sync":
+              this.log(
+                `📤 Received ${data.drawings.length} drawings from: ${data.sent_by}`,
+                "success"
+              );
+              this.syncDrawings(data.drawings);
+              break;
+            case "participants_list":
+              this.log(
+                `👥 Received participants list: ${data.participants.length} users`,
+                "success"
+              );
+              this.updateParticipantsList(data.participants);
+              break;
+            case "participant_joined":
+              this.log(`👋 User joined: ${data.user}`, "info");
+              if (data.participants) {
+                this.updateParticipantsList(data.participants);
+              } else if (data.participant) {
+                this.addParticipant(data.participant);
+              }
+              break;
+            case "participant_left":
+              this.log(`👋 User left: ${data.user}`, "info");
+              if (data.participants) {
+                this.updateParticipantsList(data.participants);
+              } else {
+                this.removeParticipant(data.user);
+              }
+              break;
+            case "participant_status_changed":
+              this.log(
+                `🔄 ${data.user} status changed to: ${data.status}`,
+                "info"
+              );
+              this.updateParticipantStatus(data.user, data.status);
+              break;
+            case "initial_state":
+              this.log(
+                `🎉 Received initial state with ${data.participants.length} participants`,
+                "success"
+              );
+              this.updateParticipantsList(data.participants);
+              break;
+            default:
+              this.log(`❓ Unknown message type: ${data.type}`, "error");
+          }
+        }
+
+        renderElement(element) {
+          const data = element.data;
+
+          this.ctx.strokeStyle = data.color || "#000000";
+          this.ctx.lineWidth = data.width || 2;
+          this.ctx.lineCap = "round";
+          this.ctx.lineJoin = "round";
+
+          switch (element.type) {
+            case "line":
+              if (data.points && data.points.length > 1) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(data.points[0][0], data.points[0][1]);
+                for (let i = 1; i < data.points.length; i++) {
+                  this.ctx.lineTo(data.points[i][0], data.points[i][1]);
+                }
+                this.ctx.stroke();
+              }
+              break;
+            case "circle":
+              this.ctx.beginPath();
+              this.ctx.arc(data.cx, data.cy, data.radius, 0, 2 * Math.PI);
+              this.ctx.stroke();
+              break;
+            case "rectangle":
+              this.ctx.beginPath();
+              this.ctx.rect(data.x, data.y, data.width, data.height);
+              this.ctx.stroke();
+              break;
+          }
+        }
+
+        // Mouse event handlers for drawing
+        onMouseDown(e) {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            this.isDrawing = true;
+            this.currentPath = [[x, y]];
+          }
+        }
+
+        onMouseMove(e) {
+          if (
+            this.isDrawing &&
+            this.ws &&
+            this.ws.readyState === WebSocket.OPEN
+          ) {
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            this.currentPath.push([x, y]);
+
+            // Throttle cursor position updates (max 10 per second = every 100ms)
+            const now = Date.now();
+            if (!this.lastCursorSent || now - this.lastCursorSent >= 100) {
+              this.lastCursorSent = now;
+              this.send({
+                type: "cursor_position",
+                cursor_data: { x, y },
+              });
+            }
+          }
+        }
+
+        onMouseUp(e) {
+          if (
+            this.isDrawing &&
+            this.currentPath &&
+            this.currentPath.length > 1
+          ) {
+            // Create the element data
+            const elementData = {
+              points: this.currentPath,
+              color: this.currentColor,
+              width: this.currentWidth,
+            };
+
+            // Store the element locally for synchronization
+            const element = {
+              type: "line",
+              data: elementData,
+              created_by: "me", // Local user identifier
+            };
+            this.drawingElements.push(element);
+
+            // Send the complete line
+            this.send({
+              type: "draw_element",
+              element_type: "line",
+              element_data: elementData,
+            });
+          }
+          this.isDrawing = false;
+          this.currentPath = null;
+        }
+
+        onMouseLeave(e) {
+          this.onMouseUp(e);
+        }
+
+        // Test functions
+        sendRandomLine() {
+          const points = [];
+          const startX = Math.random() * 600 + 100;
+          const startY = Math.random() * 400 + 100;
+
+          for (let i = 0; i < 10; i++) {
+            points.push([
+              startX + Math.random() * 100 - 50,
+              startY + Math.random() * 100 - 50,
+            ]);
+          }
+
+          const elementData = {
+            points: points,
+            color: this.getRandomColor(),
+            width: Math.floor(Math.random() * 5) + 1,
+          };
+
+          // Store locally for synchronization
+          const element = {
+            type: "line",
+            data: elementData,
+            created_by: "me",
+          };
+          this.drawingElements.push(element);
+
+          return this.send({
+            type: "draw_element",
+            element_type: "line",
+            element_data: elementData,
+          });
+        }
+
+        sendRandomCircle() {
+          const elementData = {
+            cx: Math.random() * 600 + 100,
+            cy: Math.random() * 400 + 100,
+            radius: Math.random() * 50 + 10,
+            color: this.getRandomColor(),
+            width: Math.floor(Math.random() * 5) + 1,
+          };
+
+          // Store locally for synchronization
+          const element = {
+            type: "circle",
+            data: elementData,
+            created_by: "me",
+          };
+          this.drawingElements.push(element);
+
+          return this.send({
+            type: "draw_element",
+            element_type: "circle",
+            element_data: elementData,
+          });
+        }
+
+        sendRandomRect() {
+          const x = Math.random() * 600 + 50;
+          const y = Math.random() * 400 + 50;
+
+          const elementData = {
+            x: x,
+            y: y,
+            width: Math.random() * 150 + 50,
+            height: Math.random() * 100 + 30,
+            color: this.getRandomColor(),
+            lineWidth: Math.floor(Math.random() * 5) + 1, // Fixed: was overriding width property
+          };
+
+          // Store locally for synchronization
+          const element = {
+            type: "rectangle",
+            data: elementData,
+            created_by: "me",
+          };
+          this.drawingElements.push(element);
+
+          return this.send({
+            type: "draw_element",
+            element_type: "rectangle",
+            element_data: elementData,
+          });
+        }
+
+        sendClearAll() {
+          return this.send({
+            type: "clear_all",
+          });
+        }
+
+        sendCursor() {
+          return this.send({
+            type: "cursor_position",
+            cursor_data: {
+              x: Math.random() * 800,
+              y: Math.random() * 600,
+            },
+          });
+        }
+
+        // Participants management methods
+        requestParticipants() {
+          this.log("👥 Requesting participants list...", "info");
+          return this.send({
+            type: "request_participants",
+          });
+        }
+
+        updateParticipantsList(participants) {
+          this.participants = participants;
+          this.renderParticipantsList();
+        }
+
+        addParticipant(participant) {
+          // Check if participant already exists
+          const existingIndex = this.participants.findIndex(
+            (p) => p.user === participant.user
+          );
+          if (existingIndex === -1) {
+            this.participants.push(participant);
+          } else {
+            this.participants[existingIndex] = participant;
+          }
+          this.renderParticipantsList();
+        }
+
+        removeParticipant(user) {
+          this.participants = this.participants.filter((p) => p.user !== user);
+          this.renderParticipantsList();
+        }
+
+        updateParticipantStatus(user, status) {
+          const participant = this.participants.find((p) => p.user === user);
+          if (participant) {
+            participant.is_online = status === "online";
+            this.renderParticipantsList();
+          }
+        }
+
+        renderParticipantsList() {
+          const listElement = document.getElementById("participantsList");
+
+          if (this.participants.length === 0) {
+            listElement.innerHTML =
+              '<div class="no-participants">No participants in session</div>';
+            return;
+          }
+
+          let html = `<div class="participant-count">${this.participants.length} participant(s)</div>`;
+
+          this.participants.forEach((participant) => {
+            const statusClass = participant.is_online
+              ? "status-online"
+              : "status-offline";
+            const statusText = participant.is_online ? "Online" : "Offline";
+            const joinedTime = new Date(
+              participant.joined_at
+            ).toLocaleTimeString();
+
+            html += `
+              <div class="participant-item">
+                <div>
+                  <div class="participant-name">${participant.user}</div>
+                  <div style="font-size: 11px; color: #666;">Joined: ${joinedTime}</div>
+                </div>
+                <div class="participant-status ${statusClass}">${statusText}</div>
+              </div>
+            `;
+          });
+
+          listElement.innerHTML = html;
+        }
+
+        // New drawing synchronization methods
+        requestDrawing() {
+          this.log(
+            "📥 Requesting current drawings from other users...",
+            "info"
+          );
+          return this.send({
+            type: "request_drawing",
+          });
+        }
+
+        testDisconnection() {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.log("🔌 Testing disconnection...", "info");
+            this.ws.close(1000, "Test disconnection");
+          } else {
+            this.log("❌ WebSocket is not connected", "error");
+          }
+        }
+
+        sendDrawingsToRequester(requesterChannel) {
+          this.log(
+            `📤 Sending ${this.drawingElements.length} drawings to requester`,
+            "info"
+          );
+          return this.send({
+            type: "send_drawings",
+            drawings: this.drawingElements,
+            target_channel: requesterChannel,
+          });
+        }
+
+        sendCurrentDrawings() {
+          // This is for manual testing - simulate sending drawings to a random channel
+          this.log(
+            `📤 Manually sending ${this.drawingElements.length} drawings`,
+            "info"
+          );
+          return this.send({
+            type: "send_drawings",
+            drawings: this.drawingElements,
+            target_channel: "test_channel", // In real usage, this would be a real channel
+          });
+        }
+
+        syncDrawings(drawings) {
+          this.log(`🔄 Syncing ${drawings.length} drawings to canvas`, "info");
+
+          // Clear current canvas and redraw everything
+          this.clearCanvasLocal();
+          this.drawingElements = [];
+
+          // Render all received drawings
+          drawings.forEach((element) => {
+            this.renderElement(element);
+            this.drawingElements.push(element);
+          });
+
+          this.log("✅ Drawing synchronization complete", "success");
+        }
+
+        // Test burst of messages
+        async testBurst() {
+          this.log("🚀 Starting burst test (10 messages)...", "info");
+          for (let i = 0; i < 10; i++) {
+            const success = this.sendRandomLine();
+            if (!success) break;
+            await new Promise((resolve) => setTimeout(resolve, 100)); // 100ms delay
+          }
+          this.log("🏁 Burst test completed", "success");
+        }
+
+        // Utility functions
+        getRandomColor() {
+          const colors = [
+            "#ff0000",
+            "#00ff00",
+            "#0000ff",
+            "#ffff00",
+            "#ff00ff",
+            "#00ffff",
+            "#ff8000",
+            "#8000ff",
+          ];
+          return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        clearCanvasLocal() {
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        updateConnectionStatus(connected) {
+          const statusElement = document.getElementById("connectionStatus");
+          statusElement.textContent = connected
+            ? "✅ Connected"
+            : "❌ Disconnected";
+          statusElement.className = `connection-status ${
+            connected ? "connected" : "disconnected"
+          }`;
+        }
+
+        updateStats() {
+          document.getElementById("sentCount").textContent = this.sentCount;
+          document.getElementById("receivedCount").textContent =
+            this.receivedCount;
+        }
+
+        log(message, type = "info") {
+          const logDiv = document.getElementById("messageLog");
+          const timestamp = new Date().toLocaleTimeString();
+          const logEntry = document.createElement("div");
+          logEntry.className = "log-entry";
+          logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> <span class="${type}">${message}</span>`;
+          logDiv.appendChild(logEntry);
+          logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        clearLog() {
+          document.getElementById("messageLog").innerHTML = "";
+        }
+
+        setColor(color) {
+          this.currentColor = color;
+        }
+
+        setWidth(width) {
+          this.currentWidth = width;
+        }
+      }
+
+      // Global instance
+      const drawingTest = new DrawingWebSocketTest();
+
+      // UI Functions
+      function connectWebSocket() {
+        const wsUrl = document.getElementById("wsUrl").value;
+        if (!wsUrl) {
+          alert("Please enter a WebSocket URL");
+          return;
+        }
+        drawingTest.connect(wsUrl);
+      }
+
+      function disconnectWebSocket() {
+        drawingTest.disconnect();
+      }
+
+      function sendTestDraw() {
+        drawingTest.sendRandomLine();
+      }
+
+      function sendDrawLine() {
+        drawingTest.sendRandomLine();
+      }
+
+      function sendDrawCircle() {
+        drawingTest.sendRandomCircle();
+      }
+
+      function sendDrawRect() {
+        drawingTest.sendRandomRect();
+      }
+
+      function clearCanvas() {
+        drawingTest.sendClearAll();
+      }
+
+      function sendCursorTest() {
+        drawingTest.sendCursor();
+      }
+
+      function testBurst() {
+        drawingTest.testBurst();
+      }
+
+      function updateColor() {
+        const color = document.getElementById("colorPicker").value;
+        drawingTest.setColor(color);
+      }
+
+      function updateWidth() {
+        const width = parseInt(document.getElementById("widthSlider").value);
+        document.getElementById("widthValue").textContent = width + "px";
+        drawingTest.setWidth(width);
+      }
+
+      function clearLog() {
+        drawingTest.clearLog();
+      }
+
+      function requestDrawing() {
+        drawingTest.requestDrawing();
+      }
+
+      function sendCurrentDrawings() {
+        drawingTest.sendCurrentDrawings();
+      }
+
+      function testDisconnection() {
+        drawingTest.testDisconnection();
+      }
+
+      function requestParticipants() {
+        drawingTest.requestParticipants();
+      }
+
+      // Initialize
+      updateWidth();
+      drawingTest.log("🎨 Drawing WebSocket Test initialized", "success");
+      drawingTest.log(
+        "💡 Enter WebSocket URL and click Connect to start",
+        "info"
+      );
+    </script>
+  </body>
+</html>

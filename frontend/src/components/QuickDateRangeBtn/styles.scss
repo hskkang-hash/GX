@@ -1,0 +1,148 @@
+#quick-date-range-btn-container {
+  .quick-date-range-btn {
+    background: transparent;
+    border: 1px solid #dddfe2;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+
+    &.height-for-dashboard {
+      height: 2rem;
+      width: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .quick-date-range-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    width: 100vw;
+    height: 100vh;
+
+    .quick-date-range-modal-content {
+      position: absolute;
+      z-index: 9999;
+      transform: translateX(-50%);
+      background-color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      min-width: 420px;
+      max-width: 500px;
+
+      // Enhance disabled date styling
+      .ant-picker-calendar {
+        .ant-picker-cell-disabled {
+          position: relative;
+
+          &::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            width: 1px;
+            height: 20px;
+            background-color: #ff4d4f;
+            z-index: 1;
+          }
+
+          .ant-picker-cell-inner {
+            color: #bfbfbf !important;
+            background-color: #f5f5f5 !important;
+
+            &:hover {
+              background-color: #f5f5f5 !important;
+              color: #bfbfbf !important;
+            }
+          }
+        }
+      }
+
+      // Improve date range selection visual feedback
+      .ant-picker-focused {
+        border-color: var(--ga-primary) !important;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+      }
+
+      // Style quick select buttons container
+      .quick-select-buttons-container {}
+    }
+
+    .quick-date-range-modal-content-for-surveillance-dashboard {
+      transform: translateX(-95%);
+    }
+  }
+
+  // Dark mode styles when data-theme="dark"
+  &[data-theme='dark'] {
+    .quick-date-range-btn {
+      color: #fff;
+    }
+
+    .quick-date-range-modal-content {
+      background-color: #1f1f1f !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+      color: #fff;
+
+      // Dark mode for disabled dates
+      .ant-picker-calendar {
+        .ant-picker-cell-disabled {
+          .ant-picker-cell-inner {
+            color: #595959 !important;
+            background-color: #262626 !important;
+
+            &:hover {
+              background-color: #262626 !important;
+              color: #595959 !important;
+            }
+          }
+        }
+      }
+
+      // Dark mode for date pickers
+      .ant-picker {
+        background-color: #141414 !important;
+        border-color: #434343 !important;
+        color: #fff !important;
+
+        &:hover {
+          border-color: #177ddc !important;
+        }
+
+        &.ant-picker-focused {
+          border-color: #177ddc !important;
+          box-shadow: 0 0 0 2px rgba(23, 125, 220, 0.2) !important;
+        }
+
+        input {
+          background-color: transparent !important;
+          color: #fff !important;
+        }
+
+        .ant-picker-suffix {
+          color: #8c8c8c !important;
+        }
+      }
+
+      // Dark mode for quick select buttons
+      .quick-select-buttons-container {
+        .quick-select-btn {
+          background-color: #262626 !important;
+          color: #fff !important;
+          border-color: #434343 !important;
+
+          &:hover {
+            background-color: #303030 !important;
+            border-color: #177ddc !important;
+            color: #177ddc !important;
+          }
+        }
+      }
+    }
+  }
+}

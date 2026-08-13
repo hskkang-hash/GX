@@ -1,0 +1,432 @@
+.notam-search-form {
+  // Ensure form-grid spacing matches FormRoute
+  .form-grid {
+    > div {
+      margin-bottom: 0 !important;
+    }
+  }
+
+  .ant-form-item {
+    margin-bottom: 0;
+  }
+
+  .field-label {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+    display: block;
+    color: #000000;
+
+    [data-bs-theme='dark'] &,
+    .dark & {
+      color: #ffffff;
+    }
+  }
+
+  .datetime-range-container {
+    .datetime-label {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.4rem;
+      color: #000000;
+
+      [data-bs-theme='dark'] &,
+      .dark & {
+        color: #ffffff;
+      }
+    }
+
+    .datetime-pickers {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+
+      .date-picker {
+        flex: 1;
+        min-width: 0; // Allows flex items to shrink below their content size
+        display: flex;
+
+        // Target the Ant Design DatePicker wrapper
+        &.ant-picker,
+        > .ant-picker {
+          flex: 1;
+          width: 100%;
+          min-width: 0;
+        }
+
+        .ant-picker-input input {
+          font-size: 0.875rem;
+        }
+      }
+
+      .datetime-separator {
+        font-size: 1rem;
+        color: #000000;
+
+        [data-bs-theme='dark'] &,
+        .dark & {
+          color: #ffffff;
+        }
+      }
+
+      // DatePicker dark mode styling
+      .ant-picker {
+        background-color: #ffffff;
+        border-color: #d9d9d9;
+        color: #000000;
+
+        [data-bs-theme='dark'] &,
+        .dark & {
+          background-color: #2d2e30;
+          border-color: #444646;
+          color: #ffffff;
+        }
+
+        input {
+          color: #000000;
+
+          [data-bs-theme='dark'] &,
+          .dark & {
+            color: #ffffff;
+          }
+
+          &::placeholder {
+            color: #9c9d9d;
+          }
+        }
+
+        &:hover {
+          border-color: var(--ga-primary);
+        }
+
+        &.ant-picker-focused {
+          border-color: var(--ga-primary);
+        }
+        .select-time {
+          &[data-bs-theme='dark'] {
+            label {
+              display: block;
+              font-weight: 600;
+              padding-bottom: 0.5em;
+            }
+
+            .time-helper {
+              width: 100%;
+              display: inline-block;
+
+              button {
+                width: auto;
+                background-color: #2d2e30;
+                border: none;
+                // margin: 0 0.5em 0 0;
+                font-weight: 400;
+                font-size: 0.8rem;
+                border-radius: 1.5em;
+                padding: 0.25em 0.5em;
+                color: #dddfe2;
+
+                &:focus {
+                  border: 0.0625em solid var(--ga-primary);
+                }
+              }
+            }
+
+            .anticon svg {
+              color: #ececef;
+            }
+          }
+
+          &[data-bs-theme='light'] {
+            label {
+              display: block;
+              font-weight: 600;
+              padding-bottom: 0.5em;
+            }
+
+            .time-helper {
+              width: 100%;
+              display: inline-block;
+
+              button {
+                width: auto;
+                background-color: #f2f2f2;
+                border: none;
+                // margin: 0 8px 5px 0;
+                font-weight: 400;
+                font-size: 0.8rem;
+                border-radius: 1.5em;
+                padding: 0.25em 0.5em;
+                color: #444646;
+
+                &:focus {
+                  border: 0.0625em solid var(--ga-primary);
+                }
+              }
+            }
+
+            .anticon svg {
+              color: #2d2e30;
+            }
+
+            .ant-btn-variant-solid {
+              background-color: var(--ga-primary);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // DatePicker dropdown styles
+  .ant-picker-dropdown {
+    z-index: 99999;
+  }
+
+  .series-field {
+    .field-label {
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  .series-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+
+    .series-button {
+      min-width: 70px;
+      height: 32px;
+      font-size: 0.875rem;
+    }
+  }
+
+  .airspace-field {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    .field-label {
+      margin-bottom: 0;
+      margin-top: 0.25rem;
+    }
+  }
+
+  .elevation-field {
+    .elevation-main-label {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.4rem;
+      display: block;
+      color: #000000;
+
+      [data-bs-theme='dark'] &,
+      .dark & {
+        color: #ffffff;
+      }
+    }
+  }
+
+  .elevation-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .elevation-group-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      > div {
+        flex: 1;
+        display: flex;
+        > input {
+          flex: 1;
+          max-width: unset !important;
+        }
+      }
+    }
+
+    .elevation-label {
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: #000000;
+
+      [data-bs-theme='dark'] &,
+      .dark & {
+        color: #ffffff;
+      }
+    }
+
+    // Hide labels from CustomInputHookForm in elevation group and style inputs
+    > div {
+      // Target the wrapper div from CustomInputHookForm
+      > label {
+        display: none !important;
+      }
+
+      // Make input narrower for elevation fields
+      input {
+        width: 100px !important;
+        min-width: 100px !important;
+        max-width: 100px !important;
+      }
+
+      // Ensure dark mode styling for elevation inputs
+      [data-bs-theme='dark'] &,
+      .dark & {
+        input {
+          border-color: #444646 !important;
+          color: #ffffff !important;
+
+          &::placeholder {
+            color: #9c9d9d !important;
+          }
+        }
+      }
+    }
+
+    .elevation-unit {
+      font-size: 0.875rem;
+      margin-right: 1rem;
+      color: #000000;
+
+      [data-bs-theme='dark'] &,
+      .dark & {
+        color: #ffffff;
+      }
+    }
+  }
+
+  .notam-text-label {
+    color: #000000;
+
+    [data-bs-theme='dark'] &,
+    .dark & {
+      color: #ffffff;
+    }
+  }
+
+  .notam-textarea {
+    background-color: #ffffff;
+    border-color: #d9d9d9;
+    color: #000000;
+
+    &::placeholder {
+      color: #9c9d9d;
+    }
+
+    [data-bs-theme='dark'] &,
+    .dark & {
+      border-color: #444646 !important;
+      color: #ffffff !important;
+
+      &::placeholder {
+        color: #9c9d9d !important;
+      }
+    }
+
+    &:hover {
+      border-color: var(--ga-primary) !important;
+    }
+
+    &:focus {
+      border-color: var(--ga-primary) !important;
+      box-shadow: 0 0 0 2px rgba(36, 139, 197, 0.1) !important;
+    }
+  }
+
+  .text-hint {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    color: #9c9d9d;
+
+    [data-bs-theme='dark'] &,
+    .dark & {
+      color: #9c9d9d;
+    }
+  }
+
+  .ant-radio-group {
+    display: flex;
+    gap: 1rem;
+
+    .ant-radio-wrapper {
+      color: #000000;
+      font-size: 0.875rem;
+
+      [data-bs-theme='dark'] &,
+      .dark & {
+        color: #ffffff;
+      }
+
+      .ant-radio-inner {
+        border-color: #d9d9d9;
+
+        [data-bs-theme='dark'] &,
+        .dark & {
+          border-color: #444646;
+        }
+      }
+
+      .ant-radio-checked .ant-radio-inner {
+        border-color: var(--ga-primary);
+        background-color: var(--ga-primary);
+      }
+    }
+  }
+
+  .ant-checkbox-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .ant-checkbox-wrapper {
+      font-size: 0.875rem;
+      margin: 0;
+      color: #000000;
+
+      [data-bs-theme='dark'] &,
+      .dark & {
+        color: #ffffff;
+      }
+
+      .ant-checkbox-inner {
+        border-color: #d9d9d9;
+        background-color: #ffffff;
+
+        [data-bs-theme='dark'] &,
+        .dark & {
+          border-color: #444646;
+          background-color: #2d2e30;
+        }
+      }
+
+      .ant-checkbox-checked .ant-checkbox-inner {
+        border-color: var(--ga-primary);
+        background-color: var(--ga-primary);
+      }
+    }
+  }
+
+  // Series buttons dark mode
+  .series-button {
+    [data-bs-theme='dark'] &,
+    .dark & {
+      &.ant-btn-default {
+        background-color: #2d2e30;
+        border-color: #444646;
+        color: #ffffff;
+
+        &:hover {
+          border-color: var(--ga-primary);
+          color: var(--ga-primary);
+        }
+      }
+
+      &.ant-btn-primary {
+        background-color: var(--ga-primary-dark);
+      }
+    }
+  }
+}

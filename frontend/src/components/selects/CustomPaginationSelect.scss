@@ -1,0 +1,33 @@
+.custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid var(--ga-dark-line-color);
+
+  .dark {
+    background-color: var(--ga-dark-bg-input-disabled);
+  }
+
+  .light {
+    background-color: #ffffff;
+  }
+
+  &:checked {
+    background-color: var(--ga-primary);
+    border-color: var(--ga-primary);
+    position: relative;
+  }
+
+  &:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 0.1px;
+    left: 1px;
+    color: #ffffff;
+    font-size: 0.8rem;
+  }
+}

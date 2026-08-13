@@ -1,0 +1,41 @@
+whitenoise>=6.6.0
+django-environ==0.12.0
+dj-core @ git+ssh://git@192.168.0.22/thuongle/dj-core.git@master
+pint==0.24.4
+# New required packages for geolocation
+psycopg2-binary>=2.9.9
+django-cacheops>=7.0.2
+
+signalrcore==0.9.5
+geopy==2.4.1
+opensearch-py>=2.2.0
+djangorestframework==3.16.0
+channels==4.0.0
+channels-redis==4.2.0
+uvicorn==0.35.0
+websockets==15.0.1
+websocket-client==1.0.0
+
+weasyprint==66.0
+htmldocx==0.0.6
+
+channels==4.0.0
+
+beautifulsoup4>=4.9.0
+
+# Font handling
+fonttools>=4.0.0
+Pillow>=8.0.0
+lxml>=4.9.0
+
+pandas==2.3.2
+
+django-jinja==2.10.0
+
+shapely==2.1.2
+
+pyproj==3.7.1
+
+opencv-python==4.11.0.86
+grpcio==1.76.0
+grpcio-tools==1.76.0

@@ -1,0 +1,124 @@
+/* Korean Font Support for Report Templates */
+
+/* Google Noto Sans KR - Best for Korean text */
+@font-face {
+    font-family: 'Noto Sans KR';
+    src: url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Windows Korean fonts */
+@font-face {
+    font-family: 'Malgun Gothic';
+    src: local('Malgun Gothic'), local('맑은 고딕');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Gulim';
+    src: local('Gulim'), local('굴림');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Dotum';
+    src: local('Dotum'), local('돋움');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Batang';
+    src: local('Batang'), local('바탕');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* macOS Korean fonts */
+@font-face {
+    font-family: 'AppleGothic';
+    src: local('AppleGothic');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Apple SD Gothic Neo';
+    src: local('Apple SD Gothic Neo');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Linux Korean fonts */
+@font-face {
+    font-family: 'Nanum Gothic';
+    src: local('Nanum Gothic'), local('나눔고딕');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Nanum Myeongjo';
+    src: local('Nanum Myeongjo'), local('나눔명조');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Fallback fonts */
+@font-face {
+    font-family: 'Arial Unicode MS';
+    src: local('Arial Unicode MS');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Default font stack for Korean text */
+.korean-text {
+    font-family: 'Noto Sans KR', 'Malgun Gothic', 'AppleGothic', 'Apple SD Gothic Neo', 
+                 'Nanum Gothic', 'Nanum Myeongjo', 'Gulim', 'Dotum', 'Batang', 
+                 'Arial Unicode MS', 'Arial', sans-serif;
+}
+
+/* Ensure all text elements use Korean-friendly fonts */
+.tiptap-preview,
+.tiptap-preview h1,
+.tiptap-preview h2,
+.tiptap-preview h3,
+.tiptap-preview h4,
+.tiptap-preview h5,
+.tiptap-preview h6,
+.tiptap-preview p,
+.tiptap-preview span,
+.tiptap-preview div,
+.tiptap-preview li,
+.tiptap-preview td,
+.tiptap-preview th {
+    font-family: 'Noto Sans KR', 'Malgun Gothic', 'AppleGothic', 'Apple SD Gothic Neo', 
+                 'Nanum Gothic', 'Nanum Myeongjo', 'Gulim', 'Dotum', 'Batang', 
+                 'Arial Unicode MS', 'Arial', sans-serif;
+}
+
+/* Specific font weights for Korean text */
+.korean-text-light {
+    font-weight: 300;
+}
+
+.korean-text-regular {
+    font-weight: 400;
+}
+
+.korean-text-medium {
+    font-weight: 500;
+}
+
+.korean-text-bold {
+    font-weight: 700;
+}
+
+.korean-text-black {
+    font-weight: 900;
+}

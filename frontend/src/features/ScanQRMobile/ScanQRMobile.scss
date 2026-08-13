@@ -1,0 +1,15 @@
+#confirm-qr-modal {
+  .btn-close {
+    display: none;
+  }
+}
+
+#error-qr-modal {
+  .btn-close {
+    display: none;
+  }
+
+  .modal-content {
+    width: 30rem;
+  }
+}

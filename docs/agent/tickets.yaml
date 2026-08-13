@@ -1,0 +1,1244 @@
+# ============================================================================
+# GuardianX 티켓 레지스트리 v2.0  —  기계 판독용 단일 진실원(Single Source of Truth)
+# 에이전트는 이 파일의 status / blocker / evidence 만 수정한다. spec·dod는 사람이 관리한다.
+# 스키마: docs/GuardianX_개발작업지시서_v2.0.md §1 참조
+# ============================================================================
+meta:
+  version: "2.0"
+  source_root: "C:/GuardianX/guardianx-source"
+  active_phase: "R1"          # 에이전트는 이 phase의 티켓만 집는다
+  updated_at: "2026-08-11"
+  status_enum: [backlog, ready, in_progress, review, done, blocked, dropped]
+  gate_enum: [human-required, evidence-review]
+  baseline_sha: ""          # W0-0 완료 시 에이전트가 기록
+  decisions_file: "decisions.yaml"
+  # --- MANIFEST (무결성 검증용 — 루프 STEP 0에서 대조. 불일치 시 STOP) ---
+  manifest:
+    total: 58
+    by_phase: { R1: 28, R2: 14, R3: 8, BACKLOG: 8 }
+    note: "이 파일이 유일한 정본이다. PDF/MD 문서에서 재구성하지 말 것 (D-012)."
+    ids: ['W0-0', 'W0-1a', 'W0-1b', 'W0-5', 'W0-6', 'W0-2', 'W0-3', 'W0-4', 'W1-1', 'W1-2', 'W1-3', 'W1-4', 'W2-1', 'W2-2', 'W2-3', 'W2-4', 'W3-1', 'W3-2', 'W3-3', 'W3-4', 'W4-1', 'W4-2', 'W4-3', 'W4-4', 'W5-1', 'W5-2', 'W5-3', 'W6-0', 'W6-1', 'W6-2', 'W7-1', 'W7-2', 'W8-1', 'W8-2', 'W8-3', 'W9-1', 'W9-2', 'W9-3', 'W10-1', 'W10-2', 'W11-1', 'W11-2', 'W12-1', 'W13-1', 'W14-1', 'W14-2', 'W14-3', 'W15-1', 'W16-1', 'W16-2', 'B-01', 'B-02', 'B-03', 'B-04', 'B-05', 'B-06', 'B-07', 'B-08']
+  kind_enum:   [reuse, bind, new-s, new-l, ops, doc]
+  # bind = 이미 있는 기능에 데이터만 연결 / new-s = 소규모 신규 / new-l = 대규모 신규
+
+# ---------------------------------------------------------------------------
+# PHASE R1 "Certify"  — 2026.09 ~ 2026.12 코드 동결 / 2027.1Q 출시
+# 목표: 인증 통과 가능한 빌드 + 첫 유료 레퍼런스 판매 가능 상태
+# ---------------------------------------------------------------------------
+tickets:
+
+# ===== W0. 보안 위생 (모든 작업의 선행) =====
+- id: W0-0
+  phase: R1
+  title: "저장소 초기화 + 베이스라인 커밋 (최선행)"
+  status: blocked
+  priority: P0
+  effort: S
+  kind: ops
+  depends_on: []
+  human_gate: false
+  gate: evidence-review
+  decisions: [D-004, D-005, D-006]
+  reuse_targets:
+    - .gitignore
+    - backend/.env.example
+    - frontend/.env.example
+    - yarn.lock
+  spec: |
+    ⚠️ 이 티켓이 모든 작업의 최선행이다. (D-004)
+    현재 저장소에 커밋이 하나도 없다. 지금 최초 커밋을 만들면 실키 15개가 히스토리에 박힌다.
+    따라서 반드시 아래 순서로 한다.
+      1) .gitignore 정비: .env, .env.local, *.pem, ~/.guardianx-secrets 류 제외 확인
+      2) 루트 yarn.lock 삭제(86바이트 빈 파일), npm 을 정본으로 확정 (D-006)
+      3) backend/.env.example, frontend/.env.example 의 실값을 **플레이스홀더로 치환**
+         형식: your-kakao-api-key-here / CHANGE_ME_DB_PASSWORD 등
+         ⚠️ 치환 전 실값 백업은 저장소 밖 (D-002). 백업은 사람이 수행하며,
+            에이전트는 "백업 완료 확인" 없이 치환하지 않는다 → 확인 없으면 STOP.
+      4) 최초 커밋 생성. 이 커밋 SHA 를 meta.baseline_sha 에 기록 (D-005)
+    실키는 단 한 번도 히스토리에 들어가지 않아야 한다.
+  dod: |
+    ① git log 에 커밋 1개 존재, 그 커밋의 .env.example 두 파일에 실값 0개
+    ② meta.baseline_sha 가 tickets.yaml 에 기록됨
+    ③ 루트 yarn.lock 부재, package-lock.json 존재
+  verify:
+    - "git log --oneline | wc -l"
+    - "git show HEAD:backend/.env.example | grep -Ec '(AIza|^DB_PASSWORD=t00r|minioadmin123)' || true"
+    - "test ! -f yarn.lock"
+  blocker: |
+    STOP(blocked) — 2026-08-13 17:55. 하위작업 1)2)3) 완료, 4) 커밋 차단.
+    사람 승인 필요 2건: ① 커밋 범위 확대 ② env-unavailable 처리
+
+    ══════════════════════════════════════════════════════════════
+    ⛔ 차단 사유 1 — 실키가 .env.example 밖에 10개 파일 더 있다 (신규 발견)
+    ══════════════════════════════════════════════════════════════
+    티켓 spec 3)은 .env.example 두 파일만 지목한다. 그러나 커밋 직전 전수 검사에서
+    **동일한 실키가 git 추적 대상 10개 파일에 더 존재**함을 확인했다.
+    지금 최초 커밋을 만들면 이 값들이 그대로 히스토리에 박힌다 —
+    D-004 가 막으려던 바로 그 결과이며, spec 마지막 문장
+    "실키는 단 한 번도 히스토리에 들어가지 않아야 한다" 에 정면으로 위배된다.
+
+    [환경 파일 — 전량 실값, 통째로 추적 중]
+      backend/.env.stg
+      frontend/.env.stg              (Kakao JS 키 · TURN 비밀번호)
+      frontend/.env.maps.example     (Google Maps 키)
+
+    [소스 하드코딩]
+      backend/config/settings.py:195       env("DB_PASSWORD", default=<실값>)
+      backend/config/settings.py:471-472   MINIO_ACCESS_KEY / MINIO_SECRET_KEY default=<실값>
+      backend/run_be.sh:41,42              PGPASSWORD=<실값> psql -h <내부IP>
+      frontend/index.html:31               Kakao JS appkey <실값>
+      frontend/src/configs/Constant.ts:92  Google Maps 키 하드코딩 폴백 <실값>
+      frontend/src/components/maps/README.md:34  Google Maps 키 <실값>
+
+    [⚠ §0.4 금지구역에 걸리는 2건 — 사람 승인 없이는 손대지 않는다]
+      backend/delivery/services/opensearch_data.py:21    OPENSEARCH_PASSWORD default=<실값>
+      backend/delivery/services/static_map_template.py:56  Kakao JS appkey <실값>
+      → delivery 앱은 §0.4 리팩터링 금지 구역이다. 다만 §0.4 의 취지는
+        '리팩터링 금지'이지 '보안 수정 금지'가 아니라고 판단되며, 필요한 변경은
+        하드코딩 기본값을 env 참조로 바꾸는 것뿐이고 로직은 건드리지 않는다.
+        그럼에도 2-3 판정 규칙상 임의 진행하지 않고 승인을 받는다.
+
+    선택지
+      A안(권장): W0-0 커밋 범위를 10개 파일로 확대한다. .env.stg 3개는
+        .gitignore 에 추가해 추적 제외(운영값 파일은 애초에 커밋 대상이 아니다),
+        소스 7곳은 하드코딩 기본값을 제거하고 env 참조만 남긴다.
+        delivery 2건은 금지구역 예외 승인이 필요하다.
+        → W0-0 의 목적("단 한 번도 히스토리에 들어가지 않는다")을 실제로 달성하는
+          유일한 안. 대신 effort 가 S 에서 M 으로 늘어난다.
+      B안: .env.stg 3개만 추적 제외하고 소스 7곳은 그대로 커밋한 뒤
+        별도 티켓으로 정리한다. → 히스토리 오염이 발생하므로 D-004 위반. 비권장.
+      C안: W0-0 을 여기서 멈추고 신규 티켓(W0-7 하드코딩 시크릿 제거)을
+        W0-0 의 선행으로 끼워 넣는다. 사람이 tickets.yaml 을 고쳐야 한다.
+
+    ══════════════════════════════════════════════════════════════
+    ⛔ 차단 사유 2 — DoD ③ package-lock.json 생성 불가 (env-unavailable, D-007)
+    ══════════════════════════════════════════════════════════════
+    D-201(A안) 적용으로 peer 충돌은 해소됐다(frontend/.npmrc, legacy-peer-deps=true).
+    그러나 npm 이 사내 git 의존성을 받아오지 못한다.
+      @gaion/gcs-fe : git+ssh://git@192.168.0.22/HuyNgK/gcs-fe.git#develop
+      rj-core       : git+ssh://git@192.168.0.22/HuyPhat/rj-core.git#rj-core-v2
+      → ssh: connect to host 192.168.0.22 port 22: Connection timed out
+    코드 문제가 아니라 망 접근 문제다(D-007 → env-unavailable, FAIL 로 계산하지 않음).
+    사내망/VPN 에서 `cd frontend && npm install --package-lock-only` 1회 실행하면 해소된다.
+    그때까지 DoD ③ 의 'package-lock.json 존재'는 미충족으로 남는다.
+
+    ══════════════════════════════════════════════════════════════
+    [완료된 하위작업]
+    ══════════════════════════════════════════════════════════════
+    [완료] 1) .gitignore 정비
+      - frontend/package-lock.json 무시 3줄 제거 (D-006 이행 — lock 정본을 추적해야 함)
+      - yarn.lock / frontend/yarn.lock 무시 유지 + 루트 yarn.lock 도 무시 추가
+      - .guardianx-secrets/ · *.7z · secrets.* 방어 무시 추가 (D-002)
+      - 기존 확인: *.env(18) · .env.local(33~36) · *.pem(63) 이미 존재
+    [완료] 2) 루트 yarn.lock 삭제 (86바이트 빈 lockfile — spec 기술과 일치)
+           + frontend/.npmrc 생성 (D-201 A안, legacy-peer-deps=true)
+             ※ .npmrc 는 package.json 이 있는 frontend/ 에 두어야 적용된다.
+               저장소 루트에 두면 npm 이 읽지 않는다.
+    [완료] 3) 실값 → 플레이스홀더 치환 (D-002 백업 완료 확인 받음)
+           backend/.env.example  10개 항목 → your-…-here / CHANGE_ME_DB_PASSWORD
+           frontend/.env.example  5개 항목 → your-…-here
+           + SENDER_EMAIL 도 치환 (SMTP_USERNAME 과 동일 계정이라 남기면 무의미)
+           + D-003 주석 삽입: GCS_APIKEY ≠ VITE_CGS_APIKEY 를 두 파일에 명시
+           검증: 구 실값 15종 직접 grep → .env.example 내 잔존 0
+    [차단] 4) 최초 커밋 + baseline_sha 기록  ← 위 차단 사유 1·2
+
+    ────────────────────────────────────────────────────────────
+    [해소됨] D-002 백업 확인 — 2026-08-13 사람이 완료 확인. 치환 수행함.
+    [해소됨] D-201 — A안 채택. 아래 초안은 decisions.yaml 등재용으로 남긴다.
+             (에이전트는 decisions.yaml 을 수정하지 않는다 — 읽기 전용)
+
+    D-201 초안 (사람이 decisions.yaml 에 붙여넣을 것)
+      - id: D-201
+        title: "npm peer 의존성 충돌 — react 19 vs react-text-mask"
+        question: |
+          DoD ③ 'package-lock.json 존재' 를 만들 수 없다.
+          npm install --package-lock-only 가 ERESOLVE 로 실패한다.
+            react@^19.0.0 (root)  vs  react-text-mask@^5.5.0 의 peer react ≤18
+          react-text-mask 는 실사용 중이다:
+            frontend/src/components/Form/PhoneNumberInput.tsx:14  import MaskedInput
+          D-006 은 npm 채택만 정하고 이 충돌은 다루지 않는다.
+        options:
+          - "A안: --legacy-peer-deps 로 lock 생성. .npmrc 에 legacy-peer-deps=true 고정하여
+                  CI·로컬·Docker 가 동일 조건이 되게 한다. 코드 변경 0."
+          - "B안: react-text-mask 제거 후 대체(@react-input/mask 등 React 19 지원 라이브러리)로 교체.
+                  PhoneNumberInput.tsx 1개 파일 수정. 근본 해결이나 W0-0 범위를 벗어난다."
+          - "C안: react 를 18 로 내린다. R1 범위에서 회귀 위험이 가장 크다 — 비권장."
+        recommend: |
+          A안. W0-0 은 '저장소 초기화' 티켓이고 목적은 baseline 커밋 확보다.
+          의존성 현대화를 여기에 끼워 넣으면 절대금지 #3(티켓에 없는 리팩터링)에 저촉된다.
+          .npmrc 고정은 되돌리기 쉽고, B안은 별도 티켓(예: W0-7)으로 올리는 것이 맞다.
+          단 A안은 부채를 남긴다 — react-text-mask 는 React 19 에서 런타임 경고·오작동
+          가능성이 있으므로 PhoneNumberInput 화면의 동작 확인이 별도로 필요하다.
+    ────────────────────────────────────────────────────────────
+
+    [2-5 부수효과]
+      - .gitignore 에서 package-lock.json 무시를 풀었으므로, lock 생성 후에는
+        최초 커밋에 반드시 포함된다. 포함되지 않으면 D-006 이 무효가 된다.
+      - baseline_sha 가 아직 비어 있어 컨벤션 게이트는 계속 SKIP 이다 (D-005).
+  evidence: ""
+  updated_at: "2026-08-13T17:45:00+09:00"
+
+- id: W0-1a
+  phase: R1
+  title: "시크릿 게이트 구축 (치환 검증 + 로컬 훅 + CI 파일)"
+  status: ready
+  priority: P0
+  effort: S
+  kind: ops
+  depends_on: [W0-0]
+  human_gate: false
+  gate: evidence-review
+  decisions: [D-001, D-003]
+  reuse_targets:
+    - backend/.env.example
+    - frontend/.env.example
+    - .gitignore
+  spec: |
+    D-001 에 따라 로컬 게이트를 실효 차단선으로, CI 파일은 선제 배치한다.
+      1) .pre-commit-config.yaml : gitleaks protect --staged 훅 추가 + 설치
+      2) .github/workflows/secret-scan.yml : gitleaks-action (원격 생성 시 자동 동작)
+      3) .gitlab-ci.yml : secret_detection 템플릿 (둘 다 두어도 무해)
+      4) 커스텀 룰 추가: GCS_APIKEY 와 VITE_CGS_APIKEY 의 **값이 같으면 FAIL** (D-003 단계2)
+      5) 차단 동작을 1회 재현하고 로그를 evidence 에 남긴다
+         (더미 키를 스테이징 → 커밋 시도 → 차단됨 확인 → 되돌리기)
+  dod: |
+    ① .env.example 두 파일 실값 0개
+    ② pre-commit 훅이 시크릿 포함 커밋을 실제로 차단하는 것을 1회 재현(로그 증거)
+    ③ .github/workflows/secret-scan.yml 와 .gitlab-ci.yml 존재
+    ※ '원격 CI 잡 green' 은 W0-6 으로 이연 (D-001)
+  verify:
+    - "test -f .pre-commit-config.yaml && test -f .github/workflows/secret-scan.yml"
+    - "gitleaks detect --no-git --source . --exit-code 1"
+
+- id: W0-1b
+  phase: R1
+  title: "실키 폐기·재발급 (사람 수행)"
+  status: ready
+  priority: P0
+  effort: S
+  kind: ops
+  depends_on: [W0-0]
+  human_gate: true
+  gate: human-required          # 외부 콘솔 접근 필요 — 대체 불가 (D-010)
+  decisions: [D-002, D-003]
+  reuse_targets: []
+  spec: |
+    아래 15개 항목을 각 발급처에서 **폐기 후 재발급**한다. 에이전트는 수행할 수 없다.
+      frontend: VITE_KAKAO_API_KEY, VITE_GOOGLE_MAPS_API_KEY,
+                VITE_TURN_USERNAME, VITE_TURN_PASSWORD, VITE_CGS_APIKEY
+      backend : DB_PASSWORD, MINIO_ACCESS_KEY, MINIO_SECRET_KEY,
+                SMTP_USERNAME, SMTP_PASSWORD, GCS_APIKEY,
+                OPENSEARCH_USERNAME, OPENSEARCH_PASSWORD,
+                KAKAO_API_KEY, ANYANG_SERVICE_KEY(발급기관 문의)
+    ⚠️ D-003: GCS_APIKEY(서버)와 VITE_CGS_APIKEY(클라이언트)를 **다른 값**으로 발급한다.
+       클라이언트 키는 권한 최소 + Referer/도메인 제한을 건다.
+    ⚠️ 브라우저 번들에 실렸던 키(VITE_*)는 이미 공개된 것으로 간주한다. 반드시 폐기한다.
+  dod: "15개 항목 전부 재발급 완료. 구 키로 API 호출 시 401/403 확인(폐기 증거)."
+  verify: []
+
+- id: W0-5
+  phase: R1
+  title: "클라이언트 GCS 키 제거 — proxy 경유 전환"
+  status: ready
+  priority: P1
+  effort: M
+  kind: new-s
+  depends_on: [W0-1b]
+  human_gate: false
+  gate: evidence-review
+  decisions: [D-003]
+  reuse_targets:
+    - backend/proxy/
+    - backend/proxy/services/proxy_service.py
+    - backend/proxy/middleware.py
+    - frontend/.env.example
+  spec: |
+    D-003 3단계. 브라우저 번들에 API 키를 심지 않는 구조로 바꾼다.
+    backend/proxy/ 앱이 이미 존재하므로 재사용한다(신규 앱 금지).
+      FE → 자사 백엔드(/api/v1/gcs/*) → GCS(8009)
+    전환 완료 후 frontend 의 VITE_CGS_APIKEY 를 **삭제**한다.
+  dod: |
+    ① 프로덕션 번들을 grep 해도 GCS 키가 나오지 않는다
+    ② GCS 연동 화면이 프록시 경유로 정상 동작한다
+  verify:
+    - "npm run build && ! grep -rEl '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}' frontend/dist/assets || true"
+    - "python manage.py test proxy"
+
+- id: W0-6
+  phase: R1
+  title: "원격 저장소 연결 + CI 최초 green"
+  status: ready
+  priority: P1
+  effort: S
+  kind: ops
+  depends_on: [W0-1a]
+  human_gate: true
+  gate: human-required          # 원격 저장소 생성·권한 설정
+  decisions: [D-001]
+  reuse_targets: []
+  spec: |
+    원격 저장소(GitHub 또는 GitLab)를 만들고 push 하여 시크릿 스캔 잡을 최초 green 시킨다.
+    branch protection 으로 main 직접 푸시를 차단한다(D-008).
+  dod: "원격 CI 에서 secret-scan 잡 1회 green + main branch protection 활성화."
+  verify: []
+
+- id: W0-2
+  phase: R1
+  title: "멀티테넌트 권한 우회 목록 제거"
+  status: ready
+  priority: P0
+  effort: M
+  kind: reuse
+  depends_on: [W0-0]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets:
+    - backend/common/base_model.py
+  spec: |
+    CustomManagerGroup.get_queryset() 의 performance_bypass_models 에서 업무 데이터 모델을
+    제거한다: order, orderitem, orderhistory, payment, ordercomment, orderassignment, terminal.
+    제거 후 성능 저하는 인덱스 추가와 select_related/prefetch_related 로 해결한다.
+    우회로 되돌리지 않는다.
+    프레임워크 모델(coreuser, role, group, usergroup, userprofile, userprofilelink,
+    multilanguagecontent)은 rj-core 의존이므로 즉시 제거 대신 뷰 레벨 필터를 강제한다.
+  dod: "W0-3 격리 테스트가 전부 통과하고, 목록에서 업무 모델 7종이 사라짐."
+  verify:
+    - "python manage.py test tests.test_tenant_isolation"
+
+- id: W0-3
+  phase: R1
+  title: "테넌트 격리 회귀 테스트 신설"
+  status: ready
+  priority: P0
+  effort: M
+  kind: new-s
+  depends_on: [W0-0]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets:
+    - backend/common/base_model.py
+    - backend/partner/models.py
+  spec: |
+    backend/tests/test_tenant_isolation.py 신설.
+    group A/B 사용자와 각 group 소유 레코드를 만들고, 아래 9개 모델 × 5개 시나리오를 검증한다.
+    모델: Order, Terminal, StreamMonitor, Dashboard, Device, ChecklistSetting,
+          SurveillanceProfile, Handover, ReportTemplate
+    시나리오: list / detail / update / delete / export
+    규칙: 새 모델 추가 시 이 목록 등록 없이는 머지 금지 (PR 템플릿 체크박스).
+  dod: "9모델 × 5시나리오 green, CI 필수 잡으로 등록됨."
+  verify:
+    - "python manage.py test tests.test_tenant_isolation -v 2"
+
+- id: W0-4
+  phase: R1
+  title: "데모·목업 코드 프로덕션 분리"
+  status: ready
+  priority: P0
+  effort: S
+  kind: ops
+  depends_on: [W0-0]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets:
+    - frontend/src/features/mockupDemoUi
+    - frontend/src/features/setupData
+    - frontend/src/services/API.ts
+    - drone-monitoring.html
+  spec: |
+    VITE_ENABLE_DEMO 빌드 플래그로 라우트 등록 자체를 차단하고 dynamic import 로
+    프로덕션 번들에서 제외한다. GS인증은 미완성 기능의 UI 노출을 결함으로 처리한다.
+  dod: "프로덕션 빌드 산출물에 mockupDemoUi 청크 없음. 해당 URL 직접 접근 시 404."
+  verify:
+    - "npm run build && ! grep -rl 'mockupDemoUi' dist/assets"
+
+# ===== W1. 자동 보고서 (최우선 가치) =====
+- id: W1-1
+  phase: R1
+  title: "임무 리포트 서비스 (MissionReportService)"
+  status: ready
+  priority: P0
+  effort: M
+  kind: bind
+  depends_on: [W0-2]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets:
+    - backend/report_template/
+    - backend/surveillance/services/video_analysis_report_service.py
+    - backend/print_format/
+    - backend/fonts/
+    - backend/check_fonts.py
+  spec: |
+    backend/surveillance/services/mission_report_service.py 신설.
+    build_context(mission_id) 로 SurveyMission/SurveillanceProfile, flight_log,
+    StreamMonitorRecord, DetectionEvent(W2-1 이후), devices.Device 에서 컨텍스트를 조립하고
+    render(mission_id, template_code) 로 PDF 를 생성해 MinIO 에 올린 뒤 object_path 를 반환한다.
+    PDF 생성은 report_template 의 기존 렌더 경로를 호출한다. WeasyPrint 를 새로 호출하지 않는다.
+    무거우므로 Celery task 로 실행하고 완료 시 Channels 로 알린다.
+  dod: "임무 1건에 대해 PDF가 MinIO에 생성되고 한글이 깨지지 않는다."
+  verify:
+    - "python manage.py test surveillance.tests.test_mission_report"
+
+- id: W1-2
+  phase: R1
+  title: "리포트 템플릿 3종 시드"
+  status: ready
+  priority: P0
+  effort: S
+  kind: reuse
+  depends_on: [W1-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets:
+    - backend/report_template/management/commands/
+  spec: "MISSION_DAILY / INCIDENT_REPORT / MONTHLY_PERFORMANCE 3종 시드 커맨드 추가."
+  dod: "시드 실행 후 관리자 화면에 3종이 보이고 미리보기가 렌더된다."
+  verify:
+    - "python manage.py seed_report_templates && python manage.py test report_template"
+
+- id: W1-3
+  phase: R1
+  title: "보고서 생성 API + 임무 상세 화면 버튼"
+  status: ready
+  priority: P0
+  effort: M
+  kind: new-s
+  depends_on: [W1-1, W1-2]
+  human_gate: true            # DoD가 '사람이 눌러보는 것'이라 육안 확인 필요
+  gate: evidence-review
+  reuse_targets:
+    - frontend/src/features/SurveyMission/pages/DetailSurveyMissionPage.tsx
+    - frontend/src/services/API.ts
+  spec: |
+    POST /api/v1/surveillance/missions/{id}/report   → task_id
+    GET  /api/v1/surveillance/missions/{id}/reports  → 목록
+    GET  /api/v1/reports/{report_id}/download        → MinIO presigned URL
+    FE: 임무 상세 상단에 [보고서 생성] 버튼 1개(AntD Button type=primary).
+        옵션 드롭다운·설정 모달 금지. 기본 템플릿 자동 선택.
+  dod: |
+    임무 상세에서 [보고서 생성] 1클릭 → 1분 이내 PDF 생성 →
+    임무명·일시·경로지도·비행시간·탐지이벤트·스냅샷이 들어 있어 수정 없이 결재 상신 가능.
+  verify:
+    - "npm run lint && npm run type-check"
+    - "python manage.py test surveillance"
+
+- id: W1-4
+  phase: R1
+  title: "인수인계 AI 요약 프리필"
+  status: ready
+  priority: P0
+  effort: S
+  kind: bind
+  depends_on: [W2-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets:
+    - backend/handover/services/
+    - frontend/src/features/Handover/
+  spec: |
+    인수인계 생성 시 해당 근무시간대의 DetectionEvent·미처리 건을 자동 조회해
+    본문에 프리필한다. 기존 주간/야간 폼 구조 유지, 섹션 하나만 추가.
+  dod: "인수인계 작성 화면 진입 시 'AI 요약' 섹션이 이미 채워져 있다."
+  verify:
+    - "python manage.py test handover"
+
+# ===== W2. AI 이벤트 센터 =====
+- id: W2-1
+  phase: R1
+  title: "DetectionEvent 모델 신설"
+  status: ready
+  priority: P0
+  effort: M
+  kind: new-s
+  depends_on: [W0-3]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets:
+    - backend/stream_monitors/models.py
+    - backend/common/base_model.py
+  spec: |
+    신규 앱 금지. stream_monitors 앱에 DetectionEvent 를 추가한다.
+    BaseModelWithGroup 상속 필수. 필드: stream_monitor, ai_model, event_type, severity,
+    occurred_at(index), lat/lng/alt, confidence, bbox(JSON), snapshot_path, clip_path,
+    status(new/confirmed/rejected/closed), reviewed_by, reviewed_at, reject_reason, mission(FK).
+    같은 커밋에 tests/test_tenant_isolation.py 등록을 포함한다.
+  dod: "마이그레이션 적용 성공 + 격리 테스트에 DetectionEvent 포함되어 통과."
+  verify:
+    - "python manage.py makemigrations --check --dry-run"
+    - "python manage.py test tests.test_tenant_isolation"
+
+- id: W2-2
+  phase: R1
+  title: "검출 결과 → 이벤트 수집 (중복 억제 포함)"
+  status: ready
+  priority: P0
+  effort: M
+  kind: bind
+  depends_on: [W2-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets:
+    - backend/stream_monitors/services/grpc_dual_stream_service.py
+    - backend/stream_monitors/services/grpc_client.py
+    - backend/media_data/services/media_data_detect_service.py
+  spec: |
+    검출 결과 수신 지점에서 프레임 렌더링과 별개로 DetectionEvent 를 생성한다.
+    중복 억제: 동일 stream+event_type 이 N초(기본 10초) 내 재발생하면 기존 이벤트의
+    last_seen 만 갱신한다. 스냅샷 1장을 MinIO 에 저장하고 snapshot_path 에 기록한다.
+  dod: "10초 내 동일 유형 반복 검출이 이벤트 1건으로 합쳐진다."
+  verify:
+    - "python manage.py test stream_monitors.tests.test_event_dedup"
+
+- id: W2-3
+  phase: R1
+  title: "AI 이벤트 센터 화면 (3열 콘솔)"
+  status: ready
+  priority: P0
+  effort: L
+  kind: new-l
+  depends_on: [W2-2]
+  human_gate: true
+  gate: evidence-review
+  reuse_targets:
+    - frontend/src/features/MultiStreamMonitor/
+    - frontend/src/components/maps/
+    - frontend/src/features/routes/components/MapForRouteUnified.tsx
+  spec: |
+    frontend/src/features/AiEventCenter/ 신설. 3열: 지도 | 라이브영상 | 이벤트 타임라인.
+    이벤트 리스트는 AntD Table + virtual 가상스크롤 + expandedRowRender(행 확장 인라인,
+    별도 모달 금지). 각 행에 [확인][기각] 2버튼만.
+    정렬: 최신순이되 severity=critical & status=new 는 최상단 고정.
+    색: 빨강은 critical 알람 전용. 배경은 순수 블랙 금지, 중명도 그레이(Carbon Gray 90).
+  dod: "이벤트 발생 → 3초 이내 타임라인 표출. [기각] 클릭 시 목록에서 사라지고 DB status=rejected."
+  verify:
+    - "npm run lint && npm run type-check && npm run build"
+
+- id: W2-4
+  phase: R1
+  title: "오탐 피드백 통계"
+  status: ready
+  priority: P1
+  effort: S
+  kind: new-s
+  depends_on: [W2-3]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/stream_monitors/models.py]
+  spec: "기각 누적을 AIModel별로 집계해 관리자 화면에 노출. 모델 재학습은 R2."
+  dod: "AIModel별 기각률이 관리자 화면에 표시된다."
+  verify: ["python manage.py test stream_monitors"]
+
+# ===== W3. 3계층 대시보드 =====
+- id: W3-1
+  phase: R1
+  title: "대시보드 라우트 6개 → 1개 + 프리셋 통합"
+  status: ready
+  priority: P1
+  effort: M
+  kind: reuse
+  depends_on: []
+  human_gate: false
+  gate: evidence-review
+  reuse_targets:
+    - backend/dashboard/
+    - frontend/src/features/Dashboard/
+    - frontend/src/services/API.ts
+  spec: |
+    /intergrated-dashboard(오타), /monitoring-dashboard, /surveillance-dashboard,
+    /delivery-dashboard, /delivery-dashboard-anyang(고객사 하드코딩), /disabillity-dashboard(오타)
+    → /dashboard/:presetCode 1개 라우트 + 프리셋 데이터로 통합. 기존 URL은 301 리다이렉트 유지.
+  dod: "기존 6개 URL이 모두 새 라우트로 리다이렉트되고 화면이 동일하게 동작한다."
+  verify: ["npm run type-check", "python manage.py test dashboard"]
+
+- id: W3-2
+  phase: R1
+  title: "3계층 대시보드 프리셋 정의 (OPERATOR/MANAGER/EXECUTIVE)"
+  status: ready
+  priority: P0
+  effort: M
+  kind: new-s
+  depends_on: [W3-1, W2-2]
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: [backend/dashboard/models.py, backend/dashboard/services/]
+  spec: |
+    OPERATOR : 오늘의 임무·미처리 이벤트·다음 순찰 일정·최근 보고서
+    MANAGER  : 상단 4카드(순찰 커버리지/탐지 건수/평균 응답시간/미처리 0건) + 월간 추이 + 구역 히트맵
+    EXECUTIVE: 숫자 4~6개 + 지도 1장. 대형화면·태블릿 대응. 시민 체감 사례 섹션. 스크롤 없이 1화면.
+    로그인 시 rj-core Role 에 따라 기본 프리셋 자동 분기.
+  dod: "EXECUTIVE 뷰가 회의실 대형 모니터에서 스크롤 없이 1분 내 파악되고 3m 거리에서 읽힌다."
+  verify: ["npm run build", "python manage.py test dashboard"]
+
+- id: W3-3
+  phase: R1
+  title: "월간 성과 리포트 자동 발행"
+  status: ready
+  priority: P0
+  effort: S
+  kind: bind
+  depends_on: [W1-2, W3-2]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/report_template/, backend/config/celery.py]
+  spec: "Celery beat: 매월 1일 09:00 MONTHLY_PERFORMANCE 렌더 → 부서장 role 사용자에게 메일 발송."
+  dod: "요청 없이 메일함에 PDF가 도착한다(테스트 발송 1회 성공)."
+  verify: ["python manage.py test report_template.tests.test_monthly_schedule"]
+
+- id: W3-4
+  phase: R1
+  title: "국비 공모용 실적자료 내보내기"
+  status: ready
+  priority: P1
+  effort: M
+  kind: new-s
+  depends_on: [W3-2]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/dashboard/, backend/flight_log/, backend/operational_data/]
+  spec: |
+    기간 지정 → 비행 횟수·누적 거리·커버 면적·탐지/대응 사례·가동률을
+    공모 제안서에 붙여넣을 수 있는 형식(docx 또는 표 이미지)으로 출력.
+  dod: "출력물을 복사→붙여넣기만 하면 공모 제안서 실적 섹션이 완성된다."
+  verify: ["python manage.py test dashboard"]
+
+# ===== W4. 라이선스 미터링 =====
+- id: W4-1
+  phase: R1
+  title: "LicensePlan / UsageSnapshot 모델 + 계측"
+  status: ready
+  priority: P0
+  effort: M
+  kind: new-s
+  depends_on: [W0-3]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/partner/models.py, backend/partner/services/]
+  spec: |
+    신규 앱 금지. partner 앱을 확장한다.
+    LicensePlan: group, max_devices, max_channels, max_concurrent_viewers,
+                 enabled_ai_models(M2M), enabled_modules(JSON), tier, valid_from/to, offline_key
+    UsageSnapshot: group, captured_at, active_devices, active_channels,
+                   ai_inference_seconds, storage_bytes
+    Celery beat 5분 주기 스냅샷 적재. 스트림 시작/종료 시 이벤트 기록.
+  dod: "5분마다 UsageSnapshot이 쌓이고 값이 실제 사용량과 일치한다."
+  verify: ["python manage.py test partner", "python manage.py test tests.test_tenant_isolation"]
+
+- id: W4-2
+  phase: R1
+  title: "티어 제한 적용 (경고 우선)"
+  status: ready
+  priority: P0
+  effort: S
+  kind: new-s
+  depends_on: [W4-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/partner/services/]
+  spec: |
+    한도 초과 시 기본 동작은 '차단'이 아니라 '경고 + 관리자 알림'.
+    공공 고객에게 갑작스러운 차단은 장애로 인식된다. 하드 차단은 계약상 명시된 경우만.
+  dod: "한도 초과 시 관리자 알림이 뜨고 서비스는 계속 동작한다."
+  verify: ["python manage.py test partner"]
+
+- id: W4-3
+  phase: R1
+  title: "오프라인 라이선스 키(폐쇄망)"
+  status: ready
+  priority: P1
+  effort: M
+  kind: new-s
+  depends_on: [W4-1]
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: [backend/partner/models.py]
+  spec: "인터넷 없이 서명된 키 파일로 활성화/갱신. 국방·보안기관 요건."
+  dod: "외부망 차단 환경에서 키 파일만으로 활성화가 완료된다."
+  verify: ["python manage.py test partner.tests.test_offline_license"]
+
+- id: W4-4
+  phase: R1
+  title: "사용량 관리자 화면 + CSV"
+  status: ready
+  priority: P0
+  effort: S
+  kind: new-s
+  depends_on: [W4-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [frontend/src/features/partnerManagement/]
+  spec: "테넌트별 현재 사용량 vs 한도 표시 + CSV 내보내기. 영업 데모에서 그대로 쓰는 화면."
+  dod: "관리자 화면에서 기체 수·채널 수·AI 모듈·저장 용량이 실시간으로 보이고 CSV로 나온다."
+  verify: ["npm run type-check"]
+
+# ===== W5. VMS 게이트웨이 (유일한 완전 신규 핵심) =====
+- id: W5-1
+  phase: R1
+  title: "ONVIF Profile S 노출"
+  status: ready
+  priority: P0
+  effort: L
+  kind: new-l
+  depends_on: []
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: [backend/stream_monitors/models.py, backend/proxy/]
+  spec: |
+    GuardianX 가 ONVIF 카메라인 것처럼 드론 채널을 노출한다.
+    WS-Discovery, GetProfiles, GetStreamUri, GetSnapshot 최소 구현.
+    각 StreamMonitor 를 하나의 ONVIF 프로파일에 매핑.
+    RTSP 재배포 시 재인코딩하지 않는다(패스스루). 이유: A100/H100에 NVENC 없음.
+  dod: "ONVIF Device Manager 같은 표준 도구에서 드론 채널이 카메라로 검색·재생된다."
+  verify: ["python manage.py test stream_monitors.tests.test_onvif"]
+
+- id: W5-2
+  phase: R1
+  title: "VMS 이벤트 푸시"
+  status: ready
+  priority: P0
+  effort: M
+  kind: new-s
+  depends_on: [W2-2, W5-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/third_api/]
+  spec: "DetectionEvent 발생 시 VMS로 전달. 1차 이노뎁 파트너스 오픈 API, 2차 ONVIF Event Service."
+  dod: "이벤트가 VMS 이벤트 목록에 표시된다."
+  verify: ["python manage.py test third_api"]
+
+- id: W5-3
+  phase: R1
+  title: "이노뎁 VURIX 연동 검증"
+  status: ready
+  priority: P0
+  effort: M
+  kind: ops
+  depends_on: [W5-2]
+  human_gate: true
+  gate: human-required
+  reuse_targets: []
+  spec: "이노뎁 VURIX 시험 환경에서 채널 등록 → 라이브 → 이벤트 수신 왕복 확인."
+  dod: "VURIX 화면에서 GuardianX 드론 채널을 일반 CCTV처럼 등록·시청하고 이벤트가 뜬다."
+  verify: []
+
+# ===== W6-0. 사전 실측 (R1 내 수행, R2 착수 근거) =====
+- id: W6-0
+  phase: R1
+  title: "H100 24시간 임대 파이프라인 실측"
+  status: ready
+  priority: P0
+  effort: S
+  kind: ops
+  depends_on: []
+  human_gate: true
+  gate: human-required
+  reuse_targets: [backend/stream_monitors/services/grpc_dual_stream_service.py]
+  spec: |
+    H100 24시간 임대(약 10만원)로 현재 파이프라인 vs DeepStream 파이프라인의
+    동시 채널 수를 실측한다. 드론 영상 3종(주간/야간/열화상).
+    이 수치 없이 캐파·가격표를 확정하지 않는다.
+  dod: "시나리오별 동시 채널 수 실측표가 문서화되고 GPU 캐파 설계서 수치가 갱신된다."
+  verify: []
+
+# ---------------------------------------------------------------------------
+# PHASE R2 "Station" — 2027.2Q
+# 목표: 무인 스테이션 구독 상품 출시 + GPU 파이프라인 전환 + 클라우드/폐쇄망 판
+# ---------------------------------------------------------------------------
+- id: W6-1
+  phase: R2
+  title: "GPU 상주 파이프라인 전환 (DeepStream + Triton)"
+  status: backlog
+  priority: P0
+  effort: XL
+  kind: new-l
+  depends_on: [W6-0, W2-2]
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: [backend/stream_monitors/services/]
+  spec: |
+    현재: cv2.VideoCapture(CPU) → 6프레임/1초 배치 → cv2.imencode(JPEG) → gRPC 왕복
+          → cv2.VideoWriter + ffmpeg 재인코딩. 채널당 CPU 1~2코어 점유.
+    목표: nvurisrcbin(NVDEC) → 프레임 게이팅 → nvinferserver/Triton(동적 배칭)
+          → nvtracker → 좌표만 WebSocket → 녹화는 remux.
+    기존 gRPC AI 서비스는 버리지 않고 '모델 서빙'으로 남기되 프레임 왕복을 제거한다.
+  dod: "동일 하드웨어에서 동시 채널 수가 W6-0 실측 대비 3배 이상."
+  verify: ["python manage.py test stream_monitors"]
+
+- id: W6-2
+  phase: R2
+  title: "파이프라인 인터페이스 계약 고정"
+  status: ready       # R1에서 미리 확정 (구현은 R2)
+  priority: P0
+  effort: S
+  kind: doc
+  depends_on: [W2-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/stream_monitors/consumers.py]
+  spec: |
+    아래 3개 계약을 R1에 고정하면 W2·W3가 파이프라인 교체와 무관해진다.
+      1) DetectionEvent 스키마 (W2-1)
+      2) WebSocket 메시지 {stream_id, ts, detections:[{type,bbox,conf,track_id}]}
+      3) 스트림 시작/중지 API (구현체 교체 가능하도록 추상화)
+    FE는 절대 gRPC 서비스를 직접 호출하지 않는다.
+  dod: "OpenAPI/AsyncAPI 스펙 문서가 존재하고 FE가 이 계약만 사용한다."
+  verify: ["npm run type-check"]
+
+- id: W7-1
+  phase: R2
+  title: "DJI Cloud API(Dock-to-Cloud) 어댑터"
+  status: backlog
+  priority: P0
+  effort: L
+  kind: new-l
+  depends_on: [W6-2]
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: [frontend/src/services/API.ts, backend/drone_communication/]
+  spec: |
+    현재 DJI는 /dji-url 단일 라우트만 존재. 자체 MQTT 브로커(EMQX)로 Dock 3를 바인딩하고
+    osd/services/events/state 토픽을 처리한다. 웨이라인(WPML/KMZ) 배포·실행, DRC 수동 개입,
+    라이브(WebRTC/GB28181), 미디어 자동 업로드(MinIO), HMS 알람, OTA.
+    폐쇄망 요건: Dock 유선 이더넷 + Local Data Mode, DJI 서버 미경유 검증 도구 포함.
+  dod: "Dock 3 + M4D/M4TD 에서 상태 수신·명령 왕복 지연 < 1s."
+  verify: ["python manage.py test drone_communication"]
+
+- id: W7-2
+  phase: R2
+  title: "스테이션 추상화 계층 (Station Adapter Interface)"
+  status: backlog
+  priority: P0
+  effort: M
+  kind: new-s
+  depends_on: [W7-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [frontend/src/features/dockingStation/, backend/devices/]
+  spec: "DJI Dock 과 국산 스테이션을 같은 인터페이스로 수용. 공공 제안의 '국산 구성 가능'이 수주 조건."
+  dod: "동일 미션이 DJI Dock 과 국산 스테이션 양쪽에서 실행된다."
+  verify: ["python manage.py test devices"]
+
+- id: W8-1
+  phase: R2
+  title: "무인 스테이션 운영 (도어·충전·격납·HMS)"
+  status: backlog
+  priority: P0
+  effort: L
+  kind: new-l
+  depends_on: [W7-2]
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: [frontend/src/features/dockingStation/, backend/devices/services/]
+  spec: "이륙~복귀~충전 무개입 사이클, HMS 상태·알람, 원격 도어·충전 제어."
+  dod: "이륙~복귀~충전 사이클 무개입 100회 연속 성공."
+  verify: []
+
+- id: W8-2
+  phase: R2
+  title: "자동순찰 스케줄러 (시간표·이벤트 트리거)"
+  status: backlog
+  priority: P0
+  effort: M
+  kind: bind
+  depends_on: [W8-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/surveillance/services/surveillance_profile_automation_service.py]
+  spec: "기존 automation service 확장. 시간표 + 이벤트 트리거 기반 무인 반복 임무."
+  dod: "7일 무인 연속 운영 시험에서 결측 0건."
+  verify: ["python manage.py test surveillance"]
+
+- id: W8-3
+  phase: R2
+  title: "지도 우클릭 즉시 급파 (동사형 태스킹)"
+  status: backlog
+  priority: P1
+  effort: S
+  kind: new-s
+  depends_on: [W8-2]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [frontend/src/features/routes/components/MapForRouteUnified.tsx]
+  spec: "지도 우클릭 → '여기 확인' / '여기로 비행'. 모달·폼 없이 5클릭 이내 임무 개시."
+  dod: "지도 우클릭에서 임무 개시까지 5클릭 이내."
+  verify: ["npm run type-check"]
+
+- id: W9-1
+  phase: R2
+  title: "SAHI 소물체 타일링 파이프라인"
+  status: backlog
+  priority: P0
+  effort: L
+  kind: new-l
+  depends_on: [W6-1]
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: []
+  spec: |
+    1080p 4x2 타일 + 원본 1회 = 9패스. 프레임 게이팅(N프레임당 1회)과 ROI 게이팅으로
+    원가를 조절한다. 이 스위치가 GPU당 채널 수를 35배 흔들므로 티어 경계와 직결된다.
+  dod: "SAHI ON/OFF 시 소물체 검출률과 채널 수가 각각 측정·문서화된다."
+  verify: []
+
+- id: W9-2
+  phase: R2
+  title: "열화상 융합 수색 모듈"
+  status: backlog
+  priority: P1
+  effort: M
+  kind: new-s
+  depends_on: [W9-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/stream_monitors/models.py]
+  spec: "M4TD 열화상 스트림 입력 시 요구조자 후보 마킹."
+  dod: "열화상 입력에서 후보가 마킹된다."
+  verify: []
+
+- id: W9-3
+  phase: R2
+  title: "시설물 점검 판독 + 건당 리포트"
+  status: backlog
+  priority: P1
+  effort: M
+  kind: bind
+  depends_on: [W1-1, W9-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/report_template/]
+  spec: "균열·열화상 이상(태양광·송전 프리셋). 점검 1회 → PDF 리포트 자동 생성. 건당 과금 상품."
+  dod: "점검 1회 실행 → 리포트 PDF 생성."
+  verify: []
+
+- id: W10-1
+  phase: R2
+  title: "온프레미스 완전 오프라인 패키지"
+  status: backlog
+  priority: P0
+  effort: XL
+  kind: new-l
+  depends_on: [W6-1]
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: [docker-compose.yml, docker-compose.stg.yml, nginx/, backend/config/settings.py]
+  spec: |
+    ⚠️ 과소평가 주의: 지도(Kakao/Google/Leaflet)·AI 서비스 3종·MinIO 가 전부 외부 도메인 의존이라
+    폐쇄망에서 통째로 동작하지 않는다.
+    필요 작업: 오프라인 지도 타일 서버, 내부 AI 서비스 번들, 내부 MinIO,
+    NTP/DNS 내재화, 서명 검증 오프라인 업데이트 패키지, 설치 마법사.
+  dod: "외부망 차단 환경에서 전 P0 기능이 동작한다."
+  verify: []
+
+- id: W10-2
+  phase: R2
+  title: "통신 목적지 리포트 (보안성 검토 제출용)"
+  status: backlog
+  priority: P0
+  effort: S
+  kind: new-s
+  depends_on: [W10-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/proxy/middleware.py]
+  spec: "시스템이 외부로 보내는 모든 통신 목적지를 자동 수집해 리포트로 출력. 공공 보안성 검토 대응."
+  dod: "리포트가 생성되고 DJI 서버 미경유가 증명된다."
+  verify: []
+
+- id: W11-1
+  phase: R2
+  title: "CSAP 신청 + 디지털서비스몰 등록"
+  status: backlog
+  priority: P0
+  effort: L
+  kind: ops
+  depends_on: [W10-2]
+  human_gate: true
+  gate: human-required
+  reuse_targets: []
+  spec: "클라우드 SaaS 판의 공공 조달 경로 확보."
+  dod: "디지털서비스몰 등록 완료."
+  verify: []
+
+- id: W11-2
+  phase: R2
+  title: "K8s + GPU Operator + MIG 배포"
+  status: backlog
+  priority: P1
+  effort: L
+  kind: new-l
+  depends_on: [W6-1, W4-1]
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: [docker-compose.yml]
+  spec: |
+    H100 1g.10gb × 7 MIG. 판매 가능 슬라이스는 5개(⑥내부·⑦예비 제외).
+    A100은 1g 프로파일에 NVDEC가 0개라 멀티테넌트 불가 — H100 전제.
+  dod: "MIG 슬라이스가 K8s 노드 리소스로 광고되고 테넌트별 배치가 동작한다."
+  verify: []
+
+# ---------------------------------------------------------------------------
+# PHASE R3 "Mission" — 2027.4Q  (R2 갱신 고객 2곳 이상 확보 후 착수)
+# ---------------------------------------------------------------------------
+- id: W12-1
+  phase: R3
+  title: "임무 API (DaaS) — 호출량 과금"
+  status: backlog
+  priority: P2
+  effort: L
+  kind: new-l
+  depends_on: [W8-2, W4-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: []
+  spec: "'순찰 1회/점검 1회'를 REST 호출로. API 키·호출량 계측."
+  dod: "외부 시스템에서 미션 트리거 데모 성공."
+  verify: []
+
+- id: W13-1
+  phase: R3
+  title: "에이전틱 임무 (에스엘즈 공동개발)"
+  status: backlog
+  priority: P2
+  effort: XL
+  kind: new-l
+  depends_on: [W12-1]
+  human_gate: true
+  gate: human-required
+  reuse_targets: []
+  spec: "목표 지정형 자율 임무. 공동 R&D 과제 범위에서 정의. IP·수익배분 사전 합의 필요."
+  dod: "'하천 이상 징후 확인해' 수준의 목표 지정으로 임무가 자동 구성된다."
+  verify: []
+
+- id: W14-1
+  phase: R3
+  title: "증거체인 (해시체인·접근기록·워터마크)"
+  status: backlog
+  priority: P1
+  effort: M
+  kind: new-s
+  depends_on: [W2-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/stream_monitors/models.py]
+  spec: "영상 해시체인·접근기록·워터마크 + 위변조 검증 도구. 치안·재판 증적."
+  dod: "영상 수정 시 검증이 실패하는 것이 재현된다."
+  verify: []
+
+- id: W14-2
+  phase: R3
+  title: "원클릭 증적 패키지 (zip)"
+  status: ready       # 가치 대비 공수가 작아 R1으로 앞당길 후보
+  priority: P1
+  effort: S
+  kind: new-s
+  depends_on: [W2-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/stream_monitors/models.py, backend/media_data/services/]
+  spec: "기간·구역 지정 → 영상·로그·보고서·접근기록을 zip 하나로 묶어 내보낸다."
+  dod: "기간 지정 후 30초 이내 zip 다운로드, 위변조 검증 통과."
+  verify: ["python manage.py test media_data"]
+
+- id: W14-3
+  phase: R3
+  title: "개인정보 자동 마스킹 (얼굴·번호판)"
+  status: backlog
+  priority: P1
+  effort: M
+  kind: new-s
+  depends_on: [W6-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: []
+  spec: "반출용 영상에 마스킹 강제 옵션."
+  dod: "반출 워크플로에서 마스킹이 적용된다."
+  verify: []
+
+- id: W15-1
+  phase: R3
+  title: "변화탐지 (Pro 티어)"
+  status: backlog
+  priority: P2
+  effort: M
+  kind: new-s
+  depends_on: [W9-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: []
+  spec: "동일 경로 2회 비행 이미지 비교 리포트. 구독 해지 방어 기능."
+  dod: "동일 경로 2회 비행 비교 리포트가 생성된다."
+  verify: []
+
+- id: W16-1
+  phase: R3
+  title: "파일럿 앱 (무료 깔때기)"
+  status: backlog
+  priority: P2
+  effort: L
+  kind: new-l
+  depends_on: []
+  human_gate: true
+  gate: human-required
+  reuse_targets: [frontend/src/features/LoginMobile/]
+  spec: |
+    비행로그·영상관리·자동 하이라이트. 무료. 수익 기대 금지.
+    성공 지표는 매출이 아니라 MAU·수집 영상 시간·인증 파일럿 수.
+    데이터 수집 동의 설계를 초기에 반드시 포함한다.
+  dod: "베타 출시 + 데이터 수집 동의 플로우 동작."
+  verify: []
+
+- id: W16-2
+  phase: R3
+  title: "모바일 지휘 뷰어"
+  status: backlog
+  priority: P1
+  effort: M
+  kind: new-s
+  depends_on: [W3-2]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [frontend/src/contexts/MobileContext.tsx]
+  spec: "라이브·이벤트 확인 전용(제어 불가). 현장 지휘관용."
+  dod: "모바일에서 라이브·이벤트가 확인된다."
+  verify: ["npm run type-check"]
+
+# ---------------------------------------------------------------------------
+# BACKLOG — 표준 예비 후보 (phase 미지정. 승격 조건 충족 시 phase 부여)
+# 승격 규칙: promote_when 조건이 참이 되면 사람이 phase/status 를 변경한다.
+# ---------------------------------------------------------------------------
+- id: B-01
+  phase: BACKLOG
+  title: "안티드론(C-UAS) 탐지 연계"
+  status: backlog
+  priority: P2
+  effort: L
+  kind: new-l
+  depends_on: [W2-1]
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: []
+  spec: "탐지 센서사와 제휴해 '아군 드론 관제 + 적 드론 탐지'를 한 화면으로. Axon–Dedrone 모델의 한국판."
+  promote_when: "국방·공항·발전소 고객사 1곳에서 요구가 확인될 때"
+  dod: "탐지 센서 이벤트가 GuardianX 이벤트 타임라인에 통합된다."
+  verify: []
+
+- id: B-02
+  phase: BACKLOG
+  title: "익명 벤치마크 비교 (타 지자체 대비 위치)"
+  status: backlog
+  priority: P2
+  effort: M
+  kind: new-s
+  depends_on: [W3-2]
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: []
+  spec: |
+    동급 지자체 대비 커버리지·대응시간의 상대 위치를 익명 집계로 제공.
+    ⚠️ 전제: 계약서 데이터 활용 조항이 선행되어야 하며 소급 불가.
+  promote_when: "유료 고객 3곳 이상 + 전원 데이터 활용 동의 확보"
+  dod: "익명 집계 지표가 EXECUTIVE 뷰에 표시된다."
+  verify: []
+
+- id: B-03
+  phase: BACKLOG
+  title: "지도 3종 통합 마무리 (Kakao/Google/Leaflet → Unified)"
+  status: backlog
+  priority: P1
+  effort: L
+  kind: reuse
+  depends_on: []
+  human_gate: false
+  gate: evidence-review
+  reuse_targets:
+    - frontend/src/features/routes/components/MapForRouteUnified.tsx
+    - frontend/src/features/SurveyMission/components/MapForRouteUnified.tsx
+    - frontend/src/features/surveillanceProfile/components/MapForRouteUnified.tsx
+  spec: "같은 기능이 3벌 존재. *Unified 래퍼로 수렴. 폐쇄망 오프라인 타일 대비 선행 작업."
+  promote_when: "W10-1(폐쇄망) 착수 직전 또는 지도 관련 버그가 월 3건 이상"
+  dod: "신규·기존 화면이 모두 Unified 경유로 동작한다."
+  verify: ["npm run type-check", "npm run build"]
+
+- id: B-04
+  phase: BACKLOG
+  title: "UI 라이브러리 3종 정리 (MUI/AntD/Bootstrap → AntD)"
+  status: backlog
+  priority: P1
+  effort: XL
+  kind: reuse
+  depends_on: []
+  human_gate: true
+  gate: evidence-review
+  reuse_targets: [frontend/package.json]
+  spec: "혼용으로 인한 디자인 불일치·번들 크기 문제. 신규 화면은 이미 AntD 전용. 기존 개종은 별도 판단."
+  promote_when: "디자인 컨벤션 확정 후 + R1 출시 이후"
+  dod: "번들에서 MUI/Bootstrap 의존이 제거된다."
+  verify: ["npm run build"]
+
+- id: B-05
+  phase: BACKLOG
+  title: "배송 모듈 라이선스 분리 (코드 분리 아님)"
+  status: backlog
+  priority: P1
+  effort: M
+  kind: reuse
+  depends_on: [W4-1]
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [backend/partner/models.py]
+  spec: |
+    배송 계열 12라우트·269파일. 코드 분리는 비현실적이므로
+    LicensePlan.enabled_modules 로 rj-core 메뉴를 숨기는 방식으로 상품만 분리한다.
+  promote_when: "W4-1 완료 후 즉시 (R1 후반 편입 가능)"
+  dod: "배송 미포함 티어 로그인 시 배송 메뉴가 보이지 않는다."
+  verify: ["python manage.py test partner"]
+
+- id: B-06
+  phase: BACKLOG
+  title: "다국어 확장 (태국어 이미 존재 → 동남아 현지화)"
+  status: backlog
+  priority: P2
+  effort: M
+  kind: reuse
+  depends_on: []
+  human_gate: false
+  gate: evidence-review
+  reuse_targets: [frontend/src/i18n/locales/]
+  spec: "ko/en/th 3개국어·2,934키 이미 보유. 현지 지도·공역 어댑터만 추가하면 수출 가능."
+  promote_when: "해외 파트너 계약 체결 시"
+  dod: "현지 지도·공역 어댑터가 동작한다."
+  verify: []
+
+- id: B-07
+  phase: BACKLOG
+  title: "AI 모델·학습데이터 자산화 (해자 구축)"
+  status: backlog
+  priority: P0
+  effort: XL
+  kind: ops
+  depends_on: []
+  human_gate: true
+  gate: human-required
+  reuse_targets: []
+  spec: |
+    ⚠️ 확인 필요: 외부 AI 서비스 3종(guardianx-ai / media-ai-svc / gx-ai-analysis-vn)이
+    별도 리포지토리다. 모델·학습데이터의 소유권과 이관 가능성이 이 사업 해자의 실체를 결정한다.
+    실증사업 영상의 라벨링·권리처리 현황 실사 포함.
+  promote_when: "즉시 — 경영 판단 필요 (개발보다 실사·계약 사안)"
+  dod: "모델·데이터 소유권이 문서로 확정되고 라벨링 자산 목록이 작성된다."
+  verify: []
+
+- id: B-08
+  phase: BACKLOG
+  title: "'GuardianX' 상표 출원 + 도메인 확보"
+  status: backlog
+  priority: P1
+  effort: S
+  kind: ops
+  depends_on: []
+  human_gate: true
+  gate: human-required
+  reuse_targets: []
+  spec: "해외 보안·방산 분야 유사 상표 가능성. 한국·미국·아세안 검색 후 출원. 비용은 작고 나중에 바꾸는 비용은 크다."
+  promote_when: "즉시"
+  dod: "출원 접수증 확보."
+  verify: []

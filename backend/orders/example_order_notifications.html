@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Notifications Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f0f0;
+      }
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 15px;
+      }
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        font-size: 14px;
+        transition: background-color 0.3s;
+      }
+      .btn:hover {
+        background-color: #0056b3;
+      }
+      .btn.success {
+        background-color: #28a745;
+      }
+      .btn.danger {
+        background-color: #dc3545;
+      }
+      .btn:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+      .config-input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      .connection-status {
+        font-weight: bold;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+      }
+      .connected {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .disconnected {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .section {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+      }
+      .section h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+      .log {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        height: 300px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+        margin-top: 15px;
+      }
+      .log-entry {
+        margin-bottom: 2px;
+        padding: 2px 0;
+      }
+      .timestamp {
+        color: #666;
+      }
+      .success {
+        color: #28a745;
+      }
+      .error {
+        color: #dc3545;
+      }
+      .info {
+        color: #17a2b8;
+      }
+      .warning {
+        color: #ffc107;
+      }
+      .notification {
+        background-color: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 10px;
+        margin: 5px 0;
+      }
+      .notification.order_created {
+        background-color: #e8f5e8;
+        border-left-color: #4caf50;
+      }
+      .notification.order_status_changed {
+        background-color: #fff3e0;
+        border-left-color: #ff9800;
+      }
+      .notification.order_updated {
+        background-color: #f3e5f5;
+        border-left-color: #9c27b0;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      .stat-item {
+        background: white;
+        padding: 10px;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 20px;
+        font-weight: bold;
+        color: #007bff;
+      }
+      .stat-label {
+        font-size: 12px;
+        color: #666;
+      }
+      .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📦 Order Notifications Test</h1>
+        <div class="connection-status disconnected" id="connectionStatus">
+          ❌ Disconnected
+        </div>
+      </div>
+
+      <!-- WebSocket Configuration -->
+      <div class="section">
+        <h3>📡 WebSocket Configuration</h3>
+        <div style="display: flex; gap: 10px; align-items: end">
+          <div style="flex: 1">
+            <label>WebSocket URL:</label>
+            <input
+              type="text"
+              id="wsUrl"
+              class="config-input"
+              value="ws://localhost:8000/ws/orders/notifications/"
+              placeholder="WebSocket URL"
+            />
+          </div>
+          <button class="btn" onclick="connectWebSocket()">🔗 Connect</button>
+          <button class="btn danger" onclick="disconnectWebSocket()">
+            ❌ Disconnect
+          </button>
+        </div>
+      </div>
+
+      <div class="two-column">
+        <div>
+          <!-- Connection Stats -->
+          <div class="stats">
+            <div class="stat-item">
+              <div class="stat-value" id="sentCount">0</div>
+              <div class="stat-label">Messages Sent</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="receivedCount">0</div>
+              <div class="stat-label">Messages Received</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="notificationCount">0</div>
+              <div class="stat-label">Notifications</div>
+            </div>
+          </div>
+
+          <!-- Test Controls -->
+          <div class="section">
+            <h3>🧪 Test Controls</h3>
+            <div style="margin-bottom: 10px">
+              <label>Order ID to Subscribe:</label>
+              <input
+                type="number"
+                id="orderIdInput"
+                placeholder="Enter order ID"
+                style="width: 100%; padding: 5px; margin: 5px 0"
+              />
+            </div>
+            <button
+              class="btn"
+              onclick="requestOrderStatus()"
+              style="width: 100%; margin-bottom: 5px"
+            >
+              📋 Request Order Status
+            </button>
+            <button class="btn danger" onclick="clearLog()" style="width: 100%">
+              🗑️ Clear Log
+            </button>
+          </div>
+
+          <!-- Order Tracking Test -->
+          <div class="section">
+            <h3>📍 Order Tracking Test</h3>
+            <div style="margin-bottom: 10px">
+              <label>Order Code to Track:</label>
+              <input
+                type="text"
+                id="orderCodeInput"
+                placeholder="Enter order code"
+                style="width: 100%; padding: 5px; margin: 5px 0"
+              />
+              <button
+                class="btn success"
+                onclick="connectOrderTracking()"
+                style="width: 100%"
+              >
+                🔍 Connect Order Tracking
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <!-- Notifications Display -->
+          <div class="section">
+            <h3>📬 Real-time Notifications</h3>
+            <div
+              id="notificationsDisplay"
+              style="max-height: 250px; overflow-y: auto"
+            >
+              <div style="text-align: center; color: #666; padding: 20px">
+                No notifications yet. Connect and wait for order changes...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Log -->
+      <div class="section">
+        <h3>📝 Message Log</h3>
+        <div class="log" id="messageLog"></div>
+      </div>
+    </div>
+
+    <script>
+      class OrderNotificationTest {
+        constructor() {
+          this.ws = null;
+          this.trackingWs = null;
+          this.sentCount = 0;
+          this.receivedCount = 0;
+          this.notificationCount = 0;
+          this.subscribedOrders = new Set();
+        }
+
+        connect(wsUrl) {
+          if (this.ws) {
+            this.ws.close();
+          }
+
+          this.log(`🔗 Connecting to: ${wsUrl}`, "info");
+          this.ws = new WebSocket(wsUrl);
+
+          this.ws.onopen = () => {
+            this.log("✅ WebSocket connected successfully!", "success");
+            this.updateConnectionStatus(true);
+          };
+
+          this.ws.onmessage = (event) => {
+            this.receivedCount++;
+            this.updateStats();
+
+            try {
+              const data = JSON.parse(event.data);
+              this.log(`📨 Received: ${data.type}`, "info");
+              this.handleMessage(data);
+            } catch (e) {
+              this.log(`📨 Received (raw): ${event.data}`, "info");
+            }
+          };
+
+          this.ws.onclose = (event) => {
+            this.log(
+              `❌ WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`,
+              "error"
+            );
+            this.updateConnectionStatus(false);
+          };
+
+          this.ws.onerror = (error) => {
+            this.log(`🚨 WebSocket error: ${error}`, "error");
+            this.updateConnectionStatus(false);
+          };
+        }
+
+        connectTracking(orderCode) {
+          if (this.trackingWs) {
+            this.trackingWs.close();
+          }
+
+          const trackingUrl = `ws://localhost:8000/ws/orders/track/${orderCode}/`;
+          this.log(`🔍 Connecting to order tracking: ${trackingUrl}`, "info");
+          this.trackingWs = new WebSocket(trackingUrl);
+
+          this.trackingWs.onopen = () => {
+            this.log(
+              `✅ Order tracking connected for: ${orderCode}`,
+              "success"
+            );
+          };
+
+          this.trackingWs.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              this.log(`📍 Tracking received: ${data.type}`, "info");
+              this.handleTrackingMessage(data);
+            } catch (e) {
+              this.log(`📍 Tracking received (raw): ${event.data}`, "info");
+            }
+          };
+
+          this.trackingWs.onclose = (event) => {
+            this.log(
+              `❌ Order tracking disconnected. Code: ${event.code}`,
+              "error"
+            );
+          };
+        }
+
+        disconnect() {
+          if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+            this.log("🔌 Manual disconnect", "info");
+          }
+          if (this.trackingWs) {
+            this.trackingWs.close();
+            this.trackingWs = null;
+          }
+        }
+
+        send(data) {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify(data));
+            this.sentCount++;
+            this.updateStats();
+            this.log(`📤 Sent: ${data.type}`, "success");
+            return true;
+          } else {
+            this.log("❌ WebSocket not connected", "error");
+            return false;
+          }
+        }
+
+        handleMessage(data) {
+          switch (data.type) {
+            case "connected":
+              this.log(`🎉 Welcome: ${data.message}`, "success");
+              if (data.subscribed_to) {
+                this.log(
+                  `📂 Subscribed to: ${data.subscribed_to.join(", ")}`,
+                  "info"
+                );
+              }
+              break;
+            case "order_status_changed":
+              this.handleOrderStatusChanged(data);
+              break;
+            case "order_created":
+              this.handleOrderCreated(data);
+              break;
+            case "order_updated":
+              this.handleOrderUpdated(data);
+              break;
+            case "order_status":
+              this.log(
+                `📋 Order Status: ${JSON.stringify(data.order, null, 2)}`,
+                "info"
+              );
+              break;
+            case "subscribed":
+              this.log(`🔔 ${data.message}`, "success");
+              this.subscribedOrders.add(data.order_id);
+              break;
+            case "unsubscribed":
+              this.log(`🔕 ${data.message}`, "info");
+              this.subscribedOrders.delete(data.order_id);
+              break;
+            case "error":
+              this.log(`❌ Error: ${data.message}`, "error");
+              break;
+            default:
+              this.log(`❓ Unknown message type: ${data.type}`, "warning");
+          }
+        }
+
+        handleTrackingMessage(data) {
+          switch (data.type) {
+            case "order_status":
+              this.log(
+                `📍 Tracking Status: ${JSON.stringify(data.order, null, 2)}`,
+                "info"
+              );
+              break;
+            case "order_status_changed":
+              this.log(
+                `📍 Tracking Update: Status changed to ${data.new_status?.name}`,
+                "success"
+              );
+              break;
+          }
+        }
+
+        handleOrderStatusChanged(data) {
+          this.notificationCount++;
+          this.updateStats();
+
+          const notification = this.createNotification(
+            "order_status_changed",
+            `Order ${data.order["order_code"]} status changed`,
+            `From: ${data.old_status?.name || "Unknown"} → To: ${
+              data.new_status?.name || "Unknown"
+            }`,
+            data.timestamp
+          );
+          this.displayNotification(notification);
+
+          this.log(
+            `🔄 Order ${data.order["order_code"]} status changed from ${data.old_status?.name} to ${data.new_status?.name}`,
+            "warning"
+          );
+          this.log(
+            `📋 Order Data: ${JSON.stringify(data.order, null, 2)}`,
+            "info"
+          );
+        }
+
+        handleOrderCreated(data) {
+          this.notificationCount++;
+          this.updateStats();
+
+          const notification = this.createNotification(
+            "order_created",
+            `New Order Created: ${data.order["order_code"]}`,
+            `Recipient: ${data.order["recipient_name"]}`,
+            data.timestamp
+          );
+          this.displayNotification(notification);
+
+          this.log(
+            `➕ New order created: ${data.order["order_code"]}`,
+            "success"
+          );
+          this.log(
+            `📋 Order Data: ${JSON.stringify(data.order, null, 2)}`,
+            "info"
+          );
+        }
+
+        handleOrderUpdated(data) {
+          this.notificationCount++;
+          this.updateStats();
+
+          const changes = Object.keys(data.changes || {}).join(", ");
+          const notification = this.createNotification(
+            "order_updated",
+            `Order Updated: ${data.order["order_code"]}`,
+            `Changes: ${changes}`,
+            data.timestamp
+          );
+          this.displayNotification(notification);
+
+          this.log(
+            `✏️ Order updated: ${data.order["order_code"]} - Changes: ${changes}`,
+            "info"
+          );
+          this.log(
+            `📋 Order Data: ${JSON.stringify(data.order, null, 2)}`,
+            "info"
+          );
+        }
+
+        createNotification(type, title, description, timestamp) {
+          return {
+            type,
+            title,
+            description,
+            timestamp: new Date(timestamp).toLocaleTimeString(),
+          };
+        }
+
+        displayNotification(notification) {
+          const container = document.getElementById("notificationsDisplay");
+
+          // Clear the "no notifications" message
+          if (container.querySelector('[style*="text-align: center"]')) {
+            container.innerHTML = "";
+          }
+
+          const notificationEl = document.createElement("div");
+          notificationEl.className = `notification ${notification.type}`;
+          notificationEl.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">${notification.title}</div>
+                    <div style="margin-bottom: 5px;">${notification.description}</div>
+                    <div style="font-size: 11px; color: #666;">${notification.timestamp}</div>
+                `;
+
+          container.insertBefore(notificationEl, container.firstChild);
+
+          // Keep only last 10 notifications
+          while (container.children.length > 10) {
+            container.removeChild(container.lastChild);
+          }
+        }
+
+        subscribeToOrder() {
+          const orderId = document.getElementById("orderIdInput").value;
+          if (!orderId) {
+            this.log("❌ Please enter an order ID", "error");
+            return;
+          }
+
+          this.send({
+            type: "subscribe_order",
+            order_id: parseInt(orderId),
+          });
+        }
+
+        unsubscribeFromOrder() {
+          const orderId = document.getElementById("orderIdInput").value;
+          if (!orderId) {
+            this.log("❌ Please enter an order ID", "error");
+            return;
+          }
+
+          this.send({
+            type: "unsubscribe_order",
+            order_id: parseInt(orderId),
+          });
+        }
+
+        requestOrderStatus() {
+          const orderId = document.getElementById("orderIdInput").value;
+          if (!orderId) {
+            this.log("❌ Please enter an order ID", "error");
+            return;
+          }
+
+          this.send({
+            type: "request_order_status",
+            order_id: parseInt(orderId),
+          });
+        }
+
+        updateConnectionStatus(connected) {
+          const statusElement = document.getElementById("connectionStatus");
+          statusElement.textContent = connected
+            ? "✅ Connected"
+            : "❌ Disconnected";
+          statusElement.className = `connection-status ${
+            connected ? "connected" : "disconnected"
+          }`;
+        }
+
+        updateStats() {
+          document.getElementById("sentCount").textContent = this.sentCount;
+          document.getElementById("receivedCount").textContent =
+            this.receivedCount;
+          document.getElementById("notificationCount").textContent =
+            this.notificationCount;
+        }
+
+        log(message, type = "info") {
+          const logDiv = document.getElementById("messageLog");
+          const timestamp = new Date().toLocaleTimeString();
+          const logEntry = document.createElement("div");
+          logEntry.className = "log-entry";
+          logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> <span class="${type}">${message}</span>`;
+          logDiv.appendChild(logEntry);
+          logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        clearLog() {
+          document.getElementById("messageLog").innerHTML = "";
+          document.getElementById("notificationsDisplay").innerHTML = `
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        No notifications yet. Connect and wait for order changes...
+                    </div>
+                `;
+        }
+      }
+
+      // Global instance
+      const orderTest = new OrderNotificationTest();
+
+      // UI Functions
+      function connectWebSocket() {
+        const wsUrl = document.getElementById("wsUrl").value;
+        if (!wsUrl) {
+          alert("Please enter a WebSocket URL");
+          return;
+        }
+        orderTest.connect(wsUrl);
+      }
+
+      function disconnectWebSocket() {
+        orderTest.disconnect();
+      }
+
+      function subscribeToOrder() {
+        orderTest.subscribeToOrder();
+      }
+
+      function unsubscribeFromOrder() {
+        orderTest.unsubscribeFromOrder();
+      }
+
+      function requestOrderStatus() {
+        orderTest.requestOrderStatus();
+      }
+
+      function connectOrderTracking() {
+        const orderCode = document.getElementById("orderCodeInput").value;
+        if (!orderCode) {
+          alert("Please enter an order code");
+          return;
+        }
+        orderTest.connectTracking(orderCode);
+      }
+
+      function clearLog() {
+        orderTest.clearLog();
+      }
+
+      // Initialize
+      orderTest.log("📦 Order Notifications Test initialized", "success");
+      orderTest.log(
+        "💡 Enter WebSocket URL and click Connect to start",
+        "info"
+      );
+    </script>
+  </body>
+</html>

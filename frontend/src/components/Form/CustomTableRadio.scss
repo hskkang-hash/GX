@@ -1,0 +1,77 @@
+@import '../../index.css';
+
+.custom-table-radio {
+  width: 100%;
+
+  thead {
+    tr {
+      background-color: var(--ga-dark-theme-font-color);
+      height: 40px;
+
+      th {
+        text-align: left;
+        padding: 8px;
+        font-weight: normal;
+        border-right: 1px solid var(--ga-light-line-color);
+
+        &:last-child {
+          border-right: none;
+        }
+
+        .dark & {
+          background-color: var(--ga-dark-bg-accordion);
+          color: var(--ga-dark-theme-font-color);
+          border-right: 1px solid #3c3d3e;
+        }
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      td {
+        height: 40px !important;
+        max-height: 40px !important;
+        // min-height: 40px !important;
+        // line-height: 40px !important;
+        padding-left: 8px;
+        padding-right: 8px;
+        border-bottom: 1px solid var(--ga-light-line-color);
+        border-right: 1px solid var(--ga-light-line-color);
+
+        &:last-child {
+          border-right: none;
+        }
+
+        .dark & {
+          border-bottom: 1px solid #3c3d3e;
+          border-right: 1px solid #3c3d3e;
+
+          color: var(--ga-dark-theme-font-color);
+
+          &:last-child {
+            border-right: none;
+          }
+        }
+
+        .custom-radio {
+          &.MuiRadio-root {
+            color: var(--ga-light-theme-font-color);
+
+            .dark & {
+              color: var(--ga-dark-line-color);
+
+              &.Mui-checked {
+                color: var(--ga-primary-dark);
+              }
+            }
+          }
+
+          &.Mui-checked {
+            color: var(--ga-primary) !important;
+          }
+        }
+      }
+    }
+  }
+}

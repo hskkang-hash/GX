@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # Nginx service as reverse proxy
+  nginx-stg:
+    build:
+      context: ./nginx
+    ports:
+      - "3002:3002"  # Expose frontend port
+      - "8002:8002"  # Expose backend port
+    volumes:
+      - ./backend/media:/media  # Mount media directory
+    depends_on:
+      - backend-stg
+      - frontend-stg
+    restart: unless-stopped
+    networks:
+      - guardianx-stg-network
+
+  # Frontend service for staging
+  frontend-stg:
+    build:
+      context: ./frontend
+      ssh:
+        - default=${SSH_AUTH_SOCK}
+    expose:
+      - 3002
+    volumes:
+      - ~/.ssh:/root/.ssh:ro  # Mounting host SSH directory
+    environment:
+      - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
+    env_file:
+      - ./frontend/.env.stg
+    depends_on:
+      - backend-stg
+    restart: unless-stopped
+    networks:
+      - guardianx-stg-network
+
+
+  # Backend service for staging
+  backend-stg:
+    build:
+      context: ./backend
+      ssh:
+        - default=${SSH_AUTH_SOCK}
+    volumes:
+      - ./backend:/app
+      - ./sourcedemo_stg:/sourcedemo
+      - ./backend/media:/app/media  # Add persistent volume for media files
+      - ~/.ssh:/root/.ssh:ro  # Mounting host SSH directory
+    expose:
+      - 8000
+    environment:
+      - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
+      - REDIS_HOST=redis-stg
+      - REDIS_PORT=6379
+    env_file:
+      - ./backend/.env.stg
+    restart: unless-stopped
+    networks:
+      - guardianx-stg-network
+    depends_on:
+      - redis-stg
+
+  # Celery service for staging
+  celery-stg:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      ssh:
+        - default=${SSH_AUTH_SOCK}
+    command: python -m celery -A config worker -l INFO
+    volumes:
+      - ./backend:/app
+      - ./sourcedemo_stg:/sourcedemo
+      - ./backend/media:/app/media  # Add persistent volume for media files
+      - ~/.ssh:/root/.ssh:ro  # Mounting host SSH directory
+    environment:
+      - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
+      - REDIS_HOST=redis-stg
+      - REDIS_PORT=6379
+    env_file:
+      - ./backend/.env.stg
+    restart: unless-stopped
+    networks:
+      - guardianx-stg-network
+    depends_on:
+      - redis-stg
+      - backend-stg
+
+  # Redis service for staging
+  redis-stg:
+    image: redis:latest
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+    networks:
+      - guardianx-stg-network
+
+networks:
+  guardianx-stg-network:
+    driver: bridge 

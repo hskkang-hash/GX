@@ -1,0 +1,37 @@
+{
+  "fonts_dir": "fonts",
+  "downloaded_fonts": {
+    "Nanum Gothic": "fonts/NanumGothic-Regular.ttf",
+    "Nanum Gothic Bold": "fonts/NanumGothic-Bold.ttf",
+    "Nanum Myeongjo": "fonts/NanumMyeongjo-Regular.ttf",
+    "Nanum Myeongjo Bold": "fonts/NanumMyeongjo-Bold.ttf"
+  },
+  "font_mapping": {
+    "regular": [
+      "Noto Sans KR",
+      "Nanum Gothic"
+    ],
+    "bold": [
+      "Noto Sans KR Bold",
+      "Nanum Gothic Bold"
+    ],
+    "serif": [
+      "Nanum Myeongjo"
+    ],
+    "serif_bold": [
+      "Nanum Myeongjo Bold"
+    ],
+    "fallback": [
+      "DejaVu Sans",
+      "Liberation Sans"
+    ],
+    "fallback_bold": [
+      "DejaVu Sans Bold"
+    ]
+  },
+  "css_font_families": {
+    "korean_sans": "\"Noto Sans KR\", \"Nanum Gothic\", \"Source Han Sans KR\", sans-serif",
+    "korean_serif": "\"Nanum Myeongjo\", \"Source Han Serif KR\", serif",
+    "fallback": "\"Roboto\", \"Open Sans\", \"Arial\", sans-serif"
+  }
+}

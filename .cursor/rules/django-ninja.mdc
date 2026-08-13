@@ -1,0 +1,59 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Tách biệt schemas đầu vào (IN) và đầu ra (OUT): sử dụng schemas_djantic_in.py và schemas_djantic_out.py
+- Sử dụng hậu tố InSchema cho schema đầu vào, OutSchema cho schema đầu ra
+- Đặt tên schema theo model: CameraInSchema, CameraOutSchema
+- Sử dụng CreateSchema và UpdateSchema cho tạo mới và cập nhật
+- Dùng ModelSchema khi schema trùng khớp với model, nếu chưa có thì tạo mới
+- Dùng Schema khi cần xử lý đặc biệt
+- Trường bắt buộc: name: str
+- Schema đầu vào: dùng hậu tố _id - main_type_id: Optional[int] = None
+- Schema đầu ra: hiển thị cả ID và tên - motor_type_id, motor_type
+- Quan hệ một-nhiều: cargo_compartments: Optional[List[CargoCompartmentsOutSchema]] = None
+- Đầu ra: dùng orm_mode=True để tự động chuyển đổi từ Model sang JSON
+- Lọc trường: dùng model_fields hoặc model_exclude
+- Dùng @route.get, @route.post, @route.put, @route.delete cho HTTP methods
+- Khai báo tham số path như tham số hàm: def detail_device(self, id: int)
+- Xác thực: @route.post("", auth=CustomJWTAuth())
+- Phân trang: sử dụng Paginator và trả về BaseResponse với thông tin phân trang
+- GenericRelation: xử lý trong service layer, không dùng ModelSchema trực tiếp
+- Dùng ValidationError từ ninja.errors để xử lý lỗi validation
+# Service Layer
+- Tạo lớp Service riêng biệt cho mỗi thành phần
+- Sử dụng @transaction.atomic cho các thao tác tạo, cập nhật, xóa
+- Xử lý validation trong service layer: ValidationError(f"{field} is required")
+- Trả về tuple (success, result) cho các thao tác cần thông báo kết quả
+- Cung cấp phương thức create_or_update cho model kế thừa
+- Sử dụng phương thức get_data để chuẩn bị dữ liệu trả về
+# Xử lý Measurement chuyên biệt
+- Sử dụng lớp Measurement cho các giá trị có đơn vị đo lường
+- Phân loại đo lường dựa trên data_type: simple, range, dimensions
+- Hỗ trợ chuyển đổi đơn vị dựa trên tùy chọn người dùng
+- Format giá trị hiển thị với get_formatted_value()
+# Dynamic Query Building
+- Sử dụng build_dynamic_query_from_queryset để xây dựng query động
+- Kết hợp với get_valid_filter_keys_from_queryset để kiểm soát trường được lọc
+- Áp dụng query động cho các endpoint danh sách: devices.filter(query)
+# Schema Động
+- Sử dụng DynamicSchema cho schema đầu ra
+- Kế thừa Schema và ModelSchema để mở rộng chức năng
+# Tùy chọn select_related và prefetch_related
+- Sử dụng select_related cho ForeignKey: .select_related('main_type')
+- Sử dụng prefetch_related cho quan hệ nhiều-nhiều: .prefetch_related('cargo_compartments')
+- Kết hợp cả hai để tối ưu hiệu suất truy vấn
+# Các HTTP Status Code tiêu chuẩn
+- 200: Thành công - BaseResponse(status_code=200, message="Success")
+- 404: Không tìm thấy - BaseResponse(status_code=404, message="Not found")
+- 400: Xảy ra lỗi trong quá trình xử lí
+- Chuẩn hóa response với BaseResponse chứa status_code, message, data
+- Message sẽ dựa vào tính năng và phải có đa ngôn ngữ, được thiết lập trong /home/sonnguyen/project/guardianx/backend/common/constant.py với format MESSAGE_NAME= {
+        Language.EN: "Some Message.",
+        Language.KR: "일부 메시지.."
+    }
+# Response format
+- Sử dụng BaseResponse cho tất cả API endpoints
+- Bổ sung thông tin phân trang: total_pages, total_items, current_page
+- Format nhất quán cho cả lỗi và thành công: {"success": False, "errors": e.errors()}

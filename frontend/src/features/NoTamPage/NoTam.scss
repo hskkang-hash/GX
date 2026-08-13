@@ -1,0 +1,22 @@
+.notam-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  &__content {
+    flex: 1;
+    overflow: auto;
+  }
+
+  .header-title {
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--ga-light-theme-font-color);
+
+    .dark & {
+      color: var(--ga-dark-theme-font-color);
+    }
+  }
+}

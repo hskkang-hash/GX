@@ -1,0 +1,131 @@
+@import '../../../index.css';
+
+.section-table {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 10px;
+}
+
+.dark .section-table {
+  background-color: #1f1f20;
+}
+
+.title-table {
+  font-weight: 600;
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--ga-light-theme-font-color);
+  width: fit-content;
+}
+
+.dark .title-table {
+  color: white;
+}
+
+.delivery-table-container {
+  overflow-x: auto;
+  scrollbar-width: auto;
+
+  table {
+    min-width: 600px;
+  }
+}
+
+.delivery-table-container::-webkit-scrollbar {
+  display: block;
+  height: 6px;
+}
+
+.delivery-table-container::-webkit-scrollbar-thumb {
+  background-color: #c1c1c1;
+  border-radius: 4px;
+}
+
+.delivery-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  // color: white;
+  background-color: white;
+  /* dark background giống ảnh */
+  border: 1px solid #888888;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.delivery-table th,
+.delivery-table td {
+  text-wrap: wrap;
+  min-width: 80px;
+  // border: 1px solid #888888;
+  padding: 8px 12px;
+  text-align: left;
+  border-top: 1px solid #888888;
+}
+
+.delivery-table th:not(:first-child),
+.delivery-table td:not(:first-child) {
+  border-left: 1px solid #888888;
+}
+
+.delivery-table tr:first-child th,
+.delivery-table tr:first-child td {
+  border-top: none;
+}
+
+.dark .delivery-table {
+  background-color: #1f1f20;
+}
+
+.delivery-table th {
+  // background-color: #111;
+  text-align: center;
+  background-color: rgb(232, 232, 232);
+  font-weight: bold;
+  width: 140px;
+}
+
+.dark .delivery-table th {
+  background-color: #2a2a2b;
+}
+
+.dark .delivery-table td {
+  background-color: #121212;
+  text-wrap: wrap;
+}
+
+.btn-send-reception,
+.btn-send-reception:hover,
+.btn-send-reception:active,
+.btn-send-reception[data-bs-theme='dark'],
+.btn-send-reception[data-bs-theme='dark']:hover,
+.btn-send-reception[data-bs-theme='dark']:active {
+  background-color: #fd7e14 !important;
+  border-color: #fd7e14 !important;
+  color: white !important;
+}
+
+.btn-cancel-order,
+.btn-cancel-order:hover,
+.btn-cancel-order:active,
+.btn-cancel-order[data-bs-theme='dark'],
+.btn-cancel-order[data-bs-theme='dark']:hover,
+.btn-cancel-order[data-bs-theme='dark']:active {
+  background-color: #ff0000 !important;
+  border-color: #ff0000 !important;
+  color: white !important;
+}
+
+.action-btn-cancel-order {
+  max-width: 100%;
+}
+
+.should-wrap {
+  text-wrap: nowrap !important;
+}
+
+@media (max-width: 1280px) {
+  .should-wrap {
+    text-wrap: wrap !important;
+  }
+}

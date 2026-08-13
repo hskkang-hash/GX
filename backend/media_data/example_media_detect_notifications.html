@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Media Detect Notifications Test</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+        color: #e4e4e4;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background-color: #1f2937;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        border-bottom: 2px solid #374151;
+        padding-bottom: 16px;
+      }
+      .header h1 {
+        margin: 0;
+        color: #60a5fa;
+        font-size: 1.5rem;
+      }
+      .controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+      }
+      .btn-primary:hover {
+        background-color: #2563eb;
+      }
+      .btn-success {
+        background-color: #10b981;
+        color: white;
+      }
+      .btn-success:hover {
+        background-color: #059669;
+      }
+      .btn-danger {
+        background-color: #ef4444;
+        color: white;
+      }
+      .btn-danger:hover {
+        background-color: #dc2626;
+      }
+      .btn:disabled {
+        background-color: #4b5563;
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+      .config-section {
+        background-color: #111827;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .config-section h3 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        color: #9ca3af;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .config-input {
+        width: 100%;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        border: 1px solid #374151;
+        border-radius: 6px;
+        background-color: #1f2937;
+        color: #e4e4e4;
+        font-size: 14px;
+      }
+      .config-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+      }
+      .connection-status {
+        font-weight: 600;
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      .connected {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid #10b981;
+      }
+      .connected .status-dot {
+        background-color: #10b981;
+      }
+      .disconnected {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+      }
+      .disconnected .status-dot {
+        background-color: #ef4444;
+        animation: none;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .stat-card {
+        background-color: #111827;
+        padding: 16px;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #60a5fa;
+      }
+      .stat-label {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 4px;
+      }
+      .log-section {
+        background-color: #111827;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .log-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background-color: #0f172a;
+        border-bottom: 1px solid #374151;
+      }
+      .log-header h3 {
+        margin: 0;
+        font-size: 0.875rem;
+        color: #9ca3af;
+      }
+      .log {
+        padding: 16px;
+        height: 400px;
+        overflow-y: auto;
+        font-family: "Fira Code", "Consolas", monospace;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .log-entry {
+        margin-bottom: 4px;
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+      .log-entry:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+      .timestamp {
+        color: #6b7280;
+        margin-right: 8px;
+      }
+      .log-success {
+        color: #10b981;
+      }
+      .log-error {
+        color: #ef4444;
+      }
+      .log-info {
+        color: #60a5fa;
+      }
+      .log-warning {
+        color: #f59e0b;
+      }
+      .notification-card {
+        background: linear-gradient(135deg, #1e3a5f 0%, #1a365d 100%);
+        border-left: 4px solid #3b82f6;
+        padding: 16px;
+        margin: 12px 0;
+        border-radius: 8px;
+        animation: slideIn 0.3s ease;
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      .notification-card.success {
+        background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+        border-left-color: #10b981;
+      }
+      .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .notification-type {
+        font-weight: 600;
+        font-size: 0.875rem;
+      }
+      .notification-time {
+        font-size: 0.75rem;
+        color: #9ca3af;
+      }
+      .notification-msg {
+        font-size: 1rem;
+        margin-bottom: 8px;
+        color: #e4e4e4;
+      }
+      .notification-data {
+        background-color: rgba(0, 0, 0, 0.2);
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-family: "Fira Code", monospace;
+        font-size: 12px;
+        max-height: 150px;
+        overflow-y: auto;
+      }
+      .notification-data-item {
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .notification-data-item:last-child {
+        border-bottom: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎬 Media Detect WebSocket Test</h1>
+        <span id="version">v1.0</span>
+      </div>
+
+      <div class="config-section">
+        <h3>Configuration</h3>
+        <input
+          type="text"
+          id="wsUrl"
+          class="config-input"
+          placeholder="WebSocket URL"
+          value="ws://localhost:8000/ws/media/detect/"
+        />
+        <input
+          type="text"
+          id="username"
+          class="config-input"
+          placeholder="Username (for testing - e.g., admin, test_user)"
+          value="admin"
+        />
+        <small style="color: #9ca3af; display: block; margin-top: -5px; margin-bottom: 10px;">
+          💡 Enter the username that will trigger the detection. The notification will be sent to this user's channel.
+        </small>
+      </div>
+
+      <div id="connectionStatus" class="connection-status disconnected">
+        <span class="status-dot"></span>
+        <span>Disconnected</span>
+      </div>
+
+      <div class="controls">
+        <button id="connectBtn" class="btn btn-success" onclick="connect()">
+          🔌 Connect
+        </button>
+        <button
+          id="disconnectBtn"
+          class="btn btn-danger"
+          onclick="disconnect()"
+          disabled
+        >
+          ❌ Disconnect
+        </button>
+        <button
+          id="pingBtn"
+          class="btn btn-primary"
+          onclick="sendPing()"
+          disabled
+        >
+          🏓 Ping
+        </button>
+        <button class="btn btn-primary" onclick="clearLog()">🗑️ Clear Log</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="msgReceived">0</div>
+          <div class="stat-label">Messages Received</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="msgSent">0</div>
+          <div class="stat-label">Messages Sent</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="detectNotifications">0</div>
+          <div class="stat-label">Detect Notifications</div>
+        </div>
+      </div>
+
+      <div class="log-section">
+        <div class="log-header">
+          <h3>📋 Event Log</h3>
+          <span id="logCount">0 entries</span>
+        </div>
+        <div id="log" class="log"></div>
+      </div>
+    </div>
+
+    <script>
+      class MediaDetectWebSocket {
+        constructor() {
+          this.ws = null;
+          this.receivedCount = 0;
+          this.sentCount = 0;
+          this.detectCount = 0;
+          this.logEntries = 0;
+        }
+
+        connect() {
+          const wsUrl = document.getElementById("wsUrl").value;
+          const username = document.getElementById("username").value;
+
+          // Append username as query parameter for testing
+          let finalUrl = wsUrl;
+          if (username) {
+            finalUrl += (wsUrl.includes("?") ? "&" : "?") + "username=" + username;
+          }
+
+          this.log(`🔄 Connecting to ${finalUrl}...`, "info");
+
+          try {
+            this.ws = new WebSocket(finalUrl);
+
+            this.ws.onopen = () => {
+              this.log("✅ WebSocket connected!", "success");
+              this.updateConnectionStatus(true);
+            };
+
+            this.ws.onmessage = (event) => {
+              this.receivedCount++;
+              this.updateStats();
+              try {
+                const data = JSON.parse(event.data);
+                this.handleMessage(data);
+              } catch (e) {
+                this.log(`📩 Raw message: ${event.data}`, "info");
+              }
+            };
+
+            this.ws.onerror = (error) => {
+              this.log(`❌ WebSocket error: ${error.message || "Unknown error"}`, "error");
+            };
+
+            this.ws.onclose = (event) => {
+              this.log(
+                `🔌 WebSocket closed: code=${event.code}, reason=${event.reason || "No reason"}`,
+                "warning"
+              );
+              this.updateConnectionStatus(false);
+            };
+          } catch (e) {
+            this.log(`❌ Failed to connect: ${e.message}`, "error");
+          }
+        }
+
+        disconnect() {
+          if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+          }
+        }
+
+        send(data) {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify(data));
+            this.sentCount++;
+            this.updateStats();
+            this.log(`📤 Sent: ${JSON.stringify(data)}`, "success");
+            return true;
+          } else {
+            this.log("❌ WebSocket not connected", "error");
+            return false;
+          }
+        }
+
+        sendPing() {
+          this.send({ type: "ping" });
+        }
+
+        handleMessage(data) {
+          switch (data.type) {
+            case "connected":
+              this.log(`🎉 Welcome: ${data.message}`, "success");
+              if (data.subscribed_to) {
+                this.log(
+                  `📂 Subscribed to: ${data.subscribed_to.join(", ")}`,
+                  "info"
+                );
+              }
+              break;
+            case "media_detect":
+              this.handleDetectNotification(data);
+              break;
+            case "pong":
+              this.log(`🏓 Pong received: ${data.message}`, "success");
+              break;
+            case "error":
+              this.log(`❌ Error: ${data.message}`, "error");
+              break;
+            default:
+              this.log(`📩 Message: ${JSON.stringify(data)}`, "info");
+          }
+        }
+
+        handleDetectNotification(data) {
+          this.detectCount++;
+          this.updateStats();
+
+          const logDiv = document.getElementById("log");
+          const timestamp = new Date().toLocaleTimeString();
+
+          // Create notification card
+          const card = document.createElement("div");
+          card.className = "notification-card success";
+          card.innerHTML = `
+            <div class="notification-header">
+              <span class="notification-type">🎬 Media Detect</span>
+              <span class="notification-time">${data.timestamp || timestamp}</span>
+            </div>
+            <div class="notification-msg">${data.msg || "Detection completed"}</div>
+            <div class="notification-data">
+              <strong>Detected files (${data.data?.length || 0}):</strong>
+              ${
+                data.data && data.data.length > 0
+                  ? data.data
+                      .map(
+                        (path) =>
+                          `<div class="notification-data-item">📄 ${path}</div>`
+                      )
+                      .join("")
+                  : "<div>No files</div>"
+              }
+            </div>
+          `;
+          logDiv.insertBefore(card, logDiv.firstChild);
+
+          this.log(
+            `🎬 Detect notification: ${data.msg} - ${data.data?.length || 0} files`,
+            "success"
+          );
+        }
+
+        log(message, type = "info") {
+          const logDiv = document.getElementById("log");
+          const timestamp = new Date().toLocaleTimeString();
+
+          const entry = document.createElement("div");
+          entry.className = `log-entry log-${type}`;
+          entry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+          logDiv.insertBefore(entry, logDiv.firstChild);
+
+          this.logEntries++;
+          document.getElementById("logCount").textContent = `${this.logEntries} entries`;
+        }
+
+        clearLog() {
+          document.getElementById("log").innerHTML = "";
+          this.logEntries = 0;
+          document.getElementById("logCount").textContent = "0 entries";
+        }
+
+        updateConnectionStatus(connected) {
+          const statusDiv = document.getElementById("connectionStatus");
+          const connectBtn = document.getElementById("connectBtn");
+          const disconnectBtn = document.getElementById("disconnectBtn");
+          const pingBtn = document.getElementById("pingBtn");
+
+          if (connected) {
+            statusDiv.className = "connection-status connected";
+            statusDiv.innerHTML =
+              '<span class="status-dot"></span><span>Connected</span>';
+            connectBtn.disabled = true;
+            disconnectBtn.disabled = false;
+            pingBtn.disabled = false;
+          } else {
+            statusDiv.className = "connection-status disconnected";
+            statusDiv.innerHTML =
+              '<span class="status-dot"></span><span>Disconnected</span>';
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+            pingBtn.disabled = true;
+          }
+        }
+
+        updateStats() {
+          document.getElementById("msgReceived").textContent = this.receivedCount;
+          document.getElementById("msgSent").textContent = this.sentCount;
+          document.getElementById("detectNotifications").textContent = this.detectCount;
+        }
+      }
+
+      // Global instance
+      const wsClient = new MediaDetectWebSocket();
+
+      // Global functions for buttons
+      function connect() {
+        wsClient.connect();
+      }
+
+      function disconnect() {
+        wsClient.disconnect();
+      }
+
+      function sendPing() {
+        wsClient.sendPing();
+      }
+
+      function clearLog() {
+        wsClient.clearLog();
+      }
+
+      // Auto-focus on URL input
+      document.getElementById("wsUrl").focus();
+    </script>
+  </body>
+</html>
+
