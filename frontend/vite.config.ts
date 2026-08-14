@@ -23,6 +23,11 @@ export default defineConfig({
     // Polyfill Node.js globals for browser
     'process.env': {},
     global: 'globalThis',
+    // W0-4 — 데모·목업 화면 격리 플래그.
+    // 빌드 시점에 true/false 리터럴로 치환되므로, 프로덕션 빌드
+    // (VITE_ENABLE_DEMO 미설정)에서는 데모 분기 전체가 dead code 로 제거된다.
+    // 라우트 등록도, 번들 청크도 남지 않는다.
+    __DEMO_ENABLED__: JSON.stringify(process.env.VITE_ENABLE_DEMO === 'true'),
   },
   ssr: {
     noExternal: ['react-dom'],

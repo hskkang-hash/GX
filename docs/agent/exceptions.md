@@ -106,7 +106,7 @@ orderassignment·terminal)은 제거했다. 위 7종은 rj-core/dj-core 의존�
 | **status** | active |
 | **저촉** | 정본 스키마 위반 (meta.status_enum) |
 | **사유** | RESUME_NEXT §1-1 이 지시한 tickets.yaml v2.2 정본이 전달되지 않음 |
-| **티켓** | W0-3, W0-2 |
+| **티켓** | W0-3, W0-2, W2-1, W0-4 |
 
 `D-202` 가 도입한 `verify-pending` 을 사용 중이나, 현재 설치된 정본은 v2.0 이고
 `meta.status_enum` 은 `[backlog, ready, in_progress, review, done, blocked, dropped]` 다.
@@ -115,6 +115,6 @@ orderassignment·terminal)은 제거했다. 위 7종은 rj-core/dj-core 의존�
 ### 해소 조건
 
 - [ ] tickets.yaml v2.2 (manifest.total = 62) 수령 및 교체
-- [ ] 교체 후 W0-0/W0-1a/W0-2/W0-3 의 status·evidence 이관
+- [ ] 교체 후 W0-0/W0-1a/W0-2/W0-3/W2-1/W0-4 의 status·evidence 이관
 
 **review_by**: 즉시 — 정본 전달만 되면 해소

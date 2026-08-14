@@ -11,7 +11,9 @@
 # 전체 검사(최초 1회 권장):
 #   pre-commit run --all-files
 
-exclude: '^(frontend/node_modules/|backend/venv/|.*\.(ttf|woff2?|png|jpe?g|gif|ico|pdf|mp4)$)'
+# docs/demo/ 는 W0-4 로 배포 경로에서 걷어낸 보관용 데모 파일이다.
+# 원본 그대로 두는 것이 자료로서의 값이므로 포매팅 훅을 적용하지 않는다.
+exclude: '^(frontend/node_modules/|backend/venv/|docs/demo/|.*\.(ttf|woff2?|png|jpe?g|gif|ico|pdf|mp4)$)'
 
 repos:
   # ── 시크릿 스캔 ─────────────────────────────────────────────────────────
@@ -33,6 +35,16 @@ repos:
         language: system
         pass_filenames: false
         files: '(^|/)\.env'
+
+  # ── W0-4: 데모·목업 화면이 프로덕션 빌드로 새지 않는지 ────────────────────
+  - repo: local
+    hooks:
+      - id: gx-demo-isolation
+        name: 데모·목업 격리 검사 (W0-4)
+        entry: python scripts/check_demo_isolation.py
+        language: system
+        pass_filenames: false
+        files: '^(frontend/(src/|vite\.config\.ts|public/)|.*drone-monitoring\.html$)'
 
   # ── 기본 위생 ───────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks

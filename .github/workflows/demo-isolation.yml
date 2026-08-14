@@ -1,0 +1,60 @@
+# 데모·목업 격리 (W0-4)
+#
+# GS 인증은 미완성 기능이 UI 에 노출되는 것을 결함으로 처리한다.
+# 데모 화면(mockupDemoUi / setup-demo-*)은 VITE_ENABLE_DEMO=true 빌드에서만
+# 살아 있어야 하며, 프로덕션 빌드 산출물에는 청크조차 남지 않아야 한다.
+#
+# 최종 판정은 `npm run build` 산출물 검사지만, 빌드는 사내 private 패키지
+# (rj-core / @gaion/gcs-fe)를 받을 수 있는 망에서만 돈다. 따라서
+#   - 정적 검사(scripts/check_demo_isolation.py)는 항상 돌고
+#   - 번들 검사는 private 레지스트리에 닿는 러너에서만 돈다 (build-guard 잡)
+# 로 나눈다.
+
+name: demo-isolation
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-gate:
+    name: 정적 격리 검사
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python scripts/check_demo_isolation.py
+
+  build-guard:
+    name: 프로덕션 번들에 데모 청크 없음
+    runs-on: ubuntu-latest
+    # 사내 private 패키지에 닿는 러너에서만 실행한다.
+    # self-hosted 러너가 준비되면(W0-6) runs-on 을 그 라벨로 바꾼다.
+    if: ${{ vars.GX_PRIVATE_REGISTRY_AVAILABLE == 'true' }}
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+      - name: 의존성 설치
+        run: npm install --no-audit --no-fund
+      - name: 프로덕션 빌드 (VITE_ENABLE_DEMO 미설정)
+        run: npm run build
+      - name: 데모 청크가 산출물에 없는지 확인
+        run: |
+          set -euo pipefail
+          if grep -rlE 'mockupDemoUi|setup-demo-(file|url)' dist/assets; then
+            echo "::error::프로덕션 번들에 데모 코드가 남아 있습니다 (W0-4 위반)"
+            exit 1
+          fi
+          echo "OK: dist/assets 에 데모 청크 없음"

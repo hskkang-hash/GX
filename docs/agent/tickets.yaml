@@ -320,7 +320,7 @@ tickets:
 - id: W0-4
   phase: R1
   title: "데모·목업 코드 프로덕션 분리"
-  status: ready
+  status: verify-pending
   priority: P0
   effort: S
   kind: ops
@@ -338,6 +338,27 @@ tickets:
   dod: "프로덕션 빌드 산출물에 mockupDemoUi 청크 없음. 해당 URL 직접 접근 시 404."
   verify:
     - "npm run build && ! grep -rl 'mockupDemoUi' dist/assets"
+    - "python scripts/check_demo_isolation.py"
+  evidence: "docs/agent/evidence/W0-4/README.md (정적 격리 PASS + 음성대조 FAIL 재현, Vite 5.4 청크제거 실측 A/B)"
+  blocker: |
+    두 가지가 남아 있다. 코드 결함은 아니다.
+
+    1) env-unavailable — 실제 `npm run build` 미실행.
+       frontend 의 private 의존(rj-core, @gaion/gcs-fe)이 사내 git 서버
+       192.168.0.22:22 를 가리키는데 이 환경에서 도달 불가(TCP 실패, npm install 150초 타임아웃).
+       대체 검증: ① 정적 격리 검사 PASS + 변경 전 트리에서 FAIL 재현
+                  ② 동일 Vite 5.4 최소재현으로 청크 생성 A/B 실측
+                     (플래그 OFF → 청크 0개 / ON → mockupDemoUi 청크 1개)
+       사내망 1줄로 종결: cd frontend && npm install && npm run build &&
+                          ! grep -rlE 'mockupDemoUi|setup-demo-(file|url)' dist/assets
+
+    2) DoD 후반부 "직접 접근 시 404" 판정 요청 (D-203 초안).
+       이 앱은 미등록 경로를 404 로 응답하지 않는다 — nginx try_files → index.html,
+       App.tsx catch-all → 홈 리다이렉트가 기존 전역 정책이다.
+       A안(권고) 라우트 미등록+홈 리다이렉트를 충족으로 인정하고 DoD 문구 정정
+       B안 nginx.conf 에 데모 경로 return 404 (데모 빌드 서빙 시 이미지 이원화 필요)
+       C안 SPA catch-all 을 404 페이지로 교체 (전 앱 동작 변경 — R1 범위 밖)
+  updated_at: "2026-08-14T00:00:00+09:00"
 
 # ===== W1. 자동 보고서 (최우선 가치) =====
 - id: W1-1

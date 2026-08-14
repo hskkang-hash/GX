@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { lazy } from 'react';
+import { createElement, lazy } from 'react';
+import type { ComponentType } from 'react';
 import {
   createBrowserRouter,
   Navigate,
@@ -9,6 +10,7 @@ import {
   RouterProvider,
   useNavigate,
 } from 'react-router-dom';
+import type { RouteObject } from 'react-router-dom';
 import {
   AddMenu,
   AddUser,
@@ -97,9 +99,6 @@ import Infrastruture from './features/infrastructure';
 import DetailInfrastructure from './features/infrastructure/Detail';
 import RegisterInfrastructure from './features/infrastructure/RegisterInfrastructure';
 import MappingStatus from './features/mappingStatus';
-import DashboardPage from './features/mockupDemoUi/Dashboard';
-import DisabillityDashborad from './features/mockupDemoUi/DisabillityDashborad';
-import MonitoringDashboard from './features/mockupDemoUi/MonitoringDashboard';
 import OperationSetting from './features/operationSetting';
 import DetailOperationalData from './features/operationalData/detailOperationalData/DetailOperationalData';
 import ListOperationalData from './features/operationalData/listOperationalData/ListOperationalData';
@@ -155,8 +154,52 @@ const DetailDevice = lazy(
 const EditDeviceForm = lazy(
   () => import('./features/device/editDevice/EditDeviceForm'),
 );
-const DemoPage = lazy(() => import('./features/setupData/DemoPage'));
-const DemoUrlPage = lazy(() => import('./features/setupData/DemoUrlPage'));
+/**
+ * W0-4 — 데모·목업 화면 격리
+ *
+ * `__DEMO_ENABLED__` 는 vite.config.ts 의 define 이 빌드 시점에 `true`/`false`
+ * 리터럴로 치환한다(환경변수 `VITE_ENABLE_DEMO`). 프로덕션 빌드에서는 `false` 로
+ * 접히므로 아래 배열 전체가 dead code 로 제거된다 —
+ * **라우트가 등록되지 않고, mockupDemoUi·setup-demo 청크도 생성되지 않는다.**
+ *
+ * 데모를 켜려면: `VITE_ENABLE_DEMO=true npm run build` (또는 dev 서버 실행 시 동일)
+ */
+const lazyDemoElement = (
+  loader: () => Promise<{ default: ComponentType }>,
+) => createElement(lazy(loader));
+
+const demoRoutes: RouteObject[] = __DEMO_ENABLED__
+  ? [
+      {
+        path: CustomRoutes.setupDemo.path,
+        element: lazyDemoElement(() => import('./features/setupData/DemoPage')),
+      },
+      {
+        path: CustomRoutes.setupDemoUrl.path,
+        element: lazyDemoElement(
+          () => import('./features/setupData/DemoUrlPage'),
+        ),
+      },
+      {
+        path: CustomRoutes.intergratedDashboard.path,
+        element: lazyDemoElement(
+          () => import('./features/mockupDemoUi/Dashboard'),
+        ),
+      },
+      {
+        path: CustomRoutes.monitoringDashboard.path,
+        element: lazyDemoElement(
+          () => import('./features/mockupDemoUi/MonitoringDashboard'),
+        ),
+      },
+      {
+        path: CustomRoutes.disabillityDashboard.path,
+        element: lazyDemoElement(
+          () => import('./features/mockupDemoUi/DisabillityDashborad'),
+        ),
+      },
+    ]
+  : [];
 
 const ListPackaging = lazy(
   () => import('./features/packaging/listPackaging/ListPackaging'),
@@ -498,8 +541,8 @@ function App() {
               element: <ListPartner />,
             },
 
-            { path: CustomRoutes.setupDemo.path, element: <DemoPage /> },
-            { path: CustomRoutes.setupDemoUrl.path, element: <DemoUrlPage /> },
+            // W0-4: 데모·목업 라우트는 VITE_ENABLE_DEMO=true 빌드에서만 등록된다.
+            ...demoRoutes,
             {
               path: CustomRoutes.aimProxy.path,
               element: <AimProxyPage />,
@@ -517,8 +560,6 @@ function App() {
                 />
               ),
             },
-            { path: '/intergrated-dashboard', element: <DashboardPage /> },
-            { path: '/monitoring-dashboard', element: <MonitoringDashboard /> },
             { path: '/delivery-dashboard', element: <DeliveryDashboard /> },
             {
               path: CustomRoutes.deliveryDashboardAnYang.path,
@@ -527,10 +568,6 @@ function App() {
             {
               path: '/surveillance-dashboard',
               element: <SurveillanceDashboard />,
-            },
-            {
-              path: '/disabillity-dashboard',
-              element: <DisabillityDashborad />,
             },
             {
               path: CustomRoutes.waybillTemplate.path,
