@@ -30,22 +30,17 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", default="your-secret-key-here")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
 
-# ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['*', '192.168.88.216'])
+# ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['*', 'host.internal.example'])
 ALLOWED_HOSTS = ["*"]
 
-# CSRF Trusted Origins - Add your server IPs and domains here
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    "http://192.168.0.200:31452",
-    "https://192.168.0.200:31452",
-    "http://192.168.0.200",
-    "https://192.168.0.200",
-    "http://192.168.0.200:31450",
-    "https://192.168.0.200:31450",
-    "https://guardianx-api.gaion.dev",
-    "https://guardianx.gaion.dev",
-]
+# CSRF Trusted Origins
+# W0-10: 배포처 주소는 코드 기본값이 아니라 환경변수로만 들어온다.
+#        기본값은 로컬 개발 2개뿐이다 — 미설정 시 사내 주소로 조용히 붙지 않는다.
+#        배포 origin 목록은 backend/.env.example 의 DJANGO_CSRF_TRUSTED_ORIGINS 참조.
+CSRF_TRUSTED_ORIGINS = env.list(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    default=["http://localhost:8000", "http://127.0.0.1:8000"],
+)
 # CSRF_COOKIE_SAMESITE = 'Lax'  # Thay đổi về Lax để tương thích tốt hơn với cross-site
 # CSRF_COOKIE_SECURE = (not DEBUG)  # Bật trong production
 # SESSION_COOKIE_SAMESITE = 'Lax'  # Thay đổi về Lax để tương thích tốt hơn với cross-site
@@ -194,7 +189,8 @@ DATABASES = {
         "USER": env("DB_USER", default="postgres"),
         # W0-0: 자격증명 기본값 제거 — 미설정 시 즉시 실패시킨다
         "PASSWORD": env("DB_PASSWORD"),
-        "HOST": env("DB_HOST", default="192.168.0.48"),
+        # W0-10: 사내 주소를 코드 기본값으로 두지 않는다 (.example TLD 는 해석되지 않아 즉시 드러난다)
+        "HOST": env("DB_HOST", default="db.internal.example"),
         "PORT": env("DB_PORT", default="5432"),
         "CONN_MAX_AGE": 0,  
         "POOL_OPTIONS": {
@@ -468,7 +464,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 OPENSEARCH_INDEX = env("OPENSEARCH_INDEX", default="drone_logs")
 
 # MinIO Storage Configuration
-MINIO_ENDPOINT = env("MINIO_ENDPOINT", default="192.168.0.200:30090")
+# W0-10: 사내 주소를 코드 기본값으로 두지 않는다
+MINIO_ENDPOINT = env("MINIO_ENDPOINT", default="minio.internal.example")
 # W0-0: 자격증명 기본값 제거 — 미설정 시 즉시 실패시킨다
 MINIO_ACCESS_KEY = env("MINIO_ACCESS_KEY")
 MINIO_SECRET_KEY = env("MINIO_SECRET_KEY")
@@ -643,20 +640,21 @@ CORS_EXPOSE_HEADERS = [
 ]
 
 
-STREAM_URL = env("STREAM_URL", default="http://192.168.0.200:30001")
+# W0-10: 스트림·AI 엔드포인트도 사내 주소를 코드 기본값으로 두지 않는다
+STREAM_URL = env("STREAM_URL", default="http://streaming.internal.example")
 
 # GCS API Configuration
 GCS_APIKEY = env("GCS_APIKEY", default="")
 FLIGHTBRID_URL = env("FLIGHTBRID_URL", default="http://localhost:8009")
 CAPTURE_URL = f"{STREAM_URL}/stream/api/streams/capture"
 RECORD_URL = f"{STREAM_URL}/stream/api/streams/record"
-RTSP_URL = env("RTSP_URL", default="rtsp://192.168.0.200:30554")
+RTSP_URL = env("RTSP_URL", default="rtsp://rtsp.internal.example:8554")
 RTSP_PATH = f"{RTSP_URL}/stream"
 RTSP_PATH_AI = f"{RTSP_URL}/stream"
 
-AI_ANALYSIS_URL = env("AI_ANALYSIS_URL", default="http://192.168.0.200:30018")
-AI_RTSP_PATH = env("AI_RTSP_PATH", default="https://guardianx-ai.gaion.dev/api/process_stream")
-AI_GRPC_URL = env("AI_GRPC_URL", default="192.168.0.102:8000")
+AI_ANALYSIS_URL = env("AI_ANALYSIS_URL", default="https://ai-analysis.internal.example")
+AI_RTSP_PATH = env("AI_RTSP_PATH", default="https://ai.internal.example/api/process_stream")
+AI_GRPC_URL = env("AI_GRPC_URL", default="https://media-ai.internal.example")
 
 
 # Environment
