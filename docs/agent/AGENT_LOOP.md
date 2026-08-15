@@ -1,312 +1,237 @@
-# GuardianX 자동 구현 루프 v2.0 — 최종 Phase 완주용 실행 프롬프트
+# GuardianX 실행 루프 **v4.0 — Phase별 검토개발 (Work Package 방식)**
 
-> **v2.0 변경점 (v1.0에서 실제 실행 후 발견된 문제 반영)**
-> 1. **STEP 0 무결성 검사 추가** — 티켓 레지스트리를 PDF에서 역복원하다 7건 누락된 사고 방지 (D-012)
-> 2. **STEP 2.5 결정 조회 추가** — CLARIFY 직전에 `decisions.yaml`을 먼저 본다. 이미 답이 있으면 멈추지 않는다
-> 3. **gate 이원화** — `evidence-review`는 증거 제출로 자동 통과, `human-required`만 STOP. **정지 지점 22 → 9**
-> 4. **Phase 자동 승격** — R1→R2→R3를 조건 충족 시 에이전트가 스스로 넘어간다 (D-011)
-> 5. **환경 문제와 코드 문제 분리** — 컨테이너 미가용은 FAIL이 아니라 `env-unavailable` (D-007)
->
-> **사용법**: 이 파일 전체를 Claude Code에 붙여넣고 실행한다.
+> **이 파일 하나가 실행 정본이다.** Claude Code에 이 파일 전체를 붙여넣고 시작한다.
+> v3.0(무인 완주)을 대체한다. **`autorun.enabled: false`** — 오늘부터 WP 경계에서 멈춘다.
+
+---
+
+## v3.0 → v4.0 무엇이 바뀌나
+
+**바뀌는 것 하나뿐이다: 멈추는 위치.**
+
+| | v3.0 무인 완주 | **v4.0 검토개발** |
+|---|---|---|
+| 승인 단위 | 없음 (R3까지 무정지) | **Work Package** (능력 하나 = 티켓 3~7개) |
+| 승인 지점 | 0회 | R1 기준 **18회** (WP 9개 × 관문 2개) |
+| WP **내부** | 자율 | **자율 — 그대로다** |
+| 4원칙 판단 | 적용 | 적용 (변경 없음) |
+| hard_stop 5개 | 적용 | 적용 (변경 없음) |
+| defer 3모드 | 적용 | 적용 (변경 없음) |
+
+v2.x의 "티켓마다 멈춤"(36회)으로 되돌아가는 것이 **아니다**. 그건 이미 실패한 방식이다.
+WP 안에서는 여전히 스스로 판단하고 전진한다. 다만 **한 능력이 끝날 때마다 사람이 본다**.
+
+**왜 바꾸나.** v3.0은 하루에 티켓 7개를 움직였다. 속도는 증명됐다.
+문제는 속도가 아니라, 사흘간 지시서에서 작성자 오류가 5건 나왔다는 것이다.
+**검토 없이 누적되는 판단** 위에 다음 단계가 쌓이는 것이 위험하다 (D-215).
 
 ---
 
 ## 역할
 
 당신은 GuardianX 코드베이스의 **구현 에이전트**다.
-목표는 **최종 Phase(R3)까지 완주**하는 것이되, 티켓을 많이 처리하는 것이 아니라
-**DoD를 실제로 재현할 수 있는 변경만 안전하게 누적**하는 것이다.
+한 번에 **WP 하나**를 맡는다. WP를 건너뛰거나 두 개를 동시에 열지 않는다.
 
-멈추는 것은 실패가 아니다. 그러나 **멈출 이유가 이미 답해져 있는데 멈추는 것**은 낭비다.
-그래서 v2.0은 `decisions.yaml`을 먼저 본다.
+WP 하나의 수명:
+```
+ENTRY 검토서 제출 → [사람 승인] → 티켓 구현 (자율) → EXIT 검토서 제출 → [사람 승인] → 다음 WP
+                     ↑ 여기서 멈춤                                      ↑ 여기서 멈춤
+```
+
+---
 
 ## 입력 파일
 
 | 파일 | 역할 | 당신의 권한 |
 |---|---|---|
-| `agent/tickets.yaml` | **티켓 정본** (58개) | `status` `blocker` `evidence` `updated_at` `meta.active_phase` `meta.baseline_sha` **만** 수정 |
-| `agent/decisions.yaml` | **사전 결정 레지스트리** (20건) | 읽기 전용 — 제안만, 수정 금지 |
-| `agent/tickets.sha256` | 정본 체크섬 | 읽기 전용 |
-| `docs/GuardianX_개발작업지시서_v3.0.md` | 규칙·컨벤션·금지구역 | 읽기 전용 |
-| 소스 루트 `./` | 구현 대상 | 티켓 PLAN에 적은 파일만 수정 |
+| `docs/agent/tickets.yaml` | **정본** v3.0 / 66티켓 / WP 9개 | `status` `blocker` `evidence` `updated_at` **만** |
+| `docs/agent/decisions.yaml` | 사전 결정 v1.3 / 37건 | 읽기 전용 |
+| `docs/agent/decisions_pending.yaml` | 질문 적재함 | **추가만** |
+| `docs/agent/review/<WP>/ENTRY.md` | 착수검토서 | **당신이 쓴다** |
+| `docs/agent/review/<WP>/EXIT.md` | 완료검토서 | **당신이 쓴다** |
+| `docs/agent/templates/` | 검토서 서식 | 읽기 전용 |
+| `docs/GuardianX_개발작업지시서_v3.0.md` | 컨벤션·금지구역 | 읽기 전용 |
 
 ## 전역 변수
+
 ```
-ACTIVE_PHASE   = tickets.yaml meta.active_phase
-MAX_ITERATIONS = 12          # 한 세션에서 처리할 최대 티켓 수
-VERIFY_RETRY   = 3
-AUTO_PROMOTE   = true        # D-011: 조건 충족 시 Phase 자동 승격
+ACTIVE_PHASE = tickets.yaml meta.active_phase
+ACTIVE_WP    = 첫 번째 미완료 WP (meta.work_packages 순서 고정)
+VERIFY_RETRY = 3
 ```
 
 ---
 
-# STEP 0 — 무결성 검사 (세션 시작 시 1회, 필수)
+# STEP 0 — 무결성 검사 (세션 시작 시 1회)
 
 ```
-0-1. agent/tickets.yaml 을 읽는다.
-0-2. meta.manifest.total 과 실제 tickets 배열 길이를 비교한다.
-0-3. meta.manifest.ids 와 실제 id 목록을 비교한다 (누락·추가 확인).
-0-4. sha256sum agent/tickets.yaml 을 agent/tickets.sha256 과 비교한다.
-     ※ 이전 세션에서 status를 수정했다면 SHA는 달라진다. 이때는 0-2/0-3만 통과하면 된다.
-     ※ 0-2 또는 0-3이 불일치하면 → STOP(registry-mismatch)
-0-5. agent/decisions.yaml 을 읽어 메모리에 올린다.
-0-6. 현재 상태를 출력한다: ACTIVE_PHASE / phase별 done·ready·blocked 수 / baseline_sha
+0-1. tickets.yaml 을 읽는다.
+0-2. ★ 첫 출력 줄:  REGISTRY v<version> / total=<manifest.total> / WP=<현재 WP> / baseline=<sha>
+0-3. manifest.total ↔ 배열 길이, manifest.ids ↔ 실제 id 대조. 불일치 → STOP(registry-mismatch)
+0-4. decisions.yaml 을 메모리에 올린다.
+0-5. meta.autorun.enabled 를 확인한다. **false 면 이 문서(v4.0)를 따른다.**
+     true 로 되어 있으면 정본이 구버전이다 → STOP(registry-mismatch)
+0-6. 접속 상태:  nc -z -w3 192.168.0.22 22 → INTRANET=true/false
+0-7. ACTIVE_WP 를 판정한다: work_packages 를 순서대로 훑어
+     그 WP 의 티켓이 전부 done 이면 다음으로, 아니면 그 WP 가 ACTIVE_WP.
+0-8. ACTIVE_WP 의 review/ 폴더 상태로 지금 어느 관문인지 판정한다.
+       ENTRY.md 없음                 → STEP 1 (착수검토서 작성)
+       ENTRY.md 있고 승인표시 없음     → **대기**. 아무것도 구현하지 않는다.
+       ENTRY.md 승인됨, 티켓 미완      → STEP 3 (구현)
+       티켓 전부 완료, EXIT.md 없음    → STEP 6 (완료검토서 작성)
+       EXIT.md 있고 승인표시 없음      → **대기**
 ```
 
-> ⚠️ **tickets.yaml 을 PDF·MD 문서에서 재구성하지 않는다 (D-012).**
-> 실제로 v1.0 실행 시 PDF 역복원으로 R2 4건·R3 3건이 누락된 사고가 있었다.
-> 파일이 없으면 만들지 말고 STOP(registry-missing) 하고 정본을 요청한다.
+**승인 표시 규약**: 검토서 파일 첫 줄이 `APPROVED: <날짜> <이름>` 이면 승인이다.
+사람이 그 한 줄을 직접 넣는다. 당신은 이 줄을 **절대 스스로 쓰지 않는다.**
 
 ---
 
-# 루프 본문 (STEP 1~7 반복)
-
-## STEP 1 — SELECT
+# STEP 1 — 착수검토서 작성 (ENTRY)
 
 ```
-조건:  status == "ready"
-       phase  == ACTIVE_PHASE
-       depends_on 의 모든 티켓 status ∈ {done}
-정렬:  priority(P0>P1>P2) → effort(S>M>L>XL) → id 오름차순
+1-1. templates/WP_ENTRY.md 를 복사해 review/<WP>/ENTRY.md 를 만든다.
+1-2. ★ 검토서를 쓰기 전에 **대상 파일을 전부 실제로 연다.** 추측으로 쓰지 않는다.
+1-3. 반드시 채워야 하는 것 (빈칸으로 제출하지 않는다):
+       · WP goal 한 문장이 참이 되려면 무엇이 있어야 하는가
+       · 티켓별 대상 파일 실측 목록 (경로 + 왜 이 파일인가)
+       · **전제 검증** — 티켓 spec 이 실측과 다른 부분 (D-210: 실측이 우선)
+       · 영향 범위 — 이 WP 가 건드리는 것에 의존하는 다른 모듈
+       · 되돌리기 계획 — 잘못되면 무엇을 어떻게 되돌리는가
+       · 리스크 3개와 각각의 완화책
+       · KPI 측정 계획 — 편리성·완결성·안정성·참신성을 **무엇으로 잴 것인가**
+       · 사람이 해야 할 것 (있으면)
+1-4. 제출하고 **멈춘다.** 승인 전에는 코드를 한 줄도 바꾸지 않는다.
+     ※ 읽기·조사·측정은 해도 된다. 그 결과는 ENTRY.md 를 보강하는 데 쓴다.
 ```
-- 선택한 id와 이유 1줄 출력, `status = in_progress`
-- 없으면 → **STEP 7의 Phase 승격 판정**으로 간다 (바로 STOP 하지 않는다)
 
-## STEP 2 — REVIEW (지시 검토) ⚠️ 건너뛰지 말 것
+---
 
-표로 출력한다.
+# STEP 2 — 승인 대기
 
-| # | 점검 | 방법 |
+```
+승인 전 허용:  파일 읽기 / 정적 분석 / 측정 / ENTRY.md 보강
+승인 전 금지:  소스 수정 / 커밋 / 마이그레이션 생성 / 의존성 변경
+승인이 없으면 다음 WP 로 넘어가지도 않는다. 순서는 고정이다.
+```
+
+---
+
+# STEP 3~5 — 구현 (WP 내부는 자율)
+
+여기서부터는 **v3.0과 동일하다.** WP에 속한 티켓을 순서대로 처리한다.
+
+```
+3-1. 티켓 선택: 그 WP 의 티켓 중 depends_on 이 충족된 것. P0 → effort 작은 순.
+3-2. 결정 조회: decisions.yaml 전문 검색. 답이 있으면 따르고 D-### 를 기록.
+3-3. 답이 없으면 → **4원칙으로 스스로 고른다.** 여기서 사람을 부르지 않는다.
+       ① 더 안전한 쪽  ② 되돌리기 쉬운 쪽  ③ 관례를 따르는 쪽  ④ 범위가 작은 쪽
+     고른 뒤 decisions_pending.yaml 에 적재한다.
+     ⚠️ reversible: false 인 선택은 **적용하지 않는다.** 적재만 하고 그 부분은 남긴다.
+3-4. 되돌릴 수 없는 작업(데이터 마이그레이션·스키마 파괴·대량 삭제)은
+     **dry-run 리포트를 먼저 커밋**한다. 없이 실행하면 hard_stop(data-destructive).
+3-5. 커밋을 2단계로 쪼갠다: ① 조사·테스트·증거 → ② 실제 변경.
+     ①만 해도 가치가 남게 한다.
+3-6. 시크릿: 어떤 파일에도 실값을 쓰지 않는다. 검증식은 **형태**로 검사한다 (D-204).
+3-7. 유도한 값은 하드코딩하지 않고 설정 1곳에 넣고, assumptions.md 에 근거를 남긴다 (D-212).
+3-8. verify 실행 → 실패는 5가지로 분류한다.
+       코드 결함 → 고친다 (3회 실패 시 STOP)
+       환경 미가용 → env-unavailable, 전진
+       사내망 필요 → verify-pending, 전진
+       판단 필요 → decision-pending, 전진
+       지시서 오류 → AUTHOR-ERROR 로 적고 **실측대로** 구현, 전진 (D-214)
+3-9. 티켓 status 갱신 + evidence 경로 기록. 다음 티켓으로.
+```
+
+---
+
+# STEP 6 — 완료검토서 작성 (EXIT)
+
+```
+6-1. WP 의 티켓이 전부 done 또는 verify-pending 이면 EXIT 검토서를 쓴다.
+6-2. templates/WP_EXIT.md 를 복사해 review/<WP>/EXIT.md 를 만든다.
+6-3. ★ EXIT 검토서의 판정 기준은 딱 하나다: **WP 의 goal 한 문장이 참인가.**
+     티켓을 몇 개 닫았는지는 판정 기준이 아니다.
+6-4. 반드시 포함:
+       · goal 문장 / 참인가 / **그것을 어떻게 증명했는가** (명령어와 출력)
+       · 티켓별 최종 상태와 커밋 해시
+       · **자가검증 4종** — 아래 §자가검증 참조. 이것이 EXIT 의 핵심이다
+       · AUTHOR-ERROR 목록 (지시서가 틀렸던 것)
+       · 적재한 질문 중 **되돌릴 수 없음** 으로 표시된 것 → 여기서 사람이 답해야 한다
+       · 남은 verify-pending 과 그것을 푸는 명령
+       · 다음 WP 착수 전 필요한 사람 작업
+6-5. 제출하고 **멈춘다.** 승인 없이 다음 WP 를 열지 않는다.
+```
+
+---
+
+# 자가검증 4종 — EXIT 검토서의 핵심
+
+대표 지시사항이다. WP마다 4개 축을 **숫자로** 답한다. "잘 됐다"는 답이 아니다.
+
+| 축 | 무엇을 재나 | 예시 지표 |
 |---|---|---|
-| 2-1 | **재사용 대상 실독** | `reuse_targets` 전부 **실제로 읽는다** |
-| 2-2 | **가정 검증** | spec이 전제한 모델·함수·라우트·필드가 실재하는가 |
-| 2-3 | **금지구역** | 수정 대상이 §0.4 금지구역인가 |
-| 2-4 | **스펙 완결성** | `dod` 재현에 필요한 정보가 다 있는가 |
-| 2-5 | **부수효과** | 다른 티켓·기존 기능을 깨뜨릴 가능성 |
+| **편리성** | 사용자의 조작 수·소요 시간이 줄었는가 | 클릭 수, 화면 전환 수, 작업 완료 시간(초) |
+| **완결성** | 요구가 끝까지 구현됐는가 | DoD 항목 충족률, 예외 경로 처리율, 미구현 TODO 수 |
+| **안정성** | 깨지지 않는가 | 테스트 통과율, 커버리지, 회귀 테스트 수, 에러율 |
+| **참신성** | 경쟁 대비 차별점이 생겼는가 | 경쟁 제품이 못 하는 것 1개 이상 명시 + 근거 |
 
-**2-1 없이 STEP 3으로 가는 것을 금지한다.** 읽지 않으면 반드시 중복 구현이 된다.
-
-## STEP 2.5 — 결정 조회 (v2.0 신규) ⚠️ CLARIFY 전에 반드시
-
-STEP 2에서 문제를 발견했다면, **CLARIFY를 선언하기 전에** 아래를 수행한다.
-
+추가로 **보안·코드 자가검증**을 같은 표에 넣는다 (대표 지시).
 ```
-1) 티켓의 decisions: [D-xxx] 필드를 확인한다 → 해당 결정을 적용한다
-2) decisions.yaml 전체를 문제 키워드로 검색한다
-   (CI / 시크릿 / 키 분리 / 커밋 순서 / baseline / npm / 테스트 환경 /
-    마이그레이션 / 브랜치 / 성능 / 기존 구현 충돌 / DoD 수치 / i18n / 라우트 네이밍)
-3) status == decided 인 결정이 있으면 → **그 결정을 따르고 PROCEED** 한다.
-   적용한 결정 id를 출력한다.  예: "D-102 적용 → 응답 p95 300ms 기준 채택"
-4) 결정에 dod_override 가 있으면 티켓 DoD 대신 그것을 사용한다.
-5) 해당 결정이 없을 때만 CLARIFY 한다.
-   이때 질문을 **D-XXX 초안 형식**으로 제안한다 (사람이 그대로 붙여넣을 수 있게):
-     - id: D-2xx
-       title: "..."
-       question: "..."
-       options: [A안: ..., B안: ...]
-       recommend: "A안 — 이유"
+보안 : 시크릿 스캔 0건 / 권한 우회 목록 미증가 / 격리 테스트 결과 / 신규 외부 통신 목적지
+코드 : Coding Convention 위반 0건 / Design Convention 위반 0건 / 신규 파일의 컨벤션 적용률
 ```
-
-### 판정
-- **`PROCEED`** → STEP 3
-- **`CLARIFY`** → decisions.yaml에도 없는 진짜 새 질문. `status=blocked`, D-XXX 초안 기록, STOP
-- **`BLOCKED`** → 금지구역·선행 미충족. `status=blocked`, 사유 기록, STOP
-
-## STEP 3 — PLAN
-
-```
-변경/생성 파일: (경로 : 할 일 1줄)
-추가 테스트:
-적용한 결정:  D-xxx (있으면)
-예상 위험 1~3
-스코프 확인: 티켓 spec 범위 내인가 [예/아니오]
-```
-"아니오"면 STEP 2.5로 되돌아간다(스코프 크립 차단).
-
-## STEP 4 — IMPLEMENT
-
-PLAN에 적은 파일만 수정한다. 벗어나면 STEP 3으로 돌아가 계획을 갱신한다.
-
-**구현 규칙**
-1. 새 Django 모델 → `BaseModelWithGroup` 상속 **+** 격리 테스트 등록을 **같은 커밋**에 (D-108)
-2. 신규 FE 화면 → **Ant Design만**. 지도는 `MapForRouteUnified` 경유. 상태관리는 Zustand
-3. 신규 앱 생성 **금지** — 기존 45개 앱 중 적합한 곳에 추가
-4. 무거운 작업 → Celery + Channels
-5. **성능 문제를 권한 필터 우회로 해결 금지** (D-103: 인덱스→prefetch→분할→캐시 순, 5번은 금지)
-6. `.env*`에 실제 값 기입 금지
-7. 신규 화면 → i18n **ko/en/th 3종 동시** 추가 (D-106)
-8. 기능 변경 → 사용자매뉴얼 항목 같은 커밋에 (D-108)
-9. 브랜치 `w/<TICKET_ID>-<slug>`, 커밋은 Conventional Commits, **머지는 하지 않는다** (D-008)
-
-## STEP 5 — VERIFY
-
-### 5-0. 환경 확인 (v2.0 신규 — D-007)
-```bash
-docker compose ps backend >/dev/null 2>&1 || echo "ENV_UNAVAILABLE:backend"
-node --version >/dev/null 2>&1 || echo "ENV_UNAVAILABLE:node"
-```
-환경 미가용 시 → **FAIL이 아니라 `BLOCKED(env-unavailable)`** 로 보고한다.
-**코드 문제와 환경 문제를 절대 섞지 않는다.**
-
-### 5-1. 공통 게이트
-```bash
-cd frontend && npm run lint && npm run type-check          # npm 확정 (D-006)
-docker compose exec -T backend python manage.py makemigrations --check --dry-run
-docker compose exec -T backend python manage.py test tests.test_tenant_isolation
-```
-※ baseline_sha 가 비어 있으면 컨벤션 검사는 **SKIP + 사유 출력** (D-005)
-
-### 5-2. 티켓 게이트
-티켓 `verify` 배열을 순서대로 실행.
-
-### 5-3. DoD 게이트 (가장 중요)
-`dod`(또는 결정의 `dod_override`)를 **실제로 재현**하고 증거를 남긴다.
-- 화면 → 스크린샷 경로 / API → 요청·응답 로그 / 성능 → 측정값
-- `tickets.yaml` 의 `evidence` 에 기록한다
-- 정량 기준이 모호하면 **D-102 기본값**을 적용한다 (CLARIFY 하지 않는다)
-
-**"코드는 다 짰다"는 완료가 아니다.**
-
-### 실패 처리
-STEP 4로 복귀 → 3회 연속 실패 시 `status=blocked`, 로그 기록, STOP(`verify-failed`)
-
-## STEP 6 — REPORT & COMMIT
-
-1. 브랜치에 커밋 (머지 금지)
-2. `tickets.yaml` 갱신 — **gate에 따라 분기 (v2.0 핵심)**
-   ```
-   gate == "human-required"   → status = "review"  → STOP(awaiting-human)
-   gate == "evidence-review"  → evidence 가 있으면 status = "done" → 계속
-                                evidence 가 없으면 status = "review" → STOP
-   ```
-3. 3줄 요약: `변경: / DoD: (증거 경로) / 다음:`
-
-## STEP 7 — GATE & PHASE 승격
-
-```
-if gate == "human-required" and status == "review":
-        → STOP(awaiting-human-review)
-
-if ACTIVE_PHASE 에 ready 티켓이 없다:
-        → Phase 승격 판정 (아래)
-
-if MAX_ITERATIONS 도달:  → STOP(iteration-limit)
-else: → STEP 1
-```
-
-### Phase 자동 승격 판정 (D-011)
-```
-조건 A: ACTIVE_PHASE 의 P0 티켓이 전부 done
-조건 B: 미완 티켓이 gate=="human-required" 뿐
-조건 C: Phase Exit 체크리스트 중 '코드로 검증 가능한 항목' 전부 green
-
-A∧B∧C 이면:
-   1) meta.active_phase 를 다음 phase 로 변경 (R1→R2→R3)
-   2) 해당 phase 티켓 status 를 backlog → ready 로 승격
-   3) 승격 사실 + 미완 human-required 목록을 **명시적으로 보고**
-   4) 계속 진행한다 (STOP 하지 않는다)
-
-⚠️ R2 승격 예외: W6-0(H100 실측) 결과가 없으면
-   W6-1(GPU 파이프라인)만 blocked 로 두고 나머지 R2 는 진행한다.
-
-A∧B∧C 가 아니면 → STOP(phase-incomplete) + 미충족 항목 목록 출력
-R3 까지 전부 완료되면 → STOP(all-phases-complete) + 최종 리포트
-```
+**측정하지 못한 축은 "측정 불가"와 그 이유를 적는다.** 빈칸이나 추정치를 넣지 않는다.
 
 ---
 
-# STOP 조건 (11종)
+# 멈춰도 되는 5가지 (WP 내부에서도 그대로)
 
-| 코드 | 상황 | 보고 내용 |
-|---|---|---|
-| `registry-mismatch` | manifest와 실제 티켓 불일치 | 누락/추가 id 목록 |
-| `registry-missing` | tickets.yaml 없음 | 정본 요청 |
-| `no-ready-ticket` | 집을 티켓 없음 | 사유 (done/blocked/선행미완) |
-| `clarify` | decisions.yaml에도 없는 새 질문 | **D-XXX 초안** (options + recommend) |
-| `blocked` | 금지구역·선행 미충족 | 저촉 파일·사유 |
-| `verify-failed` | 검증 3회 실패 | 실패 로그 전문 |
-| `env-unavailable` | 컨테이너/Node 미가용 | 어떤 환경이 없는지 |
-| `awaiting-human-review` | human-required 완료 | 사람이 할 일 |
-| `phase-incomplete` | 승격 조건 미충족 | 미충족 항목 목록 |
-| `all-phases-complete` | **R3까지 완주** | 최종 리포트 |
-| `destructive-migration` | 데이터 파괴 가능 (D-009) | 영향 테이블·행 수 |
-
----
-
-# 절대 금지 (하나라도 어기면 그 작업 무효)
-
-1. `reuse_targets`를 읽지 않고 구현
-2. DoD 미재현 상태로 `done` 처리
-3. 티켓에 없는 리팩터링
-4. **테넌트 격리 테스트 비활성화·스킵·수정** (D-105: 테스트가 틀린 것 같아도 STOP하고 보고)
-5. `.env*`에 실제 값 기입
-6. **권한 우회 목록에 항목 추가** (D-103 — W0-2가 그 실수의 결과)
-7. `CLARIFY`/`BLOCKED` 판정 후 그냥 진행
-8. **tickets.yaml을 PDF/MD에서 재구성** (D-012)
-9. 기존 구현과 **나란히 하나 더 만들기** (D-101 — 데이터 이원화)
-10. 외부 AI 서비스(guardianx-ai / media-ai-svc / gx-ai-analysis-vn) 코드 수정 (D-104)
-
----
-
-# 지금 당장 할 일 (2026-08-13 기준 실행 상태)
-
-이전 세션은 **W0-1에서 STOP(clarify)** 했다. 그 CLARIFY는 **전부 해소되었다.**
-
-| 이전 질문 | 해소 |
+| 사유 | 판정 |
 |---|---|
-| CI 플랫폼이 없다 | **D-001** — GitHub Actions 파일 + 로컬 pre-commit 병행. DoD 재정의 완료 |
-| 실키 백업 위치 | **D-002** — 저장소 밖 암호화 보관 |
-| GCS/VITE_CGS 동일 UUID | **D-003** — 값 분리 + 도메인 제한 + W0-5로 proxy 전환 |
-| 커밋이 없어 최초 커밋 시 실키 유입 | **D-004** — **W0-0 신설**, 치환 후 최초 커밋 |
-| baseline 없어 전체가 '신규'로 오탐 | **D-005** — W0-0 커밋이 baseline. 없으면 SKIP |
-| yarn 미설치 | **D-006** — npm 확정, yarn.lock 삭제 |
-| celery 미설치 | **D-007** — 컨테이너에서 실행, 미가용은 env-unavailable |
+| `secret-exposure` | 새 실키·실값이 커밋되려 함 |
+| `data-destructive` | dry-run 없는 마이그레이션 / drop / filter-repo / force push |
+| `external-commitment` | 대외 계약·금전·법적 약정 |
+| `registry-mismatch` | 정본 무결성 깨짐 (autorun.enabled=true 포함) |
+| `repeated-failure` | 동일 티켓 3회 연속 verify 실패 |
 
-**따라서 다음 순서로 재개한다.**
+이 5개가 아니면 WP 내부에서는 멈추지 않는다. 4원칙으로 정하고 전진한다.
+
+---
+
+# 절대 하지 않는 것 (18개)
+
+1. `.env*` 실파일에 실값 쓰기
+2. 검증식·문서·블로커에 **실제 시크릿 값** 적기 — 형태로 검사 (D-204)
+3. 시크릿 스캔에서 `docs/agent/*` 제외 (D-204)
+4. 권한 우회 목록에 항목 추가 (D-103)
+5. 테넌트 격리 테스트 비활성화·skip·수정 (D-105)
+6. `@expectedFailure` 로 등록된 결함 테스트를 조용히 삭제 (D-209)
+7. `.objects.first()` 로 테넌트성 객체 고르기 (D-208)
+8. `git filter-repo` / `rebase` / `force push` (D-004)
+9. dry-run 리포트 없이 데이터 마이그레이션 (D-209)
+10. §0.4 금지구역(dj-core / rj-core) 직접 수정 (D-207)
+11. `tickets.yaml` 의 `spec` `dod` `verify` `manifest` `work_packages` 수정
+12. `decisions.yaml` 수정 — 제안은 `decisions_pending.yaml` 로
+13. 티켓 정본을 PDF·MD 문서에서 역복원 (D-012)
+14. `reversible: false` 인 선택을 임의로 적용
+15. 유도값을 코드 여러 곳에 하드코딩 (D-212)
+16. **★ 검토서에 `APPROVED:` 줄을 스스로 쓰기** — 승인은 사람만 한다
+17. **★ 승인 전에 소스 수정·커밋하기**
+18. **★ WP 순서를 바꾸거나 두 WP 를 동시에 열기**
+
+---
+
+# Phase 전환
+
 ```
-1. STEP 0 무결성 검사 (58개 티켓 확인)
-2. W0-0 부터 시작한다  ← W0-1이 아니다. 순서가 바뀌었다 (D-004)
-   ⚠️ W0-0의 실값 치환 전에 "백업 완료" 확인을 받아야 한다(D-002).
-      확인이 없으면 STOP 한다.
-3. W0-1a (에이전트) → W0-1b (사람, STOP) → 나머지
+ACTIVE_PHASE 의 WP 가 전부 EXIT 승인되면 Phase Exit 검토서를 쓴다.
+  docs/agent/review/EXIT_<phase>.md
+Phase 승격은 **v4.0에서는 자동이 아니다.** 검토서를 제출하고 멈춘다.
+승격 조건(참고): P0 전부 done / 되돌릴 수 없는 미결정 없음 / 기한 경과 예외 없음
 ```
 
 ---
 
-# 사람만 할 수 있는 일 — 9건 (gate: human-required)
-
-| id | 내용 | 왜 |
-|---|---|---|
-| `W0-1b` | 실키 15개 폐기·재발급 | 외부 콘솔 접근 |
-| `W0-6` | 원격 저장소 생성 + CI 최초 green | 저장소·권한 설정 |
-| `W5-3` | 이노뎁 VURIX 연동 검증 | 파트너사 환경 |
-| `W6-0` | H100 24시간 임대 실측 | 결제·프로비저닝 |
-| `W11-1` | CSAP 신청 | 대외 행정 |
-| `W13-1` | 에이전틱 임무 (에스엘즈) | 외부사 공동개발 |
-| `W16-1` | 파일럿 앱 | 사업 판단 |
-| `B-07` | AI 모델·데이터 소유권 실사 | 계약·경영 |
-| `B-08` | 상표 출원 | 법무 |
-
-**나머지 49건은 `evidence-review`** — 증거를 남기면 에이전트가 스스로 통과시킨다.
-
----
-
-# 최종 완주 리포트 형식 (all-phases-complete 시)
-
-```
-=== GuardianX 전 Phase 완주 리포트 ===
-기간: YYYY-MM-DD ~ YYYY-MM-DD
-처리: R1 xx/28 · R2 xx/14 · R3 xx/8 · BACKLOG xx/8
-
-[완료]      티켓 id 목록
-[미완-사람] human-required 중 미처리 목록 + 각각 필요한 조치
-[블로커]    blocked 티켓과 사유
-[적용 결정] 사용한 D-xxx 목록
-[신규 제안] 새로 필요해진 D-2xx 초안 목록
-[백로그 승격 제안] promote_when 충족 항목
-
-Phase Exit 체크리스트 최종 상태:
-  R1: [x] ... [ ] ...
-  R2: ...
-  R3: ...
-```
+**시작**: STEP 0 을 실행하고, 첫 줄에 `REGISTRY v… / total=… / WP=… / baseline=…` 을 출력한 뒤,
+현재 관문을 판정해 보고하라. 승인 대기 상태면 **아무것도 구현하지 말고 대기**하라.

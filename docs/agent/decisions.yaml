@@ -1,5 +1,5 @@
 # ============================================================================
-# GuardianX 사전 결정 레지스트리 (Decision Registry) v1.0
+# GuardianX 사전 결정 레지스트리 (Decision Registry) v1.4  — 40건 (D-220까지)
 # ----------------------------------------------------------------------------
 # 목적: 에이전트가 STEP 2에서 CLARIFY로 멈추는 것을 줄인다.
 #       "사람만 답할 수 있는 질문"을 미리 답해 둔 파일이다.
@@ -11,8 +11,8 @@
 #  - 에이전트는 이 파일을 수정하지 않는다. (제안만 하고 사람이 확정)
 # ============================================================================
 meta:
-  version: "1.0"
-  updated_at: "2026-08-13"
+  version: "1.4"
+  updated_at: "2026-08-13T21:00"
   status_enum: [decided, pending, superseded]
 
 decisions:
@@ -295,3 +295,368 @@ decisions:
       - 새 Django 모델 + 격리 테스트 등록
       - 기능 변경 + 사용자매뉴얼 항목 갱신
       - 신규 화면 + i18n 3종 키
+
+# --- 2026-08-13 W0-0 완료 보고 대응으로 확정된 결정 (D-201~D-205) ---------
+- id: D-201
+  title: "npm peer 의존 충돌 해결 방식"
+  status: decided
+  raised_by: "agent (W0-0 blocker 초안)"
+  question: "npm install 시 peer dependency 충돌이 난다. 어떻게 푸는가?"
+  decision: |
+    **A안 확정 — legacy-peer-deps 를 저장소 설정으로 고정한다.**
+      프로젝트 루트에 .npmrc 를 만들고 커밋한다:
+        legacy-peer-deps=true
+      개별 명령에 --legacy-peer-deps 를 붙이는 방식은 금지한다(사람마다 다르게 실행되어 lock 이 흔들린다).
+    ⚠️ 이것은 충돌을 **덮는** 조치이지 해결이 아니다.
+       특히 react-text-mask 는 React 19 와 공식 호환이 아니므로 **실동작 검증이 필수**다 → W0-7 신설.
+       W0-7 에서 깨지는 것이 확인되면 react-imask 또는 자체 포맷터로 교체를 별도 승격한다.
+  rationale: |
+    이 저장소는 React 19 + MUI 7 + AntD 5 + Bootstrap 이 혼재한다(B-04 정리 대상).
+    지금 peer 트리를 정상화하려 들면 R1 일정이 통째로 무너진다.
+    덮고 가되, 덮은 사실과 검증 티켓을 명시적으로 남긴다.
+  affects: [W0-0, W0-7, W0-8]
+
+- id: D-202
+  title: "사내망 의존 패키지 — 오프라인 작업 정책 (verify-pending 모드)"
+  status: decided
+  raised_by: "agent (W0-0 DoD③ 실패: 192.168.0.22 SSH timeout)"
+  question: |
+    frontend(rj-core, @gaion/gcs-fe)와 backend(dj-core)가 모두 사내 git(192.168.0.22)에 의존한다.
+    사외에서는 npm install 도 docker build 도 불가능하다. 루프를 어떻게 계속 도는가?
+  decision: |
+    **3단 정책으로 확정한다.**
+      1) 티켓에 `requires_intranet: true|false` 를 표기한다.
+         에이전트는 SELECT 시 현재 접속 상태를 확인하고, 오프라인이면
+         requires_intranet=false 티켓을 우선 선택한다.
+      2) **verify-pending 모드를 허용한다.**
+         requires_intranet=true 인데 오프라인이면 → **구현은 하고 검증만 보류**한다.
+           status = "verify-pending"
+           evidence 에 "검증 보류 사유 + 사내망 접속 시 실행할 명령" 을 기록
+           → 에이전트는 STOP 하지 않고 다음 티켓으로 전진한다.
+         사내망 접속 시 verify-pending 티켓을 일괄 검증해 done 으로 올린다.
+      3) 중기 해소: **W0-9** — 사내망에서 개발 컨테이너 이미지를 1회 빌드해 배포하면
+         사외에서도 백엔드 검증이 가능해진다. 프론트는 W0-8 의 lock + node_modules 캐시로 해소.
+    ⚠️ verify-pending 은 **done 이 아니다.** Phase Exit 판정에서 done 으로 세지 않는다.
+  rationale: |
+    '환경이 없어서 못 한다'와 '코드가 틀려서 못 한다'는 완전히 다른 문제인데,
+    이것을 구분하지 않으면 루프가 첫 프론트엔드 티켓에서 영구 정지한다.
+    구현은 오프라인에서도 90% 가능하다. 막히는 것은 마지막 검증뿐이다.
+  affects: [전 티켓, AGENT_LOOP STEP 1/5/6]
+
+- id: D-203
+  title: "내부 토폴로지 노출 (사설 IP·내부 도메인)"
+  status: decided
+  raised_by: "agent (v2에서 제기, v3 미결정으로 2회 보류)"
+  question: "192.168.0.48(DB) · 192.168.0.200(TURN) · *.gaion.dev · 192.168.0.22(사내 git) 을 어떻게 하나?"
+  decision: |
+    **정리하되 기능은 건드리지 않는다.** W0-10 으로 처리한다.
+      정리 대상 : .env.example 2개, settings.py 기본값, 문서 내 하드코딩
+                  → 플레이스홀더로 치환 (db.internal.example / turn:turn.internal.example:3478)
+      유지 대상 : package.json 의 사내 git URL (기능상 필수)
+                  docker-compose 의 서비스명 기반 호스트 (컨테이너 네트워킹)
+    ⚠️ 사설 IP 는 외부에서 라우팅되지 않으므로 즉시 위험은 낮다.
+       그러나 공공 보안성 검토·GS 심사에서 '내부 구성 노출'로 지적될 수 있어 정리한다.
+       이것은 보안 사고 대응이 아니라 **정보 위생** 작업이다. 우선순위 P1.
+  affects: [W0-10]
+
+- id: D-204
+  title: "티켓 verify 정규식에 실제 시크릿 값 금지 (정본 자체의 결함 정정)"
+  status: decided
+  raised_by: "agent (W0-0 재검사에서 tickets.yaml:65 발견)"
+  question: |
+    tickets.yaml 의 W0-0 verify 명령이 탐지용 정규식에 실제 DB 비밀번호와 MinIO 시크릿을
+    문자열로 담고 있었다. 그 결과 베이스라인 커밋에 실값 2개가 들어갔다.
+  decision: |
+    **이것은 작업지시서 작성자(Cowork)의 오류다. 즉시 정정한다.**
+      규칙: 탐지 정규식은 **값이 아니라 형태**로 쓴다.
+        ✗ grep -E '(DB_PASSWORD=<실제값>|<실제 MinIO 시크릿>)'   ← 이 줄 자체가 유출이다
+        ✓ grep -E '^(DB_PASSWORD|MINIO_SECRET_KEY)=(?!CHANGE_ME|your-)'
+        ✓ grep -E '=(AIza|[0-9a-f]{32})'
+      적용: W0-0 verify 를 패턴 기반으로 교체 완료 (tickets.yaml v2.2)
+      후속: 이미 커밋된 2개 문자열은 W0-1b 재발급으로 무효화된다. 히스토리 세탁은 하지 않는다(D-004).
+    또한 시크릿 스캔 대상에서 **docs/agent/* 를 제외하지 않는다.**
+      정본·증거 파일도 스캔 대상이다. 실제로 blocker 인용문에 실값이 들어갈 뻔했다.
+  rationale: "에이전트가 '내 수정 권한 밖'이라 판단해 손대지 않은 것은 규칙상 정확한 행동이었다. 규칙을 지킨 결과 결함이 남았으므로, 규칙이 아니라 원본을 고친다."
+  affects: [W0-0, 전 티켓의 verify 작성 규칙]
+
+- id: D-205
+  title: "W0-0 완료 판정 — package-lock 을 분리한다"
+  status: decided
+  raised_by: "agent (W0-0 STOP(evidence-partial))"
+  question: "DoD③ package-lock.json 생성이 사내망 없이는 불가능하다. W0-0 을 done 으로 올릴 수 있나?"
+  decision: |
+    **W0-0 은 done 으로 올린다. package-lock 은 W0-8 로 분리한다.**
+      W0-0 새 DoD③ : 루트 yarn.lock 부재 + .npmrc 에 legacy-peer-deps=true 커밋
+      W0-8 (신규)   : package-lock.json 생성·커밋 — human-required, requires_intranet
+    이유: W0-1a(시크릿 게이트)·W0-2(권한 우회 제거)·W0-3(격리 테스트)·W0-4(데모 분리)는
+          package-lock 과 아무 관련이 없다. lock 하나 때문에 4개 티켓을 막는 것은 설계 오류다.
+    ⚠️ 단 W0-8 이 done 되기 전에는 프론트 빌드가 필요한 티켓이 verify-pending 에 머문다(D-202).
+  affects: [W0-0, W0-8, W0-1a, W0-2, W0-3, W0-4]
+
+- id: D-206
+  title: "delivery 2곳 예외 승인분의 사후 처리"
+  status: decided
+  raised_by: "cowork (W0-0 보고의 '예외 승인분' 언급)"
+  question: "W0-0에서 delivery 2곳을 '예외 승인분'으로 정리했는데, 계속 예외로 두는가?"
+  decision: |
+    **예외는 기한이 있어야 예외다.** 아래를 요구한다.
+      1) 예외 항목을 docs/agent/evidence/W0-0/exceptions.md 에 기록한다
+         (파일·라인 / 왜 예외인지 / 언제까지 / 해소 조건)
+      2) 기한은 **R1 코드 동결(2026-12) 이전**으로 한다
+      3) 기한 내 미해소 시 R1 Exit 체크리스트에서 자동으로 걸리게 한다
+    예외 자체를 금지하지는 않는다. 추적되지 않는 예외를 금지한다.
+  affects: [W0-0, R1 Exit]
+
+# ===========================================================================
+# 2026-08-13 2차 — W0-1a/W0-2/W0-3 실행 보고 반영 (D-207 ~ D-214)
+# 에이전트가 올린 질문 1건(D-207)과, 에이전트가 실측으로 찾아낸 결함 3건에 대한 결정
+# ===========================================================================
+
+- id: D-207
+  title: "dj-core 쪽 BaseModelWithGroup 의 우회 목록 처리 — 격리의 주 통제를 옮긴다"
+  status: decided
+  raised_by: "agent (W0-2 REVIEW 중 실측)"
+  question: |
+    common/base_model.py 의 목록을 고쳐도 order/terminal 등 8개 앱은 영향받지 않는다.
+    실제 차단선은 dj-core 안에 있고 그곳은 §0.4 금지구역이다. A/B/C 중 무엇인가?
+  decision: |
+    **C안을 주 통제로 승격한다. A안은 사실 확인용으로 병행한다. B안은 R1에서 하지 않는다.**
+
+    판단의 근거는 A/B/C의 우열이 아니다. **전제가 틀렸다는 점**이다.
+    나는 "격리는 ORM 매니저 한 지점에서 보장된다"고 가정하고 W0-2를 P0로 올렸다.
+    그 가정 자체가 틀렸다. 고칠 수 없는 남의 코드에 격리를 의존하게 설계한 것이 오류다.
+    격리는 **우리가 통제 가능한 지점**에 있어야 하고, 그 지점은 뷰·서비스 레이어다.
+
+      C안 → W0-14 (신규, P0, L) : tenant_filters 를 mixin/dependency 로 기본값화하고,
+             **미적용 엔드포인트를 테스트로 탐지**한다. 이게 진짜 차단선이다.
+      A안 → W0-11 (신규, P0, S) : 사내망에서 dj-core 실물 확인. 코드는 고치지 않는다.
+             목록이 실재하면 §0.4 예외승인 요청을 pending 에 올린다.
+      B안 → BACKLOG. R1 회귀 위험이 이득보다 크다. R2에서 재검토.
+      W0-2 → 범위 축소. '이 저장소가 소유한 목록의 선례 제거'로 격하. DoD 에서
+             '전체 격리 테스트 green' 을 떼어 W0-14 로 옮긴다.
+
+    그리고 **테스트 레벨을 바꾼다.** ORM 매니저를 테스트하면 어느 베이스를 쓰는지에
+    결과가 좌우된다. HTTP 엔드포인트 레벨로 테스트하면 베이스가 무엇이든 실제 노출을 잡는다.
+    W0-3 은 이 방식으로 다시 쓴다.
+  affects: [W0-2, W0-3, W0-11, W0-14, B-09]
+
+- id: D-208
+  title: "UserGroup.objects.first() — 우회가 아니라 오배정이다"
+  status: decided
+  raised_by: "agent (덤으로 발견)"
+  decision: |
+    **P0 결함으로 취급한다. W0-12 신규.**
+    handover_document_service.py:608 · handover_notice_service.py:96 이 임의 group 을 고른다.
+    테넌트가 하나뿐이라 지금까지 드러나지 않았을 뿐이고, 두 번째 고객이 붙는 순간 오배정이 난다.
+    원칙: **group 은 요청 컨텍스트에서만 온다.** 서비스 함수에 group 을 명시 인자로 받게 하고
+          기본값을 두지 않는다. 넘길 group 이 없으면 예외를 던진다.
+          "아무거나 하나 고르는" 폴백 경로를 코드에 남기지 않는다.
+    저장소 전역에서 같은 패턴(.objects.first() 로 테넌트성 객체 선택)을 훑어 함께 고친다.
+  affects: [W0-12, W0-3]
+
+- id: D-209
+  title: "Q(created_by__isnull=True) 전역 노출 — 조사 → 표기 → 백필 → 제거 순서를 지킨다"
+  status: decided
+  raised_by: "agent (test_null_created_by_is_not_globally_visible 실패 예측)"
+  decision: |
+    **에이전트의 예측이 맞다. 이 테스트는 실패하는 것이 정상이고, 실패가 산출물이다. W0-13 신규.**
+    생성자가 없다는 이유로 전 테넌트에 공개하는 것은 격리 구멍이다.
+    다만 **조건을 먼저 지우면 기존 레코드가 아무에게도 안 보인다.** 순서를 강제한다.
+      ① 영향 조사(읽기 전용) → evidence/W0-13/impact.md 커밋
+      ② "생성자 없음"이 아니라 "시스템 소유(is_system)"를 근거로 공개하도록 표기 도입
+      ③ 데이터 마이그레이션으로 기존 null 레코드 백필 — **dry-run 리포트 선행 필수**
+      ④ 그 다음에야 필터에서 created_by__isnull 을 제거
+    ③은 되돌리기 어렵다. dry-run 없이 실행하는 것은 hard_stop 사유(data-destructive)다.
+  affects: [W0-13, W0-3]
+
+- id: D-210
+  title: "W0-3 모델 목록 9종 중 4종 오류 — 목록을 없애고 자동 수집으로 바꾼다"
+  status: decided
+  raised_by: "agent (실측: Handover 모델 부재, Order/Device/ReportTemplate 는 groups M2M 없음)"
+  decision: |
+    **또 작성자(Cowork)의 오류다.** 나는 소스를 훑고 모델명을 손으로 옮겨 적었고 4개를 틀렸다.
+    정정만 하면 같은 실수가 반복된다. **손으로 적는 방식 자체를 폐기한다.**
+      BaseModelWithGroup(양쪽 베이스) 의 서브클래스를 apps.get_models() 로 자동 수집해
+      그 결과를 테스트 대상으로 삼는다. 목록을 사람이 관리하지 않는다.
+    부수 효과가 더 크다 — dj-core 쪽 모델도 자동 포함되고, 새 모델 누락이 구조적으로 불가능해진다.
+    의도적 제외만 EXEMPT 에 사유와 함께 남기고, 그 목록에는 증가 금지 테스트를 건다.
+    ※ 일반 규칙으로 승격: **지시서에 열거된 식별자(모델·필드·경로)는 근사치다.**
+      에이전트는 실측과 다르면 실측을 따르고, 차이를 REPORT 에 적는다. 물어보지 않아도 된다.
+  affects: [W0-3, 전 티켓의 식별자 열거 규칙]
+
+- id: D-211
+  title: "정본 버전 불일치(EX-003) 사후 처리 — 벌하지 않는다"
+  status: decided
+  raised_by: "agent (kit 미전달로 v2.0(58티켓)으로 진행, W0-10 을 티켓 없이 수행)"
+  decision: |
+    **전달이 늦은 것은 작성자 책임이다. 에이전트가 한 판단은 전부 인정한다.**
+      · v2.0 기준으로 진행한 작업 = 유효. 되돌리지 않는다.
+      · 티켓 없이 수행한 W0-10 작업 = v2.4 의 W0-10 에 사후 편입. 증거만 evidence/W0-10/ 로 옮긴다.
+      · status_enum 에 없는 verify-pending 을 쓴 것 = v2.2부터 정식 값. 소급 인정.
+    재발 방지는 규칙이 아니라 절차로 한다:
+      **STEP 0 에서 meta.version 과 manifest.total 을 REPORT 첫 줄에 항상 찍는다.**
+      작성자는 그 숫자를 보고 정본이 갔는지 확인한다. 에이전트가 확인할 일이 아니다.
+  affects: [EX-003, W0-10, AGENT_LOOP STEP 0]
+
+- id: D-212
+  title: "유도된 값(Target.api_base 등)은 verify-pending 으로 표시하고 전진한다"
+  status: decided
+  raised_by: "agent (config/urls.py 로부터 API 경로를 유도했으나 실경로 미확인)"
+  decision: |
+    **유도한 값으로 구현하되, 유도했다는 사실을 코드가 아니라 증거에 남기고 전진한다.**
+      · 코드에는 유도값을 상수가 아닌 설정(config/env)으로 넣는다. 나중에 한 줄로 고쳐진다.
+      · evidence/<ticket>/assumptions.md 에 "무엇을 무엇으로부터 유도했는지"를 적는다.
+      · 상태는 verify-pending. 사내망 접속 시 assumptions.md 목록만 훑어 일괄 확인한다.
+    금지: 유도값을 코드 여기저기 하드코딩하는 것. 확인 시 고칠 지점이 흩어진다.
+  affects: [W0-3, W2-*, 전 티켓]
+
+- id: D-213
+  title: "최종 Phase 완주 정책 — STOP 대신 defer 한다"
+  status: decided
+  raised_by: "cowork (대표 지시: 최종 phase까지 자동 개발)"
+  decision: |
+    **에이전트는 사람의 답을 기다리지 않는다. 질문을 적재하고 다음 티켓으로 간다.**
+
+    멈춰도 되는 사유는 5개뿐이다 (meta.autorun.hard_stop_only):
+      secret-exposure / data-destructive / external-commitment / registry-mismatch / repeated-failure
+    이 5개가 아니면 무조건 아래 셋 중 하나로 처리하고 **전진한다**:
+      verify-pending   — 구현 끝, 검증만 사내망 대기 (D-202)
+      decision-pending — 판단이 필요함. decisions_pending.yaml 에 적재 + 티켓의
+                         default_if_unanswered 를 적용해 구현. 답이 오면 그때 조정.
+      env-unavailable  — 환경 미가용. 코드 문제 아님 (D-007)
+
+    **default_if_unanswered 원칙** — 지시서에 명시가 없을 때 에이전트가 고를 기본값:
+      1. 더 안전한 쪽 (권한은 좁게, 노출은 적게, 삭제보다 보존)
+      2. 되돌리기 쉬운 쪽 (설정 > 코드 > 스키마 > 데이터)
+      3. 기존 관례를 따르는 쪽 (저장소에 이미 있는 패턴)
+      4. 범위가 작은 쪽
+    이 4개로도 못 고르면 그때가 decision-pending 이 아니라 진짜 defer 다.
+
+    **체크포인트**: 5티켓마다 REPORT_<phase>.md 를 갱신한다. 8연속 defer 면 진행 불가로
+    판단하고 체크포인트 보고 후 대기한다. 그 전에는 사람을 부르지 않는다.
+  affects: [AGENT_LOOP v3.0, 전 티켓]
+
+- id: D-214
+  title: "에이전트가 작성자의 오류를 찾은 경우의 처리"
+  status: decided
+  raised_by: "cowork (W0-0/W0-2/W0-3 에서 연속 3회 발생)"
+  decision: |
+    지금까지 에이전트가 찾아낸 작성자 오류: 실값 정규식(D-204) / 우회목록 전제(D-207) /
+    모델명 4건(D-210). 3연속이다. 이건 사고가 아니라 **패턴**이므로 절차로 흡수한다.
+      · spec·verify 정본은 여전히 에이전트가 고치지 않는다 (이 규칙은 유지한다).
+      · 다만 **STOP 하지 않는다.** REPORT 에 `AUTHOR-ERROR` 항목으로 적고,
+        D-210 의 일반 규칙(실측 우선)에 따라 실측대로 구현한 뒤 전진한다.
+      · 작성자는 REPORT 의 AUTHOR-ERROR 를 보고 정본을 고친다.
+    근거: 에이전트를 멈춰 세우는 비용이 오류를 늦게 고치는 비용보다 크다.
+    단 **hard_stop_only 5개에 해당하는 오류**(예: 지시서가 실키를 커밋하라고 시킴)는 예외 없이 STOP.
+  affects: [AGENT_LOOP v3.0, D-204, D-207, D-210]
+
+# ===========================================================================
+# 2026-08-14 — 실행 모드 전환 (D-215 ~ D-217)
+# ===========================================================================
+
+- id: D-215
+  title: "무인 완주(autorun) 중단 → Phase별 검토개발로 전환"
+  status: decided
+  raised_by: "대표 지시 (2026-08-14)"
+  decision: |
+    **`autorun.enabled: false`. 오늘부터 Work Package 경계에서 반드시 멈춘다.**
+
+    v4.0(무인 완주)은 하루 만에 티켓 7개를 움직였다. 속도는 증명됐다.
+    문제는 속도가 아니라 **누적된 판단을 아무도 안 본 채로 다음 단계가 그 위에 쌓인다**는 것이다.
+    지금까지 사흘간 내가 만든 지시서에서 작성자 오류가 5건 나왔다. 검토 없는 누적은 위험하다.
+
+    다만 **티켓 단위로 매번 승인받는 방식으로 되돌리지는 않는다.** 그건 v2.x 의 실패였다.
+      · 승인 단위 = **Work Package (WP)** — 한 가지 능력을 완결하는 3~7개 티켓 묶음
+      · WP 당 관문 2개 — **착수검토(ENTRY)** 와 **완료검토(EXIT)**. 둘 다 사람 승인 필수
+      · WP **내부에서는 여전히 자율**이다. 4원칙으로 정하고 전진하고, 근거는 적재한다
+      · hard_stop 5개는 그대로 유지한다
+    R1 은 9개 WP → 승인 지점 18개. 티켓 단위(36회)의 절반이면서, 무인(0회)보다 안전하다.
+  affects: [AGENT_LOOP v4.0, meta.autorun, meta.review]
+
+- id: D-216
+  title: "Work Package 구성 원칙 — 티켓이 아니라 능력 단위로 묶는다"
+  status: decided
+  raised_by: "cowork"
+  decision: |
+    WP 는 **완결된 능력 하나**여야 한다. "파일 몇 개 고치기"는 WP 가 아니다.
+    판정 기준: **그 WP 만 끝나도 대표가 고객에게 보여줄 수 있는 것이 하나 생기는가?**
+      WP-1 "테넌트 격리 완결" → "남의 데이터에 도달 불가함을 테스트로 증명" — 보여줄 수 있다 ○
+      "base_model.py 수정"                                                  — 보여줄 수 없다 ✗
+    각 WP 는 goal 에 **검증 가능한 한 문장**을 적는다. EXIT 검토는 그 문장이 참인지만 본다.
+    순서는 고정한다. WP 순서를 바꾸려면 그 자체가 대표 승인 사항이다.
+  affects: [meta.work_packages]
+
+- id: D-217
+  title: "작성자 오류 2건 추가 — 티켓 제목 오기 (W2-1 / W6-2)"
+  status: decided
+  raised_by: "cowork (자체 발견, 실측 대조 중)"
+  decision: |
+    **또 내 오류다. 이번엔 지시서가 아니라 보고서였다.**
+      v4.0 문서와 진행보고에서
+        W2-1 을 "GPU 파이프라인 CPU 병목 제거" 로 적었다 → 실제는 **"DetectionEvent 모델 신설"**
+        W6-2 를 "Design Convention 토큰화(ISA-101)" 로 적었다 → 실제는 **"파이프라인 인터페이스 계약 고정"**
+      정본에는 올바르게 적혀 있었고, 요약 문서를 쓰면서 기억으로 옮기다 틀렸다.
+      에이전트는 정본을 보고 일했으므로 **구현에는 영향이 없다.** 대표 보고가 틀렸을 뿐이다.
+    재발 방지: **요약·보고 문서의 티켓 제목은 tickets.yaml 에서 기계적으로 추출해 넣는다.**
+    기억으로 옮겨 적지 않는다. D-210 과 같은 원인(수기 전사)이고 같은 처방(자동 추출)이다.
+  affects: [보고 문서 작성 절차]
+
+# ===========================================================================
+# 2026-08-14 2차 — W0-4 실행 보고 반영 (D-218 ~ D-220)
+# ===========================================================================
+
+- id: D-218
+  title: "W0-4 DoD '직접 접근 시 404' — A안 채택, DoD 문구를 고친다 (에이전트 제안 'D-203 초안'의 확정본)"
+  status: decided
+  raised_by: "agent (W0-4 REPORT — 홈 리다이렉트 vs 404)"
+  question: |
+    데모 라우트·번들 제거 후 데모 경로로 직접 접근하면 404 가 아니라 홈으로 리다이렉트된다
+    (nginx try_files → index.html, App.tsx catch-all — SPA 전역 정책). DoD 는 404 를 요구한다.
+  decision: |
+    **A안 채택 — 홈 리다이렉트를 충족으로 인정하고, DoD 문구를 고친다. 코드 변경 0.**
+    W0-4 의 목적은 "데모 코드가 프로덕션 번들에 실리지 않는 것"이지 HTTP 상태코드가 아니다.
+    에이전트가 증명한 것이 정확히 그 목적이다 — 플래그 OFF 청크에 데모 문자열 0, 번들 별도 분리.
+      · SPA 의 catch-all 은 전역 정책이고, 데모 하나 때문에 그 정책을 바꾸는 것(B·C안)은
+        범위 초과이며 되돌리기 어려운 방향이다. 4원칙 ②④ 위반.
+      · W0-4 새 DoD 문구: "플래그 OFF 빌드의 청크에 데모 식별자 0건 + 데모 라우트가
+        라우터 테이블에 부재(홈 폴백 허용)". 404 요구는 삭제한다.
+    ※ 에이전트가 A안을 권고하고 코드 변경 없이 기다린 판단이 옳았다.
+  affects: [W0-4]
+
+- id: D-219
+  title: "환경 블로커 해소가 W3-1 보다 먼저다 — 단 WP-0 검토서를 통해서"
+  status: decided
+  raised_by: "agent (W0-4 REPORT — 'W3-1 로 계속 갈지, 사내망에서 verify-pending 4건 먼저 종결할지')"
+  question: |
+    npm install 이 사내 private 의존(rj-core@192.168.0.22) 에 막혀 실제 빌드가 안 되고
+    Docker 미기동으로 백엔드도 못 띄운다. verify-pending 이 4건(W0-2·W0-3·W2-1·W0-4)이고
+    그 그물에 W1-1·W1-4·W2-2·W4-1 도 걸린다. 지금 착수 가능한 티켓은 W3-1 뿐이다.
+  decision: |
+    **verify-pending 종결이 먼저다. W3-1 은 지금 하지 않는다.**
+    이유는 세 가지다.
+      1) 실행 모드가 바뀌었다 (D-215). W3-1 은 WP-5 소속이고, WP 순서는 고정이다.
+         WP-0 의 goal 자체가 "떠 있는 verify-pending 전부 종결"이다.
+      2) 검증 없는 코드가 이미 4건 쌓였다. 그 위에 W3-1(라우트 6→1 통합, 파급 큰 변경)을
+         더 쌓으면, 사내망 검증에서 앞의 4건 중 하나라도 깨질 때 원인 분리가 안 된다.
+      3) 네가 W0-4 에서 찾은 사실 — mockupDemoUi 가 대시보드 라우트 3개를 실제 점유 —
+         은 W3-1 의 전제를 바꾼다(정리 대상 6개 중 3개가 목업). 이 발견은 WP-5 ENTRY 의
+         '전제 검증' 항목에 들어가야 하고, 그 검토를 거친 뒤 W3-1 을 하는 것이 맞다.
+    실행: AGENT_LOOP v4.0 에 따라 **WP-0 착수검토서(ENTRY)** 를 작성하고 멈춘다.
+          ENTRY 에는 '사내망 1회 방문으로 4건을 일괄 종결하는 실행 계획'(명령 목록 순서 포함)을
+          담는다. 사람이 사내망 일정을 승인하면 그 계획대로 일괄 실행한다.
+  affects: [WP-0, WP-5, W3-1]
+
+- id: D-220
+  title: "에이전트 제안 결정 ID 는 가안이다 — 정본 ID 는 작성자가 부여한다"
+  status: decided
+  raised_by: "cowork (에이전트가 'D-203 초안' 을 제안했으나 D-203 은 이미 존재 — ID 충돌)"
+  decision: |
+    에이전트가 결정 초안을 제안할 때 붙이는 번호는 **가안**으로 취급한다.
+    이번 건: 에이전트의 'D-203 초안(404 처리)' → 정본에는 **D-218** 로 등재했다.
+    (D-203 은 '내부 토폴로지 정리'로 이미 사용 중이었다. 에이전트 손의 구판 정본에는
+    D-203 까지 없었으므로 에이전트 잘못이 아니라 **정본 전달 지연의 부작용**이다 — D-211 과 동일 원인.)
+    규칙:
+      · 에이전트는 제안 시 P-<티켓>-<n> (pending ID) 만 쓴다. D-번호는 제안하지 않는다.
+      · 작성자가 확정하며 D-번호를 부여하고, pending 항목에 확정 ID 를 역기입한다.
+  affects: [decisions_pending 운영 규칙]

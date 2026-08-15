@@ -1,0 +1,140 @@
+# ============================================================================
+# GuardianX 질문 적재함 (Pending Decisions)
+# ----------------------------------------------------------------------------
+# 목적: 에이전트가 STOP 하는 대신 질문을 여기에 쌓고 전진하기 위한 파일 (D-213).
+#
+# 규칙
+#  - 에이전트는 이 파일에 **추가만** 한다. 기존 항목을 지우거나 고치지 않는다.
+#  - 작성자(Cowork)가 답하면 decisions.yaml 로 D-### 를 발행하고,
+#    여기 항목의 status 를 answered 로 바꾼다. 이것도 작성자가 한다.
+#  - reversible: false 인 항목은 **기본값을 적용하지 않는다.** 적재만 하고 남겨둔다.
+#    되돌릴 수 없는 것을 임의로 정하는 것은 defer 가 아니라 월권이다.
+#
+# 항목 형식
+#  - id: P-<티켓ID>-<n>
+#    ticket:         어느 티켓에서 나왔는가
+#    question:       한 줄 질문
+#    options:        고려한 선택지
+#    chosen_default: 4원칙으로 고른 기본값 (reversible=false 면 비워둔다)
+#    rationale:      4원칙 중 무엇을 적용했는가
+#    reversible:     true/false
+#    blocks_dod:     true 면 티켓 status = decision-pending
+#    status:         open / answered
+# ============================================================================
+meta:
+  version: "1.0"
+  updated_at: "2026-08-13"
+
+pending:
+  - id: P-W0-2-1
+    ticket: W0-2
+    raised_at: "2026-08-14"
+    context: "WP-0 ENTRY 작성 중 (§3-5)"
+    question: >-
+      W0-2 의 dod ③ 이 "W0-14 가 done 또는 verify-pending" 인데,
+      W0-14 는 WP-1 소속이고 현재 ready 다. WP 순서 고정 규칙(금지 #18) 때문에
+      에이전트가 W0-14 를 WP-0 으로 당겨올 수 없다. W0-2 를 WP-0 에서 어떻게 닫는가.
+    options:
+      - "A: dod ③ 을 WP-1 로 이월하고, W0-2 는 ①②(목록 제거 + BypassListTest) 로 닫는다"
+      - "B: W0-14 를 WP-0 으로 편입한다 (WP 구성 변경 — 대표 승인 사항 D-216)"
+      - "C: W0-2 를 WP-1 로 이동시킨다"
+    chosen_default: "A"
+    rationale: >-
+      4원칙 ④(범위가 작은 쪽) + ③(관례). ③은 후속 티켓의 '존재 확인'일 뿐이고
+      실질 통제는 W0-14 의 산출물이다. WP 구성 변경(B)·WP 이동(C)은 둘 다 대표 승인 사항이라
+      에이전트가 고를 수 있는 선택지가 아니다.
+    reversible: true
+    blocks_dod: true
+    status: open
+
+  - id: P-W0-10-1
+    ticket: W0-10
+    raised_at: "2026-08-14"
+    context: "WP-0 ENTRY 작성 중 (§3-6)"
+    question: >-
+      W0-10 은 정본에 done 이지만, v3.1 이 dod 를 넓히면서(settings.py 기본값 포함)
+      미충족 상태가 됐다. backend/config/settings.py 에 사설 IP·내부 도메인이 13곳 남아 있다
+      (CORS 허용목록 8, DB_HOST, MINIO_ENDPOINT, STREAM/RTSP/AI 4). status 를 되돌리고
+      치환하는 것이 맞는가, 그리고 치환 범위는 어디까지인가.
+    options:
+      - "A: status 를 ready 로 정정하고 13곳 전부 env 기본값 플레이스홀더로 치환 (CORS 는 env.list)"
+      - "B: 코드 기본값은 두고 배포 환경의 .env 로만 덮어쓴다 (문서만 갱신)"
+      - "C: done 을 유지하고 새 dod 는 별도 티켓으로 뺀다"
+    chosen_default: "A"
+    rationale: >-
+      4원칙 ①(더 안전한 쪽). 기본값이 코드에 남아 있으면 .env 누락 시 조용히 사내 주소로
+      붙는다 — 외부 납품 빌드에서 특히 위험하다. 다만 기동 실패 위험이 있어
+      ENTRY §6-3 대로 사내망 방문 이후 오프라인 작업으로 순서를 미뤘다.
+    reversible: true
+    blocks_dod: true
+    status: open
+
+  - id: P-W0-4-1
+    ticket: W0-4
+    raised_at: "2026-08-14"
+    context: "WP-0 ENTRY 작성 중 (§3-1)"
+    question: >-
+      D-218 이 W0-4 의 dod 를 "플래그 OFF 청크에 데모 식별자 0건 + 라우터 테이블 부재(홈 폴백 허용)"
+      로 교체하기로 결정했으나, v3.1 tickets.yaml 의 dod 텍스트는 여전히 옛 문구
+      ("해당 URL 직접 접근 시 404")다. 어느 것을 실효 DoD 로 보는가.
+    options:
+      - "A: D-218 문구를 실효 DoD 로 삼아 검증하고, 정본 반영은 작성자에게 요청한다"
+      - "B: 정본 텍스트대로 404 를 구현한다 (D-218 이 기각한 B·C안 회귀)"
+    chosen_default: "A"
+    rationale: >-
+      4원칙 ③(관례를 따르는 쪽) — decisions.yaml 이 결정의 정본이고 tickets.yaml 의 dod 는
+      아직 반영되지 않은 상태다. dod 필드는 에이전트 수정 권한 밖(금지 #11)이라 고치지 않고
+      차이를 기록한다 (D-214 AUTHOR-ERROR 처리).
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  # --- WP-0 §11 오프라인 작업 중 적재 (2026-08-15) ---
+  - id: P-W0-3-1
+    ticket: W0-3
+    raised_at: "2026-08-15"
+    context: "WP-0 §11-2 (@expectedFailure 3건 등록) 수행 중"
+    question: >-
+      ENTRY §11-2 는 예상 실패 3건을 test_tenant_isolation.py 에 @expectedFailure 로
+      등록하라고 했다. 그런데 (a) 그 파일 머리말이 "skip·xfail·비활성화 금지"를 명시하고,
+      (b) 절대금지 #5 가 격리 테스트 수정을 금지하며, (c) D-209 는 "이 테스트는 실패하는
+      것이 정상이고 실패가 산출물"이라고 결정했다. @expectedFailure 는 그 산출물을
+      스위트 집계에서 지운다. 코드에 표기하는 것이 맞는가, 문서 등록부가 맞는가.
+    options:
+      - "A: 코드를 고치지 않고 evidence/W0-3/coverage.md §3 등록부로 표기한다"
+      - "B: ENTRY 대로 @expectedFailure 를 코드에 건다 (파일 머리말·금지 #5 예외 승인 필요)"
+      - "C: 표기하지 않고 실패를 그대로 둔다 (등록부도 만들지 않는다)"
+    chosen_default: "A"
+    rationale: >-
+      4원칙 ①(더 안전한 쪽)·④(범위가 작은 쪽). A 는 격리 테스트 파일을 한 줄도 건드리지
+      않으면서 "실패가 분류되어 기록된다"(ENTRY §9)를 충족한다. B 는 실패 건수를 0으로
+      보이게 만들어 금지 #5 가 막으려던 상태와 결과가 같아진다.
+      덧붙여 실측 결과 예상 실패는 3건이 아니라 **1건만 확정**이다 —
+      test_registry_covers_all_isolatable_models(미등록 11종 정적 확인),
+      test_null_created_by_is_not_globally_visible(대상이 dj-core 매니저라 판정 불가),
+      test_unisolated_set_has_not_grown(통과 예상). 3건 전부에 표기를 걸었다면
+      뒤 둘이 unexpected success 로 스위트를 깨뜨렸을 수 있다.
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  - id: P-W0-10-2
+    ticket: W0-10
+    raised_at: "2026-08-15"
+    context: "settings.py 치환 중 발견 (범위 밖)"
+    question: >-
+      backend/config/settings.py L629 의 CORS_ALLOW_ALL_ORIGINS = True 때문에
+      CORS_ALLOWED_ORIGINS 허용목록이 현재 아무 효력이 없다. 운영 배포에서 전 origin 을
+      허용한다는 뜻이다. W0-10 의 DoD(사설 IP·내부 도메인) 범위 밖인데 어느 티켓에서 다루는가.
+    options:
+      - "A: WP-2(릴리스 위생)의 신규 소항목으로 등재한다"
+      - "B: W0-2/W0-3 계열 보안 티켓에 붙인다"
+      - "C: 의도된 설정이므로 그대로 둔다"
+    chosen_default: "A"
+    rationale: >-
+      4원칙 ④(범위가 작은 쪽). 지금 끄면 프런트엔드 개발 서버·고객사 origin 이 즉시 막혀
+      회귀 범위가 넓다. WP-2 goal("외부에 내보낼 수 있는 빌드")과 정확히 같은 문제다.
+      이번 WP 에서는 기록만 하고 코드는 건드리지 않았다.
+    reversible: true
+    blocks_dod: false
+    status: open

@@ -184,3 +184,44 @@ App.tsx  { path: '*', element: <Navigate to={home} replace /> }   → 홈으로 
 - `mockupDemoUi/DeliveryDashboard`·`SurveillanceDashboard` (라우트 없는 사문 코드 2디렉터리) — 삭제는 별건
 - 운영 DB 메뉴가 목업 대시보드 3개를 가리키는 경우의 시드 정리 → **W3-1**
 - `frontend/nginx.conf` 와 `Dockerfile`(`npm run preview`)의 배포 경로 이원화 — R1 범위 밖
+
+---
+
+## 6. ★ D-218 새 DoD 기준 재대조 (WP-0 §11-5 · 2026-08-15 추가)
+
+D-218 이 DoD 를 교체했다. **정본 `tickets.yaml` 의 `dod` 텍스트는 아직 옛 문구("404")이며**
+(`dod` 는 에이전트 수정 권한 밖 — 금지 #11), 아래가 **실효 DoD 기준의 대조표**다.
+
+| | 옛 DoD (tickets.yaml 현재 문구) | **새 DoD (D-218 · 실효)** |
+|---|---|---|
+| 판정 대상 | 빌드 산출물 + **HTTP 상태코드** | 빌드 산출물 + **라우터 테이블** |
+| 요구 | mockupDemoUi 청크 없음 · 직접 접근 시 **404** | 플래그 OFF 청크에 **데모 식별자 0건** + 데모 라우트가 라우터 테이블에 **부재**(홈 폴백 허용) |
+| 코드 변경 | nginx/catch-all 수정 필요(B·C안) | **0** |
+
+### 6-1. 항목별 충족 판정
+
+| # | 새 DoD 소항목 | 판정 | 증거 |
+|---|---|---|---|
+| 1 | 데모 라우트가 **라우터 테이블에 부재** (플래그 OFF) | ✅ **충족** | §2 — `App.tsx` 정적 import 3건 제거, 라우트 5건이 `__DEMO_ENABLED__` 삼항 안의 `...demoRoutes` 로만 등록. §3-1 정적 검사 PASS + 음성 대조 FAIL 확인 |
+| 2 | **홈 폴백 허용** | ✅ **충족** | §4 — `App.tsx` catch-all → `<Navigate to={home}>`. D-218 이 이것을 충족으로 인정 |
+| 3 | 플래그 OFF **청크에 데모 식별자 0건** | ⚠️ **간접 실증까지만** | §3-2 — 동일 Vite 5.4 최소 재현에서 [A] 0건 / [B] 2건. **이 저장소 산출물로는 미측정** |
+| 4 | (게이트 유효성) 플래그 ON 이면 청크가 나온다 | ⚠️ **간접 실증까지만** | §3-2 [B] |
+
+**즉 새 DoD 4항목 중 2항목이 코드로 확정되었고, 2항목은 `npm install` 하나에 묶여 있다.**
+옛 DoD 였다면 여기에 "nginx 404 구현"이라는 **코드 과제가 하나 더** 붙었을 것이다 —
+D-218 의 실익이 그것이다.
+
+### 6-2. 남은 2항목을 푸는 명령 (ENTRY §10-① 과 동일)
+
+```bash
+cd frontend && npm install && npm run build
+grep -rlE 'mockupDemoUi|setup-demo-(file|url)' dist/assets || echo "PASS: 데모 식별자 0건"   # ③
+VITE_ENABLE_DEMO=true npm run build >/dev/null && \
+  grep -rlE 'mockupDemoUi' dist/assets && echo "OK: 게이트 유효"                              # ④
+```
+
+### 6-3. 작성자에게 요청
+
+`tickets.yaml` W0-4 의 `dod` 를 D-218 문구로 교체해 주십시오.
+현재는 **정본이 이미 폐기된 기준을 담고 있어**, 다음 사람이 읽으면 nginx 404 를 구현하게 된다.
+(적재: `decisions_pending.yaml` P-W0-4-1)
