@@ -132,7 +132,7 @@ MIDDLEWARE = [
     'core.middleware.connection_management.DatabaseConnectionMiddleware',  # Database connection management
     "partner.middleware.PartnerAuthMiddleware",  # Disabled: Partner auth handled in CustomJWTAuth
     'core.logger.middleware.CoreLoggingMiddleware',
-    
+
     # 'core.middleware.remove_group_field.GroupFeatureMiddleware',
 ]
 
@@ -192,13 +192,13 @@ DATABASES = {
         # W0-10: 사내 주소를 코드 기본값으로 두지 않는다 (.example TLD 는 해석되지 않아 즉시 드러난다)
         "HOST": env("DB_HOST", default="db.internal.example"),
         "PORT": env("DB_PORT", default="5432"),
-        "CONN_MAX_AGE": 0,  
+        "CONN_MAX_AGE": 0,
         "POOL_OPTIONS": {
             "POOL_SIZE": 10,           # Giảm pool size
             "MAX_OVERFLOW": 20,       # Giảm overflow
             "RECYCLE": 1800,           # Recycle sau 5 phút
             "TIMEOUT": 30,            # Giảm timeout
-            "PRE_PING": True,  
+            "PRE_PING": True,
         },
         "OPTIONS": {
             "connect_timeout": 10,
