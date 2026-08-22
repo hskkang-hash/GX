@@ -255,6 +255,32 @@ tickets:
   phase: R1
   title: "실키 폐기·재발급 (사람 수행)"
   status: ready
+  updated_at: "2026-08-22T13:20:00+09:00"
+  evidence: docs/agent/evidence/W0-1b/live-keys-found.md (실키 53개 발견 · 금고 격리 완료)
+  blocker: |
+    [2026-08-22 · 긴급도 상향 — 대표 승인] 이 티켓의 성격이 바뀌었다.
+    예방적 위생 작업 → **살아 있는 운영 키 53개 평문 노출에 대한 사고 대응.**
+
+    발견: RUNBOOK_로컬기동 STEP 1 인벤토리 중
+      C:\GuardianX\GuardianX build\...\gx-build\config\gx_be.env  실값 38/39
+                                                    \gx_fe.env   실값 15/15
+    티켓 spec 이 지목한 15개 항목이 전부 여기 실값으로 있었다.
+    11GB 폴더는 통째로 복사·전달되기 쉬운 형태다.
+
+    조치(완료): C:\GuardianX-vault\secrets-20260210\ 로 격리. 삭제는 하지 않았다 —
+      docker-compose 가 env_file 로 참조(L128·L156·L183)해 지우면 기동이 깨진다.
+      원위치에 README_MOVED.md(경로·복원절차·폐기시점)를 남겼다. 값은 읽지 않았다(D-204).
+
+    ★ 티켓이 몰랐던 항목 1건: DJANGO_SECRET_KEY.
+      세션·CSRF·토큰 서명의 뿌리다. 나머지 15개를 다 바꿔도 이것이 남으면 세션 위조가 된다.
+      → 재발급 대상 15 → 16 으로 늘려야 한다 (dod 수정은 대표 승인 사항).
+
+    ★ VITE_* 5개는 브라우저 번들에 실려 이미 배포됐다. 공개된 것으로 간주하고
+      금고 격리와 무관하게 무조건 폐기한다.
+
+    ★ 키를 바꾸기 전에 노출 범위부터 본다 — 이 폴더가 언제부터 어디에 복사됐는지,
+      퇴사자 반출이 있었는지. 이미 쓰이고 있었다면 재발급은 대응의 시작이지 끝이 아니다.
+      이것은 사람만 판정할 수 있다.
   priority: P0
   effort: S
   kind: ops
