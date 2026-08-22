@@ -575,47 +575,47 @@ tickets:
 - id: W0-13
   phase: R1
   title: "created_by 없는 레코드의 전 테넌트 노출 차단"
-  status: verify-pending
-  updated_at: "2026-08-15T19:20:00+09:00"
-  evidence: docs/agent/evidence/W0-13/impact.md (① 정적 범위 확정 · 행수 집계 스크립트)
+  status: decision-pending
+  updated_at: "2026-08-22T13:40:00+09:00"
+  evidence: docs/agent/evidence/W0-13/impact.md §5 (①  완료 · DB 없이 산출) · dump_scan.txt
   blocker: |
-    [2026-08-15 · WP-1 오프라인 진척] ① 의 정적 부분 완료. ②③④ 는 대기.
-    ① 결함 위치 확정: common/base_model.py 5곳 (156·158·167·189·193).
-      156·158 은 요청 캐시 히트 경로라 189·193 의 조건이 복제돼 있다 —
-      **한 곳만 고치면 캐시가 살아 있는 요청에서 결함이 그대로 남는다.**
-      spec 이 "필터"를 단수로 적은 자리이며, 이 중복이 실제 위험이다.
-    ★ AUTHOR-ERROR 급 전제 차이 (D-214): **이 수정의 실효 범위는 17종 중 2종(11.8%)이다.**
-      CustomManagerGroup 은 objects 로 common.base_model.BaseModelWithGroup 에만 붙고,
-      그것을 상속하는 모델은 dashboard.Dashboard · dashboard.DashboardPanel 둘뿐이다.
-      나머지 15종은 core.base(dj-core · §0.4) 매니저를 지난다 —
-        · MeasurableModelWithGroup 4종도 core.base 상속이라 영향 없음
-          (FlightLog · SurveyMission · SurveillanceProfile · Terminal)
-        · core.base 직접 상속 11종은 미확인 (W0-11 확인항목 2)
-      → 티켓을 spec 대로 완수해도 노출의 88%는 남는다. 그 사실을 DoD 가 담지 못한다.
-    ② is_system 도입을 앞당기지 않았다 (4원칙 ②). 두 이유:
-      (a) BaseModel 급 컬럼 추가는 45개 앱에 마이그레이션이 퍼지는데
-          makemigrations --check 를 돌릴 수 없다 (dj-core 부재).
-      (b) **설계 자체가 W0-11 결과에 달려 있다.** dj-core 매니저에도 같은 OR 가 있으면
-          is_system 은 A·B 양쪽에 있어야 하고 A 는 §0.4 라 뷰 통제(W0-14) 우회 설계가 된다.
-          없으면 B 에만 넣으면 된다. 두 설계의 작업량이 배 이상 차이 난다.
-    ★ 백필 주의 (③): operation_settings 의 3곳이 created_by IS NULL 을 이미
-      "시스템 기본 설정"의 뜻으로 _base_manager 로 조회한다. 그 레코드를 특정 group 으로
-      귀속시키면 기본 설정 조회가 깨진다. 백필 예외 목록에 반드시 넣을 것.
-    범위 밖 발견: delivery/services/status_mapping_service.py 가 7곳에서
-      "CustomManagerGroup 이 자동 필터링한다"고 주석하지만 delivery 모델은 core.base 를
-      쓴다. 이 저장소의 매니저는 그 코드에 관여하지 않는다 — 주석이 가리키는 보호가
-      실재하는지 미확인. §0.4 라 미수정, W0-11 결과에 따라 판정.
-    → 순서: W0-11(방문 10분) → W0-13 ①행수 → ② 설계 확정 → ③④.
+    [2026-08-22 · ① 완료, 그리고 티켓의 전제가 무너졌다]
+
+    ① 행수 집계 완료 — **DB 를 띄우지 않고 냈다.** §4 의 django 스크립트 대신
+      운영 DB 덤프(02_database_gx_deploy.sql)를 직접 파싱했다. COPY 형식의 NULL 은 \N 이다.
+      scripts/scan_dump_created_by.py · 이 방식이 오히려 정확하다 —
+      objects 로 세면 세는 행위가 CustomManagerGroup 필터를 지나 결함이 결함을 숨긴다.
+
+    ★ 결과: 테넌트성 표 159개 · created_by IS NULL **29,971 / 45,499 = 65.9%**
+      · 행 전체가 NULL 인 표 56개 · NULL 이 1건 이상인 표 81개
+      · 1위 surveillance_missionwaypoint 8,877행 **전량** — 비행 경로에 소유자가 하나도 없다
+      · orders_deliveryevent 3,033 전량 · delivery_...approvalchecklist 3,013 전량
+      · stream_monitors_streammonitor 15/39 · stream_monitors_aimodel 4/4
+
+    ★ created_by IS NULL 은 예외 상태가 아니라 **기본 상태에 가깝다.** 65.9%.
+      그리고 dj-core base.py L430 의 Q(group=…) | Q(created_by__isnull=True) 가
+      그 3분의 2를 전 테넌트에 연다 (W0-11 §5-2).
+
+    ★ spec 대로 common.base_model 만 고치면 닫히는 것은 **29,971 중 18행(0.06%)** 이다.
+      dashboard_dashboardpanel 18 + dashboard_dashboard 0. 그게 전부다.
+
+    ★ 백필(③)의 가치도 낮아졌다. created_by 를 채워도 L430 의 OR 자체는 남고,
+      그 OR 는 채워진 행에 대해서도 group 조건과 OR 로 묶여 있다. 입구를 좁힐 뿐 닫지 못한다.
+      → 되돌릴 수 없는 작업은 손대지 않았다 (is_system 스키마 · 백필). 이번 집계는 읽기 전용이다.
+
+    ▶ 대표 판정 필요 (WP-1 EXIT §7 신규 7-1 의 답이 나왔다):
+      A. dj-core 필터 수정        → 불가 (§0.4 · 금지 #10 · 재빌드 경로 없음)
+      B. 현 spec 유지             → 0.06%. "W0-13 done" 이 격리됐다는 착시를 만든다
+      C. W0-14 뷰 레벨 스코프로 재정의 → 유일한 실효 경로
+      D. W0-14 에 흡수하고 이 티켓을 dropped → C 보다 정직할 수 있다
+      의견: **C 또는 D.** B 만은 안 된다.
   priority: P0
   effort: M
   kind: reuse
   depends_on: [W0-3]
   human_gate: false
   gate: evidence-review
-  requires_intranet: false
-  decisions: [D-209]
-  reuse_targets:
-    - backend/common/base_model.py
+  requires_intranet: false   # 2026-08-22: 덤프 파싱으로 ① 해소 (구값 true)
   spec: |
     에이전트가 실측한 결함: CustomManagerGroup 필터가 Q(created_by__isnull=True) 를
     **OR 로** 포함한다. 생성자가 없는 레코드(시드·마이그레이션·시스템 생성분)가

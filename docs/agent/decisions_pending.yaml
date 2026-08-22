@@ -298,3 +298,28 @@ pending:
     status: answered
     answered_by: D-241
     answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
+
+  # --- 2026-08-22 · 로컬 회수 작업 중 적재 ---
+  - id: P-LOOP-4
+    ticket: "(해당 없음 — tickets.yaml meta.status_enum)"
+    raised_at: "2026-08-22"
+    context: "W0-13 status 기입 중"
+    question: >-
+      AGENT_LOOP STEP 3-8 은 "판단 필요 → decision-pending, 전진" 을 지시하고
+      meta.defer_modes 에도 decision-pending 이 있는데, meta.status_enum 에는 없다
+      (backlog|ready|in_progress|review|verify-pending|done|blocked|dropped 8종).
+      루프가 쓰라고 한 상태값이 정본 enum 에 없다.
+    options:
+      - "A: status_enum 에 decision-pending 을 추가한다 (manifest 유실과 같은 성격의 결손)"
+      - "B: decision-pending 을 쓰지 않고 blocked 로 대체한다"
+    chosen_default: "A"
+    rationale: >-
+      4원칙 ③(관례를 따르는 쪽). AGENT_LOOP 가 실행 정본이고 defer_modes 가 이미 이 값을
+      싣고 있으므로 enum 쪽이 빠진 것으로 본다 — manifest 유실(D-227)과 같은 성격이다.
+      B 는 틀리다. blocked 는 hard_stop 을 뜻하는데 defer_modes 의 decision-pending 은
+      "적재하고 전진"이라 정반대다. 그 둘을 같은 값으로 적으면 멈춰야 할 것과
+      전진해도 되는 것이 구별되지 않는다.
+      이번에는 W0-13 에 decision-pending 을 그대로 적었다. enum 수정은 meta 라 권한 밖(금지 #11).
+    reversible: true
+    blocks_dod: false
+    status: open
