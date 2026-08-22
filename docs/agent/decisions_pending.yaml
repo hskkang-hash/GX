@@ -138,3 +138,139 @@ pending:
     reversible: true
     blocks_dod: false
     status: open
+
+  # --- WP-0 EXIT 작성 중 적재 (2026-08-15) · 티켓이 아니라 루프 자체의 결손 ---
+  - id: P-LOOP-1
+    ticket: "(해당 없음 — AGENT_LOOP / tickets.sha256)"
+    raised_at: "2026-08-15"
+    context: "WP-0 EXIT §6-1 작성 중 무결성 검사 재현"
+    question: >-
+      docs/agent/tickets.sha256 이 베이스라인 커밋(4afca2b)을 포함한 전 커밋에서
+      실제 파일 해시와 불일치한다. 즉 hard_stop 5종 중 하나인 registry-mismatch 의
+      판정 근거가 한 번도 참을 낸 적이 없다. 이 파일을 어떻게 할 것인가.
+    options:
+      - "A: spec·dod·verify·work_packages 부분집합에만 거는 정규화 해시로 재설계한다"
+      - "B: 파일을 폐기하고 STEP 0-3 을 meta.manifest 대조로 일원화한다"
+      - "C: 매 커밋마다 전체 해시를 갱신한다"
+    chosen_default: ""
+    rationale: >-
+      기본값을 적용하지 않는다. 이 파일은 에이전트의 tickets.yaml 수정 권한
+      (status·blocker·evidence·updated_at) 밖에 있다.
+      의견은 A — 체크섬이 파일 전체를 덮으면 에이전트의 정당한 status 갱신마다 깨지므로
+      게이트가 상시 거짓이 된다(현 상태가 그것이다). C 는 에이전트가 정본 해시를
+      스스로 갱신하게 되어 게이트가 자기증명이 된다.
+      지금 상태는 "무결성 게이트가 있다"는 착시를 만들며, 없는 것보다 나쁘다.
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  - id: P-LOOP-2
+    ticket: "(해당 없음 — AGENT_LOOP STEP 0-2·0-3)"
+    raised_at: "2026-08-15"
+    context: "WP-0 EXIT §6 #5 · STEP 0 무결성 검사 수행 시도"
+    question: >-
+      AGENT_LOOP v4.0 STEP 0-2 는 첫 출력 줄에 total=<manifest.total> 을 요구하고
+      0-3 은 manifest.total ↔ 배열 길이, manifest.ids ↔ 실제 id 대조를 지시하는데,
+      tickets.yaml v3.1 의 meta 에 manifest 키가 없다(키 13개 실측). 무결성 검사를
+      어떻게 성립시키는가.
+    options:
+      - "A: tickets.yaml meta 에 manifest: {total: 66, ids: [...]} 를 신설한다"
+      - "B: STEP 0-2·0-3 문구를 실제 구조(meta.version + 배열 길이)에 맞게 개정한다"
+    chosen_default: ""
+    rationale: >-
+      기본값을 적용하지 않는다. meta 는 에이전트 수정 권한 밖(절대금지 #11)이고
+      AGENT_LOOP 는 읽기 전용이다. 의견은 A — 66개 id 목록이 정본에 박히면
+      티켓 유실·중복을 실제로 잡지만, B 는 검사를 문서에 맞추는 것이라 잡히는 것이 줄어든다.
+      이번 WP 는 배열 길이 실측(66)과 meta.version(3.1) 으로 대체 보고했다.
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  - id: P-LOOP-3
+    ticket: "(해당 없음 — WP 관문 운영)"
+    raised_at: "2026-08-15"
+    context: "WP-0 EXIT §7-1"
+    question: >-
+      review/WP-0/ENTRY.md 에 APPROVED: 줄이 없는 상태에서 §11 오프라인 작업 5건이
+      이미 실행·커밋되었다(97c0924·dfced8d·7af88b6). 승인이 있었던 것으로 보는가.
+    options:
+      - "A: 소급 승인 — 사람이 ENTRY.md 첫 줄에 APPROVED: 를 기입한다"
+      - "B: 미승인으로 보고 §11 산출물을 재검토한다"
+    chosen_default: ""
+    rationale: >-
+      기본값을 적용하지 않는다. 절대금지 #16 — 승인 줄은 사람만 쓴다. 에이전트가
+      이 판단을 내리는 순간 관문 자체가 무의미해진다.
+      의견은 A — tickets.yaml 의 W0-2·W0-10 블로커에 "대표 승인 2026-08-15" 가
+      기록되어 있어 실질 승인은 있었던 것으로 읽힌다. 다만 그 기록과
+      decisions_pending 의 status: open 이 서로 어긋나 있다(P-W0-2-1·P-W0-10-1).
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  # --- WP-1 구현 중 적재 (2026-08-15) ---
+  - id: P-W0-12-1
+    ticket: W0-12
+    raised_at: "2026-08-15"
+    context: "W0-12 spec ③ 전역 스캔 중 발견 — evidence/W0-12/scan.md §2"
+    question: >-
+      print_format/models.py:98 이 출력 서식 미리보기용 표본을
+      apps.get_model(self.model_name).objects.first() 로 동적 조회한다. 모델 메서드라
+      request 가 없어 group 필터가 걸리지 않고, 대상 모델이 테넌트 소유면
+      미리보기에 남의 테넌트 레코드가 렌더될 수 있다. 어떻게 처리하는가.
+    options:
+      - "A: W0-14 롤아웃 ②단계에서 print_format 컨트롤러와 함께 다룬다 (미리보기에 actor 전달)"
+      - "B: 지금 print_format 호출 규약을 바꿔 request/actor 를 모델까지 내린다"
+      - "C: 미리보기를 superuser 전용으로 제한한다"
+    chosen_default: "A"
+    rationale: >-
+      4원칙 ④(범위가 작은 쪽)·②(되돌리기 쉬운 쪽). B 는 print_format 의 계층 구조 변경이라
+      절대금지 #3(티켓에 없는 리팩터링)에 닿는다. 결함의 성격이 W0-12(쓰기 오배정)가 아니라
+      W0-14(읽기 노출)이므로 그쪽 롤아웃에 붙이는 것이 맞다.
+      이번 WP 에서는 코드를 건드리지 않고 기록만 했다.
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  - id: P-W0-12-2
+    ticket: W0-12
+    raised_at: "2026-08-15"
+    context: "W0-12 dod ③ 실측 대조"
+    question: >-
+      W0-12 의 dod ③ 은 "test_service_layer_does_not_pick_arbitrary_group 통과
+      (W0-3 의 expectedFailure 해제)" 인데, 그 이름의 테스트는 존재하지 않고
+      test_tenant_isolation.py 의 @expectedFailure 도 0건이다. 어디에 두는가.
+    options:
+      - "A: tests/test_route_tenant_scope.py 에 동등 가드를 두고 dod ③ 을 그 경로로 정정한다"
+      - "B: tests/test_tenant_isolation.py 에 신규 테스트를 추가한다 (절대금지 #5 예외 승인 필요)"
+    chosen_default: "A"
+    rationale: >-
+      4원칙 ①(더 안전한 쪽). B 는 격리 테스트 파일 수정이라 금지 #5 에 정면으로 닿는다.
+      A 로 구현했고 이름은 dod 문구를 그대로 따랐다. 검사는 정적(소스 grep)이라
+      DB 없이 돌고, 이 결함이 런타임이 아니라 코드에 적힌 폴백이었으므로 정적이 더 맞다.
+      dod 텍스트 정정은 작성자 몫(금지 #11).
+    reversible: true
+    blocks_dod: true
+    status: open
+
+  - id: P-W0-14-1
+    ticket: W0-14
+    raised_at: "2026-08-15"
+    context: "WP-1 구현 — evidence/W0-14/coverage.md §4"
+    question: >-
+      @tenant_scoped 데코레이터를 실 컨트롤러에 언제 부착하는가. 오프라인 순수 로직
+      시험 30건은 통과했으나 ninja·ninja_extra 가 개발 머신에 없어 등록 경로가
+      한 번도 실행되지 않았다. ninja 는 inspect.signature 로 요청 스키마를 만들므로
+      래퍼가 시그니처를 가리면 앱이 기동하지 않는다.
+    options:
+      - "A: 사내망에서 ScopeDecoratorIntegrationTest 2건이 초록이 된 뒤 파일럿 1개 컨트롤러부터"
+      - "B: 지금 전 컨트롤러에 일괄 부착한다 (경고 모드라 차단은 없다)"
+      - "C: 데코레이터를 쓰지 않고 미들웨어 한 곳에서 처리한다"
+    chosen_default: "A"
+    rationale: >-
+      4원칙 ①(더 안전한 쪽)·②(되돌리기 쉬운 쪽). B 의 위험은 차단이 아니라 기동 실패이고,
+      그것은 경고 모드로 막히지 않는다. C 는 라우트별 판정 근거(사유)를 코드에서 잃는다.
+      A 의 순서를 coverage.md §4 에 4단계로 못박아 두었다 — 다음 사람이 일괄 부착하지
+      않도록 하는 것이 그 문단의 목적이다.
+    reversible: true
+    blocks_dod: true
+    status: open
