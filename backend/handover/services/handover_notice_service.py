@@ -55,14 +55,14 @@ class HandoverNoticeService:
                 When(Q(is_processed=True) & Q(deleted__isnull=True), then=Value('Complete')),
                 When(Q(deleted__isnull=False), then=Value('Delete')),
                 default=Value('Pending'),
-                output_field=CharField() 
+                output_field=CharField()
             ),
             creator__full_name=Concat(Coalesce('created_by__first_name', Value('')), Value(' '), Coalesce('created_by__last_name', Value(''))),
             editor__full_name=Concat(Coalesce('modified_by__first_name', Value('')), Value(' '), Coalesce('modified_by__last_name', Value(''))),
             content_text=F('content') ,
 
         )
-        
+
         return queryset.order_by('-created_time')
 
     @staticmethod
@@ -73,17 +73,17 @@ class HandoverNoticeService:
             notice_id = data.get('notice_id')
             content = data.get('content')
             removed_file_ids = data.get('removed_file_ids', [])
-            
+
             if notice_id:
                 # Update
                 notice = HandoverNotice.objects.get(id=notice_id)
                 notice.content = content
                 notice.updated_time = timezone.now()
                 notice.save()
-                
+
                 # Thêm user vào editors
                 notice.editors.add(user)
-                
+
                 # Xóa files
                 if removed_file_ids:
                     notice.files.filter(id__in=removed_file_ids).delete()
@@ -94,19 +94,19 @@ class HandoverNoticeService:
                     group = user.userprofilelink.group
                 else:
                     group = UserGroup.objects.first()
-                
+
                 notice = HandoverNotice.objects.create(
                     creator=user,
                     content=content,
                     group=group,
                     created_by=user
                 )
-            
+
             # Thêm files mới
             if files:
                 for file_obj in files:
                     notice.files.add(file_obj)
-            
+
             return True, notice
         except HandoverNotice.DoesNotExist:
             raise ValidationError("Handover notice not found")
@@ -180,7 +180,7 @@ class HandoverNoticeService:
         ).get(id=notice_id)
 
     @staticmethod
-    def get_download_data(notice_status: str = None, 
+    def get_download_data(notice_status: str = None,
                          get_delete_notice: bool = False, selected_fields: List[str] = None, user: CoreUser = None, processed: bool = False, request: QueryDict = None):
         """Lấy dữ liệu để download CSV cho handover notice"""
 
@@ -216,7 +216,7 @@ class HandoverNoticeService:
                 When(Q(is_processed=True) & Q(deleted__isnull=True), then=Value('Complete')),
                 When(Q(deleted__isnull=False), then=Value('Delete')),
                 default=Value('Pending'),
-                output_field=CharField() 
+                output_field=CharField()
             ),
             content_text=F('content') ,
         ).order_by("-created_time")
@@ -231,7 +231,7 @@ class HandoverNoticeService:
                 data['updated_time'] = PrintFormatService._format_datetime_with_user_settings(data.get('updated_time'), user_settings)
             if isinstance(data.get('processed_time'), datetime):
                 data['processed_time'] = PrintFormatService._format_datetime_with_user_settings(data.get('processed_time'), user_settings)
-        
+
         return processing_notice_list
 
     @staticmethod
@@ -254,7 +254,7 @@ class HandoverNoticeService:
             'user_processed__username': 'Processed By',
             'group__name': 'Group',
         }
-        
+
         # Tạo mapping động cho các field không có trong default_mapping
         mapping = {}
         for field in selected_fields:
@@ -272,7 +272,7 @@ class HandoverNoticeService:
                     else:
                         title_words.append(word.capitalize())
                 mapping[field] = ' '.join(title_words)
-        
+
         return mapping
 
     @staticmethod
@@ -281,7 +281,7 @@ class HandoverNoticeService:
         """
         Queue handover notice download as background thread with WebSocket notifications
         Returns immediately with download status information
-        
+
         download_type được xác định động:
         - notice_status == 'processed' → download_type = 'completed_notice'
         - notice_status == 'processing' hoặc None → download_type = 'notice'
@@ -292,11 +292,11 @@ class HandoverNoticeService:
                 download_type = 'completed_notice'
             else:
                 download_type = 'notice'  # processing notice hoặc None
-            
+
             # Generate unique task ID for download tracking
             download_task_id = str(uuid.uuid4())
             task_type = f"handover_{download_type}_download"
-            
+
             # Persist initial task status for client-side polling
             pending_message = get_message(MESSAGE_ENUM.START_DOWNLOAD_FILE)
             TaskStatusService.create_or_update(
@@ -312,7 +312,7 @@ class HandoverNoticeService:
                 related_model='handover.HandoverNotice',
                 related_object_id=None,
             )
-            
+
             # Send initial notification
             _send_handover_download_notification(
                 user.username,
@@ -321,7 +321,7 @@ class HandoverNoticeService:
                 pending_message,
                 download_task_id
             )
-            
+
             # Start background thread for download processing
             # Truyền download_type vào thread để sử dụng trong _process_download_in_thread
             download_thread = threading.Thread(
@@ -330,13 +330,13 @@ class HandoverNoticeService:
                 daemon=True
             )
             download_thread.start()
-            
+
             return {
                 'success': True,
                 'download_task_id': download_task_id,
                 'message': pending_message
             }
-            
+
         except Exception as e:
             logger.error(f"Error queueing download: {str(e)}")
             return {
@@ -352,7 +352,7 @@ class HandoverNoticeService:
                                     task_type: str = None, processed: bool = False, request: QueryDict = None):
         """
         Process download in background thread with WebSocket notifications
-        
+
         Args:
             download_type: 'notice' hoặc 'completed_notice' (được truyền từ download_notice)
         """
@@ -365,12 +365,12 @@ class HandoverNoticeService:
                     download_type = 'notice'  # processing notice hoặc None
             if not task_type:
                 task_type = f"handover_{download_type}_download"
-            
+
             logger.info(f"🔄 Starting handover {download_type} download processing for task {download_task_id}")
-            
+
             # Get user
             user = CoreUser.objects.get(id=user_id)
-            
+
             # Send processing notification
             processing_message = get_message(MESSAGE_ENUM.DOWNLOAD_HANDOVER_NOTICE_PROCESSING)
             TaskStatusService.update_status(
@@ -388,7 +388,7 @@ class HandoverNoticeService:
                 processing_message,
                 download_task_id
             )
-            
+
             # Get data
             notice_list = HandoverNoticeService.get_download_data(
                 notice_status,
@@ -398,7 +398,7 @@ class HandoverNoticeService:
                 processed,
                 request
             )
-            
+
             # Create CSV với header names đã được normalize
             output = io.StringIO()
             if notice_list and selected_fields:
@@ -406,23 +406,23 @@ class HandoverNoticeService:
                 header_mapping = HandoverNoticeService._get_header_mapping(selected_fields)
                 # Tạo fieldnames đã được normalize
                 normalized_headers = [header_mapping.get(field, field.replace('_', ' ').title()) for field in selected_fields]
-                
+
                 # Tạo data với keys đã được normalize
                 normalized_data = []
                 for row in notice_list:
                     normalized_row = {header_mapping.get(key, key.replace('_', ' ').title()): value for key, value in row.items()}
                     normalized_data.append(normalized_row)
-                
+
                 writer = csv.DictWriter(output, fieldnames=normalized_headers)
                 writer.writeheader()
                 writer.writerows(normalized_data)
-            
+
             csv_content = output.getvalue().encode('utf-8')
             if download_type == 'completed_notice':
                 file_name = f"completed_notice_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             else:
                 file_name = f"notice_management_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-            
+
             # Create InMemoryUploadedFile
             file_obj = InMemoryUploadedFile(
                 file=BytesIO(csv_content),
@@ -432,20 +432,20 @@ class HandoverNoticeService:
                 size=len(csv_content),
                 charset='utf-8'
             )
-            
+
             # Upload to MinIO/S3
             feature_path = f"HandoverDownloads/{download_type.replace('_', '').title()}"  # HandoverDownloads/Notice hoặc CompletedNotice
             uploaded_file = FileHelper.user_upload_s3(
-                user, 
-                file_obj, 
-                is_avatar=False, 
+                user,
+                file_obj,
+                is_avatar=False,
                 only_image=False,
                 feature_path=feature_path
             )
-            
+
             if not uploaded_file:
                 raise ValueError("Failed to upload file to MinIO")
-            
+
             download_url = None
             file_url = None
             if hasattr(uploaded_file, 'file_url') and uploaded_file.file_url:
@@ -457,9 +457,9 @@ class HandoverNoticeService:
                     file_url = uploaded_file.file.name if hasattr(uploaded_file.file, 'name') else ''
                 if not file_url:
                     raise ValueError("File uploaded but no file_url available")
-            
+
             logger.info(f"📁 File uploaded to MinIO: {file_url}, File ID: {uploaded_file.id}")
-            
+
             success_payload = {
                 'download_url': download_url,
                 'file_url': file_url,
@@ -493,9 +493,9 @@ class HandoverNoticeService:
                 download_task_id,
                 success_payload
             )
-            
+
             logger.info(f"✅ Handover notice download completed for task {download_task_id}")
-        
+
         except Exception as e:
             logger.error(f"❌ Error in handover notice download processing: {str(e)}")
             TaskStatusService.update_status(
@@ -523,4 +523,3 @@ class HandoverNoticeService:
                 )
             except Exception:
                 pass
-

@@ -37,7 +37,7 @@ def parse_date_flexible(date_str: str) -> date:
     """
     Parse date string với nhiều format khác nhau.
     Sử dụng flexible_datetime_parser từ core.common.search.dynamic_search.
-    
+
     Hỗ trợ các format:
     - YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY, DD-MM-YYYY
     - Month DD, YYYY (e.g., December 02, 2025)
@@ -45,19 +45,19 @@ def parse_date_flexible(date_str: str) -> date:
     - YYYY/MM/DD, YY/MM/DD
     """
     from core.common.search.dynamic_search import flexible_datetime_parser
-    
+
     if not date_str:
         raise ValueError("Date string is empty")
-    
+
     # Nếu đã là date object
     if isinstance(date_str, date) and not isinstance(date_str, datetime):
         return date_str
     if isinstance(date_str, datetime):
         return date_str.date()
-    
+
     # Parse bằng flexible parser
     result = flexible_datetime_parser(date_str)
-    
+
     if isinstance(result, datetime):
         return result.date()
     elif isinstance(result, date):
@@ -65,7 +65,7 @@ def parse_date_flexible(date_str: str) -> date:
     elif result == date_str:
         # Parser trả về string gốc - không parse được
         raise ValueError(f"Invalid date format: {date_str}. Cannot parse date.")
-    
+
     raise ValueError(f"Invalid date format: {date_str}. Cannot parse date.")
 
 
@@ -73,23 +73,23 @@ def parse_date_by_user_format(date_str: str, user: Optional[CoreUser] = None) ->
     """
     Parse date string dựa vào user settings (date_format).
     Nếu không có user hoặc parse fail, fallback về parse_date_flexible.
-    
+
     Args:
         date_str: Date string cần parse
         user: CoreUser object để lấy date_format settings
-    
+
     Returns:
         date object
     """
     if not date_str:
         raise ValueError("Date string is empty")
-    
+
     # Nếu đã là date object
     if isinstance(date_str, date) and not isinstance(date_str, datetime):
         return date_str
     if isinstance(date_str, datetime):
         return date_str.date()
-    
+
     # Nếu có user, thử parse theo user settings
     if user:
         try:
@@ -101,7 +101,7 @@ def parse_date_by_user_format(date_str: str, user: Optional[CoreUser] = None) ->
                 user_settings = user.usersettings
             else:
                 user_settings = UserSettings.objects.filter(user=user).first()
-            
+
             # Get date format từ user settings
             if user_settings and hasattr(user_settings, 'date_format') and user_settings.date_format:
                 if hasattr(user_settings.date_format, 'format_string'):
@@ -116,7 +116,7 @@ def parse_date_by_user_format(date_str: str, user: Optional[CoreUser] = None) ->
                         logger.debug(f"Failed to parse '{date_str}' with user format '{date_format_str}', trying flexible parser")
         except Exception as e:
             logger.debug(f"Error getting user settings for date parsing: {e}, falling back to flexible parser")
-    
+
     # Fallback về flexible parser
     return parse_date_flexible(date_str)
 
@@ -125,17 +125,17 @@ def parse_date_range_with_validation(start_date_str, end_date_str, user: Optiona
     """
     Parse start_date và end_date cùng lúc, đảm bảo end_date > start_date.
     Sử dụng logic thông minh để tránh parse sai format.
-    
+
     Logic:
     1. Thử parse với user format trước
     2. Nếu parse được nhưng start_date > end_date, thử parse lại với format khác
     3. Thử các format phổ biến (MM/DD/YYYY, DD/MM/YYYY) và chọn format hợp lý nhất
-    
+
     Args:
         start_date_str: Start date string
         end_date_str: End date string
         user: CoreUser object để lấy date_format settings
-    
+
     Returns:
         Tuple (start_date, end_date) với end_date >= start_date
     """
@@ -146,21 +146,21 @@ def parse_date_range_with_validation(start_date_str, end_date_str, user: Optiona
         start_date = start_date_str.date()
     else:
         start_date = None
-    
+
     if isinstance(end_date_str, date) and not isinstance(end_date_str, datetime):
         end_date = end_date_str
     elif isinstance(end_date_str, datetime):
         end_date = end_date_str.date()
     else:
         end_date = None
-    
+
     # Nếu cả hai đã là date object và hợp lệ
     if start_date and end_date:
         if start_date > end_date:
             logger.warning(f"start_date ({start_date}) > end_date ({end_date}), swapping dates")
             return end_date, start_date
         return start_date, end_date
-    
+
     # Get user date format
     user_date_format = None
     if user:
@@ -172,40 +172,40 @@ def parse_date_range_with_validation(start_date_str, end_date_str, user: Optiona
                 user_settings = user.usersettings
             else:
                 user_settings = UserSettings.objects.filter(user=user).first()
-            
+
             if user_settings and hasattr(user_settings, 'date_format') and user_settings.date_format:
                 if hasattr(user_settings.date_format, 'format_string'):
                     user_date_format = user_settings.date_format.format_string
         except Exception:
             pass
-    
+
     # Danh sách các format để thử (ưu tiên user format trước)
     formats_to_try = []
     if user_date_format:
         formats_to_try.append(user_date_format)
-    
+
     # Thêm các format phổ biến để thử nếu user format fail
     common_formats = ['%m/%d/%Y', '%d/%m/%Y', '%Y-%m-%d', '%m-%d-%Y', '%d-%m-%Y']
     for fmt in common_formats:
         if fmt not in formats_to_try:
             formats_to_try.append(fmt)
-    
+
     # Thử parse với từng format
     for fmt in formats_to_try:
         try:
             parsed_start = None
             parsed_end = None
-            
+
             if not start_date and isinstance(start_date_str, str):
                 parsed_start = datetime.strptime(start_date_str.strip(), fmt).date()
             else:
                 parsed_start = start_date
-            
+
             if not end_date and isinstance(end_date_str, str):
                 parsed_end = datetime.strptime(end_date_str.strip(), fmt).date()
             else:
                 parsed_end = end_date
-            
+
             if parsed_start and parsed_end:
                 # Kiểm tra tính hợp lý: end_date >= start_date
                 if parsed_start <= parsed_end:
@@ -218,19 +218,19 @@ def parse_date_range_with_validation(start_date_str, end_date_str, user: Optiona
         except ValueError:
             # Format này không match, thử format tiếp theo
             continue
-    
+
     # Nếu tất cả format đều fail, fallback về flexible parser
     logger.warning(f"All date formats failed, falling back to flexible parser for start='{start_date_str}', end='{end_date_str}'")
     if not start_date:
         start_date = parse_date_flexible(start_date_str)
     if not end_date:
         end_date = parse_date_flexible(end_date_str)
-    
+
     # Đảm bảo end_date >= start_date
     if start_date > end_date:
         logger.warning(f"After flexible parsing, start_date ({start_date}) > end_date ({end_date}), swapping dates")
         return end_date, start_date
-    
+
     return start_date, end_date
 
 
@@ -241,7 +241,7 @@ def normalize_date_to_iso(value) -> str:
     """
     if not value:
         return None
-    
+
     if isinstance(value, datetime):
         return value.date().strftime('%Y-%m-%d')
     elif isinstance(value, date):
@@ -259,18 +259,18 @@ def format_datetime_for_download(value, user: CoreUser, preserve_in_excel: bool 
     """
     Format datetime/date value according to user settings for download.
     Used in background threads where request context is not available.
-    
+
     Args:
         value: datetime or date object to format
         user: CoreUser object (the user who initiated the download)
         preserve_in_excel: If True, prefix with single quote to prevent Excel auto-formatting
-    
+
     Returns:
         Formatted string according to user's settings
     """
     if value is None:
         return None
-    
+
     # Get user settings
     user_settings = None
     try:
@@ -282,18 +282,18 @@ def format_datetime_for_download(value, user: CoreUser, preserve_in_excel: bool 
             user_settings = UserSettings.objects.filter(user=user).first()
     except Exception:
         pass
-    
+
     # Default formats
     date_format_str = '%m-%d-%Y'
     time_format_str = '%H:%M:%S'
     user_timezone = pytz.timezone('Asia/Ho_Chi_Minh')
-    
+
     # Get user's language for locale-based defaults
     if hasattr(user, 'language') and user.language:
         lang_code = getattr(user.language, 'code', 'en')
         if lang_code == 'ko':
             date_format_str = '%Y-%m-%d'
-    
+
     # Get timezone from user
     if hasattr(user, 'timezone') and user.timezone:
         try:
@@ -302,13 +302,13 @@ def format_datetime_for_download(value, user: CoreUser, preserve_in_excel: bool 
                 user_timezone = pytz.timezone(tz_code)
         except Exception:
             pass
-    
+
     # Get date format from user settings
     if user_settings:
         if hasattr(user_settings, 'date_format') and user_settings.date_format:
             if hasattr(user_settings.date_format, 'format_string'):
                 date_format_str = user_settings.date_format.format_string
-        
+
         if hasattr(user_settings, 'time_format') and user_settings.time_format:
             if hasattr(user_settings.time_format, 'format_string'):
                 time_format_str = user_settings.time_format.format_string
@@ -318,19 +318,19 @@ def format_datetime_for_download(value, user: CoreUser, preserve_in_excel: bool 
             if value.tzinfo is None:
                 value = pytz.UTC.localize(value)
             localized = value.astimezone(user_timezone)
-            
+
             # Format date and time parts
             date_part = localized.date().strftime(date_format_str)
             time_part = localized.time().strftime(time_format_str)
             result = f"{date_part} {time_part}"
             # Add single quote prefix to prevent Excel auto-formatting
             return result
-        
+
         elif isinstance(value, date):
             result = value.strftime(date_format_str)
             # Add single quote prefix to prevent Excel auto-formatting
             return result
-        
+
         else:
             return str(value)
     except Exception as e:
@@ -352,14 +352,14 @@ def parse_time_flexible(time_str: str) -> tuple:
     - 12: %I:%M %p
     - 24_full: %H:%M:%S
     - 12_full: %I:%M:%S %p
-    
+
     Returns: (time_object, is_24h_format)
     """
     if not time_str:
         raise ValueError("Time string is empty")
-    
+
     time_str = time_str.strip()
-    
+
     # Danh sách các format time để thử parse
     time_formats = [
         ('%H:%M:%S', True),      # 24_full: HH:MM:SS
@@ -369,7 +369,7 @@ def parse_time_flexible(time_str: str) -> tuple:
         ('%I:%M:%S%p', False),    # 12_full without space: HH:MM:SSAM/PM
         ('%I:%M%p', False),       # 12 without space: HH:MMAM/PM
     ]
-    
+
     # Thử parse với các format cố định
     for fmt, is_24h in time_formats:
         try:
@@ -377,7 +377,7 @@ def parse_time_flexible(time_str: str) -> tuple:
             return time_obj, is_24h
         except ValueError:
             continue
-    
+
     # Nếu không parse được với format cố định, thử dùng dateutil.parser
     try:
         parsed_datetime = parser.parse(time_str)
@@ -413,7 +413,7 @@ class HandoverDocumentService:
                 editor__full_name=Concat(Coalesce('modified_by__first_name', Value('')), Value(' '), Coalesce('modified_by__last_name', Value(''))),
             )
             return queryset
-        
+
         # Parse dates với validation để đảm bảo end_date >= start_date
         try:
             start_date, end_date = parse_date_range_with_validation(start_date_time, end_date_time, user)
@@ -432,22 +432,22 @@ class HandoverDocumentService:
                 editor__full_name=Concat(Coalesce('modified_by__first_name', Value('')), Value(' '), Coalesce('modified_by__last_name', Value(''))),
             )
             return queryset
-        
+
         # Tạo date range
         date_range = pd.date_range(start=start_date, end=end_date)
         date_list = date_range.strftime("%Y-%m-%d").tolist()
-        
+
         # Group filter
         filters = {}
         if user and not (user.is_superuser or any(role.code == 'superuser' for role in user.roles.all())):
             if hasattr(user, 'userprofilelink') and user.userprofilelink.group:
                 filters['group'] = user.userprofilelink.group
-        
+
         # Tạo Subquery cho shift name translation
         shift_name_subquery = HandoverShift.objects.filter(
             id=OuterRef('shift_id')
         ).values('name')[:1]
-        
+
         # Trả về queryset cho documents đã tồn tại (có thể dùng apply_dynamic_filters)
         queryset = HandoverDocument.objects.filter(
             date_create_shift__in=date_list,
@@ -469,9 +469,9 @@ class HandoverDocumentService:
             creator__full_name=Concat('created_by__first_name', Value(' '), 'created_by__last_name'),
             editor__full_name=Concat('modified_by__first_name', Value(' '), 'modified_by__last_name'),
         )
-        
+
         return queryset
-    
+
     @staticmethod
     def get_empty_shifts(user=None, start_date_time=None, end_date_time=None, existing_documents=None):
         """
@@ -484,16 +484,16 @@ class HandoverDocumentService:
         # Tạo date range (đã đảm bảo start_date <= end_date từ parse_date_range_with_validation)
         date_range = pd.date_range(start=start_date, end=end_date)
         date_list = date_range.strftime("%Y-%m-%d").tolist()
-       
+
         # Lấy user language
         language = 'en'
         if user:
             if hasattr(user, 'language') and user.language:
                 language = user.language.code
-        
+
         # Lấy tất cả shift IDs (HandoverShift không có field group, nên lấy tất cả)
         handover_shift_id = set(HandoverShift._base_manager.values_list('id', flat=True))
-        
+
         # Tạo mapping: date -> set of shift_ids đã có document từ existing_documents
         # existing_documents đã được filter theo group từ hàm get_list, nên chỉ cần map date -> shift_ids
         date_shift_map = {}
@@ -506,7 +506,7 @@ class HandoverDocumentService:
                     date_shift_map[doc_date] = set()
                 if doc_date and shift_id:
                     date_shift_map[doc_date].add(shift_id)
-        
+
         # Batch query tất cả shifts một lần (không filter vì HandoverShift không có field group)
         all_shifts = list(
             HandoverShift._base_manager.values('id', 'name')
@@ -524,13 +524,13 @@ class HandoverDocumentService:
             except:
                 shift_name = shift['name']
             shifts_dict[shift_id] = shift_name
-        
+
         # Tạo list empty shifts cho các date chưa có document
         empty_shifts_list = []
         for date_str in date_list:
             existing_shift_ids = date_shift_map.get(date_str, set())
             non_existing_shift_ids = handover_shift_id - existing_shift_ids
-            
+
             if non_existing_shift_ids:
                 # Tạo list shifts chưa có document cho date này
                 data_shift = [
@@ -542,7 +542,7 @@ class HandoverDocumentService:
                     for shift_id in non_existing_shift_ids
                     if shift_id in shifts_dict
                 ]
-                
+
                 if data_shift:
                     empty_shifts_list.append({
                         'date': date_str,
@@ -557,22 +557,22 @@ class HandoverDocumentService:
         try:
             date_str = data.get('date')  # YYYY-MM-DD
             shift_id = data.get('shift_id')
-            
+
             if not date_str or not shift_id:
                 raise ValidationError("date and shift_id are required")
-            
+
             shift = HandoverShift.objects.get(id=shift_id)
-            
+
             # Parse date với nhiều format khác nhau
             try:
                 doc_date = parse_date_flexible(date_str)
             except ValueError as e:
                 raise ValidationError(f"Invalid date format: {date_str}. {str(e)}")
-            
+
             # Tính start_date và end_date từ shift.start_time và shift.end_time
             start_time_str = shift.start_time
             end_time_str = shift.end_time
-            
+
             # Parse time string thành time object với nhiều format khác nhau
             # Fallback về giá trị mặc định nếu start_time hoặc end_time không hợp lệ (giống logic cũ)
             try:
@@ -583,7 +583,7 @@ class HandoverDocumentService:
                     f"Using default value '09:00'"
                 )
                 start_time_obj = datetime.strptime("09:00", '%H:%M').time()
-            
+
             try:
                 end_time_obj, _ = parse_time_flexible(end_time_str)
             except ValueError:
@@ -592,11 +592,11 @@ class HandoverDocumentService:
                     f"Using default value '21:00'"
                 )
                 end_time_obj = datetime.strptime("21:00", '%H:%M').time()
-            
+
             # Tạo datetime từ date và time
             start_date = timezone.make_aware(datetime.combine(doc_date, start_time_obj))
             end_date = timezone.make_aware(datetime.combine(doc_date, end_time_obj))
-            
+
             # Nếu end_time < start_time thì end_date là ngày hôm sau
             if end_time_obj < start_time_obj:
                 end_date += timedelta(days=1)
@@ -617,12 +617,12 @@ class HandoverDocumentService:
                 shift=shift,
                 group=group
             ).first()
-            
+
             if existing:
                 return False, None, {'message_key': MESSAGE_ENUM.HANDOVER_DOCS_EXIST}
-            
-           
-            
+
+
+
             # Tạo document
             document = HandoverDocument.objects.create(
                 start_date=start_date,
@@ -633,7 +633,7 @@ class HandoverDocumentService:
                 group=group,
                 created_by=user
             )
-            
+
             return True, document, None
         except HandoverShift.DoesNotExist:
             raise ValidationError("Handover shift not found")
@@ -651,9 +651,9 @@ class HandoverDocumentService:
             'deleted': [],
             'failed': []
         }
-        
+
         documents = HandoverDocument.objects.filter(id__in=ids)
-        
+
         for doc in documents:
             # Kiểm tra xem có content không
             if HandoverContent.objects.filter(handover_doc=doc).exists():
@@ -662,12 +662,12 @@ class HandoverDocumentService:
                     'reason': 'Document has content'
                 })
             else:
-                
+
                 HandoverDocumentAcceptor.objects.filter(handover_document=doc).delete()
                 doc_to_delete = HandoverDocument._base_manager.get(id=doc.id)
                 doc_to_delete.delete(force_policy=HARD_DELETE)
                 results['deleted'].append(doc.id)
-        
+
         # Xác định message dựa trên kết quả
         if len(results['failed']) == 0:
             # Tất cả đều xóa thành công
@@ -678,7 +678,7 @@ class HandoverDocumentService:
         else:
             # Tất cả đều thất bại (không có record nào được xóa)
             results['message_key'] = MESSAGE_ENUM.HANDOVER_DOCUMENT_WARNING
-        
+
         return True, results
 
     @staticmethod
@@ -695,7 +695,7 @@ class HandoverDocumentService:
                 start_date = start_date_time.date()
             else:
                 raise ValueError(f"Invalid start_date_time format: {start_date_time}")
-            
+
             if isinstance(end_date_time, str):
                 end_date = parse_date_by_user_format(end_date_time, user)
             elif isinstance(end_date_time, date):
@@ -704,22 +704,22 @@ class HandoverDocumentService:
                 end_date = end_date_time.date()
             else:
                 raise ValueError(f"Invalid end_date_time format: {end_date_time}")
-            
+
             # Đảm bảo end_date >= start_date
             if start_date > end_date:
                 start_date, end_date = end_date, start_date
-            
+
             # Combine với time: start = 00:00:00, end = 23:59:59.999999
             start_dt = timezone.make_aware(datetime.combine(start_date, datetime.min.time()))
             end_dt = timezone.make_aware(datetime.combine(end_date, time(23, 59, 59, 999999)))
-            
+
         except Exception as e:
             logger.error(f"Error parsing date: {e}, falling back to date parsing")
             # Fallback về date parsing nếu parse fail
             start_date, end_date = parse_date_range_with_validation(start_date_time, end_date_time, user)
             start_dt = timezone.make_aware(datetime.combine(start_date, datetime.min.time()))
             end_dt = timezone.make_aware(datetime.combine(end_date, time(23, 59, 59, 999999)))
-        
+
         filters = {}
         filters['start_date__gte'] = start_dt
         filters['end_date__lte'] = end_dt
@@ -760,7 +760,7 @@ class HandoverDocumentService:
             # Generate unique task ID for download tracking
             download_task_id = str(uuid.uuid4())
             task_type = "handover_management_download"
-            
+
             # Persist initial task status for client-side polling
             pending_message = get_message(MESSAGE_ENUM.START_DOWNLOAD_FILE)
             TaskStatusService.create_or_update(
@@ -775,7 +775,7 @@ class HandoverDocumentService:
                 trigger_source="handover.management.download",
                 related_model="handover.HandoverDocument",
             )
-            
+
             # Send initial notification
             _send_handover_download_notification(
                 user.username,
@@ -784,7 +784,7 @@ class HandoverDocumentService:
                 pending_message,
                 download_task_id
             )
-            
+
             # Start background thread for download processing
             download_thread = threading.Thread(
                 target=HandoverDocumentService._process_download_in_thread,
@@ -792,13 +792,13 @@ class HandoverDocumentService:
                 daemon=True
             )
             download_thread.start()
-            
+
             return {
                 'success': True,
                 'download_task_id': download_task_id,
                 'message': pending_message
             }
-            
+
         except Exception as e:
             logger.error(f"Error queueing download: {str(e)}")
             return {
@@ -817,10 +817,10 @@ class HandoverDocumentService:
             task_type = "handover_management_download"
         try:
             logger.info(f"🔄 Starting handover {download_type} download processing for task {download_task_id}")
-            
+
             # Get user
             user = CoreUser.objects.get(id=user_id)
-            
+
             # Send processing notification
             processing_message = get_message(MESSAGE_ENUM.DOWNLOAD_HANDOVER_MANAGEMENT_PROCESSING)
             TaskStatusService.update_status(
@@ -838,14 +838,14 @@ class HandoverDocumentService:
                 processing_message,
                 download_task_id
             )
-            
+
             # Get data
             content_list = HandoverDocumentService.get_download_data(start_date_time, end_date_time, user, request=request)
-            
+
             # Format datetime fields according to user settings
             datetime_fields = ['created_time', 'updated_time']
             date_fields = ['handover_doc__start_date']
-            
+
             for item in content_list:
                 # Format date fields
                 for field in date_fields:
@@ -854,20 +854,20 @@ class HandoverDocumentService:
                             item[field] = format_datetime_for_download(item[field].date(), user)
                         elif isinstance(item[field], date):
                             item[field] = format_datetime_for_download(item[field], user)
-                
+
                 # Format datetime fields
                 for field in datetime_fields:
                     if field in item and item[field] is not None:
                         item[field] = format_datetime_for_download(item[field], user)
-            
+
             # Create CSV
             output = io.StringIO()
-            
+
             # Get user language for column headers
             user_lang = 'en'
             if hasattr(user, 'language') and user.language:
                 user_lang = getattr(user.language, 'code', 'en')
-            
+
             # Load translations from JSON file
             translations = {}
             try:
@@ -882,7 +882,7 @@ class HandoverDocumentService:
                         translations = json.load(f)
             except Exception as e:
                 logger.warning(f"Could not load translations for {user_lang}: {e}")
-            
+
             # Translation keys mapping (field_name -> translation_key)
             translation_keys = {
                 'handover_doc__start_date': 'handover.HandoverDocument.start_date',
@@ -894,7 +894,7 @@ class HandoverDocumentService:
                 'created_time': 'handover.HandoverNotice.created_time',
                 'updated_time': 'handover.HandoverNotice.updated_time'
             }
-            
+
             # Fallback headers (English)
             fallback_headers = {
                 'handover_doc__start_date': 'Date',
@@ -906,12 +906,12 @@ class HandoverDocumentService:
                 'created_time': 'Created Time',
                 'updated_time': 'Updated Time'
             }
-            
+
             # Build header mapping from translations
             header_mapping = {}
             for field, trans_key in translation_keys.items():
                 header_mapping[field] = fallback_headers.get(field, field)
-            
+
             # Original field names (for data extraction)
             original_fieldnames = [
                 'handover_doc__start_date',
@@ -923,10 +923,10 @@ class HandoverDocumentService:
                 'created_time',
                 'updated_time'
             ]
-            
+
             # Display names for CSV header
             display_fieldnames = [header_mapping[f] for f in original_fieldnames]
-            
+
             if content_list:
                 # Rename keys in each item to display names
                 formatted_content_list = []
@@ -936,14 +936,14 @@ class HandoverDocumentService:
                         display_key = header_mapping[orig_key]
                         formatted_item[display_key] = item.get(orig_key, '')
                     formatted_content_list.append(formatted_item)
-                
+
                 writer = csv.DictWriter(output, fieldnames=display_fieldnames)
                 writer.writeheader()
                 writer.writerows(formatted_content_list)
-            
+
             csv_content = output.getvalue().encode('utf-8')
             csv_filename = f"handover_management_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-            
+
             # Create InMemoryUploadedFile
             file_obj = InMemoryUploadedFile(
                 file=BytesIO(csv_content),
@@ -953,24 +953,24 @@ class HandoverDocumentService:
                 size=len(csv_content),
                 charset='utf-8'
             )
-            
+
             # Upload to MinIO/S3 - File được lưu vào MinIO tạm thời để user có thể download
             # File này sẽ được cleanup sau một thời gian vì không có tính năng xem lại file đã download
             # Sử dụng feature_path động theo download_type để phân loại file
             # download_type: 'handover_management' → 'HandoverDownloads/HandoverManagement'
             feature_path = f"HandoverDownloads/{download_type.replace('_', '').title()}"  # HandoverDownloads/HandoverManagement
             uploaded_file = FileHelper.user_upload_s3(
-                user, 
-                file_obj, 
-                is_avatar=False, 
+                user,
+                file_obj,
+                is_avatar=False,
                 only_image=False,
                 feature_path=feature_path
             )
-            
+
             # Kiểm tra file đã được upload thành công chưa
             if not uploaded_file:
                 raise ValueError("Failed to upload file to MinIO")
-            
+
             # Get download URL with proper protocol và file_url (relative path)
             download_url = None
             file_url = None
@@ -984,9 +984,9 @@ class HandoverDocumentService:
                     file_url = uploaded_file.file.name if hasattr(uploaded_file.file, 'name') else ''
                 if not file_url:
                     raise ValueError("File uploaded but no file_url available")
-            
+
             logger.info(f"📁 File uploaded to MinIO: {file_url}, File ID: {uploaded_file.id}")
-            
+
             success_payload = {
                 'download_url': download_url,
                 'file_url': file_url,
@@ -1020,12 +1020,12 @@ class HandoverDocumentService:
                 download_task_id,
                 success_payload
             )
-            
+
             logger.info(f"✅ Handover management download completed for task {download_task_id}")
-            
+
         except Exception as e:
             logger.error(f"❌ Error in handover management download processing: {str(e)}")
-            
+
             # Send failure notification
             try:
                 user = CoreUser.objects.get(id=user_id)
@@ -1052,5 +1052,3 @@ class HandoverDocumentService:
                 )
             except:
                 pass
-
-
