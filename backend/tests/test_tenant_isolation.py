@@ -145,8 +145,12 @@ class TenantFixtureMixin:
         런타임에 모델을 찾는다 — 사내 패키지 버전이 바뀌어도 깨지지 않는다.
         """
         CoreUser = apps.get_model("user", "CoreUser")
+        # email 을 명시한다 — dj-core CoreUser.email 은 UNIQUE 라서 두 사용자가 모두
+        # 빈 문자열로 들어가면 setUpTestData 가 픽스처 단계에서 죽는다 (P-LOCAL-2).
+        # **판정 로직은 한 글자도 바꾸지 않는다.** 픽스처만 유효해진다 (D-250 · 옵션 A).
         user = CoreUser.objects.create_user(
-            username=username, password="test-only-not-a-secret", is_active=True
+            username=username, password="test-only-not-a-secret", is_active=True,
+            email=f"{username}@test.invalid",
         )
         link_field = CoreUser._meta.get_field("userprofilelink")
         link_model = link_field.related_model
