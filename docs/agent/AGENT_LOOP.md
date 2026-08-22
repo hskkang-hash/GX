@@ -1,4 +1,31 @@
-# GuardianX 실행 루프 **v4.0 — Phase별 검토개발 (Work Package 방식)**
+# GuardianX 실행 루프 **v4.1 — Phase별 검토개발 (Work Package 방식)**
+
+## ▲ 개정 v4.1 — 2026-08-22 (D-242 · 대표 승인부 RESUME_NEXT §2-4)
+
+**바뀐 것 4개. 그중 셋은 "게이트가 죽어 있었다"의 수습이다.**
+
+| # | 무엇이 | 어떻게 |
+|---|---|---|
+| 1 | **STEP 0 첫 출력 줄** | 4개 값 전부 — `REGISTRY v… / total=… / decisions=… / loop=…` (D-240) |
+| 2 | **`tickets.sha256` 검사 조항** | **삭제.** `manifest` 대조로 대체 — `python scripts/gen_manifest.py` (D-228) |
+| 3 | **금지 17 (승인 전 수정·커밋)** | 각주 추가 — 프로토타입은 허용, **작업트리 잔류는 불허**(패치 격리) (D-234) |
+| 4 | **"사내망" 문구 전부** | **회수 경로 A(로컬 `GuardianX build`) / B(운영서버 `115.21.49.115`)** 로 치환 |
+
+> ### ★ 왜 4번인가 — 세계가 바뀌었다 (2026-08-16)
+>
+> **사내망 `192.168.0.22` 는 더 이상 존재하지 않는다. 담당 개발자는 퇴사했다.**
+> 지금까지의 모든 `verify-pending` 은 "사내망 방문 1회면 풀린다"를 전제했다.
+> **그 방문은 영원히 오지 않는다.** 그러므로 해소 경로를 다시 정의한다:
+>
+> | 경로 | 무엇 | 우선 |
+> |---|---|---|
+> | **A** | 로컬 `C:\GuardianX\GuardianX build` 에 설치본 사본이 있다 (대표 증언) | **최우선** |
+> | **B** | 운영서버 `115.21.49.115:3002` 가 가동 중 — 그 안에 설치본이 있다 | A 실패 시 |
+>
+> 실행 절차는 `docs/agent/RUNBOOK_로컬기동.md`. 기존 `runbook/INTRANET_VISIT.md` 의
+> **§A(사내 pip)만 사문화**되고 **§B·§C·§D·§E·§F 는 그대로 유효하다** — 실행 장소가 바뀔 뿐이다.
+
+---
 
 > **이 파일 하나가 실행 정본이다.** Claude Code에 이 파일 전체를 붙여넣고 시작한다.
 > v3.0(무인 완주)을 대체한다. **`autorun.enabled: false`** — 오늘부터 WP 경계에서 멈춘다.
@@ -44,7 +71,9 @@ ENTRY 검토서 제출 → [사람 승인] → 티켓 구현 (자율) → EXIT �
 
 | 파일 | 역할 | 당신의 권한 |
 |---|---|---|
-| `docs/agent/tickets.yaml` | **정본** v3.0 / 66티켓 / WP 9개 | `status` `blocker` `evidence` `updated_at` **만** |
+| `docs/agent/tickets.yaml` | **정본** v3.7-local / 66티켓 / WP 9개 | `status` `blocker` `evidence` `updated_at` **만** |
+| `docs/agent/RUNBOOK_로컬기동.md` | 회수 경로 A/B 실행 절차 (사내망 대체) | 읽고 실행 |
+| `scripts/gen_manifest.py` | 정본 무결성 대조 (sha256 대체) | 실행 전용 |
 | `docs/agent/decisions.yaml` | 사전 결정 v1.3 / 37건 | 읽기 전용 |
 | `docs/agent/decisions_pending.yaml` | 질문 적재함 | **추가만** |
 | `docs/agent/review/<WP>/ENTRY.md` | 착수검토서 | **당신이 쓴다** |
@@ -66,12 +95,18 @@ VERIFY_RETRY = 3
 
 ```
 0-1. tickets.yaml 을 읽는다.
-0-2. ★ 첫 출력 줄:  REGISTRY v<version> / total=<manifest.total> / WP=<현재 WP> / baseline=<sha>
-0-3. manifest.total ↔ 배열 길이, manifest.ids ↔ 실제 id 대조. 불일치 → STOP(registry-mismatch)
+0-2. ★ 첫 출력 줄 (4개 값 전부 · D-240):
+       REGISTRY v<version> / total=<manifest.total> / decisions=<decisions.yaml 건수> / loop=<이 파일 버전>
+0-3. `python scripts/gen_manifest.py` 실행 — manifest.total/by_phase/ids 를 실측 대조.
+     exit 1 → STOP(registry-mismatch).  **손으로 세지 않는다** (손으로 센 수가 틀렸던 것이
+     manifest 유실의 원인이다 — D-227).  `tickets.sha256` 검사는 폐기됐다 (D-228).
 0-4. decisions.yaml 을 메모리에 올린다.
 0-5. meta.autorun.enabled 를 확인한다. **false 면 이 문서(v4.0)를 따른다.**
      true 로 되어 있으면 정본이 구버전이다 → STOP(registry-mismatch)
-0-6. 접속 상태:  nc -z -w3 192.168.0.22 22 → INTRANET=true/false
+0-6. 실행 환경 판정 (사내망 조항 폐지 · 2026-08-16):
+       python -c "import core.base"  →  DJCORE=true/false
+     false 면 `docs/agent/RUNBOOK_로컬기동.md` STEP 1(회수 경로 A) 부터 시작한다.
+     A 실패 시에만 경로 B(운영서버 115.21.49.115) 로 회귀한다.
 0-7. ACTIVE_WP 를 판정한다: work_packages 를 순서대로 훑어
      그 WP 의 티켓이 전부 done 이면 다음으로, 아니면 그 WP 가 ACTIVE_WP.
 0-8. ACTIVE_WP 의 review/ 폴더 상태로 지금 어느 관문인지 판정한다.
@@ -137,7 +172,7 @@ VERIFY_RETRY = 3
 3-8. verify 실행 → 실패는 5가지로 분류한다.
        코드 결함 → 고친다 (3회 실패 시 STOP)
        환경 미가용 → env-unavailable, 전진
-       사내망 필요 → verify-pending, 전진
+       설치본(dj-core 등) 필요 → verify-pending, 전진 — 해소는 회수 경로 A/B (사내망 아님)
        판단 필요 → decision-pending, 전진
        지시서 오류 → AUTHOR-ERROR 로 적고 **실측대로** 구현, 전진 (D-214)
 3-9. 티켓 status 갱신 + evidence 경로 기록. 다음 티켓으로.
@@ -218,6 +253,9 @@ VERIFY_RETRY = 3
 15. 유도값을 코드 여러 곳에 하드코딩 (D-212)
 16. **★ 검토서에 `APPROVED:` 줄을 스스로 쓰기** — 승인은 사람만 한다
 17. **★ 승인 전에 소스 수정·커밋하기**
+    · 각주 (D-234): **프로토타입 작성은 허용**한다 — 설계를 말로만 검토하면 틀린 것을 승인하게 된다.
+      다만 **작업트리에 잔류시키지 않는다.** 승인 전 산출물은 패치로 격리해 두고,
+      승인 후에 적용한다. 커밋되지 않은 채 떠 있는 구현이 baseline 을 어긋나게 한다.
 18. **★ WP 순서를 바꾸거나 두 WP 를 동시에 열기**
 
 ---
@@ -233,5 +271,5 @@ Phase 승격은 **v4.0에서는 자동이 아니다.** 검토서를 제출하고
 
 ---
 
-**시작**: STEP 0 을 실행하고, 첫 줄에 `REGISTRY v… / total=… / WP=… / baseline=…` 을 출력한 뒤,
+**시작**: STEP 0 을 실행하고, 첫 줄에 `REGISTRY v… / total=… / decisions=… / loop=…` 을 출력한 뒤,
 현재 관문을 판정해 보고하라. 승인 대기 상태면 **아무것도 구현하지 말고 대기**하라.

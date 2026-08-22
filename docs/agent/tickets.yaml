@@ -4,16 +4,97 @@
 # 스키마: docs/GuardianX_개발작업지시서_v2.0.md §1 참조
 # ============================================================================
 meta:
-  version: "3.1"
+  version: "3.7-local"
   source_root: "C:/GuardianX/guardianx-source"
   active_phase: "R1"          # 에이전트는 이 phase의 티켓만 집는다
-  updated_at: "2026-08-14"
+  updated_at: "2026-08-22"
   status_enum: [backlog, ready, in_progress, review, verify-pending, done, blocked, dropped]
   # verify-pending = 구현 완료, 검증만 사내망 대기 (D-202). 에이전트는 다음 티켓으로 전진한다.
   gate_enum: [human-required, evidence-review]
   baseline_sha: "4afca2bb17f0dd64afce238579ad58380f9c4b57"  # W0-0 완료 확인(실측)
   decisions_file: "decisions.yaml"
   pending_file: "decisions_pending.yaml"   # 에이전트가 답이 필요한 질문을 '적재'하는 곳 (STOP 대신)
+
+  # --- 정본 무결성 (D-227 · D-228) ---
+  # tickets.sha256(파일 전체 해시)은 폐기했다. 에이전트가 status·evidence·updated_at 을
+  # 정상 작업으로 고치므로 그 해시는 **정상 동작에서 항상 어긋난다** — 게이트로 기능한 적이 없다.
+  # manifest 는 사람이 티켓을 넣고 뺄 때만 바뀌는 것(개수·id 집합)만 센다.
+  # 손으로 세지 않는다: `python scripts/gen_manifest.py` 가 실측·대조한다 (불일치 시 exit 1).
+  integrity: "manifest"
+  manifest:
+    total: 66
+    by_phase:
+      BACKLOG: 8
+      R1: 36
+      R2: 14
+      R3: 8
+    ids:
+      - W0-0
+      - W0-1a
+      - W0-1b
+      - W0-5
+      - W0-6
+      - W0-7
+      - W0-8
+      - W0-9
+      - W0-10
+      - W0-11
+      - W0-12
+      - W0-13
+      - W0-14
+      - W0-2
+      - W0-3
+      - W0-4
+      - W1-1
+      - W1-2
+      - W1-3
+      - W1-4
+      - W2-1
+      - W2-2
+      - W2-3
+      - W2-4
+      - W3-1
+      - W3-2
+      - W3-3
+      - W3-4
+      - W4-1
+      - W4-2
+      - W4-3
+      - W4-4
+      - W5-1
+      - W5-2
+      - W5-3
+      - W6-0
+      - W6-1
+      - W6-2
+      - W7-1
+      - W7-2
+      - W8-1
+      - W8-2
+      - W8-3
+      - W9-1
+      - W9-2
+      - W9-3
+      - W10-1
+      - W10-2
+      - W11-1
+      - W11-2
+      - W12-1
+      - W13-1
+      - W14-1
+      - W14-2
+      - W14-3
+      - W15-1
+      - W16-1
+      - W16-2
+      - B-01
+      - B-02
+      - B-03
+      - B-04
+      - B-05
+      - B-06
+      - B-07
+      - B-08
   # --- 실행 모드 (D-215) : 2026-08-14 자동완주 → Phase별 검토개발로 전환 ---
   autorun:
     enabled: false            # ★ 무인 완주 중단
