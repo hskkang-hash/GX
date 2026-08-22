@@ -1,0 +1,27 @@
+System check identified no issues (0 silenced).
+test_enumerator_finds_routes (tests.test_route_tenant_scope.RouteEnumerationTest.test_enumerator_finds_routes) ... ok
+test_every_route_has_exactly_one_state (tests.test_route_tenant_scope.RouteEnumerationTest.test_every_route_has_exactly_one_state)
+`scoped` / `public` / `unreviewed` 는 상호배타이고 합이 전체여야 한다. ... ok
+test_all_group_models_are_covered (tests.test_route_tenant_scope.RouteTenantScopeTest.test_all_group_models_are_covered)
+group 을 가진 모델을 소유한 앱의 HTTP 표면이 대장에 잡혀 있는가. ...
+[TENANT_SCOPE] group 보유 모델 소유 앱 28개 / 라우트가 잡힌 앱 16개 / 라우트 미발견 12개: ['advanced_table', 'article', 'auth', 'configuration', 'discuss', 'file_management', 'guardian', 'logger', 'menu', 'role', 'tag', 'user']
+skipped '대장 없음 — test_all_routes_are_tenant_scoped 가 먼저 만든다'
+test_all_routes_are_tenant_scoped (tests.test_route_tenant_scope.RouteTenantScopeTest.test_all_routes_are_tenant_scoped)
+전 라우트가 (a)스코프 적용 또는 (b)PUBLIC 등재여야 한다. ...
+[TENANT_SCOPE] total=652 scoped=0 public=3 unreviewed=649 no_auth=143 coverage=0.0% enforcing=False
+[TENANT_SCOPE] 대장을 새로 만들었습니다: /docs/agent/evidence/W0-14/route_baseline.json
+               이 파일을 커밋해야 다음 실행부터 증가 금지가 걸립니다.
+ok
+test_public_list_does_not_grow (tests.test_route_tenant_scope.RouteTenantScopeTest.test_public_list_does_not_grow)
+면제 목록 증가 금지 (W0-14 ②). ... ok
+test_public_routes_all_have_reasons (tests.test_route_tenant_scope.RouteTenantScopeTest.test_public_routes_all_have_reasons)
+PUBLIC 은 사유 없이는 등재될 수 없다. 사유가 없으면 미분류와 같다. ... ok
+test_decorated_route_registers_and_is_seen_as_scoped (tests.test_route_tenant_scope.ScopeDecoratorIntegrationTest.test_decorated_route_registers_and_is_seen_as_scoped)
+실제 API 인스턴스에 등록하고, 열거기가 `scoped` 로 보는지 확인한다. ... ok
+test_decorator_preserves_handler_signature (tests.test_route_tenant_scope.ScopeDecoratorIntegrationTest.test_decorator_preserves_handler_signature) ... ok
+test_service_layer_does_not_pick_arbitrary_group (tests.test_route_tenant_scope.ServiceLayerGroupSelectionTest.test_service_layer_does_not_pick_arbitrary_group) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 1.707s
+
+OK (skipped=1)

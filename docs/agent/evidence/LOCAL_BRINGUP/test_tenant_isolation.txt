@@ -1,0 +1,652 @@
+Using existing test database for alias 'default' ('test_database_guardianx')...
+Operations to perform:
+  Synchronize unmigrated apps: channels, common, core, corsheaders, messages, ninja_extra, ninja_jwt, optimization, proxy, ratelimit, rules, safedelete, simple_history, staticfiles, third_api
+  Apply all migrations: admin, advanced_table, apikey_account, article, auth, checklist_setting, configuration, contenttypes, dashboard, delivery, devices, discuss, django_celery_beat, file_management, flight_log, guardian, handover, logger, menu, multilanguage, notifications, operation_settings, operational_data, orders, partner, print_format, report_template, role, sessions, stream_monitors, surveillance, tag, task_status, terminals, token_blacklist, user
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying logger.0010_auditlogs_created_by_auditlogs_created_on_and_more...INFO ✅ Redis connection pool initialized (max=100)
+INFO 🎯 [MODEL_SPECIFIC] Found 1 keys matching *guardianx:universal:*migration*
+INFO 🌍 [SYSTEM_WIDE] Will clear 1 cache entries for model migration (groups: all) - SYSTEM-WIDE invalidation
+INFO 📋 [INVALIDATION_PREVIEW] Sample keys to delete (first 3):
+INFO    - :1:guardianx:universal:version:migration
+INFO ✅ [BATCH_DELETE] Successfully cleared 1/1 cache entries
+ OK
+  Applying stream_monitors.0015_alter_streammonitoraimodel_options_and_more...INFO 🎯 [MODEL_SPECIFIC] Found 1 keys matching *guardianx:universal:*migration*
+INFO 🌍 [SYSTEM_WIDE] Will clear 1 cache entries for model migration (groups: all) - SYSTEM-WIDE invalidation
+INFO 📋 [INVALIDATION_PREVIEW] Sample keys to delete (first 3):
+INFO    - :1:guardianx:universal:version:migration
+INFO ✅ [BATCH_DELETE] Successfully cleared 1/1 cache entries
+INFO 🎯 [MODEL_SPECIFIC] Found 1 keys matching *guardianx:universal:*migration*
+INFO 🌍 [SYSTEM_WIDE] Will clear 1 cache entries for model migration (groups: all) - SYSTEM-WIDE invalidation
+INFO 📋 [INVALIDATION_PREVIEW] Sample keys to delete (first 3):
+INFO    - :1:guardianx:universal:version:migration
+INFO ✅ [BATCH_DELETE] Successfully cleared 1/1 cache entries
+ OK
+  Applying surveillance.0030_surveymission_hover_and_capture...INFO 🎯 [MODEL_SPECIFIC] Found 1 keys matching *guardianx:universal:*migration*
+INFO 🌍 [SYSTEM_WIDE] Will clear 1 cache entries for model migration (groups: all) - SYSTEM-WIDE invalidation
+INFO 📋 [INVALIDATION_PREVIEW] Sample keys to delete (first 3):
+INFO    - :1:guardianx:universal:version:migration
+INFO ✅ [BATCH_DELETE] Successfully cleared 1/1 cache entries
+INFO 🎯 [MODEL_SPECIFIC] Found 1 keys matching *guardianx:universal:*migration*
+INFO 🌍 [SYSTEM_WIDE] Will clear 1 cache entries for model migration (groups: all) - SYSTEM-WIDE invalidation
+INFO 📋 [INVALIDATION_PREVIEW] Sample keys to delete (first 3):
+INFO    - :1:guardianx:universal:version:migration
+INFO ✅ [BATCH_DELETE] Successfully cleared 1/1 cache entries
+ OK
+INFO 🎯 [MODEL_SPECIFIC] Found 1 keys matching *guardianx:universal:*coreuser*
+INFO 🌍 [SYSTEM_WIDE] Will clear 1 cache entries for model coreuser (groups: all) - SYSTEM-WIDE invalidation
+INFO 📋 [INVALIDATION_PREVIEW] Sample keys to delete (first 3):
+INFO    - :1:guardianx:universal:version:coreuser
+INFO ✅ [BATCH_DELETE] Successfully cleared 1/1 cache entries
+INFO 🎯 [MODEL_SPECIFIC] Found 1 keys matching *guardianx:universal:*coreuser*
+INFO 🌍 [SYSTEM_WIDE] Will clear 1 cache entries for model coreuser (groups: all) - SYSTEM-WIDE invalidation
+INFO 📋 [INVALIDATION_PREVIEW] Sample keys to delete (first 3):
+INFO    - :1:guardianx:universal:version:coreuser
+INFO ✅ [BATCH_DELETE] Successfully cleared 1/1 cache entries
+WARNING Storage functionality will be disabled. Images and videos will not be saved.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+INFO Successfully connected to OpenSearch with crash-proof configuration
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+System check identified no issues (0 silenced).
+setUpClass (tests.test_tenant_isolation.TenantIsolationAPITest) ... ERROR
+setUpClass (tests.test_tenant_isolation.TenantIsolationORMTest) ... ERROR
+test_bypass_list_does_not_grow (tests.test_tenant_isolation.TenantIsolationRegistryTest.test_bypass_list_does_not_grow)
+권한 우회 목록에 항목을 추가하는 것을 막는다 (절대금지 #6 / D-103). ... ok
+test_registry_covers_all_isolatable_models (tests.test_tenant_isolation.TenantIsolationRegistryTest.test_registry_covers_all_isolatable_models) ... FAIL
+test_unisolated_set_has_not_grown (tests.test_tenant_isolation.TenantIsolationRegistryTest.test_unisolated_set_has_not_grown)
+격리 메커니즘 없는 모델이 새로 늘지 않았는지 확인한다. ... FAIL
+
+======================================================================
+ERROR: setUpClass (tests.test_tenant_isolation.TenantIsolationAPITest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "user_coreuser_email_key"
+DETAIL:  Key (email)=() already exists.
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/test/testcases.py", line 1400, in setUpClass
+    cls.setUpTestData()
+  File "/app/tests/test_tenant_isolation.py", line 136, in setUpTestData
+    cls.user_a = cls._make_user("user_a", cls.group_a)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_tenant_isolation.py", line 148, in _make_user
+    user = CoreUser.objects.create_user(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/models.py", line 162, in create_user
+    return self._create_user(username, email, password, **extra_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/models.py", line 156, in _create_user
+    user.save(using=self._db)
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/base_user.py", line 62, in save
+    super().save(*args, **kwargs)
+  File "/usr/local/lib/python3.11/site-packages/safedelete/models.py", line 131, in save
+    super(SafeDeleteModel, self).save(**kwargs)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 892, in save
+    self.save_base(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 998, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1161, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1202, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1852, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1836, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: duplicate key value violates unique constraint "user_coreuser_email_key"
+DETAIL:  Key (email)=() already exists.
+
+
+======================================================================
+ERROR: setUpClass (tests.test_tenant_isolation.TenantIsolationORMTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UniqueViolation: duplicate key value violates unique constraint "user_coreuser_email_key"
+DETAIL:  Key (email)=() already exists.
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/django/test/testcases.py", line 1400, in setUpClass
+    cls.setUpTestData()
+  File "/app/tests/test_tenant_isolation.py", line 136, in setUpTestData
+    cls.user_a = cls._make_user("user_a", cls.group_a)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/tests/test_tenant_isolation.py", line 148, in _make_user
+    user = CoreUser.objects.create_user(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/models.py", line 162, in create_user
+    return self._create_user(username, email, password, **extra_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/models.py", line 156, in _create_user
+    user.save(using=self._db)
+  File "/usr/local/lib/python3.11/site-packages/django/contrib/auth/base_user.py", line 62, in save
+    super().save(*args, **kwargs)
+  File "/usr/local/lib/python3.11/site-packages/safedelete/models.py", line 131, in save
+    super(SafeDeleteModel, self).save(**kwargs)
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 892, in save
+    self.save_base(
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 998, in save_base
+    updated = self._save_table(
+              ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1161, in _save_table
+    results = self._do_insert(
+              ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/base.py", line 1202, in _do_insert
+    return manager._insert(
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1852, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1836, in execute_sql
+    cursor.execute(sql, params)
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+  File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.IntegrityError: duplicate key value violates unique constraint "user_coreuser_email_key"
+DETAIL:  Key (email)=() already exists.
+
+
+======================================================================
+FAIL: test_registry_covers_all_isolatable_models (tests.test_tenant_isolation.TenantIsolationRegistryTest.test_registry_covers_all_isolatable_models)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_tenant_isolation.py", line 186, in test_registry_covers_all_isolatable_models
+    self.assertEqual(
+AssertionError: Lists differ: [] != ['dashboard.DashboardPanel']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'dashboard.DashboardPanel'
+
+- []
++ ['dashboard.DashboardPanel'] : group 격리 대상 모델이 이 테스트에 등록되지 않았습니다.
+MODELS 레지스트리에 Target(...) 을 추가하십시오. (W0-3 머지 규칙)
+
+======================================================================
+FAIL: test_unisolated_set_has_not_grown (tests.test_tenant_isolation.TenantIsolationRegistryTest.test_unisolated_set_has_not_grown)
+격리 메커니즘 없는 모델이 새로 늘지 않았는지 확인한다.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/test_tenant_isolation.py", line 200, in test_unisolated_set_has_not_grown
+    self.assertEqual(
+AssertionError: Items in the second set but not the first:
+'stream_monitors.DetectionEvent'
+'surveillance.SurveillanceProfile'
+'checklist_setting.ChecklistSetting'
+'terminals.Terminal'
+'stream_monitors.StreamMonitor' : 격리 메커니즘(groups M2M) 없는 모델이 새로 추가되었습니다: ['checklist_setting.ChecklistSetting', 'stream_monitors.DetectionEvent', 'stream_monitors.StreamMonitor', 'surveillance.SurveillanceProfile', 'terminals.Terminal']
+BaseModelWithGroup 을 상속시키십시오. (부록 A / D-108)
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.673s
+
+FAILED (failures=2, errors=2)
+Preserving test database for alias 'default' ('test_database_guardianx')...

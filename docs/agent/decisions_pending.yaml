@@ -323,3 +323,146 @@ pending:
     reversible: true
     blocks_dod: false
     status: open
+
+  # --- 2026-08-22 · RUNBOOK_로컬기동 실행 중 발생 (review/LOCAL_BRINGUP_결과.md) ---
+
+  - id: P-LOCAL-1
+    ticket: "(해당 없음 — dj-core 1.1.6 벤더 결함)"
+    raised_at: "2026-08-22"
+    context: "manage.py test 의 test DB 생성 중"
+    question: >-
+      dj-core 1.1.6 의 core/logger/migrations/0009 가 RunPython 안에서
+      apps.get_model("multilanguage", ...) 를 호출하면서 dependencies 에
+      multilanguage 를 선언하지 않았다. 그래서 마이그레이션을 0부터 쌓으면
+      LookupError 로 반드시 죽는다 — manage.py test 가 정확히 그 경로다.
+      운영은 덤프 복원이라 이 경로를 밟은 적이 없어 지금까지 드러나지 않았다.
+      §0.4 금지구역이므로 고칠 수 없고, 담당 개발자 퇴사로 벤더 창구도 없다.
+    options:
+      - "A: 운영 스키마를 템플릿으로 test DB 를 만들고 --keepdb 로 우회한다 (이번에 한 것)"
+      - "B: settings 에 multilanguage 를 logger 보다 앞에 두도록 재배치한다 (효과 없음 — 상태 그래프 문제라 INSTALLED_APPS 순서와 무관)"
+      - "C: dj-core 탈출 설계에 이 항목을 근거로 추가하고, CI 는 A 로 간다"
+    chosen_default: "A"
+    rationale: >-
+      4원칙 ①(더 안전한 쪽)·④(범위가 작은 쪽). A 는 저장소에도 dj-core 에도 손대지 않고
+      테스트를 돌릴 수 있게 한다. B 는 원인을 오해한 것이라 시도할 가치가 없다 —
+      실패는 앱 로딩 순서가 아니라 마이그레이션 상태 그래프에서 나온다.
+      C 는 A 를 포함하는 상위 판단이라 대표 몫이다.
+      ★ 부작용을 적어 둔다 - A 는 "0부터 세운 환경"을 검증하지 않는다. 즉 신규 설치 경로는
+      여전히 미검증이며, 이 결함이 살아 있는 한 **신규 고객 사이트 설치가 불가능하다.**
+      이것은 시험 편의 문제가 아니라 판매 가능성 문제다.
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  - id: P-LOCAL-2
+    ticket: "W0-3"
+    raised_at: "2026-08-22"
+    context: "tests/test_tenant_isolation.py 최초 실행"
+    question: >-
+      TenantIsolationORMTest·TenantIsolationAPITest 가 setUpTestData 에서 죽는다.
+      _make_user(148행)가 CoreUser.objects.create_user 에 email 을 주지 않아
+      두 사용자가 모두 email='' 로 들어가고, dj-core 의 CoreUser.email UNIQUE 제약
+      (user_coreuser_email_key)에 걸린다. 고유 email 을 넘기는 한 줄이면 풀린다.
+      그러나 절대금지 #5 가 이 파일의 수정을 막고, 파일 머리말도
+      "테스트가 틀린 것 같으면 고치지 말고 멈추고 보고한다" 고 적혀 있다.
+    options:
+      - "A: 대표 승인 후 _make_user 에 email=f'{username}@test.invalid' 를 추가한다"
+      - "B: 픽스처를 별도 파일로 빼고 test_tenant_isolation.py 는 import 만 한다"
+      - "C: 그대로 둔다 — ORM/API 격리 시험 5시나리오가 영구 미실행"
+    chosen_default: ""
+    rationale: >-
+      기본값을 적용하지 않는다. 금지 #5 는 이 파일에 대한 절대 조항이고,
+      "고치면 통과한다"는 상황이야말로 그 조항이 막으려는 것이다.
+      다만 C 는 대안이 아니다 - 격리를 HTTP 레벨로 증명한다는 WP-1 goal 의 본체가
+      이 5시나리오다. 그것이 안 돌면 goal 은 참이 될 수 없다.
+      A 를 권고한다. 테스트의 판정 로직은 한 글자도 바뀌지 않고 픽스처만 유효해진다.
+    reversible: true
+    blocks_dod: true
+    status: open
+
+  - id: P-LOCAL-3
+    ticket: "W0-3"
+    raised_at: "2026-08-22"
+    context: "test_unisolated_set_has_not_grown 실패 분석"
+    question: >-
+      is_group_isolatable() 은 `groups` M2M 만 본다. 그런데 dj-core 의
+      core.base.BaseModelWithGroup 은 `group` FK(단수)를 쓴다 — W2-1 dry-run 이
+      코드로 확인해 주었다. 그래서 저장소의 격리 판정 함수가 dj-core 상속 13종을
+      전부 "격리 메커니즘 없음"으로 읽는다. 실측 5종이 이 테스트를 깼다
+      (ChecklistSetting·DetectionEvent·StreamMonitor·SurveillanceProfile·Terminal).
+    options:
+      - "A: is_group_isolatable() 이 groups M2M 과 group FK 를 모두 인정하도록 넓힌다"
+      - "B: dj-core 13종을 KNOWN_UNISOLATED 로 옮긴다"
+    chosen_default: ""
+    rationale: >-
+      기본값을 적용하지 않는다 - 이 파일도 금지 #5 대상이다.
+      A 를 권고한다. B 는 "격리 메커니즘이 없다"는 **틀린 사실**을 정본에 새긴다.
+      실제로는 메커니즘이 있고 모양이 다를 뿐이다. B 로 가면 나중에 그 13종을
+      다시 조사해야 하고, 그때 KNOWN_UNISOLATED 가 조사를 가로막는다.
+      ★ 다만 A 를 적용해도 격리가 증명되는 것은 아니다. group FK 를 가졌다는 것과
+      그 필터가 실제로 걸린다는 것은 다른 문장이며, 후자는 W0-11 §5-2 가
+      created_by__isnull OR 3곳으로 이미 거짓임을 보였다. A 는 판정 함수를 사실에
+      맞추는 것일 뿐, W0-13 C안(뷰 레벨 스코프)의 필요성을 줄이지 않는다.
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  - id: P-LOCAL-4
+    ticket: "(해당 없음 — 저장소/운영 정합)"
+    raised_at: "2026-08-22"
+    context: "RUNBOOK STEP 5 대표 증언 대조"
+    question: >-
+      대표 증언은 "GuardianX build 와 guardianx-source 의 내용은 같다" 였다.
+      실측은 다르다 - 이미지 /app(2026-02-10 빌드)과 저장소 backend/ 의 *.py 를
+      md5 전수 대조한 결과 78파일이 다르고, 그중 73파일(약 2,296줄)은 베이스라인
+      커밋 4afca2b 시점부터 이미 달랐다. 공백·개행 차이는 0건 — 전부 실질 변경이다.
+      즉 운영에서 돌고 있는 것은 저장소 HEAD 가 아니다.
+    options:
+      - "A: 저장소가 정본이다 — 다음 배포 때 73파일이 운영에 나간다"
+      - "B: 운영이 정본이다 — 저장소의 2,296줄이 미배포 미검증 재고다"
+      - "C: 파일별로 판정한다 — 73파일 diff 를 사람이 훑는다"
+    chosen_default: ""
+    rationale: >-
+      기본값을 적용하지 않는다. 어느 쪽을 고르든 되돌리기 어렵고(reversible=false 성격),
+      에이전트가 알 수 없는 것 - "그 2,296줄이 왜 배포되지 않았는가" - 이 답을 정한다.
+      배포 대기였다면 A, 반려된 것이었다면 B 다.
+      ★ 이 질문이 열려 있는 동안은 **"운영서버에서 실측했다"로 내려진 모든 판정에
+      단서가 붙는다** — 그 실측의 대상은 저장소 코드가 아니다.
+      (W0-13 의 created_by NULL 실측은 이 이미지와 짝인 2026-02-10 덤프를 쓴 것이라
+      일관된다. 그 건은 영향 없다.)
+    reversible: false
+    blocks_dod: false
+    status: open
+
+  - id: P-LOCAL-5
+    ticket: "W0-14 (범위를 넘음 — 신규 티켓이 필요할 수 있다)"
+    raised_at: "2026-08-22"
+    context: "HTTP 교차 노출 실측 (evidence/W0-14/http_leak_probe.md §3)"
+    question: >-
+      dj-core base.py:308 이 `user.roles.filter(code='superuser').exists()` 인 사용자에게
+      그룹 필터를 통째로 건너뛴다. 활성 보유자가 **13명**이고 **고객 테넌트 안에 배포돼 있다**
+      (Anyang 7 · Gaion 4 · Group Default 2). 13명 전원 DB is_superuser 는 false 라
+      그 플래그로 특권 계정을 세는 감사는 0명을 보고한다.
+      실측: man(Anyang)이 남의 테넌트 15건, admin(Gaion)이 18건을 목록에서 봤다.
+      Fire_Drone 은 자기 11대 중 10대를 두 외부 테넌트에 노출하고 있고 그 사실을 알 수 없다.
+      이것은 결함인가 사양인가. 사양이라면 고객 테넌트 안에 두는 것이 맞는가.
+    options:
+      - "A: 사양으로 인정하되 superuser 역할을 운영자(가이온) 계정으로만 회수한다 — 고객 테넌트에서 제거"
+      - "B: 결함으로 보고 역할 기반 전역 우회 자체를 없앤다 (dj-core 수정 — §0.4 불가)"
+      - "C: W0-14 뷰 레벨 스코프가 superuser 역할도 무시하고 group 을 강제하게 한다"
+      - "D: 현행 유지 — 노출을 감수한다"
+    chosen_default: ""
+    rationale: >-
+      기본값을 적용하지 않는다. **되돌릴 수 없는 성격이다** — 13개 실계정의 권한을 회수하면
+      그 사람들의 업무가 즉시 멈춘다. 누가 왜 그 역할을 받았는지는 에이전트가 알 수 없다.
+      B 는 §0.4 금지구역이라 선택지가 아니다(기록용으로만 남긴다).
+      C 는 기술적으로 가능하고 W0-14 의 설계와 정합하지만, **A 없이 C 만 하면
+      운영자 자신도 전 테넌트를 못 보게 되어 지원 업무가 막힌다.** A 와 C 는 함께 가야 한다.
+      D 를 고르는 경우 그 판단을 문서로 남길 것을 권고한다 — 계약·인증 심사에서
+      "테넌트 격리" 를 주장할 수 없게 되기 때문이다.
+      ★ 우선순위 의견: 이것은 W0-13(created_by 65.9%)보다 **먼저** 답해야 한다.
+        created_by 를 전부 채워도 이 13계정에는 아무 효과가 없다. 두 구멍은 독립이다.
+    reversible: false
+    blocks_dod: true
+    answered_by: "D-243 (RESUME_NEXT 2026-08-22 §0) — A+C 병행 · 무중단 순차 회수"
+    status: answered

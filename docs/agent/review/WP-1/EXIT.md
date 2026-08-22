@@ -3,6 +3,132 @@ APPROVED: 2026-__-__ 강희석
 -->
 # WP-1 완료검토서 — 테넌트 격리 완결 (실제 노출 차단)
 
+## ▲ 갱신 재제출 — 2026-08-22 (로컬 기동 성공분 반영 · RESUME_NEXT §5-④)
+
+**이 블록이 최신 판정이다. 아래 §1~§9 는 2026-08-15 원문으로 보존한다.**
+근거: `docs/agent/review/LOCAL_BRINGUP_결과.md` · `evidence/LOCAL_BRINGUP/` · `evidence/W0-14/route_baseline.json`
+
+### ★★ 2026-08-22 2차 갱신 — **goal 문장의 답을 직접 실측했다**
+
+앞선 1차 갱신은 *"증명 도구가 아직 안 돈다"* 로 거짓을 판정했다. **그 사이 답이 나왔다.**
+격리 시험 파일은 금지 #5 로 못 고치므로, **저장소 밖에 프로브를 만들어 실제 테넌트·실제
+사용자·실제 HTTP 로 같은 질문을 물었다** (`scripts/probe_tenant_isolation.py`).
+
+> **goal**: group A 토큰으로 group B 데이터에 도달 **불가**함을 HTTP 레벨로 증명
+> **답**: **도달한다. 경로가 둘이다.** 전문 `evidence/W0-14/http_leak_probe.md`
+
+| 경로 | 무엇 | 규모 |
+|---|---|---|
+| **①** | dj-core `base.py:308` — `user.roles.filter(code='superuser')` 면 **필터 없이 전량 반환** | **활성 13계정 · 3개 테넌트에 배포됨. 그중 DB `is_superuser=true` 는 0명** |
+| **②** | dj-core `base.py:430` — `Q(group=…) \| Q(created_by__isnull=True)` | W0-13 실측 모수 **65.9%** |
+
+**실측 결과** (테넌트 9곳 · 각 1명 · `GET /api/stream-monitors/stream-monitors`):
+
+| 테넌트 | 사용자 | 역할 | 본 건수 | 자기것 | **남의 것** |
+|---|---|---|---|---|---|
+| **Anyang** | **man** | **superuser** | 30 | 7 | **15** (Gaion 4 · Fire_Drone 10 · Gongju 1) |
+| **Gaion** | **admin** | **superuser** | 30 | 4 | **18** (Anyang 7 · Fire_Drone 10 · Gongju 1) |
+| Anyang | anyang01 | delivery_admin | 9 | 7 | **1** — Gaion 소유 `Q02-0002`, `created_by` **NULL** |
+| Fire_Drone | fire_user1 | fire_admin | 10 | 10 | 0 |
+| 나머지 5곳 | — | — | 0~3 | — | 0 |
+
+**Fire_Drone 은 자기 11대 중 10대를 두 외부 테넌트에 노출하고 있다.**
+그리고 Fire_Drone 사용자는 남의 것을 하나도 못 본다 — **노출이 일방적이라 당하는 쪽이 모른다.**
+
+> **`is_superuser` 플래그를 기준으로 특권 계정을 세는 감사는 13명을 0명으로 보고한다.**
+> 이것이 이 WP 에서 나온 가장 무거운 사실이다.
+
+**경로 ①이 결함인지 사양인지는 대표 판정 사항이다.** `superuser` 라는 이름의 역할이 전 테넌트를
+보는 것 자체는 의도일 수 있다. 문제는 **그 역할이 고객 테넌트 안에 배포돼 있다**는 것이다 —
+Anyang 직원 7명이 Gaion·Fire_Drone 의 운영 데이터를 읽을 수 있다.
+
+**설계적 함의**: 두 경로 모두 ORM 매니저 안에 있고 매니저는 §0.4 금지구역이다.
+경로 ①은 매니저가 **의도적으로** 필터를 건너뛰는 지점이라, 매니저를 신뢰하는 어떤 설계도
+막지 못한다. **W0-14 뷰 레벨 스코프가 유일한 차단 수단**이라는 것이 실측으로 확정됐다.
+
+한계는 문서 §6 에 적었다 — 엔드포인트 1개 · 테넌트당 1명 · 2026-02-10 덤프.
+`seen=0` 인 테넌트 6곳은 **격리 성공의 증거가 아니다**(소유 레코드가 없을 뿐일 수 있다).
+
+---
+
+### 갱신 판정 — goal 은 **여전히 거짓**이다. 그러나 거짓인 이유가 바뀌었다.
+
+**goal**: group A 토큰으로 group B 데이터에 도달 불가함을 **HTTP 레벨로** 증명
+
+**판정**: ☐ 참 · ☐ 부분적으로 참 · **☑ 거짓**
+
+08-15 의 거짓 사유는 *"증명 수단이 실행되지 않았다"* 였다. **그 사유는 해소됐다** —
+`test_route_tenant_scope` 9건이 돌았고 데코레이터가 실제 API 에서 동작함이 확인됐다.
+
+**지금의 거짓 사유는 두 가지이고, 둘 다 08-15 보다 나쁜 소식이다.**
+
+| # | 사유 | 실측 |
+|---|---|---|
+| 1 | **HTTP 레벨 증명 도구가 아직 한 건도 돌지 않았다** | `TenantIsolationAPITest` 는 `setUpClass` 에서 죽는다 — 픽스처가 `CoreUser.email` UNIQUE 제약에 걸린다(P-LOCAL-2). 5시나리오 0/5 |
+| 2 | **막아야 할 표면이 예상보다 40% 넓다** | 정적 466 → **런타임 652**. `scoped=0 · unreviewed=649 · coverage 0.0%` |
+
+### ★ 08-15 의 판정 하나가 뒤집혔다 — §6 #5
+
+EXIT §6 #5 는 *"`created_by__isnull` 의 실효 범위는 17종 중 2종(11.8%)"* 이라고 적었다.
+**틀렸다.** 그 수는 저장소 소유 `common.base_model` 만 센 것이다. dj-core 1.1.6 을 열어 보니
+주 경로는 반대쪽이었다 — **13 : 2 이고, 고칠 수 있는 쪽이 2다** (W0-11 §5-3).
+
+그리고 이번 실행이 그것을 **런타임으로 확증**했다. `test_unisolated_set_has_not_grown` 이
+5종을 뱉었다(ChecklistSetting · DetectionEvent · StreamMonitor · SurveillanceProfile · Terminal).
+원인은 **두 베이스의 격리 필드 이름이 다르다**는 것이다 — dj-core 는 `group` FK(단수),
+저장소는 `groups` M2M(복수). W2-1 dry-run 이 코드로 보여 준다.
+
+> **결론은 08-15 와 같은 방향, 더 강한 근거다.** ORM 매니저에 격리를 맡기는 설계는 끝났다.
+> W0-13 은 C안(뷰 레벨 스코프)이 유일한 경로다.
+
+### 티켓별 갱신
+
+| 티켓 | 08-15 | **08-22** | 증명 |
+|---|---|---|---|
+| W0-11 | verify-pending | **done** | dj-core 1.1.6 회수 · 확인항목 2건 답 확보 |
+| W0-12 | verify-pending | **done** | `ServiceLayerGroupSelectionTest` **ok** — dod ①②③ 전부 |
+| W0-14 | verify-pending | **in_progress (강등)** | 구현은 실동작 확정. dod ① 미충족 — 649/652 미분류 |
+| W0-13 | decision-pending | decision-pending (유지) | C안 근거 강화 |
+
+**W0-14 강등을 숨기지 않는다.** verify-pending 은 "구현 완료, 검증만 대기" 를 뜻한다.
+검증했고 결과가 미충족이므로 in_progress 가 사실이다.
+
+### 새로 열린 것 — 롤아웃 착수 가능
+
+`P-W0-14-1`(D-241)은 *"@tenant_scoped 는 통합시험 2건 green 후 파일럿 1개부터"* 로 정해졌다.
+**그 2건이 green 이다.** `ScopeDecoratorIntegrationTest` 2건 ok.
+**파일럿 1개 착수 조건이 충족됐다** — 착수 여부는 WP-1 EXIT 승인과 FREEZE 해제에 달렸다.
+
+### 그리고 새로 드러난 미해결 하나
+
+group 보유 모델을 소유한 앱 28개 중 **12개 앱의 HTTP 표면이 열거되지 않는다**:
+`advanced_table · article · auth · configuration · discuss · file_management ·
+ guardian · logger · menu · role · tag · user` — **전부 dj-core 소유다.**
+
+저장소 라우트가 아니므로 `@tenant_scoped` 를 걸 지점 자체가 없다.
+**"dj-core 소유 HTTP 표면을 무엇으로 막을 것인가"** 가 WP-1 의 범위 밖에서 미해결로 남는다.
+이것은 W0-14 의 결함이 아니라 **WP 경계의 결함**이다 — 다음 계획이 답해야 한다.
+
+### 자가검증 갱신
+
+| 축 | 08-15 | **08-22** |
+|---|---|---|
+| **안정성** | 순수 로직 30건(자작 러너) | **실 러너 12건** — route 9(8 ok/1 skip) · isolation 3(1 ok/2 FAIL) + 2 ERROR |
+| **완결성** | dod 충족률 추정 | **W0-12 3/3 · W0-14 1/3 · 격리 5시나리오 0/5** |
+| **참신성** | "라우트 스코프 계측기" | 유지 — 그리고 **652 라우트를 실제로 세었다.** 경쟁 제품이 자사 API 표면의 테넌트 스코프 커버리지를 숫자로 말하는 사례를 우리는 알지 못한다 |
+| **편리성** | 해당 없음 (내부 통제 WP) | 해당 없음 |
+| **보안** | 우회 목록 미증가 | 유지. **추가**: dj-core 에 두 번째 우회 목록 `grid_models` 11종 존재 확인(무해 — `advanced_table` 이중 가드) |
+| **코드** | 컨벤션 위반 0건 | 0건 유지. **신규 소스 변경 0줄** |
+
+### 이 WP 를 막는 사람 판단
+
+1. **P-LOCAL-2** — 픽스처 email. **이것이 goal 을 막는 단일 최대 장애물이다.**
+   HTTP 레벨 증명 5시나리오가 이것 하나에 묶여 있다.
+2. **P-LOCAL-3** — `is_group_isolatable()` 이 `group` FK 를 보게 할 것인가.
+3. `route_baseline.json` **커밋 승인** — 없으면 미분류 증가 금지가 걸리지 않는다.
+
+---
+
 **작성** 에이전트 · 2026-08-15 · **착수검토 승인** 2026-08-15 (대표 · 구두 3문항)
 **정본** tickets v3.1 / WP 2/9 · **티켓** W0-12 · W0-14 · W0-11 · W0-13
 

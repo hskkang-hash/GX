@@ -1,0 +1,297 @@
+[
+  {
+    "gid": 4,
+    "group": "ETRI-Group",
+    "user": "thanh",
+    "roles": "admin",
+    "db_is_superuser": false,
+    "http": 200,
+    "seen": 3,
+    "own": 0,
+    "orphan": 3,
+    "foreign": 0,
+    "foreign_cb_null": [],
+    "foreign_cb_set": []
+  },
+  {
+    "gid": 5,
+    "group": "Group Default",
+    "user": "tuan",
+    "roles": "admin",
+    "db_is_superuser": false,
+    "http": 200,
+    "seen": 0,
+    "own": 0,
+    "orphan": 0,
+    "foreign": 0,
+    "foreign_cb_null": [],
+    "foreign_cb_set": []
+  },
+  {
+    "gid": 6,
+    "group": "Anyang",
+    "user": "man",
+    "roles": "superuser",
+    "db_is_superuser": false,
+    "http": 200,
+    "seen": 30,
+    "own": 7,
+    "orphan": 8,
+    "foreign": 15,
+    "foreign_cb_null": [
+      [
+        8,
+        "Q02-0002",
+        7
+      ]
+    ],
+    "foreign_cb_set": [
+      [
+        64,
+        "Gaion - DJI1",
+        7
+      ],
+      [
+        67,
+        "Drone_14",
+        11
+      ],
+      [
+        68,
+        "Drone_13",
+        11
+      ],
+      [
+        69,
+        "Drone_15",
+        11
+      ],
+      [
+        70,
+        "X05F-001",
+        11
+      ],
+      [
+        75,
+        "H40F-0002",
+        11
+      ],
+      [
+        78,
+        "H40F-0001",
+        11
+      ],
+      [
+        79,
+        "Q02F-001",
+        11
+      ],
+      [
+        80,
+        "H40FA-0001",
+        11
+      ],
+      [
+        81,
+        "X05F-002",
+        11
+      ],
+      [
+        82,
+        "Q02F-002",
+        11
+      ],
+      [
+        83,
+        "Gaion_04_ex02",
+        7
+      ],
+      [
+        88,
+        "(GAION)X05-0001",
+        14
+      ],
+      [
+        89,
+        "Test",
+        7
+      ]
+    ]
+  },
+  {
+    "gid": 7,
+    "group": "Gaion",
+    "user": "admin",
+    "roles": "superuser",
+    "db_is_superuser": false,
+    "http": 200,
+    "seen": 30,
+    "own": 4,
+    "orphan": 8,
+    "foreign": 18,
+    "foreign_cb_null": [
+      [
+        12,
+        "Q02-0003",
+        6
+      ],
+      [
+        19,
+        "H40-0001",
+        6
+      ]
+    ],
+    "foreign_cb_set": [
+      [
+        62,
+        "Anyang - DJI1",
+        6
+      ],
+      [
+        63,
+        "Anyang - DJI2",
+        6
+      ],
+      [
+        67,
+        "Drone_14",
+        11
+      ],
+      [
+        68,
+        "Drone_13",
+        11
+      ],
+      [
+        69,
+        "Drone_15",
+        11
+      ],
+      [
+        70,
+        "X05F-001",
+        11
+      ],
+      [
+        75,
+        "H40F-0002",
+        11
+      ],
+      [
+        78,
+        "H40F-0001",
+        11
+      ],
+      [
+        79,
+        "Q02F-001",
+        11
+      ],
+      [
+        80,
+        "H40FA-0001",
+        11
+      ],
+      [
+        81,
+        "X05F-002",
+        11
+      ],
+      [
+        82,
+        "Q02F-002",
+        11
+      ],
+      [
+        84,
+        "AnyangDockCam",
+        6
+      ],
+      [
+        86,
+        "Q02-0002",
+        6
+      ],
+      [
+        87,
+        "GAION-M4D",
+        6
+      ],
+      [
+        88,
+        "(GAION)X05-0001",
+        14
+      ]
+    ]
+  },
+  {
+    "gid": 8,
+    "group": "Thailand",
+    "user": "thai01",
+    "roles": "delivery_admin",
+    "db_is_superuser": false,
+    "http": 200,
+    "seen": 0,
+    "own": 0,
+    "orphan": 0,
+    "foreign": 0,
+    "foreign_cb_null": [],
+    "foreign_cb_set": []
+  },
+  {
+    "gid": 11,
+    "group": "Fire_Drone",
+    "user": "fire_user1",
+    "roles": "fire_admin,fire_user",
+    "db_is_superuser": false,
+    "http": 200,
+    "seen": 10,
+    "own": 10,
+    "orphan": 0,
+    "foreign": 0,
+    "foreign_cb_null": [],
+    "foreign_cb_set": []
+  },
+  {
+    "gid": 12,
+    "group": "DRONE-ROBOT",
+    "user": "dronerobot_user_1",
+    "roles": "drone_robot_admin",
+    "db_is_superuser": false,
+    "http": 200,
+    "seen": 0,
+    "own": 0,
+    "orphan": 0,
+    "foreign": 0,
+    "foreign_cb_null": [],
+    "foreign_cb_set": []
+  },
+  {
+    "gid": 14,
+    "group": "Gongju",
+    "user": "gongju_admin01",
+    "roles": "delivery_admin",
+    "db_is_superuser": false,
+    "http": 200,
+    "seen": 1,
+    "own": 1,
+    "orphan": 0,
+    "foreign": 0,
+    "foreign_cb_null": [],
+    "foreign_cb_set": []
+  },
+  {
+    "gid": 15,
+    "group": "GeumSan-ETRI",
+    "user": "order_geumsan",
+    "roles": "order",
+    "db_is_superuser": false,
+    "http": 200,
+    "seen": 0,
+    "own": 0,
+    "orphan": 0,
+    "foreign": 0,
+    "foreign_cb_null": [],
+    "foreign_cb_set": []
+  }
+]
