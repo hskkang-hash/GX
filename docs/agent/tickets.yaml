@@ -444,29 +444,40 @@ tickets:
 - id: W0-11
   phase: R1
   title: "dj-core 우회 목록 사실 확인 (§0.4 예외 판단)"
-  status: verify-pending
-  updated_at: "2026-08-15T18:40:00+09:00"
-  evidence: docs/agent/evidence/W0-11/dj-core-findings.md (오프라인 확정분 + 방문 실행 스크립트)
+  status: done
+  updated_at: "2026-08-22T13:10:00+09:00"
+  evidence: docs/agent/evidence/W0-11/dj-core-findings.md §5 (확인항목 1·2 완료) · 사본 C:/GuardianX-vault/dj-core-1.1.6/
   blocker: |
-    [2026-08-15 · WP-1 오프라인 진척] verify(파일 존재)는 충족. 확인항목 1·2는 대기.
-    ★ 오프라인에서 확정된 것: dj-core 는 이 저장소에 없다.
-       backend/core/ 는 advanced_table·data 둘뿐인 **암묵 네임스페이스 패키지**이고
-       (find_spec loader=None), core.base / core.user.models / core.api.v1.auth /
-       core.role.permission / core.middleware.* 는 전부 사내망 pip 배포본에 있다.
-       → **열두 스프린트에 걸친 "오프라인 시험 0건"의 진짜 원인이 이것이다.**
-         Docker·Postgres 문제가 아니라 django.setup() 이 ImportError 로 죽는다.
-         DB 를 띄워도 달라지지 않는다.
-    확인항목 1(우회 목록)·2(created_by__isnull OR)는 소스 수령 후에만 가능.
-    findings §4 에 방문 당일 실행할 스크립트 4개를 그대로 넣어 두었다 (약 10분).
-    ★ 이 티켓의 결과가 어떻게 나오든 W0-14 는 필요하다 (D-207). 반대는 성립하지 않는다 —
-      "A 에도 우회 목록이 있다"로 나오면 W0-14 의 긴급도만 올라간다.
+    [2026-08-22 · 해소] 사내망이 아니라 **로컬 도커 이미지에서 회수**했다.
+    GuardianX build/.../docker_images/guardianx-backend.tar (2.7GB) 안에 dj-core 1.1.6
+    설치본이 그대로 있었다. Docker 데몬 없이 OCI 레이어를 스트리밍해 추출 (findings §5 재현 명령).
+    requires_intranet: true 는 이제 거짓이다 — 회수 경로 A 로 대체됐다 (AGENT_LOOP v4.1 STEP 0-6).
+
+    ★ 확인항목 1 — performance_bypass_models 는 dj-core 에 **0건.** 그 목록은 저장소 소유이고
+      W0-2 범위 안에 전부 있었다. 다만 **찾지 않았던 두 번째 우회 목록 grid_models(11종)** 이 있다.
+      app_label == 'advanced_table' 로 이중 가드되고 저장소에 그 앱이 없어 지금은 무해하나,
+      "우회 목록은 하나뿐"이라는 전제가 깨졌으므로 등록부에 올렸다 (findings §5-1).
+
+    ★ 확인항목 2 — created_by__isnull OR 는 **3건** (base.py L398·L430·L439).
+      **L430 이 이 조사 전체에서 가장 중요한 발견이다**: group FK 가 제대로 있는 모델에서조차
+      Q(group=user_group) | Q(created_by__isnull=True) 로 되어 있다. 폴백이 아니라 명시적 OR 다.
+      created_by 가 NULL 인 행(시스템 생성·마이그레이션 적재·배치 삽입)은 전 테넌트에 열린다.
+
+    ★ WP-1 EXIT §6 #5 의 판정이 뒤집힌다. 실효 범위는 "17종 중 2종"이 아니라 **13 : 2** 이고
+      고칠 수 있는 쪽이 2, 고칠 수 없는 쪽(dj-core · §0.4)이 13이다. 그 13에 DetectionEvent 와
+      StreamMonitor 가 들어 있다.
+
+    → **W0-13 은 필터를 고치는 티켓이 될 수 없다.** C안(W0-14 뷰 레벨 스코프 우회)만 남는다.
+      findings §5-4. 대표 판정 대기 — 이것이 WP-1 EXIT §7 신규 7-1 의 답이다.
+      부수: 이 발견은 W0-14 의 설계(라우트에 스코프를 건다)가 처음부터 옳았음을 사후 증명한다.
+      ORM 매니저를 신뢰할 수 없다는 것이 이제 코드로 확인됐다.
   priority: P0
   effort: S
   kind: ops
   depends_on: [W0-0]
   human_gate: false
   gate: evidence-review
-  requires_intranet: true
+  requires_intranet: false   # 2026-08-22: 회수 경로 A 로 해소 (구값 true)
   decisions: [D-207]
   spec: |
     사내망 접속 시 dj-core 소스를 받아 core/base.py 의 CustomManagerGroup 을 확인한다.
