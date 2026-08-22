@@ -89,6 +89,24 @@ ModuleSpec(name='core', loader=None, ...)
 
 **신규 파일 6개(소스 2 · 문서 4) 합 1,217줄 / 변경 파일 6개.**
 
+### 2-1. 커밋 (2026-08-22 · baseline `4afca2b` → `faebd91`)
+
+STEP 3-5 규약대로 **조사·증거를 먼저, 소스 변경을 나중에** 쪼갰다. 앞 커밋만으로도
+사내망 방문 전에 확정된 사실 4건이 남는다.
+
+| 해시 | 종류 | 내용 | 티켓 |
+|---|---|---|---|
+| `195888b` | docs | 증거 4종 + WP-0 EXIT + WP-1 ENTRY/EXIT (1,408줄) | W0-11·W0-12·W0-13·W0-14 |
+| `c38576f` | chore | pre-commit 훅 공백 정리 — handover 2파일. **기능 diff 16줄이 공백 313줄에 묻히지 않도록 분리**(선례 `7af88b6`) | — |
+| `faebd91` | feat | `tenant_scope.py` 300줄 · `test_route_tenant_scope.py` 309줄 · `require_user_group()` · `TENANT_SCOPE_ENFORCE` · handover 2건 수정 | W0-14·W0-12 |
+
+커밋 시점 게이트: gitleaks **Passed** · GCS 키 분리(D-003) **Passed** · detect-private-key
+**Passed** · large-files **Passed** · py_compile **6/6** · `UserGroup.objects.first()` grep **0건**.
+작업 트리 clean.
+
+> 이 절이 EXIT 제출 시점에 비어 있었다. 산출물이 **커밋되지 않은 채** 떠 있었기 때문이고,
+> 그 상태로는 다음 WP 의 baseline 이 어긋난다. 2026-08-22 에 채웠다.
+
 ---
 
 ## 3. 자가검증 — KPI 4축
