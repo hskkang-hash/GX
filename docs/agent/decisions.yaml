@@ -1,5 +1,5 @@
 # ============================================================================
-# GuardianX 사전 결정 레지스트리 (Decision Registry) v1.6  — 56건 (D-245까지)
+# GuardianX 사전 결정 레지스트리 (Decision Registry) v1.7  — 62건 (D-251까지)
 # ----------------------------------------------------------------------------
 # 목적: 에이전트가 STEP 2에서 CLARIFY로 멈추는 것을 줄인다.
 #       "사람만 답할 수 있는 질문"을 미리 답해 둔 파일이다.
@@ -959,6 +959,93 @@ decisions:
           (2) 확인되면 probe_guardianx 를 DROP 한다.
           database_guardianx(운영 복제본)는 무변경 확인만 한다 — 삭제 대상이 아니다.
   affects: []
+
+# ============================================================================
+# 2026-08-22(2차) · RESUME_NEXT §1 — WP-2 ENTRY 정정 4건을 결정으로 승격 (D-242 승인부)
+# ============================================================================
+
+- id: D-246
+  title: "티켓 ID 재부여 — 신규 3건은 W0-16 / W0-17 / W0-18"
+  status: decided
+  raised_by: "cowork (RESUME_NEXT 2026-08-22 2차 §1) — WP-2 ENTRY §3-0 에 대한 대표 판정"
+  decision: |
+    직전 RESUME_NEXT 가 신규 작업 3건에 부여한 W2-2 / W2-3 / W2-4 는 정본에 이미
+    AI 이벤트 센터(WP-3 · 상품화 2단계 U1)로 존재한다. 그대로 두면 U1 티켓 3개가 덮인다.
+    신규 3건에 빈 번호를 준다:
+      W0-16  superuser 역할 분리        (구 W2-2)
+      W0-17  외부 의존 부분 실패 격리    (구 W2-3)
+      W0-18  응답 후처리 + 계약 정합      (구 W2-4)
+    기존 W2-2 / W2-3 / W2-4 (AI 이벤트 센터)는 무변경으로 남는다.
+    manifest total 67 → 70 (R1 37 → 40).
+  affects: [tickets.yaml, W0-16, W0-17, W0-18, W2-2, W2-3, W2-4]
+  author_error: "#14 — 신규 티켓 번호 부여 전 기존 정본 번호 미대조 (D-214 절차대로 기록)"
+
+- id: D-247
+  title: "R1 실행 순서 정정 — 역할 분리(W0-16)가 뷰 스코프(W0-14)보다 먼저"
+  status: decided
+  raised_by: "cowork (RESUME_NEXT 2026-08-22 2차 §1) — WP-2 ENTRY §3-1 에 대한 대표 판정"
+  decision: |
+    W0-14 현 구현은 dj-core 의 superuser 우회를 그대로 복제한다 —
+      common/tenant_scope.py:165 `if is_superuser(user): return`
+      common/tenant_filters.py:72 `is_superuser()` (base.py:308 과 동일 판정)
+      _check · filter_by_group_field · filter_users_by_group · get_scoped_or_404 4곳
+    "전역 superuser = GAION 운영자 전용"을 먼저 정의하지 않고 뷰부터 고치면 두 번 고친다.
+    실행 순서를 고정한다:  W0-16(정의) → W0-14(뷰가 그 정의를 강제) → W0-13(백필).
+  affects: [W0-16, W0-14, W0-13]
+  author_error: "#15 — 작성자가 뷰-우선 순서로 지정"
+
+- id: D-248
+  title: "R3 재범위 — 상태코드는 소스 수정 불가, 응답 후처리 계층으로"
+  status: decided
+  raised_by: "cowork (RESUME_NEXT 2026-08-22 2차 §1) — WP-2 ENTRY §3-2 에 대한 대표 판정"
+  decision: |
+    권한거부가 HTTP 200 으로 나가는 원인은 core/role/permission.py:512 가 dict 를 반환하기
+    때문이고, 그 파일은 §0.4 금지구역이다(D-207). 소스 수정 금지.
+    정정: 저장소 쪽 **응답 후처리 계층(미들웨어/렌더러)**에서
+          200-body-403 형태를 감지해 실제 HTTP 403 으로 승격한다.
+    하위호환 계획 필수 — 기존 클라이언트가 200 을 기대할 수 있다.
+      ① 프론트에서 status_code 를 읽는 지점 전수 영향조사를 **첫 작업**으로
+      ② 설정 1곳의 플래그 뒤에 둔다 (D-212) — 즉시 롤백 가능해야 한다
+      ③ 단계적 전환 / 버전 플래그로 롤아웃
+  affects: [W0-18]
+  author_error: "#16 — 작성자가 저장소 코드로 고칠 수 있다고 가정"
+
+- id: D-249
+  title: "WP-2 EXIT 판정 기준 정정 — 부착률이 아니라 '누출 0건'"
+  status: decided
+  raised_by: "cowork (RESUME_NEXT 2026-08-22 2차 §1) — WP-2 ENTRY §1·§6 에 대한 대표 판정"
+  decision: |
+    데코레이터는 표식일 뿐이고 실제 좁힘은 핸들러가 한다. 전 라우트에 부착해도 데이터는 샐 수 있다.
+    EXIT 격리 판정 기준을 다음으로 고정한다:
+      · scripts/probe_tenant_isolation.py 재현 결과 **누출 0건** (착수 시점 man 15 · admin 18 · anyang01 1)
+      · 격리 시나리오 **5/5** (착수 시점 0/5)
+    라우트 총수는 실측값 **652** 를 쓴다. 지시서의 466 은 정적 추정치였다.
+  affects: [W0-14, WP-2]
+  author_error: "#17 — 부착률을 완결 기준으로 오정의 + 466 정적 추정"
+
+- id: D-250
+  title: "P-LOCAL-2 격리시험 픽스처 — 승인(옵션 A). 활성화한다"
+  status: decided
+  raised_by: "cowork (RESUME_NEXT 2026-08-22 2차 §1) — P-LOCAL-2 에 대한 대표 판정"
+  decision: |
+    tests/test_tenant_isolation.py 의 _make_user 픽스처에 고유 email 을 부여해 5시나리오를 살린다.
+    판정 로직은 한 글자도 바꾸지 않는다 — 픽스처만 유효해진다.
+    근거: 살리면 빨간불이 켜진다 = 결함을 **드러내는** 방향이다. 감추는 방향이 아니다.
+          D-105(격리시험 비활성/스킵 금지) 정신에 부합한다.
+    P-LOCAL-2 status → answered.
+  affects: [W0-3, W0-14, WP-2]
+
+- id: D-251
+  title: "D-244 보강(긴급) — 운영서버 9200 · 5601 포트 노출 IP 제한 대상 추가"
+  status: decided
+  raised_by: "cowork (RESUME_NEXT 2026-08-22 2차 §1) — WP-2 ENTRY §8-4 실측에 대한 대표 판정"
+  decision: |
+    에이전트 실측: 운영서버의 9200(OpenSearch · 401 응답)·5601(Dashboards 추정 · 응답)이
+    인터넷에 열려 있다. D-244 ②(접근 IP 제한) 대상에 이 둘을 포함한다.
+    긴급도는 자격증명 회전과 동급. **수행 주체는 대표/운영자다 — 에이전트는 실행하지 않는다.**
+    (D-244 그대로: 운영 서버 접속·설정 변경은 에이전트 소관이 아니다.)
+  affects: [W0-1b, W0-5, W0-15]
+  note: "값·자격증명은 이 파일에 적지 않는다 (금지 #2)"
 
 # 미수령 번호 (작성자 트리 v3.6 에만 존재): D-226 · D-229 ~ D-233 · D-235 · D-238 · D-239
 # 이 트리에서는 참조하지 않는다. 인용이 필요해지면 원문을 요청할 것.

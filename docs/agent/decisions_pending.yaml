@@ -378,7 +378,9 @@ pending:
       A 를 권고한다. 테스트의 판정 로직은 한 글자도 바뀌지 않고 픽스처만 유효해진다.
     reversible: true
     blocks_dod: true
-    status: open
+    status: answered
+    answered_by: "D-250 (RESUME_NEXT 2026-08-22 2차 §1) — 옵션 A 승인. 픽스처만 고치고 판정 로직은 무변경."
+    answered_at: "2026-08-22"
 
   - id: P-LOCAL-3
     ticket: "W0-3"
@@ -466,3 +468,29 @@ pending:
     blocks_dod: true
     answered_by: "D-243 (RESUME_NEXT 2026-08-22 §0) — A+C 병행 · 무중단 순차 회수"
     status: answered
+
+  - id: P-WP2-1
+    ticket: "W0-16 · W0-17 · W0-18"
+    raised_at: "2026-08-22"
+    context: "D-246 으로 신규 3티켓을 등재한 뒤 work_packages 대조"
+    question: >-
+      RESUME_NEXT(2026-08-22 2차) 와 review/WP-2/ENTRY.md 가 말하는 WP-2 는 "신뢰 봉인"
+      (W0-16 → W0-14 → W0-13 → W0-17 → W0-18) 인데, 정본 tickets.yaml 의
+      meta.work_packages WP-2 는 "릴리스 위생 — 키·빌드·데모 분리"
+      (W0-1b, W0-5, W0-4, W0-8, W0-6, W0-7, W0-9, W0-15) 이고,
+      W0-14·W0-13 은 WP-1 소속이다. 즉 실행 중인 WP-2 와 정본의 WP-2 가 다른 것을 가리킨다.
+      신규 3티켓은 어느 WP 에도 속하지 않은 채 등재됐다 (manifest 는 멤버십을 검사하지 않아 통과함).
+      AGENT_LOOP STEP 0-7(ACTIVE_WP 판정)이 다음 세션에서 오작동한다.
+    options:
+      - "A: work_packages WP-2 를 '신뢰 봉인'(W0-16, W0-14, W0-13, W0-17, W0-18)으로 재정의하고, 기존 '릴리스 위생' 묶음은 빈 WP 번호로 이동"
+      - "B: 신뢰 봉인을 새 WP 번호(WP-2T 등)로 등재하고 review 폴더명을 맞춘다"
+      - "C: 그대로 둔다 — 정본 work_packages 와 실행 단위가 계속 어긋난다"
+    chosen_default: ""
+    rationale: >-
+      기본값을 적용하지 않는다. work_packages 는 금지 #11 의 대상이고, D-242 승인부가 명시한
+      범위는 '티켓 ID 재부여'까지다. 확대 해석하지 않는다 (D-242 마지막 줄).
+      실행 자체는 막히지 않는다 — 대표가 지정한 티켓 순서가 명시적이므로 그대로 진행한다.
+      A 를 권고한다. review/WP-2/ 폴더가 이미 '신뢰 봉인'으로 존재해 되돌리는 비용이 더 크다.
+    reversible: true
+    blocks_dod: false
+    status: open
