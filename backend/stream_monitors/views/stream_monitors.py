@@ -26,14 +26,19 @@ from common.constant import MESSAGE_ENUM
 from core.api.v1.auth import CustomJWTAuth
 from ninja_jwt.authentication import JWTAuth
 
+from common.tenant_scope import tenant_scoped
+
 logger = logging.getLogger(__name__)
 
 
 @api_controller('/stream-monitors', tags=['Stream Monitors'])
 class StreamMonitorsAPI:
     @route.get('', auth=CustomJWTAuth())
+    @tenant_scoped()
     def get_stream_monitors(self, request, ):
-        stream_monitors = StreamMonitorService.get_stream_monitors()
+        # W0-14 파일럿 — 요청자를 넘겨 서비스가 테넌트로 좁히게 한다.
+        # 데코레이터는 표식·경고일 뿐이고, 실제 좁힘은 이 인자가 한다.
+        stream_monitors = StreamMonitorService.get_stream_monitors(user=request.user)
         stream_monitors_out = StreamMonitorOutSchema.from_queryset(stream_monitors, many=True)
         return BaseResponse(
             status_code=200,
@@ -94,11 +99,11 @@ class StreamMonitorsAPI:
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_STREAM_MONITOR_CAPTURE_FAILED, "Stream monitor capture failed"),
                 data=[]
         )
-    
+
     @route.post('/start-record', auth=CustomJWTAuth())
     def start_record(self, request, stream_monitor_code: str, ai_model__code: Optional[str] = None):
         record_id, record_code = async_to_sync(StreamMonitorService.start_record)(
-            stream_monitor_code, 
+            stream_monitor_code,
             ai_model__code,
             enable_detection=True,
             from_fe=True,
@@ -111,7 +116,7 @@ class StreamMonitorsAPI:
                 "record_code": record_code
             }
         )
-    
+
     @route.post('/stop-record', auth=CustomJWTAuth())
     def stop_record(self, request, stream_monitor_code: str, record_id: str, ai_model__code: Optional[str] = None):
         request_user = get_current_request().user
@@ -119,7 +124,7 @@ class StreamMonitorsAPI:
         group_id = None
         if request_user and hasattr(request_user, 'userprofilelink') and request_user.userprofilelink and request_user.userprofilelink.group:
             group_id = str(request_user.userprofilelink.group.id)
-        
+
         object_path = async_to_sync(StreamMonitorService.stop_record)(
             stream_monitor_code,
             record_id,
@@ -152,7 +157,7 @@ class StreamMonitorsAPI:
                 from_fe=False,
             )
             logger.info(f"🔍 [START_RECORDING_PUBLIC] start_record returned: record_id={record_id}, stream_monitor_id={stream_monitor_id}")
-            
+
             # Check if recording actually started (record_id should not be None)
             if record_id is None:
                 logger.error(f"❌ [START_RECORDING_PUBLIC] Failed to start recording for drone_uid: {drone_uid}. Record ID is None.")
@@ -162,7 +167,7 @@ class StreamMonitorsAPI:
                     message="Failed to start recording. API call to AI_GRPC service may have failed. Check server logs for details.",
                     data=None,
                 )
-            
+
             logger.info(f"✅ [START_RECORDING_PUBLIC] Recording started successfully for drone_uid: {drone_uid}, record_id: {record_id}")
             return BaseResponse(
                 status_code=200,
@@ -199,7 +204,7 @@ class StreamMonitorsAPI:
                     message="No running recording found",
                     data=None,
                 )
-            
+
             logger.info(f"✅ [STOP_RECORDING_PUBLIC] Found record: id={record.id}, status={record.status}, created_at={record.created_at}")
             logger.info(f"🛑 [STOP_RECORDING_PUBLIC] Calling StreamMonitorService.stop_record with: drone_uid={drone_uid}, record_id={record.id}, group_id={data.group}")
 
@@ -210,9 +215,9 @@ class StreamMonitorsAPI:
                 enable_detection=False,
                 group_id=data.group,
             )
-            
+
             logger.info(f"🛑 [STOP_RECORDING_PUBLIC] stop_record returned: object_path={object_path}")
-            
+
             # Check if stop_record failed (returned None)
             if object_path is None:
                 logger.error(f"❌ [STOP_RECORDING_PUBLIC] Failed to stop recording for drone_uid={drone_uid}, record_id={record.id}")
@@ -222,7 +227,7 @@ class StreamMonitorsAPI:
                     message="Failed to stop recording. Check server logs for details.",
                     data=None,
                 )
-            
+
             logger.info(f"✅ [STOP_RECORDING_PUBLIC] Recording stopped successfully for drone_uid={drone_uid}, object_path={object_path}")
             return BaseResponse(
                 status_code=200,
@@ -238,12 +243,12 @@ class StreamMonitorsAPI:
                 message=str(exc),
                 data=None,
             )
-    
+
     @route.post('/pause-record', auth=CustomJWTAuth())
     def pause_record(self, request, stream_monitor_code: str, record_id: str, ai_model__code: Optional[str] = None):
         object_path = async_to_sync(StreamMonitorService.pause_record)(
-            stream_monitor_code, 
-            record_id, 
+            stream_monitor_code,
+            record_id,
             ai_model__code
         )
         return BaseResponse(
@@ -253,12 +258,12 @@ class StreamMonitorsAPI:
                 "object_path": object_path
             }
         )
-    
+
     @route.post('/resume-record', auth=CustomJWTAuth())
     def resume_record(self, request, stream_monitor_code: str, record_id: str, ai_model__code: Optional[str] = None):
         object_path = async_to_sync(StreamMonitorService.resume_record)(
-            stream_monitor_code, 
-            record_id, 
+            stream_monitor_code,
+            record_id,
             ai_model__code
         )
         return BaseResponse(
@@ -272,24 +277,24 @@ class StreamMonitorsAPI:
     @route.get('/ai-models', auth=CustomJWTAuth())
     def get_ai_models(self, request):
         ai_models_queryset = StreamMonitorService.get_ai_models()
-        
+
         # Get language code
         language_code = request.user.language.code if (request.user.language and hasattr(request.user, 'language')) else 'en'
         # Convert queryset to list to avoid multiple evaluations
         ai_models_list = list(ai_models_queryset)
-        
+
         # Create schema output
         ai_models_out = AIModelOutSchema.from_queryset(ai_models_list, many=True)
-        
+
         # Create a mapping of id to model instance for efficient lookup
         ai_models_dict = {model.id: model for model in ai_models_list}
-        
+
         # Update each dict with translated name
         for ai_model_dict in ai_models_out:
             if 'id' in ai_model_dict:
                 model_instance = ai_models_dict.get(ai_model_dict['id'])
                 ai_model_dict['name'] = model_instance.get_translation('name', language_code)
-        
+
         return BaseResponse(
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_AI_MODELS_SUCCESS, "AI models retrieved successfully"),

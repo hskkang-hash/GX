@@ -660,8 +660,8 @@ tickets:
   phase: R1
   title: "뷰/서비스 레벨 테넌트 필터 전 엔드포인트 강제 (격리 주 통제)"
   status: in_progress
-  updated_at: "2026-08-22T17:10:00+09:00"
-  evidence: docs/agent/evidence/W0-14/http_leak_probe.md · leak_matrix.json · coverage.md · route_baseline.json
+  updated_at: "2026-08-22T22:10:00+09:00"
+  evidence: docs/agent/evidence/W0-14/pilot_scope_stream_monitors.md · http_leak_probe.md · leak_matrix.json · coverage.md · route_baseline.json · openapi_routes.json
   blocker: |
     [2026-08-22 · **HTTP 레벨 교차 노출을 실측했다. 격리는 뚫려 있다**]
     전문: docs/agent/evidence/W0-14/http_leak_probe.md · leak_matrix.json
@@ -690,6 +690,34 @@ tickets:
 
     dod 현황은 앞 항목 그대로 — ① 미충족(649/652 미분류) · ② 부분 · ③ 충족.
     이 실측은 dod 를 옮기지 않는다. **긴급도를 옮긴다.**
+
+    ---
+    [2026-08-22 2차 · **파일럿 1개로 누출 15 → 0. 그리고 플래그 하나로도 15 → 0**]
+    전문: docs/agent/evidence/W0-14/pilot_scope_stream_monitors.md
+
+    바꾼 곳 3개 (D-247 순서대로 — 판정을 먼저 갈고 그 다음 좁혔다):
+      ① common/tenant_filters.py — 지역 is_superuser() 삭제. 판정은 tenant_roles.is_global_admin()
+         하나만 낸다. 이 파일에 판정식이 되살아나면 tests/test_tenant_filters_scope.py 가 실패한다.
+      ② common/tenant_scope.py _check — 같은 교체 + 레거시로 통과한 건에 [LEGACY_GLOBAL] 경고.
+         회수 진척을 사람이 눈으로 세지 않게 한다.
+      ③ stream_monitors 목록 뷰·서비스 — @tenant_scoped() 부착 + get_stream_monitors(user=…)
+         로 명시적 group 필터. **데코레이터가 아니라 이 인자가 실제로 좁힌다** (D-249).
+
+    실측 (같은 엔드포인트·같은 방법 · 복제본 w014_guardianx):
+      · man(Anyang · 회수 완료)   착수 15 → W0-16 후 1 → **지금 0**  (경로② 도 닫혔다)
+      · son(Anyang · 레거시 보유) 플래그 True 15 → **플래그 False 0**
+        ★ **역할을 회수하지 않아도, 설정 한 줄로 닫힌다.** 회수 절차의 순서가 바뀐다.
+      · admin(Gaion · 전역역할)   18 유지 — 누출이 아니라 정의다. 플래그 무관이 그 증거다.
+      · 무중단: 셋 다 HTTP 200 · 자기 것 7건 그대로.
+
+    라우트 대장 실측: scoped 0 → 1 / unreviewed 649 → 648 (total 652 · coverage.md §3).
+    ★ 부착률은 EXIT 기준이 아니다 (D-249). 위 누출 수치가 기준이다.
+
+    남은 것 — dod ① ②:
+      · ① 확대 롤아웃 648건. 확대 전 P-W0-14-3(orphan 33% 화면 손실) 판정 권고.
+      · ② test_all_routes_are_tenant_scoped 는 통과하나(대장 증가금지),
+        test_tenant_isolation 5시나리오는 **배선 결함으로 판정 미도달** — P-W0-14-2 적재.
+        이 파일은 금지 #5 대상이라 배선도 대표 승인 없이는 손대지 않는다 (D-250 선례).
   priority: P0
   effort: L
   kind: new-s

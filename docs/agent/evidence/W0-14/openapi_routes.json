@@ -1,0 +1,1722 @@
+{
+  "note": "W0-14 · openapi 실측 라우트 대장 (경로+메서드). 격리 시험 api_base 근거.",
+  "schema_count": 21,
+  "route_count": 531,
+  "failed_schemas": {},
+  "routes": {
+    "/api/advanced-table/column-order": [
+      "PUT"
+    ],
+    "/api/advanced-table/column-settings": [
+      "GET",
+      "PUT"
+    ],
+    "/api/advanced-table/column-settings/default": [
+      "POST"
+    ],
+    "/api/advanced-table/column-settings/has-default": [
+      "GET"
+    ],
+    "/api/advanced-table/column-settings/page-size": [
+      "PUT"
+    ],
+    "/api/advanced-table/column-settings/reset": [
+      "POST"
+    ],
+    "/api/advanced-table/column-settings/user-default": [
+      "POST"
+    ],
+    "/api/advanced-table/database/app-model/{grid_name}": [
+      "GET"
+    ],
+    "/api/advanced-table/database/metadata": [
+      "GET"
+    ],
+    "/api/advanced-table/grid-management": [
+      "GET",
+      "POST"
+    ],
+    "/api/advanced-table/grid-management/paginated": [
+      "GET"
+    ],
+    "/api/advanced-table/grid-management/{grid_id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/advanced-table/grid-management/{grid_id}/detail": [
+      "GET"
+    ],
+    "/api/advanced-table/menu-grid/{menu_id}": [
+      "GET"
+    ],
+    "/api/advanced-table/permissions/{grid_id}": [
+      "GET"
+    ],
+    "/api/advanced-table/search-conditions": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/api/advanced-table/search-conditions/paginated": [
+      "GET"
+    ],
+    "/api/advanced-table/search-conditions/user": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/api/advanced-table/select-data": [
+      "GET"
+    ],
+    "/api/advanced-table/translations/field-types": [
+      "GET"
+    ],
+    "/api/advanced-table/translations/sync": [
+      "POST"
+    ],
+    "/api/apikey/analytics": [
+      "GET"
+    ],
+    "/api/apikey/bulk-deactivate": [
+      "POST"
+    ],
+    "/api/apikey/check": [
+      "GET"
+    ],
+    "/api/apikey/keys": [
+      "GET",
+      "POST"
+    ],
+    "/api/apikey/keys/{api_key_id}": [
+      "DELETE",
+      "GET",
+      "PATCH"
+    ],
+    "/api/apikey/keys/{api_key_id}/regenerate": [
+      "POST"
+    ],
+    "/api/apikey/keys/{api_key_id}/usage-logs": [
+      "GET"
+    ],
+    "/api/apikey/keys/{user_id}": [
+      "POST"
+    ],
+    "/api/apikey/stats": [
+      "GET"
+    ],
+    "/api/article": [
+      "GET"
+    ],
+    "/api/article/related/{article_id}": [
+      "GET"
+    ],
+    "/api/article/slug/{article_slug}": [
+      "GET"
+    ],
+    "/api/article/{article_id}": [
+      "GET"
+    ],
+    "/api/checklist-setting/": [
+      "GET",
+      "POST"
+    ],
+    "/api/checklist-setting/categories/": [
+      "GET",
+      "POST"
+    ],
+    "/api/checklist-setting/categories/{id}": [
+      "DELETE"
+    ],
+    "/api/checklist-setting/delete/{ids}": [
+      "DELETE"
+    ],
+    "/api/checklist-setting/{id}": [
+      "PUT"
+    ],
+    "/api/checklist-setting/{id}/activate": [
+      "PUT"
+    ],
+    "/api/comment": [
+      "GET",
+      "POST"
+    ],
+    "/api/config-management/create": [
+      "POST"
+    ],
+    "/api/config-management/delete": [
+      "POST"
+    ],
+    "/api/config-management/gen-schema": [
+      "GET"
+    ],
+    "/api/config-management/list": [
+      "GET"
+    ],
+    "/api/config-management/list-optimized": [
+      "GET"
+    ],
+    "/api/config-management/update": [
+      "POST"
+    ],
+    "/api/config-management/update-settings": [
+      "POST"
+    ],
+    "/api/config-management/upload-file": [
+      "POST"
+    ],
+    "/api/dashboard/dashboard/": [
+      "GET"
+    ],
+    "/api/dashboard/dashboard/anyang": [
+      "GET"
+    ],
+    "/api/dashboard/dashboard/check-health/{drone_id}": [
+      "GET"
+    ],
+    "/api/dashboard/dashboard/devices-location": [
+      "GET"
+    ],
+    "/api/dashboard/dashboard/refresh": [
+      "POST"
+    ],
+    "/api/dashboard/dashboard/refresh-default": [
+      "POST"
+    ],
+    "/api/dashboard/dashboard/weather-setting": [
+      "POST"
+    ],
+    "/api/delivery/cancelled/cancel-order/{operation_id}": [
+      "POST"
+    ],
+    "/api/delivery/cancelled/cancelled-operations": [
+      "GET"
+    ],
+    "/api/delivery/completed/arrived-operations": [
+      "GET"
+    ],
+    "/api/delivery/completed/arrived-order/{operation_id}": [
+      "POST"
+    ],
+    "/api/delivery/completed/complete-order/{operation_id}": [
+      "POST"
+    ],
+    "/api/delivery/completed/complete-orders": [
+      "POST"
+    ],
+    "/api/delivery/completed/completed-operations": [
+      "GET"
+    ],
+    "/api/delivery/completed/download-report/{operation_id}": [
+      "GET"
+    ],
+    "/api/delivery/delivery-report/download-report/{operation_id}": [
+      "GET"
+    ],
+    "/api/delivery/delivery-report/operations": [
+      "GET"
+    ],
+    "/api/delivery/delivery/get-delivery-for-etri": [
+      "GET"
+    ],
+    "/api/delivery/delivery/operations": [
+      "GET"
+    ],
+    "/api/delivery/drone-monitoring/drone-status": [
+      "GET",
+      "POST"
+    ],
+    "/api/delivery/etri-integration/etri-data-format/{operation_id}": [
+      "GET"
+    ],
+    "/api/delivery/etri-integration/receive-from-etri": [
+      "POST"
+    ],
+    "/api/delivery/etri-integration/send-to-etri/{operation_id}": [
+      "POST"
+    ],
+    "/api/delivery/etri-mock/receive-delivery": [
+      "POST"
+    ],
+    "/api/delivery/etri-mock/send-status-update": [
+      "POST"
+    ],
+    "/api/delivery/etri-mock/test-scenarios": [
+      "GET"
+    ],
+    "/api/delivery/order-confirmation/{package_id}": [
+      "POST"
+    ],
+    "/api/delivery/processing/approve-flight": [
+      "POST"
+    ],
+    "/api/delivery/processing/assign-packages-to-drone": [
+      "POST"
+    ],
+    "/api/delivery/processing/assign-packages-to-drones": [
+      "POST"
+    ],
+    "/api/delivery/processing/cancel-awaiting-order": [
+      "POST"
+    ],
+    "/api/delivery/processing/cancel-flight": [
+      "POST"
+    ],
+    "/api/delivery/processing/change-drone": [
+      "POST"
+    ],
+    "/api/delivery/processing/drones": [
+      "GET"
+    ],
+    "/api/delivery/processing/get-drone-by-route/{route_id}": [
+      "GET"
+    ],
+    "/api/delivery/processing/get-drones-by-package-and-route-optimized": [
+      "GET"
+    ],
+    "/api/delivery/processing/in-transit-operations": [
+      "GET"
+    ],
+    "/api/delivery/processing/operation-items/{operation_id}": [
+      "GET"
+    ],
+    "/api/delivery/processing/routes": [
+      "GET"
+    ],
+    "/api/delivery/processing/select-drone-operations": [
+      "GET"
+    ],
+    "/api/delivery/processing/select-drone-operations-items/{operation_item_id}/{route_id}": [
+      "GET"
+    ],
+    "/api/delivery/processing/select-drone-operations/{operation_id}": [
+      "GET"
+    ],
+    "/api/delivery/processing/select-route-operations": [
+      "GET"
+    ],
+    "/api/delivery/processing/start-mission-to-gcs": [
+      "POST"
+    ],
+    "/api/delivery/processing/update-delivery-event": [
+      "POST"
+    ],
+    "/api/delivery/processing/update-drone/{operation_item_id}/{drone_id}": [
+      "PUT"
+    ],
+    "/api/delivery/processing/update-is-arrived/{operation_item_id}": [
+      "PUT"
+    ],
+    "/api/delivery/processing/update-is-delivered/{operation_item_id}": [
+      "PUT"
+    ],
+    "/api/delivery/processing/update-route/{operation_id}/{route_id}": [
+      "PUT"
+    ],
+    "/api/delivery/processing/update-status/{operation_id}": [
+      "PUT"
+    ],
+    "/api/delivery/processing/upload-mission-to-gcs": [
+      "POST"
+    ],
+    "/api/delivery/returned/check-arrived-timeout/{operation_id}": [
+      "GET"
+    ],
+    "/api/delivery/returned/check-pending-timeout/{operation_id}": [
+      "GET"
+    ],
+    "/api/delivery/returned/due-for-return-operations": [
+      "GET"
+    ],
+    "/api/delivery/returned/execute-pending-timeout": [
+      "POST"
+    ],
+    "/api/delivery/returned/execute-processed": [
+      "POST"
+    ],
+    "/api/delivery/returned/execute-returned": [
+      "POST"
+    ],
+    "/api/delivery/returned/overdue-operations": [
+      "GET"
+    ],
+    "/api/delivery/returned/pending-return-operations": [
+      "GET"
+    ],
+    "/api/delivery/returned/processed-return-operations": [
+      "GET"
+    ],
+    "/api/delivery/returned/returned-operations": [
+      "GET"
+    ],
+    "/api/delivery/verification/cancel-order/{operation_id}": [
+      "POST"
+    ],
+    "/api/delivery/verification/print-waybill/{operation_id}/{template_id}": [
+      "GET"
+    ],
+    "/api/delivery/verification/unverified-operations": [
+      "GET"
+    ],
+    "/api/delivery/verification/verified-operations": [
+      "GET"
+    ],
+    "/api/delivery/verification/verify-orders": [
+      "POST"
+    ],
+    "/api/departments/": [
+      "GET",
+      "POST"
+    ],
+    "/api/departments/delete/{department_ids}/": [
+      "DELETE"
+    ],
+    "/api/departments/{department_id}/": [
+      "GET",
+      "PUT"
+    ],
+    "/api/devices/battery-types": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/battery-types/{id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/devices/cameras": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/cameras/device/{device_id}": [
+      "GET"
+    ],
+    "/api/devices/cameras/{id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/devices/cameras/{id}/activate": [
+      "PUT"
+    ],
+    "/api/devices/cameras/{id}/change-status": [
+      "PUT"
+    ],
+    "/api/devices/cameras/{id}/deactivate": [
+      "PUT"
+    ],
+    "/api/devices/devices-management": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/devices-management/common/add-to-groups": [
+      "POST"
+    ],
+    "/api/devices/devices-management/delete/{ids}": [
+      "DELETE"
+    ],
+    "/api/devices/devices-management/{ids}/activate": [
+      "PUT"
+    ],
+    "/api/devices/devices-management/{ids}/change-status": [
+      "PUT"
+    ],
+    "/api/devices/devices-management/{ids}/deactivate": [
+      "PUT"
+    ],
+    "/api/devices/devices-management/{id}": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/devices-management/{id}/active": [
+      "POST"
+    ],
+    "/api/devices/devices-management/{id}/detach-file/{file_id}": [
+      "DELETE"
+    ],
+    "/api/devices/gnss-systems": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/gnss-systems/{id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/devices/image-stabilizations": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/image-stabilizations/{id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/devices/imus": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/imus/{id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/devices/libraries-management": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/libraries-management/libraries/{ids}": [
+      "DELETE"
+    ],
+    "/api/devices/libraries-management/{ids}/change-status": [
+      "PUT"
+    ],
+    "/api/devices/libraries-management/{id}": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/libraries-management/{id}/detach-file/{file_id}": [
+      "DELETE"
+    ],
+    "/api/devices/motor-types": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/motor-types/{id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/devices/packaging-specifications": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/packaging-specifications/{ids}/activate": [
+      "PUT"
+    ],
+    "/api/devices/packaging-specifications/{ids}/change-active": [
+      "PUT"
+    ],
+    "/api/devices/packaging-specifications/{ids}/change-status": [
+      "PUT"
+    ],
+    "/api/devices/packaging-specifications/{ids}/deactivate": [
+      "PUT"
+    ],
+    "/api/devices/packaging-specifications/{id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/devices/protocols": [
+      "GET",
+      "POST"
+    ],
+    "/api/devices/protocols/{id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/dronehw/drone-communication-management/change-status": [
+      "POST"
+    ],
+    "/api/dronehw/drone-communication-management/online-drones": [
+      "GET"
+    ],
+    "/api/dronehw/group-management/group/{group_id}/drones": [
+      "GET"
+    ],
+    "/api/dronehw/group-management/groups-with-drones": [
+      "GET"
+    ],
+    "/api/file/get-file": [
+      "GET"
+    ],
+    "/api/file/upload-file": [
+      "POST"
+    ],
+    "/api/file/user-file": [
+      "GET"
+    ],
+    "/api/flight-log/flight-log/": [
+      "GET"
+    ],
+    "/api/flight-log/flight-log/delete/{ids}": [
+      "DELETE"
+    ],
+    "/api/flight-log/flight-log/detail/{id}": [
+      "GET"
+    ],
+    "/api/flight-log/flight-log/download-log/{id}": [
+      "GET"
+    ],
+    "/api/genders/": [
+      "GET"
+    ],
+    "/api/handover/handover/content": [
+      "DELETE",
+      "POST"
+    ],
+    "/api/handover/handover/content/by-id-management": [
+      "GET"
+    ],
+    "/api/handover/handover/content/contents": [
+      "POST"
+    ],
+    "/api/handover/handover/content/handover-duty-detail": [
+      "POST"
+    ],
+    "/api/handover/handover/management": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/api/handover/handover/management/download-management": [
+      "POST"
+    ],
+    "/api/handover/handover/notice": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/api/handover/handover/notice-comment": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/api/handover/handover/notice/by-id-notice": [
+      "GET"
+    ],
+    "/api/handover/handover/notice/download-completed-notice": [
+      "POST"
+    ],
+    "/api/handover/handover/notice/download-notice": [
+      "POST"
+    ],
+    "/api/handover/handover/notice/notice-process": [
+      "POST"
+    ],
+    "/api/handover/handover/notice/notice-restore": [
+      "POST"
+    ],
+    "/api/handover/handover/shift": [
+      "DELETE",
+      "GET",
+      "POST",
+      "PUT"
+    ],
+    "/api/handover/handover/shift/work-shift-config": [
+      "POST"
+    ],
+    "/api/levels/": [
+      "GET",
+      "POST"
+    ],
+    "/api/levels/delete/{level_ids}/": [
+      "DELETE"
+    ],
+    "/api/levels/{level_id}/": [
+      "GET",
+      "PUT"
+    ],
+    "/api/logger/list": [
+      "GET"
+    ],
+    "/api/logger/management/list": [
+      "GET"
+    ],
+    "/api/logger/search": [
+      "GET"
+    ],
+    "/api/logger/stats/summary": [
+      "GET"
+    ],
+    "/api/logger/user-update/list": [
+      "GET"
+    ],
+    "/api/logger/{log_id}": [
+      "DELETE",
+      "GET"
+    ],
+    "/api/media-data/": [
+      "GET"
+    ],
+    "/api/media-data/detect": [
+      "POST"
+    ],
+    "/api/media-data/detect-callback": [
+      "POST"
+    ],
+    "/api/media-data/download": [
+      "POST"
+    ],
+    "/api/media-data/preview": [
+      "POST"
+    ],
+    "/api/media-data/upload-detection": [
+      "POST"
+    ],
+    "/api/menu/menu-base-role/{role_ids}": [
+      "GET"
+    ],
+    "/api/menu/menu-role-management": [
+      "POST"
+    ],
+    "/api/menu/menu-tree": [
+      "GET"
+    ],
+    "/api/menu/menus": [
+      "GET",
+      "POST"
+    ],
+    "/api/menu/menus/{menu_id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/menu/menus/{menu_id}/role-permissions": [
+      "POST"
+    ],
+    "/api/menu/menus/{menu_id}/role-permissions/{role_id}": [
+      "DELETE"
+    ],
+    "/api/menu/tabs": [
+      "POST"
+    ],
+    "/api/menu/tabs/{tab_id}": [
+      "DELETE",
+      "PUT"
+    ],
+    "/api/menu/tabs/{tab_id}/role-permissions": [
+      "POST"
+    ],
+    "/api/menu/tabs/{tab_id}/role-permissions/{role_id}": [
+      "DELETE"
+    ],
+    "/api/nationalities/": [
+      "GET"
+    ],
+    "/api/operation-settings/menu-integration/create-defaults/{menu_id}": [
+      "POST"
+    ],
+    "/api/operation-settings/menu-integration/groups": [
+      "GET"
+    ],
+    "/api/operation-settings/menu-integration/menus": [
+      "GET"
+    ],
+    "/api/operation-settings/menu-integration/structure": [
+      "GET"
+    ],
+    "/api/operation-settings/menu-integration/summary": [
+      "GET"
+    ],
+    "/api/operation-settings/menu-integration/tabs": [
+      "GET"
+    ],
+    "/api/operation-settings/menu-integration/validate/{menu_id}": [
+      "GET"
+    ],
+    "/api/operation-settings/operation-settings": [
+      "POST"
+    ],
+    "/api/operation-settings/operation-settings/": [
+      "GET"
+    ],
+    "/api/operation-settings/operation-settings/group/{group_id}": [
+      "GET"
+    ],
+    "/api/operation-settings/operation-settings/menu/{menu_id}": [
+      "GET"
+    ],
+    "/api/operation-settings/operation-settings/menu/{menu_id}/tab/{tab_id}": [
+      "GET"
+    ],
+    "/api/operation-settings/operation-settings/supported-apis": [
+      "GET"
+    ],
+    "/api/operation-settings/operation-settings/supported-apis/endpoints": [
+      "GET"
+    ],
+    "/api/operation-settings/operation-settings/supported-apis/method/{method}": [
+      "GET"
+    ],
+    "/api/operation-settings/operation-settings/supported-apis/{api_name}": [
+      "GET"
+    ],
+    "/api/operation-settings/operation-settings/tab/{tab_id}": [
+      "GET"
+    ],
+    "/api/operation-settings/operation-settings/{setting_id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/operational-data/operational-data": [
+      "GET"
+    ],
+    "/api/operational-data/operational-data/download-operational-data": [
+      "GET"
+    ],
+    "/api/operational-data/operational-data/upload-status/id/{upload_status_id}": [
+      "GET"
+    ],
+    "/api/operational-data/operational-data/upload-status/{task_id}": [
+      "GET"
+    ],
+    "/api/operational-data/operational-data/{order_item_id}": [
+      "GET"
+    ],
+    "/api/operational-data/operational-data/{order_item_id}/download-operational-log-drone": [
+      "GET"
+    ],
+    "/api/operational-data/operational-data/{order_item_id}/download-operational-log-robot": [
+      "GET"
+    ],
+    "/api/operational-data/operational-data/{order_item_id}/upload-operational-log-drone": [
+      "POST"
+    ],
+    "/api/operational-data/operational-data/{order_item_id}/upload-operational-log-robot": [
+      "POST"
+    ],
+    "/api/operational-data/operational-data/{order_item_id}/upload-operational-video-drone": [
+      "POST"
+    ],
+    "/api/operational-data/operational-data/{order_item_id}/upload-operational-video-robot": [
+      "POST"
+    ],
+    "/api/operational-data/operational-notice": [
+      "GET",
+      "POST"
+    ],
+    "/api/operational-data/operational-notice/change-status/{notice_id}": [
+      "POST"
+    ],
+    "/api/operational-data/operational-notice/delete/{notice_ids}": [
+      "DELETE"
+    ],
+    "/api/operational-data/operational-notice/{notice_id}": [
+      "GET",
+      "PUT"
+    ],
+    "/api/optimization/optimization/cache-status": [
+      "GET"
+    ],
+    "/api/optimization/optimization/dashboard-stats": [
+      "GET"
+    ],
+    "/api/optimization/optimization/device-metrics": [
+      "GET"
+    ],
+    "/api/optimization/optimization/order-statistics": [
+      "GET"
+    ],
+    "/api/optimization/optimization/performance-comparison": [
+      "GET"
+    ],
+    "/api/optimization/optimization/task-status/{task_id}": [
+      "GET"
+    ],
+    "/api/optimization/optimization/trigger-cache-warming": [
+      "POST"
+    ],
+    "/api/optimization/optimization/trigger-computation": [
+      "POST"
+    ],
+    "/api/optimization/optimization/warm-cache-status": [
+      "GET"
+    ],
+    "/api/optimization/optimization/warm-data/{data_type}": [
+      "GET"
+    ],
+    "/api/orders/banks/": [
+      "GET"
+    ],
+    "/api/orders/delivery-option/": [
+      "GET"
+    ],
+    "/api/orders/external-order-statuses": [
+      "GET",
+      "POST"
+    ],
+    "/api/orders/external-order-statuses/external-order-statuses/{external_status_ids}": [
+      "DELETE"
+    ],
+    "/api/orders/external-order-statuses/{external_status_id}": [
+      "GET",
+      "PUT"
+    ],
+    "/api/orders/item-types/": [
+      "GET"
+    ],
+    "/api/orders/order-status-mappings": [
+      "GET",
+      "POST"
+    ],
+    "/api/orders/order-status-mappings/available-statuses/{group_id}": [
+      "GET"
+    ],
+    "/api/orders/order-status-mappings/delete/{group_ids}": [
+      "DELETE"
+    ],
+    "/api/orders/order-status-mappings/resolve-status/{group_id}/{external_status_code}": [
+      "GET"
+    ],
+    "/api/orders/order-status-mappings/update/{group_id}": [
+      "PUT"
+    ],
+    "/api/orders/order-status-mappings/{mapping_id}": [
+      "GET"
+    ],
+    "/api/orders/order/": [
+      "GET",
+      "POST"
+    ],
+    "/api/orders/order/etri-order": [
+      "GET"
+    ],
+    "/api/orders/order/etri-order-detail": [
+      "GET"
+    ],
+    "/api/orders/order/map-status": [
+      "GET"
+    ],
+    "/api/orders/order/settings/allow-order-in-bad-weather": [
+      "PUT"
+    ],
+    "/api/orders/order/{id}": [
+      "GET"
+    ],
+    "/api/orders/order/{id}/cancel-order": [
+      "POST"
+    ],
+    "/api/orders/order/{id}/change-status": [
+      "POST"
+    ],
+    "/api/orders/order/{id}/payment": [
+      "POST"
+    ],
+    "/api/orders/order/{id}/refund": [
+      "POST"
+    ],
+    "/api/orders/order/{id}/return-order": [
+      "POST"
+    ],
+    "/api/orders/package/package-list": [
+      "GET"
+    ],
+    "/api/orders/payment-methods/": [
+      "GET"
+    ],
+    "/api/orders/pickup-locations/": [
+      "GET"
+    ],
+    "/api/orders/pickup-locations/etri-terminals": [
+      "GET"
+    ],
+    "/api/partner/api/partners/": [
+      "GET",
+      "POST"
+    ],
+    "/api/partner/api/partners/delete/{partner_ids}": [
+      "DELETE"
+    ],
+    "/api/partner/api/partners/my-status": [
+      "GET"
+    ],
+    "/api/partner/api/partners/refresh-token/{partner_id}": [
+      "POST"
+    ],
+    "/api/partner/api/partners/{partner_id}": [
+      "GET"
+    ],
+    "/api/partner/api/partners/{partner_id}/api-callbacks": [
+      "PUT"
+    ],
+    "/api/partner/api/partners/{partner_id}/api-key": [
+      "PUT"
+    ],
+    "/api/partner/api/partners/{partner_id}/copy-api-key": [
+      "GET"
+    ],
+    "/api/partner/api/partners/{partner_id}/regenerate-api-key": [
+      "POST"
+    ],
+    "/api/partner/api/partners/{partner_id}/revoke-refresh-token": [
+      "DELETE"
+    ],
+    "/api/partner/api/partners/{partner_id}/toggle-status": [
+      "PUT"
+    ],
+    "/api/partner/partner-callback-mockup/delivery-status-callback": [
+      "POST"
+    ],
+    "/api/partner/partner-callback-mockup/drone-base-station-callback": [
+      "POST"
+    ],
+    "/api/partner/partner-callback-mockup/drone-user-notice-callback": [
+      "POST"
+    ],
+    "/api/partner/partner-callback-mockup/test-websocket-connection": [
+      "GET"
+    ],
+    "/api/positions/": [
+      "GET",
+      "POST"
+    ],
+    "/api/positions/delete/{position_ids}/": [
+      "DELETE"
+    ],
+    "/api/positions/{position_id}/": [
+      "GET",
+      "PUT"
+    ],
+    "/api/print-format/print-formats": [
+      "POST"
+    ],
+    "/api/print-format/print-formats/print-formats": [
+      "GET"
+    ],
+    "/api/print-format/print-formats/print-formats/fields/model": [
+      "GET"
+    ],
+    "/api/print-format/print-formats/print-formats/{print_format_id}/preview": [
+      "GET"
+    ],
+    "/api/print-format/print-formats/print-formats/{print_format_id}/preview/report-template": [
+      "GET"
+    ],
+    "/api/print-format/print-formats/print-formats/{print_format_id}/print": [
+      "POST"
+    ],
+    "/api/print-format/print-formats/{print_format_id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/rating": [
+      "GET",
+      "POST"
+    ],
+    "/api/rating/featured": [
+      "GET"
+    ],
+    "/api/register-settings/": [
+      "GET"
+    ],
+    "/api/report-template/": [
+      "GET",
+      "POST"
+    ],
+    "/api/report-template/delete/{ids}": [
+      "DELETE"
+    ],
+    "/api/report-template/{id}": [
+      "GET",
+      "PUT"
+    ],
+    "/api/roles/": [
+      "GET",
+      "POST"
+    ],
+    "/api/roles/get-data-for-role/": [
+      "GET"
+    ],
+    "/api/roles/menu-permissions/{id}": [
+      "PUT"
+    ],
+    "/api/roles/users-by-role/{role_id}": [
+      "GET"
+    ],
+    "/api/roles/users-to-role/{role_id}": [
+      "POST"
+    ],
+    "/api/roles/{role_id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/setting/add": [
+      "POST"
+    ],
+    "/api/setting/all": [
+      "GET"
+    ],
+    "/api/setting/config-by-name": [
+      "GET"
+    ],
+    "/api/setting/edit/{setting_id}": [
+      "POST"
+    ],
+    "/api/setting/groups": [
+      "GET"
+    ],
+    "/api/source/get-html": [
+      "GET"
+    ],
+    "/api/source/get-url": [
+      "GET"
+    ],
+    "/api/source/save-html": [
+      "POST"
+    ],
+    "/api/stream-monitors/drawing/elements": [
+      "POST"
+    ],
+    "/api/stream-monitors/drawing/elements/{element_id}": [
+      "DELETE",
+      "PUT"
+    ],
+    "/api/stream-monitors/drawing/sessions": [
+      "GET",
+      "POST"
+    ],
+    "/api/stream-monitors/drawing/sessions/{session_id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/stream-monitors/drawing/sessions/{session_id}/clear": [
+      "POST"
+    ],
+    "/api/stream-monitors/drawing/sessions/{session_id}/join": [
+      "POST"
+    ],
+    "/api/stream-monitors/drawing/sessions/{session_id}/leave": [
+      "POST"
+    ],
+    "/api/stream-monitors/stream-monitors": [
+      "GET",
+      "POST"
+    ],
+    "/api/stream-monitors/stream-monitors/ai-dual-stream-status": [
+      "GET"
+    ],
+    "/api/stream-monitors/stream-monitors/ai-models": [
+      "GET"
+    ],
+    "/api/stream-monitors/stream-monitors/ai-stream-url": [
+      "GET"
+    ],
+    "/api/stream-monitors/stream-monitors/capture": [
+      "POST"
+    ],
+    "/api/stream-monitors/stream-monitors/external-stream-monitors": [
+      "POST",
+      "PUT"
+    ],
+    "/api/stream-monitors/stream-monitors/external-stream-monitors/{stream_monitor_id}": [
+      "DELETE"
+    ],
+    "/api/stream-monitors/stream-monitors/pause-record": [
+      "POST"
+    ],
+    "/api/stream-monitors/stream-monitors/resume-record": [
+      "POST"
+    ],
+    "/api/stream-monitors/stream-monitors/start-ai-dual-stream": [
+      "POST"
+    ],
+    "/api/stream-monitors/stream-monitors/start-record": [
+      "POST"
+    ],
+    "/api/stream-monitors/stream-monitors/stop-ai-dual-stream": [
+      "POST"
+    ],
+    "/api/stream-monitors/stream-monitors/stop-record": [
+      "POST"
+    ],
+    "/api/stream-monitors/stream-monitors/{drone_uid}/start-recording": [
+      "POST"
+    ],
+    "/api/stream-monitors/stream-monitors/{drone_uid}/stop-recording": [
+      "POST"
+    ],
+    "/api/surveillance/surveillance-dashboard/abnormal-signs-messages": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-dashboard/abnormal-signs-overview": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-dashboard/daily-profile-overview": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-dashboard/drone-status-overview": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-dashboard/today-profiles-polygon": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-dashboard/today-region-drones": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-dashboard/weather-setting": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles": [
+      "GET",
+      "POST"
+    ],
+    "/api/surveillance/surveillance-profiles/available-devices/": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/check-scheduled-activations": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/create/context": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/drone/mark-flight-time": [
+      "POST"
+    ],
+    "/api/surveillance/surveillance-profiles/list-completed-profiles": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/list-rejected-profiles": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/list-selected-profiles": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/timeline": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_drone_id}/download-analysis": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_drone_id}/download-log": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/approve": [
+      "POST"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/cancel": [
+      "POST"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/cancel-profile": [
+      "POST"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/change-drone": [
+      "POST"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/change-drone/options": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/check-complete": [
+      "POST"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/completed-profile": [
+      "POST"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/download-analysis-for-profile": [
+      "POST"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/reject": [
+      "POST"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/scheduled-activation": [
+      "DELETE",
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/stop-repeat": [
+      "POST"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/tasks": [
+      "DELETE",
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/tasks/{task_type}": [
+      "DELETE"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/test-upload-profile-to-flightbird": [
+      "GET"
+    ],
+    "/api/surveillance/surveillance-profiles/{profile_id}/with-map": [
+      "GET"
+    ],
+    "/api/surveillance/survey-missions": [
+      "GET",
+      "POST"
+    ],
+    "/api/surveillance/survey-missions/activate/{ids}": [
+      "POST"
+    ],
+    "/api/surveillance/survey-missions/deactivate/{ids}": [
+      "POST"
+    ],
+    "/api/surveillance/survey-missions/export/{mission_ids}": [
+      "POST"
+    ],
+    "/api/surveillance/survey-missions/mission/check_permission": [
+      "GET"
+    ],
+    "/api/surveillance/survey-missions/mission/drone-division/{survey_mission_id}": [
+      "POST"
+    ],
+    "/api/surveillance/survey-missions/mission/duplicate": [
+      "POST"
+    ],
+    "/api/surveillance/survey-missions/mission/import-plan": [
+      "POST"
+    ],
+    "/api/surveillance/survey-missions/mission/import-routes": [
+      "POST"
+    ],
+    "/api/surveillance/survey-missions/mission/import-routes-simple": [
+      "POST"
+    ],
+    "/api/surveillance/survey-missions/mission/import-status/{task_id}": [
+      "GET"
+    ],
+    "/api/surveillance/survey-missions/mission/review-mission": [
+      "POST"
+    ],
+    "/api/surveillance/survey-missions/mission/{survey_mission_ids}": [
+      "DELETE"
+    ],
+    "/api/surveillance/survey-missions/{survey_mission_id}": [
+      "GET",
+      "PUT"
+    ],
+    "/api/surveillance/survey-missions/{survey_mission_id}/approve": [
+      "POST"
+    ],
+    "/api/surveillance/survey-missions/{survey_mission_id}/reject": [
+      "POST"
+    ],
+    "/api/surveillance/video-analysis": [
+      "GET"
+    ],
+    "/api/surveillance/video-analysis/{video_analysis_id}": [
+      "GET"
+    ],
+    "/api/surveillance/video-analysis/{video_analysis_id}/download-detail": [
+      "GET"
+    ],
+    "/api/tag": [
+      "GET"
+    ],
+    "/api/task-status/task-status/{task_id}": [
+      "GET"
+    ],
+    "/api/teams/": [
+      "GET",
+      "POST"
+    ],
+    "/api/teams/delete/{team_ids}/": [
+      "DELETE"
+    ],
+    "/api/teams/{team_id}/": [
+      "GET",
+      "PUT"
+    ],
+    "/api/terminals/days-of-week": [
+      "GET",
+      "POST"
+    ],
+    "/api/terminals/days-of-week/{id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/terminals/delivery-hubs": [
+      "GET",
+      "POST"
+    ],
+    "/api/terminals/delivery-hubs/{ids}/activate": [
+      "PUT"
+    ],
+    "/api/terminals/delivery-hubs/{ids}/deactivate": [
+      "PUT"
+    ],
+    "/api/terminals/delivery-hubs/{id}": [
+      "GET",
+      "PUT"
+    ],
+    "/api/terminals/docking-stations": [
+      "GET",
+      "POST"
+    ],
+    "/api/terminals/docking-stations/{ids}/activate": [
+      "PUT"
+    ],
+    "/api/terminals/docking-stations/{ids}/deactivate": [
+      "PUT"
+    ],
+    "/api/terminals/docking-stations/{id}": [
+      "GET",
+      "PUT"
+    ],
+    "/api/terminals/functions": [
+      "GET"
+    ],
+    "/api/terminals/functions/function-types": [
+      "GET"
+    ],
+    "/api/terminals/functions/{id}": [
+      "DELETE"
+    ],
+    "/api/terminals/infrastructures": [
+      "GET",
+      "POST"
+    ],
+    "/api/terminals/infrastructures/{ids}/activate": [
+      "PUT"
+    ],
+    "/api/terminals/infrastructures/{ids}/deactivate": [
+      "PUT"
+    ],
+    "/api/terminals/infrastructures/{id}": [
+      "GET",
+      "PUT"
+    ],
+    "/api/terminals/location-types": [
+      "GET"
+    ],
+    "/api/terminals/qground-control/export-plan": [
+      "POST"
+    ],
+    "/api/terminals/qground-control/export-single-plan/{route_id}": [
+      "GET"
+    ],
+    "/api/terminals/qground-control/import-plan": [
+      "POST"
+    ],
+    "/api/terminals/qground-control/import-plans": [
+      "POST"
+    ],
+    "/api/terminals/qground-control/mavlink-commands": [
+      "GET"
+    ],
+    "/api/terminals/qground-control/mavlink-frames": [
+      "GET"
+    ],
+    "/api/terminals/routes": [
+      "GET",
+      "POST"
+    ],
+    "/api/terminals/routes/delete/{ids}": [
+      "DELETE"
+    ],
+    "/api/terminals/routes/{ids}/activate": [
+      "PUT"
+    ],
+    "/api/terminals/routes/{ids}/change-status": [
+      "PUT"
+    ],
+    "/api/terminals/routes/{ids}/deactivate": [
+      "PUT"
+    ],
+    "/api/terminals/routes/{id}": [
+      "GET",
+      "PUT"
+    ],
+    "/api/terminals/terminal-types": [
+      "GET",
+      "POST"
+    ],
+    "/api/terminals/terminal-types/{ids}/change-status": [
+      "PUT"
+    ],
+    "/api/terminals/terminal-types/{id}": [
+      "DELETE",
+      "GET",
+      "PUT"
+    ],
+    "/api/terminals/terminals": [
+      "GET",
+      "POST"
+    ],
+    "/api/terminals/terminals/delete/{ids}": [
+      "DELETE"
+    ],
+    "/api/terminals/terminals/{ids}/activate": [
+      "PUT"
+    ],
+    "/api/terminals/terminals/{ids}/deactivate": [
+      "PUT"
+    ],
+    "/api/terminals/terminals/{id}": [
+      "GET",
+      "PUT"
+    ],
+    "/api/terminals/terminals/{id}/operating-times": [
+      "GET"
+    ],
+    "/api/third-api/DroneBaseStation": [
+      "POST"
+    ],
+    "/api/third-api/DroneUserNotice": [
+      "POST"
+    ],
+    "/api/third-api/api-key-management/analytics": [
+      "GET"
+    ],
+    "/api/third-api/api-key-management/bulk-deactivate": [
+      "POST"
+    ],
+    "/api/third-api/api-key-management/check": [
+      "GET"
+    ],
+    "/api/third-api/api-key-management/get-keys/{api_key_id}": [
+      "GET"
+    ],
+    "/api/third-api/api-key-management/keys": [
+      "GET",
+      "POST"
+    ],
+    "/api/third-api/api-key-management/keys/{api_key_id}": [
+      "DELETE",
+      "PATCH"
+    ],
+    "/api/third-api/api-key-management/keys/{api_key_id}/regenerate": [
+      "POST"
+    ],
+    "/api/third-api/api-key-management/keys/{api_key_id}/usage-logs": [
+      "GET"
+    ],
+    "/api/third-api/api-key-management/keys/{user_id}": [
+      "POST"
+    ],
+    "/api/third-api/api-key-management/stats": [
+      "GET"
+    ],
+    "/api/third-api/api-key-management/test-endpoint": [
+      "GET"
+    ],
+    "/api/third-api/api/orders/order/": [
+      "POST"
+    ],
+    "/api/third-api/api/orders/order/cancel": [
+      "POST"
+    ],
+    "/api/third-api/api/orders/order/drone-location": [
+      "POST"
+    ],
+    "/api/third-api/api/route/status": [
+      "POST"
+    ],
+    "/api/third-api/callback": [
+      "POST"
+    ],
+    "/api/third-api/delivery/confirmation/{operation_id}/photo/": [
+      "GET",
+      "POST"
+    ],
+    "/api/third-api/third-party-integration/create-order": [
+      "POST"
+    ],
+    "/api/third-api/third-party-integration/save-shipping-result-data": [
+      "POST"
+    ],
+    "/api/token/pair": [
+      "POST"
+    ],
+    "/api/token/refresh": [
+      "POST"
+    ],
+    "/api/token/verify": [
+      "POST"
+    ],
+    "/api/topic": [
+      "GET",
+      "POST"
+    ],
+    "/api/topic/following/{topic_id}": [
+      "DELETE",
+      "POST"
+    ],
+    "/api/topic/slug/{topic_slug}": [
+      "GET"
+    ],
+    "/api/topic/{topic_id}": [
+      "GET"
+    ],
+    "/api/user-groups/": [
+      "GET",
+      "POST"
+    ],
+    "/api/user-groups/cache-stats/": [
+      "GET"
+    ],
+    "/api/user-groups/delete/{group_ids}/": [
+      "DELETE"
+    ],
+    "/api/user-groups/gen-schema": [
+      "GET"
+    ],
+    "/api/user-groups/refresh-cache/": [
+      "POST"
+    ],
+    "/api/user-groups/refresh-user-cache/{user_id}/": [
+      "POST"
+    ],
+    "/api/user-groups/update-settings": [
+      "POST"
+    ],
+    "/api/user-groups/update-settings-direct": [
+      "POST"
+    ],
+    "/api/user-groups/update/{group_id}/": [
+      "PUT"
+    ],
+    "/api/user-groups/validate-user-cache/{user_id}/": [
+      "POST"
+    ],
+    "/api/user-groups/{group_id}/": [
+      "GET"
+    ],
+    "/api/user-profiles/": [
+      "GET",
+      "POST"
+    ],
+    "/api/user-profiles/delete/{profile_id}/": [
+      "DELETE"
+    ],
+    "/api/user-profiles/user/{user_id}/": [
+      "GET"
+    ],
+    "/api/user-profiles/{profile_id}/": [
+      "GET",
+      "PUT"
+    ],
+    "/api/v1/auth/account": [
+      "DELETE"
+    ],
+    "/api/v1/auth/change-password": [
+      "POST"
+    ],
+    "/api/v1/auth/create-language": [
+      "POST"
+    ],
+    "/api/v1/auth/csrf-token": [
+      "GET"
+    ],
+    "/api/v1/auth/data-for-profile": [
+      "GET"
+    ],
+    "/api/v1/auth/delete-language/{ids}": [
+      "DELETE"
+    ],
+    "/api/v1/auth/delete-session": [
+      "POST"
+    ],
+    "/api/v1/auth/departments": [
+      "GET"
+    ],
+    "/api/v1/auth/end-session": [
+      "POST"
+    ],
+    "/api/v1/auth/forgot-password": [
+      "POST"
+    ],
+    "/api/v1/auth/groups": [
+      "GET"
+    ],
+    "/api/v1/auth/languages": [
+      "GET"
+    ],
+    "/api/v1/auth/login": [
+      "POST"
+    ],
+    "/api/v1/auth/logout": [
+      "POST"
+    ],
+    "/api/v1/auth/otp/generate-qr": [
+      "GET"
+    ],
+    "/api/v1/auth/otp/reset": [
+      "POST"
+    ],
+    "/api/v1/auth/otp/verify": [
+      "POST"
+    ],
+    "/api/v1/auth/positions": [
+      "GET"
+    ],
+    "/api/v1/auth/profile": [
+      "GET",
+      "PUT"
+    ],
+    "/api/v1/auth/refresh-token": [
+      "POST"
+    ],
+    "/api/v1/auth/register": [
+      "POST"
+    ],
+    "/api/v1/auth/reset-password": [
+      "POST"
+    ],
+    "/api/v1/auth/reset-password-for-user": [
+      "POST"
+    ],
+    "/api/v1/auth/teams": [
+      "GET"
+    ],
+    "/api/v1/auth/timezones": [
+      "GET"
+    ],
+    "/api/v1/auth/update-language/{id}": [
+      "PUT"
+    ],
+    "/api/v1/health/": [
+      "GET"
+    ],
+    "/api/v1/otp/generate/{user_name}": [
+      "GET"
+    ],
+    "/api/v1/otp/verify": [
+      "POST"
+    ],
+    "/api/v1/user/activate-user": [
+      "POST"
+    ],
+    "/api/v1/user/create-user": [
+      "POST"
+    ],
+    "/api/v1/user/deactivate-user": [
+      "POST"
+    ],
+    "/api/v1/user/delete-user/{user_id}": [
+      "DELETE"
+    ],
+    "/api/v1/user/format-options/": [
+      "GET"
+    ],
+    "/api/v1/user/get-countries": [
+      "GET"
+    ],
+    "/api/v1/user/get-user-detail/{user_id}": [
+      "GET"
+    ],
+    "/api/v1/user/list/": [
+      "GET"
+    ],
+    "/api/v1/user/me/": [
+      "GET"
+    ],
+    "/api/v1/user/notification-channels/": [
+      "GET"
+    ],
+    "/api/v1/user/notification-channels/subscribe": [
+      "POST"
+    ],
+    "/api/v1/user/reject-user": [
+      "POST"
+    ],
+    "/api/v1/user/settings/": [
+      "GET"
+    ],
+    "/api/v1/user/settings/update": [
+      "POST"
+    ],
+    "/api/v1/user/update-user/{user_id}/{profile}": [
+      "POST"
+    ]
+  }
+}

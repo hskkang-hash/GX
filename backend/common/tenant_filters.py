@@ -29,6 +29,8 @@ from typing import Any, TypeVar
 
 from django.db.models import Model, QuerySet
 
+from common.tenant_roles import is_global_admin
+
 T = TypeVar("T", bound=Model)
 
 
@@ -69,22 +71,31 @@ def require_user_group(user: Any):
     return group
 
 
-def is_superuser(user: Any) -> bool:
-    if not user or not getattr(user, "is_authenticated", False):
-        return False
-    if getattr(user, "is_superuser", False):
-        return True
-    roles = getattr(user, "roles", None)
-    return bool(roles and any(getattr(r, "code", None) == "superuser" for r in roles.all()))
+# ─────────────────────────────────────────────────────────────────────────────
+# 경계를 넘어도 되는가 — 판정은 `common.tenant_roles` 한 곳에서만 한다 (W0-14 · D-247)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# 이 파일에는 예전에 `is_superuser()` 가 있었다. 그 판정식은
+#   user.is_superuser or 'superuser' 역할 보유
+# 로, dj-core `core/base.py:308` 의 우회를 **글자 그대로 복제**한 것이었다.
+# 그래서 뷰를 아무리 좁혀도 통과 대상이 같았다 — 레거시 `superuser` 역할 13계정
+# (그중 7계정이 고객 테넌트 Anyang 안에 있다 · evidence/W0-16/superuser_accounts.md)
+# 이 여기서도 전부 통과했다.
+#
+# 이제 그 질문의 답은 `tenant_roles.is_global_admin()` 만 낸다. 전환 플래그
+# `TENANT_TRUST_LEGACY_SUPERUSER` 를 내리는 순간, **이 파일을 고치지 않고도**
+# 레거시 역할이 여기서 통과하지 못하게 된다 (revocation_runbook §2).
+#
+# ⚠ 판정식을 이 파일에 되살리지 말 것 (D-212). 복사본 하나가 우회 지점 하나다.
 
 
 def filter_users_by_group(queryset: QuerySet[T], user: Any) -> QuerySet[T]:
     """CoreUser 계열 queryset 을 요청자의 group 으로 좁힌다.
 
-    superuser 는 통과. 인증되지 않았거나 group 이 없으면 빈 queryset 을 준다
-    (열어두는 쪽이 아니라 닫는 쪽이 기본값이다).
+    **전역 관리자**(W0-16 정의)만 통과. 인증되지 않았거나 group 이 없으면 빈
+    queryset 을 준다 (열어두는 쪽이 아니라 닫는 쪽이 기본값이다).
     """
-    if is_superuser(user):
+    if is_global_admin(user):
         return queryset
     group = get_user_group(user)
     if group is None:
@@ -94,7 +105,7 @@ def filter_users_by_group(queryset: QuerySet[T], user: Any) -> QuerySet[T]:
 
 def filter_by_group_field(queryset: QuerySet[T], user: Any, field: str = "group") -> QuerySet[T]:
     """`group` FK 를 직접 가진 모델(UserProfileLink, UserProfile 등)용."""
-    if is_superuser(user):
+    if is_global_admin(user):
         return queryset
     group = get_user_group(user)
     if group is None:
@@ -111,7 +122,7 @@ def get_scoped_or_404(model: type[T], pk: Any, user: Any, *, group_lookup: str |
     from django.http import Http404
 
     queryset = model.objects.all()
-    if not is_superuser(user):
+    if not is_global_admin(user):
         group = get_user_group(user)
         if group is None:
             raise Http404(f"{model.__name__} not found")

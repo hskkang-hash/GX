@@ -38,7 +38,8 @@ from typing import Any, Callable, Iterable
 
 from django.conf import settings
 
-from common.tenant_filters import NoTenantGroupError, get_user_group, is_superuser
+from common.tenant_filters import NoTenantGroupError, get_user_group
+from common.tenant_roles import global_admin_reason, is_global_admin
 
 log = logging.getLogger(__name__)
 
@@ -164,7 +165,17 @@ def _find_request(args: tuple, kwargs: dict) -> Any:
 
 def _check(request: Any, func: Callable[..., Any]) -> None:
     user = getattr(request, "user", None)
-    if is_superuser(user):
+    if is_global_admin(user):
+        # 전역만 경계를 넘는다 (W0-16 정의 · D-247). 레거시 `superuser` 역할로
+        # 통과한 건은 회수 진척을 세야 하므로 사유와 함께 남긴다 — 이 줄이
+        # `TENANT_TRUST_LEGACY_SUPERUSER` 를 내려도 되는 시점의 근거가 된다.
+        if global_admin_reason(user) == "legacy-superuser":
+            log.warning(
+                "[TENANT_SCOPE][LEGACY_GLOBAL] path=%s user=%s handler=%s",
+                getattr(request, "path", "?"),
+                getattr(user, "id", None),
+                f"{getattr(func, '__module__', '?')}.{getattr(func, '__qualname__', '?')}",
+            )
         return
     if get_user_group(user) is not None:
         return

@@ -1,7 +1,7 @@
 # W0-14 라우트 테넌트 스코프 적용 현황표
 
 **작성** 에이전트 · 2026-08-15 · WP-1 (ENTRY 승인분)
-**티켓** W0-14 ③ · **상태** verify-pending (런타임 수치는 사내망 대기)
+**티켓** W0-14 ③ · **상태** 런타임 수치 실측 완료 (2026-08-22 · 로컬 기동본)
 **모드** **경고(warning)** — `TENANT_SCOPE_ENFORCE=False` (대표 승인 2026-08-15)
 
 ---
@@ -98,19 +98,24 @@ python manage.py test tests.test_route_tenant_scope -v 2
 
 ---
 
-## 3. 런타임 현황 (사내망 방문 후 기입)
+## 3. 런타임 현황 — **실측 (2026-08-22 · 로컬 기동본)**
 
-`python manage.py test tests.test_route_tenant_scope -v 2` 의 출력을 그대로 붙인다.
+사내망은 사라졌고(AGENT_LOOP v4.1 ▲4) 이 수치는 **회수 경로 A(로컬 기동본)** 에서 나왔다.
+`python manage.py test tests.test_route_tenant_scope -v 2 --keepdb` 의 출력이다.
 
-| 항목 | 값 | 비고 |
-|---|---|---|
-| `total` (런타임 라우트 수) | _(미기입)_ | 정적 466 과의 차이가 **동적 등록분** |
-| `scoped` | _(미기입 · 예상 0)_ | |
-| `public` | _(미기입)_ | |
-| `unreviewed` | _(미기입)_ | **이 수가 대장이 된다** |
-| `no_auth` | _(미기입 · 정적 102)_ | |
-| `coverage_pct` | _(미기입 · 예상 0.0%)_ | |
-| 라우트 미발견 소유 앱 | _(미기입)_ | 열거기 누락 점검 |
+| 항목 | 착수 시점 (2026-08-22) | **파일럿 후 (지금)** | 비고 |
+|---|---:|---:|---|
+| `total` (런타임 라우트 수) | 652 | **652** | 정적 466 은 과소 추정이었다 (D-249) |
+| `scoped` | 0 | **1** | 파일럿 — `GET /api/stream-monitors/stream-monitors` |
+| `public` | 3 | **3** | |
+| `unreviewed` | 649 | **648** | **이 수가 대장이다. 줄어들기만 해야 한다** |
+| `no_auth` | 143 | **143** | 정적 102 보다 41 많다 |
+| `coverage_pct` | 0.0% | **0.2%** | ★ 부착률은 EXIT 기준이 **아니다** (D-249) |
+| 라우트 미발견 소유 앱 | 12 | **12** | `advanced_table` `article` `auth` `configuration` `discuss` `file_management` `guardian` `logger` `menu` `role` `tag` `user` — 전부 dj-core 계열 |
+
+> **부착률을 성과로 읽지 말 것.** 실제 판정 기준은 누출 0건이다 (D-249).
+> 파일럿 1건이 그 엔드포인트의 누출을 15 → 0 으로 만든 근거는
+> `evidence/W0-14/pilot_scope_stream_monitors.md` 에 있다.
 
 첫 실행이 `docs/agent/evidence/W0-14/route_baseline.json` 을 만든다. **그 파일을 커밋해야**
 다음 실행부터 증가 금지가 걸린다.
@@ -120,6 +125,12 @@ python manage.py test tests.test_route_tenant_scope -v 2
 ## 4. ★ 롤아웃 순서 — 데코레이터를 아직 아무 데도 붙이지 않은 이유
 
 **착수 시점 커버리지가 0/466 인 채로 이 스프린트를 닫는다. 의도한 것이다.**
+
+> **2026-08-22 갱신 — ①이 초록이 됐고 ②를 실행했다.**
+> `ScopeDecoratorIntegrationTest` 포함 `tests.test_route_tenant_scope` 9건 전부 통과(로컬 기동본).
+> 그 위에서 파일럿 1개(`GET /api/stream-monitors/stream-monitors`)를 부착했다.
+> 우려했던 시그니처 파손은 일어나지 않았다 — 부착 후에도 `manage.py check` 0 issues,
+> 해당 엔드포인트 HTTP 200. 다음은 ③(앱 단위 확대)이며 파일럿 관찰이 먼저다.
 
 `@tenant_scoped` 는 오프라인 순수 로직 시험 **30건을 통과**했다(WP-1 EXIT §3).
 그러나 `ninja`·`ninja_extra` 가 이 머신에 없어 **등록 경로는 한 번도 실행되지 않았다.**

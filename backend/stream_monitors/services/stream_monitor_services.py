@@ -21,6 +21,7 @@ from asgiref.sync import sync_to_async
 from ninja.errors import ValidationError
 
 from common.constant import MESSAGE_ENUM
+from common.tenant_filters import filter_by_group_field
 from stream_monitors.utils.constants import VALID_STREAMS_URL
 from stream_monitors.utils.minio_client import minio_client
 from devices.models import Device
@@ -186,38 +187,38 @@ class StreamMonitorService:
                 from celery import current_app
                 current_app.control.revoke(record_instance.auto_stop_task_id, terminate=True)
                 logger.info(f"🚫 Cancelled auto-stop task {record_instance.auto_stop_task_id} for record {record_instance.id}")
-                
+
                 # Clear the task ID since it's been cancelled
                 record_instance.auto_stop_task_id = None
                 record_instance.save()
                 return True
-                
+
             except Exception as cancel_error:
                 logger.warning(f"⚠️ Failed to cancel auto-stop task {record_instance.auto_stop_task_id}: {str(cancel_error)}")
                 return False
         return True
-    
+
     @classmethod
     def _schedule_auto_stop_task(cls, stream_monitor_id: str, record_instance):
         """Helper method to schedule auto-stop task"""
         try:
             from stream_monitors.tasks import auto_stop_record
-            
+
             timeout_seconds = 5
-            
+
             # Schedule the auto-stop task
             auto_stop_task = auto_stop_record.apply_async(
                 args=[stream_monitor_id, str(record_instance.id)],
                 countdown=timeout_seconds
             )
-            
+
             # Store the task ID
             record_instance.auto_stop_task_id = auto_stop_task.id
             record_instance.save()
-            
+
             logger.info(f"📅 Scheduled auto-stop task {auto_stop_task.id} for record {record_instance.id} in {timeout_seconds} seconds")
             return True
-            
+
         except Exception as task_error:
             logger.error(f"⚠️ Failed to schedule auto-stop task for record {record_instance.id}: {str(task_error)}")
             return False
@@ -241,10 +242,26 @@ class StreamMonitorService:
         response_data = response.json()
         stream_items = [item['name'] for item in response_data.get('items', [])]
         return stream_items
-    
+
     @classmethod
     @transaction.atomic
-    def get_stream_monitors(cls):
+    def get_stream_monitors(cls, user=None):
+        """스트림 모니터 목록.
+
+        W0-14 (파일럿 1개) — `user` 를 주면 **요청자의 테넌트로 좁힌다.**
+        주지 않으면 예전과 같다(내부 호출·배치용).
+
+        왜 여기서 좁히나 (D-207)
+            `StreamMonitor.objects` 는 dj-core `CustomManagerGroup` 이고, 그 필터는
+            ① `superuser` 역할 통과 ② `Q(created_by__isnull=True)` OR 로 뚫려 있다.
+            둘 다 §0.4 라 고칠 수 없다. 그래서 **뷰·서비스가 주 통제**다.
+            이 경로가 프로브가 누출을 실측한 그 경로다
+            (evidence/W0-14/http_leak_probe.md · W0-16/http_role_split_test.md).
+
+        ⚠ `group` 이 비어 있는 레코드는 이 필터에서 **빠진다.** 소유 테넌트를
+          말할 수 없는 것을 모두에게 보이는 것이 곧 누출이었다. 귀속은 W0-13
+          (created_by/group 백필)이 하고, 그 전까지는 닫는 쪽이 기본값이다.
+        """
         # Check all devices and create StreamMonitor records if they don't exist
         devices = Device.objects.filter(active=True, deleted=None)
         if devices.count() > 0:
@@ -278,15 +295,18 @@ class StreamMonitorService:
             #         stream_monitor=StreamMonitor.objects.first(),
             #         created_by=User.objects.first()
             #     )
-        
+
         # get all stream monitors and ai models for each stream monitor
         # check ai setting for each stream monitor
         stream_monitors = StreamMonitor.objects.annotate(drone_color=F('drone__color')).filter(
             Q(drone__active=True, drone__in=devices) | Q(is_external=True)
         ).filter(deleted__isnull=True).order_by('order', 'id')
-            
+
+        if user is not None:
+            stream_monitors = filter_by_group_field(stream_monitors, user)
+
         return stream_monitors
-    
+
     @classmethod
     def _validate_stream_monitor_data(cls, stream_monitors_in: StreamMonitorsInSchema):
         """Validate stream monitor data before processing"""
@@ -295,12 +315,12 @@ class StreamMonitorService:
             if not StreamMonitor._base_manager.filter(id=stream_monitor_in.id).exists():
                 logger.error(f"StreamMonitor with id {stream_monitor_in.id} does not exist")
                 raise ValidationError(f"StreamMonitor with id {stream_monitor_in.id} does not exist")
-            
+
             # Check if Device exists
             if not Device._base_manager.filter(id=stream_monitor_in.drone_id).exists():
                 logger.error(f"Device with id {stream_monitor_in.drone_id} does not exist")
                 raise ValidationError(f"Device with id {stream_monitor_in.drone_id} does not exist")
-        
+
         logger.info(f"Validation passed for {len(stream_monitors_in.stream_monitors)} stream monitors")
 
     @classmethod
@@ -311,13 +331,13 @@ class StreamMonitorService:
             if not ai_model:
                 logger.warning(f"No AI model found for stream {stream_monitor.code}")
                 return None
-                
+
             request_payload = {
                 'stream_rtsp': f"{settings.RTSP_PATH_AI}/{stream_monitor.code}",
                 'enabled': stream_monitor_in.in_use,
-                'category': ai_model.code 
+                'category': ai_model.code
             }
-            
+
             response = requests.post(
                 ai_stream_url,
                 json=request_payload,
@@ -327,7 +347,7 @@ class StreamMonitorService:
             )
             response.raise_for_status()
             return response.json()
-            
+
         except requests.exceptions.RequestException as e:
             logger.error(f"Request error for AI stream {stream_monitor.code}: {str(e)}")
             return None
@@ -348,7 +368,7 @@ class StreamMonitorService:
             ai_model_instance.ai_stream_url = None
             ai_model_instance.ai_model = AIModel.objects.filter(id__in=stream_monitor_in.ai_models).first()
             logger.warning(f"AI stream failed to start for {stream_monitor.code}")
-        
+
         ai_model_instance.save()
 
     @classmethod
@@ -359,7 +379,7 @@ class StreamMonitorService:
             'input_url': f"{settings.RTSP_URL}/stream/{stream_monitor_id}",
             'output_url': f"{settings.RTSP_URL}/stream/ai_{stream_monitor_id}"
         }
-    
+
     @classmethod
     @transaction.atomic
     def update_stream_monitors(cls, stream_monitors_in: StreamMonitorsInSchema):
@@ -381,7 +401,7 @@ class StreamMonitorService:
                     "type": "value_error.not_found",
                 }])
 
-         
+
 
             # Handle is_active toggle first (so other updates can't accidentally start AI while off)
             if stream_monitor_in.is_active is not None and stream_monitor_in.is_active != stream_monitor.is_active:
@@ -438,7 +458,7 @@ class StreamMonitorService:
                         stream_monitor_ai_model.save()
 
         return StreamMonitor.objects.filter(id__in=[stream_monitor_in.id for stream_monitor_in in stream_monitors_in.stream_monitors])
-    
+
     @classmethod
     @transaction.atomic
     def stream_monitor_start(cls, stream_monitor_code: str, is_ai_model: bool = False):
@@ -468,7 +488,7 @@ class StreamMonitorService:
                 return f"{settings.STREAM_URL}/hls/{stream_hls_endpoint}"
             else:
                 return ""
-            
+
         except StreamMonitor.DoesNotExist:
             logger.error(f"StreamMonitor with code {stream_monitor_code} not found")
             return ""
@@ -478,8 +498,8 @@ class StreamMonitorService:
         except Exception as e:
             logger.error(f"Failed to start stream monitor {stream_monitor_code}: {str(e)}")
             return ""
-    
-    
+
+
     @classmethod
     @transaction.atomic
     def get_stream_monitor_record(cls, stream_monitor_id: str):
@@ -490,7 +510,7 @@ class StreamMonitorService:
                 'accept': 'application/json'
             }
             response = requests.post(
-                record_url, 
+                record_url,
                 json={'stream_id': stream_monitor_id},
                 headers=headers,
                 timeout=5,  # Add timeout
@@ -503,12 +523,12 @@ class StreamMonitorService:
         except Exception as e:
             logger.error(f"Unexpected error getting stream monitor record for {stream_monitor_id}: {str(e)}")
             return {"error": "Unexpected error"}
-    
+
     @classmethod
     @transaction.atomic
     def get_ai_models(cls):
         return AIModel.objects.all()
-    
+
     @classmethod
     @transaction.atomic
     def get_stream_monitor_capture(cls, stream_monitor_id: str):
@@ -518,13 +538,13 @@ class StreamMonitorService:
                 'Content-Type': 'application/json',
                 'accept': 'application/json'
             }
-            
+
             # Prepare request body payload
             request_payload = {
                 'stream_id': stream_monitor_id
             }
             response = requests.post(
-                record_url, 
+                record_url,
                 data=json.dumps(request_payload),
                 headers=headers,
                 verify=False
@@ -537,58 +557,58 @@ class StreamMonitorService:
         except Exception as e:
             logger.error(f"Unexpected error getting stream monitor capture for {stream_monitor_id}: {str(e)}")
             return None
-        
+
     @classmethod
     def find_stream_monitor(cls, stream_monitor_id: str, group_id: Optional[str] = None):
         logger.info(f"🔍 [FIND_STREAM_MONITOR] Looking for stream_monitor_id={stream_monitor_id}, group_id={group_id}")
-        
+
         # Check if stream_monitor already exists
         stream_monitor = StreamMonitor._base_manager.filter(code=stream_monitor_id).first()
-        
+
         if stream_monitor:
             # Stream monitor exists
             logger.info(f"✅ [FIND_STREAM_MONITOR] Found existing stream_monitor: id={stream_monitor.id}, is_external={stream_monitor.is_external}")
-            
+
             # If it's an external stream, return immediately (no Device needed)
             if stream_monitor.is_external:
                 logger.info(f"✅ [FIND_STREAM_MONITOR] Returning external stream_monitor: {stream_monitor.code}")
                 return stream_monitor
-            
+
             # For regular streams, verify Device exists
             if not stream_monitor.drone:
                 logger.error(f"❌ [FIND_STREAM_MONITOR] Stream monitor {stream_monitor_id} exists but has no drone/device")
                 raise Exception(f"Stream monitor {stream_monitor_id} exists but has no drone/device")
-            
+
             logger.info(f"✅ [FIND_STREAM_MONITOR] Returning regular stream_monitor with device: {stream_monitor.drone.name}")
             return stream_monitor
-        
+
         # Stream monitor doesn't exist, need to create it
         logger.info(f"🔍 [FIND_STREAM_MONITOR] Stream monitor not found, checking if external stream...")
-        
+
         # Check if this is an external stream (code starts with "external_")
         is_external = stream_monitor_id.startswith("external_")
-        
+
         if is_external:
             # External streams must be created via add_external_stream_monitor API first
             error_msg = f"External stream monitor with code {stream_monitor_id} not found. Please create it first via add_external_stream_monitor API."
             logger.error(f"❌ [FIND_STREAM_MONITOR] {error_msg}")
             raise Exception(error_msg)
-        
+
         # For regular streams, find Device and create StreamMonitor
         logger.info(f"🔍 [FIND_STREAM_MONITOR] Creating new regular stream monitor, looking for Device...")
-        
+
         device = Device._base_manager.filter(unit_id=stream_monitor_id).first()
         if not device:
             error_msg = f"Device with unit_id {stream_monitor_id} not found"
             logger.error(f"❌ [FIND_STREAM_MONITOR] {error_msg}")
             raise Exception(error_msg)
-        
+
         user = CoreUser._base_manager.filter(userprofilelink__group_id=group_id).first()
         if not user:
             error_msg = f"User with group_id {group_id} not found"
             logger.error(f"❌ [FIND_STREAM_MONITOR] {error_msg}")
             raise Exception(error_msg)
-        
+
         # Create new stream monitor
         logger.info(f"🔍 [FIND_STREAM_MONITOR] Creating new stream monitor for device: {device.name}")
         stream_monitor = StreamMonitor.objects.create(
@@ -606,7 +626,7 @@ class StreamMonitorService:
         )
         logger.info(f"✅ [FIND_STREAM_MONITOR] Created new stream_monitor: id={stream_monitor.id}, device={device.name}")
         return stream_monitor
-    
+
     @classmethod
     async def start_record(cls, stream_monitor_id: str, ai_model__code: str, enable_detection: bool = True, group_id: Optional[str] = None, from_fe = True):
         try:
@@ -625,14 +645,14 @@ class StreamMonitorService:
                 rtsp_url = f"{settings.RTSP_URL}/stream/ai_{stream_monitor_id}"
             if stream_monitor.is_external:
                 rtsp_url = stream_monitor.ip_source
-            
+
             logger.info(f"🔍 [START_RECORD] RTSP URL: {rtsp_url}")
             # Create database record first to get record_id
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             record_code = f"{timestamp}{stream_monitor_id}"
             if enable_detection and ai_model__code and from_fe:
                 record_code = f"{timestamp}{stream_monitor_id}_{ai_model__code}"
-            
+
             logger.info(f"🔍 [START_RECORD] Creating record instance with code: {record_code}")
             record_instance = await sync_to_async(StreamMonitorRecord._base_manager.create)(
                 stream_id=stream_monitor_id,
@@ -640,7 +660,7 @@ class StreamMonitorService:
                 status='running'
             )
             logger.info(f"✅ [START_RECORD] Record instance created with ID: {record_instance.id}")
-            
+
             # Call external start_record API
             logger.info(f"🔍 [START_RECORD] About to call AI_GRPC service...")
             try:
@@ -648,7 +668,7 @@ class StreamMonitorService:
                 ai_grpc_url = settings.AI_GRPC_URL.strip()
                 if not ai_grpc_url.startswith(('http://', 'https://')):
                     ai_grpc_url = f"http://{ai_grpc_url}"
-                
+
                 record_url = f"{ai_grpc_url}/start_record"
                 headers = {
                     'Content-Type': 'application/json',
@@ -660,12 +680,12 @@ class StreamMonitorService:
                     'record_id': str(record_instance.id),
                     'stream_id': stream_monitor_id
                 }
-                
+
                 # Debug logging
                 logger.info(f"🔍 [START_RECORD] Calling AI_GRPC_URL: {record_url}")
                 logger.info(f"🔍 [START_RECORD] Request body: {json.dumps(body_data, indent=2)}")
                 logger.info(f"🔍 [START_RECORD] Stream monitor ID: {stream_monitor_id}, Record ID: {record_instance.id}")
-                
+
                 response = requests.post(
                     record_url,
                     json=body_data,
@@ -673,11 +693,11 @@ class StreamMonitorService:
                     timeout=30,
                     verify=False
                 )
-                
+
                 # Log response details
                 logger.info(f"🔍 [START_RECORD] Response status code: {response.status_code}")
                 logger.info(f"🔍 [START_RECORD] Response headers: {dict(response.headers)}")
-                
+
                 try:
                     result = response.json()
                     logger.info(f"🔍 [START_RECORD] Response body: {json.dumps(result, indent=2)}")
@@ -685,16 +705,16 @@ class StreamMonitorService:
                     error_msg = f"Invalid JSON response from AI_GRPC service: {response.text}"
                     logger.error(f"❌ [START_RECORD] Response is not JSON. Response text: {response.text}")
                     raise Exception(error_msg)
-                
+
                 if result.get('status') != 'success':
                     error_msg = result.get('message', 'Unknown error')
                     logger.error(f"❌ [START_RECORD] Failed to start recording: {error_msg}")
                     logger.error(f"❌ [START_RECORD] Full response: {json.dumps(result, indent=2)}")
                     await sync_to_async(record_instance.delete)()
                     return None, None
-                    
+
                 logger.info(f"✅ [START_RECORD] Recording started successfully with record_id: {record_instance.id}")
-                
+
             except requests.exceptions.RequestException as record_err:
                 logger.error(f"❌ [START_RECORD] Request exception: {type(record_err).__name__}: {str(record_err)}")
                 logger.error(f"❌ [START_RECORD] URL attempted: {record_url}")
@@ -704,7 +724,7 @@ class StreamMonitorService:
                 logger.error(f"❌ [START_RECORD] Unexpected error: {type(record_err).__name__}: {str(record_err)}")
                 await sync_to_async(record_instance.delete)()
                 return None, None
-            
+
             try:
                 detection_url = f"{settings.AI_GRPC_URL}/start_detect"
                 url_callback = f"{settings.BACKEND_URL}/api/media-data/detect-callback"
@@ -732,14 +752,14 @@ class StreamMonitorService:
                     logger.info(f"🔍 [START_DETECT] Detection result: {detection_result}")
             except Exception as detect_err:
                 logger.warning(f"Detection API call failed: {detect_err}")
-            
+
             logger.info(f"✅ [START_RECORD] Returning record_id={record_instance.id}, record_code={record_code}")
             return record_instance.id, record_code
 
         except Exception as e:
             logger.error(f"❌ [START_RECORD] Error: {type(e).__name__}: {str(e)}")
             return None, None
-    
+
     @classmethod
     async def _stop_detection_background(
         cls,
@@ -764,9 +784,9 @@ class StreamMonitorService:
             body_data = {
                 'detection_id': str(record_id)
             }
-            
+
             logger.info(f"🔍 [STOP_DETECTION] Calling stop_detect API: record_id={record_id}, stream_monitor_id={stream_monitor_id}")
-            
+
             # Run blocking request in thread pool
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(
@@ -779,51 +799,51 @@ class StreamMonitorService:
                     verify=False
                 )
             )
-            
+
             # Check response status code
             if response.status_code != 200:
                 error_msg = f"stop_detect API returned status {response.status_code}: {response.text}"
                 logger.error(f"❌ [STOP_DETECTION] {error_msg}")
                 raise Exception(error_msg)
-            
+
             try:
                 detection_result = response.json()
             except ValueError as json_err:
                 error_msg = f"Failed to parse JSON response: {json_err}, response text: {response.text[:500]}"
                 logger.error(f"❌ [STOP_DETECTION] {error_msg}")
                 raise Exception(error_msg)
-            
+
             logger.info(f"🔍 [STOP_DETECTION] Detection result received: {detection_result}")
-            
+
             # Extract detections data
             detections_data = detection_result.get('detections', [])
             if not isinstance(detections_data, list):
                 logger.warning(f"⚠️ [STOP_DETECTION] detections is not a list, got {type(detections_data)}, using empty list")
                 detections_data = []
-            
+
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             analysis_path = minio_client.save_json(
-                detections_data, 
-                stream_monitor_id, 
+                detections_data,
+                stream_monitor_id,
                 f"{timestamp}_{stream_monitor_id}.json"
             )
-            
+
             # Validate analysis_path was created
             if not analysis_path:
                 error_msg = f"Failed to save analysis JSON to MinIO: save_json returned None (storage may be unavailable)"
                 logger.error(f"❌ [STOP_DETECTION] {error_msg}")
                 raise Exception(error_msg)
-            
+
             logger.info(f"✅ [STOP_DETECTION] Analysis path created successfully: {analysis_path}")
-            
+
             # Validate object_path before creating VideoAnalysis
             if not object_path:
                 error_msg = f"object_path is None or empty, cannot create VideoAnalysis for stream_monitor_id={stream_monitor_id}, record_id={record_id}"
                 logger.error(f"❌ [STOP_DETECTION] {error_msg}")
                 raise Exception(error_msg)
-            
+
             logger.info(f"🔍 [STOP_DETECTION] object_path={object_path}, analysis_path={analysis_path}, group_id={group_id}")
-            
+
             # Create video analysis with object_path and analysis_path
             try:
                 if profile_drone_id:
@@ -848,7 +868,7 @@ class StreamMonitorService:
                 logger.exception(f"❌ [STOP_DETECTION] Failed to create VideoAnalysis: {type(va_exc).__name__}: {str(va_exc)}")
                 # Continue to persist analysis_path even if VideoAnalysis creation fails
                 raise  # Re-raise to ensure error is logged
-                
+
             # Persist analysis_path (and optionally video_path) onto the in-progress assignment.
             try:
                 # IMPORTANT: This function uses Django ORM (sync), so it must run in a thread when called
@@ -875,7 +895,7 @@ class StreamMonitorService:
             except Exception as persist_exc:
                 logger.error(f"❌ [STOP_DETECTION] Failed to persist media paths for stream {stream_monitor_id}: {type(persist_exc).__name__}: {str(persist_exc)}")
                 # Log but don't raise - analysis_path is already created and VideoAnalysis may have been created
-                
+
         except Exception as detect_err:
             logger.exception(
                 f"❌ [STOP_DETECTION] Detection API call failed for record_id={record_id}, stream_monitor_id={stream_monitor_id}: {type(detect_err).__name__}: {str(detect_err)}"
@@ -908,7 +928,7 @@ class StreamMonitorService:
             except Exception as e:
                 logger.error(f"❌ [STOP_RECORD] Error fetching record_instance: {type(e).__name__}: {str(e)}")
                 raise
-            
+
             # Call external stop_record API
             record_url = f"{settings.AI_GRPC_URL}/stop_record"
             headers = {
@@ -916,19 +936,19 @@ class StreamMonitorService:
                 'accept': 'application/json'
             }
             logger.info(f"🛑 [STOP_RECORD] Preparing to call external API: {record_url}")
-            
+
             # Get group_code using sync_to_async to avoid SynchronousOnlyOperation error
             def get_group_code_from_user():
                 if user and hasattr(user, 'userprofilelink') and user.userprofilelink and user.userprofilelink.group:
                     return user.userprofilelink.group.code
                 return "default"
-            
+
             def get_group_code_from_id(group_id):
                 try:
                     return UserGroup._base_manager.get(id=group_id).code
                 except UserGroup.DoesNotExist:
                     return None
-            
+
             logger.info(f"🛑 [STOP_RECORD] Getting group_code: group_id={group_id}")
             group_code = None
             try:
@@ -943,10 +963,10 @@ class StreamMonitorService:
             except Exception as e:
                 logger.error(f"❌ [STOP_RECORD] Error getting group_code: {type(e).__name__}: {str(e)}")
                 raise
-            
+
             resolved_group_code = group_code or await sync_to_async(get_group_code_from_user)()
             logger.info(f"✅ [STOP_RECORD] Resolved group_code: {resolved_group_code}")
-            
+
             body_data = {
                 'bucket_name': settings.MINIO_STORAGE_MEDIA_BUCKET_NAME,
                 'record_id': str(record_id),
@@ -955,7 +975,7 @@ class StreamMonitorService:
                 'group_code': resolved_group_code
             }
             logger.info(f"🛑 [STOP_RECORD] Request body: {body_data}")
-            
+
             try:
                 logger.info(f"🛑 [STOP_RECORD] Calling external API: POST {record_url}")
                 response = requests.post(
@@ -971,12 +991,12 @@ class StreamMonitorService:
             except Exception as e:
                 logger.error(f"❌ [STOP_RECORD] Error calling external API: {type(e).__name__}: {str(e)}")
                 raise
-            
+
             # Check if stop was successful or processing
             if result.get('status') in ('success', 'processing'):
                 object_path = result.get('object_path')
                 logger.info(f"✅ [STOP_RECORD] API returned success/processing, object_path={object_path}")
-                
+
                 # Update record status to stopped
                 try:
                     logger.info(f"🛑 [STOP_RECORD] Updating record_instance: id={record_id}, status='stopped', object_path={object_path}")
@@ -989,9 +1009,9 @@ class StreamMonitorService:
                 except Exception as e:
                     logger.error(f"❌ [STOP_RECORD] Error updating record_instance: {type(e).__name__}: {str(e)}")
                     # Continue even if save fails
-                
+
                 logger.info(f"✅ [STOP_RECORD] Recording stopped successfully for record_id: {record_id}, object_path: {object_path}")
-                
+
                 # Call stop detection API in background (non-blocking) only when detection/analysis was enabled
                 if enable_detection:
                     logger.info(f"🛑 [STOP_RECORD] Creating background task for stop_detection")
@@ -1042,7 +1062,7 @@ class StreamMonitorService:
                     except Exception as e:
                         logger.exception(f"❌ [STOP_RECORD] Error creating VideoAnalysis: {type(e).__name__}: {str(e)}")
                         # Don't fail the whole operation if VideoAnalysis creation fails
-                
+
                 return object_path
             else:
                 error_message = result.get('message', 'Unknown error')
@@ -1053,7 +1073,7 @@ class StreamMonitorService:
                 except Exception as e:
                     logger.error(f"❌ [STOP_RECORD] Error updating record_instance status to 'error': {type(e).__name__}: {str(e)}")
                 return None
-                    
+
         except Exception as record_err:
             logger.exception(f"❌ [STOP_RECORD] Exception in stop_record: {type(record_err).__name__}: {str(record_err)}")
             try:
@@ -1063,7 +1083,7 @@ class StreamMonitorService:
             except Exception as save_err:
                 logger.error(f"❌ [STOP_RECORD] Error saving record_instance after exception: {type(save_err).__name__}: {str(save_err)}")
             return None
-        
+
     @classmethod
     async def pause_record(cls, stream_monitor_id: str, record_id: str, ai_model__code: str):
         try:
@@ -1073,7 +1093,7 @@ class StreamMonitorService:
             except StreamMonitorRecord.DoesNotExist:
                 logger.error(f"StreamMonitorRecord with id {record_id} not found")
                 return None
-            
+
             # Call external pause_record API
             try:
                 record_url = f"{settings.AI_GRPC_URL}/pause_record"
@@ -1086,7 +1106,7 @@ class StreamMonitorService:
                     'record_id': str(record_id),
                     'stream_id': stream_monitor_id
                 }
-                
+
                 response = requests.post(
                     record_url,
                     json=body_data,
@@ -1095,7 +1115,7 @@ class StreamMonitorService:
                     verify=False
                 )
                 result = response.json()
-                
+
                 if result.get('status') == 'success':
                     # Update record status to paused
                     record_instance.status = 'paused'
@@ -1107,17 +1127,17 @@ class StreamMonitorService:
                     record_instance.status = 'error'
                     await sync_to_async(record_instance.save)()
                     return None
-                    
+
             except Exception as record_err:
                 logger.error(f"Pause record API call failed: {record_err}")
                 record_instance.status = 'error'
                 await sync_to_async(record_instance.save)()
                 return None
-                
-        except Exception as e:  
+
+        except Exception as e:
             logger.error(f"Error pausing record: {str(e)}")
             return None
-        
+
     @classmethod
     async def resume_record(cls, stream_monitor_id: str, record_id: str, ai_model__code: str):
         try:
@@ -1140,7 +1160,7 @@ class StreamMonitorService:
                     'record_id': str(record_id),
                     'stream_id': stream_monitor_id
                 }
-                
+
                 response = requests.post(
                     record_url,
                     json=body_data,
@@ -1149,7 +1169,7 @@ class StreamMonitorService:
                     verify=False
                 )
                 result = response.json()
-                
+
                 if result.get('status') == 'success':
                     # Update record status to running
                     record_instance.status = 'running'
@@ -1161,24 +1181,24 @@ class StreamMonitorService:
                     record_instance.status = 'error'
                     await sync_to_async(record_instance.save)()
                     return None
-                    
+
             except Exception as record_err:
                 logger.error(f"Resume record API call failed: {record_err}")
                 record_instance.status = 'error'
                 await sync_to_async(record_instance.save)()
                 return None
-        except Exception as e:  
+        except Exception as e:
             logger.error(f"Error resuming record: {str(e)}")
             return None
-    
+
     @classmethod
     def start_ai_dual_stream_optimized(cls, stream_monitor_id: str, stream_id: str, is_external: bool = False, detection_type: str = "person") -> Dict[str, Any]:
         """
         Start AI dual stream with optimized processing by calling external API.
-        
+
         Args:
             stream_monitor_id: ID of the stream monitor
-            
+
         Returns:
             dict: Process information and status
         """
@@ -1187,20 +1207,20 @@ class StreamMonitorService:
             url_result = cls.get_ai_stream_url(stream_monitor_id)
             if not url_result.get('success'):
                 return url_result
-            
+
             input_url = url_result.get('input_url')
             if is_external:
                 monitor = StreamMonitor.objects.get(code=stream_monitor_id)
                 input_url = monitor.ip_source
             output_url = url_result.get('output_url')
-            
+
             if not input_url or not output_url:
                 return {
                     'success': False,
                     'error': 'Missing input_url or output_url',
                     'stream_monitor_id': stream_monitor_id
                 }
-            
+
             # Construct API endpoint URL
             # AI_GRPC_URL might be just "host:port" or full URL
             # Force HTTP protocol to avoid SSL errors
@@ -1212,9 +1232,9 @@ class StreamMonitorService:
             #     api_base_url = api_base_url.replace('http://', '', 1)
             # # Always use HTTP (not HTTPS) for this API
             # api_base_url = f"http://{api_base_url}"
-            
+
             api_url = f"{api_base_url}/start_stream"
-            
+
             # Prepare request payload
             payload = {
                 "input_url": input_url,
@@ -1228,7 +1248,7 @@ class StreamMonitorService:
                 'Content-Type': 'application/json',
                 'accept': 'application/json'
             }
-            
+
             logger.info(f"🚀 Calling AI stream API: {api_url} with payload: {payload}")
             logger.debug(f"🔍 Original AI_GRPC_URL setting: {settings.AI_GRPC_URL}, Final URL: {api_url}")
             response = requests.post(
@@ -1272,7 +1292,7 @@ class StreamMonitorService:
                     'stream_monitor_id': stream_monitor_id,
                     'status_code': response.status_code
                 }
-                
+
         except requests.exceptions.RequestException as e:
             logger.error(f"❌ Request error starting AI dual stream: {str(e)}")
             return {
@@ -1292,10 +1312,10 @@ class StreamMonitorService:
     def stop_ai_dual_stream_optimized(cls, stream_id: str, stream_monitor_id: str) -> Dict[str, Any]:
         """
         Stop AI dual stream by calling external API.
-        
+
         Args:
             stream_monitor_id: ID of the stream monitor (used as stream_id)
-            
+
         Returns:
             dict: Stop status information
         """
@@ -1311,21 +1331,21 @@ class StreamMonitorService:
             #     api_base_url = api_base_url.replace('http://', '', 1)
             # # Always use HTTP (not HTTPS) for this API
             # api_base_url = f"http://{api_base_url}"
-            
+
             api_url = f"{api_base_url}/stop_stream"
-            
+
             # Prepare request payload
             # Using stream_monitor_id as stream_id, but could also use output_url identifier
             payload = {
                 "stream_id": stream_id
             }
-            
+
             # Make API call
             headers = {
                 'Content-Type': 'application/json',
                 'accept': 'application/json'
             }
-            
+
             logger.info(f"🛑 Calling AI stream stop API: {api_url} with payload: {payload}")
             logger.debug(f"🔍 Original AI_GRPC_URL setting: {settings.AI_GRPC_URL}, Final URL: {api_url}")
             response = requests.post(
@@ -1335,7 +1355,7 @@ class StreamMonitorService:
                 timeout=10,
                 verify=False
             )
-            
+
             # Check response
             if response.status_code == 200:
                 try:
@@ -1367,7 +1387,7 @@ class StreamMonitorService:
                     'stream_monitor_id': stream_monitor_id,
                     'status_code': response.status_code
                 }
-                
+
         except requests.exceptions.RequestException as e:
             logger.error(f"❌ Request error stopping AI dual stream: {str(e)}")
             return {
@@ -1382,43 +1402,43 @@ class StreamMonitorService:
                 'error': str(e),
                 'stream_monitor_id': stream_monitor_id
             }
-    
+
     @classmethod
     async def start_record_optimize(cls, stream_monitor_id: str, ai_model_code: str = None) -> Tuple[Optional[str], Optional[str]]:
         """
         Start video recording optimized (no pause/resume support).
-        
+
         Args:
             stream_monitor_id: ID of the stream monitor
             ai_model_code: AI model code (e.g., "fire_smoke") - if provided, records from AI stream
-            
+
         Returns:
             Tuple[Optional[str], Optional[str]]: (record_code, rtsp_url) or (None, None) on failure
         """
         try:
             import uuid
             from datetime import datetime
-            
+
             # Generate record code
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             unique_id = uuid.uuid4().hex[:6]
             record_code = f"{timestamp}{stream_monitor_id}_{unique_id}"
             if ai_model_code and ai_model_code != "":
                 record_code = f"{timestamp}{stream_monitor_id}_{ai_model_code}_{unique_id}"
-            
+
             # Determine RTSP URL
             rtsp_url = f"{settings.RTSP_URL}/stream/{stream_monitor_id}"
             if ai_model_code and ai_model_code != "":
                 rtsp_url = f"{settings.RTSP_URL}/stream/ai_{stream_monitor_id}"
-            
+
             # Create record directory
             record_dir = os.path.join(settings.RECORD_DIR, record_code)
             os.makedirs(record_dir, exist_ok=True)
-            
+
             # Store recording info in a simple way (we'll use a dict to track active recordings)
             if not hasattr(cls, '_active_recordings_optimize'):
                 cls._active_recordings_optimize = {}
-            
+
             cls._active_recordings_optimize[stream_monitor_id] = {
                 'record_code': record_code,
                 'rtsp_url': rtsp_url,
@@ -1427,7 +1447,7 @@ class StreamMonitorService:
                 'ffmpeg_process': None,
                 'started_at': time.time()
             }
-            
+
             # Start ffmpeg recording process
             output_path = cls._active_recordings_optimize[stream_monitor_id]['output_path']
             cmd = [
@@ -1446,10 +1466,10 @@ class StreamMonitorService:
                 "-y",
                 str(output_path),
             ]
-            
+
             logger.info(f"Starting optimized recording for stream {stream_monitor_id}, output: {output_path}")
             logger.debug(f"FFmpeg command: {' '.join(cmd)}")
-            
+
             # Create subprocess with stdin available for graceful shutdown
             ffmpeg_process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -1457,25 +1477,25 @@ class StreamMonitorService:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            
+
             cls._active_recordings_optimize[stream_monitor_id]['ffmpeg_process'] = ffmpeg_process
-            
+
             logger.info(f"Started optimized recording for stream {stream_monitor_id}, record_code: {record_code}")
             return record_code, rtsp_url
-            
+
         except Exception as e:
             logger.error(f"Error starting optimized recording for stream {stream_monitor_id}: {str(e)}")
             return None, None
-    
+
     @classmethod
     async def stop_record_optimize(cls, stream_monitor_id: str, record_code: str) -> Optional[str]:
         """
         Stop video recording optimized and save to MinIO.
-        
+
         Args:
             stream_monitor_id: ID of the stream monitor
             record_code: Record code returned from start_record_optimize
-            
+
         Returns:
             Optional[str]: MinIO object path or None on failure
         """
@@ -1483,12 +1503,12 @@ class StreamMonitorService:
             if not hasattr(cls, '_active_recordings_optimize') or stream_monitor_id not in cls._active_recordings_optimize:
                 logger.warning(f"No active recording found for stream {stream_monitor_id}")
                 return None
-            
+
             recording_info = cls._active_recordings_optimize[stream_monitor_id]
             ffmpeg_process = recording_info.get('ffmpeg_process')
             output_path = recording_info.get('output_path')
             record_dir = recording_info.get('record_dir')
-            
+
             # Stop ffmpeg process gracefully
             if ffmpeg_process:
                 try:
@@ -1502,7 +1522,7 @@ class StreamMonitorService:
                                 logger.debug("Sent 'q' to ffmpeg stdin for graceful shutdown")
                         except Exception as stdin_err:
                             logger.debug(f"Could not send 'q' to stdin: {stdin_err}")
-                        
+
                         # Wait for process to finish gracefully
                         try:
                             await asyncio.wait_for(ffmpeg_process.wait(), timeout=5.0)
@@ -1520,7 +1540,7 @@ class StreamMonitorService:
                                 ffmpeg_process.kill()
                                 await asyncio.wait_for(ffmpeg_process.wait(), timeout=2.0)
                                 logger.debug("FFmpeg process killed")
-                        
+
                         # Check for errors in stderr
                         if ffmpeg_process.stderr:
                             try:
@@ -1533,13 +1553,13 @@ class StreamMonitorService:
                                         logger.warning(f"FFmpeg reported errors: {stderr_text[-1000:]}")
                             except Exception as stderr_err:
                                 logger.debug(f"Could not read stderr: {stderr_err}")
-                                
+
                 except Exception as e:
                     logger.warning(f"Error stopping ffmpeg process: {e}")
-            
+
             # Wait for file to be finalized (longer wait)
             await asyncio.sleep(1.0)
-            
+
             # Retry checking file existence (sometimes file system needs time)
             max_retries = 5
             file_ready = False
@@ -1550,7 +1570,7 @@ class StreamMonitorService:
                         file_ready = True
                         break
                 await asyncio.sleep(0.5)
-            
+
             if not file_ready:
                 logger.warning(f"Output video file does not exist or is empty after {max_retries} retries: {output_path}")
                 # Check if directory exists and list files for debugging
@@ -1568,17 +1588,17 @@ class StreamMonitorService:
                     except:
                         pass
                 return None
-            
+
             # Read video file and save to MinIO with retry logic
             logger.info(f"Reading video file from {output_path}")
             file_size = os.path.getsize(output_path)
             logger.info(f"Video file size: {file_size} bytes")
-            
+
             def read_and_save():
                 with open(output_path, 'rb') as f:
                     video_data = io.BytesIO(f.read())
                 return minio_client.save_video(video_data, stream_monitor_id, record_code)
-            
+
             # Retry upload to MinIO up to 3 times
             loop = asyncio.get_event_loop()
             object_path = None
@@ -1594,11 +1614,11 @@ class StreamMonitorService:
                         logger.warning(f"Upload attempt {attempt} returned None")
                 except Exception as e:
                     logger.warning(f"Upload attempt {attempt} failed with error: {str(e)}")
-                
+
                 # Sleep 1 second before retry (except on last attempt)
                 if attempt < max_retries:
                     await asyncio.sleep(1.0)
-            
+
             # Clean up - only remove directory if upload to MinIO was successful
             del cls._active_recordings_optimize[stream_monitor_id]
             if object_path:
@@ -1613,9 +1633,9 @@ class StreamMonitorService:
             else:
                 # Keep directory if all upload attempts failed
                 logger.warning(f"Video recorded but not saved to MinIO for stream {stream_monitor_id} after {max_retries} attempts, keeping temporary directory {record_dir}")
-            
+
             return object_path
-            
+
         except Exception as e:
             logger.error(f"Error stopping optimized recording for stream {stream_monitor_id}: {str(e)}")
             # Clean up on error
