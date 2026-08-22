@@ -756,7 +756,25 @@ tickets:
 - id: W0-16
   phase: R1
   title: "superuser 역할 분리 — 전역(GAION 운영) vs 테넌트 운영 (W0-14 의 전제)"
-  status: ready
+  status: done
+  updated_at: "2026-08-22T20:40:00+09:00"
+  evidence: docs/agent/evidence/W0-16/superuser_accounts.md · role_split.md · http_role_split_test.md · revocation_runbook.md
+  blocker: |
+    [2026-08-22 · dod ①②③④ 충족 — done]
+    ① 13계정 전수 목록 = evidence/W0-16/superuser_accounts.md (Anyang 7 · Gaion 4 · Group Default 2).
+       부여자·시각은 **복원 불가** — user_coreuser_roles 에 created_on·created_by 열이 없다(§4-1).
+       티켓이 지시한 대로 unknown 으로 명시했다.
+    ② 분리 정의 = evidence/W0-16/role_split.md + backend/common/tenant_roles.py.
+       W0-14 는 `is_global_admin()` 하나만 부르면 된다 (판정식 복사 금지 · D-212).
+    ③ HTTP 시험 = evidence/W0-16/http_role_split_test.md.
+       **파일럿 `man`(Anyang): 남의 테넌트 15건 → 1건. 자기 것 7건 유지(무중단).**
+       남은 1건은 created_by IS NULL 경로 → W0-13 의 몫. 대조군 `admin`(Gaion, 레거시 유지) 18건 무변화.
+    ④ 회수 절차서 = evidence/W0-16/revocation_runbook.md — **운영 반영 대기(대표 승인)**.
+
+    부수 발견 2건 (범위 밖 · 기록):
+      · 로그인 rate limit 이 HTTP 500 으로 나간다 (표준은 429) → W0-18 상태코드 목록에 추가
+      · 목록 API 는 STREAM_URL 스텁 없이는 여전히 500 → W0-17 의 대상
+    적재: P-W0-16-1 (전역 테넌트에 group 5 Group Default 를 포함할 것인가)
   priority: P0
   effort: M
   kind: new-s

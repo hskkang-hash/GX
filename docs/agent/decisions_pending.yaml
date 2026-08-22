@@ -494,3 +494,27 @@ pending:
     reversible: true
     blocks_dod: false
     status: open
+
+  - id: P-W0-16-1
+    ticket: "W0-16"
+    raised_at: "2026-08-22"
+    context: "역할 분리 실행 — --global-groups 기본값 결정"
+    question: >-
+      전역(GAION 운영) 테넌트에 group 5(Group Default)를 포함할 것인가.
+      포함 근거는 그 테넌트의 superuser 보유 2계정(hans·ldk)의 이메일 도메인이 gaion.kr 이라는 것뿐이다.
+      조직도로 확인되지 않았다. 포함하면 두 계정은 gaion_global_admin(전역)을 받고,
+      제외하면 tenant_admin_5(자기 테넌트)를 받는다.
+      group 5 에는 delivery_admin 보유자 33명이 함께 있어 "GAION 내부 전용 테넌트"라고 단정하기 어렵다.
+    options:
+      - "A: 5,7 둘 다 전역 (현재 기본값) — 업무 중단 위험이 가장 낮다"
+      - "B: 7(Gaion)만 전역 — 권한 범위가 가장 좁다. hans·ldk 가 타 테넌트를 못 보게 된다"
+      - "C: 계정 단위 지정 — 그룹이 아니라 사람으로 정한다 (스크립트 인자 추가 필요)"
+    chosen_default: "A"
+    rationale: >-
+      로컬 시험에서는 A 를 적용했다. 4원칙 ①(더 안전한 쪽)은 여기서 '업무를 끊지 않는 쪽'이다 —
+      D-243 이 즉시 회수를 막은 이유와 같다. 되돌리는 비용도 인자 하나로 가장 싸다.
+      다만 이것은 **로컬 한정**이며 운영 반영은 대표 승인 사안이다(revocation_runbook §2 ⚠).
+      조직도 확인 후 B 로 좁히는 것을 권고한다 — 권한은 좁을수록 좋고, 두 계정뿐이라 영향이 작다.
+    reversible: true
+    blocks_dod: false
+    status: open

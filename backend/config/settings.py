@@ -678,3 +678,30 @@ REDIS_RECORDING_STATUS_KEY = env("REDIS_RECORDING_STATUS_KEY", default="recordin
 # 수렴한 뒤 이 값 하나로 차단으로 넘어간다 — 코드 되돌림 없이 되돌릴 수 있는
 # 유일한 지점이므로, 스코프 판정을 코드 여러 곳에 흩지 말 것 (D-212).
 TENANT_SCOPE_ENFORCE = env.bool("TENANT_SCOPE_ENFORCE", default=False)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 전역 관리 역할 정의 (W0-16 · D-243 · D-247)
+# ─────────────────────────────────────────────────────────────────────────────
+# "누가 전역 superuser 인가"를 **여기 한 곳에서만** 정의한다 (D-212).
+# W0-14 의 뷰 레벨 스코프가 이 정의를 그대로 읽어 판정한다 — 판정식을 코드
+# 여러 곳에 흩지 말 것. 흩는 순간 우회 지점이 그 수만큼 늘어난다.
+#
+# 배경(실측 · evidence/W0-16/superuser_accounts.md): 레거시 `superuser` **역할**을
+# 13계정이 갖고 있고 그중 7계정이 **고객 테넌트(Anyang) 안**에 있다. 그 역할은
+# dj-core 의 ORM 필터(core/base.py:308)와 권한 검사(core/role/permission.py:475)를
+# 통째로 통과시킨다 — 둘 다 §0.4 라 고칠 수 없다. 그래서 **역할을 갈라낸다.**
+
+# 전역(GAION 운영) 역할 코드. 이 역할만 테넌트 경계를 넘을 수 있다.
+TENANT_GLOBAL_ADMIN_ROLE_CODES = env.list(
+    "TENANT_GLOBAL_ADMIN_ROLE_CODES", default=["gaion_global_admin"]
+)
+
+# 레거시 `superuser` 역할을 전역으로 계속 인정할 것인가 (무중단 전환용 · D-243 ②).
+# True  = 지금까지와 동일 동작. 대체역할 부여가 끝나기 전 단계의 기본값.
+# False = `superuser` 역할은 더 이상 전역이 아니다 — 테넌트 스코프가 적용된다.
+# 회수 순서: 대체역할 부여 → 이 값을 False → 검증 → 역할 회수 (evidence/W0-16/revocation_runbook.md)
+TENANT_TRUST_LEGACY_SUPERUSER = env.bool("TENANT_TRUST_LEGACY_SUPERUSER", default=True)
+
+# 테넌트 운영 역할(자기 테넌트 관리)의 코드 접두어. `<prefix>_<group_id>` 규약.
+TENANT_ADMIN_ROLE_PREFIX = env.str("TENANT_ADMIN_ROLE_PREFIX", default="tenant_admin")
