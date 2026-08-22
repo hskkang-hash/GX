@@ -22,10 +22,10 @@ meta:
   # 손으로 세지 않는다: `python scripts/gen_manifest.py` 가 실측·대조한다 (불일치 시 exit 1).
   integrity: "manifest"
   manifest:
-    total: 66
+    total: 67
     by_phase:
       BACKLOG: 8
-      R1: 36
+      R1: 37
       R2: 14
       R3: 8
     ids:
@@ -42,6 +42,7 @@ meta:
       - W0-12
       - W0-13
       - W0-14
+      - W0-15
       - W0-2
       - W0-3
       - W0-4
@@ -132,7 +133,7 @@ meta:
     - id: WP-2
       title: "릴리스 위생 — 키·빌드·데모 분리"
       phase: R1
-      tickets: [W0-1b, W0-5, W0-4, W0-8, W0-6, W0-7, W0-9]
+      tickets: [W0-1b, W0-5, W0-4, W0-8, W0-6, W0-7, W0-9, W0-15]
       goal: "외부에 내보낼 수 있는 빌드가 재현 가능하게 나온다"
     - id: WP-3
       title: "AI 이벤트 센터 — 탐지를 자산으로"
@@ -526,7 +527,10 @@ tickets:
   dod: |
     ① 두 지점에서 UserGroup.objects.first() 제거, group 명시 주입으로 전환
     ② 저장소 전역 스캔 결과가 evidence/W0-12/scan.md 에 기록됨
-    ③ test_service_layer_does_not_pick_arbitrary_group 통과 (W0-3 의 expectedFailure 해제)
+    ③ tests/test_route_tenant_scope.py::ServiceLayerGroupSelectionTest 통과
+       # D-241② 로 정정. 구 문구가 지목한 test_service_layer_does_not_pick_arbitrary_group 은
+       # 실재하지 않았고 test_tenant_isolation.py 의 @expectedFailure 도 0건이었다.
+       # 격리 테스트 파일 수정은 금지 #5 → 동등 가드를 신규 파일에 두었다.
   verify:
     - "grep -REn 'UserGroup\\.objects\\.first\\(\\)' backend/ && exit 1 || exit 0"
     - "python manage.py test tests.test_tenant_isolation -v 2"
@@ -662,6 +666,38 @@ tickets:
     - "python manage.py test tests.test_tenant_isolation -v 2"
     - "test -f docs/agent/evidence/W0-14/coverage.md"
 
+- id: W0-15
+  phase: R1
+  title: "CORS 전면허용 제거 (CORS_ALLOW_ALL_ORIGINS)"
+  status: ready
+  priority: P1
+  effort: S
+  kind: reuse
+  depends_on: [W0-10]
+  human_gate: false
+  gate: evidence-review
+  requires_intranet: false
+  decisions: [D-225]
+  reuse_targets:
+    - backend/config/settings.py
+  spec: |
+    settings.py L629 의 CORS_ALLOW_ALL_ORIGINS = True 때문에 바로 아래의
+    CORS_ALLOWED_ORIGINS 허용목록이 **아무 효력이 없다.** 운영 배포에서 전 origin 을 허용한다.
+
+    작업:
+      1. CORS_ALLOW_ALL_ORIGINS 를 env.bool("CORS_ALLOW_ALL_ORIGINS", default=False) 로 내린다.
+         하드코딩 True 를 지우는 것이 이 티켓의 전부다 (D-212: 설정 1곳).
+      2. CORS_ALLOWED_ORIGINS 가 실제로 작동하는지 확인한다 — 허용목록에 없는 origin 의
+         프리플라이트가 거부되어야 한다.
+      3. 개발 편의는 .env 로만 연다. .env.example 에는 플레이스홀더/false 만 쓴다 (금지 #1).
+
+    ⚠️ 지금 그냥 끄면 프런트 개발 서버·고객사 origin 이 즉시 막힌다. 회귀 범위가 넓어
+       WP-2(릴리스 위생)에서 다른 항목과 함께 한 번에 검증한다 — 단독 선행 금지.
+  dod: "CORS_ALLOW_ALL_ORIGINS 하드코딩 True 가 0건. 허용목록 밖 origin 의 프리플라이트가 거부되고, 목록 안 origin 은 통과한다."
+  verify:
+    - "grep -n 'CORS_ALLOW_ALL_ORIGINS *= *True' backend/config/settings.py && exit 1 || exit 0"
+    - "grep -n 'CORS_ALLOW_ALL_ORIGINS' backend/config/settings.py"
+
 - id: W0-2
   phase: R1
   title: "멀티테넌트 권한 우회 목록 제거 (저장소 소유분 한정)"
@@ -789,7 +825,11 @@ tickets:
   spec: |
     VITE_ENABLE_DEMO 빌드 플래그로 라우트 등록 자체를 차단하고 dynamic import 로
     프로덕션 번들에서 제외한다. GS인증은 미완성 기능의 UI 노출을 결함으로 처리한다.
-  dod: "프로덕션 빌드 산출물에 mockupDemoUi 청크 없음. 해당 URL 직접 접근 시 404."
+  # dod 는 D-218/D-222 로 교체됐다. 구 문구: "…해당 URL 직접 접근 시 404."
+  # SPA catch-all 은 전역 정책이고, 데모 하나 때문에 그 정책을 바꾸는 것은 범위 초과다.
+  dod: >-
+    플래그 OFF 빌드의 청크에 데모 식별자 0건 + 데모 라우트가 라우터 테이블에 부재(홈 폴백 허용).
+    대조군으로 VITE_ENABLE_DEMO=true 빌드 시 청크가 나오는 것까지 확인한다.
   verify:
     - "npm run build && ! grep -rl 'mockupDemoUi' dist/assets"
 

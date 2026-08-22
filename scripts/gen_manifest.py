@@ -28,6 +28,13 @@ import yaml
 
 TICKETS = Path(__file__).resolve().parent.parent / "docs" / "agent" / "tickets.yaml"
 
+# Windows 콘솔 기본 코드페이지(cp949)에서 한글·em-dash 출력이 UnicodeEncodeError 로 죽는다.
+# 게이트가 "불일치"를 보고하려다 크래시하면 실패 원인이 뒤바뀐다 — 먼저 stdout 을 UTF-8 로 고정한다.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, OSError):  # 파이프·리다이렉트 등 reconfigure 불가 환경
+    pass
+
 
 def measure(doc: dict) -> dict:
     """tickets 배열을 실측해 manifest 를 만든다."""

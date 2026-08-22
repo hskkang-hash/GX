@@ -22,8 +22,10 @@
 #    status:         open / answered
 # ============================================================================
 meta:
-  version: "1.0"
-  updated_at: "2026-08-13"
+  version: "1.1"
+  updated_at: "2026-08-22"
+  # 2026-08-22: 적재 11건 전량 answered (RESUME_NEXT §3 · D-242 승인부).
+  # 확정 ID 는 각 항목의 answered_by 참조. 항목 본문은 원문 그대로 보존한다.
 
 pending:
   - id: P-W0-2-1
@@ -45,7 +47,9 @@ pending:
       에이전트가 고를 수 있는 선택지가 아니다.
     reversible: true
     blocks_dod: true
-    status: open
+    status: answered
+    answered_by: D-221
+    answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
 
   - id: P-W0-10-1
     ticket: W0-10
@@ -67,7 +71,9 @@ pending:
       ENTRY §6-3 대로 사내망 방문 이후 오프라인 작업으로 순서를 미뤘다.
     reversible: true
     blocks_dod: true
-    status: open
+    status: answered
+    answered_by: D-223
+    answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
 
   - id: P-W0-4-1
     ticket: W0-4
@@ -87,7 +93,9 @@ pending:
       차이를 기록한다 (D-214 AUTHOR-ERROR 처리).
     reversible: true
     blocks_dod: false
-    status: open
+    status: answered
+    answered_by: D-222
+    answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
 
   # --- WP-0 §11 오프라인 작업 중 적재 (2026-08-15) ---
   - id: P-W0-3-1
@@ -116,7 +124,9 @@ pending:
       뒤 둘이 unexpected success 로 스위트를 깨뜨렸을 수 있다.
     reversible: true
     blocks_dod: false
-    status: open
+    status: answered
+    answered_by: D-224
+    answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
 
   - id: P-W0-10-2
     ticket: W0-10
@@ -137,7 +147,9 @@ pending:
       이번 WP 에서는 기록만 하고 코드는 건드리지 않았다.
     reversible: true
     blocks_dod: false
-    status: open
+    status: answered
+    answered_by: D-225
+    answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
 
   # --- WP-0 EXIT 작성 중 적재 (2026-08-15) · 티켓이 아니라 루프 자체의 결손 ---
   - id: P-LOOP-1
@@ -162,7 +174,9 @@ pending:
       지금 상태는 "무결성 게이트가 있다"는 착시를 만들며, 없는 것보다 나쁘다.
     reversible: true
     blocks_dod: false
-    status: open
+    status: answered
+    answered_by: D-228
+    answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
 
   - id: P-LOOP-2
     ticket: "(해당 없음 — AGENT_LOOP STEP 0-2·0-3)"
@@ -184,7 +198,9 @@ pending:
       이번 WP 는 배열 길이 실측(66)과 meta.version(3.1) 으로 대체 보고했다.
     reversible: true
     blocks_dod: false
-    status: open
+    status: answered
+    answered_by: D-227
+    answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
 
   - id: P-LOOP-3
     ticket: "(해당 없음 — WP 관문 운영)"
@@ -205,7 +221,9 @@ pending:
       decisions_pending 의 status: open 이 서로 어긋나 있다(P-W0-2-1·P-W0-10-1).
     reversible: true
     blocks_dod: false
-    status: open
+    status: answered
+    answered_by: D-234
+    answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
 
   # --- WP-1 구현 중 적재 (2026-08-15) ---
   - id: P-W0-12-1
@@ -229,7 +247,9 @@ pending:
       이번 WP 에서는 코드를 건드리지 않고 기록만 했다.
     reversible: true
     blocks_dod: false
-    status: open
+    status: answered
+    answered_by: D-241
+    answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
 
   - id: P-W0-12-2
     ticket: W0-12
@@ -250,7 +270,9 @@ pending:
       dod 텍스트 정정은 작성자 몫(금지 #11).
     reversible: true
     blocks_dod: true
-    status: open
+    status: answered
+    answered_by: D-241
+    answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
 
   - id: P-W0-14-1
     ticket: W0-14
@@ -273,4 +295,6 @@ pending:
       않도록 하는 것이 그 문단의 목적이다.
     reversible: true
     blocks_dod: true
-    status: open
+    status: answered
+    answered_by: D-241
+    answered_at: "2026-08-22"   # RESUME_NEXT §3 (D-242 승인부)
