@@ -24,6 +24,7 @@ from core.common.search.dynamic_search import apply_dynamic_filters
 from print_format.services import PrintFormatService
 from handover.models import HandoverNotice, HandoverNoticeComment
 from core.user.models import CoreUser, UserGroup
+from common.tenant_filters import NoTenantGroupError, require_user_group
 from core.file_management.models import UserMediaFile
 from core.file_management.helper import FileHelper
 from common.constant import MESSAGE_ENUM, get_message
@@ -88,12 +89,13 @@ class HandoverNoticeService:
                 if removed_file_ids:
                     notice.files.filter(id__in=removed_file_ids).delete()
             else:
-                # Create
-                group = None
-                if hasattr(user, 'userprofilelink') and user.userprofilelink.group:
-                    group = user.userprofilelink.group
-                else:
-                    group = UserGroup.objects.first()
+                # Create — 소유 group 은 요청자(actor)에서만 온다 (W0-12).
+                # 이전 구현은 저장된 첫 UserGroup 을 집어오는 폴백을 썼고,
+                # 그 경로는 남의 테넌트에 공지를 만든다.
+                try:
+                    group = require_user_group(user)
+                except NoTenantGroupError as exc:
+                    raise ValidationError(str(exc)) from exc
 
                 notice = HandoverNotice.objects.create(
                     creator=user,

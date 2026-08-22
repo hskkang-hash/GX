@@ -362,7 +362,22 @@ tickets:
 - id: W0-11
   phase: R1
   title: "dj-core 우회 목록 사실 확인 (§0.4 예외 판단)"
-  status: ready
+  status: verify-pending
+  updated_at: "2026-08-15T18:40:00+09:00"
+  evidence: docs/agent/evidence/W0-11/dj-core-findings.md (오프라인 확정분 + 방문 실행 스크립트)
+  blocker: |
+    [2026-08-15 · WP-1 오프라인 진척] verify(파일 존재)는 충족. 확인항목 1·2는 대기.
+    ★ 오프라인에서 확정된 것: dj-core 는 이 저장소에 없다.
+       backend/core/ 는 advanced_table·data 둘뿐인 **암묵 네임스페이스 패키지**이고
+       (find_spec loader=None), core.base / core.user.models / core.api.v1.auth /
+       core.role.permission / core.middleware.* 는 전부 사내망 pip 배포본에 있다.
+       → **열두 스프린트에 걸친 "오프라인 시험 0건"의 진짜 원인이 이것이다.**
+         Docker·Postgres 문제가 아니라 django.setup() 이 ImportError 로 죽는다.
+         DB 를 띄워도 달라지지 않는다.
+    확인항목 1(우회 목록)·2(created_by__isnull OR)는 소스 수령 후에만 가능.
+    findings §4 에 방문 당일 실행할 스크립트 4개를 그대로 넣어 두었다 (약 10분).
+    ★ 이 티켓의 결과가 어떻게 나오든 W0-14 는 필요하다 (D-207). 반대는 성립하지 않는다 —
+      "A 에도 우회 목록이 있다"로 나오면 W0-14 의 긴급도만 올라간다.
   priority: P0
   effort: S
   kind: ops
@@ -385,7 +400,25 @@ tickets:
 - id: W0-12
   phase: R1
   title: "서비스 레이어의 임의 그룹 선택 제거 (UserGroup.objects.first)"
-  status: ready
+  status: verify-pending
+  updated_at: "2026-08-15T18:40:00+09:00"
+  evidence: docs/agent/evidence/W0-12/scan.md (19건 성격 분류 · 결함2/위험1/무해16)
+  blocker: |
+    [2026-08-15 · WP-1 오프라인 진척] ①② 충족. ③ 만 남았다.
+    ① 정본 지목 2지점(handover_document_service:608 · handover_notice_service:96)을
+       common.tenant_filters.require_user_group(user) 로 교체. group 이 없으면
+       ValidationError 를 던지고 폴백 경로를 남기지 않았다.
+       verify #1 통과: git grep 'UserGroup.objects.first()' -- backend/ → 0건.
+    ② 전역 스캔 19건 분류 완료 → evidence/W0-12/scan.md.
+       정본 지목 2건은 전수와 일치했고, 정본이 몰랐던 1건을 더 찾았다 —
+       print_format/models.py:98 (쓰기 오배정이 아니라 읽기 오열람) → P-W0-12-1.
+    ⚠ AUTHOR-ERROR (D-214): dod ③ 의 test_service_layer_does_not_pick_arbitrary_group
+       은 실재하지 않고 test_tenant_isolation.py 의 @expectedFailure 도 0건이다.
+       그 파일 수정은 절대금지 #5 라 동등 가드를 신규 파일에 두었다 —
+       tests/test_route_tenant_scope.ServiceLayerGroupSelectionTest.
+       가드 로직은 오프라인에서 실행해 통과 확인(정적 검사라 DB 불요). → P-W0-12-2
+    남은 것: dj-core 부재로 django.setup() 이 죽어 테스트 러너 자체가 안 돈다.
+       사내망 1회 방문으로 해소 (evidence/W0-11/dj-core-findings.md §1).
   priority: P0
   effort: S
   kind: reuse
@@ -420,7 +453,37 @@ tickets:
 - id: W0-13
   phase: R1
   title: "created_by 없는 레코드의 전 테넌트 노출 차단"
-  status: ready
+  status: verify-pending
+  updated_at: "2026-08-15T19:20:00+09:00"
+  evidence: docs/agent/evidence/W0-13/impact.md (① 정적 범위 확정 · 행수 집계 스크립트)
+  blocker: |
+    [2026-08-15 · WP-1 오프라인 진척] ① 의 정적 부분 완료. ②③④ 는 대기.
+    ① 결함 위치 확정: common/base_model.py 5곳 (156·158·167·189·193).
+      156·158 은 요청 캐시 히트 경로라 189·193 의 조건이 복제돼 있다 —
+      **한 곳만 고치면 캐시가 살아 있는 요청에서 결함이 그대로 남는다.**
+      spec 이 "필터"를 단수로 적은 자리이며, 이 중복이 실제 위험이다.
+    ★ AUTHOR-ERROR 급 전제 차이 (D-214): **이 수정의 실효 범위는 17종 중 2종(11.8%)이다.**
+      CustomManagerGroup 은 objects 로 common.base_model.BaseModelWithGroup 에만 붙고,
+      그것을 상속하는 모델은 dashboard.Dashboard · dashboard.DashboardPanel 둘뿐이다.
+      나머지 15종은 core.base(dj-core · §0.4) 매니저를 지난다 —
+        · MeasurableModelWithGroup 4종도 core.base 상속이라 영향 없음
+          (FlightLog · SurveyMission · SurveillanceProfile · Terminal)
+        · core.base 직접 상속 11종은 미확인 (W0-11 확인항목 2)
+      → 티켓을 spec 대로 완수해도 노출의 88%는 남는다. 그 사실을 DoD 가 담지 못한다.
+    ② is_system 도입을 앞당기지 않았다 (4원칙 ②). 두 이유:
+      (a) BaseModel 급 컬럼 추가는 45개 앱에 마이그레이션이 퍼지는데
+          makemigrations --check 를 돌릴 수 없다 (dj-core 부재).
+      (b) **설계 자체가 W0-11 결과에 달려 있다.** dj-core 매니저에도 같은 OR 가 있으면
+          is_system 은 A·B 양쪽에 있어야 하고 A 는 §0.4 라 뷰 통제(W0-14) 우회 설계가 된다.
+          없으면 B 에만 넣으면 된다. 두 설계의 작업량이 배 이상 차이 난다.
+    ★ 백필 주의 (③): operation_settings 의 3곳이 created_by IS NULL 을 이미
+      "시스템 기본 설정"의 뜻으로 _base_manager 로 조회한다. 그 레코드를 특정 group 으로
+      귀속시키면 기본 설정 조회가 깨진다. 백필 예외 목록에 반드시 넣을 것.
+    범위 밖 발견: delivery/services/status_mapping_service.py 가 7곳에서
+      "CustomManagerGroup 이 자동 필터링한다"고 주석하지만 delivery 모델은 core.base 를
+      쓴다. 이 저장소의 매니저는 그 코드에 관여하지 않는다 — 주석이 가리키는 보호가
+      실재하는지 미확인. §0.4 라 미수정, W0-11 결과에 따라 판정.
+    → 순서: W0-11(방문 10분) → W0-13 ①행수 → ② 설계 확정 → ③④.
   priority: P0
   effort: M
   kind: reuse
@@ -456,7 +519,37 @@ tickets:
 - id: W0-14
   phase: R1
   title: "뷰/서비스 레벨 테넌트 필터 전 엔드포인트 강제 (격리 주 통제)"
-  status: ready
+  status: verify-pending
+  updated_at: "2026-08-15T18:40:00+09:00"
+  evidence: docs/agent/evidence/W0-14/coverage.md (정적 466건 실측 · 런타임 수치 대기)
+  blocker: |
+    [2026-08-15 · WP-1 오프라인 진척] 구현물은 전부 들어갔고 실행만 남았다.
+    ① 주입 지점 신설: backend/common/tenant_scope.py
+       · @tenant_scoped(required=, reason=) 데코레이터 + ScopeSpec
+       · 면제 대장 2층 — PUBLIC(사유 필수, 4건+접두어 2종) / UNREVIEWED(잔여값)
+       · enumerate_operations() — URL 리졸버를 타고 NinjaExtraAPI 인스턴스를 찾아
+         실제 등록 오퍼레이션을 연다. 정적 grep 이 아니라 런타임 레지스트리를 읽는다.
+       · settings.TENANT_SCOPE_ENFORCE (기본 False = 경고 모드) + .env.example 항목
+    ② 누락 탐지 테스트 신설: backend/tests/test_route_tenant_scope.py (8 테스트)
+       test_all_routes_are_tenant_scoped / test_all_group_models_are_covered /
+       test_public_list_does_not_grow / test_public_routes_all_have_reasons /
+       test_every_route_has_exactly_one_state / test_enumerator_finds_routes /
+       ScopeDecoratorIntegrationTest 2건
+       경고 모드 규약: 미분류가 있다고 실패하지 않고 **늘면** 실패한다.
+       첫 실행이 evidence/W0-14/route_baseline.json 을 만든다 → 그 파일을 커밋할 것.
+    ③ 현황표: evidence/W0-14/coverage.md (정적 실측 + 롤아웃 4단계)
+    ⚠ AUTHOR-ERROR (D-214) 2건:
+       (a) spec ① 의 "DRF: TenantScopedViewSetMixin" — 이 저장소에 DRF 뷰가 0개다
+           (ViewSet 0 / APIView 0 / from rest_framework import 0파일). 사문(死文)이라
+           구현하지 않았고 Ninja 갈래만 만들었다.
+       (b) spec ② 의 "config/urls.py 에서 전 라우트 열거" — 거기엔 include 23개뿐이고
+           라우트가 없다. 실 표면은 @route 466건. 열거 지점을 API 인스턴스로 바꿨다.
+    ★ 데코레이터를 실 컨트롤러에 아직 부착하지 않았다 (커버리지 0/466, 의도한 것).
+       ninja 미설치로 등록 경로가 미실행이고, 시그니처를 가리면 차단이 아니라
+       기동 실패가 난다. ScopeDecoratorIntegrationTest 가 초록이 된 뒤 파일럿부터.
+       순서는 coverage.md §4 에 4단계로 고정 → P-W0-14-1
+    오프라인 검증: 순수 로직 30건 실행 통과(경로조립·PUBLIC판정·3분류·집계·
+       경고/차단 모드 전환·require_user_group). ninja 결합만 미검증.
   priority: P0
   effort: L
   kind: new-s

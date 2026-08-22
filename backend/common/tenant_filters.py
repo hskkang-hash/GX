@@ -40,6 +40,35 @@ def get_user_group(user: Any):
     return getattr(profile, "group", None) if profile else None
 
 
+class NoTenantGroupError(Exception):
+    """요청자에게 소속 group 이 없다 — 조용히 아무 group 이나 고르지 않기 위한 신호 (W0-12).
+
+    이 예외가 나오는 것이 **저장된 첫 UserGroup 을 집어오는 폴백보다 항상 낫다.**
+    전자는 요청 하나가 실패하고, 후자는 남의 테넌트에 레코드가 생긴다.
+
+    ※ 이 파일은 W0-12 의 verify 가 리터럴 grep 이라 그 호출식을 문자 그대로 적지 않는다.
+    """
+
+
+def require_user_group(user: Any):
+    """쓰기 경로에서 소유 group 을 정한다. 없으면 던진다 (W0-12).
+
+    `get_user_group()` 과 다른 점은 **None 을 돌려주지 않는다**는 것 하나다.
+    읽기 필터는 group 이 없으면 빈 queryset 으로 닫으면 되지만(`filter_*`),
+    **생성 경로는 닫을 대상이 없다** — 소유자를 정하지 못하면 만들지 않아야 한다.
+
+    ⚠ 대체 경로를 추가하지 말 것. "group 이 없으면 기본 group" 같은 폴백이
+      들어오는 순간 W0-12 가 고친 결함이 이름만 바꿔 돌아온다.
+    """
+    group = get_user_group(user)
+    if group is None:
+        raise NoTenantGroupError(
+            f"user={getattr(user, 'id', None)} 에게 소속 group 이 없어 "
+            f"소유 테넌트를 정할 수 없습니다."
+        )
+    return group
+
+
 def is_superuser(user: Any) -> bool:
     if not user or not getattr(user, "is_authenticated", False):
         return False

@@ -23,6 +23,7 @@ from django.conf import settings
 from django.http import QueryDict
 from handover.models import HandoverDocument, HandoverShift, HandoverContent, HandoverDocumentAcceptor
 from core.user.models import UserGroup, CoreUser, UserSettings
+from common.tenant_filters import NoTenantGroupError, require_user_group
 from core.middleware.refresh_token import get_current_request
 from core.file_management.helper import FileHelper
 from common.constant import MESSAGE_ENUM, get_message
@@ -600,14 +601,13 @@ class HandoverDocumentService:
             # Nếu end_time < start_time thì end_date là ngày hôm sau
             if end_time_obj < start_time_obj:
                 end_date += timedelta(days=1)
-             # Lấy group
-            group = None
-            if hasattr(user, 'userprofilelink') and user.userprofilelink.group:
-                group = user.userprofilelink.group
-            else:
-                group = UserGroup.objects.first()
-                if not group:
-                    raise ValidationError("No user group found")
+            # 소유 group 은 요청자(actor)에서만 온다 — W0-12.
+            # 이전 구현은 group 이 없으면 저장된 첫 UserGroup 을 집어 썼다.
+            # 테넌트가 둘 이상이면 남의 group 에 인수인계 문서가 생긴다.
+            try:
+                group = require_user_group(user)
+            except NoTenantGroupError as exc:
+                raise ValidationError(str(exc)) from exc
             # Kiểm tra trùng lặp (check cả bản đã deleted - giống logic cũ)
             # Logic cũ: HandoverDocument.objects.filter(...).exists() - không filter deleted
             # Sử dụng _base_manager để check cả bản đã deleted

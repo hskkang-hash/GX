@@ -666,3 +666,15 @@ IMG_DIR = env("IMG_DIR", default=os.path.join(BASE_DIR, "stream_monitors", "medi
 
 RECORD_DIR = env("RECORD_DIR", default=os.path.join(BASE_DIR, "stream_monitors", "media", "record"))
 REDIS_RECORDING_STATUS_KEY = env("REDIS_RECORDING_STATUS_KEY", default="recording_status")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 테넌트 스코프 강제 (W0-14)
+# ─────────────────────────────────────────────────────────────────────────────
+# False = 경고 모드. 차단하지 않고 "차단됐을 요청"을 logger.warning 으로만 남긴다.
+# True  = 차단 모드. group 이 없는 요청을 NoTenantGroupError 로 끊는다.
+#
+# 착수 시점 커버리지가 0/466 이라 기본값은 False 다. 미분류 라우트가 0 에
+# 수렴한 뒤 이 값 하나로 차단으로 넘어간다 — 코드 되돌림 없이 되돌릴 수 있는
+# 유일한 지점이므로, 스코프 판정을 코드 여러 곳에 흩지 말 것 (D-212).
+TENANT_SCOPE_ENFORCE = env.bool("TENANT_SCOPE_ENFORCE", default=False)
