@@ -1,0 +1,384 @@
+# -*- coding: utf-8 -*-
+"""API 계약 회귀 시험 — W0-18 (D-248 · D-212).
+
+이 파일이 못박는 것은 셋이다.
+
+  1) **권한거부의 상태코드**  플래그 ON 이면 실제 4xx 로 나가고, OFF 이면 기존 200 이
+     한 글자도 바뀌지 않는다(하위호환). 되돌림이 실제로 되는지를 시험이 증명한다.
+  2) **`/api/token/pair`**    200 으로 토큰을 주지만 그 토큰은 `CustomJWTAuth` 라우트에서
+     401 이다. "발급 성공 → 다음 호출 401" 이 실제 동작이고, 연동 문서는 그것을 적어야 한다.
+  3) **`/api/v1/auth/delete-session`**  body·query 어느 형태로도 호출할 수 없다(전부 422).
+
+절대 금지 (AGENT_LOOP 절대금지 #4 · D-105 · D-224)
+    이 파일의 시험을 skip·xfail·비활성화하지 말 것. 아직 못 고친 결함은
+    `KNOWN_GAPS` 등록부에 **사유와 함께** 적고 증가금지 시험으로 묶는다.
+    조용히 건너뛰면 초록불이 실제 커버리지보다 커 보인다.
+
+실행
+    python manage.py test tests.test_api_contract -v 2
+"""
+
+from __future__ import annotations
+
+import json
+
+from django.apps import apps
+from django.test import Client, TestCase, override_settings
+
+from common.api_contract import (
+    KIND_PROMOTABLE,
+    KIND_RAISES,
+    KIND_SWALLOWED,
+    classify_permission_routes,
+    denial_status,
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 대표 라우트 — 세 부류에서 하나씩
+# ═══════════════════════════════════════════════════════════════════════════
+
+#: A — `response=` 선언이 없다. 거부가 200 + 본문으로 나간다.
+ROUTE_NO_SCHEMA = "/api/devices/devices-management"
+
+#: B — `response=List[…]`. 거부 dict 를 pydantic 이 거절해 예외가 된다.
+ROUTE_LIST_SCHEMA = "/api/report-template/"
+
+#: C — `response=<단일 스키마>`. 거부가 `{}` 로 소멸한다 (아직 못 고친다 · KNOWN_GAPS).
+ROUTE_SINGLE_SCHEMA = "/api/report-template/1"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 등록부 — 아직 못 고친 것을 숨기지 않고 센다 (D-224 방식)
+# ═══════════════════════════════════════════════════════════════════════════
+
+#: 거부가 `{}` 로 소멸하는 라우트 수. 응답 계층에서 복원할 수 없다.
+#: 8건 전부 §0.4 **밖**(report_template·checklist_setting)이라 `response=` 선언을 떼면
+#: A 부류가 되어 승격된다 — P-W0-18-1 판정 대기. 판정 후 이 수는 **0 이 되어야 한다.**
+KNOWN_GAPS = {
+    KIND_SWALLOWED: 8,
+}
+
+#: 실측 분포 (evidence/W0-18/backward_compat_impact.md §1-1). 라우트가 늘거나 선언이
+#: 바뀌면 이 수가 움직인다 — 움직이면 증거 문서도 같이 고쳐야 한다는 신호다.
+EXPECTED_DISTRIBUTION = {
+    KIND_PROMOTABLE: 281,
+    KIND_RAISES: 7,
+    KIND_SWALLOWED: 8,
+}
+
+
+def _bearer(user) -> dict[str, str]:
+    """이 사용자로 인증된 요청 헤더.
+
+    dj-core 는 토큰의 `jti` 를 사용자에 저장된 세션값과 대조한다. 그래서 로그인 경로가
+    하는 것과 같은 세 단계를 그대로 한다 (tests/test_tenant_isolation.py 와 같은 이유).
+    """
+    import uuid
+
+    import jwt
+    from django.conf import settings
+    from ninja_jwt.tokens import RefreshToken
+
+    session_id = str(uuid.uuid4())
+    refresh = RefreshToken.for_user(user)
+    refresh["session_id"] = session_id
+    access = str(refresh.access_token)
+    decoded = jwt.decode(
+        access,
+        settings.NINJA_JWT["SIGNING_KEY"],
+        algorithms=[settings.NINJA_JWT.get("ALGORITHM", "HS256")],
+    )
+    setter = getattr(user, "set_encrypted_session_token", None)
+    if setter is not None:
+        setter(session_id, decoded.get("jti"))
+        user.save()
+    return {"HTTP_AUTHORIZATION": f"Bearer {access}"}
+
+
+class _DeniedUserMixin:
+    """권한이 **없는** 사용자 하나.
+
+    역할은 주되 `RoleMenu`/`RoleTab` 을 주지 않는다 — `_check_path_permission` 이
+    바로 그 조합에서 False 를 낸다. 역할을 아예 주지 않아도 False 지만, 그러면
+    "역할이 없어서"와 "권한이 없어서"가 구별되지 않는다. 이 시험이 묻는 것은 후자다.
+    """
+
+    PASSWORD = "test-only-not-a-secret"
+
+    @classmethod
+    def _make_denied_user(cls, username: str):
+        CoreUser = apps.get_model("user", "CoreUser")
+        UserGroup = apps.get_model("user", "UserGroup")
+        Role = apps.get_model("role", "Role")
+
+        group = UserGroup.objects.create(name=f"contract-{username}")
+        user = CoreUser.objects.create_user(
+            username=username,
+            password=cls.PASSWORD,
+            is_active=True,
+            email=f"{username}@test.invalid",
+        )
+        link_field = CoreUser._meta.get_field("userprofilelink")
+        link_field.related_model.objects.create(
+            **{link_field.remote_field.name: user, "group": group}
+        )
+        role = Role.objects.create(role_name=f"contract-{username}", code=f"c_{username}")
+        user.roles.set([role])
+        return user
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 1) 판정 함수 — 무엇을 승격하고 무엇을 건드리지 않는가
+# ═══════════════════════════════════════════════════════════════════════════
+
+class DenialDiscriminatorTest(TestCase):
+    """판정을 좁게 잡았다는 것을 못박는다. 넓히면 배송·주문 본문이 걸린다."""
+
+    def test_permission_denial_shape_is_promoted(self):
+        payload = {"success": False, "message": {"en": "Permission denied."}, "status_code": 403}
+        self.assertEqual(denial_status(payload), 403)
+
+    def test_domain_status_code_is_not_promoted(self):
+        """배송 진행단계(0~5) · 도메인 상태문자열은 HTTP 상태가 아니다."""
+        for code in (0, 1, 5, 200, 201, "success", "error", None):
+            with self.subTest(code=code):
+                self.assertIsNone(denial_status({"success": False, "status_code": code}))
+
+    def test_success_true_is_not_promoted(self):
+        self.assertIsNone(denial_status({"success": True, "status_code": 403}))
+
+    def test_missing_success_key_is_not_promoted(self):
+        """`orders/views/order_views.py:1394` 처럼 `status: "error"` 만 쓰는 본문."""
+        self.assertIsNone(denial_status({"status": "error", "status_code": 400}))
+
+    def test_true_does_not_pass_as_status_one(self):
+        """bool 은 int 의 서브클래스다. True 가 새어들어오면 안 된다."""
+        self.assertIsNone(denial_status({"success": False, "status_code": True}))
+
+    def test_non_dict_is_not_promoted(self):
+        for payload in (None, [], "403", 403):
+            with self.subTest(payload=payload):
+                self.assertIsNone(denial_status(payload))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 2) 권한거부의 상태코드 — 플래그 ON / OFF
+# ═══════════════════════════════════════════════════════════════════════════
+
+class PermissionDeniedStatusTest(_DeniedUserMixin, TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = cls._make_denied_user("contract_denied")
+
+    def setUp(self):
+        self.client = Client()
+        self.headers = _bearer(self.user)
+
+    # ── 플래그 OFF — 기존 동작이 한 글자도 바뀌지 않는다 (하위호환) ──────────
+
+    @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=False)
+    def test_flag_off_keeps_legacy_200(self):
+        resp = self.client.get(ROUTE_NO_SCHEMA, **self.headers)
+        self.assertEqual(resp.status_code, 200, "플래그 OFF 에서 상태가 바뀌면 되돌림이 불가능하다")
+        body = json.loads(resp.content)
+        self.assertIs(body.get("success"), False)
+        self.assertEqual(body.get("status_code"), 403)
+
+    # ── 플래그 ON — A 부류: 200 → 403 ──────────────────────────────────────
+
+    @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=True)
+    def test_flag_on_promotes_no_schema_route(self):
+        resp = self.client.get(ROUTE_NO_SCHEMA, **self.headers)
+        self.assertEqual(resp.status_code, 403)
+
+    @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=True)
+    def test_promotion_preserves_body(self):
+        """상태줄만 고친다. 기존 클라이언트가 읽던 `success`·`message` 는 그대로 있어야 한다."""
+        resp = self.client.get(ROUTE_NO_SCHEMA, **self.headers)
+        body = json.loads(resp.content)
+        self.assertIs(body.get("success"), False)
+        self.assertEqual(body.get("status_code"), 403)
+        self.assertIn("message", body)
+
+    # ── 플래그 ON — B 부류: 500(예외) → 403 ────────────────────────────────
+
+    @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=True)
+    def test_flag_on_promotes_list_schema_route(self):
+        """`response=List[…]` 라우트는 거부 dict 로 **예외가 난다.**
+
+        `process_exception` 이 그 예외의 `input` 에서 거부 dict 를 되찾는다.
+        이 경로가 없으면 delivery 5건은 §0.4 라 손댈 방법이 없다.
+        """
+        resp = self.client.get(ROUTE_LIST_SCHEMA, **self.headers)
+        self.assertEqual(resp.status_code, 403)
+        self.assertIs(json.loads(resp.content).get("success"), False)
+
+    @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=False)
+    def test_flag_off_list_schema_route_still_raises(self):
+        """OFF 에서는 아무것도 하지 않는다 — 예외가 그대로 흐른다.
+
+        `raise_request_exception=False` 로 Django 가 500 을 만들게 둔다.
+        """
+        client = Client(raise_request_exception=False)
+        resp = client.get(ROUTE_LIST_SCHEMA, **self.headers)
+        self.assertEqual(resp.status_code, 500)
+
+    # ── 정상 응답은 건드리지 않는다 ───────────────────────────────────────
+
+    @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=True)
+    def test_unauthenticated_401_is_untouched(self):
+        resp = self.client.get(ROUTE_SINGLE_SCHEMA)
+        self.assertEqual(resp.status_code, 401)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 3) 엔드포인트 계약 — 문서가 적어야 할 실제 동작
+# ═══════════════════════════════════════════════════════════════════════════
+
+class AuthEndpointContractTest(_DeniedUserMixin, TestCase):
+    """연동 문서의 기재를 시험으로 못박는다 (W0-18 dod ③④).
+
+    문서와 동작이 갈라지면 여기가 먼저 빨개진다.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = cls._make_denied_user("contract_auth")
+
+    def setUp(self):
+        self.client = Client()
+
+    def test_token_pair_issues_tokens_that_do_not_work(self):
+        """`/api/token/pair` 는 **200 으로 토큰을 준다. 그리고 그 토큰은 쓸 수 없다.**
+
+        `core/auth.py` 가 `if not user.token: raise HttpError(401, "Token expired")` 로
+        막는데, `user.token` 을 채우는 것은 `/api/v1/auth/login` 뿐이다.
+        "미작동"이 아니라 **"발급은 성공하고 다음 호출이 401"** 이라는 점이 중요하다 —
+        연동 담당자가 시계·TTL 을 의심하며 시간을 버리는 지점이다.
+        """
+        resp = self.client.post(
+            "/api/token/pair",
+            data=json.dumps({"username": self.user.username, "password": self.PASSWORD}),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 200, "발급 자체는 성공한다")
+        body = json.loads(resp.content)
+        self.assertIn("access", body)
+        self.assertIn("refresh", body)
+
+        follow_up = self.client.get(
+            ROUTE_SINGLE_SCHEMA,
+            HTTP_AUTHORIZATION=f"Bearer {body['access']}",
+        )
+        self.assertEqual(
+            follow_up.status_code, 401,
+            "이 단언이 깨지면 token/pair 가 쓸 수 있게 된 것이다 — 연동 문서를 고쳐라",
+        )
+
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.token, "token/pair 는 user.token 을 채우지 않는다")
+
+    def test_login_is_the_working_credential_endpoint(self):
+        """실경로는 `/api/v1/auth/login` 이다. 라우트가 살아 있는지만 못박는다."""
+        resp = self.client.post(
+            "/api/v1/auth/login",
+            data=json.dumps({"username": self.user.username, "password": self.PASSWORD}),
+            content_type="application/json",
+        )
+        self.assertNotEqual(resp.status_code, 404, "실경로가 사라졌다 — 연동 문서를 고쳐라")
+        self.assertEqual(resp.status_code, 200)
+
+    def test_delete_session_is_not_callable_in_any_shape(self):
+        """`data: dict` 를 ninja 가 **쿼리 파라미터**로 잡는다. 그래서 부를 방법이 없다.
+
+        핸들러는 §0.4 안이라 고칠 수 없다. 문서에 "현재 호출 불가"라고 적어야 하고,
+        이 시험이 그 기재의 근거다. 고쳐지면 여기가 빨개지고 문서도 같이 고친다.
+        """
+        headers = _bearer(self.user)
+        shapes = [
+            ("body", {"data": json.dumps({"data": "x"}), "path": "/api/v1/auth/delete-session"}),
+            ("query 문자열", {"data": None, "path": "/api/v1/auth/delete-session?data=x"}),
+            (
+                "query JSON",
+                {
+                    "data": None,
+                    "path": "/api/v1/auth/delete-session?data=%7B%22session_id%22%3A%22x%22%7D",
+                },
+            ),
+            ("query 평면", {"data": None, "path": "/api/v1/auth/delete-session?session_id=x"}),
+        ]
+        for label, shape in shapes:
+            with self.subTest(shape=label):
+                resp = self.client.post(
+                    shape["path"],
+                    data=shape["data"],
+                    content_type="application/json",
+                    **headers,
+                )
+                self.assertEqual(
+                    resp.status_code, 422,
+                    f"{label} 로 호출이 통했다 — 연동 문서를 고쳐라",
+                )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 4) 커버리지 등록부 — 못 고친 것을 숨기지 않는다
+# ═══════════════════════════════════════════════════════════════════════════
+
+class MiddlewareOrderTest(TestCase):
+    """배치가 곧 기능이다. 순서가 바뀌면 승격이 **조용히** 죽는다.
+
+    `UniversalCacheMiddleware` 는 캐시 적중 시 저장된 본문으로 `JsonResponse(...)` 를
+    새로 만든다 — **상태코드를 버리고 늘 200** 이다(`universal_optimization.py:872`).
+    승격 미들웨어가 그보다 안쪽에 있으면 적중한 요청에서는 호출조차 되지 않는다.
+    그리고 그때 시험은 전부 초록이다(캐시가 비어 있으므로) — 운영에서만 틀린다.
+    """
+
+    CONTRACT = "common.api_contract.ApiContractStatusMiddleware"
+    GZIP = "django.middleware.gzip.GZipMiddleware"
+    CACHE = "common.universal_optimization.UniversalCacheMiddleware"
+
+    def test_contract_middleware_is_installed(self):
+        from django.conf import settings
+
+        self.assertIn(self.CONTRACT, settings.MIDDLEWARE)
+
+    def test_contract_middleware_sits_between_gzip_and_cache(self):
+        from django.conf import settings
+
+        order = list(settings.MIDDLEWARE)
+        contract, gzip_at, cache_at = (order.index(m) for m in (self.CONTRACT, self.GZIP, self.CACHE))
+        self.assertGreater(
+            contract, gzip_at,
+            "GZip 보다 바깥이면 압축된 본문을 JSON 으로 읽을 수 없다",
+        )
+        self.assertLess(
+            contract, cache_at,
+            "UniversalCache 보다 안쪽이면 캐시 적중한 요청에서 승격이 통째로 사라진다",
+        )
+
+
+class ContractCoverageTest(TestCase):
+
+    def test_distribution_matches_evidence(self):
+        """증거 문서의 수와 실제 레지스트리의 수가 같은가.
+
+        라우트가 늘거나 `response=` 선언이 바뀌면 여기가 먼저 빨개진다 —
+        그때 `evidence/W0-18/backward_compat_impact.md` §1-1 도 같이 고친다.
+        """
+        actual = {k: len(v) for k, v in classify_permission_routes().items()}
+        self.assertEqual(actual, EXPECTED_DISTRIBUTION)
+
+    def test_swallowed_routes_have_not_grown(self):
+        """거부가 `{}` 로 소멸하는 라우트가 **늘지 않았는가.**
+
+        늘었다면 새 라우트가 단일 스키마를 선언하면서 같은 함정에 빠진 것이다.
+        줄었다면 P-W0-18-1 이 적용된 것이고 `KNOWN_GAPS` 를 낮춰야 한다.
+        """
+        swallowed = classify_permission_routes()[KIND_SWALLOWED]
+        self.assertLessEqual(
+            len(swallowed),
+            KNOWN_GAPS[KIND_SWALLOWED],
+            "권한거부가 조용히 사라지는 라우트가 늘었다:\n  " + "\n  ".join(swallowed),
+        )

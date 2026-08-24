@@ -978,7 +978,67 @@ tickets:
 - id: W0-18
   phase: R1
   title: "응답 후처리 계층 + 엔드포인트 문서 정정 (200-body-403 → HTTP 403)"
-  status: ready
+  status: verify-pending
+  updated_at: "2026-08-24T18:40:00+09:00"
+  evidence: docs/agent/evidence/W0-18/backward_compat_impact.md · frontend_success_sites.json · docs/contracts/api-error-and-auth.md
+  blocker: |
+    [2026-08-24 · **dod ①~④ 충족 · 계약 시험 19건 green. 다만 "200-body-403" 은 하나가 아니었다**]
+    전문: docs/agent/evidence/W0-18/backward_compat_impact.md
+
+    ★ 거부가 밖으로 나가는 길이 **셋**이고 셋 다 모양이 다르다 (@path_permission 296 라우트):
+      A  response= 없음         281  → 200 + {"success":false,…,"status_code":403}   승격 가능
+      B  response=List[…]         7  → pydantic 이 dict 를 거절 → **500**            예외에서 복원
+      C  response=<단일 스키마>    8  → **200 + `{}`. 거부 사실이 소멸한다**           복원 불가
+    C 가 최악이다 — A 는 success:false 를 싣고 B 는 요란하게 실패하는데 **C 는 조용히
+    성공처럼 보인다.** 클라이언트도 감사 로그도 거부를 알 수 없다. D-248 도 티켓도 예상 못 한 부류다.
+    8건 전부 §0.4 **밖**(report_template·checklist_setting)이라 고칠 수 있다 → **P-W0-18-1**.
+    숨기지 않고 KNOWN_GAPS 등록부 + 증가금지 시험으로 묶었다 (D-224 방식 · @expectedFailure 미사용).
+
+    넣은 것 — common/api_contract.py (미들웨어 1개 · 플래그 1개)
+      · 응답단계: 200 + 거부본문 → 실제 4xx 로 **상태줄만** 승격. 본문 무변경(하위호환).
+      · process_exception: pydantic ValidationError 의 `input` 에서 거부 dict 를 되찾아 4xx.
+        근거는 ninja/errors.py:_default_exception 이 `if not DEBUG: raise exc` 로 Django 에
+        도로 넘긴다는 것. **delivery 5건이 §0.4 안이라 이 경로가 유일하다.**
+      · 판정은 좁게 — success is False **이고** status_code 가 400~599 정수일 때만.
+        저장소가 본문에 status_code 를 넣는 23곳을 전수 확인했다(배송단계 0~5·도메인 문자열·200).
+      · API_CONTRACT_PROMOTE_ERROR_STATUS **기본 False** (D-212). 되돌림은 설정 한 줄.
+
+    ★ **배치가 곧 기능이었다.** 처음에 MIDDLEWARE 맨 끝에 뒀더니 승격이 되지 않았다.
+      UniversalCacheMiddleware 가 캐시 적중 시 저장된 본문으로 응답을 새로 만드는데
+      **상태코드를 버리고 늘 200** 이다(universal_optimization.py:872). 캐시 안쪽에 두면
+      적중한 요청에서 호출조차 되지 않는다 — 그리고 **그때 시험은 전부 초록이다**(시험DB 캐시는
+      늘 비어 있으므로). 운영에서만 틀렸을 것이다. GZip 안쪽·캐시 바깥으로 옮겼고
+      그 자리를 MiddlewareOrderTest 가 못박는다.
+      · 부수 확인(좋은 소식): 캐시 키에 g{group.id} 가 들어간다 → 캐시가 격리를 가로지르지 않는다.
+
+    ★ **P-W0-14-4 의 전제를 정정한다 → P-W0-18-3.** 남은 격리 실패 3건은 이 계층으로 닫히지 않는다.
+      같은 시험을 플래그 OFF/ON 으로 돌렸고 **한 건도 움직이지 않았다** (둘 다 4 failures/1 error).
+      셋 다 권한거부가 아니기 때문이다 — Order 500 은 DoesNotExist, Terminal 400 은 승격의 반대
+      방향(상태 4xx·본문 success:true), Terminal 200 은 **본문이 거짓**이라 어떤 응답 계층도
+      하지 않은 삭제를 판정할 근거를 만들 수 없다. P-W0-14-4 rationale 이 예고한 한계가
+      한 건이 아니라 세 건 모두였다.
+
+    프론트 영향 (dod ①) — **폭발반경 21곳**
+      API 호출 369 중 311(84%)이 이미 try/catch·.catch 로 보호된다. 보호 없음 × res.success
+      의존이 21곳(15파일)이고 그중 10파일이 delivery 화면이다 → 롤아웃 마지막 순서.
+      react-query 0건 · ErrorBoundary 전 앱 1개뿐이라 증상은 흰 화면이 아니라 **스피너 고착**이다.
+      HTTP 뜻의 status_code 를 읽는 곳은 122건 중 **1곳**뿐이고 그마저 이미 4xx 경로를 먼저 본다.
+
+    문서 전제 2건 정정 (dod ③) — docs/contracts/api-error-and-auth.md 신설
+      · /api/token/pair 는 "미작동"이 아니다. **200 으로 access·refresh 를 주고, 그 토큰이
+        다음 호출에서 401 이다** (user.token 미설정 · core/auth.py). 그리고 그 401 문구가
+        "Token expired" 라 **방금 받은 토큰이 만료됐다**는 불가능한 이야기를 한다.
+        연동 담당자가 시계·TTL 을 의심하며 시간을 버리는 지점 — 이것이 실제 위험이다.
+      · /api/v1/auth/delete-session 은 "쿼리 파라미터로 부르면 된다"가 아니라
+        **어떤 형태로도 호출할 수 없다** — body·?data=x·URL인코딩 JSON·평면 파라미터 4가지 전부 422.
+        ninja 가 쿼리 문자열에서 dict 를 만들지 못한다. 문서는 "현재 호출 불가"를 적어야 한다.
+
+    부수 발견 → P-W0-18-2 (W0-18 범위 밖 · 인증 표면)
+      @path_permission 은 붙었는데 auth= 가 없는 라우트 **24건**. token/pair 가 준
+      (CustomJWTAuth 가 401 로 거부하는) 토큰으로도 권한 판정까지 도달한다.
+
+    회귀: tests 전체 66건 — 신규 19건 green, 나머지는 착수 전과 **동일한 4 failures/1 error**.
+    verify-pending 사유: 운영 반영(플래그 ON)은 대표 승인 사항이고, 프론트 21곳 보강이 선행이다.
   priority: P1
   effort: M
   kind: new-s

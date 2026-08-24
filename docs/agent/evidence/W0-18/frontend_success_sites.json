@@ -1,0 +1,3330 @@
+{
+  "total_call_sites": 369,
+  "unguarded": 58,
+  "reads_success": 191,
+  "at_risk": 21,
+  "at_risk_files": 15,
+  "sites": [
+    {
+      "file": "frontend/src/features/checklistSetting/hooks/useChecklistSetting.ts",
+      "line": 51,
+      "snippet": "const response = await API.get(endpoint['checklistSetting'], { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/checklistSetting/hooks/useChecklistSetting.ts",
+      "line": 91,
+      "snippet": "const response = await API.post(endpoint['checklistSetting'], data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/checklistSetting/hooks/useChecklistSetting.ts",
+      "line": 114,
+      "snippet": "const response = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/checklistSetting/hooks/useChecklistSetting.ts",
+      "line": 137,
+      "snippet": "const response = await API.delete(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/checklistSetting/hooks/useChecklistSetting.ts",
+      "line": 158,
+      "snippet": "const response = await API.get(endpoint['settingCategory']);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/checklistSetting/pages/CheckListSetting.tsx",
+      "line": 228,
+      "snippet": "const { message, success } = await API.put(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/DeliveryDashboard/componentsV2/PopoverDevice.tsx",
+      "line": 103,
+      "snippet": "API.get(endpoint.checkDroneHealth(deviceId))",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/hooks/useDashboard.ts",
+      "line": 49,
+      "snippet": "const response = await API.get(fullUrl);",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/hooks/useDashboard.ts",
+      "line": 106,
+      "snippet": "const response = await API.post(fullUrl);",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/hooks/useDashboard.ts",
+      "line": 140,
+      "snippet": "const response = await API.get(fullUrl, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/hooks/useDashboard.ts",
+      "line": 162,
+      "snippet": "const response = await API.post(endpoint.saveWeatherData, data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/hooks/useDashboard.ts",
+      "line": 179,
+      "snippet": "const response = await API.get(endpoint.saveWeatherData);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/hooks/useDashboard.ts",
+      "line": 196,
+      "snippet": "const response = await API.get(endpoint.deviceLocation);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/SurveillanceDashboard/hooks/useSurveillanceDashboard.ts",
+      "line": 71,
+      "snippet": "const response = await API.get(endpoint.surveillanceDashboardDroneStatus);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/SurveillanceDashboard/hooks/useSurveillanceDashboard.ts",
+      "line": 98,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/SurveillanceDashboard/hooks/useSurveillanceDashboard.ts",
+      "line": 132,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/SurveillanceDashboard/hooks/useSurveillanceDashboard.ts",
+      "line": 174,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/SurveillanceDashboard/hooks/useSurveillanceDashboard.ts",
+      "line": 231,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/SurveillanceDashboard/hooks/useSurveillanceDashboard.ts",
+      "line": 258,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Dashboard/SurveillanceDashboard/hooks/useSurveillanceDashboard.ts",
+      "line": 286,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/DataAnalysis/hooks/useDataAnalysis.ts",
+      "line": 55,
+      "snippet": "const response = await API.get(endpoint.dataAnalysis, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/DataAnalysis/hooks/useDataAnalysis.ts",
+      "line": 77,
+      "snippet": "const response = await API.get(endpoint.detailDataAnalysis(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/detailOrder/formsOrder/TrackingOrder.tsx",
+      "line": 68,
+      "snippet": "await API.get(endpoint.routes + `/${dataDetail?.route}`);",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/listDeliveryInquiry/ListDeliveryInquiry.tsx",
+      "line": 323,
+      "snippet": "const response = await API.put(endpoint.toggleOrderWeather);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 46,
+      "snippet": "const response = await API.get(endpoint.terminalsForOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 94,
+      "snippet": "const response = await API.get(endpoint.itemType, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 130,
+      "snippet": "const response = await API.get(endpoint.deliveryOption);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 169,
+      "snippet": "const response = await API.get(endpoint.packageList, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 213,
+      "snippet": "const response = await API.post(endpoint.deliveryInquiryOrder, dataOrder);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 281,
+      "snippet": "const response = await API.get(endpoint.deliveryInquiryOrder, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 313,
+      "snippet": "const response = await API.get(endpoint.detailOrder(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 335,
+      "snippet": "const response = await API.get(endpoint.packageList, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 361,
+      "snippet": "const response = await API.post(endpoint.cancelOrder(id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 391,
+      "snippet": "const response = await API.get(endpoint.bank, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 428,
+      "snippet": "const response = await API.post(endpoint.refundCash(id), data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 451,
+      "snippet": "const response = await API.get(endpoint.getOrderStatus);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/deliveryInquiry/useAPI.ts",
+      "line": 472,
+      "snippet": "const response = await API.post(endpoint.changeOrderStatus(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 68,
+      "snippet": "const response = await API.get(endpoint.operationOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 126,
+      "snippet": "const response = await API.get(endpoint.transit, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 171,
+      "snippet": "const response = await API.get(endpoint.routeSelect, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 200,
+      "snippet": "const response = await API.get(endpoint.droneSelect(operation_id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 232,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 277,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 319,
+      "snippet": "const response = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 345,
+      "snippet": "const response = await API.post(endpoint.confirmPackage(package_id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 381,
+      "snippet": "const response = await API.post(endpoint.droneStatus, payload);",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 412,
+      "snippet": "const response = await API.post(endpoint.confirmDrone, jsonData);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 429,
+      "snippet": "const { success, data } = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 456,
+      "snippet": "const response = await API.post(endpoint.cancelAwaitingOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 489,
+      "snippet": "const response = await API.post(endpoint.cancelFlight, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 533,
+      "snippet": "const response = await API.post(endpoint.changeDrone, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 568,
+      "snippet": "const response = await API.post(endpoint.uploadRoute, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 605,
+      "snippet": "const response = await API.post(endpoint.approveFlight, payload);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/hooks/useOperationOrder.ts",
+      "line": 655,
+      "snippet": "const response = await API.post(endpoint.approveFlight, payload);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/CancelledTab/hooks/useCancelledOrders.ts",
+      "line": 78,
+      "snippet": "const response = await API.get(endpoint.cancelledOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/CompletedTab/components/CompletedOrderDetail.tsx",
+      "line": 109,
+      "snippet": "await API.get(endpoint.routes + `/${data?.route}`);",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/CompletedTab/components/CompletedOrderDetail.tsx",
+      "line": 230,
+      "snippet": "const { success, message } = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/CompletedTab/components/CompletedOrderDetail.tsx",
+      "line": 254,
+      "snippet": "const response = await API.get(endpoint.downloadReport(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/CompletedTab/hooks/useCompletedOrders.ts",
+      "line": 78,
+      "snippet": "const response = await API.get(endpoint.arrivedOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/CompletedTab/hooks/useCompletedOrders.ts",
+      "line": 130,
+      "snippet": "const response = await API.get(endpoint.completedOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/CompletedTab/index.tsx",
+      "line": 236,
+      "snippet": "const { success, message } = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/listDeliveryInquiry/ListDeliveryInquiry.tsx",
+      "line": 42,
+      "snippet": "const response = await API.get(endpoint.getDataForSelectInput, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/useAPI.ts",
+      "line": 30,
+      "snippet": "const response = await API.get(endpoint.terminalsForOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/useAPI.ts",
+      "line": 75,
+      "snippet": "const response = await API.get(endpoint.itemType, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/useAPI.ts",
+      "line": 111,
+      "snippet": "const response = await API.get(endpoint.deliveryOption);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/useAPI.ts",
+      "line": 150,
+      "snippet": "const response = await API.get(endpoint.packageList, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/useAPI.ts",
+      "line": 194,
+      "snippet": "const response = await API.post(endpoint.deliveryInquiryOrder, dataOrder);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/useAPI.ts",
+      "line": 264,
+      "snippet": "const response = await API.get(endpoint.deliveryInquiryOrder, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/useAPI.ts",
+      "line": 293,
+      "snippet": "const response = await API.get(endpoint.detailOrder(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/useAPI.ts",
+      "line": 315,
+      "snippet": "const response = await API.get(endpoint.packageList, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/useAPI.ts",
+      "line": 341,
+      "snippet": "const response = await API.post(endpoint.cancelOrder(id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/useAPI.ts",
+      "line": 371,
+      "snippet": "const response = await API.get(endpoint.bank, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/InquiryTab/useAPI.ts",
+      "line": 408,
+      "snippet": "const response = await API.post(endpoint.refundCash(id), data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ProcessingTab/components/ListDroneToChangeModal.tsx",
+      "line": 66,
+      "snippet": "const response = await API.post(endpoint.changeDrone, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ProcessingTab/components/ListDroneToChangeModal.tsx",
+      "line": 160,
+      "snippet": "const response = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ProcessingTab/PackageStatusTab/index.tsx",
+      "line": 227,
+      "snippet": "const { success, data } = await API.get(endpoint.detailOrder(orderId));",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ProcessingTab/PackageStatusTab/index.tsx",
+      "line": 241,
+      "snippet": "const { success, data } = await API.get(endpoint.detailOrder(orderId));",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ProcessingTab/ReadyToShipTab/hooks/useApiSubmission.ts",
+      "line": 207,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ProcessingTab/ReadyToShipTab/hooks/useReadyToShipTab.ts",
+      "line": 10,
+      "snippet": "const response = await API.get(endpoint.detailOrder(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ProcessingTab/ReadyToShipTab/hooks/useReadyToShipTab.ts",
+      "line": 32,
+      "snippet": "const response = await API.post(endpoint.cancelAwaitingOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ProcessingTab/SelectDroneTab/index.tsx",
+      "line": 223,
+      "snippet": "const { success, data } = await API.get(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ProcessingTab/SelectRouteTab/index.tsx",
+      "line": 247,
+      "snippet": "const { success, data } = await API.get(endpoint.detailOrder(orderId));",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ProcessingTab/SelectTransitTab/DroneMonitoring.tsx",
+      "line": 795,
+      "snippet": "await API.get(endpoint.routes + `/${selectedOrder?.route_id}`);",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ProcessingTab/SelectTransitTab/index.tsx",
+      "line": 79,
+      "snippet": "const { success, data } = await API.get(endpoint.detailOrder(orderId));",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ReturnedTab/components/ReturnedOrderDetail.tsx",
+      "line": 77,
+      "snippet": "const { success, message } = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ReturnedTab/components/ReturnedOrderDetail.tsx",
+      "line": 95,
+      "snippet": "const { success, message } = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ReturnedTab/components/ReturnedOrderDetail.tsx",
+      "line": 113,
+      "snippet": "const { success, message } = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ReturnedTab/index.tsx",
+      "line": 351,
+      "snippet": "const { success, message } = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ReturnedTab/index.tsx",
+      "line": 375,
+      "snippet": "const { success, message } = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/ReturnedTab/index.tsx",
+      "line": 399,
+      "snippet": "const { success, message } = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/components/VerificationOrderDetail.tsx",
+      "line": 142,
+      "snippet": "const { success, message } = await API.post(endpoint.verifyOders, formData);",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/components/VerificationOrderDetail.tsx",
+      "line": 159,
+      "snippet": "const { success, message } = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/components/VerificationOrderDetail.tsx",
+      "line": 186,
+      "snippet": "const { success, data: previewData } = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/components/VerificationOrderDetail.tsx",
+      "line": 194,
+      "snippet": "const { success: successPrint, data: printData } = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/components/VerificationOrderDetail.tsx",
+      "line": 268,
+      "snippet": "const { success, data: previewData } = await API.get(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 33,
+      "snippet": "const response = await API.get(endpoint.terminalsForOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 80,
+      "snippet": "const response = await API.get(endpoint.itemType, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 116,
+      "snippet": "const response = await API.get(endpoint.deliveryOption);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 155,
+      "snippet": "const response = await API.get(endpoint.packageList, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 199,
+      "snippet": "const response = await API.post(endpoint.deliveryInquiryOrder, dataOrder);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 267,
+      "snippet": "const response = await API.get(endpoint.deliveryInquiryOrder, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 298,
+      "snippet": "const response = await API.get(endpoint.detailOrder(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 320,
+      "snippet": "const response = await API.get(endpoint.packageList, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 346,
+      "snippet": "const response = await API.post(endpoint.cancelOrder(id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 376,
+      "snippet": "const response = await API.get(endpoint.bank, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 413,
+      "snippet": "const response = await API.post(endpoint.refundCash(id), data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 436,
+      "snippet": "const response = await API.get(endpoint.getOrderStatus);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useAPI.ts",
+      "line": 457,
+      "snippet": "const response = await API.post(endpoint.changeOrderStatus(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useUnverifiedOrders.ts",
+      "line": 78,
+      "snippet": "const response = await API.get(endpoint.unVerifiedOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/hooks/useUnverifiedOrders.ts",
+      "line": 130,
+      "snippet": "const response = await API.get(endpoint.verifiedOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/MainTabs/VerificationTab/index.tsx",
+      "line": 236,
+      "snippet": "const { success, message } = await API.post(endpoint.verifyOders, formData);",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryOperation/OrderDetail.tsx",
+      "line": 62,
+      "snippet": "const { data } = await API.get(endpoint.detailOrder(orderId));",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryReport/components/CompletedOrderDetail.tsx",
+      "line": 74,
+      "snippet": "await API.get(endpoint.routes + `/${data?.route}`);",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryReport/components/CompletedOrderDetail.tsx",
+      "line": 136,
+      "snippet": "const { success, message } = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryReport/components/CompletedOrderDetail.tsx",
+      "line": 160,
+      "snippet": "const response = await API.get(endpoint.downloadReport(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryReport/components/OrderDetail.tsx",
+      "line": 41,
+      "snippet": "const { data } = await API.get(endpoint.detailOrder(orderId));",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryReport/hooks/useCompletedOrders.ts",
+      "line": 82,
+      "snippet": "const response = await API.get(endpoint.arrivedOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryReport/hooks/useCompletedOrders.ts",
+      "line": 134,
+      "snippet": "const response = await API.get(endpoint.completedOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryReport/hooks/useCompletedOrders.ts",
+      "line": 186,
+      "snippet": "const response = await API.get(endpoint.operationOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryReport/hooks/useCompletedOrders.ts",
+      "line": 237,
+      "snippet": "const response = await API.get(endpoint.deliveryReport, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryReport/index.tsx",
+      "line": 170,
+      "snippet": "const response = await API.get(endpoint.downloadReport(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/delivery/DeliveryReport/index.tsx",
+      "line": 263,
+      "snippet": "const { success, message } = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/DeliveryHubs/hooks/useDeliveryHubs.ts",
+      "line": 47,
+      "snippet": "const response = await API.get(endpoint.hubs, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/DeliveryHubs/hooks/useDeliveryHubs.ts",
+      "line": 66,
+      "snippet": "const response = await API.get(endpoint.hubs + `/${id}`);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/DeliveryHubs/hooks/useDeliveryHubs.ts",
+      "line": 91,
+      "snippet": "const response = await API.post(endpoint.hubs, data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/DeliveryHubs/hooks/useDeliveryHubs.ts",
+      "line": 116,
+      "snippet": "const response = await API.put(endpoint.hubs + `/${id}`, data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/DeliveryHubs/hooks/useDeliveryHubs.ts",
+      "line": 137,
+      "snippet": "const response = await API.put(endpoint.changeStatusHubs(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/DeliveryHubs/hooks/useDeliveryHubs.ts",
+      "line": 161,
+      "snippet": "const response = await API.put(endpoint.activeDeliveryHub(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/DeliveryHubs/hooks/useDeliveryHubs.ts",
+      "line": 187,
+      "snippet": "const response = await API.put(endpoint.deactiveDeliveryHub(ids), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 43,
+      "snippet": "const response = await API.delete(endpoint.deleteDevices(ids as string));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 103,
+      "snippet": "const response = await API.get(endpoint.deviceManagement, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 157,
+      "snippet": "const response = await API.put(endpoint.activeDeactiveDevice(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 187,
+      "snippet": "const response = await API.get(endpoint.detailDevice(id, edit));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 311,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 374,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 396,
+      "snippet": "const response = await API.post(endpoint.changeStatusDrone(id), { id });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 425,
+      "snippet": "const response = await API.get(endpoint.getDrones, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 517,
+      "snippet": "const response = await API.get(endpoint.getDrones, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 548,
+      "snippet": "const response = await API.get(endpoint.detailOrder(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 577,
+      "snippet": "const response = await API.get(endpoint.library, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 613,
+      "snippet": "const response = await API.get(endpoint.libraryDetail(deviceId), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 645,
+      "snippet": "const response = await API.get(endpoint.hubs, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 680,
+      "snippet": "const response = await API.put(endpoint.activeDevice(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPI.ts",
+      "line": 705,
+      "snippet": "const response = await API.put(endpoint.deactiveDevice(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/device/useAPI/useAPIInfoDevice.ts",
+      "line": 14,
+      "snippet": "const response = await API.get(endpoint.portalData, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/dockingStation/hooks/useDockingStation.ts",
+      "line": 38,
+      "snippet": "const { success, message, data, total_items, total_pages } = await API.get(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/dockingStation/hooks/useDockingStation.ts",
+      "line": 58,
+      "snippet": "const { success, message, data } = await API.get(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/dockingStation/hooks/useDockingStation.ts",
+      "line": 106,
+      "snippet": "const res = await API.post(endpoint.dockingStation, formData, config);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/dockingStation/hooks/useDockingStation.ts",
+      "line": 141,
+      "snippet": "const res = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/dockingStation/hooks/useDockingStation.ts",
+      "line": 169,
+      "snippet": "const { success, message } = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/dockingStation/hooks/useDockingStation.ts",
+      "line": 196,
+      "snippet": "const response = await API.put(endpoint.activeDockingStation(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/dockingStation/hooks/useDockingStation.ts",
+      "line": 220,
+      "snippet": "const response = await API.put(endpoint.deactiveDockingStation(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/AddNewOrder.tsx",
+      "line": 322,
+      "snippet": "const response = await API.post(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 34,
+      "snippet": "const response = await API.get(endpoint.etriOrderTerminal, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 79,
+      "snippet": "const response = await API.get(endpoint.terminalsForOrder, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 124,
+      "snippet": "const response = await API.get(endpoint.itemType, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 160,
+      "snippet": "const response = await API.get(endpoint.deliveryOption);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 199,
+      "snippet": "const response = await API.get(endpoint.packageList, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 243,
+      "snippet": "const response = await API.post(endpoint.deliveryInquiryOrder, dataOrder);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 315,
+      "snippet": "const response = await API.get(endpoint.etriOrder, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 342,
+      "snippet": "const response = await API.get(endpoint.detailEtriOrder(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 394,
+      "snippet": "const response = await API.get(endpoint.packageList, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 420,
+      "snippet": "const response = await API.post(endpoint.cancelOrder(id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 450,
+      "snippet": "const response = await API.get(endpoint.bank, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 487,
+      "snippet": "const response = await API.post(endpoint.refundCash(id), data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/entriOder/hooks/useAPI.ts",
+      "line": 510,
+      "snippet": "const response = await API.get(endpoint.getOrderStatus);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/FlightLogAnalysis/hooks/useFlightLogAnalysis.ts",
+      "line": 48,
+      "snippet": "const response = await API.get(endpoint.flightLogAnalysis, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/FlightLogAnalysis/hooks/useFlightLogAnalysis.ts",
+      "line": 83,
+      "snippet": "const response = await API.get(endpoint.detailFlightLogAnalysis(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/FlightLogAnalysis/hooks/useFlightLogAnalysis.ts",
+      "line": 100,
+      "snippet": "const response = await API.get(endpoint.downloadFlightLogAnalysis(id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/FlightLogAnalysis/hooks/useFlightLogAnalysis.ts",
+      "line": 122,
+      "snippet": "const response = await API.delete(endpoint.deleteFlightLogAnalysis(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/hooks/useComments.ts",
+      "line": 42,
+      "snippet": "const response = await API.get(endpoint.comments, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/hooks/useComments.ts",
+      "line": 125,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/hooks/useComments.ts",
+      "line": 151,
+      "snippet": "const response = await API.delete(endpoint.comments, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/hooks/useHandover.ts",
+      "line": 103,
+      "snippet": "const response = await API.get(endpoint.checkTaskSocket(taskId));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/hooks/useHandover.ts",
+      "line": 168,
+      "snippet": "const response = await API.get(endpoint.noticeManagement, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/hooks/useHandover.ts",
+      "line": 194,
+      "snippet": "const response = await API.post(endpoint.noticeProcess, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/hooks/useHandover.ts",
+      "line": 220,
+      "snippet": "const response = await API.delete(endpoint.noticeManagement, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/hooks/useHandover.ts",
+      "line": 245,
+      "snippet": "const response = await API.post(endpoint.noticeRestore, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/hooks/useHandover.ts",
+      "line": 285,
+      "snippet": "const response = await API.post(endpoint.downloadHandover, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/hooks/useHandover.ts",
+      "line": 377,
+      "snippet": "const response = await API.post(endpoint.downloadNotice, body);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/hooks/useHandover.ts",
+      "line": 475,
+      "snippet": "const response = await API.post(endpoint.downloadCompletedNotice, body);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/CompletedNotice/hooks/useCompletedNotice.ts",
+      "line": 60,
+      "snippet": "const response = await API.get(endpoint.noticeManagement, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/HandoverManagement/hooks/useHandoverManagement.ts",
+      "line": 83,
+      "snippet": "const response = await API.get(endpoint.handoverManagement, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/HandoverManagement/hooks/useHandoverManagement.ts",
+      "line": 118,
+      "snippet": "const response = await API.get(endpoint.handoverShift);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/HandoverManagement/hooks/useHandoverManagement.ts",
+      "line": 137,
+      "snippet": "const response = await API.post(endpoint.handoverManagement, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/HandoverManagement/hooks/useHandoverManagement.ts",
+      "line": 163,
+      "snippet": "const response = await API.delete(endpoint.handoverManagement, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/HandoverManagement/hooks/useHandoverManagement.ts",
+      "line": 189,
+      "snippet": "const response = await API.get(endpoint.getListNoticeHandover, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/HandoverManagement/hooks/useHandoverManagement.ts",
+      "line": 253,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/HandoverManagement/hooks/useHandoverManagement.ts",
+      "line": 291,
+      "snippet": "const response = await API.delete(endpoint.createNoticeHandover, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/HandoverManagement/hooks/useHandoverManagement.ts",
+      "line": 316,
+      "snippet": "const response = await API.post(endpoint.handoverDutyDetail, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/NoticeManagement/hooks/useNoticeManagement.ts",
+      "line": 61,
+      "snippet": "const response = await API.get(endpoint.noticeManagement, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/NoticeManagement/hooks/useNoticeManagement.ts",
+      "line": 82,
+      "snippet": "const response = await API.get(endpoint.detailNoticeManagement, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/NoticeManagement/hooks/useNoticeManagement.ts",
+      "line": 109,
+      "snippet": "const response = await API.post(endpoint.noticeProcess, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/NoticeManagement/hooks/useNoticeManagement.ts",
+      "line": 135,
+      "snippet": "const response = await API.post(endpoint.noticeProcess, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/Handover/pages/tabs/NoticeManagement/hooks/useNoticeManagement.ts",
+      "line": 181,
+      "snippet": "const response = await API.post(endpoint.noticeManagement, formData);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/infrastructure/components/DetailInfrastructure.tsx",
+      "line": 38,
+      "snippet": "const response = await API.get(endpoint.getDataForSelectInput, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/infrastructure/hooks/useInfrastructure.ts",
+      "line": 38,
+      "snippet": "const { success, message, data, total_items, total_pages } = await API.get(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/infrastructure/hooks/useInfrastructure.ts",
+      "line": 58,
+      "snippet": "const { success, message, data } = await API.get(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/infrastructure/hooks/useInfrastructure.ts",
+      "line": 110,
+      "snippet": "const res = await API.post(endpoint.infrastructure, formData, config);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/infrastructure/hooks/useInfrastructure.ts",
+      "line": 144,
+      "snippet": "const { success, message } = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/infrastructure/hooks/useInfrastructure.ts",
+      "line": 177,
+      "snippet": "const { success, message } = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/infrastructure/hooks/useInfrastructure.ts",
+      "line": 204,
+      "snippet": "const response = await API.put(endpoint.activeInfrastructure(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/infrastructure/hooks/useInfrastructure.ts",
+      "line": 228,
+      "snippet": "const response = await API.put(endpoint.deactiveInfrastructure(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/LibraryDrone/hooks/useLibrary.ts",
+      "line": 58,
+      "snippet": "const response = await API.get(endpoint.library, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/LibraryDrone/hooks/useLibrary.ts",
+      "line": 95,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/LibraryDrone/hooks/useLibrary.ts",
+      "line": 186,
+      "snippet": "const response = await API.post(endpoint.library, formData, config);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/LibraryDrone/hooks/useLibrary.ts",
+      "line": 205,
+      "snippet": "const response = await API.delete(endpoint.deleteLibrary(ids), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/LibraryDrone/hooks/useLibrary.ts",
+      "line": 276,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/mappingStatus/hooks/useMappingStatus.ts",
+      "line": 55,
+      "snippet": "const response = await API.get(endpoint['mappingStatus'], { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/mappingStatus/hooks/useMappingStatus.ts",
+      "line": 85,
+      "snippet": "const response = await API.post(endpoint['mappingStatus'], data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/mappingStatus/hooks/useMappingStatus.ts",
+      "line": 108,
+      "snippet": "const response = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/mappingStatus/hooks/useMappingStatus.ts",
+      "line": 131,
+      "snippet": "const response = await API.delete(endpoint['deleteMappingStatus'](ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/mappingStatus/hooks/useMappingStatus.ts",
+      "line": 148,
+      "snippet": "const response = await API.get(endpoint['orderStatus'], {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/mappingStatus/hooks/useMappingStatus.ts",
+      "line": 168,
+      "snippet": "const response = await API.get(endpoint.getDataForSelectInput, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MediaData/components/UpdateExternalStreamModal.tsx",
+      "line": 323,
+      "snippet": "const response = await API.put(endpoint.updateExternalStream, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MediaData/hooks/useMediaData.ts",
+      "line": 153,
+      "snippet": "const response = await API.get(endpoint.mediaData, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MediaData/hooks/useMediaData.ts",
+      "line": 196,
+      "snippet": "const response = await API.post(endpoint.previewFile, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MediaData/hooks/useMediaData.ts",
+      "line": 285,
+      "snippet": "const response = await API.get(endpoint.detailDataAnalysis(analysisId));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MediaData/hooks/useMediaData.ts",
+      "line": 345,
+      "snippet": "const response = await API.post(endpoint.downloadMediaDataFile, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MediaData/hooks/useMediaData.ts",
+      "line": 370,
+      "snippet": "const response = await API.post(endpoint.detectFileType, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MediaData/hooks/useMediaData.ts",
+      "line": 392,
+      "snippet": "const response = await API.get(endpoint.aiModels);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/AddExternalStreamModal.tsx",
+      "line": 276,
+      "snippet": "const response = await API.post(endpoint.createExternalStream, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/DroneCameraView/components/AIActionBtn.tsx",
+      "line": 42,
+      "snippet": "const response = await API.get(endpoint.aiModels);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/DroneCameraView/components/AIActionBtn.tsx",
+      "line": 68,
+      "snippet": "const response = await API.post(endpoint.streamingList, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/DroneCameraView/components/AIModal.tsx",
+      "line": 103,
+      "snippet": "const response = await API.get(endpoint.aiModels);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/DroneCameraView/components/AIModal.tsx",
+      "line": 183,
+      "snippet": "const response = await API.post(endpoint.streamingList, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/DroneCameraView/components/CaptureActionBtn.tsx",
+      "line": 44,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/DroneCameraView/components/StreamSettingModal.tsx",
+      "line": 91,
+      "snippet": "const response = await API.get(endpoint.aiModels);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/DroneCameraView/hooks/useRecording.ts",
+      "line": 26,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/DroneCameraView/hooks/useRecording.ts",
+      "line": 52,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/DroneCameraView/hooks/useRecording.ts",
+      "line": 82,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/DroneCameraView/hooks/useRecording.ts",
+      "line": 99,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/components/DroneCameraView/index.tsx",
+      "line": 1189,
+      "snippet": "const response = await API.delete(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/MultiStreamMonitor/index.tsx",
+      "line": 237,
+      "snippet": "const response = await API.get(endpoint.streamingList);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalData/useAPI/useAPI.ts",
+      "line": 81,
+      "snippet": "const response = await API.get(endpoint.operationalData, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalData/useAPI/useAPI.ts",
+      "line": 127,
+      "snippet": "const response = await API.post(endpoint[type](id), formData);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalData/useAPI/useAPI.ts",
+      "line": 166,
+      "snippet": "const response = await API.get(endpoint[type](id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalData/useAPI/useAPI.ts",
+      "line": 206,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalData/useAPI/useAPI.ts",
+      "line": 235,
+      "snippet": "const response = await API.get(endpoint.detailOperationalData(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalNotice/hooks/useOperationalNotice.ts",
+      "line": 17,
+      "snippet": "const response = await API.get(endpoint.getFieldsTemplate, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalNotice/hooks/useOperationalNotice.ts",
+      "line": 62,
+      "snippet": "const response = await API.get(endpoint['operationalNotice'], { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalNotice/hooks/useOperationalNotice.ts",
+      "line": 101,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalNotice/hooks/useOperationalNotice.ts",
+      "line": 122,
+      "snippet": "const response = await API.post(endpoint['operationalNotice'], data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalNotice/hooks/useOperationalNotice.ts",
+      "line": 154,
+      "snippet": "const response = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalNotice/hooks/useOperationalNotice.ts",
+      "line": 186,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationalNotice/hooks/useOperationalNotice.ts",
+      "line": 211,
+      "snippet": "const response = await API.delete(endpoint.deleteOperationalNotice(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationSetting/EditOperationSetting/EditOperationSetting.tsx",
+      "line": 486,
+      "snippet": "const response = await API.get(endpoint.getSupportedApis, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationSetting/EditOperationSetting/EditOperationSetting.tsx",
+      "line": 545,
+      "snippet": "const response = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/operationSetting/hooks/useSettings.tsx",
+      "line": 55,
+      "snippet": "const response = await API.get(endpoint.operationSettings, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/orderStatus/hooks/useOrderStatus.ts",
+      "line": 50,
+      "snippet": "const response = await API.get(endpoint['orderStatus'], { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/orderStatus/hooks/useOrderStatus.ts",
+      "line": 81,
+      "snippet": "const response = await API.post(endpoint['orderStatus'], data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/orderStatus/hooks/useOrderStatus.ts",
+      "line": 101,
+      "snippet": "const response = await API.put(endpoint['orderStatus'] + `/${id}`, data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/orderStatus/hooks/useOrderStatus.ts",
+      "line": 121,
+      "snippet": "const response = await API.delete(endpoint['deleteOrderStatus'](ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/otherEquipments/hooks/useEquipment.ts",
+      "line": 37,
+      "snippet": "const { success, message, data, total_items, total_pages } = await API.get(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/otherEquipments/hooks/useEquipment.ts",
+      "line": 57,
+      "snippet": "const { success, message, data } = await API.get(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/otherEquipments/hooks/useEquipment.ts",
+      "line": 115,
+      "snippet": "const { success, message } = await API.post('api/devices/cameras', data);",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/otherEquipments/hooks/useEquipment.ts",
+      "line": 129,
+      "snippet": "const { success, message } = await API.put(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/otherEquipments/hooks/useEquipment.ts",
+      "line": 146,
+      "snippet": "const { success, message } = await API.put(",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/otherEquipments/hooks/useEquipment.ts",
+      "line": 169,
+      "snippet": "const response = await API.put(endpoint.activeEquipment(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/otherEquipments/hooks/useEquipment.ts",
+      "line": 193,
+      "snippet": "const response = await API.put(endpoint.deactiveEquipment(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/packaging/useAPI/useAPI.ts",
+      "line": 62,
+      "snippet": "const response = await API.get(endpoint.packagingSpecifications, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/packaging/useAPI/useAPI.ts",
+      "line": 104,
+      "snippet": "const response = await API.put(endpoint.activeDeactivePackaging(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/packaging/useAPI/useAPI.ts",
+      "line": 134,
+      "snippet": "const response = await API.get(endpoint.detailPackaging(id, edit));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/packaging/useAPI/useAPI.ts",
+      "line": 165,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/packaging/useAPI/useAPI.ts",
+      "line": 193,
+      "snippet": "const response = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/packaging/useAPI/useAPI.ts",
+      "line": 221,
+      "snippet": "const response = await API.put(endpoint.activePackaging(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/packaging/useAPI/useAPI.ts",
+      "line": 245,
+      "snippet": "const response = await API.put(endpoint.deactivePackaging(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/partnerManagement/useAPI/useAPI.ts",
+      "line": 62,
+      "snippet": "const response = await API.get(endpoint.partner, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/partnerManagement/useAPI/useAPI.ts",
+      "line": 121,
+      "snippet": "const response = await API.delete(endpoint.deletePartner(ids as string));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/partnerManagement/useAPI/useAPI.ts",
+      "line": 145,
+      "snippet": "const response = await API.get(endpoint.detailPackaging(id, edit));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/partnerManagement/useAPI/useAPI.ts",
+      "line": 169,
+      "snippet": "const response = await API.get(endpoint.copyTokenPartner(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/partnerManagement/useAPI/useAPI.ts",
+      "line": 196,
+      "snippet": "const response = await API.post(endpoint.partner, data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/partnerManagement/useAPI/useAPI.ts",
+      "line": 214,
+      "snippet": "const response = await API.put(endpoint.updatePartner(id), data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/partnerManagement/useAPI/useAPI.ts",
+      "line": 239,
+      "snippet": "const response = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/partnerManagement/useAPI/useAPI.ts",
+      "line": 267,
+      "snippet": "const response = await API.put(endpoint.activePackaging(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/partnerManagement/useAPI/useAPI.ts",
+      "line": 291,
+      "snippet": "const response = await API.put(endpoint.deactivePackaging(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/partnerManagement/useAPI/useAPI.ts",
+      "line": 315,
+      "snippet": "const response = await API.post(endpoint.refreshTokenPartner(id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/reportTemplate/hooks/useReportTemplate.ts",
+      "line": 17,
+      "snippet": "const response = await API.get(endpoint.getFieldsTemplate, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/reportTemplate/hooks/useReportTemplate.ts",
+      "line": 62,
+      "snippet": "const response = await API.get(endpoint['reportTemplate'], { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/reportTemplate/hooks/useReportTemplate.ts",
+      "line": 89,
+      "snippet": "const response = await API.get(endpoint['reportTemplate'] + `${id}`);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/reportTemplate/hooks/useReportTemplate.ts",
+      "line": 108,
+      "snippet": "const response = await API.post(endpoint['reportTemplate'], data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/reportTemplate/hooks/useReportTemplate.ts",
+      "line": 140,
+      "snippet": "const response = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/reportTemplate/hooks/useReportTemplate.ts",
+      "line": 172,
+      "snippet": "const response = await API.delete(endpoint['deleteReportTemplate'](ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useAPI.ts",
+      "line": 97,
+      "snippet": "const response = await API.get(endpoint.routes, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useAPI.ts",
+      "line": 117,
+      "snippet": "const response = await API.post(endpoint.routes, data, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useAPI.ts",
+      "line": 140,
+      "snippet": "const response = await API.get(endpoint.routes + `/${id}`);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useAPI.ts",
+      "line": 160,
+      "snippet": "const response = await API.put(endpoint.routes + `/${id}`, data, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useAPI.ts",
+      "line": 183,
+      "snippet": "const response = await API.put(endpoint.changeStatusRoute(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useAPI.ts",
+      "line": 208,
+      "snippet": "const response = await API.put(endpoint.activeRoute(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useAPI.ts",
+      "line": 232,
+      "snippet": "const response = await API.put(endpoint.deactiveRoute(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useRoute.ts",
+      "line": 30,
+      "snippet": "const response = await API.get(endpoint.commands, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useRoute.ts",
+      "line": 68,
+      "snippet": "const response = await API.get(endpoint.commands, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useRoute.ts",
+      "line": 105,
+      "snippet": "const response = await API.get(endpoint.frames, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useRoute.ts",
+      "line": 146,
+      "snippet": "const response = await API.get(endpoint.commands, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useRoute.ts",
+      "line": 178,
+      "snippet": "const response = await API.get(endpoint.frames, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useRoute.ts",
+      "line": 222,
+      "snippet": "const response = await API.post(endpoint.importRoute, formData, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useRoute.ts",
+      "line": 287,
+      "snippet": "const response = await API.post(endpoint.importRoutes, formData, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useRoute.ts",
+      "line": 367,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/routes/useAPI/useRoute.ts",
+      "line": 430,
+      "snippet": "const response = await API.delete(endpoint.deleteRoute(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/setupData/DemoPage.tsx",
+      "line": 25,
+      "snippet": "const response = await API.get(endpoint.getMenuHtml, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/setupData/DemoUrlPage.tsx",
+      "line": 79,
+      "snippet": "const response = await API.get(endpoint.getMenuUrl, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/setupData/DJIPage.tsx",
+      "line": 19,
+      "snippet": "const response = await API.get(endpoint.getMenuUrl, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 104,
+      "snippet": "const response = await API.get(endpoint.surveyMission, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 154,
+      "snippet": "const response = await API.get(endpoint.surveyOperator, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 197,
+      "snippet": "const response = await API.get(endpoint.listAvalableDrones, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": true
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 312,
+      "snippet": "const response = await API.get(endpoint.changeDroneOptions(profile_id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 355,
+      "snippet": "const response = await API.post(endpoint.changeDroneProfile(profile_id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 395,
+      "snippet": "const response = await API.post(endpoint.addSurveillanceProfile, data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 425,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 644,
+      "snippet": "const response = await API.get(endpoint.listSurveillanceProfile, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 680,
+      "snippet": "const response = await API.get(endpoint.listOptionsProfile, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 708,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 731,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 754,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 778,
+      "snippet": "const response = await API.get(endpoint.profilesTimeline, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 800,
+      "snippet": "const response = await API.get(endpoint.droneStatus, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 823,
+      "snippet": "const response = await API.post(endpoint.stopRepeatProfile(profile_id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 848,
+      "snippet": "const response = await API.post(endpoint.cancelProfile(profile_id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 869,
+      "snippet": "const response = await API.get(endpoint.downloadLogProfile(profile_id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 895,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 934,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/hooks/useSurveillanceProfile.ts",
+      "line": 992,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/MainTabs/CancelledTab/hooks/useCancelSurveillanceProfiles.ts",
+      "line": 57,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/surveillanceProfile/MainTabs/CompletedTab/hooks/useCompletedSurveillanceProfiles.ts",
+      "line": 58,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 42,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 88,
+      "snippet": "const response = await API.get(endpoint['surveyMission'], { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 127,
+      "snippet": "const response = await API.get(endpoint['detailSurveyMission'](id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 147,
+      "snippet": "const response = await API.post(endpoint['surveyMission'], data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 173,
+      "snippet": "const response = await API.put(endpoint['detailSurveyMission'](id), data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 211,
+      "snippet": "const response = await API.post(endpoint['reviewSurveyMission'], data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 229,
+      "snippet": "const response = await API.post(endpoint['approveSurveyMission'](id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 258,
+      "snippet": "const response = await API.post(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 280,
+      "snippet": "const response = await API.post(endpoint['activateSurveyMission'](ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 300,
+      "snippet": "const response = await API.post(endpoint['deactivateSurveyMission'](ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 344,
+      "snippet": "const response = await API.get(endpoint.routes, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 444,
+      "snippet": "const response = await API.get(endpoint.checkTaskSocket(taskId));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/SurveyMission/hooks/useSurveyMission.ts",
+      "line": 515,
+      "snippet": "const response = await API.post(endpoint['importSurveyMission'], data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/terminals/useAPI/useAPI.ts",
+      "line": 68,
+      "snippet": "const response = await API.get(endpoint.terminals, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/terminals/useAPI/useAPI.ts",
+      "line": 115,
+      "snippet": "const response = await API.post(endpoint.terminals, formData, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/terminals/useAPI/useAPI.ts",
+      "line": 137,
+      "snippet": "const response = await API.get(endpoint.terminals + `/${id}`);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/terminals/useAPI/useAPI.ts",
+      "line": 165,
+      "snippet": "const response = await API.get(endpoint.terminalsOperatingTime(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/terminals/useAPI/useAPI.ts",
+      "line": 214,
+      "snippet": "const response = await API.put(endpoint.terminals + `/${id}`, formData, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/terminals/useAPI/useAPI.ts",
+      "line": 236,
+      "snippet": "const response = await API.put(endpoint.changeStatusTerminal(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/terminals/useAPI/useAPI.ts",
+      "line": 293,
+      "snippet": "const response = await API.get(endpoint.dockingStation, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/terminals/useAPI/useAPI.ts",
+      "line": 316,
+      "snippet": "const response = await API.get(endpoint.groups, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/terminals/useAPI/useAPI.ts",
+      "line": 349,
+      "snippet": "const response = await API.put(endpoint.activeTerminal(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/terminals/useAPI/useAPI.ts",
+      "line": 373,
+      "snippet": "const response = await API.put(endpoint.deactiveTerminal(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/trackOrder/useAPI/useAPI.ts",
+      "line": 77,
+      "snippet": "const response = await API.get(endpoint.deviceManagement, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/trackOrder/useAPI/useAPI.ts",
+      "line": 116,
+      "snippet": "const response = await API.put(endpoint.activeDeactiveDevice(ids));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/trackOrder/useAPI/useAPI.ts",
+      "line": 145,
+      "snippet": "const response = await API.get(endpoint.detailEtriOrder(id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/trackOrder/useAPI/useAPI.ts",
+      "line": 174,
+      "snippet": "const response = await API.get(endpoint.library, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/trackOrder/useAPI/useAPI.ts",
+      "line": 209,
+      "snippet": "const response = await API.get(endpoint.libraryDetail(deviceId), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/trackOrder/useAPI/useAPI.ts",
+      "line": 289,
+      "snippet": "const response = await API.get(endpoint.etriTracking, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/trackOrder/useAPI/useAPI.ts",
+      "line": 325,
+      "snippet": "const response = await API.post(endpoint.sendToEtri(operation_id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/trackOrder/useAPI/useAPI.ts",
+      "line": 349,
+      "snippet": "const response = await API.post(endpoint.cancelOrder(id), {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/useCommonAPI/useAPI.ts",
+      "line": 104,
+      "snippet": "const response = await API.get(endpoint.getDataForSelectInput, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/useCommonAPI/useAPI.ts",
+      "line": 137,
+      "snippet": "const response = await API.get(endpoint.getDataForSelectInput, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/useCommonAPI/useAPI.ts",
+      "line": 197,
+      "snippet": "const response = await API.get(endpoint.getDataForSelectInput, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/useCommonAPI/useAPI.ts",
+      "line": 500,
+      "snippet": "const response = await API.get(endpoint.functionTypes, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/useCommonAPI/useAPI.ts",
+      "line": 546,
+      "snippet": "const response = await API.get(endpoint.groups, {",
+      "guarded": false,
+      "guard": null,
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/useCommonAPI/useAPI.ts",
+      "line": 575,
+      "snippet": "const response = await API.get(endpoint.dayOfWeek);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/waybillTemplate/hooks/useWaybill.ts",
+      "line": 47,
+      "snippet": "const response = await API.get(endpoint.waybillTemplate, { params });",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/waybillTemplate/hooks/useWaybill.ts",
+      "line": 74,
+      "snippet": "const response = await API.get(endpoint.getFieldsTemplate, {",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/waybillTemplate/hooks/useWaybill.ts",
+      "line": 85,
+      "snippet": "const response = await API.get(endpoint.actionWaybillTemplate + '/' + id);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/waybillTemplate/hooks/useWaybill.ts",
+      "line": 114,
+      "snippet": "const response = await API.post(endpoint.actionWaybillTemplate, data);",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/waybillTemplate/hooks/useWaybill.ts",
+      "line": 139,
+      "snippet": "const response = await API.put(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/features/waybillTemplate/hooks/useWaybill.ts",
+      "line": 164,
+      "snippet": "const response = await API.delete(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": true,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/hooks/useFileManagement.ts",
+      "line": 19,
+      "snippet": "const response = await API.get(endpoint.checkTaskSocket(task_id));",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    },
+    {
+      "file": "frontend/src/hooks/useFileManagement.ts",
+      "line": 37,
+      "snippet": "const response = await API.get(",
+      "guarded": true,
+      "guard": "try",
+      "reads_success": false,
+      "reads_status_code": false
+    }
+  ]
+}

@@ -126,6 +126,13 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "proxy.middleware.RemoveXFrameOptionsMiddleware",  # Remove X-Frame-Options for proxy endpoints
     "core.middleware.refresh_token.TokenRefreshMiddleware",
+    # ★ 반드시 UniversalCacheMiddleware **바로 위** (W0-18 · D-248). 두 조건이 있다:
+    #   ① 캐시보다 바깥 — UniversalCacheMiddleware 는 캐시 적중 시 저장된 본문을
+    #      **항상 JsonResponse(200)** 으로 다시 만든다(universal_optimization.py:872).
+    #      캐시 안쪽에 두면 적중한 요청에서 승격이 통째로 사라진다.
+    #   ② GZipMiddleware 보다 안쪽 — 압축되기 전 본문을 봐야 JSON 을 읽을 수 있다.
+    #   API_CONTRACT_PROMOTE_ERROR_STATUS 가 False 면 아무것도 바꾸지 않는다.
+    "common.api_contract.ApiContractStatusMiddleware",
     "common.universal_optimization.UniversalCacheMiddleware",  # 🌍 UNIVERSAL: System-wide optimization cho ALL models & views
     "ninja.compatibility.files.fix_request_files_middleware",
     "core.middleware.dependency_check.DependencyCheckMiddleware",
@@ -135,6 +142,20 @@ MIDDLEWARE = [
 
     # 'core.middleware.remove_group_field.GroupFeatureMiddleware',
 ]
+
+# ── 응답 계약 (W0-18 · D-248 · D-212) ────────────────────────────────────────
+# 권한거부를 HTTP 200 + 본문 403 이 아니라 **실제 HTTP 403** 으로 내보낼 것인가.
+#
+#   False (기본)  기존 동작 그대로. 미들웨어는 경로에 있으나 통과만 한다.
+#   True          `{"success": false, …, "status_code": 4xx}` 를 실제 상태로 승격.
+#
+# 되돌리기는 이 한 줄이다. 켜기 전에 반드시 읽을 것:
+#   docs/agent/evidence/W0-18/backward_compat_impact.md
+#     §2-2  승격 시 무증상 실패 후보 21곳 (프론트 · 대부분 delivery 화면)
+#     §5    단계적 롤아웃 순서와 되돌림 기준
+API_CONTRACT_PROMOTE_ERROR_STATUS = (
+    os.environ.get("API_CONTRACT_PROMOTE_ERROR_STATUS", "false").lower() == "true"
+)
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
