@@ -1,0 +1,141 @@
+[MinIO Init] Warning: HTTPConnectionPool(host='minio.invalid', port=80): Max retries exceeded with url: /guardianx-dev?location= (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x75bb23f8ab50>: Failed to resolve 'minio.invalid' ([Errno -2] Name or service not known)"))
+model                                            total  cb_null  grp_null   both   R1   R2     R3  parent / note
+surveillance.MissionWaypoint                      8877     8877      8877   8877    0    0   8877  mission → surveillance.SurveyMission
+orders.OrderHistory                               5882     5696      5696   5696    0    0   5696  order → orders.Order
+terminals.Terminal                                5686     3399      3399   3399    0    0      0  부모 없음
+orders.DeliveryEvent                              3033     3033      3033   3033    0    0   2995  terminal_stop → terminals.Terminal
+delivery.DeliveryOperationApprovalChecklist       3013     3013      3013   3013    0    0   3013  approval → delivery.DeliveryOperationApproval
+terminals.RouteTerminal                           2062     1807      1807   1807    0    0   1807  route → terminals.Routes
+advanced_table.GridSettingUser                    3230      896       906    896    0   10      0  부모 없음
+advanced_table.GridSetting                         928      763       763    763    0    0      0  부모 없음
+user.Timezone                                      598      598       598    598    0    0      0  부모 없음
+delivery.DeliveryOperationHistory                  856      280       280    280    0    0    280  delivery_operation → delivery.DeliveryOperation
+orders.OrderAssignment                             261      261       261    261    0    0    261  order_item → orders.OrderItem
+user.Country                                       238      238       238    238    0    0      0  부모 없음
+menu.RoleTab                                       375      162       180    162    0   18     65  role → role.Role
+file_management.UserMediaFile                     1077       37       224     17   20  207      0  부모 없음
+terminals.TerminalOperatingTime                     98       98        98     98    0    0     98  terminal → terminals.Terminal
+user.CoreUser                                       95       95        95     95    0    0      0  부모 없음
+surveillance.SurveillanceProfileChecklistItem      231       72        72     72    0    0     72  checklist_setting → checklist_setting.ChecklistSetting
+advanced_table.UserGridManagement                   77       64        64     64    0    0     27  menu → menu.Menu
+menu.UserMenu                                       60       60        60     60    0    0      0  부모 없음
+menu.Menu                                          107        6        56      6    0   50      3  parent → menu.Menu
+user.CurrencyFormat                                 31       31        31     31    0    0      0  부모 없음
+surveillance.VideoAnalysis                         117       39        19     19   20    0     18  profile_device → surveillance.SurveillanceProfileDrone
+menu.Tab                                            27       27        27     27    0    0      8  parent_menu → menu.Menu
+devices.FrameType                                   24       24        24     24    0    0      0  부모 없음
+menu.RoleMenu                                      923        6        41      6    0   35      3  menu → menu.Menu
+surveillance.SurveillanceProfileDrone              127       23        23     23    0    0     23  profile → surveillance.SurveillanceProfile
+dashboard.DashboardPanel                            26       18        18     18    0    0      0  부모 없음
+devices.Protocol                                    17       17        17     17    0    0      0  부모 없음
+orders.OrderItemType                                23       15        15     15    0    0      0  부모 없음
+delivery.DeliveryStatus                             14       14        14     14    0    0      0  부모 없음
+devices.FrameClass                                  14       14        14     14    0    0      0  부모 없음
+stream_monitors.StreamMonitor                       39       15        13     12    3    1     12  drone → devices.Device
+configuration.AdminConfig                           12       11        11     11    0    0      0  부모 없음
+surveillance.SurveillanceProfileChecklist           83       10        10     10    0    0     10  profile → surveillance.SurveillanceProfile
+terminals.Function                                   9        9         9      9    0    0      0  부모 없음
+terminals.TerminalType                               9        9         9      9    0    0      0  부모 없음
+user.DateFormat                                      8        8         8      8    0    0      0  부모 없음
+dashboard.Dashboard                                 21        0        15      0    0   15      0  부모 없음
+devices.PackageType                                  7        7         7      7    0    0      0  부모 없음
+orders.OrderStatus                                   7        7         7      7    0    0      0  부모 없음
+surveillance.SurveillanceStatus                      7        7         7      7    0    0      0  부모 없음
+terminals.DayOfWeek                                  7        7         7      7    0    0      0  부모 없음
+user.WeekDay                                         7        7         7      7    0    0      0  부모 없음
+devices.BatteryType                                  6        6         6      6    0    0      0  부모 없음
+devices.GNSSSystem                                   6        6         6      6    0    0      0  부모 없음
+devices.ImageStabilization                           6        6         6      6    0    0      0  부모 없음
+devices.MotorType                                    6        6         6      6    0    0      0  부모 없음
+devices.DeviceStatus                                 5        5         5      5    0    0      0  부모 없음
+operation_settings.OperationSettings                35        5         5      5    0    0      0  SYSTEM-OWNED · 제외
+user.NotificationChannel                             5        5         5      5    0    0      0  부모 없음
+user.NumberFormat                                    5        5         5      5    0    0      0  부모 없음
+devices.DeviceType                                   4        4         4      4    0    0      0  부모 없음
+orders.PaymentType                                   4        4         4      4    0    0      0  부모 없음
+role.Role                                           15        3         5      3    0    2      0  부모 없음
+stream_monitors.AIModel                              4        4         4      4    0    0      0  부모 없음
+surveillance.SurveillanceProfileRepeatType           4        4         4      4    0    0      0  부모 없음
+terminals.DeactivateReason                           4        4         4      4    0    0      0  부모 없음
+terminals.LocationType                               4        4         4      4    0    0      0  부모 없음
+user.PrivacyLevel                                    4        4         4      4    0    0      0  부모 없음
+user.TimeFormat                                      4        4         4      4    0    0      0  부모 없음
+checklist_setting.ChecklistSettingCategory           3        3         3      3    0    0      0  부모 없음
+operational_data.OperationalData                     3        3         3      3    0    0      3  operation_item → delivery.DeliveryOperationItem
+surveillance.MissionPurpose                          3        3         3      3    0    0      0  부모 없음
+surveillance.SurveillanceProfileRepeatUntilType       3        3         3      3    0    0      0  부모 없음
+surveillance.SurveyMissionStatus                     3        3         3      3    0    0      0  부모 없음
+terminals.PurposeType                                3        3         3      3    0    0      0  부모 없음
+terminals.TerminalPurpose                            3        3         3      3    0    0      0  부모 없음
+user.Language                                        3        3         3      3    0    0      0  부모 없음
+advanced_table.GridSettingCategory                   2        2         2      2    0    0      0  부모 없음
+delivery.DeliveryCancellationType                    2        2         2      2    0    0      0  부모 없음
+flight_log.DroneAnomalyPrediction                    2        2         2      2    0    0      0  부모 없음
+handover.HandoverShift                               2        2         2      2    0    0      0  부모 없음
+orders.DeliveryOption                                2        2         2      2    0    0      0  부모 없음
+terminals.RouteService                               2        2         2      2    0    0      0  부모 없음
+terminals.TerminalException                          2        2         2      2    0    0      2  terminal → terminals.Terminal
+user.Gender                                          2        2         2      2    0    0      0  부모 없음
+user.Nationality                                     2        2         2      2    0    0      0  부모 없음
+user.Theme                                           2        2         2      2    0    0      0  부모 없음
+user.UserSettings                                   93        1         3      1    0    2      0  부모 없음
+user.Profile                                        92        1         1      0    1    1      0  부모 없음
+user.UserGroup                                      10        1         1      1    0    0      0  부모 없음
+user.UserProfileLink                                92        1         1      0    1    1      0  부모 없음
+print_format.PrintFormat                             4        0         1      0    0    1      0  부모 없음
+advanced_table.SearchConditionsUser                  2        0         0      0    0    0      0  부모 없음
+checklist_setting.ChecklistSetting                  63        0         0      0    0    0      0  부모 없음
+dashboard.WeatherSetting                            20        0         0      0    0    0      0  부모 없음
+delivery.Address                                  1353        0         0      0    0    0      0  부모 없음
+delivery.DeliveryCancellation                        3        0         0      0    0    0      0  부모 없음
+delivery.DeliveryOperation                         304        0         0      0    0    0      0  부모 없음
+delivery.DeliveryOperationApproval                 256        0         0      0    0    0      0  부모 없음
+delivery.DeliveryOperationItem                     285        0         0      0    0    0      0  부모 없음
+delivery.TerminalSequence                          875        0         0      0    0    0      0  부모 없음
+devices.CameraType                                  12        0         0      0    0    0      0  부모 없음
+devices.CargoCompartments                           44        0         0      0    0    0      0  부모 없음
+devices.Device                                      31        0         0      0    0    0      0  부모 없음
+devices.DeviceCamera                                 8        0         0      0    0    0      0  부모 없음
+devices.DimensionsAndWeight                         44        0         0      0    0    0      0  부모 없음
+devices.EnvironmentalSpecification                  44        0         0      0    0    0      0  부모 없음
+devices.FlightPerformance                           41        0         0      0    0    0      0  부모 없음
+devices.InsuranceInformation                        40        0         0      0    0    0      0  부모 없음
+devices.Library                                     13        0         0      0    0    0      0  부모 없음
+devices.ManufacturerInformation                     40        0         0      0    0    0      0  부모 없음
+devices.NavigationControl                           44        0         0      0    0    0      0  부모 없음
+devices.PackagingOption                            359        0         0      0    0    0      0  부모 없음
+devices.PackagingOptionSpecification               693        0         0      0    0    0      0  부모 없음
+devices.PackagingSpecification                      15        0         0      0    0    0      0  부모 없음
+devices.PackagingSpecificationDevice                45        0         0      0    0    0      0  부모 없음
+devices.PropulsionSystem                            43        0         0      0    0    0      0  부모 없음
+devices.RadioCommunication                          40        0         0      0    0    0      0  부모 없음
+devices.SafetyFeature                               44        0         0      0    0    0      0  부모 없음
+devices.SensorSuite                                 44        0         0      0    0    0      0  부모 없음
+devices.Telemetry                                   44        0         0      0    0    0      0  부모 없음
+file_management.UserMediaFileItem                    8        0         0      0    0    0      0  부모 없음
+flight_log.FlightLog                               308        0         0      0    0    0      0  부모 없음
+handover.HandoverContent                            11        0         0      0    0    0      0  부모 없음
+handover.HandoverDocument                           11        0         0      0    0    0      0  부모 없음
+handover.HandoverNotice                             11        0         0      0    0    0      0  부모 없음
+operational_data.OperationalDataUploadStatus        21        0         0      0    0    0      0  부모 없음
+operational_data.OperationalNotice                   3        0         0      0    0    0      0  부모 없음
+orders.ExternalOrderStatus                          38        0         0      0    0    0      0  부모 없음
+orders.Order                                       304        0         0      0    0    0      0  부모 없음
+orders.OrderItem                                   304        0         0      0    0    0      0  부모 없음
+orders.OrderStatusMapping                           84        0         0      0    0    0      0  부모 없음
+orders.Payment                                      64        0         0      0    0    0      0  부모 없음
+orders.ProductItem                                 247        0         0      0    0    0      0  부모 없음
+partner.Partner                                      3        0         0      0    0    0      0  부모 없음
+report_template.ReportTemplate                      13        0         0      0    0    0      0  부모 없음
+surveillance.SurveillanceProfile                    81        0         0      0    0    0      0  부모 없음
+surveillance.SurveyMission                          39        0         0      0    0    0      0  부모 없음
+task_status.TaskStatus                              84        0         0      0    0    0      0  부모 없음
+terminals.Routes                                    30        0         0      0    0    0      0  부모 없음
+[합계 · 제외분 빼고] total=45277 · created_by_null=29902 · group_null=30200 · both_null=29857 · r1_fixable=45 · r2_fixable=343 · r3_fixable=23273
+[group 대표 사용자] 9개 group — {8: 69, 11: 82, 7: 2, 5: 6, 4: 8, 15: 102, 6: 3, 14: 97, 12: 80}
+[셀 수 없음 · 저장소 모델과 운영 스키마 불일치 4건 — P-LOCAL-4]
+R1 = group 있고 created_by 없음 → created_by 채울 수 있다
+R2 = created_by 있고 group 없음 → group 채울 수 있다
+R3 = group 이 없지만 **부모 레코드에 group 이 있다** → 물려받을 수 있다
+부모 없음 = 자동 귀속 불가. 사람이 정하거나 시스템 소유로 표기 (D-209 ②)
+※ 이 스크립트는 한 행도 쓰지 않는다. 적용본은 대표 확인 후 별도로 만든다.

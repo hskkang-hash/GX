@@ -613,8 +613,8 @@ tickets:
   phase: R1
   title: "created_by 없는 레코드의 전 테넌트 노출 차단"
   status: decision-pending
-  updated_at: "2026-08-22T17:10:00+09:00"
-  evidence: docs/agent/evidence/W0-13/impact.md · dump_scan.txt · docs/agent/evidence/W0-14/http_leak_probe.md §4
+  updated_at: "2026-08-24T16:40:00+09:00"
+  evidence: docs/agent/evidence/W0-13/backfill_dryrun.md · backfill_dryrun.txt · impact.md · dump_scan.txt · docs/agent/evidence/W0-14/http_leak_probe.md §4
   blocker: |
     [2026-08-22 · C안 근거가 정적 분석에서 **실측**으로 올라섰다]
     앞 항목(덤프 파싱 65.9%)에 더해, **HTTP 레벨에서 실제 노출을 재현했다**:
@@ -628,6 +628,36 @@ tickets:
     ★ 판단 요청 그대로 유지: A(dj-core 수정) 불가 · B(common 만 수정) 2/15 · **C(뷰 레벨) 유일**.
       C 를 택하면 이 티켓은 '필터를 고치는 티켓'이 아니라 'W0-14 에 흡수되는 티켓'이 된다.
       그 판정이 필요하다.
+
+    ---
+    [2026-08-24 · **백필 dry-run 완료 (D-254 · D-209). 한 행도 쓰지 않았다**]
+    전문: docs/agent/evidence/W0-13/backfill_dryrun.md · 원자료 backfill_dryrun.txt
+    도구: scripts/backfill_owner_dryrun.py (읽기 전용 — --apply 인자가 없다)
+
+    실측: 테넌트성 131종 45,277행 중 **group NULL 30,200 (66.7%)** · created_by NULL 29,902.
+    그런데 "전량 백필"은 불가능하고 그렇게 해서도 안 된다 — 30,200이 셋으로 갈린다:
+      · **23,273 자동 가능** — 부모 레코드의 group 을 물려받는다 (MissionWaypoint→SurveyMission
+        8,877 · OrderHistory→Order 5,696 · 승인체크리스트 3,013 · RouteTerminal→Routes 1,807 …)
+      · 343 자동 가능 — created_by 의 소속 group 으로
+      · **6,584 근거 없음** — 여기가 판정 대상이고, 성격이 둘이다
+
+    ★ 근거 없는 6,584 중 가장 큰 건(terminals.Terminal 3,399)은 **역추론으로 갈렸다**
+      (참조 8경로 전수 실측): **단일 테넌트 1,809 · 미사용(참조 0) 1,590 · 다중 소유 0건.**
+      모호한 건이 0이다 — 1,809는 소유가 하나로 정해지고, 1,590은 아무도 참조하지 않는다.
+      Terminal 은 RouteTerminal·TerminalOperatingTime·DeliveryEvent 의 부모라 이것이 풀리면
+      그 아래 4,900여 행도 연쇄로 풀린다.
+
+    ★ 나머지 약 2,000행은 **애초에 테넌트 데이터가 아니다** — Timezone 598 · Country 238 ·
+      GridSetting 763 · GridSettingUser 896 · menu/devices 마스터 등. created_by/group 열을
+      베이스 모델에서 물려받았을 뿐이다. 여기에 소유자를 채우면 다른 테넌트 화면에서
+      국가·시간대·상태값이 사라진다. 필요한 것은 백필이 아니라 '공용 마스터' 표기다 (D-209 ②).
+
+    제외: operation_settings 는 created_by IS NULL 을 '시스템 기본 설정'의 뜻으로 이미 쓴다.
+    사각지대 4건: logger.AuditLogs · StreamMonitorAIModel · DrawingSession 은 deleted 열이
+    운영 스키마에 없고, DetectionEvent 는 테이블 자체가 없다 → P-W0-13-2 (P-LOCAL-4 와 같은 질문).
+
+    적재: **P-W0-13-1**(공용 마스터 판정 + Terminal 귀속 승인 · reversible=false) ·
+          **P-W0-13-2**(스키마 정합 선행). 적용 스크립트는 판정 후에 만든다 — 지금 만들지 않았다.
   priority: P0
   effort: M
   kind: reuse
