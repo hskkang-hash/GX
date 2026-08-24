@@ -22,10 +22,10 @@ meta:
   # 손으로 세지 않는다: `python scripts/gen_manifest.py` 가 실측·대조한다 (불일치 시 exit 1).
   integrity: "manifest"
   manifest:
-    total: 70
+    total: 71
     by_phase:
       BACKLOG: 8
-      R1: 40
+      R1: 41
       R2: 14
       R3: 8
     ids:
@@ -46,6 +46,7 @@ meta:
       - W0-16
       - W0-17
       - W0-18
+      - W0-19
       - W0-2
       - W0-3
       - W0-4
@@ -927,6 +928,42 @@ tickets:
   verify:
     - "python manage.py test tests.test_api_contract -v 2"
     - "test -f docs/agent/evidence/W0-18/backward_compat_impact.md"
+
+- id: W0-19
+  phase: R1
+  title: "외부 의존 저하 운전 2차 — Redis · OpenSearch · MinIO (기전이 다른 셋)"
+  status: ready
+  priority: P1
+  effort: M
+  kind: reuse
+  depends_on: [W0-17]
+  human_gate: false
+  gate: evidence-review
+  requires_intranet: false
+  decisions: [D-255, D-212]
+  reuse_targets:
+    - backend/common/external_http.py
+    - backend/stream_monitors/utils/redis_client.py
+    - backend/delivery/services/opensearch_data.py
+    - backend/stream_monitors/utils/minio_client.py
+  spec: |
+    W0-17 은 `requests` 계열(17건)을 닫았다. 남은 셋은 **기전이 다르다** — 인자가 아니라
+    연결 옵션이거나 SDK 내부 재시도다. 그래서 별 티켓으로 갈랐다 (D-255).
+      ① Redis 14곳 — 타임아웃이 호출 인자가 아니라 연결 옵션(`socket_timeout` ·
+         `socket_connect_timeout`)이다. 클라이언트 생성 1곳에서 설정을 읽게 한다 (D-212).
+      ② OpenSearch 2곳 — ★ 실측에서 이름 해석 실패 시 **재시도 5회**를 돈다(기동 로그).
+         재시도 5회는 타임아웃을 5배로 만드는 것과 같다. `max_retries`·`timeout` 을 설정 1곳에서.
+      ③ MinIO — 이미 FileSystemStorage 폴백이 있으나 기동 시 재시도 5회를 돌아 기동이 늦다.
+         기동 경로의 재시도를 줄이고, 폴백 사실을 로그 한 줄로 분명히 남긴다.
+    타임아웃 값은 `EXTERNAL_HTTP_TIMEOUT` 과 **같은 자리**(settings)에 둔다. 숫자를 흩지 않는다.
+    ⚠ 서킷 브레이커는 이 티켓의 범위가 **아니다** — 임계값은 계측이 있어야 나온다 (P-W0-17-1 근거).
+  dod: |
+    ① Redis·OpenSearch 클라이언트 생성부가 설정값을 읽고, 타임아웃 없는 생성 0곳
+    ② OpenSearch 재시도 횟수가 설정에 있고 기본값이 5보다 작다 (근거를 evidence 에 기록)
+    ③ 각 의존을 다운으로 모킹한 시험에서 핵심 화면(목록·이력·통계)이 200 유지
+  verify:
+    - "python manage.py test tests.test_external_dependency_degraded -v 2"
+    - "test -f docs/agent/evidence/W0-19/degraded_2nd.md"
 
 - id: W0-2
   phase: R1

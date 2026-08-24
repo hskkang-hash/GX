@@ -564,7 +564,8 @@ pending:
         "5/5 초록"이 실제 커버리지보다 커 보이는 착시가 생긴다.
     reversible: true
     blocks_dod: true
-    status: open
+    answered_by: "D-253 (RESUME_NEXT 2026-08-22 3차 §1) — A안 승인. 배선·픽스처만 수정, 단언 무변경"
+    status: answered
 
   - id: P-W0-14-3
     ticket: "W0-14 · W0-13"
@@ -589,7 +590,8 @@ pending:
       C 는 W0-14 가 존재하는 이유를 무효화하므로 권고하지 않는다.
     reversible: true
     blocks_dod: false
-    status: open
+    answered_by: "D-254 (RESUME_NEXT 2026-08-22 3차 §1) — 652 확대 전 W0-13 백필 선행 (dry-run 먼저)"
+    status: answered
 
   - id: P-W0-17-1
     ticket: "W0-17"
@@ -617,4 +619,5 @@ pending:
       ★ 다만 ②는 우선순위가 높다 — 재시도 5회는 타임아웃을 5배로 만드는 것과 같다.
     reversible: true
     blocks_dod: false
-    status: open
+    answered_by: "D-255 (RESUME_NEXT 2026-08-22 3차 §1) — A안 승인. 신규 티켓 W0-19(P1) 로 분리, EXIT 후 착수"
+    status: answered
