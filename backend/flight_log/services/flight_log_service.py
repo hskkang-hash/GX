@@ -23,6 +23,7 @@ import pandas as pd
 import numpy as np
 from django.conf import settings
 import requests
+from common.external_http import default_timeout
 from safedelete.models import (
     SafeDeleteModel,
     SOFT_DELETE,
@@ -116,7 +117,7 @@ class FlightLogService:
         # Cache anomaly prediction codes to avoid repeated queries
         normal_prediction = DroneAnomalyPrediction.objects.get(code="NORMAL")
         warning_prediction = DroneAnomalyPrediction.objects.get(code="WARNING")
-        
+
         # Fetch all flight logs that need processing
         flight_logs = FlightLog.objects.filter(
             fetch_anomaly_status="pending"
@@ -127,12 +128,12 @@ class FlightLogService:
             'profile_drone__profile',
             'drone_anomaly_prediction',
         )[:limit]
-        
+
         for flight in flight_logs:
             # If drone_anomaly_prediction is None and still has fetch attempts
             if flight.drone_anomaly_prediction is None and flight.fetch_anomaly_count < 3 and flight.fetch_anomaly_status != "done":
                 log_code = None
-                
+
                 if flight.order_item:
                     device = getattr(getattr(flight.order_item, 'delivery_item', None), 'drone', None)
                     if device:
@@ -141,7 +142,7 @@ class FlightLogService:
                     profile_drone = flight.profile_drone
                     if profile_drone and profile_drone.device:
                         log_code = f"{profile_drone.device.serial_number}_{profile_drone.profile.code}"
-                
+
                 if log_code:
                     anomaly_prediction = FlightLogService.get_flight_log_with_anomaly_prediction(log_code)
                     if anomaly_prediction:
@@ -185,12 +186,12 @@ class FlightLogService:
     def get_log_data(unit_id, start_time, end_time):
         """
         Get flight log analysis data for a specific device.
-        
+
         Args:
             unit_id: Device unit ID
             start_time: Start time of the flight
             end_time: End time of the flight
-            
+
         Returns:
             Dictionary containing roll_analysis, pitch_analysis, yaw_analysis,
             rollspeed_analysis, pitchspeed_analysis, yawspeed_analysis
@@ -199,7 +200,7 @@ class FlightLogService:
         flight_log_attitude_data = FlightLogService.get_drone_log_raw_data(unit_id, start_time, end_time, msg_type="ATTITUDE")
         flight_log_nav_data = FlightLogService.get_drone_log_raw_data(unit_id, start_time, end_time, msg_type="NAV_CONTROLLER_OUTPUT")
         print(f"Drone unit id: {unit_id}")
-        
+
         # Calculate roll analysis from raw IMU data
         roll_analysis = []
         rollspeed_analysis = []
@@ -209,7 +210,7 @@ class FlightLogService:
         yawspeed_analysis = []
         desired_roll_analysis = []
         desired_pitch_analysis = []
-        
+
         for entry in flight_log_attitude_data:
             src = entry["_source"]
             ts = pd.to_datetime(src["timestamp"])
@@ -243,7 +244,7 @@ class FlightLogService:
                 "timestamp": ts.isoformat(),
                 "yawspeed": yawspeed
             })
-        
+
         for entry in flight_log_nav_data:
             src = entry["_source"]
             ts = pd.to_datetime(src["timestamp"])
@@ -257,7 +258,7 @@ class FlightLogService:
                 "timestamp": ts.isoformat(),
                 "desired_pitch": desired_pitch
             })
-        
+
         # Helper function to round timestamp to seconds
         def round_timestamp_to_second(ts_str):
             """Round ISO timestamp string to second precision"""
@@ -268,18 +269,18 @@ class FlightLogService:
                 return ts_rounded.isoformat()
             except Exception:
                 return ts_str
-        
+
         # Round timestamps in existing roll_analysis records to seconds for consistency
         for roll in roll_analysis:
             roll["timestamp"] = round_timestamp_to_second(roll["timestamp"])
-        
+
         # Round timestamps in desired_roll_analysis to seconds for consistency
         desired_roll_analysis_dict = {}
         for desired_roll in desired_roll_analysis:
             timestamp = desired_roll["timestamp"]
             rounded_timestamp = round_timestamp_to_second(timestamp)
             desired_roll_analysis_dict[rounded_timestamp] = desired_roll["desired_roll"]
-        
+
         # Map desired_roll to existing roll_analysis records
         for roll in roll_analysis:
             timestamp = roll["timestamp"]
@@ -287,7 +288,7 @@ class FlightLogService:
                 roll["desired_roll"] = desired_roll_analysis_dict[timestamp]
             else:
                 roll["desired_roll"] = None
-        
+
         # Add any desired_roll records that don't have matching roll_analysis timestamps
         for desired_timestamp, desired_roll_value in desired_roll_analysis_dict.items():
             if not any(roll["timestamp"] == desired_timestamp for roll in roll_analysis):
@@ -296,45 +297,45 @@ class FlightLogService:
                     "roll": None,
                     "desired_roll": desired_roll_value
                 })
-        
+
         # Sort roll_analysis by timestamp
         roll_analysis.sort(key=lambda x: x["timestamp"])
-        
+
         # Find the first index where roll has a value (not None)
         first_roll_index = None
         for i, roll in enumerate(roll_analysis):
             if roll.get("roll") is not None:
                 first_roll_index = i
                 break
-        
+
         # Forward-fill roll and desired_roll starting from first_roll_index
         if first_roll_index is not None:
             previous_roll = roll_analysis[first_roll_index]["roll"]
             previous_desired_roll = roll_analysis[first_roll_index].get("desired_roll")
-            
+
             for i in range(first_roll_index + 1, len(roll_analysis)):
                 roll_record = roll_analysis[i]
                 if roll_record.get("roll") is None:
                     roll_record["roll"] = previous_roll
                 else:
                     previous_roll = roll_record["roll"]
-                
+
                 if roll_record.get("desired_roll") is None and previous_desired_roll is not None:
                     roll_record["desired_roll"] = previous_desired_roll
                 elif roll_record.get("desired_roll") is not None:
                     previous_desired_roll = roll_record["desired_roll"]
-        
+
         # Round timestamps in existing pitch_analysis records to seconds for consistency
         for pitch in pitch_analysis:
             pitch["timestamp"] = round_timestamp_to_second(pitch["timestamp"])
-        
+
         # Round timestamps in desired_pitch_analysis to seconds for consistency
         desired_pitch_analysis_dict = {}
         for desired_pitch in desired_pitch_analysis:
             timestamp = desired_pitch["timestamp"]
             rounded_timestamp = round_timestamp_to_second(timestamp)
             desired_pitch_analysis_dict[rounded_timestamp] = desired_pitch["desired_pitch"]
-        
+
         # Map desired_pitch to existing pitch_analysis records
         for pitch in pitch_analysis:
             timestamp = pitch["timestamp"]
@@ -342,7 +343,7 @@ class FlightLogService:
                 pitch["desired_pitch"] = desired_pitch_analysis_dict[timestamp]
             else:
                 pitch["desired_pitch"] = None
-        
+
         # Add any desired_pitch records that don't have matching pitch_analysis timestamps
         for desired_timestamp, desired_pitch_value in desired_pitch_analysis_dict.items():
             if not any(pitch["timestamp"] == desired_timestamp for pitch in pitch_analysis):
@@ -351,34 +352,34 @@ class FlightLogService:
                     "pitch": None,
                     "desired_pitch": desired_pitch_value
                 })
-        
+
         # Sort pitch_analysis by timestamp
         pitch_analysis.sort(key=lambda x: x["timestamp"])
-        
+
         # Find the first index where pitch has a value (not None)
         first_pitch_index = None
         for i, pitch in enumerate(pitch_analysis):
             if pitch.get("pitch") is not None:
                 first_pitch_index = i
                 break
-        
+
         # Forward-fill pitch and desired_pitch starting from first_pitch_index
         if first_pitch_index is not None:
             previous_pitch = pitch_analysis[first_pitch_index]["pitch"]
             previous_desired_pitch = pitch_analysis[first_pitch_index].get("desired_pitch")
-            
+
             for i in range(first_pitch_index + 1, len(pitch_analysis)):
                 pitch_record = pitch_analysis[i]
                 if pitch_record.get("pitch") is None:
                     pitch_record["pitch"] = previous_pitch
                 else:
                     previous_pitch = pitch_record["pitch"]
-                
+
                 if pitch_record.get("desired_pitch") is None and previous_desired_pitch is not None:
                     pitch_record["desired_pitch"] = previous_desired_pitch
                 elif pitch_record.get("desired_pitch") is not None:
                     previous_desired_pitch = pitch_record["desired_pitch"]
-        
+
         # Remove elements where both roll and desired_roll are None
         roll_analysis = [
             roll for roll in roll_analysis
@@ -389,7 +390,7 @@ class FlightLogService:
             pitch for pitch in pitch_analysis
             if pitch.get("pitch") is not None and pitch.get("desired_pitch") is not None
         ]
-        
+
         return {
             'roll_analysis': roll_analysis,
             'pitch_analysis': pitch_analysis,
@@ -403,10 +404,10 @@ class FlightLogService:
     def get_flight_log_detail(id):
         """
         Get flight log detail by ID.
-        
+
         Args:
             id: FlightLog ID
-            
+
         Returns:
             Dictionary containing flight log analysis data
         """
@@ -415,7 +416,7 @@ class FlightLogService:
             flight_log = FlightLog._base_manager.select_related(
                 'order_item__delivery_item__delivery_operation__route'
             ).get(id=id)
-            
+
             # Get the device from the route
             if flight_log.order_item:
                 device = flight_log.order_item.delivery_item.drone
@@ -439,7 +440,7 @@ class FlightLogService:
                         "pitchspeed_analysis": [],
                         "yawspeed_analysis": [],
                     }
-                
+
             start_time = flight_log.start_time
             end_time = flight_log.end_time
 
@@ -467,46 +468,46 @@ class FlightLogService:
                 flight_log.log_file_path = log_path
                 flight_log.save()
                 return log_data
-            
+
         except FlightLog.DoesNotExist:
             raise ValidationError(f"FlightLog with id {id} does not exist")
         except Exception as e:
             raise ValidationError(f"Error retrieving flight log detail: {str(e)}")
-    
+
     @staticmethod
     def _filter_telemetry_by_time_range(telemetry_data, start_time, end_time):
         """
         Filter telemetry data by time range.
-        
+
         Args:
             telemetry_data: Dictionary containing telemetry data with timestamps
             start_time: datetime object for flight start
             end_time: datetime object for flight end
-            
+
         Returns:
             Filtered telemetry data dictionary
         """
         from datetime import datetime
-        
+
         # Convert datetime objects to timestamps
         start_timestamp = int(start_time.timestamp())
         end_timestamp = int(end_time.timestamp())
-        
+
         filtered_data = {}
-        
+
         # Filter main timestamps and related data
         if 'timestamps' in telemetry_data:
             timestamps = telemetry_data['timestamps']
-            
+
             # Find indices within time range
             valid_indices = [
-                i for i, ts in enumerate(timestamps) 
+                i for i, ts in enumerate(timestamps)
                 if start_timestamp <= ts <= end_timestamp
             ]
-            
+
             # Filter timestamps
             filtered_data['timestamps'] = [timestamps[i] for i in valid_indices]
-            
+
             # Filter temperature data if exists
             if 'temperature' in telemetry_data and telemetry_data['temperature']:
                 filtered_data['temperature'] = [
@@ -515,7 +516,7 @@ class FlightLogService:
                 ]
             else:
                 filtered_data['temperature'] = []
-            
+
             # Filter acceleration data
             if 'acceleration' in telemetry_data:
                 filtered_data['acceleration'] = {}
@@ -525,7 +526,7 @@ class FlightLogService:
                             telemetry_data['acceleration'][axis][i] for i in valid_indices
                             if i < len(telemetry_data['acceleration'][axis])
                         ]
-            
+
             # Filter acceleration_raw data
             if 'acceleration_raw' in telemetry_data:
                 filtered_data['acceleration_raw'] = {}
@@ -535,22 +536,22 @@ class FlightLogService:
                             telemetry_data['acceleration_raw'][axis][i] for i in valid_indices
                             if i < len(telemetry_data['acceleration_raw'][axis])
                         ]
-        
+
         # Filter vibration timestamps and related data
         if 'timestamps_vibration' in telemetry_data:
             vibration_timestamps = telemetry_data['timestamps_vibration']
-            
+
             # Find indices within time range for vibration data
             vibration_valid_indices = [
-                i for i, ts in enumerate(vibration_timestamps) 
+                i for i, ts in enumerate(vibration_timestamps)
                 if start_timestamp <= ts <= end_timestamp
             ]
-            
+
             # Filter vibration timestamps
             filtered_data['timestamps_vibration'] = [
                 vibration_timestamps[i] for i in vibration_valid_indices
             ]
-            
+
             # Filter vibration data
             if 'vibration' in telemetry_data:
                 filtered_data['vibration'] = {}
@@ -560,7 +561,7 @@ class FlightLogService:
                             telemetry_data['vibration'][axis][i] for i in vibration_valid_indices
                             if i < len(telemetry_data['vibration'][axis])
                         ]
-            
+
             # Filter vibration_raw data
             if 'vibration_raw' in telemetry_data:
                 filtered_data['vibration_raw'] = {}
@@ -570,7 +571,7 @@ class FlightLogService:
                             telemetry_data['vibration_raw'][axis][i] for i in vibration_valid_indices
                             if i < len(telemetry_data['vibration_raw'][axis])
                         ]
-        
+
         return filtered_data
 
     @staticmethod
@@ -688,7 +689,8 @@ class FlightLogService:
         }
         response_result = requests.get(
             ai_analysis_result_link,
-            headers=headers
+            headers=headers,
+            timeout=default_timeout(),
         )
         print(f"Response result: {response_result}")
         if not response_result.ok or not response_result.text:

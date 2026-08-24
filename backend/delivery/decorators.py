@@ -1,6 +1,7 @@
 import json
 import functools
 import requests
+from common.external_http import default_timeout
 from django.http import JsonResponse
 from delivery.constants import DELIVERY_STATUS_LIST
 import logging
@@ -82,23 +83,23 @@ def get_schema_for_endpoint(endpoint: str) -> Optional[type[Schema]]:
     schemas = {
         # Verification group
         '/api/v1/delivery/verified_order': VerifiedOrderResponse,
-        
+
         # Processing group
         '/api/v1/delivery/select_route_processing': SelectRouteResponse,
         '/api/v1/delivery/select_drone_processing': SelectDroneResponse,
         '/api/v1/delivery/in_transit_processing': InTransitResponse,
-        
+
         # Completed group
         '/api/v1/delivery/arrived_order': ArrivedOrderResponse,
         '/api/v1/delivery/completed_order': CompletedOrderResponse,
-        
+
         # Return group
         '/api/v1/delivery/order_due_for_returned': ReturnedOrderResponse,
         '/api/v1/delivery/order_pending_returned': ReturnedOrderResponse,
         '/api/v1/delivery/overdue_order': ReturnedOrderResponse,
         '/api/v1/delivery/returned_order': ReturnedOrderResponse,
         '/api/v1/delivery/processed_order': ProcessedOrderResponse,
-        
+
         # Cancelled group
         '/api/v1/delivery/cancelled': CancelledOrderResponse,
     }
@@ -136,7 +137,7 @@ def get_current_status_from_request(request_data):
         # Try to get status directly from request
         if 'status' in request_data:
             return request_data['status']
-        
+
         # Try to get from single operation_id
         if 'operation_id' in request_data:
             try:
@@ -148,7 +149,7 @@ def get_current_status_from_request(request_data):
             except Exception as e:
                 logger.error(f"Error getting operation {request_data['operation_id']}: {str(e)}")
                 return None
-        
+
         # Try to get from multiple operation_ids (use first one as reference)
         if 'operation_ids' in request_data and request_data['operation_ids']:
             try:
@@ -160,7 +161,7 @@ def get_current_status_from_request(request_data):
             except Exception as e:
                 logger.error(f"Error getting operation {request_data['operation_ids'][0]}: {str(e)}")
                 return None
-        
+
         return None
     except Exception as e:
         logger.error(f"Unexpected error in get_current_status_from_request: {str(e)}")
@@ -173,20 +174,20 @@ def get_next_status_info(current_status):
     """
     try:
         current_status_index = next(
-            (index for index, status in enumerate(DELIVERY_STATUS_LIST) 
+            (index for index, status in enumerate(DELIVERY_STATUS_LIST)
              if status['code'] == current_status),
             None
         )
-        
+
         if current_status_index is None:
             return None, True
-        
+
         # Check if current status is the last status in the list
         is_final_status = current_status_index == len(DELIVERY_STATUS_LIST) - 1
-        
+
         if is_final_status:
             return current_status, True
-        
+
         next_status_index = current_status_index + 1
         next_status = DELIVERY_STATUS_LIST[next_status_index]['code']
         return next_status, False
@@ -217,7 +218,7 @@ def get_operation_setting_for_status(status_code):
     """
     try:
         from operation_settings.models import OperationSettings
-        
+
         # Status to operation setting name mapping
         status_to_setting_name = {
             'unverified_order': 'Order Verification',
@@ -234,26 +235,26 @@ def get_operation_setting_for_status(status_code):
             'processed_order': 'Order Return',
             'cancelled': 'Order Cancellation'
         }
-        
+
         setting_name = status_to_setting_name.get(status_code)
         if not setting_name:
             logger.warning(f"No operation setting mapping found for status: {status_code}")
             return None
-        
+
         try:
             # Get delivery operation menu
             from core.menu.models import Menu
             menu = Menu.objects.get(path="/delivery-operation", deleted__isnull=True)
-            
+
             operation_setting = OperationSettings.objects.filter(
                 menu=menu,
                 name=setting_name,
                 is_active=True
             ).order_by('id').first()
-            
+
             if not operation_setting:
                 logger.warning(f"No active operation setting found for {setting_name}")
-            
+
             return operation_setting
         except Menu.DoesNotExist:
             logger.error(f"Menu with path '/delivery-operation' not found")
@@ -328,7 +329,7 @@ def delivery_operation_execution(view_func):
             try:
                 logger.info(f"Calling external API: {operation_setting.api_url}")
                 logger.info(f"Current status: {current_status} -> Target status: {target_status}")
-                
+
                 # Prepare request parameters based on HTTP method
                 request_kwargs = {
                     'method': operation_setting.http_method,
@@ -344,7 +345,7 @@ def delivery_operation_execution(view_func):
 
                 # Merge operation settings parameters with request data
                 merged_data = request_data.copy() if request_data else {}
-                
+
                 # Add api_params if exists (for GET requests)
                 if operation_setting.api_params:
                     try:
@@ -375,14 +376,16 @@ def delivery_operation_execution(view_func):
                     # For other methods (POST, PUT, etc.), send merged_data as JSON body
                     request_kwargs['json'] = merged_data
 
+                # W0-17 — 외부 API 호출에 타임아웃을 강제한다. 값은 설정 1곳 (D-212).
+                request_kwargs.setdefault('timeout', default_timeout())
                 response = requests.request(**request_kwargs)
-               
+
                 # Handle different HTTP status codes
                 if response.status_code == 200:
                     try:
                         response_data = response.json()
                         logger.info(f"External API call successful for {operation_setting.api_url}")
-                        
+
                         # Handle another_info if present in response
                         if 'another_info' in response_data:
                             try:
@@ -408,7 +411,7 @@ def delivery_operation_execution(view_func):
                                     logger.warning("No operation_id found in request data to update another_info")
                             except Exception as e:
                                 logger.error(f"Error processing another_info from response: {str(e)}")
-                        
+
                         # Validate response data using expected response structure
                         if operation_setting.expected_response:
                             try:
@@ -417,13 +420,13 @@ def delivery_operation_execution(view_func):
                                 for key in expected_keys:
                                     if key not in response_data:
                                         logger.warning(f"Expected key '{key}' not found in response")
-                                
+
                                 logger.info(f"Response validation successful for {operation_setting.api_url}")
                             except Exception as e:
                                 logger.error(f"Response validation failed for {operation_setting.api_url}: {str(e)}")
                         else:
                             logger.warning(f"No expected response defined for {operation_setting.name}, skipping validation")
-                        
+
                         # Check if external API returned success
                         external_success = False
                         if 'success' in response_data:
@@ -434,39 +437,39 @@ def delivery_operation_execution(view_func):
                         elif response.status_code == 200:
                             # If no explicit success field, consider 200 as success
                             external_success = True
-                        
+
                         if external_success:
                             logger.info(f"External API approved the operation")
                         else:
                             logger.warning(f"External API returned unsuccessful response: {response_data}")
-                    
+
                     except json.JSONDecodeError as e:
                         logger.error(f"Invalid JSON response from external API: {str(e)}")
                     except Exception as e:
                         logger.error(f"Error processing external API response: {str(e)}")
-                        
+
                 elif response.status_code == 404:
                     logger.error(f"External API endpoint not found (404): {operation_setting.api_url}")
                     # Don't log response.text for 404 as it might contain HTML
-                    
+
                 elif response.status_code == 401:
                     logger.error(f"External API authentication failed (401): {operation_setting.api_url}")
-                    
+
                 elif response.status_code == 403:
                     logger.error(f"External API access forbidden (403): {operation_setting.api_url}")
-                    
+
                 elif response.status_code == 500:
                     logger.error(f"External API internal server error (500): {operation_setting.api_url}")
-                    
+
                 elif response.status_code == 502:
                     logger.error(f"External API bad gateway (502): {operation_setting.api_url}")
-                    
+
                 elif response.status_code == 503:
                     logger.error(f"External API service unavailable (503): {operation_setting.api_url}")
-                    
+
                 elif response.status_code == 504:
                     logger.error(f"External API gateway timeout (504): {operation_setting.api_url}")
-                    
+
                 else:
                     # For other status codes, log status code but limit response text
                     response_preview = response.text[:200] if response.text else "No response body"
@@ -495,4 +498,4 @@ def delivery_operation_execution(view_func):
         # Always continue with normal system flow regardless of any errors
         return view_func(self, request, *args, **kwargs)
 
-    return wrapper 
+    return wrapper

@@ -4,6 +4,7 @@ This file can be used to test the API endpoints manually
 """
 
 import requests
+from common.external_http import default_timeout
 import json
 
 # Base URL for the API
@@ -30,13 +31,15 @@ def test_create_api_key(token):
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
-    
+
     data = {
         "name": "Test API Key",
         "expires_days": 30
     }
-    
-    response = requests.post(ENDPOINTS["create_api_key"], headers=headers, json=data)
+
+    response = requests.post(
+        ENDPOINTS["create_api_key"], headers=headers, json=data, timeout=default_timeout()
+    )
     print(f"Create API Key - Status: {response.status_code}")
     print(f"Response: {response.json()}")
     return response
@@ -47,8 +50,8 @@ def test_list_api_keys(token):
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
-    
-    response = requests.get(ENDPOINTS["list_api_keys"], headers=headers)
+
+    response = requests.get(ENDPOINTS["list_api_keys"], headers=headers, timeout=default_timeout())
     print(f"List API Keys - Status: {response.status_code}")
     print(f"Response: {response.json()}")
     return response
@@ -59,8 +62,8 @@ def test_get_stats(token):
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
-    
-    response = requests.get(ENDPOINTS["get_stats"], headers=headers)
+
+    response = requests.get(ENDPOINTS["get_stats"], headers=headers, timeout=default_timeout())
     print(f"Get Stats - Status: {response.status_code}")
     print(f"Response: {response.json()}")
     return response
@@ -71,8 +74,10 @@ def test_get_analytics(token):
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
-    
-    response = requests.get(ENDPOINTS["get_analytics"], headers=headers, params={"days": 7})
+
+    response = requests.get(
+        ENDPOINTS["get_analytics"], headers=headers, params={"days": 7}, timeout=default_timeout()
+    )
     print(f"Get Analytics - Status: {response.status_code}")
     print(f"Response: {response.json()}")
     return response
@@ -80,24 +85,24 @@ def test_get_analytics(token):
 if __name__ == "__main__":
     # You need to provide a valid JWT token here
     token = "your_jwt_token_here"
-    
+
     print("Testing API Key Management Endpoints")
     print("=" * 50)
-    
+
     # Test create API key
     print("\n1. Testing Create API Key:")
     test_create_api_key(token)
-    
+
     # Test list API keys
     print("\n2. Testing List API Keys:")
     test_list_api_keys(token)
-    
+
     # Test get stats
     print("\n3. Testing Get Stats:")
     test_get_stats(token)
-    
+
     # Test get analytics
     print("\n4. Testing Get Analytics:")
     test_get_analytics(token)
-    
-    print("\nTest completed!") 
+
+    print("\nTest completed!")

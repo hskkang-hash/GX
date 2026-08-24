@@ -46,6 +46,18 @@ repos:
         pass_filenames: false
         files: '^(frontend/(src/|vite\.config\.ts|public/)|.*drone-monitoring\.html$)'
 
+  # ── W0-17: 외부 호출에 타임아웃이 빠지지 않는지 ──────────────────────────
+  # 타임아웃 없는 호출 하나가 늦으면 워커가 잡히고, 잡힌 워커가 쌓이면 서비스가 선다.
+  # 실측 17건을 0 으로 만든 뒤 이 훅이 그 상태를 지킨다 (evidence/W0-17/timeout_inventory.md).
+  - repo: local
+    hooks:
+      - id: gx-request-timeout
+        name: 외부 호출 타임아웃 검사 (W0-17)
+        entry: python scripts/scan_request_timeouts.py backend --check
+        language: system
+        pass_filenames: false
+        files: '^backend/.*\.py$'
+
   # ── 기본 위생 ───────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

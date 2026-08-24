@@ -3,6 +3,7 @@ from django.db.models import Value, CharField
 import requests
 from stream_monitors.models import AIModel, StreamMonitor, StreamMonitorAIModel, DrawingSession, DrawingElement, DrawingParticipant
 from stream_monitors.utils.stream_utils import get_stream_url
+from common.external_http import AVAILABLE, UNAVAILABLE, fetch_json
 from core.common.schema_utils import DynamicSchema
 from ninja import Schema
 from typing import Optional, List
@@ -22,15 +23,15 @@ class StreamMonitorOutSchema(DynamicSchema):
             'Content-Type': 'application/json',
             'accept': 'application/json'
         }
+        # W0-17 ① — 스트리밍 서버 상태조회는 **부수 정보**다.
+        # 예전에는 이 호출이 실패하면 예외가 그대로 올라가 목록 API 가 통째로 500 이었다.
+        # 드론 목록은 스트리밍 서버와 무관하게 보여야 한다. 이제 실패는 값으로 온다.
         stream_url = f"{settings.STREAM_URL}/manage/v3/paths/list"
-        response = requests.get(
-            stream_url,
-            headers=headers,
-            timeout=5,
-            verify=False
+        response_data, streams_ok = fetch_json(
+            stream_url, headers=headers, verify=False, default={}
         )
-        response_data = response.json()
-        stream_items = [item['name'] for item in response_data.get('items', [])]
+        stream_items = [item['name'] for item in (response_data or {}).get('items', [])]
+        stream_status = AVAILABLE if streams_ok else UNAVAILABLE
         if many:
             # For queryset (many=True), process each item in the result
             for item in result:
@@ -50,6 +51,8 @@ class StreamMonitorOutSchema(DynamicSchema):
                         item['ip_source'] = f"{settings.RTSP_PATH_AI if is_ai_model else settings.RTSP_PATH}/{instance.code}"
                         item['is_use_webrtc'] = settings.IS_USE_WEBRTC
                         item['is_external'] = instance.is_external
+                        # 스트리밍 서버가 죽어도 목록은 나온다. 다만 그 사실을 숨기지 않는다.
+                        item['stream_status'] = stream_status
                         check_stream = f"stream/{instance.code}"
                         if check_stream:
                             item['rtsp_url'] = f"{settings.RTSP_URL}/{check_stream}"
@@ -74,12 +77,15 @@ class StreamMonitorOutSchema(DynamicSchema):
                 )
             else:
                 result['ai_models'] = []
-        
+            # 단건도 같은 규약을 따른다 — 목록만 상태를 알고 상세는 모르면
+            # 화면이 서로 다른 이야기를 하게 된다.
+            result['stream_status'] = stream_status
+
         return result
 
 class StreamMonitorAIModelOutSchema(DynamicSchema):
     stream_path: Optional[str] = None
-    
+
     class Meta:
         model = StreamMonitorAIModel
         model_fields = ['id', 'stream_monitor', 'ai_model', 'is_active', 'ai_stream_url', 'in_use']
@@ -103,7 +109,7 @@ class UserInfoOutSchema(Schema):
 class DrawingSessionOutSchema(DynamicSchema):
     created_by: UserInfoOutSchema
     participant_count: Optional[int] = None
-    
+
     class Meta:
         model = DrawingSession
         model_fields = ['id', 'name', 'stream_monitor', 'created_at', 'updated_at', 'is_active']
@@ -111,7 +117,7 @@ class DrawingSessionOutSchema(DynamicSchema):
 
 class DrawingElementOutSchema(DynamicSchema):
     created_by: UserInfoOutSchema
-    
+
     class Meta:
         model = DrawingElement
         model_fields = ['id', 'element_type', 'data', 'created_at', 'updated_at']
@@ -119,7 +125,7 @@ class DrawingElementOutSchema(DynamicSchema):
 
 class DrawingParticipantOutSchema(DynamicSchema):
     user: UserInfoOutSchema
-    
+
     class Meta:
         model = DrawingParticipant
         model_fields = ['joined_at', 'last_activity', 'is_online']
@@ -137,7 +143,7 @@ class AIModelOutSchema(DynamicSchema):
 
 class CaptureResponse(BaseModel):
     """Response model for capture operations."""
-    stream_id: str 
+    stream_id: str
     object_path: Optional[str] = None
     message: str
     success: bool = True

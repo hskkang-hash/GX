@@ -838,7 +838,31 @@ tickets:
 - id: W0-17
   phase: R1
   title: "외부 의존 부분 실패 격리 — 저하 운전 (timeout 없는 49건)"
-  status: ready
+  status: done
+  updated_at: "2026-08-22T23:30:00+09:00"
+  evidence: docs/agent/evidence/W0-17/timeout_inventory.md
+  blocker: |
+    [2026-08-22 · **완료. 다만 지시서의 49건은 과대 추정이었다** (AUTHOR-ERROR #18 · D-214)]
+    전문: docs/agent/evidence/W0-17/timeout_inventory.md
+
+    실측(AST · scripts/scan_request_timeouts.py): requests 호출 76건 중 타임아웃 없는 것
+    **17건**이었다. 49에 섞여 있던 것은 requests 가 아니다 — redis_client 14 ·
+    OpenSearch 2 · **Django 테스트 클라이언트 5** · dict 조회 1. grep 이 이름만 보고 센 것이다.
+    실측대로 17건을 조치했다 → **0건** (면제 3건은 setdefault 형태라 정적으로만 안 보인다).
+
+    dod ① 다운 시험 (STREAM_URL 을 죽은 호스트로 두고 같은 계정·같은 요청):
+      · 목록(스트림 모니터)  **500 → 200** (`stream_status: "unavailable"`)
+      · 이력(비행 로그) 200 · 통계(대시보드) 200 · 목록(드론) 200  — 무변화
+      before 는 추정이 아니라 실측이다. 같은 서버에서 스키마 파일만 커밋본으로 되돌려 다시 쟀다.
+
+    dod ② 타임아웃 없는 호출 0건 + 면제 3건 사유 등재 · dod ③ 값은 settings 1곳
+    (EXTERNAL_HTTP_TIMEOUT · _LONG). 호출부에 숫자를 적지 않는다 (D-212).
+
+    부수 효과: 격리 시험에 **스트리밍 스텁이 더 이상 필요 없다** — W0-16 시험이 매번
+    스텁을 띄워야 했던 이유가 이 500 이었다.
+
+    남긴 것 (P-W0-17-1): Redis 14 · OpenSearch 2 · MinIO 는 기전이 달라 별도 티켓 권고.
+    특히 OpenSearch 는 이름 해석 실패 시 **재시도 5회**를 돈다 — 타임아웃을 5배로 만드는 것과 같다.
   priority: P0
   effort: M
   kind: reuse

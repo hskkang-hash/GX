@@ -705,3 +705,26 @@ TENANT_TRUST_LEGACY_SUPERUSER = env.bool("TENANT_TRUST_LEGACY_SUPERUSER", defaul
 
 # 테넌트 운영 역할(자기 테넌트 관리)의 코드 접두어. `<prefix>_<group_id>` 규약.
 TENANT_ADMIN_ROLE_PREFIX = env.str("TENANT_ADMIN_ROLE_PREFIX", default="tenant_admin")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 외부 의존 저하 운전 (W0-17 · D-212)
+# ─────────────────────────────────────────────────────────────────────────────
+# 타임아웃 값을 **여기 한 곳에서만** 정한다. 호출부에 숫자를 흩지 말 것 —
+# 흩어진 5초·30초가 실제로 몇 초인지 아무도 모르게 되는 것이 지금 상태다.
+#
+# 배경(실측 · evidence/W0-17/timeout_inventory.md): requests 호출 75건 중 17건에
+# 타임아웃이 없다. 하나가 늦으면 워커가 잡히고, 잡힌 워커가 쌓이면 서비스가 선다.
+# 실제로 목록 API 는 스트리밍 서버가 없으면 **통째로 HTTP 500** 이었다.
+
+# (연결, 응답) 초. 연결은 짧게 — 죽은 호스트는 빨리 포기하는 것이 옳다.
+EXTERNAL_HTTP_TIMEOUT = (
+    env.float("EXTERNAL_HTTP_CONNECT_TIMEOUT", default=3.0),
+    env.float("EXTERNAL_HTTP_READ_TIMEOUT", default=5.0),
+)
+
+# 업로드·다운로드처럼 본래 오래 걸리는 호출용. 그래도 무한은 아니다.
+EXTERNAL_HTTP_TIMEOUT_LONG = (
+    env.float("EXTERNAL_HTTP_CONNECT_TIMEOUT", default=3.0),
+    env.float("EXTERNAL_HTTP_LONG_READ_TIMEOUT", default=60.0),
+)

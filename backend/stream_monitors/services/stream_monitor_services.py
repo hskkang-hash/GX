@@ -11,6 +11,7 @@ import uuid
 from core.middleware.refresh_token import get_current_request
 from core.user.models import CoreUser, UserGroup
 import requests
+from common.external_http import default_timeout
 import subprocess
 import threading
 from datetime import datetime
@@ -547,7 +548,8 @@ class StreamMonitorService:
                 record_url,
                 data=json.dumps(request_payload),
                 headers=headers,
-                verify=False
+                verify=False,
+                timeout=default_timeout(),
             )
             object_path = response.json().get('object_path', None)
             if object_path:
@@ -1664,7 +1666,7 @@ class StreamMonitorService:
             "sourceOnDemand": True,
             "sourceProtocol": "tcp"
         }
-        response = requests.post(service_url, headers=headers, json=data)
+        response = requests.post(service_url, headers=headers, json=data, timeout=default_timeout())
         if response.status_code != 200:
             raise Exception(f"Failed to push stream in medianMTX server: {response.text}")
         stream_monitor = StreamMonitor.objects.create(
@@ -1701,7 +1703,7 @@ class StreamMonitorService:
                 'Content-Type': 'application/json',
                 'accept': 'application/json'
             }
-            response = requests.get(path_exist, headers=headers)
+            response = requests.get(path_exist, headers=headers, timeout=default_timeout())
             path_exist = response.json()['exists']
             if not path_exist:
                 logger.error(f"Path does not exist: {path_exist}")
@@ -1714,7 +1716,7 @@ class StreamMonitorService:
                 'Content-Type': 'application/json',
                 'accept': 'application/json'
             }
-            response = requests.delete(service_url, headers=headers)
+            response = requests.delete(service_url, headers=headers, timeout=default_timeout())
             if response.status_code != 200:
                 logger.error(f"Error deleting stream monitor: {response.text}")
         except Exception as e:

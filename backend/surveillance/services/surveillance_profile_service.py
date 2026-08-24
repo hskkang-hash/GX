@@ -16,6 +16,7 @@ from zoneinfo import ZoneInfo
 from asgiref.sync import async_to_sync
 from core.configuration.models import AdminConfig
 import requests
+from common.external_http import default_timeout, long_timeout
 from common.utils import get_gcs_api_headers
 from core.common.schema_utils import DynamicSchema
 from core.middleware.refresh_token import get_current_request
@@ -124,7 +125,7 @@ class SurveillanceProfileService:
                 language_code = 'en'
         except:
             language_code = 'en'
-        
+
         # 🆕 FIX: Map language codes (ko ↔ kr) for compatibility
         # User language might be 'ko' but translations might use 'kr' or vice versa
         language_code_variants = [language_code]
@@ -132,7 +133,7 @@ class SurveillanceProfileService:
             language_code_variants.append('kr')
         elif language_code == 'kr':
             language_code_variants.append('ko')
-        
+
         try:
             translations_data = MultiLanguageContent.objects.filter(
                 content_type=ContentType.objects.get_for_model(MissionPurpose),
@@ -152,7 +153,7 @@ class SurveillanceProfileService:
                         fallback_mapping[object_id] = translations['en']
                 except (json.JSONDecodeError, KeyError):
                     continue
-            
+
         except Exception as e:
             logger.error(f"[TRANSLATION] Error loading translations: {e}")
             return Subquery(
@@ -182,12 +183,12 @@ class SurveillanceProfileService:
                 )
                 FROM surveillance_missionpurpose mp
                 WHERE mp.id = (
-                    SELECT sm.purpose_id 
-                    FROM surveillance_surveymission sm 
+                    SELECT sm.purpose_id
+                    FROM surveillance_surveymission sm
                     WHERE sm.id = surveillance_surveillanceprofile.mission_id
                 )
                 """
-            
+
         else:
             case_conditions = []
             for tt_id, translated_name in translation_mapping.items():
@@ -208,15 +209,15 @@ class SurveillanceProfileService:
                 )
                 FROM surveillance_missionpurpose mp
                 WHERE mp.id = (
-                    SELECT sm.purpose_id 
-                    FROM surveillance_surveymission sm 
+                    SELECT sm.purpose_id
+                    FROM surveillance_surveymission sm
                     WHERE sm.id = surveillance_surveillanceprofile.mission_id
                 )
                 """
         from django.db.models.expressions import RawSQL
         from django.db.models import CharField
         return RawSQL(sql, [], output_field=CharField())
-        
+
     @staticmethod
     def get_queryset_optimized(status: Optional[str] = None, *, use_base_manager: bool = False) -> QuerySet:
         """Return queryset with required prefetch/select_related."""
@@ -224,7 +225,7 @@ class SurveillanceProfileService:
         manager = SurveillanceProfile._base_manager if use_base_manager else SurveillanceProfile.objects
 
         drone_prefetch = Prefetch("drone_assignments", queryset=SurveillanceProfileService._drone_prefetch_queryset())
-        query = manager.select_related(       
+        query = manager.select_related(
                     "mission"
                 ).defer("mission__qgc_mission_data")\
                 .select_related(
@@ -259,11 +260,11 @@ class SurveillanceProfileService:
         if status:
             query = query.filter(status__code__in=status.split(","))
         return query
-        
+
     @staticmethod
     def completed_profile(profile_id: int) -> Tuple[bool, Optional[SurveillanceProfile]]:
         try:
-            
+
             profile = SurveillanceProfile._base_manager.get(id=profile_id)
             previous_status_code = profile.status.code if profile.status else None
             if previous_status_code != "in_progress":
@@ -272,12 +273,12 @@ class SurveillanceProfileService:
             profile.status = SurveillanceStatus._base_manager.get(code="completed")
             profile.actual_end_time = completion_time
             profile.save(update_fields=["status", "actual_end_time", "modified_on"])
-            
+
             # Calculate and set total_flight_time
             SurveillanceProfileService._calculate_and_set_total_flight_time(profile)
-            
+
             drone_assignments = SurveillanceProfileDrone._base_manager.filter(profile=profile)
-            status_available = DeviceStatus._base_manager.get(code="available") 
+            status_available = DeviceStatus._base_manager.get(code="available")
             for drone_assignment in drone_assignments:
                 device = drone_assignment.device
                 device.status = status_available
@@ -381,7 +382,7 @@ class SurveillanceProfileService:
                         .select_related("status")
                         .get(id=profile_id)
                     )
-            
+
             # Double check sau khi lock để đảm bảo profile chưa bị cancel bởi process khác
             if profile.actual_end_time:
                 logger.info(
@@ -389,7 +390,7 @@ class SurveillanceProfileService:
                     profile_id,
                 )
                 return False, profile
-            
+
             cancel_time = timezone.now()
 
             cancelled_status = status_manager.get(code="cancelled")
@@ -498,31 +499,31 @@ class SurveillanceProfileService:
             start_time_start = start_time_start[0] if start_time_start else None
         if isinstance(start_time_end, list):
             start_time_end = start_time_end[0] if start_time_end else None
-        
+
         if not start_time_start or not start_time_end:
             raise ValidationError("start_time_start and start_time_end are required")
-        
+
         # Parse ISO 8601 datetime strings (format: 2025-12-10T17:00:00+00:00)
         # datetime.fromisoformat() supports both Z and +00:00 formats
         try:
             dt_start = datetime.fromisoformat(str(start_time_start).replace('Z', '+00:00'))
         except (ValueError, AttributeError) as e:
             raise ValidationError(f"Invalid start_time_start format: {start_time_start}") from e
-        
+
         try:
             dt_end = datetime.fromisoformat(str(start_time_end).replace('Z', '+00:00'))
         except (ValueError, AttributeError) as e:
             raise ValidationError(f"Invalid start_time_end format: {start_time_end}") from e
-        
 
-        
+
+
         queryset = queryset.filter(
             effective_start_time__gte=dt_start,
             effective_start_time__lte=dt_end
         )
-        
+
         queryset = queryset.order_by("-id").values("id", "name", "code", "status__code", "start_time", "actual_start_time", "actual_end_time")
-        return queryset 
+        return queryset
     @staticmethod
     def get_detail(profile_id: int) -> Optional[SurveillanceProfile]:
         try:
@@ -570,7 +571,7 @@ class SurveillanceProfileService:
         """Extract command_id from command_line dict."""
         if not command_line:
             return None
-        
+
         try:
             # Try to get command_id from digit keys
             digit_keys = [
@@ -578,7 +579,7 @@ class SurveillanceProfileService:
             ]
             if digit_keys:
                 return int(digit_keys[0])
-            
+
             # Try to get from command field
             command = command_line.get("command")
             if isinstance(command, dict):
@@ -588,7 +589,7 @@ class SurveillanceProfileService:
                     return int(command)
                 except (ValueError, TypeError):
                     pass
-            
+
             # Try command_id field
             command_id = command_line.get("command_id")
             if command_id is not None:
@@ -598,7 +599,7 @@ class SurveillanceProfileService:
                     pass
         except Exception:
             pass
-        
+
         return None
 
     @staticmethod
@@ -785,9 +786,9 @@ class SurveillanceProfileService:
             20: "NAV_RETURN_TO_LAUNCH",  # MAV_CMD_NAV_RETURN_TO_LAUNCH
             16: "NAV_WAYPOINT",  # MAV_CMD_NAV_WAYPOINT
         }
-        
+
         command_name = command_names.get(command_id, "NAV_WAYPOINT")
-        
+
         # Build params array (7 elements) as strings (to match format of other waypoints)
         if command_id == 22:  # TAKEOFF
             params = ["0.0", "0.0", "0.0", "0", str(lat), str(lon), str(altitude)]
@@ -797,7 +798,7 @@ class SurveillanceProfileService:
             params = ["0.0", "0.0", "0.0", "0", str(lat), str(lon), str(altitude)]
         else:  # RTL (20)
             params = ["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0"]
-        
+
         return {
             str(command_id): {
                 command_name: params
@@ -813,24 +814,24 @@ class SurveillanceProfileService:
         """
         Add waiting_coordinates to route_path if exists.
         Adds waiting_coordinates after takeoff and at the end with land/rtl.
-        
+
         Args:
             route_path: Existing route_path list
             assignment: Drone assignment instance
             all_mission_waypoints: Optional list of mission waypoints for getting config
-            
+
         Returns:
             Updated route_path with waiting_coordinates added
         """
         if not route_path:
             return route_path
-        
+
         # Parse waiting_coordinates
         waiting_coordinates_raw = assignment.waiting_coordinates
         waiting_lat = None
         waiting_lon = None
         waiting_alt = None
-        
+
         if waiting_coordinates_raw:
             coords_list = None
             if isinstance(waiting_coordinates_raw, list):
@@ -842,7 +843,7 @@ class SurveillanceProfileService:
                     pass
             elif isinstance(waiting_coordinates_raw, dict):
                 coords_list = list(waiting_coordinates_raw.values()) if waiting_coordinates_raw else None
-            
+
             if coords_list and isinstance(coords_list, list) and len(coords_list) >= 2:
                 try:
                     waiting_lat = float(coords_list[0])
@@ -851,10 +852,10 @@ class SurveillanceProfileService:
                         waiting_alt = float(coords_list[2])
                 except (ValueError, TypeError, IndexError):
                     pass
-        
+
         if waiting_lat is None or waiting_lon is None:
             return route_path
-        
+
         # Get takeoff altitude from first waypoint
         takeoff_altitude = 0.0
         first_wp = route_path[0] if route_path else None
@@ -868,7 +869,7 @@ class SurveillanceProfileService:
                         pass
             except Exception:
                 pass
-        
+
         # Set waiting_alt from takeoff altitude if not provided
         if waiting_alt is None:
             waiting_alt = takeoff_altitude if takeoff_altitude > 0 else 0.0
@@ -876,25 +877,25 @@ class SurveillanceProfileService:
             waiting_alt = float(waiting_alt)
         except (ValueError, TypeError):
             waiting_alt = 0.0
-        
+
         # Get frame from first waypoint
         frame_id = first_wp.get("frame_id", "3") if first_wp else "3"
         frame_name = first_wp.get("frame_name", "GLOBAL_RELATIVE_ALT") if first_wp else "GLOBAL_RELATIVE_ALT"
-        
+
         # Find takeoff waypoint (command_id == "22")
         takeoff_index = None
         for idx, wp in enumerate(route_path):
             if wp.get("command_id") == "22":  # TAKEOFF
                 takeoff_index = idx
                 break
-        
+
         # Add waiting_coordinates after takeoff
         if takeoff_index is not None:
             # Insert after takeoff
             takeoff_wp = route_path[takeoff_index]
             takeoff_lat = takeoff_wp.get("latitude")
             takeoff_lon = takeoff_wp.get("longitude")
-            
+
             # Calculate distance from takeoff to waiting_coordinates
             distance_to_waiting = 0.0
             if takeoff_lat and takeoff_lon:
@@ -905,24 +906,24 @@ class SurveillanceProfileService:
                     ).kilometers
                 except (ValueError, TypeError):
                     pass
-            
+
             # Calculate cumulative distance up to takeoff
             cumulative_distance = takeoff_wp.get("distance_from_start", 0.0)
             try:
                 cumulative_distance = float(cumulative_distance)
             except (ValueError, TypeError):
                 cumulative_distance = 0.0
-            
+
             waiting_command_name_dict = {"16": "MAV_CMD_16"}
             waiting_params_dict = {"16": [0, 0, 0, 0, waiting_lat, waiting_lon, waiting_alt]}
-            
+
             # Insert waiting_coordinates after takeoff
             waiting_order = takeoff_wp.get("order", 1)
             try:
                 waiting_order = float(waiting_order) + 0.5
             except (ValueError, TypeError):
                 waiting_order = 1.5
-            
+
             waiting_wp = {
                 "order": waiting_order,
                 "latitude": waiting_lat,
@@ -938,9 +939,9 @@ class SurveillanceProfileService:
                 "frame_id": frame_id,
                 "frame_name": frame_name,
             }
-            
+
             route_path.insert(takeoff_index + 1, waiting_wp)
-            
+
             # Recalculate distances for subsequent waypoints
             prev_distance = cumulative_distance + distance_to_waiting
             for idx in range(takeoff_index + 2, len(route_path)):
@@ -956,28 +957,28 @@ class SurveillanceProfileService:
                     wp["distance_from_start"] = round(prev_distance, 3)
                 except (ValueError, TypeError):
                     pass
-        
+
         # Add waiting_coordinates at the end with land/rtl
         last_wp = route_path[-1] if route_path else None
         if last_wp:
             last_command_id = last_wp.get("command_id")
-            
+
             # Get config for last mission waypoint
             last_mission_config = SurveillanceProfileService._get_last_mission_waypoint_config()
-            
+
             # Determine which command to use
             if last_mission_config == "land":
                 end_command_id = 21  # LAND
             else:
                 end_command_id = 20  # RTL
-            
+
             # Calculate cumulative distance up to last waypoint
             cumulative_distance = last_wp.get("distance_from_start", 0.0)
             try:
                 cumulative_distance = float(cumulative_distance)
             except (ValueError, TypeError):
                 cumulative_distance = 0.0
-            
+
 
             if last_command_id in ["21", "20"]:
                 route_path.pop()
@@ -989,7 +990,7 @@ class SurveillanceProfileService:
                         cumulative_distance = float(cumulative_distance)
                     except (ValueError, TypeError):
                         cumulative_distance = 0.0
-            
+
             # Calculate distance from last waypoint to waiting_coordinates (for land/rtl)
             last_lat = last_wp.get("latitude") if last_wp else None
             last_lon = last_wp.get("longitude") if last_wp else None
@@ -1002,21 +1003,21 @@ class SurveillanceProfileService:
                     ).kilometers
                 except (ValueError, TypeError):
                     pass
-            
+
             # Build land/rtl command with waiting coordinates
             end_command_name_dict = {str(end_command_id): f"MAV_CMD_{end_command_id}"}
             if end_command_id == 21:  # LAND
                 end_params_dict = {str(end_command_id): [0, 0, 0, 0, waiting_lat, waiting_lon, waiting_alt]}
             else:  # RTL (20)
                 end_params_dict = {str(end_command_id): [0, 0, 0, 0, 0, 0, 0]}
-            
+
             # Add land/rtl at waiting_coordinates (no separate waiting point)
             end_order = last_wp.get("order", len(route_path)) if last_wp else len(route_path)
             try:
                 end_order = float(end_order)
             except (ValueError, TypeError):
                 end_order = len(route_path)
-            
+
             end_wp = {
                 "order": end_order + 0.5,
                 "latitude": waiting_lat,
@@ -1032,9 +1033,9 @@ class SurveillanceProfileService:
                 "frame_id": frame_id,
                 "frame_name": frame_name,
             }
-            
+
             route_path.append(end_wp)
-        
+
         return route_path
 
     @staticmethod
@@ -1049,7 +1050,7 @@ class SurveillanceProfileService:
         Build route_path for a drone assignment based on start and end waypoints.
         Ensures route_path starts with takeoff and ends with land or RTL.
         Nếu mission có from_route hoặc drone_segments, sử dụng route_path từ drone_segments.
-        
+
         Args:
             assignment: Drone assignment instance
             mission: Survey mission instance
@@ -1057,7 +1058,7 @@ class SurveillanceProfileService:
             mission_end_command_id: Overall mission end command (20=RTL, 21=LAND) used when a segment needs an end command
             mission_takeoff_point: Overall mission takeoff/home point (lat, lon) used for synthetic takeoff/RTL
         """
-        
+
         if not assignment.start_waypoint_id or not assignment.end_waypoint_id:
             return None
 
@@ -1072,13 +1073,13 @@ class SurveillanceProfileService:
                 )
             start_order = assignment.start_waypoint.order
             end_order = assignment.end_waypoint.order
-            
+
             # Logic 1: Nếu mission có from_route hoặc drone_segments, build từ QGC mission trong drone_segments
             # QUAN TRỌNG: Giữ nguyên số lượng và thứ tự waypoint, KHÔNG thêm custom waypoints
             # (Tương tự logic trong _build_segments_from_imported_routes)
-            if (getattr(mission, 'from_route', False) or 
+            if (getattr(mission, 'from_route', False) or
                 (hasattr(mission, 'drone_segments') and mission.drone_segments)):
-                
+
                 # Lấy waypoints từ database để map mission_waypoint_id
                 if waypoints_cache is not None and mission.id in waypoints_cache:
                     all_mission_waypoints = waypoints_cache[mission.id]
@@ -1089,24 +1090,24 @@ class SurveillanceProfileService:
                     )
                     if waypoints_cache is not None:
                         waypoints_cache[mission.id] = all_mission_waypoints
-                
+
                 # Filter waypoints trong range này - GIỮ NGUYÊN THỨ TỰ
                 # QUAN TRỌNG: Phải bao gồm TẤT CẢ waypoints từ start_order đến end_order (bao gồm cả 2 điểm đầu cuối)
                 route_waypoints = [
                     wp for wp in all_mission_waypoints
                     if wp.get('order') is not None and start_order <= wp.get('order') <= end_order
                 ]
-                
+
                 # Sắp xếp lại theo order để đảm bảo thứ tự đúng (phòng trường hợp all_mission_waypoints không được sort)
                 route_waypoints = sorted(route_waypoints, key=lambda x: x.get('order', 0))
-                
+
                 if not route_waypoints:
                     logger.warning(
                         "No waypoints found for assignment %s (from_route/drone_segments): start_order=%d, end_order=%d",
                         assignment.id, start_order, end_order
                     )
                     return None
-                
+
                 # Validation: Đảm bảo số lượng waypoints khớp với expected count
                 expected_count = end_order - start_order + 1
                 actual_count = len(route_waypoints)
@@ -1116,7 +1117,7 @@ class SurveillanceProfileService:
                         "Some waypoints may be missing in database.",
                         assignment.id, expected_count, start_order, end_order, actual_count
                     )
-                
+
                 # Validation: Đảm bảo first và last waypoint khớp với start_order và end_order
                 first_wp_order = route_waypoints[0].get('order')
                 last_wp_order = route_waypoints[-1].get('order')
@@ -1126,7 +1127,7 @@ class SurveillanceProfileService:
                         "actual start=%d end=%d",
                         assignment.id, start_order, end_order, first_wp_order, last_wp_order
                     )
-                
+
                 # Tìm drone_segment tương ứng với assignment này (nếu có)
                 drone_segment = None
                 qgc_mission = None
@@ -1139,12 +1140,12 @@ class SurveillanceProfileService:
                             qgc_mission = segment.get('qgc_mission')
                             route_id = segment.get('route_id')
                             break
-                
+
                 # Build route_path từ mission waypoints - GIỮ NGUYÊN SỐ LƯỢNG VÀ THỨ TỰ
                 # Map với qgc_items nếu có để lấy command/params/frame chính xác
                 route_path = []
                 cumulative_distance = 0.0
-                
+
                 # Tạo map từ qgc_mission items nếu có (để lấy command/params/frame)
                 qgc_items_map = {}
                 if qgc_mission and not route_id:
@@ -1155,14 +1156,14 @@ class SurveillanceProfileService:
                         do_jump_id = item.get('doJumpId')
                         if do_jump_id is not None:
                             qgc_items_map[do_jump_id] = item
-                
+
                 # Build route_path từ mission waypoints và map với qgc_items
                 # QUAN TRỌNG: Loop qua TẤT CẢ waypoints trong range (từ start_order đến end_order)
                 # để đảm bảo bao gồm đầy đủ các điểm của route, không bỏ sót điểm nào
                 # route_waypoints đã được filter và sort theo order, bao gồm cả start và end waypoint
                 for i, wp in enumerate(route_waypoints):
                     wp_order = wp.get('order')
-                    
+
                     # Tính distance từ điểm trước
                     if i > 0:
                         try:
@@ -1174,7 +1175,7 @@ class SurveillanceProfileService:
                             cumulative_distance += distance_km
                         except (ValueError, TypeError):
                             pass
-                    
+
                     # Tìm qgc_item tương ứng (nếu có) để lấy command/params/frame
                     qgc_item = None
                     if qgc_items_map:
@@ -1190,7 +1191,7 @@ class SurveillanceProfileService:
                                     if abs(item_lat - wp_lat) < 0.0001 and abs(item_lon - wp_lon) < 0.0001:
                                         qgc_item = item
                                         break
-                    
+
                     # Extract command/params/frame từ qgc_item hoặc từ waypoint trong database
                     if qgc_item:
                         command_id = str(qgc_item.get('command', 16))
@@ -1222,7 +1223,7 @@ class SurveillanceProfileService:
                                 elif isinstance(cmd_data, list) and len(cmd_data) >= 7:
                                     altitude = cmd_data[6]
                                     break
-                    
+
                     route_path.append({
                         "order": wp_order,
                         "latitude": float(wp.get('latitude', 0)),
@@ -1238,7 +1239,7 @@ class SurveillanceProfileService:
                         "frame_id": frame_id,
                         "frame_name": frame_name,
                     })
-                
+
                 # Return route_path - KHÔNG thêm custom waypoints (DO_GRIPPER, waiting_coordinates)
                 # Đảm bảo giữ nguyên số lượng và thứ tự waypoint theo đúng mission
                 # NOTE: Nếu Flightbird yêu cầu route_path tuân thủ rule (Takeoff/Gripper/Waiting/StartSep/...),
@@ -1256,7 +1257,7 @@ class SurveillanceProfileService:
                 except Exception:
                     pass
                 return route_path
-            
+
             # Logic 2: Nếu KHÔNG có from_route hoặc drone_segments, build từ waypoints trong database
             # và thêm custom waypoints (DO_GRIPPER, waiting_coordinates) như logic cũ
             if waypoints_cache is not None and mission.id in waypoints_cache:
@@ -1268,16 +1269,16 @@ class SurveillanceProfileService:
                 )
                 if waypoints_cache is not None:
                     waypoints_cache[mission.id] = all_mission_waypoints
-            
+
             # Filter waypoints for this assignment's range
-            
+
             all_waypoints = [
                 wp for wp in all_mission_waypoints
                 if start_order <= wp["order"] <= end_order
             ]
-            
+
             # Debug: Log filtering info
-            
+
             # Debug: Log filtered waypoints
             if all_waypoints:
                 logger.debug(
@@ -1294,21 +1295,21 @@ class SurveillanceProfileService:
             # Get first and last waypoints
             first_wp = all_waypoints[0]
             last_wp = all_waypoints[-1]
-            
+
             # Get command_id for first and last waypoints
             first_command_id = SurveillanceProfileService._get_command_id_from_command_line(first_wp.get("command_line"))
             last_command_id = SurveillanceProfileService._get_command_id_from_command_line(last_wp.get("command_line"))
 
             route_path = []
             cumulative_distance = 0.0
-            
+
 
             waiting_coordinates_raw = assignment.waiting_coordinates
             waiting_lat = None
             waiting_lon = None
-            waiting_alt = None 
-            waiting_coordinates = None  
-            
+            waiting_alt = None
+            waiting_coordinates = None
+
             if waiting_coordinates_raw:
                 # Try to parse as list first
                 coords_list = None
@@ -1323,7 +1324,7 @@ class SurveillanceProfileService:
                 elif isinstance(waiting_coordinates_raw, dict):
                     # If it's a dict, try to extract values
                     coords_list = list(waiting_coordinates_raw.values()) if waiting_coordinates_raw else None
-                
+
                 # Parse coordinates from list
                 if coords_list and isinstance(coords_list, list) and len(coords_list) >= 2:
                     try:
@@ -1336,8 +1337,8 @@ class SurveillanceProfileService:
                             waiting_coordinates = True
                     except (ValueError, TypeError, IndexError):
                         pass
-            
-            frame_id = "3" 
+
+            frame_id = "3"
             frame_name = "GLOBAL_RELATIVE_ALT"
             if first_wp.get("frame"):
                 try:
@@ -1347,7 +1348,7 @@ class SurveillanceProfileService:
                 except (KeyError, IndexError, TypeError, ValueError):
                     frame_id = "3"
                     frame_name = "GLOBAL_RELATIVE_ALT"
-            
+
             takeoff_altitude = 0.0
             if first_wp.get("command_line"):
                 try:
@@ -1368,7 +1369,7 @@ class SurveillanceProfileService:
                             break
                 except (KeyError, IndexError, TypeError):
                     pass
-            
+
             if waiting_lat is not None and waiting_lon is not None:
                 if waiting_alt is None:
                     waiting_alt = takeoff_altitude if takeoff_altitude > 0 else 0.0
@@ -1378,13 +1379,13 @@ class SurveillanceProfileService:
                     waiting_alt = float(waiting_alt)
                 except (ValueError, TypeError):
                     waiting_alt = 0.0
-            
+
             first_lat = float(first_wp["latitude"]) if first_wp.get("latitude") else None
             first_lon = float(first_wp["longitude"]) if first_wp.get("longitude") else None
-            
+
             # Xác định start_idx: nếu điểm đầu tiên là takeoff (command_id == 22) thì start_idx = 1, ngược lại = 0
             start_idx = 1 if (first_command_id == 22) else 0
-            
+
             # QUAN TRỌNG: Chỉ thêm takeoff nếu điểm đầu tiên không phải là takeoff (first_command_id != 22)
             # Nếu đã có takeoff rồi thì không thêm nữa
             if first_command_id != 22 and first_lat is not None and first_lon is not None:
@@ -1398,32 +1399,32 @@ class SurveillanceProfileService:
                     except Exception:
                         takeoff_lat = first_lat
                         takeoff_lon = first_lon
-                
+
                 takeoff_command_line = SurveillanceProfileService._build_command_line_for_route(
                     22, takeoff_lat, takeoff_lon, takeoff_altitude
                 )
-                
+
                 command_name_dict = takeoff_command_line["22"]
                 params_dict = takeoff_command_line["22"]
-                
+
                 # Rule 1: Takeoff (độ cao separated)
                 takeoff_order = float(first_wp["order"] or 0) - 0.2
                 route_path.append({
                     "order": takeoff_order,
                     "latitude": takeoff_lat,
                     "longitude": takeoff_lon,
-                    "altitude": str(takeoff_altitude),  
-                    "distance_from_start": 0,  
-                    "type": "waypoint",  
+                    "altitude": str(takeoff_altitude),
+                    "distance_from_start": 0,
+                    "type": "waypoint",
                     "mission_waypoint_id": None,
-                    "name": f"Waypoint {int(first_wp['order'])}",  
-                    "command_id": "22",  
-                    "command_name": command_name_dict,  
-                    "params": params_dict,  
-                    "frame_id": frame_id,  
+                    "name": f"Waypoint {int(first_wp['order'])}",
+                    "command_id": "22",
+                    "command_name": command_name_dict,
+                    "params": params_dict,
+                    "frame_id": frame_id,
                     "frame_name": frame_name,
                 })
-                
+
                 # Rule 2: Gripper Mechanism(param2=0) immediately after Takeoff
                 try:
                     gripper_command_id = "211"
@@ -1431,9 +1432,9 @@ class SurveillanceProfileService:
                     gripper_params_dict = {gripper_command_id: ["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0"]}
                     # Set param 2 = 0 (open/release gripper)
                     gripper_params_dict[gripper_command_id][1] = "0.0"
-                    
+
                     gripper_order = takeoff_order + 0.05
-                    
+
                     route_path.append({
                         "order": gripper_order,
                         "latitude": takeoff_lat,
@@ -1451,7 +1452,7 @@ class SurveillanceProfileService:
                     })
                 except Exception as e:
                     logger.warning("Error adding Gripper Open after synthetic takeoff for assignment %s: %s", assignment.id, e)
-                
+
                 if waiting_coordinates and waiting_lat is not None and waiting_lon is not None:
                     try:
                         distance_km = geodesic(
@@ -1461,7 +1462,7 @@ class SurveillanceProfileService:
                         cumulative_distance += distance_km
                     except (ValueError, TypeError):
                         pass
-            
+
             if first_command_id == 22 and first_lat is not None and first_lon is not None:
                 # Rule 1: Takeoff (độ cao separated)
                 takeoff_order = float(first_wp["order"] or 0) - 0.2
@@ -1480,7 +1481,7 @@ class SurveillanceProfileService:
                     "frame_id": list(first_wp.get("frame", {}).keys())[0] if first_wp.get("frame") else None,
                     "frame_name": list(first_wp.get("frame", {}).values())[0] if first_wp.get("frame") else None,
                 })
-                
+
                 # Rule 2: Gripper Mechanism(param2=0) immediately after Takeoff
                 try:
                     gripper_command_id = "211"
@@ -1488,9 +1489,9 @@ class SurveillanceProfileService:
                     gripper_params_dict = {gripper_command_id: ["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0"]}
                     # Set param 2 = 0 (open/release gripper)
                     gripper_params_dict[gripper_command_id][1] = "0.0"
-                    
+
                     gripper_order = takeoff_order + 0.05
-                    
+
                     route_path.append({
                         "order": gripper_order,
                         "latitude": first_lat,
@@ -1508,7 +1509,7 @@ class SurveillanceProfileService:
                     })
                 except Exception as e:
                     logger.warning("Error adding Gripper Open after existing takeoff for assignment %s: %s", assignment.id, e)
-                
+
                 # Tính distance từ takeoff đến điểm tiếp theo (waiting point hoặc start point)
                 if waiting_lat is not None and waiting_lon is not None:
                     try:
@@ -1530,7 +1531,7 @@ class SurveillanceProfileService:
                         cumulative_distance += distance_km
                     except (ValueError, TypeError, IndexError):
                         pass
-            
+
             # Thứ tự mong muốn: takeoff -> waiting point (nếu có) -> start point -> DO_GRIPPER (open) -> route -> DO_GRIPPER (close) -> land/rtl
             # Bước 1: Thêm waiting point sau takeoff (nếu có)
             if waiting_lat is not None and waiting_lon is not None:
@@ -1541,7 +1542,7 @@ class SurveillanceProfileService:
                         waiting_alt = float(waiting_alt)
                     except (ValueError, TypeError):
                         waiting_alt = 0.0
-                    
+
                     if not route_path and first_lat is not None and first_lon is not None:
                         try:
                             distance_km = geodesic(
@@ -1551,10 +1552,10 @@ class SurveillanceProfileService:
                             cumulative_distance += distance_km
                         except (ValueError, TypeError):
                             pass
-                    
+
                     waiting_command_name_dict = {"16": "MAV_CMD_16"}
                     waiting_params_dict = {"16": [0, 0, 0, 0, waiting_lat, waiting_lon, waiting_alt]}
-                    
+
                     # Rule 3: Điểm tọa độ chờ (waiting coordinate) - luôn SAU takeoff
                     base_order = None
                     if route_path:
@@ -1566,7 +1567,7 @@ class SurveillanceProfileService:
                     except (ValueError, TypeError):
                         base_order = float(first_wp.get("order") or 0)
                     waiting_order = base_order + 0.05
-                    
+
                     route_path.append({
                         "order": waiting_order,
                         "latitude": waiting_lat,
@@ -1576,7 +1577,7 @@ class SurveillanceProfileService:
                         "type": "waypoint",
                         "mission_waypoint_id": None,
                         "name": "Waiting Point",
-                        "command_id": "16",  
+                        "command_id": "16",
                         "command_name": waiting_command_name_dict,
                         "params": waiting_params_dict,
                         "frame_id": frame_id,
@@ -1586,7 +1587,7 @@ class SurveillanceProfileService:
                     logger.warning("Error adding waiting_coordinates to route_path for assignment %s: %s", assignment.id, e)
 
             # Bước 2: Thêm start point (waypoint đầu tiên của route) và DO_GRIPPER open ngay sau đó
-       
+
 
             has_waiting_coords = waiting_lat is not None and waiting_lon is not None
             # Nếu mission đã có LAND/RTL ở cuối range, tách LAND/RTL ra để luôn có thể chèn:
@@ -1595,11 +1596,11 @@ class SurveillanceProfileService:
             end_idx = len(all_waypoints) - 1 if has_end_command_in_mission else len(all_waypoints)
 
             waypoints_added_count = 0
-            
+
             # Thêm start point đầu tiên (nếu có)
             if start_idx < len(all_waypoints) and start_idx < end_idx:
                 start_wp = all_waypoints[start_idx]
-                
+
                 # Tính distance từ điểm trước (takeoff hoặc waiting point)
                 if route_path:
                     try:
@@ -1611,7 +1612,7 @@ class SurveillanceProfileService:
                         cumulative_distance += distance_km
                     except (ValueError, TypeError):
                         pass
-                
+
                 # Extract altitude từ start waypoint
                 altitude = None
                 if start_wp.get("command_line"):
@@ -1636,7 +1637,7 @@ class SurveillanceProfileService:
                         base_order = route_path[-1].get("order")
                     if base_order is None:
                         base_order = float(first_wp.get("order") or 0)
-                    
+
                     start_sep_order = float(base_order) + 0.05
                     start_sep_lat = float(start_wp["latitude"]) if start_wp.get("latitude") else None
                     start_sep_lon = float(start_wp["longitude"]) if start_wp.get("longitude") else None
@@ -1659,7 +1660,7 @@ class SurveillanceProfileService:
                         })
                 except Exception as e:
                     logger.warning("Error adding Start Separated point for assignment %s: %s", assignment.id, e)
-                
+
                 # Rule 5: Điểm đầu mission (độ cao mission)
                 route_path.append({
                     "order": start_wp["order"],
@@ -1677,7 +1678,7 @@ class SurveillanceProfileService:
                     "frame_name": list(start_wp.get("frame", {}).values())[0] if start_wp.get("frame") else None,
                 })
                 waypoints_added_count += 1
-            
+
             # Bước 4: Thêm các waypoint còn lại (từ start_idx + 1 đến end_idx)
             for idx, wp in enumerate(all_waypoints[start_idx + 1:end_idx], start=start_idx + 1):
                 if idx > start_idx:
@@ -1747,7 +1748,7 @@ class SurveillanceProfileService:
 
             last_lat = float(last_wp["latitude"]) if last_wp.get("latitude") else None
             last_lon = float(last_wp["longitude"]) if last_wp.get("longitude") else None
-            
+
             # End mission point: LUÔN là waypoint cuối của mission (trước LAND/RTL nếu có).
             # Waiting End (nếu có) sẽ là 1 điểm riêng (Rule 10) và LAND/RTL sẽ dùng waiting coords.
             mission_end_wp = None
@@ -1965,11 +1966,11 @@ class SurveillanceProfileService:
             expected_mission_waypoints = assignment.end_waypoint.order - assignment.start_waypoint.order + 1
             # Count mission waypoints in route_path (those with mission_waypoint_id not None)
             actual_mission_waypoints = sum(1 for wp in route_path if wp.get("mission_waypoint_id") is not None)
-            
+
             # Debug: Log detailed info
             first_wp_order = first_wp.get("order") if first_wp else None
             last_wp_order = last_wp.get("order") if last_wp else None
-            
+
             if actual_mission_waypoints != expected_mission_waypoints:
                 logger.warning(
                     "Route path count mismatch for assignment %s: expected %d mission waypoints, got %d. "
@@ -1987,19 +1988,19 @@ class SurveillanceProfileService:
 
     @staticmethod
     def build_route_paths_for_assignments(
-        assignments: Union[QuerySet, List[SurveillanceProfileDrone]], 
+        assignments: Union[QuerySet, List[SurveillanceProfileDrone]],
         mission: SurveyMission
     ) -> Dict[int, List[Dict[str, Any]]]:
         """
         Build route_path for each assignment and return as dict mapping.
-        
+
         Uses waypoints cache to avoid N+1 queries when processing multiple assignments
         from the same mission.
-        
+
         Args:
             assignments: QuerySet or list of SurveillanceProfileDrone instances
             mission: The survey mission
-            
+
         Returns:
             Dict mapping assignment_id -> route_path
             Example: {123: [{order: 1, lat: 37.5, ...}, ...], 124: [...]}
@@ -2025,7 +2026,7 @@ class SurveillanceProfileService:
             pass
         mission_end_command_id = SurveillanceProfileService._get_overall_mission_end_command_id(mission, waypoints_cache)
         mission_takeoff_point = SurveillanceProfileService._get_overall_mission_takeoff_point(mission, waypoints_cache)
-        
+
         # Build route_path for each assignment
         route_paths_map = {}
         for assignment in assignments:
@@ -2228,7 +2229,7 @@ class SurveillanceProfileService:
                 if terminal
                 else None
             )
-            
+
             # Lấy cruise_speed từ FlightPerformance measurement với chuyển đổi đơn vị
             cruise_speed_ms = None
             flight_performance = getattr(device, "flight_performance", None)
@@ -2248,11 +2249,11 @@ class SurveillanceProfileService:
                                 cruise_speed_ms = cruise_speed_value
                         else:
                             cruise_speed_ms = cruise_speed_value
-            
+
             # Nếu không có, lấy từ AdminConfig (get_waypoint_speed)
             if cruise_speed_ms is None or cruise_speed_ms <= 0:
                 cruise_speed_ms = get_waypoint_speed(default=7.0)
-            
+
             # Lấy flight_time từ PropulsionSystem measurement với chuyển đổi đơn vị
             flight_time_min = None
             propulsion_system = getattr(device, "propulsion_system", None)
@@ -2337,20 +2338,20 @@ class SurveillanceProfileService:
     def _convert_utc_to_system_timezone_date(utc_datetime):
         """
         Chuyển đổi UTC datetime string hoặc datetime object sang date trong timezone của hệ thống.
-        
+
         Args:
             utc_datetime: datetime object hoặc string (UTC) hoặc date object
-            
+
         Returns:
             date object trong timezone hệ thống, hoặc None nếu không parse được
         """
         if utc_datetime is None:
             return None
-        
+
         # Nếu đã là date object, trả về luôn
         if isinstance(utc_datetime, date) and not isinstance(utc_datetime, datetime):
             return utc_datetime
-        
+
         # Nếu là string, parse thành datetime
         if isinstance(utc_datetime, str):
             try:
@@ -2366,7 +2367,7 @@ class SurveillanceProfileService:
                     utc_datetime = datetime.strptime(utc_datetime, '%Y-%m-%d %H:%M:%S')
                 except ValueError:
                     return None
-        
+
         # Nếu là datetime nhưng chưa có timezone, giả định là UTC
         if isinstance(utc_datetime, datetime):
             if timezone.is_naive(utc_datetime):
@@ -2376,14 +2377,14 @@ class SurveillanceProfileService:
                 # Đảm bảo datetime là UTC
                 if utc_datetime.tzinfo != dt_timezone.utc:
                     utc_datetime = utc_datetime.astimezone(dt_timezone.utc)
-            
+
             # Chuyển đổi sang timezone của hệ thống
             system_tz = timezone.get_current_timezone()
             system_datetime = utc_datetime.astimezone(system_tz)
-            
+
             # Trả về date trong timezone hệ thống
             return system_datetime.date()
-        
+
         return None
 
     @staticmethod
@@ -2443,7 +2444,7 @@ class SurveillanceProfileService:
             if diagnostics is not None:
                 diagnostics["failure_stage"] = "no_usable_drones"
             return [], candidate_points, False
-        
+
         for drones_to_use in range(max_drones_usable, 0, -1):
             segment_templates = SurveillanceProfileService._split_mission_points(
                 mission_points,
@@ -2471,7 +2472,7 @@ class SurveillanceProfileService:
         if diagnostics is not None and not diagnostics.get("failure_stage"):
             diagnostics["failure_stage"] = "assign_segments_failed"
         return [], candidate_points, False
-    
+
     @staticmethod
     def _build_segments_from_imported_routes(
         mission: SurveyMission,
@@ -2498,7 +2499,7 @@ class SurveillanceProfileService:
         if diagnostics is not None:
             diagnostics["failure_stage"] = diagnostics.get("failure_stage") or "imported_route_no_segments"
         return [], candidate_points, False
-    
+
     @staticmethod
     def _extract_route_path_from_qgc_mission(
         qgc_mission: Dict[str, Any],
@@ -2512,41 +2513,41 @@ class SurveillanceProfileService:
         route_path = []
         if not qgc_mission or not isinstance(qgc_mission, dict):
             return route_path
-        
+
         mission_data = qgc_mission.get('mission', {})
         if not mission_data:
             return route_path
-        
+
         items = mission_data.get('items', [])
         if not items:
             return route_path
-        
+
         cumulative_distance = 0.0
         # Không sử dụng start_order/end_order để filter items vì doJumpId có thể không khớp với order
         # Thay vào đó, extract tất cả items và sẽ map với mission waypoints sau
         order_counter = 1
-        
+
         for idx, item in enumerate(items):
             item_type = item.get('type', 'SimpleItem')
             command = item.get('command', 16)
             params = item.get('params', [])
             frame = item.get('frame', 3)
-            
+
             # Extract coordinates từ params
             lat = None
             lon = None
             alt = None
-            
+
             if isinstance(params, list) and len(params) >= 7:
                 lat = params[4] if params[4] is not None and params[4] != 0.0 else None
                 lon = params[5] if params[5] is not None and params[5] != 0.0 else None
                 alt = params[6] if params[6] is not None and params[6] != 0.0 else None
-            
+
             # Xử lý ComplexItem (survey polygon)
             if item_type == 'ComplexItem' and item.get('complexItemType') == 'survey':
                 transect_item = item.get('TransectStyleComplexItem', {})
                 transect_items = transect_item.get('Items', [])
-                
+
                 # Lấy VisualTransectPoints nếu có
                 visual_points = transect_item.get('VisualTransectPoints', [])
                 if visual_points:
@@ -2554,7 +2555,7 @@ class SurveillanceProfileService:
                         if isinstance(point, list) and len(point) >= 2:
                             point_lat = point[0]
                             point_lon = point[1]
-                            
+
                             # Tính distance từ điểm trước
                             if route_path:
                                 try:
@@ -2566,7 +2567,7 @@ class SurveillanceProfileService:
                                     cumulative_distance += distance_km
                                 except (ValueError, TypeError):
                                     pass
-                            
+
                             route_path.append({
                                 'order': order_counter,
                                 'latitude': point_lat,
@@ -2591,7 +2592,7 @@ class SurveillanceProfileService:
                             point_lat = transect_params[4]
                             point_lon = transect_params[5]
                             point_alt = transect_params[6]
-                            
+
                             if point_lat is not None and point_lon is not None:
                                 # Tính distance từ điểm trước
                                 if route_path:
@@ -2604,7 +2605,7 @@ class SurveillanceProfileService:
                                         cumulative_distance += distance_km
                                     except (ValueError, TypeError):
                                         pass
-                                
+
                                 route_path.append({
                                     'order': order_counter,
                                     'latitude': point_lat,
@@ -2621,7 +2622,7 @@ class SurveillanceProfileService:
                                     'frame_name': 'GLOBAL_RELATIVE_ALT' if transect_item_data.get('frame', 3) == 3 else 'GLOBAL',
                                 })
                                 order_counter += 1
-            
+
             # Xử lý SimpleItem
             elif item_type == 'SimpleItem' and lat is not None and lon is not None:
                 # Tính distance từ điểm trước
@@ -2635,7 +2636,7 @@ class SurveillanceProfileService:
                         cumulative_distance += distance_km
                     except (ValueError, TypeError):
                         pass
-                
+
                 route_path.append({
                     'order': order_counter,
                     'latitude': lat,
@@ -2652,7 +2653,7 @@ class SurveillanceProfileService:
                     'frame_name': 'GLOBAL_RELATIVE_ALT' if frame == 3 else 'GLOBAL',
                 })
                 order_counter += 1
-        
+
         return route_path
 
     @staticmethod
@@ -2672,20 +2673,20 @@ class SurveillanceProfileService:
             if diagnostics is not None:
                 diagnostics["failure_stage"] = diagnostics.get("failure_stage") or "imported_route_no_segments"
             return [], candidate_points, False
-        
+
         # Lấy waypoints của mission để lấy ID và order mapping
         waypoints = list(
             mission.waypoints.order_by('order')
             .values('id', 'order', 'latitude', 'longitude')
         )
-        
+
         if len(waypoints) < 2:
             mission_points, candidate_points, fallback_cruise_speed_ms = SurveillanceProfileService._collect_mission_points(mission)
             return [], candidate_points, True
-        
+
         instance_map = device_instances if device_instances is not None else {}
         mission_points, candidate_points, fallback_cruise_speed_ms = SurveillanceProfileService._collect_mission_points(mission)
-        
+
         candidate_diagnostics: Optional[Dict[str, Any]] = {} if diagnostics is not None else None
         candidates = SurveillanceProfileService._prepare_drone_candidates(
             _available_devices,
@@ -2693,49 +2694,49 @@ class SurveillanceProfileService:
             fallback_cruise_speed_ms,
             diagnostics=candidate_diagnostics,
         )
-        
+
         if not candidates:
             if diagnostics is not None:
                 diagnostics["failure_stage"] = diagnostics.get("failure_stage") or "prepare_drone_candidates_empty"
                 if candidate_diagnostics:
                     diagnostics.update(candidate_diagnostics)
             return [], candidate_points, False
-        
+
         # Sort drone_segments theo area_index từ thấp đến cao để đảm bảo thứ tự đúng
         sorted_drone_segments = sorted(
             mission.drone_segments,
             key=lambda x: x.get('area_index', 0) if x.get('area_index') is not None else 0
         )
-        
+
         # QUAN TRỌNG: Với from_route hoặc drone_segments, phải tạo segments cho TẤT CẢ drone_segments
         # Không giới hạn bởi số lượng candidates - đảm bảo số lượng assignments = số lượng segments
         segments = []
         for idx, drone_segment in enumerate(sorted_drone_segments):
             start_order = drone_segment.get('start_waypoint_order')
             end_order = drone_segment.get('end_waypoint_order')
-            
+
             if start_order is None or end_order is None:
                 continue
-            
+
             # Filter waypoints trong range này để lấy ID
             route_waypoints = [
                 wp for wp in waypoints
                 if start_order <= wp.get('order', 0) <= end_order
             ]
-            
+
             if len(route_waypoints) < 2:
                 continue
-            
+
             # Lấy candidate tương ứng, nếu không đủ thì dùng candidate đầu tiên hoặc None
             # QUAN TRỌNG: Vẫn tạo segment ngay cả khi không có candidate phù hợp
             candidate = candidates[idx] if idx < len(candidates) else (candidates[0] if candidates else None)
             start_wp = route_waypoints[0]
             end_wp = route_waypoints[-1]
-            
+
             # Kiểm tra xem có route_id không
             route_id = drone_segment.get('route_id')
             qgc_mission = drone_segment.get('qgc_mission')
-            
+
             # Tính distance từ estimated_duration hoặc từ waypoints
             route_distance = drone_segment.get('distance_km', 0)
             if route_distance == 0:
@@ -2753,12 +2754,12 @@ class SurveillanceProfileService:
                         route_distance += geodesic((lat1, lon1), (lat2, lon2)).kilometers
                     except (ValueError, TypeError):
                         pass
-            
+
             # Luôn sử dụng mission waypoints từ start_waypoint_order đến end_waypoint_order
             # Map với qgc_mission items để lấy command/params/frame nếu có
             converted_points = []
             cumulative_distance = 0.0
-            
+
             # Tạo map từ qgc_mission items nếu có (để lấy command/params/frame)
             qgc_items_map = {}
             if qgc_mission and not route_id:
@@ -2769,11 +2770,11 @@ class SurveillanceProfileService:
                     do_jump_id = item.get('doJumpId')
                     if do_jump_id is not None:
                         qgc_items_map[do_jump_id] = item
-            
+
             # Build route_path từ mission waypoints
             for i, wp in enumerate(route_waypoints):
                 wp_order = wp.get('order')
-                
+
                 # Tính distance từ điểm trước
                 if i > 0:
                     try:
@@ -2785,7 +2786,7 @@ class SurveillanceProfileService:
                         cumulative_distance += distance_km
                     except (ValueError, TypeError):
                         pass
-                
+
                 # Tìm qgc_item tương ứng (nếu có) để lấy command/params/frame
                 # doJumpId trong qgc_mission có thể bắt đầu từ 0 hoặc 1, cần map với order
                 qgc_item = None
@@ -2805,7 +2806,7 @@ class SurveillanceProfileService:
                                 if abs(item_lat - wp_lat) < 0.0001 and abs(item_lon - wp_lon) < 0.0001:
                                     qgc_item = item
                                     break
-                
+
                 # Extract command/params/frame từ qgc_item nếu có
                 command_id = None
                 params = None
@@ -2813,7 +2814,7 @@ class SurveillanceProfileService:
                 frame_name = None
                 command_name = None
                 altitude = None
-                
+
                 if qgc_item:
                     command_id = str(qgc_item.get('command', 16))
                     params = {command_id: qgc_item.get('params', [])}
@@ -2825,7 +2826,7 @@ class SurveillanceProfileService:
                     item_params = qgc_item.get('params', [])
                     if isinstance(item_params, list) and len(item_params) >= 7:
                         altitude = item_params[6] if item_params[6] is not None and item_params[6] != 0.0 else None
-                
+
                 converted_point = {
                     'order': wp_order,
                     'lat': float(wp.get('latitude', 0)),
@@ -2842,7 +2843,7 @@ class SurveillanceProfileService:
                     'command_name': command_name,
                 }
                 converted_points.append(converted_point)
-            
+
             # Fallback: nếu không có converted_points (không nên xảy ra)
             if not converted_points:
                 converted_points = [
@@ -2892,7 +2893,7 @@ class SurveillanceProfileService:
                 'flight_estimation': None,
             }
             segments.append(segment)
-        
+
         if segments:
             return segments, candidate_points, True
         if diagnostics is not None:
@@ -4179,7 +4180,7 @@ class SurveillanceProfileService:
                     min(100.0, round((flight_time_s - estimated_s) / flight_time_s * 100.0, 2)),
                 )
 
-            
+
 
             results.append(
                 {
@@ -4235,15 +4236,15 @@ class SurveillanceProfileService:
                 waypoints = list(mission.waypoints.all().order_by('order'))
             else:
                 waypoints = list(mission.waypoints.all())
-            
+
             # Determine if line mission: check if any waypoint has terminal_id
             is_line_mission = any(wp.terminal_id for wp in waypoints) if waypoints else False
-            
+
             # Alternative check: if no polygon, it's a line mission
             has_polygon = mission.polygon and isinstance(mission.polygon, list) and len(mission.polygon) > 0
             if not is_line_mission and not has_polygon:
                 is_line_mission = True
-            
+
             # Extract polygon based on mission type
             if is_line_mission:
                 # For line mission, convert waypoints to polygon format [[lat, lon], ...]
@@ -4258,7 +4259,7 @@ class SurveillanceProfileService:
                 # For polygon mission, use polygon from mission
                 if has_polygon:
                     polygon_data = mission.polygon
-            
+
             # Fallback: if still no polygon data, try to get from waypoints as last resort
             if not polygon_data and waypoints:
                 sorted_waypoints = sorted(waypoints, key=lambda wp: wp.order)
@@ -4267,7 +4268,7 @@ class SurveillanceProfileService:
                     for wp in sorted_waypoints
                     if wp.latitude and wp.longitude and wp.latitude != '0' and wp.longitude != '0'
                 ]
-        
+
         # Ensure polygon_data is always a list (empty list if no data)
         if polygon_data is None:
             polygon_data = []
@@ -4292,7 +4293,7 @@ class SurveillanceProfileService:
     ) -> Tuple[Optional[str], Optional[str]]:
         """
         Helper async function to start AI dual stream and video recording, wait for specified duration, then stop.
-        
+
         Returns:
             Tuple[Optional[str], Optional[str]]: (video_path, analysis_path) or (None, None) on failure
         """
@@ -4311,7 +4312,7 @@ class SurveillanceProfileService:
             'Content-Type': 'application/json',
             'accept': 'application/json'
         }
-        
+
         try:
             # Start video recording (canonical flow)
             started_record_id, _stream_id = await StreamMonitorService.start_record(
@@ -4363,7 +4364,7 @@ class SurveillanceProfileService:
                     record_id,
                     ai_model_code,
                 )
-            
+
             # Wait for specified duration with timeout protection
             # Use wait_for to ensure we don't wait indefinitely and can handle cancellation
             try:
@@ -4375,7 +4376,7 @@ class SurveillanceProfileService:
             except asyncio.CancelledError:
                 logger.warning(f"Recording task cancelled for stream {stream_monitor_id}, proceeding with cleanup")
                 raise  # Re-raise to ensure proper cancellation handling
-            
+
             # Stop video recording first (if it was started)
             if record_id:
                 try:
@@ -4429,7 +4430,7 @@ class SurveillanceProfileService:
                         record_id,
                     )
                 detections = stop_api_response.get('detections', []) or []
-            
+
             # Save detections as JSON
             # For debugging we still save an analysis JSON even when detections are empty,
             # as long as stop_detect returned successfully and we have a record_id.
@@ -4450,10 +4451,10 @@ class SurveillanceProfileService:
                         logger.warning(f"Failed to save detections JSON for stream {stream_monitor_id}")
                 except Exception as json_exc:
                     logger.exception(f"Error saving detections JSON for stream {stream_monitor_id}: {json_exc}")
-            
+
             # Return video_path and analysis_path
             return video_path, analysis_path
-            
+
         except asyncio.CancelledError:
             logger.warning(f"Recording task cancelled for stream {stream_monitor_id}, cleaning up resources")
             # Cleanup will happen in finally block
@@ -4468,7 +4469,7 @@ class SurveillanceProfileService:
                 record_id,
                 detect_started,
             )
-            
+
             # Stop video recording if it was started
             if record_id and not video_path:
                 try:
@@ -4520,7 +4521,7 @@ class SurveillanceProfileService:
                         stream_monitor_id,
                         cleanup_exc,
                     )
-            
+
             # # Stop AI dual stream if it was started
             # if stream_id:
             #     try:
@@ -4544,7 +4545,7 @@ class SurveillanceProfileService:
             #                         logger.exception(f"Error saving detections JSON during cleanup: {json_exc}")
             #     except Exception as cleanup_exc:
             #         logger.exception(f"Error during cleanup of AI dual stream for stream {stream_monitor_id}: {cleanup_exc}")
-        
+
         # Return results (will be None, None if cleanup was needed)
         return video_path, analysis_path
 
@@ -4799,13 +4800,13 @@ class SurveillanceProfileService:
 
             record_enabled = assignment_recording
             analysis_enabled = assignment_analysis
-            
+
             if not record_enabled:
                 continue
             if not getattr(device, "device", None) or not getattr(device.device, "unit_id", None):
                 continue
             # Start AI dual stream and stop after 60 seconds (runs in background thread)
-            
+
             def run_recording(stream_id: str, device_instance):
                 try:
                     asyncio.run(
@@ -4832,7 +4833,7 @@ class SurveillanceProfileService:
                 thread = threading.Thread(target=run_recording, args=(device.device.unit_id, device))
                 thread.daemon = True
                 thread.start()
-                
+
         try:
             cancel_message ={
                 "en": "Profile cancelled because assigned drones are performing other missions",
@@ -4845,9 +4846,11 @@ class SurveillanceProfileService:
                     profile.cancel_reason = cancel_message.get(profile.created_by.language.code.lower(), cancel_message["en"])
                     profile.save(update_fields=["status", "cancel_reason", "modified_on"])
                     return
-                
+
             headers = get_gcs_api_headers()
-            response = requests.post(endpoint, json=payload, headers=headers)
+            response = requests.post(
+                endpoint, json=payload, headers=headers, timeout=long_timeout()
+            )
             on_mission_status = DeviceStatus.objects.get(code='on_mission')
             in_process_status = SurveillanceProfileService._get_status_by_code("in_progress")
             if response.status_code in [200, 201]:
@@ -4855,7 +4858,7 @@ class SurveillanceProfileService:
                 profile.actual_start_time = timezone.now()
                 for device in devices:
                     device.device.status = on_mission_status
-                    device.device.save(update_fields=["status"])    
+                    device.device.save(update_fields=["status"])
                 profile.status = in_process_status
                 profile.save(update_fields=["status", "actual_start_time", "modified_on"])
                 logger.info(f"Upload profile {profile.id} to Flightbird successfully")
@@ -4984,7 +4987,7 @@ class SurveillanceProfileService:
         mission_id: int,
         start_time: Optional[datetime] = None,
     ) -> Dict[str, Any]:
-        
+
         mission = SurveillanceProfileService._get_mission(mission_id)
         # normalised_start = SurveillanceProfileService._normalise_start_time(start_time)
 
@@ -5091,7 +5094,7 @@ class SurveillanceProfileService:
             next_month = current + relativedelta(months=+1)
             max_day = calendar.monthrange(next_month.year, next_month.month)[1]
             next_month_is_february = next_month.month == 2
-            
+
             if original_day is not None:
                 # Xử lý các case đặc biệt:
                 # - Ngày 31: luôn là cuối tháng (28/29/30/31 tùy tháng)
@@ -5119,7 +5122,7 @@ class SurveillanceProfileService:
                 else:
                     # Các trường hợp khác: dùng ngày hiện tại hoặc cuối tháng nếu vượt quá
                     target_day = min(current_day, max_day)
-            
+
             return next_month.replace(day=target_day)
 
         return None
@@ -5191,14 +5194,14 @@ class SurveillanceProfileService:
         metadata `repeat_has_generated_child` của profile nguồn được đánh dấu để
         tránh tạo trùng lặp; bản mới tạo sẽ được đặt `repeat_parent` trỏ ngược về
         profile nguồn để đảm bảo chuỗi A → B → C → ... được duy trì tuần tự.
-        
+
         Sử dụng transaction.atomic và select_for_update để tránh race condition
         khi nhiều task Celery chạy song song.
         """
         # Reload với lock để tránh race condition
         # Use _base_manager for background task to avoid filter
         source_profile_id = (base_profile or profile).id
-        
+
         # Tìm root_profile trước khi lock để tránh deadlock
         # Nếu source_profile đã được lock từ bên ngoài (process_due_recurring_profiles),
         # không lock lại để tránh nested lock trên cùng một row
@@ -5206,7 +5209,7 @@ class SurveillanceProfileService:
         source_metadata_temp = temp_source.metadata or {}
         if not isinstance(source_metadata_temp, dict):
             source_metadata_temp = {}
-        
+
         root_profile: Optional[SurveillanceProfile] = None
         root_id = source_metadata_temp.get("repeat_root_id")
         if root_id:
@@ -5235,7 +5238,7 @@ class SurveillanceProfileService:
         if not root_profile:
             return 0
         root_id = root_profile.id
-        
+
         # Lock root_profile trước để tránh race condition và deadlock
         # Nếu root_id == source_profile_id, chỉ lock một lần
         # Sử dụng nowait=False để tránh deadlock nếu root_profile đã được lock từ bên ngoài
@@ -5249,7 +5252,7 @@ class SurveillanceProfileService:
                 str(e),
             )
             return 0
-        
+
         # Nếu source_profile khác root_profile, lock source_profile sau
         # Nếu cùng một profile, dùng root_profile đã lock
         if source_profile_id == root_id:
@@ -5265,7 +5268,7 @@ class SurveillanceProfileService:
                     str(e),
                 )
                 return 0
-        
+
         source_metadata = source_profile.metadata or {}
         if not isinstance(source_metadata, dict):
             source_metadata = {}
@@ -5332,13 +5335,13 @@ class SurveillanceProfileService:
             return 0
 
         generation_key = SurveillanceProfileService._get_repeat_generation_key(next_start, repeat_code)
-        
+
         # Chỉ clone khi start_time của profile hiện tại (source_profile) đã qua
         # Ví dụ: Profile A (16/11 08:00) -> qua 16/11 08:00 mới clone B (17/11 08:00)
         # Profile B (17/11 08:00) -> qua 17/11 08:00 mới clone C (18/11 08:00)
         if generate_if_start_before and latest_start > generate_if_start_before:
             return 0
-        
+
         # Không tạo profile nếu next_start có cùng generation_key với generate_if_start_before
         # Đảm bảo không tạo duplicate trong cùng period (ngày/tuần/tháng)
         if generate_if_start_before and not force:
@@ -5354,14 +5357,14 @@ class SurveillanceProfileService:
                     next_start, next_start_key, generate_if_start_before
                 )
                 return 0
-        
+
         # Sau khi lock root_profile, check duplicate dựa trên generation_key và start_time
         # Đảm bảo không có race condition
         root_metadata = root_profile.metadata or {}
         if not isinstance(root_metadata, dict):
             root_metadata = {}
         last_generation_key = root_metadata.get("repeat_last_generation_key")
-        
+
         # Check duplicate theo generation_key (primary check mechanism)
         if generation_key and not force and last_generation_key == generation_key:
             logger.debug(
@@ -5369,13 +5372,13 @@ class SurveillanceProfileService:
                 generation_key
             )
             return 0
-        
+
         # Check duplicate theo period (ngày/tuần/tháng) thay vì exact start_time
         # Đảm bảo không tạo duplicate trong cùng period
         chain_queryset_locked = SurveillanceProfile._base_manager.filter(
             Q(id=root_id) | Q(metadata__repeat_root_id=root_id)
         )
-        
+
         # Check duplicate theo generation_key period
         if generation_key and not force:
             # Query tất cả profiles trong chain và check generation_key của chúng
@@ -5391,7 +5394,7 @@ class SurveillanceProfileService:
                         generation_key, existing_profile.start_time
                     )
                     return 0
-        
+
         # Check duplicate với exact start_time (backup check)
         if chain_queryset_locked.filter(start_time=next_start).exists():
             logger.debug(
@@ -5494,7 +5497,7 @@ class SurveillanceProfileService:
             group=template_profile.group or root_profile.group,
             approved_by=approval_operator,
             cancelled_by=None,
-            
+
         )
         clone.save()
 
@@ -5720,14 +5723,14 @@ class SurveillanceProfileService:
                     # Lock profile row để tránh race condition khi nhiều task chạy song song
                     # Dùng _base_manager để nhất quán với query và tránh custom filter
                     locked_profile = SurveillanceProfile._base_manager.select_for_update(nowait=True).get(id=profile.id)
-                    
+
                     # Double-check flag sau khi lock
                     locked_metadata = locked_profile.metadata or {}
                     if not isinstance(locked_metadata, dict):
                         locked_metadata = {}
                     if locked_metadata.get("repeat_has_generated_child"):
                         continue
-                    
+
                     # _generate_recurring_profiles đã có @transaction.atomic nhưng sẽ dùng transaction hiện tại
                     created = SurveillanceProfileService._generate_recurring_profiles(
                         locked_profile,
@@ -6110,7 +6113,7 @@ class SurveillanceProfileService:
                 profile.operator_id = operator_id
             if repeat_parent_id:
                 profile.repeat_parent_id = repeat_parent_id
-            
+
             profile.save()
             if takeoff_altitude:
                 profile.set_measurement('takeoff_altitude', f"{takeoff_altitude} m")
@@ -6537,11 +6540,11 @@ class SurveillanceProfileService:
             locked_metadata = dict(locked_profile.metadata or {})
             # Cập nhật các thay đổi từ metadata đã được apply_auto_launch_metadata xử lý
             locked_metadata.update(metadata)
-            
+
             start_time = locked_profile.start_time
             if start_time and timezone.is_naive(start_time):
                 start_time = timezone.make_aware(start_time, timezone.get_current_timezone())
-            
+
             if start_time:
                 # ------------------------------------------------------------------
                 # Deterministic drone contention (NO RETRY):
@@ -6633,12 +6636,12 @@ class SurveillanceProfileService:
 
                 from surveillance.tasks import activate_surveillance_profile
                 from celery import current_app
-                
+
                 # Kiểm tra xem đã có task được lập lịch trước đó chưa
                 existing_scheduled = locked_metadata.get("activation_scheduled", {})
                 existing_task_id = existing_scheduled.get("task_id")
                 existing_scheduled_for = existing_scheduled.get("scheduled_for")
-                
+
                 # Nếu đã có task cũ và start_time không thay đổi, bỏ qua
                 if existing_task_id and existing_scheduled_for:
                     try:
@@ -6648,7 +6651,7 @@ class SurveillanceProfileService:
                                 existing_scheduled_time = timezone.make_aware(existing_scheduled_time, timezone.get_current_timezone())
                         else:
                             raise ValueError("Could not parse datetime")
-                        
+
                         # Nếu thời gian giống nhau (chênh lệch < 1 giây), không cần lập lịch lại
                         if abs((start_time - existing_scheduled_time).total_seconds()) < 1:
                             logger.info(
@@ -6684,7 +6687,7 @@ class SurveillanceProfileService:
                             parse_exc,
                         )
                         # Nếu không parse được, tiếp tục lập lịch mới
-                
+
                 # Lập lịch task mới
                 try:
                     # Priority cao (0) cho task auto flight để được xử lý trước
@@ -6740,7 +6743,7 @@ class SurveillanceProfileService:
                         revoke_exc,
                     )
                 metadata.pop("activation_scheduled", None)
-            
+
             SurveillanceProfileService.upload_profile_to_flightbird(profile)
             metadata.pop("auto_launch", None)
 
@@ -6767,15 +6770,15 @@ class SurveillanceProfileService:
         """Verify task còn tồn tại trong Celery không và trả về status."""
         if not task_id:
             return False, None
-        
+
         try:
             from celery import current_app
             from celery.result import AsyncResult
-            
+
             # Kiểm tra task status
             result = AsyncResult(task_id, app=current_app)
             task_status = result.state
-            
+
             # Task tồn tại nếu không phải là PENDING hoặc không tồn tại
             if task_status:
                 # Kiểm tra trong scheduled tasks nếu state là PENDING
@@ -6804,7 +6807,7 @@ class SurveillanceProfileService:
     def diagnose_task_not_running(task_id: str, scheduled_for: Optional[str] = None) -> Dict[str, Any]:
         """
         Chẩn đoán chi tiết tại sao một task với ETA không chạy.
-        
+
         Returns:
             Dict chứa thông tin chi tiết về nguyên nhân task không chạy
         """
@@ -6816,31 +6819,31 @@ class SurveillanceProfileService:
             "reasons": [],
             "details": {},
         }
-        
+
         if not task_id:
             diagnosis["reasons"].append("task_id_is_empty")
             return diagnosis
-        
+
         try:
             from celery import current_app
             from celery.result import AsyncResult
             from django.utils import timezone
             from django.utils.dateparse import parse_datetime
             import pytz
-            
+
             # 1. Kiểm tra task status cơ bản
             result = AsyncResult(task_id, app=current_app)
             task_status = result.state
             diagnosis["task_status"] = task_status
-            
+
             if not task_status:
                 diagnosis["reasons"].append("task_not_found_in_celery")
                 diagnosis["details"]["task_not_found"] = "Task không tồn tại trong Celery result backend"
-            
+
             # 2. Kiểm tra trong scheduled tasks
             try:
                 inspect = current_app.control.inspect()
-                
+
                 # Check scheduled tasks
                 scheduled = inspect.scheduled()
                 found_in_scheduled = False
@@ -6860,7 +6863,7 @@ class SurveillanceProfileService:
                                 break
                         if found_in_scheduled:
                             break
-                
+
                 # Check active tasks
                 active = inspect.active()
                 found_in_active = False
@@ -6878,7 +6881,7 @@ class SurveillanceProfileService:
                                 break
                         if found_in_active:
                             break
-                
+
                 # Check reserved tasks
                 reserved = inspect.reserved()
                 found_in_reserved = False
@@ -6895,7 +6898,7 @@ class SurveillanceProfileService:
                                 break
                         if found_in_reserved:
                             break
-                
+
                 # Check revoked tasks
                 revoked = inspect.revoked()
                 found_in_revoked = False
@@ -6908,17 +6911,17 @@ class SurveillanceProfileService:
                                 "worker": worker_name,
                             }
                             break
-                
+
                 if not found_in_scheduled and not found_in_active and not found_in_reserved:
                     if task_status == "PENDING":
                         diagnosis["reasons"].append("task_not_in_worker_queues")
                         diagnosis["details"]["task_not_in_queues"] = "Task có status PENDING nhưng không có trong scheduled/active/reserved của worker"
-                
+
             except Exception as inspect_exc:
                 diagnosis["reasons"].append("cannot_inspect_workers")
                 diagnosis["details"]["inspect_error"] = str(inspect_exc)
                 diagnosis["details"]["inspect_error_type"] = type(inspect_exc).__name__
-            
+
             # 3. Kiểm tra nếu task đã quá hạn
             if scheduled_for:
                 try:
@@ -6928,11 +6931,11 @@ class SurveillanceProfileService:
                             scheduled_for_dt = timezone.make_aware(scheduled_for_dt, timezone.get_current_timezone())
                         if scheduled_for_dt.tzinfo != pytz.UTC:
                             scheduled_for_dt = scheduled_for_dt.astimezone(pytz.UTC)
-                        
+
                         now = timezone.now()
                         if now.tzinfo != pytz.UTC:
                             now = now.astimezone(pytz.UTC)
-                        
+
                         if scheduled_for_dt < now:
                             diagnosis["reasons"].append("task_scheduled_time_passed")
                             diagnosis["details"]["time_check"] = {
@@ -6940,7 +6943,7 @@ class SurveillanceProfileService:
                                 "now_utc": now.isoformat(),
                                 "seconds_passed": (now - scheduled_for_dt).total_seconds(),
                             }
-                            
+
                             # Nếu task không tồn tại và đã quá hạn, có thể đã expire
                             if not diagnosis["task_exists"]:
                                 diagnosis["reasons"].append("task_likely_expired")
@@ -6948,7 +6951,7 @@ class SurveillanceProfileService:
                 except Exception as time_exc:
                     diagnosis["reasons"].append("cannot_parse_scheduled_time")
                     diagnosis["details"]["time_parse_error"] = str(time_exc)
-            
+
             # 4. Kiểm tra task result để xem có error không
             try:
                 if result.ready():
@@ -6963,7 +6966,7 @@ class SurveillanceProfileService:
                         }
             except Exception as result_exc:
                 pass
-            
+
             # 5. Kiểm tra Celery workers có đang chạy không
             try:
                 inspect = current_app.control.inspect()
@@ -6976,7 +6979,7 @@ class SurveillanceProfileService:
             except Exception as worker_exc:
                 diagnosis["reasons"].append("cannot_check_workers")
                 diagnosis["details"]["worker_check_error"] = str(worker_exc)
-            
+
         except Exception as exc:
             diagnosis["reasons"].append("diagnosis_error")
             diagnosis["details"]["error"] = str(exc)
@@ -6986,7 +6989,7 @@ class SurveillanceProfileService:
                 task_id,
                 exc,
             )
-        
+
         return diagnosis
 
     @staticmethod
@@ -7005,7 +7008,7 @@ class SurveillanceProfileService:
         if activation_scheduled:
             task_id = activation_scheduled.get("task_id")
             task_exists, task_status = SurveillanceProfileService._verify_task_status(task_id)
-            
+
             tasks.append({
                 "type": "activation",
                 "task_name": "activate_surveillance_profile",
@@ -7023,7 +7026,7 @@ class SurveillanceProfileService:
             overdue_check_eta = metadata.get("overdue_check_eta")
             overdue_check_scheduled_at = metadata.get("overdue_check_scheduled_at")
             task_exists, task_status = SurveillanceProfileService._verify_task_status(overdue_task_id)
-            
+
             # Kiểm tra nếu task đã quá hạn và không còn tồn tại
             is_expired = False
             if overdue_check_eta:
@@ -7044,7 +7047,7 @@ class SurveillanceProfileService:
                             is_expired = True
                 except Exception:
                     pass
-            
+
             # Chẩn đoán chi tiết nếu task không tồn tại
             diagnosis = None
             if not task_exists:
@@ -7052,7 +7055,7 @@ class SurveillanceProfileService:
                     overdue_task_id,
                     overdue_check_eta
                 )
-            
+
             tasks.append({
                 "type": "overdue_check",
                 "task_name": "check_surveillance_profile_overdue",
@@ -7084,13 +7087,13 @@ class SurveillanceProfileService:
         all_tasks_info = SurveillanceProfileService.get_all_profile_tasks(profile_id)
         if not all_tasks_info:
             return None
-        
+
         # Tìm task activation
         activation_task = next(
             (task for task in all_tasks_info["tasks"] if task["type"] == "activation"),
             None
         )
-        
+
         if not activation_task:
             return None
 
@@ -7112,11 +7115,11 @@ class SurveillanceProfileService:
     def cancel_profile_task(profile_id: int, task_type: Optional[str] = None) -> Tuple[bool, Optional[str], int]:
         """
         Hủy task đã lập cho một profile.
-        
+
         Args:
             profile_id: ID của profile
             task_type: Loại task cần hủy ('activation', 'overdue_check', hoặc None để hủy tất cả)
-        
+
         Returns:
             Tuple[bool, Optional[str], int]: (success, error_message, cancelled_count)
         """
@@ -7229,7 +7232,7 @@ class SurveillanceProfileService:
             raise ValidationError("Profile cannot be approved in its current status.")
 
 
-       
+
         device_check_status = SurveillanceProfileService._get_status_by_code("pending_device_check")
         metadata = profile.metadata or {}
         approval_history = metadata.setdefault("approval_history", [])
@@ -7413,14 +7416,14 @@ class SurveillanceProfileService:
             config = AdminConfig.objects.filter(name="System", is_active=True).values("settings").first()
             settings_data = config["settings"] if config and isinstance(config.get("settings"), dict) else {}
             tz_value = settings_data.get("timezone") or settings_data.get("time_zone") or settings_data.get("tz")
-        
+
             if isinstance(tz_value, str) and tz_value.strip():
                 try:
                     return ZoneInfo(tz_value.strip())
                 except Exception as e:
                     logger.error("Error resolving system timezone: %s", e)
                     pass
-           
+
         except Exception as e:
             logger.error("Error resolving system timezone: %s", e)
             pass
@@ -7436,12 +7439,12 @@ class SurveillanceProfileService:
     ) -> Tuple[QuerySet, datetime, datetime]:
         """
         Get timeline queryset for a specific day.
-        
+
         Args:
             created_on: The datetime to extract date from (e.g. 2025-12-08T17:00:00+00:00)
             params: Filter parameters
             profile_ids: Optional list of profile IDs to filter
-            
+
         Returns:
             Tuple of (queryset, start_of_day, end_of_day)
         """
@@ -7458,7 +7461,7 @@ class SurveillanceProfileService:
         target_date = local_datetime.date()
         start_of_day = timezone.make_aware(datetime.combine(target_date, time.min), user_tz)
         end_of_day = timezone.make_aware(datetime.combine(target_date, time.max), user_tz)
-        
+
         queryset = SurveillanceProfileService.get_queryset_optimized()
         queryset = SurveillanceProfileService.apply_filters(queryset, params)
         # Filter profiles where effective start_time (actual_start_time or start_time) is within the day
@@ -7477,7 +7480,7 @@ class SurveillanceProfileService:
             effective_start_time__gte=start_of_day,
             effective_start_time__lte=end_of_day
         )
-        
+
         if profile_ids:
             queryset = queryset.filter(id__in=profile_ids)
         queryset = queryset.distinct()
@@ -7510,24 +7513,24 @@ class SurveillanceProfileService:
                     "status_code": profile.status.code if profile.status else None,
                 }
             )
- 
+
         drone_list = Device.objects.filter(active=True)
         for drone in drone_list:
             drone_profiles = []
-            
+
             for profile in profiles:
                 drone_assignments = profile.drone_assignments.filter(device=drone)
-                
+
                 if drone_assignments.exists():
                     assignment = drone_assignments.first().profile
                     start_time = assignment.actual_start_time if (assignment.actual_start_time and assignment.actual_end_time) else assignment.start_time
                     end_time = assignment.actual_end_time if (assignment.actual_end_time and assignment.actual_start_time) else assignment.estimated_end_time
-                    
+
                     # if window_start and start_time < window_start:
                     #     start_time = window_start
                     # if window_end and end_time > window_end:
                     #     end_time = window_end
-                    
+
                     drone_profiles.append(
                         {
                             "profile_id": profile.id,
@@ -7538,12 +7541,12 @@ class SurveillanceProfileService:
                             "status_code": profile.status.code if profile.status else None,
                         }
                     )
-            
-           
+
+
             by_drone.append(
                 {
                     "drone_id": drone.id,
-                    "drone_serial": drone.name, 
+                    "drone_serial": drone.name,
                     "profiles": drone_profiles
                 }
             )
@@ -7973,7 +7976,7 @@ class SurveillanceProfileService:
     @staticmethod
     def download_log(profile_drone_id: int):
         """Download log file for a surveillance profile drone.
-        
+
         Returns:
             Tuple[bool, Optional[bytes], Optional[str]]: (success, file_content, filename) or (False, None, None) on failure
         """
@@ -7983,7 +7986,7 @@ class SurveillanceProfileService:
             if not log_path:
                 logger.warning(f"No log_path found for profile_drone {profile_drone_id}")
                 return False, None, None
-            
+
             # Construct download URL
             # Accept both full URL and object key (legacy compatibility)
             log_path_clean = str(log_path).strip()
@@ -7993,18 +7996,18 @@ class SurveillanceProfileService:
                 # Remove leading slash if present to avoid double slashes
                 log_path_clean = log_path_clean.lstrip('/')
                 download_url = f'https://{settings.MINIO_ENDPOINT}/{settings.MINIO_STORAGE_MEDIA_BUCKET_NAME}/{log_path_clean}'
-            
+
             response = requests.get(download_url, timeout=30)
-            
+
             if response.status_code != 200:
                 logger.error(f"Failed to download log from {download_url}, status: {response.status_code}")
                 return False, None, None
-            
+
             # Extract filename from path
             filename = os.path.basename(log_path) or f"log_{profile_drone_id}.tlog"
-            
+
             return True, response.content, filename
-            
+
         except SurveillanceProfileDrone.DoesNotExist:
             logger.error(f"SurveillanceProfileDrone with id {profile_drone_id} not found")
             return False, None, None
@@ -8015,7 +8018,7 @@ class SurveillanceProfileService:
     @staticmethod
     def download_analysis(profile_drone_id: int):
         """Download log file for a surveillance profile drone.
-        
+
         Returns:
             Tuple[bool, Optional[bytes], Optional[str]]: (success, file_content, filename) or (False, None, None) on failure
         """
@@ -8025,7 +8028,7 @@ class SurveillanceProfileService:
             if not log_path:
                 logger.warning(f"No log_path found for profile_drone {profile_drone_id}")
                 return False, None, None
-            
+
             # Construct download URL
             # Accept both full URL and object key (legacy compatibility)
             log_path_clean = str(log_path).strip()
@@ -8035,18 +8038,18 @@ class SurveillanceProfileService:
                 # Remove leading slash if present to avoid double slashes
                 log_path_clean = log_path_clean.lstrip('/')
                 download_url = f'https://{settings.MINIO_ENDPOINT}/{settings.MINIO_STORAGE_MEDIA_BUCKET_NAME}/{log_path_clean}'
-            
+
             response = requests.get(download_url, timeout=30)
-            
+
             if response.status_code != 200:
                 logger.error(f"Failed to download log from {download_url}, status: {response.status_code}")
                 return False, None, None
-            
+
             # Extract filename from path
             filename = os.path.basename(log_path) or f"log_{profile_drone_id}"
-            
+
             return True, response.content, filename
-            
+
         except SurveillanceProfileDrone.DoesNotExist:
             logger.error(f"SurveillanceProfileDrone with id {profile_drone_id} not found")
             return False, None, None

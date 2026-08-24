@@ -5,6 +5,7 @@ from core.configuration.models import AdminConfig
 from core.middleware.refresh_token import get_current_request
 from dashboard.models import Dashboard, DashboardPanel, WeatherSetting
 import requests
+from common.external_http import default_timeout
 from terminals.models import Routes, RouteTerminal
 from django.db.models import F, Value, CharField, Prefetch
 from django.db.models.functions import Concat, Coalesce
@@ -18,16 +19,18 @@ def get_weather_by_coordinates(latitude: float, longitude: float, country: str =
     """
     try:
         url = f"https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}&current_weather=true"
-        meteo_response = requests.get(url)
+        meteo_response = requests.get(url, timeout=default_timeout())
         weather_data = meteo_response.json()
-        
+
         if not country or not city:
             reverse_url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={latitude}&lon={longitude}"
-            location_response = requests.get(reverse_url, headers={'User-Agent': 'GuardianX/1.0'})
+            location_response = requests.get(
+                reverse_url, headers={'User-Agent': 'GuardianX/1.0'}, timeout=default_timeout()
+            )
             location_data = location_response.json()
             country = country or location_data.get('address', {}).get('country', 'Unknown')
             city = city or location_data.get('address', {}).get('city', location_data.get('address', {}).get('town', 'Unknown'))
-        
+
         return {
             'temperature': weather_data.get('current_weather', {}).get('temperature'),
             'wind_speed': weather_data.get('current_weather', {}).get('windspeed'),
@@ -56,7 +59,7 @@ class DashboardPanelOutSchema(DynamicSchema):
 
 class DashboardOutSchema(DynamicSchema):
     panels: Optional[List[DashboardPanelOutSchema]] = None
-    
+
     class Meta:
         model = Dashboard
         exclude = []
@@ -64,8 +67,8 @@ class DashboardOutSchema(DynamicSchema):
     @classmethod
     def from_queryset_with_weather(cls, obj, request, user_latitude=None, user_longitude=None, location_source=None, location_accuracy=None, user_country=None, user_city=None, user_ip=None):
         base_data = super().from_queryset(obj)
-        panels = [DashboardPanelOutSchema.from_queryset(panel) for panel in obj.panels.all()] 
-        
+        panels = [DashboardPanelOutSchema.from_queryset(panel) for panel in obj.panels.all()]
+
         weather_data = {
             'temperature': "sunny",
             'wind_speed': "10",
@@ -73,18 +76,18 @@ class DashboardOutSchema(DynamicSchema):
             'city': "Hanoi",
             'coordinates': f"{10.8230}, {106.7780}",
         }
-        
+
         if location_source == 'browser_geolocation' and user_latitude and user_longitude:
             if weather_data:
                 weather_data['location_source'] = 'browser_geolocation'
                 weather_data['location_accuracy'] = location_accuracy or 50
-        
+
         elif location_source == 'ip_geolocation' and user_latitude and user_longitude:
             if weather_data:
                 weather_data['location_source'] = 'ip_geolocation'
                 weather_data['location_accuracy'] = location_accuracy or 50000
                 weather_data['ip'] = user_ip
-        
+
         else:
             weather_data = {
                 'temperature': None,
@@ -95,7 +98,7 @@ class DashboardOutSchema(DynamicSchema):
                 'location_source': 'none',
                 'location_accuracy': None,
             }
-        
+
         data = {
             'id': base_data['id'],
             'name': base_data['name'],
@@ -112,15 +115,15 @@ class DashboardOutSchema(DynamicSchema):
             'location_accuracy': weather_data.get('location_accuracy') if weather_data else None,
             'coordinates': weather_data.get('coordinates') if weather_data else None,
         }
-        
+
         if weather_data and weather_data.get('ip'):
             data['ip'] = weather_data['ip']
-        
+
         return data
-    
+
 class DashboardWithoutWeatherOutSchema(DynamicSchema):
     panels: Optional[List[DashboardPanelOutSchema]] = None
-    
+
     class Meta:
         model = Dashboard
         exclude = []
@@ -149,13 +152,13 @@ class DashboardWithoutWeatherOutSchema(DynamicSchema):
                 output_field=CharField()
             )
         ).order_by('order')
-        
+
         # Prefetch route_terminals với queryset đã tối ưu
         route_terminals_prefetch = Prefetch(
             'route_terminals',
             queryset=route_terminals_queryset
         )
-        
+
         # Lấy tất cả routes với prefetch_related để tránh N+1 queries
         # Chỉ lấy các fields cần thiết từ Routes model để tối ưu
         routes = Routes.objects.filter(
@@ -163,15 +166,15 @@ class DashboardWithoutWeatherOutSchema(DynamicSchema):
         ).prefetch_related(
             route_terminals_prefetch
         ).only(
-            'id', 'name', 'code', 'description', 'status', 'is_active', 
+            'id', 'name', 'code', 'description', 'status', 'is_active',
             'total_stops', 'note', 'two_way', 'created_on', 'modified_on'
         ).order_by('name')
-        
+
         routes_data = []
-        
+
         # Convert to list để tránh multiple queries khi iterate
         routes_list = list(routes)
-        
+
         for route in routes_list:
             # Tối ưu: chỉ lấy các fields cần thiết từ route thay vì gọi from_queryset đầy đủ
             # Tránh load measurements và các fields không cần thiết
@@ -188,7 +191,7 @@ class DashboardWithoutWeatherOutSchema(DynamicSchema):
                 'created_on': route.created_on.isoformat() if route.created_on else None,
                 'modified_on': route.modified_on.isoformat() if route.modified_on else None,
             }
-            
+
             # Lấy route terminals đã được prefetch (không cần query thêm)
             route_terminals = []
             for route_terminal in route.route_terminals.all():
@@ -198,7 +201,7 @@ class DashboardWithoutWeatherOutSchema(DynamicSchema):
                     # Loại bỏ multiple consecutive commas và spaces, sau đó trim
                     address = re.sub(r',\s*,+', ',', address)  # Loại bỏ multiple commas
                     address = address.strip(', ').strip()  # Trim trailing commas và spaces
-                
+
                 route_terminals.append({
                     "terminal_id": route_terminal.terminal.id,
                     "name": route_terminal.terminal.name,
@@ -214,17 +217,17 @@ class DashboardWithoutWeatherOutSchema(DynamicSchema):
                     "command_line": route_terminal.command_line,
                     "frame": route_terminal.frame
                 })
-            
+
             # Cập nhật route data với route_terminals
             data['route_terminals'] = route_terminals
             routes_data.append(data)
-        
+
         return routes_data
 
     @classmethod
     def from_queryset(cls, obj):
         base_data = super().from_queryset(obj)
-        
+
         # Tối ưu: sử dụng prefetched panels nếu có, nếu không thì query một lần
         # Kiểm tra xem panels đã được prefetch chưa
         if hasattr(obj, '_prefetched_objects_cache') and 'panels' in obj._prefetched_objects_cache:
@@ -232,12 +235,12 @@ class DashboardWithoutWeatherOutSchema(DynamicSchema):
         else:
             # Nếu chưa prefetch, query một lần với select_related nếu cần
             panels_queryset = obj.panels.all()
-        
-        panels = [DashboardPanelOutSchema.from_queryset(panel) for panel in panels_queryset] 
+
+        panels = [DashboardPanelOutSchema.from_queryset(panel) for panel in panels_queryset]
 
         # Tối ưu: cache dashboard_refresh_interval query
         dashboard_refresh_interval = cls.get_dashboard_refresh_interval()
-        
+
         # Tối ưu: chỉ query weather_setting nếu user tồn tại
         request = get_current_request()
         weather_setting_data = {
@@ -252,10 +255,10 @@ class DashboardWithoutWeatherOutSchema(DynamicSchema):
                 weather_setting_data['latitude'] = weather_setting.latitude
                 weather_setting_data['longitude'] = weather_setting.longitude
                 weather_setting_data['address'] = weather_setting.address
-        
+
         # Sử dụng method mới để lấy routes data với ORM tối ưu
         routes_data = cls.get_routes_with_terminals_data()
-        
+
         data = {
             'id': base_data['id'],
             'name': base_data['name'],
@@ -268,7 +271,7 @@ class DashboardWithoutWeatherOutSchema(DynamicSchema):
             'weather_setting': weather_setting_data,
             'routes': routes_data,
         }
-        
+
         return data
 
     @classmethod
@@ -278,4 +281,3 @@ class DashboardWithoutWeatherOutSchema(DynamicSchema):
         except:
             dashboard_refresh_interval = 300
         return dashboard_refresh_interval
-

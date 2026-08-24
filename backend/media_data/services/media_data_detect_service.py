@@ -9,6 +9,7 @@ from django.db import transaction, connection
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import requests
+from common.external_http import default_timeout, long_timeout
 import urllib3
 import uuid
 import logging
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 def send_media_detect_notification(group_code: str, msg: str, object_paths: list):
     """
     Send WebSocket notification after media detection completes.
-    
+
     Args:
         group_code: Group code to notify (room: media_detect_{group_code})
         msg: Notification message
@@ -37,23 +38,23 @@ def send_media_detect_notification(group_code: str, msg: str, object_paths: list
         if not channel_layer:
             logger.warning("Channel layer not configured - notifications disabled")
             return
-        
+
         if not group_code:
             logger.warning("Missing group_code - skipping media detect notification")
             return
-        
+
         event = {
             'type': 'media_detect_notification',
             'msg': msg,
             'data': object_paths,
             'timestamp': timezone.now().isoformat(),
         }
-        
+
         # Send to group room
         async_to_sync(channel_layer.group_send)(f'media_detect_{group_code}', event)
         logger.info(f"Sent media detect notification to group {group_code}")
         print(f"Sent media detect notification to group {group_code}: {msg}")
-        
+
     except Exception as e:
         logger.error(f"Error sending media detect notification: {e}")
         print(f"Error sending media detect notification: {e}")
@@ -105,7 +106,7 @@ class MediaDataDetectService:
 
             if item['object_path'].startswith("/"):
                 item['object_path'] = item['object_path'][1:]
-            
+
             if item['media_type'] == 'video':
                 video_path = f"https://{settings.MINIO_ENDPOINT}/{item['object_path']}"
                 video_capture = cv2.VideoCapture(video_path)
@@ -113,7 +114,7 @@ class MediaDataDetectService:
                 total_frames += frames
                 video_capture.release()
             item['object_path'] = f"https://{settings.MINIO_ENDPOINT}/{item['object_path']}"
-        
+
         # Build callback URL - replace localhost with actual IPv4 for external service access
         # backend_url = settings.BACKEND_URL
         # if "localhost" in backend_url or "127.0.0.1" in backend_url:
@@ -121,7 +122,7 @@ class MediaDataDetectService:
         #     backend_url = backend_url.replace("localhost", server_ip).replace("127.0.0.1", server_ip)
         # backend_url = "http://192.168.0.31:8000"
         # callback_url = f"{backend_url}/api/media-data/detect-callback"
-        
+
         # Provide callback_url so ai-streaming-service can notify completion (final analysis_path)
         callback_url = None
         try:
@@ -155,7 +156,7 @@ class MediaDataDetectService:
                 notify_group_code = user.userprofilelink.group.code
         except Exception:
             notify_group_code = None
-        
+
         def create_video_analysis_records():
             # Close any existing connection to get a fresh one for this thread
             connection.close()
@@ -177,7 +178,7 @@ class MediaDataDetectService:
                                 raw = parsed.path.lstrip("/")
                         except Exception:
                             pass
-                        
+
                         stream_monitor = None
                         try:
                             stream_code = object_path.split('/')[-2]
@@ -202,7 +203,7 @@ class MediaDataDetectService:
                     except Exception as e:
                         logger.error(f"Error creating VideoAnalysis record: {e}")
                         print(f"Error creating VideoAnalysis record: {e}")
-                
+
                 # Send WebSocket notification after creating all records
                 if notify_group_code and created_object_paths:
                     send_media_detect_notification(
@@ -213,12 +214,15 @@ class MediaDataDetectService:
             finally:
                 # Close connection when done to clean up
                 connection.close()
-        
+
         timer = threading.Timer(delay_seconds, create_video_analysis_records)
         timer.start()
 
-        # elif total_frames == 0, call detect_media_api directly        
-        response = requests.post(detect_urls, headers=headers, json=body_data, verify=False)
+        # elif total_frames == 0, call detect_media_api directly
+        response = requests.post(
+            detect_urls, headers=headers, json=body_data, verify=False,
+            timeout=long_timeout(),  # 프레임 검출은 본래 오래 걸린다. 그래도 무한은 아니다.
+        )
         response_data = response.json()
         print("response_data: ", response_data)
         results = response_data.get('results', [])
@@ -235,7 +239,7 @@ class MediaDataDetectService:
         """
         # Call detect_media to get results
         results = MediaDataDetectService.detect_media(data)
-        
+
         created_records = []
-        
+
         return True, results
