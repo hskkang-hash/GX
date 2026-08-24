@@ -274,7 +274,24 @@ def acting_as(user):
         for dotted in targets:
             with contextlib.suppress(ModuleNotFoundError, AttributeError):
                 stack.enter_context(mock.patch(dotted, return_value=request))
-        yield request
+        # ★ 스레드 로컬 자체도 바꾼다 (D-253 배선).
+        #   dj-core 는 `get_current_request` 를 **자기 모듈에서** import 해 쓰므로 위의
+        #   patch 두 개로는 저장 시 `created_by` 자동 채움 경로를 덮지 못한다. 그러면
+        #   **직전 HTTP 요청의 사용자**가 소유자로 찍히고, tenant-B 소유로 만들려던 레코드가
+        #   실제로는 tenant-A 것이 된다 — 픽스처가 시험을 스스로 통과시켜 버린다.
+        previous = None
+        thread_local = None
+        with contextlib.suppress(Exception):
+            from core.middleware.refresh_token import thread_local
+
+            previous = getattr(thread_local, "request", None)
+            thread_local.request = request
+        try:
+            yield request
+        finally:
+            if thread_local is not None:
+                with contextlib.suppress(Exception):
+                    thread_local.request = previous
 
 
 class Deps:
@@ -290,6 +307,10 @@ class Deps:
         self.owner = owner
         self.group = group
         self._cache: dict[str, Any] = {}
+        # 의존의 code 는 **전역 UNIQUE** 다. 테넌트마다 다른 접미사를 붙여야
+        # A 쪽과 B 쪽 의존이 충돌하지 않는다 (실측: ISO-CAT 중복으로 픽스처가 죽었다).
+        self.tag = f"{getattr(group, 'pk', 'x')}"
+
 
     # --- 값 -----------------------------------------------------------------
     @staticmethod
@@ -323,35 +344,38 @@ class Deps:
     def checklist_category(self):
         return self._once("checklist_category", lambda: self._create(
             "checklist_setting", "ChecklistSettingCategory",
-            name="iso-category", code="ISO-CAT",
+            name=f"iso-category-{self.tag}", code=f"ISO-CAT-{self.tag}",
         ))
 
     def survey_mission(self):
         def build():
             purpose = self._create("surveillance", "MissionPurpose",
-                                   name="iso-purpose", code="ISO-PURPOSE")
+                                   name=f"iso-purpose-{self.tag}",
+                                   code=f"ISO-PURPOSE-{self.tag}")
             status = self._create("surveillance", "SurveyMissionStatus",
-                                  name="iso-status", code="ISO-STATUS")
+                                  name=f"iso-status-{self.tag}",
+                                  code=f"ISO-STATUS-{self.tag}")
             return self._create("surveillance", "SurveyMission",
-                                name="iso-mission", maximum_drones=1,
+                                name=f"iso-mission-{self.tag}", maximum_drones=1,
                                 purpose=purpose, status=status)
         return self._once("survey_mission", build)
 
     def handover_shift(self):
         return self._once("handover_shift", lambda: self._create(
-            "handover", "HandoverShift", name="iso-shift",
+            "handover", "HandoverShift", name=f"iso-shift-{self.tag}",
             start_time="09:00", end_time="18:00",
         ))
 
     def order_status(self):
         return self._once("order_status", lambda: self._create(
-            "orders", "OrderStatus", name="iso-status", code="iso_status",
+            "orders", "OrderStatus", name=f"iso-ostatus-{self.tag}",
+            code=f"iso_ostatus_{self.tag}",
         ))
 
     def stream_monitor(self):
         return self._once("stream_monitor", lambda: self._create(
-            "stream_monitors", "StreamMonitor", name="iso-dep-monitor",
-            code="ISO-DEP-MON", ip_source="rtsp://iso.invalid/dep",
+            "stream_monitors", "StreamMonitor", name=f"iso-dep-monitor-{self.tag}",
+            code=f"ISO-DEP-MON-{self.tag}", ip_source="rtsp://iso.invalid/dep",
         ))
 
 
@@ -378,7 +402,6 @@ class TenantFixtureMixin:
         cls.user_a = cls._make_user("user_a", cls.group_a)
         cls.user_b = cls._make_user("user_b", cls.group_b)
         cls._grant_path_permissions([cls.user_a, cls.user_b])
-        cls._seq = 0
 
     # ------------------------------------------------------------------ 권한
     @classmethod
@@ -453,13 +476,28 @@ class TenantFixtureMixin:
         link_model.objects.create(**{link_field.remote_field.name: user, "group": group})
         return user
 
-    @classmethod
-    def _create_for(cls, model: type[models.Model], group, owner, target: Target):
-        """`group` 소유 레코드 1건. 필수 필드는 target.factory 가 채운다 (D-253)."""
-        cls._seq = getattr(cls, "_seq", 0) + 1
-        seq = cls._seq
+    def _deps_for(self, owner, group) -> "Deps":
+        """시험 하나 안에서 (소유자, group) 당 `Deps` 하나. 의존의 UNIQUE 충돌을 막는다."""
+        cache = getattr(self, "_deps_cache", None)
+        if cache is None:
+            cache = self._deps_cache = {}
+        key = (getattr(owner, "pk", None), getattr(group, "pk", None))
+        deps = cache.get(key)
+        if deps is None:
+            deps = cache[key] = Deps(owner, group)
+        return deps
+
+    def _create_for(self, model: type[models.Model], group, owner, target: Target):
+        """`group` 소유 레코드 1건. 필수 필드는 target.factory 가 채운다 (D-253).
+
+        ★ 인스턴스 메서드다(클래스 메서드가 아니다). 의존 레코드 캐시를 **시험 하나의
+          수명**으로 묶기 위해서다. 클래스에 캐시를 두면 앞 시험에서 만든 pk 가 롤백된 뒤에도
+          남아, 다음 시험이 없는 행을 참조하고 teardown 의 FK 검사에서 터진다.
+        """
+        self._seq = getattr(self, "_seq", 0) + 1
+        seq = self._seq
         with acting_as(owner):
-            deps = Deps(owner, group)
+            deps = self._deps_for(owner, group)
             kwargs = target.factory(deps, seq) if target.factory else {}
             obj = model(**kwargs)
             obj.created_by = owner
@@ -636,7 +674,10 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
 
         body = route.body
         if callable(body):
-            body = body(Deps(self.user_a, self.group_a))
+            # 공격자(tenant-A)가 **자기 것**으로 만든 유효한 값을 보낸다.
+            # 같은 시험 안에서는 같은 Deps 를 쓴다 — 새로 만들면 code UNIQUE 에 걸린다.
+            with acting_as(self.user_a):
+                body = body(self._deps_for(self.user_a, self.group_a))
         if route.form:
             return encode_multipart(BOUNDARY, body or {}), MULTIPART_CONTENT
         return json.dumps(body or {}), "application/json"
@@ -693,14 +734,14 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
             model = get_model(target)
             with self.subTest(model=target.label):
                 obj_b = self._create_for(model, self.group_b, self.user_b, target)
-                before = model.objects.db_manager().filter(pk=obj_b.pk).values().first()
+                before = model._base_manager.filter(pk=obj_b.pk).values().first()
                 data, content_type = self._payload(route)
                 res = self.client_a.generic(
                     route.method, route.for_pk(obj_b.pk),
                     data=data, content_type=content_type, **self.auth_a
                 )
                 self.assertIn(res.status_code, self.FORBIDDEN, msg=target.label)
-                after = model.objects.db_manager().filter(pk=obj_b.pk).values().first()
+                after = model._base_manager.filter(pk=obj_b.pk).values().first()
                 self.assertEqual(before, after, f"[{target.label}] DB 가 변경되었습니다.")
 
     def test_delete_api(self) -> None:
@@ -712,8 +753,12 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
                     route.method, route.for_pk(obj_b.pk), **self.auth_a
                 )
                 self.assertIn(res.status_code, self.FORBIDDEN, msg=target.label)
+                # ★ `objects` 가 아니라 `_base_manager` 로 묻는다 (D-253 배선).
+                #   `objects` 는 테넌트 필터를 타므로 "삭제됐다"와 "내게 안 보인다"를
+                #   구별하지 못한다 — 남의 레코드는 항상 안 보이므로 **삭제되지 않았는데도**
+                #   삭제된 것으로 판정됐다. 판정을 사실에 맞춘다(더 엄격해진다).
                 self.assertTrue(
-                    model.objects.db_manager().filter(pk=obj_b.pk).exists(),
+                    model._base_manager.filter(pk=obj_b.pk).exists(),
                     f"[{target.label}] 레코드가 삭제되었습니다.",
                 )
 

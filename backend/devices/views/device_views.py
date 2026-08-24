@@ -9,6 +9,7 @@ from common.pagination import OptimizedPaginator
 from django.utils.translation import gettext as _
 from delivery.models import DeliveryOperationItem
 from common.utils import SchemaUtils
+from common.tenant_filters import assert_scoped
 from devices.models import Device, DimensionsAndWeight, Measurement, DeviceStatus, Library
 from devices.schemas.schemas_djantic_in import DeviceCreateSchema, DeviceUpdateSchema, AddToGroupsSchema
 from devices.schemas.schemas_djantic_out import DeviceDetailOutSchema, DeviceListOutSchema, DeviceOutSchema, AddToGroupsResponse
@@ -61,20 +62,20 @@ class DeviceAPI:
     @path_permission("read", path_override="/device")
     def list_devices(self):
 
-        
+
         request = self.context.request
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
-   
-  
+
+
+
         exclude_fields = []
-        
-       
+
+
         devices = Device.objects.all()\
             .prefetch_related('file_attachments',
                              'device_protocols',
-                             'device_gnss', 
+                             'device_gnss',
                              'packaging_specification_device',
                              'device_cameras',
                              'cargo_compartments',
@@ -82,7 +83,7 @@ class DeviceAPI:
                              'operation_approvals',
                              'order_assignments')\
             .order_by('-id')
-        
+
         dims_content_type = ContentType.objects.get_for_model(DimensionsAndWeight)
 
         unit_subquery = Measurement.objects.filter(
@@ -95,7 +96,7 @@ class DeviceAPI:
                 []
             )
         ).values('clean_unit')[:1]
-        
+
         value_subquery = Measurement.objects.filter(
             content_type=dims_content_type,
             object_id=OuterRef('dimensions_and_weight__id'),
@@ -128,30 +129,30 @@ class DeviceAPI:
             terminal__name = F('terminal__name'),
             avatar__file_url=F('avatar__file_url'),
         )
-        
+
         devices = apply_dynamic_filters(devices, request, exclude_fields, request.GET.get('sort_obj'))
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
         paginator = OptimizedPaginator(devices, page_size)
         pages = paginator.page(current_page)
         data = DeviceListOutSchema.from_queryset(pages.object_list, many=True)
-        return BaseResponse(status_code=200, 
-                            message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_DEVICE_SUCCESS), 
+        return BaseResponse(status_code=200,
+                            message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_DEVICE_SUCCESS),
                             data = data,
                             total_pages=paginator.num_pages,
                             total_items=paginator.count,
                             current_page=current_page,
                             )
-    
+
     @route.get('/{id}')
     @path_permission("read", path_override="/device")
     def detail_device(self, id: int, edit: bool=False):
         try:
-         
-            device = Device.objects.get(id=id) 
+
+            device = Device.objects.get(id=id)
             data = devices_service.DeviceService.get_complete_data(device=device,
                                                                    user_units=None,
                                                                    edit=edit)
-      
+
             return BaseResponse(
                 status_code=200,
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_DEVICE_DETAIL_SUCCESS),
@@ -163,29 +164,29 @@ class DeviceAPI:
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.NOT_FOUND, "Device"),
                 data=None
             )
-            
+
     @route.post("", auth=CustomJWTAuth())
     @path_permission("create", path_override="/device")
-    def create_device(self, 
+    def create_device(self,
                      request,
                      data: str = Form(..., description="JSON string của DeviceCreateSchema"),
                      avatar: Optional[UploadedFile] = File(None),
                      files: Optional[List[UploadedFile]] = File(None)):
         """
         Tạo mới thiết bị với avatar và các file đính kèm.
-        
+
         ## Request Parameters
-        
+
         | Parameter | Type | Description |
         |-----------|------|-------------|
         | data | Form (JSON string) | Dữ liệu thiết bị theo format DeviceCreateSchema |
         | avatar | File | Hình ảnh đại diện (không bắt buộc) |
         | files | List[File] | Các file đính kèm (không bắt buộc) |
-        
+
         ## Schema dữ liệu (DeviceCreateSchema)
-        
+
         Gửi dữ liệu trong trường `data` theo định dạng JSON với cấu trúc sau:
-        
+
         ```json
         {
           "name": "string",                     // Tên thiết bị (bắt buộc)
@@ -196,14 +197,14 @@ class DeviceAPI:
           "main_type_id": 1,                    // ID của main_type (không bắt buộc)
           "sub_type": "standard",               // Loại phụ (mặc định: "standard")
           "created_by_id": null,                // ID người tạo (không bắt buộc)
-          
+
           "dimensions": {                       // Kích thước và trọng lượng (không bắt buộc)
             "frame_size": "100 x 50 x 30 mm",   // Kích thước khung
             "maximum_takeoff_weight": "5 kg",   // Trọng lượng cất cánh tối đa
             "payload_capacity": "2 kg",         // Khả năng chở hàng
             "empty_weight": "3 kg"              // Trọng lượng rỗng
           },
-          
+
           "propulsion_system": {                // Hệ thống đẩy (không bắt buộc)
             "number_of_motors": 4,              // Số lượng động cơ
             "motor_type_id": 1,                 // ID loại động cơ
@@ -214,7 +215,7 @@ class DeviceAPI:
             "propeller_size": "10 inch",        // Kích thước cánh quạt
             "battery_capacity": "5000 mAh"      // Dung lượng pin
           },
-          
+
           "flight_performance": {               // Hiệu suất bay (không bắt buộc)
             "maximum_speed": "60 km/h",         // Tốc độ tối đa
             "cruise_speed": "40 km/h",          // Tốc độ hành trình
@@ -223,18 +224,18 @@ class DeviceAPI:
             "maximum_range": "10 km",           // Phạm vi tối đa
             "wind_resistance": "20 km/h"        // Khả năng chống gió
           },
-          
+
           "navigation_control": {               // Điều hướng và kiểm soát (không bắt buộc)
             "barometric_altimeter": true,       // Có đo độ cao khí áp
             "imu_id": 1,                        // ID của IMU
             "gps_accuracy": "2.5 m"             // Độ chính xác GPS
           },
-          
+
           "radio_communication": {              // Liên lạc vô tuyến (không bắt buộc)
             "frequency": "2.4 GHz",             // Tần số
             "range": "5 km"                     // Phạm vi
           },
-          
+
           "telemetry": {                        // Telemetry (không bắt buộc)
             "realtime_flight_data": true,          // Theo dõi thời gian thực
             "video_streaming": true,           // Streaming video
@@ -242,7 +243,7 @@ class DeviceAPI:
             "gps_position_tracking": true,     // Theo dõi vị trí GPS
             "system_health_monitoring": true   // Theo dõi trạng thái hệ thống
           },
-          
+
           "sensor_suite": {                     // Bộ cảm biến (không bắt buộc)
             "optical_flow_sensor": true,         // Phát hiện chướng ngại vật
             "ultrasonic_sensors": true,        // Tránh va chạm
@@ -254,7 +255,7 @@ class DeviceAPI:
             "radiation_detector": true,
             "weather_sensors": true
           },
-          
+
           "manufacturer_information": {         // Thông tin nhà sản xuất (không bắt buộc)
             "manufacturer_name": "DJI",         // Tên nhà sản xuất
             "country_of_origin": "China",       // Quốc gia xuất xứ
@@ -265,7 +266,7 @@ class DeviceAPI:
             "validity_period": "2023-01-01",
             "current_status": "status"
           },
-          
+
           "insurance_information": {            // Thông tin bảo hiểm (không bắt buộc)
             "insurer": "InsureCo",              // Công ty bảo hiểm
             "policy_number": "POL-12345",       // Số hợp đồng
@@ -273,7 +274,7 @@ class DeviceAPI:
             "valid_from": "2023-01-01",         // Có hiệu lực từ
             "valid_until": "2024-01-01"         // Có hiệu lực đến
           },
-          
+
           "environmental_specification": {      // Thông số môi trường (không bắt buộc)
             "temperature_range": "-10°C to 40°C", // Phạm vi nhiệt độ
             "humidity": "10-90%",               // Độ ẩm
@@ -283,24 +284,24 @@ class DeviceAPI:
             "noise_cruise": "65 dB",            // Tiếng ồn khi bay
             "noise_landing": "68 dB"            // Tiếng ồn khi hạ cánh
           },
-          
+
           "safety_feature": {                   // Tính năng an toàn (không bắt buộc)
-            "dual_imu": true,                 // 
-            "dual_gps": true,             // 
-            "dual_battery": true,        // 
-            "emergency_parachute": true,         // 
-            "return_to_home": true,         // 
-            "obstacle_detection_360": true,         // 
+            "dual_imu": true,                 //
+            "dual_gps": true,             //
+            "dual_battery": true,        //
+            "emergency_parachute": true,         //
+            "return_to_home": true,         //
+            "obstacle_detection_360": true,         //
             "stereo_cameras": true,             // Camera stereo
             "lidar_mapping": true,              // Định vị hình ảnh
             "emergency_braking": true           // Phanh khẩn cấp
           },
-          
+
           "device_protocol": {                 // Giao thức thiết bị (không bắt buộc)
             "protocol_id": 1,                  // ID giao thức
             "version": "v1.0"                  // Phiên bản
           },
-          
+
           "cargo_compartments": {              // Khoang hàng (không bắt buộc)
             "compartment_number": 1,           // Số khoang
             "name": "Main Cargo",              // Tên khoang
@@ -311,7 +312,7 @@ class DeviceAPI:
             "dimensions": "30 x 20 x 15 cm",   // Kích thước
             "weight_capacity": "1.5 kg"        // Khả năng chịu trọng lượng
           },
-          
+
           "cameras": [                         // Danh sách camera (không bắt buộc)
             {
               "name": "Main Camera",           // Tên camera
@@ -330,9 +331,9 @@ class DeviceAPI:
           ]
         }
         ```
-        
+
         ## Response
-        
+
         ```json
         {
           "success": true,
@@ -342,18 +343,18 @@ class DeviceAPI:
         }
         ```
         """
-        
+
         try:
             # Parse JSON data
             data_dict = json.loads(data)
-            
+
             # Validate với schema
             try:
                 schema = DeviceCreateSchema(**data_dict)
                 validated_data = schema.dict(exclude_unset=True)
             except Exception as e:
                 return BaseResponse(success=False, status_code=422, message=str(e))
-            
+
             # # check registration number is unique (check both Device and Library)
             # manufacturer_info = validated_data.get('manufacturer_information')
             # if manufacturer_info and isinstance(manufacturer_info, dict):
@@ -365,10 +366,10 @@ class DeviceAPI:
             #         library_exists = Library.objects.filter(manufacturer_information__registration_number=registration_number).exists()
             #         if device_exists or library_exists:
             #             return BaseResponse(success=False, status_code=400, message=MESSAGE_ENUM.get(MESSAGE_ENUM.LIBRARY_REGISTRATION_NUMBER_ALREADY_EXISTS))
-            
+
             # Create device with basic data
             device = devices_service.DeviceService.create(validated_data, request)
-            
+
             # Handle avatar upload if provided
             if avatar:
                 try:
@@ -378,7 +379,7 @@ class DeviceAPI:
                     device.save()
                 except Exception as e:
                     return BaseResponse(success=False, status_code=400, message=str(e))
-            
+
             # Handle files upload if provided
             if files and len(files) > 0:
                 try:
@@ -394,13 +395,13 @@ class DeviceAPI:
                             )
                 except Exception as e:
                     return BaseResponse(success=False, status_code=400, message=str(e))
-            
+
             # Get complete data with files
             response_data = devices_service.DeviceService.get_complete_data(device)
-            
+
             # Trigger GCS to fetch data
             devices_service.DeviceService.event_trigger_gcs_fetch_data()
-            
+
             return BaseResponse(status_code=200, message=MESSAGE_ENUM.get(MESSAGE_ENUM.CREATE_DEVICE_SUCCESS), data=response_data)
         except ValidationError as e:
             # In chi tiết lỗi
@@ -413,10 +414,10 @@ class DeviceAPI:
 
     @route.post("/{id}", auth=CustomJWTAuth())
     @path_permission("update", path_override="/device")
-    def update_device(self, 
-                     id: int, 
+    def update_device(self,
+                     id: int,
                      request,
-                     data: str = Form(None), 
+                     data: str = Form(None),
                      avatar: Optional[UploadedFile] = File(None),
                      delete_avatar: bool = Form(False, description="Xóa avatar cũ"),
                      files: Optional[List[UploadedFile]] = File(None),
@@ -491,18 +492,21 @@ class DeviceAPI:
           ]
         }
         """
+        # W0-14c — 남의 테넌트 장비면 여기서 404. **try 밖**이다 — 이 핸들러의 except 가
+        # 예외를 삼켜 HTTP 200 으로 바꾸기 때문이다 (W0-18 대상).
+        assert_scoped(Device, id, request.user)
         try:
             # Parse JSON data
             data_dict = json.loads(data) if data else {}
-            
+
             # Validate với schema
             try:
                 schema = DeviceUpdateSchema(**data_dict)
                 validated_data = schema.dict(exclude_unset=True, exclude_none=True)
             except Exception as e:
                 return BaseResponse(success=False, status_code=422, message=str(e))
-            print(f"validated_data: {validated_data}") 
-            
+            print(f"validated_data: {validated_data}")
+
             # # check registration number is unique (check both Device and Library, excluding current device)
             # manufacturer_info = validated_data.get('manufacturer_information')
             # if manufacturer_info and isinstance(manufacturer_info, dict):
@@ -514,17 +518,17 @@ class DeviceAPI:
             #         library_exists = Library.objects.filter(manufacturer_information__registration_number=registration_number).exists()
             #         if device_exists or library_exists:
             #             return BaseResponse(success=False, status_code=400, message=MESSAGE_ENUM.get(MESSAGE_ENUM.DEVICE_REGISTRATION_NUMBER_ALREADY_EXISTS))
-            
+
             # Update device with basic data
             device = devices_service.DeviceService.update(id, validated_data)
-            
+
             # Handle avatar upload if provided
             if avatar:
                 # Remove old avatar if exists
                 if device.avatar:
                     device.avatar.delete()
                     device.save()
-                
+
                 # Upload new avatar
                 avatar_file = FileHelper.user_upload_s3(request.user, avatar, is_avatar=True, only_image=True)
                 if avatar_file:
@@ -536,7 +540,7 @@ class DeviceAPI:
                 device.save()
             # Xử lý xóa tất cả file đính kèm cũ nếu replace_files=True
             device_content_type = ContentType.objects.get_for_model(device)
-            
+
             if replace_files:
                 # Xóa tất cả file đính kèm cũ
                 UserMediaFileItem.objects.filter(
@@ -550,7 +554,7 @@ class DeviceAPI:
                     file_ids = files_to_remove
                     if isinstance(file_ids, str):
                         file_ids = file_ids.split(',')
-                    
+
                     if isinstance(file_ids, list) and len(file_ids) > 0:
                         # Xóa các file đính kèm cụ thể
                         UserMediaFileItem.objects.filter(
@@ -562,7 +566,7 @@ class DeviceAPI:
                     # Log lỗi nhưng không làm gián đoạn quá trình cập nhật
                     print(f"Error processing files_to_remove: {str(e)}")
                     pass
-            
+
             # Handle files upload if provided
             if files and len(files) > 0:
                 for file in files:
@@ -574,13 +578,13 @@ class DeviceAPI:
                             content_type=device_content_type,
                             object_id=device.id
                         )
-            
+
             # Get complete data with files
             response_data = devices_service.DeviceService.get_complete_data(device)
-            
+
             # Trigger GCS to fetch data
             devices_service.DeviceService.event_trigger_gcs_fetch_data()
-            
+
             return BaseResponse(status_code=200, message=MESSAGE_ENUM.get(MESSAGE_ENUM.EDIT_DEVICE_SUCCESS), data=response_data)
         except Device.DoesNotExist:
             return BaseResponse(status_code=404, message=MESSAGE_ENUM.get(MESSAGE_ENUM.NOT_FOUND, "Device"), data=None)
@@ -593,9 +597,10 @@ class DeviceAPI:
 
     @route.delete("delete/{ids}", auth=CustomJWTAuth())
     @path_permission("delete", path_override="/device")
-    def delete_device(self, ids: str):
+    def delete_device(self, request, ids: str):
+        # W0-14c — 문지기는 try 밖. request 인자는 그것을 위해 받는다.
+        assert_scoped(Device, ids, request.user)
         try:
-            # device = Device.objects.get(id=id)
             devices_service.DeviceService.delete(ids)
             return BaseResponse(
                 status_code=200,
@@ -613,16 +618,16 @@ class DeviceAPI:
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_DELETE_FAILED),
                 data=None,
             )
-    
+
     @route.delete("/{id}/detach-file/{file_id}", auth=CustomJWTAuth())
     @path_permission("delete", path_override="/device")
     def detach_file(self, id: int, file_id: int):
-        
-      
+
+
         try:
             # Check if device exists
             device = Device.objects.get(id=id)
-            
+
             # Check if file exists and is attached to this device
             device_content_type = ContentType.objects.get_for_model(device)
             attachment = UserMediaFileItem.objects.filter(
@@ -630,17 +635,17 @@ class DeviceAPI:
                 content_type=device_content_type,
                 object_id=device.id
             ).first()
-            
+
             if not attachment:
                 return BaseResponse(
                     status_code=404,
                     message=str(_("Attachment not found")),
                     data=None
                 )
-            
+
             # Delete the attachment (not the file itself)
             attachment.delete()
-            
+
             return BaseResponse(
                 status_code=200,
                 message=str(_("File detached successfully")),
@@ -648,14 +653,14 @@ class DeviceAPI:
             )
         except Device.DoesNotExist:
             return BaseResponse(
-                status_code=404, 
-                message=MESSAGE_ENUM.get(MESSAGE_ENUM.NOT_FOUND, "Device"), 
+                status_code=404,
+                message=MESSAGE_ENUM.get(MESSAGE_ENUM.NOT_FOUND, "Device"),
                 data=None
             )
         except Exception as e:
             return BaseResponse(
-                success=False, 
-                status_code=400, 
+                success=False,
+                status_code=400,
                 message=str(_("Failed to detach file: ")) + str(e)
             )
 
@@ -704,14 +709,14 @@ class DeviceAPI:
             status_code=200,
             message=MESSAGE_ENUM.get(message_key or MESSAGE_ENUM.ACTION_ACTIVATE_SUCCESS),
         )
-    
+
     @route.post("common/add-to-groups", auth=CustomJWTAuth())
     def add_to_groups(self,  data: AddToGroupsSchema):
         success = add_records_to_groups(
             model_name=data.model_name,
             record_ids=data.record_ids,
             group_ids=data.group_ids
-        ) 
+        )
         if success:
             return BaseResponse(
                 success=True,
@@ -722,14 +727,14 @@ class DeviceAPI:
                 success=False,
                 message=get_message(MESSAGE_ENUM.ADD_RECORD_TO_GROUP_FAILED),
             )
-        
+
     @route.post("/{id}/active", auth=CustomJWTAuth())
     @path_permission("update", path_override="/device")
     def active_device(self, id: int):
         try:
             device = Device.objects.get(id=id)
             message_key = MESSAGE_ENUM.ACTION_ACTIVATE_SUCCESS
-            
+
             if device.active:
                 # check if device is in a mission
                 if device.status:
@@ -746,7 +751,7 @@ class DeviceAPI:
             device.save()
             return BaseResponse(
                 success=True,
-                status_code=200, 
+                status_code=200,
                 message=MESSAGE_ENUM.get(message_key)
             )
         except Device.DoesNotExist:
@@ -783,7 +788,7 @@ class DeviceAPI:
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_ACTIVATE_SUCCESS),
         )
-    
+
     @route.put('/{ids}/deactivate', auth=CustomJWTAuth())
     # @path_permission("update", path_override='/terminals')
     def deactivate(self, ids: str):

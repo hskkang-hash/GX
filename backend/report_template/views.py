@@ -1,4 +1,5 @@
 from ninja_extra import api_controller, route
+from common.tenant_filters import assert_scoped
 from report_template.models import ReportTemplate
 from report_template.schemas import (
     ReportTemplateInputSchema,
@@ -84,7 +85,7 @@ class ReportTemplateController:
         """
         # If setting this template as default, remove default from all other templates
         if data.is_default:
-            ReportTemplate.objects.filter(is_default=True, 
+            ReportTemplate.objects.filter(is_default=True,
                                             created_by__userprofilelink__group=request.user.userprofilelink.group).update(is_default=False)
 
         created_data = ReportTemplate(
@@ -115,6 +116,10 @@ class ReportTemplateController:
         - is_default: Whether the report template is default
         - is_enabled: Whether the report template is enabled
         """
+        # W0-14c — 남의 테넌트 레코드면 여기서 404. **try 밖에 둔다** — 이 핸들러의
+        # except 는 모든 예외를 잡아 본문에 404 를 적고 HTTP 200 으로 내보낸다 (W0-18 대상).
+        # 문지기를 try 안에 두면 차단이 200 으로 바뀌어 아무것도 막지 못한다.
+        assert_scoped(ReportTemplate, id, request.user)
         try:
             template_instance = ReportTemplate.objects.get(id=id)
 
@@ -151,6 +156,8 @@ class ReportTemplateController:
         Parameters:
         - ids: Comma-separated IDs of the report templates to delete
         """
+        # W0-14c — 문지기는 try 밖이다 (위 update 주석 참조).
+        assert_scoped(ReportTemplate, ids, request.user)
         try:
             ids = ids.split(",")
             data_to_delete = []

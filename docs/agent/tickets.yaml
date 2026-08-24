@@ -766,6 +766,37 @@ tickets:
 
     NO_ROUTE 16건 등재(사유 필수·증가금지 시험 부착) — "없어서 건너뜀"이 조용히 늘지 않게.
 
+    ---
+    [2026-08-24 2차 · **★ 직전 누출 보고를 정정한다. 원인은 픽스처 오염이었다**]
+    전문: docs/agent/evidence/W0-14/w0_14c_write_guards_and_correction.md
+    (앞 문서 wiring_fix_and_findings.md 최상단에 정정 배너를 달았다)
+
+    무엇이 틀렸나: acting_as() 가 dj-core 의 created_by 자동 채움 경로를 덮지 못해,
+    tenant-B 소유로 만들려던 레코드가 **직전 HTTP 요청의 사용자(공격자 A)** 것으로 저장됐다.
+    그래서 A 가 그것을 읽고 지울 수 있는 것은 정상이었다. 단서는 "같은 요청이 실행 순서에
+    따라 404/200 으로 갈린다"는 이상 신호였다 — 시험 하나만 돌리면 404, 두 개 돌리면 200.
+
+    픽스처 4건 정정 (판정 로직 무변경): ① 스레드 로컬 자체 교체 ② 의존 캐시를 시험 수명으로
+    ③ 의존 code 에 테넌트 접미사(전역 UNIQUE 충돌) ④ '삭제됐는가' 판정을 _base_manager 로
+    (objects 는 테넌트 필터를 타서 '삭제됨'과 '내게 안 보임'을 구별 못했다 — 더 엄격해진 것이다)
+
+    ★ 정정된 실측: **격리는 HTTP 레벨에서 버티고 있다.** 16 failures/2 errors → **4/1**.
+      · list 8/8 · detail Order 만 실패 · update Terminal 만 · delete Terminal 만
+      · 남은 3건은 누출이 아니라 **응답 계약 위반**이고 전부 §0.4 금지구역이다:
+          Order 상세 500(DoesNotExist 미포착) · Terminal 수정 400+success:true(변경 0열) ·
+          Terminal 삭제 200 "Deleted successfully"인데 **행은 그대로**(거짓 성공)
+      · 레지스트리 2건은 별건 — dashboard.DashboardPanel 미등록 · P-LOCAL-3
+
+    W0-14c 1차로 넣은 것: common/tenant_filters.assert_scoped() + 4개 앱 8핸들러
+    (report_template·checklist_setting·devices·surveillance). 남의 것 → 404.
+    ★ 문지기는 try **밖**에 둔다 — 이 핸들러들의 except 가 예외를 삼켜 HTTP 200 으로
+      바꾸기 때문이다. try 안에 두자 아무것도 막지 못했다. 옮기자 404 가 나갔다.
+    ★ 소유 확인은 _base_manager 로 한다 — objects 는 created_by__isnull OR 을 타서
+      '내 것 아님'과 '없음'이 섞인다.
+
+    남은 것: 652 확대는 **D-254 로 W0-13 백필 뒤**이고 그 백필은 P-W0-13-1 대기다.
+             금지구역 3건은 P-W0-14-4 (A안 권고 — W0-18 후처리 계층에서 소스 무수정).
+
     남은 것 — dod ① ②:
       · ① 확대 롤아웃 648건. 확대 전 P-W0-14-3(orphan 33% 화면 손실) 판정 권고.
       · ② test_all_routes_are_tenant_scoped 는 통과하나(대장 증가금지),

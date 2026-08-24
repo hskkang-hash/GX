@@ -134,6 +134,60 @@ def get_scoped_or_404(model: type[T], pk: Any, user: Any, *, group_lookup: str |
         raise Http404(f"{model.__name__} not found") from exc
 
 
+def assert_scoped(model: type[Model], pks: Any, user: Any, *,
+                  group_lookup: str | None = None) -> None:
+    """`pks` 가 **전부 요청자의 테넌트 것**인지 확인한다. 아니면 `Http404` (W0-14c).
+
+    쓰기 경로(수정·삭제)의 문지기다. 핸들러 첫 줄에서 부른다::
+
+        assert_scoped(ReportTemplate, id, request.user)
+
+    왜 403 이 아니라 404 인가
+        403 은 "그 id 는 존재하지만 네 것이 아니다"를 알려 준다 — 존재 여부가 새는 것도
+        누출이다. 남의 것은 **없는 것과 같아야** 한다 (`get_scoped_or_404` 와 같은 규약).
+
+    실측 근거 (evidence/W0-14/wiring_fix_and_findings.md)
+        이 문지기가 없어서 tenant-A 가 tenant-B 의 레코드를 **지웠다** — Device 는 행 자체가
+        사라지고, ChecklistSetting·SurveillanceProfile·ReportTemplate 는 소프트 삭제됐다.
+        수정 경로에서는 남의 행에 UPDATE 가 실행됐고, 막은 것은 DB 의 NOT NULL 제약이었다.
+
+    ⚠ 여기서 통과 판정을 따로 만들지 말 것 — 전역 여부는 `tenant_roles` 만 답한다 (D-212).
+    """
+    from django.http import Http404
+
+    if is_global_admin(user):
+        return
+
+    if isinstance(pks, str):
+        wanted = [p.strip() for p in pks.split(",") if p.strip()]
+    elif isinstance(pks, (list, tuple, set)):
+        wanted = [str(p) for p in pks]
+    else:
+        wanted = [str(pks)]
+    if not wanted:
+        return
+
+    group = get_user_group(user)
+    if group is None:
+        raise Http404(f"{model.__name__} not found")
+
+    lookup = group_lookup or _guess_group_lookup(model)
+    # ★ `objects` 가 아니라 `_base_manager` 로 묻는다.
+    #   `objects` 는 dj-core 의 테넌트 필터를 타고, 그 필터에는 `created_by__isnull=True`
+    #   OR 절이 들어 있다(§0.4 라 고칠 수 없다). 문지기가 그 필터를 통해 물으면
+    #   "내 것이 아닌데 통과"와 "없어서 통과"를 구별하지 못한다.
+    #   **소유 판정은 필터를 거치지 않은 사실 위에서 해야 한다.**
+    owned = set(
+        str(pk) for pk in model._base_manager.filter(
+            pk__in=wanted, **{lookup: group}
+        ).values_list("pk", flat=True)
+    )
+    missing = [pk for pk in wanted if pk not in owned]
+    if missing:
+        # 무엇이 빠졌는지 응답에 싣지 않는다 — 존재 여부를 흘리지 않기 위해서다.
+        raise Http404(f"{model.__name__} not found")
+
+
 def _guess_group_lookup(model: type[Model]) -> str:
     """모델이 group 에 닿는 경로를 고른다."""
     names = {f.name for f in model._meta.get_fields()}
@@ -143,6 +197,10 @@ def _guess_group_lookup(model: type[Model]) -> str:
         return "group"
     if "userprofilelink" in names:  # CoreUser
         return "userprofilelink__group"
+    if "created_by" in names:
+        # group 열이 없는 모델(ReportTemplate·Device 등)은 **생성자의 소속**이 소유다.
+        # 이 저장소가 이미 그렇게 쓰고 있다 (report_template/views.py 의 기본값 조회).
+        return "created_by__userprofilelink__group"
     raise ValueError(
         f"{model.__name__} 에서 group 경로를 찾을 수 없습니다. "
         "group_lookup 을 명시하십시오."

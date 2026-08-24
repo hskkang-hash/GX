@@ -16,6 +16,7 @@ from checklist_setting.schemas import (
 )
 from checklist_setting.schemas import ChecklistSettingInputSchema
 from checklist_setting.schemas import ChecklistSettingOutputSchema
+from common.tenant_filters import assert_scoped
 from common.constant import MESSAGE_ENUM
 from core.api.v1.auth import CustomJWTAuth
 from core.base import BaseResponse
@@ -77,7 +78,7 @@ class ChecklistSettingController:
                     'page': current_page,
                     'pageSize': page_size
                 }
-               
+
                 headers = get_gcs_api_headers()
                 response = requests.get(
                     f"{flightbrid_url}/api/drone/health/sensor-status/{device_id}",
@@ -85,7 +86,7 @@ class ChecklistSettingController:
                     headers=headers,
                     timeout=30
                 )
-                
+
                 if response.status_code == 200:
                     auto_checklist = response.json()
                     auto_checklist['drone_status'] = Device.objects.get(unit_id=device_id).status.code
@@ -109,7 +110,7 @@ class ChecklistSettingController:
                 current_page=current_page,
             )
         except Exception as e:
-            print(e) 
+            print(e)
             return BaseResponse(
                 status_code=400,
                 success=False,
@@ -160,6 +161,9 @@ class ChecklistSettingController:
         - item_name: Item name of the checklist setting
         - category: Category of the checklist setting
         """
+        # W0-14c — 문지기는 **try 밖**이다. 이 핸들러의 except 가 모든 예외를 삼켜
+        # HTTP 200 + 본문 404 로 바꾸기 때문이다 (W0-18 대상).
+        assert_scoped(ChecklistSetting, id, request.user)
         try:
             checklist_setting = ChecklistSetting.objects.get(id=id)
             checklist_data = data.dict()
@@ -193,10 +197,12 @@ class ChecklistSettingController:
         Parameters:
         - ids: Comma-separated IDs of the checklist settings to delete
         """
+        # W0-14c — 문지기는 try 밖이다 (위 update 주석 참조).
+        assert_scoped(ChecklistSetting, ids, request.user)
         try:
 
             ids = ids.split(",")
-            for item in ids:    
+            for item in ids:
                 checklist_setting = ChecklistSetting.objects.get(id=item)
                 checklist_setting.delete()
             return BaseResponse(

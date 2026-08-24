@@ -23,6 +23,7 @@ from core.role.permission import path_permission
 from surveillance.services.video_analysis_service import VideoAnalysisService
 from flight_log.services.flight_log_service import FlightLogService
 from stream_monitors.utils.minio_client import minio_client
+from common.tenant_filters import assert_scoped
 from surveillance.models import SurveillanceProfile, VideoAnalysis
 from terminals.utils import calculate_distance_km
 from terminals.views.routes_views import RoutesController
@@ -112,7 +113,7 @@ class SurveillanceProfileController:
             request_data = request.GET.copy()
             start_time_start = request_data.pop('start_time_start')
             start_time_end = request_data.pop('start_time_end')
-            
+
             queryset = SurveillanceProfileService.get_selected_list(start_time_start, start_time_end)
             queryset = filter_mensurement(queryset, SurveillanceProfile, request)
             queryset = apply_dynamic_filters(queryset, request_data, [], request.GET.get("sort_obj"))
@@ -453,12 +454,12 @@ class SurveillanceProfileController:
             queryset = SurveillanceProfileService.get_scheduled_activations()
             # Áp dụng filter và sort nếu có
             queryset = apply_dynamic_filters(queryset, request, [], request.GET.get("sort_obj"))
-            
+
             # Pagination
             page_size = int(request.GET.get("page_size", 25))
             current_page = int(request.GET.get("current_page", 1))
             paginator = OptimizedPaginator(queryset, page_size)
-            
+
             try:
                 pages = paginator.page(current_page)
             except EmptyPage:
@@ -519,10 +520,10 @@ class SurveillanceProfileController:
                     message=get_message(MESSAGE_ENUM.NOT_FOUND),
                     data=None,
                 )
-            
+
             # Get profile instance
             profile_instance = profile.first()
-            
+
             data = SurveyMissionDetailOutSchema.from_queryset(profile, many=False)
             # if not profile_instance.mission.from_route:
             #     data['altitude'] = profile_instance.mission.get_measurement('altitude').get_formatted_value()
@@ -530,7 +531,7 @@ class SurveillanceProfileController:
             # else:
             data['altitude'] = None
             use_command_altitude_range = True
-            
+
             min_altitude = None
             max_altitude = None
             drone_assignments = SurveillanceProfileService._drone_prefetch_queryset().filter(profile=profile_instance)
@@ -543,24 +544,24 @@ class SurveillanceProfileController:
                     log_path = minio_client.save_json(flight_log_raw_data, assignment.device.unit_id, filename)
                     assignment.log_path = log_path
                     assignment.save()
-            
+
             # Build route_paths mapping for all assignments
             route_paths_map = SurveillanceProfileService.build_route_paths_for_assignments(
-                drone_assignments, 
+                drone_assignments,
                 profile_instance.mission
             )
-            
+
             # Serialize drone assignments
             assignments_data = []
             for assignment in drone_assignments:
                 assignments_data.append(SurveillanceProfileDroneOutSchema.from_queryset(assignment, many=False))
-            
+
             # Add route_path to each assignment from the mapping
             for assignment_dict in assignments_data:
                 assignment_id = assignment_dict.get('id')
                 if assignment_id and assignment_id in route_paths_map:
                     assignment_dict['route_path'] = route_paths_map[assignment_id]
-            
+
             data['drone_assignments'] = assignments_data
                         # Chỉ lấy waypoint với command nằm trong danh sách cho phép để vẽ biểu đồ
             allowed_command_ids = {16, 21, 17, 18, 19, 31, 192, 195, 22, 186, 20, 86, 84}
@@ -597,7 +598,7 @@ class SurveillanceProfileController:
                     if use_command_altitude_range and command_name:
                         normalized_command_name = command_name.upper()
                         if not normalized_command_name.endswith("TAKEOFF"):
-                            
+
                             operating_altitude_measurement = measurement_map.get('operating_altitude')
                             operating_altitude_value = (
                                 operating_altitude_measurement.get_numeric_value(user_units='m')
@@ -617,9 +618,9 @@ class SurveillanceProfileController:
                                 )
                     if command_id is not None and command_id not in allowed_command_ids:
                         continue
-                
 
-                
+
+
                 distance = 0
                 if index > 0:
                     prev_waypoint = waypoints_list[index - 1]
@@ -641,7 +642,7 @@ class SurveillanceProfileController:
                     "order": waypoint.order,
                     "distance": round(distance, 2)
                 })
-            
+
             if use_command_altitude_range and min_altitude is not None and max_altitude is not None:
                 data['altitude'] = f"{round(min_altitude, 2)} m - {round(max_altitude, 2)} m"
             data['chart_data'] = chart_entries
@@ -745,6 +746,8 @@ class SurveillanceProfileController:
         profile_id: int,
         data: SurveillanceProfileUpdateInSchema,
     ):
+        # W0-14c — 문지기는 **try 밖**이다 (except 가 예외를 200 으로 바꾼다 · W0-18 대상).
+        assert_scoped(SurveillanceProfile, profile_id, request.user)
         try:
             success, profile = SurveillanceProfileService.update(profile_id, data.dict(exclude_unset=True))
             if not success:
@@ -927,6 +930,8 @@ class SurveillanceProfileController:
     @route.delete("/{profile_id}", auth=CustomJWTAuth())
     @path_permission("delete", path_override="/survey-profile")
     def delete_profile(self, request: HttpRequest, profile_id: int):
+        # W0-14c — 문지기는 try 밖.
+        assert_scoped(SurveillanceProfile, profile_id, request.user)
         try:
             success, message = SurveillanceProfileService.delete(profile_id)
             if not success:
@@ -1113,7 +1118,7 @@ class SurveillanceProfileController:
             success, profile = SurveillanceProfileService.stop_repeat(profile_id)
             if not success:
                 return BaseResponse(
-                    status_code=400, 
+                    status_code=400,
                     success=False,
                     message=get_message(MESSAGE_ENUM.STOP_REPEAT_SURVEILLANCE_PROFILE_FAILED),
                     data=None,
@@ -1145,13 +1150,13 @@ class SurveillanceProfileController:
                     message=get_message(MESSAGE_ENUM.ACTION_EXPORT_FAILED),
                     data=None,
                 )
-            
+
             # Return file as HttpResponse with proper headers
             response = HttpResponse(file_content, content_type='application/octet-stream')
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             response['Content-Length'] = len(file_content)
             return response
-            
+
         except Exception as exc:
             logger.exception("Error downloading log for surveillance profile: %s", exc)
             return BaseResponse(
@@ -1173,13 +1178,13 @@ class SurveillanceProfileController:
                     message=get_message(MESSAGE_ENUM.ACTION_EXPORT_FAILED),
                     data=None,
                 )
-            
+
             # Return file as HttpResponse with proper headers
             response = HttpResponse(file_content, content_type='application/octet-stream')
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             response['Content-Length'] = len(file_content)
             return response
-            
+
         except Exception as exc:
             logger.exception("Error downloading log for surveillance profile: %s", exc)
             return BaseResponse(
@@ -1205,7 +1210,7 @@ class SurveillanceProfileController:
         #     return BaseResponse(
         #         status_code=400,
         #         success=False,
-        #         message=get_message(MESSAGE_ENUM.UNEXPECTED_ERROR),         
+        #         message=get_message(MESSAGE_ENUM.UNEXPECTED_ERROR),
         #         data=None,
         #     )
 
@@ -1215,7 +1220,7 @@ class SurveillanceProfileController:
         """Lấy thông tin tất cả các task liên quan đến một profile."""
         try:
             all_tasks_info = SurveillanceProfileService.get_all_profile_tasks(profile_id)
-            
+
             if not all_tasks_info or not all_tasks_info.get("tasks"):
                 return BaseResponse(
                     status_code=404,
@@ -1245,7 +1250,7 @@ class SurveillanceProfileController:
         """Chi tiết lịch kích hoạt của một profile (deprecated - dùng /tasks)."""
         try:
             scheduled_info = SurveillanceProfileService.get_scheduled_activation_info(profile_id)
-            
+
             if not scheduled_info:
                 return BaseResponse(
                     status_code=404,
@@ -1281,11 +1286,11 @@ class SurveillanceProfileController:
                     message="task_type phải là 'activation' hoặc 'overdue_check'",
                     data=None,
                 )
-            
+
             success, error_message, cancelled_count = SurveillanceProfileService.cancel_profile_task(
                 profile_id, task_type=task_type
             )
-            
+
             if not success:
                 return BaseResponse(
                     status_code=404 if error_message == "Profile not found" else 400,
@@ -1317,7 +1322,7 @@ class SurveillanceProfileController:
             success, error_message, cancelled_count = SurveillanceProfileService.cancel_profile_task(
                 profile_id, task_type=None
             )
-            
+
             if not success:
                 return BaseResponse(
                     status_code=404 if error_message == "Profile not found" else 400,
@@ -1347,7 +1352,7 @@ class SurveillanceProfileController:
         """Hủy lịch kích hoạt đã lập cho một profile (deprecated - dùng /tasks/activation)."""
         try:
             success, error_message = SurveillanceProfileService.cancel_scheduled_activation(profile_id)
-            
+
             if not success:
                 return BaseResponse(
                     status_code=404 if error_message == "Profile not found" else 400,
@@ -1446,7 +1451,7 @@ class VideoAnalysisController:
                 current_page = paginator.num_pages or 1
                 pages = paginator.page(current_page)
             data = VideoAnalysisOutSchema.from_queryset(pages.object_list, many=True)
-            
+
             return BaseResponse(
                 status_code=200,
                 success=True,
@@ -1460,7 +1465,7 @@ class VideoAnalysisController:
             logger.exception("Error analyzing video: %s", exc)
             return BaseResponse(
                 status_code=400,
-                success=False,  
+                success=False,
                 message=get_message(MESSAGE_ENUM.UNEXPECTED_ERROR),
                 data=None,
             )
@@ -1497,7 +1502,7 @@ class VideoAnalysisController:
                         data['register_number'] = getattr(getattr(video_analysis.profile_device.device, 'manufacturer_information', None), 'registration_number', None)
                     except Exception:
                         pass
-            
+
             return BaseResponse(
                 status_code=200,
                 success=True,
@@ -1508,7 +1513,7 @@ class VideoAnalysisController:
             logger.exception("Error analyzing video: %s", exc)
             return BaseResponse(
                 status_code=400,
-                success=False,  
+                success=False,
                 message=get_message(MESSAGE_ENUM.UNEXPECTED_ERROR),
                 data=None,
             )
@@ -1538,7 +1543,7 @@ class VideoAnalysisController:
             logger.exception("Error downloading video analysis detail: %s", exc)
             return BaseResponse(
                 status_code=400,
-                success=False,  
+                success=False,
                 message=get_message(MESSAGE_ENUM.UNEXPECTED_ERROR),
                 data=None,
             )
