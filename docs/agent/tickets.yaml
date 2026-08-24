@@ -714,6 +714,28 @@ tickets:
     라우트 대장 실측: scoped 0 → 1 / unreviewed 649 → 648 (total 652 · coverage.md §3).
     ★ 부착률은 EXIT 기준이 아니다 (D-249). 위 누출 수치가 기준이다.
 
+    ---
+    [2026-08-24 · **W0-14b 배선 정정 완료 (D-253). 5시나리오가 처음으로 판정에 도달했다**]
+    전문: docs/agent/evidence/W0-14/wiring_fix_and_findings.md
+
+    단언은 한 글자도 바꾸지 않았다. 고친 것은 넷이다 — 실경로·시나리오별 메서드·인증(jti 대조)·
+    필수 FK 픽스처. 그리고 두 사용자에게 **동일한 경로 권한**을 줬다(역할 코드는 superuser 가
+    아니다). 그러면 남는 차이가 소속 테넌트 하나뿐이고, 그것이 이 시험이 묻는 것이다.
+
+    ★ 판정 결과: **격리는 단건 경로에서 뚫려 있다.**
+      · list  **8/8 통과** — 목록은 이미 좁혀져 있다
+      · detail **5건 200** (Order·Terminal·Device·SurveillanceProfile·ReportTemplate) — IDOR
+      · update **3건 200 + 2건은 남의 행에 UPDATE 도달** (막은 것은 DB NOT NULL 제약이다)
+      · delete **5건 200 — 그리고 실제로 지워진다**: Device 는 행 자체가 사라지고(하드),
+        ChecklistSetting·SurveillanceProfile·ReportTemplate 는 deleted 열이 찍힌다(소프트)
+      "화면에 안 보이니 안전하다"가 거짓임을 이 표가 보인다. 확대(W0-14c)의 1순위는 단건 쓰기 경로다.
+
+    부수 발견 → W0-18 입력: path_permission 의 거부는 dict 를 돌려주는데, 응답 스키마가
+    List[...] 인 라우트에서는 pydantic 이 그것을 거부해 **HTTP 500** 이 된다. D-248 이 말한
+    200-body-403 은 타입 있는 라우트에서 500 으로 나타난다.
+
+    NO_ROUTE 16건 등재(사유 필수·증가금지 시험 부착) — "없어서 건너뜀"이 조용히 늘지 않게.
+
     남은 것 — dod ① ②:
       · ① 확대 롤아웃 648건. 확대 전 P-W0-14-3(orphan 33% 화면 손실) 판정 권고.
       · ② test_all_routes_are_tenant_scoped 는 통과하나(대장 증가금지),
@@ -1020,9 +1042,9 @@ tickets:
 - id: W0-3
   phase: R1
   title: "테넌트 격리 회귀 테스트 신설"
-  status: decision-pending
-  updated_at: "2026-08-22T17:10:00+09:00"
-  evidence: docs/agent/evidence/W0-3/coverage.md · evidence/LOCAL_BRINGUP/test_tenant_isolation.txt · evidence/W0-14/http_leak_probe.md
+  status: in_progress
+  updated_at: "2026-08-24T15:30:00+09:00"
+  evidence: docs/agent/evidence/W0-14/wiring_fix_and_findings.md · evidence/W0-3/coverage.md · evidence/LOCAL_BRINGUP/test_tenant_isolation.txt · evidence/W0-14/http_leak_probe.md
   blocker: |
     [2026-08-22 · 처음으로 실행됐다. 예상 1건 적중 + 예상 밖 3건]
     결과: Ran 3 tests — 1 ok / 2 FAIL / 2 ERROR(setUpClass)
@@ -1037,6 +1059,13 @@ tickets:
 
     ★ P-LOCAL-3 — is_group_isolatable() 은 groups M2M 만 보는데 dj-core 는 group FK(단수)를 쓴다.
       그래서 dj-core 상속 13종을 "격리 없음"으로 읽고, 그중 5종이 이 테스트를 깼다.
+
+    ★ 2026-08-24 — **배선 정정(D-253) 후 5시나리오가 판정에 도달했다.** dod ① 충족.
+      Ran 13 — list 8/8 통과 · detail 5건 200 · update 3건 200(+2건 남의 행에 UPDATE 도달) ·
+      delete 5건 200(실제 삭제됨) · export 대상없음. 전문: evidence/W0-14/wiring_fix_and_findings.md
+      dod ② 는 **의도적으로 미충족**으로 둔다 — 누출을 @expectedFailure 로 등록하면 D-249 의
+      EXIT(누출 0건)가 무의미해진다. 빨간불이 W0-14c(652 확대)의 작업 목록이다.
+      P-LOCAL-3(is_group_isolatable 이 group FK 를 모른다)은 여전히 미결이라 레지스트리 2건은 실패다.
 
     ★ 2026-08-22 추가 — **이 시험이 막혀 있는 동안 답은 다른 경로로 나왔다.**
       저장소 밖 프로브(scripts/probe_tenant_isolation.py)로 HTTP 레벨 교차 노출을 실측했고,

@@ -204,6 +204,9 @@ class RouteInfo:
     has_auth: bool
     scope: ScopeSpec | None = None
     tags: tuple[str, ...] = field(default_factory=tuple)
+    #: `@path_permission(..., path_override=…)` 이 핸들러에 남긴 권한 경로.
+    #: 격리 시험 픽스처가 "이 라우트에 닿으려면 어떤 권한이 필요한가"를 여기서 읽는다.
+    path_override: Any = None
 
     @property
     def state(self) -> str:
@@ -281,6 +284,7 @@ def enumerate_operations() -> list[RouteInfo]:
                                 has_auth=bool(getattr(op, "auth_callbacks", None)),
                                 scope=getattr(view, SCOPE_ATTR, None),
                                 tags=tuple(getattr(op, "tags", ()) or ()),
+                                path_override=getattr(view, "_path_override", None),
                             )
                         )
     routes.sort(key=lambda r: (r.path, r.method))
