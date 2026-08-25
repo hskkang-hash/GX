@@ -4,10 +4,10 @@
 # 스키마: docs/GuardianX_개발작업지시서_v2.0.md §1 참조
 # ============================================================================
 meta:
-  version: "3.8-local"
+  version: "3.10-local"
   source_root: "C:/GuardianX/guardianx-source"
   active_phase: "R1"          # 에이전트는 이 phase의 티켓만 집는다
-  updated_at: "2026-08-22"
+  updated_at: "2026-08-25"
   status_enum: [backlog, ready, in_progress, review, verify-pending, done, blocked, dropped]
   # verify-pending = 구현 완료, 검증만 사내망 대기 (D-202). 에이전트는 다음 티켓으로 전진한다.
   gate_enum: [human-required, evidence-review]
@@ -22,10 +22,10 @@ meta:
   # 손으로 세지 않는다: `python scripts/gen_manifest.py` 가 실측·대조한다 (불일치 시 exit 1).
   integrity: "manifest"
   manifest:
-    total: 71
+    total: 75
     by_phase:
       BACKLOG: 8
-      R1: 41
+      R1: 45
       R2: 14
       R3: 8
     ids:
@@ -70,6 +70,10 @@ meta:
       - W5-2
       - W5-3
       - W6-0
+      - DA-01
+      - DA-02
+      - DA-03
+      - DA-04
       - W6-1
       - W6-2
       - W7-1
@@ -169,6 +173,14 @@ meta:
       phase: R1
       tickets: [W6-0]
       goal: "채널당 원가를 숫자로 확정해 가격표의 근거를 만든다"
+    # --- 2026-08-25 신설 (작업지시서 재난안전솔루션 §5 · 대표 지시) ---
+    # WP-2 와 **병행**한다. 문서 산출물만 내므로 WP-2 의 코드 작업과 충돌하지 않는다.
+    # 코드 작업(WP-DA2 = F-01~F-14 구현)은 WP-2 EXIT(누출 0건) + 대표 승인 후 별도 WP 로 연다.
+    - id: WP-DA1
+      title: "재난안전 DSM App 설계 — 요구사항·SDN매핑·화면 (에스비 1호)"
+      phase: R1
+      tickets: [DA-01, DA-02, DA-03, DA-04]
+      goal: "F-01~F-14 를 구현 가능한 요구사항·화면·커널로 내리고, 무엇이 재사용이고 무엇이 신규인지를 문서로 확정한다 (코드 0줄)"
 
   kind_enum:   [reuse, bind, new-s, new-l, ops, doc]
   # bind = 이미 있는 기능에 데이터만 연결 / new-s = 소규모 신규 / new-l = 대규모 신규
@@ -690,6 +702,7 @@ tickets:
 - id: W0-14
   phase: R1
   title: "뷰/서비스 레벨 테넌트 필터 전 엔드포인트 강제 (격리 주 통제)"
+  kernel: ['K5']                     # 공유 커널 (지시서 v2.1) — F-12 ↔ U4 이중 AC
   status: in_progress
   updated_at: "2026-08-22T22:10:00+09:00"
   evidence: docs/agent/evidence/W0-14/pilot_scope_stream_monitors.md · http_leak_probe.md · leak_matrix.json · coverage.md · route_baseline.json · openapi_routes.json
@@ -868,6 +881,7 @@ tickets:
 - id: W0-16
   phase: R1
   title: "superuser 역할 분리 — 전역(GAION 운영) vs 테넌트 운영 (W0-14 의 전제)"
+  kernel: ['K5']                     # 공유 커널 (지시서 v2.1) — F-12 ↔ U4 이중 AC
   status: done
   updated_at: "2026-08-22T20:40:00+09:00"
   evidence: docs/agent/evidence/W0-16/superuser_accounts.md · role_split.md · http_role_split_test.md · revocation_runbook.md
@@ -922,6 +936,7 @@ tickets:
 - id: W0-17
   phase: R1
   title: "외부 의존 부분 실패 격리 — 저하 운전 (timeout 없는 49건)"
+  kernel: ['K5']                     # 공유 커널 (지시서 v2.1) — F-12 ↔ U4 이중 AC
   status: done
   updated_at: "2026-08-22T23:30:00+09:00"
   evidence: docs/agent/evidence/W0-17/timeout_inventory.md
@@ -978,6 +993,7 @@ tickets:
 - id: W0-18
   phase: R1
   title: "응답 후처리 계층 + 엔드포인트 문서 정정 (200-body-403 → HTTP 403)"
+  kernel: ['K5']                     # 공유 커널 (지시서 v2.1) — F-05·F-12 ↔ U4 이중 AC
   status: verify-pending
   updated_at: "2026-08-24T18:40:00+09:00"
   evidence: docs/agent/evidence/W0-18/backward_compat_impact.md · frontend_success_sites.json · docs/contracts/api-error-and-auth.md
@@ -1285,6 +1301,7 @@ tickets:
 - id: W1-1
   phase: R1
   title: "임무 리포트 서비스 (MissionReportService)"
+  kernel: ['K4']                     # 공유 커널 (지시서 v2.1) — F-11 ↔ U1·U2 이중 AC
   status: ready
   priority: P0
   effort: M
@@ -1313,6 +1330,7 @@ tickets:
 - id: W1-2
   phase: R1
   title: "리포트 템플릿 3종 시드"
+  kernel: ['K4']                     # 공유 커널 (지시서 v2.1) — F-11 ↔ U2 이중 AC
   status: ready
   priority: P0
   effort: S
@@ -1331,6 +1349,7 @@ tickets:
 - id: W1-3
   phase: R1
   title: "보고서 생성 API + 임무 상세 화면 버튼"
+  kernel: ['K4']                     # 공유 커널 (지시서 v2.1) — F-11 ↔ U2 이중 AC
   status: ready
   priority: P0
   effort: M
@@ -1358,6 +1377,7 @@ tickets:
 - id: W1-4
   phase: R1
   title: "인수인계 AI 요약 프리필"
+  kernel: ['K4']                     # 공유 커널 (지시서 v2.1) — F-11 ↔ U2 이중 AC
   status: ready
   priority: P0
   effort: S
@@ -1380,6 +1400,7 @@ tickets:
 - id: W2-1
   phase: R1
   title: "DetectionEvent 모델 신설"
+  kernel: ['K1']                     # 공유 커널 (지시서 v2.1) — F-04·F-05 ↔ U1 이중 AC
   status: verify-pending
   updated_at: "2026-08-22T15:40:00+09:00"
   evidence: docs/agent/evidence/LOCAL_BRINGUP/W2-1_makemigrations_dryrun.txt
@@ -1425,6 +1446,7 @@ tickets:
 - id: W2-2
   phase: R1
   title: "검출 결과 → 이벤트 수집 (중복 억제 포함)"
+  kernel: ['K1']                     # 공유 커널 (지시서 v2.1) — F-01~F-04 ↔ U1 이중 AC
   status: ready
   priority: P0
   effort: M
@@ -1448,6 +1470,7 @@ tickets:
 - id: W2-3
   phase: R1
   title: "AI 이벤트 센터 화면 (3열 콘솔)"
+  kernel: ['K1']                     # 공유 커널 (지시서 v2.1) — F-05·F-09 ↔ U1 이중 AC
   status: ready
   priority: P0
   effort: L
@@ -1473,6 +1496,7 @@ tickets:
 - id: W2-4
   phase: R1
   title: "오탐 피드백 통계"
+  kernel: ['K6']                     # 공유 커널 (지시서 v2.1) — F-14 ↔ U1·U4 이중 AC
   status: ready
   priority: P1
   effort: S
@@ -1490,6 +1514,7 @@ tickets:
 - id: W3-1
   phase: R1
   title: "대시보드 라우트 6개 → 1개 + 프리셋 통합"
+  kernel: ['K3']                     # 공유 커널 (지시서 v2.1) — F-09 ↔ U3 이중 AC
   status: ready
   priority: P1
   effort: M
@@ -1512,6 +1537,7 @@ tickets:
 - id: W3-2
   phase: R1
   title: "3계층 대시보드 프리셋 정의 (OPERATOR/MANAGER/EXECUTIVE)"
+  kernel: ['K3']                     # 공유 커널 (지시서 v2.1) — F-09 ↔ U3 이중 AC
   status: ready
   priority: P0
   effort: M
@@ -1532,6 +1558,7 @@ tickets:
 - id: W3-3
   phase: R1
   title: "월간 성과 리포트 자동 발행"
+  kernel: ['K4']                     # 공유 커널 (지시서 v2.1) — F-11 ↔ U2 이중 AC
   status: ready
   priority: P0
   effort: S
@@ -1548,6 +1575,7 @@ tickets:
 - id: W3-4
   phase: R1
   title: "국비 공모용 실적자료 내보내기"
+  kernel: ['K4']                     # 공유 커널 (지시서 v2.1) — F-11 ↔ U2 이중 AC
   status: ready
   priority: P1
   effort: M
@@ -1567,6 +1595,7 @@ tickets:
 - id: W4-1
   phase: R1
   title: "LicensePlan / UsageSnapshot 모델 + 계측"
+  kernel: ['K6']                     # 공유 커널 (지시서 v2.1) — F-14 ↔ U4 이중 AC
   status: ready
   priority: P0
   effort: M
@@ -1623,6 +1652,7 @@ tickets:
 - id: W4-4
   phase: R1
   title: "사용량 관리자 화면 + CSV"
+  kernel: ['K6']                     # 공유 커널 (지시서 v2.1) — F-14 ↔ U4 이중 AC
   status: ready
   priority: P0
   effort: S
@@ -1708,6 +1738,281 @@ tickets:
     이 수치 없이 캐파·가격표를 확정하지 않는다.
   dod: "시나리오별 동시 채널 수 실측표가 문서화되고 GPU 캐파 설계서 수치가 갱신된다."
   verify: []
+
+
+# ---------------------------------------------------------------------------
+# WP-DA1 — 재난안전 DSM App 설계 (에스비정보기술 1호 · 계약 1~2차)
+# 근거: C:/GuardianX/작업지시서/작업지시서_재난안전솔루션_20260825.md §5
+#       계약 DEV-SBIT-GX-20260810 · 사업계획 BP-GX-DSM-20260824
+# ★ 이 WP 는 **문서 산출물만** 낸다. 코드 변경 0줄. (지시서 §5 Code지시 ③)
+#   코드 작업(WP-DA2 / F-01~F-14)은 WP-2 EXIT(누출 0건) + 대표 승인 후에만 착수한다.
+# ---------------------------------------------------------------------------
+- id: DA-01
+  phase: R1
+  title: "요구사항정의서 — 재난안전 DSM App (F-01~F-14 · 역할 5종 · U1~U4 수렴)"
+  status: review
+  updated_at: "2026-08-25T14:30:00+09:00"
+  evidence: docs/design/DA-01_요구사항정의서_v1.0.md · docs/agent/review/WP-DA1/ENTRY.md
+  blocker: |
+    [2026-08-25 · **dod ①~④ 충족. 계약 원문 대조에서 전제 3건이 갈렸다**]
+    전문: docs/design/DA-01_요구사항정의서_v1.0.md §0-1 · docs/agent/review/WP-DA1/ENTRY.md §3
+
+    ★ **이 App 의 실제 신규 개발은 넷뿐이다** — F-04 규칙엔진 · F-05 OpenAPI · F-06~08 SDN 연계.
+      나머지 열 건은 확장·연결이다. `DetectionEvent` 가 이미 있고(계약 고정 · W6-2),
+      대시보드 위젯 6종과 엔드포인트 7종이 이미 있다. 인용한 재사용 경로 18건은
+      `scripts/verify_da01_reuse_paths.py` 로 실재를 대조했다 — **18/18 통과.**
+
+    ★ **"5상태"를 재난 5단계로 오독했다가 계약 원문 대조에서 잡혔다** → P-DA-4.
+      계약 [별첨 1] F-09 AC 원문은 **"5상태(기본/로딩/빈/오류/권한없음)"** 다.
+      재난 등급은 F-04 의 3종(주의·경계·심각)이고 그중 **심각이 F-06 QoS 발동 조건**이다.
+      **이번 오독은 지시서가 아니라 에이전트 자신의 것이다.** 그대로 갔으면 F-09 를 통째로
+      잘못 설계했다. 지시서만 읽고 계약을 안 열었으면 잡지 못했을 것이다.
+
+    ★ **U 매핑이 한 칸 밀려 있다** → P-DA-1. 지시서 §1 "U1↔F-11 보고서 · U2↔F-10 알림" 은
+      정의 원본(상품화 개발방안 §2: U1=이벤트 증거화 · U2=보고 자동화)과 다르다.
+      같은 지시서의 v2.1 커널 절은 원 정의와 맞고, D-246 도 원 정의를 쓴다 → **원 정의를 따랐다.**
+
+    ★ **F-11 의 기반 모델에 격리가 없다** → P-DA-3. `ReportTemplate` 은 `BaseModel` 상속이라
+      group 격리가 없다. W0-14c 문지기가 HTTP 표면만 막았다. 에스비 채널은 고객사별 분리가 전제다.
+      권고 C: 격리 시험 레지스트리 등록만 지금, 모델 전환은 K4 착수 시 백필과 함께.
+
+    ★ **GAP — F-10 알림 발송 티켓이 정본에 0건** → P-DA-2 (OPEN-07).
+      계약 필수(M)인데 tickets.yaml 어디에도 없다. `NotificationsList` 는 화면단 목록이다.
+      지금 정본대로 전부 done 이 되어도 F-10 은 구현되지 않는다.
+
+    OPEN 7건(성능 목표치·p95 부하조건·격리 결함·U 매핑·열거값 절차·명세 미수령·알림 GAP)을
+    문서 §6 에 사유·기한과 함께 남겼다. 숨기지 않았다.
+    review 사유: human_gate — 이 문서가 검수 AC 90% 의 **분모**를 확정한다.
+  priority: P0
+  effort: M
+  kind: doc
+  depends_on: []
+  human_gate: true
+  gate: human-required
+  requires_intranet: false
+  decisions: [D-207, D-210, D-212]
+  reuse_targets:
+    - backend/stream_monitors/models.py            # DetectionEvent — F-01~03·F-05 의 실제 기반
+    - docs/contracts/detection-event.md            # W6-2 에서 고정된 이벤트 계약
+    - backend/surveillance/models.py               # SurveillanceProfile·SurveyMission·VideoAnalysis
+    - backend/dashboard/models.py                  # Dashboard·DashboardPanel — F-09 기반
+    - backend/report_template/models.py            # ReportTemplate — F-11 엔진
+    - backend/common/tenant_roles.py               # 역할 정의 한 곳 — F-12 역할 5종의 근거
+    - docs/contracts/api-error-and-auth.md         # F-05 의 오류·인증 계약 (W0-18 실측)
+  spec: |
+    지시서 §3 기능명세 14건(F-01~F-14)을 **구현 가능한 요구사항**으로 내린다.
+    이 문서는 검수 기준(§6 KPI)과 1:1로 대응해야 한다 — AC 90%+ 판정의 분모가 여기서 정해진다.
+
+      ① 각 F 를 (기능요구 FR / 비기능요구 NFR / 인수조건 AC / 담당계층 / 재사용 근거)로 전개한다.
+      ② ★ **재사용 근거 열이 이 문서의 핵심이다.** 신규 개발로 적기 전에 reuse_targets 를
+         실제로 읽고 "이미 있는 것"을 먼저 적는다 (지시서 v2.0 §0.1 원칙 1).
+         DetectionEvent 는 이미 있다 — F-01~F-05 는 신규 모델이 아니라 **확장·연결**이다.
+      ③ L4(App) / L3(Platform) / L2(연계 API) 귀속을 기능별로 못박는다.
+         이것은 기술 구분이 아니라 **IP 경계**다 (계약 8조 · 본체=가이온 / 신규 연계분=공동).
+         App 은 additive — 본체 무수정이 원칙이고, 무수정이 불가능한 항목은 별도로 표시한다.
+      ④ 역할 5종(관제요원·재난관제관리자·기관장/부서장·운영자·외부APP개발자)의
+         권한 매트릭스를 F 별로 작성한다. 역할 정의는 common/tenant_roles.py 규약을 따른다.
+      ⑤ U1~U4 수렴점(U1↔F-11 · U2↔F-10 · U3↔F-09)을 명시해 **한 번 개발해 두 곳에 쓴다**를
+         문서에서 강제한다.
+      ⑥ 미정 항목은 숨기지 않고 OPEN 목록에 사유·기한과 함께 남긴다
+         (F-01 성능 목표치는 "1단계 합의" 대상이라 지금 숫자를 만들어 적지 않는다).
+    ⚠ 코드 변경 금지. 이 티켓의 산출물은 문서 1개다.
+  dod: |
+    ① docs/design/DA-01_요구사항정의서_v1.0.md 가 존재하고 F-01~F-14 전건이 전개돼 있다
+    ② 각 F 에 재사용 근거(실제 파일 경로)가 적혀 있고, 그 경로가 저장소에 실재한다
+    ③ 역할 5종 × F 권한 매트릭스가 있다
+    ④ OPEN 항목이 사유·기한과 함께 목록화돼 있다
+    ⑤ 대표 승인 (human_gate)
+  verify:
+    - "test -f docs/design/DA-01_요구사항정의서_v1.0.md"
+    - "python scripts/verify_da01_reuse_paths.py"
+
+- id: DA-02
+  phase: R1
+  title: "SDN 연계 API 매핑서 — 에스비 명세 ↔ I-1~I-5 어댑터 (F-06·07·08)"
+  status: blocked
+  updated_at: "2026-08-25T14:30:00+09:00"
+  evidence: docs/design/DA-02_SDN_API_매핑서_v0.1_수령요건.md
+  priority: P0
+  effort: M
+  kind: doc
+  depends_on: []
+  human_gate: true
+  gate: human-required
+  requires_intranet: false
+  decisions: [D-204, D-212]
+  blocker: |
+    [2026-08-25] **입력 미수령 — 에스비정보기술 SDN API 명세 (계약 3조2항 · 기한 2026-08-25).**
+    명세 없이 매핑서를 쓰면 그 문서는 추측이고, 추측한 필드명 위에 F-06·07·08 어댑터를
+    구현하면 재작업이 확정된다. 그래서 **본문을 지금 쓰지 않는다.**
+    지금 낸 것은 산출물이 아니라 **수령 요건서**다 —
+      docs/design/DA-02_SDN_API_매핑서_v0.1_수령요건.md
+    무엇을 받아야 매핑이 가능한지(엔드포인트·인증·QoS 파라미터·링크상태 이벤트·오류코드)를
+    미리 적어 두어, 명세가 도착한 날 바로 매핑에 들어간다.
+    대표 조치(지시서 §5): 미수령 시 이메일로 기록 + 기한 연장 요청(6조3항).
+  reuse_targets:
+    - docs/contracts/stream-control.openapi.yaml   # 기존 OpenAPI 계약 서식 — 같은 형식을 쓴다
+    - docs/contracts/api-error-and-auth.md         # 오류·인증 계약
+    - backend/common/external_http.py              # 외부 호출 타임아웃 규약 (W0-17)
+    - backend/third_api/                           # 기존 외부 연동 어댑터 관례
+  spec: |
+    에스비 SDN 컨트롤러 API 명세를 수령한 뒤, I-1~I-5 어댑터 인터페이스로 매핑한다.
+      ① 수령 요건서(선행 · 지금 작성): 매핑에 반드시 필요한 입력 항목을 열거한다.
+      ② 매핑표(명세 수령 후): 에스비 엔드포인트 ↔ GuardianX 어댑터 메서드 ↔ 요청/응답 필드.
+      ③ 실패 설계: SDN 무응답·거부·부분성공 3종의 처리와 **결과코드 기록**(F-06 AC).
+         가이온 책임은 API 호출까지다(계약 10조1항) — 그 경계를 매핑표에 명시한다.
+      ④ 어댑터 추상화: 타 SDN 으로 교체 가능해야 한다(계약 9조2항).
+         에스비 고유 필드가 GuardianX 도메인 모델에 새어 들어가지 않게 경계를 정한다.
+      ⑤ 인증정보는 문서에 값을 적지 않는다 — 비밀저장소 참조만 적는다 (D-204).
+    ⚠ Mock 어댑터 구현조차 이 티켓 범위가 아니다. WP-DA2 다.
+  dod: |
+    ① (지금) 수령 요건서가 존재하고, 필요한 입력 항목이 항목별 사유와 함께 열거돼 있다
+    ② (명세 수령 후) 매핑표에 I-1~I-5 전건이 에스비 엔드포인트와 대응돼 있다
+    ③ 실패 3종 처리와 결과코드 기록 방식이 정의돼 있다
+    ④ 문서에 실제 인증정보 값이 0건이다
+    ⑤ 대표 승인 (human_gate)
+  verify:
+    - "test -f docs/design/DA-02_SDN_API_매핑서_v0.1_수령요건.md"
+    - "gitleaks detect --source docs/design --no-git"
+
+- id: DA-03
+  phase: R1
+  title: "화면설계안 — F-09 재난 대시보드 · F-12 관리자 설정 (User Flow 5종 기준)"
+  status: review
+  updated_at: "2026-08-25T14:30:00+09:00"
+  evidence: docs/design/DA-03_화면설계안_v1.0.md
+  blocker: |
+    [2026-08-25 · **dod ①~④ 충족. 3초 KPI 의 측정 지점을 못박았다**]
+    전문: docs/design/DA-03_화면설계안_v1.0.md
+
+    ★ **"클릭→영상 3초"를 재는 두 점을 정의했다** (§2-4):
+      t0 = 카드 클릭 핸들러 진입 / t1 = video 첫 프레임 페인트. **AC 는 t1-t0 ≤ 3.0초.**
+      스냅샷을 먼저 그려 체감을 0 으로 만들되 **AC 판정은 영상 첫 프레임으로 한다** —
+      스냅샷으로 3초를 통과했다고 주장하지 않는다. 검수는 p50/p95 분포로 보고한다.
+      정하지 않으면 이 KPI 는 판정 불가였다.
+
+    ★ **5상태 작업량의 실체: 로딩은 이미 있다.** Skeleton 5종이 실재하므로
+      **신규는 빈·오류·권한없음 × 위젯 수**다. 위젯별 적용표를 §2-5 에 냈다(검수 판정표).
+
+    ★ **스피너 고착이 이 화면의 실제 실패 모드다** (W0-18 프론트 실측 인용).
+      무보호 호출 21곳의 증상은 흰 화면이 아니라 영원한 로딩이다 —
+      즉 **로딩 상태가 오류 상태를 삼킨다.** 그래서 신규 위젯 전건에 로딩 타임아웃 10초를
+      걸고 초과 시 오류로 전이시킨다. F-09 의 숨은 필수 요건이다.
+
+    ★ **T9 의 가장 중요한 규칙: 오류 상태에서 폼을 빈 값으로 그리지 않는다** (§3-5).
+      불러오기 실패를 "설정 없음"으로 그리면 관리자가 저장을 눌러 **실제 설정을 빈 값으로 덮는다.**
+
+    미정 3건(네트워크 링크 표현 · 3계층 프리셋 관계 · 목록 기본 필터)은 §5 에 사유·시점과 함께.
+    review 사유: human_gate.
+  priority: P0
+  effort: M
+  kind: doc
+  depends_on: [DA-01]
+  human_gate: true
+  gate: human-required
+  requires_intranet: false
+  decisions: [D-207]
+  reuse_targets:
+    - frontend/src/features/Dashboard/SurveillanceDashboard   # F-09 가 확장할 실제 화면
+    - backend/dashboard/models.py                             # Dashboard·DashboardPanel 스키마
+    - backend/surveillance/views/surveillance_dashboard_view.py
+    - backend/stream_monitors/models.py                       # DetectionEvent.Severity — 색 규약의 근거
+    - frontend/src/features/operationSetting                  # F-12 가 확장할 설정 화면
+    - frontend/src/features/surveillanceProfile               # 위험구역·임계값 설정의 기존 자리
+  spec: |
+    지시서 §4 User Flow 5종을 화면으로 내린다. **F-09 와 F-12 두 화면만** 이 티켓 범위다.
+      ① Flow 별 화면 전이도(누가 → 어디서 → 무엇을 누르면 → 무엇이 나오는가).
+         완료 판정은 코드가 아니라 화면이라는 원칙(v2.0 §0.1-3)을 이 문서가 떠받친다.
+      ② F-09: 5상태 100% 표출 + **클릭→영상 3초**(KPI). 3초를 어디서 재는지(클릭 시각 →
+         첫 프레임 렌더)를 문서에 못박는다. 재는 자리를 정하지 않으면 KPI 가 판정 불가다.
+      ③ 심각도 색 규약은 DetectionEvent.Severity 3종(info·warning·critical)을 그대로 쓴다.
+         ISA-101 — 빨강은 critical 전용. 새 등급을 만들지 않는다.
+      ④ F-12: 무권한 차단 + **설정 감사로그**. 역할 5종 × 설정항목 가시/편집 매트릭스.
+      ⑤ 신규 화면은 AntD 로 만든다. **기존 화면 개종 금지**(§0.4). 지도는 *Unified 래퍼만.
+      ⑥ 저충실도(레이아웃·영역·상태)까지만. 픽셀 시안은 이 티켓 범위가 아니다.
+    ⚠ 코드 변경 금지. .tsx 를 만들지 않는다.
+  dod: |
+    ① docs/design/DA-03_화면설계안_v1.0.md 가 존재하고 Flow 5종 전건이 전이도로 있다
+    ② F-09·F-12 각각의 영역 구성·상태·빈/오류 상태가 정의돼 있다
+    ③ 3초·30초 KPI 의 **측정 지점**이 문서에 지정돼 있다
+    ④ 역할 5종 × 설정항목 가시/편집 매트릭스가 있다
+    ⑤ 대표 승인 (human_gate)
+  verify:
+    - "test -f docs/design/DA-03_화면설계안_v1.0.md"
+    - "git diff --name-only HEAD~1 -- frontend/ | wc -l | grep -qx 0"
+
+- id: DA-04
+  phase: R1
+  title: "공유 커널 6종 API 스펙 (K1~K6) — F 계약 AC ↔ U 상품 AC 이중 태깅표"
+  kernel: [K1, K2, K3, K4, K5, K6]   # 이 티켓이 커널 정의의 정본이다
+  status: review
+  updated_at: "2026-08-25T14:30:00+09:00"
+  evidence: docs/design/DA-04_공유커널_API스펙_v1.0.md · scripts/verify_kernel_map.py
+  blocker: |
+    [2026-08-25 · **dod ①~④ 충족. 커널 6종 정의 + kernel: 필드 18건 정본 반영**]
+    전문: docs/design/DA-04_공유커널_API스펙_v1.0.md
+
+    ★ **겹침은 9건이 아니라 7건이다.** 지시서 v2.1 은 "F 14개 중 9개가 U와 겹침 ·
+      공수 ~40% 절감"이라 적고 스스로 추정이라 표시했다. 실측 대조: **7건**
+      (F-04·05·09·10·11·12·14). F-06·07 은 SDN 어댑터라 U 와 겹치지 않는다.
+      절감률은 WP-DA2 착수 시 티켓별 공수 추정으로 갱신한다 (D-210).
+
+    ★ **K2 알림 커널에 대응 티켓이 0건** — 6개 커널 중 하나가 비어 있다 → P-DA-2.
+      이 GAP 은 커널 매핑을 기계로 대조했기 때문에 드러났다. 손으로 셌으면 6/6 으로 보였을 것이다.
+
+    ★ **"U1~U4 티켓"은 존재하지 않는다** — U 는 상품화 2단계의 WP 묶음이고
+      D-246 이 이미 그렇게 쓴다(U1=WP-3). 지시서의 표현은 근사치라 실측대로
+      해당 WP 의 개별 티켓 18건에 `kernel:` 을 넣었다 (D-210).
+      문서 §4 표와 정본의 일치는 `python scripts/verify_kernel_map.py` 가 판정한다 — **대조 통과.**
+
+    ★ **KPI 2건은 선언이 아니라 게이트여야 한다** (§5). 재사용률을 사람이 세면 항상 90% 가 나온다.
+      "App 이 커널 모델을 직접 import 하지 않는다"를 **정적 검사**로 걸 것을 WP-DA2 조건으로 올린다.
+      이 규칙이 IP 경계(계약 8조)의 코드상 표현이다 — 커널 로직이 App 으로 새면 경계가 소멸한다.
+
+    ID 충돌 검사(D-246 교훈): DA-01~04 는 기존 정본 ID 집합과 충돌 없음. manifest 71→75 통과.
+    review 사유: human_gate.
+  priority: P0
+  effort: M
+  kind: doc
+  depends_on: [DA-01]
+  human_gate: true
+  gate: human-required
+  requires_intranet: false
+  decisions: [D-207, D-210, D-212, D-246]
+  reuse_targets:
+    - docs/agent/GuardianX_상품화_개발방안_20260822.pdf   # U1~U4 의 정의 원본
+    - docs/design/DA-01_요구사항정의서_v1.0.md            # F-01~F-14 의 AC
+    - docs/contracts/detection-event.md                   # K1 이 이미 가지고 있는 계약
+    - backend/stream_monitors/models.py                   # K1 의 실제 저장소
+    - backend/report_template/models.py                   # K4 의 실제 엔진
+    - backend/common/tenant_roles.py                      # K5 의 판정 한 곳
+  spec: |
+    지시서 v2.1 "초효율 병행 전략 — 공유 커널"의 설계 산출물. **한 번 개발해 두 번 판다**를
+    문서로 강제한다. 커널은 전부 **L3 Platform** 구현이고 그러므로 **가이온 IP** 다(계약 8조).
+
+      ① 커널 6종의 **API 스펙**(입력·출력·오류·소유 계층)을 쓴다.
+         K1 이벤트 / K2 알림 / K3 역할별 대시보드 프레임 / K4 보고서 엔진 /
+         K5 신뢰(격리·감사·저하운전) / K6 피드백·계측.
+      ② ★ **이중 AC 표가 이 티켓의 본체다.** 커널 하나마다
+         [F-xx 계약 AC] 와 [U-x 상품 AC] 를 나란히 적고, **둘을 동시에 충족하는 하나의 구현**을
+         정의한다. 충돌 시 **계약 AC 가 우선**한다(지시서 v2.1 규칙 2).
+      ③ 규칙 1 을 문서로 못박는다: 커널은 L3 에만. App(L4)·어댑터(L2)는 **소비만** 한다.
+         커널 로직이 App 으로 새면 IP 경계가 코드에서 사라진다.
+      ④ 기존 정본 티켓과의 상호 참조표를 낸다 — 어느 W 티켓이 어느 커널을 만드는가.
+         (tickets.yaml 의 `kernel:` 필드가 그 매핑의 기계 판독본이다.)
+      ⑤ **커널 없는 요구를 숨기지 않는다.** 대응 티켓이 정본에 없는 커널은 GAP 으로 등재한다.
+    ⚠ 코드 0줄. Mock 구현도 이 티켓이 아니다.
+    ⚠ U1~U4 는 **티켓 ID 가 아니라 상품화 2단계의 WP 묶음**이다(D-246 이 U1=WP-3 으로 이미 사용).
+       지시서 v2.1 의 "U1~U4 티켓" 표현은 근사치다 — 실측대로 WP·티켓에 매핑했다(D-210).
+  dod: |
+    ① docs/design/DA-04_공유커널_API스펙_v1.0.md 가 존재하고 K1~K6 전건이 스펙으로 있다
+    ② 커널마다 [F AC] × [U AC] 이중 태깅표가 있고, 충돌 시 우선순위가 명시돼 있다
+    ③ 커널 ↔ 기존 정본 티켓 상호 참조표가 있고 tickets.yaml 의 kernel: 필드와 일치한다
+    ④ 대응 티켓이 없는 커널이 GAP 으로 등재돼 있다
+    ⑤ 대표 승인 (human_gate)
+  verify:
+    - "test -f docs/design/DA-04_공유커널_API스펙_v1.0.md"
+    - "python scripts/verify_kernel_map.py"
 
 # ---------------------------------------------------------------------------
 # PHASE R2 "Station" — 2027.2Q
