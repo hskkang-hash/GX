@@ -995,8 +995,8 @@ tickets:
   title: "응답 후처리 계층 + 엔드포인트 문서 정정 (200-body-403 → HTTP 403)"
   kernel: ['K5']                     # 공유 커널 (지시서 v2.1) — F-05·F-12 ↔ U4 이중 AC
   status: verify-pending
-  updated_at: "2026-08-24T18:40:00+09:00"
-  evidence: docs/agent/evidence/W0-18/backward_compat_impact.md · frontend_success_sites.json · docs/contracts/api-error-and-auth.md
+  updated_at: "2026-08-25T12:40:00+09:00"
+  evidence: docs/agent/evidence/W0-18/backward_compat_impact.md · response_decl_before_after.md · openapi_decl_before.json · openapi_decl_after.json · frontend_success_sites.json · docs/contracts/api-error-and-auth.md
   blocker: |
     [2026-08-24 · **dod ①~④ 충족 · 계약 시험 19건 green. 다만 "200-body-403" 은 하나가 아니었다**]
     전문: docs/agent/evidence/W0-18/backward_compat_impact.md
@@ -1055,6 +1055,37 @@ tickets:
 
     회귀: tests 전체 66건 — 신규 19건 green, 나머지는 착수 전과 **동일한 4 failures/1 error**.
     verify-pending 사유: 운영 반영(플래그 ON)은 대표 승인 사항이고, 프론트 21곳 보강이 선행이다.
+
+    ---
+    [2026-08-25 · **P-W0-18-1 A 안 적용 — 거부가 소멸하던 8건이 0 이 됐다**]
+    전문: docs/agent/evidence/W0-18/response_decl_before_after.md
+    도구: scripts/probe_openapi_response_decl.py (읽기 전용 — OpenAPI 선언만 뜬다)
+
+    적용 근거: P-W0-18-1 `chosen_default: "A"` · 4원칙 ①(더 안전한 쪽)·④(범위가 작은 쪽) ·
+      reversible: true · §0.4 **밖** (report_template 4 · checklist_setting 4).
+
+    실측 — 부류가 옮겨갔을 뿐 라우트 총수 296 은 그대로다:
+      A `response=` 없음   281 → **289**
+      B `response=List[…]`   7 →   7   (무변경 — 예외 복원 경로가 이미 동작한다)
+      C 단일 스키마          8 → **0**
+    HTTP 로도 확인했다 — 플래그 ON 에서 403 + `success:false`, OFF 에서 200 + 거부 본문.
+    계약 시험 19 → **21건 green**. 다른 5개 스위트 무변화, test_tenant_isolation 은
+    착수 전과 **동일한 4 failures/1 error** (그 셋은 권한거부가 아니라 선언 제거가 닿지 않는다).
+
+    ★ 되돌림에 한 가지 단서가 생겼다. 플래그 OFF 면 상태는 200 으로 돌아가지만 **본문은
+      더 이상 `{}` 가 아니다** — 거부 dict 가 실려 나간다. "거부를 감추는 상태"로는 설정으로
+      돌아가지 않는다. 되돌리려면 커밋을 되돌려야 한다(8줄, 스키마·데이터 무접촉).
+
+    ★ **정정 — P-W0-18-1 의 A 안 근거 하나가 사실이 아니었다** (적재: P-W0-18-4)
+      "OpenAPI 는 거짓 스키마를 잃고 참을 말하게 된다" 고 적었으나, 제거 전후 OpenAPI 문서는
+      **완전히 같다**(diff 무출력). 그 출력 스키마가 `DynamicSchema` 상속이라 `model_fields`
+      가 비어 있고, 그래서 ninja 가 애초에 응답 본문을 문서에 싣지 않았다. 같은 빈 필드가
+      런타임에는 거부 dict 를 `{}` 로 만들었다 — 두 증상의 뿌리가 하나다.
+      판정은 뒤집히지 않는다(A 의 다른 근거는 성립). 다만 이득은 하나뿐이었다.
+
+    남은 것 (이 티켓 밖):
+      · P-W0-18-2 — @path_permission 은 있고 auth= 는 없는 24건. 기본값 C(선조사) 진행 예정
+      · P-W0-18-3 — §0.4 3건(Order 500 · Terminal 400 · Terminal 삭제 거짓 성공). 대표 판정
   priority: P1
   effort: M
   kind: new-s

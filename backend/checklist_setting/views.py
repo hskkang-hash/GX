@@ -1,3 +1,25 @@
+"""Checklist Setting API.
+
+W0-18 / P-W0-18-1 — `response=<단일 스키마>` 선언을 이 컨트롤러의 쓰기·상세 라우트에서 뗐다.
+
+핸들러는 전 경로에서 `BaseResponse`(JsonResponse 서브클래스)를 돌려주고, ninja 는
+HttpResponse 를 검증 없이 통과시킨다. 즉 그 선언은 **성공 경로에 한 번도 적용된 적이 없다.**
+실제로 그 스키마를 통과한 것은 `@path_permission` 이 만든 **권한거부 dict** 뿐이었고,
+그것이 검증에서 `{}` 로 소멸했다 — 클라이언트도 감사 로그도 "거부됐다"를 알 수 없었다
+(evidence/W0-18/backward_compat_impact.md §1 · response_decl_before_after.md).
+
+소멸하는 까닭은 이 출력 스키마가 `core.common.schema_utils.DynamicSchema` 를 상속해
+**선언된 필드가 하나도 없기** 때문이다(`model_fields == {}`). 필드가 없으니 어떤 dict 를
+넣어도 `{}` 가 나온다.
+
+선언을 떼면 성공 응답은 한 글자도 바뀌지 않고(어차피 통과였다), 거부는 A 부류가 되어
+`common/api_contract.py` 의 미들웨어가 403 으로 승격한다.
+**OpenAPI 문서는 이 제거로 바뀌지 않는다** — 필드 없는 스키마라 ninja 가 애초에
+응답 본문을 문서에 싣지 않았다(제거 전후 대조 실측). 즉 잃는 문서가 없다.
+목록 라우트의 `response=List[...]` 는 그대로 둔다 — 그쪽은 예외로 요란하게 실패하고
+미들웨어가 `process_exception` 에서 복원한다(B 부류).
+"""
+
 import os
 from typing import List
 
@@ -118,7 +140,8 @@ class ChecklistSettingController:
                 data=None,
             )
 
-    @route.post("", response=ChecklistSettingOutputSchema, auth=CustomJWTAuth())
+    # W0-18 / P-W0-18-1 — `response=` 를 뗐다 (사유: 이 파일 머리말).
+    @route.post("", auth=CustomJWTAuth())
     @path_permission("create", path_override="/checklist-setting")
     def create(self, request, data: ChecklistSettingInputSchema):
         """
@@ -148,7 +171,8 @@ class ChecklistSettingController:
                 data=None,
             )
 
-    @route.put("/{id}", response=ChecklistSettingOutputSchema, auth=CustomJWTAuth())
+    # W0-18 / P-W0-18-1 — `response=` 를 뗐다 (사유: 이 파일 머리말).
+    @route.put("/{id}", auth=CustomJWTAuth())
     @path_permission("update", path_override="/checklist-setting")
     def update(self, request, id: int, data: ChecklistSettingInputSchema):
         """
@@ -186,9 +210,8 @@ class ChecklistSettingController:
                 data=None,
             )
 
-    @route.delete(
-        "/delete/{ids}", response=ChecklistSettingOutputSchema, auth=CustomJWTAuth()
-    )
+    # W0-18 / P-W0-18-1 — `response=` 를 뗐다 (사유: 이 파일 머리말).
+    @route.delete("/delete/{ids}", auth=CustomJWTAuth())
     @path_permission("delete", path_override="/checklist-setting")
     def delete(self, request, ids: str):
         """
@@ -218,7 +241,8 @@ class ChecklistSettingController:
                 data=None,
             )
 
-    @route.put("/{id}/activate", response=ChecklistSettingOutputSchema, auth=CustomJWTAuth())
+    # W0-18 / P-W0-18-1 — `response=` 를 뗐다 (사유: 이 파일 머리말).
+    @route.put("/{id}/activate", auth=CustomJWTAuth())
     @path_permission("update", path_override="/checklist-setting")
     def activate(self, request, id: int):
         """

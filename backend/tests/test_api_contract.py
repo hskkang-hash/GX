@@ -43,27 +43,29 @@ ROUTE_NO_SCHEMA = "/api/devices/devices-management"
 #: B — `response=List[…]`. 거부 dict 를 pydantic 이 거절해 예외가 된다.
 ROUTE_LIST_SCHEMA = "/api/report-template/"
 
-#: C — `response=<단일 스키마>`. 거부가 `{}` 로 소멸한다 (아직 못 고친다 · KNOWN_GAPS).
-ROUTE_SINGLE_SCHEMA = "/api/report-template/1"
+#: C 였던 것 — `response=<단일 스키마>` 선언 때문에 거부가 `{}` 로 소멸하던 라우트.
+#: P-W0-18-1 A 안 적용으로 선언을 뗐고, 이제 A 부류로서 승격된다. 부류는 0 이 됐다.
+ROUTE_FORMERLY_SWALLOWED = "/api/report-template/1"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 등록부 — 아직 못 고친 것을 숨기지 않고 센다 (D-224 방식)
 # ═══════════════════════════════════════════════════════════════════════════
 
-#: 거부가 `{}` 로 소멸하는 라우트 수. 응답 계층에서 복원할 수 없다.
-#: 8건 전부 §0.4 **밖**(report_template·checklist_setting)이라 `response=` 선언을 떼면
-#: A 부류가 되어 승격된다 — P-W0-18-1 판정 대기. 판정 후 이 수는 **0 이 되어야 한다.**
+#: 거부가 `{}` 로 소멸하는 라우트 수. 응답 계층에서 복원할 수 없는 부류다.
+#: 2026-08-25 · P-W0-18-1 A 안 적용 — report_template 4 · checklist_setting 4 의
+#: `response=<단일 스키마>` 선언을 뗐다. **8 → 0.** 등록부는 지우지 않고 0 으로 남긴다:
+#: 이 수가 다시 오르면 새 라우트가 같은 함정에 빠진 것이고, 아래 증가금지 시험이 잡는다.
 KNOWN_GAPS = {
-    KIND_SWALLOWED: 8,
+    KIND_SWALLOWED: 0,
 }
 
 #: 실측 분포 (evidence/W0-18/backward_compat_impact.md §1-1). 라우트가 늘거나 선언이
 #: 바뀌면 이 수가 움직인다 — 움직이면 증거 문서도 같이 고쳐야 한다는 신호다.
 EXPECTED_DISTRIBUTION = {
-    KIND_PROMOTABLE: 281,
+    KIND_PROMOTABLE: 289,   # 281 + P-W0-18-1 로 넘어온 8
     KIND_RAISES: 7,
-    KIND_SWALLOWED: 8,
+    KIND_SWALLOWED: 0,      # 8 → 0
 }
 
 
@@ -224,11 +226,42 @@ class PermissionDeniedStatusTest(_DeniedUserMixin, TestCase):
         resp = client.get(ROUTE_LIST_SCHEMA, **self.headers)
         self.assertEqual(resp.status_code, 500)
 
+    # ── 플래그 ON — C 였던 부류: `{}` 소멸 → 403 (P-W0-18-1) ──────────────
+
+    @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=True)
+    def test_flag_on_promotes_formerly_swallowed_route(self):
+        """선언을 뗀 뒤 **거부가 실제로 보이는가.**
+
+        수를 세는 시험(`test_swallowed_routes_have_not_grown`)만으로는 부족하다 —
+        분류가 맞아도 응답이 틀릴 수 있다. 여기서는 HTTP 를 실제로 때린다.
+        선언이 남아 있던 동안 이 라우트는 **200 + `{}`** 를 돌려줬다.
+        """
+        resp = self.client.get(ROUTE_FORMERLY_SWALLOWED, **self.headers)
+        self.assertEqual(resp.status_code, 403)
+        body = json.loads(resp.content)
+        self.assertIs(body.get("success"), False, "거부 본문이 다시 소멸했다")
+        self.assertEqual(body.get("status_code"), 403)
+
+    @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=False)
+    def test_flag_off_formerly_swallowed_route_keeps_200(self):
+        """OFF 되돌림도 그대로 성립하는가.
+
+        선언 제거는 되돌림 경로를 건드리지 않아야 한다 — 플래그 하나로 전부 원복된다는
+        하위호환 약속이 이 라우트에서도 유효하다는 뜻이다.
+        단, 본문은 **더 이상 `{}` 가 아니다.** 거부 dict 가 그대로 실려 나간다 —
+        선언을 떼서 얻은 것이 바로 이것이고, 플래그로 되돌아가지 않는 유일한 변화다.
+        """
+        resp = self.client.get(ROUTE_FORMERLY_SWALLOWED, **self.headers)
+        self.assertEqual(resp.status_code, 200)
+        body = json.loads(resp.content)
+        self.assertIs(body.get("success"), False)
+        self.assertEqual(body.get("status_code"), 403)
+
     # ── 정상 응답은 건드리지 않는다 ───────────────────────────────────────
 
     @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=True)
     def test_unauthenticated_401_is_untouched(self):
-        resp = self.client.get(ROUTE_SINGLE_SCHEMA)
+        resp = self.client.get(ROUTE_FORMERLY_SWALLOWED)
         self.assertEqual(resp.status_code, 401)
 
 
@@ -268,7 +301,7 @@ class AuthEndpointContractTest(_DeniedUserMixin, TestCase):
         self.assertIn("refresh", body)
 
         follow_up = self.client.get(
-            ROUTE_SINGLE_SCHEMA,
+            ROUTE_FORMERLY_SWALLOWED,
             HTTP_AUTHORIZATION=f"Bearer {body['access']}",
         )
         self.assertEqual(
@@ -373,8 +406,8 @@ class ContractCoverageTest(TestCase):
     def test_swallowed_routes_have_not_grown(self):
         """거부가 `{}` 로 소멸하는 라우트가 **늘지 않았는가.**
 
-        늘었다면 새 라우트가 단일 스키마를 선언하면서 같은 함정에 빠진 것이다.
-        줄었다면 P-W0-18-1 이 적용된 것이고 `KNOWN_GAPS` 를 낮춰야 한다.
+        P-W0-18-1 적용으로 지금은 **0** 이다. 늘었다면 새 라우트가 단일 스키마를
+        선언하면서 같은 함정에 다시 빠진 것이다 — 그 라우트 이름이 실패 메시지에 찍힌다.
         """
         swallowed = classify_permission_routes()[KIND_SWALLOWED]
         self.assertLessEqual(

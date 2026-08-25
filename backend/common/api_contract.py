@@ -10,7 +10,7 @@
 거부 dict 가 밖으로 나가는 길은 **셋**이고 셋 다 모양이 다르다
 (실측: `docs/agent/evidence/W0-18/backward_compat_impact.md` §1)
 
-    A  `response=` 선언이 없는 라우트  281건
+    A  `response=` 선언이 없는 라우트  281건 → **289건** (P-W0-18-1 로 C 8건이 넘어왔다)
        → 200 + 거부 본문 그대로.  __call__ 응답단계에서 상태만 승격한다.
 
     B  `response=List[…]` 라우트        7건
@@ -19,11 +19,13 @@
          → **`process_exception` 이 호출된다.** 그 예외의 `input` 에 거부 dict 가
          그대로 들어 있어서 복원할 수 있다. delivery 5건이 §0.4 안이라 이 길이 유일하다.
 
-    C  `response=<단일 스키마>` 라우트   8건
-       → 거부 dict 가 그 스키마로 검증되면서 **빈 객체 `{}` 로 소멸한다.**
+    C  `response=<단일 스키마>` 라우트   8건 → **0건** (2026-08-25 · P-W0-18-1 A 안)
+       → 거부 dict 가 그 스키마로 검증되면서 **빈 객체 `{}` 로 소멸했다.**
          응답이 만들어지기 전에 정보가 사라지므로 **이 계층에서는 복원할 수 없다.**
-         8건 전부 §0.4 밖(report_template·checklist_setting)이라 라우트 선언을
-         고치면 A 부류가 된다 → P-W0-18-1 판정 대기.
+         그래서 계층이 아니라 **선언 쪽**을 고쳤다 — 8건 전부 §0.4 밖
+         (report_template 4 · checklist_setting 4)이라 `response=` 를 뗄 수 있었고,
+         떼고 나니 A 부류가 되어 이 미들웨어의 사정권에 들어왔다.
+         이 부류가 다시 0 보다 커지면 `tests/test_api_contract.py` 가 잡는다.
 
 되돌리기 (D-212)
     `settings.API_CONTRACT_PROMOTE_ERROR_STATUS` **기본 False**.

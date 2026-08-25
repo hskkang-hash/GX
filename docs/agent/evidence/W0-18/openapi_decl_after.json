@@ -1,0 +1,44 @@
+{
+  "DELETE /api/checklist-setting/delete/{ids}": {
+    "200": null
+  },
+  "DELETE /api/report-template/delete/{ids}": {
+    "200": null
+  },
+  "GET /api/checklist-setting/": {
+    "200": {
+      "items": {
+        "$ref": "#/components/schemas/ChecklistSettingOutputSchema"
+      },
+      "title": "Response",
+      "type": "array"
+    }
+  },
+  "GET /api/report-template/": {
+    "200": {
+      "items": {
+        "$ref": "#/components/schemas/ReportTemplateOutputSchema"
+      },
+      "title": "Response",
+      "type": "array"
+    }
+  },
+  "GET /api/report-template/{id}": {
+    "200": null
+  },
+  "POST /api/checklist-setting/": {
+    "200": null
+  },
+  "POST /api/report-template/": {
+    "200": null
+  },
+  "PUT /api/checklist-setting/{id}": {
+    "200": null
+  },
+  "PUT /api/checklist-setting/{id}/activate": {
+    "200": null
+  },
+  "PUT /api/report-template/{id}": {
+    "200": null
+  }
+}
