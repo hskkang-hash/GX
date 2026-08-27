@@ -30,6 +30,17 @@ services:
       - ./backend:/app
       - ./sourcedemo:/sourcedemo
       - ~/.ssh:/root/.ssh:ro  # Mounting host SSH directory
+      # ── 저장소 게이트용 읽기전용 마운트 (D-285 (4) · D-282) ────────────────
+      # 컨테이너에는 `backend/` 만 `/app` 으로 들어와 있었다. 그래서
+      # `tests/test_k1_event_kernel.py` 의 계층 검사가 `verify_layers.py` 를 찾지 못해
+      # **skip 1** 로 남았다 — 사실대로 남긴 것이지만, 남겨 둘 이유는 없다.
+      #
+      # 저장소 수준 게이트(`verify_layers` · `verify_migrations` · `verify_tenant_scope`)는
+      # 자기 위치에서 저장소 뿌리를 되짚어 `<root>/backend` 를 훑는다. 그래서 `/app` 하나로는
+      # 부족하고 **뿌리 모양이 필요하다.** 읽기전용이므로 컨테이너가 저장소를 고칠 수 없다
+      # (D-270 쓰기 안전 3원칙).
+      - ./scripts:/repo/scripts:ro
+      - ./backend:/repo/backend:ro
     ports:
       - "0.0.0.0:8000:8000"
     environment:
@@ -55,6 +66,17 @@ services:
       - ./backend:/app
       - ./sourcedemo:/sourcedemo
       - ~/.ssh:/root/.ssh:ro  # Mounting host SSH directory
+      # ── 저장소 게이트용 읽기전용 마운트 (D-285 (4) · D-282) ────────────────
+      # 컨테이너에는 `backend/` 만 `/app` 으로 들어와 있었다. 그래서
+      # `tests/test_k1_event_kernel.py` 의 계층 검사가 `verify_layers.py` 를 찾지 못해
+      # **skip 1** 로 남았다 — 사실대로 남긴 것이지만, 남겨 둘 이유는 없다.
+      #
+      # 저장소 수준 게이트(`verify_layers` · `verify_migrations` · `verify_tenant_scope`)는
+      # 자기 위치에서 저장소 뿌리를 되짚어 `<root>/backend` 를 훑는다. 그래서 `/app` 하나로는
+      # 부족하고 **뿌리 모양이 필요하다.** 읽기전용이므로 컨테이너가 저장소를 고칠 수 없다
+      # (D-270 쓰기 안전 3원칙).
+      - ./scripts:/repo/scripts:ro
+      - ./backend:/repo/backend:ro
     environment:
       - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
       - REDIS_HOST=redis
@@ -67,6 +89,56 @@ services:
     depends_on:
       - redis
       - backend
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 판정용 셸 — **자동 migrate 를 하지 않는다** (2026-08-29 사고 대응 · D-283 · D-270)
+  # ───────────────────────────────────────────────────────────────────────────
+  #
+  # ★ 왜 이 서비스가 따로 필요한가 — 절차가 재시작 한 번으로 우회됐다
+  #
+  #   이미지의 `ENTRYPOINT=/entrypoint.sh` 는 **무조건** `python manage.py migrate` 를 돈다.
+  #   그래서 시험용 셸 컨테이너를 다시 만드는 것만으로 **마이그레이션 4건이 DB 에 적용됐다**
+  #   (logger.0010 · surveillance.0030 · stream_monitors.0015 · 0016 —
+  #    2026-08-27 13:28 UTC). D-283 이 요구한 선행 절차
+  #    (① DDL 첨부 → ② 역방향 확인 → ③ 스냅샷) **전이었다.**
+  #
+  #   여기서 배운 것은 "조심하자"가 아니다. **사람의 기억에 맡긴 절차는 도구가 우회한다.**
+  #   `docker run` 은 게이트가 볼 수 없는 자리이므로, 막을 수 있는 유일한 지점은
+  #   **셸을 만드는 방법 자체를 여기에 못박는 것**이다. 손으로 `docker run` 하지 말 것.
+  #
+  #       docker compose --profile tools up -d shell
+  #       docker compose exec shell python -m pytest tests -q --nomigrations
+  #
+  #   마이그레이션을 **적용할 때**는 이 셸이 아니라 사람이 D-283 절차를 밟는다:
+  #       ① python manage.py sqlmigrate <app> <n>              # 실행될 DDL 을 먼저 본다
+  #       ② python manage.py sqlmigrate --backwards <app> <n>  # 되돌릴 수 있는가
+  #       ③ pg_dump -Fc  →  C:\GuardianX-vault\               # 스냅샷 (D-002)
+  #       ④ python manage.py migrate <app> <n>                 # 그 다음에야 적용
+  #       ⑤ python scripts/verify_migrations.py                # 두 눈 모두 green (D-282)
+  shell:
+    profiles: ["tools"]          # 기본 `up` 에 딸려 오지 않는다 — 부를 때만 선다
+    build:
+      context: ./backend
+      ssh:
+        - default=${SSH_AUTH_SOCK}
+    # ★ 이 두 줄이 이 서비스의 존재 이유다. entrypoint 를 비워 자동 migrate 를 끊는다.
+    entrypoint: ["sleep"]
+    command: ["infinity"]
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - ./sourcedemo:/sourcedemo
+      - ./scripts:/repo/scripts:ro
+      - ./backend:/repo/backend:ro
+    env_file:
+      - ./backend/.env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - guardianx-network
+    depends_on:
+      - redis
 
   # Redis service
   redis:

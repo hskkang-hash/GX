@@ -71,6 +71,17 @@ class K1Fixture(TestCase):
         cls.stream_a = cls._make_stream("k1-stream-A", cls.group_a)
         cls.stream_b = cls._make_stream("k1-stream-B", cls.group_b)
 
+        # ── D-281 스코프 두 벌 ────────────────────────────────────────────
+        # 커널 공개 함수는 `*, scope: TenantScope` 를 **필수**로 받는다. 시험도 예외가
+        # 아니다 — 시험이 우회 경로를 쓰면 그 우회가 곧 다음 사람의 본보기가 된다.
+        from common.tenant_scope import TenantScope
+
+        cls.scope_a = TenantScope.of(cls.user_a)
+        cls.scope_b = TenantScope.of(cls.user_b)
+        # 검출 파이프라인에는 요청자가 없다. 사유를 적어 등재한다(면제가 아니다).
+        cls.scope_pipe = TenantScope.system(
+            reason="검출 파이프라인 시험 — gRPC 콜백에는 요청자가 없다 (D-281)")
+
     @classmethod
     def _make_user(cls, username: str, group):
         CoreUser = apps.get_model("user", "CoreUser")
@@ -117,10 +128,12 @@ class DedupSplitTest(K1Fixture):
 
         t0 = timezone.now()
         first = k1.record_detection(
+            scope=self.scope_pipe,
             stream_monitor_id=self.stream_a.id, event_type="fire", severity="critical",
             occurred_at=t0, confidence=0.91, snapshot_path="minio://snap/1.jpg",
         )
         second = k1.record_detection(
+            scope=self.scope_pipe,
             stream_monitor_id=self.stream_a.id, event_type="fire", severity="critical",
             occurred_at=t0 + timedelta(seconds=7), confidence=0.88,
             snapshot_path="minio://snap/2.jpg",
@@ -145,10 +158,12 @@ class DedupSplitTest(K1Fixture):
 
         t0 = timezone.now()
         first = k1.record_detection(
+            scope=self.scope_pipe,
             stream_monitor_id=self.stream_a.id, event_type="smoke", severity="warning",
             occurred_at=t0, snapshot_path="minio://snap/a.jpg",
         )
         later = k1.record_detection(
+            scope=self.scope_pipe,
             stream_monitor_id=self.stream_a.id, event_type="smoke", severity="warning",
             occurred_at=t0 + timedelta(seconds=11), snapshot_path="minio://snap/b.jpg",
         )
@@ -168,6 +183,7 @@ class DedupSplitTest(K1Fixture):
         t0 = timezone.now()
         results = [
             k1.record_detection(
+            scope=self.scope_pipe,
                 stream_monitor_id=self.stream_a.id, event_type="intrusion", severity="critical",
                 occurred_at=t0 + timedelta(seconds=30 * i), snapshot_path=f"minio://s/{i}.jpg",
             )
@@ -192,9 +208,9 @@ class DedupSplitTest(K1Fixture):
         from kernels.k1_event import services as k1
 
         t0 = timezone.now()
-        a = k1.record_detection(stream_monitor_id=self.stream_a.id, event_type="person",
+        a = k1.record_detection(scope=self.scope_pipe, stream_monitor_id=self.stream_a.id, event_type="person",
                                 severity="info", occurred_at=t0, snapshot_path="minio://a.jpg")
-        b = k1.record_detection(stream_monitor_id=self.stream_b.id, event_type="person",
+        b = k1.record_detection(scope=self.scope_pipe, stream_monitor_id=self.stream_b.id, event_type="person",
                                 severity="info", occurred_at=t0 + timedelta(seconds=1),
                                 snapshot_path="minio://b.jpg")
         self.assertNotEqual(a.event_id, b.event_id,
@@ -219,6 +235,7 @@ class ServerSideFilterTest(K1Fixture):
              ("fire", "warning"), ("vehicle", "info")]
         ):
             self.rows.append(k1.record_detection(
+            scope=self.scope_pipe,
                 stream_monitor_id=self.stream_a.id, event_type=etype, severity=sev,
                 occurred_at=t0 - timedelta(minutes=i * 10), snapshot_path=f"minio://f/{i}.jpg",
             ))
@@ -227,17 +244,17 @@ class ServerSideFilterTest(K1Fixture):
         """[F-05 · U1] 필터가 서버에서 적용된다 — 반환된 수가 곧 필터 결과여야 한다."""
         from kernels.k1_event import services as k1
 
-        got = k1.query_events(actor=self.user_a, event_type="fire")
+        got = k1.query_events(scope=self.scope_a, event_type="fire")
         self.assertEqual(
             [e.event_type for e in got], ["fire", "fire"],
             "event_type 필터가 서버에서 적용되지 않았습니다 — 클라이언트가 다시 걸러야 하고, "
             "그만큼 클릭이 늡니다 (U1 3클릭 위반).",
         )
 
-        got = k1.query_events(actor=self.user_a, severity="critical")
+        got = k1.query_events(scope=self.scope_a, severity="critical")
         self.assertEqual(len(got), 1, "severity 필터가 서버에서 적용되지 않았습니다.")
 
-        got = k1.query_events(actor=self.user_a, since=timezone.now() - timedelta(minutes=15))
+        got = k1.query_events(scope=self.scope_a, since=timezone.now() - timedelta(minutes=15))
         self.assertEqual(len(got), 2, "기간 필터가 서버에서 적용되지 않았습니다.")
 
     def test_query_does_not_do_n_plus_one(self) -> None:
@@ -257,7 +274,7 @@ class ServerSideFilterTest(K1Fixture):
 
         def count_queries(limit: int) -> int:
             with CaptureQueriesContext(connection) as ctx:
-                rows = k1.query_events(actor=self.user_a, limit=limit)
+                rows = k1.query_events(scope=self.scope_a, limit=limit)
                 _ = [(e.event_type, e.stream_monitor_name) for e in rows]  # 관련 필드까지 만진다
             return len(ctx.captured_queries)
 
@@ -271,8 +288,8 @@ class ServerSideFilterTest(K1Fixture):
     def test_paging_is_server_side(self) -> None:
         from kernels.k1_event import services as k1
 
-        page1 = k1.query_events(actor=self.user_a, limit=2, offset=0)
-        page2 = k1.query_events(actor=self.user_a, limit=2, offset=2)
+        page1 = k1.query_events(scope=self.scope_a, limit=2, offset=0)
+        page2 = k1.query_events(scope=self.scope_a, limit=2, offset=2)
         self.assertEqual(len(page1), 2)
         self.assertEqual(len(page2), 2)
         self.assertFalse({e.event_id for e in page1} & {e.event_id for e in page2},
@@ -294,10 +311,12 @@ class KernelTenantScopeTest(K1Fixture):
 
         now = timezone.now()
         self.mine = k1.record_detection(
+            scope=self.scope_pipe,
             stream_monitor_id=self.stream_a.id, event_type="fire", severity="critical",
             occurred_at=now, snapshot_path="minio://mine.jpg",
         )
         self.theirs = k1.record_detection(
+            scope=self.scope_pipe,
             stream_monitor_id=self.stream_b.id, event_type="fire", severity="critical",
             occurred_at=now, snapshot_path="minio://theirs.jpg",
         )
@@ -309,16 +328,16 @@ class KernelTenantScopeTest(K1Fixture):
         """
         from kernels.k1_event import services as k1
 
-        ids = {e.event_id for e in k1.query_events(actor=self.user_a)}
+        ids = {e.event_id for e in k1.query_events(scope=self.scope_a)}
         self.assertIn(self.mine.event_id, ids,
                       "자기 테넌트의 이벤트조차 목록에서 찾지 못했습니다 — "
                       "아래 '남의 것이 안 보인다'는 통과가 아니라 판정 불가입니다 (D-277).")
-        self.assertIsNotNone(k1.get_event(self.mine.event_id, actor=self.user_a))
+        self.assertIsNotNone(k1.get_event(self.mine.event_id, scope=self.scope_a))
 
     def test_query_events_excludes_other_tenant(self) -> None:
         from kernels.k1_event import services as k1
 
-        ids = {e.event_id for e in k1.query_events(actor=self.user_a)}
+        ids = {e.event_id for e in k1.query_events(scope=self.scope_a)}
         self.assertNotIn(self.theirs.event_id, ids,
                          "남의 테넌트 이벤트가 목록에 섞였습니다.")
 
@@ -327,7 +346,7 @@ class KernelTenantScopeTest(K1Fixture):
         from kernels.k1_event import services as k1
 
         with self.assertRaises(Http404):
-            k1.get_event(self.theirs.event_id, actor=self.user_a)
+            k1.get_event(self.theirs.event_id, scope=self.scope_a)
 
     def test_review_and_close_of_other_tenant_are_404(self) -> None:
         """쓰기 경로도 같다 — 읽기만 막고 쓰기를 열어 두는 것이 W0-14c 가 잡은 결함이었다."""
@@ -335,16 +354,16 @@ class KernelTenantScopeTest(K1Fixture):
 
         with self.assertRaises(Http404):
             k1.review_event(self.theirs.event_id, verdict="rejected",
-                            reason="probe", actor=self.user_a)
+                            reason="probe", scope=self.scope_a)
         with self.assertRaises(Http404):
-            k1.close_event(self.theirs.event_id, actor=self.user_a)
+            k1.close_event(self.theirs.event_id, scope=self.scope_a)
 
     def test_review_records_the_verdict_for_false_positive_rate(self) -> None:
         """[U1] 오탐률 수치화의 입력 — 판정과 판정자가 남아야 K6 가 셀 수 있다."""
         from kernels.k1_event import services as k1
 
         out = k1.review_event(self.mine.event_id, verdict="rejected",
-                              reason="빛 반사", actor=self.user_a)
+                              reason="빛 반사", scope=self.scope_a)
         self.assertEqual(out.status, "rejected")
 
         Event = apps.get_model("stream_monitors", "DetectionEvent")
@@ -358,7 +377,7 @@ class KernelTenantScopeTest(K1Fixture):
         """기각은 **분모에서 빼는 것이 아니다.** 행이 사라지면 오탐률을 셀 수 없다."""
         from kernels.k1_event import services as k1
 
-        k1.review_event(self.mine.event_id, verdict="rejected", reason="x", actor=self.user_a)
+        k1.review_event(self.mine.event_id, verdict="rejected", reason="x", scope=self.scope_a)
         Event = apps.get_model("stream_monitors", "DetectionEvent")
         self.assertTrue(Event.objects.filter(pk=self.mine.event_id).exists(),
                         "기각된 이벤트가 사라졌습니다 — 오탐률 분자가 함께 사라집니다.")
@@ -367,6 +386,150 @@ class KernelTenantScopeTest(K1Fixture):
 # ═══════════════════════════════════════════════════════════════════════════
 # 계층 — 커널의 공개 면은 서비스 함수다 (DA-04 §1-4 · D-278)
 # ═══════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════
+# [D-281] 스코프는 **표식이 아니라 시그니처다**
+# ═══════════════════════════════════════════════════════════════════════════
+class KernelScopeSignatureTest(K1Fixture):
+    """커널 공개 함수를 **스코프 없이 부를 수 있는가.**
+
+    ★ 왜 게이트가 있는데 시험도 두나 — 같은 것을 두 번 세는 것이 아니다.
+      `scripts/verify_tenant_scope.py` 는 **소스를 AST 로 읽어** 인자가 선언돼 있는지 본다.
+      여기서는 **실제로 불러 본다.** 선언은 맞는데 런타임에 통과해 버리는 경우
+      (기본값·`**kwargs` 흡수·데코레이터가 인자를 삼키는 경우)를 정적 눈은 못 본다.
+      한 판정을 두 각도에서 먹인다 — 트립와이어가 정적 눈·런타임 눈 둘을 둔 것과 같은 계열.
+
+    D-281: *"데코레이터는 '붙였는가'만 보지만, 필수 인자는 **부르는 쪽이 테넌트를
+    알아야만** 호출된다. 표식이 아니라 구조다 — 우회할 자리가 없다."*
+    """
+
+    #: DA-04 §2 K1 공개 면 6개 전부. 하나라도 빠지면 그 함수가 뒷문이 된다.
+    def _surface_calls(self):
+        from kernels.k1_event import services as k1
+
+        return [
+            ("record_detection", lambda: k1.record_detection(
+                stream_monitor_id=self.stream_a.id, event_type="fire", severity="critical")),
+            ("query_events", lambda: k1.query_events()),
+            ("get_event", lambda: k1.get_event(1)),
+            ("review_event", lambda: k1.review_event(1, verdict="rejected")),
+            ("close_event", lambda: k1.close_event(1)),
+            ("subscribe", lambda: k1.subscribe(webhook_url="https://test.invalid/hook")),
+        ]
+
+    def test_every_public_function_refuses_to_run_without_scope(self) -> None:
+        """[D-281] 6개 전부 — `scope` 없이 부르면 **TypeError.**
+
+        ★ **실패는 뒤를 가리지 않는다** (D-274 승격 원칙). 첫 함수에서 멈추면
+          "1건 실패"가 실제로는 "1건 실패 + 5건 미측정"이 된다. 대상별 표를 낸다.
+        """
+        table = []
+        for name, call in self._surface_calls():
+            try:
+                call()
+            except TypeError as exc:
+                ok = "scope" in str(exc)
+                table.append((name, "TypeError" if ok else f"TypeError(다른 사유: {exc})", ok))
+            except Exception as exc:  # noqa: BLE001 — 무엇이 왔는지 표에 적어야 한다
+                table.append((name, f"{type(exc).__name__}: {exc}", False))
+            else:
+                table.append((name, "통과해 버렸다", False))
+
+        failed = [(n, w) for n, w, ok in table if not ok]
+        self.assertEqual(
+            failed, [],
+            "scope 없이 호출됐거나 다른 이유로 죽은 커널 공개 함수가 있습니다 (D-281).\n"
+            + "\n".join(f"  {n:20s} {w}" for n, w, _ in table),
+        )
+
+    def test_subscribe_requires_scope_before_it_raises(self) -> None:
+        """[D-281] 구현이 없어도 스코프는 먼저 걸린다.
+
+        `subscribe` 는 부르면 `NotImplementedYet` 을 던진다. 그런데 **스코프 없이 불렀을
+        때도** 그것이 나오면, 이 함수는 "구현이 없어서 안전한" 것이지 "스코프를 요구해서
+        안전한" 것이 아니다. 구현이 들어오는 날 그 차이가 드러난다 — 지금 갈라 둔다.
+        """
+        from kernels.k1_event import services as k1
+        from kernels.k1_event.exceptions import NotImplementedYet
+
+        with self.assertRaises(TypeError):
+            k1.subscribe(webhook_url="https://test.invalid/hook")
+
+        # scope 를 주면 그때서야 "구현이 없다"가 나온다.
+        with self.assertRaises(NotImplementedYet):
+            k1.subscribe(scope=self.scope_a, webhook_url="https://test.invalid/hook")
+
+    def test_system_scope_cannot_read(self) -> None:
+        """[D-281] 파이프라인 스코프로는 **읽지 못한다.**
+
+        쓰기 파이프라인에 요청자가 없다는 사실이 읽기까지 열어 주면, 그 경로는 영구히
+        전역 조회가 된다. `record_detection` 만 시스템 스코프를 받고 나머지는 거절한다.
+        """
+        from common.tenant_scope import SystemScopeCannotRead
+        from kernels.k1_event import services as k1
+
+        mine = k1.record_detection(
+            scope=self.scope_pipe, stream_monitor_id=self.stream_a.id,
+            event_type="fire", severity="critical")
+
+        table = []
+        for name, call in [
+            ("query_events", lambda: k1.query_events(scope=self.scope_pipe)),
+            ("get_event", lambda: k1.get_event(mine.event_id, scope=self.scope_pipe)),
+            ("review_event", lambda: k1.review_event(
+                mine.event_id, verdict="rejected", scope=self.scope_pipe)),
+            ("close_event", lambda: k1.close_event(mine.event_id, scope=self.scope_pipe)),
+        ]:
+            try:
+                call()
+            except SystemScopeCannotRead:
+                table.append((name, "거절", True))
+            except Exception as exc:  # noqa: BLE001
+                table.append((name, f"{type(exc).__name__}: {exc}", False))
+            else:
+                table.append((name, "시스템 스코프로 통과해 버렸다", False))
+
+        failed = [(n, w) for n, w, ok in table if not ok]
+        self.assertEqual(
+            failed, [],
+            "시스템 스코프가 읽기·판정 경로를 통과했습니다 (D-281).\n"
+            + "\n".join(f"  {n:16s} {w}" for n, w, _ in table),
+        )
+
+    def test_scope_of_none_is_refused_at_construction(self) -> None:
+        """[D-281] 빈 스코프는 **만들어지지도 않는다** — 검사가 호출 전에 끝난다."""
+        from common.tenant_scope import TenantScope
+
+        with self.assertRaises(ValueError):
+            TenantScope.of(None)
+        with self.assertRaises(ValueError):
+            TenantScope.system(reason="")          # 사유 없는 시스템 스코프 = 면제
+        with self.assertRaises(ValueError):
+            TenantScope.system(reason="   ")       # 공백도 사유가 아니다
+        with self.assertRaises(ValueError):
+            TenantScope()                          # 둘 다 없음
+
+    def test_human_scope_cannot_write_into_another_tenants_stream(self) -> None:
+        """[D-281] 사람이 부른 기록은 **남의 스트림에 심지 못한다** — 쓰기 쪽 IDOR.
+
+        시그니처만으로는 이것을 못 막는다(스코프를 주기만 하면 되므로). 그래서 2차
+        문지기가 있다 — `record_detection` 이 `assert_scoped(StreamMonitor, ...)` 를 부른다.
+        **시그니처가 1차, 문지기가 2차** (D-281).
+        """
+        from kernels.k1_event import services as k1
+
+        with self.assertRaises(Http404):
+            k1.record_detection(
+                scope=self.scope_a,                     # 테넌트 A 가
+                stream_monitor_id=self.stream_b.id,     # 테넌트 B 의 스트림에
+                event_type="fire", severity="critical")
+
+        # 양성 대조 — 자기 스트림에는 들어간다. 위 거절이 "전부 막힌 것"이 아님을 보인다.
+        ok = k1.record_detection(
+            scope=self.scope_a, stream_monitor_id=self.stream_a.id,
+            event_type="fire", severity="critical")
+        self.assertTrue(ok.created)
+
+
 class KernelPublicSurfaceTest(TestCase):
     """DA-04 §2 K1 표가 정한 공개 면 6개가 **실재하는가.**
 
@@ -388,15 +551,58 @@ class KernelPublicSurfaceTest(TestCase):
             "표를 바꾸려면 DA-04 와 이 목록을 **같은 커밋에서** 함께 고치십시오.",
         )
 
+    #: 저장소 뿌리 후보. 컨테이너에는 `backend/` 만 `/app` 으로 들어오므로 소스 트리에서
+    #: 되짚는 경로가 통하지 않는다. `docker-compose` 가 `/repo` 로 뿌리 모양을 넣어 준다
+    #: (D-285 (4) — skip 을 해소한 마운트). 후보를 **순서대로** 보고 첫 번째를 쓴다.
+    REPO_ROOT_CANDIDATES = ("/repo",)
+
+    @classmethod
+    def _find_gate(cls, name: str):
+        """저장소 게이트 스크립트의 실경로. 없으면 `None` — **추측하지 않는다.**"""
+        from pathlib import Path
+
+        here = Path(__file__).resolve()
+        roots = [*(Path(c) for c in cls.REPO_ROOT_CANDIDATES), *here.parents[1:4]]
+        for root in roots:
+            candidate = root / "scripts" / name
+            if candidate.is_file():
+                return candidate
+        return None
+
     def test_kernel_does_not_import_apps(self) -> None:
         """계층 역전 금지 (D-278). 게이트가 CI 에서 보지만, 커널 자신도 한 번 확인한다."""
         import subprocess
         import sys
-        from pathlib import Path
 
-        root = Path(__file__).resolve().parents[2]
-        script = root / "scripts" / "verify_layers.py"
-        if not script.is_file():
-            self.skipTest("verify_layers.py 없음 — 컨테이너에는 scripts/ 가 마운트되지 않는다")
+        script = self._find_gate("verify_layers.py")
+        self.assertIsNotNone(
+            script,
+            "verify_layers.py 를 찾지 못했습니다. 컨테이너라면 docker-compose 의 "
+            "`./scripts:/repo/scripts:ro` 마운트가 빠진 것입니다 (D-285 (4)).\n"
+            "★ 이 시험은 더 이상 skip 하지 않습니다 — 마운트를 넣어 skip 을 해소한 뒤이므로, "
+            "다시 사라지면 그것은 '환경 미비'가 아니라 **되돌아간 것**입니다.",
+        )
         out = subprocess.run([sys.executable, str(script)], capture_output=True, text=True)
         self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+
+    def test_migration_state_matches_models_and_db(self) -> None:
+        """[D-282] 착시 ⑤ — **재는 자리가 실물인가.**
+
+        이 시험 파일 전체는 `--nomigrations` 로 돈다. 그러면 테스트 DB 는 마이그레이션이
+        아니라 **모델 선언에서** 만들어지고, 그래서 `DetectionEvent` 표가 실물 DB 에 없는
+        동안에도 초록이었다. 여기서 그 격차를 **같은 실행 안에서** 한 번 본다.
+
+        ※ 게이트(`scripts/verify_migrations.py`)를 부르는 것이지 판정을 복제하는 것이 아니다.
+          판정기는 한 벌이고 눈만 둘이다 — 트립와이어가 정적·런타임 눈을 둔 것과 같은 계열.
+        """
+        import subprocess
+        import sys
+
+        script = self._find_gate("verify_migrations.py")
+        self.assertIsNotNone(script, "verify_migrations.py 를 찾지 못했습니다 (D-282 게이트)")
+        out = subprocess.run([sys.executable, str(script)], capture_output=True, text=True)
+        self.assertEqual(
+            out.returncode, 0,
+            "모델 선언 · 마이그레이션 그래프 · DB 가 어긋납니다 (D-282 착시 ⑤).\n"
+            + out.stdout + out.stderr,
+        )

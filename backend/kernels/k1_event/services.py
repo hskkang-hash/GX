@@ -24,24 +24,35 @@
 커널이 모델을 옮기면 마이그레이션이 생기고, 계약 고정의 뜻이 사라진다.
 **커널이 가져가는 것은 로직이지 표가 아니다.**
 
-테넌트 스코프 — C-3.1 을 커널에서 어떻게 지키나
------------------------------------------------
-C-3.1 은 "커널 공개 함수는 `@tenant_scoped()` 를 거치거나 PUBLIC 등재"라고 적었다.
-**여기서는 데코레이터를 쓰지 않는다.** 이유가 있다:
+테넌트 스코프 — D-281 이 확정한 방식 (P-K1-1)
+--------------------------------------------
+C-3.1 은 본래 "커널 공개 함수는 `@tenant_scoped()` 를 거치거나 PUBLIC 등재"라고 적었다.
+**D-281 이 그 문언을 계층별로 나눠 개정했다.** 커널(L3)에서는 데코레이터를 쓰지 않는다:
 
     `tenant_scoped` 는 인자에서 `request` 를 찾고, 못 찾으면 **그냥 통과시킨다**
     (`common/tenant_scope._find_request` → `None` → 검사 생략).
     커널 서비스 함수에는 `request` 가 없다. 붙이면 **표식만 남고 아무것도 안 막는다** —
     데코레이터 466/466 부착을 완결로 착각했던 착시 ①(D-249)과 똑같은 모양이다.
 
-대신 DA-04 가 정한 방식을 쓴다 — *"테넌트 스코프 강제 — 인자로 group 을 명시로 받는다."*
-공개 면은 `actor` 를 **필수 인자**로 받고, 좁히기는 `common.tenant_filters` 의
-**실제 문지기**(`get_scoped_or_404` · `assert_scoped` · `filter_by_group_field`)가 한다.
-이 판정은 `common/tenant_tripwire.py` 가 라우트에 대해 쓰는 것과 **같은 문지기 목록**이다.
+대신 **테넌트 없이는 호출 자체가 불가능한 시그니처**로 만든다:
 
-⚠ 이것은 C-3.1 문언과 다른 이행 방식이다. 임의로 정하지 않고
-  `decisions_pending.yaml` 의 **P-K1-1** 로 적재했다 (D-213 — STOP 대신 적재하고 전진).
-  판정이 나오면 그때 이 주석과 게이트를 함께 고친다.
+    def query_events(*, scope: TenantScope, ...)     # scope 없으면 TypeError
+
+데코레이터는 "붙였는가"만 본다. 키워드 전용 필수 인자는 **부르는 쪽이 테넌트를 알아야만**
+호출된다 — 표식이 아니라 **구조**다. 우회할 자리가 없다.
+
+    시그니처가 1차 · 문지기가 2차 (D-281).
+
+좁히기는 여전히 `common.tenant_filters` 의 **실제 문지기**
+(`get_scoped_or_404` · `assert_scoped` · `filter_by_group_field`)가 한다.
+그 목록은 `common/tenant_tripwire.py` 가 라우트에 대해 쓰는 것과 **한 벌을 공유한다.**
+
+사람 없는 호출 — `record_detection` 은 왜 다른가
+------------------------------------------------
+검출 파이프라인(gRPC 콜백)에는 요청자가 없다. 그래도 스코프 인자를 **빼지 않고 이름을
+붙인다**: `TenantScope.system(reason=...)` 은 사유가 필수이고, 그것으로는 **읽지 못한다**
+(`require_actor()`). "테넌트를 생각하지 않은 호출"과 "사람이 없다고 적어 둔 호출"이
+코드에서 갈린다 — `grep "TenantScope.system"` 한 줄로 전수가 세어진다 (D-285 ②).
 
 `objects` 가 아니라 `_base_manager` 로 묻는 이유
 -----------------------------------------------
@@ -60,6 +71,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from common.tenant_filters import assert_scoped, filter_by_group_field, get_scoped_or_404
+from common.tenant_scope import TenantScope
 from kernels.k1_event.exceptions import InvalidEventInput, NotImplementedYet
 from kernels.k1_event.schemas import EventView, RecordResult
 
@@ -154,6 +166,7 @@ def _validate(event_type: str, severity: str) -> None:
 @transaction.atomic
 def record_detection(
     *,
+    scope: TenantScope,
     stream_monitor_id: int,
     event_type: str,
     severity: str,
@@ -170,11 +183,18 @@ def record_detection(
 ) -> RecordResult:
     """검출 하나를 이벤트로 기록한다. **중복 억제 내장** (DA-04 K1).
 
-    `actor` 를 받지 않는다 — 이 함수를 부르는 것은 **사람이 아니라 파이프라인**이다.
-    테넌트는 요청자가 아니라 **스트림이 정한다**: 이벤트는 그 스트림을 가진 테넌트의 것이다.
+    `scope` 는 **키워드 전용 필수 인자**다 (D-281). 이 함수를 부르는 것은 보통 사람이
+    아니라 파이프라인이므로 `TenantScope.system(reason=...)` 이 오지만, **그래도 받는다**:
+    받지 않으면 "테넌트를 생각하지 않은 호출"과 구별할 방법이 사라진다.
+
+    소유는 요청자가 아니라 **스트림이 정한다** — 이벤트는 그 스트림을 가진 테넌트의 것이다.
     요청자에게서 group 을 받으면 파이프라인에 요청자가 없으므로 소유가 비게 되고,
     소유가 빈 행은 §0.4 의 `created_by__isnull` OR 절을 타고 **모두에게 보인다.**
     W0-13 백필 25,296행이 그 상태를 되돌린 일이었다 — 다시 만들지 않는다.
+
+    ★ 사람이 부른 경우(`TenantScope.of(user)`)에는 **그 스트림이 그의 것인지 먼저 묻는다.**
+      묻지 않으면 남의 스트림 id 로 남의 테넌트에 이벤트를 심을 수 있다 — 쓰기 쪽 IDOR 다.
+      파이프라인 스코프에는 이 문턱이 없고, 그래서 시스템 스코프는 사유를 요구한다.
     """
     _validate(event_type, severity)
     Event = _model("DetectionEvent")
@@ -183,6 +203,11 @@ def record_detection(
     occurred_at = occurred_at or timezone.now()
     # 스트림은 `_base_manager` 로 찾는다 — 파이프라인에는 요청자가 없어 테넌트 필터가
     # 무엇을 기준으로 걸러야 할지 모른다. 소유는 아래에서 스트림의 group 으로 정한다.
+    # 사람이 부른 쓰기라면 **문지기가 먼저다** — try 밖 첫 줄 (W0-14c).
+    # 안에 두면 예외에 가려 "막힌 것"과 "찾고 나서 죽은 것"이 구별되지 않는다.
+    if not scope.is_system:
+        assert_scoped(Stream, stream_monitor_id, scope.actor)
+
     try:
         stream = Stream._base_manager.get(pk=stream_monitor_id)
     except Stream.DoesNotExist as exc:
@@ -249,7 +274,7 @@ def record_detection(
 # ═══════════════════════════════════════════════════════════════════════════
 def query_events(
     *,
-    actor,
+    scope: TenantScope,
     since: datetime | None = None,
     until: datetime | None = None,
     event_type: str | Iterable[str] | None = None,
@@ -272,6 +297,10 @@ def query_events(
 
     # ★ `_base_manager` 로 시작한다 — `objects` 는 §0.4 의 `created_by__isnull` OR 절을
     #   타서 주인 없는 행을 통과시킨다. 소유 판정은 필터를 거치지 않은 사실 위에서 한다.
+    # 시스템 스코프로는 **읽지 못한다** (D-281). 파이프라인에 요청자가 없다는 사실이
+    # 읽기까지 열어 주면 그 경로는 영구히 전역 조회가 된다.
+    actor = scope.require_actor()
+
     qs = Event._base_manager.select_related("stream_monitor")
     # 실제 좁히기. 문지기는 `common.tenant_filters` 가 한다 — 여기서 직접 group 을
     # 캐내지 않는다. 전역 여부는 `tenant_roles` 만 답한다 (D-212).
@@ -308,13 +337,14 @@ def query_events(
 # ═══════════════════════════════════════════════════════════════════════════
 # 3. get_event — 남의 것이면 404
 # ═══════════════════════════════════════════════════════════════════════════
-def get_event(event_id: int, *, actor) -> EventView:
+def get_event(event_id: int, *, scope: TenantScope) -> EventView:
     """단건 조회. 남의 테넌트 것이면 **404** — `200 + 빈 응답` 을 만들지 않는다 (W0-18).
 
     403 이 아닌 이유: 403 은 "그 id 는 존재하지만 네 것이 아니다"를 알려 준다.
     **존재 여부가 새는 것도 누출이다.** 남의 것은 없는 것과 같아야 한다.
     """
     Event = _model("DetectionEvent")
+    actor = scope.require_actor()
     row = get_scoped_or_404(Event, event_id, actor)
     # `get_scoped_or_404` 는 `objects` 로 묻는다(§0.4 OR 절 포함). 소유가 빈 행이
     # 통과하는 것을 막기 위해 문지기를 한 번 더 세운다 — 우연에 기대지 않는다 (D-274).
@@ -328,7 +358,8 @@ def get_event(event_id: int, *, actor) -> EventView:
 # 4. review_event — 판정한다 (K6 오탐 통계의 입력)
 # ═══════════════════════════════════════════════════════════════════════════
 @transaction.atomic
-def review_event(event_id: int, *, verdict: str, reason: str = "", actor) -> EventView:
+def review_event(event_id: int, *, verdict: str, reason: str = "",
+                 scope: TenantScope) -> EventView:
     """`confirmed` / `rejected` 로 판정한다.
 
     ★ **기각은 삭제가 아니다.** 행을 지우면 U1 의 오탐률 분자가 함께 사라지고,
@@ -341,6 +372,9 @@ def review_event(event_id: int, *, verdict: str, reason: str = "", actor) -> Eve
             f"허용: {Event.Status.CONFIRMED} · {Event.Status.REJECTED}. "
             f"종료는 close_event 가 한다"
         )
+    # 판정은 **사람이 하는 일**이다. 시스템 스코프로 오탐 판정이 들어오면
+    # U1 의 오탐률이 사람의 판단이 아니라 기계의 자기 채점이 된다 (D-281).
+    actor = scope.require_actor()
     # 쓰기 경로의 문지기는 **try 밖 첫 줄**에 둔다 (W0-14c) — 안에 두면 예외에 가려
     # "막힌 것"과 "찾고 나서 죽은 것"이 구별되지 않는다.
     assert_scoped(Event, event_id, actor)
@@ -358,9 +392,10 @@ def review_event(event_id: int, *, verdict: str, reason: str = "", actor) -> Eve
 # 5. close_event — F-11 보고서 트리거 지점
 # ═══════════════════════════════════════════════════════════════════════════
 @transaction.atomic
-def close_event(event_id: int, *, actor) -> EventView:
+def close_event(event_id: int, *, scope: TenantScope) -> EventView:
     """종료 처리. K4(보고서 엔진)가 여기를 트리거로 삼는다 (DA-04 K1 표)."""
     Event = _model("DetectionEvent")
+    actor = scope.require_actor()
     assert_scoped(Event, event_id, actor)
 
     row = Event._base_manager.select_related("stream_monitor").get(pk=event_id)
@@ -372,7 +407,8 @@ def close_event(event_id: int, *, actor) -> EventView:
 # ═══════════════════════════════════════════════════════════════════════════
 # 6. subscribe — F-05 Webhook · **아직 없다**
 # ═══════════════════════════════════════════════════════════════════════════
-def subscribe(*, webhook_url: str, filters: dict | None = None, signing_key_ref: str = ""):
+def subscribe(*, scope: TenantScope, webhook_url: str,
+              filters: dict | None = None, signing_key_ref: str = ""):
     """이벤트 Webhook 구독 (F-05).
 
     ★ **구현하지 않았다.** 이름만 세워 두는 이유는 DA-04 §2 K1 표가 정한 공개 면이

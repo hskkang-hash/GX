@@ -192,6 +192,123 @@ def _check(request: Any, func: Callable[..., Any]) -> None:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 2-B. 커널 계층(L3)의 스코프 — **데코레이터가 아니라 시그니처다** (D-281)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# 왜 위의 `tenant_scoped` 를 커널에 쓰지 않나
+# -------------------------------------------
+# `tenant_scoped` 는 `_find_request` 로 `request` 를 찾고, **못 찾으면 그냥 통과시킨다**
+# (`wrapper` 의 `request is not None` 조건). HTTP 라우트에는 `request` 가 실제로 있으니
+# 유효하지만, **커널 서비스 함수에는 `request` 가 없다.** 붙이면 표식만 남고 아무것도
+# 안 막는다 — 데코레이터 466/466 부착을 완결로 착각했던 착시 ①(D-249)의 재현이다.
+#
+# D-281 이 정한 방식:
+#
+#     def query_events(*, scope: TenantScope, ...)      # scope 없으면 **호출 자체가 불가**
+#
+# 데코레이터는 "붙였는가"만 본다. 필수 인자는 **부르는 쪽이 테넌트를 알아야만** 호출된다.
+# 표식이 아니라 **구조**다 — 우회할 자리가 없다. 빠뜨리면 `TypeError` 가 즉시 난다.
+#
+# 사람 없는 호출은 어떻게 하나 — 없애지 않고 **이름을 붙여 센다**
+# ---------------------------------------------------------------
+# 검출 파이프라인(gRPC 콜백)에는 요청자가 없다. 그렇다고 스코프 인자를 빼면
+# "테넌트를 생각하지 않은 호출"과 구별이 사라진다. 그래서 `TenantScope.system(reason=...)`
+# 을 두고 **사유를 필수**로 받는다. 이것은 면제가 아니라 **등재**다:
+#   · 사유 없는 시스템 스코프는 만들 수 없다 (`__post_init__` 이 던진다).
+#   · 시스템 스코프로는 **읽지 못한다** (`require_actor()`). 읽기가 전역이 되는 길을 막는다.
+#   · `grep "TenantScope.system"` 한 줄로 전수가 세어진다 — 수가 아니라 **이름으로**
+#     잠그는 D-285 (2) 와 같은 계열이다.
+
+
+class SystemScopeCannotRead(Exception):
+    """시스템 스코프로 테넌트 데이터를 읽으려 했다 (D-281).
+
+    쓰기 파이프라인에 요청자가 없다는 것은 **읽어도 된다는 뜻이 아니다.**
+    이 예외가 나오면 부르는 쪽이 요청자를 갖고 있는지 다시 볼 것 —
+    "일단 system 으로 읽자"가 한 번 통과하면 그 경로는 영구히 전역 읽기가 된다.
+    """
+
+
+@dataclass(frozen=True)
+class TenantScope:
+    """커널 호출 하나가 **누구로서** 일어나는가 (D-281).
+
+    두 가지 뿐이다. 세 번째를 만들지 말 것 — 늘어나는 순간 이 타입이 답하는 질문이 흐려진다.
+
+        TenantScope.of(request.user)         # 사람이 부른다 (HTTP 라우트 → 커널)
+        TenantScope.system(reason="…")       # 사람이 없다 (파이프라인). **사유 필수**
+
+    ⚠ 이 객체는 **권한을 주지 않는다.** 좁히기는 여전히 `common.tenant_filters` 의
+      문지기가 한다 (시그니처가 1차, 문지기가 2차 — D-281). 여기서 하는 일은
+      "부르는 쪽이 테넌트를 명시하게 강제하는 것" 하나다.
+    """
+
+    #: 요청자. 시스템 스코프면 `None`.
+    actor: Any = None
+    #: 사람이 없는 호출의 사유. 시스템 스코프에서만 채워진다.
+    system_reason: str = ""
+
+    def __post_init__(self) -> None:
+        if self.actor is None and not self.system_reason:
+            raise ValueError(
+                "TenantScope 는 요청자(actor) 또는 시스템 사유(system_reason) 중 하나가 "
+                "반드시 있어야 합니다. 둘 다 비면 '테넌트를 생각하지 않은 호출'과 "
+                "구별되지 않습니다 (D-281). "
+                "TenantScope.of(user) 또는 TenantScope.system(reason='…') 를 쓰십시오."
+            )
+        if self.actor is not None and self.system_reason:
+            raise ValueError(
+                "요청자와 시스템 사유를 함께 둘 수 없습니다 — 그 호출은 사람의 것입니까, "
+                "파이프라인의 것입니까. 하나로 답하십시오 (D-281)."
+            )
+
+    # ── 만드는 법 두 가지 ────────────────────────────────────────────────
+    @classmethod
+    def of(cls, actor: Any) -> "TenantScope":
+        """사람이 부르는 호출. `actor` 가 없으면 만들지 않는다."""
+        if actor is None:
+            raise ValueError(
+                "TenantScope.of(None) — 요청자가 없습니다. 인증이 필요한 경로라면 "
+                "여기까지 오기 전에 401 로 끊어야 하고, 파이프라인이라면 "
+                "TenantScope.system(reason='…') 를 쓰십시오 (D-281)."
+            )
+        return cls(actor=actor)
+
+    @classmethod
+    def system(cls, *, reason: str) -> "TenantScope":
+        """사람이 없는 호출. **사유가 필수다** — 등재이지 면제가 아니다.
+
+        여기 적는 사유는 다음 사람이 "이 호출에 왜 요청자가 없나"를 코드에서 바로
+        읽을 수 있어야 한다. `reason="pipeline"` 같은 건 사유가 아니다.
+        """
+        if not (reason or "").strip():
+            raise ValueError(
+                "TenantScope.system(reason=...) 에 사유가 없습니다. "
+                "사유 없는 시스템 스코프는 면제와 구별되지 않습니다 (D-281 · D-261 c)."
+            )
+        return cls(actor=None, system_reason=reason.strip())
+
+    # ── 묻는 법 ──────────────────────────────────────────────────────────
+    @property
+    def is_system(self) -> bool:
+        return self.actor is None
+
+    def require_actor(self) -> Any:
+        """읽기 경로의 문턱. 시스템 스코프면 **던진다.**
+
+        쓰기 파이프라인에 요청자가 없다는 사실이 읽기까지 열어 주지 않게 한다.
+        시스템 스코프로 `query_events` 가 돌면 그것은 곧 **전역 조회**이고,
+        전역 조회는 격리가 아니라 격리의 부재다.
+        """
+        if self.actor is None:
+            raise SystemScopeCannotRead(
+                f"시스템 스코프(사유={self.system_reason!r})로 테넌트 데이터를 읽을 수 "
+                f"없습니다. 읽기에는 요청자가 필요합니다 — TenantScope.of(user) (D-281)."
+            )
+        return self.actor
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # 3. 라우트 열거 — 누락 탐지 테스트의 입력
 # ─────────────────────────────────────────────────────────────────────────────
 

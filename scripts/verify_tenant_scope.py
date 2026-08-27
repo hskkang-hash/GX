@@ -83,18 +83,16 @@ SCOPE_DECORATORS = {"tenant_scoped"}
 #:   여기 이름을 올리는 것은 "이 함수는 테넌트 데이터를 반환하지 않는다"는 **선언**이고,
 #:   그 선언은 시험으로 뒷받침되어야 한다. 추측으로 올리지 않는다.
 KERNEL_PUBLIC: dict[str, str] = {
-    "backend/kernels/k1_event/services.py:record_detection":
-        "테넌트 데이터를 **읽지 않는다.** 파이프라인이 부르는 쓰기 함수이고 호출자에 사람이 없다 "
-        "— 요청자에게서 group 을 받을 수 없다. 대신 이벤트의 소유를 **스트림에서 물려받아 정한다** "
-        "(_inherit_owner). 반환값은 id·bool 뿐이라 남의 테넌트 것이 실려 나갈 자리가 없다. "
-        "시험 근거: tests/test_k1_event_kernel.py "
-        "DedupSplitTest.test_a_different_stream_is_never_folded (다른 테넌트 스트림과 합쳐지지 않는다) · "
-        "KernelTenantScopeTest.test_positive_control_own_event_is_found (소유가 실제로 붙는다)",
+    # record_detection 은 D-281 적용으로 **여기서 내려왔다.** 사람이 부른 경우
+    # `assert_scoped(StreamMonitor, ...)` 를 부르므로 문지기 통과(2차)로 판정된다.
+    # PUBLIC 등재는 "테넌트를 안 만진다"는 선언인데, 그 선언이 더는 필요 없어진 것이다.
     "backend/kernels/k1_event/services.py:subscribe":
         "구현이 없다. 부르면 NotImplementedYet 을 던지고 **아무 데이터도 반환하지 않는다** "
         "(F-05 Webhook — W2-2 이후 별 티켓). 구현이 들어오는 커밋에서 이 등재를 지우고 "
         "문지기를 붙여야 한다 — 구독은 그 자체가 테넌트 자원이다. "
-        "시험 근거: KernelPublicSurfaceTest.test_public_surface_matches_da04 (이름만 서 있음을 확인)",
+        "시험 근거: KernelPublicSurfaceTest.test_public_surface_matches_da04 (이름만 서 있음을 확인) · "
+        "KernelScopeSignatureTest.test_subscribe_requires_scope_before_it_raises "
+        "(scope 를 빼면 NotImplementedYet 이 아니라 TypeError 다 — D-281 은 구현 전에도 걸린다)",
 }
 
 #: PUBLIC 라우트 면제의 증가금지 래칫. 오늘 실측 4건.
@@ -122,7 +120,70 @@ def _decorator_names(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
 
 
 # ---------------------------------------------------------------------------
-# C-3.1 의 세 번째 통과 형태 — **문지기 호출** (P-K1-1 · 2026-08-28)
+# D-281 — 1차 판정: **스코프는 시그니처다** (커널 공개 함수의 필수 인자)
+# ---------------------------------------------------------------------------
+#: 커널 공개 함수가 반드시 받아야 하는 키워드 전용 인자의 이름.
+#:
+#: 왜 이름 하나를 게이트가 강제하나
+#: -------------------------------
+#: D-281: *"데코레이터는 '붙였는가'만 보지만, 필수 인자는 **부르는 쪽이 테넌트를 알아야만**
+#: 호출된다. 표식이 아니라 구조다 — 우회할 자리가 없다."*
+#:
+#: 이 검사가 없으면 다음 커널(K2~K7)이 설 때 아무도 이 규칙을 기억하지 못한다.
+#: 문서에만 있는 규칙은 지켜진 적이 없다 — `verify_classification` 이 빚 113건을 안고
+#: 출발한 것이 그 증거다. **여기서만은 빚 0 으로 시작할 수 있다.**
+SCOPE_PARAM = "scope"
+
+#: 이 인자에 기대하는 타입 이름. 어노테이션이 다르면 **경고**로만 남긴다 —
+#: 이름이 맞는데 타입만 다른 것은 "생각하지 않은 호출"이 아니라 "다르게 생각한 호출"이고,
+#: 그 둘을 같은 강도로 막으면 게이트가 판단이 아니라 잔소리가 된다.
+SCOPE_TYPE = "TenantScope"
+
+
+def _scope_param_problem(key: str, fn) -> str | None:
+    """커널 공개 함수가 `*, scope: TenantScope` 를 받는가 (D-281).
+
+    **키워드 전용**이어야 한다. 위치 인자로 두면 순서로도 넘길 수 있고, 그러면
+    호출부에서 `scope` 라는 글자가 사라진다 — 읽는 사람이 테넌트를 못 본다.
+    """
+    kwonly = {a.arg: a for a in fn.args.kwonlyargs}
+    if SCOPE_PARAM not in kwonly:
+        positional = {a.arg for a in (fn.args.posonlyargs + fn.args.args)}
+        if SCOPE_PARAM in positional:
+            return (f"{key}: `{SCOPE_PARAM}` 이 **키워드 전용이 아니다.** `*` 뒤로 옮겨라 — "
+                    f"위치 인자로 두면 호출부에서 `{SCOPE_PARAM}=` 이라는 글자가 사라지고, "
+                    f"읽는 사람이 그 호출이 어느 테넌트로서 일어나는지 못 본다 (D-281)")
+        return (f"{key}: 커널 공개 함수인데 키워드 전용 필수 인자 "
+                f"`*, {SCOPE_PARAM}: {SCOPE_TYPE}` 이 없다 (D-281). "
+                f"커널(L3)에서는 `@tenant_scoped` 를 쓰지 않는다 — "
+                f"`request` 가 없어 **표식만 남고 아무것도 안 막기** 때문이다(착시 ①). "
+                f"테넌트 없이는 호출 자체가 불가능한 시그니처로 만들어라")
+
+    # 기본값이 있으면 필수가 아니다 — `scope=None` 은 인자를 안 받는 것과 같다.
+    idx = [a.arg for a in fn.args.kwonlyargs].index(SCOPE_PARAM)
+    default = fn.args.kw_defaults[idx]
+    if default is not None:
+        return (f"{key}: `{SCOPE_PARAM}` 에 기본값이 있다 — 그러면 **필수 인자가 아니다.** "
+                f"기본값을 두는 순간 부르는 쪽이 테넌트를 몰라도 호출이 되고, "
+                f"D-281 이 막으려던 그 상태로 돌아간다")
+    return None
+
+
+def _scope_annotation_note(key: str, fn) -> str | None:
+    """어노테이션이 `TenantScope` 인가 — 어긋나면 경고 한 줄(막지는 않는다)."""
+    for a in fn.args.kwonlyargs:
+        if a.arg != SCOPE_PARAM:
+            continue
+        if a.annotation is None:
+            return f"{key}: `{SCOPE_PARAM}` 에 타입 표기가 없다 (기대: {SCOPE_TYPE})"
+        text = ast.unparse(a.annotation) if hasattr(ast, "unparse") else ""
+        if SCOPE_TYPE not in text:
+            return f"{key}: `{SCOPE_PARAM}: {text}` — 기대한 타입은 {SCOPE_TYPE} 이다"
+    return None
+
+
+# ---------------------------------------------------------------------------
+# C-3.1 의 두 번째 통과 형태 — **문지기 호출** (P-K1-1 → D-281 이 2차로 확정)
 # ---------------------------------------------------------------------------
 #: 판정기·문지기 목록을 여기서 다시 정의하지 않는다. 트립와이어가 라우트에 대해 쓰는
 #: 것과 **같은 목록**을 쓴다 — 두 벌을 두면 "라우트에서는 문지기인데 커널에서는 아닌 것"이
@@ -179,6 +240,8 @@ def scan_kernels(verbose: bool) -> list[str]:
             f"새 커널이면 KERNEL_NAMES 와 DA-04 §4 표를 **같은 커밋에서** 함께 고쳐라")
 
     n_scoped = n_public = n_guarded = 0
+    n_sig = 0                      # D-281 1차 — scope 인자를 받는 함수 수
+    notes: list[str] = []          # 어노테이션 어긋남 등 경고(막지 않는다)
     for path in sorted(KERNEL_ROOT.rglob("*.py")):
         rel = path.relative_to(ROOT).as_posix()
         if "/tests/" in rel or path.name.startswith("test_"):
@@ -195,11 +258,34 @@ def scan_kernels(verbose: bool) -> list[str]:
             if node.name.startswith("_"):
                 continue                             # 비공개는 커널 밖에서 못 부른다
             key = f"{rel}:{node.name}"
+
+            # ── 1차: 시그니처 (D-281). **면제가 없다** — PUBLIC 등재도 이것을 대신하지 못한다.
+            #   PUBLIC 은 "테넌트 데이터를 안 만진다"는 선언이지, "부르는 쪽이 테넌트를
+            #   몰라도 된다"는 뜻이 아니다. 그래서 아래 통과 형태들과 **and 로 묶인다.**
+            sig_problem = _scope_param_problem(key, node)
+            if sig_problem:
+                problems.append(sig_problem)
+            else:
+                n_sig += 1
+                note = _scope_annotation_note(key, node)
+                if note:
+                    notes.append(note)
+
+            # ── 2차: 문지기 / 데코레이터 / PUBLIC 등재
             guards = _gatekeepers_reached(path, node)
             if _decorator_names(node) & SCOPE_DECORATORS:
                 n_scoped += 1
+                # ★ D-281: 커널에서는 **데코레이터를 쓰지 않는다.** 통과로 세되 반려한다 —
+                #   `tenant_scoped` 는 request 를 못 찾으면 그냥 통과시키므로, 커널에 붙은
+                #   것은 초록을 칠할 뿐 아무것도 막지 않는다. 붙어 있다는 사실 자체가
+                #   "여기는 막혀 있다"는 오해를 만든다.
+                problems.append(
+                    f"{key}: 커널(L3) 공개 함수에 @tenant_scoped 가 붙어 있다 — "
+                    f"D-281 이 **금지**한다. 커널에는 `request` 가 없어 이 데코레이터는 "
+                    f"검사를 건너뛰고 통과시킨다(표식만 남는다). "
+                    f"`*, {SCOPE_PARAM}: {SCOPE_TYPE}` 시그니처와 문지기 호출로 대신하라")
                 if verbose:
-                    print(f"  OK {key} — @tenant_scoped")
+                    print(f"  X  {key} — @tenant_scoped (커널 금지, D-281)")
             elif guards:
                 n_guarded += 1
                 if verbose:
@@ -215,8 +301,13 @@ def scan_kernels(verbose: bool) -> list[str]:
                     f"인정하는 문지기: {', '.join(sorted(_gatekeeper_names()))}. "
                     f"스코프 없이 데이터를 반환하는 커널 함수는 반려한다")
 
-    print(f"[SCOPE] 커널 공개 함수 — @tenant_scoped {n_scoped}개 · "
-          f"문지기 호출 {n_guarded}개 · PUBLIC {n_public}개")
+    total = n_scoped + n_guarded + n_public
+    # 분모와 술어를 함께 적는다 (D-271 신설 규칙). 분모 없는 초록은 보고가 아니다.
+    print(f"[SCOPE] 커널 공개 함수 {total}개 — "
+          f"1차 scope 시그니처 {n_sig}/{total} (술어=키워드 전용·기본값 없음, D-281) · "
+          f"2차 @tenant_scoped {n_scoped} · 문지기 호출 {n_guarded} · PUBLIC {n_public}")
+    for note in notes:
+        print(f"  ! {note}")
     return problems
 
 
