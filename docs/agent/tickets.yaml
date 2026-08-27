@@ -662,8 +662,8 @@ tickets:
   phase: R1
   title: "created_by 없는 레코드의 전 테넌트 노출 차단"
   status: ready
-  updated_at: "2026-08-24T16:40:00+09:00"
-  evidence: docs/agent/evidence/W0-13/backfill_dryrun.md · backfill_dryrun.txt · impact.md · dump_scan.txt · docs/agent/evidence/W0-14/http_leak_probe.md §4 · backfill_readiness.md · scripts/backfill_owner_apply.py · scripts/backfill_owner_rollback.py
+  updated_at: "2026-08-27T21:30:00+09:00"
+  evidence: docs/agent/evidence/W0-13/backfill_dryrun.md · backfill_dryrun.txt · impact.md · dump_scan.txt · docs/agent/evidence/W0-14/http_leak_probe.md §4 · backfill_readiness.md · backfill_apply_verify.md · backfill_journal.jsonl · scripts/backfill_owner_apply.py · scripts/backfill_owner_rollback.py
   blocker: |
     [2026-08-22 · C안 근거가 정적 분석에서 **실측**으로 올라섰다]
     앞 항목(덤프 파싱 65.9%)에 더해, **HTTP 레벨에서 실제 노출을 재현했다**:
@@ -739,6 +739,36 @@ tickets:
 
     ⚠ **실행 대기**: 이 머신에 Docker 데몬·dj-core·psql 이 없다. 적용은 로컬 기동본에서
       (`RUNBOOK_로컬기동.md`). 절차와 명령은 evidence/W0-13/backfill_readiness.md §3.
+    ---
+    [2026-08-27 · **적용 완료. 25,296행 · 검증 3건 green**] D-267 · D-269 · D-270
+    전문: docs/agent/evidence/W0-13/backfill_apply_verify.md (+ .txt)
+
+    ① 반영 25,296행 · **초과 0행**. 자기 보고를 믿지 않았다 — 백업 덤프를 별도 DB 로 복원해
+       group_id 를 가진 **211 테이블 45,499행**을 양쪽에서 뽑아 diff 했다.
+       변경 25,296 그 외 0건 · 전부 NULL→값 방향 · 기존 소유자를 덮은 행 0건.
+    ② 공용 마스터 12종 무변경 — GridSetting 903 NULL 유지 · menu.Tab 27건 유지.
+       ①의 diff 가 전체 테이블을 본 것이라 "12종 밖에서도 변경 없음"까지 증명된다.
+    ③ 저널 25,296행 == 반영 행수 · 저널과 DB 실측 변경의 집합이 완전히 동일 ·
+       롤백 dry-run 이 22개 모델 전건 복원을 계산 (건너뜀 0 · 행 없음 0).
+
+    ★ **실행 前에 저널 결함을 잡았다** — apply 본의 문자열 4곳이 `"\n"`(역슬래시+n).
+      `newline="\n"` 은 ValueError 를 던지지만 **그 전에 저널이 0바이트로 생성**되어
+      재실행이 영구히 막히고, 저널 줄바꿈 2곳은 개행 없이 이어붙어 롤백이 0행을 읽는다.
+      즉 앞의 1곳만 고쳤다면 **백필은 성공하고 25,296행을 되돌릴 수 없게 됐다.**
+      D-270 ① 과 같은 계열이고, 이번에도 막은 것은 게이트가 아니라 사람의 눈이다 → P-W0-13-4.
+
+    실측 확정: UNASSIGNED_BASELINE **1,590** (dry-run 예측치와 일치 — 조정 없음) · 다중소유 **0**
+    미적용: R1 45행(범위 밖) · D-268 742행(**채우지 않는다** 확정) · 공용 마스터 12종
+    사각지대 4건(P-LOCAL-4)은 계획 단계에서 0행으로 남았다 — P-W0-13-2 그대로 유지.
+
+    적재: **P-W0-13-3** — DEFERRED 3종(RoleMenu 3 · RoleTab 65 · UserMediaFile 207 = 275행)이
+          (a) 갈래로 채워져 등록부 표시가 낡았다. 승인 범위 안이므로 위반은 아니나 임의로
+          고치지 않는다 — 등록부는 판정의 기록이지 우리 편의가 아니다.
+
+    ⚠ **아직 done 이 아니다.** 남은 것은 격리 시험 단언 배선 —
+      tenant_classification.py 의 SHARED_MASTERS(전 테넌트 조회 가능) ·
+      TENANT_UNASSIGNED(전역 관리자 외 비노출) 기대값을 시험이 소비해야 한다 (D-261 b·c).
+      그 배선은 W0-14c 에서 P0 15종 등재와 함께 한다.
   priority: P0
   effort: M
   kind: reuse

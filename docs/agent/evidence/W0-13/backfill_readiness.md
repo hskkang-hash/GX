@@ -124,7 +124,12 @@ dry-run 은 2026-08-24 실측이다. 그 사이 데이터가 변했으면 수가
 1. `UNASSIGNED_BASELINE` 을 **실측으로 확정** — 지금 값(1,590)은 dry-run 예측치다.
    실측이 다르면 **그 차이가 조사 대상**이다. 조용히 맞추지 말 것.
 2. `tenant_classification.py` 를 격리 시험이 소비하도록 단언 배선 (D-261 b·c 의 기대값).
-3. W0-14c — P0 **19종**을 `Target` 에 올린다. `flight_log.FlightLog` ·
+3. W0-14c — P0 **15종**을 `Target` 에 올린다.
+   > **정정(2026-08-27)**: 이 문서가 처음 쓴 **19종**은 D-263 재측정의 *2차* 값이다.
+   > 같은 날 3차로 단건 경로의 정의를 시정해(pk 없는 쓰기를 단건에서 분리) **15종**이
+   > 정본이 됐다 — `evidence/W0-14/leak_targets_coverage.md` §7-2 · `p0_target_draft.md`.
+   > 내려간 4종은 사라진 것이 아니라 P1 에서 사유와 함께 센다. D-266 의 2종은 15종의 1·2번이다.
+    `flight_log.FlightLog` ·
    `surveillance.VideoAnalysis` **먼저** (D-266 · WP-DA2 착수를 막는 2종).
 
 ---
