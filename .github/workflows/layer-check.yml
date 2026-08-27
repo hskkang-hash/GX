@@ -1,0 +1,39 @@
+# 계층 위반 정적 검사 (D-278 · WP-DA2 착수 조건 3)
+#
+# App(L4) 이 커널(L3) 의 **비공개면**(모델·저장소)을 직접 import 하면 실패한다.
+# 재사용 편의가 아니라 **IP 방어**다 — 커널 로직이 App 으로 새면
+# "본체=가이온 / 신규 연계=공동"(계약 8조3항)의 경계가 코드에서 소멸한다 (DA-04 §1-1).
+#
+# ★ 왜 K1 **전에** 세우나
+#   backend/kernels/ 도 backend/apps/ 도 아직 한 줄도 없다. 나중에 오는 게이트는
+#   이미 쌓인 빚을 만나고 래칫으로 잠글 수밖에 없다 (verify_classification 이 빚 113건을
+#   안고 출발한 것이 그 모양이다). **여기서만은 빚 0 으로 시작할 수 있다.**
+#   D-278: "K1 첫 커밋 전에 이 CI 가 green 이어야 한다."
+#
+# ★ 대상이 0건일 때 이 잡은 판정기 자체를 시험한다 (D-277 양성 대조).
+#   대상 0건의 "위반 0" 은 초록이 아니라 아무것도 재지 않은 것이다.
+#   스크립트가 그때 self-test 를 자동으로 돌리므로, 이 잡은 늘 무언가를 판정한다.
+
+name: layer-check
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  layer-gate:
+    name: App(L4) → 커널(L3) 직접 import 금지
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # 의존성 없음 — ast 만 쓴다. dj-core 없이 어느 러너에서나 돈다.
+      - name: 계층 검사 (위반 시 exit 1)
+        run: python scripts/verify_layers.py --self-test

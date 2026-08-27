@@ -91,6 +91,19 @@ repos:
         #   4초 걸린다. 커밋마다 4초로 "문지기 없는 새 경로"를 사는 것이 값싸다.
         files: '^(backend/.*\.py|scripts/verify_tenant_scope\.py)$'
 
+  # ── D-278: App(L4) 이 커널(L3) 내부를 직접 import 하지 않는지 ─────────────
+  # 재사용 편의가 아니라 **IP 방어**다 — 커널 로직이 App 으로 새면
+  # "본체=가이온 / 신규 연계=공동"(계약 8조3항)의 경계가 코드에서 소멸한다 (DA-04 §1-1).
+  # apps·kernels 가 아직 없다. 그래서 **지금** 세운다 — 여기서만은 빚 0 으로 시작한다.
+  - repo: local
+    hooks:
+      - id: gx-layers
+        name: 계층 위반 검사 — App→커널 직접 import 금지 (D-278)
+        entry: python scripts/verify_layers.py
+        language: system
+        pass_filenames: false
+        files: '^(backend/(apps|kernels)/.*\.py|scripts/verify_layers\.py)$'
+
   # ── 기본 위생 ───────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

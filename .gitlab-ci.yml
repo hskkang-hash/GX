@@ -5,6 +5,7 @@
 
 stages:
   - security
+  - architecture
 
 include:
   - template: Security/Secret-Detection.gitlab-ci.yml
@@ -21,6 +22,18 @@ key-divergence:
   image: python:3.11-alpine
   script:
     - python scripts/check_key_divergence.py
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# 계층 위반 정적 검사 (D-278 · WP-DA2 착수 조건 3)
+# App(L4) 이 커널(L3) 의 비공개면을 직접 import 하면 실패한다 — IP 방어(계약 8조3항).
+# K1 첫 커밋 전에 green 이어야 한다. 대상 0건이면 판정기 자체를 시험한다 (D-277).
+layer-check:
+  stage: architecture
+  image: python:3.11-alpine
+  script:
+    - python scripts/verify_layers.py --self-test
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
