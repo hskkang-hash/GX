@@ -1,0 +1,99 @@
+# DA-05 공공 데이터 원천 등록부 — 적용 5종 (D-280)
+#
+# ★ 이 파일은 **후보 등록부이지 스펙이 아니다.**
+#   `verified: false` 인 항목의 endpoint·params 는 **문서를 보고 적은 것**이고 실측이 아니다.
+#   D-280 이 경고한 그대로다 — "추정으로 쓴 스펙은 2027.2 에 전부 재작업이 된다."
+#   그래서 여기서 멈추고, 실측은 `scripts/probe_public_data_schema.py` 가 한다.
+#   실측이 끝난 항목만 `verified: true` 가 되고 그때 `{source}_schema.md` 가 생긴다.
+#
+# ⚠ **키를 여기 적지 않는다** (D-204 · D-280). 키는 C:\GuardianX-vault\ → 환경변수로만.
+#   `key_env` 는 **환경변수 이름**이지 값이 아니다.
+
+meta:
+  decision: D-280
+  updated_at: "2026-08-28"
+  code_start: "2027.2 (계약 M 기능 우선 · PRD v2.1 규칙②) — 지금은 스키마 실측만 한다"
+  why_now: |
+    키가 생겼으므로 읽기 전용 실호출로 응답 스키마를 실측해 DA-05 스펙에 박는다.
+    지금 30분이 2027.2 의 며칠을 아낀다. **코드 구현은 여전히 2027.2 다.**
+
+# 키는 두 개뿐이다 — 포털 일반키 하나로 포털 API 전부를 부른다 (D-280 P0-2).
+keys:
+  - env: GX_DATA_GO_KR_KEY
+    what: 공공데이터포털 일반 인증키 (P0-2)
+    shape: URL 인코딩된 base64 — `%2B` · `%2F` · `%3D%3D` 를 포함한 60~120자
+    covers: [school_location, national_park_safety, child_center_safety, kma_warning, kma_forecast]
+  - env: GX_KMA_API_HUB_KEY
+    what: 기상청 API 허브 토큰 (P0-1) — 포털과 별도 발급인 경우에만 쓴다
+    shape: 영숫자 22자
+    covers: [kma_warning, kma_forecast]
+
+sources:
+
+  - id: kma_warning
+    priority: P0-1
+    title: 기상청 기상특보
+    why: FX-1(건조특보 + 연기 = 심각) · FX-2(호우특보 + 수위)의 **발동 조건 원천**
+    key_env: GX_DATA_GO_KR_KEY
+    verified: false
+    endpoint: http://apis.data.go.kr/1360000/WthrWrnInfoService/getWthrWrnList
+    params: {pageNo: 1, numOfRows: 10, dataType: JSON, stnId: 108}
+    endpoint_source: "공공데이터포털 문서 — **미실측**. 실호출로 확인해야 한다"
+
+  - id: kma_forecast
+    priority: P0-1
+    title: 기상청 단기예보 / 초단기실황
+    why: 특보가 없는 평시의 기상 컨텍스트 — 임계 판정의 바탕값
+    key_env: GX_DATA_GO_KR_KEY
+    verified: false
+    endpoint: http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst
+    params: {pageNo: 1, numOfRows: 10, dataType: JSON, base_date: "TODAY", base_time: "0600", nx: 60, ny: 127}
+    endpoint_source: "공공데이터포털 문서 — **미실측**"
+
+  - id: school_location
+    priority: P1-1
+    title: 전국초중등학교위치표준데이터
+    why: 재난 시 대피소·우선보호시설. F-03 위험구역 자동 제안 · F-10 알림 우선순위
+    key_env: GX_DATA_GO_KR_KEY
+    verified: false
+    endpoint: http://api.data.go.kr/openapi/tn_pubr_public_elesch_mskul_lc_api
+    params: {pageNo: 1, numOfRows: 10, type: json}
+    endpoint_source: "공공데이터포털 표준데이터 문서 — **미실측**"
+
+  - id: national_park_safety
+    priority: P1-2
+    title: 국립공원 안전정보
+    why: F-01 화재 탐지의 지역 컨텍스트, 조난 대응
+    key_env: GX_DATA_GO_KR_KEY
+    verified: false
+    endpoint: ""
+    params: {}
+    endpoint_source: |
+      **엔드포인트 미상.** 대표가 신청한 정확한 API 명을 확인해야 한다 —
+      "국립공원 안전정보"로 검색되는 서비스가 여럿이고, 추정으로 고르면
+      2027.2 에 다른 API 를 쓰게 된다. 프로브는 이 항목을 **건너뛰고 그 사실을 적는다.**
+
+  - id: child_center_safety
+    priority: P1-3
+    title: 아동센터·돌봄센터 안전정보
+    why: 대피 우선순위 · F-10 수신자 그룹 가중 (취약계층 시설)
+    key_env: GX_DATA_GO_KR_KEY
+    verified: false
+    endpoint: ""
+    params: {}
+    endpoint_source: |
+      **엔드포인트 미상.** 위와 같은 이유로 비워 둔다.
+
+# 미적용 3종 (D-280) — 여기 넣지 않는다. 넣지 않은 것을 적어 두는 이유는
+# 다음 사람이 "빠뜨렸나" 하고 다시 넣지 않게 하기 위해서다.
+not_applied:
+  - NEIS(교육행정)          # GuardianX 도메인과 무관
+  - 대구교육청 방과후학교 공모  # 무관
+  - Open DART(기업공시)      # 무관
+
+# 아직 없는 P0 — 포털 일반키로 활용신청만 하면 된다 (대표께 안내 · D-280 §6-2)
+pending_application:
+  - 하천 수위 (홍수통제소)     # FX-2 의 나머지 절반
+  - 재난대응기관
+  - 시설자원
+  - 안전정보 통합공개

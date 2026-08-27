@@ -67,6 +67,81 @@ secretGroup = 1
     '''(?i)["'][A-Z0-9_]*(?:STATUS|CACHE|PREFIX|SUFFIX|NAME|FIELD|SORT|GROUP|INDEX|LOCK|QUEUE|CHANNEL)_KEY["']''',
   ]
 
+# ── 커스텀 룰 4: 공공데이터 인증키 (D-280) ──────────────────────────────────
+# 대표가 발급한 키 4개가 문서에 **평문**으로 있었다. 저장소에 절대 들어가면 안 된다.
+# 값이 아니라 **형태**로 쓴다 (이 파일 원칙 2) — 실제 키는 여기 적지 않는다.
+#
+# 공공데이터포털 일반키의 실물 형태: base64 를 URL 인코딩한 문자열이라
+# `%2B`(+) · `%2F`(/) · `%3D%3D`(==) 가 섞여 있고 길이가 60~120자다.
+# 이 조합은 다른 무엇과도 안 닮아서 오탐이 거의 없다.
+[[rules]]
+id = "gx-datago-service-key"
+description = "공공데이터포털 인증키 형태 (URL 인코딩 base64 · D-280)"
+regex = '''([A-Za-z0-9]{20,}(?:%2B|%2F|%3D)[A-Za-z0-9%]{10,}(?:%3D%3D|%3D))'''
+secretGroup = 1
+
+  [[rules.allowlists]]
+  regexTarget = "match"
+  regexes = [
+    '''(?i)CHANGE_ME''',
+    '''(?i)your[-_]''',
+    '''(?i)SERVICE_KEY_HERE''',
+  ]
+
+# 같은 키의 **디코딩본**(원본 base64). 인코딩을 벗겨 붙여 넣는 실수를 함께 막는다.
+# `=` 로 끝나는 60자 이상 base64 는 이 저장소에 정상적으로 나올 이유가 없다.
+[[rules]]
+id = "gx-datago-service-key-decoded"
+description = "공공데이터포털 인증키 디코딩본 형태 (base64 · D-280)"
+regex = '''\b([A-Za-z0-9+/]{60,}={1,2})'''
+secretGroup = 1
+
+  [[rules.allowlists]]
+  # 잠금 파일·번들 산출물의 integrity 해시는 같은 모양이다. 그쪽은 시크릿이 아니다.
+  regexTarget = "line"
+  regexes = [
+    '''(?i)integrity''',
+    '''(?i)sha(256|384|512)-''',
+    '''(?i)data:[a-z]+/[a-z0-9.+-]+;base64''',
+  ]
+
+# 기상청(KMA) 발급 토큰 형태 — 영숫자 22자 고정.
+#
+# ★ 1차판은 오탐 5건을 냈다: `weather_suitable = check_weather_conditions` 같은 **평범한 코드**가
+#   "weather" + "=" + 22자 식별자로 읽혔다. 22자 영숫자는 파이썬 식별자와 구별이 안 된다.
+#   룰이 오탐을 내면 사람은 그 룰을 끄고, 꺼진 룰은 없는 룰이다. 그래서 두 가지를 조인다:
+#     ① 촉발어에서 일반어 `weather` 를 뺀다 — 남기는 것은 `kma` · `apihub` · 키 이름 자체.
+#     ② 값이 **따옴표 안**이거나 **env 줄 전체**여야 한다. 맨 식별자는 잡지 않는다.
+#   (RE2 라 "숫자를 하나 이상 포함" 같은 조건은 못 쓴다 — 이 파일 머리말 참조.)
+[[rules]]
+id = "gx-kma-auth-key"
+description = "기상청 인증키 형태 (22자 토큰 · 따옴표/env 값 한정 · D-280)"
+regex = '''(?i)(?:kma|apihub|auth_?key|service_?key)[a-z0-9_]*\s*[=:]\s*["'`]([A-Za-z0-9_-]{22})["'`]'''
+secretGroup = 1
+
+  [[rules.allowlists]]
+  regexTarget = "match"
+  regexes = [
+    '''(?i)CHANGE_ME''',
+    '''(?i)your[-_]''',
+    '''(?i)[-_]here''',
+  ]
+
+# env 파일 형태 — 따옴표가 없다. 이름이 대문자이고 줄 전체가 값이어야 한다.
+[[rules]]
+id = "gx-kma-auth-key-env"
+description = "기상청 인증키 형태 — env 줄 (D-280)"
+regex = '''(?m)^[A-Z0-9_]*(?:KMA|APIHUB|AUTH_KEY|SERVICE_KEY)[A-Z0-9_]*\s*=\s*([A-Za-z0-9_-]{22})\s*$'''
+secretGroup = 1
+
+  [[rules.allowlists]]
+  regexTarget = "match"
+  regexes = [
+    '''(?i)CHANGE_ME''',
+    '''(?i)your[-_]''',
+    '''(?i)[-_]here''',
+  ]
+
 # ── 전역 allowlist ───────────────────────────────────────────────────────────
 [[allowlists]]
 description = "오탐 제외 — 경로"
