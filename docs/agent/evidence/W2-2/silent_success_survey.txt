@@ -1,0 +1,98 @@
+  OK  saves_but_empty      기대=잡힘 실제=잡힘  — 독스트링이 저장을 약속하는데 본문이 잔해뿐
+  OK  true_no_promise      기대=잡힘 실제=잡힘  — 빈 본문 + True
+  OK  implicit_none        기대=잡힘 실제=잡힘  — 빈 본문 + 암묵 None
+  OK  real_work            기대=통과 실제=통과  — 실질 작업이 있고 결과로 답한다 — 잡으면 안 된다
+  OK  used_assign          기대=통과 실제=통과  — 대입이 읽힌다 — 잔해가 아니다
+  OK  correct_shape        기대=통과 실제=통과  — D-284 가 요구한 바른 모양 — 결함으로 세면 안 된다
+  OK  private              기대=통과 실제=통과  — 비공개는 밖에서 안 부른다
+  OK  unconditional_ok     기대=잡힘 실제=잡힘  — 실질 작업은 있지만 실패를 낼 길이 없다 — detect_and_save 의 실제 모양
+  OK  can_fail             기대=통과 실제=통과  — 실패를 낼 길이 있다 — 잡으면 안 된다
+  OK  named_save_pass      기대=잡힘 실제=잡힘  — 독스트링은 없지만 **이름이 약속한다**
+
+[SILENT] self-test 통과 10/10 — 잡을 것은 잡고 안 잡을 것은 안 잡는다
+
+[SILENT] 훑은 파일 514개 (모수=backend/**/*.py 전수, 제외=migrations, __pycache__, tests, .venv, node_modules)
+[SILENT] 후보 39건 — high 29 · medium 6 · low 4 · 판정불가 0
+[SILENT] ※ 이것은 **판정이 아니라 목록**이다. 사람이 읽을 순서를 정해 준다 (D-284 (3))
+
+── high ──
+  backend/delivery/services/status_mapping_service.py:172  delete_status_mapping()  →  True(무조건)
+      무조건 성공 — 약속한다: delete, 이름:delete
+  backend/devices/services/camera_service.py:7  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/cargo_service.py:9  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/environmental_service.py:5  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/flight_performance_service.py:6  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/insurance_service.py:5  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/manufacturer_service.py:62  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/navigation_service.py:5  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/packaging_service.py:55  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/propulsion_service.py:6  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/radio_service.py:5  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/safety_service.py:5  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/sensor_service.py:6  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/devices/services/telemetry_service.py:5  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/flight_log/services/flight_log_service.py:714  save_log_file_to_minio()  →  None(암묵)
+      빈 본문 — 약속한다: 이름:save
+  backend/handover/services/handover_content_service.py:109  batch_create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/handover/services/handover_document_service.py:648  delete()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:delete
+  backend/media_data/services/media_data_download_service.py:197  send_progress()  →  None(암묵)
+      빈 본문 — 약속한다: update, send, 이름:send
+  backend/operation_settings/services/menu_integration_service.py:161  create_default_settings_for_menu()  →  True(무조건)
+      무조건 성공 — 약속한다: create, 이름:create
+  backend/operation_settings/services/operation_settings_service.py:167  create_operation_setting()  →  True(무조건)
+      무조건 성공 — 약속한다: create, 이름:create
+  backend/stream_monitors/services/stream_monitor_services.py:1697  delete_external_stream_monitor()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:delete
+  backend/surveillance/services/surveillance_profile_service.py:6017  create()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create
+  backend/surveillance/services/surveillance_profile_service.py:6218  update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:update
+  backend/surveillance/services/surveillance_profile_service.py:7328  delete()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:delete
+  backend/surveillance/services/survey_mission_service.py:3203  import_routes_to_mission()  →  True(무조건)
+      무조건 성공 — 약속한다: create
+  backend/surveillance/services/survey_mission_service.py:3395  import_routes_to_mission_simple()  →  True(무조건)
+      무조건 성공 — 약속한다: create
+  backend/task_status/services/task_status_service.py:24  create_or_update()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:create, 이름:update
+  backend/task_status/services/task_status_service.py:128  update_status()  →  True(무조건)
+      무조건 성공 — 약속한다: 이름:update
+  backend/terminals/services/qground_control_service.py:312  import_plan_file()  →  True(무조건)
+      무조건 성공 — 약속한다: upload
+── medium ──
+  backend/common/universal_optimization.py:2577  enable()  →  True(무조건)
+      무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다
+  backend/delivery/services/processing_service.py:2379  make_drone_request()  →  True(무조건)
+      무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다
+  backend/surveillance/services/surveillance_profile_service.py:7204  stop_repeat()  →  True(무조건)
+      무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다
+  backend/surveillance/services/surveillance_profile_service.py:7219  approve_profile()  →  True(무조건)
+      무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다
+  backend/surveillance/services/surveillance_profile_service.py:7265  reject_profile()  →  True(무조건)
+      무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다
+  backend/surveillance/services/survey_mission_service.py:3614  import_from_qgc_calculated_data()  →  True(무조건)
+      무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다
+── low ──
+  backend/handover/apps.py:9  ready()  →  None(암묵)
+      빈 본문 — None 을 낸다 (성공을 주장하지는 않는다)
+  backend/stream_monitors/apps.py:8  ready()  →  None(암묵)
+      빈 본문 — None 을 낸다 (성공을 주장하지는 않는다)
+  backend/stream_monitors/services/grpc_client.py:39  disconnect()  →  None(암묵)
+      빈 본문 — None 을 낸다 (성공을 주장하지는 않는다)
+  backend/stream_monitors/services/grpc_client.py:51  disconnect()  →  None(암묵)
+      빈 본문 — None 을 낸다 (성공을 주장하지는 않는다)

@@ -1407,3 +1407,68 @@ pending:
       (시그니처가 1차, 문지기가 2차). C-3.1 문언은 이 판정으로 개정된 것으로 본다.
       게이트에 "커널 공개 함수 중 scope 인자 없는 것 = fail" 을 추가했다.
     status: answered
+
+  - id: P-W2-2-1
+    ticket: "W2-2 (K1 배선) · DA-04"
+    raised_at: "2026-08-29"
+    context: "AI 라벨 → event_type → severity 를 잇는 규칙이 어느 문서에도 없다"
+    question: >-
+      `docs/contracts/detection-event.md` 는 `event_type`(person·vehicle·fire·smoke·
+      intrusion·sos)과 `severity`(info·warning·critical)를 **각각** 정의하지만,
+      **둘을 잇는 규칙은 적지 않았다.** 그런데 배선(`detection_event_bridge`)은 검출마다
+      severity 를 정해야 한다 — 정하지 않으면 이벤트를 만들 수 없다.
+      severity 는 화면 정렬(critical+new 최상단)과 K2 알림 우선순위를 직접 정하므로
+      **눈에 보이는 결과가 달라진다.**
+      ※ 함께: **문턱값(MIN_CONFIDENCE)** 도 지금 0.0 이다 — 거르지 않는다. 문턱을 올리면
+        U1 의 오탐률 분모가 그만큼 깎이므로, 숫자를 고르는 것 자체가 판정이다.
+    options:
+      - "A: 잠정표를 정본으로 승인 (fire·smoke·sos=critical · intrusion=warning · person·vehicle=info)"
+      - "B: 스트림(또는 감시 프로파일)별 설정으로 뺀다 — 현장마다 다르다"
+      - "C: AI 가 주는 값을 그대로 쓴다 (지금 proto 에는 severity 가 없다 — 스펙 변경 필요)"
+    chosen_default: "A (잠정 적용 · 되돌릴 수 있다 — 사전 하나)"
+    rationale: >-
+      **A 를 잠정 적용했다.** 되돌리는 비용이 `EVENT_TYPE_TO_SEVERITY` 사전 하나이고,
+      미적용 시 배선이 아예 서지 못한다 (reversible=true).
+      근거: ISA-101 은 빨강(critical)을 **즉시 개입이 필요한 것** 전용으로 쓰고,
+      계약 문서도 "critical 만 빨강. 다른 용도로 빨강 금지"라고 적었다. 화재·연기·구조요청은
+      사람이 지금 움직여야 하는 것이고, 사람·차량의 **존재 자체**는 그렇지 않다.
+      ○ **B 가 옳을 수 있다** — 학교 앞 차량과 통제구역 차량은 같은 것이 아니다. 다만
+        설정 화면·기본값·마이그레이션이 따라오므로 별 티켓 규모다. 지금 A 로 두고
+        B 가 필요해지는 근거(현장 요구)가 나오면 그때 연다.
+      ⛔ **C 는 지금 불가하다.** `frame_detection.proto` 의 Detection 에는 severity 가 없다
+        (실측: x·y·width·height·label·confidence·color). AI 스펙 변경은 계약 밖이다.
+      ※ 문턱값은 **0.0 으로 두었다.** "일단 0.5" 가 들어오는 순간 오탐률은 **문턱값이 만든
+        수**가 된다. 실측 분포를 갖는 K6(피드백·계측)이 정하는 것이 맞다.
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  - id: P-W2-2-2
+    ticket: "W2-2 · media_data"
+    raised_at: "2026-08-29"
+    context: "VideoAnalysis 행이 검출 성공과 무관하게 만들어진다 (D-284 조사 중 발견)"
+    question: >-
+      `media_data_detect_service.detect_media` 는 `create_video_analysis_records()` 를
+      `threading.Timer(total_frames / 20)` 로 예약하는데, 그 `Timer.start()` 가
+      AI 서버로 보내는 `requests.post` **보다 앞줄에 있다.**
+      그래서 **검출 요청이 실패해도(연결 실패·타임아웃·4xx) VideoAnalysis 행은 만들어진다.**
+      그 행의 `analysis_path` 는 아직 있지도 않은(그리고 영영 안 생길) JSON 을 가리킨다.
+      D-284 가 이름 붙인 "조용한 성공" 이 바로 이 모양이다 — 화면은 분석이 있다고 말한다.
+    options:
+      - "A: Timer 예약을 requests.post **성공 뒤로** 옮긴다 (실패하면 행을 만들지 않는다)"
+      - "B: 행은 만들되 상태 필드를 둔다 (pending → ready/failed). 콜백이 상태를 올린다"
+      - "C: 그대로 둔다 (지연 저장이 의도였다면)"
+    chosen_default: ""
+    rationale: >-
+      **기본값을 적용하지 않는다.** 셋 다 **살아 있는 경로의 동작 변경**이고, 지금 성공하던
+      요청이 실패로 바뀔 수 있다. 그 판단은 사람의 것이다 (D-213 — STOP 대신 적재하고 전진).
+      ○ **A 가 단순하다.** 다만 `total_frames/20` 지연 예약은 "AI 가 오래 걸리니 나중에
+        만들자"는 뜻으로 보이고, post 는 `long_timeout()` 으로 오래 기다린다 — 순서를 바꾸면
+        행 생성이 그만큼 늦어진다. 그 지연이 화면에 어떻게 보이는지 확인이 필요하다.
+      ★ **B 가 사실에 가장 가깝다.** 행은 "분석을 요청했다"는 사실이고, 분석 결과가 있는지는
+        **다른 사실**이다. 둘을 한 행으로 나르니 구별이 사라졌다. 다만 마이그레이션이 따라온다.
+      ⛔ **C 를 고르더라도 지금 상태로 두어서는 안 된다** — 최소한 실패했을 때 그 사실이
+        어딘가 남아야 한다. 지금은 배경 스레드가 예외를 항목별로 삼킨다.
+    reversible: true
+    blocks_dod: false
+    status: open

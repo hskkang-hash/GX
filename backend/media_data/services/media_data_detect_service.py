@@ -78,6 +78,22 @@ def get_server_ipv4_address():
         return "127.0.0.1"
 
 
+class _UpstreamShapeMismatch:
+    """상류(AI 검출 서비스) 응답이 계약 모양이 아니었다 — **빈 목록과 다른 것** (D-284).
+
+    `None` 이나 `[]` 를 쓰지 않는 이유: 그 둘은 "검출이 0건이었다"와 글자가 같다.
+    같은 값으로 두 사실을 나르면 부르는 쪽이 구별할 수 없고, 구별하지 못하면
+    상류 오류가 **200 성공**으로 나간다. 그것이 이 센티넬이 막는 것이다.
+    """
+
+    def __repr__(self) -> str:  # 로그에 이 이름이 그대로 보이게 한다
+        return "<상류 응답 모양 불일치 — 검출 0건이 아니다>"
+
+
+#: 단 하나의 인스턴스. `is` 로 비교한다 — 값이 아니라 **사실**을 나르는 표식이다.
+_UPSTREAM_SHAPE_MISMATCH = _UpstreamShapeMismatch()
+
+
 class MediaDataDetectService:
     """
     Service for detecting media files.
@@ -225,21 +241,66 @@ class MediaDataDetectService:
         )
         response_data = response.json()
         print("response_data: ", response_data)
-        results = response_data.get('results', [])
-        return results
+        if not isinstance(response_data, dict) or 'results' not in response_data:
+            # ★ "검출 0건"과 "응답 모양이 다르다"를 가른다 (D-284).
+            #   전에는 `.get('results', [])` 가 둘을 같은 빈 목록으로 만들었고,
+            #   그래서 상류가 오류를 돌려줘도 이 API 는 200 "성공"을 냈다.
+            logger.error(
+                "검출 상류 응답에 'results' 가 없습니다 — 키: %s. "
+                "빈 목록으로 바꾸지 않고 모양 불일치로 올립니다 (D-284)",
+                list(response_data)[:10] if isinstance(response_data, dict) else type(response_data).__name__,
+            )
+            return _UPSTREAM_SHAPE_MISMATCH
+        return response_data['results']
 
     @staticmethod
     @transaction.atomic
     def detect_and_save(data: MediaDetectInSchema):
+        """검출을 요청하고 그 결과를 돌려준다. **저장은 이 함수가 하지 않는다.**
+
+        ★ 이 독스트링은 원래 거짓이었다 (D-284 (2))
+        ------------------------------------------
+        전에는 이렇게 적혀 있었다 — *"Detect media files and save results to
+        VideoAnalysis. For each result: Save detections as JSON file to MinIO;
+        Create VideoAnalysis record with video_path and analysis_path."*
+
+        그런데 본문에는 `created_records = []` 한 줄뿐이었고 그 변수는 **쓰이지 않은 채**
+        `return True, results` 로 끝났다. 부르는 쪽은 저장된 줄 알았다.
+
+            D-284 원칙: **구현이 없는 함수는 성공을 반환하지 않는다.**
+                        조용한 성공이 가장 나쁘다 — 부르는 쪽이 "저장됐다"고 믿고 다음을 쌓는다.
+
+        ★ 다만 실측 결과, **저장은 실제로 일어난다 — 다른 곳에서**
+        ---------------------------------------------------------
+        `NotImplementedError` 를 던지지 않은 이유가 이것이다. 되짚어 보니:
+
+          · `VideoAnalysis` 행은 `detect_media` 안의 `create_video_analysis_records()` 가
+            만든다. `threading.Timer(total_frames / 20)` 로 **배경 스레드에서** 돈다.
+          · MinIO 의 JSON 은 우리가 쓰지 않는다. AI 서비스가 쓰고
+            `callback_url`(`/api/media-data/upload-detection`) 로 알려 준다.
+
+        즉 "본문이 비어 있다"는 맞지만 "저장이 안 된다"는 **틀리다.** 없는 구현을 있다고
+        적는 것만큼이나, 있는 구현을 없다고 적는 것도 다음 사람을 헤매게 한다.
+        그래서 여기서는 **함수가 하는 일을 정확히 적는 쪽**을 골랐다.
+
+        ★ 아직 정직하지 않은 것 — 남겨서 티켓으로 올린다
+        ------------------------------------------------
+        `create_video_analysis_records` 를 예약하는 `Timer.start()` 는 AI 서버로 보내는
+        `requests.post` **보다 앞줄에 있다.** 그래서 **검출 요청이 실패해도 VideoAnalysis
+        행은 만들어진다** — `analysis_path` 는 아직 있지도 않은 JSON 을 가리킨다.
+        이것이야말로 D-284 가 이름 붙인 "조용한 성공"이다.
+
+        고치지 않은 이유: 살아 있는 경로의 **동작 변경**이고 (배경 저장을 검출 성공에
+        묶으면 지금 성공하던 요청이 실패로 바뀔 수 있다), 그 판단은 판정 사안이다.
+        `decisions_pending` 의 **P-W2-2-2** 로 올렸다 (D-213 — STOP 대신 적재하고 전진).
+
+        Returns:
+            `(ok, results)` — `ok` 는 **상류 응답이 계약 모양이었는가**다.
+            전에는 무조건 `True` 라 뷰의 400 갈래가 **닿을 수 없는 죽은 코드**였다.
         """
-        Detect media files and save results to VideoAnalysis.
-        For each result:
-        - Save detections as JSON file to MinIO
-        - Create VideoAnalysis record with video_path and analysis_path
-        """
-        # Call detect_media to get results
+        # 상류가 `results` 키를 주지 않으면 그것은 "검출 0건"이 아니라 **모양이 다른 응답**이다.
+        # 전에는 `.get('results', [])` 가 그 둘을 같은 빈 목록으로 만들어 200 을 냈다.
         results = MediaDataDetectService.detect_media(data)
-
-        created_records = []
-
+        if results is _UPSTREAM_SHAPE_MISMATCH:
+            return False, []
         return True, results

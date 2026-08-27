@@ -1946,9 +1946,9 @@ tickets:
   phase: R1
   title: "검출 결과 → 이벤트 수집 (중복 억제 포함)"
   kernel: ['K1']                     # 공유 커널 (지시서 v2.1) — F-01~F-04 ↔ U1 이중 AC
-  status: in_progress
-  updated_at: "2026-08-28T21:00:00+09:00"
-  evidence: docs/agent/evidence/W2-1/k1_kernel_start.md
+  status: verify-pending
+  updated_at: "2026-08-29T12:00:00+09:00"
+  evidence: docs/agent/evidence/W2-2/d284_detection_wiring.md
   priority: P0
   effort: M
   kind: bind
@@ -1966,27 +1966,50 @@ tickets:
     last_seen 만 갱신한다. 스냅샷 1장을 MinIO 에 저장하고 snapshot_path 에 기록한다.
   dod: "10초 내 동일 유형 반복 검출이 이벤트 1건으로 합쳐진다."
   verify:
-    - "python manage.py test stream_monitors.tests.test_event_dedup"
+    - "docker exec gx-shell sh -c 'cd /app && DJANGO_SETTINGS_MODULE=config.settings PYTHONPATH=/app python -m pytest tests/test_w2_2_detection_wiring.py tests/test_k1_event_kernel.py -q --nomigrations -p no:randomly'"
+    - "python scripts/scan_silent_success.py --self-test"
   blocker: |
-    [2026-08-28 · **커널은 섰다. 배선이 남았다** — D-275 EXIT 승인 후 K1 착수]
-    중복 억제 로직은 `kernels/k1_event/services.record_detection` 에 있고 이중 AC 시험
-    14건이 green 이다. 남은 것은 **호출처 2곳을 커널에 잇는 일**이다.
+    [2026-08-29 · **배선이 섰다. 남은 것은 스냅샷과 호출처 ②** — D-284 이행]
 
-    ★ **호출처 2곳 실측 — 둘 다 지금은 이벤트를 만들지 못한다**
-     ① `stream_monitors/services/grpc_client.py:147-152` `process_frame_batch`
-        AI 서버는 프레임마다 `Detection{x, y, width, height, label, confidence, color}` 를
-        **이미 돌려주고 있다**(proto 실측: `FrameWithDetections{frame, detections}`).
-        그런데 클라이언트는 `frame_with_detections.frame.image_data` 만 디코딩하고
-        **`detections` 를 통째로 버린다.** metadata 에도 안 싣는다.
-        → 검출이 없는 게 아니라 **받아서 버리고 있다.** 이 두 줄이 W2-2 의 핵심이다.
-        `grpc_dual_stream_service.py:401` 은 `processed_frames` 만 소비하므로 그쪽도 함께 고친다.
-     ② `media_data/services/media_data_detect_service.py:233` `detect_and_save`
-        독스트링은 "VideoAnalysis 레코드를 만든다"고 적혀 있는데 **본문이 비어 있다**
-        (`created_records = []` 를 만들고 쓰지 않은 채 `return True, results`).
-        부르는 쪽은 저장된 줄 안다 — K1 `exceptions.NotImplementedYet` 이 막으려는 그 모양이다.
+    ★ **호출처 ① 는 이어졌다** (D-284 (1))
+      `grpc_client.process_frame_batch` 가 `detections` 를 더는 버리지 않는다.
+      metadata 에 `detections`(프레임별) · `detection_count` 를 실어 보내고,
+      bbox 는 계약대로 **정규화 좌표(0.0~1.0)** 로 옮긴다(proto 는 픽셀 정수를 준다).
+      `grpc_dual_stream_service` 가 배치 처리 뒤 `_publish_detection_events` 를 부르고,
+      `detection_event_bridge.publish_detections` 가 K1 `record_detection` 으로 넘긴다.
+      시험 14건 신설 — 그중 `LiveCallSiteTest` 는 **함수가 있는 것**이 아니라
+      **실호출 경로가 부르는 것**을 본다(정의 1건·사용 0건이 그 상태였다).
 
-    ⚠ **선행**: `0016_detectionevent` 마이그레이션이 **아직 적용되지 않았다**(W2-1 참조).
-      표가 없는 상태에서 배선하면 첫 검출에서 죽는다. 적용이 배선보다 먼저다.
+    ★ **부수 소득 — 커널 결함 1건을 시험이 잡았다** (F-04 위반)
+      같은 배치에 같은 검출 3연발 → 이벤트는 1건으로 접혔는데 `should_notify` 가
+      **세 번 다 참**이었다. 알림 질의가 `.exclude(pk=event.pk)` 로 자기 자신을 빼는데,
+      접히면 `event` 가 기존 이벤트라 유일한 "이전 것"이 매번 제외된 것이다.
+      `should_notify = (not folded) and (not prior_exists)` 로 교정. 양성 대조 확인
+      (되돌리면 빨감). 커널 시험에도 회귀 시험을 고정했다.
+
+    ★ **호출처 ② 는 정직해졌지만 K1 에 잇지 않았다** (D-284 (2) — 판단 필요)
+      `detect_and_save` 의 독스트링이 거짓이었던 것은 사실이다. 다만 실측해 보니
+      **저장은 실제로 일어난다 — 다른 곳에서**: `VideoAnalysis` 행은 `detect_media` 안의
+      `create_video_analysis_records()` 가 `threading.Timer` 로 만들고, MinIO JSON 은
+      AI 서비스가 콜백으로 쓴다. 그래서 `NotImplementedError` 를 던지지 않고
+      **독스트링을 사실로 고치고 죽은 코드를 걷어냈다.**
+      또한 상류 응답에 `results` 키가 없을 때 전에는 `.get('results', [])` 가 그것을
+      **빈 목록으로 바꿔 200 을 냈다** — 뷰의 400 갈래가 닿을 수 없는 죽은 코드였다.
+      이제 모양 불일치를 센티넬로 갈라 400 이 닿는다.
+
+      **K1 이벤트로는 잇지 않았다.** 이 경로의 결과 모양(업로드 영상 분석 JSON)을
+      **재지 못했다** — AI 서비스가 이 PC 에서 닿지 않는다(`ai-analysis.invalid`).
+      추정으로 파서를 쓰면 2027.2 에 전부 재작업이다 (D-280 · D-273 초안 검증 원칙).
+      → 잇는 것이 W2-2 범위인지 판단을 구한다. **지금 초록으로 세지 않는다.**
+
+    ⚠ **아직 안 한 것 — 스냅샷 1장** (spec 이 요구한다)
+      `snapshot_path` 는 지금 빈 문자열로 넘어간다. 프레임을 MinIO 에 올리는 일이
+      남았고, 그것은 외부 저장소 호출이라 타임아웃(W0-17 · C-3.3)이 함께 걸린다.
+      **가짜 경로를 만들어 넣지 않았다** — 있지도 않은 객체를 가리키는 경로는
+      "저장했다"는 거짓말이고, 그것이 D-284 가 이름 붙인 조용한 성공이다.
+
+    적재한 판정 2건: **P-W2-2-1**(severity 매핑·문턱값) · **P-W2-2-2**(VideoAnalysis 가
+    검출 실패와 무관하게 만들어진다).
 
 - id: W2-3
   phase: R1

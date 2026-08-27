@@ -122,6 +122,49 @@ class DedupSplitTest(K1Fixture):
     DA-04 의 해법은 **두 창을 나누는 것**이다 — 이벤트는 10초, 알림은 5분.
     """
 
+    def test_folded_records_do_not_notify_again(self) -> None:
+        """[F-04] ★ **접힌 관측은 알림을 다시 내지 않는다.**
+
+        접혔다는 것은 **같은 이벤트**라는 뜻이고, F-04 는 "동일 이벤트 5분 내 중복 알림
+        0건"이다. 그러니 접힘 → 알림 없음이어야 한다.
+
+        ★ 이 시험은 결함을 **잡고 나서** 생겼다 (W2-2 배선 시험이 먼저 잡았다).
+          같은 배치에 같은 검출 3연발 → 이벤트는 1건으로 접혔는데 `should_notify` 가
+          **세 번 다 참**이었다. 원인은 알림 질의가 `.exclude(pk=event.pk)` 로 자기 자신을
+          빼는데, 접히면 `event` 가 **기존 이벤트**여서 유일한 "이전 것"이 매번 제외된 것이다.
+
+          `test_event_count_and_notify_count_differ` 는 30초 간격이라 매번 **새 이벤트**였고,
+          그래서 이 갈래를 한 번도 지나가지 않았다. 시나리오가 초록이어도 갈래가 안 덮이면
+          못 잡는다 — 착시 ②(D-262)의 작은 판이다.
+        """
+        from kernels.k1_event import services as k1
+
+        t0 = timezone.now()
+        results = [
+            k1.record_detection(
+                scope=self.scope_pipe,
+                stream_monitor_id=self.stream_a.id, event_type="smoke",
+                severity="critical", occurred_at=t0 + timedelta(seconds=i * 3),
+            )
+            for i in range(3)                       # 3초 간격 — 전부 10초 창 안이다
+        ]
+
+        # 대상별 표를 낸다 — **실패는 뒤를 가리지 않는다** (D-274 승격 원칙).
+        table = [(i, r.created, r.folded_into_existing, r.should_notify)
+                 for i, r in enumerate(results)]
+        detail = "\n".join(
+            f"  #{i} created={c} folded={f} should_notify={n}" for i, c, f, n in table)
+
+        self.assertEqual([r.created for r in results], [True, False, False],
+                         f"10초 창이 안 먹었다\n{detail}")
+        self.assertEqual(
+            [r.should_notify for r in results], [True, False, False],
+            f"접힌 관측이 알림을 다시 냈다 — 같은 이벤트인데 K2 가 여러 번 보낸다 "
+            f"(F-04 위반)\n{detail}")
+
+        # 이벤트는 **하나뿐**이다. 접힘이 이벤트를 늘리지 않는다 (U1 분모는 관측이 아니라 이벤트).
+        self.assertEqual(len({r.event_id for r in results}), 1, detail)
+
     def test_records_within_10s_fold_into_one_event(self) -> None:
         """[F-04] 같은 stream+type 이 10초 안에 재발하면 **이벤트는 1건**이고 last_seen 만 는다."""
         from kernels.k1_event import services as k1

@@ -1,0 +1,367 @@
+  OK  saves_but_empty      기대=잡힘 실제=잡힘  — 독스트링이 저장을 약속하는데 본문이 잔해뿐
+  OK  true_no_promise      기대=잡힘 실제=잡힘  — 빈 본문 + True
+  OK  implicit_none        기대=잡힘 실제=잡힘  — 빈 본문 + 암묵 None
+  OK  real_work            기대=통과 실제=통과  — 실질 작업이 있고 결과로 답한다 — 잡으면 안 된다
+  OK  used_assign          기대=통과 실제=통과  — 대입이 읽힌다 — 잔해가 아니다
+  OK  correct_shape        기대=통과 실제=통과  — D-284 가 요구한 바른 모양 — 결함으로 세면 안 된다
+  OK  private              기대=통과 실제=통과  — 비공개는 밖에서 안 부른다
+  OK  unconditional_ok     기대=잡힘 실제=잡힘  — 실질 작업은 있지만 실패를 낼 길이 없다 — detect_and_save 의 실제 모양
+  OK  can_fail             기대=통과 실제=통과  — 실패를 낼 길이 있다 — 잡으면 안 된다
+  OK  named_save_pass      기대=잡힘 실제=잡힘  — 독스트링은 없지만 **이름이 약속한다**
+
+[SILENT] self-test 통과 10/10 — 잡을 것은 잡고 안 잡을 것은 안 잡는다
+
+[SILENT] 훑은 파일 514개 (모수=backend/**/*.py 전수, 제외=migrations, __pycache__, tests, .venv, node_modules)
+[
+  {
+    "file": "backend/delivery/services/status_mapping_service.py",
+    "func": "delete_status_mapping",
+    "line": 172,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: delete, 이름:delete"
+  },
+  {
+    "file": "backend/devices/services/camera_service.py",
+    "func": "create_or_update",
+    "line": 7,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/cargo_service.py",
+    "func": "create_or_update",
+    "line": 9,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/environmental_service.py",
+    "func": "create_or_update",
+    "line": 5,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/flight_performance_service.py",
+    "func": "create_or_update",
+    "line": 6,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/insurance_service.py",
+    "func": "create_or_update",
+    "line": 5,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/manufacturer_service.py",
+    "func": "create_or_update",
+    "line": 62,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/navigation_service.py",
+    "func": "create_or_update",
+    "line": 5,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/packaging_service.py",
+    "func": "create_or_update",
+    "line": 55,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/propulsion_service.py",
+    "func": "create_or_update",
+    "line": 6,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/radio_service.py",
+    "func": "create_or_update",
+    "line": 5,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/safety_service.py",
+    "func": "create_or_update",
+    "line": 5,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/sensor_service.py",
+    "func": "create_or_update",
+    "line": 6,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/devices/services/telemetry_service.py",
+    "func": "create_or_update",
+    "line": 5,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/flight_log/services/flight_log_service.py",
+    "func": "save_log_file_to_minio",
+    "line": 714,
+    "grade": "high",
+    "returns": "None(암묵)",
+    "shape": "빈 본문",
+    "why": "빈 본문 — 약속한다: 이름:save"
+  },
+  {
+    "file": "backend/handover/services/handover_content_service.py",
+    "func": "batch_create_or_update",
+    "line": 109,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/handover/services/handover_document_service.py",
+    "func": "delete",
+    "line": 648,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:delete"
+  },
+  {
+    "file": "backend/media_data/services/media_data_download_service.py",
+    "func": "send_progress",
+    "line": 197,
+    "grade": "high",
+    "returns": "None(암묵)",
+    "shape": "빈 본문",
+    "why": "빈 본문 — 약속한다: update, send, 이름:send"
+  },
+  {
+    "file": "backend/operation_settings/services/menu_integration_service.py",
+    "func": "create_default_settings_for_menu",
+    "line": 161,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: create, 이름:create"
+  },
+  {
+    "file": "backend/operation_settings/services/operation_settings_service.py",
+    "func": "create_operation_setting",
+    "line": 167,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: create, 이름:create"
+  },
+  {
+    "file": "backend/stream_monitors/services/stream_monitor_services.py",
+    "func": "delete_external_stream_monitor",
+    "line": 1697,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:delete"
+  },
+  {
+    "file": "backend/surveillance/services/surveillance_profile_service.py",
+    "func": "create",
+    "line": 6017,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create"
+  },
+  {
+    "file": "backend/surveillance/services/surveillance_profile_service.py",
+    "func": "update",
+    "line": 6218,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:update"
+  },
+  {
+    "file": "backend/surveillance/services/surveillance_profile_service.py",
+    "func": "delete",
+    "line": 7328,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:delete"
+  },
+  {
+    "file": "backend/surveillance/services/survey_mission_service.py",
+    "func": "import_routes_to_mission",
+    "line": 3203,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: create"
+  },
+  {
+    "file": "backend/surveillance/services/survey_mission_service.py",
+    "func": "import_routes_to_mission_simple",
+    "line": 3395,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: create"
+  },
+  {
+    "file": "backend/task_status/services/task_status_service.py",
+    "func": "create_or_update",
+    "line": 24,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:create, 이름:update"
+  },
+  {
+    "file": "backend/task_status/services/task_status_service.py",
+    "func": "update_status",
+    "line": 128,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: 이름:update"
+  },
+  {
+    "file": "backend/terminals/services/qground_control_service.py",
+    "func": "import_plan_file",
+    "line": 312,
+    "grade": "high",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 약속한다: upload"
+  },
+  {
+    "file": "backend/common/universal_optimization.py",
+    "func": "enable",
+    "line": 2577,
+    "grade": "medium",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다"
+  },
+  {
+    "file": "backend/delivery/services/processing_service.py",
+    "func": "make_drone_request",
+    "line": 2379,
+    "grade": "medium",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다"
+  },
+  {
+    "file": "backend/surveillance/services/surveillance_profile_service.py",
+    "func": "stop_repeat",
+    "line": 7204,
+    "grade": "medium",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다"
+  },
+  {
+    "file": "backend/surveillance/services/surveillance_profile_service.py",
+    "func": "approve_profile",
+    "line": 7219,
+    "grade": "medium",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다"
+  },
+  {
+    "file": "backend/surveillance/services/surveillance_profile_service.py",
+    "func": "reject_profile",
+    "line": 7265,
+    "grade": "medium",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다"
+  },
+  {
+    "file": "backend/surveillance/services/survey_mission_service.py",
+    "func": "import_from_qgc_calculated_data",
+    "line": 3614,
+    "grade": "medium",
+    "returns": "True(무조건)",
+    "shape": "무조건 성공",
+    "why": "무조건 성공 — 실패를 낼 길이 없다. 부르는 쪽의 실패 갈래는 죽은 코드다"
+  },
+  {
+    "file": "backend/handover/apps.py",
+    "func": "ready",
+    "line": 9,
+    "grade": "low",
+    "returns": "None(암묵)",
+    "shape": "빈 본문",
+    "why": "빈 본문 — None 을 낸다 (성공을 주장하지는 않는다)"
+  },
+  {
+    "file": "backend/stream_monitors/apps.py",
+    "func": "ready",
+    "line": 8,
+    "grade": "low",
+    "returns": "None(암묵)",
+    "shape": "빈 본문",
+    "why": "빈 본문 — None 을 낸다 (성공을 주장하지는 않는다)"
+  },
+  {
+    "file": "backend/stream_monitors/services/grpc_client.py",
+    "func": "disconnect",
+    "line": 39,
+    "grade": "low",
+    "returns": "None(암묵)",
+    "shape": "빈 본문",
+    "why": "빈 본문 — None 을 낸다 (성공을 주장하지는 않는다)"
+  },
+  {
+    "file": "backend/stream_monitors/services/grpc_client.py",
+    "func": "disconnect",
+    "line": 51,
+    "grade": "low",
+    "returns": "None(암묵)",
+    "shape": "빈 본문",
+    "why": "빈 본문 — None 을 낸다 (성공을 주장하지는 않는다)"
+  }
+]

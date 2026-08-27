@@ -251,8 +251,23 @@ def record_detection(
         )
         _inherit_owner(event, stream)
 
-    # ── 알림 창(5분): 접는 것과 **무관하게** 따로 판정한다 ────────────────
-    #   이 이벤트 자신은 세지 않는다. "5분 안에 이미 다른 이벤트가 있었는가"만 본다.
+    # ── 알림 창(5분) ──────────────────────────────────────────────────────
+    #
+    # 두 조건이 **함께** 걸린다. 하나라도 빠지면 F-04 가 깨진다.
+    #
+    #   ① 접힌 관측은 알리지 않는다.  접혔다는 것은 **같은 이벤트**라는 뜻이고,
+    #      F-04 는 "동일 이벤트 5분 내 중복 알림 0건"이다.
+    #   ② 5분 안에 다른 이벤트가 이미 있었으면 알리지 않는다.
+    #
+    # ★ ① 이 처음에 빠져 있었다. W2-2 배선 시험(같은 배치에 같은 검출 3연발)이 잡았다:
+    #   셋이 한 이벤트로 접혔는데 `should_notify` 가 **세 번 다 참**이었다.
+    #   원인은 아래 질의가 `.exclude(pk=event.pk)` 로 **자기 자신을 빼기** 때문이다 —
+    #   접히면 `event` 는 기존 이벤트이므로, 유일한 "이전 것"이 매번 제외됐다.
+    #   "5분간 30초 간격 5회" 시험은 매번 새 이벤트라 이 갈래를 지나가지 않았다.
+    #   **시나리오가 초록이어도 갈래가 안 덮이면 못 잡는다** — 착시 ②(D-262)의 작은 판이다.
+    #
+    # ※ 이벤트를 접는 것과 알림을 접는 것은 여전히 **다른 판정**이다 (DA-04 의 두 창).
+    #   접힌 관측도 이벤트로는 남는다(`last_seen_at` 갱신) — U1 의 오탐률 분모는 그대로다.
     prior_exists = (
         Event._base_manager
         .filter(stream_monitor_id=stream_monitor_id, event_type=event_type,
@@ -264,7 +279,7 @@ def record_detection(
     return RecordResult(
         event_id=event.pk,
         created=not folded,
-        should_notify=not prior_exists,
+        should_notify=(not folded) and (not prior_exists),
         folded_into_existing=folded,
     )
 
