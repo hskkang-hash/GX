@@ -1,0 +1,7 @@
+[SCOPE] 커널 테넌트 스코프 대조 (C-3.1 · D-105 · K5)
+[SCOPE] 커널 디렉터리 없음 (backend/kernels) — 커널은 WP-2 EXIT 후 K1 부터 선다. 게이트는 그때 자동으로 물린다
+[SCOPE] PUBLIC 라우트 면제 4건 (래칫 상한 4)
+[SCOPE] no_route 등재 51종 — 라우트 신설 여부 대조 (D-272)
+
+[SCOPE] 통과
+[SCOPE] ※ 라우트 단위 스코프는 이 게이트가 아니라 backend/tests/test_route_tenant_scope.py 가 본다 (Django 필요). 중복해서 세지 않는다

@@ -14,9 +14,10 @@ from devices.services.packaging_service import PackagingSpecificationService
 from ninja_extra import api_controller, route
 from core.role.permission import permission_required, path_permission
 from ninja.errors import ValidationError
-from common.pagination import OptimizedPaginator 
+from common.pagination import OptimizedPaginator
 from django.db.models.expressions import RawSQL
 from core.common.base_response import BaseResponse
+from common.tenant_filters import assert_scoped
 from django.db.models import (
     QuerySet,
     Count,
@@ -55,7 +56,7 @@ STATUS_COLOR_MAPPING = {
     'returned_order': '#1D9BE2',
     'processed_order': '#9C9D9D',
     'cancelled': '#EE533D',
-    
+
 }
 
 @api_controller('/order', tags=['Order'])
@@ -69,11 +70,11 @@ class OrderAPI:
         language = get_current_request().user.language.code if get_current_request().user.language else 'en'
         STATUS_MAPPING = [
             'Receipt Completed' if language == 'en' else '접수완료' if language == 'ko' else 'ใบเสร็จสมบูรณ์',
-            'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก', 
+            'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',
             'Waiting for Delivery' if language == 'en' else '배송대기' if language == 'ko' else 'รอการจัดส่ง',
             'In Delivery' if language == 'en' else '배송중' if language == 'ko' else 'กำลังจัดส่ง',
             'Delivery Completed' if language == 'en' else '배송완료' if language == 'ko' else 'การจัดส่งเสร็จสมบูรณ์',
-            'Receipt Cancelled' if language == 'en' else '접수취소' if language == 'ko' else 'การรับถูกยกเลิก', 
+            'Receipt Cancelled' if language == 'en' else '접수취소' if language == 'ko' else 'การรับถูกยกเลิก',
         ]
         return BaseResponse(
             status_code=200,
@@ -84,9 +85,9 @@ class OrderAPI:
     @route.get('/etri-order', url_name='etri_order', auth=CustomJWTAuth())
     @path_permission("read", path_override=['/order', '/etri-order','/delivery-operation'])
     def list_etri_orders(
-        self, 
-        request, 
-        page_size: int = 10, 
+        self,
+        request,
+        page_size: int = 10,
         current_page: int = 1,
         sort_obj: object = None,
         item_count: int = None,
@@ -97,7 +98,7 @@ class OrderAPI:
     ):
         """
         Get paginated list of orders with optional filtering and sorting
-        
+
         Parameters:
         - page_size: Number of items per page
         - current_page: Current page number
@@ -110,7 +111,7 @@ class OrderAPI:
         status_codes = ['delivered', 'pending_confirmation', 'awaiting_shipment', 'cancelled', 'pending_processing', 'awaiting_payment', 'returned']
         if request.GET.get('status_codes'):
             status_codes = [status_code for status_code in status_codes if status_code in request.GET.get('status_codes')]
-        
+
         # Convert string parameters if provided
         page_size = int(request.GET.get('page_size', page_size))
         current_page = int(request.GET.get('current_page', current_page))
@@ -120,29 +121,29 @@ class OrderAPI:
         language = get_current_request().user.language.code if get_current_request().user.language else 'en'
         STATUS_MAPPING = {
             'unverified_order': 'Receipt Completed' if language == 'en' else '접수완료' if language == 'ko' else 'ใบเสร็จสมบูรณ์',
-            'cancelled': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',  
-            'overdue_order': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',  
-            'returned_order': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก', 
-            'processed_order': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',  
-            'order_pending_returned': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',  
-            'order_due_for_returned': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',  
+            'cancelled': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',
+            'overdue_order': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',
+            'returned_order': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',
+            'processed_order': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',
+            'order_pending_returned': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',
+            'order_due_for_returned': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',
             'select_route_processing': 'Waiting for Delivery' if language == 'en' else '배송대기' if language == 'ko' else 'รอการจัดส่ง',
             'select_drone_processing': 'Waiting for Delivery' if language == 'en' else '배송대기' if language == 'ko' else 'รอการจัดส่ง',
             'in_transit_processing': 'In Delivery' if language == 'en' else '배송중' if language == 'ko' else 'กำลังจัดส่ง',
             'completed_order': 'Delivery Completed' if language == 'en' else '배송완료' if language == 'ko' else 'การจัดส่งเสร็จสมบูรณ์',
             'arrived_order': 'Delivery Completed' if language == 'en' else '배송 완료' if language == 'ko' else 'การจัดส่งเสร็จสมบูรณ์',  # Also map arrived to shipped
             'verified_order': 'Receipt Completed' if language == 'en' else '접수완료' if language == 'ko' else 'ใบเสร็จสมบูรณ์',  # Map verified to received as well
-            'receipt_cancelled': 'Receipt Cancelled' if language == 'en' else '접수취소' if language == 'ko' else 'การรับถูกยกเลิก',  
+            'receipt_cancelled': 'Receipt Cancelled' if language == 'en' else '접수취소' if language == 'ko' else 'การรับถูกยกเลิก',
         }
 
         STATUS_MAPPING_COLOR = {
             'unverified_order': '#9C9D9D',
-            'cancelled': '#EE533D',  
-            'overdue_order': '#EE533D',  
-            'returned_order': '#EE533D', 
-            'processed_order': '#EE533D',  
-            'order_pending_returned': '#EE533D',  
-            'order_due_for_returned': '#EE533D',  
+            'cancelled': '#EE533D',
+            'overdue_order': '#EE533D',
+            'returned_order': '#EE533D',
+            'processed_order': '#EE533D',
+            'order_pending_returned': '#EE533D',
+            'order_due_for_returned': '#EE533D',
             'select_route_processing': '#1E90FF',
             'select_drone_processing': '#1E90FF',
             'in_transit_processing': '#6495ED',
@@ -154,7 +155,7 @@ class OrderAPI:
         orders_queryset = Order.objects.annotate(
 
             item_count=Count('items', distinct=True),
-            
+
             # Cancel information using subqueries
             cancel_time=Subquery(
                 OrderHistory.objects.filter(
@@ -162,14 +163,14 @@ class OrderAPI:
                     action='cancelled'
                 ).values('created_on')[:1]
             ),
-           
+
             cancelled_by_first_name=Subquery(
                 OrderHistory.objects.filter(
                     order=OuterRef('pk'),
                     action='cancelled'
                 ).values('created_by__first_name')[:1]
             ),
-            
+
             # Refund information using subquery
             refunded_time=Subquery(
                 OrderHistory.objects.filter(
@@ -182,7 +183,7 @@ class OrderAPI:
                     order=OuterRef('pk'),
                     action='delivered'
                 ).values('created_on')[:1]
-            ), 
+            ),
             returned_time = Subquery(
                 OrderHistory.objects.filter(
                     order=OuterRef('pk'),
@@ -213,8 +214,8 @@ class OrderAPI:
             ),
             sender_address__full_address = F('sender_address__full_address'),
             recipient_address__full_address = F('recipient_address__full_address'),
-            
-            
+
+
         ).select_related(
             'status',
             'created_by'
@@ -234,11 +235,11 @@ class OrderAPI:
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
         paginator = OptimizedPaginator(orders_queryset, page_size)
         pages = paginator.page(current_page)
-        
+
         return BaseResponse(
-            status_code=200, 
-            message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_ORDER_SUCCESS), 
-            data=OrderListOutSchema.from_queryset(pages.object_list, many=True) , 
+            status_code=200,
+            message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_ORDER_SUCCESS),
+            data=OrderListOutSchema.from_queryset(pages.object_list, many=True) ,
             total_pages=paginator.num_pages,
             total_items=paginator.count,
             current_page=current_page,
@@ -250,21 +251,21 @@ class OrderAPI:
     def get_etri_order(self, request, id: int):
         """
         Get detailed information about a specific order
-        
+
         Parameters:
         - id: The order ID to retrieve
         """
         language = get_current_request().user.language.code if get_current_request().user.language else 'en'
-        
+
         STATUS_MAPPING = {
             # Primary status mappings using existing codes
             'delivered': 'Delivery Completed' if language == 'en' else '배송완료' if language == 'ko' else 'การจัดส่งเสร็จสมบูรณ์',  # Status 0
-            'cancelled': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',  # Status 1  
+            'cancelled': 'Delivery Cancelled' if language == 'en' else '배송취소' if language == 'ko' else 'การจัดส่งถูกยกเลิก',  # Status 1
             'in_transit_processing': 'In Delivery' if language == 'en' else '배송중' if language == 'ko' else 'กำลังจัดส่ง',  # Status 2
             'awaiting_shipment': 'Waiting for Delivery' if language == 'en' else '배송대기' if language == 'ko' else 'รอการจัดส่ง',  # Status 3
             'pending_confirmation': 'Receipt Completed' if language == 'en' else '접수완료' if language == 'ko' else 'ใบเสร็จสมบูรณ์',  # Status 4
             'receipt_cancelled': 'Receipt Cancelled' if language == 'en' else '접수취소' if language == 'ko' else 'การรับถูกยกเลิก',  # Status 5
-            
+
             # Legacy mappings for backward compatibility
             'unverified_order': 'Received' if language == 'en' else '접수완료' if language == 'ko' else 'ใบเสร็จสมบูรณ์',  # Maps to Status 4
             'verified_order': 'Waiting for Delivery' if language == 'en' else '배송대기' if language == 'ko' else 'รอการจัดส่ง',  # Maps to Status 3
@@ -288,7 +289,7 @@ class OrderAPI:
                 default=Value('failed'),
                 output_field=CharField()
             ),
-            
+
             # Various timestamps
             verified_time=Subquery(
                 OrderHistory._base_manager.filter(
@@ -343,10 +344,10 @@ class OrderAPI:
                     order=OuterRef('pk')
                 ).values('status_history__changed_at')[:1]
             ),
-            
+
             # Address info with ORM formatting
             recipient_address_full=F('recipient_address__full_address'),
-            
+
             # Pickup location formatted address
             pickup_location_formatted=Case(
                 When(
@@ -368,7 +369,7 @@ class OrderAPI:
                 default=Value(None),
                 output_field=CharField()
             ),
-            
+
             # Delivery address based on option
             delivery_address_formatted=Case(
                 When(
@@ -401,7 +402,7 @@ class OrderAPI:
                 default=Value(None),
                 output_field=CharField()
             ),
-            
+
             # Transferred terminal formatted address
             transferred_terminal_formatted=Subquery(
                 DeliveryReturn.objects.filter(
@@ -423,21 +424,21 @@ class OrderAPI:
                     )
                 ).values('formatted_address')[:1]
             ),
-            
+
             # Route ID
             route=Subquery(
                 DeliveryOperation.objects.filter(
                     order=OuterRef('pk')
                 ).values('route_id')[:1]
             ),
-            
+
             # Mapped status based on delivery operation
             mapped_status_code=Subquery(
                 DeliveryOperation.objects.filter(
                     order=OuterRef('pk')
                 ).values('current_status__code')[:1]
             )
-            
+
         ).select_related(
             'status',
             'created_by',
@@ -463,20 +464,20 @@ class OrderAPI:
 
         # Get order data using schema
         order_data = OrderDetailOutSchema.from_queryset(order, many=False)
-        
+
         # Add items using schema
         items_data = []
         for item in order.items.all():
             item_data = OrderItemOutSchema.from_queryset(item, many=False)
             items_data.append(item_data)
         order_data['items'] = items_data
-        
+
         # All fields including history and delivery_events are handled by schema and ORM
 
         # Financial summary is handled by DynamicSchema automatically
 
         # Add complex business logic fields that require custom processing
-        
+
         # Add mapped_status using ORM data
         if hasattr(order, 'delivery_operation') and order.delivery_operation and order.delivery_operation.current_status:
             mapped_status = order.delivery_operation.current_status
@@ -611,9 +612,9 @@ class OrderAPI:
     @route.get('/', url_name='list_orders', auth=CustomJWTAuth())
     @path_permission("read", path_override=['/order', '/etri-order', '/delivery-inquiry'])
     def list_orders(
-        self, 
-        request, 
-        page_size: int = 10, 
+        self,
+        request,
+        page_size: int = 10,
         current_page: int = 1,
         sort_obj: object = None,
         item_count: int = None,
@@ -624,7 +625,7 @@ class OrderAPI:
     ):
         """
         Get paginated list of orders with optional filtering and sorting
-        
+
         Parameters:
         - page_size: Number of items per page
         - current_page: Current page number
@@ -640,7 +641,7 @@ class OrderAPI:
         status_codes = ['delivered', 'pending_confirmation', 'awaiting_shipment', 'cancelled', 'pending_processing', 'awaiting_payment', 'returned']
         if request.GET.get('status_codes'):
             status_codes = [status_code for status_code in status_codes if status_code in request.GET.get('status_codes')]
-        
+
         # Convert string parameters if provided
         page_size = int(request.GET.get('page_size', page_size))
         current_page = int(request.GET.get('current_page', current_page))
@@ -648,7 +649,7 @@ class OrderAPI:
         sort_obj = request.GET.get('sort_obj', sort_obj)
 
         language = get_current_request().user.language.code if get_current_request().user.language else 'en'
-        
+
         orders_queryset = Order.objects.annotate(
             item_count=Count('items', distinct=True),
             # Cancel information using subqueries
@@ -658,7 +659,7 @@ class OrderAPI:
                     action='cancelled'
                 ).values('created_on')[:1]
             ),
-           
+
             cancelled_by__name=Coalesce(
                 # Lấy từ action 'cancelled' trước
                 Subquery(
@@ -678,13 +679,13 @@ class OrderAPI:
                 Value(None),
                 output_field=CharField()
             ),
-            
+
          delivered_time = Subquery(
                 OrderHistory.objects.filter(
                     order=OuterRef('pk'),
                     action='delivered'
                 ).values('created_on')[:1]
-            ), 
+            ),
             returned_time = Subquery(
                 OrderHistory.objects.filter(
                     order=OuterRef('pk'),
@@ -696,8 +697,8 @@ class OrderAPI:
                     order=OuterRef('pk'),
                     action='refunded'
                 ).values('created_on')[:1]
-            ), 
-            origin=Concat( 
+            ),
+            origin=Concat(
                 Coalesce(F('pickup_location__name'), Value(''), output_field=CharField()),
                 Value(' ('),
                 Coalesce(F('pickup_location__street_address'), Value(''), output_field=CharField()),
@@ -722,7 +723,7 @@ class OrderAPI:
                 Value(')'),
                 output_field=CharField()
             ),
-            
+
             # Destination (recipient_address or delivery_terminal) with null handling
             destination=Case(
                 When(
@@ -757,11 +758,11 @@ class OrderAPI:
                         output_field=CharField()
                     )
                 ),
-                default=Value('N/A'), 
+                default=Value('N/A'),
                 output_field=CharField()
             ),
-            
-            # Delivery address formatted 
+
+            # Delivery address formatted
             delivery_address_formatted=Concat(
                 F('recipient_address__full_address'),
                 Value(' ('),
@@ -769,8 +770,8 @@ class OrderAPI:
                 Value(')'),
                 output_field=CharField()
             ),
-            
-            # Pickup location formatted 
+
+            # Pickup location formatted
             pickup_location_formatted=Concat(
                 F('pickup_location__name'),
                 Value(' ('),
@@ -789,7 +790,7 @@ class OrderAPI:
 
             # Use dynamic mapping annotations for Order context
             **mapping_annotations
-            
+
                 ).select_related(
             'status',
             'created_by',
@@ -798,7 +799,7 @@ class OrderAPI:
         ).prefetch_related(
             # 🚀 COMPLETE PREFETCH: All possible related objects to eliminate ALL lazy loading
             'items',
-            'items__item_type', 
+            'items__item_type',
             'items__products',
             'items__assignments',
             'items__assignments__device',
@@ -810,17 +811,17 @@ class OrderAPI:
             # Permission system optimization
             'created_by__userprofilelink__group'
         ).order_by('-modified_on')
-        
+
         orders_queryset = orders_queryset.filter(status__code__in=status_codes, delivery_operation__another_info__etri__isnull=True)
-        
+
         if request.GET.get('mapped_status'):
             orders_queryset = orders_queryset.filter(mapped_status=request.GET.get('mapped_status'))
 
         if request.GET.get('receipt_code'):
             orders_queryset = orders_queryset.filter(receipt_code__icontains=request.GET.get('receipt_code'))
-        
+
         orders_queryset = apply_dynamic_filters(orders_queryset, request, exclude_fields, request.GET.get('sort_obj', None))
-        
+
         paginator = OptimizedPaginator(orders_queryset, page_size)
         pages = paginator.page(current_page)
 
@@ -834,7 +835,7 @@ class OrderAPI:
                 page_pks = [obj.pk for obj in pages.object_list]
         except Exception:
             page_pks = [obj.pk for obj in pages.object_list]
-        
+
         schema_data = OrderListOutSchema.from_queryset(
             orders_queryset.filter(pk__in=page_pks),
             many=True,
@@ -846,9 +847,9 @@ class OrderAPI:
 
         dashboard_refresh_interval, dashboard_auto_refresh = OrderService.get_delivery_inquiry_refresh_config()
         allow_order_in_bad_weather = UserGroupService.get_user_group_settings(request.user.userprofilelink.group.id, 'allow_order_in_bad_weather')
-        
+
         return BaseResponse(
-            status_code=200, 
+            status_code=200,
             message=get_message(MESSAGE_ENUM.GET_LIST_SUCCESS),
             data=schema_data,
             total_pages=paginator.num_pages,
@@ -864,15 +865,21 @@ class OrderAPI:
     def get_order(self, request, id: int):
         """
         Get detailed information about a specific order
-        
+
         Parameters:
         - id: The order ID to retrieve
         """
-        
+        # ★ W0-14c 문지기 (2026-08-28). 이 핸들러에는 try/except 가 없어
+        #   `Order.DoesNotExist` 가 그대로 미들웨어까지 올라가 **HTTP 500** 이 된다.
+        #   실측: 남의 주문 pk 에 500 — 막힌 것이지만 그 500 은 "막혔다"를 말하지 않는다.
+        #   그리고 이 경로는 OrderHistory·Payment·DeliveryOperation 의 **부모 경로**이기도 해서
+        #   (D-272 via_parent) 자식 3종의 판정이 전부 이 500 에 걸려 있었다.
+        assert_scoped(Order, id, request.user)
+
 
         # Get mapping annotations for delivery operation context (used with delivery_operation__ prefix)
         mapping_annotations = StatusMappingService.build_annotate_with_mapping(context='order')
-        
+
         language = request.user.language.code if request.user.language else 'en'
         latest_cancellation = DeliveryCancellation.objects.filter(
                         delivery_operation__order_id=OuterRef('pk')
@@ -905,7 +912,7 @@ class OrderAPI:
                 Value(')'),
                 output_field=CharField()
             ),
-            
+
             # Destination (recipient_address or delivery_terminal) with null handling
             destination=Case(
                 When(
@@ -940,11 +947,11 @@ class OrderAPI:
                         output_field=CharField()
                     )
                 ),
-                default=Value('N/A'), 
+                default=Value('N/A'),
                 output_field=CharField()
             ),
-            
-            # Delivery address formatted 
+
+            # Delivery address formatted
             delivery_address_formatted=Concat(
                 F('recipient_address__full_address'),
                 Value(' ('),
@@ -952,8 +959,8 @@ class OrderAPI:
                 Value(')'),
                 output_field=CharField()
             ),
-            
-            # Pickup location formatted 
+
+            # Pickup location formatted
             pickup_location_formatted=Concat(
                 F('pickup_location__name'),
                 Value(' ('),
@@ -967,7 +974,7 @@ class OrderAPI:
                 Value(')'),
                 output_field=CharField()
             ),
-            
+
             # Delivery terminal formatted address
             delivery_terminal_formatted=Concat(
                 F('delivery_terminal__name'),
@@ -982,7 +989,7 @@ class OrderAPI:
                 Value(')'),
                 output_field=CharField()
             ),
-            
+
             # Transferred terminal formatted address
             transferred_terminal_formatted=Subquery(
                 DeliveryReturn.objects.filter(
@@ -1004,7 +1011,7 @@ class OrderAPI:
                     )
                 ).values('formatted_address')[:1]
             ),
-            
+
             # Route ID
             route=Subquery(
                 DeliveryOperation.objects.filter(
@@ -1094,7 +1101,7 @@ class OrderAPI:
             ),
             # Apply mapping annotations
             **mapping_annotations
-            
+
         ).select_related(
             'status',
             'created_by',
@@ -1122,7 +1129,7 @@ class OrderAPI:
         # Financial summary is handled by DynamicSchema automatically
 
         # Add complex business logic fields that require custom processing
-        
+
         # Add mapped_status using the new mapping system
         if hasattr(order, 'mapped_status') and order.mapped_status:
             order_data['mapped_status'] = {
@@ -1303,7 +1310,7 @@ class OrderAPI:
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_ORDER_SUCCESS, "Order retrieved successfully"),
             data=order_data
         )
-    
+
     @route.post('/', auth=CustomJWTAuth())
     @path_permission("create", path_override=['/order', '/etri-order','/delivery-operation', '/delivery-inquiry'])
     def create_order(self, request, data: OrderCreateSchema):
@@ -1360,18 +1367,18 @@ class OrderAPI:
         try:
             # In a real implementation, this would call a service in the order module
             order = OrderService.create(data.dict(), request)
-            
+
             # Calculate order totals after creation
             order.calculate_totals()
             order.save()
-            
+
             # Convert order to schema for JSON serialization - keep original format
             order_data = {}
             order_data['order_code'] = order.order_code
             order_data['order_id'] = order.id
             order_data['status_name'] = order.status.name
             order_data['status_code'] = order.status.code
-            
+
             # Add new financial_summary field only
             order_data['financial_summary'] = {
                 'total_amount': {
@@ -1381,13 +1388,13 @@ class OrderAPI:
                     'currency_symbol': order.total_amount.currency_symbol if order.total_amount else None
                 }
             }
-            
+
             return BaseResponse(
                 status_code=200,
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.CREATE_ORDER_SUCCESS, "Order created successfully"),
                 data=order_data
             )
-        
+
         except ValidationError as e:
             return {
                 "status": "error",
@@ -1397,8 +1404,8 @@ class OrderAPI:
             }
         except Exception as e:
             return BaseResponse(
-                success=False, 
-                status_code=400, 
+                success=False,
+                status_code=400,
                 message=str(e)
             )
 
@@ -1433,7 +1440,7 @@ class OrderAPI:
                 status_code=400,
                 message=str(e)
             )
-        
+
     @route.post('/{id}/return-order', auth=CustomJWTAuth())
     @path_permission("update", path_override=['/order', '/etri-order', '/delivery-inquiry'])
     def return_order(self, request, id: int):
@@ -1494,12 +1501,12 @@ class OrderAPI:
         """
         try:
             order, refund_order = OrderService.refund_order(id, data.dict())
-            
+
             # Use DynamicSchema for refund info
             refund_info = None
             if refund_order:
                 refund_info = RefundOrderOutSchema.from_queryset(refund_order)
-            
+
             return BaseResponse(
                 status_code=200,
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.REFUND_ORDER_SUCCESS, "Order refunded successfully"),
@@ -1518,7 +1525,7 @@ class OrderAPI:
                 status_code=400,
                 message=str(e)
             )
-        
+
     @route.post('/{id}/change-status', auth=CustomJWTAuth())
     @path_permission("update", path_override=['/order', '/etri-order', '/delivery-inquiry'])
     def change_status_order(self, request, id: int):
@@ -1544,8 +1551,8 @@ class OrderAPI:
                 status_code=400,
                 message=str(e)
             )
-        
-    
+
+
     @route.put('/settings/allow-order-in-bad-weather', url_name='allow_order_in_bad_weather', auth=CustomJWTAuth())
     def allow_order_in_bad_weather(self, request):
         """
@@ -1566,7 +1573,7 @@ class OrderAPI:
                 status_code=200,
                 message=message
             )
-        except Exception as e:  
+        except Exception as e:
             return BaseResponse(
                 success=False,
                 status_code=400,
@@ -1577,7 +1584,7 @@ class OrderAPI:
 class PackageAPI:
     @route.get('/package-list', url_name='get_package_list', auth=CustomJWTAuth())
     def get_package_list(
-        self, 
+        self,
         request,
         weight: float = None,
         dimension_l: float = None,
@@ -1588,7 +1595,7 @@ class PackageAPI:
     ):
         """
         Get list of packaging specifications with optional filtering
-        
+
         Parameters:
         - is_waterproof: Filter by waterproof capability
         - is_fragile: Filter by fragile support
@@ -1596,13 +1603,13 @@ class PackageAPI:
         """
         # Get name filter from query params
         name_search = request.GET.get('name', None)
-        
+
         # Get package list from the service with caching
         package_list = OrderService.get_package_list_cached(
-            weight, dimension_l, dimension_w, dimension_h, 
+            weight, dimension_l, dimension_w, dimension_h,
             is_waterproof, is_fragile, name_search
         )
-        
+
         # Use PackagingSpecificationService to process the package list
         serialized_packages = PackagingSpecificationService.get_list_specification_data(package_list)
 
@@ -1616,14 +1623,14 @@ class PackageAPI:
 class DeliveryOptionAPI:
     @route.get('/', url_name='get_delivery_options')
     def get_delivery_options(
-        self, 
+        self,
         request,
     ):
         """
         Get list of available delivery options
         """
         query = DeliveryOption.objects.all()
-        
+
         # Convert QuerySet to serializable data using the schema
         serialized_options = DeliveryOptionOutSchema.from_queryset(query, many=True)
         return BaseResponse(
@@ -1631,7 +1638,7 @@ class DeliveryOptionAPI:
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_DELIVERY_OPTIONS_SUCCESS, "Delivery options retrieved successfully"),
             data=serialized_options
         )
-    
+
 @api_controller('/banks', tags=['Banks'])
 class BankAPI:
     @route.get('/', url_name='get_banks')
@@ -1651,7 +1658,7 @@ class BankAPI:
 class PickupLocationAPI:
     @route.get('/', url_name='get_pickup_locations', auth=CustomJWTAuth())
     def get_pickup_locations(
-        self, 
+        self,
         request,
         address: str = None,
         page_size: int = 25,
@@ -1663,9 +1670,9 @@ class PickupLocationAPI:
         Get list of pickup locations
         """
         terminals = OrderService.get_terminals_by_route(pickup_location_id=pickup_location_id)
-        
+
         terminals = apply_dynamic_filters(terminals, request.GET, [], request.GET.get('sort_obj'))
-        
+
         terminals = sort_terminal_by_address(terminals, address)
 
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
@@ -1690,10 +1697,10 @@ class PickupLocationAPI:
             total_items=paginator.count,
             current_page=current_page
         )
-    
+
     @route.get('/etri-terminals', url_name='get_pickup_locations_etri', auth=CustomJWTAuth())
     def get_pickup_locations_etri(
-        self, 
+        self,
         request,
         address: str = None,
         page_size: int = 25,

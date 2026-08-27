@@ -17,6 +17,8 @@ from django.core.cache import cache
 
 from core.api.v1.auth import CustomJWTAuth
 from core.common.base_response import BaseResponse
+from common.tenant_filters import assert_scoped
+from surveillance.models import SurveyMission
 from core.role.permission import path_permission
 from core.common.search.dynamic_search import apply_dynamic_filters
 from devices.utils import filter_mensurement
@@ -46,7 +48,7 @@ from surveillance.schemas.schemas_djantic_out import (
 )
 from surveillance.services.survey_mission_service import SurveyMissionService
 from surveillance.services.survey_mission_builder_service import SurveyMissionBuilderService
-from ninja.files import UploadedFile 
+from ninja.files import UploadedFile
 from ninja import Schema, Path, Query, Form, File
 logger = logging.getLogger(__name__)
 
@@ -109,23 +111,28 @@ class SurveyMissionController:
             total_items=paginator.count,
             current_page=current_page
         )
-    
+
     @route.get("/{survey_mission_id}", auth=CustomJWTAuth())
     @path_permission("read", path_override="/survey-mission")
     def get_survey_mission(self, request: HttpRequest, survey_mission_id: int):
         """Get survey mission detail"""
+        # ★ D-272 — 이 경로는 `MissionWaypoint`(8,877행)의 **부모 경로**다.
+        #   자식에 자기 pk 경로가 없다는 것은 안전이 아니다. 부모를 막아야 자식이 안 샌다.
+        #   실측(2026-08-28): 남의 미션에 **500**('NoneType' has no 'waypoints')이 나갔다 —
+        #   막힌 뒤 죽은 것이지만, 그 500 은 "막혔다"를 말해 주지 않는다.
+        assert_scoped(SurveyMission, survey_mission_id, request.user)
         success, result = SurveyMissionService.get_detail(survey_mission_id)
-        
+
         if not success:
             return BaseResponse(
                 status_code=404,
                 message=get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_NOT_FOUND),
                 data=None
             )
-        
+
         # Prepare output data
         data = SurveyMissionDetailOutSchema.from_queryset(result, many = False)
-        
+
         # Lấy danh sách waypoint đã được prefetch sẵn trong service
         waypoints_list = list(result.first().waypoints.all())
         data['line_mission'] = any(waypoint.terminal_id for waypoint in waypoints_list) and not result.first().from_route
@@ -143,7 +150,7 @@ class SurveyMissionController:
             else:
                 # Nếu có trong cache, filter lại để chỉ lấy cruise_speed và operating_altitude
                 cached_measurements = [m for m in cached_measurements if m.measurement_type in ['cruise_speed', 'operating_altitude']]
-            
+
             measurement_map = {m.measurement_type: m for m in cached_measurements}
             measurements_cache[waypoint.id] = measurement_map
 
@@ -169,7 +176,7 @@ class SurveyMissionController:
         data['all_waypoints'] = serialized_waypoints
 
                     # Chỉ lấy waypoint với command nằm trong danh sách cho phép để vẽ biểu đồ
-        
+
         allowed_command_ids = {16, 21, 17, 18, 19, 31, 192, 195, 22, 186, 20}
         chart_entries = []
         routes_controller = RoutesController()
@@ -212,14 +219,14 @@ class SurveyMissionController:
             })
 
         data['chart_data'] = chart_entries
-        
+
         return BaseResponse(
             status_code=200,
             message="Survey mission retrieved successfully",
             data=data
         )
-    
-    
+
+
     @route.post("/mission/review-mission", auth=CustomJWTAuth())
     @path_permission("create", path_override="/survey-mission")
     def review_survey_mission(self, request: HttpRequest, data: SurveyMissionReviewInSchema):
@@ -227,7 +234,7 @@ class SurveyMissionController:
         Review survey mission without creating
         Returns QGC JSON file data for testing/download
         FE can use this to download .plan file before creating mission
-        
+
         Request body only requires survey parameters (polygon + optional settings)
         No mission metadata needed (name, group, purpose, etc.)
         """
@@ -287,13 +294,13 @@ class SurveyMissionController:
             )
 
         cache.set(cache_key, result, timeout=60 * 10)
-        
+
         return BaseResponse(
             status_code=200,
             message="QGC mission file generated successfully",
             data=result
         )
-    
+
     @route.post("", auth=CustomJWTAuth())
     @path_permission("create", path_override="/survey-mission")
     def create_survey_mission(self, request: HttpRequest, data: SurveyMissionCreateInSchema):
@@ -328,24 +335,24 @@ class SurveyMissionController:
             total_distance=data.total_distance,
             estimated_time=data.estimated_time
         )
-        
+
         if not success:
             return BaseResponse(
                 status_code=400,
                 message=get_message(MESSAGE_ENUM.MESSAGE_OPERATION_FAILED),
                 data={"error": result}
             )
-        
+
         # Prepare output data
         output_data = SurveyMissionOutSchema.from_queryset(result, many = False)
-       
-        
+
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_CREATED),
             data=output_data
         )
-    
+
     @route.put("/{survey_mission_id}", auth=CustomJWTAuth())
     @path_permission("update", path_override="/survey-mission")
     def update_survey_mission(
@@ -382,26 +389,26 @@ class SurveyMissionController:
             total_distance=data.total_distance,
             estimated_time=data.estimated_time,
             action_commands=[cmd.dict() for cmd in data.action_commands] if data.action_commands else None,
-            hover_and_capture=data.hover_and_capture or False,  
+            hover_and_capture=data.hover_and_capture or False,
         )
-        
+
         if not success:
             return BaseResponse(
                 status_code=400 if result != "Survey mission not found" else 404,
                 message=get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_NOT_FOUND) if result == "Survey mission not found" else get_message(MESSAGE_ENUM.MESSAGE_OPERATION_FAILED),
                 data={"error": result} if result != "Survey mission not found" else None
             )
-        
+
         # Prepare output data
         output_data = SurveyMissionOutSchema.from_queryset(result, many=False)
-        
-        
+
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_UPDATED),
             data=output_data
         )
-    
+
     @route.post("/{survey_mission_id}/approve", auth=CustomJWTAuth())
     @path_permission("update", path_override="/survey-mission")
     def approve_mission(
@@ -419,20 +426,20 @@ class SurveyMissionController:
             survey_mission_id=survey_mission_id,
             user=request.user,
         )
-        
+
         if not success:
             return BaseResponse(
                 status_code=400,
                 message=get_message(MESSAGE_ENUM.MESSAGE_OPERATION_FAILED),
                 data={"error": result}
             )
-        
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_APPROVED),
             data=SurveyMissionOutSchema.from_queryset(result, many=False)
         )
-    
+
     @route.post("/{survey_mission_id}/reject", auth=CustomJWTAuth())
     @path_permission("update", path_override="/survey-mission")
     def reject_mission(
@@ -450,67 +457,67 @@ class SurveyMissionController:
             user=request.user,
             reason=data.reason
         )
-        
+
         if not success:
             return BaseResponse(
                 status_code=400,
                 message=get_message(MESSAGE_ENUM.MESSAGE_OPERATION_FAILED),
                 data={"error": result}
             )
-        
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_REJECTED),
             data=SurveyMissionOutSchema.from_queryset(result, many=False)
         )
-    
+
     @route.post("/activate/{ids}", auth=CustomJWTAuth())
     @path_permission("update", path_override="/survey-mission")
     def activate_missions(self, request: HttpRequest, ids: str):
         """Activate multiple missions (bulk action)"""
         success, result = SurveyMissionService.activate_missions(ids)
-        
+
         if not success:
             return BaseResponse(
                 status_code=400,
                 message=get_message(MESSAGE_ENUM.ACTION_ACTIVATE_FAILED),
                 data={"error": result}
             )
-        
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.ACTION_ACTIVATE_SUCCESS),
             data=None
         )
-    
+
     @route.post("/deactivate/{ids}", auth=CustomJWTAuth())
     @path_permission("update", path_override="/survey-mission")
     def deactivate_missions(self, request: HttpRequest, ids: str):
         """Deactivate multiple missions (bulk action)"""
         success, result = SurveyMissionService.deactivate_missions(ids)
-        
+
         if not success:
             return BaseResponse(
                 status_code=400,
                 message=get_message(MESSAGE_ENUM.ACTION_DEACTIVATE_FAILED),
                 data={"error": result}
             )
-        
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.ACTION_DEACTIVATE_SUCCESS),
             data=None
         )
-    
+
     @route.post("/mission/import-plan", auth=CustomJWTAuth())
     @path_permission("create", path_override="/survey-mission")
     def import_survey_mission_from_plan(self, request: HttpRequest, file: UploadedFile = File(...)):
         """
         Import survey mission from QGC plan file
-        
+
         Args:
             data: Schema chứa file .plan và thông tin import
-            
+
         Returns:
             SurveyMission được tạo từ file .plan
         """
@@ -520,7 +527,7 @@ class SurveyMissionController:
                 plan_file=file,
                 group_id=request.user.userprofilelink.group.id
             )
-            
+
             if not success:
                 return BaseResponse(
                     status_code=400,
@@ -528,12 +535,12 @@ class SurveyMissionController:
                     data={"error": result},
                     success=False
                 )
-            
+
             return BaseResponse(
                 status_code=200,
                 message=get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_CREATED),
             )
-            
+
         except Exception as e:
             return BaseResponse(
                 status_code=400,
@@ -541,7 +548,7 @@ class SurveyMissionController:
                 data={"error": str(e)},
                 success=False
             )
-    
+
     @route.post("/mission/import-routes", auth=CustomJWTAuth())
     @path_permission("create", path_override="/survey-mission")
     def import_routes_to_mission(self, request: HttpRequest, data: SurveyMissionImportRoutesInSchema):
@@ -549,13 +556,13 @@ class SurveyMissionController:
         Import nhiều route thành 1 mission (Background Job)
         Tất cả RouteTerminal từ các route sẽ được chuyển thành MissionWaypoint
         Polygon sẽ được detect tự động từ tất cả RouteTerminal
-        
+
         Chạy ngầm để tránh timeout khi xử lý số lượng lớn.
         Sử dụng task_id để check status qua API /mission/import-status/{task_id}
-        
+
         Args:
             data: SurveyMissionImportRoutesInSchema chứa route_ids và thông số mission
-            
+
         Returns:
             task_id để check status
         """
@@ -565,11 +572,11 @@ class SurveyMissionController:
             from surveillance.tasks import _process_import_routes_in_thread
             from task_status.models import TaskStatus
             from task_status.services.task_status_service import TaskStatusService
-            
+
             # Generate unique task ID for import tracking
             import_task_id = str(uuid.uuid4())
             task_type = "survey_mission_import_routes"
-            
+
             # Persist initial task status for client-side polling
             pending_message = get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_IMPORT_STARTED)
             TaskStatusService.create_or_update(
@@ -585,7 +592,7 @@ class SurveyMissionController:
                 related_model='surveillance.SurveyMission',
                 payload=data.dict(),
             )
-            
+
             # Start background thread for import processing
             import_thread = threading.Thread(
                 target=_process_import_routes_in_thread,
@@ -621,7 +628,7 @@ class SurveyMissionController:
                 daemon=True
             )
             import_thread.start()
-            
+
             return BaseResponse(
                 status_code=200,
                 message=pending_message,
@@ -631,7 +638,7 @@ class SurveyMissionController:
                     'message': pending_message
                 }
             )
-            
+
         except Exception as e:
             logger.error(f"Error starting import routes to mission task: {str(e)}")
             return BaseResponse(
@@ -640,7 +647,7 @@ class SurveyMissionController:
                 data={"error": str(e)},
                 success=False
             )
-    
+
     @route.post("/mission/import-routes-simple", auth=CustomJWTAuth())
     @path_permission("create", path_override="/survey-mission")
     def import_routes_to_mission_simple(self, request: HttpRequest, data: SurveyMissionImportRoutesSimpleInSchema):
@@ -651,13 +658,13 @@ class SurveyMissionController:
         - Vị trí và thứ tự theo route_ids truyền vào (ví dụ: [102, 103, 101] → bay từ 102 → 103 → 101)
         - Tất cả thông số waypoint lấy từ RouteTerminal
         - Chỉ thông số mission level lấy từ schema hoặc default
-        
+
         Chạy ngầm để tránh timeout khi xử lý số lượng lớn.
         Sử dụng task_id để check status qua API /mission/import-status/{task_id}
-        
+
         Args:
             data: SurveyMissionImportRoutesSimpleInSchema chứa route_ids và thông số mission
-            
+
         Returns:
             task_id để check status
         """
@@ -667,11 +674,11 @@ class SurveyMissionController:
             from surveillance.tasks import _process_import_routes_simple_in_thread
             from task_status.models import TaskStatus
             from task_status.services.task_status_service import TaskStatusService
-            
+
             # Generate unique task ID for import tracking
             import_task_id = str(uuid.uuid4())
             task_type = "survey_mission_import_routes_simple"
-            
+
             # Persist initial task status for client-side polling
             pending_message = get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_IMPORT_STARTED)
             TaskStatusService.create_or_update(
@@ -686,7 +693,7 @@ class SurveyMissionController:
                 trigger_source='survey.mission.import_routes_simple',
                 related_model='surveillance.SurveyMission',
             )
-            
+
             # Start background thread for import processing
             import_thread = threading.Thread(
                 target=_process_import_routes_simple_in_thread,
@@ -711,7 +718,7 @@ class SurveyMissionController:
                 daemon=True
             )
             import_thread.start()
-            
+
             return BaseResponse(
                 status_code=200,
                 message=pending_message,
@@ -721,7 +728,7 @@ class SurveyMissionController:
                     'message': pending_message
                 }
             )
-            
+
         except Exception as e:
             logger.error(f"Error starting import routes to mission simple task: {str(e)}")
             return BaseResponse(
@@ -730,29 +737,29 @@ class SurveyMissionController:
                 data={"error": str(e)},
                 success=False
             )
-    
+
     @route.get("/mission/import-status/{task_id}", auth=CustomJWTAuth())
     @path_permission("read", path_override="/survey-mission")
     def get_import_routes_status(self, request: HttpRequest, task_id: str):
         """
         Check status của import routes task (sử dụng TaskStatus model)
-        
+
         Args:
             task_id: Task ID từ response của import-routes hoặc import-routes-simple
-            
+
         Returns:
             Task status với progress và result (nếu completed)
         """
         try:
             from task_status.services.task_status_service import TaskStatusService
             from task_status.schemas.schemas_djantic_out import TaskStatusOutSchema
-            
+
             # Lấy TaskStatus từ database
             task_status = TaskStatusService.get_by_task_id(task_id)
-            
+
             # Serialize TaskStatus
             response_data = TaskStatusService.serialize(task_status)
-            
+
             # Nếu SUCCESS và có mission_id, lấy thông tin mission
             if task_status.status == 'success' and task_status.data and task_status.data.get('mission_id'):
                 mission_id = task_status.data.get('mission_id')
@@ -763,13 +770,13 @@ class SurveyMissionController:
                         response_data['mission'] = mission_data
                 except Exception as e:
                     logger.warning(f"Could not fetch mission {mission_id}: {str(e)}")
-            
+
             return BaseResponse(
                 status_code=200,
                 message="Task status retrieved successfully",
                 data=response_data
             )
-            
+
         except ValidationError as e:
             logger.error(f"Validation error retrieving import routes task status: {str(e)}")
             return BaseResponse(
@@ -790,12 +797,12 @@ class SurveyMissionController:
     def import_from_qgc_calculated_data(self, request: HttpRequest, data: SurveyMissionImportQGCInSchema):
         """
         Import survey mission từ QGC calculated data với drone_missions
-        
+
         Nhận vào data đã được tính toán từ QGC với:
         - drone_missions: List các drone mission với QGC structure
         - survey_config: Config của survey
         - polygon: Polygon coordinates
-        
+
         Tự động:
         - Parse QGC items thành waypoints
         - Tạo drone_segments từ drone_missions
@@ -803,12 +810,12 @@ class SurveyMissionController:
         - Build QGC file đúng format
         """
         try:
-            
-            
+
+
             # Override group_id nếu có trong request
             if data.group_id:
                 group_id = data.group_id
-            
+
             # Call service method
             success, result = SurveyMissionService.import_from_qgc_calculated_data(
                 name=data.name,
@@ -829,12 +836,12 @@ class SurveyMissionController:
                 note=data.note,
                 group_id=group_id,
             )
-            
+
             if success:
                 # Serialize result
                 from surveillance.schemas.schemas_djantic_out import SurveyMissionDetailOutSchema
                 mission_data = SurveyMissionDetailOutSchema.from_orm(result)
-                
+
                 return BaseResponse(
                     status_code=200,
                     message=get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_CREATED),
@@ -847,7 +854,7 @@ class SurveyMissionController:
                     success=False,
                     data={"error": str(result)}
                 )
-                
+
         except ValidationError as e:
             return BaseResponse(
                 status_code=400,
@@ -863,34 +870,34 @@ class SurveyMissionController:
                 data={"error": str(e)}
             )
 
-    
+
     @route.delete("mission/{survey_mission_ids}", auth=CustomJWTAuth())
     @path_permission("delete", path_override="/survey-mission")
     def delete_survey_mission(self, request: HttpRequest, survey_mission_ids: str):
         """Delete survey mission"""
         success, result = SurveyMissionService.delete(survey_mission_ids.split(","))
-        
+
         if not success:
             return BaseResponse(
                 status_code=404 if result == "Survey mission not found" else 400,
                 message=get_message(MESSAGE_ENUM.ACTION_DELETE_FAILED),
                 data={"error": result}
             )
-        
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.ACTION_DELETE_SUCCESS),
             data=None
         )
-    
+
     @route.post("/export/{mission_ids}", auth=CustomJWTAuth())
     def export_survey_missions(self, request: HttpRequest, mission_ids:str):
         """
         Export multiple survey missions to ZIP file
-        
+
         Args:
             mission_ids: List of survey mission IDs to export
-            
+
         Returns:
             ZIP file containing .plan files for each mission
         """
@@ -902,27 +909,27 @@ class SurveyMissionController:
                     message=get_message(MESSAGE_ENUM.MESSAGE_INVALID_INPUT),
                     data={"error": "Mission IDs list cannot be empty"}
                 )
-            
+
             # Export missions to ZIP
             success, result = SurveyMissionService.export_survey_missions_to_plans(mission_ids, create_zip=True)
-            
+
             if not success:
                 return BaseResponse(
                     status_code=400,
                     message=get_message(MESSAGE_ENUM.ACTION_EXPORT_FAILED),
                     data={"error": result}
                 )
-            
+
             # Create filename
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f"survey_missions_export_{timestamp}.zip"
-            
+
             # Return ZIP file
             from django.http import HttpResponse
             response = HttpResponse(result.getvalue(), content_type='application/zip')
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
             return response
-            
+
         except Exception as e:
             logger.error(f"Error exporting survey missions: {str(e)}")
             return BaseResponse(
@@ -930,19 +937,19 @@ class SurveyMissionController:
                 message=get_message(MESSAGE_ENUM.ACTION_EXPORT_FAILED),
                 data={"error": str(e)}
             )
-    
+
     @route.post("mission/drone-division/{survey_mission_id}", auth=CustomJWTAuth())
     @path_permission("read")
     def create_drone_division_from_mission(self, request: HttpRequest, survey_mission_id: int):
         """
         Tạo mission chia cho nhiều drone từ survey mission có sẵn
-        
+
         Args:
             survey_mission_id: ID của survey mission
-        
+
         Returns:
             SurveyMissionDroneDivisionOutSchema: Thông tin mission chia cho drone
-            
+
         Note:
             Các thông số khác được lấy từ mission measurements:
             - altitude: từ measurement 'altitude' (m)
@@ -965,7 +972,7 @@ class SurveyMissionController:
                     message=get_message(MESSAGE_ENUM.MESSAGE_NOT_FOUND),
                     success=False
                 )
-            
+
             # 2. Kiểm tra mission có polygon không
             if not survey_mission.polygon:
                 return BaseResponse(
@@ -973,57 +980,57 @@ class SurveyMissionController:
                     message="Survey mission không có polygon để tạo drone division",
                     success=False
                 )
-            
+
             # 3. Lấy tham số từ mission hoặc từ request
             maximum_drones = survey_mission.maximum_drones
             if not maximum_drones or maximum_drones < 1:
                 maximum_drones = 1
-            
+
             # 4. Lấy các thông số từ mission measurements
             from devices.utils import get_numeric_value
-            
+
             altitude_measurement = survey_mission.get_measurement('altitude')
             altitude = get_numeric_value(altitude_measurement) if altitude_measurement else 100.0
-            
+
             survey_angle_measurement = survey_mission.get_measurement('survey_angle')
             survey_angle = get_numeric_value(survey_angle_measurement) if survey_angle_measurement else 0.0
-            
+
             trigger_distance_measurement = survey_mission.get_measurement('trigger_distance')
             trigger_distance = get_numeric_value(trigger_distance_measurement) if trigger_distance_measurement else 25.0
-            
+
             spacing_measurement = survey_mission.get_measurement('spacing')
             spacing = get_numeric_value(spacing_measurement) if spacing_measurement else 30.0
-            
+
             turnaround_distance_measurement = survey_mission.get_measurement('turnaround_distance')
             turnaround_distance = get_numeric_value(turnaround_distance_measurement) if turnaround_distance_measurement else 60.96
-            
+
             frontal_overlap_measurement = survey_mission.get_measurement('frontal_overlap')
             frontal_overlap = get_numeric_value(frontal_overlap_measurement) if frontal_overlap_measurement else 70.0
-            
+
             side_overlap_measurement = survey_mission.get_measurement('side_overlap')
             side_overlap = get_numeric_value(side_overlap_measurement) if side_overlap_measurement else 70.0
-            
+
             # 5. Lấy thông số từ qgc_mission_data nếu có
             default_cruise_speed = get_waypoint_speed()
             cruise_speed = default_cruise_speed
             hover_speed = 5.0    # Default
             entry_location = 1   # Default
-            
+
             if survey_mission.qgc_mission_data and 'mission' in survey_mission.qgc_mission_data:
                 mission_data = survey_mission.qgc_mission_data['mission']
                 cruise_speed = mission_data.get('cruiseSpeed', default_cruise_speed)
                 hover_speed = mission_data.get('hoverSpeed', 5.0)
-            
+
             # 6. Khởi tạo builder service
             builder = SurveyMissionBuilderService()
-            
+
             # 7. Lấy danh sách device active từ database
             from devices.models import Device
             available_devices = list(Device.objects.filter(
                 active=True,
                 main_type__name__icontains='drone'  # Chỉ lấy device có type là drone
             ).values('id', 'name', 'serial_number')[:maximum_drones])
-            
+
             # 8. Tạo drone division mission
             result = builder.build_survey_mission_with_drone_division(
                 polygon=survey_mission.polygon,
@@ -1041,14 +1048,14 @@ class SurveyMissionController:
                 return_to_home=bool(getattr(survey_mission, "return_to_home", True)),
                 available_devices=available_devices,
             )
-            
+
             # 8. Trả về kết quả
             return BaseResponse(
                 status_code=200,
                 message=get_message(MESSAGE_ENUM.ADD_RECORD_TO_GROUP_SUCCESS),
                 data=result
             )
-            
+
         except Exception as e:
             logger.error(f"Error creating drone division: {str(e)}")
             return BaseResponse(
@@ -1056,5 +1063,3 @@ class SurveyMissionController:
                 message=get_message(MESSAGE_ENUM.MESSAGE_OPERATION_FAILED),
                 success=False
             )
-    
-    

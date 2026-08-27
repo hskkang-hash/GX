@@ -182,13 +182,77 @@ def scan_public_registry() -> list[str]:
     return problems
 
 
+def _norm(s: str) -> str:
+    s = s.strip("{}").lower().replace("_", "").replace("-", "")
+    if s.endswith("id"):
+        s = s[:-2]
+    if s.endswith("s"):
+        s = s[:-1]
+    return s
+
+
+def scan_no_route_models() -> list[str]:
+    """`no_route` 로 등재된 모델에 **라우트가 생겼는지** 본다 (D-272).
+
+    D-272 는 `no_route` 를 "면제가 아니라 등재"로 못 박고,
+    **라우트가 추가되면 재검사되도록 게이트에 연결**하라고 했다. 여기가 그 연결이다.
+
+    `no_route` 는 "닿을 수 없다"는 **그 시점의 사실**이다. 라우트 하나가 추가되면
+    그 사실은 조용히 거짓이 되고, 아무도 그 모델을 다시 보지 않는다 —
+    인구조사가 행 0 인 모델 25종을 못 보던 것과 같은 모양이다.
+
+    Django 없이 판정한다: 커밋된 인구조사(`tenant_census.py`)와
+    라우트 실측본(`openapi_routes.json`)만 읽는다. pre-commit 에서 돌아야 하기 때문이다.
+    """
+    import ast as _ast
+
+    census = ROOT / "backend" / "tests" / "tenant_census.py"
+    routes = ROOT / "docs" / "agent" / "evidence" / "W0-14" / "openapi_routes.json"
+    if not census.is_file() or not routes.is_file():
+        return [f"인구조사·라우트 실측본을 못 찾았다 ({census.name} · {routes.name}) — "
+                f"못 읽은 채 통과시키지 않는다"]
+
+    tree = _ast.parse(census.read_text(encoding="utf-8"))
+    table = None
+    for node in _ast.walk(tree):
+        tgt = None
+        if isinstance(node, _ast.AnnAssign) and isinstance(node.target, _ast.Name):
+            tgt = node.target.id
+        elif isinstance(node, _ast.Assign) and isinstance(node.targets[0], _ast.Name):
+            tgt = node.targets[0].id
+        if tgt == "CENSUS" and isinstance(node.value, _ast.Dict):
+            table = {k.value: _ast.literal_eval(v)
+                     for k, v in zip(node.value.keys, node.value.values)}
+    if table is None:
+        return ["tenant_census.CENSUS 를 읽지 못했다 — 형태가 바뀌었다면 게이트도 함께 고쳐라"]
+
+    import json as _json
+    paths = list(_json.loads(routes.read_text(encoding="utf-8"))["routes"])
+    problems = []
+    n = 0
+    for label, entry in table.items():
+        if entry[1] != "no_route":
+            continue
+        n += 1
+        model = label.split(".")[-1]
+        for path in paths:
+            parts = [s for s in path.split("/") if s]
+            if any(_norm(s) == _norm(model) for s in parts):
+                problems.append(
+                    f"{label} 은 no_route 로 등재돼 있는데 라우트가 실재한다: {path} — "
+                    f"인구조사를 다시 만들고 그 모델을 재검사하라 (D-272)")
+                break
+    print(f"[SCOPE] no_route 등재 {n}종 — 라우트 신설 여부 대조 (D-272)")
+    return problems
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--list", action="store_true", help="함수별 상태를 전부 출력한다")
     args = ap.parse_args()
 
     print("[SCOPE] 커널 테넌트 스코프 대조 (C-3.1 · D-105 · K5)")
-    problems = scan_kernels(args.list) + scan_public_registry()
+    problems = scan_kernels(args.list) + scan_public_registry() + scan_no_route_models()
 
     for key, why in KERNEL_PUBLIC.items():
         if len(why.strip()) < 10:

@@ -41,6 +41,8 @@ from django.apps import apps
 from django.db import models
 from django.test import Client, TestCase
 
+from tests.tenant_census import CENSUS
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 레지스트리 — 새 모델을 추가하면 여기에 등록한다
@@ -95,6 +97,22 @@ class Target:
     #: 레코드 1건을 만드는 팩토리. `Deps` 로 필수 FK 를 만들어 쓴다.
     factory: Callable[["Deps", int], dict[str, Any]] | None = None
 
+    # ── D-272: 도달 가능성 3값 ──────────────────────────────────────────
+    #: `direct_pk` · `via_parent` · `no_route`. **인구조사(tenant_census)와 같아야 한다** —
+    #: 다르면 `test_reach_matches_census` 가 실패한다. 두 곳이 다른 말을 하면 어느 쪽도 못 믿는다.
+    reach: str = "direct_pk"
+    #: `via_parent` 일 때 부모 경로. `{pk}` 는 **부모의 pk** 로 치환된다.
+    #: 자기 pk 경로가 없다고 안전한 것이 아니다 — 부모를 부르면 자식이 딸려 나온다.
+    via_parent: Route | None = None
+    #: 만들어진 자식에서 **부모의 pk** 를 꺼낸다. 없으면 `via_parent` 경로에 `{pk}` 가 없어야 한다.
+    parent_pk: Callable[[Any], Any] | None = None
+    #: URL 의 `{pk}` 자리에 넣을 **속성 이름**. 기본은 `pk` 다.
+    #:
+    #: ★ 모든 단건 경로가 pk 를 받는 것은 아니다 — `task_status` 는 업무 키(`task_id`)를 받는다.
+    #:   pk 를 넣으면 없는 레코드를 조회하게 되고, 그때 나오는 200/404 는
+    #:   **격리의 답이 아니라 배선의 답**이다. 첫 판이 그 200 을 누출로 보고했다.
+    pk_attr: str = "pk"
+
 
 #: W0-3 지시서가 지정한 9종 + W2-1 신설 1종.
 #: `Handover` 라는 이름의 모델은 존재하지 않는다 — handover 앱의 실제 최상위 모델은
@@ -122,7 +140,7 @@ MODELS: tuple[Target, ...] = (
         factory=lambda d, n: {"name": f"iso-terminal-{n}"},
     ),
     Target(
-        "StreamMonitor", "stream_monitors", "StreamMonitor",
+        "StreamMonitor", "stream_monitors", "StreamMonitor", reach="direct_pk",
         list_path="/api/stream-monitors/stream-monitors",
         factory=lambda d, n: {
             "name": f"iso-monitor-{n}", "code": f"ISO-MON-{n}",
@@ -130,7 +148,7 @@ MODELS: tuple[Target, ...] = (
         },
     ),
     Target(
-        "Dashboard", "dashboard", "Dashboard",
+        "Dashboard", "dashboard", "Dashboard", reach="via_parent",
         list_path="/api/dashboard/dashboard/",
         factory=lambda d, n: {"name": f"iso-dash-{n}", "code": f"ISO-DASH-{n}"},
     ),
@@ -164,7 +182,7 @@ MODELS: tuple[Target, ...] = (
         },
     ),
     Target(
-        "HandoverDocument", "handover", "HandoverDocument",
+        "HandoverDocument", "handover", "HandoverDocument", reach="via_parent",
         list_path="/api/handover/handover/management",
         factory=lambda d, n: {
             "start_date": d.now(), "end_date": d.now(), "handover": d.owner,
@@ -209,10 +227,120 @@ MODELS: tuple[Target, ...] = (
         factory=lambda d, n: {},          # 필수 필드 0개 (실측)
     ),
 
+    # ─────────────────────────────────────────────────────────────────────
+    # W0-14c · P0 나머지 13종 (D-262 ② EXIT 전수 · D-272 도달 가능성 3값)
+    #
+    # ★ `reach` 는 인구조사(tenant_census)와 **같아야 한다** — 다르면 시험이 실패한다.
+    #   direct_pk  = 자기 pk 로 지목하는 경로가 있다 → 그 경로를 친다
+    #   via_parent = 자기 pk 경로는 없고 **부모를 통해 노출된다** →
+    #                부모 경로 스코프 + 자식 필터를 **둘 다** 친다.
+    #                "직접 경로 없음"은 안전이 아니다 (D-272).
+    # ─────────────────────────────────────────────────────────────────────
+
+    # --- direct_pk 3종 (FlightLog·VideoAnalysis 는 위에 이미 있다) --------
+    Target(
+        "OrderItem", "orders", "OrderItem", reach="direct_pk",
+        list_path="/api/operational-data/operational-data",
+        detail=Route("GET", "/api/operational-data/operational-data/{pk}"),
+        factory=lambda d, n: {"order": d.order(), "name": f"iso-item-{n}"},
+    ),
+    Target(
+        "OrderStatusMapping", "orders", "OrderStatusMapping", reach="direct_pk",
+        list_path="/api/orders/order-status-mappings",
+        detail=Route("GET", "/api/orders/order-status-mappings/{pk}"),
+        factory=lambda d, n: {"delivery_status": d.delivery_status()},
+    ),
+    Target(
+        # ★ 초안·추적본이 지목한 `/api/optimization/optimization/task-status/{task_id}` 는
+        #   **이 모델의 라우트가 아니다** — 그 핸들러는 Celery `AsyncResult(task_id)` 를 볼 뿐
+        #   TaskStatus 를 만지지 않는다. 이름이 같아서 매핑됐다.
+        #   실제 라우트는 `/api/task-status/task-status/{task_id}` 이고,
+        #   자리표시자는 pk 가 아니라 **업무 키 `task_id`** 다 (D-273 초안 검증 원칙).
+        "TaskStatus", "task_status", "TaskStatus", reach="direct_pk",
+        pk_attr="task_id",
+        detail=Route("GET", "/api/task-status/task-status/{pk}"),
+        factory=lambda d, n: {"task_id": f"iso-task-{d.tag}-{n}", "task_type": "iso"},
+    ),
+
+    # --- via_parent 10종 --------------------------------------------------
+    Target(
+        "MissionWaypoint", "surveillance", "MissionWaypoint", reach="via_parent",
+        via_parent=Route("GET", "/api/surveillance/survey-missions/{pk}"),
+        parent_pk=lambda o: o.mission_id,
+        factory=lambda d, n: {"mission": d.survey_mission(), "order": n,
+                              "latitude": "37.0", "longitude": "127.0"},
+    ),
+    Target(
+        "SurveillanceProfileDrone", "surveillance", "SurveillanceProfileDrone",
+        reach="via_parent",
+        via_parent=Route("GET", "/api/surveillance/surveillance-profiles/{pk}"),
+        parent_pk=lambda o: o.profile_id,
+        # unique(profile, order) 제약이 있고 order 에 기본값이 있어, 두 테넌트가
+        # 같은 값으로 충돌한다 — 실측에서 IntegrityError 로 드러났다. 순번을 준다.
+        factory=lambda d, n: {"profile": d.surveillance_profile(), "order": n},
+    ),
+    Target(
+        "SurveillanceProfileChecklist", "surveillance", "SurveillanceProfileChecklist",
+        reach="via_parent",
+        via_parent=Route("GET", "/api/surveillance/surveillance-profiles/{pk}"),
+        parent_pk=lambda o: o.profile_id,
+        # unique(profile, profile_drone) — 캐시된 드론을 다시 쓰면 다른 시나리오가 만든
+        # 체크리스트와 충돌한다. 순번을 준 새 드론으로 만든다 (실측에서 드러났다).
+        factory=lambda d, n: {"profile": d.surveillance_profile(),
+                              "profile_drone": d.profile_drone_n(n)},
+    ),
+    Target(
+        "SurveillanceProfileChecklistItem", "surveillance",
+        "SurveillanceProfileChecklistItem", reach="via_parent",
+        # 유일한 도달 경로가 `write` 버킷에 있다 — 부모 프로필의 pk 를 받는다.
+        via_parent=Route("GET", "/api/surveillance/surveillance-profiles/{pk}"),
+        parent_pk=lambda o: o.checklist.profile_id,
+        factory=lambda d, n: {"checklist": d.profile_checklist()},
+    ),
+    Target(
+        "OrderHistory", "orders", "OrderHistory", reach="via_parent",
+        via_parent=Route("GET", "/api/orders/order/{pk}"),
+        parent_pk=lambda o: o.order_id,
+        factory=lambda d, n: {"order": d.order(), "action": "iso",
+                              "description": f"iso-history-{n}"},
+    ),
+    Target(
+        "Payment", "orders", "Payment", reach="via_parent",
+        via_parent=Route("GET", "/api/orders/order/{pk}"),
+        parent_pk=lambda o: o.order_id,
+        factory=lambda d, n: {"order": d.order(), "amount": 1000,
+                              "payment_type": d.payment_type()},
+    ),
+    Target(
+        "DeliveryOperation", "delivery", "DeliveryOperation", reach="via_parent",
+        via_parent=Route("GET", "/api/orders/order/{pk}"),
+        parent_pk=lambda o: o.order_id,
+        # order 가 OneToOne 이라 캐시된 주문을 재사용하면 unique 위반이다.
+        factory=lambda d, n: {"order": d.order_n(n), "current_status": d.delivery_status()},
+    ),
+    Target(
+        "DeliveryOperationItem", "delivery", "DeliveryOperationItem", reach="via_parent",
+        # 부모(DeliveryOperation)를 지목하는 라우트가 없다 — 목록 경로로 자식 필터를 본다.
+        via_parent=Route("GET", "/api/operational-data/operational-data"),
+        factory=lambda d, n: {"delivery_operation": d.delivery_operation()},
+    ),
+    Target(
+        "RouteTerminal", "terminals", "RouteTerminal", reach="via_parent",
+        via_parent=Route("GET", "/api/terminals/routes/{pk}"),
+        parent_pk=lambda o: o.route_id,
+        factory=lambda d, n: {"route": d.routes(), "terminal": d.terminal()},
+    ),
+    Target(
+        "TerminalOperatingTime", "terminals", "TerminalOperatingTime", reach="via_parent",
+        via_parent=Route("GET", "/api/terminals/terminals/{pk}/operating-times"),
+        parent_pk=lambda o: o.terminal_id,
+        factory=lambda d, n: {"terminal": d.terminal(), "day_of_week": d.day_of_week()},
+    ),
+
     # W2-1 에서 신설. BaseModelWithGroup 상속 — group 격리 대상이다.
     # HTTP 표면은 아직 없다 (W2-2 가 만든다) — 그래서 전 시나리오가 NO_ROUTE 다.
     Target(
-        "DetectionEvent", "stream_monitors", "DetectionEvent",
+        "DetectionEvent", "stream_monitors", "DetectionEvent", reach="no_route",
         factory=lambda d, n: {
             "stream_monitor": d.stream_monitor(), "event_type": "iso-test",
             "occurred_at": d.now(), "snapshot_path": f"iso/{n}.jpg",
@@ -250,17 +378,56 @@ NO_ROUTE: dict[str, str] = {
                         "(flight_log/views.py 의 라우트 4개는 목록·상세·다운로드·삭제뿐)",
     "VideoAnalysis:update": "수정 라우트가 없다 — /video-analysis 컨트롤러는 GET 3개뿐이다",
     "VideoAnalysis:delete": "삭제 라우트가 없다 — 같은 이유",
+
+    # ── W0-14c · P0 나머지 등재분 (2026-08-28 · openapi_routes.json 전수 대조) ──
+    "OrderItem:update": "수정 라우트가 없다. /operational-data/{order_item_id} 아래는 "
+                        "업로드 POST 4건뿐이고 품목 자체를 고치는 경로가 아니다",
+    "OrderItem:delete": "삭제 라우트가 없다 — 품목은 주문 취소로 처리된다",
+    "OrderStatusMapping:update": "PUT 은 /update/{group_id} 로 **그룹 단위**다 — "
+                                 "매핑 pk 를 지목하지 않는다",
+    "OrderStatusMapping:delete": "DELETE 는 /delete/{group_ids} 로 **그룹 단위**다 — "
+                                 "매핑 pk 를 지목하지 않는다",
+    "TaskStatus:list": "목록 라우트가 없다. task-status 는 {task_id} 단건 조회 2건뿐이다",
+    "TaskStatus:update": "수정 라우트가 없다 — 상태는 작업이 쓰고 사람은 읽기만 한다",
+    "TaskStatus:delete": "삭제 라우트가 없다 — 같은 이유",
 }
 
-#: 격리 메커니즘이 **아직 없는** 모델 (2026-08-13 실측).
-#: 이 집합이 늘어나면 test_unisolated_set_has_not_grown 이 실패한다 —
-#: 격리 없는 모델을 새로 들이는 것을 막는 장치다. 줄어드는 것은 환영이다.
-KNOWN_UNISOLATED: frozenset[str] = frozenset({
-    "orders.Order",              # core.base.BaseModel — groups 필드 없음
-    "devices.Device",            # core.base.BaseModel — groups 필드 없음
-    "report_template.ReportTemplate",  # core.base.BaseModel — groups 필드 없음
-    "handover.HandoverDocument",       # core.base.BaseModel — groups 필드 없음
-})
+#: ★ **FK 격리가 실증된 모델** — D-271 ① 의 증명 게이트.
+#:
+#: 값은 **무엇으로 증명했는가**다. "FK 를 가졌다"는 증명이 아니다 —
+#: 비소유 테넌트로 HTTP 를 쳐서 누출 0 을 본 것이 증명이다.
+#: 여기 없는 FK 모델은 `unproven` 이고, **unproven 은 안전이 아니라 "아직 모른다"**이다.
+#:
+#: ⚠ 이 표에 이름을 올리는 것은 **초록 하나를 늘리는 일**이다. 근거 없이 올리지 않는다.
+#:   근거는 이 파일의 시나리오 시험이 그 모델을 실제로 쳤다는 사실이어야 하고,
+#:   아래 `test_proven_models_are_actually_probed` 가 그것을 대조한다.
+FK_PROVEN: dict[str, str] = {
+    "orders.Order":
+        "detail 시나리오 실측 — 남의 pk 로 GET /api/orders/order/{id} (2026-08-27 · §0.4 계약 결함 별건)",
+    "terminals.Terminal":
+        "detail 404 실측 — GET /api/terminals/terminals/{id} (2026-08-27)",
+    "devices.Device":
+        "detail·update·delete 전건 404 실측 (2026-08-27)",
+    "checklist_setting.ChecklistSetting":
+        "update·delete 404 실측 (2026-08-27)",
+    "surveillance.SurveillanceProfile":
+        "detail·update·delete 전건 404 실측 (2026-08-27)",
+    "report_template.ReportTemplate":
+        "detail·update·delete 전건 404 실측 (2026-08-27)",
+    "flight_log.FlightLog":
+        "detail·delete 404 실측 — assert_scoped 부착 후 (2026-08-27 · D-274)",
+    "surveillance.VideoAnalysis":
+        "detail 404 실측 — assert_scoped 부착 후 (2026-08-27 · D-274)",
+}
+
+#: 격리 메커니즘이 **아예 없는** 모델 — 소유 필드(`groups` M2M · `group` FK) 둘 다 없다.
+#:
+#: ★ 2026-08-28: **비었다.** 옛 술어가 `groups` M2M 만 봐서 여기 4종이 들어 있었으나
+#:   (`orders.Order` · `devices.Device` · `report_template.ReportTemplate` ·
+#:   `handover.HandoverDocument`), 넷 다 **`group` FK 를 가지고 있다.**
+#:   즉 이 집합은 **틀린 사실을 정본에 기록하고 있었다** — D-271 이 고친 것이 이것이다.
+#:   비운 것은 요구를 낮춘 것이 아니다: 그 넷은 이제 `FK_PROVEN` 의 **실증 대상**이 된다.
+KNOWN_UNISOLATED: frozenset[str] = frozenset()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -271,30 +438,57 @@ def get_model(target: Target) -> type[models.Model]:
     return apps.get_model(target.app_label, target.model_name)
 
 
-def is_group_isolatable(model: type[models.Model]) -> bool:
-    """`groups` M2M 을 가진 모델만 group 격리를 받을 수 있다.
+def _concrete(model: type[models.Model]):
+    """실제 필드만. **역방향 접근자를 세지 않는다** (D-263).
 
-    ⚠ **이 정의는 이 저장소의 실제 테넌시 기전과 다르다** — P-LOCAL-3 (미판정).
-      dj-core 의 `BaseModelWithGroup` 은 `group` **FK(단수)** 를 쓰고, W0-13 백필이
-      2026-08-27 에 채운 25,296행이 바로 그 `group_id` 다. 즉 기전은 **있고 모양이 다르다.**
-      그런데 이 함수는 그것을 "격리 메커니즘 없음"으로 읽는다.
-
-      고치지 않는 이유: 이 파일은 금지 #5 대상이고, P-LOCAL-3 이 A안(둘 다 인정)을
-      권고한 채 **판정 대기**다. 판정 없이 판정 로직을 바꾸지 않는다.
-      대신 아래 `has_group_fk` 로 **사실을 따로 잰다** — 픽스처는 사실을 써야 하고,
-      단언은 판정을 기다린다.
+    `auth.Permission` 에는 `auth.Group.permissions` 의 역방향 접근자가 `group` 이라는
+    이름으로 잡힌다 — 인구조사 첫 판이 그것을 800행짜리 격리 대상으로 보고했다.
     """
-    return any(f.name == "groups" for f in model._meta.get_fields())
+    return [f for f in model._meta.get_fields() if isinstance(f, models.Field)]
+
+
+def has_group_m2m(model: type[models.Model]) -> bool:
+    return any(f.name == "groups" and getattr(f, "many_to_many", False)
+               for f in _concrete(model))
 
 
 def has_group_fk(model: type[models.Model]) -> bool:
-    """dj-core `BaseModelWithGroup` 계열 — `group` FK 로 테넌트를 가린다.
-
-    `is_group_isolatable` 과 **일부러 분리해 둔다.** 하나로 합치는 것이 P-LOCAL-3 의
-    A안이고 그것은 판정 사항이다. 여기서는 픽스처가 올바른 소유자를 쓰는 데만 쓴다.
-    """
+    """dj-core `BaseModelWithGroup` 계열 — `group` FK 로 테넌트를 가린다."""
     return any(f.name == "group" and getattr(f, "many_to_one", False)
-               for f in model._meta.get_fields())
+               for f in _concrete(model))
+
+
+def is_group_isolatable(model: type[models.Model]) -> bool:
+    """group 격리를 **받을 수 있는가** — `groups` M2M ∪ `group` FK (D-271).
+
+    ★ 2026-08-28 술어 교정 (D-271 · P-LOCAL-3 A안 승인).
+      옛 정의는 `groups` M2M 만 봤다. 그 술어로 센 모수는 **2종**이다
+      (`dashboard.Dashboard` · `dashboard.DashboardPanel`) — 실측 모수는 **142종**이고,
+      나머지 140종은 dj-core `BaseModelWithGroup` 의 **`group` FK(단수)** 를 쓴다.
+      W0-13 백필이 채운 25,296행이 바로 그 `group_id` 다. **기전은 있고 모양이 달랐다.**
+
+      즉 옛 정의는 "격리 메커니즘이 없다"는 **틀린 사실**을 4개 모델에 새기고 있었고
+      (`KNOWN_UNISOLATED`), 모수 2 위의 초록으로 D-260 이 지적한 착시를 만들고 있었다.
+
+      **D-105(격리 시험 약화 금지) 저촉이 아니다** — 시험을 무르게 하는 변경이 아니라
+      술어의 사실오류 교정이고, 아래 `is_isolation_proven` 이 요구 수준을 **높인다.**
+    """
+    return has_group_m2m(model) or has_group_fk(model)
+
+
+def is_isolation_proven(model: type[models.Model]) -> bool:
+    """격리가 **증명됐는가** — D-271 ① 의 증명 게이트.
+
+    "FK 를 가졌다"와 "그 필터가 실제로 걸린다"는 다른 문장이다.
+    W0-11 §5-2 가 `created_by__isnull` OR 3곳으로 후자가 거짓일 수 있음을 이미 보였고,
+    이번 턴에 `FlightLog` 가 `_base_manager` 로 통째로 열려 있던 것이 그 실례다.
+
+    그래서 **FK 는 실증된 것만 초록으로 센다.** 미실증은 `unproven` 이고,
+    unproven 은 "안전"이 아니라 **"아직 모른다"**이다.
+    """
+    if has_group_m2m(model):
+        return True
+    return f"{model._meta.app_label}.{model.__name__}" in FK_PROVEN
 
 
 class _FakeRequest:
@@ -389,8 +583,11 @@ class Deps:
         obj = model(**kwargs)
         obj.created_by = self.owner
         obj.save()
-        if is_group_isolatable(model):
+        if has_group_m2m(model):
             obj.groups.set([self.group])
+        elif has_group_fk(model) and getattr(obj, "group_id", None) != self.group.pk:
+            obj.group = self.group
+            obj.save(update_fields=["group"])
         return obj
 
     def address(self):
@@ -432,6 +629,76 @@ class Deps:
             "stream_monitors", "StreamMonitor", name=f"iso-dep-monitor-{self.tag}",
             code=f"ISO-DEP-MON-{self.tag}", ip_source="rtsp://iso.invalid/dep",
         ))
+
+    # ── W0-14c · P0 등재분의 의존 (2026-08-28) ───────────────────────────
+    # 필수 필드는 전부 기동본에서 실측했다 (scripts/probe_p0_targets.py).
+    # 추정으로 채우지 않는다 — W0-14b 를 죽인 것이 못 본 필수 FK 24건이었다.
+    def terminal(self):
+        return self._once("terminal", lambda: self._create(
+            "terminals", "Terminal", name=f"iso-dep-terminal-{self.tag}"))
+
+    def day_of_week(self):
+        return self._once("day_of_week", lambda: self._create(
+            "terminals", "DayOfWeek", name=f"iso-dow-{self.tag}", code=f"ISO-DOW-{self.tag}"))
+
+    def routes(self):
+        return self._once("routes", lambda: self._create(
+            "terminals", "Routes", name=f"iso-route-{self.tag}"))
+
+    def order(self):
+        return self._once("order", lambda: self._create(
+            "orders", "Order", order_code=f"ISO-DEP-{self.tag}",
+            recipient_name=f"iso-dep-{self.tag}", recipient_phone="01000000000",
+            recipient_address=self.address(), status=self.order_status()))
+
+    def order_n(self, n: int):
+        """순번을 준 **새** 주문. `DeliveryOperation.order` 가 OneToOne 이라
+        캐시된 주문을 다시 쓰면 unique 위반이다 (실측에서 드러났다)."""
+        return self._once(f"order_{n}", lambda: self._create(
+            "orders", "Order", order_code=f"ISO-DEP-{self.tag}-{n}",
+            recipient_name=f"iso-dep-{self.tag}-{n}", recipient_phone="01000000000",
+            recipient_address=self.address(), status=self.order_status()))
+
+    def delivery_status(self):
+        return self._once("delivery_status", lambda: self._create(
+            "delivery", "DeliveryStatus", name=f"iso-dstatus-{self.tag}",
+            code=f"ISO-DSTATUS-{self.tag}"))
+
+    def delivery_operation(self):
+        return self._once("delivery_operation", lambda: self._create(
+            "delivery", "DeliveryOperation", order=self.order_n(900),
+            current_status=self.delivery_status()))
+
+    def payment_type(self):
+        return self._once("payment_type", lambda: self._create(
+            "orders", "PaymentType", name=f"iso-ptype-{self.tag}",
+            code=f"ISO-PTYPE-{self.tag}"))
+
+    def external_order_status(self):
+        return self._once("external_order_status", lambda: self._create(
+            "orders", "ExternalOrderStatus", name=f"iso-ext-{self.tag}",
+            value=f"ISO-EXT-{self.tag}"))
+
+    def surveillance_profile(self):
+        return self._once("surveillance_profile", lambda: self._create(
+            "surveillance", "SurveillanceProfile", name=f"iso-dep-profile-{self.tag}",
+            mission=self.survey_mission(), start_time=self.now()))
+
+    def profile_drone(self):
+        return self._once("profile_drone", lambda: self._create(
+            "surveillance", "SurveillanceProfileDrone",
+            profile=self.surveillance_profile(), order=900 + int(self.tag or 0)))
+
+    def profile_drone_n(self, n: int):
+        """순번을 준 **새** 드론. `unique(profile, order)` 때문에 재사용하면 충돌한다."""
+        return self._once(f"profile_drone_{n}", lambda: self._create(
+            "surveillance", "SurveillanceProfileDrone",
+            profile=self.surveillance_profile(), order=1000 + n))
+
+    def profile_checklist(self):
+        return self._once("profile_checklist", lambda: self._create(
+            "surveillance", "SurveillanceProfileChecklist",
+            profile=self.surveillance_profile(), profile_drone=self.profile_drone()))
 
 
 class TenantFixtureMixin:
@@ -557,7 +824,7 @@ class TenantFixtureMixin:
             obj = model(**kwargs)
             obj.created_by = owner
             obj.save()
-            if is_group_isolatable(model):
+            if has_group_m2m(model):
                 obj.groups.set([group])
             elif has_group_fk(model):
                 # ★ dj-core 의 BaseModelWithGroup 은 `group` FK(단수)를 쓴다.
@@ -593,7 +860,7 @@ class TenantFixtureMixin:
 
     def _assert_owned_by(self, obj, group, target: Target) -> None:
         model = type(obj)
-        if is_group_isolatable(model):
+        if has_group_m2m(model):
             owners = self._m2m_owner_pks(obj)
             self.assertEqual(
                 {group.pk}, owners,
@@ -646,36 +913,139 @@ class TenantFixtureMixin:
 class TenantIsolationRegistryTest(TestCase):
     """새 모델을 만들고 여기 등록하지 않으면 실패한다."""
 
-    def test_registry_covers_all_isolatable_models(self) -> None:
-        registered = {f"{t.app_label}.{t.model_name}" for t in MODELS}
-        missing = []
-        for model in apps.get_models():
-            if not is_group_isolatable(model):
-                continue
-            label = f"{model._meta.app_label}.{model.__name__}"
-            if model._meta.app_label in {"user", "core"}:
-                continue  # dj-core 프레임워크 모델은 §0.4 금지구역
-            if label not in registered:
-                missing.append(label)
+    #: dj-core 프레임워크 앱 — §0.4 라 이 저장소가 고칠 수 없다.
+    #: **면제가 아니라 관할 밖**이다. 수는 따로 세어 보고한다.
+    FRAMEWORK_APPS = {"user", "core"}
+
+    @classmethod
+    def _live_isolatable(cls) -> set[str]:
+        """지금 코드에서 격리 대상인 모델 전부 (D-271 술어 · 저장소 관할)."""
+        return {
+            f"{m._meta.app_label}.{m.__name__}"
+            for m in apps.get_models()
+            if is_group_isolatable(m) and m._meta.app_label not in cls.FRAMEWORK_APPS
+        }
+
+    def test_census_matches_code(self) -> None:
+        """인구조사 표가 **지금 코드**와 일치하는가 — 모르는 모델을 만나면 멈춘다 (D-264).
+
+        표에 없는 모델이 코드에 생기면 아무도 그것을 보지 않는다.
+        `leak_targets.json`(131종)이 덤프 집계라 **행 0인 모델 25종을 못 봤던 것**이
+        정확히 그 상태였다 — 행이 0인 것은 "안전"이 아니라 "아직 안 썼다"이다.
+        """
+        live = self._live_isolatable()
+        table = set(CENSUS)
+        only_code = sorted(live - table)
+        only_table = sorted(table - live)
         self.assertEqual(
-            [], sorted(missing),
-            "group 격리 대상 모델이 이 테스트에 등록되지 않았습니다.\n"
-            "MODELS 레지스트리에 Target(...) 을 추가하십시오. (W0-3 머지 규칙)",
-        )
+            [], only_code,
+            f"인구조사에 없는 격리 대상이 코드에 있습니다: {only_code}\n"
+            "scripts/gen_tenant_census.py 를 다시 돌리고, **왜 늘었는지**를 함께 적으십시오.")
+        self.assertEqual(
+            [], only_table,
+            f"인구조사에는 있는데 코드에 없는 모델입니다: {only_table}\n"
+            "모델이 지워졌다면 표도 다시 만드십시오 — 낡은 표는 초록을 만듭니다.")
+
+    def test_registry_covers_all_isolatable_models(self) -> None:
+        """**모수는 142종이다** (D-271 ②).
+
+        옛 정의는 `groups` M2M 만 세어 모수가 **2종**이었고, 그 위의 "누락 1건"은
+        아무것도 말하지 않았다 — D-260 이 지적하고 D-271 이 인정한 작은 모수의 착시다.
+
+        지금 요구하는 것: **P0 는 전수 등재**(D-262 ② EXIT 조건),
+        나머지는 인구조사에 **사유와 함께** 분류되어 있을 것.
+        """
+        registered = {f"{t.app_label}.{t.model_name}" for t in MODELS}
+        live = self._live_isolatable()
+
+        p0 = sorted(k for k, v in CENSUS.items() if v[0] == "P0")
+        missing_p0 = sorted(set(p0) - registered)
+        self.assertEqual(
+            [], missing_p0,
+            f"P0 {len(p0)}종 중 {len(missing_p0)}종이 레지스트리에 없습니다 "
+            f"(D-262 ② EXIT 조건):\n{missing_p0}\nMODELS 에 Target(...) 을 추가하십시오.")
+
+        nofix = []
+        for label in sorted(live - registered):
+            entry = CENSUS.get(label)
+            if entry is None or not (entry[4] or "").strip():
+                nofix.append(label)
+        self.assertEqual(
+            [], nofix,
+            f"분류 사유가 없는 격리 대상입니다: {nofix}\n"
+            "사유 없는 분류는 '안 봤다'와 구별되지 않습니다 (D-262 ④).")
+
+        print(f"\n[ISO] 모수 {len(live)}종 — 등재 {len(registered & live)} · "
+              f"P0 {len(p0)}(전수 등재) · 표 밖 0")
+
+    def test_unproven_fk_is_not_counted_green(self) -> None:
+        """D-271 ① — FK 는 **실증된 것만** 초록으로 센다.
+
+        "FK 를 가졌다"와 "그 필터가 실제로 걸린다"는 다른 문장이다.
+        이번 턴의 `FlightLog` 가 그 실례다 — FK 를 가졌는데 `_base_manager` 로 통째로 열려 있었다.
+        그러므로 미실증(`unproven`)은 **안전이 아니라 "아직 모른다"**이고, 초록에서 뺀다.
+        """
+        live = self._live_isolatable()
+        proven, unproven = [], []
+        for label in sorted(live):
+            model = apps.get_model(label)
+            (proven if is_isolation_proven(model) else unproven).append(label)
+
+        registered = {f"{t.app_label}.{t.model_name}" for t in MODELS}
+        self.assertTrue(
+            set(proven) & registered,
+            "실증된 모델이 하나도 없습니다 — FK_PROVEN 이 비었거나 술어가 깨졌습니다.")
+
+        print(f"[ISO] 실증 {len(proven)}/{len(live)} · unproven {len(unproven)} "
+              f"(unproven 은 안전이 아니라 '아직 모른다')")
+
+        not_registered = sorted(set(FK_PROVEN) - registered)
+        self.assertEqual(
+            [], not_registered,
+            f"FK_PROVEN 에 있는데 레지스트리에 없는 모델입니다: {not_registered}\n"
+            "시험이 치지 않는 모델을 '실증됐다'고 적을 수 없습니다.")
+
+    def test_proven_models_are_actually_probed(self) -> None:
+        """실증 목록의 모델은 **HTTP 시나리오가 실재**해야 한다 (D-271 ①).
+
+        시나리오가 하나도 없는데 이름만 올라와 있으면, 그 초록은 아무도 치지 않은 초록이다.
+        """
+        by_label = {f"{t.app_label}.{t.model_name}": t for t in MODELS}
+        naked = []
+        for label, why in FK_PROVEN.items():
+            t = by_label.get(label)
+            if t is None:
+                continue
+            if not (t.list_path or t.detail or t.update or t.delete or t.export_path):
+                naked.append(label)
+            self.assertGreaterEqual(
+                len((why or "").strip()), 10,
+                f"FK_PROVEN['{label}'] 에 근거가 없습니다 — 무엇으로 증명했는지 적으십시오.")
+        self.assertEqual(
+            [], naked,
+            f"HTTP 시나리오가 하나도 없는데 실증됐다고 적힌 모델입니다: {naked}")
 
     def test_unisolated_set_has_not_grown(self) -> None:
-        """격리 메커니즘 없는 모델이 새로 늘지 않았는지 확인한다."""
-        actual_unisolated = set()
-        for target in MODELS:
-            model = get_model(target)
-            if not is_group_isolatable(model):
-                actual_unisolated.add(f"{target.app_label}.{target.model_name}")
+        """격리 메커니즘이 **아예 없는** 모델이 새로 늘지 않았는지 확인한다.
+
+        ★ 2026-08-28: 술어 교정(D-271)으로 이 집합은 **비었다.**
+          옛 정의가 `groups` M2M 만 봐서 FK 를 가진 4종을 "메커니즘 없음"으로 적고 있었다.
+          비운 것은 요구를 낮춘 것이 아니다 — 그 넷은 이제 `FK_PROVEN` 의 실증 대상이다.
+        """
+        actual_unisolated = {
+            f"{t.app_label}.{t.model_name}" for t in MODELS
+            if not is_group_isolatable(get_model(t))
+        }
         new = actual_unisolated - KNOWN_UNISOLATED
         self.assertEqual(
             set(), new,
-            f"격리 메커니즘(groups M2M) 없는 모델이 새로 추가되었습니다: {sorted(new)}\n"
-            "BaseModelWithGroup 을 상속시키십시오. (부록 A / D-108)",
-        )
+            f"소유 필드(groups M2M · group FK)가 **아예 없는** 모델이 추가되었습니다: "
+            f"{sorted(new)}\nBaseModelWithGroup 을 상속시키십시오. (부록 A / D-108)")
+        stale = KNOWN_UNISOLATED - actual_unisolated
+        self.assertEqual(
+            set(), stale,
+            f"KNOWN_UNISOLATED 에 남아 있으나 실제로는 소유 필드가 있는 모델입니다: "
+            f"{sorted(stale)}\n틀린 사실을 정본에 두지 마십시오 — 지우십시오.")
 
     def test_bypass_list_does_not_grow(self) -> None:
         """권한 우회 목록에 항목을 추가하는 것을 막는다 (절대금지 #6 / D-103)."""
@@ -739,7 +1109,13 @@ class TenantIsolationORMTest(TenantFixtureMixin, TestCase):
             orphan = model(**kwargs)
             orphan.created_by = None
             orphan.save()
-            orphan.groups.set([self.group_b])
+            # 소유를 붙이는 모양이 둘이다 (D-271 술어 확장). M2M 만 가정하면
+            # FK 모델에서 AttributeError 로 죽는다 — 술어를 넓힌 뒤 실측으로 드러났다.
+            if has_group_m2m(model):
+                orphan.groups.set([self.group_b])
+            else:
+                orphan.group = self.group_b
+                orphan.save(update_fields=["group"])
         with acting_as(self.user_a):
             visible = set(model.objects.values_list("pk", flat=True))
         self.assertNotIn(
@@ -801,6 +1177,91 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
             self.exc = exc
             self.content = f"{type(exc).__name__}: {exc}".encode("utf-8", "replace")
 
+    @staticmethod
+    def _leak_markers(obj) -> tuple[list[str], bool]:
+        """응답 본문에서 **이 레코드**를 찾아낼 문자열들과, 그것이 확정적인지.
+
+        ★ `"id":N` 하나만 보면 안 된다 — 두 방향으로 틀린다:
+          · **오탐**: 실측에서 `"id":1` 이 최상위 대시보드가 아니라 중첩된
+            `"panels":[{"id":1,…}]` 에 맞았다. 그걸 누출이라 적으면 사람은 곧
+            이 시험을 안 믿게 된다.
+          · **누락**: 응답에 공백이 있으면(`"id": 1`) 부분 문자열 검사가 놓친다.
+            기존 `test_list_api` 의 `assertNotContains` 가 그 모양이었다.
+
+        그래서 **픽스처가 심어 둔 고유값**(iso- 로 시작하는 이름·코드)을 우선한다.
+        그런 값이 없는 모델에서만 `"id":N` 으로 떨어지고, 그때는 확정적이지 않음을
+        함께 돌려준다 — 판정이 그 사실을 알고 쓰게 하려는 것이다.
+        """
+        distinctive = []
+        for attr in ("code", "name", "order_code", "task_id", "item_name",
+                     "description", "serial_number"):
+            val = getattr(obj, attr, None)
+            if isinstance(val, str) and val.lower().startswith("iso"):
+                distinctive.append(val)
+        if distinctive:
+            return distinctive, True
+        return [f'"id":{obj.pk}'], False
+
+    @staticmethod
+    def _structural_hit(obj, body: str):
+        """본문을 **파싱해서** 이 레코드로 보이는 객체를 찾는다.
+
+        ★ 왜 문자열 검색으로는 안 되나 — 실측이 두 번 가르쳐 줬다:
+          · `"id":1` 이 최상위 항목이 아니라 중첩된 `"panels":[{"id":1,…}]` 에 맞았다
+          · `"id":3` 이 handover **문서**가 아니라 그 안의 **교대(shift)** 에 맞았다
+          둘 다 "누출"로 보고됐고 둘 다 아니었다. 추측으로 빨간불을 켜면
+          사람은 곧 이 시험을 안 믿게 되고, 안 믿는 시험은 꺼진 시험과 같다.
+
+        그래서 **id 가 같은 것만으로는 세지 않는다.** 같은 dict 안에 그 모델의
+        필드 이름이 둘 이상 함께 있어야 그 모델의 직렬화로 본다.
+        """
+        try:
+            doc = json.loads(body)
+        except Exception:                       # noqa: BLE001 — JSON 이 아니면 구조로 못 본다
+            return None
+        field_names = {f.name for f in type(obj)._meta.get_fields()} - {"id", "pk"}
+        found = []
+
+        def walk(node, path="$"):
+            if isinstance(node, dict):
+                if node.get("id") == obj.pk:
+                    shared = (set(node) & field_names) | {
+                        k[:-3] for k in node if k.endswith("_id") and k[:-3] in field_names}
+                    if len(shared) >= 2:
+                        found.append((path, sorted(shared)[:6]))
+                for k, v in node.items():
+                    walk(v, f"{path}.{k}")
+            elif isinstance(node, list):
+                for i, v in enumerate(node):
+                    walk(v, f"{path}[{i}]")
+
+        walk(doc)
+        return found[0] if found else None
+
+    @classmethod
+    def _find_leak(cls, obj, body: str):
+        """본문에서 이 레코드를 찾으면 `(맞은 근거, 문맥)`, 없으면 None."""
+        marks, decisive = cls._leak_markers(obj)
+        flat = body.replace(" ", "")
+        if decisive:
+            # 픽스처가 심은 고유값 — 이것이 맞으면 다툴 여지가 없다
+            for m in marks:
+                if m and m in flat:
+                    at = flat.index(m)
+                    return m, flat[max(0, at - 80):at + 80]
+            return None
+        # 고유값이 없는 모델 — **구조로** 확인한다 (id 일치만으로는 세지 않는다)
+        hit = cls._structural_hit(obj, body)
+        if hit:
+            path, shared = hit
+            return f"id={obj.pk} @ {path} (필드 {shared})", flat[:160]
+        return None
+
+    @staticmethod
+    def _url_key(obj, target: Target):
+        """URL 에 넣을 식별자. 대개 pk 이지만 업무 키인 경우가 있다 (`pk_attr`)."""
+        return getattr(obj, target.pk_attr)
+
     def _call(self, method: str, path: str, **kwargs):
         try:
             return self.client_a.generic(method, path, **kwargs, **self.auth_a)
@@ -824,12 +1285,25 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
         return out
 
     def _assert_declared(self, target: Target, attr: str) -> None:
+        """칸이 비었으면 **왜 비었는지**가 어딘가에 적혀 있어야 한다.
+
+        ★ D-272 이후 사유는 두 곳에서 온다:
+          · `reach != "direct_pk"` — 자기 pk 경로가 애초에 없다는 **분류**가 사유다.
+            그 대신 `via_parent` 시나리오가 친다. 이쪽을 NO_ROUTE 에 또 적으면
+            면제 대장이 분류를 베껴 쓰는 꼴이 되고, 그러면 대장의 수가 뜻을 잃는다.
+          · `reach == "direct_pk"` — 자기 pk 경로가 **있는데** 이 칸만 없는 경우다.
+            그건 진짜 누락이므로 NO_ROUTE 에 사유와 함께 등재해야 한다.
+        """
+        if target.reach != "direct_pk":
+            self.assertIsNotNone(
+                CENSUS.get(f"{target.app_label}.{target.model_name}"),
+                f"[{target.label}] reach={target.reach} 인데 인구조사에 없습니다.")
+            return
         key = f"{target.label}:{attr}"
         self.assertIn(
             key, NO_ROUTE,
             f"[{key}] 라우트가 없는데 사유가 등재되지 않았습니다. "
-            "Target 에 실제 라우트를 적거나, NO_ROUTE 에 **사유와 함께** 등재하십시오.",
-        )
+            "Target 에 실제 라우트를 적거나, NO_ROUTE 에 **사유와 함께** 등재하십시오.")
 
     def test_list_api(self) -> None:
         for target, path in self._scenario_targets("list"):
@@ -842,7 +1316,13 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
                         f"[{target.label}] 목록 경로 {path} 가 404 입니다. "
                         "Target.list_path 를 실제 라우트로 고치십시오."
                     )
-                self.assertNotContains(res, f'"id":{obj_b.pk}', msg_prefix=target.label)
+                # 옛 판은 `assertNotContains(res, '"id":N')` 이었다. 그 검사는
+                # 공백 있는 응답(`"id": N`)을 **놓치고**, 중첩 객체의 id 에 **잘못 맞는다.**
+                # 픽스처가 심은 고유값을 우선해 둘 다 없앤다.
+                found = self._find_leak(obj_b, res.content.decode("utf-8", "replace"))
+                self.assertIsNone(
+                    found,
+                    f"[{target.label}] 목록에 tenant-B 레코드가 보입니다: {found}")
 
     def _report(self, name: str, rows: list[tuple[str, int, str]]) -> None:
         """대상별 판정을 **표로** 남기고, 새는 것 전부를 한 번에 단언한다.
@@ -868,7 +1348,7 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
             model = get_model(target)
             with self.subTest(model=target.label):
                 obj_b = self._create_for(model, self.group_b, self.user_b, target)
-                res = self._call(route.method, route.for_pk(obj_b.pk))
+                res = self._call(route.method, route.for_pk(self._url_key(obj_b, target)))
                 rows.append((target.label, res.status_code, str(getattr(res, "exc", ""))[:60]))
         self._report("detail", rows)
 
@@ -880,7 +1360,7 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
                 obj_b = self._create_for(model, self.group_b, self.user_b, target)
                 before = model._base_manager.filter(pk=obj_b.pk).values().first()
                 data, content_type = self._payload(route)
-                res = self._call(route.method, route.for_pk(obj_b.pk),
+                res = self._call(route.method, route.for_pk(self._url_key(obj_b, target)),
                                  data=data, content_type=content_type)
                 rows.append((target.label, res.status_code, str(getattr(res, "exc", ""))[:60]))
                 after = model._base_manager.filter(pk=obj_b.pk).values().first()
@@ -893,7 +1373,7 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
             model = get_model(target)
             with self.subTest(model=target.label):
                 obj_b = self._create_for(model, self.group_b, self.user_b, target)
-                res = self._call(route.method, route.for_pk(obj_b.pk))
+                res = self._call(route.method, route.for_pk(self._url_key(obj_b, target)))
                 rows.append((target.label, res.status_code, str(getattr(res, "exc", ""))[:60]))
                 # ★ `objects` 가 아니라 `_base_manager` 로 묻는다 (D-253 배선).
                 #   `objects` 는 테넌트 필터를 타므로 "삭제됐다"와 "내게 안 보인다"를
@@ -904,6 +1384,117 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
                     f"[{target.label}] 레코드가 삭제되었습니다.",
                 )
         self._report("delete", rows)
+
+    def test_detector_can_see_own_records(self) -> None:
+        """★ **양성 대조** — 탐지기가 *있는 것*을 찾을 수 있는가.
+
+        누출 0건이라는 보고는 두 가지를 뜻할 수 있다:
+          (가) 정말 안 샌다
+          (나) **탐지기가 눈이 멀었다**
+
+        둘을 가르지 않으면 초록은 아무것도 증명하지 않는다 — 이번 턴에만
+        문자열 검사가 두 번 오탐하고(중첩 panels·shift), 한 번 누락했다(공백 `"id": 3`).
+        그래서 **자기 테넌트의 레코드는 반드시 찾아내야 한다**고 못 박는다.
+        여기가 빨개지면 같은 시나리오의 "누출 0" 은 **판정 불가**로 읽어야 한다.
+        """
+        blind: list[str] = []
+        seen: list[str] = []
+        for target in MODELS:
+            if not target.list_path:
+                continue
+            model = get_model(target)
+            with self.subTest(model=target.label):
+                obj_a = self._create_for(model, self.group_a, self.user_a, target)
+                res = self.client_a.get(target.list_path, **self.auth_a)
+                if res.status_code != 200:
+                    blind.append(f"{target.label}(목록 {res.status_code})")
+                    continue
+                found = self._find_leak(
+                    obj_a, res.content.decode("utf-8", "replace"))
+                (seen if found else blind).append(target.label)
+        print(f"\n[ISO] 탐지기 양성 대조 — 자기 레코드를 찾음 {len(seen)} · "
+              f"못 찾음 {len(blind)}")
+        if blind:
+            print("      못 찾은 대상(그 시나리오의 '누출 0' 은 판정 불가다): "
+                  + ", ".join(blind))
+        self.assertTrue(
+            seen,
+            "탐지기가 자기 테넌트 레코드조차 하나도 못 찾았습니다 — "
+            "이 시험의 '누출 0' 은 아무것도 증명하지 않습니다.")
+
+    def test_via_parent_api(self) -> None:
+        """D-272 — 부모를 통해 노출되는 모델은 **둘 다** 친다.
+
+        ① **부모 경로 스코프** — 남의 부모를 지목하면 막혀야 한다
+        ② **자식 필터** — 설령 부모 경로가 열려 있어도, 응답 본문에 **남의 자식이
+           들어 있으면 안 된다**
+
+        왜 둘인가: 부모만 막으면 목록형 경로가 남고, 자식만 보면 부모의 pk 로 들어오는
+        길이 남는다. "직접 경로가 없다"는 안전이 아니다 — 그것이 D-272 의 문장이다.
+        """
+        rows: list[tuple[str, int, str]] = []
+        child_leaks: list[str] = []
+        for target in MODELS:
+            if target.reach != "via_parent":
+                continue
+            # 부모 pk 경로가 없으면 **목록 경로**로 자식 필터를 본다.
+            # via_parent 인데 아무 데도 안 치면 그 분류는 "안 봤다"와 같아진다.
+            route = target.via_parent or (
+                Route("GET", target.list_path) if target.list_path else None)
+            self.assertIsNotNone(
+                route,
+                f"[{target.label}] reach=via_parent 인데 칠 경로가 없습니다 — "
+                "부모 경로나 목록 경로 중 하나는 있어야 분류가 뜻을 갖습니다.")
+            model = get_model(target)
+            with self.subTest(model=target.label):
+                obj_b = self._create_for(model, self.group_b, self.user_b, target)
+                if target.parent_pk is not None:
+                    ppk = target.parent_pk(obj_b)
+                    self.assertIsNotNone(
+                        ppk, f"[{target.label}] 부모 pk 를 꺼내지 못했습니다.")
+                    path = route.for_pk(ppk)
+                else:
+                    path = route.path                    # 목록형 — {pk} 가 없다
+                res = self._call(route.method, path)
+                body = getattr(res, "content", b"").decode("utf-8", "replace")
+
+                # ① 부모 pk 를 지목한 경우에만 **막혀야 한다.**
+                #   목록형 경로에 200 은 정상이다 — 거기서 묻는 것은 상태가 아니라 **본문**이다.
+                #   둘을 같은 칸에서 세면 목록의 정상 200 이 누출로 보고된다(첫 판이 그랬다).
+                if target.parent_pk is not None:
+                    rows.append((target.label, res.status_code,
+                                 str(getattr(res, "exc", ""))[:50]))
+                else:
+                    note = "목록형 — 상태는 200 이 정상. 본문만 본다"
+                    rows.append((target.label + "(목록)", 404, note))
+
+                # ② 자식 필터 — 본문에 남의 자식이 들어 있으면 그 자체가 누출이다.
+                found = self._find_leak(obj_b, body)
+                if found:
+                    hit, ctx = found
+                    child_leaks.append(f"{target.label}(자식 {hit} @ {path})  …{ctx}…")
+        self._report("via_parent(부모 경로 스코프)", rows)
+        self.assertEqual(
+            [], child_leaks,
+            f"부모 경로 응답에 **남의 자식 레코드**가 들어 있습니다: {child_leaks}\n"
+            "부모를 막지 못했거나 자식 필터가 없습니다 (D-272).")
+
+    def test_reach_matches_census(self) -> None:
+        """레지스트리의 `reach` 와 인구조사가 **같은 말을 하는가**.
+
+        두 곳이 다른 말을 하면 어느 쪽도 못 믿는다 — D-227(manifest 유실)이 만든 상태다.
+        """
+        bad = []
+        for target in MODELS:
+            label = f"{target.app_label}.{target.model_name}"
+            entry = CENSUS.get(label)
+            if entry is None:
+                continue
+            if entry[1] != target.reach:
+                bad.append(f"{label}: 레지스트리={target.reach} 인구조사={entry[1]}")
+        self.assertEqual(
+            [], bad,
+            f"도달 가능성이 두 곳에서 다릅니다:\n" + f"\n".join(bad))
 
     def test_export(self) -> None:
         for target in MODELS:
@@ -954,6 +1545,11 @@ class NoRouteRegistryTest(TestCase):
         # ── 2026-08-27 W0-14c P0 등재분 ────────────────────────────────
         "FlightLog": 1,        # update 없음
         "VideoAnalysis": 2,    # update·delete 없음
+        # ── 2026-08-28 W0-14c P0 전수 등재분 (direct_pk 만 여기 온다) ──
+        # via_parent·no_route 대상은 **분류가 사유**이므로 이 대장에 오지 않는다 (D-272).
+        "OrderItem": 2,            # update·delete 없음
+        "OrderStatusMapping": 2,   # 수정·삭제가 그룹 단위라 pk 를 못 지목한다
+        "TaskStatus": 3,           # list·update·delete 없음
     }
 
     def test_every_entry_has_a_reason(self) -> None:

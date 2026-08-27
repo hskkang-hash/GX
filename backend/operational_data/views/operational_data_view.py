@@ -9,6 +9,8 @@ from common.pagination import OptimizedPaginator
 from core.role.permission import path_permission
 from core.common.search.dynamic_search import apply_dynamic_filters
 from core.common.base_response import BaseResponse
+from common.tenant_filters import assert_scoped
+from orders.models import OrderItem
 from core.api.v1.auth import CustomJWTAuth
 from core.user.models import DateFormat, TimeFormat
 from common.constant import MESSAGE_ENUM
@@ -38,8 +40,8 @@ class OperationalDataAPI:
                     if type:
                         type = type.get_translation('name', language)
                         data[i]['item_type'] = type
-            return BaseResponse(status_code=200, 
-                message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_OPERATIONAL_DATA_SUCCESS), 
+            return BaseResponse(status_code=200,
+                message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_OPERATIONAL_DATA_SUCCESS),
                 data = data,
                 total_pages=paginator.num_pages,
                 total_items=paginator.count,
@@ -47,7 +49,7 @@ class OperationalDataAPI:
             )
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_OPERATIONAL_DATA_FAILED))
-        
+
     @route.get('/download-operational-data')
     # @path_permission("read", path_override="/operational-data")
     def download_operational_data(self, request, order_item_ids: List[int] = Query(...)):
@@ -72,10 +74,16 @@ class OperationalDataAPI:
                 )
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_EXPORT_FAILED))
-        
+
     @route.get('/{order_item_id}')
     @path_permission("read", path_override="/operational-data")
     def get_operational_data_detail(self, request, order_item_id: int):
+        # ★ 문지기는 try **밖**이다 (W0-14c). 아래 except 가 모든 예외를 500 으로 덮어
+        #   "막힌 것"과 "찾은 뒤 죽은 것"을 구별할 수 없게 만든다.
+        #   실측(2026-08-28): 남의 테넌트 pk 에 **500** 이 나갔다 — 매니저가 걸러 누출은
+        #   없었으나 그 500 은 답이 아니다. 우연한 차단에 기대지 않는다
+        #   (매니저 필터에는 created_by__isnull OR 절이 있어 소유가 빈 행을 못 거른다).
+        assert_scoped(OrderItem, order_item_id, request.user)
         try:
             operational_data = OperationalDataService.get_operational_data_detail(order_item_id)
             language = request.user.language.code if request.user.language else 'en'
@@ -87,7 +95,7 @@ class OperationalDataAPI:
             return BaseResponse(status_code=200, message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_OPERATIONAL_DATA_SUCCESS), data=data)
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_OPERATIONAL_DATA_FAILED))
-        
+
     @route.post('/{order_item_id}/upload-operational-log-drone')
     # @path_permission("create", path_override="/operational-data")
     def upload_operational_log_drone(self, request, order_item_id: int, files: List[UploadedFile] = File(None)):
@@ -107,13 +115,13 @@ class OperationalDataAPI:
                 )
             else:
                 return BaseResponse(
-                    status_code=400, 
+                    status_code=400,
                     message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_LOG_DRONE_FAILED),
                     data={'error': result.get('error', 'Unknown error')}
                 )
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_LOG_DRONE_FAILED))
-        
+
     @route.post('/{order_item_id}/upload-operational-log-robot')
     # @path_permission("create", path_override="/operational-data")
     def upload_operational_log_robot(self, request, order_item_id: int, files: List[UploadedFile] = File(None)):
@@ -133,14 +141,14 @@ class OperationalDataAPI:
                 )
             else:
                 return BaseResponse(
-                    status_code=400, 
+                    status_code=400,
                     message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_LOG_ROBOT_FAILED),
                     data={'error': result.get('error', 'Unknown error')}
                 )
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_LOG_ROBOT_FAILED))
-        
-    @route.post('/{order_item_id}/upload-operational-video-drone') 
+
+    @route.post('/{order_item_id}/upload-operational-video-drone')
     # @path_permission("create", path_override="/operational-data")
     def upload_operational_video_drone(self, request, order_item_id: int, files: List[UploadedFile] = File(None)):
         try:
@@ -159,13 +167,13 @@ class OperationalDataAPI:
                 )
             else:
                 return BaseResponse(
-                    status_code=400, 
+                    status_code=400,
                     message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_VIDEO_DRONE_FAILED),
                     data={'error': result.get('error', 'Unknown error')}
                 )
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_VIDEO_DRONE_FAILED))
-        
+
     @route.post('/{order_item_id}/upload-operational-video-robot')
     # @path_permission("create", path_override="/operational-data")
     def upload_operational_video_robot(self, request, order_item_id: int, files: List[UploadedFile] = File(None)):
@@ -185,13 +193,13 @@ class OperationalDataAPI:
                 )
             else:
                 return BaseResponse(
-                    status_code=400, 
+                    status_code=400,
                     message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_VIDEO_ROBOT_FAILED),
                     data={'error': result.get('error', 'Unknown error')}
                 )
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_VIDEO_ROBOT_FAILED))
-        
+
     @route.get('/{order_item_id}/download-operational-log-drone')
     # @path_permission("read", path_override="/operational-data")
     def download_operational_log_drone(self, request, order_item_id: int):
@@ -217,7 +225,7 @@ class OperationalDataAPI:
                 )
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_EXPORT_FAILED))
-        
+
     @route.get('/{order_item_id}/download-operational-log-robot')
     # @path_permission("read", path_override="/operational-data")
     def download_operational_log_robot(self, request, order_item_id: int):
@@ -243,7 +251,7 @@ class OperationalDataAPI:
                 )
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_EXPORT_FAILED))
-    
+
     @route.get('/upload-status/{task_id}', auth=CustomJWTAuth())
     # @path_permission("read", path_override="/operational-data")
     def get_upload_status_by_task_id(self, request, task_id: str):
@@ -263,7 +271,7 @@ class OperationalDataAPI:
                 )
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_OPERATIONAL_DATA_FAILED))
-    
+
     @route.get('/upload-status/id/{upload_status_id}', auth=CustomJWTAuth())
     # @path_permission("read", path_override="/operational-data")
     def get_upload_status_by_id(self, request, upload_status_id: int):
@@ -283,5 +291,3 @@ class OperationalDataAPI:
                 )
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_OPERATIONAL_DATA_FAILED))
-        
-    
