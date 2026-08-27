@@ -82,7 +82,20 @@ SCOPE_DECORATORS = {"tenant_scoped"}
 #: ⚠ **PUBLIC 은 검사 면제가 아니라 "공용임을 시험으로 증명한 것"이어야 한다** (D-261 c).
 #:   여기 이름을 올리는 것은 "이 함수는 테넌트 데이터를 반환하지 않는다"는 **선언**이고,
 #:   그 선언은 시험으로 뒷받침되어야 한다. 추측으로 올리지 않는다.
-KERNEL_PUBLIC: dict[str, str] = {}
+KERNEL_PUBLIC: dict[str, str] = {
+    "backend/kernels/k1_event/services.py:record_detection":
+        "테넌트 데이터를 **읽지 않는다.** 파이프라인이 부르는 쓰기 함수이고 호출자에 사람이 없다 "
+        "— 요청자에게서 group 을 받을 수 없다. 대신 이벤트의 소유를 **스트림에서 물려받아 정한다** "
+        "(_inherit_owner). 반환값은 id·bool 뿐이라 남의 테넌트 것이 실려 나갈 자리가 없다. "
+        "시험 근거: tests/test_k1_event_kernel.py "
+        "DedupSplitTest.test_a_different_stream_is_never_folded (다른 테넌트 스트림과 합쳐지지 않는다) · "
+        "KernelTenantScopeTest.test_positive_control_own_event_is_found (소유가 실제로 붙는다)",
+    "backend/kernels/k1_event/services.py:subscribe":
+        "구현이 없다. 부르면 NotImplementedYet 을 던지고 **아무 데이터도 반환하지 않는다** "
+        "(F-05 Webhook — W2-2 이후 별 티켓). 구현이 들어오는 커밋에서 이 등재를 지우고 "
+        "문지기를 붙여야 한다 — 구독은 그 자체가 테넌트 자원이다. "
+        "시험 근거: KernelPublicSurfaceTest.test_public_surface_matches_da04 (이름만 서 있음을 확인)",
+}
 
 #: PUBLIC 라우트 면제의 증가금지 래칫. 오늘 실측 4건.
 #:
@@ -108,6 +121,46 @@ def _decorator_names(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
     return out
 
 
+# ---------------------------------------------------------------------------
+# C-3.1 의 세 번째 통과 형태 — **문지기 호출** (P-K1-1 · 2026-08-28)
+# ---------------------------------------------------------------------------
+#: 판정기·문지기 목록을 여기서 다시 정의하지 않는다. 트립와이어가 라우트에 대해 쓰는
+#: 것과 **같은 목록**을 쓴다 — 두 벌을 두면 "라우트에서는 문지기인데 커널에서는 아닌 것"이
+#: 생기고, 그 어긋남은 아무도 못 본다.
+_TRACE_CACHE: dict = {}
+
+
+def _gatekeeper_names() -> set[str]:
+    from common.tenant_tripwire import GATEKEEPER_CALLS
+    return set(GATEKEEPER_CALLS)
+
+
+def _gatekeepers_reached(path: Path, node: ast.AST) -> list[str]:
+    """이 커널 함수의 호출 그래프가 **실제 문지기**에 닿는가.
+
+    ★ 왜 `@tenant_scoped` 만으로 판정하지 않나 (P-K1-1)
+      `tenant_scoped` 는 인자에서 `request` 를 찾고 못 찾으면 **그냥 통과시킨다**
+      (`common/tenant_scope._find_request` → None → 검사 생략).
+      커널 서비스 함수에는 `request` 가 없다. 붙이면 **표식만 남고 아무것도 안 막는다** —
+      데코레이터 466/466 부착을 완결로 착각했던 착시 ①(D-249)과 똑같은 모양이다.
+
+      그래서 통과 형태를 하나 **더한다.** 이것은 C-3.1 을 **무르게 하는 것이 아니라
+      높이는 것**이다 (D-105 저촉 아님): 표식이 아니라 `common.tenant_filters` 의
+      진짜 문지기가 호출 그래프에 있어야 인정한다.
+
+      ⚠ C-3.1 문언과 다른 이행이므로 임의로 정하지 않고 `decisions_pending.yaml` 의
+        **P-K1-1** 로 적재했다 (D-213). 판정이 나오면 이 함수와 그 항목을 함께 고친다.
+    """
+    from common import ast_call_trace as trace
+
+    backend = BACKEND
+    idx = _TRACE_CACHE.get("idx")
+    if idx is None:
+        idx = _TRACE_CACHE["idx"] = trace.Index(backend)
+    t = idx.trace(node, path)
+    return sorted(t.calls & _gatekeeper_names())
+
+
 def scan_kernels(verbose: bool) -> list[str]:
     """커널 공개 함수를 훑는다. 커널이 없으면 그 사실을 말하고 통과한다."""
     problems: list[str] = []
@@ -125,7 +178,7 @@ def scan_kernels(verbose: bool) -> list[str]:
             f"모르는 커널 디렉터리: backend/kernels/{name} — C-1 의 K1~K7 에 없다. "
             f"새 커널이면 KERNEL_NAMES 와 DA-04 §4 표를 **같은 커밋에서** 함께 고쳐라")
 
-    n_scoped = n_public = 0
+    n_scoped = n_public = n_guarded = 0
     for path in sorted(KERNEL_ROOT.rglob("*.py")):
         rel = path.relative_to(ROOT).as_posix()
         if "/tests/" in rel or path.name.startswith("test_"):
@@ -142,20 +195,28 @@ def scan_kernels(verbose: bool) -> list[str]:
             if node.name.startswith("_"):
                 continue                             # 비공개는 커널 밖에서 못 부른다
             key = f"{rel}:{node.name}"
+            guards = _gatekeepers_reached(path, node)
             if _decorator_names(node) & SCOPE_DECORATORS:
                 n_scoped += 1
                 if verbose:
                     print(f"  OK {key} — @tenant_scoped")
+            elif guards:
+                n_guarded += 1
+                if verbose:
+                    print(f"  G  {key} — 문지기: {', '.join(guards)}")
             elif key in KERNEL_PUBLIC:
                 n_public += 1
                 if verbose:
                     print(f"  P  {key} — PUBLIC: {KERNEL_PUBLIC[key]}")
             else:
                 problems.append(
-                    f"{key}: 커널 공개 함수인데 @tenant_scoped 도 없고 PUBLIC 등재도 없다 "
-                    f"(C-3.1). 스코프 없이 데이터를 반환하는 커널 함수는 반려한다")
+                    f"{key}: 커널 공개 함수인데 @tenant_scoped 도, 문지기 호출도, "
+                    f"PUBLIC 등재도 없다 (C-3.1). "
+                    f"인정하는 문지기: {', '.join(sorted(_gatekeeper_names()))}. "
+                    f"스코프 없이 데이터를 반환하는 커널 함수는 반려한다")
 
-    print(f"[SCOPE] 커널 공개 함수 — 스코프 {n_scoped}개 · PUBLIC {n_public}개")
+    print(f"[SCOPE] 커널 공개 함수 — @tenant_scoped {n_scoped}개 · "
+          f"문지기 호출 {n_guarded}개 · PUBLIC {n_public}개")
     return problems
 
 

@@ -1888,9 +1888,9 @@ tickets:
   phase: R1
   title: "DetectionEvent 모델 신설"
   kernel: ['K1']                     # 공유 커널 (지시서 v2.1) — F-04·F-05 ↔ U1 이중 AC
-  status: verify-pending
-  updated_at: "2026-08-22T15:40:00+09:00"
-  evidence: docs/agent/evidence/LOCAL_BRINGUP/W2-1_makemigrations_dryrun.txt
+  status: done
+  updated_at: "2026-08-28T21:00:00+09:00"
+  evidence: docs/agent/evidence/LOCAL_BRINGUP/W2-1_makemigrations_dryrun.txt · docs/agent/evidence/W2-1/k1_kernel_start.md · backend/stream_monitors/migrations/0016_detectionevent.py
   blocker: |
     [2026-08-22 · **dry-run 리포트 확보(금지 #9 충족). 마이그레이션 생성은 승인 대기**]
     $ python manage.py makemigrations --check --dry-run   → exit 1
@@ -1929,12 +1929,26 @@ tickets:
   verify:
     - "python manage.py makemigrations --check --dry-run"
     - "python manage.py test tests.test_tenant_isolation"
+  blocker: |
+    [2026-08-28 · **done** — 다만 verify 가 그동안 통과한 적이 없었다]
+    ★ **모델은 있는데 마이그레이션이 없었다.** `makemigrations --check --dry-run` 을 실제로
+      돌리자 `0016_detectionevent` 가 생성 대상으로 나왔고, 로컬 DB 에도 표가 **없었다**
+      (information_schema 조회 0건 · stream_monitors 적용 마이그레이션 14건).
+      시험이 초록이던 이유는 `--nomigrations` 가 모델 선언에서 테스트 DB 를 직접 만들기
+      때문이다(D-273) — **시험이 도는 것과 스키마가 맞는 것은 다르다**(P-LOCAL-4).
+      이번에 마이그레이션을 생성해 `--check` 가 exit 0 이 됐다.
+    ⚠ **생성했을 뿐 적용하지 않았다.** 운영 DB 적용은 별건이고 D-269(스냅샷)·D-270(쓰기 안전
+      3원칙)·"운영 DB 직접 변경 금지"가 걸린다. 적용 계획은 W2-2 ENTRY 에서 세운다.
+    · 격리 등재: tests/test_k1_event_kernel.py KernelTenantScopeTest 가 A/B 테넌트로
+      목록·단건·판정·종료 전건을 판정한다. 양성 대조 포함(D-277).
 
 - id: W2-2
   phase: R1
   title: "검출 결과 → 이벤트 수집 (중복 억제 포함)"
   kernel: ['K1']                     # 공유 커널 (지시서 v2.1) — F-01~F-04 ↔ U1 이중 AC
-  status: ready
+  status: in_progress
+  updated_at: "2026-08-28T21:00:00+09:00"
+  evidence: docs/agent/evidence/W2-1/k1_kernel_start.md
   priority: P0
   effort: M
   kind: bind
@@ -1953,6 +1967,26 @@ tickets:
   dod: "10초 내 동일 유형 반복 검출이 이벤트 1건으로 합쳐진다."
   verify:
     - "python manage.py test stream_monitors.tests.test_event_dedup"
+  blocker: |
+    [2026-08-28 · **커널은 섰다. 배선이 남았다** — D-275 EXIT 승인 후 K1 착수]
+    중복 억제 로직은 `kernels/k1_event/services.record_detection` 에 있고 이중 AC 시험
+    14건이 green 이다. 남은 것은 **호출처 2곳을 커널에 잇는 일**이다.
+
+    ★ **호출처 2곳 실측 — 둘 다 지금은 이벤트를 만들지 못한다**
+     ① `stream_monitors/services/grpc_client.py:147-152` `process_frame_batch`
+        AI 서버는 프레임마다 `Detection{x, y, width, height, label, confidence, color}` 를
+        **이미 돌려주고 있다**(proto 실측: `FrameWithDetections{frame, detections}`).
+        그런데 클라이언트는 `frame_with_detections.frame.image_data` 만 디코딩하고
+        **`detections` 를 통째로 버린다.** metadata 에도 안 싣는다.
+        → 검출이 없는 게 아니라 **받아서 버리고 있다.** 이 두 줄이 W2-2 의 핵심이다.
+        `grpc_dual_stream_service.py:401` 은 `processed_frames` 만 소비하므로 그쪽도 함께 고친다.
+     ② `media_data/services/media_data_detect_service.py:233` `detect_and_save`
+        독스트링은 "VideoAnalysis 레코드를 만든다"고 적혀 있는데 **본문이 비어 있다**
+        (`created_records = []` 를 만들고 쓰지 않은 채 `return True, results`).
+        부르는 쪽은 저장된 줄 안다 — K1 `exceptions.NotImplementedYet` 이 막으려는 그 모양이다.
+
+    ⚠ **선행**: `0016_detectionevent` 마이그레이션이 **아직 적용되지 않았다**(W2-1 참조).
+      표가 없는 상태에서 배선하면 첫 검출에서 죽는다. 적용이 배선보다 먼저다.
 
 - id: W2-3
   phase: R1
