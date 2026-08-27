@@ -31,6 +31,15 @@ try:
 except (AttributeError, OSError):
     pass
 
+#: DA-04 가 정의한 커널. **이 목록에 없는 커널 코드는 실패다** (아래 §미지 커널 검사).
+#:
+#: 왜 화이트리스트인가 (2026-08-27 · D-258)
+#:     지시서 v2.2 가 K7(컨텍스트 커널)을 예고했고 DA-05 가 그 스펙을 쓴다. 그때
+#:     tickets.yaml 에 `kernel: [K7]` 만 먼저 달리면, 이 스크립트는 K1~K6 만 돌므로
+#:     **K7 을 아예 보지 않는다** — 문서에 없는 매핑이 조용히 정본에 남는다.
+#:     그것이 이 스크립트가 막으려던 바로 그 상태다(D-227 manifest 유실과 같은 모양).
+#:     그래서 모르는 커널을 만나면 **통과시키지 않고 실패**한다.
+#:     K7 을 추가할 때는 여기와 DA-04 §4 표를 **같은 커밋에서** 함께 고친다.
 KERNELS = ["K1", "K2", "K3", "K4", "K5", "K6"]
 
 #: DA-04 §4 의 표 행 — `| K1 | W2-1 · W2-2 · W2-3 |`
@@ -74,6 +83,14 @@ def main() -> int:
 
     reg, doc = from_registry(), from_doc()
     problems: list[str] = []
+
+    # 미지 커널 검사 — 화이트리스트 밖의 코드는 문서와 대조된 적이 없다는 뜻이다.
+    unknown = sorted(set(reg) - set(KERNELS))
+    if unknown:
+        problems.append(
+            f"정본에 미지의 커널 코드가 있다 {unknown} — DA-04 매핑표와 이 스크립트의 "
+            f"KERNELS 에 함께 등재하라 (커널을 늘리면서 검증을 늘리지 않으면 그 커널은 무검증이다)"
+        )
 
     for k in KERNELS:
         r, d = reg.get(k, set()), doc.get(k, set())
