@@ -1,0 +1,88 @@
+[CLASSIFICATION] 데이터 쓰기 ↔ 분류 등록부 참조 대조 (D-270 ③)
+  OK scripts/backfill_owner_apply.py: 쓰기 2건 · 등록부 참조 있음
+  =  scripts/backfill_owner_dryrun.py: 빚 1건 (래칫 유지)
+  =  scripts/backfill_owner_rollback.py: 빚 1건 (래칫 유지)
+    ·  scripts/build_leak_targets.py: 쓰기 없음
+    ·  scripts/check_demo_isolation.py: 쓰기 없음
+    ·  scripts/check_key_divergence.py: 쓰기 없음
+    ·  scripts/draft_isolation_targets.py: 쓰기 없음
+    ·  scripts/dump_openapi_routes.py: 쓰기 없음
+    ·  scripts/gen_manifest.py: 쓰기 없음
+    ·  scripts/map_routes_to_models.py: 쓰기 없음
+    ·  scripts/probe_openapi_response_decl.py: 쓰기 없음
+  =  scripts/probe_tenant_isolation.py: 빚 3건 (래칫 유지)
+  =  scripts/role_split_local.py: 빚 6건 (래칫 유지)
+    ·  scripts/scan_auth_surface.py: 쓰기 없음
+    ·  scripts/scan_dump_created_by.py: 쓰기 없음
+    ·  scripts/scan_frontend_success_contract.py: 쓰기 없음
+    ·  scripts/scan_request_timeouts.py: 쓰기 없음
+    ·  scripts/verify_da01_reuse_paths.py: 쓰기 없음
+    ·  scripts/verify_kernel_map.py: 쓰기 없음
+    ·  backend/checklist_setting/management/commands/__init__.py: 쓰기 없음
+    ·  backend/checklist_setting/management/commands/init_checklist_categories.py: 쓰기 없음
+    ·  backend/checklist_setting/management/commands/init_checklist_items.py: 쓰기 없음
+    ·  backend/common/management/commands/__init__.py: 쓰기 없음
+    ·  backend/common/management/commands/clear_cache.py: 쓰기 없음
+    ·  backend/dashboard/management/commands/__init__.py: 쓰기 없음
+  =  backend/dashboard/management/commands/create_dashboard_config.py: 빚 1건 (래칫 유지)
+  =  backend/dashboard/management/commands/generate_delivery_dashboard.py: 빚 10건 (래칫 유지)
+    ·  backend/delivery/management/commands/__init__.py: 쓰기 없음
+  =  backend/delivery/management/commands/create_operation_config.py: 빚 1건 (래칫 유지)
+  =  backend/delivery/management/commands/create_status_mappings.py: 빚 2건 (래칫 유지)
+  =  backend/delivery/management/commands/generate_delivery_operation_items.py: 빚 1건 (래칫 유지)
+    ·  backend/delivery/management/commands/list_status_mappings.py: 쓰기 없음
+  =  backend/delivery/management/commands/remove_status_mappings.py: 빚 1건 (래칫 유지)
+    ·  backend/devices/management/commands/__init__.py: 쓰기 없음
+  =  backend/devices/management/commands/create_default_drone_status.py: 빚 1건 (래칫 유지)
+  =  backend/devices/management/commands/generate_unit_config.py: 빚 2건 (래칫 유지)
+    ·  backend/devices/management/commands/init_frame_data.py: 쓰기 없음
+  =  backend/devices/management/commands/migrate_unit_preferences.py: 빚 1건 (래칫 유지)
+    ·  backend/flight_log/management/commands/__init__.py: 쓰기 없음
+    ·  backend/flight_log/management/commands/create_sample_drone_anomaly_predictions.py: 쓰기 없음
+  =  backend/flight_log/management/commands/update_total_distance_old_records.py: 빚 2건 (래칫 유지)
+    ·  backend/handover/management/commands/__init__.py: 쓰기 없음
+  =  backend/handover/management/commands/init_shifts.py: 빚 1건 (래칫 유지)
+    ·  backend/operation_settings/management/commands/__init__.py: 쓰기 없음
+  =  backend/operation_settings/management/commands/init_operation_settings.py: 빚 2건 (래칫 유지)
+  =  backend/operation_settings/management/commands/load_operation_settings_sample.py: 빚 3건 (래칫 유지)
+    ·  backend/operational_data/management/commands/__init__.py: 쓰기 없음
+    ·  backend/orders/management/commands/__init__.py: 쓰기 없음
+  =  backend/orders/management/commands/backfill_order_status_mapping_names.py: 빚 1건 (래칫 유지)
+    ·  backend/orders/management/commands/cold_start_test.py: 쓰기 없음
+  =  backend/orders/management/commands/create_default_delivery_options.py: 빚 1건 (래칫 유지)
+  =  backend/orders/management/commands/create_default_order_status.py: 빚 1건 (래칫 유지)
+    ·  backend/orders/management/commands/create_default_payment_types.py: 쓰기 없음
+  =  backend/orders/management/commands/create_delivery_inquiry_refresh_config.py: 빚 2건 (래칫 유지)
+  =  backend/orders/management/commands/create_order_history.py: 빚 22건 (래칫 유지)
+    ·  backend/orders/management/commands/create_sample_banks.py: 쓰기 없음
+    ·  backend/orders/management/commands/create_sample_order_item_types.py: 쓰기 없음
+  =  backend/orders/management/commands/generate_delivery_process.py: 빚 9건 (래칫 유지)
+  =  backend/orders/management/commands/init_anyang_data.py: 빚 6건 (래칫 유지)
+  =  backend/orders/management/commands/init_status_mapping_data.py: 빚 6건 (래칫 유지)
+  =  backend/orders/management/commands/init_status_mapping_data_anyang.py: 빚 6건 (래칫 유지)
+    ·  backend/orders/management/commands/simple_test.py: 쓰기 없음
+  =  backend/orders/management/commands/update_external_status_codes.py: 빚 2건 (래칫 유지)
+    ·  backend/partner/management/commands/__init__.py: 쓰기 없음
+  =  backend/report_template/management/commands/create_default_template.py: 빚 1건 (래칫 유지)
+  =  backend/report_template/management/commands/manage_templates.py: 빚 5건 (래칫 유지)
+    ·  backend/report_template/management/commands/test_report.py: 쓰기 없음
+    ·  backend/stream_monitors/management/commands/__init__.py: 쓰기 없음
+    ·  backend/stream_monitors/management/commands/create_ai_models.py: 쓰기 없음
+  =  backend/stream_monitors/management/commands/create_stream_monitors.py: 빚 1건 (래칫 유지)
+  =  backend/stream_monitors/management/commands/create_test_session.py: 빚 2건 (래칫 유지)
+    ·  backend/surveillance/management/commands/__init__.py: 쓰기 없음
+  =  backend/surveillance/management/commands/init_surveillance_data.py: 빚 2건 (래칫 유지)
+    ·  backend/surveillance/management/commands/migrate_total_flight_time.py: 쓰기 없음
+    ·  backend/surveillance/management/commands/simulate_upload_profile_to_flightbird.py: 쓰기 없음
+    ·  backend/terminals/management/commands/__init__.py: 쓰기 없음
+    ·  backend/terminals/management/commands/create_default_deactivate_reasons.py: 쓰기 없음
+    ·  backend/terminals/management/commands/create_default_location_types.py: 쓰기 없음
+  =  backend/terminals/management/commands/create_sample_terminals.py: 빚 2건 (래칫 유지)
+  =  backend/terminals/management/commands/init_days_of_week.py: 빚 3건 (래칫 유지)
+  =  backend/terminals/management/commands/init_default_speed_wp.py: 빚 2건 (래칫 유지)
+    ·  backend/terminals/management/commands/init_route_service.py: 쓰기 없음
+    ·  backend/third_api/management/commands/__init__.py: 쓰기 없음
+
+[CLASSIFICATION] 대상 83개 · 쓰기 36개 (등록부 참조 1개) · WRITE_AUDIT 2줄
+[CLASSIFICATION] 남은 빚 35개 파일 113건 — 래칫 상한 113건 (P-W0-13-5)
+[CLASSIFICATION] 통과 — 새 빚 없음. 쓰는 것은 등록부를 참조하거나 래칫 안에 있다

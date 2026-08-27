@@ -58,6 +58,20 @@ repos:
         pass_filenames: false
         files: '^backend/.*\.py$'
 
+  # ── D-270 ③: 데이터를 쓰는 스크립트가 분류 등록부를 참조하는지 ───────────
+  # 2026-08-27 사고: 백필 적용본이 등록부를 참조하지 않아 공용 마스터
+  # advanced_table.GridSetting(479행) · menu.Tab 을 채우려 했다. D-261(c) 가 금지한
+  # 바로 그 일이다. 판정문은 있었고 **게이트가 없었다** — 막은 것은 시뮬레이션이었다.
+  # 기존 빚 113건은 KNOWN_DEBT 래칫으로 잠갔다. 새 빚은 오늘부터 막힌다.
+  - repo: local
+    hooks:
+      - id: gx-classification
+        name: 분류 등록부 참조 검사 (D-270 ③)
+        entry: python scripts/verify_classification.py
+        language: system
+        pass_filenames: false
+        files: '^(scripts/.*\.py|backend/[^/]+/management/commands/.*\.py|backend/tests/tenant_classification\.py)$'
+
   # ── 기본 위생 ───────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

@@ -1134,3 +1134,40 @@ pending:
     reversible: true
     blocks_dod: false
     status: open
+
+  - id: P-W0-13-5
+    ticket: "W0-13 · W0-14"
+    raised_at: "2026-08-27"
+    context: "D-270 ③ 게이트를 세웠더니 기존 빚 113건이 드러났다 — 갚는 순서 판정 요청"
+    question: >-
+      `scripts/verify_classification.py`(D-270 ③)를 처음 돌린 실측:
+      **데이터를 쓰는 스크립트 36개 중 분류 등록부를 참조하는 것은 1개**(백필 적용본)뿐이다.
+      나머지 35개 파일 113건은 공용 마스터인지 아닌지 **모르는 채로** 데이터를 쓴다.
+      그중 위험한 것이 실재한다 — 공용 마스터를 **통째로 지우는** 관리 명령이다:
+        · `init_days_of_week.py` — `DayOfWeek.objects.all().delete()`
+        · `init_anyang_data.py` — `OrderItemType.objects.all().delete()`
+          (`OrderItemType` 은 SHARED_MASTERS 에 등재된 공용 마스터다)
+        · `init_status_mapping_data(_anyang).py` — `ExternalOrderStatus`·`OrderStatusMapping` 전량 삭제
+        · `init_operation_settings.py` · `load_operation_settings_sample.py` — `OperationSettings` 전량 삭제
+      전부 실패시키면 오늘부터 모든 커밋이 막히고 게이트가 꺼진다(= 장식이 된다).
+      조용히 통과시키면 빚이 안 보인다. 그래서 `KNOWN_DEBT` **증가금지 래칫**으로 잠갔다 —
+      새 빚은 오늘부터 막히고, 기존 113건은 목록으로 남아 있다.
+      **어느 순서로 갚을지**를 청한다.
+    options:
+      - "A: 공용 마스터를 지우는 7개를 WP-2 EXIT 전에 먼저 갚고, 나머지 28개는 P1 로 등재"
+      - "B: 35개 전부를 하나의 티켓으로 묶어 EXIT 후 일괄 처리"
+      - "C: 래칫만 유지하고 갚는 것은 각 파일을 다음에 손댈 때 함께 한다 (기회주의적 상환)"
+    chosen_default: ""
+    rationale: >-
+      **기본값을 적용하지 않는다.** 35개 파일을 지금 고치는 것은 WP-2 EXIT 를 늦추는 일이고,
+      EXIT 는 WP-DA2 착수 조건이라 일정 전체가 밀린다(P-DA-3 을 C안으로 판정한 것과 같은 논리).
+      반대로 미루면 그 사이에 공용 마스터를 지우는 명령이 그대로 남는다.
+      **이 저울은 우리가 기울일 것이 아니다.**
+      ★ **A 를 권고한다.** 7개는 "지우면 다른 테넌트 화면에서 값이 사라진다"는 D-261 (c) 의
+        사고를 **실제로 낼 수 있는** 것이고, 나머지 28개는 대체로 생성·갱신이라 성격이 다르다.
+        C 는 반대한다 — "다음에 손댈 때"가 오지 않는 파일이 정확히 위험한 파일이다.
+      ※ 래칫은 **면제 목록이 아니라 갚을 목록**이다. 숫자를 올리는 방향으로 고치는 것은
+        게이트를 끄는 것과 같다 — 그 경우 고칠 것은 코드다.
+    reversible: true
+    blocks_dod: false
+    status: open
