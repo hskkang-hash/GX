@@ -1,0 +1,48 @@
+W0-13 잔여분 — D-261 (b)(c) 기대값 단언 배선 + W0-14c 전체 실행
+실행 2026-08-28 · 로컬 복제본
+
+[ISO] 모수 142종 — 등재 25 · P0 15(전수 등재) · 표 밖 0
+[ISO] 매니저 관측 — terminals.Terminal 주인없는 행(created_by NULL·group NULL)이 tenant-A 의 objects 에 보인다
+[ISO] 공용 마스터 조회 가능 확인 1종 (선언 12종 중 시험 DB 에 행이 있는 것)
+[ISO] 미배정 비노출 확인 1종 (HTTP 표면)
+[ISO] delete — 대상 6건
+  OK   Terminal                   404
+  OK   Device                     404
+  OK   ChecklistSetting           404
+  OK   SurveillanceProfile        404
+  OK   ReportTemplate             404
+  OK   FlightLog                  404
+[ISO] detail — 대상 10건
+  OK   Order                      404
+  OK   Terminal                   404
+  OK   Device                     404
+  OK   SurveillanceProfile        404
+  OK   ReportTemplate             404
+  OK   FlightLog                  404
+  OK   VideoAnalysis              404
+  OK   OrderItem                  404
+  OK   OrderStatusMapping         404
+  OK   TaskStatus                 404
+[ISO] 탐지기 양성 대조 — 자기 레코드를 찾음 8 · 못 찾음 5
+      못 찾은 대상(그 시나리오의 '누출 0' 은 판정 불가다): Order, StreamMonitor, Dashboard, VideoAnalysis, OrderItem
+[ISO] update — 대상 5건
+  OK   Terminal                   404
+  OK   Device                     404
+  OK   ChecklistSetting           404
+  OK   SurveillanceProfile        404
+  OK   ReportTemplate             404
+[ISO] via_parent(부모 경로 스코프) — 대상 12건
+  OK   Dashboard(목록)              404  목록형 — 상태는 200 이 정상. 본문만 본다
+  OK   HandoverDocument(목록)       404  목록형 — 상태는 200 이 정상. 본문만 본다
+  OK   MissionWaypoint            404
+  OK   SurveillanceProfileDrone   404
+  OK   SurveillanceProfileChecklist 404
+  OK   SurveillanceProfileChecklistItem 404
+  OK   OrderHistory               404
+  OK   Payment                    404
+  OK   DeliveryOperation          404
+  OK   DeliveryOperationItem(목록)  404  목록형 — 상태는 200 이 정상. 본문만 본다
+  OK   RouteTerminal              404
+  OK   TerminalOperatingTime      404
+
+90 passed, 34 warnings in 26.75s

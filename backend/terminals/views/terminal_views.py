@@ -87,7 +87,14 @@ class TerminalsController:
 
     @route.get('/{id}')
     @path_permission("read", path_override='/terminals')
-    def get_terminal(self, id: int):
+    def get_terminal(self, request, id: int):
+        # ★ W0-14c 문지기 — 이 파일에서 request 를 안 받던 **세 번째** 핸들러다
+        #   (get_terminal · delete_terminal · get_terminal_operating_times).
+        #   남의 터미널에는 매니저가 404 를 냈지만, **주인 없는 행(group NULL·created_by NULL)**
+        #   에는 200 이 나갔다 — dj-core 매니저의 created_by__isnull OR 절 때문이다(§0.4).
+        #   그 1,590행이 D-261 (b) 가 "채우지 않는다"고 판정한 tenant_unassigned 다.
+        #   백필로는 못 막고 **뷰 경계에서만** 막힌다 — W0-13 이 C안을 유일해라고 한 이유.
+        assert_scoped(Terminal, id, request.user)
         terminal = terminal_service.get_terminal(id)
         if not terminal:
             return BaseResponse(

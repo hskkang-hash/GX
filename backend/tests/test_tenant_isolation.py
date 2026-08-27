@@ -1129,6 +1129,150 @@ class TenantIsolationORMTest(TenantFixtureMixin, TestCase):
 # 3) HTTP 수준 격리 — 5시나리오
 # ═══════════════════════════════════════════════════════════════════════════
 
+class TenantClassificationExpectationTest(TenantFixtureMixin, TestCase):
+    """(setUp 은 아래에 있다 — 두 테넌트의 HTTP 클라이언트를 둘 다 쓴다)"""
+    """분류 등록부의 **선언을 단언으로 지킨다** (D-261 b·c · W0-13 잔여분).
+
+    백필 뒤에도 공용 마스터와 미배정은 **둘 다 `group IS NULL`** 로 남는다.
+    즉 DB 만 봐서는 "공용이라서 비었다"와 "아직 안 정했다"가 구별되지 않는다.
+    그 상태를 방치하면 미분류가 면제로 위장하고, 시험은 초록이 되고 노출은 그대로 남는다.
+
+    그래서 `backend/tests/tenant_classification.py` 에 **선언**하고, 여기서 **지킨다**:
+
+      · `SHARED_MASTERS`     기대값 = **전 테넌트가 조회 가능**해야 한다
+      · `TENANT_UNASSIGNED`  기대값 = **전역 관리자 외 어떤 테넌트에도 비노출**
+
+    > **PUBLIC 은 검사 면제가 아니라 "공용임을 시험으로 증명한 것"이어야 한다** (D-261 c).
+    """
+
+    def setUp(self) -> None:
+        self.client_a = Client()
+        self.client_b = Client()
+        self.auth_a = self._bearer(self.user_a)
+        self.auth_b = self._bearer(self.user_b)
+
+    def _make(self, label: str, **kwargs):
+        """`group` 을 비운 채 만든다 — 공용 마스터와 미배정이 실제로 그 상태다."""
+        model = apps.get_model(label)
+        obj = model(**kwargs)
+        obj.created_by = None
+        obj.save()
+        if has_group_m2m(model):
+            obj.groups.clear()
+        if has_group_fk(model) and getattr(obj, "group_id", None) is not None:
+            obj.group = None
+            obj.save(update_fields=["group"])
+        return obj
+
+    def test_shared_masters_are_visible_to_every_tenant(self) -> None:
+        """공용 마스터는 **모든 테넌트가 봐야 한다.** 안 보이면 화면에서 값이 사라진다."""
+        from tests import tenant_classification as tc
+
+        checked, invisible = [], []
+        for label in sorted(tc.SHARED_MASTERS):
+            try:
+                model = apps.get_model(label)
+            except LookupError:
+                self.fail(f"SHARED_MASTERS 의 '{label}' 이 실재하지 않습니다 — 낡은 선언입니다.")
+            if not (has_group_fk(model) or has_group_m2m(model)):
+                continue                      # 소유 필드 자체가 없으면 격리 대상이 아니다
+            row = model._base_manager.filter(group__isnull=True).first()
+            if row is None:
+                continue                      # 시험 DB 에 그 마스터 행이 없다 — 여기서 만들지 않는다
+            checked.append(label)
+            for who, group in ((self.user_a, self.group_a), (self.user_b, self.group_b)):
+                with acting_as(who):
+                    seen = model.objects.filter(pk=row.pk).exists()
+                if not seen:
+                    invisible.append(f"{label}(pk {row.pk}) ← {group.pk}")
+        print(f"\n[ISO] 공용 마스터 조회 가능 확인 {len(checked)}종 "
+              f"(선언 {len(tc.SHARED_MASTERS)}종 중 시험 DB 에 행이 있는 것)")
+        self.assertEqual(
+            [], invisible,
+            f"공용 마스터가 어떤 테넌트에게 **안 보입니다**: {invisible}\n"
+            "공용으로 선언해 놓고 못 보게 하면 그 화면에서 값이 사라집니다 (D-261 c).")
+
+    def test_tenant_unassigned_is_hidden_at_http(self) -> None:
+        """미배정 행은 **HTTP 표면에서** 어떤 테넌트에도 보이면 안 된다 (D-261 b).
+
+        `terminals.Terminal` 1,590행이 그것이다 — 참조가 0이라 채우지 않기로 한 행들.
+        채우지 않았으므로 `group IS NULL` 이고, 그래서 **매니저 수준에서는 전 테넌트에 보인다**
+        (아래 `test_..._at_orm_manager` 가 그 사실을 고정한다 — §0.4 라 여기서 못 고친다).
+
+        고칠 수 있는 자리는 **뷰 경계**다. `assert_scoped` 는 `_base_manager` 로 묻고
+        요청자의 group 과 대조하므로, 주인 없는 행은 어느 테넌트에도 속하지 않아 404 가 된다.
+        W0-13 이 "C안(뷰 레벨)이 유일하다"고 판정한 것이 이 구조다.
+        """
+        from tests import tenant_classification as tc
+
+        route = {t.app_label + "." + t.model_name: t for t in MODELS}
+        leaks = []
+        checked = []
+        for label in sorted(tc.TENANT_UNASSIGNED):
+            target = route.get(label)
+            if target is None or target.detail is None:
+                continue          # 상세 경로가 없으면 HTTP 로 물을 수 없다 — 조용히 넘기지 않고 세지 않는다
+            orphan = self._make(label, name=f"iso-unassigned-{label.split('.')[-1]}")
+            self.assertIsNone(
+                getattr(orphan, "group_id", None),
+                f"[{label}] 미배정으로 만들려 했는데 group 이 채워졌습니다 — 시험 전제가 깨졌습니다.")
+            checked.append(label)
+            for client, who in ((self.client_a, "A"), (self.client_b, "B")):
+                res = client.generic(
+                    target.detail.method, target.detail.for_pk(orphan.pk),
+                    **(self.auth_a if who == "A" else self.auth_b))
+                if res.status_code not in (403, 404):
+                    leaks.append(f"{label}(pk {orphan.pk}) → tenant-{who} {res.status_code}")
+        print(f"\n[ISO] 미배정 비노출 확인 {len(checked)}종 (HTTP 표면)")
+        self.assertEqual(
+            [], leaks,
+            f"미배정 행이 HTTP 로 보입니다: {leaks}\n"
+            "채우지 않기로 한 행은 **전역 관리자 외 비노출**이어야 합니다 (D-261 b).")
+
+    def test_orm_manager_behaviour_on_orphans_is_reported(self) -> None:
+        """주인 없는 행에 대한 **매니저 수준의 거동을 관측해 보고**한다.
+
+        ★ 왜 단언하지 않나 — 처음에는 "매니저 수준에서는 보인다"를 D-224 방식으로
+          **고정**하려 했다. 그런데 같은 코드가 실행 문맥에 따라 True/False 로 갈렸다
+          (앞 시험의 HTTP 호출이 남긴 스레드 로컬·캐시가 영향을 준 것으로 보인다).
+          **흔들리는 사실을 단언으로 박으면 그 시험은 곧 무시된다.** 그래서 관측만 남긴다.
+
+        보장은 위 `test_tenant_unassigned_is_hidden_at_http` 가 진다 — 막을 수 있는 자리는
+        뷰 경계이고(W0-13 C안), 매니저는 §0.4 라 여기서 고칠 수 없다.
+
+        관측값이 "보인다"로 나오면 그것이 W0-11 §5-2 의 `created_by__isnull` OR 절이고,
+        W0-13 백필이 25,296행을 채우고도 남긴 **잔여 노출**의 모양이다.
+        """
+        from tests import tenant_classification as tc
+
+        for label in sorted(tc.TENANT_UNASSIGNED):
+            orphan = self._make(label, name=f"iso-orm-{label.split('.')[-1]}")
+            model = apps.get_model(label)
+            with acting_as(self.user_a):
+                visible = model.objects.filter(pk=orphan.pk).exists()
+            print(f"[ISO] 매니저 관측 — {label} 주인없는 행(created_by NULL·group NULL)이 "
+                  f"tenant-A 의 objects 에 {'보인다' if visible else '안 보인다'}")
+
+    def test_declarations_are_consistent(self) -> None:
+        """선언 자체가 성립하는가 — 중복 선언 · 근거 누락 · 래칫 누락."""
+        from tests import tenant_classification as tc
+
+        self.assertEqual(
+            set(), tc.conflicts(),
+            f"같은 모델이 두 곳에 선언됐습니다: {sorted(tc.conflicts())} — "
+            "공용이면서 주인 없음일 수는 없습니다.")
+        for name in ("SHARED_MASTERS", "TENANT_UNASSIGNED", "DEFERRED"):
+            for label, why in getattr(tc, name).items():
+                self.assertGreaterEqual(
+                    len((why or "").strip()), 10,
+                    f"{name}['{label}'] 에 근거가 없습니다 — 근거 없는 등재는 면제입니다.")
+        for label in tc.TENANT_UNASSIGNED:
+            self.assertIn(
+                label, tc.UNASSIGNED_BASELINE,
+                f"TENANT_UNASSIGNED['{label}'] 에 증가금지 래칫이 없습니다 — "
+                "주인 없는 행이 쌓이는 것을 아무도 못 봅니다.")
+
+
 class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
     """list / detail / update / delete / export 를 userA 로 호출해 B 를 못 보게 한다.
 
