@@ -148,3 +148,60 @@ class StreamMonitorListDegradesTest(SimpleTestCase):
 
     def test_status_constants_are_distinct(self):
         self.assertNotEqual(AVAILABLE, UNAVAILABLE)
+
+class MinioStorageDegradedTest(SimpleTestCase):
+    """저장소(MinIO)도 외부 의존이다 — C-3.3.
+
+    왜 뒤늦게 붙나: W0-17 게이트는 `requests` 만 셌고, **저장소는 그 밖에 있었다.**
+    2026-08-27 백필 실행 로그가 그 대가를 보여줬다 — endpoint 가 닿지 않는데
+    MinIO 초기화가 `minio.invalid` 를 향해 **5회 재시도**를 두 번 돌았다.
+    타임아웃도 재시도 상한도 없어서, 저장소 하나가 안 뜨면 그 뒤 작업이 그만큼 매달린다.
+
+    MinIO SDK 는 호출마다 `timeout=` 을 받지 않는다. **생성자에서 한 번** 정한다 —
+    그래서 이 시험이 보는 곳도 호출부가 아니라 생성부다.
+    """
+
+    def _pool(self):
+        from stream_monitors.utils.minio_client import MinioClient
+        return MinioClient._http_client()
+
+    def test_pool_has_connect_and_read_timeout(self):
+        pool = self._pool()
+        t = pool.connection_pool_kw.get("timeout")
+        self.assertIsNotNone(t, "MinIO 연결 풀에 타임아웃이 없습니다 — 매달릴 수 있습니다.")
+        self.assertIsNotNone(t.connect_timeout, "연결 타임아웃이 없습니다.")
+        self.assertIsNotNone(t.read_timeout, "응답 타임아웃이 없습니다.")
+
+    def test_retries_are_capped(self):
+        """재시도 상한이 없으면 타임아웃이 있어도 그 배수만큼 매달린다."""
+        pool = self._pool()
+        retries = pool.connection_pool_kw.get("retries")
+        self.assertIsNotNone(retries, "재시도 상한이 없습니다 — 오늘 5회를 돌았습니다.")
+        self.assertLessEqual(
+            retries.total, 2,
+            "재시도가 많으면 타임아웃을 걸어도 그 배수만큼 매달립니다.",
+        )
+
+    @override_settings(MINIO_CONNECT_TIMEOUT=1.5, MINIO_READ_TIMEOUT=4.5,
+                       MINIO_MAX_RETRIES=0)
+    def test_values_come_from_settings_not_literals(self):
+        """값이 코드에 박혀 있으면 운영에서 못 바꾼다 (C-3.4 계열)."""
+        pool = self._pool()
+        t = pool.connection_pool_kw["timeout"]
+        self.assertEqual(1.5, t.connect_timeout)
+        self.assertEqual(4.5, t.read_timeout)
+        self.assertEqual(0, pool.connection_pool_kw["retries"].total)
+
+    def test_construction_failure_does_not_raise(self):
+        """저장소가 죽어도 예외가 올라오지 않는다 — 실패는 값으로 온다 (available=False)."""
+        from stream_monitors.utils import minio_client as mc
+
+        with mock.patch.object(mc, "Minio", side_effect=OSError("storage down")):
+            try:
+                client = mc.MinioClient()
+            except Exception as exc:  # pragma: no cover - 실패 시 메시지를 남긴다
+                self.fail(f"저장소 장애가 예외로 새어 나왔습니다: {exc!r}")
+        self.assertFalse(
+            client.available,
+            "저장소가 죽었는데 available=True 입니다 — 죽은 것을 성공으로 위장했습니다.",
+        )
