@@ -661,8 +661,8 @@ tickets:
 - id: W0-13
   phase: R1
   title: "created_by 없는 레코드의 전 테넌트 노출 차단"
-  status: ready
-  updated_at: "2026-08-27T21:30:00+09:00"
+  status: done
+  updated_at: "2026-08-28T12:00:00+09:00"
   evidence: docs/agent/evidence/W0-13/backfill_dryrun.md · backfill_dryrun.txt · impact.md · dump_scan.txt · docs/agent/evidence/W0-14/http_leak_probe.md §4 · backfill_readiness.md · backfill_apply_verify.md · backfill_journal.jsonl · scripts/backfill_owner_apply.py · scripts/backfill_owner_rollback.py
   blocker: |
     [2026-08-22 · C안 근거가 정적 분석에서 **실측**으로 올라섰다]
@@ -769,6 +769,20 @@ tickets:
       tenant_classification.py 의 SHARED_MASTERS(전 테넌트 조회 가능) ·
       TENANT_UNASSIGNED(전역 관리자 외 비노출) 기대값을 시험이 소비해야 한다 (D-261 b·c).
       그 배선은 W0-14c 에서 P0 15종 등재와 함께 한다.
+    ---
+    [2026-08-28 · **WP-2 EXIT 제출. 이 티켓 done**] D-262 4조건 · D-271 · D-272
+    전문: docs/agent/review/WP-2/EXIT.md
+
+    green 90/90 (대상=저장소 시험 전수, 술어=pytest --nomigrations)
+    격리 시나리오 33/33 (대상=등재 25종 × 5시나리오, 술어=남의 테넌트 pk → 403/404)
+    P0 전수 15/15 · 모수 142종 · FK 실증 10/142 · 탐지기 양성 대조 8/13
+
+    ★ 아직 모르는 것을 지우지 않고 적었다 (EXIT §5):
+      · 주인 없는 행은 **매니저 수준에서 여전히 보인다** (§0.4 · created_by__isnull OR).
+        막은 것은 HTTP 표면뿐이다 — 문지기 없는 새 경로가 생기면 그 순간 다시 샌다.
+      · 목록 격리를 **재지 못하는 5종** (양성 대조 실패) — 그 칸은 통과가 아니라 판정 불가다
+      · unproven FK 132종 — "안전"이 아니라 "아직 모른다"
+
   priority: P0
   effort: M
   kind: reuse
@@ -802,8 +816,8 @@ tickets:
   phase: R1
   title: "뷰/서비스 레벨 테넌트 필터 전 엔드포인트 강제 (격리 주 통제)"
   kernel: ['K5']                     # 공유 커널 (지시서 v2.1) — F-12 ↔ U4 이중 AC
-  status: in_progress
-  updated_at: "2026-08-22T22:10:00+09:00"
+  status: done
+  updated_at: "2026-08-28T12:00:00+09:00"
   evidence: docs/agent/evidence/W0-14/pilot_scope_stream_monitors.md · http_leak_probe.md · leak_matrix.json · coverage.md · route_baseline.json · openapi_routes.json · w0_14c_write_guards_and_correction.md · leak_targets_coverage.md · leak_targets.json · route_model_map.json · p0_target_draft.md · exit_coverage_appendix.md
   blocker: |
     [2026-08-22 · **HTTP 레벨 교차 노출을 실측했다. 격리는 뚫려 있다**]
@@ -1048,6 +1062,20 @@ tickets:
       ⚠ **초안이지 정답이 아니다**: dj-core 부모(BaseModel 등)의 필수 필드는 저장소 밖이라
         보이지 않는다. 수정/삭제 메서드 모양도 기동본 확인 대상이다(PATCH 는 전체에 1건).
         그대로 MODELS 에 붙여넣지 않는다 — 추정 위에 배선을 쌓으면 전부 다시 한다.
+    ---
+    [2026-08-28 · **WP-2 EXIT 제출. 이 티켓 done**] D-262 4조건 · D-271 · D-272
+    전문: docs/agent/review/WP-2/EXIT.md
+
+    green 90/90 (대상=저장소 시험 전수, 술어=pytest --nomigrations)
+    격리 시나리오 33/33 (대상=등재 25종 × 5시나리오, 술어=남의 테넌트 pk → 403/404)
+    P0 전수 15/15 · 모수 142종 · FK 실증 10/142 · 탐지기 양성 대조 8/13
+
+    ★ 아직 모르는 것을 지우지 않고 적었다 (EXIT §5):
+      · 주인 없는 행은 **매니저 수준에서 여전히 보인다** (§0.4 · created_by__isnull OR).
+        막은 것은 HTTP 표면뿐이다 — 문지기 없는 새 경로가 생기면 그 순간 다시 샌다.
+      · 목록 격리를 **재지 못하는 5종** (양성 대조 실패) — 그 칸은 통과가 아니라 판정 불가다
+      · unproven FK 132종 — "안전"이 아니라 "아직 모른다"
+
   priority: P0
   effort: L
   kind: new-s
@@ -1465,8 +1493,8 @@ tickets:
 - id: W0-3
   phase: R1
   title: "테넌트 격리 회귀 테스트 신설"
-  status: in_progress
-  updated_at: "2026-08-24T15:30:00+09:00"
+  status: done
+  updated_at: "2026-08-28T12:00:00+09:00"
   evidence: docs/agent/evidence/W0-14/wiring_fix_and_findings.md · evidence/W0-3/coverage.md · evidence/LOCAL_BRINGUP/test_tenant_isolation.txt · evidence/W0-14/http_leak_probe.md · evidence/W0-14/w0_14c_write_guards_and_correction.md · evidence/W0-14/leak_targets_coverage.md
   blocker: |
     [2026-08-22 · 처음으로 실행됐다. 예상 1건 적중 + 예상 밖 3건]
@@ -1541,6 +1569,20 @@ tickets:
     ★ 부록이 답하는 것: 격리를 몇 종에서 시험했나(9 → EXIT 시 24) · 시험 안 한 107종의
       **각각의 사유** · "안전한가"에 **"모른다"**라고 답한다는 사실.
       에스비 검수의 "보안 점검 통과"(계획서 7장)에 이 문서로 답한다.
+    ---
+    [2026-08-28 · **WP-2 EXIT 제출. 이 티켓 done**] D-262 4조건 · D-271 · D-272
+    전문: docs/agent/review/WP-2/EXIT.md
+
+    green 90/90 (대상=저장소 시험 전수, 술어=pytest --nomigrations)
+    격리 시나리오 33/33 (대상=등재 25종 × 5시나리오, 술어=남의 테넌트 pk → 403/404)
+    P0 전수 15/15 · 모수 142종 · FK 실증 10/142 · 탐지기 양성 대조 8/13
+
+    ★ 아직 모르는 것을 지우지 않고 적었다 (EXIT §5):
+      · 주인 없는 행은 **매니저 수준에서 여전히 보인다** (§0.4 · created_by__isnull OR).
+        막은 것은 HTTP 표면뿐이다 — 문지기 없는 새 경로가 생기면 그 순간 다시 샌다.
+      · 목록 격리를 **재지 못하는 5종** (양성 대조 실패) — 그 칸은 통과가 아니라 판정 불가다
+      · unproven FK 132종 — "안전"이 아니라 "아직 모른다"
+
   priority: P0
   effort: M
   kind: new-s
