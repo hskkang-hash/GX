@@ -281,6 +281,120 @@ class BridgeToKernelTest(TestCase):
                                detections_per_frame=[], reason="")
 
 
+class SnapshotTest(BridgeToKernelTest):
+    """[W2-2 spec] **스냅샷 1장을 MinIO 에** — 그리고 못 올렸을 때 무엇을 남기나.
+
+        W2-2 spec: *"스냅샷 1장을 MinIO 에 저장하고 snapshot_path 에 기록한다."*
+        계약 불변규칙 4: *"스냅샷은 MinIO 에 1장. 원본 프레임을 DB 에 넣지 않는다."*
+
+    ★ 이 시험의 절반은 **실패 경로**다. 이 PC 에서 MinIO 는 닿지 않고(`minio.invalid`),
+      운영에서도 저장소는 언제든 죽는다. 그때 무엇이 남는지가 "저장했다"는 거짓말과
+      "증거가 없다"는 사실을 가른다 (D-284).
+    """
+
+    def _frame(self):
+        import numpy as np
+
+        return np.zeros((480, 640, 3), dtype=np.uint8)
+
+    def test_snapshot_path_is_recorded_when_upload_succeeds(self) -> None:
+        from unittest.mock import patch
+
+        from stream_monitors.services.detection_event_bridge import publish_detections
+
+        with patch("stream_monitors.services.detection_snapshot.upload_snapshot",
+                   return_value=("gx-bucket/detections/1/20260829/120000_000000.jpg", "")):
+            result = publish_detections(
+                stream_monitor_id=self.stream.id,
+                detections_per_frame=[[{"label": "fire", "confidence": 0.9, "bbox": None}]],
+                frames=[self._frame()],
+                reason="시험")
+
+        self.assertEqual(result.snapshots_uploaded, 1)
+        Event = apps.get_model("stream_monitors", "DetectionEvent")
+        row = Event._base_manager.order_by("-id").first()
+        self.assertTrue(row.snapshot_path.endswith(".jpg"))
+
+    def test_failed_upload_leaves_an_empty_path_not_a_fake_one(self) -> None:
+        """★ 못 올리면 **빈 문자열**이다. 있지도 않은 객체를 가리키지 않는다.
+
+        가짜 경로는 화면이 믿고 깨진 이미지를 띄우게 만든다 — D-284 가 이름 붙인
+        조용한 성공이다. **그리고 이벤트는 그래도 기록된다** — 스냅샷이 없다고
+        검출을 버리는 것이 더 나쁘다.
+        """
+        from unittest.mock import patch
+
+        from stream_monitors.services.detection_event_bridge import publish_detections
+
+        with patch("stream_monitors.services.detection_snapshot.upload_snapshot",
+                   return_value=("", "MinIO 가 사용 불가 상태다(초기화 실패)")):
+            result = publish_detections(
+                stream_monitor_id=self.stream.id,
+                detections_per_frame=[[{"label": "smoke", "confidence": 0.8, "bbox": None}]],
+                frames=[self._frame()],
+                reason="시험")
+
+        self.assertEqual(result.snapshots_uploaded, 0)
+        self.assertEqual(sum(result.snapshot_failures.values()), 1)
+        # ★ 사유가 남는가. 빈 경로만 보면 "안 올림"과 "못 올림"이 구별되지 않는다.
+        self.assertTrue(any("MinIO" in why for why in result.snapshot_failures))
+
+        # ★ 그래도 이벤트는 있다.
+        self.assertEqual(result.created, 1)
+        Event = apps.get_model("stream_monitors", "DetectionEvent")
+        self.assertEqual(Event._base_manager.order_by("-id").first().snapshot_path, "")
+
+    def test_one_snapshot_per_event_type_not_per_detection(self) -> None:
+        """계약이 "1장"이라 적었다 — 검출마다 올리면 배치 하나가 저장소를 수십 번 두드린다."""
+        from unittest.mock import patch
+
+        from stream_monitors.services.detection_event_bridge import publish_detections
+
+        with patch("stream_monitors.services.detection_snapshot.upload_snapshot",
+                   return_value=("b/o.jpg", "")) as up:
+            result = publish_detections(
+                stream_monitor_id=self.stream.id,
+                detections_per_frame=[[
+                    {"label": "person", "confidence": 0.9, "bbox": None},
+                    {"label": "person", "confidence": 0.8, "bbox": None},
+                    {"label": "fire", "confidence": 0.7, "bbox": None},
+                ]],
+                frames=[self._frame()],
+                reason="시험")
+
+        self.assertEqual(up.call_count, 2, "종류당 1장이어야 한다 (person · fire)")
+        # 접혀서 쓰이지 않은 장수를 **숨기지 않고 센다.**
+        self.assertEqual(result.snapshots_uploaded, 2)
+        self.assertEqual(result.snapshots_discarded, 0)
+
+    def test_no_frames_means_no_upload_attempt(self) -> None:
+        """양성 대조 — 프레임을 안 주면 **올리려 들지 않는다.**
+
+        전부 올리려 드는 배선은 저장소가 없을 때 배치마다 실패 로그를 쏟는다.
+        """
+        from unittest.mock import patch
+
+        from stream_monitors.services.detection_event_bridge import publish_detections
+
+        with patch("stream_monitors.services.detection_snapshot.upload_snapshot") as up:
+            publish_detections(
+                stream_monitor_id=self.stream.id,
+                detections_per_frame=[[{"label": "fire", "confidence": 0.9, "bbox": None}]],
+                reason="시험")
+        up.assert_not_called()
+
+    def test_upload_refuses_empty_bytes_with_a_reason(self) -> None:
+        """빈 바이트는 **사유와 함께** 거절한다 — 조용히 성공하지 않는다."""
+        from stream_monitors.services.detection_snapshot import encode_frame, upload_snapshot
+
+        path, why = upload_snapshot(stream_monitor_id=1, jpeg_bytes=b"")
+        self.assertEqual(path, "")
+        self.assertTrue(why, "빈 경로에 사유가 없으면 '안 올림'과 '못 올림'이 구별되지 않는다")
+
+        # 인코딩 실패도 예외가 아니라 빈 바이트다 — 스트림이 죽으면 안 된다.
+        self.assertEqual(encode_frame(None), b"")
+
+
 class LiveCallSiteTest(TestCase):
     """[D-284 (1)] **실호출 경로**가 배선을 부르는가.
 

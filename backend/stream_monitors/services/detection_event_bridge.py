@@ -118,6 +118,12 @@ class PublishResult:
     below_confidence: int = 0
     #: 커널이 반려한 것 (계약 밖 열거값 등). 사유를 그대로 남긴다.
     rejected: list[str] = field(default_factory=list)
+    #: 실제로 올라간 스냅샷 수.
+    snapshots_uploaded: int = 0
+    #: 올렸는데 이벤트가 접혀서 **쓰이지 않은** 수. 낭비를 숨기지 않고 센다 (아래 주석 참조).
+    snapshots_discarded: int = 0
+    #: 못 올린 사유 → 그 수. 빈 경로에 사유가 없으면 "안 올림"과 "못 올림"이 구별되지 않는다.
+    snapshot_failures: dict[str, int] = field(default_factory=dict)
 
     @property
     def total_seen(self) -> int:
@@ -132,6 +138,7 @@ def publish_detections(
     detections_per_frame: Iterable[Iterable[dict[str, Any]]],
     reason: str,
     snapshot_path: str = "",
+    frames: list | None = None,
     mission_id: int | None = None,
 ) -> PublishResult:
     """검출 묶음을 K1 이벤트로 넘긴다.
@@ -140,7 +147,10 @@ def publish_detections(
         stream_monitor_id: 어느 스트림의 검출인가. **이벤트의 소유가 여기서 정해진다.**
         detections_per_frame: `grpc_client` 의 `metadata['detections']` 그대로.
         reason: 이 호출에 사람이 없는 이유 (D-281 — 사유 없는 시스템 스코프는 만들 수 없다).
-        snapshot_path: MinIO 객체 경로. 없으면 빈 문자열 — **가짜 경로를 만들지 않는다.**
+        snapshot_path: 이미 올려 둔 MinIO 객체 경로. 비어 있고 `frames` 가 있으면
+            여기서 올린다. **못 올려도 빈 문자열이지 가짜 경로가 아니다.**
+        frames: 프레임 이미지(ndarray) 목록. `detections_per_frame` 과 **같은 순서**다.
+            주면 스냅샷을 올린다 (W2-2 spec · 계약 불변규칙 4 — "스냅샷은 MinIO 에 1장").
         mission_id: 임무 중이라면 그 id.
 
     Returns:
@@ -152,8 +162,13 @@ def publish_detections(
     """
     scope = TenantScope.system(reason=reason)
     result = PublishResult()
+    frames = frames or []
 
-    for frame_detections in detections_per_frame:
+    #: 이 호출에서 (event_type)별로 이미 올린 스냅샷. **종류당 1장** — 계약이 "1장"이라
+    #: 적었고, 검출마다 올리면 배치 하나가 저장소를 수십 번 두드린다.
+    uploaded: dict[str, str] = {}
+
+    for frame_index, frame_detections in enumerate(detections_per_frame):
         for det in frame_detections or ():
             label = (det.get("label") or "").strip()
             confidence = det.get("confidence")
@@ -168,6 +183,31 @@ def publish_detections(
                 result.below_confidence += 1
                 continue
 
+            # ── 스냅샷 (W2-2 spec) ────────────────────────────────────────
+            #
+            # ★ 접힐지 **먼저 알 수 없다.** 접힘 판정은 커널의 몫이고, 여기서 미리 물으면
+            #   그 판정을 두 벌 두게 된다(그리고 두 벌은 반드시 어긋난다). 그래서 올린 뒤
+            #   접히면 그 1장은 쓰이지 않는다 — 커널은 접을 때 snapshot_path 를 덮지 않는다
+            #   (첫 스냅샷이 그 이벤트의 증거다). **그 낭비를 숨기지 않고 센다**
+            #   (`snapshots_discarded`). 수가 커지면 그때 최적화의 근거가 된다.
+            path = snapshot_path or uploaded.get(event_type, "")
+            newly_uploaded = False
+            if not path and frames and event_type not in uploaded:
+                from stream_monitors.services.detection_snapshot import (
+                    encode_frame, upload_snapshot,
+                )
+
+                frame = frames[frame_index] if frame_index < len(frames) else None
+                path, why = upload_snapshot(
+                    stream_monitor_id=stream_monitor_id,
+                    jpeg_bytes=encode_frame(frame))
+                uploaded[event_type] = path
+                if path:
+                    newly_uploaded = True
+                    result.snapshots_uploaded += 1
+                else:
+                    result.snapshot_failures[why] = result.snapshot_failures.get(why, 0) + 1
+
             try:
                 recorded = record_detection(
                     scope=scope,
@@ -176,7 +216,7 @@ def publish_detections(
                     severity=EVENT_TYPE_TO_SEVERITY[event_type],
                     confidence=confidence,
                     bbox=det.get("bbox"),
-                    snapshot_path=snapshot_path,
+                    snapshot_path=path,
                     mission_id=mission_id,
                 )
             except InvalidEventInput as exc:
@@ -189,8 +229,17 @@ def publish_detections(
                 result.created += 1
             else:
                 result.folded += 1
+                if newly_uploaded:
+                    # 올렸는데 접혔다 — 이 1장은 쓰이지 않는다. **세어서 보이게 둔다.**
+                    result.snapshots_discarded += 1
             if recorded.should_notify:
                 result.to_notify += 1
+
+    for why, n in result.snapshot_failures.items():
+        # 못 올린 것을 조용히 넘기지 않는다. 이벤트는 남았고 증거만 없는 상태다.
+        log.warning("[K1][SNAPSHOT] stream=%s 스냅샷 %s건 실패: %s — "
+                    "이벤트는 기록됐고 snapshot_path 는 **빈 문자열**이다 "
+                    "(가짜 경로를 만들지 않는다)", stream_monitor_id, n, why)
 
     if result.unmapped_labels:
         # 목록을 **글자 그대로** 남긴다. 요약하면 표를 늘릴 때 쓸 수 없다.

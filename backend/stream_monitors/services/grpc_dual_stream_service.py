@@ -27,7 +27,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-def _publish_detection_events(stream_monitor_id, metadata) -> None:
+def _publish_detection_events(stream_monitor_id, metadata, frames=None) -> None:
     """`metadata['detections']` 를 K1 이벤트로 넘긴다 (D-284 (1)).
 
     ★ 실패해도 스트림을 죽이지 않는다. 그러나 **조용히 넘어가지도 않는다** —
@@ -55,6 +55,9 @@ def _publish_detection_events(stream_monitor_id, metadata) -> None:
         result = publish_detections(
             stream_monitor_id=stream_monitor_id,
             detections_per_frame=detections,
+            # 스냅샷은 **AI 가 그려 준 프레임**을 쓴다. 원본이 아니라 검출 표시가 있는 쪽이
+            # 증거로서 값이 있다 — U1 의 "증거 확보 클릭 ≤ 3" 이 보는 것이 이 이미지다.
+            frames=frames,
             reason=("AI 검출 파이프라인(gRPC dual stream) — 콜백에는 요청자가 없다. "
                     "이벤트의 소유는 스트림이 정한다 (D-281)"),
         )
@@ -67,10 +70,12 @@ def _publish_detection_events(stream_monitor_id, metadata) -> None:
     # 분모와 술어를 함께 적는다 (D-271). 만든 것만 세면 버린 것이 안 보인다.
     logger.info(
         "📌 [K1] stream=%s 검출 %s건 → 이벤트 신규 %s · 접힘 %s · 알림대상 %s "
-        "(미매핑 %s · 문턱미달 %s · 반려 %s)",
+        "(미매핑 %s · 문턱미달 %s · 반려 %s) · 스냅샷 올림 %s · 버려짐 %s · 실패 %s",
         stream_monitor_id, result.total_seen, result.created, result.folded,
         result.to_notify, sum(result.unmapped_labels.values()),
-        result.below_confidence, len(result.rejected))
+        result.below_confidence, len(result.rejected),
+        result.snapshots_uploaded, result.snapshots_discarded,
+        sum(result.snapshot_failures.values()))
     for why in result.rejected:
         logger.warning("⚠️ [K1] 커널이 반려: %s", why)
 
@@ -468,7 +473,8 @@ class GrpcDualStreamService:
                             # 조용히 삼키지도 않는다 — 위 gRPC 예외와 **다른 로그**를 남긴다.
                             # 한 덩어리로 묶으면 "AI 가 죽은 것"과 "저장이 죽은 것"이
                             # 같은 줄로 보이고, 그러면 어느 쪽을 고쳐야 하는지 알 수 없다.
-                            _publish_detection_events(stream_monitor_id, metadata)
+                            _publish_detection_events(
+                                stream_monitor_id, metadata, processed_frames)
 
                         except Exception as e:
                             logger.error(f"❌ gRPC batch processing error: {str(e)}")
