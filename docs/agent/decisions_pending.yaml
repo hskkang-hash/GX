@@ -352,7 +352,8 @@ pending:
       이것은 시험 편의 문제가 아니라 판매 가능성 문제다.
     reversible: true
     blocks_dod: false
-    status: open
+    answered_by: D-273
+    status: answered
 
   - id: P-LOCAL-2
     ticket: "W0-3"
@@ -1264,4 +1265,5 @@ pending:
         "누출 0" 이 "탐지기가 눈멀었다"와 구별되지 않는 상태로 되돌아간다.
     reversible: true
     blocks_dod: false
-    status: open
+    answered_by: D-275 §5-2 (권고 B 채택) · D-277
+    status: answered
