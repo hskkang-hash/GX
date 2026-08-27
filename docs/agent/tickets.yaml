@@ -22,10 +22,10 @@ meta:
   # 손으로 세지 않는다: `python scripts/gen_manifest.py` 가 실측·대조한다 (불일치 시 exit 1).
   integrity: "manifest"
   manifest:
-    total: 75
+    total: 77
     by_phase:
       BACKLOG: 8
-      R1: 45
+      R1: 47
       R2: 14
       R3: 8
     ids:
@@ -74,6 +74,8 @@ meta:
       - DA-02
       - DA-03
       - DA-04
+      - DA-05
+      - DA2-21
       - W6-1
       - W6-2
       - W7-1
@@ -181,6 +183,41 @@ meta:
       phase: R1
       tickets: [DA-01, DA-02, DA-03, DA-04]
       goal: "F-01~F-14 를 구현 가능한 요구사항·화면·커널로 내리고, 무엇이 재사용이고 무엇이 신규인지를 문서로 확정한다 (코드 0줄)"
+
+    # --- 2026-08-27 신설 (대표 승인 · D-259) — WP-DA2 3분할 ---
+    # 왜 셋으로 쪼개나: WP 하나 = 능력 하나(AGENT_LOOP v4.1). WP-DA2 를 통으로 두면
+    # 대표 검토가 **3개월에 한 번**이 되고, 그것이 v3.0 무인완주가 실패한 모양이다(D-215).
+    # 월별 증분 릴리스(지시서 §5)를 그대로 WP 경계로 쓴다 — 릴리스 = 검토 지점.
+    #
+    # ★ 착수 조건 (셋 모두 공통):
+    #   (1) WP-2 EXIT(누출 0건)  (2) 대표 승인  (3) 정적 계층 검사 CI 등재
+    #       App(L4) 이 커널(L3) 모델을 직접 import 하면 실패 — DA-04 §5 · 계약 8조 IP 경계
+    # ★ ID 대역 (D-259): DA2-1x = a / DA2-2x = b / DA2-3x = c. 티켓 전건 등재는 2026-09.
+    - id: WP-DA2a
+      title: "릴리스#1 — K1 이벤트 커널 + F-01~03 탐지 확장 + F-05 이벤트 API"
+      phase: R1
+      tickets: []                      # 2026-09 등재 (DA2-1x 대역)
+      goal: "이벤트가 저장·조회·확인되고 외부 APP 이 F-05 하나로만 들어온다 (p95 500ms · U1 골격)"
+    - id: WP-DA2b
+      title: "릴리스#2 — SDN 어댑터 F-06~08(Mock→실기) + K2 알림 + K6 피드백"
+      phase: R1
+      tickets: [DA2-21]                # 나머지는 2026-09 등재 (DA2-2x 대역)
+      goal: "이벤트가 SDN 제어와 알림 발송으로 이어지고, 오탐이 숫자로 돌아온다 (10초·60초·30초 AC)"
+    - id: WP-DA2c
+      title: "릴리스#3 — K3 대시보드 프레임 + K4 보고서 엔진 → F-09·11·12 + 검수 준비"
+      phase: R1
+      tickets: []                      # 2026-09 등재 (DA2-3x 대역)
+      goal: "역할 3뷰가 각자 다른 화면을 보고 상황 보고서가 PDF 로 나온다 (5상태 100% · 영상 3초)"
+    - id: WP-DA3
+      title: "통합시험·최종검수 — 에스비 시험환경 (2027.1 · 계약 6차)"
+      phase: R1
+      tickets: []
+      goal: "화재·침수·통신두절 3시나리오가 에스비 환경에서 통과하고 소스가 인도된다 (AC 90%+ · 중대결함 0)"
+    - id: WP-DA4
+      title: "안정화 및 K7 데이터 커널 · F-13/14 고도화 (2027.2~8 · 계약 7~12차)"
+      phase: R2
+      tickets: []
+      goal: "융합 신호로 오탐률이 측정 가능하게 줄고, 상용판이 에스비 채널로 나간다"
 
   kind_enum:   [reuse, bind, new-s, new-l, ops, doc]
   # bind = 이미 있는 기능에 데이터만 연결 / new-s = 소규모 신규 / new-l = 대규모 신규
@@ -624,9 +661,9 @@ tickets:
 - id: W0-13
   phase: R1
   title: "created_by 없는 레코드의 전 테넌트 노출 차단"
-  status: decision-pending
+  status: ready
   updated_at: "2026-08-24T16:40:00+09:00"
-  evidence: docs/agent/evidence/W0-13/backfill_dryrun.md · backfill_dryrun.txt · impact.md · dump_scan.txt · docs/agent/evidence/W0-14/http_leak_probe.md §4
+  evidence: docs/agent/evidence/W0-13/backfill_dryrun.md · backfill_dryrun.txt · impact.md · dump_scan.txt · docs/agent/evidence/W0-14/http_leak_probe.md §4 · backfill_readiness.md · scripts/backfill_owner_apply.py · scripts/backfill_owner_rollback.py
   blocker: |
     [2026-08-22 · C안 근거가 정적 분석에서 **실측**으로 올라섰다]
     앞 항목(덤프 파싱 65.9%)에 더해, **HTTP 레벨에서 실제 노출을 재현했다**:
@@ -670,6 +707,38 @@ tickets:
 
     적재: **P-W0-13-1**(공용 마스터 판정 + Terminal 귀속 승인 · reversible=false) ·
           **P-W0-13-2**(스키마 정합 선행). 적용 스크립트는 판정 후에 만든다 — 지금 만들지 않았다.
+    ---
+    [2026-08-27 · **판정 확정 — 임계경로 해제. 적용 도구까지 만들었고 실행만 남았다**] D-261
+    전문: docs/agent/RESUME_NEXT.md §0 · evidence/W0-13/backfill_readiness.md
+
+    ★ status **decision-pending → ready**. 부수 효과로 P-LOOP-4(enum 에 없는 상태값)도 해소된다.
+
+    판정 3갈래 (세종 위임 · 대표 승인과 동일 효력):
+      (a) 부모 상속 가능 **23,616행 → 적용** (내역: R3 부모상속 23,273 + R2 created_by소속 343)
+      (b) terminals.Terminal 3,399 → **분할**. 단일소유 1,809 적용 / 미사용 1,590 은
+          채우지 않고 `tenant_unassigned` 로 **선언**하고 시험이 비노출을 지킨다
+      (c) 공용 마스터 약 2,000행 → **백필 금지 확정**. `shared: true` 로 면제대장에 근거와 함께
+          등록하고, 시험 기대값은 "전 테넌트 조회 가능" —
+          **PUBLIC 은 면제가 아니라 공용임을 시험으로 증명한 것**이어야 한다
+
+    만든 것 (전부 py_compile 통과 · 실행은 기동본 필요):
+      · scripts/backfill_owner_apply.py    — 적용본. **dry-run 로직을 import 해 재사용**한다
+        (복제하면 두 수가 갈리고 어느 쪽이 진실인지 알 수 없게 된다 — D-227 과 같은 실패 모양)
+      · scripts/backfill_owner_rollback.py — 짝. D-261 이 "롤백 없이 적용 금지"라 했다
+      · backend/tests/tenant_classification.py — (b)(c) 선언부. 스키마 변경 없이 선언 + 시험으로 지킨다
+
+    ★ **적용을 거부하는 가드를 파일 실재로 걸었다.** 체크박스가 아니다:
+      (1) --dryrun-report 실재 (D-209) (2) --backup 실재 + 1MB 이상 (D-002 · 빈 덤프 방지)
+      (3) --journal 경로. 저널이 이미 있으면 **덮지 않고 거부**한다 — 지우면 그 적용분은 못 되돌린다.
+      저널은 쓰기 **전에** 옛 값을 남기고 fsync 한다. 롤백은 현재 값이 우리가 쓴 값일 때만 복원한다
+      (남이 그 뒤에 바꾼 값을 덮으면 그것이 두 번째 사고다).
+
+    ★ **R1 45행은 적용하지 않는다.** D-261 (a) 의 23,616 은 R2+R3 의 합이고 R1(group 은 있고
+      created_by 가 없는 45행)은 RESUME_NEXT 가 언급하지 않았다. 승인 안 받은 행을 쓰지 않는다.
+      필요하면 `--include-r1` 이 있으나 별도 판정이 있을 때만 쓴다.
+
+    ⚠ **실행 대기**: 이 머신에 Docker 데몬·dj-core·psql 이 없다. 적용은 로컬 기동본에서
+      (`RUNBOOK_로컬기동.md`). 절차와 명령은 evidence/W0-13/backfill_readiness.md §3.
   priority: P0
   effort: M
   kind: reuse
@@ -705,7 +774,7 @@ tickets:
   kernel: ['K5']                     # 공유 커널 (지시서 v2.1) — F-12 ↔ U4 이중 AC
   status: in_progress
   updated_at: "2026-08-22T22:10:00+09:00"
-  evidence: docs/agent/evidence/W0-14/pilot_scope_stream_monitors.md · http_leak_probe.md · leak_matrix.json · coverage.md · route_baseline.json · openapi_routes.json
+  evidence: docs/agent/evidence/W0-14/pilot_scope_stream_monitors.md · http_leak_probe.md · leak_matrix.json · coverage.md · route_baseline.json · openapi_routes.json · w0_14c_write_guards_and_correction.md · leak_targets_coverage.md · leak_targets.json · route_model_map.json · p0_target_draft.md · exit_coverage_appendix.md
   blocker: |
     [2026-08-22 · **HTTP 레벨 교차 노출을 실측했다. 격리는 뚫려 있다**]
     전문: docs/agent/evidence/W0-14/http_leak_probe.md · leak_matrix.json
@@ -815,6 +884,82 @@ tickets:
       · ② test_all_routes_are_tenant_scoped 는 통과하나(대장 증가금지),
         test_tenant_isolation 5시나리오는 **배선 결함으로 판정 미도달** — P-W0-14-2 적재.
         이 파일은 금지 #5 대상이라 배선도 대표 승인 없이는 손대지 않는다 (D-250 선례).
+    ---
+    [2026-08-27 · **판정 도구의 커버리지를 셌다 — 시험은 131종 중 9종만 본다**] D-260
+    전문: docs/agent/evidence/W0-14/leak_targets_coverage.md
+    도구: scripts/build_leak_targets.py (읽기 전용 · Django·dj-core 불필요)
+
+    ★ **EXIT 조건 1 은 지금 판정 불가다 — 모수가 밝혀져 있지 않다.**
+      "재현 누출 0건 · 시나리오 5/5" 의 그 5시나리오가 도는 대상은 **9종**이고
+      테넌트성 모델은 **131종**(W0-13 실측)이다. 나머지 **122종**에 대해 말할 수 있는 것은
+      "누출 없음"이 아니라 **"모른다"** 다. 122종에 0건이라 쓰면 측정이 아니라 가정이다.
+
+    ★ 그러므로 남은 일은 "648 라우트 부착"이 아니다 — 부착률은 EXIT 기준이 아니다(D-249).
+      **시험 대상을 9 → 131 로 올리는 것**이고, 그 작업 목록이 이 실측이다:
+        · **P0 6종** (시험 밖 · 단건 경로 있음 · 행 50+) — 여기부터 Target 에 올린다
+          menu.Menu 12 · orders.OrderStatusMapping 5 · flight_log.FlightLog 3 ·
+          surveillance.VideoAnalysis 2 · task_status.TaskStatus 2 · orders.Payment 1
+          ※ FlightLog(308행)·VideoAnalysis(117행)는 재난안전 App(F-13·F-01~03)이 직접 쓸
+            데이터다. 에스비 채널은 고객사별 분리가 전제 — WP-DA2 착수 전에 닫아야 한다.
+        · P1 17종 · P2 99종
+    ★ **P2 99종을 "라우트 없음"으로 읽지 말 것.** 그중 **93종은 같은 앱에 단건 경로가 있다** —
+      모델명이 경로와 안 맞았을 뿐일 수 있다(동사형 경로가 흔하다). 자동 면제하지 않는다.
+      미분류가 면제로 위장하면 시험은 초록이 되고 노출은 그대로 남는다(coverage.md §2 도피로).
+    ★ 대조 불일치 1건: stream_monitors.DetectionEvent 는 시험에 있고 인구조사에 없다
+      (W2-1 마이그레이션 미적용). 지우지 않고 출력에 띄운다.
+
+    ⚠ 이 커밋은 **세는 것까지**다. Target 추가·누출 수정은 하지 않았다 —
+      실경로 확인이 선행이고(W0-14b 배선 결함 4종의 교훈), 남은 실패 3건은 §0.4 안이다.
+    ⚠ **여전히 대기: W0-13 백필 판정(P-W0-13-1/2).** D-254 가 백필을 652 확대 앞에 뒀고
+      그 판정이 없으면 W0-14c 본체는 열리지 않는다. 대표 결재 대기 중.
+
+    ---
+    [2026-08-27 2차 · **실경로 재측정 — P0 가 6종에서 19종으로 늘었다**] D-263 · D-262
+    전문: docs/agent/evidence/W0-14/leak_targets_coverage.md §7
+    도구: scripts/map_routes_to_models.py (신설) · build_leak_targets.py (이름 매칭 **폐기**)
+
+    ★ D-263 이 앱 단위 매칭을 금지하고 모델별 실경로 매칭을 지시했다. 이름 매칭을 버리고
+      **핸들러가 실제로 만지는 모델을 AST 로 추적**한다 — 라우트 → 핸들러 → 호출 → 모델.
+      호출 해석은 그 모듈이 **실제로 import 한 모듈 안에서만** 한다. 근거는 파일:행이다.
+
+    ★ **결과가 바뀌었다. D-262 의 "P0 6종"은 1차 측정의 수다:**
+        P0 **19종**(EXIT 필수) · P1 **46종**(계획 등재) · UNREVIEWED **57종**(사유 첨부)
+      6종만 닫고 EXIT 하면 13종이 모수 밖에 남는다 — **D-262 가 고치려던 실패의 재발**이다.
+      그래서 수를 갱신해 올린다. EXIT 조건 ②의 실제 범위는 세 배다.
+
+    ★ 만드는 과정에서 도구 결함 2건을 잡았고 둘 다 문서에 남겼다:
+      ① 호출 그래프 폭주(ChecklistSetting "단건 313건") — 이름만으로 함수를 찾아 앱을 넘나들었다.
+         1차의 앱 단위 매칭과 **같은 결함**이다.
+      ② **거짓 음성** — flight_log.FlightLog 의 /detail/{id}·/delete/{ids} 를 놓쳤다.
+         핸들러가 **자기와 같은 이름의** 서비스 메서드를 가려 해석이 자기 자신에서 끝났다.
+         그대로 갔으면 FlightLog 가 조용히 면제된다 — 그리고 그 모델은 하필
+         **D-266 이 WP-DA2 착수 전 필수로 지정한 2종 중 하나**였다.
+      ②가 더 무섭다. ①은 수가 이상해서 보이지만 ②는 **경고 없이 커버리지를 줄인다.**
+
+    ★ P0 19종 중 group NULL 100% 가 넷(MissionWaypoint 8,877 · DeliveryOperationApprovalChecklist
+      3,013 · OrderAssignment 261 · TerminalOperatingTime 98). **W0-13 백필 (a) 의 대상이기도 하다** —
+      백필이 끝나야 격리 시험의 기대값이 의미를 갖는다. 순서는 D-261 대로 백필이 먼저다.
+
+    ---
+    [2026-08-27 3차 · **P0 를 19 → 15 로 시정 + ④ 준비 완료**]
+    전문: evidence/W0-14/leak_targets_coverage.md (배너) · p0_target_draft.md
+
+    ★ **시정**: 2차는 **pk 가 없는 쓰기**(`POST /approve-flight` 처럼 요청 **본문**으로 대상을
+      고르는 라우트)를 "단건 경로"로 셌다. 그것은 IDOR 경로가 아니라 배선이 다른 별개 위험이다.
+      섞으면 단건 수가 부풀고 그러면 P0 가 부푼다 — **또 하나의 "구별하지 못하는 수"**다.
+      분리: **P0 15 · P1 50 · UNREVIEWED 57**. 내려간 4종은 사라진 게 아니라 P1 에서 사유와 함께 센다.
+      (이 저장소가 반복해서 만난 실패다 — 부착률 466/466 · 앱 단위 매칭 · 시나리오 5/5.
+       셋 다 "수는 큰데 대상을 구별하지 못하는 수"였다.)
+
+    ★ **④(P0 전수 시험)의 배선을 미리 뽑았다** — `scripts/draft_isolation_targets.py` 신설.
+      W0-14b 를 죽인 것은 격리 로직이 아니라 배선이었고 그중 최대가 **필수 FK 24건**이었다.
+      P0 15종에 대해 (a) 어떤 라우트가 이 모델을 만지는가 (b) 레코드 하나를 만들려면 무엇이
+      필요한가(= `null=True` 도 `default=` 도 없는 필드)를 모델 선언 AST 로 뽑았다.
+      · **D-266 선결 2종(FlightLog · VideoAnalysis)이 마침 필수 FK 0** —
+        우선순위와 배선 비용이 같은 방향이다. 필수 FK 없는 4종이 첫 묶음.
+      ⚠ **초안이지 정답이 아니다**: dj-core 부모(BaseModel 등)의 필수 필드는 저장소 밖이라
+        보이지 않는다. 수정/삭제 메서드 모양도 기동본 확인 대상이다(PATCH 는 전체에 1건).
+        그대로 MODELS 에 붙여넣지 않는다 — 추정 위에 배선을 쌓으면 전부 다시 한다.
   priority: P0
   effort: L
   kind: new-s
@@ -1234,7 +1379,7 @@ tickets:
   title: "테넌트 격리 회귀 테스트 신설"
   status: in_progress
   updated_at: "2026-08-24T15:30:00+09:00"
-  evidence: docs/agent/evidence/W0-14/wiring_fix_and_findings.md · evidence/W0-3/coverage.md · evidence/LOCAL_BRINGUP/test_tenant_isolation.txt · evidence/W0-14/http_leak_probe.md
+  evidence: docs/agent/evidence/W0-14/wiring_fix_and_findings.md · evidence/W0-3/coverage.md · evidence/LOCAL_BRINGUP/test_tenant_isolation.txt · evidence/W0-14/http_leak_probe.md · evidence/W0-14/w0_14c_write_guards_and_correction.md · evidence/W0-14/leak_targets_coverage.md
   blocker: |
     [2026-08-22 · 처음으로 실행됐다. 예상 1건 적중 + 예상 밖 3건]
     결과: Ran 3 tests — 1 ok / 2 FAIL / 2 ERROR(setUpClass)
@@ -1265,6 +1410,49 @@ tickets:
 
     dod ② 는 D-224 로 @expectedFailure 금지 · coverage.md 등록부 방식이 정본이므로 형식은 유지된다.
     ※ status 값 decision-pending 은 meta.status_enum 에 없다 — P-LOOP-4 참조.
+
+    ---
+    [2026-08-27 · **레지스트리에 넣을 것 2건이 대표 판정으로 확정됐다**] D-256 (P-DA-3 → C안)
+      · report_template.ReportTemplate — BaseModel 상속이라 모델 레벨 group 격리가 없다.
+        W0-14c 문지기가 HTTP 표면만 막았다. **지금은 격리 시험 레지스트리 등록만** 하고,
+        BaseModelWithGroup 전환은 K4 착수 시(WP-DA2c) 백필과 함께. 이유: 지금 전환하면
+        스키마 변경 + 백필이라 파괴적이고(D-209) WP-2 EXIT 를 늦춘다 — EXIT 는 WP-DA2
+        착수 조건이므로 전체 일정이 밀린다. 등록해 두면 **문지기 없는 새 경로가 붉게 뜬다.**
+      · dashboard.DashboardPanel — 같은 성격의 미등록. 함께 처리한다.
+      ⚠ 둘 다 NO_ROUTE 가 늘어 증가금지 래칫에 걸린다(정정본 §3 이 예고). 래칫을 푸는 것이
+        아니라 BASELINE 을 **사유와 함께** 올린다 — 사유 없는 상향은 도피로다.
+
+    [2026-08-27 · **커버리지가 EXIT 의 실제 병목이라는 것이 실측됐다**] D-260
+    전문: docs/agent/evidence/W0-14/leak_targets_coverage.md
+    이 시험의 MODELS 는 **9종**이고 테넌트성 모델은 **131종**이다. dod 를 "5시나리오 green"
+    으로만 읽으면 **122종이 모수 밖에 있는 채로 초록**이 된다. P0 6종 → P1 17종 순으로
+    Target 을 올리는 것이 W0-14c 의 작업 목록이다.
+
+    [2026-08-27 2차 · **EXIT 조건 1 이 재정의됐다 + 분류 등록부 신설**] D-262 · D-261
+    · EXIT 조건 1 은 이제 넷이다: ① 시나리오 5/5 ② **P0 전수 통과(EXIT 필수)**
+      ③ P1 시험 계획 등재 ④ UNREVIEWED 각각의 사유 첨부.
+      "우리가 무엇을 검증했고 무엇을 아직 모르는지"를 EXIT 문서가 스스로 말하게 한다.
+    · 재측정 결과 **P0 19종 · P1 46종 · UNREVIEWED 57종** (D-262 는 6종으로 쓰였다 — 갱신분).
+    · 신설 `backend/tests/tenant_classification.py` — D-261 (b)(c) 의 선언부.
+      SHARED_MASTERS 12건(기대값: 전 테넌트 조회 가능) · TENANT_UNASSIGNED 1건
+      (기대값: 전역 관리자 외 비노출) · DEFERRED 5건(별도 판단 필요를 **명시**).
+      전건에 근거 한 줄이 붙어 있고, 18건 전부 W0-13 인구조사에 실재함을 대조했다.
+      ⚠ 아직 **시험이 이 등록부를 소비하지 않는다** — 단언 배선은 기동본에서 (아래).
+    ⚠ 실행 대기: 이 머신에 dj-core 가 없어 시험을 돌릴 수 없다. Target 추가·단언 배선은
+      로컬 기동본에서 한다. 검증 없이 시험 파일을 고치면 그 자체가 위험이다(금지 #5 취지).
+
+    [2026-08-27 3차 · **EXIT 조건 ③④ 산출물을 만들었다 — 재생성 가능본**]
+    산출: docs/agent/evidence/W0-14/exit_coverage_appendix.md
+    생성: `python scripts/build_leak_targets.py --appendix` (손으로 고치지 않는다)
+
+    D-262 ③ P1 **50종** 시험 계획 등재 · ④ UNREVIEWED **57종** 분류 사유 전건.
+    UNREVIEWED 중 **선언 14종 / 미판단 43종**(합계 15,210행)을 있는 그대로 적었다.
+    ★ **미판단이 남은 채로 EXIT 하는 것은 허용된다** — D-262 ④ 가 요구한 것은 "전부
+      판단하라"가 아니라 "각각의 분류 사유를 문서로 첨부하라"이기 때문이다.
+      다만 **미판단을 판단으로 위장하지 않는다.** 표의 빈 칸이 그 정직함의 자리다.
+    ★ 부록이 답하는 것: 격리를 몇 종에서 시험했나(9 → EXIT 시 24) · 시험 안 한 107종의
+      **각각의 사유** · "안전한가"에 **"모른다"**라고 답한다는 사실.
+      에스비 검수의 "보안 점검 통과"(계획서 7장)에 이 문서로 답한다.
   priority: P0
   effort: M
   kind: new-s
@@ -1803,8 +1991,8 @@ tickets:
 - id: DA-01
   phase: R1
   title: "요구사항정의서 — 재난안전 DSM App (F-01~F-14 · 역할 5종 · U1~U4 수렴)"
-  status: review
-  updated_at: "2026-08-25T14:30:00+09:00"
+  status: done
+  updated_at: "2026-08-27T10:00:00+09:00"
   evidence: docs/design/DA-01_요구사항정의서_v1.0.md · docs/agent/review/WP-DA1/ENTRY.md
   blocker: |
     [2026-08-25 · **dod ①~④ 충족. 계약 원문 대조에서 전제 3건이 갈렸다**]
@@ -1836,6 +2024,16 @@ tickets:
     OPEN 7건(성능 목표치·p95 부하조건·격리 결함·U 매핑·열거값 절차·명세 미수령·알림 GAP)을
     문서 §6 에 사유·기한과 함께 남겼다. 숨기지 않았다.
     review 사유: human_gate — 이 문서가 검수 AC 90% 의 **분모**를 확정한다.
+
+    ---
+    [2026-08-27 · **대표 승인 — done**] D-256. 승인 표시는 대표 지시 대행으로 기입했다.
+    승인은 이 문서에 달려 있던 판정 3건을 함께 확정한다(문서가 그 기본값 위에 쓰였으므로):
+      · P-DA-1 → **A** (U 매핑은 정의 원본 = 상품화 개발방안 §2 를 정본으로)
+      · P-DA-3 → **C** (ReportTemplate 은 문지기 유지 + 격리 시험 레지스트리 등록만 지금.
+                        BaseModelWithGroup 전환은 K4 착수 시 백필과 함께 — WP-DA2c)
+      · P-DA-4 → **A** (5상태 = 화면 상태 5종. 계약 [별첨 1] 원문)
+    OPEN 7건은 닫히지 않았다 — 승인이 OPEN 을 지우지 않는다. OPEN-07(F-10 GAP)은
+    D-257 로 티켓 `DA2-21` 이 되었고, 나머지 6건은 WP-DA2a ENTRY 의 입력이다.
   priority: P0
   effort: M
   kind: doc
@@ -1884,7 +2082,7 @@ tickets:
   phase: R1
   title: "SDN 연계 API 매핑서 — 에스비 명세 ↔ I-1~I-5 어댑터 (F-06·07·08)"
   status: blocked
-  updated_at: "2026-08-25T14:30:00+09:00"
+  updated_at: "2026-08-27T10:00:00+09:00"
   evidence: docs/design/DA-02_SDN_API_매핑서_v0.1_수령요건.md
   priority: P0
   effort: M
@@ -1903,6 +2101,19 @@ tickets:
     무엇을 받아야 매핑이 가능한지(엔드포인트·인증·QoS 파라미터·링크상태 이벤트·오류코드)를
     미리 적어 두어, 명세가 도착한 날 바로 매핑에 들어간다.
     대표 조치(지시서 §5): 미수령 시 이메일로 기록 + 기한 연장 요청(6조3항).
+
+    ---
+    [2026-08-27 · **기한 2일 초과 — 계속 blocked**]
+    계약 3조2항의 명세 제출 기한은 **2026-08-25**였다. 오늘 2026-08-27 기준 **2일 초과**이고
+    저장소에 명세 파일은 여전히 0건이다(`docs/design/` · `docs/contracts/` 대조).
+    이 초과를 티켓에 남기는 이유: 12월 검수에서 F-06·07·08 이 Mock 으로만 통과할 경우,
+    **지연의 귀속을 다투게 된다.** 그때 근거가 되는 것은 기억이 아니라 이 기록과 대표의 이메일이다.
+
+    ★ 그러나 이 blocked 가 F-06~08 을 인질로 잡지는 않는다 (D-259).
+      어댑터 인터페이스 I-1~I-5 와 Mock 구현은 **명세와 독립**이어야 한다 —
+      계약 9조2항이 "타 SDN 교체 가능"을 요구하므로 그것이 원래 옳은 설계다.
+      인터페이스 확정은 WP-DA1 잔여분(9월)에서, 실기 결선만 명세 도착 후로 미룬다.
+    ⚠ 대표 조치 미확인: ① 미수령 이메일 기록 ② 6조3항 기한 연장 요청. 둘 다 오늘 확인 필요.
   reuse_targets:
     - docs/contracts/stream-control.openapi.yaml   # 기존 OpenAPI 계약 서식 — 같은 형식을 쓴다
     - docs/contracts/api-error-and-auth.md         # 오류·인증 계약
@@ -1931,8 +2142,8 @@ tickets:
 - id: DA-03
   phase: R1
   title: "화면설계안 — F-09 재난 대시보드 · F-12 관리자 설정 (User Flow 5종 기준)"
-  status: review
-  updated_at: "2026-08-25T14:30:00+09:00"
+  status: done
+  updated_at: "2026-08-27T10:00:00+09:00"
   evidence: docs/design/DA-03_화면설계안_v1.0.md
   blocker: |
     [2026-08-25 · **dod ①~④ 충족. 3초 KPI 의 측정 지점을 못박았다**]
@@ -1957,6 +2168,10 @@ tickets:
 
     미정 3건(네트워크 링크 표현 · 3계층 프리셋 관계 · 목록 기본 필터)은 §5 에 사유·시점과 함께.
     review 사유: human_gate.
+
+    ---
+    [2026-08-27 · **대표 승인 — done**] D-256. P-DA-4 → A 확정으로 "5상태 = 화면 상태 5종"이
+    이 문서의 전제로 굳는다. 미정 3건은 WP-DA2c(12월 · F-09/F-12 구현) ENTRY 의 입력으로 이월한다.
   priority: P0
   effort: M
   kind: doc
@@ -1998,8 +2213,8 @@ tickets:
   phase: R1
   title: "공유 커널 6종 API 스펙 (K1~K6) — F 계약 AC ↔ U 상품 AC 이중 태깅표"
   kernel: [K1, K2, K3, K4, K5, K6]   # 이 티켓이 커널 정의의 정본이다
-  status: review
-  updated_at: "2026-08-25T14:30:00+09:00"
+  status: done
+  updated_at: "2026-08-27T10:00:00+09:00"
   evidence: docs/design/DA-04_공유커널_API스펙_v1.0.md · scripts/verify_kernel_map.py
   blocker: |
     [2026-08-25 · **dod ①~④ 충족. 커널 6종 정의 + kernel: 필드 18건 정본 반영**]
@@ -2024,6 +2239,12 @@ tickets:
 
     ID 충돌 검사(D-246 교훈): DA-01~04 는 기존 정본 ID 집합과 충돌 없음. manifest 71→75 통과.
     review 사유: human_gate.
+
+    ---
+    [2026-08-27 · **대표 승인 — done**] D-256. §5 가 올린 조건(App 이 커널 모델을 직접
+    import 하지 않는다 = 정적 검사)은 D-259 로 **WP-DA2 착수 조건**에 편입됐다.
+    K2 GAP 은 D-257 로 닫힌다 — 티켓 `DA2-21` 등재. 이 티켓의 §4 매핑표도 함께 갱신했고
+    `python scripts/verify_kernel_map.py` 가 그 일치를 판정한다.
   priority: P0
   effort: M
   kind: doc
@@ -2066,6 +2287,120 @@ tickets:
   verify:
     - "test -f docs/design/DA-04_공유커널_API스펙_v1.0.md"
     - "python scripts/verify_kernel_map.py"
+
+# --- 2026-08-27 신설 (지시서 v2.2 Code 지시 · 대표 승인 D-258) ---
+- id: DA-05
+  phase: R1
+  title: "데이터 어댑터 4종 · K7 컨텍스트 커널 API 스펙 (지시서 v2.2 Data IN/OUT)"
+  status: ready
+  updated_at: "2026-08-27T10:00:00+09:00"
+  priority: P1
+  effort: M
+  kind: doc
+  depends_on: [DA-01, DA-04]
+  human_gate: true
+  gate: human-required
+  requires_intranet: false
+  decisions: [D-204, D-207, D-210, D-258]
+  reuse_targets:
+    - backend/common/external_http.py              # 외부 호출 타임아웃 규약 (W0-17)
+    - backend/third_api/                           # 기존 외부 연동 어댑터 관례
+    - docs/design/DA-04_공유커널_API스펙_v1.0.md   # K1~K6 — K7 은 그 서식을 따른다
+    - docs/contracts/detection-event.md            # K7 이 먹이는 F-04 의 입력 계약
+    - docs/agent/evidence/W0-17/                   # 저하 운전 패턴 — 소스 장애 시 영상 단독 판정
+  spec: |
+    지시서 v2.2 "데이터 전략"의 설계 산출물. **문서만. 코드 0줄.**
+
+      (1) L2 데이터 어댑터 4종의 스펙: 기상(apihub.kma.go.kr) · 재난안전(safetydata.go.kr) ·
+          수위/공공(data.go.kr) · 위성(NASA FIRMS). 넷은 **독립·교체 가능**해야 한다 —
+          한 소스가 죽어도 나머지가 산다.
+      (2) L3 **K7 컨텍스트 커널**: 4종을 정규화·캐시해 **하나의 context 로** 내놓는다.
+          F-04 규칙이 소비하는 것은 어댑터가 아니라 K7 이다 (커널 규칙 1 — 어댑터는 L2).
+      (3) ★ **저하 운전이 이 커널의 기본 상태다.** 외부 데이터는 **보조 신호**이고,
+          소스 장애 시 **영상 단독 판정으로 떨어진다**(W0-17 패턴). 이것을 예외가 아니라
+          정상 경로로 설계한다 — 무상 공공 API 의 가용성은 우리 통제 밖이다.
+      (4) 융합 규칙 FX-1~FX-4 를 F-04 규칙 스키마의 `context` 조건으로 표현한다.
+          **코드 무변경으로 규칙만 바뀌어야 한다**(F-04 AC: JSON 무재기동 반영).
+      (5) Data OUT: 수신기관 프로필(유형·등급 필터·채널·유무상 키) 1테이블을 K1 에 얹는 안.
+          기관별 신규 연동을 만들지 않는다 — 전부 F-05 + Webhook 하나로 나간다.
+      (6) 키는 문서에 값을 적지 않는다. 비밀저장소 참조만 (D-204).
+    ⚠ **계약과의 경계를 문서 머리에 못박는다**: F-01~14 의 AC 는 외부 데이터와 **무관**하다.
+       K7 은 상용판 확장이고 코드 착수는 **2027.2~**(WP-DA4). 12월까지는 계약 M 기능에 집중한다.
+    ⚠ 예외 단 1건: 10~12월에 **F-04 규칙 스키마에 `context` 필드만 예약**한다(빈 채로).
+       나중에 스키마를 바꾸면 이미 저장된 규칙을 전부 이관해야 한다 — 그 비용을 지금 0 으로 만든다.
+    ⚠ 선행 확인 2건(대표·법률): (a) 지자체 데이터 소유권 — 라이선스 표준계약에 "비식별 이벤트
+       메타 제3자 제공 동의" 조항 (b) 유상 판매는 개인정보·위치정보법 검토 후. 문서에 미결로 남긴다.
+  dod: |
+    (1) docs/design/DA-05_데이터어댑터_K7_API스펙_v1.0.md 가 존재하고 어댑터 4종 + K7 이 스펙으로 있다
+    (2) 소스 장애 시 저하 운전 경로가 **소스별로** 정의돼 있다 (전부 죽어도 영상 단독 판정)
+    (3) FX-1~FX-4 가 F-04 규칙 JSON 예시로 표현돼 있고, `context` 필드 예약 위치가 지정돼 있다
+    (4) Data OUT 수신기관 프로필 스키마가 있고, 신규 연동 없이 기관을 늘릴 수 있음이 보인다
+    (5) 문서에 실제 인증정보 값이 0건이다 (gitleaks)
+    (6) K7 을 DA-04 §4 매핑표와 verify_kernel_map.py 의 대상 커널에 **함께** 편입한다
+        (지금 편입하지 않는 이유: K7 스펙이 없는 상태에서 kernel: 필드만 넣으면 검증 밖에서 떠돈다)
+    (7) 대표 승인 (human_gate)
+  verify:
+    - "test -f docs/design/DA-05_데이터어댑터_K7_API스펙_v1.0.md"
+    - "gitleaks detect --source docs/design --no-git"
+    - "python scripts/verify_kernel_map.py"
+
+# --- 2026-08-27 신설 (P-DA-2 → B안 승인 · D-257) ---
+# ★ 이 티켓이 없으면 정본이 전부 done 이 되어도 계약 필수(M) 기능 하나가 구현되지 않는다.
+#   DA-04 가 "커널 6종 중 K2 만 대응 티켓 0건"을 기계로 잡아 드러난 GAP 이다.
+- id: DA2-21
+  phase: R1
+  title: "F-10 알림 발송 — K2 알림 커널 (등급별 수신그룹 · 다채널 · 발송이력)"
+  kernel: [K2]
+  feature: [F-10]
+  status: backlog
+  updated_at: "2026-08-27T10:00:00+09:00"
+  priority: P0
+  effort: L
+  kind: new-l
+  depends_on: [DA-01, DA-04]
+  human_gate: true
+  gate: human-required
+  requires_intranet: false
+  decisions: [D-210, D-257, D-259]
+  blocker: |
+    [2026-08-27 · **착수 금지 — backlog 로 등재만 한다**]
+    코드 착수는 WP-DA2b(11월) 이고 그 전제는 WP-2 EXIT + 대표 승인이다 (D-259).
+    지금 등재하는 이유는 착수가 아니라 **누락 방지**다 — 계약 필수(M) 기능이
+    정본에서 빠져 있는 상태를 몇 주 유지하는 것이 실제 위험이다 (P-DA-2 B안).
+
+    ★ **미해결 선행 1건 — 발송 채널 업체 선정은 개발 사안이 아니다.**
+      SMS·푸시는 외부 유료 서비스이고 계약·비용 판단이 필요하다 (DA-04 D4-1).
+      기한: WP-DA2b ENTRY(2026-10) 까지. 미정이면 메일 채널만으로 착수하고
+      SMS·푸시는 어댑터 자리만 비워 둔다 — AC 30초는 채널 종류와 무관하다.
+    ★ frontend/.../SurveillanceDashboard/components/NotificationsList 는 **화면단 목록**이다.
+      발송 기능이 아니다. 재사용 대상으로 착각하지 말 것 — DA-01 OPEN-07 의 실측.
+  reuse_targets:
+    - backend/stream_monitors/models.py            # DetectionEvent — 발송 트리거의 원천 (K1)
+    - docs/contracts/detection-event.md            # Severity 3종 — critical 이 F-10 발동 조건
+    - backend/common/external_http.py              # 외부 발송 호출 타임아웃 규약 (W0-17)
+    - backend/common/tenant_roles.py               # 수신그룹은 역할 5종 위에 얹는다 (K5)
+  spec: |
+    K2 알림 커널. **L3 Platform 구현 = 가이온 IP**(계약 8조3항) — App 은 소비만 한다.
+
+      (1) 등급별 **수신그룹** 모델: 재난 등급 3종(주의·경계·심각) × 역할 5종 → 수신자 규칙.
+          규칙 편집은 F-12(관리자 설정)이고 **설정 감사로그**가 남아야 한다.
+      (2) 채널 어댑터: 메일 · SMS · 푸시. **채널은 교체 가능해야 한다** — 업체가 미정이므로
+          인터페이스를 먼저 고정하고 구현체를 나중에 끼운다 (DA-02 와 같은 이유).
+      (3) **발송 이력**: 무엇을 · 누구에게 · 언제 · 성공/실패 · 재시도. AC 판정의 유일한 근거다.
+      (4) 저하 운전: 발송 업체가 죽어도 이벤트 처리·대시보드는 200 을 유지한다 (W0-17 패턴).
+          발송 실패는 이력에 실패로 남고 재시도 큐로 간다 — 조용히 사라지지 않는다.
+      (5) 이중 AC (DA-04 §2): [F-10 계약 AC] 심각 30초 내 발송 기록 ↔ [U2 상품 AC] 보고 자동화.
+          충돌 시 **계약 AC 우선**.
+    ⚠ 커널 규칙 1: K2 는 L3 에만. DSM App(L4)은 K2 의 API 만 부른다 — 모델 직접 import 금지.
+       이 규칙은 정적 검사로 걸린다 (D-259 착수 조건 3).
+  dod: |
+    (1) 심각 등급 이벤트 발생 → **30초 이내** 발송 기록이 남는 것이 시험으로 판정된다 (F-10 AC)
+    (2) 등급 x 역할 수신그룹 규칙이 F-12 화면에서 편집되고 설정 감사로그가 남는다
+    (3) 발송 실패가 이력에 남고 재시도된다 — 조용한 유실 0건
+    (4) 발송 업체 다운 시 이벤트 처리·대시보드 API 가 200 을 유지한다 (저하 운전 회귀시험)
+    (5) App(L4) → K2 모델 직접 import 0건 (정적 검사 green)
+  verify:
+    - "python manage.py test tests.test_notification_kernel -v 2"
 
 # ---------------------------------------------------------------------------
 # PHASE R2 "Station" — 2027.2Q
