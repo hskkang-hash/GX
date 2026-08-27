@@ -417,9 +417,18 @@ pending:
       그 필터가 실제로 걸린다는 것은 다른 문장이며, 후자는 W0-11 §5-2 가
       created_by__isnull OR 3곳으로 이미 거짓임을 보였다. A 는 판정 함수를 사실에
       맞추는 것일 뿐, W0-13 C안(뷰 레벨 스코프)의 필요성을 줄이지 않는다.
+    answered_at: "2026-08-28"
+    answered_by: "세종(기획) · 대표 위임 — RESUME_NEXT 2026-08-28"
+    answer: >-
+      **D-271 — A안 승인 + 증명 게이트 3조건.** 술어를 groups M2M ∪ group FK 로 확장하되,
+      ① FK 인정은 **모델별 실증 필수** (비소유 테넌트 HTTP 프로브 · 누출 0 확인분만 계상,
+      미실증은 unproven 으로 초록에서 뺀다) ② registry 모수를 **131종 전수**로 교정
+      ③ has_group_fk() 는 픽스처 전용 유지 · 단언은 ①의 실증을 참조.
+      D-105 저촉 아님 — 술어의 사실오류 교정이고 ①이 요구 수준을 오히려 높인다.
+      ※ "FK 를 가졌다"와 "필터가 실제로 걸린다"가 다르다는 위 지적이 바로 조건 ①로 흡수됐다.
     reversible: true
     blocks_dod: true
-    status: open
+    status: answered
 
   - id: P-LOCAL-4
     ticket: "(해당 없음 — 저장소/운영 정합)"
@@ -1215,6 +1224,14 @@ pending:
         C 는 수를 줄여 초록을 만드는 것이라 D-262 가 고치려던 실패의 재발이다.
       ※ A 를 택하면 Target 에 시나리오 한 칸(`via_parent`)이 늘고, 그 배선은 이번에 만든
         대상별 판정표 위에서 그대로 돈다 — 구조 변경은 크지 않다.
+    answered_at: "2026-08-28"
+    answered_by: "세종(기획) · 대표 위임 — RESUME_NEXT 2026-08-28"
+    answer: >-
+      **D-272 — A안 승인.** 도달 가능성을 3값으로 센다:
+      direct_pk(그 경로에 스코프 부착·시험) · via_parent(부모 경로 스코프 + 자식 필터
+      **둘 다** 시험. "직접 경로 없음"은 안전이 아니다) ·
+      no_route(면제가 아니라 등재 + **전수 라우트 대조 근거 첨부** · 라우트 추가 시
+      재검사되도록 게이트 연결). 근거는 D-263(자동 면제 금지)의 연장이다.
     reversible: true
     blocks_dod: true
-    status: open
+    status: answered
