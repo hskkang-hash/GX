@@ -401,12 +401,24 @@ pending:
       A 를 권고한다. B 는 "격리 메커니즘이 없다"는 **틀린 사실**을 정본에 새긴다.
       실제로는 메커니즘이 있고 모양이 다를 뿐이다. B 로 가면 나중에 그 13종을
       다시 조사해야 하고, 그때 KNOWN_UNISOLATED 가 조사를 가로막는다.
+      ★ **2026-08-27 격상 — 이 항목이 WP-2 EXIT 의 임계경로가 됐다** (W0-14c 실측).
+        (1) D-262 ② 가 P0 전수 등재를 EXIT 조건으로 걸었는데, P0 15종은 **전부 group FK**
+            모델이다. 즉 **EXIT 조건을 지키는 일이 이 시험을 더 빨갛게 만든다** —
+            등재할수록 "격리 메커니즘 없음"이 늘어난다. 오늘 2종만 올렸는데 5 → 7 이 됐다.
+        (2) 같은 정의를 쓰는 `test_registry_covers_all_isolatable_models` 의 **모수가 틀렸다.**
+            이 시험은 groups M2M 을 가진 소수만 세어 "누락 1건"이라 말한다. 그러나
+            W0-13 인구조사의 테넌트성 모델은 **131종**이다 — 이 초록은 D-260 이 지적한 그 착시다.
+        (3) A 를 뒷받침하는 새 사실: **W0-13 백필이 2026-08-27 에 채운 25,296행이 바로
+            그 `group_id`** 다. 기전이 없는 것이 아니라 우리가 어제 그 기전을 강화했다.
+        조치: 판정 없이 판정 로직을 바꾸지 않았다. 대신 `has_group_fk()` 를 **일부러 분리해**
+        두고 픽스처만 쓰게 했다 — 픽스처는 사실을 써야 하고, 단언은 판정을 기다린다.
+        전문: evidence/W0-14/w0_14c_p0_d266.md §8
       ★ 다만 A 를 적용해도 격리가 증명되는 것은 아니다. group FK 를 가졌다는 것과
       그 필터가 실제로 걸린다는 것은 다른 문장이며, 후자는 W0-11 §5-2 가
       created_by__isnull OR 3곳으로 이미 거짓임을 보였다. A 는 판정 함수를 사실에
       맞추는 것일 뿐, W0-13 C안(뷰 레벨 스코프)의 필요성을 줄이지 않는다.
     reversible: true
-    blocks_dod: false
+    blocks_dod: true
     status: open
 
   - id: P-LOCAL-4
@@ -1170,4 +1182,39 @@ pending:
         게이트를 끄는 것과 같다 — 그 경우 고칠 것은 코드다.
     reversible: true
     blocks_dod: false
+    status: open
+
+  - id: P-W0-14-5
+    ticket: "W0-14 · W0-3"
+    raised_at: "2026-08-27"
+    context: "P0 의 '라우트가 닿는다'가 두 뜻으로 쓰였다 — 나머지 13종의 등재 방식이 여기서 갈린다"
+    question: >-
+      `leak_targets_coverage.md` §7-2 는 P0 를 "**pk 를 지목하는 경로가 닿고** 행 50+"로
+      정의했다. D-266 선결 2종을 실제로 등재하며 나머지 13종의 실경로를 652 대장과 대조하니
+      **그런 경로가 없는 종이 여럿**이다:
+        · `surveillance.MissionWaypoint`(8,877행) — waypoint 를 포함하는 라우트 0개
+        · `orders.OrderHistory`(5,882) · `orders.OrderItem` — 직접 경로 없음
+        · `terminals.RouteTerminal`(2,062) — 초안이 지목한 `export-single-plan/{route_id}` 는
+          **Routes 의 id** 이지 RouteTerminal 의 pk 가 아니다
+      모순이 아니라 정의가 두 뜻으로 쓰인 것이다. `map_routes_to_models.py` 의 "닿는다"는
+      *핸들러가 그 모델을 만진다*(부모 경로를 통해)는 뜻이고, 격리 시험의 5시나리오는
+      *pk 로 그 레코드를 지목한다*를 전제한다.
+      **부모를 통해 자식이 새는 것은 실재하는 위험이고 재야 한다.** 다만
+      detail/update/delete 칸으로는 잴 수 없다.
+    options:
+      - "A: 부모 경로 시나리오를 신설 — 부모를 부르고 응답 본문에 남의 자식 pk 가 없는지 본다 (지금 export 가 그 모양이다). 13종을 그 시나리오로 등재"
+      - "B: pk 직접 경로가 없는 종은 ORM 수준 격리만 재고 HTTP 는 NO_ROUTE 로 등재 (사유 첨부)"
+      - "C: P0 정의를 pk 직접 경로가 있는 종으로 좁히고, 나머지는 P1 로 내린다 (EXIT 범위 축소)"
+    chosen_default: ""
+    rationale: >-
+      **기본값을 적용하지 않는다.** 셋이 EXIT 의 모수를 서로 다르게 만든다 —
+      즉 "무엇을 다 봤다고 말할 것인가"를 정하는 판정이고, 그것은 D-262 가 세운 조건의 해석이다.
+      ★ **A 를 권고한다.** 부모를 통한 자식 노출이 이 저장소에서 실재하는 모양이다
+        (MissionWaypoint 8,877행은 백필 前 group NULL 100% 였고 SurveyMission 아래에 있다).
+        B 는 HTTP 표면이 있는데도 "없다"고 적게 되어 NO_ROUTE 의 뜻을 흐린다.
+        C 는 수를 줄여 초록을 만드는 것이라 D-262 가 고치려던 실패의 재발이다.
+      ※ A 를 택하면 Target 에 시나리오 한 칸(`via_parent`)이 늘고, 그 배선은 이번에 만든
+        대상별 판정표 위에서 그대로 돈다 — 구조 변경은 크지 않다.
+    reversible: true
+    blocks_dod: true
     status: open

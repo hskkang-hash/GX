@@ -1472,6 +1472,14 @@ class VideoAnalysisController:
 
     @route.get("/{video_analysis_id}", auth=CustomJWTAuth())
     def get_video_analysis_detail(self, request: HttpRequest, video_analysis_id: int):
+        # ★ 문지기는 try **밖**이다 (W0-14c 1차의 교훈) — 아래 except 가 모든 예외를
+        #   삼켜 400 으로 바꾸므로, 안에 두면 Http404 도 삼켜져 아무것도 막지 못한다.
+        #   실측(2026-08-27): 남의 테넌트 레코드에 **400** 이 나갔다. 매니저가 걸러
+        #   누출은 없었으나 "없는 것과 같아야" 한다는 규약은 404 다 — 400 은
+        #   "요청이 틀렸다"여서 존재 여부에 대해 다른 말을 한다.
+        #   그리고 우연한 차단에 기대지 않는다: 매니저의 필터에는 created_by__isnull
+        #   OR 절이 있어(§0.4) 소유가 빈 행에서는 걸러 주지 못한다.
+        assert_scoped(VideoAnalysis, video_analysis_id, request.user)
         try:
             video_analysis = VideoAnalysisService.get_video_analysis_detail(video_analysis_id)
             # Use from_queryset instead of from_orm for DynamicSchema to get all fields including video_size
@@ -1520,6 +1528,14 @@ class VideoAnalysisController:
 
     @route.get("/{video_analysis_id}/download-detail")
     def download_video_analysis_detail(self, request: HttpRequest, video_analysis_id: int):
+        # ★ 문지기는 try **밖**이다 (W0-14c 1차의 교훈) — 아래 except 가 모든 예외를
+        #   삼켜 400 으로 바꾸므로, 안에 두면 Http404 도 삼켜져 아무것도 막지 못한다.
+        #   실측(2026-08-27): 남의 테넌트 레코드에 **400** 이 나갔다. 매니저가 걸러
+        #   누출은 없었으나 "없는 것과 같아야" 한다는 규약은 404 다 — 400 은
+        #   "요청이 틀렸다"여서 존재 여부에 대해 다른 말을 한다.
+        #   그리고 우연한 차단에 기대지 않는다: 매니저의 필터에는 created_by__isnull
+        #   OR 절이 있어(§0.4) 소유가 빈 행에서는 걸러 주지 못한다.
+        assert_scoped(VideoAnalysis, video_analysis_id, request.user)
         try:
             video_analysis = VideoAnalysisService.get_video_analysis_detail(video_analysis_id)
             # Use from_queryset instead of from_orm for DynamicSchema to get all fields including video_size

@@ -1,0 +1,32 @@
+W0-14c P0 등재 · D-266 선결 2종 — 격리 시험 실행 결과
+실행 2026-08-27 · 대상 = 로컬 복제본 (운영 아님)
+명령: docker exec gx-shell sh -c 'cd /app && DJANGO_SETTINGS_MODULE=config.settings PYTHONPATH=/app python -m pytest tests/ -q --nomigrations -p no:randomly -s'
+
+[ISO] delete — 대상 6건
+  LEAK Terminal                   200
+  OK   Device                     404
+  OK   ChecklistSetting           404
+  OK   SurveillanceProfile        404
+  OK   ReportTemplate             404
+  OK   FlightLog                  404
+[ISO] detail — 대상 7건
+  LEAK Order                      500  Order matching query does not exist.
+  OK   Terminal                   404
+  OK   Device                     404
+  OK   SurveillanceProfile        404
+  OK   ReportTemplate             404
+  OK   FlightLog                  404
+  OK   VideoAnalysis              404
+[ISO] update — 대상 5건
+  LEAK Terminal                   400
+  OK   Device                     404
+  OK   ChecklistSetting           404
+  OK   SurveillanceProfile        404
+  OK   ReportTemplate             404
+
+FAILED tests/test_tenant_isolation.py::TenantIsolationRegistryTest::test_registry_covers_all_isolatable_models
+FAILED tests/test_tenant_isolation.py::TenantIsolationRegistryTest::test_unisolated_set_has_not_grown
+FAILED tests/test_tenant_isolation.py::TenantIsolationAPITest::test_delete_api
+FAILED tests/test_tenant_isolation.py::TenantIsolationAPITest::test_detail_api
+FAILED tests/test_tenant_isolation.py::TenantIsolationAPITest::test_update_api
+5 failed, 75 passed, 35 warnings in 26.18s

@@ -181,6 +181,34 @@ MODELS: tuple[Target, ...] = (
         factory=lambda d, n: {"name": f"iso-template-{n}"},
     ),
 
+    # ─────────────────────────────────────────────────────────────────────
+    # W0-14c · P0 등재 (D-262 ② EXIT 필수 · 착수 순서 D-266 선결 2종 먼저)
+    #
+    # ★ 경로는 **초안이 아니라 실측**이다. `p0_target_draft.md` 는 정적 초안이었고
+    #   실제로 둘 중 하나가 틀렸다 — VideoAnalysis 의 상세 경로로
+    #   `/api/surveillance/surveillance-profiles/{profile_id}` 를 적었는데 그것은
+    #   **다른 모델(SurveillanceProfile)의 라우트**다. 실경로는 `/video-analysis/{id}` 다.
+    #   근거: evidence/W0-14/openapi_routes.json (531 경로 · 652 오퍼레이션)
+    #   필수 필드도 기동본에서 실측했다 (scripts/probe_p0_targets.py) — 둘 다 0개.
+    # ─────────────────────────────────────────────────────────────────────
+
+    # flight_log.FlightLog — 308행 · F-13 정찰. ★ D-266: WP-DA2 착수를 막는 2종 중 하나
+    Target(
+        "FlightLog", "flight_log", "FlightLog",
+        list_path="/api/flight-log/flight-log/",
+        detail=Route("GET", "/api/flight-log/flight-log/detail/{pk}"),
+        delete=Route("DELETE", "/api/flight-log/flight-log/delete/{pk}"),
+        factory=lambda d, n: {},          # 필수 필드 0개 (실측)
+    ),
+
+    # surveillance.VideoAnalysis — 117행 · F-01~03 탐지. ★ D-266 선결 2종 중 하나
+    Target(
+        "VideoAnalysis", "surveillance", "VideoAnalysis",
+        list_path="/api/surveillance/video-analysis",
+        detail=Route("GET", "/api/surveillance/video-analysis/{pk}"),
+        factory=lambda d, n: {},          # 필수 필드 0개 (실측)
+    ),
+
     # W2-1 에서 신설. BaseModelWithGroup 상속 — group 격리 대상이다.
     # HTTP 표면은 아직 없다 (W2-2 가 만든다) — 그래서 전 시나리오가 NO_ROUTE 다.
     Target(
@@ -216,6 +244,12 @@ NO_ROUTE: dict[str, str] = {
     "DetectionEvent:detail": "HTTP 표면 미구현 (W2-2)",
     "DetectionEvent:update": "HTTP 표면 미구현 (W2-2)",
     "DetectionEvent:delete": "HTTP 표면 미구현 (W2-2)",
+
+    # ── W0-14c · P0 등재분 (2026-08-27 실측) ─────────────────────────────
+    "FlightLog:update": "수정 라우트가 없다. 비행 로그는 기기가 쓰고 사람은 읽기만 한다 "
+                        "(flight_log/views.py 의 라우트 4개는 목록·상세·다운로드·삭제뿐)",
+    "VideoAnalysis:update": "수정 라우트가 없다 — /video-analysis 컨트롤러는 GET 3개뿐이다",
+    "VideoAnalysis:delete": "삭제 라우트가 없다 — 같은 이유",
 }
 
 #: 격리 메커니즘이 **아직 없는** 모델 (2026-08-13 실측).
@@ -238,8 +272,29 @@ def get_model(target: Target) -> type[models.Model]:
 
 
 def is_group_isolatable(model: type[models.Model]) -> bool:
-    """`groups` M2M 을 가진 모델만 group 격리를 받을 수 있다."""
+    """`groups` M2M 을 가진 모델만 group 격리를 받을 수 있다.
+
+    ⚠ **이 정의는 이 저장소의 실제 테넌시 기전과 다르다** — P-LOCAL-3 (미판정).
+      dj-core 의 `BaseModelWithGroup` 은 `group` **FK(단수)** 를 쓰고, W0-13 백필이
+      2026-08-27 에 채운 25,296행이 바로 그 `group_id` 다. 즉 기전은 **있고 모양이 다르다.**
+      그런데 이 함수는 그것을 "격리 메커니즘 없음"으로 읽는다.
+
+      고치지 않는 이유: 이 파일은 금지 #5 대상이고, P-LOCAL-3 이 A안(둘 다 인정)을
+      권고한 채 **판정 대기**다. 판정 없이 판정 로직을 바꾸지 않는다.
+      대신 아래 `has_group_fk` 로 **사실을 따로 잰다** — 픽스처는 사실을 써야 하고,
+      단언은 판정을 기다린다.
+    """
     return any(f.name == "groups" for f in model._meta.get_fields())
+
+
+def has_group_fk(model: type[models.Model]) -> bool:
+    """dj-core `BaseModelWithGroup` 계열 — `group` FK 로 테넌트를 가린다.
+
+    `is_group_isolatable` 과 **일부러 분리해 둔다.** 하나로 합치는 것이 P-LOCAL-3 의
+    A안이고 그것은 판정 사항이다. 여기서는 픽스처가 올바른 소유자를 쓰는 데만 쓴다.
+    """
+    return any(f.name == "group" and getattr(f, "many_to_one", False)
+               for f in model._meta.get_fields())
 
 
 class _FakeRequest:
@@ -504,7 +559,51 @@ class TenantFixtureMixin:
             obj.save()
             if is_group_isolatable(model):
                 obj.groups.set([group])
+            elif has_group_fk(model):
+                # ★ dj-core 의 BaseModelWithGroup 은 `group` FK(단수)를 쓴다.
+                #   여기서 명시하지 않고 자동 채움에 기대면, 픽스처가 **남의 것을 만들지
+                #   못했는데도 시험은 통과**할 수 있다 — D-253 2차 정정이 잡은 오염이
+                #   정확히 그 모양이었다(직전 요청의 사용자로 저장돼 A 가 읽는 게 정상이었다).
+                if getattr(obj, "group_id", None) != getattr(group, "pk", None):
+                    obj.group = group
+                    obj.save(update_fields=["group"])
+        # 만든 것이 정말 그 테넌트 소유인가 — 픽스처가 스스로 증명한다.
+        # 이것이 아니면 이 시험은 격리가 아니라 자기 자신을 시험하게 된다.
+        self._assert_owned_by(obj, group, target)
         return obj
+
+    @staticmethod
+    def _m2m_owner_pks(obj) -> set:
+        """`groups` M2M 의 실제 소유자 pk. **연결 테이블을 `_base_manager` 로 직접 읽는다.**
+
+        ★ `obj.groups.values_list("pk")` 로 물으면 안 된다 — 그 관리자는 `UserGroup` 의
+          테넌트 필터를 타므로, 현재 사용자 문맥이 없는 자리에서는 **붙어 있는데도 빈 집합**을
+          돌려준다. 실측에서 Dashboard 가 정확히 그렇게 나왔다.
+          '없다'와 '내게 안 보인다'를 구별하려면 연결 테이블 자체를 봐야 한다
+          (D-253 이 삭제 판정을 `_base_manager` 로 옮긴 것과 같은 이유다).
+        """
+        through = type(obj)._meta.get_field("groups").remote_field.through
+        to_obj = next(f.name for f in through._meta.fields
+                      if f.related_model is type(obj))
+        to_grp = next(f for f in through._meta.fields
+                      if f.related_model is not None and f.name != to_obj
+                      and f.related_model is not type(obj))
+        rows = through._base_manager.filter(**{to_obj: obj})
+        return set(rows.values_list(f"{to_grp.name}_id", flat=True))
+
+    def _assert_owned_by(self, obj, group, target: Target) -> None:
+        model = type(obj)
+        if is_group_isolatable(model):
+            owners = self._m2m_owner_pks(obj)
+            self.assertEqual(
+                {group.pk}, owners,
+                f"[{target.label}] 픽스처가 만든 레코드의 groups 가 {owners} 입니다 — "
+                f"의도한 소유는 {group.pk} 입니다. 소유가 틀리면 이 시험은 격리를 재지 않습니다.")
+        elif has_group_fk(model):
+            self.assertEqual(
+                getattr(group, "pk", None), getattr(obj, "group_id", None),
+                f"[{target.label}] 픽스처가 만든 레코드의 group_id 가 "
+                f"{getattr(obj, 'group_id', None)} 입니다 — 의도한 소유는 {group.pk} 입니다.")
 
     @classmethod
     def _bearer(cls, user) -> dict[str, str]:
@@ -682,6 +781,32 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
             return encode_multipart(BOUNDARY, body or {}), MULTIPART_CONTENT
         return json.dumps(body or {}), "application/json"
 
+    class _Crashed:
+        """핸들러가 예외로 죽었을 때의 응답 대역. 상태코드는 500 으로 본다.
+
+        왜 예외를 삼키지 않고 **판정으로 바꾸나**
+            Django 테스트 클라이언트는 뷰의 미포착 예외를 그대로 다시 던진다.
+            그러면 `subTest` 루프가 **그 자리에서 끝나고 뒤의 모델은 아예 호출되지 않는다** —
+            실측: `orders.Order` 상세가 `DoesNotExist` 로 죽어 그 뒤 FlightLog·VideoAnalysis 가
+            판정에 도달하지 못했다. 앞의 한 건이 뒤의 전부를 가린 것이다.
+            그 상태에서 "실패 1건"이라는 보고는 **커버리지 착시**다.
+
+            그래서 예외를 500 응답으로 바꿔 기록한다. 500 은 (403, 404) 가 아니므로
+            **단언은 그대로 실패한다** — 판정이 느슨해지지 않는다. 달라지는 것은
+            "뒤의 모델도 판정된다"는 것뿐이다.
+        """
+
+        def __init__(self, exc: BaseException):
+            self.status_code = 500
+            self.exc = exc
+            self.content = f"{type(exc).__name__}: {exc}".encode("utf-8", "replace")
+
+    def _call(self, method: str, path: str, **kwargs):
+        try:
+            return self.client_a.generic(method, path, **kwargs, **self.auth_a)
+        except Exception as exc:               # noqa: BLE001 — 판정으로 바꾼다
+            return self._Crashed(exc)
+
     # ------------------------------------------------------------------ 대상
     def _scenario_targets(self, attr: str):
         """그 시나리오의 라우트가 실재하는 대상만 준다.
@@ -719,40 +844,57 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
                     )
                 self.assertNotContains(res, f'"id":{obj_b.pk}', msg_prefix=target.label)
 
+    def _report(self, name: str, rows: list[tuple[str, int, str]]) -> None:
+        """대상별 판정을 **표로** 남기고, 새는 것 전부를 한 번에 단언한다.
+
+        ★ 왜 표인가 — subTest 만으로는 앞의 실패가 뒤를 가린다. 실측: `orders.Order` 상세가
+          죽으면서 그 뒤 FlightLog·VideoAnalysis 가 판정에 도달했는지조차 알 수 없었다.
+          "실패 1건"이라는 보고가 실제로는 "1건 실패 + N건 미측정"이었던 것이다.
+          **미측정을 통과로 읽는 것이 이 저장소가 반복해서 만난 실패 모양이다.**
+        """
+        print(f"\n[ISO] {name} — 대상 {len(rows)}건")
+        for label, status, note in rows:
+            mark = "OK  " if status in self.FORBIDDEN else "LEAK"
+            print(f"  {mark} {label:26} {status}  {note}")
+        leaks = [f"{label}({status})" for label, status, _ in rows
+                 if status not in self.FORBIDDEN]
+        self.assertEqual(
+            [], leaks,
+            f"{name}: 남의 테넌트 레코드에 {self.FORBIDDEN} 가 아닌 응답을 준 대상 — {leaks}")
+
     def test_detail_api(self) -> None:
+        rows: list[tuple[str, int, str]] = []
         for target, route in self._scenario_targets("detail"):
             model = get_model(target)
             with self.subTest(model=target.label):
                 obj_b = self._create_for(model, self.group_b, self.user_b, target)
-                res = self.client_a.generic(
-                    route.method, route.for_pk(obj_b.pk), **self.auth_a
-                )
-                self.assertIn(res.status_code, self.FORBIDDEN, msg=target.label)
+                res = self._call(route.method, route.for_pk(obj_b.pk))
+                rows.append((target.label, res.status_code, str(getattr(res, "exc", ""))[:60]))
+        self._report("detail", rows)
 
     def test_update_api(self) -> None:
+        rows: list[tuple[str, int, str]] = []
         for target, route in self._scenario_targets("update"):
             model = get_model(target)
             with self.subTest(model=target.label):
                 obj_b = self._create_for(model, self.group_b, self.user_b, target)
                 before = model._base_manager.filter(pk=obj_b.pk).values().first()
                 data, content_type = self._payload(route)
-                res = self.client_a.generic(
-                    route.method, route.for_pk(obj_b.pk),
-                    data=data, content_type=content_type, **self.auth_a
-                )
-                self.assertIn(res.status_code, self.FORBIDDEN, msg=target.label)
+                res = self._call(route.method, route.for_pk(obj_b.pk),
+                                 data=data, content_type=content_type)
+                rows.append((target.label, res.status_code, str(getattr(res, "exc", ""))[:60]))
                 after = model._base_manager.filter(pk=obj_b.pk).values().first()
                 self.assertEqual(before, after, f"[{target.label}] DB 가 변경되었습니다.")
+        self._report("update", rows)
 
     def test_delete_api(self) -> None:
+        rows: list[tuple[str, int, str]] = []
         for target, route in self._scenario_targets("delete"):
             model = get_model(target)
             with self.subTest(model=target.label):
                 obj_b = self._create_for(model, self.group_b, self.user_b, target)
-                res = self.client_a.generic(
-                    route.method, route.for_pk(obj_b.pk), **self.auth_a
-                )
-                self.assertIn(res.status_code, self.FORBIDDEN, msg=target.label)
+                res = self._call(route.method, route.for_pk(obj_b.pk))
+                rows.append((target.label, res.status_code, str(getattr(res, "exc", ""))[:60]))
                 # ★ `objects` 가 아니라 `_base_manager` 로 묻는다 (D-253 배선).
                 #   `objects` 는 테넌트 필터를 타므로 "삭제됐다"와 "내게 안 보인다"를
                 #   구별하지 못한다 — 남의 레코드는 항상 안 보이므로 **삭제되지 않았는데도**
@@ -761,6 +903,7 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
                     model._base_manager.filter(pk=obj_b.pk).exists(),
                     f"[{target.label}] 레코드가 삭제되었습니다.",
                 )
+        self._report("delete", rows)
 
     def test_export(self) -> None:
         for target in MODELS:
@@ -788,8 +931,30 @@ class NoRouteRegistryTest(TestCase):
     그래서 사유를 요구하고, 개수의 상한을 못 박는다.
     """
 
-    #: 2026-08-22 배선 정정 시점의 실측값. **늘리지 말 것.** 라우트가 생기면 줄인다.
+    #: 2026-08-22 배선 정정 시점의 실측값 — **레지스트리 10종일 때의 총합**이다.
+    #: 아래 `PER_LABEL` 로 대체됐으나 그 시점의 수를 지우지 않는다 (무엇이 바뀌었는지 남긴다).
     BASELINE = 16
+
+    #: ★ **레이블별 증가금지 래칫** (2026-08-27 · W0-14c).
+    #:
+    #: 왜 전역 총합을 버렸나 — D-262 ② 가 P0 전수 등재를 EXIT 조건으로 걸었다.
+    #: 레지스트리가 10종에서 늘면 "라우트 없는 칸"도 함께 는다. 그것은 **새로 생긴 누락이
+    #: 아니라 새로 보이게 된 누락**이다. 그런데 전역 상한 16 은 그 등재 자체를 막는다 —
+    #: 즉 **EXIT 조건을 지키려면 게이트를 꺼야 하는** 구조였다.
+    #:
+    #: 그렇다고 상한만 올리면 그것이야말로 게이트를 끄는 일이다. 그래서 레이블별로 못 박는다.
+    #: 이쪽이 **전역 총합보다 엄격하다** — 총합만 보면 한 모델의 증가가 다른 모델의
+    #: 감소 뒤에 숨을 수 있고, 그때 "줄었다"는 보고가 나온다.
+    #:
+    #: 늘리려면 이 표를 고쳐야 하고, 그 diff 가 곧 "왜 늘렸는가"를 묻는 자리가 된다.
+    PER_LABEL: dict[str, int] = {
+        # ── 2026-08-22 실측 10종분 (합 16 — 위 BASELINE 과 같다) ──────────
+        "Order": 2, "StreamMonitor": 3, "Dashboard": 3, "ChecklistSetting": 1,
+        "HandoverDocument": 3, "DetectionEvent": 4,
+        # ── 2026-08-27 W0-14c P0 등재분 ────────────────────────────────
+        "FlightLog": 1,        # update 없음
+        "VideoAnalysis": 2,    # update·delete 없음
+    }
 
     def test_every_entry_has_a_reason(self) -> None:
         for key, reason in NO_ROUTE.items():
@@ -799,10 +964,40 @@ class NoRouteRegistryTest(TestCase):
             )
 
     def test_no_route_set_does_not_grow(self) -> None:
+        """레이블별로 늘지 않았는가. 총합만 보면 한쪽 증가가 다른 쪽 감소 뒤에 숨는다."""
+        from collections import Counter
+
+        actual = Counter(key.partition(":")[0] for key in NO_ROUTE)
+        for label, count in sorted(actual.items()):
+            allowed = self.PER_LABEL.get(label)
+            self.assertIsNotNone(
+                allowed,
+                f"[{label}] 라우트 없는 시나리오 {count}건이 래칫에 없습니다. "
+                "새 대상을 등재했다면 PER_LABEL 에 그 수를 적으십시오 — "
+                "적는 행위가 '왜 없어도 되는가'를 묻는 자리입니다.",
+            )
+            self.assertLessEqual(
+                count, allowed,
+                f"[{label}] 라우트 없는 시나리오가 늘었습니다 ({allowed} → {count}). "
+                "새 모델에 HTTP 표면을 만들거나, 왜 없어도 되는지 사유를 함께 적으십시오.",
+            )
+        for label, allowed in sorted(self.PER_LABEL.items()):
+            if actual.get(label, 0) < allowed:
+                print(f"[NO_ROUTE] {label}: {allowed} → {actual.get(label, 0)} 로 줄었다 "
+                      f"— PER_LABEL 을 낮춰라")
+
+    def test_legacy_baseline_still_holds(self) -> None:
+        """2026-08-22 의 10종분 총합 16 은 그대로여야 한다.
+
+        레이블별 래칫으로 바꾸면서 **옛 수가 조용히 늘어나지 않았음**을 따로 증명한다.
+        표의 형태를 바꾼 커밋이 동시에 수를 늘리는 것이 가장 알아채기 어려운 후퇴다.
+        """
+        legacy = {"Order", "StreamMonitor", "Dashboard", "ChecklistSetting",
+                  "HandoverDocument", "DetectionEvent"}
+        total = sum(1 for key in NO_ROUTE if key.partition(":")[0] in legacy)
         self.assertLessEqual(
-            len(NO_ROUTE), self.BASELINE,
-            f"라우트 없는 시나리오가 늘었습니다 ({self.BASELINE} → {len(NO_ROUTE)}). "
-            "새 모델에 HTTP 표면을 만들거나, 왜 없어도 되는지 사유를 함께 적으십시오.",
+            total, self.BASELINE,
+            f"2026-08-22 10종분의 라우트 없음이 {self.BASELINE} → {total} 로 늘었습니다.",
         )
 
     def test_keys_refer_to_registered_targets(self) -> None:
