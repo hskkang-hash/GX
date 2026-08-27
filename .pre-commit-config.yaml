@@ -82,11 +82,14 @@ repos:
   - repo: local
     hooks:
       - id: gx-tenant-scope
-        name: 커널 테넌트 스코프 검사 (C-3.1)
+        name: 커널 테넌트 스코프 + 신규 경로 트립와이어 (C-3.1 · D-275 §5-1)
         entry: python scripts/verify_tenant_scope.py
         language: system
         pass_filenames: false
-        files: '^(backend/kernels/.*\.py|backend/common/tenant_scope\.py|scripts/verify_tenant_scope\.py)$'
+        # ★ 트립와이어가 붙으면서 대상이 **backend 전 파이썬**으로 넓어졌다 (D-275 §5-1).
+        #   새 라우트는 어느 views.py 에서든 생긴다 — 좁은 필터는 곧 감긴 눈이다.
+        #   4초 걸린다. 커밋마다 4초로 "문지기 없는 새 경로"를 사는 것이 값싸다.
+        files: '^(backend/.*\.py|scripts/verify_tenant_scope\.py)$'
 
   # ── 기본 위생 ───────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks

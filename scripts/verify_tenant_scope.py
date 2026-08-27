@@ -34,15 +34,37 @@ Django 없이 정적으로 판정할 수 있는 것만 본다:
   · 커널 공개 함수의 스코프 표식 (AST)
   · `PUBLIC_ROUTES` 전건에 사유가 있는가 (AST — 시험도 보지만 커밋 시점에 먼저 잡는다)
   · 면제 목록이 **늘지 않았는가** (PUBLIC_BASELINE 래칫)
+  · **신규 경로 트립와이어 — 정적 눈** (D-275 §5-1, 아래)
+
+신규 경로 트립와이어 (D-275 §5-1) — **EXIT 승인의 유일한 필수 부대조건**
+------------------------------------------------------------------------
+WP-2 EXIT §5-1 의 미지는 이것이었다: 주인 없는 행은 매니저 수준에서 여전히 보이고,
+근원은 저장소 밖이라 못 고친다. 지금 닫혀 있는 이유는 **라우트마다 문지기를 손으로 달았기
+때문**이고, **문지기 없는 새 경로가 하나 생기면 그 순간 다시 샌다.**
+
+그 문장을 사람의 기억이 아니라 게이트가 지키게 한다.
+
+  판정기  `backend/common/tenant_tripwire.py` — **한 벌뿐이다**
+  눈 둘   정적(여기, Django 불필요)  ·  런타임(`tests/test_route_tripwire.py`, 전수 열거)
+
+여기가 정적 눈이다. 지시가 요구한 **런타임 전수 열거**는 시험 쪽이 한다 — pre-commit 은
+Django 를 띄울 수 없기 때문이다. 정적 눈이 런타임 눈을 대신하는 것이 아니라,
+**커밋 시점에 먼저 걸러 주는 앞눈**이다. 같은 것을 두 번 세는 것이 아니라 한 판정을
+두 각도에서 먹인다 (원칙 1: 중복 0 은 **판정**의 중복을 금하는 것이다).
+
+    python scripts/verify_tenant_scope.py --write-baseline   # 등재부 갱신(정적 구획만)
 """
 from __future__ import annotations
 
 import argparse
 import ast
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+BACKEND = ROOT / "backend"
+sys.path.insert(0, str(BACKEND))
 KERNEL_ROOT = ROOT / "backend" / "kernels"
 APP_ROOT = ROOT / "backend" / "apps"
 TENANT_SCOPE = ROOT / "backend" / "common" / "tenant_scope.py"
@@ -246,13 +268,62 @@ def scan_no_route_models() -> list[str]:
     return problems
 
 
+def scan_route_tripwire(write_baseline: bool) -> list[str]:
+    """★ 신규 경로 트립와이어 — **정적 눈** (D-275 §5-1).
+
+    "라우트가 테넌트 모델을 만지는데 문지기가 하나도 없으면 unguarded" 를 판정하고,
+    **등재부에 없던 unguarded 가 나타나면 실패**한다.
+
+    판정기는 `backend/common/tenant_tripwire.py` 한 벌뿐이고, 여기는 그것에
+    **정적 열거**를 먹인다. 런타임 전수 열거는 `tests/test_route_tripwire.py` 가 한다.
+
+    ※ 왜 수가 아니라 이름인가: `PUBLIC_BASELINE` 처럼 수로 잠그면 낡은 라우트가 하나
+      지워질 때마다 새 라우트 하나가 조용히 들어올 자리가 생긴다. 수는 그대로인데
+      노출은 바뀐다. 그래서 이 게이트는 라우트 **하나하나의 이름**을 등재부에 적는다.
+    """
+    try:
+        from common import tenant_tripwire as tw
+    except Exception as exc:   # pragma: no cover - 판정기가 없으면 통과가 아니라 실패다
+        return [f"트립와이어 판정기를 못 불렀다 ({exc}) — "
+                f"backend/common/tenant_tripwire.py 가 있어야 한다. "
+                f"판정기 없이 통과시키지 않는다"]
+
+    rep = tw.compare(tw.Report("static", tw.scan_static()))
+    print(rep.summary)
+    for note in rep.notes:
+        print("  · " + note)
+
+    if write_baseline:
+        import json
+        path = tw.baseline_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = tw.build_baseline([rep], _today())
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + chr(10),
+                       encoding="utf-8")
+        os.replace(tmp, path)          # D-270 ① 원자 교체 — 원본을 truncate 하지 않는다
+        print(f"[SCOPE] 등재부(정적 구획)를 다시 썼다: {path} — 커밋할 것. "
+              f"런타임 구획은 건드리지 않았다")
+        return []
+
+    return rep.problems
+
+
+def _today() -> str:
+    from datetime import date
+    return date.today().isoformat()
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--list", action="store_true", help="함수별 상태를 전부 출력한다")
+    ap.add_argument("--write-baseline", action="store_true",
+                    help="트립와이어 등재부의 **정적 구획만** 다시 쓴다 (런타임 구획 보존)")
     args = ap.parse_args()
 
     print("[SCOPE] 커널 테넌트 스코프 대조 (C-3.1 · D-105 · K5)")
-    problems = scan_kernels(args.list) + scan_public_registry() + scan_no_route_models()
+    problems = (scan_kernels(args.list) + scan_public_registry() + scan_no_route_models()
+                + scan_route_tripwire(args.write_baseline))
 
     for key, why in KERNEL_PUBLIC.items():
         if len(why.strip()) < 10:
@@ -267,6 +338,8 @@ def main() -> int:
     print("[SCOPE] 통과")
     print("[SCOPE] ※ 라우트 단위 스코프는 이 게이트가 아니라 "
           "backend/tests/test_route_tenant_scope.py 가 본다 (Django 필요). 중복해서 세지 않는다")
+    print("[SCOPE] ※ 트립와이어의 **런타임 전수 열거**는 backend/tests/test_route_tripwire.py 가 "
+          "한다 (D-275 §5-1). 판정기는 한 벌이고 눈만 둘이다")
     return 0
 
 
