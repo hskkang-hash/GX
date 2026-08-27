@@ -1,0 +1,127 @@
+검증 ② 공용 마스터 무변경 — W0-13 백필 적용 (D-267 ②)
+실행 2026-08-27 · 대상 = 로컬 복제본 database_guardianx (운영 115.21.49.115 아님)
+비교본 = /backup/gx_before_backfill.dump 를 gx_verify_before 로 pg_restore 한 백필 前 상태
+
+== 검증 ② 공용 마스터(SHARED_MASTERS 12종) 무변경 — 백필 前 복원본 vs 백필 後 현재 ==
+-- 백필 前 (gx_before_backfill.dump 를 gx_verify_before 로 복원) --
+     model     |      tbl      | rows | group_not_null | group_null
+---------------+---------------+------+----------------+------------
+ user.Timezone | user_timezone |  598 |              0 |        598
+(1 row)
+
+    model     |     tbl      | rows | group_not_null | group_null
+--------------+--------------+------+----------------+------------
+ user.Country | user_country |  238 |              0 |        238
+(1 row)
+
+        model        |         tbl         | rows | group_not_null | group_null
+---------------------+---------------------+------+----------------+------------
+ user.CurrencyFormat | user_currencyformat |   31 |              0 |         31
+(1 row)
+
+           model            |            tbl             | rows | group_not_null | group_null
+----------------------------+----------------------------+------+----------------+------------
+ advanced_table.GridSetting | advanced_table_gridsetting | 1088 |            185 |        903
+(1 row)
+
+     model     |      tbl      | rows | group_not_null | group_null
+---------------+---------------+------+----------------+------------
+ menu.UserMenu | menu_usermenu |   60 |              0 |         60
+(1 row)
+
+  model   |   tbl    | rows | group_not_null | group_null
+----------+----------+------+----------------+------------
+ menu.Tab | menu_tab |   27 |              0 |         27
+(1 row)
+
+       model       |        tbl        | rows | group_not_null | group_null
+-------------------+-------------------+------+----------------+------------
+ devices.FrameType | devices_frametype |   24 |              0 |         24
+(1 row)
+
+      model       |       tbl        | rows | group_not_null | group_null
+------------------+------------------+------+----------------+------------
+ devices.Protocol | devices_protocol |   17 |              0 |         17
+(1 row)
+
+       model        |        tbl         | rows | group_not_null | group_null
+--------------------+--------------------+------+----------------+------------
+ devices.FrameClass | devices_frameclass |   14 |              0 |         14
+(1 row)
+
+        model         |         tbl          | rows | group_not_null | group_null
+----------------------+----------------------+------+----------------+------------
+ orders.OrderItemType | orders_orderitemtype |   23 |              8 |         15
+(1 row)
+
+          model          |           tbl           | rows | group_not_null | group_null
+-------------------------+-------------------------+------+----------------+------------
+ delivery.DeliveryStatus | delivery_deliverystatus |   14 |              0 |         14
+(1 row)
+
+           model           |            tbl            | rows | group_not_null | group_null
+---------------------------+---------------------------+------+----------------+------------
+ configuration.AdminConfig | configuration_adminconfig |   12 |              1 |         11
+(1 row)
+
+
+-- 백필 後 (database_guardianx 현재) --
+     model     |      tbl      | rows | group_not_null | group_null
+---------------+---------------+------+----------------+------------
+ user.Timezone | user_timezone |  598 |              0 |        598
+(1 row)
+
+    model     |     tbl      | rows | group_not_null | group_null
+--------------+--------------+------+----------------+------------
+ user.Country | user_country |  238 |              0 |        238
+(1 row)
+
+        model        |         tbl         | rows | group_not_null | group_null
+---------------------+---------------------+------+----------------+------------
+ user.CurrencyFormat | user_currencyformat |   31 |              0 |         31
+(1 row)
+
+           model            |            tbl             | rows | group_not_null | group_null
+----------------------------+----------------------------+------+----------------+------------
+ advanced_table.GridSetting | advanced_table_gridsetting | 1088 |            185 |        903
+(1 row)
+
+     model     |      tbl      | rows | group_not_null | group_null
+---------------+---------------+------+----------------+------------
+ menu.UserMenu | menu_usermenu |   60 |              0 |         60
+(1 row)
+
+  model   |   tbl    | rows | group_not_null | group_null
+----------+----------+------+----------------+------------
+ menu.Tab | menu_tab |   27 |              0 |         27
+(1 row)
+
+       model       |        tbl        | rows | group_not_null | group_null
+-------------------+-------------------+------+----------------+------------
+ devices.FrameType | devices_frametype |   24 |              0 |         24
+(1 row)
+
+      model       |       tbl        | rows | group_not_null | group_null
+------------------+------------------+------+----------------+------------
+ devices.Protocol | devices_protocol |   17 |              0 |         17
+(1 row)
+
+       model        |        tbl         | rows | group_not_null | group_null
+--------------------+--------------------+------+----------------+------------
+ devices.FrameClass | devices_frameclass |   14 |              0 |         14
+(1 row)
+
+        model         |         tbl          | rows | group_not_null | group_null
+----------------------+----------------------+------+----------------+------------
+ orders.OrderItemType | orders_orderitemtype |   23 |              8 |         15
+(1 row)
+
+          model          |           tbl           | rows | group_not_null | group_null
+-------------------------+-------------------------+------+----------------+------------
+ delivery.DeliveryStatus | delivery_deliverystatus |   14 |              0 |         14
+(1 row)
+
+           model           |            tbl            | rows | group_not_null | group_null
+---------------------------+---------------------------+------+----------------+------------
+ configuration.AdminConfig | configuration_adminconfig |   12 |              1 |         11
+(1 row)

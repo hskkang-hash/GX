@@ -64,7 +64,7 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
-from django.db import models, transaction  # noqa: E402
+from django.db import connection, models, transaction  # noqa: E402
 from django.db.models import Q  # noqa: E402
 
 try:
@@ -79,6 +79,33 @@ SPLIT_BY_BACKREF = {"terminals.Terminal"}
 
 #: 백업 파일이 이보다 작으면 백업이 아니라고 본다 (빈 파일·실패한 덤프 방지).
 MIN_BACKUP_BYTES = 1024 * 1024  # 1MB
+
+
+def load_shared_masters() -> dict[str, str]:
+    """`backend/tests/tenant_classification.py` 의 SHARED_MASTERS 를 읽는다.
+
+    ★ **D-261 (c) 는 공용 마스터의 백필을 금지했다.** 그런데 처음 판은 이 등록부를 아예
+      참조하지 않아 `advanced_table.GridSetting`(479행) · `menu.Tab`(8행) 등을 채우려 했다.
+      채우면 다른 테넌트 화면에서 국가·시간대·상태값이 사라진다 — 판정이 막으려던 그 사고다.
+      **시뮬레이션이 아니었으면 그대로 썼을 것이다.**
+
+    ⚠ 등록부를 못 읽으면 **진행하지 않는다.** 비어 있다고 보고 진행하면 금지 대상을 전부
+      채우게 된다 — 실패했을 때 안전한 쪽은 "멈춤"이다.
+    """
+    for cand in (Path("/app/tests/tenant_classification.py"),
+                 HERE.parent / "backend" / "tests" / "tenant_classification.py"):
+        if cand.is_file():
+            spec = importlib.util.spec_from_file_location("tenant_classification", cand)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            return dict(mod.SHARED_MASTERS)
+    raise SystemExit(
+        "[BACKFILL] 분류 등록부(tenant_classification.py)를 찾지 못했다 — 멈춘다.\n"
+        "         이 파일이 없으면 D-261 (c) 의 '공용 마스터 백필 금지'를 지킬 수 없다."
+    )
+
+
+SHARED_MASTERS = load_shared_masters()
 
 
 # ---------------------------------------------------------------------------
@@ -121,20 +148,20 @@ class Journal:
             return
         if self.path.exists():
             raise SystemExit(
-                f"[BACKFILL] 저널이 이미 있다: {self.path}\\n"
+                f"[BACKFILL] 저널이 이미 있다: {self.path}\n"
                 "         덮어쓰지 않는다 — 기존 저널을 지우면 그 적용분은 되돌릴 수 없다."
             )
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._fh = self.path.open("w", encoding="utf-8", newline="\\n")
+        self._fh = self.path.open("w", encoding="utf-8", newline="\n")
         self._fh.write(json.dumps({"_meta": "GuardianX backfill journal · W0-13 · D-261"},
-                                  ensure_ascii=False) + "\\n")
+                                  ensure_ascii=False) + "\n")
 
     def record(self, label: str, pk, field: str, old, new):
         self.count += 1
         if self._fh:
             self._fh.write(json.dumps(
                 {"model": label, "pk": pk, "field": field, "old": old, "new": new},
-                ensure_ascii=False, default=str) + "\\n")
+                ensure_ascii=False, default=str) + "\n")
 
     def close(self):
         if self._fh:
@@ -204,34 +231,54 @@ def plan_r2(model, group_field: str) -> list[tuple]:
 # (b) 역참조 전수 — 소유가 **하나로 정해질 때만** 정한다
 # ---------------------------------------------------------------------------
 def plan_backref(model) -> tuple[list[tuple], list, list]:
-    """(정해짐, 참조 0 = tenant_unassigned, 다중 소유 = 사람 판단)"""
-    soft = soft_filter(model)
-    targets = list(model._base_manager.filter(soft & Q(group__isnull=True)).values_list("pk", flat=True))
-    rels = [
-        f for f in model._meta.get_fields()
-        if (f.one_to_many or f.one_to_one) and f.auto_created and not f.concrete
-        and "group" in {pf.name for pf in f.related_model._meta.get_fields()}
-    ]
+    """(정해짐, 참조 0 = tenant_unassigned, 다중 소유 = 사람 판단)
+
+    ★ **D-261 의 판정이 딛고 선 SQL 을 그대로 쓴다** (`backfill_dryrun.md` §7).
+      처음 판은 역참조를 **일반화해 다시 유도**했다 — 모든 역방향 FK 중 group 을 가진 것.
+      그러면 (a) 이후 상태에서 **2,551 / 848** 이 나온다. 틀린 수는 아니다: MissionWaypoint
+      (8,877행 · 백필 前 group 100% NULL)가 (a) 로 채워지며 새로 켜진 증거이고 다중 소유는 0 이다.
+
+      그러나 D-261 이 승인한 것은 **1,809 적용 / 1,590 미배정**이고, 그 수는 아래 8경로를
+      **백필 前 상태**에서 잰 것이다(문서 SQL 을 지금 돌리면 정확히 재현된다).
+      일반화한 정의로 742행을 더 쓰면 그것은 **판정이 "채우지 않는다"고 분류한 행**이다.
+      승인받지 않은 행을 쓰지 않는 것이 이 스크립트의 첫째 규칙이므로, **판정의 정의**를 쓴다.
+      → (a) 뒤에 다시 재면 742행이 결정 가능해진다. **2차 판정으로 올린다.**
+        지금 안 써서 잃는 것은 없다 — 뒤에 더할 수 있고, 잘못 쓰면 되돌려야 한다.
+    """
+    if model._meta.label != "terminals.Terminal":
+        raise RuntimeError(
+            f"plan_backref 는 terminals.Terminal 전용이다 (D-261 b). 받은 것: {model._meta.label}"
+        )
+
+    # backfill_dryrun.md §7 의 usage 8경로. 한 줄도 바꾸지 않는다.
+    USAGE = """
+      SELECT rt.terminal_id AS tid, r.group_id FROM terminals_routeterminal rt
+        JOIN terminals_routes r ON r.id=rt.route_id WHERE r.group_id IS NOT NULL
+      UNION ALL SELECT r.terminal_from_id, r.group_id FROM terminals_routes r WHERE r.group_id IS NOT NULL
+      UNION ALL SELECT o.pickup_location_id, o.group_id FROM orders_order o WHERE o.group_id IS NOT NULL
+      UNION ALL SELECT o.delivery_terminal_id, o.group_id FROM orders_order o WHERE o.group_id IS NOT NULL
+      UNION ALL SELECT d.terminal_id, d.group_id FROM devices_device d WHERE d.group_id IS NOT NULL
+      UNION ALL SELECT w.terminal_id, w.group_id FROM surveillance_missionwaypoint w WHERE w.group_id IS NOT NULL
+      UNION ALL SELECT f.start_point_id, f.group_id FROM flight_log_flightlog f WHERE f.group_id IS NOT NULL
+      UNION ALL SELECT f.end_point_id, f.group_id FROM flight_log_flightlog f WHERE f.group_id IS NOT NULL
+    """
+    sql = f"""
+    WITH orphan AS (SELECT id FROM terminals_terminal WHERE deleted IS NULL AND group_id IS NULL),
+    usage AS ({USAGE})
+    SELECT o.id, count(DISTINCT u.group_id) AS tenants, min(u.group_id) AS gid
+    FROM orphan o LEFT JOIN usage u ON u.tid = o.id
+    GROUP BY o.id
+    """
     decided, orphan, multi = [], [], []
-    for pk in targets:
-        groups: set = set()
-        for rel in rels:
-            try:
-                groups |= set(
-                    rel.related_model._base_manager.filter(**{f"{rel.field.name}_id": pk})
-                    .exclude(group__isnull=True)
-                    .values_list("group_id", flat=True)
-                )
-            except Exception:
-                continue
-            if len(groups) > 1:
-                break
-        if not groups:
-            orphan.append(pk)
-        elif len(groups) == 1:
-            decided.append((pk, next(iter(groups))))
-        else:
-            multi.append(pk)          # **채우지 않는다.** 다중 소유는 사람이 정한다
+    with connection.cursor() as c:
+        c.execute(sql)
+        for pk, tenants, gid in c.fetchall():
+            if tenants == 0:
+                orphan.append(pk)
+            elif tenants == 1:
+                decided.append((pk, gid))
+            else:
+                multi.append(pk)      # **채우지 않는다.** 다중 소유는 사람이 정한다
     return decided, orphan, multi
 
 
@@ -258,6 +305,88 @@ def apply_pairs(model, field: str, pairs: list[tuple], journal: Journal, do_writ
                 for i in range(0, len(pks), 1000):
                     model._base_manager.filter(pk__in=pks[i:i + 1000]).update(**{col: val})
     return written
+
+
+class _PlanRollback(Exception):
+    """계획 모드의 트랜잭션을 되돌리기 위한 신호. 오류가 아니다."""
+
+
+def run_phases(models, journal, totals, unassigned, multi_owner, do_write: bool) -> None:
+    """(a) 를 전부 끝낸 뒤 (b) 를 한다. **순서가 답을 바꾼다.**
+
+    Terminal 의 소유는 자식(RouteTerminal 등)의 group 이 말해 주는데, 그 자식들은
+    백필 前에 자기도 비어 있다 (실측: TerminalOperatingTime·DeliveryEvent 는 group 0건,
+    RouteTerminal 은 2,062 중 255건만). 한 패스로 돌면서 Terminal 을 먼저 만나면
+    **정해짐이 14 로 나온다** — dry-run 의 1,809 와 어긋난다.
+    (a) 가 RouteTerminal 을 Routes 에서 채운 뒤 (b) 를 돌리면 같은 답이 나온다.
+    추론 깊이를 늘리는 것이 아니라 **의존 순서를 지키는 것**이다 — 새 추측을 넣지 않는다.
+    """
+    print("[BACKFILL] ── (a) 부모 상속 · created_by 소속 ──")
+    print(f"[BACKFILL] 공용 마스터 {len(SHARED_MASTERS)}종은 **제외**한다 (D-261 c · 백필 금지)")
+
+    # ★ **계획을 전부 먼저 세우고 그 다음에 쓴다 (스냅샷 의미론).**
+    #   그렇게 하지 않으면 부모를 채운 결과가 자식을 새로 풀어 **연쇄**가 일어나고,
+    #   D-261 이 승인한 23,616(백필 前 상태에서 **독립적으로** 측정한 값)을 넘어 쓰게 된다.
+    #   실측: 연쇄를 허용하면 R3 가 23,265 → 24,340 으로 늘었다.
+    #   (b) 의 계획도 같은 이유로 **(a) 를 쓰기 전에** 세운다 — D-261 이 잰 상태가 그것이다.
+    #
+    # ★ 세이브포인트: Postgres 는 트랜잭션 안에서 쿼리 하나가 실패하면 **그 트랜잭션 전체를
+    #   거부**한다("current transaction is aborted"). 저장소 모델과 운영 스키마가 어긋난
+    #   4건(P-LOCAL-4)이 실제로 그렇게 만든다 — 세이브포인트가 없으면 그 한 건이
+    #   나머지 130종을 전부 건너뛰게 한다(실측: 시뮬레이션 1차에서 그렇게 됐다).
+    plans: list[tuple] = []
+    for model, group_field in models:
+        label = model._meta.label
+        if label in SPLIT_BY_BACKREF or label in SHARED_MASTERS:
+            continue
+        try:
+            with transaction.atomic():
+                r3 = plan_r3(model, group_field)
+                r2 = plan_r2(model, group_field)
+            seen = {pk for pk, _ in r3}
+            r2 = [(pk, v) for pk, v in r2 if pk not in seen]   # R3 가 우선
+            if r3 or r2:
+                plans.append((model, r3, r2))
+        except Exception as exc:      # 저장소 모델 ↔ 운영 스키마 불일치 (P-LOCAL-4)
+            print(f"  ⚠ {label:44} 계획 불가 — {str(exc).splitlines()[0][:80]}")
+
+    backref_plans: list[tuple] = []
+    for model, group_field in models:
+        if model._meta.label not in SPLIT_BY_BACKREF:
+            continue
+        try:
+            with transaction.atomic():
+                backref_plans.append((model, *plan_backref(model)))
+        except Exception as exc:
+            print(f"  ⚠ {model._meta.label:44} (b) 계획 불가 — {str(exc).splitlines()[0][:80]}")
+
+    for model, r3, r2 in plans:
+        label = model._meta.label
+        try:
+            with transaction.atomic():
+                n3 = apply_pairs(model, "group", r3, journal, do_write)
+                n2 = apply_pairs(model, "group", r2, journal, do_write)
+            totals["r3"] += n3
+            totals["r2"] += n2
+            if n3 or n2:
+                print(f"  (a) {label:44} R3 {n3:>6} · R2 {n2:>5}")
+        except Exception as exc:
+            print(f"  ⚠ {label:44} 쓰기 건너뜀 — {str(exc).splitlines()[0][:80]}")
+
+    print("[BACKFILL] ── (b) 역참조 (D-261 §7 의 8경로 · **(a) 前 스냅샷**에서 잰다) ──")
+    for model, decided, orphan, multi in backref_plans:
+        label = model._meta.label
+        try:
+            with transaction.atomic():
+                n = apply_pairs(model, "group", decided, journal, do_write)
+            totals["backref"] += n
+            unassigned[label] = orphan
+            if multi:
+                multi_owner[label] = multi
+            print(f"  (b) {label:44} 정해짐 {len(decided):>5} · "
+                  f"참조0 {len(orphan):>5} · 다중소유 {len(multi):>3}")
+        except Exception as exc:
+            print(f"  ⚠ {label:44} 쓰기 건너뜀 — {str(exc).splitlines()[0][:80]}")
 
 
 # ---------------------------------------------------------------------------
@@ -308,41 +437,38 @@ def main() -> int:
     totals = {"r3": 0, "r2": 0, "backref": 0}
     unassigned: dict[str, list] = {}
     multi_owner: dict[str, list] = {}
+    models = [
+        (m, gf) for m, gf in DR.tenantish_models()
+        if m._meta.app_label not in DR.SYSTEM_OWNED_APPS
+    ]   # created_by IS NULL 을 '시스템 기본'의 뜻으로 쓰는 앱은 건드리면 깨진다
 
     try:
-        for model, group_field in DR.tenantish_models():
-            label = model._meta.label
-            if model._meta.app_label in DR.SYSTEM_OWNED_APPS:
-                continue          # created_by IS NULL 을 '시스템 기본'의 뜻으로 쓴다 — 건드리면 깨진다
+        if args.apply:
+            run_phases(models, journal, totals, unassigned, multi_owner, do_write=True)
+        else:
+            # ★ **계획 모드는 롤백되는 트랜잭션 안에서 진짜로 쓴다.**
+            #   왜: (b) 는 (a) 의 결과 위에서만 옳은 수를 낸다. 쓰지 않고 세면 (b) 가
+            #   14 로 나오고, 그러면 "적용 전에 수를 대조한다"는 가드가 무의미해진다 —
+            #   대조할 수 없는 수를 대조하라고 요구하는 셈이다.
+            #   시뮬레이션으로 만들면 **로직을 복제하지 않고** 적용 후의 수를 미리 본다.
+            #   끝에서 반드시 되돌린다. 중간에 죽어도 Postgres 가 되돌린다.
+            print("[BACKFILL] 계획 모드 = **롤백되는 트랜잭션 안의 시뮬레이션**. "
+                  "적용 후와 같은 수가 나오고, 한 행도 남지 않는다.")
             try:
-                if label in SPLIT_BY_BACKREF:
-                    decided, orphan, multi = plan_backref(model)
-                    n = apply_pairs(model, "group", decided, journal, args.apply)
-                    totals["backref"] += n
-                    unassigned[label] = orphan
-                    if multi:
-                        multi_owner[label] = multi
-                    print(f"  (b) {label:44} 정해짐 {len(decided):>5} · "
-                          f"참조0 {len(orphan):>5} · 다중소유 {len(multi):>3}")
-                    continue
-                r3 = plan_r3(model, group_field)
-                r2 = plan_r2(model, group_field)
-                seen = {pk for pk, _ in r3}
-                r2 = [(pk, v) for pk, v in r2 if pk not in seen]   # R3 가 우선
-                n3 = apply_pairs(model, "group", r3, journal, args.apply)
-                n2 = apply_pairs(model, "group", r2, journal, args.apply)
-                totals["r3"] += n3
-                totals["r2"] += n2
-                if n3 or n2:
-                    print(f"  (a) {label:44} R3 {n3:>6} · R2 {n2:>5}")
-            except Exception as exc:      # 저장소 모델 ↔ 운영 스키마 불일치 (P-LOCAL-4)
-                print(f"  ⚠ {label:44} 건너뜀 — {str(exc).splitlines()[0][:90]}")
+                with transaction.atomic():
+                    run_phases(models, journal, totals, unassigned, multi_owner, do_write=True)
+                    raise _PlanRollback
+            except _PlanRollback:
+                print("[BACKFILL] ↩ 트랜잭션 되돌림 — 디스크에 남은 변경 0건")
     finally:
         journal.close()
 
     print()
     print(f"[BACKFILL] (a) 부모상속 R3={totals['r3']:,} · created_by소속 R2={totals['r2']:,} "
           f"· 합계 {totals['r3'] + totals['r2']:,}   (D-261 예상 23,616)")
+    print("[BACKFILL] ※ R2 가 예상(343)보다 적은 것은 **더 엄격하기 때문**이다 — dry-run 은"
+          " 'created_by 가 있다'만 셌고, 여기서는 '그 사용자의 소속 group 이 실제로 확인된다'까지"
+          " 요구한다. 소속이 확인되지 않는 생성자의 행은 채우면 추측이 된다.")
     print(f"[BACKFILL] (b) 역참조 단일소유 {totals['backref']:,}   (D-261 예상 1,809)")
     for label, pks in unassigned.items():
         print(f"[BACKFILL] (b) {label} tenant_unassigned {len(pks):,}행 — **채우지 않았다** "
