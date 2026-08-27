@@ -74,6 +74,20 @@ repos:
         pass_filenames: false
         files: '^(scripts/.*\.py|backend/[^/]+/management/commands/.*\.py|backend/tests/tenant_classification\.py)$'
 
+  # ── C-3.1: 커널 공개 함수가 테넌트 스코프를 통과하는지 ────────────────────
+  # 오늘은 아무것도 막지 않는다 — backend/kernels/ 가 아직 없다(커널은 EXIT 후 K1 부터).
+  # 그래도 지금 세운다: 나중에 오는 게이트는 이미 쌓인 빚을 만나고 래칫으로 잠글 수밖에 없다
+  # (verify_classification 이 빚 113건을 안고 출발한 것이 그 모양이다).
+  # 커널은 아직 한 줄도 없으므로 **여기서만은 빚 0 으로 시작할 수 있다.**
+  - repo: local
+    hooks:
+      - id: gx-tenant-scope
+        name: 커널 테넌트 스코프 검사 (C-3.1)
+        entry: python scripts/verify_tenant_scope.py
+        language: system
+        pass_filenames: false
+        files: '^(backend/kernels/.*\.py|backend/common/tenant_scope\.py|scripts/verify_tenant_scope\.py)$'
+
   # ── 기본 위생 ───────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
