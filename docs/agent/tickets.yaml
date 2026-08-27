@@ -7,7 +7,7 @@ meta:
   version: "3.10-local"
   source_root: "C:/GuardianX/guardianx-source"
   active_phase: "R1"          # 에이전트는 이 phase의 티켓만 집는다
-  updated_at: "2026-08-25"
+  updated_at: "2026-08-28"
   status_enum: [backlog, ready, in_progress, review, verify-pending, done, blocked, dropped]
   # verify-pending = 구현 완료, 검증만 사내망 대기 (D-202). 에이전트는 다음 티켓으로 전진한다.
   gate_enum: [human-required, evidence-review]
@@ -22,10 +22,10 @@ meta:
   # 손으로 세지 않는다: `python scripts/gen_manifest.py` 가 실측·대조한다 (불일치 시 exit 1).
   integrity: "manifest"
   manifest:
-    total: 77
+    total: 79
     by_phase:
       BACKLOG: 8
-      R1: 47
+      R1: 49
       R2: 14
       R3: 8
     ids:
@@ -47,6 +47,8 @@ meta:
       - W0-17
       - W0-18
       - W0-19
+      - W0-20
+      - W0-21
       - W0-2
       - W0-3
       - W0-4
@@ -1437,6 +1439,120 @@ tickets:
   verify:
     - "python manage.py test tests.test_external_dependency_degraded -v 2"
     - "test -f docs/agent/evidence/W0-19/degraded_2nd.md"
+
+- id: W0-20
+  phase: R1
+  title: "목록 격리 판정기 재작성 — '판정 불가 5종'을 잴 수 있게 만든다"
+  status: ready
+  priority: P1
+  effort: M
+  kind: fix
+  depends_on: [W0-3, W0-14]
+  human_gate: false
+  gate: evidence-review
+  requires_intranet: false
+  decisions: [D-275, D-277, D-274, D-262]
+  blocker: |
+    [2026-08-28 · **P1 최우선** — D-275 §5-2 가 지정했다]
+    이 티켓은 결함을 고치는 것이 아니라 **재지 못하는 것을 재게** 만드는 것이다.
+    §5-2 의 5종은 "목록 누출 0" 이 아니라 **판정 불가**다. 그 둘을 구별하지 못하면
+    EXIT §0 의 `탐지기 양성 대조 8/13` 이 영원히 8 로 남는다.
+  reuse_targets:
+    - backend/tests/test_tenant_isolation.py       # 시나리오 5종 · 절대금지 #5 (수정 불가)
+    - backend/tests/tenant_census.py               # 모수 142 · reach 3값
+    - backend/common/tenant_tripwire.py            # 라우트→모델 추적 (문지기 판정과 같은 색인)
+    - docs/agent/evidence/W0-14/w0_14c_p0_full_run.txt   # 33칸 원자료 — 무엇이 재졌고 무엇이 안 재졌나
+  spec: |
+    **문제 (WP-2 EXIT §5-2)**: 목록 시나리오의 양성 대조가 5종에서 실패한다 —
+    탐지기가 **자기 테넌트의 레코드조차** 그 목록 응답에서 못 찾는다.
+
+        찾음 8 · 못 찾음 5
+        orders.Order · stream_monitors.StreamMonitor · dashboard.Dashboard ·
+        surveillance.VideoAnalysis · orders.OrderItem
+
+    즉 이 5종의 "목록 누출 0" 은 **통과가 아니라 판정 불가**다 (D-275 §5-2 · 권고 B 채택).
+    상세·수정·삭제·부모경로 시나리오는 이 5종도 전부 green 이다 — 못 재는 것은 **목록 한 칸**이다.
+
+    ★ **원인 규명이 먼저다** (P-W0-14-6 rationale 그대로).
+      모델마다 다른 질의 인자를 **추정해서** 붙이는 것이 W0-14b 를 죽인 그 방식이다.
+      추정한 배선 위에 초록을 쌓지 않는다.
+
+      (1) 왜 안 실리는가를 **모델별로** 확인한다 — 기본 필터(미확인·날짜범위)인가,
+          페이지네이션인가, 정렬인가, 다른 이유인가. 응답 본문과 쿼리를 실측해 가른다.
+      (2) 원인이 밝혀진 것부터 **그 근거로** 픽스처·질의 인자를 배선한다.
+          원인을 못 밝힌 것은 **계속 판정 불가로 남긴다** — 지우지 않는다.
+      (3) 판정기는 문자열 매칭이 아니라 **고유값 + 본문 파싱 구조 판정**이어야 한다 (D-277).
+      (4) 배선한 것마다 **양성 대조를 함께** 붙인다. 양성 대조 없는 단언은 green 으로 세지 않는다.
+
+    ⚠ `tests/test_tenant_isolation.py` 의 **단언은 고치지 않는다** (절대금지 #5 · D-105).
+      D-253 선례대로 **배선만** 고친다. 단언을 고쳐야 판정된다면 그것은 이 티켓이 아니라
+      대표 판정 사항이다 — `decisions_pending.yaml` 에 적재하고 전진한다.
+  dod: |
+    ① 5종 각각에 대해 "왜 목록 응답에 안 실렸나"가 **실측 근거와 함께** 문서에 있다
+       (추정으로 적은 것은 추정이라고 적는다)
+    ② 원인이 밝혀진 모델은 목록 시나리오가 **양성 대조를 통과**한다
+       (자기 테넌트 레코드를 응답에서 찾아낸다)
+    ③ 그 위에서 목록 격리 판정이 나온다 — green 이든 누출이든 **판정이 난다**
+    ④ 원인 미규명분은 `판정 불가` 로 **남아 있고**, 그 수가 EXIT 부속 문서에 갱신된다
+    ⑤ 탐지기 양성 대조 수치가 8/13 에서 **올라가고**, 분모·술어를 병기해 보고한다 (D-274)
+  verify:
+    - "docker exec gx-shell sh -c 'cd /app && DJANGO_SETTINGS_MODULE=config.settings PYTHONPATH=/app python -m pytest tests/test_tenant_isolation.py -q --nomigrations -p no:randomly -s'"
+    - "test -f docs/agent/evidence/W0-14/list_verdict_rebuild.md"
+
+- id: W0-21
+  phase: R1
+  title: "unproven FK 132종 배치별 실증 — '안전'이 아니라 '아직 모른다'를 갚는다"
+  status: ready
+  priority: P1
+  effort: L
+  kind: new-s
+  depends_on: [W0-3, W0-14]
+  human_gate: false
+  gate: evidence-review
+  requires_intranet: false
+  decisions: [D-275, D-271, D-272, D-263, D-276]
+  blocker: |
+    [2026-08-28 · D-275 §5-3]
+    D-271 ①이 "실증된 FK 만 isolatable 로 센다"고 못박은 결과 **실증 10 / 142** 다.
+    나머지 132종은 **"안전"이 아니라 "아직 모른다"** 이고, 그 상태로 등재돼 있다.
+    이 티켓은 그 빚을 배치로 갚는다. 갚기 전에는 어느 수치도 132를 초록으로 세지 않는다.
+  reuse_targets:
+    - scripts/probe_p0_targets.py                  # 비소유 테넌트 HTTP 프로브 — 실증 방식 정본
+    - scripts/probe_isolatable_census.py           # 술어 M2M ∪ FK 판정
+    - backend/tests/tenant_census.py               # 142종 · priority · reach · owns
+    - backend/common/tenant_tripwire.py            # unguarded 346 — 어디부터 갚을지의 우선순위 근거
+    - docs/agent/evidence/W0-14/p1_p2_classification.md   # P1-a/b/c 배치 정의
+  spec: |
+    **모수 142 · 실증 10 · unproven 132** (술어 = 비소유 테넌트 계정 HTTP 프로브 누출 0 — D-271 ①).
+
+    `p1_p2_classification.md` §1 이 정한 3배치를 그대로 쓴다:
+
+      P1-a  행 250+ 4종 (`DeliveryOperationApprovalChecklist` 3,013 · `TerminalSequence` 875 ·
+            `OrderAssignment` 261 · `DeliveryOperationApproval` 256)   — WP-2 EXIT **직후**
+            근거: 행이 많고 본문지목쓰기 경로가 닿는다. **새면 크게 샌다.**
+      P1-b  `direct_pk` 15종                                            — WP-DA2a 착수 **전**
+            근거: pk 로 지목되므로 IDOR 배선이 P0 와 같다 — 등재 비용이 낮다.
+      P1-c  나머지 (코드·마스터성 소량 테이블)                          — WP-DA2a 와 **병행**
+            근거: 행이 적고 대개 부모를 통해서만 닿는다.
+
+    ★ **행 0 은 안전이 아니라 "아직 안 썼다"** (D-276). 배치에서 빼지 않는다 —
+      내일 첫 행이 들어오는 순간 그 모델은 무방비로 시작한다.
+    ★ 도달 가능성은 **3값**으로 센다 (D-272): `direct_pk` / `via_parent` / `no_route`.
+      `via_parent` 는 **부모 경로 스코프 + 자식 필터 둘 다** 시험 대상이다.
+      "직접 경로 없음"은 안전이 아니다.
+    ★ 실증되지 않은 것을 **자동으로 면제하지 않는다** (D-263). 못 잰 것은 못 잰 것으로 남긴다.
+
+    배치를 마칠 때마다 `tenant_census.py` 를 다시 생성하고 **차이를 조사한다** —
+    수가 조용히 바뀌면 무엇을 승인했는지가 사라진다 (D-269 와 같은 계열).
+  dod: |
+    ① P1-a 4종 실증 완료 — 비소유 테넌트 프로브 누출 0, 시나리오 5종 전건 판정
+    ② P1-b 15종 실증 완료 — 같은 술어
+    ③ P1-c 실증 일정이 배치별 날짜와 함께 문서에 있고, 착수분은 실증 완료
+    ④ 매 배치 후 `실증 N/142` 가 **분모·술어와 함께** 보고된다 (D-274)
+    ⑤ 실증 실패(누출 발견)는 **숨기지 않고** 결함 티켓으로 분기한다
+  verify:
+    - "docker exec gx-shell sh -c 'cd /app && DJANGO_SETTINGS_MODULE=config.settings PYTHONPATH=/app python -m pytest tests/test_tenant_isolation.py -q --nomigrations -p no:randomly -s'"
+    - "test -f docs/agent/evidence/W0-14/fk_proof_batches.md"
 
 - id: W0-2
   phase: R1
