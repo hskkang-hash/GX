@@ -146,10 +146,6 @@ SCENARIOS: dict[str, Scenario] = {
             Step(9, "K4 보고서 PDF — 이벤트·조치·캡처 치환", "K4",
                  ac="F-11 템플릿 변수 3종"),
         ),
-        pending_reason=(
-            "K2 알림 커널이 아직 없다 — 4·5단계(수신자 결정·30초 발송 기록)를 잴 수 없다. "
-            "D-291 증분 규칙이 정한 가동 시점이 'K2 done' 이므로 그때 이 사유를 지우고 쓴다."
-        ),
     ),
     "E2E-2": Scenario(
         code="E2E-2",
