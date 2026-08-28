@@ -220,3 +220,112 @@ class DetectionEvent(BaseModelWithGroup):
 
     def __str__(self):
         return f"{self.event_type}@{self.stream_monitor_id} {self.occurred_at:%Y-%m-%d %H:%M:%S}"
+
+
+class NotificationRule(BaseModelWithGroup):
+    """K2 알림 커널 — **등급 × 역할 → 누가 받는가** (DA-04 §2 K2 · DA2-21 (1)).
+
+    왜 새 앱을 만들지 않았나
+        `DetectionEvent`(W2-1)와 같은 이유다. 신규 앱은 `INSTALLED_APPS` 를 건드리고,
+        그것은 설정 변경이며 되돌리기가 더 크다(4원칙 ②·④). 이 두 표는 이벤트와
+        같은 수명·같은 테넌트 경계를 갖는다 — 이벤트가 사는 앱에 둔다.
+        ※ 전용 앱으로 옮길지는 **P-K2-1 로 적재**했다. 옮기는 것은 마이그레이션 하나이고,
+          지금 나누면 K2 착수 자체가 설정 변경 승인 대기가 된다.
+
+    ⚠ BaseModelWithGroup 상속 필수 (group 격리).
+      수신 규칙이 테넌트를 넘으면 **남의 재난 알림이 우리에게 온다** — 격리 실패 중에서도
+      가장 눈에 띄는 종류다.
+
+    ★ 규칙은 **역할**을 가리키고 사람을 가리키지 않는다.
+      사람을 직접 넣으면 인사이동마다 규칙을 고쳐야 하고, 고치지 않은 규칙은
+      **퇴사자에게 재난 알림을 보내는 상태**로 남는다.
+    """
+
+    #: 어느 등급에서 발동하는가. `DetectionEvent.Severity` 와 **같은 열거를 쓴다** —
+    #: 등급을 두 벌로 두면 규칙이 가리키는 등급과 이벤트의 등급이 갈린다.
+    severity = models.CharField(
+        max_length=16, choices=DetectionEvent.Severity.choices, db_index=True
+    )
+    role = models.ForeignKey(
+        "role.Role", on_delete=models.CASCADE, related_name="notification_rules"
+    )
+    #: 구역 라벨. **분류 체계가 아니라 라벨이다** — 이 저장소에 zone 모델이 없다(실측).
+    #: 비어 있으면 모든 구역에 적용된다. 체계는 P-K2-2 로 적재했다 (추정 금지 · D-280).
+    zone = models.CharField(max_length=64, null=True, blank=True, db_index=True)
+    #: 발송 채널 목록 (`["email"]`). 업체 미정이므로 **어댑터 자리만 비워 둔다**(D4-1).
+    #: 문자열 하나가 아니라 목록인 이유: 같은 등급을 메일과 SMS 로 동시에 보내는 것이
+    #: F-10 의 기본 요구이고, 하나로 두면 규칙을 채널 수만큼 복제하게 된다.
+    channels = models.JSONField(default=list)
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    class Meta:
+        ordering = ["severity", "id"]
+        indexes = [
+            # 발동 조회: 등급 + 활성 (구역은 선택이라 뒤에 온다)
+            models.Index(fields=["severity", "is_active"]),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
+        return f"{self.severity}/{self.role_id}/{self.zone or '*'}"
+
+
+class DeliveryRecord(BaseModelWithGroup):
+    """K2 발송 이력 — **AC 판정의 유일한 근거** (DA-04 §2 K2 · DA2-21 (3)).
+
+    DA-04: *"`occurred_at → sent_at` 이 F-10 의 30초 AC 를 재는 두 점이다."*
+    그래서 두 점이 **한 행에서 읽혀야** 한다 — 이벤트를 따라가 시각을 찾아야 하면
+    그 조회가 곧 AC 측정의 비용이 되고, 비용이 큰 측정은 안 하게 된다.
+
+    ★ 이 표가 곧 K4 보고서의 "조치 이력" 행이다 (DA-04 K2 이중 AC).
+      알림용·보고서용 두 벌로 적재하지 않는다 — 두 벌이면 보고서와 알림이 다른 말을 한다.
+
+    ★ 실패도 **행으로 남는다.** 실패를 남기지 않으면 "보낸 적 없음"과 "보내려다 실패"가
+      같은 상태(행 없음)가 되고, 그것이 D-290 이 금지한 모양이다.
+    """
+
+    class Channel(models.TextChoices):
+        EMAIL = "email", "이메일"
+        SMS = "sms", "SMS"
+        PUSH = "push", "앱 푸시"
+        WEBHOOK = "webhook", "Webhook"
+
+    event = models.ForeignKey(
+        DetectionEvent, on_delete=models.CASCADE, related_name="deliveries"
+    )
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="detection_deliveries",
+    )
+    #: 수신 주소의 **사본**. 사람이 지워져도(SET_NULL) 어디로 보냈는지는 남아야 한다 —
+    #: 감사에서 "누구에게 갔나"에 답하지 못하면 이력이 아니다.
+    recipient_address = models.CharField(max_length=255, blank=True, default="")
+    channel = models.CharField(max_length=16, choices=Channel.choices, db_index=True)
+
+    #: 이벤트 발생 시각의 **사본**. F-10 의 두 점 중 하나 — 조인 없이 재게 한다.
+    occurred_at = models.DateTimeField(db_index=True)
+    #: 발송을 마친 시각. 실패면 `None` 이다 — 실패에 시각을 넣으면 30초 AC 가
+    #: **실패한 발송으로도 달성된다.**
+    sent_at = models.DateTimeField(null=True, blank=True, db_index=True)
+
+    succeeded = models.BooleanField(default=False, db_index=True)
+    failure_reason = models.CharField(max_length=255, null=True, blank=True)
+    retry_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["-occurred_at", "id"]
+        indexes = [
+            # F-10 판정: 이벤트별 발송 이력
+            models.Index(fields=["event", "-occurred_at"]),
+            # 5분 알림 억제 조회 (K2.suppress)
+            models.Index(fields=["succeeded", "-occurred_at"]),
+        ]
+
+    @property
+    def latency_seconds(self) -> float | None:
+        """`occurred_at → sent_at`. **F-10 의 30초를 재는 두 점** (DA-04).
+
+        실패면 `None` 이다 — 0 이 아니다. 실패를 0초로 세면 평균이 좋아진다.
+        """
+        if self.sent_at is None:
+            return None
+        return (self.sent_at - self.occurred_at).total_seconds()

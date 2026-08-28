@@ -1472,3 +1472,176 @@ pending:
     reversible: true
     blocks_dod: false
     status: open
+  # ── K2 알림 커널 착수분 (2026-08-30 · 실행 순서 ④) ──────────────────────
+  - id: P-K2-1
+    ticket: "DA2-21 · K2"
+    raised_at: "2026-08-30"
+    context: "K2 의 두 표(NotificationRule · DeliveryRecord)를 어느 앱에 두는가"
+    question: >-
+      K2 는 L3 커널이고 **가이온 IP** 다(계약 8조3항). 그런데 Django 에서 표는 앱에
+      속하고, 이 저장소에는 알림 앱이 없다. 지금은 `DetectionEvent`(W2-1)의 선례를 따라
+      `stream_monitors` 앱에 두었다 — 이벤트와 **같은 수명·같은 테넌트 경계**를 갖기
+      때문이다. 전용 앱(`notifications`)으로 옮길 것인가?
+    options:
+      - "A: stream_monitors 에 둔다 (지금 상태) — 신규 앱 없음, INSTALLED_APPS 무변경"
+      - "B: 전용 앱 notifications 를 만든다 — 커널 경계가 앱 경계와 일치한다"
+      - "C: kernels/ 안에 앱을 만든다 — 커널 패키지가 곧 앱이 된다"
+    chosen_default: "A (되돌릴 수 있다 — 표 이동 마이그레이션 하나)"
+    rationale: >-
+      **A 를 적용했다** (4원칙 ②·④ — 되돌리기 쉬운 쪽 · 범위가 작은 쪽).
+      신규 앱은 `INSTALLED_APPS` 변경이고 그것은 설정 변경이다. 지금 나누면 K2 착수
+      자체가 설정 승인 대기가 된다 — 실행 순서 ④가 요구한 것은 착수다.
+      ○ **B 가 장기적으로 옳다.** DA-04 §1-3 이 "커널은 L3 에만" 을 못박았고, 앱 경계가
+        커널 경계와 다르면 `verify_layers.py` 가 볼 수 있는 것이 줄어든다. 다만 이동은
+        `AlterModelTable` 하나이고, 행이 아직 0 인 지금이 아니라 **행이 생기기 전 아무
+        때나** 같은 비용이다 — 지금 해야 할 이유가 없다.
+      ⛔ **C 는 dj-core 의 앱 탐색 관례와 어긋난다** (실측: 전 앱이 backend/ 최상위).
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  - id: P-K2-2
+    ticket: "DA2-21 · K2 · E2E-2"
+    raised_at: "2026-08-30"
+    context: "DA-04 K2 의 `resolve_recipients(severity, group, zone)` 에서 zone 이 무엇인가"
+    question: >-
+      DA-04 는 수신자 결정의 입력으로 **구역(zone)** 을 적었고, D-291 의 E2E-2(침수)는
+      *"같은 구역 인명(F-03) 결합"* 을 요구한다. 그런데 **이 저장소에 zone 모델이 없다**
+      (실측: 구역·구획·존을 뜻하는 모델 0건). 무엇을 구역으로 볼 것인가 —
+      행정구역인가 · 스트림 묶음인가 · 지도상 폴리곤인가?
+    options:
+      - "A: 자유 라벨 (CharField) — 지금 상태. 규칙에 문자열 하나를 달고 같으면 같은 구역"
+      - "B: 스트림 묶음 — 구역은 카메라들의 집합이다 (StreamMonitor 에 zone FK)"
+      - "C: 지도 폴리곤 — 좌표가 들어오면 어느 구역인지 계산한다 (GIS 필요)"
+    chosen_default: "A (라벨만. **분류 체계를 만들지 않았다**)"
+    rationale: >-
+      **A 를 적용했다.** DA-04 가 인자로 적은 것을 자리조차 만들지 않으면 나중에
+      `resolve_recipients` 의 시그니처가 바뀌고, 그때는 부르는 곳이 여럿이다.
+      그러나 **분류 체계를 추정으로 만들지 않았다**(D-280) — 지금 것은 라벨이지 체계가 아니다.
+      ★ E2E-2 는 이 판정이 나기 전까지 열지 않는다. 그것이 `e2e_contract.py` 의
+        `pending_reason` 에 적힌 이유다 — 시나리오를 쓰려면 "같은 구역"의 뜻이 먼저다.
+      ○ **B 가 현장에 가깝다** (안양천 제안서의 구역 개념이 카메라 묶음이다). 다만
+        `StreamMonitor` 스키마 변경이라 마이그레이션이 따라온다.
+      ⛔ **C 는 지금 과하다** — GIS 의존이 붙고, 계약에 폴리곤 요구가 없다.
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  # ── K6 피드백·계측 커널 착수분 (2026-08-30 · 실행 순서 ④) ────────────────
+  - id: P-K6-1
+    ticket: "W2-4 · K6 · K1"
+    raised_at: "2026-08-30"
+    context: "`close_event` 가 status 를 덮어 **판정(확인/기각)을 지운다** — 오탐률 분모가 준다"
+    question: >-
+      `DetectionEvent.status` 하나가 **판정**(confirmed/rejected)과 **수명**(new/closed)을
+      함께 나른다. 그래서 `K1.close_event` 가 `closed` 로 덮는 순간 그 이벤트가 확인이었는지
+      기각이었는지가 DB 에서 사라진다.
+      DA-04 는 *"같은 status 필드가 F-14·U1·U4 를 동시에 먹인다"* 고 적었는데 그 전제가
+      여기서 깨진다 — **오래된 이벤트일수록 종료되므로 분모가 시간이 갈수록 작아지고,
+      U1 의 "오탐률 월 하락" 이 그 축소만으로 달성될 수 있다.**
+    options:
+      - "A: status 를 둘로 나눈다 — verdict(확인/기각) + lifecycle(신규/종료). 마이그레이션 1건"
+      - "B: close_event 가 판정을 덮지 않게 한다 — 판정된 이벤트는 closed 로 가지 않는다"
+      - "C: 그대로 두고 K6 이 `reviewed_at` 으로 분모를 센다 — status 는 최종 상태만"
+    chosen_default: ""
+    rationale: >-
+      **기본값을 적용하지 않는다.** 셋 다 **살아 있는 계약의 의미 변경**이다 —
+      `close_event` 는 DA-04 K1 표에서 **K4 보고서의 트리거**이고(F-11), 그 시점을 바꾸면
+      보고서가 언제 나오는지가 바뀐다. 그 판단은 사람의 것이다 (D-213).
+      ★ 대신 **손실을 숫자로 보이게 했다**: `RateWindow.verdict_lost_to_close` 가
+        "판정이 지워진 이벤트 수" 를 함께 낸다. 숨기면 분모가 왜 줄었는지 아무도 모른다.
+        그리고 `tests/test_k6_feedback_kernel.ClosedEventVerdictLossTest` 가 **지금의 사실**을
+        단언한다 — 누가 고치면 그 시험이 실패하고, 그때 이 항목을 함께 닫으면 된다.
+      ○ **A 가 사실에 가장 가깝다.** 판정과 수명은 다른 사실이고, 한 칸에 넣은 것이 원인이다.
+      ○ **C 가 가장 싸다** (마이그레이션 없음). 다만 `reviewed_at` 은 기각·확인을 구별하지
+        않으므로 **분자를 못 센다** — 분모만 살리고 분자를 잃는다.
+    reversible: false
+    blocks_dod: false
+    status: open
+
+  - id: P-K6-2
+    ticket: "W2-4 · K6"
+    raised_at: "2026-08-30"
+    context: "DA-04 K6 표는 `record_feedback` 을 'K1 review_event 가 호출' 이라 적었다"
+    question: >-
+      문서대로면 방향이 **K1 → K6** 다. 그런데 판정을 저장하는 자리는
+      `DetectionEvent.status` 하나뿐이고, K6 이 그것을 직접 쓰면 같은 필드에 **쓰는 곳이
+      둘**이 된다 — DA-04 가 같은 표에서 요구한 *"집계 경로를 하나로 유지"* 가 쓰기 단계에서
+      이미 깨진다. 방향을 어떻게 잡는가?
+    options:
+      - "A: K6.record_feedback 이 K1.review_event 에 **얇게 위임** (지금 상태). 쓰기는 K1 한 곳"
+      - "B: 문서대로 K1 이 K6 을 부른다 — K6 이 별도 피드백 표에 적재"
+      - "C: record_feedback 을 K6 공개 면에서 뺀다 — App 이 K1 을 직접 부른다"
+    chosen_default: "A (되돌릴 수 있다 — 함수 본문 3줄)"
+    rationale: >-
+      **A 를 적용했다** (D-210 실측 우선 · 4원칙 ①·②).
+      A 는 문서의 **의도**(오탐 판정이 K6 의 입력이다)를 지키면서 문서가 만든 **부작용**
+      (쓰는 곳이 둘)을 피한다. 그리고 D-287 이 말한 재사용의 증거이기도 하다 —
+      *"진짜 재사용은 K2·K3·K4 가 K1 을 소비하는 것으로 증명된다."*
+      ⛔ **B 는 DA-04 자신이 금지한다**: *"별도 집계 테이블을 만들지 않는다 — 두 벌로 세면
+        숫자가 갈리고, 갈린 숫자는 고객 앞에서 못 쓴다."*
+      ○ **C 도 성립한다.** 다만 DA-04 §2 K6 표에서 공개 면 하나를 지우는 것이므로
+        문서 개정이 필요하다. A 는 문서를 그대로 두고 성립한다.
+      ※ `tests/test_k6_feedback_kernel.SingleWritePathTest` 가 위임을 **관찰로** 확인한다 —
+        K1 을 막으면 K6 도 못 쓴다. 소스를 읽고 "부르는 것처럼 보인다"로 판정하지 않는다.
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  - id: P-K6-3
+    ticket: "W4-1 · K6 · DA-03"
+    raised_at: "2026-08-30"
+    context: "`kpi_series` 의 t0/t1 계측을 **어디에 적재하는가**"
+    question: >-
+      DA-04 K6 은 *"DA-03 §2-4 의 t0/t1 계측을 여기 적재한다. 검수는 '재봤더니 빨랐다'가
+      아니라 p50/p95 로 한다"* 고 적었다. 그런데 적재처를 별 표로 두면 DA-04 가 같은 표에서
+      요구한 *"집계 경로를 하나로"* 와 충돌하고, 이벤트 행에 붙이면 **이벤트마다 계측 칼럼이
+      늘어난다**(3초·30초·10초·60초…). 어디에 적재하는가?
+    options:
+      - "A: 이벤트 행에 소수의 칼럼 — 계약이 지정한 지점만 (3초·30초)"
+      - "B: 계측 전용 표 — 지점이 늘어도 스키마가 안 바뀐다"
+      - "C: 이미 있는 행에서 유도 — 예: 30초는 DeliveryRecord.occurred_at→sent_at 로 이미 재어진다"
+    chosen_default: ""
+    rationale: >-
+      **기본값을 적용하지 않는다.** `kpi_series` 는 지금 `NotImplementedYet` 을 던지고,
+      그것이 정직한 상태다 — 표본이 없는 p95 는 **만들어진 수**이고, 검수에 올라가는 수를
+      추측으로 만들지 않는다 (D-280).
+      ★ **C 가 이미 부분적으로 참이다**: F-10 의 30초는 `DeliveryRecord` 의 두 점에서
+        **조인 없이** 읽힌다(K2 착수분). 즉 계측 지점 중 하나는 이미 실물 위에 있다.
+        나머지 지점(클릭→영상 3초 등)이 어디서 나오는지는 K3 착수 시 드러난다 —
+        **그때 이 항목을 다시 본다.** 지금 정하면 K3 이 만들 사실을 추측하는 것이 된다.
+    reversible: false
+    blocks_dod: false
+    status: open
+
+  # ── 환경 (2026-08-30 · E2E 규약 ① 이행 중 발견) ─────────────────────────
+  - id: P-ENV-1
+    ticket: "E2E · 인도 · CI"
+    raised_at: "2026-08-30"
+    context: "빈 DB 에서 `manage.py migrate` 가 죽는다 — 스키마가 마이그레이션만으로 재현되지 않는다"
+    question: >-
+      dj-core 의 `core/logger/migrations/0009_…` 가 `apps.get_model("multilanguage", …)` 를
+      부르면서 그 앱에 대한 **dependency 를 선언하지 않는다.** 실행 계획에서 뒤에 오면
+      `RunPython` 이 받는 상태에 그 모델이 없어 `LookupError` 로 죽는다.
+      즉 **빈 DB 에서 이 저장소를 세울 수 없었다** (실측:
+      `docs/agent/evidence/e2e/migration_from_scratch.md`).
+      계약 6차(2027.1)는 **소스 인도**이고 받는 쪽은 빈 DB 에서 시작한다. 어떻게 푸는가?
+    options:
+      - "A: dj-core `logger/0009` 에 dependency 를 넣는다 — 근본 해결. **§0.4 금지구역 수정**이라 사내 패키지 배포가 필요하다"
+      - "B: 설치 절차에 두 줄을 넣는다 — `migrate user` → `migrate multilanguage` → `migrate` (지금 E2E 가 쓰는 방식)"
+      - "C: 저장소에 순서 마이그레이션을 넣는다 (`run_before`) — **되돌렸다.** 이미 적용된 DB 의 migrate 를 영구히 막는다"
+    chosen_default: "B (E2E 시험 DB 생성에만 적용 · 되돌릴 수 있다)"
+    rationale: >-
+      **B 를 적용했다** — 다만 **`backend/tests/e2e/conftest.py` 안에서만**이다.
+      E2E 가 도는 것이 실행 순서 ⑤의 요구이고, 그것을 세우는 최소 변경이 이것이다.
+      스키마를 바꾸지 않는다 (순서일 뿐이다).
+      ⛔ **C 는 실제로 만들어 보고 되돌렸다.** 빈 DB 에서는 통과하지만, `logger/0009` 가
+        이미 적용된 DB(지금의 개발 DB · 운영 DB)에서는 `migrate` 자체가
+        `InconsistentMigrationHistory` 로 죽고 `--fake` 로도 못 넘는다.
+        **새 환경 하나를 살리려고 도는 환경 전부를 세우는 변경**이라 채택하지 않았다.
+      ★ **A 가 근본이다.** 그러나 사내 패키지 수정이므로 사람의 결정이 필요하다.
+      ★ 그리고 **B 만으로는 부족하다** — 인도 문서의 설치 절차와 CI 에 그 두 줄이 들어가야
+        한다. 지금은 시험 경로에만 있고, 그 사실을 숨기지 않는다.
+    reversible: true
+    blocks_dod: false
+    status: open

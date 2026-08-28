@@ -93,6 +93,21 @@ KERNEL_PUBLIC: dict[str, str] = {
         "시험 근거: KernelPublicSurfaceTest.test_public_surface_matches_da04 (이름만 서 있음을 확인) · "
         "KernelScopeSignatureTest.test_subscribe_requires_scope_before_it_raises "
         "(scope 를 빼면 NotImplementedYet 이 아니라 TypeError 다 — D-281 은 구현 전에도 걸린다)",
+
+    # ── K6 (2026-08-30 착수분) — 둘 다 **구현이 없다.** 데이터를 반환하지 않는다.
+    #    등재는 면제가 아니라 선언이고, 그 선언은 아래 시험이 뒷받침한다.
+    "backend/kernels/k6_feedback/services.py:usage_snapshot":
+        "구현이 없다. 부르면 NotImplementedYet 을 던지고 **아무 데이터도 반환하지 않는다** "
+        "(U4 과금 근거 — W4-1 `UsageSnapshot` 모델이 저장소에 없다, 실측 0건). "
+        "본문 첫 줄에서 `scope.require_actor()` 를 부르므로 시스템 스코프로도 못 지나간다. "
+        "구현이 들어오는 커밋에서 이 등재를 지우고 문지기를 붙여야 한다 — 사용량은 테넌트 자원이다. "
+        "시험 근거: HonestAbsenceTest.test_usage_snapshot_raises_instead_of_returning_zero · "
+        "HonestAbsenceTest.test_absent_surface_still_demands_scope_first",
+    "backend/kernels/k6_feedback/services.py:kpi_series":
+        "구현이 없다. 부르면 NotImplementedYet 을 던진다 — DA-03 §2-4 의 t0/t1 계측 적재가 "
+        "선행이고, 표본 없는 p95 는 만들어진 수다 (D-280 · 적재 P-K6-3). "
+        "본문에서 `scope.require_actor()` 를 먼저 부른다. "
+        "시험 근거: HonestAbsenceTest.test_kpi_series_raises_instead_of_returning_empty",
 }
 
 #: PUBLIC 라우트 면제의 증가금지 래칫. 오늘 실측 4건.

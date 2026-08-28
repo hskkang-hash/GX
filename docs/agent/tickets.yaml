@@ -2112,7 +2112,25 @@ tickets:
   human_gate: false
   gate: evidence-review
   requires_intranet: false
-  reuse_targets: [backend/stream_monitors/models.py]
+  updated_at: "2026-08-30T18:00:00+09:00"
+  evidence: backend/kernels/k6_feedback/ · backend/tests/test_k6_feedback_kernel.py
+  blocker: |
+    [2026-08-30 · **K6 커널 착수분 완료 — 화면은 아직**] 실행 순서 ④.
+    이 티켓의 **backend 쪽 커널**(K6)이 섰다: `backend/kernels/k6_feedback/`.
+      · `false_positive_rate` — 비율 + **분모·분자**. 분모 0 이면 `rate=None`(0.0 아님 · D-290).
+        미판정(new)은 분모가 아니다 — 판정을 미루기만 해도 좋아지는 지표를 만들지 않는다.
+      · `bucket="month"` 로 F-14(월간 리포트)와 U1(추이)이 **같은 질의**에서 나온다.
+      · `record_feedback` 은 K1 `review_event` 에 얇게 위임한다 — 쓰기 경로가 하나여야
+        "집계 경로를 하나로"(DA-04 K6)가 쓰기 단계에서 깨지지 않는다 (적재 P-K6-2).
+      · `usage_snapshot` · `kpi_series` 는 **`NotImplementedYet` 을 던진다** —
+        W4-1 계측 모델과 t0/t1 적재가 선행이다. 계측에서 조용한 0 은 특히 나쁘다:
+        아무도 재지 않은 지표가 좋은 지표로 보고된다 (D-284 · D-290).
+    ★ **등재된 결함 P-K6-1** — `close_event` 가 status 를 덮어 판정을 지운다. 오래된
+      이벤트일수록 종료되므로 **분모가 시간이 갈수록 작아지고**, U1 의 "월 하락" 이 그
+      축소만으로 달성될 수 있다. 고치지 않고 적재했다(계약 F-11 트리거에 닿는다).
+      대신 손실을 숫자로 냈다: `RateWindow.verdict_lost_to_close`.
+    아직 아닌 것: **관리자 화면**(dod) · AIModel별 기각률 집계 화면. 화면은 W2-3 다음이다.
+  reuse_targets: [backend/stream_monitors/models.py, backend/kernels/k6_feedback/]
   spec: "기각 누적을 AIModel별로 집계해 관리자 화면에 노출. 모델 재학습은 R2."
   dod: "AIModel별 기각률이 관리자 화면에 표시된다."
   verify: ["python manage.py test stream_monitors"]
@@ -2718,8 +2736,9 @@ tickets:
   title: "F-10 알림 발송 — K2 알림 커널 (등급별 수신그룹 · 다채널 · 발송이력)"
   kernel: [K2]
   feature: [F-10]
-  status: backlog
-  updated_at: "2026-08-27T10:00:00+09:00"
+  status: in_progress
+  updated_at: "2026-08-30T18:00:00+09:00"
+  evidence: docs/agent/evidence/W2-K2/
   priority: P0
   effort: L
   kind: new-l
@@ -2740,6 +2759,31 @@ tickets:
       SMS·푸시는 어댑터 자리만 비워 둔다 — AC 30초는 채널 종류와 무관하다.
     ★ frontend/.../SurveillanceDashboard/components/NotificationsList 는 **화면단 목록**이다.
       발송 기능이 아니다. 재사용 대상으로 착각하지 말 것 — DA-01 OPEN-07 의 실측.
+
+    ---
+    [2026-08-30 · **커널 착수 — 실행 순서 ④ 승인부**] 위의 "착수 금지"는 이 지시로 풀렸다.
+    지운 것이 아니라 **위의 문장을 그대로 두고 이어 적는다** — 언제·무엇으로 풀렸는지가
+    기록이다.
+
+    ▣ 이번 턴에 선 것 (backend/kernels/k2_notify/)
+      · 공개 면 4개 전건 — resolve_recipients · send · suppress · list_deliveries
+        (DA-04 §2 K2 표 그대로. `KernelPublicSurfaceTest` 가 표↔코드 일치를 판정한다)
+      · 표 2개 — NotificationRule(등급×역할×구역) · DeliveryRecord(발송 이력)
+        마이그레이션 `stream_monitors/0017`. **신규 표 생성만** — ALTER·DROP 0줄.
+        D-283 4조건 이행: DDL 전문 첨부 · 역방향 확인 · 로컬 복제본 · 적용 후 게이트 green.
+      · [F-10] 30초 판정을 **레코드에서** 읽는다 — `occurred_at → sent_at` 이 한 행에 있다.
+        실패한 발송은 `sent_at=None` 이라 **아무리 빨라도 F-10 을 충족하지 않는다.**
+      · 저하 운전 — 어댑터가 값으로 실패하든 예외로 죽든 관제가 서지 않는다.
+        실측: 예외 경로가 처음에 파이프라인을 세웠고, `_ExplodingChannel` 시험이 잡았다.
+      · 수신자 0명 → `NoRecipients` 예외. 빈 성공을 만들지 않는다 (DA-03 §3-2 · D-290).
+
+    ▣ **아직 아닌 것** (이 티켓은 done 이 아니다)
+      · dod (2) F-12 규칙 편집 화면 + 설정 감사로그 — 화면이 없다
+      · dod (3) 재시도 **큐** — 지금은 `retry_count` 칼럼만 있고 재시도기가 없다.
+        실패는 이력에 남지만 **자동으로 다시 보내지 않는다.** 이 사실을 초록으로 세지 않는다.
+      · SMS·푸시·Webhook 어댑터 — D4-1(업체 선정) 대기. `channels.UNAVAILABLE` 에
+        **사유와 함께** 등재돼 있고, 그 채널로 보내려 하면 실패 이력이 남는다.
+      · 적재 판정 2건: **P-K2-1**(표를 어느 앱에 두는가) · **P-K2-2**(zone 이 무엇인가)
   reuse_targets:
     - backend/stream_monitors/models.py            # DetectionEvent — 발송 트리거의 원천 (K1)
     - docs/contracts/detection-event.md            # Severity 3종 — critical 이 F-10 발동 조건
