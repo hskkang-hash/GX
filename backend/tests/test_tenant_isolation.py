@@ -1656,6 +1656,314 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# 3-B) 쓰기 방향 격리 — **읽기 5 + 쓰기 4** (D-290)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 왜 새로 만드나 — 우리는 읽기만 보고 있었다
+# -------------------------------------------
+# 위의 다섯 시나리오(list·detail·update·delete·export)는 전부 **남의 레코드를 지목해**
+# 무슨 일이 일어나는가를 묻는다. 지목할 레코드가 이미 있다는 전제가 깔려 있다.
+#
+# D-290 이 잡은 구멍은 그 전제 **밖**에 있었다: 남의 `stream_monitor_id` 를 적어
+# **남의 테넌트에 새 행을 심는 것**. 지목하는 것이 아니라 만들어 넣는 것이므로
+# update·delete 시나리오가 지나가지 않는다. 그리고 만들어진 행은 그 테넌트의
+# 정상 데이터처럼 보이므로, 이후 어떤 읽기 시험도 그것을 이상하다고 하지 않는다.
+#
+# 어디서 막히나 — 이 저장소의 쓰기 문턱은 **서비스 계층**이다
+# ------------------------------------------------------------
+# ORM 은 막지 않는다. `Model.objects.create(parent_id=<남의 것>)` 은 그냥 된다.
+# 뷰는 라우트가 있는 것만 막는다. 커널 공개 함수는 **시그니처가 스코프를 요구하고**
+# (D-281) 그 안에서 문지기를 부른다 — 지금 이 저장소에서 쓰기를 실제로 막는 자리다.
+#
+# 그래서 여기서 재는 것은 **커널 공개 쓰기 함수 전수**다. 함수가 늘면 대장도 늘어야 하고,
+# 늘지 않으면 아래 래칫이 멈춘다 (D-285 ② — 개수가 아니라 이름으로 잠근다).
+
+
+@dataclass(frozen=True)
+class WriteProbe:
+    """쓰기 방향 시나리오 하나.
+
+    `attempt` 는 **(스코프, 남의 것을 가리키는 인자)** 로 한 번 호출된다.
+    호출이 예외로 끊기거나(문지기) 행이 남의 테넌트에 생기지 않으면 통과다.
+    """
+
+    label: str
+    #: 어느 커널 공개 함수를 재는가. 래칫이 이 이름으로 대조한다.
+    kernel_callable: str
+    #: (test, scope, victim) -> None. 남의 테넌트에 쓰기를 **시도**한다.
+    attempt: Callable[[Any, Any, Any], Any]
+    #: (test, scope, own) -> None. **양성 대조** — 자기 것으로는 성공해야 한다 (D-277).
+    positive: Callable[[Any, Any, Any], Any]
+    #: 이 쓰기가 행을 만드는 표. 남의 테넌트 행 수가 늘지 않았는지 여기서 센다.
+    model: tuple[str, str] | None = None
+
+
+def _k1_record_into(test, scope, stream):
+    from kernels.k1_event import record_detection
+
+    return record_detection(
+        scope=scope, stream_monitor_id=stream.pk,
+        event_type="fire", severity="critical",
+        snapshot_path="minio://iso/write-probe.jpg", confidence=0.9,
+    )
+
+
+def _k1_review(test, scope, event_id):
+    from kernels.k1_event import review_event
+
+    return review_event(event_id, verdict="rejected", reason="iso-write-probe", scope=scope)
+
+
+def _k1_close(test, scope, event_id):
+    from kernels.k1_event import close_event
+
+    return close_event(event_id, scope=scope)
+
+
+#: ★ 쓰기 방향 대장. **여기가 정본이다.**
+#: 커널에 쓰기 공개 함수가 늘면 아래 `test_write_probe_registry_covers_kernel_writes`
+#: 가 멈춘다 — "새 쓰기 면을 만들고 격리 시험은 안 늘리는" 상태를 막는다.
+WRITE_PROBES: tuple[WriteProbe, ...] = (
+    WriteProbe(
+        label="K1.record_detection → 남의 스트림에 이벤트 심기",
+        kernel_callable="kernels.k1_event.record_detection",
+        attempt=_k1_record_into,
+        positive=_k1_record_into,
+        model=("stream_monitors", "DetectionEvent"),
+    ),
+    WriteProbe(
+        label="K1.review_event → 남의 이벤트를 오탐 판정",
+        kernel_callable="kernels.k1_event.review_event",
+        attempt=_k1_review,
+        positive=_k1_review,
+    ),
+    WriteProbe(
+        label="K1.close_event → 남의 이벤트를 종료",
+        kernel_callable="kernels.k1_event.close_event",
+        attempt=_k1_close,
+        positive=_k1_close,
+    ),
+)
+
+#: 쓰기 면인데 아직 재지 않는 것. **사유 필수** — 빈 자리는 잊힌 자리다 (D-264).
+#: 이름을 여기 적는 것은 면제가 아니라 **등재**다 (D-281 시스템 스코프와 같은 계열).
+WRITE_NO_PROBE: dict[str, str] = {
+    "kernels.k1_event.subscribe":
+        "구현 전 — `NotImplementedYet` 을 던진다. 구독의 테넌트 소유 판정이 선행 "
+        "(D-287 · W2-2 이후 별 티켓). 구현되는 커밋에서 이 줄을 지우고 probe 를 넣는다.",
+}
+
+
+class TenantIsolationWriteTest(TenantFixtureMixin, TestCase):
+    """★ 쓰기 방향 — **남의 테넌트에 심을 수 있는가** (D-290).
+
+    읽기 격리가 완전해도 쓰기가 열려 있으면 격리가 아니다. 심어 둔 행은 그 테넌트의
+    정상 데이터처럼 보이고, 그 뒤의 어떤 읽기 시험도 그것을 이상하다고 하지 않는다.
+    """
+
+    #: 문지기가 낼 수 있는 거부의 형태. **200 + 조용한 성공은 여기 없다** (D-284).
+    @staticmethod
+    def _is_refusal(exc: BaseException) -> bool:
+        from django.core.exceptions import PermissionDenied
+        from django.http import Http404
+
+        return isinstance(exc, (Http404, PermissionDenied)) or \
+            type(exc).__name__ in {"NoTenantGroupError", "InvalidEventInput"}
+
+    def _own_stream(self):
+        from kernels.k1_event.services import _owner_field
+
+        StreamMonitor = apps.get_model("stream_monitors", "StreamMonitor")
+        return self._stream_for(StreamMonitor, self.group_a, self.user_a, "A")
+
+    def _victim_stream(self):
+        StreamMonitor = apps.get_model("stream_monitors", "StreamMonitor")
+        return self._stream_for(StreamMonitor, self.group_b, self.user_b, "B")
+
+    def _stream_for(self, model, group, owner, tag):
+        from kernels.k1_event.services import _owner_field
+
+        self._seq = getattr(self, "_seq", 0) + 1
+        with acting_as(owner):
+            sm = model(name=f"iso-write-{tag}-{self._seq}",
+                       code=f"ISO-W-{tag}-{self._seq}",
+                       ip_source="rtsp://iso.invalid/write")
+            sm.created_by = owner
+            sm.save()
+            if _owner_field(model) == "groups":
+                sm.groups.set([group])
+            else:
+                sm.group = group
+                sm.save(update_fields=["group"])
+        return sm
+
+    def _event_of(self, stream, group):
+        """그 테넌트 소유의 이벤트 1건. 파이프라인 스코프로 만든다 (요청자가 없다)."""
+        from common.tenant_scope import TenantScope
+        from kernels.k1_event import record_detection
+
+        result = record_detection(
+            scope=TenantScope.system(reason="쓰기 격리 시험 픽스처 — 파이프라인 모사"),
+            stream_monitor_id=stream.pk, event_type="fire", severity="critical",
+            snapshot_path="minio://iso/fixture.jpg",
+        )
+        return result.event_id
+
+    # ── 쓰기 1 ────────────────────────────────────────────────────────────
+    def test_write_create_into_another_tenant_is_refused(self) -> None:
+        """남의 스트림 id 로 남의 테넌트에 이벤트를 심을 수 없다.
+
+        ★ 이것이 D-290 이 인정한 실제 구멍이다. 읽기 격리만 보던 동안 열려 있었고,
+          D-281 이 커널 시그니처를 세우면서 드러났다.
+        """
+        from common.tenant_scope import TenantScope
+
+        Event = apps.get_model("stream_monitors", "DetectionEvent")
+        victim = self._victim_stream()
+        before = Event._base_manager.filter(stream_monitor=victim).count()
+
+        probe = WRITE_PROBES[0]
+        with self.assertRaises(Exception) as caught:
+            probe.attempt(self, TenantScope.of(self.user_a), victim)
+        self.assertTrue(
+            self._is_refusal(caught.exception),
+            f"[{probe.label}] 거부가 아니라 {type(caught.exception).__name__} 로 끊겼습니다 — "
+            f"문지기에 닿기 전에 다른 이유로 죽은 것일 수 있습니다: {caught.exception}")
+
+        after = Event._base_manager.filter(stream_monitor=victim).count()
+        self.assertEqual(
+            before, after,
+            f"[{probe.label}] 남의 테넌트에 행이 심겼습니다 ({before} → {after}). "
+            "심긴 행은 그 테넌트의 정상 데이터처럼 보여 이후 어떤 읽기 시험도 잡지 못합니다.")
+
+    # ── 쓰기 2 ────────────────────────────────────────────────────────────
+    def test_write_update_of_another_tenant_row_is_refused(self) -> None:
+        """남의 **기존 행**을 판정·종료로 바꿀 수 없다.
+
+        위의 HTTP `update`·`delete` 시나리오와 다른 자리다: 저기는 라우트를 통과하고,
+        여기는 **커널 공개 함수를 직접** 부른다. App(L4)이 커널을 소비하는 경로가
+        곧 이 경로이므로, 뷰가 막아도 커널이 열려 있으면 격리가 아니다.
+        """
+        from common.tenant_scope import TenantScope
+
+        Event = apps.get_model("stream_monitors", "DetectionEvent")
+        victim_event = self._event_of(self._victim_stream(), self.group_b)
+        before = Event._base_manager.filter(pk=victim_event).values().first()
+
+        for probe in WRITE_PROBES[1:]:
+            with self.subTest(probe=probe.label):
+                with self.assertRaises(Exception) as caught:
+                    probe.attempt(self, TenantScope.of(self.user_a), victim_event)
+                self.assertTrue(
+                    self._is_refusal(caught.exception),
+                    f"[{probe.label}] 거부가 아니라 "
+                    f"{type(caught.exception).__name__}: {caught.exception}")
+
+        after = Event._base_manager.filter(pk=victim_event).values().first()
+        self.assertEqual(before, after,
+                         "남의 이벤트 행이 변경되었습니다 — 거부했다는 응답과 "
+                         "DB 가 그대로인 것은 **다른 사실**입니다.")
+
+    # ── 쓰기 3 · 양성 대조 ─────────────────────────────────────────────────
+    def test_write_positive_control_own_tenant_succeeds(self) -> None:
+        """★ **양성 대조** (D-277 · D-289) — 자기 것에는 쓸 수 있는가.
+
+        "전부 거부됨"은 격리일 수도 있고 **기능이 죽은 것**일 수도 있다.
+        둘을 가르지 않으면 위의 두 초록은 아무것도 증명하지 않는다.
+
+        표본은 합성이 아니라 **저장소 실물**이다 — `kernels.k1_event` 의 공개 함수를
+        그대로 부른다 (D-289: 합성 표본만으로 검증한 시험은 자기가 만든 것만 잡는다).
+        """
+        from common.tenant_scope import TenantScope
+
+        Event = apps.get_model("stream_monitors", "DetectionEvent")
+        own = self._own_stream()
+        scope_a = TenantScope.of(self.user_a)
+
+        result = WRITE_PROBES[0].positive(self, scope_a, own)
+        self.assertTrue(result.created,
+                        "자기 스트림에 이벤트를 만들지 못했습니다 — 쓰기 경로가 죽었습니다.")
+        row = Event._base_manager.get(pk=result.event_id)
+        self.assertEqual(own.pk, row.stream_monitor_id)
+
+        # 만든 행의 **소유가 비어 있지 않아야** 한다. 주인 없는 행은 §0.4 의
+        # `created_by__isnull` OR 절을 타고 모든 테넌트에게 보인다 (W0-13 백필이 되돌린 상태).
+        model = Event
+        if has_group_m2m(model):
+            self.assertTrue(self._m2m_owner_pks(row),
+                            "만들어진 이벤트에 소유 group 이 없습니다 — 주인 없는 행입니다.")
+        elif has_group_fk(model):
+            self.assertIsNotNone(getattr(row, "group_id", None),
+                                 "만들어진 이벤트에 group 이 없습니다 — 주인 없는 행입니다.")
+
+        # 판정·종료도 자기 것에는 된다.
+        WRITE_PROBES[1].positive(self, scope_a, result.event_id)
+        WRITE_PROBES[2].positive(self, scope_a, result.event_id)
+
+    # ── 쓰기 4 · 래칫 ─────────────────────────────────────────────────────
+    def test_write_probe_registry_covers_kernel_writes(self) -> None:
+        """★ 커널에 **쓰기 공개 함수가 늘면 이 대장도 늘어야 한다** (D-285 ②).
+
+        개수가 아니라 **이름**으로 잠근다. 개수로 잠그면 함수 하나가 지워질 때마다
+        새 함수가 들어올 자리가 생긴다.
+
+        판정 방식: 커널 공개 면 중 **DB 를 바꾸는 것**(`@transaction.atomic` 이 붙은 것)을
+        런타임에서 세고, 각각이 `WRITE_PROBES` 에 있거나 `WRITE_NO_PROBE` 에 사유와 함께
+        등재됐는지 본다. 손으로 세지 않는다 — 손으로 센 수가 틀렸던 것이 D-227 이다.
+        """
+        import importlib
+        import inspect
+
+        probed = {p.kernel_callable for p in WRITE_PROBES}
+        registered = set(WRITE_NO_PROBE)
+        unlisted: list[str] = []
+        seen: list[str] = []
+
+        for package in ("kernels.k1_event",):
+            module = importlib.import_module(package)
+            for name in getattr(module, "__all__", []):
+                func = getattr(module, name, None)
+                if not callable(func) or inspect.isclass(func):
+                    continue
+                dotted = f"{package}.{name}"
+                if not self._writes_to_db(func):
+                    continue
+                seen.append(dotted)
+                if dotted not in probed and dotted not in registered:
+                    unlisted.append(dotted)
+
+        print(f"\n[ISO-WRITE] 커널 쓰기 공개 면 {len(seen)}건 · "
+              f"probe {len(probed)}건 · 사유 등재 {len(registered)}건")
+        self.assertEqual(
+            [], unlisted,
+            f"쓰기 공개 함수가 격리 대장에 없습니다: {unlisted}. "
+            "WRITE_PROBES 에 시나리오를 넣거나 WRITE_NO_PROBE 에 **사유와 함께** "
+            "등재하십시오 (D-290 · D-285 ②).")
+
+        stale = sorted(registered & probed)
+        self.assertEqual([], stale,
+                         f"probe 가 생겼는데 사유 등재가 남아 있습니다: {stale}.")
+
+    @staticmethod
+    def _writes_to_db(func) -> bool:
+        """이 공개 함수가 DB 를 바꾸는가.
+
+        `@transaction.atomic` 은 **쓰기에만** 붙는다(읽기에 붙일 이유가 없다).
+        완벽한 판별은 아니지만 **추측이 아니라 코드에 있는 표식**이고, 놓치는 쪽으로
+        틀리면 위의 단언이 조용히 통과한다 — 그래서 소스 본문도 함께 본다.
+        """
+        import inspect
+
+        wrapped = getattr(func, "__wrapped__", func)
+        try:
+            src = inspect.getsource(wrapped)
+        except (OSError, TypeError):
+            return False
+        markers = (".create(", ".save(", ".update(", ".delete(", "NotImplementedYet")
+        return any(m in src for m in markers)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # 4) 면제 대장 증가 금지 — "없어서 건너뜀"이 늘어나는 것을 막는다
 # ═══════════════════════════════════════════════════════════════════════════
 

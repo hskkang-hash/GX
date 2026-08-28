@@ -217,7 +217,19 @@ gate_isolation() {
   for s in list detail update delete export; do
     grep -q "test_${s}" "$f" || { fail "test_${s}_* 시나리오 없음"; rc=1; }
   done
-  [ $rc -eq 0 ] && pass "5시나리오 전부 존재"
+  [ $rc -eq 0 ] && pass "읽기 5시나리오 전부 존재"
+
+  # ── 쓰기 방향 (D-290) ──────────────────────────────────────────────────
+  # 읽기 다섯은 전부 **남의 레코드를 지목해** 무슨 일이 나는가를 묻는다. 지목할 것이
+  # 이미 있다는 전제다. D-290 이 잡은 구멍은 그 전제 밖 — 남의 id 를 적어 **남의 테넌트에
+  # 새 행을 심는 것**이었다. 심긴 행은 그 테넌트의 정상 데이터처럼 보여 읽기 시험이
+  # 영영 못 잡는다. 그래서 쓰기 시나리오를 **이름으로** 요구한다 (수가 아니다 — D-285 ②).
+  local wrc=0
+  for w in create_into_another_tenant_is_refused            update_of_another_tenant_row_is_refused            positive_control_own_tenant_succeeds            probe_registry_covers_kernel_writes; do
+    grep -q "test_write_${w}" "$f" || { fail "test_write_${w} 없음 ← D-290"; wrc=1; }
+  done
+  [ $wrc -eq 0 ] && pass "쓰기 4시나리오 전부 존재 (양성 대조·래칫 포함)"
+  [ $wrc -ne 0 ] && rc=1
 
   # 스킵·비활성화 탐지 (절대금지 #4)
   if grep -nE '@(unittest\.)?(skip|expectedFailure)|@pytest\.mark\.(skip|xfail)|return  *# *TODO' "$f" >/dev/null 2>&1; then
