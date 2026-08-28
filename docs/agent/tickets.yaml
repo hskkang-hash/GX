@@ -22,10 +22,10 @@ meta:
   # 손으로 세지 않는다: `python scripts/gen_manifest.py` 가 실측·대조한다 (불일치 시 exit 1).
   integrity: "manifest"
   manifest:
-    total: 79
+    total: 80
     by_phase:
       BACKLOG: 8
-      R1: 49
+      R1: 50
       R2: 14
       R3: 8
     ids:
@@ -58,6 +58,7 @@ meta:
       - W1-4
       - W2-1
       - W2-2
+      - W2-2b
       - W2-3
       - W2-4
       - W3-1
@@ -150,7 +151,7 @@ meta:
     - id: WP-3
       title: "AI 이벤트 센터 — 탐지를 자산으로"
       phase: R1
-      tickets: [W2-2, W2-3, W2-4]
+      tickets: [W2-2, W2-2b, W2-3, W2-4]
       goal: "탐지 결과가 저장·검색·판정되고 오탐률을 숫자로 말할 수 있다"
     - id: WP-4
       title: "임무보고·인수인계 자동화"
@@ -2010,6 +2011,68 @@ tickets:
 
     적재한 판정 2건: **P-W2-2-1**(severity 매핑·문턱값) · **P-W2-2-2**(VideoAnalysis 가
     검출 실패와 무관하게 만들어진다).
+
+# --- 2026-08-30 신설 (D-287 · 세종 위임 판정) ---
+# ★ 판정문은 이 티켓의 ID 를 `W2-3` 으로 지정했으나 W2-3 은 이미 "AI 이벤트 센터 화면"이다.
+#   D-246 이 만든 ID 충돌 검사 관례에 따라 실측 우선(D-210)으로 `W2-2b` 로 등재한다.
+#   (`W0-1a`/`W0-1b` 가 이미 쓰는 후속 티켓 표기 — 새 규칙을 만들지 않는다.)
+- id: W2-2b
+  phase: R1
+  title: "AI 응답 스키마 실측 — detect_and_save 를 K1 에 잇기 위한 선행"
+  kernel: ['K1']                     # 공유 커널 — F-01~F-03 ↔ U1 이중 AC (W2-2 와 같은 계보)
+  status: ready
+  updated_at: "2026-08-30T09:00:00+09:00"
+  priority: P0
+  effort: S
+  kind: bind
+  depends_on: [W2-2]
+  human_gate: false
+  gate: evidence-review
+  requires_intranet: false
+  decisions: [D-280, D-284, D-287, D-290]
+  blocker: |
+    [2026-08-30 · 등재] **착수 조건은 AI 분석 서버의 가동이다.** 지금 `ai-analysis` 는
+    로컬에서 `invalid` 상태이고, 그래서 응답 모양을 **잴 수 없다.**
+
+    ★ 이 티켓이 존재하는 이유는 D-287 이다: `detect_and_save` 는 독스트링이 "저장한다"인데
+      본문이 비어 있었고 `True` 를 냈다. 지금은 `NotImplementedError` 를 던지도록 정직화됐다.
+      **그 상태를 유지하는 것이 D-280(추정 금지)의 준수다** — 응답 모양을 모르는 채
+      파서를 쓰면 2027 에 전부 재작업이 된다.
+
+    W2-2 호출처 ①(gRPC 검출 → K1)은 이미 배선돼 있다. 여기서 잇는 것은
+    **호출처 ②(업로드 영상 분석 → K1)** 하나다. D-287 이 커널 done 요건에서
+    "호출처 2곳"을 뺐으므로 이 티켓은 **K1 done 의 선행이 아니다** — 후행 보강이다.
+  reuse_targets:
+    - backend/media_data/services/media_data_detect_service.py   # detect_and_save — 잇는 지점
+    - backend/kernels/k1_event/                                  # 소비할 커널 공개 면
+    - docs/contracts/detection-event.md                          # 맞춰야 할 이벤트 계약
+    - scripts/probe_public_data_schema.py                        # 스키마 실측 스크립트의 관례
+  spec: |
+    **실 서버 응답을 캡처해 스키마를 확정한 뒤** `detect_and_save` 를 K1 에 잇는다.
+    추정 파서를 쓰지 않는다 (D-280 · D-287).
+
+      (1) AI 분석 서버가 뜬 상태에서 **읽기 전용 실호출 1회 이상**을 캡처한다.
+          산출물: `docs/agent/evidence/W2-2b/ai_response_schema.md`
+          (요청 예 · 응답 필드 · 타입 · null 가능성 · 오류 응답 모양).
+          ⚠ 응답 본문 샘플에 키·개인정보가 섞이지 않게 마스킹한다 (D-204).
+      (2) 캡처한 필드를 `docs/contracts/` 의 이벤트 계약과 **대조표**로 낸다.
+          맞지 않는 필드는 **맞다고 쓰지 않는다** — 격차를 격차로 남긴다.
+      (3) 대조가 끝난 뒤에만 `detect_and_save` 가 `record_detection` 을 부른다.
+          스코프는 `TenantScope.system(reason=...)` — 업로드 분석에는 요청자가 있을 수도
+          있으므로, **있으면 `TenantScope.of(user)` 를 쓴다.** 있는 요청자를 버리고
+          시스템 스코프를 쓰면 쓰기 IDOR 문턱이 사라진다 (D-290).
+      (4) ★ 잇지 못한 채로 끝나면 **`NotImplementedError` 를 그대로 둔다.**
+          "일단 빈 목록을 돌려주자"는 D-290 위반이다 — 없는 것과 실패한 것을 같은 값으로
+          표현하지 않는다.
+  dod: |
+    ① evidence/W2-2b/ai_response_schema.md 에 **실측 응답**이 있다 (추정 표기 0건)
+    ② 계약 대조표가 있고, 불일치 필드가 불일치로 적혀 있다
+    ③ detect_and_save 가 K1 record_detection 을 부르고, 그 경로의 시험이 green
+    ④ 요청자가 있는 호출은 TenantScope.of(user) 를 쓴다 — 쓰기 IDOR 시험이 green (D-290)
+    ⑤ 실호출 0건이면 ③④ 를 하지 않고 **NotImplementedError 를 유지한 채** ①의 미측정 사실을 남긴다
+  verify:
+    - "test -f docs/agent/evidence/W2-2b/ai_response_schema.md"
+    - "python -m pytest tests/test_w2_2_detection_wiring.py -q --nomigrations -p no:randomly"
 
 - id: W2-3
   phase: R1
