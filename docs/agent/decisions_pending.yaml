@@ -1645,3 +1645,64 @@ pending:
     reversible: true
     blocks_dod: false
     status: open
+  # ── K3 대시보드 프레임 착수분 (2026-08-30 · 실행 순서 ⑥) ────────────────
+  - id: P-K3-1
+    ticket: "W3-2 · K3"
+    raised_at: "2026-08-30"
+    context: "역할 코드 ↔ 프리셋(OPERATOR/MANAGER/EXECUTIVE) 매핑이 저장소에 없다"
+    question: >-
+      DA-03 은 역할을 **다섯 종류의 사람**으로 적었다(관제요원 · 재난관제 관리자 ·
+      기관장/부서장 · 운영자 · 외부 APP 개발자). W3-2 는 *"로그인 시 rj-core Role 에 따라
+      기본 프리셋 자동 분기"* 를 요구한다. 그런데 **`role.Role.code` 에 그 다섯이 어떤
+      문자열로 들어 있는지가 정해진 바 없다** — 실측으로도 찾지 못했다.
+      매핑을 무엇으로 확정하는가?
+    options:
+      - "A: 설정에서 읽는다 (지금 상태) — `settings.K3_ROLE_PRESET_MAP`. 코드에 문자열 0개"
+      - "B: 역할 코드 규약을 새로 정한다 — `gx_operator`·`gx_manager`·`gx_executive` 등을 신설하고 부여"
+      - "C: 기존 역할 데이터를 실측해 그대로 매핑 — 운영 DB 의 Role.code 를 조사한 뒤 확정"
+    chosen_default: "A (되돌릴 수 있다 — 설정 한 줄)"
+    rationale: >-
+      **A 를 적용했다.** 코드에 역할 문자열을 박으면 그것이 곧 규약이 되고, 나중에
+      실측이 다르면 **박은 쪽이 이긴다** — D-210(실측 우선)이 막으려던 모양이다.
+      설정이 비면 매핑도 비고, 그때 `get_preset` 은 **가장 좁은 프리셋**으로 떨어지되
+      `matched=False` 로 그 사실을 말한다 — 조용히 기본값을 주지 않는다(D-290).
+      ★ **C 가 선행이다.** 운영 DB 의 `Role.code` 실측 없이는 B 도 A 도 채울 값이 없다.
+        다만 운영 DB 조회는 대표 승인 사안이라 여기서 열지 않았다.
+      ○ **B 는 C 뒤에 온다.** 실측한 역할이 다섯과 안 맞으면 그때 신설을 판단한다.
+      ※ 같은 이유로 `settings.K3_WIDGET_MATRIX`(DA-03 §3-4 가시/편집 매트릭스)도 비어 있다.
+        **비면 편집(E)은 아무에게도 열리지 않는다** — 그것이 이 기본값의 요점이다.
+    reversible: true
+    blocks_dod: false
+    status: open
+
+  - id: P-E2E-1
+    ticket: "E2E-2 · W2-1 · DA-01"
+    raised_at: "2026-08-30"
+    context: "F-02(침수·수위) 이벤트를 `DetectionEvent` 로 만들 수 없다 — 열거에 없다"
+    question: >-
+      계약 [별첨1] 시나리오 2종(침수)의 2단계는 *"F-02 이벤트 생성 (30초)"* 이다.
+      그런데 `DetectionEvent.EventType` 은 **여섯뿐**이다:
+      `person` `vehicle` `fire` `smoke` `intrusion` `sos`
+      (`docs/contracts/detection-event.md` §47 — 2026-08-13 고정).
+      **침수·수위를 담을 칸이 없다.** 열거를 늘리는가, 다른 방법으로 담는가?
+    options:
+      - "A: 열거에 `flood`(또는 `water_level`)를 추가한다 — 계약 문서 + W2-3 색 규칙 동시 개정"
+      - "B: 수위는 이벤트가 아니라 **계측**으로 본다 — K7 컨텍스트 커널이 받고, 문턱 초과 시 기존 열거로 승격"
+      - "C: `intrusion` 등 기존 값에 실어 보낸다"
+    chosen_default: ""
+    rationale: >-
+      **기본값을 적용하지 않는다.** 셋 다 **고정된 계약의 의미 변경**이다 (D-283 이 신규 표를
+      백필과 가른 것과 같은 이유로, 열거 확장은 신규 표와 다르다 — 기존 행의 해석이 바뀐다).
+      ⛔ **C 는 명백히 안 된다.** 수위 초과를 `intrusion` 으로 실으면 **오탐률 분모가
+        오염되고**(K6), W2-3 색 규칙이 침입 색을 칠하며, 아무도 그 사실을 모른다.
+        E2E-2 는 그래서 2단계를 **잠근 채** 남겼다 — 실어 보내는 대신 못 잰다고 적었다.
+      ★ **B 가 지시서 v2.2 의 방향에 가깝다** (DA-05 K7 컨텍스트 커널이 수위/공공데이터를 받는다).
+        수위는 초당 들어오는 계측이고 이벤트가 아니다 — 전부 이벤트로 만들면 이벤트 표가
+        계측 로그가 된다.
+      ○ **A 가 가장 단순하다.** 다만 `docs/contracts/detection-event.md` 는 W6-2 가 고정한
+        계약이고, 색 규칙(ISA-101)과 화면 정렬이 함께 따라온다.
+      ※ 잠금은 도구가 지킨다: `e2e_contract.LOCKED_CAPABILITIES["FLOOD_EVENT_TYPE"]` 에
+        사유가 있고, 없으면 `test_every_unlock_name_is_known_and_has_a_reason` 이 멈춘다.
+    reversible: false
+    blocks_dod: false
+    status: open

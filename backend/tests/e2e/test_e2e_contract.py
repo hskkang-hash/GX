@@ -20,6 +20,8 @@ from unittest import TestCase
 
 from tests.e2e.e2e_contract import (
     FORBIDDEN_WAITS,
+    KERNEL_PACKAGES,
+    LOCKED_CAPABILITIES,
     REQUIRED_ATTRS,
     REQUIRED_METHODS,
     SCENARIOS,
@@ -91,6 +93,36 @@ class E2EContractTest(TestCase):
                   if not s.unlocked and not s.pending_reason.strip()]
         self.assertEqual([], silent,
                          f"해금 전 시나리오에 사유가 없습니다: {silent} (D-264 — 모르면 멈춘다).")
+
+    def test_every_unlock_name_is_known_and_has_a_reason(self) -> None:
+        """★ 단계가 가리키는 해금 이름은 **커널이거나, 사유 있는 잠긴 능력**이다.
+
+        셋째는 없다. 이름을 오타 내면 그 단계는 **영원히 해금되지 않으면서 아무도
+        모르는** 상태가 된다 — 빠진 줄은 보이지 않는다 (D-264).
+        """
+        unknown = []
+        for scenario in SCENARIOS.values():
+            for step in scenario.steps:
+                if step.unlocked_by is None:
+                    continue
+                if step.unlocked_by in KERNEL_PACKAGES:
+                    continue
+                reason = LOCKED_CAPABILITIES.get(step.unlocked_by, "")
+                if not reason.strip():
+                    unknown.append(
+                        f"{scenario.code} {step.no}단계 → {step.unlocked_by!r}")
+        self.assertEqual(
+            [], unknown,
+            f"해금 이름이 커널도 아니고 사유 있는 잠긴 능력도 아닙니다: {unknown}. "
+            "KERNEL_PACKAGES 에 넣거나 LOCKED_CAPABILITIES 에 **사유와 함께** 등재하십시오.")
+
+    def test_locked_capability_is_not_secretly_a_kernel(self) -> None:
+        """잠긴 능력과 커널 이름이 겹치면 어느 쪽이 정본인지 알 수 없다."""
+        overlap = sorted(set(LOCKED_CAPABILITIES) & set(KERNEL_PACKAGES))
+        self.assertEqual(
+            [], overlap,
+            f"같은 이름이 커널과 잠긴 능력 양쪽에 있습니다: {overlap}. "
+            "여는 커밋에서 LOCKED_CAPABILITIES 의 줄을 **지우고** KERNEL_PACKAGES 로 옮기십시오.")
 
     def test_every_e2e_meets_the_common_contract(self) -> None:
         """★ 규약 ①~④ 를 **메서드 이름으로** 확인한다.

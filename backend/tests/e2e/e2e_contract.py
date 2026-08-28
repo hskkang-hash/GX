@@ -59,6 +59,33 @@ KERNEL_PACKAGES: dict[str, str] = {
 }
 
 
+#: ★ 커널이 아닌 **잠긴 능력**. 단계가 이 이름을 가리키면 영영 열리지 않는다 —
+#: 여는 사람이 여기서 이름을 지우고 `KERNEL_PACKAGES` 에 넣는 순간이 곧
+#: **"이제 잴 수 있다"는 선언**이다.
+#:
+#: 왜 이 등재부가 필요한가 — D-264(모르면 멈춘다)의 E2E 판
+#: -------------------------------------------------------
+#: 계약 시나리오에는 **지금 기술로 잴 수 없는 단계**가 섞여 있다. 그것을 단계에서 빼면
+#: 시나리오가 짧아진 채로 초록이 되고(빠진 줄은 보이지 않는다), 그렇다고 커널 이름을 붙이면
+#: 커널이 붙는 순간 **못 재는 것을 재라고** 요구하게 된다.
+#: 그래서 제3의 자리를 둔다: **이름은 있고, 사유가 있고, 안 열린다.**
+LOCKED_CAPABILITIES: dict[str, str] = {
+    "VIDEO":
+        "이벤트 클릭 → 영상 재생 경로가 아직 없다. K3 는 **프레임**이고 영상이 아니다 — "
+        "한 칸에 두면 프레임이 초록일 때 영상까지 초록으로 읽힌다. "
+        "재생 경로가 서면 이 줄을 지우고 KERNEL_PACKAGES 에 넣는다.",
+    "FLOOD_EVENT_TYPE":
+        "F-02(침수·수위)는 `DetectionEvent.EventType` 열거에 **없다** — 실측: "
+        "person·vehicle·fire·smoke·intrusion·sos 여섯뿐(docs/contracts/detection-event.md §47). "
+        "열거를 늘리는 것은 2026-08-13 에 고정된 계약 문서를 고치는 일이고, W2-3 색 규칙이 "
+        "함께 따라온다(DA-01 OPEN-05). **판정 사안이라 추정으로 늘리지 않는다**(D-280) — "
+        "P-E2E-1 로 적재했다.",
+    "ZONE":
+        "'같은 구역'을 판정할 구역 개념이 모델에 없다 — P-K2-2 가 열려 있다. "
+        "행정구역인지 카메라 묶음인지 폴리곤인지가 정해지면 그때 연다.",
+}
+
+
 def kernel_present(code: str) -> bool:
     """그 커널이 **실재하는가.** 티켓 status 가 아니라 import 로 답한다."""
     module = KERNEL_PACKAGES.get(code)
@@ -142,8 +169,15 @@ SCENARIOS: dict[str, Scenario] = {
             Step(6, "K6 피드백 — 판정이 오탐률 분모·분자로 돌아온다", "K6",
                  ac="F-14 월간 오탐률"),
             Step(7, "SDN QoS 요청 (Mock · 10초)", "SDN", ac="F-06 10초"),
-            Step(8, "K3 대시보드 — 클릭 → 영상 3초", "K3", ac="F-09 영상 3초"),
-            Step(9, "K4 보고서 PDF — 이벤트·조치·캡처 치환", "K4",
+            Step(8, "K3 대시보드 프레임 — 프리셋 도달 0클릭 · 패널 5상태", "K3",
+                 ac="F-09 5상태 100% · U3 도달 클릭 ≤ 2"),
+            # ★ 8단계에서 **영상을 떼어냈다.** K3 가 붙었다고 "클릭→영상 3초"가
+            #   측정되는 것이 아니다 — 영상 재생 경로가 아직 없다. 한 칸에 두면
+            #   프레임이 초록일 때 영상까지 초록으로 읽힌다(미측정을 통과로 읽는 모양).
+            #   `unlocked_by="VIDEO"` 는 `KERNEL_PACKAGES` 에 없으므로 **영영 안 열린다** —
+            #   여는 사람이 그 이름을 등재하는 순간이 곧 "이제 잴 수 있다"는 선언이다.
+            Step(9, "이벤트 클릭 → 영상 3초 이내 재생", "VIDEO", ac="F-09 영상 3초"),
+            Step(10, "K4 보고서 PDF — 이벤트·조치·캡처 치환", "K4",
                  ac="F-11 템플릿 변수 3종"),
         ),
     ),
@@ -154,15 +188,12 @@ SCENARIOS: dict[str, Scenario] = {
         required_from="K3",          # 실행 순서 ⑥: "K3 ‖ K4 착수 → … E2E-2 가동"
         steps=(
             Step(1, "수위선 초과 신호 투입", None),
-            Step(2, "F-02 이벤트 생성 (30초)", "K1", ac="F-02 30초"),
-            Step(3, "같은 구역 인명(F-03) 결합 → 등급 상향", "K1", ac="F-03 결합"),
+            # ★ 2·3 은 **잠겨 있다.** 커널이 없어서가 아니라 **계약과 모델이 아직 그것을
+            #   표현하지 못해서**다. 사유는 `LOCKED_CAPABILITIES` 에 있다.
+            Step(2, "F-02 이벤트 생성 (30초)", "FLOOD_EVENT_TYPE", ac="F-02 30초"),
+            Step(3, "같은 구역 인명(F-03) 결합 → 등급 상향", "ZONE", ac="F-03 결합"),
             Step(4, "등급별 수신자 그룹이 실제로 달라지는가", "K2",
                  ac="F-10 등급별 수신그룹 분기"),
-        ),
-        pending_reason=(
-            "구역(zone) 개념이 아직 모델에 없다 — 수위선·인명 결합의 '같은 구역' 을 "
-            "무엇으로 판정할지 미정. 추정으로 쓰지 않는다(D-280). "
-            "K2 수신그룹 모델이 zone 을 갖는 시점에 착수한다."
         ),
     ),
     "E2E-3": Scenario(
@@ -213,6 +244,13 @@ REQUIRED_ATTRS: tuple[str, ...] = ("SCENARIO", "REAL_SAMPLE")
 FORBIDDEN_WAITS: tuple[str, ...] = ("time.sleep(", "asyncio.sleep(", "sleep(")
 
 
+def _active(steps: tuple["Step", ...]) -> tuple["Step", ...]:
+    """해금된 단계만. `Scenario.active_steps` 와 **같은 술어**를 쓴다 —
+    두 곳이 다른 말을 하면 어느 쪽도 못 믿는다 (D-227 이 만든 상태가 그것이었다)."""
+    return tuple(s for s in steps
+                 if s.unlocked_by is None or kernel_present(s.unlocked_by))
+
+
 @dataclass
 class StepOutcome:
     """단계 하나의 결과. 실패 표(규약 ⑥)의 한 줄이 된다."""
@@ -240,24 +278,41 @@ class StepLedger:
         self.rows.append(StepOutcome(step.no, step.title, ok, note))
 
     def render(self, planned: tuple[Step, ...]) -> str:
-        seen = {r.no for r in self.rows}
-        lines = [f"[{self.scenario}] 단계 {len(self.rows)}/{len(planned)} 도달"]
+        """단계표. **미측정을 통과로 읽지 않게** 세 상태를 가른다.
+
+        `OK` / `FAIL` / `잠김` / `미측정`. 미측정이 둘로 갈리는 것이 요점이다 —
+        **잠겨서 못 잰 것**과 **앞 단계에서 끊겨 도달 못 한 것**은 다른 사실이고,
+        전자는 기다릴 일이며 후자는 고칠 일이다.
+        """
+        unlocked = {s.no for s in _active(planned)}
+        locked = len(planned) - len(unlocked)
+        lines = [f"[{self.scenario}] 단계 {len(self.rows)}/{len(unlocked)} 도달 "
+                 f"(계획 {len(planned)} · 잠김 {locked})"]
         for step in planned:
             row = next((r for r in self.rows if r.no == step.no), None)
-            if row is None:
-                mark = "미측정" if seen else "미측정"
-                note = "앞 단계에서 끊겨 도달하지 못했다"
-            else:
+            if row is not None:
                 mark = "OK  " if row.ok else "FAIL"
                 note = row.note
+            elif step.no not in unlocked:
+                mark = "잠김"
+                note = f"해금 대기 — {step.unlocked_by}"
+            else:
+                mark = "미측정"
+                note = "앞 단계에서 끊겨 도달하지 못했다"
             lines.append(f"  {mark}  {step.no}. {step.title[:44]:46} {note}")
         return "\n".join(lines)
 
     def write_evidence(self, scenario: Scenario) -> Path:
-        """증거를 남긴다 (규약 ⑥). 경로를 돌려주어 보고에 그대로 쓴다."""
+        """증거를 남긴다 (규약 ⑥). 경로를 돌려주어 보고에 그대로 쓴다.
+
+        ★ **해금분이 아니라 계획된 전 단계**를 그린다. 해금분만 그리면 잠긴 단계가
+          증거에서 사라지고, 그 순간 "2/2 도달"이 완주로 읽힌다 — 빠진 줄은 보이지
+          않는다(D-274). 실측으로 그렇게 됐다: E2E-2 의 첫 증거가 4단계 중 잠긴 둘을
+          지운 채 "2/2" 로 나왔다.
+        """
         scenario.evidence_dir.mkdir(parents=True, exist_ok=True)
         path = scenario.evidence_dir / "steps.md"
-        body = self.render(scenario.active_steps)
+        body = self.render(scenario.steps)
         path.write_text(
             f"# {scenario.code} — {scenario.title}\n\n"
             f"해금 단계 {len(scenario.active_steps)}/{len(scenario.steps)}\n\n"

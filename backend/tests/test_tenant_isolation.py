@@ -152,6 +152,24 @@ MODELS: tuple[Target, ...] = (
         list_path="/api/dashboard/dashboard/",
         factory=lambda d, n: {"name": f"iso-dash-{n}", "code": f"ISO-DASH-{n}"},
     ),
+    # ── 2026-08-30 등재 (DA-04 §2 K3 의 선행 조건) ──────────────────────
+    # DA-04 K3: *"⚠ `dashboard.DashboardPanel` 이 테넌트 격리 시험 레지스트리에
+    # **미등록**이라는 실측이 있다(W0-14 2026-08-24 항목). **K3 착수 전 등록한다.**"*
+    # 그 조건을 K3 커널 커밋과 **같은 커밋에서** 이행한다.
+    #
+    # reach=via_parent 인 이유: 단건 pk 라우트가 없다(인구조사 실측 — 단건 0 · 목록 2).
+    # 그래서 부모 pk 가 아니라 **목록 경로의 본문**으로 자식 필터를 본다.
+    # 대시보드 목록 응답은 패널을 중첩해 싣는다 — 그 중첩이 곧 이 모델의 노출 경로다.
+    Target(
+        "DashboardPanel", "dashboard", "DashboardPanel", reach="via_parent",
+        list_path="/api/dashboard/dashboard/",
+        factory=lambda d, n: {
+            "dashboard": d.dashboard(),
+            "panel_title": f"iso-panel-{n}",
+            "panel_type": "chart",
+            "panel_config": {"code": f"ISO-PANEL-{n}"},
+        },
+    ),
     Target(
         "Device", "devices", "Device",
         list_path="/api/devices/devices-management",
@@ -628,6 +646,16 @@ class Deps:
         return self._once("stream_monitor", lambda: self._create(
             "stream_monitors", "StreamMonitor", name=f"iso-dep-monitor-{self.tag}",
             code=f"ISO-DEP-MON-{self.tag}", ip_source="rtsp://iso.invalid/dep",
+        ))
+
+    def dashboard(self):
+        """`DashboardPanel` 의 필수 부모 (2026-08-30 · K3 착수 전 등재).
+
+        같은 테넌트 소유로 둔다 — 검증 대상은 자식이지 부모가 아니다.
+        """
+        return self._once("dashboard", lambda: self._create(
+            "dashboard", "Dashboard", name=f"iso-dep-dash-{self.tag}",
+            code=f"ISO-DEP-DASH-{self.tag}",
         ))
 
     # ── W0-14c · P0 등재분의 의존 (2026-08-28) ───────────────────────────
@@ -1338,7 +1366,12 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
         """
         distinctive = []
         for attr in ("code", "name", "order_code", "task_id", "item_name",
-                     "description", "serial_number"):
+                     "description", "serial_number",
+                     # 2026-08-30 — DashboardPanel 등재분. 이 모델에는 `code`·`name` 이
+                     # 없어 `"id":N` 로 떨어졌고, 그 경로는 이 함수의 독스트링이 경고한
+                     # **오탐·누락 둘 다** 나는 자리다(중첩 panels 의 id 에 잘못 맞았던 실측).
+                     # 픽스처가 심는 고유값을 쓰게 해 확정 판정으로 올린다.
+                     "panel_title"):
             val = getattr(obj, attr, None)
             if isinstance(val, str) and val.lower().startswith("iso"):
                 distinctive.append(val)

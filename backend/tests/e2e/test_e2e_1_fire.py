@@ -12,7 +12,11 @@
     4. K2 수신자 결정 — 등급 × 역할 수신그룹
     5. K2 발송 기록 — occurred_at → sent_at **30초 이내** (F-10)
     6. K6 피드백 — 판정이 오탐률 분모·분자로 돌아온다
-    7~9. SDN QoS · K3 대시보드 · K4 보고서 — **해금 전**. 등재부가 자동으로 늘린다.
+    8. K3 대시보드 프레임 — 프리셋 도달 0클릭 · 패널 5상태
+    7 · 9 · 10. SDN QoS · 영상 3초 · K4 보고서 — **해금 전**. 등재부가 자동으로 늘린다.
+
+★ 9단계(영상 3초)를 8단계에서 **떼어냈다.** K3 가 붙었다고 영상이 측정되는 것이 아니다 —
+  재생 경로가 아직 없다. 한 칸에 두면 프레임이 초록일 때 영상까지 초록으로 읽힌다.
 
 ★ 왜 "지금 도는 단계"를 코드가 정하나
   단계를 손으로 켜고 끄면 누군가 끄고 잊는다. `e2e_contract.SCENARIOS` 가 커널
@@ -238,6 +242,30 @@ class E2E1FireTest(_FireScenario):
         # 조회로도 같은 이벤트가 보인다 — 화면이 볼 것과 같은 경로 (F-05)
         found = query_events(scope=self.scope_a, since=now - timedelta(hours=1))
         self.assertIn(first.event_id, [e.event_id for e in found])
+
+        # ── 8. K3 대시보드 프레임 ─────────────────────────────────────
+        #    K3 가 붙는 순간 등재부가 이 단계를 열었다. **여는 것은 코드다** —
+        #    커널 패키지가 import 되는지로 판정하므로, 사람이 켜고 끄지 못한다.
+        from kernels.k3_dashboard import (
+            FIVE_STATES,
+            SERVER_EMITTED_STATES,
+            get_preset,
+            resolve_layout,
+        )
+
+        preset = get_preset(scope=self.scope_a)
+        self.assertEqual(0, preset.clicks_to_reach,
+                         "[U3] 로그인 직후 화면에 도달하는 클릭이 0 이 아닙니다.")
+        self.assertEqual(5, len(FIVE_STATES), "[F-09] 5상태가 다섯이 아닙니다.")
+
+        panels = resolve_layout(scope=self.scope_a)
+        for panel in panels:
+            self.assertIn(
+                panel.state, SERVER_EMITTED_STATES,
+                f"서버가 낼 수 없는 상태를 냈습니다: {panel.state}")
+        self.ledger.record(
+            self._step(8), True,
+            f"프리셋 {preset.preset}(matched={preset.matched}) · 패널 {len(panels)}칸")
 
         print("\n" + self.ledger.render(self.scenario.active_steps))
 

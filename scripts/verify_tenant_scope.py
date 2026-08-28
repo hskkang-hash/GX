@@ -108,6 +108,23 @@ KERNEL_PUBLIC: dict[str, str] = {
         "선행이고, 표본 없는 p95 는 만들어진 수다 (D-280 · 적재 P-K6-3). "
         "본문에서 `scope.require_actor()` 를 먼저 부른다. "
         "시험 근거: HonestAbsenceTest.test_kpi_series_raises_instead_of_returning_empty",
+
+    # ── K3 (2026-08-30 착수분) — **테넌트 데이터를 반환하지 않는다.**
+    #    둘 다 요청자 **자신의** 역할에서 파생된 값만 낸다(프리셋 이름 · 가시성 열거).
+    #    남의 테넌트 행을 읽는 자리는 `resolve_layout` 이고, 그것은 문지기를 탄다.
+    "backend/kernels/k3_dashboard/services.py:get_preset":
+        "테넌트 데이터를 반환하지 않는다 — 돌려주는 것은 프리셋 이름과 **요청자 자신의** "
+        "역할 코드뿐이다. 전역 여부 판정은 `tenant_roles.is_global_admin` 한 곳만 부른다(D-212). "
+        "시험 근거: PresetRoutingTest.test_preset_returns_no_other_tenants_data · "
+        "PresetRoutingTest.test_unmapped_role_falls_back_to_the_narrowest_preset "
+        "(모르면 좁게 — 넓은 쪽으로 떨어뜨리면 역할을 못 알아본 사람이 기관장 화면을 본다)",
+    "backend/kernels/k3_dashboard/services.py:widget_permission":
+        "테넌트 데이터를 반환하지 않는다 — 돌려주는 것은 `Visibility` 열거값 하나다. "
+        "★ 이 함수는 **격리를 대신하지 않는다**: VISIBLE 을 줘도 그 위젯이 읽는 데이터는 "
+        "여전히 `filter_by_group_field` 를 탄다 (DA-03 §3-4 — 화면에서 감추는 것은 통제가 아니다). "
+        "편집(E)은 설정 없이는 절대 참이 되지 않는다. "
+        "시험 근거: WidgetPermissionTest.test_editable_is_never_true_without_configuration · "
+        "WidgetPermissionTest.test_visibility_does_not_replace_tenant_isolation",
 }
 
 #: PUBLIC 라우트 면제의 증가금지 래칫. 오늘 실측 4건.
