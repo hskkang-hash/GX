@@ -2035,9 +2035,13 @@ tickets:
     로컬에서 `invalid` 상태이고, 그래서 응답 모양을 **잴 수 없다.**
 
     ★ 이 티켓이 존재하는 이유는 D-287 이다: `detect_and_save` 는 독스트링이 "저장한다"인데
-      본문이 비어 있었고 `True` 를 냈다. 지금은 `NotImplementedError` 를 던지도록 정직화됐다.
-      **그 상태를 유지하는 것이 D-280(추정 금지)의 준수다** — 응답 모양을 모르는 채
-      파서를 쓰면 2027 에 전부 재작업이 된다.
+      본문이 비어 있었고 무조건 `True` 를 냈다 — 뷰의 400 갈래가 닿을 수 없는 죽은 코드였다.
+      **지금은 `(ok, results)` 를 돌려주고, 상류 응답이 계약 모양이 아니면 빈 목록이 아니라
+      `_UPSTREAM_SHAPE_MISMATCH` 로 올린다** (D-290 의 원형).
+      ※ 판정문은 "NotImplementedError 유지" 라 적었으나 실측은 다르다 — 저장은 실제로
+        일어난다(`detect_media` 안의 `threading.Timer`). D-287 결정문에 정정을 달았다(D-214).
+        취지(잇지 않는다 · 추정 파서 금지)는 그대로다.
+      **응답 모양을 모르는 채 파서를 쓰면 2027 에 전부 재작업이 된다** (D-280).
 
     W2-2 호출처 ①(gRPC 검출 → K1)은 이미 배선돼 있다. 여기서 잇는 것은
     **호출처 ②(업로드 영상 분석 → K1)** 하나다. D-287 이 커널 done 요건에서
@@ -2061,15 +2065,15 @@ tickets:
           스코프는 `TenantScope.system(reason=...)` — 업로드 분석에는 요청자가 있을 수도
           있으므로, **있으면 `TenantScope.of(user)` 를 쓴다.** 있는 요청자를 버리고
           시스템 스코프를 쓰면 쓰기 IDOR 문턱이 사라진다 (D-290).
-      (4) ★ 잇지 못한 채로 끝나면 **`NotImplementedError` 를 그대로 둔다.**
-          "일단 빈 목록을 돌려주자"는 D-290 위반이다 — 없는 것과 실패한 것을 같은 값으로
-          표현하지 않는다.
+      (4) ★ 잇지 못한 채로 끝나면 **지금의 정직한 반환을 그대로 둔다** —
+          `(ok, results)` + `_UPSTREAM_SHAPE_MISMATCH`. "일단 빈 목록을 돌려주자"는
+          D-290 위반이다: 없는 것과 실패한 것을 같은 값으로 표현하지 않는다.
   dod: |
     ① evidence/W2-2b/ai_response_schema.md 에 **실측 응답**이 있다 (추정 표기 0건)
     ② 계약 대조표가 있고, 불일치 필드가 불일치로 적혀 있다
     ③ detect_and_save 가 K1 record_detection 을 부르고, 그 경로의 시험이 green
     ④ 요청자가 있는 호출은 TenantScope.of(user) 를 쓴다 — 쓰기 IDOR 시험이 green (D-290)
-    ⑤ 실호출 0건이면 ③④ 를 하지 않고 **NotImplementedError 를 유지한 채** ①의 미측정 사실을 남긴다
+    ⑤ 실호출 0건이면 ③④ 를 하지 않고 **지금의 반환 계약을 유지한 채** ①의 미측정 사실을 남긴다
   verify:
     - "test -f docs/agent/evidence/W2-2b/ai_response_schema.md"
     - "python -m pytest tests/test_w2_2_detection_wiring.py -q --nomigrations -p no:randomly"

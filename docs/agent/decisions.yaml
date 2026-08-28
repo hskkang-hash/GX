@@ -1789,10 +1789,20 @@ decisions:
              K1 을 소비하는 것으로 증명된다 — AI 호출처 개수가 아니다.
              대리 지표를 만족시키려 추정 파서를 쓰는 것은 본말전도이고 D-280 위반이다.
 
-    ▣ **②(detect_and_save) 처분: 정직화 상태(NotImplementedError) 유지.**
+    ▣ **②(detect_and_save) 처분: 정직화 상태 유지.**
        ai-analysis.invalid 로 응답 모양을 못 재는 동안 잇지 않는다 — 추정 파서 금지(D-280).
        → 신규 티켓 「AI 응답 스키마 실측」 등재. 실 서버 응답을 캡처해 스키마를 확정한 뒤
-         ②를 K1 에 잇는다. 그 전까지 ②는 실패를 정직하게 던진다.
+         ②를 K1 에 잇는다.
+
+       ※ **판정문 문언 정정 (D-214 절차 · 2026-08-30)**: 판정문은 "정직화 상태
+         (NotImplementedError) 유지" 라고 적었으나, 실측은 다르다. 직전 턴(REPLY_20260829 §정정)이
+         이미 보고한 대로 `detect_and_save` 는 **NotImplementedError 를 던지지 않는다** —
+         저장이 실제로 일어나기 때문이다(`detect_media` 안의 `threading.Timer` 가
+         `create_video_analysis_records()` 를 돌린다). 그래서 그 턴은 예외 대신
+         **독스트링을 사실로 고치고** 반환을 `(ok, results)` 로 바꿔 상류 모양 불일치가
+         빈 목록으로 뭉개지지 않게 했다(D-290 의 원형).
+         D-287 의 **취지**(잇지 않는다 · 추정 파서 금지)는 그대로이고, 그것을 강제하는 것은
+         예외가 아니라 아래 `enforced_by` 의 세 가지다. 없는 예외를 있다고 적지 않는다.
 
     ▣ **K1 done.** 다음은 K2 ‖ K6 착수.
 
@@ -1805,8 +1815,14 @@ decisions:
       공개 면이 갈리면 **실패**. 커널 done 의 "계약 AC 충족"을 코드가 판정한다.
     · python scripts/verify_kernel_map.py — 커널↔티켓 매핑이 문서와 갈리면 exit 1.
       "호출처 2곳" 대신 **"K2·K3·K4 가 K1 을 소비한다"** 를 재사용의 증거로 쓰는 근거표가 이것이다.
-    · backend/media_data/services/media_data_detect_service.py 의 detect_and_save 가 던지는
-      NotImplementedError — 잇지 않았다는 사실을 **호출하면 즉시 터지는 형태**로 남긴다. 주석이 아니다.
+    · backend/tests/test_w2_2_detection_wiring.py 의 SilentSuccessSurveyTest —
+      "본문 없이 True 를 반환하는 공개 함수" 조사기가 돈다. `detect_and_save` 의 옛 모양
+      (`return True, results`)이 **실물 표본**으로 들어 있어(D-289), 누가 그 모양을 되살리면 잡힌다.
+    · backend/media_data/services/media_data_detect_service.py 의 `_UPSTREAM_SHAPE_MISMATCH` —
+      상류 응답이 계약 모양이 아니면 **빈 목록이 아니라 불일치 값**으로 올라간다.
+      추정 파서를 끼우려면 이 갈래를 먼저 지워야 하고, 지우는 순간 위 조사기가 본다.
+    · scripts/scan_silent_success.py --self-test — 조용한 성공 형태를 저장소 전수로 훑고,
+      대조 표본에 **실물 1건 이상**을 요구한다 (D-289).
   affects: [K1, W2-2, W2-2b, DA-04, D-284, D-214]
 
 - id: D-288
