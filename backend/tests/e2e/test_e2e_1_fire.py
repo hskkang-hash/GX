@@ -13,7 +13,8 @@
     5. K2 발송 기록 — occurred_at → sent_at **30초 이내** (F-10)
     6. K6 피드백 — 판정이 오탐률 분모·분자로 돌아온다
     8. K3 대시보드 프레임 — 프리셋 도달 0클릭 · 패널 5상태
-    7 · 9 · 10. SDN QoS · 영상 3초 · K4 보고서 — **해금 전**. 등재부가 자동으로 늘린다.
+    10. K4 보고서 PDF — 이벤트·조치·캡처 치환 (조치는 **K2 의 그 행 그대로**)
+    7 · 9. SDN QoS · 영상 3초 — **해금 전**. 등재부가 자동으로 늘린다.
 
 ★ 9단계(영상 3초)를 8단계에서 **떼어냈다.** K3 가 붙었다고 영상이 측정되는 것이 아니다 —
   재생 경로가 아직 없다. 한 칸에 두면 프레임이 초록일 때 영상까지 초록으로 읽힌다.
@@ -133,6 +134,17 @@ class _FireScenario(TestCase):
         Rule = apps.get_model("stream_monitors", "NotificationRule")
         return cls._own(Rule.objects.create(
             severity="critical", role=role, channels=["email"], is_active=True), group)
+
+    def _report_template(self):
+        """A 테넌트의 보고서 템플릿 하나. 세 변수를 **전부 자리 잡아 둔다.**"""
+        Template = apps.get_model("report_template", "ReportTemplate")
+        return self._own(Template.objects.create(
+            name="e2e1-화재보고", is_default=False, is_enabled=True,
+            template=("<h1>화재 상황보고</h1>"
+                      "<section>{{ events }}</section>"
+                      "<section>{{ actions }}</section>"
+                      "<section>{{ captures }}</section>"),
+        ), self.group_a)
 
     # ── 프레임 투입 — 1단계 ──────────────────────────────────────────────
     @staticmethod
@@ -266,6 +278,50 @@ class E2E1FireTest(_FireScenario):
         self.ledger.record(
             self._step(8), True,
             f"프리셋 {preset.preset}(matched={preset.matched}) · 패널 {len(panels)}칸")
+
+        # ── 10. K4 보고서 PDF ─────────────────────────────────────────
+        #    K4 가 붙으면서 등재부가 이 단계를 열었다.
+        #    ★ 여기가 재사용의 증거다 — 보고서의 "조치 이력"은 K2 의 발송 기록
+        #      **그 행 그대로**다. 두 벌로 적재하지 않는다 (DA-04 §2 K2).
+        from kernels.k4_report import REQUIRED_VARIABLES, build_context, render
+        from kernels.k4_report import renderers as k4_renderers
+
+        class _CapturingRenderer:
+            name = "weasyprint"
+
+            def __init__(self):
+                self.html = ""
+
+            def render(self, *, html):
+                from kernels.k4_report.renderers import RenderOutcome
+
+                self.html = html
+                return RenderOutcome(True, pdf=b"%PDF-1.4 e2e1")
+
+        capturing = _CapturingRenderer()
+        undo = k4_renderers.register(capturing)
+        self.addCleanup(undo)
+
+        template = self._report_template()
+        context = build_context(scope=self.scope_a, since=now - timedelta(hours=1))
+        for name in REQUIRED_VARIABLES:
+            self.assertTrue(hasattr(context, name),
+                            f"[F-11] 치환 변수 {name} 가 없습니다.")
+        self.assertTrue(context.actions,
+                        "보고서에 조치 이력이 안 실렸습니다 — K2 발송 기록을 못 읽었습니다.")
+        self.assertEqual(
+            [r.delivery_id for r in records], [a.delivery_id for a in context.actions],
+            "보고서의 조치 행이 5단계에서 만든 발송 이력과 다릅니다 — 두 벌로 적재했습니다.")
+        self.assertTrue(context.captures, "[F-11] 캡처가 안 실렸습니다.")
+        self.assertEqual((), context.manual_fields,
+                         "[U2] 손으로 채울 칸이 남았습니다 — 10분은 그 수가 0 일 때입니다.")
+
+        pdf = render(scope=self.scope_a, template_id=template.pk, context=context)
+        self.assertTrue(pdf.startswith(b"%PDF"), "PDF 가 아닙니다.")
+        self.ledger.record(
+            self._step(10), True,
+            f"이벤트 {len(context.events)} · 조치 {len(context.actions)} · "
+            f"캡처 {len(context.captures)} · 손입력 0")
 
         print("\n" + self.ledger.render(self.scenario.active_steps))
 

@@ -1838,7 +1838,32 @@ tickets:
   phase: R1
   title: "보고서 생성 API + 임무 상세 화면 버튼"
   kernel: ['K4']                     # 공유 커널 (지시서 v2.1) — F-11 ↔ U2 이중 AC
-  status: ready
+  status: in_progress
+  updated_at: "2026-08-30T23:00:00+09:00"
+  evidence: backend/kernels/k4_report/ · docs/agent/evidence/W2-K4/open03_premise.md
+  blocker: |
+    [2026-08-30 · **K4 커널 착수분 완료 — API·화면은 아직**] 실행 순서 ⑥.
+      · 공개 면 3개 (DA-04 §2 K4): render · build_context · list_templates
+      · [F-11] 치환 변수 3종(이벤트·조치·캡처)이 **자동으로** 모인다.
+        ★ **조치 이력은 K2 의 `DeliveryRecord` 그 행 그대로다** — 보고서용으로 다시
+          적재하지 않는다(DA-04 §2 K2). 시험이 delivery_id 로 동일성을 확인한다.
+      · [U2] 재는 것은 초가 아니라 **손으로 채울 칸의 개수**다. 지금 **0**.
+        DA-04: "10분은 사람의 작업 시간이지 렌더 시간이 아니다."
+      · ★ **"조치 없음"과 "조치를 못 가져옴"을 가른다**(`sources_failed`) — 뭉개면
+        발송 조회가 실패한 보고서가 "조치 없음"으로 **인쇄되어** 나가고, 종이는 되돌릴 수 없다.
+        기본값은 **불완전하면 안 찍는 것**이고, 굳이 찍으면 그 사실이 본문에 박힌다.
+      · 0바이트 PDF 는 **성공이 아니다** — 커널이 어댑터와 별개로 한 번 더 본다.
+        실측: 그 줄이 없을 때 `_EmptyPdfRenderer` 시험이 통과했다(잡아서 고쳤다).
+      · 엔진은 레지스트리로 갈아 끼운다. 커널에 App 이름이 나오는 자리는 `renderers.py`
+        한 곳뿐이고, 시험이 **AST 로** 그것을 지킨다.
+    ★ **OPEN-03 은 전제가 틀려 해소됐다** (D-210 · D-214):
+      `BaseModel` 이 이미 group FK + CustomManagerGroup 을 갖고, `BaseModelWithGroup` 은
+      DEPRECATED 이며 필드를 더 정의하지 않는다. 살아 있는 13행은 전부 소유가 채워져 있다.
+      **기저 클래스 변경·마이그레이션·백필 모두 불필요했다.**
+      → 직전 회신에서 "K4 가 막혔다"고 적은 것은 **문서를 읽고 내린 판단**이었다. 실측하니
+        달랐다. 그 오판을 지우지 않는다 — evidence/W2-K4/open03_premise.md §0.
+    아직 아닌 것: **HTTP API·화면 버튼**(이 티켓의 dod) · `render_period`(기간 종합 보고서 —
+    기간 집계 정의가 선행, P-K6-3) · 치환 문법 확정(P-K4-1).
   priority: P0
   effort: M
   kind: new-s

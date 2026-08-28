@@ -125,6 +125,16 @@ KERNEL_PUBLIC: dict[str, str] = {
         "편집(E)은 설정 없이는 절대 참이 되지 않는다. "
         "시험 근거: WidgetPermissionTest.test_editable_is_never_true_without_configuration · "
         "WidgetPermissionTest.test_visibility_does_not_replace_tenant_isolation",
+
+    # ── K4 (2026-08-30 착수분) — 구현이 없다. 데이터를 반환하지 않는다.
+    "backend/kernels/k4_report/services.py:render_period":
+        "구현이 없다. 부르면 NotImplementedYet 을 던지고 **아무 데이터도 반환하지 않는다** "
+        "(기간 종합 보고서 — 기간 집계의 정의가 선행이고, 지금 만들면 K6 의 집계 경로와 "
+        "**두 벌**이 된다: DA-04 §2 K6 이 금지한 모양이다. P-K6-3 과 함께 연다). "
+        "본문 첫 줄에서 `scope.require_actor()` 를 부르므로 시스템 스코프로도 못 지나간다. "
+        "구현이 들어오는 커밋에서 이 등재를 지우고 문지기를 붙여야 한다 — "
+        "기간 보고서는 그 기간의 테넌트 데이터를 통째로 읽는다. "
+        "시험 근거: HonestAbsenceTest.test_render_period_raises_instead_of_returning_empty",
 }
 
 #: PUBLIC 라우트 면제의 증가금지 래칫. 오늘 실측 4건.
