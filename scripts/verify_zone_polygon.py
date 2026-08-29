@@ -141,6 +141,9 @@ _ZONES_OPENED_BARE = "ZONE_POLYGON_READY = True\nraise NotImplementedError('x')\
 def self_test() -> int:
     cases = (
         ("잠근 채 사유가 있으면 안 잡는다", _ZONES_LOCKED, _TESTS_OK, False),
+        # ★ **출생 표본** (D-310) — 이 도구를 만들게 한 바로 그 사례.
+        #   "추정으로 열면 그 추측이 F-03 의 계약이 된다." 사유 없이 잠그면 그 약함이
+        #   조용히 계약의 자리를 차지한다 — 아래 갈래가 그것을 잡는다.
         ("사유 없이 잠근 것을 잡는다", _ZONES_NO_REASON, _TESTS_OK, True),
         ("구현·시험을 갖추고 올린 것은 안 잡는다", _ZONES_OPENED, _TESTS_OK, False),
         ("시험 없이 올린 것을 잡는다", _ZONES_OPENED, _TESTS_NONE, True),

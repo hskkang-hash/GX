@@ -1,0 +1,26 @@
+# D-310 자기표본 기준선 — **오늘 출생 표본이 없는 도구** (2026-09-04 실측)
+#
+# ★ `python scripts/verify_tool_selftest.py --freeze` 가 만든다. 손으로 고치지 말 것.
+#
+# 래칫이다 — 소급 사유를 요구하지 않는다(D-311). 오늘 없는 것에 사후 사유를 달게 하면
+# 사유란이 거짓으로 채워지고, 그 거짓이 다음 판정의 근거가 된다.
+# 여기 이름을 **새로** 올리는 일(=표본 없는 새 도구)만 exit 1 이다.
+# 이름이 사라지는 것은 채워졌다는 뜻이고, 그것은 환영이다.
+
+GATE bypass
+GATE deprecated_base
+GATE forbidden_zone
+GATE isolation
+GATE model_inheritance
+GATE secrets
+GATE ui_library
+verify_classification.py
+verify_da01_reuse_paths.py
+verify_decision_tools.py
+verify_e2e_contract.py
+verify_kernel_map.py
+verify_layers.py
+verify_migrations.py
+verify_model_inheritance.py
+verify_tenant_scope.py
+verify_timeout.py

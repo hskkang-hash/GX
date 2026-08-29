@@ -239,6 +239,9 @@ def self_test() -> int:
 
     cases.append(("정상 단계표는 통과한다", probe(good, 4, 0) is True))
     cases.append(("FAIL 이 있으면 잡는다", probe(fail, 4, 0) is False))
+    # ★ **출생 표본** (D-310) — 이 도구를 만들게 한 바로 그 사례.
+    #   "다섯이 찼다" 를 사람이 쓰면 다시 문서다(D-286). 그리고 **증거를 지우는
+    #   것만으로 초록이 되는** 판정기라면 그것은 게이트가 아니다 — 아래 갈래가 그것이다.
     cases.append(("★ 증거가 없으면 통과가 아니다", probe(None, 4, 0) is False))
     cases.append(("잠김이 늘면 잡는다", probe(more_locked, 4, 0) is False))
 

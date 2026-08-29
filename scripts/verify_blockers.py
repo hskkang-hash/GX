@@ -68,7 +68,12 @@ def parse(text: str) -> list[dict]:
         m = re.match(r"^    ([a-z_]+):\s*(.*)$", raw)
         if m:
             key, value = m.group(1), m.group(2).strip()
-            current[key] = "" if value in ("|", ">", ">-", "|-") else value.strip('"')
+            if value in ("|", ">", ">-", "|-"):
+                current[key] = ""
+            else:
+                # 줄 끝 주석은 값이 아니다 — `sent_at: "2026-09-04"  # 발송 완료` 에서
+                # 날짜만 남긴다. 안 자르면 date.fromisoformat 이 그 자리에서 죽는다(실측).
+                current[key] = value.split(" #", 1)[0].strip().strip('"')
             continue
         if key and raw.startswith("      "):
             current[key] = (current.get(key, "") + " " + raw.strip()).strip()
@@ -95,7 +100,46 @@ def check(rows: list[dict]) -> list[str]:
             problems.append(
                 f"{rid}: state_in_code 가 가리킨 '{where}' 가 없다 — "
                 f"없는 자리를 적으면 그것도 문서다 (D-286)")
+        # ★ D-320 — CONTRACT 는 **시각을 갖는다.** 잠김이 조용히 늙지 않게 한다.
+        if t == "CONTRACT":
+            for field in ("sent_at", "due_by"):
+                if not (row.get(field) or "").strip():
+                    problems.append(
+                        f"{rid}: CONTRACT 인데 `{field}` 가 없다 — 발송·기한이 없으면 "
+                        f"지연이 **얼마나** 되었는지 아무도 못 세고, 세지 못하는 지연은 "
+                        f"협상 카드가 되지 않는다 (D-320 · 계약 6조3항 기산)")
     return problems
+
+
+def elapsed_lines(rows: list[dict]) -> list[str]:
+    """CONTRACT 항목의 경과 일수. **매 실행마다 계산한다** — 문서에 적지 않는다(D-320).
+
+    적어 두면 그 숫자는 적은 날에 멈춘다. 시간이 지나는 것이 화면에 보여야 협상 카드가 된다.
+    """
+    from datetime import date
+
+    out: list[str] = []
+    today = date.today()
+    for row in rows:
+        if (row.get("unlock_type") or "").strip() != "CONTRACT":
+            continue
+        sent = (row.get("sent_at") or "").strip().strip('"')
+        due = (row.get("due_by") or "").strip().strip('"')
+        try:
+            sent_d = date.fromisoformat(sent)
+            due_d = date.fromisoformat(due)
+        except ValueError:
+            out.append(f"  {row['id']}: 날짜 형식이 아니다 (sent_at={sent!r} due_by={due!r})")
+            continue
+        waited = (today - sent_d).days
+        if today > due_d:
+            out.append(f"  ★ {row['id']}: **회신 지연 {(today - due_d).days}일** "
+                       f"(발송 {sent} · 기한 {due} · 대기 {waited}일) — "
+                       f"계약 6조3항 이행기한 연장 사유가 누적 중이다")
+        else:
+            out.append(f"  {row['id']}: 발송 {sent} · 기한 {due} · 대기 {waited}일 "
+                       f"(기한까지 {(due_d - today).days}일)")
+    return out
 
 
 def summary(rows: list[dict]) -> Counter:
@@ -107,6 +151,9 @@ def self_test() -> int:
              "why": "w", "unlock_step": "s", "state_in_code": "scripts"}]
     cases = (
         ("정상 항목은 안 잡는다", good, False),
+        # ★ **출생 표본** (D-310) — 이 도구를 만들게 한 바로 그 사례.
+        #   잠김이 전부 "막혔다" 한 단어였다. 유형이 비면 **하루짜리(ADMIN)가
+        #   계약 리스크(CONTRACT) 뒤에 숨는다** — 아래 갈래가 그것을 잡는다.
         ("★ unlock_type 이 비면 잡는다",
          [{**good[0], "unlock_type": ""}], True),
         ("★ unlock_owner 가 비면 잡는다",
@@ -115,6 +162,12 @@ def self_test() -> int:
         ("없는 파일을 가리키면 잡는다",
          [{**good[0], "state_in_code": "없는/자리.py"}], True),
         ("해소 절차가 없으면 잡는다", [{**good[0], "unlock_step": ""}], True),
+        # ★ D-320 — CONTRACT 인데 발송·기한이 없으면 지연을 셀 수 없다.
+        ("CONTRACT 인데 sent_at 이 없으면 잡는다",
+         [{**good[0], "unlock_type": "CONTRACT", "unlock_owner": "상대방"}], True),
+        ("CONTRACT + 발송·기한이 있으면 안 잡는다",
+         [{**good[0], "unlock_type": "CONTRACT", "unlock_owner": "상대방",
+           "sent_at": "2026-09-04", "due_by": "2026-09-19"}], False),
     )
     bad = 0
     for label, rows, should_fail in cases:
@@ -160,6 +213,8 @@ def main() -> int:
               "구별할 수 없다. 판정 불가이지 통과가 아니다")
         return 1
 
+    for line in elapsed_lines(rows):
+        print("[BLOCKER]" + line)
     print("[BLOCKER] 유형별: " + " · ".join(
         f"{t} {counts.get(t, 0)}" for t in VALID_TYPES)
         + (f" · 미분류 {counts.get('?', 0)}" if counts.get("?") else ""))

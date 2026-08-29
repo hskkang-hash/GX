@@ -20,6 +20,9 @@
             실측해 채운다. 추정 금지(D-280). 확인 전에는 빈 값으로 두고 어댑터를 만들지
             않는다."* 추측한 필드명 위의 파서는 첫 실호출에서 전부 재작업이 된다.
           · 좌표계 변환 — juso API 가 어느 좌표계를 받는지(WGS84/GRS80TM) 미실측
+          · ★ **방향 자체가 미판정이다**(`JUSO_REVERSE_SUPPORTED='unknown'` · D-318) —
+            juso 의 주력은 「검색어 → 주소」·「주소 → 좌표」이고, 우리가 필요한 것은
+            그 반대다. 역방향을 안 주면 키가 와도 이 자원으로는 안 열린다
           · 캐시·재시도 정책 — 재시도 **대상**만 상태로 표시하고, 재시도기는 만들지 않았다
 
     → 남은 일은 **`AddressPort` 구현 하나**다. SDN 표준과 같은 모양이고 같은 이유다.
@@ -46,6 +49,32 @@ log = logging.getLogger(__name__)
 #:   타임아웃 없는 호출 하나가 요청 스레드를 붙잡으면 그것이 곧 장애다.
 #:   주소는 보조 정보이므로 짧다: 사람이 알림을 기다리는 시간을 주소가 잡아먹으면 안 된다.
 TIMEOUT_SECONDS: float = 2.0
+
+#: ★ **juso 가 우리가 필요한 방향을 주는가** — 3값이다 (D-318 · D-290).
+#:
+#:   'unknown' 아직 실호출로 확인하지 않았다. **재시도 대상이다**
+#:   'yes'     역방향(좌표 → 도로명주소)을 준다. 어댑터를 만들 수 있다
+#:   'no'      정방향만 준다. **키가 와도 FX-5 는 이 자원으로 열리지 않는다** —
+#:             그때는 어댑터 설계가 아니라 **자원 선택**의 문제이고, 그 선택은
+#:             개발이 판정하지 않는다(D-318 ㉡)
+#:
+#:   왜 2값이 아니라 3값인가: 'no' 와 'unknown' 을 합치면 **"안 준다" 와 "안 물어봤다"가
+#:   같은 값**이 되고, 그러면 대체 자원을 찾아야 하는지 아직 물어보면 되는지 모른다.
+#:   D-290 이 pending/failed 를 가른 것과 같은 이유다.
+#:
+#:   올리는 방법은 하나뿐이다: `python scripts/probe_juso_direction.py` 로 **실호출 1회.**
+#:   증거는 `docs/agent/evidence/D-318/` 에 남는다. 문서를 읽고 올리지 않는다(D-316).
+JUSO_REVERSE_SUPPORTED: str = "unknown"
+
+#: `unknown` 인 사유. 비면 `scripts/verify_juso_direction.py` 가 exit 1.
+JUSO_REVERSE_UNKNOWN_REASON: str = (
+    "승인키가 이 개발 환경에 없어 실호출을 못 했다(2026-09-04 실측: "
+    "C:/GuardianX-vault/secrets-20260210/gx_be.env 에 juso 항목 없음 · 환경변수 "
+    "GX_JUSO_API_KEY 없음 · backend/.env 파일 자체가 없음). 대표께서 승인키 2건을 "
+    "발급하셨다는 회신은 받았으나 **문서로 안 것을 계정에서 본 것으로 등재하지 않는다**"
+    "(D-316). 해소는 개발이 아니라 키를 환경변수에 넣고 프로브를 1회 돌리는 것이며, "
+    "그러면 이 상수가 yes/no 로 확정되고 FX-5 의 설계가 갈린다."
+)
 
 #: 이 어댑터가 **잴 수 있는 상태인가.** SDN 과 같은 규약이다.
 #: 구현체가 없으므로 False 이고, 사유가 비면 `scripts/verify_e2e_contract.py` 가 exit 1.
@@ -194,6 +223,8 @@ def resolve(*, lat: float | None, lng: float | None,
 
 __all__ = [
     "TIMEOUT_SECONDS",
+    "JUSO_REVERSE_SUPPORTED",
+    "JUSO_REVERSE_UNKNOWN_REASON",
     "KERNEL_READY",
     "NOT_READY_REASON",
     "AddressPort",

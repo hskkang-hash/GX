@@ -15,6 +15,10 @@ meta:
   updated_at: "2026-09-02"
   enum:
     unlock_type: [DEV, CONTRACT, ADMIN]
+  # ★ D-320 — CONTRACT 항목에는 칸 셋이 더 필요하다. **잠김이 조용히 늙지 않게** 한다.
+  #   sent_at : 발송일 · due_by : 회신 기한(발송 + 15일 · 계약 3조2항 준용)
+  #   경과 일수는 게이트가 **매 실행마다 계산해 출력**한다 —
+  #   시간이 지나는 것이 화면에 보여야 협상 카드가 된다.
 
 blockers:
 
@@ -24,43 +28,56 @@ blockers:
     unlock_owner: 에스비정보기술 (독촉·기한 연장 통지는 대표)
     blocks: [F-06, F-07, F-08, F-13, E2E-3]
     since: "2026-08-25"          # 계약 3조2항이 정한 제공 기한
+    sent_at: "2026-09-04"        # 발송문 발송 완료 (대표 회신)
+    due_by: "2026-09-19"         # 발송 + 15일 (계약 3조2항 준용)
     why: |
       Mock 조차 I-1~I-5 의 필드 이름과 타입이 있어야 만들 수 있다(DA-02 §0).
       추측 필드 위의 어댑터는 재작업이 확정되고 D-280 위반이다.
+      ★ 2026-09-04 **잠금의 성격이 바뀌었다**(D-320): 「미발송」 → 「발송·회신 대기」.
+        이로써 계약 6조3항(협조 지연 시 이행기한 자동 연장)의 **기산점이 섰다.**
+        이건 개발 진척이 아니라 **계약상 지위의 변화**다 — 이제 지연의 책임 소재가
+        문서로 남고, 게이트가 경과 일수를 매 실행마다 출력한다.
     unlock_step: |
       명세 수령. 포트·수령요건 34건(A차단 24)은 이미 서 있으므로,
       오면 `SdnPort` 구현체 하나를 채우고 KERNEL_READY 를 올리면 끝난다.
     state_in_code: backend/adapters/sdn/__init__.py — KERNEL_READY=False + NOT_READY_REASON
 
   - id: JUSO_API_KEY
-    title: 주소정보 연계서비스(juso.go.kr) 승인키 미발급 + 응답 스키마 미실측
+    title: juso 승인키 — 발급은 완료, **개발 환경에 없다** + 방향 미판정
     unlock_type: ADMIN
-    unlock_owner: 대표
+    unlock_owner: 대표 (키 전달 1회)
     blocks: [FX-5]
     since: "2026-08-31"          # D-298 로 FX-5 착수가 승인된 날
     why: |
-      요청 URL 은 .env.example 에 등재됐으나 응답의 필드 이름·중첩 구조·오류 코드는
-      실호출로만 확인된다. 추측한 필드명 위의 파서는 첫 실호출에서 전부 재작업이다(D-280).
-      ★ 승인키는 **공공데이터포털 일반키와 별개 계정**이다 — 이 사실이 대장에 없으면
-        "포털 키 있으니 되겠지" 로 넘어가고 그만큼 더 지연된다.
+      ★ 2026-09-04 실측 — **발급은 완료됐고 이 환경에는 없다. 둘은 다른 사실이다.**
+        대표께서 승인키 2건 발급을 회신하셨다. 그러나 개발 환경에서 확인되지 않는다:
+        C:/GuardianX-vault/secrets-20260210/gx_be.env 에 juso 항목 없음 ·
+        환경변수 GX_JUSO_API_KEY 없음 · backend/.env 파일 자체가 부재.
+        **문서로 안 것을 계정에서 본 것으로 등재하지 않는다**(D-316) — 그래서
+        .env.example 의 juso 항목은 여전히 `source: doc_only` 이고 어댑터가 금지돼 있다.
+      ★ 그리고 **방향이 미판정이다**(D-318): juso 의 주력은 「검색어→주소」·「주소→좌표」이고
+        FX-5 가 필요한 것은 그 반대(좌표→도로명주소)다. 역방향을 안 주면 **키가 와도
+        이 자원으로는 안 열린다** — 그때는 어댑터 설계가 아니라 자원 선택의 문제다.
+      ⚠ 그래서 이 항목은 **ADMIN 으로 남긴다.** 지시서 §5 는 ADMIN 0건을 예상했으나,
+        남은 한 걸음이 개발이 아니라 **사무(키 전달)** 이기 때문이다. 유형을 사실과
+        다르게 적으면 그 순간 이 대장이 하는 일이 없어진다(D-307).
     unlock_step: |
-      juso.go.kr 가입 → 승인키 신청(10분) → 환경변수 GX_JUSO_API_KEY 설정 →
-      `python scripts/probe_public_data_schema.py --only juso_coord2addr` **1회**.
-      그다음 남는 일은 AddressPort 구현 하나다.
-    state_in_code: backend/adapters/juso/__init__.py — KERNEL_READY=False + NOT_READY_REASON
+      승인키를 개발 환경 환경변수 `GX_JUSO_API_KEY` 로 전달(값은 저장소·문서 어디에도
+      적지 않는다 · D-319) → `python scripts/probe_juso_direction.py` **실호출 1회.**
+      그 1회가 JUSO_REVERSE_SUPPORTED 를 yes/no 로 확정하고 FX-5 설계를 가른다.
+    state_in_code: backend/adapters/juso/__init__.py — JUSO_REVERSE_SUPPORTED='unknown'
 
-  - id: CCTV_SERVICE_NAME
-    title: CCTV·재난안전정보 API 의 정확한 서비스명 미확인
-    unlock_type: ADMIN
-    unlock_owner: 대표
-    blocks: [DA-05 등재]
-    since: "2026-08-31"
-    why: |
-      "국립공원 안전정보" 등으로 검색되는 서비스가 여럿이고, 추정으로 고르면
-      2027.2 에 다른 API 를 쓰게 된다(D-280). 그래서 sources.yaml 의 endpoint 를 비워 뒀다.
-    unlock_step: |
-      data.go.kr 마이페이지 → 활용신청 목록에서 이름 복사(10분).
-    state_in_code: docs/agent/evidence/DA-05/sources.yaml — endpoint 빈 문자열 + 사유
+  # ★ CCTV_SERVICE_NAME 은 **여기서 내려갔다** (D-321, 2026-09-04).
+  #   근거: 활용신청 현황 18건 전수에 없고, **신청할 필요도 없다.**
+  #   포털의 재난안전 CCTV 정보는 "어디에 CCTV 가 있는지" 의 **메타데이터**이지 영상이
+  #   아니다. 우리는 CCTV 영상을 **직접 받는 회사**다(L1 현장 연계) — 설치 위치 목록은
+  #   우리 기능 어디에도 입력으로 들어가지 않는다.
+  #
+  #   ★ 그동안 이것이 잠금으로 남아 있던 이유는 하나다 — **이름이 우리 도메인과 닮아서.**
+  #     "CCTV·재난안전정보" 는 우리가 하는 일처럼 들린다. 그러나 하는 일이 아니다.
+  #     **이름의 유사성을 기능의 필요성으로 읽은 것** — 이것도 착시의 한 종류다.
+  #   국립공원(5)·아동센터(6)도 같다: 컨텍스트 보강용이고 계약 AC 어디에도 걸리지 않는다.
+  #   셋의 상태는 .env.example 에 `source: doc_only` + `status: not_required` 로 남는다.
 
   - id: F03_POLYGON_DESIGN
     title: F-03 위험구역 폴리곤 — 좌표 표현·좌표계 미확정

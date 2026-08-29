@@ -156,6 +156,10 @@ _BAD_MISSING_FN = _GOOD.replace("ALL_GATES=(alpha)", "ALL_GATES=(alpha beta)")
 def self_test() -> int:
     cases = (
         ("건수를 내는 게이트는 안 잡는다", _GOOD, False),
+        # ★ **출생 표본** (D-310) — 이 도구를 만들게 한 바로 그 사례.
+        #   `$PY - <<PYEOF` 가 stdin 을 스크립트로 써서 앞의 파이프가 덮였고,
+        #   게이트는 **한 줄도 못 보면서 exit 0** 이었다. 건수를 안 내는 게이트가
+        #   바로 그 상태이며, 아래 갈래가 그것을 잡는다.
         ("건수를 안 내는 게이트를 잡는다", _BAD_NO_COUNT, True),
         ("러너의 [입력] 대조가 지워진 것을 잡는다", _BAD_NO_RUNNER, True),
         ("등재만 되고 함수가 없는 게이트를 잡는다", _BAD_MISSING_FN, True),

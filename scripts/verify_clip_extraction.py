@@ -141,6 +141,10 @@ _CLIPS_OPENED_BARE = "CLIP_EXTRACTION_READY = True\nraise NotImplementedError('x
 def self_test() -> int:
     cases = (
         ("잠근 채 사유가 있으면 안 잡는다", _CLIPS_LOCKED, _TESTS_OK, False),
+        # ★ **출생 표본** (D-310) — 이 도구를 만들게 한 바로 그 사례.
+        #   D-312(AUTHOR ERROR): "만료 서명 URL" 이라는 관용어가 프리사인드 URL 을
+        #   뜻해 **계약 11조를 깨는 구현**을 지시할 뻔했다. 잠금이 사유 없이 서면
+        #   그 위험이 사유 없이 남는다 — 아래 갈래가 그것을 잡는다.
         ("사유 없이 잠근 것을 잡는다", _CLIPS_NO_REASON, _TESTS_OK, True),
         ("구현·시험을 갖추고 올린 것은 안 잡는다", _CLIPS_OPENED, _TESTS_OK, False),
         ("시험 없이 올린 것을 잡는다", _CLIPS_OPENED, _TESTS_NONE, True),

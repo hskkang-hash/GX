@@ -334,6 +334,10 @@ def self_test() -> int:
         ("ORM 쓰기가 있는 필드는 안 잡는다", "probe.Thing.written" not in dead),
         ("★ 읽기만 있는 필드를 잡는다", "probe.Thing.only_read" in dead),
         ("filter 는 쓰기가 아니다", counts.get("probe.Thing.only_read", (9, 9))[0] == 0),
+        # ★ **출생 표본** (D-310) — 이 도구를 만들게 한 바로 그 사례.
+        #   착시 ⑥ 을 잡으려고 만든 판정기가 자기가 태어난 이유(clip_path)를
+        #   "살아 있다" 고 답했다. 그 갈래가 아래 한 줄이고, 여기서 초록이 나오면
+        #   이 도구는 도구가 아니다.
         ("★ 값 객체 생성자는 쓰기가 아니다 (clip_path 를 놓쳤던 갈래)",
          "probe.Thing.carried" in dead),
         ("M2M .set() 은 쓰기다", "probe.Thing.tagged" not in dead),
@@ -386,9 +390,12 @@ def main() -> int:
 
     print(f"[DEADFIELD] 쓰기 0곳 {len(dead)}건 — 기준선 빚 {len(debt)} · 선언 등재 "
           f"{len(declared)} · **새 빚 {len(fresh)}** · 배선되어 빠진 것 {len(healed)}")
+    # ★ D-311 — §0.4 금지구역은 **잔여 계산의 분모에서 뺀다.** 우리 관할이 아닌 것을
+    #   분모에 넣으면 갚을 수 없는 빚이 영원히 진척률을 눌러 앉힌다(D-207).
+    ours = [d for d in dead if d.split(".")[0] not in FORBIDDEN_APPS]
     print(f"[DEADFIELD] 그중 §0.4 금지구역 {len(forbidden)}건 "
-          f"(delivery·orders·terminals — 우리가 못 고친다) · 우리 관할 "
-          f"{len(dead) - len(forbidden)}건")
+          f"(delivery·orders·terminals — 우리가 못 고친다. **잔여 분모에서 제외**) · "
+          f"**우리 관할 잔여 {len(ours)}건**")
 
     if args.census:
         for label in sorted(fields):
@@ -430,10 +437,12 @@ def main() -> int:
             f"{label}: DECLARED_UNWIRED 에 있는데 이제 쓰인다 — 등재를 지운다. "
             f"낡은 선언이 남으면 다음에 죽는 필드를 그 이름이 가린다")
     if healed:
-        # 실패가 아니다. 줄어드는 것은 환영이고, 줄었다는 사실을 보이게 둔다(D-295).
-        print(f"[DEADFIELD] 기준선에서 빠진 {len(healed)}건 — 배선됐다. "
-              f"`--freeze` 로 기준선을 줄인다: {healed[:5]}"
-              + (" …" if len(healed) > 5 else ""))
+        # ★ D-311 — **줄어드는 것이 보여야 갚는 맛이 난다.** 실패가 아니고 로그다.
+        #   빚 목록이 조용히 늘지 않는 것만으로는 부족하다 — 줄어든 줄의 이름을 남긴다.
+        print(f"[DEADFIELD] ★ 기준선에서 빠진 {len(healed)}건 — **배선됐다.**")
+        for name in healed:
+            print(f"[DEADFIELD]   갚음: {name}")
+        print("[DEADFIELD] `--freeze` 로 기준선을 줄인다")
 
     if problems:
         print("[DEADFIELD] 위반 — 쓰기가 없는 필드는 '구현된 것처럼 보이는 미구현' 이다 (D-304)")
