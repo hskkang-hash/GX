@@ -126,6 +126,10 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "proxy.middleware.RemoveXFrameOptionsMiddleware",  # Remove X-Frame-Options for proxy endpoints
     "core.middleware.refresh_token.TokenRefreshMiddleware",
+    # ★ 전역 접근 관문 (D-348 · D-343 ③). **캐시보다 바깥이어야 한다**(D-341 착시 ⑦) —
+    #   캐시 안쪽에 두면 열려 있던 동안 익명으로 채워진 항목이 관문을 지나지 않고 그대로 나간다.
+    #   §0.4 금지구역의 라우트도 이 한 겹이 덮는다. 파일은 한 줄도 건드리지 않는다.
+    "common.access_gate.AccessGateMiddleware",
     # ★ 반드시 UniversalCacheMiddleware **바로 위** (W0-18 · D-248). 두 조건이 있다:
     #   ① 캐시보다 바깥 — UniversalCacheMiddleware 는 캐시 적중 시 저장된 본문을
     #      **항상 JsonResponse(200)** 으로 다시 만든다(universal_optimization.py:872).

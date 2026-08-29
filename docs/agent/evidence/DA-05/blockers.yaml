@@ -286,19 +286,31 @@ blockers:
        상태의 자리가 아니다.)
 
   - id: DELIVERY_ZONE_ANON_LEAK
-    title: 금지구역(backend/delivery) 의 2자리가 **익명에게 데이터를 돌려준다**
+    title: 금지구역(backend/delivery) 의 2자리가 익명에게 데이터를 돌려주던 것 — **해소됨**
     unlock_type: DEV
-    unlock_owner: backend/delivery 소유팀 (§0.4 이관 자산 · 우리는 손댈 수 없다)
-    blocks: [상용 오픈 ②보안-SEC-14]
+    unlock_owner: backend/delivery 소유팀 (§0.4) — 다만 **해소는 우리 층에서 했다**
+    blocks: []
     since: "2026-09-08"
-    blocked_now: true
-    verified_at: "2026-09-08"
+    resolved_at: "2026-09-09"
+    blocked_now: false
+    verified_at: "2026-09-09"
     verified_by: |
-      익명 GET 을 캐시 우회로 때린 실측(docs/agent/evidence/D-343/authn_gap_calls.json):
-        GET /api/delivery/drone-monitoring/drone-status   200 · 17,416 B · 드론 텔레메트리 전량
-        GET /api/delivery/etri-mock/test-scenarios        200 ·  1,976 B · 시험 시나리오
-      음성 대조 3자리는 같은 실행에서 401 — 환경이 인증을 안 거는 것이 아니다.
+      [2026-09-09 · 해소 후 재호출 · 익명 · 캐시 우회]
+        GET /api/delivery/drone-monitoring/drone-status   **401** (63 B) ← 그날 17,416 B
+        GET /api/delivery/etri-mock/test-scenarios        **401** (63 B) ← 그날  1,976 B
+      backend/tests/test_access_gate.py 가 이 둘을 회귀로 못박는다.
+      forbidden-zone 게이트는 초록이다 — 그 파일은 한 줄도 안 바뀌었다.
+
+      [2026-09-08 · 해소 전 실측] 같은 두 자리가 200 으로 데이터를 돌려주고 있었다.
+      음성 대조 3자리는 같은 실행에서 401 — 환경이 인증을 안 거는 것이 아니었다.
     why: |
+      ★ **해소 [판정 D-348 · 2026-09-09]** — 막는 자리를 바꿔서 풀었다.
+        D-207 이 금지한 것은 **그 파일을 수정하는 것**이고, 그 경로로 가는 요청을
+        **우리 층에서 막는 것**은 금지된 적이 없다. `common/access_gate.py` 한 겹이다.
+        「어느 규칙을 어길까」를 고르지 않고 **절차에 예외 경로를 만들었다** —
+        규칙도 안 어기고 구멍도 안 남겼다.
+
+      ── 아래는 해소 전의 기록이다. 지우지 않는다(없앤 것과 미룬 것은 다르다) ──
       ★ **우리가 고칠 수 있었고, 실제로 한 번 고쳤다가 되돌렸다.**
         `backend/delivery/views/api.py` 의 4자리에 `JwtOrInboundKey()` 를 붙였더니
         `verify_gates.sh` 의 forbidden-zone 게이트가 **STOP(blocked)** 로 잡았다.
