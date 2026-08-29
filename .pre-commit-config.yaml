@@ -262,6 +262,40 @@ repos:
         pass_filenames: false
         files: '^(backend/.*\.py|docs/agent/evidence/D-343/.*)$'
 
+  # ── D-344: 측정 재현성 ─────────────────────────────────────────────────
+  # 같은 커밋에서 두 번 돌려 다른 수가 나오면, 그건 세는 도구가 아니라 추정하는 도구다.
+  - repo: local
+    hooks:
+      - id: gx-measure-repro
+        name: 측정 재현성 검사 (D-344)
+        entry: python scripts/verify_measure_repro.py
+        language: system
+        pass_filenames: false
+        files: '^scripts/(probe|verify)_.*\.py$'
+
+  # ── D-346: 상용 오픈 기준 ──────────────────────────────────────────────
+  # 계약 39절을 다 채워도 상용은 절반이다. 증명 없는 칸은 '구현' 으로 적을 수 없다.
+  - repo: local
+    hooks:
+      - id: gx-ga-readiness
+        name: 상용 오픈 기준 8영역 검사 (D-346)
+        entry: python scripts/verify_ga_readiness.py
+        language: system
+        pass_filenames: false
+        files: '^docs/agent/evidence/(D-346|D-309|DA-05)/.*$'
+
+  # ── D-347: 피드백 콘솔 화면 ────────────────────────────────────────────
+  # 고객이 보는 자리다. 실제가 아닌 화면이 한 장이라도 들어가면 거짓말이다.
+  # 0장은 실패가 아니다 — **사유 없는 0장이 실패다.**
+  - repo: local
+    hooks:
+      - id: gx-screens
+        name: 화면 캡처 증거 검사 (D-347)
+        entry: python scripts/verify_screens.py
+        language: system
+        pass_filenames: false
+        files: '^docs/agent/evidence/D-347/.*$'
+
   # ── 기본 위생 ───────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

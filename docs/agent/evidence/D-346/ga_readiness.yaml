@@ -1,0 +1,340 @@
+# 상용 서비스 오픈 기준 — 8영역 · **절 단위** (D-346)
+#
+# 왜 이 표가 따로 있나
+# --------------------
+#   계약 39절을 100% 채워도 **상용 출시는 되지 않는다.** 계약에 없는 것이 상용에는 필수다.
+#   그래서 축을 둘로 나눠 잰다 (D-345): 계약 진척과 기반 진척을 하나의 %로 합치지 않는다.
+#
+# 규칙 (D-314 · D-346)
+# --------------------
+#   · 상태는 넷뿐이다: 구현 · 미착수 · 잠김 · 미측정.  **「부분」 금지** —
+#     「부분」은 상태가 아니라 **아직 안 쪼갠 것의 이름**이다. 쪼개면 잔여가 숫자가 된다
+#   · ★ **증명이 없는 칸은 '구현'으로 적을 수 없다.** 그런 칸은 '미측정'이다
+#     → '구현' 에는 `proof` 가 있어야 하고, 그 **파일이 실재**해야 한다 (없는 시험은 문서다)
+#   · '잠김' 에는 `blocker` 가 있어야 하고 `DA-05/blockers.yaml` 에 그 id 가 있어야 한다
+#   · '미착수' 와 '미측정' 에는 `why` 가 있어야 한다 — 사유 없는 빈칸은 잊은 것과 구별되지 않는다
+#
+# 가중치는 [판정]이다 — 세종이 정했다. 각 절의 상태는 [실측]이다 — 여기서 갈아 끼운다.
+#
+# 강제: scripts/verify_ga_readiness.py — 위 규칙 전부 + 가중 합계 출력. 어긋나면 exit 1.
+
+meta:
+  decision: D-346
+  updated_at: "2026-09-08"
+  status_enum: [구현, 미착수, 잠김, 미측정]
+  banned_status: [부분, 진행중, 일부, 대부분, 거의]
+  note: |
+    이 표는 네 번 쓴다 (D-346 ★): ① 상용 로드맵 ② 투자·영업 자료
+    ③ GS인증 준비 체크리스트 ④ 계약 작업이 상용을 얼마나 밀어주는지의 지도.
+
+areas:
+
+  # ═══════════════════════════════════════════════════════════════════════
+  - id: "1"
+    name: 기능 완결성
+    weight: 20
+    # ★ 절을 여기 옮겨 적지 않는다. 계약 절 대장이 원본이고, 게이트가 **그 파일을 읽어**
+    #   구현/전체를 계산한다. 옮겨 적으면 두 표가 갈리고, 갈리는 순간 하나는 거짓말이다.
+    derived_from: docs/agent/evidence/D-309/contract_ac_ledger.yaml
+    note: |
+      계약 기능 39절(F-01~F-14를 절로 쪼갠 것). 상용 전용 기능은 아래 ⑦(사용성)에 있다.
+
+  # ═══════════════════════════════════════════════════════════════════════
+  - id: "2"
+    name: 보안
+    weight: 20
+    clauses:
+      - id: SEC-01
+        title: 들어오는 키의 수용 면을 **라우트마다 선언**하게 한다 (기본값 거절)
+        status: 구현
+        proof: backend/tests/test_f05_inbound_api_key.py
+
+      - id: SEC-02
+        title: 그 기본값 거절을 **전역**으로 올린다 (전 라우트)
+        status: 미착수
+        why: |
+          [실측 2026-09-08] 663 라우트 중 515자리가 지금도 들어오는 키를 받는다.
+          D-343 이 순서를 못박았다 — ①② 인벤토리·분류까지 하고 ③ 전역 적용은
+          **범위 판정을 받은 뒤**에 한다. 판정 대기 중이며 임의로 넓히지 않는다.
+
+      - id: SEC-03
+        title: 익명 반출 0건 — **우리가 고칠 수 있는 자리**
+        status: 구현
+        proof: backend/tests/test_authn_gap_closed.py
+        note: |
+          [실측 2026-09-08] 11자리에서 나가고 있었다. 그중 우리 소관 9자리가 속한 컨트롤러의
+          관문 없는 라우트 24자리를 닫고 재호출로 0건을 확인했다.
+          docs/agent/evidence/D-343/INCIDENT.md
+
+      - id: SEC-14
+        title: 익명 반출 0건 — **§0.4 금지구역**
+        status: 잠김
+        blocker: DELIVERY_ZONE_ANON_LEAK
+        why: |
+          [실측 2026-09-08] backend/delivery 의 2자리가 지금도 익명에게 나간다
+          (드론 텔레메트리 17KB · 시험 시나리오 2KB). 막는 코드를 붙였다가
+          forbidden-zone 게이트가 STOP 으로 잡아 되돌렸다 — **게이트가 옳다**(D-327 · D-207).
+          「모른다」가 아니라 **「못 한다」**이다.
+
+      - id: SEC-04
+        title: 우리 층에 **인증 관문 없는 라우트** 0건
+        status: 미착수
+        why: |
+          [실측 2026-09-08] 79 → 51건. 남은 51건 중 24건은 authz 가 익명을 떨어뜨리고(호출로 확인),
+          27건은 관문이 아예 없으나 호출에서 데이터가 나오지 않았다.
+          **「데이터가 안 나왔다」는 「안전하다」가 아니다** — 핸들러는 돌았다.
+          닫을 범위는 SEC-02 와 함께 판정받는다. 그동안 래칫으로 잠갔다(route_baseline.txt).
+
+      - id: SEC-05
+        title: 시크릿이 커밋되는 것을 막는다
+        status: 구현
+        proof: .gitleaks.toml
+
+      - id: SEC-06
+        title: 나가는 키(자격증명)를 코드가 아니라 저장처에 둔다
+        status: 구현
+        proof: backend/tests/test_k5_credential_store.py
+
+      - id: SEC-07
+        title: 키 회전 절차 (발급·폐기·주기)
+        status: 미착수
+        why: FR-05-3 의 「발급·폐기」 절이 미착수다. 회전 주기는 그 뒤의 일이다.
+
+      - id: SEC-08
+        title: 침투 시험 (외부 또는 자체)
+        status: 미착수
+        why: 0건. 상용 오픈 전 1회는 필요하다 — 지금 있는 것은 우리가 스스로 때린 호출뿐이다.
+
+      - id: SEC-09
+        title: 운영 포트 노출 점검
+        status: 미측정
+        why: |
+          운영 서버를 직접 건드리지 않는다(불변 제약). 개발 환경의 포트 노출은 운영과 다르다 —
+          **개발에서 잰 수를 운영의 수로 적으면 그것이 착시 ⑤(환경)다.**
+
+      - id: SEC-10
+        title: 들어오는 키를 평문으로 흘리지 않는다 (HTTPS 강제)
+        status: 구현
+        proof: backend/tests/test_f05_inbound_api_key.py
+
+      - id: SEC-11
+        title: 권한 거부가 **거부의 상태 코드**로 나간다
+        status: 잠김
+        blocker: DJCORE_200_ENVELOPE_403
+        why: dj-core 가 HTTP 200 봉투에 403 을 담아 보낸다. §0.4 라 우리가 못 고친다.
+
+      - id: SEC-12
+        title: 주석 처리된 권한 뒤의 **열린 문** 0건
+        status: 구현
+        proof: backend/tests/test_commented_guards.py
+
+      - id: SEC-13
+        title: 캐시가 관문 판정을 대신하지 않는다
+        status: 구현
+        proof: scripts/verify_cache_bypass.py
+
+  # ═══════════════════════════════════════════════════════════════════════
+  - id: "3"
+    name: 데이터 격리·다중테넌시
+    weight: 10
+    clauses:
+      - id: ISO-01
+        title: 테넌트 간 읽기·쓰기가 양방향으로 막힌다
+        status: 구현
+        proof: backend/tests/test_tenant_isolation.py
+
+      - id: ISO-02
+        title: 격리가 게이트로 상시 검사된다
+        status: 구현
+        proof: scripts/verify_tenant_scope.py
+
+      - id: ISO-03
+        title: 새 라우트가 테넌트 범위를 **선언**하고 태어난다
+        status: 미착수
+        why: |
+          [실측 2026-09-08] 663 라우트 중 `@tenant_scoped` 표식이 붙은 것은 11건(면제 1건).
+          나머지 651건은 핸들러 안에서 좁히거나 좁히지 않는다 — 라우트 표면에서는 알 수 없다.
+          라우트 인벤토리(D-343)가 이 칸을 처음 숫자로 만들었다.
+
+      - id: ISO-04
+        title: 데모·시연 데이터가 실데이터와 섞이지 않는다
+        status: 구현
+        proof: scripts/check_demo_isolation.py
+
+  # ═══════════════════════════════════════════════════════════════════════
+  - id: "4"
+    name: 운영 (설치·백업·복구·감시)
+    weight: 15
+    clauses:
+      - id: OPS-01
+        title: 설치·운영 매뉴얼이 있다
+        status: 구현
+        proof: docs/agent/runbook/설치운영매뉴얼_v0.1.md
+
+      - id: OPS-02
+        title: "**빈 환경에서** 매뉴얼대로 설치가 재현된다"
+        status: 미측정
+        why: |
+          매뉴얼은 「빈 것에서 세워 보며」 적었으나, 인수자가 빈 환경에서 재현한 기록이 없다.
+          우리가 우리 환경에서 한 번 더 도는 것은 재현이 아니다(착시 ⑤ — 환경).
+
+      - id: OPS-03
+        title: 마이그레이션이 한 줄로 선다
+        status: 잠김
+        blocker: MIGRATE_ONE_LINER
+        why: dj-core `logger/0009` 의존 미선언. §0.4 라 우리가 못 고친다 — 우회 경로를 우리 층에 둔다.
+
+      - id: OPS-04
+        title: 백업 절차 (무엇을 · 어디에 · 얼마나 자주)
+        status: 미착수
+        why: 0건. DB·MinIO 객체·설정 셋 다 절차가 없다.
+
+      - id: OPS-05
+        title: 복구 시험 (백업에서 실제로 살아나는가)
+        status: 미착수
+        why: OPS-04 가 없으면 잴 것이 없다. **백업보다 복구 시험이 어렵고 더 중요하다.**
+
+      - id: OPS-06
+        title: 감시 — 죽었을 때 사람이 안다
+        status: 미착수
+        why: 0건. 헬스체크 · 알람 · 대시보드 어느 것도 없다.
+
+      - id: OPS-07
+        title: 로그 수집·보존 기간
+        status: 미측정
+        why: 컨테이너 stdout 으로 나가는 것 외에 수집처·보존 정책이 정해진 바 없다.
+
+      - id: OPS-08
+        title: 되돌리기 절차 (배포 실패 시)
+        status: 미측정
+        why: 매뉴얼 §5 에 문장은 있으나 **되돌려 본 기록이 없다.** 해 본 적 없는 절차는 절차가 아니다.
+
+  # ═══════════════════════════════════════════════════════════════════════
+  - id: "5"
+    name: 성능·확장
+    weight: 10
+    clauses:
+      - id: PERF-01
+        title: 부하 시험 시나리오와 도구
+        status: 미착수
+        why: 0건. 도구도 시나리오도 없다.
+
+      - id: PERF-02
+        title: 동시 스트림 상한 실측
+        status: 미측정
+        why: |
+          카메라 39대가 등재돼 있으나 몇 대까지 동시에 처리되는지 **잰 적이 없다.**
+          「39대가 등재돼 있다」와 「39대가 동시에 돈다」는 다른 문장이다.
+
+      - id: PERF-03
+        title: 이벤트 처리량 · 알림 지연 예산
+        status: 미측정
+        why: F-10 의 30초는 **한 건**을 재는 시험이다. 초당 몇 건까지 그 30초가 지켜지는지는 안 쟀다.
+
+      - id: PERF-04
+        title: 응답시간 예산과 그 회귀 감시
+        status: 미착수
+        why: 예산 자체가 정해진 바 없다.
+
+  # ═══════════════════════════════════════════════════════════════════════
+  - id: "6"
+    name: 품질 (E2E·회귀·부작위)
+    weight: 10
+    clauses:
+      - id: QA-01
+        title: 단위·통합 시험이 상시 돈다
+        status: 구현
+        proof: .pre-commit-config.yaml
+        note: "[실측 2026-09-08] 433 passed (e2e 제외)"
+
+      - id: QA-02
+        title: E2E 시나리오가 프레임 투입부터 보고서까지 돈다
+        status: 구현
+        proof: backend/tests/e2e/test_e2e_1_fire.py
+        note: "[실측 2026-09-08] 23 passed · E2E-1 화재 · E2E-2 침수"
+
+      - id: QA-03
+        title: 규칙이 문서가 아니라 게이트로 강제된다
+        status: 구현
+        proof: scripts/verify_decision_tools.py
+
+      - id: QA-04
+        title: 부작위 시험 — 「안 열린 것」이 기본임을 잰다
+        status: 구현
+        proof: backend/tests/test_f05_inbound_api_key.py
+
+      - id: QA-05
+        title: 시험이 캐시가 아니라 대상을 잰다
+        status: 구현
+        proof: backend/tests/no_cache.py
+
+      - id: QA-06
+        title: 수를 내는 도구가 두 번 돌려 같은 수를 낸다
+        status: 구현
+        proof: scripts/verify_measure_repro.py
+
+      - id: QA-07
+        title: 시험이 코드의 어디를 지나는지 (커버리지)
+        status: 미측정
+        why: 커버리지를 잰 적이 없다. **시험 수는 커버리지가 아니다** — 433 이 무엇을 지나는지 모른다.
+
+  # ═══════════════════════════════════════════════════════════════════════
+  - id: "7"
+    name: 사용성 (관리 UI·온보딩)
+    weight: 10
+    clauses:
+      - id: UX-01
+        title: 카메라 설치 주소를 사람이 채울 수 있다
+        status: 구현
+        proof: backend/tests/test_camera_address_write.py
+        note: 관리 커맨드다. UI 는 UX-02 다 — 「채울 수 있다」와 「화면에서 채운다」는 다른 절이다.
+
+      - id: UX-02
+        title: 관리 UI (카메라·수신자·임계값을 화면에서)
+        status: 미착수
+        why: 미착수. 지금은 전부 커맨드나 API 다.
+
+      - id: UX-03
+        title: 온보딩 — 처음 쓰는 사람이 혼자 시작한다
+        status: 미착수
+        why: 설치 매뉴얼은 설치자용이다. 사용자용 시작 문서가 없다.
+
+      - id: UX-04
+        title: 화면 캡처 증거 (피드백 콘솔에 채울 것)
+        status: 미착수
+        blocker: BROWSER_E2E_HARNESS
+        why: |
+          D-347 은 「E2E 실행 중에 찍는다 · 그림·모형·합성 금지」다.
+          [실측 2026-09-08] 지금 E2E 는 Django TestCase 다 — **브라우저를 열지 않는다.**
+          찍을 화면이 실행 중에 존재하지 않는다. 만들어 찍으면 그것이 D-347 이 금지한 합성이다.
+          틀(INDEX.yaml · verify_screens.py)은 세웠고 **0장으로 시작한다** — 분모가 보인다.
+
+  # ═══════════════════════════════════════════════════════════════════════
+  - id: "8"
+    name: 법·인증 (개인정보·GS·SLA)
+    weight: 5
+    clauses:
+      - id: LAW-01
+        title: 계약 11조 — 영상 반출 4규약
+        status: 구현
+        proof: backend/tests/test_clip_playback.py
+
+      - id: LAW-02
+        title: 영상정보처리기기 설치·운영 고지
+        status: 미착수
+        why: 문서 0건.
+
+      - id: LAW-03
+        title: 개인정보 처리방침
+        status: 미착수
+        why: 문서 0건.
+
+      - id: LAW-04
+        title: GS인증 준비 (시험 항목 대조표)
+        status: 미착수
+        why: 준비만 있다 — 대조표가 없다.
+
+      - id: LAW-05
+        title: SLA (가용성·응답·복구 목표)
+        status: 미착수
+        why: ⑤ 성능이 0건이라 약속할 수 있는 수가 없다. **재지 않은 것을 약속하지 않는다.**
