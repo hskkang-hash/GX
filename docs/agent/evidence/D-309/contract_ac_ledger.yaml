@@ -1,0 +1,204 @@
+# 계약 AC 전수 대장 F-01~F-14 — **실측** (D-309 · 2026-09-02)
+#
+# ★ 규칙: **증명 시험이 없는 칸은 '구현' 으로 적을 수 없다.** 그런 칸은 '부분' 이 아니라
+#   **'미측정'** 이다. "미측정" 이 몇 건인지가 이 표의 진짜 값이다 —
+#   우리가 **무엇을 모르는지** 세는 표이기 때문이다.
+#
+# ★ D-292 반성: 문서를 읽어 표를 만들면 그 표는 문서의 사본이다. `state` 칸은
+#   **그 시험이 실재하는가**로만 채웠고, `scripts/verify_contract_ac.py` 가 매번 다시 본다.
+#
+# state 열거
+#   구현    계약 AC 를 재는 시험이 실재하고 돈다
+#   부분    일부만 잰다. **무엇을 못 재는지 not_measured 에 적는다**
+#   잠김    지금 잴 수 없다. unlock_id 가 DA-05 잠금 대장을 가리킨다
+#   미측정  구현 여부와 무관하게 **재는 시험이 없다.** 초록도 빨강도 아니다
+#
+# proof 형식: `<시험 파일>::<메서드 이름>` — 파일이 없거나 그 이름이 없으면 게이트가 exit 1.
+
+meta:
+  decision: D-309
+  updated_at: "2026-09-02"
+  measured_by: "scripts/verify_contract_ac.py (파일·메서드 실재 대조)"
+  state_enum: [구현, 부분, 잠김, 미측정]
+
+features:
+
+  - id: F-01
+    ac: "화재·연기 탐지 → 이벤트 저장"
+    kernel: K1
+    state: 구현
+    proof:
+      - "backend/tests/test_w2_2_detection_wiring.py::test_known_labels_become_events"
+      - "backend/tests/e2e/test_e2e_1_fire.py::test_fire_scenario_runs_end_to_end"
+    note: |
+      AI 라벨 → 계약 열거값 → K1 이벤트까지가 배선으로 도는 것을 잰다. E2E-1 2단계가
+      소유 상속(스트림 → 이벤트)까지 함께 본다.
+      ⚠ **AI 가 실제로 쓰는 라벨 문자열은 아직 재지 못했다**(AI_GRPC_URL 미도달).
+        표에는 글자가 같은 것만 넣었고, 못 옮긴 라벨은 세어서 로그로 낸다(D-273).
+
+  - id: F-02
+    ac: "수위선 초과 → 30초 내 이벤트 생성"
+    kernel: K1
+    state: 부분
+    proof:
+      - "backend/tests/e2e/test_e2e_2_flood.py::test_flood_scenario_runs_end_to_end"
+      - "backend/tests/test_d294_event_type_separation.py::test_the_contract_document_lists_it"
+    not_measured: |
+      **지점별 수위 임계값(FR-02-2)을 저장할 표가 없다.** 그래서 시험은 "초과 신호가 이미
+      났다"는 전제에서 시작한다 — 임계값을 코드에 박으면 그 값이 곧 AC 판정의 근거가 된다
+      (D-280). 30초 AC 자체는 논리 시계로 재고 있다.
+    unlock_id: ""
+
+  - id: F-03
+    ac: "지정 위험구역(폴리곤) 내 사람·차량 진입 → 결합·등급 상향"
+    kernel: K1
+    state: 부분
+    proof:
+      - "backend/tests/test_zone_judgment.py::test_f03_combination_raises_the_severity"
+      - "backend/tests/e2e/test_e2e_2_flood.py::test_flood_scenario_runs_end_to_end"
+    not_measured: |
+      **폴리곤 판정을 재지 않는다.** 지금 도는 것은 `kind='camera_group'` 이고 계약보다
+      약하다(D-299). 약함을 상수로 선언했으므로 조용히 계약의 자리를 차지하지는 않는다 —
+      ZONE_POLYGON_READY 를 올리는 순간 test_f03_polygon_contract_ac 가 의무가 된다.
+    unlock_id: F03_POLYGON_DESIGN
+
+  - id: F-04
+    ac: "동일 이벤트 5분 내 중복 알림 0건"
+    kernel: K1
+    state: 구현
+    proof:
+      - "backend/tests/test_k1_event_kernel.py::test_folded_records_do_not_notify_again"
+      - "backend/tests/test_k1_event_kernel.py::test_event_count_and_notify_count_differ_in_five_minutes"
+      - "backend/tests/e2e/test_e2e_1_fire.py::test_fire_scenario_runs_end_to_end"
+    note: |
+      기록 창(10초)과 알림 창(5분)을 **다른 판정**으로 둔 것이 이 AC 의 핵심이다.
+      합치면 F-04 를 지키려다 U1 의 오탐률 분모가 거짓이 된다(DA-04 두 창).
+
+  - id: F-05
+    ac: "외부 App 이 이벤트 OpenAPI **하나로만** 들어온다 (API Key 발급·폐기 포함)"
+    kernel: K1
+    state: 미측정
+    proof: []
+    not_measured: |
+      ★ **재는 시험이 없다.** K1 커널 공개 면은 서지만, "외부 App 의 유일한 진입면" 이라는
+      AC 를 재는 시험이 없다 — 그 판정에는 (가) 공개 OpenAPI 스키마의 안정성, (나) API Key
+      발급·폐기(FR-05-3), (다) 다른 경로로 못 들어옴을 보이는 **부작위 시험**이 필요하다.
+      (나)는 저장처가 없다(dsm.SETTING_DOMAINS['api_keys'] 실측).
+      **구현이 없다는 뜻이 아니라 재지 않았다는 뜻이다.** 이 칸이 이 대장의 값이다.
+    unlock_id: ""
+
+  - id: F-06
+    ac: "심각 등급 발생 시 SDN QoS 요청 (10초 이내)"
+    kernel: 어댑터(L2)
+    state: 잠김
+    proof:
+      - "backend/tests/test_sdn_port_standard.py::test_calling_it_now_stops_and_says_why"
+    not_measured: |
+      SDN API 명세 미수령. Mock 조차 I-1~I-5 의 필드 이름·타입이 있어야 만든다(DA-02 §0).
+      지금 재는 것은 **"부르면 왜 못 하는지 말하며 멈추는가"** 뿐이고, 10초 AC 는 못 잰다.
+    unlock_id: SDN_API_SPEC
+
+  - id: F-07
+    ac: "링크 장애 시 대체 경로 요청"
+    kernel: 어댑터(L2)
+    state: 잠김
+    proof:
+      - "backend/tests/test_sdn_port_standard.py::test_every_interface_is_blocked_and_says_by_what"
+    not_measured: "위와 같다 — 명세 미수령. 포트 인터페이스만 서 있다."
+    unlock_id: SDN_API_SPEC
+
+  - id: F-08
+    ac: "링크다운 → 60초 내 이벤트"
+    kernel: 어댑터(L2)
+    state: 잠김
+    proof:
+      - "backend/tests/test_dsm_app.py::test_waiting_not_down_while_the_spec_is_missing"
+    not_measured: |
+      명세 미수령. 다만 **화면이 '대기 — 명세 미수령'을 정확히 말하는지**는 잰다 —
+      연계 없음을 '장애'로 표시하면 우리 책임이 아닌 것이 우리 결함으로 보인다.
+    unlock_id: SDN_API_SPEC
+
+  - id: F-09
+    ac: "재난 대시보드 — 5상태(기본/로딩/빈/오류/권한없음) 100% · 이벤트 클릭 → 영상 3초 이내 재생"
+    kernel: K3
+    state: 부분
+    proof:
+      - "backend/tests/test_k3_dashboard_kernel.py::test_five_states_are_defined_by_name"
+      - "backend/tests/test_dsm_app.py::test_the_five_states_come_from_the_kernel_not_from_here"
+      - "backend/tests/test_clip_playback.py::test_a_reference_is_written_in_the_event_path"
+      - "backend/tests/test_clip_playback.py::test_rule4_no_full_download_route_exists"
+      - "backend/tests/e2e/test_e2e_1_fire.py::test_fire_scenario_runs_end_to_end"
+    not_measured: |
+      **"영상 3초 이내 재생" 의 3초를 못 잰다** — 바이트가 나가야 잴 수 있고, 구간 추출이
+      잠겨 있다(D-306). 지금 재는 것은 "클릭 → 구간 참조를 안전하게 말하기" 까지이고,
+      E2E-1 9단계 제목도 그렇게 바꿨다(D-302 — 재는 것을 그대로 적는다).
+      5상태는 온전히 잰다.
+    unlock_id: CLIP_EXTRACTION
+
+  - id: F-10
+    ac: "등급별 수신그룹 분기 · 심각 발생 후 30초 내 발송 기록"
+    kernel: K2
+    state: 구현
+    proof:
+      - "backend/tests/test_k2_notify_kernel.py::test_delivery_record_carries_both_points_of_f10"
+      - "backend/tests/test_k2_notify_kernel.py::test_late_delivery_does_not_meet_f10"
+      - "backend/tests/test_k2_notify_kernel.py::test_failed_delivery_never_meets_f10"
+      - "backend/tests/e2e/test_e2e_2_flood.py::test_flood_scenario_runs_end_to_end"
+    note: |
+      실패한 발송은 아무리 빨라도 이 AC 를 통과하지 못한다 — `sent_at` 은 성공했을 때만
+      찍는다. 그렇지 않으면 F-10 이 거짓으로 달성된다.
+
+  - id: F-11
+    ac: "상황 보고서 — 템플릿 변수 3종(이벤트·조치·캡처) 치환 · 손입력 0"
+    kernel: K4
+    state: 구현
+    proof:
+      - "backend/tests/test_k4_report_kernel.py::test_context_carries_all_three_contract_variables"
+      - "backend/tests/test_k4_report_kernel.py::test_no_field_needs_manual_entry"
+      - "backend/tests/test_k4_report_kernel.py::test_incomplete_context_is_refused_by_default"
+      - "backend/tests/e2e/test_e2e_1_fire.py::test_fire_scenario_runs_end_to_end"
+    note: |
+      "조치 이력" 은 K2 의 발송 기록 **그 행 그대로**다 — 두 벌로 적재하지 않는다.
+      출처가 실패했으면 찍지 않고 409 로 멈춘다(종이는 되돌릴 수 없다).
+
+  - id: F-12
+    ac: "관리자 설정 — 수신자·위젯·구역·임계값·등급규칙·API키를 한 곳에서 · 무권한 차단 + 감사로그 전건"
+    kernel: K5
+    state: 부분
+    proof:
+      - "backend/tests/test_dsm_app.py::test_every_contract_domain_has_a_row"
+      - "backend/tests/test_dsm_app.py::test_denied_attempt_is_recorded"
+      - "backend/tests/test_dsm_app.py::test_allowed_attempt_is_recorded_too"
+      - "backend/tests/test_dsm_app.py::test_unavailable_domains_raise_instead_of_returning_empty"
+    not_measured: |
+      **여섯 영역 중 둘만 다룰 수 있다**(수신자·위젯). 넷은 저장할 표가 없다 —
+      구역(P-K2-2 는 D-299 로 판정됐으나 설정 화면은 아직) · 임계값(FR-02-2) ·
+      등급규칙(F-04 JSON 규칙엔진) · API키(FR-05-3).
+      못 다루는 영역은 **빈 응답이 아니라 사유와 함께 501** 로 나간다 — 그 갈래는 잰다.
+    unlock_id: ""
+
+  - id: F-13
+    ac: "정찰 프로파일 **초안** 생성 · 비행 명령은 전송하지 않는다"
+    kernel: K7
+    state: 부분
+    proof:
+      - "backend/tests/test_sdn_port_standard.py::test_the_port_has_no_flight_command"
+    not_measured: |
+      **부정 조건(비행 명령 미전송)만 잰다.** 프로파일 초안 생성은 미착수이고, 그 촉발은
+      F-08 링크다운 이벤트이므로 SDN 명세에 묶여 있다.
+      ★ 이 칸이 부작위 시험의 값을 잘 보여 준다 — "만들지 않았음" 은 지금도 잴 수 있다.
+    unlock_id: SDN_API_SPEC
+
+  - id: F-14
+    ac: "월간 오탐률 — 판정이 분모·분자로 돌아온다"
+    kernel: K6
+    state: 구현
+    proof:
+      - "backend/tests/test_k6_feedback_kernel.py::test_unreviewed_events_are_not_in_the_denominator"
+      - "backend/tests/test_k6_feedback_kernel.py::test_zero_denominator_is_none_not_zero"
+      - "backend/tests/test_k6_feedback_kernel.py::test_closing_a_judged_event_keeps_it_in_the_denominator"
+      - "backend/tests/test_d293_cohort_regression.py::test_closing_events_does_not_move_the_cohort"
+      - "backend/tests/e2e/test_e2e_1_fire.py::test_fire_scenario_runs_end_to_end"
+    note: |
+      종료가 판정을 덮으면 오탐률이 **저절로 좋아진다** — 개선이 아니라 나쁜 데이터가
+      사라지는 것이다(D-293). `verdict` 를 `status` 와 따로 둔 이유가 이 AC 다.

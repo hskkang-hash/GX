@@ -1,0 +1,108 @@
+# 잠금 대장 — **무엇이 막고 있고, 누가 푸는가** (D-307)
+#
+# ★ 지금까지 잠김은 전부 "막혔다" 한 단어였다. 셋은 성격이 전혀 다르다:
+#     DEV       개발로 풀린다        → 일정 문제
+#     CONTRACT  상대방 이행이 필요   → 책임 문제
+#     ADMIN     우리 쪽 사무 1회     → **하루면 풀리는데 안 한 것**
+#   섞어 두면 하루짜리가 계약 리스크 뒤에 숨는다. 그래서 유형을 칸으로 만든다.
+#
+# ⚠ `unlock_type` · `unlock_owner` 가 비면 `scripts/verify_blockers.py` 가 exit 1 한다.
+#   등재는 면제가 아니라 **선언**이다 — 여기 이름을 적는 일이 곧 "이것이 막혀 있음을
+#   알고 있고, 누가 푸는지도 안다"는 진술이다 (D-264 · D-281 계열).
+
+meta:
+  decision: D-307
+  updated_at: "2026-09-02"
+  enum:
+    unlock_type: [DEV, CONTRACT, ADMIN]
+
+blockers:
+
+  - id: SDN_API_SPEC
+    title: 에스비정보기술 SDN 컨트롤러 API 명세 미수령
+    unlock_type: CONTRACT
+    unlock_owner: 에스비정보기술 (독촉·기한 연장 통지는 대표)
+    blocks: [F-06, F-07, F-08, F-13, E2E-3]
+    since: "2026-08-25"          # 계약 3조2항이 정한 제공 기한
+    why: |
+      Mock 조차 I-1~I-5 의 필드 이름과 타입이 있어야 만들 수 있다(DA-02 §0).
+      추측 필드 위의 어댑터는 재작업이 확정되고 D-280 위반이다.
+    unlock_step: |
+      명세 수령. 포트·수령요건 34건(A차단 24)은 이미 서 있으므로,
+      오면 `SdnPort` 구현체 하나를 채우고 KERNEL_READY 를 올리면 끝난다.
+    state_in_code: backend/adapters/sdn/__init__.py — KERNEL_READY=False + NOT_READY_REASON
+
+  - id: JUSO_API_KEY
+    title: 주소정보 연계서비스(juso.go.kr) 승인키 미발급 + 응답 스키마 미실측
+    unlock_type: ADMIN
+    unlock_owner: 대표
+    blocks: [FX-5]
+    since: "2026-08-31"          # D-298 로 FX-5 착수가 승인된 날
+    why: |
+      요청 URL 은 .env.example 에 등재됐으나 응답의 필드 이름·중첩 구조·오류 코드는
+      실호출로만 확인된다. 추측한 필드명 위의 파서는 첫 실호출에서 전부 재작업이다(D-280).
+      ★ 승인키는 **공공데이터포털 일반키와 별개 계정**이다 — 이 사실이 대장에 없으면
+        "포털 키 있으니 되겠지" 로 넘어가고 그만큼 더 지연된다.
+    unlock_step: |
+      juso.go.kr 가입 → 승인키 신청(10분) → 환경변수 GX_JUSO_API_KEY 설정 →
+      `python scripts/probe_public_data_schema.py --only juso_coord2addr` **1회**.
+      그다음 남는 일은 AddressPort 구현 하나다.
+    state_in_code: backend/adapters/juso/__init__.py — KERNEL_READY=False + NOT_READY_REASON
+
+  - id: CCTV_SERVICE_NAME
+    title: CCTV·재난안전정보 API 의 정확한 서비스명 미확인
+    unlock_type: ADMIN
+    unlock_owner: 대표
+    blocks: [DA-05 등재]
+    since: "2026-08-31"
+    why: |
+      "국립공원 안전정보" 등으로 검색되는 서비스가 여럿이고, 추정으로 고르면
+      2027.2 에 다른 API 를 쓰게 된다(D-280). 그래서 sources.yaml 의 endpoint 를 비워 뒀다.
+    unlock_step: |
+      data.go.kr 마이페이지 → 활용신청 목록에서 이름 복사(10분).
+    state_in_code: docs/agent/evidence/DA-05/sources.yaml — endpoint 빈 문자열 + 사유
+
+  - id: F03_POLYGON_DESIGN
+    title: F-03 위험구역 폴리곤 — 좌표 표현·좌표계 미확정
+    unlock_type: DEV
+    unlock_owner: Code (설계 확정 후)
+    blocks: [F-03 폴리곤 판정]
+    since: "2026-09-01"
+    why: |
+      GeoJSON 인지 좌표쌍 배열인지, WGS84 인지 TM 인지가 정해지지 않았다.
+      지금 한쪽을 고르면 그 선택이 곧 F-03 의 계약이 된다(D-280).
+      그동안 kind='camera_group' 이 같은 질문에 답한다(D-299).
+    unlock_step: |
+      F-03 설계(좌표 표현·좌표계·구역 편집 화면) 확정 → ZONE_POLYGON_READY=True.
+      올리는 순간 test_f03_polygon_contract_ac 가 의무가 된다.
+    state_in_code: backend/stream_monitors/services/zones.py — ZONE_POLYGON_READY=False
+
+  - id: CLIP_EXTRACTION
+    title: F-09 영상 구간 추출·트랜스코딩 미구현
+    unlock_type: DEV
+    unlock_owner: Code
+    blocks: [F-09 영상 재생(바이트)]
+    since: "2026-09-02"
+    why: |
+      바이트 구간 읽기 · 키프레임 경계 맞춤 재인코딩 · 재저장 셋이 필요하고,
+      특히 키프레임 판단은 코덱·컨테이너별로 달라 실측 없이 고르면 그 선택이 곧
+      F-09 의 계약이 된다(D-280). 그동안 재생 라우트는 **구간에 묶인 만료 티켓**만 내고
+      바이트를 흘리지 않는다 — 계약 11조를 어기지 않는 유일한 상태다.
+    unlock_step: |
+      F-09 영상 재생 설계(코덱·전송 방식·보존 기간) 확정 → CLIP_EXTRACTION_READY=True.
+      올리는 순간 test_extraction_integrity_contract_ac 가 의무가 된다.
+    state_in_code: backend/stream_monitors/services/clips.py — CLIP_EXTRACTION_READY=False
+
+  - id: MIGRATE_ONE_LINER
+    title: 빈 DB 에서 `manage.py migrate` 한 줄로 세울 수 없다
+    unlock_type: DEV
+    unlock_owner: dj-core 담당 (이 저장소는 §0.4 로 못 고친다)
+    blocks: [설치 절차]
+    since: "2026-08-30"
+    why: |
+      dj-core 의 logger/0009 가 multilanguage 의존을 선언하지 않는다. §0.4 금지구역이라
+      이 저장소가 고칠 수 없다(P-ENV-1). 순서 제약을 넣어 봤더니 **이미 도는 환경 전부가
+      InconsistentMigrationHistory 로 죽었다** — 되돌렸다.
+    unlock_step: |
+      dj-core 의 마이그레이션 의존 선언 수정. 그동안 설치 매뉴얼 §2-3 의 **세 줄**을 쓴다.
+    state_in_code: docs/agent/evidence/e2e/migration_from_scratch.md

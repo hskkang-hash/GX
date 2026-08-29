@@ -145,6 +145,47 @@ repos:
         pass_filenames: false
         files: '^(backend/stream_monitors/(models\.py|services/zones\.py)|backend/tests/test_zone_judgment\.py|scripts/verify_zone_polygon\.py)$'
 
+  # ── D-306: 구간 추출 잠금이 값싼 선언이 아닌지 ───────────────────────────
+  # 계약 11조(원본 영상 무반출)가 걸리는 자리다. 상수를 내리면 사유를 요구하고,
+  # 올리면 F-09 추출 무결성 시험과 구현을 요구한다.
+  - repo: local
+    hooks:
+      - id: gx-clip-extraction
+        name: F-09 구간 추출 잠금 검사 (D-306)
+        entry: python scripts/verify_clip_extraction.py
+        language: system
+        pass_filenames: false
+        files: '^(backend/stream_monitors/(models\.py|services/clips\.py)|backend/apps/dsm/api\.py|backend/tests/test_clip_playback\.py|scripts/verify_clip_extraction\.py)$'
+
+  # ── D-304: 쓰기 0곳 필드(착시 ⑥)가 새로 태어나지 않는지 ──────────────────
+  # 필드가 있으면 기능이 있다고 읽는다. 오늘의 빚은 이름으로 잠갔고, 새 빚만 막는다.
+  - repo: local
+    hooks:
+      - id: gx-dead-fields
+        name: 죽은 필드 검사 — 착시 ⑥ (D-304)
+        entry: python scripts/verify_dead_fields.py
+        language: system
+        pass_filenames: false
+        files: '^(backend/.*\.py|docs/agent/evidence/D-304/dead_fields_baseline\.txt|scripts/verify_dead_fields\.py)$'
+
+  # ── D-307 / D-309: 잠금 대장 · 계약 AC 대장 ──────────────────────────────
+  # 잠김을 "막혔다" 한 단어로 두면 하루짜리(ADMIN)가 계약 리스크(CONTRACT) 뒤에 숨는다.
+  # 그리고 증명 시험이 없는 칸을 '구현' 으로 적으면 검수에서 처음 알게 된다.
+  - repo: local
+    hooks:
+      - id: gx-blockers
+        name: 잠금 대장 유형·주인 검사 (D-307)
+        entry: python scripts/verify_blockers.py
+        language: system
+        pass_filenames: false
+        files: '^(docs/agent/evidence/DA-05/blockers\.yaml|scripts/verify_blockers\.py)$'
+      - id: gx-contract-ac
+        name: 계약 AC 전수 대장 검사 (D-309)
+        entry: python scripts/verify_contract_ac.py
+        language: system
+        pass_filenames: false
+        files: '^(docs/agent/evidence/D-309/contract_ac_ledger\.yaml|backend/tests/.*\.py|scripts/verify_contract_ac\.py)$'
+
   # ── 기본 위생 ───────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
