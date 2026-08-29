@@ -45,6 +45,28 @@ FORMERLY_OPEN_IN_FORBIDDEN_ZONE = (
     ("/api/delivery/etri-mock/test-scenarios", 1976),
 )
 
+#: ★ **두 번째 출생 표본** — 2026-09-10 (D-364). 위 둘과 성격이 다르므로 따로 둔다.
+#:
+#: 위 둘은 「보였는데 못 닫은 자리」였다. 이 넷은 **「안 보이던 자리」**다 —
+#: 측정기가 리다이렉트를 따라가지 않아 **301 로 찍혔고**, 301 은 「본문 없음」 칸에
+#: 들어가 관문이 있는 것처럼 보였다. 따라가자 200 이 나왔다.
+#:
+#:     GET /api/orders/banks            200 ·  87 B
+#:     GET /api/orders/delivery-option  200 ·  96 B
+#:     GET /api/orders/payment-methods  200 ·  97 B
+#:     GET /api/orders/item-types       500        (핸들러가 터져 데이터는 안 나갔다)
+#:
+#: ★ 그날 본문이 `data: []` 였던 것은 **이 환경의 그 표가 비어서**이지 관문이 있어서가
+#:   아니다. 그래서 아래 바이트 수는 「그날 나간 양」이 아니라 **「그날 나간 봉투의 크기」**다 —
+#:   행이 있는 환경에서는 목록이 통째로 나간다 (D-301 「검사 못함 ≠ 0건 검사」).
+#: `backend/orders/` 는 §0.4 다. 라우트가 아니라 **길목**을 막았다 (D-357).
+FORMERLY_HIDDEN_BY_REDIRECT = (
+    ("/api/orders/banks", 87),
+    ("/api/orders/delivery-option", 96),
+    ("/api/orders/payment-methods", 97),
+    ("/api/orders/item-types", 0),
+)
+
 #: 캐시 미들웨어. 관문은 **이것보다 바깥**이어야 한다.
 CACHE_MIDDLEWARE = "common.universal_optimization.UniversalCacheMiddleware"
 GATE_MIDDLEWARE = "common.access_gate.AccessGateMiddleware"
@@ -201,3 +223,74 @@ class DeclaredPathsStayNonEmptyTest(TestCase):
                            "익명 거절 목록이 비었다 — 관문이 아무것도 안 본다")
         self.assertGreater(len(INBOUND_KEY_ALLOWED), 0,
                            "허용 목록이 비면 그건 「좁혔다」가 아니라 「다 막았다」이다")
+
+
+class RedirectHiddenRoutesRejectAnonymousTest(TestCase):
+    """★ D-364 — **리다이렉트 뒤에 숨어 있던 넷.** 따라가서 재고, 막고, 다시 잰다.
+
+    이 시험이 못박는 것은 관문 하나가 아니라 **측정 방식**이다:
+    `follow=True` 없이 재면 301 이 나오고, 301 은 「막혔다」로도 「닿았다」로도 읽힌다.
+    두 뜻을 갖는 응답은 판정에 쓸 수 없다 — 그래서 여기서는 언제나 따라간다.
+    """
+
+    def setUp(self):
+        self.client = Client(raise_request_exception=False, **NO_CACHE)
+
+    def test_anonymous_gets_401_when_the_redirect_is_followed(self):
+        """① 따라간 끝에서 401 이다. **중간의 301 을 답으로 읽지 않는다.**"""
+        wrong = []
+        for path, _bytes in FORMERLY_HIDDEN_BY_REDIRECT:
+            resp = self.client.get(path, follow=True)
+            if resp.status_code != 401:
+                wrong.append("%s -> %s" % (path, resp.status_code))
+        self.assertEqual(
+            wrong, [],
+            "★ 익명이 리다이렉트 끝에서 다시 닿는다:\n  " + "\n  ".join(wrong))
+
+    def test_the_gate_answers_before_the_redirect(self):
+        """② **관문이 리다이렉트보다 앞이다.** 막은 자리는 301 조차 내주지 않는다.
+
+        착시가 생기던 구조는 이렇다: `APPEND_SLASH` 가 301 을 먼저 내고, 재는 쪽이
+        따라가지 않으면 그 301 이 답으로 남는다. 301 은 「막혔다」로도 「닿았다」로도
+        읽히고, **두 뜻을 갖는 응답은 판정에 쓸 수 없다.**
+
+        고친 뒤에는 따라가든 안 따라가든 401 이다 — 착시가 이 넷에서 **구조로 사라졌다**
+        (D-357 「그 자리에 못 생기게 하는 것이 생긴 것을 잡는 것보다 낫다」).
+        """
+        for path, _bytes in FORMERLY_HIDDEN_BY_REDIRECT:
+            self.assertEqual(
+                self.client.get(path).status_code, 401,
+                "%s 가 관문보다 먼저 301 을 냈다 — 착시가 돌아왔다" % path)
+
+    def test_the_illusion_still_exists_where_we_did_not_gate(self):
+        """③ **음성 대조** — 착시 자체가 사라진 것은 아니라는 사실을 시험이 기억한다.
+
+        ②만 있으면 「이제 301 은 안 나온다」로 읽힌다. 그러면 다음 사람이 다른 경로를
+        따라가지 않고 재고, 같은 착시를 다시 겪는다. 그래서 **막지 않은 자리**에서
+        301 이 여전히 나온다는 것을 여기서 못박는다.
+
+        [실측 2026-09-10] `GET /api/flight-log/flight-log`
+            따라가지 않으면 **301** · 따라가면 200 봉투 안의 403 (D-349 착시 ⑧과 겹친다)
+        """
+        ungated = "/api/flight-log/flight-log"
+        self.assertEqual(
+            self.client.get(ungated).status_code, 301,
+            "%s 가 301 이 아니다 — 착시의 구조가 바뀌었으면 이 대조를 다시 골라라" % ungated)
+        self.assertNotEqual(
+            self.client.get(ungated, follow=True).status_code, 301,
+            "따라갔는데도 301 이다 — 리다이렉트가 자기 자신을 가리킨다")
+
+    def test_no_payload_leaks_in_the_rejection(self):
+        """③ 거절 본문에 원래 목록이 섞여 나가지 않는다."""
+        for path, _bytes in FORMERLY_HIDDEN_BY_REDIRECT:
+            resp = self.client.get(path, follow=True)
+            self.assertLess(
+                len(resp.content or b""), 512,
+                "%s 의 401 본문이 %d바이트다" % (path, len(resp.content or b"")))
+
+    def test_every_hidden_path_is_actually_declared(self):
+        """④ 시험이 아는 넷이 **선언 목록에 실재**한다 — 시험만 알고 코드는 모르는 상태를 막는다."""
+        missing = [p for p, _ in FORMERLY_HIDDEN_BY_REDIRECT
+                   if p not in AUTHN_REQUIRED_PATHS]
+        self.assertEqual(missing, [],
+                         "시험은 아는데 관문은 모르는 경로가 있다: %r" % missing)

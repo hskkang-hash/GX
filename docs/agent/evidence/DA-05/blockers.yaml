@@ -126,23 +126,41 @@ blockers:
   #   셋의 상태는 .env.example 에 `source: doc_only` + `status: not_required` 로 남는다.
 
   - id: F03_POLYGON_DESIGN
-    title: F-03 위험구역 폴리곤 — 좌표 표현·좌표계 미확정
+    title: F-03 위험구역 폴리곤 — 좌표 표현·좌표계 미확정 · **해소됨**
     unlock_type: DEV
     unlock_owner: Code (설계 확정 후)
-    blocks: [F-03 폴리곤 판정]
+    blocks: []
     since: "2026-09-01"
-    blocked_now: true
-    verified_at: "2026-09-06"
+    resolved_at: "2026-09-10"
+    blocked_now: false
+    verified_at: "2026-09-10"
     verified_by: |
-      backend/stream_monitors/services/zones.py 의 ZONE_POLYGON_READY=False 를 파일에서 확인 · Zone.geometry_status 열거에 ready 행이 0건인 것을 모델 선언에서 확인.
+      [2026-09-10 · 해소 후 실측]
+        ZONE_POLYGON_READY=True · `_point_in_polygon` 실재 ·
+        backend/tests/test_zone_judgment.py 31 passed (경계 사례 넷 포함) ·
+        scripts/verify_zone_polygon.py exit 0 — 「구현 없이 상수만 올린 것」 갈래도 초록.
+
+      ★ 잠금 규약이 **값을 냈다**: 상수를 올리자 게이트가 test_f03_polygon_contract_ac 를
+        요구했고, 구현만 올리고 시험을 안 낼 길이 없었다(D-299).
     why: |
-      GeoJSON 인지 좌표쌍 배열인지, WGS84 인지 TM 인지가 정해지지 않았다.
-      지금 한쪽을 고르면 그 선택이 곧 F-03 의 계약이 된다(D-280).
-      그동안 kind='camera_group' 이 같은 질문에 답한다(D-299).
+      ★ **해소 [판정 D-365 · 2026-09-10]** — 미룬 이유가 사라져서가 아니라
+        **미루는 값보다 갚을 절의 값이 커져서** 골랐다. 고른 것을 고른 자리에 적는다:
+
+          표현    GeoJSON Polygon 부분집합 (RFC 7946) · 바깥 고리 하나 · 구멍 없음
+          좌표계  WGS84 · [경도, 위도] 순서 · 평면 판정
+          경계    경계 위의 점은 **안** (BOUNDARY_IS_INSIDE=True) —
+                  경계에 선 사람을 밖으로 세면 놓친다. 헛경보는 사람이 지우고
+                  놓친 것은 아무도 모른다
+          거절    자기교차 폴리곤은 **판정하지 않는다** — '안' 이 하나로 정해지지 않고,
+                  어느 규칙을 골라도 화면이 그린 모양과 갈린다
+
+        [해소 전] GeoJSON 인지 좌표쌍 배열인지, WGS84 인지 TM 인지가 정해지지 않았고,
+        지금 한쪽을 고르면 그 선택이 곧 F-03 의 계약이 됐다(D-280).
+        그동안 kind='camera_group' 이 같은 질문에 답했다(D-299).
     unlock_step: |
-      F-03 설계(좌표 표현·좌표계·구역 편집 화면) 확정 → ZONE_POLYGON_READY=True.
-      올리는 순간 test_f03_polygon_contract_ac 가 의무가 된다.
-    state_in_code: backend/stream_monitors/services/zones.py — ZONE_POLYGON_READY=False
+      (해소 완료) F-03 설계 확정 → ZONE_POLYGON_READY=True →
+      test_f03_polygon_contract_ac 가 의무가 됨. 세 단계 모두 2026-09-10 에 끝났다.
+    state_in_code: backend/stream_monitors/services/zones.py — ZONE_POLYGON_READY=True
 
   - id: CLIP_EXTRACTION
     title: F-09 영상 구간 추출·트랜스코딩 미구현

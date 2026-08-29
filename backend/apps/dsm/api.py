@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
 from ninja.errors import HttpError
 from ninja_extra import api_controller, route
@@ -317,4 +318,127 @@ class DsmAPI:
         except ThresholdIsContractFixed as exc:
             raise HttpError(409, str(exc))
         except (ThresholdNotDefined, ScopeNotAvailable, ValueError) as exc:
+            raise HttpError(400, str(exc))
+
+    @route.post("/settings/zones", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="F-12 구역 쓰기 — 남의 테넌트 위험구역을 못 만든다")
+    def save_zone(self, request, name: str, kind: str, zone_id: int | None = None,
+                  geometry: dict | None = None, camera_ids: list[int] | None = None,
+                  is_active: bool = True):
+        """F-12 「구역」 · F-03 「지정 위험구역(폴리곤)」 — 구역을 **지정하는 유일한 문**.
+
+        오류를 셋으로 가른다. 뭉치면 화면 앞의 사람이 무엇을 해야 할지 모른다:
+
+            403  권한이 없다        — 감사 번호와 함께 나간다
+            400  도형이 잘못됐다    — `InvalidPolygon`. **다시 그려야 한다**
+            403  남의 카메라를 붙였다 — 조용히 빼지 않는다(D-284)
+
+        ★ 남의 `zone_id` 는 **404** 다 — 403 은 그 구역이 있다는 사실을 알린다(D-269).
+        """
+        from stream_monitors.services.zones import InvalidPolygon
+
+        try:
+            return services.save_zone_setting(
+                scope=_scope(request), zone_id=zone_id, name=name, kind=kind,
+                geometry=geometry, camera_ids=camera_ids, is_active=is_active)
+        except PermissionDeniedForSetting as exc:
+            raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
+        except Http404 as exc:
+            raise HttpError(404, str(exc) or "그런 구역이 없습니다.")
+        except PermissionDenied as exc:
+            # L3 이 낸 거부. **이 저장소가 쓰는 거부의 형태**이고,
+            # `test_tenant_isolation._is_refusal` 이 아는 형태이기도 하다 —
+            # 새 예외 형을 만들면 격리 시험이 그것을 「부서진 것」으로 읽는다.
+            raise HttpError(403, str(exc))
+        except InvalidPolygon as exc:
+            # 400 — **요청이 틀렸다.** 구역을 다시 그려야 한다. 500(결함)이 아니다.
+            raise HttpError(400, str(exc))
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+
+    # ── F-05 「API Key 발급·폐기」 · F-12 「API키」 ─────────────────────────
+    #
+    # ★ 이 셋이 계약 F-05 의 마지막 절을 갚는 자리다 (D-367). 세 번 미뤄졌던 절이고,
+    #   미룬 이유가 세 번 다 달랐다 — 방향 오판(D-337) · 범위 문제(D-335) · 그리고
+    #   남은 하나가 이것, **발급·폐기의 면**이다.
+    #
+    # ★ `inbound_key=True` 를 여기에 **주지 않는다.** 들어오는 키로 들어오는 키를
+    #   발급받을 수 있으면 키 하나가 영원히 자기를 갱신한다 — 폐기가 폐기가 아니게 된다.
+    #   이 셋은 사람(JWT)만 부른다.
+    @route.post("/settings/api-keys", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="F-05 키 발급 — 남의 테넌트 이름으로 키를 만들 수 없다")
+    def issue_api_key(self, request, name: str, expires_days: int | None = None):
+        """F-05 「API Key 발급」. **`secret` 이 사람에게 보이는 유일한 응답이다.**
+
+        저장소는 원문을 갖지 않는다(sha256 해시만). 이 응답을 놓치면 되찾을 수 없고
+        회전만 가능하다 — 되찾을 수 있다면 그것은 어딘가에 저장돼 있다는 뜻이다.
+        """
+        try:
+            return services.issue_inbound_key(
+                scope=_scope(request), name=name, expires_days=expires_days)
+        except PermissionDeniedForSetting as exc:
+            raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
+        except PermissionDenied as exc:
+            raise HttpError(403, str(exc))
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+
+    @route.delete("/settings/api-keys/{int:key_id}", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="F-05 키 폐기 — 남의 테넌트 키를 끌 수 없다")
+    def revoke_api_key(self, request, key_id: int):
+        """F-05 「API Key 폐기」. 행은 남고 **꺼진다.**
+
+        남의 키는 **404** 다 — 403 은 "있는데 못 만진다" 를 알려 주고, 그것만으로
+        남의 테넌트에 그 id 가 있다는 사실이 샌다 (D-269).
+        """
+        from kernels.k5_trust import InboundKeyNotFound
+
+        try:
+            return services.revoke_inbound_key(scope=_scope(request), key_id=key_id)
+        except PermissionDeniedForSetting as exc:
+            raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
+        except InboundKeyNotFound:
+            raise HttpError(404, "그런 키가 없습니다.")
+        except PermissionDenied as exc:
+            raise HttpError(403, str(exc))
+
+    @route.post("/settings/api-keys/{int:key_id}/rotate", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="F-05 키 회전 — 남의 테넌트 키를 돌릴 수 없다")
+    def rotate_api_key(self, request, key_id: int):
+        """회전 — 폐기와 발급을 **한 번에.** 둘로 나누면 한쪽을 잊는다.
+
+        옛 키는 지워지지 않고 `rotated` 로 남는다 — "폐기됐다" 와 "새것으로 바뀌었다"
+        는 다른 사실이고, 뒤엣것은 **후속 키가 있다**는 뜻이다.
+        """
+        from kernels.k5_trust import InboundKeyNotFound
+
+        try:
+            return services.rotate_inbound_key(scope=_scope(request), key_id=key_id)
+        except PermissionDeniedForSetting as exc:
+            raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
+        except InboundKeyNotFound:
+            raise HttpError(404, "그런 키가 없습니다.")
+        except PermissionDenied as exc:
+            raise HttpError(403, str(exc))
+
+    @route.post("/settings/grade-rules", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="F-12 등급규칙 쓰기 — 남의 테넌트 등급규칙을 못 바꾼다")
+    def set_grade_rule(self, request, event_type: str, severity: str, reason: str):
+        """F-12 「등급규칙」 · F-04 「JSON **무재기동** 반영」 — 규칙을 바꾸는 유일한 문.
+
+        **사유 없이는 못 바꾼다.** 무엇에서 무엇으로는 표가 알지만 **왜** 는
+        여기서만 들어온다 — 그 칸이 비면 400 이다.
+
+        ★ 응답의 `lowered` 를 화면이 반드시 보여 줘야 한다. 참이면 그 이벤트는
+          **조용해진 것**이고, 경보가 안 오는 것은 「아무 일도 없음」으로 보인다.
+        """
+        from kernels.k5_trust import GradeRuleNotDefined, SeverityNotInContract
+
+        try:
+            return services.set_grade_rule_value(
+                scope=_scope(request), event_type=event_type,
+                severity=severity, reason=reason)
+        except PermissionDeniedForSetting as exc:
+            raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
+        except (GradeRuleNotDefined, SeverityNotInContract, ValueError) as exc:
             raise HttpError(400, str(exc))

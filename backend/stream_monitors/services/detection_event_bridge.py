@@ -48,6 +48,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 from common.tenant_scope import TenantScope
+from kernels.k5_trust.grade_rules import severity_for
 from kernels.k1_event import InvalidEventInput, record_detection
 
 log = logging.getLogger(__name__)
@@ -179,6 +180,8 @@ def publish_detections(
     result = PublishResult()
     frames = frames or []
 
+
+
     # ── FX-5 주소 자동 변환 (D-298) ──────────────────────────────────────
     #
     # ★ **배치당 한 번만** 부른다. 검출마다 부르면 프레임 하나에 열 번씩 외부 API 를
@@ -249,7 +252,17 @@ def publish_detections(
                     scope=scope,
                     stream_monitor_id=stream_monitor_id,
                     event_type=event_type,
-                    severity=EVENT_TYPE_TO_SEVERITY[event_type],
+                    # ★ 사전을 직접 읽지 않는다 — **커널이 매번 DB 를 본다** (D-368).
+                    #   사전은 import 시점에 한 번 읽히고, 그것만 있으면 규칙을 바꾸려면
+                    #   재기동해야 한다. **재기동은 재난 상황 중에 하면 안 되는 일**이고,
+                    #   규칙을 고치는 시점은 대개 경보가 쏟아지는 그 순간이다.
+                    #   계약 F-04 「JSON 무재기동 반영」이 요구하는 것이 이 한 줄이다.
+                    # ★ 등급규칙의 테넌트는 **그 카메라의 주인**이다 (D-368) —
+                    #   커널이 `stream_monitor_id` 로 그것을 정한다. 파이프라인에는
+                    #   요청자가 없으므로(D-281) 요청자에게서 테넌트를 얻을 수 없고,
+                    #   그렇다고 좁히지 않으면 **아무 테넌트의 규칙이나 집는다.**
+                    severity=severity_for(scope=scope, event_type=event_type,
+                                          stream_monitor_id=stream_monitor_id),
                     confidence=confidence,
                     bbox=det.get("bbox"),
                     snapshot_path=path,

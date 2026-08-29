@@ -1,17 +1,26 @@
 # -*- coding: utf-8 -*-
 """D-299 구역 판정 — **선 것과 그 이상을 안 만든 것을 함께 잰다** (D-300).
 
-셋으로 나뉜다:
+넷으로 나뉜다:
 
-    ZoneJudgmentTest        섰는가          — 카메라 묶음 판정이 실제로 도는가
-    NothingWasGuessedTest   안 만들었는가    — 폴리곤을 추측으로 만들지 않았는가 (D-300)
-    PolygonStillLockedTest  잠겨 있는가      — 잠금이 값싼 선언이 아닌가
+    ZoneJudgmentTest        섰는가       — 카메라 묶음 판정이 실제로 도는가
+    PolygonContractTest     계약 절      — F-03 폴리곤 AC + 경계 사례 넷 (D-365)
+    PolygonIsOpenTest       열렸는가     — 열림이 값싼 선언이 아닌가
+    ReadyPolygonDataTest    데이터 대조  — 데이터와 상수가 앞서거니 하지 않는가
 
-★ 왜 "안 만들었는가"를 시험하나 (D-300)
----------------------------------------
-금지된 산출물이 있는 작업에서 **"무엇을 만들었나"만 재면 금지선을 넘은 것이 초록 속에
-숨는다.** 여기서 금지된 것은 폴리곤이다 — 좌표 표현·좌표계가 미확정인데 지금 고르면
-그 선택이 곧 F-03 의 계약이 된다(D-280). 그래서 만들지 않았음을 시험이 잰다.
+★ 2026-09-10 — **부작위 시험 둘이 답을 바꿨다** (D-365)
+------------------------------------------------------
+직전까지 이 파일에는 `NothingWasGuessedTest`(폴리곤을 **안 만들었는가**)와
+`PolygonStillLockedTest`(**잠겨 있는가**)가 있었다. 폴리곤이 미확정인 동안 그 둘이
+"추측이 계약이 되는 것"을 막았고, 실제로 막았다 — 그동안 아무도 좌표계를 몰래 고르지 못했다.
+
+이번 턴에 좌표 표현·좌표계를 **정식으로 골랐으므로**(D-365) 그 둘은 답이 바뀌었다.
+지운 것이 아니라 **교대한 것**이다: 「안 만들었는가」를 재던 자리를 「만든 것이 계약을
+지키는가」가 이어받았고, 「잠겨 있는가」를 「열림이 값싼 선언이 아닌가」가 이어받았다.
+
+★ 그러나 **부작위 시험 자체는 사라지지 않았다.** `test_no_gis_dependency_was_pulled_in`
+  이 그것이다 — 여는 것과 무엇이든 끌어오는 것은 다른 일이고, 열렸다고 부작위를
+  거두면 그 다음에 들어오는 의존은 아무도 안 본다 (D-300).
 """
 from __future__ import annotations
 
@@ -196,76 +205,236 @@ class ZoneJudgmentTest(_ZoneFixture):
         self.assertTrue(zones.zones_for_camera(self.cam_gauge.pk, scope=self.scope_a))
 
 
-class NothingWasGuessedTest(SimpleTestCase):
-    """★ **그 이상을 만들지 않았는가** — 부작위 시험 (D-300).
+class PolygonContractTest(SimpleTestCase):
+    """★ **계약 F-03 폴리곤 절** — 순수 함수로 잰다. DB 없이 경계를 판다 (D-365).
 
-    폴리곤은 좌표 표현·좌표계가 미확정이다. 지금 고르면 그 선택이 곧 F-03 의 계약이
-    되고(D-280), 그 사실은 나중에 남지 않는다. 그래서 **안 만들었음**을 잰다.
+    이 클래스가 `NothingWasGuessedTest`(폴리곤을 **안 만들었는가**)를 대체한다.
+    그 시험은 사라진 것이 아니라 **답이 바뀐 것**이다 — 만들지 않았음을 재던 자리가
+    만든 것을 재는 자리가 됐다. 잠금 규약이 요구한 교대이고(D-299), 잠금을 올린
+    커밋이 이 파일을 함께 고치지 않으면 `verify_zone_polygon.py` 가 exit 1 한다.
     """
 
-    def test_no_point_in_polygon_implementation_exists(self) -> None:
-        from pathlib import Path
+    #: 서울 시청 앞 사각형 하나. 축에 나란해서 경계 사례를 손으로 셀 수 있다.
+    SQUARE = {"type": "Polygon", "coordinates": [[
+        [126.970, 37.560], [126.980, 37.560],
+        [126.980, 37.570], [126.970, 37.570], [126.970, 37.560]]]}
 
-        src = Path(zones.__file__).read_text(encoding="utf-8")
-        # 함수 정의가 없어야 한다. 주석·독스트링의 언급은 구현이 아니다.
-        self.assertNotIn(
-            "def _point_in_polygon", src,
-            "폴리곤 판정 구현이 생겼습니다 — 그렇다면 ZONE_POLYGON_READY 를 올리고 "
-            "F-03 AC 시험을 붙이십시오. 구현만 있고 잠금이 그대로인 상태가 가장 나쁩니다.")
+    #: ㄷ자 — **오목**. 볼록만 맞는 알고리즘은 여기서 틀린다.
+    CONCAVE = {"type": "Polygon", "coordinates": [[
+        [0.0, 0.0], [4.0, 0.0], [4.0, 4.0], [3.0, 4.0],
+        [3.0, 1.0], [1.0, 1.0], [1.0, 4.0], [0.0, 4.0]]]}
 
-    def test_no_coordinate_system_was_chosen(self) -> None:
-        """좌표계를 코드가 고르지 않았다 — 고르는 자리는 F-03 설계이지 이 파일이 아니다."""
-        from pathlib import Path
+    #: 나비넥타이 — **자기교차.** 「안」이 하나로 정해지지 않는다.
+    BOWTIE = {"type": "Polygon", "coordinates": [[
+        [0.0, 0.0], [2.0, 2.0], [2.0, 0.0], [0.0, 2.0]]]}
 
-        src = Path(zones.__file__).read_text(encoding="utf-8")
-        body = "\n".join(
-            line for line in src.split("\n")
-            if not line.lstrip().startswith("#"))
-        for token in ("EPSG", "srid", "SRID", "GEOSGeometry", "gis"):
-            self.assertNotIn(
-                token, body,
-                f"좌표계·GIS 의존({token})이 들어왔습니다 — 계약에 GIS 요구가 없고, "
-                f"지금 고른 좌표계가 곧 F-03 의 계약이 됩니다 (D-280).")
+    def test_f03_polygon_contract_ac(self) -> None:
+        """★ **계약 AC** — "지정 위험구역(폴리곤) 내 사람·차량 진입".
 
-    def test_zone_editing_surface_was_not_built(self) -> None:
-        """구역을 **만드는** 면은 이번 범위가 아니다 — 만들면 쓰기 격리 시험이 함께 늘어야 한다."""
+        `verify_zone_polygon.py` 가 이름으로 요구하는 시험이다. 상수를 올리는 순간
+        의무가 되며, 이 이름이 사라지면 정적 게이트가 exit 1 한다.
+
+        재는 것은 계약 문장 그대로 **안과 밖이 갈리는가** 하나다.
+        경계·오목·자기교차는 아래에서 따로 판다 — 한 시험에 다 넣으면 무엇이
+        깨졌는지가 실패 한 줄에 안 나온다.
+        """
+        ring = zones._ring(self.SQUARE)
+
+        inside = (126.975, 37.565)      # 한가운데
+        outside = (126.990, 37.565)     # 동쪽 바깥
+
+        self.assertTrue(
+            zones._point_in_polygon(inside[0], inside[1], ring),
+            "구역 한가운데의 진입을 '밖'으로 판정했습니다 — F-03 이 성립하지 않습니다.")
         self.assertFalse(
-            [n for n in zones.__all__ if n.startswith(("create", "update", "delete"))],
-            "구역 편집 함수가 공개 면에 생겼습니다 — 쓰기 면이 늘면 "
-            "test_tenant_isolation.py 의 WRITE_PROBES 도 함께 늘어야 합니다 (D-290).")
+            zones._point_in_polygon(outside[0], outside[1], ring),
+            "★ 구역 밖을 '안'으로 판정했습니다 — 모든 진입이 위험구역 진입이 됩니다. "
+            "이쪽이 더 나쁜 오류입니다(경보가 의미를 잃습니다).")
+
+    def test_the_declared_lock_and_the_implementation_agree(self) -> None:
+        """상수·구현·좌표계 선언이 **같은 말을 한다.** 하나만 올라간 상태를 막는다."""
+        self.assertTrue(zones.ZONE_POLYGON_READY)
+        self.assertTrue(zones.is_polygon_ready())
+        self.assertTrue(callable(zones._point_in_polygon))
+        self.assertEqual(zones.ZONE_CRS, "WGS84",
+                         "좌표계 선언이 바뀌었습니다 — 바꾸려면 F-03 계약 해석부터 "
+                         "다시 받으십시오. 이 문자열이 곧 계약입니다(D-365).")
+        self.assertEqual((zones.LON, zones.LAT), (0, 1),
+                         "GeoJSON 좌표 순서가 뒤집혔습니다 — [경도, 위도] 입니다.")
+
+    # ── 경계 사례 넷 (지시 D-360 ②) ─────────────────────────────────────
+    def test_a_point_on_a_vertex_is_inside(self) -> None:
+        """① **꼭짓점 위.** 광선 투사가 가장 자주 틀리는 자리다."""
+        ring = zones._ring(self.SQUARE)
+        for lon, lat in ring:
+            self.assertTrue(
+                zones._point_in_polygon(lon, lat, ring),
+                f"꼭짓점 ({lon}, {lat}) 을 '밖'으로 판정했습니다 — 경계에 선 사람을 "
+                f"놓칩니다(BOUNDARY_IS_INSIDE={zones.BOUNDARY_IS_INSIDE}).")
+
+    def test_a_point_on_an_edge_is_inside(self) -> None:
+        """② **변 위.** 남·북·동·서 네 변을 모두 판다 — 한 변만 맞을 수 있다."""
+        ring = zones._ring(self.SQUARE)
+        on_edges = (
+            (126.975, 37.560),   # 남
+            (126.975, 37.570),   # 북
+            (126.970, 37.565),   # 서
+            (126.980, 37.565),   # 동
+        )
+        for lon, lat in on_edges:
+            self.assertTrue(
+                zones._point_in_polygon(lon, lat, ring),
+                f"변 위의 점 ({lon}, {lat}) 을 '밖'으로 판정했습니다.")
+
+    def test_a_concave_polygon_judges_the_notch_as_outside(self) -> None:
+        """③ **오목 다각형.** ㄷ자의 **패인 곳**은 밖이다.
+
+        볼록 껍질로 판정하는 구현은 여기서만 틀린다 — 사각형 시험은 통과한 채로.
+        그래서 이 갈래가 없으면 잘못된 구현이 초록으로 들어온다.
+        """
+        ring = zones._ring(self.CONCAVE)
+        self.assertFalse(
+            zones._point_in_polygon(2.0, 3.0, ring),
+            "★ ㄷ자의 패인 곳을 '안'으로 판정했습니다 — 볼록 껍질로 재고 있습니다.")
+        self.assertTrue(zones._point_in_polygon(0.5, 2.0, ring), "왼쪽 기둥 안")
+        self.assertTrue(zones._point_in_polygon(3.5, 2.0, ring), "오른쪽 기둥 안")
+        self.assertTrue(zones._point_in_polygon(2.0, 0.5, ring), "아래 이음부 안")
+
+    def test_a_self_intersecting_polygon_is_refused_not_guessed(self) -> None:
+        """④ **자기교차는 거절한다.** 조용히 한쪽 규칙을 고르지 않는다.
+
+        고르는 순간 화면이 그린 모양과 시스템이 판정하는 모양이 갈리고,
+        **갈렸다는 사실이 아무 데도 안 남는다** (D-284).
+        """
+        points = zones._ring(self.BOWTIE)
+        with self.assertRaises(zones.InvalidPolygon) as caught:
+            zones._reject_self_intersection(points)
+        self.assertIn("자기교차", str(caught.exception))
+
+    def test_a_simple_polygon_is_not_called_self_intersecting(self) -> None:
+        """★ **음성 대조** — 멀쩡한 도형을 거절하면 그 검사는 검사가 아니다 (D-289).
+
+        이웃한 두 변은 언제나 꼭짓점을 공유한다. 그것을 교차로 세면
+        **모든 폴리곤이 자기교차**가 되고, 구역 기능이 통째로 죽는다.
+        """
+        for name, geom in (("사각형", self.SQUARE), ("ㄷ자", self.CONCAVE)):
+            zones._reject_self_intersection(zones._ring(geom))   # 안 터져야 한다
+
+    # ── 잘못 그린 것은 잘못 그렸다고 말한다 ─────────────────────────────
+    def test_a_flipped_coordinate_pair_is_caught(self) -> None:
+        """★ 위경도가 뒤집혀 들어오면 **판정하지 않고 잡는다.**
+
+        이 모듈에서 가장 흔한 사고다. 뒤집힌 채로 판정하면 서울의 구역이
+        인도양 어딘가가 되고, 그러면 **모든 진입이 구역 밖**이 된다 — 조용히.
+        """
+        flipped = {"type": "Polygon", "coordinates": [[
+            [37.560, 126.970], [37.560, 126.980], [37.570, 126.980]]]}
+        with self.assertRaises(zones.InvalidPolygon) as caught:
+            zones._ring(flipped)
+        self.assertIn("위도", str(caught.exception))
+
+    def test_a_polygon_with_a_hole_is_refused(self) -> None:
+        """구멍은 받지 않는다 — **조용히 무시하지 않는다.**
+
+        무시하면 구멍 안이 '구역 안'으로 판정되고, 그 오판은 화면에 안 보인다.
+        """
+        holed = {"type": "Polygon", "coordinates": [
+            self.SQUARE["coordinates"][0],
+            [[126.973, 37.563], [126.977, 37.563], [126.977, 37.567]]]}
+        with self.assertRaises(zones.InvalidPolygon):
+            zones._ring(holed)
+
+    def test_a_degenerate_ring_is_refused(self) -> None:
+        """꼭짓점 둘짜리에는 '안'이 없다 — 넓이 없는 도형을 판정하지 않는다."""
+        line = {"type": "Polygon", "coordinates": [[[0.0, 0.0], [1.0, 1.0]]]}
+        with self.assertRaises(zones.InvalidPolygon):
+            zones._ring(line)
+
+    def test_an_unclosed_ring_is_accepted(self) -> None:
+        """닫는 점이 없어도 받는다 — 화면이 안 닫고 보내는 일이 흔하다.
+
+        닫힌 것과 안 닫힌 것이 **같은 판정**을 내야 한다. 다르면 그리는 쪽의
+        사소한 습관이 판정을 바꾼다.
+        """
+        closed = zones._ring(self.SQUARE)
+        unclosed = zones._ring({"type": "Polygon",
+                                "coordinates": [self.SQUARE["coordinates"][0][:-1]]})
+        self.assertEqual(closed, unclosed)
 
 
-class PolygonStillLockedTest(SimpleTestCase):
-    """★ 잠겨 있는가 — 그리고 그 잠금이 **값싼 선언이 아닌가.**"""
+class PolygonIsOpenTest(SimpleTestCase):
+    """★ 열렸는가 — 그리고 **열림이 값싼 선언이 아닌가.**
 
-    def test_polygon_is_locked(self) -> None:
-        self.assertFalse(zones.ZONE_POLYGON_READY)
-        self.assertFalse(zones.is_polygon_ready())
+    `PolygonStillLockedTest` 를 대체한다. 잠금 규약은 그대로이고 방향만 뒤집혔다:
+    잠겨 있으면 사유를 요구했고, 열려 있으면 **구현과 시험**을 요구한다.
+    """
 
-    def test_the_lock_carries_a_reason(self) -> None:
-        """"안 됐다" 는 말은 사유를 요구한다 (D-264)."""
+    def test_the_reason_string_is_kept_for_the_way_back(self) -> None:
+        """사유를 **지우지 않았다.** 되돌리는 날 사유 없이 되돌릴 수 있으면 안 된다."""
         reason = zones.ZONE_POLYGON_NOT_READY_REASON.strip()
-        self.assertTrue(reason)
-        self.assertGreater(
-            len(reason), 60,
-            "사유가 한 줄 변명입니다 — 무엇이 없어서 못 하는지를 적으십시오.")
-        self.assertIn("F-03", reason, "어느 계약 조항이 걸린 일인지가 사유에 없습니다.")
+        self.assertTrue(reason, "되돌림용 사유가 지워졌습니다 — 되돌림이 조용해집니다.")
+        self.assertIn("F-03", reason)
 
-    def test_polygon_zone_refuses_to_judge(self) -> None:
-        """★ 조용히 False 를 돌려주지 않는다 — 미구현이 '구역 밖'으로 위장하지 않는다."""
+    def test_an_undrawn_zone_still_refuses_to_judge(self) -> None:
+        """★ 코드가 섰다고 **안 그린 구역이 판정되지는 않는다.**
+
+        `geometry_status='not_implemented'` 는 여전히 `NotImplementedError` 다 —
+        이것이 「안 그렸다」와 「밖이다」를 가르는 자리이고, 여기가 무너지면
+        도형을 안 넣은 구역이 **영원히 아무도 안 걸리는 구역**이 된다.
+        """
         Zone = apps.get_model("stream_monitors", "Zone")
-        unsaved = Zone(name="폴리곤 자리", kind="polygon")
+        undrawn = Zone(name="아직 안 그린 구역", kind="polygon",
+                       geometry_status="not_implemented")
         with self.assertRaises(NotImplementedError) as caught:
-            zones.contains(unsaved, lat=37.4, lng=126.9)
+            zones.contains(undrawn, lat=37.565, lng=126.975)
         self.assertIn("F-03", str(caught.exception))
 
-    def test_zone_kernel_is_present_but_polygon_is_not(self) -> None:
-        """두 잠금이 **다른 것을 잠근다** — 하나가 다른 하나를 열지 않는다."""
+    def test_a_drawn_zone_judges(self) -> None:
+        """음성 대조 — 그린 구역은 **실제로 판정한다.** 전부 멈추면 그건 구현이 아니다."""
+        Zone = apps.get_model("stream_monitors", "Zone")
+        drawn = Zone(name="그린 구역", kind="polygon", geometry_status="ready",
+                     geometry=PolygonContractTest.SQUARE)
+        self.assertTrue(zones.contains(drawn, lat=37.565, lng=126.975))
+        self.assertFalse(zones.contains(drawn, lat=37.565, lng=126.990))
+        self.assertTrue(zones.point_in_zone(drawn, lat=37.565, lng=126.975))
+
+    def test_a_polygon_zone_asked_with_a_camera_id_says_so(self) -> None:
+        """좌표 없이 물으면 **그 질문이 아니라고** 말한다 — False 를 돌려주지 않는다."""
+        Zone = apps.get_model("stream_monitors", "Zone")
+        drawn = Zone(name="그린 구역", kind="polygon", geometry_status="ready",
+                     geometry=PolygonContractTest.SQUARE)
+        with self.assertRaises(ValueError):
+            zones.contains(drawn, camera_id=1)
+
+    def test_zone_kernel_and_polygon_are_still_two_locks(self) -> None:
+        """두 잠금이 **여전히 둘이다.** 둘 다 열렸다고 한 이름으로 합치지 않았다."""
+        from pathlib import Path
+
         from tests.e2e.e2e_contract import kernel_present
 
         self.assertTrue(kernel_present("ZONE"), "E2E-2 3단계가 다시 잠겼습니다.")
-        self.assertFalse(zones.ZONE_POLYGON_READY,
-                         "구역이 열렸다고 폴리곤까지 열렸습니다 — 두 잠금이 붙었습니다.")
+        self.assertTrue(zones.ZONE_POLYGON_READY)
+        src = Path(zones.__file__).read_text(encoding="utf-8")
+        self.assertIn("ZONE_POLYGON_READY: bool =", src,
+                      "폴리곤 잠금이 제 이름의 상수가 아니게 됐습니다 — "
+                      "KERNEL_READY 와 한 칸이 되면 하나를 내릴 때 둘 다 내려갑니다.")
+        self.assertIn("KERNEL_READY: bool =", src)
+
+    def test_no_gis_dependency_was_pulled_in(self) -> None:
+        """★ **부작위는 그대로 잰다** (D-300). 열었다고 GIS 를 끌어오지 않았다.
+
+        계약에 GIS 요구가 없고, 의존 하나가 배포 하나를 어렵게 한다.
+        이 시험이 사라지면 다음 사람이 `django.contrib.gis` 를 조용히 넣는다.
+        """
+        from pathlib import Path
+
+        src = Path(zones.__file__).read_text(encoding="utf-8")
+        body = "\n".join(line for line in src.split("\n")
+                         if not line.lstrip().startswith("#"))
+        for token in ("GEOSGeometry", "contrib.gis", "shapely", "pyproj"):
+            self.assertNotIn(
+                token, body,
+                f"GIS 의존({token})이 들어왔습니다 — 판정은 순수 함수로 섭니다.")
 
     def test_the_static_gate_agrees(self) -> None:
         """`scripts/verify_zone_polygon.py` 와 **같은 말을 하는가.**
@@ -290,13 +459,24 @@ class PolygonStillLockedTest(SimpleTestCase):
 
 
 class ReadyPolygonDataTest(_ZoneFixture):
-    """★ **데이터가 상수를 앞지르는 것**을 잡는다 — 정적 게이트가 못 보는 쪽."""
+    """★ **데이터와 상수가 앞서거니 하는 것**을 잡는다 — 정적 게이트가 못 보는 쪽.
+
+    상수가 True 가 된 지금(D-365) 이 대조의 **방향이 둘**이 됐다:
+
+        ① 되돌아가는 쪽 — 상수를 내렸는데 `ready` 행이 남아 있다
+                          (화면은 폴리곤이 돈다고 믿고 코드는 미구현이다)
+        ② 앞서가는 쪽   — `ready` 인데 **도형이 판정 불가**다
+                          (「가동」이라 적혀 있는데 부르면 멈춘다 — 더 조용한 고장이다)
+
+    ②는 상수가 False 이던 동안에는 존재할 수 없던 갈래다. 열면서 생긴 새 위험을
+    열면서 함께 잰다 — 열고 나서 나중에 재면 그 사이가 빈다.
+    """
 
     def test_no_ready_polygon_zone_without_the_flag(self) -> None:
-        """`geometry_status='ready'` 인 Zone 이 있는데 상수가 False 면 실패한다.
+        """① `geometry_status='ready'` 인 Zone 이 있는데 상수가 False 면 실패한다.
 
-        그 상태에서는 화면과 운영자는 폴리곤이 돈다고 믿는데 코드는 미구현이다.
         정적 게이트는 DB 를 못 보므로 이 대조는 여기서만 가능하다 (D-299).
+        지금은 상수가 True 라 이 갈래가 **안 돈다** — 되돌리는 날을 위해 남긴다.
         """
         Zone = apps.get_model("stream_monitors", "Zone")
         ready = Zone._base_manager.filter(geometry_status="ready")
@@ -307,9 +487,44 @@ class ReadyPolygonDataTest(_ZoneFixture):
                 "데이터가 코드를 앞질렀습니다. 상수를 올리거나 그 행을 되돌리십시오.")
 
     def test_positive_control_the_check_can_fail(self) -> None:
-        """★ 위 시험이 **실패할 수 있는가.** 실패할 수 없는 시험은 시험이 아니다 (D-277)."""
-        Zone = apps.get_model("stream_monitors", "Zone")
+        """★ 위 시험이 **실패할 수 있는가.** 실패할 수 없는 시험은 시험이 아니다 (D-277).
+
+        상수가 True 인 지금 ①의 몸통은 통째로 건너뛰어진다. 그대로 두면 이 대조는
+        **언제나 통과하는 시험** — 즉 시험이 아닌 것 — 이 된다. 그래서 상수를 잠깐
+        내려 그 갈래를 실제로 돌린다. 건너뛰는 시험을 통과로 세지 않는다 (D-301).
+        """
         self._zone("폴리곤 앞지르기", self.group_a, [], kind="polygon",
                    geometry_status="ready")
+        original = zones.ZONE_POLYGON_READY
+        zones.ZONE_POLYGON_READY = False
+        self.addCleanup(setattr, zones, "ZONE_POLYGON_READY", original)
         with self.assertRaises(AssertionError):
             self.test_no_ready_polygon_zone_without_the_flag()
+
+    def test_every_ready_zone_can_actually_be_judged(self) -> None:
+        """② **`ready` 라고 적힌 구역은 실제로 판정된다.**
+
+        「가동」이라 적혀 있는데 부르면 `InvalidPolygon` 으로 멈추는 행은, 화면에서
+        멀쩡해 보이고 판정에서만 사라진다 — **경보가 안 오는 위험구역**이다.
+        그 상태는 아무도 신고하지 않으므로 여기서 전수로 판다.
+        """
+        Zone = apps.get_model("stream_monitors", "Zone")
+        broken = []
+        for zone in Zone._base_manager.filter(geometry_status="ready",
+                                              kind="polygon"):
+            try:
+                zones.contains(zone, lat=37.565, lng=126.975)
+            except zones.InvalidPolygon as exc:
+                broken.append(f"{zone.name}: {exc}")
+        self.assertEqual(
+            broken, [],
+            "geometry_status='ready' 인데 판정할 수 없는 구역이 있습니다 — "
+            "화면에는 '가동'으로 보이고 판정에서만 사라집니다: "
+            + " · ".join(broken))
+
+    def test_positive_control_a_broken_ready_zone_is_caught(self) -> None:
+        """★ 위 ②가 **실제로 잡는가.** 깨진 행을 하나 심어 본다 (D-277)."""
+        self._zone("도형 없는 가동 구역", self.group_a, [], kind="polygon",
+                   geometry_status="ready", geometry=None)
+        with self.assertRaises(AssertionError):
+            self.test_every_ready_zone_can_actually_be_judged()

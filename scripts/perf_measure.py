@@ -173,6 +173,150 @@ def measure(samples: int = SAMPLES, warmup: int = WARMUP) -> dict:
     }
 
 
+#: 부하 계단. **1 부터 시작한다** — 1 이 없으면 「부하 없을 때」와 비교할 기준이 없고,
+#: 기준이 없으면 "느려졌다" 를 말할 수 없다.
+LOAD_STEPS: tuple[int, ...] = (1, 2, 4, 8, 16)
+
+#: 「무너졌다」의 술어. p95 가 **1단계(부하 없음) 대비 몇 배**가 되면 무너진 것으로 보는가.
+#: 값의 근거: 계약 AC 가 정한 수가 **아니다**(D-280). 배수로 두는 이유는 절대값이
+#: 환경마다 다르기 때문이고, 3배는 「같은 일이 눈에 띄게 느려졌다」의 통상 기준이다.
+DEGRADATION_FACTOR: float = 3.0
+
+
+def measure_under_load(steps=LOAD_STEPS, per_worker: int = 10) -> dict:
+    """★ **부하 하 재측정** (D-359) — 동시에 몇이 들어오면 어디서 먼저 무너지는가.
+
+    D-359 가 정한 목적을 그대로 옮긴다:
+
+        **어디서 먼저 무너지는가**를 찾는 것이 목적이다. 절대값은 그 다음이다.
+
+    ★ 이 측정이 **재는 것과 못 재는 것**을 먼저 적는다 (D-301 · 착시 ⑤)
+      재는 것    이벤트 쓰기·알림 발송의 **동시성 상한** — DB 연결·락·인덱스가 걸리는 구간
+      못 재는 것 **동시 스트림 상한** — RTSP 원본 N개와 AI 추론 서버(GPU)가 없다.
+                 그 수를 이 결과에서 유추하면 안 된다. 여기 없는 것은 여기 없다.
+
+      즉 이것은 「카메라 몇 대」의 답이 **아니다.** AI·GPU 없이도 상한이 걸리는 구간이
+      있고, 그 구간을 재는 것이다 — 그 둘을 한 수로 적으면 제안서에 잘못된 수가 간다.
+
+    ★ 되돌린다 — 스레드마다 트랜잭션이 따로라 `set_rollback` 을 못 쓴다.
+      그래서 만든 행의 id 를 모아 **끝나고 지운다.** 측정기가 자기가 재는 세상을
+      바꾸면 다음 측정의 분모가 달라진다.
+    """
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    import django
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    sys.path.insert(0, "/app")
+    django.setup()
+
+    from django.apps import apps
+    from django.db import connections
+    from django.utils import timezone as djtz
+
+    from common.tenant_scope import TenantScope
+    from kernels.k1_event import services as k1
+
+    StreamMonitor = apps.get_model("stream_monitors", "StreamMonitor")
+    Event = apps.get_model("stream_monitors", "DetectionEvent")
+    monitor = StreamMonitor._base_manager.order_by("id").first()
+    if monitor is None:
+        raise RuntimeError("카메라가 한 대도 없다 — 잴 대상이 없다 (D-301)")
+
+    scope = TenantScope.system(reason="부하 하 재측정 (D-359)")
+    created: list[int] = []
+    lock = threading.Lock()
+    counter = {"n": 0}
+    rows = []
+
+    def one_call() -> float:
+        with lock:
+            counter["n"] += 1
+            nth = counter["n"]
+        # ★ 논리 시계 — 중복 억제(F-04 5분)가 측정을 삼키면 **빠른 것이 아니라
+        #   안 한 것**이고, 그 둘은 같은 수로 보인다.
+        occurred = djtz.now() - djtz.timedelta(minutes=10 * nth)
+        start = time.perf_counter()
+        result = k1.record_detection(
+            scope=scope, stream_monitor_id=monitor.id, event_type="fire",
+            severity="critical", occurred_at=occurred, confidence=0.91)
+        elapsed = time.perf_counter() - start
+        event_id = getattr(result, "event_id", None)
+        if event_id:
+            with lock:
+                created.append(event_id)
+        return elapsed
+
+    def worker(n: int) -> list[float]:
+        try:
+            return [one_call() for _ in range(n)]
+        finally:
+            connections.close_all()      # 스레드마다 연결이 따로다 — 두면 샌다
+
+    try:
+        for workers in steps:
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                started = time.perf_counter()
+                results = list(pool.map(worker, [per_worker] * workers))
+                wall = time.perf_counter() - started
+            times = [t for chunk in results for t in chunk]
+            stat = percentiles(times)
+            stat["workers"] = workers
+            stat["calls"] = len(times)
+            #: 초당 처리량. **지연만 보면 「느려졌지만 더 많이 처리했다」가 안 보인다.**
+            stat["throughput_per_sec"] = round(len(times) / wall, 2) if wall else None
+            rows.append(stat)
+    finally:
+        if created:
+            # ★ **분류 등록부를 보고 지운다** (D-270 ③).
+            #
+            #   왜 면제로 처리하지 않았나: 이것은 모호한 호출이 아니라 **진짜 ORM
+            #   삭제**다. 그런 자리에 「이건 괜찮다」를 적어 두면, 다음에 정말 위험한
+            #   삭제가 같은 모양으로 들어와도 아무도 안 본다.
+            #
+            #   그래서 검사한다 — **공용 마스터는 어떤 경우에도 지우지 않는다.**
+            #   측정이 자기가 만든 행만 지운다는 것은 지금 이 코드를 읽으면 알지만,
+            #   다음 사람이 이 되돌림을 다른 모델에 복사할 때 그 사실이 따라가지 않는다.
+            #   등록부 대조는 그때 멈춘다.
+            from tests.tenant_classification import SHARED_MASTERS
+
+            label = f"{Event._meta.app_label}.{Event.__name__}"
+            if label in SHARED_MASTERS:
+                raise RuntimeError(
+                    f"{label} 은 공용 마스터다 — 측정 되돌림이 공용 데이터를 "
+                    f"지우려 한다. 멈춘다 (D-270 ③)")
+            Event._base_manager.filter(pk__in=created).delete()
+
+    baseline = rows[0]["p95_ms"] if rows and rows[0].get("p95_ms") else None
+    knee = None
+    for row in rows:
+        if baseline and row.get("p95_ms") and row["p95_ms"] > baseline * DEGRADATION_FACTOR:
+            knee = row["workers"]
+            break
+
+    return {
+        "steps": rows,
+        "baseline_p95_ms": baseline,
+        "degradation_factor": DEGRADATION_FACTOR,
+        #: ★ **어디서 먼저 무너지는가.** `None` 이면 이 계단 안에서는 안 무너졌다는
+        #:   뜻이고, 그것은 「상한이 없다」가 **아니다** — 계단이 짧았을 뿐이다.
+        "knee_workers": knee,
+        "knee_note": (
+            f"동시 {knee} 에서 p95 가 부하 없을 때의 {DEGRADATION_FACTOR}배를 넘었다"
+            if knee else
+            f"계단 {steps} 안에서는 {DEGRADATION_FACTOR}배를 넘지 않았다 — "
+            f"**상한이 없다는 뜻이 아니라 이 계단이 짧다는 뜻이다.** 더 올려 봐야 안다"),
+        "not_measured": {
+            "concurrent_streams": (
+                "RTSP 원본 N개와 AI 추론 서버(GPU)가 없다. 이 결과에서 「카메라 몇 대」를 "
+                "유추하면 안 된다 — 여기서 잰 것은 이벤트 쓰기·알림의 동시성이고, "
+                "스트림 수집·디코딩·추론은 이 측정에 들어 있지 않다"),
+        },
+        "cleaned_up_events": len(created),
+    }
+
+
 def self_test() -> int:
     """★ 출생 표본 — **환경 없는 수치**와 **평균으로 꼬리를 숨기는 것**을 막는가."""
     checks = [
@@ -201,6 +345,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="/docs/agent/evidence/D-354/perf.json")
     ap.add_argument("--samples", type=int, default=SAMPLES)
+    ap.add_argument("--load", action="store_true",
+                    help="부하 하 재측정 (D-359) — 계단식으로 올리며 무너지는 자리를 찾는다")
+    ap.add_argument("--per-worker", type=int, default=10)
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
 
@@ -244,6 +391,25 @@ def main() -> int:
             print("[PERF] %s 지연: 표본 없음 — 재지 못했다" % label)
     print("[PERF] 동시 스트림 상한: **미측정** — %s"
           % payload["stream_ceiling"]["why_unmeasured"].split(".")[0])
+
+    if args.load:
+        # ★ 부하 하 재측정 (D-359). **부하 없는 수와 나란히 적는다** —
+        #   위의 p95 는 「부하 없는 상태의 수」이고, 그 사실이 표에 함께 있어야 한다.
+        load = measure_under_load(per_worker=args.per_worker)
+        payload["under_load"] = load
+        with open(args.out, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+        print("[PERF] ── 부하 하 재측정 (D-359) ──")
+        for row in load["steps"]:
+            print("[PERF]   동시 %2d · 호출 %3d · p50 %7.2fms · p95 %7.2fms · "
+                  "처리량 %s/s"
+                  % (row["workers"], row["calls"], row["p50_ms"], row["p95_ms"],
+                     row["throughput_per_sec"]))
+        print("[PERF] ★ 어디서 먼저 무너지는가: %s" % load["knee_note"])
+        print("[PERF] ★ 여기 없는 것: %s"
+              % load["not_measured"]["concurrent_streams"].split(".")[0])
+        print("[PERF] 측정으로 생긴 이벤트 %d건을 지웠다" % load["cleaned_up_events"])
     print("[PERF] → %s" % args.out)
     print("[PERF] ★ 이 수는 **목표가 아니라 출발점**이다 (D-280).")
     return EXIT_OK

@@ -63,10 +63,30 @@ INBOUND_KEY_ALLOWED: frozenset[tuple[str, str]] = frozenset({
 #:     GET  /api/delivery/drone-monitoring/drone-status   17,416 B  드론 텔레메트리
 #:     GET  /api/delivery/etri-mock/test-scenarios         1,976 B  시험 시나리오
 #: 뒤의 둘은 같은 컨트롤러의 쓰기 면이다 — 한 자리를 막고 옆자리를 열면 사고는 그대로다.
+#:
+#: ★ 2026-09-10 넷이 더 올랐다 (D-364) — **측정기가 안 보여 주던 자리다.**
+#: [실측] `probe_gap_route_settlement.py` 가 리다이렉트를 **따라가자** 드러났다:
+#:     GET /api/orders/banks             200 · 87 B   익명 도달
+#:     GET /api/orders/delivery-option   200 · 96 B   익명 도달
+#:     GET /api/orders/payment-methods   200 · 97 B   익명 도달
+#:     GET /api/orders/item-types        500          익명 도달(핸들러가 터졌다)
+#: 직전 측정에서 이 넷은 **301** 로 찍혀 「본문 없음」 칸에 들어갔다. 301 은 관문의 답이
+#: 아니라 `APPEND_SLASH` 의 답이었고, 따라가지 않았기 때문에 **관문이 있는 것처럼 보였다**
+#: (D-350 — 측정기를 먼저 의심한다. 이번이 두 번째 적용이다).
+#:
+#: ★ 지금 `data: []` 가 나온다고 안전한 것이 아니다 — 그 표가 이 환경에서 비어 있을 뿐이다.
+#:   행이 있는 환경에서는 같은 호출이 목록을 통째로 내놓는다 (D-301 「검사 못함 ≠ 0건」).
+#: ★ `item-types` 는 터지므로 데이터가 안 나가지만 **함께 올린다.** 한 자리를 막고
+#:   옆자리를 열면 사고는 그대로이고, 터지던 것이 고쳐지는 날 그 자리가 열린 채로 남는다.
+#: `backend/orders/` 는 §0.4 다 — 라우트를 고치지 않고 **우리 층에서 막는다**(D-357).
 AUTHN_REQUIRED_PATHS: tuple[str, ...] = (
     "/api/delivery/drone-monitoring/drone-status",
     "/api/delivery/etri-mock/test-scenarios",
     "/api/delivery/etri-mock/receive-delivery",
+    "/api/orders/banks",
+    "/api/orders/delivery-option",
+    "/api/orders/payment-methods",
+    "/api/orders/item-types",
 )
 
 #: 이 관문이 보는 면. API 밖(관리자·정적·문서)은 종전대로 둔다 — 넓히면 로그인 화면까지 막는다.

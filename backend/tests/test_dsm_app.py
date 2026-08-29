@@ -442,24 +442,60 @@ class SettingHonestAbsenceTest(DsmFixture):
         return self._own(self._role(tenant_admin_role_code(self.group_a.pk)),
                          self.group_a)
 
-    def test_unavailable_domains_raise_instead_of_returning_empty(self) -> None:
-        """★ 2026-09-06 — 남은 것은 **둘**이다 (D-325).
+    def test_every_contract_domain_is_now_available(self) -> None:
+        """★ 2026-09-10 — **다섯이 전부 열렸다** (D-366 · D-368).
 
-        `thresholds` 와 `api_keys` 는 K5 표 ①②가 서면서 열렸다. 여기서 이름을 빼는 것이
-        **그 사실의 증거**다 — 열렸는데 목록에 남겨 두면 이 시험이 거짓으로 초록이 된다.
-        열린 쪽은 아래 `test_the_two_new_tables_are_actually_available` 가 잰다.
+        이 자리는 원래 「막힌 영역이 사유와 함께 멈추는가」를 재던 시험이었다.
+        열릴 때마다 그 목록에서 이름이 빠졌고, 오늘 마지막 하나(`grade_rules`)가 빠지며
+        **목록이 비었다.**
+
+            2026-09-06  `thresholds` · `api_keys` — K5 표 ①② (D-325)
+            2026-09-10  `zones` — 좌표계 확정(D-365) + 편집 면(D-366)
+            2026-09-10  `grade_rules` — 표 ③ (D-368)
+
+        ★ 빈 목록을 도는 시험을 남겨 두지 않는다. 0건을 도는 for 문은 **언제나
+          통과하는 시험** — 즉 시험이 아닌 것 — 이고, 그 초록은 아무것도 증명하지
+          않는다 (D-301 「검사 못함 ≠ 0건 검사」). 그래서 술어를 **뒤집는다**:
+          「막힌 것이 사유를 갖는가」에서 **「전부 열렸는가」**로.
+
+        ★ 그리고 「없는 영역」 갈래는 사라지지 않았다 —
+          `test_an_unknown_domain_is_still_refused` 가 그것을 이어받는다.
+          F-12 가 다루지 않는 이름은 여전히 멈춘다.
+        """
+        from apps.dsm import services
+        from apps.dsm.services import SETTING_DOMAINS
+
+        still_blocked = {d: why for d, why in SETTING_DOMAINS.items() if why}
+        self.assertEqual(
+            {}, still_blocked,
+            "아직 막힌 F-12 설정 영역이 있습니다 — 열렸다면 사유를 비우고, "
+            "안 열렸다면 그 사유가 왜 남는지를 여기 적으십시오: %r" % still_blocked)
+
+        # 다섯이 **실제로** 응답을 낸다. 목록에서 이름이 빠진 것만으로는
+        # 아무것도 재지 않은 것이다 (D-277 양성 대조).
+        for domain in ("recipients", "widgets", "zones", "thresholds",
+                       "grade_rules", "api_keys"):
+            with self.subTest(domain=domain):
+                out = services.setting_overview(scope=self.scope_a, domain=domain)
+                self.assertIsInstance(
+                    out, dict,
+                    f"{domain} 이 dict 를 안 돌려줍니다 — 열렸다고 적었는데 "
+                    f"화면이 읽을 것이 없습니다.")
+
+    def test_an_unknown_domain_is_still_refused(self) -> None:
+        """★ 「없는 영역」 갈래는 **사라지지 않았다.**
+
+        다섯이 다 열렸다고 아무 이름이나 받으면, 오타가 빈 설정 화면이 된다 —
+        그리고 사용자는 **설정 기능이 있는데 비어 있다**고 읽는다(D-284 · D-290).
         """
         from apps.dsm import services
         from apps.dsm.exceptions import SettingNotAvailable
 
-        for domain in ("zones", "grade_rules"):
-            with self.subTest(domain=domain):
-                with self.assertRaises(SettingNotAvailable) as caught:
-                    services.setting_overview(scope=self.scope_a, domain=domain)
-                self.assertTrue(
-                    str(caught.exception).strip(),
-                    f"{domain} 이 사유 없이 막혔습니다 — 모르는 것을 모른다고 말할 때도 "
-                    f"이유를 적습니다 (D-264).")
+        with self.assertRaises(SettingNotAvailable) as caught:
+            services.setting_overview(scope=self.scope_a, domain="zoness")
+        self.assertTrue(str(caught.exception).strip(),
+                        "사유 없이 막혔습니다 — 모르는 것을 모른다고 말할 때도 "
+                        "이유를 적습니다 (D-264).")
 
     def test_the_two_new_tables_are_actually_available(self) -> None:
         """★ 양성 대조 — **열렸다고 적었으면 실제로 나와야 한다** (D-325 · D-277).
@@ -492,6 +528,184 @@ class SettingHonestAbsenceTest(DsmFixture):
         for domain in ("recipients", "zones", "thresholds", "grade_rules", "api_keys"):
             self.assertIn(domain, SETTING_DOMAINS,
                           f"FR-12-1 의 '{domain}' 이 설정 영역 목록에서 빠졌습니다.")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# F-12 「구역」 — **위험구역을 지정하는 면** (D-366)
+# ═══════════════════════════════════════════════════════════════════════════
+class ZoneSettingTest(DsmFixture):
+    """★ 계약 F-12 「구역」 절 — 관리자 설정에서 위험구역을 **한 곳에서 관리한다.**
+
+    직전까지 이 절은 「미착수」였고 사유는 *"위험구역을 저장할 표가 없다"* 였다.
+    실측해 보니 막고 있던 것은 표가 아니라 **체계**였다 — 행정구역인지 카메라
+    묶음인지 폴리곤인지가 미정이었고, 표(`Zone`)는 D-299 로 이미 서 있었다.
+    D-365 가 그 체계를 정하면서 사유가 해소됐고, 이 시험이 그 해소를 잰다.
+
+    ★ **사유가 사라진 것과 절이 갚아진 것은 다른 사실이다**(D-314). 그래서
+      「열렸다」로 적지 않고 네 갈래를 실제로 부른다: 읽기 · 쓰기 · 무권한 · 격리.
+    """
+
+    #: 좌표계·표현은 L3 이 정한다. 시험이 자기 상수를 두면 두 벌이 되고 갈린다.
+    SQUARE = {"type": "Polygon", "coordinates": [[
+        [126.970, 37.560], [126.980, 37.560],
+        [126.980, 37.570], [126.970, 37.570]]]}
+
+    def setUp(self) -> None:
+        super().setUp()
+        from common.tenant_roles import tenant_admin_role_code
+
+        self.admin_role = self._own(
+            self._role(tenant_admin_role_code(self.group_a.pk)), self.group_a)
+        self.user_a.roles.add(self.admin_role)
+        self.user_a.refresh_from_db()
+
+    # ── ① 읽기 ───────────────────────────────────────────────────────────
+    def test_the_zones_domain_is_actually_readable(self) -> None:
+        """★ 양성 대조 — 「열렸다」고 적었으면 **실제로 나와야 한다** (D-277).
+
+        `SETTING_DOMAINS['zones']` 의 사유를 지우는 것만으로는 아무것도 재지 않은 것이다.
+        """
+        from apps.dsm import services
+
+        out = services.setting_overview(scope=self.scope_a, domain="zones")
+        self.assertIn("zones", out)
+        self.assertEqual(out["crs"], "WGS84",
+                         "좌표계가 응답에 안 실렸습니다 — 화면이 좌표를 어느 계로 "
+                         "보낼지 모르면 뒤집힌 좌표가 들어옵니다.")
+
+    # ── ② 쓰기 ───────────────────────────────────────────────────────────
+    def test_a_polygon_zone_can_be_created_and_then_judges(self) -> None:
+        """★ **지정한 구역이 실제로 판정한다.** 저장만 되고 안 도는 것을 막는다.
+
+        F-12 「구역」과 F-03 「지정 위험구역(폴리곤)」은 **한 뿌리**다 — 지정하는 면이
+        없으면 판정기는 픽스처로만 도는 코드이고, 판정이 없으면 지정은 장식이다.
+        그래서 한 시험에서 둘을 잇는다.
+        """
+        from apps.dsm import services
+        from stream_monitors.services import zones
+
+        saved = services.save_zone_setting(
+            scope=self.scope_a, name="하천 범람 위험구역", kind="polygon",
+            geometry=self.SQUARE)
+
+        self.assertEqual(saved["geometry_status"], "ready",
+                         "폴리곤을 넣었는데 geometry_status 가 ready 가 아닙니다 — "
+                         "부르는 쪽이 정하게 두면 도형 없는 ready 가 생깁니다.")
+        self.assertTrue(saved["audit_id"], "성공이 감사에 안 남았습니다 (AC-12).")
+
+        Zone = apps.get_model("stream_monitors", "Zone")
+        zone = Zone._base_manager.get(pk=saved["zone_id"])
+        self.assertTrue(zones.contains(zone, lat=37.565, lng=126.975),
+                        "지정한 구역이 그 안의 좌표를 '밖'으로 판정합니다.")
+        self.assertFalse(zones.contains(zone, lat=37.565, lng=126.990))
+
+    def test_a_camera_group_zone_can_be_created(self) -> None:
+        """카메라 묶음 구역도 같은 문으로 만든다 — 종류마다 문을 만들지 않는다."""
+        from apps.dsm import services
+
+        saved = services.save_zone_setting(
+            scope=self.scope_a, name="보행교 구간", kind="camera_group",
+            camera_ids=[self.stream_a.pk])
+
+        Zone = apps.get_model("stream_monitors", "Zone")
+        zone = Zone._base_manager.get(pk=saved["zone_id"])
+        self.assertEqual([self.stream_a.pk],
+                         list(zone.cameras.values_list("pk", flat=True)))
+        self.assertEqual(saved["geometry_status"], "not_implemented",
+                         "카메라 묶음인데 도형이 '가동'으로 적혔습니다 — "
+                         "도형 없는 ready 는 판정에서만 사라지는 구역이 됩니다.")
+
+    def test_a_broken_polygon_is_refused_at_the_door(self) -> None:
+        """★ **잘못 그린 구역은 저장되지 않는다.**
+
+        저장해 두고 부를 때 터지면 화면에는 '가동'인 구역이 판정에서만 사라진다 —
+        그 상태는 아무도 신고하지 않는다(D-284).
+        """
+        from apps.dsm import services
+        from stream_monitors.services.zones import InvalidPolygon
+
+        Zone = apps.get_model("stream_monitors", "Zone")
+        before = Zone._base_manager.count()
+        bowtie = {"type": "Polygon", "coordinates": [[
+            [0.0, 0.0], [2.0, 2.0], [2.0, 0.0], [0.0, 2.0]]]}
+
+        with self.assertRaises(InvalidPolygon):
+            services.save_zone_setting(scope=self.scope_a, name="나비넥타이",
+                                       kind="polygon", geometry=bowtie)
+        self.assertEqual(before, Zone._base_manager.count(),
+                         "판정 불가 도형이 저장됐습니다.")
+
+    def test_a_polygon_zone_without_geometry_is_refused(self) -> None:
+        """도형 없는 폴리곤 구역은 만들 수 없다 — 화면에는 구역인데 아무것도 안 잡는다."""
+        from apps.dsm import services
+
+        with self.assertRaises(ValueError):
+            services.save_zone_setting(scope=self.scope_a, name="빈 폴리곤",
+                                       kind="polygon", geometry=None)
+
+    # ── ③ 무권한 ─────────────────────────────────────────────────────────
+    def test_a_non_admin_cannot_create_a_zone(self) -> None:
+        """★ AC-12 「무권한은 차단하며」 — 구역 쓰기도 그 차단 안이다.
+
+        구역 지정은 "어디를 위험하다고 볼 것인가" 를 바꾸는 일이다. 읽기만 막고
+        쓰기를 열어 두면 아무나 위험구역을 지울 수 있다.
+        """
+        from apps.dsm import services
+        from apps.dsm.exceptions import PermissionDeniedForSetting
+
+        Zone = apps.get_model("stream_monitors", "Zone")
+        before = Zone._base_manager.count()
+
+        with self.assertRaises(PermissionDeniedForSetting) as caught:
+            services.save_zone_setting(scope=self.scope_b, name="남이 만든 구역",
+                                       kind="camera_group")
+        self.assertTrue(caught.exception.audit_id,
+                        "차단이 감사에 안 남았습니다 — '시도가 없었다' 와 "
+                        "'시도가 막혔다' 가 같은 상태가 됩니다 (AC-12).")
+        self.assertEqual(before, Zone._base_manager.count())
+
+    # ── ④ 격리 ───────────────────────────────────────────────────────────
+    def test_another_tenants_camera_cannot_be_pulled_into_my_zone(self) -> None:
+        """★ 남의 카메라를 내 위험구역에 붙일 수 없다.
+
+        붙으면 남의 테넌트 카메라의 진입이 **내 화면에 뜬다** — 읽기 격리가 아무리
+        완전해도 이 한 줄이 열려 있으면 격리가 아니다(D-290).
+        """
+        from django.core.exceptions import PermissionDenied
+
+        from apps.dsm import services
+
+        with self.assertRaises(PermissionDenied):
+            services.save_zone_setting(
+                scope=self.scope_a, name="남의 카메라 끌어오기",
+                kind="camera_group", camera_ids=[self.stream_b.pk])
+
+    def test_another_tenants_zone_is_not_visible_or_editable(self) -> None:
+        """남의 구역은 **목록에 없고, 고칠 수도 없다.** 없는 것으로 답한다(404 · D-269)."""
+        from django.http import Http404
+
+        from apps.dsm import services
+
+        mine = services.save_zone_setting(scope=self.scope_a, name="내 구역",
+                                          kind="camera_group")
+
+        self.user_b.roles.add(self._own(self._role_admin_b(), self.group_b))
+        self.user_b.refresh_from_db()
+        from common.tenant_scope import TenantScope
+
+        scope_b_admin = TenantScope.of(self.user_b)
+
+        listed = services.setting_overview(scope=scope_b_admin, domain="zones")
+        self.assertNotIn(mine["zone_id"], [z["zone_id"] for z in listed["zones"]],
+                         "남의 구역이 목록에 보입니다.")
+        with self.assertRaises(Http404):
+            services.save_zone_setting(scope=scope_b_admin, zone_id=mine["zone_id"],
+                                       name="가로채기", kind="camera_group")
+
+    def _role_admin_b(self):
+        from common.tenant_roles import tenant_admin_role_code
+
+        return self._role(tenant_admin_role_code(self.group_b.pk))
 
 
 # ═══════════════════════════════════════════════════════════════════════════

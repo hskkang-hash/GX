@@ -1733,6 +1733,14 @@ class WriteProbe:
     positive: Callable[[Any, Any, Any], Any]
     #: 이 쓰기가 행을 만드는 표. 남의 테넌트 행 수가 늘지 않았는지 여기서 센다.
     model: tuple[str, str] | None = None
+    #: ★ `attempt` 가 받는 **남의 것**이 무엇인가 — 스트림(새로 심기)인가 이벤트(고치기)인가.
+    #:
+    #:   2026-09-10 (D-366) 에 더했다. 직전까지 두 시험이 `WRITE_PROBES[0]` 과 `[1:]` 로
+    #:   **자리로** 갈랐는데, 그 규약이 어디에도 안 적혀 있었다. 구역 쓰기(새로 심기)를
+    #:   끝에 붙이자 「고치기」 시험이 그것을 집어 `AttributeError` 로 죽었다 —
+    #:   거부가 아니라 **시험이 부서진 것**이었고, 그 모양은 격리 실패와 구별되지 않는다.
+    #:   자리가 아니라 **뜻으로** 고른다.
+    victim_kind: str = "event"
 
 
 def _k1_record_into(test, scope, stream):
@@ -1757,6 +1765,23 @@ def _k1_close(test, scope, event_id):
     return close_event(event_id, scope=scope)
 
 
+def _zone_save_with_foreign_camera(test, scope, stream):
+    """★ 2026-09-10 (D-366) — 구역 쓰기 면이 생겼으므로 대장도 늘었다.
+
+    직전까지 `test_zone_editing_surface_was_not_built` 가 구역 편집 면의 부재를 지켰고,
+    그 시험은 **"쓰기 면이 늘면 WRITE_PROBES 도 함께 늘어야 한다"** 는 조건을 걸고
+    있었다. 면을 열면서 그 조건을 먼저 지킨다 — 열고 나서 시험을 지우는 것과는
+    다른 일이다.
+
+    재는 것: **남의 카메라를 내 구역에 붙일 수 있는가.** 붙으면 남의 테넌트 카메라가
+    내 위험구역 판정에 끌려 들어오고, 그 카메라의 진입이 내 화면에 뜬다.
+    """
+    from stream_monitors.services.zones import save_zone
+
+    return save_zone(scope=scope, name="격리 probe 구역", kind="camera_group",
+                     camera_ids=[stream.pk])
+
+
 #: ★ 쓰기 방향 대장. **여기가 정본이다.**
 #: 커널에 쓰기 공개 함수가 늘면 아래 `test_write_probe_registry_covers_kernel_writes`
 #: 가 멈춘다 — "새 쓰기 면을 만들고 격리 시험은 안 늘리는" 상태를 막는다.
@@ -1767,6 +1792,7 @@ WRITE_PROBES: tuple[WriteProbe, ...] = (
         attempt=_k1_record_into,
         positive=_k1_record_into,
         model=("stream_monitors", "DetectionEvent"),
+        victim_kind="stream",
     ),
     WriteProbe(
         label="K1.review_event → 남의 이벤트를 오탐 판정",
@@ -1779,6 +1805,14 @@ WRITE_PROBES: tuple[WriteProbe, ...] = (
         kernel_callable="kernels.k1_event.close_event",
         attempt=_k1_close,
         positive=_k1_close,
+    ),
+    WriteProbe(
+        label="ZONE.save_zone → 남의 카메라를 내 위험구역에 붙이기",
+        kernel_callable="stream_monitors.services.zones.save_zone",
+        attempt=_zone_save_with_foreign_camera,
+        positive=_zone_save_with_foreign_camera,
+        model=("stream_monitors", "Zone"),
+        victim_kind="stream",
     ),
 )
 
@@ -1859,13 +1893,17 @@ class TenantIsolationWriteTest(TenantFixtureMixin, TestCase):
         victim = self._victim_stream()
         before = Event._base_manager.filter(stream_monitor=victim).count()
 
-        probe = WRITE_PROBES[0]
-        with self.assertRaises(Exception) as caught:
-            probe.attempt(self, TenantScope.of(self.user_a), victim)
-        self.assertTrue(
-            self._is_refusal(caught.exception),
-            f"[{probe.label}] 거부가 아니라 {type(caught.exception).__name__} 로 끊겼습니다 — "
-            f"문지기에 닿기 전에 다른 이유로 죽은 것일 수 있습니다: {caught.exception}")
+        planting = [p for p in WRITE_PROBES if p.victim_kind == "stream"]
+        self.assertTrue(planting, "심기 probe 가 0건입니다 — 이 시험이 아무것도 안 잽니다.")
+        for probe in planting:
+            with self.subTest(probe=probe.label):
+                with self.assertRaises(Exception) as caught:
+                    probe.attempt(self, TenantScope.of(self.user_a), victim)
+                self.assertTrue(
+                    self._is_refusal(caught.exception),
+                    f"[{probe.label}] 거부가 아니라 {type(caught.exception).__name__} 로 "
+                    f"끊겼습니다 — 문지기에 닿기 전에 다른 이유로 죽은 것일 수 "
+                    f"있습니다: {caught.exception}")
 
         after = Event._base_manager.filter(stream_monitor=victim).count()
         self.assertEqual(
@@ -1887,7 +1925,7 @@ class TenantIsolationWriteTest(TenantFixtureMixin, TestCase):
         victim_event = self._event_of(self._victim_stream(), self.group_b)
         before = Event._base_manager.filter(pk=victim_event).values().first()
 
-        for probe in WRITE_PROBES[1:]:
+        for probe in (p for p in WRITE_PROBES if p.victim_kind == "event"):
             with self.subTest(probe=probe.label):
                 with self.assertRaises(Exception) as caught:
                     probe.attempt(self, TenantScope.of(self.user_a), victim_event)
@@ -1917,7 +1955,9 @@ class TenantIsolationWriteTest(TenantFixtureMixin, TestCase):
         own = self._own_stream()
         scope_a = TenantScope.of(self.user_a)
 
-        result = WRITE_PROBES[0].positive(self, scope_a, own)
+        result = next(p for p in WRITE_PROBES
+                      if p.kernel_callable.endswith("record_detection")).positive(
+            self, scope_a, own)
         self.assertTrue(result.created,
                         "자기 스트림에 이벤트를 만들지 못했습니다 — 쓰기 경로가 죽었습니다.")
         row = Event._base_manager.get(pk=result.event_id)
@@ -1956,7 +1996,11 @@ class TenantIsolationWriteTest(TenantFixtureMixin, TestCase):
         unlisted: list[str] = []
         seen: list[str] = []
 
-        for package in ("kernels.k1_event",):
+        # ★ 2026-09-10 (D-366) — `stream_monitors.services.zones` 를 더했다.
+        #   쓰기 문턱이 커널 밖에도 생겼기 때문이다. 훑는 범위를 안 넓히면 대장은
+        #   **자기가 안 보는 곳에서 늘어난 쓰기 면을 초록으로 통과시킨다** —
+        #   그것이 D-301(검사 못함 ≠ 0건 검사)의 이 파일 판이다.
+        for package in ("kernels.k1_event", "stream_monitors.services.zones"):
             module = importlib.import_module(package)
             for name in getattr(module, "__all__", []):
                 func = getattr(module, name, None)

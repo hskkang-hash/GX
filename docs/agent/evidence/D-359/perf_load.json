@@ -1,0 +1,156 @@
+{
+  "environment": {
+    "measured_at": "2026-08-29T16:21:12+00:00",
+    "python": "3.11.14",
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+    "cpu_count": 8,
+    "gpu": "없음 (이 환경에 GPU 가 붙어 있지 않다 — AI 추론은 외부 서버가 한다)",
+    "cgroup_memory_max": "max",
+    "cgroup_cpu_max": "max 100000",
+    "mem_total": "8062588 kB"
+  },
+  "samples_requested": 30,
+  "event_pipeline": {
+    "n": 30,
+    "p50_ms": 11.41,
+    "p95_ms": 12.22,
+    "max_ms": 12.56,
+    "min_ms": 11.05
+  },
+  "notify_pipeline": {
+    "n": 30,
+    "p50_ms": 2.81,
+    "p95_ms": 3.18,
+    "max_ms": 3.26,
+    "min_ms": 2.66
+  },
+  "notes": [
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients",
+    "K2 예외: NoRecipients"
+  ],
+  "witness_camera_id": 3,
+  "stream_ceiling": {
+    "declared": {
+      "CELERY_BEAT_MAX_LOOP_INTERVAL": 300,
+      "CELERY_TASK_MAX_RETRIES": 3,
+      "CELERY_TASK_REJECT_ON_WORKER_LOST": true,
+      "CELERY_WORKER_CONCURRENCY": 2,
+      "CELERY_WORKER_DISABLE_RATE_LIMITS": false,
+      "CELERY_WORKER_MAX_MEMORY_PER_CHILD": 200000,
+      "CELERY_WORKER_MAX_TASKS_PER_CHILD": 50,
+      "CELERY_WORKER_PREFETCH_MULTIPLIER": 1,
+      "CELERY_WORKER_SEND_TASK_EVENTS": true,
+      "COMMENT_MAX_ALLOWED_IMG": 10,
+      "DATA_UPLOAD_MAX_MEMORY_SIZE": 2621440,
+      "DATA_UPLOAD_MAX_NUMBER_FIELDS": 1000,
+      "DATA_UPLOAD_MAX_NUMBER_FILES": 100,
+      "FILE_NAME_MAX_LENGTH": 255,
+      "FILE_UPLOAD_MAX_MEMORY_SIZE": 2621440,
+      "NINJA_PAGINATION_MAX_LIMIT": 100,
+      "RATING_MAX_ALLOWED_IMG": 5,
+      "STREAM_URL": "http://streaming.invalid"
+    },
+    "measured": null,
+    "why_unmeasured": "동시 스트림 상한을 실측하려면 RTSP 원본 N개와 AI 서버가 필요하다. 이 환경에는 둘 다 없다(AI_RTSP_PATH=http://ai.invalid/api/process_stream). 「선언된 상한」을 「실제 상한」으로 적으면 그것이 착시 ①이다.",
+    "what_it_takes": [
+      "RTSP 원본 N개 (모의 송출기라도 실제 프레임이 흘러야 한다)",
+      "AI 추론 서버 1대 (지금은 ai.invalid)",
+      "측정 대상 지표: 프레임 드롭률 · CPU/메모리 · 이벤트 지연의 열화 지점"
+    ]
+  },
+  "under_load": {
+    "steps": [
+      {
+        "n": 10,
+        "p50_ms": 32.67,
+        "p95_ms": 45.3,
+        "max_ms": 45.3,
+        "min_ms": 29.94,
+        "workers": 1,
+        "calls": 10,
+        "throughput_per_sec": 29.68
+      },
+      {
+        "n": 20,
+        "p50_ms": 16.83,
+        "p95_ms": 54.13,
+        "max_ms": 54.13,
+        "min_ms": 12.0,
+        "workers": 2,
+        "calls": 20,
+        "throughput_per_sec": 78.01
+      },
+      {
+        "n": 40,
+        "p50_ms": 36.21,
+        "p95_ms": 42.81,
+        "max_ms": 45.73,
+        "min_ms": 23.06,
+        "workers": 4,
+        "calls": 40,
+        "throughput_per_sec": 108.71
+      },
+      {
+        "n": 80,
+        "p50_ms": 85.5,
+        "p95_ms": 103.41,
+        "max_ms": 113.96,
+        "min_ms": 42.5,
+        "workers": 8,
+        "calls": 80,
+        "throughput_per_sec": 92.52
+      },
+      {
+        "n": 160,
+        "p50_ms": 161.49,
+        "p95_ms": 191.45,
+        "max_ms": 205.9,
+        "min_ms": 114.44,
+        "workers": 16,
+        "calls": 160,
+        "throughput_per_sec": 96.34
+      }
+    ],
+    "baseline_p95_ms": 45.3,
+    "degradation_factor": 3.0,
+    "knee_workers": 16,
+    "knee_note": "동시 16 에서 p95 가 부하 없을 때의 3.0배를 넘었다",
+    "not_measured": {
+      "concurrent_streams": "RTSP 원본 N개와 AI 추론 서버(GPU)가 없다. 이 결과에서 「카메라 몇 대」를 유추하면 안 된다 — 여기서 잰 것은 이벤트 쓰기·알림의 동시성이고, 스트림 수집·디코딩·추론은 이 측정에 들어 있지 않다"
+    },
+    "cleaned_up_events": 310
+  }
+}

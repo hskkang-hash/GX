@@ -1,0 +1,27 @@
+{
+  "created_at": "2026-08-29T16:05:24+00:00",
+  "db_settings": {
+    "name": "database_guardianx",
+    "host": "postgres",
+    "port": "5432",
+    "user": "postgres"
+  },
+  "objects": {
+    "bucket": "guardianx-dev",
+    "objects": 3,
+    "bytes": 4992,
+    "endpoint": "gx-minio-restoretest:9000",
+    "scope": "event_bound",
+    "retention_days": 90,
+    "skipped_not_event_bound": 2,
+    "event_bound_expected": 3,
+    "missing_in_bucket": [],
+    "missing_count": 0,
+    "fell_back_to_all": false,
+    "keys": [
+      "clips/restore-proof-0.mp4",
+      "clips/restore-proof-1.mp4",
+      "clips/restore-proof-2.mp4"
+    ]
+  }
+}

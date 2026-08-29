@@ -223,16 +223,20 @@ def build_report(*, scope: TenantScope, template_id: int,
 SETTING_DOMAINS: dict[str, str] = {
     "recipients": "",   # 다룰 수 있다 — NotificationRule 실재, K2 가 읽는다
     "widgets": "",      # 다룰 수 있다 — K3 widget_permission
-    "zones": "위험구역을 저장할 표가 없다. `NotificationRule.zone` 은 체계가 아니라 "
-             "**라벨**이고, 행정구역인지 카메라 묶음인지 폴리곤인지가 미정이다 "
-             "(P-K2-2). 체계를 여기서 정하면 그 추측이 곧 계약이 된다",
+    # ★ 2026-09-10 열렸다 — D-366. 「저장할 표가 없다」가 아니게 됐다.
+    #   막고 있던 것은 표가 아니라 **체계**였다: 행정구역인지 카메라 묶음인지 폴리곤인지.
+    #   D-365 가 그 셋 중 둘(카메라 묶음·폴리곤)을 고르고 좌표계까지 못박았으므로
+    #   이 사유는 해소됐다. 남은 하나(행정구역)는 **안 만든다** — 계약 F-03 이
+    #   부르는 것은 "지정 위험구역" 이고 행정구역 경계는 그 질문이 아니다(D-280).
+    "zones": "",
     # ★ 2026-09-06 열렸다 — K5 표 ① (D-325). 「저장할 표가 없다」가 아니게 됐다.
     #   임의값을 두지 않은 것이 요점이다: F-02 의 지점별 수위 기준선은 여전히 **값이 없고**,
     #   없으면 `ThresholdNotSet` 으로 멈춘다. 표가 생겼다고 숫자가 생긴 것이 아니다(D-280).
     "thresholds": "",
-    "grade_rules": "등급규칙(F-04 JSON 규칙엔진)을 저장할 표가 없다. "
-                   "`detection_event_bridge.EVENT_TYPE_TO_SEVERITY` 는 배선의 "
-                   "**잠정 사전**이지 사용자가 고치는 설정이 아니다 (P-W2-2-1)",
+    # ★ 2026-09-10 열렸다 — 표 ③ (D-368). 「저장할 표가 없다」가 아니게 됐다.
+    #   잠정 사전은 그대로 남는다 — 그것이 **정의**이고 표는 **덮어쓴 값**이다.
+    #   표 ①이 임계값에 쓴 그 구조를 그대로 쓴다: 정의는 개발이, 값은 운영이 정한다.
+    "grade_rules": "",
     # ★ 2026-09-06 열렸다 — K5 표 ② (D-325 · D-328). 저장처가 생겼다.
     #   **값은 여전히 저장소 밖이다**(D-204 · D-319) — 표가 갖는 것은 값이 아니라
     #   「있는가 · 무엇인가」의 사실이고, 조회는 언제나 마스킹된다.
@@ -301,6 +305,119 @@ def set_threshold_value(*, scope: TenantScope, key: str, value: float, reason: s
                          scope_level=scope_level, scope_ref=scope_ref)
 
 
+def save_zone_setting(*, scope: TenantScope, name: str, kind: str,
+                      zone_id: int | None = None, geometry=None,
+                      camera_ids: list[int] | None = None,
+                      is_active: bool = True) -> dict[str, Any]:
+    """F-12 「구역」 쓰기 — **위험구역이 실제로 지정되는 자리** (D-366).
+
+    App 은 문지기 노릇만 한다. 도형 검증·소유 상속·테넌트 좁히기는 **L3 이** 한다 —
+    여기서 다시 하면 두 벌이 되고, 두 벌은 반드시 어긋난다(D-212).
+
+    ★ 무권한 차단도 **성공도** 감사에 남는다(AC-12). 구역 지정은 "어디를 위험하다고
+      볼 것인가" 를 바꾸는 일이라, 누가 언제 바꿨는지가 사고 뒤에 반드시 필요하다.
+    """
+    from stream_monitors.services.zones import save_zone
+
+    action = f"write:zones:{zone_id if zone_id is not None else 'new'}"
+    access = guard_setting(scope=scope, action=action, api_method="POST")
+    if not access.allowed:
+        raise PermissionDeniedForSetting(access.reason, audit_id=access.audit_id)
+
+    zone = save_zone(scope=scope, zone_id=zone_id, name=name, kind=kind,
+                     geometry=geometry, camera_ids=camera_ids, is_active=is_active)
+    return {"zone_id": zone.pk, "name": zone.name, "kind": zone.kind,
+            "geometry_status": zone.geometry_status, "is_active": zone.is_active,
+            "audit_id": access.audit_id}
+
+
+def issue_inbound_key(*, scope: TenantScope, name: str,
+                      expires_days: int | None = None) -> dict[str, Any]:
+    """F-05 「API Key 발급」 · F-12 「API키」 — **키가 실제로 발급되는 자리** (D-367).
+
+    ★ 응답에 `secret` 이 실리는 **유일한 자리**다. 저장소는 원문을 갖지 않으므로
+      이 응답을 놓치면 되찾을 수 없고 회전만 가능하다. 그것이 옳은 성질이다.
+    ★ 감사에는 **키 값을 적지 않는다** — `audit_id` 와 이름·prefix 만 남는다(D-335 규약 ④).
+    """
+    # ★ **공개 면에서만** 가져온다 (DA-04 §1-4). 비공개 모듈을 직접 가져오면
+    #   `verify_layers.py` 가 멈춘다 — 커널 로직이 App 으로 새는 것이
+    #   계약 8조3항 경계의 소멸이기 때문이다.
+    from kernels.k5_trust import DEFAULT_EXPIRES_DAYS, issue_key
+
+    access = guard_setting(scope=scope, action=f"write:inbound_api_key:issue:{name}",
+                           api_method="POST")
+    if not access.allowed:
+        raise PermissionDeniedForSetting(access.reason, audit_id=access.audit_id)
+
+    issued = issue_key(scope=scope, name=name,
+                       expires_days=DEFAULT_EXPIRES_DAYS if expires_days is None
+                       else expires_days)
+    return {**_key_payload(issued.view), "secret": issued.secret,
+            "audit_id": access.audit_id}
+
+
+def revoke_inbound_key(*, scope: TenantScope, key_id: int) -> dict[str, Any]:
+    """F-05 「API Key 폐기」 — 행을 지우지 않고 **꺼진 상태로 남긴다**.
+
+    지우면 "그 키가 언제까지 살아 있었나" 가 사라진다. 사고 조사에 필요한 것은
+    "지금 없다" 가 아니라 **"언제부터 없었나"** 다.
+    """
+    from kernels.k5_trust import revoke_key
+
+    access = guard_setting(scope=scope, action=f"write:inbound_api_key:revoke:{key_id}",
+                           api_method="POST")
+    if not access.allowed:
+        raise PermissionDeniedForSetting(access.reason, audit_id=access.audit_id)
+    return {**_key_payload(revoke_key(scope=scope, key_id=key_id)),
+            "audit_id": access.audit_id}
+
+
+def rotate_inbound_key(*, scope: TenantScope, key_id: int) -> dict[str, Any]:
+    """폐기 + 발급을 **한 동작으로.** 둘로 나누면 한쪽을 잊는다."""
+    from kernels.k5_trust import rotate_key
+
+    access = guard_setting(scope=scope, action=f"write:inbound_api_key:rotate:{key_id}",
+                           api_method="POST")
+    if not access.allowed:
+        raise PermissionDeniedForSetting(access.reason, audit_id=access.audit_id)
+    issued = rotate_key(scope=scope, key_id=key_id)
+    return {**_key_payload(issued.view), "secret": issued.secret,
+            "rotated_from": key_id, "audit_id": access.audit_id}
+
+
+def _key_payload(view) -> dict[str, Any]:
+    """키 하나의 응답 모양. **값 칸이 없다** — 여기에 칸을 만들면 언젠가 채워진다."""
+    return {"key_id": view.key_id, "name": view.name, "prefix": view.prefix,
+            "api_type": view.api_type, "capability": view.capability,
+            "status": view.status, "is_active": view.is_active,
+            "expires_at": view.expires_at}
+
+
+def set_grade_rule_value(*, scope: TenantScope, event_type: str, severity: str,
+                         reason: str) -> dict[str, Any]:
+    """F-12 「등급규칙」 쓰기 — **F-04 「JSON 무재기동 반영」이 실제로 반영되는 자리** (D-368).
+
+    App 은 문지기 노릇만 한다. 열거 검사·이력 기록은 **커널이** 한다 —
+    여기서 다시 판정하면 두 벌이 되고, 두 벌은 반드시 어긋난다(D-212).
+
+    ★ 하향이면 `lowered=True` 가 응답에 실린다. 막지 않되 **조용히 지나가지도 않는다** —
+      `fire → info` 는 화재를 조용하게 만드는 변경이고, 경보가 안 오는 것은
+      「아무 일도 없음」으로 보인다.
+    """
+    from kernels.k5_trust import set_grade_rule
+
+    access = guard_setting(scope=scope, action=f"write:grade_rules:{event_type}",
+                           api_method="POST")
+    if not access.allowed:
+        raise PermissionDeniedForSetting(access.reason, audit_id=access.audit_id)
+
+    view = set_grade_rule(scope=scope, event_type=event_type, severity=severity,
+                          reason=reason)
+    return {"event_type": view.event_type, "severity": view.severity,
+            "default_severity": view.default_severity, "lowered": view.lowered,
+            "reason": view.reason, "audit_id": access.audit_id}
+
+
 def setting_overview(*, scope: TenantScope, domain: str) -> dict[str, Any]:
     """F-12 설정 한 영역을 읽는다. **무권한이면 차단되고 그 사실이 남는다.**
 
@@ -330,10 +447,53 @@ def setting_overview(*, scope: TenantScope, domain: str) -> dict[str, Any]:
                 "history": list(threshold_history(scope=scope, limit=20))}
 
     if domain == "api_keys":
-        # ★ K5 표 ②. 값은 나오지 않는다 — 마스킹된 **사실**만 나온다(D-204 · D-319).
-        from kernels.k5_trust import list_credentials
+        # ★ **두 방향을 나란히 낸다** (D-367). 한 칸에 뭉치면 D-337 이 잡은 혼동이
+        #   화면 안으로 들어온다 — 「우리가 남을 부를 때 쓰는 키」와 「남이 우리를
+        #   부를 때 쓰는 키」는 관리 주체도 폐기 절차도 다르다.
+        #   값은 어느 쪽도 나오지 않는다 — 마스킹된 **사실**만 나온다(D-204 · D-319).
+        from kernels.k5_trust import inbound_key_facts, list_credentials
 
-        return {"api_keys": list(list_credentials(scope=scope))}
+        _facts = inbound_key_facts(scope=scope)
+        return {
+            #: 나가는 키 — 표 ②(환경변수 선언). 우리가 남의 API 를 부를 때 쓴다
+            "outbound": list(list_credentials(scope=scope)),
+            #: 들어오는 키 — 남의 App 이 우리 이벤트 OpenAPI 를 부를 때 쓴다
+            "inbound": [
+                {"key_id": k.key_id, "name": k.name, "prefix": k.prefix,
+                 "status": k.status, "is_active": k.is_active,
+                 "created_at": k.created_at, "last_used": k.last_used,
+                 "expires_at": k.expires_at}
+                for k in _facts["keys"]],
+            "inbound_api_type": _facts["api_type"],
+            "inbound_capability": _facts["capability"],
+            #: ★ 옛 키(단일 목록)를 쓰던 화면을 위해 남긴다. **표 ②만 들어 있다** —
+            #:   두 방향을 여기에 합치면 옛 화면이 들어오는 키를 나가는 키로 읽는다.
+            "api_keys": list(list_credentials(scope=scope)),
+        }
+
+    if domain == "grade_rules":
+        # ★ 표 ③. 정의 전건 + 덮어쓴 값. **덮어쓴 것만 내지 않는다** —
+        #   그러면 화면이 "규칙 2개" 를 그리고 나머지가 규칙 없이 도는 것처럼 읽힌다.
+        from kernels.k5_trust import grade_rule_history, list_grade_rules
+
+        rules = list_grade_rules(scope=scope)
+        return {
+            "grade_rules": [
+                {"event_type": r.event_type, "severity": r.severity,
+                 "default_severity": r.default_severity, "overridden": r.overridden,
+                 "reason": r.reason, "lowered": r.lowered}
+                for r in rules],
+            #: ★ **낮춘 것의 수를 따로 낸다.** 낮춘 규칙은 경보를 끈 것이고,
+            #:   목록 안에 섞여 있으면 화면에서 눈에 안 띈다 (D-301 건수 출력).
+            "lowered_count": sum(1 for r in rules if r.lowered),
+            "history": list(grade_rule_history(scope=scope, limit=20)),
+        }
+
+    if domain == "zones":
+        # ★ L3 의 구역 서비스만 부른다 — Zone 모델을 App 이 직접 만지지 않는다(DA-04 §1-4).
+        from stream_monitors.services.zones import ZONE_CRS, list_zones
+
+        return {"zones": list_zones(scope=scope), "crs": ZONE_CRS}
 
     if domain == "widgets":
         from kernels.k3_dashboard import SETTING_WIDGETS, widget_permission

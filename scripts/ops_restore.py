@@ -33,6 +33,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
 import subprocess
@@ -131,12 +132,111 @@ def self_test() -> int:
     return EXIT_FAIL if bad else EXIT_OK
 
 
+#: ★ 복구가 **써도 되는** 버킷의 접두어. 원본 버킷에는 절대 쓰지 않는다.
+#:   DB 복구가 `gx_restore_*` 임시 DB 로만 가는 것과 **같은 규약**이다 —
+#:   복구 예행이 원본을 덮으면 그것은 예행이 아니라 사고다.
+RESTORE_BUCKET_PREFIX = "gx-restore-"
+
+
+def restore_objects(manifest: dict, backup_dir: Path) -> dict:
+    """★ **객체를 실제로 되살린다** (D-356 ③).
+
+    「복구를 해 보지 않은 백업은 백업이 아니다」 — DB 에 적용한 그 규정을 영상에도
+    그대로 적용한다. 그리고 DB 때와 같이 **원본에는 쓰지 않는다**: 새 버킷을 만들어
+    거기에 올리고, **해시로 대조**한 뒤 그 버킷을 지운다.
+
+    ★ 왜 해시인가 — 「파일이 생겼다」는 성공이 아니다(D-354 ①). 0바이트 파일도 생긴다.
+      바이트가 **그때 그 바이트인지**를 재는 것만이 복구 판정이다.
+    """
+    import hashlib
+
+    from minio import Minio
+
+    obj_info = manifest.get("objects") or {}
+    if obj_info.get("unreachable"):
+        raise RuntimeError("대조표에 객체가 '닿지 못함' 으로 적혀 있다 — 뜬 것이 없다")
+
+    endpoint = os.environ.get("MINIO_ENDPOINT", "")
+    if not endpoint:
+        raise RuntimeError("MINIO_ENDPOINT 가 비었다")
+    client = Minio(
+        endpoint.replace("http://", "").replace("https://", ""),
+        access_key=os.environ.get("MINIO_ACCESS_KEY", ""),
+        secret_key=os.environ.get("MINIO_SECRET_KEY", ""),
+        secure=endpoint.startswith("https"),
+    )
+    source_bucket = obj_info.get("bucket", "")
+    target_bucket = RESTORE_BUCKET_PREFIX + datetime.now(timezone.utc).strftime(
+        "%Y%m%d%H%M%S")
+    if source_bucket.startswith(RESTORE_BUCKET_PREFIX):
+        raise RuntimeError(
+            "원본 버킷 이름이 복구 접두어로 시작한다 — 예행 버킷을 원본으로 뜬 것이다")
+
+    files = sorted((backup_dir / "objects").glob("*"))
+    keys = list(obj_info.get("keys") or [])
+    commands = [
+        "# 복구는 **새 버킷**으로만 간다 — 원본에는 쓰지 않는다",
+        f"mc mb {target_bucket}",
+        f"mc cp --recursive {backup_dir / 'objects'}/ {target_bucket}/",
+    ]
+
+    client.make_bucket(target_bucket)
+    restored = matched = 0
+    mismatched: list[str] = []
+    try:
+        for key in keys:
+            flat = backup_dir / "objects" / key.replace("/", "_")
+            if not flat.is_file():
+                mismatched.append(f"{key}: 백업 파일이 없다")
+                continue
+            data = flat.read_bytes()
+            client.put_object(target_bucket, key, io.BytesIO(data), len(data))
+            restored += 1
+
+            # ★ 원본과 **바이트로** 대조한다. 되살린 것이 그때 그것인가.
+            back = client.get_object(target_bucket, key).read()
+            origin = client.get_object(source_bucket, key).read()
+            if hashlib.sha256(back).hexdigest() == hashlib.sha256(origin).hexdigest():
+                matched += 1
+            else:
+                mismatched.append(f"{key}: 되살린 바이트가 원본과 다르다")
+    finally:
+        # 예행이므로 치운다. 남기면 다음 예행이 「이미 있다」로 죽는다.
+        for key in keys:
+            try:
+                client.remove_object(target_bucket, key)
+            except Exception:
+                pass
+        try:
+            client.remove_bucket(target_bucket)
+            commands.append(f"mc rb --force {target_bucket}")
+        except Exception:
+            pass
+
+    return {
+        "source_bucket": source_bucket,
+        "restore_bucket": target_bucket,
+        "files_in_backup": len(files),
+        "expected": len(keys),
+        "restored": restored,
+        "hash_matched": matched,
+        "mismatched": mismatched,
+        "ok": bool(keys) and not mismatched and matched == len(keys),
+        "commands": commands,
+    }
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--manifest", default="docs/agent/evidence/D-354/backup/manifest.json")
     ap.add_argument("--evidence", default="docs/agent/evidence/D-354/restore_run.md")
     ap.add_argument("--via", default="local",
                     help="local | docker:<컨테이너> — pg_restore 를 **어디서** 부를 것인가")
+    ap.add_argument("--objects", action="store_true",
+                    help="객체저장도 **실제로 되살린다** (D-356 ③). 새 버킷으로만 간다")
+    ap.add_argument("--objects-only", action="store_true",
+                    help="DB 는 건드리지 않고 객체만 되살린다 — 둘의 클라이언트가 "
+                         "사는 자리가 달라 따로 돌게 되는 환경이 있다")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
 
@@ -148,6 +248,28 @@ def main() -> int:
         print("[OPS-RESTORE] 대조표가 없다: %s — 먼저 ops_backup.py 를 돌려라" % manifest_path)
         return EXIT_FAIL
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    if args.objects_only:
+        # ★ 객체만. **성공·실패를 수로 낸다** — 「했다」로 적지 않는다 (D-301).
+        try:
+            out = restore_objects(manifest, manifest_path.parent)
+        except Exception as exc:
+            print("[OPS-RESTORE] 판정 불가 — 객체저장에 닿지 못했다: %s" % str(exc)[:200])
+            return EXIT_UNDECIDABLE
+        print("[OPS-RESTORE] 객체 복구: 대상 %d개 · 되살림 %d개 · **해시 일치 %d개**"
+              % (out["expected"], out["restored"], out["hash_matched"]))
+        print("[OPS-RESTORE] 복구 버킷 %s (원본 %s 에는 쓰지 않았다)"
+              % (out["restore_bucket"], out["source_bucket"]))
+        for line in out["mismatched"]:
+            print("[OPS-RESTORE] FAIL — %s" % line)
+        evidence = Path(args.evidence)
+        evidence.parent.mkdir(parents=True, exist_ok=True)
+        evidence.write_text(_render_object_evidence(manifest, out), encoding="utf-8")
+        print("[OPS-RESTORE] 증거 → %s" % evidence)
+        print("[OPS-RESTORE] %s" % ("영상 복구 성공 — 바이트가 원본과 같다"
+                                    if out["ok"] else "영상 복구 실패"))
+        return EXIT_OK if out["ok"] else EXIT_FAIL
+
     db = manifest.get("db") or {}
     expected = {k: v for k, v in (db.get("rows") or {}).items()}
     if not db.get("file") or not any(v is not None for v in expected.values()):
@@ -277,6 +399,69 @@ def _render_evidence(manifest, target, commands, expected, actual, ok, notes) ->
         ]
     else:
         lines.append("객체 %s개 · %s bytes" % (obj.get("objects"), obj.get("bytes")))
+    return "\n".join(lines) + "\n"
+
+
+def _render_object_evidence(manifest: dict, out: dict) -> str:
+    """영상 복구 기록. **명령을 그대로 적는다** — 사고 나는 날 이걸 보고 친다 (D-356 ③)."""
+    obj = manifest.get("objects") or {}
+    lines = [
+        "# 영상(객체저장) 복구 실행 기록 — **해 봤다** (D-356 ③)",
+        "",
+        "> 「복구를 해 보지 않은 백업은 백업이 아니다」 — DB 에 적용한 그 규정을",
+        "> 영상에도 그대로 적용한 기록이다. **파일이 생겼다**가 아니라",
+        "> **바이트가 그때 그 바이트인가**를 잰다.",
+        "",
+        "## 1. 무엇을 떴나",
+        "",
+        "| 항목 | 값 |",
+        "|---|---|",
+        f"| 원본 버킷 | `{out['source_bucket']}` |",
+        f"| 범위 | `{obj.get('scope', '?')}` — "
+        + ("**이벤트에 묶인 것만**(D-356 ①)" if obj.get("scope") == "event_bound"
+           else "버킷 전량") + " |",
+        f"| 뜬 객체 | {obj.get('objects')}개 · {obj.get('bytes')} bytes |",
+        f"| 이벤트에 묶인 총수 | {obj.get('event_bound_expected')}개 |",
+        f"| 안 묶여서 건너뛴 것 | {obj.get('skipped_not_event_bound')}개 |",
+        f"| 묶였는데 버킷에 없던 것 | {obj.get('missing_count')}개 |",
+        f"| 보존 기간 | {obj.get('retention_days')}일 |",
+        "",
+        "## 2. 되살려 봤나 — **수로 답한다**",
+        "",
+        "| 항목 | 값 |",
+        "|---|---|",
+        f"| 복구 대상 | {out['expected']}개 |",
+        f"| 되살린 것 | {out['restored']}개 |",
+        f"| **해시 일치** | **{out['hash_matched']}개** |",
+        f"| 어긋난 것 | {len(out['mismatched'])}개 |",
+        f"| 복구 버킷 | `{out['restore_bucket']}` (예행 뒤 지웠다) |",
+        "",
+        "★ **원본 버킷에는 쓰지 않았다.** DB 복구가 `gx_restore_*` 임시 DB 로만 가는 것과",
+        "같은 규약이다 — 복구 예행이 원본을 덮으면 그것은 예행이 아니라 사고다.",
+        "",
+        "## 3. 친 명령 — 그대로",
+        "",
+        "```",
+        *out["commands"],
+        "```",
+        "",
+        "## 4. 판정",
+        "",
+        ("**성공** — 되살린 바이트가 원본과 같다." if out["ok"]
+         else "**실패** — 아래를 보라."),
+    ]
+    for line in out["mismatched"]:
+        lines.append(f"- {line}")
+    lines += [
+        "",
+        "## 5. ★ 아직 아닌 것 — 적어 둔다 (D-356 ②)",
+        "",
+        "이 예행의 백업 목적지는 **저장소 안**(`docs/agent/evidence/`)이다.",
+        "**같은 디스크는 백업이 아니다.** 운영에서는 최소 다른 볼륨, 가능하면 다른 호스트로",
+        "가야 하고, 그 목적지는 **배포 구성에서 정해진다** — 지금 그 경로를 적으면",
+        "실측하지 않은 경로가 매뉴얼에 들어간다(D-286). 그래서 여기에는",
+        "**「해 봤다」와 「아직 어디에 둘지는 안 정했다」를 함께** 적는다.",
+    ]
     return "\n".join(lines) + "\n"
 
 

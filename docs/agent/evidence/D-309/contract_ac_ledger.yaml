@@ -90,11 +90,28 @@ features:
           - "backend/tests/test_zone_judgment.py::test_f03_combination_does_not_overwrite_the_stored_severity"
         note: "상향은 **값**이고 저장된 등급을 덮지 않는다 — 효과는 수신자로 나타난다."
       - quote: "지정 위험구역(폴리곤)"
-        state: 잠김
-        unlock_id: F03_POLYGON_DESIGN
+        state: 구현
+        proof:
+          - "backend/tests/test_zone_judgment.py::test_f03_polygon_contract_ac"
+          - "backend/tests/test_zone_judgment.py::test_a_point_on_a_vertex_is_inside"
+          - "backend/tests/test_zone_judgment.py::test_a_point_on_an_edge_is_inside"
+          - "backend/tests/test_zone_judgment.py::test_a_concave_polygon_judges_the_notch_as_outside"
+          - "backend/tests/test_zone_judgment.py::test_a_self_intersecting_polygon_is_refused_not_guessed"
         note: |
-          좌표 표현·좌표계 미확정. ZONE_POLYGON_READY=False 로 **선언된 미완성**이고,
-          올리는 순간 test_f03_polygon_contract_ac 가 의무가 된다(D-299).
+          ★ 2026-09-10 **해소** (D-365). 잠금이 값을 낸 사례다 — 상수를 올리자
+          verify_zone_polygon.py 가 test_f03_polygon_contract_ac 를 요구했고,
+          구현만 올리고 시험을 안 낼 길이 없었다(D-299).
+
+          고른 것을 적는다 — **이 선택이 곧 계약이다**(D-280):
+            표현   GeoJSON Polygon 부분집합 (RFC 7946) · 바깥 고리 하나 · 구멍 없음
+            좌표계 WGS84 · 경도-위도 순서 · 평면 판정
+            경계   경계 위의 점은 **안** — 경계에 선 사람을 밖으로 세면 놓친다.
+                   헛경보는 사람이 지우고 놓친 것은 아무도 모른다
+            거절   자기교차 폴리곤은 판정하지 않는다 — 안이 하나로 정해지지 않는다
+
+          경계 사례 넷(꼭짓점·변·오목·자기교차)을 각각 따로 잰다. 한 시험에 묶으면
+          무엇이 깨졌는지가 실패 한 줄에 안 나온다. 오목 갈래가 특히 값을 한다 —
+          볼록 껍질로 재는 잘못된 구현은 **사각형 시험은 통과한 채** 거기서만 틀린다.
 
   - id: F-04
     ac: "동일 이벤트에 대해 5분 내 중복 알림 0건을 보장한다"
@@ -141,41 +158,31 @@ features:
           그 키가 EventView 에 실재하는지까지(App 이 모델을 타고 들어가면 멈춘다).
           ★ 이 시험 파일이 그대로 **연동 규격서의 정본**이다(D-315) — 문서를 따로 쓰지 않는다.
       - quote: "API Key 발급·폐기"
-        state: 미착수
+        state: 구현
+        proof:
+          - "backend/tests/test_f05_inbound_key_lifecycle.py::test_f05_issue_and_revoke_contract_ac"
+          - "backend/tests/test_f05_inbound_key_lifecycle.py::test_the_secret_is_shown_exactly_once"
+          - "backend/tests/test_f05_inbound_key_lifecycle.py::test_rotation_replaces_and_marks_the_old_one"
+          - "backend/tests/test_f05_inbound_key_lifecycle.py::test_another_tenants_key_cannot_be_revoked"
+          - "backend/tests/test_f05_inbound_key_lifecycle.py::test_the_two_directions_are_not_the_same_thing"
         note: |
-          ★ 2026-09-06 **사유를 정정한다 — 방향이 반대였다.**
-          D-325 표 ②(자격증명 저장처)가 이 절을 갚을 것으로 예상됐으나, 실측해 보니
-          **두 개가 다른 것**이다:
-            · 표 ②   = **나가는** 자격증명 — 우리가 남의 API(juso·포털)를 부를 때 쓰는 키
-            · FR-05-3 = **들어오는** 자격증명 — 남의 App 이 우리 이벤트 OpenAPI 를 부를 때 쓰는 키
-          둘 다 "API Key" 라 불려서 같은 것으로 읽혔다 — **이름의 유사성을 같음으로 읽은 것**이고,
-          D-321(재난안전 CCTV)과 D-328(어떤 키인지 묻지 않았다)의 형제다.
-          그래서 이 절은 **미착수 그대로 둔다.** 표 ②가 섰다고 이 절을 올리면
-          그 순간 대장이 거짓말을 시작한다.
-          남은 선행 판정: 이벤트 OpenAPI 의 **인증 방식**(지금은 JWT). 키 발급을 붙이려면
-          그 방식부터 정해야 하고, 그것을 지금 고르면 그 선택이 곧 F-05 의 계약이 된다(D-280).
-          ★ 2026-09-06 실측 — **바퀴를 다시 만들지 말 것**: 이관 자산에 발급·폐기 면이
-            이미 있다 — `core.apikey_account`(dj-core · §0.4 금지구역)와 그것을 감싼
-            `backend/third_api/views/api_key_controller.py`. 다만 **F-05 의 진입면에 연결돼
-            있지 않고**(이벤트 OpenAPI 는 CustomJWTAuth 만 받는다), 그 컨트롤러의
-            `@path_permission` 이 **주석 처리돼 있다.** 그래서 지금 상태로 이 절을 올릴 수 없다.
-            붙이는 일은 「만들기」가 아니라 **「잇기 + 권한 되살리기」**이고, 그 판정을 요청한다.
-          ★ 2026-09-07 — 판정을 받았고(D-335), 착수해 보니 **한 겹 더 아래였다.**
-            「잇기」도 아니었다. dj-core 의 CustomJWTAuth 가 들어오는 키 헤더를 **이미 받고 있었고**,
-            호출로 재 보니 키 하나가 **F-05 진입면 7자리 전부에 도달**했다 —
-            events · deliveries · dashboard · clip · **clip/stream(원본 영상)** · reports · settings.
-            만료·비활성·가짜 키는 401 이었다. **인증은 성했고, 성하지 않은 것은 범위였다.**
-            → 그래서 한 일은 **좁히기**다: backend/common/inbound_api_key.py 의 JwtOrInboundKey 가
-              라우트마다 키 수용을 선언하게 하고 **기본값은 거절**이며, 지금 열린 곳은
-              `GET /api/dsm/events` 하나뿐이다. 규약 다섯을 시험 17건으로 걸었다
-              (backend/tests/test_f05_inbound_api_key.py).
-            ★ **그러나 이 절은 여전히 미착수다.** 이 절이 말하는 것은 「발급·폐기」이고,
-              이번에 한 것은 **소비 면의 범위**다. 둘은 다른 일이다 —
-              범위를 좁혔다고 발급·폐기를 만든 것이 아니다. 올리면 그 순간 대장이 거짓말한다.
-              남은 것: 발급·폐기 면(third_api api_key_controller)의 **권한 주석 11자리**를
-              갚고, 그 면에 증명 시험을 붙이는 일.
-          부재는 여전히 조용하지 않다 — 표 ②가 `api_keys` 설정 면에 **나가는 키의 사실**을
-          내보내고, 들어오는 키가 없다는 것은 이 note 가 말한다.
+          ★ 2026-09-10 **해소** (D-367). 이 절은 **세 번 미뤄졌고 세 번 다 옳았다** —
+          그 내력이 이 절의 값이다:
+
+            2026-09-06 (D-325)  표 2가 갚을 줄 알았다 → **방향이 반대**였다.
+                                표 2 = 나가는 키 · 이 절 = 들어오는 키 (D-337)
+            2026-09-07 (D-335)  인증은 **이미 성했고** 성하지 않은 것은 **범위**였다.
+                                키 하나가 진입면 7자리(원본 영상 포함)에 닿았다 → 좁혔다.
+                                그러나 좁히기는 **소비 면**이고 이 절은 **발급 면**이다
+            2026-09-10 (D-367)  남은 하나 — 발급·폐기의 면. 이 시험 파일
+
+          세 번 다 「올릴 수 있을 것 같은」 상태였고 세 번 다 안 올렸다. 그 덕에
+          지금 무엇을 갚았는지가 정확히 남아 있다 (D-314 — 부분을 구현으로 올리지 않는다).
+
+          한 일: **만들지 않고 감쌌다.** 발급기는 core.apikey_account(dj-core · 0.4)에
+          이미 있고 우리는 **읽고 호출만** 한다. 우리가 더한 것은 셋 —
+          (1) 테넌트 귀속(dj-core 의 키는 user FK 만 갖는다) (2) 마스킹 조회(값 칸이 없다)
+          (3) 회전(폐기+발급을 한 동작으로 — 둘로 두면 한쪽을 잊는다).
 
   - id: F-06
     ac: "심각 등급 발생 시 SDN QoS 요청을 10초 이내에 보낸다"
@@ -325,11 +332,27 @@ features:
         proof:
           - "backend/tests/test_dsm_app.py::test_available_domains_actually_return_something"
       - quote: "구역"
-        state: 미착수
+        state: 구현
+        proof:
+          - "backend/tests/test_dsm_app.py::test_a_polygon_zone_can_be_created_and_then_judges"
+          - "backend/tests/test_dsm_app.py::test_a_non_admin_cannot_create_a_zone"
+          - "backend/tests/test_dsm_app.py::test_another_tenants_camera_cannot_be_pulled_into_my_zone"
+          - "backend/tests/test_dsm_app.py::test_a_broken_polygon_is_refused_at_the_door"
         note: |
-          Zone 모델은 D-299 로 섰으나 **구역을 만드는 설정 면이 없다.** 지금 구역은
-          관리자 화면·픽스처로 만든다. 못 다루는 영역은 빈 응답이 아니라 사유와 함께
-          501 로 나간다(그 갈래는 test_unavailable_domains_raise_instead_of_returning_empty 가 잰다).
+          ★ 2026-09-10 **해소** (D-366). 실측해 보니 막고 있던 것은 **표가 아니라
+          체계**였다 — Zone 은 D-299 로 이미 서 있었고, 미정이던 것은 「행정구역인지
+          카메라 묶음인지 폴리곤인지」였다. D-365 가 그 셋 중 둘을 고르면서 사유가 해소됐다.
+          (행정구역은 **안 만든다** — 계약 F-03 이 부르는 것은 지정 위험구역이다.)
+
+          ★ 이 절과 F-03 폴리곤 절은 **한 뿌리**다: 지정하는 면이 없으면 판정기는
+            픽스처로만 도는 코드이고, 판정이 없으면 지정은 장식이다.
+            그래서 한 시험(..._can_be_created_and_then_judges)이 둘을 잇는다.
+
+          ★ 쓰기 면이 늘었으므로 **격리 대장도 함께 늘렸다** —
+            test_tenant_isolation.py 의 WRITE_PROBES 에 구역 쓰기 probe 를 넣고,
+            대장 검사가 stream_monitors.services.zones 까지 훑도록 넓혔다.
+            직전 test_zone_editing_surface_was_not_built 가 건 조건이 정확히 그것이었고,
+            **면을 열면서 그 조건을 먼저 지켰다.**
       - quote: "임계값"
         state: 구현
         proof:
@@ -345,19 +368,56 @@ features:
             그 구별이 없으면 "임계값을 설정 가능하게 만들었다" 가 곧
             **"계약 AC 를 설정 가능하게 만들었다"** 가 된다.
       - quote: "등급규칙"
-        state: 미착수
+        state: 구현
+        proof:
+          - "backend/tests/test_grade_rules.py::test_f04_no_restart_contract_ac"
+          - "backend/tests/test_grade_rules.py::test_the_judgment_does_not_read_the_dict_directly"
+          - "backend/tests/test_grade_rules.py::test_lowering_is_reported_as_lowered"
+          - "backend/tests/test_grade_rules.py::test_the_history_keeps_what_it_was_and_why"
+          - "backend/tests/test_grade_rules.py::test_a_non_admin_cannot_change_a_grade_rule"
         note: |
-          F-04 JSON 규칙엔진을 저장할 표가 없다. detection_event_bridge 의
-          EVENT_TYPE_TO_SEVERITY 는 배선의 **잠정 사전**이지 사용자가 고치는 설정이 아니다
-          (P-W2-2-1 미결).
+          ★ 2026-09-10 **해소** (D-368 · 표 3 · 마이그 0023). 표 1과 **같은 모양**이다:
+          정의는 코드(EVENT_TYPE_TO_SEVERITY — 잠정값과 그 근거), 값은 DB(GradeRule).
+          잠정 사전을 **지우지 않았다** — 정의를 DB 로 옮기면 운영이 정의를 지울 수 있고,
+          지워진 정의는 코드가 부를 때 터진다(D-325 와 같은 판단).
+
+          ★ 이 절이 F-04 「JSON 무재기동 반영」과 **같은 자리**다. 그 AC 가 코드에서
+            나오는 곳은 한 줄이다 — 배선이 사전을 직접 읽지 않고 **매번 DB 를 본다.**
+            사전은 import 시점에 한 번 읽히고, 그것만 있으면 규칙 변경이 재기동을
+            요구한다. **재기동은 재난 상황 중에 하면 안 되는 일**이고, 규칙을 고치는
+            시점은 대개 경보가 쏟아지는 그 순간이다.
+
+          ★ 이 표에서 가장 위험한 동작은 **하향**이다. fire 를 info 로 내리면 화재가
+            조용해지고, 경보가 안 오는 것은 「아무 일도 없음」으로 보인다.
+            막지 않되 셋을 요구한다: 사유 · 이력 · lowered 표식.
+            설정 화면은 **낮춘 것의 수를 따로 낸다**(D-301) — 목록에 섞이면 안 보인다.
+
+          ★ [시험이 잡은 것] 첫 구현은 테넌트가 없으면 좁히지 **않았고**, 그래서
+            파이프라인 판정이 **아무 테넌트의 규칙이나 집었다.** 「좁히지 않는다」와
+            「전역만 본다」를 한 값(None)에 둔 것이 원인이었다. 지금은 판정의 테넌트를
+            **그 카메라의 주인**에서 얻는다 — 요청자가 없는 자리의 정답이다(D-281).
       - quote: "API키"
-        state: 미착수
+        state: 구현
+        proof:
+          - "backend/tests/test_f05_inbound_key_lifecycle.py::test_the_setting_page_shows_both_directions_separately"
+          - "backend/tests/test_f05_inbound_key_lifecycle.py::test_a_non_admin_cannot_issue_a_key"
+          - "backend/tests/test_f05_inbound_key_lifecycle.py::test_no_key_value_reaches_the_setting_page"
+          - "backend/tests/test_f05_inbound_key_lifecycle.py::test_the_capability_is_read_from_the_gate_not_retyped"
         note: |
-          F-05 의 'API Key 발급·폐기' 절과 **같은 뿌리**다(FR-05-3) — 그래서 함께 남는다.
-          ★ 2026-09-06: `api_keys` 설정 면은 열렸고 K5 표 ②가 **나가는 키의 사실**을 낸다.
-            그러나 FR-12-1 이 부르는 "API Key" 는 FR-05-3 이 가리키는 **들어오는 키**이고,
-            그것은 아직 없다. 설정 면이 열린 것과 그 절이 갚아진 것은 다른 사실이다 —
-            **부분을 구현으로 올리지 않는다**(D-314).
+          ★ 2026-09-10 **해소** (D-367). F-05 의 API Key 발급·폐기 절과 **같은 뿌리**였고
+          (FR-05-3) 함께 갚아졌다 — 뿌리가 같으면 함께 남고 함께 풀린다.
+
+          설정 화면은 **두 방향을 나란히, 그러나 따로** 낸다(inbound / outbound).
+          한 칸에 뭉치면 D-337 이 잡은 혼동이 화면 안으로 들어온다 — 관리 주체도
+          폐기 절차도 다른 둘을 같은 목록에서 보면 운영자가 남의 키를 우리 키로 읽는다.
+
+          ★ 값은 어느 방향도 화면에 안 나온다. 「이 키로 할 수 있는 일」(capability)은
+            문장으로 적지 않고 **미들웨어의 허용 집합에서 읽는다** — 적으면 그 집합이
+            바뀌는 날 문장만 옛말이 되고, 옛말이 된 문장은 옛말인 것이 안 보인다(D-286).
+
+          ★ 2026-09-06 에 이 절을 안 올린 것이 옳았다: 그때 열린 것은 표 2(나가는 키)의
+            설정 면이었고, FR-12-1 이 부르는 것은 **들어오는 키**였다.
+            설정 면이 열린 것과 그 절이 갚아진 것은 다른 사실이다(D-314).
 
   - id: F-13
     ac: "정찰 프로파일 초안을 생성하되 비행 명령은 전송하지 않는다"

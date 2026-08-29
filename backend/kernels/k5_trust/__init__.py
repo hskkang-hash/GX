@@ -6,6 +6,11 @@ DA-04 가 정의한 K5 는 격리·감사·저하 운전이었고, 그 대부분
 
     표 ①  임계값(Threshold)          — `thresholds.py` 정의 + DB 덮어쓰기·이력
     표 ②  자격증명 저장처(Credential) — `credentials.py` 선언 + DB 사실
+    표 ③  등급규칙(GradeRule)         — `grade_rules.py`. 정의는 배선에, 값은 DB
+                                       (2026-09-10 · D-368 · F-04 무재기동 반영)
+    (2026-09-10 추가 · D-367)
+    들어오는 키(InboundKey)          — `inbound_keys.py` 발급·폐기·회전·목록.
+                                       **표가 아니다** — dj-core 의 표를 감싼 면이다
 
 왜 둘 다 K5 인가 (D-325 이행 판정)
 ----------------------------------
@@ -30,6 +35,28 @@ from kernels.k5_trust.credentials import (  # noqa: F401
     ROTATED,
     TYPED,
     VERIFIED,
+)
+from kernels.k5_trust.grade_rules import (  # noqa: F401
+    SEVERITY_ORDER,
+    GradeRuleNotDefined,
+    GradeRuleView,
+    SeverityNotInContract,
+    grade_rule_history,
+    list_grade_rules,
+    set_grade_rule,
+    severity_for,
+)
+from kernels.k5_trust.inbound_keys import (  # noqa: F401
+    DEFAULT_EXPIRES_DAYS,
+    INBOUND_API_TYPE,
+    inbound_key_facts,
+    InboundKeyNotFound,
+    InboundKeyView,
+    IssuedKey,
+    issue_key,
+    list_keys,
+    revoke_key,
+    rotate_key,
 )
 from kernels.k5_trust.exceptions import (  # noqa: F401
     CredentialNotDeclared,
@@ -62,6 +89,28 @@ __all__ = [
     "credential_fact",
     "secret_for",
     "refresh_credential",
+    # ★ 표 ③ 등급규칙 — F-12 「등급규칙」 · F-04 「무재기동 반영」 (D-368)
+    "severity_for",
+    "list_grade_rules",
+    "set_grade_rule",
+    "grade_rule_history",
+    "SEVERITY_ORDER",
+    "GradeRuleView",
+    "GradeRuleNotDefined",
+    "SeverityNotInContract",
+    # ★ 들어오는 키 — 발급·폐기·회전·목록 (D-367 · 계약 F-05 · F-12)
+    #   표 ②(나가는 키)와 **같은 어휘, 다른 방향**이다. 한 표에 두지 않는 이유는
+    #   inbound_keys.py 머리에 있다 (D-337).
+    "issue_key",
+    "revoke_key",
+    "rotate_key",
+    "list_keys",
+    "INBOUND_API_TYPE",
+    "DEFAULT_EXPIRES_DAYS",
+    "inbound_key_facts",
+    "InboundKeyView",
+    "IssuedKey",
+    "InboundKeyNotFound",
     # 상태 5값 (D-328)
     "ABSENT",
     "PRESENT",

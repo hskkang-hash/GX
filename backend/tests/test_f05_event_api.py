@@ -72,6 +72,21 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     #   그 손이 곧 "진입면을 늘린다"는 선언이다.
     #   문지기: @tenant_scoped + CustomJWTAuth + guard_setting(F-12 감사 전건).
     ("POST", "/api/dsm/settings/thresholds"),
+    # ★ 2026-09-10 **다섯이 늘었다** — 계약 절 셋을 갚으면서 (D-365~368).
+    #   손으로 이 줄들을 더하는 일이 곧 "진입면을 넓힌다" 는 선언이다.
+    #   이 시험이 아니었으면 다섯이 조용히 늘었을 것이고, F-05 의
+    #   「이벤트 OpenAPI 하나로만 들어온다」가 소리 없이 약해졌을 것이다.
+    #
+    #   문지기: 전건 @tenant_scoped + JwtOrInboundKey(키 거절 · 기본값) +
+    #           guard_setting(F-12 감사 — 성공·실패 모두)
+    #   ★ 다섯 다 **들어오는 키를 받지 않는다.** 특히 api-keys 셋이 그렇다 —
+    #     키로 키를 발급받을 수 있으면 키 하나가 영원히 자기를 갱신하고,
+    #     그러면 폐기가 폐기가 아니게 된다.
+    ("POST", "/api/dsm/settings/zones"),          # F-12 「구역」 (D-366)
+    ("POST", "/api/dsm/settings/grade-rules"),    # F-12 「등급규칙」 (D-368)
+    ("POST", "/api/dsm/settings/api-keys"),       # F-05 「발급」 (D-367)
+    ("DELETE", "/api/dsm/settings/api-keys/{int:key_id}"),         # F-05 「폐기」
+    ("POST", "/api/dsm/settings/api-keys/{int:key_id}/rotate"),    # F-05 「회전」
 })
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**

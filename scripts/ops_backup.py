@@ -14,7 +14,12 @@
 무엇을 뜨나 — 둘
 ----------------
   ① **DB** — `pg_dump -Fc`(custom). 스키마·데이터·인덱스가 한 파일에 들어간다
-  ② **객체저장** — 영상 클립·캡처가 사는 곳(MinIO). 버킷의 객체를 내려받는다
+  ② **객체저장** — 영상 클립·캡처가 사는 곳(MinIO).
+     ★ 기본은 **버킷 전량이 아니라 「이벤트에 묶인 것만」**이다 (D-356 ① · `--object-scope`).
+       전량은 크고 비싸고 제품이 필요로 하는 것도 아니다 — 재난안전에서 증빙이 되는 것은
+       「그 이벤트의 그 장면」이고, 그것을 아는 표가 `EventClip`(D-306)이다.
+       그래서 **영상 백업과 EventClip 이 한 덩어리**다.
+  ③ 보존 기간 — `RETENTION_DAYS`. 정하지 않으면 **디스크가 정책을 대신 정한다**(D-356 ④)
 
     ★ 둘 다 떠야 한다. DB 만 뜨면 이벤트 행은 살아나고 **그 이벤트의 영상은 사라진다** —
       복구된 시스템이 「영상이 있었다고 말하는 DB」가 된다. 착시 ⑥(스키마)의 운영판이다.
@@ -175,8 +180,18 @@ def dump_db(out_dir: Path, via: str = "local") -> dict:
     }
 
 
-def mirror_objects(out_dir: Path) -> dict:
-    """객체저장을 내려받는다. 닿지 못하면 **예외로 끝난다** — 조용히 0개로 적지 않는다."""
+#: ★ 보존 기간 (D-356 ④). **정하지 않으면 디스크가 정책을 대신 정한다** —
+#: 그리고 디스크가 정하는 방식은 「가득 차면 백업이 멈춘다」이다.
+#:
+#: 왜 90일인가: 계약 검수(2027.1)와 그 뒤 안정화 구간을 한 번에 덮는 길이이고,
+#: 재난·사고 보고서(F-11)가 사후에 영상을 부르는 창이 대개 분기 안이다.
+#: **계약이 정한 수가 아니다** — 계약 [별첨1] 에 보존 기간 조항이 없다(D-280).
+#: 고객이 다른 값을 요구하면 그때 이 상수 하나를 고친다.
+RETENTION_DAYS: int = 90
+
+
+def _minio_client():
+    """객체저장 클라이언트. 설정이 비면 **예외** — 조용히 0개로 적지 않는다."""
     from minio import Minio
 
     endpoint = os.environ.get("MINIO_ENDPOINT", "")
@@ -189,14 +204,82 @@ def mirror_objects(out_dir: Path) -> dict:
         secret_key=os.environ.get("MINIO_SECRET_KEY", ""),
         secure=endpoint.startswith("https"),
     )
+    return client, bucket, endpoint
+
+
+def event_bound_keys() -> set[str] | None:
+    """★ **이벤트에 묶인 객체 키만** (D-356 ①). Django 가 없으면 `None`.
+
+    왜 전량이 아닌가 — 버킷 전량은 크고 비싸고, **제품이 필요로 하는 것도 아니다.**
+    재난안전에서 증빙이 되는 것은 「그 이벤트의 그 장면」이고, 그것을 아는 표가
+    `EventClip`(D-306)이다. 그래서 ②(무엇을 뜨는가)와 EventClip 이 한 덩어리다.
+
+    ★ `None` 과 `set()` 은 **다른 값**이다:
+        None    이벤트 목록을 못 읽었다 (Django 없음) — 전량으로 물러난다
+        set()   읽었는데 **묶인 객체가 0개다** — 뜰 것이 없는 것이 사실이다
+      둘을 같은 값으로 두면 「못 읽었다」가 「없다」로 조용히 바뀐다 (D-301).
+    """
+    try:
+        sys.path.insert(0, "/app")
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+        import django
+
+        django.setup()
+        from django.apps import apps as _apps
+
+        Clip = _apps.get_model("stream_monitors", "EventClip")
+    except Exception:
+        return None
+    return {k for k in Clip._base_manager.exclude(object_key="")
+            .values_list("object_key", flat=True) if k}
+
+
+def mirror_objects(out_dir: Path, *, scope: str = "event_bound") -> dict:
+    """객체저장을 내려받는다. 닿지 못하면 **예외로 끝난다** — 조용히 0개로 적지 않는다.
+
+    `scope` 둘 (D-356 ①):
+        event_bound  이벤트(`EventClip`)에 묶인 객체만. **기본값** — 제품에 맞는다
+        all          버킷 전량. 크고 비싸다. 이관·이사 때만 쓴다
+
+    ★ 어느 쪽으로 떴는지를 **대조표에 적는다.** 안 적으면 복구할 때 「왜 이것밖에
+      없나」를 아무도 못 읽는다 — 「빠졌다」와 「원래 안 떴다」가 같은 그림이 된다.
+    """
+    client, bucket, endpoint = _minio_client()
+
+    wanted = event_bound_keys() if scope == "event_bound" else None
+    fell_back = scope == "event_bound" and wanted is None
+
     target = out_dir / "objects"
     target.mkdir(parents=True, exist_ok=True)
-    count = total = 0
+    count = total = skipped = 0
+    keys: list[str] = []
     for obj in client.list_objects(bucket, recursive=True):
-        client.fget_object(bucket, obj.object_name, str(target / obj.object_name.replace("/", "_")))
+        if wanted is not None and obj.object_name not in wanted:
+            skipped += 1
+            continue
+        client.fget_object(bucket, obj.object_name,
+                           str(target / obj.object_name.replace("/", "_")))
         count += 1
         total += int(obj.size or 0)
-    return {"bucket": bucket, "objects": count, "bytes": total, "endpoint": endpoint}
+        keys.append(obj.object_name)
+
+    #: ★ **묶여 있는데 버킷에 없는 것** — 이것이 가장 중요한 수다.
+    #:   DB 는 「영상이 있다」고 말하는데 그 장면이 실제로는 없는 상태이고,
+    #:   백업이 그것을 **처음으로 드러내는 자리**다 (착시 ⑥의 운영판).
+    missing = sorted(wanted - set(keys)) if wanted is not None else []
+    return {
+        "bucket": bucket, "objects": count, "bytes": total, "endpoint": endpoint,
+        "scope": scope,
+        "retention_days": RETENTION_DAYS,
+        "skipped_not_event_bound": skipped,
+        "event_bound_expected": None if wanted is None else len(wanted),
+        "missing_in_bucket": missing[:50],
+        "missing_count": len(missing),
+        #: 전량으로 물러났는가. **물러난 것을 적는다** — 안 적으면 다음 사람이
+        #: 「이벤트 단위로 떴다」고 읽고 그 수를 인용한다.
+        "fell_back_to_all": fell_back,
+        "keys": sorted(keys)[:200],
+    }
 
 
 def self_test() -> int:
@@ -238,6 +321,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--db", action="store_true")
     ap.add_argument("--objects", action="store_true")
+    ap.add_argument("--object-scope", default="event_bound",
+                    choices=("event_bound", "all"),
+                    help="event_bound(기본) = 이벤트에 묶인 객체만 · all = 버킷 전량")
     ap.add_argument("--out", default="/docs/agent/evidence/D-354/backup")
     ap.add_argument("--via", default="local",
                     help="local | docker:<컨테이너> — pg_dump 를 **어디서** 부를 것인가")
@@ -264,9 +350,19 @@ def main() -> int:
 
     if args.objects:
         try:
-            manifest["objects"] = mirror_objects(out_dir)
-            print("[OPS-BACKUP] 객체 %d개 · %d bytes"
-                  % (manifest["objects"]["objects"], manifest["objects"]["bytes"]))
+            manifest["objects"] = mirror_objects(out_dir, scope=args.object_scope)
+            info = manifest["objects"]
+            print("[OPS-BACKUP] 객체 %d개 · %d bytes · 범위 %s · 보존 %d일"
+                  % (info["objects"], info["bytes"], info["scope"],
+                     info["retention_days"]))
+            if info["fell_back_to_all"]:
+                print("[OPS-BACKUP] ★ 이벤트 목록을 못 읽어 **전량으로 물러났다** — "
+                      "이 백업을 '이벤트 단위' 로 인용하지 마라")
+            if info["missing_count"]:
+                # ★ DB 는 「영상이 있다」고 말하는데 그 장면이 없다.
+                print("[OPS-BACKUP] ★ 이벤트에 묶였는데 **버킷에 없는 객체 %d개** — "
+                      "복구해도 그 장면은 안 돌아온다: %s"
+                      % (info["missing_count"], " · ".join(info["missing_in_bucket"][:5])))
         except Exception as exc:
             # ★ 「닿지 못했다」와 「0개다」는 다른 사실이다 (D-301).
             manifest["objects"] = {"unreachable": True, "reason": str(exc)[:200],

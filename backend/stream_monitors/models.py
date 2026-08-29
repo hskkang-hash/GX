@@ -704,6 +704,87 @@ class ThresholdChange(BaseModel):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# 표 ③ 등급규칙 — F-12 「등급규칙」 · F-04 「JSON 무재기동 반영」 (D-368)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 표 ①(임계값)과 **같은 모양**이다: 정의는 코드에, 값은 DB 에. 같은 모양으로 두는 이유는
+# 하나다 — 운영자가 설정 화면 두 곳에서 다른 규칙을 배우지 않아도 된다.
+#
+#   정의(코드)  `detection_event_bridge.EVENT_TYPE_TO_SEVERITY` — 잠정 기본값과 그 근거
+#   값(DB)      아래 `GradeRule` — 운영이 덮어쓴 값 · 사유 · 누가 · 언제
+#
+# ★ 「무재기동 반영」이 무엇을 요구하나 (계약 F-04)
+# ------------------------------------------------
+# 코드의 사전은 **import 시점에 한 번** 읽힌다. 그것만 있으면 규칙을 바꾸려면 재기동해야
+# 하고, 재기동은 재난 상황 중에 **하면 안 되는 일**이다. 그래서 판정이 매번 DB 를 본다.
+# 그것이 이 표의 존재 이유이고, 그 성질을 `test_grade_rules.py` 가 잰다.
+
+
+class GradeRule(BaseModel):
+    """등급규칙 한 줄 — `event_type` 을 어느 `severity` 로 읽을 것인가 (D-368).
+
+    ★ **행이 없는 것이 정상이다.** 없으면 코드의 잠정 기본값을 쓴다 — 표 ①에서
+      "덮어쓴 적이 없다" 를 `null` 로 둔 것과 같은 뜻이다(D-290). 행을 만들어 두고
+      기본값을 복사해 넣으면, 코드의 기본값이 바뀌는 날 **복사본만 옛말**이 된다.
+
+    ★ 테넌트별로 다를 수 있다 — 하천 지자체와 산업단지는 같은 `person` 검출을 다르게
+      읽는다. 기저(`BaseModel`)의 `group` FK 가 그 층이다.
+
+    ★ 삭제하지 않는다 — 끄는 것은 `is_active=False` 다. 지우면 "그 규칙이 언제까지
+      살아 있었나" 가 사라지고, 사고 조사에서 찾는 것이 정확히 그것이다.
+    """
+
+    #: `detection_event_bridge.EVENT_TYPE_TO_SEVERITY` 의 키. 정의에 없는 타입은
+    #: 커널이 거부한다 — 오타가 새 이벤트 타입이 되지 않게(표 ①과 같은 규약).
+    event_type = models.CharField(max_length=32, db_index=True)
+    #: 계약 열거 그대로: info | warning | critical. 커널이 열거를 검사한다.
+    severity = models.CharField(max_length=16)
+    #: ★ 비울 수 없다. 등급을 낮추는 변경은 **경보를 끄는 것**이고,
+    #:   사유 없는 하향은 사후에 사고로만 보인다.
+    reason = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "k5_grade_rule"
+        ordering = ["event_type", "-id"]
+        indexes = [
+            # 판정 경로가 매번 타는 길 — 「무재기동 반영」의 값이 여기서 나온다
+            models.Index(fields=["event_type", "is_active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.event_type}→{self.severity}"
+
+
+class GradeRuleChange(BaseModel):
+    """등급규칙 **변경 이력** — 표 ①의 `ThresholdChange` 와 같은 이유로 별도 표다.
+
+    `updated_at` 한 칸은 "언제" 만 답한다. 사고 뒤에 필요한 질문은
+    **"무엇에서 무엇으로, 누가, 왜"** 이고, 특히 등급 **하향**은 그 넷이 없으면
+    "왜 경보가 안 왔나" 에 아무도 답하지 못한다.
+    """
+
+    event_type = models.CharField(max_length=32, db_index=True)
+    #: null = 그전에는 코드의 잠정 기본값이었다 (덮어쓴 적이 없다).
+    old_severity = models.CharField(max_length=16, null=True, blank=True)
+    #: null = 덮어쓰기를 껐다 (기본값으로 돌아갔다).
+    new_severity = models.CharField(max_length=16, null=True, blank=True)
+    reason = models.CharField(max_length=255)
+    changed_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="grade_rule_changes")
+
+    class Meta:
+        db_table = "k5_grade_rule_change"
+        ordering = ["-changed_at", "-id"]
+
+    def __str__(self):
+        return f"{self.event_type}: {self.old_severity}→{self.new_severity}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # K5 표 ② 자격증명 저장처 — **값이 아니라 「있는가」의 사실** (D-325 · D-328)
 # ═══════════════════════════════════════════════════════════════════════════
 

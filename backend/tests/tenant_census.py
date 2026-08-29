@@ -390,6 +390,12 @@ CENSUS: dict[str, tuple[str, str, str, int | None, str]] = {
     "stream_monitors.EventClip":
         ("GAP", "no_route", "fk", 0,
          "2026-09-02 D-306 으로 신설(마이그 0021). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다. 소유는 **이벤트에서 물려받는다**(stream_monitors.services.clips._own) — 주인 없는 행은 §0.4 의 created_by__isnull OR 절을 타고 모두에게 보인다(W0-13 이 되돌린 상태). 격리 단언은 backend/tests/test_clip_playback.py 의 test_the_clip_inherits_the_tenant_from_the_event 와 규약 ①(test_rule1_another_tenant_gets_404)이 함께 잰다. 쓰기 면은 이벤트 생성 경로 안 한 곳뿐이고 HTTP 로 만드는 경로는 없다 — 생기면 WRITE_PROBES 에 함께 등재한다(D-290) / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),
+    "stream_monitors.GradeRule":
+        ("GAP", "no_route", "fk", 0,
+         "2026-09-10 D-368 로 신설(마이그 0023). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다. 소유는 **바꾼 사람의 소속에서 물려받는다**(kernels.k5_trust.grade_rules._inherit_group) — 주인 없는 행은 §0.4 의 created_by__isnull OR 절을 타고 모두에게 보인다(W0-13 이 되돌린 상태). ★ 이 표의 격리가 특별히 중요한 이유: 행 하나가 **다른 테넌트의 경보를 끌 수 있다**(fire→info). 격리 단언은 backend/tests/test_grade_rules.py 의 GradeRulesAreTenantScopedTest 4건이 잰다 — 남의 규칙이 내 판정을 안 바꾸고, 내 목록에 안 보이고, 파이프라인이 테넌트를 추측하지 않고, 무권한이 못 바꾼다. 쓰기 면은 커널 함수 하나(set_grade_rule)이고 HTTP 는 POST /api/dsm/settings/grade-rules 한 곳 — 전건 @tenant_scoped + guard_setting / 도달: 자기 pk 로 지목하는 경로가 없다(event_type 으로만 지목한다). 전수 라우트에도 이 모델의 pk 를 받는 경로가 없다"),
+    "stream_monitors.GradeRuleChange":
+        ("GAP", "no_route", "fk", 0,
+         "2026-09-10 D-368 로 신설(마이그 0023). GradeRule 의 변경 이력이고 **읽기 전용**이다 — 만드는 곳은 set_grade_rule 안 한 곳뿐이고 고치거나 지우는 면이 없다(사고 조사에서 찾는 것이 정확히 이 행이므로). 소유는 바꾼 사람의 소속에서 물려받는다. 조회는 grade_rule_history 가 _scoped 로 좁힌다 / 도달: 자기 pk 로 지목하는 경로가 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),
     "stream_monitors.NotificationRule":
         ("GAP", "no_route", "fk", 0,
          "인구조사(덤프 집계)에 없었다 — 행이 0이라 안 보였다. **아직 안 쓴 것이지 안전한 것이 아니다** / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),

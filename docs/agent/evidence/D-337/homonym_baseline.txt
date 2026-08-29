@@ -12,6 +12,7 @@ api_key	backend/apps/dsm/services.py	3
 api_key	backend/common/cache_hint_registry.py	1
 api_key	backend/common/universal_optimization.py	4
 api_key	backend/kernels/k3_dashboard/presets.py	1
+api_key	backend/kernels/k5_trust/inbound_keys.py	6
 api_key	backend/partner/middleware/partner_auth_middleware.py	18
 api_key	backend/partner/models.py	1
 api_key	backend/partner/schemas/schemas_djantic_in.py	2
@@ -20,13 +21,14 @@ api_key	backend/partner/services/partner_service.py	25
 api_key	backend/partner/utils/partner_utils.py	9
 api_key	backend/partner/views/partner_controller.py	8
 api_key	backend/print_format/services.py	1
-api_key	backend/tests/test_dsm_app.py	4
-api_key	backend/tests/test_f05_event_api.py	3
+api_key	backend/tests/test_dsm_app.py	5
+api_key	backend/tests/test_f05_event_api.py	6
+api_key	backend/tests/test_f05_inbound_key_lifecycle.py	9
 api_key	backend/tests/test_k5_credential_store.py	4
 api_key	backend/third_api/schema.py	3
 api_key	backend/third_api/services/anyang_services.py	1
 api_key	backend/third_api/test_api.py	11
 api_key	backend/third_api/views/api_key_controller.py	1
-api_key	scripts/probe_route_inventory.py	4
 api_key	scripts/verify_commented_guards.py	1
 api_key	scripts/verify_homonyms.py	6
+api_key	scripts/verify_threshold_table.py	1

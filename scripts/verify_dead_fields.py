@@ -110,21 +110,21 @@ DECLARED_UNWIRED: dict[str, str] = {
 
     # ── 우리가 만든 것 중 아직 운영 쓰기 경로가 없는 것 ────────────────────
     #    기준선(옛 빚)에 섞어 두지 않는다. 우리가 만든 것은 우리가 사유를 안다.
-    "stream_monitors.Zone.kind":
-        "D-299 로 신설. 구역을 **만드는** 공개 면(편집 API·화면)을 이번 범위에서 "
-        "만들지 않았고, 만들지 않았음을 test_zone_judgment.py 의 "
-        "test_zone_editing_surface_was_not_built 가 잰다(D-300). 지금 구역은 관리자 "
-        "화면·픽스처로 만든다. 편집 면이 생기면 이 등재를 지우고 쓰기 격리 시험을 "
-        "WRITE_PROBES 에 함께 올린다(D-290).",
-    "stream_monitors.Zone.cameras":
-        "위와 같다 (D-299 · D-300). 판정은 이 M2M 을 읽고, 채우는 것은 아직 사람이다.",
-    "stream_monitors.Zone.geometry":
-        "D-299 의 **선언된 미완성**. F-03 폴리곤의 자리이고, 좌표 표현·좌표계가 "
-        "확정되기 전에는 비운다(D-280). ZONE_POLYGON_READY 가 이 칸을 잠근다 — "
-        "채우는 코드가 생기는 순간이 곧 그 상수를 올릴 때다.",
-    "stream_monitors.Zone.geometry_status":
-        "위와 같다 (D-299). 기본값 not_implemented 로만 존재하며, ready 인 행이 생기면 "
-        "test_zone_judgment.py 의 test_no_ready_polygon_zone_without_the_flag 가 멈춘다.",
+    # ★ Zone 의 네 칸은 **2026-09-10 에 등재에서 내려갔다** (D-365 · D-366).
+    #   등재문이 예고한 그대로 됐다: *"편집 면이 생기면 이 등재를 지우고 쓰기 격리
+    #   시험을 WRITE_PROBES 에 함께 올린다"* — `save_zone` 이 넷을 전부 쓰고,
+    #   WRITE_PROBES 에 구역 쓰기 probe 가 올라갔다.
+    #   ★ 낡은 선언을 남겨 두지 않는 이유: **남은 선언이 다음에 죽는 필드를 가린다.**
+    #     게이트가 그것을 잡아 줬다(「등재에 있는데 이제 쓰인다」).
+    # ── 2026-09-10 신설분 (D-368 표 ③) ───────────────────────────────────
+    "stream_monitors.GradeRuleChange.changed_at":
+        "D-368 로 신설. `auto_now_add=True` 라 **DB 가 채운다** — 우리 코드에 대입문이 "
+        "없는 것이 정상이고, 없는 것이 오히려 옳다(사람이 시각을 적으면 그 시각을 "
+        "속일 수 있다). 읽기는 `grade_rule_history` 가 한다. "
+        "★ 같은 모양의 `ThresholdChange.changed_at`(D-325)과 대칭이며, 그쪽도 같은 "
+        "이유로 등재돼 있다. 시험 근거: test_grade_rules.py::"
+        "test_the_history_keeps_what_it_was_and_why (이력 행이 실재하고 읽힌다).",
+
     "stream_monitors.NotificationRule.role":
         "D-287 K2 로 신설. **수신 규칙을 만드는 운영 경로가 아직 없다** — 규칙은 관리자 "
         "화면·픽스처로 만들고, F-12 설정 화면이 그 자리다(미착수). K2 는 이 칸을 읽어 "

@@ -94,6 +94,18 @@ KERNEL_PUBLIC: dict[str, str] = {
         "KernelScopeSignatureTest.test_subscribe_requires_scope_before_it_raises "
         "(scope 를 빼면 NotImplementedYet 이 아니라 TypeError 다 — D-281 은 구현 전에도 걸린다)",
 
+    # ── K5 (2026-09-10 · D-367) — **테넌트 데이터를 반환하지 않는 함수 하나**
+    "backend/kernels/k5_trust/inbound_keys.py:capability_now":
+        "「이 키로 무엇을 할 수 있는가」를 문장으로 만든다. 읽는 것은 "
+        "`common.access_gate.INBOUND_KEY_ALLOWED` — **설비의 사실**이지 테넌트의 사실이 "
+        "아니다. 어느 테넌트가 물어도 같은 답이고, DB 를 보지 않는다. "
+        "★ 그래서 scope 를 받지 않는다: 받으면 「테넌트마다 다른 답이 있다」는 "
+        "거짓 신호가 시그니처에 남고, 다음 사람이 그 인자를 채우려다 없는 구별을 만든다. "
+        "시험 근거: test_f05_inbound_key_lifecycle.py::"
+        "test_the_capability_is_read_from_the_gate_not_retyped "
+        "(허용 집합의 전건과 그 **건수**가 문장에 실재하는지 대조 — 문장을 따로 적으면 "
+        "그 집합이 바뀌는 날 문장만 옛말이 된다 · D-286)",
+
     # ── K6 (2026-08-30 착수분) — 둘 다 **구현이 없다.** 데이터를 반환하지 않는다.
     #    등재는 면제가 아니라 선언이고, 그 선언은 아래 시험이 뒷받침한다.
     "backend/kernels/k6_feedback/services.py:usage_snapshot":

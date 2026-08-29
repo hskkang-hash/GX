@@ -103,6 +103,7 @@ WRITE_AUDIT: dict[str, str] = {
         "redis_client.delete() — Redis 키 삭제다. DB 행이 아니라 캐시이고 분류 등록부의 대상이 아니다",
     "backend/common/management/commands/clear_cache.py:147":
         "redis_client.delete() — 같은 이유. 캐시 비우기이지 테넌트 데이터 쓰기가 아니다",
+
 }
 
 #: ★ 증가금지 래칫 — 2026-08-27 실측으로 잠근 **기존 빚**. 파일별 '등록부 미참조 쓰기' 건수다.
