@@ -25,6 +25,8 @@ import json
 from django.apps import apps
 from django.test import Client, TestCase, override_settings
 
+from tests.no_cache import NO_CACHE
+
 from common.api_contract import (
     KIND_PROMOTABLE,
     KIND_RAISES,
@@ -174,7 +176,9 @@ class PermissionDeniedStatusTest(_DeniedUserMixin, TestCase):
         cls.user = cls._make_denied_user("contract_denied")
 
     def setUp(self):
-        self.client = Client()
+        # 캐시 처리: 우회 — X-No-Cache (D-341 착시 ⑦).
+        # 관문·계약을 재는 시험이 캐시를 재면 안 된다.
+        self.client = Client(**NO_CACHE)
         self.headers = _bearer(self.user)
 
     # ── 플래그 OFF — 기존 동작이 한 글자도 바뀌지 않는다 (하위호환) ──────────
@@ -222,7 +226,7 @@ class PermissionDeniedStatusTest(_DeniedUserMixin, TestCase):
 
         `raise_request_exception=False` 로 Django 가 500 을 만들게 둔다.
         """
-        client = Client(raise_request_exception=False)
+        client = Client(raise_request_exception=False, **NO_CACHE)
         resp = client.get(ROUTE_LIST_SCHEMA, **self.headers)
         self.assertEqual(resp.status_code, 500)
 

@@ -41,6 +41,8 @@ from django.apps import apps
 from django.db import models
 from django.test import Client, TestCase
 
+from tests.no_cache import NO_CACHE
+
 from tests.tenant_census import CENSUS
 
 
@@ -1174,8 +1176,9 @@ class TenantClassificationExpectationTest(TenantFixtureMixin, TestCase):
     """
 
     def setUp(self) -> None:
-        self.client_a = Client()
-        self.client_b = Client()
+        # 캐시 처리: 우회 — X-No-Cache (D-341). 캐시가 답하면 격리가 아니라 캐시를 잰다.
+        self.client_a = Client(**NO_CACHE)
+        self.client_b = Client(**NO_CACHE)
         self.auth_a = self._bearer(self.user_a)
         self.auth_b = self._bearer(self.user_b)
 
@@ -1312,7 +1315,8 @@ class TenantIsolationAPITest(TenantFixtureMixin, TestCase):
     FORBIDDEN = (403, 404)
 
     def setUp(self) -> None:
-        self.client_a = Client()
+        # 캐시 처리: 우회 — X-No-Cache (D-341).
+        self.client_a = Client(**NO_CACHE)
         self.auth_a = self._bearer(self.user_a)
 
     def _payload(self, route: Route):

@@ -28,6 +28,8 @@ import jwt as pyjwt
 from django.conf import settings
 from django.test import Client, TestCase
 
+from tests.no_cache import NO_CACHE
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 등록부 — 못 고친 것을 숨기지 않고 센다 (D-224 방식)
 # ═══════════════════════════════════════════════════════════════════════════
@@ -89,7 +91,8 @@ class UnauthenticatedReachTest(TestCase):
     """헤더가 아예 없을 때 무엇이 다른가 — 대조군과 나란히 본다."""
 
     def setUp(self):
-        self.client = Client(raise_request_exception=False)
+        # 캐시 처리: 우회 — X-No-Cache (D-341).
+        self.client = Client(raise_request_exception=False, **NO_CACHE)
 
     def test_auth_callback_route_rejects_anonymous(self):
         """`auth=` 가 붙은 라우트는 **401** 이다. 이것이 정상이다."""
@@ -125,7 +128,8 @@ class MalformedBearerTest(TestCase):
     """
 
     def setUp(self):
-        self.client = Client(raise_request_exception=False)
+        # 캐시 처리: 우회 — X-No-Cache (D-341).
+        self.client = Client(raise_request_exception=False, **NO_CACHE)
 
     def _get(self, path: str, token: str):
         return self.client.get(path, HTTP_AUTHORIZATION=f"Bearer {token}")

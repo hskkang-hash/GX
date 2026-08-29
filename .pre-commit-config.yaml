@@ -238,6 +238,18 @@ repos:
         pass_filenames: false
         files: '^(backend/.*\.py|scripts/.*\.py|docs/agent/evidence/D-337/.*)$'
 
+  # ── D-341: 착시 ⑦ 캐시 ─────────────────────────────────────────────────
+  # 고친 뒤에도 2자리가 200 이었고 cache.clear() 뒤 0 이 됐다. 캐시가 없었다면
+  # 그 2자리는 「고쳤다」로 보고됐을 것이다. 스택을 때리는 시험은 캐시 처리를 적는다.
+  - repo: local
+    hooks:
+      - id: gx-cache-bypass
+        name: 캐시 우회 표기 검사 (D-341)
+        entry: python scripts/verify_cache_bypass.py
+        language: system
+        pass_filenames: false
+        files: '^(backend/tests/.*\.py|docs/agent/evidence/D-341/.*)$'
+
   # ── D-343: 라우트 인벤토리·3갈래 대장 ──────────────────────────────────
   # 새 라우트가 대장에 없이 태어나면 분류되지 않은 표면이 된다.
   # 전역 적용(③)은 판정 대기지만, 표면이 넓어지는 것은 지금부터 막는다(④ 래칫).

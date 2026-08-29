@@ -80,6 +80,27 @@ RULES = {
         "qualifiers": (r"inbound", r"outbound", r"incoming", r"outgoing"),
         "why": "나가는 키(우리가 남을 부름) 와 들어오는 키(남이 우리를 부름) 는 다른 것이다",
     },
+    # D-342 에서 등재된 넷째 이름의 **기계 술어**.
+    #
+    # ★ 술어를 행위에 긋는다 (D-324). 금지 대상은 낱말 `auth` 가 아니라
+    #   **우리가 새로 짓는 이름이 `auth` 인 것**이다. 그래서 셋만 본다:
+    #     · 줄 처음의 대입     `auth = request.headers.get(...)`   ← 우리가 지은 이름
+    #     · 함수 이름          `def auth(`
+    #     · 속성 대입          `self.auth = `
+    #   `django.contrib.auth` · `core.api.v1.auth` 는 **남의 이름**이라 못 고치고(§0.4),
+    #   ninja 의 `auth=CustomJWTAuth()` 는 **프레임워크의 인자 이름**이라 못 고친다.
+    #   낱말을 금지하면 그 낱말을 정확히 쓰는 줄까지 죽는다 — 처음 넓게 걸었을 때 151건이
+    #   잡혔고 그 대부분이 임포트 경로와 설명문이었다. 좁히고 나니 **3건**, 그중 진짜는 1건이었다.
+    "auth": {
+        "ledger_name": "권한 · 인증 (authz 와 authn)",
+        "pattern": r"^\s*auth\s*(?::[^=]+)?=(?!=)|def\s+auth\s*\(|self\.auth\s*=",
+        "qualifiers": (
+            r"authn", r"authz",
+            # ninja 라우트 선언의 인자 이름. 우리가 지은 이름이 아니다.
+            r"=\s*[A-Z]\w*\(",
+        ),
+        "why": "인가(무엇을 할 수 있나)와 인증(누구인가)은 다른 것이다 — 「auth」 는 둘 다로 읽힌다",
+    },
 }
 
 #: ★ 술어를 **식별자에만** 건다 — 산문에 걸지 않는다.
@@ -94,9 +115,6 @@ RULES = {
 LEDGER_UNJUDGED_REASON = {
     "CCTV · 재난안전정보": "코드 식별자가 아니라 **문서에서의 개념 혼동**이다. 기계 술어가 없다",
     "juso 승인키": "키 이름은 표 ②(자격증명 저장처)가 잠근다 — verify_credential_store.py 의 자리다",
-    "권한 (path_permission 과 auth)":
-        "한국어 산문 낱말이다. 식별자로 나타나지 않아 술어를 걸면 설명문까지 잡는다. "
-        "대신 **D-334 게이트가 행위로 판정한다**(주석 권한 + auth= 없음 → exit 1)",
 }
 
 #: 같은 줄 안에서 수식어를 찾는 창. 줄 단위로 본다 — 사람이 그 줄만 읽고 가르는지가 기준이다.
@@ -204,7 +222,22 @@ def self_test() -> int:
     if _violations_in_text("# 여기서 api_key 라는 이름이 왜 모호한지 설명한다", "api_key"):
         failures.append("주석(산문) 안의 이름을 위반으로 잡았다 — 게이트가 소음이 된다")
 
-    # ④ 대장의 모든 이름이 **판정되거나 사유와 함께 검사 못함으로** 나오는가 (D-301)
+    # ④ D-342 의 넷째 이름 — **우리가 지은 `auth` 는 잡고, 남의 이름은 안 잡는다**
+    #    출생 표본: `common/inbound_api_key.py` 가 실제로 갖고 있던 한 줄이다.
+    if not _violations_in_text('    auth = request.headers.get("Authorization", "")', "auth"):
+        failures.append("★ 출생 표본(우리가 지은 이름 auth)을 잡지 못했다 — D-342 의 술어가 죽었다")
+    if _violations_in_text('    authn_header = request.headers.get("Authorization", "")', "auth"):
+        failures.append("authn_ 로 고친 이름을 위반으로 잡았다 — 고친 것을 벌하면 안 된다")
+    for benign in (
+        "from django.contrib.auth import get_user_model",   # 남의 이름 (§0.4)
+        "from core.api.v1.auth import CustomJWTAuth",       # 남의 이름 (§0.4)
+        "    auth=CustomJWTAuth(),",                        # ninja 의 인자 이름
+        "@route.get('', auth=JwtOrInboundKey())",           # 같은 것, 한 줄 모양
+    ):
+        if _violations_in_text(benign, "auth"):
+            failures.append("고칠 수 없는 남의 이름을 위반으로 잡았다(D-324): %s" % benign.strip())
+
+    # ⑤ 대장의 모든 이름이 **판정되거나 사유와 함께 검사 못함으로** 나오는가 (D-301)
     names = _ledger_names()
     if not names:
         failures.append("대장을 읽지 못했다: %s" % LEDGER)

@@ -62,21 +62,33 @@ entries:
     naming: "코드에서는 outbound_api_key / inbound_api_key 로 쓴다"
     cost: "표 ② 하나가 절 두 개를 갚는 것으로 계산했다. 잔여가 10 이 아니라 12 였다."
 
-  - name: "권한 (path_permission 과 auth)"
-    found_in: D-334
+  - name: "권한 · 인증 (authz 와 authn)"
+    found_in: D-342          # 처음 부딪힌 것은 D-334, 대장에 이름을 확정한 것은 D-342
     found_at: "2026-09-07"
     sense_a:
-      label: "권한 (authorization)"
+      label: "인가 (authorization · authz)"
       what: "@path_permission — 이 사람이 이 자원에 **무엇을 할 수 있는가**. 역할·경로 대장을 본다"
     sense_b:
-      label: "인증 (authentication)"
+      label: "인증 (authentication · authn)"
       what: "route 의 auth= 콜백 — **이 사람이 누구인가**. 없으면 익명이 그대로 통과한다"
     distinguished_by: |
-      **관문의 종류.** A 가 꺼지면 「아무 역할이나 통과」이고, B 가 꺼지면 「아무나 통과」다.
+      **질문이 다르다** (D-342). A 는 「무엇을 할 수 있나」를 묻고 B 는 「누구인가」를 묻는다.
+      관문의 종류로도 갈린다: A 가 꺼지면 「아무 역할이나 통과」, B 가 꺼지면 「아무나 통과」.
       ★ 둘을 한 칸에 두면 **양쪽으로 틀린다**:
         「주석 처리된 권한 = 인증이 꺼졌다」로 읽으면 24자리를 사고로 세고,
         「권한이 꺼졌을 뿐」으로 읽으면 15자리 **열린 문**을 놓친다.
-    naming: "게이트·보고에서 authn(인증) / authz(권한) 을 붙여 쓴다. 「권한」 단독 금지"
+    naming: |
+      코드·시험·문서에서 `auth` 를 **단독으로 쓰지 않는다** — `authn_` / `authz_` 로 쓴다.
+      다만 금지는 **우리가 새로 짓는 이름**에만 건다(D-324): `django.contrib.auth` ·
+      `core.api.v1.auth` 는 남의 이름이라 못 고치고, ninja 의 `auth=` 는 프레임워크의
+      인자 이름이라 못 고친다. 낱말을 금지하면 그 낱말을 정확히 쓰는 줄까지 죽는다.
     cost: |
       주석 39자리를 한 덩어리로 읽었다면 무엇을 즉시 고치고 무엇을 래칫에 둘지 가를 수 없었다.
       가르고 나서야 「열린 문 15 · 느슨한 권한 24」가 나왔고, 유예가 다른 두 규칙이 생겼다.
+      ★ 그리고 이 구분이 **사고 ③을 찾아냈다**(2026-09-08 · D-343 ①):
+        인벤토리에서 「authz 활성 + authn 없음」 24자리와 「아무 관문도 없음」 55자리를
+        갈랐고, 뒤쪽을 호출로 재서 **익명에게 데이터가 나가는 11자리**를 찾았다.
+        한 칸에 두었으면 24자리의 「권한이 막아 준다」에 가려 11자리를 못 봤을 것이다.
+    enforced_by: |
+      scripts/verify_homonyms.py — RULES["auth"]. 우리가 새로 짓는 이름이 `auth` 이면 exit 1.
+      기존분은 래칫(D-311).

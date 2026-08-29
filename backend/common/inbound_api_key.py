@@ -78,8 +78,10 @@ def carries_inbound_key(request: HttpRequest) -> bool:
     """
     if request.headers.get(INBOUND_KEY_HEADER):
         return True
-    auth = request.headers.get("Authorization", "")
-    scheme = auth.split(" ", 1)[0].lower() if auth else ""
+    # 이름에 갈래를 박는다 (D-342): 여기서 보는 것은 **인증(authn)** 헤더다.
+    # 「auth」 단독은 인가(authz)로도 읽힌다 — 그 혼동이 사고 ①을 만들었다.
+    authn_header = request.headers.get("Authorization", "")
+    scheme = authn_header.split(" ", 1)[0].lower() if authn_header else ""
     return scheme in INBOUND_AUTHORIZATION_SCHEMES
 
 
