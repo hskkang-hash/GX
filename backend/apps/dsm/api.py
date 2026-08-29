@@ -31,6 +31,7 @@ from django.http import Http404, HttpResponse
 from ninja.errors import HttpError
 from ninja_extra import api_controller, route
 
+from common.inbound_api_key import JwtOrInboundKey
 from common.tenant_scope import TenantScope, tenant_scoped
 from core.api.v1.auth import CustomJWTAuth
 
@@ -75,7 +76,7 @@ class DsmAPI:
     """F-09~F-12 의 라우트. **커널을 소비만 한다** (DA-04 §1-1)."""
 
     # ── F-09 재난 대시보드 ───────────────────────────────────────────────
-    @route.get("/dashboard/frame", auth=CustomJWTAuth())
+    @route.get("/dashboard/frame", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-09 대시보드 프레임 — 남의 테넌트 패널이 섞이면 안 된다")
     def dashboard_frame(self, request, dashboard_code: str | None = None):
         """F-09 프레임. **AC-09 ①의 5상태를 값으로 낸다.**
@@ -96,7 +97,7 @@ class DsmAPI:
             "link": {"status": frame.link.status.value, "reason": frame.link.reason},
         }
 
-    @route.get("/dashboard/link-state", auth=CustomJWTAuth())
+    @route.get("/dashboard/link-state", auth=JwtOrInboundKey())
     @tenant_scoped(required=False,
                    reason="연계 상태는 테넌트별 사실이 아니라 **설비의 사실**이다 — "
                           "테넌트 모델을 만지지 않으므로 group 을 요구하지 않는다. "
@@ -112,7 +113,9 @@ class DsmAPI:
         state = services.link_state()
         return {"status": state.status.value, "reason": state.reason}
 
-    @route.get("/events", auth=CustomJWTAuth())
+    @route.get("/events", auth=JwtOrInboundKey(
+        inbound_key=True,
+        reason="F-05 「외부 App 이 이벤트 OpenAPI 하나로만 들어온다」 — 읽기 전용 조회"))
     @tenant_scoped(reason="F-09 이벤트 목록 — 남의 테넌트 이벤트가 보이면 격리 실패다")
     def events(self, request, since: datetime | None = None,
                event_type: str | None = None, severity: str | None = None,
@@ -135,7 +138,7 @@ class DsmAPI:
             for e in rows]}
 
     # ── F-10 알림 발송 ───────────────────────────────────────────────────
-    @route.post("/events/{int:event_id}/notify", auth=CustomJWTAuth())
+    @route.post("/events/{int:event_id}/notify", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-10 발송 — 남의 이벤트로 발송을 일으킬 수 없다 (쓰기 IDOR)")
     def notify(self, request, event_id: int):
         """F-10 발송. **실패도 200 이고, 실패는 행으로 보인다.**
@@ -155,7 +158,7 @@ class DsmAPI:
              "sent_at": r.sent_at}
             for r in records]}
 
-    @route.get("/deliveries", auth=CustomJWTAuth())
+    @route.get("/deliveries", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-10 발송 이력 — 수신자 주소가 새면 안 된다")
     def deliveries(self, request, event_id: int | None = None,
                    since: datetime | None = None, until: datetime | None = None,
@@ -172,7 +175,7 @@ class DsmAPI:
             for r in rows]}
 
     # ── F-11 상황 보고서 ─────────────────────────────────────────────────
-    @route.get("/reports/templates", auth=CustomJWTAuth())
+    @route.get("/reports/templates", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-11 템플릿 목록 — 남의 테넌트 템플릿이 보이면 안 된다")
     def report_templates(self, request):
         rows = services.report_templates(scope=_scope(request))
@@ -180,7 +183,7 @@ class DsmAPI:
             {"template_id": t.template_id, "name": t.name,
              "renderer": t.renderer} for t in rows]}
 
-    @route.get("/reports/{int:template_id}.pdf", auth=CustomJWTAuth())
+    @route.get("/reports/{int:template_id}.pdf", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-11 보고서 — 남의 이벤트가 보고서에 실리면 안 된다")
     def report_pdf(self, request, template_id: int, event_id: int | None = None,
                    mission_id: int | None = None):
@@ -216,7 +219,7 @@ class DsmAPI:
     #     ② 만료 서명 URL — 무기한 링크 금지
     #     ③ 구간 한정 — 구간이 서명에 묶여 있어 **다른 구간을 요구할 수조차 없다**
     #     ④ 다운로드 아님 — 원본 전체를 주는 경로가 **없다**(부작위 시험이 잰다 · D-300)
-    @route.get("/events/{int:event_id}/clip", auth=CustomJWTAuth())
+    @route.get("/events/{int:event_id}/clip", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-09 영상 구간 참조 — 남의 이벤트 영상에 닿으면 계약 11조 위반이다")
     def event_clip(self, request, event_id: int):
         """AC-09 — 이벤트 클릭 → **어디를 보라**.
@@ -242,7 +245,7 @@ class DsmAPI:
             "reason": ticket.reason,
         }
 
-    @route.get("/events/{int:event_id}/clip/stream", auth=CustomJWTAuth())
+    @route.get("/events/{int:event_id}/clip/stream", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-09 영상 구간 전송 — 구간 밖 바이트가 나가면 계약 11조 위반이다")
     def event_clip_stream(self, request, event_id: int, token: str,
                           start_offset: float, duration: float):
@@ -269,7 +272,7 @@ class DsmAPI:
         raise HttpError(500, "도달할 수 없는 자리")   # stream_window 는 언제나 멈춘다
 
     # ── F-12 관리자 설정 ─────────────────────────────────────────────────
-    @route.get("/settings/{domain}", auth=CustomJWTAuth())
+    @route.get("/settings/{domain}", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-12 설정 — 남의 테넌트 설정이 보이면 안 된다")
     def settings_domain(self, request, domain: str):
         """AC-12 — 무권한 차단 + **성공·실패 모두 감사로그**.
@@ -287,7 +290,7 @@ class DsmAPI:
             # "영영 없는 것" 이 클라이언트에서 구별되지 않는다.
             raise HttpError(501, str(exc))
 
-    @route.post("/settings/thresholds", auth=CustomJWTAuth())
+    @route.post("/settings/thresholds", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-12 임계값 쓰기 — 남의 테넌트 임계값을 못 바꾼다")
     def set_threshold(self, request, key: str, value: float, reason: str,
                       scope_level: str = "global", scope_ref: int | None = None):

@@ -3263,12 +3263,35 @@ decisions:
       **인증된 아무 역할이나 API 키 발급·폐기·통계에 닿는다.** F-05 를 여기에 이을 때
       그 11자리를 함께 갚지 않으면 **들어오는 키를 나가는 키 관리면 위에 얹는 꼴**이 된다.
   enforced_by: |
-    ★ 규약 다섯의 시험은 **착수 시** 추가한다. 지금 강제되는 것은 **선행**이고, 그것은 실재한다:
-    · scripts/verify_commented_guards.py — 잇는 자리인 backend/third_api/views/api_key_controller.py 의
-      권한 주석 11자리를 기준선으로 잠근다. **여기서 `auth=` 가 빠지면 exit 1** —
-      들어오는 키를 얹기 전에 그 면이 열리는 것을 막는다.
-    · backend/tests/test_commented_guards.py — 그 면이 익명에게 401 임을 호출로 못박는다.
-    · docs/agent/evidence/D-334/commented_guards_baseline.txt — 11자리가 줄면 기준선도 줄인다.
+    ★ 2026-09-07 이행 — 그리고 **착수하며 판정이 한 겹 바뀌었다.**
+      「만들지 않고 잇는다」고 적었는데, 실측해 보니 **이미 이어져 있었다.**
+      dj-core 의 CustomJWTAuth 가 X-API-Key 와 Authorization 의 inbound 스킴을
+      **이미 받는다** (dj-core 의 auth 모듈 — §0.4 저장소 밖이라 경로로 적지 않는다). 즉 들어오는 키는 만들 것이 아니라
+      **이미 살아 있었고, 아무도 그 범위를 정하지 않았다.**
+      호출로 잰 것 [실측]: 키 하나로 F-05 진입면 **7자리 전부에 도달** —
+      events · deliveries · dashboard/frame(200) · clip · **clip/stream** ·
+      reports/templates(200) · settings/{domain}.
+      만료·비활성·가짜 키는 401 이었다. **인증은 성했고, 성하지 않은 것은 범위였다.**
+      ★ clip/stream 이 계약 11조(영상 반출 · D-306)의 자리다. 발급된 아무 키나 거기 닿고 있었다.
+      → 그래서 이 절의 일은 「만들기」도 「잇기」도 아니라 **「좁히기」**였다. D-334 와 같은 얼굴이다.
+    · backend/common/inbound_api_key.py — JwtOrInboundKey. 라우트마다 들어오는 키를 받을지
+      **선언하게** 하고, **기본값은 거절**이다(D-300 — 새 라우트가 조용히 표면을 넓히지 못한다).
+      CustomJWTAuth 를 상속해 감싸기만 한다 — 고치지 않는다(§0.4 · D-207).
+    · backend/apps/dsm/api.py — 진입면 11자리 전건이 이 문지기를 지난다.
+      들어오는 키가 닿는 곳은 **GET /api/dsm/events 하나뿐**이다(규약 ③).
+    · backend/tests/test_f05_inbound_api_key.py — 규약 다섯을 하나씩 맡는 5개 클래스, 17건.
+      ⑤ 부작위가 본체다: 원본 영상·설정·보고서에 키가 닿지 않음을 **호출로** 재고,
+      음성 대조(이벤트 조회에는 들어간다)를 함께 둔다 — 전부 401 이면 그것은 「막았다」가
+      아니라 「아무것도 안 열렸다」이다.
+    · scripts/verify_commented_guards.py — 발급·폐기 면
+      (backend/third_api/views/api_key_controller.py)의 권한 주석
+      11자리를 기준선으로 잠근다. **거기서 auth= 가 빠지면 exit 1.**
+    ★ 아직 아닌 것: **FR-05-3 「API Key 발급·폐기」 절은 미착수 그대로다.**
+      이번에 한 것은 **소비 면의 범위**이고, 발급·폐기는 그 컨트롤러의 권한 11자리와 함께
+      갚을 별개의 일이다. 규약 다섯을 지켰다고 그 절을 올리지 않는다 — 올리면 대장이 거짓말한다.
+    ★ 남은 실측 하나 [실측 2026-09-07]: 이 좁히기는 **DSM 진입면에만** 걸었다.
+      X-API-Key 는 여전히 `CustomJWTAuth` 를 쓰는 **다른 모든 라우트**에서 인증된다.
+      그 범위를 어떻게 할지는 판정이 필요하다 — 이번 턴에 넓히지 않았다.
   affects: [D-204, D-207, D-269, D-300, D-319, D-325, D-328, D-333, D-334, D-337, F-05, FR-05-3]
 
 - id: D-336
