@@ -23,6 +23,20 @@ DA-04 K6: *"오탐률의 분모·분자는 `DetectionEvent.status` 하나에서 
 **별도 집계 테이블을 만들지 않는다.**"* 그 말을 그대로 따른다 — 이 패키지에
 `models.py` 가 없는 것이 설계이고, 있으면 그것이 결함이다.
 
+★ 한 칸만 옮겼다 — `status` → `verdict` (D-293)
+-----------------------------------------------
+DA-04 가 지목한 칸은 `status` 였는데, 그 칸은 **수명주기**라서 종료(`closed`)가
+판정(`confirmed`/`rejected`)을 덮는다. 덮이면 그 이벤트가 분모에서 빠지고,
+**종료가 쌓일수록 오탐률이 저절로 좋아진다.** 개선이 아니라 나쁜 데이터가
+사라지는 것이고, U1 의 "오탐률 월 하락"이 그 축소만으로 달성돼 버린다.
+
+그래서 같은 행에 덮이지 않는 칸 `verdict` 를 하나 두고 **거기서만 센다.**
+DA-04 의 요구는 지켜진다 — 여전히 표 하나, 집계 경로 하나다. 바뀐 것은
+어느 칸에서 세는가뿐이고, 그 한 칸이 지표의 자가개선을 막는다.
+
+  강제: `tests/test_d293_cohort_regression.py` — 같은 코호트를 두 시점에 계산해
+  **값이 동일한지** 본다. 값이 변하면 exit 1.
+
 `record_feedback` 은 왜 K1 을 부르나 — **쓰기 경로는 하나여야 한다**
 -------------------------------------------------------------------
 DA-04 K6 표는 `record_feedback` 옆에 *"K1 `review_event` 가 호출"* 이라 적었다.
@@ -58,9 +72,13 @@ from common.tenant_scope import TenantScope
 from kernels.k6_feedback.exceptions import InvalidMetricInput, NotImplementedYet
 from kernels.k6_feedback.schemas import FalsePositiveRate, RateWindow
 
-#: 분모에 드는 상태 — **사람이 판정한 것만**. 미판정(new)은 분모가 아니다.
+#: 분모에 드는 판정 — **사람이 판정한 것만**. 미판정(null)은 분모가 아니다.
 #: 미판정을 분모에 넣으면 판정을 미루기만 해도 오탐률이 떨어진다.
-REVIEWED_STATUSES = ("confirmed", "rejected")
+#:
+#: ★ 이름이 `..._STATUSES` 가 아니라 `..._VERDICTS` 인 것이 D-293 의 요점이다:
+#:   세는 칸이 `status`(수명주기 — 종료가 덮는다)에서 `verdict`(판정 — 덮이지 않는다)로
+#:   옮겨졌다. 값 자체는 같은 두 글자이고, **어느 칸에서 세는가**만 달라졌다.
+REVIEWED_VERDICTS = ("confirmed", "rejected")
 
 #: 지원하는 묶음 단위. `kpi_series` 와 공유한다 — 두 함수가 다른 달력을 쓰면
 #: 같은 기간의 두 보고가 다른 칸으로 나온다.
@@ -200,18 +218,24 @@ def _window(qs, since: datetime, until: datetime) -> RateWindow:
     **각 질의 사이에 판정이 바뀔 수 있다** — 그러면 분자와 분모가 다른 시점의 사실이 된다.
     """
     row = qs.filter(occurred_at__gte=since, occurred_at__lte=until).aggregate(
-        rejected=Count("pk", filter=Q(status="rejected"), distinct=True),
-        reviewed=Count("pk", filter=Q(status__in=REVIEWED_STATUSES), distinct=True),
-        unreviewed=Count("pk", filter=Q(status="new"), distinct=True),
-        # ★ P-K6-1 — `close_event` 가 status 를 `closed` 로 덮어 판정을 지운다.
-        #   그 수를 **숨기지 않고 함께 낸다.** 이 수만큼 분모가 실제보다 작다.
-        closed=Count("pk", filter=Q(status="closed"), distinct=True),
+        # ★ 세는 칸은 `verdict` 다 — `status` 가 아니다 (D-293).
+        #   status 로 세면 종료된 판정이 분모에서 빠지고, 그러면 같은 코호트의
+        #   오탐률이 **시간이 갈수록 달라진다.** 코호트 회귀 시험이 그것을 막는다.
+        rejected=Count("pk", filter=Q(verdict="rejected"), distinct=True),
+        reviewed=Count("pk", filter=Q(verdict__in=REVIEWED_VERDICTS), distinct=True),
+        # 미판정 — 수명주기와 무관하게 **판정이 없는 것 전부**다. `status="new"` 로
+        # 세면 판정 없이 종료된 이벤트가 어느 칸에도 안 잡혀 모수가 조용히 준다.
+        unreviewed=Count("pk", filter=Q(verdict__isnull=True), distinct=True),
+        # 판정 없이 닫힌 것 — 미판정의 부분집합이다. 이 수가 크면 판정 절차가
+        # 종료에 밀리고 있다는 뜻이고, 그것은 지표가 아니라 운영의 신호다.
+        closed_unjudged=Count(
+            "pk", filter=Q(status="closed", verdict__isnull=True), distinct=True),
     )
     return RateWindow(
         since=since, until=until,
         rejected=row["rejected"], reviewed=row["reviewed"],
         unreviewed=row["unreviewed"],
-        verdict_lost_to_close=row["closed"],
+        closed_without_verdict=row["closed_unjudged"],
     )
 
 

@@ -60,6 +60,11 @@ urlpatterns = [
     path("api/handover/", include("handover.urls")),  # Handover Management APIs
     path("api/task-status/", include("task_status.urls")),  # Task status tracking APIs
     path("api/media-data/", include("media_data.urls")),  # Media data (MinIO) management APIs
+    # ★ L4 DSM App — F-09 대시보드 · F-10 알림 · F-11 보고서 · F-12 설정.
+    #   Django 앱이 아니다(모델이 없다) — INSTALLED_APPS 를 건드리지 않고 라우트만 붙인다.
+    #   신규 라우트는 트립와이어(D-275 §5-1)를 통과해야 한다: 문지기 없는 새 경로가
+    #   하나 생기면 그 순간 다시 샌다.
+    path("api/dsm/", include("apps.dsm.urls")),  # 재난안전 모니터링 App (F-09~F-12)
 ]
 
 # Serve static and media files in development

@@ -204,24 +204,26 @@ class MonthlyReportTest(K6Fixture):
             false_positive_rate(scope=self.scope_a, bucket="week")
 
 
-class ClosedEventVerdictLossTest(K6Fixture):
-    """★ **등재된 결함 P-K6-1** — 종료가 판정을 지운다.
+class ClosedEventKeepsItsVerdictTest(K6Fixture):
+    """★ **P-K6-1 을 닫는다 — 종료가 판정을 지우지 않는다** (D-293).
 
-    `DetectionEvent.status` 는 값 하나로 **판정**(confirmed/rejected)과 **수명**(new/closed)을
-    함께 나른다. 그래서 `K1.close_event` 가 status 를 `closed` 로 덮는 순간 그 이벤트가
-    확인이었는지 기각이었는지가 **DB 에서 사라진다.**
+    이 시험의 이전 판은 정반대를 단언했다: 종료하면 분모가 준다는 **그때의 사실**을
+    적고, "전제가 바뀌면 이 시험과 P-K6-1 을 같은 커밋에서 닫으라"는 문장을 남겼다.
+    지금이 그 커밋이다.
 
-    DA-04 는 *"같은 status 필드가 F-14·U1·U4 를 동시에 먹인다"* 고 적었는데, 그 전제가
-    이 지점에서 깨진다 — 오래된 이벤트일수록 종료되므로 **분모는 시간이 갈수록 작아지고**,
-    U1 의 "월 하락"은 그 축소만으로도 달성될 수 있다.
+    무엇이 바뀌었나 — 칸 하나
+    -------------------------
+    `status` 는 **판정**(confirmed/rejected)과 **수명**(new/closed)을 한 값에 실었고,
+    종료가 마지막에 오므로 판정을 덮었다. 그래서 오래된 이벤트일수록 분모에서
+    빠졌고, U1 의 "오탐률 월 하락"이 **판정을 종료하기만 해도** 달성될 수 있었다.
 
-    ※ 고치지 않고 **적재했다**(P-K6-1). `close_event` 의 의미를 바꾸는 것은 F-11(보고서
-      트리거)의 계약에 닿고, 그것은 판단이 필요한 일이다 (D-213 — STOP 대신 적재하고 전진).
-      대신 그 손실을 **숫자로 보이게** 했다: `RateWindow.verdict_lost_to_close`.
+    D-293 이 그것을 금지했다. 판정은 덮이지 않는 칸(`verdict`)에 남고, 오탐률은
+    거기서만 센다. 종료는 여전히 `status` 를 옮기고 K4 보고서를 트리거한다 —
+    **F-11 의 트리거 계약은 그대로다.**
     """
 
-    def test_closing_a_judged_event_removes_it_from_the_denominator(self) -> None:
-        from kernels.k1_event import close_event
+    def test_closing_a_judged_event_keeps_it_in_the_denominator(self) -> None:
+        from kernels.k1_event import close_event, get_event
         from kernels.k6_feedback import false_positive_rate
 
         rejected = self._event(self.stream_a)
@@ -232,21 +234,57 @@ class ClosedEventVerdictLossTest(K6Fixture):
         since = timezone.now() - timedelta(days=1)
         before = false_positive_rate(scope=self.scope_a, since=since)
         self.assertEqual(2, before.total.reviewed)
+        self.assertEqual(1, before.total.rejected)
 
         close_event(rejected, scope=self.scope_a)
         after = false_positive_rate(scope=self.scope_a, since=since)
 
-        # ★ 이것이 **지금의 사실**이다. 좋다는 뜻이 아니라 사실이라는 뜻이다.
         self.assertEqual(
-            1, after.total.reviewed,
-            "P-K6-1 의 전제가 바뀌었습니다 — 종료가 더 이상 판정을 지우지 않는다면 "
-            "그것은 **좋은 변화**이고, 이 시험과 P-K6-1 을 같은 커밋에서 닫으십시오.")
+            before.total.reviewed, after.total.reviewed,
+            "종료가 분모를 깎았습니다 — 지표가 스스로 좋아지는 구조가 돌아왔습니다 (D-293).")
         self.assertEqual(
-            0, after.total.rejected,
-            "P-K6-1 의 전제가 바뀌었습니다 — 위와 같이 처리하십시오.")
+            before.total.rejected, after.total.rejected,
+            "종료가 분자를 깎았습니다 — 기각이 종료되면 오탐이 없던 일이 됩니다 (D-293).")
         self.assertEqual(
-            1, after.total.verdict_lost_to_close,
-            "판정이 지워진 수를 보고하지 않으면 분모가 왜 줄었는지 아무도 모릅니다.")
+            before.total.rate, after.total.rate,
+            "같은 코호트인데 종료 전후로 오탐률이 달라졌습니다.")
+
+    def test_the_lifecycle_still_moves(self) -> None:
+        """종료가 **무의미해진 것이 아니다** — status 는 옮겨간다.
+
+        판정을 지키려다 종료 자체를 없애면 K4(F-11 보고서)의 트리거가 사라진다.
+        두 칸이 각자 자기 일을 하는지 함께 본다.
+        """
+        from kernels.k1_event import close_event, get_event
+
+        event_id = self._event(self.stream_a)
+        self._judge(event_id, "rejected")
+        closed = close_event(event_id, scope=self.scope_a)
+
+        self.assertEqual("closed", closed.status, "종료가 수명주기를 옮기지 않았습니다.")
+        self.assertEqual("rejected", closed.verdict, "종료가 판정을 지웠습니다 (D-293).")
+        self.assertEqual("rejected", get_event(event_id, scope=self.scope_a).verdict,
+                         "다시 읽으면 판정이 사라집니다 — 저장되지 않았습니다.")
+
+    def test_closing_without_a_verdict_is_counted_and_named(self) -> None:
+        """판정 없이 닫힌 것은 **미판정**이지 손실이 아니다 — 그러나 보고한다.
+
+        이 수가 크면 지표가 나쁜 것이 아니라 **판정 절차가 종료에 밀리고 있다**는 뜻이다.
+        숨기면 얇은 표본 위의 비율이 두꺼운 표본처럼 읽힌다 (D-271 ③).
+        """
+        from kernels.k1_event import close_event
+        from kernels.k6_feedback import false_positive_rate
+
+        never_judged = self._event(self.stream_a)
+        close_event(never_judged, scope=self.scope_a)
+
+        out = false_positive_rate(scope=self.scope_a,
+                                  since=timezone.now() - timedelta(days=1))
+        self.assertEqual(0, out.total.reviewed, "판정한 적 없는 것이 분모에 들었습니다.")
+        self.assertEqual(1, out.total.unreviewed,
+                         "판정 없이 닫힌 이벤트가 미판정 수에서 빠졌습니다 — 모수가 조용히 줄었습니다.")
+        self.assertEqual(1, out.total.closed_without_verdict,
+                         "판정 없이 닫힌 수를 보고하지 않으면 표본이 왜 얇은지 아무도 모릅니다.")
 
 
 class KernelTenantScopeTest(K6Fixture):

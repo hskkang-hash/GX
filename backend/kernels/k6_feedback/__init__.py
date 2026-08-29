@@ -23,7 +23,7 @@ from kernels.k6_feedback.exceptions import (
 from kernels.k6_feedback.schemas import FalsePositiveRate, RateWindow
 from kernels.k6_feedback.services import (
     BUCKETS,
-    REVIEWED_STATUSES,
+    REVIEWED_VERDICTS,
     false_positive_rate,
     kpi_series,
     record_feedback,
@@ -45,6 +45,8 @@ __all__ = [
     "NotImplementedYet",
     # 분모의 정의 — **밖에서도 읽을 수 있게 둔다.**
     # 오탐률을 다시 세려는 코드가 생기면 최소한 같은 분모를 쓰게 한다.
-    "REVIEWED_STATUSES",
+    # ★ 이름이 `..._STATUSES` 에서 바뀌었다 (D-293): 세는 칸이 `status`(종료가 덮는다)
+    #   에서 `verdict`(덮이지 않는다)로 옮겨졌다. 값은 같은 두 글자다.
+    "REVIEWED_VERDICTS",
     "BUCKETS",
 ]
