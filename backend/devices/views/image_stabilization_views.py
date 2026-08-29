@@ -10,22 +10,23 @@ from core.api.v1.auth import CustomJWTAuth
 from core.common.base_response import BaseResponse
 from core.common.search.dynamic_search import apply_dynamic_filters
 from common.constant import MESSAGE_ENUM
+from common.inbound_api_key import JwtOrInboundKey
 
 @api_controller('/image-stabilizations', tags=['Image Stabilizations'])
 class ImageStabilizationAPI:
-    @route.get('')
+    @route.get('', auth=JwtOrInboundKey())
     def list_image_stabilizations(self, request):
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         stabilizations = ImageStabilization.objects.all().order_by('-id')
         stabilizations = apply_dynamic_filters(stabilizations, request.GET, [], request.GET.get('sort_obj', None))
-        
+
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
         paginator = OptimizedPaginator(stabilizations, page_size)
         pages = paginator.page(current_page)
         data = ImageStabilizationOutSchema.from_queryset(pages.object_list, many=True)
-        
+
         return BaseResponse(
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_IMAGE_STABILIZATION_SUCCESS),
@@ -35,7 +36,7 @@ class ImageStabilizationAPI:
             current_page=current_page
         )
 
-    @route.get('/{id}')
+    @route.get('/{id}', auth=JwtOrInboundKey())
     def get_image_stabilization(self, id: int):
         try:
             stabilization = ImageStabilization.objects.get(id=id)

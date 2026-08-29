@@ -1,0 +1,7 @@
+# D-343 ④ 래칫 기준선 — 오늘의 건수. 늘면 exit 1 (D-311)
+#
+# ★ --freeze 가 만든다. 손으로 고치지 말 것.
+#   declared       = 코드가 들어오는 키를 받겠다고 선언한 자리
+#   open_anonymous = 인증 콜백이 아예 없는 자리 (관문 없음 — 「거절」이 아니다)
+declared	1
+open_anonymous	104

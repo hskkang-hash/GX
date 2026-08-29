@@ -10,22 +10,23 @@ from core.api.v1.auth import CustomJWTAuth
 from core.common.base_response import BaseResponse
 from core.common.search.dynamic_search import apply_dynamic_filters
 from common.constant import MESSAGE_ENUM
+from common.inbound_api_key import JwtOrInboundKey
 
 @api_controller('/battery-types', tags=['Battery Types'])
 class BatteryTypeAPI:
-    @route.get('')
+    @route.get('', auth=JwtOrInboundKey())
     def list_battery_types(self, request):
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         battery_types = BatteryType.objects.all().order_by('-id')
         battery_types = apply_dynamic_filters(battery_types, request.GET, [], request.GET.get('sort_obj', None))
-        
+
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
         paginator = OptimizedPaginator(battery_types, page_size)
         pages = paginator.page(current_page)
         data = BatteryTypeOutSchema.from_queryset(pages.object_list, many=True)
-        
+
         return BaseResponse(
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_BATTERY_TYPE_SUCCESS),
@@ -35,7 +36,7 @@ class BatteryTypeAPI:
             current_page=current_page
         )
 
-    @route.get('/{id}')
+    @route.get('/{id}', auth=JwtOrInboundKey())
     def get_battery_type(self, id: int):
         try:
             battery_type = BatteryType.objects.get(id=id)

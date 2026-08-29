@@ -238,6 +238,18 @@ repos:
         pass_filenames: false
         files: '^(backend/.*\.py|scripts/.*\.py|docs/agent/evidence/D-337/.*)$'
 
+  # ── D-343: 라우트 인벤토리·3갈래 대장 ──────────────────────────────────
+  # 새 라우트가 대장에 없이 태어나면 분류되지 않은 표면이 된다.
+  # 전역 적용(③)은 판정 대기지만, 표면이 넓어지는 것은 지금부터 막는다(④ 래칫).
+  - repo: local
+    hooks:
+      - id: gx-route-inventory
+        name: 라우트 3갈래 대장 검사 (D-343)
+        entry: python scripts/verify_route_inventory.py
+        language: system
+        pass_filenames: false
+        files: '^(backend/.*\.py|docs/agent/evidence/D-343/.*)$'
+
   # ── 기본 위생 ───────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

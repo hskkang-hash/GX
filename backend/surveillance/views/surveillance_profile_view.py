@@ -54,6 +54,7 @@ from surveillance.schemas.schemas_djantic_out import (
     VideoAnalysisOutSchema,
 )
 from devices.utils import  filter_mensurement
+from common.inbound_api_key import JwtOrInboundKey
 
 logger = logging.getLogger(__name__)
 
@@ -1435,7 +1436,7 @@ class SurveillanceProfileController:
 
 @api_controller("/video-analysis", tags=["Video Analysis"])
 class VideoAnalysisController:
-    @route.get("")
+    @route.get("", auth=JwtOrInboundKey())
     def get_video_analysis(self, request: HttpRequest, page_size: int = 25, current_page: int = 1):
         try:
             page_size = int(page_size)
@@ -1526,7 +1527,7 @@ class VideoAnalysisController:
                 data=None,
             )
 
-    @route.get("/{video_analysis_id}/download-detail")
+    @route.get("/{video_analysis_id}/download-detail", auth=JwtOrInboundKey())
     def download_video_analysis_detail(self, request: HttpRequest, video_analysis_id: int):
         # ★ 문지기는 try **밖**이다 (W0-14c 1차의 교훈) — 아래 except 가 모든 예외를
         #   삼켜 400 으로 바꾸므로, 안에 두면 Http404 도 삼켜져 아무것도 막지 못한다.

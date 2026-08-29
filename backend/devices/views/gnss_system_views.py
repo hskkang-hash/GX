@@ -10,22 +10,23 @@ from core.api.v1.auth import CustomJWTAuth
 from core.common.base_response import BaseResponse
 from core.common.search.dynamic_search import apply_dynamic_filters
 from common.constant import MESSAGE_ENUM
+from common.inbound_api_key import JwtOrInboundKey
 
 @api_controller('/gnss-systems', tags=['GNSS Systems'])
 class GNSSSystemAPI:
-    @route.get('')
+    @route.get('', auth=JwtOrInboundKey())
     def list_gnss_systems(self, request):
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         gnss_systems = GNSSSystem.objects.all().order_by('-id')
         gnss_systems = apply_dynamic_filters(gnss_systems, request.GET, [], request.GET.get('sort_obj', None))
-        
+
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
         paginator = OptimizedPaginator(gnss_systems, page_size)
         pages = paginator.page(current_page)
         data = GNSSSystemOutSchema.from_queryset(pages.object_list, many=True, auto_resolve_fields=False)
-        
+
         return BaseResponse(
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_GNSS_SYSTEM_SUCCESS),
@@ -35,7 +36,7 @@ class GNSSSystemAPI:
             current_page=current_page
         )
 
-    @route.get('/{id}')
+    @route.get('/{id}', auth=JwtOrInboundKey())
     def get_gnss_system(self, id: int):
         try:
             gnss_system = GNSSSystem.objects.get(id=id)
