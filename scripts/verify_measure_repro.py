@@ -71,6 +71,7 @@ MEASURES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("cache-bypass",     ("scripts/verify_cache_bypass.py", "--list")),
     ("route-ledger",     ("scripts/verify_route_inventory.py", "--list")),
     ("ga-readiness",     ("scripts/verify_ga_readiness.py", "--list")),
+    ("envelope",         ("scripts/verify_envelope.py", "--list")),
 )
 
 #: 당연히 변하는 것. 지우지 않으면 게이트가 **시계를 재고** 매번 빨개진다.

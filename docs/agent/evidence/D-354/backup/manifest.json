@@ -1,0 +1,32 @@
+{
+  "created_at": "2026-08-29T13:44:57+00:00",
+  "db_settings": {
+    "name": "database_guardianx",
+    "host": "postgres",
+    "port": "5432",
+    "user": "postgres"
+  },
+  "db": {
+    "file": "db_database_guardianx_20260829T134442Z.dump",
+    "bytes": 4447529,
+    "sha256": "6578919a3bf0f272225695b7e2d76d90a5634ba46cc58524e5578ffc7cbfbcd1",
+    "via": "docker:postgres",
+    "client_version": "pg_dump (PostgreSQL) 18.1 (Debian 18.1-1.pgdg13+2)",
+    "command": [
+      "docker exec postgres pg_dump -Fc -h localhost -p 5432 -U postgres -d database_guardianx -f /tmp/db_database_guardianx_20260829T134442Z.dump",
+      "docker cp postgres:/tmp/db_database_guardianx_20260829T134442Z.dump 'docs\\agent\\evidence\\D-354\\backup\\db_database_guardianx_20260829T134442Z.dump'"
+    ],
+    "rows": {
+      "stream_monitors_streammonitor": 39,
+      "stream_monitors_detectionevent": 0,
+      "stream_monitors_eventclip": 0,
+      "user_coreuser": 103,
+      "auth_group": 0
+    }
+  },
+  "objects": {
+    "unreachable": true,
+    "reason": "HTTPConnectionPool(host='minio.invalid', port=80): Max retries exceeded with url: /guardianx-dev?location= (Caused by NameResolutionError(\"<urllib3.connection.HTTPConnection object at 0x77bbc6d997d0>:",
+    "endpoint": "minio.invalid"
+  }
+}
