@@ -296,6 +296,18 @@ repos:
         pass_filenames: false
         files: '^docs/agent/evidence/D-347/.*$'
 
+  # ── D-349: 착시 ⑧ 봉투 ────────────────────────────────────────────────
+  # 겉의 200 이 안의 403 을 덮는다. 계약 상대가 읽는 면(F-05)은 래칫이 없다 —
+  # 거기서 200 봉투에 담긴 실패는 에스비 App 이 성공으로 읽는다.
+  - repo: local
+    hooks:
+      - id: gx-envelope
+        name: 봉투 불일치 검사 (D-349)
+        entry: python scripts/verify_envelope.py
+        language: system
+        pass_filenames: false
+        files: '^(backend/.*\.py|docs/agent/evidence/(D-343|D-349)/.*)$'
+
   # ── 기본 위생 ───────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

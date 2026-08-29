@@ -161,6 +161,19 @@ API_CONTRACT_PROMOTE_ERROR_STATUS = (
     os.environ.get("API_CONTRACT_PROMOTE_ERROR_STATUS", "false").lower() == "true"
 )
 
+# ★ D-349 착시 ⑧ — 봉투. **F-05 진입면은 래칫에서 제외한다.**
+#
+#   전역 승격은 무증상 실패 후보 21곳(대부분 delivery 화면)을 건드린다 — 그래서 위 플래그는
+#   아직 꺼져 있다. 그러나 **계약 상대가 읽는 면은 다르다**:
+#   에스비 App 이 HTTP 200 을 보고 실패를 성공으로 읽으면 그건 계약 사고다.
+#   게이트웨이·모니터링·재시도 로직이 전부 속고, **우리 판정기가 첫 피해자였다**(18 → 11).
+#
+#   그래서 승격을 **경로로 좁혀** 먼저 건다. 전역 플래그가 꺼져 있어도 이 경로들은 승격된다.
+#   되돌리기는 이 목록을 비우는 것이다.
+API_CONTRACT_PROMOTE_PATHS = tuple(
+    p for p in os.environ.get("API_CONTRACT_PROMOTE_PATHS", "/api/dsm/").split(",") if p.strip()
+)
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://127.0.0.1:8080",

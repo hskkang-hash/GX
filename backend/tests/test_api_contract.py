@@ -23,7 +23,10 @@ from __future__ import annotations
 import json
 
 from django.apps import apps
-from django.test import Client, TestCase, override_settings
+from django.http import JsonResponse
+from django.test import (
+    Client, RequestFactory, TestCase, override_settings,
+)
 
 from tests.no_cache import NO_CACHE
 
@@ -419,3 +422,67 @@ class ContractCoverageTest(TestCase):
             KNOWN_GAPS[KIND_SWALLOWED],
             "권한거부가 조용히 사라지는 라우트가 늘었다:\n  " + "\n  ".join(swallowed),
         )
+
+
+class ScopedPromotionForContractSurfaceTest(TestCase):
+    """D-349 ③ — **F-05 진입면은 래칫에서 제외한다.** 전역 플래그가 꺼져 있어도 승격한다.
+
+    캐시 처리: 해당 없음 — 미들웨어를 직접 호출한다 (스택을 타지 않는다).
+
+    왜 경로로 좁혔나
+        전역 승격은 무증상 실패 후보 21곳(대부분 delivery 화면)을 건드린다(W0-18 §2-2).
+        한 번에 뒤집으면 **무엇이 깨졌는지 모르는 채로 초록이 된다.**
+        그러나 계약 상대가 읽는 면은 다르다 — 거기서 200 봉투에 담긴 실패는
+        **에스비 App 이 성공으로 읽는다. 계약 사고다.**
+
+    ★ 출생 표본 (D-310): 2026-09-08 에 18 을 11 로 만든 그 본문 그대로.
+    """
+
+    #: 그날 익명 호출이 받은 본문. HTTP 는 200 이었다.
+    DENIAL_BODY = {"success": False, "message": {"ko": "권한이 거부되었습니다."},
+                   "status_code": 403}
+
+    def _promote(self, path):
+        from common.api_contract import ApiContractStatusMiddleware
+
+        def get_response(request):
+            return JsonResponse(self.DENIAL_BODY, status=200)
+
+        middleware = ApiContractStatusMiddleware(get_response)
+        request = RequestFactory().get(path)
+        return middleware(request)
+
+    def test_flag_is_off_by_default(self):
+        """전역 플래그를 켜서 통과하는 시험이 되면 이 시험은 아무것도 증명하지 않는다."""
+        from common.api_contract import promotion_enabled
+
+        self.assertFalse(promotion_enabled(), "전역 승격이 켜져 있다 — 이 시험의 전제가 깨졌다")
+
+    def test_contract_surface_is_promoted_without_the_global_flag(self):
+        resp = self._promote("/api/dsm/events")
+        self.assertEqual(
+            resp.status_code, 403,
+            "★ F-05 진입면이 200 봉투에 403 을 담아 보낸다 — 에스비 App 이 성공으로 읽는다",
+        )
+
+    def test_other_surfaces_stay_on_the_ratchet(self):
+        """음성 대조 — 전부 승격되면 그건 「좁혔다」가 아니라 「전역을 켰다」이다."""
+        resp = self._promote("/api/terminals/terminals")
+        self.assertEqual(resp.status_code, 200,
+                         "래칫 밖의 면까지 승격됐다 — 범위 판정 없이 넓힌 것이다")
+
+    def test_body_is_not_rewritten(self):
+        """상태줄만 고친다. 기존 클라이언트가 읽던 success·message 가 사라지면 안 된다."""
+        resp = self._promote("/api/dsm/events")
+        body = json.loads(resp.content.decode("utf-8"))
+        self.assertIs(body.get("success"), False)
+        self.assertIn("message", body)
+
+    def test_scope_is_declared_not_guessed(self):
+        from django.conf import settings
+
+        from common.api_contract import promotion_scope
+
+        self.assertEqual(tuple(settings.API_CONTRACT_PROMOTE_PATHS), promotion_scope())
+        self.assertGreater(len(promotion_scope()), 0,
+                           "승격 경로가 비었다 — 계약 면이 래칫으로 되돌아갔다")

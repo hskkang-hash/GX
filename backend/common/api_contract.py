@@ -57,9 +57,31 @@ _MIN_STATUS = 400
 _MAX_STATUS = 599
 
 
+#: 전역 플래그가 꺼져 있어도 **여기 경로는 승격한다** (D-349 ③).
+#: 계약 상대가 읽는 면(F-05)은 래칫에 두지 않는다 — 거기서 200 봉투에 담긴 실패는
+#: 에스비 App 이 성공으로 읽고, 그것은 계약 사고다.
+SCOPE = "API_CONTRACT_PROMOTE_PATHS"
+
+
 def promotion_enabled() -> bool:
     """플래그 한 곳. 시험도 운영도 이 함수만 본다 (D-212)."""
     return bool(getattr(settings, FLAG, False))
+
+
+def promotion_scope() -> tuple[str, ...]:
+    """전역 플래그와 **무관하게** 승격하는 경로 앞머리들."""
+    return tuple(getattr(settings, SCOPE, ()) or ())
+
+
+def promotion_enabled_for(path: str) -> bool:
+    """이 경로에서 승격하는가.
+
+    ★ 두 갈래를 **하나의 함수로** 답한다. 두 곳에서 물으면 언젠가 갈리고,
+      갈리면 어느 쪽이 진짜 규칙인지 아무도 모른다(D-337 계열).
+    """
+    if promotion_enabled():
+        return True
+    return any(path.startswith(prefix) for prefix in promotion_scope())
 
 
 def denial_status(payload: Any) -> int | None:
@@ -200,7 +222,7 @@ class ApiContractStatusMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
-        if not promotion_enabled():
+        if not promotion_enabled_for(request.path):
             return response
         # 승격은 200 에서만 한다. 이미 4xx 로 나가는 응답은 건드릴 이유가 없다.
         if response.status_code != 200:
@@ -225,7 +247,7 @@ class ApiContractStatusMiddleware:
         되살리지 못하면 None 을 돌려 **원래 예외를 그대로 흐르게 둔다.**
         진짜 직렬화 결함을 이 미들웨어가 삼키면 안 된다.
         """
-        if not promotion_enabled():
+        if not promotion_enabled_for(request.path):
             return None
         payload = _denial_from_exception(exception)
         if payload is None:

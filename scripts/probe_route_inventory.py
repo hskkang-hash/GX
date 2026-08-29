@@ -50,9 +50,12 @@ D-210 은 **호출로 재라**고 한다. 그런데 쓰기 메서드를 포함�
 from __future__ import annotations
 
 import argparse
+import ast
+import inspect
 import json
 import os
 import sys
+import textwrap
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -67,6 +70,12 @@ except (AttributeError, OSError):
 CLASS_INBOUND = "inbound_key_allowed"    # 외부 App 이 부를 면. 선언한 것만
 CLASS_SESSION = "session_only"           # 사람 UI 전용. **분류의 기본값**
 CLASS_INTERNAL = "internal_only"         # 내부 호출 전용
+
+#: 봉투 불일치 상태 (D-349 착시 ⑧). **본문에 상태를 담으면서 HTTP 는 200 인 응답**을 낸다.
+ENV_PROMOTED = "promoted"        # 승격 경로다 — 본문의 상태가 HTTP 상태가 된다
+ENV_AUTHZ = "authz_envelope"     # dj-core path_permission 이 200 봉투에 403 을 담는다 (호출로 확인)
+ENV_BODY_STATUS = "body_status"  # 핸들러가 상태를 담은 dict 를 그대로 돌려준다 (정적)
+ENV_CLEAN = "clean"              # 봉투와 내용이 갈릴 자리가 없다
 
 #: 들어오는 키 수용 상태.
 KEY_ACCEPTS = "accepts"          # 지금 키가 닿는다 — 좁혀지지 않은 자리
@@ -96,6 +105,48 @@ def inbound_key_state(auth_names: list[str], declared: bool | None) -> str:
     return KEY_UNKNOWN
 
 
+def envelope_state(path: str, has_authz: bool, source: str, promote_prefixes) -> str:
+    """이 라우트가 **봉투와 내용이 갈린 응답**을 낼 수 있는가 (D-349 ①).
+
+    ★ 술어를 한 번 좁혔다 (D-350 — 놀라운 수가 나오면 측정기를 먼저 의심한다).
+      처음에는 `status_code=4xx` 를 grep 해 **564건**을 셌다. 놀라운 수였고, 틀렸다 —
+      그 대부분은 `BaseResponse(status_code=404)` 였는데 그 클래스는 `JsonResponse` 를
+      상속하며 `super().__init__(..., status=status_code)` 를 부른다. **HTTP 상태가 따라간다.**
+      갈리는 것은 **Response 로 감싸지 않고 dict 를 그대로 돌려줄 때**뿐이다.
+
+    확인된 갈래 둘:
+      · `authz_envelope` — dj-core `path_permission` 이 `{"success": False, "status_code": 403}`
+        를 그대로 돌려준다. [실측 2026-09-08] 익명 호출 20건이 HTTP 200 + 본문 403 이었다
+      · `body_status` — 우리 핸들러가 상태를 담은 dict 를 반환한다 (정적 판정)
+    """
+    if any(path.startswith(prefix) for prefix in promote_prefixes):
+        return ENV_PROMOTED
+    if has_authz:
+        return ENV_AUTHZ
+    if _returns_status_dict(source):
+        return ENV_BODY_STATUS
+    return ENV_CLEAN
+
+
+def _returns_status_dict(source: str) -> bool:
+    """`return {... "status_code": 4xx ...}` 처럼 **감싸지 않은** dict 를 돌려주는가."""
+    if not source:
+        return False
+    try:
+        tree = ast.parse(textwrap.dedent(source))
+    except (SyntaxError, ValueError):
+        return False
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Return) or not isinstance(node.value, ast.Dict):
+            continue
+        for key, value in zip(node.value.keys, node.value.values):
+            if not isinstance(key, ast.Constant) or key.value not in ("status_code", "status"):
+                continue
+            if isinstance(value, ast.Constant) and isinstance(value.value, int)                     and not isinstance(value.value, bool) and 400 <= value.value <= 599:
+                return True
+    return False
+
+
 def classify(state: str) -> tuple[str, str]:
     """3갈래 분류와 그 근거. **판단이 서지 않으면 `session_only`** (D-343 ②).
 
@@ -120,6 +171,12 @@ def collect() -> list[dict]:
     django.setup()
 
     from common.tenant_scope import SCOPE_ATTR, _iter_ninja_apis, _join
+
+    try:
+        from common.api_contract import promotion_enabled, promotion_scope
+        promote_prefixes = ("/",) if promotion_enabled() else promotion_scope()
+    except Exception:                                     # pragma: no cover
+        promote_prefixes = ()
 
     try:
         from common.inbound_api_key import JwtOrInboundKey
@@ -149,6 +206,12 @@ def collect() -> list[dict]:
                             reason = getattr(cb, "reason", "") or ""
 
                     scope = getattr(view, SCOPE_ATTR, None)
+                    has_authz = bool(getattr(view, "_path_override", None))
+                    try:
+                        source = inspect.getsource(view)
+                    except (OSError, TypeError):
+                        source = ""
+                    envelope = envelope_state(path, has_authz, source, promote_prefixes)
                     state = inbound_key_state(auth_names, declared)
                     klass_name, why = classify(state)
                     parts = [p for p in path.split("/") if p]
@@ -170,7 +233,8 @@ def collect() -> list[dict]:
                                 if scope is not None and getattr(scope, "required", False)
                                 else "exempt" if scope is not None else "none"
                             ),
-                            "authz_path_permission": bool(getattr(view, "_path_override", None)),
+                            "authz_path_permission": has_authz,
+                            "envelope": envelope,
                             "classification": klass_name,
                             "classified_by": why,
                         })
@@ -191,6 +255,7 @@ def summarize(rows: list[dict]) -> dict:
         "by_classification": count("classification"),
         "by_tenant_scope": count("tenant_scope"),
         "by_authn": count("authn"),
+        "by_envelope": count("envelope"),
         "authz_path_permission": sum(1 for r in rows if r["authz_path_permission"]),
     }
 
@@ -234,6 +299,31 @@ def self_test() -> int:
         bad += 0 if ok else 1
         print("  %s   %s  (실측 %s)" % ("OK  " if ok else "FAIL", label, shown))
 
+    # ★ 봉투 술어 (D-349) — **출생 표본은 564 를 낸 그 틀린 술어다** (D-350)
+    def _src(body: str) -> str:
+        return "def f():" + chr(10) + "    " + body + chr(10)
+
+    env_cases = [
+        ("★ 출생표본 — path_permission 이 붙은 자리는 200 봉투에 403 을 담는다",
+         ("/api/terminals/terminals", True, "", ()), "authz_envelope"),
+        ("★ 출생표본 — BaseResponse(status_code=404) 는 **갈리지 않는다** (HTTP 가 따라간다)",
+         ("/api/x", False, _src("return BaseResponse(status_code=404)"), ()), "clean"),
+        ("감싸지 않은 dict 로 상태를 돌려주면 잡는다",
+         ("/api/x", False, _src("return {'success': False, 'status_code': 403}"), ()),
+         "body_status"),
+        ("승격 경로는 갈리지 않는다 (F-05)",
+         ("/api/dsm/events", True, "", ("/api/dsm/",)), "promoted"),
+        ("상태가 아닌 숫자는 안 잡는다",
+         ("/api/x", False, _src("return {'status_code': 200}"), ()), "clean"),
+        ("True 는 1 이 아니다 (bool 은 int 의 서브클래스)",
+         ("/api/x", False, _src("return {'status': True}"), ()), "clean"),
+    ]
+    for label, args, expect in env_cases:
+        got = envelope_state(*args)
+        ok = got == expect
+        bad += 0 if ok else 1
+        print("  %s   %s  (실측 %s)" % ("OK  " if ok else "FAIL", label, got))
+
     # 음성 대조 — 분류가 넓어지지 않는가
     for state in (KEY_ACCEPTS, KEY_REFUSES, KEY_NO_GATE, KEY_UNKNOWN):
         klass, _ = classify(state)
@@ -241,7 +331,7 @@ def self_test() -> int:
         bad += 0 if ok else 1
         print("  %s   %s 는 넓히지 않는다 → %s" % ("OK  " if ok else "FAIL", state, klass))
 
-    print("[ROUTE-INVENTORY] 자기시험 %d건 중 %d건 실패" % (len(cases) + 4, bad))
+    print("[ROUTE-INVENTORY] 자기시험 %d건 중 %d건 실패" % (len(cases) + len(env_cases) + 4, bad))
     return 1 if bad else 0
 
 
@@ -279,6 +369,8 @@ def main() -> int:
         "%s %d" % (k, v) for k, v in totals["by_classification"].items()))
     print("[ROUTE-INVENTORY] 테넌트 범위: " + " · ".join(
         "%s %d" % (k, v) for k, v in totals["by_tenant_scope"].items()))
+    print("[ROUTE-INVENTORY] 봉투(D-349): " + " · ".join(
+        "%s %d" % (k, v) for k, v in totals["by_envelope"].items()))
     print("[ROUTE-INVENTORY] → %s" % args.out)
     return 0
 

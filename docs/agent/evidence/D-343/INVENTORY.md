@@ -1,4 +1,4 @@
-# 라우트 인벤토리 — 전수 663건 [실측 2026-09-08]
+# 라우트 인벤토리 — 전수 663건 [실측 2026-09-09]
 
 > D-343 ①②. `docker exec gx-shell python /repo/scripts/probe_route_inventory.py` 가 낸다.
 > 런타임 ninja 레지스트리 전수 — 정적 grep 이 아니다.
