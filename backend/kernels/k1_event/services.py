@@ -122,6 +122,33 @@ def _inherit_owner(event, stream) -> None:
         event.save(update_fields=["group"])
 
 
+def _reference_clip(event) -> None:
+    """FX-VIDEO — 이벤트가 나면 **영상 구간 참조도 함께 난다** (D-306).
+
+    ★ 왜 여기인가. 밖에서 나중에 채우는 배치를 만들면 그 배치는 언젠가 안 돌고,
+      그러면 표는 있는데 행이 없다 — `clip_path` 가 **정의 1건 · 읽기 2곳 · 쓰기 0곳**이
+      된 경로가 정확히 그것이다(D-304 착시 ⑥). 그래서 쓰기 지점을 **하나로**, 그것도
+      이벤트가 태어나는 자리에 둔다.
+
+    ★ 실패해도 이벤트를 끌고 내려가지 않는다. 영상 참조는 **보조 정보**이고, 여기서
+      예외가 나가면 탐지 기록이 통째로 사라진다 — 주소 조회에 적용한 판단과 같다(C-3.3).
+      다만 **조용히 넘기지 않는다**: 사유를 로그에 남긴다(D-290).
+
+    ⚠ 계층: `stream_monitors` 는 커널과 같은 L3 이고 `DetectionEvent` 를 소유한 앱이다.
+      App(L4)·어댑터(L2)가 아니므로 `verify_layers.py` 의 금지 ③·⑤ 에 걸리지 않는다.
+    """
+    try:
+        from stream_monitors.services.clips import reference_for_event
+
+        reference_for_event(event)
+    except Exception as exc:               # noqa: BLE001 — 이벤트가 우선이다
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "[K1][CLIP] event=%s 영상 구간 참조 실패: %s — 이벤트는 기록됐고 "
+            "참조만 없다 (가짜 참조를 만들지 않는다)", event.pk, type(exc).__name__)
+
+
 def _to_view(row) -> EventView:
     return EventView(
         event_id=row.pk,
@@ -287,6 +314,7 @@ def record_detection(
             address_status=_address_status(address, address_status, lat, lng),
         )
         _inherit_owner(event, stream)
+        _reference_clip(event)
 
     # ── 알림 창(5분) ──────────────────────────────────────────────────────
     #

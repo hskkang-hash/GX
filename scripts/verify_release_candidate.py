@@ -91,20 +91,59 @@ def _scenario_condition(no: str, code: str, want_unlocked: int,
 
 
 def _locked_reasons_present() -> tuple[bool, str]:
-    """잠긴 능력마다 사유가 있는가. 없으면 ①이 '사유 명시' 를 못 채운다."""
+    """**잠긴 것마다 사유가 있는가.** 사유는 두 곳에 산다 — 둘 다 본다.
+
+    ① `LOCKED_CAPABILITIES` — 커널이 아닌 잠긴 능력(이름 + 사유)
+    ② 모듈의 `KERNEL_READY=False` + `NOT_READY_REASON` — 어댑터·서비스가 스스로 하는 선언
+
+    ★ 2026-09-02 실측: ①이 **비었다.** FLOOD(D-294) · ZONE(D-299) · VIDEO(D-306)가 차례로
+      열리면서 등재부에서 지워졌고, 남은 잠김(SDN)의 사유는 ②에 있다. 그때 이 함수가
+      "잠긴 능력 0건 — 등재부가 비었거나 형식이 바뀌었다"로 실패했다. 그것은 **판정기가
+      한쪽 눈만 뜨고 있었다는 뜻**이지 저장소가 잘못된 것이 아니다.
+
+      그런데 ①이 빈 것을 그냥 통과시키면 안 된다: 등재부 형식이 바뀌어 못 읽는 경우와
+      **정말로 다 열린 경우**가 구별되지 않는다. 그래서 둘을 합쳐 세고, 합이 0 인데
+      단계표에 잠김이 남아 있으면 실패한다 — 아래 호출부가 그 대조를 한다.
+    """
+    problems: list[str] = []
+    total = 0
+
     src = CONTRACT.read_text(encoding="utf-8")
     block = re.search(r"LOCKED_CAPABILITIES[^=]*=\s*\{(.*?)\n\}", src, re.S)
-    if not block:
-        return False, "LOCKED_CAPABILITIES 가 없다"
-    names = re.findall(r'^    "([A-Z_]+)":', block.group(1), re.M)
-    if not names:
-        return False, "잠긴 능력이 0건 — 등재부가 비었거나 형식이 바뀌었다"
-    thin = [n for n in names
-            if len("".join(re.findall(
-                r'"((?:[^"\\]|\\.)*)"',
-                block.group(1).split(f'"{n}":', 1)[1].split("\n    \"", 1)[0]))) < 40]
-    return (not thin), (f"잠긴 능력 {len(names)}건 전부 사유 있음"
-                        if not thin else f"사유가 빈약한 항목: {thin}")
+    if block is None:
+        return False, "LOCKED_CAPABILITIES 등재부 자체가 없다 — 형식이 바뀌었다"
+    body = block.group(1)
+    names = re.findall(r'^    "([A-Z_]+)":', body, re.M)
+    for n in names:
+        total += 1
+        chunk = body.split(f'"{n}":', 1)[1].split('\n    "', 1)[0]
+        chunk = "\n".join(ln for ln in chunk.split("\n")
+                          if not ln.lstrip().startswith("#"))
+        why = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', chunk))
+        if len(why.strip()) < 40:
+            problems.append(f"LOCKED_CAPABILITIES['{n}'] 의 사유가 빈약하다")
+
+    # ② 모듈 스스로의 선언 — `scripts/verify_e2e_contract.py` 와 **같은 판정기**를 쓴다.
+    #    두 벌로 두면 언젠가 다른 말을 하고, 그때 어느 쪽이 진실인지 알 수 없다.
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "_vec", ROOT / "scripts" / "verify_e2e_contract.py")
+    vec = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(vec)
+    for code, module in vec.kernel_packages().items():
+        path = ROOT / "backend" / (module.replace(".", "/") + "/__init__.py")
+        if not path.is_file():
+            path = ROOT / "backend" / (module.replace(".", "/") + ".py")
+        if not path.is_file():
+            continue
+        if vec.literal_from(path, "KERNEL_READY") is False:
+            total += 1
+    problems.extend(vec.not_ready_declarations())
+
+    if problems:
+        return False, f"사유가 없거나 빈약한 잠김: {problems[:2]}"
+    return True, f"잠긴 것 {total}건 전부 사유 있음 (등재부 {len(names)} + 모듈 선언 {total - len(names)})"
 
 
 def _gate_counts_condition() -> Condition:
@@ -130,11 +169,20 @@ def _gate_counts_condition() -> Condition:
 
 def conditions() -> list[Condition]:
     out = [
-        _scenario_condition("①", "E2E-1", want_unlocked=8, want_locked=2),
+        # ★ 2026-09-02 · D-306 으로 VIDEO 칸이 열려 잠김이 2 → 1 이 됐다.
+        #   기대값을 함께 고친다 — 안 고치면 이 판정기가 "덜 잠긴 것"을 실패로 읽는다.
+        _scenario_condition("①", "E2E-1", want_unlocked=9, want_locked=1),
         _scenario_condition("②", "E2E-2", want_unlocked=4, want_locked=0),
         _gate_counts_condition(),
     ]
     reasons_ok, reasons_note = _locked_reasons_present()
+    # ★ 단계표에 잠김이 남아 있는데 사유가 **한 건도** 없으면 그것은 통과가 아니다 —
+    #   사유 없는 잠김은 "아직" 인지 "영영" 인지 구별되지 않는다(D-264).
+    locked_in_steps = sum((_counts(_steps(c)) or (0, 0, 0, 0))[3]
+                          for c in ("E2E-1", "E2E-2", "E2E-3") if _steps(c))
+    if locked_in_steps and "0건" in reasons_note:
+        reasons_ok, reasons_note = False, (
+            f"단계표에 잠김 {locked_in_steps}칸이 있는데 사유가 0건이다 — 판정 불가")
     out[0].ok = out[0].ok and reasons_ok
     out[0].note += f" · {reasons_note}"
 
@@ -226,7 +274,7 @@ def main() -> int:
         print(f"[RC] 미충족 {len(missed)}건 — **아직 릴리스 후보가 아니다**")
         return 1
     print("[RC] 다섯 조건 충족 — 릴리스 후보(SDN 제외판) 선언 가능")
-    print("     ※ 이것은 '완주' 가 아니다. 잠긴 칸(SDN·VIDEO)은 잴 수 없는 것이고,")
+    print("     ※ 이것은 '완주' 가 아니다. 잠긴 칸은 잴 수 없는 것이고,")
     print("       정확한 표현은 '이 범위 안에서는 끊긴 단계가 없다' 이다 (D-302).")
     return 0
 

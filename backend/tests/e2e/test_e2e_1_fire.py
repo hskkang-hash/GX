@@ -84,6 +84,19 @@ class _FireScenario(TestCase):
         cls.user_b = cls._user("e2e1_user_b", cls.group_b, cls.role_b)
         cls.stream_a = cls._stream("e2e1-cam-A", cls.group_a)
         cls.stream_b = cls._stream("e2e1-cam-B", cls.group_b)
+
+        # ★ 9단계(영상 구간 참조)용 — **그 카메라는 녹화 중이었다.**
+        #   이것은 편의를 위한 픽스처가 아니라 시나리오의 사실이다: 관제 카메라는
+        #   돌고 있고, 화재는 그 녹화 위에서 난다. 녹화가 없으면 참조는
+        #   `unavailable` + 사유가 되고 티켓은 404 다 — 그 갈래는
+        #   test_clip_playback.py 가 따로 잰다.
+        Record = apps.get_model("stream_monitors", "StreamMonitorRecord")
+        record = Record.objects.create(
+            stream_id=cls.stream_a.code, code="e2e1-rec", status="running",
+            object_path="minio://records/e2e1-cam-A/2026-09-02.mp4")
+        # created_at 은 auto_now_add 다 — 이벤트보다 앞서게 뒤로 민다.
+        Record.objects.filter(pk=record.pk).update(
+            created_at=timezone.now() - timedelta(minutes=30))
         cls._rule(cls.group_a, cls.role_a)
         cls._rule(cls.group_b, cls.role_b)
 
@@ -278,6 +291,43 @@ class E2E1FireTest(_FireScenario):
         self.ledger.record(
             self._step(8), True,
             f"프리셋 {preset.preset}(matched={preset.matched}) · 패널 {len(panels)}칸")
+
+        # ── 9. 이벤트 클릭 → 영상 구간 참조 + 재생 규약 ★ D-306 으로 열린 단계 ──
+        #
+        #    ★ **재는 것을 정확히 적는다.** 계약 AC 의 문장은 "클릭 → 영상 3초 이내
+        #      재생" 이고, 그 3초는 **바이트가 나가야** 잴 수 있다. 바이트는 아직 나가지
+        #      않는다(CLIP_EXTRACTION_READY=False). 그래서 여기서 재는 것은
+        #      "클릭 → 어디를 보라를 안전하게 말하기" 까지이고, 표에도 그렇게 적는다.
+        #      원래 문장을 그대로 두고 초록을 내면 재지 않은 것을 잰 것으로 읽힌다(D-302).
+        from stream_monitors.services import clips
+
+        clicked_at = timezone.now()
+        ticket = clips.issue_ticket(scope=self.scope_a, event_id=first.event_id)
+        elapsed = (timezone.now() - clicked_at).total_seconds()
+
+        self.assertEqual(first.event_id, ticket.event_id)
+        self.assertTrue(ticket.object_key, "구간 참조에 원본 객체가 없습니다.")
+        self.assertGreater(ticket.expires_at, clicked_at,
+                           "[규약 ②] 만료 없는 링크입니다.")
+        self.assertFalse(ticket.playable,
+                         "구간 추출이 잠겨 있는데 playable 이 참입니다 — "
+                         "잠금과 응답이 갈렸습니다.")
+        self.assertTrue(ticket.reason, "[D-264] 못 주는 이유가 비었습니다.")
+        self.assertLessEqual(
+            elapsed, 3.0,
+            f"[F-09] 클릭에서 구간 참조까지 {elapsed:.2f}s — 3초 AC 를 넘겼습니다. "
+            f"(재생 자체는 아직 잴 수 없습니다.)")
+
+        # 규약 ① — 남의 테넌트는 404. 이 단계에서 함께 잰다(격리는 경로마다 재야 한다).
+        from django.http import Http404
+
+        with self.assertRaises(Http404):
+            clips.issue_ticket(scope=self.scope_b, event_id=first.event_id)
+
+        self.ledger.record(
+            self._step(9), True,
+            f"참조 {elapsed:.2f}s ≤ 3s · 만료 {ticket.expires_at:%H:%M:%S} · "
+            f"추출 잠김(playable=False)")
 
         # ── 10. K4 보고서 PDF ─────────────────────────────────────────
         #    K4 가 붙으면서 등재부가 이 단계를 열었다.

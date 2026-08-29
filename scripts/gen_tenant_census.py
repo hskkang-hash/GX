@@ -275,6 +275,16 @@ NEW_SINCE_CENSUS: dict[str, str] = {
         "test_isolation_another_tenant_cannot_see_our_zones 가 양방향으로 잰다. "
         "구역을 **만드는** 공개 면은 아직 없으므로 쓰기 IDOR 표면도 아직 없다 — "
         "생기면 WRITE_PROBES 에 함께 등재한다(D-290)",
+    "stream_monitors.EventClip":
+        "2026-09-02 D-306 으로 신설(마이그 0021). 인구조사(2026-08-14 덤프)에 없었던 것이 "
+        "아니라 그때 존재하지 않았다. 소유는 **이벤트에서 물려받는다**"
+        "(stream_monitors.services.clips._own) — 주인 없는 행은 §0.4 의 "
+        "created_by__isnull OR 절을 타고 모두에게 보인다(W0-13 이 되돌린 상태). "
+        "격리 단언은 backend/tests/test_clip_playback.py 의 "
+        "test_the_clip_inherits_the_tenant_from_the_event 와 규약 ①"
+        "(test_rule1_another_tenant_gets_404)이 함께 잰다. "
+        "쓰기 면은 이벤트 생성 경로 안 한 곳뿐이고 HTTP 로 만드는 경로는 없다 — "
+        "생기면 WRITE_PROBES 에 함께 등재한다(D-290)",
 }
 
 

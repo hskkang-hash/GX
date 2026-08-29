@@ -485,3 +485,66 @@ class Zone(BaseModel):
 
     def __str__(self):
         return f"{self.name}({self.kind})"
+
+
+class EventClip(BaseModel):
+    """이벤트 ↔ 영상 **구간 참조** (D-306). 새 인코딩 0건 — "어디를 보라"만 적는다.
+
+    왜 `clip_path` 가 아니라 새 표인가
+    ----------------------------------
+    `DetectionEvent.clip_path` 는 **정의 1건 · 읽기 2곳 · 쓰기 0곳**이었다. 읽는 코드가
+    있으니 살아 있어 보였고 시험은 읽기만 지나가며 초록이었다 — D-304 가 착시 ⑥
+    (스키마의 착시)으로 이름 붙인 모양이다. 그 칸을 그대로 채우면 **한 칸이 두 뜻**을
+    갖는다: "추출된 파일 경로" 인지 "원본 녹화의 어느 구간" 인지.
+
+    구간 참조는 셋(객체 · 시작 · 길이)이 함께여야 뜻이 있으므로 칸 하나로는 표현되지 않는다.
+    그래서 표를 나누고, 옛 칸은 쓰지 않는다는 사실을
+    `scripts/verify_dead_fields.py` 의 `DECLARED_UNWIRED` 에 사유와 함께 등재했다.
+
+    ★ 무엇을 만들지 않았나 (D-300 부작위)
+    -------------------------------------
+    **새 파일을 만들지 않는다.** 이 표는 이미 MinIO 에 있는 녹화 객체(`/start-record` 의
+    산출물)를 가리킬 뿐이고, 실제 구간 추출·트랜스코딩은
+    `stream_monitors.services.clips.CLIP_EXTRACTION_READY` 가 잠근다.
+
+    ★ 쓰기 지점은 **이벤트 생성 경로 안 한 곳**이다 (D-306)
+    ------------------------------------------------------
+    밖에서 나중에 채우는 배치를 만들지 않는다 — 그것이 `clip_path` 가 죽은 필드가 된
+    경로다. 이벤트가 나면 참조도 함께 난다. 녹화가 없었으면 행이 없는 것이 아니라
+    `unavailable` + 사유로 **행이 남는다**: "없다" 와 "아직 안 봤다" 를 구별하기 위해서다(D-290).
+    """
+
+    class ClipStatus(models.TextChoices):
+        #: 그 시각에 녹화가 없었다. **사유가 함께 남는다.** 재시도 대상이 아니다.
+        UNAVAILABLE = "unavailable", "녹화 없음"
+        #: 원본 녹화의 어느 구간인지 안다. **지금 만드는 것이 여기까지다.**
+        REFERENCED = "referenced", "구간 참조"
+        #: 그 구간이 실제로 잘려 나왔다. 이 값을 쓰려면 CLIP_EXTRACTION_READY 가 True 여야 한다.
+        EXTRACTED = "extracted", "구간 추출"
+
+    event = models.ForeignKey(
+        DetectionEvent, on_delete=models.CASCADE, related_name="clips")
+    #: 이미 MinIO 에 있는 녹화 객체. **우리가 만든 것이 아니다.**
+    object_key = models.CharField(max_length=512, blank=True, default="")
+    #: 녹화 시작점에서 몇 초 뒤부터인가 (이벤트 시각 − PRE_ROLL, 0 미만이면 0).
+    start_offset = models.FloatField(null=True, blank=True)
+    #: 몇 초짜리 구간인가 (PRE_ROLL + POST_ROLL).
+    duration = models.FloatField(null=True, blank=True)
+    clip_status = models.CharField(
+        max_length=16, choices=ClipStatus.choices,
+        default=ClipStatus.UNAVAILABLE, db_index=True)
+    #: ★ `unavailable` 일 때 **반드시 채워진다.** 사유 없는 부재는 "없다" 인지
+    #:   "못 찾았다" 인지 구별되지 않고, 구별되지 않는 것은 잊힌다 (D-264 · D-290).
+    unavailable_reason = models.CharField(max_length=255, blank=True, default="")
+
+    class Meta:
+        ordering = ["-id"]
+        indexes = [
+            # 이벤트 클릭 → 참조 조회 (F-09 의 3초를 재는 경로)
+            models.Index(fields=["event", "-id"]),
+            # 잠금 대조: extracted 인 행이 있는데 상수가 False 인가
+            models.Index(fields=["clip_status"]),
+        ]
+
+    def __str__(self):
+        return f"clip({self.clip_status})@event{self.event_id}"

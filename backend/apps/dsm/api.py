@@ -206,6 +206,68 @@ class DsmAPI:
             f'attachment; filename="guardianx-report-{template_id}.pdf"')
         return response
 
+    # ── F-09 영상 재생 — 계약 11조(원본 영상 무반출)가 여기서 걸린다 (D-306) ──
+    #
+    # ★ 이 두 라우트가 이번 턴에서 가장 위험한 자리다. 영상은 우리 산출물 중 반출 위험이
+    #   가장 크고, 계약 11조는 그것을 정면으로 금지한다. 규약 넷을 **시험으로** 걸었고
+    #   (backend/tests/test_clip_playback.py), 넷 중 하나라도 없으면 라우트를 내지 않는다.
+    #
+    #     ① 테넌트 범위 — 남의 event_id 는 404. 403 이 아니다(존재도 알리지 않는다 · D-269)
+    #     ② 만료 서명 URL — 무기한 링크 금지
+    #     ③ 구간 한정 — 구간이 서명에 묶여 있어 **다른 구간을 요구할 수조차 없다**
+    #     ④ 다운로드 아님 — 원본 전체를 주는 경로가 **없다**(부작위 시험이 잰다 · D-300)
+    @route.get("/events/{int:event_id}/clip", auth=CustomJWTAuth())
+    @tenant_scoped(reason="F-09 영상 구간 참조 — 남의 이벤트 영상에 닿으면 계약 11조 위반이다")
+    def event_clip(self, request, event_id: int):
+        """AC-09 — 이벤트 클릭 → **어디를 보라**.
+
+        돌려주는 것은 구간에 묶인 만료 티켓이고, **객체를 통째로 받을 수 있는 URL 이
+        아니다.** 프리사인드 URL 을 내면 요청한 30초를 주려다 두 시간짜리 원본을 준다.
+        """
+        from stream_monitors.services import clips
+
+        try:
+            ticket = clips.issue_ticket(scope=_scope(request), event_id=event_id)
+        except Http404 as exc:
+            raise HttpError(404, str(exc) or "그런 이벤트가 없습니다.")
+        return {
+            "event_id": ticket.event_id,
+            "start_offset": ticket.start_offset,
+            "duration": ticket.duration,
+            "expires_at": ticket.expires_at.isoformat(),
+            "token": ticket.token,
+            # ★ 지금 바이트를 받을 수 있는가. 거짓이면 **사유가 함께 나간다** —
+            #   조용히 빈 응답을 주면 화면은 "영상이 없다" 로 읽는다 (D-284 · D-290).
+            "playable": ticket.playable,
+            "reason": ticket.reason,
+        }
+
+    @route.get("/events/{int:event_id}/clip/stream", auth=CustomJWTAuth())
+    @tenant_scoped(reason="F-09 영상 구간 전송 — 구간 밖 바이트가 나가면 계약 11조 위반이다")
+    def event_clip_stream(self, request, event_id: int, token: str,
+                          start_offset: float, duration: float):
+        """구간의 바이트. **지금은 아무 바이트도 나가지 않는다** (CLIP_EXTRACTION_READY=False).
+
+        티켓을 **먼저** 검증하고 그다음 잠금에서 멈춘다. 순서가 반대면 "티켓이 틀렸다" 와
+        "아직 못 준다" 가 같은 응답이 되고, 잠금이 풀린 날 검증이 도는지 아무도 모른다.
+        """
+        from stream_monitors.services import clips
+
+        try:
+            clip_ticket = clips.issue_ticket(scope=_scope(request), event_id=event_id)
+        except Http404 as exc:
+            raise HttpError(404, str(exc) or "그런 이벤트가 없습니다.")
+        try:
+            clips.stream_window(
+                token=token, event_id=event_id, object_key=clip_ticket.object_key,
+                start_offset=start_offset, duration=duration)
+        except Http404 as exc:
+            raise HttpError(404, str(exc))
+        except NotImplementedError as exc:
+            # 501 — **아직 구현하지 않았다.** 404(없는 주소)도 500(결함)도 아니다.
+            raise HttpError(501, str(exc))
+        raise HttpError(500, "도달할 수 없는 자리")   # stream_window 는 언제나 멈춘다
+
     # ── F-12 관리자 설정 ─────────────────────────────────────────────────
     @route.get("/settings/{domain}", auth=CustomJWTAuth())
     @tenant_scoped(reason="F-12 설정 — 남의 테넌트 설정이 보이면 안 된다")
