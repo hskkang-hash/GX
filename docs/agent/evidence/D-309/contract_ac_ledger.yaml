@@ -61,12 +61,18 @@ features:
           - "backend/tests/e2e/test_e2e_2_flood.py::test_flood_scenario_runs_end_to_end"
         note: "논리 시계로 잰다 — 실시간 대기 금지(D-291 규약 ⑤)."
       - quote: "지점별 기준선 설정"
-        state: 미착수
+        state: 구현
+        proof:
+          - "backend/tests/test_k5_threshold_table.py::test_the_narrower_scope_wins"
+          - "backend/tests/test_k5_threshold_table.py::test_the_waterlevel_baseline_has_no_invented_default"
+          - "backend/tests/test_k5_threshold_table.py::test_an_admin_sets_the_point_baseline"
         note: |
-          **임계값을 저장할 표가 없다**(FR-02-2). 시험은 "초과 신호가 이미 났다"는 전제에서
-          시작한다 — 임계값을 코드에 박으면 그 값이 곧 AC 판정의 근거가 된다(D-280).
-          ★ 이 절은 F-12 의 "임계값" 절과 **같은 뿌리**다. 표 하나가 두 절을 함께 올린다.
-
+          ★ 2026-09-06 — K5 표 ①이 서면서 올라갔다(D-325).
+          **계약이 「지점별」이라고 못박았으므로** 적용 범위를 camera 로 두고, 좁은 것이
+          이기게 했다(camera → tenant → global). 관리자가 F-12 쓰기 문으로 지점마다 넣는다.
+          ★ **기본값을 지어내지 않았다** — 하천 지점마다 범람 수위가 다르므로 전역 기본이라는
+            것이 성립하지 않는다. 값이 없으면 `ThresholdNotSet` 으로 멈춘다.
+            「기본값 0」은 「기준선이 0cm」로 읽히고, 그러면 **모든 신호가 초과**가 된다(D-280 · D-290).
   - id: F-03
     ac: "지정 위험구역(폴리곤) 내 사람·차량 진입을 결합해 등급을 상향한다"
     kernel: K1
@@ -137,10 +143,25 @@ features:
       - quote: "API Key 발급·폐기"
         state: 미착수
         note: |
-          **저장처가 없다**(FR-05-3). 다만 그 부재는 조용하지 않다 —
-          dsm.SETTING_DOMAINS['api_keys'] 가 사유와 함께 501 로 나가고 그 갈래는 잰다
-          (test_dsm_app.py::test_unavailable_domains_raise_instead_of_returning_empty).
-          키 값은 저장소 밖이고(D-204), 발급 이력의 자리는 W4 계측 모델과 함께 정해진다.
+          ★ 2026-09-06 **사유를 정정한다 — 방향이 반대였다.**
+          D-325 표 ②(자격증명 저장처)가 이 절을 갚을 것으로 예상됐으나, 실측해 보니
+          **두 개가 다른 것**이다:
+            · 표 ②   = **나가는** 자격증명 — 우리가 남의 API(juso·포털)를 부를 때 쓰는 키
+            · FR-05-3 = **들어오는** 자격증명 — 남의 App 이 우리 이벤트 OpenAPI 를 부를 때 쓰는 키
+          둘 다 "API Key" 라 불려서 같은 것으로 읽혔다 — **이름의 유사성을 같음으로 읽은 것**이고,
+          D-321(재난안전 CCTV)과 D-328(어떤 키인지 묻지 않았다)의 형제다.
+          그래서 이 절은 **미착수 그대로 둔다.** 표 ②가 섰다고 이 절을 올리면
+          그 순간 대장이 거짓말을 시작한다.
+          남은 선행 판정: 이벤트 OpenAPI 의 **인증 방식**(지금은 JWT). 키 발급을 붙이려면
+          그 방식부터 정해야 하고, 그것을 지금 고르면 그 선택이 곧 F-05 의 계약이 된다(D-280).
+          ★ 2026-09-06 실측 — **바퀴를 다시 만들지 말 것**: 이관 자산에 발급·폐기 면이
+            이미 있다 — `core.apikey_account`(dj-core · §0.4 금지구역)와 그것을 감싼
+            `backend/third_api/views/api_key_controller.py`. 다만 **F-05 의 진입면에 연결돼
+            있지 않고**(이벤트 OpenAPI 는 CustomJWTAuth 만 받는다), 그 컨트롤러의
+            `@path_permission` 이 **주석 처리돼 있다.** 그래서 지금 상태로 이 절을 올릴 수 없다.
+            붙이는 일은 「만들기」가 아니라 **「잇기 + 권한 되살리기」**이고, 그 판정을 요청한다.
+          부재는 여전히 조용하지 않다 — 표 ②가 `api_keys` 설정 면에 **나가는 키의 사실**을
+          내보내고, 들어오는 키가 없다는 것은 이 note 가 말한다.
 
   - id: F-06
     ac: "심각 등급 발생 시 SDN QoS 요청을 10초 이내에 보낸다"
@@ -296,8 +317,19 @@ features:
           관리자 화면·픽스처로 만든다. 못 다루는 영역은 빈 응답이 아니라 사유와 함께
           501 로 나간다(그 갈래는 test_unavailable_domains_raise_instead_of_returning_empty 가 잰다).
       - quote: "임계값"
-        state: 미착수
-        note: "★ F-02 의 '지점별 기준선 설정' 절과 **같은 뿌리**다. 표 하나가 두 절을 올린다."
+        state: 구현
+        proof:
+          - "backend/tests/test_k5_threshold_table.py::test_contract_fixed_thresholds_cannot_be_overridden"
+          - "backend/tests/test_k5_threshold_table.py::test_the_history_keeps_what_it_was_and_why"
+          - "backend/tests/test_k5_threshold_table.py::test_a_non_admin_cannot_change_a_threshold"
+          - "backend/tests/test_dsm_app.py::test_the_two_new_tables_are_actually_available"
+        note: |
+          ★ F-02 의 '지점별 기준선 설정' 절과 **같은 뿌리**였고, 표 하나가 두 절을 함께 올렸다
+          (D-325 — 절 분해가 없었으면 보이지 않았을 뿌리다).
+          ★ 이 절 고유의 위험 하나를 표가 막는다: **계약을 설정으로 어길 수 없다.**
+            F-04 「5분」·F-10 「30초」는 `contract_fixed` 로 잠겨 있고, 덮으려 하면 409 다.
+            그 구별이 없으면 "임계값을 설정 가능하게 만들었다" 가 곧
+            **"계약 AC 를 설정 가능하게 만들었다"** 가 된다.
       - quote: "등급규칙"
         state: 미착수
         note: |
@@ -306,7 +338,12 @@ features:
           (P-W2-2-1 미결).
       - quote: "API키"
         state: 미착수
-        note: "F-05 의 'API Key 발급·폐기' 절과 **같은 뿌리**다(FR-05-3)."
+        note: |
+          F-05 의 'API Key 발급·폐기' 절과 **같은 뿌리**다(FR-05-3) — 그래서 함께 남는다.
+          ★ 2026-09-06: `api_keys` 설정 면은 열렸고 K5 표 ②가 **나가는 키의 사실**을 낸다.
+            그러나 FR-12-1 이 부르는 "API Key" 는 FR-05-3 이 가리키는 **들어오는 키**이고,
+            그것은 아직 없다. 설정 면이 열린 것과 그 절이 갚아진 것은 다른 사실이다 —
+            **부분을 구현으로 올리지 않는다**(D-314).
 
   - id: F-13
     ac: "정찰 프로파일 초안을 생성하되 비행 명령은 전송하지 않는다"

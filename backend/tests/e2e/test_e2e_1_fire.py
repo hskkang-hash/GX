@@ -57,6 +57,11 @@ REAL_SAMPLE = (
     "kernels.k6_feedback.false_positive_rate — 저장소의 실제 커널 공개 면"
 )
 
+#: ★ D-338 ② — 카메라 설치 주소. **알림 본문에 이 글자가 실제로 나가는지**를 이 시나리오가 본다.
+#:   필드가 있다는 사실과 그 값이 사람에게 도달한다는 사실은 다르다 (착시 ⑥ · D-304).
+CAMERA_ADDRESS = "경기도 안양시 만안구 안양로 123"
+CAMERA_ADDRESS_DETAIL = "정문"
+
 
 class _FireScenario(TestCase):
     """화재 시나리오의 픽스처 — 테넌트 A(우리) · 테넌트 B(남).
@@ -138,9 +143,18 @@ class _FireScenario(TestCase):
 
     @classmethod
     def _stream(cls, name, group):
+        """★ 설치 주소가 **채워진** 카메라다 (D-338 ②).
+
+        빈 카메라로 E2E 를 돌리면 알림 위치줄이 좌표 갈래로만 흐르고,
+        「주소 칸을 만들었다」는 사실만 남는다. 그건 D-304 착시 ⑥ 그대로다.
+        여기에 주소를 넣어야 **「이 경로로 사람에게 도달한다」**가 증명된다.
+        """
         StreamMonitor = apps.get_model("stream_monitors", "StreamMonitor")
         return cls._own(StreamMonitor.objects.create(
-            name=name, code=name, ip_source="rtsp://e2e.invalid/fire"), group)
+            name=name, code=name, ip_source="rtsp://e2e.invalid/fire",
+            install_address=CAMERA_ADDRESS,
+            install_address_detail=CAMERA_ADDRESS_DETAIL,
+            address_source="manual"), group)
 
     @classmethod
     def _rule(cls, group, role):
@@ -250,6 +264,20 @@ class E2E1FireTest(_FireScenario):
             record.meets_f10,
             f"[F-10] occurred_at → sent_at 이 30초를 넘겼습니다: {record.latency_seconds}초")
         self.assertEqual(1, len(mail.outbox), "메일이 실제로 나가지 않았습니다.")
+
+        # ★ D-338 ② — 카메라 설치 주소가 **사람이 받는 본문에** 실제로 있는가.
+        #   「필드를 만들었다」가 아니라 **「이 경로로 사람에게 도달한다」**를 재는 자리다.
+        #   여기가 빨개지면 주소는 DB 에만 있고 알림에는 없는 것이다 — 착시 ⑥ (D-304).
+        sent_body = mail.outbox[0].body
+        self.assertIn(
+            CAMERA_ADDRESS, sent_body,
+            "카메라 설치 주소가 알림 본문에 없습니다 — 주소는 DB 에만 있고 사람에게는 "
+            "좌표만 갔습니다 (D-338 ②)")
+        self.assertIn(
+            CAMERA_ADDRESS_DETAIL, sent_body,
+            "현장 표현(「정문」)이 본문에 없습니다 — 도로명주소만으로는 새벽 당직자가 "
+            "건물 안 어디인지 모릅니다 (D-330)")
+
         self.ledger.record(self._step(5), True, f"{record.latency_seconds:.2f}s ≤ 30s")
 
         # 두 번째 이벤트는 K2 도 접는다 — 두 창의 판정이 같은 결론에 이른다.

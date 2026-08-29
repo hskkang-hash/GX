@@ -1,0 +1,49 @@
+# D-334 주석 처리된 권한 데코레이터 기준선 — **오늘 주석 상태인 자리** (2026-09-07 실측)
+#
+# ★ `python scripts/verify_commented_guards.py --freeze` 가 만든다. 손으로 고치지 말 것.
+#
+# 래칫이다 — 소급 사유를 요구하지 않는다(D-311). 여기 이름을 **새로** 올리는 일만 exit 1 이다.
+# 이름이 사라지는 것은 권한이 복구됐다는 뜻이고, 그것은 환영이다.
+#
+# ★ 단, **`auth=` 가 없는 자리는 기준선에 있어도 exit 1 이다.** 그건 느슨한 권한이 아니라
+#   열린 문이고, 열린 문에는 유예가 없다 (D-334 ③).
+
+backend/delivery/views/api.py::ProcessingController::update_delivery_event::path_permission
+backend/devices/views/device_views.py::DeviceAPI::activate::path_permission
+backend/devices/views/device_views.py::DeviceAPI::deactivate::path_permission
+backend/drone_communication/views/drone_views.py::DroneCommunicationAPI::get_online_drones::path_permission
+backend/operational_data/views/operational_data_view.py::OperationalDataAPI::download_operational_data::path_permission
+backend/operational_data/views/operational_data_view.py::OperationalDataAPI::download_operational_log_drone::path_permission
+backend/operational_data/views/operational_data_view.py::OperationalDataAPI::download_operational_log_robot::path_permission
+backend/operational_data/views/operational_data_view.py::OperationalDataAPI::get_upload_status_by_id::path_permission
+backend/operational_data/views/operational_data_view.py::OperationalDataAPI::get_upload_status_by_task_id::path_permission
+backend/operational_data/views/operational_data_view.py::OperationalDataAPI::upload_operational_log_drone::path_permission
+backend/operational_data/views/operational_data_view.py::OperationalDataAPI::upload_operational_log_robot::path_permission
+backend/operational_data/views/operational_data_view.py::OperationalDataAPI::upload_operational_video_drone::path_permission
+backend/operational_data/views/operational_data_view.py::OperationalDataAPI::upload_operational_video_robot::path_permission
+backend/surveillance/views/surveillance_profile_view.py::SurveillanceProfileController::completed_profile::path_permission
+backend/surveillance/views/surveillance_profile_view.py::SurveillanceProfileController::list_scheduled_activations::path_permission
+backend/surveillance/views/surveillance_profile_view.py::SurveillanceProfileController::list_selected_profiles::path_permission
+backend/surveillance/views/survey_mission_view.py::SurveyMissionController::check_permission::path_permission
+backend/terminals/views/day_of_week_views.py::DayOfWeekController::get_day_of_week::path_permission
+backend/terminals/views/day_of_week_views.py::DayOfWeekController::list_days_of_week::path_permission
+backend/terminals/views/terminal_views.py::FunctionController::delete_function::path_permission
+backend/terminals/views/terminal_views.py::FunctionController::get_function_types::path_permission
+backend/terminals/views/terminal_views.py::FunctionController::list_functions::path_permission
+backend/terminals/views/terminal_views.py::TerminalTypeController::create_terminal_type::path_permission
+backend/terminals/views/terminal_views.py::TerminalTypeController::delete_terminal_type::path_permission
+backend/terminals/views/terminal_views.py::TerminalTypeController::get_terminal_type::path_permission
+backend/terminals/views/terminal_views.py::TerminalTypeController::list_terminal_types::path_permission
+backend/terminals/views/terminal_views.py::TerminalTypeController::update_terminal_type::path_permission
+backend/third_api/views/api.py::ThirdPartyIntegrationController::receive_status_from_etri_swagger::path_permission
+backend/third_api/views/api_key_controller.py::ThirdPartyAPIKeyController::bulk_deactivate::path_permission
+backend/third_api/views/api_key_controller.py::ThirdPartyAPIKeyController::check_api_key::path_permission
+backend/third_api/views/api_key_controller.py::ThirdPartyAPIKeyController::create_api_key::path_permission
+backend/third_api/views/api_key_controller.py::ThirdPartyAPIKeyController::delete_api_key::path_permission
+backend/third_api/views/api_key_controller.py::ThirdPartyAPIKeyController::get_analytics::path_permission
+backend/third_api/views/api_key_controller.py::ThirdPartyAPIKeyController::get_api_key::path_permission
+backend/third_api/views/api_key_controller.py::ThirdPartyAPIKeyController::get_stats::path_permission
+backend/third_api/views/api_key_controller.py::ThirdPartyAPIKeyController::get_usage_logs::path_permission
+backend/third_api/views/api_key_controller.py::ThirdPartyAPIKeyController::list_api_keys::path_permission
+backend/third_api/views/api_key_controller.py::ThirdPartyAPIKeyController::regenerate_api_key::path_permission
+backend/third_api/views/api_key_controller.py::ThirdPartyAPIKeyController::update_api_key::path_permission

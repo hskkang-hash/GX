@@ -286,3 +286,32 @@ class DsmAPI:
             # 400(잘못된 요청)도 아니다. 셋을 뭉치면 "언젠가 생길 것" 과
             # "영영 없는 것" 이 클라이언트에서 구별되지 않는다.
             raise HttpError(501, str(exc))
+
+    @route.post("/settings/thresholds", auth=CustomJWTAuth())
+    @tenant_scoped(reason="F-12 임계값 쓰기 — 남의 테넌트 임계값을 못 바꾼다")
+    def set_threshold(self, request, key: str, value: float, reason: str,
+                      scope_level: str = "global", scope_ref: int | None = None):
+        """F-12 「임계값」 · F-02 「**지점별** 기준선 설정」 — 값을 바꾸는 유일한 문.
+
+        **사유 없이는 못 바꾼다.** 무엇에서 무엇으로는 표가 알지만 **왜** 는
+        여기서만 들어온다 — 그 칸이 비면 400 이다.
+
+        계약이 못박은 값(F-04 5분 · F-10 30초)은 **409** 다. 400(잘못된 요청)이 아니라
+        409(상태 충돌)인 이유: 요청이 틀린 게 아니라 **그 값이 계약이라서** 안 되는 것이다.
+        """
+        from kernels.k5_trust import (
+            ScopeNotAvailable,
+            ThresholdIsContractFixed,
+            ThresholdNotDefined,
+        )
+
+        try:
+            return services.set_threshold_value(
+                scope=_scope(request), key=key, value=value, reason=reason,
+                scope_level=scope_level, scope_ref=scope_ref)
+        except PermissionDeniedForSetting as exc:
+            raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
+        except ThresholdIsContractFixed as exc:
+            raise HttpError(409, str(exc))
+        except (ThresholdNotDefined, ScopeNotAvailable, ValueError) as exc:
+            raise HttpError(400, str(exc))

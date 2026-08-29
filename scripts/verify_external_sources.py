@@ -36,6 +36,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 ENV_EXAMPLE = ROOT / "backend" / ".env.example"
+SOURCES = ROOT / "docs" / "agent" / "evidence" / "DA-05" / "sources.yaml"
+
+#: ★ D-333 — 외부 의존을 대장에 올리기 전에 **「우리가 이미 아는 것으로 되는가」**를 적는다.
+#:   두 칸이 비면 등재를 거부한다. 외부 의존 하나를 **안 만드는 것**이,
+#:   외부 의존 하나를 잘 만드는 것보다 언제나 싸다 — 만들지 않은 것은 고장 나지 않는다.
+D333_FIELDS = ("internal_alternative_considered", "why_not")
 ADAPTERS = ROOT / "backend" / "adapters"
 
 VALID_SOURCES = ("account_verified", "doc_only")
@@ -175,6 +181,26 @@ NOT_A_SOURCE = ("EXTERNAL_API_TIMEOUT_SEC", "EXTERNAL_API_RETRY",
                 "EXTERNAL_API_CACHE_TTL_SEC", "EXTERNAL_API_ENABLED")
 
 
+def check_internal_first(sources: list[dict]) -> list[str]:
+    """★ D-333 — 외부 원천마다 **내부 대안을 검토했다는 기록**이 있는가. **순수 함수다.**
+
+    출생 표본은 FX-5 다: 좌표→주소를 외부에서 사려고 키를 신청하고 실측기를 만들고
+    잠금을 세웠는데, 답은 **카메라가 고정 설치물**이라는 우리가 이미 아는 사실이었다.
+    그 검토를 적을 칸이 없었기 때문에 아무도 묻지 않았다.
+    """
+    problems: list[str] = []
+    for s in sources:
+        sid = s.get("id", "?")
+        for field in D333_FIELDS:
+            if not str(s.get(field) or "").strip():
+                problems.append(
+                    f"{sid}: `{field}` 가 비었다 — 외부 자원을 올리기 전에 "
+                    f"「우리가 이미 아는 것으로 되는가」를 먼저 적는다(D-333). "
+                    f"검토한 게 없으면 \"없음\" 이라고 적어라. "
+                    f"묻지 않고 가는 것만 금지한다")
+    return problems
+
+
 def check(rows: list[dict], used: dict[str, str]) -> list[str]:
     problems: list[str] = []
     for row in rows:
@@ -248,6 +274,23 @@ def self_test() -> int:
         else:
             print(f"  OK   {label}")
 
+    # ★ D-333 출생 표본 — FX-5: 밖에서 사려던 것을 우리는 이미 알고 있었다
+    for label, sample, should_fail in (
+            ("★ D-333 출생표본 내부 대안 칸이 비면 잡는다",
+             [{"id": "juso_coord2addr"}], True),
+            ("두 칸이 다 있으면 안 잡는다",
+             [{"id": "x", "internal_alternative_considered": "카메라 설치 주소",
+               "why_not": "내부가 이겼다"}], False),
+            ("\"없음\" 이라고 적은 것은 빈 것이 아니다",
+             [{"id": "x", "internal_alternative_considered": "없음",
+               "why_not": "계약 AC 가 부르지 않는다"}], False)):
+        got = bool(check_internal_first(sample))
+        if got != should_fail:
+            print(f"  FAIL {label}")
+            bad += 1
+        else:
+            print(f"  OK   {label}")
+
     parsed = parse(ENV_EXAMPLE.read_text(encoding="utf-8")) if ENV_EXAMPLE.is_file() else []
     ok_parse = len(parsed) >= 8
     print(f"  {'OK  ' if ok_parse else 'FAIL'} 파서가 .env.example 을 읽는다 ({len(parsed)}건)")
@@ -256,7 +299,7 @@ def self_test() -> int:
     if bad:
         print(f"[EXTSRC] 자기시험 {bad}건 실패 — 이 판정기는 눈이 멀었다")
         return 1
-    print(f"[EXTSRC] 자기시험 {len(cases) + 4}건 통과 (출생 표본 + 술어 반례 3)")
+    print(f"[EXTSRC] 자기시험 {len(cases) + 7}건 통과 (출생 표본 2 + 술어 반례 3 + D-333 3)")
     return 0
 
 
@@ -298,6 +341,22 @@ def main() -> int:
             print(f"  {mark}  {r['name']:34} {r['source'] or '(근거 없음)'}{extra}")
 
     problems = check(rows, used)
+
+    # ★ D-333 — 외부 원천 등록부에도 같은 두 칸을 요구한다.
+    if SOURCES.is_file():
+        import yaml
+
+        doc = yaml.safe_load(SOURCES.read_text(encoding="utf-8")) or {}
+        srcs = doc.get("sources") or []
+        print(f"[EXTSRC] D-333 내부 대안 검토 — 원천 **{len(srcs)}건** 전수 "
+              f"(술어=internal_alternative_considered · why_not 두 칸이 채워졌는가)")
+        if not srcs:
+            problems.append("sources.yaml 에서 원천을 한 건도 못 읽었다 — "
+                            "판정 불가이지 통과가 아니다 (D-301)")
+        problems += check_internal_first(srcs)
+    else:
+        problems.append(f"{SOURCES.relative_to(ROOT)} 가 없다 — D-333 을 판정할 수 없다")
+
     if problems:
         print("[EXTSRC] 위반 — 문서로 안 것이 실측 행세를 하고 있다")
         for p in problems:

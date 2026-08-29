@@ -226,13 +226,17 @@ SETTING_DOMAINS: dict[str, str] = {
     "zones": "위험구역을 저장할 표가 없다. `NotificationRule.zone` 은 체계가 아니라 "
              "**라벨**이고, 행정구역인지 카메라 묶음인지 폴리곤인지가 미정이다 "
              "(P-K2-2). 체계를 여기서 정하면 그 추측이 곧 계약이 된다",
-    "thresholds": "지점별 수위·임계값을 저장할 표가 없다(FR-02-2 가 요구하는 것). "
-                  "지금 임의값을 두면 그 값이 곧 F-02 의 AC 판정 근거가 된다",
+    # ★ 2026-09-06 열렸다 — K5 표 ① (D-325). 「저장할 표가 없다」가 아니게 됐다.
+    #   임의값을 두지 않은 것이 요점이다: F-02 의 지점별 수위 기준선은 여전히 **값이 없고**,
+    #   없으면 `ThresholdNotSet` 으로 멈춘다. 표가 생겼다고 숫자가 생긴 것이 아니다(D-280).
+    "thresholds": "",
     "grade_rules": "등급규칙(F-04 JSON 규칙엔진)을 저장할 표가 없다. "
                    "`detection_event_bridge.EVENT_TYPE_TO_SEVERITY` 는 배선의 "
                    "**잠정 사전**이지 사용자가 고치는 설정이 아니다 (P-W2-2-1)",
-    "api_keys": "API Key 발급·폐기(FR-05-3)의 저장처가 없다. 키 값은 저장소 밖이고"
-                "(D-204), 발급 이력을 어디에 두는가는 W4 계측 모델과 함께 정해진다",
+    # ★ 2026-09-06 열렸다 — K5 표 ② (D-325 · D-328). 저장처가 생겼다.
+    #   **값은 여전히 저장소 밖이다**(D-204 · D-319) — 표가 갖는 것은 값이 아니라
+    #   「있는가 · 무엇인가」의 사실이고, 조회는 언제나 마스킹된다.
+    "api_keys": "",
 }
 
 
@@ -279,6 +283,24 @@ def guard_setting(*, scope: TenantScope, action: str,
     return SettingAccess(allowed=allowed, reason=why, audit_id=entry.audit_id)
 
 
+def set_threshold_value(*, scope: TenantScope, key: str, value: float, reason: str,
+                        scope_level: str = "global",
+                        scope_ref: int | None = None) -> dict[str, Any]:
+    """F-12 「임계값」 쓰기 — **F-02 「지점별 기준선 설정」이 실제로 설정되는 자리**.
+
+    App 은 문지기 노릇만 한다. 값 판정(계약 고정인가 · 범위가 맞는가)과 내력 기록은
+    **커널이** 한다 — 여기서 다시 판정하면 두 벌이 되고, 두 벌은 반드시 어긋난다(D-212).
+    """
+    from kernels.k5_trust import set_threshold
+
+    access = guard_setting(scope=scope, action=f"write:thresholds:{key}",
+                           api_method="POST")
+    if not access.allowed:
+        raise PermissionDeniedForSetting(access.reason, audit_id=access.audit_id)
+    return set_threshold(scope=scope, key=key, value=value, reason=reason,
+                         scope_level=scope_level, scope_ref=scope_ref)
+
+
 def setting_overview(*, scope: TenantScope, domain: str) -> dict[str, Any]:
     """F-12 설정 한 영역을 읽는다. **무권한이면 차단되고 그 사실이 남는다.**
 
@@ -299,6 +321,19 @@ def setting_overview(*, scope: TenantScope, domain: str) -> dict[str, Any]:
         raise SettingNotAvailable(
             f"F-12 의 '{domain}' 설정은 아직 다룰 수 없다 — {blocker}. "
             f"빈 목록을 돌려주지 않는다: 없는 것과 비어 있는 것은 다르다 (D-284 · D-290)")
+
+    if domain == "thresholds":
+        # ★ K5 표 ①. **커널 서비스 함수만 부른다** — 모델을 직접 만지지 않는다(DA-04 §1-4).
+        from kernels.k5_trust import list_thresholds, threshold_history
+
+        return {"thresholds": list(list_thresholds(scope=scope)),
+                "history": list(threshold_history(scope=scope, limit=20))}
+
+    if domain == "api_keys":
+        # ★ K5 표 ②. 값은 나오지 않는다 — 마스킹된 **사실**만 나온다(D-204 · D-319).
+        from kernels.k5_trust import list_credentials
+
+        return {"api_keys": list(list_credentials(scope=scope))}
 
     if domain == "widgets":
         from kernels.k3_dashboard import SETTING_WIDGETS, widget_permission

@@ -443,10 +443,16 @@ class SettingHonestAbsenceTest(DsmFixture):
                          self.group_a)
 
     def test_unavailable_domains_raise_instead_of_returning_empty(self) -> None:
+        """★ 2026-09-06 — 남은 것은 **둘**이다 (D-325).
+
+        `thresholds` 와 `api_keys` 는 K5 표 ①②가 서면서 열렸다. 여기서 이름을 빼는 것이
+        **그 사실의 증거**다 — 열렸는데 목록에 남겨 두면 이 시험이 거짓으로 초록이 된다.
+        열린 쪽은 아래 `test_the_two_new_tables_are_actually_available` 가 잰다.
+        """
         from apps.dsm import services
         from apps.dsm.exceptions import SettingNotAvailable
 
-        for domain in ("zones", "thresholds", "grade_rules", "api_keys"):
+        for domain in ("zones", "grade_rules"):
             with self.subTest(domain=domain):
                 with self.assertRaises(SettingNotAvailable) as caught:
                     services.setting_overview(scope=self.scope_a, domain=domain)
@@ -454,6 +460,18 @@ class SettingHonestAbsenceTest(DsmFixture):
                     str(caught.exception).strip(),
                     f"{domain} 이 사유 없이 막혔습니다 — 모르는 것을 모른다고 말할 때도 "
                     f"이유를 적습니다 (D-264).")
+
+    def test_the_two_new_tables_are_actually_available(self) -> None:
+        """★ 양성 대조 — **열렸다고 적었으면 실제로 나와야 한다** (D-325 · D-277).
+
+        위 시험에서 이름 둘을 빼는 것만으로는 아무것도 재지 않은 것이다.
+        """
+        from apps.dsm import services
+
+        out = services.setting_overview(scope=self.scope_a, domain="thresholds")
+        self.assertTrue(out["thresholds"], "표 ①이 비었습니다 — K5 를 부르지 않았습니다.")
+        out = services.setting_overview(scope=self.scope_a, domain="api_keys")
+        self.assertTrue(out["api_keys"], "표 ②가 비었습니다 — K5 를 부르지 않았습니다.")
 
     def test_available_domains_actually_return_something(self) -> None:
         """양성 대조 — **전부 막는 함수**라면 위 시험은 아무것도 재지 않은 것이다."""

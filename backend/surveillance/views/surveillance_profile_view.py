@@ -999,7 +999,7 @@ class SurveillanceProfileController:
                 data=None,
             )
 
-    @route.post("/{profile_id}/completed-profile")
+    @route.post("/{profile_id}/completed-profile", auth=CustomJWTAuth())
     # @path_permission("update", path_override="/surveillance/profile")
     def completed_profile(self, request: HttpRequest, profile_id: int):
         try:

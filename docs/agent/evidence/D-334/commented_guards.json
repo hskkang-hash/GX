@@ -1,0 +1,1491 @@
+{
+  "files_scanned": 591,
+  "guard_decorators": [
+    "path_permission",
+    "oauth2_required",
+    "scope_required",
+    "tenant_scoped",
+    "tenant_scope.tenant_scoped",
+    "ensure_csrf_cookie"
+  ],
+  "excluded_with_reason": {
+    "csrf_exempt": "주석 처리되면 접근이 좁아진다 — 권한 계열의 반대편이다",
+    "require_http_methods": "메서드 제한이지 권한 판정이 아니다"
+  },
+  "denominator_total_guard_usages": 320,
+  "active": 281,
+  "commented": 39,
+  "commented_rows": [
+    {
+      "file": "backend/delivery/views/api.py",
+      "line": 503,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"update\", path_override='/delivery-operation/processing')",
+      "class": "ProcessingController",
+      "handler": "update_delivery_event",
+      "route_decorator": "@route.post(\"/update-delivery-event\")",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/delivery/processing/update-delivery-event",
+          "methods": "POST",
+          "qualname": "ProcessingController.update_delivery_event",
+          "module": "delivery.views.api",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "reached": false,
+          "status": 422,
+          "note": "핸들러에 도달하지 못했다",
+          "path": "/api/delivery/processing/update-delivery-event",
+          "methods": "POST",
+          "probe_kind": "stub"
+        }
+      ]
+    },
+    {
+      "file": "backend/devices/views/device_views.py",
+      "line": 771,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"update\", path_override='/terminals')",
+      "class": "DeviceAPI",
+      "handler": "activate",
+      "route_decorator": "@route.put('/{ids}/activate', auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/devices/devices-management/{ids}/activate",
+          "methods": "PUT",
+          "qualname": "DeviceAPI.activate",
+          "module": "devices.views.device_views",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/devices/devices-management/{ids}/activate",
+          "methods": "PUT",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/devices/views/device_views.py",
+      "line": 793,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"update\", path_override='/terminals')",
+      "class": "DeviceAPI",
+      "handler": "deactivate",
+      "route_decorator": "@route.put('/{ids}/deactivate', auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/devices/devices-management/{ids}/deactivate",
+          "methods": "PUT",
+          "qualname": "DeviceAPI.deactivate",
+          "module": "devices.views.device_views",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/devices/devices-management/{ids}/deactivate",
+          "methods": "PUT",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/drone_communication/views/drone_views.py",
+      "line": 29,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\")",
+      "class": "DroneCommunicationAPI",
+      "handler": "get_online_drones",
+      "route_decorator": "@route.get('/online-drones')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/dronehw/drone-communication-management/online-drones",
+          "methods": "GET",
+          "qualname": "DroneCommunicationAPI.get_online_drones",
+          "module": "drone_communication.views.drone_views",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "path": "/api/dronehw/drone-communication-management/online-drones",
+          "methods": "GET",
+          "status": 200,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/operational_data/views/operational_data_view.py",
+      "line": 54,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override=\"/operational-data\")",
+      "class": "OperationalDataAPI",
+      "handler": "download_operational_data",
+      "route_decorator": "@route.get('/download-operational-data')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/operational-data/operational-data/download-operational-data",
+          "methods": "GET",
+          "qualname": "OperationalDataAPI.download_operational_data",
+          "module": "operational_data.views.operational_data_view",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "path": "/api/operational-data/operational-data/download-operational-data",
+          "methods": "GET",
+          "status": 422,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/operational_data/views/operational_data_view.py",
+      "line": 100,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"create\", path_override=\"/operational-data\")",
+      "class": "OperationalDataAPI",
+      "handler": "upload_operational_log_drone",
+      "route_decorator": "@route.post('/{order_item_id}/upload-operational-log-drone')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-log-drone",
+          "methods": "POST",
+          "qualname": "OperationalDataAPI.upload_operational_log_drone",
+          "module": "operational_data.views.operational_data_view",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "reached": true,
+          "status": 500,
+          "note": "핸들러 자리 도달 — 인증 관문 없음 (대체물이 받았고 본체는 돌지 않았다)",
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-log-drone",
+          "methods": "POST",
+          "probe_kind": "stub"
+        }
+      ]
+    },
+    {
+      "file": "backend/operational_data/views/operational_data_view.py",
+      "line": 126,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"create\", path_override=\"/operational-data\")",
+      "class": "OperationalDataAPI",
+      "handler": "upload_operational_log_robot",
+      "route_decorator": "@route.post('/{order_item_id}/upload-operational-log-robot')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-log-robot",
+          "methods": "POST",
+          "qualname": "OperationalDataAPI.upload_operational_log_robot",
+          "module": "operational_data.views.operational_data_view",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "reached": true,
+          "status": 500,
+          "note": "핸들러 자리 도달 — 인증 관문 없음 (대체물이 받았고 본체는 돌지 않았다)",
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-log-robot",
+          "methods": "POST",
+          "probe_kind": "stub"
+        }
+      ]
+    },
+    {
+      "file": "backend/operational_data/views/operational_data_view.py",
+      "line": 152,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"create\", path_override=\"/operational-data\")",
+      "class": "OperationalDataAPI",
+      "handler": "upload_operational_video_drone",
+      "route_decorator": "@route.post('/{order_item_id}/upload-operational-video-drone')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-video-drone",
+          "methods": "POST",
+          "qualname": "OperationalDataAPI.upload_operational_video_drone",
+          "module": "operational_data.views.operational_data_view",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "reached": true,
+          "status": 500,
+          "note": "핸들러 자리 도달 — 인증 관문 없음 (대체물이 받았고 본체는 돌지 않았다)",
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-video-drone",
+          "methods": "POST",
+          "probe_kind": "stub"
+        }
+      ]
+    },
+    {
+      "file": "backend/operational_data/views/operational_data_view.py",
+      "line": 178,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"create\", path_override=\"/operational-data\")",
+      "class": "OperationalDataAPI",
+      "handler": "upload_operational_video_robot",
+      "route_decorator": "@route.post('/{order_item_id}/upload-operational-video-robot')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-video-robot",
+          "methods": "POST",
+          "qualname": "OperationalDataAPI.upload_operational_video_robot",
+          "module": "operational_data.views.operational_data_view",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "reached": true,
+          "status": 500,
+          "note": "핸들러 자리 도달 — 인증 관문 없음 (대체물이 받았고 본체는 돌지 않았다)",
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-video-robot",
+          "methods": "POST",
+          "probe_kind": "stub"
+        }
+      ]
+    },
+    {
+      "file": "backend/operational_data/views/operational_data_view.py",
+      "line": 204,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override=\"/operational-data\")",
+      "class": "OperationalDataAPI",
+      "handler": "download_operational_log_drone",
+      "route_decorator": "@route.get('/{order_item_id}/download-operational-log-drone')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/operational-data/operational-data/{order_item_id}/download-operational-log-drone",
+          "methods": "GET",
+          "qualname": "OperationalDataAPI.download_operational_log_drone",
+          "module": "operational_data.views.operational_data_view",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "path": "/api/operational-data/operational-data/1/download-operational-log-drone",
+          "methods": "GET",
+          "status": 400,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/operational_data/views/operational_data_view.py",
+      "line": 230,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override=\"/operational-data\")",
+      "class": "OperationalDataAPI",
+      "handler": "download_operational_log_robot",
+      "route_decorator": "@route.get('/{order_item_id}/download-operational-log-robot')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/operational-data/operational-data/{order_item_id}/download-operational-log-robot",
+          "methods": "GET",
+          "qualname": "OperationalDataAPI.download_operational_log_robot",
+          "module": "operational_data.views.operational_data_view",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "path": "/api/operational-data/operational-data/1/download-operational-log-robot",
+          "methods": "GET",
+          "status": 400,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/operational_data/views/operational_data_view.py",
+      "line": 256,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override=\"/operational-data\")",
+      "class": "OperationalDataAPI",
+      "handler": "get_upload_status_by_task_id",
+      "route_decorator": "@route.get('/upload-status/{task_id}', auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/operational-data/operational-data/upload-status/{task_id}",
+          "methods": "GET",
+          "qualname": "OperationalDataAPI.get_upload_status_by_task_id",
+          "module": "operational_data.views.operational_data_view",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/operational-data/operational-data/upload-status/1",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/operational_data/views/operational_data_view.py",
+      "line": 276,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override=\"/operational-data\")",
+      "class": "OperationalDataAPI",
+      "handler": "get_upload_status_by_id",
+      "route_decorator": "@route.get('/upload-status/id/{upload_status_id}', auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/operational-data/operational-data/upload-status/id/{upload_status_id}",
+          "methods": "GET",
+          "qualname": "OperationalDataAPI.get_upload_status_by_id",
+          "module": "operational_data.views.operational_data_view",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/operational-data/operational-data/upload-status/id/1",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/surveillance/views/surveillance_profile_view.py",
+      "line": 108,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override=\"/survey-profile\")",
+      "class": "SurveillanceProfileController",
+      "handler": "list_selected_profiles",
+      "route_decorator": "@route.get(\"/list-selected-profiles\", auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/surveillance/surveillance-profiles/list-selected-profiles",
+          "methods": "GET",
+          "qualname": "SurveillanceProfileController.list_selected_profiles",
+          "module": "surveillance.views.surveillance_profile_view",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/surveillance/surveillance-profiles/list-selected-profiles",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/surveillance/views/surveillance_profile_view.py",
+      "line": 450,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\")",
+      "class": "SurveillanceProfileController",
+      "handler": "list_scheduled_activations",
+      "route_decorator": "@route.get(\"/check-scheduled-activations\", auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/surveillance/surveillance-profiles/check-scheduled-activations",
+          "methods": "GET",
+          "qualname": "SurveillanceProfileController.list_scheduled_activations",
+          "module": "surveillance.views.surveillance_profile_view",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/surveillance/surveillance-profiles/check-scheduled-activations",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/surveillance/views/surveillance_profile_view.py",
+      "line": 1003,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"update\", path_override=\"/surveillance/profile\")",
+      "class": "SurveillanceProfileController",
+      "handler": "completed_profile",
+      "route_decorator": "@route.post(\"/{profile_id}/completed-profile\")",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/completed-profile",
+          "methods": "POST",
+          "qualname": "SurveillanceProfileController.completed_profile",
+          "module": "surveillance.views.surveillance_profile_view",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "reached": true,
+          "status": 500,
+          "note": "핸들러 자리 도달 — 인증 관문 없음 (대체물이 받았고 본체는 돌지 않았다)",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/completed-profile",
+          "methods": "POST",
+          "probe_kind": "stub"
+        }
+      ]
+    },
+    {
+      "file": "backend/surveillance/views/survey_mission_view.py",
+      "line": 60,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"update\", path_override=\"/survey-mission\")",
+      "class": "SurveyMissionController",
+      "handler": "check_permission",
+      "route_decorator": "@route.get(\"mission/check_permission\", auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/surveillance/survey-missions/mission/check_permission",
+          "methods": "GET",
+          "qualname": "SurveyMissionController.check_permission",
+          "module": "surveillance.views.survey_mission_view",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/surveillance/survey-missions/mission/check_permission",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/terminals/views/day_of_week_views.py",
+      "line": 25,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override=['/terminals', '/delivery-hubs', '/docking-stations', '/infrastructure'])",
+      "class": "DayOfWeekController",
+      "handler": "list_days_of_week",
+      "route_decorator": "@route.get('')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/terminals/days-of-week",
+          "methods": "GET",
+          "qualname": "DayOfWeekController.list_days_of_week",
+          "module": "terminals.views.day_of_week_views",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "path": "/api/terminals/days-of-week",
+          "methods": "GET",
+          "status": 200,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/terminals/views/day_of_week_views.py",
+      "line": 38,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override=['/terminals', '/delivery-hubs', '/docking-stations', '/infrastructure-terminals'])",
+      "class": "DayOfWeekController",
+      "handler": "get_day_of_week",
+      "route_decorator": "@route.get('/{id}')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/terminals/days-of-week/{id}",
+          "methods": "GET",
+          "qualname": "DayOfWeekController.get_day_of_week",
+          "module": "terminals.views.day_of_week_views",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "path": "/api/terminals/days-of-week/1",
+          "methods": "GET",
+          "status": 404,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/terminals/views/terminal_views.py",
+      "line": 760,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\")",
+      "class": "TerminalTypeController",
+      "handler": "list_terminal_types",
+      "route_decorator": "@route.get('')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/terminals/terminal-types",
+          "methods": "GET",
+          "qualname": "TerminalTypeController.list_terminal_types",
+          "module": "terminals.views.terminal_views",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "path": "/api/terminals/terminal-types",
+          "methods": "GET",
+          "status": 200,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/terminals/views/terminal_views.py",
+      "line": 785,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\")",
+      "class": "TerminalTypeController",
+      "handler": "get_terminal_type",
+      "route_decorator": "@route.get('/{id}')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/terminals/terminal-types/{id}",
+          "methods": "GET",
+          "qualname": "TerminalTypeController.get_terminal_type",
+          "module": "terminals.views.terminal_views",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "path": "/api/terminals/terminal-types/1",
+          "methods": "GET",
+          "status": 404,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/terminals/views/terminal_views.py",
+      "line": 802,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"create\")",
+      "class": "TerminalTypeController",
+      "handler": "create_terminal_type",
+      "route_decorator": "@route.post('', auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/terminals/terminal-types",
+          "methods": "POST",
+          "qualname": "TerminalTypeController.create_terminal_type",
+          "module": "terminals.views.terminal_views",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/terminals/terminal-types",
+          "methods": "POST",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/terminals/views/terminal_views.py",
+      "line": 819,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"update\")",
+      "class": "TerminalTypeController",
+      "handler": "update_terminal_type",
+      "route_decorator": "@route.put('/{id}', auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/terminals/terminal-types/{id}",
+          "methods": "PUT",
+          "qualname": "TerminalTypeController.update_terminal_type",
+          "module": "terminals.views.terminal_views",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/terminals/terminal-types/{id}",
+          "methods": "PUT",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/terminals/views/terminal_views.py",
+      "line": 836,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"delete\")",
+      "class": "TerminalTypeController",
+      "handler": "delete_terminal_type",
+      "route_decorator": "@route.delete('/{id}', auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/terminals/terminal-types/{id}",
+          "methods": "DELETE",
+          "qualname": "TerminalTypeController.delete_terminal_type",
+          "module": "terminals.views.terminal_views",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/terminals/terminal-types/{id}",
+          "methods": "DELETE",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/terminals/views/terminal_views.py",
+      "line": 1094,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\")",
+      "class": "FunctionController",
+      "handler": "list_functions",
+      "route_decorator": "@route.get('', auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/terminals/functions",
+          "methods": "GET",
+          "qualname": "FunctionController.list_functions",
+          "module": "terminals.views.terminal_views",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/terminals/functions",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/terminals/views/terminal_views.py",
+      "line": 1116,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\")",
+      "class": "FunctionController",
+      "handler": "get_function_types",
+      "route_decorator": "@route.get('/function-types')",
+      "auth_kwarg_in_source": false,
+      "runtime_matches": [
+        {
+          "path": "/api/terminals/functions/function-types",
+          "methods": "GET",
+          "qualname": "FunctionController.get_function_types",
+          "module": "terminals.views.terminal_views",
+          "has_auth": false,
+          "auth": [],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "no_authn_no_authz",
+      "anonymous_probe": [
+        {
+          "path": "/api/terminals/functions/function-types",
+          "methods": "GET",
+          "status": 500,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/terminals/views/terminal_views.py",
+      "line": 1142,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"delete\")",
+      "class": "FunctionController",
+      "handler": "delete_function",
+      "route_decorator": "@route.delete('/{id}', auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/terminals/functions/{id}",
+          "methods": "DELETE",
+          "qualname": "FunctionController.delete_function",
+          "module": "terminals.views.terminal_views",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/terminals/functions/{id}",
+          "methods": "DELETE",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api.py",
+      "line": 63,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"update\", path_override='/etri-integration')",
+      "class": "ThirdPartyIntegrationController",
+      "handler": "receive_status_from_etri_swagger",
+      "route_decorator": "@route.post(\"/save-shipping-result-data\", auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/third-party-integration/save-shipping-result-data",
+          "methods": "POST",
+          "qualname": "ThirdPartyIntegrationController.receive_status_from_etri_swagger",
+          "module": "third_api.views.api",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/third-party-integration/save-shipping-result-data",
+          "methods": "POST",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api_key_controller.py",
+      "line": 30,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"create\", path_override='/api-key-management')",
+      "class": "ThirdPartyAPIKeyController",
+      "handler": "create_api_key",
+      "route_decorator": "@route.post(\"/keys\", response={201: APIKeyResponseSchema, 400: ErrorResponseSchema}, auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/api-key-management/keys",
+          "methods": "POST",
+          "qualname": "ThirdPartyAPIKeyController.create_api_key",
+          "module": "third_api.views.api_key_controller",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/api-key-management/keys",
+          "methods": "POST",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api_key_controller.py",
+      "line": 43,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override='/api-key-management')",
+      "class": "ThirdPartyAPIKeyController",
+      "handler": "list_api_keys",
+      "route_decorator": "@route.get(\"/keys\", response=List[APIKeySchema], auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/api-key-management/keys",
+          "methods": "GET",
+          "qualname": "ThirdPartyAPIKeyController.list_api_keys",
+          "module": "third_api.views.api_key_controller",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/api-key-management/keys",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api_key_controller.py",
+      "line": 54,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override='/api-key-management')  # Tạm thời comment out để test",
+      "class": "ThirdPartyAPIKeyController",
+      "handler": "get_api_key",
+      "route_decorator": "@route.get(\"/keys\", response=List[APIKeySchema], auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/api-key-management/get-keys/{api_key_id}",
+          "methods": "GET",
+          "qualname": "ThirdPartyAPIKeyController.get_api_key",
+          "module": "third_api.views.api_key_controller",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/api-key-management/get-keys/1",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api_key_controller.py",
+      "line": 71,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"update\", path_override='/api-key-management')",
+      "class": "ThirdPartyAPIKeyController",
+      "handler": "update_api_key",
+      "route_decorator": "@route.patch(\"/keys/{api_key_id}\", response={200: APIKeySchema, 400: ErrorResponseSchema}, auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/api-key-management/keys/{api_key_id}",
+          "methods": "PATCH",
+          "qualname": "ThirdPartyAPIKeyController.update_api_key",
+          "module": "third_api.views.api_key_controller",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/api-key-management/keys/{api_key_id}",
+          "methods": "PATCH",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api_key_controller.py",
+      "line": 84,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"delete\", path_override='/api-key-management')",
+      "class": "ThirdPartyAPIKeyController",
+      "handler": "delete_api_key",
+      "route_decorator": "@route.delete(\"/keys/{api_key_id}\", response=MessageResponseSchema, auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/api-key-management/keys/{api_key_id}",
+          "methods": "DELETE",
+          "qualname": "ThirdPartyAPIKeyController.delete_api_key",
+          "module": "third_api.views.api_key_controller",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/api-key-management/keys/{api_key_id}",
+          "methods": "DELETE",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api_key_controller.py",
+      "line": 95,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"update\", path_override='/api-key-management')",
+      "class": "ThirdPartyAPIKeyController",
+      "handler": "regenerate_api_key",
+      "route_decorator": "@route.delete(\"/keys/{api_key_id}\", response=MessageResponseSchema, auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/api-key-management/keys/{api_key_id}/regenerate",
+          "methods": "POST",
+          "qualname": "ThirdPartyAPIKeyController.regenerate_api_key",
+          "module": "third_api.views.api_key_controller",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/api-key-management/keys/{api_key_id}/regenerate",
+          "methods": "POST",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api_key_controller.py",
+      "line": 106,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override='/api-key-management')",
+      "class": "ThirdPartyAPIKeyController",
+      "handler": "get_usage_logs",
+      "route_decorator": "@route.post(\"/keys/{api_key_id}/regenerate\", response=APIKeyResponseSchema, auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/api-key-management/keys/{api_key_id}/usage-logs",
+          "methods": "GET",
+          "qualname": "ThirdPartyAPIKeyController.get_usage_logs",
+          "module": "third_api.views.api_key_controller",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/api-key-management/keys/1/usage-logs",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api_key_controller.py",
+      "line": 117,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override='/api-key-management')",
+      "class": "ThirdPartyAPIKeyController",
+      "handler": "get_stats",
+      "route_decorator": "@route.get(\"/keys/{api_key_id}/usage-logs\", response=UsageLogsResponseSchema, auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/api-key-management/stats",
+          "methods": "GET",
+          "qualname": "ThirdPartyAPIKeyController.get_stats",
+          "module": "third_api.views.api_key_controller",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/api-key-management/stats",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api_key_controller.py",
+      "line": 128,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override='/api-key-management')",
+      "class": "ThirdPartyAPIKeyController",
+      "handler": "get_analytics",
+      "route_decorator": "@route.get(\"/stats\", response=APIKeyStatsSchema, auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/api-key-management/analytics",
+          "methods": "GET",
+          "qualname": "ThirdPartyAPIKeyController.get_analytics",
+          "module": "third_api.views.api_key_controller",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/api-key-management/analytics",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api_key_controller.py",
+      "line": 139,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"delete\", path_override='/api-key-management')",
+      "class": "ThirdPartyAPIKeyController",
+      "handler": "bulk_deactivate",
+      "route_decorator": "@route.get(\"/analytics\", response=UsageAnalyticsSchema, auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/api-key-management/bulk-deactivate",
+          "methods": "POST",
+          "qualname": "ThirdPartyAPIKeyController.bulk_deactivate",
+          "module": "third_api.views.api_key_controller",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/api-key-management/bulk-deactivate",
+          "methods": "POST",
+          "status": null,
+          "note": "not_probed — 쓰기 메서드는 부작용이 있어 때리지 않는다"
+        }
+      ]
+    },
+    {
+      "file": "backend/third_api/views/api_key_controller.py",
+      "line": 152,
+      "decorator": "path_permission",
+      "source": "# @path_permission(\"read\", path_override='/api-key-management')",
+      "class": "ThirdPartyAPIKeyController",
+      "handler": "check_api_key",
+      "route_decorator": "@route.get(\"/check\", response=CheckAPIKeyResponseSchema, auth=CustomJWTAuth())",
+      "auth_kwarg_in_source": true,
+      "runtime_matches": [
+        {
+          "path": "/api/third-api/api-key-management/check",
+          "methods": "GET",
+          "qualname": "ThirdPartyAPIKeyController.check_api_key",
+          "module": "third_api.views.api_key_controller",
+          "has_auth": true,
+          "auth": [
+            "CustomJWTAuth"
+          ],
+          "has_path_permission": false
+        }
+      ],
+      "registered": true,
+      "verdict": "authn_only",
+      "anonymous_probe": [
+        {
+          "path": "/api/third-api/api-key-management/check",
+          "methods": "GET",
+          "status": 401,
+          "note": ""
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "denominator_total_guard_usages": 320,
+    "active": 281,
+    "commented": 39,
+    "by_verdict": {
+      "authn_only": 24,
+      "no_authn_no_authz": 15
+    },
+    "by_file": {
+      "backend/third_api/views/api_key_controller.py": 11,
+      "backend/operational_data/views/operational_data_view.py": 9,
+      "backend/terminals/views/terminal_views.py": 8,
+      "backend/surveillance/views/surveillance_profile_view.py": 3,
+      "backend/devices/views/device_views.py": 2,
+      "backend/terminals/views/day_of_week_views.py": 2,
+      "backend/delivery/views/api.py": 1,
+      "backend/drone_communication/views/drone_views.py": 1,
+      "backend/surveillance/views/survey_mission_view.py": 1,
+      "backend/third_api/views/api.py": 1
+    },
+    "anonymously_reachable_2xx": [
+      {
+        "file": "backend/drone_communication/views/drone_views.py",
+        "line": 29,
+        "handler": "get_online_drones",
+        "path": "/api/dronehw/drone-communication-management/online-drones",
+        "methods": "GET",
+        "status": 200,
+        "note": ""
+      },
+      {
+        "file": "backend/terminals/views/day_of_week_views.py",
+        "line": 25,
+        "handler": "list_days_of_week",
+        "path": "/api/terminals/days-of-week",
+        "methods": "GET",
+        "status": 200,
+        "note": ""
+      },
+      {
+        "file": "backend/terminals/views/terminal_views.py",
+        "line": 760,
+        "handler": "list_terminal_types",
+        "path": "/api/terminals/terminal-types",
+        "methods": "GET",
+        "status": 200,
+        "note": ""
+      }
+    ],
+    "anonymously_reachable_count": 3,
+    "anonymously_reached_handler": [
+      {
+        "file": "backend/delivery/views/api.py",
+        "line": 503,
+        "handler": "update_delivery_event",
+        "reached": false,
+        "status": 422,
+        "note": "핸들러에 도달하지 못했다",
+        "path": "/api/delivery/processing/update-delivery-event",
+        "methods": "POST",
+        "probe_kind": "stub"
+      },
+      {
+        "file": "backend/drone_communication/views/drone_views.py",
+        "line": 29,
+        "handler": "get_online_drones",
+        "path": "/api/dronehw/drone-communication-management/online-drones",
+        "methods": "GET",
+        "status": 200,
+        "note": ""
+      },
+      {
+        "file": "backend/operational_data/views/operational_data_view.py",
+        "line": 54,
+        "handler": "download_operational_data",
+        "path": "/api/operational-data/operational-data/download-operational-data",
+        "methods": "GET",
+        "status": 422,
+        "note": ""
+      },
+      {
+        "file": "backend/operational_data/views/operational_data_view.py",
+        "line": 100,
+        "handler": "upload_operational_log_drone",
+        "reached": true,
+        "status": 500,
+        "note": "핸들러 자리 도달 — 인증 관문 없음 (대체물이 받았고 본체는 돌지 않았다)",
+        "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-log-drone",
+        "methods": "POST",
+        "probe_kind": "stub"
+      },
+      {
+        "file": "backend/operational_data/views/operational_data_view.py",
+        "line": 126,
+        "handler": "upload_operational_log_robot",
+        "reached": true,
+        "status": 500,
+        "note": "핸들러 자리 도달 — 인증 관문 없음 (대체물이 받았고 본체는 돌지 않았다)",
+        "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-log-robot",
+        "methods": "POST",
+        "probe_kind": "stub"
+      },
+      {
+        "file": "backend/operational_data/views/operational_data_view.py",
+        "line": 152,
+        "handler": "upload_operational_video_drone",
+        "reached": true,
+        "status": 500,
+        "note": "핸들러 자리 도달 — 인증 관문 없음 (대체물이 받았고 본체는 돌지 않았다)",
+        "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-video-drone",
+        "methods": "POST",
+        "probe_kind": "stub"
+      },
+      {
+        "file": "backend/operational_data/views/operational_data_view.py",
+        "line": 178,
+        "handler": "upload_operational_video_robot",
+        "reached": true,
+        "status": 500,
+        "note": "핸들러 자리 도달 — 인증 관문 없음 (대체물이 받았고 본체는 돌지 않았다)",
+        "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-video-robot",
+        "methods": "POST",
+        "probe_kind": "stub"
+      },
+      {
+        "file": "backend/operational_data/views/operational_data_view.py",
+        "line": 204,
+        "handler": "download_operational_log_drone",
+        "path": "/api/operational-data/operational-data/1/download-operational-log-drone",
+        "methods": "GET",
+        "status": 400,
+        "note": ""
+      },
+      {
+        "file": "backend/operational_data/views/operational_data_view.py",
+        "line": 230,
+        "handler": "download_operational_log_robot",
+        "path": "/api/operational-data/operational-data/1/download-operational-log-robot",
+        "methods": "GET",
+        "status": 400,
+        "note": ""
+      },
+      {
+        "file": "backend/surveillance/views/surveillance_profile_view.py",
+        "line": 1003,
+        "handler": "completed_profile",
+        "reached": true,
+        "status": 500,
+        "note": "핸들러 자리 도달 — 인증 관문 없음 (대체물이 받았고 본체는 돌지 않았다)",
+        "path": "/api/surveillance/surveillance-profiles/{profile_id}/completed-profile",
+        "methods": "POST",
+        "probe_kind": "stub"
+      },
+      {
+        "file": "backend/terminals/views/day_of_week_views.py",
+        "line": 25,
+        "handler": "list_days_of_week",
+        "path": "/api/terminals/days-of-week",
+        "methods": "GET",
+        "status": 200,
+        "note": ""
+      },
+      {
+        "file": "backend/terminals/views/day_of_week_views.py",
+        "line": 38,
+        "handler": "get_day_of_week",
+        "path": "/api/terminals/days-of-week/1",
+        "methods": "GET",
+        "status": 404,
+        "note": ""
+      },
+      {
+        "file": "backend/terminals/views/terminal_views.py",
+        "line": 760,
+        "handler": "list_terminal_types",
+        "path": "/api/terminals/terminal-types",
+        "methods": "GET",
+        "status": 200,
+        "note": ""
+      },
+      {
+        "file": "backend/terminals/views/terminal_views.py",
+        "line": 785,
+        "handler": "get_terminal_type",
+        "path": "/api/terminals/terminal-types/1",
+        "methods": "GET",
+        "status": 404,
+        "note": ""
+      },
+      {
+        "file": "backend/terminals/views/terminal_views.py",
+        "line": 1116,
+        "handler": "get_function_types",
+        "path": "/api/terminals/functions/function-types",
+        "methods": "GET",
+        "status": 500,
+        "note": ""
+      }
+    ],
+    "anonymously_reached_count": 15
+  },
+  "note": "D-334 · 주석 처리된 권한 데코레이터 전수. verdict 는 셋이다: unregistered(라우트 아님) · authn_only(인증은 있고 권한만 꺼짐) · no_authn_no_authz(익명 도달 후보). anonymously_reachable_2xx 가 「지금 열려 있는가」의 실측 답이다."
+}

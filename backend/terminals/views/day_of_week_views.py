@@ -21,32 +21,32 @@ from ninja import Form
 
 @api_controller('/days-of-week', tags=['Days of Week'])
 class DayOfWeekController:
-    @route.get('')
+    @route.get('', auth=CustomJWTAuth())
     # @path_permission("read", path_override=['/terminals', '/delivery-hubs', '/docking-stations', '/infrastructure'])
     def list_days_of_week(self):
         """Lấy danh sách tất cả days of week"""
         days_of_week = day_of_week_service.get_all()
         data = DayOfWeekOutSchema.from_queryset(days_of_week, many=True, auto_resolve_fields=False)
-        
+
         return BaseResponse(
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_TERMINAL_TYPE_SUCCESS),
             data=data
         )
 
-    @route.get('/{id}')
+    @route.get('/{id}', auth=CustomJWTAuth())
     # @path_permission("read", path_override=['/terminals', '/delivery-hubs', '/docking-stations', '/infrastructure-terminals'])
     def get_day_of_week(self, id: int):
         """Lấy chi tiết một day of week"""
         day_of_week = day_of_week_service.get(id)
-        
+
         if not day_of_week:
             return BaseResponse(
                 status_code=404,
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.NOT_FOUND, "Day of week"),
                 data=None
             )
-        
+
         data = DayOfWeekOutSchema.from_queryset(day_of_week, many=False, auto_resolve_fields=False)
         return BaseResponse(
             status_code=200,
@@ -68,7 +68,7 @@ class DayOfWeekController:
                 message=str(e),
                 data=None
             )
-        
+
         success, result = day_of_week_service.create(validated_data)
         if not success:
             return BaseResponse(
@@ -76,7 +76,7 @@ class DayOfWeekController:
                 message=str(result),
                 data=None
             )
-        
+
         return BaseResponse(
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.CREATE_TERMINAL_TYPE_SUCCESS),
@@ -97,7 +97,7 @@ class DayOfWeekController:
                 message=str(e),
                 data=None
             )
-        
+
         success, result = day_of_week_service.update(id, validated_data)
         if not success:
             return BaseResponse(
@@ -105,7 +105,7 @@ class DayOfWeekController:
                 message=str(result),
                 data=None
             )
-        
+
         return BaseResponse(
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPDATE_TERMINAL_TYPE_SUCCESS),
@@ -123,10 +123,9 @@ class DayOfWeekController:
                 message=str(result),
                 data=None
             )
-        
+
         return BaseResponse(
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_DELETE_SUCCESS),
             data=None
         )
-

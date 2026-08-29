@@ -135,6 +135,35 @@ KERNEL_PUBLIC: dict[str, str] = {
         "구현이 들어오는 커밋에서 이 등재를 지우고 문지기를 붙여야 한다 — "
         "기간 보고서는 그 기간의 테넌트 데이터를 통째로 읽는다. "
         "시험 근거: HonestAbsenceTest.test_render_period_raises_instead_of_returning_empty",
+
+    # ── K5 표 ② 자격증명 (2026-09-06 · D-325 · D-328) — **테넌트 데이터가 아니다.**
+    #    표 ②가 담는 것은 **우리 계정의 외부 API 키에 대한 사실**이다(juso 팝업키 ·
+    #    공공데이터포털 일반키). 테넌트마다 다른 값이 아니라 회사 하나가 가진 자원이고,
+    #    그래서 `filter_by_group_field` 로 좁힐 대상 자체가 없다 — 좁히면 전부 사라진다.
+    #    ★ 그렇다고 아무나 볼 수 있는 것은 아니다. 넷 다 `scope` 를 **필수 인자로 받고**
+    #      `require_actor()`/감사 기록을 통과한다. 시스템 스코프로도 못 지나간다.
+    "backend/kernels/k5_trust/services.py:list_credentials":
+        "테넌트 데이터를 반환하지 않는다 — 표 ②는 **우리 계정 키**에 대한 사실만 담고, "
+        "**값을 담는 칸이 자체가 없다**(D-204 · D-319). 조회는 언제나 마스킹이다. "
+        "본문 첫 줄에서 `scope.require_actor()` 를 부른다. "
+        "시험 근거: CredentialStoreShapeTest.test_the_model_has_no_place_to_put_a_value · "
+        "CredentialObservationTest.test_the_lookup_is_always_masked",
+    "backend/kernels/k5_trust/services.py:credential_fact":
+        "위와 같다 — 한 건짜리다. 값을 내보내지 않고 마스킹된 사실만 낸다. "
+        "조회 자체가 감사에 남는다(guardianx.k5.credentials). "
+        "시험 근거: CredentialObservationTest.test_the_lookup_is_always_masked · "
+        "CredentialUsageGateTest.test_both_the_grant_and_the_refusal_are_audited",
+    "backend/kernels/k5_trust/services.py:secret_for":
+        "★ 값을 내보내는 **유일한 출구**다. 그러나 테넌트 자원이 아니라 우리 계정 키이고, "
+        "두 조건(이 환경 상태 typed 이상 · capability 기재)을 넘지 못하면 값을 내주지 않는다"
+        "(D-328 — juso 사건이 정확히 여기서 걸렸어야 했다). 허용도 거부도 감사에 남는다. "
+        "시험 근거: CredentialUsageGateTest.test_a_key_below_typed_is_refused_to_feature_code · "
+        "CredentialUsageGateTest.test_no_audit_row_carries_the_value",
+    "backend/kernels/k5_trust/services.py:refresh_credential":
+        "이 환경을 다시 보고 표의 상태·확인시각을 갱신한다. 반환하는 것은 상태와 시각이며 "
+        "**값도 테넌트 행도 아니다**. 이 함수가 있어서 blockers.yaml 의 "
+        "verified_at/verified_by 가 진술이 아니라 조회 결과가 된다(D-323). "
+        "시험 근거: CredentialUsageGateTest.test_refresh_writes_the_verification_columns",
 }
 
 #: PUBLIC 라우트 면제의 증가금지 래칫. 오늘 실측 4건.

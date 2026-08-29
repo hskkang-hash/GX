@@ -26,21 +26,21 @@ from delivery.services.processing_service import ProcessingService
 from delivery.services.confirmation_service import ConfirmationService
 # StatusMappingService removed since status mapping moved to orders app
 from delivery.schemas.schemas_djantic_in import (
-    AddressSchema, 
-    CancelOrderSchema, 
-    SendDataToEtriSchema, 
-    VerifyOrdersSchema, 
-    PendingTimeoutSchema, 
-    ExecuteOrdersSchema, 
+    AddressSchema,
+    CancelOrderSchema,
+    SendDataToEtriSchema,
+    VerifyOrdersSchema,
+    PendingTimeoutSchema,
+    ExecuteOrdersSchema,
     UpdateStatusSchema,
-    InputListSchema, 
-    AssignPackagesToDroneSchema, 
+    InputListSchema,
+    AssignPackagesToDroneSchema,
     UpdateDeliveryEventSchema,
-    SendToEtriSchema, 
+    SendToEtriSchema,
     ReceiveFromEtriSchema,
-    AssignPackagesToDronesInSchema, 
-    CancelFlightInSchema, 
-    ChangeDroneInSchema, 
+    AssignPackagesToDronesInSchema,
+    CancelFlightInSchema,
+    ChangeDroneInSchema,
     ApproveFlightInSchema,
     CancelAwaitingOrderInSchema,
     UploadMissionToGcsInSchema,
@@ -70,14 +70,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 @api_controller("/verification", tags=["Verification"])
-class VerificationController: 
+class VerificationController:
     @route.get("/unverified-operations", auth=CustomJWTAuth())
     @path_permission("read", path_override='/delivery-operation/verification')
     def get_unverified_operations(self, request,):
         """Get unverified operations"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations = DeliverySystem.get_unverified_operations()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -100,7 +100,7 @@ class VerificationController:
         """Get verified operations"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations = DeliverySystem.get_verified_operations()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -160,13 +160,13 @@ class ProcessingController:
                 status_code=400,
                 message=get_message(MESSAGE_ENUM.NO_OPERATION_FOUND)
             )
-        
+
         operation = DeliveryOperation.objects.get(id=operation_id)
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         routes = DeliverySystem.get_list_of_routes(operation)
-        
+
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
         paginator = OptimizedPaginator(routes, page_size)
         pages = paginator.page(current_page)
@@ -186,7 +186,7 @@ class ProcessingController:
         """Get list of drones"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         drones = DeliverySystem.get_list_of_drones()
         query = build_dynamic_query_from_queryset(drones, request.GET)
         drones = drones.filter(query)
@@ -209,7 +209,7 @@ class ProcessingController:
         """Get items by processing operation ID"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         items = DeliverySystem.get_items_by_processing(operation_id)
         query = build_dynamic_query_from_queryset(items, request.GET)
         items = items.filter(query)
@@ -232,7 +232,7 @@ class ProcessingController:
         """Get operations in select route phase"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations, routes = DeliverySystem.get_tab_operation_select_route_processing()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -259,7 +259,7 @@ class ProcessingController:
         """Get operations in select drone phase"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations, drones = DeliverySystem.get_tab_operation_select_drone_processing()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -279,7 +279,7 @@ class ProcessingController:
             total_items=paginator.count,
             current_page=current_page
         )
-    
+
     @route.get("/select-drone-operations/{operation_id}", auth=CustomJWTAuth())
     @path_permission("read", path_override='/delivery-operation/processing')
     def get_tab_operation_select_drone_processing_by_operation_id(self, request, operation_id: int):
@@ -296,11 +296,11 @@ class ProcessingController:
         for item in delivery_items:
             # Convert delivery item to dict using schema
             item_schema = DeliveryOperationItemOutSchema.from_queryset(item)
-            
+
             # Add item to response data
             item_dict = dict(item_schema)
             items_data.append(item_dict)
-        
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.GET_LIST_SUCCESS),
@@ -312,9 +312,9 @@ class ProcessingController:
         """Get suitable drones for a package and route with optimization."""
         try:
             print(f"🚁 [API] Starting drone search for package {package_id}, route {route_id}")
-            
+
             suitable_drones = DeliverySystem.get_drones_by_package_and_route_optimized(package_id, route_id)
-            
+
             # Format response
             response_data = []
             for drone_data in suitable_drones:
@@ -331,7 +331,7 @@ class ProcessingController:
                     'terminal_name': drone_data.get('terminal_name'),
                     'eta_minutes': drone_data.get('eta_minutes')
                 }
-                
+
                 # Get drone real-time position (OPTIMIZED - batch call)
                 try:
                     # OPTIMIZATION: Use the position already calculated in repository
@@ -344,15 +344,15 @@ class ProcessingController:
                         drone_dict['last_location'] = drone_last_location
                 except Exception as e:
                     drone_dict['last_location'] = {'latitude': 0, 'longitude': 0}
-                
+
                 response_data.append(drone_dict)
-            
+
             # Sort by distance and ETA
             response_data.sort(key=lambda x: (x.get('distance_km', float('inf')), x.get('eta_minutes', float('inf'))))
-            
+
             print(f"🚁 [API] Found {len(response_data)} suitable drones")
             return response_data
-            
+
         except Exception as e:
             print(f"❌ [API] Error: {str(e)}")
             raise ValidationError(f"Failed to get suitable drones: {str(e)}")
@@ -364,11 +364,11 @@ class ProcessingController:
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
         language = request.user.language.code if request.user.language else 'en'
-        
+
         # Validate language parameter
         if language not in ['en', 'ko']:
             language = 'en'  # Default to English for invalid values
-        
+
         # Use new repository method that handles all processing logic with multilingual support
         from delivery.repository.processing_repository import ProcessingRepository
         result = ProcessingRepository.get_drones_for_operation_item_with_full_data(
@@ -378,7 +378,7 @@ class ProcessingController:
             current_page=current_page,
             language=language
         )
-        
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.GET_LIST_SUCCESS),
@@ -394,33 +394,33 @@ class ProcessingController:
         """Get operations in transit phase with streaming data from StreamMonitor"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         # Get operations with streaming data (returns list with processed streaming URLs)
         operations = DeliverySystem.get_tab_operation_in_transit_processing()
-        
+
         # Apply dynamic filters - need to get the original QuerySet for filtering
         from delivery.repository.processing_repository import ProcessingRepository
         original_operations = ProcessingRepository.get_operation_in_transit_processing()
         filtered_operations = apply_dynamic_filters(original_operations, request, [], request.GET.get('sort_obj', None))
-        
+
         # Get the IDs of filtered operations
         filtered_ids = list(filtered_operations.values_list('id', flat=True))
         ops_dict = {op.id: op for op in operations}
         # Filter the processed operations list to match the filtered IDs
         filtered_processed_operations = [ops_dict[op_id] for op_id in filtered_ids if op_id in ops_dict]
-        
+
         # Apply pagination to the filtered list
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
         paginator = OptimizedPaginator(filtered_processed_operations, page_size)
         pages = paginator.page(current_page)
-        
+
         # Serialize the data - handle list of objects
         data = []
         for operation in pages.object_list:
             # Convert each operation to dict format using the schema
             operation_data = DeliveryOperationOutSchema.from_queryset(operation, many=False)
             data.append(operation_data)
-        
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.GET_LIST_SUCCESS),
@@ -498,8 +498,8 @@ class ProcessingController:
                 message=get_message(MESSAGE_ENUM.SELECT_DRONE_FAILED),
                 data={}
             )
-        
-    @route.post("/update-delivery-event")
+
+    @route.post("/update-delivery-event", auth=CustomJWTAuth())
     # @path_permission("update", path_override='/delivery-operation/processing')
     def update_delivery_event(self, request, data: UpdateDeliveryEventSchema):
         """Update delivery event"""
@@ -534,7 +534,7 @@ class ProcessingController:
             message=get_message(MESSAGE_ENUM.GET_LIST_SUCCESS),
             data=result
         )
-    
+
     @route.post("/assign-packages-to-drones")
     @path_permission("update", path_override='/delivery-operation/processing')
     def assign_packages_to_drones(self, request, data: AssignPackagesToDronesInSchema):
@@ -551,7 +551,7 @@ class ProcessingController:
             detail_msg = message.get('message') if isinstance(message, dict) else None
             error_code = message.get('error') if isinstance(message, dict) else None
             # Map known error codes to multilingual messages
-            
+
             code_to_enum = {
                 'INSUFFICIENT_WEIGHT_CAPACITY': MESSAGE_ENUM.INSUFFICIENT_WEIGHT_CAPACITY,
                 'INSUFFICIENT_PACKAGE_SLOTS': MESSAGE_ENUM.INSUFFICIENT_PACKAGE_SLOTS,
@@ -601,7 +601,7 @@ class ProcessingController:
                 message=get_message(MESSAGE_ENUM.CHANGE_DRONE_SUCCESS),
                 data=[]
             )
-        
+
         else:
             return BaseResponse(
                 status_code=400,
@@ -677,7 +677,7 @@ class ProcessingController:
                 message=get_message(MESSAGE_ENUM.CANCEL_ORDER_FAILED),
                 data=operations
             )
-    
+
     @route.post("/start-mission-to-gcs", auth=CustomJWTAuth())
     @path_permission("update", path_override='/delivery-operation/processing')
     def start_mission_to_gcs(self, request, data: StartMissionToGcsInSchema):
@@ -687,7 +687,7 @@ class ProcessingController:
             message=get_message(MESSAGE_ENUM.UPDATE_DEVICE_SUCCESS),
             data=result
         )
-        
+
     @route.post("/upload-mission-to-gcs", auth=CustomJWTAuth())
     @path_permission("update", path_override='/delivery-operation/processing')
     def upload_mission_to_gcs(self, request, data: UploadMissionToGcsInSchema):
@@ -715,7 +715,7 @@ class ReturnedController:
         """Get due for return operations"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations = DeliverySystem.get_due_for_return_operations()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -738,7 +738,7 @@ class ReturnedController:
         """Get pending return operations"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations = DeliverySystem.get_pending_return_operations()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -761,7 +761,7 @@ class ReturnedController:
         """Get overdue operations"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations = DeliverySystem.get_overdue_operations()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -780,11 +780,11 @@ class ReturnedController:
 
     @route.get("/returned-operations", auth=CustomJWTAuth())
     @path_permission("read", path_override='/delivery-operation/returned')
-    def get_returned_operations(self, request):     
+    def get_returned_operations(self, request):
         """Get returned operations"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations = DeliverySystem.get_returned_operations()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -804,10 +804,10 @@ class ReturnedController:
     @route.get("/processed-return-operations", auth=CustomJWTAuth())
     @path_permission("read", path_override='/delivery-operation/returned')
     def get_processed_return_operations(self, request):
-        """Get processed return operations"""   
+        """Get processed return operations"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations = DeliverySystem.get_processed_return_operations()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -823,7 +823,7 @@ class ReturnedController:
             total_items=paginator.count,
             current_page=current_page
         )
-        
+
     @route.get("/check-arrived-timeout/{operation_id}", auth=CustomJWTAuth())
     @path_permission("read", path_override='/delivery-operation/returned')
     def check_arrived_order_timeout_no_pickup(self, request, operation_id: int):
@@ -917,7 +917,7 @@ class CompletedController:
         """Get arrived operations"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations = DeliverySystem.get_arrived_operations()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -940,7 +940,7 @@ class CompletedController:
         """Get completed operations"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations = DeliverySystem.get_completed_operations()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -975,32 +975,32 @@ class DeliveryReportController:
         """Get delivery report operations - filtered for completed orders"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         # Default to completed_order if no status_codes provided
         if not status_codes:
             status_codes = ["completed_order"]
-        
+
         # Only allow completed_order status for delivery report
         if "completed_order" not in status_codes:
             status_codes = ["completed_order"]
-        
+
         # Get completed operations
         operations = DeliverySystem.get_completed_operations()
-        
+
         # Get dynamic mapping annotations
         from delivery.services.status_mapping_service import StatusMappingService
         mapping_annotations = StatusMappingService.build_annotate_with_mapping(context='delivery_operation')
-        
+
         # Apply annotations to queryset before filtering
         operations = operations.annotate(**mapping_annotations)
-        
+
         # Apply dynamic query filters
         query = apply_dynamic_filters(operations, request, [], request.GET.get('sort_obj', None))
-        
+
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
         paginator = OptimizedPaginator(query, page_size)
         pages = paginator.page(current_page)
-        
+
         data = CompletedOperationOutSchema.from_queryset(pages.object_list, many=True)
         return BaseResponse(
             status_code=200,
@@ -1010,7 +1010,7 @@ class DeliveryReportController:
             total_items=paginator.count,
             current_page=current_page
         )
-    
+
     @route.get("/download-report/{operation_id}", auth=CustomJWTAuth())
     @path_permission("read", path_override='/delivery-report')
     def download_report(self, request, operation_id: int):
@@ -1041,7 +1041,7 @@ class CancelledController:
         """Get cancelled operations"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         operations = DeliverySystem.get_cancelled_operations()
         query = build_dynamic_query_from_queryset(operations, request.GET)
         operations = operations.filter(query)
@@ -1067,7 +1067,7 @@ class DeliveryController:
         """Get delivery operations"""
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         # Get operations based on status codes
         operations = None
         if status_codes:
@@ -1080,14 +1080,14 @@ class DeliveryController:
 
             # Collect operations from all relevant services
             operations_list = []
-            
+
             # Get verification operations
             if verification_codes:
                 if "unverified_order" in verification_codes:
                     operations_list.append(DeliverySystem.get_unverified_operations())
                 if "verified_order" in verification_codes:
                     operations_list.append(DeliverySystem.get_verified_operations())
-            
+
             # Get processing operations
             if processing_codes:
                 if "select_route_processing" in processing_codes:
@@ -1117,17 +1117,17 @@ class DeliveryController:
                         total_pages=paginator.num_pages,
                         total_items=paginator.count,
                         current_page=current_page
-                    ) 
+                    )
                 if "in_transit_processing" in processing_codes:
                     operations_list.append(DeliverySystem.get_tab_operation_in_transit_processing())
-            
+
             # Get completed operations
             if completed_codes:
                 if "arrived_order" in completed_codes:
                     operations_list.append(DeliverySystem.get_arrived_operations())
                 if "completed_order" in completed_codes:
                     operations_list.append(DeliverySystem.get_completed_operations())
-            
+
             # Get returned operations
             if returned_codes:
                 if "order_due_for_returned" in returned_codes:
@@ -1140,7 +1140,7 @@ class DeliveryController:
                     operations_list.append(DeliverySystem.get_returned_operations())
                 if "processed_order" in returned_codes:
                     operations_list.append(DeliverySystem.get_processed_return_operations())
-            
+
             # Get cancelled operations
             if cancelled_codes:
                 operations_list.append(DeliverySystem.get_cancelled_operations())
@@ -1159,7 +1159,7 @@ class DeliveryController:
                                     seen_ids.add(op_id)
                         except Exception:
                             continue
-                
+
                 if operation_ids:
                     # Create a simple queryset without complex annotations to avoid conflicts
                     # Using Case/When to preserve order based on the original list
@@ -1167,11 +1167,11 @@ class DeliveryController:
                         *[When(id=pk, then=pos) for pos, pk in enumerate(operation_ids)],
                         output_field=IntegerField()
                     )
-                    
+
                     operations = DeliveryOperation.objects.filter(id__in=operation_ids).annotate(
                         preserved_order=preserved_order
                     ).order_by('preserved_order')
-                    
+
                     # Add basic annotations that are commonly needed
                     # try:
                         # Get latest cancellation subquery
@@ -1179,10 +1179,10 @@ class DeliveryController:
                     latest_cancellation = DeliveryCancellation.objects.filter(
                         delivery_operation=OuterRef('pk')
                     ).order_by('-id')
-                    
+
                     # Get dynamic mapping annotations
                     from delivery.services.status_mapping_service import StatusMappingService
-                    
+
                     # Get group context for mapping
 
                     mapping_annotations = StatusMappingService.build_annotate_with_mapping(context='delivery_operation')
@@ -1215,7 +1215,7 @@ class DeliveryController:
                             output_field=CharField()
                         )
                     ).values('address')
-                    
+
                     # Subquery for destination (recipient_address) with null handling
                     destination_subquery = Order.objects.filter(
                         id=OuterRef('order_id')
@@ -1253,7 +1253,7 @@ class DeliveryController:
                                     output_field=CharField()
                                 )
                             ),
-                            default=Value('N/A'), 
+                            default=Value('N/A'),
                             output_field=CharField()
                         )
                     ).values('address')
@@ -1349,7 +1349,7 @@ class DeliveryController:
                             ),
                             Value(None),
                             output_field=CharField()
-                        ),                       
+                        ),
                         creator=Concat(F('order__created_by__first_name'), Value(' '), F('order__created_by__last_name'), output_field=CharField()),
                         # Apply dynamic mapping
                         **mapping_annotations,
@@ -1380,7 +1380,7 @@ class DeliveryController:
                 total_items=paginator.count,
                 current_page=current_page
             )
-        
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.GET_LIST_SUCCESS),
@@ -1390,7 +1390,7 @@ class DeliveryController:
             current_page=current_page
         )
 
-    
+
     @route.get("/get-delivery-for-etri", auth=CustomJWTAuth())
     @path_permission("read", path_override='/etri-tracking')
     def get_delivery_for_etri(self, request):
@@ -1402,33 +1402,33 @@ class DeliveryController:
         - Select route & Select drone -> Pending shipment
         - Intransit -> Intransit
         - Completed -> Shipped
-        
+
         Supports dynamic search and sorting via query parameters:
         - Search by order code, status, mapped_status, recipient info
         - Sort by any field including mapped_status
         """
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         # Get QuerySet with mapped_status annotation
         operations = DeliverySystem.get_delivery_for_etri()
-        
+
         # Apply dynamic filters and sorting
         operations = apply_dynamic_filters(
-            operations, 
-            request, 
-            [], 
+            operations,
+            request,
+            [],
             request.GET.get('sort_obj', None)
         )
-        
+
         # Apply pagination on QuerySet
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
         paginator = OptimizedPaginator(operations, page_size)
         pages = paginator.page(current_page)
-        
+
         # Format the paginated data with images and additional info
         formatted_data = DeliveryOperationEtriOutSchema.from_queryset(pages.object_list, many=True)
-         
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.GET_LIST_SUCCESS),
@@ -1437,18 +1437,18 @@ class DeliveryController:
             total_items=paginator.count,
             current_page=current_page
         )
-    
+
 @api_controller("/drone-monitoring", tags=["Drone Monitoring"])
 class DroneMonitoringController:
     @route.get("/drone-status")
     def get_drone_status_monitoring(self, request, unique_id: Optional[str] = None, msg_type: Optional[str] = None):
         """
         Retrieve drone status monitoring data (GET method for backward compatibility).
-        
+
         Parameters:
         - unique_id (optional): Unique ID of the drone to view details
         - msg_type (optional): Message type to filter (RAW_IMU, VIBRATION, SCALED_PRESSURE, RC_CHANNELS, SERVO_OUTPUT_RAW, etc.)
-        
+
         Behavior:
         - If `unique_id` is not provided, the API returns all active drones.
         - If `unique_id` is provided but `msg_type` is not, the API returns all measurement data from that drone including RC channels and servo outputs.
@@ -1467,25 +1467,25 @@ class DroneMonitoringController:
                 msg_type=msg_type,
                 size=100
             )
-        
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.GET_LIST_SUCCESS),
             data=data
         )
-    
+
     @route.post("/drone-status")
     def post_drone_status_monitoring(self, request, data: DroneMonitoringRequestInSchema):
         """
         Retrieve drone status monitoring data with selected monitoring items (POST method).
-        
+
         Request body:
         {
             "unique_id": "drone_3_1_conn_4ef01b03",
             "monitoring_items": ["x-axis", "y-axis", "z-axis", "vibe", "ch1in", "ch2out", ...],
             "time_window_minutes": 15
         }
-        
+
         Returns filtered data based on selected monitoring items.
         """
         print(f"✅ [DRONE_MONITORING] Data: {data}")
@@ -1495,7 +1495,7 @@ class DroneMonitoringController:
             monitoring_items=data.monitoring_items,
             time_window_minutes=data.time_window_minutes or 15
         )
-        
+
         return BaseResponse(
             status_code=200,
             message=get_message(MESSAGE_ENUM.GET_LIST_SUCCESS),
@@ -1530,7 +1530,7 @@ class EtriIntegrationController:
             path = path.strip()
             if (path.startswith("'") and path.endswith("'")) or (path.startswith('"') and path.endswith('"')):
                 path = path[1:-1]
-            
+
             # Parse string format "[(lat, lng), (lat2, lng2), ...]" thành list
             try:
                 # Sử dụng ast.literal_eval để parse an toàn
@@ -1552,7 +1552,7 @@ class EtriIntegrationController:
                 return []
         else:
             return []
-    
+
     @route.post("/send-to-etri/{operation_id}", auth=CustomJWTAuth())
     def send_delivery_to_etri(self, request, operation_id: int):
         """
@@ -1569,10 +1569,10 @@ class EtriIntegrationController:
             ).prefetch_related(
                 'order__items__item_type'
             ).get(id=operation_id)
-            
+
             # Send to ETRI
             result = DeliverySystem.send_delivery_to_etri(delivery_operation, request)
-            
+
             if result['success']:
                 return BaseResponse(
                     status_code=200,
@@ -1585,7 +1585,7 @@ class EtriIntegrationController:
                     message=result['message'],
                     data=result
                 )
-                
+
         except DeliveryOperation.DoesNotExist:
             return BaseResponse(
                 status_code=404,
@@ -1596,13 +1596,13 @@ class EtriIntegrationController:
                 status_code=500,
                 message=f"Unexpected error: {str(e)}"
             )
-    
+
     @route.post("/receive-from-etri")
     def receive_status_from_etri(self, request, data: ReceiveFromEtriSchema):
         """
         API 8: ETRI 관제 시스템 → GAION 운영 시스템 송신 API
         Receive delivery status update from ETRI system
-        
+
         Hỗ trợ cả 2 format, normalize về list format (format chuẩn):
         - String format: "[(36.6485432, 126.6714442)]" -> [[36.6485432, 126.6714442]]
         - List format: [[36.6485432, 126.6714442]] -> giữ nguyên
@@ -1610,7 +1610,7 @@ class EtriIntegrationController:
         try:
             # Convert schema to dict
             etri_data = dict(data)
-            
+
             # Normalize path fields to list format (format chuẩn của hệ thống)
             if 'DRONE_PATH' in etri_data:
                 etri_data['DRONE_PATH'] = self._normalize_path_to_list(etri_data['DRONE_PATH'])
@@ -1618,10 +1618,10 @@ class EtriIntegrationController:
                 etri_data['ROBOT_PATH'] = self._normalize_path_to_list(etri_data['ROBOT_PATH'])
             if 'DOCKING_POINT' in etri_data:
                 etri_data['DOCKING_POINT'] = self._normalize_path_to_list(etri_data['DOCKING_POINT'])
-            
+
             # Process ETRI status update
             result = DeliverySystem.receive_status_from_etri(etri_data, request)
-            
+
             if result['success']:
                 return BaseResponse(
                     status_code=200,
@@ -1634,7 +1634,7 @@ class EtriIntegrationController:
                     message=result['message'],
                     data=result
                 )
-                
+
         except ValidationError as e:
             return BaseResponse(
                 status_code=400,
@@ -1646,7 +1646,7 @@ class EtriIntegrationController:
                 status_code=500,
                 message=f"Unexpected error: {str(e)}"
             )
-    
+
     @route.get("/etri-data-format/{operation_id}", auth=CustomJWTAuth())
     def get_etri_data_format(self, request, operation_id: int):
         """
@@ -1662,17 +1662,17 @@ class EtriIntegrationController:
             ).prefetch_related(
                 'order__items__item_type'
             ).get(id=operation_id)
-            
+
             # Get ETRI formatted data
             from delivery.services.etri_service import EtriService
             etri_data = EtriService._prepare_etri_data(delivery_operation, request)
-            
+
             return BaseResponse(
                 status_code=200,
                 message=get_message(MESSAGE_ENUM.GET_LIST_SUCCESS),
                 data=etri_data
             )
-            
+
         except DeliveryOperation.DoesNotExist:
             return BaseResponse(
                 status_code=404,
@@ -1687,7 +1687,7 @@ class EtriIntegrationController:
 @api_controller("/etri-mock", tags=["ETRI Mock APIs (Development Only)"])
 class EtriMockController:
     """Mock ETRI APIs for development testing"""
-    
+
     @route.post("/receive-delivery")
     def mock_receive_delivery(self, request, data: SendToEtriSchema):
         """
@@ -1697,14 +1697,14 @@ class EtriMockController:
         try:
             # Simulate ETRI processing
             etri_data = dict(data)
-            
+
             # Mock response scenarios based on data
             receipt_id = etri_data.get('RECEIPT_ID')
             mission_id = etri_data.get('MISSION_ID')
             # Simulate different response scenarios
             import random
             scenario = random.choice(['success'])
-            
+
             if scenario == 'success':
                 return {
                     "status": "success",
@@ -1739,13 +1739,13 @@ class EtriMockController:
                         "retry_after": 300
                     }
                 )
-                
+
         except Exception as e:
             return BaseResponse(
                 status_code=500,
                 message=f"Mock ETRI API error: {str(e)}"
             )
-    
+
     @route.post("/send-status-update", auth=CustomJWTAuth())
     def mock_send_status_update(self, request, data: SendDataToEtriSchema):
         """
@@ -1776,7 +1776,7 @@ class EtriMockController:
             # Get the specific operation
             operation = operations.first()
             receipt_id = operation.another_info.get('etri', {}).get('receipt_id')
-            
+
             # Generate mock status update data with all ETRI status values (0-5)
             mock_statuses = [
                 {
@@ -1787,7 +1787,7 @@ class EtriMockController:
                 },
                 {
                     "MISSION_STATUS": 1,  # 배송취소 -> cancelled
-                    "STATUS_NAME": "Delivery Cancelled", 
+                    "STATUS_NAME": "Delivery Cancelled",
                     "DESCRIPTION": "Delivery is rejected or delivery failed",
                     "CANCELLATION_REASON": random.choice([
                         "날씨",
@@ -1824,16 +1824,16 @@ class EtriMockController:
                     ])
                 }
             ]
-            
+
             selected_status = random.choice(mock_statuses)
-            
+
             # Generate transmission data as shown in the image
             from datetime import datetime, timedelta
             from delivery.config.route_dummy_data import get_random_route
 
             mission_date = datetime.now() + timedelta(hours=random.randint(1, 48))
             receipt_date = datetime.now()
-            
+
             # Get random route data
             selected_route = get_random_route()
             # drone_path = selected_route["drone_path"]
@@ -1857,7 +1857,7 @@ class EtriMockController:
                     current_lng += random.uniform(-0.005, 0.005)
                     coords.append((round(current_lat, 3), round(current_lng, 3)))
                 return coords
-            
+
             # Generate drone path first
             drone_path = generate_coordinates_list(5)
             # Generate robot path starting from drone's end point
@@ -1866,7 +1866,7 @@ class EtriMockController:
             mock_data = {
                 # GAION to ETRI transmission format
                 "CONTROL_ID": "gcs_user_001",
-                "USER_ID": "gaion_user_001", 
+                "USER_ID": "gaion_user_001",
                 "ORG_ID": "gaion",
                 "RECEIPT_ID": receipt_id,
                 "MISSION_ID": f"ms_gaion_{receipt_id}",
@@ -1882,18 +1882,18 @@ class EtriMockController:
                 "DRONE_PATH_DISTANCE": selected_route["drone_path_distance"],  # Calculated distance in km
                 "ROBOT_PATH_DISTANCE": selected_route["robot_path_distance"]   # Calculated distance in km
             }
-            
+
             # Add cancellation reason if status is cancelled (1)
             if selected_status["MISSION_STATUS"] == 1 and selected_status["CANCELLATION_REASON"]:
                 mock_data["CANCELLATION_REASON"] = selected_status["CANCELLATION_REASON"]
-            
+
             # Update operation with transmission data using organized structure
             if not operation.another_info:
                 operation.another_info = {}
-            
+
             # Get or create etri section for organized data structure
             etri_info = operation.another_info.get('etri', {})
-            
+
             # Update etri section with transmission data
             user = operation.order.created_by
             group_code = user.userprofilelink.group.code if user.userprofilelink.group else None
@@ -1906,14 +1906,14 @@ class EtriMockController:
                 'transmission_data': mock_data,
                 'last_mock_update': datetime.now().isoformat(),
             })
-            
+
             operation.another_info['etri'] = etri_info
             operation.save()
-            
+
             # Send to our own receive endpoint
             from delivery.services.etri_service import EtriService
             result = EtriService.receive_status_from_etri(mock_data, request)
-            
+
             return BaseResponse(
                 status_code=200,
                 message="Mock status update sent successfully with complete transmission data",
@@ -1925,7 +1925,7 @@ class EtriMockController:
                     "transmission_format_note": "Includes both GAION->ETRI transmission format and status update data"
                 }
             )
-            
+
         except Exception as e:
             return BaseResponse(
                 status_code=500,
@@ -1933,7 +1933,7 @@ class EtriMockController:
             )
 
 
-    
+
     @route.get("/test-scenarios")
     def get_test_scenarios(self, request):
         """
@@ -1947,13 +1947,13 @@ class EtriMockController:
                     "probability": "70%"
                 },
                 {
-                    "name": "Validation Error", 
+                    "name": "Validation Error",
                     "description": "ETRI returns validation errors",
                     "probability": "20%"
                 },
                 {
                     "name": "System Error",
-                    "description": "ETRI system temporarily unavailable", 
+                    "description": "ETRI system temporarily unavailable",
                     "probability": "10%"
                 }
             ],
@@ -1967,7 +1967,7 @@ class EtriMockController:
                 {
                     "status_code": 1,
                     "status_name": "Delivery Cancelled",
-                    "gaion_status": "cancelled", 
+                    "gaion_status": "cancelled",
                     "description": "Delivery is rejected or delivery failed (reason for cancellation must also be indicated)"
                 },
                 {
@@ -1997,13 +1997,13 @@ class EtriMockController:
             ],
             "test_endpoints": {
                 "send_to_etri": "/api/etri-integration/send-to-etri/{operation_id}",
-                "receive_from_etri": "/api/etri-integration/receive-from-etri", 
+                "receive_from_etri": "/api/etri-integration/receive-from-etri",
                 "mock_etri_receive": "/api/etri-mock/receive-delivery",
                 "mock_status_update": "/api/etri-mock/send-status-update",
                 "etri_data_format": "/api/etri-integration/etri-data-format/{operation_id}"
             }
         }
-        
+
         return BaseResponse(
             status_code=200,
             message="ETRI test scenarios retrieved successfully",

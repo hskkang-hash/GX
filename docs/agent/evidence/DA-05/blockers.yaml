@@ -4,17 +4,39 @@
 #     DEV       개발로 풀린다        → 일정 문제
 #     CONTRACT  상대방 이행이 필요   → 책임 문제
 #     ADMIN     우리 쪽 사무 1회     → **하루면 풀리는데 안 한 것**
+#     OPS       현장이 아는 값       → **우리가 만들 수 없는 것** (D-338)
 #   섞어 두면 하루짜리가 계약 리스크 뒤에 숨는다. 그래서 유형을 칸으로 만든다.
 #
 # ⚠ `unlock_type` · `unlock_owner` 가 비면 `scripts/verify_blockers.py` 가 exit 1 한다.
 #   등재는 면제가 아니라 **선언**이다 — 여기 이름을 적는 일이 곧 "이것이 막혀 있음을
 #   알고 있고, 누가 푸는지도 안다"는 진술이다 (D-264 · D-281 계열).
+#
+# ═══════════════════════════════════════════════════════════════════════════
+# ★ 판정 술어 (D-323) — 「끝났는가」가 아니라 **「지금 막혀 있는가」**
+# ═══════════════════════════════════════════════════════════════════════════
+#
+#     blocked_now = 「그것 때문에 **지금 이 환경에서** 막혀 있는가」
+#
+#   · **발급 완료 ≠ 전달 완료 ≠ 환경 존재.** 세 사실을 한 칸에 두지 않는다 (D-290 계열).
+#   · 「유형을 사실과 다르게 적으면 그 순간 이 대장이 하는 일이 없어진다.」
+#   · 잠김 총수와 **지금 막고 있는 수**는 다른 수다. 게이트가 둘을 따로 출력한다.
+#
+#   verified_at / verified_by — **"완료했다"는 진술이 아니라 확인 행위가 잠금을 내린다.**
+#   두 칸이 비면 exit 1. 무엇으로 확인했는지(파일·호출·화면)를 적는다.
+#
+#   ★ 없앤 것과 미룬 것은 다르다 — `blocked_now: false` 인 항목을 **지우지 않는다.**
+#     지우면 나중에 왜 안 했는지 아무도 모른다.
+#
+# ★ D-333 — CONTRACT·ADMIN(= 우리 밖에 기대는 잠금)에는 두 칸이 더 필요하다:
+#     internal_alternative_considered : 무엇을 검토했는가 (없으면 "없음"이라고 적는다)
+#     why_not                          : 왜 안 되는가
+#   외부 의존 하나를 **안 만드는 것**이 외부 의존 하나를 잘 만드는 것보다 언제나 싸다.
 
 meta:
   decision: D-307
   updated_at: "2026-09-02"
   enum:
-    unlock_type: [DEV, CONTRACT, ADMIN]
+    unlock_type: [DEV, CONTRACT, ADMIN, OPS]
   # ★ D-320 — CONTRACT 항목에는 칸 셋이 더 필요하다. **잠김이 조용히 늙지 않게** 한다.
   #   sent_at : 발송일 · due_by : 회신 기한(발송 + 15일 · 계약 3조2항 준용)
   #   경과 일수는 게이트가 **매 실행마다 계산해 출력**한다 —
@@ -30,6 +52,17 @@ blockers:
     since: "2026-08-25"          # 계약 3조2항이 정한 제공 기한
     sent_at: "2026-09-04"        # 발송문 발송 완료 (대표 회신)
     due_by: "2026-09-19"         # 발송 + 15일 (계약 3조2항 준용)
+    blocked_now: true
+    verified_at: "2026-09-06"
+    verified_by: |
+      backend/adapters/sdn/__init__.py 의 KERNEL_READY=False 를 파일에서 확인 ·
+      명세 문서가 docs/design/DA-02 에 수령분으로 들어온 것이 없음을 저장소에서 확인.
+    internal_alternative_considered: |
+      추측 필드로 Mock 어댑터를 먼저 세우는 안. 그리고 **포트·수령요건만 세우고 멈추는 안.**
+    why_not: |
+      뒤의 것을 **채택했고 이미 서 있다**(포트 34건 · A차단 24). 앞의 것은 안 한다 —
+      추측 필드 위의 어댑터는 재작업이 확정이고 D-280 위반이다. 상대방의 명세는
+      우리가 아는 것으로 대체할 수 없다 — I-1~I-5 의 필드 이름은 **그쪽 사실**이다.
     why: |
       Mock 조차 I-1~I-5 의 필드 이름과 타입이 있어야 만들 수 있다(DA-02 §0).
       추측 필드 위의 어댑터는 재작업이 확정되고 D-280 위반이다.
@@ -43,29 +76,42 @@ blockers:
     state_in_code: backend/adapters/sdn/__init__.py — KERNEL_READY=False + NOT_READY_REASON
 
   - id: JUSO_API_KEY
-    title: juso 승인키 — 발급은 완료, **개발 환경에 없다** + 방향 미판정
+    title: 도로명주소 팝업 API 승인키 2건 — 발급됨 · **이 환경에 없음** · 그러나 막고 있지 않다
     unlock_type: ADMIN
-    unlock_owner: 대표 (키 전달 1회)
-    blocks: [FX-5]
+    unlock_owner: 대표 (키 전달 1회) — 다만 **지금 요청드리지 않는다**
+    blocks: [카메라 주소 입력 팝업 UI (D-331)]
     since: "2026-08-31"          # D-298 로 FX-5 착수가 승인된 날
+    blocked_now: false
+    verified_at: "2026-09-06"
+    verified_by: |
+      대표 승인 화면 2건에서 **API 유형**을 실측(「도로명주소 팝업 API」) ·
+      backend/adapters/juso/__init__.py 의 JUSO_REVERSE_SUPPORTED='no' 를 파일에서 확인 ·
+      K5 표 ②(backend/kernels/k5_trust/credentials.py)에 JUSO_POPUP_KEY_1/2 로 등재.
+      ★ 이 두 칸은 이제 손으로 적는 칸이 아니라 **조회 결과**다 —
+        `kernels.k5_trust.refresh_credential(name=..., verified_by=...)` 이 채운다(D-325).
+    internal_alternative_considered: |
+      **카메라 설치 주소**(D-330). 카메라는 고정 설치물이므로 설치할 때 주소를 안다.
+    why_not: |
+      ★ 반대다 — **내부가 이겼다.** 이벤트 위치는 그 카메라의 주소이고, 외부 호출 0건 ·
+      타임아웃 없음 · 비용 0 이다. 결과까지 더 좋다: 「정문 (서울시 …로 12)」.
+      남은 팝업 키의 용처는 **주소를 입력할 때 오타를 막는 것** 하나이고, 그것은
+      지금 막고 있는 일이 아니다.
     why: |
-      ★ 2026-09-04 실측 — **발급은 완료됐고 이 환경에는 없다. 둘은 다른 사실이다.**
-        대표께서 승인키 2건 발급을 회신하셨다. 그러나 개발 환경에서 확인되지 않는다:
-        C:/GuardianX-vault/secrets-20260210/gx_be.env 에 juso 항목 없음 ·
-        환경변수 GX_JUSO_API_KEY 없음 · backend/.env 파일 자체가 부재.
-        **문서로 안 것을 계정에서 본 것으로 등재하지 않는다**(D-316) — 그래서
-        .env.example 의 juso 항목은 여전히 `source: doc_only` 이고 어댑터가 금지돼 있다.
-      ★ 그리고 **방향이 미판정이다**(D-318): juso 의 주력은 「검색어→주소」·「주소→좌표」이고
-        FX-5 가 필요한 것은 그 반대(좌표→도로명주소)다. 역방향을 안 주면 **키가 와도
-        이 자원으로는 안 열린다** — 그때는 어댑터 설계가 아니라 자원 선택의 문제다.
-      ⚠ 그래서 이 항목은 **ADMIN 으로 남긴다.** 지시서 §5 는 ADMIN 0건을 예상했으나,
-        남은 한 걸음이 개발이 아니라 **사무(키 전달)** 이기 때문이다. 유형을 사실과
-        다르게 적으면 그 순간 이 대장이 하는 일이 없어진다(D-307).
+      ★ 2026-09-06 **사유가 통째로 바뀌었다** — 두 가지가 동시에 일어났다(D-332):
+        ① 키가 왔다(파일로). 다만 **아직 개발 환경에 넣지 않았다** — 발급 ≠ 전달 ≠
+           환경 존재(D-323). 그래서 이 항목은 남는다.
+        ② 그 키로 FX-5 를 할 수 없음이 확정됐다(D-329). API 유형이 **도로명주소 팝업 API**
+           였다 — 브라우저에 주소검색 창을 띄우는 UI 위젯이고 서버 조회 API 조차 아니다.
+           **막고 있던 이유 자체가 사라졌다.**
+      그래서 유형은 ADMIN 그대로이되 `blocked_now: false` 다.
+      ★ 지우지 않는 이유: **없앤 것과 미룬 것은 다르다.** 지우면 나중에 왜 안 했는지
+        아무도 모르고, 다음 사람이 같은 키를 다시 신청한다.
+      직전(2026-09-04) 사유는 「승인키 미전달 + 방향 미판정」이었다 — 그 기록도 남긴다.
     unlock_step: |
-      승인키를 개발 환경 환경변수 `GX_JUSO_API_KEY` 로 전달(값은 저장소·문서 어디에도
-      적지 않는다 · D-319) → `python scripts/probe_juso_direction.py` **실호출 1회.**
-      그 1회가 JUSO_REVERSE_SUPPORTED 를 yes/no 로 확정하고 FX-5 설계를 가른다.
-    state_in_code: backend/adapters/juso/__init__.py — JUSO_REVERSE_SUPPORTED='unknown'
+      표 ①②가 선 뒤에, 팝업 키를 프론트엔드 설정값으로 넣고 카메라 등록 화면에
+      주소검색 팝업을 붙인다(D-331). **값은 저장소·문서 어디에도 적지 않는다**(D-319).
+      상태는 K5 표 ②에서 `refresh_credential` 로 올린다 — 손으로 적지 않는다.
+    state_in_code: backend/kernels/k5_trust/credentials.py — JUSO_POPUP_KEY_1/2 (typed)
 
   # ★ CCTV_SERVICE_NAME 은 **여기서 내려갔다** (D-321, 2026-09-04).
   #   근거: 활용신청 현황 18건 전수에 없고, **신청할 필요도 없다.**
@@ -85,6 +131,10 @@ blockers:
     unlock_owner: Code (설계 확정 후)
     blocks: [F-03 폴리곤 판정]
     since: "2026-09-01"
+    blocked_now: true
+    verified_at: "2026-09-06"
+    verified_by: |
+      backend/stream_monitors/services/zones.py 의 ZONE_POLYGON_READY=False 를 파일에서 확인 · Zone.geometry_status 열거에 ready 행이 0건인 것을 모델 선언에서 확인.
     why: |
       GeoJSON 인지 좌표쌍 배열인지, WGS84 인지 TM 인지가 정해지지 않았다.
       지금 한쪽을 고르면 그 선택이 곧 F-03 의 계약이 된다(D-280).
@@ -100,6 +150,10 @@ blockers:
     unlock_owner: Code
     blocks: [F-09 영상 재생(바이트)]
     since: "2026-09-02"
+    blocked_now: true
+    verified_at: "2026-09-06"
+    verified_by: |
+      backend/stream_monitors/services/clips.py 의 CLIP_EXTRACTION_READY=False 를 파일에서 확인.
     why: |
       바이트 구간 읽기 · 키프레임 경계 맞춤 재인코딩 · 재저장 셋이 필요하고,
       특히 키프레임 판단은 코덱·컨테이너별로 달라 실측 없이 고르면 그 선택이 곧
@@ -116,6 +170,10 @@ blockers:
     unlock_owner: dj-core 담당 (이 저장소는 §0.4 로 못 고친다)
     blocks: [설치 절차]
     since: "2026-08-30"
+    blocked_now: true
+    verified_at: "2026-09-06"
+    verified_by: |
+      docs/agent/evidence/e2e/migration_from_scratch.md 의 실행 기록을 파일에서 확인 — dj-core logger/0009 의 의존 미선언은 §0.4 금지구역이라 이 저장소가 못 고친다.
     why: |
       dj-core 의 logger/0009 가 multilanguage 의존을 선언하지 않는다. §0.4 금지구역이라
       이 저장소가 고칠 수 없다(P-ENV-1). 순서 제약을 넣어 봤더니 **이미 도는 환경 전부가
@@ -123,3 +181,36 @@ blockers:
     unlock_step: |
       dj-core 의 마이그레이션 의존 선언 수정. 그동안 설치 매뉴얼 §2-3 의 **세 줄**을 쓴다.
     state_in_code: docs/agent/evidence/e2e/migration_from_scratch.md
+
+  # ★ D-338 ③ — 개발 잠금이 아니다. **우리가 만들 수 없는 값**이다.
+  #   쓰기 지점은 이번 턴에 섰다(set_camera_address). 남은 것은 현장이 아는 값뿐이다.
+  - id: CAMERA_INSTALL_ADDRESS
+    title: 카메라 39대의 설치 도로명주소가 비어 있다
+    unlock_type: OPS
+    unlock_owner: 고객사 (설치 위치를 아는 쪽)
+    blocks: [F-10 알림 위치줄의 주소 표기]
+    since: "2026-09-06"
+    blocked_now: false
+    verified_at: "2026-09-07"
+    verified_by: |
+      scripts/verify_camera_address.py 를 이 환경에서 실행해 미입력 건수를 확인했고,
+      backend/tests/test_camera_address_write.py 7건이 쓰기 경로가 실재함을 증명한다.
+      E2E-1 이 주소가 채워진 카메라로 돌아 **알림 본문에 주소가 실제로 나가는 것**을 본다.
+    why: |
+      카메라는 고정 설치물이고 설치 위치는 **현장을 아는 쪽만 안다**(D-330).
+      우리가 지어내면 그 주소가 알림에 그대로 나가 사람을 엉뚱한 곳으로 보낸다 —
+      **틀린 주소는 없는 주소보다 나쁘다.**
+      ★ blocked_now 가 false 인 이유: 주소가 없어도 알림은 좌표 1줄로 그대로 나간다.
+        발송을 지연시키지 않는다(D-308 · D-330). 막고 있는 것이 아니라 **덜 좋은 것**이다.
+    unlock_step: |
+      고객사에서 「카메라 이름 / 도로명주소 / 현장 표현」 세 칸 목록을 받아
+      `python manage.py set_camera_address --csv cameras.csv` 한 줄.
+      개발·시연용은 표본으로 채워 증명한다 — 납품 시 실값이 필요하다.
+    internal_alternative_considered: |
+      좌표→주소 역지오코딩(FX-5). 외부 API·키·저하 운전이 필요했다.
+    why_not: |
+      필요 없었다. 카메라가 고정물이라 설치 시점에 주소를 안다(D-330 · D-333).
+      그리고 결과가 더 좋다 — 역지오코딩은 도로명주소만 주지만 현장 표현(「정문」)은 못 준다.
+    state_in_code: |
+      backend/stream_monitors/models.py — address_source='unset' 이 기본값 ·
+      backend/stream_monitors/management/commands/set_camera_address.py — 쓰기 지점

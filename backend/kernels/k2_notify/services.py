@@ -98,7 +98,27 @@ def _location_line(event) -> str:
 
     상태 넷이 각각 다른 문장을 낸다. 같은 문장으로 뭉치면 받는 사람은 "주소가 없는 사건"과
     "주소를 못 얻은 사건"을 구별할 수 없고, 새벽 당직자에게 그 차이가 곧 대응 속도다.
+
+    ★ 2026-09-06 — **카메라 설치 주소가 먼저다** (D-330)
+    ---------------------------------------------------
+    좌표를 주소로 바꾸려고 외부 자원을 찾고 키를 신청하고 잠금을 세웠는데,
+    답은 **카메라가 고정 설치물이라는 사실** 하나였다. 설치할 때 주소를 안다.
+
+    그리고 결과가 더 좋다. 역지오코딩은 「서울시 …로 12」만 주지만
+    우리는 **「정문 (서울시 …로 12)」**를 준다 — 새벽 당직자에게 이 차이가 결정적이다.
+
+    ⚠ **발송을 지연시키지 않는다.** 주소는 보조 정보이지 발송 조건이 아니다.
+      카메라 주소가 없으면(`address_source='unset'`) 아래 종전 갈래로 그대로 내려간다 —
+      D-308 이 그은 경계를 넓히지 않는다.
     """
+    camera = getattr(event, "stream_monitor", None)
+    if camera is not None:
+        installed = (getattr(camera, "install_address", "") or "").strip()
+        source = getattr(camera, "address_source", "unset") or "unset"
+        if installed and source != "unset":
+            detail = (getattr(camera, "install_address_detail", "") or "").strip()
+            return f"위치 {detail} ({installed})" if detail else f"위치 {installed}"
+
     status = getattr(event, "address_status", "") or ""
     if status == "resolved" and event.address:
         return f"위치 {event.address}"

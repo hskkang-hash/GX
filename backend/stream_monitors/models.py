@@ -36,6 +36,37 @@ class StreamMonitor(BaseModelWithGroup):
     external_start_time = models.DateTimeField(null=True, blank=True)
     external_end_time = models.DateTimeField(null=True, blank=True)
     external_remark = models.TextField(null=True, blank=True)
+
+    # ─────────────────────────────────────────────────────────────────────
+    # 설치 주소 — **밖에서 사 오려던 것을 우리는 이미 알고 있었다** (D-330)
+    # ─────────────────────────────────────────────────────────────────────
+    #
+    # 종전 설계는 이벤트 좌표 → 외부 역지오코딩 API → 주소 였다. 외부 의존 · 타임아웃 ·
+    # 저하 운전 · 비용, 그리고 **자원이 없어서 잠김**(FX-5).
+    # 그런데 **카메라는 고정 설치물이다.** 설치할 때 주소를 안다 — 적어 두지 않았을 뿐이다.
+    #
+    # ★ 결과가 더 좋다. 역지오코딩은 「서울시 …로 12」만 준다.
+    #   우리는 **「정문 (서울시 …로 12)」**를 준다 — 새벽 당직자에게 이 차이가 결정적이다.
+    #
+    # 계층: L3 Platform. 카메라 속성이므로 카메라와 같은 층·같은 앱이다 (Zone 과 같은 판단 · D-299).
+    class AddressSource(models.TextChoices):
+        #: ★ 기본값. **"아직 안 적음"** 이지 "주소가 없는 카메라" 가 아니다 (D-290).
+        #:   이 값이면 알림은 종전대로 좌표 1줄로 나간다 — **발송을 지연시키지 않는다.**
+        UNSET = "unset", "미입력"
+        #: 사람이 적었다. 지금 있는 유일한 출처다. 팝업 API 로 채워도 출처는 사람이다(D-331).
+        MANUAL = "manual", "수기 입력"
+
+    #: 도로명주소. 팝업 API(D-331)로 채우면 정규화된 값이 들어온다 —
+    #: 손으로 치면 오타가 나고, 오타 난 주소는 **알림에 그대로 나가 사람을 엉뚱한 곳으로 보낸다.**
+    install_address = models.CharField(max_length=255, null=True, blank=True)
+    #: "정문" · "3층 복도" — 현장 사람이 쓰는 표현. 도로명주소가 답하지 못하는 것을 답한다.
+    install_address_detail = models.CharField(max_length=255, null=True, blank=True)
+    address_source = models.CharField(
+        max_length=16, choices=AddressSource.choices,
+        default=AddressSource.UNSET, db_index=True,
+        help_text="unset = 아직 안 적음. 알림은 좌표 1줄로 나가고 지연되지 않는다 (D-330)",
+    )
+
     TRANSLATABLE_FIELDS = ['name']
 
     def __str__(self):
@@ -548,3 +579,189 @@ class EventClip(BaseModel):
 
     def __str__(self):
         return f"clip({self.clip_status})@event{self.event_id}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# K5 표 ① 임계값 — **한 번 만들어 네 절을 갚는 표 둘 중 첫째** (D-325)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 정의(항목·기본값·단위·적용 범위)는 코드에 있다 — `kernels/k5_trust/thresholds.py`.
+# **여기 있는 것은 그 정의를 덮어쓴 값과 그 내력**이다. 둘을 나눈 이유:
+#
+#   · 정의는 개발이 정한다(무엇이 임계값인가·단위가 무엇인가). 커밋으로 바뀐다.
+#   · 값은 운영이 정한다(F-12 관리자 설정). 화면으로 바뀐다.
+#   한 표에 두면 운영이 정의를 지울 수 있고, 지워진 정의는 코드가 부를 때 터진다.
+
+
+class ThresholdSetting(BaseModel):
+    """임계값 **덮어쓴 값** 한 줄. 정의는 여기 없다 (D-325 표 ①).
+
+    적용 범위 세 층 — **좁은 것이 이긴다**
+    --------------------------------------
+        camera  특정 카메라(`camera` FK)   ← F-02 「지점별 기준선 설정」이 요구하는 층
+        tenant  특정 테넌트(`group` FK)
+        global  전역 기본 덮어쓰기(둘 다 null)
+
+    ★ 지금 채우는 것은 **전역 기본뿐**이다(D-325). tenant·camera 는 **자리이지 데이터가
+      아니다** — 행이 하나도 없고, 없는 것이 정상이다. Zone 의 폴리곤 자리와 같은 대칭이다.
+      자리를 지금 만드는 이유: 나중에 채우는 것이 재작업이 아니라 **빈칸 채우기**가 되게 한다.
+
+    ★ 왜 `scope_ref` 정수 칸이 아니라 `camera` FK 인가
+    --------------------------------------------------
+    정수 한 칸에 "테넌트 id 또는 카메라 id" 를 담으면 **한 칸이 두 뜻**을 갖는다(D-290).
+    그러면 카메라가 지워져도 행이 남고, 남은 행이 다른 카메라의 id 와 겹친다.
+    테넌트는 기저(`BaseModel`)가 주는 `group` FK 로, 카메라는 제 이름의 FK 로 적는다.
+
+    ★ 값을 문자열로 두는 이유
+    -------------------------
+    임계값은 초·분·cm·비율이 섞인다. 숫자 칸 하나로 두면 단위가 값에서 사라지고,
+    단위가 사라진 숫자는 **다음 사람이 반드시 잘못 읽는다.** 단위는 정의(코드)에 있고
+    여기 있는 것은 그 단위로 읽을 문자열이다. 파싱은 커널이 한다 — 한 곳에서만.
+
+    기저는 `BaseModel` 이다 — 실행 중인 dj-core 가 `group` FK 를 자동으로 준다(D-292 실측).
+    `BaseModelWithGroup` 은 DEPRECATED 이고 신규 상속이 게이트로 막혀 있다(D-295).
+    """
+
+    class ScopeLevel(models.TextChoices):
+        GLOBAL = "global", "전역"
+        TENANT = "tenant", "테넌트"
+        CAMERA = "camera", "카메라"
+
+    #: `kernels/k5_trust/thresholds.py` 의 정의 키. 정의에 없는 키는 커널이 거부한다 —
+    #: 표에 남은 고아 행이 설정 화면에 나타나는 것을 막는다.
+    key = models.CharField(max_length=64, db_index=True)
+    scope_level = models.CharField(
+        max_length=8, choices=ScopeLevel.choices, default=ScopeLevel.GLOBAL, db_index=True)
+    #: `scope_level='camera'` 일 때만 채워진다. 카메라가 지워지면 이 행도 함께 간다 —
+    #: 없는 지점의 기준선이 남아 있으면 그것이 다음 사고의 근거가 된다.
+    camera = models.ForeignKey(
+        StreamMonitor, on_delete=models.CASCADE, null=True, blank=True,
+        related_name="threshold_settings")
+    value = models.CharField(max_length=64)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="threshold_settings")
+
+    class Meta:
+        db_table = "k5_threshold_setting"
+        constraints = [
+            # 같은 자리에 두 값이 있으면 어느 쪽이 유효한지 아무도 모른다.
+            # 층마다 따로 거는 이유: NULL 은 서로 다르게 취급되므로 한 제약으로는
+            # 전역 행의 중복을 막지 못한다 (Postgres 실측 규칙).
+            models.UniqueConstraint(
+                fields=["key"], condition=models.Q(scope_level="global"),
+                name="uniq_threshold_global"),
+            models.UniqueConstraint(
+                fields=["key", "group"], condition=models.Q(scope_level="tenant"),
+                name="uniq_threshold_tenant"),
+            models.UniqueConstraint(
+                fields=["key", "camera"], condition=models.Q(scope_level="camera"),
+                name="uniq_threshold_camera"),
+        ]
+        indexes = [models.Index(fields=["key", "scope_level"])]
+
+    def __str__(self):
+        return f"{self.key}@{self.scope_level}={self.value}"
+
+
+class ThresholdChange(BaseModel):
+    """**변경 이력** (D-325 표 ① 구조의 다섯째 칸).
+
+    왜 별도 표인가 — `updated_at` 한 칸으로는 "언제 바뀌었나" 만 답한다.
+    임계값 사고에서 실제로 필요한 질문은 **"무엇에서 무엇으로, 누가, 왜"** 다.
+    그 넷이 없으면 사후에 되돌릴 값을 아무도 모른다.
+
+    ★ 설정 행이 지워져도 이력은 남는다 — 지워진 설정이야말로 사고 조사에서 찾는 것이다
+      (D-290: 없는 것과 지워진 것은 다르다). 그래서 카메라 참조는 `SET_NULL` 이고,
+      어느 카메라였는지는 `camera_label` 에 문자열로 박아 둔다.
+    """
+
+    key = models.CharField(max_length=64, db_index=True)
+    scope_level = models.CharField(max_length=8, db_index=True)
+    camera = models.ForeignKey(
+        StreamMonitor, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="threshold_changes")
+    #: 카메라가 지워진 뒤에도 "어느 지점이었나" 가 남는다. FK 하나로는 그것이 사라진다.
+    camera_label = models.CharField(max_length=255, blank=True, default="")
+    #: null = 그전에는 정의 기본값이었다 (덮어쓴 적이 없다).
+    old_value = models.CharField(max_length=64, null=True, blank=True)
+    #: null = 덮어쓰기를 지웠다 (정의 기본값으로 돌아갔다).
+    new_value = models.CharField(max_length=64, null=True, blank=True)
+    #: ★ 비울 수 없다. 사유 없는 임계값 변경은 다음 사람에게 사고로만 보인다.
+    reason = models.CharField(max_length=255)
+    changed_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="threshold_changes")
+
+    class Meta:
+        db_table = "k5_threshold_change"
+        ordering = ["-changed_at", "-id"]
+
+    def __str__(self):
+        return f"{self.key}: {self.old_value}→{self.new_value}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# K5 표 ② 자격증명 저장처 — **값이 아니라 「있는가」의 사실** (D-325 · D-328)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class CredentialRecord(BaseModel):
+    """외부 자격증명 하나에 대해 **우리가 아는 사실**. 값은 여기 없다.
+
+    ★ 값을 담는 칸이 없다 — 실수로도 담을 수 없다 (D-204 · D-319)
+    ---------------------------------------------------------------
+    "마스킹해서 저장" 은 저장이다. 칸이 있으면 언젠가 채워지고, 채워진 값은 덤프·백업·
+    화면·로그로 흘러나간다. 그래서 **칸 자체를 만들지 않는다.** 값은 환경변수에만 있다.
+
+    ★ 상태 5값 — `present` 와 `typed` 사이의 간격이 하루였다 (D-328)
+    ----------------------------------------------------------------
+        absent   → 이 환경에 없다
+        present  → 파일에 있다                    ← 여기까지만 알면 juso 사건이 반복된다
+        typed    → **무슨 API 인지 안다**          ← 놓쳤던 칸
+        verified → 호출해서 확인했다
+        rotated  → 재발급됐다 (옛 값은 더 이상 유효하지 않다)
+
+    2026-09-06 실측: 대표께서 juso 승인키 2건을 발급하셨고, 우리는 「키가 있는가」만
+    물었다. 「어떤 키인가」를 묻지 않아서 **팝업 API(브라우저 UI 위젯)** 인 것을 하루 뒤에
+    알았다. 그 하루가 `present` 와 `typed` 사이다.
+
+    ★ 소유 테넌트는 기저의 `group` FK 다 — null 이면 **우리 계정 키**(모든 테넌트 공용).
+      정수 칸을 따로 두지 않는 이유는 격리 판정이 `group` 하나만 보게 하기 위해서다(D-212).
+
+    ★ 이 표가 서면 `blockers.yaml` 의 `verified_at`/`verified_by`(D-323)가
+      **손으로 적는 칸이 아니라 조회 결과**가 된다.
+    """
+
+    class Status(models.TextChoices):
+        ABSENT = "absent", "이 환경에 없다"
+        PRESENT = "present", "파일에 있다"
+        TYPED = "typed", "무슨 API 인지 안다"
+        VERIFIED = "verified", "호출해서 확인했다"
+        ROTATED = "rotated", "재발급됨"
+
+    #: `kernels/k5_trust/credentials.py` 의 선언 이름. 선언에 없는 이름은 커널이 거부한다.
+    name = models.CharField(max_length=64, unique=True)
+    status = models.CharField(
+        max_length=16, choices=Status.choices, default=Status.ABSENT, db_index=True)
+    #: ★ 발급처가 부르는 그 이름 그대로 (D-328). "도로명주소 팝업 API".
+    #:   우리 말로 바꿔 적으면 그 순간 신청 화면과 대조할 수 없게 된다.
+    api_type = models.CharField(max_length=128, blank=True, default="")
+    #: ★ 이 키로 **할 수 있는 일**. 비어 있으면 기능 코드가 이 키를 읽을 수 없다
+    #:   (scripts/verify_credential_store.py 가 exit 1).
+    capability = models.TextField(blank=True, default="")
+    #: 이 환경에서 마지막으로 확인한 시각. **진술이 아니라 확인 행위가 남긴다**(D-323).
+    verified_at = models.DateTimeField(null=True, blank=True)
+    #: 무엇으로 확인했는가 — 파일·호출·화면. 비면 위 시각은 근거가 없다.
+    verified_by = models.CharField(max_length=255, blank=True, default="")
+    note = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = "k5_credential_record"
+        ordering = ["name"]
+        indexes = [models.Index(fields=["status"])]
+
+    def __str__(self):
+        return f"{self.name}[{self.status}]"

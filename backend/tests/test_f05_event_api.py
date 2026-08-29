@@ -66,6 +66,12 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/reports/templates"),
     ("GET", "/api/dsm/reports/{int:template_id}.pdf"),
     ("GET", "/api/dsm/settings/{domain}"),
+    # ★ 2026-09-06 추가 (D-325 표 ① · F-02 「지점별 기준선 설정」 · F-12 「임계값」).
+    #   진입면이 **하나 늘었다** — 그리고 그것이 이 시험의 값이다: 사람이 아니라 도구가
+    #   그 사실을 여기서 멈춰 세웠다. 늘리는 판단은 손으로 이 줄을 더하는 일이고,
+    #   그 손이 곧 "진입면을 늘린다"는 선언이다.
+    #   문지기: @tenant_scoped + CustomJWTAuth + guard_setting(F-12 감사 전건).
+    ("POST", "/api/dsm/settings/thresholds"),
 })
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**
@@ -264,21 +270,35 @@ class EntryShapeIsStableTest(SimpleTestCase):
             f"들어가고 있다는 뜻입니다.")
 
 
-class ApiKeyIsDeclaredMissingTest(SimpleTestCase):
-    """★ 못 재는 것을 **없다고 말하는 상태**가 유지되는가 (FR-05-3)."""
+class ApiKeyStoreExistsTest(SimpleTestCase):
+    """★ FR-05-3 — **저장처가 생겼다** (2026-09-06 · D-325 표 ② · D-328).
 
-    def test_api_key_issuance_is_declared_not_silently_missing(self) -> None:
-        """저장처가 없다는 사실이 **사유와 함께** 선언돼 있어야 한다 (D-264 · D-290).
+    이 시험의 앞선 판은 정반대를 쟀다: *"저장처가 없다는 사실이 사유와 함께 선언돼
+    있어야 한다."* 그 시험은 이렇게 끝맺고 있었다 — **"저장처가 생겼다면 F-05 대장의
+    not_measured 도 함께 고치십시오."** 그날이 왔으므로 함께 고친다.
 
-        조용히 빈 응답을 주면 화면은 "발급된 키가 없다" 로 읽는다 — 그것은
-        "발급할 자리가 없다" 와 전혀 다른 사실이다.
-        """
+    ★ 이름을 바꾸는 것이 요점이다. `...IsDeclaredMissing` 인 채로 내용만 뒤집으면
+      다음 사람이 이름을 믿고 코드를 안 읽는다.
+    """
+
+    def test_the_api_key_domain_is_no_longer_blocked(self) -> None:
         from apps.dsm.services import SETTING_DOMAINS
 
         self.assertIn("api_keys", SETTING_DOMAINS,
                       "API Key 영역이 설정 대장에서 사라졌습니다 — 빠진 줄은 보이지 않습니다.")
-        reason = (SETTING_DOMAINS["api_keys"] or "").strip()
-        self.assertTrue(reason, "API Key 영역이 '다룰 수 있다' 로 바뀌었습니다. "
-                                "저장처가 생겼다면 F-05 대장의 not_measured 도 함께 고치십시오.")
-        self.assertIn("FR-05-3", reason,
-                      "어느 계약 조항이 걸린 일인지가 사유에 없습니다.")
+        self.assertEqual("", (SETTING_DOMAINS["api_keys"] or "").strip(),
+                         "표 ②가 섰는데 사유가 남아 있습니다 — 사유는 막힌 것의 표시입니다.")
+
+    def test_the_store_holds_facts_not_values(self) -> None:
+        """★ D-204 · D-319 — 저장처가 생겼다는 것이 **값을 담는다**는 뜻은 아니다."""
+        from kernels.k5_trust.credentials import CredentialDef
+
+        self.assertNotIn("value", CredentialDef.__dataclass_fields__,
+                         "표 ②가 값을 담기 시작하면 그것은 저장처가 아니라 유출면입니다.")
+
+    def test_every_key_says_what_kind_of_api_it_is(self) -> None:
+        """★ D-328 — 「있는가」가 아니라 **「무엇인가」**. 그 칸이 없어서 하루를 잃었다."""
+        from kernels.k5_trust.credentials import CREDENTIALS
+
+        self.assertTrue(CREDENTIALS)
+        self.assertTrue(all(s.api_type.strip() for s in CREDENTIALS.values()))

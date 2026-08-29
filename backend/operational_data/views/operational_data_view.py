@@ -50,7 +50,7 @@ class OperationalDataAPI:
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_OPERATIONAL_DATA_FAILED))
 
-    @route.get('/download-operational-data')
+    @route.get('/download-operational-data', auth=CustomJWTAuth())
     # @path_permission("read", path_override="/operational-data")
     def download_operational_data(self, request, order_item_ids: List[int] = Query(...)):
         try:
@@ -96,7 +96,7 @@ class OperationalDataAPI:
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_OPERATIONAL_DATA_FAILED))
 
-    @route.post('/{order_item_id}/upload-operational-log-drone')
+    @route.post('/{order_item_id}/upload-operational-log-drone', auth=CustomJWTAuth())
     # @path_permission("create", path_override="/operational-data")
     def upload_operational_log_drone(self, request, order_item_id: int, files: List[UploadedFile] = File(None)):
         try:
@@ -122,7 +122,7 @@ class OperationalDataAPI:
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_LOG_DRONE_FAILED))
 
-    @route.post('/{order_item_id}/upload-operational-log-robot')
+    @route.post('/{order_item_id}/upload-operational-log-robot', auth=CustomJWTAuth())
     # @path_permission("create", path_override="/operational-data")
     def upload_operational_log_robot(self, request, order_item_id: int, files: List[UploadedFile] = File(None)):
         try:
@@ -148,7 +148,7 @@ class OperationalDataAPI:
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_LOG_ROBOT_FAILED))
 
-    @route.post('/{order_item_id}/upload-operational-video-drone')
+    @route.post('/{order_item_id}/upload-operational-video-drone', auth=CustomJWTAuth())
     # @path_permission("create", path_override="/operational-data")
     def upload_operational_video_drone(self, request, order_item_id: int, files: List[UploadedFile] = File(None)):
         try:
@@ -174,7 +174,7 @@ class OperationalDataAPI:
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_VIDEO_DRONE_FAILED))
 
-    @route.post('/{order_item_id}/upload-operational-video-robot')
+    @route.post('/{order_item_id}/upload-operational-video-robot', auth=CustomJWTAuth())
     # @path_permission("create", path_override="/operational-data")
     def upload_operational_video_robot(self, request, order_item_id: int, files: List[UploadedFile] = File(None)):
         try:
@@ -200,7 +200,7 @@ class OperationalDataAPI:
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPLOAD_OPERATIONAL_VIDEO_ROBOT_FAILED))
 
-    @route.get('/{order_item_id}/download-operational-log-drone')
+    @route.get('/{order_item_id}/download-operational-log-drone', auth=CustomJWTAuth())
     # @path_permission("read", path_override="/operational-data")
     def download_operational_log_drone(self, request, order_item_id: int):
         try:
@@ -226,7 +226,7 @@ class OperationalDataAPI:
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_EXPORT_FAILED))
 
-    @route.get('/{order_item_id}/download-operational-log-robot')
+    @route.get('/{order_item_id}/download-operational-log-robot', auth=CustomJWTAuth())
     # @path_permission("read", path_override="/operational-data")
     def download_operational_log_robot(self, request, order_item_id: int):
         try:

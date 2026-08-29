@@ -16,6 +16,12 @@
 `logger.AuditLogs` 가 이미 있다(dj-core). 새 감사 표를 만들면 감사 이력이 두 곳에
 쌓이고, 두 곳에 쌓인 이력은 어느 쪽이 전부인지 아무도 모른다.
 
+★ 2026-09-06 — **쓰는 자리는 `common/audit_writer.py` 하나다** (D-325 표 ②).
+  K5 자격증명 표도 같은 표에 접근 감사를 남긴다. 커널(L3)은 App(L4)을 import 할 수
+  없으므로, 그대로 두면 같은 모양으로 쓰는 코드가 두 벌이 된다. 판정식 복사본 하나가
+  격리 사고의 원인이었고(D-212), **기록식도 같다.** 이 파일은 이제 F-12 의 앞면이다 —
+  `LOGGER_NAME` 만 다르고 쓰는 손은 하나다.
+
   ⚠ dj-core 는 §0.4 금지구역(D-207)이다 — **모델을 고치지 않는다.** 우리는 행을
     쓸 뿐이고, FK 분류 열(action·service·command …)은 **비워 둔다.** 그 분류값이
     무엇을 뜻하는지 우리가 모르기 때문이다. 모르는 칸을 그럴듯하게 채우면 그 값이
@@ -33,11 +39,10 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from typing import Any
 
-from django.apps import apps
-
+from common import audit_writer
+from common.audit_writer import AuditEntry
 from common.tenant_scope import TenantScope
 
 log = logging.getLogger("guardianx.audit.settings")
@@ -46,25 +51,13 @@ log = logging.getLogger("guardianx.audit.settings")
 #: 이름이 하나여야 "전건" 이라는 말이 성립한다 (D-285 ②).
 LOGGER_NAME = "guardianx.f12.settings"
 
-#: 감사에 남는 판정 두 가지. 값이 둘뿐인 것이 요점이다 —
-#: "시도했다" 만 남기면 막혔는지 통과했는지가 안 남는다.
-ALLOWED = "allowed"
-DENIED = "denied"
+#: 감사에 남는 판정 두 가지. `common/audit_writer` 가 정본이고 여기서 이름만 다시 낸다 —
+#: 값을 여기서 새로 적으면 두 벌이 되고, 두 벌은 반드시 어긋난다.
+ALLOWED = audit_writer.ALLOWED
+DENIED = audit_writer.DENIED
 
-
-@dataclass(frozen=True)
-class AuditEntry:
-    """남긴 감사 한 줄. 부르는 쪽이 응답에 실어 보낼 수 있게 값으로 돌려준다."""
-
-    audit_id: int
-    outcome: str
-    action: str
-    actor_id: int | None
-    reason: str
-
-
-def _model():
-    return apps.get_model("logger", "AuditLogs")
+#: 메시지 머리 표시. 집계는 `LOGGER_NAME` 이 하고, 이것은 사람이 눈으로 가르는 표시다.
+TAG = "[F-12]"
 
 
 def record(
@@ -84,30 +77,15 @@ def record(
     `outcome` 은 `ALLOWED` / `DENIED` 둘뿐이다. 자유 문자열을 받으면 다음 사람이
     "attempted" 같은 제3의 값을 넣고, 그러면 전건 집계가 갈린다.
     """
-    if outcome not in (ALLOWED, DENIED):
-        raise ValueError(
-            f"outcome={outcome!r} 은 감사 판정이 아니다. 허용: {ALLOWED} · {DENIED}. "
-            f"제3의 값을 만들면 '성공·실패 모두' 라는 AC-12 의 집계가 갈린다")
-
-    actor = scope.actor
-    row = _model()._base_manager.create(
-        logger_name=LOGGER_NAME,
-        level_name="INFO" if outcome == ALLOWED else "WARNING",
-        msg=f"[F-12] {action} — {outcome}: {reason}",
-        note=reason,
-        api_name=api_name or action,
-        api_method=api_method,
-        status_http=status_http,
-        user_id=getattr(actor, "pk", None),
-        username=getattr(actor, "username", "") or "",
-        # ★ 분류 FK 는 비운다 — 그 열거가 무엇을 뜻하는지 우리가 모른다 (D-280).
-        data_before=before,
-        data_after=after,
+    entry = audit_writer.write(
+        logger_name=LOGGER_NAME, tag=TAG, actor=scope.actor,
+        action=action, outcome=outcome, reason=reason,
+        before=before, after=after,
+        api_name=api_name, api_method=api_method, status_http=status_http,
     )
     log.info("[F-12] %s %s actor=%s reason=%s",
-             action, outcome, getattr(actor, "pk", None), reason)
-    return AuditEntry(audit_id=row.pk, outcome=outcome, action=action,
-                      actor_id=getattr(actor, "pk", None), reason=reason)
+             action, outcome, entry.actor_id, reason)
+    return entry
 
 
 def entries(*, action: str | None = None, limit: int = 100) -> tuple[AuditEntry, ...]:
@@ -117,14 +95,4 @@ def entries(*, action: str | None = None, limit: int = 100) -> tuple[AuditEntry,
       이 함수를 부르는 라우트가 한다. 여기서 좁히면 "전건" 이 조용히 부분집합이 된다.
       이 함수를 라우트에 직접 노출하지 않는 이유이기도 하다.
     """
-    qs = _model()._base_manager.filter(logger_name=LOGGER_NAME)
-    if action:
-        qs = qs.filter(api_name=action)
-    return tuple(
-        AuditEntry(audit_id=r.pk,
-                   outcome=ALLOWED if r.level_name == "INFO" else DENIED,
-                   action=r.api_name or "",
-                   actor_id=r.user_id,
-                   reason=r.note or "")
-        for r in qs.order_by("-id")[:limit]
-    )
+    return audit_writer.read(logger_name=LOGGER_NAME, action=action, limit=limit)

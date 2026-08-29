@@ -756,7 +756,7 @@ class FunctionController:
 
 @api_controller('/terminal-types', tags=['Terminal Types'])
 class TerminalTypeController:
-    @route.get('')
+    @route.get('', auth=CustomJWTAuth())
     # @path_permission("read")
     def list_terminal_types(self, request):
         page_size = int(request.GET.get('page_size', 25))
@@ -781,7 +781,7 @@ class TerminalTypeController:
             current_page=current_page
         )
 
-    @route.get('/{id}')
+    @route.get('/{id}', auth=CustomJWTAuth())
     # @path_permission("read")
     def get_terminal_type(self, id: int):
         terminal_type = terminal_type_service.get_terminal_type(id)
@@ -1112,7 +1112,7 @@ class FunctionController:
             current_page=current_page
         )
 
-    @route.get('/function-types')
+    @route.get('/function-types', auth=CustomJWTAuth())
     # @path_permission("read")
     def get_function_types(self, request, function_types: str = None):
         current_page = int(request.GET.get('current_page', 1))

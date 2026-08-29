@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 """잠금 대장 판정 — **막힌 것의 종류를 정확히 말하게 한다** (D-307).
 
-    unlock_type  : 'DEV' | 'CONTRACT' | 'ADMIN'
+    unlock_type  : 'DEV' | 'CONTRACT' | 'ADMIN' | 'OPS'
     unlock_owner : 누가 푸는가
 
 왜 유형이 필요한가
 ------------------
 지금까지 잠김은 전부 "막혔다" 한 단어였다. 셋은 성격이 전혀 다르다 —
 **DEV 는 일정 문제, CONTRACT 는 책임 문제, ADMIN 은 하루면 풀리는데 안 한 것**이다.
+그리고 **OPS 는 우리가 만들 수 없는 값**이다 — 현장을 아는 쪽이 채운다(D-338 ③).
+OPS 를 DEV 로 적으면 개발이 못 끝낸 일처럼 보이고, 실제로는 아무도 안 채운다.
 섞어 두면 하루짜리가 계약 리스크 뒤에 숨는다. 대표께 올라가는 표에서 그 셋이 갈려 있어야
 "오늘 무엇을 하면 몇 개가 풀리는가"를 즉시 읽는다.
 
@@ -36,8 +38,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LEDGER = ROOT / "docs" / "agent" / "evidence" / "DA-05" / "blockers.yaml"
 
-VALID_TYPES = ("DEV", "CONTRACT", "ADMIN")
+VALID_TYPES = ("DEV", "CONTRACT", "ADMIN", "OPS")
 REQUIRED = ("title", "unlock_type", "unlock_owner", "why", "unlock_step", "state_in_code")
+
+#: ★ D-323 — 술어는 「끝났는가」가 아니라 **「지금 막혀 있는가」**다.
+#:   그리고 **"완료했다"는 진술이 아니라 확인 행위가 잠금을 내린다** — 두 칸이 그 증거다.
+BLOCKED_NOW_VALUES = ("true", "false")
+VERIFICATION = ("blocked_now", "verified_at", "verified_by")
+
+#: ★ D-333 — 밖에 기대는 잠금(CONTRACT·ADMIN)은 **먼저 안을 뒤졌는지**를 적는다.
+#:   DEV 는 우리가 하는 일이므로 대상이 아니다 — 외부 의존을 만들지 않는 것이 요점이다.
+INTERNAL_FIRST = ("internal_alternative_considered", "why_not")
+INTERNAL_FIRST_TYPES = ("CONTRACT", "ADMIN")
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -100,6 +112,27 @@ def check(rows: list[dict]) -> list[str]:
             problems.append(
                 f"{rid}: state_in_code 가 가리킨 '{where}' 가 없다 — "
                 f"없는 자리를 적으면 그것도 문서다 (D-286)")
+        # ★ D-323 — 확인 행위가 잠금을 내린다. 세 칸이 비면 이 등재는 진술일 뿐이다.
+        for field in VERIFICATION:
+            if not (row.get(field) or "").strip():
+                problems.append(
+                    f"{rid}: `{field}` 가 비었다 — **'완료했다'는 진술이 아니라 확인 "
+                    f"행위가 잠금을 내린다**(D-323). 발급 완료 · 전달 완료 · 환경 존재는 "
+                    f"세 개의 다른 사실이고, 한 칸에 두면 이 대장이 하는 일이 없어진다")
+        bn = (row.get("blocked_now") or "").strip().lower()
+        if bn and bn not in BLOCKED_NOW_VALUES:
+            problems.append(
+                f"{rid}: blocked_now='{bn}' 은 true/false 가 아니다 — "
+                f"오타는 새 값이 아니다")
+        # ★ D-333 — 밖에 기대는 잠금은 **먼저 안을 뒤졌는지**를 적는다.
+        if t in INTERNAL_FIRST_TYPES:
+            for field in INTERNAL_FIRST:
+                if not (row.get(field) or "").strip():
+                    problems.append(
+                        f"{rid}: {t} 인데 `{field}` 가 비었다 — 밖에 기대기 전에 "
+                        f"「우리가 이미 아는 것으로 되는가」를 먼저 적는다(D-333). "
+                        f"검토한 게 없으면 \"없음\" 이라고 적어라. **묻지 않고 가는 것만 "
+                        f"금지한다** — 만들지 않은 외부 의존은 고장 나지 않는다")
         # ★ D-320 — CONTRACT 는 **시각을 갖는다.** 잠김이 조용히 늙지 않게 한다.
         if t == "CONTRACT":
             for field in ("sent_at", "due_by"):
@@ -148,7 +181,11 @@ def summary(rows: list[dict]) -> Counter:
 
 def self_test() -> int:
     good = [{"id": "A", "title": "t", "unlock_type": "DEV", "unlock_owner": "Code",
-             "why": "w", "unlock_step": "s", "state_in_code": "scripts"}]
+             "why": "w", "unlock_step": "s", "state_in_code": "scripts",
+             "blocked_now": "true", "verified_at": "2026-09-06",
+             "verified_by": "파일에서 확인"}]
+    ext = {**good[0], "unlock_type": "ADMIN", "unlock_owner": "대표",
+           "internal_alternative_considered": "카메라 설치 주소", "why_not": "내부가 이겼다"}
     cases = (
         ("정상 항목은 안 잡는다", good, False),
         # ★ **출생 표본** (D-310) — 이 도구를 만들게 한 바로 그 사례.
@@ -167,7 +204,21 @@ def self_test() -> int:
          [{**good[0], "unlock_type": "CONTRACT", "unlock_owner": "상대방"}], True),
         ("CONTRACT + 발송·기한이 있으면 안 잡는다",
          [{**good[0], "unlock_type": "CONTRACT", "unlock_owner": "상대방",
-           "sent_at": "2026-09-04", "due_by": "2026-09-19"}], False),
+           "sent_at": "2026-09-04", "due_by": "2026-09-19",
+           "internal_alternative_considered": "없음", "why_not": "상대방 사실이다"}], False),
+        # ★ D-323 출생 표본 — 「ADMIN 0건」. 발급은 됐고 전달은 안 됐는데
+        #   그 셋을 한 칸에 두어서 0 이 되는 쪽으로 적혔다. 확인 칸이 없어서 가능했다.
+        ("★ 출생표본 verified_by 가 비면 잡는다 — 진술은 확인이 아니다",
+         [{**good[0], "verified_by": ""}], True),
+        ("blocked_now 가 비면 잡는다", [{**good[0], "blocked_now": ""}], True),
+        ("blocked_now 오타를 잡는다", [{**good[0], "blocked_now": "maybe"}], True),
+        ("blocked_now: false 는 그 자체로 위반이 아니다",
+         [{**good[0], "blocked_now": "false"}], False),
+        # ★ D-333 — 밖에 기대는 잠금만 두 칸을 요구한다
+        ("★ ADMIN 인데 내부 대안 칸이 비면 잡는다",
+         [{**good[0], "unlock_type": "ADMIN", "unlock_owner": "대표"}], True),
+        ("ADMIN + 두 칸이 있으면 안 잡는다", [ext], False),
+        ("DEV 는 내부 대안 칸을 요구하지 않는다", [good[0]], False),
     )
     bad = 0
     for label, rows, should_fail in cases:
@@ -184,7 +235,7 @@ def self_test() -> int:
     if bad:
         print(f"[BLOCKER] 자기시험 {bad}건 실패 — 이 판정기는 눈이 멀었다")
         return 1
-    print(f"[BLOCKER] 자기시험 {len(cases) + 1}건 통과 (양성 5 · 음성 2)")
+    print(f"[BLOCKER] 자기시험 {len(cases) + 1}건 통과 (양성 9 · 음성 5 · 출생 표본 포함)")
     return 0
 
 
@@ -215,6 +266,13 @@ def main() -> int:
 
     for line in elapsed_lines(rows):
         print("[BLOCKER]" + line)
+    # ★ D-323 — 잠김 총수와 **지금 막고 있는 수**는 다른 수다. 한 칸에 두지 않는다.
+    now = [r for r in rows if (r.get("blocked_now") or "").strip().lower() == "true"]
+    parked = [r for r in rows if (r.get("blocked_now") or "").strip().lower() == "false"]
+    print(f"[BLOCKER] ★ **지금 막고 있는 것 {len(now)}건** · 남겨 두었으나 "
+          f"막고 있지 않은 것 {len(parked)}건 (총 {len(rows)}건)")
+    for r in parked:
+        print(f"[BLOCKER]   (미룸) {r['id']} — 없앤 것과 미룬 것은 다르다. 지우지 않는다")
     print("[BLOCKER] 유형별: " + " · ".join(
         f"{t} {counts.get(t, 0)}" for t in VALID_TYPES)
         + (f" · 미분류 {counts.get('?', 0)}" if counts.get("?") else ""))

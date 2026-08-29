@@ -13,6 +13,7 @@ from common.utils import SchemaUtils
 from django.db import connection, reset_queries
 from django.conf import settings
 from core.role.permission import path_permission
+from core.api.v1.auth import CustomJWTAuth
 from core.common.base_response import BaseResponse
 
 from drone_communication.services.drone_service import DroneComunicationService
@@ -22,25 +23,25 @@ from common.constant import MESSAGE_ENUM
 
 logger = logging.getLogger(__name__)
 
-@api_controller('/drone-communication-management', 
+@api_controller('/drone-communication-management',
                 tags=['Drone Communication Management'])
 class DroneCommunicationAPI:
-    @route.get('/online-drones')
+    @route.get('/online-drones', auth=CustomJWTAuth())
     # @path_permission("read")
     def get_online_drones(
-        self, 
+        self,
         page: int = Query(1, description="Page number, starting from 1"),
         page_size: int = Query(10, description="Number of items per page"),
         search_field: Optional[str] = Query(None, description="Search by DRONE_UNIQUE_ID")
     ):
         """
         Get a paginated list of online drones from the SignalR hub.
-        
+
         Args:
             page (int): Page number, starting from 1 (default: 1)
             page_size (int): Number of items per page (default: 10)
             search_field (str, optional): Search term for filtering by DRONE_UNIQUE_ID
-        
+
         Returns:
             BaseResponse: A list of online drones with pagination metadata.
         """
@@ -51,7 +52,7 @@ class DroneCommunicationAPI:
                 page_size=page_size,
                 search_field=search_field
             )
-            
+
             return BaseResponse(
                 status_code=200,
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_DEVICE_SUCCESS),
@@ -64,7 +65,7 @@ class DroneCommunicationAPI:
                 message=f"Error getting online drones: {str(e)}",
                 data=[]
             )
-            
+
 
     @route.post('/change-status')
     def change_status(self, data: ChangeStatusInSchema):

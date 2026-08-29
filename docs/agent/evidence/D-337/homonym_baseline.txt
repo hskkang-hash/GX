@@ -1,0 +1,31 @@
+# D-337 동음이의 기준선 — **오늘 수식어 없이 쓰이는 건수** (2026-09-07 실측)
+#
+# ★ `python scripts/verify_homonyms.py --freeze` 가 만든다. 손으로 고치지 말 것.
+#
+# 래칫이다(D-311). **파일별 건수**로 잠근다 — 줄 번호로 잠그면 위아래가 밀릴 때마다
+# 새 위반이 되어 게이트가 거짓말을 한다. 건수가 늘거나 새 파일이 나타나면 exit 1.
+# 건수가 줄어드는 것은 환영이고, --freeze 로 내린다.
+#
+# 형식:  <이름키> <탭> <파일> <탭> <건수>
+
+api_key	backend/apps/dsm/services.py	3
+api_key	backend/common/cache_hint_registry.py	1
+api_key	backend/common/universal_optimization.py	4
+api_key	backend/kernels/k3_dashboard/presets.py	1
+api_key	backend/partner/middleware/partner_auth_middleware.py	18
+api_key	backend/partner/models.py	1
+api_key	backend/partner/schemas/schemas_djantic_in.py	2
+api_key	backend/partner/schemas/schemas_djantic_out.py	1
+api_key	backend/partner/services/partner_service.py	25
+api_key	backend/partner/utils/partner_utils.py	9
+api_key	backend/partner/views/partner_controller.py	8
+api_key	backend/print_format/services.py	1
+api_key	backend/tests/test_dsm_app.py	4
+api_key	backend/tests/test_f05_event_api.py	3
+api_key	backend/tests/test_k5_credential_store.py	4
+api_key	backend/third_api/schema.py	3
+api_key	backend/third_api/services/anyang_services.py	1
+api_key	backend/third_api/test_api.py	11
+api_key	backend/third_api/views/api_key_controller.py	1
+api_key	scripts/verify_commented_guards.py	1
+api_key	scripts/verify_homonyms.py	6
