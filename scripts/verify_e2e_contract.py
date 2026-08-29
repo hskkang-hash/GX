@@ -94,6 +94,55 @@ def required_methods_in_contract() -> set[str]:
     return set(re.findall(r'"(test_[a-z0-9_]+)"', block.group(1)))
 
 
+def kernel_packages() -> dict[str, str]:
+    """`KERNEL_PACKAGES` 의 코드 → 모듈 경로. import 하지 않고 리터럴로 읽는다."""
+    tree = ast.parse(CONTRACT.read_text(encoding="utf-8"), filename=str(CONTRACT))
+    for node in tree.body:
+        targets = getattr(node, "targets", []) or (
+            [node.target] if hasattr(node, "target") else [])
+        if not any(isinstance(t, ast.Name) and t.id == "KERNEL_PACKAGES" for t in targets):
+            continue
+        if isinstance(node.value, ast.Dict):
+            return {k.value: v.value
+                    for k, v in zip(node.value.keys, node.value.values)
+                    if isinstance(k, ast.Constant) and isinstance(v, ast.Constant)}
+    return {}
+
+
+def not_ready_declarations() -> list[str]:
+    """★ **"안 됐다" 는 말은 사유를 요구한다** (D-264 · 2026-08-31).
+
+    커널/어댑터 모듈이 `KERNEL_READY = False` 를 선언하면 그 시나리오는 잠긴 채로
+    남는다. 그 선언이 값싸지 않게 하는 것이 이 검사다: `NOT_READY_REASON` 이 비어
+    있으면 **exit 1**.
+
+    사유 없는 False 는 "아직" 인지 "영영" 인지 구별되지 않고, 구별되지 않는 것은
+    잊힌다 — `LOCKED_CAPABILITIES` 가 사유를 필수로 둔 것과 같은 이유다.
+
+    Django 를 띄우지 않는다 — 파일을 AST 로 읽는다. CI 게이트는 어디서든 돌아야 한다.
+    """
+    problems: list[str] = []
+    for code, module in kernel_packages().items():
+        path = ROOT / "backend" / (module.replace(".", "/") + "/__init__.py")
+        if not path.is_file():
+            path = ROOT / "backend" / (module.replace(".", "/") + ".py")
+        if not path.is_file():
+            continue                      # 아직 없는 커널은 이 검사의 대상이 아니다
+        ready = literal_from(path, "KERNEL_READY")
+        if ready is not False:
+            continue
+        reason = literal_from(path, "NOT_READY_REASON")
+        if not (isinstance(reason, str) and reason.strip()):
+            problems.append(
+                f"{code}({module}): KERNEL_READY=False 인데 NOT_READY_REASON 이 비었다 — "
+                f"사유 없는 미준비는 '아직' 인지 '영영' 인지 구별되지 않는다 (D-264)")
+        elif len(reason.strip()) < 40:
+            problems.append(
+                f"{code}({module}): NOT_READY_REASON 이 {len(reason.strip())}자다 — "
+                f"한 줄 변명이 아니라 **무엇이 없어서 못 하는지**를 적는다")
+    return problems
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--list", action="store_true")
@@ -148,9 +197,14 @@ def main() -> int:
                 if token in src:
                     problems.append(f"{code}: 실시간 대기 {token} — 규약 ⑤ 위반")
 
+    # ── "안 됐다" 에는 사유가 붙어 있는가 ───────────────────────────────
+    problems.extend(not_ready_declarations())
+
     if args.list:
         for code, module, exists in rows:
             print(f"  {code}  {module:34} {'있음' if exists else '아직 없음'}")
+        for code, module in sorted(kernel_packages().items()):
+            print(f"  {code:5} → {module}")
 
     print(f"[E2E] 시나리오 {len(codes)}건 등재 · 시험 모듈 "
           f"{sum(1 for _, _, e in rows if e)}건 실재 · 규약 메서드 {len(REQUIRED_METHODS)}종")

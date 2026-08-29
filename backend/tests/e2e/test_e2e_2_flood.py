@@ -3,24 +3,39 @@
 
 계약 [별첨1] 8장 시나리오 2종. K3 가 붙으면서 등재부가 이 시나리오를 의무로 바꿨다.
 
-지금 도는 단계 — **둘뿐이다. 그리고 그 사실을 표에 적는다**
------------------------------------------------------------
+지금 도는 단계 — **넷 전부** (2026-09-01 · D-299 로 마지막 하나가 열렸다)
+---------------------------------------------------------------------------
     1. 수위선 초과 신호 투입                      ← 돈다
-    2. F-02 이벤트 생성 (30초)                    ← **잠김** `FLOOD_EVENT_TYPE`
-    3. 같은 구역 인명(F-03) 결합 → 등급 상향       ← **잠김** `ZONE`
+    2. F-02 이벤트 생성 (30초)                    ← 열렸다 (D-294, 2026-08-31)
+    3. 같은 구역 인명(F-03) 결합 → 등급 상향       ← **열렸다** (D-299, 2026-09-01)
     4. 등급별 수신자 그룹이 실제로 달라지는가       ← 돈다  ★ 이 시나리오의 상품 AC
 
-★ 2·3 이 잠긴 이유는 커널이 없어서가 아니다 — **계약과 모델이 아직 그것을 표현하지 못한다.**
+★ 2단계가 어떻게 열렸나 — **잠금 사유가 사라졌기 때문이다**
 
-  · 2단계: `DetectionEvent.EventType` 에 침수·수위가 **없다.** 실측 여섯뿐이다
-    (person · vehicle · fire · smoke · intrusion · sos —
-    `docs/contracts/detection-event.md` §47). 열거를 늘리는 것은 2026-08-13 에 고정된
-    계약 문서를 고치는 일이고 W2-3 색 규칙이 따라온다(DA-01 OPEN-05).
-    **추정으로 늘리지 않는다**(D-280) — P-E2E-1 로 적재했다.
-  · 3단계: '같은 구역'을 판정할 구역 개념이 모델에 없다 — P-K2-2 가 열려 있다.
+  잠금 사유는 "`DetectionEvent.EventType` 에 침수·수위가 없다" 였다. D-294 가
+  *"F-02 는 계약 M 기능이므로 타입 부재는 설계 선택이 아니라 **누락**"* 이라고 판정했고,
+  계약 문서 v1.1 · 마이그레이션 0018 로 `flood` 가 들어왔다.
+  그래서 이 단계는 이제 **추정 없이** 돈다 — 열거가 실재하므로 D-280 위반이 아니다.
 
-  잠긴 단계는 `LOCKED_CAPABILITIES` 에 **사유와 함께** 등재돼 있고, 단계표에
-  **미측정으로 나온다.** 빼지 않는 이유는 하나다 — 빠진 줄은 보이지 않는다.
+  ⚠ 여전히 하지 않는 것: 수위 임계값을 코드에 박지 않는다. 지점별 기준선은 F-12 설정의
+    일이고(FR-02-2), 여기서 정하면 그 값이 곧 AC 판정의 근거가 된다.
+    이 시험은 **초과 신호가 이미 났다는 전제**에서 시작한다.
+
+★ 3단계가 어떻게 열렸나 — **모델이 그것을 표현하게 됐다** (D-299)
+
+  잠금 사유는 "'같은 구역'을 판정할 구역 개념이 없다" 였다(`NotificationRule.zone` 은
+  체계가 아니라 라벨이다). P-K2-2 가 `Zone` 모델로 판정됐고, 마이그레이션 0019 로
+  실재한다. 그래서 이 단계는 이제 **추정 없이** 돈다.
+
+  ⚠ 열린 것은 **카메라 묶음 판정 하나**다. 계약 F-03 의 폴리곤은 여전히 미구현이고,
+    `stream_monitors.services.zones.ZONE_POLYGON_READY = False` 가 그것을 잠근다.
+    이 시험은 폴리곤을 재지 않는다 — 재는 척도 하지 않는다. 폴리곤을 여는 사람이
+    그 상수를 올리는 순간 `test_zone_judgment.py` 의 F-03 AC 시험이 의무가 된다.
+
+  ⚠ 여기서도 하지 않는 것: 결합이 **저장된 등급을 덮어쓰지 않는다.** 관측이 실제로 난
+    등급은 오탐률·이력의 사실이고, 결합 판정이 그것을 덮으면 나중에 "무엇이 실제로
+    났는가"를 아무도 못 읽는다(D-293 과 같은 계열). 결합의 효과는 **누가 받는가**로
+    나타나고, 이 시험은 그것을 잰다.
 
 그러면 왜 지금 쓰는가
 ---------------------
@@ -78,6 +93,16 @@ class _FloodScenario(TestCase):
 
         cls.stream_a = cls._stream("e2e2-gauge-A", cls.group_a)
         cls.stream_b = cls._stream("e2e2-gauge-B", cls.group_b)
+        # ★ 3단계용 — **수위 탐지 카메라와 인명 탐지 카메라는 다른 카메라다.**
+        #   같은 카메라로 두면 "같은 구역인가"를 묻지 않고도 통과한다(자기 자신은
+        #   언제나 자기 구역에 있다). 그러면 이 단계는 아무것도 재지 않는다.
+        cls.stream_people = cls._stream("e2e2-people-A", cls.group_a)
+        #: 두 카메라를 한 구역으로 묶는다. 이것이 D-299 의 camera_group 이다.
+        cls.zone = cls._zone("e2e2-안양천-보행교구간", cls.group_a,
+                             [cls.stream_a, cls.stream_people])
+        #: 같은 테넌트의 **다른 구역** — 결합이 아무 두 카메라나 묶지 않는지 재는 음성 대조용.
+        cls.stream_far = cls._stream("e2e2-far-A", cls.group_a)
+        cls.zone_far = cls._zone("e2e2-상류구간", cls.group_a, [cls.stream_far])
 
         cls._rule(cls.group_a, cls.role_watch, "warning")
         cls._rule(cls.group_a, cls.role_chief, "critical")
@@ -126,6 +151,13 @@ class _FloodScenario(TestCase):
             name=name, code=name, ip_source="rtsp://e2e.invalid/gauge"), group)
 
     @classmethod
+    def _zone(cls, name, group, streams):
+        Zone = apps.get_model("stream_monitors", "Zone")
+        zone = cls._own(Zone.objects.create(name=name, kind="camera_group"), group)
+        zone.cameras.set(streams)
+        return zone
+
+    @classmethod
     def _rule(cls, group, role, severity):
         Rule = apps.get_model("stream_monitors", "NotificationRule")
         return cls._own(Rule.objects.create(
@@ -136,9 +168,14 @@ class _FloodScenario(TestCase):
     def _water_level_reading(*, level_cm: float, threshold_cm: float):
         """수위 계측 한 건. **아직 이벤트가 아니다.**
 
-        이 신호를 `DetectionEvent` 로 만들지 못하는 이유가 2단계의 잠금이다 —
-        `EventType` 에 침수·수위가 없다. 여기서 임의로 `intrusion` 같은 것에 실어
-        보내면 그 순간 오탐률 분모가 오염되고, 아무도 그 사실을 모른다.
+        신호와 이벤트는 다른 것이다. 이 계측이 `DetectionEvent` 가 되는 순간이
+        2단계이고, 그 단계는 D-294 로 열렸다 — `EventType.FLOOD` 가 실재하므로
+        이제 **기존 타입에 실어 보내지 않아도 된다.** 실어 보냈다면 그 타입의
+        오탐률 분모가 오염되고 아무도 그 사실을 몰랐을 것이다.
+
+        ⚠ 임계값(`threshold_cm`)은 **픽스처가 주는 값**이지 코드가 정한 값이 아니다.
+          지점별 기준선은 F-12 설정의 일이다(FR-02-2). 여기서 정하면 그 값이 곧
+          AC 판정의 근거가 된다.
         """
         return {"level_cm": level_cm, "threshold_cm": threshold_cm,
                 "exceeded": level_cm > threshold_cm}
@@ -174,7 +211,9 @@ class E2E2FloodTest(_FloodScenario):
 
     def test_flood_scenario_runs_end_to_end(self) -> None:
         """수위 초과 신호 → (잠긴 2·3) → **등급별 수신자가 실제로 다른가**."""
+        from kernels.k1_event import get_event
         from kernels.k2_notify import resolve_recipients, send
+        from stream_monitors.services import zones
 
         # ── 1. 수위선 초과 신호 ───────────────────────────────────────
         reading = self._water_level_reading(level_cm=182.0, threshold_cm=150.0)
@@ -182,8 +221,71 @@ class E2E2FloodTest(_FloodScenario):
         self.ledger.record(self._step(1), True,
                            f"{reading['level_cm']}cm > {reading['threshold_cm']}cm")
 
-        # ── 2·3 은 잠겨 있다 — 여기서 아무것도 하지 않는다 ────────────
-        #    `active_steps` 에 없으므로 단계표에 **미측정**으로 나온다.
+        # ── 2. F-02 이벤트 생성 (30초) ★ D-294 로 열린 단계 ───────────
+        #    AC 는 "30초"다. **논리 시계로 잰다** — 실시간으로 기다리지 않는다(규약 ⑤).
+        #    재는 두 점은 계약이 정한 그대로다: 신호 발생 시각 → 이벤트의 occurred_at.
+        detected_at = timezone.now()
+        flood_event_id = self._event(
+            self.stream_a, severity="warning", when=detected_at, event_type="flood")
+
+        made = get_event(flood_event_id, scope=self.scope_a)
+        self.assertEqual(
+            "flood", made.event_type,
+            "침수 신호가 침수 타입으로 저장되지 않았습니다 — 다른 타입에 실렸다면 "
+            "그 타입의 오탐률 분모가 오염됩니다 (D-294).")
+        elapsed = (made.occurred_at - detected_at).total_seconds()
+        self.assertLessEqual(
+            abs(elapsed), 30.0,
+            f"[F-02] 초과 신호에서 이벤트까지 {elapsed:.2f}s — 30초 AC 를 넘겼습니다.")
+        self.ledger.record(self._step(2), True,
+                           f"event_id={flood_event_id} · {abs(elapsed):.2f}s ≤ 30s")
+
+        # ── 3. 같은 구역 인명(F-03) 결합 → 등급 상향 ★ D-299 로 열린 단계 ──
+        #
+        #    재는 것은 둘이다:
+        #      ① 같은 구역의 침수 관측 + 인명 관측이 **결합되는가**
+        #      ② 결합이 **아무 두 관측이나** 묶지 않는가 (음성 대조 — D-289)
+        #    ②가 없으면 "언제나 결합" 이 통과한다. 언제나 참인 시험은 시험이 아니다.
+        person_event_id = self._event(
+            self.stream_people, severity="warning",
+            when=detected_at, event_type="person")
+
+        flood_view = get_event(flood_event_id, scope=self.scope_a)
+        person_view = get_event(person_event_id, scope=self.scope_a)
+
+        combined = zones.combine_in_zone(
+            scope=self.scope_a, primary=flood_view, secondary=person_view)
+        self.assertIsNotNone(
+            combined,
+            "[F-03] 같은 구역의 침수·인명 관측이 결합되지 않았습니다 — "
+            "두 카메라가 한 Zone 에 묶여 있는데 판정이 그것을 못 봤습니다.")
+        self.assertEqual(self.zone.pk, combined.zone_id)
+        self.assertEqual({flood_event_id, person_event_id}, set(combined.event_ids))
+        self.assertEqual(
+            "critical", combined.severity,
+            "[F-03] 결합됐는데 등급이 오르지 않았습니다 — 결합의 효과는 등급 상향입니다.")
+        self.assertNotEqual(
+            flood_view.severity, combined.severity,
+            "결합 전후의 등급이 같습니다. 그렇다면 이 단계는 아무것도 하지 않았습니다.")
+
+        # ② 음성 대조 — 다른 구역의 관측은 **묶이지 않는다**
+        far_event_id = self._event(
+            self.stream_far, severity="warning", event_type="person")
+        far_view = get_event(far_event_id, scope=self.scope_a)
+        self.assertIsNone(
+            zones.combine_in_zone(scope=self.scope_a,
+                                  primary=flood_view, secondary=far_view),
+            "다른 구역의 관측이 결합됐습니다 — 이 판정은 구역을 보지 않고 있습니다.")
+
+        # ★ 저장된 등급은 **그대로다.** 결합은 값이지 덮어쓰기가 아니다.
+        self.assertEqual(
+            "warning", get_event(flood_event_id, scope=self.scope_a).severity,
+            "결합이 저장된 등급을 덮었습니다 — 관측이 실제로 난 등급은 사실이고, "
+            "덮으면 오탐률과 이력이 무엇을 세는지 알 수 없게 됩니다 (D-293 계열).")
+
+        self.ledger.record(
+            self._step(3), True,
+            f"zone={combined.zone_name} · {flood_view.severity}→{combined.severity}")
 
         # ── 4. 등급별 수신자 그룹이 실제로 달라지는가 ─────────────────
         warning = resolve_recipients(scope=self.scope_a, severity="warning")
@@ -209,34 +311,55 @@ class E2E2FloodTest(_FloodScenario):
                          "심각 이벤트가 경고 수신자에게 갔습니다.")
         self.assertEqual(1, len(mail.outbox))
 
+        # ★ 3단계의 상향이 4단계로 **실제로 이어지는가.** 결합이 값만 바꾸고 수신자가
+        #   그대로면 F-03 은 아무 효과가 없다 — 그것이 "이름뿐인 등급 상향"이다.
+        escalated = {r.user_id for r in resolve_recipients(
+            scope=self.scope_a, severity=combined.severity)}
+        self.assertEqual(
+            crit_ids, escalated,
+            "[F-03→F-10] 결합으로 오른 등급의 수신자가 심각 수신그룹과 다릅니다.")
+        self.assertNotEqual(
+            warn_ids, escalated,
+            "결합 전(경고)과 결합 후의 수신자가 같습니다 — 등급 상향이 아무 효과가 "
+            "없다면 F-03 결합은 이름뿐입니다.")
+
         self.ledger.record(
             self._step(4), True,
-            f"경고 {sorted(warn_ids)} ≠ 심각 {sorted(crit_ids)}")
+            f"경고 {sorted(warn_ids)} ≠ 심각 {sorted(crit_ids)} · "
+            f"F-03 상향분 {sorted(escalated)}")
         print("\n" + self.ledger.render(self.scenario.active_steps))
 
-    def test_locked_steps_are_reported_not_hidden(self) -> None:
-        """★ 잠긴 2·3 이 **표에 미측정으로 나오는가.**
+    def test_every_step_is_reported_not_hidden(self) -> None:
+        """★ **네 단계가 전부 표에 나오는가** — 그리고 잠긴 것이 남았다면 사유가 있는가.
 
-        빼면 시나리오가 짧아진 채로 초록이 되고, 빠진 줄은 보이지 않는다 (D-274).
+        E2E-2 는 D-299 로 잠김 0 이 됐다. 그렇다고 이 시험을 지우면, 다음에 단계가
+        하나 잠길 때 그 사실을 아무도 안 본다 — 빠진 줄은 보이지 않는다(D-274).
+        그래서 판정을 **뒤집어서 남긴다**: 계획된 전 단계가 표에 있고, 잠긴 것이 있다면
+        그것마다 사유가 있어야 한다.
         """
         from tests.e2e.e2e_contract import LOCKED_CAPABILITIES
 
         planned = self.scenario.steps
         active = {s.no for s in self.scenario.active_steps}
-        self.assertNotIn(2, active, "F-02 단계가 열렸습니다 — EventType 이 늘었다면 "
-                                    "LOCKED_CAPABILITIES 와 이 시험을 함께 고치십시오.")
-        self.assertNotIn(3, active, "구역 결합 단계가 열렸습니다 — P-K2-2 가 닫혔다면 "
-                                    "같이 고치십시오.")
+        self.assertIn(2, active, "F-02 단계가 다시 닫혔습니다 — D-294 로 열린 단계입니다. "
+                                 "EventType 에서 flood 가 빠졌다면 계약 문서와 함께 되돌리십시오.")
+        self.assertIn(3, active,
+                      "구역 결합 단계가 다시 닫혔습니다 — D-299 로 열린 단계입니다. "
+                      "Zone 모델이나 stream_monitors.services.zones 가 사라졌다면 "
+                      "결정문과 함께 되돌리십시오.")
+        self.assertEqual(
+            len(planned), len(active),
+            f"E2E-2 는 D-299 로 잠김 0 입니다. 지금 {len(planned) - len(active)}칸이 "
+            f"잠겼다면 무엇이 되돌아갔는지 확인하십시오.")
 
         table = self.ledger.render(planned)
-        self.assertIn("미측정", table)
-        for no in (2, 3):
-            step = self._step(no)
+        for step in planned:
             self.assertIn(step.title[:16], table,
-                          f"{no}단계가 표에서 빠졌습니다.")
-            self.assertTrue(
-                LOCKED_CAPABILITIES.get(step.unlocked_by, "").strip(),
-                f"{no}단계의 잠금 사유가 비었습니다 (D-264).")
+                          f"{step.no}단계가 표에서 빠졌습니다.")
+            if step.no not in active:
+                self.assertTrue(
+                    LOCKED_CAPABILITIES.get(step.unlocked_by, "").strip(),
+                    f"{step.no}단계의 잠금 사유가 비었습니다 (D-264).")
 
     # ── 규약 ① ───────────────────────────────────────────────────────────
     def test_runs_on_migrated_database(self) -> None:

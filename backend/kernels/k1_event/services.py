@@ -128,6 +128,10 @@ def _to_view(row) -> EventView:
         event_type=row.event_type,
         severity=row.severity,
         status=row.status,
+        # ★ 판정은 `status` 와 따로 나간다 (D-293). 종료된 이벤트의 화면·보고서가
+        #   "이것은 오탐이었다"를 계속 말할 수 있어야 한다 — status 만 보내면
+        #   종료 후에는 그 사실이 App 에서 사라진다.
+        verdict=row.verdict,
         occurred_at=row.occurred_at,
         last_seen_at=row.last_seen_at,
         stream_monitor_id=row.stream_monitor_id,
@@ -136,12 +140,41 @@ def _to_view(row) -> EventView:
         bbox=row.bbox,
         snapshot_path=row.snapshot_path,
         clip_path=row.clip_path,
+        address=row.address,
+        address_status=row.address_status,
         lat=row.lat,
         lng=row.lng,
         reviewed_by_id=row.reviewed_by_id,
         reviewed_at=row.reviewed_at,
         reject_reason=row.reject_reason,
     )
+
+
+def _address_status(address: str | None, given: str | None,
+                    lat: float | None, lng: float | None) -> str:
+    """FX-5 — 주소 칸의 상태를 정한다. **커널은 주소를 조회하지 않는다.**
+
+    조회는 L2 어댑터(`adapters.juso`)의 일이고, 커널이 어댑터를 부르면 계층 역전이다
+    (`scripts/verify_layers.py` 금지 ⑤ — "커널이 외부를 안다"). 그래서 커널은 **받은
+    것을 적을 뿐**이고, 부르는 쪽(배선)이 조회해서 넘긴다.
+
+    받지 못했을 때 무엇으로 두는가가 이 함수의 전부이고, 그 판단이 D-290 이다:
+
+        좌표가 없다      → `disabled`  조회할 대상이 없다. **재시도 대상이 아니다.**
+        주소를 받았다    → `resolved`
+        그 밖            → `pending`   아직 안 물어봤다. 재시도 대상이다.
+
+    ★ 좌표 없음을 `pending` 으로 두면 **영원히 재시도 대상**이 된다. 재시도기는 그것을
+      매번 집어 들고 매번 아무것도 못 한다 — 조용한 낭비이자, 재시도 목록이 곧
+      거짓말이 되는 길이다. 없는 것은 없다고 적는다 (D-284).
+    """
+    if given:
+        return given
+    if address:
+        return "resolved"
+    if lat is None or lng is None:
+        return "disabled"
+    return "pending"
 
 
 def _validate(event_type: str, severity: str) -> None:
@@ -180,6 +213,8 @@ def record_detection(
     alt: float | None = None,
     ai_model_id: int | None = None,
     mission_id: int | None = None,
+    address: str | None = None,
+    address_status: str | None = None,
 ) -> RecordResult:
     """검출 하나를 이벤트로 기록한다. **중복 억제 내장** (DA-04 K1).
 
@@ -248,6 +283,8 @@ def record_detection(
             lat=lat, lng=lng, alt=alt,
             snapshot_path=snapshot_path,
             mission_id=mission_id,
+            address=address,
+            address_status=_address_status(address, address_status, lat, lng),
         )
         _inherit_owner(event, stream)
 
@@ -396,10 +433,16 @@ def review_event(event_id: int, *, verdict: str, reason: str = "",
 
     row = Event._base_manager.select_related("stream_monitor").get(pk=event_id)
     row.status = verdict
+    # ★ 판정을 **두 곳에 쓴다** — 같은 값이지만 두 칸의 수명이 다르다 (D-293).
+    #   `status` 는 수명주기라 `close_event` 가 덮고, `verdict` 는 덮이지 않는다.
+    #   오탐률은 이제 `verdict` 만 본다. 두 칸이 갈릴 자리는 종료 한 곳뿐이고,
+    #   그 한 곳이 정확히 D-293 이 지키라고 한 지점이다.
+    row.verdict = verdict
     row.reviewed_by = actor
     row.reviewed_at = timezone.now()
     row.reject_reason = reason or None
-    row.save(update_fields=["status", "reviewed_by", "reviewed_at", "reject_reason"])
+    row.save(update_fields=["status", "verdict", "reviewed_by", "reviewed_at",
+                            "reject_reason"])
     return _to_view(row)
 
 
@@ -408,7 +451,18 @@ def review_event(event_id: int, *, verdict: str, reason: str = "",
 # ═══════════════════════════════════════════════════════════════════════════
 @transaction.atomic
 def close_event(event_id: int, *, scope: TenantScope) -> EventView:
-    """종료 처리. K4(보고서 엔진)가 여기를 트리거로 삼는다 (DA-04 K1 표)."""
+    """종료 처리. K4(보고서 엔진)가 여기를 트리거로 삼는다 (DA-04 K1 표).
+
+    ★ **판정을 지우지 않는다** (D-293). `status` 만 `closed` 로 옮기고 `verdict` 는
+      건드리지 않는다 — `update_fields` 에 `verdict` 가 **없는 것이 그 보장**이다.
+
+      왜 이것이 중요한가. 예전에는 종료가 `status` 를 덮어 판정이 사라졌고,
+      오탐률의 분모·분자가 함께 줄었다. 그러면 **시간이 갈수록 오탐률이 저절로
+      좋아진다** — 개선된 것이 아니라 나쁜 데이터가 사라진 것이다. 착시의 새 얼굴이다.
+
+      같은 코호트를 두 시점에 계산해 값이 같은지 보는 회귀 시험이 이 성질을 잠근다:
+      `tests/test_d293_cohort_regression.py`. 여기서 `verdict` 를 덮으면 그 시험이 멈춘다.
+    """
     Event = _model("DetectionEvent")
     actor = scope.require_actor()
     assert_scoped(Event, event_id, actor)

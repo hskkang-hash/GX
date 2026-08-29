@@ -45,7 +45,11 @@ class EventView:
     event_id: int
     event_type: str
     severity: str
+    #: 수명주기 칸. 종료되면 `closed` 가 된다.
     status: str
+    #: ★ 사람의 판정 — **종료돼도 남는다** (D-293). `status` 와 다른 칸인 이유가 이것이다.
+    #:   `None` 은 "아직 아무도 판정하지 않았다" 이고, 오탐률의 분모 밖이다.
+    verdict: str | None
     occurred_at: datetime
     last_seen_at: datetime | None
     stream_monitor_id: int
@@ -60,3 +64,9 @@ class EventView:
     reviewed_by_id: int | None = None
     reviewed_at: datetime | None = None
     reject_reason: str | None = None
+    #: ★ FX-5 — 사람이 읽는 위치. **보조 정보다.** 없어도 이벤트는 성립한다.
+    address: str | None = None
+    #: 주소 칸이 왜 그 상태인가 (pending | resolved | failed | disabled).
+    #: `address` 가 None 인 것만으로는 "아직 안 물어봤다"와 "물어봤는데 실패했다"가
+    #: 구별되지 않는다 — 둘은 다음 행동이 다르다 (D-290).
+    address_status: str = "pending"

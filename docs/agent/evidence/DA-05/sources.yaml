@@ -23,6 +23,10 @@ keys:
     what: 공공데이터포털 일반 인증키 (P0-2)
     shape: URL 인코딩된 base64 — `%2B` · `%2F` · `%3D%3D` 를 포함한 60~120자
     covers: [school_location, national_park_safety, child_center_safety, kma_warning, kma_forecast]
+  - env: GX_JUSO_API_KEY
+    what: 주소정보 연계서비스 승인키 (FX-5) — **포털 일반키로는 못 부른다**
+    shape: 미실측 — 발급 화면에서 확인한다
+    covers: [juso_coord2addr]
   - env: GX_KMA_API_HUB_KEY
     what: 기상청 API 허브 토큰 (P0-1) — 포털과 별도 발급인 경우에만 쓴다
     shape: 영숫자 22자
@@ -59,6 +63,24 @@ sources:
     endpoint: http://api.data.go.kr/openapi/tn_pubr_public_elesch_mskul_lc_api
     params: {pageNo: 1, numOfRows: 10, type: json}
     endpoint_source: "공공데이터포털 표준데이터 문서 — **미실측**"
+
+  - id: juso_coord2addr
+    priority: P1-0
+    title: 주소정보 연계서비스 — 좌표 → 도로명 주소 (juso.go.kr)
+    why: |
+      FX-5. F-10 알림 본문과 F-11 보고서 위치란에 **사람이 읽는 위치**가 들어간다.
+      지금은 좌표만 나가서 받는 사람이 지도를 따로 연다 — 새벽 당직자에게 그 차이가 크다.
+    key_env: GX_JUSO_API_KEY          # 포털 일반키와 **별개 계정**이다 (juso.go.kr 자체 발급)
+    verified: false
+    endpoint: https://business.juso.go.kr/jst/jstRoadNmAddrApiSearch
+    params: {}
+    endpoint_source: |
+      **응답 스키마 미실측.** 요청 URL 은 D-298 로 .env.example 에 등재됐으나,
+      응답의 필드 이름·중첩 구조·오류 코드는 실호출로 확인해야 한다.
+      그래서 `backend/adapters/juso/` 는 **포트와 저하 운전만** 세우고 HTTP 구현체를
+      만들지 않았다(`KERNEL_READY=False`). 추측한 필드명 위의 파서는 첫 실호출에서
+      전부 재작업이 되고, 그때는 그것이 추측이었다는 사실조차 남지 않는다(D-280).
+      해소: 키를 환경변수에 넣고 이 스크립트를 `--only juso_coord2addr` 로 한 번 돌린다.
 
   - id: national_park_safety
     priority: P1-2

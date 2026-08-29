@@ -255,6 +255,29 @@ def fk_models() -> list[str]:
 '''
 
 
+#: ★ **인구조사 이후에 태어난 모델** — label → 사유 (D-264 · D-271 ②).
+#:
+#: 왜 목록이 필요한가. 인구조사(`leak_targets.json`)에 없는 모델은 아래에서 자동으로
+#: "행이 0이라 안 보였다" 나 "셀 수도 없다(P-LOCAL-4)" 로 분류된다. 그 둘 다
+#: **새로 만든 모델에는 거짓이다** — 인구조사 시점에 그 모델은 존재하지 않았고,
+#: 행이 0인 것은 아티팩트가 아니라 당연한 사실이다.
+#:
+#: 거짓 사유를 자동 생성하면 그것이 근거처럼 읽힌다. 이 저장소가 반복해 만난
+#: 사후 정당화의 모양이고(D-249 부착률 착시), 그래서 **새로 만든 것은 이름을 적는다.**
+#: 적는 일이 곧 "이 모델의 격리를 생각했다"는 선언이다.
+NEW_SINCE_CENSUS: dict[str, str] = {
+    "stream_monitors.Zone":
+        "2026-09-01 D-299 로 신설(마이그 0019). 인구조사(2026-08-14 덤프)에 **없었던 것이 "
+        "아니라 그때 존재하지 않았다** — 행 0 은 아티팩트가 아니라 신설 직후의 사실이다. "
+        "소유는 dj-core BaseModel 의 group FK 로 첫 행부터 붙고, 판정 서비스"
+        "(stream_monitors.services.zones)는 스코프로 좁힌 뒤에만 구역을 돌려준다. "
+        "격리 단언은 backend/tests/test_zone_judgment.py 의 "
+        "test_isolation_another_tenant_cannot_see_our_zones 가 양방향으로 잰다. "
+        "구역을 **만드는** 공개 면은 아직 없으므로 쓰기 IDOR 표면도 아직 없다 — "
+        "생기면 WRITE_PROBES 에 함께 등재한다(D-290)",
+}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
@@ -285,7 +308,14 @@ def main() -> int:
                 n = model._base_manager.count()
             except Exception:
                 n = None
-            if n == 0:
+            if label in NEW_SINCE_CENSUS:
+                # ★ 신설 모델은 자동 사유가 거짓이 된다 — 이름을 적은 사유를 쓴다.
+                if n == 0:
+                    gap_zero += 1
+                elif n:
+                    gap_nonzero += 1
+                reason = NEW_SINCE_CENSUS[label]
+            elif n == 0:
                 gap_zero += 1
                 reason = ("인구조사(덤프 집계)에 없었다 — 행이 0이라 안 보였다. "
                           "**아직 안 쓴 것이지 안전한 것이 아니다**")

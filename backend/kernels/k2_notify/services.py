@@ -84,17 +84,49 @@ def _inherit_owner(row, source) -> None:
         row.save(update_fields=["group"])
 
 
+def _location_line(event) -> str:
+    """FX-5 — 위치 한 줄. **상태에 따라 다른 문장이 나간다** (D-290 · D-298).
+
+    ★ 이 함수는 이 파일의 원래 방침을 **한 겹 완화한다.** 아래 `_subject_and_body` 는
+      "본문에 좌표 원문을 넣지 않는다" 였다 — 메일은 저장소 밖으로 나가는 유일한 경로이고
+      본문에 실리는 것이 곧 유출 표면이기 때문이다. D-298 의 FX-5 지시가 그 방침을
+      **명시적으로** 바꿨다: *"'failed' 면 알림에 '주소 확인 불가(좌표: …)'로 나가고"*.
+
+      완화의 범위를 여기 한 줄로 좁혀 둔다: 조회에 **실패했을 때만** 좌표가 실린다.
+      성공하면 도로명 주소만 나가고 좌표는 나가지 않는다 — 사람이 지도를 여는 데
+      좌표가 필요한 경우는 주소를 못 얻은 경우뿐이기 때문이다.
+
+    상태 넷이 각각 다른 문장을 낸다. 같은 문장으로 뭉치면 받는 사람은 "주소가 없는 사건"과
+    "주소를 못 얻은 사건"을 구별할 수 없고, 새벽 당직자에게 그 차이가 곧 대응 속도다.
+    """
+    status = getattr(event, "address_status", "") or ""
+    if status == "resolved" and event.address:
+        return f"위치 {event.address}"
+    if status == "failed":
+        # 좌표가 없는데 failed 인 상태는 만들어지지 않는다(k1_event._address_status 참조).
+        # 그래도 방어적으로 적는다 — 없는 값을 'None' 이라고 인쇄하지 않기 위해서다.
+        where = (f"좌표: {event.lat}, {event.lng}"
+                 if event.lat is not None and event.lng is not None else "좌표 없음")
+        return f"위치 주소 확인 불가({where})"
+    if status == "pending":
+        return "위치 주소 조회 중"
+    return "위치 미상 — 좌표가 기록되지 않았습니다"
+
+
 def _subject_and_body(event) -> tuple[str, str]:
-    """알림 본문. **본문에 개인정보·좌표 원문을 넣지 않는다.**
+    """알림 본문. **개인정보를 넣지 않는다.**
 
     메일은 저장소 밖으로 나가는 유일한 경로다. 여기서 무엇을 싣는가가 곧
     유출 표면이므로, 사람이 **화면으로 들어와 확인하게** 하는 최소 정보만 담는다.
+
+    ⚠ 좌표는 예외 하나로 실린다 — FX-5 의 조회 실패 시뿐이다. `_location_line` 참조.
     """
     subject = f"[GuardianX] {event.get_severity_display()} — {event.get_event_type_display()}"
     body = (
         f"이벤트 #{event.pk}\n"
         f"발생 {timezone.localtime(event.occurred_at):%Y-%m-%d %H:%M:%S}\n"
         f"등급 {event.severity} · 종류 {event.event_type}\n"
+        f"{_location_line(event)}\n"
         f"관제 화면에서 확인하십시오."
     )
     return subject, body

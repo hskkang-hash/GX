@@ -141,6 +141,12 @@ class DetectionEvent(BaseModelWithGroup):
         SMOKE = "smoke", "연기"
         INTRUSION = "intrusion", "침입"
         SOS = "sos", "구조요청"
+        #: ★ D-294 로 신설. F-02(침수·수위)는 계약 M 기능이고, 전용 타입이 **없던 것은
+        #:   설계 선택이 아니라 누락**이었다. 기존 타입에 실어 보내면 그 타입의
+        #:   오탐률 분모가 오염되고 **아무도 그 사실을 모른다**.
+        #:   계약 문서(docs/contracts/detection-event.md §열거값)와 W2-3 색 규칙을
+        #:   같은 커밋에서 함께 고쳤다 — 문서와 코드가 갈리면 어느 쪽이 계약인지 모른다.
+        FLOOD = "flood", "침수"
 
     class Severity(models.TextChoices):
         INFO = "info", "정보"
@@ -184,6 +190,28 @@ class DetectionEvent(BaseModelWithGroup):
     status = models.CharField(
         max_length=16, choices=Status.choices, default=Status.NEW, db_index=True
     )
+    #: ★ 사람의 판정 그 자체 — **종료되어도 지워지지 않는다** (D-293).
+    #:
+    #: 왜 `status` 와 따로 두나. `status` 는 수명주기(new→confirmed/rejected→closed)이고
+    #: 마지막 칸이 앞 칸을 **덮는다**. 그래서 판정된 이벤트가 종료되는 순간 오탐률의
+    #: 분모·분자에서 조용히 빠졌다 — 종료가 쌓일수록 오탐률이 **저절로 좋아지는** 구조다.
+    #: 개선된 것이 아니라 나쁜 데이터가 사라진 것이고, D-293 이 그것을 금지했다.
+    #:
+    #: 집계 표를 새로 만드는 것이 아니다(DA-04 K6 "별도 집계 테이블 금지"). 같은 행에
+    #: **덮이지 않는 칸 하나**를 둘 뿐이고, 오탐률은 이제 이 칸 하나에서 나온다 —
+    #: 집계 경로는 여전히 하나다.
+    #:
+    #: null 은 "아직 아무도 판정하지 않았다" 이고, `status="closed"` 와 무관하다.
+    #: 열거는 `Status` 전체가 아니라 **판정 둘뿐**이다. `new`·`closed` 는 판정이 아니라
+    #: 수명주기 칸이고, 그것이 여기 들어오면 다시 두 뜻이 한 칸에 섞인다.
+    VERDICT_CHOICES = [
+        (Status.CONFIRMED, Status.CONFIRMED.label),
+        (Status.REJECTED, Status.REJECTED.label),
+    ]
+    verdict = models.CharField(
+        max_length=16, choices=VERDICT_CHOICES, null=True, blank=True, db_index=True,
+        help_text="사람의 판정(confirmed/rejected). 종료해도 덮이지 않는다 (D-293)",
+    )
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -193,6 +221,45 @@ class DetectionEvent(BaseModelWithGroup):
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
     reject_reason = models.CharField(max_length=255, null=True, blank=True)
+
+    # ── FX-5 주소 자동 변환 (D-298 예외 승인분) ──────────────────────────
+    #
+    # 왜 좌표 옆에 주소를 두나 — **새벽 당직자에게 이 차이가 크다.**
+    # 지금 알림에는 좌표만 나가고, 받는 사람은 지도를 따로 연다. 도로명 주소가 함께
+    # 나가면 그 한 단계가 사라진다. F-10 알림 본문과 F-11 보고서 위치란이 쓴다.
+    #
+    # ★ 주소는 **보조 정보다.** 주소 조회가 죽어도 이벤트는 정상 생성된다(저하 운전).
+    #   이 두 필드가 null 이거나 disabled 인 것은 실패가 아니다.
+    address = models.CharField(
+        max_length=512, null=True, blank=True,
+        help_text="도로명 주소 (FX-5). 조회 전·불가 시 null — 빈 문자열과 구별한다",
+    )
+
+    class AddressStatus(models.TextChoices):
+        #: 아직 조회하지 않았다. **재시도 대상이다.**
+        PENDING = "pending", "조회 대기"
+        #: 조회해서 주소를 받았다. `address` 에 값이 있다.
+        RESOLVED = "resolved", "조회 완료"
+        #: 조회했는데 실패했다. **재시도 대상이지만 알림에는 "주소 확인 불가"로 나간다.**
+        FAILED = "failed", "조회 실패"
+        #: 조회 대상이 아니다 — 어댑터가 꽂혀 있지 않거나 좌표가 없다. **재시도하지 않는다.**
+        DISABLED = "disabled", "조회 안 함"
+
+    #: ★ D-290 적용 — **"아직 조회 안 함"과 "조회했는데 실패"를 같은 값으로 두지 않는다.**
+    #:
+    #:   한 칸으로 두면(예: address 가 null 인지로 판정) 둘이 구별되지 않고, 구별되지
+    #:   않으면 재시도 대상 목록이 만들어지지 않는다 — 실패한 것들이 영원히 pending 인
+    #:   척하거나, 아직 안 한 것들이 실패로 세어진다. 둘 다 조용한 유실이다.
+    #:
+    #:   'failed'   → 알림 본문은 "주소 확인 불가(좌표: …)" 로 나간다. 사람이 좌표를 본다.
+    #:   'pending'  → 재시도 대상.
+    #:   'disabled' → 재시도하지 않는다. **두 사유가 여기 모인다**(어댑터 미설정 · 좌표 없음).
+    #:                둘을 갈라야 할 이유가 생기면 그것은 결정 사안이지 조용한 변경이 아니다.
+    address_status = models.CharField(
+        max_length=16, choices=AddressStatus.choices,
+        default=AddressStatus.PENDING, db_index=True,
+        help_text="주소 조회 상태 (FX-5 · D-290). pending 과 failed 를 합치지 않는다",
+    )
 
     # 리포트 연결용 (W1-1 MissionReportService 가 임무별 이벤트를 모은다)
     mission = models.ForeignKey(
@@ -216,6 +283,12 @@ class DetectionEvent(BaseModelWithGroup):
             models.Index(fields=["stream_monitor", "event_type", "-occurred_at"]),
             # 임무 리포트 집계(W1-1)
             models.Index(fields=["mission", "-occurred_at"]),
+            # ★ 오탐률 코호트 집계(D-293): 발생 기간 × 판정. `status` 가 아니라
+            #   `verdict` 로 센다 — 종료가 판정을 덮지 않는 칸이 이것이기 때문이다.
+            models.Index(fields=["verdict", "-occurred_at"]),
+            # ★ 타입별 분리 집계(D-294): 오탐률이 타입별로 갈라져야 침수가 화재의
+            #   분모를 오염시키지 않는다.
+            models.Index(fields=["event_type", "verdict", "-occurred_at"]),
         ]
 
     def __str__(self):
@@ -329,3 +402,86 @@ class DeliveryRecord(BaseModelWithGroup):
         if self.sent_at is None:
             return None
         return (self.sent_at - self.occurred_at).total_seconds()
+
+
+class Zone(BaseModel):
+    """구역 — **카메라 묶음(지금) + 폴리곤 자리(계약 F-03, 비워 둠)** (D-299).
+
+    왜 두 가지를 한 모델에 두나
+    ---------------------------
+    계약 F-03 의 AC 는 *"지정 위험구역(**폴리곤**) 내 사람·차량 진입"* 이다. 최종적으로
+    폴리곤이 필요하다 — 카메라 묶음은 계약보다 약하다. 그러나 지금 폴리곤 전체를 만드는
+    것은 크고(GIS 의존·구역 편집 화면), 안 만들면 E2E-2 의 3단계가 계속 잠긴다.
+
+    그래서 **같은 모델에 둘 다 자리를 두고, 지금은 카메라 묶음만 채운다.**
+    나중에 폴리곤을 채우는 것이 재작업이 아니라 **빈칸 채우기**가 되게 하는 것이 요점이다.
+    다른 모델을 새로 만들면 그때 `Zone` 이 둘이 되고, 둘이 되면 어느 쪽이 계약인지 모른다
+    (D-227 이 만든 상태가 그것이었다).
+
+    ★ 추측을 계약으로 만들지 않는다 — **선언된 미완성**으로 만든다
+    -------------------------------------------------------------
+    `geometry` 를 지금 채우면 그 필드 모양이 곧 F-03 의 계약이 된다(D-280).
+    그래서 비워 두되 **비어 있다는 사실을 모델이 말하게** 했다: `geometry_status` 가
+    `not_implemented` 인 동안 판정 함수는 조용히 False 를 돌려주지 않고
+    `NotImplementedError` 로 멈춘다(D-284). 없는 것은 없다고 말한다.
+
+    계층 — **L3 Platform** (D-299)
+    ------------------------------
+    구역은 재난안전 전용 개념이 아니다(산업안전·시설물 App 도 쓴다). 카메라를 묶는 일이므로
+    카메라와 같은 층·같은 앱에 둔다 — `DetectionEvent` 를 stream_monitors 안에 둔 것과
+    같은 이유이고, 신규 앱을 만들지 않는다.
+
+    기저는 `BaseModel` 이다 — 실행 중인 dj-core 가 `group` FK 를 자동으로 준다(D-292 실측).
+    `BaseModelWithGroup` 은 DEPRECATED 이고 신규 상속이 게이트로 막혀 있다(D-295).
+    """
+
+    class Kind(models.TextChoices):
+        #: 지금 채우는 것. "같은 구역" = 같은 묶음에 속한 카메라.
+        CAMERA_GROUP = "camera_group", "카메라 묶음"
+        #: 계약 F-03 의 최종형. 자리만 있고 판정은 미구현이다.
+        POLYGON = "polygon", "폴리곤"
+
+    class GeometryStatus(models.TextChoices):
+        #: ★ 기본값. **"아직 안 만들었다"** 이지 "폴리곤이 없는 구역" 이 아니다.
+        NOT_IMPLEMENTED = "not_implemented", "미구현"
+        #: 폴리곤 판정이 실제로 서면 이 값이 된다. 이 값을 가진 행이 하나라도 생기면
+        #: `ZONE_POLYGON_READY` 가 True 여야 한다 — 아니면 게이트가 exit 1 (D-299).
+        READY = "ready", "가동"
+
+    name = models.CharField(max_length=255)
+    kind = models.CharField(
+        max_length=16, choices=Kind.choices, default=Kind.CAMERA_GROUP, db_index=True
+    )
+    #: 지금 채우는 것 — 이 구역에 속한 카메라들.
+    #: M2M 인 이유: 카메라 하나가 두 구역에 걸칠 수 있다(하천 합류부·교차로).
+    #: FK 로 두면 그 현장을 표현할 수 없고, 표현할 수 없는 것은 조용히 한쪽으로 몰린다.
+    cameras = models.ManyToManyField(
+        StreamMonitor, blank=True, related_name="zones",
+        help_text="이 구역에 속한 카메라. kind='camera_group' 일 때 판정의 근거다",
+    )
+    #: 계약 F-03 의 폴리곤이 들어올 자리. **지금은 비운다.**
+    #: 좌표 표현(GeoJSON 인지 좌표쌍 배열인지)·좌표계(WGS84/TM)는 아직 정해지지 않았고,
+    #: 여기서 정하면 그 선택이 곧 계약이 된다 — 정해지는 자리는 F-03 설계이지 이 필드가 아니다.
+    geometry = models.JSONField(
+        null=True, blank=True,
+        help_text="F-03 폴리곤. 표현·좌표계 미확정이므로 비워 둔다 (D-280)",
+    )
+    geometry_status = models.CharField(
+        max_length=20, choices=GeometryStatus.choices,
+        default=GeometryStatus.NOT_IMPLEMENTED, db_index=True,
+        help_text="폴리곤 판정이 실제로 도는가. ready 가 하나라도 있으면 "
+                  "ZONE_POLYGON_READY 가 True 여야 한다 (D-299)",
+    )
+    is_active = models.BooleanField(default=True)
+
+    TRANSLATABLE_FIELDS = ["name"]
+
+    class Meta:
+        ordering = ["name", "id"]
+        indexes = [
+            # "이 구역이 지금 판정에 쓰이는가" — 활성 구역을 종류별로 훑는다
+            models.Index(fields=["kind", "is_active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name}({self.kind})"

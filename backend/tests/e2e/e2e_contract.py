@@ -55,7 +55,22 @@ KERNEL_PACKAGES: dict[str, str] = {
     "K6": "kernels.k6_feedback",
     # SDN 어댑터는 커널이 아니라 L2 어댑터다. 이름을 함께 두는 이유는
     # E2E-3 의 해금 조건이 그것이기 때문이다 (D-291 증분 규칙).
+    #
+    # ★ 이 패키지는 **2026-08-31 에 실재하게 됐다** — 그러나 `KERNEL_READY = False` 다.
+    #   포트·수령 요건·오류 계약만 세웠고 어댑터 구현은 없다(명세 미수령 · D-297).
+    #   그래서 `kernel_present("SDN")` 은 여전히 False 이고 E2E-3 은 잠겨 있다.
+    #   사유는 `adapters.sdn.NOT_READY_REASON` 에 있고, 비면 게이트가 멈춘다.
     "SDN": "adapters.sdn",
+    # ★ ZONE 은 커널이 아니라 **L3 Platform 의 판정 서비스**다. 이름을 여기 두는 이유는
+    #   E2E-2 3단계의 해금 조건이 그것이기 때문이다 (SDN 과 같은 계열의 등재).
+    #
+    #   2026-09-01 · D-299 로 **잠금이 풀렸다.** 이 이름을 아래 LOCKED_CAPABILITIES 에서
+    #   지우고 여기 넣은 것이 곧 "이제 잴 수 있다"는 선언이고, 그 선언의 근거는
+    #   `Zone` 모델(마이그 0019)과 `stream_monitors.services.zones` 다.
+    #   그 모듈의 `KERNEL_READY` 는 True 이므로 3단계가 돈다 — 다만 **폴리곤은 여전히
+    #   잠겨 있다**(`ZONE_POLYGON_READY=False`). 두 잠금이 다른 것을 잠근다:
+    #   여기 것은 "구역 판정을 잴 수 있는가", 저기 것은 "폴리곤으로 잴 수 있는가".
+    "ZONE": "stream_monitors.services.zones",
 }
 
 
@@ -73,29 +88,83 @@ LOCKED_CAPABILITIES: dict[str, str] = {
     "VIDEO":
         "이벤트 클릭 → 영상 재생 경로가 아직 없다. K3 는 **프레임**이고 영상이 아니다 — "
         "한 칸에 두면 프레임이 초록일 때 영상까지 초록으로 읽힌다. "
-        "재생 경로가 서면 이 줄을 지우고 KERNEL_PACKAGES 에 넣는다.",
-    "FLOOD_EVENT_TYPE":
-        "F-02(침수·수위)는 `DetectionEvent.EventType` 열거에 **없다** — 실측: "
-        "person·vehicle·fire·smoke·intrusion·sos 여섯뿐(docs/contracts/detection-event.md §47). "
-        "열거를 늘리는 것은 2026-08-13 에 고정된 계약 문서를 고치는 일이고, W2-3 색 규칙이 "
-        "함께 따라온다(DA-01 OPEN-05). **판정 사안이라 추정으로 늘리지 않는다**(D-280) — "
-        "P-E2E-1 로 적재했다.",
-    "ZONE":
-        "'같은 구역'을 판정할 구역 개념이 모델에 없다 — P-K2-2 가 열려 있다. "
-        "행정구역인지 카메라 묶음인지 폴리곤인지가 정해지면 그때 연다.",
+        "재생 경로가 서면 이 줄을 지우고 KERNEL_PACKAGES 에 넣는다. "
+        "★ 사유 실측 (D-302, 2026-09-01): **실 스트림 부재가 아니라 배선 부재다.** "
+        "`DetectionEvent.clip_path` 는 정의 1건 · 읽기 2곳(k1_event._to_view · "
+        "k4_report.services)이고 **쓰기 0곳**이다 — 아무도 채우지 않는다. "
+        "녹화는 스트림 단위로 존재하지만(`/start-record` · `/stop-record` → MinIO "
+        "object_path) 그 산출물이 이벤트와 이어져 있지 않고, 이벤트 시각으로 구간을 "
+        "찾아 되돌려주는 라우트도 없다(전수 라우트에 재생 경로 0건). "
+        "즉 막고 있는 것은 카메라도 스트림도 아니라 **이벤트↔영상 구간의 연결과 "
+        "재생 엔드포인트**이며, 이것은 개발로 풀 수 있는 항목이다(계약 블로커가 아니다). "
+        "ZONE 처럼 지금 열 수는 없다 — 열려면 그 배선을 만들어야 하고, 그 전에 "
+        "여는 것은 잴 수 없는 것을 재라고 요구하는 일이다.",
+    # ★ FLOOD_EVENT_TYPE 은 **여기서 지워졌다** (D-294, 2026-08-31).
+    #   지운 것이 곧 "이제 잴 수 있다"는 선언이고, 그 선언의 근거는 계약 문서 v1.1 과
+    #   마이그레이션 0018 이다. 잠금 사유를 지우면서 단계의 `unlocked_by` 를 "K1" 로
+    #   옮겼다 — 침수 이벤트를 만드는 것은 K1 의 일이기 때문이다.
+    #   되돌아온다면(열거가 다시 빠진다면) `test_d294_event_type_separation.py` 가 먼저 멈춘다.
+    # ★ ZONE 은 **여기서 지워졌다** (D-299, 2026-09-01).
+    #   잠금 사유였던 "구역 개념이 모델에 없다" 가 사라졌다 — `Zone` 모델이 실재하고
+    #   카메라 묶음 판정이 돈다. 지운 것이 곧 선언이고, 근거는 마이그레이션 0019 다.
+    #   되돌아온다면(모델이 지워진다면) `test_zone_judgment.py` 가 먼저 멈춘다.
+    #
+    #   ⚠ 폴리곤은 여전히 미구현이다. 그것은 이 등재부가 아니라
+    #   `stream_monitors.services.zones.ZONE_POLYGON_READY` 가 잠근다 — 잠기는 대상이
+    #   다르기 때문이다. 여기는 "단계를 잴 수 있는가", 저기는 "어느 방식으로 재는가".
 }
 
 
 def kernel_present(code: str) -> bool:
-    """그 커널이 **실재하는가.** 티켓 status 가 아니라 import 로 답한다."""
+    """그 커널이 **실재하는가.** 티켓 status 가 아니라 import 로 답한다.
+
+    ★ 한 겹 좁혔다 — **파일이 있는 것과 잴 수 있는 것은 다르다** (2026-08-31).
+
+      SDN 어댑터의 자리(`adapters/sdn/`)를 명세 수령 전에 세웠다. 포트·수령 요건·
+      오류 계약처럼 **명세 없이도 확정할 수 있는 것**은 지금 확정해 두는 것이 옳고
+      (DA-02 §3), 그래야 명세가 온 날 할 일이 "구현체 하나" 로 줄어든다.
+
+      그런데 예전 술어대로라면 그 패키지가 import 되는 순간 E2E-3 이 **의무가 되고**
+      E2E-1 의 7단계가 열린다 — 어댑터가 없는데 SDN 시나리오를 재라고 요구하게 된다.
+      **잴 수 없는 것을 재라고 요구하는 것**은 이 등재부가 애초에 막으려던 일이다.
+
+      그래서 모듈이 `KERNEL_READY = False` 를 **선언하면 없는 것으로 본다.**
+      선언에 기대는 것이 아니냐 — 아니다. 값싼 선언이 못 되게 두 가지를 붙였다:
+
+        · `NOT_READY_REASON` 이 비면 `scripts/verify_e2e_contract.py` 가 exit 1.
+          "안 됐다" 는 말은 **사유를 요구한다** (D-264).
+        · True 로 올리는 순간 그 시나리오 전체가 의무가 된다. 구현 없이 올리면
+          시험이 **즉시 실패한다.** "됐다" 는 말은 **시험을 부른다.**
+
+      선언이 거짓이면 어느 방향으로든 멈춘다. 그것이 이 술어가 여전히 실측인 이유다.
+    """
     module = KERNEL_PACKAGES.get(code)
     if module is None:
         return False
     try:
-        importlib.import_module(module)
+        mod = importlib.import_module(module)
     except Exception:
         return False
-    return True
+    # 선언이 없으면 예전 그대로 — import 되면 있는 것이다.
+    return bool(getattr(mod, "KERNEL_READY", True))
+
+
+def not_ready_reason(code: str) -> str:
+    """`KERNEL_READY=False` 인 모듈이 밝힌 사유. 없으면 빈 문자열.
+
+    게이트가 이것을 읽어 **사유 없는 미준비**를 막는다. 사유가 없으면 그 False 는
+    "아직" 인지 "영영" 인지 구별되지 않고, 구별되지 않는 것은 잊힌다.
+    """
+    module = KERNEL_PACKAGES.get(code)
+    if module is None:
+        return ""
+    try:
+        mod = importlib.import_module(module)
+    except Exception:
+        return ""
+    if getattr(mod, "KERNEL_READY", True):
+        return ""
+    return str(getattr(mod, "NOT_READY_REASON", "") or "")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -190,7 +259,9 @@ SCENARIOS: dict[str, Scenario] = {
             Step(1, "수위선 초과 신호 투입", None),
             # ★ 2·3 은 **잠겨 있다.** 커널이 없어서가 아니라 **계약과 모델이 아직 그것을
             #   표현하지 못해서**다. 사유는 `LOCKED_CAPABILITIES` 에 있다.
-            Step(2, "F-02 이벤트 생성 (30초)", "FLOOD_EVENT_TYPE", ac="F-02 30초"),
+            # ★ D-294 로 **열렸다.** 잠금 사유였던 FLOOD_EVENT_TYPE 은 위 등재부에서
+            #   지워졌고, 이제 이 단계는 K1 이 있으면 돈다.
+            Step(2, "F-02 이벤트 생성 (30초)", "K1", ac="F-02 30초"),
             Step(3, "같은 구역 인명(F-03) 결합 → 등급 상향", "ZONE", ac="F-03 결합"),
             Step(4, "등급별 수신자 그룹이 실제로 달라지는가", "K2",
                  ac="F-10 등급별 수신그룹 분기"),

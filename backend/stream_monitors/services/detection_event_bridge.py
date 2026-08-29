@@ -65,6 +65,11 @@ LABEL_TO_EVENT_TYPE: dict[str, str] = {
     "smoke": "smoke",
     "intrusion": "intrusion",
     "sos": "sos",
+    # D-294 로 신설된 타입. 여기 넣는 근거도 같다 — **글자가 같으면 그것이다.**
+    # AI 가 실제로 `"flood"` 라는 라벨을 쓰는지는 아직 재지 못했고(AI_GRPC_URL 미도달),
+    # 재지 못한 사실은 이 주석에 남는다. 안 쓰면 `unmapped_labels` 에 그 라벨이 세어져
+    # 나오고, 그 목록이 이 표를 늘릴 근거가 된다 (D-273).
+    "flood": "flood",
 }
 
 #: `event_type` → `severity` (계약 열거: info | warning | critical).
@@ -81,6 +86,11 @@ EVENT_TYPE_TO_SEVERITY: dict[str, str] = {
     "fire": "critical",
     "smoke": "critical",
     "sos": "critical",
+    # D-294 신설. 잠정값의 근거는 위와 같다 — 침수는 사람이 지금 움직여야 하는 것이다.
+    # ★ 다만 이 잠정값은 **F-02 의 등급 상향 규칙과 다른 층**이다: 수위 임계 초과가
+    #   곧 critical 인지, 지점별 기준선(FR-02-2)과 인명 결합(F-03)을 거쳐 오르는지는
+    #   P-W2-2-1 과 함께 판정될 사안이다. 여기서는 배선의 기본값만 정한다.
+    "flood": "critical",
     "intrusion": "warning",
     "person": "info",
     "vehicle": "info",
@@ -140,6 +150,8 @@ def publish_detections(
     snapshot_path: str = "",
     frames: list | None = None,
     mission_id: int | None = None,
+    lat: float | None = None,
+    lng: float | None = None,
 ) -> PublishResult:
     """검출 묶음을 K1 이벤트로 넘긴다.
 
@@ -152,6 +164,9 @@ def publish_detections(
         frames: 프레임 이미지(ndarray) 목록. `detections_per_frame` 과 **같은 순서**다.
             주면 스냅샷을 올린다 (W2-2 spec · 계약 불변규칙 4 — "스냅샷은 MinIO 에 1장").
         mission_id: 임무 중이라면 그 id.
+        lat, lng: 이 검출이 난 지점의 좌표(기체 텔레메트리). **주면 FX-5 주소 조회를 한다.**
+            안 주면 조회하지 않고 `address_status='disabled'` 로 남는다 — 좌표가 없는데
+            `pending` 으로 두면 재시도 목록이 영원히 못 푸는 항목을 안고 돈다.
 
     Returns:
         `PublishResult` — 만든 것과 **버린 것을 함께** 센다.
@@ -163,6 +178,27 @@ def publish_detections(
     scope = TenantScope.system(reason=reason)
     result = PublishResult()
     frames = frames or []
+
+    # ── FX-5 주소 자동 변환 (D-298) ──────────────────────────────────────
+    #
+    # ★ **배치당 한 번만** 부른다. 검출마다 부르면 프레임 하나에 열 번씩 외부 API 를
+    #   두드리게 되고, 같은 좌표에서 같은 답이 온다. 좌표는 배치 단위로 들어오므로
+    #   답도 배치 단위다.
+    #
+    # ★ 여기가 조회의 자리인 이유 — **커널은 어댑터를 부를 수 없다.**
+    #   `scripts/verify_layers.py` 금지 ⑤ 가 `kernels/** → adapters/**` 를 막는다
+    #   (커널이 외부를 알면 계약 9조2항 '타 어댑터로 교체 가능' 이 그때 깨진다).
+    #   그래서 배선인 이 파일이 조회하고, 커널은 **받은 것을 적을 뿐**이다.
+    #
+    # ★ `resolve` 는 **예외를 던지지 않는다.** 그래서 여기 try 가 없다 — try 를 두면
+    #   "주소 실패를 여기서 처리한다" 는 신호가 되고, 그 순간 어댑터 쪽 저하 운전이
+    #   느슨해진다. 저하는 어댑터의 계약이지 부르는 쪽의 관용이 아니다 (C-3.3 · W0-17).
+    from adapters.juso import resolve as resolve_address
+
+    located = resolve_address(lat=lat, lng=lng)
+    if located.status in ("failed", "disabled") and located.reason:
+        log.info("[FX-5] stream=%s 주소 %s — %s",
+                 stream_monitor_id, located.status, located.reason[:120])
 
     #: 이 호출에서 (event_type)별로 이미 올린 스냅샷. **종류당 1장** — 계약이 "1장"이라
     #: 적었고, 검출마다 올리면 배치 하나가 저장소를 수십 번 두드린다.
@@ -218,6 +254,10 @@ def publish_detections(
                     bbox=det.get("bbox"),
                     snapshot_path=path,
                     mission_id=mission_id,
+                    lat=lat,
+                    lng=lng,
+                    address=located.address,
+                    address_status=located.status,
                 )
             except InvalidEventInput as exc:
                 # 계약 위반은 **이 배치만** 실패시킨다. 스트림 전체를 죽이지 않는다.

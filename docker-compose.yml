@@ -41,6 +41,10 @@ services:
       # (D-270 쓰기 안전 3원칙).
       - ./scripts:/repo/scripts:ro
       - ./backend:/repo/backend:ro
+      # ★ 문서·증거도 읽을 수 있어야 한다 (2026-09-01). 시험 중에는 저장소 등재부
+      #   (DA-05 sources.yaml · decisions.yaml)와 코드가 갈렸는지 대조하는 것이 있고,
+      #   마운트가 없으면 그 시험은 **판정 불가로 skip 된다** — skip 은 통과가 아니다.
+      - ./docs:/repo/docs:ro
     ports:
       - "0.0.0.0:8000:8000"
     environment:
