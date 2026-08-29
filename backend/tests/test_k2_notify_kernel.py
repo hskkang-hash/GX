@@ -477,7 +477,15 @@ class KernelPublicSurfaceTest(TestCase):
     #: DA-04 §2 K2 의 "공개 면" 열 그대로.
     #: ★ 2026-09-20 — `notice_false_positive` 가 늘었다 (P-16 오탐 ③).
     SURFACE = ["resolve_recipients", "send", "suppress", "list_deliveries",
-               "notice_false_positive"]
+               "notice_false_positive",
+               # ★ P-20 ① (2026-09-22) — 알림 규칙 쓰기 면. 개발 DB 의 규칙이 **0건**
+               #   이어서 `send` 가 언제나 `NoRecipients` 를 던지던 자리를 연다.
+               #   DA-04 §2 K2 표와 `kernels/k2_notify/__init__.py` 를 같은 커밋에서 고쳤다.
+               "save_notification_rule",
+               # ★ 차선 D (2026-09-04) — 재알림 N분. `WRITE_NO_PROBE` 에
+               #   선등재된 이름을 그대로 쓴다. DA-04 §2 K2 표와
+               #   `kernels/k2_notify/__init__.py` 를 같은 커밋에서 고쳤다.
+               "renotify"]
 
     def test_public_surface_matches_da04(self) -> None:
         from kernels import k2_notify

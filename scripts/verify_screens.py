@@ -41,7 +41,15 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import yaml
+try:
+    import yaml
+except ImportError:                                    # pragma: no cover — 환경 미비
+    #: ★ [실측 2026-09-23 · 차선 C] 이 판정기를 `gx-shell` 안에서 돌리면
+    #:   `ModuleNotFoundError: yaml` 로 **역추적만 뱉고 죽었다.** 그 화면은
+    #:   「빨강」과 구별되지 않는다 — 차선 C 가 실제로 그것을 「검증기만 판정 불가」로
+    #:   읽었고, 그 사이 호스트에서는 **진짜 빨강**(파일 이름 규약)이 나 있었다.
+    #:   못 잰 것은 **못 잰다고 말한다**(exit 2 · D-301). 이 판정기는 호스트에서 돈다.
+    yaml = None
 
 ROOT = Path(__file__).resolve().parent.parent
 SCREENS = ROOT / "docs" / "agent" / "evidence" / "D-347" / "screens"
@@ -64,16 +72,51 @@ META_FIELDS = ("route", "user_role", "scenario", "captured_at", "data_source")
 # 술어 — 파일 없이 시험할 수 있게 순수 함수로
 # ═══════════════════════════════════════════════════════════════════════════
 
-def expected_path(entry: dict) -> str:
-    """규약 ⑤ — `<scenario>/<role>/<route>.png`.
+def route_stem(route: str) -> str:
+    """라우트에서 **파일 이름의 뿌리**를 만든다 — 질의문자열은 뺀다.
 
-    시나리오의 단계(`E2E-1/8`)에서 앞부분만 쓴다. 경로의 `/` 는 `_` 로 눕힌다 —
-    경로를 그대로 디렉터리로 만들면 한 화면이 트리 깊숙이 숨는다.
+    ★ [실측 2026-09-23 · 차선 C] 질의를 그대로 파일명에 넣던 규칙이 두 곳에서 깨졌다:
+      ⓐ `?` 는 윈도우 마운트에서 **저장이 죽는다** (`/dsm/events?preset=mine`)
+      ⓑ 같은 라우트를 다른 단언으로 두 번 찍으면 **뒤엣것이 앞엣것을 덮는데
+        인덱스에는 두 줄이 남는다** — 인덱스가 거짓말을 한다
+    """
+    path = str(route or "").split("?", 1)[0]
+    return path.strip("/").replace("/", "_") or "root"
+
+
+def route_stems(route: str) -> tuple[str, ...]:
+    """받아 줄 뿌리 둘 — **날 것**과 **id 를 눕힌 것**.
+
+    ★ [실측 2026-09-23] 상세 화면의 라우트에는 씨앗 id 가 박힌다(`/dsm/events/4796`).
+      그 id 는 실행마다 바뀌므로 파일 이름에 넣으면 **한 장 찍을 때마다 새 파일**이 남고,
+      넣지 않으면 뿌리가 라우트와 안 맞는다. 둘 다 받아 준다:
+          날 것    dsm_events_4796        (지금까지의 16장이 이 모양이다)
+          눕힌 것  dsm_events_id_…        (변하는 자리를 `id` 로 눕힌다)
+      ⚠ 「아무 이름이나」가 아니다. 숫자 자리 **하나만** 눕힌다.
+    """
+    import re as _re
+
+    raw = route_stem(route)
+    laid = _re.sub(r"(^|_)\d+(?=_|$)", r"\1id", raw)
+    return (raw,) if laid == raw else (raw, laid)
+
+
+def expected_prefix(entry: dict) -> tuple[str, ...]:
+    """규약 ⑤(정정) — `<scenario>/<role>/<route 뿌리>…png`.
+
+    ★ 왜 「같아야 한다」에서 「**로 시작해야 한다**」로 늦췄나 [2026-09-23]:
+      한 라우트가 화면 여러 장을 낼 수 있다(프리셋 넷 · 상세의 판정 패널).
+      그때 파일 이름이 갈리지 않으면 **덮어쓰기**가 나고, 덮어쓰기는 인덱스와
+      파일이 조용히 갈라지는 가장 흔한 길이다. 그래서 뒤에 붙는 꼬리표를 허용한다.
+
+    ★ 그러나 **뿌리는 여전히 라우트에서 나온다.** 이름을 완전히 자유롭게 두면
+      「이 그림이 어느 화면인지」를 파일만 보고 못 판정하게 되고, 그 순간 이 판정기가
+      할 일이 없어진다. 늦추되 **끈은 남긴다.**
     """
     scenario = str(entry.get("scenario", "")).split("/")[0]
     role = str(entry.get("user_role", ""))
-    route = str(entry.get("route", "")).strip("/").replace("/", "_") or "root"
-    return "%s/%s/%s.png" % (scenario, role, route)
+    return tuple("%s/%s/%s" % (scenario, role, stem)
+                 for stem in route_stems(entry.get("route", "")))
 
 
 def parse_when(value) -> datetime | None:
@@ -100,9 +143,11 @@ def judge_entry(entry: dict, *, exists, run_log: dict, tolerance_min: int) -> li
         return out
     if not exists(rel):
         out.append("%s: 파일이 없다 — 없는 캡처를 적으면 그것도 문서다" % rel)
-    want = expected_path(entry)
-    if rel != want:
-        out.append("%s: 자리가 규약과 다르다 — «%s» 여야 한다 (<scenario>/<role>/<route>.png)"
+    wants = expected_prefix(entry)
+    if not (rel.endswith(".png")
+            and any(rel == w + ".png" or rel.startswith(w + "_") for w in wants)):
+        want = wants[0]
+        out.append("%s: 자리가 규약과 다르다 — «%s[_꼬리표].png» 여야 한다 (<scenario>/<role>/<route 뿌리>)"
                    % (rel, want))
 
     when = parse_when(entry.get("captured_at"))
@@ -157,8 +202,24 @@ def self_test() -> int:
         ("captured_at 이 시각이 아니면 잡는다",
          any("날짜·시각이 아니다" in x for x in p(dict(good, captured_at="어제")))),
         ("경로의 / 는 _ 로 눕힌다",
-         expected_path({"scenario": "E2E-2/3", "user_role": "ADMIN",
-                        "route": "/events/1/clip"}) == "E2E-2/ADMIN/events_1_clip.png"),
+         expected_prefix({"scenario": "E2E-2/3", "user_role": "ADMIN",
+                          "route": "/events/1/clip"})[0] == "E2E-2/ADMIN/events_1_clip"),
+        # ★ 2026-09-23 출생 표본 — 아래 셋이 이번 턴에 실제로 깨진 자리다
+        ("★ 질의문자열은 파일 이름에서 뺀다 (윈도우에서 `?` 는 저장이 죽는다)",
+         not p(dict(good, route="/dashboard?preset=mine",
+                    file="E2E-1/OPERATOR/dashboard_preset_mine.png"),
+               exists=lambda r: True)),
+        ("★ 한 라우트가 두 장을 내면 꼬리표로 갈린다 (덮어쓰기가 인덱스를 거짓말로 만든다)",
+         not p(dict(good, file="E2E-1/OPERATOR/dashboard_verdict_panel.png"),
+               exists=lambda r: True)),
+        ("★ 상세의 씨앗 id 는 `id` 로 눕혀도 받는다",
+         not p(dict(good, route="/events/4796", scenario="E2E-1/8",
+                    file="E2E-1/OPERATOR/events_id_verdict_panel.png"),
+               exists=lambda r: True)),
+        ("그래도 남의 라우트 이름을 붙이면 잡는다 — 끈은 남는다",
+         any("자리가 규약과 다르다" in x
+             for x in p(dict(good, file="E2E-1/OPERATOR/handover_note.png"),
+                        exists=lambda r: True))),
     ]
     bad = 0
     for label, ok in checks:
@@ -176,6 +237,13 @@ def main() -> int:
 
     if args.self_test:
         return self_test()
+
+    if yaml is None:
+        # ★ 판정 규칙 자체는 yaml 없이도 시험된다(위 `--self-test` 는 순수 함수만 쓴다).
+        #   인덱스를 못 읽는 것은 **판정 불가**이지 통과도 실패도 아니다.
+        print("[SCREENS] PyYAML 이 없다 — 인덱스를 못 읽는다. **판정 불가**(exit 2). "
+              "이 판정기는 호스트에서 돈다 (컨테이너 `gx-shell` 에는 PyYAML 이 없다 [실측])")
+        return 2
 
     if not INDEX.exists():
         print("[SCREENS] 인덱스가 없다: %s — 판정이 아니라 틀이 없는 것이다" % INDEX)

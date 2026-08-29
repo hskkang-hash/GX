@@ -170,8 +170,16 @@ API_CONTRACT_PROMOTE_ERROR_STATUS = (
 #
 #   그래서 승격을 **경로로 좁혀** 먼저 건다. 전역 플래그가 꺼져 있어도 이 경로들은 승격된다.
 #   되돌리기는 이 목록을 비우는 것이다.
+#   ★ [A2 접두 · 2026-09-04] **한 번에 하나씩 넓힌다.** 이번 턴에 `/api/stream-monitors/`
+#     를 더했다(라우트 28건 · 화면이 실제로 부르는 호출 3건 · 시험 2파일 [실측]).
+#     왜 하나씩인가 — 전역으로 켜면 652자리의 거절 모양이 **같은 순간에** 바뀌고,
+#     그때 깨지는 화면이 어느 접두 때문인지 아무도 못 가른다. 되돌리기도 전부냐 전무냐가 된다.
+#     왜 이 접두인가 — **화면이 지나가는 자리**여서다. 다음 후보 `/api/handover/`(25건)는
+#     지금 화면이 한 번도 부르지 않아 켜도 지나가는 것이 없다(확인이 안 된다).
 API_CONTRACT_PROMOTE_PATHS = tuple(
-    p for p in os.environ.get("API_CONTRACT_PROMOTE_PATHS", "/api/dsm/").split(",") if p.strip()
+    p for p in os.environ.get(
+        "API_CONTRACT_PROMOTE_PATHS", "/api/dsm/,/api/stream-monitors/").split(",")
+    if p.strip()
 )
 
 CORS_ALLOWED_ORIGINS = [

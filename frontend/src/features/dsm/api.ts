@@ -17,8 +17,14 @@ export const dsmEndpoint = {
   dashboardFrame: '/api/dsm/dashboard/frame',
   linkState: '/api/dsm/dashboard/link-state',
   events: '/api/dsm/events',
+  /** W1 요약 한 줄 — 오탐 N 의 원천(K6 `false_positive_rate`)을 **부르는 첫 화면**. */
+  eventsSummary: '/api/dsm/events/summary',
   eventDetail: (id: number | string) => `/api/dsm/events/${id}`,
   notify: (id: number | string) => `/api/dsm/events/${id}/notify`,
+  /** 진위 판정(오탐/실제) — U1 #11 이 누를 자리가 없던 그 문 (D-414). */
+  review: (id: number | string) => `/api/dsm/events/${id}/review`,
+  /** 대응 진행 한 칸 (D-399). **판정과 다른 축이다** — 버튼도 따로 둔다. */
+  response: (id: number | string) => `/api/dsm/events/${id}/response`,
   deliveries: '/api/dsm/deliveries',
 } as const;
 
@@ -46,12 +52,22 @@ function unwrap<T>(res: any): T {
   const bodyStatus: number | undefined =
     typeof body?.status_code === 'number' ? body.status_code : undefined;
 
+  // ★ [차선 D · 2026-09-04] 사유가 `detail` 로 오는 자리가 있다.
+  //   `message` 만 읽던 동안 404 의 사유가 **화면에 닿지 않았다** — 사용자는
+  //   「요청이 실패했습니다 (404)」만 보고, 그것이 「없다」인지 「못 가져왔다」인지 모른다.
+  //   둘을 가르는 문장이 서버에 있는데 화면이 안 읽는 것은 D-284 의 조용한 판이다.
+  const detail: string | undefined =
+    typeof body?.detail === 'string' ? body.detail : undefined;
+
   if (httpStatus >= 400) {
-    throw new DsmApiError(body?.message ?? `요청이 실패했습니다 (${httpStatus})`, httpStatus);
+    throw new DsmApiError(
+      body?.message ?? detail ?? `요청이 실패했습니다 (${httpStatus})`,
+      httpStatus,
+    );
   }
   if (bodyStatus !== undefined && bodyStatus >= 400) {
     throw new DsmApiError(
-      body?.message ?? `요청이 거절되었습니다 (${bodyStatus})`,
+      body?.message ?? detail ?? `요청이 거절되었습니다 (${bodyStatus})`,
       bodyStatus,
     );
   }

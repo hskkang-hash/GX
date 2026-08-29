@@ -20,6 +20,7 @@ from kernels.k1_event.exceptions import (
     ResponseTransitionNeedsManager,
     ResponseTransitionNeedsReason,
 )
+from kernels.k1_event.field_reply import list_field_replies, reply_from_field
 from kernels.k1_event.response_flow import (
     advance_response,
     close_as_false_positive,
@@ -53,6 +54,14 @@ __all__ = [
     #   공개 면에 두는 이유는 격리 대장(WRITE_PROBES)이 커널 `__all__` 을 훑기 때문이다:
     #   면에서 감추면 쓰기 면이 **대장 밖에서** 자란다(D-290 · D-301).
     "close_as_false_positive",
+    # ★ 차선 D (2026-09-04) M3 현장 회신 — U3 #9. 공개 면에 두는 이유는
+    #   격리 대장(WRITE_PROBES)이 커널 `__all__` 을 훑기 때문이다:
+    #   면에서 감추면 쓰기 면이 **대장 밖에서** 자란다(D-290 · D-301).
+    "reply_from_field",
+    # ★ 읽기도 공개 면에 둔다 — App 이 서브모듈을 직접 가져오면 계층 검사가 멈춘다
+    #   (D-278 · DA-04 §1-4). 실제로 그렇게 짰다가 5개 시험이 한꺼번에 빨개졌고,
+    #   그 빨강이 옳다: 커널 로직이 App 으로 새는 첫 걸음이 서브모듈 import 다.
+    "list_field_replies",
     # 나가는 값의 모양
     "EventView",
     "RecordResult",

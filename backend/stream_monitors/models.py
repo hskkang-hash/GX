@@ -178,6 +178,18 @@ class DetectionEvent(BaseModelWithGroup):
         #:   계약 문서(docs/contracts/detection-event.md §열거값)와 W2-3 색 규칙을
         #:   같은 커밋에서 함께 고쳤다 — 문서와 코드가 갈리면 어느 쪽이 계약인지 모른다.
         FLOOD = "flood", "침수"
+        #: ★ P-20 ③ 으로 신설 (2026-09-22). **탐지가 아니라 시스템의 상태**다.
+        #:   죽은 카메라·저장 용량은 `scripts/ops_monitor.py` 안에만 있었고
+        #:   (온보딩 U1 #3 · U2 #19 · U5 #15 — 셋 다 「화면 없는 신호」), 운영 감시는
+        #:   크론이 읽는 자리이지 사람이 보는 화면이 아니다. 같은 신호를 이벤트로 내면
+        #:   W1 「시스템」 프리셋에서 **새 화면 없이** U5 가 본다.
+        #:
+        #:   ⚠ 이 둘은 AI 라벨에서 오지 않는다 — `LABEL_TO_EVENT_TYPE` 에 넣지 않는다.
+        #:     넣으면 AI 가 「카메라가 죽었다」를 검출했다고 말할 수 있게 된다.
+        #:   ⚠ 오탐률(U1)의 분모는 `event_type` 별로 갈리므로(D-294), 이 둘이 섞여
+        #:     탐지 유형의 오탐률을 흐리지 않는다 — 그것이 전용 타입을 만든 이유다.
+        CAMERA_DOWN = "camera_down", "카메라 무응답"
+        STORAGE_HIGH = "storage_high", "저장 용량 임계"
 
     class Severity(models.TextChoices):
         INFO = "info", "정보"

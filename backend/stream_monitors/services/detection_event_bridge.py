@@ -95,6 +95,14 @@ EVENT_TYPE_TO_SEVERITY: dict[str, str] = {
     "intrusion": "warning",
     "person": "info",
     "vehicle": "info",
+    # ★ P-20 ③ 신설 (2026-09-22) — **시스템 이벤트**. 잠정값 `warning` 의 근거:
+    #   카메라 한 대가 조용한 것도, 용량이 임계를 넘은 것도 **사람이 가서 봐야 하는
+    #   일**이지만 재난 그 자체는 아니다. `critical` 로 두면 ISA-101 의 빨강이
+    #   재난이 아닌 것에 쓰이고, 그러면 빨강이 무뎌진다.
+    #   ⚠ 이 값이 `k5_trust.severity_for` 의 기본값이 된다 — 테넌트가 설정 화면에서
+    #     올리고 내릴 수 있다(무재기동 반영). 여기 적는 것은 **출발점**이다.
+    "camera_down": "warning",
+    "storage_high": "warning",
 }
 
 #: 이 값 아래의 검출은 이벤트로 만들지 않는다.

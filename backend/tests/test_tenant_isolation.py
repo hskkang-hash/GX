@@ -1812,6 +1812,65 @@ def _zone_save_with_foreign_camera(test, scope, stream):
                      camera_ids=[stream.pk])
 
 
+def _k2_send_for(test, scope, event_id):
+    """★ 2026-09-22 (P-20) — **발송이 대장에 처음 들어온다.**
+
+    이 자리는 이번 턴에 판별기를 고치고 나서야 보였다. 직전까지 `_writes_to_db` 가
+    `send` 를 **읽기로 봤다** — 행을 만드는 것은 사설 헬퍼 `_send_one` 이기 때문이다.
+    그런데 그날 시드는 `send` 하나로 **발송 이력 120행**을 만들었다 [실측].
+
+    재는 것: **남의 이벤트를 내 스코프로 발송시킬 수 있는가.** 열려 있으면 남의 테넌트
+    사건이 우리 수신자에게 문자로 가고, 그것은 읽기 격리를 온전히 지키고도 새는 자리다.
+    ⚠ 이 쓰기가 만드는 행은 `DeliveryRecord` 다 — 아래 「고치기」 시험은 이벤트 행이
+      그대로인지까지만 본다. 발송 이력 쪽 대조는 `tests/test_e_p20_seed.py` 가 잰다.
+    """
+    from kernels.k2_notify import send
+
+    return send(scope=scope, event_id=event_id)
+
+
+def _k1_reply_from_field(test, scope, event_id):
+    """★ 2026-09-04 (차선 D · M3 현장 회신) — 면이 열렸으므로 대장도 늘었다.
+
+    재는 것: **남의 이벤트에 현장 회신을 남길 수 있는가.** 남으면 남의 관제 기록에
+    우리 문장이 섞이고, 그 기록은 대외 보고의 근거가 된다.
+    ⚠ 이 쓰기가 만드는 행은 감사 표(`logger.AuditLogs`)다 — 아래 「고치기」 시험은
+      이벤트 행이 그대로인지까지만 본다. 회신 쪽 대조는 `tests/test_d_mobile_field.py`.
+    ★ 이 줄이 `WRITE_NO_PROBE` 에서 여기로 **옮겨 온** 자리다(2026-09-22 선등재 → 09-04 개통).
+    """
+    from kernels.k1_event import reply_from_field
+
+    return reply_from_field(scope=scope, event_id=event_id, text="격리 probe 현장 회신")
+
+
+def _k2_renotify(test, scope, event_id):
+    """★ 2026-09-04 (차선 D · 재알림 N분) — 면이 열렸으므로 대장도 늘었다.
+
+    재는 것: **남의 이벤트로 남의 수신자에게 다시 알릴 수 있는가.**
+
+    ★ 원 발송을 파이프라인 스코프로 **먼저 심는다.** 안 심으면 `renotify` 가
+      「원 발송이 없다」로 먼저 돌아서서 **문지기에 닿기 전에** 끝난다 — 그러면 이
+      probe 는 아무것도 재지 않으면서 초록이 된다(D-277 의 양성 대조가 필요한 이유).
+    """
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from common.tenant_scope import TenantScope
+    from kernels.k2_notify import Recipient, renotify, send
+
+    #: ★ 수신자를 **손으로 준다.** 규칙에서 뽑게 두면 이 픽스처의 테넌트에 규칙이 없어
+    #:   `NoRecipients` 가 먼저 나고, 그러면 이 probe 는 **문지기에 닿기도 전에** 죽는다
+    #:   [실측 2026-09-04 — 처음 그렇게 짰다가 「거부가 아니라 NoRecipients」로 빨개졌다].
+    #:   그 빨강은 격리 실패가 아니라 **시험이 부서진 것**이고, 둘은 구별되지 않는다(D-366).
+    send(scope=TenantScope.system(reason="격리 probe — 재알림의 원 발송 심기"),
+         event_id=event_id,
+         recipients=(Recipient(user_id=test.user_b.pk, display_name="iso-probe",
+                               address="iso-probe@invalid", channel="log", rule_id=0),))
+    return renotify(scope=scope, event_id=event_id, after_minutes=1,
+                    now=timezone.now() + timedelta(minutes=2))
+
+
 #: ★ 쓰기 방향 대장. **여기가 정본이다.**
 #: 커널에 쓰기 공개 함수가 늘면 아래 `test_write_probe_registry_covers_kernel_writes`
 #: 가 멈춘다 — "새 쓰기 면을 만들고 격리 시험은 안 늘리는" 상태를 막는다.
@@ -1849,6 +1908,26 @@ WRITE_PROBES: tuple[WriteProbe, ...] = (
         positive=_k1_close,
     ),
     WriteProbe(
+        label="K2.send → 남의 이벤트를 내 스코프로 발송시키기 (P-20 · 판별기 정정으로 드러남)",
+        kernel_callable="kernels.k2_notify.send",
+        attempt=_k2_send_for,
+        positive=_k2_send_for,
+        model=("stream_monitors", "DeliveryRecord"),
+    ),
+    WriteProbe(
+        label="K1.reply_from_field → 남의 이벤트에 현장 회신 남기기 (차선 D · M3)",
+        kernel_callable="kernels.k1_event.reply_from_field",
+        attempt=_k1_reply_from_field,
+        positive=_k1_reply_from_field,
+    ),
+    WriteProbe(
+        label="K2.renotify → 남의 이벤트로 남의 수신자에게 재알림 (차선 D)",
+        kernel_callable="kernels.k2_notify.renotify",
+        attempt=_k2_renotify,
+        positive=_k2_renotify,
+        model=("stream_monitors", "DeliveryRecord"),
+    ),
+    WriteProbe(
         label="ZONE.save_zone → 남의 카메라를 내 위험구역에 붙이기",
         kernel_callable="stream_monitors.services.zones.save_zone",
         attempt=_zone_save_with_foreign_camera,
@@ -1864,6 +1943,46 @@ WRITE_NO_PROBE: dict[str, str] = {
     "kernels.k1_event.subscribe":
         "구현 전 — `NotImplementedYet` 을 던진다. 구독의 테넌트 소유 판정이 선행 "
         "(D-287 · W2-2 이후 별 티켓). 구현되는 커밋에서 이 줄을 지우고 probe 를 넣는다.",
+
+    # ─────────────────────────────────────────────────────────────────────
+    # ★ 2026-09-22 · **선등록** — 차선(C·D·E2)이 이번 턴에 여는 쓰기 면 여섯.
+    #   조율자가 **차선 착수 전에 한 번에** 적는다. 왜 미리 적나:
+    #     · P-8 은 「탐침 없는 쓰기 면 금지」다. 면을 열고 나서 대장을 늘리면
+    #       **면이 먼저 서고 잣대가 뒤따르는** 순서가 되고, 그 사이가 열린 자리다.
+    #     · 미리 적어 두면 차선은 면을 여는 그 커밋에서 **이 줄을 지우고 probe 를
+    #       넣어야** 한다 — 지우지 않으면 `stale` 로 이 파일이 빨개진다.
+    #   ⚠ 이름은 **예정**이다. 차선이 다른 이름으로 열면 **그 커밋에서 이름을 고쳐**
+    #     남긴다 — 지우고 새로 적는 것이 아니라 고쳐 적는다(대장 항목은 지우지 않는다).
+    #   ⚠ 여기 있는 것은 면제가 아니라 **등재**다. 사유 칸이 그것을 말한다.
+    # ─────────────────────────────────────────────────────────────────────
+    "kernels.k1_event.write_handover_note":
+        "선등재(차선 C · 인계 메모 /handover 본문) — 아직 없다. 재야 할 것: "
+        "**남의 이벤트에 인계 메모를 붙일 수 있는가.** 붙으면 남의 관제 기록에 "
+        "내 글이 남고, 그것은 읽기 격리가 온전해도 격리가 아니다.",
+    "kernels.k1_event.record_dispatch":
+        "선등재(차선 C · W2 상세 전파 기록) — 아직 없다. 재야 할 것: **남의 이벤트를 "
+        "전파했다고 적을 수 있는가.** 전파 기록은 대외 보고의 근거가 되므로 "
+        "남의 테넌트 사건에 우리 이름이 남으면 사실 자체가 오염된다.",
+    "kernels.k2_notify.save_notification_rule":
+        "**면이 열렸다** (2026-09-22 · 차선 E2 · P-20 ①). 재는 것은 이미 서 있다 — "
+        "`tests/test_e_p20_seed.py` 가 음성(A 가 B 의 규칙을 고치려 하면 거절 + 행이 "
+        "안 바뀐다)과 양성(제 규칙은 고친다)을 함께 잰다. **여기(WRITE_PROBES)로 옮기려면 "
+        "`victim_kind=\"rule\"` 갈래**가 먼저 필요하다 — 지금 러너는 「스트림에 심기」와 "
+        "「이벤트 고치기」 둘만 안다. 그 갈래를 만드는 커밋에서 이 줄을 지운다. "
+        "★ 사유가 「아직 안 만들었다」에서 「다른 파일이 잰다」로 **바뀐 것**이 이 줄의 "
+        "이력이다 — 지우지 않고 사유를 바꾼다(대장 규약).",
+    "stream_monitors.services.patrol.save_patrol_schedule":
+        "선등재(차선 E2 · 평상 운영 ② 순회 설정) — 아직 없다. 재야 할 것: **남의 "
+        "카메라를 내 순회에 넣을 수 있는가.** `save_zone` 과 같은 모양의 구멍이고, "
+        "그 면은 D-366 에서 이미 한 번 이 대장을 늘리게 했다.",
+    "stream_monitors.services.admin_ui.save_camera_settings":
+        "선등재(차선 C · UX-02 관리 UI 쓰기 면 — 카메라·수신자·임계값) — 아직 없다. "
+        "재야 할 것: **남의 카메라 설정·임계값을 화면에서 바꿀 수 있는가.** 임계값은 "
+        "「무엇이 이벤트가 되는가」라, 남의 것을 바꾸면 남의 관제가 눈이 먼다.",
+    "kernels.k2_notify.save_alert_destination":
+        "선등재(차선 E2 · OPS-10 경보 발송처) — 아직 없다. 재야 할 것: **남의 "
+        "테넌트 경보를 내 발송처로 돌릴 수 있는가.** 돌아가면 남의 재난 경보가 "
+        "우리에게 오고 **정작 그쪽에는 안 간다** — 조용한 사고 중 가장 나쁜 형태다.",
 }
 
 
@@ -2058,7 +2177,13 @@ class TenantIsolationWriteTest(TenantFixtureMixin, TestCase):
         #   쓰기 문턱이 커널 밖에도 생겼기 때문이다. 훑는 범위를 안 넓히면 대장은
         #   **자기가 안 보는 곳에서 늘어난 쓰기 면을 초록으로 통과시킨다** —
         #   그것이 D-301(검사 못함 ≠ 0건 검사)의 이 파일 판이다.
-        for package in ("kernels.k1_event", "stream_monitors.services.zones"):
+        # ★ 2026-09-22 (P-20 · 차선 E2 가 잡은 것) — `kernels.k2_notify` 를 더한다.
+        #   훑는 곳이 둘뿐인 동안 **K2 의 쓰기 공개 면은 대장 밖에서 자랐다**:
+        #   `send` 는 발송 이력 행을 만들고, `save_notification_rule` 은 이번 턴에
+        #   새로 열렸다. 보는 곳만 세고 「미등재 0건」이라 말하는 것이 D-301 의 이 파일 판이다.
+        #   ⚠ 이 한 줄을 더하면 대장이 늘어난다 — 그것이 이 줄의 목적이다.
+        for package in ("kernels.k1_event", "kernels.k2_notify",
+                        "stream_monitors.services.zones"):
             module = importlib.import_module(package)
             for name in getattr(module, "__all__", []):
                 func = getattr(module, name, None)
@@ -2092,14 +2217,49 @@ class TenantIsolationWriteTest(TenantFixtureMixin, TestCase):
         틀리면 위의 단언이 조용히 통과한다 — 그래서 소스 본문도 함께 본다.
         """
         import inspect
+        import re
 
-        wrapped = getattr(func, "__wrapped__", func)
-        try:
-            src = inspect.getsource(wrapped)
-        except (OSError, TypeError):
-            return False
         markers = (".create(", ".save(", ".update(", ".delete(", "NotImplementedYet")
-        return any(m in src for m in markers)
+
+        def _src(fn):
+            try:
+                return inspect.getsource(getattr(fn, "__wrapped__", fn))
+            except (OSError, TypeError):
+                return ""
+
+        src = _src(func)
+        if any(m in src for m in markers):
+            return True
+
+        # ★ 2026-09-22 (P-20) — **한 단계 위임까지 따라간다.**
+        #
+        #   [실측] 이 판별기는 `kernels.k2_notify.send` 를 **읽기로 봤다.** 그 함수는
+        #   행을 만들지 않고 `_send_one()` 에게 시키며, 표식은 그 안에 있다. 같은 이유로
+        #   `suppress`·`notice_false_positive` 도 안 보였다 — 그런데 그날 시드가
+        #   `send` 하나로 **발송 이력 120행**을 만들었다. 즉 대장은 **자기가 안 보는
+        #   곳에서 늘어난 쓰기 면을 초록으로 통과**시키고 있었다(D-301 의 이 파일 판).
+        #
+        #   왜 한 단계만인가 — 끝까지 따라가면 결국 ORM 이 나오므로 **모든 함수가
+        #   쓰기**가 된다. 한 단계는 「공개 면이 자기 모듈의 사설 헬퍼에게 시킨다」는
+        #   실제 모양을 덮으면서, 판별을 뜻 있게 남긴다. 두 단계가 필요한 자리가
+        #   나오면 그때 늘린다 — **그 사례를 보고 나서** 늘린다.
+        module = inspect.getmodule(getattr(func, "__wrapped__", func))
+        if module is None:
+            return False
+        # ★ 2026-09-04 (차선 D 가 잡은 남은 반쪽) — **다른 모듈에서 들여온 이름**도 본다.
+        #   [실측] `kernels.k2_notify.renotify` 는 `send()` 하나로 `DeliveryRecord` 행을
+        #   만드는데 판별기는 그것을 **읽기로 봤다**: 09-22 판은 같은 모듈의 `_` 헬퍼만
+        #   따라갔고, `send` 는 `_` 로 시작하지 않으며 다른 모듈에서 들어온 이름이다.
+        #   선등재가 없었으면 **조용히 통과했을 자리**다.
+        #   → 부르는 이름을 **그 모듈의 이름 공간에서** 찾는다(들여온 것 포함).
+        #   ⚠ 여전히 **한 단계만**이다 — 끝까지 따라가면 결국 ORM 이 나오고,
+        #     그러면 모든 함수가 쓰기가 된다.
+        for name in set(re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*\(", src)):
+            helper = getattr(module, name, None)
+            if callable(helper) and not inspect.isclass(helper):
+                if any(m in _src(helper) for m in markers):
+                    return True
+        return False
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -45,7 +45,7 @@ class DetectionEvent(BaseModelWithGroup):   # group 격리 필수
 
 | 필드 | 값 | 비고 |
 |---|---|---|
-| `event_type` | `person` `vehicle` `fire` `smoke` `intrusion` `sos` `flood` | 추가 시 이 문서와 W2-3 색 규칙을 함께 갱신. `flood` 는 **D-294 로 신설**(F-02 침수·수위) |
+| `event_type` | `person` `vehicle` `fire` `smoke` `intrusion` `sos` `flood` `camera_down` `storage_high` | 추가 시 이 문서와 W2-3 색 규칙을 함께 갱신. `flood` 는 **D-294 로 신설**(F-02 침수·수위) · `camera_down` `storage_high` 는 **P-20 ③ 으로 신설**(2026-09-22) — **탐지가 아니라 시스템 상태**다. AI 라벨에서 오지 않으며 `LABEL_TO_EVENT_TYPE` 에 없다 |
 | `severity` | `info` `warning` `critical` | `critical` 만 빨강 (ISA-101). 다른 용도로 빨강 금지 |
 | `status` | `new` `confirmed` `rejected` `closed` | 수명주기. 화면 정렬: `critical`+`new` 는 최상단 고정 |
 | `verdict` | `null` `confirmed` `rejected` | **사람의 판정. 종료가 덮지 않는다** (D-293 신설). 오탐률의 분모·분자는 `status` 가 아니라 이 칸에서 나온다 |

@@ -95,7 +95,13 @@ def commits() -> list[tuple[str, str, str, list[str]]]:
 def check(rows, known: set[str]) -> list[str]:
     problems: list[str] = []
     for sha, subject, body, files in rows:
-        numbers = {f"D-{n}" for n in D_NUMBER.findall(body)}
+        # ★ [실측 2026-09-04] **제목도 읽는다.** 직전까지 `body` 만 봤고, 그래서
+        #   `feat(D-416): …` 처럼 **제목에 번호를 단 커밋**을 「번호가 하나도 없다」로
+        #   잡았다(커밋 1da8468). 이 저장소의 커밋 규약은 번호를 **제목에** 단다 —
+        #   즉 내력은 끊기지 않았고 **판정기의 눈이 좁았다.**
+        #   ⚠ 느슨해지는 것이 아니다: 제목에도 본문에도 번호가 없으면 여전히 잡힌다
+        #     (자기시험 셋째 갈래가 그 자리이고, 아래에 제목 갈래를 하나 더 박았다).
+        numbers = {f"D-{n}" for n in D_NUMBER.findall(f"{subject}\n{body}")}
         ghosts = sorted(n for n in numbers if n not in known)
         if ghosts:
             problems.append(
@@ -126,6 +132,15 @@ def self_test() -> int:
          [("ccc", "docs: z", "본문에 번호 없음", ["docs/agent/decisions.yaml"])], True),
         ("결정문을 안 고친 커밋은 번호가 없어도 된다",
          [("ddd", "chore: w", "정리", ["backend/x.py"])], False),
+        # ★ 2026-09-04 출생 표본 — **제목에만 번호가 있는 커밋**(이 저장소의 규약).
+        #   직전 판은 이것을 「번호 없음」으로 잡았고, 그 빨강은 내력의 문제가 아니라
+        #   판정기의 눈이었다.
+        ("★ 제목에만 번호가 있어도 내력은 이어진다",
+         [("eee", "feat(D-299): x", "본문에는 번호가 없다",
+           ["docs/agent/decisions.yaml"])], False),
+        ("그래도 제목·본문 어디에도 없으면 잡는다",
+         [("fff", "feat: 번호 없음", "본문도 없다",
+           ["docs/agent/decisions.yaml"])], True),
     )
     bad = 0
     for label, rows, should_fail in cases:
@@ -137,7 +152,7 @@ def self_test() -> int:
     if bad:
         print(f"[TRACE] 자기시험 {bad}건 실패 — 이 판정기는 눈이 멀었다")
         return 1
-    print(f"[TRACE] 자기시험 {len(cases)}건 통과 (양성 2 · 음성 2)")
+    print(f"[TRACE] 자기시험 {len(cases)}건 통과 (양성 3 · 음성 3)")
     return 0
 
 

@@ -47,6 +47,12 @@ export interface EventRow {
   lat: number | null;
   lng: number | null;
   snapshot_path: string;
+  /**
+   * ★ 대응 진행 축 — `status`(탐지 판정)와 **다른 것을 묻는다** (D-399).
+   *   「사람이 어디까지 했나」다. 2026-09-21 에 목록 응답으로 나오기 시작했고,
+   *   그전까지 W1 「미처리」 프리셋을 **서버가 걸러 줄 수 없었다**(온보딩 U2 #2).
+   */
+  response_state: string;
 }
 
 export interface EventDetailView extends EventRow {
@@ -59,6 +65,35 @@ export interface EventDetailView extends EventRow {
   reviewed_by_id: number | null;
   reviewed_at: string | null;
   reject_reason: string;
+  /**
+   * ★ 갈 수 있는 다음 칸. **서버가 준다** — 화면이 전이표를 따로 들면
+   *   서버가 거절하는 버튼을 그리게 된다. 표는 서버에 하나만 둔다 (D-399).
+   */
+  allowed_next: string[];
+}
+
+/**
+ * W1 요약 한 줄 (`GET /api/dsm/events/summary`).
+ *
+ * ★ **비율만 받지 않는다 — 분자·분모를 함께 받는다** (D-271 ③ · D-301).
+ *   「오탐 4건」만 그리면 그것이 12건 중 4인지 400건 중 4인지 화면이 모른다.
+ * ★ `false_positive_rate` 가 `null` 인 것과 `0` 인 것은 **다른 사실**이다.
+ *   앞은 「잴 수 없다(판정 0건)」이고 뒤는 「재 봤더니 0이다」다. `measurable` 이 가른다.
+ */
+export interface EventSummary {
+  hours: number;
+  since: string;
+  until: string;
+  unhandled: number;
+  /** 세는 데에도 상한이 있다. 참이면 화면은 「N건」이 아니라 「N건 이상」이라 적는다. */
+  unhandled_capped: boolean;
+  unhandled_cap: number;
+  false_positive: number;
+  reviewed: number;
+  unreviewed: number;
+  closed_without_verdict: number;
+  false_positive_rate: number | null;
+  measurable: boolean;
 }
 
 export interface DeliveryRow {

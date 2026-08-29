@@ -43,7 +43,7 @@
 #   `dict[str, int]` 는 미래 임포트 없이도 동작한다. 데코레이터 쪽을 고치면
 #   `common/tenant_scope.py` 가 자기와 무관한 타입을 임포트하게 되고, 그것은
 #   **다음 사람이 이유를 못 읽는 코드**다.
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
@@ -68,6 +68,12 @@ def _scope(request) -> TenantScope:
     if user is None or not getattr(user, "is_authenticated", False):
         raise HttpError(401, "인증이 필요합니다.")
     return TenantScope.of(user)
+
+
+#: W1 요약 한 줄이 세는 「미처리」의 상한. **세는 데에도 상한이 있다** — 상한 없이
+#: 세면 이벤트가 쌓인 테넌트에서 요약 한 줄이 목록보다 무거워지고, 그러면 가장 급한
+#: 사람이 가장 오래 기다린다. 상한에 닿았다는 사실은 응답이 `unhandled_capped` 로 말한다.
+_UNHANDLED_CAP = 500
 
 
 def _panel_payload(panel) -> dict:
@@ -137,8 +143,10 @@ class DsmAPI:
         reason="F-05 「외부 App 이 이벤트 OpenAPI 하나로만 들어온다」 — 읽기 전용 조회"))
     @tenant_scoped(reason="F-09 이벤트 목록 — 남의 테넌트 이벤트가 보이면 격리 실패다")
     def events(self, request, since: datetime | None = None,
+               until: datetime | None = None,
                event_type: str | None = None, severity: str | None = None,
-               response_state: str | None = None, limit: int = 50):
+               response_state: str | None = None, mine: bool = False,
+               limit: int = 50):
         """F-09 이벤트 목록.
 
         ★ NFR-09-1 — 스트리밍 서버가 죽어도 이 목록은 200 이다.
@@ -148,10 +156,44 @@ class DsmAPI:
           그전까지 대응 축은 상세에만 있었고, 그래서 관제팀장의 「미처리 이벤트 확인」을
           서버가 걸러 줄 수 없었다(온보딩 48행 U2 #2). 화면이 목록을 받아 자기가 거르면
           **페이지 밖 이벤트는 없는 것이 된다** — DA-04 「필터는 전부 서버에서」.
+
+        ★ 2026-09-23 (차선 C · W1 프리셋 4종) — `until` 과 `mine` 이 더해졌다.
+
+          · `until` 은 「지난 12시간」의 **닫는 쪽**이다. `since` 만 있으면 창이
+            열려 있고, 열린 창은 「지난 12시간」이 아니라 「12시간 전부터 지금까지
+            그리고 미래」다. 두 끝을 다 받는 것이 창이다.
+
+          · `event_type` 은 **쉼표로 여럿**을 받는다(`camera_down,storage_high`).
+            「시스템」 프리셋이 그것을 쓴다 — 시스템 신호는 한 유형이 아니다.
+
+          · `mine=true` 는 **요청자 자신**으로 좁힌다. `reviewed_by_id=<숫자>` 를
+            질의로 받지 않는 이유: 그러면 화면이 남의 사번을 넣어 「그 사람이 무엇을
+            판정했나」를 물을 수 있고, 그것은 이 라우트가 계약한 것이 아니다.
+            좁히는 값을 **서버가 정한다** — 요청은 「나」라고만 말한다.
+            ⚠ 「내가 **판정**한 것」이다. 「내가 대응한 것」이 아니다 — 대응 전이의
+              행위자는 행이 아니라 감사에 있다(D-399 가 두 축을 가른 그 이유).
         """
-        rows = services.recent_events(scope=_scope(request), since=since,
-                                      event_type=event_type, severity=severity,
-                                      response_state=response_state, limit=limit)
+        scope = _scope(request)
+        #: ★ 유형 **여럿**을 받는다 (2026-09-23 · W1 「시스템」 프리셋).
+        #:   시스템 신호는 한 유형이 아니라 여럿이다(`camera_down` · `storage_high` ·
+        #:   앞으로 늘어날 것들). 화면이 유형마다 한 번씩 부르면 두 응답을 화면이 합치게
+        #:   되고, 합치는 순간 **각 응답의 상한이 따로 걸린다** — 「미처리 3건」이
+        #:   실은 「첫 유형 상한 안의 3건」이 되는 그 모양이다.
+        #:   커널 `query_events` 는 처음부터 `str | Iterable` 을 받는다 — 여기서 새로
+        #:   만드는 것이 아니라 **이미 있는 것을 HTTP 로 여는 것**이다.
+        types = ([t.strip() for t in event_type.split(",") if t.strip()]
+                 if event_type and "," in event_type else event_type)
+        reviewed_by_id = None
+        if mine:
+            #: `require_actor()` 는 시스템 스코프면 던진다 — 「나」가 없는 요청이
+            #: 「나의 것」을 물으면 그것은 400 이 아니라 **일어날 수 없는 요청**이다.
+            reviewed_by_id = getattr(scope.require_actor(), "pk", None)
+            if reviewed_by_id is None:
+                raise HttpError(403, "요청자를 특정할 수 없어 「내 담당」을 낼 수 없습니다.")
+        rows = services.recent_events(scope=scope, since=since, until=until,
+                                      event_type=types, severity=severity,
+                                      response_state=response_state,
+                                      reviewed_by_id=reviewed_by_id, limit=limit)
         return {"total": len(rows), "events": [
             {"event_id": e.event_id, "event_type": e.event_type,
              "severity": e.severity, "status": e.status, "verdict": e.verdict,
@@ -161,6 +203,76 @@ class DsmAPI:
              "lat": e.lat, "lng": e.lng, "snapshot_path": e.snapshot_path,
              "response_state": e.response_state}
             for e in rows]}
+
+    # ── W1 요약 한 줄 (차선 C · 2026-09-23) ─────────────────────────────
+    #
+    # ★ **라우트 삼킴을 먼저 본다** (D-410 이 남긴 자리). 바로 아래 `/events/{int:event_id}`
+    #   는 `int` 변환기라 「summary」를 삼키지 않는다 — 그래도 **위에 둔다.** 변환기가
+    #   언젠가 `{str:...}` 로 바뀌면 그 순간 이 라우트가 조용히 404 가 되고, 조용한
+    #   404 는 「기능이 없다」와 구별되지 않는다.
+    #
+    # ★ 이 라우트가 여는 것은 **읽기뿐**이다 — 쓰기 면이 아니므로 WRITE_PROBES 대상이
+    #   아니다(P-8 은 쓰기 면의 규약이다).
+    @route.get("/events/summary", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="W1 요약 — 남의 테넌트 오탐률·미처리 수가 섞이면 격리 실패다")
+    def events_summary(self, request, hours: int = 12):
+        """U2 #1 「밤사이 요약 보기」 · W1 프리셋 「지난 12시간」의 **한 줄**.
+
+        ★ 이 수를 App 이 세지 않는다. 오탐은 K6(`false_positive_rate`)가, 미처리는
+          K1(`query_events`)이 센다 — App 은 **둘을 한 응답에 나란히 놓을 뿐**이다.
+          여기서 나눗셈을 한 줄이라도 하면 집계 경로가 둘이 되고, 갈린 수는 고객
+          앞에서 못 쓴다(DA-04 K6 「집계 경로를 하나로 유지하는 것 자체가 요구사항」).
+
+        ★ **분모를 함께 낸다** (D-271 ③ · D-301). 「오탐 4건」만 보면 그것이 12건 중
+          4인지 400건 중 4인지 모른다. `reviewed`(판정 모수) · `unreviewed`(미판정) 를
+          같이 실어 보낸다.
+
+        ★ 분모가 0이면 `rate` 는 **`null` 이다 — 0.0 이 아니다.** 0.0 으로 내면
+          「판정을 안 하기만 해도 오탐률이 좋아지는」 지표가 된다. 그래서 화면이
+          두 경우를 가를 수 있도록 `measurable` 을 함께 낸다.
+
+        ★ 미처리 수에는 **상한이 있다.** 상한에 닿으면 `unhandled_capped=true` 로
+          말한다 — 「215건」과 「최소 200건」을 같은 숫자로 내보내면 그 순간
+          요약 한 줄이 거짓말을 한다(D-301 분모 규약의 같은 계열).
+        """
+        from django.utils import timezone
+
+        from kernels.k6_feedback import false_positive_rate
+
+        if hours <= 0 or hours > 24 * 31:
+            # 400 — 요청이 틀렸다. 창을 임의로 잘라 「그럴듯한 수」를 내지 않는다.
+            raise HttpError(400, "hours 는 1 이상 744(31일) 이하여야 합니다.")
+
+        scope = _scope(request)
+        until = timezone.now()
+        since = until - timedelta(hours=hours)
+
+        rate = false_positive_rate(scope=scope, since=since, until=until)
+        w = rate.total
+
+        #: 미처리 = 대응 축이 아직 「발생」인 것. `status`(탐지 판정)로 세지 않는다 —
+        #: 두 축을 섞으면 U2 가 「봐야 할 것」과 「판정해야 할 것」을 구별하지 못한다.
+        pending = services.recent_events(
+            scope=scope, since=since, until=until,
+            response_state="occurred", limit=_UNHANDLED_CAP + 1)
+        capped = len(pending) > _UNHANDLED_CAP
+
+        return {
+            "hours": hours,
+            "since": since,
+            "until": until,
+            #: 「지금 눈앞에 몇 건이 남아 있나」 — W1 「미처리」 프리셋이 여는 그 수.
+            "unhandled": min(len(pending), _UNHANDLED_CAP),
+            "unhandled_capped": capped,
+            "unhandled_cap": _UNHANDLED_CAP,
+            #: 오탐 축. **비율만 내지 않는다** — 분자·분모를 함께 낸다.
+            "false_positive": w.rejected,
+            "reviewed": w.reviewed,
+            "unreviewed": w.unreviewed,
+            "closed_without_verdict": w.closed_without_verdict,
+            "false_positive_rate": w.rate,          # 분모 0 이면 **null**
+            "measurable": rate.is_measurable,
+        }
 
     # ★ 들어오는 키를 **받지 않는다**(기본값 거절). 상세는 목록에 없는 것을 더 낸다 —
     #   `clip_path`(영상 구간) · `address` · `reviewed_by_id`. 계약이 F-05 로 연 것은
@@ -229,6 +341,49 @@ class DsmAPI:
             raise HttpError(400, str(exc))
         except services.ResponseTransitionForbidden as exc:
             raise HttpError(409, str(exc))
+
+    # ── 현장 회신 (U3 #9 · 차선 D 가 커널을, 조율자가 문을) ───────────────
+    @route.post("/events/{int:event_id}/field-reply", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="현장 회신 쓰기 — 남의 이벤트에 회신을 남길 수 없다 (쓰기 IDOR)")
+    def field_reply(self, request, event_id: int, text: str):
+        """이동 중인 사람이 한 줄을 돌려준다 (M3).
+
+        ★ **문이 없으면 커널 면은 잠든 것이다.** 차선 D 가 커널과 시험을 세웠고
+          `dormant` 게이트가 「켜진 상태로 태어나야 한다」로 이 자리를 잡았다 —
+          그 빨강이 이 문을 만들게 했다(D-377).
+        ★ 회신은 **계정이 남긴다.** 무계정 링크로 부를 수 있는 자리를 만들지 않는다.
+
+        거절을 4xx 로 나눈다: 404 없는·남의 이벤트 · 422 빈 글 · 403 요청자 없음(시스템 스코프).
+        """
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            reply = services.field_reply(
+                scope=_scope(request), event_id=event_id, text=text)
+        except Http404:
+            raise HttpError(404, "그런 이벤트가 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except services.InvalidEventInput as exc:
+            raise HttpError(422, str(exc))
+        # ★ 내는 칸은 `FieldReply` 가 **실제로 가진 것**뿐이다. 지어내지 않는다 —
+        #   없는 칸을 읽어 라우트가 부르는 즉시 죽은 사례가 이 파일에 이미 있다(D-410).
+        return {"reply_id": reply.reply_id, "event_id": reply.event_id,
+                "text": reply.text, "author_id": reply.author_id,
+                "author_name": reply.author_name}
+
+    @route.get("/events/{int:event_id}/field-replies", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="현장 회신 읽기 — 남의 이벤트 회신이 보이면 안 된다")
+    def field_replies(self, request, event_id: int, limit: int = 50):
+        """그 이벤트에 달린 현장 회신들. 이벤트 문지기를 먼저 지난다."""
+        try:
+            rows = services.field_replies(
+                scope=_scope(request), event_id=event_id, limit=limit)
+        except Http404:
+            raise HttpError(404, "그런 이벤트가 없습니다.")
+        return {"total": len(rows), "replies": [
+            {"reply_id": r.reply_id, "event_id": r.event_id, "text": r.text,
+             "author_id": r.author_id, "author_name": r.author_name} for r in rows]}
 
     # ── 판정 축 (P-16 · 오탐 ②) ──────────────────────────────────────────
     @route.post("/events/{int:event_id}/review", auth=JwtOrInboundKey())
@@ -314,11 +469,17 @@ class DsmAPI:
     @tenant_scoped(reason="F-10 발송 이력 — 수신자 주소가 새면 안 된다")
     def deliveries(self, request, event_id: int | None = None,
                    since: datetime | None = None, until: datetime | None = None,
-                   succeeded: bool | None = None, limit: int = 100, offset: int = 0):
-        """FR-10-2 — 대상·시각·채널·성공여부가 남는가."""
+                   succeeded: bool | None = None, mine: bool = False,
+                   limit: int = 100, offset: int = 0):
+        """FR-10-2 — 대상·시각·채널·성공여부가 남는가.
+
+        ★ `mine=true` 는 **「내게 온 것」**이다 (차선 D · 2026-09-04). 사번을 받지 않는다 —
+          받으면 남의 사번으로 남의 수신 이력을 물을 수 있고, 이 라우트가 막으려는 것이
+          바로 그것이다. **진입면은 늘지 않는다**: method·path 가 그대로다.
+        """
         rows = services.delivery_history(
             scope=_scope(request), event_id=event_id, since=since, until=until,
-            succeeded=succeeded, limit=limit, offset=offset)
+            succeeded=succeeded, mine=mine, limit=limit, offset=offset)
         return {"total": len(rows), "deliveries": [
             {"delivery_id": r.delivery_id, "event_id": r.event_id,
              "recipient_id": r.recipient_id, "channel": r.channel,

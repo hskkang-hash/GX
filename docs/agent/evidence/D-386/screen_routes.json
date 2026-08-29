@@ -1,6 +1,8 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
-  "captured_at": "2026-09-02T10:07:20",
+  "captured_at": "2026-09-04T08:02:05",
+  "screens_total": 21,
+  "routes_total": 20,
   "screens": {
     "/dsm/dashboard": [
       {
@@ -52,7 +54,12 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events?limit=50",
+        "path": "/api/dsm/events/summary?hours=12",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events?limit=50&response_state=occurred",
         "status": 200
       },
       {
@@ -71,7 +78,7 @@
         "status": 200
       }
     ],
-    "/dsm/events/4704": [
+    "/dsm/events/4820": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -84,12 +91,12 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=4704",
+        "path": "/api/dsm/deliveries?event_id=4820",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/4704",
+        "path": "/api/dsm/events/4820",
         "status": 200
       },
       {
@@ -291,7 +298,7 @@
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-01T17:00:00%2B00:00&end_date=2026-09-02T16:59:59%2B00:00&limit=100&page=1&page_size=5",
+        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-03T17:00:00%2B00:00&end_date=2026-09-04T16:59:59%2B00:00&limit=100&page=1&page_size=5",
         "status": 200
       },
       {
@@ -301,7 +308,7 @@
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-02",
+        "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-04",
         "status": 200
       },
       {
@@ -576,6 +583,159 @@
       {
         "method": "POST",
         "path": "/api/proxy/notam",
+        "status": 200
+      }
+    ],
+    "/dsm/events?preset=unhandled": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/summary?hours=12",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events?limit=50&response_state=occurred",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/events?preset=recent": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/summary?hours=12",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events?limit=50&since=2026-09-03T13:01:35.992Z&until=2026-09-04T01:01:35.992Z",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/events?preset=mine": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/summary?hours=12",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events?limit=50&mine=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/events?preset=system": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/dashboard/link-state",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/summary?hours=12",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events?limit=50&event_type=camera_down,storage_high",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
         "status": 200
       }
     ]

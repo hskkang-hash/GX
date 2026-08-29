@@ -142,17 +142,25 @@ def dashboard_frame(*, scope: TenantScope, dashboard_code: str | None = None,
 
 
 def recent_events(*, scope: TenantScope, since: datetime | None = None,
+                  until: datetime | None = None,
                   event_type=None, severity=None, response_state=None,
+                  reviewed_by_id: int | None = None,
                   limit: int = 50):
     """F-09 이벤트 목록. K1 을 그대로 부른다 — 필터도 커널이 건다.
 
     ★ NFR-09-1 — 외부 의존(스트리밍 서버)이 죽어도 이 목록은 산다.
       여기서 스트리밍을 부르지 않는 것이 그 성질의 전부다.
+
+    ★ 2026-09-23 (차선 C · W1 프리셋 4종) — `until` 과 `reviewed_by_id` 가 더해졌다.
+      **App 은 여기서 아무것도 거르지 않는다.** 인자를 커널로 넘기기만 한다 —
+      App 이 한 줄이라도 거르기 시작하면 필터가 두 층에 생기고, 두 층은 어긋난다.
     """
     from kernels.k1_event import query_events
 
-    return query_events(scope=scope, since=since, event_type=event_type,
+    return query_events(scope=scope, since=since, until=until,
+                        event_type=event_type,
                         severity=severity, response_state=response_state,
+                        reviewed_by_id=reviewed_by_id,
                         limit=limit)
 
 
@@ -202,6 +210,28 @@ def advance_response(*, scope: TenantScope, event_id: int, to_state: str,
     from kernels.k1_event import advance_response as _advance
 
     return _advance(event_id, to_state=to_state, reason=reason, scope=scope)
+
+
+def field_reply(*, scope: TenantScope, event_id: int, text: str):
+    """현장이 돌려주는 한 줄 (U3 #9 · 차선 D).
+
+    ★ **App 은 규칙을 들지 않는다.** 문지기(`get_event` 404)·길이 검증·감사 기록은
+      전부 커널에 있다. 여기서 다시 하면 두 벌이 되고, 두 벌은 반드시 갈린다.
+    """
+    from kernels.k1_event import reply_from_field
+
+    return reply_from_field(scope=scope, event_id=event_id, text=text)
+
+
+def field_replies(*, scope: TenantScope, event_id: int, limit: int = 50):
+    """한 이벤트의 현장 회신들.
+
+    ★ 좁히기는 커널이 한다 — 감사 표에는 테넌트 칸이 없어서 `list_field_replies` 가
+      **이벤트 문지기를 먼저 지난 뒤** 번호로 뽑는다. 순서가 뜻이다.
+    """
+    from kernels.k1_event import list_field_replies
+
+    return list_field_replies(scope=scope, event_id=event_id, limit=limit)
 
 
 def response_state(*, scope: TenantScope, event_id: int):
@@ -254,16 +284,30 @@ def notify_event(*, scope: TenantScope, event_id: int, channels=None):
 
 def delivery_history(*, scope: TenantScope, event_id: int | None = None,
                      since: datetime | None = None, until: datetime | None = None,
-                     succeeded: bool | None = None, limit: int = 100, offset: int = 0):
+                     succeeded: bool | None = None, mine: bool = False,
+                     limit: int = 100, offset: int = 0):
     """F-10 발송 기록 조회 (FR-10-2: 대상·시각·채널·성공여부).
 
     이 목록이 곧 F-11 보고서의 "조치 이력" 이다 — 보고서용을 따로 만들지 않는다
     (DA-04 K2 이중 AC).
+
+    ★ `mine` — **「내게 온 것」을 서버가 거른다** (차선 D · 2026-09-04).
+      직전까지 커널에는 `recipient_id` 가 있는데 이 함수가 안 넘겨서, 모바일 M1 이
+      「내게 온 이벤트」를 **서버에게 물어볼 수 없었다.** 화면이 대신 거르면
+      **페이지 밖 발송이 없는 것**이 된다 — W1 프리셋에서 이미 같은 이유로 서버 필터를
+      골랐다(P-13).
+
+    ★ 그리고 **좁히는 값은 서버가 정한다.** 요청은 「나」라고만 말한다 —
+      `recipient_id=<숫자>` 를 질의로 받으면 남의 사번으로 「그 사람에게 무엇이 갔나」를
+      물을 수 있고, 이 라우트의 사유(「수신자 주소가 새면 안 된다」)가 그것을 이미
+      금지하고 있다. `/events` 의 `mine` 과 같은 규약이다.
     """
     from kernels.k2_notify import list_deliveries
 
+    recipient_id = getattr(scope.require_actor(), "pk", None) if mine else None
     return list_deliveries(scope=scope, event_id=event_id, since=since, until=until,
-                           succeeded=succeeded, limit=limit, offset=offset)
+                           recipient_id=recipient_id, succeeded=succeeded,
+                           limit=limit, offset=offset)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

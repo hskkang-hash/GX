@@ -63,6 +63,12 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/events/{int:event_id}/clip"),
     ("GET", "/api/dsm/events/{int:event_id}/clip/stream"),
     ("POST", "/api/dsm/events/{int:event_id}/notify"),
+    # ★ 2026-09-04 **둘이 늘었다** — 현장 회신(U3 #9 · 차선 D 커널 + 조율자 배선).
+    #   문지기: `@tenant_scoped`(쓰기·읽기 IDOR) + `JwtOrInboundKey`.
+    #   ⚠ 회신은 **계정이 남긴다** — 무계정 링크 금지의 집행은 커널의 요청자 검사에도 있다.
+    #   여는 이유: `dormant` 게이트가 「켜진 상태로 태어나야 한다」로 잡았기 때문이다.
+    ("POST", "/api/dsm/events/{int:event_id}/field-reply"),
+    ("GET", "/api/dsm/events/{int:event_id}/field-replies"),
     ("GET", "/api/dsm/reports/templates"),
     ("GET", "/api/dsm/reports/{int:template_id}.pdf"),
     ("GET", "/api/dsm/settings/{domain}"),
@@ -129,6 +135,23 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     #   ★ 거절을 4xx 로 **나눈다** (D-290): 422(판정값이 아니다) · 404(없는 이벤트 ·
     #     남의 이벤트) · 403(시스템 스코프 — 판정은 사람이 하는 일이다 · D-281).
     ("POST", "/api/dsm/events/{int:event_id}/review"),
+    # ★ 2026-09-23 **하나가 늘었다** — W1 요약 한 줄 (차선 C · 온보딩 U2 #1
+    #   「밤사이 요약 보기」). 손으로 이 줄을 더하는 일이 곧 「진입면을 넓힌다」는
+    #   선언이고, 그 선언을 여기 남긴다. 이 시험이 먼저 멈춰 세웠다 —
+    #   21 vs 22 로 빨개졌고, 게이트가 지시보다 위다(D-327).
+    #
+    #   왜 목록 라우트로 세지 않고 라우트를 늘렸나: 요약은 **집계**다. 화면이
+    #   `/events` 를 받아 자기가 세면 상한 밖의 이벤트가 안 세어지고, 「미처리 3건」이
+    #   실은 「상한 안의 3건」이 된다 — 그리고 그 사실이 화면에 안 나온다.
+    #   오탐률은 K6 `false_positive_rate` 만 낸다(집계 경로 하나 · DA-04 K6).
+    #
+    #   문지기: @tenant_scoped(남의 테넌트 오탐률·미처리 수가 섞이면 격리 실패) +
+    #           JwtOrInboundKey(**키 거절 — 기본값**).
+    #   ⚠ **읽기 전용이다.** 쓰기 면이 아니므로 WRITE_PROBES 대상이 아니다(P-8).
+    #   ⚠ 등록 자리가 `/events/{int:event_id}` **위**여야 한다. 지금은 `int` 변환기라
+    #     삼키지 않지만, 변환기가 `{str:...}` 로 바뀌는 날 조용히 404 가 된다 —
+    #     조용한 404 는 「기능이 없다」와 구별되지 않는다(D-410 이 남긴 자리).
+    ("GET", "/api/dsm/events/summary"),
 })
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**
@@ -154,6 +177,19 @@ K1_CONSUMERS: dict[str, str] = {
         "HTTP 진입면이 아니라 운영자가 손으로 부르는 커맨드다",
     "backend/kernels/k2_notify/services.py":
         "커널 간 재사용 — 알림이 이벤트를 읽는다. HTTP 진입면이 아니다",
+    "backend/kernels/k2_notify/renotify.py":
+        "★ 커널 간 재사용 — **재알림 N분**(차선 D · U3 · 2026-09-04). 이벤트를 읽어 "
+        "「아직 아무도 손대지 않았는가」를 묻는다(K1 `response_state`). 전이표를 "
+        "여기 다시 적지 않으려고 소비자가 됐다 — 두 벌이면 갈리고, 갈리면 재알림이 "
+        "영원히 울리거나 영원히 안 울린다(D-212). HTTP 진입면이 아니다: 이 이름을 "
+        "여는 라우트는 아직 없고, 여는 커밋이 `EVENT_ENTRY_SURFACE` 를 함께 늘린다",
+    "backend/kernels/k1_event/field_reply.py":
+        "★ 커널 자신의 구현 — **현장 회신**(차선 D · U3 #9 · M3 · 2026-09-04). "
+        "쓰기 앞에 K1 의 읽기 문지기(`get_event`)를 그대로 세우려고 이 모듈이 "
+        "K1 을 부른다 — `advance_response` 가 한 것과 같은 규약이고, 문지기를 새로 "
+        "만들면 두 벌이 갈린다(D-212). 회신은 `DeliveryRecord` 도 새 표도 만들지 "
+        "않고 전용 `logger_name`(`guardianx.dsm.field_reply`)의 감사 한 줄로 남는다. "
+        "소비자가 아니라 **소비되는 쪽**이다 — HTTP 진입면이 아니다",
     "backend/kernels/k3_dashboard/services.py":
         "커널 간 재사용 — 대시보드가 이벤트를 읽는다",
     "backend/kernels/k4_report/services.py":

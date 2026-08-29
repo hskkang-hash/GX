@@ -36,6 +36,27 @@ class Recipient:
 
 
 @dataclass(frozen=True)
+class RuleView:
+    """알림 규칙 한 줄. **모델이 아니라 값이다** (`Recipient` 와 같은 이유).
+
+    ★ `role_code` 를 함께 담는 이유: 부르는 쪽이 `rule.role.code` 를 타고 들어가면
+      역할 모델이 App 의 계약이 된다. 규칙을 만든 화면이 되돌려 받는 것은 **번호가
+      아니라 이름**이어야 사람이 확인할 수 있다 — 「누가 받는가」가 이 값의 전부다.
+
+    ★ `channels` 는 튜플이다. 리스트로 내면 부르는 쪽이 고칠 수 있고, 고쳐도 DB 는
+      안 바뀐다 — 「바꿨는데 안 바뀌는」 자리를 만들지 않는다.
+    """
+
+    rule_id: int
+    severity: str
+    role_id: int
+    role_code: str
+    zone: str | None
+    channels: tuple[str, ...]
+    is_active: bool
+
+
+@dataclass(frozen=True)
 class DeliveryView:
     """발송 이력 한 줄. **F-10 을 재는 두 점이 한 줄에 있다** (DA-04 K2)."""
 

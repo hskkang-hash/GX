@@ -65,6 +65,7 @@
 | `subscribe(webhook)` | URL · 필터 · 서명키 참조 | Subscription | F-05 Webhook |
 | `advance_response(id, to_state, reason)` | 대응 진행 한 칸 | {from,to,allowed_next,audit_id} | ★ **D-399.** `status` 와 **다른 축**이다 — 아래 설명 |
 | `response_state(id)` | id | {response_state, allowed_next} | 화면이 자기 전이표를 들지 않게 서버가 낸다 |
+| `reply_from_field(id, text)` | 이벤트 · 한 줄 | {reply_id, at, actor} | ★ **차선 D · 2026-09-04(U3 #9).** 현장이 돌려주는 한 줄. **새 표를 만들지 않고** 대응 이력과 같은 축(감사 `guardianx.dsm.response` 계열)에 남긴다 — 사람이 한 일의 기록이지 탐지의 사실이 아니다. ⚠ 아직 **HTTP 라우트가 없다**(커널 면만) |
 
 ★ **왜 축이 둘인가** (D-399 · 2026-09-14 추가). 지시서가 「이벤트를 4값으로」를 냈고
 실측하니 `status` 는 **이미 4값**이었다. 두 4값은 **묻는 것이 다르다**:
@@ -103,11 +104,17 @@
 | `send(event, recipients, channels)` | SMS · 이메일 · 앱 푸시 · Webhook | DeliveryRecord[] |
 | `suppress?(event)` | | bool — **5분 중복 억제 판정은 여기다** (K1 이 아니다) |
 | `list_deliveries(...)` | 기간·이벤트·수신자 | DeliveryRecord[] |
+| `notice_false_positive(event)` | 오탐 종결된 이벤트 | 통지한 주소[] — **1회**. `DeliveryRecord` 를 만들지 않는다(F-10 지연 통계와 5분 억제를 오염시키므로 감사 한 줄로 남긴다) · P-16 오탐 ③ (2026-09-20) |
+| `save_notification_rule(severity, role_code, channels, zone, rule_id)` | 등급·역할코드·채널·구역 | RuleView — **규칙이 만들어지는 자리**. P-20 ① (2026-09-22) |
+| `renotify(event_id, after_minutes)` | 사건·재알림 창(N분) | RenotifyResult — **보낸 뒤 N분이 지나도 아무도 손대지 않은 사건만** 다시 보낸다. 기준점은 발생 시각이 아니라 **마지막 성공 발송 시각**이다. 차선 D · U3 (2026-09-04) |
 
 - **DeliveryRecord 필수 필드**: 이벤트 · 수신자 · 채널 · `sent_at` · 성공여부 · 실패사유 · **재시도 횟수**.
   `occurred_at → sent_at` 이 F-10 의 30초 AC 를 재는 두 점이다.
 - 외부 발송 업체 호출은 **타임아웃 필수**(`common/external_http.py`) — 발송이 느리다고 관제가 멈추면 안 된다.
 - 수신자 0명 저장 금지(DA-03 §3-2) — 조용한 무력화를 막는다.
+- **규칙은 역할을 가리키고 사람을 가리키지 않는다.** `save_notification_rule` 이 등급 열거·역할 실재·채널 이름·소속 넷을 검사한다 — 검사 없이 만든 규칙은 화면에는 규칙으로 보이면서 발송에서 아무도 못 고른다.
+- **5분 억제는 재알림을 접지 않는다 [실측 2026-09-04]**: `suppress` 의 판정식은 `occurred_at__lt=event.occurred_at` 이라 **같은 이벤트**의 재발송에는 걸리지 않는다 — 억제가 접어 줄 것이라 믿고 재알림 문을 열면 버튼 한 번에 같은 사람에게 무한히 간다. 문턱은 `renotify` 가 따로 잰다(마지막 성공 발송 + N분 · 대응 진행이 `occurred` 일 때만).
+- **표가 코드보다 짧았다 [실측 2026-09-22]**: `notice_false_positive` 는 2026-09-20 에 구현됐으나 이 표에 없었다. 「같은 커밋에서 함께 고친다」가 한 번 어긋난 자리라 지우지 않고 여기 적는다.
 
 | 이중 AC | 계약 (F) | 상품 (U) |
 |---|---|---|

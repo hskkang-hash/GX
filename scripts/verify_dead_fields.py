@@ -125,16 +125,10 @@ DECLARED_UNWIRED: dict[str, str] = {
         "이유로 등재돼 있다. 시험 근거: test_grade_rules.py::"
         "test_the_history_keeps_what_it_was_and_why (이력 행이 실재하고 읽힌다).",
 
-    "stream_monitors.NotificationRule.role":
-        "D-287 K2 로 신설. **수신 규칙을 만드는 운영 경로가 아직 없다** — 규칙은 관리자 "
-        "화면·픽스처로 만들고, F-12 설정 화면이 그 자리다(미착수). K2 는 이 칸을 읽어 "
-        "수신자를 정하므로 읽기 경로는 살아 있다.",
-    "stream_monitors.NotificationRule.zone":
-        "위와 같다. ★ 덧붙여 이 칸은 **체계가 아니라 라벨**이다(P-K2-2). 구역의 정본은 "
-        "D-299 의 Zone 모델이고, 이 칸의 처분(제거 또는 Zone FK 로 승격)은 F-12 설정 "
-        "화면을 만들 때 함께 판정한다.",
-    "stream_monitors.NotificationRule.channels":
-        "위와 같다 (D-287). K2 의 resolve_recipients 가 읽는다.",
+    # ★ [2026-09-22 · P-20] `NotificationRule` 의 role·zone·channels 세 칸이 여기서
+    #   **빠졌다.** 차선 E2 가 `save_notification_rule` 로 **쓰는 경로**를 열었고,
+    #   시드가 그 문으로 규칙 4건을 만들었다 [실측]. 판정기가 「등재를 지워라」로 먼저
+    #   말했다 — **낡은 선언이 남으면 다음에 죽는 필드를 그 이름이 가린다**(D-304).
 }
 
 

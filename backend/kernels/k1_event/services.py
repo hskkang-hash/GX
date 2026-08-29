@@ -366,6 +366,13 @@ def query_events(
     #:   **서버가 거른다** — DA-04 의 「필터는 전부 서버에서」가 이 칸에도 적용된다.
     #:   화면이 페이지를 받아 자기가 거르면 **페이지 밖 이벤트는 없는 것이 된다.**
     response_state: str | Iterable[str] | None = None,
+    #: ★ 판정자로 좁힌다 (2026-09-23 · W1 「내 담당」 프리셋 · 차선 C).
+    #:   **서버가 거른다** — 화면이 페이지를 받아 자기가 거르면 페이지 밖의 내 이벤트는
+    #:   없는 것이 된다(온보딩 U2 #9 「요원별 처리 현황」).
+    #:   ⚠ 이 칸은 「누가 **판정**했나」다. 「누가 대응했나」가 아니다 — 대응 전이의
+    #:     행위자는 행이 아니라 감사(`guardianx.dsm.response`)에 있고, 둘을 한 칸으로
+    #:     읽으면 판정과 대응이 다시 섞인다(D-399 가 축을 가른 이유).
+    reviewed_by_id: int | None = None,
     stream_monitor_id: int | None = None,
     mission_id: int | None = None,
     limit: int = 100,
@@ -405,6 +412,8 @@ def query_events(
     _in("severity", severity)
     _in("status", status)
     _in("response_state", response_state)
+    if reviewed_by_id is not None:
+        qs = qs.filter(reviewed_by_id=reviewed_by_id)
     if since is not None:
         qs = qs.filter(occurred_at__gte=since)
     if until is not None:

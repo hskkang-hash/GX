@@ -25,11 +25,20 @@ from kernels.k2_notify.schemas import (
     SUPPRESS_WINDOW,
     DeliveryView,
     Recipient,
+    RuleView,
+)
+from kernels.k2_notify.renotify import (
+    DEFAULT_RENOTIFY_AFTER,
+    MAX_RENOTIFY_AFTER,
+    MIN_RENOTIFY_AFTER,
+    RenotifyResult,
+    renotify,
 )
 from kernels.k2_notify.services import (
     list_deliveries,
     notice_false_positive,
     resolve_recipients,
+    save_notification_rule,
     send,
     suppress,
 )
@@ -44,9 +53,20 @@ __all__ = [
     #   발송이 아니라 **뒷정리**라 `DeliveryRecord` 행을 만들지 않는다 — 그 표는
     #   F-10 의 30초와 5분 억제를 재는 자리다(함수 머리말 ★★).
     "notice_false_positive",
+    # ★ P-20 ① 알림 규칙 쓰기 면 — **개발 DB 규칙 0건**이 이 이름을 만들었다 (2026-09-22).
+    #   격리 대장(`tests/test_tenant_isolation.WRITE_NO_PROBE`)에 **선등재된 이름**이고,
+    #   면이 실제로 열렸으므로 그 줄은 probe 로 옮겨져야 한다(P-8).
+    "save_notification_rule",
+    # ★ 차선 D (2026-09-04) 재알림 N분 — **U3 「내가 놓친 알림」의 자리**.
+    #   격리 대장(`tests/test_tenant_isolation.WRITE_NO_PROBE`)에 **선등재된 이름**이고,
+    #   면이 실제로 열렸으므로 그 줄은 probe 로 옮겨져야 한다(P-8).
+    #   ⚠ 5분 억제는 **같은 이벤트의 재발송을 접지 않는다** — 문턱은 이 모듈이 따로 잰다.
+    "renotify",
     # 나가는 값의 모양
     "Recipient",
     "DeliveryView",
+    "RuleView",
+    "RenotifyResult",
     # 오류 계약
     "K2Error",
     "EventNotFound",
@@ -56,4 +76,8 @@ __all__ = [
     # 계약이 정한 숫자 — 화면·시험·보고서가 **같은 값**을 본다 (D-212)
     "F10_MAX_LATENCY",
     "SUPPRESS_WINDOW",
+    # 재알림 창의 기본·상한·하한. 화면이 자기 숫자를 들지 않는다 (D-212).
+    "DEFAULT_RENOTIFY_AFTER",
+    "MAX_RENOTIFY_AFTER",
+    "MIN_RENOTIFY_AFTER",
 ]

@@ -99,6 +99,8 @@ import Infrastruture from './features/infrastructure';
 import DetailInfrastructure from './features/infrastructure/Detail';
 import RegisterInfrastructure from './features/infrastructure/RegisterInfrastructure';
 import MappingStatus from './features/mappingStatus';
+// 모바일 · 이동 중 수신 모드 경로 (U3 · 차선 D) — 경로는 이 파일 한 곳에서 정한다.
+import { mobileRoutes } from './features/mobile/routes';
 import OperationSetting from './features/operationSetting';
 import DetailOperationalData from './features/operationalData/detailOperationalData/DetailOperationalData';
 import ListOperationalData from './features/operationalData/listOperationalData/ListOperationalData';
@@ -169,6 +171,18 @@ const DsmControlDashboard = lazy(
 );
 const DsmEventList = lazy(() => import('./features/dsm/pages/EventList'));
 const DsmEventDetail = lazy(() => import('./features/dsm/pages/EventDetail'));
+/**
+ * 모바일 — 이동 중 수신 모드 (U3 · 차선 D).
+ *
+ * ★ 경로는 `features/mobile/routes.ts` 한 곳에서 정한다. `CustomRoutes` 에 넣지
+ *   않은 이유는 그 파일이 이번 턴 공용 자리라서다 — 충돌하면 조각으로 보고한다.
+ * ★ **무계정 링크 금지**(불변 제약): 모바일은 링크로 들어오지만 이 둘은 다른 화면과
+ *   똑같이 `PrivateLayout` 아래에 선다. 토큰이 없으면 `/login` 으로 튕긴다.
+ */
+const MobileInbox = lazy(() => import('./features/mobile/pages/MobileInbox'));
+const MobileEventDetail = lazy(
+  () => import('./features/mobile/pages/MobileEventDetail'),
+);
 /**
  * W0-4 — 데모·목업 화면 격리
  *
@@ -397,6 +411,15 @@ function App() {
             {
               path: CustomRoutes.dsm.eventDetail.path,
               element: <DsmEventDetail />,
+            },
+            // ── 모바일 · 이동 중 수신 모드 (U3 · 차선 D) ──────────────────
+            //   M1 은 발송 기록이 정본이다(이벤트 목록이 아니다). 상세는 목록의
+            //   값을 물려받지 않고 서버에 다시 묻는다 — 문지기가 목록에만 서고
+            //   상세에 안 서는 모양을 만들지 않기 위해서다.
+            { path: mobileRoutes.inbox.path, element: <MobileInbox /> },
+            {
+              path: mobileRoutes.eventDetail.path,
+              element: <MobileEventDetail />,
             },
             { path: CustomRouters.user.path, element: <UserManagement /> },
             {

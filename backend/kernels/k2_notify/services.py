@@ -58,6 +58,7 @@ from kernels.k2_notify.schemas import (
     SUPPRESS_WINDOW,
     DeliveryView,
     Recipient,
+    RuleView,
 )
 
 
@@ -255,6 +256,164 @@ def _filter_rules_by_group(qs, group, actor=None):
     if field == "groups":
         return qs.filter(groups=group).distinct()
     return qs.filter(group=group)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 1-b. save_notification_rule — **규칙을 만드는 자리** (P-20 ① · 2026-09-22)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 왜 이 면이 열렸나 — **개발 DB 의 알림 규칙이 0건이었다** [실측 2026-09-21].
+# 규칙이 0건이면 `resolve_recipients` 는 언제나 빈 목록을 내고, `send` 는 언제나
+# `NoRecipients` 를 던진다. 즉 **알림 체계 전체가 꺼진 상태**이고, 그 상태에서
+# 모바일 M1(내게 온 이벤트)은 빈 화면이다. 화면이 비어 있는 이유가 「사건이 없어서」인지
+# 「규칙이 없어서」인지 화면만 봐서는 갈리지 않는다 — 그것이 이 면을 여는 이유다.
+#
+# ★ **시드가 행을 직접 만들지 않게 하려고 여기에 둔다** (P-9 · D-401).
+#   `NotificationRule.objects.create(...)` 를 시드가 부르면 등급 열거·역할 실재·채널
+#   이름·소속 판정이 **한 번도 안 돈다.** 그 네 검사가 안 돈 규칙은 화면에는 규칙으로
+#   보이면서 발송에서는 아무도 못 고른다. D-401 이 이벤트에서 잡은 것과 같은 병이다.
+def save_notification_rule(
+    *,
+    scope: TenantScope,
+    severity: str,
+    role_code: str,
+    channels: Iterable[str],
+    zone: str | None = None,
+    is_active: bool = True,
+    rule_id: int | None = None,
+    group=None,
+) -> RuleView:
+    """알림 규칙 하나를 만들거나 고친다. **「누구에게 무엇이 가는가」가 정해지는 자리.**
+
+    ★ 역할 **코드**로 받는다. 번호로 받으면 부르는 쪽이 `role.Role` 을 먼저 조회해야 하고,
+      그러면 역할 모델이 K2 의 공개 계약이 된다(`Recipient.role_code` 와 같은 이유).
+      그리고 번호는 환경마다 다르다 — 시드가 번호를 박으면 다른 DB 에서 **엉뚱한 역할**에
+      재난 알림이 간다.
+
+    ★ **채널 이름을 검사한다.** 등록된 어댑터가 없어도 좋다(업체 미정 · D4-1) —
+      그러나 **아무 문자열이나 받지는 않는다.** 오타로 만든 채널은 발송 때마다 실패 행만
+      남기고, 그 행을 보는 사람은 「업체가 죽었다」로 읽는다. 모르는 이름은 지금 막는다.
+
+    ★ **남의 규칙은 없는 것으로 답한다** (`get_scoped_or_404` · D-269). 403 은 "그 번호는
+      있지만 네 것이 아니다"를 알려 주고, 규칙의 존재 자체가 「저 테넌트가 무엇을 어떻게
+      받는가」의 일부다.
+
+    ⚠ 되돌려 주는 것은 모델이 아니라 `RuleView` 다 — 모델을 내보내면 App 이 그 위에서
+      `.save()` 를 부르고, 그 순간 이 함수의 네 검사가 우회된다.
+    """
+    Rule = _model("NotificationRule")
+    Event = _model("DetectionEvent")
+
+    # ── ① 등급 ────────────────────────────────────────────────────────────
+    if severity not in Event.Severity.values:
+        raise InvalidNotifyInput(
+            f"severity={severity!r} 은 계약에 없다. 허용: {', '.join(Event.Severity.values)}")
+
+    # ── ② 채널 ────────────────────────────────────────────────────────────
+    names = tuple(dict.fromkeys(str(c).strip() for c in channels if str(c).strip()))
+    if not names:
+        raise InvalidNotifyInput(
+            "채널이 비었다 — 채널 없는 규칙은 **아무에게도 안 가는 규칙**이고, 화면에는 "
+            "규칙으로 보인다. 그것이 D-284 가 이름 붙인 조용한 무력화다")
+    unknown = [c for c in names
+               if channel_registry.get(c) is None and c not in channel_registry.UNAVAILABLE]
+    if unknown:
+        raise InvalidNotifyInput(
+            f"모르는 채널이다: {unknown}. 등록된 채널: "
+            f"{', '.join(sorted(channel_registry.REGISTRY))} / 미구현(자리 있음): "
+            f"{', '.join(sorted(channel_registry.UNAVAILABLE))}. "
+            f"오타로 만든 채널은 발송마다 실패 행만 남기고, 그 행은 「업체가 죽었다」로 읽힌다")
+
+    # ── ③ 역할 ────────────────────────────────────────────────────────────
+    Role = apps.get_model("role", "Role")
+    role = Role._base_manager.filter(code=role_code).first()
+    if role is None:
+        have = ", ".join(sorted(Role._base_manager.values_list("code", flat=True))[:20])
+        raise InvalidNotifyInput(
+            f"role_code={role_code!r} 인 역할이 없다. 있는 것(일부): {have}. "
+            f"없는 역할을 가리키는 규칙은 **영원히 0명**을 고른다")
+
+    # ── ④ 테넌트 ──────────────────────────────────────────────────────────
+    actor = scope.actor
+    group = group or (get_user_group(actor) if actor is not None else None)
+    if group is None:
+        raise InvalidNotifyInput(
+            "규칙을 담을 테넌트가 없다. 파이프라인·시드 호출이면 `group=` 을 넘겨라 — "
+            "그것 없이 만들면 **소유 없는 규칙**이 되고, 소유 없는 행은 §0.4 의 "
+            "`created_by__isnull` OR 절을 타고 **모든 테넌트에 보인다** (D-281)")
+
+    zone = (zone or "").strip() or None
+    return _write_rule(Rule, scope, actor, group, role, severity, names, zone,
+                       is_active, rule_id)
+
+
+@transaction.atomic
+def _write_rule(Rule, scope, actor, group, role, severity, names, zone,
+                is_active, rule_id) -> RuleView:
+    """검사를 다 지난 값을 **행으로 만든다.** 검사와 쓰기를 나눈 이유는 하나다 —
+    `@transaction.atomic` 안에서 입력 검증까지 하면 거절도 트랜잭션을 열고 닫는다."""
+    created = rule_id is None
+    if created:
+        row = Rule._base_manager.create(
+            severity=severity, role=role, zone=zone,
+            channels=list(names), is_active=is_active)
+        _set_owner(row, group)
+    else:
+        # ★ 문지기가 **먼저다** (W0-14c). 안에 두면 "막힌 것"과 "찾고 나서 죽은 것"이
+        #   구별되지 않는다. 시스템 스코프에는 요청자가 없으므로 소유를 직접 견준다.
+        if actor is not None:
+            from common.tenant_filters import get_scoped_or_404
+
+            row = get_scoped_or_404(Rule, rule_id, actor)
+        else:
+            row = Rule._base_manager.filter(pk=rule_id).first()
+            if row is None or not _owns(row, group):
+                raise InvalidNotifyInput(
+                    f"rule_id={rule_id} 는 이 테넌트의 규칙이 아니다 — 시스템 스코프라도 "
+                    f"남의 규칙은 고치지 않는다 (D-281)")
+        row.severity = severity
+        row.role = role
+        row.zone = zone
+        row.channels = list(names)
+        row.is_active = is_active
+        row.save(update_fields=["severity", "role", "zone", "channels", "is_active"])
+
+    view = RuleView(rule_id=row.pk, severity=row.severity, role_id=row.role_id,
+                    role_code=getattr(role, "code", "") or "", zone=row.zone,
+                    channels=tuple(row.channels or []), is_active=row.is_active)
+    audit_writer.write(
+        logger_name="guardianx.dsm.notify", tag="[RULE]", actor=actor,
+        action="notify.save_rule", api_name=f"dsm.notify.save_rule:{row.pk}",
+        api_method="POST" if created else "PUT",
+        outcome=audit_writer.ALLOWED,
+        reason=(f"알림 규칙 {'생성' if created else '수정'} — "
+                f"{view.severity}/{view.role_code}/{view.zone or '*'} "
+                f"채널 {', '.join(view.channels)}"),
+        before=None if created else {"rule_id": row.pk},
+        after={"rule_id": row.pk, "severity": view.severity,
+               "role_code": view.role_code, "zone": view.zone,
+               "channels": list(view.channels), "is_active": view.is_active},
+        status_http=200,
+    )
+    return view
+
+
+def _set_owner(row, group) -> None:
+    """소유를 박는다. 필드 이름을 하드코딩하지 않는다 — `_inherit_owner` 와 같은 판단을
+    쓰되, 물려받을 원본이 없는 자리(신규 규칙)라 group 을 직접 받는다."""
+    field = _owner_field(type(row))
+    if field == "groups":
+        row.groups.set([group])
+    else:
+        setattr(row, "group", group)
+        row.save(update_fields=["group"])
+
+
+def _owns(row, group) -> bool:
+    field = _owner_field(type(row))
+    if field == "groups":
+        return row.groups.filter(pk=group.pk).exists()
+    return getattr(row, "group_id", None) == group.pk
 
 
 # ═══════════════════════════════════════════════════════════════════════════

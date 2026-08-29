@@ -103,6 +103,32 @@ TARGETS = [
     {"step": 14, "route": "/operation-settings", "must_see": "API URL"},
     {"step": 15, "route": "/report-template", "must_see": "Usage Count"},
     {"step": 16, "route": "/notam", "must_see": "SNOWTAM"},
+    # ── [차선 C · 2026-09-23] **W1 관제 프리셋 넷 + W2 판정 칸** 다섯 장을 더해
+    #    16 → 21 장으로 간다. 앞의 16 장과 다른 점이 하나 있다: 이 다섯은 **같은
+    #    라우트를 질의로 가른 화면**이다. 프리셋을 화면 안 상태로만 뒀으면 여기에
+    #    적을 주소가 없었을 것이고, 「그 화면이 떴다」를 단언할 방법도 없었다 —
+    #    프리셋을 `?preset=` 으로 둔 이유의 절반이 이것이다.
+    #
+    #    ⚠ `must_see` 는 **그 프리셋에서만 나오는 글자**여야 한다. 넷이 같은 라우트라
+    #      「이벤트 목록」 같은 공통 글자로 단언하면 **프리셋이 안 바뀌어도 초록**이다.
+    #      그래서 각 프리셋의 안내 줄(headline)을 그대로 쓴다.
+    {"step": 17, "route": "/dsm/events?preset=unhandled",
+     "slug": "dsm_events_preset_unhandled",
+     "must_see": "W1 프리셋 · 미처리 — 대응 축이 아직 「발생」인 것"},
+    {"step": 18, "route": "/dsm/events?preset=recent",
+     "slug": "dsm_events_preset_recent",
+     "must_see": "W1 프리셋 · 지난 12시간 — 창의 두 끝을 서버가 받는다"},
+    {"step": 19, "route": "/dsm/events?preset=mine",
+     "slug": "dsm_events_preset_mine",
+     "must_see": "W1 프리셋 · 내 담당 — 내가 판정한 이벤트"},
+    {"step": 20, "route": "/dsm/events?preset=system",
+     "slug": "dsm_events_preset_system",
+     "must_see": "W1 프리셋 · 시스템 — 장애인가 현장인가"},
+    #: W2 상세의 판정·대응 칸. 상세 화면 자체는 step 3 이 이미 찍는다 —
+    #: 여기서 단언하는 것은 **누를 자리가 생겼다**는 사실이다(U1 #11).
+    {"step": 21, "route": "/dsm/events/{event_id}",
+     "slug": "dsm_events_id_verdict_panel",
+     "must_see": "진위 판정 · 대응 진행"},
 ]
 
 #: ★ [실측 2026-09-13 · D-386] 열어 보고 **찍지 못한 화면**. 목록에 남긴다 —
@@ -376,7 +402,12 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                 #:   「죽은 라우트」로 보고했다 — 죽은 것은 라우트가 아니라 측정이었다(D-350).
                 #: ★ 그리고 **질의문자열을 지우지 않는다.** 지우면 필수 인자가 사라져
                 #:   살아 있는 라우트가 422 로 나온다 — 같은 종류의 두 번째 오답이었다.
-                api_calls[route] = sorted({
+                #: ★ [실측 2026-09-23 · 차선 C 가 잡은 것] **덮어쓰지 않고 합친다.**
+                #:   한 라우트로 두 장을 찍으면(상세 화면 + 그 화면의 판정 패널)
+                #:   1차판은 뒤엣것이 앞엣것의 기록을 **덮었다** — 인덱스는 21장인데
+                #:   이 파일은 20자리였고, 사라진 한 자리만큼 `verify_route_alive` 가
+                #:   때릴 것을 잃었다. **때릴 것이 줄어든 판정기는 조용히 더 초록이 된다**(D-301).
+                api_calls[route] = sorted(set(api_calls.get(route, ())) | {
                     (m, u[len(api):], st)
                     for m, u, st in seen_calls
                     if u.startswith(api + "/api/")})
@@ -396,8 +427,19 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                         f"실제로 `/api/` 를 부른 곳: {missed or '없음'}")
                 step = f"{SCENARIO}/{t['step']}"
                 when = datetime.now().replace(microsecond=0)
+                #: ★ [차선 C · 2026-09-23] 파일 이름을 **`slug` 로 받을 수 있게** 했다.
+                #:   사유 둘, 둘 다 실측이다:
+                #:     ① 질의문자열이 붙은 라우트(`/dsm/events?preset=unhandled`)를
+                #:        그대로 파일 이름으로 쓰면 **`?` 가 들어간다.** 이 저장소의
+                #:        `docs/` 는 윈도우 호스트에서 마운트되고, 윈도우는 파일 이름에
+                #:        `?` 를 허용하지 않는다 — 캡처가 아니라 **저장**에서 죽는다.
+                #:     ② 같은 라우트를 다른 단언으로 두 번 찍을 수 있다(상세 화면의
+                #:        판정 칸). 이름이 route 뿐이면 뒤엣것이 앞엣것을 **덮고**,
+                #:        인덱스에는 두 줄이 남는다 — 인덱스가 거짓말을 하게 된다.
+                #:   `slug` 가 없으면 지금까지의 규칙 그대로다(기존 16장 불변).
                 rel = "%s/%s/%s.png" % (SCENARIO, role,
-                                        route.strip("/").replace("/", "_") or "root")
+                                        t.get("slug")
+                                        or route.strip("/").replace("/", "_") or "root")
                 out = SCREENS / rel
                 out.parent.mkdir(parents=True, exist_ok=True)
                 page.screenshot(path=str(out))
@@ -516,6 +558,11 @@ def main() -> int:
     routes_out.write_text(json.dumps({
         "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
         "captured_at": datetime.now().replace(microsecond=0).isoformat(),
+        #: ★ 키는 **라우트**이고, 화면 수와 다를 수 있다 — 한 라우트가 두 장을 낼 수 있기
+        #:   때문이다(상세 + 판정 패널). 그래서 화면 수를 **따로 적는다**: 이 파일의 자리
+        #:   수를 화면 수로 읽으면 「21장인데 20자리」가 결함처럼 보인다(실제로 그렇게 읽혔다).
+        "screens_total": len(got["entries"]),
+        "routes_total": len(got["api_calls"]),
         "screens": {k: [{"method": m, "path": p, "status": st}
                         for m, p, st in v] for k, v in got["api_calls"].items()},
         #: ★ P-9 — **데이터 출처를 화면마다 말한다.** 시드로 찍은 화면은 실제 화면이지만

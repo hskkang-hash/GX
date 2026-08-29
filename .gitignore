@@ -87,6 +87,10 @@ docs/agent/evidence/D-354/backup/objects/
 # 브라우저 캡처용으로 컨테이너에 심는 프런트 산출물 (D-386).
 # `gx-shell` 의 /app 이 이 디렉터리라서 여기 생긴다 — **빌드 산출물이므로 추적하지 않는다.**
 backend/_fe_dist/
+# ★ [2026-09-04] 차선마다 자기 번들을 심는다(`_fe_dist_d` · `_fe_dist_c` …).
+#   접두로 막지 않으면 **시크릿 게이트가 빨개진다** — 번들에는 지도 API 키가 구워져
+#   들어가고, 그 파일이 저장소에 실리면 「저장소가 나른다」가 된다 [실측 09-04].
+backend/_fe_dist*/
 
 # 고정 설치된 외부 도구 (scripts/secret_scanner.lock.json) — 저장소가 드는 것은 lock 이지 물건이 아니다
 tools/
