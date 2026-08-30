@@ -83,6 +83,25 @@ THRESHOLDS: dict[str, ThresholdDef] = {
             "둘을 한 칸에 두면 기록과 알림이 같은 규칙이 된다(K1 이 나눈 이유).",
         used_by=("kernels/k1_event/services.py:DEDUP_WINDOW",),
     ),
+    "event.invalidation_rate_limit": ThresholdDef(
+        key="event.invalidation_rate_limit",
+        title="캐시 무효화 신호 분당 상한",
+        unit="per_minute",
+        default=200,
+        applies_to=SCOPE_GLOBAL,
+        contract_fixed=False,
+        clause="",
+        why="★ **사유 없이 서 있던 상수였다** (D-367 ④). 옛 주석은 「prevent abuse」 "
+            "한 줄뿐이라 DoS 방지인지 DB 보호인지 알 수 없었다. 코드를 읽어 답을 냈다 — "
+            "이 수신기는 전역 `post_save`·`post_delete` 이고 한 번 돌 때 Redis 를 "
+            "훑는다. 지키던 것은 **DB 가 아니라 Redis 와 응답 지연**이다. "
+            "그래서 상한은 남기고 **넘었을 때의 행동만 바꿨다**: 버리지 않고 미룬다. "
+            "★ `contract_fixed` 가 **아니다** — F-10 「30초」를 이 값이 정하지 않는다. "
+            "미루기로 바꾼 뒤로는 이 값이 낮아도 무효화가 소실되지 않으므로 계약에 "
+            "닿지 않는다. 닿는다고 적으면 계약이 아닌 것을 계약으로 만드는 일이다(D-280). "
+            "용량 측정이 실측 상한을 내면 그 수로 고친다 — 지금 값은 **물려받은 값**이다.",
+        used_by=("common/universal_optimization.py:CACHE_INVALIDATION_RATE_LIMIT",),
+    ),
     "notify.suppress_window": ThresholdDef(
         key="notify.suppress_window",
         title="알림 중복 억제창",

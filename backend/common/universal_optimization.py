@@ -2337,15 +2337,35 @@ def handle_multilanguage_cache_invalidation(instance, app_label, model_name):
         print(f"❌ [MULTILANG_CACHE_ERROR] Failed to handle multilanguage cache invalidation: {e}")
 
 
+#: 캐시 무효화 신호의 분당 상한. **표 ① `event.invalidation_rate_limit` 의 값이다**
+#: (`kernels/k5_trust/thresholds.py`). 두 곳의 수가 갈리면
+#: `scripts/verify_threshold_table.py` 가 exit 1 을 낸다.
+#:
+#: ★ 이 수가 왜 있는지 [실측 2026-09-11]: 2026 년 이전 커밋의 주석은
+#:   「FIX: Rate limiting to prevent abuse」 한 줄뿐이고, DoS 방지인지 DB 보호인지
+#:   적혀 있지 않았다. 코드를 읽어 답을 냈다 — 이 수신기는 `post_save`·`post_delete`
+#:   **전역** 수신기이고, 한 번 돌 때 Redis 키 탐색·버전 증가·패턴 삭제를 한다.
+#:   즉 이 상한이 지키던 것은 **DB 가 아니라 Redis 와 응답 지연**이다.
+#:   (「abuse」는 외부 공격이 아니라 **신호 폭풍**을 가리킨 말이었다.)
+#:
+#: ★ 그래서 상한 자체는 남긴다. 바꾼 것은 **넘었을 때 무엇을 하는가**다 —
+#:   버리지 않고 미룬다 (D-367). 상한이 하던 일(순간 부하 억제)은 그대로 서고,
+#:   상한이 하던 **다른 일(무효화 소실)** 만 사라진다.
+CACHE_INVALIDATION_RATE_LIMIT = 200
+
+
 @recursion_protected  # 🔐 FIX: Prevent recursive loops
-@rate_limited(max_per_minute=200)  # 🚦 FIX: Rate limiting to prevent abuse
+@rate_limited(max_per_minute=CACHE_INVALIDATION_RATE_LIMIT)  # 🚦 상한 초과분은 **미룬다** (D-367)
 def universal_cache_invalidation(sender, instance, **kwargs):
     """
     🎯 SELECTIVE cache invalidation based on change type - USER-SPECIFIC vs GROUP-SHARED
-    
+
     🔧 PROTECTIONS ADDED:
     - Recursion protected: Prevents infinite signal loops
-    - Rate limited: Max 200/min to prevent abuse
+    - Rate limited: 분당 200. ★ **초과분은 버리지 않고 미룬다** (D-367).
+      옛 판은 초과분을 `return` 으로 버렸고, 그것이 「폭주 때 낡은 화면이 남는」
+      경로였다. 재난안전 시스템에서 폭주는 정상 동작이다 —
+      **지연은 허용, 소실은 불허.** 규칙은 `common/cache_signal_protection.py` 머리말.
     """
     if not UniversalOptimizer.ENABLED:
         #print(f"⚠️ [CACHE_DISABLED] Universal cache is disabled - skipping invalidation")

@@ -73,6 +73,27 @@ DECLARED_NOT_A_SETTING: dict[str, str] = {
     "stream_monitors/services/zones.py::비교::lat::-90.0#1":
         "WGS84 위도 정의역 -90 — 위와 같다",
 
+    # ── 2026-09-11 · D-367 미룸 큐의 내부 치수 ──────────────────────────────
+    #   ★ 셋 다 **정책이 아니라 기계의 치수**다. 어떤 값을 넣든 규칙은 안 바뀐다:
+    #     「심각 등급은 버리지 않는다」가 상수이고, 이 수들은 그 규칙을 지키는
+    #     방식의 치수일 뿐이다. 운영이 이 수를 바꿔서 **얻는 것이 없다** —
+    #     바꿔서 얻을 것이 생기는 날(예: 「이 테넌트는 큐를 두 배로」) 표 ①에 올린다.
+    "common/cache_signal_protection.py::이름대입::DEFER_QUEUE_MAX::5000#1":
+        "미룸 큐의 **메모리 보호선**이지 정책이 아니다. 접기(coalesce) 덕에 이 수는 "
+        "「1분 안에 바뀌는 서로 다른 행의 수」이고, 넘쳐도 심각 등급은 버려지지 않는다 "
+        "(넘치면 그 자리에서 처리한다). 운영이 조절해서 얻을 동작 차이가 없다.",
+    "common/cache_signal_protection.py::이름대입::DRAIN_BATCH::50#1":
+        "한 번 흘릴 때 처리하는 건수 — **저장 한 번이 큐 전체를 떠안지 않게** 하는 "
+        "치수다. 크게 해도 작게 해도 소실은 0 이고, 달라지는 것은 한 요청이 떠안는 "
+        "일의 양뿐이다. 계약도 운영도 이 수를 부르지 않는다.",
+    "common/cache_signal_protection.py::이름대입::DRAIN_INTERVAL::5.0#1":
+        "흘리개 스레드가 쉬는 간격(초). 폭주가 끝난 뒤 남은 몇 건이 언제 풀리는가를 "
+        "정할 뿐이고, **풀린다는 사실 자체는 이 값과 무관하다.** F-10 「30초」와 "
+        "혼동하지 말 것 — 재는 구간이 다르다(D-290).",
+    "common/cache_signal_protection.py::비교::idle_rounds::12#1":
+        "흘리개가 눕기 전에 헛도는 횟수. 스레드 하나를 언제 재우는가일 뿐이고, "
+        "다음 미룸이 오면 `_ensure_flusher` 가 다시 깨운다 — 큐가 남은 채로 "
+        "잠들 수 있는 값이 아니다.",
     # ── 2026-09-10 · D-367/D-368 ────────────────────────────────────────────
     "kernels/k5_trust/grade_rules.py::기본값::limit::20#1":
         "설정 화면이 보여 줄 변경 이력의 기본 개수다. 계약이 부르지 않고, 운영이 "
@@ -191,6 +212,29 @@ def cross_check(defs: dict[str, dict], read=None) -> list[str]:
                     f"{got} 이다** (backend/{rel}) — 표와 코드가 갈리면 표는 거짓말하는 "
                     f"문서가 된다. 둘을 같은 커밋에서 고쳐라")
     return problems
+
+
+def table_owned(defs, current) -> set[str]:
+    """표 ①이 `used_by` 로 **이미 이름을 댄** 상수의 지문.
+
+    ★ 왜 이 함수가 생겼나 [실측 2026-09-11 · D-350 「측정기를 먼저 의심한다」]:
+      이 게이트의 위반 문구는 **「표 ①에 올리거나 … 등재하라」**고 적는다. 그런데
+      표 ①에 올려도 래칫은 계속 잡았다 — 래칫이 기준선과 `DECLARED_NOT_A_SETTING`
+      만 뺐기 때문이다. **도구가 시킨 대로 했는데 도구가 계속 빨간** 상태였고,
+      그 상태는 사람에게 「그냥 등재해 버려」를 가르친다. 표가 비게 되는 길이다.
+
+      표에 올린 값은 이미 대조(①)가 **표와 코드가 같은지** 매번 본다. 래칫이 그것을
+      「등재되지 않은 매직 넘버」로 한 번 더 세는 것은 같은 값을 두 벌로 세는 일이다.
+    """
+    owned = set()
+    refs = {(rel, name)
+            for spec in defs.values()
+            for ref in spec["used_by"]
+            for rel, _, name in [ref.partition(":")] if name}
+    for fp, hit in current.items():
+        if (hit.path, hit.name) in refs:
+            owned.add(fp)
+    return owned
 
 
 def fingerprints(hits) -> dict[str, object]:
@@ -481,10 +525,11 @@ def main() -> int:
               "기준선 없이 내는 초록은 아무것도 재지 않은 것이다 (D-301)")
         return 1
     current = fingerprints(hits)
-    fresh = sorted(set(current) - baseline - set(DECLARED_NOT_A_SETTING))
+    owned = table_owned(defs, current)
+    fresh = sorted(set(current) - baseline - set(DECLARED_NOT_A_SETTING) - owned)
     healed = sorted(baseline - set(current))
     print(f"[THRESHOLD] 기준선 {len(baseline)}건 · **새 매직 넘버 {len(fresh)}건** · "
-          f"사라진 것 {len(healed)}건")
+          f"사라진 것 {len(healed)}건 · 표 ①이 이름을 댄 것 {len(owned)}건")
     if healed:
         print("[THRESHOLD] `--freeze` 로 기준선을 줄인다 — 줄어드는 것이 보여야 갚는 맛이 난다")
 
