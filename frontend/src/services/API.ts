@@ -3,6 +3,18 @@ import { createApiClient } from 'rj-core';
 export const CustomRoutes = {
   qrCode: '/qr-code',
 
+  /**
+   * DSM 재난안전 모니터링 화면 셋 (D-371 ①).
+   * 상세는 `:id` 를 받는다 — 목록에서 골라 넘기지 않고 **서버에 다시 묻는다**
+   * (문지기가 목록에만 서고 상세에 안 서는 모양을 만들지 않기 위해서다).
+   */
+  dsm: {
+    title: 'Disaster Monitoring',
+    dashboard: { title: '관제 대시보드', path: '/dsm/dashboard' },
+    events: { title: '이벤트 목록', path: '/dsm/events' },
+    eventDetail: { title: '이벤트 상세', path: '/dsm/events/:id' },
+  },
+
   device: {
     title: 'Device',
     path: '/device',

@@ -87,6 +87,17 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/api/dsm/settings/api-keys"),       # F-05 「발급」 (D-367)
     ("DELETE", "/api/dsm/settings/api-keys/{int:key_id}"),         # F-05 「폐기」
     ("POST", "/api/dsm/settings/api-keys/{int:key_id}/rotate"),    # F-05 「회전」
+    # ★ 2026-09-11 **하나가 늘었다** — 이벤트 상세 화면(D-371 ①)이 부를 자리.
+    #   이 시험이 먼저 멈춰 세웠다. 게이트가 지시보다 위다(D-327) — 손으로 이 줄을
+    #   더하는 일이 곧 「진입면을 넓힌다」는 선언이고, 그 선언을 여기 남긴다.
+    #
+    #   왜 목록에서 골라내지 않고 라우트를 늘렸나: 화면이 목록 응답에서 한 줄을
+    #   골라 상세로 쓰면 **문지기가 목록에만 서고 상세에는 안 선다.** 그 자리가
+    #   IDOR 이 태어나는 자리다. 상세는 서버에 다시 묻는다.
+    #   문지기: @tenant_scoped + JwtOrInboundKey(**키 거절** — 상세는 목록에 없는
+    #           clip_path·address·reviewed_by_id 를 더 낸다. 계약이 F-05 로 연 것은
+    #           이벤트 조회이지 그 셋이 아니다)
+    ("GET", "/api/dsm/events/{int:event_id}"),    # F-09 이벤트 상세 (D-371)
 })
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**

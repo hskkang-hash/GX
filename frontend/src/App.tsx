@@ -154,6 +154,21 @@ const DetailDevice = lazy(
 const EditDeviceForm = lazy(
   () => import('./features/device/editDevice/EditDeviceForm'),
 );
+
+/**
+ * DSM(재난안전 모니터링) 화면 셋 — D-371 ① · E2E-1 전 구간을 덮는다.
+ *
+ * 탐지 → **목록 → 상세 → 알림 확인**. 셋을 한 벌로 두는 이유는 그 셋이
+ * 한 시나리오이기 때문이고, 그래서 화면이 서면 E2E 캡처도 함께 선다(D-347).
+ *
+ * ★ 새 앱을 만들지 않는다 — 기존 관제 화면 위에 얹는다(D-370 additive).
+ *   그래서 `PrivateLayout` + `Sidebar` 아래에 그대로 들어간다.
+ */
+const DsmControlDashboard = lazy(
+  () => import('./features/dsm/pages/ControlDashboard'),
+);
+const DsmEventList = lazy(() => import('./features/dsm/pages/EventList'));
+const DsmEventDetail = lazy(() => import('./features/dsm/pages/EventDetail'));
 /**
  * W0-4 — 데모·목업 화면 격리
  *
@@ -371,6 +386,18 @@ function App() {
           element: <Sidebar />,
           children: [
             { path: CustomRoutes.qrCode, element: <ScanQRMobile /> },
+            // ── DSM 재난안전 모니터링 (D-371 ①) ──────────────────────────
+            //   경로는 `CustomRoutes.dsm` 한 곳에서 정한다 — 문자열을 화면에
+            //   흩으면 경로를 바꾸는 날 어느 화면이 옛말인지 안 보인다.
+            {
+              path: CustomRoutes.dsm.dashboard.path,
+              element: <DsmControlDashboard />,
+            },
+            { path: CustomRoutes.dsm.events.path, element: <DsmEventList /> },
+            {
+              path: CustomRoutes.dsm.eventDetail.path,
+              element: <DsmEventDetail />,
+            },
             { path: CustomRouters.user.path, element: <UserManagement /> },
             {
               path: CustomRouters.user.subRoutes.addUser.path,

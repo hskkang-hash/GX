@@ -1,0 +1,44 @@
+{
+  "measured_at": "2026-08-30T06:03:02+00:00",
+  "verdict": "UNKNOWN",
+  "report": {
+    "measured_at": "2026-08-30T06:03:02+00:00",
+    "signals": {
+      "db_ping_ms": {
+        "value": 7.56,
+        "verdict": "OK",
+        "note": ""
+      },
+      "cache_alive": {
+        "value": true,
+        "verdict": "OK",
+        "note": "왕복 5.7ms"
+      },
+      "object_store_alive": {
+        "value": true,
+        "verdict": "OK",
+        "note": "저장소에 질의가 닿았다 (존재 여부 False · 쓰지 않았다)"
+      },
+      "latest_event_age_min": {
+        "value": null,
+        "verdict": "UNKNOWN",
+        "note": "이벤트가 한 건도 없다 — 「밀렸다」가 아니라 「비었다」"
+      },
+      "unsent_deliveries": {
+        "value": 0,
+        "verdict": "OK",
+        "note": ""
+      },
+      "db_size_gb": {
+        "value": 0.085,
+        "verdict": "OK",
+        "note": ""
+      },
+      "cameras": {
+        "value": 39,
+        "verdict": "OK",
+        "note": "등록 카메라 수 — 늘고 줄어드는 것이 보인다"
+      }
+    }
+  }
+}

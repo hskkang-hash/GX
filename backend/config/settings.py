@@ -622,6 +622,16 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 
 
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 운영 자동화 (D-373) — **감시는 켜고, 백업은 끈 채로 둔다**
+# ─────────────────────────────────────────────────────────────────────────────
+# 백업을 기본으로 켜지 않는 이유는 겁이 나서가 아니다. 백업은 **어디에 얼마나 오래
+# 쌓을 것인가**를 정해야 도는 일이고, 그 답은 고객 환경마다 다르다. 기본값으로 켜면
+# 우리가 남의 디스크에 대해 그 답을 정하는 것이 된다.
+# 켤 때는 둘을 **함께** 준다 — 보관처 없이 켜면 태스크가 판정 불가로 멈춘다.
+OPS_BACKUP_SCHEDULE_ENABLED = env.bool("OPS_BACKUP_SCHEDULE_ENABLED", default=False)
+OPS_BACKUP_DIR = env.str("OPS_BACKUP_DIR", default="")
 CELERY_BEAT_SYNC_EVERY = 30  # Sync every 30 seconds (reduced load)
 CELERY_BEAT_MAX_LOOP_INTERVAL = 300  # Max 5 minutes between checks
 
@@ -743,6 +753,22 @@ TENANT_TRUST_LEGACY_SUPERUSER = env.bool("TENANT_TRUST_LEGACY_SUPERUSER", defaul
 
 # 테넌트 운영 역할(자기 테넌트 관리)의 코드 접두어. `<prefix>_<group_id>` 규약.
 TENANT_ADMIN_ROLE_PREFIX = env.str("TENANT_ADMIN_ROLE_PREFIX", default="tenant_admin")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K3 역할별 대시보드 프레임의 배선 (D-371 ① · P-K3-1 해소)
+# ─────────────────────────────────────────────────────────────────────────────
+# 커널(`kernels/k3_dashboard/presets.py`)은 매핑을 코드에 박지 않고 **여기서 읽는다**
+# — 실측되지 않은 매핑을 박지 않기 위해서다(D-280). 그 설정이 여태 없었고, 그래서
+# 프레임은 서 있는데 **모든 사람이 같은 화면**을 봤다.
+#
+# 근거·판정·비운 것의 목록은 전부 `config/k3_roles.py` 에 있다. 여기서 값을 다시
+# 적지 않는다 — 두 벌은 반드시 어긋난다(D-369).
+from config.k3_roles import (  # noqa: E402
+    K3_ROLE_PRESET_MAP,
+    K3_UNMAPPED_BY_DECISION,
+    K3_WIDGET_MATRIX,
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

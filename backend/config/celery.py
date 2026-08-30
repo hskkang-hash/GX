@@ -57,6 +57,24 @@ app.conf.beat_schedule = {
         "task": "flight_log.tasks.task_update_pending_anomaly_predictions",
         "schedule": 300.0,  # run every 15 minutes to update anomaly predictions
     },
+    # ── 운영 자동화 (D-373) ─────────────────────────────────────────────
+    #   ★ 도구는 이미 있었다(scripts/ops_*.py · D-354 ①). 없던 것은 **주기**다.
+    #     「백업 스크립트가 있다」와 「백업이 매일 돈다」는 다른 사실이고,
+    #     사람이 손으로 부르는 백업은 **바쁜 날 안 돌아간다.**
+    "ops-monitor-3signals": {
+        # 감시 3종 — 살아 있는가 · 밀리는가 · 채워지는가. 읽기만 하므로 **기본 켬**.
+        # 5분: 1분이면 로그가 소음이 되고, 1시간이면 죽은 것을 한 시간 뒤에 안다.
+        "task": "common.ops_monitor_beat",
+        "schedule": 300.0,
+    },
+    "ops-backup-daily": {
+        # ★ 이 주기는 등록되지만 **태스크가 스스로 꺼져 있다**
+        #   (`OPS_BACKUP_SCHEDULE_ENABLED` 기본 False).
+        #   여기서 빼지 않고 등록해 두는 이유: 빼 두면 켜는 날 **아무도 이 자리를 못 찾는다.**
+        #   등록해 두면 「꺼져 있다」가 로그에 매일 한 줄로 보인다 — 조용한 부재보다 낫다(D-290).
+        "task": "common.ops_backup_beat",
+        "schedule": crontab(hour=3, minute=30),
+    },
 }
 
 # Additional Celery configurations to fix timeout issues

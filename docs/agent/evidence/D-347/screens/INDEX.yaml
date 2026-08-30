@@ -43,6 +43,18 @@ meta:
   empty_reason: |
     브라우저를 여는 E2E 가 없다 (BROWSER_E2E_HARNESS).
     **찍을 화면이 실행 중에 존재하지 않는다.** 만들어 찍는 것은 D-347 ①이 금지한다.
+
+    ★ [실측 2026-09-11 · D-371] 사유가 **한 겹 바뀌었다.** 지우지 않고 덧붙인다:
+      화면 셋은 이제 **코드에 있다** — frontend/src/features/dsm/pages/
+        ControlDashboard.tsx (관제 대시보드) · EventList.tsx · EventDetail.tsx
+      즉 「그릴 화면이 없다」는 더 이상 사유가 아니다. 남은 사유는 둘이다:
+        ① 브라우저 구동체가 여전히 없다 (playwright·selenium 어느 것도 requirements 에 없음)
+        ② 이 작업 환경에 프런트 의존 설치본이 없다 — `frontend/node_modules` 부재.
+           있는 것은 컨테이너 `gx-fe-build` 뿐이고, 그 안의 `rj-core` 판이 저장소와
+           어긋나 저장소 전체 타입오류 **3229건**이 난다 [실측].
+           (**새 화면 셋에서 난 오류는 0건**이다 — 어긋난 것은 기존 화면과 rj-core 다)
+      ★ 그래서 여전히 **0장**이고, 0장인 것이 정직한 상태다.
+        「화면을 만들었으니 한 장 만들어 넣자」가 D-347 ①이 금지한 바로 그 일이다.
   expected_when_unlocked: |
     E2E-1(화재) · E2E-2(침수) 의 화면 단계마다 역할 1개 이상.
     최소 대상: 로그인 · 대시보드 · 이벤트 목록 · 이벤트 상세(영상 구간) · 보고서.

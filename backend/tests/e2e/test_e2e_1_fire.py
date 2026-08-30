@@ -83,7 +83,11 @@ class _FireScenario(TestCase):
         cls.group_b = UserGroup.objects.create(name="e2e1-tenant-B")
         UserGroup.objects.filter(pk__in=[cls.group_a.pk, cls.group_b.pk]).update(created_by=None)
 
-        cls.role_a = cls._own(cls._role("e2e1_watch_a"), cls.group_a)
+        # ★ 역할 코드를 **배선된 것으로** 쓴다 (D-373). 지어낸 코드를 쓰면
+        #   `get_preset` 이 늘 `matched=False` 로 떨어지고, 그러면 이 시나리오는
+        #   「배선이 없는 상태」만 영원히 재게 된다 — 실제 운영과 다른 세상이다.
+        #   `fire_user` 는 config/k3_roles.py 가 관제요원으로 이은 코드다.
+        cls.role_a = cls._own(cls._role("fire_user"), cls.group_a)
         cls.role_b = cls._own(cls._role("e2e1_watch_b"), cls.group_b)
         cls.user_a = cls._user("e2e1_user_a", cls.group_a, cls.role_a)
         cls.user_b = cls._user("e2e1_user_b", cls.group_b, cls.role_b)
@@ -309,6 +313,12 @@ class E2E1FireTest(_FireScenario):
         preset = get_preset(scope=self.scope_a)
         self.assertEqual(0, preset.clicks_to_reach,
                          "[U3] 로그인 직후 화면에 도달하는 클릭이 0 이 아닙니다.")
+        # ★ **배선이 실제로 먹는가** (D-373). 여기서 matched=False 가 나오면
+        #   화면은 서 있는데 역할이 안 붙은 것이고, 그것은 「역할별 화면」이 아니다.
+        self.assertTrue(
+            preset.matched,
+            f"[U3] 역할 {preset.role_codes} 가 프리셋에 매핑되지 않았습니다 — "
+            f"{preset.reason}. 배선은 config/k3_roles.py 다")
         self.assertEqual(5, len(FIVE_STATES), "[F-09] 5상태가 다섯이 아닙니다.")
 
         panels = resolve_layout(scope=self.scope_a)

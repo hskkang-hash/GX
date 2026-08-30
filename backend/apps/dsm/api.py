@@ -138,6 +138,36 @@ class DsmAPI:
              "lat": e.lat, "lng": e.lng, "snapshot_path": e.snapshot_path}
             for e in rows]}
 
+    # ★ 들어오는 키를 **받지 않는다**(기본값 거절). 상세는 목록에 없는 것을 더 낸다 —
+    #   `clip_path`(영상 구간) · `address` · `reviewed_by_id`. 계약이 F-05 로 연 것은
+    #   **이벤트 조회**이지 이 셋이 아니고, 계약이 안 연 것을 우리가 열지 않는다(D-280).
+    #   화면은 사람의 토큰으로 부르므로 이 선택이 화면을 막지 않는다.
+    @route.get("/events/{int:event_id}", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="F-09 이벤트 상세 — 남의 이벤트 id 로 펴 보면 IDOR 이다")
+    def event_detail(self, request, event_id: int):
+        """F-09 이벤트 상세 (D-371 ⑤ 화면 셋 중 셋째).
+
+        ★ 남의 것이면 **404** 다 (403 이 아니다). 403 은 「그 id 는 있지만 네 것이
+          아니다」를 알려 주고, **존재 여부가 새는 것도 누출**이다 — 판정은 K1 이 한다.
+
+        ★ `verdict` 를 `status` 와 따로 낸다(D-293). 종료된 이벤트의 화면이
+          「이것은 오탐이었다」를 계속 말할 수 있어야 한다.
+        """
+        e = services.event_detail(scope=_scope(request), event_id=event_id)
+        return {
+            "event_id": e.event_id, "event_type": e.event_type,
+            "severity": e.severity, "status": e.status, "verdict": e.verdict,
+            "occurred_at": e.occurred_at, "last_seen_at": e.last_seen_at,
+            "stream_monitor_id": e.stream_monitor_id,
+            "stream_monitor_name": e.stream_monitor_name,
+            "confidence": e.confidence, "bbox": e.bbox,
+            "snapshot_path": e.snapshot_path, "clip_path": e.clip_path,
+            "address": e.address, "address_status": e.address_status,
+            "lat": e.lat, "lng": e.lng,
+            "reviewed_by_id": e.reviewed_by_id, "reviewed_at": e.reviewed_at,
+            "reject_reason": e.reject_reason,
+        }
+
     # ── F-10 알림 발송 ───────────────────────────────────────────────────
     @route.post("/events/{int:event_id}/notify", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-10 발송 — 남의 이벤트로 발송을 일으킬 수 없다 (쓰기 IDOR)")

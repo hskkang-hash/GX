@@ -154,6 +154,18 @@ def recent_events(*, scope: TenantScope, since: datetime | None = None,
                         severity=severity, limit=limit)
 
 
+def event_detail(*, scope: TenantScope, event_id: int):
+    """이벤트 하나 (F-09 상세 화면 · D-371 ⑤).
+
+    ★ 목록을 받아 화면에서 골라내지 않는다. 골라내면 **문지기가 목록에만 서고
+      상세에는 안 서는** 모양이 되고, 그 자리가 IDOR 이 태어나는 자리다.
+      좁히기는 커널의 `get_event` 가 한다 — App 은 소비만 한다.
+    """
+    from kernels.k1_event import get_event
+
+    return get_event(event_id, scope=scope)
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # F-10 알림 발송
 # ═══════════════════════════════════════════════════════════════════════════
