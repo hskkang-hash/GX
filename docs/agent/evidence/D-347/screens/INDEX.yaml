@@ -82,26 +82,53 @@ screens:
   #   손으로 옮겨 적으면 이벤트 id 하나가 어긋나는 날 인덱스가 거짓말을 하고,
   #   그 거짓말은 고객이 보는 자리에 실린다 (D-284).
   #
-  #   셋은 전부 **브라우저가 실제로 지나간 화면**이다. 이 실행체는 화면마다
+  #   전부 **브라우저가 실제로 지나간 화면**이다. 이 실행체는 화면마다
   #   「그 화면에만 있는 글자」를 먼저 찾고, 못 찾으면 **찍지 않고 실패한다** —
   #   로그인으로 튕긴 뒤 찍은 PNG 도 파일은 생기므로, 「파일이 생겼다」를 성공으로
   #   두면 이 인덱스가 거짓말을 싣게 된다.
   #
-  #   ⚠ 역할은 `OPERATOR` 다. 이 계정은 **역할↔프리셋 매핑에 걸리지 않아** 가장 좁은
-  #     화면으로 떨어졌고, 대시보드 캡처에 그 경고가 그대로 찍혀 있다 — 지우지 않는다.
-  #     D-383 이 안양 관제팀에 물으려는 바로 그 자리이고, **화면이 그 질문을 대신 말한다.**
+  #   ⚠ [실측 2026-09-13 · D-386] 역할은 **`NO_ROLE`** 이다. 이 계정은 제품의 `role` 이
+  #     **비어 있다** — 1차판이 `OPERATOR` 라 적어 두었던 자리이고, 그것은 진술이지
+  #     실측이 아니었다(D-323). 지금은 제품이 들고 있는 값을 읽어 적는다.
+  #     그리고 그 사실이 화면 하나를 설명한다: `/users` 는 **본문 0자**로 떴다.
+  #     빈 화면은 찍지 않았고 결함으로 등재했다(RJCORE_BLANK_ON_NO_PERMISSION).
   - route: /dsm/dashboard
-    user_role: OPERATOR
+    user_role: NO_ROLE
     scenario: SCREENS-1/1
-    captured_at: "2026-08-30T14:49:57"
-    file: SCREENS-1/OPERATOR/dsm_dashboard.png
+    captured_at: "2026-08-30T15:34:54"
+    file: SCREENS-1/NO_ROLE/dsm_dashboard.png
   - route: /dsm/events
-    user_role: OPERATOR
+    user_role: NO_ROLE
     scenario: SCREENS-1/2
-    captured_at: "2026-08-30T14:50:04"
-    file: SCREENS-1/OPERATOR/dsm_events.png
-  - route: /dsm/events/4672
-    user_role: OPERATOR
+    captured_at: "2026-08-30T15:35:01"
+    file: SCREENS-1/NO_ROLE/dsm_events.png
+  - route: /dsm/events/4676
+    user_role: NO_ROLE
     scenario: SCREENS-1/3
-    captured_at: "2026-08-30T14:50:12"
-    file: SCREENS-1/OPERATOR/dsm_events_4672.png
+    captured_at: "2026-08-30T15:35:09"
+    file: SCREENS-1/NO_ROLE/dsm_events_4676.png
+  - route: /device
+    user_role: NO_ROLE
+    scenario: SCREENS-1/4
+    captured_at: "2026-08-30T15:35:17"
+    file: SCREENS-1/NO_ROLE/device.png
+  - route: /roles
+    user_role: NO_ROLE
+    scenario: SCREENS-1/5
+    captured_at: "2026-08-30T15:35:24"
+    file: SCREENS-1/NO_ROLE/roles.png
+  - route: /menu
+    user_role: NO_ROLE
+    scenario: SCREENS-1/6
+    captured_at: "2026-08-30T15:35:32"
+    file: SCREENS-1/NO_ROLE/menu.png
+  - route: /configuration-management
+    user_role: NO_ROLE
+    scenario: SCREENS-1/7
+    captured_at: "2026-08-30T15:35:39"
+    file: SCREENS-1/NO_ROLE/configuration-management.png
+  - route: /profile
+    user_role: NO_ROLE
+    scenario: SCREENS-1/8
+    captured_at: "2026-08-30T15:35:47"
+    file: SCREENS-1/NO_ROLE/profile.png

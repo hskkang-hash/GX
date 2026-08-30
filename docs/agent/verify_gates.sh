@@ -607,6 +607,46 @@ gate_dormant() {
   return 1
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# GATE: route-alive — 화면이 쓰는 라우트를 **실제 HTTP 로 때린다** (D-386)
+#
+# ★ 이 게이트의 존재 이유는 **단위 시험이 전부 초록이어도 독립적으로 빨개지는 것**이다.
+#   ★ **출생 표본** (D-310): 화면을 처음 띄운 순간 `/api/dsm/events` 가 **500** 이었다
+#     [실측 2026-09-12]. 그 세 값(GET · /api/dsm/events · 500)이
+#     `verify_route_alive.py::BIRTH_SAMPLE` 에 박혀 있고 자기시험이 그것을 판정한다.
+#   단위 530건이 전부 초록인 채로 그 라우트는 운영에서 죽어 있었다 — 단위는 함수를 부르고
+#   브라우저는 라우트를 때린다. 그 사이(URL 배선·스키마 해석·권한·미들웨어)를 아무도 안 봤다.
+#
+# ⚠ 서버가 안 떠 있거나 자격증명이 없으면 **SKIP(판정 불가)** 이다. 통과가 아니다 —
+#   때려 보지 못한 것을 초록으로 적는 것이 이 게이트가 막으려는 바로 그 병이다(D-301).
+# ─────────────────────────────────────────────────────────────────────────────
+gate_route_alive() {
+  head_ "GATE route-alive — 화면이 쓰는 라우트가 살아 있나 (D-386)"
+  # ★ **출생 표본** (D-310) — `verify_route_alive.py::BIRTH_SAMPLE` 에 그날의 세 값이
+  #   박혀 있다: GET · /api/dsm/events · **500** [실측 2026-09-12].
+  #   아래 자기시험이 그 표본을 판정하고, 판정이 어긋나면 이 게이트는 시작하지 않는다.
+  local out rc
+  if out=$($PY scripts/verify_route_alive.py --self-test 2>&1); then
+    pass "탐지기 자기시험 통과 (판정 규칙 8종 + 자기표본 /api/dsm/events)"
+  else
+    fail "탐지기 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_route_alive.py 2>&1); rc=$?
+  local nroutes
+  nroutes=$(echo "$out" | grep -m1 -o '\[입력\] [0-9]*건' | tr -dc '0-9')
+  inputs "${nroutes:-0}" "화면이 실제로 부른 GET 라우트 (캡처가 기록한 것)"          "캡처를 아직 한 번도 안 돌렸다 — 때릴 목록이 없다" || return 1
+  echo "$out" | grep -E "^\[ALIVE\] ✗" | sed 's/^/        /'
+  case $rc in
+    0) pass "$(echo "$out" | tail -1)"; return 0 ;;
+    2) skip "판정 불가 — 서버 미기동이거나 자격증명이 없다"             "(GX_ROUTE_USER/GX_ROUTE_PASSWORD · 통과가 아니다)"; return 0 ;;
+    *) fail "죽은 라우트가 있다 — 화면이 부르는 자리가 응답하지 않는다"
+       echo "$out" | sed 's/^/        /'; return 1 ;;
+  esac
+}
+
 _dispatch_gate() {
   case "$1" in
     secrets)            gate_secrets ;;
@@ -617,6 +657,7 @@ _dispatch_gate() {
     ui-library)         gate_ui_library ;;
     forbidden-zone)     gate_forbidden_zone ;;
     dormant)            gate_dormant ;;
+    route-alive)        gate_route_alive ;;
     *) echo "알 수 없는 게이트: $1"; exit 2 ;;
   esac
 }
@@ -647,7 +688,7 @@ run_gate() {
   return $rc
 }
 
-ALL_GATES=(secrets bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant)
+ALL_GATES=(secrets bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {

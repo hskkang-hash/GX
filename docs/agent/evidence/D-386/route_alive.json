@@ -1,0 +1,89 @@
+{
+  "api": "http://localhost:8000",
+  "checked": 13,
+  "skipped_with_id": [
+    "/api/dsm/events/4676",
+    "/api/v1/user/get-user-detail/105"
+  ],
+  "rows": [
+    {
+      "method": "GET",
+      "path": "/api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/config-management/list-optimized",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/config-management/list?page_size=25&current_page=1",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/departments/?page_size=10000&current_page=1&group__id=4",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/dashboard/frame",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/deliveries?event_id=4676",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/events?limit=10",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/events?limit=50",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/menu/menus?page_size=10000",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/?page_size=10000&current_page=1",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+      "status": 200,
+      "alive": true
+    }
+  ],
+  "dead": 0
+}

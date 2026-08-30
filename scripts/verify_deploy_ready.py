@@ -43,6 +43,8 @@ from __future__ import annotations
 
 import argparse
 import os
+import json
+import re
 import sys
 from pathlib import Path
 
@@ -162,12 +164,77 @@ def self_test() -> int:
     finally:
         os.environ.clear()
         os.environ.update(keep)
+
+    # ★ D-387 브랜치 참조 — **양성과 음성 둘 다.** 판정기가 「전부 고정됐다」만 말할 줄
+    #   알면 그것은 판정기가 아니라 도장이다.
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        pin = "git+ssh://git@h/x.git#" + "a" * 40
+        (d / "lock.json").write_text("{}", encoding="utf-8")
+        (d / "pinned.json").write_text(
+            json.dumps({"dependencies": {"x": pin, "y": "^1.0.0"}}), encoding="utf-8")
+        (d / "floating.json").write_text(
+            json.dumps({"dependencies": {"x": "git+ssh://git@h/x.git#develop"}}),
+            encoding="utf-8")
+        seen, floating, notes = audit_dep_pins(d / "pinned.json", d / "lock.json")
+        checks.append(("커밋으로 고정된 git 의존은 통과한다 (본 것 %d건)" % seen,
+                       seen == 2 and not floating and not notes))
+        _, floating, _ = audit_dep_pins(d / "floating.json", d / "lock.json")
+        checks.append(("★ 브랜치를 가리키면 잡는다 — 같은 명령이 날마다 다른 것을 가져온다",
+                       len(floating) == 1))
+        _, _, notes = audit_dep_pins(d / "pinned.json", d / "no-such-lock.json")
+        checks.append(("lock 이 없으면 사유를 낸다 — 판의 진실이 저장소에 없다",
+                       len(notes) == 1))
+        _, _, notes = audit_dep_pins(d / "no-such.json", d / "lock.json")
+        checks.append(("★ 음성 — 못 읽으면 **0건 통과가 아니라 사유**다 (D-301)",
+                       len(notes) == 1))
     bad = 0
     for label, ok in checks:
         bad += 0 if ok else 1
         print("  %s   %s" % ("OK  " if ok else "FAIL", label))
     print("[DEPLOY] 자기시험 %d건 중 %d건 실패" % (len(checks), bad))
     return 1 if bad else 0
+
+
+# ---------------------------------------------------------------------------
+# D-387 — **재현되지 않는 빌드는 배포하지 않는다.** 브랜치 참조를 전수한다
+#
+# 브랜치를 가리키는 의존은 **같은 명령이 시점마다 다른 코드를 가져온다.** 오늘 되던
+# 빌드가 내일 깨지고, 원인은 우리 커밋이 아니라 남의 브랜치가 움직인 것이다 —
+# 그 상태로는 **배포할 때마다 다른 것이 나갈 수 있다.**
+#
+# 그래서 새 게이트를 만들지 않고 **배포 전 점검에 한 줄을 더한다**(D-353 비율 규정).
+# 자격증명과 같은 성질이다: 없으면 배포하지 않는다.
+# ---------------------------------------------------------------------------
+FRONTEND_PKG = ROOT / "frontend" / "package.json"
+FRONTEND_LOCK = ROOT / "frontend" / "package-lock.json"
+
+#: 커밋 핀은 40자리 16진수다. `#develop`·`#v2` 같은 이름은 **움직이는 표적**이다.
+_COMMIT_PIN = re.compile(r"#[0-9a-f]{40}$")
+
+
+def audit_dep_pins(pkg_path: Path = FRONTEND_PKG,
+                   lock_path: Path = FRONTEND_LOCK) -> tuple[int, list[str], list[str]]:
+    """(본 건수, 브랜치 참조, 사유). **못 읽으면 0건이 아니라 사유를 낸다** (D-301).
+
+    ★ 경로를 인자로 받는 이유는 하나다 — **시험할 수 있게 하려고.** 파일 자리를 함수
+      안에 못 박으면 자기시험이 진짜 저장소를 고쳐야만 음성 갈래를 볼 수 있다.
+    """
+    if not pkg_path.is_file():
+        return 0, [], [f"{pkg_path} 를 못 읽었다 — 검사하지 못했다(0건 검사가 아니다)"]
+    pkg = json.loads(pkg_path.read_text(encoding="utf-8"))
+    deps = {}
+    for section in ("dependencies", "devDependencies", "optionalDependencies"):
+        deps.update(pkg.get(section) or {})
+    git_specs = {k: v for k, v in deps.items()
+                 if isinstance(v, str) and ("git+" in v or v.startswith("git:"))}
+    floating = [f"{k} = {v}" for k, v in sorted(git_specs.items())
+                if not _COMMIT_PIN.search(v)]
+    notes = []
+    if not lock_path.is_file():
+        notes.append("lock 파일이 없다 — 판의 진실이 저장소에 없다 (D-387)")
+    return len(deps), floating, notes
 
 
 def main() -> int:
@@ -198,12 +265,24 @@ def main() -> int:
         if args.list:
             print(f"         없으면: {breaks}")
 
-    if problems:
+    seen, floating, notes = audit_dep_pins()
+    print(f"[DEPLOY] [입력] 프런트 의존 {seen}건 — **브랜치 참조가 남아 있나** (D-387)")
+    for n in notes:
+        print(f"[DEPLOY] ⚠ {n}")
+    if floating or notes:
+        for f in floating:
+            print(f"[DEPLOY] 움직이는 표적: {f}")
+        print("[DEPLOY] ★ 재현되지 않는 빌드는 상용에 나갈 수 없다 — "
+              "**커밋으로 고정한다** (D-387)")
+    print("[DEPLOY] 프런트 의존 — **브랜치 참조 0건** · lock 있음 (재현 가능한 빌드)")
+    pins_bad = bool(floating or notes)
+
+    if problems or pins_bad:
         for p in problems:
             print(f"[DEPLOY] 준비되지 않았다 — {p}")
         if args.for_deploy:
             print("[DEPLOY] ★ **배포하지 않는다.** 막은 것에는 여는 절차가 함께 "
-                  "있어야 한다 (D-382)")
+                  "있어야 하고(D-382), **재현되지 않는 빌드는 나가지 않는다**(D-387)")
             return 1
         print("[DEPLOY] (개발 환경 판정 — 종료 코드는 0 이다. 배포 파이프라인은 "
               "`--for-deploy` 로 불러 실제로 멈춘다)")

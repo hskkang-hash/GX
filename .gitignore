@@ -83,3 +83,7 @@ secrets.*
 # 저장소가 아니라 백업 저장소의 것이다. 복구가 성공했다는 **증거**는 남는다.
 docs/agent/evidence/D-354/backup/*.dump
 docs/agent/evidence/D-354/backup/objects/
+
+# 브라우저 캡처용으로 컨테이너에 심는 프런트 산출물 (D-386).
+# `gx-shell` 의 /app 이 이 디렉터리라서 여기 생긴다 — **빌드 산출물이므로 추적하지 않는다.**
+backend/_fe_dist/

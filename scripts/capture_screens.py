@@ -82,6 +82,24 @@ TARGETS = [
     {"step": 1, "route": "/dsm/dashboard", "must_see": "관제 대시보드"},
     {"step": 2, "route": "/dsm/events", "must_see": "이벤트 목록"},
     {"step": 3, "route": "/dsm/events/{event_id}", "must_see": "이벤트 상세"},
+    # ── D-386 [실측 2026-09-13] 다섯 장을 더한다. 셋은 우리가 만든 화면이고
+    #    이 다섯은 **인수받은 화면**이다 — 남의 화면을 여는 것이 값이 큰 이유는
+    #    우리가 한 번도 열어 본 적 없는 배선이 거기 있기 때문이다.
+    #    `must_see` 는 **실제로 띄워 보고** 그 화면에만 있는 글자로 골랐다(추측 아님).
+    {"step": 4, "route": "/device", "must_see": "Add New Device"},
+    {"step": 5, "route": "/roles", "must_see": "Add New Role"},
+    {"step": 6, "route": "/menu", "must_see": "Menu Management"},
+    {"step": 7, "route": "/configuration-management", "must_see": "Is Active?"},
+    {"step": 8, "route": "/profile", "must_see": "Personal Information"},
+]
+
+#: ★ [실측 2026-09-13 · D-386] 열어 보고 **찍지 못한 화면**. 목록에 남긴다 —
+#:   못 찍은 것을 목록에서 지우면 「안 해 본 것」과 「해 봤더니 안 되는 것」이 같아진다.
+#:   `/users` 는 API 6건이 전부 200 인 채로 **본문 글자 수가 0** 이었다(빈 화면).
+#:   결함으로 등재했다: DA-05/blockers.yaml :: RJCORE_BLANK_ON_NO_PERMISSION
+KNOWN_BLANK = [
+    {"route": "/users", "why": "본문 0자 · API 6건 200 · JS 오류 0건 — 권한 없는 화면이 "
+                               "안내 대신 빈 화면을 낸다 (DA-03 §3-4 위반 · rj-core §0.4)"},
 ]
 
 try:
@@ -235,7 +253,24 @@ def _release_session(username: str) -> None:
     _ = apps  # django.setup() 만 필요했다
 
 
-def capture(*, web: str, user: str, password: str, event_id: int) -> dict:
+def read_role(username: str) -> str:
+    """찍은 사람의 역할을 **제품이 들고 있는 값**에서 읽는다 (D-323).
+
+    ★ 1차판은 `role = "OPERATOR"` 로 박혀 있었다. 바로 위 주석이 「우리가 정해서 적지
+      않는다」라고 말하면서 정해서 적고 있었다 — 그리고 그 진술은 **틀렸다**:
+      이 계정의 `role` 은 [실측] **None** 이다. 그래서 `/users` 가 빈 화면으로 떴다.
+      인덱스에 OPERATOR 라 적혔으면 그 사실이 통째로 가려졌을 것이다.
+    """
+    apps = _django()
+    from django.contrib.auth import get_user_model
+    u = get_user_model()._base_manager.filter(username=username).first()
+    role = getattr(getattr(u, "role", None), "code", None) or getattr(u, "role", None)
+    _ = apps
+    return str(role) if role else "NO_ROLE"
+
+
+def capture(*, web: str, user: str, password: str, event_id: int, role: str,
+            api: str) -> dict:
     from playwright.sync_api import sync_playwright
 
     # ★ 이번 실행이 남길 자리를 **먼저 비운다.** 이벤트 상세의 경로에는 그때그때의
@@ -246,11 +281,17 @@ def capture(*, web: str, user: str, password: str, event_id: int) -> dict:
     shutil.rmtree(SCREENS / SCENARIO, ignore_errors=True)
     SCREENS.mkdir(parents=True, exist_ok=True)
     entries, steps, page_errors = [], {}, []
+    #: 화면이 **실제로 부른** API. 우리가 「이 화면은 이걸 부를 것이다」라고 적지 않는다 —
+    #: 브라우저가 부른 것을 그대로 적고, `verify_route_alive.py` 가 그 목록을 때린다(D-386).
+    api_calls: dict[str, list] = {}
+    seen_calls: list = []
 
     with sync_playwright() as p:
         browser = p.chromium.launch(args=["--no-sandbox"])
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.on("pageerror", lambda e: page_errors.append(str(e)[:200]))
+        page.on("response", lambda r: seen_calls.append(
+            (r.request.method, r.url, r.status)))
         try:
             page.goto(f"{web}/login", wait_until="networkidle", timeout=60_000)
             page.wait_for_timeout(1_500)
@@ -266,12 +307,10 @@ def capture(*, web: str, user: str, password: str, event_id: int) -> dict:
                     f"로그인 뒤에도 로그인 화면이다 ({page.url}) — "
                     f"본문: {page.inner_text('body')[:160]!r}")
 
-            #: 역할 프리셋은 **화면이 말하는 것을 읽는다.** 우리가 정해서 적지 않는다 —
-            #: 적으면 「이 역할로 찍었다」가 진술이 되고, 진술은 증거가 아니다(D-323).
-            role = "OPERATOR"
 
             for t in TARGETS:
                 route = t["route"].replace("{event_id}", str(event_id))
+                seen_calls.clear()
                 page.goto(f"{web}{route}", wait_until="networkidle", timeout=60_000)
                 page.wait_for_timeout(6_000)
                 body = page.inner_text("body")
@@ -280,6 +319,16 @@ def capture(*, web: str, user: str, password: str, event_id: int) -> dict:
                         f"{route}: 「{t['must_see']}」 가 화면에 없다 — "
                         f"찍지 않는다. 본문: {body[:200]!r}")
 
+                #: ★ [실측 2026-09-13] 1차판은 URL 을 `/api/` 로 잘랐고, 그래서
+                #:   **구글 지도**(`maps.googleapis.com/maps/api/js`)가 우리 라우트
+                #:   `/api/js` 로 둔갑했다. `verify_route_alive` 가 그 404 를
+                #:   「죽은 라우트」로 보고했다 — 죽은 것은 라우트가 아니라 측정이었다(D-350).
+                #: ★ 그리고 **질의문자열을 지우지 않는다.** 지우면 필수 인자가 사라져
+                #:   살아 있는 라우트가 422 로 나온다 — 같은 종류의 두 번째 오답이었다.
+                api_calls[route] = sorted({
+                    (m, u[len(api):], st)
+                    for m, u, st in seen_calls
+                    if u.startswith(api + "/api/")})
                 step = f"{SCENARIO}/{t['step']}"
                 when = datetime.now().replace(microsecond=0)
                 rel = "%s/%s/%s.png" % (SCENARIO, role,
@@ -296,7 +345,8 @@ def capture(*, web: str, user: str, password: str, event_id: int) -> dict:
         finally:
             browser.close()
 
-    return {"entries": entries, "steps": steps, "page_errors": page_errors}
+    return {"entries": entries, "steps": steps, "page_errors": page_errors,
+            "api_calls": api_calls}
 
 
 #: 인덱스의 `screens:` 아래를 **이 실행체가 직접 쓴다.**
@@ -307,14 +357,16 @@ _INDEX_HEAD = """screens:
   #   손으로 옮겨 적으면 이벤트 id 하나가 어긋나는 날 인덱스가 거짓말을 하고,
   #   그 거짓말은 고객이 보는 자리에 실린다 (D-284).
   #
-  #   셋은 전부 **브라우저가 실제로 지나간 화면**이다. 이 실행체는 화면마다
+  #   전부 **브라우저가 실제로 지나간 화면**이다. 이 실행체는 화면마다
   #   「그 화면에만 있는 글자」를 먼저 찾고, 못 찾으면 **찍지 않고 실패한다** —
   #   로그인으로 튕긴 뒤 찍은 PNG 도 파일은 생기므로, 「파일이 생겼다」를 성공으로
   #   두면 이 인덱스가 거짓말을 싣게 된다.
   #
-  #   ⚠ 역할은 `OPERATOR` 다. 이 계정은 **역할↔프리셋 매핑에 걸리지 않아** 가장 좁은
-  #     화면으로 떨어졌고, 대시보드 캡처에 그 경고가 그대로 찍혀 있다 — 지우지 않는다.
-  #     D-383 이 안양 관제팀에 물으려는 바로 그 자리이고, **화면이 그 질문을 대신 말한다.**
+  #   ⚠ [실측 2026-09-13 · D-386] 역할은 **`NO_ROLE`** 이다. 이 계정은 제품의 `role` 이
+  #     **비어 있다** — 1차판이 `OPERATOR` 라 적어 두었던 자리이고, 그것은 진술이지
+  #     실측이 아니었다(D-323). 지금은 제품이 들고 있는 값을 읽어 적는다.
+  #     그리고 그 사실이 화면 하나를 설명한다: `/users` 는 **본문 0자**로 떴다.
+  #     빈 화면은 찍지 않았고 결함으로 등재했다(RJCORE_BLANK_ON_NO_PERMISSION).
 """
 
 
@@ -369,10 +421,12 @@ def main() -> int:
         return EXIT_OK
 
     _release_session(args.user)
+    role = read_role(args.user)
+    print(f"[SHOT] 찍는 사람의 역할 = {role} (제품이 들고 있는 값 · D-323)")
     event_id = seed_events(args.user)
     try:
         got = capture(web=args.web, user=args.user, password=args.password,
-                      event_id=event_id)
+                      event_id=event_id, role=role, api=args.api)
     finally:
         print(f"[SHOT] 씨앗 정리: {clean_events()}")
 
@@ -384,6 +438,19 @@ def main() -> int:
         #: 브라우저가 뱉은 오류를 **숨기지 않는다.** 0건이면 0건이라고 적힌다.
         "page_errors": got["page_errors"],
     }, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    routes_out = ROOT / "docs" / "agent" / "evidence" / "D-386" / "screen_routes.json"
+    if not routes_out.parent.parent.is_dir():          # 컨테이너에서는 /docs 가 따로다
+        routes_out = Path("/docs") / "agent" / "evidence" / "D-386" / "screen_routes.json"
+    routes_out.parent.mkdir(parents=True, exist_ok=True)
+    routes_out.write_text(json.dumps({
+        "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
+        "captured_at": datetime.now().replace(microsecond=0).isoformat(),
+        "screens": {k: [{"method": m, "path": p, "status": st}
+                        for m, p, st in v] for k, v in got["api_calls"].items()},
+        "blank_screens": KNOWN_BLANK,
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"[SHOT] 화면이 부른 API 기록: {routes_out}")
 
     _rewrite_index(got["entries"])
     print(f"[SHOT] {len(got['entries'])}장 · 브라우저 오류 {len(got['page_errors'])}건")
