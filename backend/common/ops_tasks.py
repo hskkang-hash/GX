@@ -225,3 +225,90 @@ def ops_backup_beat() -> dict:
 
     _write_evidence("backup_last", payload)
     return payload
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 운영 자동화 ③ — **감사 로그 보존기간 집행** (D-377 · 착시 ⑨ 전수에서 나왔다)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 착수 전 실측 (D-379) — **이미 있었다.** 또다.
+#
+#     dj-core `core/logger/tasks.py::purge_old_audit_logs` 가 **있다.**
+#     `config/celery.py` 의 beat 표에 그 항목이 **주석으로 꺼진 채** 있었다:
+#
+#         # "purge-audit-logs-daily": {
+#         #        "task": "core.logger.tasks.purge_old_audit_logs",
+#         #        "schedule": crontab(hour=3, minute=0),
+#         #    },
+#
+#     누군가 켰다가 껐고, **끈 사유는 어디에도 없다.** 이것이 ㉡(주기 없음)의
+#     가장 순수한 형태다 — `verify_dormant.py` 가 주석 처리된 beat 항목을 따로
+#     세는 이유가 이것이다.
+#
+# ★ 왜 백업(D-375)과 달리 **켜는가** — 두 질문이 다르기 때문이다
+# ---------------------------------------------------------------
+#     백업 : 「어디에 얼마나 오래 쌓을 것인가」 — 제품 안에 **답이 없다.**
+#            기본값으로 켜면 우리가 남의 디스크에 대해 그 답을 정하는 것이 된다. → 끈다
+#     정리 : 「감사 로그를 며칠 보관할 것인가」 — 제품 안에 **이미 답이 있다.**
+#            `System > security.audit_log_retention_days` (기본 90). 고객이 정한 값이다.
+#
+#     ★ 그러니 정리를 꺼 두는 것은 **고객이 정한 보존기간이 아무 일도 하지 않는다**는
+#       뜻이다. 설정은 있는데 그 설정이 도는 자리가 없는 것 — 그것이 착시 ⑨ 다.
+#       켜는 것이 그 설정을 처음으로 **뜻있게** 만든다.
+#
+# ★ 왜 dj-core 태스크를 beat 에 직접 걸지 않고 여기서 감싸는가
+# ------------------------------------------------------------
+#     ① dj-core 는 §0.4 이관 자산이라 우리가 그 태스크의 로그·판정을 못 바꾼다.
+#        감싸면 **몇 건을 지웠는지, 어느 보존기간으로 지웠는지**를 우리가 적을 수 있다.
+#        「돌았다」와 「무엇을 했다」는 다른 사실이다 (D-290).
+#     ② 끄는 손잡이가 필요하다. 지우는 일에는 되돌림이 없으므로,
+#        고객이 「우리는 영구 보관한다」면 그 자리에서 끌 수 있어야 한다.
+#     ③ ★ 그래도 **기본은 켬**이다. 끈 채로 등록만 해 두면 그것이 착시 ⑨ 의 재발이다 —
+#        「켜기만 하고 안 도는 것」. 켤 수 없는 것만 꺼 둔다.
+def audit_purge_enabled() -> bool:
+    return bool(getattr(settings, "OPS_AUDIT_PURGE_ENABLED", True))
+
+
+@shared_task(name="common.ops_audit_purge_beat")
+def ops_audit_purge_beat() -> dict:
+    """감사 로그 보존기간을 집행한다 — **고객이 정한 일수 그대로.**
+
+    ★ 보존기간을 여기서 정하지 않는다. dj-core 의 설정을 읽는 것이 그 태스크의 몫이고,
+      우리는 **몇 건이 남았고 몇 건이 사라졌는지**를 적는다. 두 벌로 정하면 어긋난다(D-369).
+    """
+    stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    if not audit_purge_enabled():
+        payload = {"measured_at": stamp, "verdict": "SKIPPED",
+                   "reason": ("OPS_AUDIT_PURGE_ENABLED 가 거짓이다 — 보존기간을 "
+                              "집행하지 않는다. 감사 로그는 무한히 쌓인다")}
+        logger.info("[OPS][AUDIT] 건너뜀 — %s", payload["reason"])
+        return payload
+
+    try:
+        from core.logger.models import AuditLogs
+        from core.logger.tasks import purge_old_audit_logs
+    except Exception as exc:                       # noqa: BLE001
+        # 도구를 못 찾은 것은 **판정 불가**이지 정상이 아니다 (D-301).
+        payload = {"measured_at": stamp, "verdict": "UNKNOWN",
+                   "reason": f"dj-core 감사 로그 정리를 찾지 못했다: "
+                             f"{type(exc).__name__}: {exc}"[:300]}
+        logger.error("[OPS][AUDIT] %s", payload["reason"])
+        _write_evidence("audit_purge_last", payload)
+        return payload
+
+    try:
+        before = AuditLogs._base_manager.count()
+        purge_old_audit_logs()
+        after = AuditLogs._base_manager.count()
+        payload = {"measured_at": stamp, "verdict": "OK",
+                   "rows_before": before, "rows_after": after,
+                   "purged": before - after}
+        logger.info("[OPS][AUDIT] 보존기간 집행 — %d건 중 %d건 정리 (남은 %d건)",
+                    before, before - after, after)
+    except Exception as exc:                       # noqa: BLE001
+        payload = {"measured_at": stamp, "verdict": "ALARM",
+                   "reason": f"{type(exc).__name__}: {exc}"[:300]}
+        logger.exception("[OPS][AUDIT] 감사 로그 정리가 실패했다")
+
+    _write_evidence("audit_purge_last", payload)
+    return payload

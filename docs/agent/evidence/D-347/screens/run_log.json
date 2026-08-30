@@ -1,0 +1,11 @@
+{
+  "harness": "scripts/capture_screens.py",
+  "scenario": "SCREENS-1",
+  "ran_at": "2026-08-30T14:50:12",
+  "steps": {
+    "SCREENS-1/1": "2026-08-30T14:49:57",
+    "SCREENS-1/2": "2026-08-30T14:50:04",
+    "SCREENS-1/3": "2026-08-30T14:50:12"
+  },
+  "page_errors": []
+}

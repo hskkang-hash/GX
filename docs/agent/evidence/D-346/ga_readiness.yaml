@@ -429,15 +429,66 @@ areas:
         status: 미착수
         why: 설치 매뉴얼은 설치자용이다. 사용자용 시작 문서가 없다.
 
+      # ★ D-314 — **「부분」은 상태가 아니다. 절로 쪼갠다.**
+      #   3장이 섰고 13장이 남았다. 한 칸에 「부분」이라 적으면 그 칸을 읽는 사람이
+      #   3인지 13인지 모른다 — 그래서 **선 것**과 **남은 것**을 두 절로 나눈다.
       - id: UX-04
-        title: 화면 캡처 증거 (피드백 콘솔에 채울 것)
-        status: 미착수
-        blocker: BROWSER_E2E_HARNESS
+        title: 화면 캡처 증거 — DSM 화면 셋 (대시보드·이벤트 목록·이벤트 상세)
+        status: 구현
+        proof: docs/agent/evidence/D-347/screens/INDEX.yaml
+        note: |
+          ★ [실측 2026-09-12 · D-384 ②] **3장.** 0장이던 두 턴이 끝났다.
+          `scripts/capture_screens.py` 가 playwright chromium 으로 로그인부터 지나가며
+          화면마다 「그 화면에만 있는 글자」를 확인한 뒤에만 찍는다.
+          `scripts/verify_screens.py` 가 run_log 와 ±5분으로 대조한다 (통과).
+              /dsm/dashboard · /dsm/events · /dsm/events/{id}
+          ⚠ 이 절은 **화면 셋**만 말한다. 남은 13개는 UX-06 이다 —
+            안 찍은 것을 이 절의 초록 안에 숨기지 않는다.
         why: |
-          D-347 은 「E2E 실행 중에 찍는다 · 그림·모형·합성 금지」다.
-          [실측 2026-09-08] 지금 E2E 는 Django TestCase 다 — **브라우저를 열지 않는다.**
-          찍을 화면이 실행 중에 존재하지 않는다. 만들어 찍으면 그것이 D-347 이 금지한 합성이다.
-          틀(INDEX.yaml · verify_screens.py)은 세웠고 **0장으로 시작한다** — 분모가 보인다.
+          [이력 · 지우지 않는다] 2026-09-08 에 이 절이 미착수였던 사유는 둘이었다 —
+          브라우저 구동체 부재, 그리고 프런트 빌드 부재. **둘 다 이번에 풀렸다.**
+          빌드는 「타입오류 0」이 아니라 **「빌드 1회 성공」**으로 풀렸다 (D-381) —
+          타입오류 3229건은 **그대로다.** 두 사실을 섞어 읽지 말 것.
+
+      - id: UX-06
+        title: 화면 캡처 증거 — 나머지 화면 13개
+        status: 미착수
+        why: |
+          [실측 2026-09-12] 안 찍었다. 구동체(`scripts/capture_screens.py`)는 섰으므로
+          **막힌 것이 아니라 안 한 것**이다 — 이번 턴의 표적이 3장이었다(D-384 ②).
+          ★ 「잠김」이 아니라 「미착수」인 것이 중요하다. 잠김으로 적으면 남이 풀어
+            주기를 기다리는 절이 되고, 이것은 **우리가 하면 되는 일**이다.
+
+      # ★ D-383 — **화면이 없어도 할 수 있는 검수.** 이 절의 정답은 우리에게 없다
+      - id: UX-05
+        title: 역할↔화면 매핑 확인 (안양 관제팀 검수 항목)
+        status: 잠김
+        blocker: K3_ROLE_MAPPING_UNCONFIRMED
+        proof: backend/config/k3_roles.py
+        note: |
+          ★ 우리가 이은 **7종은 인용이 아니라 우리 판정**이다 (D-383). DA-03 §3-4 는
+          역할을 「다섯 종류의 사람」으로 적었고, 이 저장소의 `role.Role.code` 는
+          **15종**이다 [실측]. 그 둘을 이은 것이 우리이고, 근거는 코드 주석마다 있다.
+
+          **나머지 8종은 「미배선」이다** — 추측으로 채우지 않았다
+          (`K3_UNMAPPED_BY_DECISION`). 비워 두면 `get_preset` 이 `matched=False` 로
+          **말해 준다** — 조용히 기본값을 주지 않는다.
+
+          ★ 이 매핑의 정답은 **안양 관제팀이 안다.** 검수에서 물을 것 셋:
+            ① 우리가 이은 7종이 **맞는가**
+            ② **빠진 것**이 있는가 (미배선 8종 중 화면을 받아야 하는 역할)
+            ③ **이건 보이면 안 된다** 가 있는가
+          ★ 이것이 검수 콘솔의 첫 실전 용도다 — **화면이 없어도 할 수 있는 검수**이고,
+            실제로 `SCREENS-1/OPERATOR/dsm_dashboard.png` 에 그 질문이 찍혀 있다:
+            「역할 매핑을 찾지 못해 가장 좁은 화면으로 떨어졌습니다」.
+        proof_detail: |
+          이은 7종 [우리 판정 · 2026-09-11]
+            OPERATOR  : fire_user · surveillance_operation · operator
+            MANAGER   : fire_admin · surveillance_order · admin
+            EXECUTIVE : view_only_-_anyang
+          미배선 8종 [판정 · 추측 아님]
+            order · delivery_admin · delivery_order · delivery_operation ·
+            drone_robot_admin · drone_robot_user · user · superuser
 
   # ═══════════════════════════════════════════════════════════════════════
   - id: "8"

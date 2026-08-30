@@ -45,12 +45,25 @@ app.conf.beat_schedule = {
         "task": "terminals.tasks.process_terminal_auto_activation",
         "schedule": 60.0,  # run every minute to check and update terminal status (backup/fallback)
     },
-    # "purge-audit-logs-daily": {
-    #        "task": "core.logger.tasks.purge_old_audit_logs",
-    #        "schedule": crontab(hour=3, minute=0), # run at 3:00 AM to purge audit logs older than 90 days
-    #    },
+    # ── 잠자는 기능 전수에서 나온 자리 (D-377 착시 ⑨ · ㉡ 주기 없음) ────────
+    #
+    #   ★ 아래 두 줄은 **주석으로 꺼진 beat 항목**이었다. 누군가 켰다가 껐고 사유가
+    #     어디에도 없었다. `scripts/verify_dormant.py` 가 이런 항목을 따로 세는 이유다 —
+    #     세지 않으면 영원히 안 보인다.
+    #
+    #   ① 감사 로그 정리 → **켰다.** 다만 `common.ops_audit_purge_beat` 로 감싸서 켠다:
+    #      dj-core 태스크는 몇 건을 지웠는지 말하지 않고, 끄는 손잡이도 없다.
+    #      (사유 전문은 `common/ops_tasks.py` 의 그 자리에 있다)
+    #
+    #   ② 비행로그 수집 → **켜지 않는다.** 그리고 그 사유가 둘이다:
+    #      · 이 환경의 `OPENSEARCH` 는 `opensearch.invalid` 다 — 닿지 못한다 [실측]
+    #      · ★ **이 주석은 켜도 안 돌아간다.** `flight_log.task…` 는 오타이고
+    #        실제 모듈은 `flight_log.tasks` 다(`backend/flight_log/task.py` 는 없다).
+    #        그대로 풀면 beat 가 15분마다 `NotRegistered` 를 낸다 — **꺼진 채로 틀린**
+    #        항목이라 아무도 몰랐다. 이름을 고쳐 두되 끈 채로 둔다: 켜는 날
+    #        오타부터 다시 만나지 않게.
     # "flight-log-data-fetch-scheduler": {
-    #     "task": "flight_log.task.fetch_flight_log_data_from_opensearch",
+    #     "task": "flight_log.tasks.fetch_flight_log_data_from_opensearch",
     #     "schedule": 900.0,  # run every 15 minutes to fetch flight log data from OpenSearch
     # },
     "flight-log-anomaly-prediction-scheduler": {
@@ -66,6 +79,15 @@ app.conf.beat_schedule = {
         # 5분: 1분이면 로그가 소음이 되고, 1시간이면 죽은 것을 한 시간 뒤에 안다.
         "task": "common.ops_monitor_beat",
         "schedule": 300.0,
+    },
+    "ops-audit-purge-daily": {
+        # ★ 백업과 달리 **기본으로 켠다.** 보존기간의 답이 제품 안에 이미 있기 때문이다
+        #   (`System > security.audit_log_retention_days`, 기본 90일).
+        #   꺼 두면 **고객이 정한 보존기간이 아무 일도 하지 않는다** — 그것이 착시 ⑨ 다.
+        #   03:10 — 백업(03:30)보다 **앞이다.** 지우기 전의 상태가 백업에 담기면
+        #   정리와 백업이 서로를 되돌릴 수 없게 된다.
+        "task": "common.ops_audit_purge_beat",
+        "schedule": crontab(hour=3, minute=10),
     },
     "ops-backup-daily": {
         # ★ 이 주기는 등록되지만 **태스크가 스스로 꺼져 있다**

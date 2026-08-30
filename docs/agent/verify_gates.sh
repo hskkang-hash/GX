@@ -552,6 +552,61 @@ gate_deprecated_base() {
   return 1
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# GATE dormant — **「만들어진 것」과 「켜진 것」은 다르다** (D-377 · 착시 ⑨)
+#
+# 앞선 여덟 착시는 전부 "무엇을 세는가"의 문제였다. 아홉째는 한 단계 위다:
+# **코드가 있으면 동작한다고 읽는 것.** 시험은 함수를 직접 불러 통과시키고,
+# 운영은 그 함수를 부르지 않는다 — 둘 다 초록이다.
+#
+# 이 게이트는 오늘 자는 것을 이름으로 잠그고 **새로 자는 것만** 막는다(D-311 래칫).
+# 즉 요구는 하나다: **새로 만드는 것은 「켜진 상태로 태어나야 한다.」**
+#
+# ★ 셋을 한 수로 합치지 않는다 — 고치는 방법이 다르다:
+#     ㉠ 호출 없음 → 배선   ㉡ 주기 없음 → 등록   ㉢ 설정 빔 → 데이터
+# ─────────────────────────────────────────────────────────────────────────────
+gate_dormant() {
+  head_ "GATE dormant — 잠자는 기능 래칫 (D-377 착시 ⑨)"
+  local out rc
+
+  # ★ 판정 전에 판정기부터 (D-277 · D-350 · D-310).
+  #
+  #   ★ **출생 표본** — 이 게이트가 태어난 사례는 셋이고 셋 다 합성이 아니다:
+  #     ① K3 프레임 · 모니터링 · 백업 — 「구현하라」고 지시받은 셋이 **전부 이미 있었고**
+  #        없던 것은 배선과 주기였다. 그것이 착시 ⑨ 의 이름이 된 자리다.
+  #     ② 이 판정기 자신이 ㉢ 을 **0건으로 잘못 냈다** — 설정이 거의 전부 `env(...)` 라
+  #        기본값이 접히지 않았다. 그 0을 실측으로 읽었으면 착시를 잡으려던 도구가
+  #        착시를 하나 더 만들었다. 그 사례가 `verify_dormant.py` 의 자기시험에
+  #        `BIRTH_ENV_SETTING` 으로 박혀 있다.
+  #     ③ beat 표에 줄이 있는데 그 태스크를 **아무도 import 하지 않던** 자리 —
+  #        D-373 이 「켰다」고 보고한 감시·백업이 실제로 그랬다.
+  #        `backend/tests/test_dormant_wiring.py` 가 그 갈래를 본다.
+  if out=$($PY scripts/verify_dormant.py --self-test 2>&1); then
+    pass "탐지기 자기시험 통과 (양성 5갈래 · 음성 5갈래)"
+  else
+    fail "탐지기 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_dormant.py 2>&1); rc=$?
+
+  # D-301 — 무엇을 몇 건 보았는지 밖으로 말한다. 세 술어의 **모수 합**을 낸다.
+  local nscanned
+  nscanned=$(echo "$out" | grep -o "모수 *[0-9]*" | tr -dc "0-9
+" | awk '{t+=$1} END {print t+0}')
+  inputs "${nscanned:-0}" "함수 정의·celery 태스크·분기에 쓰이는 설정 (세 술어의 모수 합)"     "판정기가 모수를 말하지 않았다 — 출력 형식이 바뀌었거나 아무것도 못 봤다" || return 1
+
+  echo "$out" | grep -E "^\[DORMANT\] ㉠|^\[DORMANT\] ㉡|^\[DORMANT\] ㉢|^\[DORMANT\] 합계"     | sed 's/^/        /'
+  if [ $rc -eq 0 ]; then
+    pass "$(echo "$out" | tail -1)"
+    return 0
+  fi
+  fail "새로 잠든 것이 있다 — **켜진 상태로 태어나야 한다**"
+  echo "$out" | sed 's/^/        /'
+  return 1
+}
+
 _dispatch_gate() {
   case "$1" in
     secrets)            gate_secrets ;;
@@ -561,6 +616,7 @@ _dispatch_gate() {
     deprecated-base)    gate_deprecated_base ;;
     ui-library)         gate_ui_library ;;
     forbidden-zone)     gate_forbidden_zone ;;
+    dormant)            gate_dormant ;;
     *) echo "알 수 없는 게이트: $1"; exit 2 ;;
   esac
 }
@@ -591,7 +647,7 @@ run_gate() {
   return $rc
 }
 
-ALL_GATES=(secrets bypass isolation model-inheritance deprecated-base ui-library forbidden-zone)
+ALL_GATES=(secrets bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {

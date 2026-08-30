@@ -270,12 +270,21 @@ blockers:
       **저장소 밖(§0.4 금지구역)이라 여기에 경로로 적지 않는다** — 읽기만 했다.
 
   - id: BROWSER_E2E_HARNESS
-    title: E2E 가 브라우저를 열지 않아 **실행 중 화면을 찍을 수 없다**
+    title: E2E 가 브라우저를 열지 않아 **실행 중 화면을 찍을 수 없다** — **[2026-09-12 풀림]**
     unlock_type: DEV
     unlock_owner: 우리 (개발)
     blocks: [상용 오픈 ⑦사용성-UX-04, 피드백 콘솔의 스크린샷 자리]
     since: "2026-09-08"
-    blocked_now: true
+    blocked_now: false
+    unblocked_at: "2026-09-12"
+    unblocked_by: |
+      [실측 2026-09-12 · D-384 ②] **3장이 찍혔다.** `scripts/capture_screens.py` 가
+      playwright chromium 으로 로그인 → /dsm/dashboard → /dsm/events → /dsm/events/{id}
+      를 지나가며, 화면마다 「그 화면에만 있는 글자」를 확인한 뒤에만 찍는다.
+      `scripts/verify_screens.py` 통과 (3장 · run_log 와 ±5분 대조).
+      ★ 앞선 잠금 `FRONTEND_DEPS_DRIFT` 는 **완전히 풀리지 않았다** —
+        타입오류 3229건은 그대로이고, 풀린 것은 **빌드 1회 성공**뿐이다 (D-381).
+        그 하나로 이 잠금이 열렸다는 사실이 D-381 의 문턱 낮추기가 옳았다는 증거다.
     verified_at: "2026-09-08"
     verified_by: |
       backend/tests/e2e/ 의 시나리오 두 벌이 전부 django.test.TestCase 다 —
@@ -411,13 +420,30 @@ blockers:
       docs/agent/evidence/D-368/write_surface.json — 전수와 갈래
 
   - id: FRONTEND_DEPS_DRIFT
-    title: 프런트 의존 설치본이 저장소와 어긋난다 — **타입오류 3229건.** 화면 캡처보다 먼저 풀 것
+    title: 프런트 의존 설치본이 저장소와 어긋난다 — **타입오류 3229건** (빌드는 [2026-09-12] 선다)
     unlock_type: DEV
     unlock_owner: rj-core 소유팀 + 우리 (판 맞추기)
-    blocks: [BROWSER_E2E_HARNESS, 상용 오픈 ⑦사용성-UX-04, 프런트 빌드]
+    blocks: [상용 오픈 ⑦사용성-UX-04, 타입 검사]
     since: "2026-09-11"
     blocked_now: true
-    verified_at: "2026-09-11"
+    verified_at: "2026-09-12"
+    partial_unblock: |
+      ★ [실측 2026-09-12 · D-381] **「빌드가 되는가」와 「타입이 깨끗한가」를 나눠 답한다.**
+
+          빌드   `npx vite build` → **exit 0 · 66초** · 번들 산출됨.  **선다.**
+          타입   `tsc --noEmit` → **3229건.**  그대로다.
+
+      즉 이 잠금은 **캡처를 막지 않는다** — 그래서 `blocks` 에서 BROWSER_E2E_HARNESS 를
+      뺐다. 타입검사와 번들링은 다른 일이고, 스크린샷에 필요한 것은 후자였다.
+
+      ⚠ [실측] 처음 돌린 빌드는 **JS 힙 부족으로 죽었다**(기본 2GB).
+        `NODE_OPTIONS=--max-old-space-size=6144` 로 넘겼다. 이것은 판 어긋남이 아니라
+        **번들 크기**의 문제다 — 단일 청크가 16MB 다. 둘을 섞어 읽지 말 것.
+
+      ⚠ [실측] `frontend/` 에 **lock 파일이 없다.** D-381 ④ 가 「lock 이 없으면 그것이
+        진짜 결함」이라 한 그 상태다. 그리고 `rj-core` 는 커밋이 아니라 **브랜치**를
+        가리킨다(`#rj-core-v2`) — 같은 명세가 날마다 다른 것을 설치할 수 있다.
+        **판의 진실이 저장소에 없다.** 이것이 3229건의 뿌리이고, 아래 unlock_step ①이다.
     verified_by: |
       [실측 2026-09-11]
         · 호스트에 `frontend/node_modules` 가 **없다** (`npx tsc` 가 tsc 를 못 찾는다)
@@ -438,6 +464,9 @@ blockers:
 
       ⚠ 3229 를 「우리 코드의 빚」으로 읽지 말 것. 분모가 다르다.
     unlock_step: |
+      ⓪ ★ **lock 을 만든다.** 지금 `frontend/` 에는 lock 파일이 없고, `rj-core` 는
+         브랜치(`#rj-core-v2`)를 가리킨다 — 그래서 「저장소가 정본」이라는 D-381 ③ 을
+         적용할 대상 자체가 없다. **lock 고정이 첫 일이다** (D-381 ④ 그대로).
       ① `frontend/package.json` 의 `rj-core#rj-core-v2` 가 가리키는 커밋과
          컨테이너 설치본의 커밋을 **대조한다** (둘 중 무엇이 정본인지가 첫 질문이다)
       ② 정본 판으로 `npm ci` 를 다시 하고 `npx tsc --noEmit` 건수를 다시 센다
@@ -453,3 +482,65 @@ blockers:
     state_in_code: |
       frontend/src/features/dsm/ — 새 화면 셋 (타입오류 0건) ·
       docs/agent/evidence/D-347/screens/INDEX.yaml — 0장 사유에 이 사실이 함께 적혀 있다
+
+  # ═════════════════════════════════════════════════════════════════════════
+  - id: K3_ROLE_MAPPING_UNCONFIRMED
+    title: 역할↔프리셋 매핑 — **7종은 우리 판정이고, 8종은 미배선이다.** 정답은 고객이 안다
+    unlock_type: CONTRACT
+    unlock_owner: 안양 관제팀 (고객)
+    blocks: [상용 오픈 ⑦사용성-UX-05, 역할별 화면의 정확성]
+    since: "2026-09-12"
+    # ★ 게이트가 요구해서 채우는 칸이 아니다 — **묻지 않은 질문은 지연이 시작되지도
+    #   않는다.** CONTRACT 로 올린 순간 「언제 물었고 언제까지 답을 받나」가 없으면
+    #   그 잠금은 영원히 「고객 대기」로 늙는다 (D-320 · 계약 6조3항 기산).
+    #   그래서 이 턴의 회신에 이 질문을 실어 보내는 것을 발송으로 잡는다.
+    sent_at: "2026-09-12"        # 이 턴 회신 §7 「역할↔화면 매핑 확인」으로 발송
+    due_by: "2026-09-27"         # 발송 + 15일 (계약 3조2항 준용)
+    blocked_now: true
+    verified_at: "2026-09-12"
+    verified_by: |
+      [실측 2026-09-11 · role.Role 전수] 이 저장소의 역할 코드는 **15종**이다.
+      DA-03 §3-4 는 역할을 **「다섯 종류의 사람」**으로 적었다. 그 둘을 잇는 표가
+      문서 어디에도 없다 — 그래서 `backend/config/k3_roles.py` 에서 **우리가 이었다.**
+
+      이은 것 7종 (근거는 파일의 주석마다 있다):
+        OPERATOR  : fire_user · surveillance_operation · operator
+        MANAGER   : fire_admin · surveillance_order · admin
+        EXECUTIVE : view_only_-_anyang
+      비운 것 8종 (`K3_UNMAPPED_BY_DECISION` · **추측으로 채우지 않았다**):
+        order · delivery_admin · delivery_order · delivery_operation ·
+        drone_robot_admin · drone_robot_user · user · superuser
+    why: |
+      ★ **이것은 인용이 아니라 우리 판정이다** (D-383). 그 표기를 여기 남기는 이유는
+      다음 사람이 이 표를 「DA-03 에서 옮겨 적은 것」으로 읽지 않게 하기 위해서다 —
+      옮겨 적은 표는 원본을 찾아 대조할 수 있지만, **판정한 표는 판정한 사람에게
+      물어야 한다.** 어느 쪽인지 모르면 아무도 못 고친다 (D-322 의 계열).
+
+      ★ 그리고 이 매핑의 정답은 우리에게 **없다.** 「재난관제 관리자가 임계값을 편집할
+        수 있는가」는 코드가 답할 수 있는 질문이 아니라 **운영 규정**이다.
+        틀리면 두 방향으로 틀린다: 넓으면 볼 것이 아닌 사람이 보고, 좁으면 일이 안 된다.
+
+      ⚠ 지금 상태는 **안전한 쪽으로 틀려 있다** — 매핑에 없는 역할은 `matched=False` 로
+        가장 좁은 프리셋(OPERATOR)에 떨어지고, 편집(E)은 설정 없이는 **절대 참이 되지
+        않는다**. 그래서 이 잠금은 「위험」이 아니라 「미확정」이다.
+    unlock_step: |
+      ★ **화면이 없어도 할 수 있는 검수다** — 이것이 검수 콘솔의 첫 실전 용도다(D-383).
+      ① 검수 콘솔의 `UX-05` 항목으로 관제팀에 셋을 묻는다:
+         ㉠ 이은 7종이 **맞는가**
+         ㉡ **빠진 것**이 있는가 (미배선 8종 중 화면을 받아야 하는 역할)
+         ㉢ **이건 보이면 안 된다** 가 있는가
+      ② 받은 답만 `K3_ROLE_PRESET_MAP` 과 `K3_WIDGET_MATRIX` 에 넣는다.
+         **답이 없는 칸은 비운 채로 둔다** — 비어 있는 것이 틀린 것보다 낫다(D-280).
+      ③ 답을 받은 날짜와 답한 사람을 여기 `verified_by` 에 적는다 — 진술이 아니라 출처다.
+    internal_alternative_considered: |
+      역할 이름의 유사도로 나머지 8종도 자동 매핑하는 것.
+    why_not: |
+      이름이 비슷한 것과 **권한이 같은 것**은 다르다. `drone_robot_admin` 에 MANAGER 를
+      주면 배송 관리자가 재난 임계값 편집 화면을 얻는다 — 그것은 추측이 만든 권한이고,
+      추측으로 만든 권한은 **아무도 자기가 가진 줄 모른다.** (D-280 추정 금지)
+    state_in_code: |
+      backend/config/k3_roles.py — 이은 7종 · 비운 8종(사유 포함) ·
+      backend/kernels/k3_dashboard/presets.py — 설정이 비면 가장 좁은 쪽으로 떨어진다 ·
+      docs/agent/evidence/D-347/screens/SCREENS-1/OPERATOR/dsm_dashboard.png —
+        ★ **그 상태가 화면에 찍혀 있다**: 「역할 매핑을 찾지 못해 가장 좁은 화면으로
+        떨어졌습니다」. 캡처가 이 잠금의 증거를 겸한다

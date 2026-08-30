@@ -1,0 +1,27 @@
+{
+  "created_at": "2026-08-30T07:44:45+00:00",
+  "db_settings": {
+    "name": "database_guardianx",
+    "host": "postgres",
+    "port": "5432",
+    "user": "postgres"
+  },
+  "objects": {
+    "bucket": "guardianx-dev",
+    "objects": 3,
+    "bytes": 30720,
+    "endpoint": "gx-minio:9000",
+    "scope": "event_bound",
+    "retention_days": 90,
+    "skipped_not_event_bound": 0,
+    "event_bound_expected": 3,
+    "missing_in_bucket": [],
+    "missing_count": 0,
+    "fell_back_to_all": false,
+    "keys": [
+      "gxprobe-D384/clip-0.bin",
+      "gxprobe-D384/clip-1.bin",
+      "gxprobe-D384/clip-2.bin"
+    ]
+  }
+}

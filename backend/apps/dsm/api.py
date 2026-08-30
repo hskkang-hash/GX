@@ -23,8 +23,26 @@
 **언제나 HTTP 200 으로 나간다.** 그것이 ②가 금지한 모양 그 자체다.
 신규 App 은 성공이면 값을, 실패면 `HttpError` 를 던진다.
 """
-from __future__ import annotations
-
+# ★ `from __future__ import annotations` 를 **일부러 쓰지 않는다** (D-378 · 실측 2026-09-12).
+#
+#   브라우저를 처음 붙였더니 `/api/dsm/events` 가 **HTTP 500** 이었다:
+#       pydantic.errors.PydanticUserError:
+#           `QueryParams` is not fully defined; you should define `datetime`
+#
+#   미래 임포트가 켜지면 `since: datetime | None` 이 **문자열 주석**이 되고, ninja 는
+#   그 문자열을 함수의 `__globals__` 에서 푼다. 그런데 이 핸들러는 `@tenant_scoped` 로
+#   감싸여 있어 실제 함수 객체의 `__globals__` 는 `common/tenant_scope.py` 의 것이다 —
+#   거기에 `datetime` 이 없다. 그래서 **주석이 영원히 풀리지 않는다.**
+#
+#   ★ 단위 시험은 이것을 못 잡았다. 시험은 `services.recent_events` 를 직접 부르고,
+#     실패하는 자리는 **라우트가 질의 인자를 만드는 순간**이기 때문이다 — 착시 ⑨의
+#     정확히 같은 모양이다(코드는 있고 시험은 초록인데 운영 경로가 죽는다).
+#     화면을 처음 띄운 그 순간에 나왔다. **화면이 시험이었다.**
+#
+#   왜 여기서 미래 임포트를 빼는 것으로 고치나: 파이썬 3.11 에서 `X | None` 과
+#   `dict[str, int]` 는 미래 임포트 없이도 동작한다. 데코레이터 쪽을 고치면
+#   `common/tenant_scope.py` 가 자기와 무관한 타입을 임포트하게 되고, 그것은
+#   **다음 사람이 이유를 못 읽는 코드**다.
 from datetime import datetime
 
 from django.core.exceptions import PermissionDenied

@@ -112,6 +112,55 @@ CREDENTIALS: dict[str, CredentialDef] = {
         is_secret=True,
         declared_status=PRESENT,
     ),
+    # ═══════════════════════════════════════════════════════════════════════
+    # ★ **들어오는** 키가 이 표에 처음 들어온다 (D-382)
+    # ═══════════════════════════════════════════════════════════════════════
+    #
+    # 표 ②는 여태 **나가는 키**(우리가 남을 부를 때)의 표였다. 이 한 건은 방향이
+    # 반대다 — **AI 분석 서버가 우리를 부른다.** 그래서 이름에 `INBOUND_` 를 박는다:
+    # D-337(동음이의 대장)이 잡은 혼동이 「API Key」라는 한 단어가 두 방향을 가리킨
+    # 것이었고, 방향을 **이름으로** 말하지 않으면 그 혼동이 표 안으로 들어온다.
+    #
+    # ★ 왜 이 줄이 지금 생겼나 — **막은 것에는 여는 절차가 함께 있어야 한다** (D-382)
+    # ------------------------------------------------------------------------
+    #   D-370 에서 익명이 쓰던 네 자리를 막았고, 그중 둘(`/api/media-data/detect-callback`,
+    #   `/api/media-data/upload-detection`)은 **AI 서비스가 인증 없이 부르던 콜백**이다.
+    #   막은 것은 옳았다 — 인증 없는 쓰기 콜백을 열어 두는 쪽이 더 나쁘다.
+    #
+    #   그러나 **막기만 하고 여는 절차가 없으면 다음 배포에서 조용히 깨진다.**
+    #   차단은 절반이고, 나머지 절반은 복구 경로다. 이 줄이 그 나머지 절반이다:
+    #     · 이 키가 무엇인지 (`api_type`) · 이 키로 무엇을 할 수 있는지 (`capability`)
+    #     · 지금 이 환경에 있는지 (5값 상태 — `probe()` 가 다시 판정한다)
+    #     · 그리고 **`present` 미만이면 배포하지 않는다** (`scripts/verify_deploy_ready.py`)
+    #
+    # ⚠ 이 키는 **테넌트별 DB 행이 아니다.** 테넌트별 발급·폐기는
+    #   `kernels/k5_trust/inbound_keys.py` 의 몫이고 그것은 표 ②에 들어갈 수 없다(D-337).
+    #   여기 있는 것은 **환경변수 하나로 오는 서비스 간 자격증명**이라 표 ②의 술어
+    #   (「이 환경의 환경변수에 있는가」)가 그대로 성립한다.
+    "INBOUND_AI_CALLBACK_KEY": CredentialDef(
+        name="INBOUND_AI_CALLBACK_KEY",
+        env_var="INBOUND_AI_CALLBACK_KEY",
+        api_type="GuardianX 들어오는 서비스 키 (AI 분석 서버 → 우리)",
+        capability=(
+            "AI 분석 서버가 `/api/media-data/detect-callback` 과 "
+            "`/api/media-data/upload-detection` 두 자리를 부를 때 자신을 증명한다. "
+            "**쓰기 콜백이다** — 검출 결과를 저장한다. "
+            "★ 재난 검출 **본선은 이 경로가 아니다** [실측 D-370]: 본선은 gRPC "
+            "(`stream_monitors/services/grpc_dual_stream_service.py` → K1)이므로 "
+            "이 키가 없어도 **F-02·F-10 계약 경로는 살아 있다.** 죽는 것은 미디어 분석 "
+            "콜백이고, 그것이 이 절이 CONTRACT 가 아니라 DEV 인 이유다."
+        ),
+        intended_use=(
+            "D-370 이 두 콜백에 `CustomJWTAuth` 를 붙이면서 AI 서버 쪽이 깨진다. "
+            "배포 전에 이 키를 양쪽에 심어야 한다 — 대장 `AI_CALLBACK_NEEDS_CREDENTIAL`. "
+            "★ [실측 2026-09-12] 지금 이 환경에 **없다**(`absent`). 그것이 사실이고, "
+            "`verify_deploy_ready.py` 가 배포를 막는 자리가 여기다."
+        ),
+        is_secret=True,
+        #: ★ **아직 받지 않았다.** `absent` 라고 적는 것이 이 표의 요점이다 —
+        #:   「받을 예정」을 `present` 로 적으면 표가 계획서가 되고, 계획서는 배포를 막지 못한다.
+        declared_status=ABSENT,
+    ),
 }
 
 
