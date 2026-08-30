@@ -1,0 +1,20 @@
+{
+  "note": "D-368 래칫 기준선. **`writes` 는 여기 없다** — 그 갈래에는 래칫이 없고 0건이 절대선이다.",
+  "frozen_at": "2026-08-30T06:07:30+00:00",
+  "read_only_in_practice": 4,
+  "rejected_elsewhere": 28,
+  "public_by_design": 11,
+  "public_by_design_paths": [
+    "/api/token/pair",
+    "/api/token/refresh",
+    "/api/token/verify",
+    "/api/v1/auth/delete-session",
+    "/api/v1/auth/forgot-password",
+    "/api/v1/auth/login",
+    "/api/v1/auth/logout",
+    "/api/v1/auth/otp/reset",
+    "/api/v1/auth/otp/verify",
+    "/api/v1/auth/refresh-token",
+    "/api/v1/auth/reset-password"
+  ]
+}

@@ -244,7 +244,13 @@ class MediaDataAPI:
             data=preview_data
         )
 
-    @route.post('/detect-callback')
+    # ★ D-368 — 익명 쓰기를 막는다. 이 자리는 [실측 2026-09-11] 익명이 핸들러에
+    #   **도달했고**, 본문은 `update_or_create`/`create` 로 쓴다. 쓰기 오염은
+    #   조용하고 되돌릴 수 없다 — 심어진 행은 진짜와 섞여 나중에 못 골라낸다.
+    #   같은 파일의 형제 라우트들과 **같은 관문**을 쓴다(새 방식을 들이지 않는다).
+    #   ⚠ 이 자리를 부르던 AI 서비스는 이제 토큰이나 발급된 키를 붙여야 한다 —
+    #     그 클라이언트는 보호할 것이 아니라 고칠 것이다(D-368 ③). 대장에 등재했다.
+    @route.post('/detect-callback', auth=CustomJWTAuth())
     def detect_callback(self, request, data: MediaDetectCallbackInSchema):
         """
         Callback for detect media.
@@ -367,7 +373,13 @@ class MediaDataAPI:
     
     
 
-    @route.post('/upload-detection')
+    # ★ D-368 — 익명 쓰기를 막는다. 이 자리는 [실측 2026-09-11] 익명이 핸들러에
+    #   **도달했고**, 본문은 `update_or_create`/`create` 로 쓴다. 쓰기 오염은
+    #   조용하고 되돌릴 수 없다 — 심어진 행은 진짜와 섞여 나중에 못 골라낸다.
+    #   같은 파일의 형제 라우트들과 **같은 관문**을 쓴다(새 방식을 들이지 않는다).
+    #   ⚠ 이 자리를 부르던 AI 서비스는 이제 토큰이나 발급된 키를 붙여야 한다 —
+    #     그 클라이언트는 보호할 것이 아니라 고칠 것이다(D-368 ③). 대장에 등재했다.
+    @route.post('/upload-detection', auth=CustomJWTAuth())
     def upload_detection(self, request, data: MediaDetectCallbackInSchema, **kwargs):
         """
         Callback when AI service finishes uploading detection result JSON to MinIO.

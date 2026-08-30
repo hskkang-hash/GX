@@ -1,6 +1,7 @@
 from core.common.search.dynamic_search import apply_dynamic_filters
 from ninja_extra import api_controller, route
 from common.pagination import OptimizedPaginator
+from core.api.v1.auth import CustomJWTAuth
 from core.role.permission import path_permission
 from core.common.base_response import BaseResponse
 from flight_log.schemas.schemas_djantic_out import FlightLogOutSchema
@@ -82,7 +83,11 @@ class FlightLogAPI:
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_FLIGHT_LOG_DETAIL_FAILED), data=[])
 
-    @route.delete('/delete/{ids}', url_name='delete_flight_log')
+    # ★ D-368 — 익명 삭제를 막는다. [실측 2026-09-11] `@path_permission` 은
+    #   있었으나 `auth=` 가 없어 **익명이 핸들러에 도달했다.** 권한(authz)과
+    #   인증(authn)은 같은 이름이 아니다(D-342) — 누구인지 모르는 요청에
+    #   역할 판정을 물으면 그 판정은 아무도 아닌 사람에 대한 판정이다.
+    @route.delete('/delete/{ids}', url_name='delete_flight_log', auth=CustomJWTAuth())
     @path_permission("delete", path_override='/flight-log-analysis')
     def delete_flight_log(self, request, ids: str):
         # ★ 문지기는 try **밖**이다 (W0-14c 1차의 교훈).

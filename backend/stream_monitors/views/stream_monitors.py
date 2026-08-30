@@ -358,7 +358,10 @@ class StreamMonitorsAPI:
                 data=None
             )
 
-    @route.delete('/external-stream-monitors/{stream_monitor_id}')
+    # ★ D-368 — 익명 삭제를 막는다. [실측 2026-09-11] 익명이 핸들러에 도달했고
+    #   본문은 `delete()` 한다. 스트림 하나가 지워지면 그 스트림이 낼 이벤트가
+    #   **앞으로 영영 안 난다** — 재난안전 시스템에서 조용한 삭제가 하는 일이다.
+    @route.delete('/external-stream-monitors/{stream_monitor_id}', auth=CustomJWTAuth())
     def delete_external_stream_monitor(self, request, stream_monitor_id: str):
         try:
             success, message = StreamMonitorService.delete_external_stream_monitor(stream_monitor_id)
