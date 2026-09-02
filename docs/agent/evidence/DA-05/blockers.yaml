@@ -193,9 +193,20 @@ blockers:
     blocks: [UX-09]
     since: "2026-09-14"
     blocked_now: true
-    verified_at: "2026-09-14"
+    verified_at: "2026-09-18"
     verified_by: |
-      [실측] `scripts/capture_screens.py` 16장 실행 중 `/media-data` 화면이 부른
+      ★ 갱신 [실측 2026-09-18 · P-5]: **MinIO 를 세웠고 500 은 사라졌다** —
+        두 자리 모두 `200 · success:true`. `route-alive` 도 초록이 되었다.
+        그러나 **이 등재는 내려가지 않는다.** 여기 적힌 결함은 「저장소가 죽었을 때」의
+        일이고, 저장소를 실제로 내려 다시 재어 보니 **그때가 더 나빠졌다:**
+            저장소 살아 있을 때   200 · success:true · 1건
+            저장소 **내렸을 때**   200 · success:true · 1건   ← 아무 일도 안 일어난다
+        `minio_client.available` 이 **기동 시 한 번** 정해지고 다시 보지 않기 때문이다
+        (`stream_monitors/utils/minio_client.py:21,41` — `__init__` 에서만 True 가 된다).
+        예전에는 저장소가 없으면 최소한 **500 으로 소리쳤다.** 지금은 조용하다.
+        운영에서 새벽 두 시에 저장소가 죽으면 화면은 계속 「자료가 있습니다」라고 말하고,
+        당직자는 파일을 눌러 본 뒤에야 안다. 자세한 것은 MINIO_AVAILABILITY_IS_BOOT_TIME_ONLY.
+      [실측 2026-09-14] `scripts/capture_screens.py` 16장 실행 중 `/media-data` 화면이 부른
       `GET /api/media-data/?page_size=25&current_page=1` 이 **500**.
       토큰으로 직접 재현했고 응답 본문을 그대로 받았다. 화면은 그 500 을 받고도
       「0 of 0」 을 그려 **자료가 없는 것처럼** 보였다 (본문에 오류 문구 0자).
@@ -785,3 +796,72 @@ blockers:
     state_in_code: |
       docs/agent/verify_gates.sh — waiting() 헬퍼 · tally() 집계 줄
       (「잼고 통과 N · 잼고 실패 N · 못 잼 N (대기 N)」)
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # P-5 저장소 — 세웠고, 세우고 나서 **더 조용한 결함**이 드러났다 [실측 2026-09-18]
+  # ═════════════════════════════════════════════════════════════════════════
+
+  - id: MINIO_ABSENT_IN_DEV
+    title: 개발 환경에 객체 저장소가 아예 없었다 (`minio.invalid`) — **해제됨**
+    unlock_type: DEV
+    unlock_owner: Code
+    blocks: [P-5, UX-09]
+    since: "2026-09-13"
+    blocked_now: false
+    verified_at: "2026-09-18"
+    verified_by: |
+      [실측] `docker compose up -d minio` 로 세웠다(판을 digest 로 고정).
+      health 200 · 버킷 `guardianx-dev` · 탐침 객체 1건 ·
+      `/api/media-data/` 와 `/api/media-data` **둘 다 500 → 200 · success:true** ·
+      게이트 `route-alive` **잼고 실패 → 잼고 통과**(죽은 라우트 0).
+      판정기가 양쪽으로 무는 것도 확인했다: 저장소를 내리면 `verify_minio.py` exit 1,
+      되돌리면 exit 0.
+    why: |
+      `MINIO_ENDPOINT=minio.invalid` 는 **일부러 안 풀리는 이름**이었다 — 없다는 사실이
+      조용해지지 않게. 그 덕에 부재가 500 으로 보였고, 그 500 이 게이트의 유일한 빨강이었다.
+      ★ 기존 자격증명은 5자짜리 **더미**였다(MinIO 루트 요건은 8자 이상) — 즉 한 번도
+        진짜로 서 본 적이 없었다. 새로 만들어 뿌리 `.env`(gitignored)에 두었다.
+    unlock_step: |
+      해제 완료. 재현: `cp .env.example .env` → 값 채움 → `docker compose up -d minio`.
+      ⚠ 이 기계의 개발 환경은 손으로 만든 `gx-main-network` 위에 있어서, compose 가 세운
+      컨테이너를 그 망에 **한 번 더 이어 준다**(`docker network connect --alias minio`).
+      새 환경을 compose 만으로 세우면 그 줄은 필요 없다.
+    state_in_code: |
+      docker-compose.yml — minio 서비스(digest 고정) · minio-data 볼륨 ·
+      .env.example(이름만) · scripts/verify_minio.py(강제 도구)
+
+  - id: MINIO_AVAILABILITY_IS_BOOT_TIME_ONLY
+    title: 저장소가 **돌다가 죽으면** 제품이 알아채지 못한다 — 500 대신 조용한 200
+    unlock_type: DEV
+    unlock_owner: Code (다만 처분은 설계 판정이 먼저다 — 세종)
+    blocks: [UX-09, 평상 운영 ①]
+    since: "2026-09-18"
+    blocked_now: true
+    verified_at: "2026-09-18"
+    verified_by: |
+      [실측] MinIO 를 실제로 내리고 같은 라우트를 때렸다:
+          살아 있을 때   200 · success:true · 1건
+          **내렸을 때**   200 · success:true · 1건
+          되돌린 뒤      200 · success:true · 1건
+      코드 근거: `backend/stream_monitors/utils/minio_client.py` — `self.available` 은
+      `__init__` 안에서만 True 가 되고(21·41행) 이후 다시 확인하지 않는다.
+      즉 **가용성은 기동 시점의 사진 한 장**이다.
+    why: |
+      ★ 고치기 전보다 **더 조용해졌다.** 저장소가 없던 동안에는 최소한 500 으로 소리쳤다.
+        이제는 기동 때 살아 있기만 하면, 그 뒤 저장소가 죽어도 목록이 계속 나온다.
+        새벽에 저장소가 죽으면 당직자는 파일을 눌러 본 뒤에야 안다 — D-378 이 말한
+        「보이는 것으로 등급을 정한다」의 반대쪽 얼굴이다.
+      ★ 함께 드러난 것: **감시도 눈이 멀어 있었다.** `ops_monitor.py` 의
+        `object_store_alive` 는 `default_storage.exists(...)` 를 불러 **예외가 없으면
+        닿았다**로 읽었는데, 저장소가 죽어도 그 호출은 예외 없이 False 를 돌려준다.
+        「없다」와 「못 물어봤다」를 한 값으로 읽은 것이다(D-301). **그쪽은 이번에 고쳤다** —
+        이제 저장소에게 버킷 존재를 직접 묻고, 못 닿으면 ALARM 이다(OK→ALARM→OK 실측).
+    unlock_step: |
+      ① 감시 축은 **끝났다** — `object_store_alive` 가 저장소 죽음을 잡는다 [실측].
+      ② 남은 것은 **읽기 면**이다. `minio_client.available` 을 매 요청 확인하면 요청마다
+         왕복이 붙는다(F-05 p95 를 먹는다). 그래서 처분은 셋 중 하나이고 **판정이 먼저다**:
+           ㉮ 짧은 TTL 캐시(예: 5초)로 다시 보기   ㉯ 실패 시에만 재확인 후 500 으로 승격
+           ㉰ 그대로 두고 감시에만 맡긴다(화면은 조용한 채로)
+      ③ ⚠ 어느 쪽이든 화면이 `success:false` 를 안 듣는 문제는 그대로다
+         (MEDIA_LIST_SHOWS_EMPTY_WHEN_STORAGE_DOWN · rj-core 인수 화면).
+    state_in_code: backend/stream_monitors/utils/minio_client.py — self.available 은 __init__ 에서만 세워진다

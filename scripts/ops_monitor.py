@@ -114,18 +114,40 @@ def collect() -> dict:
         out["signals"]["cache_alive"] = {"value": None, "verdict": UNKNOWN,
                                          "note": "캐시에 닿지 못했다: %s" % type(exc).__name__}
 
+    # ★ [실측 2026-09-18] 앞판은 `default_storage.exists(...)` 를 불러 **예외가 안 나면
+    #   닿은 것**으로 읽었다. MinIO 를 실제로 내리고 재어 보니 그 호출은 **예외 없이
+    #   False** 를 돌려주었고, 이 신호는 저장소가 죽은 채로 **OK** 를 냈다.
+    #
+    #     저장소 살아 있을 때   object_store_alive  OK
+    #     저장소 내렸을 때      object_store_alive  OK      ← 눈이 감겼다
+    #
+    #   「없다」와 「못 물어봤다」를 한 값으로 읽은 것이다 — D-301 이 이름 붙인 그 모양이고,
+    #   하필 **「살아 있는가」를 보라고 세운 신호**에서 났다.
+    #   그래서 저장소에게 **저장소만 답할 수 있는 것**을 묻는다: 버킷의 존재.
+    #   닿지 못하면 그 호출은 **예외를 던진다** — 그것이 우리가 원하는 갈림이다.
+    #   ⚠ 쓰지 않는다. 감시가 데이터를 만들면 그건 감시가 아니다.
     try:
-        from django.core.files.storage import default_storage
+        from django.conf import settings as _s
+        from minio import Minio
 
-        # 「닿는가」만 본다 — 쓰지 않는다. 감시가 데이터를 만들면 그건 감시가 아니다.
-        alive = default_storage.exists("ops_monitor_probe_does_not_exist")
+        _ep = str(getattr(_s, "MINIO_ENDPOINT", "") or "")
+        for _scheme in ("http://", "https://"):
+            if _ep.startswith(_scheme):
+                _ep = _ep[len(_scheme):]
+        _bucket = getattr(_s, "MINIO_STORAGE_MEDIA_BUCKET_NAME", "")
+        _c = Minio(_ep.rstrip("/"), access_key=_s.MINIO_ACCESS_KEY,
+                   secret_key=_s.MINIO_SECRET_KEY,
+                   secure=bool(getattr(_s, "MINIO_USE_HTTPS", False)))
+        _found = _c.bucket_exists(_bucket)
         out["signals"]["object_store_alive"] = {
-            "value": True, "verdict": OK,
-            "note": "저장소에 질의가 닿았다 (존재 여부 %s · 쓰지 않았다)" % alive}
+            "value": True, "verdict": OK if _found else ALARM,
+            "note": ("저장소가 답했다 · 버킷 %s %s"
+                     % (_bucket, "있음" if _found else "**없음** — 닿았지만 담을 곳이 없다"))}
     except Exception as exc:
+        # 닿지 못한 것은 **모른다가 아니라 나쁨**이다. 「살아 있는가」의 답은 「아니오」다.
         out["signals"]["object_store_alive"] = {
-            "value": None, "verdict": UNKNOWN,
-            "note": "객체저장 클라이언트를 못 읽었다: %s" % type(exc).__name__}
+            "value": False, "verdict": ALARM,
+            "note": "저장소에 닿지 못했다: %s %s" % (type(exc).__name__, str(exc)[:80])}
 
     # ② 밀리는가 ──────────────────────────────────────────────────────────
     try:

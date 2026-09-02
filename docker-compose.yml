@@ -144,6 +144,44 @@ services:
     depends_on:
       - redis
 
+  # ─────────────────────────────────────────────────────────────────────────
+  # MinIO — 객체 저장소 (P-5)
+  #
+  # ★ 왜 이것이 「기반」인가. 이것이 없는 동안 `/api/media-data(/)` 두 자리가 **500** 이었고,
+  #   그 500 을 화면은 「0 of 0」으로 그렸다 — 사용자에게는 **자료가 없는 것처럼** 보였다
+  #   (D-378 · MEDIA_LIST_SHOWS_EMPTY_WHEN_STORAGE_DOWN). 게이트 `route-alive` 의
+  #   유일한 빨강도 그 두 자리였다.
+  #
+  # ★ 판을 **digest 로** 못박는다 (D-387). `:latest` 는 lock 이 아니다 —
+  #   내일 받으면 다른 물건이 오고, 그때 빨개지면 우리는 그 빨강을 「환경 탓」으로 읽는다.
+  #   태그는 사람이 읽으라고 함께 적는다. **둘을 따로 고치면 lock 이 아니다.**
+  #
+  # ⚠ 자격증명은 **저장소에 없다.** 뿌리의 `.env`(gitignored)를 compose 가 자동으로 읽고,
+  #   저장소에는 이름만 남는다(`.env.example` · D-204). `:?` 는 값이 없으면
+  #   **조용히 기본값으로 서는 대신 그 자리에서 멈추라**는 뜻이다 — 기본 자격증명으로
+  #   선 저장소는 열려 있는 저장소다.
+  minio:
+    # minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?뿌리 .env 에 MINIO_ROOT_USER 가 없다 (이름은 .env.example 참조)}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?뿌리 .env 에 MINIO_ROOT_PASSWORD 가 없다 (8자 이상)}
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"     # S3 API
+      - "9001:9001"     # 콘솔
+    # 저장소가 **떴다**와 **받는다**는 다른 사실이다 — 뒤엣것을 본다.
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    networks:
+      - guardianx-network
+
   # Redis service
   redis:
     image: redis:latest
@@ -152,6 +190,11 @@ services:
     restart: unless-stopped
     networks:
       - guardianx-network
+
+volumes:
+  # 저장소의 자료는 컨테이너보다 오래 산다. 이름 붙인 볼륨이 아니면
+  # `docker compose down` 한 번에 영상이 사라진다.
+  minio-data:
 
 networks:
   guardianx-network:

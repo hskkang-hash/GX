@@ -295,7 +295,11 @@ def self_test() -> int:
 #:   (`docs/agent/ENV_EXAMPLE_게이트자격증명.txt` · D-204).
 #:   ⚠ 이미 환경에 있는 값을 **덮지 않는다** — CI 가 준 값이 파일에 지는 일이 없어야 한다.
 LOCAL_ENV_FILES = (".env.gates", ".env.local", ".env")
-LOCAL_ENV_KEYS = ("GX_API", "GX_ROUTE_USER", "GX_ROUTE_PASSWORD", "GX_ROUTE_CONTAINER")
+LOCAL_ENV_KEYS = ("GX_API", "GX_ROUTE_USER", "GX_ROUTE_PASSWORD", "GX_ROUTE_CONTAINER",
+                  # P-5 — 같은 로컬 파일에서 저장소 자격증명도 읽는다.
+                  # 읽는 자리를 둘로 만들면 둘이 어긋난다(D-369).
+                  "MINIO_ENDPOINT", "MINIO_ROOT_USER", "MINIO_ROOT_PASSWORD",
+                  "MINIO_BUCKET_NAME")
 
 
 def load_local_env() -> list[str]:
@@ -332,9 +336,12 @@ def load_local_env() -> list[str]:
 #:   같은 판정을 한다(두 벌은 반드시 어긋난다 · D-369).
 #:   ⚠ 비밀번호를 명령줄에 싣지 않는다. `docker exec -e NAME`(값 없이)은 **제 환경에서**
 #:     값을 가져가므로 프로세스 목록에 남지 않는다.
-def delegate_to_container(container: str, json_path: str | None) -> int:
+def delegate_to_container(container: str, json_path: str | None,
+                         script: str = "verify_route_alive.py") -> int:
     import subprocess
-    inner = ["python", "/repo/scripts/verify_route_alive.py"]
+    #: `script` — 이 위임은 판정기 하나만의 것이 아니다. `verify_minio.py` 도 같은 문으로
+    #:   들어간다. 위임을 복사하지 않고 **이름만 받는다** (두 벌은 반드시 어긋난다 · D-369).
+    inner = ["python", "/repo/scripts/" + script]
     if json_path:
         #: 컨테이너는 문서를 `/docs` 로 붙인다 — 호스트의 `docs/…` 를 그 자리로 옮긴다.
         norm = json_path.replace("\\", "/")
@@ -342,9 +349,16 @@ def delegate_to_container(container: str, json_path: str | None) -> int:
     cmd = ["docker", "exec",
            "-e", "GX_ROUTE_IN_CONTAINER=1",
            "-e", "GX_API", "-e", "GX_ROUTE_USER", "-e", "GX_ROUTE_PASSWORD",
+           "-e", "MINIO_ENDPOINT", "-e", "MINIO_ROOT_USER",
+           "-e", "MINIO_ROOT_PASSWORD", "-e", "MINIO_BUCKET_NAME",
            container] + inner
     print(f"[ALIVE] 컨테이너 위임: {container} (호스트에서 서버가 안 보인다 · "
           f"GX_ROUTE_CONTAINER)")
+    # ★ [실측 2026-09-18] **비우지 않으면 우리 줄이 맨 뒤로 간다.** 자식은 파이프에
+    #   바로 쓰고 우리 출력은 버퍼에 남았다가 종료 때 흘러나온다. 그래서 게이트가
+    #   `tail -1` 로 집은 「판정문」이 실제로는 **이 안내 문구**였다 —
+    #   초록이 무엇을 재고 한 말인지 모르게 되는 자리다(D-301). 순서는 사실의 일부다.
+    sys.stdout.flush()
     try:
         return subprocess.call(cmd)
     except FileNotFoundError:

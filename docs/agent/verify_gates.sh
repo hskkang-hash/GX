@@ -715,7 +715,12 @@ gate_route_alive() {
   inputs "${nroutes:-0}" "화면이 실제로 부른 GET 라우트 (캡처가 기록한 것)"          "캡처를 아직 한 번도 안 돌렸다 — 때릴 목록이 없다" || return 1
   echo "$out" | grep -E "^\[ALIVE\] ✗" | sed 's/^/        /'
   case $rc in
-    0) pass "$(echo "$out" | tail -1)"; return 0 ;;
+    # ★ 판정문을 **이름으로** 집는다. `tail -1` 은 마지막 줄이 판정문이라고
+    #   가정했는데, 컨테이너 위임이 붙자 그 가정이 깨져 **초록이 안내 문구를 말했다**
+    #   [실측 2026-09-18]. 초록은 자기가 무엇을 쟀는지 말해야 한다(D-301).
+    0) pass "$(echo "$out" | grep -m1 -E '^\[ALIVE\] 통과 —' || echo '[ALIVE] 통과 (판정문을 못 찾았다)')"
+       echo "$out" | grep -m1 -E '^\[ALIVE\] 토큰 대조' | sed 's/^/        /'
+       return 0 ;;
     2) skip "판정 불가 — 서버 미기동이거나 자격증명이 없다"             "(GX_ROUTE_USER/GX_ROUTE_PASSWORD · 통과가 아니다)"; return 0 ;;
     *) fail "죽은 라우트가 있다 — 화면이 부르는 자리가 응답하지 않는다"
        echo "$out" | sed 's/^/        /'; return 1 ;;

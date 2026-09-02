@@ -5719,3 +5719,82 @@ decisions:
     · backend/tests/test_response_flow.py — 두 축이 붙지 않았음을 보는 시험이 있다
     · backend/stream_monitors/management/commands/seed_dsm_events.py — 두 축을 각각 부른다
   affects: [D-280, D-290, D-293, D-399, D-401]
+
+- id: D-406
+  author_tree_id: "지시서 P-5 (세종 2026-09-18)"
+  title: "저장소를 세웠다 — 그리고 **세우고 나서 더 조용한 결함**이 드러났다"
+  status: decided
+  raised_by: "세종(기획) 2026-09-18 순서 1 · Code 실측 이행"
+  decision: |
+    ▣ 착수 전 실측 [D-379 의무 · 2026-09-18]:
+        MinIO 서비스     → **없음** (docker-compose 에 항목 자체가 없다)
+        MinIO 이미지     → **이미 있음** (로컬에 `minio/minio` · D-333 ① — 밖에 사러 안 갔다)
+        백엔드 배선      → **이미 있음** (`django_minio_backend` · settings 506~526행)
+        기존 자격증명    → **더미** — 5자였다. MinIO 루트 요건은 8자 이상이다.
+                            즉 **한 번도 진짜로 서 본 적이 없었다**
+    ▣ 이행: compose 서비스 1개. 판을 **digest 로** 못박았다(D-387) — `:latest` 는 lock 이 아니다.
+      태그(RELEASE.2025-09-07T16-13-09Z)는 사람이 읽으라고 옆에 적었다.
+      자격증명은 뿌리 `.env`(gitignored)에서 compose 가 읽고 저장소엔 이름만 남는다(D-204).
+      `${VAR:?}` 로 받는다 — 비면 **기본 자격증명으로 조용히 서는 대신 그 자리에서 멈춘다.**
+    ▣ 강제 도구 [실측]: health 200 · 버킷 `guardianx-dev` · 탐침 객체 1건 ·
+      `/api/media-data/` 와 `/api/media-data` **둘 다 500 → 200 · success:true** ·
+      게이트 `route-alive` **잼고 실패 → 잼고 통과**(죽은 라우트 0).
+      게이트 아홉: **잼고 통과 7 · 잼고 실패 0 · 못 잼 0 · 대기 2.**
+    ▣ ★★ 그리고 세우고 나서 **더 나쁜 것**이 드러났다. 저장소를 실제로 내려 보았다:
+          살아 있을 때  200 · success:true · 1건
+          **내렸을 때**  200 · success:true · 1건   ← 아무 일도 안 일어난다
+      `minio_client.available` 이 `__init__` 에서만 True 가 되고 다시 보지 않는다.
+      **가용성이 기동 시점의 사진 한 장**이다. 저장소가 없던 동안에는 최소한 500 으로
+      소리쳤다 — 이제는 조용하다. 새벽에 죽으면 당직자는 파일을 눌러 본 뒤에야 안다.
+      ★ 이것을 이번 턴에 고치지 않는다. 매 요청 확인은 F-05 의 p95 를 먹고,
+        처분(㉮ 짧은 TTL · ㉯ 실패 시 재확인 후 500 승격 · ㉰ 감시에만 맡김)은 **설계 판정**이다.
+        고르는 자리가 세종이므로 대장에 올리고 셋을 적어 두었다(D-280 — 짐작해서 고르지 않는다).
+    ▣ 정정 보고 (D-379): 지시서 §3 은 「P-5 가 media 화면·영상 백업·**EventClip** 을 한 번에
+      연다」고 적었다. **EventClip 은 P-5 로 안 열린다** [실측] — `CLIP_EXTRACTION_READY=False` 는
+      저장소 부재가 아니라 **계약 11조(원본 영상 반출 금지) 설계 잠금**이다.
+      코덱·전송 방식·보존 기간이 정해져야 풀린다. 저장소는 그 셋 중 어느 것도 아니다.
+    ▣ 목록의 내용은 MinIO 가 아니라 **DB** 가 낸다 [실측] — `MediaDataService.list_media` 는
+      MinIO 로 **가용성만** 보고 항목은 질의로 만든다. 그래서 버킷에 객체를 직접 넣어도
+      목록에 안 뜬다. **그것이 옳다.** 판정기가 「버킷의 객체」와 「라우트의 응답」을
+      따로 세는 이유다 — 둘은 다른 것을 증명한다.
+  enforced_by: |
+    · docker-compose.yml — minio 서비스(digest 고정) · minio-data 이름 붙인 볼륨
+    · .env.example — 이름만 (D-204). 값이 비면 compose 가 멈춘다
+    · scripts/verify_minio.py — 저장소 살아있나 · 객체 ≥1 · 라우트가 받나(success 포함) ·
+      출생 표본 2(죽은 두 자리 500 · 조용한 성공 500/true) · 대조 실측 내리면 1 · 세우면 0
+    · docs/agent/verify_gates.sh — gate_route_alive (죽은 라우트 0)
+    · docs/agent/evidence/DA-05/blockers.yaml :: MINIO_ABSENT_IN_DEV ·
+      MINIO_AVAILABILITY_IS_BOOT_TIME_ONLY
+    · docs/agent/evidence/P-5/minio.md
+  affects: [D-204, D-301, D-333, D-350, D-378, D-386, D-387, D-397, D-403]
+
+- id: D-407
+  author_tree_id: "Code 자발 (P-5 를 재다가 나왔다)"
+  title: "「살아 있는가」를 보라고 세운 신호가 **저장소가 죽어도 OK** 였다"
+  status: decided
+  raised_by: "Code 2026-09-18 실측"
+  decision: |
+    ▣ 실측: MinIO 를 내리고 `ops_monitor.py` 를 돌렸다.
+          저장소 살아 있을 때   object_store_alive  **OK**
+          저장소 **내렸을 때**   object_store_alive  **OK**   ← 눈이 감겨 있었다
+    ▣ 원인: 신호가 `default_storage.exists("...존재하지_않는_이름")` 을 부르고
+      **예외가 안 나면 닿은 것**으로 읽었다. 그런데 저장소가 죽어도 그 호출은
+      예외 없이 **False** 를 돌려준다. 「없다」와 「못 물어봤다」를 **한 값으로 읽은 것**이다.
+    ▣ ★ D-301 이 이름 붙인 바로 그 모양이고, 하필 **「살아 있는가」를 보라고 세운 신호**에서
+      났다. 감시가 눈이 멀면 그것은 감시가 없는 것보다 나쁘다 — **있다는 착시**를 준다.
+      그리고 이 결함은 **저장소를 세우기 전에는 드러날 수 없었다**: 없는 것을 감시하면
+      무엇을 물어도 답이 같다. 세워 놓고 **일부러 내려 봐야** 보인다.
+    ▣ 고침: 저장소에게 **저장소만 답할 수 있는 것**을 묻는다 — 버킷의 존재.
+      닿지 못하면 그 호출은 예외를 던지고, 그 예외가 우리가 원하는 갈림이다.
+      닿았는데 버킷이 없으면 그것도 ALARM 이다 — **닿았지만 담을 곳이 없다**는 다른 사실이다.
+      쓰지 않는다: 감시가 데이터를 만들면 그건 감시가 아니다.
+    ▣ 대조 [실측]: **OK → ALARM → OK.** 자기시험 7건 그대로 통과.
+    ▣ ★ 원칙 하나를 여기 적는다: **가짜 환경에서 초록인 감시는 감시가 아니다.**
+      의존이 없는 채로 「닿았는가」를 물으면 어떤 구현도 초록을 낼 수 있다.
+      감시는 **의존을 세운 뒤 일부러 내려 봐야** 처음으로 시험된다.
+  enforced_by: |
+    · scripts/ops_monitor.py — object_store_alive 가 버킷 존재를 직접 묻는다.
+      못 닿으면 ALARM(모름이 아니다) · 닿았는데 버킷이 없어도 ALARM
+    · scripts/verify_minio.py — 같은 사실을 라우트 쪽에서 한 번 더 본다
+    · docs/agent/evidence/P-5/minio.md §4
+  affects: [D-290, D-301, D-350, D-378, D-403]
