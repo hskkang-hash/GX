@@ -21,12 +21,27 @@ TICKETS="$SCRIPT_DIR/tickets.yaml"
 cd "$REPO_ROOT" || exit 3
 
 RED=$'\033[31m'; GRN=$'\033[32m'; YEL=$'\033[33m'; DIM=$'\033[2m'; RST=$'\033[0m'
-FAILED=0; PASSED=0; SKIPPED=0
+FAILED=0; PASSED=0; SKIPPED=0; WAITING=0
 TICKET_ID=""
 
 pass()  { PASSED=$((PASSED+1));  printf '  %sPASS%s  %s\n' "$GRN" "$RST" "$1"; }
 fail()  { FAILED=$((FAILED+1));  printf '  %sFAIL%s  %s\n' "$RED" "$RST" "$1"; }
 skip()  { SKIPPED=$((SKIPPED+1)); printf '  %sSKIP%s  %s %s\n' "$YEL" "$RST" "$1" "${DIM}${2:-}${RST}"; }
+
+# ★ [P-12 ④ · 2026-09-16 판정] **「못 잼」 안에 성격이 다른 둘이 섞여 있었다.**
+#
+#     못 잼 : 볼 것이 있는데 **못 봤다**   ← 자격증명이 없다 · 도구가 없다 · 서버가 없다
+#     대기  : 볼 것이 **설계상 0건이다**   ← 이번 변경에 models.py 가 없다 · FE 파일이 없다
+#
+#   앞의 것은 **빚**이다. 갚아야 하고, 갚을 때까지 그 자리는 안 지켜진다.
+#   뒤의 것은 빚이 아니다. 게이트는 멀쩡히 서 있고 다만 이번엔 지나갈 것이 없었다.
+#   둘을 한 칸에 넣으면 「회색 5」 같은 수가 나오고, 그 수를 보는 사람은
+#   **다섯 자리가 안 지켜지고 있다**고 읽는다. 실제로 그런 것은 셋이었다.
+#
+#   ⚠ 그렇다고 없애지 않는다 (P-12 ④). 대상이 0인 것과 게이트가 없는 것은 다르다 —
+#     지우면 「안 해 본 것」과 「해 봤더니 볼 게 없던 것」이 같아진다 (D-301).
+#     그래서 **자기 칸**을 준다. 종료 코드는 여전히 2다 — 재지 않은 것은 초록이 아니다.
+waiting() { WAITING=$((WAITING+1)); printf '  %sWAIT%s  %s %s\n' "$YEL" "$RST" "$1" "${DIM}${2:-}${RST}"; }
 
 # ★ [D-400] 종료 코드 **판정식은 여기 하나뿐이다.** 세 자리(단일 게이트·티켓 전체·
 #   자기시험)가 각자 계산하면 반드시 어긋나고, 어긋난 판정식 복사본 하나가 D-212 였다.
@@ -34,8 +49,16 @@ skip()  { SKIPPED=$((SKIPPED+1)); printf '  %sSKIP%s  %s %s\n' "$YEL" "$RST" "$1
 #   ★ 실패가 있으면 판정 불가가 함께 있어도 **1** 이다 — 실패가 「모른다」 뒤에 숨으면 안 된다.
 summary_rc() {
   if [ "$FAILED" -ne 0 ]; then return 1; fi
-  if [ "$SKIPPED" -gt 0 ]; then return 2; fi
+  # 대기도 「재지 못한 것」이다 — 종료 코드에서는 회색과 같은 자리에 선다.
+  # 둘이 갈리는 곳은 **집계 줄**이다: 무엇을 갚아야 하는지가 거기서 보여야 한다.
+  if [ "$SKIPPED" -gt 0 ] || [ "$WAITING" -gt 0 ]; then return 2; fi
   return 0
+}
+
+# 집계 한 줄 — **총합만 적는 보고는 받지 않는다** (P-12).
+tally() {
+  printf '\n%s잼고 통과 %d · 잼고 실패 %d · 못 잼 %d (대기 %d)%s\n' \
+    "$DIM" "$PASSED" "$FAILED" "$SKIPPED" "$WAITING" "$RST"
 }
 head_() { printf '\n%s── %s%s\n' "$DIM" "$1" "$RST"; }
 
@@ -220,18 +243,19 @@ gate_secrets() {
     fi
   done
 
-  if command -v gitleaks >/dev/null 2>&1; then
-    if gitleaks detect --source . --no-banner --redact >/dev/null 2>&1; then
-      pass "gitleaks 스캔 클린"
-    else
-      fail "gitleaks 검출 — gitleaks detect --source . 로 확인"
-      found=1
-    fi
-  elif command -v trufflehog >/dev/null 2>&1; then
-    pass "trufflehog 존재 (수동 실행 필요)"
-  else
-    skip "시크릿 스캐너 미설치" "(W0-1 작업 4: gitleaks 또는 trufflehog CI 추가)"
-  fi
+  # ★ [P-12 ② · 2026-09-17] 앞판은 `command -v gitleaks` 한 줄로 판단했고,
+  #   스캐너가 없으면 **SKIP** 했다. 그 자리가 회색으로 남아 있던 다섯 중 하나다.
+  #   이제 판정기가 따로 산다 — 스캐너를 어디서 찾는지(lock 이 고정한 `tools/`),
+  #   무엇을 스캔 면으로 볼 것인지(저장소가 나르는 것 vs 디스크에 있는 것),
+  #   심어 보고 잡는지(양성 1 · 음성 2)를 전부 그 파일이 말한다.
+  local sout srrc
+  sout=$($PY scripts/verify_secret_scan.py 2>&1); srrc=$?
+  echo "$sout" | sed 's/^/        /'
+  case $srrc in
+    0) pass "시크릿 스캔 — 저장소가 나르는 자리 0건 · 이력 0건 (래칫 D-311)" ;;
+    2) skip "시크릿 스캐너 미설치" "(python scripts/install_secret_scanner.py · 판·해시 고정 D-387)" ;;
+    *) fail "시크릿 검출 — 저장소가 나르는 자리 또는 이력에 있다"; found=1 ;;
+  esac
   return $found
 }
 
@@ -287,7 +311,39 @@ PYEOF
   else
     pass "업무 데이터 모델 우회 0건"
   fi
-  [ -n "$fw" ] && skip "프레임워크 모델 잔존: $fw" "(W0-2 작업2 — 뷰 레벨 필터로 대응)"
+  # ★ [P-12 ③ · 2026-09-17] 여기는 **못 잰 자리가 아니었다.**
+  #   게이트는 목록을 읽었고, 프레임워크 모델이 몇 개 남았는지 **알고 있었다.**
+  #   그런데 SKIP 을 냈고, SKIP 은 「판정 불가」로 집계된다(D-400). 그래서 이 자리가
+  #   회색 다섯 중 하나로 셈해졌다 — **아는 것을 모른다고 적은 것**이다.
+  #   아는 빚에는 회색이 아니라 **래칫**이 맞다(D-311): 기존분은 세어 고정하고,
+  #   하나라도 늘면 빨개진다. 그래야 「언젠가 없앤다」가 「오늘 안 늘었다」로 바뀐다.
+  #   ⚠ 이 줄을 늘리려면 기준선을 함께 고쳐야 한다 — 그 수정이 곧 결재 요청이다.
+  local FW_BASELINE="coreuser,group,multilanguagecontent,role,userprofile,userprofilelink,usergroup"
+  if [ -n "$fw" ]; then
+    local fw_sorted fw_n base_n
+    fw_sorted=$(printf '%s' "$fw" | tr ',' '
+' | tr 'A-Z' 'a-z' | sort | paste -sd, -)
+    fw_n=$(printf '%s' "$fw_sorted" | tr ',' '
+' | grep -c .)
+    base_n=$(printf '%s' "$FW_BASELINE" | tr ',' '
+' | grep -c .)
+    local newcomers
+    newcomers=$(comm -23 <(printf '%s' "$fw_sorted" | tr ',' '
+' | sort -u)                          <(printf '%s' "$FW_BASELINE" | tr ',' '
+' | sort -u) | paste -sd, -)
+    if [ -n "$newcomers" ]; then
+      fail "우회 목록에 **새 프레임워크 모델**이 들었다: $newcomers  ← 래칫 D-311"
+      printf '        %s기준선 %d건에서 %d건으로 늘었다. 늘리려면 기준선을 함께 고친다%s
+'         "$DIM" "$base_n" "$fw_n" "$RST"
+      rc=1
+    else
+      pass "프레임워크 모델 잔존 ${fw_n}건 — 기준선 ${base_n}건 안 (새로 는 것 0건 · 래칫 D-311)"
+      printf '        %s빚: %s — W0-2 작업2(뷰 레벨 필터). 대장: DA-05/blockers.yaml :: BYPASS_FRAMEWORK_MODELS%s
+'         "$DIM" "$fw_sorted" "$RST"
+    fi
+  else
+    pass "프레임워크 모델 잔존 0건 — 빚을 다 갚았다 (기준선을 0 으로 내릴 수 있다)"
+  fi
   if [ -n "$unk" ]; then
     fail "미분류 모델이 우회 목록에 추가됨: $unk  ← 절대금지 #6"
     rc=1
@@ -359,7 +415,10 @@ gate_model_inheritance() {
   # ★ D-301 — 변경된 models.py 가 0 건인 것은 정상이다(모델을 안 건드린 커밋).
   #   그러나 그 사실을 **말하지 않으면** 파이프가 끊겨 0 건이 된 경우와 구별되지 않는다.
   inputs "$nchanged" "변경된 models.py"     "베이스라인($BASELINE) 대비 변경된 models.py 가 없다 — 신규 모델이 태어나지 않은 커밋이다"     || return 1
-  [ "$nchanged" -eq 0 ] && { skip "볼 대상 없음" "(0건 사유는 위 [입력] 줄에 있다)"; return 0; }
+  # ★ [P-12 ③④] 「못 잼」이 아니라 **대기**다 — 이 게이트는 멀쩡히 서 있고,
+  #   이번 변경에 지나갈 것이 없었을 뿐이다. 자격증명이 없어 못 잰 것과 같은 칸에 두면
+  #   갚아야 할 빚의 수가 부풀어 보인다. 없애지는 않는다: 대상 0과 게이트 부재는 다르다.
+  [ "$nchanged" -eq 0 ] && { waiting "볼 대상 0건 — 대기" "(0건 사유는 위 [입력] 줄에 있다 · 빚이 아니다)"; return 0; }
 
   local rc=0
   for f in $changed; do
@@ -433,7 +492,10 @@ gate_ui_library() {
   local nchanged
   nchanged=$(printf '%s' "$changed" | grep -c . || true)
   inputs "$nchanged" "변경된 FE 파일"     "베이스라인($BASELINE) 대비 변경된 frontend/src 파일이 없다 — 이번 변경은 BE 전용이다"     || return 1
-  [ "$nchanged" -eq 0 ] && { skip "볼 대상 없음" "(0건 사유는 위 [입력] 줄에 있다)"; return 0; }
+  # ★ [P-12 ③④] 「못 잼」이 아니라 **대기**다 — 이 게이트는 멀쩡히 서 있고,
+  #   이번 변경에 지나갈 것이 없었을 뿐이다. 자격증명이 없어 못 잰 것과 같은 칸에 두면
+  #   갚아야 할 빚의 수가 부풀어 보인다. 없애지는 않는다: 대상 0과 게이트 부재는 다르다.
+  [ "$nchanged" -eq 0 ] && { waiting "볼 대상 0건 — 대기" "(0건 사유는 위 [입력] 줄에 있다 · 빚이 아니다)"; return 0; }
 
   local rc=0
   for f in $changed; do
@@ -463,7 +525,10 @@ gate_forbidden_zone() {
   changed=$(changed_files)
   nchanged=$(printf '%s' "$changed" | grep -c . || true)
   inputs "$nchanged" "베이스라인 대비 변경 파일"     "변경 파일이 0건이다 — 작업 트리가 베이스라인과 같다. 금지구역 판정의 대상 자체가 없다"     || return 1
-  [ "$nchanged" -eq 0 ] && { skip "볼 대상 없음" "(0건 사유는 위 [입력] 줄에 있다)"; return 0; }
+  # ★ [P-12 ③④] 「못 잼」이 아니라 **대기**다 — 이 게이트는 멀쩡히 서 있고,
+  #   이번 변경에 지나갈 것이 없었을 뿐이다. 자격증명이 없어 못 잰 것과 같은 칸에 두면
+  #   갚아야 할 빚의 수가 부풀어 보인다. 없애지는 않는다: 대상 0과 게이트 부재는 다르다.
+  [ "$nchanged" -eq 0 ] && { waiting "볼 대상 0건 — 대기" "(0건 사유는 위 [입력] 줄에 있다 · 빚이 아니다)"; return 0; }
 
   local allow=""
   if [ -n "$TICKET_ID" ]; then
@@ -716,17 +781,17 @@ case "${1:-}" in
   --self-test)
     st_fail=0
     # ① 판정 불가 하나 → **2** 여야 한다 (이 도구가 틀렸던 바로 그 자리)
-    PASSED=0; FAILED=0; SKIPPED=0
+    PASSED=0; FAILED=0; SKIPPED=0; WAITING=0
     skip "자기시험 — 판정 불가 표본" "(출생 표본: route-alive 가 자격증명 없이 0 을 냈다)" >/dev/null
     summary_rc; st_rc=$?
     [ $st_rc -eq 2 ] || { echo "  자기시험 실패 ① 판정 불가가 $st_rc — 2 여야 한다"; st_fail=1; }
     # ② 전부 통과 → 0. 「판정 불가를 2 로」가 **모든 것을 2 로** 만들면 안 된다
-    PASSED=0; FAILED=0; SKIPPED=0
+    PASSED=0; FAILED=0; SKIPPED=0; WAITING=0
     pass "자기시험 — 통과 표본" >/dev/null
     summary_rc; st_rc=$?
     [ $st_rc -eq 0 ] || { echo "  자기시험 실패 ② 통과가 $st_rc — 0 이어야 한다"; st_fail=1; }
     # ③ 실패가 있으면 판정 불가가 함께 있어도 **1**. 실패가 「모른다」 뒤에 숨으면 안 된다
-    PASSED=0; FAILED=0; SKIPPED=0
+    PASSED=0; FAILED=0; SKIPPED=0; WAITING=0
     fail "자기시험 — 실패 표본" >/dev/null; skip "자기시험 — 함께 있는 판정 불가" "" >/dev/null
     summary_rc; st_rc=$?
     [ $st_rc -eq 1 ] || { echo "  자기시험 실패 ③ 실패+판정불가가 $st_rc — 1 이어야 한다"; st_fail=1; }
@@ -740,7 +805,7 @@ case "${1:-}" in
   --gate)
     [ $# -ge 2 ] || usage
     run_gate "$2"; rc=$?
-    printf '\n%s통과 %d · 실패 %d · 판정 불가 %d%s\n' "$DIM" "$PASSED" "$FAILED" "$SKIPPED" "$RST"
+    tally
     # ★ [D-400 · 2026-09-16] **판정 불가는 통과가 아니다** — 그런데 종료 코드가 0 이었다.
     #   그 탓에 「게이트 9종 전부 exit 0」이라는 보고가 나갔고, 그때 route-alive 는
     #   자격증명이 없어 **아무것도 재지 않은 채** 0 을 내고 있었다.
@@ -823,12 +888,12 @@ case $? in
 ' "$YEL" "$RST" "$PASSED" "$SKIPPED"
     exit 2 ;;
   0)
-    printf '  %sGATES PASS%s  통과 %d · 판정 불가 %d — DoD 재현 후 done 처리
-' "$GRN" "$RST" "$PASSED" "$SKIPPED"
+    printf '  %sGATES PASS%s  잼고 통과 %d · 못 잼 %d (대기 %d) — DoD 재현 후 done 처리
+' "$GRN" "$RST" "$PASSED" "$SKIPPED" "$WAITING"
     exit 0 ;;
   *)
-    printf '  %sFAIL%s  통과 %d · 실패 %d · 판정 불가 %d
-' "$RED" "$RST" "$PASSED" "$FAILED" "$SKIPPED"
+    printf '  %sFAIL%s  잼고 통과 %d · 잼고 실패 %d · 못 잼 %d (대기 %d)
+' "$RED" "$RST" "$PASSED" "$FAILED" "$SKIPPED" "$WAITING"
     printf '  %s3회 연속 실패 시 STOP(verify-failed)%s
 ' "$DIM" "$RST"
     exit 1 ;;

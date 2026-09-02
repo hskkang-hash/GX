@@ -5270,7 +5270,9 @@ decisions:
     · backend/tests/test_dormant_wiring.py :: test_celery_signal_hooks_are_not_reported_dormant
       — 합성 fixture 는 규칙이 있는지를 보고, 이 시험은 그 규칙이 **오늘 이 저장소의 그 세
         함수에** 걸리는지를 본다 (D-310)
-    · docs/agent/evidence/D-393/recount.md · dormant_recount.json · dormant_reclassified.json
+    · docs/agent/evidence/D-393/recount.md
+    · docs/agent/evidence/D-393/dormant_recount.json
+    · docs/agent/evidence/D-393/dormant_reclassified.json
   affects: [D-277, D-301, D-310, D-311, D-350, D-377, D-385, D-388]
 
 - id: D-394
@@ -5329,7 +5331,10 @@ decisions:
     ▣ **한계를 적어 두는 것이 지금 할 수 있는 정직이다** (D-290 3값 · D-301).
       다음에 이 91건을 볼 때의 출발점이 이 항목이다.
   enforced_by: |
-    · docs/agent/evidence/D-393/recount.md §6
+    · scripts/classify_dormant.py — ㉰정상 요약을 낼 때 **method 건수 옆에 한계를 함께
+      출력한다.** 수만 따로 옮겨 적는 것을 막는 자리다: 「91건」이 보고서로 걸어 나갈 때
+      「불린다는 뜻이 아니다」가 그 옆에 붙어 나간다. 두 줄을 지우면 착시 ⑨가 재발한다
+    · docs/agent/evidence/D-393/recount.md
   affects: [D-290, D-301, D-350, D-377, D-388, D-394]
 
 - id: D-396
@@ -5569,3 +5574,148 @@ decisions:
     · backend/tests/test_f05_event_api.py :: K1_CONSUMERS(seed_dsm_events 등재)
     · docs/agent/evidence/D-401/seed_is_real_path.md
   affects: [D-284, D-290, D-301, D-330, D-337, D-347, D-350, D-386, D-396, D-399]
+
+- id: D-402
+  author_tree_id: "지시서 P-12 (세종 2026-09-17)"
+  title: "회색 다섯을 열어 보니 **성격이 셋이었다** — 잼 7 · 회색 0 · 대기 2"
+  status: decided
+  raised_by: "세종(기획) 2026-09-17 P-12 · Code 실측 이행"
+  decision: |
+    ▣ 착수 전 실측 [D-379 의무 · 2026-09-17]: 게이트 9종을 하나씩 돌려 기준선을 잡았다 —
+      **잼고 통과 4 · 잼고 실패 0 · 못 잼 5.** 지시서 기록과 일치.
+    ▣ ★★ 다섯을 열어 보니 **성격이 셋으로 갈렸다.** 「회색 5」는 한 종류가 아니었다:
+        ① 진짜 빚 2   route-alive(자격증명 없음) · secrets(도구 없음) — **갚았다**
+        ② 잘못 칠한 색 1  bypass — **쟀고 알고 있었는데** SKIP 을 냈다
+        ③ 빚이 아닌 것 2  model-inheritance · ui-library — **볼 대상이 0건**이었다
+      「회색 5」라는 수는 **다섯 자리가 안 지켜진다**로 읽힌다. 실제로는 셋이었다.
+    ▣ 결과 [실측]: **잼고 통과 6 · 잼고 실패 1 · 못 잼 0 (대기 2).** 잼 = 7.
+      목표(잼 ≥ 6 · 회색 ≤ 3)를 넘겼다. 집계 줄이 이제 네 수를 병기한다.
+    ▣ ★ **대기**라는 칸을 새로 만들었다(P-12 ④). 「못 봤다」와 「볼 것이 없었다」는
+      다른 사실이다. 앞의 것은 갚아야 할 빚이고 뒤의 것은 아니다. 종료 코드는 둘 다 2 다 —
+      재지 않은 것은 초록이 아니다. 갈리는 자리는 **집계 줄**이고, 거기서 갈려야
+      「무엇을 갚아야 하는가」가 보인다. ⚠ 없애지 않는다: 대상 0과 게이트 부재는 다르다.
+    ▣ bypass 는 회색에서 **래칫**으로 옮겼다(D-311). 프레임워크 모델 7건은 아는 빚이고,
+      아는 빚에는 회색이 아니라 기준선이 맞다. 「언젠가 없앤다」가 **「오늘 안 늘었다」**로
+      바뀐다 — 뒤엣것만 매일 확인할 수 있다. 래칫 대조 [실측] 양성 1 · 음성 3.
+  enforced_by: |
+    · docs/agent/verify_gates.sh — waiting() · tally() · gate_bypass 의 FW_BASELINE 래칫
+    · scripts/verify_gate_counts.py — 게이트마다 [입력] 건수를 말하는지 (D-301)
+    · docs/agent/evidence/DA-05/blockers.yaml — GATE_ROUTE_ALIVE_CREDENTIAL ·
+      GATE_SECRET_SCANNER_ABSENT · BYPASS_FRAMEWORK_MODELS · GATE_TARGETS_ZERO_WAITING
+    · docs/agent/evidence/P-12/greys.md
+  affects: [D-290, D-301, D-311, D-350, D-353, D-400]
+
+- id: D-403
+  author_tree_id: "지시서 P-12 ① (세종 2026-09-17)"
+  title: "route-alive — **로그인 성공이 토큰이 먹힌다는 증거가 아니었다.** 26 중 24가 401이었다"
+  status: decided
+  raised_by: "Code 2026-09-17 실측 (P-12 ① 이행 중 발견)"
+  decision: |
+    ▣ 지시대로 자격증명을 로컬 `.env.gates`(gitignored)에서 읽게 하고 게이트를 돌렸다.
+      **exit 0 이 나왔다.** 그런데 출력을 보니 **26건 중 24건이 401** 이었다.
+    ▣ 원인 [실측]: 판정기가 `/api/token/pair` 를 **첫째로** 물었고 그것이 231자 JWT 를
+      내주었다. 그러나 dj-core `core/auth.py:38` 은 `user.token`(저장된 세션 토큰)이 없으면
+      그 JWT 를 **"Token expired"** 로 거절한다 — `token/pair` 는 세션을 세우지 않는다.
+      제품의 진짜 문은 `/api/v1/auth/login` 이고 **`end_previous_session` 칸이 필요하다**
+      (동시 접속 1개라 없으면 **200 + `success:false`** 가 온다 — 조용한 성공).
+    ▣ ★★ 그런데 더 나쁜 것은 원인이 아니라 **판정이 초록이었다는 사실**이다.
+      401 을 「문지기가 섰다(살아 있다)」로 읽는 규칙은 **옳다.** 틀린 것은
+      **들어가지 못한 채로 그 규칙을 쓴 것**이다. 그 파일 첫머리가 「이 판정기의 가장 나쁜
+      실패」라 스스로 적어 둔 그 모양이 그대로 일어났다 — 적어 두는 것으로는 안 막힌다.
+    ▣ ★ 고침은 규칙이 아니라 **증거**다: 로그인 뒤 **같은 목록을 익명으로 한 번 더 때려**
+      토큰이 무엇을 바꿨는지 센다(`token_changed_anything`). 0건이면 판정 불가다.
+      **토큰을 넣은 것과 안 넣은 것의 결과가 같으면 그 토큰은 없는 것과 같다.**
+      양성 대조를 손으로 정하지 않는 것이 요점이다 — 「이 라우트는 200 이어야 한다」를
+      적어 두면 그 목록이 곧 옛말이 된다.
+    ▣ 고친 뒤 [실측]: 토큰이 바꾼 라우트 **24/26** · 토큰 들고도 401/403 인 자리 **0**.
+      그리고 그 401 밑에 덮여 있던 것이 드러났다 — `/api/media-data(/)` **500 두 자리**.
+      게이트는 **exit 1**. §1 이 「옳은 색」이라 한 그 색이다. P-5(MinIO)가 서면 풀린다.
+    ▣ 대조 [실측]: 자격증명 있이 **exit 1** · 없이 **exit 2**. 갈린다.
+    ▣ 환경 [실측]: `gx-shell` 이 8000 을 게시하지 않아 호스트에서 서버가 안 보인다.
+      `GX_ROUTE_CONTAINER` 로 **자기 자신을 컨테이너 안에서 다시 돌린다** — 두 벌을
+      만들지 않는다(두 벌은 반드시 어긋난다 · D-369).
+  enforced_by: |
+    · scripts/verify_route_alive.py — token_changed_anything(익명 대조) ·
+      BIRTH_SAMPLE_TOKEN_DEAF(26,24) · _extract_token(조용한 성공 거절) · LOGIN_PATHS 순서 ·
+      load_local_env · delegate_to_container. 자기시험이 음성 2갈래로 무는 것을 확인했다
+    · docs/agent/ENV_EXAMPLE_게이트자격증명.txt — 저장소엔 이름만 (D-204)
+    · docs/agent/evidence/D-386/route_alive.json — 26건 · 200 24 · 500 2
+    · docs/agent/evidence/DA-05/blockers.yaml :: GATE_ROUTE_ALIVE_CREDENTIAL
+  affects: [D-204, D-284, D-301, D-310, D-350, D-369, D-386, D-400]
+
+- id: D-404
+  author_tree_id: "지시서 P-12 ② (세종 2026-09-17)"
+  title: "시크릿 스캔 — **어디를 보는가가 판정의 절반이었다.** 같은 저장소에 19건과 1건"
+  status: decided
+  raised_by: "Code 2026-09-17 실측 (P-12 ② 이행)"
+  decision: |
+    ▣ gitleaks 8.21.2 를 **판·해시 고정**으로 세웠다(D-387). 받은 파일이 lock 의 sha256 이
+      아니면 **설치를 거절한다** — 「깔았다」가 진술이 아니라 확인 행위가 된다(D-323).
+      판은 `.pre-commit-config.yaml` 과 같은 것으로 맞췄다 — 두 벌이 어긋나지 않게(D-369).
+      받은 물건은 `tools/`(gitignored). **저장소가 드는 것은 lock 이지 물건이 아니다.**
+    ▣ ★★ 깔고 처음 돌린 날 [실측]: 파일 면 **19건** · 이력 면 **1건**.
+      같은 저장소, 같은 규칙, 열아홉 배. 어느 쪽도 거짓말이 아니었다 —
+      **서로 다른 질문에 답하고 있었다.** 물어야 할 것은 「저장소가 무엇을 나르는가」다.
+      그래서 파일 면을 훑고 **git 이 그 파일을 나르는지**로 가른다. 저장소 밖(빌드 산출물·
+      로컬 `.env.stg`)은 건수로 말하되 빨강으로 세지 않는다 — 지우지도 않는다.
+    ▣ 실제 발견 **1건**: `backend/stream_monitors/example_frontend.html:813` 에
+      Django CSRF 토큰 32자가 하드코딩. **게다가 그 값이 차 있어서 바로 아래
+      `if (!csrfToken)` 대체 경로 세 갈래가 한 번도 안 돌고 있었다** — 유출이면서 동시에
+      기능 결함이었다. 값을 비우니 둘이 함께 고쳐졌다. **지우는 것이 곧 고치는 것**이었다.
+      회전 불필요 [판정]: Django CSRF 토큰은 세션 범위이고 그 세션은 오래 전에 끝났다.
+      장수 자격증명이었다면 여기 적지 않고 폐기·재발급이 먼저였다.
+    ▣ ★ 측정기 결함 둘도 함께 나왔다 (D-350 — 측정기를 먼저 의심한다):
+      ① `regexTarget="line"` 허용목록이 **~100KB 넘는 파일에서 조용히 꺼진다**(청크 경계).
+         같은 `integrity` 한 줄이 118바이트에서 허용, 202KB 에서 오탐. **규칙이 아니라
+         크기가 갈랐다.** 자리(paths)로 한 번 더 잠그고 4000줄 표본으로 매번 확인한다.
+      ② `git check-ignore` 가 **한 건도 못 맞히고 있었다** — 파이썬 `text=True` 가 개행을
+         CRLF 로 바꿔 경로에 CR 이 섞였고, git 은 그것을 C-따옴표로 감싸 돌려주었다.
+         결과는 **무시되는 파일을 「저장소가 나른다」로 읽는 것** — 있지도 않은 유출로
+         빨개졌다. NUL 구분(`-z`)으로 고쳤다.
+         **잘못된 빨강은 잘못된 초록만큼 빨리 게이트를 죽인다.**
+    ▣ 래칫 [D-311]: 이력에 이미 든 1건은 `.gitleaksignore` 가 **사유와 함께** 고정한다.
+      이력 재작성은 대표 결정이고 공유 저장소를 쓰는 모두의 작업본을 깨뜨린다.
+      기존 빚에 영원히 빨간 게이트는 꺼지고, 꺼진 게이트는 아무것도 안 지킨다(D-353).
+    ▣ 대조 [실측]: 저장소가 나르는 자리에 심으면 **exit 1**, 치우면 **exit 0**.
+      자기시험 양성 1(심은 키 32자) · 음성 2(플레이스홀더 · 큰 잠금 파일).
+      ⚠ 첫 심기는 AWS 문서 예제값이라 기본 허용목록에 걸려 **안 잡혔다** — 나쁜 표본이었다.
+        무엇을 심는지가 자기시험의 절반이다.
+  enforced_by: |
+    · scripts/install_secret_scanner.py — 해시 불일치면 설치 거절 (D-387)
+    · scripts/secret_scanner.lock.json — 판 8.21.2 + sha256 2종
+    · scripts/verify_secret_scan.py — 스캔 면 판정 · BIRTH_SAMPLE_SURFACE · BIRTH_SAMPLE_CHUNK ·
+      자기시험 양성 1 · 음성 2
+    · docs/agent/verify_gates.sh — gate_secrets 가 이 판정기를 부른다 (0/1/2 그대로 전달)
+    · .gitleaks.toml — 자리(paths) 허용목록
+    · .gitleaksignore — 래칫 (사유 포함)
+    · docs/agent/evidence/DA-05/blockers.yaml :: GATE_SECRET_SCANNER_ABSENT
+  affects: [D-003, D-301, D-310, D-311, D-323, D-350, D-353, D-387]
+
+- id: D-405
+  author_tree_id: "Code 자발 (지시서 §5 「확인해 [실측]으로」)"
+  title: "오탐 ① 결합 규칙은 **없다** — 시드가 두 축을 각각 불렀을 뿐이다"
+  status: decided
+  raised_by: "Code 2026-09-17 실측"
+  decision: |
+    ▣ 지시서 §5: 「① 결합 규칙(REJECTED→대응 자동 closed)은 시드 `rejected 4 · closed 8` 로
+      보아 **돌아가는 듯하다** — 확인해 [실측]으로.」
+    ▣ 실측 결과: **없다.** `review_event` 는 `response_state` 를 한 번도 건드리지 않는다
+      (`update_fields=["status","verdict","reviewed_by","reviewed_at","reject_reason"]`).
+      시드가 `review_event` 와 `advance_response` 를 **각각** 부른다
+      (`seed_dsm_events.py` — `if verdict: review_event(...)` 다음에 `for to in FORWARD[:steps]`).
+      즉 「rejected 4 · closed 8」은 결합의 증거가 아니라 **시드가 두 번 쓴 결과**다.
+    ▣ ★ 이것이 D-401 이 이름 붙인 모양의 재발이다 — **출력의 수를 보고 원인을 추정했다.**
+      같은 수가 「규칙이 있다」에서도 「시드가 두 번 썼다」에서도 나온다.
+      **수는 원인을 말하지 않는다.** 무엇이 그 수를 만들었는지는 코드가 말한다(D-280).
+    ▣ 붙일 것인가는 **세종의 자리다.** 붙이면 D-399 가 갈라 둔 두 축이 한쪽에서 다시 묶인다.
+      다만 오탐 기각에는 `reviewed_by` 가 있으므로 D-399 가 금지한 「접수한 사람이 없는
+      종결」과는 다르다 — 그 점에서 결합은 **변호 가능하다.** 판정을 기다린다.
+    ▣ 나머지 상태 [실측]: ② 판정 API — `review_event`·`record_feedback` 은 **있고**
+      라우트 면은 **없다**(부분). ④ 오탐률 — `false_positive_rate` 가 **있다**(코호트 기준 ·
+      `verdict` 로만 센다 · D-293). ③ 통지 — **없다**(쓰기 면이라 P-8 이 먼저다).
+  enforced_by: |
+    · backend/kernels/k1_event/services.py — review_event 의 update_fields 에
+      `response_state` 가 **없는 것이 그 보장**이다. 붙이려면 이 줄이 먼저 바뀐다
+    · backend/tests/test_response_flow.py — 두 축이 붙지 않았음을 보는 시험이 있다
+    · backend/stream_monitors/management/commands/seed_dsm_events.py — 두 축을 각각 부른다
+  affects: [D-280, D-290, D-293, D-399, D-401]

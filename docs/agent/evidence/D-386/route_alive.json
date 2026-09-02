@@ -1,8 +1,8 @@
 {
   "api": "http://localhost:8000",
-  "checked": 13,
+  "checked": 26,
   "skipped_with_id": [
-    "/api/dsm/events/4676",
+    "/api/dsm/events/4704",
     "/api/v1/user/get-user-detail/105"
   ],
   "rows": [
@@ -44,7 +44,7 @@
     },
     {
       "method": "GET",
-      "path": "/api/dsm/deliveries?event_id=4676",
+      "path": "/api/dsm/deliveries?event_id=4704",
       "status": 200,
       "alive": true
     },
@@ -62,7 +62,85 @@
     },
     {
       "method": "GET",
+      "path": "/api/flight-log/flight-log/?page_size=25&current_page=1",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/media-data/?page_size=25&current_page=1",
+      "status": 500,
+      "alive": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/media-data?page_size=25&current_page=1",
+      "status": 500,
+      "alive": false
+    },
+    {
+      "method": "GET",
       "path": "/api/menu/menus?page_size=10000",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/stream-monitors/stream-monitors",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/stream-monitors/stream-monitors/ai-models",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-01T17:00:00%2B00:00&end_date=2026-09-02T16:59:59%2B00:00&limit=100&page=1&page_size=5",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-08-29T17:00:00%2B00:00&end_date=2026-09-05T16:59:59%2B00:00",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-02",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/surveillance/surveillance-dashboard/drone-status-overview",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/surveillance/surveillance-dashboard/today-profiles-polygon",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4",
+      "status": 200,
+      "alive": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/surveillance/surveillance-dashboard/weather-setting",
       "status": 200,
       "alive": true
     },
@@ -85,5 +163,5 @@
       "alive": true
     }
   ],
-  "dead": 0
+  "dead": 2
 }

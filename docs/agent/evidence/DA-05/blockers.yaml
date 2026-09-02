@@ -652,3 +652,136 @@ blockers:
       docs/agent/evidence/D-347/screens/SCREENS-1/OPERATOR/dsm_dashboard.png —
         ★ **그 상태가 화면에 찍혀 있다**: 「역할 매핑을 찾지 못해 가장 좁은 화면으로
         떨어졌습니다」. 캡처가 이 잠금의 증거를 겸한다
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # P-12 회색 다섯 — **판정 불가는 초록도 빨강도 아니다** [실측 2026-09-17]
+  #
+  #   2026-09-16 집계: 잼고 통과 4 · 잼고 실패 0 · **못 잼 5**
+  #   2026-09-17 집계: 잼고 통과 6 · 잼고 실패 1 · 못 잼 0 (**대기 2**)
+  #
+  #   다섯을 하나씩 열어 보니 **성격이 셋으로 갈렸다:**
+  #     ① 진짜 빚 2 — 자격증명·도구가 없어 못 쟀다 (route-alive · secrets). 갚았다.
+  #     ② 잘못 칠한 색 1 — 쟀고 알고 있는 빚을 SKIP 으로 냈다 (bypass). 래칫으로 옮겼다.
+  #     ③ 빚이 아닌 것 2 — 볼 대상이 0건이었다 (model-inheritance · ui-library). **대기**다.
+  #   ★ 「회색 5」라는 수는 **다섯 자리가 안 지켜진다**고 읽힌다. 실제로는 셋이었다.
+  # ═════════════════════════════════════════════════════════════════════════
+
+  - id: GATE_ROUTE_ALIVE_CREDENTIAL
+    title: route-alive 가 자격증명이 없어 아무것도 못 재고 있었다 — **해제됨**
+    unlock_type: DEV
+    unlock_owner: Code
+    blocks: [P-12①]
+    since: "2026-09-14"
+    blocked_now: false
+    verified_at: "2026-09-17"
+    verified_by: |
+      [실측] 같은 게이트를 두 번 돌려 갈라지는 것을 확인했다:
+        자격증명 있이  → exit 1 (죽은 라우트 2건을 잡는다)
+        자격증명 없이  → exit 2 (판정 불가)
+      증거: docs/agent/evidence/D-386/route_alive.json — 26건 · 200 24 · 500 2.
+    why: |
+      값이 저장소에 있으면 안 되고(D-204), 없으면 게이트가 못 잰다. 그 사이에서
+      이 자리는 **영원히 회색**이었다.
+      ★ 그리고 풀고 나서 더 나쁜 것이 나왔다: 자격증명을 넣자 게이트가 **exit 0** 을 냈는데,
+        26건 중 24건이 401 이었다. `/api/token/pair` 가 내주는 JWT 를 dj-core 가
+        `user.token` 이 없다고 거절했고(core/auth.py:38 "Token expired"),
+        판정 규칙이 401 을 「문지기가 섰다(살아 있다)」로 읽었다.
+        **토큰을 받았다는 사실이 토큰이 먹힌다는 증거가 아니었다.**
+        그 401 밑에 `/api/media-data(/)` **500 두 자리**가 덮여 있었다.
+    unlock_step: |
+      ① 값은 로컬 `.env.gates`(gitignored)에 산다. 저장소엔 이름만 —
+         docs/agent/ENV_EXAMPLE_게이트자격증명.txt (D-204)
+      ② 서버가 호스트에서 안 보이면(gx-shell 이 8000 을 게시하지 않는다)
+         `GX_ROUTE_CONTAINER` 로 컨테이너 안에서 같은 코드를 돌린다 — 두 벌을 만들지 않는다
+      ③ 로그인 뒤 **익명으로 한 번 더 때려** 토큰이 무엇을 바꿨는지 센다.
+         0건이면 판정 불가다 — 못 들어간 채로 본 401 을 초록으로 적지 않는다
+    state_in_code: |
+      scripts/verify_route_alive.py — LOGIN_PATHS · _extract_token(조용한 성공 거절) ·
+      token_changed_anything(익명 대조) · load_local_env · delegate_to_container ·
+      BIRTH_SAMPLE_TOKEN_DEAF (출생 표본 ② 26건 중 24건 401)
+
+  - id: GATE_SECRET_SCANNER_ABSENT
+    title: 시크릿 스캐너가 설치되어 있지 않아 못 재고 있었다 — **해제됨**
+    unlock_type: DEV
+    unlock_owner: Code
+    blocks: [P-12②]
+    since: "2026-08-13"
+    blocked_now: false
+    verified_at: "2026-09-17"
+    verified_by: |
+      [실측] gitleaks 8.21.2 를 판·해시 고정으로 설치하고(sha256 대조 일치),
+      게이트가 SKIP → PASS 로 갈렸다. 자기시험 양성 1(심은 키 32자를 잡는다) ·
+      음성 2(플레이스홀더를 안 잡는다 · 큰 잠금 파일의 integrity 해시를 안 잡는다).
+      분류기 양성 대조: 저장소가 나르는 자리에 심으니 exit 1, 치우니 exit 0.
+    why: |
+      ★ 깔고 처음 돌린 날 나온 수가 스캔 면에 따라 **19건 대 1건**이었다.
+        파일 면(--no-git)은 빌드 산출물과 로컬 `.env.stg` 까지 세고,
+        이력 면은 커밋된 것만 센다. 물어야 할 것은 **「저장소가 무엇을 나르는가」**다.
+      실제 발견 1건: backend/stream_monitors/example_frontend.html:813 에
+        Django CSRF 토큰 32자가 하드코딩. 게다가 그 값이 차 있어서 바로 아래
+        `if (!csrfToken)` 대체 경로 세 갈래가 **한 번도 안 돌고 있었다** — 유출이면서
+        동시에 기능 결함이었다. 값을 비워 두 가지를 함께 고쳤다.
+      ★ 측정기 결함 하나도 함께 나왔다: `regexTarget="line"` 허용목록이
+        **~100KB 넘는 파일에서 조용히 꺼진다**(gitleaks 청크 경계). 같은 한 줄이
+        118바이트에서는 허용되고 202KB 에서는 오탐이었다. 자리(paths)로 한 번 더 잠갔고
+        그 잠금이 살아 있는지를 **4000줄 표본**으로 매번 확인한다.
+    unlock_step: |
+      python scripts/install_secret_scanner.py — 판·해시는 scripts/secret_scanner.lock.json
+      이 고정한다(D-387). 해시가 다르면 **설치를 거절한다.** 받은 물건은 tools/(gitignored)에
+      두고 저장소는 lock 만 든다.
+    state_in_code: |
+      scripts/install_secret_scanner.py — 판·해시 고정 설치 ·
+      scripts/secret_scanner.lock.json(판 8.21.2 + sha256) ·
+      scripts/verify_secret_scan.py(스캔 면 판정 + 자기시험) ·
+      .gitleaks.toml(자리 허용목록) · .gitleaksignore(래칫 D-311)
+
+  - id: BYPASS_FRAMEWORK_MODELS
+    title: 권한 우회 목록에 프레임워크 모델 7건이 남아 있다 — 회색이 아니라 **빚**이다
+    unlock_type: DEV
+    unlock_owner: Code (W0-2 작업2 — 뷰 레벨 필터)
+    blocks: [W0-2]
+    since: "2026-08-13"
+    blocked_now: true
+    verified_at: "2026-09-17"
+    verified_by: |
+      [실측] `scripts/../docs/agent/verify_gates.sh --gate bypass` 가 목록 7건을 읽고
+      기준선 7건과 대조한다: coreuser · group · multilanguagecontent · role ·
+      usergroup · userprofile · userprofilelink. 새로 는 것 0건.
+      래칫 대조 [실측]: 양성 1(하나 늘면 잡는다) · 음성 3(그대로 · 줄어듦 · 대소문자만 다름).
+    why: |
+      ★ 이 자리는 **못 잰 자리가 아니었다.** 게이트는 목록을 읽었고 몇 개가 남았는지
+        알고 있었는데 SKIP 을 냈고, SKIP 은 판정 불가로 집계된다(D-400).
+        **아는 것을 모른다고 적은 것**이고, 그래서 회색 다섯 중 하나로 셈해졌다.
+      아는 빚에는 회색이 아니라 래칫이 맞다(D-311). 「언젠가 없앤다」가
+      **「오늘 안 늘었다」**로 바뀐다 — 뒤엣것만 매일 확인할 수 있다.
+    unlock_step: |
+      ① 뷰 레벨 필터로 프레임워크 모델의 테넌트 경계를 세운다 (W0-2 작업2)
+      ② 하나씩 목록에서 빼고 기준선을 함께 내린다. 기준선이 0 이 되면 이 등재를 내린다
+      ③ ⚠ 기준선을 **올리는** 수정은 곧 결재 요청이다 — 조용히 늘리지 않는다
+    state_in_code: |
+      backend/common/base_model.py — performance_bypass_models ·
+      docs/agent/verify_gates.sh — gate_bypass 의 FW_BASELINE (래칫 기준선)
+
+  - id: GATE_TARGETS_ZERO_WAITING
+    title: model-inheritance · ui-library 는 **볼 대상이 0건**이었다 — 빚이 아니라 대기
+    unlock_type: DEV
+    unlock_owner: Code
+    blocks: []
+    since: "2026-09-16"
+    blocked_now: false
+    verified_at: "2026-09-17"
+    verified_by: |
+      [실측] 두 게이트의 [입력] 줄이 0건과 그 사유를 말한다 —
+      「베이스라인(HEAD) 대비 변경된 models.py 가 없다」 ·
+      「변경된 frontend/src 파일이 없다」. 게이트는 멀쩡히 서 있고 지나갈 것이 없었다.
+      심어 보면 즉시 판정한다(각 게이트의 양성 대조는 종전대로 살아 있다).
+    why: |
+      「못 잼」 한 칸에 성격이 다른 둘이 들어 있었다: **못 본 것**과 **볼 것이 없던 것.**
+      앞의 것은 갚아야 할 빚이고 뒤의 것은 아니다. 섞어 두면 「회색 5」가 되고,
+      그 수를 보는 사람은 다섯 자리가 안 지켜진다고 읽는다 — 실제로는 셋이었다.
+    unlock_step: |
+      해제할 것이 없다. 이 둘은 **models.py 나 frontend/src 를 건드리는 커밋에서
+      자동으로 잼으로 바뀐다.** 없애지는 않는다(P-12 ④) — 대상 0과 게이트 부재는 다르다.
+    state_in_code: |
+      docs/agent/verify_gates.sh — waiting() 헬퍼 · tally() 집계 줄
+      (「잼고 통과 N · 잼고 실패 N · 못 잼 N (대기 N)」)

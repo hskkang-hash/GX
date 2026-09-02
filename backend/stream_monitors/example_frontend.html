@@ -810,7 +810,13 @@
 
         try {
           // Try multiple sources for CSRF token
-          let csrfToken = "pX8n6oSuKeY2cwlGr3l73cGPLx31KiIO";
+          // ★ 실제 CSRF 토큰이 여기 박혀 있었다 [실측 2026-09-17 · gitleaks 이력 스캔].
+          //   두 가지가 함께 틀렸다:
+          //     ① 잡아 온 토큰 하나가 저장소에 들어갔다 — 예제 파일도 저장소다.
+          //     ② 그 값이 차 있으니 아래 `if (!csrfToken)` 세 갈래가 **한 번도 안 돈다.**
+          //        쿠키·전용 엔드포인트로 받아 오는 길을 스스로 막고 있었다.
+          //   비워 두면 그 세 갈래가 살아난다 — 지우는 것이 곧 고치는 것이다.
+          let csrfToken = "";
 
           // Method 2: Try to get from meta tag or cookies if admin failed
           if (!csrfToken) {

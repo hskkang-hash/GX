@@ -283,6 +283,17 @@ def run(*, want_json: str | None, want_list: str | None) -> int:
             rules[rule] += 1
         detail = " · ".join(f"{r} {n}" for r, n in sorted(rules.items()))
         print(f"[CLASSIFY]   {name:8} **{len(buckets[name]):3}건**   {detail}")
+        # ★ D-395 강제 — **수는 자기 한계를 달고 다녀야 한다.**
+        #   `method` 규칙은 「그 클래스를 밖에서 쓰는가」만 본다. 그래서 살아 있는 클래스
+        #   안의 죽은 메서드도 ㉰정상이 된다(`broadcast_detection_message` 가 그 예다).
+        #   즉 이 수는 **「불린다」가 아니라 「살아 있는 클래스 안에 있다」**는 뜻이다.
+        #   규칙은 고치지 않기로 했다 — 고치면 이 수가 한꺼번에 다른 칸으로 쏟아지고
+        #   그 이동을 검증할 수 없다. 검증 못 할 이동은 분류가 아니라 도장이다(D-388 ②).
+        #   할 수 있는 정직은 **수를 낼 때마다 한계를 함께 내는 것**이다.
+        #   ⚠ 이 두 줄을 지우면 그 수는 다시 「91건은 불린다」로 읽힌다 — 착시 ⑨의 재발이다.
+        if name == NORMAL and rules.get("method"):
+            print(f"[CLASSIFY]   {'':8} └ ⚠ 한계(D-395): 그중 **method {rules['method']}건**은 "
+                  f"「불린다」는 뜻이 **아니다** — 「살아 있는 클래스 안에 있다」는 뜻이다")
     print(f"[CLASSIFY] ★ 이 도구는 **한 건도 지우지 않는다** — 가르기만 한다 (D-388)")
 
     if want_list:
