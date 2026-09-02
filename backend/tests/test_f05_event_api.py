@@ -87,6 +87,12 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/api/dsm/settings/api-keys"),       # F-05 「발급」 (D-367)
     ("DELETE", "/api/dsm/settings/api-keys/{int:key_id}"),         # F-05 「폐기」
     ("POST", "/api/dsm/settings/api-keys/{int:key_id}/rotate"),    # F-05 「회전」
+    # ★ 2026-09-14 **하나가 늘었다** — 대응 진행 축(D-399). 손으로 이 줄을 더하는 일이
+    #   곧 「진입면을 넓힌다」는 선언이다. 이 시험이 그 선언을 강제했다.
+    #   문지기: @tenant_scoped(쓰기 IDOR) + JwtOrInboundKey.
+    #   ★ 이 라우트는 **거절을 4xx 로 낸다** — 409(그 전이는 없다) · 400(사유를 채워라) ·
+    #     403(팀장이 해야 한다). 셋을 한 코드로 묶지 않는다(D-290).
+    ("POST", "/api/dsm/events/{int:event_id}/response"),
     # ★ 2026-09-11 **하나가 늘었다** — 이벤트 상세 화면(D-371 ①)이 부를 자리.
     #   이 시험이 먼저 멈춰 세웠다. 게이트가 지시보다 위다(D-327) — 손으로 이 줄을
     #   더하는 일이 곧 「진입면을 넓힌다」는 선언이고, 그 선언을 여기 남긴다.
@@ -110,6 +116,11 @@ K1_CONSUMERS: dict[str, str] = {
         "커널 자신의 공개 면 — 소비자가 아니라 **소비되는 쪽**이다",
     "backend/kernels/k1_event/services.py":
         "커널 자신의 구현 — 공개 면이 여기를 다시 import 한다",
+    "backend/kernels/k1_event/response_flow.py":
+        "★ 커널 자신의 구현 — 대응 진행 축(D-399). 1차판은 이 파일이 `apps/dsm/` 에 "
+        "있었고 `AppStaysThinTest` 가 즉시 빨개졌다. `DetectionEvent` 의 수명주기는 "
+        "K1 의 것이고 review_event·close_event 가 이미 여기 산다 — 흩어 두면 같은 "
+        "표의 규칙이 두 층에 나뉜다. 소비자가 아니라 **소비되는 쪽**이다",
     "backend/apps/dsm/services.py":
         "★ **유일한 App 소비자.** F-05 가 말하는 그 하나의 진입면이 여기서 시작한다",
     "backend/kernels/k2_notify/services.py":

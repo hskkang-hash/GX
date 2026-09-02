@@ -15,7 +15,12 @@ from kernels.k1_event.exceptions import (
     InvalidEventInput,
     K1Error,
     NotImplementedYet,
+    ResponseTransitionError,
+    ResponseTransitionForbidden,
+    ResponseTransitionNeedsManager,
+    ResponseTransitionNeedsReason,
 )
+from kernels.k1_event.response_flow import advance_response, response_state
 from kernels.k1_event.schemas import EventView, RecordResult
 from kernels.k1_event.services import (
     DEDUP_WINDOW,
@@ -36,6 +41,10 @@ __all__ = [
     "review_event",
     "close_event",
     "subscribe",
+    # ★ D-399 대응 진행 축 — `status`(탐지 판정)와 **다른 축**이다. 섞지 않는다.
+    #   DA-04 §2 K1 표에 두 줄을 더했다(같은 커밋 규약).
+    "advance_response",
+    "response_state",
     # 나가는 값의 모양
     "EventView",
     "RecordResult",
@@ -43,6 +52,10 @@ __all__ = [
     "K1Error",
     "InvalidEventInput",
     "NotImplementedYet",
+    "ResponseTransitionError",
+    "ResponseTransitionForbidden",
+    "ResponseTransitionNeedsManager",
+    "ResponseTransitionNeedsReason",
     # 두 창. **같은 값으로 두지 말 것** — 합치면 F-04 와 U1 중 하나가 깨진다
     "DEDUP_WINDOW",
     "NOTIFY_WINDOW",

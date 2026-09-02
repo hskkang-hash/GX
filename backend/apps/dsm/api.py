@@ -184,7 +184,45 @@ class DsmAPI:
             "lat": e.lat, "lng": e.lng,
             "reviewed_by_id": e.reviewed_by_id, "reviewed_at": e.reviewed_at,
             "reject_reason": e.reject_reason,
+            #: ★ D-399 — 대응 진행은 `status`(탐지 판정)와 **다른 축**이라 따로 낸다.
+            #:   `allowed_next` 를 함께 내는 이유: 화면이 자기 전이표를 따로 들면
+            #:   서버가 거절하는 버튼을 그리게 된다. 표는 서버에 하나만 둔다.
+            **services.response_state(scope=_scope(request), event_id=e.event_id),
         }
+
+    # ── 대응 진행 축 (D-399) ─────────────────────────────────────────────
+    @route.post("/events/{int:event_id}/response", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="대응 진행 쓰기 — 남의 이벤트를 접수·종결할 수 없다 (쓰기 IDOR)")
+    def advance_response(self, request, event_id: int, to_state: str,
+                         reason: str = ""):
+        """대응 진행을 한 칸 옮긴다 (D-399). 발생 → 접수 확인 → 조치중 → 종결.
+
+        ★ **거절은 4xx 다.** `200 + {"success": false}` 를 만들지 않는다 —
+          이 App 이 처음부터 금지한 모양이고(W0-18), 착시 ⑧의 자리다.
+
+        셋을 **다른 상태 코드로** 가른다. 부르는 쪽이 할 일이 다르기 때문이다:
+          409  그 전이 자체가 없다 — 다시 보내도 같다
+          400  되돌림인데 사유가 비었다 — 채워 다시 보내면 된다
+          403  되돌림인데 관제팀장이 아니다 — 이 사람은 못 한다
+        하나로 묶어 400 만 내면 화면이 **무엇을 고쳐 다시 보낼지**를 모른다 (D-290).
+        """
+        #: ★ 커널 예외를 여기서 HTTP 로 번역한다. 커널은 HTTP 를 모른다 —
+        #:   상태코드를 커널에 적으면 다음 소비자(배치·gRPC)가 그 값을 못 쓴다.
+        #:   ⚠ 이름을 **`services` 를 거쳐** 받는다. 이 모듈이 K1 을 직접 부르면
+        #:     `test_f05_event_api` 가 멈춘다 — 「K1 의 App 소비자는 하나뿐」이
+        #:     F-05 「진입면 하나」의 실제 집행이고, 그 하나는 `services` 다.
+        try:
+            return services.advance_response(
+                scope=_scope(request), event_id=event_id,
+                to_state=to_state, reason=reason)
+        except Http404:
+            raise HttpError(404, "그런 이벤트가 없습니다.")
+        except services.ResponseTransitionNeedsManager as exc:
+            raise HttpError(403, str(exc))
+        except services.ResponseTransitionNeedsReason as exc:
+            raise HttpError(400, str(exc))
+        except services.ResponseTransitionForbidden as exc:
+            raise HttpError(409, str(exc))
 
     # ── F-10 알림 발송 ───────────────────────────────────────────────────
     @route.post("/events/{int:event_id}/notify", auth=JwtOrInboundKey())

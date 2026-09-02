@@ -190,6 +190,28 @@ class DetectionEvent(BaseModelWithGroup):
         REJECTED = "rejected", "기각"
         CLOSED = "closed", "종료"
 
+    #: ★ D-399 — **대응 진행 축.** `status` 와 **다른 축이다**. 섞지 않는다.
+    #:
+    #: 왜 세 번째 칸인가. 지시서는 「이벤트를 4값으로 바꾸라」고 했고 실측하니
+    #: `status` 는 **이미 4값**이었다. 그런데 두 4값은 **묻는 것이 다르다**:
+    #:
+    #:     status         「이 탐지가 진짜인가」   신규 → 확인/기각 → 종료
+    #:     response_state 「사람이 어디까지 했나」 발생 → 확인 → 조치중 → 종결
+    #:
+    #: 지시서의 값을 `status` 에 밀어 넣으면 **판정과 대응이 한 칸에 섞인다.**
+    #: 그것은 D-293 이 `status` 와 `verdict` 를 가른 것과 **같은 실수**다 —
+    #: 그때 섞여 있던 탓에 종료가 쌓일수록 오탐률이 저절로 좋아졌다.
+    #: 한 칸에 두 뜻을 넣으면 마지막에 쓴 사람이 앞사람의 뜻을 덮는다.
+    #:
+    #: ⚠ 이 칸은 **who·when·reason 을 들지 않는다.** 전이 기록은 `logger.AuditLogs` 에
+    #:   `common/audit_writer.py` 로 남긴다 — 새 표를 만들지 않는다(D-333).
+    #:   현재 값만 여기 있고, **어떻게 왔는지는 감사가 안다.**
+    class ResponseState(models.TextChoices):
+        OCCURRED = "occurred", "발생"
+        ACKNOWLEDGED = "acknowledged", "접수 확인"
+        IN_PROGRESS = "in_progress", "조치중"
+        CLOSED = "closed", "종결"
+
     stream_monitor = models.ForeignKey(
         StreamMonitor, on_delete=models.CASCADE, related_name="detection_events"
     )
@@ -220,6 +242,13 @@ class DetectionEvent(BaseModelWithGroup):
 
     status = models.CharField(
         max_length=16, choices=Status.choices, default=Status.NEW, db_index=True
+    )
+    #: ★ D-399 대응 진행 축. 전이 규칙과 감사는 `apps/dsm/response_flow.py` 한 곳에 있다 —
+    #:   이 칸을 직접 대입하는 코드를 만들지 마라. 규칙이 두 벌이 되면 반드시 어긋난다(D-212).
+    response_state = models.CharField(
+        max_length=16, choices=ResponseState.choices,
+        default=ResponseState.OCCURRED, db_index=True,
+        help_text="대응 진행(발생→접수확인→조치중→종결). status(탐지 판정)와 다른 축이다 (D-399)",
     )
     #: ★ 사람의 판정 그 자체 — **종료되어도 지워지지 않는다** (D-293).
     #:

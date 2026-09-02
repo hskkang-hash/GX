@@ -63,6 +63,22 @@
 | `review_event(id, verdict, reason)` | confirmed / rejected | Event | K6 오탐 통계의 입력 |
 | `close_event(id)` | | Event | F-11 보고서 트리거 지점 |
 | `subscribe(webhook)` | URL · 필터 · 서명키 참조 | Subscription | F-05 Webhook |
+| `advance_response(id, to_state, reason)` | 대응 진행 한 칸 | {from,to,allowed_next,audit_id} | ★ **D-399.** `status` 와 **다른 축**이다 — 아래 설명 |
+| `response_state(id)` | id | {response_state, allowed_next} | 화면이 자기 전이표를 들지 않게 서버가 낸다 |
+
+★ **왜 축이 둘인가** (D-399 · 2026-09-14 추가). 지시서가 「이벤트를 4값으로」를 냈고
+실측하니 `status` 는 **이미 4값**이었다. 두 4값은 **묻는 것이 다르다**:
+
+| 칸 | 묻는 것 | 값 |
+|---|---|---|
+| `status` | 이 탐지가 진짜인가 | 신규 → 확인/기각 → 종료 |
+| `response_state` | 사람이 어디까지 했나 | 발생 → 접수 확인 → 조치중 → 종결 |
+
+한 칸에 두 뜻을 넣으면 **마지막에 쓴 사람이 앞사람의 뜻을 덮는다.** 그것이 D-293 이
+`status` 와 `verdict` 를 가른 이유이고, 섞여 있던 동안 종료가 쌓일수록 오탐률이
+저절로 좋아졌다. 전이 규칙: **앞으로만 간다.** 되돌림은 「종결 → 조치중」 하나뿐이고,
+관제팀장(K3 MANAGER 이상)만, **사유 필수**. 전이 기록은 새 표가 아니라
+`logger.AuditLogs` 에 `common/audit_writer.py` 로 남긴다 (D-333).
 
 - **저장 계약**: `docs/contracts/detection-event.md` v1.0 (고정 2026-08-13). **이 문서가 계약을 바꾸지 않는다.**
 - 확장 필요: 침수 계열 · 통신두절 계열 열거값 추가 → 계약 문서 + W2-3 색 규칙 동시 갱신(DA-01 OPEN-05).

@@ -167,6 +167,46 @@ def event_detail(*, scope: TenantScope, event_id: int):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# 대응 진행 축 (D-399)
+# ═══════════════════════════════════════════════════════════════════════════
+#: ★ 커널 예외를 **여기서 다시 내보낸다.** `api.py` 가 직접 `kernels.k1_event` 를
+#:   쓰면 `test_f05_event_api` 가 멈춘다 — 「K1 의 App 소비자는 **하나뿐**」이 F-05
+#:   「진입면 하나」의 실제 집행이고, 그 하나가 이 파일이다.
+#:   ⚠ 클래스를 **다시 정의하지 않고 그대로 내보낸다.** 새로 정의하면 커널이 던진
+#:     것과 App 이 잡는 것이 다른 클래스가 되어 `except` 가 조용히 안 걸린다.
+from kernels.k1_event import (  # noqa: E402  (재수출 — 위 규약 때문에 여기 있다)
+    ResponseTransitionError,
+    ResponseTransitionForbidden,
+    ResponseTransitionNeedsManager,
+    ResponseTransitionNeedsReason,
+)
+
+__all_response_errors__ = (
+    "ResponseTransitionError", "ResponseTransitionForbidden",
+    "ResponseTransitionNeedsManager", "ResponseTransitionNeedsReason",
+)
+def advance_response(*, scope: TenantScope, event_id: int, to_state: str,
+                     reason: str = ""):
+    """대응 진행을 한 칸 옮긴다 (D-399).
+
+    ★ **App 은 규칙을 들지 않는다.** 전이표·되돌림 권한·감사는 전부 K1 에 있다 —
+      1차판은 이것을 App 에 두었고 `AppStaysThinTest` 가 즉시 빨개졌다. 옳은 지적이다:
+      `DetectionEvent` 의 수명주기는 K1 의 것이고 `review_event`·`close_event` 가
+      이미 거기 산다. 흩어 두면 같은 표의 규칙이 두 층에 나뉜다.
+    """
+    from kernels.k1_event import advance_response as _advance
+
+    return _advance(event_id, to_state=to_state, reason=reason, scope=scope)
+
+
+def response_state(*, scope: TenantScope, event_id: int):
+    """지금 어디까지 왔나 + 갈 수 있는 곳 (D-399). 상세 화면이 부른다."""
+    from kernels.k1_event import response_state as _state
+
+    return _state(event_id, scope=scope)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # F-10 알림 발송
 # ═══════════════════════════════════════════════════════════════════════════
 def notify_event(*, scope: TenantScope, event_id: int, channels=None):

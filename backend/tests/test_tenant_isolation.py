@@ -1765,6 +1765,20 @@ def _k1_close(test, scope, event_id):
     return close_event(event_id, scope=scope)
 
 
+def _k1_advance_response(test, scope, event_id):
+    """★ 2026-09-14 (D-399) — 대응 진행 쓰기 면이 생겼으므로 대장도 늘었다.
+
+    남의 이벤트를 **접수 확인 상태로 밀어 넣을 수 있는가**를 본다. 읽기만 막고
+    이 자리를 열어 두면, 남의 관제 화면에서 이벤트가 저절로 「누가 접수했다」로
+    바뀐다 — 심어진 행보다 나쁘다. 그 이벤트는 **원래 그 테넌트의 것**이라
+    아무 읽기 시험도 그것을 이상하다고 하지 않는다.
+    """
+    from kernels.k1_event import advance_response
+
+    return advance_response(event_id, to_state="acknowledged",
+                            reason="iso-write-probe", scope=scope)
+
+
 def _zone_save_with_foreign_camera(test, scope, stream):
     """★ 2026-09-10 (D-366) — 구역 쓰기 면이 생겼으므로 대장도 늘었다.
 
@@ -1799,6 +1813,12 @@ WRITE_PROBES: tuple[WriteProbe, ...] = (
         kernel_callable="kernels.k1_event.review_event",
         attempt=_k1_review,
         positive=_k1_review,
+    ),
+    WriteProbe(
+        label="K1.advance_response → 남의 이벤트를 접수 확인으로 밀기 (D-399)",
+        kernel_callable="kernels.k1_event.advance_response",
+        attempt=_k1_advance_response,
+        positive=_k1_advance_response,
     ),
     WriteProbe(
         label="K1.close_event → 남의 이벤트를 종료",

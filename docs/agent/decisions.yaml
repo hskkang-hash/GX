@@ -11,8 +11,8 @@
 #  - 에이전트는 이 파일을 수정하지 않는다. (제안만 하고 사람이 확정)
 # ============================================================================
 meta:
-  version: "4.0"
-  updated_at: "2026-09-14T18:00"
+  version: "4.1"
+  updated_at: "2026-09-14T22:00"
   status_enum: [decided, pending, superseded]
 
 decisions:
@@ -5402,3 +5402,87 @@ decisions:
     · docs/agent/evidence/D-346/ga_readiness.yaml :: UX-10 (잠김)
     · docs/agent/evidence/D-396/screens_16.md §3
   affects: [D-290, D-301, D-310, D-327, D-349, D-350, D-358, D-378, D-386, D-396]
+
+- id: D-398
+  author_tree_id: "지시서 D-393~400 (세종 2026-09-14) 대응표"
+  title: "지시서 제안 번호 D-393~400 을 저장소 정본 **D-398~405** 로 재배치한다"
+  status: decided
+  raised_by: "세종(기획) 2026-09-14 · D-380 상시 규약"
+  decision: |
+    ▣ 사실: 지시서가 도착했을 때 저장소는 이미 D-393~397 을 쓰고 있었다(같은 날 작업분).
+      D-380 이 정한 대로 **저장소가 정본**이고 지시서 번호는 제안이다. 덮지 않고 잇는다.
+    ▣ 대응표:
+        지시서 D-393 사용자 6종 PRD 등재  → 저장소 **D-401**
+        지시서 D-394 이벤트 상태 4값       → 저장소 **D-399**  ← 이번 턴 이행
+        지시서 D-395 모바일 3장 + 왕복      → 저장소 **D-400**
+        지시서 D-396 오탐 처리             → 저장소 **D-402**
+        지시서 D-397 평상 운영 3건          → 저장소 **D-403**
+        지시서 D-398 HWPX                 → 저장소 **D-404**
+        지시서 D-399 화면 순서 재조정        → 저장소 **D-405**
+        지시서 D-400 PRD v2.4 발행         → 저장소 **D-406**
+      ★ 이행 순서가 아니라 **번호만** 옮긴 것이다. 지시서의 실행 순서는 그대로다.
+    ▣ ★ 그리고 **정정 보고 셋** (D-379 — 「구현하라」 항목은 착수 전 확인이 의무다):
+      ① 지시서 실행 순서 1 「E2E 23종 · lock 고정 · 잠자는 314건 분류가 이번 턴에도 먼저」
+         → **셋 다 이미 있음.** 직전 커밋 `cc876ae`(D-385~392)에서 끝났고 보고했다
+      ② 지시서 D-399 「화면 3/16 → 8/16」 → **이미 16/16 이다** (커밋 `d4598ea` · D-396)
+      ③ 지시서 D-394 「현재 이벤트는 사실상 2값」 → **틀렸다. 이미 4값이다** (D-399 참조)
+  enforced_by: |
+    · docs/agent/decisions.yaml — 이 항목이 대응표의 정본이다
+    · docs/agent/evidence/D-399/response_axis.md
+  affects: [D-379, D-380, D-385, D-396]
+
+- id: D-399
+  author_tree_id: "지시서 D-394 (세종 2026-09-14)"
+  title: "이벤트 상태 4값 — **이미 4값이었고, 축이 달랐다.** 세 번째 칸을 세운다"
+  status: decided
+  raised_by: "세종(기획) 2026-09-14 · Code 이행 + 축 판정"
+  decision: |
+    ▣ 착수 전 실측 [D-379 의무 · 실측 2026-09-14]:
+        상태 「2값」        → **틀림. 이미 4값** (`stream_monitors/models.py:186`)
+        대응 진행 축        → **없음**
+        이벤트 감사 테이블   → **이미 있음** (`common/audit_writer.py` + `logger.AuditLogs`)
+        오탐 모델(D-402)   → **이미 있음** (`verdict`·`reviewed_*`·`reject_reason` · D-293)
+    ▣ ★★ 두 4값은 **다른 것을 묻는다:**
+        `status`         「이 탐지가 진짜인가」   신규 → 확인/기각 → 종료
+        `response_state` 「사람이 어디까지 했나」 발생 → 접수 확인 → 조치중 → 종결
+      지시서 값을 `status` 에 밀어 넣으면 **판정과 대응이 한 칸에 섞인다.**
+      그것은 D-293 이 `status` 와 `verdict` 를 가른 것과 **같은 실수**이고,
+      섞여 있던 동안 종료가 쌓일수록 오탐률이 **저절로 좋아졌다.**
+      **한 칸에 두 뜻을 넣으면 마지막에 쓴 사람이 앞사람의 뜻을 덮는다.**
+    ▣ 판정: **세 번째 칸 `response_state` 신설**(ⓐ안). 계약 문서를 건드리지 않고
+      마이그레이션이 **가산적**이다. ⚠ 이 선택은 세종의 자리였고 **답을 못 받은 채
+      진행했다** — 되돌리려면 `0025` 를 되감고 칸 하나를 지운다. `status` 는 무손상이다.
+    ▣ 전이: **앞으로만.** `occurred → closed` 직행 없음 — 접수한 사람이 없는 종결이
+      생기면 「아무도 안 봤는데 닫힌 이벤트」와 「보고 닫은 이벤트」가 같아진다(D-290).
+      되돌림은 **「종결 → 조치중」 하나뿐** · 관제팀장(K3 MANAGER 이상) · **사유 필수**.
+      넓게 열면 감사 이력이 이야기를 잃는다 — 오간 흔적만 남는다.
+    ▣ 감사: **새 표를 만들지 않았다**(D-333). who·when·from·to·reason 은 전부
+      `logger.AuditLogs` 에 있고, 칸에는 **현재 값만** 있다.
+    ▣ 거절은 **실제 4xx** 다: 409(그 전이는 없다) · 400(사유를 채워라) · 403(팀장이 해야 한다)
+      · 404(남의 것 — 존재 여부가 새는 것도 누출이다). **셋을 한 코드로 묶지 않는다** —
+      묶으면 화면이 「무엇을 고쳐 다시 보낼지」를 모른다(D-290). `200+{"success":false}` 없음.
+    ▣ ★★ **시험 일곱이 설계를 고쳤고 일곱 다 시험이 옳았다.** 1차판은 규칙을 App 에
+      두었다: `AppStaysThinTest`(App 이 `_base_manager` 를 만졌다) ·
+      `TenantIsolationWriteTest`(새 쓰기 면이 격리 탐침에 없다) ·
+      `EntrySurfaceIsOne/Locked`(라우트가 늘었고 K1 소비자가 등재 없이 늘었다) ·
+      `KernelPublicSurfaceTest`(칸이 DB 에 안 들어갔다).
+      전부 **설계 지적**이지 잔소리가 아니었다 — `DetectionEvent` 의 수명주기는 K1 의
+      것이고, 새 쓰기 면은 **남의 이벤트를 접수 확인으로 밀 수 있는지**를 재야 한다.
+      (심어진 행보다 나쁘다: 그 이벤트는 원래 그 테넌트 것이라 **어떤 읽기 시험도
+       이상하다고 하지 않는다**)
+    ▣ 이관 [실측]: 개발 DB 는 이벤트 **0행**이라 마이그레이션을 돌려도 「0행」이다 —
+      **0건은 검증이 아니다**(D-301). 네 상태를 심어 이관 함수를 직접 돌려 봤다.
+      매핑은 **[판정]이다**: new→occurred · confirmed→**acknowledged** · rejected→closed ·
+      closed→closed. `confirmed` 를 `in_progress` 로 올리지 않은 이유 — 판정은 「봤다」이지
+      「조치했다」가 아니고, **안 한 일을 했다고 적지 않는다.**
+    ▣ 파괴적 연산 **0건** — dry-run 결과가 `AddField` 하나뿐이었다 (D-209).
+  enforced_by: |
+    · backend/kernels/k1_event/response_flow.py — 전이표·되돌림 권한·감사가 있는 한 자리
+    · backend/tests/test_response_flow.py (11건) — 특히 `AxesStayApartTest`:
+      대응을 옮겨도 `status`·`verdict` 가 그대로인지 본다 (D-293 재발 방지)
+    · backend/tests/test_tenant_isolation.py :: WRITE_PROBES(advance_response)
+    · backend/tests/test_f05_event_api.py :: EVENT_ENTRY_SURFACE · K1_CONSUMERS
+    · backend/tests/test_k1_event_kernel.py :: KernelPublicSurfaceTest.SURFACE
+    · docs/design/DA-04_공유커널_API스펙_v1.0.md §K1 (같은 커밋에서 함께 고쳤다)
+    · docs/agent/evidence/D-399/response_axis.md
+  affects: [D-209, D-212, D-278, D-285, D-290, D-293, D-301, D-333, D-379, D-380, D-398]

@@ -581,8 +581,11 @@ class KernelPublicSurfaceTest(TestCase):
     """
 
     #: DA-04 §2 K1 의 "공개 면" 열 그대로.
+    #: ★ 2026-09-14 — 둘이 늘었다 (D-399 대응 진행 축). DA-04 §2 K1 표와 `__init__` 과
+    #:   이 줄을 **같은 커밋에서** 함께 고쳤다. 갈리면 어느 쪽이 계약인지 모른다.
     SURFACE = ["record_detection", "query_events", "get_event",
-               "review_event", "close_event", "subscribe"]
+               "review_event", "close_event", "subscribe",
+               "advance_response", "response_state"]
 
     def test_public_surface_matches_da04(self) -> None:
         from kernels import k1_event
