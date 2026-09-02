@@ -865,3 +865,80 @@ blockers:
       ③ ⚠ 어느 쪽이든 화면이 `success:false` 를 안 듣는 문제는 그대로다
          (MEDIA_LIST_SHOWS_EMPTY_WHEN_STORAGE_DOWN · rj-core 인수 화면).
     state_in_code: backend/stream_monitors/utils/minio_client.py — self.available 은 __init__ 에서만 세워진다
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # P-15 인증 경로 — 재다가 **선언된 쓰기 라우트 넷이 도달 불가**임이 나왔다
+  # ═════════════════════════════════════════════════════════════════════════
+
+  - id: DSM_SETTINGS_WRITE_ROUTES_SHADOWED
+    title: F-05·F-12 쓰기 라우트 **넷이 HTTP 로 도달 불가**다 (405) — 단위 시험은 전부 초록
+    unlock_type: DEV
+    unlock_owner: Code (다만 셋 중 어느 처분인지는 세종 판정 · 경로 계약이 걸린다)
+    blocks: [F-05, F-12, U6 외부 연계]
+    since: "2026-09-18"
+    blocked_now: true
+    verified_at: "2026-09-18"
+    verified_by: |
+      [실측] 제품 토큰으로 직접 때렸다:
+          POST /api/dsm/settings/api-keys      405 (Allow: GET)   F-05 API Key 발급
+          POST /api/dsm/settings/thresholds    405 (Allow: GET)   F-12 임계값
+          POST /api/dsm/settings/zones         405 (Allow: GET)   F-12 구역
+          POST /api/dsm/settings/grade-rules   405 (Allow: GET)   F-12 등급규칙
+      두 단짜리 형제는 멀쩡하다 — DELETE /settings/api-keys/{id} **403** ·
+      POST /settings/api-keys/{id}/rotate **403** (문지기가 선 것이지 죽은 것이 아니다).
+      원인: 같은 컨트롤러의 `@route.get("/settings/{domain}")` 이 **먼저 선언되어**
+      `settings/<한 단>` 을 통째로 먹는다. Django 는 첫 일치에서 멈추고 그 뷰는 GET 만 안다.
+    why: |
+      ★ **왜 여태 안 보였나** — 두 눈의 사각이 정확히 겹쳤다.
+        · 단위 시험은 **서비스 함수를 직접 부른다.** `verify_contract_ac.py` 도 절마다
+          그 시험을 가리키므로 넷 다 초록이었다. D-386 이 이름 붙인 층이 여기다:
+          「단위 시험은 함수를 부르고, 브라우저는 라우트를 때린다」
+        · `route-alive` 는 **화면이 실제로 부른 GET** 만 때린다. 이 넷은 쓰기 면이고
+          화면이 아직 안 부른다.
+      ★ 계약 수에 대한 정직한 진술: 이 절들의 **로직은 구현되어 있고 시험도 있다.**
+        틀린 것은 「구현되었다」가 아니라 **「외부 App 이 쓸 수 있다」**는 함의다.
+        U6 는 HTTP 로만 들어오므로, U6 에게 이 넷은 없는 것과 같다.
+    unlock_step: |
+      셋 중 하나를 세종이 고른다 — **셋 다 경로 계약을 건드린다:**
+        ㉮ 선언 순서를 바꾼다     → GET /settings/thresholds 가 405 가 된다. **살아 있는 것을 깬다**
+        ㉯ 일반 조회를 옮긴다     → 예: GET /settings/view/{domain}. 읽는 쪽 계약이 바뀐다
+        ㉰ 쓰기 경로를 옮긴다     → 예: POST /settings/api-keys/issue. DA-04 스펙 대조 필요
+      고른 뒤: 넷을 다시 때려 405 가 0 이 되는 것을 [실측]하고 래칫 기준선을 0 으로 내린다.
+      ⚠ 그때까지 기준선 4건은 **늘지 않게** 잠겨 있다(D-311).
+    state_in_code: |
+      backend/apps/dsm/api.py — @route.get("/settings/{domain}") 이 362행,
+      막히는 POST 넷은 380·409·454·510행 (선언이 뒤라 도달하지 못한다) ·
+      scripts/verify_authn_paths.py :: SHADOWED_WRITE_ROUTES (래칫 기준선)
+
+  - id: TOKEN_PAIR_PARASITIC_SESSION
+    title: "`/api/token/pair` 는 죽은 문이 아니라 **남의 세션에 기생하는 문**이다"
+    unlock_type: DEV
+    unlock_owner: Code (막는 방식은 세종 판정 — 밖에서 차단이라 제품 영향이 있다)
+    blocks: [U6 연동 문서]
+    since: "2026-09-18"
+    blocked_now: true
+    verified_at: "2026-09-18"
+    verified_by: |
+      [실측] 같은 계정으로 두 갈래를 만들어 쟀다:
+          세션(`user.token`) **없을 때**  pair 토큰으로 /api/dsm/events → **401**
+          세션 **있을 때**              같은 문의 토큰으로            → **200**
+      즉 스스로 세션을 세우지 못할 뿐, 세션이 살아 있으면 그 토큰도 통한다.
+      ★ 이 대장의 첫 판은 「어디서도 401」이라 적었고 **판정기가 그것을 반박했다** —
+        한 갈래만 재면 어느 쪽이든 그럴듯하다.
+    why: |
+      위험의 모양이 「죽은 문」과 다르다. 세션이 살아 있는 동안에는 아이디·비밀번호를
+      아는 쪽이 이 문으로 **세션 관리 규약(동시 접속 1개)을 우회한 토큰을 더 찍어 낼 수
+      있다.** 로그아웃하면 `user.token` 이 지워져 그 토큰들도 함께 죽으므로 폭은 좁다.
+      지금 등급은 「즉시 위험」이 아니라 **「연동 담당자가 먼저 발견하면 안 되는 문」**이다 —
+      OpenAPI 에 보이고, 처음 붙이는 사람은 그 문을 먼저 고른다. 실제로 우리 도구가 그랬다.
+    internal_alternative_considered: |
+      해당 없음(DEV) — 다만 저장소 안에서 이 문을 쓰는 자리가 하나 남아 있다:
+      `tests/test_screens_browser.py::_force_logout`. 막기 전에 그것부터 옮긴다.
+    unlock_step: |
+      ① `_force_logout` 을 `/api/v1/auth/login` 경로로 옮긴다 (저장소 안 사용처 0건 만들기)
+      ② 그 다음에 바깥에서 차단한다 (D-335/D-348 — dj-core 는 안 고친다 · D-207)
+      ③ `tests/test_api_contract.py` 의 계약 시험은 **그대로 둔다.** 그 시험이 빨개지는 날은
+         이 문이 스스로 세션을 세우게 된 날이다
+    state_in_code: |
+      docs/agent/authn_paths.md — §2 처분과 두 갈래 실측 ·
+      scripts/verify_authn_paths.py 가 두 갈래를 매번 다시 잰다
