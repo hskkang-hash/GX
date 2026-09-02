@@ -16,7 +16,8 @@ D-347 은 「E2E 실행 중에 찍는다」고 정했다. 그런데 **그 문장
 
 보는 것 — 다섯
 --------------
-  ① 항목마다 메타 4칸이 **찼는가** (route · user_role · scenario · captured_at)
+  ① 항목마다 메타 5칸이 **찼는가** (route · user_role · scenario · captured_at ·
+     **data_source** — 시드인가 현장인가 · P-9)
   ② `file` 이 가리킨 PNG 가 **실재하는가** (없는 파일을 적으면 그것도 문서다)
   ③ 파일 자리가 규약대로인가 — `<scenario>/<role>/<route>.png`
   ④ `captured_at` 이 E2E 실행 로그의 그 단계 시각과 **±5분** 안인가
@@ -52,7 +53,11 @@ try:
 except (AttributeError, OSError):
     pass
 
-META_FIELDS = ("route", "user_role", "scenario", "captured_at")
+#: ★ [P-9 · 2026-09-16] **다섯째 칸을 더했다 — `data_source`.**
+#:   시드로 찍은 화면은 실제 화면이지만 **실제 사고는 아니다.** 그 둘이 구분되지
+#:   않으면 검수 자리에서 시드 화면이 현장 화면으로 읽힌다 — 착시가 아니라 거짓말이다
+#:   (D-284). 비어 있으면 이 게이트가 멈춘다: 출처 없는 화면은 싣지 않는다.
+META_FIELDS = ("route", "user_role", "scenario", "captured_at", "data_source")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -129,6 +134,7 @@ def self_test() -> int:
     """
     log = {"steps": {"E2E-1/8": "2026-09-08T11:20:00"}}
     good = {"route": "/dashboard", "user_role": "OPERATOR", "scenario": "E2E-1/8",
+            "data_source": "시드",
             "captured_at": "2026-09-08T11:22:00", "file": "E2E-1/OPERATOR/dashboard.png"}
     have = {"E2E-1/OPERATOR/dashboard.png"}.__contains__
 

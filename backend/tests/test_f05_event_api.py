@@ -123,6 +123,10 @@ K1_CONSUMERS: dict[str, str] = {
         "표의 규칙이 두 층에 나뉜다. 소비자가 아니라 **소비되는 쪽**이다",
     "backend/apps/dsm/services.py":
         "★ **유일한 App 소비자.** F-05 가 말하는 그 하나의 진입면이 여기서 시작한다",
+    "backend/stream_monitors/management/commands/seed_dsm_events.py":
+        "★ 검수용 시드 (P-9). **이 소비자가 K1 을 부르는 것이 요점이다** — 지시서가 정한 "
+        "「실제 이벤트」는 K1 생성 경로를 통과한 행이고, DB 직접 INSERT 는 모형이다. "
+        "HTTP 진입면이 아니라 운영자가 손으로 부르는 커맨드다",
     "backend/kernels/k2_notify/services.py":
         "커널 간 재사용 — 알림이 이벤트를 읽는다. HTTP 진입면이 아니다",
     "backend/kernels/k3_dashboard/services.py":

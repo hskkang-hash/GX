@@ -11,8 +11,8 @@
 #  - 에이전트는 이 파일을 수정하지 않는다. (제안만 하고 사람이 확정)
 # ============================================================================
 meta:
-  version: "4.1"
-  updated_at: "2026-09-14T22:00"
+  version: "4.2"
+  updated_at: "2026-09-16T20:00"
   status_enum: [decided, pending, superseded]
 
 decisions:
@@ -5486,3 +5486,86 @@ decisions:
     · docs/design/DA-04_공유커널_API스펙_v1.0.md §K1 (같은 커밋에서 함께 고쳤다)
     · docs/agent/evidence/D-399/response_axis.md
   affects: [D-209, D-212, D-278, D-285, D-290, D-293, D-301, D-333, D-379, D-380, D-398]
+
+- id: D-400
+  author_tree_id: "지시서 P-10 (세종 2026-09-16)"
+  title: "**판정 불가는 통과가 아니다** — 집계기가 SKIP 을 exit 0 으로 세고 있었다"
+  status: decided
+  raised_by: "세종(기획) 2026-09-16 P-10 · Code 실측"
+  decision: |
+    ▣ 세종의 물음(§1): 「직전 턴 route-alive 는 빨갰는데 이번 보고는 게이트 9종 전부
+      exit 0 이다. **왜 초록이 됐는지가 보고에 없다.**」
+    ▣ 답 — **(c) 의 변형** [실측 2026-09-16]:
+      · (a) 아니다 — 죽은 라우트 2건은 **처분되지 않았다.** 지금 자격증명을 주고 때리면
+        `verify_route_alive.py` 는 여전히 **exit 1 · 죽은 라우트 2건**이다
+      · (b) 아니다 — 시험을 한 줄도 고치지 않았다 (D-327)
+      · (c) 그렇다. 다만 **목록에서 빠진 것이 아니다** — route-alive 는 9종에 있었다.
+        빠진 것은 **판정**이다: 자격증명이 없으면 SKIP(판정 불가)이고,
+        **집계기가 그 SKIP 을 exit 0 으로 셌다.**
+      → 「게이트 9종 전부 exit 0」은 **빨간 것을 재지 않고 낸 초록**이었다.
+        09-14 회신 본문에는 적었으나 **커밋 메시지에는 안 적었다** — 세종이 읽는 것은 커밋이다.
+    ▣ ★★ 그리고 route-alive 하나가 아니었다 [실측]: 다섯 자리가 SKIP 이었다 —
+      `secrets`(스캐너 미설치 · 다만 pre-commit 훅은 커밋마다 실제로 돈다) ·
+      `bypass`(프레임워크 모델 잔존) · `model-inheritance`·`ui-library`(볼 대상 0건) ·
+      `route-alive`. **아홉 중 넷만 실제로 쟀다.**
+    ▣ 고침: 종료 코드가 스스로 말한다 — **0 쟀고 통과 · 1 쟀고 실패 · 2 못 쟀다.**
+      이 저장소는 이미 `verify_migrations.py` 등에서 exit 2 = 판정 불가를 쓴다.
+      **집계기만 그것을 몰랐다.**
+      ★ 실패(1)로 하지 않은 이유: 서버 없는 환경에서 CI 를 빨갛게 만들면 **그 게이트는
+        결국 꺼진다**(D-353). 꺼진 게이트는 아무것도 안 지킨다.
+        「모른다」는 **자기 칸이 있어야 한다** — D-290 의 집계기 판이다.
+      ★ 판정식은 **한 벌**이다(`summary_rc`). 세 자리가 각자 계산하면 어긋나고,
+        어긋난 판정식 복사본 하나가 D-212 였다.
+    ▣ 세종 오류 **1건** [실측]: 지시서가 「죽은 라우트 2: /monitoring-dashboard ·
+      /intergrated-dashboard」라 적었다. **그 둘은 죽은 라우트가 아니다** — 화면 경로이고
+      열었더니 홈으로 튕긴 **도달 불가** 건이다(D-396 ③④). 죽은 라우트 2건은
+      `/api/media-data/` 와 `/api/media-data` — **같은 자리의 두 형태**다.
+  enforced_by: |
+    · docs/agent/verify_gates.sh :: summary_rc() — 판정식 한 벌
+    · docs/agent/verify_gates.sh --self-test — 세 갈래(판정불가 2 · 통과 0 · 실패+판정불가 1)
+      ★ 음성 갈래 실측: `summary_rc` 를 망가뜨리자 자기시험이 exit 1 로 빨개졌고,
+        되돌리자 초록이 됐다 (D-310 · D-350)
+    · docs/agent/evidence/D-400/undecidable_is_not_pass.md
+  affects: [D-212, D-290, D-301, D-310, D-327, D-350, D-353, D-386, D-396]
+
+- id: D-401
+  author_tree_id: "지시서 P-9 (세종 2026-09-16)"
+  title: "P-9 시드 — 그리고 **기존 씨앗이 모형이었다.** 화면 16장이 그 위에서 찍혔다"
+  status: decided
+  raised_by: "세종(기획) 2026-09-16 P-9 · Code 이행"
+  decision: |
+    ▣ 지시서가 「실제 이벤트」를 정의했다 [인용]: **K1 생성 경로를 통과한 행.
+      DB 직접 INSERT 나 화면 고정값은 모형이다 — 금지.**
+    ▣ ★★ 그 정의로 재니 **기존 씨앗이 걸렸다** [실측]:
+      `scripts/capture_screens.py::seed_events` 가 `_base_manager.create(...)` 로 행을
+      직접 만들고 있었다. **화면 16장은 그 모형 위에서 찍혔다.**
+    ▣ 무엇을 숨겼나 — 구체적으로:
+      · `event_type` 이 `gxprobe-D384-screen` 이었다. **열거값이 아니다** — K1 의
+        `_validate` 를 안 지나므로 아무 문자열이나 들어가고, 화면·통계는 그것을 유형으로 읽는다
+      · 중복 억제(F-04)·주소 조회(FX-5)·클립 참조가 **한 번도 안 돈다**
+      · **모형 데이터는 파이프라인을 건너뛴 만큼 결함을 숨긴다.** 이것이 D-386(화면을
+        띄우는 것이 가장 강한 시험)을 정확히 그만큼 약하게 만든다 — 브라우저가 라우트를
+        때려도, 그 라우트가 읽는 행이 파이프라인을 안 지났으면 결함이 나타날 수 없다
+    ▣ 고침: `seed_dsm_events` 커맨드 신설(`record_detection` 만 부른다) ·
+      캡처 씨앗을 실제 경로로 · **정리 근거를 유형에서 씨앗 카메라로** (유형이 열거값이
+      되면서 옛 기준으로는 못 고른다 — 그대로 뒀으면 씨앗이 안 지워진 채 남았다)
+    ▣ 심은 것 [실측]: **20건** · 판정 12 · 대응 전이 36 ·
+      대응 진행 occurred 4/acknowledged 4/in_progress 4/closed 8 ·
+      탐지 판정 new 8/confirmed 8/rejected 4 · 유형 fire·flood·intrusion·person 각 5.
+      ★ **두 축을 모두 채운 이유**: 한 축만 채우면 화면에서 **두 축이 있다는 사실 자체가
+        안 보인다** — 「종결」이 대응 종결인지 판정 종료인지 모른 채 검수에 나간다.
+      ★ 스냅샷·구간은 **비어 있다**(MinIO 부재). 지시서대로 비어 있는 채로 찍었다.
+    ▣ 실측이 도구를 한 번 고쳤다(D-350): 1차판이 `DataError: varchar(16)` 로 죽었다 —
+      `address_source` 는 **자유 문자열이 아니라 열거값**(unset/manual)이고 설치 주소는
+      `install_address` 다. **이름이 비슷한 칸 둘을 섞었다** — 동음이의의 작은 판(D-337).
+    ▣ 데이터 출처를 화면마다 적는다: `verify_screens` 필수 메타 **4칸 → 5칸**(`data_source`).
+      늘리자마자 기존 16장이 **전부 빨개졌고**(출처 미표기), 실제 경로 씨앗으로 다시 찍었다.
+      ★ 시드로 찍은 화면은 **실제 화면이지만 실제 사고는 아니다.** 구분되지 않으면
+        검수에서 시드 화면이 현장 화면으로 읽힌다 — **착시가 아니라 거짓말이다**(D-284).
+  enforced_by: |
+    · backend/stream_monitors/management/commands/seed_dsm_events.py (--purge · --report)
+    · scripts/capture_screens.py :: seed_events(record_detection) · clean_events(카메라 기준)
+    · scripts/verify_screens.py :: META_FIELDS 5칸 (data_source 필수)
+    · backend/tests/test_f05_event_api.py :: K1_CONSUMERS(seed_dsm_events 등재)
+    · docs/agent/evidence/D-401/seed_is_real_path.md
+  affects: [D-284, D-290, D-301, D-330, D-337, D-347, D-350, D-386, D-396, D-399]

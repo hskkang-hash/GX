@@ -27,6 +27,16 @@ TICKET_ID=""
 pass()  { PASSED=$((PASSED+1));  printf '  %sPASS%s  %s\n' "$GRN" "$RST" "$1"; }
 fail()  { FAILED=$((FAILED+1));  printf '  %sFAIL%s  %s\n' "$RED" "$RST" "$1"; }
 skip()  { SKIPPED=$((SKIPPED+1)); printf '  %sSKIP%s  %s %s\n' "$YEL" "$RST" "$1" "${DIM}${2:-}${RST}"; }
+
+# ★ [D-400] 종료 코드 **판정식은 여기 하나뿐이다.** 세 자리(단일 게이트·티켓 전체·
+#   자기시험)가 각자 계산하면 반드시 어긋나고, 어긋난 판정식 복사본 하나가 D-212 였다.
+#       0 = 쟀고 통과   1 = 쟀고 실패   2 = **못 쟀다**(판정 불가)
+#   ★ 실패가 있으면 판정 불가가 함께 있어도 **1** 이다 — 실패가 「모른다」 뒤에 숨으면 안 된다.
+summary_rc() {
+  if [ "$FAILED" -ne 0 ]; then return 1; fi
+  if [ "$SKIPPED" -gt 0 ]; then return 2; fi
+  return 0
+}
 head_() { printf '\n%s── %s%s\n' "$DIM" "$1" "$RST"; }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -699,12 +709,51 @@ usage() {
 GATES_ONLY=0
 case "${1:-}" in
   ""|-h|--help) usage ;;
+  # ★ 출생 표본 (D-310 · D-400) — **이 도구가 틀렸던 그 사례**를 시험으로 박는다.
+  #   2026-09-14 보고의 「게이트 9종 전부 exit 0」은 다섯 자리가 **아무것도 재지 않은 채**
+  #   낸 초록이었다. 집계기가 SKIP(판정 불가)을 0 으로 셌기 때문이다.
+  #   합성 예제만 보는 자기시험은 자기가 태어난 이유를 못 본다 — 그래서 실제 갈래 셋을 본다.
+  --self-test)
+    st_fail=0
+    # ① 판정 불가 하나 → **2** 여야 한다 (이 도구가 틀렸던 바로 그 자리)
+    PASSED=0; FAILED=0; SKIPPED=0
+    skip "자기시험 — 판정 불가 표본" "(출생 표본: route-alive 가 자격증명 없이 0 을 냈다)" >/dev/null
+    summary_rc; st_rc=$?
+    [ $st_rc -eq 2 ] || { echo "  자기시험 실패 ① 판정 불가가 $st_rc — 2 여야 한다"; st_fail=1; }
+    # ② 전부 통과 → 0. 「판정 불가를 2 로」가 **모든 것을 2 로** 만들면 안 된다
+    PASSED=0; FAILED=0; SKIPPED=0
+    pass "자기시험 — 통과 표본" >/dev/null
+    summary_rc; st_rc=$?
+    [ $st_rc -eq 0 ] || { echo "  자기시험 실패 ② 통과가 $st_rc — 0 이어야 한다"; st_fail=1; }
+    # ③ 실패가 있으면 판정 불가가 함께 있어도 **1**. 실패가 「모른다」 뒤에 숨으면 안 된다
+    PASSED=0; FAILED=0; SKIPPED=0
+    fail "자기시험 — 실패 표본" >/dev/null; skip "자기시험 — 함께 있는 판정 불가" "" >/dev/null
+    summary_rc; st_rc=$?
+    [ $st_rc -eq 1 ] || { echo "  자기시험 실패 ③ 실패+판정불가가 $st_rc — 1 이어야 한다"; st_fail=1; }
+    if [ $st_fail -ne 0 ]; then
+      echo "${RED}[GATES] 자기시험 실패 — 판정기를 먼저 의심한다 (D-350)${RST}"; exit 1
+    fi
+    echo "[GATES] 자기시험 통과 — 종료 코드 세 갈래 (0 쟀고 통과 · 1 쟀고 실패 · 2 못 잼)"
+    exit 0 ;;
+
   --list) printf '%s\n' "${ALL_GATES[@]}"; exit 0 ;;
   --gate)
     [ $# -ge 2 ] || usage
     run_gate "$2"; rc=$?
-    printf '\n%s통과 %d · 실패 %d · 건너뜀 %d%s\n' "$DIM" "$PASSED" "$FAILED" "$SKIPPED" "$RST"
-    exit $rc ;;
+    printf '\n%s통과 %d · 실패 %d · 판정 불가 %d%s\n' "$DIM" "$PASSED" "$FAILED" "$SKIPPED" "$RST"
+    # ★ [D-400 · 2026-09-16] **판정 불가는 통과가 아니다** — 그런데 종료 코드가 0 이었다.
+    #   그 탓에 「게이트 9종 전부 exit 0」이라는 보고가 나갔고, 그때 route-alive 는
+    #   자격증명이 없어 **아무것도 재지 않은 채** 0 을 내고 있었다.
+    #   죽은 라우트 2건은 그대로였다 — **빨간 것을 재지 않고 낸 초록**이다 (P-10).
+    #   이 저장소의 규약을 그대로 쓴다: `verify_migrations.py` 등이 이미 **exit 2 = 판정
+    #   불가**를 쓴다. 집계기만 그것을 몰랐다. 이제 종료 코드가 스스로 말한다:
+    #       0 = 쟀고 통과   1 = 쟀고 실패   2 = **못 쟀다**
+    #   ★ 1(실패)로 하지 않는 이유: 서버 없는 환경에서 CI 를 빨갛게 만들면
+    #     그 게이트는 결국 꺼진다(D-353). 꺼진 게이트는 아무것도 안 지킨다.
+    #     「모른다」는 **자기 칸이 있어야 한다** — D-290 의 집계기 판이다.
+    summary_rc; src=$?
+    [ $rc -ne 0 ] && exit $rc
+    exit $src ;;
   -*) usage ;;
   *) TICKET_ID="$1"; [ "${2:-}" = "--gates-only" ] && GATES_ONLY=1 ;;
 esac
@@ -766,11 +815,21 @@ printf '  %s%s%s\n' "$YEL" "$DOD" "$RST"
 printf '  %s→ 실제로 재현하고 tickets.yaml 의 evidence 에 증거 경로를 남길 것%s\n' "$DIM" "$RST"
 
 printf '\n════════════════════════════════════════════════════════════════\n'
-if [ $FAILED -eq 0 ]; then
-  printf '  %sGATES PASS%s  통과 %d · 건너뜀 %d — DoD 재현 후 done 처리\n' "$GRN" "$RST" "$PASSED" "$SKIPPED"
-  exit 0
-else
-  printf '  %sFAIL%s  통과 %d · 실패 %d · 건너뜀 %d\n' "$RED" "$RST" "$PASSED" "$FAILED" "$SKIPPED"
-  printf '  %s3회 연속 실패 시 STOP(verify-failed)%s\n' "$DIM" "$RST"
-  exit 1
-fi
+summary_rc
+case $? in
+  2)
+    # ★ [D-400] 못 잰 것이 있으면 **GATES PASS 라고 말하지 않는다** (P-10 · D-301).
+    printf '  %sGATES UNDECIDABLE%s  통과 %d · **판정 불가 %d** — 못 잰 것을 통과로 세지 않는다
+' "$YEL" "$RST" "$PASSED" "$SKIPPED"
+    exit 2 ;;
+  0)
+    printf '  %sGATES PASS%s  통과 %d · 판정 불가 %d — DoD 재현 후 done 처리
+' "$GRN" "$RST" "$PASSED" "$SKIPPED"
+    exit 0 ;;
+  *)
+    printf '  %sFAIL%s  통과 %d · 실패 %d · 판정 불가 %d
+' "$RED" "$RST" "$PASSED" "$FAILED" "$SKIPPED"
+    printf '  %s3회 연속 실패 시 STOP(verify-failed)%s
+' "$DIM" "$RST"
+    exit 1 ;;
+esac

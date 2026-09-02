@@ -1,6 +1,6 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
-  "captured_at": "2026-09-02T08:27:11",
+  "captured_at": "2026-09-02T10:07:20",
   "screens": {
     "/dsm/dashboard": [
       {
@@ -71,7 +71,7 @@
         "status": 200
       }
     ],
-    "/dsm/events/4682": [
+    "/dsm/events/4704": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -84,12 +84,12 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=4682",
+        "path": "/api/dsm/deliveries?event_id=4704",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/4682",
+        "path": "/api/dsm/events/4704",
         "status": 200
       },
       {
@@ -580,6 +580,7 @@
       }
     ]
   },
+  "data_source": "시드 (K1 record_detection 실제 경로 · 실제 사고 아님)",
   "blank_screens": [
     {
       "route": "/users",

@@ -48,7 +48,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
@@ -229,15 +229,34 @@ def seed_events(username: str, n: int = 2) -> int:
         monitor.group_id = gid
         monitor.save(update_fields=["group"])
     now = datetime.now(timezone.utc)
+    # ★★ [실측 2026-09-16 · P-9] 1차판은 여기서 `DE._base_manager.create(...)` 로
+    #   행을 **직접 만들었다.** 지시서가 정한 「실제 이벤트」의 정의로는 그것이 **모형**이다:
+    #       실제 = K1 이벤트 생성 경로를 통과해 생긴 행. 직접 INSERT 는 모형이다
+    #   화면 16장은 그 모형 위에서 찍혔다. 무엇을 숨겼나 — 구체적으로:
+    #     · `event_type` 이 `gxprobe-D384-screen` 이었다. **열거값이 아니다.**
+    #       K1 의 `_validate` 를 안 지나므로 아무 문자열이나 들어가고, 화면과 통계는
+    #       그것을 유형으로 읽는다
+    #     · 중복 억제(F-04)·주소 조회(FX-5)·클립 참조가 **한 번도 안 돈다.**
+    #       그 경로의 결함은 씨앗으로 찍은 화면에서 절대 드러나지 않는다
+    #   **모형 데이터는 파이프라인을 건너뛴 만큼 결함을 숨긴다** — 화면을 띄우는 것이
+    #   가장 강한 시험이라는 D-386 이 그만큼 약해진다. 그래서 실제 경로로 바꾼다.
+    from common.tenant_scope import TenantScope
+    from kernels.k1_event import record_detection
+
+    scope = TenantScope.system(reason="캡처 씨앗 — 탐지 파이프라인에는 요청자가 없다")
     first = None
     for i in range(n):
-        e = DE._base_manager.create(
-            stream_monitor=monitor, event_type=PROBE_TAG,
-            severity=("warning" if i else "critical"),
-            occurred_at=now, snapshot_path="", status="new", address_status="pending",
-            group_id=gid,
+        #: 시각을 벌린다 — 같은 (stream, type) 이 10초 안에 다시 오면 K1 이 접는다(F-04).
+        #: 접히면 「심은 수」와 「생긴 수」가 갈라지고, 그 차이를 모르면 수가 거짓이 된다.
+        result = record_detection(
+            scope=scope, stream_monitor_id=monitor.pk,
+            event_type=("fire" if i == 0 else "flood"),
+            severity=("critical" if i == 0 else "warning"),
+            occurred_at=now - timedelta(minutes=2 * (i + 1)),
+            snapshot_path="",          # MinIO 부재 — 비어 있는 채로 둔다 (P-9)
         )
-        first = first or e.id
+        first = first or result.event_id
+    _ = DE  # 위 주석의 대상이었던 이름 — 지우지 않고 남긴다
     return first
 
 
@@ -245,7 +264,11 @@ def clean_events() -> dict:
     apps = _django()
     SM = apps.get_model("stream_monitors", "StreamMonitor")
     DE = apps.get_model("stream_monitors", "DetectionEvent")
-    ev = DE._base_manager.filter(event_type=PROBE_TAG)
+    #: ★ [실측 2026-09-16] 씨앗이 실제 경로로 바뀌면서 `event_type` 은 **열거값**이
+    #:   됐다(fire·flood). 그러니 유형으로는 더 이상 못 고른다 — 골랐다면 씨앗이
+    #:   **안 지워진 채 남고**, 다음 실행의 화면에 그 행이 섞인다.
+    #:   지우는 근거는 이제 **씨앗 카메라 하나**다. 표는 하나여야 한다.
+    ev = DE._base_manager.filter(stream_monitor__code__startswith=PROBE_TAG)
     n_ev = ev.count()
     ev.delete()
     mon = SM._base_manager.filter(code__startswith=PROBE_TAG)
@@ -428,6 +451,11 @@ def _rewrite_index(entries: list) -> None:
         "    scenario: {scenario}",
         '    captured_at: "{captured_at}"',
         "    file: {file}",
+        #: ★ P-9 — **화면마다 데이터 출처를 적는다.** 시드로 찍은 화면은 실제 화면이지만
+        #:   실제 사고는 아니다. 검수에서 고객이 그것을 구분할 수 있어야 하고,
+        #:   구분 못 하면 「시드 화면」이 「현장 화면」으로 읽힌다 — 그건 착시가 아니라
+        #:   거짓말이다(D-284). 실행체가 직접 쓴다 — 손으로 옮겨 적지 않는다.
+        "    data_source: 시드",
         "",
     ))
     body = "".join(row.format(**e) for e in entries)
@@ -490,6 +518,9 @@ def main() -> int:
         "captured_at": datetime.now().replace(microsecond=0).isoformat(),
         "screens": {k: [{"method": m, "path": p, "status": st}
                         for m, p, st in v] for k, v in got["api_calls"].items()},
+        #: ★ P-9 — **데이터 출처를 화면마다 말한다.** 시드로 찍은 화면은 실제 화면이지만
+        #:   **실제 사고는 아니다.** 고객이 검수에서 그것을 구분할 수 있어야 한다.
+        "data_source": "시드 (K1 record_detection 실제 경로 · 실제 사고 아님)",
         "blank_screens": KNOWN_BLANK,
         #: 못 찍은 것을 **왜 못 찍었는지로 갈라** 적는다 (D-396). 한 칸에 두면
         #: 「안 해 본 것」과 「해 봤더니 안 되는 것」이 같아지고, 둘을 합치면
