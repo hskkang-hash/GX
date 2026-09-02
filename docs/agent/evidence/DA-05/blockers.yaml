@@ -182,6 +182,51 @@ blockers:
       올리는 순간 test_extraction_integrity_contract_ac 가 의무가 된다.
     state_in_code: backend/stream_monitors/services/clips.py — CLIP_EXTRACTION_READY=False
 
+  # ★ D-397 — **화면 16장을 여는 중에 나왔다.** 그리고 둘을 가른다:
+  #   ① 이 환경에서 500 인 것 — 원인은 MinIO 부재다. 환경이다
+  #   ② 저장소가 죽었을 때 화면이 「자료 없음」으로 보이는 것 — **환경이 아니라 설계다**
+  #   ②는 운영에서도 난다. MinIO 가 잠깐만 죽어도 당직자는 「영상이 없다」고 읽는다.
+  - id: MEDIA_LIST_SHOWS_EMPTY_WHEN_STORAGE_DOWN
+    title: 저장소 미도달 시 미디어 목록이 오류 대신 **빈 목록**으로 보인다
+    unlock_type: DEV
+    unlock_owner: Code (화면 쪽은 rj-core 인수 화면이라 그쪽 판정이 필요하다)
+    blocks: [UX-09]
+    since: "2026-09-14"
+    blocked_now: true
+    verified_at: "2026-09-14"
+    verified_by: |
+      [실측] `scripts/capture_screens.py` 16장 실행 중 `/media-data` 화면이 부른
+      `GET /api/media-data/?page_size=25&current_page=1` 이 **500**.
+      토큰으로 직접 재현했고 응답 본문을 그대로 받았다. 화면은 그 500 을 받고도
+      「0 of 0」 을 그려 **자료가 없는 것처럼** 보였다 (본문에 오류 문구 0자).
+      `scripts/verify_route_alive.py` 가 같은 자리를 **죽은 라우트 2건**(경로 끝
+      빗금 있는 것과 없는 것)으로 잡고 exit 1 이다 — 게이트는 빨간 채로 둔다(D-327).
+    why: |
+      ★ 이번 턴에 **응답이 말하던 두 거짓말은 고쳤다** [실측]:
+        · `success: true` · `status: 500`  →  `success: false`
+          (dj-core `BaseResponse(success=True, …)` 가 기본값이다. 안 넘기면 조용히 참이 된다)
+        · 「Failed to retrieve **operational notice** list」 → 「Failed to retrieve media list」
+          (`MESSAGE_ENUM.GET_LIST_FAILED` 하나를 여러 앱이 나눠 쓰는데 영문이 한 앱 것이었다)
+      **그러나 화면은 그대로다.** 화면이 `success` 를 보지 않기 때문이고, 그 화면은
+      인수 자산이다. 즉 **서버는 이제 진실을 말하는데 화면이 안 듣는다.**
+      ★ 500 자체는 이 환경에 MinIO 가 없어서다(`minio.invalid`). 그것은 환경이다.
+        여기 등재하는 것은 **「저장소가 죽었을 때 사용자가 그것을 알 수 있는가」**이고,
+        지금 답은 **아니오**다 (D-378 — 결함 등급은 보이는 것으로 정한다).
+    internal_alternative_considered: |
+      같은 저장소에 이미 **저하 운전** 처리가 있다 —
+      `[DEGRADED] 외부 의존 실패 … 저하 운전으로 계속한다` (streaming.invalid 자리).
+      미디어 목록을 그 방식으로 바꾸면 200 + 빈 목록이 되는데, **그것은 지금 화면이
+      보이는 것과 똑같다.** 사용자에게는 아무것도 나아지지 않는다 — 그래서 안 했다.
+    why_not: |
+      고칠 자리는 서버가 아니라 **화면**이다. 그 화면(rj-core 계열 인수 자산)은
+      우리가 고치지 않는다. `/users` 빈 화면(RJCORE_BLANK_ON_NO_PERMISSION)과
+      **같은 갈래**다 — 서버는 옳게 말하는데 화면이 그 말을 버린다.
+    unlock_step: |
+      ① 화면이 `success:false` 를 받으면 안내를 띄우도록 인수 화면 쪽 판정을 받는다
+      ② 그때까지 게이트 `route-alive` 는 이 자리에서 **빨간 채로 둔다** —
+         초록으로 만드는 예외를 넣지 않는다. 넣는 순간 이 대장이 하는 일이 없어진다
+    state_in_code: backend/media_data/views/media_data_view.py — list_media 가 success=False 를 내리도록 고쳤다 (화면은 그대로다)
+
   - id: MIGRATE_ONE_LINER
     title: 빈 DB 에서 `manage.py migrate` 한 줄로 세울 수 없다
     unlock_type: DEV

@@ -92,6 +92,32 @@ ENTRY_DECORATORS = {
     "http_put", "http_patch", "http_delete", "database_sync_to_async",
 }
 
+#: ★ 출생 표본 (D-310 · D-393) — **데코레이터의 「점 뒤」가 배선인 갈래.**
+#   `ENTRY_DECORATORS` 는 **이름 집합**이라 `@receiver` 는 잡지만
+#   `@worker_process_init.connect` 는 못 잡는다. `_dec_names` 가 내는 이름은
+#   {"connect", "worker_process_init"} 이고 둘 다 위 집합에 없다.
+#   그래서 `backend/config/celery.py` 의 시그널 훅 셋이 ㉠「호출 없음」에 들었고,
+#   D-388 이 그 셋을 **㉮「켜야 할 것」**으로 냈다 — **이미 켜져 있는 것을** 그렇게 냈다.
+#   ★ gunicorn `server-hook` 오답(D-388 ③)과 **같은 모양**이다: 프레임워크가 부르는 자리를
+#     「아무도 안 부른다」로 읽는다. 그때는 파일 이름으로 메웠고, 여기서는 **배선 형태**로 잡는다.
+#   `@sig.connect` · `@sig.connect(sender=X)` 둘 다 django/celery 의 표준 시그널 배선이다.
+_SIGNAL_WIRING_ATTRS = {"connect", "connect_via"}
+
+
+def _wired_by_signal(fn: ast.AST) -> bool:
+    """`@<시그널>.connect` 로 **배선된** 함수인가.
+
+    이름이 아니라 **모양**을 본다 — 점 앞이 무엇이든 점 뒤가 `connect` 면 배선이다.
+    `ENTRY_DECORATORS` 에 `"connect"` 를 넣는 것으로도 오늘은 같은 결과가 나오지만,
+    그러면 `@connect` 라는 **이름의** 데코레이터까지 함께 빠진다. 모수에서 빼는 일은
+    좁게 하는 쪽이 옳다 — 넓게 빼면 진짜 잠든 것이 조용히 사라진다 (D-301).
+    """
+    for dec in getattr(fn, "decorator_list", []) or []:
+        node = dec.func if isinstance(dec, ast.Call) else dec
+        if isinstance(node, ast.Attribute) and node.attr in _SIGNAL_WIRING_ATTRS:
+            return True
+    return False
+
 #: ㉢ 「비었다」로 보는 값. 코드가 이 값으로 분기하면 **늘 같은 가지로 간다.**
 _EMPTY_LITERALS = ("", None, False)
 
@@ -162,6 +188,8 @@ def audit_uncalled(trees):
             if name.startswith("_") or name in FRAMEWORK_HOOKS:
                 continue
             if _dec_names(node) & ENTRY_DECORATORS:
+                continue
+            if _wired_by_signal(node):         # `@sig.connect` — 배선이다 (D-393)
                 continue
             defs[name].append(f"{_rel(path)}::{name}")
 
@@ -621,6 +649,17 @@ def self_test() -> int:
             "    if settings.BIRTH_ENV_SETTING:\n        return 5\n"
             "    if settings.BIRTH_ENV_FILLED:\n        return 6\n"
             "    return settings.SLEEPY_LIST\n", encoding="utf-8")
+        # ★ 출생 표본 ③ (D-393) — `@<시그널>.connect`. `backend/config/celery.py` 의
+        #   셋이 이 모양이었고 ㉠ 이 그것을 「아무도 안 부른다」로 셌다.
+        #   ★ `signal_not_wired` 를 **같은 파일에** 둔 이유: 배선된 것만 빠지고
+        #     **평범한 미호출 함수는 그대로 잡히는지**를 본다. 파일째 면제하면 안 된다.
+        (d / "m" / "signals.py").write_text(
+            "from celery.signals import worker_process_init, task_prerun\n"
+            "@worker_process_init.connect\n"
+            "def signal_wired_bare():\n    return 1\n"
+            "@task_prerun.connect(sender=None)\n"
+            "def signal_wired_called():\n    return 2\n"
+            "def signal_not_wired():\n    return 3\n", encoding="utf-8")
         (d / "m" / "tests").mkdir()
         (d / "m" / "tests" / "test_x.py").write_text(
             "from m.views import uncalled_helper\n"
@@ -649,6 +688,9 @@ def self_test() -> int:
         bad.append("㉢ 빈 설정으로 분기하는 자리를 못 잡았다")
     if "EMPTY_TABLE" not in dc:
         bad.append("㉢ settings 가 `config.*` 에서 끌어오는 **빈 표**를 못 잡았다")
+    if "signal_not_wired" not in an:
+        bad.append("★ 출생 표본 ③ 양성 — 배선 안 된 미호출 함수가 시그널 파일에 있다고 "
+                   "함께 빠졌다. **파일째 면제**는 모수를 조용히 줄인다 (D-301)")
     if "BIRTH_ENV_SETTING" not in dc:
         bad.append("★ 출생 표본 — `env(…, default=\"\")` 를 접지 못해 ㉢ 이 다시 0건이다 "
                    "(1차판이 정확히 이랬다 · D-350)")
@@ -665,13 +707,18 @@ def self_test() -> int:
         bad.append("㉢ 값이 든 표를 비었다고 했다 (거짓 양성)")
     if "BIRTH_ENV_FILLED" in dc:
         bad.append("★ 출생 표본 음성 — 기본값이 든 `env(…)` 를 비었다고 했다 (거짓 양성)")
+    if "signal_wired_bare" in an:
+        bad.append("★ 출생 표본 ③ 음성 — `@sig.connect` 로 **배선된** 함수를 잠들었다고 했다. "
+                   "D-388 이 celery 훅 셋을 ㉮ 로 낸 자리다 (D-350 · D-393)")
+    if "signal_wired_called" in an:
+        bad.append("★ 출생 표본 ③ 음성 — `@sig.connect(sender=…)` 호출 형태를 못 알아봤다")
 
     if bad:
         print("[DORMANT] 자기시험 실패 — **판정기를 먼저 의심한다** (D-350)")
         for b in bad:
             print(f"  · {b}")
         return 1
-    print("[DORMANT] 자기시험 통과 — 양성 6갈래 · 음성 6갈래 (출생 표본 포함)")
+    print("[DORMANT] 자기시험 통과 — 양성 7갈래 · 음성 8갈래 (출생 표본 셋 포함)")
     return 0
 
 
@@ -781,9 +828,22 @@ def main() -> int:
     woke = sorted(baseline - set(labeled))
     if woke:
         # ★ **켠 것이 보여야 켜는 맛이 난다** (D-311). 실패가 아니고 로그다.
-        print(f"[DORMANT] ★ 기준선에서 빠진 {len(woke)}건 — **켜졌다.**")
-        for w in woke:
-            print(f"[DORMANT]   켬: {w}")
+        #
+        # ★★ 그러나 목록에서 빠지는 길은 **둘**이고, 둘은 전혀 다른 일이다 (D-393):
+        #     ① 켜졌다        — 모수에는 그대로 있는데 **운영이 이제 그것을 부른다.** 진척이다
+        #     ② 자고 있지 않았다 — **모수에서 빠졌다.** 판정기가 틀렸던 것이지 우리가 한 일이 없다
+        #   합쳐서 「켜졌다」로 적으면 **판정기 정정이 진척으로 둔갑한다.** D-385 가 금지한
+        #   그 모양이다 — 「켰다」는 「돌았다」의 증거가 있어야 하고, ②에는 그 증거가 없다.
+        #   ★ 이 갈래를 만든 자리: celery 시그널 훅 셋. 그것은 **처음부터 켜져 있었다.**
+        universe = {f"A {x}" for x in pa} | {f"B {x}" for x in pb} | {f"C {x}" for x in pc}
+        turned_on = [w for w in woke if w in universe]
+        never_asleep = [w for w in woke if w not in universe]
+        print(f"[DORMANT] ★ 기준선에서 빠진 {len(woke)}건 — "
+              f"**켜졌다 {len(turned_on)}건 · 자고 있지 않았다 {len(never_asleep)}건**")
+        for w in turned_on:
+            print(f"[DORMANT]   켬: {w}  (모수에 있고 운영이 부른다 — 진척)")
+        for w in never_asleep:
+            print(f"[DORMANT]   정정: {w}  (**모수에서 빠졌다** — 판정기가 틀렸던 것이다)")
         print("[DORMANT] `--freeze` 로 기준선을 줄인다")
     if fresh:
         print("[DORMANT] 위반 — **새로 만드는 것은 「켜진 상태로 태어나야 한다」** (D-377)")

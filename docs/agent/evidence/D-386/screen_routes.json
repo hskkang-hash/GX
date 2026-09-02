@@ -1,6 +1,6 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
-  "captured_at": "2026-08-30T15:35:47",
+  "captured_at": "2026-09-02T08:27:11",
   "screens": {
     "/dsm/dashboard": [
       {
@@ -71,7 +71,7 @@
         "status": 200
       }
     ],
-    "/dsm/events/4676": [
+    "/dsm/events/4682": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -84,12 +84,12 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=4676",
+        "path": "/api/dsm/deliveries?event_id=4682",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/4676",
+        "path": "/api/dsm/events/4682",
         "status": 200
       },
       {
@@ -272,12 +272,334 @@
         "path": "/api/v1/user/get-user-detail/105",
         "status": 200
       }
+    ],
+    "/surveillance-dashboard": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-01T17:00:00%2B00:00&end_date=2026-09-02T16:59:59%2B00:00&limit=100&page=1&page_size=5",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-08-29T17:00:00%2B00:00&end_date=2026-09-05T16:59:59%2B00:00",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-02",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/surveillance/surveillance-dashboard/drone-status-overview",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/surveillance/surveillance-dashboard/today-profiles-polygon",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/surveillance/surveillance-dashboard/weather-setting",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/survey-profile": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/media-data": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/media-data/?page_size=25&current_page=1",
+        "status": 500
+      },
+      {
+        "method": "GET",
+        "path": "/api/media-data?page_size=25&current_page=1",
+        "status": 301
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/stream-monitors/stream-monitors/ai-models",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/?page_size=10000&current_page=1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/flight-log-analysis": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/flight-log/flight-log/?page_size=25&current_page=1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/?page_size=10000&current_page=1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/multi-stream-monitor": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/stream-monitors/stream-monitors",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/stream-monitors/stream-monitors/ai-models",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/operation-settings": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/report-template": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/notam": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/?page_size=10000&current_page=1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/proxy/notam",
+        "status": 200
+      }
     ]
   },
   "blank_screens": [
     {
       "route": "/users",
       "why": "본문 0자 · API 6건 200 · JS 오류 0건 — 권한 없는 화면이 안내 대신 빈 화면을 낸다 (DA-03 §3-4 위반 · rj-core §0.4)"
+    },
+    {
+      "route": "/handover",
+      "why": "본문 0자 · API 실패 0건 · JS 오류 0건 — /users 와 같은 모양"
+    }
+  ],
+  "redirected_screens": [
+    {
+      "route": "/monitoring-dashboard",
+      "landed": "/profile",
+      "why": "요청한 경로가 아니라 이 계정의 홈 화면이 떴다 — 라우트에 도달하지 못한다"
+    },
+    {
+      "route": "/intergrated-dashboard",
+      "landed": "/profile",
+      "why": "같음. 둘 다 App.tsx 의 별도 라우트 묶음(189~211줄)에 있다"
     }
   ]
 }

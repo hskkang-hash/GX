@@ -59,9 +59,6 @@ A backend/common/universal_optimization.py::verify_model_classification
 A backend/common/utils.py::create_multipart_schema
 A backend/common/utils.py::generate_item_code
 A backend/common/utils.py::generate_order_code
-A backend/config/celery.py::close_db_connections_after_task
-A backend/config/celery.py::close_db_connections_before_task
-A backend/config/celery.py::init_worker_process
 A backend/dashboard/repository/dashboard_repository.py::get_linked_delivery_hubs_with_status
 A backend/dashboard/shemas/schemas_djantic_out.py::get_weather_by_coordinates
 A backend/delivery/config/route_dummy_data.py::get_route_by_id

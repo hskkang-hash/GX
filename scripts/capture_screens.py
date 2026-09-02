@@ -91,6 +91,18 @@ TARGETS = [
     {"step": 6, "route": "/menu", "must_see": "Menu Management"},
     {"step": 7, "route": "/configuration-management", "must_see": "Is Active?"},
     {"step": 8, "route": "/profile", "must_see": "Personal Information"},
+    # ── D-396 [실측 2026-09-14] 여덟 장을 더해 **16/16** 을 채운다.
+    #    고른 기준: 재난안전·감시 국면에 닿는 화면 우선 (§0.4 배송·주문·터미널은 뺐다).
+    #    `must_see` 는 **후보 16개를 실제로 열어 본문을 읽고** 골랐다 — 추측이 아니다.
+    #    (정찰 결과: 찍을 수 있는 것 13 · 찍을 수 없는 것 3. 셋은 아래 KNOWN_* 에 남긴다)
+    {"step": 9, "route": "/surveillance-dashboard", "must_see": "Last Updated"},
+    {"step": 10, "route": "/survey-profile", "must_see": "Add New Profile"},
+    {"step": 11, "route": "/media-data", "must_see": "No preview available."},
+    {"step": 12, "route": "/flight-log-analysis", "must_see": "Drone State Prediction"},
+    {"step": 13, "route": "/multi-stream-monitor", "must_see": "Participants"},
+    {"step": 14, "route": "/operation-settings", "must_see": "API URL"},
+    {"step": 15, "route": "/report-template", "must_see": "Usage Count"},
+    {"step": 16, "route": "/notam", "must_see": "SNOWTAM"},
 ]
 
 #: ★ [실측 2026-09-13 · D-386] 열어 보고 **찍지 못한 화면**. 목록에 남긴다 —
@@ -100,6 +112,22 @@ TARGETS = [
 KNOWN_BLANK = [
     {"route": "/users", "why": "본문 0자 · API 6건 200 · JS 오류 0건 — 권한 없는 화면이 "
                                "안내 대신 빈 화면을 낸다 (DA-03 §3-4 위반 · rj-core §0.4)"},
+    # ★ [실측 2026-09-14 · D-396] **두 번째 빈 화면.** `/users` 와 같은 모양이다 —
+    #   API 실패 0건 · JS 오류 0건인 채로 본문만 0자다. 한 건이면 그 화면의 사정이지만
+    #   **둘이면 성질**이다. RJCORE_BLANK_ON_NO_PERMISSION 에 표본을 더했다.
+    {"route": "/handover", "why": "본문 0자 · API 실패 0건 · JS 오류 0건 — /users 와 같은 모양"},
+]
+
+#: ★ [실측 2026-09-14 · D-396] 열었더니 **다른 화면이 떴다.** 빈 화면과는 다른 결함이다 —
+#:   빈 화면은 「왔는데 아무것도 없다」이고, 이것은 **「거기 갈 수 없다」**이다.
+#:   둘을 한 칸에 두면 고치는 사람이 어디를 볼지 모른다 (D-377 ㉠㉡㉢ 를 가른 것과 같은 이유).
+#:   ⚠ 이 계정의 `role` 은 `NO_ROLE` 이다 — 역할이 있는 계정에서는 다를 수 있고,
+#:     그것은 **아직 재 보지 않았다.** 「권한 때문」이라고 적지 않는다 (D-322).
+KNOWN_REDIRECT = [
+    {"route": "/monitoring-dashboard", "landed": "/profile",
+     "why": "요청한 경로가 아니라 이 계정의 홈 화면이 떴다 — 라우트에 도달하지 못한다"},
+    {"route": "/intergrated-dashboard", "landed": "/profile",
+     "why": "같음. 둘 다 App.tsx 의 별도 라우트 묶음(189~211줄)에 있다"},
 ]
 
 try:
@@ -329,6 +357,20 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                     (m, u[len(api):], st)
                     for m, u, st in seen_calls
                     if u.startswith(api + "/api/")})
+                #: ★ [실측 2026-09-14 · D-397] 이 접두 대조가 **조용히 0건을 낼 수 있다.**
+                #:   `--api http://127.0.0.1:8000` 을 줬는데 번들은 `http://localhost:8000`
+                #:   을 부르면 한 건도 안 맞는다. 화면은 다 떴고 데이터도 다 그려졌는데
+                #:   기록만 비었다 — 그리고 그 빈 기록은 `verify_route_alive` 를
+                #:   **「때릴 것이 없어 통과」**로 만든다. 0건은 통과가 아니다(D-301).
+                #:   여기서는 세지 못한 URL 을 그대로 보여 준다 — 무엇과 안 맞았는지가
+                #:   화면에 있어야 다음 사람이 5분 만에 고친다.
+                if not api_calls[route]:
+                    missed = sorted({u.split("/api/")[0] for _, u, _ in seen_calls
+                                     if "/api/" in u})
+                    raise RuntimeError(
+                        f"{route}: 화면이 부른 우리 API 를 **0건** 기록했다. "
+                        f"`--api {api}` 와 번들이 부르는 주소가 다르다. "
+                        f"실제로 `/api/` 를 부른 곳: {missed or '없음'}")
                 step = f"{SCENARIO}/{t['step']}"
                 when = datetime.now().replace(microsecond=0)
                 rel = "%s/%s/%s.png" % (SCENARIO, role,
@@ -449,6 +491,10 @@ def main() -> int:
         "screens": {k: [{"method": m, "path": p, "status": st}
                         for m, p, st in v] for k, v in got["api_calls"].items()},
         "blank_screens": KNOWN_BLANK,
+        #: 못 찍은 것을 **왜 못 찍었는지로 갈라** 적는다 (D-396). 한 칸에 두면
+        #: 「안 해 본 것」과 「해 봤더니 안 되는 것」이 같아지고, 둘을 합치면
+        #: 「아무것도 없다」와 「거기 갈 수 없다」도 같아진다.
+        "redirected_screens": KNOWN_REDIRECT,
     }, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"[SHOT] 화면이 부른 API 기록: {routes_out}")
 

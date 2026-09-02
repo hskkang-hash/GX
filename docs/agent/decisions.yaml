@@ -11,8 +11,8 @@
 #  - 에이전트는 이 파일을 수정하지 않는다. (제안만 하고 사람이 확정)
 # ============================================================================
 meta:
-  version: "3.8"
-  updated_at: "2026-09-13T18:00"
+  version: "4.0"
+  updated_at: "2026-09-14T18:00"
   status_enum: [decided, pending, superseded]
 
 decisions:
@@ -5236,3 +5236,169 @@ decisions:
   enforced_by: |
     · docs/agent/verify_gates.sh :: ALL_GATES (9종)
   affects: [D-286, D-353]
+
+- id: D-393
+  author_tree_id: "Code 자발 (지시서 없음 · 현재 상태 분석에서 나왔다)"
+  title: "**켜기 전에 판정기를 의심했다** — ㉮ 41 중 셋은 처음부터 켜져 있었다"
+  status: decided
+  raised_by: "Code 2026-09-14 (D-350 · D-385 계열)"
+  decision: |
+    ▣ 사실 [실측 2026-09-14]: D-388 이 낸 ㉮「켜야 할 것」 41건의 맨 위 셋
+      (`backend/config/celery.py` 의 `init_worker_process` ·
+       `close_db_connections_before_task` · `close_db_connections_after_task`)은
+      `@worker_process_init.connect` 등으로 **처음부터 배선돼 있었다.**
+      **켜라고 낸 것이 이미 켜져 있었다.**
+    ▣ 구멍의 자리: `ENTRY_DECORATORS` 는 **이름 집합**이라 `@receiver` 는 잡지만
+      `@sig.connect` 는 못 잡는다 — `_dec_names` 가 내는 이름 `{connect, worker_process_init}`
+      둘 다 그 집합에 없다. **이름이 아니라 모양인 배선**이 통째로 빠져 있었다.
+    ▣ ★ gunicorn `server-hook` 오답(D-388 ③)과 **같은 모양**이다 — 프레임워크가 부르는
+      자리를 「아무도 안 부른다」로 읽는다. 그때는 **파일 이름**으로 메웠고 이번에는
+      **배선 형태**로 잡는다. 파일 이름으로 메웠으면 `celery.py` 에서 다시 뚫렸을 것이다:
+      그 파일에는 배선된 함수와 배선 안 된 함수가 **함께 있다.**
+    ▣ 모수 정정 [실측]: ㉠ 314 → **311** · ㉮ 41 → **38** · 우리 관할 198 → **195**.
+      저장소 전수에서 `@<x>.connect` 배선은 **정확히 3건**이고 셋 다 ㉮ 에 있었다.
+    ▣ ★★ 그리고 래칫의 **말**을 갈랐다. 기준선에서 빠지는 길은 둘이고 전혀 다른 일이다:
+        ① **켜졌다**          모수에 있는데 운영이 이제 부른다 — **진척이다**
+        ② **자고 있지 않았다** 모수에서 빠졌다 — **판정기가 틀렸던 것이지 우리가 한 일이 없다**
+      합쳐서 「켜졌다」로 적으면 **판정기 정정이 진척으로 둔갑한다.** D-385 가 금지한 모양이다.
+      게이트가 이제 둘을 따로 출력한다. **이번 턴에 켠 것은 0건이다.**
+    ▣ ★ 모수에서 빼는 일은 **좁게** 한다: `ENTRY_DECORATORS` 에 `"connect"` 를 넣지 않고
+      **점 뒤가 `connect` 인 데코레이터**만 본다. 넓게 빼면 진짜 잠든 것이 조용히 사라진다(D-301).
+  enforced_by: |
+    · scripts/verify_dormant.py :: _wired_by_signal() · 자기시험 출생 표본 ③ (양성 1 · 음성 2)
+      ★ 같은 파일에 `signal_not_wired` 를 두어 **파일째 면제가 아님**을 시험이 본다
+    · backend/tests/test_dormant_wiring.py :: test_celery_signal_hooks_are_not_reported_dormant
+      — 합성 fixture 는 규칙이 있는지를 보고, 이 시험은 그 규칙이 **오늘 이 저장소의 그 세
+        함수에** 걸리는지를 본다 (D-310)
+    · docs/agent/evidence/D-393/recount.md · dormant_recount.json · dormant_reclassified.json
+  affects: [D-277, D-301, D-310, D-311, D-350, D-377, D-385, D-388]
+
+- id: D-394
+  author_tree_id: "Code 자발"
+  title: "㉮ 는 **자산 목록이 아니다** — 둘을 열어 보니 하나는 켜면 안 되는 것이었다"
+  status: decided
+  raised_by: "Code 2026-09-14 (D-388 ▣ 「㉯는 한 건도 지우지 마라」의 반대편)"
+  decision: |
+    ▣ D-388 은 ㉯(지워야 할 것)를 지우기 전에 분류 정확도를 보라고 했다. **㉮ 도 같다** —
+      「켜야 할 것」이라는 이름이 곧 **켜도 된다**는 뜻이 아니다. 둘을 열어 봤다.
+
+    ▣ ① `backend/common/base_model.py::process_request` (class `RequestMiddleware`) —
+      **켜면 안 된다.** [실측]
+        · `RequestMiddleware` 는 `MIDDLEWARE` 에 없다 (backend 전체 참조 0건)
+        · 이 미들웨어가 채우는 `_request_local` 을 **읽는 코드가 저장소에 없다** —
+          쓰기 1자리(자기 자신)뿐이다
+        · 실제로 쓰이는 것은 `core.middleware.refresh_token.get_current_request()` 이고
+          그 미들웨어는 `backend/config/settings.py:128` 에 **등록돼 있다**
+      → **대체된 것**이다. 켰다면 매 요청마다 스레드 로컬에 request 를 붙잡아 두고
+        읽는 이는 아무도 없다. ㉮ 가 아니라 ㉯ 성격이다.
+
+    ▣ ② `backend/surveillance/signals.py::video_analysis_post_save` —
+      **진짜 ㉮ 이고, 당직자에게 보이는 결함이다** (D-378). [실측] **두 겹으로 꺼져 있다:**
+        · `# @receiver(post_save, sender=VideoAnalysis)` — 데코레이터가 **주석**이다
+        · `surveillance/apps.py::SurveillanceConfig` 에 `ready()` 가 없어 signals 모듈을
+          **아무도 import 하지 않는다** — 주석을 풀어도 안 돈다
+      그리고 크기: `SurveillanceDashboardService.broadcast_detection_message` 를 부르는
+      **운영 코드는 그 시그널 한 자리뿐**이다(1507줄은 docstring 안의 예시다).
+      → **새 탐지가 저장돼도 관제 화면으로 가는 알림이 한 번도 발화하지 않는다.**
+
+    ▣ ★ 그러나 **켜지 않았다.** 사유를 적는다(D-322 — 부재 주장도 주장이다):
+      `post_save` 마다 브로드캐스트를 쏘는 것은 **D-369 가 다룬 그 폭주 경로**다.
+      재난 때 초당 수십 건이 그대로 채널 레이어를 때린다. 켜려면 **큐잉 · 같은 (모델,pk)
+      접기**를 함께 얹어야 하고, 그것은 켜기가 아니라 **설계**다. 상용 절 UX-08 로 등재했다.
+    ▣ ★★ 규약: **㉮ 를 켤 때는 「왜 안 켜져 있었나」를 먼저 답한다.** 답이 「대체됐다」면
+      켜는 것이 아니라 지우는 것이고, 답이 「누가 껐다」면 **끈 이유**부터 찾는다.
+  enforced_by: |
+    · docs/agent/evidence/D-393/recount.md §5
+    · docs/agent/evidence/D-346/ga_readiness.yaml :: UX-08 (미착수 · 사유 포함)
+  affects: [D-369, D-377, D-378, D-385, D-388, D-393]
+
+- id: D-395
+  author_tree_id: "Code 자발"
+  title: "㉰정상 `method` 91건의 한계를 [실측]으로 적는다 — **고치지 않고 적는다**"
+  status: decided
+  raised_by: "Code 2026-09-14 (D-394 ②가 드러냈다)"
+  decision: |
+    ▣ 사실: `broadcast_detection_message` 는 **㉰정상**으로 분류된다. 규칙 `method` 가
+      「그 클래스가 자기 파일 밖에서 쓰이는가」만 보기 때문이다. `SurveillanceDashboardService`
+      는 밖에서 쓰인다 — 그래서 **그 안의 죽은 메서드도 정상이 된다.**
+    ▣ 그러므로 ㉰정상 132건 중 **method 91건**은 「살아 있는 클래스 안에 있다」는 뜻이지
+      **「그 메서드가 불린다」는 뜻이 아니다.** 두 문장을 같은 것으로 읽으면 착시 ⑨의 재발이다.
+    ▣ ★ **이번에는 규칙을 고치지 않는다.** 고치면 91건이 한꺼번에 다른 칸으로 쏟아지고,
+      그 이동은 이번 턴에 검증할 수 없다. 검증 못 할 이동은 **분류가 아니라 도장**이다
+      (D-388 ②가 정확히 그 실패였다).
+    ▣ **한계를 적어 두는 것이 지금 할 수 있는 정직이다** (D-290 3값 · D-301).
+      다음에 이 91건을 볼 때의 출발점이 이 항목이다.
+  enforced_by: |
+    · docs/agent/evidence/D-393/recount.md §6
+  affects: [D-290, D-301, D-350, D-377, D-388, D-394]
+
+- id: D-396
+  author_tree_id: "Code 자발 (D-391 ③이 남긴 「나머지 8장」)"
+  title: "화면 **16/16** — 그리고 **16장이면 더 나온다**가 맞았다 (결함 4건)"
+  status: decided
+  raised_by: "Code 2026-09-14 (D-386 이행)"
+  decision: |
+    ▣ 이행 [실측 2026-09-14]: **8장 → 16장.** 브라우저 오류 0건 · `verify_screens` 통과.
+      고르기 전에 **후보 16개를 실제로 열어 본문을 읽었다** — `must_see` 를 추측으로
+      적지 않는다(D-386). 정찰 결과 **찍을 수 있는 것 13 · 찍을 수 없는 것 3.**
+    ▣ ★ D-386 은 「3장에 죽은 라우트 1건. **16장이면 더 나온다**」고 했다. **넷 나왔다:**
+        ① `/api/media-data/` **500** — 화면은 「0 of 0」 을 그렸다(D-397 에서 다룬다)
+        ② `/handover` **본문 0자** — `/users` 와 같은 모양. **둘이면 성질이다**
+        ③④ `/monitoring-dashboard` · `/intergrated-dashboard` — 요청한 경로가 아니라
+            이 계정의 홈이 떴다
+    ▣ ★ **못 찍은 것을 「왜 못 찍었는지」로 갈라 적는다.** ②와 ③④는 다른 결함이다 —
+      ②는 「왔는데 아무것도 없다」이고 ③④는 **「거기 갈 수 없다」**이다. 한 칸에 두면
+      고치는 사람이 어디를 볼지 모른다. ㉠㉡㉢ 을 가른 것과 같은 이유다(D-377).
+      `capture_screens.KNOWN_BLANK` 옆에 `KNOWN_REDIRECT` 를 세웠다.
+    ▣ ⚠ 이 계정의 `role` 은 `NO_ROLE` 이다. 역할이 있는 계정에서는 다를 수 있고
+      **아직 재 보지 않았다** — 「권한 때문」이라고 적지 않는다(D-322 · D-389).
+    ▣ 때릴 자리도 두 배가 됐다: `verify_route_alive` 입력 13건 → **26건.**
+  enforced_by: |
+    · docs/agent/evidence/D-347/screens/INDEX.yaml — 16장 (실행체가 직접 쓴다)
+    · docs/agent/evidence/D-396/screens_16.md
+    · docs/agent/evidence/D-346/ga_readiness.yaml :: UX-07(구현) · UX-09(잠김)
+    · scripts/capture_screens.py :: TARGETS 16 · KNOWN_BLANK 2 · KNOWN_REDIRECT 2
+  affects: [D-284, D-301, D-322, D-347, D-352, D-377, D-378, D-386]
+
+- id: D-397
+  author_tree_id: "Code 자발"
+  title: "**0건 기록은 통과가 아니다** — 판정기가 자기 눈 감김을 스스로 잡았다"
+  status: decided
+  raised_by: "Code 2026-09-14 (D-310 출생 표본이 잡았다)"
+  decision: |
+    ▣ 사실 [실측]: 첫 캡처는 16장 전부 성공했고 `verify_screens` 도 통과했다.
+      **그런데 `screen_routes.json` 은 16화면 전부 「API 호출 0건」이었다.**
+      원인: `--api http://127.0.0.1:8000` 을 줬는데 **번들은 `http://localhost:8000`**
+      을 부른다. 접두 대조가 한 건도 안 맞았다.
+    ▣ ★ 이 조합이 가장 나쁘다 — **화면은 다 떴고 데이터도 다 그려졌는데 기록만 비었다.**
+      그 빈 기록은 `verify_route_alive` 를 **「때릴 것이 없어 통과」**로 만든다.
+      **죽은 라우트가 있어도 초록이 났을 것이다.** 0건은 통과가 아니다(D-301).
+    ▣ ★★ 잡은 것은 **D-310 이 박아 둔 출생 표본**이다 —
+      `verify_route_alive` 는 자기를 만들게 한 그 500 라우트가 목록에 없으면
+      **판정을 시작하지 않는다.** 그 규약이 두 턴 만에 값을 했다.
+      「자기가 태어난 표본을 시험에 넣는다」는 규약의 **두 번째 수확**이다(첫째는 D-385).
+    ▣ 고침: `capture_screens.py` 가 **어느 화면에서든 우리 API 기록이 0건이면 실패**하고,
+      `/api/` 를 실제로 부른 주소를 **그대로 보여 준다** — 무엇과 안 맞았는지가 화면에
+      있어야 다음 사람이 5분 만에 고친다.
+    ▣ 바로잡은 뒤 [실측]: 16화면 · API 호출 **109건** · 그중 실패 1건.
+      그 1건이 `/api/media-data/` 500 이고, 응답이 **세 가지를 동시에 잘못 말하고 있었다:**
+        ① `success: true` · `status: 500` — dj-core `BaseResponse` 의 기본값이 True 라
+           우리 뷰가 안 넘겨 **조용히 참**이 됐다
+        ② 문구가 「Failed to retrieve **operational notice** list」 — 남의 앱 이름이다.
+           **틀린 문구는 고치는 사람을 엉뚱한 앱으로 보낸다**
+        ③ 화면은 그 500 을 받고도 「0 of 0」 을 그렸다 — **「영상 자료가 없다」로 보인다**(D-378)
+      **①②는 고쳤다. ③은 화면 쪽(인수 자산)이라 안 고치고 잠금에 올렸다.**
+      즉 **서버는 이제 진실을 말하는데 화면이 안 듣는다.**
+    ▣ ★ 전수 [실측]: 오류 상태(>=400)로 `BaseResponse` 를 내면서 `success` 를 안 내린 자리가
+      **우리 관할 175건 · §0.4 105건**(올바른 호출 710건). **이번 턴에 고친 것은 1건뿐이다** —
+      화면이 실제로 보여 준 그 자리다. 나머지 174건은 **전면 수정하지 않는다**(D-358 계열):
+      한 번에 고치면 그 이동을 이번 턴에 검증할 수 없고, 검증 못 할 이동은 분류가 아니라 도장이다.
+    ▣ 게이트 `route-alive` 는 이 자리에서 **빨간 채로 둔다**(D-327). 초록으로 만드는 예외를
+      넣지 않는다 — 넣는 순간 그 게이트가 하는 일이 없어진다.
+  enforced_by: |
+    · scripts/capture_screens.py — 화면별 API 기록 0건이면 RuntimeError (D-301)
+    · scripts/verify_route_alive.py — 출생 표본이 목록에 없으면 자기시험 실패
+    · docs/agent/evidence/DA-05/blockers.yaml :: MEDIA_LIST_SHOWS_EMPTY_WHEN_STORAGE_DOWN
+    · docs/agent/evidence/D-346/ga_readiness.yaml :: UX-10 (잠김)
+    · docs/agent/evidence/D-396/screens_16.md §3
+  affects: [D-290, D-301, D-310, D-327, D-349, D-350, D-358, D-378, D-386, D-396]

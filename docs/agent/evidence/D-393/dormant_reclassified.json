@@ -1,0 +1,889 @@
+{
+  "source": "scripts/verify_dormant.py :: 호출 없음(㉠)",
+  "total": 311,
+  "ours": {
+    "?판정불가": [
+      {
+        "label": "backend/common/api_contract.py::classify_permission_routes",
+        "rule": "test-only"
+      },
+      {
+        "label": "backend/common/cache_signal_protection.py::defer_stats",
+        "rule": "test-only"
+      },
+      {
+        "label": "backend/common/cache_signal_protection.py::reset_defer_state",
+        "rule": "test-only"
+      },
+      {
+        "label": "backend/common/ops_tasks.py::ops_status",
+        "rule": "test-only"
+      },
+      {
+        "label": "backend/common/performance_optimizer.py::enable_request_caching",
+        "rule": "test-only"
+      },
+      {
+        "label": "backend/common/performance_optimizer.py::get_performance_stats",
+        "rule": "test-only"
+      },
+      {
+        "label": "backend/common/performance_optimizer.py::optimized_queryset_evaluation",
+        "rule": "test-only"
+      },
+      {
+        "label": "backend/common/performance_optimizer.py::optimized_schema_processing",
+        "rule": "test-only"
+      },
+      {
+        "label": "backend/common/tenant_scope.py::summarize",
+        "rule": "test-only"
+      },
+      {
+        "label": "backend/common/tenant_tripwire.py::scan_runtime",
+        "rule": "test-only"
+      }
+    ],
+    "㉰정상": [
+      {
+        "label": "backend/common/api_contract.py::process_exception",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/measurable_model.py::get_all_measurements_converted",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/measurable_model.py::get_all_measurements_formatted",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/schema_measurable.py::to_drf_serializer_data",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/selective_cache_optimization.py::get_all_model_relationships",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/selective_cache_optimization.py::refresh_relationship_cache",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/selective_cache_optimization.py::smart_reconstruct",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/tenant_tripwire.py::compare",
+        "rule": "dynamic"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::add_immediate_invalidation_model",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::add_sensitive_pattern",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::analyze_model_relationships",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::benchmark_performance_improvements",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::check_current_cache_keys",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::check_immediate_invalidation_models",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::compare_cache_strategies",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::debug_cache_issue",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::disable_selective_cache",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::emergency_disable",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::enable_selective_cache",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::fix_grid_cache",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::fix_search_cache_collision",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::get_model_ttl",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::get_selective_cache_stats",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::get_system_stats",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::optimize_for_production",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::optimize_model_ttl",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::quick_cache_check",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::remove_sensitive_pattern",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::sync_multi_system_cache",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::test_cache_impact",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::test_endpoint_caching",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::test_grid_vs_device_cache",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::test_model_invalidation",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::test_selective_invalidation",
+        "rule": "method"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::verify_model_classification",
+        "rule": "method"
+      },
+      {
+        "label": "backend/dashboard/repository/dashboard_repository.py::get_linked_delivery_hubs_with_status",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/models.py::get_all_measurements_converted",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/models.py::get_all_measurements_formatted",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/models.py::get_entity_measurements",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/models.py::get_entity_measurements",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/services/camera_service.py::add_to_device",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/services/camera_service.py::get_device_cameras",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/services/cargo_service.py::get_all_data",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/services/library_service.py::copy_from_library_to_device",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/services/packaging_service.py::create_packaging_option",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/services/packaging_service.py::create_packaging_specification",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/services/packaging_service.py::update_packaging_option",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/services/packaging_service.py::update_packaging_specification",
+        "rule": "method"
+      },
+      {
+        "label": "backend/devices/test.py::setUp",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_camera_service",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_complete_device_workflow",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_complex_unit_error_margins",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_complex_unit_measurements",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_complex_unit_ranges",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_device_creation",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_device_creation_missing_required",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_dimensions_service",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_error_margin_values",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_flight_performance",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_invalid_measurement_values",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_multi_value_measurements",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_not_exceeding_values",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_range_values",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_safety_features",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_simple_measurement",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_telemetry_service",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_up_to_values",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/test.py::test_update_existing_device",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/tests.py::setUp",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/tests.py::test_camera_service",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/tests.py::test_complete_device_workflow",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/tests.py::test_device_creation",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/tests.py::test_device_creation_missing_required",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/tests.py::test_dimensions_service",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/tests.py::test_flight_performance",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/tests.py::test_invalid_measurement_values",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/tests.py::test_safety_features",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/tests.py::test_telemetry_service",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/devices/tests.py::test_update_existing_device",
+        "rule": "test-file"
+      },
+      {
+        "label": "backend/drone_communication/services/drone_service.py::get_online_drones_from_api",
+        "rule": "method"
+      },
+      {
+        "label": "backend/flight_log/services/flight_log_service.py::download_log_file_from_minio",
+        "rule": "method"
+      },
+      {
+        "label": "backend/flight_log/services/flight_log_service.py::get_flight_logs",
+        "rule": "method"
+      },
+      {
+        "label": "backend/flight_log/services/flight_log_service.py::save_log_file_to_minio",
+        "rule": "method"
+      },
+      {
+        "label": "backend/gunicorn.conf.py::on_exit",
+        "rule": "server-hook"
+      },
+      {
+        "label": "backend/gunicorn.conf.py::on_reload",
+        "rule": "server-hook"
+      },
+      {
+        "label": "backend/gunicorn.conf.py::on_starting",
+        "rule": "server-hook"
+      },
+      {
+        "label": "backend/gunicorn.conf.py::post_fork",
+        "rule": "server-hook"
+      },
+      {
+        "label": "backend/gunicorn.conf.py::post_worker_init",
+        "rule": "server-hook"
+      },
+      {
+        "label": "backend/gunicorn.conf.py::pre_fork",
+        "rule": "server-hook"
+      },
+      {
+        "label": "backend/gunicorn.conf.py::worker_abort",
+        "rule": "server-hook"
+      },
+      {
+        "label": "backend/gunicorn.conf.py::worker_exit",
+        "rule": "server-hook"
+      },
+      {
+        "label": "backend/gunicorn.conf.py::worker_int",
+        "rule": "server-hook"
+      },
+      {
+        "label": "backend/media_data/consumers.py::media_download_notification",
+        "rule": "method"
+      },
+      {
+        "label": "backend/operation_settings/services/api_documentation_service.py::add_custom_api",
+        "rule": "method"
+      },
+      {
+        "label": "backend/operation_settings/services/api_documentation_service.py::validate_api_structure",
+        "rule": "method"
+      },
+      {
+        "label": "backend/operational_data/consumers.py::operational_data_error_notification",
+        "rule": "method"
+      },
+      {
+        "label": "backend/operational_data/consumers.py::operational_data_processing_notification",
+        "rule": "method"
+      },
+      {
+        "label": "backend/operational_data/services/operational_data_service.py::download_operational_data_sync",
+        "rule": "method"
+      },
+      {
+        "label": "backend/partner/services/partner_callback_service.py::trigger_universal_event",
+        "rule": "method"
+      },
+      {
+        "label": "backend/partner/services/partner_service.py::generate_refresh_token_for_partner",
+        "rule": "method"
+      },
+      {
+        "label": "backend/partner/utils/partner_utils.py::format_partner_data",
+        "rule": "method"
+      },
+      {
+        "label": "backend/partner/utils/partner_utils.py::generate_api_key",
+        "rule": "method"
+      },
+      {
+        "label": "backend/partner/utils/partner_utils.py::generate_partner_code",
+        "rule": "method"
+      },
+      {
+        "label": "backend/partner/utils/partner_utils.py::mask_sensitive_data",
+        "rule": "method"
+      },
+      {
+        "label": "backend/print_format/models.py::get_preview_data",
+        "rule": "method"
+      },
+      {
+        "label": "backend/print_format/services.py::create_print_format",
+        "rule": "method"
+      },
+      {
+        "label": "backend/print_format/services.py::format_field_value",
+        "rule": "method"
+      },
+      {
+        "label": "backend/print_format/services.py::generate_qr_base64",
+        "rule": "method"
+      },
+      {
+        "label": "backend/print_format/services.py::get_example_data",
+        "rule": "method"
+      },
+      {
+        "label": "backend/print_format/services.py::get_field_options",
+        "rule": "method"
+      },
+      {
+        "label": "backend/print_format/services.py::get_relation_label",
+        "rule": "method"
+      },
+      {
+        "label": "backend/print_format/services.py::get_user_print_formats",
+        "rule": "method"
+      },
+      {
+        "label": "backend/proxy/middleware.py::process_response",
+        "rule": "method"
+      },
+      {
+        "label": "backend/stream_monitors/services/stream_monitor_services.py::get_list_available_streams",
+        "rule": "method"
+      },
+      {
+        "label": "backend/stream_monitors/services/stream_monitor_services.py::get_stream_monitor_capture",
+        "rule": "method"
+      },
+      {
+        "label": "backend/stream_monitors/services/stream_monitor_services.py::get_stream_monitor_record",
+        "rule": "method"
+      },
+      {
+        "label": "backend/stream_monitors/services/stream_monitor_services.py::start_record_optimize",
+        "rule": "method"
+      },
+      {
+        "label": "backend/stream_monitors/services/stream_monitor_services.py::stop_record_optimize",
+        "rule": "method"
+      },
+      {
+        "label": "backend/stream_monitors/services/stream_monitor_services.py::stream_monitor_start",
+        "rule": "method"
+      },
+      {
+        "label": "backend/surveillance/models.py::can_activate",
+        "rule": "method"
+      },
+      {
+        "label": "backend/surveillance/services/surveillance_profile_media_service.py::save_recording_result_for_stream_monitor",
+        "rule": "method"
+      },
+      {
+        "label": "backend/surveillance/services/surveillance_profile_service.py::get_active_profiles",
+        "rule": "method"
+      },
+      {
+        "label": "backend/surveillance/services/survey_mission_service.py::export_single_mission_to_zip",
+        "rule": "method"
+      },
+      {
+        "label": "backend/surveillance/services/survey_mission_service.py::preview",
+        "rule": "method"
+      },
+      {
+        "label": "backend/third_api/schema.py::resolve_is_expired",
+        "rule": "method"
+      },
+      {
+        "label": "backend/third_api/schema.py::resolve_user_username",
+        "rule": "method"
+      },
+      {
+        "label": "backend/third_api/services/address_service.py::create_fallback_address",
+        "rule": "method"
+      },
+      {
+        "label": "backend/third_api/services/address_service.py::reverse_geocode",
+        "rule": "method"
+      },
+      {
+        "label": "backend/third_api/services/anyang_order_automation.py::get_delivery_eta_from_order",
+        "rule": "method"
+      },
+      {
+        "label": "backend/third_api/services/anyang_services.py::create_delivery_operation",
+        "rule": "method"
+      },
+      {
+        "label": "backend/third_api/services/anyang_services.py::get_package_price",
+        "rule": "method"
+      },
+      {
+        "label": "backend/third_api/services/anyang_services.py::trigger_completion_callback",
+        "rule": "method"
+      }
+    ],
+    "㉮켜야": [
+      {
+        "label": "backend/common/ast_call_trace.py::models_touched",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/base_model.py::process_request",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/base_model.py::set_use_group",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/cache_signal_protection.py::cleanup_rate_limits",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/cache_signal_protection.py::protected_signal",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/inbound_api_key.py::inbound_key_routes",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/tenant_tripwire.py::build_baseline",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/tenant_tripwire.py::scan_static",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::handle_multilanguage_cache_invalidation",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/universal_optimization.py::invalidate_cross_system",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/utils.py::create_multipart_schema",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/utils.py::generate_item_code",
+        "rule": "live"
+      },
+      {
+        "label": "backend/common/utils.py::generate_order_code",
+        "rule": "live"
+      },
+      {
+        "label": "backend/dashboard/shemas/schemas_djantic_out.py::get_weather_by_coordinates",
+        "rule": "live"
+      },
+      {
+        "label": "backend/devices/utils.py::sort_terminal_by_location",
+        "rule": "live"
+      },
+      {
+        "label": "backend/media_data/services/media_data_detect_service.py::get_server_ipv4_address",
+        "rule": "live"
+      },
+      {
+        "label": "backend/operation_settings/auth.py::get_token_scopes",
+        "rule": "live"
+      },
+      {
+        "label": "backend/operation_settings/auth.py::has_scope",
+        "rule": "live"
+      },
+      {
+        "label": "backend/operation_settings/auth.py::is_oauth2_authenticated",
+        "rule": "live"
+      },
+      {
+        "label": "backend/operation_settings/auth.py::oauth2_required",
+        "rule": "live"
+      },
+      {
+        "label": "backend/operation_settings/auth.py::scope_required",
+        "rule": "live"
+      },
+      {
+        "label": "backend/optimization/tasks/cache_warming_tasks.py::warm_specific_data",
+        "rule": "live"
+      },
+      {
+        "label": "backend/report_template/utils.py::clean_template_for_pdf",
+        "rule": "live"
+      },
+      {
+        "label": "backend/report_template/utils.py::download_and_install_korean_fonts",
+        "rule": "live"
+      },
+      {
+        "label": "backend/report_template/utils.py::test_korean_font_support",
+        "rule": "live"
+      },
+      {
+        "label": "backend/stream_monitors/services/frame_detection_pb2_grpc.py::add_FrameDetectionServiceServicer_to_server",
+        "rule": "live"
+      },
+      {
+        "label": "backend/stream_monitors/services/grpc_dual_stream_service.py::get_grpc_dual_stream_status",
+        "rule": "live"
+      },
+      {
+        "label": "backend/stream_monitors/services/grpc_dual_stream_service.py::start_grpc_dual_stream",
+        "rule": "live"
+      },
+      {
+        "label": "backend/stream_monitors/services/grpc_dual_stream_service.py::stop_grpc_dual_stream",
+        "rule": "live"
+      },
+      {
+        "label": "backend/stream_monitors/utils/redis_client.py::clear_webrtc_state",
+        "rule": "live"
+      },
+      {
+        "label": "backend/stream_monitors/utils/redis_client.py::delete_recording_status",
+        "rule": "live"
+      },
+      {
+        "label": "backend/stream_monitors/utils/redis_client.py::list_recording_statuses",
+        "rule": "live"
+      },
+      {
+        "label": "backend/stream_monitors/utils/redis_client.py::set_recording_status",
+        "rule": "live"
+      },
+      {
+        "label": "backend/stream_monitors/utils/stream_utils.py::get_stream_url",
+        "rule": "live"
+      },
+      {
+        "label": "backend/surveillance/signals.py::video_analysis_post_save",
+        "rule": "live"
+      },
+      {
+        "label": "backend/third_api/common/utils.py::anyang_service_key_required",
+        "rule": "live"
+      },
+      {
+        "label": "backend/third_api/common/utils.py::validate_required_fields",
+        "rule": "live"
+      },
+      {
+        "label": "backend/third_api/schema.py::resolve_api_key_name",
+        "rule": "live"
+      }
+    ],
+    "㉯지워야": [
+      {
+        "label": "backend/stream_monitors/services/record_service.py::control_record",
+        "rule": "orphan"
+      },
+      {
+        "label": "backend/stream_monitors/services/record_service.py::get_recording_status_by_code",
+        "rule": "orphan"
+      },
+      {
+        "label": "backend/stream_monitors/services/video_record_service.py::get_status",
+        "rule": "orphan"
+      },
+      {
+        "label": "backend/stream_monitors/services/video_record_service.py::pause",
+        "rule": "orphan"
+      },
+      {
+        "label": "backend/stream_monitors/services/video_record_service.py::resume",
+        "rule": "orphan"
+      }
+    ]
+  },
+  "forbidden_zone": {
+    "㉮켜야": [
+      "backend/delivery/config/route_dummy_data.py::get_route_by_id",
+      "backend/delivery/decorators.py::get_schema_for_endpoint",
+      "backend/delivery/decorators.py::get_service_for_endpoint",
+      "backend/delivery/decorators.py::get_service_for_status",
+      "backend/delivery/services/processing_service.py::get_approved_drone_ids_from_ops",
+      "backend/delivery/utils/queryset_to_json.py::serialize_related",
+      "backend/orders/signals.py::set_order_change_user",
+      "backend/terminals/services/day_of_week_service.py::create_day_of_week",
+      "backend/terminals/services/day_of_week_service.py::delete_day_of_week",
+      "backend/terminals/services/day_of_week_service.py::get_all_days_of_week",
+      "backend/terminals/services/day_of_week_service.py::get_day_of_week",
+      "backend/terminals/services/day_of_week_service.py::update_day_of_week",
+      "backend/terminals/services/exception_service.py::bulk_create_exceptions",
+      "backend/terminals/services/exception_service.py::create_exception",
+      "backend/terminals/services/exception_service.py::delete_exception",
+      "backend/terminals/services/exception_service.py::get_exception",
+      "backend/terminals/services/exception_service.py::get_exceptions_by_terminal",
+      "backend/terminals/services/exception_service.py::update_exception",
+      "backend/terminals/services/operating_time_service.py::bulk_create_or_update_operating_times",
+      "backend/terminals/services/operating_time_service.py::create_operating_time",
+      "backend/terminals/services/operating_time_service.py::delete_operating_time",
+      "backend/terminals/services/operating_time_service.py::get_operating_time",
+      "backend/terminals/services/operating_time_service.py::get_operating_times_by_terminal",
+      "backend/terminals/services/operating_time_service.py::update_operating_time",
+      "backend/terminals/services/terminal_service.py::get_docking_station",
+      "backend/terminals/services/terminal_service.py::get_docking_stations"
+    ],
+    "㉰정상": [
+      "backend/delivery/management/commands/create_status_mappings.py::get_version",
+      "backend/delivery/management/commands/list_status_mappings.py::get_version",
+      "backend/delivery/management/commands/remove_status_mappings.py::get_version",
+      "backend/delivery/models.py::get_next_unvisited_terminal",
+      "backend/delivery/models.py::get_visited_terminals",
+      "backend/delivery/repository/address_repository.py::get_by_city_and_district",
+      "backend/delivery/repository/address_repository.py::get_by_coordinates",
+      "backend/delivery/repository/cancelled_repository.py::get_cancelled_statuses",
+      "backend/delivery/repository/completed_repository.py::get_completed_statuses",
+      "backend/delivery/repository/completed_repository.py::get_items_by_arrived",
+      "backend/delivery/repository/completed_repository.py::get_items_by_completed",
+      "backend/delivery/repository/confirmation_repository.py::add_arrived_order_delivery_history",
+      "backend/delivery/repository/confirmation_repository.py::add_delivered_package_delivery_history",
+      "backend/delivery/repository/confirmation_repository.py::check_all_packages_arrived",
+      "backend/delivery/repository/confirmation_repository.py::check_all_packages_delivered",
+      "backend/delivery/repository/confirmation_repository.py::check_all_packages_delivered_in_operation",
+      "backend/delivery/repository/confirmation_repository.py::check_if_only_one_package_is_not_delivered",
+      "backend/delivery/repository/confirmation_repository.py::get_all_items_for_operation",
+      "backend/delivery/repository/confirmation_repository.py::update_package_arrival_by_drone_status",
+      "backend/delivery/repository/confirmation_repository.py::update_package_arrival_status",
+      "backend/delivery/repository/confirmation_repository.py::update_package_delivery_status",
+      "backend/delivery/repository/processing_repository.py::check_all_operation_items_delivered",
+      "backend/delivery/repository/processing_repository.py::check_order_history",
+      "backend/delivery/repository/processing_repository.py::check_terminal_is_delivery_terminal",
+      "backend/delivery/repository/processing_repository.py::get_last_terminal_of_route_by_order",
+      "backend/delivery/repository/processing_repository.py::get_list_of_routes_with_measurements",
+      "backend/delivery/repository/processing_repository.py::get_operation_item_by_drone",
+      "backend/delivery/repository/processing_repository.py::get_operation_items_by_operation_id_and_drone",
+      "backend/delivery/repository/processing_repository.py::get_order_assignment_by_package",
+      "backend/delivery/repository/processing_repository.py::get_terminal_by_id",
+      "backend/delivery/repository/processing_repository.py::get_terminal_by_lat_long",
+      "backend/delivery/repository/processing_repository.py::get_terminal_time_stops",
+      "backend/delivery/repository/processing_repository.py::update_drone_status_to_available",
+      "backend/delivery/repository/processing_repository.py::update_operation_status_to_arrived",
+      "backend/delivery/repository/returned_repository.py::get_returned_statuses",
+      "backend/delivery/repository/verification_repository.py::get_verification_statuses",
+      "backend/delivery/services/delivery_system.py::get_tab_operation_in_transit_processing_with_delivery_device",
+      "backend/delivery/services/delivery_system.py::get_tab_operation_in_transit_processing_with_delivery_items",
+      "backend/delivery/services/delivery_system.py::get_tab_operation_select_drone_processing_with_suitable_drones",
+      "backend/delivery/services/drone_state_service.py::analyze_and_update_drone_state",
+      "backend/delivery/services/drone_state_service.py::validate_log_data",
+      "backend/delivery/services/map_service.py::format_map_data_for_template",
+      "backend/delivery/services/opensearch_data.py::bulk_index",
+      "backend/delivery/services/opensearch_data.py::count_documents",
+      "backend/delivery/services/opensearch_data.py::create_bool_query",
+      "backend/delivery/services/opensearch_data.py::create_index",
+      "backend/delivery/services/opensearch_data.py::create_match_query",
+      "backend/delivery/services/opensearch_data.py::create_range_query",
+      "backend/delivery/services/opensearch_data.py::create_term_query",
+      "backend/delivery/services/opensearch_data.py::create_terms_query",
+      "backend/delivery/services/opensearch_data.py::delete_document",
+      "backend/delivery/services/opensearch_data.py::delete_index",
+      "backend/delivery/services/opensearch_data.py::get_cluster_health",
+      "backend/delivery/services/opensearch_data.py::get_document",
+      "backend/delivery/services/opensearch_data.py::get_indices",
+      "backend/delivery/services/opensearch_data.py::index_document",
+      "backend/delivery/services/opensearch_data.py::is_healthy",
+      "backend/delivery/services/opensearch_data.py::reconnect",
+      "backend/delivery/services/opensearch_data.py::search_by_query_string",
+      "backend/delivery/services/opensearch_data.py::search_drone_logs_by_sys_id_and_msg_type",
+      "backend/delivery/services/opensearch_data.py::update_document",
+      "backend/delivery/services/processing_service.py::calculate_distance_traveled",
+      "backend/delivery/services/processing_service.py::check_route_terminal_set_servo",
+      "backend/delivery/services/processing_service.py::check_terminalseq_exists",
+      "backend/delivery/services/processing_service.py::find_nearest_terminal",
+      "backend/delivery/services/processing_service.py::get_all_active_drones_unique_ids",
+      "backend/delivery/services/processing_service.py::get_drone_position_only",
+      "backend/delivery/services/processing_service.py::get_drone_positions_batch",
+      "backend/delivery/services/processing_service.py::get_drone_positions_batch_async",
+      "backend/delivery/services/processing_service.py::get_etri_status_display",
+      "backend/delivery/services/processing_service.py::is_drone_near_terminal",
+      "backend/delivery/services/processing_service.py::test_distance_calculation",
+      "backend/delivery/services/status_mapping_service.py::create_status_mapping",
+      "backend/delivery/services/status_mapping_service.py::delete_status_mapping",
+      "backend/delivery/services/status_mapping_service.py::get_all_delivery_statuses",
+      "backend/delivery/services/status_mapping_service.py::get_mapping_for_status",
+      "backend/delivery/services/status_mapping_service.py::get_status_mapping_by_id",
+      "backend/delivery/services/status_mapping_service.py::get_status_mappings_by_group",
+      "backend/delivery/services/status_mapping_service.py::update_status_mapping",
+      "backend/delivery/services/verification_service.py::verify_order",
+      "backend/orders/management/commands/init_anyang_data.py::get_address_from_coordinates_fallback",
+      "backend/orders/repository/order_repository.py::get_order_by_id",
+      "backend/orders/schemas/schemas_djantic_out.py::resolve_delivery_status_name",
+      "backend/orders/schemas/schemas_djantic_out.py::resolve_external_order_statuses",
+      "backend/orders/schemas/schemas_djantic_out.py::resolve_group_name",
+      "backend/orders/schemas/schemas_djantic_out.py::resolve_group_name",
+      "backend/orders/services/order_service.py::get_order_by_id",
+      "backend/terminals/models.py::get_position_in_routes",
+      "backend/terminals/models.py::get_route_neighbors",
+      "backend/terminals/models.py::get_routes_count",
+      "backend/terminals/models.py::get_terminal_types_names",
+      "backend/terminals/models.py::get_terminals_in_same_routes",
+      "backend/terminals/models.py::get_terminals_with_multiple_routes",
+      "backend/terminals/models.py::is_end_terminal",
+      "backend/terminals/models.py::is_start_terminal",
+      "backend/terminals/services/qground_control_service.py::test_mavlink_frames_api",
+      "backend/terminals/services/qground_control_service.py::test_special_commands_handling",
+      "backend/terminals/services/terminal_service.py::get_delivery_hub",
+      "backend/terminals/services/terminal_service.py::get_terminal_type_by_code"
+    ],
+    "㉯지워야": [
+      "backend/delivery/models.py::create_sequence_from_route"
+    ]
+  },
+  "note": "한 건도 지우지 않았다 (D-388). 가르기만 한 결과다."
+}

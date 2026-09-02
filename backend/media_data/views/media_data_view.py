@@ -32,28 +32,28 @@ logger = logging.getLogger(__name__)
 class MediaDataAPI:
     @route.get('', auth=CustomJWTAuth())
     def list_media(
-        self, 
-        request, 
-        media_type: str = None, 
+        self,
+        request,
+        media_type: str = None,
         prefix: str = None,
-        current_page: int = 1, 
+        current_page: int = 1,
         page_size: int = 25
     ):
         """
         List media items (images/videos) stored in MinIO with pagination, search and sort.
-        
+
         Query params:
         - media_type: filter by 'image', 'video', or 'all'
         - prefix: path prefix (e.g., 'features/')
         - current_page: page number (default: 1)
         - page_size: items per page (default: 25)
-        
+
         Search params (handled automatically via request.GET):
         - object_name: search by file name
         - type: search by type (image, video, document, etc.)
         - group__name: search by group name
         - size: search by size
-        
+
         Sort params:
         - sort_obj: JSON string, e.g. [{"key":"object_name","value":"desc"}]
         """
@@ -67,14 +67,21 @@ class MediaDataAPI:
 
         # Service returns combined list (folders + files) already filtered & sorted
         success, result = MediaDataService.list_media(
-            media_type=media_type, 
+            media_type=media_type,
             prefix=prefix,
             request=request,
         )
         if not success:
+            # ★ [실측 2026-09-14 · D-397] 화면 16장을 여는 중에 이 자리가 500 을 냈다
+            #   (저장소 미도달). 그때 응답이 두 가지를 잘못 말하고 있었다:
+            #     ① `success` 를 안 내려 봉투가 **`success: true` · `status: 500`** 이었다
+            #        — dj-core `BaseResponse` 의 기본값이 True 다. 안 넘기면 조용히 참이 된다
+            #     ② 문구가 「operational notice」 라 말했다 — 남의 앱 이름이다
             return BaseResponse(
+                success=False,
                 status_code=500,
-                message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_FAILED, "Failed to fetch list"),
+                message=MESSAGE_ENUM.get(MESSAGE_ENUM.MEDIA_LIST_FAILED,
+                                         "Failed to retrieve media list"),
                 data=[],
             )
 
@@ -86,7 +93,7 @@ class MediaDataAPI:
         paginator = OptimizedPaginator(items, page_size)
         page = paginator.page(current_page)
         data = list(page.object_list)
-        
+
         # Compute previous prefix for navigation
         prev_prefix = ''
         if current_prefix:
@@ -108,7 +115,7 @@ class MediaDataAPI:
     def download_media(self, request, data: MediaDownloadInSchema):
         """
         Download media files - ALWAYS ASYNC với WebSocket progress.
-        
+
         Returns:
         - task_id immediately
         - Connect to WebSocket (ws/media/download/) for real-time progress
@@ -120,7 +127,7 @@ class MediaDataAPI:
                 message="No object paths provided",
                 data=[]
             )
-        
+
         # Get username for WebSocket room
         username = request.user.username if request.user else None
         if not username:
@@ -129,11 +136,11 @@ class MediaDataAPI:
                 message="User not authenticated",
                 data=[]
             )
-        
+
         # Generate unique task ID for download tracking
         download_task_id = str(uuid.uuid4())
         task_type = "media_data_download"
-        
+
         # Persist initial task status for client-side polling
         pending_message = get_message(MESSAGE_ENUM.START_DOWNLOAD_FILE)
         success, task_status = TaskStatusService.create_or_update(
@@ -149,16 +156,16 @@ class MediaDataAPI:
             related_model='media_data.MediaData',
             related_object_id=None,
         )
-        
+
         logger.info(f"📊 Created TaskStatus: task_id={download_task_id}, success={success}")
-        
+
         response = MediaDataDownloadService.download_media(
             object_paths=data.object_paths,
             username=username,
             task_id=download_task_id,
             user_id=request.user.id,
         )
-        
+
         if response is None:
             # Update TaskStatus to failed if no files found
             TaskStatusService.update_status(
@@ -171,14 +178,14 @@ class MediaDataAPI:
                 message=get_message(MESSAGE_ENUM.ACTION_EXPORT_FAILED),
                 data={'error': "Media not found or cannot be downloaded"},
             )
-        
+
         # Always async mode - return task_id
         logger.info(f"📤 Returning download response with task_id={download_task_id}")
-        
+
         # Ensure response has correct task_id
         if isinstance(response, dict):
             response['task_id'] = download_task_id
-        
+
         return BaseResponse(
             status_code=200,
             message="Download task created successfully",
@@ -192,27 +199,27 @@ class MediaDataAPI:
         and create VideoAnalysis records.
         """
         success, result = MediaDataDetectService.detect_and_save(data)
-        
+
         if not success:
             return BaseResponse(
                 status_code=400,
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.DETECT_MEDIA_FAILED, "Detection failed"),
                 data=[]
             )
-        
+
         return BaseResponse(
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.DETECT_MEDIA_SUCCESS, "Detection completed successfully"),
             data=result,
             total_items=len(result)
         )
-    
+
     @route.post('/preview', auth=CustomJWTAuth())
     def preview_media(self, request, data: MediaPreviewInSchema):
         """
         Get a presigned URL to preview a media file.
         Uses MinIO presigned URLs for optimal performance.
-        
+
         The URL will expire after the specified time (default: 15 minutes).
         Path format: bucket/path/to/file.ext (e.g., 'guardianx-idc/features/data.csv')
         """
@@ -222,22 +229,22 @@ class MediaDataAPI:
             expiry_minutes = 1
         if expiry_minutes > 60:
             expiry_minutes = 60
-        
+
         expiry = timedelta(minutes=expiry_minutes)
-        
+
         # Get preview URL
         preview_data = MediaDataPreviewService.get_preview_url(
             object_path=data.object_path,
             expiry=expiry
         )
-        
+
         if preview_data is None:
             return BaseResponse(
                 status_code=400,
                 message="File not found or file type not supported for preview (only images, videos, and PDFs are supported)",
                 data=None
             )
-        
+
         return BaseResponse(
             status_code=200,
             message="Preview URL generated successfully",
@@ -271,7 +278,7 @@ class MediaDataAPI:
         print("url_callback: ", url_callback)
         print("stream_id: ", stream_id)
         logger.info(f"Detect callback received for detection_id={detection_id}, batch_id={batch_id}, url_callback={url_callback}, stream_id={stream_id}")
-        
+
         # 1) Forward callback to WebSocket so FE can render detection frames progressively
         channel_layer = get_channel_layer()
         if channel_layer:
@@ -368,10 +375,10 @@ class MediaDataAPI:
                     )
         except Exception as e:
             logger.warning(f"Persist VideoAnalysis from callback failed: {e}")
-        
+
         return BaseResponse(status_code=200, message="Detect callback received successfully", data=None)
-    
-    
+
+
 
     # ★ D-368 — 익명 쓰기를 막는다. 이 자리는 [실측 2026-09-11] 익명이 핸들러에
     #   **도달했고**, 본문은 `update_or_create`/`create` 로 쓴다. 쓰기 오염은
@@ -398,7 +405,7 @@ class MediaDataAPI:
         target_group = f"media_upload_detection_{group_code}" if group_code else "media_upload_detection_global"
 
         # Iterate through each detection result and update (or create) VideoAnalysis
-        updated = 0 
+        updated = 0
         created = 0
         for item in (data.results or []):
             object_path = item.get("object_path")

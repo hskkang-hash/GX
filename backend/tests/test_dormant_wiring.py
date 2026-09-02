@@ -170,3 +170,59 @@ class DormantAuditorSelfTest(TestCase):
                              capture_output=True, text=True)
         self.assertEqual(out.returncode, 0,
                          f"잠자는 기능 판정기의 자기시험이 깨졌다:\n{out.stdout}\n{out.stderr}")
+
+    def test_celery_signal_hooks_are_not_reported_dormant(self):
+        """★ 출생 표본을 **저장소 실물로** 박는다 (D-310 · D-393).
+
+        합성 fixture 는 규칙이 있는지를 본다. 이 시험은 **그 규칙이 오늘 이 저장소의
+        그 세 함수에 실제로 걸리는지**를 본다 — D-388 이 ㉮「켜야 할 것」으로 냈던
+        `config/celery.py` 의 시그널 훅 셋이다. 셋은 `@worker_process_init.connect`
+        등으로 **처음부터 배선돼 있었다.** 켜라고 낸 것이 이미 켜져 있었다.
+
+        ⚠ 이 시험이 빨개지는 길은 둘이다. 둘 다 알아야 할 일이다:
+          ① 판정기가 시그널 배선을 다시 못 보게 됐다 (규칙이 사라졌다)
+          ② 누가 `celery.py` 에서 `.connect` 배선을 떼어 냈다 — **그때는 진짜 잠든다**
+        """
+        import ast
+        import importlib.util
+        from pathlib import Path
+
+        candidates = [
+            Path(__file__).resolve().parents[2] / "scripts" / "verify_dormant.py",
+            Path("/repo/scripts/verify_dormant.py"),
+        ]
+        script = next((c for c in candidates if c.is_file()), None)
+        if script is None:
+            self.skipTest("verify_dormant.py 를 못 찾았다 — 판정 불가 (D-301)")
+
+        spec = importlib.util.spec_from_file_location("_vd_for_test", script)
+        vd = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(vd)
+
+        celery_py = script.parent.parent / "backend" / "config" / "celery.py"
+        if not celery_py.is_file():
+            celery_py = Path("/repo/backend/config/celery.py")
+        if not celery_py.is_file():
+            self.skipTest("backend/config/celery.py 를 못 찾았다 — 판정 불가 (D-301)")
+
+        tree = ast.parse(celery_py.read_text(encoding="utf-8", errors="replace"))
+        hooks = {
+            node.name: vd._wired_by_signal(node)
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+        expected = ["init_worker_process",
+                    "close_db_connections_before_task",
+                    "close_db_connections_after_task"]
+        missing = [n for n in expected if n not in hooks]
+        self.assertEqual(missing, [],
+                         "config/celery.py 에서 시그널 훅이 사라졌다: %s" % missing)
+        unwired = [n for n in expected if not hooks[n]]
+        self.assertEqual(unwired, [],
+                         "`@<시그널>.connect` 배선을 판정기가 못 봤다 — D-388 이 이 셋을 "
+                         "㉮「켜야 할 것」으로 냈던 그 자리다: %s" % unwired)
+
+        # 음성 — **파일째 면제가 아니다.** 배선 없는 함수는 여전히 배선 없음으로 나와야 한다
+        plain = [n for n, w in hooks.items() if not w]
+        self.assertTrue(plain,
+                        "celery.py 의 함수 전부가 「배선됨」으로 나왔다 — 파일째 면제된 것이다")

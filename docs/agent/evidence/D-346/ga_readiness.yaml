@@ -508,12 +508,74 @@ areas:
             대장에 올렸다(RJCORE_BLANK_ON_NO_PERMISSION). **화면이 시험이었다.**
 
       - id: UX-07
-        title: 화면 캡처 증거 — 남은 화면 8개
+        title: 화면 캡처 증거 — 남은 화면 8개 (감시·영상·운영 계열)
+        status: 구현
+        proof: docs/agent/evidence/D-396/screens_16.md
+        note: |
+          ★ [실측 2026-09-14 · D-396] **8장 → 16장. 16/16 이 찼다.**
+          고르기 전에 **후보 16개를 실제로 열어 본문을 읽었다**(추측 금지 · D-386):
+            찍을 수 있는 것 13 · 찍을 수 없는 것 3.
+          찍은 여덟:
+            /surveillance-dashboard「Last Updated」 /survey-profile「Add New Profile」
+            /media-data「No preview available.」 /flight-log-analysis「Drone State Prediction」
+            /multi-stream-monitor「Participants」 /operation-settings「API URL」
+            /report-template「Usage Count」 /notam「SNOWTAM」
+          브라우저 오류 **0건** · `verify_screens.py` 통과(16장 · ±5분 대조).
+        why: |
+          [이력 · 지우지 않는다] 2026-09-13 에 이 절이 미착수였던 사유는
+          「구동체는 섰고 이번 턴 표적이 5장이었다」였다. 이번에 채웠다.
+
+      # ★ D-396 — **16장이 결함 셋을 더 냈다.** 이 절은 그 셋을 위한 자리다
+      - id: UX-09
+        title: 열었더니 못 찍은 화면 셋 (빈 화면 1 · 도달 불가 2)
+        status: 잠김
+        blocker: RJCORE_BLANK_ON_NO_PERMISSION
+        proof: docs/agent/evidence/D-386/screen_routes.json
+        note: |
+          ★ [실측 2026-09-14 · D-396] 후보 16개를 열어 **셋을 못 찍었다.**
+          **왜 못 찍었는지로 갈라 적는다** — 한 칸에 두면 고치는 사람이 어디를 볼지 모른다:
+            ㉠ **빈 화면**    `/handover` — 본문 0자 · API 실패 0건 · JS 오류 0건.
+               `/users` 와 **같은 모양**이다. 한 건이면 그 화면의 사정이지만
+               **둘이면 성질**이다 — RJCORE_BLANK_ON_NO_PERMISSION 에 표본을 더했다
+            ㉡ **도달 불가** `/monitoring-dashboard` · `/intergrated-dashboard` —
+               요청한 경로가 아니라 이 계정의 홈(`/profile`)이 떴다. 빈 화면과 다르다:
+               빈 화면은 「왔는데 아무것도 없다」이고 이것은 **「거기 갈 수 없다」**이다
+          ⚠ 이 계정의 `role` 은 `NO_ROLE` 이다 — 역할이 있는 계정에서는 다를 수 있고
+            그것은 **아직 재 보지 않았다.** 「권한 때문」이라고 적지 않는다 (D-322).
+        why: |
+          셋 다 화면 쪽(인수 자산)에서 갈린다. 서버는 이 셋에서 오류를 내지 않았다.
+
+      - id: UX-10
+        title: 저장소가 죽었을 때 사용자가 그것을 안다
+        status: 잠김
+        blocker: MEDIA_LIST_SHOWS_EMPTY_WHEN_STORAGE_DOWN
+        proof: docs/agent/evidence/D-396/screens_16.md
+        note: |
+          ★ [실측 2026-09-14 · D-397] 16장을 여는 중에 `/api/media-data/` 가 **500** 이었다.
+          그런데 화면은 「0 of 0」 을 그렸다 — **당직자에게는 「영상 자료가 없다」로 보인다**(D-378).
+          이번 턴에 **응답이 말하던 두 거짓말은 고쳤다**: `success: true`→`false` ·
+          「operational notice」→「media list」. **그러나 화면은 그대로다** — 화면이 안 듣는다.
+          게이트 `route-alive` 는 이 자리에서 **빨간 채로 둔다**(D-327). 예외를 넣지 않는다.
+
+      # ★ D-394 — **잠자는 기능 전수가 낸 첫 제품 절.** 코드는 다 있고 꺼져 있다
+      - id: UX-08
+        title: 관제 화면 실시간 탐지 알림 (WebSocket 브로드캐스트)
         status: 미착수
         why: |
-          [실측 2026-09-13] 안 찍었다. 구동체는 서 있으므로 **막힌 것이 아니라 안 한 것**이다 —
-          이번 턴의 표적이 5장이었다(D-391 ③). 8/16 이고, 남은 8장은 다음 표적이다.
-          ★ 「잠김」이 아니라 「미착수」인 것이 중요하다 — 우리가 하면 되는 일이다.
+          [실측 2026-09-14 · D-394] **코드는 있고 두 겹으로 꺼져 있다.**
+            ① `backend/surveillance/signals.py` 의 `@receiver(post_save, sender=VideoAnalysis)`
+               가 **주석**이다
+            ② `surveillance/apps.py::SurveillanceConfig` 에 `ready()` 가 없어
+               **signals 모듈을 아무도 import 하지 않는다** — 주석을 풀어도 안 돈다
+          그리고 크기가 여기 있다: `SurveillanceDashboardService.broadcast_detection_message`
+          를 부르는 **운영 코드는 그 시그널 한 자리뿐**이다 (1507줄은 docstring 안의 예시다).
+          → **새 탐지가 저장돼도 관제 화면으로 가는 알림이 한 번도 발화하지 않는다.**
+            당직자에게는 「새 이벤트가 안 뜬다」로 보인다 (D-378).
+
+          ★ 「잠김」이 아니라 「미착수」다 — 우리가 하면 되는 일이다. 다만 **한 줄 주석 해제가
+            아니다**: `post_save` 마다 브로드캐스트를 쏘는 것은 D-369 가 다룬 **폭주 경로**이고,
+            재난 때 그대로 채널 레이어를 때린다. 켜려면 **큐잉 · 같은 (모델,pk) 접기**를
+            함께 얹어야 한다. 그것은 켜기가 아니라 설계이므로 세종의 판정을 기다린다.
 
       # ★ D-383 — **화면이 없어도 할 수 있는 검수.** 이 절의 정답은 우리에게 없다
       - id: UX-05

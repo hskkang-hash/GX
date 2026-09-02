@@ -95,40 +95,80 @@ screens:
   - route: /dsm/dashboard
     user_role: NO_ROLE
     scenario: SCREENS-1/1
-    captured_at: "2026-08-30T15:34:54"
+    captured_at: "2026-09-02T08:25:14"
     file: SCREENS-1/NO_ROLE/dsm_dashboard.png
   - route: /dsm/events
     user_role: NO_ROLE
     scenario: SCREENS-1/2
-    captured_at: "2026-08-30T15:35:01"
+    captured_at: "2026-09-02T08:25:22"
     file: SCREENS-1/NO_ROLE/dsm_events.png
-  - route: /dsm/events/4676
+  - route: /dsm/events/4682
     user_role: NO_ROLE
     scenario: SCREENS-1/3
-    captured_at: "2026-08-30T15:35:09"
-    file: SCREENS-1/NO_ROLE/dsm_events_4676.png
+    captured_at: "2026-09-02T08:25:29"
+    file: SCREENS-1/NO_ROLE/dsm_events_4682.png
   - route: /device
     user_role: NO_ROLE
     scenario: SCREENS-1/4
-    captured_at: "2026-08-30T15:35:17"
+    captured_at: "2026-09-02T08:25:37"
     file: SCREENS-1/NO_ROLE/device.png
   - route: /roles
     user_role: NO_ROLE
     scenario: SCREENS-1/5
-    captured_at: "2026-08-30T15:35:24"
+    captured_at: "2026-09-02T08:25:45"
     file: SCREENS-1/NO_ROLE/roles.png
   - route: /menu
     user_role: NO_ROLE
     scenario: SCREENS-1/6
-    captured_at: "2026-08-30T15:35:32"
+    captured_at: "2026-09-02T08:25:52"
     file: SCREENS-1/NO_ROLE/menu.png
   - route: /configuration-management
     user_role: NO_ROLE
     scenario: SCREENS-1/7
-    captured_at: "2026-08-30T15:35:39"
+    captured_at: "2026-09-02T08:25:59"
     file: SCREENS-1/NO_ROLE/configuration-management.png
   - route: /profile
     user_role: NO_ROLE
     scenario: SCREENS-1/8
-    captured_at: "2026-08-30T15:35:47"
+    captured_at: "2026-09-02T08:26:07"
     file: SCREENS-1/NO_ROLE/profile.png
+  - route: /surveillance-dashboard
+    user_role: NO_ROLE
+    scenario: SCREENS-1/9
+    captured_at: "2026-09-02T08:26:16"
+    file: SCREENS-1/NO_ROLE/surveillance-dashboard.png
+  - route: /survey-profile
+    user_role: NO_ROLE
+    scenario: SCREENS-1/10
+    captured_at: "2026-09-02T08:26:23"
+    file: SCREENS-1/NO_ROLE/survey-profile.png
+  - route: /media-data
+    user_role: NO_ROLE
+    scenario: SCREENS-1/11
+    captured_at: "2026-09-02T08:26:31"
+    file: SCREENS-1/NO_ROLE/media-data.png
+  - route: /flight-log-analysis
+    user_role: NO_ROLE
+    scenario: SCREENS-1/12
+    captured_at: "2026-09-02T08:26:38"
+    file: SCREENS-1/NO_ROLE/flight-log-analysis.png
+  - route: /multi-stream-monitor
+    user_role: NO_ROLE
+    scenario: SCREENS-1/13
+    captured_at: "2026-09-02T08:26:46"
+    file: SCREENS-1/NO_ROLE/multi-stream-monitor.png
+  - route: /operation-settings
+    user_role: NO_ROLE
+    scenario: SCREENS-1/14
+    captured_at: "2026-09-02T08:26:53"
+    file: SCREENS-1/NO_ROLE/operation-settings.png
+  - route: /report-template
+    user_role: NO_ROLE
+    scenario: SCREENS-1/15
+    captured_at: "2026-09-02T08:27:01"
+    file: SCREENS-1/NO_ROLE/report-template.png
+  - route: /notam
+    user_role: NO_ROLE
+    scenario: SCREENS-1/16
+    captured_at: "2026-09-02T08:27:11"
+    file: SCREENS-1/NO_ROLE/notam.png

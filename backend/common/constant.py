@@ -1224,7 +1224,7 @@ class MESSAGE_ENUM:
         Language.KR: "도킹스테이션 상태 변경에 실패했습니다.",
         Language.TH: "การเปลี่ยนแปลงสถานะสถานีเชื่อมต่อล้มเหลว",
     }
-    
+
     # Detection message templates with placeholders: {detect_name}
     DETECTION_MESSAGE_TEMPLATE_FIRE_SMOKE = {
         Language.EN: "Detected {detect_name}.",
@@ -1251,7 +1251,7 @@ class MESSAGE_ENUM:
         Language.KR: "{detect_name}을(를) 감지했습니다.",
         Language.TH: "ตรวจพบ {detect_name}.",
     }
-    
+
     # Detection names in different languages
     DETECTION_NAME_FIRE_SMOKE = {
         Language.EN: "fire/smoke",
@@ -1369,7 +1369,7 @@ class MESSAGE_ENUM:
         "fire": {Language.EN: "fire", Language.KR: "화재", Language.TH: "ไฟ"},
         "smoke": {Language.EN: "smoke", Language.KR: "연기", Language.TH: "ควัน"},
     }
-    
+
     # Relative time translations
     RELATIVE_TIME_JUST_NOW = {
         Language.EN: "just now",
@@ -1441,7 +1441,7 @@ class MESSAGE_ENUM:
         Language.KR: "전",
         Language.TH: "ที่แล้ว",
     }
-    
+
     # Month names translations
     MONTH_JANUARY = {
         Language.EN: "January",
@@ -1503,7 +1503,7 @@ class MESSAGE_ENUM:
         Language.KR: "12월",
         Language.TH: "ธันวาคม",
     }
-    
+
     # Month abbreviations translations
     MONTH_ABBR_JANUARY = {
         Language.EN: "Jan",
@@ -1565,7 +1565,7 @@ class MESSAGE_ENUM:
         Language.KR: "12월",
         Language.TH: "ธ.ค.",
     }
-    
+
     GET_DRONE_STATUS_OVERVIEW_SUCCESS = {
         Language.EN: "Drone status overview fetched successfully.",
         Language.KR: "드론 상태 개요가 성공적으로 가져왔습니다.",
@@ -1596,9 +1596,9 @@ class MESSAGE_ENUM:
         Language.KR: "오늘 지역 드론 목록을 성공적으로 가져왔습니다.",
         Language.TH: "ดึงข้อมูลโดรนตามภูมิภาคสำหรับวันนี้สำเร็จ",
     }
-    
-    ACTIVATE_INFRASTRUCTURE_SUCCESS = { 
-        Language.EN: "Infrastructure status changed successfully.", 
+
+    ACTIVATE_INFRASTRUCTURE_SUCCESS = {
+        Language.EN: "Infrastructure status changed successfully.",
         Language.KR: "인프라 상태가 변경되었습니다.",
         Language.TH: "การเปลี่ยนแปลงสถานะโครงสร้างพื้นฐานสำเร็จ",
     }
@@ -1978,7 +1978,7 @@ class MESSAGE_ENUM:
         Language.KR: "운영 로그 드론이 성공적으로 다운로드되었습니다.",
         Language.TH: "การวาดสำเร็จ",
     }
-    
+
     DOWNLOAD_OPERATIONAL_LOG_DRONE_FAILED = {
         Language.EN: "Operational log drone downloaded failed.",
         Language.KR: "운영 로그 드론이 다운로드 실패했습니다.",
@@ -1990,7 +1990,7 @@ class MESSAGE_ENUM:
         Language.KR: "운영 로그 로봇이 성공적으로 업로드되었습니다.",
         Language.TH: "การวาดสำเร็จ",
     }
-    
+
     UPLOAD_OPERATIONAL_LOG_ROBOT_FAILED = {
         Language.EN: "Operational log robot uploaded failed.",
         Language.KR: "운영 로그 로봇이 업로드 실패했습니다.",
@@ -2002,7 +2002,7 @@ class MESSAGE_ENUM:
         Language.KR: "운영 비디오 드론 업로드가 성공적으로 대기열에 추가되었습니다. 완료되면 알림을 받게 됩니다.",
         Language.TH: "การวาดสำเร็จ",
     }
-    
+
     UPLOAD_OPERATIONAL_VIDEO_DRONE_FAILED = {
         Language.EN: "Operational video drone uploaded failed.",
         Language.KR: "운영 비디오 드론이 업로드 실패했습니다.",
@@ -2014,7 +2014,7 @@ class MESSAGE_ENUM:
         Language.KR: "운영 비디오 로봇 업로드가 성공적으로 대기열에 추가되었습니다. 완료되면 알림을 받게 됩니다.",
         Language.TH: "การวาดสำเร็จ",
     }
-    
+
     UPLOAD_OPERATIONAL_VIDEO_ROBOT_FAILED = {
         Language.EN: "Operational video robot uploaded failed.",
         Language.KR: "운영 비디오 로봇이 업로드 실패했습니다.",
@@ -2068,7 +2068,7 @@ class MESSAGE_ENUM:
         Language.KR: "운영 로그 드론이 성공적으로 업로드되었습니다.",
         Language.TH: "การวาดสำเร็จ",
     }
-    
+
     UPLOAD_OPERATIONAL_LOG_DRONE_FAILED = {
         Language.EN: "Operational log drone uploaded failed.",
         Language.KR: "운영 로그 드론이 업로드 실패했습니다.",
@@ -2080,7 +2080,7 @@ class MESSAGE_ENUM:
         Language.KR: "운영 로그 로봇이 성공적으로 다운로드되었습니다.",
         Language.TH: "การวาดสำเร็จ",
     }
-    
+
     DOWNLOAD_OPERATIONAL_LOG_ROBOT_FAILED = {
         Language.EN: "Operational log robot downloaded failed.",
         Language.KR: "운영 로그 로봇이 다운로드 실패했습니다.",
@@ -2092,7 +2092,7 @@ class MESSAGE_ENUM:
         Language.KR: "운영 로그 로봇이 비어있습니다.",
         Language.TH: "การวาดสำเร็จ",
     }
-    
+
     OPERATIONAL_LOG_DRONE_EMPTY = {
         Language.EN: "Operational log drone is empty.",
         Language.KR: "운영 로그 드론이 비어있습니다.",
@@ -2104,7 +2104,7 @@ class MESSAGE_ENUM:
         Language.KR: "운영 데이터가 성공적으로 다운로드되었습니다.",
         Language.TH: "การวาดสำเร็จ",
     }
-    
+
     DOWNLOAD_OPERATIONAL_DATA_FAILED = {
         Language.EN: "Operational data downloaded failed.",
         Language.KR: "운영 데이터가 다운로드 실패했습니다.",
@@ -2212,7 +2212,7 @@ class MESSAGE_ENUM:
         Language.KR: "파트너 리프레시 토큰 폐기 실패.",
         Language.TH: "การวาดสำเร็จ",
     }
-    
+
     # Partner Management messages
     CREATE_PARTNER_WITH_PROXY_SUCCESS = {
         Language.EN: "Partner created successfully with auto-generated credentials.",
@@ -2340,7 +2340,7 @@ class MESSAGE_ENUM:
         Language.TH: "การวาดสำเร็จ",
     }
     UPDATE_SUCCESS = {
-        Language.EN: "Updated operational notice successfully", 
+        Language.EN: "Updated operational notice successfully",
         Language.KR: "공지가 업데이트되었습니다",
         Language.TH: "การวาดสำเร็จ",
     }
@@ -2707,7 +2707,7 @@ class MESSAGE_ENUM:
         Language.KR: "AI 듀얼 스트림이 성공적으로 중지되었습니다",
         Language.TH: "การหยุด AI สตรีมสองสายสำเร็จ",
     }
-    
+
     GET_AI_DUAL_STREAM_STATUS_SUCCESS = {
         Language.EN: "AI dual stream status retrieved successfully",
         Language.KR: "AI 듀얼 스트림 상태를 성공적으로 가져왔습니다",
@@ -3063,6 +3063,15 @@ class MESSAGE_ENUM:
         Language.EN: "Media detection failed",
         Language.KR: "미디어 감지 실패",
         Language.TH: "การตรวจจับสื่อล้มเหลว",
+    }
+    # ★ [실측 2026-09-14 · D-397] 화면을 열어 찾았다. `/media-data` 가 실패하면
+    #   응답이 「Failed to retrieve **operational notice** list」라 말하고 있었다 —
+    #   `GET_LIST_FAILED` 하나를 여러 앱이 나눠 쓰는데 그 영문이 **한 앱의 것**이었다.
+    #   틀린 문구는 고치는 사람을 엉뚱한 앱으로 보낸다.
+    MEDIA_LIST_FAILED = {
+        Language.EN: "Failed to retrieve media list",
+        Language.KR: "미디어 목록 가져오기 실패",
+        Language.TH: "ไม่สามารถดึงรายการสื่อได้",
     }
 
     @classmethod
