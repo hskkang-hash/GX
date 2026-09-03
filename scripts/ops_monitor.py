@@ -59,7 +59,23 @@ THRESHOLDS = {
                               "발송 경로가 막혔다는 뜻이다"),
     # ③ 채워지는가
     "db_size_gb": (50, "DB 50GB. 지금 4MB 다 — 이 값은 상한이 아니라 **증가를 눈치채는 자리**다"),
+    # ── 평상 운영 ① 죽은 카메라 (2026-09-20 · 차선 E) ──────────────────────
+    "cameras_silent_24h": (0, "★ [추정] 0 대. **한 대라도 조용하면 사람이 본다** — 카메라는 "
+                              "수십 대 규모이므로 「몇 대까지는 괜찮다」는 값이 없다. "
+                              "⚠ 이 신호는 죽은 카메라와 **아무 일도 없던 카메라**를 못 가른다 "
+                              "(아래 collect 의 ⚠ 를 보라). 그래서 경보의 뜻은 「죽었다」가 "
+                              "아니라 **「가서 봐라」**다"),
+    # ── 평상 운영 ④ 저장 용량 (2026-09-20 · 차선 E) ────────────────────────
+    "storage_used_pct": (80, "★ [추정] 80%. 근거는 이 저장소에 없다 — 영상 보존기간·카메라 수가 "
+                             "정해지면 그때 다시 잡는다. 80 을 고른 이유는 **남은 20% 가 "
+                             "사람이 움직일 시간**이기 때문이다(주말 하나를 버티는 폭). "
+                             "용량 상한이 선언되지 않으면 이 신호는 **판정 불가**다 — 모르는 "
+                             "것을 초록으로 적지 않는다(D-301)"),
 }
+
+#: 용량 상한은 **환경이 선언한다.** 코드가 추측하면 그 추측이 곧 초록이 된다.
+#:   GX_STORAGE_CAPACITY_GB=500   (없으면 storage_used_pct 는 UNKNOWN)
+STORAGE_CAPACITY_ENV = "GX_STORAGE_CAPACITY_GB"
 
 
 def _now() -> datetime:
@@ -183,6 +199,87 @@ def collect() -> dict:
     except Exception as exc:
         out["signals"]["cameras"] = {"value": None, "verdict": UNKNOWN,
                                      "note": "재지 못했다: %s" % type(exc).__name__}
+
+    # ── 평상 운영 ① 죽은 카메라 ───────────────────────────────────────────
+    # ★★ **감시 유무를 먼저 잰다** (세종 09-20 차선 E). 답: **없다.**
+    #   `StreamMonitor` 에는 「마지막으로 살아 있던 시각」 칸이 없다 —
+    #   `is_active` 는 **운영자가 켜고 끄는 스위치**이지 카메라가 살아 있다는 증거가
+    #   아니다. 스위치가 켜진 채 죽은 카메라와 살아 있는 카메라는 그 칸에서 같다.
+    #
+    #   그래서 지금 잴 수 있는 것은 **간접 증거 하나**뿐이다: 그 카메라에서 마지막
+    #   이벤트가 언제 왔나.
+    #   ⚠ 이것은 「죽었다」의 증거가 아니다. **아무 일도 없던 카메라도 조용하다.**
+    #     둘을 가르려면 스트림 하트비트(마지막 프레임 시각)가 필요하고 그것은 칸이
+    #     없다 — 잠금으로 등재한다(DA-05/blockers.yaml :: CAMERA_LIVENESS_HEARTBEAT).
+    #     못 가르는 것을 「가른다」고 적는 것이 이 저장소가 반복해 만난 실패다(D-301).
+    try:
+        from datetime import timedelta
+
+        Monitor = apps.get_model("stream_monitors", "StreamMonitor")
+        Event = apps.get_model("stream_monitors", "DetectionEvent")
+        since = _now() - timedelta(hours=24)
+        active = list(Monitor._base_manager.filter(is_active=True)
+                      .values_list("pk", "code"))
+        recent = set(Event._base_manager.filter(occurred_at__gte=since)
+                     .values_list("stream_monitor_id", flat=True))
+        ever = set(Event._base_manager.values_list("stream_monitor_id", flat=True))
+        # ★★ **한 번도 안 울린 카메라와 울리다 멈춘 카메라는 다른 사실이다.**
+        #   [실측 2026-09-20] 개발 DB 에서 켜진 40대 중 **39대가 한 번도** 이벤트를 낸
+        #   적이 없다(배송 도메인에서 온 `drone_*`). 그 39를 「죽은 카메라」로 세면
+        #   경보가 첫날부터 39 로 시작하고, **그 경보는 아무도 안 본다**
+        #   (이 파일 머리말: 「더 보면 아무도 안 본다」).
+        #   죽은 카메라의 뜻은 **「살아 있던 것이 조용해졌다」**이다.
+        silent = [c for pk, c in active if pk in ever and pk not in recent]
+        never = [c for pk, c in active if pk not in ever]
+        put("cameras_silent_24h", len(silent),
+            "켜져 있고 **전에 울린 적 있는데** 24시간 조용한 것: %s — 「죽었다」가 아니라 "
+            "**「가서 봐라」**다" % (", ".join(silent[:5]) + ("…" if len(silent) > 5 else "")
+                                    or "없음"))
+        out["signals"]["cameras_never_seen"] = {
+            "value": len(never), "verdict": OK,
+            "note": ("켜져 있는 %d대 중 **한 번도 이벤트를 낸 적 없는** 것 — 설치 미완·"
+                     "외부 드론일 수 있다. 경보가 아니라 **세어 두는 수**다 (임계 없음)"
+                     % len(active))}
+    except Exception as exc:
+        put("cameras_silent_24h", None, "재지 못했다: %s" % type(exc).__name__)
+
+    # ── 평상 운영 ④ 저장 용량 ─────────────────────────────────────────────
+    # 용량 상한은 **환경이 선언한다.** 선언이 없으면 판정 불가다 — 「몇 % 찼나」는
+    # 분모 없이 답할 수 없는 질문이고, 분모를 코드가 지어내면 그 추측이 초록이 된다.
+    try:
+        capacity_gb = float(os.environ.get(STORAGE_CAPACITY_ENV, "") or 0)
+    except ValueError:
+        capacity_gb = 0
+    used_gb, detail = None, ""
+    try:
+        from django.conf import settings as _s2
+        from minio import Minio
+
+        _ep2 = str(getattr(_s2, "MINIO_ENDPOINT", "") or "")
+        for _scheme in ("http://", "https://"):
+            if _ep2.startswith(_scheme):
+                _ep2 = _ep2[len(_scheme):]
+        _b2 = getattr(_s2, "MINIO_STORAGE_MEDIA_BUCKET_NAME", "")
+        _c2 = Minio(_ep2.rstrip("/"), access_key=_s2.MINIO_ACCESS_KEY,
+                    secret_key=_s2.MINIO_SECRET_KEY,
+                    secure=bool(getattr(_s2, "MINIO_USE_HTTPS", False)))
+        total = sum(o.size or 0 for o in _c2.list_objects(_b2, recursive=True))
+        used_gb = round(total / (1024 ** 3), 4)
+        detail = "버킷 %s 객체 합계 %.4fGB" % (_b2, used_gb)
+    except Exception as exc:
+        detail = "저장소 사용량을 못 셌다: %s" % type(exc).__name__
+    out["signals"]["storage_used_gb"] = {
+        "value": used_gb, "verdict": OK if used_gb is not None else UNKNOWN,
+        "note": detail}
+    if used_gb is None or capacity_gb <= 0:
+        out["signals"]["storage_used_pct"] = {
+            "value": None, "verdict": UNKNOWN,
+            "note": ("용량 상한이 선언되지 않았다(%s) — **분모 없이 「몇 %% 찼나」에 답하지 "
+                     "않는다**(D-301)" % STORAGE_CAPACITY_ENV)
+                    if capacity_gb <= 0 else detail}
+    else:
+        put("storage_used_pct", round(used_gb / capacity_gb * 100, 2),
+            "상한 %.0fGB (%s 가 선언)" % (capacity_gb, STORAGE_CAPACITY_ENV))
     return out
 
 
@@ -198,6 +295,13 @@ def self_test() -> int:
         ("★ 임계값마다 사유가 있다 — 적을 수 없는 임계값은 임계값이 아니다",
          all(len(note) > 10 for _limit, note in THRESHOLDS.values())),
         ("신호가 셋 이상이다 (살아있나·밀리나·채워지나)", len(THRESHOLDS) >= 3),
+        # ★ 2026-09-20 (차선 E) — 새 신호 둘의 **음성 갈래**를 함께 둔다.
+        ("★ 조용한 카메라 한 대는 경보다 — 「몇 대까지는 괜찮다」가 없다",
+         judge("cameras_silent_24h", 1) == ALARM),
+        ("조용한 카메라 0대는 정상이다", judge("cameras_silent_24h", 0) == OK),
+        ("★ 용량 상한이 없으면 **판정 불가**다 — 분모 없이 %는 없다",
+         judge("storage_used_pct", None) == UNKNOWN),
+        ("80% 를 넘으면 경보", judge("storage_used_pct", 80.1) == ALARM),
     ]
     bad = 0
     for label, ok in checks:
