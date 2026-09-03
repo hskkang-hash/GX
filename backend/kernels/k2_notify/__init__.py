@@ -28,6 +28,7 @@ from kernels.k2_notify.schemas import (
 )
 from kernels.k2_notify.services import (
     list_deliveries,
+    notice_false_positive,
     resolve_recipients,
     send,
     suppress,
@@ -39,6 +40,10 @@ __all__ = [
     "send",
     "suppress",
     "list_deliveries",
+    # ★ P-16 오탐 ③ — 알림이 나간 이벤트가 오탐이 되면 원 수신자에게 **1회** (2026-09-20).
+    #   발송이 아니라 **뒷정리**라 `DeliveryRecord` 행을 만들지 않는다 — 그 표는
+    #   F-10 의 30초와 5분 억제를 재는 자리다(함수 머리말 ★★).
+    "notice_false_positive",
     # 나가는 값의 모양
     "Recipient",
     "DeliveryView",

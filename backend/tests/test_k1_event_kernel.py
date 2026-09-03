@@ -583,9 +583,14 @@ class KernelPublicSurfaceTest(TestCase):
     #: DA-04 §2 K1 의 "공개 면" 열 그대로.
     #: ★ 2026-09-14 — 둘이 늘었다 (D-399 대응 진행 축). DA-04 §2 K1 표와 `__init__` 과
     #:   이 줄을 **같은 커밋에서** 함께 고쳤다. 갈리면 어느 쪽이 계약인지 모른다.
+    #: ★ 2026-09-20 — 하나가 더 늘었다 (P-16 오탐 결합). `__init__` 과 이 줄을
+    #:   **같은 커밋에서** 고쳤다. 이 함수는 소비자 한 곳만 부르지만 공개 면에 둔다 —
+    #:   격리 대장(`WRITE_PROBES`)이 커널 `__all__` 을 훑기 때문이고, 면에서 감추면
+    #:   쓰기 면이 **대장 밖에서** 자란다(D-290 · D-301).
     SURFACE = ["record_detection", "query_events", "get_event",
                "review_event", "close_event", "subscribe",
-               "advance_response", "response_state"]
+               "advance_response", "response_state",
+               "close_as_false_positive"]
 
     def test_public_surface_matches_da04(self) -> None:
         from kernels import k1_event

@@ -39,6 +39,7 @@ import argparse
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -86,6 +87,30 @@ def judge_media(status: int, success: object) -> tuple[bool, str]:
     if status >= 500:
         return False, "**서버 오류** — 저장소에 닿지 못하는 자리다"
     return False, "받지 못한다"
+
+
+def probe(api: str, path: str, token: str) -> tuple[int, object]:
+    """한 자리를 때려 (HTTP 상태, 본문 `success`) 를 돌려준다.
+
+    ★ 두 값을 함께 내는 이유는 이 파일 머리말의 D-397 그대로다 — 상태 코드만 보는
+      판정은 `success:true · status:500` 을 초록으로 읽는다.
+    """
+    req = urllib.request.Request(api + path)
+    req.add_header("Authorization", f"Bearer {token}")
+    try:
+        with urllib.request.urlopen(req, timeout=25) as r:
+            status = r.status
+            body = json.loads(r.read().decode("utf-8", "replace") or "{}")
+    except urllib.error.HTTPError as e:
+        status = e.code
+        try:
+            body = json.loads(e.read().decode("utf-8", "replace") or "{}")
+        except json.JSONDecodeError:
+            body = {}
+    except Exception as exc:                             # noqa: BLE001
+        print(f"[MINIO] {path} — 응답을 못 받았다: {type(exc).__name__} {exc}")
+        status, body = 0, {}
+    return status, (body.get("success") if isinstance(body, dict) else None)
 
 
 def http_status(url: str, timeout: int = 10) -> int:
@@ -232,32 +257,32 @@ def main() -> int:
         print("[MINIO] 토큰을 못 받았다 — **판정 불가**")
         return EXIT_UNDECIDABLE
     for path in (MEDIA_PATH, MEDIA_PATH.replace("/api/media-data/", "/api/media-data")):
-        req = urllib.request.Request(args.api + path)
-        req.add_header("Authorization", f"Bearer {token}")
-        success: object = None
-        try:
-            with urllib.request.urlopen(req, timeout=25) as r:
-                status = r.status
-                body = json.loads(r.read().decode("utf-8", "replace") or "{}")
-        except urllib.error.HTTPError as e:
-            status = e.code
-            try:
-                body = json.loads(e.read().decode("utf-8", "replace") or "{}")
-            except json.JSONDecodeError:
-                body = {}
-        except Exception as exc:                         # noqa: BLE001
-            print(f"[MINIO] {path} — 응답을 못 받았다: {type(exc).__name__} {exc}")
-            status, body = 0, {}
-        if isinstance(body, dict):
-            success = body.get("success")
+        status, success = probe(args.api, path, token)
         ok, why = judge_media(status, success)
         mark = "  " if ok else "✗ "
         print(f"[MINIO] {mark}{status:3} success={success!s:5} {path[:46]:46} {why}")
         if not ok:
             rc = EXIT_FAIL
 
+    # ── ④ 캐시 안과 밖이 **같은 것을 말하는가** (P-19 · 상시 항목) ─────────
+    #    액자에 든 사진은 언제나 200 이다. 같은 순간에 두 URL 을 견주지 않으면
+    #    ③의 초록이 「지금 받는다」인지 「받았던 적이 있다」인지 갈리지 않는다.
+    plain = probe(args.api, MEDIA_PATH, token)
+    fresh = probe(args.api, f"{MEDIA_PATH}&bust={int(time.time() * 1000)}", token)
+    print(f"[MINIO] [입력] 2건 — 같은 순간 두 URL (캐시 안 {plain[0]}/{plain[1]} · "
+          f"캐시 밖 {fresh[0]}/{fresh[1]})")
+    if plain != fresh:
+        rc = EXIT_FAIL
+        print(f"[MINIO] ✗ **캐시가 사진을 액자에 넣고 있다** — 질의문자열 하나로 답이 "
+              f"바뀐다. 캐시 안 {plain} vs 캐시 밖 {fresh}")
+        print("[MINIO]   `media-data` 가 BYPASS_PATTERNS 에서 빠졌는지 먼저 본다 "
+              "(D-412 · P-19 · scripts/verify_cache_frame.py)")
+    else:
+        print("[MINIO]   캐시 안과 밖이 같은 답을 낸다 — 우회가 살아 있다 (D-412)")
+
     if rc == EXIT_OK:
-        print(f"[MINIO] 통과 — 저장소 산다 · 객체 {n}건 · 화면이 부르는 두 자리가 받는다")
+        print(f"[MINIO] 통과 — 저장소 산다 · 객체 {n}건 · 화면이 부르는 두 자리가 받는다 · "
+              f"캐시 안팎이 같다")
     return rc
 
 

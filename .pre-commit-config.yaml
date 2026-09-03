@@ -250,6 +250,19 @@ repos:
         pass_filenames: false
         files: '^(backend/tests/.*\.py|docs/agent/evidence/D-341/.*)$'
 
+  # ── D-413 (P-19): 상태·가용성 응답은 캐시를 지나지 않는다 ──────────────
+  # 09-19 에 사람의 눈이 한 번 지킨 규칙이다(D-412 · media-data). 사람의 눈은 다음
+  # 라우트에서 다시 필요하고, 그때 거기 없다. 그래서 도구로 옮긴다.
+  # ★ 이어 붙은 리터럴도 함께 본다 — 쉼표 하나가 패턴 하나를 삼킨 자리가 실제로 있었다.
+  - repo: local
+    hooks:
+      - id: gx-cache-frame
+        name: 상태·가용성 캐시 우회 검사 (D-413 · P-19)
+        entry: python scripts/verify_cache_frame.py
+        language: system
+        pass_filenames: false
+        files: '^(backend/common/(universal_optimization|cache_hint_registry)\.py|scripts/verify_cache_frame\.py)$'
+
   # ── D-343: 라우트 인벤토리·3갈래 대장 ──────────────────────────────────
   # 새 라우트가 대장에 없이 태어나면 분류되지 않은 표면이 된다.
   # 전역 적용(③)은 판정 대기지만, 표면이 넓어지는 것은 지금부터 막는다(④ 래칫).

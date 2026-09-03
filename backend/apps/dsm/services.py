@@ -175,6 +175,7 @@ def event_detail(*, scope: TenantScope, event_id: int):
 #:   ⚠ 클래스를 **다시 정의하지 않고 그대로 내보낸다.** 새로 정의하면 커널이 던진
 #:     것과 App 이 잡는 것이 다른 클래스가 되어 `except` 가 조용히 안 걸린다.
 from kernels.k1_event import (  # noqa: E402  (재수출 — 위 규약 때문에 여기 있다)
+    InvalidEventInput,
     ResponseTransitionError,
     ResponseTransitionForbidden,
     ResponseTransitionNeedsManager,
@@ -184,6 +185,8 @@ from kernels.k1_event import (  # noqa: E402  (재수출 — 위 규약 때문�
 __all_response_errors__ = (
     "ResponseTransitionError", "ResponseTransitionForbidden",
     "ResponseTransitionNeedsManager", "ResponseTransitionNeedsReason",
+    # ★ P-16 — 판정값이 아닌 값은 **422** 로 나간다. `api.py` 가 이 이름으로 잡는다.
+    "InvalidEventInput",
 )
 def advance_response(*, scope: TenantScope, event_id: int, to_state: str,
                      reason: str = ""):
@@ -204,6 +207,29 @@ def response_state(*, scope: TenantScope, event_id: int):
     from kernels.k1_event import response_state as _state
 
     return _state(event_id, scope=scope)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 판정 축 — 오탐/정탐 (P-16 · 오탐 ②)
+# ═══════════════════════════════════════════════════════════════════════════
+def review_event(*, scope: TenantScope, event_id: int, verdict: str,
+                 reason: str = ""):
+    """이 탐지가 진짜인가를 사람이 판정한다 (F-14 오탐률의 입력).
+
+    ★ 이 함수는 **2026-08 부터 커널에 있었고 문이 없었다.** 화면의 「오탐」 버튼이
+      부를 자리가 없어 U1 의 오탐률은 시드로만 채워졌다 — 착시 ⑨(함수는 문이 아니다).
+      P-16 에서 문을 세운다.
+
+    ★ **App 은 규칙을 들지 않는다.** 판정값 검증·감사·오탐 결합은 전부 커널에 있다.
+      결합(→ 대응 축 종결)은 이 호출의 **부작용이 아니라 소비자의 일**이다 —
+      `stream_monitors/services/` 의 오탐 결합 소비자 한 곳에만 산다.
+      (그 모듈 이름을 여기 적지 않는다: `AppStaysThinTest` 가 이 파일에서 오탐 관련
+       영문 낱말을 **App 이 오탐률을 다시 세는 냄새**로 읽는다. 그 판정이 옳다 —
+       이름을 적고 싶어 시험을 넓히는 것이 시험을 고쳐 초록을 만드는 일이다 · D-327)
+    """
+    from kernels.k1_event import review_event as _review
+
+    return _review(event_id, verdict=verdict, reason=reason, scope=scope)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

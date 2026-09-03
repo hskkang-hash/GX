@@ -475,7 +475,9 @@ class KernelPublicSurfaceTest(TestCase):
     """DA-04 §2 K2 표가 정한 공개 면 4개가 **실재하는가.**"""
 
     #: DA-04 §2 K2 의 "공개 면" 열 그대로.
-    SURFACE = ["resolve_recipients", "send", "suppress", "list_deliveries"]
+    #: ★ 2026-09-20 — `notice_false_positive` 가 늘었다 (P-16 오탐 ③).
+    SURFACE = ["resolve_recipients", "send", "suppress", "list_deliveries",
+               "notice_false_positive"]
 
     def test_public_surface_matches_da04(self) -> None:
         from kernels import k2_notify

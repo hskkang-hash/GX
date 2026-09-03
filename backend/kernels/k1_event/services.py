@@ -74,6 +74,7 @@ from common.tenant_filters import assert_scoped, filter_by_group_field, get_scop
 from common.tenant_scope import TenantScope
 from kernels.k1_event.exceptions import InvalidEventInput, NotImplementedYet
 from kernels.k1_event.schemas import EventView, RecordResult
+from kernels.k1_event.verdict_events import verdict_changed
 
 #: **기록** 중복 억제 창. 같은 stream+type 이 이 안에 재발하면 `last_seen_at` 만 갱신한다.
 #: DA-04 가 못박은 10초. 이 값을 늘리면 U1 의 오탐률 분모가 그만큼 줄어든다.
@@ -460,6 +461,7 @@ def review_event(event_id: int, *, verdict: str, reason: str = "",
     assert_scoped(Event, event_id, actor)
 
     row = Event._base_manager.select_related("stream_monitor").get(pk=event_id)
+    previous = row.verdict or ""
     row.status = verdict
     # ★ 판정을 **두 곳에 쓴다** — 같은 값이지만 두 칸의 수명이 다르다 (D-293).
     #   `status` 는 수명주기라 `close_event` 가 덮고, `verdict` 는 덮이지 않는다.
@@ -471,6 +473,16 @@ def review_event(event_id: int, *, verdict: str, reason: str = "",
     row.reject_reason = reason or None
     row.save(update_fields=["status", "verdict", "reviewed_by", "reviewed_at",
                             "reject_reason"])
+    # ★ **여기서 `response_state` 를 건드리지 않는다** (P-16 · D-399).
+    #   「오탐이면 대응도 종결」은 사용자에게는 한 가지 일이지만, 코드에서 두 축이
+    #   맞물리면 다음 사람이 판정을 고치려다 대응을 깨뜨린다. 이 함수가 하는 일은
+    #   **일어난 일을 말하는 것**까지다 — 결합은 소비자 한 곳에만 산다
+    #   (`stream_monitors.services.false_positive_closer`).
+    #   같은 값으로 다시 판정한 것은 전이가 아니므로 보내지 않는다.
+    if previous != verdict:
+        verdict_changed.send(
+            sender=Event, event_id=event_id, verdict=verdict,
+            previous=previous, scope=scope)
     return _to_view(row)
 
 

@@ -56,6 +56,9 @@ COMBOS = [
     (1, None),              # 접수 확인 · 미판정
     (2, "confirmed"),       # 조치중 · 진짜였다
     (3, "confirmed"),       # 종결 · 진짜였다
+    #: ★ 2026-09-20 (P-16) — 종결 · 오탐이었다. **대응 축은 시드가 걷지 않는다.**
+    #:   판정 하나가 결합 규칙으로 종결까지 끌고 간다(`steps` 를 3 으로 둔 것은
+    #:   「여기까지 가 있어야 한다」는 **기대값**이고, 그 값을 아래에서 대조한다).
     (3, "rejected"),        # 종결 · 오탐이었다 — 오탐률의 분자
 ]
 FORWARD = ["acknowledged", "in_progress", "closed"]
@@ -169,7 +172,7 @@ class Command(BaseCommand):
             reason="시드 — 탐지 파이프라인에는 요청자가 없다 (D-281)")
 
         now = timezone.now()
-        made, moved, judged = 0, 0, 0
+        made, moved, judged, coupled = 0, 0, 0, 0
         nth = 0
         for (etype, severity, label) in SCENARIOS:
             for (steps, verdict) in COMBOS:
@@ -189,10 +192,26 @@ class Command(BaseCommand):
                     review_event(result.event_id, verdict=verdict,
                                  reason=f"시드 — {label}", scope=scope_user)
                     judged += 1
-                for to in FORWARD[:steps]:
+                #: ★ 2026-09-20 (P-16) — `rejected` 는 **대응 축을 직접 걷지 않는다.**
+                #:   여기서 세 칸을 더 걸으면 시드가 규칙을 **흉내 내는 것**이 되고,
+                #:   그러면 규칙이 안 돌아도 시드는 똑같이 보인다. 2026-09-17 에
+                #:   「시드가 rejected 4 · closed 8 이니 돌아가는 듯하다」로 잘못 읽은
+                #:   자리가 정확히 여기다 — **수는 원인을 말하지 않는다**(세종 09-18 §0-4).
+                #:   이제 이 네 건의 `closed` 는 **결합 소비자가 한 일**이고,
+                #:   아래 대조가 그것을 말로가 아니라 수로 확인한다.
+                for to in ([] if verdict == "rejected" else FORWARD[:steps]):
                     advance_response(result.event_id, to_state=to,
                                      reason=f"시드 — {label}", scope=scope_user)
                     moved += 1
+                if verdict == "rejected":
+                    state = DetectionEvent._base_manager.values_list(
+                        "response_state", flat=True).get(pk=result.event_id)
+                    if state != "closed":
+                        raise CommandError(
+                            f"[SEED] 오탐 판정 뒤에도 대응 축이 {state!r} 입니다 — "
+                            f"결합 소비자가 안 돌고 있습니다(P-16). 시드가 그 자리를 "
+                            f"대신 닫으면 규칙의 부재가 안 보입니다.")
+                    coupled += 1
 
         self.stdout.write(
             f"[SEED] 카메라 {'새로 만듦' if created else '기존 사용'} ({SEED_CODE}) · "
@@ -200,6 +219,9 @@ class Command(BaseCommand):
         self.stdout.write(
             f"[SEED] **심은 이벤트 {made}건** (record_detection 호출 {made}회) · "
             f"판정 {judged}건 · 대응 전이 {moved}회 — 전부 K1 공개 면을 통과했다")
+        self.stdout.write(
+            f"[SEED] [실측] 오탐 결합으로 **자동 종결된 것 {coupled}건** — 이 수는 시드가 "
+            f"옮긴 것이 아니라 소비자가 옮긴 것이다 (P-16)")
         self._report(DetectionEvent)
 
     def _report(self, DetectionEvent):

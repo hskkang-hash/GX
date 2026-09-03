@@ -1779,6 +1779,22 @@ def _k1_advance_response(test, scope, event_id):
                             reason="iso-write-probe", scope=scope)
 
 
+def _k1_close_as_false_positive(test, scope, event_id):
+    """★ 2026-09-20 (P-16) — 오탐 결합 소비자가 쓰는 자리이므로 대장도 늘었다.
+
+    재는 것: **남의 이벤트를 「오탐이라 종결됨」으로 바꿀 수 있는가.** 이 자리가 열려
+    있으면 남의 관제 화면에서 진행 중이던 대응이 저절로 닫힌다 — `advance_response`
+    보다 나쁘다. 한 칸이 아니라 **끝까지** 밀기 때문이다.
+
+    ★ 소비자가 시스템 행위자로 감사에 남는다고 해서 문지기가 없어지는 것이 아니다.
+      행위자는 `system:false_positive` 이지만 **읽기 문지기는 판정자의 스코프**를 지난다.
+      그 둘을 섞으면 「시스템이 하는 일에는 테넌트가 없다」가 되고, 그것이 격리의 부재다.
+    """
+    from kernels.k1_event import close_as_false_positive
+
+    return close_as_false_positive(event_id, scope=scope, reason="iso-write-probe")
+
+
 def _zone_save_with_foreign_camera(test, scope, stream):
     """★ 2026-09-10 (D-366) — 구역 쓰기 면이 생겼으므로 대장도 늘었다.
 
@@ -1819,6 +1835,12 @@ WRITE_PROBES: tuple[WriteProbe, ...] = (
         kernel_callable="kernels.k1_event.advance_response",
         attempt=_k1_advance_response,
         positive=_k1_advance_response,
+    ),
+    WriteProbe(
+        label="K1.close_as_false_positive → 남의 이벤트를 오탐 종결로 밀기 (P-16)",
+        kernel_callable="kernels.k1_event.close_as_false_positive",
+        attempt=_k1_close_as_false_positive,
+        positive=_k1_close_as_false_positive,
     ),
     WriteProbe(
         label="K1.close_event → 남의 이벤트를 종료",
@@ -1993,9 +2015,25 @@ class TenantIsolationWriteTest(TenantFixtureMixin, TestCase):
             self.assertIsNotNone(getattr(row, "group_id", None),
                                  "만들어진 이벤트에 group 이 없습니다 — 주인 없는 행입니다.")
 
-        # 판정·종료도 자기 것에는 된다.
-        WRITE_PROBES[1].positive(self, scope_a, result.event_id)
-        WRITE_PROBES[2].positive(self, scope_a, result.event_id)
+        # 판정·대응도 자기 것에는 된다. **자리가 아니라 뜻으로 고른다** —
+        # 이 파일이 위에서 스스로 적어 둔 규칙이고(WriteProbe.victim_kind 주석),
+        # 2026-09-20 에 그 규칙을 안 지킨 대가를 바로 치렀다: 대장 가운데에 probe 가
+        # 하나 늘자 `[2]` 가 다른 함수를 가리켰다.
+        by = {p.kernel_callable.rsplit(".", 1)[1]: p for p in WRITE_PROBES}
+
+        # ★ 순서가 뜻을 갖는다 (P-16). 판정 `rejected` 는 **대응 축을 닫는다.**
+        #   그래서 대응 진행 양성 대조를 **판정보다 먼저** 한다 — 뒤에 두면
+        #   「닫힌 것을 접수하려 했다」로 빨개지고, 그 빨강은 격리가 아니라
+        #   결합이 옳게 도는 증거다. 두 사실을 한 시험에서 섞지 않는다.
+        by["advance_response"].positive(self, scope_a, result.event_id)
+        by["review_event"].positive(self, scope_a, result.event_id)
+
+        # 결합이 이미 닫았으므로 **두 번 눌러도 한 번이다.**
+        again = by["close_as_false_positive"].positive(self, scope_a, result.event_id)
+        self.assertFalse(
+            again["changed"],
+            "이미 종결된 이벤트를 한 번 더 닫았습니다 — 같은 사실이 감사에 두 줄로 "
+            "남으면 「몇 번 닫혔나」가 세어지지 않습니다 (P-16).")
 
     # ── 쓰기 4 · 래칫 ─────────────────────────────────────────────────────
     def test_write_probe_registry_covers_kernel_writes(self) -> None:

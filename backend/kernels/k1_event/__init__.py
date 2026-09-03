@@ -20,7 +20,11 @@ from kernels.k1_event.exceptions import (
     ResponseTransitionNeedsManager,
     ResponseTransitionNeedsReason,
 )
-from kernels.k1_event.response_flow import advance_response, response_state
+from kernels.k1_event.response_flow import (
+    advance_response,
+    close_as_false_positive,
+    response_state,
+)
 from kernels.k1_event.schemas import EventView, RecordResult
 from kernels.k1_event.services import (
     DEDUP_WINDOW,
@@ -45,6 +49,10 @@ __all__ = [
     #   DA-04 §2 K1 표에 두 줄을 더했다(같은 커밋 규약).
     "advance_response",
     "response_state",
+    # ★ P-16 오탐 결합 — **소비자 한 곳만 부른다** (2026-09-20).
+    #   공개 면에 두는 이유는 격리 대장(WRITE_PROBES)이 커널 `__all__` 을 훑기 때문이다:
+    #   면에서 감추면 쓰기 면이 **대장 밖에서** 자란다(D-290 · D-301).
+    "close_as_false_positive",
     # 나가는 값의 모양
     "EventView",
     "RecordResult",

@@ -152,7 +152,22 @@ class UniversalOptimizer:
         #   무효화 신호가 없으므로 캐시하지 않는다. 목록의 진실은 우리 DB 가 아니라
         #   **저장소가 살아 있는가**에 달려 있다.
         'media-data',
-        'video-analysis','media-data'
+        'video-analysis',
+
+        # ============ 상태·가용성 (P-19 · D-413 · 2026-09-20) ============
+        # ★ **이 자리에서 쉼표 하나가 패턴 하나를 삼키고 있었다** [실측 2026-09-20].
+        #   `'video-analysis','media-data'` 뒤에 쉼표가 없어 다음 줄의 `'task-status'` 와
+        #   파이썬 암묵 이어붙이기로 **`'media-datatask-status'`** 가 되어 있었다 —
+        #   목록에는 적혀 있는데 아무 경로에도 안 맞는다. 사람이 읽으면 있고 정규식이
+        #   읽으면 없다. `/api/task-status/...` 는 그동안 조용히 캐시됐다.
+        #   눈으로는 못 잡는 모양이라 도구로 옮겼다: `scripts/verify_cache_frame.py`
+        #   (토큰 수와 AST 원소 수를 견준다).
+        #
+        #   아래 셋은 **상태·가용성을 말하는 자리**다. 상태를 묻는 질문에 과거의 답을
+        #   주면 그 답은 틀린 것이 아니라 **질문에 답한 것이 아니다.**
+        'dsm/',            # 재난안전 감시 도메인 전수 — 경보·연계 상태는 실시간이고
+                           # 무효화 신호가 없다. 늦은 참은 이 도메인에서 거짓과 같은 값이다
+        'link-state',      # 연계 상태 — 끊긴 뒤에도 붙어 있다고 말하는 것이 가장 나쁜 실패다
 
         # ============ TASK STATUS (MUST bypass - cần real-time progress) ============
         'task-status', 'upload-status', 'check-task',

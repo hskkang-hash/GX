@@ -40,6 +40,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.db import transaction
+
 from common import audit_writer
 from common.audit_writer import AuditEntry
 from common.tenant_scope import TenantScope
@@ -65,6 +67,25 @@ STATES = (OCCURRED, ACKNOWLEDGED, IN_PROGRESS, CLOSED)
 #: 이름이 하나여야 「전건」이라는 말이 성립한다 (D-285 ②).
 LOGGER_NAME = "guardianx.dsm.response"
 TAG = "[RESP]"
+
+#: ★ 오탐 자동 종결의 **행위자** (P-16). 감사에 사람 이름이 아니라 이 이름이 남는다 —
+#:   U1 이 누른 것은 「오탐」이고 「종결」은 **규칙이 한 일**이다. 둘을 같은 행위자로
+#:   적으면 감사가 「그 사람이 닫았다」고 말하게 되고, 그것은 일어난 일이 아니다.
+#:   ⚠ 행위자가 시스템이라고 해서 **테넌트가 없어지는 것이 아니다** — 문지기는
+#:     판정자의 스코프로 지난다(아래 `close_as_false_positive` 첫 줄).
+FALSE_POSITIVE_ACTOR = "system:false_positive"
+
+
+class _SystemActor:
+    """감사 한 줄에 쓸 **이름뿐인 행위자.** `audit_writer` 는 `pk` 와 `username` 만 본다.
+
+    가짜 사용자 행을 만들지 않는 이유: DB 에 사람이 아닌 사람이 생기면 권한·통계·
+    로그인이 전부 그 행을 사람으로 세게 된다. 이름만 남기는 것으로 충분하다.
+    """
+
+    pk = None
+    username = FALSE_POSITIVE_ACTOR
+
 
 #: 허용 전이. **앞으로만 간다** — 건너뛰기 없음.
 #: `occurred → closed` 직행을 넣지 않은 이유: 접수한 사람이 없는 종결이 생기고,
@@ -162,6 +183,59 @@ def advance_response(event_id: int, *, to_state: str, reason: str = "",
         "allowed_next": list(_allowed_next(to_state)),
         "audit_id": entry.audit_id,
     }
+
+
+@transaction.atomic
+def close_as_false_positive(event_id: int, *, reason: str = "",
+                            scope: TenantScope) -> dict:
+    """오탐 판정에 따라 대응 축을 **끝까지 닫는다** (P-16 · 소비자만 부른다).
+
+    ★ 왜 `advance_response` 로 못 하나 — 전이표는 **앞으로 한 칸씩**만 허용한다
+      (`occurred → acknowledged → in_progress → closed`). 오탐은 그 계단을 오르는 일이
+      아니라 **계단 자체가 없어지는 일**이다: 아무도 접수하지 않았고 아무도 조치하지
+      않았는데 이 이벤트는 끝났다. 그것을 세 번의 가짜 전이로 흉내 내면 감사가
+      「누가 접수했다」고 거짓말을 한다.
+
+    ★ 그래도 **이 파일 안**이다. `response_state` 를 대입하는 자리는 여전히 둘뿐이고
+      둘 다 여기 있다 — 규칙이 두 층에 흩어지지 않는다(D-212 · D-399).
+
+    ★ 문지기는 **판정자의 스코프**로 지난다. 행위자만 시스템이다. 이 둘을 섞어
+      시스템 스코프로 열면 「시스템이 하는 일에는 테넌트가 없다」가 되고, 그것이
+      격리의 부재다 (D-281).
+
+    ★ **두 번 불러도 한 번만 일어난다.** 이미 `closed` 면 감사도 쓰지 않고 돌아간다 —
+      같은 사실을 두 줄로 적으면 「몇 번 닫혔나」가 세어지지 않는다.
+    """
+    from kernels.k1_event.services import get_event
+
+    get_event(event_id, scope=scope)          # 남의 것이면 여기서 404 가 난다
+    Event = _model("DetectionEvent")
+    event = Event._base_manager.get(pk=event_id)
+
+    frm = event.response_state
+    if frm == CLOSED:
+        return {"event_id": event_id, "from": frm, "to": CLOSED,
+                "changed": False, "audit_id": None}
+
+    #: 누가 눌렀는지는 **본문에** 남긴다. 행위자 칸은 규칙의 것이고, 그 규칙을 켠 사람은
+    #: 본문에서 읽힌다 — 둘을 한 칸에 넣으면 하나가 지워진다.
+    by = getattr(scope.actor, "username", "") or ""
+    entry = audit_writer.write(
+        logger_name=LOGGER_NAME, tag=TAG, actor=_SystemActor(),
+        action=f"response.{frm}->{CLOSED}",
+        outcome=audit_writer.ALLOWED,
+        reason=(reason.strip()
+                or f"오탐 판정에 따른 자동 종결 (판정자 {by or '알 수 없음'} · P-16)"),
+        before={"event_id": event.id, "response_state": frm},
+        after={"event_id": event.id, "response_state": CLOSED,
+               "rule": "false_positive", "reviewed_by": by},
+        api_name="dsm.events.review", api_method="POST", status_http=200,
+    )
+    event.response_state = CLOSED
+    event.save(update_fields=["response_state"])
+    return {"event_id": event_id, "from": frm, "to": CLOSED,
+            "changed": True, "audit_id": entry.audit_id,
+            "allowed_next": list(_allowed_next(CLOSED))}
 
 
 def response_state(event_id: int, *, scope: TenantScope) -> dict:

@@ -120,6 +120,15 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     #           clip_path·address·reviewed_by_id 를 더 낸다. 계약이 F-05 로 연 것은
     #           이벤트 조회이지 그 셋이 아니다)
     ("GET", "/api/dsm/events/{int:event_id}"),    # F-09 이벤트 상세 (D-371)
+    # ★ 2026-09-20 **하나가 늘었다** — 판정(오탐) 라우트 (P-16 · 오탐 ②).
+    #   `review_event` 는 2026-08 부터 **서비스로는 있었고 문이 없었다.** 화면의 「오탐」
+    #   버튼이 부를 자리가 없어 U1 의 오탐률은 시드로만 채워졌다 — 착시 ⑨(함수는 문이
+    #   아니다)의 세 번째 실사례다. 손으로 이 줄을 더하는 일이 곧 「진입면을 넓힌다」는
+    #   선언이고, 그 선언을 여기 남긴다.
+    #   문지기: @tenant_scoped(쓰기 IDOR) + JwtOrInboundKey.
+    #   ★ 거절을 4xx 로 **나눈다** (D-290): 422(판정값이 아니다) · 404(없는 이벤트 ·
+    #     남의 이벤트) · 403(시스템 스코프 — 판정은 사람이 하는 일이다 · D-281).
+    ("POST", "/api/dsm/events/{int:event_id}/review"),
 })
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**
@@ -151,6 +160,12 @@ K1_CONSUMERS: dict[str, str] = {
         "커널 간 재사용 — 보고서가 이벤트를 읽는다",
     "backend/kernels/k6_feedback/services.py":
         "커널 간 재사용 — 오탐률이 이벤트를 센다",
+    "backend/stream_monitors/services/false_positive_closer.py":
+        "★ **오탐 결합이 사는 단 한 곳** (P-16 · 2026-09-20). 판정 축의 신호를 받아 "
+        "대응 축을 닫는다. HTTP 진입면이 아니다 — 밖에서 부를 주소가 없고, "
+        "`verdict_changed` 를 받는 자리다. 이 모듈이 **소비자인 것이 요점**이다: "
+        "`review_event` 가 `response_state` 를 직접 쓰면 D-399 가 가른 두 축이 코드에서 "
+        "다시 맞물린다. 결합은 한 곳에만 두고, 그 한 곳을 여기 이름으로 적는다",
     "backend/stream_monitors/services/detection_event_bridge.py":
         "AI 검출 파이프라인 배선. gRPC 콜백이라 **요청자가 없고**(D-281 시스템 스코프) "
         "HTTP 진입면이 아니다 — 밖에서 부를 수 있는 주소가 없다",

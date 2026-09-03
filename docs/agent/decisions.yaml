@@ -6021,3 +6021,107 @@ decisions:
     · backend/common/universal_optimization.py — BYPASS_PATTERNS 에 media-data
     · scripts/verify_minio.py · scripts/ops_monitor.py (object_store_alive)
   affects: [D-209, D-290, D-301, D-341, D-347, D-397, D-406, D-407]
+
+- id: D-413
+  author_tree_id: "세종 지시서 2026-09-20 §3 A3 (P-19)"
+  title: "상태·가용성을 말하는 응답은 캐시를 지나지 않는다 — 그리고 **쉼표 하나가 패턴 하나를 삼키고 있었다**"
+  status: decided
+  raised_by: "세종 P-19 (D-412 뿌리 ②의 일반화)"
+  decision: |
+    ▣ 규칙 — **상태를 묻는 질문에 과거의 답을 주면, 그 답은 틀린 것이 아니라 질문에
+      답한 것이 아니다.** `UniversalCacheMiddleware` 는 적중 본문을 언제나
+      `JsonResponse(200)` 으로 되살린다. 그러므로 바깥에서 바뀌는 것(저장소·연계·경보)을
+      말하는 라우트는 **캐시 밖**이어야 한다. D-412 가 `media-data` 하나에 대해 한 일을
+      규칙으로 올린다.
+    ▣ ★★ **실측 중 뿌리 하나를 더 찾았다 — 목록에 적혀 있는데 존재하지 않는 패턴.**
+      `BYPASS_PATTERNS` 안에서 쉼표가 하나 빠져 있었다:
+          'video-analysis','media-data'      ← 뒤에 쉼표 없음
+          # ============ TASK STATUS ============
+          'task-status', ...
+      파이썬이 두 리터럴을 **암묵 이어붙이기**로 `'media-datatask-status'` 로 만들었다.
+      아무 경로에도 안 맞는다. `'task-status'` 는 **사람이 목록을 읽으면 있고 정규식이
+      읽으면 없었다** — `/api/task-status/...` 는 그동안 조용히 캐시되고 있었다.
+      ⚠ 이 모양은 **눈으로 못 잡는다.** 리뷰도 grep 도 목록에서 그 낱말을 찾아낸다.
+        갈리는 자리는 하나뿐이다: **AST 는 원소 하나, 토크나이저는 STRING 둘.**
+    ▣ 고침 셋:
+      ① 쉼표를 넣어 `'task-status'` 를 되살렸다 (캐시 안 38 → **37**).
+      ② 상태·가용성 자리를 우회 목록에 명시 등재: `dsm/`(재난 감시 도메인 전수) ·
+         `link-state`(연계 상태). **지금 캐시를 안 타는 것은 우연이지 규칙이 아니다** —
+         `PATH_HINT_REGISTRY` 에 이름 하나가 늘면 그날부터 캐시된다. 규칙으로 적는다.
+      ③ 판정기 신설 `scripts/verify_cache_frame.py` — 셋을 본다:
+           ⓐ `STATE_SURFACES` 7자리가 전부 캐시 밖인가 (**이름으로** 못 박는다)
+           ⓑ 이어 붙은 리터럴 0건인가 (토큰 수 vs AST 원소 수)
+           ⓒ [입력] 캐시 등록부 69 · 우회 패턴 72 · 상태 자리 7 — 모수를 함께 낸다
+         출생 표본은 그 쉼표 자리 그대로다. 호스트에서 돈다(Django 불요).
+    ▣ 게이트 `minio` 에 **상시 항목 ④** 를 붙였다: 같은 순간 `/api/media-data/` 와
+      `?bust=` 를 견주고 **답이 다르면 실패**. 「지금 받는다」와 「받았던 적이 있다」를
+      가르는 자다. 통과 줄에 「캐시 안팎이 같다」가 함께 나온다.
+    ▣ 안 한 것: 캐시 자체를 끄지 않았다. 성능 설정이 아니라 **어느 질문에 캐시가
+      끼면 안 되는가**의 문제이고, 그 목록은 이름으로 관리한다.
+  enforced_by: |
+    · scripts/verify_cache_frame.py — 판정 ⓐⓑⓒ · --self-test (출생 표본 = 그 쉼표)
+    · .pre-commit-config.yaml :: gx-cache-frame — universal_optimization/cache_hint_registry 가
+      바뀌면 반드시 돈다
+    · scripts/verify_minio.py — 상시 항목 ④ 캐시 안/밖 두 URL 대조
+    · backend/common/universal_optimization.py — BYPASS_PATTERNS (dsm/ · link-state · task-status)
+  affects: [D-290, D-301, D-310, D-311, D-341, D-350, D-412]
+
+- id: D-414
+  author_tree_id: "세종 지시서 2026-09-18 §1 판정 (P-16) · 09-20 §3 차선 B"
+  title: "오탐 결합은 **붙였다 — 그러나 코드에서는 맞물리지 않게** (소비자 한 곳)"
+  status: decided
+  raised_by: "세종 판정 P-16 (D-405 「결합 규칙은 없다」 정정 보고의 후속)"
+  decision: |
+    ▣ 사용자에게는 한 가지 일이다 — U1 이 「오탐」을 누르고 나서 「종결」을 또 눌러야 하면
+      **두 종류의 종결**이 화면에 보인다(P-1 이 막으려던 모양). 그래서 붙인다.
+    ▣ 코드에서는 맞물리지 않는다 — D-399 가 가른 두 축이 다시 묶이면 다음 사람이
+      판정을 고치려다 대응을 깨뜨린다. 배선은 셋이다:
+        · `review_event` 는 `response_state` 를 **모른다** — 신호만 보낸다
+          (`kernels/k1_event/verdict_events.py::verdict_changed`)
+        · `close_as_false_positive` 는 `verdict` 를 **모른다** — 대응 축만 만진다
+          (`response_flow.py` — 그 축을 쥔 **그 파일 안**이다. 대입 자리는 여전히 둘)
+        · 둘을 아는 코드는 **한 파일**뿐이다:
+          `stream_monitors/services/false_positive_closer.py` (K1_CONSUMERS 등재)
+      ★ 그 「한 곳」을 **시험이 지킨다**: 소비자를 떼면 결합이 사라져야 한다
+        (`CouplingLivesInOnePlaceTest`). ①만 재면 「어디서 닫히든」 초록이고,
+        그러면 `review_event` 안에 한 줄이 들어가도 시험은 조용하다.
+    ▣ **역방향 없음.** `rejected → confirmed` 재판정에도 대응 축은 `closed` 그대로다.
+      다시 여는 것은 사람이 한다(U2 · `closed → in_progress` · 사유 필수 · 감사).
+    ▣ 행위자는 `system:false_positive` — 사람이 한 것은 **판정**이고 종결은 규칙이 했다.
+      다만 **문지기는 판정자의 스코프로 지난다.** 행위자가 시스템이라고 테넌트가
+      없어지면 「시스템이 하는 일에는 테넌트가 없다」가 되고 그것이 격리의 부재다(D-281).
+      누가 눌렀는지는 감사 본문(`reviewed_by`)에 남는다 — 한 칸에 둘을 넣으면 하나가 지워진다.
+    ▣ `advance_response` 로 흉내 내지 않았다 — 세 번의 가짜 전이는 감사가
+      「누가 접수했다」고 거짓말하게 만든다. 오탐은 계단을 오르는 일이 아니라
+      **계단 자체가 없어지는 일**이다. 그래서 직행 함수를 따로 두되 같은 파일에 둔다.
+    ▣ 오탐 ② **판정 라우트를 열었다** — `POST /api/dsm/events/{id}/review`.
+      서비스는 2026-08 부터 있었고 **문이 없었다**(착시 ⑨ 세 번째 실사례).
+      거절을 4xx 로 나눈다: 404(없는 것·남의 것) · 422(판정값이 아니다) · 403(요청자 없음).
+      P-8 대로 **등록부를 먼저** 고쳐 빨감을 보고(3건) 구현했다.
+    ▣ 오탐 ③ 종결 통지 — **1회**. ★ `DeliveryRecord` 행을 만들지 않는다:
+      그 표는 F-10 의 30초를 재는 두 점이고 5분 억제가 세는 표다. 통지 행을 끼우면
+      지연 통계가 경보 아닌 것을 세고, **억제가 다음 진짜 경보를 삼킨다.**
+      통지는 발송이 아니라 뒷정리다 — 감사 한 줄로 남긴다(세종이 말한 「로그 어댑터」).
+      1회는 그 감사 행의 존재로 지킨다.
+    ▣ 오탐 ④ 오탐률 — **이미 있었다.** `false_positive_rate` 가 기간·카메라(stream_monitor_id)·
+      시나리오(event_type)를 다 받는다 [실측: 지난 12시간 0.333 · 기각 4 / 판정 12].
+      **다만 부르는 화면이 0곳**이다. 읽는 자리는 C 차선(W1 요약)이라 여기서 열지 않았다 —
+      읽는 사람 없는 라우트를 미리 열면 그것이 다음 턴의 잠자는 기능이다.
+    ▣ ★ 시드 재점검 — `rejected` 4건에서 **대응 축을 직접 닫던 호출을 뺐다.**
+      직전까지 시드가 규칙을 흉내 내고 있었고, 그래서 규칙이 없어도 결과가 같았다.
+      [실측] 대응 전이 36회 → **24회** · 자동 종결 **4건** · 분포는 그대로
+      (closed 8 · rejected 4). **수는 같은데 원인이 다르다** — 시드가 그 차이를 직접
+      확인하고, 안 닫혀 있으면 `CommandError` 로 멈춘다.
+    ▣ 함께 고친 시험 둘 — **초록을 만들려고 고친 것이 아니다**(D-327):
+      · `AxesStayApartTest` 의 판정값을 `rejected` → `confirmed` 로. 결합이 붙은 뒤로
+        그 시험이 재려던 「사람이 네 칸을 걸어간다」가 애초에 일어나지 않는다.
+      · `test_write_positive_control` 이 probe 를 **자리(index)가 아니라 뜻으로** 고르게.
+        그 파일이 스스로 적어 둔 규칙인데 안 지키고 있었고, probe 하나가 늘자 `[2]` 가
+        다른 함수를 가리켰다. 순서도 뜻을 갖는다 — 대응 양성 대조는 판정보다 먼저.
+  enforced_by: |
+    · backend/tests/test_false_positive_coupling.py — 13건 (①~⑥ · 결합의 자리 포함)
+    · backend/tests/test_tenant_isolation.py :: WRITE_PROBES(close_as_false_positive)
+    · backend/tests/test_f05_event_api.py :: EVENT_ENTRY_SURFACE(POST …/review) · K1_CONSUMERS
+    · backend/stream_monitors/management/commands/seed_dsm_events.py — 자동 종결 대조(CommandError)
+    · scripts/verify_contract_route_reach.py — 판정 라우트 도달 21/21
+  affects: [D-212, D-281, D-290, D-293, D-300, D-311, D-327, D-333, D-347, D-377, D-399, D-405]

@@ -35,6 +35,7 @@ K2 의 `suppress` 는 *발송 이력*을 보고 "실제로 이미 보냈는가"�
 """
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Iterable
 
@@ -42,6 +43,7 @@ from django.apps import apps
 from django.db import transaction
 from django.utils import timezone
 
+from common import audit_writer
 from common.tenant_filters import assert_scoped, filter_by_group_field, get_user_group
 from common.tenant_scope import TenantScope
 from kernels.k2_notify import channels as channel_registry
@@ -57,6 +59,9 @@ from kernels.k2_notify.schemas import (
     DeliveryView,
     Recipient,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 def _model(name: str):
@@ -397,6 +402,75 @@ def _send_one(event, recipient: Recipient) -> DeliveryView:
         row.failure_reason = (outcome.reason or "사유 없음")[:250]
     row.save(update_fields=["succeeded", "sent_at", "failure_reason"])
     return _to_view(row)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 3-b. notice_false_positive — 오탐으로 종결됐다고 **원 수신자에게 한 번** (P-16 · 오탐 ③)
+# ═══════════════════════════════════════════════════════════════════════════
+#: 이 통지의 감사 `logger_name`. 발송 이력(`DeliveryRecord`)과 **다른 자리**에 남긴다 —
+#: 이유는 아래 함수 머리말 ★★ 를 보라.
+FP_NOTICE_LOGGER = "guardianx.dsm.notify"
+FP_NOTICE_ACTION = "notify.false_positive"
+
+
+def _fp_notice_key(event_id: int) -> str:
+    """이 이벤트의 통지 한 줄을 **정확히** 집는 이름. 「1회」는 이 이름으로 지켜진다."""
+    return f"dsm.{FP_NOTICE_ACTION}:{event_id}"
+
+
+def notice_false_positive(*, scope: TenantScope, event_id: int) -> tuple[str, ...]:
+    """알림이 나갔던 이벤트가 오탐이 되면 **원 수신자에게 1회** 알린다.
+
+    돌려주는 것: 알린 주소들. 알릴 사람이 없으면 빈 튜플이다 —
+    **「보낸 적 없음」과 「받을 사람이 없음」은 다른 사실이다**(D-290).
+
+    ★★ **왜 `DeliveryRecord` 행을 만들지 않는가.** 그 표는 F-10 의 30초 AC 를 재는
+      두 점(`occurred_at → sent_at`)이고, 동시에 K2 의 5분 억제(`suppress`)가 세는
+      표다. 여기에 통지 행을 끼우면 두 가지가 한꺼번에 망가진다:
+        · F-10 지연 통계가 **경보가 아닌 것**을 경보로 세고
+        · 5분 억제가 이 통지를 최근 발송으로 읽어 **그 다음 진짜 경보를 삼킨다**
+      통지는 발송이 아니라 **뒷정리**다. 그래서 감사 한 줄로만 남긴다 — 세종이 지시한
+      「로그 어댑터」가 이것이다.
+
+    ★ **1회**는 감사 행의 존재로 지킨다. 같은 이벤트를 두 번 오탐이라 해도 통지는 하나다.
+      두 번 알리면 「오탐이 두 번 일어났다」로 읽히고, 그 수를 누군가는 센다.
+    """
+    Delivery = _model("DeliveryRecord")
+    Event = _model("DetectionEvent")
+
+    event = Event._base_manager.filter(pk=event_id).first()
+    if event is None:
+        raise EventNotFound(f"event_id={event_id} 가 없다")
+    if not scope.is_system:
+        assert_scoped(Event, event_id, scope.actor)
+
+    key = _fp_notice_key(event_id)
+    if audit_writer.read(logger_name=FP_NOTICE_LOGGER, action=key, limit=1):
+        return ()                     # 이미 알렸다 — 두 번째는 일어나지 않는다
+
+    #: 원 수신자 = **실제로 받은 사람**이다. 실패한 발송은 받은 적이 없으므로 알릴
+    #: 것도 없다 — 「보내려 했다」에 정정을 보내면 없던 경보를 만들어 낸다.
+    addresses = tuple(dict.fromkeys(
+        row.recipient_address
+        for row in Delivery._base_manager.filter(event_id=event_id, succeeded=True)
+        if row.recipient_address
+    ))
+    if not addresses:
+        return ()
+
+    audit_writer.write(
+        logger_name=FP_NOTICE_LOGGER, tag="[FP]", actor=scope.actor,
+        action=FP_NOTICE_ACTION, api_name=key, api_method="POST",
+        outcome=audit_writer.ALLOWED,
+        reason=(f"오탐으로 종결됨을 원 수신자 {len(addresses)}명에게 통지 "
+                f"(event_id={event_id})"),
+        before={"event_id": event_id, "verdict": "rejected"},
+        after={"event_id": event_id, "notified": list(addresses)},
+        status_http=200,
+    )
+    logger.info("[FP] event_id=%s 오탐 종결 통지 %d명: %s",
+                event_id, len(addresses), ", ".join(addresses))
+    return addresses
 
 
 # ═══════════════════════════════════════════════════════════════════════════

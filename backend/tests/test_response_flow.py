@@ -134,9 +134,17 @@ class AxesStayApartTest(ResponseFlowFixture):
         from kernels.k1_event import review_event
 
         eid = self._event(self.stream_a)
-        review_event(eid, verdict="rejected", reason="시험용 오탐 판정",
+        #: ★ 2026-09-20 (P-16) — 판정값이 `rejected` 에서 **`confirmed` 로 바뀌었다.**
+        #:   시험을 고쳐 초록을 만든 것이 아니다(D-327). 바뀐 것은 **계약**이다:
+        #:   세종 판정으로 「오탐이면 대응 축도 자동 종결」이 붙었고, 그러면 이 시험이
+        #:   재려던 「사람이 네 칸을 걸어간다」가 애초에 일어나지 않는다 — 첫 칸에서
+        #:   이미 닫혀 있다. 그 빨강은 축이 섞인 증거가 아니라 **결합이 옳게 도는 증거**다.
+        #:   이 시험이 재는 것(대응 진행이 판정 칸을 덮지 않는가)은 그대로이고,
+        #:   결합 자체는 `tests/test_false_positive_coupling.py` 가 따로 잰다.
+        review_event(eid, verdict="confirmed", reason="시험용 정탐 판정",
                      scope=self.scope_a)
         before = self._row(eid)
+        self.assertEqual(before.verdict, "confirmed")
 
         for to in (self.S.ACKNOWLEDGED, self.S.IN_PROGRESS, self.S.CLOSED):
             services.advance_response(scope=self.scope_a, event_id=eid, to_state=to)

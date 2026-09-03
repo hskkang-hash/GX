@@ -224,6 +224,47 @@ class DsmAPI:
         except services.ResponseTransitionForbidden as exc:
             raise HttpError(409, str(exc))
 
+    # ── 판정 축 (P-16 · 오탐 ②) ──────────────────────────────────────────
+    @route.post("/events/{int:event_id}/review", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="판정 쓰기 — 남의 이벤트를 오탐이라 판정할 수 없다 (쓰기 IDOR)")
+    def review_event(self, request, event_id: int, verdict: str, reason: str = ""):
+        """이 탐지가 진짜인가를 판정한다 — `confirmed` / `rejected` (F-14 의 입력).
+
+        ★ **이 문이 없어서 오탐률이 시드로만 채워지고 있었다.** 서비스는 2026-08 부터
+          있었고 부를 주소가 없었다 — 착시 ⑨(함수는 문이 아니다)의 세 번째 실사례다.
+
+        ★ `rejected` 면 **대응 축도 함께 닫힌다**(P-16). 다만 그 일은 이 라우트가
+          하지 않는다 — 판정 신호를 받은 소비자 한 곳이 한다. 사용자에게 한 번의
+          행동인 것과 코드에서 두 축이 맞물리는 것은 다른 일이다(D-399).
+
+        **거절을 4xx 로 나눈다** (D-290). 부르는 쪽이 할 일이 다르기 때문이다:
+          404  없는 이벤트 · **남의 테넌트 이벤트** (존재 여부도 새면 누출이다)
+          422  판정값이 아니다 (`closed` 를 여기로 보내는 것 — 종료는 다른 문이다)
+          403  요청자가 없다 (시스템 스코프) — **판정은 사람이 하는 일**이다(D-281)
+        """
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            e = services.review_event(
+                scope=_scope(request), event_id=event_id,
+                verdict=verdict, reason=reason)
+        except Http404:
+            raise HttpError(404, "그런 이벤트가 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except services.InvalidEventInput as exc:
+            #: 422 다 — 문법은 맞고 **값이 계약 밖**이다. 400 으로 묶으면 화면이
+            #: 「보낸 모양이 틀렸나」와 「값이 틀렸나」를 구별하지 못한다.
+            raise HttpError(422, str(exc))
+        return {
+            "event_id": e.event_id, "status": e.status, "verdict": e.verdict,
+            "reviewed_by_id": e.reviewed_by_id, "reviewed_at": e.reviewed_at,
+            "reject_reason": e.reject_reason,
+            #: ★ 결합의 결과를 **같은 응답에** 실어 준다. 화면이 한 번 더 물어야 하면
+            #:   그 사이에 두 종류의 종결이 보인다 — P-1 이 막으려던 그 모양이다.
+            **services.response_state(scope=_scope(request), event_id=e.event_id),
+        }
+
     # ── F-10 알림 발송 ───────────────────────────────────────────────────
     @route.post("/events/{int:event_id}/notify", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-10 발송 — 남의 이벤트로 발송을 일으킬 수 없다 (쓰기 IDOR)")
