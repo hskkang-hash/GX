@@ -234,10 +234,28 @@ class DsmAPI:
         업체가 죽어도 이벤트 처리는 200 을 유지한다. 대신 각 행의 `succeeded` 가 갈린다.
         `404` 는 **남의 테넌트 이벤트**일 때만 난다.
         """
+        from kernels.k2_notify import EventNotFound, InvalidNotifyInput, NoRecipients
+
         try:
             records = services.notify_event(scope=_scope(request), event_id=event_id)
         except Http404:
             raise HttpError(404, "그런 이벤트가 없습니다.")
+        # ★ [D-410 · 2026-09-19] **셋을 갈라 낸다** — 세 번째 눈이 잡은 자리다.
+        #   계약 라우트 도달 판정기가 없는 id 로 두드렸더니 **500** 이었다:
+        #   「그런 이벤트가 없다」를 **서버 결함**으로 내고 있었다. U6 은 자기 잘못인지
+        #   우리 잘못인지 알 수 없고, 우리 감시는 남의 오타를 우리 장애로 센다.
+        #
+        #   404  없는 이벤트          — id 를 고쳐라 (남의 테넌트도 여기 · D-269)
+        #   409  수신자 0명           — 요청이 틀린 게 아니라 **알림 체계가 꺼져 있다**.
+        #                              200 으로 삼키면 그것이 조용한 무력화다(DA-03 §3-2)
+        #   400  그 밖의 잘못된 입력  — 등급이 계약 밖 · 테넌트를 못 정함
+        #   ⚠ 발송 **실패**는 여기 없다 — 그것은 200 이고 행의 `succeeded` 가 말한다.
+        except EventNotFound:
+            raise HttpError(404, "그런 이벤트가 없습니다.")
+        except NoRecipients as exc:
+            raise HttpError(409, str(exc))
+        except InvalidNotifyInput as exc:
+            raise HttpError(400, str(exc))
         return {"total": len(records), "deliveries": [
             {"delivery_id": r.delivery_id, "event_id": r.event_id,
              "recipient_id": r.recipient_id, "channel": r.channel,
@@ -265,10 +283,18 @@ class DsmAPI:
     @route.get("/reports/templates", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-11 템플릿 목록 — 남의 테넌트 템플릿이 보이면 안 된다")
     def report_templates(self, request):
+        # ★ [D-410 · 2026-09-19] `renderer` 를 읽어 **AttributeError → 500** 이었다.
+        #   `TemplateView`(K4 공개 면)에 그런 칸은 **한 번도 없었다** — App 이 없는
+        #   칸을 지어내 읽고 있었고, 이 라우트는 부르는 즉시 죽었다.
+        #   ★ 왜 여태 안 보였나: 단위 시험은 `services.report_templates` 를 부르고
+        #     **그 반환값을 이 자리에서 다시 읽지 않는다.** 화면도 이 라우트를 안 부른다.
+        #     함수는 초록이고 문은 죽어 있었다 — 착시 ⑨ 의 두 번째 실사례다.
+        #   내는 칸은 `TemplateView` 가 **실제로 가진 것**뿐이다. 지어내지 않는다.
         rows = services.report_templates(scope=_scope(request))
         return {"total": len(rows), "templates": [
             {"template_id": t.template_id, "name": t.name,
-             "renderer": t.renderer} for t in rows]}
+             "is_default": t.is_default, "is_enabled": t.is_enabled,
+             "usage_count": t.usage_count} for t in rows]}
 
     @route.get("/reports/{int:template_id}.pdf", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-11 보고서 — 남의 이벤트가 보고서에 실리면 안 된다")
@@ -359,24 +385,13 @@ class DsmAPI:
         raise HttpError(500, "도달할 수 없는 자리")   # stream_window 는 언제나 멈춘다
 
     # ── F-12 관리자 설정 ─────────────────────────────────────────────────
-    @route.get("/settings/{domain}", auth=JwtOrInboundKey())
-    @tenant_scoped(reason="F-12 설정 — 남의 테넌트 설정이 보이면 안 된다")
-    def settings_domain(self, request, domain: str):
-        """AC-12 — 무권한 차단 + **성공·실패 모두 감사로그**.
-
-        `403` 응답의 `audit_id` 는 **차단이 기록에 남았다는 증거**다.
-        차단만 하고 안 남기면 "시도가 없었다" 와 "시도가 막혔다" 가 같은 상태가 된다.
-        """
-        try:
-            return services.setting_overview(scope=_scope(request), domain=domain)
-        except PermissionDeniedForSetting as exc:
-            raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
-        except SettingNotAvailable as exc:
-            # 501 — 서버가 그 기능을 **아직 구현하지 않았다.** 404(없는 주소)도
-            # 400(잘못된 요청)도 아니다. 셋을 뭉치면 "언젠가 생길 것" 과
-            # "영영 없는 것" 이 클라이언트에서 구별되지 않는다.
-            raise HttpError(501, str(exc))
-
+    #
+    # ⚠ **이 표지를 지우지 마라.** `test_clip_playback.test_rule4_no_full_download_...`
+    #   이 `api.py` 원문을 「F-09 영상 재생」…「F-12 관리자 설정」 사이로 잘라 내
+    #   계약 11조(원본 통째 다운로드 금지)를 검사한다. 표지가 없으면 그 시험이
+    #   `ValueError: substring not found` 로 멈춘다 — 실제로 2026-09-19 에 그랬다.
+    #   ★ 그때 고칠 것은 **시험이 아니라 표지**다(D-327). 표지는 영상 구간이
+    #     끝나는 자리에 선다.
     @route.post("/settings/thresholds", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-12 임계값 쓰기 — 남의 테넌트 임계값을 못 바꾼다")
     def set_threshold(self, request, key: str, value: float, reason: str,
@@ -528,3 +543,68 @@ class DsmAPI:
             raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
         except (GradeRuleNotDefined, SeverityNotInContract, ValueError) as exc:
             raise HttpError(400, str(exc))
+
+    # ── F-12 설정 **조회** ────────────────────────────────────────────────
+    #
+    # ★ [D-410 · 2026-09-19] **이 자리는 맨 뒤여야 한다.** 위로 올리면 그 순간
+    #   쓰기 라우트 넷이 다시 HTTP 로 도달 불가가 된다 — 그것이 며칠을 숨어 있었다.
+    #
+    #   django-ninja 는 경로 문자열마다 `PathView` 를 하나 두고, Django 는 **먼저
+    #   등록된 패턴**에서 멈춘다. `settings/<str:domain>` 은 `settings/thresholds` ·
+    #   `settings/zones` · `settings/api-keys` · `settings/grade-rules` 를 전부
+    #   삼킨다. 삼킨 PathView 에는 GET 밖에 없으므로 POST 는 **405 (Allow: GET)** 였다.
+    #
+    #   ★★ 왜 여태 안 보였나 — **두 눈의 사각이 정확히 겹쳤다**(착시 ⑨ 배선형):
+    #       · 단위 시험은 **서비스 함수**를 부른다 → 초록
+    #       · route-alive 는 **화면이 부른 GET** 만 때린다 → 쓰기 면을 안 본다
+    #     「구현되었다」는 참이었고 「외부 App 이 쓸 수 있다」가 거짓이었다. U6 은
+    #     HTTP 로만 들어온다 — U6 에게 그 넷은 **없는 기능**이었다.
+    #     세 번째 눈을 세웠다: `scripts/verify_contract_route_reach.py`.
+    #
+    #   ⚠ 순서만으로는 반이다. `thresholds` 와 `zones` 는 **설정 영역 이름이면서
+    #     동시에 쓰기 경로**다 — 리터럴을 먼저 등록하면 이번엔 그 둘의 GET 이
+    #     405 가 된다. 그래서 아래 둘을 **같은 리터럴 경로에** 붙였다: 한 경로 =
+    #     한 PathView 이므로 GET·POST 가 한 문에 함께 선다.
+    #     진입면이 넓어진 것이 아니다 — **같은 문이 제 이름으로 다시 걸린 것**이다
+    #     (같은 핸들러 · 같은 문지기 · 같은 응답). `EVENT_ENTRY_SURFACE` 에
+    #     그 사유와 함께 두 줄을 적었다.
+    def _setting_overview(self, request, domain: str):
+        """세 라우트가 **같은 몸**을 쓴다. 복사하면 한쪽만 고쳐지는 날이 온다."""
+        try:
+            return services.setting_overview(scope=_scope(request), domain=domain)
+        except PermissionDeniedForSetting as exc:
+            raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
+        except SettingNotAvailable as exc:
+            # 501 — 서버가 그 기능을 **아직 구현하지 않았다.** 404(없는 주소)도
+            # 400(잘못된 요청)도 아니다. 셋을 뭉치면 "언젠가 생길 것" 과
+            # "영영 없는 것" 이 클라이언트에서 구별되지 않는다.
+            raise HttpError(501, str(exc))
+
+    @route.get("/settings/thresholds", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="F-12 설정 — 남의 테넌트 설정이 보이면 안 된다")
+    def settings_thresholds(self, request):
+        """`GET /settings/{domain}` 의 `domain=thresholds` **바로 그것**이다.
+
+        쓰기(POST)와 같은 경로 문자열이라 같은 `PathView` 에 실린다 — 그래야
+        POST 가 산다. 응답도 문지기도 위 `{domain}` 과 글자까지 같다.
+        """
+        return self._setting_overview(request, "thresholds")
+
+    @route.get("/settings/zones", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="F-12 설정 — 남의 테넌트 설정이 보이면 안 된다")
+    def settings_zones(self, request):
+        """`GET /settings/{domain}` 의 `domain=zones` **바로 그것**이다."""
+        return self._setting_overview(request, "zones")
+
+    @route.get("/settings/{domain}", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="F-12 설정 — 남의 테넌트 설정이 보이면 안 된다")
+    def settings_domain(self, request, domain: str):
+        """AC-12 — 무권한 차단 + **성공·실패 모두 감사로그**.
+
+        `403` 응답의 `audit_id` 는 **차단이 기록에 남았다는 증거**다.
+        차단만 하고 안 남기면 "시도가 없었다" 와 "시도가 막혔다" 가 같은 상태가 된다.
+
+        ⚠ **맨 마지막에 등록된다** — 위 D-410 주석을 읽어라. 이 자리를 올리면
+          쓰기 라우트 넷이 조용히 405 로 되돌아간다.
+        """
+        return self._setting_overview(request, domain)

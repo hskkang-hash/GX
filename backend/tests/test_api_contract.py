@@ -289,35 +289,35 @@ class AuthEndpointContractTest(_DeniedUserMixin, TestCase):
     def setUp(self):
         self.client = Client()
 
-    def test_token_pair_issues_tokens_that_do_not_work(self):
-        """`/api/token/pair` 는 **200 으로 토큰을 준다. 그리고 그 토큰은 쓸 수 없다.**
+    def test_token_pair_is_gone(self):
+        """`/api/token/pair` 는 **없다.** 404 여야 한다 (D-411 · 승인 세종 2026-09-19).
 
-        `core/auth.py` 가 `if not user.token: raise HttpError(401, "Token expired")` 로
-        막는데, `user.token` 을 채우는 것은 `/api/v1/auth/login` 뿐이다.
-        "미작동"이 아니라 **"발급은 성공하고 다음 호출이 401"** 이라는 점이 중요하다 —
-        연동 담당자가 시계·TTL 을 의심하며 시간을 버리는 지점이다.
+        ★ **이것은 시험을 고쳐 초록을 만든 것이 아니다.** 앞판의 단언
+          (「200 으로 발급하고 그 토큰은 401 이다」)은 **그날의 사실이었고 옳았다.**
+          바뀐 것은 시험이 아니라 **계약**이다: 세종이 그 문의 제거를 승인했고,
+          결정 대장에 사유와 함께 남았다(D-411). 계약이 바뀌면 시험도 바뀐다 —
+          바뀌지 않는 것은 **계약을 시험이 정하지 않는다**는 것이다(D-327 · D-300).
+
+        ★ 왜 **부작위**를 시험하나 — 없앤 것은 다시 생긴다. 특히 이 문은
+          `core.urls`(dj-core · 금지구역) 안에 그대로 살아 있고, 우리는 `config/urls.py`
+          에서 **순서로** 가리고 있을 뿐이다. 그 줄이 아래로 한 칸만 내려가면
+          문은 소리 없이 다시 열린다. 그 순간을 사람이 아니라 이 시험이 본다.
+
+        ★ **401 이 아니라 404 여야 한다.** 401 이면 연동 담당자가 「자격증명이
+          모자라다」로 읽고 계정을 고치려 든다 — 없는 것은 없다고 말한다(D-290).
         """
         resp = self.client.post(
             "/api/token/pair",
             data=json.dumps({"username": self.user.username, "password": self.PASSWORD}),
             content_type="application/json",
         )
-        self.assertEqual(resp.status_code, 200, "발급 자체는 성공한다")
-        body = json.loads(resp.content)
-        self.assertIn("access", body)
-        self.assertIn("refresh", body)
-
-        follow_up = self.client.get(
-            ROUTE_FORMERLY_SWALLOWED,
-            HTTP_AUTHORIZATION=f"Bearer {body['access']}",
-        )
         self.assertEqual(
-            follow_up.status_code, 401,
-            "이 단언이 깨지면 token/pair 가 쓸 수 있게 된 것이다 — 연동 문서를 고쳐라",
-        )
+            resp.status_code, 404,
+            "token/pair 가 다시 열렸다 — config/urls.py 의 차단 줄이 "
+            "core.urls include 아래로 내려갔는지 보라 (D-411)")
 
         self.user.refresh_from_db()
-        self.assertFalse(self.user.token, "token/pair 는 user.token 을 채우지 않는다")
+        self.assertFalse(self.user.token, "닫힌 문이 세션을 세웠다 — 가려진 것이 아니다")
 
     def test_login_is_the_working_credential_endpoint(self):
         """실경로는 `/api/v1/auth/login` 이다. 라우트가 살아 있는지만 못박는다."""

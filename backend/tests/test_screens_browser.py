@@ -60,16 +60,31 @@ def _release_session() -> str | None:
     ★ 이 한 걸음이 없으면 이 시험은 「직전에 누가 로그인했나」에 따라 빨개진다.
       환경 때문에 흔들리는 빨강은 결함을 가린다 — 아무도 안 보게 되기 때문이다.
     """
-    body = json.dumps({"username": USER, "password": PASSWORD}).encode()
-    req = urllib.request.Request(f"{API}/api/token/pair", data=body,
+    # ★ [D-411 · 2026-09-19] 앞판은 `/api/token/pair` 로 토큰을 받아 로그아웃했다.
+    #   그 문은 제거됐다 — 그리고 **없어도 되는 문이었다**: `login` 자신이
+    #   `end_previous_session` 으로 앞선 세션을 닫는다. 토큰을 받으러 다른 문에
+    #   들르던 것은 처음부터 우회였고, 그 우회가 제거를 막고 있던 유일한 사용처였다.
+    body = json.dumps({"username": USER, "password": PASSWORD,
+                       "end_previous_session": True}).encode()
+    req = urllib.request.Request(f"{API}/api/v1/auth/login", data=body,
                                  headers={"Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=20) as r:
-            token = json.loads(r.read().decode("utf-8", "replace")).get("access")
+            data = json.loads(r.read().decode("utf-8", "replace"))
     except Exception as exc:                      # noqa: BLE001
         return f"토큰을 못 받았다: {type(exc).__name__} {exc}"
+    #: 제품은 **200 + success:false** 로 「다른 곳에 활성 세션」을 낸다 — 토큰이 없다.
+    #:   그 200 을 성공으로 읽으면 조용한 실패가 초록이 된다 [실측 · verify_route_alive].
+    token = None
+    for sc in (data, data.get("user") or {}, data.get("data") or {}):
+        if isinstance(sc, dict) and data.get("success") is not False:
+            for k in ("access_token", "access", "token"):
+                v = sc.get(k)
+                if isinstance(v, str) and len(v) > 40:
+                    token = v
+                    break
     if not token:
-        return "토큰이 응답에 없다"
+        return f"토큰이 응답에 없다 (success={data.get('success')!r})"
     out = urllib.request.Request(f"{API}/api/v1/auth/logout", data=b"{}",
                                  headers={"Content-Type": "application/json",
                                           "Authorization": f"Bearer {token}"})

@@ -1,11 +1,11 @@
 {
-  "measured_at": "2026-09-02T03:11:59+00:00",
-  "verdict": "UNKNOWN",
+  "measured_at": "2026-09-03T03:17:39+00:00",
+  "verdict": "ALARM",
   "report": {
-    "measured_at": "2026-09-02T03:11:59+00:00",
+    "measured_at": "2026-09-03T03:17:39+00:00",
     "signals": {
       "db_ping_ms": {
-        "value": 0.24,
+        "value": 0.28,
         "verdict": "OK",
         "note": ""
       },
@@ -15,9 +15,9 @@
         "note": "왕복 0.5ms"
       },
       "object_store_alive": {
-        "value": true,
-        "verdict": "OK",
-        "note": "저장소에 질의가 닿았다 (존재 여부 False · 쓰지 않았다)"
+        "value": false,
+        "verdict": "ALARM",
+        "note": "저장소에 닿지 못했다: MaxRetryError HTTPConnectionPool(host='minio.invalid', port=80): Max retries exceeded with url"
       },
       "latest_event_age_min": {
         "value": null,

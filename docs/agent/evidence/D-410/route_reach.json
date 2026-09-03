@@ -1,0 +1,150 @@
+{
+  "surface": "EVENT_ENTRY_SURFACE",
+  "counted": 20,
+  "rows": [
+    {
+      "method": "GET",
+      "path": "/api/dsm/dashboard/frame",
+      "probe": "/api/dsm/dashboard/frame",
+      "status": 200,
+      "verdict": "reach"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/dashboard/link-state",
+      "probe": "/api/dsm/dashboard/link-state",
+      "status": 200,
+      "verdict": "reach"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/deliveries",
+      "probe": "/api/dsm/deliveries",
+      "status": 200,
+      "verdict": "reach"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/events",
+      "probe": "/api/dsm/events",
+      "status": 200,
+      "verdict": "reach"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/reports/templates",
+      "probe": "/api/dsm/reports/templates",
+      "status": 200,
+      "verdict": "reach"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/settings/thresholds",
+      "probe": "/api/dsm/settings/thresholds",
+      "status": 403,
+      "verdict": "reach"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/settings/zones",
+      "probe": "/api/dsm/settings/zones",
+      "status": 403,
+      "verdict": "reach"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/settings/api-keys",
+      "probe": "/api/dsm/settings/api-keys",
+      "status": 422,
+      "verdict": "reach"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/settings/grade-rules",
+      "probe": "/api/dsm/settings/grade-rules",
+      "status": 422,
+      "verdict": "reach"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/settings/thresholds",
+      "probe": "/api/dsm/settings/thresholds",
+      "status": 422,
+      "verdict": "reach"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/settings/zones",
+      "probe": "/api/dsm/settings/zones",
+      "status": 422,
+      "verdict": "reach"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/dsm/settings/api-keys/{int:key_id}",
+      "probe": "/api/dsm/settings/api-keys/987654321",
+      "status": 403,
+      "verdict": "reach"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/events/{int:event_id}",
+      "probe": "/api/dsm/events/4684",
+      "status": 200,
+      "verdict": "reach"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/events/{int:event_id}/clip",
+      "probe": "/api/dsm/events/4684/clip",
+      "status": 404,
+      "verdict": "reach"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/events/{int:event_id}/clip/stream",
+      "probe": "/api/dsm/events/4684/clip/stream",
+      "status": 422,
+      "verdict": "reach"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/reports/{int:template_id}.pdf",
+      "probe": "/api/dsm/reports/7.pdf",
+      "status": 200,
+      "verdict": "reach"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/settings/{domain}",
+      "probe": "/api/dsm/settings/reach-probe",
+      "status": 501,
+      "verdict": "reach"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/events/{int:event_id}/notify",
+      "probe": "/api/dsm/events/987654321/notify",
+      "status": 404,
+      "verdict": "reach"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/events/{int:event_id}/response",
+      "probe": "/api/dsm/events/987654321/response",
+      "status": 422,
+      "verdict": "reach"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/settings/api-keys/{int:key_id}/rotate",
+      "probe": "/api/dsm/settings/api-keys/987654321/rotate",
+      "status": 403,
+      "verdict": "reach"
+    }
+  ],
+  "failed": 0,
+  "unmeasured": 0,
+  "token_changed": 20,
+  "gated": 4
+}

@@ -16,13 +16,45 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.http import Http404
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ★ [D-411 · 판정 2 · 승인 세종 2026-09-19] `/api/token/pair` 를 **뺀다.**
+#
+#   그 문이 무엇이었나 — [실측 2026-09-18, 두 갈래]
+#     · 웹 UI·모바일·게이트·시드 중 **아무도 부르지 않는다**(번들 21파일 정독 · 0건)
+#     · 발급한 JWT 는 dj-core `core/auth.py:38` 이 `user.token` 없다고 거절한다
+#     · 세션이 **없으면 401 · 남이 세워 두면 200** — 죽은 문이 아니라
+#       **남의 세션에 기생하는 문**이다. 스스로는 아무것도 못 세운다
+#   쓸모없는 토큰을 내주는 문은 기능이 아니라 **공격 면**이다. 그래서 닫는다.
+#
+#   ⚠ **dj-core 를 고치지 않는다** (D-207 · §0.4). 저 라우트는 `core.urls` 안에 있고
+#     그 파일은 금지구역이다. 바깥에서 막는다: Django 는 **먼저 등록된 패턴**에서
+#     멈추므로, `include("core.urls")` **앞**에 같은 경로를 놓으면 그 문에 못 닿는다.
+#     이 줄을 아래로 옮기면 문이 다시 열린다 — 순서가 곧 판정이다.
+#
+#   ⚠ `token/refresh` · `token/verify` 는 **건드리지 않는다.** 이번에 잰 것은
+#     `pair` 하나이고, 재지 않은 것을 함께 닫으면 그 순간 이 결정이 추측이 된다(D-301).
+def _gone(request, *args, **kwargs):
+    """닫힌 문. **404 다** — 401·403 이 아니다.
+
+    401 을 내면 「자격증명이 모자란다」로 읽혀 연동 담당자가 계정을 고치려 든다.
+    없는 것은 없다고 말한다(D-290 — 부재와 거절을 가른다).
+    """
+    raise Http404(
+        "/api/token/pair 는 2026-09-19 에 제거됐다 (D-411). "
+        "로그인은 POST /api/v1/auth/login 이다 — docs/agent/authn_paths.md"
+    )
+
 # URLs patterns main
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # ★ D-411 — `core.urls` **보다 먼저.** 아래로 내리면 문이 다시 열린다.
+    path("api/token/pair", _gone),
     path("api/", include("core.urls")),  # APIs core
     path("api/devices/", include("devices.urls")),  # APIs devices
     path("api/delivery/", include("delivery.urls")),  # APIs delivery

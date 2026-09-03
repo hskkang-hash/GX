@@ -727,6 +727,44 @@ gate_route_alive() {
   esac
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# GATE: contract-route-reach — 계약 진입면이 **HTTP 로 닿는가**  (D-410)
+#
+# ★ **세 번째 눈이다.** 두 눈의 사각이 정확히 겹친 자리를 본다:
+#     · 단위/계약 시험(verify_contract_ac) → **서비스 함수**를 부른다. 배선을 안 본다
+#     · route-alive                        → **화면이 부른 GET** 만 때린다. 쓰기 면을 안 본다
+#   그 사이에서 `POST /api/dsm/settings/{api-keys,thresholds,zones,grade-rules}` 넷이
+#   **405 (Allow: GET)** 인 채로 며칠을 살았다 [실측 2026-09-18]. 로직도 시험도 있었고
+#   틀린 것은 「구현되었다」가 아니라 **「외부 App 이 쓸 수 있다」**는 함의였다.
+#   U6 는 HTTP 로만 들어온다 — **함수는 문이 아니다**(착시 ⑨ 배선형).
+# ─────────────────────────────────────────────────────────────────────────────
+gate_contract_route_reach() {
+  head_ "GATE contract-route-reach — 계약 진입면이 HTTP 로 닿나 (D-410)"
+  local out rc
+  if out=$($PY scripts/verify_contract_route_reach.py --self-test 2>&1); then
+    pass "탐지기 자기시험 통과 (판정 규칙 14종 + 출생 표본 405 넷)"
+  else
+    fail "탐지기 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_contract_route_reach.py 2>&1); rc=$?
+  local nroutes
+  nroutes=$(echo "$out" | grep -m1 -o '\[입력\] [0-9]*건' | tr -dc '0-9')
+  inputs "${nroutes:-0}" "선언된 계약 진입면 (EVENT_ENTRY_SURFACE · method+path)"     "등재부를 못 읽었다 — 무엇을 두드릴지 모르는 채로 통과할 수 없다" || return 1
+  echo "$out" | grep -E "^\[REACH\] X " | sed 's/^/        /'
+  case $rc in
+    0) pass "$(echo "$out" | grep -m1 -E '^\[REACH\] 계약 진입면 전부 도달' || echo '[REACH] 통과')"
+       echo "$out" | grep -m1 -E '^\[REACH\] \[대조\]' | sed 's/^/        /'
+       return 0 ;;
+    # ★ 못 잼은 **통과가 아니다**(P-12). 씨앗이 없어 못 잰 자리는 회색으로 선다.
+    2) skip "판정 불가 — 서버 미기동·자격증명 없음·씨앗 없는 자리"                "(통과가 아니다 · D-301)"; return 0 ;;
+    *) fail "계약이 선언한 문 중 열리지 않는 것이 있다 — 함수가 있어도 U6 은 못 쓴다"
+       echo "$out" | sed 's/^/        /'; return 1 ;;
+  esac
+}
+
 _dispatch_gate() {
   case "$1" in
     secrets)            gate_secrets ;;
@@ -738,6 +776,7 @@ _dispatch_gate() {
     forbidden-zone)     gate_forbidden_zone ;;
     dormant)            gate_dormant ;;
     route-alive)        gate_route_alive ;;
+    contract-route-reach) gate_contract_route_reach ;;
     *) echo "알 수 없는 게이트: $1"; exit 2 ;;
   esac
 }
@@ -768,7 +807,7 @@ run_gate() {
   return $rc
 }
 
-ALL_GATES=(secrets bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive)
+ALL_GATES=(secrets bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {

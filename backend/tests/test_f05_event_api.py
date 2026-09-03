@@ -66,6 +66,22 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/reports/templates"),
     ("GET", "/api/dsm/reports/{int:template_id}.pdf"),
     ("GET", "/api/dsm/settings/{domain}"),
+    # ★ 2026-09-19 **둘이 늘었다 — 그런데 진입면은 넓어지지 않았다** (D-410).
+    #   `GET /settings/{domain}` 이 `domain=thresholds` · `domain=zones` 로 이미
+    #   서 주던 **바로 그 문**이다: 같은 핸들러(`_setting_overview`) · 같은 문지기
+    #   (@tenant_scoped + JwtOrInboundKey + guard_setting) · 같은 응답.
+    #   바뀐 것은 **어느 URL 패턴이 그 문을 여는가** 뿐이다.
+    #
+    #   왜 다시 걸었나: 이 둘은 **설정 영역 이름이면서 동시에 쓰기 경로**다.
+    #   `settings/<str:domain>` 이 먼저 등록돼 있는 한 `POST /settings/thresholds`
+    #   는 405 였다(Allow: GET). 리터럴을 앞으로 옮기면 이번엔 GET 이 405 가 된다 —
+    #   한 경로 = 한 PathView 이므로, **GET 과 POST 를 같은 문에 함께 세우는 것**이
+    #   둘 다 사는 유일한 배선이다.
+    #
+    #   ⚠ 이 두 줄을 지우면 시험이 멈춘다. 멈추면 지우지 말고 **왜 문이 사라졌는지**
+    #     를 보라 — 십중팔구 `{domain}` 이 다시 위로 올라간 것이다.
+    ("GET", "/api/dsm/settings/thresholds"),
+    ("GET", "/api/dsm/settings/zones"),
     # ★ 2026-09-06 추가 (D-325 표 ① · F-02 「지점별 기준선 설정」 · F-12 「임계값」).
     #   진입면이 **하나 늘었다** — 그리고 그것이 이 시험의 값이다: 사람이 아니라 도구가
     #   그 사실을 여기서 멈춰 세웠다. 늘리는 판단은 손으로 이 줄을 더하는 일이고,

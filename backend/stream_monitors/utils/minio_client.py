@@ -13,12 +13,37 @@ logger = logging.getLogger(__name__)
 
 
 class MinioClient:
+    """MinIO 접속. **`available` 은 사진이 아니라 맥박이다** (D-412 · 판정 1).
+
+    ★ [실측 2026-09-18] 앞판은 `available` 을 `__init__` 에서 한 번만 정했다. 그래서
+      **저장소를 내려도 `/api/media-data/` 가 200 + success:true** 를 냈다 — 기동 시점의
+      사진을 계속 보여 준 것이다. 저장소가 없을 때는 500 으로 소리쳤는데, **세우고
+      나서 더 조용해졌다.** 「환경이 서야 결함이 보인다」의 실사례다.
+
+    그래서 셋으로 바꿨다:
+      ① `available` 은 **TTL 캐시**(기본 5초)로 갱신한다 — 매 요청 확인은 하지 않는다.
+         F-05 의 p95 예산을 저장소 왕복으로 태우면 그 자체가 결함이 된다.
+      ② 요청이 실패하면 **즉시 False 로 강등**하고 다음 읽기에서 곧바로 재확인한다.
+         TTL 을 기다리게 하면 죽은 5초 동안 「살아 있다」고 말한다.
+      ③ 기동 때 못 세웠어도 **다시 세워 본다** — 저장소가 나중에 뜨는 것이 정상이다.
+         못 세우면 `available` 은 False 로 남고, 그 False 는 사실이다.
+
+    ⚠ 감시(`object_store_alive`)는 **이 값을 읽지 않는다.** 감시와 요청 경로가 서로
+      다른 눈이어야 한다 — 한 눈이 멀면 둘 다 멀면 안 된다(판정 1 ㉰).
+    """
+
+    #: 맥박 주기. 설정으로 바꿀 수 있다 — 코드에 박으면 운영에서 못 바꾼다(C-3.4 계열).
+    DEFAULT_AVAILABILITY_TTL = 5.0
+
     def __init__(self):
         self.endpoint = settings.MINIO_ENDPOINT
         self.access_key = settings.MINIO_ACCESS_KEY
         self.secret_key = settings.MINIO_SECRET_KEY
         self.bucket_name = settings.MINIO_STORAGE_MEDIA_BUCKET_NAME
-        self.available = False
+        #: 마지막 맥박의 결과와 시각. `None` = **한 번도 안 재 봤다**(모른다).
+        self._alive: bool | None = None
+        self._alive_at: float = 0.0
+        self._prober = None
         self.client = None
 
         try:
@@ -38,10 +63,107 @@ class MinioClient:
                 http_client=self._http_client(),
             )
             self._ensure_bucket_exists()
-            self.available = True
+            self._remember(True)
         except Exception as e:
+            self.client = None
+            self._remember(False)
             logger.error(f"Failed to initialize Minio client: {e}")
             logger.warning("Storage functionality will be disabled. Images and videos will not be saved.")
+
+    # ── 맥박 ────────────────────────────────────────────────────────────────
+    @property
+    def _ttl(self) -> float:
+        return float(getattr(settings, "MINIO_AVAILABILITY_TTL",
+                             self.DEFAULT_AVAILABILITY_TTL))
+
+    def _remember(self, alive: bool) -> None:
+        self._alive, self._alive_at = alive, time.monotonic()
+
+    def mark_unavailable(self, why: object = "") -> None:
+        """요청이 실패했다 — **즉시 강등하고 다음 읽기에서 다시 재게 한다.**
+
+        TTL 이 끝나기를 기다리면 죽은 그 몇 초 동안 「살아 있다」고 말한다. 그 몇 초가
+        `success: true` 를 만들고, 그 true 를 본 화면은 **아무 일도 없다**고 그린다.
+        """
+        self._alive, self._alive_at = False, 0.0
+        if why:
+            logger.warning(f"Storage marked unavailable: {why}")
+
+    def _note_failure(self, exc: BaseException) -> None:
+        """호출이 실패했다. **저장소가 죽은 것일 때만** 강등한다.
+
+        ⚠ `S3Error` 는 강등하지 않는다 — 그것은 **서버가 대답한 것**이다(없는 객체·
+          권한 거절). 대답한 서버를 「죽었다」로 적으면 파일 하나가 없을 때마다
+          저장소 전체가 죽었다 살았다 하고, 그렇게 흔들리는 신호는 아무도 안 본다.
+          죽음의 증거는 **대답이 없는 것**이다: 연결 거부·시간 초과·이름 해석 실패.
+        """
+        if isinstance(exc, S3Error):
+            return
+        self.mark_unavailable(f"{type(exc).__name__}: {exc}")
+
+    def _probe(self) -> bool:
+        """살아 있나 — **실제로 물어본다.** 버킷 하나를 묻는 가장 싼 왕복이다."""
+        prober = self._probe_client()
+        if prober is None:
+            return False
+        try:
+            prober.bucket_exists(self.bucket_name)
+        except S3Error:
+            # 서버가 **대답했다.** 버킷 권한이 없어도 저장소는 살아 있다.
+            return True
+        except Exception as exc:                           # noqa: BLE001
+            logger.debug(f"Storage probe failed: {exc}")
+            return False
+        # 기동 때 못 세웠다면 여기서 세운다 — 저장소는 나중에 뜬다.
+        if self.client is None:
+            try:
+                self.client = Minio(
+                    endpoint=self.endpoint, access_key=self.access_key,
+                    secret_key=self.secret_key, secure=False,
+                    http_client=self._http_client())
+                self._ensure_bucket_exists()
+            except Exception as exc:                       # noqa: BLE001
+                self.client = None
+                logger.warning(f"Storage answered the probe but could not be built: {exc}")
+                return False
+        return True
+
+    def _probe_client(self):
+        """맥박 전용 접속 — **짧은 시간 상한**을 쓴다. 한 번 만들어 재사용한다."""
+        import urllib3
+
+        if getattr(self, "_prober", None) is None:
+            try:
+                self._prober = Minio(
+                    endpoint=self.endpoint, access_key=self.access_key,
+                    secret_key=self.secret_key, secure=False,
+                    http_client=urllib3.PoolManager(
+                        timeout=urllib3.Timeout(
+                            connect=float(getattr(settings, "MINIO_PROBE_CONNECT_TIMEOUT",
+                                                  self.PROBE_CONNECT_TIMEOUT)),
+                            read=float(getattr(settings, "MINIO_PROBE_READ_TIMEOUT",
+                                               self.PROBE_READ_TIMEOUT))),
+                        retries=False))
+            except Exception as exc:                       # noqa: BLE001
+                logger.debug(f"Probe client could not be built: {exc}")
+                self._prober = None
+        return self._prober
+
+    @property
+    def available(self) -> bool:
+        """**지금** 저장소가 있나. TTL 안이면 마지막 맥박을, 지나면 다시 잰다."""
+        if self._alive is not None and                 (time.monotonic() - self._alive_at) < self._ttl:
+            return self._alive
+        alive = self._probe()
+        self._remember(alive)
+        return alive
+
+    #: 맥박용 왕복의 상한. **데이터 호출과 같은 예산을 쓰면 안 된다** [실측 2026-09-19]:
+    #:   저장소가 죽었을 때 데이터용 풀(connect 3s · retries 1)로 재면 **6.6초**가 걸렸고,
+    #:   그 6.6초를 요청 하나가 통째로 문다. 맥박은 건강검진이지 데이터 왕복이 아니다 —
+    #:   「죽었나?」는 빨리 답할수록 좋고, 틀리면 5초 뒤에 다시 묻는다.
+    PROBE_CONNECT_TIMEOUT = 1.0
+    PROBE_READ_TIMEOUT = 1.0
 
     @staticmethod
     def _http_client():
@@ -140,6 +262,7 @@ class MinioClient:
             logger.info(f"Image saved to {self.bucket_name}/{object_name}")
             return object_name
         except Exception as e:
+            self._note_failure(e)
             logger.error(f"Error saving image to Minio: {e}")
             return None
 
@@ -214,6 +337,7 @@ class MinioClient:
             return None
 
         except Exception as e:
+            self._note_failure(e)
             logger.error(f"Error saving video to Minio: {e}")
             return None
 
@@ -269,6 +393,7 @@ class MinioClient:
             logger.info(f"JSON saved to {self.bucket_name}/{object_name}")
             return object_name
         except Exception as e:
+            self._note_failure(e)
             logger.error(f"Error saving JSON to Minio: {e}")
             return None
 
@@ -341,6 +466,7 @@ class MinioClient:
             logger.error(f"Error parsing JSON from {object_path_or_url}: {e}")
             return None
         except Exception as e:
+            self._note_failure(e)
             logger.error(f"Error retrieving JSON from Minio: {e}")
             return None
 
@@ -410,6 +536,7 @@ class MinioClient:
             return stat.size
 
         except Exception as e:
+            self._note_failure(e)
             logger.error(f"Error retrieving file size from Minio: {e}")
             return None
 
@@ -442,6 +569,7 @@ class MinioClient:
             logger.error(f"MinIO error getting metadata: {e}")
             return {}
         except Exception as e:
+            self._note_failure(e)
             logger.error(f"Error getting metadata: {e}")
             return {}
 

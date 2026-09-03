@@ -33,5 +33,6 @@ api_key	backend/third_api/test_api.py	11
 api_key	backend/third_api/views/api_key_controller.py	1
 api_key	scripts/verify_authn_paths.py	1
 api_key	scripts/verify_commented_guards.py	1
+api_key	scripts/verify_contract_route_reach.py	3
 api_key	scripts/verify_homonyms.py	6
 api_key	scripts/verify_threshold_table.py	1

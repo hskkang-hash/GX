@@ -5879,3 +5879,145 @@ decisions:
     · docs/agent/authn_paths.md — §3 처분 셋
     · docs/agent/evidence/DA-05/blockers.yaml :: DSM_SETTINGS_WRITE_ROUTES_SHADOWED
   affects: [D-280, D-301, D-309, D-311, D-314, D-386]
+
+- id: D-410
+  author_tree_id: "세종 지시서 2026-09-19 §1 판정 3 (Code 가 재어 올린 것을 세종이 판정)"
+  title: "계약 쓰기 라우트 넷을 **고쳤다** — 그리고 세 번째 눈을 세우자 둘이 더 나왔다"
+  status: decided
+  raised_by: "D-409 (Code 2026-09-18 실측) → 세종 판정 2026-09-19"
+  decision: |
+    ▣ 재현 [실측 2026-09-19] — 제품 토큰으로: 넷 다 **405 (Allow: GET)**. D-409 그대로.
+    ▣ 고침 — ㉮ 를 골랐다. **그러나 순서만으로는 반이었다.**
+        `thresholds` · `zones` 는 **설정 영역 이름이면서 동시에 쓰기 경로**다.
+        리터럴을 앞으로 옮기면 이번엔 그 둘의 **GET 이 405** 가 된다. 좁히는 정규식도
+        같은 이유로 못 푼다 — 경로 문자열이 같기 때문이다.
+        한 경로 = 한 `PathView` 이므로, **GET 과 POST 를 같은 문에 함께 세우는 것**이
+        둘 다 사는 유일한 배선이다:
+          ① 리터럴 쓰기 경로 넷을 `{domain}` **앞으로**
+          ② 겹치는 둘에 **같은 리터럴 경로의 GET** 을 붙임 (같은 핸들러 `_setting_overview`
+             · 같은 문지기 · 같은 응답)
+          ③ `{domain}` 은 **맨 뒤** — 나머지 네 영역을 그대로 받는다
+        라우트 계약 문서 **무변경**. 문서가 옳았고 배선이 틀렸다.
+    ▣ 결과 [실측]: 넷 다 **405 → 422**(검증이 돌았다 = 도달). GET 여섯 영역 전부 그대로
+      403/501. 바뀐 갈래 하나: `GET /settings/{api-keys,grade-rules}`(하이픈) 501 → **405**.
+      그 둘은 애초에 영역 이름이 아니었고(영역은 밑줄), 이제 POST 전용이라 405 가 더 정확하다.
+    ▣ `EVENT_ENTRY_SURFACE` 에 두 줄이 늘었으나 **진입면이 넓어진 것이 아니다** —
+      같은 문이 제 이름으로 다시 걸렸다. 그 사유를 등재부에 함께 적었다.
+    ▣ ★★ **세 번째 눈 신설** — `scripts/verify_contract_route_reach.py`.
+      두 도구의 사각이 정확히 겹친 자리를 본다: 선언된 계약 진입면의 (method, path) 마다
+      자격증명 있이 한 번씩 두드린다. **405 는 언제나 실패다.**
+      · 목록은 손으로 안 적는다 — `EVENT_ENTRY_SURFACE` 를 AST 로 읽는다(두 벌은 어긋난다 · D-369)
+      · 로그인·컨테이너 위임·익명 대조는 `verify_route_alive` 것을 **가져다 쓴다**(복사 금지)
+      · ★ **404 를 가르는 자** [실측]: 「없는 문」과 「없는 행」은 같은 404 다. 그래서
+        아무도 안 받는 메서드(PROPFIND)로 한 번 더 두드린다 — 라우트가 있으면 ninja 가 405,
+        없으면 Django 가 404. 씨앗도 필요 없고 **아무것도 쓰지 않는다**
+      · 씨앗은 **제품이 준다**(목록 응답에서 id 를 거둔다). ⚠ **쓰기 경로엔 실재 id 를
+        쓰지 않는다** — 진짜 id 로 notify 를 두드리면 판정기가 **진짜로 발송하고**
+        F-04 5분 중복 억제가 걸려 **그 다음 진짜 경보가 조용해진다**
+    ▣ ★ 그 눈이 돌자마자 **아무도 안 보던 자리 둘**이 나왔다 — 둘 다 500:
+        `GET /api/dsm/reports/templates`      `TemplateView` 에 **없는 칸** `renderer` 를 읽었다
+        `POST /api/dsm/events/{id}/notify`    「그런 이벤트가 없다」를 **서버 결함**으로 냈다
+      앞엣것은 App 이 커널 공개 면에 없는 칸을 지어내 읽은 것 — 부르는 즉시 죽었다.
+      단위 시험은 서비스 함수를 부르고 **그 반환값을 이 자리에서 다시 읽지 않는다.**
+      착시 ⑨(배선형)의 **두 번째 실사례**다.
+      뒤엣것은 K2 에 좁은 갈래 `EventNotFound`(InvalidNotifyInput 상속)를 파서 갈랐다:
+        404 없는 이벤트 · 409 수신자 0명(알림 체계가 꺼져 있다) · 400 그 밖
+      셋을 뭉치면 U6 은 **자기 잘못인지 우리 잘못인지** 모르고, 우리 감시는 남의 오타를
+      우리 장애로 센다.
+    ▣ 되올림: 계약 진입면 **20건 전부 도달 · 못 닿음 0 · 못 잼 0** [실측].
+      래칫 기준선 **4 → 0** (D-311) — 갚은 빚은 기준선에서 내린다. 안 내리면 그 자리가
+      다시 썩어도 초록이 난다. 감시 목록은 지우지 않는다: **다시 405 가 되는 순간을
+      보는 것**이 그 자리의 일이다(대상 0 과 게이트 부재는 다르다 · D-301).
+  enforced_by: |
+    · scripts/verify_contract_route_reach.py — 계약 진입면 전수 도달 (신설 게이트)
+    · scripts/verify_authn_paths.py — UNREACHABLE_BASELINE = 0 래칫
+    · backend/tests/test_f05_event_api.py — EVENT_ENTRY_SURFACE (등재부 · 두 줄 사유 포함)
+    · backend/apps/dsm/api.py — 리터럴 경로가 `{domain}` 보다 **먼저** 등록된다(순서가 판정이다)
+    · backend/tests/test_clip_playback.py — `backend/apps/dsm/api.py` 의 「F-12 관리자 설정」
+      표지가 영상 구간의 끝을 가른다. 표지를 지우면 그 시험이 멈춘다 [실측 2026-09-19]
+    · docs/agent/authn_paths.md §3
+    · docs/agent/evidence/D-410/route_reach.json
+  affects: [D-207, D-269, D-280, D-284, D-290, D-300, D-301, D-309, D-310, D-311,
+            D-314, D-327, D-369, D-386, D-397, D-409]
+
+- id: D-411
+  author_tree_id: "세종 지시서 2026-09-19 §1 판정 2 (승인)"
+  title: "`/api/token/pair` 를 **뺐다** — 쓸모없는 토큰을 내주는 문은 공격 면이다"
+  status: decided
+  raised_by: "D-408 (Code 2026-09-18 두 갈래 실측) → 세종 승인 2026-09-19"
+  decision: |
+    ▣ 사유 [실측] — 셋이 함께 성립한다:
+        · 실제 클라이언트 **0건** (빌드 번들 21파일 정독)
+        · 발급한 JWT 를 dj-core `core/auth.py:38` 이 `user.token` 없다고 거절
+        · 세션 없으면 401 · 남이 세워 두면 200 — **죽은 문이 아니라 기생하는 문**
+      아이디·비밀번호를 아는 쪽이 남의 세션 위에서 **동시 접속 1개 규약을 우회한 토큰**을
+      더 찍어 낼 수 있었다. 쓸모없는 토큰을 내주는 문은 기능이 아니라 **공격 면**이다.
+    ▣ 어떻게 — **dj-core 는 한 줄도 안 고쳤다**(D-207 · §0.4). 라우트는 `core.urls` 안에
+      그대로 살아 있고, `config/urls.py` 에서 `include("core.urls")` **앞에** 같은 경로를
+      놓아 404 를 낸다. Django 는 먼저 등록된 패턴에서 멈춘다.
+      ⚠ **순서가 곧 판정이다** — 저 줄이 한 칸만 내려가면 문은 **소리 없이 다시 열린다.**
+    ▣ **404 다. 401 이 아니다** — 401 이면 연동 담당자가 「자격증명이 모자란다」로 읽고
+      계정을 고치려 든다. 없는 것은 없다고 말한다(D-290).
+    ▣ 함께 옮긴 것: 저장소 안 유일한 사용처 `test_screens_browser.py::_release_session`
+      → `/api/v1/auth/login`(`end_previous_session:true`). **없어도 되는 우회였다** —
+      로그인 자신이 앞선 세션을 닫는다.
+    ▣ ★ **Code 오판 1건 — 뺐다가 되돌렸다.** 처음엔 `common/tenant_scope.py::PUBLIC_ROUTES`
+      에서 그 줄을 뺐다(「없어진 문의 면제를 남기지 않는다」). **시험이 그것을 잡았다**:
+      미분류 라우트가 **648 → 649** 로 늘었다(`test_route_tenant_scope`).
+      라우트는 URLconf 에서 **사라지지 않았다** — `core.urls` 안에 그대로 있고 우리는
+      앞에 404 문을 세워 가리고 있을 뿐이다. 등재를 지우면 그 자리는 「인증 불요로
+      판정이 끝난 것」에서 **「아직 아무도 안 본 것」**이 된다.
+      **빚을 갚은 것이 아니라 빚을 안 보이게 한 것**이었다. 사유를 바꿔 되돌렸다:
+      「제거된 문 — 404 만 낸다. 아무것도 내주지 않으므로 인증이 필요 없다」.
+      거기 남는 것은 **면제가 아니라 판정**이다.
+    ▣ 건드리지 않은 것: `token/refresh` · `token/verify`. 이번에 잰 것은 `pair` 하나이고,
+      재지 않은 것을 함께 닫으면 그 순간 이 결정이 **추측**이 된다(D-301).
+    ▣ ★ W0-18 계약 시험을 **부작위 시험**으로 바꿨다(404 기대 · D-300).
+      **시험을 고쳐 초록을 만든 것이 아니다** — 앞판의 단언은 그날의 사실이었고 옳았다.
+      바뀐 것은 시험이 아니라 **계약**이고, 그 변경은 세종 승인으로 이 대장에 남는다(D-327).
+  enforced_by: |
+    · backend/config/urls.py — 차단 줄(순서 · 사유 주석)
+    · backend/tests/test_api_contract.py::test_token_pair_is_gone — 404 부작위
+    · scripts/verify_authn_paths.py — 익명 POST → 404 기대
+    · docs/agent/authn_paths.md §2
+  affects: [D-004, D-103, D-204, D-207, D-290, D-300, D-301, D-327, D-337, D-408]
+
+- id: D-412
+  author_tree_id: "세종 지시서 2026-09-19 §1 판정 1"
+  title: "MinIO 가용성은 **사진이 아니라 맥박**이다 — 그리고 캐시가 그 사진을 액자에 넣고 있었다"
+  status: decided
+  raised_by: "세종 판정 1 (D-406 의 「세우고 나서 더 조용해졌다」 후속)"
+  decision: |
+    ▣ 뿌리가 **둘**이었다. 하나만 고쳤으면 여전히 조용했을 것이다.
+    ▣ 뿌리 ① `minio_client.available` 이 `__init__` 에서 한 번만 정해졌다 — **기동 시점의 사진.**
+      고침: TTL 캐시(기본 5초 · `MINIO_AVAILABILITY_TTL`)로 갱신하는 **속성**으로 바꾸고,
+      요청이 실패하면 **즉시 False 로 강등**해 다음 읽기에서 곧바로 재확인한다.
+      기동 때 못 세웠어도 **다시 세워 본다** — 저장소는 나중에 뜬다.
+      ⚠ `S3Error` 로는 강등하지 않는다: 그것은 **서버가 대답한 것**이다(없는 객체·권한 거절).
+        대답한 서버를 죽었다고 적으면 파일 하나 없을 때마다 저장소가 죽었다 살았다 하고,
+        그렇게 흔들리는 신호는 아무도 안 본다. 죽음의 증거는 **대답이 없는 것**이다.
+    ▣ 뿌리 ② ★ **응답 캐시가 저장소 장애를 덮고 있었다** [실측 2026-09-19].
+      MinIO 를 내린 채 같은 순간에 두 번 물었더니:
+          GET /api/media-data/         **200 · success:true**  (0.01s · 캐시)
+          GET /api/media-data/?bust=…  **500 · success:false** (6.68s · 실제)
+      `UniversalCacheMiddleware` 는 적중한 본문을 **언제나 JsonResponse(200)** 으로 다시
+      만든다. 그래서 살아 있을 때 담긴 200 이, 죽은 뒤에도 「목록을 가져왔다」고 말한다.
+      고침: `BYPASS_PATTERNS` 에 `media-data` 를 넣었다 — 그 파일이 이미 세워 둔
+      surveillance-dashboard 와 **같은 사유**다: 바깥에서 바뀌는 것은 무효화 신호가 없다.
+      목록의 진실은 우리 DB 가 아니라 **저장소가 살아 있는가**에 달려 있다.
+    ▣ 뿌리 ③ (곁가지) 죽은 저장소 탐침이 **6.6초** 였다 — 데이터용 풀(connect 3s · retry 1)로
+      재고 있었다. 맥박 전용 접속(connect 1s · read 1s · retries 없음)을 따로 뒀다 → **3.3초**.
+      맥박은 건강검진이지 데이터 왕복이 아니다.
+    ▣ 강제 도구 [실측 2026-09-19 · HTTP 경로]:
+        살아 있음        200 · success:true · **25~30ms** (매 요청 왕복 없음 — TTL 이 지킨다)
+        내림 → 감지      **약 5초** 안에 500 · success:false
+        올림 → 회복      **약 6초** 안에 200 · success:true
+        죽은 동안 비용   5초에 한 번 3.3초 (나머지는 캐시된 False · 0ms)
+      프로세스 안 대조: t+4s True(0.00s) → t+9.3s **False(3.31s)** → t+24.6s True(0.00s).
+    ▣ 감시(`object_store_alive`)는 **그대로 둔다**(판정 1 ㉰) — 감시와 요청 경로가
+      서로 다른 눈이어야 한다. 한 눈이 멀 때 둘 다 멀면 안 된다.
+  enforced_by: |
+    · backend/stream_monitors/utils/minio_client.py — available 속성 · _probe · _note_failure
+    · backend/common/universal_optimization.py — BYPASS_PATTERNS 에 media-data
+    · scripts/verify_minio.py · scripts/ops_monitor.py (object_store_alive)
+  affects: [D-209, D-290, D-301, D-341, D-347, D-397, D-406, D-407]

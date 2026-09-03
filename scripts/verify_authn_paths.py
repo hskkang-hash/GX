@@ -62,9 +62,14 @@ EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
 #: 제품이 실제로 세션을 세우는 문. 번들에서 실측한 값이다 — 우리가 고른 것이 아니다.
 PRODUCT_LOGIN = "/api/v1/auth/login"
-#: 토큰은 주지만 **세션을 못 세우는** 문. 세션이 이미 있으면 그 토큰도 통한다 —
-#: 그래서 「죽었다」가 아니라 **「기생한다」**가 정확한 말이다 [실측 2026-09-18].
-DEAD_LOGIN = "/api/token/pair"
+#: ★ [D-411 · 2026-09-19] **제거된 문.** 이제 404 다.
+#:   무엇이었나 — 토큰은 주지만 **세션을 못 세우는** 문. 세션이 이미 있으면 그 토큰도
+#:   통했다. 그래서 「죽었다」가 아니라 **「기생한다」**가 정확한 말이었다 [실측 09-18]:
+#:       세션 없음 → 401   ·   남이 세워 둠 → 200
+#:   **한 갈래만 재면 어느 쪽이든 그럴듯하다** — 그 교훈은 지우지 않는다. 다만 이제
+#:   재는 것이 바뀌었다: 「기생하는가」가 아니라 **「없어졌는가」**다.
+REMOVED_LOGIN = "/api/token/pair"
+DEAD_LOGIN = REMOVED_LOGIN          # 옛 이름 — 자기시험·출력이 아직 부른다
 #: 로그인이 통했는지 보는 자리. 출생 표본이기도 하다(500 을 내던 그 라우트).
 GATED_ROUTE = "/api/dsm/events?limit=1"
 
@@ -72,10 +77,15 @@ GATED_ROUTE = "/api/dsm/events?limit=1"
 #:   [실측 2026-09-17] `/api/token/pair` 로 받은 토큰으로 26건을 때려 **24건이 401**.
 BIRTH_SAMPLE_WRONG_DOOR = (26, 24)
 
-#: ★ 도달 불가 쓰기 면 — **래칫** (D-311). [실측 2026-09-18]
-#:   `GET /api/dsm/settings/{domain}` 이 같은 자리를 먼저 먹어, 아래 넷은 **405** 다.
-#:   단위 시험은 서비스 함수를 직접 부르므로 **전부 초록**이었다 — D-386 이 이름 붙인 층이다.
-#:   ⚠ 이 목록은 「괜찮다」가 아니라 「오늘 이만큼이고 늘면 빨개진다」는 뜻이다.
+#: ★ 도달 불가 쓰기 면 — **래칫** (D-311).
+#:   [실측 2026-09-18] `GET /api/dsm/settings/{domain}` 이 같은 자리를 먼저 먹어
+#:   아래 넷이 **405** 였다. 단위 시험은 서비스 함수를 직접 부르므로 **전부 초록**이었다.
+#:   [실측 2026-09-19 · D-410] 배선을 고쳐 **넷 다 422(도달)** 가 됐다.
+#:   ★ 그래서 기준선을 **4 → 0 으로 조인다.** 래칫은 한 방향으로만 돈다: 갚은 빚은
+#:     기준선에서 내려야 하고, 안 내리면 그 자리가 다시 썩어도 초록이 난다.
+#:   ⚠ 목록은 지우지 않는다 — **이 넷이 다시 405 가 되는 순간을 보는 것**이 이 자리의
+#:     일이다. 지우면 그 순간을 아무도 안 본다(D-301 · 「대상 0 과 게이트 부재는 다르다」).
+UNREACHABLE_BASELINE = 0
 SHADOWED_WRITE_ROUTES = (
     ("POST", "/api/dsm/settings/api-keys"),      # F-05 API Key 발급
     ("POST", "/api/dsm/settings/thresholds"),    # F-12 임계값
@@ -150,8 +160,14 @@ def self_test() -> int:
     if not LEDGER.is_file():
         bad.append(f"대장이 없다: {LEDGER.relative_to(ROOT)} — 판정만 있고 기록이 없으면 "
                    f"다음 사람은 같은 자리에서 다시 헤맨다 (P-15)")
+    #: ★ **감시 목록**과 **기준선**은 다른 것이다 (D-410 이 갈랐다).
+    #:   목록이 비면 볼 것이 없다 — 래칫이 아무것도 안 지킨다.
+    #:   기준선이 0 인 것은 반대다: **빚을 다 갚았다**는 뜻이고, 그래야 다시 늘 때 빨개진다.
     if len(SHADOWED_WRITE_ROUTES) == 0:
-        bad.append("도달 불가 기준선이 비었다 — 0 이면 래칫이 아무것도 안 지킨다")
+        bad.append("감시 목록이 비었다 — 볼 라우트가 없으면 래칫이 아무것도 안 지킨다")
+    if UNREACHABLE_BASELINE > len(SHADOWED_WRITE_ROUTES):
+        bad.append(f"기준선({UNREACHABLE_BASELINE})이 감시 목록"
+                   f"({len(SHADOWED_WRITE_ROUTES)})보다 크다 — 못 넘을 수 없는 문턱이다")
     #: 음성 갈래 — 기준선 항목은 **전부 쓰기 메서드**여야 한다. 읽기가 섞이면
     #: 「쓰기 면이 막혔다」는 이 목록의 뜻이 흐려진다.
     for method, path in SHADOWED_WRITE_ROUTES:
@@ -163,7 +179,8 @@ def self_test() -> int:
             print("    " + b)
         return EXIT_FAIL
     print(f"[AUTHN] 자기시험 통과 — 출생 표본({gated}/{n} 401) · 로그인 첫 경로 · "
-          f"대장 실재 · 도달불가 기준선 {len(SHADOWED_WRITE_ROUTES)}건(전부 쓰기)")
+          f"대장 실재 · 쓰기 라우트 감시 {len(SHADOWED_WRITE_ROUTES)}건(전부 쓰기) · "
+          f"도달불가 기준선 {UNREACHABLE_BASELINE}")
     return EXIT_OK
 
 
@@ -237,26 +254,16 @@ def main() -> int:
     #   하지 않기 때문이다 — **시험은 옳고, 문장이 너무 넓었다.**
     #   ⚠ 이 갈래를 만들려면 탐침 계정을 **로그아웃시켜야 한다.** 탐침 계정만 건드리고
     #     끝나면 다시 로그인해 되돌린다.
-    pair_no_session = pair_with_session = None
-    pair = issue_pair_token(args.api, args.user, args.password)
-    if pair:
-        request(args.api, "POST", "/api/v1/auth/logout", token=pair, body=b"{}")
-        fresh = issue_pair_token(args.api, args.user, args.password)
-        if fresh:
-            pair_no_session = request(args.api, "GET", GATED_ROUTE, token=fresh)
-        token = login(args.api, args.user, args.password) or token
-        again = issue_pair_token(args.api, args.user, args.password)
-        if again:
-            pair_with_session = request(args.api, "GET", GATED_ROUTE, token=again)
-    print(f"[AUTHN] [입력] 2건 — {DEAD_LOGIN} 토큰을 두 갈래로 때렸다: "
-          f"세션 없을 때 {pair_no_session} · 세션 있을 때 {pair_with_session}")
-    if pair_no_session != 401:
-        print(f"[AUTHN] ✗ 세션 없이 발급한 {DEAD_LOGIN} 토큰이 {pair_no_session} 다 — "
-              f"이 문이 **스스로 세션을 세우게 되었다.** 연동 문서와 계약 시험을 고쳐라")
-        rc = EXIT_FAIL
-    if pair_with_session is not None and not 200 <= pair_with_session < 300:
-        print(f"[AUTHN] ✗ 세션이 있는데도 {pair_with_session} 다 — 대장의 「기생한다」가 "
-              f"옛말이 되었다. 다시 재고 대장을 고쳐라")
+    #   ★ [D-411 · 승인 세종 2026-09-19] 그 문을 **뺐다.** 그러므로 이제 재는 것은
+    #     「기생하는가」가 아니라 **「없어졌는가」**다 — 그리고 없앤 것은 다시 생긴다.
+    #     `core.urls`(금지구역) 안에 라우트는 그대로 살아 있고 우리는 `config/urls.py`
+    #     에서 **순서로** 가리고 있을 뿐이다. 그 줄이 한 칸 내려가면 소리 없이 열린다.
+    #     ⚠ **익명으로 잰다.** 자격증명을 얹으면 401 인지 404 인지가 흐려진다.
+    pair_status = request(args.api, "POST", REMOVED_LOGIN, body=b'{"username":"x","password":"y"}')
+    print(f"[AUTHN] [입력] 1건 — {REMOVED_LOGIN} 익명 POST → {pair_status} (기대 404 · D-411)")
+    if pair_status != 404:
+        print(f"[AUTHN] ✗ 제거한 문이 {pair_status} 를 낸다 — **다시 열렸다.** "
+              f"config/urls.py 의 차단 줄이 core.urls include 아래로 내려갔는지 보라 (D-411)")
         rc = EXIT_FAIL
 
     # ── 면 ④ 외부 App 의 키 면 — **발급 문 자체가 도달 불가다** ──────────────
@@ -270,17 +277,18 @@ def main() -> int:
     for method, path in dead:
         print(f"[AUTHN]   · 도달 불가 {method:6} {path} "
               f"— `GET /api/dsm/settings/{{domain}}` 이 같은 자리를 먼저 먹는다")
-    if len(dead) > len(SHADOWED_WRITE_ROUTES):
-        print("[AUTHN] ✗ 도달 불가가 기준선보다 늘었다 — 래칫 D-311")
+    if len(dead) > UNREACHABLE_BASELINE:
+        print(f"[AUTHN] ✗ 도달 불가가 기준선({UNREACHABLE_BASELINE})보다 늘었다 — 래칫 D-311. "
+              f"`GET /settings/{{domain}}` 이 다시 위로 올라갔는지 보라 (D-410)")
         rc = EXIT_FAIL
-    elif len(dead) < len(SHADOWED_WRITE_ROUTES):
-        print(f"[AUTHN]   ★ 도달 불가가 {len(SHADOWED_WRITE_ROUTES)} → {len(dead)} 로 줄었다 — "
+    elif len(dead) < UNREACHABLE_BASELINE:
+        print(f"[AUTHN]   ★ 도달 불가가 {UNREACHABLE_BASELINE} → {len(dead)} 로 줄었다 — "
               f"기준선을 함께 내려라")
 
     if rc == EXIT_OK:
         print(f"[AUTHN] 통과 — 제품의 문 하나({PRODUCT_LOGIN})가 세션을 세우고, "
-              f"{DEAD_LOGIN} 는 **스스로 못 세우며**(세션 없이 401), "
-              f"화면은 그 문 위에 서 있지 않다")
+              f"{REMOVED_LOGIN} 는 **없으며**(404 · D-411), "
+              f"선언된 쓰기 라우트 {len(SHADOWED_WRITE_ROUTES)}건은 전부 도달한다")
     return rc
 
 

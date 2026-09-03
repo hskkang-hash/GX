@@ -46,6 +46,7 @@ from common.tenant_filters import assert_scoped, filter_by_group_field, get_user
 from common.tenant_scope import TenantScope
 from kernels.k2_notify import channels as channel_registry
 from kernels.k2_notify.exceptions import (
+    EventNotFound,
     InvalidNotifyInput,
     NoRecipients,
     NotImplementedYet,
@@ -269,7 +270,7 @@ def suppress(*, scope: TenantScope, event_id: int) -> bool:
 
     event = Event._base_manager.select_related("stream_monitor").filter(pk=event_id).first()
     if event is None:
-        raise InvalidNotifyInput(f"event_id={event_id} 가 없다")
+        raise EventNotFound(f"event_id={event_id} 가 없다")
     if not scope.is_system:
         assert_scoped(Event, event_id, scope.actor)
 
@@ -310,7 +311,7 @@ def send(
 
     event = Event._base_manager.select_related("stream_monitor").filter(pk=event_id).first()
     if event is None:
-        raise InvalidNotifyInput(f"event_id={event_id} 가 없다")
+        raise EventNotFound(f"event_id={event_id} 가 없다")
     # 사람이 부른 발송은 **자기 테넌트 이벤트**에만 보낸다 — 쓰기 쪽 IDOR (D-290).
     # 파이프라인 스코프에는 이 문턱이 없고, 그래서 시스템 스코프는 사유를 요구한다.
     if not scope.is_system:

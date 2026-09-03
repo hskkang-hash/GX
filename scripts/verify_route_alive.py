@@ -171,18 +171,27 @@ def login(api: str, user: str, password: str) -> str | None:
     return None
 
 
-def hit(api: str, method: str, path: str, token: str | None) -> int:
+def hit(api: str, method: str, path: str, token: str | None,
+        *, with_body: bool = False) -> int | tuple[int, bytes]:
+    """문 하나를 두드린다. `with_body` 면 `(상태, 본문)` 을 함께 돌려준다.
+
+    ★ 본문 갈래는 `verify_contract_route_reach` 가 쓴다 — 그 판정기는 목록 응답에서
+      **씨앗 id 를 거둬** 매개변수 경로를 때린다(없는 id 로 때리면 404 가 「없는 문」인지
+      「없는 행」인지 못 가른다). 그쪽에 두 번째 `hit` 을 두지 않는 이유는 하나다:
+      **두 벌은 반드시 어긋난다**(D-369). 이 함수 안에는 2026-09-17 의 교훈
+      (익명 대조 · 401 판독)이 얽혀 있고, 복사본은 그 교훈을 한쪽에만 남긴다.
+    """
     req = urllib.request.Request(api + path, method=method)
     if token:
         req.add_header("Authorization", f"Bearer {token}")
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
-            return r.status
+            return (r.status, r.read()) if with_body else r.status
     except urllib.error.HTTPError as e:
-        return e.code
+        return (e.code, e.read()) if with_body else e.code
     except Exception as exc:                           # noqa: BLE001
         print(f"[ALIVE] {path} — 응답을 못 받았다: {type(exc).__name__} {exc}")
-        return 0
+        return (0, b"") if with_body else 0
 
 
 #: ★ **출생 표본 ②** (D-310) — [실측 2026-09-17] 「로그인 성공」을 찍고도

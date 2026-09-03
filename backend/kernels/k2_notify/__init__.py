@@ -14,6 +14,7 @@ App(L4)이 만질 수 있는 것은 여기 있는 이름뿐이다. `scripts/veri
   두 벌로 적재하면 알림과 보고서가 다른 말을 한다 (DA-04 K2 이중 AC).
 """
 from kernels.k2_notify.exceptions import (
+    EventNotFound,
     InvalidNotifyInput,
     K2Error,
     NoRecipients,
@@ -43,6 +44,7 @@ __all__ = [
     "DeliveryView",
     # 오류 계약
     "K2Error",
+    "EventNotFound",
     "InvalidNotifyInput",
     "NoRecipients",
     "NotImplementedYet",
