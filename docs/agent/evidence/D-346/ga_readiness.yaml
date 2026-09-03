@@ -119,6 +119,9 @@ areas:
       - id: SEC-09
         title: 운영 포트 노출 점검
         status: 미측정
+        hand: out
+        hand_why: |
+          운영 서버 포트는 **운영 접근**이 있어야 잰다 — 대표 작업 창(D-209 운영 로그인 금지)
         why: |
           운영 서버를 직접 건드리지 않는다(불변 제약). 개발 환경의 포트 노출은 운영과 다르다 —
           **개발에서 잰 수를 운영의 수로 적으면 그것이 착시 ⑤(환경)다.**
@@ -131,6 +134,9 @@ areas:
       - id: SEC-11
         title: 권한 거부가 **거부의 상태 코드**로 나간다 — 전 라우트
         status: 잠김
+        hand: in
+        hand_why: |
+          §4 판정으로 길이 생겼다 — 접두를 한 개씩 승격하고 §0.4 화면은 **프론트 인터셉터**로 밖에서 잇는다(D-335/D-348). 우리가 닫는다
         blocker: DJCORE_200_ENVELOPE_403
         why: |
           dj-core 가 HTTP 200 봉투에 403 을 담아 보낸다. §0.4 라 우리가 못 고친다.
@@ -188,6 +194,9 @@ areas:
       - id: OPS-02
         title: "**빈 환경에서** 매뉴얼대로 설치가 재현된다"
         status: 미측정
+        hand: in
+        hand_why: |
+          빈 컨테이너 하나면 잰다 — 도구·환경이 손 안이다
         why: |
           매뉴얼은 「빈 것에서 세워 보며」 적었으나, 인수자가 빈 환경에서 재현한 기록이 없다.
           우리가 우리 환경에서 한 번 더 도는 것은 재현이 아니다(착시 ⑤ — 환경).
@@ -195,6 +204,9 @@ areas:
       - id: OPS-03
         title: 마이그레이션이 한 줄로 선다
         status: 잠김
+        hand: in
+        hand_why: |
+          dj-core 는 못 고치지만 **우회 경로를 우리 층에 둔다**고 이 대장이 이미 적었다
         blocker: MIGRATE_ONE_LINER
         why: dj-core `logger/0009` 의존 미선언. §0.4 라 우리가 못 고친다 — 우회 경로를 우리 층에 둔다.
 
@@ -289,11 +301,17 @@ areas:
       - id: OPS-07
         title: 로그 수집·보존 기간
         status: 미측정
+        hand: in
+        hand_why: |
+          보존 기간은 우리가 정하고 우리가 구현한다
         why: 컨테이너 stdout 으로 나가는 것 외에 수집처·보존 정책이 정해진 바 없다.
 
       - id: OPS-08
         title: 되돌리기 절차 (배포 실패 시)
         status: 미측정
+        hand: in
+        hand_why: |
+          되돌리기 절차는 문서 + dry-run — 손 안
         why: 매뉴얼 §5 에 문장은 있으나 **되돌려 본 기록이 없다.** 해 본 적 없는 절차는 절차가 아니다.
 
       - id: OPS-11
@@ -317,6 +335,9 @@ areas:
       - id: PERF-02
         title: 동시 스트림 상한 실측
         status: 미측정
+        hand: out
+        hand_why: |
+          동시 스트림 상한은 **GPU 서버**가 있어야 잰다
         why: |
           [실측 2026-09-09] 이 환경에는 RTSP 원본도 AI 서버도 없다(`ai.invalid`).
           그래서 **선언된 상한**(설정값)과 **실제 상한**을 나눠 적었다 —
@@ -412,6 +433,12 @@ areas:
       - id: QA-07
         title: 시험이 코드의 어디를 지나는지 (커버리지)
         status: 미측정
+        hand: in
+        hand_why: |
+          도구만 있으면 우리가 잰다. ★ 그런데 **이번 턴에 못 쟀다** [실측 2026-09-21]:
+          `pytest-cov` 가 컨테이너에 없고 설치에 외부 네트워크가 필요하다.
+          「손 안」은 그대로다 — 막는 것이 상대방도 기관도 아니라 **설치 한 번**이다.
+          그것을 「손 밖」으로 옮기면 그 순간 이 절이 조용히 어쩔 수 없는 것이 된다.
         why: 커버리지를 잰 적이 없다. **시험 수는 커버리지가 아니다** — 433 이 무엇을 지나는지 모른다.
 
       # ★ D-387 — 재현되지 않는 빌드는 상용에 나갈 수 없다. **두 절로 쪼갠다**(D-314):
@@ -428,6 +455,9 @@ areas:
       - id: QA-09
         title: 설치가 재현된다 (`npm ci` 가 같은 것을 가져온다)
         status: 미측정
+        hand: out
+        hand_why: |
+          lockfile 이 금고에 있고 **커밋 승인이 대표**의 자리다(W0-8)
         why: |
           [실측 2026-09-13] **못 쟀다.** 사내 git(192.168.0.22:22)이 이 환경에서
           연결 거부다 — `ssh: connect to host 192.168.0.22 port 22: Connection refused`.
@@ -535,6 +565,9 @@ areas:
       - id: UX-09
         title: 열었더니 못 찍은 화면 셋 (빈 화면 1 · 도달 불가 2)
         status: 잠김
+        hand: out
+        hand_why: |
+          셋 다 인수 자산(rj-core §0.4) 화면에서 갈린다 — 소유팀
         blocker: RJCORE_BLANK_ON_NO_PERMISSION
         proof: docs/agent/evidence/D-386/screen_routes.json
         note: |
@@ -554,6 +587,9 @@ areas:
       - id: UX-10
         title: 저장소가 죽었을 때 사용자가 그것을 안다
         status: 잠김
+        hand: in
+        hand_why: |
+          `/media-data` 는 **우리 화면**이다. 서버는 이미 500 을 말한다 — 화면이 듣게 하면 닫힌다
         blocker: MEDIA_LIST_SHOWS_EMPTY_WHEN_STORAGE_DOWN
         proof: docs/agent/evidence/D-396/screens_16.md
         note: |
@@ -617,6 +653,9 @@ areas:
       - id: UX-05
         title: 역할↔화면 매핑 확인 (안양 관제팀 검수 항목)
         status: 잠김
+        hand: out
+        hand_why: |
+          매핑의 정답은 **안양 관제팀**이 안다 — 검수 항목
         blocker: K3_ROLE_MAPPING_UNCONFIRMED
         proof: backend/config/k3_roles.py
         note: |

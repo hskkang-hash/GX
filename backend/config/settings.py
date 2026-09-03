@@ -245,7 +245,15 @@ DATABASES = {
             "options": "-c statement_timeout=30000",
         },
         "ATOMIC_REQUESTS": False,  # Tắt atomic requests
-        "AUTOCOMMIT": True  # Bật autocommit để đảm bảo transaction consistency
+        "AUTOCOMMIT": True,  # Bật autocommit để đảm bảo transaction consistency
+        # ── P-18 (정정 · 2026-09-21) 차선마다 **시험 DB 이름을 가른다** ──────────
+        # 병렬 차선을 막고 있던 것은 자원이 아니라 **이름 하나**였다 [실측 09-10]:
+        # 두 차선이 시험을 동시에 돌리면 둘 다 `test_<DB_NAME>` 을 만들려 해서
+        # `DuplicateDatabase` / `ObjectInUse` 로 죽었고, **그 빨강은 코드 결함처럼
+        # 보이지만 환경 충돌**이다. 컨테이너를 복제하지 않는다 — 이름만 가른다.
+        #     DB_TEST_NAME=test_gx_c  (차선 C) · test_gx_d · test_gx_e · test_gx_v
+        # 비우면 Django 기본(`test_` + NAME)이라 지금까지와 **똑같이** 돈다.
+        "TEST": {"NAME": env("DB_TEST_NAME", default=None) or None},
     }
 }
 # SESSION_SERIALIZER = "core.common.security.session_serializer.EncryptedSessionSerializer"

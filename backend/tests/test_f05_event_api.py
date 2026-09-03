@@ -176,6 +176,13 @@ EVENT_RESPONSE_KEYS: frozenset[str] = frozenset({
     "event_id", "event_type", "severity", "status", "verdict",
     "occurred_at", "last_seen_at", "stream_monitor_id", "stream_monitor_name",
     "lat", "lng", "snapshot_path",
+    # ★ 2026-09-21 **하나가 늘었다** — 대응 진행(D-399). 손으로 이 줄을 더하는 일이
+    #   곧 「목록의 모양을 넓힌다」는 선언이고, 그 선언을 여기 남긴다.
+    #   왜 넓혔나: 그전까지 대응 축은 **상세에만** 있었고, 그래서 관제팀장의
+    #   「미처리 이벤트 확인」을 서버가 걸러 줄 수 없었다(온보딩 48행 U2 #2).
+    #   ⚠ 넓힌 것은 **읽기 면**이다 — 이 값을 쓰는 문은 여전히 `/events/{id}/response`
+    #     하나뿐이고, 목록은 아무것도 바꾸지 않는다.
+    "response_state",
 })
 
 

@@ -138,22 +138,28 @@ class DsmAPI:
     @tenant_scoped(reason="F-09 이벤트 목록 — 남의 테넌트 이벤트가 보이면 격리 실패다")
     def events(self, request, since: datetime | None = None,
                event_type: str | None = None, severity: str | None = None,
-               limit: int = 50):
+               response_state: str | None = None, limit: int = 50):
         """F-09 이벤트 목록.
 
         ★ NFR-09-1 — 스트리밍 서버가 죽어도 이 목록은 200 이다.
           여기서 스트리밍을 부르지 않는 것이 그 성질의 전부다.
+
+        ★ 2026-09-21 — `response_state` 가 **나가고 들어온다**(W1 「미처리」 프리셋).
+          그전까지 대응 축은 상세에만 있었고, 그래서 관제팀장의 「미처리 이벤트 확인」을
+          서버가 걸러 줄 수 없었다(온보딩 48행 U2 #2). 화면이 목록을 받아 자기가 거르면
+          **페이지 밖 이벤트는 없는 것이 된다** — DA-04 「필터는 전부 서버에서」.
         """
         rows = services.recent_events(scope=_scope(request), since=since,
                                       event_type=event_type, severity=severity,
-                                      limit=limit)
+                                      response_state=response_state, limit=limit)
         return {"total": len(rows), "events": [
             {"event_id": e.event_id, "event_type": e.event_type,
              "severity": e.severity, "status": e.status, "verdict": e.verdict,
              "occurred_at": e.occurred_at, "last_seen_at": e.last_seen_at,
              "stream_monitor_id": e.stream_monitor_id,
              "stream_monitor_name": e.stream_monitor_name,
-             "lat": e.lat, "lng": e.lng, "snapshot_path": e.snapshot_path}
+             "lat": e.lat, "lng": e.lng, "snapshot_path": e.snapshot_path,
+             "response_state": e.response_state}
             for e in rows]}
 
     # ★ 들어오는 키를 **받지 않는다**(기본값 거절). 상세는 목록에 없는 것을 더 낸다 —

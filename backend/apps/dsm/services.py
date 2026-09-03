@@ -142,7 +142,8 @@ def dashboard_frame(*, scope: TenantScope, dashboard_code: str | None = None,
 
 
 def recent_events(*, scope: TenantScope, since: datetime | None = None,
-                  event_type=None, severity=None, limit: int = 50):
+                  event_type=None, severity=None, response_state=None,
+                  limit: int = 50):
     """F-09 이벤트 목록. K1 을 그대로 부른다 — 필터도 커널이 건다.
 
     ★ NFR-09-1 — 외부 의존(스트리밍 서버)이 죽어도 이 목록은 산다.
@@ -151,7 +152,8 @@ def recent_events(*, scope: TenantScope, since: datetime | None = None,
     from kernels.k1_event import query_events
 
     return query_events(scope=scope, since=since, event_type=event_type,
-                        severity=severity, limit=limit)
+                        severity=severity, response_state=response_state,
+                        limit=limit)
 
 
 def event_detail(*, scope: TenantScope, event_id: int):

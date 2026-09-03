@@ -175,6 +175,7 @@ def _to_view(row) -> EventView:
         reviewed_by_id=row.reviewed_by_id,
         reviewed_at=row.reviewed_at,
         reject_reason=row.reject_reason,
+        response_state=row.response_state,
     )
 
 
@@ -361,6 +362,10 @@ def query_events(
     event_type: str | Iterable[str] | None = None,
     severity: str | Iterable[str] | None = None,
     status: str | Iterable[str] | None = None,
+    #: ★ 대응 진행으로 좁힌다 (2026-09-21 · W1 「미처리」 프리셋).
+    #:   **서버가 거른다** — DA-04 의 「필터는 전부 서버에서」가 이 칸에도 적용된다.
+    #:   화면이 페이지를 받아 자기가 거르면 **페이지 밖 이벤트는 없는 것이 된다.**
+    response_state: str | Iterable[str] | None = None,
     stream_monitor_id: int | None = None,
     mission_id: int | None = None,
     limit: int = 100,
@@ -399,6 +404,7 @@ def query_events(
     _in("event_type", event_type)
     _in("severity", severity)
     _in("status", status)
+    _in("response_state", response_state)
     if since is not None:
         qs = qs.filter(occurred_at__gte=since)
     if until is not None:

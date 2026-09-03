@@ -318,3 +318,65 @@ class ReviewRouteRefusalIsFourXXTest(FalsePositiveCouplingFixture):
         victim = self._event(self.stream_b)
         self.assertEqual(404, self._status_of(victim, "rejected"))
         self.assertEqual(self._row(victim).response_state, self.S.OCCURRED)
+
+
+class EventListCarriesTheResponseAxisTest(FalsePositiveCouplingFixture):
+    """★ 목록이 **대응 축을 실어 나른다** (2026-09-21 · W1 「미처리」 프리셋의 선행).
+
+    왜 시험이 따로 있나 — 이 자리는 「구현됐는데 안 보이는」 모양의 이웃이었다.
+    `response_state` 는 2026-09-14 부터 모델에도 상세에도 있었지만 **목록에 없었다.**
+    그래서 관제팀장이 「미처리만 보여 달라」고 할 때 서버가 답할 수 없었고,
+    화면이 페이지를 받아 스스로 거르면 **페이지 밖 이벤트는 없는 것이 된다.**
+    """
+
+    def test_the_list_row_carries_response_state(self) -> None:
+        from apps.dsm.api import DsmAPI
+
+        eid = self._event(self.stream_a)
+        out = DsmAPI.events(DsmAPI, _FakeRequest(self.user_a))
+        row = next(r for r in out["events"] if r["event_id"] == eid)
+        self.assertIn("response_state", row,
+                      "목록 한 줄에 대응 축이 없습니다 — 화면이 그것을 셀 수 없습니다.")
+        self.assertEqual(row["response_state"], self.S.OCCURRED)
+
+    def test_the_server_filters_by_response_state(self) -> None:
+        """★ **필터는 서버에서** (DA-04). 화면이 거르면 페이지 밖이 안 세어진다."""
+        from apps.dsm import services
+        from apps.dsm.api import DsmAPI
+
+        open_one = self._event(self.stream_a)
+        closed_one = self._event(self.stream_a)
+        services.advance_response(scope=self.scope_a, event_id=closed_one,
+                                  to_state=self.S.ACKNOWLEDGED)
+
+        out = DsmAPI.events(DsmAPI, _FakeRequest(self.user_a),
+                            response_state=self.S.OCCURRED)
+        ids = {r["event_id"] for r in out["events"]}
+        self.assertIn(open_one, ids)
+        self.assertNotIn(closed_one, ids,
+                         "「발생」으로 걸렀는데 접수 확인된 이벤트가 따라왔습니다.")
+
+    def test_a_false_positive_leaves_the_unhandled_preset(self) -> None:
+        """★ 두 축이 **같은 목록에서** 맞물려 보인다 — 오탐 판정 하나로 미처리에서 빠진다.
+
+        U1 이 「오탐」을 누르면 그 이벤트는 대응 축에서도 종결이므로(P-16)
+        관제팀장의 「미처리」 프리셋에서 **한 번에** 사라져야 한다. 두 번 눌러야
+        사라지면 그것이 P-1 이 막으려던 「두 종류의 종결」이다.
+        """
+        from apps.dsm.api import DsmAPI
+        from kernels.k1_event import review_event
+
+        eid = self._event(self.stream_a)
+        before = {r["event_id"] for r in DsmAPI.events(
+            DsmAPI, _FakeRequest(self.user_a),
+            response_state=self.S.OCCURRED)["events"]}
+        self.assertIn(eid, before)
+
+        review_event(eid, verdict="rejected", reason="안개였다", scope=self.scope_a)
+
+        after = {r["event_id"] for r in DsmAPI.events(
+            DsmAPI, _FakeRequest(self.user_a),
+            response_state=self.S.OCCURRED)["events"]}
+        self.assertNotIn(eid, after,
+                         "오탐 판정 뒤에도 「미처리」에 남아 있습니다 — 관제팀장은 "
+                         "닫힌 일을 다시 봅니다.")

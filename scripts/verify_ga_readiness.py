@@ -59,6 +59,11 @@ STATUSES = (DONE, "미착수", "잠김", "미측정")
 BANNED = ("부분", "진행중", "일부", "대부분", "거의")
 NEEDS_WHY = ("미착수", "미측정")
 
+#: 「잠김」·「미측정」이 어디에 속하는가 (2026-09-21 · 세종 §3 판정).
+#:   design 은 **분모에서 뺀다** — 하지 않기로 한 것은 못 한 것이 아니다.
+#:   out 은 분모에 남기고 따로 센다 — 조건이 열어 준다.
+HANDS = ("design", "out", "in")
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 술어 — 파일 없이 시험할 수 있게 순수 함수로 둔다
@@ -83,6 +88,21 @@ def judge_clause(clause: dict, *, exists, blocker_ids: set[str]) -> list[str]:
             out.append("%s: '구현' 인데 증명이 없다 — **그런 칸은 '미측정'이다** (D-346)" % cid)
         elif not exists(proof):
             out.append("%s: 증명이 가리킨 «%s» 가 없다 — 없는 증명은 문서다" % (cid, proof))
+
+    #: ★ P-18 턴(2026-09-21) — **분류하지 않은 것은 분모에서 뺄 수 없다.**
+    #:   「잠김」·「미측정」은 셋 중 하나여야 한다:
+    #:     design  하지 않기로 한 것 — 기능이 아니라 규칙이다. 100%의 대상이 아니다
+    #:     out     손 밖 — 상대방·기관·GPU·대표. 조건이 성립하면 열린다
+    #:     in      손 안 — 우리가 닫을 수 있다. **이것이 남아 있는 한 100%가 아니다**
+    #:   분류를 안 적으면 그 절은 조용히 「어쩔 수 없는 것」이 된다.
+    if status in ("잠김", "미측정"):
+        hand = (clause.get("hand") or "").strip()
+        if hand not in HANDS:
+            out.append("%s: '%s' 인데 hand 가 %r 다 — 허용: %s. **분류하지 않은 것은 "
+                       "분모에서 뺄 수 없다**" % (cid, status, hand, ", ".join(HANDS)))
+        elif len((clause.get("hand_why") or "").strip()) < 10:
+            out.append("%s: hand=%s 인데 사유가 없다 — 「손 밖」은 선언이지 면제가 아니다"
+                       % (cid, hand))
 
     if status == "잠김":
         blocker = (clause.get("blocker") or "").strip()
@@ -136,6 +156,28 @@ def contract_clause_counts() -> dict[str, int]:
     return counts
 
 
+#: 계약 절 대장의 잠금 id → hand. 계약 절은 상태를 두 곳에 적지 않으므로(위 함수)
+#: 분류도 **거기 있는 값**에서 파생한다.
+CONTRACT_HAND = {
+    #: 계약 11조 — 구간 추출은 **하지 않기로 한 것**이다. 기능이 아니라 규칙이므로
+    #: 100%의 분모에서 뺀다. 「못 했다」로 세면 영원히 안 채워지는 칸이 생긴다.
+    "CLIP_EXTRACTION": "design",
+    #: 상대방(SDN) 명세가 오면 열린다 — 조건부다.
+    "SDN_API_SPEC": "out",
+}
+
+
+def contract_clause_hands() -> dict[str, int]:
+    """계약 절 중 잠김을 hand 별로 센다. 술어는 `unlock_id` 다."""
+    text = CONTRACT.read_text(encoding="utf-8")
+    out: dict[str, int] = {}
+    for m in re.finditer(r"^\s*unlock_id:\s*(\S+)", text, re.MULTILINE):
+        hand = CONTRACT_HAND.get(m.group(1).strip())
+        if hand:
+            out[hand] = out.get(hand, 0) + 1
+    return out
+
+
 def blocker_ids() -> set[str]:
     if not BLOCKERS.exists():
         return set()
@@ -177,7 +219,19 @@ def self_test() -> int:
             for p in problems({"id": "X", "status": "잠김", "blocker": "없는것"}))))
     checks.append((
         "대장에 있는 blocker 는 통과한다",
-        not problems({"id": "X", "status": "잠김", "blocker": "MIGRATE_ONE_LINER"})))
+        not problems({"id": "X", "status": "잠김", "blocker": "MIGRATE_ONE_LINER",
+                      "hand": "in", "hand_why": "우회 경로를 우리 층에 둔다"})))
+    #: ★ 2026-09-21 — **분류하지 않은 것은 분모에서 뺄 수 없다** (세종 §3).
+    checks.append((
+        "'잠김' 인데 hand 가 없으면 잡는다",
+        any("분모에서 뺄 수 없다" in p
+            for p in problems({"id": "X", "status": "잠김",
+                               "blocker": "MIGRATE_ONE_LINER"}))))
+    checks.append((
+        "hand 는 있는데 사유가 없으면 잡는다 — 「손 밖」은 선언이지 면제가 아니다",
+        any("선언이지 면제가" in p
+            for p in problems({"id": "X", "status": "미측정", "why": "재는 중",
+                               "hand": "out"}))))
     checks.append((
         "사유 없는 '미착수' 를 잡는다",
         any("사유가 없다" in p for p in problems({"id": "X", "status": "미착수"}))))
@@ -205,11 +259,12 @@ def self_test() -> int:
 
 # ═══════════════════════════════════════════════════════════════════════════
 
-def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str]]:
+def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, int]]:
     data = yaml.safe_load(LEDGER.read_text(encoding="utf-8"))
     areas = data["areas"]
     ids = blocker_ids()
     counts: dict[str, dict[str, int]] = {}
+    hands: dict[str, int] = dict(contract_clause_hands())   # 계약 절 몫을 먼저 담는다
     problems: list[str] = []
 
     for area in areas:
@@ -230,12 +285,15 @@ def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str]]:
                     clause, exists=lambda rel: (ROOT / rel).exists(), blocker_ids=ids)]
                 status = (clause.get("status") or "").strip()
                 c[status] = c.get(status, 0) + 1
+                hand = (clause.get("hand") or "").strip()
+                if hand in HANDS:
+                    hands[hand] = hands.get(hand, 0) + 1
         counts[area["id"]] = c
 
     weights = sum(a["weight"] for a in areas)
     if weights != 100:
         problems.insert(0, "가중치 합이 %d 다 — 100 이 아니면 아래 수는 전부 무의미하다" % weights)
-    return areas, counts, problems
+    return areas, counts, problems, hands
 
 
 def main() -> int:
@@ -252,7 +310,7 @@ def main() -> int:
         print("[GA] 대장이 없다: %s" % LEDGER)
         return 1
 
-    areas, counts, problems = load()
+    areas, counts, problems, hands = load()
     total, rows = score(areas, counts)
     all_clauses = sum(sum(c.values()) for c in counts.values())
     done = sum(c.get(DONE, 0) for c in counts.values())
@@ -268,6 +326,25 @@ def main() -> int:
               % (aid, name, weight, d, n, ratio * 100, weighted))
     print("[GA] ★ 상용 오픈 가중 합계 **%.1f%%** [실측]" % total)
     print("[GA] (계약 축과 합치지 않는다 — D-345. 계약 절은 영역 ①이 그대로 인용한다)")
+
+    # ── 손 안 도달율 (2026-09-21 · 세종 §3) ────────────────────────────────
+    # **우리가 닫을 수 있는 100%** 를 따로 낸다. 두 수를 함께 적는 이유:
+    #   가중 합계만 적으면 「상대방이 안 주는 것」과 「우리가 안 한 것」이 같은 칸에서
+    #   같은 무게로 눌러 앉는다. 그러면 아무리 일해도 수가 안 오르는 것처럼 보이고,
+    #   반대로 손 안에 남은 것이 몇인지도 안 보인다.
+    design, out_of_hand, in_hand = (hands.get(k, 0) for k in HANDS)
+    denom = all_clauses - design - out_of_hand
+    print("[GA] [입력] 분류 %d건 — 설계 잠금 %d(분모에서 뺀다) · 손 밖 %d · 손 안 %d"
+          % (design + out_of_hand + in_hand, design, out_of_hand, in_hand))
+    if denom > 0:
+        print("[GA] ★ **손 안 도달율 %.1f%%** = 구현 %d / (%d − 설계 잠금 %d − 손 밖 %d = %d)"
+              % (done / denom * 100, done, all_clauses, design, out_of_hand, denom))
+        not_started = sum(c.get("미착수", 0) for c in counts.values())
+        print("[GA]   손 안에 남은 %d절 = 미착수 %d(전부 우리 것) + 잠김·미측정 중 손 안 %d — "
+              "이 %d절이 **우리가 닫을 수 있는 100%%** 까지의 거리다"
+              % (denom - done, not_started, in_hand, denom - done))
+    else:
+        print("[GA] 손 안 도달율 **판정 불가** — 분모가 0 이하다 (분류가 어긋났다)")
 
     if args.list or args.table:
         _print_table(areas, counts, rows, total, markdown=args.table)
