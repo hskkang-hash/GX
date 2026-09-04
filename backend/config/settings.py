@@ -170,15 +170,26 @@ API_CONTRACT_PROMOTE_ERROR_STATUS = (
 #
 #   그래서 승격을 **경로로 좁혀** 먼저 건다. 전역 플래그가 꺼져 있어도 이 경로들은 승격된다.
 #   되돌리기는 이 목록을 비우는 것이다.
-#   ★ [A2 접두 · 2026-09-04] **한 번에 하나씩 넓힌다.** 이번 턴에 `/api/stream-monitors/`
+#   ★ [A2 접두 · 2026-09-04] **한 번에 하나씩 넓힌다.** 그 턴에 `/api/stream-monitors/`
 #     를 더했다(라우트 28건 · 화면이 실제로 부르는 호출 3건 · 시험 2파일 [실측]).
 #     왜 하나씩인가 — 전역으로 켜면 652자리의 거절 모양이 **같은 순간에** 바뀌고,
 #     그때 깨지는 화면이 어느 접두 때문인지 아무도 못 가른다. 되돌리기도 전부냐 전무냐가 된다.
-#     왜 이 접두인가 — **화면이 지나가는 자리**여서다. 다음 후보 `/api/handover/`(25건)는
-#     지금 화면이 한 번도 부르지 않아 켜도 지나가는 것이 없다(확인이 안 된다).
+#
+#   ★ [A2 접두 · 2026-09-26 · 차선 S · SEC-11] `/api/surveillance/` 를 더한다.
+#     ★★ **먼저 잰 것부터 적는다: 앞의 두 접두는 296건 중 0건을 갚았다** [실측].
+#        인벤토리를 다시 뜨니 `promoted` 가 11 → 61 로 늘었는데, 그 61건 중
+#        `authz_path_permission` 을 가진 것은 **0건**이었다 — 승격된 자리는 전부
+#        원래 `clean` 이던 라우트다. 봉투가 갈리는 296건은 다른 접두 아래 산다:
+#        surveillance 48 · delivery 48 · terminals 38 · devices 33 · handover 25 ….
+#        「대부분 갚았다」고 적었으면 그것이 거짓말이 됐을 자리다(지시서 §4-3).
+#     왜 이 접두인가 — 갚을 수 있는 것 중 **가장 크고**(48건), §0.4 금지구역이 아니며,
+#     **화면이 실제로 지나간다**(캡처 24장의 호출 중 7건 · `D-386/screen_routes.json`).
+#     `/api/handover/`(25건)는 화면이 한 번도 부르지 않아 켜도 지나가는 것이 없다.
+#     delivery·terminals(86건)는 §0.4 이고 무증상 실패 후보가 몰려 있는 자리다.
 API_CONTRACT_PROMOTE_PATHS = tuple(
     p for p in os.environ.get(
-        "API_CONTRACT_PROMOTE_PATHS", "/api/dsm/,/api/stream-monitors/").split(",")
+        "API_CONTRACT_PROMOTE_PATHS",
+        "/api/dsm/,/api/stream-monitors/,/api/surveillance/").split(",")
     if p.strip()
 )
 

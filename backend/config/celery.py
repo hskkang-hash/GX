@@ -89,6 +89,14 @@ app.conf.beat_schedule = {
         "task": "common.ops_audit_purge_beat",
         "schedule": crontab(hour=3, minute=10),
     },
+    "sec-key-rotation-watch-daily": {
+        # SEC-07 — 돌려야 할 들어오는 키를 **말한다.** 돌리지는 않는다.
+        #   03:50 — 정리(03:10)·백업(03:30) 뒤다. 하루의 정리가 끝난 뒤에 내일의 빚을 센다.
+        #   ★ 자동 회전을 걸지 않는 이유: 회전은 상대의 연동을 흔들고,
+        #     끊긴 쪽에서는 **우리 잘못으로 보이지 않는다.** 흔드는 시각은 사람이 정한다.
+        "task": "common.key_rotation_watch_beat",
+        "schedule": crontab(hour=3, minute=50),
+    },
     "ops-backup-daily": {
         # ★ 이 주기는 등록되지만 **태스크가 스스로 꺼져 있다**
         #   (`OPS_BACKUP_SCHEDULE_ENABLED` 기본 False).

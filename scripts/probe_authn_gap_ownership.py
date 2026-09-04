@@ -43,27 +43,26 @@ try:
 except (AttributeError, OSError):
     pass
 
-#: §0.4 금지구역 (D-207). **경로로** 확인한다 — 이름이 비슷한 것만으로 붙이지 않는다.
-FORBIDDEN_APPS = ("delivery", "orders", "terminals")
+#: ★ 마운트가 셋이다 — `/app`(=backend) · `/repo/{backend,scripts}` · `/docs`.
+#:   컨테이너에서 `/repo/scripts/…` 로 부르면 `backend` 패키지가 경로에 없다.
+#:   **같은 디렉터리인데 경로가 둘**이라 생기는 일이고, 도구 쪽에서 잇는다.
+for _cand in ("/app", str(Path(__file__).resolve().parent.parent / "backend"),
+              str(Path(__file__).resolve().parent)):
+    if _cand not in sys.path and Path(_cand).is_dir():
+        sys.path.insert(0, _cand)
 
-OURS = "우리 층"
-OUTSIDE = "저장소 밖"
-FORBIDDEN = "§0.4 금지구역"
-UNRESOLVED = "모듈 해석 실패"
-
-
-def classify_path(file_path: str) -> str:
-    """핸들러 소스 파일 경로 하나 → 관할. **순수 함수다** — 자기시험이 이것을 먹인다."""
-    if not file_path:
-        return UNRESOLVED
-    p = file_path.replace("\\", "/")
-    if "site-packages" in p:
-        return OUTSIDE
-    if any(f"/{zone}/" in p for zone in FORBIDDEN_APPS):
-        return FORBIDDEN
-    if "/app/" in p or "/backend/" in p:
-        return OURS
-    return UNRESOLVED
+#: ★ 관할 술어는 **여기 없다** — `scripts/route_ownership.py` 한 벌뿐이다 (D-369).
+#:   이 계측기와 부작위 시험(`tests/test_authn_gap_closed.py`)이 같은 술어를 봐야 한다.
+#:   두 벌이면 어긋나고, 어긋나면 **계측기는 0을 내고 시험은 통과하는데 실제로는 열려 있는**
+#:   상태가 만들어진다.
+from route_ownership import (                 # noqa: E402
+    FORBIDDEN,
+    FORBIDDEN_APPS,
+    OURS,
+    OUTSIDE,
+    UNRESOLVED,
+    classify_path,
+)
 
 
 def handler_file(view: str) -> str:

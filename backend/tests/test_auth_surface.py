@@ -38,13 +38,25 @@ from tests.no_cache import NO_CACHE
 #: 실측 2026-08-25 — 652 라우트 중 auth 없음 143, 그중 @path_permission 부착 **24**.
 #: terminals 9 · devices 6 · flight_log 4 · delivery 3 · operational_data 1 · orders 1.
 #: 24건 중 공개 라우트로 볼 만한 것은 **0건**이다 (evidence/W0-18/auth_surface.md).
-#: P-W0-18-5 판정 대기 — 붙이기로 하면 이 수는 0 이 되어야 한다.
+#:
+#: ★ [실측 2026-09-26 · 차선 S · SEC-04] **24 → 13.** devices 6 · flight_log 4 ·
+#:   operational_data 1 에 관문을 걸었다(우리 층). 남은 13은 **전부 §0.4 금지구역**이다:
+#:   terminals 9 · delivery 3 · orders 1. 우리가 못 고치는 자리이므로 이 수는
+#:   **0 이 되지 않는다** — 0을 목표로 적으면 영원히 갚지 못하는 빚이 된다.
+#:   길이 열린다면 그것은 코드가 아니라 판정이다(D-348 이 미들웨어로 연 것처럼).
 KNOWN_GAPS = {
-    "no_auth_with_path_permission": 24,
+    "no_auth_with_path_permission": 13,
 }
 
 #: 대표 라우트 — 인증 관문이 **없는** 쪽과 **있는** 쪽. 둘을 같은 요청으로 때려 비교한다.
-ROUTE_NO_AUTH_CALLBACK = "/api/devices/devices-management"
+#: ★ [2026-09-26] 관문 없는 쪽을 `/api/devices/devices-management` 에서 옮겼다 —
+#:   그 자리에 **관문이 생겼기 때문이다**(SEC-04). 대조군은 「아직 관문이 없는 자리」여야
+#:   하고, 지금 그런 자리는 §0.4 금지구역뿐이다.
+ROUTE_NO_AUTH_CALLBACK = "/api/terminals/terminals"
+
+#: ★ SEC-04 로 **관문이 생긴** 자리 하나. 「없던 것이 생겼다」를 시험이 직접 말한다 —
+#:   수만 낮추면 다음 사람은 그 수가 왜 낮아졌는지 모른다.
+ROUTE_GATE_ADDED_BY_SEC04 = "/api/devices/devices-management"
 ROUTE_WITH_AUTH_CALLBACK = "/api/report-template/"
 
 
@@ -87,6 +99,27 @@ class AuthSurfaceRegistryTest(TestCase):
         )
 
 
+class RemainingGapIsForbiddenZoneOnlyTest(TestCase):
+    """★ [SEC-04 · 2026-09-26] **남은 것이 무엇인지**를 시험이 말한다.
+
+    수만 세면 「13건 남았다」로 끝나고, 그 13이 우리가 안 한 것인지 못 하는 것인지
+    구별되지 않는다. 남은 자리가 전부 §0.4 라면 그것은 **판정 대기**이지 미착수가 아니다.
+    """
+
+    ZONE = ("/terminals/", "/delivery/", "/orders/")
+
+    def test_nothing_outside_the_forbidden_zone_is_left(self):
+        outside = [r for r in _gap_routes() if not any(z in r for z in self.ZONE)]
+        self.assertEqual(outside, [], "금지구역 밖에 관문 없는 권한 라우트가 남았다: %s"
+                         % " | ".join(outside))
+
+    def test_the_zone_routes_are_actually_there(self):
+        """0건 검사와 검사 못 함을 가른다 (D-301) — 대조군이 사라지면 위 시험은 공회전이다."""
+        self.assertGreater(len(_gap_routes()), 0,
+                           "관문 없는 권한 라우트가 0건이다 — KNOWN_GAPS 를 0 으로 내리고 "
+                           "이 대조 시험을 지워라")
+
+
 class UnauthenticatedReachTest(TestCase):
     """헤더가 아예 없을 때 무엇이 다른가 — 대조군과 나란히 본다."""
 
@@ -98,6 +131,16 @@ class UnauthenticatedReachTest(TestCase):
         """`auth=` 가 붙은 라우트는 **401** 이다. 이것이 정상이다."""
         resp = self.client.get(ROUTE_WITH_AUTH_CALLBACK)
         self.assertEqual(resp.status_code, 401)
+
+    def test_the_route_sec04_gated_now_rejects_anonymous(self):
+        """★ [SEC-04 · 2026-09-26] **없던 관문이 생겼다** — 그 사실을 시험이 말한다.
+
+        이 자리는 어제까지 인증을 한 번도 묻지 않고 권한 판정까지 갔다.
+        지금은 401 이다. 되돌아가면 이 시험이 빨개진다.
+        """
+        resp = self.client.get(ROUTE_GATE_ADDED_BY_SEC04)
+        self.assertEqual(resp.status_code, 401,
+                         "SEC-04 로 건 관문이 사라졌다 — 익명이 권한 판정까지 간다")
 
     def test_no_auth_callback_route_reaches_permission_check(self):
         """`auth=` 가 없는 라우트는 401 이 아니라 **권한 판정까지 간다.**

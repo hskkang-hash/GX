@@ -219,16 +219,38 @@ routes:
   "GET /api/dronehw/drone-communication-management/online-drones": session_only
   "GET /api/dronehw/group-management/group/{group_id}/drones": session_only
   "GET /api/dronehw/group-management/groups-with-drones": session_only
+  "GET /api/dsm/cameras/address-gap": session_only
+  "POST /api/dsm/cameras/import": session_only
   "GET /api/dsm/dashboard/frame": session_only
   "GET /api/dsm/dashboard/link-state": session_only
   "GET /api/dsm/deliveries": session_only
+  "GET /api/dsm/drill": session_only
+  "POST /api/dsm/drill": session_only
+  "GET /api/dsm/drill/report": session_only
   "GET /api/dsm/events": inbound_key_allowed
+  "GET /api/dsm/events/queue": session_only
+  "GET /api/dsm/events/response-times": session_only
+  "GET /api/dsm/events/summary": session_only
+  "GET /api/dsm/events/{int:event_id}": session_only
   "GET /api/dsm/events/{int:event_id}/clip": session_only
   "GET /api/dsm/events/{int:event_id}/clip/stream": session_only
+  "GET /api/dsm/events/{int:event_id}/field-replies": session_only
+  "POST /api/dsm/events/{int:event_id}/field-reply": session_only
   "POST /api/dsm/events/{int:event_id}/notify": session_only
+  "POST /api/dsm/events/{int:event_id}/response": session_only
+  "POST /api/dsm/events/{int:event_id}/review": session_only
+  "GET /api/dsm/events/{int:event_id}/snapshot": session_only
+  "GET /api/dsm/events/{int:event_id}/timeline": session_only
   "GET /api/dsm/reports/templates": session_only
   "GET /api/dsm/reports/{int:template_id}.pdf": session_only
+  "POST /api/dsm/settings/api-keys": session_only
+  "DELETE /api/dsm/settings/api-keys/{int:key_id}": session_only
+  "POST /api/dsm/settings/api-keys/{int:key_id}/rotate": session_only
+  "POST /api/dsm/settings/grade-rules": session_only
+  "GET /api/dsm/settings/thresholds": session_only
   "POST /api/dsm/settings/thresholds": session_only
+  "GET /api/dsm/settings/zones": session_only
+  "POST /api/dsm/settings/zones": session_only
   "GET /api/dsm/settings/{domain}": session_only
   "GET /api/file/get-file": session_only
   "POST /api/file/upload-file": session_only

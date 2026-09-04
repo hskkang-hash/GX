@@ -700,7 +700,7 @@ class SurveillanceProfileController:
                 data=None,
             )
 
-    @route.post("/drone/mark-flight-time")
+    @route.post("/drone/mark-flight-time", auth=CustomJWTAuth())
     def mark_drone_flight_time(self, request: HttpRequest, data: SurveillanceProfileDroneFlightMarkInSchema):
         try:
             success, result = SurveillanceProfileService.mark_drone_flight_time(

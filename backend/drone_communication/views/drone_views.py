@@ -67,7 +67,7 @@ class DroneCommunicationAPI:
             )
 
 
-    @route.post('/change-status')
+    @route.post('/change-status', auth=CustomJWTAuth())
     def change_status(self, data: ChangeStatusInSchema):
         try:
             result = DroneComunicationService.change_status(data.drone_uid, data.status, data.active)

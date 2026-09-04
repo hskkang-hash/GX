@@ -16,7 +16,7 @@ from django.http import JsonResponse
 
 @api_controller('/flight-log', tags=['Flight Log'])
 class FlightLogAPI:
-    @route.get('/', url_name='get_flight_log')
+    @route.get('/', url_name='get_flight_log', auth=CustomJWTAuth())
     @path_permission("read", path_override='/flight-log-analysis')
     def get_flight_log(self, request):
         try:
@@ -52,7 +52,7 @@ class FlightLogAPI:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_FLIGHT_LOG_FAILED), data=[], total_pages=0, total_items=0, current_page=1)
 
 
-    @route.get('/detail/{id}', url_name='get_flight_log_detail')
+    @route.get('/detail/{id}', url_name='get_flight_log_detail', auth=CustomJWTAuth())
     @path_permission("read", path_override='/flight-log-analysis')
     def get_flight_log_detail(self, request, id: int):
         # ★ 문지기는 try **밖**이다 (W0-14c 1차의 교훈).
@@ -65,7 +65,7 @@ class FlightLogAPI:
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_FLIGHT_LOG_DETAIL_FAILED), data=[])
 
-    @route.get('/download-log/{id}', url_name='download_log_file')
+    @route.get('/download-log/{id}', url_name='download_log_file', auth=CustomJWTAuth())
     @path_permission("read", path_override='/flight-log-analysis')
     def download_log_file(self, request, id: int):
         # ★ 문지기는 try **밖**이다 (W0-14c 1차의 교훈).

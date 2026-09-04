@@ -278,6 +278,7 @@ class ChecklistSettingCategoryController:
     @route.get(
         "/",
         response=List[ChecklistSettingCategoryOutputSchema],
+        auth=CustomJWTAuth(),
     )
     def get_categories(self, request):
         """

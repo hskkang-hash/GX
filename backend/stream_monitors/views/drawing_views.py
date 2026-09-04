@@ -16,19 +16,20 @@ from stream_monitors.schemas.schemas_djantic_out import (
     DrawingElementOutSchema
 )
 from stream_monitors.services.drawing_services import DrawingService
+from core.api.v1.auth import CustomJWTAuth
 
 
 @api_controller('/drawing', tags=['Drawing'])
 class DrawingAPI:
-    
-    @route.get('/sessions')
+
+    @route.get('/sessions', auth=CustomJWTAuth())
     @path_permission('stream_monitors.view_drawingsession')
     def get_drawing_sessions(self, request, stream_monitor_id: int = None):
         """Get all drawing sessions"""
         try:
             sessions = DrawingService.get_drawing_sessions(stream_monitor_id)
             sessions_out = DrawingSessionOutSchema.from_queryset(sessions, many=True)
-            
+
             return BaseResponse(
                 status_code=200,
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_DRAWING_SESSIONS_SUCCESS, "Drawing sessions retrieved successfully"),
@@ -40,7 +41,7 @@ class DrawingAPI:
                 status_code=500,
                 message=f"Failed to retrieve drawing sessions: {str(e)}"
             )
-    
+
     @route.post('/sessions', auth=JWTAuth())
     @path_permission('stream_monitors.add_drawingsession')
     def create_drawing_session(self, request, data: DrawingSessionCreateInSchema):
@@ -51,7 +52,7 @@ class DrawingAPI:
                 stream_monitor_id=data.stream_monitor_id,
                 user=request.user
             )
-            
+
             if success:
                 session_out = DrawingSessionOutSchema.from_queryset(result, many=False)
                 return BaseResponse(
@@ -71,18 +72,18 @@ class DrawingAPI:
                 status_code=500,
                 message=f"Failed to create drawing session: {str(e)}"
             )
-    
-    @route.get('/sessions/{session_id}')
+
+    @route.get('/sessions/{session_id}', auth=CustomJWTAuth())
     @path_permission('stream_monitors.view_drawingsession')
     def get_drawing_session_detail(self, request, session_id: int):
         """Get detailed information about a drawing session"""
         try:
             result = DrawingService.get_drawing_session_detail(session_id)
-            
+
             if result:
                 session_out = DrawingSessionOutSchema.from_queryset(result['session'], many=False)
                 elements_out = DrawingElementOutSchema.from_queryset(result['elements'], many=True)
-                
+
                 return BaseResponse(
                     status_code=200,
                     message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_DRAWING_SESSION_DETAIL_SUCCESS, "Drawing session detail retrieved successfully"),
@@ -104,7 +105,7 @@ class DrawingAPI:
                 status_code=500,
                 message=f"Failed to retrieve drawing session detail: {str(e)}"
             )
-    
+
     @route.put('/sessions/{session_id}', auth=JWTAuth())
     @path_permission('stream_monitors.change_drawingsession')
     def update_drawing_session(self, request, session_id: int, data: DrawingSessionUpdateInSchema):
@@ -116,7 +117,7 @@ class DrawingAPI:
                 user=request.user,
                 **update_data
             )
-            
+
             if success:
                 session_out = DrawingSessionOutSchema.from_queryset(result, many=False)
                 return BaseResponse(
@@ -136,7 +137,7 @@ class DrawingAPI:
                 status_code=500,
                 message=f"Failed to update drawing session: {str(e)}"
             )
-    
+
     @route.delete('/sessions/{session_id}', auth=JWTAuth())
     @path_permission('stream_monitors.delete_drawingsession')
     def delete_drawing_session(self, request, session_id: int):
@@ -146,7 +147,7 @@ class DrawingAPI:
                 session_id=session_id,
                 user=request.user
             )
-            
+
             if success:
                 return BaseResponse(
                     status_code=200,
@@ -164,7 +165,7 @@ class DrawingAPI:
                 status_code=500,
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_DELETE_FAILED)
             )
-    
+
     @route.post('/sessions/{session_id}/join', auth=JWTAuth())
     @path_permission('stream_monitors.view_drawingsession')
     def join_drawing_session(self, request, session_id: int):
@@ -174,7 +175,7 @@ class DrawingAPI:
                 session_id=session_id,
                 user=request.user
             )
-            
+
             if success:
                 return BaseResponse(
                     status_code=200,
@@ -193,7 +194,7 @@ class DrawingAPI:
                 status_code=500,
                 message=f"Failed to join drawing session: {str(e)}"
             )
-    
+
     @route.post('/sessions/{session_id}/leave', auth=JWTAuth())
     @path_permission('stream_monitors.view_drawingsession')
     def leave_drawing_session(self, request, session_id: int):
@@ -203,7 +204,7 @@ class DrawingAPI:
                 session_id=session_id,
                 user=request.user
             )
-            
+
             if success:
                 return BaseResponse(
                     status_code=200,
@@ -221,7 +222,7 @@ class DrawingAPI:
                 status_code=500,
                 message=f"Failed to leave drawing session: {str(e)}"
             )
-    
+
     @route.post('/sessions/{session_id}/clear', auth=JWTAuth())
     @path_permission('stream_monitors.change_drawingsession')
     def clear_session_elements(self, request, session_id: int):
@@ -231,7 +232,7 @@ class DrawingAPI:
                 session_id=session_id,
                 user=request.user
             )
-            
+
             if success:
                 return BaseResponse(
                     status_code=200,
@@ -249,7 +250,7 @@ class DrawingAPI:
                 status_code=500,
                 message=f"Failed to clear drawing elements: {str(e)}"
             )
-    
+
     @route.post('/elements', auth=JWTAuth())
     @path_permission('stream_monitors.add_drawingelement')
     def create_drawing_element(self, request, data: DrawingElementCreateInSchema):
@@ -261,7 +262,7 @@ class DrawingAPI:
                 data=data.data,
                 user=request.user
             )
-            
+
             if success:
                 element_out = DrawingElementOutSchema.from_queryset(result, many=False)
                 return BaseResponse(
@@ -281,7 +282,7 @@ class DrawingAPI:
                 status_code=500,
                 message=f"Failed to create drawing element: {str(e)}"
             )
-    
+
     @route.put('/elements/{element_id}', auth=JWTAuth())
     @path_permission('stream_monitors.change_drawingelement')
     def update_drawing_element(self, request, element_id: int, data: DrawingElementUpdateInSchema):
@@ -292,7 +293,7 @@ class DrawingAPI:
                 data=data.data,
                 user=request.user
             )
-            
+
             if success:
                 element_out = DrawingElementOutSchema.from_queryset(result, many=False)
                 return BaseResponse(
@@ -312,7 +313,7 @@ class DrawingAPI:
                 status_code=500,
                 message=f"Failed to update drawing element: {str(e)}"
             )
-    
+
     @route.delete('/elements/{element_id}', auth=JWTAuth())
     @path_permission('stream_monitors.delete_drawingelement')
     def delete_drawing_element(self, request, element_id: int):
@@ -322,7 +323,7 @@ class DrawingAPI:
                 element_id=element_id,
                 user=request.user
             )
-            
+
             if success:
                 return BaseResponse(
                     status_code=200,

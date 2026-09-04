@@ -51,79 +51,79 @@ LIBRARY_UPDATE_EXAMPLE = {
 
 @api_controller('/libraries-management', tags=['Libraries Management (Templates)'])
 class LibraryAPI:
-    @route.get('')
+    @route.get('', auth=CustomJWTAuth())
     @path_permission("read", path_override="/library")
     def list_libraries(self):
         total_start_time = time.time()
-        
+
         old_debug = settings.DEBUG
         settings.DEBUG = True
         reset_queries()
-        
+
         request = self.context.request
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         query_start_time = time.time()
         exclude_fields = []
         libraries = Library.objects.all()\
-            .select_related('main_type', 
-                           'manufacturer_information', 
+            .select_related('main_type',
+                           'manufacturer_information',
                            'avatar',
                            )\
             .prefetch_related('file_attachments')\
-            .order_by('-id') 
-        
+            .order_by('-id')
+
         libraries = libraries.annotate(model=F('manufacturer_information__model_number'),
                                    manufacturer=F('manufacturer_information__manufacturer'),
                                    in_use=Count('devices'),main_type__name = F('main_type__name'))
-       
+
         libraries = apply_dynamic_filters(libraries, request, exclude_fields, request.GET.get('sort_obj'))
-        
+
         query_time = time.time() - query_start_time
-        
+
         paging_start_time = time.time()
-        
+
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
         paginator = OptimizedPaginator(libraries, page_size)
         pages = paginator.page(current_page)
-        
+
         paging_time = time.time() - paging_start_time
-        
+
         conversion_start_time = time.time()
-        
+
         data = LibraryListOutSchema.from_queryset(pages.object_list, many=True)
-        
+
         conversion_time = time.time() - conversion_start_time
-        
+
         queries = connection.queries
         sql_count = len(queries)
         total_sql_time = sum(float(q['time']) for q in queries)
-        
+
         slow_queries = [q for q in queries if float(q['time']) > 0.01]
-        
+
         total_time = time.time() - total_start_time
-        
+
         settings.DEBUG = old_debug
-        
-        return BaseResponse(status_code=200, 
-                            message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_LIBRARY_SUCCESS), 
+
+        return BaseResponse(status_code=200,
+                            message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_LIBRARY_SUCCESS),
                             data = data,
                             total_pages=paginator.num_pages,
                             total_items=paginator.count,
                             current_page=current_page,
                             )
-    
-    @route.get('/{id}')
+
+    @route.get('/{id}', auth=CustomJWTAuth())
     @path_permission("read", path_override="/library")
     def detail_library(self, id: int, edit: bool=False):
         try:
-         
-            library = Library.objects.filter(id=id).first() 
+
+            library = Library.objects.filter(id=id).first()
             data = library_service.LibraryService.get_complete_data(library=library,
                                                                    user_units=None,
                                                                    edit=edit)
-      
+
             return BaseResponse(
                 status_code=200,
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIBRARY_DETAIL_SUCCESS),
@@ -135,29 +135,29 @@ class LibraryAPI:
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.NOT_FOUND, "Library"),
                 data=None
             )
-            
+
     @route.post("", auth=CustomJWTAuth())
     @path_permission("create", path_override="/library")
-    def create_library(self, 
+    def create_library(self,
                      request,
                      data: str = Form(..., description="JSON string của LibraryCreateSchema"),
                      avatar: Optional[UploadedFile] = File(None),
                      files: Optional[List[UploadedFile]] = File(None)):
         """
         Tạo mới library template với avatar và các file đính kèm.
-        
+
         ## Request Parameters
-        
+
         | Parameter | Type | Description |
         |-----------|------|-------------|
         | data | Form (JSON string) | Dữ liệu library theo format LibraryCreateSchema |
         | avatar | File | Hình ảnh đại diện (không bắt buộc) |
         | files | List[File] | Các file đính kèm (không bắt buộc) |
-        
+
         ## Schema dữ liệu (LibraryCreateSchema)
-        
+
         Gửi dữ liệu trong trường `data` theo định dạng JSON với cấu trúc tương tự Device nhưng không có serial_number và unit_id:
-        
+
         ```json
         {
           "name": "string",                     // Tên template (bắt buộc)
@@ -166,13 +166,13 @@ class LibraryAPI:
           "main_type_id": 1,                    // ID của main_type (không bắt buộc)
           "sub_type": "standard",               // Loại phụ (mặc định: "standard")
           "created_by_id": null,                // ID người tạo (không bắt buộc)
-          
+
           // Các trường khác tương tự Device...
         }
         ```
-        
+
         ## Response
-        
+
         ```json
         {
           "success": true,
@@ -182,18 +182,18 @@ class LibraryAPI:
         }
         ```
         """
-        
+
         try:
             # Parse JSON data
             data_dict = json.loads(data)
-            
+
             # Validate với schema
             try:
                 schema = LibraryCreateSchema(**data_dict)
                 validated_data = schema.dict(exclude_unset=True)
             except Exception as e:
                 return BaseResponse(success=False, status_code=422, message=str(e))
-            
+
             # check registration number is unique
             manufacturer_info = validated_data.get('manufacturer_information')
             if manufacturer_info and isinstance(manufacturer_info, dict):
@@ -212,7 +212,7 @@ class LibraryAPI:
                     library.save()
                 except Exception as e:
                     return BaseResponse(success=False, status_code=400, message=str(e))
-            
+
             # Handle files upload if provided
             if files and len(files) > 0:
                 try:
@@ -228,7 +228,7 @@ class LibraryAPI:
                             )
                 except Exception as e:
                     return BaseResponse(success=False, status_code=400, message=str(e))
-            
+
             # Get complete data with files
             response_data = library_service.LibraryService.get_complete_data(library)
             return BaseResponse(status_code=200, message=MESSAGE_ENUM.get(MESSAGE_ENUM.CREATE_LIBRARY_SUCCESS), data=response_data)
@@ -243,10 +243,10 @@ class LibraryAPI:
 
     @route.post("/{id}", auth=CustomJWTAuth())
     @path_permission("update", path_override="/library")
-    def update_library(self, 
-                     id: int, 
+    def update_library(self,
+                     id: int,
                      request,
-                     data: str = Form(None), 
+                     data: str = Form(None),
                      avatar: Optional[UploadedFile] = File(None),
                      delete_avatar: bool = Form(False, description="Xóa avatar cũ"),
                      files: Optional[List[UploadedFile]] = File(None),
@@ -258,14 +258,14 @@ class LibraryAPI:
         try:
             # Parse JSON data
             data_dict = json.loads(data) if data else {}
-            
+
             # Validate với schema
             try:
                 schema = LibraryUpdateSchema(**data_dict)
                 validated_data = schema.dict(exclude_unset=True, exclude_none=True)
             except Exception as e:
                 return BaseResponse(success=False, status_code=422, message=str(e))
-            
+
             # check registration number is unique (excluding current library)
             manufacturer_info = validated_data.get('manufacturer_information')
             if manufacturer_info and isinstance(manufacturer_info, dict):
@@ -273,17 +273,17 @@ class LibraryAPI:
                 if registration_number:
                     if Library.objects.filter(manufacturer_information__registration_number=registration_number).exclude(id=id).exists():
                         return BaseResponse(success=False, status_code=400, message=MESSAGE_ENUM.get(MESSAGE_ENUM.LIBRARY_REGISTRATION_NUMBER_ALREADY_EXISTS))
-            
+
             # Update library with basic data
             library = library_service.LibraryService.update(id, validated_data)
-            
+
             # Handle avatar upload if provided
             if avatar:
                 # Remove old avatar if exists
                 if library.avatar:
                     library.avatar.delete()
                     library.save()
-                
+
                 # Upload new avatar
                 avatar_file = FileHelper.user_upload_s3(request.user, avatar, is_avatar=True, only_image=True)
                 if avatar_file:
@@ -295,7 +295,7 @@ class LibraryAPI:
                 library.save()
             # Xử lý xóa tất cả file đính kèm cũ nếu replace_files=True
             library_content_type = ContentType.objects.get_for_model(library)
-            
+
             if replace_files:
                 # Xóa tất cả file đính kèm cũ
                 UserMediaFileItem.objects.filter(
@@ -309,7 +309,7 @@ class LibraryAPI:
                     file_ids = files_to_remove
                     if isinstance(file_ids, str):
                         file_ids = file_ids.split(',')
-                    
+
                     if isinstance(file_ids, list) and len(file_ids) > 0:
                         # Xóa các file đính kèm cụ thể
                         UserMediaFileItem.objects.filter(
@@ -321,7 +321,7 @@ class LibraryAPI:
                     # Log lỗi nhưng không làm gián đoạn quá trình cập nhật
                     print(f"Error processing files_to_remove: {str(e)}")
                     pass
-            
+
             # Handle files upload if provided
             if files and len(files) > 0:
                 for file in files:
@@ -333,7 +333,7 @@ class LibraryAPI:
                             content_type=library_content_type,
                             object_id=library.id
                         )
-            
+
             # Get complete data with files
             response_data = library_service.LibraryService.get_complete_data(library)
             return BaseResponse(status_code=200, message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPDATE_LIBRARY_SUCCESS), data=response_data)
@@ -366,14 +366,14 @@ class LibraryAPI:
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_DELETE_FAILED),
                 data=None,
             )
-    
+
     @route.delete("/{id}/detach-file/{file_id}", auth=CustomJWTAuth())
     @path_permission("delete", path_override="/library")
     def detach_file(self, id: int, file_id: int):
         try:
             # Check if library exists
             library = Library.objects.get(id=id)
-            
+
             # Check if file exists and is attached to this library
             library_content_type = ContentType.objects.get_for_model(library)
             attachment = UserMediaFileItem.objects.filter(
@@ -381,17 +381,17 @@ class LibraryAPI:
                 content_type=library_content_type,
                 object_id=library.id
             ).first()
-            
+
             if not attachment:
                 return BaseResponse(
                     status_code=404,
                     message=str(_("Attachment not found")),
                     data=None
                 )
-            
+
             # Delete the attachment (not the file itself)
             attachment.delete()
-            
+
             return BaseResponse(
                 status_code=200,
                 message=str(_("File detached successfully")),
@@ -399,14 +399,14 @@ class LibraryAPI:
             )
         except Library.DoesNotExist:
             return BaseResponse(
-                status_code=404, 
-                message=MESSAGE_ENUM.get(MESSAGE_ENUM.NOT_FOUND, "Library"), 
+                status_code=404,
+                message=MESSAGE_ENUM.get(MESSAGE_ENUM.NOT_FOUND, "Library"),
                 data=None
             )
         except Exception as e:
             return BaseResponse(
-                success=False, 
-                status_code=400, 
+                success=False,
+                status_code=400,
                 message=str(_("Failed to detach file: ")) + str(e)
             )
 
@@ -426,6 +426,3 @@ class LibraryAPI:
             library.active = not library.active
             library.save()
         return BaseResponse(status_code=200,message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPDATE_LIBRARY_SUCCESS))
-    
-
-  

@@ -15,24 +15,24 @@ from common.constant import MESSAGE_ENUM
 from core.role.permission import path_permission
 @api_controller('/packaging-specifications', tags=['Packaging Specifications'])
 class PackagingSpecificationAPI:
-    @route.get('')
+    @route.get('', auth=CustomJWTAuth())
     @path_permission("read", "/packaging")
     def list_packaging_specifications(self, request):
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
-        
+
         specifications = PackagingSpecification.objects.select_related('package_type').all().order_by('-id')
         query = filter_mensurement(specifications, PackagingSpecification, request)
 
- 
+
         query = apply_dynamic_filters(query, request, [], request.GET.get('sort_obj', None))
 
-        
+
         # 🚀 OPTIMIZED: Use OptimizedPaginator to automatically optimize COUNT query
         paginator = OptimizedPaginator(query, page_size)
         pages = paginator.page(current_page)
         data = PackagingSpecificationService.get_list_specification_data(pages.object_list)
-        
+
         return BaseResponse(
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.GET_LIST_PACKAGING_SPECIFICATION_SUCCESS),
@@ -42,7 +42,7 @@ class PackagingSpecificationAPI:
             current_page=current_page
         )
 
-    @route.get('/{id}')
+    @route.get('/{id}', auth=CustomJWTAuth())
     @path_permission("read", "/packaging")
     def get_packaging_specification(self, id: int, edit: bool=True):
         try:
@@ -74,7 +74,7 @@ class PackagingSpecificationAPI:
                 fragile=data.fragile,
                 note=data.note,
             )
-            
+
             # Xử lý measurements sau khi tạo
             if hasattr(data, 'dimensions') and data.dimensions:
                 Measurement.create_from_string(specification, 'dimensions', data.dimensions)
@@ -85,7 +85,7 @@ class PackagingSpecificationAPI:
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.CREATE_PACKAGING_SPECIFICATION_SUCCESS),
                 data=PackagingSpecificationService.get_single_specification_data(specification.id)
             )
-                
+
         except ValidationError as e:
             return {"success": False, "errors": e.errors()}
 
@@ -119,9 +119,9 @@ class PackagingSpecificationAPI:
                 specification.note = data.note
             else:
                 specification.note = None
-                
+
             specification.save()
-            
+
             # Xử lý measurements
             if hasattr(data, 'dimensions') and data.dimensions:
                 # Xóa measurement cũ nếu có
@@ -140,7 +140,7 @@ class PackagingSpecificationAPI:
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.UPDATE_PACKAGING_SPECIFICATION_SUCCESS),
                 data=PackagingSpecificationOutSchema.from_queryset(specification)
             )
-                
+
         except PackagingSpecification.DoesNotExist:
             return BaseResponse(
                 status_code=404,
@@ -173,7 +173,7 @@ class PackagingSpecificationAPI:
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_DELETE_FAILED),
                 data=None,
             )
-        
+
     @route.put("/{ids}/change-status", auth=CustomJWTAuth())
     @path_permission("update", "/packaging")
     def change_status(self, ids: str):
@@ -202,7 +202,7 @@ class PackagingSpecificationAPI:
             message=MESSAGE_ENUM.get(message_key or MESSAGE_ENUM.ACTION_ACTIVATE_SUCCESS),
             data=None,
         )
-    
+
     @route.put("/{ids}/activate", auth=CustomJWTAuth())
     @path_permission("update", "/packaging")
     def activate(self, ids: str):
@@ -222,7 +222,7 @@ class PackagingSpecificationAPI:
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_ACTIVATE_SUCCESS),
         )
-    
+
     @route.put("/{ids}/deactivate", auth=CustomJWTAuth())
     @path_permission("update", "/packaging")
     def deactivate(self, ids: str):
@@ -242,7 +242,7 @@ class PackagingSpecificationAPI:
             status_code=200,
             message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_DEACTIVATE_SUCCESS),
         )
-    
+
     @route.put("/{ids}/change-active", auth=CustomJWTAuth())
     @path_permission("update", "/packaging")
     def change_active(self, ids: str):

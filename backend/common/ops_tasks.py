@@ -448,3 +448,34 @@ def evidence_anchor_beat() -> dict:
 
     _write_evidence("evidence_anchor_last", payload)
     return payload
+
+@shared_task(name="common.key_rotation_watch_beat")
+def key_rotation_watch_beat() -> dict:
+    """SEC-07 — **돌려야 할 키가 있는가.** 매일 03:50.
+
+    ★ 자동으로 돌리지 않는다. 회전은 상대의 연동을 흔들고, 언제 흔들지는 사람이 정한다.
+      이 자리가 하는 일은 하나다 — **때가 됐다는 사실을 사람에게 말한다.**
+    ★ 이 beat 가 없으면 `key_rotation.py` 는 「있는데 아무도 안 부르는 코드」다.
+      절차를 문서로만 두면 그 절차는 바쁜 날 돌지 않는다(D-373 이 백업에서 만난 그것).
+    ★ 03:10 정리 · 03:30 백업 뒤다 — 하루의 정리가 끝난 뒤에 내일의 빚을 센다.
+    """
+    from common import key_rotation
+
+    stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    due = key_rotation.keys_due_for_rotation()
+    payload = {
+        "measured_at": stamp,
+        "due": len(due),
+        "policy_days": key_rotation.KEY_MAX_AGE_DAYS,
+        "overlap_days": key_rotation.KEY_ROTATION_OVERLAP_DAYS,
+        "keys": [{"key_id": d.key_id, "prefix": d.prefix, "owner": d.owner,
+                  "age_days": d.age_days, "days_left": d.days_left, "why": d.why}
+                 for d in due],
+    }
+    if due:
+        logger.warning("[SEC-07] 돌려야 할 들어오는 키 %d건 — %s", len(due),
+                       " · ".join(f"{d.prefix}({d.why})" for d in due[:5]))
+    else:
+        logger.info("[SEC-07] 돌려야 할 키 0건 (정책 %d일)", key_rotation.KEY_MAX_AGE_DAYS)
+    _write_evidence("key_rotation_last", payload)
+    return payload

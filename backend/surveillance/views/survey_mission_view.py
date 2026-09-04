@@ -793,7 +793,7 @@ class SurveyMissionController:
                 data={'error': str(e), 'task_id': task_id},
                 success=False
             )
-    @route.post("/mission/duplicate")
+    @route.post("/mission/duplicate", auth=CustomJWTAuth())
     def import_from_qgc_calculated_data(self, request: HttpRequest, data: SurveyMissionImportQGCInSchema):
         """
         Import survey mission từ QGC calculated data với drone_missions

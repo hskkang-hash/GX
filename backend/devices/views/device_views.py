@@ -58,7 +58,7 @@ DEVICE_UPDATE_EXAMPLE = {
 
 @api_controller('/devices-management', tags=['Devices Management'])
 class DeviceAPI:
-    @route.get('')
+    @route.get('', auth=CustomJWTAuth())
     @path_permission("read", path_override="/device")
     def list_devices(self):
 
@@ -143,7 +143,7 @@ class DeviceAPI:
                             current_page=current_page,
                             )
 
-    @route.get('/{id}')
+    @route.get('/{id}', auth=CustomJWTAuth())
     @path_permission("read", path_override="/device")
     def detail_device(self, id: int, edit: bool=False):
         try:

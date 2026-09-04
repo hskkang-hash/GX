@@ -265,3 +265,86 @@ class NoNewGatelessRouteInFixedControllersTest(TestCase):
         self.assertEqual(
             naked, [],
             "★ 고친 컨트롤러에 관문 없는 라우트가 다시 생겼다:\n  " + "\n  ".join(naked))
+
+class OurLayerHasNoGatelessRouteTest(TestCase):
+    """④ SEC-04 — **우리 층 전체**에 인증 관문 없는 라우트가 0건인가 (2026-09-26 · 차선 S).
+
+    ③(고친 컨트롤러 잠금)과 다른 시험이다. ③은 **이름을 적은 컨트롤러**만 본다 —
+    이름을 안 적은 새 컨트롤러가 관문 없이 태어나면 ③은 초록이다.
+    이 시험은 **레지스트리 전수**를 훑고 관할로 가른다.
+
+    ★ 「데이터가 안 나왔다」는 「안전하다」가 아니다(지시서 §4-2). 그래서 응답 본문이
+      아니라 **관문이 붙어 있는가**를 본다 — 핸들러가 돌았는지 여부가 판정 대상이다.
+
+    ★ 관할 술어는 계측기(`scripts/probe_authn_gap_ownership.py`)와 **같은 한 벌**을
+      쓴다(`common.route_ownership`). 두 벌이면 계측기는 0을 내고 시험은 통과하는데
+      실제로는 열려 있는 상태가 만들어진다.
+
+    ★ [실측 2026-09-26] 28 → **0**. 저장소 밖 49 · §0.4 금지구역 23 은 우리가 못 고치는
+      자리이고 이 시험의 대상이 아니다 — 그 둘을 한 수에 섞은 것이 09-09 의 「55」였다.
+    """
+
+    #: ★ 관할 술어는 **재는 층**에 산다(`scripts/route_ownership.py`). 제품 코드가
+    #:   부르지 않는 함수를 `backend/` 에 두었더니 잠자는 기능 게이트가 잡았고,
+    #:   그 빨강이 옳았다 — 이것은 제품이 하는 일이 아니라 재는 일이다.
+    #:   마운트가 여럿이라 경로 후보를 둘 둔다: 컨테이너(`/repo/scripts`)와 체크아웃.
+    @staticmethod
+    def _load_predicate():
+        import sys
+        from pathlib import Path
+
+        here = Path(__file__).resolve()
+        for cand in ("/repo/scripts", str(here.parent.parent.parent / "scripts")):
+            if cand not in sys.path and Path(cand).is_dir():
+                sys.path.insert(0, cand)
+        import route_ownership          # noqa: PLC0415
+
+        return route_ownership
+
+    def _gateless_by_owner(self):
+        import inspect
+
+        mod = self._load_predicate()
+        UNRESOLVED, classify_path = mod.UNRESOLVED, mod.classify_path
+
+        buckets = {}
+        seen = 0
+        for (method, path), op in _registry_rows().items():
+            seen += 1
+            if getattr(op, "auth_callbacks", None) or []:
+                continue
+            view = getattr(op, "view_func", None)
+            try:
+                where = classify_path(inspect.getfile(view)) if view else UNRESOLVED
+            except (TypeError, OSError):
+                where = UNRESOLVED
+            buckets.setdefault(where, []).append("%s %s" % (method, path))
+        return seen, buckets
+
+    def test_our_layer_is_zero(self):
+        OURS = self._load_predicate().OURS
+
+        seen, buckets = self._gateless_by_owner()
+        # 0건 검사와 검사 못함을 가른다 (D-301).
+        self.assertGreater(seen, 100,
+                           "레지스트리에서 라우트를 %d건밖에 못 봤다 — 열거기 고장이다" % seen)
+        ours = sorted(buckets.get(OURS, []))
+        self.assertEqual(
+            ours, [],
+            "★ 우리 층에 인증 관문 없는 라우트가 %d건 있다 — SEC-04 의 표적이다:\n  %s"
+            % (len(ours), "\n  ".join(ours)))
+
+    def test_the_unresolved_bucket_is_not_silently_counted_as_safe(self):
+        """★ **못 본 것을 0으로 세지 않는다** (D-301).
+
+        모듈을 못 여는 라우트가 생기면 그것은 「안전하다」가 아니라 「모른다」다.
+        모르는 자리가 늘면 이 시험이 그 수를 말한다 — 조용히 우리 층에서 빠지지 않게.
+        """
+        UNRESOLVED = self._load_predicate().UNRESOLVED
+
+        _seen, buckets = self._gateless_by_owner()
+        unresolved = sorted(buckets.get(UNRESOLVED, []))
+        self.assertEqual(
+            unresolved, [],
+            "★ 관할을 못 가른 관문 없는 라우트가 %d건이다 — 0건이 아니라 **못 본 것**이다:\n  %s"
+            % (len(unresolved), "\n  ".join(unresolved)))

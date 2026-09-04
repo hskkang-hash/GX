@@ -75,7 +75,7 @@ class OperationalDataAPI:
         except Exception as e:
             return BaseResponse(status_code=500, message=MESSAGE_ENUM.get(MESSAGE_ENUM.ACTION_EXPORT_FAILED))
 
-    @route.get('/{order_item_id}')
+    @route.get('/{order_item_id}', auth=CustomJWTAuth())
     @path_permission("read", path_override="/operational-data")
     def get_operational_data_detail(self, request, order_item_id: int):
         # ★ 문지기는 try **밖**이다 (W0-14c). 아래 except 가 모든 예외를 500 으로 덮어

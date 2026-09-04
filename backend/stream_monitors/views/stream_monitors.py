@@ -46,7 +46,7 @@ class StreamMonitorsAPI:
             data=stream_monitors_out
         )
 
-    @route.post('')
+    @route.post('', auth=CustomJWTAuth())
     def update_stream_monitor(self, request, stream_monitors_in: StreamMonitorsInSchema):
         try:
             stream_monitors = StreamMonitorService.update_stream_monitors(stream_monitors_in)
@@ -143,7 +143,7 @@ class StreamMonitorsAPI:
         )
 
     # Public endpoints for 3rd parties (no auth): record-only (no detect / no video_analysis)
-    @route.post("/{drone_uid}/start-recording")
+    @route.post("/{drone_uid}/start-recording", auth=CustomJWTAuth())
     def start_recording_public(self, request, drone_uid: str, data: StartRecordingInSchema):
         logger.info(f"🔍 [START_RECORDING_PUBLIC] ===== API CALLED =====")
         logger.info(f"🔍 [START_RECORDING_PUBLIC] Starting recording for drone_uid: {drone_uid}")
@@ -185,7 +185,7 @@ class StreamMonitorsAPI:
                 data=None,
             )
 
-    @route.post("/{drone_uid}/stop-recording")
+    @route.post("/{drone_uid}/stop-recording", auth=CustomJWTAuth())
     def stop_recording_public(self, request, drone_uid: str, data: StopRecordingInSchema):
         logger.info(f"🛑 [STOP_RECORDING_PUBLIC] ===== API CALLED =====")
         logger.info(f"🛑 [STOP_RECORDING_PUBLIC] drone_uid={drone_uid}, data={data}")
@@ -310,7 +310,7 @@ class StreamMonitorsAPI:
             data=ai_stream_url
         )
 
-    @route.post('/start-ai-dual-stream')
+    @route.post('/start-ai-dual-stream', auth=CustomJWTAuth())
     def start_ai_dual_stream(self, request, stream_monitor_id: str, output_file: str = None, fps: int = 25, stream_width: int = 1280, stream_height: int = 720):
         stream_resolution = (stream_width, stream_height)
         # result = StreamMonitorService.start_ai_dual_stream(stream_monitor_id, output_file, fps, stream_resolution)
@@ -321,7 +321,7 @@ class StreamMonitorsAPI:
             data=result
         )
 
-    @route.post('/stop-ai-dual-stream')
+    @route.post('/stop-ai-dual-stream', auth=CustomJWTAuth())
     def stop_ai_dual_stream(self, request, stream_monitor_id: str, stream_id: str):
         result = StreamMonitorService.stop_ai_dual_stream_optimized(stream_id, stream_monitor_id)
         if result.get('object_path'):
@@ -332,7 +332,7 @@ class StreamMonitorsAPI:
             data=result
         )
 
-    @route.get('/ai-dual-stream-status')
+    @route.get('/ai-dual-stream-status', auth=CustomJWTAuth())
     def get_ai_dual_stream_status(self, request, stream_monitor_id: str):
         result = StreamMonitorService.get_ai_dual_stream_status(stream_monitor_id)
         return BaseResponse(
@@ -341,7 +341,7 @@ class StreamMonitorsAPI:
             data=result
         )
 
-    @route.post('/external-stream-monitors')
+    @route.post('/external-stream-monitors', auth=CustomJWTAuth())
     def add_external_stream_monitor(self, request, stream_monitor_in: ExternalStreamMonitorInSchema):
         try:
             stream_monitor = StreamMonitorService.add_external_stream_monitor(stream_monitor_in)
@@ -384,7 +384,7 @@ class StreamMonitorsAPI:
                 data=e
             )
 
-    @route.put('/external-stream-monitors')
+    @route.put('/external-stream-monitors', auth=CustomJWTAuth())
     def update_external_stream_monitor(self, request, stream_monitor_in: ExternalStreamMonitorInSchema):
         try:
             success, message = StreamMonitorService.update_external_stream_monitor(stream_monitor_in)
