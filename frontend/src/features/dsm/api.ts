@@ -26,6 +26,25 @@ export const dsmEndpoint = {
   /** 대응 진행 한 칸 (D-399). **판정과 다른 축이다** — 버튼도 따로 둔다. */
   response: (id: number | string) => `/api/dsm/events/${id}/response`,
   deliveries: '/api/dsm/deliveries',
+  /**
+   * ★ P-25 스냅샷 **바이트**. 인증 뒤에 서고 소인이 찍혀 나온다 —
+   *   `<img src>` 로 그냥 붙이면 브라우저가 **인증 헤더 없이** 부르고 401 이 온다.
+   *   `fetchSnapshotUrl()` 로 받아 objectURL 로 붙인다.
+   */
+  snapshot: (id: number | string) => `/api/dsm/events/${id}/snapshot`,
+  /** UX-13 단일 초점 큐 — 최상단의 **하나**와 5분 창 묶음. */
+  eventsQueue: '/api/dsm/events/queue',
+  /** UX-14 월간 p50/p95 — 자동 종결을 뺀 분모. */
+  responseTimes: '/api/dsm/events/response-times',
+  /** UX-14 네 시각 타임라인. */
+  timeline: (id: number | string) => `/api/dsm/events/${id}/timeline`,
+  /** UX-17 훈련 모드 스위치(GET 상태 · POST 전환). **한 경로 두 메서드**다. */
+  drill: '/api/dsm/drill',
+  drillReport: '/api/dsm/drill/report',
+  /** UX-18 「주소 없는 카메라 N대」 배지. */
+  cameraAddressGap: '/api/dsm/cameras/address-gap',
+  /** UX-18 벌크 등록. **`dry_run` 기본값이 참**이다 — 표가 먼저다(D-209). */
+  cameraImport: '/api/dsm/cameras/import',
 } as const;
 
 /** DA-03 §4-3 — 로딩이 이보다 길면 그것은 로딩이 아니라 오류다. */
@@ -110,4 +129,33 @@ export function dsmPost<T>(url: string, body?: unknown): Promise<T> {
   return withTimeout(async (signal) =>
     unwrap<T>(await API.post(url, body ?? {}, { signal })),
   );
+}
+
+/**
+ * ★ P-25 — **인증 헤더가 실리는 경로로** 스냅샷을 받는다.
+ *
+ * 왜 `<img src="/api/dsm/events/1/snapshot">` 이면 안 되나: 브라우저의 이미지 요청은
+ * 이 앱의 axios 인터셉터를 지나지 않는다. 토큰이 안 실리고, 그러면 **401 이 오고
+ * 화면에는 깨진 이미지 아이콘**이 뜬다 — 그 아이콘은 「스냅샷이 없다」와 구별되지
+ * 않는다(D-290). 서명 URL 로 여는 길은 **무계정 링크 금지**로 막혀 있다.
+ *
+ * 그래서 axios 로 받아 objectURL 을 만든다. 부르는 쪽은 **반드시 `revoke` 를 부른다** —
+ * 안 부르면 카드가 갱신될 때마다 blob 이 쌓여 관제 화면이 밤새 메모리를 먹는다.
+ */
+export async function fetchSnapshotUrl(
+  eventId: number | string,
+): Promise<{ url: string; revoke: () => void }> {
+  const res = await API.get(dsmEndpoint.snapshot(eventId), {
+    responseType: 'blob',
+    // 캐시가 장애를 덮는다(P-19 · UniversalCacheMiddleware 는 적중 본문을 언제나
+    // 200 으로 되살린다). 스냅샷은 소인에 **열람 시각**이 찍혀 나오므로 캐시된
+    // 바이트는 남의 시각을 보여 준다 — 그것은 소인의 뜻을 지운다.
+    headers: { 'X-No-Cache': 'true' },
+  });
+  const status: number = res?.status ?? 0;
+  if (status >= 400) {
+    throw new DsmApiError(`스냅샷을 받지 못했습니다 (${status})`, status);
+  }
+  const url = URL.createObjectURL(res.data as Blob);
+  return { url, revoke: () => URL.revokeObjectURL(url) };
 }

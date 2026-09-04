@@ -976,6 +976,60 @@ blockers:
          **이벤트가 아니라 프레임**이다. 이벤트로 채우면 지금과 같은 신호가 된다
       ③ `ops_monitor` 의 `cameras_silent_24h` 술어를 그 칸으로 바꾸고, 임계를 분 단위로 조인다
       ④ 그때 이 잠금을 `blocked_now: false` 로 내린다 — **지우지 않는다**
+
+      ★ [실측 2026-09-24 · 2파] **①②가 끝났다. ③이 남았다 — 그래서 아직 내리지 않는다.**
+        · ① 칸: `StreamMonitor.last_frame_at` + 인덱스 (마이그레이션 0027 · 차선 Q).
+          이름이 계획의 `last_seen_at` 이 아니라 `last_frame_at` 이다 — **프레임**을
+          재는 칸임을 이름이 말하게 했다. 이 대장의 계획 이름을 고쳐 적지 않고 여기 남긴다.
+        · ② 채우기: `grpc_dual_stream_service._publish_detection_events` 첫머리에서
+          **검출 유무와 무관하게** 적는다(조율자 병합). ⚠ 이 배선은 차선이 낸 코드에
+          **빠져 있었다** — 칸과 규칙과 판정기는 섰는데 채우는 호출이 0곳이었고, 시험은
+          스스로 맥박을 심어서 전부 초록이었다. 운영에서는 영원히 `None` 이고 규칙은
+          그것을 두절로 세지 않으므로 **0건만 내는 잠자는 기능**이 될 뻔했다(D-377).
+          부작위 시험을 박았다: `test_q_camera_pulse.PulseIsFedByThePipelineTest`.
+        · ③ 남음: `cameras_silent_24h` 는 여전히 **이벤트**를 본다. 술어를 맥박으로
+          바꾸는 것은 그 신호의 뜻과 임계를 함께 바꾸는 일이라 별도 판정이 필요하다 —
+          섞어서 하면 「가서 봐라」가 어느 날 다른 뜻이 된다.
     state_in_code: |
       scripts/ops_monitor.py — `cameras_silent_24h` · `cameras_never_seen` (둘로 가른 이유가
       주석에 있다) · docs/agent/evidence/D-373/monitor_last.json
+
+  - id: DJCORE_CREATE_USER_NOT_ATOMIC
+    title: "사용자 생성이 **원자적이지 않다** — 반쪽 사람이 남고 재시도가 영원히 막힌다"
+    unlock_type: DEV
+    unlock_owner: dj-core 소유팀 (§0.4 — 우리가 못 고친다)
+    blocks: [시드 U1~U5, 온보딩 계정 생성, UX-02 관리 UI 사용자 등록]
+    since: "2026-09-24"
+    blocked_now: true
+    verified_at: "2026-09-24"
+    verified_by: |
+      [실측 2026-09-24 · 차선 E3 가 **실제로 발생시켜** 확인했다] `POST /api/v1/user/create-user`
+      가 프로필 생성 단계에서 죽으면 `CoreUser` 행만 남고 응답은 `400 Failed to create user.`
+      다. 부른 쪽은 「안 생겼다」로 읽는데 **소속도 역할도 없는 반쪽 사람**이 남았고,
+      같은 이름으로 재시도하면 `Username already exists` 가 나 **영원히 막힌다.**
+      남은 행(id 107)은 손으로 치웠다.
+    why: |
+      「실패했다」와 「반쯤 성공했다」가 **같은 응답**으로 나온다. 그 둘은 다음 행동이
+      다르다 — 앞엣것은 다시 부르면 되고, 뒤엣것은 **먼저 치워야** 다시 부를 수 있다.
+      D-290 이 이름 붙인 자리이고, 여기서는 그 값이 특히 크다: 온보딩의 첫 걸음이
+      사용자 생성이라 **처음 쓰는 사람이 가장 먼저 만나는 실패**가 이것이다.
+      ★ 곁가지 하나: `user_profile_link.employee_id` 에 UNIQUE 가 있다. 같은 사번을
+        두 사람에게 달면 둘째가 죽고 **사유가 응답에 안 실린다** — 같은 계열이다.
+    internal_alternative_considered: |
+      · 우리 층에서 감싸기(생성 → 확인 → 실패 시 정리): 정리 자체가 `CoreUser` 삭제라
+        위험이 더 크다. 지우는 코드는 되돌릴 수 없다
+      · 미리 이름 충돌을 검사: 경합에서 그대로 깨진다. 검사와 생성 사이가 열린 자리다
+      · **지금 쓰는 우회**: 시드는 생성 뒤 프로필·역할을 확인하고, 안 서면 사유를
+        출력하고 멈춘다. 조용히 넘어가지 않는 것까지가 우리가 할 수 있는 전부다
+    why_not: |
+      `core/api/v1/user.py` 는 dj-core(site-packages · §0.4 D-207)다. 파일을 고치면
+      forbidden-zone 게이트가 STOP 을 낸다 — 그리고 그 게이트가 옳다.
+      D-348 이 연 길(우리 층 미들웨어)은 **길목 차단**에는 쓰지만 트랜잭션 경계에는
+      못 쓴다. 경계는 그 함수 안에 있어야 한다.
+    unlock_step: |
+      ① 소유팀이 `create_user` 를 한 트랜잭션으로 묶는다 (프로필·역할까지)
+      ② 부분 실패 시 응답이 **무엇이 남았는지** 말한다 (400 한 줄이 아니라)
+      ③ 그때 이 잠금을 `blocked_now: false` 로 내린다 — 지우지 않는다
+    state_in_code: |
+      backend/stream_monitors/management/commands/seed_role_users.py — 생성 뒤 확인하고
+      안 서면 멈춘다 · docs/agent/evidence/OPS-SEED/ (차선 E3 실측 기록)

@@ -16,6 +16,7 @@ App(L4)이 만질 수 있는 것은 여기 있는 이름뿐이다. `scripts/veri
 from kernels.k2_notify.exceptions import (
     EventNotFound,
     InvalidNotifyInput,
+    NotifyPermissionDenied,
     K2Error,
     NoRecipients,
     NotImplementedYet,
@@ -33,6 +34,25 @@ from kernels.k2_notify.renotify import (
     MIN_RENOTIFY_AFTER,
     RenotifyResult,
     renotify,
+)
+from kernels.k2_notify.alarm_budget import (
+    BUDGET_OK,
+    BUDGET_ORANGE,
+    BUDGET_WINDOW_DAYS,
+    EEMUA_191_ALARMS_PER_OPERATOR_HOUR,
+    AlarmBudgetView,
+    simulate_alarm_budget,
+)
+from kernels.k2_notify.heartbeat import (
+    DEAD_MAN_RULE,
+    DIGEST_ACTION,
+    DIGEST_GRACE,
+    DIGEST_HOUR,
+    DIGEST_LOGGER,
+    HeartbeatDigestResult,
+    digest_clock,
+    heartbeat_watch,
+    send_heartbeat_digest,
 )
 from kernels.k2_notify.services import (
     list_deliveries,
@@ -57,6 +77,17 @@ __all__ = [
     #   격리 대장(`tests/test_tenant_isolation.WRITE_NO_PROBE`)에 **선등재된 이름**이고,
     #   면이 실제로 열렸으므로 그 줄은 probe 로 옮겨져야 한다(P-8).
     "save_notification_rule",
+    # ★ 차선 Q (2026-09-04) OPS-14 생존 알림 — **매일 08:00 1통. 안 오면 장애다.**
+    #   격리 대장(`tests/test_tenant_isolation.WRITE_NO_PROBE`)에 **선등재된 이름**이고,
+    #   면이 실제로 열렸으므로 그 줄은 probe 로 옮겨져야 한다(P-8).
+    #   ⚠ 이 발송은 `DeliveryRecord` 행을 만들지 않는다 — 그 표는 이벤트에 매달려
+    #     F-10 의 30초를 재는 자리다. 생존 알림은 `logger.AuditLogs` 에 한 줄로 남는다.
+    "send_heartbeat_digest",
+    "heartbeat_watch",
+    "digest_clock",
+    # ★ 차선 Q (2026-09-04) QA-12 알림 예산 — **저장 전에 건수를 말한다.**
+    #   읽기 전용이다: 규칙도 발송 이력도 만들지 않는다.
+    "simulate_alarm_budget",
     # ★ 차선 D (2026-09-04) 재알림 N분 — **U3 「내가 놓친 알림」의 자리**.
     #   격리 대장(`tests/test_tenant_isolation.WRITE_NO_PROBE`)에 **선등재된 이름**이고,
     #   면이 실제로 열렸으므로 그 줄은 probe 로 옮겨져야 한다(P-8).
@@ -67,10 +98,13 @@ __all__ = [
     "DeliveryView",
     "RuleView",
     "RenotifyResult",
+    "AlarmBudgetView",
+    "HeartbeatDigestResult",
     # 오류 계약
     "K2Error",
     "EventNotFound",
     "InvalidNotifyInput",
+    "NotifyPermissionDenied",
     "NoRecipients",
     "NotImplementedYet",
     # 계약이 정한 숫자 — 화면·시험·보고서가 **같은 값**을 본다 (D-212)
@@ -80,4 +114,16 @@ __all__ = [
     "DEFAULT_RENOTIFY_AFTER",
     "MAX_RENOTIFY_AFTER",
     "MIN_RENOTIFY_AFTER",
+    # ★ 알림 예산의 상한은 **우리가 지은 수가 아니다** — EEMUA 191 [인용] (QA-12).
+    #   이름에 출처를 박아 둔다: `MAX_ALARMS` 였다면 불편할 때 누군가 8로 고쳤을 것이다.
+    "EEMUA_191_ALARMS_PER_OPERATOR_HOUR",
+    "BUDGET_WINDOW_DAYS",
+    "BUDGET_OK",
+    "BUDGET_ORANGE",
+    # ★ 생존 알림의 규약 — 매뉴얼 첫 쪽이 이 문장을 인용한다 (OPS-14).
+    "DIGEST_HOUR",
+    "DIGEST_GRACE",
+    "DIGEST_LOGGER",
+    "DIGEST_ACTION",
+    "DEAD_MAN_RULE",
 ]

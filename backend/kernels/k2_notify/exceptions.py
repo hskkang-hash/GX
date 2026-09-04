@@ -2,6 +2,8 @@
 """K2 오류 계약. K1·K6 과 같은 형을 쓴다 — App 이 커널마다 다른 계보를 외우지 않게."""
 from __future__ import annotations
 
+from django.core.exceptions import PermissionDenied
+
 
 class K2Error(Exception):
     """K2 가 내는 모든 오류의 뿌리."""
@@ -27,6 +29,23 @@ class EventNotFound(InvalidNotifyInput):
       `POST /api/dsm/events/{id}/notify` 를 없는 id 로 두드렸더니 **500** 이었다.
       「그런 이벤트가 없다」를 **서버 결함**으로 내고 있었다 — U6 은 자기 잘못인지
       우리 잘못인지 알 수 없었다.
+    """
+
+
+class NotifyPermissionDenied(InvalidNotifyInput, PermissionDenied):
+    """남의 테넌트를 `group=` 으로 가리켰다 — **입력 오류가 아니라 권한 판정**이다.
+
+    ★ [2026-09-24 · 조율자 병합] 차선 Q 가 세운 문지기(`services._owner_for`)는 옳았는데
+      던지는 이름이 `InvalidNotifyInput` 이었다. 그 이름은 **「모르는 채널」·「기간이 계약
+      밖」 같은 평범한 입력 오류도** 쓴다. 격리 러너(`tests/test_tenant_isolation`)의
+      「거절로 세는 예외」 목록에 그 넓은 이름을 넣으면, 문지기에 **닿지도 못하고** 입력
+      오류로 죽은 호출이 「막혔다」로 세어진다 — D-366 이 이름 붙인 거짓 초록 그대로다.
+
+    ★ `EventNotFound` 와 같은 형이다: **넓은 그물은 그대로 두고 좁은 그물을 더한다.**
+      이미 `except InvalidNotifyInput` 으로 잡던 자리는 한 곳도 안 바뀐다(차선 Q 의
+      시험 셋이 그 넓은 이름으로 잡고 있고, 그대로 통과한다).
+      동시에 `PermissionDenied` 이므로 격리 러너가 **권한 거절로만** 세고,
+      HTTP 로 번역될 일이 생기면 400 이 아니라 403 이다.
     """
 
 

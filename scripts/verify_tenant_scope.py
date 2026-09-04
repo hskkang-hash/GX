@@ -94,6 +94,22 @@ KERNEL_PUBLIC: dict[str, str] = {
         "KernelScopeSignatureTest.test_subscribe_requires_scope_before_it_raises "
         "(scope 를 빼면 NotImplementedYet 이 아니라 TypeError 다 — D-281 은 구현 전에도 걸린다)",
 
+    # ── K2 (2026-09-24 · OPS-14) — **시스템만 부를 수 있는 감시 하나**
+    "backend/kernels/k2_notify/heartbeat.py:heartbeat_watch":
+        "「오늘 08:00 것이 왔는가」를 테넌트마다 한 줄로 돌려준다 — dead man's switch 의 "
+        "나머지 절반이다(보내는 것만으로는 안 온 것을 아무도 모른다). "
+        "★ 이것은 한 테넌트의 사실이 아니라 **설비 전체의 사실**이라 좁힐 대상이 없다. "
+        "그래서 문지기로 좁히지 않고 **문 자체를 시스템 스코프에만 연다** — 사람이 부르면 "
+        "`NotifyPermissionDenied` 다. 사람이 부를 수 있으면 「지금 알림이 안 나가는 "
+        "테넌트」를 남이 알게 되고, 그것은 감시가 아니라 정찰이다. "
+        "★ 읽기만 한다 — 여기서 다시 보내지 않는다(감시가 발송을 겸하면 감시가 부하를 "
+        "만들고 그 부하가 다시 감시 대상이 된다). "
+        "시험 근거: test_q_heartbeat_digest.py::"
+        "HeartbeatWatchTest.test_a_person_cannot_run_the_watch (사람 스코프 거절) · "
+        "test_the_watch_reports_every_tenant_not_only_the_late_ones "
+        "(늦지 않은 것도 돌려준다 — 늦은 것만 내면 「본 적 없다」와 「봤는데 괜찮다」가 "
+        "같은 빈 목록이 된다 · D-290)",
+
     # ── K5 (2026-09-10 · D-367) — **테넌트 데이터를 반환하지 않는 함수 하나**
     "backend/kernels/k5_trust/inbound_keys.py:capability_now":
         "「이 키로 무엇을 할 수 있는가」를 문장으로 만든다. 읽는 것은 "

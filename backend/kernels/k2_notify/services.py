@@ -51,6 +51,7 @@ from kernels.k2_notify.exceptions import (
     EventNotFound,
     InvalidNotifyInput,
     NoRecipients,
+    NotifyPermissionDenied,
     NotImplementedYet,
 )
 from kernels.k2_notify.schemas import (
@@ -238,6 +239,44 @@ def resolve_recipients(
                     role_code=getattr(rule.role, "code", "") or "",
                 ))
     return tuple(out)
+
+
+def _owner_for(scope: TenantScope, group):
+    """`group=` 을 받되 **사람이 남의 테넌트를 가리키지 못하게** 한다 (D-281 · D-290).
+
+    ★ 2026-09-04 (차선 Q) — 이 함수가 없던 동안 `group=` 은 **무조건 믿는 인자**였다.
+      파이프라인(시스템 스코프)에는 요청자가 없으니 그 인자가 꼭 필요하다. 그런데
+      같은 인자를 사람이 넘길 수도 있었고, 그러면 A 테넌트 사용자가 `group=B` 로
+      **B 의 이벤트 수와 카메라 맥박을 뽑아** 자기 수신자에게 메일로 보낼 수 있었다.
+      읽기 격리를 온전히 지키고도 새는 자리이고, `WRITE_NO_PROBE` 의
+      `send_heartbeat_digest` 항목이 정확히 그것을 경고하고 있었다.
+
+    규칙 셋:
+      · 시스템 스코프(요청자 없음)  → 준 `group` 을 그대로 쓴다. 사유는 스코프가 든다
+      · 사람인데 `group` 이 없다     → 자기 소속
+      · 사람인데 `group` 을 줬다     → **자기 것이거나 전역 관리자일 때만** 받는다
+
+    ⚠ 거절은 값이 아니라 예외다. `None` 을 돌려주면 부르는 쪽이 「소속 없음」과
+      「남의 것을 가리켰다」를 같은 모양으로 보고, 그 둘은 다른 사실이다.
+    """
+    from common.tenant_roles import is_global_admin
+
+    actor = scope.actor
+    if scope.is_system or actor is None:
+        return group
+    own = get_user_group(actor)
+    if group is None:
+        return own
+    if is_global_admin(actor):
+        return group
+    if own is not None and getattr(group, "pk", None) == own.pk:
+        return group
+    # ★ 좁은 갈래다(2026-09-24 병합) — 격리 러너가 **권한 거절로만** 세게 한다.
+    #   넓은 `InvalidNotifyInput` 으로 던지면 「모르는 채널」로 죽은 호출까지 「막혔다」가 된다.
+    raise NotifyPermissionDenied(
+        "남의 테넌트를 `group=` 으로 가리켰다. 이 인자는 요청자가 없는 호출"
+        "(파이프라인·크론)을 위한 자리이지 **테넌트를 고르는 손잡이가 아니다** — "
+        "사람이 고를 수 있으면 남의 관제 현황이 내 수신자에게 간다 (D-281)")
 
 
 def _filter_rules_by_group(qs, group, actor=None):
@@ -523,11 +562,28 @@ def _send_one(event, recipient: Recipient) -> DeliveryView:
     """
     Delivery = _model("DeliveryRecord")
 
+    # ★ 훈련 모드 (UX-17 · 2026-09-24 · 조율자가 잇는다 — 차선은 이 파일을 안 만진다)
+    #
+    #   테넌트가 훈련 중이면 **채널을 로그 어댑터로 바꾼다.** 지자체는 연 2회 이상
+    #   재난 대응 훈련을 하고, 그날 실제 문자가 소방·팀장에게 나가면 **그날로 알림을 끈다.**
+    #
+    #   ★ 이름을 **가장하지 않고 그대로 남긴다**: 행의 `channel` 에 `log` 가 적히므로
+    #     종료 보고서가 「사람이 아니라 로그로 갔다」를 말할 수 있다. 원래 채널로 적어 두고
+    #     몰래 로그로 보내면, 그 행은 **보냈다는 거짓말**이 된다(D-284).
+    #   ⚠ 안전한 기본값은 **실발송**이다 — `group_id` 가 없으면 `is_drill_mode` 는 거짓이다.
+    #     스위치를 못 읽는 상태에서 조용해지는 것이 이 절이 막으려는 사고 그 자체다.
+    from stream_monitors.services.drill import DRILL_CHANNEL, is_drill_mode
+
+    group = _group_of(event)
+    channel = (DRILL_CHANNEL
+               if is_drill_mode(group_id=getattr(group, "pk", None))
+               else recipient.channel)
+
     row = Delivery._base_manager.create(
         event=event,
         recipient_id=recipient.user_id,
         recipient_address=recipient.address,
-        channel=recipient.channel,
+        channel=channel,
         occurred_at=event.occurred_at,
         succeeded=False,
         failure_reason=None,
@@ -535,9 +591,9 @@ def _send_one(event, recipient: Recipient) -> DeliveryView:
     )
     _inherit_owner(row, event)
 
-    adapter = channel_registry.get(recipient.channel)
+    adapter = channel_registry.get(channel)
     if adapter is None:
-        row.failure_reason = channel_registry.why_unavailable(recipient.channel)[:250]
+        row.failure_reason = channel_registry.why_unavailable(channel)[:250]
         row.save(update_fields=["failure_reason"])
         return _to_view(row)
 

@@ -45,7 +45,7 @@ class DetectionEvent(BaseModelWithGroup):   # group 격리 필수
 
 | 필드 | 값 | 비고 |
 |---|---|---|
-| `event_type` | `person` `vehicle` `fire` `smoke` `intrusion` `sos` `flood` `camera_down` `storage_high` | 추가 시 이 문서와 W2-3 색 규칙을 함께 갱신. `flood` 는 **D-294 로 신설**(F-02 침수·수위) · `camera_down` `storage_high` 는 **P-20 ③ 으로 신설**(2026-09-22) — **탐지가 아니라 시스템 상태**다. AI 라벨에서 오지 않으며 `LABEL_TO_EVENT_TYPE` 에 없다 |
+| `event_type` | `person` `vehicle` `fire` `smoke` `intrusion` `sos` `flood` `camera_down` `storage_high` `camera_cluster_down` | 추가 시 이 문서와 W2-3 색 규칙을 함께 갱신. `flood` 는 **D-294 로 신설**(F-02 침수·수위) · `camera_down` `storage_high` 는 **P-20 ③ 으로 신설**(2026-09-22) — **탐지가 아니라 시스템 상태**다. AI 라벨에서 오지 않으며 `LABEL_TO_EVENT_TYPE` 에 없다. ★ `camera_cluster_down` 은 **OPS-15 로 신설**(2026-09-04 · 차선 Q) — 같은 구역 카메라 N대(기본 3) 중 M대(기본 2)가 5분 안에 함께 맥박(`StreamMonitor.last_frame_at`)을 잃은 것이다. **`camera_down` 과 다른 화면에 간다**: 한 대는 운영(시스템 이벤트), 군집은 관제(재난 징후). 규칙은 `stream_monitors/services/camera_pulse.py` 한 곳에 있고, AI 라벨에서 오지 않는다. ⚠ 정직 고지 — 이것은 F-08(SDN 링크 상태)을 구현으로 바꾸지 않는다. 그 절은 손 밖에 그대로 있다 |
 | `severity` | `info` `warning` `critical` | `critical` 만 빨강 (ISA-101). 다른 용도로 빨강 금지 |
 | `status` | `new` `confirmed` `rejected` `closed` | 수명주기. 화면 정렬: `critical`+`new` 는 최상단 고정 |
 | `verdict` | `null` `confirmed` `rejected` | **사람의 판정. 종료가 덮지 않는다** (D-293 신설). 오탐률의 분모·분자는 `status` 가 아니라 이 칸에서 나온다 |

@@ -137,6 +137,7 @@ import AddNewTemplate from './features/waybillTemplate/AddNewTemplate';
 import EditTemplate from './features/waybillTemplate/EditTemplate';
 import './index.css';
 import { CustomRoutes } from './services/API';
+import { dsm2Routes } from './features/dsm/routes';
 import { ClearStoreOnRouteChange } from './utils/ClearStoreOnRouteChange';
 
 dayjs.extend(customParseFormat);
@@ -171,6 +172,16 @@ const DsmControlDashboard = lazy(
 );
 const DsmEventList = lazy(() => import('./features/dsm/pages/EventList'));
 const DsmEventDetail = lazy(() => import('./features/dsm/pages/EventDetail'));
+/**
+ * 2파 DSM 화면 셋 (차선 C · 2026-09-24) — UX-13 · UX-17 · UX-18.
+ *
+ * ★ 경로는 `features/dsm/routes.ts` 한 곳에서 정한다. `CustomRoutes` 에 넣지 않은
+ *   이유는 그 파일이 이번 파에 네 차선이 같이 쓰는 공용 자리라서다 — 충돌하면
+ *   그 충돌은 **라우팅 침묵**으로 나타난다(화면이 안 뜨는데 오류도 안 난다).
+ */
+const DsmFocusQueue = lazy(() => import('./features/dsm/pages/FocusQueue'));
+const DsmDrillMode = lazy(() => import('./features/dsm/pages/DrillMode'));
+const DsmCameraImport = lazy(() => import('./features/dsm/pages/CameraImport'));
 /**
  * 모바일 — 이동 중 수신 모드 (U3 · 차선 D).
  *
@@ -408,6 +419,13 @@ function App() {
               element: <DsmControlDashboard />,
             },
             { path: CustomRoutes.dsm.events.path, element: <DsmEventList /> },
+            // ── 2파 · UX-13 · UX-17 · UX-18 (차선 C) ─────────────────────
+            //   ⚠ `/dsm/events/:id` 가 변수 조각이라 `/dsm/events/...` 리터럴을
+            //     삼킬 수 있다 — 그래서 큐는 `/dsm/queue` 로 **다른 가지**에 둔다.
+            //     삼킬 수 없는 자리에 두는 것이 순서를 외우는 것보다 안전하다.
+            { path: dsm2Routes.focusQueue.path, element: <DsmFocusQueue /> },
+            { path: dsm2Routes.drill.path, element: <DsmDrillMode /> },
+            { path: dsm2Routes.cameraImport.path, element: <DsmCameraImport /> },
             {
               path: CustomRoutes.dsm.eventDetail.path,
               element: <DsmEventDetail />,

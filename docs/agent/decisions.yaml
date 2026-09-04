@@ -6484,3 +6484,296 @@ decisions:
     · docs/agent/evidence/D-346/ga_readiness.yaml — 120절
     · docs/agent/remaining_40.md — §2-7
   affects: [D-204, D-269, D-284, D-290, D-300, D-306, D-311, D-346, D-410, D-412, D-417]
+
+- id: D-421
+  author_tree_id: "세종 지시서 2026-09-24 §2 S행 · LAW-08 · SEC-04 · ISO-03"
+  title: "차선 S 병합 — **판정기가 제 눈으로 못 보던 자리**를 찾았고, 「55」가 틀린 수였다"
+  status: decided
+  raised_by: "차선 S 보고 2026-09-24 → 조율자 병합·검증"
+  decision: |
+    ▣ **LAW-08 증거 해시 체인 — 닫혔다** [실측 · 22 passed · 게이트 자기시험 17건]
+      감사 한 줄이 저장될 때 `common/audit_writer.write()` **안쪽에서** 체인에 이어진다.
+      실 DB 292행에서 3행을 이은 뒤 **한 행의 내용을 고치자 `ok=False` · hash_mismatch 1건**
+      (트랜잭션 롤백). 「고치면 어긋난다」가 이 절의 전부이고, 그것을 실제로 보였다.
+
+    ▣ ★ **PRD 와 갈린 자리를 차선이 덮지 않았다** — 이 병합의 값이 여기 있다
+      「기존 `AuditLogs` 에 두 칸」이 **안 됐다**: 그 표는 dj-core §0.4 이고, 시험이
+      `--nomigrations` 로 돌아 **모델에 없는 열은 시험 DB 에 서지 않는다** —
+      열을 더하는 길은 **증거를 못 내는 길**이었다. 두 값을 우리 것인 `data_after` 의
+      예약 키 둘로 두었다. 성질은 같고, 진짜 열로 옮길 때 고칠 곳은 두 함수뿐이다.
+      ★ 그리고 `kernels/k1_event/evidence_chain.py` 를 **안 만들었다**: 증거 행 전부가
+        이미 `audit_writer.write()` 한 곳을 지나고, 체인을 K1(L3)에 두면 L1 이 커널을
+        import 해야 해 계층이 역전된다(`verify_layers` 가 멈춘다). `common/` 에 두었다.
+
+    ▣ ★★ **ISO-03 — 두 실험의 차이가 게이트의 존재 이유다** [실측]
+        · 문지기가 **없는** 새 라우트            → 기존 트립와이어 exit 1
+        · 문지기는 부르되 **선언이 없는** 라우트 → 같은 게이트 **exit 0 (통과)** ← 구멍
+        · 같은 라우트에 새 게이트                → **exit 1**, 이름으로 지목
+      기존 461건은 **이름으로** 잠갔다(수가 아니라 이름 · D-249 · 래칫 D-311).
+      절이 묻는 것은 「**새** 라우트가 선언하고 태어나는가」이므로 구현으로 적는다.
+
+    ▣ ★★★ **SEC-04 의 「55」가 틀린 수였다** [실측 2026-09-24 · 인벤토리 재측정]
+      라우트 **685건** 중 인증 콜백 없음 **100건**을 관할로 갈랐다:
+        **우리 층 28** (authz 있음 10 · 아무것도 없음 18) · 저장소 밖 49 ·
+        §0.4 금지구역 23 · 모듈 해석 실패 **0**
+      55 는 09-09 자 수이고 **관할 구분이 없었다** — 우리가 못 고치는 자리와 고쳐야 하는
+      자리가 한 수에 섞여 있었다. **표적이 준 것이 아니라 처음으로 표적을 알게 됐다.**
+      그중 `stream_monitors` 12건에 **쓰기 면**이 섞여 있다(녹화 시작/중지 · 스트림 등록).
+
+    ▣ 조율자 몫: `WRITE_NO_PROBE` 의 `append_evidence_hash` 를 **지우지 않고 사유를 바꿨다** —
+      「아직 없다」→「면을 열지 않기로 했다」. 공개 면으로 내면 부르는 쪽이 **어느 체인에
+      이을지 고르게 되고, 고를 수 있으면 남의 체인에 붙일 수 있다.**
+  enforced_by: |
+    · backend/common/evidence_chain.py · backend/common/audit_writer.py
+    · backend/tests/test_s_evidence_chain.py (22)
+    · scripts/verify_evidence_chain.py (자기시험 17 · 정적 눈 + --db + --anchor)
+    · scripts/verify_route_scope_declared.py (자기시험 10 · 등재부 461건)
+    · scripts/probe_authn_gap_ownership.py · docs/agent/evidence/SEC-04/authn_gap_ownership.json
+  affects: [D-207, D-249, D-284, D-301, D-311, D-343, D-346, D-348, D-417]
+
+- id: D-422
+  author_tree_id: "세종 지시서 2026-09-24 §2 Q행 · OPS-14 · OPS-15 · QA-12"
+  title: "차선 Q 병합 — 선등록이 **실제로 반출을 막았고**, 맥박을 채우는 자리는 비어 있었다"
+  status: decided
+  raised_by: "차선 Q 보고 2026-09-24 → 조율자 병합·검증"
+  decision: |
+    ▣ **OPS-15 군집 두절 — 닫혔다** [실측] 3중 2 → **1건** · **1대만 → 0건** ·
+      따로 죽은 2대 → **0건**. 지시서 §3-3 이 「초록의 절반은 부작위」라 못 박은 그 두 갈래가
+      실제로 갈렸다. 「2대가 죽어 있다」와 「2대가 **함께** 죽었다」는 다르다 — 창(5분)이 가른다.
+
+    ▣ ★★ **조율자가 병합에서 잡은 것 — 맥박을 채우는 호출이 0곳이었다**
+      칸(`last_frame_at`)과 규칙과 판정기는 섰는데 `record_frame` 을 부르는 곳이
+      **시험 말고 없었다.** 시험은 스스로 맥박을 심으므로 전부 초록이었고, 운영에서는
+      그 칸이 영원히 `None` 이며 규칙은 그것을 **두절로 세지 않으므로**(「아직 안 왔다」≠
+      「죽었다」) OPS-15 는 **0건만 내는 잠자는 기능**이 될 뻔했다(D-377 · 착시 ⑨).
+      → `grpc_dual_stream_service._publish_detection_events` 첫머리에 **검출 유무와
+        무관하게** 적도록 이었다(검출 0건인 프레임도 맥박이다). 부작위 시험을 박았다:
+        `PulseIsFedByThePipelineTest` — 이 시험이 빨개지면 배선이 지워진 것이다.
+
+    ▣ ★★ **선등록이 값을 했다** — `send_heartbeat_digest` 의 `group=` 이 무조건 믿는
+      인자였다. A 테넌트 사용자가 `group=B` 로 **B 의 어제 이벤트 수와 카메라 맥박**을 뽑아
+      자기 수신자에게 보낼 수 있었다. `WRITE_NO_PROBE` 에 09-24 착수 전 적어 둔 사유가
+      **정확히 그 반출을 이름으로 경고**하고 있었고, 차선이 그것을 읽고 문지기를 세웠다.
+
+    ▣ 조율자 정정 하나 — **거절의 이름을 좁혔다.** 그 문지기는 `InvalidNotifyInput` 을
+      던졌는데, 그 이름은 「모르는 채널」 같은 **평범한 입력 오류도** 쓴다. 격리 러너의
+      거절 목록에 넣으면 문지기에 **닿지도 못하고** 죽은 호출이 「막혔다」로 세어진다
+      (D-366 의 거짓 초록). `NotifyPermissionDenied(InvalidNotifyInput, PermissionDenied)`
+      를 팠다 — `EventNotFound` 와 같은 형이다(넓은 그물은 두고 좁은 그물을 더한다).
+
+    ▣ **QA-12 알림 예산 — 닫혔다.** [시험]이 **건수**를 낸다: 「시간당 6.4건 — EEMUA 191
+      권고 상한 6건」 · 빨강이 아니라 **주황**(빨강은 즉시 개입 전용 · ISA-101) · 쓰기 0행.
+      상한 6은 **우리가 지은 수가 아니다** [인용] — 지었다면 규칙마다 함께 흔들렸을 것이다.
+
+    ▣ **OPS-14 — 함수는 차선이, 주기는 조율자가.** beat 둘을 걸고 **등록만 확인하지 않고
+      한 번 돌렸다**: 생존 알림 `{sent: 1, no_recipients: 9}` · 맥박 검사
+      `{zones: 0, cameras: 0, created: 0}`. 수신자 0명인 테넌트 9개를 **수로 남긴다.**
+      맥박 검사는 **1분**이다 — 창이 5분이라 5분 주기면 창 하나를 통째로 놓친다.
+
+    ▣ 정직 고지(차선 Q 가 스스로 달았다): 군집 판정기의 초록은 **합성 구역** 위에서 났다.
+      개발 DB 에 카메라 3대 이상인 활성 구역이 **0개**다. 판정기 `[입력]` 줄에 「구역 출처」
+      칸을 만들어 시드가 심으면 값이 바뀌게 했다 — **합성의 초록을 시드의 초록처럼 적지 않으려고.**
+  enforced_by: |
+    · backend/stream_monitors/services/camera_pulse.py (+ 마이그레이션 0027)
+    · backend/kernels/k2_notify/{heartbeat,alarm_budget}.py · services._owner_for
+    · backend/kernels/k2_notify/exceptions.py :: NotifyPermissionDenied
+    · backend/tests/test_q_{camera_pulse,alarm_budget,heartbeat_digest}.py (18·17·16)
+    · backend/tests/test_q_camera_pulse.py::PulseIsFedByThePipelineTest (배선 부작위)
+    · scripts/verify_camera_pulse.py · scripts/verify_alarm_budget.py
+    · backend/config/celery.py :: ops14-heartbeat-digest(08:00) · ops15-camera-pulse-scan(60s)
+    · backend/tests/test_tenant_isolation.py :: PULSE.record_frame probe
+  affects: [D-212, D-281, D-290, D-301, D-366, D-373, D-377, D-401, D-412, D-415, D-417]
+
+- id: D-423
+  author_tree_id: "세종 지시서 2026-09-24 §2 E3행 · 시드 U2·U4 · OPS-02·07·08·10·12"
+  title: "차선 E3 병합 — **해 본 기록**이 셋 생겼고, 재 보니 없던 것이 둘이었다"
+  status: decided
+  raised_by: "차선 E3 보고 2026-09-24 → 조율자 병합·검증"
+  decision: |
+    ▣ **시드 U2·U4 — 진짜 사람 둘.** ORM 우회가 아니라 `POST /api/v1/user/create-user`
+      **200** 으로 심었다. 착수 전 `fire_admin` 0명 · `view_only_-_anyang` 0명 →
+      착수 후 각 1명 · critical 수신자 12 → **14명**. 두 계정으로 **실제 로그인·`/me`·
+      logout 까지** 확인했다. 그동안 탐침 계정에 역할이 0이라 **역할별 화면 판정 자체가
+      불가능**했다 — 그 벽이 내려갔다.
+
+    ▣ **OPS-08 — 해 본 기록이 생겼다** [실측 · 381초]
+        세운 직후 표 220 · head 0027 → `migrate stream_monitors 0019` → 표 **214**
+        (0020 의 칸 2개 사라짐) → 다시 밀기 → 표 **220** (칸 2개 돌아옴). 훈련 DB 는 지웠다.
+      직전까지 이 칸이 「미측정」이던 사유가 정확히 이것이었다 — **문장은 있고 해 본 적이
+      없었다.** 해 본 적 없는 절차는 절차가 아니다.
+
+    ▣ **OPS-12 볼륨 갈래 — 닫혔다.** 덤프 4,497,801B 를 **다른 볼륨**에 두고 **다른
+      컨테이너**에서 `pg_restore --list` 목차 3,337줄로 읽어 냈다. 남은 갈래(다른 호스트)는
+      배포 구성이 정한다. **절 제목이 둘을 말하므로 상태는 아직 미착수다** — 쪼개면 볼륨
+      쪽이 숫자가 되지만 **분모를 이번 턴에 또 늘리지 않는다**(다음 턴 제안으로 올린다).
+
+    ▣ ★ **회색 둘이 빨강으로 갈렸다 — 그것이 이번 턴의 값이다**
+      · **OPS-07**: 수집기 6개 전수 중 컨테이너 stdout **5개가 `max-size`·`max-file`
+        둘 다 없다 → 무한 적재.** 파일 핸들러 0개. 보존 정책이 있는 것은 DB 감사 로그 하나뿐.
+        「미측정」에서 「미착수」로 내려왔다 — 못 잰 것이 아니라 **재 보니 없었다.**
+      · **OPS-10**: 발송처 표는 섰고 **모든 규칙의 채널이 `log` 다 — 사람에게 도달하는
+        경보 0건.** `critical/fire_user` 받을 사람 0명 · info·warning 규칙 0건.
+        대표 결정 ①(알림 채널) 없이는 못 넘는 자리이고, **표를 세운 것까지가 우리 몫**이었다.
+
+    ▣ **OPS-02 — 못 쟀고, 옮기지 않았다.** 사내 git `192.168.0.22` 의 22·9418 **둘 다 불통** ·
+      `SSH_AUTH_SOCK` 없음 · 개인키 없음 [실측]. 이미 있는 이미지를 다시 쓰는 것은
+      **재현이 아니라 재사용**이다(착시 ⑤). 「손 밖」 후보로 **올렸을 뿐 옮기지 않았다**
+      (D-389 — 부재 주장도 근거가 필요하다). 컨테이너는 아무것도 지우지 않았다:
+      지우기 전에 절차를 적어 보니 **지워서 얻을 것이 없었다.**
+      ★ HWPX 도 같은 형으로 안 만들었다 — 저장소에 `.hwpx` 0건 · 파서 0개 · 한컴 없음.
+        만들어도 「만들었다」이지 **「열린다」가 아니다.** 대표 결정 ③ 대기.
+
+    ▣ ★★ **제품 결함 하나를 실제로 발생시켜 찾았다 — 등재했다**
+      `core/api/v1/user.py::create_user` 가 **원자적이지 않다.** 프로필 생성에서 죽으면
+      `CoreUser` 행만 남고 응답은 `400 Failed to create user.` — 부른 쪽은 「안 생겼다」로
+      읽는데 **소속도 역할도 없는 반쪽 사람**이 남고, 재시도하면 `Username already exists`
+      가 나 **영원히 막힌다**(실제로 발생시켜 확인 · id 107 은 손으로 치웠다).
+      dj-core §0.4 라 우리가 못 고친다 → `DJCORE_CREATE_USER_NOT_ATOMIC` 로 등재.
+      ★ 값이 특히 큰 이유: 온보딩의 첫 걸음이 사용자 생성이라 **처음 쓰는 사람이 가장 먼저
+        만나는 실패**가 이것이다.
+
+    ▣ 조율자 몫: 설치 매뉴얼 §2-3 의 낡은 수를 고쳤다(「214개 · 0020」 09-01 자 →
+      **220개 · 0027**). **문서의 수는 조용히 낡는다** — 되돌리기 훈련이 빈 DB 를 실제로
+      세우면서 그 사실이 드러났다.
+  enforced_by: |
+    · backend/stream_monitors/management/commands/seed_role_users.py · scripts/verify_seed_roles.py
+    · scripts/ops_rollback_drill.py · scripts/ops_backup_volume.py
+    · scripts/ops_log_collectors.py · scripts/ops_alert_routing.py · scripts/ops_patrol.py
+    · docs/agent/evidence/{OPS-02,OPS-07,OPS-08,OPS-10,OPS-12,OPS-PATROL,HWPX}/
+    · docs/agent/evidence/DA-05/blockers.yaml :: DJCORE_CREATE_USER_NOT_ATOMIC
+    · docs/agent/onboarding_48.md — 역할 계정 둘 · docs/agent/runbook/설치운영매뉴얼_v0.1.md §2-3
+  affects: [D-204, D-286, D-290, D-301, D-338, D-354, D-373, D-389]
+
+- id: D-424
+  author_tree_id: "세종 지시서 2026-09-24 §2 C행 · UX-13·14·17·18 · PRD v2.5 킥"
+  title: "차선 C 병합 — **지시서가 셋 틀렸고 차선이 착수 전에 고쳤다** · 부작위 시험이 배선을 불렀다"
+  status: decided
+  raised_by: "차선 C 보고 2026-09-24 → 조율자 병합·배선·화면 캡처"
+  decision: |
+    ▣ ★★ **착수 전 실측이 지시서를 세 곳 고쳤다** — 이 차선의 가장 큰 값이다
+      ① 「네 시각은 모델에 **이미 있다**」 — **아니었다.** `DetectionEvent` 에 있는 것은
+         `occurred_at` 하나뿐이다. D-399 는 `response_state` **한 칸**을 세웠고 그 주석이
+         「이 칸은 who·when 을 들지 않는다 — 어떻게 왔는지는 감사가 안다」라고 적어 두었다.
+         → 네 시각은 **감사에서 센다. 칸 셋을 새로 만들지 않았다** — 새 칸은 태어나는 순간
+           과거가 비고, **빈 과거는 「대응이 빨랐다」로 읽힌다.**
+      ② **ONVIF 는 이 저장소에 없다** (`grep -ril onvif backend/` = 0건). 없는 것 위에
+         화면을 얹지 않았다(P-15). `Row.source` 를 비워 두어 어댑터가 오면 값 하나만 는다.
+      ③ **좌표 역지오코딩은 이미 「불가」 판정**이다(D-329). 게다가 `StreamMonitor` 에
+         **위·경도 칸이 아예 없다** — 역지오코딩할 좌표가 없다.
+      부재를 못박는 시험을 남겼다(`AbsentPathsAreNamedTest`) — 생기는 날 빨개진다.
+
+    ▣ ★ **차선 C 의 시험이 차선 C 의 버그를 잡았다.** 1차판 ×N 묶음은 `timestamp() // 300`
+      **고정 격자**여서 60초짜리 7건이 벽시계 5분 경계를 걸치면 두 장으로 갈렸다
+      (한 번 초록 · 한 번 빨강). **시험이 흔들린 것이 아니라 규칙이 틀렸다** —
+      **이어붙이는 창**(앞 건과의 간격 ≤ 300초)으로 바꿨다.
+
+    ▣ **UX-14 대응 시계** — 문턱 넷(30초·2분·5분·8분) · 상세 타임라인 · 월간 p50/p95.
+      **자동 종결은 분모에서 뺀다**: `excluded_auto_closed=3 · close.n=1` [실측].
+      분모가 0이면 p50 은 `null` 이다 — **0 이 아니다.**
+    ▣ **UX-13 단일 초점 큐** — `total_events=7 · card_total=1`. **이벤트는 접지 않는다**
+      (F-14 통계가 원본 건수를 본다). 접는 것은 화면이지 기록이 아니다.
+
+    ▣ ★★★ **부작위 시험이 배선을 불렀다** (UX-17)
+      차선 C 는 스위치·창·보고서까지 짓고 **K2 채널 어댑터 앞에서 멈췄다**(발송 경로는
+      하나이고 그 파일은 차선의 것이 아니다). 멈춘 자리에 시험 하나를 남겼다 —
+      「K2 발송 경로가 **아직** 훈련 스위치를 보지 않는다」.
+      조율자가 `_send_one` 에 한 자리를 잇자 **그 시험이 빨개졌고, 그 빨강이 「배선이
+      왔다」는 선언**이었다. 갈아 끼운 것이 `DrillIsWiredToChannelsTest`(훈련 중 채널이
+      `log` + 양성 대조). 화면의 「아직 배선 안 됨」 경고 문구도 함께 지웠다 —
+      **안 고치면 화면이 없는 결함을 있다고 말한다.**
+      ★ 이름을 **가장하지 않는다**: 행의 `channel` 에 `log` 가 그대로 적힌다. 원래 채널로
+        적어 두고 몰래 로그로 보내면 그 행은 **보냈다는 거짓말**이다(D-284).
+      ★ 안전한 기본값은 **실발송**이다 — 테넌트를 못 읽으면 훈련이 아니다.
+
+    ▣ 조율자 몫 — **화면을 실제로 찍었다.** 차선 C 는 「화면이 그려지는 모양은 [추정]」이라
+      정직하게 적었고(동시 접속 1개라 다른 차선의 세션을 끊게 되어 브라우저를 안 띄웠다),
+      차선이 다 끝난 뒤 조율자가 번들을 다시 빌드해 심고 캡처했다:
+      **21 → 24장** · `verify_screens` 통과 · `route-alive` **31 → 35건**.
+      그 캡처가 없으면 UX-13·17·18 은 「서버 면은 섰고 화면은 못 봤다」이고, 그 상태에서
+      '구현'으로 적는 것이 이 대장이 금지하는 부풀리기다(D-346 · P-9).
+      ★ 게이트가 슬러그 규약도 잡았다 — 파일 이름이 라우트 뿌리로 시작해야 한다.
+        `dsm_focus_queue` → `dsm_queue_focus` 로 고치고 다시 찍었다.
+
+    ▣ 진입면 **여덟이 늘었다**(25 → 33). 손으로 그 줄을 더하는 일이 곧 선언이고,
+      `test_f05_event_api` 가 먼저 멈춰 세웠다 — 게이트가 지시보다 위다(D-327).
+      쓰기는 둘뿐(`POST /drill` · `POST /cameras/import`)이고 그 둘의 probe 는 선등록에서
+      `WRITE_PROBES` 로 옮겼다.
+  enforced_by: |
+    · backend/stream_monitors/services/{response_clock,drill,bulk_register}.py
+    · backend/apps/dsm/{api,services}.py — 라우트 8
+    · backend/kernels/k2_notify/services._send_one — 훈련 채널 우회 한 자리
+    · backend/tests/test_c_{response_clock,drill_mode,bulk_register}.py
+    · backend/tests/test_c_drill_mode.py::DrillIsWiredToChannelsTest (부작위 → 양성 교체)
+    · backend/tests/test_f05_event_api.py :: EVENT_ENTRY_SURFACE 33건
+    · backend/tests/test_tenant_isolation.py :: DRILL/BULK probe 둘
+    · scripts/capture_screens.py — 표적 22·23·24 · docs/agent/evidence/D-347/screens (24장)
+    · frontend/src/features/dsm/** (routes.ts · ResponseClock · FocusQueue · DrillMode · CameraImport)
+  affects: [D-209, D-284, D-290, D-300, D-327, D-329, D-330, D-346, D-347, D-399, D-401]
+
+- id: D-425
+  author_tree_id: "세종 지시서 2026-09-24 §5-3 병합 · §5-4 세 수 · 조율자 몫"
+  title: "2파 병합 — **게이트가 차선 넷이 놓친 여섯을 잡았고**, 그중 하나는 켜 놓고 안 도는 기능이었다"
+  status: decided
+  raised_by: "조율자(Code) 2026-09-24 · S → Q → E3 → C 병합과 V"
+  decision: |
+    ▣ **세 수** [실측 2026-09-24 · 병합 뒤]
+        상용 가중  55.7% → **64.3%** (120)
+        손 안 도달율  63.0% → **71.3%** (77/108)
+        남은 절  40 → **31** (미착수 27 · 미측정 4)
+      영역 ③ 데이터 격리가 **4/4 = 100%** 가 됐다(ISO-03 닫힘).
+
+    ▣ ★★ **잠자는 기능 게이트가 이 병합의 값을 절반 냈다.** 차선 넷이 낸 코드에서
+      **새로 태어나 아무도 안 부르는 함수 여섯**을 잡았다(D-377 「켜진 상태로 태어나야
+      한다」). 여섯 다 시험에서만 불리고 있었고, 시험은 스스로 상태를 심으므로 초록이었다.
+      넷은 **제자리에 이었고** 둘은 새 자리를 만들었다:
+        · `is_drill_event`      → 이벤트 상세의 `data_source`(drill/live). 표식 없이 섞이면
+                                  그 달의 통계가 **훈련을 재난으로 센다**
+        · `is_late`             → `heartbeat_watch` 신설 → 5분 감시의 `heartbeat_late` 신호.
+                                  **안 온 것을 알아채는 자리**가 없으면 OPS-14 는 「보낸다」에서 끝난다
+        · `verify_chain` ·      → `evidence_anchor_beat`(00:05) 신설. 매일 어제 것을 닫고
+          `daily_anchor` ·        앵커 40자와 **무엇을 해시했는지**를 함께 남긴다 —
+          `anchor_line` ·         필드 목록이 없으면 나중에 같은 값을 다시 못 만든다
+          `iter_hashed_fields`
+      ★ 그리고 같은 병 하나를 게이트 **전에** 손으로 잡았다: `record_frame`(맥박)을
+        부르는 곳이 0곳이었다. 파이프라인에 이었고 부작위 시험을 박았다(D-422).
+
+    ▣ ★ **거짓 초록 하나를 막았다** — 차선 Q 의 문지기가 `InvalidNotifyInput` 을 던졌는데
+      그 이름은 「모르는 채널」 같은 평범한 입력 오류도 쓴다. 격리 러너의 거절 목록에
+      넣었으면 **문지기에 닿지도 못하고 죽은 호출이 「막혔다」로** 세어졌을 것이다.
+      `NotifyPermissionDenied` 를 좁게 팠다(D-366 의 재발 방지).
+
+    ▣ **공용 등록부는 조율자만 고쳤다** — 차선 넷은 한 줄도 안 건드렸고 변경안을 코드로
+      보고했다. 그 규약 덕에 네 차선이 같은 트리에서 동시에 돌고도 **등록부 충돌 0건**이다.
+        · `EVENT_ENTRY_SURFACE` 25 → **33** (진입면 여덟이 늘었다 · 쓰기는 둘뿐)
+        · `WRITE_PROBES` 9 → **12** (선등록 셋이 probe 로 옮겨 왔다) · 훑는 범위 +3 패키지
+        · `K1_CONSUMERS` +1 (`camera_pulse`)
+        · 선등록 둘은 **지우지 않고 사유를 바꿨다**(`append_evidence_hash` · `send_heartbeat_digest`)
+
+    ▣ **K2 채널 어댑터(훈련 모드)는 조율자가 이었다** — 차선 C 가 남긴 부작위 시험이
+      배선과 함께 빨개졌고, 그 빨강이 「배선이 왔다」는 선언이었다(D-424).
+
+    ▣ **화면을 실제로 찍었다** — 21 → **24장**(`verify_screens` 통과) ·
+      `route-alive` 31 → **35건**. 캡처 없이 UX-13·17·18 을 '구현'으로 적는 것이
+      이 대장이 금지하는 부풀리기다(D-346 · P-9).
+
+    ▣ 병합에서 **게이트 넷이 더 잡았고 넷 다 닫았다**:
+      `verify_tenant_scope`(새 커널 공개 함수의 문지기 — 시스템 전용으로 좁히고 등재) ·
+      `verify_threshold_table`(새 매직 넘버 15건 — 사유와 함께 등재, 그중 **일곱은
+      「표 ① 이관 대상」으로 이름을 댔다**) · `verify_classification`(쓰기 3자리가
+      분류 등록부를 안 봤다) · `verify_tool_selftest`(새 도구에 출생 표본이 없었다).
+
+    ▣ [실측] 단위 **750 → 최종 재실행** · E2E 23 · 게이트 **9종 exit 0 · 실패 0 · 대기 0** ·
+      `verify_*` **44 exit 0 · 빨강 0**(호스트 회색 6은 전부 컨테이너에서 초록).
+  enforced_by: |
+    · docs/agent/evidence/D-346/ga_readiness.yaml — 120절 · 구현 77
+    · docs/agent/remaining_40.md — 31절 · §0-A 닫힌 아홉
+    · backend/tests/test_f05_event_api.py :: EVENT_ENTRY_SURFACE 33 · K1_CONSUMERS
+    · backend/tests/test_tenant_isolation.py :: WRITE_PROBES 12 · 훑는 범위 6패키지
+    · backend/common/ops_tasks.py :: heartbeat_digest_beat · camera_pulse_scan_beat ·
+      evidence_anchor_beat · ops_monitor_beat 의 heartbeat_late 신호
+    · backend/config/celery.py :: beat 3 (08:00 · 60s · 00:05)
+    · scripts/verify_tenant_scope.py :: KERNEL_PUBLIC heartbeat_watch
+    · scripts/verify_threshold_table.py :: DECLARED_NOT_A_SETTING +15
+    · docs/agent/evidence/D-347/screens (24장) · docs/agent/onboarding_48.md
+  affects: [D-261, D-270, D-272, D-277, D-281, D-290, D-301, D-310, D-311, D-327,
+            D-346, D-366, D-377, D-421, D-422, D-423, D-424]

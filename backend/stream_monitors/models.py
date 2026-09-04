@@ -22,6 +22,28 @@ class StreamMonitor(BaseModelWithGroup):
     is_visualize = models.BooleanField(default=False)
     order = models.IntegerField(default=0)
     is_external = models.BooleanField(default=False)
+
+    # ── OPS-15 맥박 (2026-09-04 · 차선 Q) ────────────────────────────────
+    #
+    # 왜 칸 하나가 필요한가 — **「조용함」과 「죽음」은 다른 사실이다**
+    # ---------------------------------------------------------------
+    # D-415 의 `cameras_silent_24h` 는 「이벤트가 안 온 카메라」를 센다. 그런데 아무 일도
+    # 안 일어난 카메라와 케이블이 끊긴 카메라는 그 수에서 **같은 모양**이다
+    # (온보딩 U1 #3 에 그렇게 적혀 있다 · 실측). 이 칸이 그 둘을 가른다:
+    # 프레임은 사건이 없어도 온다. 프레임이 끊긴 것은 **장비의 사실**이다.
+    #
+    # ★ `null` 은 **「아직 한 장도 안 왔다」**이지 **「죽었다」가 아니다** (D-290).
+    #   판정기는 이 값을 두절로 세지 않는다 — 세면 시드 직후의 새 카메라가 전부
+    #   군집 두절이 되고, 그러면 이 신호는 태어나자마자 소음이 된다.
+    #
+    # ⚠ **이 칸은 등급을 만들지 않는다.** 두절 판정과 군집 규칙은
+    #   `stream_monitors/services/camera_pulse.py` 한 곳에 있다 — 판단은 한 곳에서만(D-212).
+    last_frame_at = models.DateTimeField(
+        null=True, blank=True, db_index=True,
+        help_text="마지막 프레임 수신 시각(맥박). null 은 '아직 안 왔다'이지 '죽었다'가 "
+                  "아니다. 군집 두절 판정은 camera_pulse.py 가 한다 (OPS-15)",
+    )
+
     external_drone_name = models.CharField(max_length=255, null=True, blank=True)
     external_operation_name = models.CharField(max_length=255, null=True, blank=True)
     external_registration_number = models.CharField(max_length=255, null=True, blank=True)
@@ -190,6 +212,19 @@ class DetectionEvent(BaseModelWithGroup):
         #:     탐지 유형의 오탐률을 흐리지 않는다 — 그것이 전용 타입을 만든 이유다.
         CAMERA_DOWN = "camera_down", "카메라 무응답"
         STORAGE_HIGH = "storage_high", "저장 용량 임계"
+        #: ★ OPS-15 로 신설 (2026-09-04 · 차선 Q). **`camera_down` 과 다른 화면에 간다.**
+        #:
+        #:   한 대가 죽은 것은 운영의 일이다 — 사람이 가서 본다(시스템 이벤트).
+        #:   같은 구역 여러 대가 **동시에** 죽은 것은 그 구역에 무슨 일이 생겼다는 뜻이다
+        #:   (재난 징후). 하천이 넘치면 하천변 카메라가 함께 죽고, 그것을 알기 위해
+        #:   SDN 링크 상태(F-08)가 필요하지 않다 — 우리 수집기가 이미 안다.
+        #:
+        #:   ⚠ 정직 고지: 이것은 **F-08 을 구현으로 바꾸지 않는다.** F-08 은 SDN 링크
+        #:     상태를 말하고 그 절은 손 밖에 그대로 있다. 이것은 새 절(OPS-15)이고,
+        #:     F-08 이 열리면 같은 규칙의 **두 번째 입력**이 된다 — 규칙은 안 바뀌고
+        #:     입력만 는다.
+        #:   ⚠ AI 라벨에서 오지 않는다 — `LABEL_TO_EVENT_TYPE` 에 넣지 않는다.
+        CAMERA_CLUSTER_DOWN = "camera_cluster_down", "카메라 군집 두절"
 
     class Severity(models.TextChoices):
         INFO = "info", "정보"

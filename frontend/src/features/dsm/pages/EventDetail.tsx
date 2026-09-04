@@ -45,8 +45,10 @@ import {
   STATUS_LABEL,
   VERDICT_LABEL,
 } from '../severity';
-import { absolute, relative, stamp, TIMEZONE_NOTE } from '../time';
-import type { DeliveryRow, EventDetailView } from '../types';
+import EventSnapshot from '../components/EventSnapshot';
+import ResponseClock from '../components/ResponseClock';
+import { absolute, durationOrAbsent, relative, stamp, TIMEZONE_NOTE } from '../time';
+import type { DeliveryRow, EventDetailView, ResponseTimeline } from '../types';
 
 const { Text, Title } = Typography;
 
@@ -86,6 +88,20 @@ export default function EventDetail() {
       enabled: Boolean(id),
       isEmpty: (v) => (v?.deliveries?.length ?? 0) === 0,
     },
+  );
+
+  /**
+   * UX-14 **네 시각 타임라인.**
+   *
+   * ★ 착수 전 실측이 지시서를 고쳤다 [2026-09-24]: 넷 중 모델에 있는 것은
+   *   `occurred_at` 하나뿐이고, 나머지 셋은 대응 전이 **감사**에서 세운다
+   *   (D-399 가 그 칸 주석에 「어떻게 왔는지는 감사가 안다」라고 적어 둔 그대로).
+   *   그래서 목록 응답에서 골라 쓸 수 없고 **따로 묻는다.**
+   */
+  const timeline = useDsmResource<ResponseTimeline>(
+    () => dsmGet<ResponseTimeline>(dsmEndpoint.timeline(id!)),
+    [id],
+    { enabled: Boolean(id) },
   );
 
   const notify = useCallback(async () => {
@@ -304,6 +320,101 @@ export default function EventDetail() {
             </Card>
           )}
         </StateBoundary>
+
+        {/* ── UX-14 대응 시계 · 네 시각 타임라인 (차선 C · 2026-09-24) ────────
+            ★ 「—」와 「0초」를 가른다(D-290): `null` 은 **그 일이 아직 안 일어났다**
+              이고 0 은 **즉시 일어났다**이다. 둘을 같은 글자로 그리면
+              「아무도 접수 안 함」이 「즉시 접수」로 보인다. */}
+        {e && (
+          <Card
+            size="small"
+            title="대응 시계 — 발생 → 접수 확인 → 조치 착수 → 종결"
+          >
+            <StateBoundary
+              state={timeline.state}
+              reason={timeline.reason}
+              onRetry={timeline.reload}
+            >
+              {timeline.data ? (
+                <Row gutter={16}>
+                  <Col xs={24} md={8}>
+                    {/* P-25 — 인증 헤더가 실리는 경로로 받는다. `<img src>` 직결이 아니다. */}
+                    <EventSnapshot
+                      eventId={e.event_id}
+                      snapshotPath={e.snapshot_path}
+                      height={180}
+                    />
+                  </Col>
+                  <Col xs={24} md={16}>
+                    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                      <ResponseClock
+                        occurredAt={timeline.data.occurred_at}
+                        closedAt={timeline.data.closed_at}
+                      />
+                      {timeline.data.auto_closed ? (
+                        <Alert
+                          type="warning"
+                          showIcon
+                          message="이 이벤트는 사람이 닫은 것이 아닙니다."
+                          description={
+                            '오탐 판정에 따라 규칙이 자동 종결했습니다(P-16). ' +
+                            '그래서 이 건은 대응 시간 p50/p95 의 **분모에서 빠집니다** — ' +
+                            '빼지 않으면 오탐이 많을수록 대응이 빨라 보입니다.'
+                          }
+                        />
+                      ) : null}
+                      {timeline.data.reopened > 0 ? (
+                        <Alert
+                          type="info"
+                          showIcon
+                          message={`한 번 닫혔다가 다시 열렸습니다 (${timeline.data.reopened}회).`}
+                          description="종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다."
+                        />
+                      ) : null}
+                      <Descriptions size="small" column={{ xs: 1, sm: 2 }} bordered>
+                        <Descriptions.Item label="① 발생">
+                          {absolute(timeline.data.occurred_at)}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="② 접수 확인">
+                          {timeline.data.acknowledged_at
+                            ? `${absolute(timeline.data.acknowledged_at)} · +${durationOrAbsent(timeline.data.acknowledge_seconds)}`
+                            : '아직 아무도 접수하지 않았습니다'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="③ 조치 착수">
+                          {timeline.data.arrived_at
+                            ? `${absolute(timeline.data.arrived_at)} · +${durationOrAbsent(timeline.data.arrive_seconds)}`
+                            : '아직 조치가 시작되지 않았습니다'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="④ 종결">
+                          {timeline.data.closed_at
+                            ? `${absolute(timeline.data.closed_at)} · +${durationOrAbsent(timeline.data.close_seconds)}`
+                            : '아직 열려 있습니다'}
+                        </Descriptions.Item>
+                      </Descriptions>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        전이 {timeline.data.transitions.length}건 —{' '}
+                        {timeline.data.transitions.length === 0
+                          ? '아직 한 칸도 움직이지 않았습니다.'
+                          : timeline.data.transitions
+                              .map(
+                                (t) =>
+                                  `${absolute(t.at)} ${t.from}→${t.to}` +
+                                  (t.automatic ? ' (규칙)' : ` (${t.by || '알 수 없음'})`),
+                              )
+                              .join(' · ')}
+                      </Text>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        이 네 시각은 대응 전이 <b>감사</b>(`guardianx.dsm.response`)에서
+                        세운 것입니다 — 모델에 칸을 새로 만들지 않았습니다. 새 칸은 태어나는
+                        순간 과거가 비어 있고, 빈 과거는 「대응이 빨랐다」로 읽힙니다.
+                      </Text>
+                    </Space>
+                  </Col>
+                </Row>
+              ) : null}
+            </StateBoundary>
+          </Card>
+        )}
 
         {/* ── W2 진위 판정 · 대응 진행 (U1 #11 · U2 #3 · D-399/D-414) ─────────
             ★ 이 칸이 이 화면에만 있는 글자다 — 검수 촬영이 이것으로 단언한다. */}

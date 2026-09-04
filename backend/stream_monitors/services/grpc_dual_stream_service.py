@@ -39,6 +39,34 @@ def _publish_detection_events(stream_monitor_id, metadata, frames=None) -> None:
       최상위에서 끌어오면 앱 레지스트리가 준비되기 전에 닿을 수 있다. 지연 import 는
       순환을 피하려는 편법이 아니라 **로딩 순서에 대한 사실**이다.
     """
+    # ── OPS-15 맥박 (2026-09-24 · 조율자가 잇는다) ─────────────────────────
+    #
+    # ★ **검출보다 먼저다.** 맥박은 「사건이 있었는가」가 아니라 「프레임이 오는가」이고,
+    #   그 둘을 같은 자리에서 재면 D-415 가 이미 겪은 것이 반복된다 — 조용한 밤의
+    #   정상 카메라와 케이블이 끊긴 카메라가 같은 값을 낸다.
+    #   그래서 아래 「검출 0건이면 조용히 지난다」 **앞**에 둔다: 검출 0건인 프레임도
+    #   맥박이다.
+    #
+    # ★ 이 줄이 없으면 `last_frame_at` 은 영원히 `None` 이고, `camera_pulse` 는
+    #   그것을 **두절로 세지 않으므로**(「아직 안 왔다」≠「죽었다」) OPS-15 는
+    #   조용히 0건만 낸다 — 켜 놓고 안 도는 기능이다(D-377 잠자는 기능).
+    #
+    # 비용: 콜백마다 pk 한 행 UPDATE 하나. 맥박 판정 창이 5분이므로 초당 여러 번 쓸
+    # 이유는 없다 — 부하가 보이면 스트림별 최종 기록 시각을 캐시에 두고 걸러라.
+    # 그 조임은 **여기서** 한다: 커널 쪽에 두면 시험이 시각을 못 정한다.
+    try:
+        from stream_monitors.services.camera_pulse import record_frame
+        from common.tenant_scope import TenantScope
+
+        record_frame(
+            scope=TenantScope.system(
+                reason="OPS-15 맥박 — gRPC 콜백에는 요청자가 없다 (D-281)"),
+            stream_monitor_id=stream_monitor_id)
+    except Exception as exc:  # noqa: BLE001 — 맥박 하나가 스트림을 죽이지 않는다
+        logger.warning("[PULSE] stream=%s 맥박을 못 적었다: %s — **영상은 계속 흐른다.** "
+                       "이 줄이 잦으면 군집 두절 판정이 눈을 감고 있는 것이다",
+                       stream_monitor_id, exc)
+
     detections = (metadata or {}).get('detections') or []
     if not any(detections):
         # "검출 0건"과 "못 받았다"는 다르다. 0건은 정상이므로 조용히 지난다 —

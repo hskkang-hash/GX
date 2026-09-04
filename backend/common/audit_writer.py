@@ -28,6 +28,8 @@ from typing import Any
 
 from django.apps import apps
 
+from common import evidence_chain
+
 #: 감사에 남는 판정 두 가지. 값이 둘뿐인 것이 요점이다 —
 #: "시도했다" 만 남기면 막혔는지 통과했는지가 안 남는다.
 ALLOWED = "allowed"
@@ -43,6 +45,12 @@ class AuditEntry:
     action: str
     actor_id: int | None
     reason: str
+    #: ★ LAW-08 — 이 행이 체인의 어느 자리에 붙었나. 부르는 쪽이 응답·영수증에 실을 수
+    #:   있게 값으로 돌려준다. 읽기(`read`)에서는 비어 있다 — 읽을 때 다시 계산하면
+    #:   "저장된 값" 과 "계산한 값" 이 같은 이름으로 섞이고, 그 둘이 섞이면 검증이
+    #:   자기 자신을 증명하게 된다.
+    prev_hash: str = ""
+    row_hash: str = ""
 
 
 def _model():
@@ -90,8 +98,15 @@ def write(
         data_before=before,
         data_after=after,
     )
+    # ★ LAW-08 — 저장된 그 행을 **곧바로 체인에 잇는다**. 실패는 삼키지 않는다:
+    #   이을 수 없으면 예외가 올라가고 이 감사 쓰기 자체가 실패한다(머리말 규약).
+    #   체인 없는 감사 행 하나는 나중에 "그때는 원래 없었다" 로 읽히고, 그 변명이 한 번
+    #   통하면 체인 전체의 값이 사라진다.
+    prev_hash, row_hash = evidence_chain.append_evidence_hash(audit_id=row.pk)
+
     return AuditEntry(audit_id=row.pk, outcome=outcome, action=action,
-                      actor_id=getattr(actor, "pk", None), reason=reason)
+                      actor_id=getattr(actor, "pk", None), reason=reason,
+                      prev_hash=prev_hash, row_hash=row_hash)
 
 
 def read(*, logger_name: str, action: str | None = None,

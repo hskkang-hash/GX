@@ -97,6 +97,26 @@ app.conf.beat_schedule = {
         "task": "common.ops_backup_beat",
         "schedule": crontab(hour=3, minute=30),
     },
+    # ── 2파 (2026-09-24) — 차선 Q 가 함수를 짓고 조율자가 주기를 건다 ────────
+    "ops14-heartbeat-digest": {
+        # ★ OPS-14 생존 알림 — 매일 08:00 한 통. **안 오면 장애다.**
+        #   서버 1대다. 죽으면 탐지도 알림도 멈추는데 **침묵과 정상은 같은 모양**이다.
+        #   이 한 통이 그 둘을 가른다 — 그래서 이 항목이 꺼지면 감시가 꺼진다.
+        "task": "common.heartbeat_digest_beat",
+        "schedule": crontab(hour=8, minute=0),
+    },
+    "law08-evidence-anchor": {
+        # ★ LAW-08 일일 앵커 — 00:05. 자정 **직후**에 어제 것을 닫는다.
+        #   00:00 정각에 두면 그 순간 쓰이는 감사 행이 어제인지 오늘인지 갈린다.
+        "task": "common.evidence_anchor_beat",
+        "schedule": crontab(hour=0, minute=5),
+    },
+    "ops15-camera-pulse-scan": {
+        # ★ OPS-15 카메라 맥박 군집 두절 — **1분**. 규칙의 창이 5분이라 5분 주기로 재면
+        #   창 하나를 통째로 놓칠 수 있고, 놓친 군집 두절은 아무 흔적도 안 남긴다.
+        "task": "stream_monitors.camera_pulse_scan_beat",
+        "schedule": 60.0,
+    },
 }
 
 # Additional Celery configurations to fix timeout issues
@@ -105,16 +125,16 @@ app.conf.update(
     worker_prefetch_multiplier=1,  # Cần = 1 để priority hoạt động đúng
     task_acks_late=True,
     worker_disable_rate_limits=True,
-    
+
     # Task priority settings (số nhỏ hơn = priority cao hơn)
     task_default_priority=10,  # Priority mặc định cho các task thông thường
     task_inherit_parent_priority=True,  # Task con kế thừa priority từ task cha
-    
+
     # 🔐 FIX: Database connection settings for multiprocessing
     worker_pool_restarts=True,  # Restart workers periodically to prevent connection issues
     worker_max_tasks_per_child=1000,  # Limit tasks per worker to prevent connection leaks
     worker_concurrency=4,  # Limit concurrent workers to manage connections
-    
+
     # Connection and retry settings
     broker_connection_retry_on_startup=True,
     broker_connection_retry=True,
@@ -128,10 +148,10 @@ app.conf.update(
         'retry_on_timeout': True,
         'max_connections': 20,
     },
-    
+
     # Task cancellation on connection loss
     worker_cancel_long_running_tasks_on_connection_loss=True,
-    
+
     # Tất cả tasks sẽ được gửi đến default queue
     # task_routes={
     #     'orders.tasks.*': {'queue': 'orders'},
@@ -139,17 +159,17 @@ app.conf.update(
     #     'delivery.signals.*': {'queue': 'delivery'},
     #     'stream_monitors.tasks.*': {'queue': 'stream'},
     # },
-    
+
     # Chỉ sử dụng default queue
     task_default_queue='default',
-    
+
     # Result backend settings
     result_expires=3600,  # 1 hour
     result_backend_transport_options={
         'master_name': "mymaster",
         'visibility_timeout': 3600,
     },
-    
+
     # Beat settings
     beat_scheduler='django_celery_beat.schedulers:DatabaseScheduler',
     beat_sync_every=1,
@@ -187,4 +207,4 @@ def close_db_connections_after_task(**kwargs):
     This ensures connections are properly cleaned up.
     """
     from django.db import connections
-    connections.close_all() 
+    connections.close_all()

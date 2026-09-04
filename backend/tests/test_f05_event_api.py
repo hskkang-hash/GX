@@ -167,6 +167,26 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     #   ★ 나가는 바이트에는 **소인**이 있다(테넌트명·열람 시각). 저장은 못 막지만
     #     출처는 남는다 — `backend/tests/test_snapshot_route.py` 규약 넷이 잰다.
     ("GET", "/api/dsm/events/{int:event_id}/snapshot"),
+    # ★ 2026-09-24 **여덟이 늘었다** — 차선 C 2파 (UX-13 · UX-14 · UX-17 · UX-18).
+    #   손으로 이 줄들을 더하는 일이 곧 「진입면을 넓힌다」는 선언이고, 그 선언을 여기 남긴다.
+    #   이 시험이 먼저 멈춰 세웠다(25 vs 33) — 게이트가 지시보다 위다(D-327).
+    #   문지기: 전건 `@tenant_scoped` + `JwtOrInboundKey`(**키 거절 — 기본값**).
+    #
+    #   ⚠ 읽기 여섯은 쓰기 면이 아니라 WRITE_PROBES 대상이 아니다(P-8).
+    #     **쓰기는 둘뿐**이다 — `POST /drill` · `POST /cameras/import`. 그 둘의 probe 는
+    #     `tests/test_tenant_isolation.py` 에 함께 들어갔다(선등록에서 옮겨 온 자리다).
+    #   ⚠ 등록 순서가 곧 라우팅이다(D-410): `/events/queue`·`/events/response-times` 는
+    #     `/events/{int:event_id}` **위**에, drill·cameras 넷은 `/settings/{domain}` **아래**에
+    #     선다. 이 순서가 바뀌면 조용히 404·405 가 되고, 조용한 404 는 「기능이 없다」와
+    #     구별되지 않는다.
+    ("GET",  "/api/dsm/events/queue"),                    # UX-13 초점 큐 + ×N 묶음
+    ("GET",  "/api/dsm/events/response-times"),           # UX-14 월간 p50/p95
+    ("GET",  "/api/dsm/events/{int:event_id}/timeline"),  # UX-14 네 시각
+    ("GET",  "/api/dsm/drill"),                           # UX-17 훈련 모드 상태
+    ("POST", "/api/dsm/drill"),                           # UX-17 스위치 ★쓰기
+    ("GET",  "/api/dsm/drill/report"),                    # UX-17 종료 보고서
+    ("GET",  "/api/dsm/cameras/address-gap"),             # UX-18 「주소 없는 카메라 N대」
+    ("POST", "/api/dsm/cameras/import"),                  # UX-18 벌크 ★쓰기(dry_run 기본 True)
 })
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**
@@ -220,6 +240,12 @@ K1_CONSUMERS: dict[str, str] = {
     "backend/stream_monitors/services/detection_event_bridge.py":
         "AI 검출 파이프라인 배선. gRPC 콜백이라 **요청자가 없고**(D-281 시스템 스코프) "
         "HTTP 진입면이 아니다 — 밖에서 부를 수 있는 주소가 없다",
+    "backend/stream_monitors/services/camera_pulse.py":
+        "★ **OPS-15 카메라 맥박 군집 두절** (차선 Q · 2026-09-24). 구역 N중 M 두절을 "
+        "`camera_cluster_down` 이벤트로 낸다 — **K1 경로 하나로만** 만든다. 여기서 "
+        "`DetectionEvent` 를 직접 만들면 등급 검증·소유 상속·중복 억제가 한 번도 안 "
+        "돌고, 그 행은 화면에는 이벤트로 보이면서 아무 규칙도 안 탄다(D-401). "
+        "HTTP 진입면이 아니다 — 밖에서 부를 주소가 없고 맥박 검사가 부르는 자리다",
 }
 
 #: `/api/dsm/events` 응답의 키 집합. **모양이 계약이다** — 조용히 늘거나 줄면 멈춘다.

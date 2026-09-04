@@ -30,9 +30,16 @@ D-373 에서 감시(`ops_monitor_beat`)와 백업(`ops_backup_beat`)을 beat 표
 여기서 다시 정의하지 않는다 — 본문은 `ops_tasks.py` 하나뿐이다. 두 벌은 어긋난다(D-369).
 """
 from common.ops_tasks import (  # noqa: F401  — import 되는 것이 이 파일의 전부다
+    camera_pulse_scan_beat,
+    evidence_anchor_beat,
+    heartbeat_digest_beat,
     ops_audit_purge_beat,
     ops_backup_beat,
     ops_monitor_beat,
 )
 
-__all__ = ["ops_monitor_beat", "ops_backup_beat", "ops_audit_purge_beat"]
+__all__ = ["ops_monitor_beat", "ops_backup_beat", "ops_audit_purge_beat",
+           # ★ 2026-09-24 (2파) — 이 줄에 이름이 없으면 `@shared_task` 는 **실행되지 않고**
+           #   beat 는 매일 `NotRegistered` 를 낸다. 이 파일의 존재 이유가 그것이다.
+           "heartbeat_digest_beat", "camera_pulse_scan_beat",
+           "evidence_anchor_beat"]

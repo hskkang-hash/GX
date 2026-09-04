@@ -1,0 +1,721 @@
+{
+  "measured_at": "2026-09-04",
+  "note": "SEC-04 모수 — **인증 콜백이 없는 라우트**를 관할별로 가른다. 「우리 층」이 SEC-04 가 0 으로 만들어야 하는 수이고, 「모듈 해석 실패」는 0 이 아니라 **못 본 것**이다 (D-301).",
+  "totals": {
+    "routes": 685,
+    "no_authn": 100,
+    "§0.4 금지구역": 23,
+    "우리 층": 28,
+    "저장소 밖": 49,
+    "ours_with_authz": 10,
+    "ours_without_anything": 18
+  },
+  "by_owner": {
+    "§0.4 금지구역": [
+      {
+        "method": "GET",
+        "path": "/api/delivery/drone-monitoring/drone-status",
+        "view": "delivery.views.api.DroneMonitoringController.get_drone_status_monitoring",
+        "app": "delivery",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/delivery/drone-monitoring/drone-status",
+        "view": "delivery.views.api.DroneMonitoringController.post_drone_status_monitoring",
+        "app": "delivery",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/delivery/etri-integration/receive-from-etri",
+        "view": "delivery.views.api.EtriIntegrationController.receive_status_from_etri",
+        "app": "delivery",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/delivery/etri-mock/receive-delivery",
+        "view": "delivery.views.api.EtriMockController.mock_receive_delivery",
+        "app": "delivery",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/etri-mock/test-scenarios",
+        "view": "delivery.views.api.EtriMockController.get_test_scenarios",
+        "app": "delivery",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/delivery/processing/assign-packages-to-drone",
+        "view": "delivery.views.api.ProcessingController.assign_packages_to_drone",
+        "app": "delivery",
+        "authz_path_permission": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/delivery/processing/assign-packages-to-drones",
+        "view": "delivery.views.api.ProcessingController.assign_packages_to_drones",
+        "app": "delivery",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/delivery/processing/get-drones-by-package-and-route-optimized",
+        "view": "delivery.views.api.ProcessingController.get_drones_by_package_and_route_optimized",
+        "app": "delivery",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/delivery/verification/verify-orders",
+        "view": "delivery.views.api.VerificationController.verify_orders",
+        "app": "delivery",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/orders/banks",
+        "view": "orders.views.order_views.BankAPI.get_banks",
+        "app": "orders",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/orders/delivery-option",
+        "view": "orders.views.order_views.DeliveryOptionAPI.get_delivery_options",
+        "app": "orders",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/orders/item-types",
+        "view": "orders.views.item_views.ItemTypesAPI.get_item_types",
+        "app": "orders",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/orders/order/{id}/payment",
+        "view": "orders.views.order_views.OrderAPI.payment_order",
+        "app": "orders",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/orders/payment-methods",
+        "view": "orders.views.payment_views.PaymentMethodsAPI.get_payment_methods",
+        "app": "orders",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/terminals/delivery-hubs",
+        "view": "terminals.views.terminal_views.DeliveryHubController.list_delivery_hubs",
+        "app": "terminals",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/terminals/delivery-hubs/{id}",
+        "view": "terminals.views.terminal_views.DeliveryHubController.get_delivery_hub",
+        "app": "terminals",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/terminals/docking-stations",
+        "view": "terminals.views.terminal_views.DockingStationController.list_docking_stations",
+        "app": "terminals",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/terminals/docking-stations/{id}",
+        "view": "terminals.views.terminal_views.DockingStationController.get_docking_station",
+        "app": "terminals",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/terminals/infrastructures",
+        "view": "terminals.views.terminal_views.InfrastructureController.list_infrastructures",
+        "app": "terminals",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/terminals/infrastructures/{id}",
+        "view": "terminals.views.terminal_views.InfrastructureController.get_infrastructure",
+        "app": "terminals",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/terminals/terminals",
+        "view": "terminals.views.terminal_views.TerminalsController.list_terminals",
+        "app": "terminals",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/terminals/terminals/{id}",
+        "view": "terminals.views.terminal_views.TerminalsController.get_terminal",
+        "app": "terminals",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/terminals/terminals/{id}/operating-times",
+        "view": "terminals.views.terminal_views.TerminalsController.get_terminal_operating_times",
+        "app": "terminals",
+        "authz_path_permission": true
+      }
+    ],
+    "우리 층": [
+      {
+        "method": "GET",
+        "path": "/api/checklist-setting/categories",
+        "view": "checklist_setting.views.ChecklistSettingCategoryController.get_categories",
+        "app": "checklist-setting",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/devices/devices-management",
+        "view": "devices.views.device_views.DeviceAPI.list_devices",
+        "app": "devices",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/devices/devices-management/{id}",
+        "view": "devices.views.device_views.DeviceAPI.detail_device",
+        "app": "devices",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/devices/libraries-management",
+        "view": "devices.views.library_views.LibraryAPI.list_libraries",
+        "app": "devices",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/devices/libraries-management/{id}",
+        "view": "devices.views.library_views.LibraryAPI.detail_library",
+        "app": "devices",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/devices/packaging-specifications",
+        "view": "devices.views.packaging_specification_views.PackagingSpecificationAPI.list_packaging_specifications",
+        "app": "devices",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/devices/packaging-specifications/{id}",
+        "view": "devices.views.packaging_specification_views.PackagingSpecificationAPI.get_packaging_specification",
+        "app": "devices",
+        "authz_path_permission": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/dronehw/drone-communication-management/change-status",
+        "view": "drone_communication.views.drone_views.DroneCommunicationAPI.change_status",
+        "app": "dronehw",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/flight-log/flight-log",
+        "view": "flight_log.views.FlightLogAPI.get_flight_log",
+        "app": "flight-log",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/flight-log/flight-log/detail/{id}",
+        "view": "flight_log.views.FlightLogAPI.get_flight_log_detail",
+        "app": "flight-log",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/flight-log/flight-log/download-log/{id}",
+        "view": "flight_log.views.FlightLogAPI.download_log_file",
+        "app": "flight-log",
+        "authz_path_permission": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/operational-data/operational-data/{order_item_id}",
+        "view": "operational_data.views.operational_data_view.OperationalDataAPI.get_operational_data_detail",
+        "app": "operational-data",
+        "authz_path_permission": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/partner/partner-callback-mockup/delivery-status-callback",
+        "view": "partner.views.partner_callback_mockup_controller.PartnerCallbackMockupController.receive_delivery_status_callback",
+        "app": "partner",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/partner/partner-callback-mockup/drone-base-station-callback",
+        "view": "partner.views.partner_callback_mockup_controller.PartnerCallbackMockupController.receive_drone_base_station_callback",
+        "app": "partner",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/partner/partner-callback-mockup/drone-user-notice-callback",
+        "view": "partner.views.partner_callback_mockup_controller.PartnerCallbackMockupController.receive_drone_user_notice_callback",
+        "app": "partner",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/partner/partner-callback-mockup/test-websocket-connection",
+        "view": "partner.views.partner_callback_mockup_controller.PartnerCallbackMockupController.test_websocket_connection",
+        "app": "partner",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/stream-monitors/drawing/sessions",
+        "view": "stream_monitors.views.drawing_views.DrawingAPI.get_drawing_sessions",
+        "app": "stream-monitors",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/stream-monitors/drawing/sessions/{session_id}",
+        "view": "stream_monitors.views.drawing_views.DrawingAPI.get_drawing_session_detail",
+        "app": "stream-monitors",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/stream-monitors/stream-monitors",
+        "view": "stream_monitors.views.stream_monitors.StreamMonitorsAPI.update_stream_monitor",
+        "app": "stream-monitors",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/stream-monitors/stream-monitors/ai-dual-stream-status",
+        "view": "stream_monitors.views.stream_monitors.StreamMonitorsAPI.get_ai_dual_stream_status",
+        "app": "stream-monitors",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/stream-monitors/stream-monitors/external-stream-monitors",
+        "view": "stream_monitors.views.stream_monitors.StreamMonitorsAPI.add_external_stream_monitor",
+        "app": "stream-monitors",
+        "authz_path_permission": false
+      },
+      {
+        "method": "PUT",
+        "path": "/api/stream-monitors/stream-monitors/external-stream-monitors",
+        "view": "stream_monitors.views.stream_monitors.StreamMonitorsAPI.update_external_stream_monitor",
+        "app": "stream-monitors",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/stream-monitors/stream-monitors/start-ai-dual-stream",
+        "view": "stream_monitors.views.stream_monitors.StreamMonitorsAPI.start_ai_dual_stream",
+        "app": "stream-monitors",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/stream-monitors/stream-monitors/stop-ai-dual-stream",
+        "view": "stream_monitors.views.stream_monitors.StreamMonitorsAPI.stop_ai_dual_stream",
+        "app": "stream-monitors",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/stream-monitors/stream-monitors/{drone_uid}/start-recording",
+        "view": "stream_monitors.views.stream_monitors.StreamMonitorsAPI.start_recording_public",
+        "app": "stream-monitors",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/stream-monitors/stream-monitors/{drone_uid}/stop-recording",
+        "view": "stream_monitors.views.stream_monitors.StreamMonitorsAPI.stop_recording_public",
+        "app": "stream-monitors",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/surveillance/surveillance-profiles/drone/mark-flight-time",
+        "view": "surveillance.views.surveillance_profile_view.SurveillanceProfileController.mark_drone_flight_time",
+        "app": "surveillance",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/surveillance/survey-missions/mission/duplicate",
+        "view": "surveillance.views.survey_mission_view.SurveyMissionController.import_from_qgc_calculated_data",
+        "app": "surveillance",
+        "authz_path_permission": false
+      }
+    ],
+    "저장소 밖": [
+      {
+        "method": "PUT",
+        "path": "/api/advanced-table/column-order",
+        "view": "core.advanced_table.api.AdvancedTableController.update_column_order",
+        "app": "advanced-table",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/apikey/analytics",
+        "view": "core.apikey_account.api.APIKeyController.get_analytics",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/apikey/bulk-deactivate",
+        "view": "core.apikey_account.api.APIKeyController.bulk_deactivate",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/apikey/check",
+        "view": "core.apikey_account.api.APIKeyController.check_api_key",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/apikey/keys",
+        "view": "core.apikey_account.api.APIKeyController.list_api_keys",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/apikey/keys",
+        "view": "core.apikey_account.api.APIKeyController.create_api_key",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/apikey/keys/{api_key_id}",
+        "view": "core.apikey_account.api.APIKeyController.delete_api_key",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/apikey/keys/{api_key_id}",
+        "view": "core.apikey_account.api.APIKeyController.get_api_key",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/apikey/keys/{api_key_id}",
+        "view": "core.apikey_account.api.APIKeyController.update_api_key",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/apikey/keys/{api_key_id}/regenerate",
+        "view": "core.apikey_account.api.APIKeyController.regenerate_api_key",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/apikey/keys/{api_key_id}/usage-logs",
+        "view": "core.apikey_account.api.APIKeyController.get_usage_logs",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/apikey/keys/{user_id}",
+        "view": "core.apikey_account.api.APIKeyController.create_api_key_for_user",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/apikey/stats",
+        "view": "core.apikey_account.api.APIKeyController.get_stats",
+        "app": "apikey",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/comment",
+        "view": "core.discuss.comment.api.CommentController.get_comments",
+        "app": "comment",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "view": "core.configuration.api.ConfigManagementController.list_configs_optimized",
+        "app": "config-management",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/rating",
+        "view": "core.discuss.rating.api.RatingController.get_ratings",
+        "app": "rating",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/rating/featured",
+        "view": "core.discuss.rating.api.RatingController.get_featured_ratings",
+        "app": "rating",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/register-settings",
+        "view": "core.user.api.RegisterSettingsController.get_register_settings",
+        "app": "register-settings",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/source/get-html",
+        "view": "core.sourcedemo.services.source_services.get_html",
+        "app": "source",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/source/get-url",
+        "view": "core.sourcedemo.services.source_services.get_url",
+        "app": "source",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/source/save-html",
+        "view": "core.sourcedemo.services.source_services.save_html",
+        "app": "source",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/third-api/api-key-management/keys/{user_id}",
+        "view": "core.apikey_account.api.APIKeyController.create_api_key_for_user",
+        "app": "third-api",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/token/pair",
+        "view": "ninja_jwt.controller.TokenObtainPairController.obtain_token",
+        "app": "token",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/token/refresh",
+        "view": "ninja_jwt.controller.TokenObtainPairController.refresh_token",
+        "app": "token",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/token/verify",
+        "view": "ninja_jwt.controller.TokenVerificationController.verify_token",
+        "app": "token",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/topic",
+        "view": "core.discuss.topic.api.TopicController.get_topics",
+        "app": "topic",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/topic/slug/{topic_slug}",
+        "view": "core.discuss.topic.api.TopicController.get_topic_detail_by_slug",
+        "app": "topic",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/topic/{topic_id}",
+        "view": "core.discuss.topic.api.TopicController.get_topic_detail",
+        "app": "topic",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/auth/csrf-token",
+        "view": "core.api.v1.auth.get_csrf_token",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/auth/data-for-profile",
+        "view": "core.api.v1.auth.get_data_for_profile",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/delete-session",
+        "view": "core.api.v1.auth.delete_user_session",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/auth/departments",
+        "view": "core.api.v1.auth.get_departments",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/forgot-password",
+        "view": "core.api.v1.auth.forgot_password",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/auth/groups",
+        "view": "core.api.v1.auth.get_groups",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/auth/languages",
+        "view": "core.api.v1.auth.get_languages",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/login",
+        "view": "core.api.v1.auth.login_user",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/logout",
+        "view": "core.api.v1.auth.logout_user",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/auth/otp/generate-qr",
+        "view": "core.api.v1.auth.generate_otp_qr_code",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/otp/reset",
+        "view": "core.api.v1.auth.reset_otp",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/otp/verify",
+        "view": "core.api.v1.auth.verify_otp_code",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/auth/positions",
+        "view": "core.api.v1.auth.get_positions",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/refresh-token",
+        "view": "core.api.v1.auth.refresh_token",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/register",
+        "view": "core.api.v1.auth.register_user",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/reset-password",
+        "view": "core.api.v1.auth.reset_password",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/reset-password-for-user",
+        "view": "core.api.v1.auth.reset_password_for_user",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/auth/teams",
+        "view": "core.api.v1.auth.get_teams",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/auth/timezones",
+        "view": "core.api.v1.auth.get_timezones",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/health",
+        "view": "core.api.v1.health.health_check",
+        "app": "v1",
+        "authz_path_permission": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/user/create-user",
+        "view": "core.api.v1.user.create_user",
+        "app": "v1",
+        "authz_path_permission": false
+      }
+    ]
+  }
+}

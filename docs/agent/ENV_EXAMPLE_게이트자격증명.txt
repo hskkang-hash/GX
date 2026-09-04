@@ -67,3 +67,12 @@
     scripts/verify_route_alive.py                     판정기 (LOCAL_ENV_FILES · LOCAL_ENV_KEYS)
     docs/agent/evidence/DA-05/blockers.yaml           :: GATE_ROUTE_ALIVE_CREDENTIAL
     docs/agent/ENV_EXAMPLE_외부데이터API.txt          같은 규칙의 다른 자리 (외부 데이터 키)
+
+# ★ 2026-09-24 (2파 · 차선 E3) — 시드가 세우는 역할 사람들(U2·U4)의 비밀번호.
+#   `seed_role_users` 가 이 이름으로 읽는다. **값은 이 파일에 없다**(D-204) —
+#   저장소 밖 `.env.gates` 에만 있고, 여기 남는 것은 이름뿐이다.
+#   ⚠ 값에 `#` 을 쓰지 말 것: `set -a; . ./.env.gates` 로 셸에서 소싱하면 `#` 부터
+#     주석으로 잘려 **틀린 비밀번호로 로그인 시도**가 된다. 게이트의 파이썬 로더는
+#     잘리지 않으므로 셸과 게이트가 서로 다른 값을 보는 상태가 만들어진다
+#     [실측 2026-09-24 — 실제로 그렇게 한 번 실패했다].
+GX_SEED_ROLE_PASSWORD=

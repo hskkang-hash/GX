@@ -1871,6 +1871,62 @@ def _k2_renotify(test, scope, event_id):
                     now=timezone.now() + timedelta(minutes=2))
 
 
+def _pulse_record_into(test, scope, stream):
+    """★ 2026-09-24 (차선 Q · OPS-15) — 면이 열렸으므로 대장도 늘었다.
+
+    재는 것: **남의 카메라 맥박을 내가 갱신할 수 있는가.** 갱신할 수 있으면 남의 구역
+    두절을 **조용히 덮을 수 있다** — 심은 행은 보이지만 덮인 두절은 아무 흔적도 안 남긴다.
+    ⚠ 이 쓰기는 행을 **만들지 않고 고친다**(`last_frame_at` update). 그래서 `model` 을
+      주지 않는다 — 행 수를 세는 갈래로는 안 잡히고, 문지기의 거절이 유일한 증거다.
+    """
+    from stream_monitors.services.camera_pulse import record_frame
+
+    return record_frame(scope=scope, stream_monitor_id=stream.pk)
+
+
+def _drill_switch_into(test, scope, stream):
+    """★ 2026-09-24 (차선 C · UX-17) — 면이 열렸으므로 대장도 늘었다.
+
+    재는 것: **남의 테넌트 알림을 내가 끌 수 있는가.** 이것은 켜는 스위치가 아니라
+    **끄는** 스위치다 — 남의 훈련 모드를 켜 두면 그 테넌트의 진짜 경보가 로그로만 가고
+    **아무에게도 안 간다.** 조용한 사고 중 가장 나쁜 형태다.
+    """
+    from stream_monitors.services import drill
+
+    return drill.set_drill_mode(scope=scope, enabled=True,
+                                reason="iso-write-probe", group_id=stream.group_id)
+
+
+def _drill_switch_own(test, scope, stream):
+    """양성 대조 — 제 테넌트 스위치는 켜진다 (D-277)."""
+    from stream_monitors.services import drill
+
+    return drill.set_drill_mode(scope=scope, enabled=True, reason="iso-write-probe")
+
+
+def _bulk_import_into(test, scope, stream):
+    """★ 2026-09-24 (차선 C · UX-18) — 면이 열렸으므로 대장도 늘었다.
+
+    재는 것: **남의 테넌트에 카메라를 무더기로 심을 수 있는가.** 한 번에 100행이
+    들어오는 면이라 한 건짜리 구멍과 값이 다르다.
+    """
+    from stream_monitors.services import bulk_register
+
+    csv_text = ("name,ip_source,address\n"
+                f"{stream.name},rtsp://iso.invalid/probe,격리 탐침 주소\n")
+    return bulk_register.apply_camera_import(scope=scope, csv_text=csv_text,
+                                             group_id=stream.group_id)
+
+
+def _bulk_import_own(test, scope, stream):
+    """양성 대조 — 제 테넌트에는 심어진다 (D-277)."""
+    from stream_monitors.services import bulk_register
+
+    csv_text = ("name,ip_source,address\n"
+                f"{stream.name},rtsp://iso.invalid/probe,격리 탐침 주소\n")
+    return bulk_register.apply_camera_import(scope=scope, csv_text=csv_text)
+
+
 #: ★ 쓰기 방향 대장. **여기가 정본이다.**
 #: 커널에 쓰기 공개 함수가 늘면 아래 `test_write_probe_registry_covers_kernel_writes`
 #: 가 멈춘다 — "새 쓰기 면을 만들고 격리 시험은 안 늘리는" 상태를 막는다.
@@ -1935,6 +1991,31 @@ WRITE_PROBES: tuple[WriteProbe, ...] = (
         model=("stream_monitors", "Zone"),
         victim_kind="stream",
     ),
+    # ── 2026-09-24 · 2파 병합 — **선등록에서 옮겨 온 셋** ────────────────────
+    #   09-24 착수 전에 `WRITE_NO_PROBE` 에 이름만 적어 두었던 자리들이다. 면이 열렸으니
+    #   그 줄을 지우고 probe 가 여기로 온다 — 그것이 선등록의 목적이었다(P-8 · D-417).
+    WriteProbe(
+        label="PULSE.record_frame → 남의 카메라 맥박을 덮기 (차선 Q · OPS-15)",
+        kernel_callable="stream_monitors.services.camera_pulse.record_frame",
+        attempt=_pulse_record_into,
+        positive=_pulse_record_into,
+        victim_kind="stream",
+    ),
+    WriteProbe(
+        label="DRILL.set_drill_mode → 남의 테넌트 알림을 끄기 (차선 C · UX-17)",
+        kernel_callable="stream_monitors.services.drill.set_drill_mode",
+        attempt=_drill_switch_into,
+        positive=_drill_switch_own,
+        victim_kind="stream",
+    ),
+    WriteProbe(
+        label="BULK.apply_camera_import → 남의 테넌트에 카메라 무더기로 심기 (차선 C · UX-18)",
+        kernel_callable="stream_monitors.services.bulk_register.apply_camera_import",
+        attempt=_bulk_import_into,
+        positive=_bulk_import_own,
+        model=("stream_monitors", "StreamMonitor"),
+        victim_kind="stream",
+    ),
 )
 
 #: 쓰기 면인데 아직 재지 않는 것. **사유 필수** — 빈 자리는 잊힌 자리다 (D-264).
@@ -1994,23 +2075,27 @@ WRITE_NO_PROBE: dict[str, str] = {
     #     probe 가 이미 `WRITE_PROBES` 에 있다 — 이번 파의 C 차선이 얹는 것은 **화면**이지
     #     새 쓰기 면이 아니다. 없는 것을 등재하면 대장이 스스로를 부풀린다.
     # ─────────────────────────────────────────────────────────────────────
-    "stream_monitors.services.drill.set_drill_mode":
-        "선등재(차선 C+조율자 · UX-17 훈련 모드 스위치) — 아직 없다. 재야 할 것: "
-        "**남의 테넌트를 훈련 모드로 바꿀 수 있는가.** 바꿀 수 있으면 남의 진짜 경보가 "
-        "로그 어댑터로 흘러 **아무에게도 안 간다** — 켜는 것이 아니라 **끄는** 스위치이고, "
-        "그래서 이 면은 다른 어떤 쓰기보다 조용하게 사고를 만든다.",
-    "stream_monitors.services.bulk_register.apply_camera_import":
-        "선등재(차선 C · UX-18 벌크 등록 적용) — 아직 없다. 재야 할 것: **남의 "
-        "테넌트에 카메라를 무더기로 심을 수 있는가.** 한 번에 100행이 들어오는 면이라 "
-        "한 건짜리 구멍과 값이 다르다. ★ dry-run 이 먼저다(D-209) — 표를 보여 주고 나서 쓴다.",
     "kernels.k2_notify.send_heartbeat_digest":
-        "선등재(차선 Q · OPS-14 생존 알림 08:00) — 아직 없다. 재야 할 것: **남의 "
-        "테넌트 요약을 내 수신자에게 보낼 수 있는가.** 어제의 이벤트 수와 카메라 맥박이 "
-        "본문에 실리므로, 잘못 가면 그것은 안부 인사가 아니라 **남의 관제 현황 반출**이다.",
+        "**면이 열렸다** (2026-09-24 · 차선 Q · OPS-14). 재는 것은 이미 서 있다 — "
+        "`tests/test_q_heartbeat_digest.py` 가 음성(A 가 `group=B` 를 가리키면 거절 + "
+        "발송 기록 0행)과 양성(제 group 은 보낸다)을 함께 잰다. **여기(WRITE_PROBES)로 "
+        "옮기지 않은 이유는 양성 대조다**: 이 파일의 픽스처에는 알림 규칙이 없어 제 "
+        "테넌트로 불러도 `NoRecipients` 로 먼저 돌아서고, 그러면 probe 는 **문지기에 "
+        "닿기도 전에** 죽으면서 초록이 된다 — D-366 이 이름 붙인 모양이다. "
+        "규칙 픽스처를 세우는 커밋에서 이 줄을 지우고 probe 를 넣는다. "
+        "★ 사유가 「아직 없다」에서 「다른 파일이 잰다」로 **바뀐 것**이 이 줄의 이력이다. "
+        "★ 그 문지기(`services._owner_for`)는 이 선등록이 경고한 반출을 실제로 막았다 — "
+        "**선등록이 값을 한 자리다.**",
     "kernels.k1_event.append_evidence_hash":
-        "선등재(차선 S · LAW-08 증거 해시 체인) — 아직 없다. 재야 할 것: **남의 "
-        "테넌트 체인에 행을 이어 붙일 수 있는가.** 이 체인의 값은 「고치면 다음 날 종이와 "
-        "어긋난다」에 있고, 남이 이어 붙일 수 있으면 그 값이 통째로 사라진다.",
+        "★ 2026-09-24 (차선 S · LAW-08 개통) — **이 이름의 공개 면은 열리지 않았다.** "
+        "체인을 잇는 일은 `common/audit_writer.write()` 안쪽에서 자동으로 일어난다"
+        "(`common.evidence_chain`). 커널 공개 면으로 내면 부르는 쪽이 **어느 행을 어느 "
+        "체인에 이을지 고르게 되고, 고를 수 있으면 남의 체인에 이어 붙일 수 있다.** "
+        "그래서 인자는 감사 행 id 하나이고 체인을 고르는 면이 없다. "
+        "줄을 남기는 이유: 다음 사람이 같은 이름으로 공개 면을 열려 할 때 **여기서 먼저 "
+        "읽게** 하기 위해서다. 열게 되면 그 커밋에서 이 줄을 지우고 probe 를 넣는다. "
+        "★ 사유가 「아직 없다」에서 「면을 열지 않기로 했다」로 **바뀐 것**이 이 줄의 "
+        "이력이다 — 지우지 않고 사유를 바꾼다(대장 규약).",
 }
 
 
@@ -2210,8 +2295,15 @@ class TenantIsolationWriteTest(TenantFixtureMixin, TestCase):
         #   `send` 는 발송 이력 행을 만들고, `save_notification_rule` 은 이번 턴에
         #   새로 열렸다. 보는 곳만 세고 「미등재 0건」이라 말하는 것이 D-301 의 이 파일 판이다.
         #   ⚠ 이 한 줄을 더하면 대장이 늘어난다 — 그것이 이 줄의 목적이다.
+        # ★ 2026-09-24 (2파 병합) — 셋을 더한다. 이번 파에서 쓰기 면이 **커널 밖 세 곳에**
+        #   새로 섰다: 맥박 갱신(Q) · 훈련 스위치(C) · 벌크 등록(C). 훑는 곳을 안 넓히면
+        #   대장은 자기가 안 보는 곳에서 늘어난 면을 초록으로 통과시킨다 — 그 모양을
+        #   09-22 에 이미 한 번 겪었다(K2 가 밖에 있었다).
         for package in ("kernels.k1_event", "kernels.k2_notify",
-                        "stream_monitors.services.zones"):
+                        "stream_monitors.services.zones",
+                        "stream_monitors.services.camera_pulse",
+                        "stream_monitors.services.drill",
+                        "stream_monitors.services.bulk_register"):
             module = importlib.import_module(package)
             for name in getattr(module, "__all__", []):
                 func = getattr(module, name, None)

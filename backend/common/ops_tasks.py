@@ -142,6 +142,37 @@ def ops_monitor_beat() -> dict:
     else:
         overall = "OK"
 
+    # ★ [2026-09-24] **생존 알림이 안 온 것도 신호다** (OPS-14 나머지 절반).
+    #   보내는 것만 있으면 이 절은 「보낸다」에서 끝나고, 안 온 것을 알아채는 일이
+    #   사람의 기억에 남는다 — 그러면 장치가 아니다. 감시는 5분마다 도므로
+    #   「오늘 08:00 것이 왔는가」를 물어볼 자리로 여기가 맞다.
+    #   ⚠ 여기서 **다시 보내지 않는다.** 감시가 발송을 겸하면 감시가 부하를 만들고
+    #     그 부하가 다시 감시 대상이 된다.
+    try:
+        from common.tenant_scope import TenantScope
+        from kernels.k2_notify import heartbeat_watch
+
+        watch = heartbeat_watch(
+            scope=TenantScope.system(reason="OPS-14 생존 알림 감시 — 요청자가 없다"))
+        late = [(gid, why) for (gid, is_late_, why) in watch if is_late_]
+        report["heartbeat_late"] = {
+            "value": len(late), "verdict": "ALARM" if late else "OK",
+            "note": (late[0][1] if late else
+                     "오늘 것이 왔거나 아직 유예 안이다 — 본 테넌트 %d" % len(watch)),
+        }
+        if late:
+            overall = "ALARM"
+            logger.error("[OPS][HEARTBEAT] **안 왔다** — 테넌트 %d개: %s",
+                         len(late), late[0][1])
+    except Exception as exc:                       # noqa: BLE001
+        # 감시가 못 잰 것은 **판정 불가**이지 정상이 아니다 (D-301).
+        report["heartbeat_late"] = {
+            "value": None, "verdict": "UNKNOWN",
+            "note": f"재지 못했다: {type(exc).__name__}: {exc}"[:200]}
+        if overall == "OK":
+            overall = "UNKNOWN"
+        logger.warning("[OPS][HEARTBEAT] 생존 알림 감시가 못 쟀다: %s", exc)
+
     payload = {"measured_at": stamp, "verdict": overall, "report": report}
     _write_evidence("monitor_last", payload)
     log = logger.error if overall == "ALARM" else (
@@ -311,4 +342,109 @@ def ops_audit_purge_beat() -> dict:
         logger.exception("[OPS][AUDIT] 감사 로그 정리가 실패했다")
 
     _write_evidence("audit_purge_last", payload)
+    return payload
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 2파 주기 둘 — **도구는 차선이 지었고 주기는 조율자가 건다** (2026-09-24)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ D-373 이 이 파일에 적어 둔 문장이 그대로 다시 쓰인다:
+#   「백업 스크립트가 있다」와 「백업이 매일 돈다」는 다른 사실이다.
+#   차선 Q 가 OPS-14·OPS-15 의 **함수**를 세웠고, 주기가 없으면 그 둘은
+#   **사람이 손으로 부를 때만** 도는 기능이다 — 그리고 바쁜 날 안 불린다.
+
+@shared_task(name="common.heartbeat_digest_beat")
+def heartbeat_digest_beat() -> dict:
+    """OPS-14 — 테넌트마다 매일 08:00 한 통. **안 오면 장애다.**
+
+    ★ 테넌트를 돌면서 부른다. `group` 없이 한 번 부르면 **전 테넌트의 수가 한 통에**
+      실리고, 그것은 안부 인사가 아니라 남의 관제 현황 반출이다(D-281).
+    ★ 수신자가 0명인 테넌트를 **조용히 넘기지 않는다** — 수로 남긴다. 「보냈는데
+      대상이 없었다」가 성공으로 보이는 것이 재난 시스템에서 가장 조용한 고장이다.
+    """
+    from django.apps import apps
+
+    from common.tenant_scope import TenantScope
+    from kernels.k2_notify import NoRecipients, send_heartbeat_digest
+
+    scope = TenantScope.system(reason="OPS-14 생존 알림 크론 — 요청자가 없다")
+    out = {"sent": 0, "no_recipients": 0, "failed": 0}
+    for group in apps.get_model("user", "UserGroup").objects.all():
+        try:
+            send_heartbeat_digest(scope=scope, group=group)
+            out["sent"] += 1
+        except NoRecipients:
+            out["no_recipients"] += 1
+        except Exception as exc:                   # noqa: BLE001
+            out["failed"] += 1
+            logger.exception("[OPS][HEARTBEAT] group=%s 에 못 보냈다: %s",
+                             getattr(group, "pk", None), exc)
+    logger.info("[OPS][HEARTBEAT] 생존 알림 — 보냄 %d · 수신자 0명 %d · 실패 %d",
+                out["sent"], out["no_recipients"], out["failed"])
+    return out
+
+
+@shared_task(name="stream_monitors.camera_pulse_scan_beat")
+def camera_pulse_scan_beat() -> dict:
+    """OPS-15 — 구역 맥박 검사. **1분 주기다.**
+
+    왜 1분인가: 규칙의 창이 5분이다. 5분마다 재면 창 하나를 통째로 놓칠 수 있고,
+    놓친 군집 두절은 **아무 흔적도 남기지 않는다**. 1분이면 창 안에 다섯 번 본다.
+    """
+    from common.tenant_scope import TenantScope
+    from stream_monitors.services.camera_pulse import scan_clusters
+
+    result = scan_clusters(
+        scope=TenantScope.system(reason="OPS-15 맥박 검사 — 요청자가 없다"))
+    payload = {"zones": result.zones_seen, "cameras": result.cameras_seen,
+               "created": result.created}
+    if payload["created"]:
+        logger.warning("[OPS][PULSE] 군집 두절 %d건 — 구역 %d · 카메라 %d",
+                       payload["created"], payload["zones"], payload["cameras"])
+    return payload
+
+
+@shared_task(name="common.evidence_anchor_beat")
+def evidence_anchor_beat() -> dict:
+    """LAW-08 — 매일 00:05, **그날의 마지막 해시**를 재고 남긴다.
+
+    ★ 왜 매일 재나: 체인은 **고치면 어긋난다**가 전부이고, 어긋난 것을 **언제** 아는가가
+      그 값을 정한다. 사고가 난 뒤에 처음 돌리면 「언제부터 틀렸나」를 못 말한다.
+    ★ 여기서 내는 앵커 40자가 일일 보고서 꼬리에 인쇄될 값이다 —
+      **종이가 앵커다.** 인쇄 자리(K4)는 아직 없고, 값과 기록은 여기서부터 선다.
+    ★ 무엇을 해시했는지 함께 남긴다: 필드 목록이 없으면 나중에 같은 값을 다시 못 만든다.
+    """
+    from datetime import date, timedelta
+
+    from common import evidence_chain
+
+    stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    day = date.today() - timedelta(days=1)
+    try:
+        report = evidence_chain.verify_chain()
+        anchor = evidence_chain.daily_anchor(day)
+        payload = {
+            "measured_at": stamp,
+            "verdict": "OK" if report.ok else "ALARM",
+            "day": day.isoformat(),
+            "anchor": anchor,
+            "anchor_line": evidence_chain.anchor_line(day, anchor),
+            "total": report.total,
+            "chained": report.chained,
+            "breaks": len(report.breaks),
+            "hashed_fields": list(evidence_chain.iter_hashed_fields()),
+        }
+        if not report.ok:
+            logger.error("[LAW-08] **체인이 어긋났다** — 끊긴 자리 %d건 (day=%s)",
+                         len(report.breaks), day)
+        else:
+            logger.info("[LAW-08] 체인 온전 — 전체 %d · 이어진 것 %d · 앵커 %s",
+                        report.total, report.chained, (anchor or "(그날 기록 없음)")[:16])
+    except Exception as exc:                       # noqa: BLE001
+        payload = {"measured_at": stamp, "verdict": "UNKNOWN",
+                   "reason": f"{type(exc).__name__}: {exc}"[:300]}
+        logger.exception("[LAW-08] 앵커를 재지 못했다 — 판정 불가")
+
+    _write_evidence("evidence_anchor_last", payload)
     return payload

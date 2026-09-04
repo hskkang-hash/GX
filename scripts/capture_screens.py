@@ -129,6 +129,22 @@ TARGETS = [
     {"step": 21, "route": "/dsm/events/{event_id}",
      "slug": "dsm_events_id_verdict_panel",
      "must_see": "진위 판정 · 대응 진행"},
+    # ── [2파 병합 · 2026-09-24] **세 장을 더해 21 → 24 장으로 간다.**
+    #    차선 C 가 지은 화면 셋이고, 이 셋이 찍히기 전까지 UX-13·17·18 은
+    #    「서버 면은 섰고 화면은 못 봤다」였다 — 그 상태에서 '구현'으로 적는 것이
+    #    이 대장이 금지하는 부풀리기다(D-346 · P-9).
+    #
+    #    ⚠ `must_see` 는 각 페이지의 `HEADLINE` 상수 원문이다. 공통 글자로 단언하면
+    #      **다른 화면이 떠도 초록**이 된다 — 프리셋 넷에서 배운 것과 같은 함정이다.
+    {"step": 22, "route": "/dsm/queue",
+     "slug": "dsm_queue_focus",
+     "must_see": "W1 단일 초점 — 지금 가장 급한 하나"},
+    {"step": 23, "route": "/dsm/drill",
+     "slug": "dsm_drill_mode",
+     "must_see": "UX-17 훈련 모드 — 켜면 알림이 사람에게 가지 않는다"},
+    {"step": 24, "route": "/dsm/cameras/import",
+     "slug": "dsm_cameras_import_dryrun",
+     "must_see": "UX-18 카메라 벌크 등록 — 표를 먼저 봅니다 (dry-run)"},
 ]
 
 #: ★ [실측 2026-09-13 · D-386] 열어 보고 **찍지 못한 화면**. 목록에 남긴다 —

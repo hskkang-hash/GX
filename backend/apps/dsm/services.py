@@ -176,6 +176,27 @@ def event_detail(*, scope: TenantScope, event_id: int):
     return get_event(event_id, scope=scope)
 
 
+def event_data_source(*, view) -> str:
+    """이 이벤트가 **훈련 중에 난 것인가** (UX-17 · D-347 화면 메타).
+
+    ★ 칸이 아니라 **창 판정**이다. `data_source` 를 이벤트 열로 만들면 새 칸이 태어나는
+      순간 과거가 비고, **빈 과거는 「훈련이 아니었다」로 읽힌다.** 훈련 창은 감사에
+      있고 과거도 함께 온다 — 그래서 그 창에 드는지로 답한다.
+
+    ★ 이 함수가 없던 동안 `drill.is_drill_event` 는 **시험에서만 불렸다** —
+      판정기는 있는데 그 답을 아무도 안 쓰는 상태이고, `verify_dormant` 가
+      「켜진 상태로 태어나야 한다」로 그것을 잡았다(D-377).
+    """
+    from stream_monitors.services.drill import DATA_SOURCE, is_drill_event_for_stream
+
+    #: ★ 소속을 되짚는 한 줄은 **여기 두지 않는다** — App 이 ORM 을 만지면
+    #:   `test_dsm_app` 이 잡는다(DA-04 §1-1). 그 한 줄은 `drill` 쪽에 있다.
+    return (DATA_SOURCE
+            if is_drill_event_for_stream(occurred_at=view.occurred_at,
+                                         stream_monitor_id=view.stream_monitor_id)
+            else "live")
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 스냅샷 바이트 — P-25 (2026-09-24)
 # ═══════════════════════════════════════════════════════════════════════════
@@ -712,3 +733,258 @@ def setting_overview(*, scope: TenantScope, domain: str) -> dict[str, Any]:
     return {"recipients": {
         s: [r.user_id for r in resolve_recipients(scope=scope, severity=s)]
         for s in severities}}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# UX-14 대응 시계 · UX-13 단일 초점 큐 (차선 C · 2026-09-24)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ **App 은 시각을 세지 않는다.** 네 시각을 감사에서 세우는 일은
+#   `stream_monitors/services/response_clock.py` 한 곳에 있다 — 여기서 한 줄이라도
+#   다시 세면 화면의 시계와 통계의 시계가 갈리고, 갈린 두 수는 고객 앞에서 못 쓴다.
+#
+# ★ 문지기는 **그대로 K1 이 선다.** 이 파일이 `recent_events`·`event_detail` 로
+#   스코프를 통과시킨 이벤트만 시계 모듈에 넘긴다 — 시계 모듈은 테넌트를 모른다.
+#   순서가 곧 격리다(`field_replies` 가 감사에 대해 쓴 것과 같은 규약).
+
+#: ★ 묶는 창 — **5분 · 같은 `stream+type`** (UX-13).
+#:
+#:   ⚠ **이벤트를 접는 것이 아니다.** 원본 행은 그대로 있고 F-14 통계는 그것을 센다.
+#:     접히는 것은 **카드**다 — 같은 카메라에서 같은 유형이 3분 사이 7번 나면
+#:     관제요원이 볼 것은 7장이 아니라 **1장에 「×7」**이다. 7장이면 그 7장이
+#:     화면을 밀어내고, 밀려난 자리에 있던 **다른 카메라의 첫 발생**이 사라진다.
+#:     UX-13 이 막는 것이 정확히 그 자리다.
+#:
+#:   ⚠ K1 의 중복 억제(W2-2)와 **다른 것**이다. 그쪽은 행을 안 만드는 판정이고,
+#:     이쪽은 이미 만들어진 행을 화면에서 묶는 표시다. 창의 값도 다르고 목적도 다르다.
+GROUP_WINDOW_SECONDS = 300
+
+
+def response_clock(*, scope: TenantScope, event_id: int):
+    """한 이벤트의 **네 시각 타임라인** (UX-14 · 상세 화면).
+
+    ★ 문지기를 새로 만들지 않는다 — `event_detail` 이 이미 남의 것을 404 로 막는다.
+      그 답을 받아 시계를 씌운다. 순서가 뜻이다.
+    """
+    from django.utils import timezone
+
+    from stream_monitors.services import response_clock as clock
+
+    event = event_detail(scope=scope, event_id=event_id)
+    stamps = clock.stamps_for([event]).get(event.event_id)
+    if stamps is None:                      # 있을 수 없는 상태 — 조용히 빈 값을 내지 않는다
+        raise SettingNotAvailable(
+            "대응 시계를 세우지 못했습니다 — 이벤트는 있는데 발생 시각이 없습니다.")
+    return {
+        "event_id": event.event_id,
+        "response_state": event.response_state,
+        "stream_monitor_name": event.stream_monitor_name,
+        **stamps.as_dict(now=timezone.now()),
+    }
+
+
+def response_latency(*, scope: TenantScope, since: datetime | None = None,
+                     until: datetime | None = None, limit: int = 2000):
+    """월간 p50 / p95 — **자동 종결은 분모에서 뺀다** (지시서 §3-4).
+
+    빼지 않으면 오탐 자동 종결이 대응 시간을 좋게 만든다: 규칙이 즉시 닫은 이벤트는
+    `발생 → 종결` 이 0초에 가깝고, 그것이 분모에 들어가면 **오탐이 많은 달일수록
+    대응이 빨라 보인다.** 지표가 사실의 반대를 말하는 자리다.
+
+    ★ 뺀 건수를 **함께 낸다.** 안 보이면 다음 사람이 이 수를 원본 건수로 읽는다(D-301).
+    """
+    from stream_monitors.services import response_clock as clock
+
+    rows = recent_events(scope=scope, since=since, until=until, limit=limit)
+    stamps = clock.stamps_for(rows)
+    stats = clock.latency_stats(stamps.values())
+    return {
+        "since": since, "until": until,
+        #: 상한에 닿았으면 **말한다.** 잘린 표본 위의 p95 는 p95 가 아니다.
+        "sampled": len(rows), "sample_cap": limit,
+        "sample_capped": len(rows) >= limit,
+        **stats,
+    }
+
+
+def focus_queue(*, scope: TenantScope, since: datetime | None = None,
+                until: datetime | None = None, limit: int = 200):
+    """**W1 최상단은 목록이 아니라 가장 급한 하나다** (UX-13).
+
+    무엇을 내는가
+        `focus`   지금 가장 급한 **한 건**. 대응 시계·스냅샷 경로·갈 수 있는 다음 칸.
+        `queue`   나머지를 5분 창 `stream+type` 으로 묶은 카드들. 각 카드에 `count`(×N).
+
+    ★ 「가장 급한」의 정의를 **서버가 정한다.** 화면이 정하면 화면마다 다른 하나가
+      최상단에 오고, 인수인계에서 두 사람이 다른 사건을 이야기하게 된다.
+      순서: ① 아직 안 닫힌 것 ② 경과 문턱이 높은 것 ③ 등급 ④ 오래된 것.
+      ⚠ **최신순이 아니다.** 최신순이면 새 이벤트가 계속 최상단을 밀어내고,
+        가장 오래 방치된 사건이 영원히 안 보인다 — 지금 화면이 그 모양이다.
+
+    ★ 묶어도 **수는 줄지 않는다.** `total_events` 가 원본 건수이고 카드 수와 다르다 —
+      둘을 같은 수로 내면 F-14 통계와 화면이 다른 말을 하게 된다.
+    """
+    from django.utils import timezone
+
+    from stream_monitors.services import response_clock as clock
+
+    rows = list(recent_events(scope=scope, since=since, until=until, limit=limit))
+    stamps = clock.stamps_for(rows)
+    now = timezone.now()
+
+    #: 등급의 무게. K1 의 `Severity` 열거를 **순서로만** 쓴다 — 등급 규칙(무엇이
+    #: critical 인가)은 K5 `grade_rules` 의 것이고 여기서 다시 정하지 않는다.
+    weight = {"critical": 3, "warning": 2, "info": 1}
+
+    #: ★ **고정 격자로 묶지 않는다** [실측 2026-09-24 — 이 시험이 먼저 멈춰 세웠다].
+    #:
+    #:   1차판은 `int(occurred_at.timestamp() // 300)` 으로 5분 격자를 만들었고,
+    #:   `test_repeats_collapse_into_one_card_but_the_count_survives` 가 **한 번은 초록,
+    #:   한 번은 빨강**이었다. 이유: 60초에 걸친 7건이 벽시계의 5분 경계를 **걸치면**
+    #:   두 장으로 갈린다. 「5분 안에 연속으로 났다」가 참인데 화면은 두 장을 그린다 —
+    #:   그리고 그 갈림은 **몇 시 몇 분에 났는가**에 달려 있어 재현되지 않는다.
+    #:   시험이 흔들린 것이 아니라 **묶는 규칙이 틀렸다.** 벽시계 격자는 「연속 발생」을
+    #:   묻지 않고 「같은 칸에 떨어졌나」를 묻는다.
+    #:
+    #:   그래서 **이어 붙이는 창**(session window)으로 바꾼다: 같은 `stream+type` 을
+    #:   시간순으로 늘어놓고, **앞 건과의 간격이 창보다 좁으면 같은 카드**다.
+    #:   지시서가 말한 「같은 카메라 연속 발생」이 정확히 이 뜻이고, 벽시계와 무관하다.
+    def _entry(row):
+        stamp = stamps.get(row.event_id)
+        elapsed = stamp.elapsed_seconds(now) if stamp else None
+        return {
+            "event_id": row.event_id,
+            "event_type": row.event_type,
+            "severity": row.severity,
+            "status": row.status,
+            "verdict": row.verdict,
+            "response_state": row.response_state,
+            "occurred_at": row.occurred_at,
+            "last_seen_at": row.last_seen_at,
+            "stream_monitor_id": row.stream_monitor_id,
+            "stream_monitor_name": row.stream_monitor_name,
+            "lat": row.lat, "lng": row.lng,
+            "snapshot_path": row.snapshot_path,
+            "elapsed_seconds": elapsed,
+            "urgency_tier": clock.urgency_tier(elapsed),
+            "acknowledged_at": stamp.acknowledged_at if stamp else None,
+            "arrived_at": stamp.arrived_at if stamp else None,
+            "closed_at": stamp.closed_at if stamp else None,
+        }
+
+    #: 같은 카메라·같은 유형끼리 모으고 **시간순**으로 늘어놓는다.
+    #: 유형까지 키에 넣는 이유: 카메라만 보면 **화재와 침수가 한 장**이 된다.
+    by_source: dict[tuple, list] = {}
+    for row in rows:
+        by_source.setdefault((row.stream_monitor_id, row.event_type), []).append(row)
+
+    cards: list[dict] = []
+    for members in by_source.values():
+        members.sort(key=lambda r: r.occurred_at)
+        card = None
+        previous_at = None
+        for row in members:
+            entry = _entry(row)
+            gap = ((row.occurred_at - previous_at).total_seconds()
+                   if previous_at is not None else None)
+            previous_at = row.occurred_at
+            if card is not None and gap is not None and gap <= GROUP_WINDOW_SECONDS:
+                card["count"] += 1
+                card["member_event_ids"].append(row.event_id)
+                #: 대표는 **가장 급한 쪽**이다. 최신이 아니다 — 최신을 대표로 두면
+                #: 오래 방치된 첫 발생의 시계가 카드에서 사라진다.
+                if (entry["urgency_tier"], weight.get(row.severity, 0)) > (
+                        card["urgency_tier"], weight.get(card["severity"], 0)):
+                    for name in ("event_id", "severity", "status", "verdict",
+                                 "response_state", "occurred_at", "elapsed_seconds",
+                                 "urgency_tier", "acknowledged_at", "arrived_at",
+                                 "closed_at", "snapshot_path"):
+                        card[name] = entry[name]
+                if row.last_seen_at and (card["last_seen_at"] is None
+                                         or row.last_seen_at > card["last_seen_at"]):
+                    card["last_seen_at"] = row.last_seen_at
+                continue
+            card = {
+                **entry,
+                #: ×N 배지. **묶인 원본의 수**이고, 접힌 것은 카드이지 기록이 아니다.
+                "count": 1,
+                #: 묶인 이벤트의 id 전부. 화면이 「무엇이 묶였나」를 펼 수 있어야
+                #: 「1장으로 줄었다」와 「6건이 사라졌다」가 구별된다(D-290).
+                "member_event_ids": [row.event_id],
+                "window_seconds": GROUP_WINDOW_SECONDS,
+            }
+            cards.append(card)
+
+    def rank(card):
+        return (
+            0 if card["closed_at"] is None else 1,      # 안 닫힌 것이 먼저
+            -card["urgency_tier"],
+            -weight.get(card["severity"], 0),
+            card["occurred_at"],                        # 오래된 것이 먼저
+        )
+
+    ordered = sorted(cards, key=rank)
+    focus = ordered[0] if ordered else None
+    if focus is not None:
+        focus = {**focus,
+                 **response_state(scope=scope, event_id=focus["event_id"])}
+    return {
+        "now": now,
+        #: ★ 원본 건수. 카드 수(`card_total`)와 **다른 수**이고, 다른 것이 요점이다.
+        "total_events": len(rows),
+        "card_total": len(ordered),
+        "sample_capped": len(rows) >= limit,
+        "window_seconds": GROUP_WINDOW_SECONDS,
+        "tier_thresholds_sec": list(clock.URGENCY_THRESHOLDS_SEC),
+        "focus": focus,
+        "queue": ordered[1:],
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# UX-17 훈련 모드 · UX-18 벌크 등록 (차선 C · 2026-09-24)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ App 은 스위치도 판정도 들지 않는다 — L3 서비스를 부를 뿐이다.
+#   문지기(남의 테넌트를 훈련 모드로 바꿀 수 있는가 · 남의 테넌트에 카메라를 심을 수
+#   있는가)는 그 두 모듈 안에 하나씩 있고, P-8 탐침이 그 자리를 잰다.
+def drill_state(*, scope: TenantScope):
+    """지금 훈련 모드인가 (UX-17)."""
+    from stream_monitors.services import drill
+
+    return drill.drill_state(scope=scope).as_dict()
+
+
+def set_drill_mode(*, scope: TenantScope, enabled: bool, reason: str):
+    """훈련 모드를 켜거나 끈다 (UX-17). **사유 필수** — 사유 없는 미발송은 장애와 같다."""
+    from stream_monitors.services import drill
+
+    return drill.set_drill_mode(scope=scope, enabled=enabled, reason=reason)
+
+
+def drill_report(*, scope: TenantScope):
+    """훈련 종료 보고서 1장 (UX-17). **첫 줄이 「실채널 발송 N건」이다.**"""
+    from stream_monitors.services import drill
+
+    return drill.drill_report(scope=scope)
+
+
+def plan_camera_import(*, scope: TenantScope, csv_text: str):
+    """벌크 등록 **dry-run** (UX-18 · D-209). 아무것도 쓰지 않는다."""
+    from stream_monitors.services import bulk_register
+
+    return bulk_register.plan_camera_import(scope=scope, csv_text=csv_text)
+
+
+def apply_camera_import(*, scope: TenantScope, csv_text: str):
+    """벌크 등록 **집행** (UX-18). dry-run 이 낸 그 표를 그대로 쓴다."""
+    from stream_monitors.services import bulk_register
+
+    return bulk_register.apply_camera_import(scope=scope, csv_text=csv_text)
+
+
+def camera_address_gap(*, scope: TenantScope):
+    """「주소 없는 카메라 N대」 배지 (UX-18). **분모와 함께** 낸다."""
+    from stream_monitors.services import bulk_register
+
+    return bulk_register.address_gap(scope=scope)

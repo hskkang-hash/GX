@@ -1,8 +1,8 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
-  "captured_at": "2026-09-04T08:02:05",
-  "screens_total": 21,
-  "routes_total": 20,
+  "captured_at": "2026-09-04T14:27:12",
+  "screens_total": 24,
+  "routes_total": 23,
   "screens": {
     "/dsm/dashboard": [
       {
@@ -78,7 +78,7 @@
         "status": 200
       }
     ],
-    "/dsm/events/4820": [
+    "/dsm/events/8031": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -91,12 +91,17 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=4820",
+        "path": "/api/dsm/deliveries?event_id=8031",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/4820",
+        "path": "/api/dsm/events/8031",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/8031/timeline",
         "status": 200
       },
       {
@@ -383,7 +388,7 @@
       {
         "method": "GET",
         "path": "/api/media-data/?page_size=25&current_page=1",
-        "status": 500
+        "status": 200
       },
       {
         "method": "GET",
@@ -641,7 +646,7 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events?limit=50&since=2026-09-03T13:01:35.992Z&until=2026-09-04T01:01:35.992Z",
+        "path": "/api/dsm/events?limit=50&since=2026-09-03T19:26:18.759Z&until=2026-09-04T07:26:18.759Z",
         "status": 200
       },
       {
@@ -721,6 +726,107 @@
       {
         "method": "GET",
         "path": "/api/dsm/events?limit=50&event_type=camera_down,storage_high",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/queue": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/queue?limit=200",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/drill": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/drill",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/drill/report",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/cameras/import": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/cameras/address-gap",
         "status": 200
       },
       {

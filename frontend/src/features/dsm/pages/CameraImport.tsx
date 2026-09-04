@@ -1,0 +1,252 @@
+/**
+ * UX-18 **벌크 등록 · 주소 자동** — ★ dry-run 이 먼저다 (D-209).
+ *
+ * 이 화면의 순서가 곧 규약이다
+ * ----------------------------
+ *   ① CSV 를 붙인다 → ② **표를 본다**(무엇이 새로 생기고 무엇이 바뀌는지) →
+ *   ③ 그 표를 본 사람이 다시 눌러야 쓴다.
+ * 표를 건너뛰는 길이 이 화면에 없다 — 「적용」 버튼은 표가 없으면 그려지지 않는다.
+ *
+ * 왜: 한 건짜리 등록은 잘못 눌러도 한 건이 틀린다. 100행 일괄은 **한 번의 실수가
+ * 100대의 이름·주소를 덮어쓰고**, 덮어쓴 뒤에는 원래 값이 어디에도 없다.
+ *
+ * 착수 전 실측이 지시서의 두 항목을 고쳤다 [2026-09-24] — 화면이 그것을 **말한다**
+ * ------------------------------------------------------------------------------
+ *   · **ONVIF 는 이 저장소에 없다** (`grep -ril onvif backend/` = 0건). 없는 프로토콜
+ *     위에 탭을 만들지 않는다(P-15). CSV 한 갈래만 연다.
+ *   · **좌표→도로명 역지오코딩은 「불가」로 판정돼 있다** (D-329 · `JUSO_REVERSE_SUPPORTED='no'`).
+ *     게다가 `StreamMonitor` 에 위도·경도 칸이 **아예 없다** — 역지오코딩할 좌표가
+ *     애초에 없다. 주소는 **CSV 의 `address` 칸**으로 들어온다(D-330 이 정한 길:
+ *     *카메라는 고정 설치물이므로 설치할 때 주소를 안다*).
+ *     CSV 에 좌표를 실으면 어댑터를 **정말 부르고** 그 답(`disabled`)을 표에 적는다 —
+ *     「없는 척」과 「불러 봤더니 없다」는 다른 사실이다.
+ */
+import { Alert, Button, Card, Col, Input, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
+import { useCallback, useState } from 'react';
+import { Main } from 'rj-core';
+
+import { dsmEndpoint, dsmGet, dsmPost } from '../api';
+import StateBoundary from '../components/StateBoundary';
+import { useDsmResource } from '../hooks/useDsmResource';
+import type { AddressGap, ImportPlan, ImportRow } from '../types';
+
+const { Text, Title, Paragraph } = Typography;
+
+/** 이 화면에만 있는 글자 — 검수 촬영의 단언 대상이다. */
+export const HEADLINE = 'UX-18 카메라 벌크 등록 — 표를 먼저 봅니다 (dry-run)';
+
+const SAMPLE = `name,code,ip_source,address,detail
+정문카메라,GATE-01,rtsp://10.0.0.11/stream,경기도 안양시 만안구 안양로 123,정문
+3층복도,F3-01,rtsp://10.0.0.12/stream,경기도 안양시 만안구 안양로 123,3층 복도`;
+
+const ACTION_TAG: Record<string, { color: string; label: string }> = {
+  create: { color: 'green', label: '새로 만듦' },
+  update: { color: 'blue', label: '바뀜' },
+  unchanged: { color: 'default', label: '변화 없음' },
+  error: { color: 'red', label: '못 씀' },
+};
+
+export default function CameraImportPage() {
+  const [csvText, setCsvText] = useState('');
+  const [plan, setPlan] = useState<ImportPlan | null>(null);
+  const [applied, setApplied] = useState<ImportPlan | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const gap = useDsmResource<AddressGap>(() => dsmGet(dsmEndpoint.cameraAddressGap), []);
+
+  const run = useCallback(
+    async (dryRun: boolean) => {
+      setBusy(true);
+      setError('');
+      try {
+        const result = await dsmPost<ImportPlan>(dsmEndpoint.cameraImport, {
+          csv_text: csvText,
+          dry_run: dryRun,
+        });
+        if (dryRun) {
+          setPlan(result);
+          setApplied(null);
+        } else {
+          setApplied(result);
+          setPlan(result);
+          gap.reload();
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [csvText, gap],
+  );
+
+  const columns = [
+    { title: '행', dataIndex: 'line', width: 60 },
+    { title: '이름', dataIndex: 'name' },
+    {
+      title: '판정',
+      dataIndex: 'action',
+      width: 110,
+      render: (v: string) => {
+        const t = ACTION_TAG[v] ?? { color: 'default', label: v };
+        return <Tag color={t.color}>{t.label}</Tag>;
+      },
+    },
+    {
+      title: '무엇이 바뀌나',
+      dataIndex: 'changes',
+      render: (changes: ImportRow['changes']) => {
+        const keys = Object.keys(changes ?? {});
+        if (!keys.length) return <Text type="secondary">—</Text>;
+        return (
+          <Space direction="vertical" size={0}>
+            {keys.map((k) => (
+              <Text key={k} style={{ fontSize: 12 }}>
+                <b>{k}</b>: {String(changes[k][0] ?? '(없음)')} → {String(changes[k][1] ?? '(없음)')}
+              </Text>
+            ))}
+          </Space>
+        );
+      },
+    },
+    { title: '사유', dataIndex: 'reason' },
+    {
+      title: '주소 조회',
+      dataIndex: 'address_lookup',
+      width: 110,
+      render: (v: string) =>
+        v ? (
+          <Tag color={v === 'resolved' ? 'green' : 'orange'} title="좌표를 준 행에 대해 FX-5 어댑터가 답한 상태">
+            {v}
+          </Tag>
+        ) : (
+          <Text type="secondary">—</Text>
+        ),
+    },
+  ];
+
+  return (
+    <Main>
+      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        <Title level={4} style={{ margin: 0 }}>
+          {HEADLINE}
+        </Title>
+
+        {/* 「주소 없는 카메라 N대」 배지 — **분모와 함께** 낸다 (D-301). */}
+        <StateBoundary state={gap.state} reason={gap.reason} onRetry={gap.reload}>
+          {gap.data ? (
+            <Card size="small">
+              <Row gutter={24} align="middle">
+                <Col>
+                  <Statistic
+                    title="주소 없는 카메라"
+                    value={gap.data.without_address}
+                    suffix={`/ ${gap.data.total}대`}
+                    valueStyle={{
+                      color: gap.data.without_address > 0 ? '#cf1322' : '#389e0d',
+                    }}
+                  />
+                </Col>
+                <Col flex="auto">
+                  <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                    「{gap.data.without_address}대」만 보면 그것이 40 중 39인지 400 중 39인지
+                    모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다.
+                    {gap.data.measurable
+                      ? ` 지금 채워진 비율 ${Math.round((gap.data.coverage ?? 0) * 100)}%.`
+                      : ' 카메라가 한 대도 없어 비율은 잴 수 없습니다 — 0%가 아닙니다.'}
+                    {gap.data.marked_but_blank > 0
+                      ? ` ⚠ 「적었다고 표시됐는데 주소가 빈」 카메라 ${gap.data.marked_but_blank}대가 있습니다.`
+                      : ''}
+                  </Paragraph>
+                </Col>
+              </Row>
+            </Card>
+          ) : null}
+        </StateBoundary>
+
+        <Alert
+          type="info"
+          showIcon
+          message="이 화면이 여는 갈래는 CSV 하나입니다."
+          description={
+            'ONVIF 일괄 등록은 이 저장소에 구현도 어댑터도 없습니다(실측: grep 0건) — ' +
+            '없는 프로토콜 위에 탭을 만들지 않습니다. ' +
+            '좌표→도로명 역지오코딩은 D-329 로 「불가」 판정돼 있고, 카메라 모델에는 ' +
+            '위도·경도 칸이 아예 없습니다. 주소는 CSV 의 address 칸으로 들어옵니다(D-330).'
+          }
+        />
+
+        <Card
+          title="① CSV 붙여넣기"
+          extra={
+            <Button size="small" onClick={() => setCsvText(SAMPLE)}>
+              예시 채우기
+            </Button>
+          }
+        >
+          <Input.TextArea
+            rows={8}
+            value={csvText}
+            onChange={(e) => setCsvText(e.target.value)}
+            placeholder={SAMPLE}
+            style={{ fontFamily: 'monospace' }}
+          />
+          <Space style={{ marginTop: 12 }}>
+            <Button type="primary" loading={busy} disabled={!csvText.trim()} onClick={() => run(true)}>
+              ② 표 먼저 보기 (dry-run)
+            </Button>
+            {/* ★ 표가 없으면 적용 버튼이 **없다.** 순서가 규약이다. */}
+            {plan && !plan.fatal && plan.will_write > 0 && !applied ? (
+              <Button danger loading={busy} onClick={() => run(false)}>
+                ③ 이 표대로 적용 ({plan.will_write}행)
+              </Button>
+            ) : null}
+          </Space>
+        </Card>
+
+        {error ? <Alert type="error" showIcon message="거절되었습니다." description={error} /> : null}
+
+        {plan ? (
+          <Card
+            title={
+              applied
+                ? `적용 완료 — 생성 ${applied.created ?? 0} · 수정 ${applied.updated ?? 0}`
+                : `dry-run 표 — ${plan.total}행`
+            }
+          >
+            {plan.fatal ? (
+              <Alert
+                type="error"
+                showIcon
+                message="한 행도 쓰지 않았습니다."
+                description={`${plan.fatal} — 부분 성공을 만들지 않습니다. 100행 중 37행이 들어간 상태는 되돌릴 지점이 없습니다.`}
+              />
+            ) : (
+              <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                <Row gutter={16}>
+                  {Object.entries(plan.counts).map(([k, n]) => (
+                    <Col key={k}>
+                      <Statistic title={ACTION_TAG[k]?.label ?? k} value={n} />
+                    </Col>
+                  ))}
+                </Row>
+                <Table<ImportRow>
+                  size="small"
+                  rowKey="line"
+                  dataSource={plan.rows}
+                  columns={columns as never}
+                  pagination={{ pageSize: 25, showSizeChanger: false }}
+                />
+                <Text type="secondary">
+                  이 표와 집행은 <b>같은 판정식</b>을 씁니다(`bulk_register._plan`). 두 벌이면
+                  표에 없던 일이 일어나고, 그러면 dry-run 은 보여 주기일 뿐 약속이 아니게 됩니다.
+                </Text>
+              </Space>
+            )}
+          </Card>
+        ) : null}
+      </Space>
+    </Main>
+  );
+}

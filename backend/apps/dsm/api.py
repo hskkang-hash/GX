@@ -274,6 +274,60 @@ class DsmAPI:
             "measurable": rate.is_measurable,
         }
 
+    # ── UX-13 단일 초점 큐 · UX-14 대응 시계 (차선 C · 2026-09-24) ────────
+    #
+    # ★ **라우트 삼킴을 먼저 본다** (D-410 이 남긴 자리). 이 둘은 아래
+    #   `/events/{int:event_id}` **위**에 선다. 지금은 `int` 변환기라 「queue」·
+    #   「response-times」를 삼키지 않지만, 변환기가 `{str:...}` 로 바뀌는 날
+    #   조용히 404 가 되고 조용한 404 는 「기능이 없다」와 구별되지 않는다.
+    #
+    # ★ 둘 다 **읽기 전용**이다 — 쓰기 면이 아니므로 WRITE_PROBES 대상이 아니다(P-8).
+    @route.get("/events/queue", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-13 초점 큐 — 남의 테넌트 이벤트가 최상단에 오면 격리 실패다")
+    def events_queue(self, request, since: datetime | None = None,
+                     until: datetime | None = None, limit: int = 200):
+        """**W1 최상단은 목록이 아니라 가장 급한 하나다** (UX-13).
+
+        왜 목록 라우트로 안 되나 — 「가장 급한 하나」와 「5분 창 묶음」은 **페이지
+        밖까지 봐야** 정해진다. 화면이 `/events` 한 페이지를 받아 자기가 고르면
+        상한 밖에 있는 더 급한 사건이 **없는 것이 된다**(DA-04 「필터는 전부 서버에서」).
+
+        ★ **이벤트를 접는 것이 아니다.** 원본 건수는 `total_events` 로 그대로 나가고
+          카드 수는 `card_total` 로 따로 나간다 — 둘이 다른 수인 것이 요점이다.
+          F-14 통계는 원본을 세고, 접히는 것은 화면이지 기록이 아니다.
+
+        ★ 문턱 표(`tier_thresholds_sec`)를 **함께 낸다.** 화면은 시계가 계속 도니까
+          자기도 계산해야 하는데, 그 표를 화면이 따로 들면 서버 통계와 화면 글자가
+          다른 문턱을 쓰게 된다 — `allowed_next` 와 같은 규약이다(D-399).
+        """
+        if limit <= 0 or limit > 1000:
+            raise HttpError(400, "limit 은 1 이상 1000 이하여야 합니다.")
+        return services.focus_queue(scope=_scope(request), since=since,
+                                    until=until, limit=limit)
+
+    @route.get("/events/response-times", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-14 대응 시간 — 남의 테넌트 p50/p95 가 섞이면 격리 실패다")
+    def events_response_times(self, request, days: int = 30, limit: int = 2000):
+        """월간 p50 / p95 — **자동 종결을 분모에서 뺀다** (지시서 §3-4).
+
+        빼지 않으면 오탐 자동 종결이 대응 시간을 좋게 만든다: 규칙이 즉시 닫은
+        이벤트는 `발생 → 종결` 이 0초에 가깝고, 그것이 분모에 들어가면 **오탐이 많은
+        달일수록 대응이 빨라 보인다.** 지표가 사실의 정반대를 말하는 자리다.
+
+        ★ 뺀 건수(`excluded_auto_closed`)를 **함께 낸다.** 분모 없는 백분위는
+          「7건 중 p95」와 「700건 중 p95」를 같은 숫자로 내보낸다(D-301).
+        ★ 분모 0 이면 p50·p95 는 **`null` 이다 — 0 이 아니다.** 대응한 적이 없는 달과
+          즉시 대응한 달을 같은 숫자로 내면 그 표는 대외 보고에 못 쓴다.
+        """
+        from django.utils import timezone
+
+        if days <= 0 or days > 366:
+            raise HttpError(400, "days 는 1 이상 366 이하여야 합니다.")
+        until = timezone.now()
+        return services.response_latency(scope=_scope(request),
+                                         since=until - timedelta(days=days),
+                                         until=until, limit=limit)
+
     # ★ 들어오는 키를 **받지 않는다**(기본값 거절). 상세는 목록에 없는 것을 더 낸다 —
     #   `clip_path`(영상 구간) · `address` · `reviewed_by_id`. 계약이 F-05 로 연 것은
     #   **이벤트 조회**이지 이 셋이 아니고, 계약이 안 연 것을 우리가 열지 않는다(D-280).
@@ -302,11 +356,36 @@ class DsmAPI:
             "lat": e.lat, "lng": e.lng,
             "reviewed_by_id": e.reviewed_by_id, "reviewed_at": e.reviewed_at,
             "reject_reason": e.reject_reason,
+            #: ★ UX-17 — **이 이벤트가 훈련 중에 난 것인가** (`drill` / `live`).
+            #:   화면·보고서가 이 값을 그대로 적는다(D-347 화면 메타 다섯째).
+            #:   훈련 이벤트가 표식 없이 실제 이벤트와 섞이면, 나중에 그 달의 통계가
+            #:   **훈련을 재난으로 센다.**
+            "data_source": services.event_data_source(view=e),
             #: ★ D-399 — 대응 진행은 `status`(탐지 판정)와 **다른 축**이라 따로 낸다.
             #:   `allowed_next` 를 함께 내는 이유: 화면이 자기 전이표를 따로 들면
             #:   서버가 거절하는 버튼을 그리게 된다. 표는 서버에 하나만 둔다.
             **services.response_state(scope=_scope(request), event_id=e.event_id),
         }
+
+    # ── UX-14 대응 시계 상세 (차선 C · 2026-09-24) ────────────────────────
+    @route.get("/events/{int:event_id}/timeline", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-14 대응 시계 — 남의 이벤트 대응 이력을 펴 보면 IDOR 이다")
+    def event_timeline(self, request, event_id: int):
+        """네 시각 타임라인 — `occurred_at → acknowledged_at → arrived_at → closed_at`.
+
+        ★ 착수 전 실측이 지시서를 고쳤다 [2026-09-24]: 이 넷 중 **모델에 있는 것은
+          `occurred_at` 하나뿐**이다. 나머지 셋은 `logger.AuditLogs` 의 대응 전이
+          기록에서 세운다 — D-399 가 그 칸의 주석에 *"현재 값만 여기 있고, 어떻게
+          왔는지는 감사가 안다"* 라고 적어 둔 그대로다.
+          칸 셋을 새로 만들지 않은 이유: 새 칸은 태어나는 순간 **과거가 비어 있고**,
+          빈 과거는 「대응이 빨랐다」로 읽힌다.
+
+        ★ 자동 종결이면 `auto_closed=true` 다. 「사람이 닫았다」와 같은 모양으로
+          내보내면 대응 시간 통계가 오탐을 잘한 일로 센다.
+
+        ★ **읽기 전용**이다 — 쓰기 면이 아니므로 WRITE_PROBES 대상이 아니다(P-8).
+        """
+        return services.response_clock(scope=_scope(request), event_id=event_id)
 
     # ── 대응 진행 축 (D-399) ─────────────────────────────────────────────
     @route.post("/events/{int:event_id}/response", auth=JwtOrInboundKey())
@@ -858,3 +937,96 @@ class DsmAPI:
           쓰기 라우트 넷이 조용히 405 로 되돌아간다.
         """
         return self._setting_overview(request, domain)
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # UX-17 훈련 모드 · UX-18 벌크 등록 (차선 C · 2026-09-24)
+    # ═══════════════════════════════════════════════════════════════════════
+    #
+    # ★ **맨 뒤에 선다.** 바로 위 `/settings/{domain}` 은 `settings/` 로 시작하는
+    #   것만 삼키므로 이 넷을 가리지 않는다. 그래도 뒤에 두는 이유는 D-410 이 남긴
+    #   교훈이다 — 변수 경로 위로 리터럴을 옮기는 순간 다른 메서드가 405 로 죽는다.
+    #   ⚠ 404 를 만나면 **PROPFIND 로 한 번 더 두드려라.** 라우트가 있으면 405 이고
+    #     없으면 404 다 — 그 둘을 눈으로 못 가르면 「기능이 없다」와 「길이 다르다」가
+    #     같은 그림이 된다.
+
+    @route.get("/drill", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-17 훈련 상태 — 남의 테넌트가 훈련 중인지도 남의 정보다")
+    def drill_state(self, request):
+        """지금 훈련 모드인가 (UX-17). **읽기 전용.**
+
+        `since`·`by`·`reason` 을 함께 낸다 — 「켜져 있다」만으로는 사후에
+        「그 시각의 미발송이 훈련이었나 장애였나」를 가를 수 없다.
+        """
+        return services.drill_state(scope=_scope(request))
+
+    @route.post("/drill", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-17 훈련 스위치 — 남의 테넌트 알림을 끌 수 있으면 격리 실패다")
+    def set_drill_mode(self, request, enabled: bool, reason: str):
+        """훈련 모드를 켜거나 끈다 (UX-17). **끄는 스위치다.**
+
+        ★ 켜면 그 테넌트의 알림이 사람에게 가지 않는다. 그래서 이 면은 다른 어떤
+          쓰기보다 조용하게 사고를 만든다 — 남이 켜면 남의 **진짜** 경보가 로그로 흘러
+          아무에게도 안 간다. 문지기는 `stream_monitors/services/drill.py` 안에 하나
+          있고, P-8 탐침(`drill.set_drill_mode`)이 그 자리를 잰다.
+
+        ★ **사유 필수.** 사유 없는 미발송은 장애와 구별되지 않는다 → 400.
+
+        ⚠ **아직 채널이 안 바뀐다.** 스위치와 상태 판정은 여기까지 서 있고,
+          실제 채널 우회는 `kernels/k2_notify/` 안에서 일어나야 한다(발송 경로는
+          하나다). 그 파일은 조율자의 것이고 이 차선은 만지지 않았다 —
+          필요한 배선 한 자리를 보고서에 정확히 적었다.
+        """
+        try:
+            return services.set_drill_mode(scope=_scope(request),
+                                           enabled=bool(enabled), reason=reason)
+        except ValueError as exc:
+            # 400 — 요청이 틀렸다. 200 + {"success": false} 를 만들지 않는다(W0-18).
+            raise HttpError(400, str(exc)) from exc
+        except PermissionDenied as exc:
+            raise HttpError(403, str(exc) or "훈련 모드를 바꿀 권한이 없습니다.") from exc
+
+    @route.get("/drill/report", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-17 훈련 보고서 — 남의 테넌트 발송 현황이 나가면 격리 실패다")
+    def drill_report(self, request):
+        """훈련 종료 보고서 1장 (UX-17). **첫 줄이 「실채널 발송 N건」이다.**
+
+        ★ 0 을 「없음」으로 적지 않는다 — **모수와 함께** 적는다(D-301). 창 안 발송
+          전건이 몇이고 그중 실채널이 몇인지. 분모 없는 0 은 「발송 자체가 없었다」와
+          구별되지 않고, 그러면 스위치가 안 걸린 채 아무 일도 없던 밤이 「훈련 성공」이 된다.
+        """
+        return services.drill_report(scope=_scope(request))
+
+    @route.get("/cameras/address-gap", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-18 주소 배지 — 남의 테넌트 카메라 수가 섞이면 격리 실패다")
+    def camera_address_gap(self, request):
+        """「주소 없는 카메라 N대」 배지 (UX-18). **분모와 함께** 낸다.
+
+        「39대」만 보면 그것이 40 중 39인지 400 중 39인지 모른다 — 앞은 거의 전부이고
+        뒤는 10%다. 두 사실에 필요한 행동이 다르다.
+        """
+        return services.camera_address_gap(scope=_scope(request))
+
+    @route.post("/cameras/import", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-18 벌크 등록 — 남의 테넌트에 카메라를 무더기로 심을 수 없다")
+    def camera_import(self, request, csv_text: str, dry_run: bool = True):
+        """CSV 일괄 등록 (UX-18). ★ **dry-run 이 기본값이다** (D-209).
+
+        왜 기본이 dry-run 인가: 한 건짜리 등록은 잘못 눌러도 한 건이 틀린다.
+        100행 일괄은 **한 번의 실수가 100대의 이름·주소를 덮어쓰고**, 덮어쓴 뒤에는
+        원래 값이 어디에도 없다. 그래서 `dry_run=false` 를 **명시해야만** 쓴다 —
+        기본값이 쓰기인 면은 언젠가 반드시 실수로 눌린다.
+
+        ★ 표와 집행이 **같은 판정식**을 쓴다(`bulk_register._plan`). 두 벌이면 표에
+          없던 일이 일어나고, 그러면 dry-run 은 보여 주기일 뿐 약속이 아니게 된다.
+
+        ⚠ ONVIF 는 이 저장소에 **없다** [실측 2026-09-24 · `grep -ril onvif` 0건].
+          없는 프로토콜 위에 화면을 얹지 않는다(P-15). CSV 한 갈래만 연다.
+        """
+        try:
+            if dry_run:
+                return services.plan_camera_import(scope=_scope(request),
+                                                   csv_text=csv_text)
+            return services.apply_camera_import(scope=_scope(request),
+                                                csv_text=csv_text)
+        except PermissionDenied as exc:
+            raise HttpError(403, str(exc) or "카메라를 등록할 권한이 없습니다.") from exc
