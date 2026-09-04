@@ -259,12 +259,17 @@ def self_test() -> int:
 
 # ═══════════════════════════════════════════════════════════════════════════
 
-def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, int]]:
+def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, int],
+                    dict[str, int]]:
     data = yaml.safe_load(LEDGER.read_text(encoding="utf-8"))
     areas = data["areas"]
     ids = blocker_ids()
     counts: dict[str, dict[str, int]] = {}
     hands: dict[str, int] = dict(contract_clause_hands())   # 계약 절 몫을 먼저 담는다
+    #: ★ 2026-09-24 (P-26) — hand 는 이제 '미착수' 에도 붙는다(PRD v2.5 15절이 전부 `hand: in`).
+    #:   그래서 「잠김·미측정 중 손 안」을 따로 센다 — 안 가르면 아래 한 줄이
+    #:   34 + 22 = 56 처럼 읽혀 **남은 40절과 어긋난다.** 분모는 그대로다(design·out 만 뺀다).
+    hands_lock: dict[str, int] = dict(contract_clause_hands())
     problems: list[str] = []
 
     for area in areas:
@@ -288,12 +293,14 @@ def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, 
                 hand = (clause.get("hand") or "").strip()
                 if hand in HANDS:
                     hands[hand] = hands.get(hand, 0) + 1
+                    if status in ("잠김", "미측정"):
+                        hands_lock[hand] = hands_lock.get(hand, 0) + 1
         counts[area["id"]] = c
 
     weights = sum(a["weight"] for a in areas)
     if weights != 100:
         problems.insert(0, "가중치 합이 %d 다 — 100 이 아니면 아래 수는 전부 무의미하다" % weights)
-    return areas, counts, problems, hands
+    return areas, counts, problems, hands, hands_lock
 
 
 def main() -> int:
@@ -310,7 +317,7 @@ def main() -> int:
         print("[GA] 대장이 없다: %s" % LEDGER)
         return 1
 
-    areas, counts, problems, hands = load()
+    areas, counts, problems, hands, hands_lock = load()
     total, rows = score(areas, counts)
     all_clauses = sum(sum(c.values()) for c in counts.values())
     done = sum(c.get(DONE, 0) for c in counts.values())
@@ -340,9 +347,13 @@ def main() -> int:
         print("[GA] ★ **손 안 도달율 %.1f%%** = 구현 %d / (%d − 설계 잠금 %d − 손 밖 %d = %d)"
               % (done / denom * 100, done, all_clauses, design, out_of_hand, denom))
         not_started = sum(c.get("미착수", 0) for c in counts.values())
+        in_lock = hands_lock.get("in", 0)
         print("[GA]   손 안에 남은 %d절 = 미착수 %d(전부 우리 것) + 잠김·미측정 중 손 안 %d — "
               "이 %d절이 **우리가 닫을 수 있는 100%%** 까지의 거리다"
-              % (denom - done, not_started, in_hand, denom - done))
+              % (denom - done, not_started, in_lock, denom - done))
+        if not_started + in_lock != denom - done:
+            print("[GA]   ⚠ 두 몫의 합 %d 이 남은 %d 과 다르다 — 분류가 어긋났다"
+                  % (not_started + in_lock, denom - done))
     else:
         print("[GA] 손 안 도달율 **판정 불가** — 분모가 0 이하다 (분류가 어긋났다)")
 

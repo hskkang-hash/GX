@@ -177,6 +177,86 @@ def event_detail(*, scope: TenantScope, event_id: int):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# 스냅샷 바이트 — P-25 (2026-09-24)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 판정(지시서 §1 P-25): 프리사인드 URL 은 **무계정 링크**라 만들지 않는 것이 옳았다.
+#   대신 **인증 필수 바이트 라우트 1개**를 낸다. 스냅샷은 11조가 말하는 원본 영상이
+#   아니라 정지 이미지 1장이고(DA-01 FR-01-3), 화면이 이미 그리고 있는 것이다.
+#
+#   저장은 못 막는다. **그래서 출처를 남긴다** — 테넌트명과 열람 시각을 소인으로 찍는다.
+
+
+class SnapshotUnavailable(RuntimeError):
+    """스냅샷 바이트를 지금 줄 수 없다. **사유가 함께 온다** — 빈 응답을 만들지 않는다.
+
+    Attributes:
+        kind: `missing`(이 이벤트에 프레임이 없다) / `storage`(저장소가 죽었다) /
+              `stamp`(소인을 못 찍었다 — 우리 결함). 라우트가 이 셋을 **다른 상태 코드**로
+              번역한다: 404 · 503 · 500. 하나로 뭉치면 「없다」와 「지금 안 된다」가
+              같은 답이 되고, 운영자는 어느 쪽을 고쳐야 하는지 모른다.
+    """
+
+    def __init__(self, kind: str, reason: str):
+        super().__init__(reason)
+        self.kind = kind
+        self.reason = reason
+
+
+def _watermark_text(*, actor, event_id: int, occurred_at) -> str:
+    """소인 문구 — **테넌트명과 시각**. 둘 중 하나라도 없으면 소인의 뜻이 없다."""
+    from django.utils import timezone
+
+    from common.tenant_filters import get_user_group
+
+    group = get_user_group(actor)
+    tenant = (getattr(group, "name", "") or getattr(group, "code", "")
+              or "(소속 미상)")
+    viewed = timezone.localtime().strftime("%Y-%m-%d %H:%M")
+    when = occurred_at.strftime("%Y-%m-%d %H:%M") if occurred_at else "시각 미상"
+    return f"GuardianX · {tenant} · 이벤트 {event_id} ({when}) · 열람 {viewed}"
+
+
+def event_snapshot(*, scope: TenantScope, event_id: int) -> bytes:
+    """이벤트 스냅샷 1장의 **소인 찍힌** 바이트 (P-25).
+
+    좁히기는 `event_detail` 이 부르는 커널이 한다 — 남의 테넌트 이벤트는 **404** 다.
+    여기서 다시 필터를 짜지 않는다: 두 벌을 두면 어긋나고, 어긋난 쪽이 조용히 이긴다.
+
+    Raises:
+        SnapshotUnavailable: 프레임이 없거나(`missing`) · 저장소가 죽었거나(`storage`) ·
+            소인을 못 찍었을 때(`stamp`).
+    """
+    from stream_monitors.services.detection_snapshot import fetch_snapshot
+
+    from apps.dsm.watermark import stamp
+
+    view = event_detail(scope=scope, event_id=event_id)
+    path = (getattr(view, "snapshot_path", "") or "").strip()
+    if not path:
+        raise SnapshotUnavailable(
+            "missing", "이 이벤트에는 저장된 스냅샷이 없습니다.")
+
+    data, reason = fetch_snapshot(path)
+    if not data:
+        # ★ 「경로는 있는데 객체가 없다」는 **저장소 쪽 사실**이다. 우리 결함(500)으로
+        #   올리지 않는다 — 고칠 자리가 다르다.
+        kind = "missing" if "0바이트" in reason or "경로" in reason else "storage"
+        raise SnapshotUnavailable(kind, reason)
+
+    try:
+        return stamp(data, _watermark_text(
+            actor=scope.require_actor(), event_id=event_id,
+            occurred_at=getattr(view, "occurred_at", None)))
+    except Exception as exc:  # noqa: BLE001
+        # 소인을 못 찍으면 **원본을 그대로 내보내지 않는다.** 소인 없는 바이트가
+        # 나가는 순간 P-25 가 준 것은 라우트뿐이고 출처는 없다.
+        raise SnapshotUnavailable(
+            "stamp", f"소인을 찍지 못해 스냅샷을 내보내지 않습니다 — "
+                     f"{type(exc).__name__}: {exc}") from exc
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # 대응 진행 축 (D-399)
 # ═══════════════════════════════════════════════════════════════════════════
 #: ★ 커널 예외를 **여기서 다시 내보낸다.** `api.py` 가 직접 `kernels.k1_event` 를

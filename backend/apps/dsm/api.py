@@ -487,6 +487,48 @@ class DsmAPI:
              "sent_at": r.sent_at}
             for r in rows]}
 
+    # ── 스냅샷 바이트 (P-25 · 2026-09-24) ────────────────────────────────
+    #
+    # ★ 판정: **무계정 링크를 만들지 않는다.** 서명 URL 한 줄이면 이 라우트는 필요 없지만,
+    #   그 링크는 계정 없이 열리고 한 번 새면 회수할 수 없다(불변 제약).
+    #   그래서 바이트는 **우리 라우트로만** 나가고, 그 문은 인증과 테넌트를 본다.
+    #
+    # ★ 이것은 영상이 아니다. 정지 이미지 1장이고(DA-01 FR-01-3) 화면이 이미 그리고 있다.
+    #   계약 11조가 막는 것은 원본 영상이며, 그 금지는 아래 구간 라우트가 그대로 진다.
+    #
+    # ★ 저장은 못 막는다 — 브라우저에 뜬 그림은 누구나 저장한다.
+    #   **대신 출처를 남긴다**: 테넌트명과 열람 시각을 소인으로 찍는다.
+    #   소인을 못 찍으면 **내보내지 않는다**(500) — 소인 없는 바이트가 나가면
+    #   이 라우트가 준 것은 편의뿐이고 남긴 것은 없다.
+    #
+    # ★ 다운로드 헤더를 달지 않는다. `inline` 은 「화면에 그리라」이고
+    #   `attachment` 는 「파일로 받으라」다 — 후자는 반출의 모양이다.
+    @route.get("/events/{int:event_id}/snapshot", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="스냅샷 바이트 — 남의 이벤트 프레임이 나가면 격리 실패다")
+    def event_snapshot(self, request, event_id: int):
+        """이벤트 스냅샷 1장. **소인이 찍힌 JPEG.**
+
+        상태 넷을 다르게 낸다 — 뭉치면 운영자가 어디를 고칠지 모른다:
+            401 인증 없음 · 404 없는/남의 이벤트, 또는 프레임 없음 ·
+            503 저장소 연결 안 됨 · 500 소인 실패(우리 결함)
+        """
+        try:
+            jpeg = services.event_snapshot(scope=_scope(request), event_id=event_id)
+        except Http404 as exc:
+            raise HttpError(404, str(exc) or "그런 이벤트가 없습니다.")
+        except services.SnapshotUnavailable as exc:
+            status = {"missing": 404, "storage": 503, "stamp": 500}.get(exc.kind, 500)
+            raise HttpError(status, exc.reason)
+
+        response = HttpResponse(jpeg, content_type="image/jpeg")
+        # `inline` — 화면에 그리라는 뜻이다. 파일명을 주지 않는다(받아 두라는 신호다).
+        response["Content-Disposition"] = "inline"
+        # 캐시 금지 (P-19). 미들웨어의 `dsm/` 우회와 **두 겹**이다 — 한 겹이 지워져도
+        # 다른 한 겹이 남는다. 남의 소인이 찍힌 그림이 중간 캐시에 남으면 안 된다.
+        response["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
+
     # ── F-11 상황 보고서 ─────────────────────────────────────────────────
     @route.get("/reports/templates", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-11 템플릿 목록 — 남의 테넌트 템플릿이 보이면 안 된다")

@@ -89,3 +89,62 @@ def encode_frame(frame) -> bytes:
     except Exception as exc:  # noqa: BLE001
         logger.warning("스냅샷 JPEG 인코딩 실패: %s", exc)
         return b""
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 읽는 쪽 — P-25 (2026-09-24)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 왜 여기에 두나. 올린 자리와 읽는 자리가 갈리면 **경로 규약이 둘이 된다** —
+#   위 `upload_snapshot` 이 `f"{bucket}/{object_name}"` 로 쓰고, 읽는 쪽이 그 모양을
+#   다르게 가정하는 순간 조용히 404 가 난다. 같은 파일에 두어 규약을 한 곳에 묶는다.
+#
+# ★ 프리사인드 URL 을 만들지 않는다 (11조 · 불변 제약 「무계정 링크 금지」).
+#   프리사인드는 **계정 없는 링크**이고, 한 번 새면 우리가 회수할 수 없다.
+#   바이트는 우리 라우트를 통해서만 나가고, 그 라우트는 인증과 테넌트를 본다.
+
+def fetch_snapshot(snapshot_path: str) -> tuple[bytes, str]:
+    """스냅샷 객체의 바이트를 읽는다.
+
+    Args:
+        snapshot_path: `upload_snapshot` 이 기록한 `"{bucket}/{object}"`.
+
+    Returns:
+        `(jpeg_bytes, reason)` — 성공하면 `(bytes, "")`, 실패하면 `(b"", 사유)`.
+        **둘 중 하나는 반드시 비어 있다** — 위 규약과 같다. 빈 바이트에 사유가 없으면
+        「없는 것」과 「못 읽은 것」이 구별되지 않고, 그 둘은 다른 HTTP 상태다.
+    """
+    path = (snapshot_path or "").strip().lstrip("/")
+    if not path:
+        return b"", "스냅샷 경로가 비었다 — 이 이벤트에는 저장된 프레임이 없다"
+    if "/" not in path:
+        return b"", f"스냅샷 경로 «{path}» 에 버킷이 없다 — «버킷/객체» 모양이어야 한다"
+    bucket, _, object_name = path.partition("/")
+
+    try:
+        from stream_monitors.utils.minio_client import minio_client
+    except Exception as exc:  # noqa: BLE001
+        return b"", f"MinIO 클라이언트를 가져오지 못했다: {type(exc).__name__}: {exc}"
+
+    # ★ `available` 은 맥박이다(D-412) — 사진이 아니다. 여기서 묻는 값은 **지금**의 값이고,
+    #   저장소가 죽어 있으면 그 사실이 그대로 위로 올라가 503 이 된다. 200 을 만들지 않는다.
+    if not getattr(minio_client, "available", False) or minio_client.client is None:
+        return b"", "저장소 연결 안 됨 — MinIO 가 지금 사용 불가 상태다"
+
+    response = None
+    try:
+        response = minio_client.client.get_object(bucket, object_name)
+        data = response.read()
+    except Exception as exc:  # noqa: BLE001
+        return b"", f"스냅샷을 읽지 못했다: {type(exc).__name__}: {exc}"
+    finally:
+        if response is not None:
+            try:
+                response.close()
+                response.release_conn()
+            except Exception:  # noqa: BLE001 — 반납 실패가 읽은 바이트를 무르지 않는다
+                pass
+
+    if not data:
+        return b"", "스냅샷 객체가 0바이트다 — 올라간 적이 없거나 지워졌다"
+    return data, ""
