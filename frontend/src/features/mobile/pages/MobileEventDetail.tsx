@@ -344,12 +344,11 @@ export default function MobileEventDetail() {
                 <Alert
                   type="warning"
                   showIcon
-                  message="현장 회신(M3)은 아직 없습니다"
+                  message="현장 회신은 아직 보낼 수 없습니다"
                   description={
                     <Text style={{ fontSize: 12 }}>
-                      회신 쓰기 면(`kernels.k1_event.reply_from_field`)은 이번 턴에
-                      지었으나 그것을 여는 HTTP 라우트가 아직 없습니다. 없는 문 위에
-                      손잡이를 그리지 않습니다 (P-15).
+                      회신하기는 준비 중입니다. 지금은 이 화면에서 보낼 수 없어
+                      단추를 두지 않았습니다 — 눌러도 아무 일이 없는 단추를 두지 않습니다.
                     </Text>
                   }
                 />

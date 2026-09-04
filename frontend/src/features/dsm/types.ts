@@ -30,7 +30,11 @@ export interface DashboardFrame {
   /** 분모. 「정상 3칸」만 보면 전체가 3인지 30인지 모른다 (D-301). */
   panel_total: number;
   panels: PanelView[];
-  link: { status: string; reason: string };
+  /**
+   * 연계 상태. **사유는 없다** (P-27) — 서버가 관제요원에게는 상태 하나만 준다.
+   * `detail` 은 **관리자에게만** 오는 한 줄이고, 그 한 줄도 서버 사전에서 온다.
+   */
+  link: { status: string; detail?: string };
 }
 
 export interface EventRow {

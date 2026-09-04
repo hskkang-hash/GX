@@ -260,7 +260,7 @@ def self_test() -> int:
 # ═══════════════════════════════════════════════════════════════════════════
 
 def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, int],
-                    dict[str, int]]:
+                    dict[str, int], dict[str, int]]:
     data = yaml.safe_load(LEDGER.read_text(encoding="utf-8"))
     areas = data["areas"]
     ids = blocker_ids()
@@ -270,6 +270,11 @@ def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, 
     #:   그래서 「잠김·미측정 중 손 안」을 따로 센다 — 안 가르면 아래 한 줄이
     #:   34 + 22 = 56 처럼 읽혀 **남은 40절과 어긋난다.** 분모는 그대로다(design·out 만 뺀다).
     hands_lock: dict[str, int] = dict(contract_clause_hands())
+    #: ★ [2026-09-26] **'미착수' 도 손 밖일 수 있다** — P-30 이 OPS-12 를 쪼개며
+    #:   「다른 호스트」 갈래를 미착수·손 밖으로 냈다. 계약 절(영역 ①)의 몫은 여기
+    #:   담지 않는다: 그쪽 미착수는 잠금 대장이 아니라 계약 대장이 세고, 그 수는
+    #:   `contract_clause_hands()` 가 이미 hands 에 넣었다.
+    hands_todo: dict[str, int] = {}
     problems: list[str] = []
 
     for area in areas:
@@ -295,12 +300,19 @@ def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, 
                     hands[hand] = hands.get(hand, 0) + 1
                     if status in ("잠김", "미측정"):
                         hands_lock[hand] = hands_lock.get(hand, 0) + 1
+                    elif status == "미착수":
+                        hands_todo[hand] = hands_todo.get(hand, 0) + 1
+                elif status == "미착수":
+                    #: hand 칸이 없는 미착수. **손 밖이라 적힌 적이 없으므로 손 안이다** —
+                    #: 다만 「손 안이라고 적은 것」과 구별해 센다. 둘을 뭉치면
+                    #: 분류를 잊은 절과 분류한 절이 같은 칸에 선다(D-301).
+                    hands_todo["none"] = hands_todo.get("none", 0) + 1
         counts[area["id"]] = c
 
     weights = sum(a["weight"] for a in areas)
     if weights != 100:
         problems.insert(0, "가중치 합이 %d 다 — 100 이 아니면 아래 수는 전부 무의미하다" % weights)
-    return areas, counts, problems, hands, hands_lock
+    return areas, counts, problems, hands, hands_lock, hands_todo
 
 
 def main() -> int:
@@ -317,7 +329,7 @@ def main() -> int:
         print("[GA] 대장이 없다: %s" % LEDGER)
         return 1
 
-    areas, counts, problems, hands, hands_lock = load()
+    areas, counts, problems, hands, hands_lock, hands_todo = load()
     total, rows = score(areas, counts)
     all_clauses = sum(sum(c.values()) for c in counts.values())
     done = sum(c.get(DONE, 0) for c in counts.values())
@@ -346,11 +358,18 @@ def main() -> int:
     if denom > 0:
         print("[GA] ★ **손 안 도달율 %.1f%%** = 구현 %d / (%d − 설계 잠금 %d − 손 밖 %d = %d)"
               % (done / denom * 100, done, all_clauses, design, out_of_hand, denom))
-        not_started = sum(c.get("미착수", 0) for c in counts.values())
+        #: 미착수도 **손 안 것만** 센다 — 손 밖 미착수를 우리 잔여에 넣으면
+        #: 갚을 수 없는 절이 진척률을 눌러 앉는다(D-311 이 잠자는 빚에서 한 것과 같다).
+        #: 계약 절(영역 ①)의 미착수는 hand 칸이 없으므로 아래 「그 밖」이 받는다.
+        marked = hands_todo.get("in", 0)
+        unmarked = hands_todo.get("none", 0)
         in_lock = hands_lock.get("in", 0)
-        print("[GA]   손 안에 남은 %d절 = 미착수 %d(전부 우리 것) + 잠김·미측정 중 손 안 %d — "
+        contract_rest = (denom - done) - marked - unmarked - in_lock
+        print("[GA]   손 안에 남은 %d절 = 미착수 %d(손 안이라 적힘) + 미착수 %d(hand 미기재) "
+              "+ 잠김·미측정 중 손 안 %d + 계약 절 %d — "
               "이 %d절이 **우리가 닫을 수 있는 100%%** 까지의 거리다"
-              % (denom - done, not_started, in_lock, denom - done))
+              % (denom - done, marked, unmarked, in_lock, contract_rest, denom - done))
+        not_started = marked + unmarked + contract_rest
         if not_started + in_lock != denom - done:
             print("[GA]   ⚠ 두 몫의 합 %d 이 남은 %d 과 다르다 — 분류가 어긋났다"
                   % (not_started + in_lock, denom - done))

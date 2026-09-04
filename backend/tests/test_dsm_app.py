@@ -303,6 +303,80 @@ class LinkStateTest(DsmFixture):
 # ═══════════════════════════════════════════════════════════════════════════
 # F-10 알림 발송
 # ═══════════════════════════════════════════════════════════════════════════
+class LinkStateSecrecyTest(DsmFixture):
+    """P-27 [P0] — **화면이 받는 것에 상대사명·계약번호·조항이 없는가.**
+
+    사고 (2026-09-25): `preset=system` 화면의 「연계 상태」 상자가 `reason` 을 그대로
+    그렸고, 그 문단에는 상대사명 · 계약번호 · 조항 · 미이행 사실이 들어 있었다.
+
+    ★ 이 시험이 **응답 조립부를 직접 부른다.** 화면 코드를 보는 시험이었다면 다음 화면이
+      같은 병을 다시 앓는다 — 막는 곳은 화면이 아니라 서버다.
+    """
+
+    #: 화면에 있으면 안 되는 것들. `verify_ui_secrets.py` 의 목록과 **같은 뿌리**다.
+    FORBIDDEN = ("DEV-SBIT", "에스비정보기술", "조2항", "조3항", "D-2", "D-3")
+
+    def _payload(self, user):
+        from apps.dsm import api, services
+
+        class _Req:
+            pass
+
+        req = _Req()
+        req.user = user
+        return api._link_payload(services.link_state(), req)
+
+    def test_a_watch_officer_gets_one_word_and_nothing_else(self) -> None:
+        """관제요원 응답에는 **상태 하나**뿐이다. 사유 칸 자체가 없다."""
+        payload = self._payload(self.user_a)
+        self.assertEqual({"status"}, set(payload),
+                         "관제요원 응답에 사유 칸이 있으면, 화면이 안 그려도 "
+                         "개발자 도구를 연 사람은 읽습니다.")
+        self.assertEqual("waiting", payload["status"])
+
+    def test_the_contract_paragraph_cannot_reach_any_screen(self) -> None:
+        """관리자 응답까지 훑는다 — **관리자 상세에도** 상대사명·계약번호·조항은 없다."""
+        import adapters.sdn as sdn
+
+        #: 먼저 그 문단이 **지금도 우리 쪽에는 있다**를 확인한다. 없으면 이 시험은
+        #: 아무것도 재지 않은 것이다 (D-277 음성 대조가 무의미해진다).
+        self.assertIn("에스비정보기술", sdn.NOT_READY_REASON)
+
+        CoreUser = apps.get_model("user", "CoreUser")
+        admin = CoreUser.objects.create_user(
+            username="dsm_admin_secrecy", password="test-only-not-a-secret",
+            is_active=True, email="dsm_admin_secrecy@test.invalid", is_superuser=True)
+
+        for who, user in (("관제요원", self.user_a), ("관리자", admin)):
+            body = str(self._payload(user))
+            for needle in self.FORBIDDEN:
+                self.assertNotIn(needle, body,
+                                 f"{who} 응답에 '{needle}' 가 실렸습니다 — "
+                                 f"그것은 화면이 아니라 문서의 자리입니다.")
+
+    def test_the_admin_line_comes_from_the_dictionary_not_from_the_reason(self) -> None:
+        """관리자 한 줄은 **사전에서** 온다. 지어내면 다음 문장이 또 누출이다."""
+        from apps.dsm import services
+
+        CoreUser = apps.get_model("user", "CoreUser")
+        admin = CoreUser.objects.create_user(
+            username="dsm_admin_dict", password="test-only-not-a-secret",
+            is_active=True, email="dsm_admin_dict@test.invalid", is_superuser=True)
+
+        payload = self._payload(admin)
+        self.assertIn("detail", payload, "관리자에게는 「자세히」 한 줄이 있어야 합니다.")
+        self.assertIn(payload["detail"], set(services.LINK_DETAIL.values()),
+                      "사전에 없는 문구를 만들지 않습니다.")
+
+    def test_the_dictionary_covers_every_status(self) -> None:
+        """상태가 늘면 사전이 빈다. **비면 보이게** 한다 — 조용한 빈칸을 만들지 않는다."""
+        from apps.dsm.services import LINK_DETAIL, LinkStatus
+
+        for status in LinkStatus:
+            self.assertTrue(LINK_DETAIL.get(status),
+                            f"'{status.value}' 에 사용자 언어 한 줄이 없습니다.")
+
+
 class NotifyTest(DsmFixture):
     """AC-10 — 심각 이벤트에 30초 내 발송 기록."""
 

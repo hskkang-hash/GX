@@ -51,6 +51,7 @@ from ninja.errors import HttpError
 from ninja_extra import api_controller, route
 
 from common.inbound_api_key import JwtOrInboundKey
+from common.tenant_roles import is_global_admin, is_tenant_admin
 from common.tenant_scope import TenantScope, tenant_scoped
 from core.api.v1.auth import CustomJWTAuth
 
@@ -93,6 +94,27 @@ def _panel_payload(panel) -> dict:
     }
 
 
+def _link_payload(link, request) -> dict:
+    """연계 상태 → 화면이 읽는 dict. **사유는 싣지 않는다** (P-27 · 2026-09-26).
+
+    ★ 여기가 사고가 났던 자리다. 앞판은 `reason` 을 그대로 실었고, 그 안에는
+      상대사명 · 계약번호 · 조항 · 미이행 사실이 문단으로 들어 있었다. 관제요원 화면의
+      「연계 상태」 상자가 그것을 그대로 그렸다 — 정직하려던 것이 누출이 됐다.
+
+    ★ **막는 곳은 화면이 아니라 여기다.** 화면에서 안 그리게 하는 방식은 다음 화면이
+      다시 그린다. 서버가 주지 않으면 어떤 화면도 그릴 수 없다.
+
+    관리자에게만 `detail` 한 줄을 준다. 그 한 줄도 지어내지 않고 **사전에서** 가져온다
+    (`services.LINK_DETAIL`) — 상대사명 · 계약번호 · 조항은 거기에도 없다.
+    """
+    user = getattr(request, "user", None)
+    admin = is_global_admin(user) or is_tenant_admin(user)
+    payload: dict = {"status": link.status.value}
+    if admin:
+        payload["detail"] = services.link_detail(link.status)
+    return payload
+
+
 # ★ 접두어를 비운다. `config/urls.py` 가 이미 `api/dsm/` 로 마운트하므로 여기서 다시
 #   "/dsm" 을 붙이면 **`/api/dsm/dsm/...` 가 된다** — 기존 앱들이 실제로 그 모양이다
 #   (`/api/stream-monitors/stream-monitors/...`). 새로 만드는 것까지 그럴 이유는 없다.
@@ -119,7 +141,7 @@ class DsmAPI:
             "state_counts": frame.state_counts,
             "panel_total": len(frame.panels),
             "panels": [_panel_payload(p) for p in frame.panels],
-            "link": {"status": frame.link.status.value, "reason": frame.link.reason},
+            "link": _link_payload(frame.link, request),
         }
 
     @route.get("/dashboard/link-state", auth=JwtOrInboundKey())
@@ -136,7 +158,7 @@ class DsmAPI:
           같다 — 그 목록은 **인증 불요**를 뜻하고, 이 라우트는 인증이 필요하다.
         """
         state = services.link_state()
-        return {"status": state.status.value, "reason": state.reason}
+        return _link_payload(state, request)
 
     @route.get("/events", auth=JwtOrInboundKey(
         inbound_key=True,

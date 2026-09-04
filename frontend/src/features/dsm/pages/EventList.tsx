@@ -17,12 +17,13 @@
  *
  * ★ 등급은 색 + 아이콘 + 라벨 셋으로 낸다. 색만 쓰면 색각 이상이 못 읽는다 (DA-03 §2-2).
  */
-import { Alert, Button, Card, Col, Row, Select, Space, Table, Tag, Typography } from 'antd';
+import { Alert, Badge, Button, Card, Col, Popover, Row, Select, Space, Table, Tag, Typography } from 'antd';
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Main } from 'rj-core';
 
 import { dsmEndpoint, dsmGet } from '../api';
+import { linkStatusBadge, linkStatusLabel } from '../copy';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import {
@@ -125,10 +126,15 @@ const PRESETS: PresetDef[] = [
  *     `scripts/ops_monitor.py` 안에만 있고 부를 라우트가 없다 —
  *     온보딩 48행의 U1 #3 · U5 #15 가 그 자리다. 없는 것은 없다고 적는다(D-284).
  */
+/**
+ * ★ [P-27 · 2026-09-25 사고] 이 안내는 앞판에서 **우리 도구 경로**를 화면에 적고 있었다
+ *   (`scripts/ops_monitor.py`). 없는 것을 없다고 적는 일은 옳지만, **어디에 없는지는
+ *   사용자에게 뜻이 없다.** 없다는 사실만 사용자 언어로 남기고, 어디에 무엇이 있는지는
+ *   주석과 대장의 자리로 되돌린다.
+ */
 const SYSTEM_NOTE =
-  '이 목록은 시스템 유형 이벤트입니다. 카메라 맥박·저장 용량 %는 ' +
-  'scripts/ops_monitor.py 안에만 있고 부를 수 있는 라우트가 아직 없습니다 — ' +
-  '여기 없는 것은 아직 없는 것입니다 (온보딩 U1 #3 · U5 #15).';
+  '이 목록은 설비 자신이 낸 신호입니다. 카메라 응답 여부와 저장 용량은 ' +
+  '아직 이 화면에서 볼 수 없습니다 — 여기 없는 것은 아직 없는 것입니다.';
 
 function parsePreset(value: string | null): PresetKey {
   const hit = PRESETS.find((p) => p.key === value);
@@ -196,7 +202,7 @@ export default function EventList() {
   );
 
   /** 「시스템」 프리셋이 더 읽는 **지금 이 순간의** 신호. P-19 — 캐시를 지나지 않는다. */
-  const link = useDsmResource<{ status: string; reason: string }>(
+  const link = useDsmResource<{ status: string; detail?: string }>(
     () => dsmGet(dsmEndpoint.linkState),
     [],
     { enabled: active.key === 'system', refreshMs: REFRESH_MS },
@@ -300,15 +306,29 @@ export default function EventList() {
         {/* 그 화면에만 있는 글자 — 검수 촬영이 이 줄로 「그 화면이 떴다」를 단언한다 */}
         <Alert type="info" showIcon message={active.headline} description={active.why} />
 
+        {/* ★ [P-27 · P0] **여기가 사고가 난 자리다.**
+
+            앞판은 서버가 준 사유를 그대로 문단으로 그렸다. 그 문단에는 상대사명 ·
+            계약번호 · 조항 · 미이행 사실이 들어 있었고, 관제요원 화면에 떠 있었다.
+            이제 화면이 그리는 것은 **한 단어**이고, 「자세히」는 서버가 관리자에게만
+            `detail` 을 줄 때에만 나타난다 — 화면이 역할을 판정하지 않는다.
+            판정하는 쪽이 둘이면 한쪽은 반드시 틀린다. */}
         {active.key === 'system' && (
           <Card size="small" title="연계 상태 (지금 이 순간)">
             <StateBoundary state={link.state} reason={link.reason} onRetry={link.reload}>
               {link.data && (
                 <Space direction="vertical">
-                  <Text>
-                    연계 상태: <b>{link.data.status}</b>
-                    {link.data.reason ? ` — ${link.data.reason}` : ''}
-                  </Text>
+                  <Space size="small">
+                    <Badge
+                      status={linkStatusBadge(link.data.status)}
+                      text={linkStatusLabel(link.data.status)}
+                    />
+                    {link.data.detail && (
+                      <Popover content={<div style={{ maxWidth: 320 }}>{link.data.detail}</div>}>
+                        <Button type="link" size="small">자세히</Button>
+                      </Popover>
+                    )}
+                  </Space>
                   <Text type="secondary">{SYSTEM_NOTE}</Text>
                 </Space>
               )}

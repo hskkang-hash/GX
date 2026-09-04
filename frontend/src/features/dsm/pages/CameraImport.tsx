@@ -168,12 +168,10 @@ export default function CameraImportPage() {
         <Alert
           type="info"
           showIcon
-          message="이 화면이 여는 갈래는 CSV 하나입니다."
+          message="카메라는 CSV 파일로 한 번에 등록합니다."
           description={
-            'ONVIF 일괄 등록은 이 저장소에 구현도 어댑터도 없습니다(실측: grep 0건) — ' +
-            '없는 프로토콜 위에 탭을 만들지 않습니다. ' +
-            '좌표→도로명 역지오코딩은 D-329 로 「불가」 판정돼 있고, 카메라 모델에는 ' +
-            '위도·경도 칸이 아예 없습니다. 주소는 CSV 의 address 칸으로 들어옵니다(D-330).'
+            '카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. ' +
+            '좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.'
           }
         />
 

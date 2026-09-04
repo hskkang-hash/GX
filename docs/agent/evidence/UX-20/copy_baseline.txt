@@ -1,0 +1,22 @@
+# UX-20 제품 언어 — **오늘의 빚**. 줄이는 것만 허용한다 (래칫 · D-311).
+# 열쇠: 파일<TAB>패턴<TAB>발췌(공백 정규화). 줄 번호는 쓰지 않는다.
+# 잠근 날: 2026-09-26 · 18건
+
+frontend/src/features/dsm/components/EventSnapshot.tsx	절 ID	인증된 경로로 받은 프레임입니다. 이미지에는 테넌트명과 열람 시각 소인이 찍혀 있습니다 (P-25).
+frontend/src/features/dsm/pages/CameraImport.tsx	백틱	을 씁니다(`bulk_register._plan`). 두 벌이면 표에 없던 일이 일어나고, 그러면 dry-run 은 보여 주기일 뿐 약속이 아니게 됩니다.
+frontend/src/features/dsm/pages/CameraImport.tsx	절 ID	UX-18 카메라 벌크 등록 — 표를 먼저 봅니다 (dry-run)
+frontend/src/features/dsm/pages/DrillMode.tsx	마크다운 강조	켜져 있는 동안 이 테넌트의 알림은 **로그 어댑터로만** 나갑니다 — 소방·팀장에게
+frontend/src/features/dsm/pages/DrillMode.tsx	백틱	문자가 가지 않습니다. 채널 이름은 가장하지 않고 `log` 로 그대로 남으므로, 아래
+frontend/src/features/dsm/pages/DrillMode.tsx	백틱	이 보고서의 훈련 창은 감사(`guardianx.dsm.drill`)에서 왔습니다. 이벤트에 `data_source` 칸을 새로 만들지 않았습니다 — 새 칸은 태어나는 순간 과거가
+frontend/src/features/dsm/pages/DrillMode.tsx	절 ID	UX-17 훈련 모드 — 켜면 알림이 사람에게 가지 않는다
+frontend/src/features/dsm/pages/EventDetail.tsx	마크다운 강조	그래서 이 건은 대응 시간 p50/p95 의 **분모에서 빠집니다** —
+frontend/src/features/dsm/pages/EventDetail.tsx	백틱	(`guardianx.dsm.response`)에서 세운 것입니다 — 모델에 칸을 새로 만들지 않았습니다. 새 칸은 태어나는 순간 과거가 비어 있고, 빈 과거는 「대응이 빨랐다」로
+frontend/src/features/dsm/pages/EventDetail.tsx	절 ID	계약 F-10 — 심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.
+frontend/src/features/dsm/pages/EventDetail.tsx	절 ID	발송 이력 (F-10)
+frontend/src/features/dsm/pages/EventDetail.tsx	절 ID	오탐 판정에 따라 규칙이 자동 종결했습니다(P-16).
+frontend/src/features/dsm/pages/EventList.tsx	백틱	`mine=true` 만 보냅니다. 사번을 화면이 정하지 않습니다 — 「나」가 누구인지는
+frontend/src/features/dsm/pages/EventList.tsx	백틱	`since` 와 `until` 을 둘 다 보냅니다. 여는 쪽만 보내면 그것은
+frontend/src/features/dsm/pages/EventList.tsx	백틱	서버가 `response_state=occurred` 로 걸러 준 목록입니다.
+frontend/src/features/dsm/pages/EventList.tsx	영문 열거값	서버가 `response_state=occurred` 로 걸러 준 목록입니다.
+frontend/src/features/mobile/pages/MobileEventDetail.tsx	백틱	MinIO 객체 참조입니다. 이 바이트를 내보내는 라우트가 `/api/dsm/` 에 없습니다 [실측 2026-09-04]. 화면이 직접 프리사인드 URL 을 만들면 그것은 무계정
+frontend/src/features/mobile/pages/MobileInbox.tsx	백틱	서버가 테넌트까지는 걸러 줍니다. 수신자까지 좁히는 인자(`mine`)가 `GET /api/dsm/deliveries` 에 아직 없습니다 [실측 2026-09-04]. 화면이 받아

@@ -22,6 +22,7 @@ import { dsmEndpoint, dsmGet } from '../api';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { EVENT_TYPE_LABEL, labelOf, SEVERITY_COLOR, SEVERITY_ICON, SEVERITY_LABEL } from '../severity';
+import { linkStatusBadge, linkStatusLabel } from '../copy';
 import { stamp, TIMEZONE_NOTE } from '../time';
 import type { DashboardFrame, EventRow } from '../types';
 
@@ -30,14 +31,8 @@ const { Text, Title } = Typography;
 /** 부분 갱신 간격. 재난 화면은 사람이 새로고침을 누르고 있을 수 없다. */
 const REFRESH_MS = 15_000;
 
-const LINK_BADGE: Record<string, { status: 'success' | 'processing' | 'error'; text: string }> = {
-  ok: { status: 'success', text: '연계 정상' },
-  healthy: { status: 'success', text: '연계 정상' },
-  waiting: { status: 'processing', text: '연계 대기' },
-  pending: { status: 'processing', text: '연계 대기' },
-  down: { status: 'error', text: '연계 끊김' },
-  disconnected: { status: 'error', text: '연계 끊김' },
-};
+/* ★ 표시 이름은 **사전 한 곳**에서만 온다 (P-27 · `../copy`). 화면마다 자기 표를 들면
+   같은 상태가 화면마다 다른 말로 불리고, 그중 하나는 반드시 늙는다. */
 
 export default function ControlDashboard() {
   const navigate = useNavigate();
@@ -60,7 +55,6 @@ export default function ControlDashboard() {
   );
 
   const link = frame.data?.link;
-  const badge = link ? LINK_BADGE[link.status] ?? { status: 'error' as const, text: `연계 ${link.status}` } : null;
 
   return (
     <Main>
@@ -73,11 +67,13 @@ export default function ControlDashboard() {
           </Col>
           <Col>
             <Space size="large">
-              {/* ③ 연계 상태 — **끊김이어도 아래는 계속 동작한다** */}
-              {badge && (
-                <span title={link?.reason}>
-                  <Badge status={badge.status} text={badge.text} />
-                </span>
+              {/* ③ 연계 상태 — **끊김이어도 아래는 계속 동작한다**
+
+                  ★ [P-27 · 2026-09-25 사고] 앞판은 `title={link.reason}` 으로 서버가 준
+                    사유를 **툴팁에** 걸었다. 그 문단에는 상대사명·계약번호·조항이 들어
+                    있었고, 마우스를 얹으면 그대로 떴다. 지금 화면이 받는 것은 상태 하나다. */}
+              {link && (
+                <Badge status={linkStatusBadge(link.status)} text={linkStatusLabel(link.status)} />
               )}
               <Text type="secondary">
                 {frame.loadedAt ? `갱신 ${stamp(frame.loadedAt)}` : ''}

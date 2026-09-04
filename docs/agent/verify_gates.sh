@@ -765,9 +765,79 @@ gate_contract_route_reach() {
   esac
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# GATE: ui-secrets — **화면이 우리 서랍을 열어 보여 주는가** (P-27 · SEC-17)
+#
+# ★ **출생 표본** (D-310): 2026-09-25, `preset=system` 화면의 「연계 상태」 상자가
+#   상대사명·계약번호·조항·미이행 사실을 관제요원 앞에 문단으로 그리고 있었다.
+#   화면은 정상으로 보였다 — 오류도, 빈 칸도, 느림도 없었다. **잘 도는 화면이 새고 있었다.**
+#   그래서 이 게이트는 V 의 **첫 판정기**다: 다른 것이 다 초록이어도 여기서 멈춘다.
+#
+# ⚠ 두 면 중 프런트만 본다(호스트에서 도는 갈래). API 응답 갈래는 서버가 필요하고,
+#   그것은 컨테이너에서 `--api` 로 잰다 — **못 잰 것을 초록으로 세지 않는다.**
+gate_ui_secrets() {
+  # ★ **출생 표본** (D-310) — `verify_ui_secrets.py::BIRTH_SAMPLE` 에 그날 화면에
+  #   실제로 떠 있던 문단의 첫 줄이 박혀 있다(상대사명 · 계약번호 · 조항).
+  #   자기시험이 그 문자열을 못 잡으면 이 게이트는 시작하지 못한다.
+  local out rc nfiles
+  if out=$($PY scripts/verify_ui_secrets.py --self-test 2>&1); then
+    pass "판정기 자기시험 통과 (양성 1 · 음성 3 — 주석은 잡지 않는다)"
+  else
+    fail "판정기 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_ui_secrets.py --list 2>&1); rc=$?
+  nfiles=$(echo "$out" | grep -o "\[입력\] [0-9]*개 프런트 파일" | tr -dc "0-9")
+  inputs "${nfiles:-0}" "프런트 렌더 문자열 (주석 걷어낸 뒤 · 패턴 6종)"     "프런트 파일을 한 개도 못 읽었다 — 0건 검사와 검사 못 함은 다르다" || return 1
+
+  if [ $rc -eq 0 ]; then
+    pass "렌더 문자열에 상대사명·계약번호·조항·내부 경로 0건"
+    return 0
+  fi
+  fail "화면이 우리 서랍을 열었다 — 사용자 본문은 사용자 언어로만"
+  echo "$out" | sed 's/^/        /'
+  return 1
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GATE: ui-copy — **화면이 우리 대장의 말로 말하는가** (P-29 · UX-20)
+#
+# ★ 래칫이다(D-311). 오늘의 빚 18건은 이름으로 잠겨 있고, 이 게이트가 막는 것은
+#   **새로 생기는 것**이다. 처음부터 exit 1 로 두면 사람이 게이트를 끄고,
+#   꺼진 게이트는 없는 게이트보다 나쁘다.
+gate_ui_copy() {
+  # ★ **출생 표본** (D-310) — `verify_ui_copy.py::BIRTH_SAMPLES` 셋이 그날 화면의
+  #   제목과 문단 그대로다: 「UX-17 …」 · 「`response_state=occurred` 로 걸러 준 …」 ·
+  #   「data_source = live」. 셋 중 하나라도 못 잡으면 자기시험이 빨개진다.
+  local out rc nfiles
+  if out=$($PY scripts/verify_ui_copy.py --self-test 2>&1); then
+    pass "판정기 자기시험 통과 (양성 3 — 그날 화면의 제목·문단 그대로)"
+  else
+    fail "판정기 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_ui_copy.py 2>&1); rc=$?
+  nfiles=$(echo "$out" | grep -o "\[입력\] [0-9]*개 화면 파일" | tr -dc "0-9")
+  inputs "${nfiles:-0}" "화면 파일의 사용자 본문 (문자열 몸통·JSX 본문)"     "화면 파일을 한 개도 못 읽었다" || return 1
+
+  echo "$out" | grep -E "^\[COPY\] 잔여" | sed 's/^/        /'
+  case $rc in
+    0) pass "$(echo "$out" | tail -1)"; return 0 ;;
+    2) skip "기준선이 없다" "(python scripts/verify_ui_copy.py --freeze)"; return 0 ;;
+    *) fail "새로 생긴 대장 언어가 있다 — 사전에 없는 문구는 만들지 않는다"
+       echo "$out" | sed 's/^/        /'; return 1 ;;
+  esac
+}
+
 _dispatch_gate() {
   case "$1" in
     secrets)            gate_secrets ;;
+    ui-secrets)         gate_ui_secrets ;;
+    ui-copy)            gate_ui_copy ;;
     bypass)             gate_bypass ;;
     isolation)          gate_isolation ;;
     model-inheritance)  gate_model_inheritance ;;
@@ -807,7 +877,8 @@ run_gate() {
   return $rc
 }
 
-ALL_GATES=(secrets bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach)
+# ★ ui-secrets 가 secrets 바로 뒤다 — **V 의 첫 판정기**(09-26 §6).
+ALL_GATES=(secrets ui-secrets ui-copy bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {
