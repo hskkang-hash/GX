@@ -1,0 +1,30 @@
+{
+  "commit": "a3f63d149017eb907e29c4f63ad5190978e41f7d",
+  "commit_source": "GX_COMMIT 환경변수",
+  "bundle": {
+    "source": "서버 http://localhost:3002",
+    "assets": [
+      "/assets/index-Cz6i1xpt.js",
+      "/assets/router-CWOBuQ2U.js"
+    ],
+    "commits": [
+      "a3f63d149017eb907e29c4f63ad5190978e41f7d"
+    ],
+    "html_only": []
+  },
+  "sidecar": null,
+  "token_prefix": "GX_COMMIT:",
+  "rows": [
+    {
+      "name": "번들이 자기 커밋을 말한다",
+      "verdict": "pass",
+      "why": "`GX_COMMIT:a3f63d1…` ← /assets/index-Cz6i1xpt.js, /assets/router-CWOBuQ2U.js · 서버 http://localhost:3002"
+    },
+    {
+      "name": "번들 해시 = 현재 커밋",
+      "verdict": "pass",
+      "why": "a3f63d1 = a3f63d1 — 서버가 내는 번들이 **현재 커밋**이다"
+    }
+  ],
+  "exit": 0
+}

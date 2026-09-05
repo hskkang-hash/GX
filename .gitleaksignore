@@ -41,3 +41,5 @@ docs/agent/evidence/P-64/배치명령_20260905_TF.md:gx-agent-docs-hex:36
 # 32자리 16진이 **md5 대조값**이다. 지운 파일을 gzip 으로 보관하고 「푼 것이 원본과
 # 같다」를 말하는 유일한 근거다 — 가리면 「치웠다」가 증거 없는 말이 된다. 눈으로 읽었다.
 docs/agent/evidence/OPS-07/멈춘_파일_정리.md:gx-agent-docs-hex:51
+# 같은 이유 — 조율자의 배치 완주 기록. 눈으로 읽었다: 커밋 `a3f63d149017eb907e29c4f63ad5190978e41f7d`.
+docs/agent/evidence/P-64/배치_완주_20260905_TF_조율자.md:gx-agent-docs-hex:8
