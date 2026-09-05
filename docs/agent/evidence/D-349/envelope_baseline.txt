@@ -7,5 +7,5 @@
 # 우리가 못 고친다. 전역 승격은 무증상 실패 후보 21곳을 건드린다(W0-18 §2-2).
 #
 # 형식:  <상태> <탭> <건수>
-authz_envelope	205
+authz_envelope	193
 body_status	0

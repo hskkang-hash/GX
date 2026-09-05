@@ -136,6 +136,14 @@ export default defineConfig({
     // 빈 값이면 `GX_COMMIT:` 이라는 글자가 번들에 **아예 안 남는다** — 말할 수 없는
     // 것을 말하지 않는 것이 이 자리의 정직이다.
     __GX_COMMIT_TOKEN__: JSON.stringify(GX_COMMIT_TOKEN),
+    // UX-25 / P-61 — **지원 창구 한 줄.** 버전 옆에 선다.
+    // 값은 배포하는 쪽이 준다(`GX_SUPPORT` 또는 `VITE_GX_SUPPORT`). 기본값을 두지
+    // 않는 이유는 하나다: 여기에 전화번호를 적으면 그 번호가 곧 저장소에 적힌
+    // 번호이고, 기관마다 다른 그 번호는 반드시 늙는다. 빈 값이면 화면은
+    // 「지원 창구 미등록」이라 적는다 — 지어낸 번호보다 낫다(`버전 알 수 없음`과 같은 규약).
+    __GX_SUPPORT__: JSON.stringify(
+      (process.env.GX_SUPPORT || process.env.VITE_GX_SUPPORT || '').trim(),
+    ),
   },
   ssr: {
     noExternal: ['react-dom'],

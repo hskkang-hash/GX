@@ -51,6 +51,7 @@ from ninja.errors import HttpError
 from ninja_extra import api_controller, route
 
 from common.inbound_api_key import JwtOrInboundKey
+from common.wall_token import JwtOrWallToken
 from common.tenant_roles import is_global_admin, is_tenant_admin
 from common.tenant_scope import TenantScope, tenant_scoped
 from core.api.v1.auth import CustomJWTAuth
@@ -323,7 +324,14 @@ class DsmAPI:
     #   조용히 404 가 되고 조용한 404 는 「기능이 없다」와 구별되지 않는다.
     #
     # ★ 둘 다 **읽기 전용**이다 — 쓰기 면이 아니므로 WRITE_PROBES 대상이 아니다(P-8).
-    @route.get("/events/queue", auth=JwtOrInboundKey())
+    # ★ [UX-24a · 턴 F · 차선 S] 월 표시 토큰이 닿는 **두 문 중 하나**.
+    #   `/wall` 이 20초마다 부르는 자리다(Wall.tsx:177). 선언한 라우트만 그 토큰을
+    #   받는다 — 선언 없는 라우트는 거절이 기본값이다(`common/wall_token.py`).
+    #   ⚠ 읽기뿐이다. 같은 토큰으로 쓰기를 때리면 미들웨어가 먼저 403 을 낸다.
+    @route.get("/events/queue", auth=JwtOrWallToken(
+        wall_token=True,
+        wall_reason="UX-24a 월 화면의 초점 큐 칸 — 세션 없이 읽는다 (P-62)",
+    ))
     @tenant_scoped(reason="UX-13 초점 큐 — 남의 테넌트 이벤트가 최상단에 오면 격리 실패다")
     def events_queue(self, request, since: datetime | None = None,
                      until: datetime | None = None, limit: int = 200):
@@ -1191,7 +1199,12 @@ class DsmAPI:
     # ═══════════════════════════════════════════════════════════════════════
     # UX-23 카메라 격자 (차선 C2 · 2026-09-05)
     # ═══════════════════════════════════════════════════════════════════════
-    @route.get("/cameras/pulse", auth=JwtOrInboundKey())
+    # ★ [UX-24a · 턴 F · 차선 S] 월 표시 토큰이 닿는 **두 문 중 둘째**.
+    #   `useCameraPulse.ts` 가 부르는 자리다. 읽기뿐이고, 아무것도 만들지 않는다.
+    @route.get("/cameras/pulse", auth=JwtOrWallToken(
+        wall_token=True,
+        wall_reason="UX-24a 월 화면의 카메라 상태 칸 — 세션 없이 읽는다 (P-62)",
+    ))
     @tenant_scoped(reason="UX-23 카메라 맥박 — 남의 테넌트 카메라의 생사가 나가면 "
                           "격리 실패다. 「어느 구역이 통째로 끊겼는가」는 재난 정보다")
     def camera_pulse(self, request):

@@ -95,168 +95,168 @@ screens:
   - route: /dsm/dashboard
     user_role: NO_ROLE
     scenario: SCREENS-1/1
-    captured_at: "2026-09-05T18:44:27"
+    captured_at: "2026-09-05T21:19:15"
     file: SCREENS-1/NO_ROLE/dsm_dashboard.png
     data_source: 시드
   - route: /dsm/events
     user_role: NO_ROLE
     scenario: SCREENS-1/2
-    captured_at: "2026-09-05T18:44:35"
+    captured_at: "2026-09-05T21:19:22"
     file: SCREENS-1/NO_ROLE/dsm_events.png
     data_source: 시드
-  - route: /dsm/events/9711
+  - route: /dsm/events/9713
     user_role: NO_ROLE
     scenario: SCREENS-1/3
-    captured_at: "2026-09-05T18:44:42"
-    file: SCREENS-1/NO_ROLE/dsm_events_9711.png
+    captured_at: "2026-09-05T21:19:30"
+    file: SCREENS-1/NO_ROLE/dsm_events_9713.png
     data_source: 시드
   - route: /device
     user_role: NO_ROLE
     scenario: SCREENS-1/4
-    captured_at: "2026-09-05T18:44:50"
+    captured_at: "2026-09-05T21:19:38"
     file: SCREENS-1/NO_ROLE/device.png
     data_source: 시드
   - route: /roles
     user_role: NO_ROLE
     scenario: SCREENS-1/5
-    captured_at: "2026-09-05T18:44:58"
+    captured_at: "2026-09-05T21:19:46"
     file: SCREENS-1/NO_ROLE/roles.png
     data_source: 시드
   - route: /menu
     user_role: NO_ROLE
     scenario: SCREENS-1/6
-    captured_at: "2026-09-05T18:45:05"
+    captured_at: "2026-09-05T21:19:53"
     file: SCREENS-1/NO_ROLE/menu.png
     data_source: 시드
   - route: /configuration-management
     user_role: NO_ROLE
     scenario: SCREENS-1/7
-    captured_at: "2026-09-05T18:45:13"
+    captured_at: "2026-09-05T21:20:01"
     file: SCREENS-1/NO_ROLE/configuration-management.png
     data_source: 시드
   - route: /profile
     user_role: NO_ROLE
     scenario: SCREENS-1/8
-    captured_at: "2026-09-05T18:45:21"
+    captured_at: "2026-09-05T21:20:09"
     file: SCREENS-1/NO_ROLE/profile.png
     data_source: 시드
   - route: /surveillance-dashboard
     user_role: NO_ROLE
     scenario: SCREENS-1/9
-    captured_at: "2026-09-05T18:45:30"
+    captured_at: "2026-09-05T21:20:19"
     file: SCREENS-1/NO_ROLE/surveillance-dashboard.png
     data_source: 시드
   - route: /survey-profile
     user_role: NO_ROLE
     scenario: SCREENS-1/10
-    captured_at: "2026-09-05T18:45:37"
+    captured_at: "2026-09-05T21:20:27"
     file: SCREENS-1/NO_ROLE/survey-profile.png
     data_source: 시드
   - route: /media-data
     user_role: NO_ROLE
     scenario: SCREENS-1/11
-    captured_at: "2026-09-05T18:45:45"
+    captured_at: "2026-09-05T21:20:35"
     file: SCREENS-1/NO_ROLE/media-data.png
     data_source: 시드
   - route: /flight-log-analysis
     user_role: NO_ROLE
     scenario: SCREENS-1/12
-    captured_at: "2026-09-05T18:45:53"
+    captured_at: "2026-09-05T21:20:43"
     file: SCREENS-1/NO_ROLE/flight-log-analysis.png
     data_source: 시드
   - route: /multi-stream-monitor
     user_role: NO_ROLE
     scenario: SCREENS-1/13
-    captured_at: "2026-09-05T18:46:01"
+    captured_at: "2026-09-05T21:20:51"
     file: SCREENS-1/NO_ROLE/multi-stream-monitor.png
     data_source: 시드
   - route: /operation-settings
     user_role: NO_ROLE
     scenario: SCREENS-1/14
-    captured_at: "2026-09-05T18:46:08"
+    captured_at: "2026-09-05T21:20:59"
     file: SCREENS-1/NO_ROLE/operation-settings.png
     data_source: 시드
   - route: /report-template
     user_role: NO_ROLE
     scenario: SCREENS-1/15
-    captured_at: "2026-09-05T18:46:16"
+    captured_at: "2026-09-05T21:21:07"
     file: SCREENS-1/NO_ROLE/report-template.png
     data_source: 시드
   - route: /notam
     user_role: NO_ROLE
     scenario: SCREENS-1/16
-    captured_at: "2026-09-05T18:46:24"
+    captured_at: "2026-09-05T21:21:14"
     file: SCREENS-1/NO_ROLE/notam.png
     data_source: 시드
   - route: /dsm/events?preset=unhandled
     user_role: NO_ROLE
     scenario: SCREENS-1/17
-    captured_at: "2026-09-05T18:46:32"
+    captured_at: "2026-09-05T21:21:21"
     file: SCREENS-1/NO_ROLE/dsm_events_preset_unhandled.png
     data_source: 시드
   - route: /dsm/events?preset=recent
     user_role: NO_ROLE
     scenario: SCREENS-1/18
-    captured_at: "2026-09-05T18:46:40"
+    captured_at: "2026-09-05T21:21:30"
     file: SCREENS-1/NO_ROLE/dsm_events_preset_recent.png
     data_source: 시드
   - route: /dsm/events?preset=mine
     user_role: NO_ROLE
     scenario: SCREENS-1/19
-    captured_at: "2026-09-05T18:46:47"
+    captured_at: "2026-09-05T21:21:37"
     file: SCREENS-1/NO_ROLE/dsm_events_preset_mine.png
     data_source: 시드
   - route: /dsm/events?preset=system
     user_role: NO_ROLE
     scenario: SCREENS-1/20
-    captured_at: "2026-09-05T18:46:55"
+    captured_at: "2026-09-05T21:21:44"
     file: SCREENS-1/NO_ROLE/dsm_events_preset_system.png
     data_source: 시드
-  - route: /dsm/events/9711
+  - route: /dsm/events/9713
     user_role: NO_ROLE
     scenario: SCREENS-1/21
-    captured_at: "2026-09-05T18:47:03"
+    captured_at: "2026-09-05T21:21:52"
     file: SCREENS-1/NO_ROLE/dsm_events_id_verdict_panel.png
     data_source: 시드
   - route: /dsm/queue
     user_role: NO_ROLE
     scenario: SCREENS-1/22
-    captured_at: "2026-09-05T18:47:11"
+    captured_at: "2026-09-05T21:22:01"
     file: SCREENS-1/NO_ROLE/dsm_queue_focus.png
     data_source: 시드
   - route: /dsm/drill
     user_role: NO_ROLE
     scenario: SCREENS-1/23
-    captured_at: "2026-09-05T18:47:18"
+    captured_at: "2026-09-05T21:22:09"
     file: SCREENS-1/NO_ROLE/dsm_drill_mode.png
     data_source: 시드
   - route: /dsm/cameras/import
     user_role: NO_ROLE
     scenario: SCREENS-1/24
-    captured_at: "2026-09-05T18:47:26"
+    captured_at: "2026-09-05T21:22:17"
     file: SCREENS-1/NO_ROLE/dsm_cameras_import_dryrun.png
     data_source: 시드
   - route: /dsm/cameras/address
     user_role: NO_ROLE
     scenario: SCREENS-1/25
-    captured_at: "2026-09-05T18:47:33"
+    captured_at: "2026-09-05T21:22:25"
     file: SCREENS-1/NO_ROLE/dsm_cameras_address_fill.png
     data_source: 시드
   - route: /start?role=OPERATOR
     user_role: NO_ROLE
     scenario: SCREENS-1/26
-    captured_at: "2026-09-05T18:47:41"
+    captured_at: "2026-09-05T21:22:32"
     file: SCREENS-1/NO_ROLE/start_onboarding.png
     data_source: 시드
   - route: /m/inbox
     user_role: NO_ROLE
     scenario: SCREENS-1/27
-    captured_at: "2026-09-05T18:47:48"
+    captured_at: "2026-09-05T21:22:40"
     file: SCREENS-1/NO_ROLE/m_inbox_m1.png
     data_source: 시드
-  - route: /m/events/9711
+  - route: /m/events/9713
     user_role: NO_ROLE
     scenario: SCREENS-1/28
-    captured_at: "2026-09-05T18:47:56"
+    captured_at: "2026-09-05T21:22:47"
     file: SCREENS-1/NO_ROLE/m_events_id_m3_field_reply.png
     data_source: 시드

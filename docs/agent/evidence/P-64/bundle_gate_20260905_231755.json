@@ -1,0 +1,30 @@
+{
+  "commit": "cce7f7beac78b21ccbcaef84c3c6a38f53e135f6",
+  "commit_source": "GX_COMMIT 환경변수",
+  "bundle": {
+    "source": "서버 http://localhost:3002",
+    "assets": [
+      "/assets/index-Duku5zsy.js",
+      "/assets/router-CWOBuQ2U.js"
+    ],
+    "commits": [
+      "cce7f7beac78b21ccbcaef84c3c6a38f53e135f6"
+    ],
+    "html_only": []
+  },
+  "sidecar": null,
+  "token_prefix": "GX_COMMIT:",
+  "rows": [
+    {
+      "name": "번들이 자기 커밋을 말한다",
+      "verdict": "pass",
+      "why": "`GX_COMMIT:cce7f7b…` ← /assets/index-Duku5zsy.js, /assets/router-CWOBuQ2U.js · 서버 http://localhost:3002"
+    },
+    {
+      "name": "번들 해시 = 현재 커밋",
+      "verdict": "pass",
+      "why": "cce7f7b = cce7f7b — 서버가 내는 번들이 **현재 커밋**이다"
+    }
+  ],
+  "exit": 0
+}

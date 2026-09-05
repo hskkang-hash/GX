@@ -274,6 +274,23 @@ python scripts/verify_authn_paths.py
 기준선 파일은 손으로 고치지 않는다(도구가 만든다). **사유는 여기 남긴다** —
 다음에 그 한 줄을 보는 사람이 「왜 예외인가」를 여기서 읽게.
 
+### 2026-09-05 턴 F — 기준선 146 → 150 (+4) · 사유
+
+`backend/tests/test_s_wall_token.py` 의 쓰기 탐침 목록이 수식어 없는 `api_key` 를 넷 썼다.
+넷 다 **제품의 실제 URL 문자열**이다:
+
+```
+("POST",   "/api/dsm/settings/api-keys")          ("DELETE", "/api/dsm/settings/api-keys/1")
+("POST",   "/api/dsm/settings/api-keys/1/rotate") ("GET",    "/api/dsm/settings/api_keys")
+```
+
+이름을 바꾸면 **두드릴 자리가 달라진다** — 그러면 이 시험은 있지도 않은 문을 두드리고
+초록이 된다. §7 이 이미 같은 판정을 한 자리(하이픈 URL 과 밑줄 영역 이름이 다른 것,
+그 다름이 §3 의 절반이다)와 정확히 같은 이유다. `--freeze` 로 올렸다.
+
+★ 여기 남는 것은 「바꾸면 안 되는 자리라서 얼렸다」는 **판정**이지 「혼동이 없다」는
+주장이 아니다.
+
 ### 2026-09-19 — 기준선 139 → 142 (+3) · 사유
 
 새 판정기 `scripts/verify_contract_route_reach.py` 가 수식어 없는 `api_key` 를 셋 썼다.
@@ -353,3 +370,122 @@ docker exec gx-shell sh -c 'cd /app && DJANGO_SETTINGS_MODULE=config.settings \
 `tests/test_s_session_limit.py::test_dj_core_admits_exactly_one_session` 은 **결함을 고정한다**
 (characterization · `test_auth_surface.py` 와 같은 방식). dj-core 가 여러 세션을 받게 되는 날
 그 시험이 빨개지고, **그날이 이 절을 다시 여는 날**이다.
+
+---
+
+## 9. UX-24a 월(wall) 표시 토큰 — **인증 경로가 하나 늘었다** (2026-09-05 턴 F · 차선 S)
+
+★ **이 절을 먼저 쓰고 지었다** (P-15 · 지시서 §4 함정 ③). 아래 표의 실측은 지은 뒤에 채웠다.
+
+세종 판정 **P-62**: 월 모드는 **세션이 필요 없다.** §8 이 못박은 대로 「2대가 동시에 산다」는
+`user.token` 한 칸(§0.4) 때문에 우리 층에서 못 연다(UX-24b). 그래서 **문을 쪼갰다** —
+월은 세션을 세우지 않는 **다른 문**으로 들어온다. 그러면 자리 데스크톱의 세션은
+**건드려지지 않는다.**
+
+### 9-1. 대장 행 — 인증 경로 **+1**
+
+| 면 | 어느 인증으로 들어가나 | 실측 | 근거 경로 |
+|---|---|---|---|
+| **월 대형 화면 `/wall`** | `X-GX-Wall-Token: gxwall1.…` — **로그인 문을 안 부른다** | 아래 §9-5 | `backend/common/wall_token.py` |
+
+이 문이 §0 의 「토큰이라 불리는 셋」에 **넷째**로 붙는다. 셋과 무엇이 다른지 먼저 적는다 —
+이름이 겹치면 다음 사람이 같은 것으로 읽는다(동음이의 · D-337):
+
+| 이름 | 어디에 실리나 | 누가 검증하나 | 세션을 세우나 | 쓰기 |
+|---|---|---|---|---|
+| **user.token**(세션) | `Authorization: Bearer <JWT>` | dj-core `CustomJWTAuth` | **세운다**(한 칸을 덮어쓴다) | 역할대로 |
+| **inbound_api_key** | `X-API-Key` | dj-core + `JwtOrInboundKey` | 아니다 | 선언한 라우트만 |
+| ~~JWT(pair)~~ | — | — | 제거됨(404 · D-411) | — |
+| ★ **월 표시 토큰** | **`X-GX-Wall-Token`** | **우리 층 `common/wall_token.py`** | **아니다 — `user.token` 을 한 자도 안 만진다** | **0** |
+
+★ **왜 JWT 로 만들지 않았나.** JWT 를 발급하면 그것은 `Authorization: Bearer` 자리에 실리고,
+  그 자리는 dj-core 가 본다 — 즉 **제품 전체의 문**이 된다. 월 한 장을 위해 문 하나를
+  통째로 여는 것이다. 그래서 **다른 헤더 · 다른 서명 열쇠 · 다른 검증기**로 갈랐다.
+  서명 열쇠는 `HMAC(SECRET_KEY, "gx.ux24a.wall-display-token.v1")` 이라 JWT 열쇠와
+  **같은 값이 될 수 없다**(영역 분리). 월 토큰을 `Authorization` 에 실어도 통하지 않고,
+  JWT 를 `X-GX-Wall-Token` 에 실어도 통하지 않는다.
+
+### 9-2. 이 토큰이 할 수 있는 것 — **읽기 둘뿐이다**
+
+`/wall` 화면이 실제로 부르는 문만 열었다(손으로 고른 것이 아니라 화면에서 읽었다):
+
+```
+GET /api/dsm/events/queue     Wall.tsx:177  dsmGet(dsmEndpoint.eventsQueue)
+GET /api/dsm/cameras/pulse    useCameraPulse.ts:CAMERA_PULSE_PATH
+```
+
+그 밖의 **모든 경로 · 모든 쓰기 메서드**는 이 토큰으로 열리지 않는다. 두 겹으로 막는다:
+
+| 겹 | 자리 | 무엇을 막나 |
+|---|---|---|
+| ① 미들웨어 | `WallTokenMiddleware` (`AccessGateMiddleware` **위**) | 쓰기 메서드 → **403** · 목록 밖 경로 → **403**. §0.4 라우트까지 **전부** 덮는다 |
+| ② 라우트 선언 | `JwtOrWallToken(wall_token=True, …)` — **두 라우트에만** | 선언 없는 라우트는 월 토큰을 **거절한다**(기본값 거절 · `JwtOrInboundKey` 와 같은 규약) |
+
+★ 한 겹이면 충분한가 — **아니다.** ②만 있으면 §0.4 안에서 새 라우트가 나는 날 그 자리가
+  선언 없이 열릴 수 있고, ①만 있으면 목록을 늘리는 손이 곧 개방이 된다. 둘을 함께 두면
+  **어느 한쪽을 늘려도 다른 쪽이 남는다.**
+
+### 9-3. 발급 주체와 회수 절차 — **HTTP 문이 아니다**
+
+| 물음 | 답 |
+|---|---|
+| 누가 발급하나 | **U5 시스템 관리자**가 서버에서 관리 명령으로. `python manage.py wall_token issue --user <계정>` |
+| 왜 HTTP 문이 아닌가 | 발급 문을 네트워크에 내면 그 문이 새 공격면이다. 월 토큰은 **한 달에 몇 번** 나가는 물건이고, 그런 것에 상시 열린 문을 주지 않는다(D-300 부작위) |
+| 유효기간 | **12시간 고정.** 발급기가 그것만 찍고, 검증기도 `exp-iat > 12h` 면 서명이 맞아도 거절한다 |
+| 어디에 남나 | 토큰 자체는 **어디에도 저장하지 않는다**(자체 완결 · 서명). 남는 것은 `jti`·발급 시각·대상 계정뿐 |
+| 어떻게 끊나(한 장) | `python manage.py wall_token revoke --jti <jti>` — 회수 목록(캐시 · 12시간)이 곧 만료된다. 토큰 수명보다 오래 들고 있을 이유가 없다 |
+| 어떻게 끊나(전부) | `python manage.py wall_token revoke --all` — 발급 시각 기준선(`WALL_TOKEN_EPOCH`)을 지금으로 올린다. **그 이전에 나간 것 전부**가 즉시 죽는다 |
+| 되돌리기 한 줄 | `settings.WALL_TOKEN_ENABLED = False` — 그러면 이 문은 통째로 401 이다 |
+
+⚠ **회수 목록은 캐시다.** 재기동하면 비고, 그러면 개별 회수는 사라진다 — 그 사실을 숨기지
+않는다. 그래서 **전부 끊기**(`--all`)는 캐시가 아니라 설정값(`WALL_TOKEN_EPOCH`)에 둔다.
+급한 회수는 `--all` 이 답이다.
+
+### 9-4. 「쓰기 0」은 주장이 아니라 시험이다
+
+`backend/tests/test_s_wall_token.py` 가 쓰기 문 여럿을 이 토큰으로 두드려 **전부 거부**되는지
+잰다. 목록에는 이 절이 연 두 읽기 문의 **바로 옆 쓰기 문**들이 들어간다 — 판정(`/review`)·
+접수(`/response`)·현장 회신(`/field-reply`)·설정 쓰기·§0.4 경로. 그리고 HTTP 로도 한 번
+더 두드린다(§9-5) — **단위 시험은 함수를 부르고 브라우저는 라우트를 때린다**(D-386).
+
+### 9-5. 실측 [2026-09-05 턴 F]
+
+명령 그대로와 원 출력은 `docs/agent/evidence/UX-24a/wall_token_20260905_TF.md` 에 있다.
+
+```
+docker exec gx-shell sh -c 'cd /app && DJANGO_SETTINGS_MODULE=config.settings   python /docs/agent/evidence/UX-24a/probe_wall_token.py'
+
+[UX-24a] 월 토큰 발급 jti=… 수명=43200초                      ← 12시간
+[UX-24a] ① 자리 로그인 success=True
+[UX-24a] ② 자리 화면 /api/dsm/events?limit=1 → 200
+[UX-24a] ③ 월 토큰으로 /api/dsm/events/queue?limit=5 → 200
+[UX-24a] ③ 월 토큰으로 /api/dsm/cameras/pulse      → 200
+[UX-24a] ④ **월을 켠 뒤** 자리 화면 → 200  (①과 같다)        ← ★ 닫는 조건
+[UX-24a] ⑤ user.token 이 바뀌었나 → **그대로다**              ← ★ 세션을 안 만졌다
+[UX-24a] ⑥ 쓰기 문 20개 두드림 → **거부 20** · 열림 0          ← ★ 쓰기 0
+[UX-24a] ⑦ 목록 밖 읽기 6개 → **거부 6** · 열림 0
+```
+
+회수도 **다른 프로세스에서** 재었다(발급은 관리 명령 · 검증은 runserver):
+
+```
+[REVOKE] 발급 직후            → 200
+[REVOKE] 회수 뒤(다른 프로세스) → 401
+```
+
+시험: `tests/test_s_wall_token.py` **30건 초록**
+(쓰기 탐침 20 · 목록 밖 읽기 8 · 영역 분리 · 부작위 전수 · 대조군 「로그인으로 월을 켜면
+자리가 죽는다」 포함). 게이트: `scripts/verify_authn_paths.py` **exit 0**, 면 ⑤ 가 늘었다.
+
+⚠ **못 잰 것**
+- 브라우저로 실제 `/wall` 을 띄워 본 것은 **아니다.** 앞단은 아직 이 헤더를 안 싣는다
+  (§9-6). 잰 것은 **서버 면**이다 — 문이 열리고, 자리가 살고, 쓰기가 0 이다.
+- 월 토큰 요청의 **응답 캐시** 상호작용: 미들웨어가 `request.user` 를 세워 캐시 열쇠가
+  그 사용자 것이 되게 했지만, 두 테넌트의 월 토큰으로 **교차 확인은 못 했다**(이 환경에
+  월 계정이 하나다).
+
+### 9-6. ⚠ 조율자 배선 필요 — 앞단이 이 헤더를 실어야 한다
+
+서버 면은 섰다. 남은 것은 `/wall` 화면이 요청에 `X-GX-Wall-Token` 을 싣는 일이다.
+지금은 안 싣는다 — **없는 배선을 있는 척하지 않는다.** 그때까지 `/wall` 은 종전대로
+로그인 세션으로 뜨고, 그러면 자리 화면이 죽는다(P-62 이전 상태).

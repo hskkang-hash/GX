@@ -1,0 +1,152 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "web": "http://localhost:3002",
+  "api": "http://localhost:8000",
+  "when": "2026-09-05T14:03:08",
+  "names_from_perf_load": {
+    "S1": "목록 — 관제요원이 가장 자주 여는 자리",
+    "S2": "대시보드 — 첫 화면 한 벌",
+    "S3": "단일 초점 — 가장 급한 하나"
+  },
+  "walks": {
+    "S1": {
+      "clicks": 1,
+      "ms": 11619,
+      "steps": [
+        {
+          "n": 1,
+          "what": "주소 /dsm/events",
+          "ok": true,
+          "ms": 6571,
+          "settle_ms": 5000,
+          "net_ms": 1571
+        },
+        {
+          "n": 2,
+          "what": "button 「미처리」 누름",
+          "ok": false,
+          "ms": 5048,
+          "settle_ms": 5000,
+          "net_ms": 48,
+          "why": "RuntimeError: 「미처리 — 대응 축이 아직 「발생」인 것」 가 화면에 없다 — 본문: '이벤트 목록\\n갱신 14:03 · 6초 전\\n요약 한 줄 · 지난 12시간\\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\\n미처리 보기\\n지난 12시간 보기\\n내 담당 보기\\n시스템 보기\\n등급 전체\\n유형 전체\\n새로고침\\n5건\\n?\\n미처리 — 아직 아무도 손대지 않은 것\\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니'"
+        }
+      ],
+      "completed": false,
+      "failed_at": 2,
+      "net_ms": 1619
+    },
+    "S2": {
+      "clicks": 1,
+      "ms": 11562,
+      "steps": [
+        {
+          "n": 1,
+          "what": "주소 /dsm/dashboard",
+          "ok": true,
+          "ms": 6520,
+          "settle_ms": 5000,
+          "net_ms": 1520
+        },
+        {
+          "n": 2,
+          "what": "글자 「전체 목록」 누름",
+          "ok": true,
+          "ms": 5042,
+          "settle_ms": 5000,
+          "net_ms": 42
+        }
+      ],
+      "completed": true,
+      "failed_at": null,
+      "net_ms": 1562
+    },
+    "S3": {
+      "clicks": 0,
+      "ms": 6593,
+      "steps": [
+        {
+          "n": 1,
+          "what": "주소 /dsm/queue",
+          "ok": false,
+          "ms": 6593,
+          "settle_ms": 5000,
+          "net_ms": 1593,
+          "why": "RuntimeError: 「지금 가장 급한 하나」 가 화면에 없다 — 본문: 'GuardianX는 대응 시간을 잽니다.\\n지금 처리할 것 — 가장 급한 하나\\n?\\n단축키\\n소리 켜기\\n갱신 14:03 · 0초 전 · 표기 시간대: Asia/Seoul\\n소리가 꺼져 있습니다\\n이벤트(원본 건수)\\n22\\n카드(5분 창 묶음)\\n6\\n같은 카메라·같은 유형이 5분 창 안에 연속으로 나면 카드 한 장에 「×N」으로 묶입니다. 이벤트는 접지 않습니다 — 위 '"
+        }
+      ],
+      "completed": false,
+      "failed_at": 1,
+      "net_ms": 1593
+    }
+  },
+  "console_errors": {
+    "login": [
+      "console.error: Failed to load resource: the server responded with a status of 404 (File not found)",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: New order notification WebSocket error: Event",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: 🚨 Partner callback WebSocket error: Event",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: 🚨 Partner callback WebSocket error: Event",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: 🚨 Partner callback WebSocket error: Event"
+    ],
+    "S1": [
+      "console.error: Failed to load resource: the server responded with a status of 404 (File not found)",
+      "console.error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: 🚨 Partner callback WebSocket error: Event",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: New order notification WebSocket error: Event",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: 🚨 Partner callback WebSocket error: Event",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: 🚨 Partner callback WebSocket error: Event"
+    ],
+    "S2": [
+      "console.error: Failed to load resource: the server responded with a status of 404 (File not found)",
+      "console.error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: 🚨 Partner callback WebSocket error: Event",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: New order notification WebSocket error: Event",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: 🚨 Partner callback WebSocket error: Event",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: 🚨 Partner callback WebSocket error: Event"
+    ],
+    "S3": [
+      "console.error: Failed to load resource: the server responded with a status of 404 (File not found)",
+      "console.error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+      "console.error: Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: New order notification WebSocket error: Event",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: 🚨 Partner callback WebSocket error: Event"
+    ]
+  },
+  "session_closed": true,
+  "not_walked": {
+    "S4": "부하용 혼합 시나리오 — 동시 호출이라 사람의 걸음으로 환산되지 않는다"
+  },
+  "api_failures": {
+    "S1": [
+      "422 GET http://localhost:8000/api/user-groups/gen-schema?raw=false"
+    ],
+    "S2": [
+      "422 GET http://localhost:8000/api/user-groups/gen-schema?raw=false"
+    ],
+    "S3": [
+      "422 GET http://localhost:8000/api/user-groups/gen-schema?raw=false",
+      "503 GET http://localhost:8000/api/dsm/events/4805/snapshot"
+    ]
+  },
+  "session_lost": false
+}

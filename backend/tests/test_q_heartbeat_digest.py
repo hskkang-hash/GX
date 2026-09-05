@@ -147,6 +147,40 @@ class HeartbeatDigestTest(K2Fixture):
         self.assertEqual(3, result.events_yesterday)
         self.assertEqual((1, 1), (result.cameras_alive, result.cameras_total))
 
+    def test_body_says_whether_the_audit_trail_is_being_written(self) -> None:
+        """★ P-65 — 「정상」이라는 편지는 **그 정상을 증명할 기록이 쓰이고 있을 때만** 참이다.
+
+        [실측 턴 E] celery 워커가 0개이던 사흘 동안 감사 쓰기 12,468건이 큐에 갇혀
+        있었고, 그동안에도 이 편지는 「정상」이라고 나갈 수 있었다. 본문에 한 줄이
+        있어야 받는 사람이 **증거가 밀리고 있다**는 것을 안다.
+        """
+        from kernels.k2_notify import send_heartbeat_digest
+
+        result = send_heartbeat_digest(scope=self.scope_a, now=_at_eight())
+        self.assertIn("감사 기록 대기", result.body,
+                      "감사 큐가 밀리는 것을 본문이 말하지 않으면, 사흘이 지나도 "
+                      "받는 사람은 「정상」만 읽는다 (P-65)")
+
+    def test_the_audit_line_says_the_numbers_when_it_can_measure(self) -> None:
+        """★ **양성과 음성을 함께** — 잴 수 있으면 수를 적고, 못 재면 「못 쟀다」다.
+
+        브로커가 없는 시험 환경에서도 이 줄은 서야 한다. 그러나 **0건이라고 적으면
+        안 된다** — 못 잰 것과 0은 다른 사실이다 (D-301).
+        """
+        from common.audit_queue import digest_line, judge_lag
+
+        # 음성: 밀린 것이 0건이면 지연도 0이다
+        self.assertEqual(0.0, judge_lag(0, 0.0, 99999)[0])
+        # 양성: 턴 E 의 실측 수 — 밀렸고 아무것도 안 쓰였다 → 하한을 적는다
+        self.assertEqual(259200.0, judge_lag(12468, 0.0, 259200)[0])
+        # 회색: 브로커에 못 닿으면 None 이다. 0이 아니다
+        self.assertIsNone(judge_lag(None, 1.0, 1)[0])
+
+        line = digest_line({"backlog": 12468, "lag_seconds": 259200.0, "errors": {}})
+        self.assertIn("12468", line)
+        blind = digest_line({"backlog": None, "errors": {"backlog": "ConnectionError"}})
+        self.assertIn("못 쟀다", blind)
+
     def test_it_actually_reaches_the_channel(self) -> None:
         """★ 「기록이 남았다」와 「나갔다」는 다른 사실이다 — 둘 다 잰다."""
         from django.core import mail

@@ -65,7 +65,7 @@ import re
 import subprocess
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
@@ -175,7 +175,14 @@ def judge(facts: dict) -> list[tuple[str, bool, str]]:
                         "이 판정기는 눈이 멀었다. `PROJECT_CONTAINERS` 에 넣어라"
                         % ", ".join(unlisted) if unlisted else "")))
 
-    forever = [s["name"] for s in sinks if s.get("retention") == "무한"]
+    # ★ [2026-09-05 · 턴 F] **「멈춘 파일」을 「무한 적재」로 세지 않는다.**
+    #   ②가 묻는 것은 「이것이 무한히 **자라는가**」다. 더 이상 아무도 쓰지 않는 파일은
+    #   자라지 않는다 — 그것을 무한 적재로 세면 **틀린 사유의 빨강**이 되고, 틀린 사유의
+    #   빨강은 고칠 방법이 없어서 다음 사람이 무시한다(D-301).
+    #   그렇다고 초록으로 덮지도 않는다: 안 자라는 것과 **없는 것**은 다르다.
+    #   남은 바이트는 아래 ⑤가 따로 빨갛게 센다. 색을 지우는 것이 아니라 **옮긴다.**
+    forever = [s["name"] for s in sinks
+               if s.get("retention") == "무한" and not s.get("stopped")]
     out.append(("② 보존 기간", not forever,
                 "%d개 전부에 보존 기간이 있다" % len(sinks) if not forever
                 else "**보존 기간이 없다**(무한 적재): %s" % ", ".join(forever)))
@@ -216,6 +223,25 @@ def judge(facts: dict) -> list[tuple[str, bool, str]]:
                          "그 문장은 `docs/agent/RUNBOOK_로컬기동.md` STEP 2A 에 적혀 있다 — "
                          "이 빨강은 **다음에 그 컨테이너를 띄우는 사람**이 지운다"
                          % ", ".join(naked)))
+
+    # ── ⑤ 멈춘 파일 잔재 — **안 자란다고 사라진 것은 아니다** (턴 F) ──────────
+    #
+    # ★ ②에서 옮겨 온 색이다. `gx-front.access.log` 가 그 자리였다:
+    #   앞단이 접근로그를 stdout 으로 옮긴 뒤에도 6.6MB 짜리 파일이 그대로 남았고,
+    #   판정기는 그것을 「보존 기간 없는 수집기」로 셌다. 틀린 사유였다 — 그 파일은
+    #   자라지 않는다. 그러나 **아무도 지우지 않으면 영원히 남는다**. 그러므로
+    #   빨강은 남기되 사유를 바꾼다: 「무한 적재」가 아니라 **「치우지 않은 잔재」**다.
+    #   지우는 방법이 한 줄이므로(아래 문장) 이 빨강은 **지울 수 있는 빨강**이다.
+    stopped = [s for s in sinks
+               if s.get("stopped") and (s.get("residue") or 0) > 0]
+    out.append(("⑤ 멈춘 파일 잔재", not stopped,
+                "멈춘 채 남은 파일이 없다" if not stopped
+                else "**더 이상 쓰이지 않는데 남아 있는 파일**: %s — 자라지는 않으나 "
+                     "아무도 안 지운다. 치우거나(`docker exec <컨테이너> rm <경로>`) "
+                     "다시 쓰기로 정해야 한다. **지우기 전에 그 안의 기록이 증거인지 "
+                     "먼저 묻는다**"
+                     % ", ".join("%s(%s바이트)" % (s["name"], format(s.get("residue") or 0, ","))
+                                 for s in stopped)))
     return out
 
 
@@ -388,6 +414,22 @@ def file_sinks() -> list[dict]:
     """
     sinks: list[dict] = []
     for cname, paths in CONTAINER_FILE_LOGS.items():
+        # ★ [턴 F] **창의 시작은 「지금」에서 뺀다 — 파일의 마지막 줄에서 빼지 않는다.**
+        #
+        #   종전 판은 `newest - 60분` 을 창으로 삼았다. 그러면 **석 달 전에 멈춘 파일도**
+        #   자기가 죽던 날의 마지막 한 시간을 「한 시간 치」로 내놓는다 — 즉 **안 자라는
+        #   파일이 자라는 것처럼 보인다.** [실측 2026-09-05] 이 판정기가 이미 멈춘
+        #   `gx-front.access.log` 에 대해 `189바이트/시간` 을 적고 있었다. 그 수는
+        #   지어낸 수가 아니라 **잘못된 창에서 잰 수**였고, 잘못된 창은 지어낸 수보다
+        #   나쁘다 — 실측 표시를 달고 나가기 때문이다.
+        #
+        #   「지금」은 **컨테이너에게 묻는다.** 호스트 시계를 쓰면 시계 어긋남이 창에
+        #   섞이고, 그 어긋남만큼 죽은 파일이 살아 보이거나 산 파일이 죽어 보인다.
+        rc, nowout, _ = docker("exec", cname, "sh", "-c", "date -u +%s")
+        try:
+            now_epoch = int(nowout.strip()) if rc == 0 else None
+        except ValueError:
+            now_epoch = None
         for path in paths:
             rc, out, _ = docker("exec", cname, "sh", "-c",
                                 "test -f %s && test ! -L %s && wc -c < %s"
@@ -397,29 +439,49 @@ def file_sinks() -> list[dict]:
             total = int(out.strip())
             rc, blob, _ = docker("exec", cname, "sh", "-c",
                                  "tail -c %d %s" % (FILE_TAIL_CAP, path), binary=True)
-            per_hour, note = None, ""
-            if rc == 0:
+            per_hour, note, age = None, "", None
+            if rc == 0 and now_epoch is not None:
                 lines = blob.decode("utf-8", "replace").splitlines(keepends=True)
                 stamped = [(t, len(l.encode("utf-8", "replace")))
                            for l in lines for t in (_parse_access_time(l),) if t]
                 if stamped:
-                    newest = max(t for t, _ in stamped)
-                    cutoff = newest - timedelta(minutes=WINDOW_MINUTES)
+                    now = datetime.fromtimestamp(now_epoch, tz=timezone.utc)
+                    cutoff = now - timedelta(minutes=WINDOW_MINUTES)
                     per_hour = sum(n for t, n in stamped if t >= cutoff)
+                    age = int((now - max(t for t, _ in stamped)).total_seconds())
                     if total > FILE_TAIL_CAP and stamped[0][0] >= cutoff:
                         note = " · 꼬리 %dMB 가 한 시간을 못 덮는다 — **이 이상**" % (
                             FILE_TAIL_CAP // (1024 * 1024))
+            elif rc == 0 and now_epoch is None:
+                note = " · 컨테이너 시계를 **못 읽었다** — 한 시간 치를 안 적는다"
+
+            # ★ **멈췄는가**를 사실로 적는다. 창 안에 한 바이트도 안 들어왔으면 멈춘 것이다.
+            #   못 쟀으면(`per_hour is None`) **멈췄다고 적지 않는다** — 회색은 초록이 아니다.
+            stopped = (per_hour == 0)
+            if stopped:
+                retention = "정지 · 잔재 %s바이트" % format(total, ",")
+                detail = ("컨테이너 **안의 파일**(총 %s바이트) — **더 이상 쓰이지 않는다**"
+                          "(마지막 줄이 %s초 전 · 최근 %d분 동안 0바이트 [실측]). "
+                          "자라지는 않으나 **아무도 안 지운다** — 잔재다%s"
+                          % (format(total, ","), format(age, ",") if age is not None else "?",
+                             WINDOW_MINUTES, note))
+            else:
+                retention = "무한"
+                detail = ("컨테이너 **안의 파일**(총 %s바이트) — `json-file` 회전 밖이다. "
+                          "`--log-opt` 도 compose 의 `logging` 도 여기 닿지 않고, "
+                          "`nginx:alpine` 에는 logrotate 가 없다%s"
+                          % (format(total, ","), note))
             sinks.append({
                 "name": "파일 · %s:%s" % (cname, path),
                 "kind": "file",
                 # ★ 도커 회전과 **무관하다.** `--log-opt` 는 stdout 에만 건다.
-                "retention": "무한",
+                "retention": retention,
                 "declared": False,
+                "stopped": stopped,
+                "residue": total if stopped else 0,
+                "idle_seconds": age,
                 "bytes_per_hour": per_hour,
-                "detail": ("컨테이너 **안의 파일**(총 %s바이트) — `json-file` 회전 밖이다. "
-                           "`--log-opt` 도 compose 의 `logging` 도 여기 닿지 않고, "
-                           "`nginx:alpine` 에는 logrotate 가 없다%s"
-                           % (format(total, ","), note)),
+                "detail": detail,
             })
     return sinks
 
@@ -468,6 +530,18 @@ try:
     #   한 인자로 부르면 TypeError 가 나고, 그 예외를 삼키면 「보존기간 없음」으로 보인다.
     out["retention_days"] = get_config_value_by_path(
         "System", "security.audit_log_retention_days", 90)
+    # ★ **선언과 코드 기본값을 가른다** (2026-09-05 · 턴 F)
+    #
+    #   `get_config_value_by_path(..., 90)` 은 **설정이 없어도 90을 돌려준다.** 그래서
+    #   종전 판은 「보존 90일이 **선언돼 있다**」고 적었다 — 그런데 그 90은 고객이 정한
+    #   값이 아니라 우리 코드의 기본값이었다. 파기는 되돌릴 수 없는 일이고,
+    #   되돌릴 수 없는 일을 **아무도 정하지 않은 수**로 하는 것이 P-57 함정 ㉡ 그대로다.
+    #
+    #   가르는 법은 하나다: **아무도 안 쓸 표시값**을 기본값으로 넣고 그것이 그대로
+    #   돌아오는지 본다. 그대로면 그 자리에 값이 **없는 것**이다.
+    _SENTINEL = "__GX_UNDECLARED__"
+    out["retention_declared"] = get_config_value_by_path(
+        "System", "security.audit_log_retention_days", _SENTINEL) != _SENTINEL
 except Exception as exc:
     out["retention_days_error"] = "%s: %s" % (type(exc).__name__, exc)
 
@@ -662,6 +736,31 @@ def judge_db_retention(info: dict) -> tuple[str | None, str]:
             retention = "%s일 (beat %s · 워커 %d · 마지막 발화 %d초 전)" % (
                 days, ", ".join(beat), len(workers), age)
             extra = " · 워커 %s · 켜진 파기 항목 %d개" % (", ".join(workers), len(on))
+
+    # ── **보존 일수를 누가 정했는가** — 마지막에 덮어쓴다 (2026-09-05 · 턴 F) ──
+    #
+    # ★ 왜 위 갈래들 **뒤에** 두는가. 앞에 두면 「브로커에 못 닿았다」 같은 **회색**을
+    #   빨강으로 덮어 버린다 — 못 잰 것을 잰 것처럼 만드는 것이고, 이 판정기가 가장
+    #   피하려는 짓이다(D-301). 그래서 순서는: 먼저 **잴 수 있었는가**, 그 다음에
+    #   **잰 것이 무엇인가**. 회색은 회색으로 두고 사유만 덧붙인다.
+    #
+    # ★ 무엇을 덮는가. [실측 2026-09-05 · 턴 F] `AdminConfig::System` 에
+    #   `security.audit_log_retention_days` 가 **없다** — 표시값 탐침이 표시값을 그대로
+    #   돌려줬다. 즉 「감사 로그 90일 보존」은 **아무도 선언한 적이 없는 코드 기본값**이다.
+    #   그리고 dj-core 의 `purge_old_audit_logs` 는 `_base_manager` 의 평범한
+    #   `QuerySet.delete()` 로 지운다 — safedelete 정책 밖의 **하드 삭제**다
+    #   [실측: `_base_manager`=Manager · qs=QuerySet]. 그러므로 지금 파기를 켜면
+    #   「아무도 정하지 않은 수로 감사 기록을 되돌릴 수 없게 지운다」가 된다.
+    #   **선언이 먼저다**(P-57 함정 ㉡ · 지시서 §4). 선언 없는 초록은 내지 않는다.
+    if info.get("retention_declared") is False:
+        note = (" · ⚠ 보존 일수가 **어디에도 선언되지 않았다** — %s일은 "
+                "`purge_old_audit_logs` 의 **코드 기본값**이고 `AdminConfig::System` "
+                "에 `security.audit_log_retention_days` 가 없다(표시값 탐침 [실측]). "
+                "이 상태로 파기를 켜면 **아무도 정하지 않은 수로 감사 기록을 하드 "
+                "삭제**하게 된다. 먼저 선언하고, 그 다음에 켠다" % days)
+        extra = extra + note
+        if retention is not None:              # 회색은 회색으로 둔다
+            retention = "무한"
     return retention, extra
 
 
@@ -682,19 +781,19 @@ def self_test() -> int:
         {"name": "a", "kind": "docker", "retention": "무한",
          "declared": True, "bytes_per_hour": 100}]}
     r = judge(forever)
-    ok &= [p for _, p, _ in r] == [True, False, True, True]
+    ok &= [p for _, p, _ in r] == [True, False, True, True, True]
 
     unknown = {"declarations": {}, "sinks": [
         {"name": "a", "kind": "docker", "retention": None,
          "declared": True, "bytes_per_hour": 100}]}
     r = judge(unknown)
-    ok &= [p for _, p, _ in r] == [False, True, True, True]
+    ok &= [p for _, p, _ in r] == [False, True, True, True, True]
 
     blind = {"declarations": {}, "sinks": [
         {"name": "a", "kind": "docker", "retention": "10m × 3",
          "declared": True, "bytes_per_hour": None}]}
     r = judge(blind)
-    ok &= [p for _, p, _ in r] == [True, True, False, True]
+    ok &= [p for _, p, _ in r] == [True, True, False, True, True]
 
     # ── ④ **이번 판의 요점** ─────────────────────────────────────────────
     #   ㉠ compose 선언은 없지만 **상한은 걸려 있다**(`docker run --log-opt`).
@@ -706,14 +805,14 @@ def self_test() -> int:
         {"name": "a", "kind": "docker", "retention": "10m × 3",
          "declared": False, "bytes_per_hour": 1}]}
     r = judge(applied_not_declared)
-    ok &= [p for _, p, _ in r] == [True, True, True, True]
+    ok &= [p for _, p, _ in r] == [True, True, True, True, True]
 
     #   ㉠′ 그러나 **선언도 없고 상한도 없으면** 빨강이다 — 아무도 안 막았다.
     naked_and_unlimited = {"declarations": {}, "sinks": [
         {"name": "a", "kind": "docker", "retention": "무한",
          "declared": False, "bytes_per_hour": 1}]}
     r = judge(naked_and_unlimited)
-    ok &= [p for _, p, _ in r] == [True, False, True, False]
+    ok &= [p for _, p, _ in r] == [True, False, True, False, True]
 
     #   ㉠″ ⑤ **목록 신선도** — 떠 있는데 목록에 없는 컨테이너가 있으면 ①은 초록이
     #      될 수 없다. 나머지가 다 멀쩡해도 그렇다: **여섯을 세고 「전수」라고 적는**
@@ -723,7 +822,7 @@ def self_test() -> int:
                   "sinks": [{"name": "a", "kind": "docker", "retention": "10m × 5",
                              "declared": True, "bytes_per_hour": 1}]}
     r = judge(stale_list)
-    ok &= [p for _, p, _ in r] == [False, True, True, True]
+    ok &= [p for _, p, _ in r] == [False, True, True, True, True]
 
     #   ㉠‴ **음성 대조** — 목록 밖이 없으면 같은 표가 초록이다(위 빨강이 다른 데서
     #      온 것이 아님을 못박는다)
@@ -736,14 +835,39 @@ def self_test() -> int:
         {"name": "a", "kind": "docker", "retention": "무한",
          "declared": True, "bytes_per_hour": 1}]}
     r = judge(declared_not_applied)
-    ok &= [p for _, p, _ in r] == [True, False, True, True]
+    ok &= [p for _, p, _ in r] == [True, False, True, True, True]
 
     #   ㉢ compose 를 **못 읽었다** → ④는 초록이 아니다. 회색은 초록이 아니다(D-301)
     cannot_read = {"declarations": None, "sinks": [
         {"name": "a", "kind": "docker", "retention": "10m × 3",
          "declared": True, "bytes_per_hour": 1}]}
     r = judge(cannot_read)
-    ok &= [p for _, p, _ in r] == [True, True, True, False]
+    ok &= [p for _, p, _ in r] == [True, True, True, False, True]
+
+    # ── ⑤ **멈춘 파일** — 양성과 음성을 함께 (턴 F) ─────────────────────────
+    #   ㉠ **자라는** 파일이고 상한이 없다 → ②가 빨갛고 ⑤는 초록.
+    #      (「무한 적재」는 자라는 것에만 쓴다)
+    growing_file = {"declarations": {}, "sinks": [
+        {"name": "f", "kind": "file", "retention": "무한", "declared": False,
+         "stopped": False, "residue": 0, "bytes_per_hour": 4536}]}
+    r = judge(growing_file)
+    ok &= [p for _, p, _ in r] == [True, False, True, True, True]
+
+    #   ㉡ **멈춘** 파일이 6.6MB 남아 있다 → ②는 초록(안 자란다), ⑤가 빨갛다.
+    #      ★ 이 표본이 이번 판의 요점이다. 색을 **지우는** 것이 아니라 **옮긴다** —
+    #        ②와 ⑤가 동시에 초록이 되는 길은 **파일을 치우는 것** 하나뿐이다.
+    stopped_file = {"declarations": {}, "sinks": [
+        {"name": "f", "kind": "file", "retention": "정지 · 잔재 6,612,367바이트",
+         "declared": False, "stopped": True, "residue": 6612367,
+         "bytes_per_hour": 0}]}
+    r = judge(stopped_file)
+    ok &= [p for _, p, _ in r] == [True, True, True, True, False]
+
+    #   ㉢ **음성 대조** — 그 파일을 치우면(수집기 목록에서 사라지면) 둘 다 초록이다.
+    gone = {"declarations": {}, "sinks": [
+        {"name": "a", "kind": "docker", "retention": "10m × 5",
+         "declared": True, "bytes_per_hour": 1}]}
+    ok &= all(p for _, p, _ in judge(gone))
 
     # ══ 「지우는 자리가 도는가」 다섯 갈래 — **양성과 음성을 함께** (턴 E) ══════
     #
@@ -766,16 +890,27 @@ def self_test() -> int:
                   "task": "core.logger.tasks.purge_old_audit_logs",
                   "enabled": False, "last_run_at": "None"}],
              "beat_last_run_at": "2026-09-05 08:52:59+00:00",
-             "beat_age_seconds": 12}
+             "beat_age_seconds": 12,
+             # ★ [실측 2026-09-05 · 턴 F] `AdminConfig::System` 에 이 열쇠가 **없다.**
+             #   90은 코드 기본값이다 — 표본에 그 사실을 넣지 않으면 아래 ②(스위치만
+             #   켜면 초록)가 **거짓 초록**이 된다.
+             "retention_declared": False}
 
     #   ① 출생 표본 그대로 → **빨강**. 워커가 있어도 항목이 꺼져 있으면 안 지워진다.
     ret, ex = judge_db_retention(BIRTH)
     ok &= (ret == "무한") and ("꺼져 있다" in ex)
 
-    #   ② **음성 대조** — 그 표본에서 **스위치만 켜면** 초록이어야 한다.
+    #   ②′ **스위치만 켜는 것으로는 부족하다** (턴 F). 보존 일수가 미선언이면
+    #      켜도 빨강이다 — 아무도 정하지 않은 수로 하드 삭제가 돌기 때문이다.
+    switched_on_undeclared = dict(
+        BIRTH, purge_beat_rows=[dict(r, enabled=True)
+                                for r in BIRTH["purge_beat_rows"]])
+    ret, ex = judge_db_retention(switched_on_undeclared)
+    ok &= (ret == "무한") and ("선언되지 않았다" in ex)
+
+    #   ② **음성 대조** — 스위치를 켜고 **보존 일수도 선언되면** 초록이다.
     #      (빨강이 다른 데서 온 것이 아님을 못박는다 · 불변 4)
-    on = dict(BIRTH, purge_beat_rows=[dict(r, enabled=True)
-                                      for r in BIRTH["purge_beat_rows"]])
+    on = dict(switched_on_undeclared, retention_declared=True)
     ret, ex = judge_db_retention(on)
     ok &= (ret is not None) and ret.startswith("90일") and ("무한" not in ret)
 
@@ -925,8 +1060,16 @@ def main() -> int:
     waiting = [s2["name"] for s2 in sinks
                if s2.get("kind") == "docker" and s2.get("declared")
                and s2.get("retention") == "무한"]
+    # ★ [턴 F] **꼬리말이 ④와 어긋나 있었다.** 종전에는 「선언이 없다」를 전부
+    #   「이 빨강은…」이라고 적었는데, ④는 그중 **상한이 실제로 걸린 것**을 빨강으로
+    #   세지 않는다. 그래서 ④가 초록인 날에도 꼬리말만 「빨강 3개」라고 말했다 —
+    #   보고서가 자기 판정과 어긋나는 자리다. 여기서도 ④와 **같은 기준으로** 가른다.
     naked = [s2["name"] for s2 in sinks
-             if s2.get("kind") == "docker" and not s2.get("declared")]
+             if s2.get("kind") == "docker" and not s2.get("declared")
+             and s2.get("retention") == "무한"]
+    capped_by_command = [s2["name"] for s2 in sinks
+                         if s2.get("kind") == "docker" and not s2.get("declared")
+                         and s2.get("retention") != "무한"]
     if waiting:
         say("**선언은 섰고 적용은 다음 재기동**인 수집기 %d개: %s"
             % (len(waiting), ", ".join(waiting)))
@@ -942,7 +1085,15 @@ def main() -> int:
         say("  안 지워진다 — **다음에 그 컨테이너를 띄우는 사람**이 `--log-opt` 를 붙여야")
         say("  지워진다(`docs/agent/RUNBOOK_로컬기동.md` STEP 2A).")
         say()
-    if not waiting and not naked:
+    if capped_by_command:
+        say("**선언은 없고 상한은 걸려 있는 수집기 %d개**(빨강 아님 · 경고): %s"
+            % (len(capped_by_command), ", ".join(capped_by_command)))
+        say("  compose 밖 `docker run` 으로 떴고, 상한은 **띄우는 명령**에 산다 —")
+        say("  `--log-opt max-size=10m --log-opt max-file=5` (`docs/agent/RUNBOOK_로컬기동.md`")
+        say("  STEP 2A). **지금 걸려 있다는 것이 다음에도 걸린다는 뜻은 아니다** —")
+        say("  다음에 띄우는 사람이 그 문장을 빠뜨리면 상한은 조용히 사라진다.")
+        say()
+    if not waiting and not naked and not capped_by_command:
         say("컨테이너 수집기 전부에 상한이 **걸려 있고 선언돼 있다.**")
 
     if args.evidence:

@@ -557,13 +557,557 @@
         "permit_delete": true
       },
       "cut_at": "2026-09-05T10:40:52.714399+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 2,
+      "menu_path": "/settings",
+      "menu_name": "Admin ",
+      "role_menu_id": 686,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.765359+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 2,
+      "menu_path": "/settings",
+      "menu_name": "Admin ",
+      "role_menu_id": 139,
+      "group_id": null,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.768472+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 96,
+      "menu_path": "/checklist-setting",
+      "menu_name": "Checklist Setting",
+      "role_menu_id": 690,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.769944+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 104,
+      "menu_path": "/routes",
+      "menu_name": "Routes",
+      "role_menu_id": 682,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.771116+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 130,
+      "menu_path": "/packaging",
+      "menu_name": "Packaging",
+      "role_menu_id": 850,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.772517+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 101,
+      "menu_path": "/library",
+      "menu_name": "장치 구성 템플릿 ",
+      "role_menu_id": 836,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.774524+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 22,
+      "menu_path": "GCS",
+      "menu_name": "GCS",
+      "role_menu_id": 662,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.775824+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 24,
+      "menu_path": "/gcs-mavlink",
+      "menu_name": "GaionGCS",
+      "role_menu_id": 664,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.777022+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 33,
+      "menu_path": "Delivery Settings",
+      "menu_name": "Delivery Settings",
+      "role_menu_id": 840,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.778231+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 17,
+      "menu_path": "surveillance",
+      "menu_name": "Surveillance",
+      "role_menu_id": 670,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.779374+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 28,
+      "menu_path": "Asset",
+      "menu_name": "Asset",
+      "role_menu_id": 676,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.780584+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 128,
+      "menu_path": "/delivery-hubs",
+      "menu_name": "Surveillance Hubs",
+      "role_menu_id": 824,
+      "group_id": 7,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.781716+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 117,
+      "menu_path": "/packaging",
+      "menu_name": "Packaging",
+      "role_menu_id": 521,
+      "group_id": 4,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.782868+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 96,
+      "menu_path": "/checklist-setting",
+      "menu_name": "Checklist Setting",
+      "role_menu_id": 332,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.784046+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 83,
+      "menu_path": "/library",
+      "menu_name": "Device Library",
+      "role_menu_id": 212,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.785264+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 91,
+      "menu_path": "/delivery-hubs",
+      "menu_name": "Delivery Hubs",
+      "role_menu_id": 222,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.786540+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 84,
+      "menu_path": "/routes",
+      "menu_name": "Routes",
+      "role_menu_id": 232,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.787699+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 120,
+      "menu_path": "/survey-mission",
+      "menu_name": "Mission",
+      "role_menu_id": 672,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:11:58.788916+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 11,
+      "menu_path": "/delivery-dashboard",
+      "menu_name": "Delivery Dashboard",
+      "role_menu_id": 134,
+      "group_id": null,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.306602+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 1,
+      "menu_path": "/dashboard",
+      "menu_name": "Dashboard",
+      "role_menu_id": 131,
+      "group_id": null,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.309101+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 6,
+      "menu_path": "/configuration-management",
+      "menu_name": "구성 관리",
+      "role_menu_id": 141,
+      "group_id": null,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.310637+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 86,
+      "menu_path": "/etri-tracking",
+      "menu_name": "ETRI Tracking",
+      "role_menu_id": 151,
+      "group_id": null,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.312065+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 118,
+      "menu_path": "/other-equipments",
+      "menu_name": "Other equipments",
+      "role_menu_id": 528,
+      "group_id": 4,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.313484+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 87,
+      "menu_path": "delivery-management",
+      "menu_name": "Delivery Management",
+      "role_menu_id": 179,
+      "group_id": 7,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.315061+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 3,
+      "menu_path": "/users",
+      "menu_name": "User Management",
+      "role_menu_id": 142,
+      "group_id": null,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.316455+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 127,
+      "menu_path": "/etri-tracking",
+      "menu_name": "Delivery Inquiry",
+      "role_menu_id": 778,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.317792+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 119,
+      "menu_path": "/docking-stations",
+      "menu_name": "Docking Station",
+      "role_menu_id": 539,
+      "group_id": 4,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.319156+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 116,
+      "menu_path": "operating-equipment",
+      "menu_name": "Operating Equipment",
+      "role_menu_id": 514,
+      "group_id": 4,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.320418+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 88,
+      "menu_path": "drone-robot",
+      "menu_name": "Drones/Robots and Docking Station",
+      "role_menu_id": 198,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.321616+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 90,
+      "menu_path": "delivery-point-and-docking-station",
+      "menu_name": "Delivery Hub and Route",
+      "role_menu_id": 217,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.322915+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 109,
+      "menu_path": "/operational-data",
+      "menu_name": "Operational Data",
+      "role_menu_id": 429,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.324141+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 111,
+      "menu_path": "/partner",
+      "menu_name": "Partner Management",
+      "role_menu_id": 448,
+      "group_id": 6,
+      "bundle": "P-61-U1",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T14:18:27.325361+00:00"
     }
   ],
-  "updated_at": "2026-09-05T10:40:52.947202+00:00",
+  "updated_at": "2026-09-05T14:18:27.518378+00:00",
   "write_target": "menu.RoleMenu",
   "classification": "DEFERRED",
   "scope": "all-tenants",
   "bundles": [
-    "P-50"
+    "P-61-U1"
   ]
 }

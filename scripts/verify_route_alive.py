@@ -305,6 +305,10 @@ def self_test() -> int:
 #:   ⚠ 이미 환경에 있는 값을 **덮지 않는다** — CI 가 준 값이 파일에 지는 일이 없어야 한다.
 LOCAL_ENV_FILES = (".env.gates", ".env.local", ".env")
 LOCAL_ENV_KEYS = ("GX_API", "GX_ROUTE_USER", "GX_ROUTE_PASSWORD", "GX_ROUTE_CONTAINER",
+                  # UX-25 — 시드 역할 계정(U1·U2·U4) 공용 비밀번호.
+                  # `verify_sidebar.py` 가 **역할별로 로그인해서** 사이드바를 잰다.
+                  # 읽는 자리를 따로 만들지 않는다(같은 D-369 사유).
+                  "GX_SEED_ROLE_PASSWORD",
                   # P-5 — 같은 로컬 파일에서 저장소 자격증명도 읽는다.
                   # 읽는 자리를 둘로 만들면 둘이 어긋난다(D-369).
                   "MINIO_ENDPOINT", "MINIO_ROOT_USER", "MINIO_ROOT_PASSWORD",
@@ -358,6 +362,9 @@ def delegate_to_container(container: str, json_path: str | None,
     cmd = ["docker", "exec",
            "-e", "GX_ROUTE_IN_CONTAINER=1",
            "-e", "GX_API", "-e", "GX_ROUTE_USER", "-e", "GX_ROUTE_PASSWORD",
+           # ★ 값 없이 이름만 넘긴다 — 프로세스 목록에 비밀번호가 안 남는다.
+           #   이 이름이 부모 환경에 없으면 docker 는 그냥 안 넘긴다(무해).
+           "-e", "GX_SEED_ROLE_PASSWORD",
            "-e", "MINIO_ENDPOINT", "-e", "MINIO_ROOT_USER",
            "-e", "MINIO_ROOT_PASSWORD", "-e", "MINIO_BUCKET_NAME",
            container] + inner

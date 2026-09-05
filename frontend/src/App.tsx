@@ -39,6 +39,14 @@ import {
 } from 'rj-core';
 
 /**
+ * ★ [P-62 꼬리 · 2026-09-05 턴 F · 차선 S] **끊긴 화면의 한 줄.**
+ *   휴대전화에서 로그인해 이 화면이 닫혔을 때, 그 사실을 화면이 말하고
+ *   1클릭으로 다시 로그인한다. 안 뜨는 것이 기본값이다 — 밀려남 표식
+ *   (`reason_code: session_evicted`)이 온 401 에서만 그린다.
+ */
+import { SessionEndedNotice } from '@/features/session/SessionEndedNotice';
+
+/**
  * ★ [UX-21 · 2026-09-26 · 차선 C] **로고 자산의 이름에서 공백을 뺐다.**
  *
  *   [실측 2026-09-25 · 화면 24장] 전 화면에서 로고가 깨져 `alt` 텍스트(「logo」)만
@@ -1035,6 +1043,8 @@ function App() {
 
   return (
     <AuthProvider>
+      {/* 관문 안팎 어디서 끊기든 같은 한 줄이 뜬다 — 라우터보다 바깥에 둔다. */}
+      <SessionEndedNotice />
       <LoadingProvider>
         <ConfigDataWrap>
           <ConfigSystemProvider>

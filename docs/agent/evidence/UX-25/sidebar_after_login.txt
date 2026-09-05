@@ -1,0 +1,60 @@
+# UX-25 — 시드·정리 **뒤** 사이드바 (실제 로그인 · GET /api/menu/menus)
+# 2026-09-05 · gx-shell 안 runserver:8000 · 계정은 `seed_role_users` 가 심은 셋
+
+=== gxseed_u1_operator (U1 관제요원 fire_user) — 5줄 ===
+   #132  지금 처리할 것               -> /dsm/queue
+   #133  무슨 일 있었나               -> /dsm/events
+   #134  카메라 격자                 -> /dsm/cameras/grid
+   #135  인계 메모                  -> /handover
+   #136  처음이세요                  -> /start
+
+=== gxseed_u2_manager (U2 관제팀장 fire_admin) — 21줄 ===
+   #132  지금 처리할 것               -> /dsm/queue
+   #133  무슨 일 있었나               -> /dsm/events
+   #134  카메라 격자                 -> /dsm/cameras/grid
+   #135  인계 메모                  -> /handover
+   #136  처음이세요                  -> /start
+   #137  관제 현황                  -> /dsm/dashboard
+   #138  훈련 모드                  -> /dsm/drill
+   #1    Dashboard              -> /dashboard
+   #17   Surveillance           -> surveillance
+     #120  Mission                -> /survey-mission
+   #22   GCS                    -> GCS
+     #24   GaionGCS               -> /gcs-mavlink
+   #28   Asset                  -> Asset
+     #128  Surveillance Hubs      -> /delivery-hubs
+     #130  Packaging              -> /packaging
+     #101  Device Library         -> /library
+     #104  Routes                 -> /routes
+   #33   Delivery Settings      -> Delivery Settings
+   #2    Admin                  -> /settings
+     #96   Checklist Setting      -> /checklist-setting
+     #3    User Management        -> /users
+
+=== gxseed_u4_official (U4 재난안전과 view_only_-_anyang) — 26줄 ===
+   #133  무슨 일 있었나               -> /dsm/events
+   #139  열람·삭제 청구               -> /dsm/privacy-requests
+   #1    Dashboard              -> /dashboard
+     #93   Delivery Ops Dashboard -> /delivery-dashboard-anyang
+     #11   Delivery Dashboard     -> /delivery-dashboard
+     #13   Disabillity Dashboard  -> /disabillity-dashboard
+   #7    Delivery               -> delivery
+     #94   Delivery Inquiry       -> /delivery-inquiry
+     #70   Delivery Operation     -> /delivery-operation
+   #17   Surveillance           -> surveillance
+     #120  Mission                -> /survey-mission
+   #22   GCS                    -> GCS
+     #24   GaionGCS               -> /gcs-mavlink
+   #25   Data Analysis          -> Data Analysis
+     #123  Media Analysis         -> /data-analysis
+   #28   Asset                  -> Asset
+     #102  Delivery Hubs          -> /delivery-hubs
+     #103  Docking Station        -> /docking-stations
+     #104  Routes                 -> /routes
+   #37   Operator               -> Operator
+     #38   Handover               -> /handover
+     #114  Operational Notice     -> /operational-notice
+     #41   AIP                    -> /aim
+   #2    Admin                  -> /settings
+     #36   Packaging              -> /packaging
+     #96   Checklist Setting      -> /checklist-setting

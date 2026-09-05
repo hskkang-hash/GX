@@ -57,6 +57,17 @@ THRESHOLDS = {
                                  "**운영 데이터를 보고 조여야 하는 첫 후보**다"),
     "unsent_deliveries": (10, "못 보낸 알림 10건. F-10 은 30초 내 발송이므로 10건이 쌓였다는 것은 "
                               "발송 경로가 막혔다는 뜻이다"),
+    # ── P-65 감사 쓰기 지연 (2026-09-05 · 턴 F · 열두 번째 신호) ────────────
+    "audit_queue_lag_sec": (300, "★ 감사 큐 지연 **5분**. 근거는 [실측]이다 — 턴 E 에 celery "
+                                 "워커가 0개이던 **사흘** 동안 `task_add_log` 가 12,468건 "
+                                 "밀려 있었고, 그동안 이 저장소의 어떤 신호도 울리지 않았다. "
+                                 "감사 로그는 「나중에 쓰면 되는 것」이 아니다 — 사고가 난 "
+                                 "순간의 기록이 사고 뒤에 쓰이면 그 기록은 **그 순간을 "
+                                 "증명하지 못한다**. 5분을 고른 이유: 정상일 때 이 큐는 "
+                                 "초 단위로 비고(쓰는 속도 [실측]), 5분이면 사람이 "
+                                 "붙어야 하는 정도의 밀림이다. ⚠ 지연은 [추정]이다 — "
+                                 "celery 메시지에 넣은 시각이 없다"
+                                 "(`common/audit_queue.py` 머리말)"),
     # ③ 채워지는가
     "db_size_gb": (50, "DB 50GB. 지금 4MB 다 — 이 값은 상한이 아니라 **증가를 눈치채는 자리**다"),
     # ── 평상 운영 ① 죽은 카메라 (2026-09-20 · 차선 E) ──────────────────────
@@ -183,6 +194,50 @@ def collect() -> dict:
     except Exception as exc:
         put("unsent_deliveries", None, "재지 못했다: %s" % type(exc).__name__)
 
+    # ── P-65 **감사 쓰기 지연** — 열두 번째 신호 (2026-09-05 · 턴 F) ──────
+    #
+    # ★ 왜 이 신호가 없으면 안 되는가. 이 저장소는 감사 로그를 「지워지는가」로만
+    #   지켜 왔다(OPS-07 ②). 그런데 감사에 못 답하는 길은 둘이고, 둘째가 더 조용하다:
+    #   **생긴 것이 안 쓰이는 것.** 표는 그대로고 행 수도 안 줄고 화면도 멀쩡하다.
+    #   [실측 턴 E] 워커 0개인 사흘 동안 12,468건이 큐에 갇혀 있었고 아무도 몰랐다.
+    #
+    # ★ 재는 자리는 **한 곳**이다 — `common/audit_queue.py`. 생존 알림 본문도 같은
+    #   함수를 부른다. 두 벌로 재면 반드시 어긋나고, 어긋난 쪽이 조용히 초록이 된다(D-369).
+    #
+    # ★ 경보를 **어디로 보내는가는 여기서 정하지 않는다.** `--check` 의 exit 1 이
+    #   경보이고, 그 exit 를 받아 사람에게 보내는 자리는 P-41 이 이미 정했다
+    #   (`K2_OPS_ALERT_ROLE_CODES` = U5 시스템관리자 · `K2_SEND_ALLOWED_DOMAINS`
+    #   밖으로는 실발송하지 않는다). 여기서 새 발송 경로를 만들면 그 경로만 허용
+    #   목록을 비켜 간다.
+    try:
+        from common.audit_queue import measure as _audit_measure
+
+        aq = _audit_measure(now=_now())
+        keys = aq.get("queue_keys") or {}
+        out["signals"]["audit_queue_backlog"] = {
+            "value": aq.get("backlog"),
+            "verdict": OK if aq.get("backlog") is not None else UNKNOWN,
+            "note": ("밀린 감사 쓰기 [실측] · 담긴 큐 %s — ⚠ `LLEN %s` 하나만 재면 "
+                     "**언제나 0**이다 — kombu 가 우선순위마다 **다른 키**를 쓴다(이름 뒤 두 바이트 + 우선순위 숫자). 임계는 건수가 "
+                     "아니라 **지연**에 건다"
+                     % (keys or "없음", aq.get("queue_base") or "default"))
+                    if aq.get("backlog") is not None
+                    else "밀린 건수를 **못 쟀다**: %s"
+                         % (aq.get("errors", {}).get("backlog") or "사유 없음")}
+        put("audit_queue_lag_sec", aq.get("lag_seconds"), aq.get("lag_basis") or "")
+        out["signals"]["audit_write_rate_per_min"] = {
+            "value": aq.get("write_rate_per_min"),
+            "verdict": OK if aq.get("write_rate_per_min") is not None else UNKNOWN,
+            "note": ("최근 %d분간 `logger_auditlogs` 에 들어온 행/분 [실측] · "
+                     "마지막 쓰기 %s (임계 없음 — **세어 두는 수**다. 조용한 밤에 "
+                     "0인 것은 장애가 아니다)"
+                     % (getattr(__import__("common.audit_queue", fromlist=["x"]),
+                                "RATE_WINDOW_MINUTES", 10),
+                        aq.get("last_write_at") or "없음"))}
+    except Exception as exc:
+        put("audit_queue_lag_sec", None, "재지 못했다: %s: %s"
+            % (type(exc).__name__, str(exc)[:120]))
+
     # ③ 채워지는가 ────────────────────────────────────────────────────────
     try:
         with connection.cursor() as cur:
@@ -302,7 +357,42 @@ def self_test() -> int:
         ("★ 용량 상한이 없으면 **판정 불가**다 — 분모 없이 %는 없다",
          judge("storage_used_pct", None) == UNKNOWN),
         ("80% 를 넘으면 경보", judge("storage_used_pct", 80.1) == ALARM),
+        # ── P-65 감사 쓰기 지연 — **양성과 음성을 함께** (2026-09-05 · 턴 F) ──
+        ("★ 감사 큐 지연이 5분을 넘으면 경보 — 턴 E 의 사흘을 이 줄이 잡는다",
+         judge("audit_queue_lag_sec", 300.1) == ALARM),
+        ("정확히 5분은 아직 경보가 아니다 — 경계를 못박는다",
+         judge("audit_queue_lag_sec", 300) == OK),
+        ("★ **음성 대조** — 밀린 것이 없으면 지연 0이고 초록이다. 조용한 밤은 장애가 아니다",
+         judge("audit_queue_lag_sec", 0.0) == OK),
+        ("감사 큐를 **못 쟀으면** 판정 불가다 — 브로커에 못 닿은 것은 0건이 아니다",
+         judge("audit_queue_lag_sec", None) == UNKNOWN),
     ]
+    # ── 큐 이름과 지연 셈 — **순수 함수를 따로 시험한다** (브로커 없이) ─────
+    try:
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))), "backend"))
+        from common import audit_queue as _aq
+
+        names = _aq.queue_names("default", list(range(10)))
+        checks += [
+            ("★ 우선순위 큐 이름을 전수로 만든다 — `default` 하나만 재면 언제나 0이다",
+             len(names) == 10 and names[0] == "default"
+             and names[9] == "default9"),
+            ("우선순위 0 에는 접미가 붙지 않는다 (kombu 규칙)",
+             "default0" not in names),
+            ("★ 밀린 것이 0건이면 지연은 0이다 — 지어내지 않는다",
+             _aq.judge_lag(0, 0, 99999)[0] == 0.0),
+            ("★ 밀린 것이 있고 쓰는 속도가 있으면 나눗셈이다 — 120건 ÷ 60건/분 = 120초",
+             _aq.judge_lag(120, 60.0, 5)[0] == 120.0),
+            ("★★ **턴 E 의 사흘** — 12,468건이 밀렸고 아무것도 안 쓰였다 → 하한을 적는다",
+             _aq.judge_lag(12468, 0.0, 259200)[0] == 259200.0),
+            ("브로커에 못 닿으면 **못 쟀다**(None)이지 0이 아니다 (D-301)",
+             _aq.judge_lag(None, 1.0, 1)[0] is None),
+            ("밀린 것이 있는데 속도도 마지막 쓰기도 못 쟀으면 **못 쟀다**",
+             _aq.judge_lag(5, 0.0, None)[0] is None),
+        ]
+    except Exception as exc:                       # noqa: BLE001
+        checks.append(("감사 큐 순수 함수를 **못 불렀다**: %s" % exc, False))
     bad = 0
     for label, ok in checks:
         bad += 0 if ok else 1

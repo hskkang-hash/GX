@@ -86,8 +86,14 @@ WALKS: dict[str, list] = {
     "S1": [
         {"go": "/dsm/events", "see": "이벤트 목록"},
         # 관제요원이 목록에서 가장 먼저 하는 일: **아직 아무도 안 본 것**만 남긴다.
+        # ⚠ [실측 2026-09-05 턴 F] 이 `see` 는 **낡아 있었다**: 「미처리 — 대응 축이
+        #   아직 「발생」인 것」. 그 문구는 UX-20 이 화면 밖으로 뺀 절 언어이고,
+        #   이 걸음표는 **9-04 번들을 보고 적힌 것**이다. 번들을 새로 배치하자마자
+        #   이 줄이 빨강을 냈고, 그 빨강은 화면의 결함이 아니라 **기대가 낡은 것**이었다.
+        #   → 낡은 입력이 초록을 만드는 것과 같은 자리다(P-59). 정본은 화면 상수다:
+        #     `frontend/src/features/dsm/pages/EventList.tsx` 의 프리셋 `headline`.
         {"click": ("button", "미처리"),
-         "see": "미처리 — 대응 축이 아직 「발생」인 것"},
+         "see": "미처리 — 아직 아무도 손대지 않은 것"},
         # 그리고 한 건을 연다. 여기까지가 「목록」 시나리오의 끝이다.
         {"click_row": 1, "see": "이벤트 상세"},
     ],
@@ -104,7 +110,10 @@ WALKS: dict[str, list] = {
         {"click_text": "전체 목록", "see": "이벤트 목록"},
     ],
     "S3": [
-        {"go": "/dsm/queue", "see": "지금 가장 급한 하나"},
+        # ⚠ 같은 낡음 [실측 2026-09-05 턴 F] — 화면 머리는 「지금 처리할 것 — 가장
+        #   급한 하나」다(`features/dsm/pages/FocusQueue.tsx` 의 `HEADLINE`).
+        #   「지금 가장 급한 하나」는 어느 번들에도 없는 글자였다.
+        {"go": "/dsm/queue", "see": "지금 처리할 것 — 가장 급한 하나"},
         # 단일 초점에서 **가장 급한 하나를 여는** 단추. 이것이 이 화면의 존재 이유다.
         {"click": ("button", "상세 열기"), "see": "이벤트 상세"},
     ],
@@ -124,6 +133,19 @@ KNOWN_CONSOLE_NOISE = (
     ("Partner callback WebSocket error", "위 404 가 남기는 두 번째 줄"),
     ("/ws/orders/notifications/", "§0.4 orders 웹소켓 — 같음"),
     ("New order notification WebSocket error", "위 404 가 남기는 두 번째 줄"),
+    # ── 아래 셋은 **URL 이 붙기 전에는 분류할 수 없던 것들**이다 [실측 2026-09-05 턴 F].
+    #    브라우저가 자원 적재 실패를 적는 줄에는 URL 이 없다 — 「Failed to load
+    #    resource: … 404」 뿐이다. 그 줄만 보고 분류하려면 **모든 404 를 한꺼번에**
+    #    면제해야 하고, 그것은 분류가 아니라 눈감기다. 그래서 `walk()` 가 브라우저의
+    #    위치(URL)를 그 줄에 붙이고, 여기서 **자리로** 가른다.
+    ("/Inter/Inter-VariableFont", "인수 자산 CSS 가 안 실린 글꼴을 부른다(404) — "
+                                  "`url(../Inter/…ttf)`. 우리 CSS 는 `/fonts/Inter-Variable.ttf` "
+                                  "를 부르고 그것은 200이다. 화면은 대체 글꼴로 그려진다"),
+    ("/api/user-groups/gen-schema", "dj-core 사용자그룹 스키마(422) — §0.4 자산이고 "
+                                    "상용점검 §3.1-5 에 이미 등재된 결함이다. "
+                                    "**분류는 면제가 아니다** — 등재된 자리에서 고친다"),
+    ("/ws/surveillance/profiles/", "감시 프로필 웹소켓 — `runserver` 는 WSGI 라 이 환경에 "
+                                   "웹소켓 자체가 없다(404). 위 둘과 같은 사유 · 배치의 사실이 아니다"),
 )
 
 
@@ -240,6 +262,19 @@ def self_test() -> int:
         "console.error: 새로 난 오류"]})
     if names(judge(mixed)).get("분류되지 않은 콘솔 오류 0건"):
         bad.append("**잡음에 섞인 새 오류**를 통과로 읽는다 — 목록이 면제가 됐다")
+
+    # ── ★ **URL 이 붙어야 분류된다** (턴 F) ────────────────────────────────
+    #   자원 적재 실패 줄은 URL 없이는 남의 자리와 우리 고장을 못 가른다.
+    #   ㉠ URL 이 붙으면 자리로 분류된다  ㉡ **URL 이 없으면 분류되지 않는다**(빨강).
+    #   ㉡ 이 뒤집히면 이 목록은 「모든 404 면제」가 된다 — 그것은 분류가 아니다.
+    res404 = "console.error: Failed to load resource: the server responded with a status of 404"
+    with_url = dict(green, console_errors={"S1": [
+        f"{res404} (File not found) ← http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf"]})
+    if not names(judge(with_url)).get("분류되지 않은 콘솔 오류 0건"):
+        bad.append("URL 이 붙은 **인수 자산 글꼴 404** 를 분류하지 못한다")
+    if names(judge(dict(green, console_errors={"S1": [res404]}))).get(
+            "분류되지 않은 콘솔 오류 0건"):
+        bad.append("**URL 없는** 404 줄을 통과로 읽는다 — 그러면 모든 404 가 면제된다")
 
     for key, label in (("console_errors", "분류되지 않은 콘솔 오류 0건"),
                        ("session_closed", "세션을 닫았다")):
@@ -413,7 +448,28 @@ def walk(*, web: str, api: str, user: str, password: str) -> dict:
     api_failures: dict = {}
 
     def note(kind: str, text: str) -> None:
-        errors.setdefault(current["key"], []).append(f"{kind}: {text}"[:200])
+        errors.setdefault(current["key"], []).append(f"{kind}: {text}"[:300])
+
+    def note_console(m) -> None:
+        """`console.error` 한 줄. **자원 적재 실패에는 URL 을 붙인다.**
+
+        ★ [실측 2026-09-05 턴 F] 브라우저가 적는 줄은 「Failed to load resource: the
+          server responded with a status of 404 (File not found)」 **뿐**이다 —
+          어느 자원인지가 없다. 그 줄로는 인수 자산의 글꼴 404 와 우리 화면의 고장을
+          가를 수 없고, **가를 수 없는 줄은 분류할 수 없다.** 그래서 못 가른 채로
+          「분류되지 않은 오류」에 쌓였고, 그 수는 아무에게도 자리를 알려 주지 않았다.
+          브라우저는 그 자리를 `location.url` 로 함께 준다 — 붙여서 적는다.
+        """
+        if m.type != "error":
+            return
+        text = m.text
+        try:
+            url = (m.location or {}).get("url") or ""
+        except Exception:                                       # noqa: BLE001
+            url = ""
+        if url and url not in text:
+            text = f"{text} ← {url}"
+        note("console.error", text)
 
     def note_response(r) -> None:
         try:
@@ -430,8 +486,7 @@ def walk(*, web: str, api: str, user: str, password: str) -> dict:
         # ★ **두 가지를 다 듣는다**: 잡히지 않은 예외(pageerror)와 `console.error`.
         #   전자만 들으면 화면이 스스로 삼킨 오류가 안 보인다.
         page.on("pageerror", lambda e: note("pageerror", str(e)))
-        page.on("console",
-                lambda m: note("console.error", m.text) if m.type == "error" else None)
+        page.on("console", note_console)
         page.on("response", note_response)
         try:
             _login(page, web, user, password)

@@ -21,6 +21,11 @@ declare global {
    * 글자가 번들에 아예 안 남는다(차선 Q 규약 ①).
    */
   const __GX_COMMIT_TOKEN__: string;
+  /**
+   * 배포가 넣는 **지원 창구 한 줄** (UX-25 · P-61). 빈 문자열은 「등록되지 않았다」다.
+   * 기관마다 다른 값이므로 저장소에 기본값을 두지 않는다 — `vite.config.ts` 의 그 이유.
+   */
+  const __GX_SUPPORT__: string;
 }
 
 /** 이 번들이 난 커밋. **빈 문자열이면 모르는 것이다** — 없는 것이 아니다. */
@@ -29,6 +34,21 @@ export const GX_COMMIT: string =
 
 /** 화면에 뜨는 글자. 사전 등재 표시는 「버전 3d40cf6」 꼴이다. */
 export const VERSION_LABEL = GX_COMMIT ? `버전 ${GX_COMMIT}` : '버전 알 수 없음';
+
+/**
+ * 지원 창구 한 줄 — **전 역할의 화면 하단에 뜬다** (세종 P-61 「전 역할 하단」).
+ *
+ * ★ 왜 「미등록」이라 적나: 빈 값에 그럴듯한 번호를 채우면, 장애가 난 날 사람이
+ *   그 번호로 전화를 걸고 아무도 안 받는다. 그것은 안내가 아니라 **막다른 골목**이고,
+ *   막다른 골목은 「안내가 없다」보다 나쁘다. 「버전 알 수 없음」과 같은 규약이다.
+ */
+export const GX_SUPPORT: string =
+  typeof __GX_SUPPORT__ === 'string' ? __GX_SUPPORT__ : '';
+
+/** 화면에 뜨는 글자. */
+export const SUPPORT_LABEL = GX_SUPPORT
+  ? `장애 신고 ${GX_SUPPORT}`
+  : '장애 신고 창구 미등록';
 
 /**
  * 게이트가 번들에서 찾는 토큰. **여기서 조립하지 않는다** — 접두어까지 포함해

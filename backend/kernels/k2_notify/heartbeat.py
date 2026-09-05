@@ -117,7 +117,31 @@ class HeartbeatDigestResult:
 # ═══════════════════════════════════════════════════════════════════════════
 # 순수 — 본문과 「왔는가」 판정
 # ═══════════════════════════════════════════════════════════════════════════
-def _compose(covers: date, events: int, pulse_line: str, sent_at: datetime):
+def _audit_line() -> str:
+    """감사 기록이 **지금 쓰이고 있는가** 한 줄 (P-65 · 2026-09-05 · 턴 F).
+
+    ★ 왜 안부 편지에 이 줄이 필요한가. 제목이 「GuardianX 정상」이려면 그 정상을
+      **증명할 기록이 지금 쓰이고 있어야** 한다. [실측 턴 E] celery 워커가 0개이던
+      사흘 동안 감사 쓰기 12,468건이 큐에 갇혀 있었다 — 그동안에도 이 편지는
+      「정상」이라고 나갈 수 있었다. 증거 없는 안부는 안부가 아니다.
+
+    ★ 재는 자리는 `common/audit_queue.py` **한 곳**이다 — `scripts/ops_monitor.py` 도
+      같은 함수를 부른다. 두 벌로 재면 어긋나고, 어긋난 쪽이 조용히 초록이 된다(D-369).
+
+    ★ 이 수는 **테넌트 것이 아니다** — 브로커와 감사 표의 상태다. 그래서 group 별로
+      갈리지 않고, 남의 관제 현황이 아니므로 반출도 아니다.
+    """
+    try:
+        from common.audit_queue import digest_line
+
+        return digest_line()
+    except Exception as exc:                       # noqa: BLE001
+        # 못 쟀다고 편지를 안 보내지는 않는다 — **못 쟀다고 적는다**(D-301).
+        return f"감사 기록 대기: **못 쟀다** ({type(exc).__name__})"
+
+
+def _compose(covers: date, events: int, pulse_line: str, sent_at: datetime,
+             audit_line: str | None = None):
     """제목과 본문. **판정 문장을 본문에 넣는다** — 받는 사람이 규약을 매번 다시 읽는다."""
     subject = f"[GuardianX] 정상 — {covers.isoformat()} 요약"
     body = "\n".join([
@@ -125,6 +149,7 @@ def _compose(covers: date, events: int, pulse_line: str, sent_at: datetime):
         "",
         f"어제({covers.isoformat()}) 이벤트 {events}건",
         pulse_line,
+        audit_line if audit_line is not None else _audit_line(),
         "",
         f"발송 {sent_at.isoformat(timespec='seconds')}",
         DEAD_MAN_RULE,

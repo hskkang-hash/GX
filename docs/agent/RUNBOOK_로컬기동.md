@@ -150,34 +150,36 @@ docker run -d --name gx-shell   --log-opt max-size=10m --log-opt max-file=5 …
 > 세우면서 실제로 벌어진 일(기동 즉시 14개 발화 · 3일치 12,468건 밀린 큐)은
 > `docs/agent/evidence/P-56/` 에 있다.
 
-## STEP 2C — 프런트 빌드 전에 **소스를 넣는다** (P-59 · 2026-09-05 턴 E)
-
-> **`gx-fe-build` 의 `/app` 은 저장소를 물고 있지 않다 — 자기 사본이다.**
-> 넣지 않고 빌드하면 그 `exit 0` 은 **직전 턴의 코드를 빌드한 것**이고,
-> 이번 턴에 대해 아무 말도 하지 않는다. 턴 D 에서 조율자가 실제로 그 초록을 냈다.
+## STEP 2C — 배치는 **명령 하나**다 (P-64 · 2026-09-05 턴 F)
 
 ```bash
-# ① 소스와 설정을 넣는다 — 없으면 아래 exit 0 은 직전 턴 코드에 대한 것이다
-docker cp frontend/src/. gx-fe-build:/app/src/
-docker cp frontend/vite.config.ts gx-fe-build:/app/vite.config.ts
-
-# ② 커밋 해시를 넘긴다 (P-59) — 컨테이너에는 `.git` 이 없어 스스로 알아낼 수 없다.
-#    ⚠ 40자리를 넘긴다. `--short` 는 부딪힐 수 있고, 부딪히는 신원은 신원이 아니다.
-docker exec -e NODE_OPTIONS=--max-old-space-size=6144 -e GX_COMMIT=$(git rev-parse HEAD)     gx-fe-build sh -c 'cd /app && npx vite build --outDir dist_te'
-
-# ③ **배치** — 3002 를 내주는 것은 gx-shell 의 /app/_fe_dist 다(spa_server.py).
-#    빌드만 하고 여기를 안 갈면 화면은 옛것 그대로다 — 턴 E 에 그 상태로 하루가 갔다.
-docker exec gx-fe-build sh -c 'cd /app && tar cf - dist_te' | docker exec -i gx-shell sh -c     'rm -rf /app/_fe_dist_new && mkdir -p /app/_fe_dist_new && tar xf - -C /app/_fe_dist_new --strip-components=1 &&      rm -rf /app/_fe_dist && mv /app/_fe_dist_new /app/_fe_dist'
-
-# ④ **적용을 잰다** — exit 0 은 무엇이 성공했는지 말해 주지 않는다
-python scripts/verify_bundle_hash.py --dist <배치된 자리>     # 서버가 내는 번들 = 현재 커밋
+bash scripts/deploy.sh
 ```
 
-> **순서가 곧 내용이다**: 커밋 → 빌드(새 HEAD) → 배치 → 잰다.
-> 커밋 전에 빌드하면 그 번들은 태어나자마자 옛것이고, 게이트가 그것을 빨강으로 낸다.
+빌드 → 다이제스트 → 배치(**원자적**) → 번들 해시 게이트(서버가 내는 번들 = HEAD)
+→ `walk_scenarios` 1회. 하나라도 실패하면 **되돌리고 `exit 1`** — 이전 번들이 계속 선다.
 
-마지막 줄이 이 절차의 핵심이다 — **`exit 0` 은 무엇이 성공했는지 말해 주지 않는다.**
-번들 안에 이번 턴의 이름이 실재하는지 눈으로 본다. (게이트로도 잰다: `verify_bundle_hash.py`)
+> **여기에 손 절차를 두 벌로 적지 않는다.** 이 절에는 09-04 까지 네 걸음이 손으로
+> 적혀 있었고, 그중 ③(배치)을 한 번 빠뜨린 결과 **2026-09-04 07:17 자 낡은 번들이
+> 하루 동안 서비스됐다.** 그 사이 찍힌 화면 증거 24장이 전부 낡은 번들의 증거였고,
+> `capture_screens` 의 빨강 10건이 「UX 회귀」로 읽힐 뻔했다.
+> **절차는 빠뜨릴 수 있고 명령은 빠뜨릴 수 없다.**
+> 무엇을 어떤 순서로 왜 그렇게 하는지는 `scripts/deploy.sh` 의 머리말이 **정본**이다.
+
+| 종료 코드 | 뜻 |
+|---|---|
+| **0** | 빌드·배치·번들 신원·걷기 다 초록 |
+| **1** | 실패 — **되돌렸다.** 이전 번들이 서비스된다(되돌린 것을 다시 재서 보인다) |
+| **2** | **못 쟀다**(회색). 회색은 초록이 아니다 (D-301) |
+
+곁가지: `--no-walk`(게이트까지만) · `--strict-walk`(걷기 회색도 되돌린다) ·
+`--skip-build` · `--allow-dirty`(프런트 작업본이 더러워도 진행) · `--self-test`(도커 없이).
+
+⚠ **재생성 직후의 `gx-fe-build` 는 `/app` 이 이미지 사본으로 돌아가 있다.**
+이 명령이 매번 `docker cp` 로 소스를 먼저 넣는다 — 그것이 P-59 거짓 초록을 막는 첫 걸음이다.
+⚠ 3002 를 내주는 것은 `gx-shell` 의 `/app/_fe_dist` 다. 닫혀 있으면 이 명령이 세운다.
+⚠ 걷기는 `gx-shell` 안의 `playwright` + `chromium` 과 API 8000 을 쓴다. 없으면 **회색(2)**이고,
+회색은 「걸었는데 괜찮았다」가 아니다.
 
 ## STEP 2D — 재기동 창 **한 덩이** (P-55 · OPS-07 적용 · 2026-09-05 턴 E)
 

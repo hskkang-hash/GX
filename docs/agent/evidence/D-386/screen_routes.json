@@ -1,6 +1,6 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
-  "captured_at": "2026-09-05T18:47:56",
+  "captured_at": "2026-09-05T21:22:48",
   "screens_total": 28,
   "routes_total": 27,
   "screens": {
@@ -78,7 +78,7 @@
         "status": 200
       }
     ],
-    "/dsm/events/9711": [
+    "/dsm/events/9713": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -91,17 +91,17 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=9711",
+        "path": "/api/dsm/deliveries?event_id=9713",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9711",
+        "path": "/api/dsm/events/9713",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9711/timeline",
+        "path": "/api/dsm/events/9713/timeline",
         "status": 200
       },
       {
@@ -388,7 +388,7 @@
       {
         "method": "GET",
         "path": "/api/media-data/?page_size=25&current_page=1",
-        "status": 200
+        "status": 503
       },
       {
         "method": "GET",
@@ -646,7 +646,7 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events?limit=50&since=2026-09-04T23:46:33.173Z&until=2026-09-05T11:46:33.173Z",
+        "path": "/api/dsm/events?limit=50&since=2026-09-05T02:21:23.132Z&until=2026-09-05T14:21:23.132Z",
         "status": 200
       },
       {
@@ -758,7 +758,7 @@
       {
         "method": "GET",
         "path": "/api/dsm/events/4805/snapshot",
-        "status": 200
+        "status": 503
       },
       {
         "method": "GET",
@@ -931,7 +931,7 @@
         "status": 200
       }
     ],
-    "/m/events/9711": [
+    "/m/events/9713": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -944,17 +944,17 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9711",
+        "path": "/api/dsm/events/9713",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9711/clip",
+        "path": "/api/dsm/events/9713/clip",
         "status": 404
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9711/field-replies",
+        "path": "/api/dsm/events/9713/field-replies",
         "status": 200
       },
       {

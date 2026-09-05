@@ -31,3 +31,13 @@ docs/agent/evidence/P-59/규약_QA.md:gx-agent-docs-hex:33
 docs/agent/evidence/P-59/규약_QA.md:gx-agent-docs-hex:67
 docs/agent/evidence/P-59/규약_QA.md:gx-agent-docs-hex:68
 docs/agent/evidence/P-59/규약_QA.md:gx-agent-docs-hex:186
+
+# ── P-64 배치 명령 (2026-09-05 · 턴 F) ────────────────────────────────────────
+# 같은 이유다: `deploy.sh` 의 번들 해시 게이트 로그에 커밋 40자리가 **찍혀야** 한다.
+# 그 줄이 이 절의 산출이고, 가리면 「서버가 내는 번들 = HEAD」를 아무도 못 읽는다.
+# 눈으로 읽었다 — 현재 커밋 `cce7f7beac78b21ccbcaef84c3c6a38f53e135f6` 하나다.
+docs/agent/evidence/P-64/배치명령_20260905_TF.md:gx-agent-docs-hex:36
+# ── OPS-07 멈춘 파일 정리 (2026-09-05 · 턴 F) ─────────────────────────────────
+# 32자리 16진이 **md5 대조값**이다. 지운 파일을 gzip 으로 보관하고 「푼 것이 원본과
+# 같다」를 말하는 유일한 근거다 — 가리면 「치웠다」가 증거 없는 말이 된다. 눈으로 읽었다.
+docs/agent/evidence/OPS-07/멈춘_파일_정리.md:gx-agent-docs-hex:51

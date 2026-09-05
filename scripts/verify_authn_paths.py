@@ -93,6 +93,20 @@ SHADOWED_WRITE_ROUTES = (
     ("POST", "/api/dsm/settings/grade-rules"),   # F-12 등급규칙
 )
 
+#: ★ [UX-24a · 2026-09-05 턴 F] **월(wall) 표시 토큰** — 대장 §9. 넷째 문이다.
+#:   세션이 아니다: `Authorization` 이 아닌 제 헤더로 실려 오고, dj-core 는 이 토큰을
+#:   아예 못 본다. 그래서 월을 켜도 **자리 데스크톱 세션이 산다**(P-62).
+#:   ⚠ 여기서 재는 것은 「그 겹이 **살아 있는가**」다 — 서명 없는 토큰이 거절되는지,
+#:     그리고 그 토큰으로 **쓰기 문이 안 열리는지**. 유효한 토큰으로 여는 전체 실측은
+#:     `docs/agent/evidence/UX-24a/probe_wall_token.py` 가 한다(발급에 Django 가 필요하다).
+WALL_TOKEN_HEADER = "X-GX-Wall-Token"
+#: 월 화면이 부르는 두 문 중 하나. 여기에 **서명 없는** 토큰을 실으면 401 이어야 한다.
+WALL_READ_ROUTE = "/api/dsm/events/queue"
+#: ★ 쓰기 0 — 월 토큰 자리에 무엇을 실어도 이 문은 열리지 않아야 한다.
+WALL_WRITE_PROBE = ("POST", "/api/dsm/events/1/review")
+#: 서명이 맞을 리 없는 값. **진짜 토큰을 게이트에 심지 않는다** — 심으면 그것이 유출이다.
+WALL_FORGED_TOKEN = "gxwall1.eyJ2IjoxfQ.not-a-signature"
+
 #: 화면 번들에서 **실제로 나가는 주소**를 읽는다. 손으로 적으면 곧 옛말이 된다.
 BUNDLE_GLOBS = ("backend/_fe_dist/assets/*.js", "frontend/dist/assets/*.js")
 
@@ -119,10 +133,12 @@ def bundle_login_paths() -> tuple[set[str], int]:
 
 
 def request(api: str, method: str, path: str, *, token: str | None = None,
-            body: bytes | None = None) -> int:
+            body: bytes | None = None, headers: dict[str, str] | None = None) -> int:
     req = urllib.request.Request(api + path, data=body, method=method)
     if token:
         req.add_header("Authorization", f"Bearer {token}")
+    for name, value in (headers or {}).items():
+        req.add_header(name, value)
     if body is not None:
         req.add_header("Content-Type", "application/json")
     try:
@@ -173,6 +189,15 @@ def self_test() -> int:
     for method, path in SHADOWED_WRITE_ROUTES:
         if method not in ("POST", "PUT", "PATCH", "DELETE"):
             bad.append(f"기준선에 읽기 메서드가 있다: {method} {path}")
+    #: 면 ⑤ — 월 토큰(UX-24a). 위조 토큰이 **진짜 모양**이어야 이 갈래가 무언가를 잰다.
+    if not WALL_FORGED_TOKEN.startswith("gxwall1."):
+        bad.append("위조 월 토큰이 제 모양이 아니다 — 모양이 안 맞으면 서명 갈래에 닿지도 못한다")
+    if WALL_WRITE_PROBE[0] not in ("POST", "PUT", "PATCH", "DELETE"):
+        bad.append(f"월 쓰기 탐침이 읽기다: {WALL_WRITE_PROBE}")
+    if LEDGER.is_file():
+        _text = LEDGER.read_text(encoding="utf-8", errors="replace")
+        if WALL_TOKEN_HEADER not in _text:
+            bad.append(f"대장에 {WALL_TOKEN_HEADER} 행이 없다 — 인증 경로는 **먼저 적고** 짓는다 (P-15)")
     if bad:
         print("[AUTHN] 자기시험 실패 — 판정기를 먼저 의심한다 (D-350):")
         for b in bad:
@@ -180,7 +205,7 @@ def self_test() -> int:
         return EXIT_FAIL
     print(f"[AUTHN] 자기시험 통과 — 출생 표본({gated}/{n} 401) · 로그인 첫 경로 · "
           f"대장 실재 · 쓰기 라우트 감시 {len(SHADOWED_WRITE_ROUTES)}건(전부 쓰기) · "
-          f"도달불가 기준선 {UNREACHABLE_BASELINE}")
+          f"도달불가 기준선 {UNREACHABLE_BASELINE} · 월 토큰 행 실재")
     return EXIT_OK
 
 
@@ -285,10 +310,33 @@ def main() -> int:
         print(f"[AUTHN]   ★ 도달 불가가 {UNREACHABLE_BASELINE} → {len(dead)} 로 줄었다 — "
               f"기준선을 함께 내려라")
 
+    # ── 면 ⑤ 월(wall) 표시 토큰 — **그 겹이 살아 있는가** (UX-24a · 대장 §9) ──
+    #
+    #   재는 것 둘. 유효한 토큰은 여기서 만들지 않는다 — 게이트에 진짜 토큰을 심으면
+    #   그것이 곧 유출이고, 발급에는 Django 가 필요하다(그 실측은 UX-24a 탐침이 한다).
+    #     ㉠ 서명 없는 토큰이 읽기 문에서 **거절**되는가 → 401
+    #     ㉡ 그 토큰 자리로 **쓰기 문이 열리지 않는가** → 2xx 면 그 자리에서 빨갛다
+    wall_headers = {WALL_TOKEN_HEADER: WALL_FORGED_TOKEN}
+    st_read = request(args.api, "GET", WALL_READ_ROUTE, headers=wall_headers)
+    print(f"[AUTHN] [입력] 1건 — 위조 월 토큰으로 {WALL_READ_ROUTE} → {st_read} (기대 401)")
+    if st_read != 401:
+        print(f"[AUTHN] ✗ 서명 없는 월 토큰이 {st_read} 를 낸다 — 월 토큰 겹이 없거나 "
+              f"검증이 헐겁다 (common/wall_token.py · MIDDLEWARE 에서 빠졌는지 보라)")
+        rc = EXIT_FAIL
+
+    wmethod, wpath = WALL_WRITE_PROBE
+    st_write = request(args.api, wmethod, wpath, headers=wall_headers, body=b"{}")
+    print(f"[AUTHN] [입력] 1건 — 월 토큰 자리로 {wmethod} {wpath} → {st_write} "
+          f"(**쓰기 0** · 2xx 면 실패)")
+    if 200 <= st_write < 300:
+        print("[AUTHN] ✗ 월 토큰 자리로 쓰기 문이 열렸다 — 이 절의 전제가 깨졌다 (UX-24a)")
+        rc = EXIT_FAIL
+
     if rc == EXIT_OK:
         print(f"[AUTHN] 통과 — 제품의 문 하나({PRODUCT_LOGIN})가 세션을 세우고, "
               f"{REMOVED_LOGIN} 는 **없으며**(404 · D-411), "
-              f"선언된 쓰기 라우트 {len(SHADOWED_WRITE_ROUTES)}건은 전부 도달한다")
+              f"선언된 쓰기 라우트 {len(SHADOWED_WRITE_ROUTES)}건은 전부 도달하고, "
+              f"월 표시 토큰(UX-24a)은 **읽기만** 연다")
     return rc
 
 

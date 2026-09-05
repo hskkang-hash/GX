@@ -194,6 +194,93 @@ P50_KEEP_ROLE_CODES = ()
 #    그래서 표를 **쌍의 목록**으로 둔다. 끊기·되잇기가 같은 목록을 본다.
 # ═══════════════════════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ③-3 P-61 — **관제요원(U1) 9장 상한** (2026-09-05 턴 F · UX-25)
+#
+#    세종 P-61 은 역할별 사이드바를 표로 못 박으면서 규칙 하나를 더 달았다:
+#      「역할에 없는 메뉴는 **렌더하지 않는다**(비활성 아님) · 관제 역할(U1) 메뉴 **9장 상한**」
+#
+#    UX-25 시드(`common/product_menus.py`)가 제품 화면 다섯 줄을 U1 위에 세웠다.
+#    그것으로 「제품에 닿는다」는 닫혔는데 **상한은 안 닫혔다**:
+#
+#      [실측 2026-09-05 · 실제 로그인 · GET /api/menu/menus · gxseed_u1_operator]
+#        시드 전 12줄(제품 0장) → 시드 뒤 **17줄**(제품 5장 + 인수 자산 12줄)
+#
+#    남은 12줄은 한 줄도 관제요원의 화면이 아니다 — 정찰 임무 · GaionGCS · 정찰거점 ·
+#    적재함 · 장치 구성 템플릿 · 항로 및 경로 · 체크리스트 설정 · 관리자 설정, 그리고
+#    그것들을 매단 묶음 마디 넷. 그래서 **U1 에서만** 끊는다.
+#
+#    ★ 왜 묶음 마디(`surveillance` · `GCS` · `Asset` · `Delivery Settings`)까지 끊나:
+#      dj-core `list_menus` 는 마디를 「자식이 남았으니 보인다」가 아니라 **제 행의
+#      `permit_read` 로도** 보인다(위 P-50 주석의 그 사실). 자식만 끊으면 사이드바에
+#      **아무 데도 못 가는 영문 한 줄**이 남는다 — 「Media Viewer」에서 이미 만난 고장이다.
+#
+#    ★ **U2·U4·U5 는 안 건드린다.** 상한은 P-61 이 U1 에게만 준 것이고, 재지 않은 것을
+#      함께 끊으면 그 순간 이 결정이 추측이 된다(D-301). U2 는 21줄 · U4 는 26줄로
+#      남는다 — 그 수는 **판정하지 않고 적는다.**
+# ═══════════════════════════════════════════════════════════════════════════
+
+#: U1 이 지금 보는 인수 자산 여덟 화면. [실측 2026-09-05 · 위 로그인 결과 그대로]
+P61_U1_ACQUIRED_SCREEN_PATHS = (
+    "/survey-mission",     # 정찰 임무 (드론 조사 임무)
+    "/gcs-mavlink",        # GaionGCS (지상관제국)
+    "/delivery-hubs",      # 정찰거점 (배송 거점의 이름만 바꾼 화면)
+    "/packaging",          # 적재함
+    "/library",            # 장치 구성 템플릿
+    "/routes",             # 항로 및 경로
+    "/checklist-setting",  # 체크리스트 설정
+    "/settings",           # 『Admin』관리자 설정 — 관제요원의 자리가 아니다
+)
+
+#: 그 여덟을 매단 묶음 마디 넷. 경로가 라우트가 아니라 **글자**다(눌러도 안 간다).
+P61_U1_GROUP_NODE_PATHS = (
+    "surveillance",
+    "GCS",
+    "Asset",
+    "Delivery Settings",
+)
+
+#: ★ **역할 코드마다 사이드바가 다르다** — 계정 하나로 재면 못 보는 자리 (2026-09-05)
+#:
+#:   처음 이 묶음은 `gxseed_u1_operator`(역할 `fire_user`)의 사이드바 열두 줄만
+#:   담았다. `verify_sidebar.py` 의 **두 눈 대조**가 그것을 잡았다:
+#:
+#:     [실측 2026-09-05 · 역할 코드별]
+#:       fire_user              5줄  ← 계정으로 잰 것. 깨끗했다
+#:       surveillance_operation 5줄
+#:       operator              19줄  ← **아무 계정으로도 안 재 본 자리**
+#:
+#:   U1 은 역할 **셋**이고(`K3_ROLE_OPERATORS`), 상한은 셋 모두에 걸린다. `operator`
+#:   역할을 가진 사람(이 DB 에 열둘)은 배송 대시보드·협력사 관리·도킹 스테이션을
+#:   그대로 보고 있었다. 계정 하나로 재고 「닫았다」고 적었으면 그것이 거짓 초록이다.
+P61_U1_OPERATOR_ONLY_PATHS = (
+    "/dashboard",                          # Dashboard 뿌리
+    "/configuration-management",           # 구성 관리
+    "/etri-tracking",                      # Delivery Inquiry
+    "/other-equipments",                   # Other equipments
+    "/delivery-dashboard",                 # Delivery Dashboard
+    "/docking-stations",                   # Docking Station
+    "/users",                              # User Management — P-61 U1 에 없다
+    "/operational-data",                   # Operational Data
+    "/partner",                            # Partner Management
+    "delivery-management",                 # 묶음 마디
+    "drone-robot",                         # 묶음 마디
+    "delivery-point-and-docking-station",  # 묶음 마디
+    "operating-equipment",                 # 묶음 마디
+)
+
+P61_U1_PATHS = (
+    P61_U1_ACQUIRED_SCREEN_PATHS
+    + P61_U1_GROUP_NODE_PATHS
+    + P61_U1_OPERATOR_ONLY_PATHS
+)
+
+#: **U1 뿐이다.** `K3_ROLE_OPERATORS` 한 곳에서 온다 — 여기 코드를 적지 않는다(D-212).
+P61_U1_ROLE_CODES = tuple(K3_ROLE_OPERATORS)
+
+#: 끊지 않는 역할. U2·U4·U5 는 이 묶음의 대상이 아니므로 `roles` 에 애초에 없다.
+P61_U1_KEEP_ROLE_CODES = tuple(K3_ROLE_MANAGERS) + tuple(K3_ROLE_EXECUTIVES) + tuple(K3_ROLE_SYSOPS)
+
 CUT_BUNDLES = (
     {
         "id": "UX-21",
@@ -209,6 +296,14 @@ CUT_BUNDLES = (
         "paths": P50_LEGACY_PATHS,
         "roles": P50_ROLE_CODES,
         "keep": P50_KEEP_ROLE_CODES,
+    },
+    {
+        "id": "P-61-U1",
+        "why": "관제요원(U1) 9장 상한 — 인수 자산 8화면 + 묶음 마디 4 (세종 P-61 · UX-25). "
+               "**U1 에서만** 끊는다",
+        "paths": P61_U1_PATHS,
+        "roles": P61_U1_ROLE_CODES,
+        "keep": P61_U1_KEEP_ROLE_CODES,
     },
 )
 

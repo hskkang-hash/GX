@@ -1,5 +1,11 @@
 import { createApiClient } from 'rj-core';
 
+import {
+  announceSessionEnded,
+  isSessionEvicted,
+  sessionEndedAnnounced,
+} from '@/features/session/sessionEnded';
+
 export const CustomRoutes = {
   qrCode: '/qr-code',
 
@@ -991,10 +997,72 @@ export const endpoint = {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const apiClient = createApiClient({
   baseURL: import.meta.env.VITE_API_URL,
+  /**
+   * ★ [P-62 꼬리 · 2026-09-05 턴 F · 차선 S] **말없이 튕기지 않는다.**
+   *
+   * 이 제품은 동시 접속이 1개다 — 휴대전화에서 로그인하면 이 화면이 그 자리에서
+   * 죽는다. 종전에는 그 401 을 보자마자 `/login` 으로 튕겼고, 사람이 보는 것은
+   * 「하던 일이 사라지고 로그인 화면이 떠 있다」뿐이었다. **왜인지는 아무데도 없었다.**
+   *
+   * 서버는 이미 말하고 있다(`common/session_limit.py` · 턴 E):
+   *     401 { detail: "다른 기기에서 로그인되었습니다", reason_code: "session_evicted" }
+   * 아래 인터셉터가 그 표식을 보면 안내 한 줄을 띄우고(`SessionEndedNotice`),
+   * 튕기는 것은 **사람이 「다시 로그인」을 누를 때**로 미룬다.
+   *
+   * ⚠ 그 밖의 401 은 **종전 그대로 튕긴다.** 넓게 잡으면 비밀번호를 틀린 사람이
+   *   있지도 않은 다른 기기를 찾는다.
+   */
   redirectOn401: () => {
+    if (sessionEndedAnnounced()) return;
     window.location.href = '/login';
   },
 }) as any;
 const { API } = apiClient;
+
+/**
+ * ★ 밀려남을 **여기서** 읽는다 — `redirectOn401` 은 응답 본문을 못 본다.
+ *
+ * ⚠ **순서가 곧 판정이다.** [실측 2026-09-05 · `node_modules/rj-core/dist/rj-core.es.js`]
+ *   rj-core 는 제 응답 인터셉터를 먼저 달아 두었고, 401 을 보면 이렇게 한다:
+ *
+ *       401 → 토큰 재발급 시도 → **실패** → `Promise.reject(재발급 오류)` → `redirectOn401()`
+ *
+ *   즉 그 뒤에 붙은 인터셉터가 받는 것은 **재발급 오류**이지 원래의 401 이 아니다 —
+ *   본문(`reason_code`)이 거기 없다. `use()` 로 뒤에 붙이면 이 절은 **아무것도 못 본다.**
+ *   그래서 axios 의 처리기 배열 **맨 앞**에 넣는다(axios 1.13.5 · `interceptors.response
+ *   .handlers`). 우리는 **보기만 하고 오류를 그대로 다시 던진다** — rj-core 의 재발급
+ *   갈래는 한 자도 안 바뀐다.
+ *
+ * ⚠ 배열 모양은 axios 의 내부다. 그래서 **확인하고** 넣고, 안 되면 `use()` 로 떨어지며,
+ *   그마저 안 되면 아무 일도 하지 않는다 — 그때 동작은 종전과 **똑같다**(말없이 튕긴다).
+ *   없는 배선을 있는 척하지 않는다.
+ */
+const noteEvictionOn401 = {
+  fulfilled: (response: any) => response,
+  rejected: (error: any) => {
+    const status = error?.response?.status;
+    const body = error?.response?.data;
+    if (status === 401 && isSessionEvicted(body)) {
+      announceSessionEnded(body);
+    }
+    return Promise.reject(error);
+  },
+  synchronous: false,
+  runWhen: null,
+};
+
+try {
+  const handlers = API?.interceptors?.response?.handlers;
+  if (Array.isArray(handlers)) {
+    handlers.unshift(noteEvictionOn401);
+  } else {
+    API?.interceptors?.response?.use?.(
+      noteEvictionOn401.fulfilled,
+      noteEvictionOn401.rejected,
+    );
+  }
+} catch {
+  // 인터셉터를 못 붙였다. 안내 한 줄이 제품을 세우지 않는다 — 종전 동작으로 돈다.
+}
 
 export default API;

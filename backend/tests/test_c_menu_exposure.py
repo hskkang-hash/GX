@@ -369,7 +369,13 @@ class BundlesAreSeparableTest(LegacyThreeFixture):
         bundles = {e.get("bundle") for e in led["entries"]}
         self.assertEqual(bundles, {"UX-21", "P-50"},
                          "장부가 어느 판정으로 끊었는지 말하지 않습니다: %r" % bundles)
-        self.assertEqual(sorted(led.get("bundles", [])), ["P-50", "UX-21"])
+        # ★ 여기에 이름을 손으로 적지 않는다 (2026-09-05 · UX-25 가 `P-61-U1` 을 더했다).
+        #   장부의 `bundles` 는 「이번에 **돌린** 판정」이고, 인자를 안 주면 표 전부다.
+        #   손으로 적으면 판정이 하나 늘 때마다 이 줄이 빨강이 되고, 그 빨강은
+        #   「장부가 고장났다」가 아니라 **「표가 늘었다」**다 — 둘을 구별 못 하는
+        #   시험은 다음 사람에게 무시당한다.
+        from common.menu_exposure import BUNDLE_IDS
+        self.assertEqual(sorted(led.get("bundles", [])), sorted(BUNDLE_IDS))
 
     def test_one_decision_can_be_undone_alone(self) -> None:
         """P-50 만 되살리고 UX-21 은 끊긴 채로 둔다."""

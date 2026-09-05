@@ -16,10 +16,23 @@
  * ★ 자리를 차지하지 않는다(`fixed`). 흐름에 넣으면 화면마다 아래 여백이 달라지고,
  *   긴 목록의 끝에서는 아예 안 보인다.
  *
+ ★ [UX-25 · 세종 P-61 · 2026-09-05] **지원 창구 한 줄이 여기 붙었다.**
+ *
+ *   P-61 은 「전 역할 **사이드바 하단**에 버전과 지원 창구」라 적었다. 그 자리에는
+ *   못 붙였다 — 사이드바는 인수 부품(`rj-core` 의 `CustomSidebar`)이 통째로 그리고
+ *   그 파일은 §0.4 금지구역이다. 우리 층에서 그 안에 한 줄을 넣을 자리가 없다
+ *   (`SidebarProps` 에 `children` 이 선언돼 있으나 `App.tsx` 의 호출은 그것을 쓰지
+ *   않고, 부품이 그 자리를 어디에 그리는지도 우리가 못 본다).
+ *
+ *   그래서 **화면 하단 오른쪽**에 붙인다. P-61 이 이 줄로 얻으려던 것 — 「전 역할이
+ *   늘 볼 수 있는 자리」 — 은 그대로 지켜진다. 오히려 넓다: 사이드바가 없는 화면
+ *   (월 모드 · 로그인 · 온보딩 · 모바일)에서도 보인다.
+ *   ⚠ 「사이드바 하단」이라 적으면 거짓이다. **화면 하단**이라고 적는다.
+ *
  * ★ 「알 수 없음」이 뜨는 경우가 있다. 그것은 결함 표시가 **아니라 정직한 표시**다 —
  *   커밋을 못 읽은 빌드다(`vite.config.ts` 머리말의 ③). 지어낸 해시보다 낫다.
  */
-import { VERSION_LABEL } from '../constants/build';
+import { SUPPORT_LABEL, VERSION_LABEL } from '../constants/build';
 
 export default function BuildVersion() {
   return (
@@ -39,7 +52,7 @@ export default function BuildVersion() {
         fontVariantNumeric: 'tabular-nums',
       }}
     >
-      {VERSION_LABEL}
+      {VERSION_LABEL} · {SUPPORT_LABEL}
     </div>
   );
 }

@@ -126,6 +126,15 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "proxy.middleware.RemoveXFrameOptionsMiddleware",  # Remove X-Frame-Options for proxy endpoints
     "core.middleware.refresh_token.TokenRefreshMiddleware",
+    # ★ [UX-24a · 2026-09-05 턴 F · 차선 S] 월(wall) 표시 토큰 한 겹. **줄을 새로 넣었다**
+    #   (기존 줄은 한 자도 안 고쳤다). 자리는 `AccessGateMiddleware` **바로 위** —
+    #   응답 캐시보다 바깥이어야 두 가지가 성립한다:
+    #     ① 캐시에 적중한 월 요청도 이 겹을 지난다 (D-341 착시 ⑦)
+    #     ② `request.user` 를 여기서 세워야 캐시 열쇠가 **그 사용자 것**이 된다
+    #   하는 일은 하나다: 월 토큰을 들고 온 요청의 **쓰기와 목록 밖 경로를 403 으로 끊는다**
+    #   (§0.4 라우트까지 전부 덮는다). 월 토큰이 없는 요청은 한 자도 안 만진다.
+    #   되돌리기는 `WALL_TOKEN_ENABLED = False` 한 줄이다.
+    "common.wall_token.WallTokenMiddleware",
     # ★ 전역 접근 관문 (D-348 · D-343 ③). **캐시보다 바깥이어야 한다**(D-341 착시 ⑦) —
     #   캐시 안쪽에 두면 열려 있던 동안 익명으로 채워진 항목이 관문을 지나지 않고 그대로 나간다.
     #   §0.4 금지구역의 라우트도 이 한 겹이 덮는다. 파일은 한 줄도 건드리지 않는다.
@@ -181,6 +190,19 @@ API_CONTRACT_PROMOTE_ERROR_STATUS = (
 SESSION_LIMIT_ENABLED = (
     os.environ.get("SESSION_LIMIT_ENABLED", "true").lower() == "true"
 )
+
+# ★ [UX-24a · 2026-09-05 턴 F · 차선 S] 월(wall) 표시 토큰 — 세종 판정 P-62.
+#   **세션이 아니다.** 읽기 전용 · 12시간 · 화면 `/wall` 하나 · **쓰기 0**.
+#   대장은 `docs/agent/authn_paths.md` §9, 구현과 사유는 `common/wall_token.py`.
+#   끄면 이 문은 통째로 401 이다 — 다른 어떤 문도 영향받지 않는다(되돌리기 한 줄).
+WALL_TOKEN_ENABLED = (
+    os.environ.get("WALL_TOKEN_ENABLED", "true").lower() == "true"
+)
+
+# ★ **전부 회수**의 자리. 이 시각(epoch 초) **이전에 발급된 월 토큰은 전부 죽는다.**
+#   캐시가 아니라 설정값인 이유: 재기동해도 살아 있어야 하는 판정이기 때문이다.
+#   `python manage.py wall_token revoke --all` 이 넣을 값을 알려 준다.
+WALL_TOKEN_EPOCH = int(os.environ.get("WALL_TOKEN_EPOCH", "0") or 0)
 
 # ★ D-349 착시 ⑧ — 봉투. **F-05 진입면은 래칫에서 제외한다.**
 #
@@ -280,7 +302,24 @@ API_CONTRACT_PROMOTE_PATHS = tuple(
         "/api/dsm/,/api/stream-monitors/,/api/surveillance/"
         ",/api/advanced-table/,/api/config-management/,/api/user-groups/"
         ",/api/flight-log/,/api/departments/"
-        ",/api/partner/,/api/third-api/").split(",")
+        ",/api/partner/,/api/third-api/"
+        # ★ [SEC-11a · 2026-09-05 턴 F · 차선 S] 잔여 205 → 193.
+        #   이 둘은 잔여 안에서 **우리가 읽을 수 있는 화면**이 부르는 유일한 자리다.
+        #   승격을 정하기 전에 그 화면들의 오류 처리를 전부 읽었다 [실측]:
+        #     features/Dashboard/hooks/useDashboard.ts        `response.success` 를 본다
+        #     DeliveryDashboard/{index,indexV2,indexV3,AnYang}.tsx
+        #                                                    try/**finally** 로 스피너를 끈다
+        #     features/checklistSetting/hooks/useChecklistSetting.ts
+        #                                                    호출마다 try/**catch**/finally ·
+        #                                                    `error.response.data.message` 를 그린다
+        #   즉 승격 뒤에 사람이 보는 것은 지금과 **같고**(빈 화면),
+        #   달라지는 것은 HTTP 상태가 참이 되는 것뿐이다. 승격 전에는 거절이 200 으로
+        #   나가 오류율 대시보드가 그것을 **성공으로 센다**(D-358).
+        #   ⚠ 되돌리기: 이 두 줄을 뺀다. 되돌릴 조건 — 이 화면들에서 권한 거절이
+        #     **스피너 고착**으로 나타나면(W0-18 §2-1) 그때가 되돌릴 때다.
+        #     지금은 네 화면 전부 `finally` 로 스피너를 끄고, 전역
+        #     `unhandledrejection` 처리기는 저장소에 **0건**이다 [실측].
+        ",/api/dashboard/,/api/checklist-setting/").split(",")
     if p.strip()
 )
 
