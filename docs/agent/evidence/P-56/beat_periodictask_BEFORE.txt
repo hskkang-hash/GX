@@ -1,0 +1,17 @@
+ id |                     name                     |                                task                                 | enabled
+----+----------------------------------------------+---------------------------------------------------------------------+---------
+  4 | celery.backend_cleanup                       | celery.backend_cleanup                                              | t
+  5 | precompute-order-statistics                  | optimization.tasks.aggregation_tasks.precompute_order_statistics    | t
+  6 | precompute-device-metrics                    | optimization.tasks.aggregation_tasks.precompute_device_metrics      | t
+  7 | precompute-delivery-statistics               | optimization.tasks.aggregation_tasks.precompute_delivery_statistics | t
+  8 | warm-popular-data-cache                      | optimization.tasks.cache_warming_tasks.warm_popular_data_cache      | t
+  9 | warm-dashboard-cache                         | optimization.tasks.cache_warming_tasks.warm_dashboard_cache         | t
+ 10 | surveillance-auto-launch-processor           | surveillance.tasks.process_surveillance_auto_launch                 | t
+ 11 | surveillance-recurring-profile-generator     | surveillance.tasks.process_surveillance_recurring_profiles          | t
+ 12 | surveillance-overdue-profile-check-scheduler | surveillance.tasks.schedule_surveillance_profile_overdue_checks     | t
+ 13 | terminal-activation-scheduler                | terminals.tasks.schedule_terminal_activation_tasks                  | t
+ 14 | purge-audit-logs-daily                       | core.logger.tasks.purge_old_audit_logs                              | t
+ 15 | surveillance-overdue-profile-processor       | surveillance.tasks.process_surveillance_profile_overdue             | t
+ 16 | terminal-auto-activation-processor           | terminals.tasks.process_terminal_auto_activation                    | t
+ 17 | flight-log-anomaly-prediction-scheduler      | flight_log.tasks.task_update_pending_anomaly_predictions            | t
+(14 rows)

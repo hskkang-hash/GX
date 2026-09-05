@@ -154,6 +154,8 @@ import AddNewTemplate from './features/waybillTemplate/AddNewTemplate';
 import EditTemplate from './features/waybillTemplate/EditTemplate';
 import './index.css';
 import { CustomRoutes } from './services/API';
+import BuildVersion from './features/dsm/components/BuildVersion';
+import { KICK_SENTENCE } from './features/dsm/constants/kick';
 import { dsm2Routes } from './features/dsm/routes';
 import { ClearStoreOnRouteChange } from './utils/ClearStoreOnRouteChange';
 
@@ -210,6 +212,8 @@ const DsmCameraGrid = lazy(() => import('./features/dsm/pages/CameraGrid'));
 const DsmPrivacyRequests = lazy(
   () => import('./features/dsm/pages/PrivacyRequests'),
 );
+/** 턴 E · OPS-16 계량 표. */
+const DsmMetering = lazy(() => import('./features/dsm/pages/Metering'));
 /**
  * 모바일 — 이동 중 수신 모드 (U3 · 차선 D).
  *
@@ -314,6 +318,18 @@ const Sidebar = () => {
  */
 const FirstTimeLink = () => (
   <div style={{ textAlign: 'center', padding: '12px 0' }}>
+    {/*
+      P-52 킥 문장 — **세 자리에 같은 글자**를 둔다(로그인 · 지금 처리할 것 상단 ·
+      월간 1쪽 첫 줄). 제품이 무엇을 하는 물건인지 한 문장으로 말하는 자리이고,
+      세 자리가 다른 말을 하면 그것은 문장이 아니라 장식이다.
+
+      ★ 글자를 여기 손으로 적어 두지 않는다 — 상수 하나에서 가져온다
+        (`features/dsm/constants/kick.ts`). 자리마다 적으면 한 자리를 고치는 날
+        나머지가 옛말이 되고, 옛말이 된 것은 화면에서 안 보인다.
+    */}
+    <p style={{ margin: '0 0 8px', fontSize: 13, opacity: 0.75 }}>
+      {KICK_SENTENCE}
+    </p>
     <a href={dsm2Routes.onboarding.path}>처음이세요?</a>
   </div>
 );
@@ -322,11 +338,21 @@ const Login = () => {
   const { isMobile } = useMobileContext();
   const navigate = useNavigate();
 
+  /*
+    P-59 — 로그인 화면은 **관문 밖**이라 `PrivateLayout` 아래에 없다. 그래서 여기
+    한 번 더 둔다. 지원 창구에 전화가 오는 자리가 정확히 여기다 — 아직 못 들어간
+    사람은 관문 안의 어떤 화면도 못 보고, 그때 「무엇이 떠 있나」에 답할 유일한
+    화면이 이 화면이다.
+    ⚠ 관문 밖에 아직 하나 더 있다 — 온보딩 화면(`dsm2Routes.onboarding`)은
+      두 가지 어디에도 안 걸린 홀로 선 경로다. 그 화면에 표시를 넣으려면 그 파일을
+      만져야 하고, 이번 턴 그 파일은 이 차선의 것이 아니다.
+  */
   if (isMobile) {
     return (
       <>
         <LoginMobile logoImage={logoExpandedLightModeDefault} />
         <FirstTimeLink />
+        <BuildVersion />
       </>
     );
   }
@@ -338,6 +364,7 @@ const Login = () => {
         navigate={navigate}
       />
       <FirstTimeLink />
+      <BuildVersion />
     </>
   );
 };
@@ -420,6 +447,13 @@ const PrivateLayout = () => {
       <GlobalLoading />
       <FileManagement />
       <FormNavigationBlocker />
+      {/*
+        P-59 — **관문 안의 모든 화면**이 자기 버전을 말한다. 여기 한 번 두는 것으로
+        족하다: 관문 뒤의 화면은 전부 이 자리의 자식이고(월 모드도 사이드바 화면도),
+        표시는 흐름 밖(`fixed`)이라 어느 화면의 배치도 밀지 않는다.
+        ⚠ 이 표시는 화면당 한 번만 떠야 한다 — 화면마다 따로 넣으면 겹쳐 그린다.
+      */}
+      <BuildVersion />
     </>
   );
 };
@@ -504,6 +538,7 @@ function App() {
               path: dsm2Routes.privacyRequests.path,
               element: <DsmPrivacyRequests />,
             },
+            { path: dsm2Routes.metering.path, element: <DsmMetering /> },
             {
               path: CustomRoutes.dsm.eventDetail.path,
               element: <DsmEventDetail />,

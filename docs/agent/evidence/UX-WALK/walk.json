@@ -5,7 +5,7 @@
   },
   "web": "http://localhost:3002",
   "api": "http://localhost:8000",
-  "when": "2026-09-05T04:31:32",
+  "when": "2026-09-05T10:45:11",
   "names_from_perf_load": {
     "S1": "목록 — 관제요원이 가장 자주 여는 자리",
     "S2": "대시보드 — 첫 화면 한 벌",
@@ -14,11 +14,44 @@
   "walks": {
     "S1": {
       "clicks": 2,
-      "ms": 17730,
+      "ms": 18028,
       "steps": [
         {
           "n": 1,
           "what": "주소 /dsm/events",
+          "ok": true,
+          "ms": 6959,
+          "settle_ms": 5000,
+          "net_ms": 1959
+        },
+        {
+          "n": 2,
+          "what": "button 「미처리」 누름",
+          "ok": true,
+          "ms": 5034,
+          "settle_ms": 5000,
+          "net_ms": 34
+        },
+        {
+          "n": 3,
+          "what": "표 1번째 줄 누름",
+          "ok": true,
+          "ms": 6034,
+          "settle_ms": 6000,
+          "net_ms": 34
+        }
+      ],
+      "completed": true,
+      "failed_at": null,
+      "net_ms": 2027
+    },
+    "S2": {
+      "clicks": 1,
+      "ms": 11703,
+      "steps": [
+        {
+          "n": 1,
+          "what": "주소 /dsm/dashboard",
           "ok": true,
           "ms": 6648,
           "settle_ms": 5000,
@@ -26,74 +59,41 @@
         },
         {
           "n": 2,
-          "what": "button 「미처리」 누름",
-          "ok": true,
-          "ms": 5035,
-          "settle_ms": 5000,
-          "net_ms": 35
-        },
-        {
-          "n": 3,
-          "what": "표 1번째 줄 누름",
-          "ok": true,
-          "ms": 6047,
-          "settle_ms": 6000,
-          "net_ms": 47
-        }
-      ],
-      "completed": true,
-      "failed_at": null,
-      "net_ms": 1730
-    },
-    "S2": {
-      "clicks": 1,
-      "ms": 11622,
-      "steps": [
-        {
-          "n": 1,
-          "what": "주소 /dsm/dashboard",
-          "ok": true,
-          "ms": 6563,
-          "settle_ms": 5000,
-          "net_ms": 1563
-        },
-        {
-          "n": 2,
           "what": "글자 「전체 목록」 누름",
           "ok": true,
-          "ms": 5059,
+          "ms": 5055,
           "settle_ms": 5000,
-          "net_ms": 59
+          "net_ms": 55
         }
       ],
       "completed": true,
       "failed_at": null,
-      "net_ms": 1622
+      "net_ms": 1703
     },
     "S3": {
       "clicks": 1,
-      "ms": 11963,
+      "ms": 11750,
       "steps": [
         {
           "n": 1,
           "what": "주소 /dsm/queue",
           "ok": true,
-          "ms": 6917,
+          "ms": 6708,
           "settle_ms": 5000,
-          "net_ms": 1917
+          "net_ms": 1708
         },
         {
           "n": 2,
           "what": "button 「상세 열기」 누름",
           "ok": true,
-          "ms": 5046,
+          "ms": 5042,
           "settle_ms": 5000,
-          "net_ms": 46
+          "net_ms": 42
         }
       ],
       "completed": true,
       "failed_at": null,
-      "net_ms": 1963
+      "net_ms": 1750
     }
   },
   "console_errors": {
@@ -103,22 +103,18 @@
       "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
       "console.error: 🚨 Partner callback WebSocket error: Event",
       "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
-      "console.error: 🚨 Partner callback WebSocket error: Event",
-      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
       "console.error: 🚨 Partner callback WebSocket error: Event"
     ],
     "S1": [
       "console.error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "console.error: 🚨 Partner callback WebSocket error: Event",
       "console.error: WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404",
       "console.error: New order notification WebSocket error: Event",
       "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
       "console.error: 🚨 Partner callback WebSocket error: Event",
       "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
       "console.error: 🚨 Partner callback WebSocket error: Event",
-      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
-      "console.error: 🚨 Partner callback WebSocket error: Event",
-      "console.error: Access to XMLHttpRequest at 'http://localhost:8000/api/dsm/events/4803/snapshot' from origin 'http://localhost:3002' has been blocked by CORS policy: Request header field x-no-cache is ",
-      "console.error: Failed to load resource: net::ERR_FAILED",
       "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
       "console.error: 🚨 Partner callback WebSocket error: Event"
     ],
@@ -135,14 +131,10 @@
     ],
     "S3": [
       "console.error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
-      "console.error: Access to XMLHttpRequest at 'http://localhost:8000/api/dsm/events/4805/snapshot' from origin 'http://localhost:3002' has been blocked by CORS policy: Request header field x-no-cache is ",
-      "console.error: Failed to load resource: net::ERR_FAILED",
       "console.error: WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404",
       "console.error: New order notification WebSocket error: Event",
       "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
       "console.error: 🚨 Partner callback WebSocket error: Event",
-      "console.error: Access to XMLHttpRequest at 'http://localhost:8000/api/dsm/events/4805/snapshot' from origin 'http://localhost:3002' has been blocked by CORS policy: Request header field x-no-cache is ",
-      "console.error: Failed to load resource: net::ERR_FAILED",
       "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
       "console.error: 🚨 Partner callback WebSocket error: Event"
     ]

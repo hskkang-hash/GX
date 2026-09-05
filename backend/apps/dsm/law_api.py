@@ -170,3 +170,127 @@ class DsmLawAPI:
             raise HttpError(404, str(exc)) from exc
         except ValueError as exc:
             raise HttpError(422, str(exc)) from exc
+
+    # ═══════════════════════════════════════════════════════════════════
+    # LAW-02a · P-57 — 파기 (「보관 기간이 지난 영상 지우기」)
+    #
+    # ★ 왜 `sweep` 옆에 **다른 문**을 내나 — 좁히는 축이 다르기 때문이다.
+    #   `sweep` 은 전역이고 전역 관리자만 부른다. `purge` 는 **테넌트 하나**를
+    #   지우고, 그래서 그 테넌트의 관리자가 자기 것에 대해 부를 수 있다.
+    #   한 문에 두 뜻을 담으면 「내 것만 지우려던 손」이 전역을 지운다.
+    # ═══════════════════════════════════════════════════════════════════
+    @route.get("/law/purge/tenants", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="P-57 파기 대상 — 선언한 테넌트만 목록에 오른다")
+    def purge_tenants(self, request):
+        """**보존 일수를 선언한 테넌트**만. 선언하지 않은 곳은 파기 대상이 아니다.
+
+        파기는 일어난 뒤에 알면 늦다 — 그래서 「누가 대상인가」를 먼저 보여 준다.
+        """
+        from apps.dsm.retention import declared_tenants
+
+        _admin(request)
+        rows = declared_tenants()
+        return {"declared": rows, "count": len(rows),
+                "note": ("이 목록에 없는 테넌트는 보존 일수를 선언하지 않았고, "
+                         "그래서 파기하지 않는다. 선언이 먼저다")}
+
+    @route.post("/law/purge", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="P-57 파기 — 되돌릴 수 없는 쓰기다. 테넌트 하나에만 닿는다")
+    def purge_tenant(self, request, group_id: int = 0, dry_run: bool = True,
+                     reason: str = ""):
+        """보관 기간이 지난 영상을 **그대로 지운다.** `dry_run` 기본값이 참이다.
+
+        `group_id` 를 주지 않으면 **내 테넌트**다. 남의 테넌트를 지정하는 것은
+        전역 관리자만 할 수 있다 — 테넌트 관리자가 남의 자료를 파기할 수는 없다.
+        """
+        from common.tenant_filters import get_user_group
+
+        from apps.dsm.retention import purge
+
+        scope = _admin(request)
+        actor = scope.require_actor()
+        mine = get_user_group(actor)
+        target = int(group_id) or (mine.pk if mine is not None else 0)
+        if not target:
+            raise HttpError(422, "지울 테넌트를 정하지 못했습니다. 요청자에게 "
+                                 "소속이 없습니다.")
+        if (mine is None or target != mine.pk) and not is_global_admin(actor):
+            raise HttpError(403, "다른 테넌트의 영상은 파기할 수 없습니다.")
+        if not dry_run and not (reason or "").strip():
+            raise HttpError(
+                422, "왜 지금 지우는지 사유가 필요합니다. "
+                     "지운 뒤에는 되돌릴 수 없습니다.")
+        return purge(group_id=target, dry_run=bool(dry_run), actor=actor,
+                     reason=reason)
+
+    @route.get("/law/purge/history", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="P-57 「지운 기록」 — 남의 테넌트 파기 이력은 안 보인다")
+    def purge_history_route(self, request, limit: int = 50):
+        """**지운 기록.** 전역 관리자가 아니면 **내 테넌트 것만** 보인다."""
+        from common.tenant_filters import get_user_group
+
+        from apps.dsm.retention import purge_history
+
+        scope = _admin(request)
+        actor = scope.require_actor()
+        if is_global_admin(actor):
+            rows = purge_history(limit=int(limit))
+        else:
+            mine = get_user_group(actor)
+            if mine is None:
+                raise HttpError(422, "요청자에게 소속이 없어 기록을 좁힐 수 "
+                                     "없습니다.")
+            rows = purge_history(group_id=mine.pk, limit=int(limit))
+        return {"entries": rows, "count": len(rows)}
+
+    # ═══════════════════════════════════════════════════════════════════
+    # OPS-16 — 이번 달 사용량 (계량)
+    #
+    # ★ **읽기 전용이다.** 이 문은 아무것도 만들지 않는다 — 계량이 이벤트를
+    #   만들면 그 수로 청구하게 된다.
+    # ═══════════════════════════════════════════════════════════════════
+    @route.get("/metering", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="OPS-16 사용량 — 남의 테넌트 사용량은 남의 사업 규모다")
+    def metering_usage(self, request, month: str = ""):
+        """**이번 달 사용량** 다섯 칸. `month` 를 주면 그 달(`YYYY-MM`)."""
+        from apps.dsm.metering import usage
+
+        try:
+            return usage(scope=_scope(request), month=month)
+        except ValueError as exc:
+            raise HttpError(422, str(exc)) from exc
+        except LookupError as exc:
+            raise HttpError(422, str(exc)) from exc
+
+    @route.get("/metering/series", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="OPS-16 달별 사용량 — 지난 달과 견주는 자리")
+    def metering_series(self, request, months: int = 6):
+        """최근 몇 달을 한 번에. 화면이 표로 그린다."""
+        from apps.dsm.metering import usage_series
+
+        try:
+            return usage_series(scope=_scope(request), months=int(months))
+        except LookupError as exc:
+            raise HttpError(422, str(exc)) from exc
+
+    @route.get("/metering/csv", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="OPS-16 표 내려받기 — 내 테넌트 것만 나간다")
+    def metering_csv(self, request, months: int = 6):
+        """**표 내려받기.** 못 잰 칸은 **빈 칸**으로 나간다 — 0으로 적지 않는다."""
+        from django.http import HttpResponse
+
+        from apps.dsm.metering import usage_csv
+
+        try:
+            text = usage_csv(scope=_scope(request), months=int(months))
+        except LookupError as exc:
+            raise HttpError(422, str(exc)) from exc
+        #: ★ BOM 을 앞에 붙인다. 안 붙이면 엑셀이 한글 제목을 깨뜨려 열고,
+        #:   그러면 「표 내려받기」는 눌리는데 쓸 수가 없다.
+        response = HttpResponse("﻿" + text,
+                                content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = (
+            'attachment; filename="guardianx-usage.csv"')
+        #: 캐시가 장애를 덮는다(P-19) — 사용량은 지금의 수여야 한다.
+        response["Cache-Control"] = "no-store"
+        return response

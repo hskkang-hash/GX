@@ -207,3 +207,35 @@ export async function fetchSnapshotUrl(
   const url = URL.createObjectURL(res.data as Blob);
   return { url, revoke: () => URL.revokeObjectURL(url) };
 }
+
+/**
+ * OPS-16 계량 · P-57 파기 — **끝에 상수만 더한다** (2026-09-05 · 차선 E).
+ *
+ * ★ 왜 `dsmEndpoint` 안이 아니라 여기인가: 이번 턴에 이 파일을 여러 차선이 읽는다.
+ *   위쪽 객체 리터럴에 줄을 끼우면 그 줄이 충돌하고, **충돌한 상수 파일은
+ *   화면 전체를 못 세운다.** 끝에 붙이는 것은 아무 줄도 안 건드린다.
+ *
+ * ★ 문자열을 화면 코드에 흩지 않는다 — `dsmEndpoint` 와 같은 규약이다.
+ */
+export const dsmMeteringEndpoint = {
+  /** OPS-16 「이번 달 사용량」 다섯 칸. `month=YYYY-MM` 을 주면 그 달. */
+  usage: '/api/dsm/metering',
+  /** 최근 몇 달을 한 번에 — 지난 달과 견주는 자리. */
+  usageSeries: '/api/dsm/metering/series',
+  /**
+   * 「표 내려받기」. **CSV 본문이 그대로 온다** — 봉투가 아니다.
+   * ⚠ `<a href>` 로 붙이면 브라우저가 **인증 헤더 없이** 부르고 401 이 온다
+   *   (`fetchSnapshotUrl` 머리말과 같은 자리). 반드시 이 앱의 axios 로 받는다.
+   */
+  usageCsv: '/api/dsm/metering/csv',
+} as const;
+
+/** P-57 파기 — 「보관 기간이 지난 영상 지우기」. **되돌릴 수 없다.** */
+export const dsmPurgeEndpoint = {
+  /** 보존 일수를 **선언한** 테넌트만. 여기 없으면 파기 대상이 아니다. */
+  tenants: '/api/dsm/law/purge/tenants',
+  /** 파기(POST). **`dry_run` 기본값이 참**이다 — 표가 먼저다(D-209). */
+  purge: '/api/dsm/law/purge',
+  /** 「지운 기록」. 전역 관리자가 아니면 내 테넌트 것만 보인다. */
+  history: '/api/dsm/law/purge/history',
+} as const;

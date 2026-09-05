@@ -1,4 +1,4 @@
-# OPS-07 — 로그 수집기를 전수로 쟀다 (2026-09-05 15:39:07)
+# OPS-07 — 로그 수집기를 전수로 쟀다 (2026-09-05 20:09:39)
 
 **이 파일은 `scripts/ops_log_collectors.py` 가 실행하며 적었다.**
 한 시간 치는 [실측]이고 하루 환산은 [추정]이다 — 갈라서 적었다.
@@ -9,13 +9,15 @@
 |---|---|---|---|---|
 | 컨테이너 stdout · gx-shell | 무한 | 0바이트 | 0바이트 | 드라이버 json-file · max-size 없음 · max-file 없음 · **선언은 섰다 · 적용은 다음 재기동** — docker-compose.yml::shell 에 10m × 5 로 선언돼 있다 (docker run — 이름 대응표) |
 | 컨테이너 stdout · postgres | 무한 | 0바이트 | 0바이트 | 드라이버 json-file · max-size 없음 · max-file 없음 · **선언은 섰다 · 적용은 다음 재기동** — docker-compose.yml::postgres 에 10m × 5 로 선언돼 있다 (docker run — 이름 대응표) |
-| 컨테이너 stdout · redis | 무한 | 4,958바이트 | 118,992바이트 | 드라이버 json-file · max-size 없음 · max-file 없음 · **선언은 섰다 · 적용은 다음 재기동** — docker-compose.yml::redis 에 10m × 5 로 선언돼 있다 (docker run — 이름 대응표) |
+| 컨테이너 stdout · redis | 무한 | 3,583바이트 | 85,992바이트 | 드라이버 json-file · max-size 없음 · max-file 없음 · **선언은 섰다 · 적용은 다음 재기동** — docker-compose.yml::redis 에 10m × 5 로 선언돼 있다 (docker run — 이름 대응표) |
 | 컨테이너 stdout · guardianx-source-minio-1 | 무한 | 0바이트 | 0바이트 | 드라이버 json-file · max-size 없음 · max-file 없음 · **선언은 섰다 · 적용은 다음 재기동** — docker-compose.yml::minio 에 10m × 5 로 선언돼 있다 (compose 라벨) |
 | 컨테이너 stdout · gx-fe-build | 무한 | 0바이트 | 0바이트 | 드라이버 json-file · max-size 없음 · max-file 없음 · compose 에 대응 서비스가 **없다**(docker run — 이름 대응표) — `docker run --log-opt` 로만 걸린다 |
 | 컨테이너 stdout · gx-nginx-e | 10m × 5 | 0바이트 | 0바이트 | 드라이버 json-file · 회전 10m × 5 · compose 에 대응 서비스가 **없다**(docker run — 이름 대응표) — `docker run --log-opt` 로만 걸린다 |
-| 컨테이너 stdout · gx-gunicorn-e | 10m × 5 | 10,274,859바이트 | 246,596,616바이트 | 드라이버 json-file · 회전 10m × 5 · compose 에 대응 서비스가 **없다**(docker run — 이름 대응표) — `docker run --log-opt` 로만 걸린다 |
-| 파일 · gx-nginx-e:/var/log/nginx/gx-front.access.log | 무한 | 2,122,482바이트 | 50,939,568바이트 | 컨테이너 **안의 파일**(총 6,079,532바이트) — `json-file` 회전 밖이다. `--log-opt` 도 compose 의 `logging` 도 여기 닿지 않고, `nginx:alpine` 에는 logrotate 가 없다 |
-| DB 감사 로그 · logger_auditlogs | 무한 | 4행 | 96행 | 행 1427개 · 3571712바이트 · 가장 오래된 2026-08-27 13:28:44.947815+00:00 · ⚠ 보존 90일이 **선언돼 있으나 지우는 워커가 0개다** — beat 일정 `ops-audit-purge-daily` 은 적혀 있고, 그것을 실행할 celery 워커가 브로커에 하나도 붙어 있지 않다. **선언은 삭제가 아니다** |
+| 컨테이너 stdout · gx-gunicorn-e | 10m × 5 | 2,569,445바이트 | 61,666,680바이트 | 드라이버 json-file · 회전 10m × 5 · compose 에 대응 서비스가 **없다**(docker run — 이름 대응표) — `docker run --log-opt` 로만 걸린다 |
+| 컨테이너 stdout · gx-celery-e | 10m × 5 | 3,367바이트 | 80,808바이트 | 드라이버 json-file · 회전 10m × 5 · docker-compose.yml::celery 에 10m × 5 로 선언돼 있다 (docker run — 이름 대응표) |
+| 컨테이너 stdout · gx-beat-e | 10m × 5 | 634바이트 | 15,216바이트 | 드라이버 json-file · 회전 10m × 5 · docker-compose.yml::beat 에 10m × 5 로 선언돼 있다 (docker run — 이름 대응표) |
+| 파일 · gx-nginx-e:/var/log/nginx/gx-front.access.log | 무한 | 530,754바이트 | 12,738,096바이트 | 컨테이너 **안의 파일**(총 6,612,082바이트) — `json-file` 회전 밖이다. `--log-opt` 도 compose 의 `logging` 도 여기 닿지 않고, `nginx:alpine` 에는 logrotate 가 없다 |
+| DB 감사 로그 · logger_auditlogs | 무한 | 1,771행 | 42,504행 | 행 3218개 · 7741440바이트 · 가장 오래된 2026-08-27 13:28:44.947815+00:00 · 워커 1 · ⚠ 보존 90일이 선언돼 있고 워커도 붙었으나 파기 항목이 **DB 주기 표에서 꺼져 있다**(purge-audit-logs-daily=off, ops-audit-purge-daily=off) — 파기 대상 판정(보존 일수 미선언 테넌트 제외)이 서기 전까지 차선 E 가 껐다(P-57 대기). **켜기 전에는 아무것도 안 지워진다** |
 
 ### 선언 — **다음에 뜰 컨테이너에는 걸리는가** [실측]
 
@@ -23,6 +25,8 @@
 |---|---|---|---|---|
 | `backend` | docker-compose.yml | json-file | 10m | 5 |
 | `backend-stg` | docker-compose.stg.yml | json-file | 10m | 5 |
+| `beat` | docker-compose.yml | json-file | 10m | 5 |
+| `beat-stg` | docker-compose.stg.yml | json-file | 10m | 5 |
 | `celery` | docker-compose.yml | json-file | 10m | 5 |
 | `celery-stg` | docker-compose.stg.yml | json-file | 10m | 5 |
 | `frontend` | docker-compose.yml | json-file | 10m | 5 |
@@ -55,11 +59,11 @@
 table                  logger_auditlogs
 time_col               create_datetime
 time_col_candidates    ['create_datetime', 'created_on', 'deleted', 'modified_on']
-rows                   1427
-bytes                  3571712
+rows                   3218
+bytes                  7741440
 oldest                 2026-08-27 13:28:44.947815+00:00
-newest                 2026-09-05 05:50:31.804287+00:00
-rows_last_hour         4
+newest                 2026-09-05 11:09:32.989602+00:00
+rows_last_hour         1771
 retention_days         90
 purge_beat             {'ops-audit-purge-daily': '<crontab: 10 3 * * * (m/h/dM/MY/d)>'}
 file_handlers          []
@@ -71,9 +75,9 @@ file_handlers          []
 
 ## 2. 판정
 
-  OK   ① 수집기 전수       수집기 9개를 전수로 셌다
+  OK   ① 수집기 전수       수집기 11개를 전수로 셌다
   FAIL ② 보존 기간        **보존 기간이 없다**(무한 적재): 컨테이너 stdout · gx-shell, 컨테이너 stdout · postgres, 컨테이너 stdout · redis, 컨테이너 stdout · guardianx-source-minio-1, 컨테이너 stdout · gx-fe-build, 파일 · gx-nginx-e:/var/log/nginx/gx-front.access.log, DB 감사 로그 · logger_auditlogs
-  OK   ③ 자라는 속도       9개의 한 시간 치를 쟀다
+  OK   ③ 자라는 속도       11개의 한 시간 치를 쟀다
   FAIL ④ 선언           **선언할 자리조차 없는 수집기**: 컨테이너 stdout · gx-fe-build — compose 밖 `docker run` 으로 떴다. **compose 를 고쳐도 닿지 않는다.** 상한은 `--log-opt max-size=10m --log-opt max-file=5` 로만 걸리고, 그 문장은 `docs/agent/RUNBOOK_로컬기동.md` STEP 2A 에 적혀 있다 — 이 빨강은 **다음에 그 컨테이너를 띄우는 사람**이 지운다
 
 판정 **실패**.

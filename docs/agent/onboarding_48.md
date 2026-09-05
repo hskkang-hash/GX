@@ -277,3 +277,67 @@
 1. **목록 응답에 대응 축이 없다.** `EVENT_RESPONSE_KEYS` 에 `response_state` 가 없어 U2 #2 「미처리 이벤트 확인」을 서버가 걸러 주지 못한다. W1 프리셋(C)의 첫 일이 이것이다 — 화면을 그리기 전에 **목록이 그 값을 실어야** 한다.
 2. **알림 규칙 0건 · 스냅샷 0건.** 화면이 생겨도 채울 것이 없다. U3 #3·U2 #16이 그 자리다 — D·C 차선의 시드가 함께 늘어야 한다.
 3. **화면 없는 신호가 셋.** 죽은 카메라·장애 판단·저장 용량은 전부 `ops_monitor` 안에만 있다. 운영 감시(크론)와 관리자 화면은 **다른 자리**다 — U5 #14가 그것을 한 줄로 말한다.
+
+
+---
+
+## ★ 2026-09-05 턴 E — **P-60 검증**: 조율자의 63% 재측을 다시 재다 (차선 Q · QA/E2E)
+
+- 세종 P-60: 「63%가 **셋째 술어**로 잰 수인지 보고에 없다 — 안 적었으면 재측」.
+- 이 절은 **검증 절이다. 위 표들은 한 글자도 고치지 않았다.** 갈리는 것이 있으면
+  갈린 채로 적는다 — 맞추지 않는다.
+- 방법: 위 재측 절이 든 행마다 **셋째 술어의 두 반쪽을 따로** 확인했다 —
+  ㉠ 사용자 면이 실재하고 **App.tsx 에 등록되어 도달 가능한가**
+  ㉡ 그 면이 **부르는 서버 경로가 실재하는가**. 근거는 소스 자리(파일:행)다.
+
+### ① 셋째 술어를 적용했는가 — **적용했다**
+
+재측 절의 네 행은 판정문에 **화면과 서버 경로를 짝으로** 적었다. 그것이 셋째 술어다.
+네 행을 다시 확인했다 [실측 2026-09-05 · 소스]:
+
+| 행 | ㉠ 사용자 면 | ㉡ 서버 경로 | Q 판정 |
+|---|---|---|---|
+| U1 #3 죽은 카메라 확인 | `dsm/routes.ts:51` `/dsm/cameras/grid` → `App.tsx:534` `<DsmCameraGrid/>` · `pages/CameraGrid.tsx:85` 가 `pulse.data.counts` 와 `state`·`reason` 을 그린다 | `hooks/useCameraGrid.ts:91` → `api.ts:56` `/api/dsm/cameras/pulse` → `backend/apps/dsm/api.py:1194` | **● 동의** |
+| U3 #9 현장 상황 한 줄 보고 | `mobile/routes.ts:18` `/m/events/:id` → `App.tsx:552` · `MobileEventDetail.tsx:106` 「현장 회신 — 본 것을 한 줄로」 | `mobile/api.ts:52` → `dsm/api.ts:49` `POST /api/dsm/events/{id}/field-reply` → `backend/apps/dsm/api.py:466` | **● 동의** |
+| U5 #5 카메라 설치 주소 입력 | `dsm/routes.ts:28` `/dsm/cameras/address` → `App.tsx:531` `<DsmCameraAddress/>` | `CameraAddress.tsx:87` `GET /api/dsm/cameras/address-gap`(`api.py:1156`) · `:99` `POST …/cameras/import`(실재) | **● 동의** — ⚠ 다만 쓰기는 **전용 문이 아니라 일괄 등록 문**을 탄다. 술어는 만족하나, 「주소 하나 고치기」가 일괄 등록을 지나는 것은 다음 사람이 알아야 한다 |
+| U6 #4 이벤트 발생 웹훅 수신 | 기계 사용자다 — 면이 곧 API: `api.py:596·631·644` 구독 발급·조회·폐기 | `apps/dsm/services.py:422` `webhook_outbox.dispatch_event` 가 **생성 경로에서** 불린다 · 재시도는 `kernels/k1_event/services.py:543` `RetryPolicy` | **● 동의** |
+
+### ② 올리지 않은 행 둘 — **둘 다 옳다**
+
+- **U3 #3 상황 사진 1장 보기 ◐ 유지 — 동의.** `MobileEventDetail.tsx:316–339` 는
+  `snapshot_path`(객체 키 문자열)를 복사 가능한 글자로 그리고, 그 아래에
+  「사진이 있지만 이 화면에서는 아직 볼 수 없습니다」를 **스스로 적어 둔다.**
+  바이트를 그리는 코드가 이 화면에 없다. 문(`/snapshot`)은 열렸고
+  자리 화면(`dsm/api.ts:196`)이 그것을 그린다 — **이동 중인 사람의 화면은 아니다.**
+- **U1 #2 전체 상황판 한눈에 ◐ 유지 — 동의.** 카메라 정상/이상 수를 내는 것은
+  `useCameraPulse` 이고, 그것을 부르는 화면은 **월 모드**(`Wall.tsx:181`)와
+  **카메라 격자**(`useCameraGrid.ts:91`) 둘이다. `ControlDashboard.tsx` 는
+  둘 중 어느 것도 부르지 않는다 — **`/dsm/dashboard` 는 이번 턴에 안 바뀌었다**는
+  재측 절의 말이 맞다.
+  ⚠ Q 가 한 번 갈렸다가 되돌린 자리다: 처음에 「그 칸을 내는 것은 월 모드가 아니라
+  카메라 격자다」로 적었는데, `Wall.tsx:181` 이 `useCameraPulse` 를 실제로 부른다.
+  **둘 다 부른다** — 재측 절의 이유는 옳고, 다만 「월 모드뿐」이 아니다.
+
+### ③ 내려간 행 — **0건** (이 방법이 볼 수 있는 범위에서)
+
+48행이 인용한 **서버 문 14종**(`events/summary`·`events/queue`·`dashboard/frame`·
+`dashboard/link-state`·`review`·`response`·`notify`·`snapshot`·`clip`·
+`reports/templates`·`deliveries`·`settings/api-keys`·`cameras/import`·
+`response-times`)과 **화면 라우트 11종**(`/login`·`/dsm/dashboard`·`/dsm/events`·
+`/multi-stream-monitor`·`/handover`·`/users`·`/roles`·`/device`·`/report-template`·
+`/m/inbox`·`/m/events/:id`)이 **전부 그대로 실재한다** [실측 2026-09-05].
+사라져서 내려갈 행이 없다.
+
+⚠ **이 0 의 한계를 적는다 — 재지 않은 것을 초록으로 적지 않기 위해서다.**
+이 검증은 **소스에서 면과 문이 실재하는가**까지다. 브라우저로 48행을 다시 걷지
+않았다(동시 접속 1개 · 같은 턴에 점검표가 세션을 쓴다). 그러므로
+「길이 살아 있다」는 확인이고 「그 길로 일이 끝난다」는 확인이 아니다.
+후자는 점검표 56칸과 `walk_scenarios` 가 재는 것이고, 둘은 **다른 것을 잰다.**
+
+### ④ 셈 — 재측 절의 산수는 맞는다
+
+27.5 + 0.5(U1 #3) + 0.5(U3 #9) + 0.5(U5 #5) + 1.0(U6 #4) = **30.0 / 48 = 62.5% → 63%**.
+소계 넷(U1 7.0 · U3 4.5 · U5 4.5 · U6 5.0)도 각각 들어맞는다.
+
+> **Q 결론**: 63% 는 **셋째 술어로 잰 수가 맞다** · 갈린 행 **0** · 내려간 행 **0**
+> (소스 실재 기준) · 다시 볼 자리 하나 — U5 #5 의 쓰기가 일괄 등록 문을 탄다.

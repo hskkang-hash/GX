@@ -171,13 +171,21 @@ TARGETS = [
      "slug": "dsm_onboarding_start",
      "must_see": "처음 시작하기 — 첫 근무일에 혼자 시작하기"},
     #: M1 — 휴대전화의 첫 화면. `MobileInbox.HEADLINE` 원문이다.
+    #: ⚠ [실측 2026-09-05 · 턴 E · 차선 Q] **`slug` 는 아무 이름이나가 아니다.**
+    #:   `verify_screens.expected_prefix` 는 파일 이름이 **라우트 뿌리로 시작**할 것을
+    #:   요구한다(`<scenario>/<role>/<route 뿌리>[_꼬리표].png`). 앞선 이름
+    #:   `m1_mobile_inbox` 는 뿌리가 `m_inbox` 가 아니라 **빨강**이었다.
+    #:   이 어긋남이 두 턴 동안 안 보인 이유: 촬영이 17번에서 죽어 **27·28번까지
+    #:   가 본 적이 없었다.** 죽는 도구는 자기 뒤에 있는 결함을 함께 숨긴다.
     {"step": 27, "route": "/m/inbox", "viewport": MOBILE_VIEWPORT,
-     "slug": "m1_mobile_inbox",
+     "slug": "m_inbox_m1",
      "must_see": "내게 온 이벤트"},
     #: M3 — 현장 회신. `MobileEventDetail.FIELD_REPLY_HEADLINE` 원문이다.
     #: ⚠ 「현장 상세」로 단언하지 않는다 — 그것은 M2 의 글자이고, M3 가 없어도 뜬다.
+    #: 뿌리는 `m_events_<id>` 이고, `route_stems` 가 숫자 자리를 `id` 로 눕힌 것도
+    #: 받아 준다 — 씨앗 id 는 실행마다 바뀌므로 **눕힌 쪽**을 쓴다(step 21 과 같다).
     {"step": 28, "route": "/m/events/{event_id}", "viewport": MOBILE_VIEWPORT,
-     "slug": "m3_mobile_field_reply",
+     "slug": "m_events_id_m3_field_reply",
      "must_see": "현장 회신 — 본 것을 한 줄로"},
 ]
 
@@ -408,6 +416,26 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
     shutil.rmtree(SCREENS / SCENARIO, ignore_errors=True)
     SCREENS.mkdir(parents=True, exist_ok=True)
     entries, steps, page_errors = [], {}, []
+    #: ★ [2026-09-05 · 턴 E · 차선 Q] **못 찍은 것 하나가 나머지를 삼키지 않는다.**
+    #:   [실측] 이 파일은 첫 불일치에서 `raise` 했고, 17번(`?preset=unhandled`)의
+    #:   문구가 **낡은 번들**과 안 맞아 **뒤의 12장(프리셋·큐·훈련·일괄등록·주소·
+    #:   온보딩·모바일 둘)을 한 장도 못 찍었다.** 그 12장은 「해 봤더니 안 된다」가
+    #:   아니라 **「해 보지도 못했다」**였고, 둘은 다른 사실이다(D-396 의 규칙을
+    #:   이 파일 안에서 어기고 있었다).
+    #:   그래서 **놓친 것을 모아 두고 계속 간다.** 색은 그대로다 —
+    #:   `main` 이 `entries` 수로 빨강을 내므로 한 장이라도 못 찍으면 여전히 실패다.
+    #:   ⚠ 그리고 이렇게 해야 `_rewrite_index` 가 돈다. 중간에 죽으면 PNG 는
+    #:     지워진 채 인덱스만 옛 목록을 들고 남는다 — **인덱스가 없는 파일을
+    #:     가리키는 것**이 이 저장소가 가장 싫어하는 종류의 거짓말이다.
+    misses: list = []
+    #: ★ [실측 2026-09-05 · 턴 E] **세션을 빼앗기면 화면 결함이 아니다.**
+    #:   이 환경은 **동시 접속 1개**다. 다른 차선이 같은 계정으로 로그인하면
+    #:   (`end_previous_session`) 이 브라우저가 로그인 화면으로 튕긴다. 그때
+    #:   남은 화면은 전부 「문구가 없다」로 기록됐고 — 실제로 없던 것은 문구가
+    #:   아니라 **세션**이었다. [그날 16장이 그렇게 기록됐다]
+    #:   `walk_scenarios` 는 이미 이 갈래를 갖고 있다(`session_lost`). 이쪽에만
+    #:   없어서 **같은 사고가 여기서만 화면 결함으로 읽혔다.**
+    session_lost = False
     #: 화면이 **실제로 부른** API. 우리가 「이 화면은 이걸 부를 것이다」라고 적지 않는다 —
     #: 브라우저가 부른 것을 그대로 적고, `verify_route_alive.py` 가 그 목록을 때린다(D-386).
     api_calls: dict[str, list] = {}
@@ -443,11 +471,25 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                 page.set_viewport_size(t.get("viewport", DESKTOP_VIEWPORT))
                 page.goto(f"{web}{route}", wait_until="networkidle", timeout=60_000)
                 page.wait_for_timeout(6_000)
+                # ★ **먼저 세션을 묻는다.** 문구를 먼저 보면 튕긴 화면의 본문에
+                #   기다린 글자가 없다는 이유로 「화면 결함」이 기록된다.
+                if page.url.rstrip("/").endswith("/login"):
+                    session_lost = True
+                    print(f"[SHOT] ★ {route}: **세션을 빼앗겼다** — 로그인 화면으로 "
+                          f"튕겼다({page.url}). 이 환경은 **동시 접속 1개**다: 다른 "
+                          f"차선이 같은 계정으로 들어오면 이쪽이 끝난다. "
+                          f"**화면의 결함이 아니므로 여기서 멈춘다** — 남은 화면을 "
+                          f"「문구가 없다」로 적으면 그 기록이 거짓이 된다")
+                    break
                 body = page.inner_text("body")
                 if t["must_see"] not in body:
-                    raise RuntimeError(
-                        f"{route}: 「{t['must_see']}」 가 화면에 없다 — "
-                        f"찍지 않는다. 본문: {body[:200]!r}")
+                    misses.append({
+                        "step": t["step"], "route": route,
+                        "must_see": t["must_see"], "why": "문구가 화면에 없다",
+                        "body": body[:200]})
+                    print(f"[SHOT] X {route}: 「{t['must_see']}」 가 화면에 없다 — "
+                          f"찍지 않는다. 본문: {body[:160]!r}")
+                    continue
 
                 #: ★ [실측 2026-09-13] 1차판은 URL 을 `/api/` 로 잘랐고, 그래서
                 #:   **구글 지도**(`maps.googleapis.com/maps/api/js`)가 우리 라우트
@@ -474,10 +516,16 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                 if not api_calls[route]:
                     missed = sorted({u.split("/api/")[0] for _, u, _ in seen_calls
                                      if "/api/" in u})
-                    raise RuntimeError(
-                        f"{route}: 화면이 부른 우리 API 를 **0건** 기록했다. "
-                        f"`--api {api}` 와 번들이 부르는 주소가 다르다. "
-                        f"실제로 `/api/` 를 부른 곳: {missed or '없음'}")
+                    misses.append({
+                        "step": t["step"], "route": route,
+                        "must_see": t["must_see"],
+                        "why": f"화면이 부른 우리 API 를 0건 기록했다 · "
+                               f"`--api {api}` 와 번들 주소가 다르다 "
+                               f"(실제로 부른 곳: {missed or '없음'})"})
+                    print(f"[SHOT] X {route}: 화면이 부른 우리 API **0건** — "
+                          f"`--api {api}` 와 번들이 부르는 주소가 다르다. "
+                          f"실제로 `/api/` 를 부른 곳: {missed or '없음'}")
+                    continue
                 step = f"{SCENARIO}/{t['step']}"
                 when = datetime.now().replace(microsecond=0)
                 #: ★ [차선 C · 2026-09-23] 파일 이름을 **`slug` 로 받을 수 있게** 했다.
@@ -506,7 +554,8 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
             browser.close()
 
     return {"entries": entries, "steps": steps, "page_errors": page_errors,
-            "api_calls": api_calls}
+            "api_calls": api_calls, "misses": misses,
+            "session_lost": session_lost}
 
 
 #: 인덱스의 `screens:` 아래를 **이 실행체가 직접 쓴다.**
@@ -630,8 +679,26 @@ def main() -> int:
     print(f"[SHOT] 화면이 부른 API 기록: {routes_out}")
 
     _rewrite_index(got["entries"])
+    # ★ **못 찍은 것을 이름으로 남긴다.** 수만 적으면 다음 사람이 어느 화면인지
+    #   다시 찾아야 하고, 다시 찾는 동안 「아마 데이터가 없었겠지」가 끼어든다.
+    for m in got.get("misses", ()):
+        print(f"[SHOT] 못 찍음 · step {m['step']} {m['route']} — {m['why']}"
+              + (f" · 기다린 글자 「{m['must_see']}」" if m.get("must_see") else ""))
+    if got.get("misses"):
+        print(f"[SHOT] ★ 못 찍은 {len(got['misses'])}장은 **화면의 결함일 수도, "
+              f"서버가 내는 번들이 낡은 것일 수도 있다.** 가르는 것은 P-59 게이트다: "
+              f"`scripts/verify_bundle_hash.py --web <SPA>`")
     print(f"[SHOT] {len(got['entries'])}장 · 브라우저 오류 {len(got['page_errors'])}건")
     print(json.dumps(got["entries"], ensure_ascii=False, indent=2))
+    if got.get("session_lost"):
+        # ★ **판정 불가지 빨강이 아니다.** 세션을 빼앗긴 것은 환경의 사실이고
+        #   화면의 결함이 아니다 — 빨강으로 적으면 다음 사람이 없는 결함을 쫓는다.
+        #   ⚠ 그리고 이 실행의 증거는 **불완전하다**: 이 함수는 시작하면서 PNG 폴더를
+        #     비우므로, 튕긴 실행은 앞선 온전한 벌을 **덮는다.** 다시 찍어야 한다.
+        print(f"[SHOT] **판정 불가(exit 2)** — 세션을 빼앗겼다. 이번 벌은 "
+              f"{len(got['entries'])}/{len(TARGETS)}장에서 끊겼고, 이 실행이 앞선 벌을 "
+              f"**덮었다.** 동시 접속 1개인 창을 확보한 뒤 **다시 찍는다**")
+        return EXIT_UNDECIDABLE
     return EXIT_OK if len(got["entries"]) == len(TARGETS) else EXIT_FAIL
 
 

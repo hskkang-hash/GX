@@ -514,11 +514,26 @@ def video_retention_enabled() -> bool:
 
 @shared_task(name="common.video_retention_sweep_beat")
 def video_retention_sweep_beat() -> dict:
-    """보관 기간이 지난 영상을 **실제로 지운다** (LAW-02a).
+    """보관 기간이 지난 영상을 **실제로 지운다** (LAW-02a · P-57).
 
     ★ 주기 실행은 `dry_run=False` 다 — 그것이 이 태스크의 존재 이유다.
       미리보기만 도는 주기는 「적었다」와 같은 상태이고, 그 상태가 안내판을
       거짓말로 만든다. 사람이 누르는 자리(HTTP)는 반대로 `dry_run` 이 기본이다.
+
+    ★ **2026-09-05 · 차선 E — 부르는 손이 `sweep` 에서 `purge_all_declared` 로 바뀌었다.**
+      태스크 **이름은 그대로다**(`common.video_retention_sweep_beat`) — beat 표는
+      `config/celery.py` 에 있고 그 파일은 이 차선의 것이 아니다. 이름을 바꾸면
+      beat 가 없는 태스크를 부르고, **없는 태스크를 부르는 주기는 조용히 아무것도
+      안 한다.** 바뀐 것은 이름이 아니라 **범위**다:
+
+          앞:  `sweep()`               — **전역.** 아무도 선언하지 않았어도 제품
+                                        기본값 30일로 전 테넌트를 지운다.
+          지금: `purge_all_declared()` — **선언한 테넌트만.** 선언이 먼저다.
+
+      왜 바꾸나 (지시서 §4 함정 ㉡): celery 워커가 서면 이 주기가 **실제로 돈다.**
+      그 순간 「우리는 영구 보관한다」고 알고 있던 테넌트의 영상이 30일에 사라진다.
+      제품 기본값 30은 **안내판의 수**이지 남의 자료에 대한 파기 명령이 아니다.
+      선언이 하나도 없으면 이 태스크는 **0건 파기**로 끝나고, 그것이 옳은 정지다.
     """
     stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
     if not video_retention_enabled():
@@ -531,14 +546,17 @@ def video_retention_sweep_beat() -> dict:
         return payload
 
     try:
-        from apps.dsm.retention import sweep
+        from apps.dsm.retention import purge_all_declared
 
-        result = sweep(dry_run=False, actor=None,
-                       reason="주기 집행 — 보존기간이 지난 영상을 지운다")
+        result = purge_all_declared(
+            dry_run=False, actor=None,
+            reason="주기 집행 — 선언한 보존 일수대로 지운다 (P-57 파기)")
         payload = {"measured_at": stamp, "verdict": "OK", **result}
-        logger.info("[OPS][VIDEO] %s일 기준 — 만료 %s건 · 삭제 %s건",
-                    result.get("retention_days"), result.get("expired_total"),
-                    result.get("deleted_total"))
+        logger.info("[OPS][VIDEO] 테넌트 %s중 선언 %s — 만료 %s건 · 파기 %s건 · "
+                    "객체 %s건",
+                    result.get("tenants_total"), result.get("tenants_declared"),
+                    result.get("expired_total"), result.get("deleted_total"),
+                    result.get("objects_deleted_total"))
     except Exception as exc:                       # noqa: BLE001
         # 지우지 못한 것은 **판정 불가**이지 「0건 정리」가 아니다 (D-301).
         payload = {"measured_at": stamp, "verdict": "ALARM",

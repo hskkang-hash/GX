@@ -287,3 +287,69 @@ python scripts/verify_authn_paths.py
 
 ★ 이름을 못 바꾸는 것과 이름이 옳은 것은 다르다. 여기 남는 것은 「바꾸면 안 되는
 자리라서 얼렸다」는 **판정**이지 「혼동이 없다」는 주장이 아니다.
+
+---
+
+## 8. UX-24 동시 세션 상한 — **새 문이 아니다. 있는 문 위의 정책이다** (2026-09-05 턴 E · 차선 S)
+
+★ **이 행을 먼저 쓰고 짓는다** (P-15 · 지시서 §4 함정 ③). 죽은 인증 길 위에 화면을
+얹지 않기 위해서다. 아래는 전부 [실측]이고, **못 잰 것은 「판정 불가」라고 적었다.**
+
+| 면 | 어느 인증으로 들어가나 | 실측 | 근거 경로 |
+|---|---|---|---|
+| **월 모드 대형 화면** | `POST /api/v1/auth/login` — **같은 문** | 문 200 · **동시성 판정 불가** | `frontend/src/features/dsm/pages/Wall.tsx` 는 앞단 라우트다. 서버 문은 하나다 |
+| **자리 데스크톱** | 같은 문 | 같음 | — |
+| **이동 중 휴대전화 M1~M3** | 같은 문 (`LoginMobile.tsx`) | 같음 | §1 표와 동일 |
+
+**새 인증 경로는 0 개다.** 상한은 로그인 문 **뒤**에 붙는 정책이고, 우리 층 미들웨어
+`common/session_limit.py` 가 그 자리다.
+
+### 8-1. `end_previous_session` 이 어디서 도는가 — **dj-core 안이다 (§0.4)**
+
+| 무엇 | 자리 | 하는 일 |
+|---|---|---|
+| 요청 칸 | `core/api/v1/schemas.py:20` | `end_previous_session: bool = False` |
+| 거절 갈래 | `core/api/v1/auth.py:630` | 칸이 **거짓**이고 앞선 세션이 있으면 **200 · `success:false`** — 토큰을 안 준다 |
+| 축출 갈래 | `core/api/v1/auth.py:693` | 칸이 **참**이면 그 사용자의 `OutstandingToken` 을 **전부** 블랙리스트 |
+| 세션 심기 | `core/api/v1/auth.py:706·725` | `session_id = uuid4()` → `user.set_encrypted_session_token(session_id, access_jti)` |
+| 세션 대조 | `core/auth.py:31·51·63` | 토큰의 `session_id` ≠ `user.token` 의 `session_id` → **401 `"Token from different session"`** |
+| 저장 자리 | `core/user/models.py:577` | `user.token = enc("<session_id>:<access_jti>")` — **한 벌만 들어간다** |
+
+★ **동시 접속 1개는 설정이 아니라 자료구조다.** `user.token` 은 CharField 한 칸이고
+세션을 하나만 담는다. 로그인은 그 칸을 **덮어쓴다.** 그러므로 두 기기가 동시에 사는 길은
+둘 중 하나뿐이고 **둘 다 §0.4 안이다**:
+`core/auth.py` 의 대조를 고치거나, `user.token` 을 여러 벌로 바꾸거나.
+
+### 8-2. 그래서 우리 층은 무엇을 얹었나 — **셋을 얹고 하나는 판정 불가**
+
+| | 얹었나 | 자리 |
+|---|---|---|
+| 역할별 상한 표 (U1 3 · U2 3 · U4 2 · U5 2) | **얹었다** | `common/session_limit.py::cap_for_user` — 역할 코드는 `config/k3_roles` 한 곳이 답한다(D-369) |
+| 월 모드 세션 12시간 | **얹었다** | 같은 파일 `WALL_MODE_SESSION_TTL` · **토큰 수명은 안 늘렸다**(§8-3) |
+| 초과 시 **가장 오래된 세션**을 끊는다 | **얹었다** (순수 함수 `admit`) | 같은 파일 — 대장은 캐시, 시험은 순수 함수로 잰다 |
+| 끊긴 화면에 안내 한 줄 | **얹었다** (서버가 말한다) | `SessionLimitMiddleware` 가 dj-core 의 401 `"Token from different session"` 을 사전 문구로 바꾼다 |
+| **실제로 2대가 동시에 산다** | **판정 불가** | 위 8-1. 우리 층에서 얹을 수 있는 자리가 없다 — **지어내지 않는다** |
+
+⚠ **조율자 배선 필요 1**: 서버는 이제 사전 문구를 401 본문(`detail`)에 싣는다. 그 글자가
+사람에게 닿으려면 앞단이 `detail` 을 그려야 한다. `frontend/` 는 차선 S 의 것이 아니다.
+
+### 8-3. 토큰 수명 — **한 값도 안 바꿨다** [실측]
+
+`NINJA_JWT` 접근 200분 · 재발급 7일 · 회전 켜짐 그대로다. 월 모드 12시간이 그 값을
+요구하는지부터 쟀다: **요구하지 않는다.** 12시간 > 200분이지만 재발급(7일)과 회전이
+그 사이를 잇는다 — 앞단이 실제로 재발급을 부르는 것은 `UX-16/session_12h.md` 가
+번들에서 확인해 두었다. 접근 토큰을 720분으로 올리면 월 모드 한 장을 위해
+**제품 전체의 탈취 창**이 3.3시간에서 12시간으로 넓어진다. 그것은 이 절이 아니라 보안 결정이다.
+`tests/test_s_session_limit.py::test_token_lifetime_unchanged` 가 이 세 값을 못박는다.
+
+### 8-4. 강제 도구
+
+```
+docker exec gx-shell sh -c 'cd /app && DJANGO_SETTINGS_MODULE=config.settings \
+  DB_TEST_NAME=test_gx_sec python -m pytest tests/test_s_session_limit.py -q \
+  --nomigrations -p no:randomly --tb=short 2>/dev/null'
+```
+
+`tests/test_s_session_limit.py::test_dj_core_admits_exactly_one_session` 은 **결함을 고정한다**
+(characterization · `test_auth_surface.py` 와 같은 방식). dj-core 가 여러 세션을 받게 되는 날
+그 시험이 빨개지고, **그날이 이 절을 다시 여는 날**이다.

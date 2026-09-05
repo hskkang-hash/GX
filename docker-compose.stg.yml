@@ -83,7 +83,11 @@ services:
       dockerfile: Dockerfile
       ssh:
         - default=${SSH_AUTH_SOCK}
-    command: python -m celery -A config worker -l INFO
+    # 하드 상한·동시성의 사유는 `docker-compose.yml` 의 `celery` 서비스에 한 벌만
+    # 적혀 있다(D-369). 요약: 소프트 상한만으로는 멈춘 태스크가 슬롯을 안 돌려준다.
+    command: >
+      python -m celery -A config worker -l INFO
+      --concurrency=2 --time-limit=600 --soft-time-limit=300
     volumes:
       - ./backend:/app
       - ./sourcedemo_stg:/sourcedemo
@@ -102,6 +106,42 @@ services:
     depends_on:
       - redis-stg
       - backend-stg
+
+  # celery **beat** for staging — 주기를 발화시키는 자리 (P-56 · 2026-09-05 · 차선 E)
+  #
+  # ★ **정확히 1대**다. 워커(`celery-stg`)는 늘릴 수 있고 beat 는 늘리면 안 된다 —
+  #   2대면 모든 주기가 두 번씩 돈다. 사유·함정(첫 기동 즉시 발화 · 파기 항목 끄기)은
+  #   `docker-compose.yml` 의 `beat` 서비스 머리말에 한 벌만 적혀 있다(D-369).
+  #
+  # ⚠ 스테이징에 이것을 세우는 사람이 반드시 먼저 볼 것: DatabaseScheduler 는 뜨는
+  #   순간 `last_run_at` 이 빈 crontab 항목을 **전부 즉시 발화한다**. 스테이징 DB 에
+  #   90일보다 오래된 감사 행이나 30일보다 오래된 영상이 있으면 **그 순간 지워진다.**
+  #   세우기 **전에** 파기 항목 셋을 끈다(명령은 운영 compose 머리말에 있다).
+  beat-stg:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      ssh:
+        - default=${SSH_AUTH_SOCK}
+    command: python -m celery -A config beat -l INFO
+    volumes:
+      - ./backend:/app
+      - ./sourcedemo_stg:/sourcedemo
+      - ~/.ssh:/root/.ssh:ro
+    environment:
+      - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
+      - REDIS_HOST=redis-stg
+      - REDIS_PORT=6379
+    env_file:
+      - ./backend/.env.stg
+    restart: unless-stopped
+    logging: *gx-logging
+    networks:
+      - guardianx-stg-network
+    depends_on:
+      - redis-stg
+      - backend-stg
+      - celery-stg
 
   # Redis service for staging
   redis-stg:

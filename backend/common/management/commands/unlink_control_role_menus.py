@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
-"""관제 역할(U1·U2·U4)에서 인수 자산 메뉴의 **연결만** 끊는다 — UX-21 · P-40 승인.
+"""관제 역할에서 인수 자산·레거시 메뉴의 **연결만** 끊는다 — UX-21(P-40) · P-50.
+
+★ **묶음이 둘이다.** 무엇을 누구에게서 끊는지가 판정마다 다르다(`CUT_BUNDLES`):
+
+      UX-21   인수 자산 8자리 → U1·U2·U4        (U5 유지 — 장비 등록의 자리)
+      P-50    레거시 셋+묶음 마디 4자리 → U1·U2·U4·**U5**
+              감시 대시보드 · 미디어 버킷 · 드론 다중 스트림 · Media Viewer 마디
+
+  `--bundle UX-21` / `--bundle P-50` 로 하나만 돌릴 수 있다. 안 주면 **둘 다**.
+  두 묶음은 `/media-data` 에서 겹치는데, 겹친 행은 **한 번만** 끊고 장부에는
+  `bundle` 칸으로 어느 판정이 끊었는지 적는다.
 
 ★★ **이 끊기는 소속(테넌트)을 가로지른다 — 그것을 알고 한다.**
 
@@ -34,7 +44,12 @@
 
 ★ 지우지 않는다. `Menu` 행도, 라우트도, `RoleMenu` 행도 **한 줄도 안 지운다.**
   끊는 것은 그 행의 네 칸(read·create·update·delete)뿐이고, 바꾸기 전 값은 장부에 남는다.
-★ U5(시스템 관리자)는 **유지한다** — 세종 P-40 그대로.
+★ U5(시스템 관리자)는 **UX-21 묶음에서만** 유지한다 — 세종 P-40 그대로.
+  P-50 묶음(레거시 셋)은 **U5 에서도 끊는다** — 상용 점검 §8: 관제 제품인데
+  인수 자산 화면이 그대로 보인다. 셋은 장비 등록의 자리가 아니라 고장났거나
+  (스켈레톤 고착 · 검은 타일) **대체된**(UX-23 카메라 격자) 화면이다.
+★ `superuser` 는 어느 묶음에도 없다 — 전역 관리자 판정은 `tenant_roles` 한 곳이
+  한다(D-212). 그 역할에는 셋이 **그대로 보인다.** 모르고 남긴 것이 아니다.
 """
 
 from __future__ import annotations
@@ -48,16 +63,16 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from common.menu_exposure import (
+    BUNDLE_IDS,
     EXPECTED_CLASSIFICATION,
     PERMIT_FIELDS,
-    UX21_CONTROL_ROLE_CODES,
-    UX21_KEEP_ROLE_CODES,
-    UX21_MENU_PATHS,
     WRITE_TARGET,
+    all_target_role_menus,
     assert_classification_unchanged,
+    bundles_by_id,
     default_ledger_path,
+    is_live,
     live_link_count,
-    target_role_menus,
 )
 
 
@@ -72,7 +87,8 @@ def _key(entry: dict) -> tuple:
 
 
 class Command(BaseCommand):
-    help = ("UX-21 — 관제 역할(U1·U2·U4)의 인수 자산 메뉴 연결을 끊는다. "
+    help = ("UX-21 · P-50 — 관제 역할의 인수 자산·레거시 메뉴 연결을 끊는다"
+            "(묶음 둘: UX-21 은 U1·U2·U4 · P-50 은 U5 까지). "
             "**공용이 아니라 소속을 갖는 표다**(core.menu.RoleMenu · 등록부 DEFERRED) — "
             "--group 또는 --all-tenants 를 반드시 준다. "
             "되돌리기: relink_control_role_menus · 장부: docs/agent/evidence/UX-21/")
@@ -84,6 +100,9 @@ class Command(BaseCommand):
                             help="모든 소속에서 끊는다 — 전역이라는 것을 **선언하는** 것이다")
         parser.add_argument("--dry-run", action="store_true", help="바꾸지 않고 표만 낸다")
         parser.add_argument("--list", action="store_true", dest="show", help="현황만 낸다")
+        parser.add_argument("--bundle", action="append", default=None,
+                            choices=list(BUNDLE_IDS),
+                            help="이 판정의 묶음만 끊는다(여러 번 가능). 안 주면 전부")
         parser.add_argument("--check", action="store_true", help="살아 있는 연결이 있으면 exit 1")
         parser.add_argument("--ledger", default=None, help="장부 파일 경로")
 
@@ -116,12 +135,22 @@ class Command(BaseCommand):
         scope = "all-tenants" if all_tenants else sorted(groups)
         scoped = None if all_tenants else groups
 
-        rows = list(target_role_menus(group_ids=scoped))
-        live = [r for r in rows if any(getattr(r, f) for f in PERMIT_FIELDS)]
+        try:
+            bundles = bundles_by_id(opts.get("bundle"))
+        except KeyError as exc:                     # pragma: no cover — choices 가 먼저 막는다
+            raise CommandError(str(exc))
 
-        self.stdout.write("역할(U1·U2·U4): " + " · ".join(UX21_CONTROL_ROLE_CODES))
-        self.stdout.write("유지(U5): " + " · ".join(UX21_KEEP_ROLE_CODES))
-        self.stdout.write("메뉴 %d자리: %s" % (len(UX21_MENU_PATHS), " ".join(UX21_MENU_PATHS)))
+        pairs = all_target_role_menus(group_ids=scoped, bundles=bundles)
+        rows = [r for r, _ in pairs]
+        of_bundle = {r.pk: bid for r, bid in pairs}
+        live = [r for r in rows if is_live(r)]
+
+        for b in bundles:
+            self.stdout.write("[묶음 %s] %s" % (b["id"], b["why"]))
+            self.stdout.write("   역할 %d: %s" % (len(b["roles"]), " · ".join(b["roles"])))
+            self.stdout.write("   유지 %d: %s" % (len(b["keep"]),
+                                                 " · ".join(b["keep"]) or "없음"))
+            self.stdout.write("   메뉴 %d자리: %s" % (len(b["paths"]), " ".join(b["paths"])))
         self.stdout.write("범위: %s" % ("모든 소속" if all_tenants else "소속 %s" % scope))
         hit = Counter(r.group_id for r in live)
         self.stdout.write("대상 연결 행 %d · 살아 있는 연결 %d · 걸리는 소속 %s"
@@ -129,11 +158,12 @@ class Command(BaseCommand):
         for r in sorted(live, key=lambda x: (str(x.group_id), x.role.code, x.menu.path)):
             flags = "".join("RCUD"[i] if getattr(r, f) else "-"
                             for i, f in enumerate(PERMIT_FIELDS))
-            self.stdout.write("  소속%-5s %-22s %-24s [%s] %s"
-                              % (r.group_id, r.role.code, r.menu.path, flags, r.menu.menu_name))
+            self.stdout.write("  소속%-5s %-8s %-22s %-24s [%s] %s"
+                              % (r.group_id, of_bundle[r.pk], r.role.code, r.menu.path,
+                                 flags, r.menu.menu_name))
 
         if opts["check"]:
-            n = live_link_count(group_ids=scoped)
+            n = live_link_count(group_ids=scoped, bundles=bundles)
             self.stdout.write("남은 연결: %d" % n)
             if n:
                 raise SystemExit(1)
@@ -155,6 +185,7 @@ class Command(BaseCommand):
         ledger["write_target"] = WRITE_TARGET
         ledger["classification"] = EXPECTED_CLASSIFICATION
         ledger["scope"] = scope
+        ledger["bundles"] = [b["id"] for b in bundles]
         known = {_key(e) for e in ledger["entries"]}
 
         with transaction.atomic():
@@ -169,6 +200,9 @@ class Command(BaseCommand):
                     # ★ 소속을 적는다. 없으면 되돌리기가 **어느 소속의 것인지** 말하지
                     #   못하고, 다음 사람이 「왜 우리 메뉴가 없나」에 답을 못 찾는다.
                     "group_id": r.group_id,
+                    # ★ **어느 판정으로 끊었나.** 이것이 없으면 되돌릴 때 「UX-21 만
+                    #   되살리고 P-50 은 그대로」를 고를 수 없다.
+                    "bundle": of_bundle[r.pk],
                     "before": {f: bool(getattr(r, f)) for f in PERMIT_FIELDS},
                     "cut_at": datetime.now(dt_timezone.utc).isoformat(),
                 }
@@ -191,4 +225,5 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             "끊었다: %d개 연결 · 소속 %s · 장부 %s (행은 하나도 지우지 않았다)"
             % (len(live), dict(hit), ledger_path)))
-        self.stdout.write("남은 연결: %d" % live_link_count(group_ids=scoped))
+        self.stdout.write("남은 연결: %d"
+                          % live_link_count(group_ids=scoped, bundles=bundles))

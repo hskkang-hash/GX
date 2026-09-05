@@ -49,6 +49,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -69,6 +70,10 @@ CLEAN = "clean"
 
 #: 계약 상대가 읽는 면. 여기는 **래칫이 없다.**
 CONTRACT_SURFACE_PREFIXES = ("/api/dsm/",)
+
+#: ★ [2026-09-05 턴 E · 차선 S · SEC-11a] **화면이 실제로 부른 호출**의 기록.
+#:   캡처 24장이 브라우저에서 낸 호출 전수다 — 손으로 적은 목록이 아니다.
+SCREEN_CALLS = ROOT / "docs" / "agent" / "evidence" / "D-386" / "screen_routes.json"
 
 _HEADER = """\
 # D-349 봉투 불일치 기준선 — **오늘의 건수** (2026-09-09 실측)
@@ -127,6 +132,74 @@ def judge(rows: list[dict], baseline: dict[str, int]) -> tuple[list[str], dict[s
     return problems, counts
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ④ **화면이 부르는 라우트의 봉투 잔여 = 0** — 이 수가 SEC-11a 의 심장이다
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 왜 이 눈이 따로 서야 하는가 [실측 2026-09-05]
+# ---------------------------------------------
+# 이날 잔여는 205건이었다. 그런데 **화면이 부르는 라우트 중 봉투가 갈리는 것은 0건**이다:
+#
+#     캡처 24장의 고유 호출 33건 → promoted 27 · clean 5 · authz_envelope **0** · 미대조 1
+#
+# 즉 205 라는 수는 「화면이 205자리에서 거부를 삼킨다」가 아니다. **그 수를 그대로
+# SEC-11a 의 빚으로 읽으면 틀린다** — P-35 가 이미 쪼개 두었다: 부르는 자리는 우리 몫,
+# 안 부르는 인수 라우트는 주인이 따로 있다(SEC-11b).
+#
+# ★ 그래서 이 게이트가 지켜야 할 것은 **총량이 아니라 이 0** 이다. 접두를 넓히다가
+#   화면이 부르는 자리를 되돌리거나, 새 화면이 봉투 갈리는 라우트를 부르기 시작하면
+#   **그 순간** 빨개져야 한다. 총량 래칫(②)은 그것을 못 본다 — 총량은 그대로인 채
+#   화면 쪽만 나빠질 수 있기 때문이다.
+
+
+def _path_matcher(template: str) -> "re.Pattern[str]":
+    """`/api/x/{id}` 같은 자리표를 한 단 매칭으로 바꾼다."""
+    return re.compile("^" + re.sub(r"\{[^}]+\}", r"[^/]+", template).rstrip("/") + "/?$")
+
+
+def screen_calls(doc: dict) -> list[tuple[str, str]]:
+    """캡처 기록에서 **고유 호출**을 뽑는다 (질의문자열은 떼고, 중복은 접는다)."""
+    out: set[tuple[str, str]] = set()
+    for calls in (doc.get("screens") or {}).values():
+        for call in calls or []:
+            path = str(call.get("path", "")).split("?")[0]
+            if path:
+                out.add((str(call.get("method", "GET")).upper(), path))
+    return sorted(out)
+
+
+def judge_screen_surface(
+    rows: list[dict], calls: list[tuple[str, str]]
+) -> tuple[list[str], dict, list[str]]:
+    """화면이 부른 호출마다 그 라우트의 봉투를 본다. **authz_envelope 는 0이어야 한다.**"""
+    pats = [(_path_matcher(r["path"]), r) for r in rows]
+    counts = {"matched": 0, "unmatched": 0, AUTHZ: 0}
+    bad: list[str] = []
+    unmatched: list[str] = []
+    for method, path in calls:
+        hit = next((r for pat, r in pats if r["method"] == method and pat.match(path)), None)
+        if hit is None:
+            counts["unmatched"] += 1
+            unmatched.append("%s %s" % (method, path))
+            continue
+        counts["matched"] += 1
+        if hit.get("envelope") == AUTHZ:
+            counts[AUTHZ] += 1
+            bad.append("%s %s  (라우트 %s)" % (method, path, hit["path"]))
+
+    problems: list[str] = []
+    if not calls:
+        problems.append("화면 호출 기록이 비었다 — 판정이 아니라 열거기 고장이다 (D-301)")
+    elif counts["matched"] == 0:
+        problems.append("화면 호출 %d건 중 인벤토리와 대조된 것이 0건이다 — 못 잰 것이다"
+                        % len(calls))
+    if bad:
+        problems.append(
+            "★ **화면이 부르는 라우트에서 봉투가 갈린다** %d건 — 여기는 래칫이 아니라 0이다 "
+            "(SEC-11a · P-35):\n    " % len(bad) + "\n    ".join(bad[:10]))
+    return problems, counts, unmatched
+
+
 def parse_baseline(text: str) -> dict[str, int]:
     out: dict[str, int] = {}
     for raw in text.splitlines():
@@ -169,6 +242,24 @@ def self_test() -> int:
          any("열거기 고장" in p for p in judge([], base)[0])),
         ("기준선이 없으면 초록이 아니다",
          any("기준선에" in p for p in judge([row("/api/x", CLEAN)], {})[0])),
+        # ── ④ 화면이 부르는 면 ────────────────────────────────────────
+        ("★ 화면이 부르는 라우트에 봉투 갈림이 있으면 잡는다 (SEC-11a)",
+         any("화면이 부르는 라우트" in p for p in judge_screen_surface(
+             [row("/api/x/{id}", AUTHZ)], [("GET", "/api/x/7")])[0])),
+        ("화면이 부르는 라우트가 승격돼 있으면 통과한다",
+         not judge_screen_surface(
+             [row("/api/x/{id}", PROMOTED)], [("GET", "/api/x/7")])[0]),
+        ("자리표를 한 단으로만 편다 — 두 단을 삼키면 엉뚱한 라우트에 붙는다",
+         not _path_matcher("/api/x/{id}").match("/api/x/7/deep")),
+        ("화면 호출이 비면 초록이 아니다 (D-301)",
+         any("열거기 고장" in p for p in judge_screen_surface([row("/api/x", CLEAN)], [])[0])),
+        ("★ 대조가 0건이면 「잔여 0」이 아니라 **못 쟀다**",
+         any("못 잰 것이다" in p for p in judge_screen_surface(
+             [row("/api/x", CLEAN)], [("GET", "/api/other")])[0])),
+        ("호출 뽑기가 질의문자열을 떼고 중복을 접는다",
+         screen_calls({"screens": {"a": [{"method": "get", "path": "/api/x?q=1"},
+                                          {"method": "GET", "path": "/api/x?q=2"}]}})
+         == [("GET", "/api/x")]),
         ("기준선 파서가 두 줄을 읽는다",
          parse_baseline("# 주석\nauthz_envelope\t296\nbody_status\t0\n")
          == {AUTHZ: 296, BODY_STATUS: 0}),
@@ -222,6 +313,22 @@ def main() -> int:
     print("[ENVELOPE] 계약 면(F-05) %d건 — 래칫 없음 (D-349 ③)"
           % sum(1 for r in rows if any(r["path"].startswith(p)
                                        for p in CONTRACT_SURFACE_PREFIXES)))
+
+    # ④ 화면이 부르는 면 — **여기는 래칫이 아니라 0이다** (SEC-11a · P-35)
+    if not SCREEN_CALLS.exists():
+        # 못 잰 것을 통과로 세지 않는다. 회색은 초록이 아니다 (exit 2).
+        print("[ENVELOPE] **판정 불가** — 화면 호출 기록이 없다: %s" % SCREEN_CALLS)
+        return 2
+    calls = screen_calls(json.loads(SCREEN_CALLS.read_text(encoding="utf-8")))
+    screen_problems, screen_counts, unmatched = judge_screen_surface(rows, calls)
+    print("[ENVELOPE] 화면이 부르는 면: 고유 호출 %d건 → 대조 %d · 미대조 %d · "
+          "봉투 갈림 **%d건** (여기는 0이어야 한다)"
+          % (len(calls), screen_counts["matched"], screen_counts["unmatched"],
+             screen_counts[AUTHZ]))
+    for line in unmatched:
+        # 미대조는 실패가 아니라 **못 잰 것**이다. 세어서 보이게만 둔다.
+        print("          미대조(못 쟀다): %s" % line)
+    problems.extend(screen_problems)
 
     if args.list:
         for r in rows:

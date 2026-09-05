@@ -73,7 +73,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
+import re
 import statistics
 import sys
 import time
@@ -118,6 +120,32 @@ BASELINE_CAVEAT = (
 
 #: 회귀 감시의 문턱. 기준선 대비 이만큼을 **넘으면** 빨강 (세종 위임 판정 P-34).
 REGRESSION_TOLERANCE = 0.20
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ★ 세종 판정 P-53 — **응답시간과 오류율은 다른 칸이다**
+# ═══════════════════════════════════════════════════════════════════════════
+#   [실측 2026-09-05 · 턴 D] 3,722 요청 중 502 가 8건(0.21%) 났고 p95 는 네 면
+#   전부 예산 안이었다(F05 217ms ≤ 500ms …). 그런데 이 게이트는 **예산 칸에**
+#   빨강을 적었다 — 「오류가 있으면 예산과 무관하게 빨강」이었기 때문이다.
+#   그 빨강을 보고 다음 사람은 **응답시간이 예산을 넘었다고 읽는다.** 실제로 넘은
+#   것은 가용성이고, 고칠 자리도(워커 재활용 · OPS-13a) 전혀 다른 자리다.
+#   **한 칸에 두 고장을 적으면 어느 쪽이 빨간지 아무도 모른다.**
+#: 오류율 예산 — SLA 가용성 **99.9%** 의 월 단위 환산(30일 43,200분 중 43.2분).
+#: 이 수는 여기서 정한 것이 아니다 — 세종 판정 P-53 · LAW-05 SLA 초안에서 옮겨 적었다.
+ERROR_BUDGET = 0.001
+
+#: 표본의 이만큼이 오류면 **응답시간을 판정하지 않는다.**
+#: 502 는 **빠르다** — 앞단(nginx)이 뒤를 못 잡고 즉시 끊으므로 그 표본은 20ms 대다.
+#: 오류가 표본의 다수를 차지하면 p95 는 「우리 코드가 얼마나 빠른가」가 아니라
+#: 「얼마나 빨리 실패하는가」다. 소수(0.1% 대)면 가운데 값이 흔들리지 않으므로
+#: 응답시간을 그대로 판정하고, 그 사실은 사유에 적는다.
+LATENCY_POISON = 0.05
+
+#: **3/n 규칙**(rule of three) — 오류 0건을 본 표본 n 에서 참 오류율의 95% 상한은 3/n.
+#: 그래서 0.1% 를 **확인**하려면 최소 3,000건이 필요하다. n 이 그보다 작을 때의
+#: 「0건」은 「0.1% 안이다」가 아니라 **못 쟀다**(회색)이다 — 40건에서 오류 0건을
+#: 보고 가용성 99.9% 를 초록으로 적는 것이 정확히 이 게이트가 막아야 할 거짓 초록이다.
+ERROR_MIN_N = math.ceil(3 / ERROR_BUDGET)
 
 
 @dataclass(frozen=True)
@@ -230,13 +258,21 @@ def judge_face(key: str, face: Face, sample: dict | None, baseline: dict | None,
         out.append((f"{label} · 회귀 +{tolerance:.0%}", GRAY, "**못 쟀다** — 표본이 없다"))
         return out
 
+    n_total = int(sample.get("n") or 0)
     errors = int(sample.get("errors", 0))
+    err_rate = (errors / n_total) if n_total else 0.0
     p95 = float(sample.get("p95_ms", 0.0))
 
-    if errors:
-        out.append((f"{label} · 예산 {face.budget_ms:.0f}ms", FAIL,
-                    f"오류 {errors}건 — **느린 것보다 틀린 것이 먼저다.** "
-                    f"{sample.get('error_detail')}"))
+    # ★ **오류는 이 칸에서 판정하지 않는다** (세종 P-53). 여기는 응답시간 칸이고,
+    #   오류율은 `judge_availability` 가 **자기 칸에서** 빨강을 낸다. 둘 다 종료
+    #   코드에 든다 — 갈라 적는 것이지 면제하는 것이 아니다.
+    #   다만 오류가 표본을 **먹어 버리면** 이 칸의 수는 성능이 아니다:
+    if err_rate > LATENCY_POISON:
+        out.append((f"{label} · 예산 {face.budget_ms:.0f}ms", GRAY,
+                    f"**판정 불가** — 표본의 {err_rate:.1%}({errors}/{n_total})가 "
+                    f"오류다. 502 는 앞단이 뒤를 못 잡고 즉시 끊으므로 **빠르다** — "
+                    f"이 p95 는 「우리 코드가 얼마나 빠른가」가 아니라 「얼마나 빨리 "
+                    f"실패하는가」다. 오류율은 가용성 칸이 따로 판정한다 (P-53)"))
     elif not sample.get("cache_bust", False):
         # 캐시를 비끼지 못한 수는 **성능이 아니다.** 초록으로 적지 않는다.
         out.append((f"{label} · 예산 {face.budget_ms:.0f}ms", GRAY,
@@ -260,7 +296,14 @@ def judge_face(key: str, face: Face, sample: dict | None, baseline: dict | None,
             ok = p95 <= face.budget_ms
             band = "" if lo is None else f" · {sample.get('repeats')}벌 {float(lo):.0f}–{float(hi):.0f}ms"
             head = (f"p95(가운데) {p95:.0f}ms {'≤' if ok else '>'} "
-                    f"{face.budget_ms:.0f}ms (n={sample.get('n')} · 오류 0{band})")
+                    f"{face.budget_ms:.0f}ms (n={sample.get('n')} · "
+                    f"오류 {errors}{band})")
+            if errors:
+                # ★ 초록이지만 **조건부 초록**이다. 이 줄이 없으면 다음 사람이
+                #   「오류가 있는데도 초록이 났다」를 면제로 읽는다.
+                head += (f" · ⚠ 표본에 오류 {errors}건({err_rate:.2%})이 섞였다 — "
+                         f"이 칸은 **응답시간만** 판정한다. 오류율은 아래 "
+                         f"「[전체] 가용성」 칸이 낸다 (P-53)")
             if ok:
                 verdict, tail = PASS, ""
             elif mode == MODE_BASELINE:
@@ -326,6 +369,111 @@ def judge_face(key: str, face: Face, sample: dict | None, baseline: dict | None,
                         f"p95 {p95:.0f}ms {'≤' if ok else '>'} 기준선 "
                         f"{float(base_p95):.0f}ms × {1 + tolerance:.2f} = {ceiling:.0f}ms"
                         f"{band} · 기준선 출처 {src}"))
+    return out
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 가용성 — **응답시간과 다른 칸** (세종 판정 P-53)
+# ═══════════════════════════════════════════════════════════════════════════
+def _bucket(status: int) -> str:
+    """상태 하나를 갈래로. **0(도달 못 함)은 5xx 쪽**이다 — 사용자에게는 같은 고장이다."""
+    if status <= 0 or 500 <= status < 600:
+        return "5xx"
+    if 400 <= status < 500:
+        return "4xx"
+    return "other"
+
+
+def _split_errors(sample: dict) -> tuple[int, int, bool]:
+    """`(5xx, 4xx, 추정했는가)`.
+
+    ★ 낡은 증거(`errors_5xx` 가 없는 `budget.json`)에서도 판정할 수 있어야 한다 —
+      그러지 않으면 이 갈래는 다시 재기 전까지 회색이고, 회색인 채로 잊힌다.
+      그때는 `error_detail` 의 상태 코드로 갈래를 **추정**하고, 추정했다는 사실을
+      사유에 적는다. `error_detail` 은 **중복을 지운 목록**이라 건수는 못 준다 —
+      건수는 `errors` 에서 오고 갈래만 여기서 온다.
+    """
+    total = int(sample.get("errors", 0) or 0)
+    if "errors_5xx" in sample:
+        five = int(sample.get("errors_5xx") or 0)
+        four = int(sample.get("errors_4xx") or 0)
+        # 갈래 합이 총합에 못 미치면(3xx 등) 나머지는 5xx 쪽으로 센다 — 모르는 고장을
+        # 「없는 고장」으로 접지 않는다.
+        return five + max(0, total - five - four), four, False
+    if not total:
+        return 0, 0, False
+    codes = [int(m.group(1))
+             for line in (sample.get("error_detail") or [])
+             if (m := re.search(r"->\s*(\d{1,3})", str(line)))]
+    kinds = {_bucket(c) for c in codes}
+    if kinds == {"4xx"}:
+        return 0, total, True
+    return total, 0, True
+
+
+def judge_availability(faces: dict | None, *, budget: float = ERROR_BUDGET) -> list:
+    """측정 **전체**의 오류율을 판정한다. `(이름, 판정, 사유)`.
+
+    ★ 왜 면별이 아니라 전체인가 — SLA 가용성은 **서비스 한 대의 수**이고, 면별
+      n=900 에서는 오류 1건이 곧 0.11% 라 **0.1% 예산이 태어나면서부터 빨갛다.**
+      가르지 못하는 것을 갈랐다고 적으면 그 빨강은 다음 사람이 끈다(이 파일이
+      회귀 갈래에서 이미 배운 규칙이다). 면별 수는 **사유에 적어** 어느 면이
+      울었는지 보이게 한다 — 판정은 하나, 근거는 넷.
+
+    ★ 4xx 는 **다른 고장**이다. 우리가 두드리는 자리는 전부 유효한 주소이고 토큰도
+      있다. 그래서 4xx 에는 예산이 없다 — 계약이 어긋난 것이고 0건이어야 한다.
+    """
+    name5 = f"[전체] 가용성 · 5xx ≤ {budget:.1%}"
+    name4 = "[전체] 계약 · 4xx 0건"
+    out: list = []
+    if not faces:
+        out.append((name5, GRAY, "**못 쟀다** — 표본이 없다. 0건은 「안정적」이 아니다"))
+        out.append((name4, GRAY, "**못 쟀다** — 표본이 없다"))
+        return out
+
+    n = sum(int(f.get("n") or 0) for f in faces.values())
+    five = four = 0
+    guessed = False
+    per: list[str] = []
+    for key in sorted(faces):
+        f = faces[key] or {}
+        a, b, g = _split_errors(f)
+        five += a
+        four += b
+        guessed = guessed or g
+        fn = int(f.get("n") or 0)
+        per.append(f"{key} {a + b}/{fn}" + (f"={(a + b) / fn:.2%}" if fn else ""))
+    detail = " · ".join(per)
+    tail = " · ⚠ 갈래를 `error_detail` 로 **추정**했다(낡은 증거)" if guessed else ""
+
+    if not n:
+        out.append((name5, GRAY, "**못 쟀다** — 표본 0건"))
+    elif five == 0 and n < ERROR_MIN_N:
+        out.append((name5, GRAY,
+                    f"**못 쟀다** — 5xx 0건이지만 표본 {n:,}건은 {budget:.1%} 를 "
+                    f"**증명하지 않는다.** 3/n 규칙으로 이 표본이 말할 수 있는 상한은 "
+                    f"{3 / n:.2%} 다 — {budget:.1%} 를 확인하려면 최소 "
+                    f"{ERROR_MIN_N:,}건이 필요하다. 면별 {detail}"))
+    else:
+        rate = five / n
+        ok = rate <= budget
+        out.append((name5, PASS if ok else FAIL,
+                    f"5xx {five}/{n:,} = **{rate:.3%}** "
+                    f"{'≤' if ok else '>'} {budget:.1%} "
+                    f"(SLA 가용성 99.9% 월 환산 · 세종 P-53) · 면별 {detail}"
+                    + tail
+                    + ("" if ok else " — **응답시간이 아니라 가용성이 빨갛다.** "
+                                     "고칠 자리는 예산 표가 아니라 앞단·워커다")))
+
+    if four:
+        out.append((name4, FAIL,
+                    f"4xx {four}/{n:,} — 우리가 두드린 자리는 전부 **유효한 주소**이고 "
+                    f"토큰도 있다. 4xx 는 느림도 가용성도 아니라 **계약이 어긋난 "
+                    f"것**이다 · 면별 {detail}" + tail))
+    elif n:
+        out.append((name4, PASS, f"4xx 0/{n:,}"))
+    else:
+        out.append((name4, GRAY, "**못 쟀다** — 표본 0건"))
     return out
 
 
@@ -565,10 +713,83 @@ def self_test() -> int:
     if exit_code([("a", OVER, ""), ("b", FAIL, "")]) != EXIT_FAIL:
         bad.append("기준선 초과가 빨강을 덮는다")
 
-    # ── 오류가 있으면 예산과 무관하게 빨강 ───────────────────────────────
-    err = verdicts(judge_face("F05", face, dict(green, errors=1, p95_ms=1.0), base))
-    if err.get("F05 계약 F-05 진입면 (NFR-05-1) · 예산 500ms") != FAIL:
-        bad.append("오류 1건인데 「1ms 라 빠르다」를 초록으로 읽는다")
+    # ── ★ 세종 판정 P-53 — **응답시간 칸과 오류율 칸을 가른다** ──────────
+    #
+    # ★★ **출생 표본** (D-310) — 이 갈래를 만들게 한 바로 그 사례다.
+    #    [실측 2026-09-05 · 턴 D · `budget.json`] gx-nginx-e 앞단에서 3,600 표본
+    #    (보고된 총 요청 3,722)을 냈고 **502 가 8건**이었다. 네 면의 p95 는 전부
+    #    예산 안이었다(F05 217ms ≤ 500ms · SCREEN 225 ≤ 800 · MEDIA 179 ≤ 1000 ·
+    #    STATUS 181 ≤ 300). 그런데 이 게이트는 **예산 칸에 빨강**을 적었다 —
+    #    「오류가 있으면 예산과 무관하게 빨강」이었기 때문이다.
+    #    사람은 그 빨강을 「응답시간이 예산을 넘었다」로 읽었고(PERF-04),
+    #    실제로 넘은 것은 **가용성**(OPS-13a · 워커 재활용)이었다.
+    #    **한 칸에 두 고장을 적으면 어느 쪽이 빨간지 아무도 모른다.**
+    birth_perf = dict(green, n=900, errors=2, errors_5xx=2, errors_4xx=0,
+                      p95_ms=217.3, p95_min=168.0, p95_max=274.5,
+                      noise=0.49, repeats=3, concurrency=10)
+    born = verdicts(judge_face("F05", face, birth_perf,
+                               {"p95_ms": 417.1, "concurrency": 10}))
+    if born.get("F05 계약 F-05 진입면 (NFR-05-1) · 예산 500ms") != PASS:
+        bad.append("**출생 표본**(턴 D · 502 2건 · p95 217ms ≤ 500ms)의 **응답시간 "
+                   "칸**이 초록이 아니다 — 오류가 예산 칸을 물들이면 PERF-04 와 "
+                   "OPS-13a 를 가릴 수 없다 (세종 P-53)")
+    avail = verdicts(judge_availability({"F05": birth_perf}))
+    if avail.get("[전체] 가용성 · 5xx ≤ 0.1%") != FAIL:
+        bad.append("**출생 표본**의 5xx 2/900 = 0.22% 가 0.1% 예산을 넘었는데 "
+                   "가용성 칸이 빨강이 아니다 — 갈라 적는 것은 면제가 아니다")
+
+    # 둘은 **함께 종료 코드에 든다.** 응답시간만 초록이면 통과가 되는 게이트는
+    # 오류율 예산을 적어 두고도 아무것도 막지 않는다.
+    if exit_code([("응답시간", PASS, ""), ("가용성", FAIL, "")]) != EXIT_FAIL:
+        bad.append("오류율 빨강이 종료 코드에 들지 않는다 — 갈랐더니 사라졌다")
+
+    # 오류율 예산 안이면 **초록**이다 (0.1% 는 0건이 아니다).
+    inside = verdicts(judge_availability(
+        {"F05": {"n": 4000, "errors": 3, "errors_5xx": 3, "errors_4xx": 0}}))
+    if inside.get("[전체] 가용성 · 5xx ≤ 0.1%") != PASS:
+        bad.append("5xx 3/4,000 = 0.075% 는 예산 안인데 빨강이다 — 예산을 「0건」으로 "
+                   "읽으면 그 게이트는 영원히 빨갛고, 영원히 빨간 게이트는 죽는다")
+
+    # **3/n 규칙** — 작은 표본의 「0건」은 0.1% 를 증명하지 않는다.
+    tiny = verdicts(judge_availability({"F05": {"n": 40, "errors": 0,
+                                                "errors_5xx": 0, "errors_4xx": 0}}))
+    if tiny.get("[전체] 가용성 · 5xx ≤ 0.1%") != GRAY:
+        bad.append("40건에서 오류 0건을 보고 가용성 99.9% 를 **초록**으로 적는다 — "
+                   "3/n 규칙으로 이 표본이 말할 수 있는 상한은 7.5% 다")
+    big = verdicts(judge_availability({"F05": {"n": 4000, "errors": 0,
+                                               "errors_5xx": 0, "errors_4xx": 0}}))
+    if big.get("[전체] 가용성 · 5xx ≤ 0.1%") != PASS:
+        bad.append("4,000건 오류 0건이 초록이 아니다 — 3/n 규칙을 넘겼는데도 회색이면 "
+                   "이 갈래는 영원히 회색이다")
+
+    # **4xx 는 다른 고장이다.** 유효한 주소에 유효한 토큰으로 두드린 자리다.
+    contract = verdicts(judge_availability(
+        {"F05": {"n": 4000, "errors": 1, "errors_5xx": 0, "errors_4xx": 1}}))
+    if contract.get("[전체] 계약 · 4xx 0건") != FAIL:
+        bad.append("4xx 1건이 초록이다 — 4xx 에는 예산이 없다(계약이 어긋난 것)")
+    if contract.get("[전체] 가용성 · 5xx ≤ 0.1%") != PASS:
+        bad.append("4xx 가 **가용성 칸까지** 물들인다 — 두 칸을 가른 뜻이 없다")
+
+    # 낡은 증거(갈래 없음)에서도 **판정한다** — 회색인 채로 잊히지 않게.
+    legacy = verdicts(judge_availability(
+        {"F05": {"n": 900, "errors": 2,
+                 "error_detail": ["/api/dsm/events?limit=50 -> 502"]}}))
+    if legacy.get("[전체] 가용성 · 5xx ≤ 0.1%") != FAIL:
+        bad.append("`errors_5xx` 가 없는 낡은 증거를 판정하지 못한다 — 그 회색은 "
+                   "다시 잴 때까지 아무도 안 본다")
+
+    # 표본이 없으면 **회색**이다 (D-301).
+    if verdicts(judge_availability(None)).get("[전체] 가용성 · 5xx ≤ 0.1%") != GRAY:
+        bad.append("표본이 없는데 가용성이 회색이 아니다")
+
+    # ── 오류가 표본을 먹으면 **응답시간을 판정하지 않는다** ───────────────
+    #   502 는 앞단이 즉시 끊으므로 빠르다. 반이 502 인 표본의 p95 1ms 를
+    #   「빠르다」로 읽으면, 서버가 죽을수록 이 게이트가 초록이 된다.
+    poisoned = verdicts(judge_face(
+        "F05", face, dict(green, n=100, errors=50, errors_5xx=50, p95_ms=1.0), base))
+    if poisoned.get("F05 계약 F-05 진입면 (NFR-05-1) · 예산 500ms") != GRAY:
+        bad.append("표본의 50%가 502 인데 「1ms 라 빠르다」를 **초록**으로 읽는다 — "
+                   "서버가 죽을수록 초록이 되는 게이트다")
 
     # ── ★ 출생 표본 (D-310) — **캐시 적중을 성능으로 적는 것** ────────────
     #   [실측 2026-09-19 · D-412] MinIO 를 내린 채 같은 순간에 두 번 물었다:
@@ -667,7 +888,8 @@ def self_test() -> int:
         for b in bad:
             print("    " + b)
         return EXIT_FAIL
-    print("[PERF-BUDGET] 자기시험 통과 — 초록 1 · 예산초과 2(모드별) · **회귀 1** · 오류 1 · "
+    print("[PERF-BUDGET] 자기시험 통과 — 초록 1 · 예산초과 2(모드별) · **회귀 1** · "
+          "**P-53 응답시간/오류율 가르기 10**(출생 표본 턴 D 502 8건 포함) · "
           "출생 표본 1(캐시 적중) · 회색 3 · 동시성 대조 2 · 잡음 대조 3 · 걸침 대조 3 · **회귀 걸침 3** · **모드 7** · 종료코드 7 · 구조 3 · 표 대조 2")
     return EXIT_OK
 
@@ -729,6 +951,9 @@ def _one_pass(one, *, concurrency: int, rounds: int) -> dict:
             samples: list[float] = []
             per_call: dict[str, list[float]] = {}
             errors: list[str] = []
+            #: ★ **갈래를 재는 순간에 센다** (P-53). `error_detail` 은 중복을 지운
+            #:   목록이라 나중에 세면 건수를 잃는다 — 502 여덟 건이 한 줄로 접힌다.
+            by_kind = {"5xx": 0, "4xx": 0, "other": 0}
             for round_no in range(rounds + WARMUP_ROUNDS):
                 batch = [face.calls[i % len(face.calls)] for i in range(concurrency)]
                 for path, status, elapsed in pool.map(one, batch):
@@ -736,6 +961,7 @@ def _one_pass(one, *, concurrency: int, rounds: int) -> dict:
                         continue        # 워밍업은 버린다 — 다른 것을 재고 있다
                     if not (200 <= status < 300):
                         errors.append(f"{path} -> {status}")
+                        by_kind[_bucket(status)] += 1
                     samples.append(elapsed)
                     per_call.setdefault(path, []).append(elapsed)
             faces[key] = {
@@ -744,6 +970,10 @@ def _one_pass(one, *, concurrency: int, rounds: int) -> dict:
                 "concurrency": concurrency,
                 "n": len(samples),
                 "errors": len(errors),
+                #: 갈래를 나눠 둔다 — 「느린 것」과 「틀린 것」을 가르고(P-53),
+                #: 틀린 것 안에서 다시 **가용성(5xx)** 과 **계약(4xx)** 을 가른다.
+                "errors_5xx": by_kind["5xx"],
+                "errors_4xx": by_kind["4xx"],
                 "error_detail": sorted(set(errors))[:6],
                 "cache_bust": True,      # 위 `_bust` 가 매 호출 다른 값을 붙였다
                 "p50_ms": round(percentile(samples, 50), 1) if samples else 0.0,
@@ -766,6 +996,8 @@ def _fold(passes: list[dict], *, concurrency: int) -> dict:
         p50s = [p[key]["p50_ms"] for p in passes]
         median = statistics.median(p95s)
         errors = sum(p[key]["errors"] for p in passes)
+        five = sum(p[key].get("errors_5xx", 0) for p in passes)
+        four = sum(p[key].get("errors_4xx", 0) for p in passes)
         detail = sorted({d for p in passes for d in p[key]["error_detail"]})[:6]
         out[key] = {
             "title": face.title,
@@ -774,6 +1006,8 @@ def _fold(passes: list[dict], *, concurrency: int) -> dict:
             "repeats": len(passes),
             "n": sum(p[key]["n"] for p in passes),
             "errors": errors,
+            "errors_5xx": five,
+            "errors_4xx": four,
             "error_detail": detail,
             "cache_bust": True,          # 매 호출 다른 `?bust=` 를 붙였다
             "p50_ms": round(statistics.median(p50s), 1),
@@ -789,7 +1023,8 @@ def _fold(passes: list[dict], *, concurrency: int) -> dict:
         print(f"[PERF-BUDGET]   {key:6} {face.title[:28]:30} n={out[key]['n']:<4} "
               f"p95(가운데) {out[key]['p95_ms']:7.1f}ms "
               f"[{out[key]['p95_min']:.0f}–{out[key]['p95_max']:.0f}] "
-              f"· 잡음 {out[key]['noise']:.0%} · 오류 {errors}")
+              f"· 잡음 {out[key]['noise']:.0%} · 오류 {errors}"
+              f" (5xx {five} · 4xx {four})")
     return out
 
 
@@ -957,6 +1192,25 @@ def main() -> int:
                                    "source": f.source, "calls": list(f.calls)}
                                for k, f in FACES.items()}
         doc["regression_tolerance"] = REGRESSION_TOLERANCE
+        doc["error_budget"] = ERROR_BUDGET
+        # ★ **한 벌로 판정하지 마라** (세종 P-53 · 턴 D 가 배운 것). 같은 설정이
+        #   턴 D 에 8건을 내고 턴 E 에 3건을 냈다 — 502 건수는 그 순간의 기계
+        #   상태(loadavg)가 좌우한다. 그래서 **매 측정의 오류율을 쌓아 둔다.**
+        #   판정은 여전히 이번 벌로 하되, 이력이 예산을 걸치면 아래에서 경고한다.
+        _n = sum(int(f.get("n") or 0) for f in latest.values())
+        _five = sum(_split_errors(f)[0] for f in latest.values())
+        doc.setdefault("availability_history", []).append({
+            "measured_at": doc["latest"]["measured_at"],
+            "n": _n, "errors_5xx": _five,
+            "rate": round(_five / _n, 5) if _n else None,
+            "loadavg": (doc["latest"].get("co_resident") or {}).get("loadavg"),
+            "mode": mode, "rounds": args.rounds, "repeat": args.repeat,
+            "concurrency": args.concurrency,
+        })
+        doc["availability_history"] = doc["availability_history"][-10:]
+        doc["error_budget_source"] = ("SLA 가용성 99.9% 의 월 단위 환산 — 세종 판정 "
+                                      "P-53 · LAW-05 SLA 초안. 이 게이트가 정한 수가 "
+                                      "아니라 옮겨 적은 수다")
         doc["caveat"] = BASELINE_CAVEAT
         doc["mode"] = mode
         # `pending_acceptance` 는 판정을 돌려야 나온다 — 아래에서 채우고 다시 쓴다.
@@ -986,6 +1240,9 @@ def main() -> int:
     for key, face in FACES.items():
         rows.extend(judge_face(key, face, latest_faces.get(key), base_faces.get(key),
                                mode=mode))
+    # ★ **오류율은 자기 칸에서 판정한다** (세종 P-53). 응답시간 칸이 초록이어도
+    #   이 칸이 빨가면 종료 코드는 빨강이다 — 갈라 적는 것이지 면제가 아니다.
+    rows.extend(judge_availability(latest_faces))
 
     mark = {PASS: "  ", FAIL: "X ", GRAY: "? ", OVER: "! "}
     for (name, verdict, why) in rows:
@@ -1007,7 +1264,15 @@ def main() -> int:
                             encoding="utf-8")
 
     rc = exit_code(rows)
-    print("[PERF-BUDGET] " + BASELINE_CAVEAT)
+    # ★ 단서는 **기준선 모드일 때만** 참이다. 합격선(nginx·gunicorn)에서 잰 수에
+    #   「이 수는 runserver 로 잰 기준선이다」를 붙이면 그 줄이 곧 거짓이 되고,
+    #   거짓 단서는 다음 사람이 진짜 단서까지 안 읽게 만든다.
+    if mode == MODE_BASELINE:
+        print("[PERF-BUDGET] " + BASELINE_CAVEAT)
+    else:
+        print("[PERF-BUDGET] ★ 이 수는 **합격선 모드**로 잰 것이다 — 대상이 "
+              f"runserver 가 아니다(Server: {(doc.get('latest') or {}).get('server_header')!r}). "
+              "절대 예산도 빨강이고, 위 단서(기준선)는 이 수에 붙지 않는다")
     if mode == MODE_BASELINE:
         co = ((doc.get("latest") or {}).get("co_resident") or {})
         #: 껍데기(`sh -c … runserver …`)는 세지 않는다 — 서버 하나가 둘로 세어지면
@@ -1018,6 +1283,22 @@ def main() -> int:
             print(f"[PERF-BUDGET] [환경] 같은 컨테이너에 runserver {len(procs)}대가 서 "
                   f"있다 — **내 p95 는 남의 부하를 함께 잰다**(loadavg "
                   f"{co.get('loadavg')}). 잡음의 출처가 여기다")
+    hist = [h for h in (doc.get("availability_history") or [])
+            if h.get("rate") is not None]
+    if len(hist) >= 2:
+        rates = [h["rate"] for h in hist[-5:]]
+        if min(rates) <= ERROR_BUDGET < max(rates):
+            # ★ **이 자리는 색이 없다 — 사실만 적는다.** 판정을 뒤집지 않는 이유는
+            #   하나다: 뒤집을 규칙을 여기서 지어내면 그것은 게이트가 아니라 내 의견이
+            #   된다. 세종에게 필요한 것은 「몇 벌을 재고 어떻게 접을 것인가」라는
+            #   **판정**이고, 이 줄은 그 판정을 청하는 근거다.
+            print(f"[PERF-BUDGET] ★★ **한 벌로 판정하지 마라** — 최근 "
+                  f"{len(rates)}벌의 5xx 비율이 "
+                  + " · ".join(f"{r:.3%}" for r in rates)
+                  + f" 로 예산 {ERROR_BUDGET:.1%} 를 **걸친다.** 어느 벌을 쓰느냐로 "
+                    f"색이 갈린다 — 이 게이트의 색은 지금 코드가 아니라 "
+                    f"**그 순간의 기계 상태**를 함께 담고 있다 "
+                  + " · ".join(f"loadavg {h.get('loadavg')}" for h in hist[-5:]))
     if pending:
         names = " · ".join(f"{q['face']}({q['p95_ms']:.0f}ms>{q['budget_ms']:.0f}ms)"
                            for q in pending)
@@ -1033,7 +1314,10 @@ def main() -> int:
                   + (f" · 다만 예산을 넘은 자리 {len(pending)}곳이 "
                      f"`pending_acceptance` 에 남아 있다" if pending else
                      " · 예산을 넘은 자리도 없다")),
-        EXIT_FAIL: "실패 — 위의 X 가 예산을 넘었거나 기준선 대비 20% 넘게 나빠진 자리다",
+        EXIT_FAIL: ("실패 — 위의 X 가 그 자리다. **X 가 어느 칸인지 보라**(세종 P-53): "
+                    "「· 예산 …ms」는 **응답시간**(PERF-04) · 「· 회귀 +20%」는 회귀 · "
+                    "「[전체] 가용성」은 **오류율**(OPS-13a 앞단·워커)이다. 셋은 다른 "
+                    "고장이고 고칠 자리도 다르다"),
         EXIT_UNDECIDABLE: "**회색(exit 2)** — 못 쟀다. 위의 ? 가 그 자리다. "
                           "회색은 초록이 아니다 (D-301)",
     }[rc])

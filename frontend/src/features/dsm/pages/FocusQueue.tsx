@@ -64,6 +64,7 @@ import EventSnapshot from '../components/EventSnapshot';
 import ResponseClock from '../components/ResponseClock';
 import ShortcutHelp from '../components/ShortcutHelp';
 import StateBoundary from '../components/StateBoundary';
+import { KICK_SENTENCE } from '../constants/kick';
 import { useAlertSound } from '../hooks/useAlertSound';
 import { useCriticalAlarm } from '../hooks/useCriticalAlarm';
 import { useDsmResource } from '../hooks/useDsmResource';
@@ -240,6 +241,20 @@ export default function FocusQueuePage() {
   return (
     <Main>
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        {/*
+          P-52 킥 문장 — **둘째 자리.** 로그인 화면과 **같은 상수**에서 온다
+          (`../constants/kick`). 여기 손으로 다시 적으면 두 자리가 갈리고, 갈린
+          문장 둘은 제품 소개가 아니라 장식 둘이다.
+
+          ★ 제목 위에 둔다. 이 화면은 관제요원이 하루 종일 켜 두는 화면이고, 제목
+            아래로 내려가면 「가장 급한 하나」와 섞여 사건 정보처럼 읽힌다 —
+            이 문장은 사건이 아니라 **제품이 무엇을 하는 물건인지**를 말한다.
+          ★ 작고 흐리다. 관제 화면의 주인공은 언제나 카드다.
+        */}
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          {KICK_SENTENCE}
+        </Text>
+
         <Row justify="space-between" align="middle">
           <Col>
             <Space size={4} align="center">

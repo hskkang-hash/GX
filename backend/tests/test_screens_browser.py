@@ -123,11 +123,30 @@ def test_captured_screens_and_recorded_routes_agree():
     shot_routes = [ln.split("route:", 1)[1].strip()
                    for ln in index.splitlines() if ln.strip().startswith("- route:")]
     assert shot_routes, "인덱스에 화면이 한 장도 없다 — 0장을 통과로 읽지 않는다"
+
+    # ★ [2026-09-05 · 턴 E] **씨앗 id 를 열쇠에서 뺀다.**
+    #
+    #   이 시험이 빨개졌다: 인덱스는 `/dsm/events/9709` 를 찍었다고 적었는데 API 기록에는
+    #   `/dsm/events/8031` 이 있었다. **둘은 같은 화면이다** — 다른 것은 그날 씨앗이 만든
+    #   이벤트 번호뿐이다. 촬영을 다시 할 때마다 번호가 바뀌므로, 번호를 열쇠에 두면
+    #   **두 개의 참인 기록이 매번 어긋난 것처럼 보인다.**
+    #
+    #   ⚠ 느슨하게 만드는 것이 아니다. 여전히 **그 화면의 API 기록이 실재해야** 통과한다 —
+    #     사라지는 것은 「어느 행을 열었나」뿐이고, 그것은 이 시험이 묻는 것이 아니다.
+    #     (묻는 것은 「찍은 화면이 부른 문이 기록됐나」이고, 문은 행마다 같다.)
+    def _shape(route: str) -> str:
+        """경로에서 **숫자 조각**을 지운다. `/dsm/events/9709` → `/dsm/events/:id`."""
+        head, _, query = route.partition("?")
+        parts = [(":id" if seg.isdigit() else seg) for seg in head.split("/")]
+        return "/".join(parts) + (("?" + query) if query else "")
+
+    recorded = {_shape(k): v for k, v in routes["screens"].items()}
     for route in shot_routes:
-        assert route in routes["screens"], (
+        shape = _shape(route)
+        assert shape in recorded, (
             f"{route} 를 찍었는데 그 화면이 부른 API 가 기록되지 않았다 — "
             f"때릴 것이 없는 판정기는 조용히 초록이 된다")
-        assert routes["screens"][route], f"{route} 의 API 기록이 비었다"
+        assert recorded[shape], f"{route} 의 API 기록이 비었다"
 
 
 @pytest.mark.skipif(DOCS is None, reason="캡처 증거를 못 찾았다")

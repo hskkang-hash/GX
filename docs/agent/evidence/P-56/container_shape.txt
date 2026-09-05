@@ -1,0 +1,2 @@
+gx-celery-e: log={"Type":"json-file","Config":{"max-file":"5","max-size":"10m"}} cmd=["-m","celery","-A","config","worker","-l","INFO","--concurrency=2","--time-limit=600","--soft-time-limit=300","-n","gx-worker-e@%h"]
+gx-beat-e: log={"Type":"json-file","Config":{"max-file":"5","max-size":"10m"}} cmd=["-m","celery","-A","config","beat","-l","INFO"]

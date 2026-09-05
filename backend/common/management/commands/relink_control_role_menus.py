@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""끊은 역할↔메뉴 연결을 **장부대로** 되잇는다 — UX-21 되돌리기.
+"""끊은 역할↔메뉴 연결을 **장부대로** 되잇는다 — UX-21 · P-50 되돌리기.
+
+★ 장부 항목마다 **어느 판정으로 끊었나**(`bundle`)가 적혀 있다. `--bundle P-50`
+  으로 그 판정만 되돌릴 수 있다 — 「레거시 셋은 되살리되 인수 자산 8자리는
+  끊긴 채로」가 가능해야 판정 하나를 무를 수 있다.
+  `bundle` 칸이 없는 옛 항목은 UX-21 로 읽는다(그때는 묶음이 하나뿐이었다).
 
 ★★ **이 표는 소속(테넌트)을 갖는다 — 공용 마스터가 아니다.**
     쓰는 표는 `core.menu.RoleMenu` 이고, 분류 등록부
@@ -29,23 +34,30 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from common.menu_exposure import (
+    BUNDLE_IDS,
     EXPECTED_CLASSIFICATION,
     PERMIT_FIELDS,
     WRITE_TARGET,
     assert_classification_unchanged,
+    bundles_by_id,
     default_ledger_path,
     live_link_count,
 )
 
 
 class Command(BaseCommand):
-    help = ("UX-21 되돌리기 — 장부에 적힌 대로 역할↔메뉴 연결을 다시 잇는다. "
+    help = ("UX-21 · P-50 되돌리기 — 장부에 적힌 대로 역할↔메뉴 연결을 다시 잇는다"
+            "(`--bundle` 로 판정 하나만 무를 수 있다). "
             "**공용이 아니라 소속을 갖는 표다**(core.menu.RoleMenu · 등록부 DEFERRED). "
             "장부: docs/agent/evidence/UX-21/menu_unlink_ledger.json")
 
     def add_arguments(self, parser):
         parser.add_argument("--group", type=int, action="append", default=None,
                             help="이 소속의 항목만 되돌린다. 여러 번 줄 수 있다")
+        parser.add_argument("--bundle", action="append", default=None,
+                            choices=list(BUNDLE_IDS),
+                            help="이 판정으로 끊은 것만 되돌린다(여러 번 가능). "
+                                 "안 주면 장부의 안 되돌린 것 전부")
         parser.add_argument("--dry-run", action="store_true", help="바꾸지 않고 표만 낸다")
         parser.add_argument("--ledger", default=None)
 
@@ -75,14 +87,26 @@ class Command(BaseCommand):
         if groups:
             entries = [e for e in entries if e.get("group_id") in set(groups)]
 
+        want_bundles = opts.get("bundle")
+        if want_bundles:
+            try:
+                bundles_by_id(want_bundles)          # 모르는 이름이면 여기서 멈춘다
+            except KeyError as exc:                  # pragma: no cover — choices 가 먼저 막는다
+                raise CommandError(str(exc))
+            # ★ `bundle` 칸이 없는 항목은 **P-50 이전에 끊은 것**이다(UX-21 만 있던 때).
+            #   「모르니까 포함」이 아니라 「그때는 UX-21 뿐이었다」는 사실로 읽는다.
+            entries = [e for e in entries
+                       if e.get("bundle", "UX-21") in set(want_bundles)]
+
         self.stdout.write("장부 %s · 끊을 때 범위 %s"
                           % (ledger_path, ledger.get("scope", "(안 적힘)")))
         self.stdout.write("되돌릴 항목 %d · 소속 %s"
                           % (len(entries),
                              dict(Counter(e.get("group_id") for e in entries)) or "없음"))
         for e in entries:
-            self.stdout.write("  소속%-5s %-22s %-24s → %s" % (
-                e.get("group_id"), e["role_code"], e["menu_path"],
+            self.stdout.write("  소속%-5s %-8s %-22s %-24s → %s" % (
+                e.get("group_id"), e.get("bundle", "UX-21"),
+                e["role_code"], e["menu_path"],
                 "".join("RCUD"[i] if e["before"][f] else "-"
                         for i, f in enumerate(PERMIT_FIELDS)),
             ))
@@ -97,8 +121,14 @@ class Command(BaseCommand):
         missing, restored = [], 0
         with transaction.atomic():
             for e in entries:
-                rm = RoleMenu.objects.filter(
-                    role_id=e["role_id"], menu_id=e["menu_id"]).first()
+                # ★ **소속까지 좁힌다.** (역할, 메뉴)만으로 고르면 같은 짝이 여러
+                #   소속에 있을 때 `.first()` 가 **남의 소속 행**을 되살릴 수 있다.
+                #   장부는 소속을 적어 두었으므로 그것을 쓴다(옛 항목은 안 적혀 있다).
+                qs = RoleMenu.objects.filter(
+                    role_id=e["role_id"], menu_id=e["menu_id"])
+                if e.get("group_id") is not None:
+                    qs = qs.filter(group_id=e["group_id"])
+                rm = qs.first()
                 if rm is None:
                     # 조용히 넘어가지 않는다 — 넘어가면 「다 되돌렸다」가 거짓이 된다.
                     missing.append(e)

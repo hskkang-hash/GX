@@ -1,0 +1,149 @@
+### 역할별 보이는 메뉴 (permit_read=True ∪ 조상)
+== U1 fire_user — 화면 8 · 묶음마디 4 (합 12)
+   화면 /checklist-setting           Checklist Setting
+   화면 /delivery-hubs               Surveillance Hubs
+   화면 /gcs-mavlink                 GaionGCS
+   화면 /library                     장치 구성 템플릿
+   화면 /packaging                   Packaging
+   화면 /routes                      Routes
+   화면 /settings                    Admin
+   화면 /survey-mission              Mission
+   마디 Asset                        Asset
+   마디 Delivery Settings            Delivery Settings
+   마디 GCS                          GCS
+   마디 surveillance                 Surveillance
+== U1 surveillance_operation — 화면 0 · 묶음마디 0 (합 0)
+== U1 operator — 화면 16 · 묶음마디 4 (합 20)
+   화면 /checklist-setting           Checklist Setting
+   화면 /configuration-management    구성 관리
+   화면 /dashboard                   Dashboard
+   화면 /delivery-dashboard          Delivery Dashboard
+   화면 /delivery-hubs               Delivery Hubs
+   화면 /docking-stations            Docking Station
+   화면 /etri-tracking               Delivery Inquiry
+   화면 /etri-tracking               ETRI Tracking
+   화면 /library                     Device Library
+   화면 /operational-data            Operational Data
+   화면 /other-equipments            Other equipments
+   화면 /packaging                   Packaging
+   화면 /partner                     Partner Management
+   화면 /routes                      Routes
+   화면 /settings                    Admin
+   화면 /users                       User Management
+   마디 delivery-management          Delivery Management
+   마디 delivery-point-and-docking-station Delivery Hub and Route
+   마디 drone-robot                  Drones/Robots and Docking Station
+   마디 operating-equipment          Operating Equipment
+== U2 fire_admin — 화면 10 · 묶음마디 4 (합 14)
+   화면 /checklist-setting           Checklist Setting
+   화면 /dashboard                   Dashboard
+   화면 /delivery-hubs               Surveillance Hubs
+   화면 /gcs-mavlink                 GaionGCS
+   화면 /library                     장치 구성 템플릿
+   화면 /packaging                   Packaging
+   화면 /routes                      Routes
+   화면 /settings                    Admin
+   화면 /survey-mission              Mission
+   화면 /users                       User Management
+   마디 Asset                        Asset
+   마디 Delivery Settings            Delivery Settings
+   마디 GCS                          GCS
+   마디 surveillance                 Surveillance
+== U2 surveillance_order — 화면 0 · 묶음마디 0 (합 0)
+== U4 view_only_-_anyang — 화면 18 · 묶음마디 6 (합 24)
+   화면 /aim                         AIP
+   화면 /checklist-setting           Checklist Setting
+   화면 /dashboard                   Dashboard
+   화면 /data-analysis               Media Analysis
+   화면 /delivery-dashboard          Delivery Dashboard
+   화면 /delivery-dashboard-anyang   Delivery Ops Dashboard
+   화면 /delivery-hubs               배달거점
+   화면 /delivery-inquiry            Delivery Inquiry
+   화면 /delivery-operation          Delivery Operation
+   화면 /disabillity-dashboard       Disabillity Dashboard
+   화면 /docking-stations            Docking Station
+   화면 /gcs-mavlink                 GaionGCS
+   화면 /handover                    Handover
+   화면 /operational-notice          Operational Notice
+   화면 /packaging                   적재함
+   화면 /routes                      Routes
+   화면 /settings                    Admin
+   화면 /survey-mission              Mission
+   마디 Asset                        Asset
+   마디 Data Analysis                Data Analysis
+   마디 GCS                          GCS
+   마디 Operator                     Operator
+   마디 delivery                     Delivery
+   마디 surveillance                 Surveillance
+== U5 admin — 화면 58 · 묶음마디 13 (합 71)
+   화면 /aim                         AIP
+   화면 /configuration-management    구성 관리
+   화면 /dashboard                   Dashboard
+   화면 /delivery-dashboard          Delivery Dashboard
+   화면 /delivery-hubs               배달거점
+   화면 /delivery-operation          Delivery Operation
+   화면 /device                      Drones & Robot
+   화면 /device                      Drones and Robots
+   화면 /device                      드론 및 로봇
+   화면 /disabillity-dashboard       Disabillity Dashboard
+   화면 /docking-stations            Docking Station
+   화면 /docking-stations            Docking Station
+   화면 /etri-order                  ETRI Order
+   화면 /etri-tracking               ETRI Tracking
+   화면 /gcs-mavlink                 GaionGCS
+   화면 /handover                    Handover
+   화면 /infrastructure              인프라
+   화면 /intergrated-dashboard       Integrated Dashboard
+   화면 /library                     Device Library
+   화면 /library                     장치 구성 템플릿
+   화면 /menu                        메뉴 관리
+   화면 /monitoring-dashboard        Monitoring Dashboard
+   화면 /notam                       NOTAM
+   화면 /other-equipments            Other Equipment
+   화면 /other-equipments            Other equipments
+   화면 /packaging                   Packaging
+   화면 /packaging                   Packaging
+   화면 /packaging                   적재함
+   화면 /report-template             Report Template
+   화면 /roles                       역할 관리
+   화면 /routes                      Routes
+   화면 /settings                    Admin
+   화면 /setup-demo-file             Delivery Price
+   화면 /setup-demo-file             Surveillance Operation
+   화면 /setup-demo-file             Surveillance Settings
+   화면 /setup-demo-file             Virtual Cockpit
+   화면 /setup-demo-file             고객
+   화면 /setup-demo-file             고객응대
+   화면 /setup-demo-url              Access status by user
+   화면 /setup-demo-url              CPU per Node
+   화면 /setup-demo-url              DISK per Node
+   화면 /setup-demo-url              DJI Flighthub
+   화면 /setup-demo-url              Elastic Schedule Monitoring
+   화면 /setup-demo-url              FlightHub2
+   화면 /setup-demo-url              Index Mgmt
+   화면 /setup-demo-url              Index life cycle
+   화면 /setup-demo-url              Ingest Mgmt
+   화면 /setup-demo-url              Mem per Node
+   화면 /setup-demo-url              NIC per Node
+   화면 /setup-demo-url              Schedule Information
+   화면 /setup-demo-url              Schedule Monitoring
+   화면 /setup-demo-url              Search status by user
+   화면 /setup-demo-url              Surveillance Plan
+   화면 /setup-demo-url              Template Mgmt
+   화면 /setup-demo-url              운용데이터
+   화면 /terminals                   Terminals
+   화면 /users                       User Management
+   화면 /waybill-template            Waybill Templates
+   마디 Asset                        Asset
+   마디 Data Analysis                Data Analysis
+   마디 Delivery Settings            Delivery Settings
+   마디 GCS                          GCS
+   마디 Metadata                     Metadata
+   마디 Operator                     Operator
+   마디 Server Monitoring            Server Monitoring
+   마디 Usage                        Usage
+   마디 delivery                     Delivery
+   마디 delivery-management          Delivery Management
+   마디 drone-robot                  Drones/Robots and Docking Station
+   마디 operating-equipment          Operating Equipment
+   마디 surveillance                 Surveillance

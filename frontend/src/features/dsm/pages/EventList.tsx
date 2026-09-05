@@ -94,7 +94,7 @@ interface PresetDef {
 const PRESETS: PresetDef[] = [
   {
     key: 'unhandled',
-    label: '미처리',
+    label: '미처리 보기',
     headline: '미처리 — 아직 아무도 손대지 않은 것',
     why:
       '처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. ' +
@@ -103,7 +103,7 @@ const PRESETS: PresetDef[] = [
   },
   {
     key: 'recent',
-    label: `지난 ${RECENT_HOURS}시간`,
+    label: `지난 ${RECENT_HOURS}시간 보기`,
     headline: `지난 ${RECENT_HOURS}시간 — 이 시간 창 안에 난 것`,
     why:
       `지금부터 ${RECENT_HOURS}시간 전까지, 창의 두 끝을 정해 놓고 봅니다. ` +
@@ -112,7 +112,7 @@ const PRESETS: PresetDef[] = [
   },
   {
     key: 'mine',
-    label: '내 담당',
+    label: '내 담당 보기',
     headline: '내 담당 — 내가 판정한 이벤트',
     why:
       '내가 실제·오탐을 판정한 이벤트입니다. 내가 처리 단계를 옮긴 것과는 다릅니다.',
@@ -120,7 +120,7 @@ const PRESETS: PresetDef[] = [
   },
   {
     key: 'system',
-    label: '시스템',
+    label: '시스템 보기',
     headline: '시스템 — 설비 자신이 낸 신호',
     why:
       '현장에서 난 일이 아니라 카메라·저장 장치 같은 설비 자신의 상태입니다. ' +
@@ -288,8 +288,14 @@ export default function EventList() {
 
         <Card size="small">
           <Space direction="vertical" size="small" style={{ width: '100%' }}>
+            {/* ★ [P-51 · 2026-09-05] 묶음 이름 **「프리셋」을 뺐다.**
+                「프리셋」은 우리 말이다 — 사전(GX-COPY §5 턴 E)이 단추 넷에
+                「…보기」라는 이름을 주었고, 그 이름이 **누르면 무엇이 보이는지**를
+                먼저 말한다. 묶음에 이름을 다시 붙이려면 사전에 낱말이 있어야 하는데
+                없다 — **없는 말을 만들지 않는다**(GX-COPY 규칙). 그래서 지운다.
+                ⚠ 질의 인자 이름(`preset=`)은 **계약**이라 그대로다. 바뀐 것은
+                  표시 이름뿐이다(GX-COPY 규칙 2). */}
             <Space wrap>
-              <Text strong>프리셋</Text>
               {PRESETS.map((p) => (
                 <Button
                   key={p.key}

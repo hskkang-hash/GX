@@ -261,3 +261,169 @@ class ItDoesNotCutOtherTenantsUnlessToldTest(MenuUnlinkFixture):
         self.assertTrue(self.link_u1.permit_read, "지정한 소속이 안 되살아났습니다.")
         self.assertFalse(self.link_other_tenant.permit_read,
                          "시키지 않은 소속까지 되살렸습니다.")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# P-50 — 레거시 화면 셋을 **U5 에서도** 끊는다 (2026-09-05 턴 E · 상용 점검 §8)
+#
+#   턴 C 는 U5 를 남겼다. 상용 점검이 반박했다 — 「관제 제품인데 인수 자산 화면이
+#   그대로 보인다」. 그래서 묶음이 둘이 됐고, 이 아래가 묻는 것은 **묶음이 서로를
+#   삼키지 않는가**다. 합쳐 버리면 U5 가 `/device` 까지 잃고, 그것은 P-40 이
+#   남기라 한 자리다.
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class LegacyThreeFixture(MenuUnlinkFixture):
+    """P-50 세 화면 + **묶음 마디 하나**를 최소 표에 더한다.
+
+    ★ 마디를 픽스처에 넣는 이유 — dj-core `list_menus` 는 묶음을 「자식이 남았으니
+      보인다」가 아니라 **제 행의 `permit_read` 로도** 보인다. 자식만 끊으면
+      사이드바에 **아무 데도 못 가는 한 줄**이 남는다. 그 한 줄을 재려면 표에
+      있어야 한다.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        from core.menu.models import Menu, RoleMenu
+
+        self.legacy_dash = Menu.objects.create(
+            menu_name="Surveillance Dashboard", path="/surveillance-dashboard")
+        self.media_bucket = Menu.objects.create(
+            menu_name="Media Data", path="/media-data")
+        #: 묶음 마디 — 경로가 라우트가 아니라 문자열이다(실물이 그렇다).
+        self.media_viewer_node = Menu.objects.create(
+            menu_name="Media Viewer", path="Media Viewer")
+        self.multi_stream = Menu.objects.create(
+            menu_name="Multi-Stream Monitor", path="/multi-stream-monitor",
+            parent=self.media_viewer_node)
+
+        def link(menu, role, **kw):
+            kw.setdefault("permit_read", True)
+            return RoleMenu.objects.create(
+                menu=menu, role=role, group=self.group_a, **kw)
+
+        self.u5_dash = link(self.legacy_dash, self.u5, permit_create=True)
+        self.u5_bucket = link(self.media_bucket, self.u5, permit_create=True)
+        self.u5_stream = link(self.multi_stream, self.u5)
+        self.u5_node = link(self.media_viewer_node, self.u5)
+        self.u1_stream = link(self.multi_stream, self.u1)
+        self.u1_node = link(self.media_viewer_node, self.u1)
+
+
+class SysopLosesTheLegacyThreeTest(LegacyThreeFixture):
+    """★ U5 에서도 끊긴다 — P-50 의 본문."""
+
+    def test_all_three_legacy_screens_go_dark_for_sysop(self) -> None:
+        self._cut()
+        for row, name in ((self.u5_dash, "레거시 감시 대시보드"),
+                          (self.u5_bucket, "미디어 버킷"),
+                          (self.u5_stream, "드론 다중 스트림")):
+            row.refresh_from_db()
+            self.assertFalse(row.permit_read,
+                             "시스템 관리자에게 %s 가 아직 보입니다." % name)
+            self.assertFalse(row.permit_create,
+                             "%s 의 읽기만 끊겼습니다 — 반만 끊긴 연결입니다." % name)
+
+    def test_the_empty_group_node_goes_too(self) -> None:
+        """★ 자식만 끊으면 **아무 데도 못 가는 한 줄**이 사이드바에 남는다."""
+        self._cut()
+        self.u5_node.refresh_from_db()
+        self.u1_node.refresh_from_db()
+        self.assertFalse(self.u5_node.permit_read,
+                         "자식 잃은 묶음 마디가 관리자 사이드바에 남았습니다.")
+        self.assertFalse(self.u1_node.permit_read,
+                         "자식 잃은 묶음 마디가 관제요원 사이드바에 남았습니다.")
+
+    def test_sysop_still_keeps_the_ux21_eight(self) -> None:
+        """★ 묶음이 서로를 삼키지 않는다 — U5 의 `/device` 는 P-40 이 남긴 자리다."""
+        self._cut()
+        self.link_u5.refresh_from_db()
+        self.assertTrue(self.link_u5.permit_read,
+                        "P-50 이 UX-21 묶음까지 끊었습니다 — U5 는 /device 를 "
+                        "유지해야 합니다(P-40).")
+
+
+class BundlesAreSeparableTest(LegacyThreeFixture):
+    """★ 판정 하나만 돌리고, 판정 하나만 무를 수 있는가."""
+
+    def test_ux21_bundle_alone_does_not_touch_the_legacy_three(self) -> None:
+        self._cut(bundle=["UX-21"])
+        self.u5_stream.refresh_from_db()
+        self.link_u1.refresh_from_db()
+        self.assertFalse(self.link_u1.permit_read, "UX-21 묶음이 안 끊겼습니다.")
+        self.assertTrue(self.u5_stream.permit_read,
+                        "UX-21 만 돌렸는데 P-50 대상까지 끊겼습니다.")
+
+    def test_p50_bundle_alone_does_not_touch_the_acquired_eight(self) -> None:
+        self._cut(bundle=["P-50"])
+        self.u5_stream.refresh_from_db()
+        self.link_u1.refresh_from_db()
+        self.assertFalse(self.u5_stream.permit_read, "P-50 묶음이 안 끊겼습니다.")
+        self.assertTrue(self.link_u1.permit_read,
+                        "P-50 만 돌렸는데 UX-21 대상까지 끊겼습니다.")
+
+    def test_the_ledger_says_which_decision_cut_each_row(self) -> None:
+        """장부에 판정 이름이 없으면 **판정 하나만 무를 수 없다.**"""
+        self._cut()
+        led = json.loads(self.ledger.read_text(encoding="utf-8"))
+        bundles = {e.get("bundle") for e in led["entries"]}
+        self.assertEqual(bundles, {"UX-21", "P-50"},
+                         "장부가 어느 판정으로 끊었는지 말하지 않습니다: %r" % bundles)
+        self.assertEqual(sorted(led.get("bundles", [])), ["P-50", "UX-21"])
+
+    def test_one_decision_can_be_undone_alone(self) -> None:
+        """P-50 만 되살리고 UX-21 은 끊긴 채로 둔다."""
+        self._cut()
+        self._restore(bundle=["P-50"])
+        self.u5_stream.refresh_from_db()
+        self.link_u1.refresh_from_db()
+        self.assertTrue(self.u5_stream.permit_read, "P-50 이 안 되살아났습니다.")
+        self.assertFalse(self.link_u1.permit_read,
+                         "P-50 만 무르라 했는데 UX-21 까지 되살아났습니다.")
+
+
+class LegacyThreeRoundTripTest(LegacyThreeFixture):
+    """★ **왕복** — 끊었다 · 되붙였다 · 다시 끊는다. 세 번 다 같은 자리로 온다."""
+
+    def test_cut_restore_cut_lands_in_the_same_place(self) -> None:
+        self._cut()
+        self.u5_dash.refresh_from_db()
+        self.assertFalse(self.u5_dash.permit_read)
+
+        self._restore()
+        self.u5_dash.refresh_from_db()
+        self.assertTrue(self.u5_dash.permit_read, "되붙지 않았습니다.")
+        self.assertTrue(self.u5_dash.permit_create)
+        # 끊기 전에 꺼져 있던 칸은 꺼진 채로 — 되돌리기이지 새 부여가 아니다.
+        self.assertFalse(self.u5_dash.permit_update)
+
+        self._cut()
+        self.u5_dash.refresh_from_db()
+        self.assertFalse(self.u5_dash.permit_read, "두 번째 끊기가 안 먹었습니다.")
+
+    def test_nothing_is_deleted_across_the_round_trip(self) -> None:
+        from core.menu.models import Menu, RoleMenu
+
+        menus, links = Menu.objects.count(), RoleMenu.objects.count()
+        self._cut()
+        self._restore()
+        self._cut()
+        self.assertEqual(Menu.objects.count(), menus, "메뉴 행이 줄었습니다.")
+        self.assertEqual(RoleMenu.objects.count(), links, "연결 행이 줄었습니다.")
+
+
+class SuperuserIsNotInAnyBundleTest(LegacyThreeFixture):
+    """★ `superuser` 에게는 셋이 **그대로 보인다** — 모르고 남긴 것이 아니다.
+
+    전역 관리자 판정은 `common/tenant_roles.is_global_admin` 한 곳이 한다(D-212).
+    여기에 적으면 판정식이 두 벌이 되고, 두 벌은 반드시 어긋난다. 그 사실을
+    시험으로 **적어 둔다** — 다음 사람이 「빠뜨렸다」로 읽지 않게.
+    """
+
+    def test_superuser_is_absent_from_every_bundle(self) -> None:
+        from common.menu_exposure import CUT_BUNDLES
+
+        for b in CUT_BUNDLES:
+            self.assertNotIn("superuser", b["roles"],
+                             "%s 묶음이 superuser 를 넣었습니다 — 전역 관리자 판정은 "
+                             "tenant_roles 한 곳이 합니다(D-212)." % b["id"])

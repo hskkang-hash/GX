@@ -1,0 +1,10 @@
+CONTAINER                  DRIVER     MAXSIZE  MAXFILE
+guardianx-source-minio-1   json-file
+gx-beat-e                  json-file  10m      5
+gx-celery-e                json-file  10m      5
+gx-fe-build                json-file
+gx-gunicorn-e              json-file  10m      5
+gx-nginx-e                 json-file  10m      5
+gx-shell                   json-file
+postgres                   json-file
+redis                      json-file

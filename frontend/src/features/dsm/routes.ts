@@ -54,4 +54,9 @@ export const dsm2Routes = {
    * ★ 원본은 이 화면을 통해 나가지 않는다. 화면이 부르는 것은 **마스킹본**뿐이다.
    */
   privacyRequests: { title: '열람·삭제 청구', path: '/dsm/privacy-requests' },
+  /**
+   * OPS-16 계량 표 — 이번 달 우리 센터가 얼마나 썼나. 관리자 자리.
+   * ★ 세는 화면이지 만드는 화면이 아니다 — 여기서 아무것도 생성하지 않는다.
+   */
+  metering: { title: '이번 달 사용량', path: '/dsm/metering' },
 } as const;

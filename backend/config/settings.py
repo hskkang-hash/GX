@@ -130,6 +130,14 @@ MIDDLEWARE = [
     #   캐시 안쪽에 두면 열려 있던 동안 익명으로 채워진 항목이 관문을 지나지 않고 그대로 나간다.
     #   §0.4 금지구역의 라우트도 이 한 겹이 덮는다. 파일은 한 줄도 건드리지 않는다.
     "common.access_gate.AccessGateMiddleware",
+    # ★ [UX-24 · 2026-09-05 턴 E · 차선 S] 동시 세션 상한 한 겹. **줄을 새로 넣었다**
+    #   (기존 줄은 한 자도 안 고쳤다). 자리는 `ApiContractStatusMiddleware` 바로 위 —
+    #   같은 두 조건을 만족해야 한다: 캐시보다 바깥 · GZip 보다 안쪽(본문을 JSON 으로
+    #   읽는다). 이 한 겹이 하는 일은 둘뿐이다:
+    #     ① 로그인 성공 응답에서 세션을 대장에 남기고 상한을 넘으면 가장 오래된 것을 끊는다
+    #     ② dj-core 의 영문 401 "Token from different session" 에 사전 문구를 붙인다
+    #   **상태코드는 안 바꾼다.** 되돌리기는 `SESSION_LIMIT_ENABLED = False` 한 줄이다.
+    "common.session_limit.SessionLimitMiddleware",
     # ★ 반드시 UniversalCacheMiddleware **바로 위** (W0-18 · D-248). 두 조건이 있다:
     #   ① 캐시보다 바깥 — UniversalCacheMiddleware 는 캐시 적중 시 저장된 본문을
     #      **항상 JsonResponse(200)** 으로 다시 만든다(universal_optimization.py:872).
@@ -159,6 +167,19 @@ MIDDLEWARE = [
 #     §5    단계적 롤아웃 순서와 되돌림 기준
 API_CONTRACT_PROMOTE_ERROR_STATUS = (
     os.environ.get("API_CONTRACT_PROMOTE_ERROR_STATUS", "false").lower() == "true"
+)
+
+# ── UX-24 동시 세션 상한 (2026-09-05 턴 E · 차선 S) ─────────────────────────
+#
+#   True (기본)  로그인 성공을 대장에 남기고, dj-core 의 영문 401
+#                "Token from different session" 에 사전 문구를 붙인다.
+#   False        미들웨어가 경로에 있으나 통과만 한다. **되돌리기는 이 한 줄이다.**
+#
+# ⚠ 이 값을 켜도 **동시 접속은 여전히 1개다.** 그 1개는 dj-core 의 자료구조이고
+#   §0.4 라 우리가 못 고친다 — 사유와 실측은 `docs/agent/authn_paths.md` §8 에 있다.
+#   여기서 켜지는 것은 「상한 정책」과 「끊긴 이유를 말하기」뿐이다.
+SESSION_LIMIT_ENABLED = (
+    os.environ.get("SESSION_LIMIT_ENABLED", "true").lower() == "true"
 )
 
 # ★ D-349 착시 ⑧ — 봉투. **F-05 진입면은 래칫에서 제외한다.**
@@ -226,12 +247,40 @@ API_CONTRACT_PROMOTE_ERROR_STATUS = (
 #     안전 근거 [실측]: W0-18 §2-2 무증상 실패 후보 15파일 중 이 두 접두를 부르는
 #     파일 **0개**. flight-log 호출부는 `features/FlightLogAnalysis/**` 5파일이고
 #     그 어느 것도 후보 목록에 없다. departments 는 `frontend/src` 호출부 0건이다.
+#   ★ [A2 접두 둘 · 2026-09-05 턴 E · 차선 S · SEC-11a] `/api/partner/` ·
+#     `/api/third-api/` 을 더한다. **12건.**
+#     ★★ 먼저 잰 것부터 적는다 — **화면이 부르는 라우트의 봉투 잔여는 이미 0 이다**
+#        [실측 2026-09-05]. 캡처 24장이 부른 고유 호출 33건을 인벤토리와 대조하니
+#        promoted 27 · clean 5 · **authz_envelope 0** · 미대조 1(`POST /api/proxy/notam`).
+#        그러니 「화면」쪽으로는 더 갚을 것이 없다. 남은 217건은 다른 곳에 산다.
+#     그래서 **SEC-11a 의 정의로 되돌아갔다**(P-35): 이 절의 몫은 「화면 · 계약 ·
+#     **외부 진입면**」이다. 잔여 217 중 외부 진입면은 이 둘이고, 그 둘의 정체는:
+#        /api/partner/    11건 — 파트너 API 키 **발급·회전·폐기·상태전환**
+#        /api/third-api/   1건 — 제3자 연동 주문 생성
+#     바깥의 기계가 읽는 면이다. 거부가 200 으로 나가면 연동자·게이트웨이·재시도 로직이
+#     전부 실패를 성공으로 읽는다 — **F-05 계약 사고와 정확히 같은 모양**이다(D-349).
+#
+#     ★ 함께 **안 더한 것**과 그 사유 — 이것이 이번 판단의 절반이다:
+#        delivery 48 · terminals 38 · orders 11  §0.4 금지구역 (97건)
+#        devices 33 · handover 25                 **이미 판정이 있다** — SEC-11b(손 밖) ·
+#          `tests/test_api_contract.py::test_forbidden_zone_prefixes_stay_out` 이
+#          「우리가 승격하지 않는다」를 못박아 두었다. 승격은 인수자 판단이다(P-35)
+#        dashboard 7 · checklist-setting 5        W0-18 §2-2 무증상 실패 후보 21곳이
+#          실제로 부르는 자리다(`useDashboard.ts` · `CheckListSetting.tsx`)
+#        report-template 5 · operational-data 8   기존 계약 시험이 **플래그 OFF 에서
+#          200/500** 을 못박고 있다. 여기를 접두로 켜면 그 시험이 빨개지는데, 그것은
+#          「고쳤다」가 아니라 **계약을 말없이 바꾼 것**이다 (D-327)
+#        roles 9 · user-profiles 5 · levels·positions·teams 9 · genders·nationalities 2
+#          rj-core 가 그리는 인수 관리 화면의 마스터 자료다. 그 화면의 오류 처리를
+#          **이 저장소에서 읽을 수 없다**(rj-core 는 node_modules 에도 없다) —
+#          못 재는 것을 켜는 것은 판정이 아니라 도박이다. SEC-11b 로 남긴다
 API_CONTRACT_PROMOTE_PATHS = tuple(
     p for p in os.environ.get(
         "API_CONTRACT_PROMOTE_PATHS",
         "/api/dsm/,/api/stream-monitors/,/api/surveillance/"
         ",/api/advanced-table/,/api/config-management/,/api/user-groups/"
-        ",/api/flight-log/,/api/departments/").split(",")
+        ",/api/flight-log/,/api/departments/"
+        ",/api/partner/,/api/third-api/").split(",")
     if p.strip()
 )
 

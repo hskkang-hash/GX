@@ -83,9 +83,14 @@ except (AttributeError, OSError):
 #:   전수라고 적은 것이다. **목록으로 세는 판정기는 목록이 낡는 만큼 눈이 먼다.**
 #:   그래서 ⑤(목록 신선도)를 아래에 두었다: 떠 있는데 목록에 없는 우리 컨테이너가
 #:   하나라도 있으면 ①은 초록이 될 수 없다.
+#: ★ [2026-09-05 · 턴 E] 둘이 늘었다 — `gx-celery-e`(워커 1) · `gx-beat-e`(beat 1).
+#:   P-56 이 세운 자리다. ⑤(목록 신선도)가 이 둘을 즉시 빨강으로 찍어 주었고,
+#:   그것이 ⑤를 둔 이유 그대로다 — **컨테이너를 늘린 사람이 목록을 갱신하지 않으면
+#:   판정기는 그만큼 눈이 먼다.** 둘 다 `--log-opt` 를 붙여 띄웠다(적용 확인 완료).
 PROJECT_CONTAINERS = ("gx-shell", "postgres", "redis",
                       "guardianx-source-minio-1", "gx-fe-build",
-                      "gx-nginx-e", "gx-gunicorn-e")
+                      "gx-nginx-e", "gx-gunicorn-e",
+                      "gx-celery-e", "gx-beat-e")
 
 #: 「우리 것」을 이름으로 가른다 — ⑤가 목록 밖 컨테이너를 찾을 때 쓴다.
 #: 남의 컨테이너(다른 제품)를 우리 빨강으로 세지 않기 위한 좁힘이다.
@@ -137,6 +142,11 @@ ADHOC_TO_SERVICE = {
     # 상한은 **띄우는 명령**에 산다 — `docs/agent/RUNBOOK_로컬기동.md` STEP 2A.
     "gx-nginx-e": None,
     "gx-gunicorn-e": None,
+    # 턴 E 의 celery 둘. compose 에 **대응 서비스가 있다**(`celery` · `beat`) —
+    # 이 기계에서는 손으로 띄웠을 뿐이다. 그래서 `None` 이 아니라 서비스 이름을 적는다:
+    # ④(선언)는 초록이 되고, ②(적용)는 띄울 때 붙인 `--log-opt` 가 답한다.
+    "gx-celery-e": "celery",
+    "gx-beat-e": "beat",
 }
 
 
@@ -469,6 +479,47 @@ try:
 except Exception as exc:
     out["purge_beat_error"] = "%s: %s" % (type(exc).__name__, exc)
 
+# ★ **세 번째 사실 — beat 가 도는가** (2026-09-05 · 턴 E)
+#
+#   턴 D 는 「선언(beat 표)」과 「워커」를 갈랐다. 그것으로도 부족했다. 이 저장소의
+#   스케줄러는 `django_celery_beat.schedulers:DatabaseScheduler` 이고, 그 뜻은
+#   **주기의 정본이 코드가 아니라 DB 표**라는 것이다. 그래서 세 가지가 따로 참이어야
+#   무언가 지워진다:
+#
+#       ① `config/celery.py` 의 `beat_schedule` 에 항목이 있다   ← 턴 D 가 쟀다
+#       ② 그 항목을 **실행할 워커**가 붙어 있다                   ← 턴 D 가 쟀다
+#       ③ 그 항목을 **밀어 줄 beat** 가 돌고, DB 표에서 그 줄이 **켜져 있다**  ← 여기
+#
+#   ③이 없으면 ①②만으로 초록이 난다. [실측 2026-09-05 17:52] 이 기계가 정확히 그
+#   상태였다 — 워커 1대가 붙어 있고, 파기 항목은 DB 표에서 **꺼져 있다**(파기 대상
+#   판정이 아직 없어서 차선 E 가 껐다 · P-57 대기). 워커만 보고 「90일이 걸렸다」고
+#   적으면 그 순간 이 판정기가 거짓 초록의 출처가 된다.
+#
+#   beat 의 생사는 프로세스를 찾지 않고 **자취로** 잰다: DatabaseScheduler 는 항목을
+#   발화할 때마다 그 줄의 `last_run_at` 을 고쳐 쓴다. 그러므로 켜진 항목들의
+#   `last_run_at` 최댓값이 최근이면 beat 는 돌고 있다. 프로세스 목록보다 이쪽이
+#   낫다 — beat 가 **다른 기계에서** 돌아도 참이 되기 때문이다.
+try:
+    from django.db.models import Max
+    from django_celery_beat.models import PeriodicTask
+
+    _PURGE_TASKS = ("common.ops_audit_purge_beat",
+                    "core.logger.tasks.purge_old_audit_logs")
+    out["purge_beat_rows"] = [
+        {"name": r["name"], "task": r["task"], "enabled": r["enabled"],
+         "last_run_at": str(r["last_run_at"])}
+        for r in PeriodicTask.objects.filter(task__in=_PURGE_TASKS)
+                                     .values("name", "task", "enabled", "last_run_at")
+    ]
+    _last = PeriodicTask.objects.filter(enabled=True).aggregate(
+        m=Max("last_run_at"))["m"]
+    out["beat_last_run_at"] = str(_last) if _last else None
+    if _last is not None:
+        from django.utils import timezone as _tz
+        out["beat_age_seconds"] = int((_tz.now() - _last).total_seconds())
+except Exception as exc:
+    out["beat_probe_error"] = "%s: %s" % (type(exc).__name__, exc)
+
 # ★ **선언과 도는 것은 다른 사실이다** (2026-09-05 · 턴 D).
 #   `beat_schedule` 에 이름이 있다는 것은 「일정이 적혀 있다」일 뿐이다. 그 일정을
 #   밀어 줄 beat 도, 밀린 것을 **실행할 워커**도 따로 떠야 한다. 워커가 0개면
@@ -524,6 +575,33 @@ def db_sink() -> tuple[dict | None, dict]:
 
     if info.get("error"):
         return None, info
+    retention, extra = judge_db_retention(info)
+    return {"name": "DB 감사 로그 · %s" % info.get("table", "?"),
+            "kind": "db", "retention": retention,
+            "detail": "행 %s개 · %s바이트 · 가장 오래된 %s%s"
+                      % (info.get("rows"), info.get("bytes"), info.get("oldest"), extra),
+            "bytes_per_hour": info.get("rows_last_hour")}, info
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 「지우는 자리가 실제로 도는가」 — **순수 함수** (D-277 · 2026-09-05 · 턴 E)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 왜 도커·DB 밖으로 꺼냈는가. 이 판정은 **다섯 갈래**로 늘어났고(브로커 · 워커 ·
+#   beat 표 · 항목 스위치 · beat 자취), 갈래가 늘어난 판정은 **양성만 시험하면
+#   반드시 어느 갈래가 조용히 초록이 된다.** 순수 함수여야 `--self-test` 가
+#   양성과 음성을 함께 낼 수 있다(불변 4).
+#
+# ★ **출생 표본**(D-310) — 아래 self_test 의 fixture 는 지어낸 수가 아니라
+#   2026-09-05 17:52 이 기계에서 실제로 나온 값이다:
+#       retention_days=90 · rows_expired=0 · oldest=2026-08-27T13:28:44
+#       celery_workers=['gx-worker-e@15b6075fe591'] · broker_reachable=True
+#       purge_beat_rows: ops-audit-purge-daily(enabled=False) ·
+#                        purge-audit-logs-daily(enabled=False)
+#   그 순간의 옳은 답은 **「무한」(빨강)** 이다 — 워커는 붙었지만 파기 항목이 꺼져
+#   있었다. 이 표본이 초록으로 바뀌면 그때 이 판정기가 거짓말을 시작한 것이다.
+def judge_db_retention(info: dict) -> tuple[str | None, str]:
+    """감사 로그 보존이 **걸렸는가**. `(retention, extra)` — `None` 은 못 쟀다."""
     days = info.get("retention_days")
     beat = info.get("purge_beat") or {}
     workers = info.get("celery_workers")
@@ -548,13 +626,43 @@ def db_sink() -> tuple[dict | None, dict]:
                  "`%s` 은 적혀 있고, 그것을 실행할 celery 워커가 브로커에 하나도 "
                  "붙어 있지 않다. **선언은 삭제가 아니다**" % (days, ", ".join(beat)))
     else:
-        retention = "%s일 (beat %s · 워커 %d)" % (days, ", ".join(beat), len(workers))
-        extra = " · 워커 %s" % ", ".join(workers)
-    return {"name": "DB 감사 로그 · %s" % info.get("table", "?"),
-            "kind": "db", "retention": retention,
-            "detail": "행 %s개 · %s바이트 · 가장 오래된 %s%s"
-                      % (info.get("rows"), info.get("bytes"), info.get("oldest"), extra),
-            "bytes_per_hour": info.get("rows_last_hour")}, info
+        # ★ 워커가 있다 — 그런데 그것으로 끝이 아니다 (2026-09-05 · 턴 E).
+        #   ③ beat 가 돌고, 그 항목이 **DB 표에서 켜져 있어야** 지워진다.
+        rows = info.get("purge_beat_rows")
+        age = info.get("beat_age_seconds")
+        on = [r for r in (rows or []) if r.get("enabled")]
+        if rows is None:
+            retention = None
+            extra = (" · 워커 %d · **beat 를 못 쟀다**(%s) — 워커만 보고 초록을 내지 "
+                     "않는다" % (len(workers), info.get("beat_probe_error") or "사유 없음"))
+        elif not rows:
+            # 코드에는 일정이 있는데 DB 표에 그 줄이 없다 = beat 가 **한 번도 안 떴다**.
+            # DatabaseScheduler 는 뜰 때 표를 심는다 — 표가 비었다는 것이 그 증거다.
+            retention = "무한"
+            extra = (" · 워커 %d · ⚠ **beat 가 한 번도 뜬 적이 없다** — 주기의 정본은 "
+                     "DB 표(`django_celery_beat_periodictask`)인데 파기 항목의 줄이 "
+                     "**아예 없다**. `config/celery.py` 의 선언은 심어지지 않았다"
+                     % len(workers))
+        elif not on:
+            # ★ 이번 턴의 실제 상태다. 껐다는 사실을 **초록으로 덮지 않는다**.
+            retention = "무한"
+            extra = (" · 워커 %d · ⚠ 보존 %s일이 선언돼 있고 워커도 붙었으나 파기 항목이 "
+                     "**DB 주기 표에서 꺼져 있다**(%s) — 파기 대상 판정(보존 일수 미선언 "
+                     "테넌트 제외)이 서기 전까지 차선 E 가 껐다(P-57 대기). "
+                     "**켜기 전에는 아무것도 안 지워진다**"
+                     % (len(workers), days,
+                        ", ".join("%s=off" % r["name"] for r in rows)))
+        elif age is None or age > 900:
+            # 켜져 있는데 자취가 없다/오래됐다 = beat 프로세스가 죽었다.
+            retention = "무한"
+            extra = (" · 워커 %d · ⚠ 파기 항목은 켜져 있으나 **beat 의 자취가 없다**"
+                     "(마지막 발화 %s) — 밀어 주는 자리가 죽으면 켠 것도 안 돈다"
+                     % (len(workers), info.get("beat_last_run_at")))
+        else:
+            retention = "%s일 (beat %s · 워커 %d · 마지막 발화 %d초 전)" % (
+                days, ", ".join(beat), len(workers), age)
+            extra = " · 워커 %s · 켜진 파기 항목 %d개" % (", ".join(workers), len(on))
+    return retention, extra
 
 
 def self_test() -> int:
@@ -636,6 +744,65 @@ def self_test() -> int:
          "declared": True, "bytes_per_hour": 1}]}
     r = judge(cannot_read)
     ok &= [p for _, p, _ in r] == [True, True, True, False]
+
+    # ══ 「지우는 자리가 도는가」 다섯 갈래 — **양성과 음성을 함께** (턴 E) ══════
+    #
+    # ★ **출생 표본**(D-310). 아래 `BIRTH` 는 지어낸 값이 아니라 2026-09-05 17:52
+    #   이 기계에서 실제로 나온 사실이다. 그 순간의 옳은 답은 **빨강(「무한」)** 이고,
+    #   그 이유는 「워커가 없어서」가 아니라 **「파기 항목이 꺼져 있어서」**다.
+    #   워커만 보던 종전 판이었다면 이 표본에 **초록**을 냈다 — 그것이 이 갈래를
+    #   더한 이유이고, 이 fixture 가 그 회귀를 막는다.
+    BIRTH = {"table": "logger_auditlogs", "rows": 2576, "bytes": 3571712,
+             "oldest": "2026-08-27 13:28:44.947815+00:00",
+             "retention_days": 90,
+             "purge_beat": {"ops-audit-purge-daily": "<crontab: 10 3 * * *>"},
+             "broker_reachable": True,
+             "celery_workers": ["gx-worker-e@15b6075fe591"],
+             "purge_beat_rows": [
+                 {"name": "ops-audit-purge-daily",
+                  "task": "common.ops_audit_purge_beat",
+                  "enabled": False, "last_run_at": "None"},
+                 {"name": "purge-audit-logs-daily",
+                  "task": "core.logger.tasks.purge_old_audit_logs",
+                  "enabled": False, "last_run_at": "None"}],
+             "beat_last_run_at": "2026-09-05 08:52:59+00:00",
+             "beat_age_seconds": 12}
+
+    #   ① 출생 표본 그대로 → **빨강**. 워커가 있어도 항목이 꺼져 있으면 안 지워진다.
+    ret, ex = judge_db_retention(BIRTH)
+    ok &= (ret == "무한") and ("꺼져 있다" in ex)
+
+    #   ② **음성 대조** — 그 표본에서 **스위치만 켜면** 초록이어야 한다.
+    #      (빨강이 다른 데서 온 것이 아님을 못박는다 · 불변 4)
+    on = dict(BIRTH, purge_beat_rows=[dict(r, enabled=True)
+                                      for r in BIRTH["purge_beat_rows"]])
+    ret, ex = judge_db_retention(on)
+    ok &= (ret is not None) and ret.startswith("90일") and ("무한" not in ret)
+
+    #   ③ beat 가 한 번도 안 떴다(표에 줄이 없다) → 빨강. 「꺼짐」과 **다른 사유**다.
+    ret, ex = judge_db_retention(dict(BIRTH, purge_beat_rows=[]))
+    ok &= (ret == "무한") and ("한 번도 뜬 적이 없다" in ex)
+
+    #   ④ 항목은 켜져 있는데 beat 의 자취가 낡았다 → 빨강. 켠 것도 안 돈다.
+    stale = dict(on, beat_age_seconds=99999)
+    ret, ex = judge_db_retention(stale)
+    ok &= (ret == "무한") and ("자취가 없다" in ex)
+
+    #   ⑤ beat 를 **못 쟀다** → 회색(None). 회색은 초록이 아니고 빨강도 아니다(D-301).
+    blind_beat = dict(on)
+    blind_beat.pop("purge_beat_rows")
+    blind_beat["beat_probe_error"] = "ImportError: django_celery_beat"
+    ret, ex = judge_db_retention(blind_beat)
+    ok &= (ret is None) and ("못 쟀다" in ex)
+
+    #   ⑥ 워커 0 → 빨강 (턴 D 가 세운 갈래 · 회귀 방지)
+    ret, ex = judge_db_retention(dict(on, celery_workers=[]))
+    ok &= (ret == "무한") and ("워커가 0개" in ex)
+
+    #   ⑦ 브로커에 못 닿았다 → 회색. 「워커 없음」으로 옮기지 않는다
+    ret, ex = judge_db_retention(dict(on, broker_reachable=False,
+                                      broker_error="ConnectionError"))
+    ok &= (ret is None) and ("못 닿았다" in ex)
 
     print("self-test: %s" % ("통과" if ok else "실패"))
     return EXIT_OK if ok else EXIT_FAIL

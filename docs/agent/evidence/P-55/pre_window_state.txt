@@ -1,0 +1,14 @@
+/gx-shell log={"Type":"json-file","Config":{}}
+/postgres log={"Type":"json-file","Config":{}}
+/redis log={"Type":"json-file","Config":{}}
+/guardianx-source-minio-1 log={"Type":"json-file","Config":{}}
+/gx-fe-build log={"Type":"json-file","Config":{}}
+gx-celery-e	guardianx-backend:latest	Up 2 minutes
+gx-beat-e	guardianx-backend:latest	Up 28 minutes
+gx-nginx-e	nginx:alpine	Up 6 hours
+gx-gunicorn-e	guardianx-backend:latest	Up 5 hours
+guardianx-source-minio-1	14cea493d9a3	Up 2 days (healthy)
+gx-shell	guardianx-backend:latest	Up 3 days
+gx-fe-build	guardianx-frontend:latest	Up 3 days
+redis	redis:latest	Up 3 days
+postgres	postgres:latest	Up 3 days

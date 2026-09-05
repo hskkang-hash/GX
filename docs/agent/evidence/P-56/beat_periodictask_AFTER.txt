@@ -1,0 +1,25 @@
+ id |                     name                     |                                task                                 | enabled |          last_run_at
+----+----------------------------------------------+---------------------------------------------------------------------+---------+-------------------------------
+  4 | celery.backend_cleanup                       | celery.backend_cleanup                                              | t       | 2026-09-05 10:41:59.722571+00
+  5 | precompute-order-statistics                  | optimization.tasks.aggregation_tasks.precompute_order_statistics    | t       | 2026-09-05 11:00:00.001019+00
+  6 | precompute-device-metrics                    | optimization.tasks.aggregation_tasks.precompute_device_metrics      | t       | 2026-09-05 11:03:00.001117+00
+  7 | precompute-delivery-statistics               | optimization.tasks.aggregation_tasks.precompute_delivery_statistics | t       | 2026-09-05 10:56:00.000745+00
+  8 | warm-popular-data-cache                      | optimization.tasks.cache_warming_tasks.warm_popular_data_cache      | t       | 2026-09-05 11:05:00.000096+00
+  9 | warm-dashboard-cache                         | optimization.tasks.cache_warming_tasks.warm_dashboard_cache         | t       | 2026-09-05 10:45:00.000343+00
+ 10 | surveillance-auto-launch-processor           | surveillance.tasks.process_surveillance_auto_launch                 | t       | 2026-09-05 11:04:59.899758+00
+ 11 | surveillance-recurring-profile-generator     | surveillance.tasks.process_surveillance_recurring_profiles          | t       | 2026-09-05 10:41:59.728593+00
+ 12 | surveillance-overdue-profile-check-scheduler | surveillance.tasks.schedule_surveillance_profile_overdue_checks     | t       | 2026-09-05 11:01:59.737324+00
+ 13 | terminal-activation-scheduler                | terminals.tasks.schedule_terminal_activation_tasks                  | t       | 2026-09-05 10:41:59.744024+00
+ 14 | purge-audit-logs-daily                       | core.logger.tasks.purge_old_audit_logs                              | f       |
+ 15 | surveillance-overdue-profile-processor       | surveillance.tasks.process_surveillance_profile_overdue             | t       | 2026-09-05 11:04:59.902477+00
+ 16 | terminal-auto-activation-processor           | terminals.tasks.process_terminal_auto_activation                    | t       | 2026-09-05 11:04:59.904984+00
+ 17 | flight-log-anomaly-prediction-scheduler      | flight_log.tasks.task_update_pending_anomaly_predictions            | t       | 2026-09-05 11:01:59.750125+00
+ 18 | ops-monitor-3signals                         | common.ops_monitor_beat                                             | t       | 2026-09-05 11:01:59.415767+00
+ 19 | ops-audit-purge-daily                        | common.ops_audit_purge_beat                                         | f       |
+ 20 | law02a-video-retention-sweep                 | common.video_retention_sweep_beat                                   | f       |
+ 21 | sec-key-rotation-watch-daily                 | common.key_rotation_watch_beat                                      | t       |
+ 22 | ops-backup-daily                             | common.ops_backup_beat                                              | t       |
+ 23 | ops14-heartbeat-digest                       | common.heartbeat_digest_beat                                        | t       |
+ 24 | law08-evidence-anchor                        | common.evidence_anchor_beat                                         | t       |
+ 25 | ops15-camera-pulse-scan                      | stream_monitors.camera_pulse_scan_beat                              | t       | 2026-09-05 11:05:59.546993+00
+(22 rows)

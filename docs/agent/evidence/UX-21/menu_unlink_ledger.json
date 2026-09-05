@@ -353,10 +353,217 @@
         "permit_delete": false
       },
       "cut_at": "2026-09-05T05:29:19.189116+00:00"
+    },
+    {
+      "role_code": "admin",
+      "role_id": 4,
+      "menu_id": 76,
+      "menu_path": "Media Viewer",
+      "menu_name": "Media Viewer",
+      "role_menu_id": 79,
+      "group_id": 6,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T10:40:52.697776+00:00"
+    },
+    {
+      "role_code": "admin",
+      "role_id": 4,
+      "menu_id": 77,
+      "menu_path": "/multi-stream-monitor",
+      "menu_name": "Multi-Stream Monitor",
+      "role_menu_id": 80,
+      "group_id": 6,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T10:40:52.700352+00:00"
+    },
+    {
+      "role_code": "admin",
+      "role_id": 4,
+      "menu_id": 75,
+      "menu_path": "/media-data",
+      "menu_name": "Media Data",
+      "role_menu_id": 78,
+      "group_id": 6,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T10:40:52.701871+00:00"
+    },
+    {
+      "role_code": "fire_admin",
+      "role_id": 13,
+      "menu_id": 77,
+      "menu_path": "/multi-stream-monitor",
+      "menu_name": "Multi-Stream Monitor",
+      "role_menu_id": 667,
+      "group_id": 6,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T10:40:52.703250+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 77,
+      "menu_path": "/multi-stream-monitor",
+      "menu_name": "Multi-Stream Monitor",
+      "role_menu_id": 668,
+      "group_id": 6,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T10:40:52.704723+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 77,
+      "menu_path": "/multi-stream-monitor",
+      "menu_name": "Multi-Stream Monitor",
+      "role_menu_id": 401,
+      "group_id": 5,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T10:40:52.706093+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 12,
+      "menu_path": "/surveillance-dashboard",
+      "menu_name": "Surveillance Dashboard",
+      "role_menu_id": 379,
+      "group_id": 7,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T10:40:52.707366+00:00"
+    },
+    {
+      "role_code": "fire_admin",
+      "role_id": 13,
+      "menu_id": 76,
+      "menu_path": "Media Viewer",
+      "menu_name": "Media Viewer",
+      "role_menu_id": 665,
+      "group_id": 6,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T10:40:52.708940+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 76,
+      "menu_path": "Media Viewer",
+      "menu_name": "Media Viewer",
+      "role_menu_id": 666,
+      "group_id": 6,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T10:40:52.710126+00:00"
+    },
+    {
+      "role_code": "fire_admin",
+      "role_id": 13,
+      "menu_id": 12,
+      "menu_path": "/surveillance-dashboard",
+      "menu_name": "Surveillance Dashboard",
+      "role_menu_id": 813,
+      "group_id": 5,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T10:40:52.711403+00:00"
+    },
+    {
+      "role_code": "admin",
+      "role_id": 4,
+      "menu_id": 12,
+      "menu_path": "/surveillance-dashboard",
+      "menu_name": "Surveillance Dashboard",
+      "role_menu_id": 63,
+      "group_id": 6,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T10:40:52.712910+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 76,
+      "menu_path": "Media Viewer",
+      "menu_name": "Media Viewer",
+      "role_menu_id": 400,
+      "group_id": 5,
+      "bundle": "P-50",
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T10:40:52.714399+00:00"
     }
   ],
-  "updated_at": "2026-09-05T05:29:19.274370+00:00",
+  "updated_at": "2026-09-05T10:40:52.947202+00:00",
   "write_target": "menu.RoleMenu",
   "classification": "DEFERRED",
-  "scope": "all-tenants"
+  "scope": "all-tenants",
+  "bundles": [
+    "P-50"
+  ]
 }

@@ -52,6 +52,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -89,7 +90,7 @@ PLACEHOLDER = "이 화면은 아직 준비 중입니다"
 # ═══════════════════════════════════════════════════════════════════════════
 
 #: `if (isTypingTarget(ev.target)) return;` 처럼 **초점을 물어보고 빠져나가는** 자리.
-GUARD_USE = re.compile(r"if\s*\([^;{}]*\.target[^;{}]*\)\s*\{?\s*return")
+_GUARD_USE = GUARD_USE = re.compile(r"if\s*\([^;{}]*\.target[^;{}]*\)\s*\{?\s*return")
 #: 무엇을 초점으로 보는가 — 입력칸 · 여러 줄 칸 · 편집 가능한 자리.
 GUARD_TAGS = ("INPUT", "TEXTAREA")
 GUARD_EDIT = re.compile(r"isContentEditable|contenteditable", re.I)
@@ -215,6 +216,215 @@ def check_wiring(src: str) -> list[str]:
     return bad
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ⑦ **한글 IME 상태 재현** — 세종 P-58 이 더 요구한 것 (2026-09-05 턴 E · 차선 S)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 왜 술어 ①만으로는 부족한가
+# --------------------------
+# ①은 「소스 어딘가에 `.code` 를 읽는 자리가 있는가」를 센다. 그것으로는 **이 모양을
+# 못 잡는다**:
+#
+#     const code = ev.code;                 // 읽기는 읽는다 (①은 초록)
+#     logDebug(code);
+#     switch (ev.key) { case 'j': ... }      // 그런데 **판정은 글자로 한다** (전멸)
+#
+# 즉 ①은 「읽는가」를 묻고, ⑦은 **「무엇으로 고르는가」**를 묻는다. 둘은 다른 물음이다.
+#
+# 어떻게 브라우저 없이 재는가 — **잰 것과 못 잰 것을 먼저 가른다**
+# ----------------------------------------------------------------
+# 이 판정기는 브라우저를 열지 않는다(그 자리는 이 턴에 QA/E2E 것이다). 대신:
+#
+#     ① 소스에서 **배선**을 뽑는다 — switch 가 무엇을 받고, case 라벨이 무엇인가
+#     ② 한글 입력기가 켜진 상태의 **키 이벤트 모형**을 만든다
+#     ③ 그 이벤트를 ①의 배선에 흘려 보내 **먹는지**를 본다
+#
+# ★ 이것은 **모형에 대한 재현**이지 브라우저 실측이 아니다. 그 사실을 숨기지 않는다.
+#   모형이 옳다는 근거는 아래 `IME_MODEL_BASIS` 에 적었고, 모형이 틀리면 이 술어도
+#   틀린다 — 그래서 **다음 사람이 브라우저에서 확인할 것 셋**을 `BROWSER_TODO` 에
+#   남겼다. 「못 잰 것을 잰 척하지 않는다」가 이 절의 규약이다.
+
+#: 모형의 근거. 이 셋이 깨지면 ⑦의 답도 깨진다.
+IME_MODEL_BASIS = (
+    "한글 입력기가 켜지면 `event.key` 는 두벌식 낱자로 온다 (j→ㅓ · k→ㅏ · m→ㅡ · r→ㄱ) "
+    "— 턴 D 실측",
+    "`event.code` 는 자판의 **자리**라 입력기와 무관하다 (KeyJ 는 언제나 KeyJ)",
+    "숫자열·Enter 는 입력기가 바꾸지 않는다 — 그래서 고장이 **부분적**이고, "
+    "그래서 「가끔 안 먹는다」로만 보고된다",
+)
+
+#: ⑦이 **못 재는 것** 셋. 브라우저에서만 답이 난다.
+BROWSER_TODO = (
+    "한글 입력기가 켜진 채 **입력칸 밖**에서 j 를 눌렀을 때 `ev.isComposing` 이 "
+    "참인가. 참이면 `if (ev.isComposing) return;` 한 줄이 단축키를 전부 삼킨다 "
+    "— 물리 키로 바꾼 것과 무관하게 죽는다",
+    "그때 `ev.code` 가 정말 'KeyJ' 로 오는가 (일부 입력기는 keydown 을 "
+    "keyCode 229 로만 올린다고 알려져 있다)",
+    "월 모드처럼 **초점이 아무 데도 없는** 화면에서 window 리스너가 그 keydown 을 "
+    "받는가",
+)
+
+#: **한글 입력기 켜짐** — 그 자리를 눌렀을 때 `event.key` 로 오는 것 (두벌식).
+#:
+#: ★ 여기서 가장 중요한 칸은 낱자가 아니라 **숫자열과 Enter 다.** 입력기는 그것들을
+#:   바꾸지 않는다 — 그래서 글자로 고르는 배선에서도 1·2·3·Enter 는 **멀쩡히 먹는다.**
+#:   고장이 여덟 자리 중 넷에만 나므로 사람은 「가끔 안 먹는다」라고 보고하고,
+#:   재현하려는 사람의 자판은 영문이라 **언제나 잘 된다.** 이 표가 그 함정 자체다.
+KEY_WHEN_IME_ON = {
+    "KeyJ": "ㅓ", "KeyK": "ㅏ", "KeyM": "ㅡ", "KeyR": "ㄱ",
+    "Digit1": "1", "Digit2": "2", "Digit3": "3",
+    "Numpad1": "1", "Numpad2": "2", "Numpad3": "3",
+    "Enter": "Enter",
+}
+
+#: **영문 자판** — 대조군. 재현하려는 사람이 늘 보는 세상이다.
+KEY_WHEN_IME_OFF = {
+    "KeyJ": "j", "KeyK": "k", "KeyM": "m", "KeyR": "r",
+    "Digit1": "1", "Digit2": "2", "Digit3": "3",
+    "Numpad1": "1", "Numpad2": "2", "Numpad3": "3",
+    "Enter": "Enter",
+}
+
+
+@dataclass(frozen=True)
+class KeyEvent:
+    """브라우저가 올리는 keydown 하나의 **모형**."""
+
+    code: str                  # 자판의 자리 — 입력기와 무관
+    key: str                   # 입력기가 만든 글자
+    is_composing: bool = False
+    target_tag: str = "BODY"   # 초점이 있는 요소
+    ctrl: bool = False
+    alt: bool = False
+    meta: bool = False
+
+
+#: switch 가 받는 값이 무엇에서 왔는가.
+_SWITCH = re.compile(r"switch\s*\(\s*([A-Za-z_$][\w$.]*)\s*\)")
+_CASE = re.compile(r"case\s*['\"]([^'\"]+)['\"]\s*:")
+_ASSIGN = re.compile(r"(?:const|let|var)\s+%s\s*=\s*([^;]+);")
+_FN_BODY = re.compile(r"function\s+%s\s*\([^)]*\)[^{]*\{")
+#: 입력창 갈래가 **불리는** 자리 (①과 같은 술어를 쓴다 — 두 벌을 만들지 않는다).
+_COMPOSING_GUARD = re.compile(r"if\s*\([^;{}]*isComposing[^;{}]*\)\s*\{?\s*return")
+_MODIFIER_GUARD = re.compile(r"if\s*\([^;{}]*(?:ctrlKey|metaKey|altKey)[^;{}]*\)\s*\{?\s*return")
+
+
+def _resolve_reader(src: str, subject: str) -> str | None:
+    """switch 가 받는 값이 **자리(`code`)** 에서 왔는가 **글자(`key`)** 에서 왔는가.
+
+    셋을 차례로 본다: 직접 읽기 → 변수 대입 → 함수 반환. 못 풀면 `None` 을 돌려
+    **판정 불가**로 만든다 — 모르는 것을 「code 일 것이다」로 채우지 않는다.
+    """
+    if subject.endswith(".code"):
+        return "code"
+    if subject.endswith(".key"):
+        return "key"
+    name = subject.split(".")[0]
+
+    m = re.search(_ASSIGN.pattern % re.escape(name), src)
+    if m:
+        expr = m.group(1)
+        call = re.match(r"\s*([A-Za-z_$][\w$]*)\s*\(", expr)
+        if call:
+            fn = re.search(_FN_BODY.pattern % re.escape(call.group(1)), src)
+            if fn:
+                body = src[fn.end():]
+                order = [(body.find(".code"), "code"), (body.find(".key"), "key")]
+                order = [(i, k) for i, k in order if i >= 0]
+                if order:
+                    return min(order)[1]
+            return None
+        if ".code" in expr:
+            return "code"
+        if ".key" in expr:
+            return "key"
+    return None
+
+
+def extract_dispatch(src: str) -> tuple[str | None, list[str]]:
+    """소스에서 **배선**을 뽑는다 — (무엇으로 고르는가, 고를 수 있는 라벨들)."""
+    m = _SWITCH.search(src)
+    if not m:
+        return None, []
+    reader = _resolve_reader(src, m.group(1))
+    labels = _CASE.findall(src[m.end():])
+    return reader, labels
+
+
+def dispatch(src: str, ev: KeyEvent) -> str | None:
+    """이 소스의 배선에 이벤트 하나를 흘려 보낸다. 먹으면 라벨, 안 먹으면 None."""
+    if _GUARD_USE.search(src) and (
+        ev.target_tag.upper() in GUARD_TAGS or ev.target_tag.upper() == "CONTENTEDITABLE"
+    ):
+        return None
+    if _MODIFIER_GUARD.search(src) and (ev.ctrl or ev.alt or ev.meta):
+        return None
+    if _COMPOSING_GUARD.search(src) and ev.is_composing:
+        return None
+    reader, labels = extract_dispatch(src)
+    if reader is None:
+        return None
+    subject = ev.code if reader == "code" else ev.key
+    return subject if subject in labels else None
+
+
+def ime_event(code: str, *, target: str = "BODY", composing: bool = False) -> KeyEvent:
+    """한글 입력기가 **켜진** 채 그 자리를 눌렀을 때 올라오는 것 (모형)."""
+    return KeyEvent(code=code, key=KEY_WHEN_IME_ON.get(code, code),
+                    target_tag=target, is_composing=composing)
+
+
+def latin_event(code: str, *, target: str = "BODY") -> KeyEvent:
+    """영문 자판 — 대조군."""
+    return KeyEvent(code=code, key=KEY_WHEN_IME_OFF.get(code, code), target_tag=target)
+
+
+def check_ime_replay(src: str) -> list[str]:
+    """⑦ 한글 입력기 상태에서 단축키가 **실제로 먹는가** — 배선에 흘려 본다."""
+    bad: list[str] = []
+    reader, labels = extract_dispatch(src)
+    if reader is None:
+        # 못 푼 것을 통과로 세지 않는다 (exit 2 와 같은 뜻을 술어 안에서 낸다).
+        return ["**판정 불가** — switch 가 무엇을 받는지 못 풀었다. 배선을 못 읽었으므로 "
+                "이 술어는 아무것도 재지 못했다 (0건 검사와 검사 못 함은 다르다)"]
+    if not labels:
+        return ["**판정 불가** — case 라벨이 0건이다"]
+    if reader == "key":
+        # 머리부터 말한다. 아래 여덟 갈래를 다 세면 「라벨이 없다」로 보여서
+        # **진짜 원인(글자로 고른다)** 이 목록에 묻힌다.
+        bad.append(
+            "★ 배선이 **글자(`event.key`)로 고른다** — 한글 입력기가 켜지는 순간 "
+            "글자 단축키가 전부 죽는다. 자판의 **자리**(`event.code`)로 골라야 한다 (P-58)"
+        )
+
+    # ① 한글 입력기가 켜진 채 여덟 자리가 **다** 먹어야 한다.
+    #
+    # ★ 자리마다 두 세상을 함께 흘려 본다 — 영문 자판과 한글 입력기. 한쪽만 재면
+    #   「배선이 아예 없다」와 「입력기에서만 죽는다」가 구별되지 않는다. 그 구별이
+    #   이 절의 전부다: 앞엣것은 누구나 보고, 뒤엣것은 **아무도 재현하지 못한다.**
+    dead: list[str] = []
+    for code in ("KeyJ", "KeyK", "KeyM", "KeyR", "Enter", "Digit1", "Digit2", "Digit3"):
+        latin = dispatch(src, latin_event(code))
+        hangul = dispatch(src, ime_event(code))
+        if latin is None:
+            bad.append(f"{code} 를 고르는 자리가 아예 없다 — 단축키 안내와 배선이 어긋난다")
+        elif hangul is None:
+            dead.append(code)
+    if dead:
+        bad.append(
+            "한글 입력기가 켜지면 죽는 자리 %d개: %s "
+            "(영문 자판에서는 **전부 먹는다** — 그래서 아무도 재현하지 못한다)"
+            % (len(dead), " · ".join(dead))
+        )
+    # ② 대조군 — 영문 자판에서는 언제나 잘 된다. 그래서 아무도 재현하지 못했다.
+    if dispatch(src, latin_event("KeyJ")) is None:
+        bad.append("영문 자판에서도 안 먹는다 — 이건 입력기 문제가 아니라 배선이 없는 것이다")
+    # ③ 음성 — 입력칸 안에서는 먹으면 안 된다 (검색창에 j 를 칠 수 있어야 한다).
+    if dispatch(src, ime_event("KeyJ", target="INPUT")) is not None:
+        bad.append("입력칸 안에서도 먹는다 — 글자 하나가 화면을 스크롤한다")
+    return bad
+
+
 CHECKS = (
     ("① 키보드 · 입력창 갈래", "keys", check_keys),
     ("② 소리 — 심각만 · 묶음 1회", "alarm", check_sound),
@@ -222,6 +432,7 @@ CHECKS = (
     ("④ 월 모드 자동 갱신 · 마지막 갱신", "wall", check_wall_refresh),
     ("⑤ 월 모드 실패를 말한다", "wall", check_wall_voice),
     ("⑥ 큐 화면 배선", "queue", check_wiring),
+    ("⑦ 한글 IME 상태 재현 (P-58)", "keys", check_ime_replay),
 )
 
 
@@ -336,6 +547,70 @@ const isTypingTarget = (el) =>
   el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable;
 """
 
+#: ★ ⑦의 양성 — 실제 배선과 같은 모양이다. 자리를 먼저 보고, 자리를 못 읽는 옛
+#: 브라우저에서만 글자로 물러선다.
+GOOD_IME_KEYS = """
+function slotOf(ev) {
+  const code = ev.code || '';
+  if (code) return code;
+  const key = (ev.key || '').toLowerCase();
+  if (key === 'j') return 'KeyJ';
+  return '';
+}
+const onKeyDown = (ev) => {
+  if (isTypingTarget(ev.target)) return;
+  if (ev.ctrlKey || ev.altKey || ev.metaKey) return;
+  const slot = slotOf(ev);
+  switch (slot) {
+    case 'KeyJ': act.onNext(); break;
+    case 'KeyK': act.onPrev(); break;
+    case 'Enter': act.onOpen(); break;
+    case 'KeyM': act.onToggleSound(); break;
+    case 'KeyR': act.onReload(); break;
+    case 'Digit1': case 'Numpad1': act.onStep(0); break;
+    case 'Digit2': case 'Numpad2': act.onStep(1); break;
+    case 'Digit3': case 'Numpad3': act.onStep(2); break;
+  }
+};
+function isTypingTarget(t) {
+  const tag = t.tagName.toUpperCase();
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
+  if (t.isContentEditable) return true;
+  return false;
+}
+"""
+
+#: ★★ **⑦이 있는 이유 그 자체** — 술어 ①은 이것을 **초록으로 본다.**
+#:
+#:   `ev.code` 를 읽기는 읽는다(로그로). 그런데 **고르는 것은 글자**다.
+#:   ①은 「읽는가」를 묻고 ⑦은 「무엇으로 고르는가」를 묻는다 — 그 틈이 여기다.
+#:   물리 키로 고쳤다고 보고된 코드가 이 모양으로 남아 있으면 관제실에서는
+#:   여전히 j·k·m·r 이 죽고 1·2·3 만 산다. 「가끔 안 먹는다」의 정확한 모양이다.
+BAD_KEYS_READS_CODE_BUT_SWITCHES_ON_KEY = """
+window.addEventListener('keydown', onKeyDown);
+const onKeyDown = (ev) => {
+  if (isTypingTarget(ev.target)) return;
+  const slot = ev.code;
+  trace('key pressed', slot);
+  switch (ev.key) {
+    case 'j': act.onNext(); break;
+    case 'k': act.onPrev(); break;
+    case 'Enter': act.onOpen(); break;
+    case 'm': act.onToggleSound(); break;
+    case 'r': act.onReload(); break;
+    case '1': act.onStep(0); break;
+    case '2': act.onStep(1); break;
+    case '3': act.onStep(2); break;
+  }
+};
+function isTypingTarget(t) {
+  const tag = t.tagName.toUpperCase();
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
+  if (t.isContentEditable) return true;
+  return false;
+}
+"""
+
 #: 음성 ⑨ — 훅은 만들었는데 화면이 **안 부른다**. 파일 수는 늘고 화면은 그대로다.
 BAD_QUEUE_UNWIRED = """
 <Alert message="소리가 꺼져 있습니다" />
@@ -351,6 +626,7 @@ def self_test() -> int:
         ("④ 좋은 월 모드 갱신", check_wall_refresh, GOOD_WALL),
         ("⑤ 좋은 월 모드 실패 문장", check_wall_voice, GOOD_WALL),
         ("⑥ 좋은 큐 배선", check_wiring, GOOD_QUEUE),
+        ("⑦ 자리로 고르는 배선 — IME 재현", check_ime_replay, GOOD_IME_KEYS),
     )
     for name, fn, src in positives:
         bad = fn(src)
@@ -369,6 +645,9 @@ def self_test() -> int:
         ("자리표 남음", check_wall_voice, BAD_WALL_PLACEHOLDER),
         ("화면이 훅을 안 부름", check_wiring, BAD_QUEUE_UNWIRED),
         ("★ 출생 표본 — 글자만 보고 자리를 안 봄(한글 입력기)", check_keys, BAD_KEYS_IME_ONLY_KEY),
+        ("★ 출생 표본 — IME 재현으로 다시 잰다", check_ime_replay, BAD_KEYS_IME_ONLY_KEY),
+        ("★★ 자리를 읽지만 **글자로 고른다** — ①이 못 보는 자리",
+         check_ime_replay, BAD_KEYS_READS_CODE_BUT_SWITCHES_ON_KEY),
     )
     for name, fn, src in negatives:
         if not fn(src):

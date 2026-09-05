@@ -263,6 +263,42 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     #   ⚠ `/cameras/address-gap`·`/cameras/import` 와 형제다. 변수 조각이 없으므로
     #     서로 삼키지 않는다.
     ("GET", "/api/dsm/cameras/pulse"),                  # UX-23 카메라 맥박 + 군집 두절
+    # ★ 2026-09-05 턴 E — **여섯이 늘었다** (차선 E · P-57 파기 셋 · OPS-16 계량 셋).
+    #   손으로 이 줄들을 더하는 일이 곧 「진입면을 넓힌다」는 선언이고, 그 선언을 여기
+    #   남긴다. 이 시험이 47 != 53 으로 멈춰 세운 것이 **그 시험의 값이다** —
+    #   턴 D 의 차선 L 이 여덟을 등재한 것과 같은 자리다(evidence/LAW-02a/README §부록).
+    #
+    #   ── P-57 파기 (「보관 기간이 지난 영상 지우기」) ──────────────────────
+    #   왜 라우트를 냈나: 「지운다」가 이 저장소에서 **지우지 않았다**(dj-core 소프트
+    #   삭제). 파기는 하드 삭제 + 객체 삭제 + 파기 기록이고, 그것을 사람이 누르는 자리와
+    #   그 대상을 **미리 보는 자리**가 필요하다 — 파기는 일어난 뒤에 알면 늦다.
+    #
+    #   왜 `/law/retention/sweep` 옆에 다른 문인가: **좁히는 축이 다르다.** sweep 은
+    #   전역이고 전역 관리자만 부른다. purge 는 테넌트 하나다. 한 문에 두 뜻을 담으면
+    #   「내 것만 지우려던 손」이 전역을 지운다.
+    #
+    #   문지기: `@tenant_scoped` + `JwtOrInboundKey`(**키 거절 — 기본값**) + 관리자.
+    #   ⚠ `POST /law/purge` 는 **쓰기 면이다.** 되돌릴 수 없다 — 그래서 `dry_run`
+    #     기본값이 **참**이고, `dry_run=false` 에는 사유가 없으면 422 다.
+    #   ⚠ `/law/purge/tenants`·`/law/purge/history` 는 **리터럴**이고 `{}` 조각이
+    #     없다. `/law/privacy-requests/{receipt_no}` 와 접두가 달라 서로 안 삼킨다.
+    ("GET", "/api/dsm/law/purge/tenants"),              # P-57 파기 대상(선언한 테넌트)
+    ("POST", "/api/dsm/law/purge"),                     # P-57 파기 (dry-run 기본값)
+    ("GET", "/api/dsm/law/purge/history"),              # P-57 「지운 기록」
+    #
+    #   ── OPS-16 계량 (「이번 달 사용량」) ────────────────────────────────
+    #   왜 라우트를 냈나: 계량 자리가 **0건**이었다 [실측]. 가격표를 쓸 수는 있어도
+    #   청구할 수는 없었다. 다섯 수(카메라 대수·쓰는 사람 수·이벤트 수·보낸 알림 수·
+    #   저장 용량)를 **읽기 전용**으로 센다.
+    #
+    #   ⚠ **셋 다 읽기 전용이다** — 계량이 행을 하나라도 만들면 **그 수로 청구하게
+    #     된다.** 쓰기 면이 아니므로 WRITE_PROBES 대상이 아니다(P-8).
+    #     `tests/test_be_metering.py::test_reading_usage_creates_no_rows` 가 지킨다.
+    #   ⚠ `/metering/csv` 는 CSV 본문을 그대로 낸다(봉투가 아니다). `<a href>` 로
+    #     붙이면 인증 헤더가 안 실려 401 이므로 화면은 axios 로 받는다.
+    ("GET", "/api/dsm/metering"),                       # OPS-16 이번 달 사용량 다섯 칸
+    ("GET", "/api/dsm/metering/series"),                # OPS-16 달별 사용량
+    ("GET", "/api/dsm/metering/csv"),                   # OPS-16 표 내려받기
 })
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**
