@@ -82,12 +82,24 @@ FRAMEWORK_HOOKS = {
     "receive", "receive_json", "send_json", "websocket_connect", "websocket_disconnect",
     # migration / app config
     "forwards", "backwards",
+    # ★ [2026-09-26] pytest — **훅과 픽스처는 pytest 가 이름으로 부른다.**
+    #   QA-11 이 `backend/conftest.py` 에 훅 하나와 픽스처 하나를 넣자 이 판정기가
+    #   「아무도 안 부른다」로 잡았다. 옳은 관찰이고 **틀린 결론**이다: 부르는 쪽이
+    #   우리 코드가 아닐 뿐 그 둘은 매 실행마다 돈다. 안 돌면 시험이 통째로 다르게 돈다.
+    #   ⚠ 이름으로 거르므로 좁게 적는다 — 넓히면 「conftest 에 있으면 다 봐준다」가 된다.
+    "pytest_configure", "pytest_collection_modifyitems", "pytest_addoption",
+    "pytest_load_initial_conftests", "pytest_sessionstart", "pytest_sessionfinish",
+    "pytest_runtest_setup", "pytest_generate_tests",
+    "django_db_setup", "django_db_modify_db_settings",
 }
 
 #: 진입점을 표시하는 데코레이터. 이것이 붙으면 **프레임워크가 진입시킨다** — 모수 밖이다.
 ENTRY_DECORATORS = {
     "shared_task", "task", "periodic_task", "receiver", "property", "cached_property",
     "setter", "getter", "deleter", "register", "api_controller",
+    #: pytest 픽스처 — 이름이 아니라 **데코레이터**로 안다. `@pytest.fixture` 가 붙으면
+    #: 부르는 쪽은 pytest 이고, 그것은 우리 코드에 안 나타난다.
+    "fixture",
     "get", "post", "put", "patch", "delete", "route", "http_get", "http_post",
     "http_put", "http_patch", "http_delete", "database_sync_to_async",
 }

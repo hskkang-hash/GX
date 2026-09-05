@@ -6919,3 +6919,62 @@ decisions:
     · docs/agent/evidence/W0-18/auth_surface.md §2026-09-26
   affects: [D-207, D-277, D-284, D-290, D-300, D-301, D-311, D-335, D-342, D-343,
             D-348, D-349, D-369, D-377, D-426]
+
+- id: D-428
+  author_tree_id: "세종 지시서 2026-09-26 §3 턴 A · 차선 Q 첫 셋"
+  title: "회피가 해결이 됐다 — 그리고 **함수는 12ms 인데 문은 400ms 였다**"
+  status: decided
+  raised_by: "조율자(Code) 2026-09-26 · 차선 Q (QA-10 · QA-11 · PERF-01)"
+  decision: |
+    ▣ **QA-11 닫힘 — 단위와 E2E 를 동시에 돌렸고 둘 다 초록이다** [실측].
+        단위 786 passed · 1 skipped (235초) · E2E 23 passed (165초) — **같은 순간에.**
+        `DuplicateDatabase`/`ObjectInUse` **0건**. 도는 동안 DB 두 개가 나란히 있었다.
+      ★ 지금까지의 「순차로 돌린다」는 **회피이지 해결이 아니었고**(D-390), 게다가 사람의
+        기억을 요구했다 — 기억을 요구하는 규칙은 바쁜 날 깨진다(D-286).
+        이제 **실행 자체가** 이름을 정한다: `tests/e2e` 를 겨누면 `…_e2e`.
+      ★★ **고친 것은 코드가 아니라 순서였고, 그 실패는 조용했다.**
+        처음에는 conftest 최상단에서 `DB_TEST_NAME` 환경변수를 세웠다. 안 먹었다 —
+        pytest-django 가 **먼저** `django.setup()` 을 부르고 그때 settings 가 이미 그 값을
+        읽어 버린다. 로그에는 아무 말도 없었고 **옛 이름으로 조용히 돌았다.**
+        동시 실행을 재현해서야 보였다(`DuplicateDatabase` 12건). 지금은
+        `django_db_modify_db_settings` — DB 를 만들기 직전에 불린다.
+      ★ 그리고 그 갈래를 살린 것은 **`backend/pytest.ini` 의 존재**였다. ini 가 없으면
+        rootdir 이 인자의 공통 조상(`tests/e2e`)이 되고, `backend/conftest.py` 는 그 위라
+        **아예 안 읽힌다** — 고친 코드가 조용히 안 도는 상태다. 시험이 그 파일을 지킨다.
+
+    ▣ **QA-10 닫힘 — 999줄을 지웠다** (사람 승인 뒤).
+        `record_service.py` 281줄 · `video_record_service.py` 718줄.
+      ★ 지우기 전에 **다시 쟀다.** 분류는 09-13 자였고 그 사이에 코드가 움직인다.
+        같은 턴에 SEC-04 로 `start-recording`·`stop-recording` 라우트를 만졌는데,
+        그 라우트들은 이 모듈이 아니라 `StreamMonitorService` 를 쓴다 —
+        **이름이 비슷한 것과 같은 것은 다르다.**
+      ★★ **지우자 세 번째 모듈이 드러났다.** 게이트가 바로 잡았다:
+        `tasks/record_task.py::start_recording`·`stop_recording` 이 새로 잠들었다 —
+        지운 둘이 그 클래스의 **유일한 사용처**였다. 지우지 않았다(승인 밖이다).
+        기준선에 이름으로 남겨 조용히 사라지지 않게 했다. **죽은 코드는 층으로 쌓인다.**
+
+    ▣ **PERF-01 닫힘 — 부하 도구와 시나리오 넷** (`scripts/perf_load.py` · 자기시험 9건).
+      [실측 동시 10 · 5라운드 · 워밍업 버림 · 오류 0]
+        S1 목록 p50 397.9 / p95 424.6 · S2 대시보드 389.9 / 431.0 ·
+        S3 단일 초점 426.5 / **588.8**(가장 느린 자리) · S4 섞기 418.1 / 429.8  (ms)
+      ★★ **PERF-03 은 12.28ms 였다.** 그것은 커널 **함수**의 수이고, 이것은 **문**의 수다 —
+        30배가 넘는다. 미들웨어·직렬화·인증·커넥션 풀은 함수 안에 없다.
+        12.28ms 를 「응답이 12ms」로 읽었으면 그것이 착시 ①(부분을 전체로)이다.
+      ★ ⚠ 이 수는 `runserver`(개발 서버)의 수다. 운영은 gunicorn 이고 워커 수도 다르다 —
+        개발에서 잰 수를 운영의 수로 적으면 착시 ⑤(환경)다. 그래서 **예산 판정을 하지
+        않았다**: 첫 수는 기준선이지 합격선이 아니다. 예산은 PERF-04 가 정한다.
+      ★ 읽기만 때린다 — 쓰기 면을 부하로 때리면 그 데이터가 진짜와 섞이고 골라낼 수 없다.
+
+    ▣ 게이트를 한 자리 고쳤다: 잠자는 기능 판정기가 `backend/conftest.py` 의 pytest
+      훅·픽스처를 「아무도 안 부른다」로 잡았다 — **옳은 관찰이고 틀린 결론**이다.
+      부르는 쪽이 우리 코드가 아닐 뿐 매 실행마다 돈다. 이름과 데코레이터로 좁게 면제했다.
+
+    ▣ [실측] 세 수 — 상용 가중 **68.8%**(126) · 손 안 도달율 **74.1%**(112) · 구현 **83**.
+  enforced_by: |
+    · backend/conftest.py :: django_db_modify_db_settings · test_db_name
+    · backend/pytest.ini — rootdir 못 박기 (없으면 conftest 가 안 읽힌다)
+    · backend/tests/test_q_test_db_split.py :: 7건 (RootConfigIsPinnedTest 포함)
+    · scripts/perf_load.py :: SCENARIOS 4종 · judge() · BIRTH_SAMPLE(커널 12.28ms)
+    · docs/agent/evidence/PERF-01/load.json — 첫 수
+    · docs/agent/evidence/D-377/dormant_baseline.txt — 지운 5 · 드러난 2
+  affects: [D-286, D-301, D-310, D-311, D-350, D-368, D-377, D-388, D-390, D-427]

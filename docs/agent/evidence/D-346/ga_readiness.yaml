@@ -558,8 +558,24 @@ areas:
     clauses:
       - id: PERF-01
         title: 부하 시험 시나리오와 도구
-        status: 미착수
-        why: 0건. 도구도 시나리오도 없다.
+        status: 구현
+        proof: scripts/perf_load.py
+        note: |
+          [실측 2026-09-26 · 차선 Q · 동시 10 · 5라운드 · 워밍업 1라운드 버림 · 오류 0건]
+            S1 목록      p50 397.9ms · p95 424.6ms
+            S2 대시보드  p50 389.9ms · p95 431.0ms
+            S3 단일 초점 p50 426.5ms · p95 588.8ms   ← 가장 느린 자리
+            S4 섞기      p50 418.1ms · p95 429.8ms
+            증거: docs/agent/evidence/PERF-01/load.json
+          ★ **이 수와 PERF-03 의 수는 같은 것이 아니다.** PERF-03 은 커널 **함수**를 불러
+            K1 p50 12.28ms 를 냈다. 문을 두드리면 p50 **약 400ms** 다 — 30배가 넘는다.
+            미들웨어·직렬화·인증·커넥션 풀은 함수 안에 없다. 12.28ms 를 「응답이 12ms」로
+            읽었으면 그것이 착시 ①(부분을 전체로)이다. 이 도구가 태어난 이유가 그것이다.
+          ★ ⚠ **이 수는 `runserver` 의 수다**(개발 서버). 운영은 gunicorn 이고 워커 수도
+            다르다 — 개발에서 잰 수를 운영의 수로 적으면 착시 ⑤(환경)다. 그래서 예산
+            판정은 하지 않았다: **첫 수는 기준선이지 합격선이 아니다.** 예산은 PERF-04 가 정한다.
+          ★ 읽기만 때린다. 쓰기 면을 부하로 때리면 그 데이터가 진짜와 섞이고, 섞이면
+            나중에 골라낼 수 없다(D-368 이 쓰기 면을 따로 센 그 이유).
 
       - id: PERF-02
         title: 동시 스트림 상한 실측
@@ -719,23 +735,72 @@ areas:
       # ★ D-388 — **코드를 줄이는 것도 진척이다.** 읽을 것이 줄고 시험할 것이 준다
       - id: QA-10
         title: 죽은 코드 제거 (㉯ 지워야 할 것)
-        status: 미착수
+        status: 구현
+        proof: docs/agent/evidence/D-388/dormant_classified.md
+        note: |
+          [실측 2026-09-26 · 차선 Q · **사람 승인 뒤 삭제**] 두 모듈 **999줄**을 지웠다:
+            `stream_monitors/services/record_service.py`      281줄 (control_record · get_recording_status_by_code)
+            `stream_monitors/services/video_record_service.py` 718줄 (get_status · pause · resume)
+          지운 뒤 **단위 786 passed · E2E 23 passed**(동시 실행 · 오류 0).
+          ★ 지우기 전에 **다시 쟀다.** 분류는 09-13 자였고, 그 사이에 코드가 움직인다 —
+            부르는 곳 **0곳**(유일한 등장은 `video_record_service.py` 가 자기 파일 안에서
+            만드는 인스턴스 한 줄). 같은 턴에 SEC-04 로 `start-recording`·`stop-recording`
+            라우트를 만졌는데 그 라우트들은 이 모듈이 아니라 `CaptureService` ·
+            `StreamMonitorService` 를 쓴다 — **이름이 비슷한 것과 같은 것은 다르다.**
+          ★ 판정기가 이 목록을 낼 때 **세 번 틀렸다**는 기록이 증거 문서에 있다(D-350).
+            그중 하나는 `gunicorn.conf.py` 의 서버 훅 아홉을 「지워야」로 낸 것이었다 —
+            지웠으면 워커 수명주기가 통째로 사라진다. 그래서 **다시 재고, 승인을 받고, 지운다.**
+          ★★ **지우자 세 번째 모듈이 드러났다** [실측 2026-09-26]. 잠자는 기능 게이트가
+            바로 잡았다: `stream_monitors/tasks/record_task.py::start_recording`·`stop_recording`
+            이 **새로 잠들었다** — 지운 두 모듈이 그 클래스의 **유일한 사용처**였다.
+            `RecordingTask` 를 부르는 곳은 이제 backend 전체에 0곳이고, 살아 있는
+            녹화 라우트는 `StreamMonitorService` 를 쓴다.
+            ⚠ **지우지 않았다** — 승인받은 것은 두 모듈이고, 세 번째는 다음 승인의 자리다.
+            기준선에 이름으로 남겨 두었다(`D-377/dormant_baseline.txt`): 조용히 사라지지
+            않게 하는 것이 이 대장의 일이다.
+          ★ 그리고 게이트를 한 자리 고쳤다: `backend/conftest.py` 의 pytest 훅·픽스처를
+            「아무도 안 부른다」로 잡았다 — 옳은 관찰이고 **틀린 결론**이다. 부르는 쪽이
+            우리 코드가 아닐 뿐 매 실행마다 돈다. 이름과 데코레이터로 좁게 면제했다.
         why: |
           [실측 2026-09-13] **가르기만 했고 한 건도 지우지 않았다** — D-388 지시 그대로다.
           ㉠ 314건을 넷으로 갈랐다: ㉮켜야 41 · ㉯지워야 5 · ㉰정상 132 · 판정불가 10
           (§0.4 126건 제외 · 우리 관할 188). 지운 줄 수 **0줄**.
           지우는 것은 되돌리기 어렵고, **분류의 정확도를 먼저 봐야 한다.**
           증거: docs/agent/evidence/D-388/dormant_classified.md
+          ★ [재실측 2026-09-26 · 차선 Q] 5건은 **모듈 둘**이다 —
+            `stream_monitors/services/record_service.py`(281줄) ·
+            `stream_monitors/services/video_record_service.py`(718줄) · 합 999줄.
+            backend 전체에서 이 두 이름을 부르는 곳은 **0곳**이다(유일한 등장은
+            `video_record_service.py` 가 자기 파일 안에서 만드는 인스턴스 한 줄).
+            ⚠ 같은 턴에 SEC-04 로 `start-recording`·`stop-recording` 라우트를 만졌는데,
+              그 라우트들은 이 모듈이 아니라 `CaptureService`·`StreamMonitorService` 를 쓴다.
+          ★ **삭제는 사람 승인 뒤다**(지시서 턴 A). 승인 전까지 상태는 미착수다 —
+            「지울 준비가 됐다」는 상태가 아니다.
 
       # ★ D-390 — 회피가 아니라 해결로 올린다. 지금은 「순차로 돌린다」로 피하고 있다
       - id: QA-11
         title: 단위 시험과 E2E 가 서로의 DB 를 다투지 않는다
-        status: 미착수
-        why: |
-          [실측] 둘이 같은 `test_database_guardianx` 를 쓴다. 동시에 돌리면 나중 쪽이
-          `DuplicateDatabase`/`ObjectInUse` 로 죽는다 — **코드 결함처럼 보이지만 환경 충돌**이다.
-          지금 대응은 「순차로 돌린다」이고 그것은 **회피이지 해결이 아니다**(D-390).
-          이번 턴에 하지 않았다 — 지시가 등재만 하라고 했다.
+        status: 구현
+        proof: backend/tests/test_q_test_db_split.py
+        note: |
+          [실측 2026-09-26 · 차선 Q] **동시에 돌렸고 둘 다 초록이다.**
+            단위 779 passed · 1 skipped (241초) · E2E 23 passed (173초) — **같은 순간에.**
+            `DuplicateDatabase`/`ObjectInUse` **0건**. 도는 동안 DB 두 개가 나란히 있었다:
+            `test_database_guardianx` · `test_database_guardianx_e2e` [psql 실측].
+          ★ **회피가 해결이 됐다**(D-390). 지금까지의 「순차로 돌린다」는 사람의 기억을
+            요구했고, 기억을 요구하는 규칙은 바쁜 날 깨진다(D-286). 이제 **실행 자체가**
+            이름을 정한다 — `tests/e2e` 를 겨누면 `…_e2e`.
+          ★ **고친 것은 코드 한 줄이 아니라 순서였다.** 처음에는 conftest 최상단에서
+            `DB_TEST_NAME` 환경변수를 세웠는데 안 먹었다 — pytest-django 가 **먼저**
+            `django.setup()` 을 부르고 그때 settings 가 이미 그 값을 읽어 버린다.
+            그 실패는 로그에 안 나오고 **조용히 옛 이름으로 돌았다**(동시 실행 재현으로 잡았다).
+            지금은 `django_db_modify_db_settings` 픽스처 — DB 를 만들기 직전에 불린다.
+          ★ 그리고 **그 갈래를 살린 것은 `backend/pytest.ini` 의 존재**였다. ini 가 없으면
+            rootdir 이 인자의 공통 조상(`tests/e2e`)이 되고, 그러면 `backend/conftest.py` 는
+            그 위라 **아예 안 읽힌다** — 고친 코드가 조용히 안 도는 상태다.
+            파일이 사라지면 시험이 말한다(`RootConfigIsPinnedTest`).
+          ★ `DB_TEST_NAME` 을 사람이 준 실행에서는 그 값이 이긴다 — 차선마다 이름을 가르는
+            P-18 의 길을 막지 않는다. xdist 워커 접미사도 지우지 않는다.
 
       # ── PRD v2.5 신규 (2026-09-24 · P-26 등재) ──────────────────────────
       - id: QA-12
