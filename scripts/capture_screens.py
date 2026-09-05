@@ -168,7 +168,11 @@ TARGETS = [
      "slug": "dsm_cameras_address_fill",
      "must_see": "카메라 주소 채우기 — 한 대씩"},
     {"step": 26, "route": "/start?role=OPERATOR",
-     "slug": "dsm_onboarding_start",
+     # ★ [2026-09-05 · 턴 E] 규약은 «<route 뿌리>[_꼬리표]» 다. 이 화면의 뿌리는
+     #   `/dsm/...` 이 아니라 **`/start`** 다 — 온보딩만 관문 밖 최상위에 서기 때문이다.
+     #   1차판 `dsm_onboarding_start` 는 뿌리를 잘못 붙였고, **이번에 처음 찍혀서** 이제 보였다.
+     #   (같은 종류를 QA 가 둘 고쳤다 — 두 턴 동안 안 보인 이유는 거기까지 가 본 적이 없어서다.)
+     "slug": "start_onboarding",
      "must_see": "처음 시작하기 — 첫 근무일에 혼자 시작하기"},
     #: M1 — 휴대전화의 첫 화면. `MobileInbox.HEADLINE` 원문이다.
     #: ⚠ [실측 2026-09-05 · 턴 E · 차선 Q] **`slug` 는 아무 이름이나가 아니다.**
@@ -653,9 +657,22 @@ def main() -> int:
         "page_errors": got["page_errors"],
     }, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    routes_out = ROOT / "docs" / "agent" / "evidence" / "D-386" / "screen_routes.json"
-    if not routes_out.parent.parent.is_dir():          # 컨테이너에서는 /docs 가 따로다
-        routes_out = Path("/docs") / "agent" / "evidence" / "D-386" / "screen_routes.json"
+    # ★★ [실측 2026-09-05 · 턴 E] **이 두 줄이 판정기를 두 턴 동안 속였다.**
+    #
+    #   1차판은 «`/repo/docs` 가 있으면 거기, 없으면 `/docs`» 로 골랐다. 그런데
+    #   **자기가 `mkdir(parents=True)` 로 그 폴더를 만든다.** 첫 실행이 `/repo/docs/...`
+    #   를 만들고 나면, 그 다음부터 이 판정은 **언제나 「여기가 맞다」**고 답한다 —
+    #   판정이 자기가 만든 흔적을 근거로 삼는다.
+    #
+    #   결과: 인덱스(`_screens_dir()` 로 고른 자리)는 저장소에 닿는데 API 기록은
+    #   **컨테이너 안에 갇혔다.** 저장소의 `screen_routes.json` 은 하루 전 것으로 멈춰 있었고,
+    #   `test_captured_screens_and_recorded_routes_agree` 가 「찍었는데 기록이 없다」로
+    #   계속 빨갰다. **두 표가 갈렸고, 갈린 이유가 파일 하나의 주소였다.**
+    #
+    #   고침: **인덱스가 실제로 있는 자리를 기준으로 삼는다**(`SCREENS`). 그 자리는
+    #   `_screens_dir()` 가 **파일의 실재**로 골랐지 폴더의 실재로 고르지 않았다 —
+    #   그래서 자기가 만든 것에 속지 않는다.
+    routes_out = (SCREENS.parent.parent / "D-386" / "screen_routes.json")
     routes_out.parent.mkdir(parents=True, exist_ok=True)
     routes_out.write_text(json.dumps({
         "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",

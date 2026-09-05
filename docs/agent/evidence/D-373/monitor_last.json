@@ -1,18 +1,18 @@
 {
-  "measured_at": "2026-09-05T11:36:59+00:00",
+  "measured_at": "2026-09-05T11:51:59+00:00",
   "verdict": "ALARM",
   "report": {
-    "measured_at": "2026-09-05T11:36:59+00:00",
+    "measured_at": "2026-09-05T11:51:59+00:00",
     "signals": {
       "db_ping_ms": {
-        "value": 9.25,
+        "value": 7.09,
         "verdict": "OK",
         "note": ""
       },
       "cache_alive": {
         "value": true,
         "verdict": "OK",
-        "note": "왕복 1.6ms"
+        "note": "왕복 1.4ms"
       },
       "object_store_alive": {
         "value": true,
@@ -20,7 +20,7 @@
         "note": "저장소가 답했다 · 버킷 guardianx-dev 있음"
       },
       "latest_event_age_min": {
-        "value": 2782.5,
+        "value": 2797.5,
         "verdict": "ALARM",
         "note": ""
       },

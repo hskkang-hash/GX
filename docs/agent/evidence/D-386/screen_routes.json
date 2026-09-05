@@ -1,8 +1,8 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
-  "captured_at": "2026-09-04T14:27:12",
-  "screens_total": 24,
-  "routes_total": 23,
+  "captured_at": "2026-09-05T18:47:56",
+  "screens_total": 28,
+  "routes_total": 27,
   "screens": {
     "/dsm/dashboard": [
       {
@@ -78,7 +78,7 @@
         "status": 200
       }
     ],
-    "/dsm/events/8031": [
+    "/dsm/events/9711": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -91,17 +91,17 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=8031",
+        "path": "/api/dsm/deliveries?event_id=9711",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/8031",
+        "path": "/api/dsm/events/9711",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/8031/timeline",
+        "path": "/api/dsm/events/9711/timeline",
         "status": 200
       },
       {
@@ -220,7 +220,7 @@
       {
         "method": "GET",
         "path": "/api/config-management/list?page_size=25&current_page=1",
-        "status": 200
+        "status": 403
       },
       {
         "method": "GET",
@@ -303,38 +303,38 @@
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-03T17:00:00%2B00:00&end_date=2026-09-04T16:59:59%2B00:00&limit=100&page=1&page_size=5",
-        "status": 200
+        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-04T17:00:00%2B00:00&end_date=2026-09-05T16:59:59%2B00:00&limit=100&page=1&page_size=5",
+        "status": 403
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-08-29T17:00:00%2B00:00&end_date=2026-09-05T16:59:59%2B00:00",
-        "status": 200
+        "status": 403
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-04",
-        "status": 200
+        "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-05",
+        "status": 403
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/drone-status-overview",
-        "status": 200
+        "status": 403
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/today-profiles-polygon",
-        "status": 200
+        "status": 403
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4",
-        "status": 200
+        "status": 403
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/weather-setting",
-        "status": 200
+        "status": 403
       },
       {
         "method": "GET",
@@ -435,7 +435,7 @@
       {
         "method": "GET",
         "path": "/api/flight-log/flight-log/?page_size=25&current_page=1",
-        "status": 200
+        "status": 403
       },
       {
         "method": "GET",
@@ -646,7 +646,7 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events?limit=50&since=2026-09-03T19:26:18.759Z&until=2026-09-04T07:26:18.759Z",
+        "path": "/api/dsm/events?limit=50&since=2026-09-04T23:46:33.173Z&until=2026-09-05T11:46:33.173Z",
         "status": 200
       },
       {
@@ -757,6 +757,11 @@
       },
       {
         "method": "GET",
+        "path": "/api/dsm/events/4805/snapshot",
+        "status": 200
+      },
+      {
+        "method": "GET",
         "path": "/api/dsm/events/queue?limit=200",
         "status": 200
       },
@@ -832,6 +837,124 @@
       {
         "method": "GET",
         "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/cameras/address": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/cameras/address-gap",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/start?role=OPERATOR": [
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/m/inbox": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/deliveries?limit=50",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events?limit=200",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/m/events/9711": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/9711",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/9711/clip",
+        "status": 404
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/9711/field-replies",
         "status": 200
       },
       {
