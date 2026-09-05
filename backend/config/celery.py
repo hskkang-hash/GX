@@ -89,6 +89,17 @@ app.conf.beat_schedule = {
         "task": "common.ops_audit_purge_beat",
         "schedule": crontab(hour=3, minute=10),
     },
+    "law02a-video-retention-sweep": {
+        # ★ LAW-02a 영상 보존기간 집행 — **안내판에 인쇄되는 수가 여기서 참이 된다.**
+        #   03:20 — 감사 정리(03:10) 뒤, 백업(03:30) **앞**이다. 앞에 두는 이유는
+        #   ③이 적어 둔 것과 같다: 지우기 전의 상태가 백업에 담기면 정리와 백업이
+        #   서로를 되돌릴 수 없게 된다.
+        #   ⚠ 이 줄을 지우면 「보관 기간이 지난 영상은 자동으로 지워집니다」가
+        #     거짓이 된다. 지우려면 그 문장을 화면에서 함께 내려야 한다 —
+        #     `retention.policy()['enforced']` 가 이 줄의 실재를 그대로 잰다.
+        "task": "common.video_retention_sweep_beat",
+        "schedule": crontab(hour=3, minute=20),
+    },
     "sec-key-rotation-watch-daily": {
         # SEC-07 — 돌려야 할 들어오는 키를 **말한다.** 돌리지는 않는다.
         #   03:50 — 정리(03:10)·백업(03:30) 뒤다. 하루의 정리가 끝난 뒤에 내일의 빚을 센다.

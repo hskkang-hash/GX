@@ -45,6 +45,7 @@ from django.utils import timezone
 
 from common import audit_writer
 from common.tenant_filters import assert_scoped, filter_by_group_field, get_user_group
+from common.ai_act_notice import notice_line
 from common.tenant_scope import TenantScope
 from kernels.k2_notify import channels as channel_registry
 from kernels.k2_notify.exceptions import (
@@ -155,7 +156,14 @@ def _subject_and_body(event) -> tuple[str, str]:
         f"발생 {timezone.localtime(event.occurred_at):%Y-%m-%d %H:%M:%S}\n"
         f"등급 {event.severity} · 종류 {event.event_type}\n"
         f"{_location_line(event)}\n"
-        f"관제 화면에서 확인하십시오."
+        f"관제 화면에서 확인하십시오.\n"
+        # ★ LAW-06 — 자동 분석 고지. **꼬리에 붙는다** (2026-09-05 · 차선 L).
+        #   고지는 「어딘가에 적혀 있다」가 아니라 **읽는 자리에 있다**여야 뜻이 있다.
+        #   화면 밖에서 판정을 처음 보는 사람은 이 본문으로 본다 — 그래서 여기다.
+        #   문장은 common/ai_act_notice.py 한 곳에서만 정한다: 커널은 App 을
+        #   import 할 수 없으므로(계층 역전 금지), 문장을 App 에 두면 두 벌이 되고
+        #   두 벌이 된 고지는 한쪽만 고쳐진다.
+        f"{notice_line()}"
     )
     return subject, body
 

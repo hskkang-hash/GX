@@ -49,6 +49,27 @@ export const dsmEndpoint = {
   fieldReply: (id: number | string) => `/api/dsm/events/${id}/field-reply`,
   /** M3 현장 회신 목록 (읽기). */
   fieldReplies: (id: number | string) => `/api/dsm/events/${id}/field-replies`,
+  /**
+   * UX-23 카메라 맥박 — 카메라별 생사 + 군집 두절. **읽기 전용**이고
+   * 아무것도 만들지 않는다. 판정은 서버 한 곳(`camera_pulse`)이 한다.
+   */
+  cameraPulse: '/api/dsm/cameras/pulse',
+  /**
+   * LAW-02a 영상 보관 기간 — 선언된 값과 「그 수대로 지우는가」를 함께 낸다.
+   */
+  lawRetention: '/api/dsm/law/retention',
+  /** LAW-02a 보존기간 집행. **dry_run 기본값이 참**이다 — 표가 먼저다. */
+  lawRetentionSweep: '/api/dsm/law/retention/sweep',
+  /** LAW-06 다섯 의무 자리표 + 고지 문구. */
+  lawAiActDuties: '/api/dsm/law/ai-act/duties',
+  /** LAW-07 열람·삭제 청구 목록(GET) · 접수(POST). **한 경로 두 메서드**다. */
+  privacyRequests: '/api/dsm/law/privacy-requests',
+  privacyRequestDetail: (no: string) => `/api/dsm/law/privacy-requests/${no}`,
+  /** ★ 마스킹본. 원본 경로는 이 응답의 어느 칸에도 없다. */
+  privacyRequestMasked: (no: string) =>
+    `/api/dsm/law/privacy-requests/${no}/masked`,
+  privacyRequestReply: (no: string) =>
+    `/api/dsm/law/privacy-requests/${no}/reply`,
 } as const;
 
 /** DA-03 §4-3 — 로딩이 이보다 길면 그것은 로딩이 아니라 오류다. */

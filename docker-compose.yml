@@ -26,6 +26,18 @@ version: '3.8'
 #      부하에서는 사실상 아무것도 안 잘린다 — 상한은 **평시를 위한 것이 아니라
 #      사고를 위한 것**이다. 무언가 초당 수천 줄을 토하기 시작한 그날 디스크를
 #      지키는 값이고, 그날이 오기 전에는 아무 일도 하지 않는 것이 옳다.
+#
+#      ⛔ **㉠은 2026-09-05 에 뒤집혔다. 지우지 않고 남긴다** — 판정이 어떻게 틀렸는지가
+#        다음 사람에게는 판정보다 값나간다. 위 문장은 **앞단이 없던 날의 실측** 위에
+#        서 있었다. 턴 C 가 `gx-gunicorn-e`(접근로그 stdout)를 세운 뒤 다시 재니:
+#            gx-gunicorn-e stdout   **10,274,859 바이트/시간** ≈ **247 MB/일** [실측 · 부하 중]
+#            앞단 접근로그(파일)      2,122,482 바이트/시간 ≈  51 MB/일 [실측 · 부하 중]
+#            postgres                363 KB/일 [실측 2026-09-24]
+#        즉 이 형상에서 50MB 는 「약 140일」이 아니라 **약 5시간** 치다. 「사고를 위한
+#        값이고 평시에는 아무 일도 안 한다」는 판정은 **평시에 초당 수천 줄을 토하는
+#        수집기가 없을 때만** 참이었고, 웹서버 접근로그가 바로 그런 수집기다.
+#        → 그러므로 이 상한은 **사고 조사에 답하지 못한다**: 어제 로그를 찾으면 없다.
+#          그것이 ㉢(정본은 stdout 이 아니다)을 **더 중요하게** 만든다.
 #   ㉡ 그런데도 **「N일 보존」이라고 적지 않는다.** `json-file` 회전은 **크기 기반**이다.
 #      조용한 달에는 더 오래 남고 시끄러운 날에는 몇 시간 만에 밀린다. 「50MB 상한」은
 #      약속할 수 있고 「140일 보존」은 약속할 수 없다 — 뒤엣것을 적으면 사고 조사에서
@@ -44,6 +56,26 @@ version: '3.8'
 #
 # ⚠ 앵커 하나를 모든 서비스가 가리킨다. 값을 두 벌로 적으면 반드시 어긋나고,
 #   어긋난 뒤에는 어느 쪽이 정본인지 아무도 모른다(D-369).
+#
+# ═══ 2026-09-05 · 턴 D 가 더 잰 것 — **상한이 안 닿는 자리 둘** ═════════════
+#
+# ㉠ **컨테이너 안에서 파일로 쌓는 로그에는 이 선언이 닿지 않는다.**
+#    [실측] 앞단 `gx-nginx-e` 는 `access_log /var/log/nginx/gx-front.access.log` 로
+#    **파일에** 적는다 — stdout 이 아니므로 `json-file` 회전과 무관하고,
+#    `nginx:alpine` 에는 logrotate 도 없다. 그 파일은 **한 시간에 4MB 가까이** 자란다
+#    (부하를 걸 때). 즉 이 저장소에서 가장 시끄러운 수집기는 postgres(363 KB/일)가
+#    아니라 **앞단 접근로그**이고, 그것이 유일하게 상한 밖이었다.
+#    → **컨테이너에 `--log-opt` 를 걸었다 ≠ 그 컨테이너의 로그에 상한이 걸렸다.**
+#      고치는 자리는 compose 가 아니라 `nginx/gx-front.conf` 의 `access_log` 다
+#      (stdout 으로 보내면 이 앵커 안으로 들어온다).
+#
+# ㉡ **정본(DB 감사 로그 90일)에도 조건이 붙는다 — 지우는 자리가 실제로 돌 때만.**
+#    [실측 2026-09-05] 이 기계에 celery 워커가 **0개**다(브로커 redis 는 살아 있다 ·
+#    `inspect.ping() → None` · 어느 컨테이너에도 celery 프로세스가 없다).
+#    beat 일정 `ops-audit-purge-daily`(03:10)는 `config/celery.py` 에 **적혀 있고**,
+#    그것을 실행할 워커가 없으므로 **이 환경에서는 아무것도 안 지워진다.**
+#    「보존 90일」은 선언이고, 선언은 삭제가 아니다 — `ops_log_collectors.py` 가
+#    이제 브로커 도달성과 워커 유무를 갈라서 재고 이 자리를 빨강으로 찍는다.
 x-gx-logging: &gx-logging
   driver: json-file
   options:
@@ -247,10 +279,61 @@ services:
     networks:
       - guardianx-network
 
+  # ═══════════════════════════════════════════════════════════════════════
+  # compose **밖에 있던** 컨테이너를 안으로 들인다 (OPS-07 · 2026-09-05 · 턴 D)
+  # ═══════════════════════════════════════════════════════════════════════
+  #
+  # ★ 왜 이 자리가 필요한가 — **선언할 자리가 없으면 상한도 없다**
+  #   이 기계의 `postgres` 는 `docker run` 으로 떴다. compose 에 대응 서비스가
+  #   **아예 없었으므로** `logging` 앵커가 닿을 자리도 없었고, 그래서
+  #   `scripts/ops_log_collectors.py` 는 이 수집기를 **「선언할 자리조차 없다」**
+  #   로 찍었다. 그 빨강은 compose 를 고쳐서는 안 지워지는 빨강이었다 —
+  #   지울 수 없는 빨강은 다음 사람이 그냥 무시한다.
+  #
+  # ⚠ **선언이 섰다고 지금 걸린 것이 아니다.** 도커의 `LogConfig` 는 컨테이너를
+  #   **만들 때** 굳는다. 지금 떠 있는 `postgres` 에 상한을 걸려면 **다시 만들어야**
+  #   하고, 그 재기동은 [2026-09-05 현재] **하지 않는다** — `gx-shell` 안에서 다른
+  #   차선 셋이 시험 DB 를 만들고 지우는 중이고, postgres 를 내리면 그 셋이 한꺼번에
+  #   죽는다(조율자 지시 · 턴 D). 절차는 `docs/agent/RUNBOOK_로컬기동.md` STEP 2B 에
+  #   적었다. **「선언이 섰다」를 「보존이 걸렸다」로 적지 않는다.**
+  #
+  # ⚠ `profiles` 로 감싼다 — 맨 `docker compose up` 에 딸려 오면 이미 떠 있는
+  #   `postgres`(5433)와 포트가 부딪친다. 부를 때만 선다:
+  #       docker compose --profile local up -d postgres
+  #
+  # ⚠ 이 기계의 컨테이너들은 손으로 만든 `gx-main-network` 위에 있다. compose 가
+  #   만든 것은 `guardianx-network` 에 서므로 한 번 더 이어 줘야 `gx-shell` 이 닿는다
+  #   (MinIO 에 이미 같은 절차가 있다):
+  #       docker network connect --alias postgres gx-main-network guardianx-source-postgres-1
+  postgres:
+    profiles: ["local"]
+    # [실측 2026-09-05] 떠 있는 컨테이너의 이미지 그대로. 태그는 `latest` 이지만
+    # 실제로 도는 것은 PG 18 이다(`PG_VERSION=18.1`) — `latest` 는 **날짜에 따라
+    # 다른 것을 가리키는 이름**이므로, 이 서비스로 갈아탈 때 판이 바뀔 수 있다.
+    image: postgres:latest
+    environment:
+      # 값은 저장소에 없다. 뿌리 `.env`(gitignored)가 준다 — 없으면 **그 자리에서
+      # 멈춘다**(`:?`). 기본 비밀번호로 조용히 서지 않는다(MinIO 와 같은 규약).
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 가 없다 — 뿌리 .env 를 보라}
+    ports:
+      - "5433:5432"
+    volumes:
+      # [실측] 떠 있는 컨테이너가 쓰는 이름 붙인 볼륨. **이름을 바꾸면 빈 DB 가 선다.**
+      - gx_pgdata:/var/lib/postgresql
+    restart: unless-stopped
+    logging: *gx-logging
+    networks:
+      - guardianx-network
+
 volumes:
   # 저장소의 자료는 컨테이너보다 오래 산다. 이름 붙인 볼륨이 아니면
   # `docker compose down` 한 번에 영상이 사라진다.
   minio-data:
+  # 개발 DB. **이미 있는 볼륨을 그대로 가리킨다** — compose 가 새로 만들면
+  # 빈 DB 가 서고, 그 빈 DB 위에서 도는 시험은 전부 거짓이다.
+  gx_pgdata:
+    external: true
 
 networks:
   guardianx-network:

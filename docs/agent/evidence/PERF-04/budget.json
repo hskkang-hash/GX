@@ -1,9 +1,9 @@
 {
   "latest": {
-    "measured_at": "2026-09-05T05:00:24+00:00",
+    "measured_at": "2026-09-05T06:20:55+00:00",
     "api": "http://gx-nginx-e:8500",
     "environment": {
-      "measured_at": "2026-09-05T05:00:24+00:00",
+      "measured_at": "2026-09-05T06:20:55+00:00",
       "python": "3.11.14",
       "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
       "cpu_count": 8,
@@ -17,7 +17,7 @@
         "python manage.py runserver 0.0.0.0:8000 --noreload",
         "sh -c cd /app && python manage.py runserver 0.0.0.0:8000 --noreload > /tmp/gate8000.log 2>&1"
       ],
-      "loadavg": "2.03 1.45 1.56 3/566 161864"
+      "loadavg": "2.72 1.26 0.71 2/553 172831"
     },
     "server_header": "nginx",
     "mode": "acceptance",
@@ -32,26 +32,26 @@
         "concurrency": 10,
         "repeats": 3,
         "n": 900,
-        "errors": 1,
+        "errors": 2,
         "error_detail": [
           "/api/dsm/events?limit=50 -> 502"
         ],
         "cache_bust": true,
-        "p50_ms": 100.3,
-        "p95_ms": 166.8,
+        "p50_ms": 99.0,
+        "p95_ms": 217.3,
         "p95_each": [
-          166.8,
-          149.6,
-          175.4
+          274.5,
+          217.3,
+          168.0
         ],
-        "p95_min": 149.6,
-        "p95_max": 175.4,
-        "noise": 0.155,
+        "p95_min": 168.0,
+        "p95_max": 274.5,
+        "noise": 0.49,
         "per_call": {
           "/api/dsm/events?limit=50": {
             "n": 300,
-            "p50_ms": 118.3,
-            "p95_ms": 175.4
+            "p50_ms": 90.5,
+            "p95_ms": 168.0
           }
         }
       },
@@ -61,41 +61,43 @@
         "concurrency": 10,
         "repeats": 3,
         "n": 900,
-        "errors": 1,
+        "errors": 3,
         "error_detail": [
+          "/api/dsm/dashboard/frame -> 502",
+          "/api/dsm/events/queue -> 502",
           "/api/dsm/events/response-times -> 502"
         ],
         "cache_bust": true,
-        "p50_ms": 125.8,
-        "p95_ms": 262.1,
+        "p50_ms": 104.4,
+        "p95_ms": 225.4,
         "p95_each": [
-          164.1,
-          266.6,
-          262.1
+          225.4,
+          226.7,
+          146.2
         ],
-        "p95_min": 164.1,
-        "p95_max": 266.6,
-        "noise": 0.391,
+        "p95_min": 146.2,
+        "p95_max": 226.7,
+        "noise": 0.357,
         "per_call": {
           "/api/dsm/dashboard/frame": {
             "n": 90,
-            "p50_ms": 130.7,
-            "p95_ms": 328.8
+            "p50_ms": 97.8,
+            "p95_ms": 147.0
           },
           "/api/dsm/events/queue": {
             "n": 60,
-            "p50_ms": 132.5,
-            "p95_ms": 223.2
+            "p50_ms": 104.9,
+            "p95_ms": 146.2
           },
           "/api/dsm/events/response-times": {
             "n": 60,
-            "p50_ms": 122.2,
-            "p95_ms": 319.5
+            "p50_ms": 88.9,
+            "p95_ms": 150.4
           },
           "/api/dsm/events/summary": {
             "n": 90,
-            "p50_ms": 126.2,
-            "p95_ms": 262.1
+            "p50_ms": 95.6,
+            "p95_ms": 144.5
           }
         }
       },
@@ -105,26 +107,24 @@
         "concurrency": 10,
         "repeats": 3,
         "n": 900,
-        "errors": 1,
-        "error_detail": [
-          "/api/media-data/ -> 502"
-        ],
+        "errors": 0,
+        "error_detail": [],
         "cache_bust": true,
-        "p50_ms": 91.7,
-        "p95_ms": 174.4,
+        "p50_ms": 77.8,
+        "p95_ms": 178.7,
         "p95_each": [
-          174.4,
-          197.1,
-          168.6
+          178.7,
+          139.5,
+          240.0
         ],
-        "p95_min": 168.6,
-        "p95_max": 197.1,
-        "noise": 0.163,
+        "p95_min": 139.5,
+        "p95_max": 240.0,
+        "noise": 0.562,
         "per_call": {
           "/api/media-data/": {
             "n": 300,
-            "p50_ms": 94.6,
-            "p95_ms": 168.6
+            "p50_ms": 106.7,
+            "p95_ms": 240.0
           }
         }
       },
@@ -134,24 +134,26 @@
         "concurrency": 10,
         "repeats": 3,
         "n": 900,
-        "errors": 0,
-        "error_detail": [],
-        "cache_bust": true,
-        "p50_ms": 94.7,
-        "p95_ms": 170.9,
-        "p95_each": [
-          197.9,
-          166.2,
-          170.9
+        "errors": 2,
+        "error_detail": [
+          "/api/dsm/dashboard/link-state -> 502"
         ],
-        "p95_min": 166.2,
-        "p95_max": 197.9,
-        "noise": 0.185,
+        "cache_bust": true,
+        "p50_ms": 82.8,
+        "p95_ms": 181.0,
+        "p95_each": [
+          139.8,
+          182.6,
+          181.0
+        ],
+        "p95_min": 139.8,
+        "p95_max": 182.6,
+        "noise": 0.236,
         "per_call": {
           "/api/dsm/dashboard/link-state": {
             "n": 300,
-            "p50_ms": 99.6,
-            "p95_ms": 170.9
+            "p50_ms": 79.3,
+            "p95_ms": 181.0
           }
         }
       }

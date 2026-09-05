@@ -35,4 +35,23 @@ export const dsm2Routes = {
    *   (서버 호출 0건 · 정적 글자뿐). 무계정 금지는 자료를 보이는 링크의 규약이다.
    */
   onboarding: { title: '처음 시작하기', path: '/start' },
+  /**
+   * UX-16 월(Wall) 모드 — 관제실 대형 화면.
+   *
+   * ★ 이 하나만 **사이드바 밖**에 선다(관문은 그대로 안). 대형 화면에는 마우스가 없고,
+   *   사이드바는 마우스를 전제한 물건이다. 관문 밖으로 내보내지는 않는다 —
+   *   화면에 실제 사건이 뜨기 때문이다(무계정 링크 금지).
+   * ⚠ 최상위 리터럴이라 `/dsm/...` 어느 변수 조각도 삼키지 못한다.
+   */
+  wall: { title: '월 모드', path: '/wall' },
+  /**
+   * UX-23 카메라 격자 — 자동 순회 · 응답 없는 카메라 표시.
+   * ⚠ `/dsm/cameras/import` · `/dsm/cameras/address` 와 형제다(변수 조각 없음).
+   */
+  cameraGrid: { title: '카메라 격자', path: '/dsm/cameras/grid' },
+  /**
+   * LAW-07 개인정보 열람·삭제 청구 — 접수 → 마스킹본 조회 → 회신 기록.
+   * ★ 원본은 이 화면을 통해 나가지 않는다. 화면이 부르는 것은 **마스킹본**뿐이다.
+   */
+  privacyRequests: { title: '열람·삭제 청구', path: '/dsm/privacy-requests' },
 } as const;

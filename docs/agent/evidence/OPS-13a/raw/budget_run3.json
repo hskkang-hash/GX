@@ -1,0 +1,234 @@
+{
+  "latest": {
+    "measured_at": "2026-09-05T06:34:25+00:00",
+    "api": "http://gx-nginx-e:8500",
+    "environment": {
+      "measured_at": "2026-09-05T06:34:26+00:00",
+      "python": "3.11.14",
+      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+      "cpu_count": 8,
+      "gpu": "없음 (이 환경에 GPU 가 붙어 있지 않다 — AI 추론은 외부 서버가 한다)",
+      "cgroup_memory_max": "max",
+      "cgroup_cpu_max": "max 100000",
+      "mem_total": "8062592 kB"
+    },
+    "co_resident": {
+      "runserver_processes": [
+        "python manage.py runserver 0.0.0.0:8000 --noreload",
+        "sh -c cd /app && python manage.py runserver 0.0.0.0:8000 --noreload > /tmp/gate8000.log 2>&1"
+      ],
+      "loadavg": "3.81 2.38 1.46 3/570 174336"
+    },
+    "server_header": "nginx",
+    "mode": "acceptance",
+    "server": "runserver 가 아니다 — **합격선 모드**로 판정한다",
+    "concurrency": 10,
+    "rounds": 30,
+    "repeat": 3,
+    "faces": {
+      "F05": {
+        "title": "계약 F-05 진입면 (NFR-05-1)",
+        "budget_ms": 500.0,
+        "concurrency": 10,
+        "repeats": 3,
+        "n": 900,
+        "errors": 0,
+        "error_detail": [],
+        "cache_bust": true,
+        "p50_ms": 107.9,
+        "p95_ms": 172.6,
+        "p95_each": [
+          243.1,
+          144.7,
+          172.6
+        ],
+        "p95_min": 144.7,
+        "p95_max": 243.1,
+        "noise": 0.57,
+        "per_call": {
+          "/api/dsm/events?limit=50": {
+            "n": 300,
+            "p50_ms": 107.9,
+            "p95_ms": 172.6
+          }
+        }
+      },
+      "SCREEN": {
+        "title": "화면 API",
+        "budget_ms": 800.0,
+        "concurrency": 10,
+        "repeats": 3,
+        "n": 900,
+        "errors": 0,
+        "error_detail": [],
+        "cache_bust": true,
+        "p50_ms": 118.5,
+        "p95_ms": 182.3,
+        "p95_each": [
+          182.3,
+          186.6,
+          143.0
+        ],
+        "p95_min": 143.0,
+        "p95_max": 186.6,
+        "noise": 0.239,
+        "per_call": {
+          "/api/dsm/dashboard/frame": {
+            "n": 90,
+            "p50_ms": 97.9,
+            "p95_ms": 142.9
+          },
+          "/api/dsm/events/queue": {
+            "n": 60,
+            "p50_ms": 99.5,
+            "p95_ms": 149.7
+          },
+          "/api/dsm/events/response-times": {
+            "n": 60,
+            "p50_ms": 90.0,
+            "p95_ms": 137.1
+          },
+          "/api/dsm/events/summary": {
+            "n": 90,
+            "p50_ms": 95.0,
+            "p95_ms": 144.4
+          }
+        }
+      },
+      "MEDIA": {
+        "title": "스냅샷·미디어",
+        "budget_ms": 1000.0,
+        "concurrency": 10,
+        "repeats": 3,
+        "n": 900,
+        "errors": 0,
+        "error_detail": [],
+        "cache_bust": true,
+        "p50_ms": 89.8,
+        "p95_ms": 119.9,
+        "p95_each": [
+          123.7,
+          119.9,
+          101.0
+        ],
+        "p95_min": 101.0,
+        "p95_max": 123.7,
+        "noise": 0.189,
+        "per_call": {
+          "/api/media-data/": {
+            "n": 300,
+            "p50_ms": 71.4,
+            "p95_ms": 101.0
+          }
+        }
+      },
+      "STATUS": {
+        "title": "상태·가용성 (캐시 금지 · P-19)",
+        "budget_ms": 300.0,
+        "concurrency": 10,
+        "repeats": 3,
+        "n": 900,
+        "errors": 0,
+        "error_detail": [],
+        "cache_bust": true,
+        "p50_ms": 92.1,
+        "p95_ms": 121.7,
+        "p95_each": [
+          120.1,
+          121.7,
+          166.7
+        ],
+        "p95_min": 120.1,
+        "p95_max": 166.7,
+        "noise": 0.383,
+        "per_call": {
+          "/api/dsm/dashboard/link-state": {
+            "n": 300,
+            "p50_ms": 99.6,
+            "p95_ms": 166.7
+          }
+        }
+      }
+    }
+  },
+  "baseline": {
+    "measured_at": "2026-09-05T06:34:26+00:00",
+    "server": "runserver (개발 서버)",
+    "note": "면별 기준선의 출처는 각 항목의 `source` 다. PERF-01 에서 온 수는 그 파일이 잰 동시성의 수이고, 동시성이 다르면 이 게이트는 회귀를 **회색**으로 낸다 — 다른 것 둘을 견주지 않기 위해서다.",
+    "faces": {
+      "F05": {
+        "p95_ms": 429.8,
+        "concurrency": 10,
+        "source": "PERF-01 load.json · 가장 느린 자리 /api/dsm/events?limit=50",
+        "covered_calls": [
+          "/api/dsm/events?limit=50"
+        ]
+      },
+      "SCREEN": {
+        "p95_ms": 590.2,
+        "concurrency": 10,
+        "source": "PERF-01 load.json · 가장 느린 자리 /api/dsm/events/queue",
+        "covered_calls": [
+          "/api/dsm/dashboard/frame",
+          "/api/dsm/events/queue",
+          "/api/dsm/events/response-times",
+          "/api/dsm/events/summary"
+        ]
+      },
+      "MEDIA": {
+        "p95_ms": 119.9,
+        "concurrency": 10,
+        "source": "이번 측정 — PERF-01 에 이 면이 없다(첫 수)"
+      },
+      "STATUS": {
+        "p95_ms": 416.8,
+        "concurrency": 10,
+        "source": "PERF-01 load.json · 가장 느린 자리 /api/dsm/dashboard/link-state",
+        "covered_calls": [
+          "/api/dsm/dashboard/link-state"
+        ]
+      }
+    }
+  },
+  "budget_table": {
+    "F05": {
+      "title": "계약 F-05 진입면 (NFR-05-1)",
+      "budget_ms": 500.0,
+      "source": "계약 F-05 「OpenAPI 제공 · p95 500ms」 (kernels/k1_event/services.py 머리말)",
+      "calls": [
+        "/api/dsm/events?limit=50"
+      ]
+    },
+    "SCREEN": {
+      "title": "화면 API",
+      "budget_ms": 800.0,
+      "source": "세종 위임 판정 P-34",
+      "calls": [
+        "/api/dsm/events/summary",
+        "/api/dsm/dashboard/frame",
+        "/api/dsm/events/queue",
+        "/api/dsm/events/response-times"
+      ]
+    },
+    "MEDIA": {
+      "title": "스냅샷·미디어",
+      "budget_ms": 1000.0,
+      "source": "세종 위임 판정 P-34",
+      "calls": [
+        "/api/media-data/"
+      ]
+    },
+    "STATUS": {
+      "title": "상태·가용성 (캐시 금지 · P-19)",
+      "budget_ms": 300.0,
+      "source": "세종 위임 판정 P-34 · 캐시 금지는 P-19 · D-413",
+      "calls": [
+        "/api/dsm/dashboard/link-state"
+      ]
+    }
+  },
+  "regression_tolerance": 0.2,
+  "caveat": "★ 이 수는 `runserver`(개발 서버)로 잰 **기준선**이다. **합격선은 gunicorn+nginx 에서 다시 잰다**(OPS-13 뒤). 그때까지 이 초록은 「예산을 지켰다」가 아니라 **「기준선이 예산 안에 있다」**이다 — 기준선을 합격선으로 옮겨 적으면 착시 ⑤(환경)다.",
+  "mode": "acceptance",
+  "pending_acceptance": []
+}

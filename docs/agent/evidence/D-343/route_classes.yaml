@@ -221,6 +221,7 @@ routes:
   "GET /api/dronehw/group-management/groups-with-drones": session_only
   "GET /api/dsm/cameras/address-gap": session_only
   "POST /api/dsm/cameras/import": session_only
+  "GET /api/dsm/cameras/pulse": session_only
   "GET /api/dsm/dashboard/frame": session_only
   "GET /api/dsm/dashboard/link-state": session_only
   "GET /api/dsm/deliveries": session_only
@@ -241,6 +242,14 @@ routes:
   "POST /api/dsm/events/{int:event_id}/review": session_only
   "GET /api/dsm/events/{int:event_id}/snapshot": session_only
   "GET /api/dsm/events/{int:event_id}/timeline": session_only
+  "GET /api/dsm/law/ai-act/duties": session_only
+  "GET /api/dsm/law/privacy-requests": session_only
+  "POST /api/dsm/law/privacy-requests": session_only
+  "GET /api/dsm/law/privacy-requests/{receipt_no}": session_only
+  "GET /api/dsm/law/privacy-requests/{receipt_no}/masked": session_only
+  "POST /api/dsm/law/privacy-requests/{receipt_no}/reply": session_only
+  "GET /api/dsm/law/retention": session_only
+  "POST /api/dsm/law/retention/sweep": session_only
   "GET /api/dsm/reports/templates": session_only
   "GET /api/dsm/reports/{int:template_id}.pdf": session_only
   "POST /api/dsm/settings/api-keys": session_only

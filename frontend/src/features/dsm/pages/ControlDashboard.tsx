@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { Main } from 'rj-core';
 
 import { dsmEndpoint, dsmGet } from '../api';
+import AutoAnalysisNotice from '../components/AutoAnalysisNotice';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { useDetectionPing } from '../hooks/useDetectionPing';
@@ -96,6 +97,9 @@ export default function ControlDashboard() {
   return (
     <Main>
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        {/* ★ 자동 분석 고지 — 로그인 뒤 첫 화면에서 **먼저** 읽힌다 (차선 L · LAW-06).
+            문장은 한 곳에서만 정한다: 여기 복사하면 알림 본문과 갈린다. */}
+        <AutoAnalysisNotice />
         <Row justify="space-between" align="middle">
           <Col>
             <Space size={4} align="center">

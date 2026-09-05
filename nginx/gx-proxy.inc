@@ -26,5 +26,10 @@ proxy_next_upstream error timeout http_502;
 #   포기하고 502 가 나간다. 3 이면 그 창을 넘는다.
 # ⚠ `non_idempotent` 는 **넣지 않는다.** 넣으면 POST 도 다시 보내고, 그것은 502 를
 #   없애는 대신 **경보를 두 번 보내는** 결함으로 바꾸는 일이다. GET 만 다시 보낸다.
+#   ★ [실측 2026-09-05 · 턴 D] 이제 그 「두 번」에 **수가 있다.** 같은 부하 네 벌
+#     (14,888 요청)에서 앞단은 **재시도 113건 중 104건을 되살렸다**(손님은 200 을 봤다).
+#     그 113건이 쓰기였다면 `non_idempotent` 를 켠 순간 **104건이 중복 전송**된다 —
+#     0.7%, 즉 1,000건에 7건이다. 재난 경보에서 그것은 502 보다 나쁘다.
+#     근거: `docs/agent/evidence/OPS-13a/README.md` §3 ④.
 proxy_next_upstream_tries 3;
 proxy_next_upstream_timeout 15s;

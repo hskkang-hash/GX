@@ -479,3 +479,71 @@ def key_rotation_watch_beat() -> dict:
         logger.info("[SEC-07] 돌려야 할 키 0건 (정책 %d일)", key_rotation.KEY_MAX_AGE_DAYS)
     _write_evidence("key_rotation_last", payload)
     return payload
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 운영 자동화 ④ — **영상 보존기간 집행** (LAW-02a · 2026-09-05 · 차선 L)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 감사 로그 정리(위 ③)와 **같은 모양으로** 선다. 새 방식을 들이지 않는다:
+#   도구는 차선이 짓고 주기는 여기 걸린다 — 이 파일이 이미 세 번 그렇게 했다.
+#
+# ★ 왜 이것이 백업(꺼짐)이 아니라 감사 정리(켜짐) 쪽인가 — 질문이 같기 때문이다.
+#     백업 : 「어디에 얼마나 쌓을 것인가」 — 제품 안에 답이 없다 → 끈다
+#     정리 : 「며칠 보관할 것인가」        — **제품 안에 답이 있다** → 켠다
+#   LAW-02a 가 그 답을 만들었다(`apps/dsm/retention.retention_days()`). 그리고
+#   그 수는 **안내판에 인쇄되어 게시된다.** 게시된 수대로 지우지 않으면 그 종이는
+#   법적 효력을 가진 거짓말이 된다 — 꺼 둘 수 있는 성질의 일이 아니다.
+#
+# ★ 그래도 손잡이는 둔다: `VIDEO_RETENTION_SWEEP_ENABLED=false` 면 안 돈다.
+#   지우는 일에는 되돌림이 없고, 「우리는 영구 보관한다」는 고객이 있을 수 있다.
+#   ⚠ 끄면 안내판의 「보관 기간이 지난 영상은 자동으로 지워집니다」가 거짓이 된다 —
+#     그래서 끈 상태를 `ops_status()` 가 아니라 **보존 정책 응답이** 말한다
+#     (`retention.policy()['enforced']`). 화면이 그 값을 본다.
+#
+# ★ L1 이 L4 를 부르는 것처럼 보이는 자리다 — **함수 안에서** 늦게 부른다.
+#   위 ③이 dj-core 태스크를 감싼 것과 같은 모양이고, 계층 게이트
+#   (`scripts/verify_layers.py`)가 보는 것은 `backend/apps` · `backend/kernels` ·
+#   `backend/adapters` 셋이다. 판단은 그것과 별개로 적어 둔다: 주기는 제품의 것이고
+#   태스크가 사는 자리는 celery 가 찾을 수 있는 곳이어야 한다. `apps/dsm` 은
+#   Django 앱이 아니라 autodiscover 가 못 본다 [실측 · `apps/dsm/__init__.py`].
+def video_retention_enabled() -> bool:
+    """영상 보존기간 집행이 켜져 있는가. **기본은 켬**이다(위 사유)."""
+    return bool(getattr(settings, "VIDEO_RETENTION_SWEEP_ENABLED", True))
+
+
+@shared_task(name="common.video_retention_sweep_beat")
+def video_retention_sweep_beat() -> dict:
+    """보관 기간이 지난 영상을 **실제로 지운다** (LAW-02a).
+
+    ★ 주기 실행은 `dry_run=False` 다 — 그것이 이 태스크의 존재 이유다.
+      미리보기만 도는 주기는 「적었다」와 같은 상태이고, 그 상태가 안내판을
+      거짓말로 만든다. 사람이 누르는 자리(HTTP)는 반대로 `dry_run` 이 기본이다.
+    """
+    stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    if not video_retention_enabled():
+        payload = {"measured_at": stamp, "verdict": "SKIPPED",
+                   "reason": ("VIDEO_RETENTION_SWEEP_ENABLED 가 거짓이다 — "
+                              "보존기간을 집행하지 않는다. 안내판에 적힌 보관 "
+                              "기간은 지켜지지 않는다")}
+        logger.info("[OPS][VIDEO] 건너뜀 — %s", payload["reason"])
+        _write_evidence("video_retention_last", payload)
+        return payload
+
+    try:
+        from apps.dsm.retention import sweep
+
+        result = sweep(dry_run=False, actor=None,
+                       reason="주기 집행 — 보존기간이 지난 영상을 지운다")
+        payload = {"measured_at": stamp, "verdict": "OK", **result}
+        logger.info("[OPS][VIDEO] %s일 기준 — 만료 %s건 · 삭제 %s건",
+                    result.get("retention_days"), result.get("expired_total"),
+                    result.get("deleted_total"))
+    except Exception as exc:                       # noqa: BLE001
+        # 지우지 못한 것은 **판정 불가**이지 「0건 정리」가 아니다 (D-301).
+        payload = {"measured_at": stamp, "verdict": "ALARM",
+                   "reason": f"{type(exc).__name__}: {exc}"[:300]}
+        logger.exception("[OPS][VIDEO] 영상 보존기간 집행이 실패했다")
+
+    _write_evidence("video_retention_last", payload)
+    return payload

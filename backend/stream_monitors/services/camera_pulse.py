@@ -247,6 +247,63 @@ def pulse_counts(*, scope: TenantScope, now: datetime | None = None,
     return PulseCounts(alive=alive, total=total, never_seen=never)
 
 
+@dataclass(frozen=True)
+class CameraPulseRow:
+    """카메라 한 대의 맥박. **세 사실을 세 값으로** 들고 다닌다.
+
+    ★ 왜 `alive` 를 여기서 정하나 (2026-09-05 · 차선 C2 · UX-23)
+    ------------------------------------------------------------
+    화면(카메라 격자)이 카메라 목록을 받아 **자기 문턱으로** 생사를 정하면, 그 순간
+    판정이 두 벌이 된다 — 화면의 「응답 없음」과 이 파일이 내는 `camera_down`·
+    `camera_cluster_down` 이 서로 다른 카메라를 가리키게 되고, 그 어긋남은 아무도
+    못 본다. 그래서 **문턱은 이 파일 밖으로 나가지 않는다.** 나가는 것은 답이다.
+
+    ★ `last_frame_at is None` 은 **「아직 한 장도 안 왔다」**이지 「죽었다」가 아니다.
+      `alive=False` 이지만 `last_frame_at` 이 `None` 인 것으로 그 둘이 갈린다 —
+      두 값을 하나로 접으면 방금 등록한 카메라가 방금 끊긴 카메라로 보인다(D-290).
+    """
+
+    id: int
+    name: str
+    alive: bool
+    last_frame_at: datetime | None
+
+    @property
+    def never_seen(self) -> bool:
+        return self.last_frame_at is None
+
+    def silent_seconds(self, now: datetime) -> int | None:
+        """조용한 지 몇 초. **한 번도 안 온 카메라는 `None`** — 0이 아니다."""
+        if self.last_frame_at is None:
+            return None
+        return int((now - self.last_frame_at).total_seconds())
+
+
+def pulse_rows(*, scope: TenantScope, now: datetime | None = None,
+               group=None) -> list[CameraPulseRow]:
+    """카메라별 맥박 전수. **활성 카메라만** 센다 — `pulse_counts` 와 같은 모수다.
+
+    ★ 이 함수와 `pulse_counts` 는 **같은 질의·같은 문턱**을 쓴다. 두 수가 갈리면
+      화면의 「응답 없음 N대」와 생존 알림의 「맥박 N/N」이 다른 말을 하게 되고,
+      `tests/test_c2_camera_grid.py::OneJudgementNotTwoTest` 가 그 자리를 잰다.
+
+    ★ 이름을 함께 낸다. id 만 내면 부르는 쪽이 이름을 얻으려고 카메라 표를 다시
+      질의하게 되고, 그 질의에는 이 파일의 스코프 규약이 안 붙는다.
+    """
+    Stream = _model("StreamMonitor")
+    now = now or timezone.now()
+    qs = _scoped(Stream._base_manager.filter(is_active=True), scope, group)
+    rows = qs.distinct().order_by("name", "pk").values_list(
+        "pk", "name", "last_frame_at")
+    return [
+        CameraPulseRow(
+            id=pk, name=name or "",
+            alive=bool(last is not None and now - last <= PULSE_TIMEOUT),
+            last_frame_at=last)
+        for (pk, name, last) in rows
+    ]
+
+
 def _scoped(qs, scope: TenantScope, group=None):
     """스코프로 좁힌다. `zones._scoped` 와 **같은 판단**을 쓴다 (D-212).
 
@@ -367,6 +424,10 @@ __all__ = [
     "record_frame",
     "PulseCounts",
     "pulse_counts",
+    # ★ 카메라별 전수 (UX-23 · 2026-09-05). **문턱은 이 파일 밖으로 안 나간다** —
+    #   나가는 것은 `alive` 라는 답이다. 화면이 문턱을 들면 판정이 두 벌이 된다.
+    "CameraPulseRow",
+    "pulse_rows",
     # 훑기
     "ScanResult",
     "scan_clusters",

@@ -23,18 +23,52 @@
  *
  * ★ 버튼 셋은 **서버가 준 `allowed_next`** 로 그린다. 화면이 전이표를 따로 들면
  *   **서버가 거절하는 버튼**을 그리게 된다 (D-399).
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * UX-15 **키보드 · 소리** (차선 C1 · 2026-09-05)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * 무엇이 문제였나: 판정 경로가 **클릭뿐**이고 소리는 **0종**이었다. 관제요원은
+ * 8시간 마우스를 쥐지 않는다.
+ *
+ * 1 · 2 · 3 을 **무엇에 붙였나** [판단과 그 사유]
+ * ---------------------------------------------
+ * 이 저장소의 축은 둘이다 — **판정**(실제 / 오탐)과 **처리 단계**(미처리 → 접수 →
+ * 조치 중 → 종결). 사전 규칙 4 는 「한 화면에 축은 하나」이고, **이 화면이 이미 가진
+ * 축은 처리 단계 하나뿐**이다(단추가 `allowed_next` 로만 그려진다 · 판정 단추는
+ * 이 화면에 없다). 그래서 단축키도 **처리 단계**에 붙였다. 판정 단축키를 여기 붙이면
+ * 축이 둘이 되고, 축이 둘이면 사람이 어느 축을 눌렀는지 모른다.
+ *
+ * 붙인 자리는 **고정**이다: 1=접수하기 · 2=조치 시작 · 3=종결하기.
+ * ★ `allowed_next` 의 **순서**에 붙이지 않았다. 순서에 붙이면 카드마다 1 의 뜻이
+ *   달라진다 — 미처리 카드에서 1 은 접수인데 접수된 카드에서 1 은 조치 시작이 된다.
+ *   관제실에서 **뜻이 흔들리는 키**는 오조작을 만든다. 고정으로 두고, 서버가 허락한
+ *   칸만 살린다(D-399 는 그대로다 — 화면은 여전히 자기 전이표를 갖지 않는다).
+ *
+ * ★ 숫자 키는 **가장 급한 하나**에만 든다. 대기 카드에는 서버가 `allowed_next` 를
+ *   주지 않으므로(그 필드는 `focus` 에만 온다) 화면이 지어낼 수 없다. J·K·Enter 는
+ *   대기 카드에도 든다 — 그것은 **읽는 일**이지 쓰는 일이 아니기 때문이다.
+ *
+ * ★ **심각만 소리가 난다.** 묶인 반복(×N)은 **1회**다. 그 두 문지기는
+ *   `useCriticalAlarm` 에 있다. 음소거이거나 브라우저가 소리를 잠가 두었으면
+ *   화면이 **먼저** 「소리가 꺼져 있습니다」로 말한다 — 안 울리는 이유를 모르면
+ *   사용자는 조용한 화면을 「사건이 없다」로 읽는다.
  */
 import { Alert, Badge, Button, Card, Col, Row, Space, Statistic, Tag, Typography } from 'antd';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Main } from 'rj-core';
 
 import { dsmEndpoint, dsmGet, dsmPostQuery, DsmApiError } from '../api';
 import EventSnapshot from '../components/EventSnapshot';
 import ResponseClock from '../components/ResponseClock';
+import ShortcutHelp from '../components/ShortcutHelp';
 import StateBoundary from '../components/StateBoundary';
+import { useAlertSound } from '../hooks/useAlertSound';
+import { useCriticalAlarm } from '../hooks/useCriticalAlarm';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { useDetectionPing } from '../hooks/useDetectionPing';
+import { useQueueKeys } from '../hooks/useQueueKeys';
 import { dsm2Routes } from '../routes';
 import {
   advanceLabel,
@@ -45,12 +79,18 @@ import {
   SEVERITY_ICON,
   SEVERITY_LABEL,
 } from '../severity';
-import { stamp, TIMEZONE_NOTE } from '../time';
+import { FALLBACK_TIER_THRESHOLDS_SEC, stamp, TIMEZONE_NOTE } from '../time';
 import type { FocusQueue as FocusQueueView, QueueCard } from '../types';
 
 const { Text, Title, Paragraph } = Typography;
 
 const REFRESH_MS = 15_000;
+
+/**
+ * 숫자 키 → 처리 단계. **고정이다** (위 머리말의 판단).
+ * 값은 계약 스키마의 것이고 화면 표시 이름은 `RESPONSE_STATE_LABEL` 이 따로 든다.
+ */
+const STEP_SLOTS = ['acknowledged', 'in_progress', 'closed'] as const;
 
 /** 이 화면에만 있는 글자 — 검수 촬영의 단언 대상이다. */
 export const HEADLINE = '지금 처리할 것 — 가장 급한 하나';
@@ -89,6 +129,12 @@ export default function FocusQueuePage() {
   const navigate = useNavigate();
   const [acting, setActing] = useState(false);
   const [actionError, setActionError] = useState<string>('');
+  const [showKeys, setShowKeys] = useState(false);
+  /** 0 은 초점 카드, 1 부터가 대기 카드다. **선택은 읽는 일**이다. */
+  const [selected, setSelected] = useState(0);
+  const rowRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  const sound = useAlertSound();
 
   const queue = useDsmResource<FocusQueueView>(
     () => dsmGet(dsmEndpoint.eventsQueue, { limit: 200 }),
@@ -105,6 +151,35 @@ export default function FocusQueuePage() {
    */
   useDetectionPing(queue.reload);
 
+  const data = queue.data;
+  const focus = data?.focus ?? null;
+
+  /** 초점 하나 + 대기 카드들. **여기서 거르지도 정렬하지도 않는다** — 서버 순서 그대로다. */
+  const cards = useMemo<QueueCard[]>(
+    () => (focus ? [focus, ...(data?.queue ?? [])] : [...(data?.queue ?? [])]),
+    [focus, data],
+  );
+
+  const thresholds = data?.tier_thresholds_sec ?? [...FALLBACK_TIER_THRESHOLDS_SEC];
+
+  // ★ 심각만 · 묶음은 1회. 문지기는 훅 안에 있다.
+  useCriticalAlarm({
+    cards,
+    thresholds,
+    play: sound.play,
+    ready: queue.state === 'data' || queue.state === 'empty',
+  });
+
+  // 선택이 목록 밖으로 나가지 않게 한다. 카드가 줄면 선택도 줄어야 한다.
+  useEffect(() => {
+    setSelected((n) => (cards.length === 0 ? 0 : Math.min(n, cards.length - 1)));
+  }, [cards.length]);
+
+  // 골라 놓은 줄이 화면 밖에 있으면 고른 것이 아니다.
+  useEffect(() => {
+    rowRefs.current[selected]?.scrollIntoView({ block: 'nearest' });
+  }, [selected]);
+
   const advance = useCallback(
     async (eventId: number, toState: string) => {
       setActing(true);
@@ -116,6 +191,9 @@ export default function FocusQueuePage() {
         //   이 자리는 관제요원이 **미처리를 접수로 넘기는** 단추다. 422 면 넘길 수
         //   없는데 화면은 멀쩡히 떠 있다 — 가장 늦게 발견되는 종류의 고장이다.
         await dsmPostQuery(dsmEndpoint.response(eventId), { to_state: toState });
+        // 키보드로 일하는 사람은 **눌린 것을 눈으로 확인할 시간이 없다.**
+        // 이 한 음이 없으면 같은 키를 두 번 누른다.
+        sound.play('actionEcho');
         queue.reload();
       } catch (err) {
         // ★ 거절은 4xx 로 온다. 그 문장을 **화면에 그대로 낸다** — 서버가 왜
@@ -127,11 +205,37 @@ export default function FocusQueuePage() {
         setActing(false);
       }
     },
-    [queue],
+    [queue, sound],
   );
 
-  const data = queue.data;
-  const focus = data?.focus ?? null;
+  /**
+   * 숫자 키 한 번. **서버가 허락한 칸이 아니면 아무 일도 안 한다** —
+   * 화면이 전이표를 들지 않기 때문이고, 안 드는 것이 이 화면의 성질이다.
+   */
+  const onStep = useCallback(
+    (slot: number) => {
+      const target = STEP_SLOTS[slot];
+      if (!target || !focus || acting) return;
+      if (!(focus.allowed_next ?? []).includes(target)) return;
+      void advance(focus.event_id, target);
+    },
+    [focus, acting, advance],
+  );
+
+  useQueueKeys({
+    onNext: () => setSelected((n) => Math.min(n + 1, Math.max(cards.length - 1, 0))),
+    onPrev: () => setSelected((n) => Math.max(n - 1, 0)),
+    onOpen: () => {
+      const card = cards[selected];
+      if (card) navigate(eventPath(card.event_id));
+    },
+    onStep,
+    onToggleSound: sound.toggle,
+    onReload: queue.reload,
+  });
+
+  const selectedRing = (index: number) =>
+    index === selected ? '2px solid #1677ff' : '2px solid transparent';
 
   return (
     <Main>
@@ -154,11 +258,29 @@ export default function FocusQueuePage() {
             </Space>
           </Col>
           <Col>
-            <Text type="secondary">
-              {queue.loadedAt ? `갱신 ${stamp(queue.loadedAt)}` : ''} · {TIMEZONE_NOTE}
-            </Text>
+            <Space size={8} wrap>
+              <Button size="small" onClick={() => setShowKeys((v) => !v)}>
+                단축키
+              </Button>
+              {/* 상태가 아니라 **누르면 일어나는 일**을 적는다 (사전 §5). */}
+              <Button size="small" onClick={sound.audible ? sound.toggle : sound.enable}>
+                {sound.audible ? '소리 끄기' : '소리 켜기'}
+              </Button>
+              <Text type="secondary">
+                {queue.loadedAt ? `갱신 ${stamp(queue.loadedAt)}` : ''} · {TIMEZONE_NOTE}
+              </Text>
+            </Space>
           </Col>
         </Row>
+
+        {/* ★ 안 울리는 이유를 **먼저** 말한다. 조용한 화면은 평온과 구별되지 않는다. */}
+        {!sound.audible ? (
+          <Alert type="warning" showIcon message="소리가 꺼져 있습니다" />
+        ) : null}
+
+        {showKeys ? (
+          <ShortcutHelp targetNote="숫자 키는 가장 급한 하나에만 듭니다." />
+        ) : null}
 
         <StateBoundary
           state={queue.state}
@@ -196,65 +318,78 @@ export default function FocusQueuePage() {
               ) : null}
 
               {focus ? (
-                <Card
-                  title={<CardHead card={focus} />}
-                  extra={
-                    <Button type="link" onClick={() => navigate(eventPath(focus.event_id))}>
-                      상세 열기
-                    </Button>
-                  }
+                <div
+                  ref={(el) => {
+                    rowRefs.current[0] = el;
+                  }}
+                  style={{ border: selectedRing(0), borderRadius: 8 }}
+                  onClick={() => setSelected(0)}
                 >
-                  <Row gutter={16}>
-                    <Col xs={24} md={10}>
-                      <EventSnapshot
-                        eventId={focus.event_id}
-                        snapshotPath={focus.snapshot_path}
-                        height={240}
-                      />
-                    </Col>
-                    <Col xs={24} md={14}>
-                      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                        <div>
-                          <Text type="secondary">대응 시계 · 발생 {stamp(focus.occurred_at)}</Text>
-                          <ResponseClock
-                            occurredAt={focus.occurred_at}
-                            closedAt={focus.closed_at}
-                            thresholds={data.tier_thresholds_sec}
-                          />
-                        </div>
+                  <Card
+                    title={<CardHead card={focus} />}
+                    extra={
+                      <Button type="link" onClick={() => navigate(eventPath(focus.event_id))}>
+                        상세 열기
+                      </Button>
+                    }
+                  >
+                    <Row gutter={16}>
+                      <Col xs={24} md={10}>
+                        <EventSnapshot
+                          eventId={focus.event_id}
+                          snapshotPath={focus.snapshot_path}
+                          height={240}
+                        />
+                      </Col>
+                      <Col xs={24} md={14}>
+                        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                          <div>
+                            <Text type="secondary">대응 시계 · 발생 {stamp(focus.occurred_at)}</Text>
+                            <ResponseClock
+                              occurredAt={focus.occurred_at}
+                              closedAt={focus.closed_at}
+                              thresholds={data.tier_thresholds_sec}
+                            />
+                          </div>
 
-                        {/* ★ 버튼은 서버가 준 `allowed_next` 로만 그린다 —
-                            화면이 전이표를 들면 서버가 거절하는 버튼을 그리게 된다. */}
-                        <Space wrap>
-                          {(focus.allowed_next ?? []).map((next) => (
-                            <Button
-                              key={next}
-                              type="primary"
-                              loading={acting}
-                              onClick={() => advance(focus.event_id, next)}
-                            >
-                              {advanceLabel(next)}
-                            </Button>
-                          ))}
-                          {(focus.allowed_next ?? []).length === 0 ? (
-                            <Text type="secondary">
-                              더 갈 곳이 없습니다 — 이 사건은 마지막 단계입니다.
-                            </Text>
+                          {/* ★ 버튼은 서버가 준 `allowed_next` 로만 그린다 —
+                              화면이 전이표를 들면 서버가 거절하는 버튼을 그리게 된다.
+                              숫자는 **고정 자리**다: 접수 1 · 조치 시작 2 · 종결 3. */}
+                          <Space wrap>
+                            {(focus.allowed_next ?? []).map((next) => {
+                              const slot = (STEP_SLOTS as readonly string[]).indexOf(next);
+                              return (
+                                <Button
+                                  key={next}
+                                  type="primary"
+                                  loading={acting}
+                                  onClick={() => advance(focus.event_id, next)}
+                                >
+                                  {advanceLabel(next)}
+                                  {slot >= 0 ? ` (${slot + 1})` : ''}
+                                </Button>
+                              );
+                            })}
+                            {(focus.allowed_next ?? []).length === 0 ? (
+                              <Text type="secondary">
+                                더 갈 곳이 없습니다 — 이 사건은 마지막 단계입니다.
+                              </Text>
+                            ) : null}
+                          </Space>
+
+                          {focus.count > 1 ? (
+                            <Alert
+                              type="info"
+                              showIcon
+                              message={`이 카드에 ${focus.count}건이 묶여 있습니다.`}
+                              description={`이벤트 id: ${focus.member_event_ids.join(', ')} — 카드만 묶였고 기록은 그대로입니다.`}
+                            />
                           ) : null}
                         </Space>
-
-                        {focus.count > 1 ? (
-                          <Alert
-                            type="info"
-                            showIcon
-                            message={`이 카드에 ${focus.count}건이 묶여 있습니다.`}
-                            description={`이벤트 id: ${focus.member_event_ids.join(', ')} — 카드만 묶였고 기록은 그대로입니다.`}
-                          />
-                        ) : null}
-                      </Space>
-                    </Col>
-                  </Row>
-                </Card>
+                      </Col>
+                    </Row>
+                  </Card>
+                </div>
               ) : (
                 <Alert
                   type="success"
@@ -270,36 +405,47 @@ export default function FocusQueuePage() {
                   {data.queue.length === 0 ? (
                     <Text type="secondary">대기 중인 카드가 없습니다.</Text>
                   ) : null}
-                  {data.queue.map((card) => (
-                    <Row
-                      key={`${card.stream_monitor_id}-${card.event_type}-${card.event_id}`}
-                      align="middle"
-                      gutter={12}
-                      style={{ borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
-                    >
-                      <Col flex="auto">
-                        <CardHead card={card} />
-                        <div>
-                          <Text type="secondary" style={{ fontSize: 12 }}>
-                            발생 {stamp(card.occurred_at)}
-                          </Text>
-                        </div>
-                      </Col>
-                      <Col>
-                        <ResponseClock
-                          occurredAt={card.occurred_at}
-                          closedAt={card.closed_at}
-                          thresholds={data.tier_thresholds_sec}
-                          compact
-                        />
-                      </Col>
-                      <Col>
-                        <Button size="small" onClick={() => navigate(eventPath(card.event_id))}>
-                          열기
-                        </Button>
-                      </Col>
-                    </Row>
-                  ))}
+                  {data.queue.map((card, i) => {
+                    const index = focus ? i + 1 : i;
+                    return (
+                      <div
+                        key={`${card.stream_monitor_id}-${card.event_type}-${card.event_id}`}
+                        ref={(el) => {
+                          rowRefs.current[index] = el;
+                        }}
+                        style={{ border: selectedRing(index), borderRadius: 6 }}
+                        onClick={() => setSelected(index)}
+                      >
+                        <Row
+                          align="middle"
+                          gutter={12}
+                          style={{ borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
+                        >
+                          <Col flex="auto">
+                            <CardHead card={card} />
+                            <div>
+                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                발생 {stamp(card.occurred_at)}
+                              </Text>
+                            </div>
+                          </Col>
+                          <Col>
+                            <ResponseClock
+                              occurredAt={card.occurred_at}
+                              closedAt={card.closed_at}
+                              thresholds={data.tier_thresholds_sec}
+                              compact
+                            />
+                          </Col>
+                          <Col>
+                            <Button size="small" onClick={() => navigate(eventPath(card.event_id))}>
+                              열기
+                            </Button>
+                          </Col>
+                        </Row>
+                      </div>
+                    );
+                  })}
                 </Space>
               </Card>
             </Space>

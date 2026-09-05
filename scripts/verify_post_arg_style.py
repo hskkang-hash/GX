@@ -72,7 +72,13 @@ except (AttributeError, OSError):
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
 #: 재는 서버 면. **이름으로 적는다** — 늘 때 사람이 여기를 고쳐야 한다(모수의 선언).
-API_MODULES = ("backend/apps/dsm/api.py",)
+API_MODULES = (
+    "backend/apps/dsm/api.py",
+    #: ★ 2026-09-05 · 차선 L — 법·인증 면은 **다른 파일**에 산다(LAW-02a · LAW-06 ·
+    #:   LAW-07). 여기 안 적으면 그 파일의 POST 는 이 게이트의 **눈 밖**이고,
+    #:   눈 밖의 라우트는 규약이 깨져도 초록이다. 컨트롤러가 늘면 여기도 는다.
+    "backend/apps/dsm/law_api.py",
+)
 
 #: 본문으로 읽히는 타입 표기의 표식. django-ninja 는 Schema/모델 타입을 본문으로 본다.
 #: 이름 조각으로 본다 — 무엇이 Schema 를 상속했는지는 여기서 알 수 없다. 그래서

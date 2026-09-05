@@ -1063,3 +1063,92 @@ def camera_address_gap(*, scope: TenantScope):
     from stream_monitors.services import bulk_register
 
     return bulk_register.address_gap(scope=scope)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# UX-23 카메라 격자 — **맥박은 판단하지 않는다. 인용한다** (차선 C2 · 2026-09-05)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 판정은 `stream_monitors/services/camera_pulse.py` (OPS-15) 한 곳에 있다. 이 App 은
+#   그 파일의 **상수와 함수를 부를 뿐** 자기 숫자를 들지 않는다 — 5분·3대·2대를 여기
+#   다시 적으면 규칙이 바뀌는 날 화면만 옛말이 되고, 옛말이 된 화면은 조용하다(D-212).
+#
+# ★ 「조용함」과 「죽음」과 「아직 안 옴」은 **세 가지 다른 사실**이다 (camera_pulse 머리말).
+#     조용함    프레임은 오는데 사건이 없다        `alive=true`
+#     죽음      프레임이 5분 넘게 안 온다          `alive=false` · `last_seen_at` 있음
+#     아직 안 옴 프레임이 한 장도 온 적 없다        `alive=false` · `last_seen_at=null`
+#   셋을 한 값으로 접으면 새로 등록한 카메라와 케이블이 끊긴 카메라가 같은 그림이 된다.
+#
+# ★ **사유 문장을 응답에 싣지 않는다** (P-27). `ClusterVerdict.reason` 은 우리 말이고
+#   관제요원 화면의 말이 아니다. 대신 **구조로** 말한다: `judged` 는 「봤는가」이고
+#   `fires` 는 「걸렸는가」다. 그 둘이 있으면 0건이 「구역이 작아 안 봤다」인지
+#   「봤는데 안 걸렸다」인지 갈린다 — 사유 문장이 하던 일을 값이 한다(D-290 · D-301).
+def camera_pulse(*, scope: TenantScope, now: datetime | None = None) -> dict:
+    """UX-23 카메라 맥박 + 군집 두절. **읽기 전용** — 아무것도 만들지 않는다.
+
+    ★ 이 함수에 **문턱도 질의도 없다.** 카메라별 생사는 `pulse_rows` 가, 구역 판정은
+      `scan_clusters` 가 답한다. 여기서 하는 일은 그 답을 화면이 읽는 모양으로
+      옮기는 것뿐이다 — App 이 얇다는 것이 그 뜻이다 (DA-04 §1-1).
+
+    ★ `scan_clusters(create_events=False)` 로 부른다. 화면을 열었다고 이벤트가
+      생기면 **보는 행위가 보는 대상을 바꾼다** — 그 문이 camera_pulse 에 이미 있다.
+    """
+    from django.utils import timezone as _tz
+
+    from stream_monitors.services import camera_pulse as pulse
+
+    # 시스템 스코프로는 읽지 못한다 (D-281). 파이프라인에 요청자가 없다는 사실이
+    # 읽기까지 열어 주면 그 경로는 영구히 전역 조회가 된다.
+    scope.require_actor()
+    at = now or _tz.now()
+
+    rows = pulse.pulse_rows(scope=scope, now=at)
+    counts = pulse.pulse_counts(scope=scope, now=at)
+    scan = pulse.scan_clusters(scope=scope, now=at, create_events=False)
+
+    zones = [{
+        "zone_id": zone_id,
+        "zone_name": zone_name,
+        # 「안 봤다」와 「봤는데 안 걸렸다」를 가른다 — 0건의 뜻이 둘이다.
+        "judged": verdict.total >= pulse.CLUSTER_MIN_CAMERAS,
+        "total": verdict.total,
+        "never_seen": verdict.never_seen,
+        "silent_camera_ids": list(verdict.silent),
+        "cluster_camera_ids": list(verdict.cluster),
+        "fires": bool(verdict.fires),
+    } for (zone_id, zone_name, verdict) in scan.verdicts]
+
+    return {
+        "now": at,
+        # 규칙의 수를 응답에 싣는다 — 화면이 자기 문턱을 들지 않게 하려면 서버가
+        # 그 문턱을 말해야 한다(`allowed_next`·`tier_thresholds_sec` 과 같은 규약).
+        "rules": {
+            "pulse_timeout_seconds": int(pulse.PULSE_TIMEOUT.total_seconds()),
+            "cluster_window_seconds": int(pulse.CLUSTER_WINDOW.total_seconds()),
+            "cluster_min_cameras": pulse.CLUSTER_MIN_CAMERAS,
+            "cluster_min_down": pulse.CLUSTER_MIN_DOWN,
+        },
+        # 분모를 함께 낸다 (D-301). 「응답 없음 2대」만 보면 전체가 3인지 300인지 모른다.
+        "counts": {
+            "alive": counts.alive,
+            "total": counts.total,
+            "never_seen": counts.never_seen,
+        },
+        "cameras": [{
+            "id": row.id,
+            "name": row.name,
+            "alive": row.alive,
+            "last_seen_at": row.last_frame_at,
+            # 「없다」와 「언제부터 없다」는 다른 사실이다. 한 번도 안 온 카메라는
+            # 「언제부터」가 없으므로 `null` 이고, 그 null 은 0이 아니다.
+            "silent_seconds": row.silent_seconds(at),
+        } for row in rows],
+        "cluster": {
+            "zones_seen": scan.zones_seen,
+            "cameras_seen": scan.cameras_seen,
+            # ★ **부작위가 여기서 보인다.** 한 대만 끊기면 이 수는 0이어야 하고,
+            #   0이 「안 봤다」가 아니라 「봤는데 안 걸렸다」임은 `zones_seen` 이 말한다.
+            "outage_count": sum(1 for z in zones if z["fires"]),
+            "zones": zones,
+        },
+    }

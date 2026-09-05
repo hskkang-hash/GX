@@ -202,6 +202,15 @@ const DsmCameraImport = lazy(() => import('./features/dsm/pages/CameraImport'));
 const DsmOnboarding = lazy(() => import('./features/dsm/pages/Onboarding'));
 const DsmCameraAddress = lazy(() => import('./features/dsm/pages/CameraAddress'));
 /**
+ * 턴 D DSM 화면 셋 (2026-09-05) — UX-16 월 모드 · UX-23 카메라 격자 · LAW-07 청구.
+ * 경로는 `features/dsm/routes.ts` 한 곳에서 정한다(위와 같은 이유).
+ */
+const DsmWall = lazy(() => import('./features/dsm/pages/Wall'));
+const DsmCameraGrid = lazy(() => import('./features/dsm/pages/CameraGrid'));
+const DsmPrivacyRequests = lazy(
+  () => import('./features/dsm/pages/PrivacyRequests'),
+);
+/**
  * 모바일 — 이동 중 수신 모드 (U3 · 차선 D).
  *
  * ★ 경로는 `features/mobile/routes.ts` 한 곳에서 정한다. `CustomRoutes` 에 넣지
@@ -461,6 +470,11 @@ function App() {
     {
       element: <PrivateLayout />,
       children: [
+        // ── UX-16 월(Wall) 모드 — **사이드바 밖 · 관문 안** (턴 D) ─────────
+        //   관제실 대형 화면에는 마우스가 없다. 사이드바는 마우스를 전제한
+        //   물건이라 이 하나만 형제로 세운다. 관문은 그대로 지난다 —
+        //   실제 사건이 뜨는 화면을 무계정으로 열지 않는다.
+        { path: dsm2Routes.wall.path, element: <DsmWall /> },
         {
           element: <Sidebar />,
           children: [
@@ -481,6 +495,15 @@ function App() {
             { path: dsm2Routes.drill.path, element: <DsmDrillMode /> },
             { path: dsm2Routes.cameraImport.path, element: <DsmCameraImport /> },
             { path: dsm2Routes.cameraAddress.path, element: <DsmCameraAddress /> },
+            // ── 턴 D · UX-23 · LAW-07 ────────────────────────────────────
+            {
+              path: dsm2Routes.cameraGrid.path,
+              element: <DsmCameraGrid />,
+            },
+            {
+              path: dsm2Routes.privacyRequests.path,
+              element: <DsmPrivacyRequests />,
+            },
             {
               path: CustomRoutes.dsm.eventDetail.path,
               element: <DsmEventDetail />,

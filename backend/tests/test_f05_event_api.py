@@ -71,6 +71,28 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/events/{int:event_id}/field-replies"),
     ("GET", "/api/dsm/reports/templates"),
     ("GET", "/api/dsm/reports/{int:template_id}.pdf"),
+    # ★ 2026-09-05 **여덟이 늘었다** — 법·인증 면 (LAW-02a · LAW-06 · LAW-07 · 차선 L).
+    #   손으로 이 줄들을 더하는 일이 곧 「진입면을 넓힌다」는 선언이다. 이 시험이
+    #   그 선언을 강제했다 — 여덟이 조용히 늘 뻔했다.
+    #
+    #   ★ 이 여덟은 **다른 컨트롤러**(`apps/dsm/law_api.py`)에 산다. 같은 턴에 두 차선이
+    #     한 라우트 파일을 고치면 충돌하고, 충돌한 라우트는 **라우팅 침묵**이 된다.
+    #     컨트롤러가 둘이어도 **진입면은 하나다** — 같은 `NinjaExtraAPI` 에 등록되고
+    #     같은 `/api/dsm/` 아래에 서며 여기 한 표에 함께 잠긴다.
+    #
+    #   문지기: 전건 @tenant_scoped + JwtOrInboundKey.
+    #   ★ 청구 넷은 **관리자만**이다(403) — 응답에 청구인의 이름이 실린다.
+    #   ★ `POST /law/retention/sweep` 은 **되돌릴 수 없는 쓰기**다:
+    #     `dry_run` 기본값이 참이고, 거짓으로 부르는 것은 **전역 관리자**만 할 수 있으며
+    #     사유가 없으면 422 다. 지금 이 집행은 테넌트별로 나뉘지 않기 때문이다.
+    ("GET", "/api/dsm/law/ai-act/duties"),                          # LAW-06 자리표
+    ("GET", "/api/dsm/law/retention"),                              # LAW-02a 보관 기간
+    ("POST", "/api/dsm/law/retention/sweep"),                       # LAW-02a 집행
+    ("GET", "/api/dsm/law/privacy-requests"),                       # LAW-07 목록
+    ("POST", "/api/dsm/law/privacy-requests"),                      # LAW-07 접수
+    ("GET", "/api/dsm/law/privacy-requests/{receipt_no}"),          # LAW-07 상세
+    ("GET", "/api/dsm/law/privacy-requests/{receipt_no}/masked"),   # LAW-07 마스킹본
+    ("POST", "/api/dsm/law/privacy-requests/{receipt_no}/reply"),   # LAW-07 회신 기록
     ("GET", "/api/dsm/settings/{domain}"),
     # ★ 2026-09-19 **둘이 늘었다 — 그런데 진입면은 넓어지지 않았다** (D-410).
     #   `GET /settings/{domain}` 이 `domain=thresholds` · `domain=zones` 로 이미
@@ -223,6 +245,24 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     #     `{domain}` 에 삼켜져 조용히 405/404 가 된다 — D-410 이 남긴 자리다.
     ("GET", "/api/dsm/settings/notice-draft"),          # LAW-02 영상정보처리기기 고지
     ("GET", "/api/dsm/settings/privacy-collection"),    # LAW-03 수집 항목(모델에서 생성)
+    # ★ 2026-09-05 TD **하나가 늘었다** — UX-23 카메라 격자의 맥박 (차선 C2).
+    #   손으로 이 줄을 더하는 일이 곧 「진입면을 넓힌다」는 선언이고, 그 선언을 여기 남긴다.
+    #   이 턴에도 차선 넷이 각자 자기 것만 등재한다 — 두 차선에 걸친 자리는 조율자가
+    #   병합에서 맞춘다(위 LAW-02·03 줄이 그 규약을 이미 적었다).
+    #
+    #   왜 라우트를 냈나: OPS-15 의 맥박 판정은 **시스템 이벤트로만** 나가고 있었다
+    #   (`camera_cluster_down`). 화면에서 「어느 카메라가 응답이 없는가」를 볼 문이
+    #   없었고, 문이 없으면 화면은 카메라 목록을 받아 **자기 문턱으로** 생사를 정하게
+    #   된다 — 그러면 화면의 「응답 없음」과 시스템 이벤트의 두절 판정이 갈린다.
+    #   판정은 한 곳(`camera_pulse.py`)이고, 이 문은 그것을 **인용해서 낸다.**
+    #
+    #   문지기: `@tenant_scoped`(남의 테넌트 카메라의 생사 · 구역 두절은 재난 정보다) +
+    #           `JwtOrInboundKey`(**키 거절 — 기본값**).
+    #   ⚠ **읽기 전용이다** — `scan_clusters(create_events=False)` 로 부른다.
+    #     쓰기 면이 아니므로 WRITE_PROBES 대상이 아니다(P-8).
+    #   ⚠ `/cameras/address-gap`·`/cameras/import` 와 형제다. 변수 조각이 없으므로
+    #     서로 삼키지 않는다.
+    ("GET", "/api/dsm/cameras/pulse"),                  # UX-23 카메라 맥박 + 군집 두절
 })
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**

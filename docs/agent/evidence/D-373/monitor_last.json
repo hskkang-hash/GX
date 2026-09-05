@@ -1,18 +1,18 @@
 {
-  "measured_at": "2026-09-05T05:12:46+00:00",
+  "measured_at": "2026-09-05T07:13:54+00:00",
   "verdict": "ALARM",
   "report": {
-    "measured_at": "2026-09-05T05:12:46+00:00",
+    "measured_at": "2026-09-05T07:13:54+00:00",
     "signals": {
       "db_ping_ms": {
-        "value": 0.24,
+        "value": 0.29,
         "verdict": "OK",
         "note": ""
       },
       "cache_alive": {
         "value": true,
         "verdict": "OK",
-        "note": "왕복 0.5ms"
+        "note": "왕복 0.4ms"
       },
       "object_store_alive": {
         "value": false,

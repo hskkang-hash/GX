@@ -1,0 +1,28 @@
+[PERF-BUDGET] 자기시험 통과 — 초록 1 · 예산초과 2(모드별) · **회귀 1** · 오류 1 · 출생 표본 1(캐시 적중) · 회색 3 · 동시성 대조 2 · 잡음 대조 3 · 걸침 대조 3 · **회귀 걸침 3** · **모드 7** · 종료코드 7 · 구조 3 · 표 대조 2
+[ALIVE] 로그인 성공: /api/v1/auth/login
+[PERF-BUDGET] [입력] http://gx-nginx-e:8500 · 면 4종 · 동시 10 · 30라운드 (워밍업 1라운드 버림) · **호출마다 ?bust=**
+[PERF-BUDGET] [모드] acceptance ← Server: 'nginx'  (저절로 골랐다)
+[PERF-BUDGET]   1차: F05 p95 274ms · SCREEN p95 225ms · MEDIA p95 179ms · STATUS p95 140ms
+[PERF-BUDGET]   2차: F05 p95 217ms · SCREEN p95 227ms · MEDIA p95 140ms · STATUS p95 183ms
+[PERF-BUDGET]   3차: F05 p95 168ms · SCREEN p95 146ms · MEDIA p95 240ms · STATUS p95 181ms
+[PERF-BUDGET]   F05    계약 F-05 진입면 (NFR-05-1)         n=900  p95(가운데)   217.3ms [168–274] · 잡음 49% · 오류 2
+[PERF-BUDGET]   SCREEN 화면 API                         n=900  p95(가운데)   225.4ms [146–227] · 잡음 36% · 오류 3
+[PERF-BUDGET]   MEDIA  스냅샷·미디어                        n=900  p95(가운데)   178.7ms [140–240] · 잡음 56% · 오류 0
+[PERF-BUDGET]   STATUS 상태·가용성 (캐시 금지 · P-19)          n=900  p95(가운데)   181.0ms [140–183] · 잡음 24% · 오류 2
+[PERF-BUDGET] 기록 → /docs/agent/evidence/PERF-04/budget.json
+[PERF-BUDGET]   F05 캐시 금지 (P-19)                                     이 면은 캐시 금지 면이 아니다 — 검사하지 않는다
+[PERF-BUDGET]   SCREEN 캐시 금지 (P-19)                                  이 면은 캐시 금지 면이 아니다 — 검사하지 않는다
+[PERF-BUDGET]   MEDIA 캐시 금지 (P-19)                                   이 면은 캐시 금지 면이 아니다 — 검사하지 않는다
+[PERF-BUDGET]   STATUS 캐시 금지 (P-19)                                  1자리 전부 `BYPASS_PATTERNS` 에 걸린다
+[PERF-BUDGET] X F05 계약 F-05 진입면 (NFR-05-1) · 예산 500ms                오류 2건 — **느린 것보다 틀린 것이 먼저다.** ['/api/dsm/events?limit=50 -> 502']
+[PERF-BUDGET] ? F05 계약 F-05 진입면 (NFR-05-1) · 회귀 +20%                 **판정 불가** — 측정 잡음 49% 가 문턱 20% 보다 크다 (p95 168.0–274.5ms · 3벌). `runserver` 는 한 프로세스라 꼬리가 스케줄러를 탄다 — 회귀 감시는 gunicorn+nginx 뒤에 뜻이 선다 (OPS-13)
+[PERF-BUDGET] X SCREEN 화면 API · 예산 800ms                             오류 3건 — **느린 것보다 틀린 것이 먼저다.** ['/api/dsm/dashboard/frame -> 502', '/api/dsm/events/queue -> 502', '/api/dsm/events/response-times -> 502']
+[PERF-BUDGET] ? SCREEN 화면 API · 회귀 +20%                              **판정 불가** — 측정 잡음 36% 가 문턱 20% 보다 크다 (p95 146.2–226.7ms · 3벌). `runserver` 는 한 프로세스라 꼬리가 스케줄러를 탄다 — 회귀 감시는 gunicorn+nginx 뒤에 뜻이 선다 (OPS-13)
+[PERF-BUDGET]   MEDIA 스냅샷·미디어 · 예산 1000ms                            p95(가운데) 179ms ≤ 1000ms (n=900 · 오류 0 · 3벌 140–240ms)
+[PERF-BUDGET] ? MEDIA 스냅샷·미디어 · 회귀 +20%                              **판정 불가** — 측정 잡음 56% 가 문턱 20% 보다 크다 (p95 139.5–240.0ms · 3벌). `runserver` 는 한 프로세스라 꼬리가 스케줄러를 탄다 — 회귀 감시는 gunicorn+nginx 뒤에 뜻이 선다 (OPS-13)
+[PERF-BUDGET] X STATUS 상태·가용성 (캐시 금지 · P-19) · 예산 300ms              오류 2건 — **느린 것보다 틀린 것이 먼저다.** ['/api/dsm/dashboard/link-state -> 502']
+[PERF-BUDGET] ? STATUS 상태·가용성 (캐시 금지 · P-19) · 회귀 +20%               **판정 불가** — 측정 잡음 24% 가 문턱 20% 보다 크다 (p95 139.8–182.6ms · 3벌). `runserver` 는 한 프로세스라 꼬리가 스케줄러를 탄다 — 회귀 감시는 gunicorn+nginx 뒤에 뜻이 선다 (OPS-13)
+[PERF-BUDGET] ★ 이 수는 `runserver`(개발 서버)로 잰 **기준선**이다. **합격선은 gunicorn+nginx 에서 다시 잰다**(OPS-13 뒤). 그때까지 이 초록은 「예산을 지켰다」가 아니라 **「기준선이 예산 안에 있다」**이다 — 기준선을 합격선으로 옮겨 적으면 착시 ⑤(환경)다.
+[PERF-BUDGET] 잰 때 2026-09-05T06:20:55+00:00 · 기준선 2026-09-05T02:50:35+00:00
+[PERF-BUDGET] 실패 — 위의 X 가 예산을 넘었거나 기준선 대비 20% 넘게 나빠진 자리다
+EXIT=1

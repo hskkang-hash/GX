@@ -61,9 +61,11 @@ import argparse
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import time
+from datetime import datetime, timedelta
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
@@ -74,8 +76,36 @@ except (AttributeError, OSError):
 
 #: 이 제품이 띄우는 컨테이너들. **여기 없는 컨테이너는 세지 않는다** — 남의 것을
 #: 우리 수집기로 세면 수가 부풀고, 부푼 수 위에서 정한 정책은 틀린다.
+#:
+#: ★ [실측 2026-09-05 · 턴 D] **이 목록이 낡아 있었다.** 턴 C 가 앞단을 세우며
+#:   `gx-nginx-e` · `gx-gunicorn-e` 둘을 띄웠는데 목록에 안 들어왔고, 그래서 이
+#:   판정기는 「수집기 6개를 **전수로** 셌다」고 초록을 냈다 — 여덟인데 여섯을 세고
+#:   전수라고 적은 것이다. **목록으로 세는 판정기는 목록이 낡는 만큼 눈이 먼다.**
+#:   그래서 ⑤(목록 신선도)를 아래에 두었다: 떠 있는데 목록에 없는 우리 컨테이너가
+#:   하나라도 있으면 ①은 초록이 될 수 없다.
 PROJECT_CONTAINERS = ("gx-shell", "postgres", "redis",
-                      "guardianx-source-minio-1", "gx-fe-build")
+                      "guardianx-source-minio-1", "gx-fe-build",
+                      "gx-nginx-e", "gx-gunicorn-e")
+
+#: 「우리 것」을 이름으로 가른다 — ⑤가 목록 밖 컨테이너를 찾을 때 쓴다.
+#: 남의 컨테이너(다른 제품)를 우리 빨강으로 세지 않기 위한 좁힘이다.
+PROJECT_NAME_HINTS = ("gx-", "guardianx", "postgres", "redis", "minio")
+
+#: 컨테이너 **안에서 파일로** 쌓이는 로그. **`--log-opt` 가 여기에는 닿지 않는다.**
+#:
+#: ★ [실측 2026-09-05 · 턴 D] 이 자리를 이 판정기가 한 번도 안 봤다. 앞단(nginx)은
+#:   `access_log /var/log/nginx/gx-front.access.log` 로 **파일에** 적는다 — stdout 이
+#:   아니므로 도커의 `json-file` 회전과 아무 상관이 없고, `nginx:alpine` 에는
+#:   logrotate 도 없다. 즉 **상한이 걸린 줄 알았던 컨테이너 안에서 상한 없는 수집기가
+#:   돌고 있었다.** 「컨테이너에 `--log-opt` 를 걸었다」가 「그 컨테이너의 로그에 상한이
+#:   걸렸다」가 아니라는 것 — 이 절에서 가장 하기 쉬운 두 번째 거짓말이다.
+CONTAINER_FILE_LOGS = {
+    "gx-nginx-e": ("/var/log/nginx/gx-front.access.log",),
+}
+
+#: 파일 수집기의 한 시간 치를 잴 때 되읽는 꼬리의 상한. 이보다 빨리 자라면
+#: **적게 잡힌다** — 그때는 「이 이상」이라고 적는다(모자라게 적지, 부풀리지 않는다).
+FILE_TAIL_CAP = 16 * 1024 * 1024
 
 #: DB 쪽 사실을 물어볼 자리. dj-core 가 여기에만 있다.
 APP_CONTAINER = "gx-shell"
@@ -101,8 +131,12 @@ COMPOSE_FILES = ("docker-compose.yml", "docker-compose.stg.yml")
 ADHOC_TO_SERVICE = {
     "gx-shell": "shell",          # compose 의 `shell` 서비스와 같은 이미지·같은 자리
     "redis": "redis",
-    "postgres": None,             # compose 에 postgres 서비스가 없다 (외부 DB 전제)
+    "postgres": "postgres",       # 2026-09-05 · 턴 D 에 compose 로 들였다 (profiles: local)
     "gx-fe-build": None,          # 프론트 빌드용 임시 컨테이너 — compose 밖이다
+    # 턴 C 의 앞단 둘. compose 에 자리가 없고(포트 8500 은 차선 E 전용 형상이다),
+    # 상한은 **띄우는 명령**에 산다 — `docs/agent/RUNBOOK_로컬기동.md` STEP 2A.
+    "gx-nginx-e": None,
+    "gx-gunicorn-e": None,
 }
 
 
@@ -118,9 +152,18 @@ def judge(facts: dict) -> list[tuple[str, bool, str]]:
                 ("③ 자라는 속도", False, "못 쟀다")]
 
     unknown = [s["name"] for s in sinks if s.get("retention") is None]
-    out.append(("① 수집기 전수", not unknown,
-                "수집기 %d개를 전수로 셌다" % len(sinks) if not unknown
-                else "보존 정책을 **못 읽은** 수집기: %s" % ", ".join(unknown)))
+    # ★ 「전수」는 **목록이 신선할 때만** 전수다. 떠 있는데 목록에 없는 우리 컨테이너가
+    #   있으면 이 판정기는 그만큼 눈이 먼 것이고, 그 상태의 초록은 거짓이다.
+    #   [실측 2026-09-05 · 턴 D] 실제로 둘(`gx-nginx-e`·`gx-gunicorn-e`)이 빠져 있었다.
+    unlisted = facts.get("unlisted") or []
+    out.append(("① 수집기 전수", not unknown and not unlisted,
+                "수집기 %d개를 전수로 셌다" % len(sinks) if not unknown and not unlisted
+                else ("보존 정책을 **못 읽은** 수집기: %s" % ", ".join(unknown)
+                      if unknown else "")
+                     + ("" if not (unknown and unlisted) else " · ")
+                     + ("**목록에 없는데 떠 있는 컨테이너**: %s — 목록이 낡은 만큼 "
+                        "이 판정기는 눈이 멀었다. `PROJECT_CONTAINERS` 에 넣어라"
+                        % ", ".join(unlisted) if unlisted else "")))
 
     forever = [s["name"] for s in sinks if s.get("retention") == "무한"]
     out.append(("② 보존 기간", not forever,
@@ -144,8 +187,17 @@ def judge(facts: dict) -> list[tuple[str, bool, str]]:
                     "**못 쟀다** — compose 파일을 읽지 못했다 (PyYAML 없음/파일 없음). "
                     "회색은 초록이 아니다"))
     else:
+        # ★ [2026-09-05 · 턴 D] **둘을 갈랐다.** 종전에는 「compose 선언이 없다」를
+        #   전부 빨강으로 찍었는데, 그러면 `docker run` 으로만 뜨는 앞단 둘
+        #   (`gx-nginx-e`·`gx-gunicorn-e`)은 상한이 **실제로 걸려 있어도** 영원히
+        #   빨강이 된다 — 지울 수 없는 빨강은 다음 사람이 그냥 무시한다.
+        #   그래서 빨강은 **상한이 실제로 없는 것**에만 남긴다:
+        #     · compose 선언도 없고 상한도 안 걸림 → **빨강** (아무도 안 막았다)
+        #     · compose 선언은 없지만 상한은 걸림  → 경고 한 줄 (상한이 **명령**에 산다.
+        #       그 명령은 RUNBOOK STEP 2A 이고, 다음에 띄우는 사람이 빠뜨리면 사라진다)
         naked = [s["name"] for s in sinks
-                 if s.get("kind") == "docker" and not s.get("declared")]
+                 if s.get("kind") == "docker" and not s.get("declared")
+                 and s.get("retention") == "무한"]
         out.append(("④ 선언", not naked,
                     "컨테이너 수집기 전부에 상한이 **선언돼 있다**" if not naked
                     else "**선언할 자리조차 없는 수집기**: %s — compose 밖 "
@@ -280,6 +332,88 @@ def container_sinks(declarations: dict | None = None) -> list[dict]:
     return sinks
 
 
+def running_containers() -> list[str]:
+    rc, out, _ = docker("ps", "--format", "{{.Names}}")
+    return [n.strip() for n in out.splitlines() if n.strip()] if rc == 0 else []
+
+
+def unlisted_containers() -> list[str]:
+    """떠 있는데 `PROJECT_CONTAINERS` 에 없는 **우리** 컨테이너.
+
+    ★ 이것이 ⑤다. 목록으로 세는 판정기는 목록이 낡는 만큼 눈이 먼다 —
+      그런데 **눈이 먼 채로 「전수」라고 적는다**. 그 초록이 이 절에서 가장 위험하다.
+      [실측 2026-09-05 · 턴 D] 턴 C 의 앞단 둘이 그렇게 빠져 있었다.
+    """
+    known = set(PROJECT_CONTAINERS)
+    out = []
+    for name in running_containers():
+        if name in known:
+            continue
+        low = name.lower()
+        if any(h in low for h in PROJECT_NAME_HINTS):
+            out.append(name)
+    return out
+
+
+#: `[05/Sep/2026:06:17:51 +0000]` — nginx 기본 `$time_local`.
+_ACCESS_TIME = re.compile(r"\[(\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}) ([+-]\d{4})\]")
+
+
+def _parse_access_time(line: str):
+    m = _ACCESS_TIME.search(line)
+    if not m:
+        return None
+    try:
+        return datetime.strptime(m.group(1) + m.group(2), "%d/%b/%Y:%H:%M:%S%z")
+    except ValueError:
+        return None
+
+
+def file_sinks() -> list[dict]:
+    """**컨테이너 안에서 파일로** 쌓이는 로그. `--log-opt` 가 닿지 않는 자리다.
+
+    한 시간 치는 **파일 자신의 시계**로 잰다 — 가장 최근 줄의 시각에서 60분을 뺀 것을
+    창의 시작으로 삼는다. 호스트 시계와 컨테이너 시계가 어긋나도 그 어긋남이
+    수에 섞이지 않는다.
+    """
+    sinks: list[dict] = []
+    for cname, paths in CONTAINER_FILE_LOGS.items():
+        for path in paths:
+            rc, out, _ = docker("exec", cname, "sh", "-c",
+                                "test -f %s && test ! -L %s && wc -c < %s"
+                                % (path, path, path))
+            if rc != 0 or not out.strip().isdigit():
+                continue                       # 없으면 **없다고** 세지 않는다
+            total = int(out.strip())
+            rc, blob, _ = docker("exec", cname, "sh", "-c",
+                                 "tail -c %d %s" % (FILE_TAIL_CAP, path), binary=True)
+            per_hour, note = None, ""
+            if rc == 0:
+                lines = blob.decode("utf-8", "replace").splitlines(keepends=True)
+                stamped = [(t, len(l.encode("utf-8", "replace")))
+                           for l in lines for t in (_parse_access_time(l),) if t]
+                if stamped:
+                    newest = max(t for t, _ in stamped)
+                    cutoff = newest - timedelta(minutes=WINDOW_MINUTES)
+                    per_hour = sum(n for t, n in stamped if t >= cutoff)
+                    if total > FILE_TAIL_CAP and stamped[0][0] >= cutoff:
+                        note = " · 꼬리 %dMB 가 한 시간을 못 덮는다 — **이 이상**" % (
+                            FILE_TAIL_CAP // (1024 * 1024))
+            sinks.append({
+                "name": "파일 · %s:%s" % (cname, path),
+                "kind": "file",
+                # ★ 도커 회전과 **무관하다.** `--log-opt` 는 stdout 에만 건다.
+                "retention": "무한",
+                "declared": False,
+                "bytes_per_hour": per_hour,
+                "detail": ("컨테이너 **안의 파일**(총 %s바이트) — `json-file` 회전 밖이다. "
+                           "`--log-opt` 도 compose 의 `logging` 도 여기 닿지 않고, "
+                           "`nginx:alpine` 에는 logrotate 가 없다%s"
+                           % (format(total, ","), note)),
+            })
+    return sinks
+
+
 #: gx-shell 안에서 돌 조각. **DB 에 직접 묻는다** — 화면이나 요약을 믿지 않는다.
 DB_PROBE = r'''
 import json, os, django
@@ -335,6 +469,35 @@ try:
 except Exception as exc:
     out["purge_beat_error"] = "%s: %s" % (type(exc).__name__, exc)
 
+# ★ **선언과 도는 것은 다른 사실이다** (2026-09-05 · 턴 D).
+#   `beat_schedule` 에 이름이 있다는 것은 「일정이 적혀 있다」일 뿐이다. 그 일정을
+#   밀어 줄 beat 도, 밀린 것을 **실행할 워커**도 따로 떠야 한다. 워커가 0개면
+#   purge 태스크는 큐에 쌓이거나 아예 안 생기고, 어느 쪽이든 **아무것도 안 지워진다.**
+#   그러므로 여기서 **브로커에 닿는가**와 **워커가 붙어 있는가**를 갈라서 잰다:
+#     · 브로커에 못 닿음  → **회색**(못 쟀다). 「워커 없음」이 아니다
+#     · 브로커는 닿고 워커 0 → **빨강**. 보존 기간은 선언일 뿐 걸려 있지 않다
+try:
+    from config.celery import app as _app
+    _conn = _app.connection()
+    try:
+        _conn.ensure_connection(max_retries=0, timeout=5)
+        out["broker_reachable"] = True
+    finally:
+        try:
+            _conn.release()
+        except Exception:
+            pass
+except Exception as exc:
+    out["broker_reachable"] = False
+    out["broker_error"] = "%s: %s" % (type(exc).__name__, exc)
+
+if out.get("broker_reachable"):
+    try:
+        _pong = _app.control.inspect(timeout=5.0).ping()
+        out["celery_workers"] = sorted(_pong) if _pong else []
+    except Exception as exc:
+        out["celery_workers_error"] = "%s: %s" % (type(exc).__name__, exc)
+
 try:
     from django.conf import settings
     out["file_handlers"] = sorted(
@@ -363,17 +526,34 @@ def db_sink() -> tuple[dict | None, dict]:
         return None, info
     days = info.get("retention_days")
     beat = info.get("purge_beat") or {}
-    if days and beat:
-        retention = "%s일 (beat %s)" % (days, ", ".join(beat))
-    elif days and not beat:
+    workers = info.get("celery_workers")
+    extra = ""
+    if not (days and beat):
         # ★ 설정은 있는데 도는 자리가 없다 — 착시 ⑨. **무한과 같다.**
-        retention = "무한"
-    else:
+        retention = "무한" if days else None
+    elif info.get("broker_reachable") is not True:
+        # 브로커에 못 닿았다 → **못 쟀다**. 「워커 없음」으로 적으면 회색을 빨강으로
+        # 옮기는 것이고, 옮긴 색은 다음 사람이 못 되돌린다(D-301).
         retention = None
+        extra = " · 브로커에 **못 닿았다**(%s) — 워커 유무를 못 쟀다" % (
+            info.get("broker_error") or "사유 없음")
+    elif workers is None:
+        retention = None
+        extra = " · 워커 조회가 **실패했다**(%s)" % info.get("celery_workers_error")
+    elif not workers:
+        # ★ **이 자리가 이번 판의 요점이다.** 일정은 적혀 있고 브로커도 살아 있는데
+        #   그 태스크를 **실행할 워커가 0개**다. 지우는 자리가 안 돈다 = 안 지워진다.
+        retention = "무한"
+        extra = (" · ⚠ 보존 %s일이 **선언돼 있으나 지우는 워커가 0개다** — beat 일정 "
+                 "`%s` 은 적혀 있고, 그것을 실행할 celery 워커가 브로커에 하나도 "
+                 "붙어 있지 않다. **선언은 삭제가 아니다**" % (days, ", ".join(beat)))
+    else:
+        retention = "%s일 (beat %s · 워커 %d)" % (days, ", ".join(beat), len(workers))
+        extra = " · 워커 %s" % ", ".join(workers)
     return {"name": "DB 감사 로그 · %s" % info.get("table", "?"),
             "kind": "db", "retention": retention,
-            "detail": "행 %s개 · %s바이트 · 가장 오래된 %s"
-                      % (info.get("rows"), info.get("bytes"), info.get("oldest")),
+            "detail": "행 %s개 · %s바이트 · 가장 오래된 %s%s"
+                      % (info.get("rows"), info.get("bytes"), info.get("oldest"), extra),
             "bytes_per_hour": info.get("rows_last_hour")}, info
 
 
@@ -409,13 +589,38 @@ def self_test() -> int:
     ok &= [p for _, p, _ in r] == [True, True, False, True]
 
     # ── ④ **이번 판의 요점** ─────────────────────────────────────────────
-    #   ㉠ 적용은 됐는데 선언이 없다 → 다음 재기동에 상한이 사라진다. ④가 빨강이다.
-    #      (②만 보면 초록이고, 그 초록이 재기동 한 번에 뒤집힌다)
+    #   ㉠ compose 선언은 없지만 **상한은 걸려 있다**(`docker run --log-opt`).
+    #      ④는 **빨강이 아니다** — 빨강은 「아무도 안 막았다」에만 남긴다.
+    #      [2026-09-05 · 턴 D] 종전에는 이것도 빨강이었고, 그래서 `docker run` 으로만
+    #      뜨는 앞단 둘은 상한이 걸려 있어도 영원히 빨강이었다. 지울 수 없는 빨강은
+    #      다음 사람이 그냥 무시한다 — 무시되는 빨강은 방어선이 아니다.
     applied_not_declared = {"declarations": {}, "sinks": [
         {"name": "a", "kind": "docker", "retention": "10m × 3",
          "declared": False, "bytes_per_hour": 1}]}
     r = judge(applied_not_declared)
-    ok &= [p for _, p, _ in r] == [True, True, True, False]
+    ok &= [p for _, p, _ in r] == [True, True, True, True]
+
+    #   ㉠′ 그러나 **선언도 없고 상한도 없으면** 빨강이다 — 아무도 안 막았다.
+    naked_and_unlimited = {"declarations": {}, "sinks": [
+        {"name": "a", "kind": "docker", "retention": "무한",
+         "declared": False, "bytes_per_hour": 1}]}
+    r = judge(naked_and_unlimited)
+    ok &= [p for _, p, _ in r] == [True, False, True, False]
+
+    #   ㉠″ ⑤ **목록 신선도** — 떠 있는데 목록에 없는 컨테이너가 있으면 ①은 초록이
+    #      될 수 없다. 나머지가 다 멀쩡해도 그렇다: **여섯을 세고 「전수」라고 적는**
+    #      것이 이 판정기가 낼 수 있는 가장 조용한 거짓말이다.
+    stale_list = {"declarations": {"a": {"max-size": "10m"}},
+                  "unlisted": ["gx-nginx-e"],
+                  "sinks": [{"name": "a", "kind": "docker", "retention": "10m × 5",
+                             "declared": True, "bytes_per_hour": 1}]}
+    r = judge(stale_list)
+    ok &= [p for _, p, _ in r] == [False, True, True, True]
+
+    #   ㉠‴ **음성 대조** — 목록 밖이 없으면 같은 표가 초록이다(위 빨강이 다른 데서
+    #      온 것이 아님을 못박는다)
+    fresh_list = dict(stale_list, unlisted=[])
+    ok &= all(p for _, p, _ in judge(fresh_list))
 
     #   ㉡ 선언은 섰는데 적용이 아직이다 → ②는 빨강, ④는 초록.
     #      「선언은 섰고 적용은 다음 재기동」이 정확히 이 모양이다.
@@ -459,6 +664,13 @@ def main() -> int:
     say()
     declarations = compose_declarations()
     sinks = container_sinks(declarations)
+    sinks.extend(file_sinks())
+    unlisted = unlisted_containers()
+    if unlisted:
+        say("⚠ **떠 있는데 목록에 없는 컨테이너**: %s" % ", ".join(unlisted))
+        say("  이 판정기는 `PROJECT_CONTAINERS` 로 센다 — 목록이 낡은 만큼 눈이 먼다.")
+        say("  그리고 눈이 먼 채로 「전수」라고 적는다. 그래서 ①을 빨강으로 둔다.")
+        say()
     dbs, dbinfo = db_sink()
     if dbs is not None:
         sinks.append(dbs)
@@ -533,7 +745,7 @@ def main() -> int:
 
     say("## 2. 판정")
     say()
-    facts = {"sinks": sinks, "declarations": declarations}
+    facts = {"sinks": sinks, "declarations": declarations, "unlisted": unlisted}
     rows = judge(facts)
     for name, passed, why in rows:
         say("  %s %-14s %s" % ("OK  " if passed else "FAIL", name, why))

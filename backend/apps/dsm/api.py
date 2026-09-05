@@ -1187,3 +1187,25 @@ class DsmAPI:
                                                 csv_text=csv_text)
         except PermissionDenied as exc:
             raise HttpError(403, str(exc) or "카메라를 등록할 권한이 없습니다.") from exc
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # UX-23 카메라 격자 (차선 C2 · 2026-09-05)
+    # ═══════════════════════════════════════════════════════════════════════
+    @route.get("/cameras/pulse", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-23 카메라 맥박 — 남의 테넌트 카메라의 생사가 나가면 "
+                          "격리 실패다. 「어느 구역이 통째로 끊겼는가」는 재난 정보다")
+    def camera_pulse(self, request):
+        """카메라별 맥박 + 군집 두절 (UX-23 · OPS-15). **읽기 전용.**
+
+        ★ 판정을 여기서 하지 않는다 — `stream_monitors/services/camera_pulse.py` 를
+          부른다. 두 벌을 두면 화면의 「응답 없음」과 시스템 이벤트의 두절 판정이
+          갈리고, 그 어긋남은 아무도 못 본다.
+
+        ★ 아무것도 만들지 않는다(`create_events=False`). 화면을 열었다고 이벤트가
+          생기면 **보는 행위가 보는 대상을 바꾼다.**
+
+        ★ 세 값을 접지 않는다: 살아 있음 · 응답 없음 · 한 번도 안 옴.
+          `alive` 와 `last_seen_at` 의 조합이 그 셋을 가른다(응답 모양은
+          `docs/agent/evidence/UX-23/README.md` 에 적었다 — 다른 차선이 읽는다).
+        """
+        return services.camera_pulse(scope=_scope(request))
