@@ -112,23 +112,30 @@ TARGETS = [
     #    ⚠ `must_see` 는 **그 프리셋에서만 나오는 글자**여야 한다. 넷이 같은 라우트라
     #      「이벤트 목록」 같은 공통 글자로 단언하면 **프리셋이 안 바뀌어도 초록**이다.
     #      그래서 각 프리셋의 안내 줄(headline)을 그대로 쓴다.
+    #
+    #    ★ [UX-20/UX-22 · 2026-09-26 · 차선 C] **여덟 개의 `must_see` 를 함께 고쳤다.**
+    #      화면의 안내 줄에서 절 ID(「UX-17」·「UX-18」)와 우리 절 이름(「W1 프리셋」)을
+    #      뺐기 때문이다(GX-COPY §4). 이 상수는 **화면 문자열의 사본**이므로 화면만
+    #      고치고 여기를 안 고치면 다음 촬영이 전부 빨개진다 — 그 빨강은 화면의 결함이
+    #      아니라 사본이 뒤처졌다는 뜻이고, 그것이 가장 헷갈리는 종류의 빨강이다.
+    #      ⚠ 화면 문구를 또 바꾸면 **같은 커밋에서** 이 줄들도 바꾼다.
     {"step": 17, "route": "/dsm/events?preset=unhandled",
      "slug": "dsm_events_preset_unhandled",
-     "must_see": "W1 프리셋 · 미처리 — 대응 축이 아직 「발생」인 것"},
+     "must_see": "미처리 — 아직 아무도 손대지 않은 것"},
     {"step": 18, "route": "/dsm/events?preset=recent",
      "slug": "dsm_events_preset_recent",
-     "must_see": "W1 프리셋 · 지난 12시간 — 창의 두 끝을 서버가 받는다"},
+     "must_see": "지난 12시간 — 이 시간 창 안에 난 것"},
     {"step": 19, "route": "/dsm/events?preset=mine",
      "slug": "dsm_events_preset_mine",
-     "must_see": "W1 프리셋 · 내 담당 — 내가 판정한 이벤트"},
+     "must_see": "내 담당 — 내가 판정한 이벤트"},
     {"step": 20, "route": "/dsm/events?preset=system",
      "slug": "dsm_events_preset_system",
-     "must_see": "W1 프리셋 · 시스템 — 장애인가 현장인가"},
+     "must_see": "시스템 — 설비 자신이 낸 신호"},
     #: W2 상세의 판정·대응 칸. 상세 화면 자체는 step 3 이 이미 찍는다 —
     #: 여기서 단언하는 것은 **누를 자리가 생겼다**는 사실이다(U1 #11).
     {"step": 21, "route": "/dsm/events/{event_id}",
      "slug": "dsm_events_id_verdict_panel",
-     "must_see": "진위 판정 · 대응 진행"},
+     "must_see": "처리 단계 · 진위 판정"},
     # ── [2파 병합 · 2026-09-24] **세 장을 더해 21 → 24 장으로 간다.**
     #    차선 C 가 지은 화면 셋이고, 이 셋이 찍히기 전까지 UX-13·17·18 은
     #    「서버 면은 섰고 화면은 못 봤다」였다 — 그 상태에서 '구현'으로 적는 것이
@@ -138,13 +145,13 @@ TARGETS = [
     #      **다른 화면이 떠도 초록**이 된다 — 프리셋 넷에서 배운 것과 같은 함정이다.
     {"step": 22, "route": "/dsm/queue",
      "slug": "dsm_queue_focus",
-     "must_see": "W1 단일 초점 — 지금 가장 급한 하나"},
+     "must_see": "지금 처리할 것 — 가장 급한 하나"},
     {"step": 23, "route": "/dsm/drill",
      "slug": "dsm_drill_mode",
-     "must_see": "UX-17 훈련 모드 — 켜면 알림이 사람에게 가지 않는다"},
+     "must_see": "훈련 모드 — 켜면 알림이 사람에게 가지 않습니다"},
     {"step": 24, "route": "/dsm/cameras/import",
      "slug": "dsm_cameras_import_dryrun",
-     "must_see": "UX-18 카메라 벌크 등록 — 표를 먼저 봅니다 (dry-run)"},
+     "must_see": "카메라 일괄 등록 — 표를 먼저 봅니다"},
 ]
 
 #: ★ [실측 2026-09-13 · D-386] 열어 보고 **찍지 못한 화면**. 목록에 남긴다 —

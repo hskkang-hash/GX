@@ -19,14 +19,33 @@ D-343 은 전역 적용(③)을 **인벤토리를 보고 판정한 뒤에** 하�
   ④ **래칫**(D-311) — `declared` · `open_anonymous` 건수가 기준선을 넘으면 exit 1
   ⑤ 인벤토리가 비어 있지 않은가 (D-301 — 0건은 「없다」가 아니라 「못 봤다」일 수 있다)
 
-★ 왜 게이트가 컨테이너를 부르지 않나
-------------------------------------
-인벤토리는 **런타임 레지스트리**를 읽어야 나온다(`probe_route_inventory.py`). 게이트가
-매번 컨테이너를 띄우면 게이트가 환경에 매인다 — 환경이 죽으면 게이트가 **초록으로**
-죽는다(D-301). 그래서 게이트는 **커밋된 인벤토리 파일**을 본다. 인벤토리를 다시 뜨는 것은
-사람의 일이고, 낡은 인벤토리는 `--max-age-days` 가 잡는다.
+★ 신선도 — **게이트 입력 파일은 게이트가 스스로 다시 만든다** (세종 §1-2 · 2026-09-05)
+--------------------------------------------------------------------------------
+뿌리 [실측]: 낡은 인벤토리 json 이 **두 턴 동안** 이 게이트를 거짓 초록으로 만들었다.
+승격 접두를 늘려도 커밋된 파일은 그대로였고, 게이트는 그 파일을 읽어 초록이었다.
+그때 커밋된 파일에는 `measured_at` 이 **빈 문자열**이었고, 판정 줄은 그것을
+`(인벤토리 측정일 미기재)` 라고 **적기만 하고 통과시켰다.**
 
-    python scripts/verify_route_inventory.py             # 판정
+그래서 규칙 셋을 못박는다.
+
+  ① 인벤토리는 **자기가 언제 잰 것인지 스스로 적는다**
+     (`probe_route_inventory.py` 가 `measured_at` 에 지금 시각을 초 단위로 넣는다).
+  ② 이 게이트는 **24시간**이 지나면 초록도 빨강도 아닌 **회색(exit 2)** 을 낸다.
+     측정일이 아예 없어도 회색이다 — 「모른다」는 「통과」가 아니다.
+  ③ 회색을 만나면 `--refresh` 로 **게이트가 스스로 다시 뜬다**(gx-shell 컨테이너).
+
+★ 왜 기본 판정이 컨테이너를 부르지 않나
+    인벤토리는 **런타임 레지스트리**를 읽어야 나온다. 판정이 매번 컨테이너를 띄우면
+    게이트가 환경에 매인다 — 환경이 죽으면 게이트가 **초록으로** 죽는다(D-301).
+    그래서 판정은 커밋된 파일을 보되, 낡으면 **초록을 주지 않고 회색을 준다.**
+    다시 뜨는 것은 `--refresh` 라는 **명시적인 한 걸음**이고, 그 걸음이 실패하면
+    그것도 회색이다. 어느 갈래에서도 「못 쟀다」가 초록이 되지 않는다.
+
+종료 코드 (저장소 규약 · D-400)
+    0 = 쟀고 통과   1 = 쟀고 실패   2 = **못 쟀다 (회색 — 초록이 아니다)**
+
+    python scripts/verify_route_inventory.py             # 판정 (신선도 24h 포함)
+    python scripts/verify_route_inventory.py --refresh   # 다시 뜨고 판정
     python scripts/verify_route_inventory.py --list      # 분류별 건수
     python scripts/verify_route_inventory.py --freeze    # 대장·기준선 생성/갱신
     python scripts/verify_route_inventory.py --self-test
@@ -35,8 +54,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import subprocess
 import sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -179,21 +200,100 @@ def judge(inventory: dict, ledger: dict[str, str], baseline: dict[str, int],
             problems.append("%s 가 늘었다: 기준선 %d → 지금 %d. 표면이 넓어졌다"
                             % (name, base, counts[name]))
 
-    # 낡은 인벤토리
+    # ★ 낡음은 **여기서 판정하지 않는다** — 낡은 것은 「틀렸다」(빨강)가 아니라
+    #   「모른다」(회색)다. `staleness()` 가 따로 답하고 main 이 exit 2 로 낸다.
+    #   섞으면 회색이 빨강 뒤에 숨거나 빨강이 회색으로 눅는다.
     if max_age_days is not None:
-        measured = (inventory.get("measured_at") or "").strip()
-        if not measured:
-            problems.append("인벤토리에 measured_at 이 없다 — 언제 잰 수인지 모른다 (D-322)")
-        else:
-            try:
-                age = (date.today() - date.fromisoformat(measured)).days
-            except ValueError:
-                problems.append("measured_at 이 날짜가 아니다: %r" % measured)
-            else:
-                if age > max_age_days:
-                    problems.append("인벤토리가 %d일 지났다 (허용 %d) — 다시 떠라"
-                                    % (age, max_age_days))
+        hours = max_age_days * 24
+        reason = staleness(inventory, hours)
+        if reason:
+            problems.append(reason)
     return problems, counts
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 신선도 — 회색(exit 2)의 자리 (세종 §1-2 · 2026-09-05)
+# ═══════════════════════════════════════════════════════════════════════════
+
+#: 게이트 입력 파일의 수명. 이보다 오래되면 **초록을 주지 않는다.**
+MAX_AGE_HOURS = 24
+
+
+def measured_age_hours(measured: str, now: datetime | None = None) -> float | None:
+    """`measured_at` 이 몇 시간 전인가. 읽을 수 없으면 None.
+
+    두 모양을 다 읽는다 — 날짜만(`2026-09-05`)과 초까지(`2026-09-05T13:20:11`).
+    날짜만 적힌 옛 파일은 **그 날의 0시**로 읽는다(늦게 잡지 않는다 — 안전한 쪽).
+    """
+    measured = (measured or "").strip()
+    if not measured:
+        return None
+    try:
+        stamp = datetime.fromisoformat(measured)
+    except ValueError:
+        try:
+            stamp = datetime.combine(date.fromisoformat(measured), datetime.min.time())
+        except ValueError:
+            return None
+    # ★ 시계 둘을 같은 자리에 세운다 [실측 2026-09-05]. 프로브는 컨테이너(UTC)에서,
+    #   게이트는 호스트(+09:00)에서 돈다. 시간대가 붙어 있으면 그것을 쓰고, 없으면
+    #   양쪽을 **둘 다 시간대 없는 것으로** 본다 — 한쪽만 aware 면 파이썬이 뺄셈에서 터진다.
+    if stamp.tzinfo is not None:
+        now = now.astimezone(stamp.tzinfo) if (now and now.tzinfo) else datetime.now().astimezone()
+    else:
+        now = now or datetime.now()
+        if now.tzinfo is not None:
+            now = now.replace(tzinfo=None)
+    return (now - stamp).total_seconds() / 3600.0
+
+
+def staleness(inventory: dict, max_age_hours: float = MAX_AGE_HOURS,
+              now: datetime | None = None) -> str | None:
+    """회색이어야 할 이유. 신선하면 None.
+
+    ★ **없는 측정일은 신선함이 아니다.** 두 턴을 거짓 초록으로 살게 한 것이
+      정확히 그 자리다 — 빈 `measured_at` 을 「미기재」라고 적기만 하고 통과시켰다.
+    """
+    measured = (inventory.get("measured_at") or "").strip()
+    if not measured:
+        return ("인벤토리에 측정일(measured_at)이 없다 — 언제 잰 수인지 **모른다**. "
+                "모르는 것은 통과가 아니다")
+    age = measured_age_hours(measured, now)
+    if age is None:
+        return "측정일이 날짜/시각이 아니다: %r — 읽을 수 없는 것은 통과가 아니다" % measured
+    if age > max_age_hours:
+        return ("인벤토리가 %.1f시간 지났다 (허용 %g시간) — 게이트가 읽는 입력이 낡았다. "
+                "낡은 입력 위의 초록은 초록이 아니다" % (age, max_age_hours))
+    return None
+
+
+def refresh(out_path: Path, container: str = "gx-shell") -> tuple[bool, str]:
+    """게이트가 **스스로** 인벤토리를 다시 뜬다 (세종 §1-2).
+
+    실패하면 (False, 사유). 부르는 쪽은 그것을 **회색**으로 낸다 — 다시 뜨지 못한 것은
+    「통과」가 아니고 「틀렸다」도 아니다.
+    """
+    cmd = [
+        "docker", "exec",
+        "-e", "DJANGO_SETTINGS_MODULE=config.settings",
+        container, "python", "/repo/scripts/probe_route_inventory.py",
+        "/docs/agent/evidence/D-343/route_inventory.json",
+    ]
+    env = dict(os.environ, MSYS_NO_PATHCONV="1")
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300,
+                              encoding="utf-8", errors="replace", env=env)
+    except FileNotFoundError:
+        return False, "docker 를 찾을 수 없다 — 컨테이너 없이는 레지스트리를 못 읽는다"
+    except subprocess.TimeoutExpired:
+        return False, "인벤토리 재측정이 300초를 넘겼다"
+    if proc.returncode != 0:
+        tail = "\n".join((proc.stdout + proc.stderr).splitlines()[-5:])
+        return False, "재측정이 exit %d 로 끝났다:\n    %s" % (proc.returncode, tail)
+    if not out_path.exists():
+        return False, "재측정은 끝났는데 파일이 없다: %s" % out_path
+    return True, "\n".join(l for l in proc.stdout.splitlines()
+                            if "ROUTE-INVENTORY" in l)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -351,6 +451,33 @@ def self_test() -> int:
                  {"declared": 0, "open_anonymous": 0})
     checks.append(("관문 없는 자리가 늘면 잡는다", any("open_anonymous 가 늘었다" in x for x in p)))
 
+    # -- 신선도 (세종 §1-2 · 2026-09-05) ------------------------------------
+    # ★ 출생 표본: **빈 measured_at 이 두 턴을 거짓 초록으로 살게 했다.**
+    #   그때 판정 줄은 `(인벤토리 측정일 미기재)` 라고 적기만 하고 통과시켰다.
+    now = datetime(2026, 9, 5, 12, 0, 0)
+    checks.append(("★ 출생표본 — 측정일이 없으면 회색이다 (「미기재」는 통과가 아니다)",
+                   staleness({"measured_at": ""}, 24, now) is not None))
+    checks.append(("측정일 키가 아예 없어도 회색이다",
+                   staleness({}, 24, now) is not None))
+    checks.append(("★ 24시간 하고도 1분이 지나면 회색이다",
+                   staleness({"measured_at": "2026-09-04T11:59:00"}, 24, now) is not None))
+    checks.append(("음성 대조 — 23시간 전이면 신선하다 (초록을 막지 않는다)",
+                   staleness({"measured_at": "2026-09-04T13:00:00"}, 24, now) is None))
+    checks.append(("날짜만 적힌 옛 파일도 읽는다 — 그날 0시로 본다",
+                   staleness({"measured_at": "2026-09-05"}, 24, now) is None))
+    checks.append(("날짜만 적힌 어제 파일은 회색이다 (0시 기준 36시간)",
+                   staleness({"measured_at": "2026-09-04"}, 24, now) is not None))
+    checks.append(("읽을 수 없는 측정일도 회색이다 — 모르는 것은 통과가 아니다",
+                   staleness({"measured_at": "지난 주"}, 24, now) is not None))
+    checks.append(("나이를 시간으로 센다 (24.0)",
+                   abs((measured_age_hours("2026-09-04T12:00:00", now) or 0) - 24.0) < 1e-6))
+    # ★ 회색과 빨강을 섞지 않는다 — 낡음이 judge 의 problems 로 새어 들면
+    #   exit 1 이 되고, 「환경이 낡았다」가 「코드가 틀렸다」로 보고된다.
+    p_stale, _ = judge(inv([events, ui]),
+                       {"GET /api/dsm/events": "inbound_key_allowed",
+                        "GET /api/terminals/terminals": "session_only"}, base)
+    checks.append(("낡음은 judge 의 실패 목록에 들어가지 않는다 (회색 != 빨강)", not p_stale))
+
     # 대장 파서
     parsed = parse_ledger('# 주석\nroutes:\n  "GET /a": session_only\n  "POST /b": internal_only\n')
     checks.append(("대장 파서가 두 줄을 읽는다",
@@ -371,16 +498,37 @@ def main() -> int:
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--report", action="store_true",
                     help="사람이 읽는 표를 INVENTORY.md 로 쓴다 (D-343 ▣ — 한 번 만들어 세 번 쓴다)")
-    ap.add_argument("--max-age-days", type=int, default=None)
+    ap.add_argument("--max-age-days", type=int, default=None,
+                    help="(옛 이름) --max-age-hours 로 환산된다")
+    ap.add_argument("--max-age-hours", type=float, default=MAX_AGE_HOURS,
+                    help="게이트 입력의 수명. 넘으면 **회색(exit 2)** — 초록이 아니다")
+    ap.add_argument("--refresh", action="store_true",
+                    help="판정 전에 gx-shell 에서 인벤토리를 **다시 뜬다** (세종 §1-2)")
+    ap.add_argument("--container", default="gx-shell")
     args = ap.parse_args()
 
     if args.self_test:
         return self_test()
 
+    max_age_hours = (args.max_age_days * 24
+                     if args.max_age_days is not None else args.max_age_hours)
+
+    # ★ 세종 §1-2 — **게이트 입력 파일은 게이트가 스스로 다시 만든다.**
+    if args.refresh:
+        ok, note = refresh(INVENTORY, args.container)
+        if not ok:
+            print("[ROUTE-LEDGER] GRAY 인벤토리를 다시 뜨지 못했다 — %s" % note)
+            print("[ROUTE-LEDGER] 회색은 초록이 아니다. 재지 못한 것을 통과로 적지 않는다 (D-301)")
+            return 2
+        print("[ROUTE-LEDGER] 인벤토리를 다시 떴다:")
+        for line in note.splitlines():
+            print("    " + line)
+
     if not INVENTORY.exists():
-        print("[ROUTE-LEDGER] 인벤토리가 없다: %s" % INVENTORY)
-        print("[ROUTE-LEDGER] docker exec gx-shell python /repo/scripts/probe_route_inventory.py")
-        return 1
+        # ★ 없는 것은 「틀렸다」가 아니라 「모른다」다 — 회색이다 (D-301).
+        print("[ROUTE-LEDGER] GRAY 인벤토리가 없다: %s" % INVENTORY)
+        print("[ROUTE-LEDGER] python scripts/verify_route_inventory.py --refresh")
+        return 2
 
     inventory = json.loads(INVENTORY.read_text(encoding="utf-8"))
     rows = inventory.get("routes", [])
@@ -405,10 +553,14 @@ def main() -> int:
         return 0
 
     baseline = parse_baseline(BASELINE.read_text(encoding="utf-8")) if BASELINE.exists() else {}
-    problems, counts = judge(inventory, ledger, baseline, args.max_age_days)
+    problems, counts = judge(inventory, ledger, baseline, None)
+    stale = staleness(inventory, max_age_hours)
 
-    print("[ROUTE-LEDGER] [입력] 라우트 %d건 · 대장 %d건 (인벤토리 측정일 %s)"
-          % (counts["routes"], counts["ledger"], inventory.get("measured_at") or "미기재"))
+    measured = (inventory.get("measured_at") or "").strip()
+    age = measured_age_hours(measured)
+    print("[ROUTE-LEDGER] [입력] 라우트 %d건 · 대장 %d건 (인벤토리 측정일 %s%s)"
+          % (counts["routes"], counts["ledger"], measured or "**미기재**",
+             "" if age is None else " · %.1f시간 전" % age))
     print("[ROUTE-LEDGER] 들어오는 키: 선언 %d · 지금 닿는 자리 %d · 관문 없음 %d"
           % (counts["declared"], counts["accepts"], counts["open_anonymous"]))
 
@@ -422,11 +574,24 @@ def main() -> int:
             if r["inbound_key"] in ("declared", "open_anonymous"):
                 print("  %-14s %-6s %s" % (r["inbound_key"], r["method"], r["path"]))
 
+    # ★ 순서가 판정이다 (D-400 규약과 같다):
+    #   빨강(쟀고 틀렸다)이 회색(못 쟀다)보다 앞선다 — 실패가 「모른다」 뒤에 숨으면 안 된다.
     if problems:
         for p in problems:
             print("[ROUTE-LEDGER] FAIL %s" % p)
+        if stale:
+            print("[ROUTE-LEDGER] (덧붙여 입력도 낡았다 — %s)" % stale)
         return 1
-    print("[ROUTE-LEDGER] 대장과 코드가 갈리지 않았다")
+
+    if stale:
+        print("[ROUTE-LEDGER] GRAY %s" % stale)
+        print("[ROUTE-LEDGER] **회색은 초록이 아니다.** 대장과 코드가 갈리지 않은 것은")
+        print("[ROUTE-LEDGER] 낡은 파일 위에서 본 것이라 아무것도 증명하지 않는다.")
+        print("[ROUTE-LEDGER] 다시 떠라: python scripts/verify_route_inventory.py --refresh")
+        return 2
+
+    print("[ROUTE-LEDGER] PASS 대장과 코드가 갈리지 않았다 (입력 신선 — %.1f시간 전 측정)"
+          % (age or 0.0))
     return 0
 
 

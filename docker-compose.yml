@@ -1,5 +1,55 @@
 version: '3.8'
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 로그 회전·상한 — **무한 적재를 여기서 끊는다** (OPS-07 · 2026-09-24 · 차선 E)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 착수 전 실측 (`python scripts/ops_log_collectors.py`)
+# ----------------------------------------------------
+#   [실측 2026-09-24] 떠 있는 컨테이너 5개(gx-shell · postgres · redis · minio ·
+#   gx-fe-build)가 전부 `json-file` 드라이버에 **`max-size`·`max-file` 둘 다 없다.**
+#   도커는 `max-size` 가 없으면 **자르지 않는다** — 디스크가 찰 때까지 쌓인다.
+#   파일 핸들러는 0개다(`settings.LOGGING` 에 FileHandler 없음). 보존 정책이 있는
+#   수집기는 DB 감사 로그 하나뿐이다(90일 · beat `ops-audit-purge-daily` 03:10).
+#
+#   자라는 속도 [실측 · 총량 ÷ 가동 기간, 2026-09-02 기동 이후 약 3.4일]
+#       postgres   1,235,022 바이트 / 3.4일 ≈ **363 KB/일**   ← 가장 시끄럽다
+#       redis        171,206 바이트 / 3.4일 ≈  50 KB/일
+#       minio          4,530 바이트 / 2.3일 ≈   2 KB/일
+#       gx-shell·gx-fe-build           0 바이트 (stdout 으로 아무것도 안 낸다)
+#
+# ★ 값의 근거 — **[판정]이다. 인용이 아니다**
+# -------------------------------------------
+#   `max-size: 10m` × `max-file: 5` → 컨테이너당 상한 **50MB**.
+#
+#   ㉠ 가장 시끄러운 수집기(363 KB/일)에 대해 50MB 는 약 **140일** 치다. 즉 지금
+#      부하에서는 사실상 아무것도 안 잘린다 — 상한은 **평시를 위한 것이 아니라
+#      사고를 위한 것**이다. 무언가 초당 수천 줄을 토하기 시작한 그날 디스크를
+#      지키는 값이고, 그날이 오기 전에는 아무 일도 하지 않는 것이 옳다.
+#   ㉡ 그런데도 **「N일 보존」이라고 적지 않는다.** `json-file` 회전은 **크기 기반**이다.
+#      조용한 달에는 더 오래 남고 시끄러운 날에는 몇 시간 만에 밀린다. 「50MB 상한」은
+#      약속할 수 있고 「140일 보존」은 약속할 수 없다 — 뒤엣것을 적으면 사고 조사에서
+#      「있어야 할 로그가 없다」가 된다.
+#   ㉢ 그래서 **정본은 컨테이너 stdout 이 아니다.** 감사에 답하는 것은 DB 감사 로그
+#      (`logger_auditlogs` · 90일 · purge beat 실재)이고, 컨테이너 stdout 은
+#      **운영 디버깅용 단기 버퍼**다. 이 판정이 없으면 상한을 거는 것이 곧
+#      「증거를 지우는 일」이 된다.
+#
+# ⚠ **선언은 여기 섰고, 적용은 다음 재기동이다.** 도커의 `LogConfig` 는 컨테이너를
+#   **만들 때** 굳는다 — 이미 떠 있는 컨테이너에는 이 선언이 닿지 않는다. 그리고
+#   지금 그 컨테이너들 위에서 다른 차선이 일하고 있으므로 재기동하지 않는다.
+#   `scripts/ops_log_collectors.py` 가 **선언(여기)** 과 **적용(실행 중 컨테이너)** 을
+#   따로 재고, 둘이 갈린 자리를 「선언은 섰고 적용은 다음 재기동」으로 찍는다 —
+#   「고쳤다」와 「고친 것이 돌고 있다」는 다른 사실이다(D-301).
+#
+# ⚠ 앵커 하나를 모든 서비스가 가리킨다. 값을 두 벌로 적으면 반드시 어긋나고,
+#   어긋난 뒤에는 어느 쪽이 정본인지 아무도 모른다(D-369).
+x-gx-logging: &gx-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   # Frontend service
   frontend:
@@ -17,6 +67,7 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    logging: *gx-logging
     networks:
       - guardianx-network
 
@@ -54,6 +105,7 @@ services:
     env_file:
       - ./backend/.env
     restart: unless-stopped
+    logging: *gx-logging
     networks:
       - guardianx-network
     depends_on:
@@ -88,6 +140,7 @@ services:
     env_file:
       - ./backend/.env
     restart: unless-stopped
+    logging: *gx-logging
     networks:
       - guardianx-network
     depends_on:
@@ -139,6 +192,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    logging: *gx-logging
     networks:
       - guardianx-network
     depends_on:
@@ -179,6 +233,7 @@ services:
       timeout: 5s
       retries: 12
     restart: unless-stopped
+    logging: *gx-logging
     networks:
       - guardianx-network
 
@@ -188,6 +243,7 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+    logging: *gx-logging
     networks:
       - guardianx-network
 

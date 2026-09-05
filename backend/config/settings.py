@@ -186,10 +186,27 @@ API_CONTRACT_PROMOTE_ERROR_STATUS = (
 #     **화면이 실제로 지나간다**(캡처 24장의 호출 중 7건 · `D-386/screen_routes.json`).
 #     `/api/handover/`(25건)는 화면이 한 번도 부르지 않아 켜도 지나가는 것이 없다.
 #     delivery·terminals(86건)는 §0.4 이고 무증상 실패 후보가 몰려 있는 자리다.
+#
+#   ★ [A2 접두 셋 · 2026-09-05 · 차선 S · SEC-11a] `/api/advanced-table/` ·
+#     `/api/config-management/` · `/api/user-groups/` 을 더한다.
+#     왜 이 셋인가 — **추측이 아니라 교집합이다.** 둘을 겹쳐 골랐다:
+#       ① 신선본 인벤토리(`D-343/route_inventory.json` · 측정일 2026-09-05)의
+#          `envelope=authz_envelope` — 봉투가 갈리는 248건이 사는 자리
+#       ② 화면 캡처 24장이 **실제로 부른** 호출(`D-386/screen_routes.json`)
+#     교집합은 다섯 접두였고, 그중 큰 셋이 이 셋이다 [실측]:
+#       advanced-table 12건(화면호출 24) · config-management 7건(24) · user-groups 5건(51)
+#       — 남은 둘은 flight-log 4건(호출 1) · departments 3건(호출 1)로 작다.
+#     이 셋은 **화면 열리는 순간 세 접두가 다 불린다**(테마·설정·권한 스키마) —
+#     즉 거부가 200 으로 나가면 그 거부를 **모든 화면이** 삼킨다.
+#     안전 근거 [실측]: W0-18 §2-2 의 무증상 실패 후보 21곳(15파일) 중
+#     이 세 접두를 부르는 파일은 **0개**다.
+#     손 밖(SEC-11b): delivery 48 · terminals 38 · orders 11 은 §0.4 금지구역이고,
+#     devices 33 · handover 25 는 화면이 한 번도 부르지 않는다 — 인수자 판단이다.
 API_CONTRACT_PROMOTE_PATHS = tuple(
     p for p in os.environ.get(
         "API_CONTRACT_PROMOTE_PATHS",
-        "/api/dsm/,/api/stream-monitors/,/api/surveillance/").split(",")
+        "/api/dsm/,/api/stream-monitors/,/api/surveillance/"
+        ",/api/advanced-table/,/api/config-management/,/api/user-groups/").split(",")
     if p.strip()
 )
 
@@ -676,6 +693,46 @@ EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="your-email@gmail.com")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="your-app-password")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="your-email@gmail.com")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# K2 경보 이메일 — OPS-10 「발송까지」 (2026-09-24 · 차선 E)
+# ─────────────────────────────────────────────────────────────────────────────
+# [실측 2026-09-24] 개발 DB 의 알림 규칙 4건은 **전부 채널이 `log`** 다. `log` 는
+# 사람이 아니라 로그에 도달한다(`kernels/k2_notify/channels.py::LogChannel`) — 즉
+# **사람에게 도달하는 경보가 0건**이다. 그리고 `info`·`warning` 등급에는 규칙이
+# 아예 0건이다. 배선은 살아 있고, 켜져 있지 않았다.
+#
+# ★ 이 블록이 하는 일은 **주소 하나만 넣으면 나가는 상태**를 만드는 것이다.
+#   수신 주소는 저장소에 오지 않는다(대표가 로컬 `.env` 로 준다 · D-204).
+#
+# ⚠ **위 EMAIL_* 의 기본값은 자리 표시자다** (`your-email@gmail.com` ·
+#   `your-app-password`). 그 값으로 SMTP 는 서지 않는다. 그런데 `getattr` 로 읽으면
+#   **값이 있다**로 보인다 — 「설정했다」와 「자리 표시자가 남아 있다」가 같아진다(D-290).
+#   그래서 자리 표시자의 목록을 **이름으로** 둔다. 판정기·어댑터가 이 목록을 읽고
+#   「SMTP 미설정」을 **회색**으로 말한다. 회색은 초록이 아니다.
+EMAIL_PLACEHOLDER_VALUES = (
+    "your-email@gmail.com",
+    "your-app-password",
+    "CHANGE_ME",
+    "",
+)
+
+#: 규칙이 기본으로 고를 채널. `log` 로 두면 **사람에게 도달하지 않는다** — 그 사실은
+#: 발송 이력의 `channel` 칸에 그대로 남는다. 운영에서는 `email` 로 준다.
+#: 값을 바꾸는 것만으로 규칙이 바뀌지는 않는다 — `manage.py seed_alert_routing` 이
+#: 이 값을 읽어 규칙을 **다시 세운다**. 설정은 의도이고, 규칙이 사실이다.
+K2_ALERT_CHANNEL = env.str("K2_ALERT_CHANNEL", default="log")
+
+#: 경보를 받을 **사람의 주소**. 대표가 줄 값이고, 저장소에는 **이름만** 있다.
+#: 비어 있으면 `seed_alert_routing --channel email` 은 **심지 않고 멈춘다** —
+#: 주소 없이 규칙만 email 로 바꾸면 발송 이력이 전부 실패 행이 되고, 그것은
+#: 배선의 사실이 아니라 환경의 사실이다(P-20 ①과 같은 판정).
+K2_ALERT_EMAIL_TO = env.list("K2_ALERT_EMAIL_TO", default=[])
+
+#: 도달할 수 없는 주소의 도메인. RFC 2606 이 「절대 존재하지 않는다」고 못 박은 TLD 다.
+#: 시드 사람의 주소가 여기에 있다 — **주소가 있다**와 **사람이 받는다**를 가르는 칸이다.
+UNDELIVERABLE_EMAIL_SUFFIXES = (".invalid",)
+
 ALLOWED_IMG_EXTENSIONS = [
     ".jpg",
     ".jpeg",

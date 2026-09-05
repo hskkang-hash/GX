@@ -73,6 +73,27 @@ def promotion_scope() -> tuple[str, ...]:
     return tuple(getattr(settings, SCOPE, ()) or ())
 
 
+def path_in_scope(path: str, prefixes) -> bool:
+    """경로가 접두 목록 안인가. **모음(collection) 라우트를 빠뜨리지 않는다.**
+
+    ★ [실측 2026-09-05 · 차선 S] `/api/user-groups/` 를 승격 목록에 넣었는데
+      `POST /api/user-groups` (끝의 `/` 가 없다) 하나가 그대로 남았다 —
+      기대 24건 중 23건만 갚혔고 그 1건이 **모음 라우트**였다. 목록·생성처럼
+      가장 많이 불리는 자리가 정확히 그 모양이다. `startswith` 만 쓰면
+      접두를 넣을 때마다 그 자리가 조용히 빠진다.
+
+    그래서 규칙을 둘로 적는다:
+      · `path` 가 접두로 시작하거나
+      · `path` 가 접두에서 끝의 `/` 를 뗀 것과 **같으면** (모음 라우트)
+    """
+    for prefix in prefixes:
+        if path.startswith(prefix):
+            return True
+        if prefix.endswith("/") and path == prefix[:-1]:
+            return True
+    return False
+
+
 def promotion_enabled_for(path: str) -> bool:
     """이 경로에서 승격하는가.
 
@@ -81,7 +102,7 @@ def promotion_enabled_for(path: str) -> bool:
     """
     if promotion_enabled():
         return True
-    return any(path.startswith(prefix) for prefix in promotion_scope())
+    return path_in_scope(path, promotion_scope())
 
 
 def denial_status(payload: Any) -> int | None:

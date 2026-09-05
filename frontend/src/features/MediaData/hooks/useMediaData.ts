@@ -32,6 +32,26 @@ export const useMediaData = () => {
   }, [userInfo]);
   const { showLoading, hideLoading } = useLoadingContext();
   const [objSearch, setObjSearch] = useState<SearchObject>({});
+  /**
+   * UX-10 — **목록을 못 가져왔다는 사실.**
+   *
+   * ★ [실측 2026-09-14 · D-397] `GET /api/media-data/` 가 **500** 인데 화면은
+   *   「0 of 0」 을 그렸다. 아래 `catch` 가 `console.error` 한 줄이라 실패가
+   *   **콘솔에만** 남고, 표는 앞의 빈 상태를 그대로 들고 서 있었기 때문이다 —
+   *   당직자에게는 **「영상 자료가 없다」**로 보인다(D-378).
+   *
+   *   「없다」와 「못 가져왔다」는 다른 사실이다(DA-03 §2-5 규칙 1):
+   *     없다        = 기다릴 것이 없다
+   *     못 가져왔다 = **다시 시도할 것이 있다**
+   *   그래서 이 값을 세운다. `null` 이면 목록이 사실이고, 아니면 표를 믿으면 안 된다.
+   *
+   * ★ 503 은 **저장소가 죽은 것**이다. 우리 코드가 깨진 것(500)과 다른 사실이라
+   *   다른 문장으로 적는다 — 하나로 묶으면 저장소 장애가 「자료 없음」으로 위장된다.
+   */
+  const [listError, setListError] = useState<{
+    storageDown: boolean;
+    status: number;
+  } | null>(null);
   const [state, dispatch] = useReducer(
     MediaDataPageReducer,
     initialMediaDataState,
@@ -154,6 +174,8 @@ export const useMediaData = () => {
         params: paramsFetch,
       });
 
+      //: 성공했으니 앞 실패를 지운다 — 안 지우면 「다시 시도」가 성공해도 빨강이 남는다
+      setListError(null);
       setData({
         data: response.data.map(
           (item: {
@@ -180,7 +202,15 @@ export const useMediaData = () => {
         totalItem: response.total_items,
       });
     } catch (error) {
+      //: ★ [UX-10 · 2026-09-26] 앞판은 여기서 `console.error` 하고 **아무것도 안
+      //:   했다.** 실패가 콘솔에만 남고 화면은 「0 of 0」 을 그렸다 — 조용한 실패는
+      //:   없는 실패보다 나쁘다. 이제 실패를 **화면이 들 수 있는 값으로** 올린다.
+      //: ★ 표를 억지로 비우지 않는다. 앞서 받아 둔 목록이 있으면 그것은 「그때는
+      //:   사실이었던 것」이고, 화면이 그 위에 **못 가져왔다**를 덮어 말한다.
+      const status =
+        (error as { response?: { status?: number } })?.response?.status ?? 0;
       console.error(error);
+      setListError({ storageDown: status === 503, status });
     } finally {
       hideLoading();
     }
@@ -415,6 +445,7 @@ export const useMediaData = () => {
     objSearch,
     setObjSearch,
     getMediaDataAPI,
+    listError,
     setData,
     previewFileAPI,
     viewFile,

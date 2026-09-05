@@ -56,6 +56,7 @@ import json
 import os
 import sys
 import textwrap
+from datetime import datetime
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -105,6 +106,21 @@ def inbound_key_state(auth_names: list[str], declared: bool | None) -> str:
     return KEY_UNKNOWN
 
 
+def _in_scope(path: str, prefixes) -> bool:
+    """승격 접두 판정. **미들웨어와 같은 규칙이어야 한다.**
+
+    운영 규칙의 정본은 `common.api_contract.path_in_scope` 다. 여기 사본을 두는 것은
+    자기시험이 Django 없이 돌아야 하기 때문이고, `collect()` 는 런타임에서
+    정본을 가져다 쓴다(`_SCOPE_MATCH`). 두 규칙이 갈리면 인벤토리가 거짓말을 한다.
+    """
+    for prefix in prefixes:
+        if path.startswith(prefix):
+            return True
+        if prefix.endswith("/") and path == prefix[:-1]:
+            return True
+    return False
+
+
 def envelope_state(path: str, has_authz: bool, source: str, promote_prefixes) -> str:
     """이 라우트가 **봉투와 내용이 갈린 응답**을 낼 수 있는가 (D-349 ①).
 
@@ -119,7 +135,7 @@ def envelope_state(path: str, has_authz: bool, source: str, promote_prefixes) ->
         를 그대로 돌려준다. [실측 2026-09-08] 익명 호출 20건이 HTTP 200 + 본문 403 이었다
       · `body_status` — 우리 핸들러가 상태를 담은 dict 를 반환한다 (정적 판정)
     """
-    if any(path.startswith(prefix) for prefix in promote_prefixes):
+    if _in_scope(path, promote_prefixes):
         return ENV_PROMOTED
     if has_authz:
         return ENV_AUTHZ
@@ -175,6 +191,12 @@ def collect() -> list[dict]:
     try:
         from common.api_contract import promotion_enabled, promotion_scope
         promote_prefixes = ("/",) if promotion_enabled() else promotion_scope()
+        # 정본 판정기를 그대로 쓴다 — 사본과 갈리면 인벤토리가 거짓말이 된다.
+        try:
+            from common.api_contract import path_in_scope as _official
+            globals()["_in_scope"] = _official
+        except ImportError:
+            pass
     except Exception:                                     # pragma: no cover
         promote_prefixes = ()
 
@@ -313,6 +335,10 @@ def self_test() -> int:
          "body_status"),
         ("승격 경로는 갈리지 않는다 (F-05)",
          ("/api/dsm/events", True, "", ("/api/dsm/",)), "promoted"),
+        ("★ 모음 라우트 — 끝의 / 가 없어도 승격 접두 안이다 [실측 2026-09-05]",
+         ("/api/user-groups", True, "", ("/api/user-groups/",)), "promoted"),
+        ("이름이 겹쳐 보여도 다른 접두는 승격이 아니다",
+         ("/api/user-groups-archive", True, "", ("/api/user-groups/",)), "authz_envelope"),
         ("상태가 아닌 숫자는 안 잡는다",
          ("/api/x", False, _src("return {'status_code': 200}"), ()), "clean"),
         ("True 는 1 이 아니다 (bool 은 int 의 서브클래스)",
@@ -354,7 +380,16 @@ def main() -> int:
     payload = {
         "note": "D-343 ①② 라우트 인벤토리 전수. inbound_key=accepts 가 「지금 키가 닿는 자리」다. "
                 "classification 의 기본값은 session_only — 판단이 서지 않으면 좁은 쪽(D-343 ②).",
-        "measured_at": os.environ.get("GX_MEASURED_AT", ""),
+        # ★ [2026-09-05 · 세종 §1-2] **입력 파일은 자기가 언제 잰 것인지 스스로 적는다.**
+        #   전에는 `GX_MEASURED_AT` 이 없으면 빈 문자열이었고, 그래서 커밋된 인벤토리가
+        #   측정일 없이 두 턴을 살았다. 측정일이 없으면 게이트는 낡음을 못 보고
+        #   **거짓 초록**을 낸다. 이제 기본값이 「지금」이다 — 초 단위까지 적는다.
+        #   ★ **시간대를 붙여 적는다** [실측 2026-09-05]: 이 프로브는 컨테이너(UTC)에서
+        #     돌고 게이트는 호스트(+09:00)에서 돈다. 시간대 없는 시각을 적으면 방금 뜬
+        #     인벤토리가 게이트 눈에 **9시간 낡은 것**으로 보인다 — 24시간 예산의 3분의 1을
+        #     시계 차이가 먹는다. 붙여 적으면 두 시계가 같은 순간을 가리킨다.
+        "measured_at": (os.environ.get("GX_MEASURED_AT")
+                        or datetime.now().astimezone().isoformat(timespec="seconds")),
         "totals": totals,
         "routes": rows,
     }

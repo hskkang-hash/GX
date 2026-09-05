@@ -35,6 +35,7 @@ import ResponseClock from '../components/ResponseClock';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import {
+  advanceLabel,
   EVENT_TYPE_LABEL,
   labelOf,
   RESPONSE_STATE_LABEL,
@@ -50,7 +51,7 @@ const { Text, Title, Paragraph } = Typography;
 const REFRESH_MS = 15_000;
 
 /** 이 화면에만 있는 글자 — 검수 촬영의 단언 대상이다. */
-export const HEADLINE = 'W1 단일 초점 — 지금 가장 급한 하나';
+export const HEADLINE = '지금 처리할 것 — 가장 급한 하나';
 
 function eventPath(id: number): string {
   return `/dsm/events/${id}`;
@@ -208,12 +209,12 @@ export default function FocusQueuePage() {
                               loading={acting}
                               onClick={() => advance(focus.event_id, next)}
                             >
-                              {labelOf(RESPONSE_STATE_LABEL, next)}(으)로
+                              {advanceLabel(next)}
                             </Button>
                           ))}
                           {(focus.allowed_next ?? []).length === 0 ? (
                             <Text type="secondary">
-                              더 갈 곳이 없습니다 — 이 사건은 대응 축의 끝에 있습니다.
+                              더 갈 곳이 없습니다 — 이 사건은 마지막 단계입니다.
                             </Text>
                           ) : null}
                         </Space>

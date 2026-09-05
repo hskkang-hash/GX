@@ -254,12 +254,11 @@ A backend/stream_monitors/services/stream_monitor_services.py::get_stream_monito
 A backend/stream_monitors/services/stream_monitor_services.py::start_record_optimize
 A backend/stream_monitors/services/stream_monitor_services.py::stop_record_optimize
 A backend/stream_monitors/services/stream_monitor_services.py::stream_monitor_start
-A backend/stream_monitors/tasks/record_task.py::start_recording
-A backend/stream_monitors/tasks/record_task.py::stop_recording
 A backend/stream_monitors/utils/redis_client.py::clear_webrtc_state
 A backend/stream_monitors/utils/redis_client.py::delete_recording_status
 A backend/stream_monitors/utils/redis_client.py::list_recording_statuses
 A backend/stream_monitors/utils/redis_client.py::set_recording_status
+A backend/stream_monitors/utils/redis_client.py::update_recording_status
 A backend/stream_monitors/utils/stream_utils.py::get_stream_url
 A backend/surveillance/models.py::can_activate
 A backend/surveillance/services/surveillance_profile_media_service.py::save_recording_result_for_stream_monitor

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""역할을 가진 **사람**을 실제 생성 경로로 심는다 — U2 · U4 (P-9 · D-401 계열).
+"""역할을 가진 **사람**을 실제 생성 경로로 심는다 — U1 · U2 · U4 (P-9 · D-401 계열).
 
 왜 이 명령이 생겼나 — **화면이 없는 것이 아니라 사람이 없었다**
 --------------------------------------------------------------------
@@ -12,6 +12,18 @@
       view_only_-_anyang(U4) 그 소속에 0명
       operator   (U1)        12명
       critical 수신자 12명   — **전원 operator**. U2·U4 자리는 규칙만 서 있고 사람이 없다
+
+    [실측 2026-09-24 · 같은 소속 · U2·U4 를 심은 뒤]
+      fire_admin (U2)        1명   ← 2026-09-04 시드가 메웠다
+      view_only_-_anyang(U4) 1명   ← 같음
+      operator   (U1)        12명
+      fire_user  (U1)        **0명**  ← 규칙 `critical/fire_user` 는 서 있는데 사람이 없다
+      critical 수신자 14명
+
+    ★ `fire_user` 가 남아 있던 이유는 「U1 은 이미 12명 있다」고 읽었기 때문이다.
+      그러나 K2 규칙은 **역할 코드**를 가리키고, `operator` 와 `fire_user` 는 다른 코드다.
+      「U1 자리에 사람이 있다」와 「이 규칙이 고르는 사람이 있다」는 다른 사실이다 —
+      OPS-10 발송처 표가 `fire_user/log 0명`을 critical 로 찍어서야 갈렸다(D-301).
 
 즉 K2 규칙 넷(`fire_user`·`operator`·`fire_admin`·`view_only_-_anyang`)은 이미 서 있고,
 그중 **둘은 아무에게도 도달하지 않는다.** 「규칙이 있다」와 「받을 사람이 있다」가
@@ -109,14 +121,25 @@ SEED_EMAIL_DOMAIN = "seed.invalid"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 심을 사람 둘 — **역할 코드는 실측 목록에서 고른다**(config/k3_roles.py 머리말)
+# 심을 사람 셋 — **역할 코드는 실측 목록에서 고른다**(config/k3_roles.py 머리말)
 # ═══════════════════════════════════════════════════════════════════════════
-#: 지시서가 요구한 것은 「U2·U4 역할 사람 **각 1명**」이다. 더 심지 않는다 —
+#: 지시서가 요구한 것은 「U1(`fire_user`)·U2·U4 역할 사람 **각 1명**」이다. 더 심지 않는다 —
 #: 수를 늘리면 「몇 명이 옳은가」를 시드가 정하게 되고, 그것은 지시서가 정하지 않은 수다.
 #:
 #: ⚠ `role_code` 를 바꿀 때는 `config.k3_roles.K3_ROLE_PRESET_MAP` 을 함께 봐야 한다.
 #:   그 표가 역할 → 프리셋을 정하고, 프리셋이 곧 「이 사람이 보는 화면」이다.
 SEED_PEOPLE = (
+    {
+        "key": "U1",
+        "username": SEED_PREFIX + "u1_operator",
+        "role_code": "fire_user",
+        "expect_preset": "OPERATOR",
+        "display": "%s U1 관제요원(화재)" % SEED_NAME_PREFIX,
+        "why": "화면 앞에 앉아 이벤트를 처리하는 사람. K3 OPERATOR 프리셋. "
+               "★ 이 자리는 **경보가 갈 곳**이다 — K2 규칙 `critical/fire_user` 는 "
+               "2026-09-04 부터 서 있었는데 그 역할에 사람이 0명이었다(실측 2026-09-24). "
+               "규칙이 있고 사람이 0명이면 경보는 아무 데도 안 간다(D-301)",
+    },
     {
         "key": "U2",
         "username": SEED_PREFIX + "u2_manager",
@@ -167,7 +190,7 @@ def _refuse_if_shared_master() -> None:
 
 
 class Command(BaseCommand):
-    help = "U2·U4 역할을 가진 사람을 **실제 생성 경로(HTTP)** 로 심는다"
+    help = "U1·U2·U4 역할을 가진 사람을 **실제 생성 경로(HTTP)** 로 심는다"
 
     def add_arguments(self, parser):
         parser.add_argument("--peer", default="gxprobe_e2e",

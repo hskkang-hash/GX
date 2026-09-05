@@ -478,6 +478,58 @@ class ScopedPromotionForContractSurfaceTest(TestCase):
         self.assertIs(body.get("success"), False)
         self.assertIn("message", body)
 
+    # ── SEC-11a · 부르는 자리 접두 셋 (2026-09-05 · 차선 S) ──────────────────
+    #   화면 캡처 24장이 실제로 부른 접두 ∩ 봉투가 갈리는 자리(authz_envelope).
+    #   화면이 열리는 순간 이 셋이 다 불린다 — 여기서 거부가 200 으로 나가면
+    #   **모든 화면이 그 거부를 삼킨다.**
+    CALLED_PREFIX_SAMPLES = (
+        ("/api/advanced-table/select-data", "화면 24장 전부가 부르는 테마·표 데이터"),
+        ("/api/config-management/list-optimized", "화면 24장 전부가 부르는 설정"),
+        ("/api/user-groups/gen-schema", "권한 스키마 — 화면 호출 51건"),
+    )
+
+    def test_called_surfaces_are_promoted(self):
+        for path, why in self.CALLED_PREFIX_SAMPLES:
+            with self.subTest(path=path):
+                self.assertEqual(
+                    self._promote(path).status_code, 403,
+                    "부르는 자리가 200 봉투에 403 을 담는다 (%s)" % why,
+                )
+
+    def test_collection_route_without_trailing_slash_is_promoted(self):
+        """★ 출생 표본 [실측 2026-09-05] — 접두 셋을 켰는데 **한 건이 남았다.**
+
+        기대 24건 중 갚힌 것은 23건이었고, 남은 하나가 `POST /api/user-groups` —
+        접두 `/api/user-groups/` 로는 `startswith` 가 걸리지 않는 **모음 라우트**다.
+        목록·생성처럼 가장 많이 불리는 자리가 정확히 그 모양이라, 이 한 줄이 없으면
+        접두를 넣을 때마다 그 자리가 조용히 빠진다.
+        """
+        self.assertEqual(
+            self._promote("/api/user-groups").status_code, 403,
+            "모음 라우트(끝의 / 없음)가 승격에서 빠졌다 — 접두마다 이 자리가 샌다",
+        )
+
+    def test_lookalike_prefix_is_not_promoted(self):
+        """음성 대조 — 이름이 겹쳐 보이는 다른 접두까지 끌려오면 좁힌 것이 아니다."""
+        self.assertEqual(
+            self._promote("/api/user-groups-archive").status_code, 200,
+            "접두가 아닌 자리까지 승격됐다",
+        )
+
+    def test_forbidden_zone_prefixes_stay_out(self):
+        """§0.4 · SEC-11b — 손 밖의 자리는 우리가 승격하지 않는다.
+
+        delivery·terminals·orders 는 금지구역이고 devices·handover 는 화면이
+        한 번도 부르지 않는다. 승격은 **인수자 판단**이다(P-35).
+        """
+        for path in ("/api/delivery/orders", "/api/terminals/terminals",
+                     "/api/orders/list", "/api/devices/list", "/api/handover/list"):
+            with self.subTest(path=path):
+                self.assertEqual(
+                    self._promote(path).status_code, 200,
+                    "손 밖(SEC-11b)의 자리를 우리가 승격했다 — 인수 자산의 계약 동작이 바뀐다",
+                )
+
     def test_scope_is_declared_not_guessed(self):
         from django.conf import settings
 

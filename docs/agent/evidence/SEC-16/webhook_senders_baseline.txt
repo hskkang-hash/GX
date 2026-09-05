@@ -1,0 +1,15 @@
+# SEC-16 ⑤ 래칫 기준선 — 규약을 쓰지 않는 **기존** 웹훅/콜백 발송자 (D-311)
+#
+# ★ 여기 있는 것은 §0.4 레거시이거나 SEC-16 이전에 태어난 자리다. 소급하지 않는다.
+#   **새 발송자는 100% 의무다** — 이 목록에 손으로 한 줄을 더하는 것이
+#   「이 자리는 서명 없이 밖으로 쏜다」는 선언이다. 사유 없이 더하지 말 것.
+#
+# [실측 2026-09-05 · 차선 S] backend 파이썬 645개를 읽어 2건. 둘 다 SEC-16 이전에 났다.
+
+# §0.4 금지구역(partner 레거시). `requests.post(callback_url, ...)` 3자리 ·
+# 서명 없음 · 재시도는 Celery `max_retries=3` 로 밖에 있다. 우리가 못 고친다.
+backend/partner/services/partner_callback_service.py
+
+# 인수 자산의 탐지 결과 콜백. 서명 없음 · 재시도 없음.
+# ★ 이 자리는 SEC-16 규약으로 갚을 수 있는 후보다(§0.4 밖) — UX-19 뒤 판단.
+backend/media_data/services/media_data_detect_service.py

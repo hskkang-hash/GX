@@ -24,6 +24,7 @@ import { Main } from 'rj-core';
 
 import { dsmEndpoint, dsmGet } from '../api';
 import { linkStatusBadge, linkStatusLabel } from '../copy';
+import { VerdictBadge } from '../components/ResponseSteps';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import {
@@ -33,9 +34,7 @@ import {
   SEVERITY_COLOR,
   SEVERITY_ICON,
   SEVERITY_LABEL,
-  STATUS_LABEL,
   SYSTEM_EVENT_TYPES,
-  VERDICT_LABEL,
 } from '../severity';
 import { absolute, stamp, TIMEZONE_NOTE } from '../time';
 import type { EventRow, EventSummary } from '../types';
@@ -68,43 +67,63 @@ interface PresetDef {
   query: Record<string, string | number | boolean>;
 }
 
+/**
+ * ★ [UX-20 · 2026-09-26] **안내 줄을 사용자 언어로 다시 썼다.**
+ *
+ *   앞판의 `headline`·`why` 에는 「W1 프리셋」 같은 우리 절 이름과 서버 인자
+ *   (`response_state=occurred` · `since` · `until` · `mine=true`) · 감사 채널 이름이
+ *   백틱째로 들어 있었다. 백틱은 렌더되지 않고 **그대로 화면에 보인다.**
+ *
+ *   무엇을 어떻게 걸렀는가는 사실이지만 **당직자의 말이 아니다.** 그 사유는 여기
+ *   주석과 대장의 자리에 남기고, 화면에는 「지금 무엇을 보고 있는가」만 남긴다
+ *   (GX-COPY §0 · §4).
+ *
+ *   ⚠ 거른 쪽이 서버라는 사실 자체는 **버리지 않는다** — 「상한 밖의 것도 빠지지
+ *     않습니다」는 사용자에게 뜻이 있는 문장이라 사용자 언어로 남겼다.
+ *
+ *   (내부 사실 · 화면에 적지 않는다)
+ *     unhandled : `response_state=occurred` 를 서버로 보낸다
+ *     recent    : `since` 와 `until` 을 **둘 다** 보낸다 — 여는 쪽만 보내면
+ *                 「12시간 전부터 미래까지」가 된다
+ *     mine      : `mine=true` 만 보낸다. 「나」가 누구인지는 서버가 안다.
+ *                 ⚠ 내가 **판정**한 것이지 내가 **대응**한 것이 아니다 —
+ *                 대응 전이의 행위자는 행이 아니라 감사에 있다
+ *     system    : `event_type` 으로 서버가 거른다
+ */
 const PRESETS: PresetDef[] = [
   {
     key: 'unhandled',
     label: '미처리',
-    headline: 'W1 프리셋 · 미처리 — 대응 축이 아직 「발생」인 것',
+    headline: '미처리 — 아직 아무도 손대지 않은 것',
     why:
-      '서버가 `response_state=occurred` 로 걸러 준 목록입니다. ' +
-      '화면이 페이지를 받아 거른 것이 아니므로 상한 밖의 이벤트도 빠지지 않습니다.',
+      '처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. ' +
+      '화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.',
     query: { response_state: 'occurred' },
   },
   {
     key: 'recent',
     label: `지난 ${RECENT_HOURS}시간`,
-    headline: `W1 프리셋 · 지난 ${RECENT_HOURS}시간 — 창의 두 끝을 서버가 받는다`,
+    headline: `지난 ${RECENT_HOURS}시간 — 이 시간 창 안에 난 것`,
     why:
-      '`since` 와 `until` 을 둘 다 보냅니다. 여는 쪽만 보내면 그것은 ' +
-      '「지난 12시간」이 아니라 「12시간 전부터 미래까지」입니다.',
+      `지금부터 ${RECENT_HOURS}시간 전까지, 창의 두 끝을 정해 놓고 봅니다. ` +
+      '화면을 새로 고쳐도 창이 미끄러지지 않아 위의 요약 한 줄과 같은 시간을 말합니다.',
     query: {},   // 아래에서 since·until 을 계산해 넣는다 (지금 시각이 필요하다)
   },
   {
     key: 'mine',
     label: '내 담당',
-    headline: 'W1 프리셋 · 내 담당 — 내가 판정한 이벤트',
+    headline: '내 담당 — 내가 판정한 이벤트',
     why:
-      '`mine=true` 만 보냅니다. 사번을 화면이 정하지 않습니다 — 「나」가 누구인지는 ' +
-      '서버가 압니다. ⚠ 내가 「판정」한 것이지 내가 「대응」한 것이 아닙니다: ' +
-      '대응 전이의 행위자는 행이 아니라 감사(guardianx.dsm.response)에 있습니다.',
+      '내가 실제·오탐을 판정한 이벤트입니다. 내가 처리 단계를 옮긴 것과는 다릅니다.',
     query: { mine: true },
   },
   {
     key: 'system',
     label: '시스템',
-    headline: 'W1 프리셋 · 시스템 — 장애인가 현장인가',
+    headline: '시스템 — 설비 자신이 낸 신호',
     why:
-      `현장 탐지가 아니라 설비 자신의 상태입니다 (${SYSTEM_EVENT_TYPES.join(' · ')}). ` +
-      '서버가 유형으로 걸러 줍니다 — 화면이 목록을 받아 고른 것이 아닙니다. ' +
-      '아래 「연계 상태」는 이벤트가 아니라 지금 이 순간의 신호라 따로 놓았습니다.',
+      '현장에서 난 일이 아니라 카메라·저장 장치 같은 설비 자신의 상태입니다. ' +
+      '아래 「연계 상태」는 지난 일이 아니라 지금 이 순간의 신호라 따로 놓았습니다.',
     query: { event_type: SYSTEM_EVENT_TYPES.join(',') },
   },
 ];
@@ -247,7 +266,7 @@ export default function EventList() {
                 {summary.data.reviewed}건 ·{' '}
                 {summary.data.measurable && summary.data.false_positive_rate !== null
                   ? `오탐률 ${(summary.data.false_positive_rate * 100).toFixed(1)}%`
-                  : '오탐률 잴 수 없음 (판정 0건 — 분모가 없다)'}{' '}
+                  : '아직 판정한 이벤트가 없습니다'}{' '}
                 · 미판정 {summary.data.unreviewed}건
                 {summary.data.closed_without_verdict > 0
                   ? ` (판정 없이 종료 ${summary.data.closed_without_verdict}건)`
@@ -295,10 +314,25 @@ export default function EventList() {
                 }))}
               />
               <Button onClick={events.reload}>새로고침</Button>
-              {/* 분모를 늘 보여 준다 (D-301) — 「3건」만 보면 걸러진 것인지 없는 것인지 모른다 */}
-              <Text type="secondary">
-                표시 {rows.length}건 (요청 상한 {PAGE_SIZE}건)
-              </Text>
+              {/* ★ [UX-20] 「요청 상한 50건」을 본문에서 뺐다. 상한은 **사실**이지만
+                  당직자의 말이 아니다 — 「?」 뒤로 옮겼다 (GX-COPY §2).
+                  분모를 버린 것이 아니라 **한 칸 뒤로 옮긴 것**이다(D-301). */}
+              <Space size={4}>
+                <Text type="secondary">{rows.length}건</Text>
+                <Popover
+                  content={
+                    <div style={{ maxWidth: 280 }}>
+                      한 번에 최대 {PAGE_SIZE}건까지 받아 옵니다. 조건에 맞는 이벤트가
+                      그보다 많으면 오래된 것부터 이 화면에 안 나올 수 있습니다 —
+                      기간이나 등급을 좁혀 보십시오.
+                    </div>
+                  }
+                >
+                  <Button type="text" size="small" aria-label="건수 설명">
+                    ?
+                  </Button>
+                </Popover>
+              </Space>
             </Space>
           </Space>
         </Card>
@@ -369,32 +403,23 @@ export default function EventList() {
                 },
                 { title: '카메라', dataIndex: 'stream_monitor_name', ellipsis: true },
                 {
-                  // ★ 대응 진행 — **판정과 다른 축이다** (D-399). 이 칸이 목록에 없어서
-                  //   U2 의 「미처리 이벤트 확인」이 눈짐작이었다(온보딩 U2 #2).
-                  title: '대응',
+                  // ★ [UX-22 · 2026-09-26] **세 열을 둘로 줄였다.** 앞판은 「대응 · 상태 ·
+                  //   판정」을 나란히 세웠고, 셋 다 「이 사건이 어디까지 왔나」로 읽혀
+                  //   사람이 어느 축을 보는지 몰랐다 (GX-COPY §1-4).
+                  //   남긴 축은 둘이다 — **처리 단계**(사람이 어디까지 했나)와
+                  //   **판정**(그 탐지가 진짜였나). 진위 축(`status`)은 판정과 같은 것을
+                  //   두 이름으로 부르던 열이라 사용자 화면에서 내렸다(라우트·값은 그대로).
+                  title: '처리 단계',
                   dataIndex: 'response_state',
-                  width: 120,
+                  width: 110,
                   render: (v: string) => labelOf(RESPONSE_STATE_LABEL, v),
                 },
                 {
-                  // 상태는 **형태**로 구분한다 — 색을 두 축에 쓰지 않는다 (DA-03 §2-2)
-                  title: '상태',
-                  dataIndex: 'status',
-                  width: 90,
-                  render: (v: string) => (
-                    <span
-                      style={{ textDecoration: v === 'closed' ? 'line-through' : undefined }}
-                    >
-                      {labelOf(STATUS_LABEL, v)}
-                    </span>
-                  ),
-                },
-                {
-                  // ★ 판정은 상태와 **따로** 낸다 (D-293) — 종료돼도 오탐이었음을 말한다
+                  // ★ 판정은 처리 단계와 **따로** 낸다 (D-293) — 종결돼도 오탐이었음을 말한다
                   title: '판정',
                   dataIndex: 'verdict',
                   width: 90,
-                  render: (v: string) => labelOf(VERDICT_LABEL, v),
+                  render: (v: string) => <VerdictBadge verdict={v} />,
                 },
                 {
                   title: '발생',

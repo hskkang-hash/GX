@@ -31,15 +31,15 @@ import { useParams } from 'react-router-dom';
 
 import StateBoundary from '../../dsm/components/StateBoundary';
 import { useDsmResource } from '../../dsm/hooks/useDsmResource';
+import ResponseSteps, { VerdictBadge } from '../../dsm/components/ResponseSteps';
 import {
+  advanceLabel,
   EVENT_TYPE_LABEL,
   labelOf,
   RESPONSE_STATE_LABEL,
   SEVERITY_COLOR,
   SEVERITY_ICON,
   SEVERITY_LABEL,
-  STATUS_LABEL,
-  VERDICT_LABEL,
 } from '../../dsm/severity';
 import { absolute, relative } from '../../dsm/time';
 import { dsmGet, DsmApiError, mobileEndpoint, mobilePostWithQuery } from '../api';
@@ -49,12 +49,12 @@ import type { ClipTicket, EventDetailView } from '../types';
 
 const { Text, Paragraph } = Typography;
 
-/** 서버가 준 다음 칸의 **이름표만** 여기서 정한다 — 표 자체는 서버 것이다. */
-const ADVANCE_LABEL: Record<string, string> = {
-  acknowledged: '접수 확인',
-  in_progress: '조치 중',
-  closed: '완료(종결)',
-};
+/**
+ * ★ [UX-22 · 2026-09-26] **이름표를 사전(`dsm/severity.ts`)에서 가져온다.**
+ *   여기 따로 든 표는 관제 화면과 다른 말을 쓰고 있었다 — 같은 칸이 관제에서는
+ *   「종결」, 휴대전화에서는 「완료(종결)」였다. 한 사건을 두 사람이 다른 이름으로
+ *   부르면 교대 인계에서 말이 어긋난다. **표 자체는 여전히 서버 것이다.**
+ */
 
 const ADDRESS_STATUS_LABEL: Record<string, string> = {
   resolved: '조회됨',
@@ -104,10 +104,10 @@ export default function MobileEventDetail() {
             to_state: toState,
             reason,
           });
-          message.success(`「${ADVANCE_LABEL[toState] ?? toState}」로 옮겼습니다.`);
+          message.success(`「${labelOf(RESPONSE_STATE_LABEL, toState)}」 단계로 옮겼습니다.`);
           event.reload();
         } catch (err) {
-          message.error(err instanceof Error ? err.message : '대응 진행이 실패했습니다.');
+          message.error(err instanceof Error ? err.message : '처리 단계를 옮기지 못했습니다.');
           throw err; // 모달을 닫지 않는다 — 실패했는데 닫히면 성공처럼 보인다
         } finally {
           setBusy('');
@@ -178,9 +178,12 @@ export default function MobileEventDetail() {
                     {SEVERITY_ICON[e.severity]} {labelOf(SEVERITY_LABEL, e.severity)}
                   </Tag>
                   <Text strong>{labelOf(EVENT_TYPE_LABEL, e.event_type)}</Text>
-                  <Tag>{labelOf(STATUS_LABEL, e.status)}</Tag>
-                  {/* ★ 판정은 상태와 **다른 축**이다 (D-293) — 종결된 것도 오탐이었음을 말한다. */}
-                  {e.verdict ? <Tag>{labelOf(VERDICT_LABEL, e.verdict)}</Tag> : null}
+                  {/* ★ [UX-22 · 2026-09-26] 진위 축(`status`) 태그를 내렸다 — 판정과
+                      같은 것을 다른 이름으로 부르던 칸이라 한 카드에 둘이 서면
+                      사람이 어느 축을 보는지 모른다(GX-COPY §1-4).
+                      남은 축은 **처리 단계**(아래 「현장 조치」)와 **판정** 둘이다. */}
+                  <Tag>{labelOf(RESPONSE_STATE_LABEL, e.response_state)}</Tag>
+                  <VerdictBadge verdict={e.verdict} />
                 </Space>
                 <Text style={{ fontSize: 13 }}>
                   발생 {relative(e.occurred_at)} ({absolute(e.occurred_at)})
@@ -240,17 +243,23 @@ export default function MobileEventDetail() {
                       >
                         {e.snapshot_path}
                       </Paragraph>
-                      {/* ★ 그림을 그리지 않는 이유를 적는다. 빈 자리는 「사진이 없다」로 읽힌다. */}
+                      {/* ★ 그림을 그리지 않는 이유를 적는다. 빈 자리는 「사진이 없다」로 읽힌다.
+                          ★ [UX-20 · 2026-09-26] 앞판은 저장소 제품 이름과 내부 경로
+                            (`/api/dsm/`)를 백틱째로 화면에 적었다 — 「어디에 없는지」는
+                            사용자에게 뜻이 없고, 읽는 사람에게는 우리 서랍의 지도다
+                            (GX-COPY §1-3 · §4).
+                          (내부 사실 · 화면에 적지 않는다: MinIO 객체 참조이고, 이 바이트를
+                           내보내는 라우트가 `/api/dsm/` 에 아직 없다 [실측 2026-09-04].
+                           화면이 직접 프리사인드 URL 을 만들면 무계정 링크가 되므로
+                           만들지 않았다.) */}
                       <Alert
                         type="info"
                         showIcon
-                        message="참조는 있고 표시 경로가 없습니다"
+                        message="사진이 있지만 이 화면에서는 아직 볼 수 없습니다"
                         description={
                           <Text style={{ fontSize: 12 }}>
-                            MinIO 객체 참조입니다. 이 바이트를 내보내는 라우트가
-                            `/api/dsm/` 에 없습니다 [실측 2026-09-04]. 화면이 직접
-                            프리사인드 URL 을 만들면 그것은 무계정 링크가 되므로
-                            만들지 않았습니다.
+                            사진은 보관되어 있습니다. 휴대전화 화면에서 여는 길이 아직
+                            열리지 않았습니다 — 관제 화면에서 확인하십시오.
                           </Text>
                         }
                       />
@@ -306,14 +315,12 @@ export default function MobileEventDetail() {
                 size={8}
                 style={{ width: '100%' }}
               >
-                <Text style={{ fontSize: 13 }}>
-                  지금: <Tag>{labelOf(RESPONSE_STATE_LABEL, e.response_state)}</Tag>
-                </Text>
+                {/* ★ [UX-22] 처리 단계 한 줄 — 미처리 → 접수 → 조치 중 → 종결 */}
+                <ResponseSteps state={e.response_state} />
 
                 {(e.allowed_next ?? []).length === 0 ? (
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    지금 이 계정이 옮길 수 있는 칸이 없습니다. (서버가 낸 목록이 비어
-                    있습니다 — 화면이 표를 따로 들지 않습니다.)
+                    지금 이 계정이 옮길 수 있는 다음 단계가 없습니다.
                   </Text>
                 ) : (
                   <Space
@@ -334,7 +341,7 @@ export default function MobileEventDetail() {
                           onClick={() => advance(next, backward)}
                         >
                           {backward ? '되돌리기 → ' : ''}
-                          {ADVANCE_LABEL[next] ?? next}
+                          {advanceLabel(next)}
                         </Button>
                       );
                     })}

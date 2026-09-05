@@ -42,11 +42,11 @@ import {
   SEVERITY_COLOR,
   SEVERITY_ICON,
   SEVERITY_LABEL,
-  STATUS_LABEL,
-  VERDICT_LABEL,
+  advanceLabel,
 } from '../severity';
 import EventSnapshot from '../components/EventSnapshot';
 import ResponseClock from '../components/ResponseClock';
+import ResponseSteps, { VerdictBadge } from '../components/ResponseSteps';
 import { absolute, durationOrAbsent, relative, stamp, TIMEZONE_NOTE } from '../time';
 import type { DeliveryRow, EventDetailView, ResponseTimeline } from '../types';
 
@@ -59,15 +59,11 @@ const ADDRESS_STATUS_LABEL: Record<string, string> = {
 };
 
 /**
- * ★ 대응 진행 버튼의 라벨. **전이표를 화면이 들지 않는다** — 서버가 준 `allowed_next`
- *   에 있는 값만 그린다. 화면이 자기 표를 들면 서버가 거절하는 버튼을 그리게 된다(D-399).
- *   이 표는 「값 → 사람이 읽는 말」일 뿐이고, **무엇이 가능한가는 여기 없다.**
+ * ★ 대응 진행 버튼의 라벨은 **사전(`severity.ts`)에서 온다** (UX-22 · 2026-09-26).
+ *   두 벌을 두면 목록·상세·큐가 같은 칸을 서로 다른 말로 부른다.
+ *   **전이표는 여전히 화면이 들지 않는다** — 서버가 준 `allowed_next` 에 있는 값만
+ *   그린다. 이 표는 「값 → 사람이 읽는 말」일 뿐이고 **무엇이 가능한가는 여기 없다**(D-399).
  */
-const ADVANCE_LABEL: Record<string, string> = {
-  acknowledged: '접수 확인',
-  in_progress: '조치 시작',
-  closed: '종결',
-};
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
@@ -198,10 +194,10 @@ export default function EventDetail() {
         setBusy(toState);
         try {
           await postWith(dsmEndpoint.response(id), { to_state: toState, reason });
-          message.success(`대응 진행을 「${ADVANCE_LABEL[toState] ?? toState}」로 옮겼습니다.`);
+          message.success(`처리 단계를 「${labelOf(RESPONSE_STATE_LABEL, toState)}」 단계로 옮겼습니다.`);
           event.reload();
         } catch (err) {
-          message.error(err instanceof Error ? err.message : '대응 진행이 실패했습니다.');
+          message.error(err instanceof Error ? err.message : '처리 단계를 옮기지 못했습니다.');
           throw err;
         } finally {
           setBusy('');
@@ -217,7 +213,7 @@ export default function EventDetail() {
         content: (
           <Space direction="vertical" style={{ width: '100%' }}>
             <Text type="secondary">
-              되돌림은 「종결 → 조치중」 하나뿐이고 관제팀장만 할 수 있습니다. 사유가 비면
+              되돌림은 「종결 → 조치 중」 하나뿐이고 관제팀장만 할 수 있습니다. 사유가 비면
               서버가 400 으로 거절합니다 — 무엇에서 무엇으로는 표가 알고 「왜」는 여기서만
               들어옵니다.
             </Text>
@@ -253,8 +249,10 @@ export default function EventDetail() {
             </Space>
           </Col>
           <Col>
+            {/* ★ [UX-20] 「규칙대로 발송」 → 「알림 보내기」. 「규칙대로」가 무엇인지는
+                이 화면 앞에서 알 수 없다 (GX-COPY §2). */}
             <Button type="primary" loading={sending} onClick={notify}>
-              규칙대로 발송
+              알림 보내기
             </Button>
           </Col>
         </Row>
@@ -271,13 +269,16 @@ export default function EventDetail() {
                 <Descriptions.Item label="유형">
                   {labelOf(EVENT_TYPE_LABEL, e.event_type)}
                 </Descriptions.Item>
-                <Descriptions.Item label="상태">
-                  <span style={{ textDecoration: e.status === 'closed' ? 'line-through' : undefined }}>
-                    {labelOf(STATUS_LABEL, e.status)}
-                  </span>
+                {/* ★ [UX-22 · 2026-09-26] **넷이던 축을 둘로 줄였다.** 앞판은 「상태 ·
+                    판정 · 대응 진행」을 나란히 세웠고, 「상태」는 판정과 같은 것을 다른
+                    이름(「기각」)으로 부르던 칸이었다 — 같은 건이 화면에서 두 이름을
+                    갖는다. 사용자에게 남기는 축은 **처리 단계**와 **판정** 둘이고,
+                    진위 축은 관리자 자리로 물러난다(값·라우트는 그대로 · GX-COPY §1-2). */}
+                <Descriptions.Item label="처리 단계">
+                  {labelOf(RESPONSE_STATE_LABEL, e.response_state)}
                 </Descriptions.Item>
                 <Descriptions.Item label="판정">
-                  {labelOf(VERDICT_LABEL, e.verdict)}
+                  <VerdictBadge verdict={e.verdict} />
                 </Descriptions.Item>
                 <Descriptions.Item label="발생 시각">
                   {absolute(e.occurred_at)} · {relative(e.occurred_at)}
@@ -305,10 +306,6 @@ export default function EventDetail() {
                 <Descriptions.Item label="영상 구간">
                   {e.clip_path ? '있음' : '없음'}
                 </Descriptions.Item>
-                {/* ★ 대응 진행은 **판정과 다른 축이다** (D-399). 같은 칸에 두지 않는다. */}
-                <Descriptions.Item label="대응 진행">
-                  {labelOf(RESPONSE_STATE_LABEL, e.response_state)}
-                </Descriptions.Item>
                 <Descriptions.Item label="판정자">
                   {e.reviewed_by_id ? `#${e.reviewed_by_id}` : '아직 아무도 판정하지 않음'}
                   {e.reviewed_at ? ` · ${stamp(e.reviewed_at)}` : ''}
@@ -328,7 +325,7 @@ export default function EventDetail() {
         {e && (
           <Card
             size="small"
-            title="대응 시계 — 발생 → 접수 확인 → 조치 착수 → 종결"
+            title="대응 시계 — 미처리 → 접수 → 조치 중 → 종결"
           >
             <StateBoundary
               state={timeline.state}
@@ -355,11 +352,14 @@ export default function EventDetail() {
                         <Alert
                           type="warning"
                           showIcon
+                          /* ★ [UX-20] 절 ID(P-16)와 마크다운 별표를 뺐다 — 별표는
+                             렌더되지 않고 화면에 그대로 보인다. 통계 이야기(p50/p95
+                             분모)는 관리자 자리로 옮기고, 당직자에게 뜻이 있는
+                             「사람이 닫은 것이 아니다」만 남긴다 (GX-COPY §4). */
                           message="이 이벤트는 사람이 닫은 것이 아닙니다."
                           description={
-                            '오탐 판정에 따라 규칙이 자동 종결했습니다(P-16). ' +
-                            '그래서 이 건은 대응 시간 p50/p95 의 **분모에서 빠집니다** — ' +
-                            '빼지 않으면 오탐이 많을수록 대응이 빨라 보입니다.'
+                            '오탐으로 판정하여 자동으로 종결된 건입니다. ' +
+                            '대응 시간 통계에는 이 건을 넣지 않습니다.'
                           }
                         />
                       ) : null}
@@ -403,10 +403,15 @@ export default function EventDetail() {
                               )
                               .join(' · ')}
                       </Text>
+                      {/* ★ [UX-20] 이 자리에 감사 채널 이름(`guardianx.dsm.response`)이
+                          백틱째로 떠 있었다. 「어디에서 왔는가」는 사실이지만 당직자에게
+                          뜻이 없고, 읽는 사람에게는 우리 서랍의 지도다 (GX-COPY §1-3).
+                          (내부 사실 · 화면에 적지 않는다: 네 시각은 대응 전이 감사에서
+                           세운다 — 모델에 칸을 새로 만들지 않았다. 새 칸은 태어나는 순간
+                           과거가 비어 있고, 빈 과거는 「대응이 빨랐다」로 읽힌다.) */}
                       <Text type="secondary" style={{ fontSize: 12 }}>
-                        이 네 시각은 대응 전이 <b>감사</b>(`guardianx.dsm.response`)에서
-                        세운 것입니다 — 모델에 칸을 새로 만들지 않았습니다. 새 칸은 태어나는
-                        순간 과거가 비어 있고, 빈 과거는 「대응이 빨랐다」로 읽힙니다.
+                        네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는
+                        칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.
                       </Text>
                     </Space>
                   </Col>
@@ -419,8 +424,11 @@ export default function EventDetail() {
         {/* ── W2 진위 판정 · 대응 진행 (U1 #11 · U2 #3 · D-399/D-414) ─────────
             ★ 이 칸이 이 화면에만 있는 글자다 — 검수 촬영이 이것으로 단언한다. */}
         {e && (
-          <Card size="small" title="진위 판정 · 대응 진행">
-            <Space direction="vertical" size="small" style={{ width: '100%' }}>
+          <Card size="small" title="처리 단계 · 진위 판정">
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              {/* ★ [UX-22] **처리 단계 한 줄.** 네 칸을 한 줄로 세워 「지금 어디까지
+                  왔나」를 한 눈에 낸다 — 앞판은 이 정보가 세 열에 흩어져 있었다. */}
+              <ResponseSteps state={e.response_state} />
               <Space wrap>
                 <Text strong>진위 판정</Text>
                 <Button
@@ -437,17 +445,15 @@ export default function EventDetail() {
                 >
                   오탐으로 판정
                 </Button>
-                <Text type="secondary">
-                  현재 판정: {labelOf(VERDICT_LABEL, e.verdict)}
-                </Text>
+                <Text type="secondary">현재 판정</Text>
+                <VerdictBadge verdict={e.verdict} />
               </Space>
 
               <Space wrap>
-                <Text strong>대응 진행</Text>
-                <Text>{labelOf(RESPONSE_STATE_LABEL, e.response_state)}</Text>
+                <Text strong>다음 단계</Text>
                 {(e.allowed_next ?? []).length === 0 ? (
                   <Text type="secondary">
-                    → 여기서 갈 수 있는 다음 칸이 없습니다 (서버가 그렇게 답했습니다)
+                    여기서 옮길 수 있는 다음 단계가 없습니다.
                   </Text>
                 ) : (
                   (e.allowed_next ?? []).map((next) => {
@@ -460,7 +466,7 @@ export default function EventDetail() {
                         loading={busy === next}
                         onClick={() => advance(next, backward)}
                       >
-                        {backward ? '되돌리기 (사유 필수)' : `→ ${ADVANCE_LABEL[next] ?? next}`}
+                        {backward ? '되돌리기 (사유 필수)' : advanceLabel(next)}
                       </Button>
                     );
                   })
@@ -484,9 +490,10 @@ export default function EventDetail() {
           </Card>
         )}
 
-        <Card size="small" title="발송 이력 (F-10)">
+        <Card size="small" title="발송 이력">
           {/* ★ F-10 은 「심각 등급 발생 후 30초 내 발송 기록」이다.
-              위의 발생 시각과 아래의 발송 시각이 **한 화면에** 있어야 사람이 잰다. */}
+              위의 발생 시각과 아래의 발송 시각이 **한 화면에** 있어야 사람이 잰다.
+              ★ [UX-20] 제목에서 절 ID(F-10)를 뺐다 — 절 이름은 제목이 아니다. */}
           <StateBoundary
             state={deliveries.state}
             reason={deliveries.reason}
@@ -529,8 +536,10 @@ export default function EventDetail() {
           <Alert
             type="info"
             showIcon
-            message="계약 F-10 — 심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다."
-            description="위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그것이 30초를 거짓으로 통과하지 못하게 하는 규약입니다."
+            /* ★ [UX-20] 절 ID(계약 F-10)를 문장에서 뺐다. 「30초」라는 약속은
+               당직자에게 뜻이 있으므로 남기고, 그 약속의 이름만 뺀다. */
+            message="심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다."
+            description="위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다."
           />
         )}
 

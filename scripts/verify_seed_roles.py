@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""U2·U4 역할 사람이 **지금 이 환경에 있는가** — 네 수를 잰다 (2026-09-04 · 차선 E3).
+"""U1·U2·U4 역할 사람이 **지금 이 환경에 있는가** — 다섯 수를 잰다 (2026-09-04 · E3).
 
     "첫 일: 시드 확장 — U2·U4 역할 사람 각 1명(`data_source=seed`)"
         — RESUME_NEXT 2026-09-04 §E3
@@ -17,13 +17,21 @@
     둘째가 죽는다. 그 사유는 **응답에 실리지 않는다**
   · 역할이 붙어도 **소속이 없으면** K2 수신자에도, 어느 화면에도 안 잡힌다
 
-재는 것 넷
-----------
-  ① 시드 사람 2명 (U2·U4) 이 있고 **표식 셋**을 다 갖췄는가
+재는 것 다섯
+------------
+  ① 시드 사람 3명 (U1·U2·U4) 이 있고 **표식 셋**을 다 갖췄는가
   ② 각자의 역할이 정확히 하나이고, 기대한 코드인가
   ③ K3 가 그 사람에게 주는 프리셋이 기대값인가 (`matched=True`)
-  ④ K2 `critical` 수신자에 그 두 역할이 **각각 1명 이상** 잡히는가
+  ④ K2 `critical` 수신자에 그 세 역할이 **각각 1명 이상** 잡히는가
      — 「역할을 가진 사람이 있다」와 「알림이 그 사람에게 간다」는 다른 사실이다(D-301)
+  ⑤ **첫 로그인 역할 매핑 경고**가 남아 있는가 (2026-09-24 추가)
+     `get_preset` 은 매핑을 못 찾으면 `matched=False` 로 가장 좁은 화면에 떨어뜨리고
+     그 사유를 경고로 남긴다. 그 경고에는 **두 종류**가 섞여 있다:
+       ㉠ `K3_UNMAPPED_BY_DECISION` 에 이름이 적힌 역할 — **일부러 안 매핑한 것**
+       ㉡ 어디에도 안 적힌 역할        — **매핑을 빠뜨린 것**
+     ⑤가 세는 것은 ㉡뿐이다. ㉠까지 세면 「매핑하지 않기로 했다」가 결함으로 보이고,
+     그러면 결함을 지우려고 배송 역할을 재난 화면에 매핑하게 된다(D-264).
+     ㉠과, 역할이 아예 0개인 사람은 **[실측]으로 따로 찍는다** — 판정하지 않고 센다.
 
     docker exec -w /app -e PYTHONPATH=/app gx-shell python /repo/scripts/verify_seed_roles.py
     python scripts/verify_seed_roles.py --self-test     # 판정 규칙만 (Django 없이)
@@ -48,6 +56,8 @@ except (AttributeError, OSError):
 #: 기대값. 시드 명령에서 **읽어 온다** — 여기에 복사하면 두 벌이 되고 어긋난다(D-369).
 #: 이 상수는 커맨드 모듈을 못 읽었을 때의 마지막 그물이다.
 FALLBACK_EXPECT = (
+    {"key": "U1", "username": "gxseed_u1_operator",
+     "role_code": "fire_user", "expect_preset": "OPERATOR"},
     {"key": "U2", "username": "gxseed_u2_manager",
      "role_code": "fire_admin", "expect_preset": "MANAGER"},
     {"key": "U4", "username": "gxseed_u4_official",
@@ -68,7 +78,8 @@ def judge(found: dict, expect: tuple) -> list[tuple[str, bool, str]]:
         return [("시드 사람", False, "**못 쟀다** — DB 에 닿지 못했다"),
                 ("역할", False, "못 쟀다"),
                 ("프리셋", False, "못 쟀다"),
-                ("수신자", False, "못 쟀다")]
+                ("수신자", False, "못 쟀다"),
+                ("매핑 경고", False, "못 쟀다")]
 
     # ① 있는가 + 표식
     missing = [s["username"] for s in expect if s["username"] not in people]
@@ -117,6 +128,18 @@ def judge(found: dict, expect: tuple) -> list[tuple[str, bool, str]]:
                                                 json.dumps(by_role, ensure_ascii=False))
                     if not zero else
                     "규칙은 있는데 **닿는 사람이 0명**인 역할: %s" % ", ".join(zero)))
+
+    # ⑤ 매핑 경고 — **빠뜨린 것만** 센다 (㉡). ㉠·역할 0개는 아래에서 실측으로 찍는다.
+    holes = found.get("mapping_holes")
+    if holes is None:
+        out.append(("매핑 경고", False, "**못 쟀다** — K3 매핑을 읽지 못했다"))
+    else:
+        out.append(("매핑 경고", not holes,
+                    "매핑을 빠뜨린 역할 0종 — 첫 로그인 경고 없음"
+                    if not holes else
+                    "**매핑을 빠뜨린 역할**(선언도 안 됐다): %s — "
+                    "이 역할로 처음 로그인하면 가장 좁은 화면에 떨어지고 경고가 뜬다"
+                    % ", ".join("%s(%d명)" % (c, n) for c, n in sorted(holes.items()))))
     return out
 
 
@@ -188,6 +211,37 @@ def collect() -> tuple[dict, tuple, str | None]:
             people[spec["username"]] = entry
         found["people"] = people
 
+        # ── ⑤ 첫 로그인 역할 매핑 경고 ────────────────────────────────────
+        # 이 소속의 **활성 사용자 전수**를 훑는다. 시드 사람만 보면 「우리가 심은 셋은
+        # 멀쩡하다」밖에 말하지 못하고, 경고를 실제로 보는 사람은 나머지다.
+        #
+        # ★ 판정식을 복제하지 않는다(D-212·D-369): 매핑은 `settings.K3_ROLE_PRESET_MAP`,
+        #   「일부러 안 매핑한 것」은 `settings.K3_UNMAPPED_BY_DECISION` 이 정본이다.
+        #   여기서 역할 목록을 다시 적으면 두 벌이 되고, 두 벌은 반드시 어긋난다.
+        try:
+            from django.conf import settings as dj_settings
+
+            mapping = set(getattr(dj_settings, "K3_ROLE_PRESET_MAP", None) or {})
+            declared = set(getattr(dj_settings, "K3_UNMAPPED_BY_DECISION", None) or {})
+            holes, by_decision, roleless = {}, {}, []
+            for u in User._base_manager.filter(
+                    userprofilelink__group=group, is_active=True).distinct():
+                codes = sorted(r.code for r in u.roles.all())
+                if not codes:
+                    roleless.append(u.username)
+                    continue
+                if any(c in mapping for c in codes):
+                    continue                       # 하나라도 매핑되면 경고가 안 뜬다
+                for c in codes:
+                    bucket = by_decision if c in declared else holes
+                    bucket[c] = bucket.get(c, 0) + 1
+            found["mapping_holes"] = holes
+            found["mapping_by_decision"] = by_decision
+            found["roleless"] = sorted(roleless)
+        except Exception as exc:                              # noqa: BLE001
+            found["mapping_holes"] = None
+            found["mapping_error"] = "%s: %s" % (type(exc).__name__, exc)
+
         from kernels.k2_notify import resolve_recipients
         rec = resolve_recipients(scope=TenantScope.of(peer),
                                  severity="critical", group=group)
@@ -221,7 +275,8 @@ def self_test() -> int:
     birth = {"people": {s["username"]: {"roles": [], "group_ok": True, "marked": True,
                                         "preset": "OPERATOR", "matched": False}
                         for s in expect},
-             "recipients_total": 12, "recipients_by_role": {"operator": 12}}
+             "recipients_total": 12, "recipients_by_role": {"operator": 12},
+             "mapping_holes": {}}
     r = judge(birth, expect)
     #: ★ 출생 표본의 요점은 **초록이 아니어야 한다**는 것이다. 「전부 빨강」이 아니라
     #:   「하나라도 빨강」으로 잰다 — 그날 소속과 표식은 멀쩡했고 **역할만** 없었다.
@@ -237,7 +292,8 @@ def self_test() -> int:
     half = {"people": {s["username"]: {"roles": [], "group_ok": False, "marked": False,
                                        "preset": "OPERATOR", "matched": False}
                        for s in expect},
-            "recipients_total": 12, "recipients_by_role": {"operator": 12}}
+            "recipients_total": 12, "recipients_by_role": {"operator": 12},
+            "mapping_holes": {"fire_user": 1}}
     r = judge(half, expect)
     ok &= not any(p for _, p, _ in r)
 
@@ -245,9 +301,10 @@ def self_test() -> int:
     good = {"people": {s["username"]: {"roles": [s["role_code"]], "group_ok": True,
                                        "marked": True, "preset": s["expect_preset"],
                                        "matched": True} for s in expect},
-            "recipients_total": 14,
-            "recipients_by_role": {"operator": 12, "fire_admin": 1,
-                                   "view_only_-_anyang": 1}}
+            "recipients_total": 15,
+            "recipients_by_role": {"fire_user": 1, "operator": 12, "fire_admin": 1,
+                                   "view_only_-_anyang": 1},
+            "mapping_holes": {}}
     r = judge(good, expect)
     ok &= all(p for _, p, _ in r)
 
@@ -255,7 +312,30 @@ def self_test() -> int:
     unreached = dict(good)
     unreached["recipients_by_role"] = {"operator": 12}
     r = judge(unreached, expect)
-    ok &= [p for _, p, _ in r] == [True, True, True, False]
+    ok &= [p for _, p, _ in r] == [True, True, True, False, True]
+
+    # ── ⑤ 매핑 경고 — **㉠(선언된 결정)과 ㉡(빠뜨린 것)을 가르는가** ──────
+    #   [실측 2026-09-24] 소속 4 에는 `order` 역할 9명이 matched=False 로 떨어진다.
+    #   그 역할은 `K3_UNMAPPED_BY_DECISION` 에 이름이 적혀 있다 — **배송 역할을 재난
+    #   화면에 매핑하지 않기로 한 결정**이다. 이것을 경고로 세면, 경고를 지우는 가장
+    #   빠른 길이 「배송 역할을 재난 화면에 매핑하는 것」이 된다. 그러면 §0.4 금지구역의
+    #   사람들이 재난 관제 화면을 얻고, 판정기가 그 사고의 원인이 된다.
+    by_decision_only = dict(good)
+    by_decision_only["mapping_holes"] = {}
+    by_decision_only["mapping_by_decision"] = {"order": 9}
+    r = judge(by_decision_only, expect)
+    ok &= all(p for _, p, _ in r)
+
+    hole = dict(good)
+    hole["mapping_holes"] = {"surveillance_order": 3}
+    r = judge(hole, expect)
+    ok &= [p for _, p, _ in r] == [True, True, True, True, False]
+
+    # 매핑을 **못 읽었다** → ⑤는 초록이 아니다. 회색은 초록이 아니다(D-301)
+    blind = dict(good)
+    blind["mapping_holes"] = None
+    r = judge(blind, expect)
+    ok &= [p for _, p, _ in r] == [True, True, True, True, False]
 
     print("self-test: %s" % ("통과" if ok else "실패"))
     return EXIT_OK if ok else EXIT_FAIL
@@ -278,6 +358,23 @@ def main() -> int:
     rows = judge(found, expect)
     for name, passed, why2 in rows:
         print("  %s %-12s %s" % ("OK  " if passed else "FAIL", name, why2))
+
+    # ── 판정하지 않고 **세는** 두 줄. 없애야 할 것과 그냥 그런 것을 가른다 ──
+    by_dec = found.get("mapping_by_decision")
+    if by_dec is not None:
+        print("  [실측] 일부러 매핑하지 않은 역할로 로그인하는 사람: %s"
+              % (", ".join("%s(%d명)" % kv for kv in sorted(by_dec.items()))
+                 or "없다"))
+        print("         — `K3_UNMAPPED_BY_DECISION` 에 이름이 적혀 있다. **선언된 결정**이지")
+        print("           빠뜨린 자리가 아니다. 이들을 재난 화면에 매핑하면 그 순간")
+        print("           「매핑하지 않기로 했다」가 사라진다(D-264).")
+    roleless = found.get("roleless")
+    if roleless is not None:
+        print("  [실측] 역할이 **0개**인 활성 계정: %s"
+              % (", ".join(roleless) or "없다"))
+        print("         — 매핑의 문제가 아니라 **계정의 문제**다. 역할이 없으면 고를 프리셋도")
+        print("           없다. 이 판정기는 세기만 한다 — 누구에게 어떤 역할을 줄지는")
+        print("           시드가 정할 일이 아니다.")
     return EXIT_OK if all(p for _, p, _ in rows) else EXIT_FAIL
 
 

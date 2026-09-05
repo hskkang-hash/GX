@@ -38,10 +38,26 @@ import {
   useUserInfo,
 } from 'rj-core';
 
-import logoExpandedLightModeDefault from './assets/images/Full Version-Black.png';
-import logoExpandedDarkModeDefault from './assets/images/Full Version-White.png';
-import logoLightModeDefault from './assets/images/Short Version-Black.png';
-import logoDarkModeDefault from './assets/images/Short Version-White.png';
+/**
+ * ★ [UX-21 · 2026-09-26 · 차선 C] **로고 자산의 이름에서 공백을 뺐다.**
+ *
+ *   [실측 2026-09-25 · 화면 24장] 전 화면에서 로고가 깨져 `alt` 텍스트(「logo」)만
+ *   떠 있었다(결함 #2). 앞판이 가리키던 파일 이름에는 **공백**이 있었고
+ *   (`Full Version-Black.png`), 번들은 그것을 `assets/Full%20Version-Black-….png`
+ *   로 냈다 [실측 — `backend/_fe_dist/assets/index-*.js` 에 그대로 있다].
+ *   그 `%20` 은 정적 파일을 내주는 쪽(개발 서버·nginx·WhiteNoise)마다 다르게 풀리고,
+ *   한 곳에서만 안 풀려도 화면에는 **깨진 그림 한 장**이 뜬다. 그 그림은
+ *   「로고가 없다」와 구별되지 않는다.
+ *
+ *   ⚠ **원본 파일을 지우지 않았다** — 삭제는 대표 승인 사항이다. 공백 없는 이름의
+ *     사본을 더하고 여기서 그것을 가리킨다. 인수 코드가 옛 이름을 쓰고 있어도 안 깨진다.
+ *   ⚠ 이 한 줄이 로고를 살렸는지는 **다시 찍어 봐야 안다**(재촬영은 턴 D). 공백은
+ *     원인의 후보이지 확인된 원인이 아니다 — [추정]이라고 적는다.
+ */
+import logoExpandedLightModeDefault from './assets/images/logo-full-black.png';
+import logoExpandedDarkModeDefault from './assets/images/logo-full-white.png';
+import logoLightModeDefault from './assets/images/logo-short-black.png';
+import logoDarkModeDefault from './assets/images/logo-short-white.png';
 import backgroundImageDefault from './assets/images/backgroundLogin.png';
 import { FileManagement } from './components/FileManagement/FileManagement';
 import { FormNavigationBlocker } from './components/FormNavigationBlocker';

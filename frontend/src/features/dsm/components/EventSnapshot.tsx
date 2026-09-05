@@ -41,6 +41,8 @@ export default function EventSnapshot({
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<{ message: string; status: number } | null>(null);
   const [loading, setLoading] = useState(false);
+  /** 「다시 시도」가 누를 것이 되게 하는 값. 늘면 아래 effect 가 다시 돈다. */
+  const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
     if (!snapshotPath) {
@@ -79,7 +81,7 @@ export default function EventSnapshot({
       // ★ 반드시 되돌린다 — 안 하면 15초 갱신마다 blob 이 쌓여 관제 화면이 밤새 먹는다.
       if (revoke) revoke();
     };
-  }, [eventId, snapshotPath]);
+  }, [eventId, snapshotPath, nonce]);
 
   if (!snapshotPath) {
     return (
@@ -92,16 +94,26 @@ export default function EventSnapshot({
   if (error) {
     // ★ 503 은 **저장소가 죽은 것**이다(UX-10). 「스냅샷이 없다」와 다른 사실이므로
     //   다른 문장으로 적는다 — 하나로 묶으면 장애가 데이터 부재로 위장된다.
+    //
+    // ★ [UX-20 · 2026-09-26] **원문 오류를 그리지 않는다.** 앞판은 `error.message` 를
+    //   그대로 냈고, 화면에 「Network Error」가 떴다 — 그것은 axios 의 말이지
+    //   당직자의 말이 아니다(GX-COPY §2). 원문은 콘솔·관리자 자리에 남기고 화면에는
+    //   사용자 언어 한 줄과 **누를 것**(다시 시도)을 낸다.
     const storageDown = error.status === 503;
     return (
       <Alert
         type={storageDown ? 'warning' : 'error'}
         showIcon
-        message={storageDown ? '저장소 연결 안 됨' : '스냅샷을 받지 못했습니다.'}
+        message={storageDown ? '저장소에 연결할 수 없습니다' : '사진을 불러오지 못했습니다'}
         description={
           storageDown
-            ? `이벤트는 정상입니다 — 이미지 저장소에 닿지 못했습니다. (${error.message})`
-            : error.message
+            ? '이벤트 자체는 정상입니다 — 사진을 보관하는 저장소에 닿지 못했습니다.'
+            : '잠시 뒤 다시 시도해 주십시오.'
+        }
+        action={
+          <a onClick={() => setNonce((n) => n + 1)} role="button">
+            다시 시도
+          </a>
         }
       />
     );
@@ -114,9 +126,9 @@ export default function EventSnapshot({
         style={{ width: '100%', height, objectFit: 'contain', background: '#000' }}
       />
       <figcaption>
+        {/* ★ [UX-20] 절 ID(P-25)를 뺐다 — 절 이름은 사용자 본문의 자리가 아니다. */}
         <Text type="secondary" style={{ fontSize: 12 }}>
-          인증된 경로로 받은 프레임입니다. 이미지에는 테넌트명과 열람 시각 소인이
-          찍혀 있습니다 (P-25).
+          이 사진에는 기관명과 열람 시각이 찍혀 있습니다.
         </Text>
       </figcaption>
     </figure>

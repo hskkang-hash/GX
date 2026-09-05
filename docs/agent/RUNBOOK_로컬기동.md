@@ -51,7 +51,14 @@ pip install -r requirements.txt --no-deps 실패시 개별 처리   # dj-core �
 python -c "import core.base; import core.user.models; print('dj-core OK')"   # ★ 관문
 python manage.py check
 ```
-- DB: Docker 가능하면 `docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=devonly postgres:16` / 불가하면 Windows Postgres 설치.
+- DB: Docker 가능하면 `docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=devonly --log-opt max-size=10m --log-opt max-file=5 postgres:16` / 불가하면 Windows Postgres 설치.
+- ⚠ **`docker run` 으로 띄우는 컨테이너에는 `--log-opt` 를 반드시 붙인다** (OPS-07 · 2026-09-24).
+  `docker-compose.yml` 의 `logging` 선언은 **compose 가 만든 컨테이너에만** 닿는다.
+  손으로 띄운 컨테이너(`postgres` · `gx-fe-build` · `gx-shell`)는 그 선언 밖이고,
+  `max-size` 가 없으면 도커는 **자르지 않는다** — 디스크가 찰 때까지 쌓인다
+  ([실측] `scripts/ops_log_collectors.py` 가 그 상태를 빨강으로 찍는다).
+  값은 compose 와 **같은 값**을 쓴다: `--log-opt max-size=10m --log-opt max-file=5`
+  (컨테이너당 상한 50MB. 근거는 `docker-compose.yml` 머리말).
 - `.env` 는 `.env.example` 복사 후 로컬값. **외부 `*.gaion.dev` 의존(AI·MinIO·OpenSearch)은 전부 비우거나 더미로** — 기동 목표에 불필요. 죽는 지점이 있으면 해당 기능만 설정으로 끄고 기록.
 - `python manage.py migrate` → `runserver` → `http://localhost:8000` 응답 확인.
 

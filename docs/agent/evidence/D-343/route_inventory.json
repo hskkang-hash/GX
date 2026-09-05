@@ -1,6 +1,6 @@
 {
   "note": "D-343 ①② 라우트 인벤토리 전수. inbound_key=accepts 가 「지금 키가 닿는 자리」다. classification 의 기본값은 session_only — 판단이 서지 않으면 좁은 쪽(D-343 ②).",
-  "measured_at": "",
+  "measured_at": "2026-09-05T09:26:14+07:00",
   "totals": {
     "routes": 685,
     "by_inbound_key": {
@@ -26,9 +26,9 @@
       "JWTAuth": 9
     },
     "by_envelope": {
-      "clean": 316,
-      "authz_envelope": 248,
-      "promoted": 121
+      "clean": 291,
+      "authz_envelope": 224,
+      "promoted": 170
     },
     "authz_path_permission": 296
   },
@@ -44,7 +44,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -66,7 +66,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -88,7 +88,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -110,7 +110,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -132,7 +132,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -154,7 +154,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -176,7 +176,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -198,7 +198,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -220,7 +220,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -242,7 +242,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -264,7 +264,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -286,7 +286,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -308,7 +308,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -330,7 +330,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -352,7 +352,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -374,7 +374,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -396,7 +396,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -418,7 +418,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -440,7 +440,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -462,7 +462,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -484,7 +484,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -506,7 +506,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -528,7 +528,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -550,7 +550,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -572,7 +572,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -594,7 +594,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -616,7 +616,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -638,7 +638,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -660,7 +660,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -1163,7 +1163,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -1185,7 +1185,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -1207,7 +1207,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -1229,7 +1229,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -1244,7 +1244,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -1266,7 +1266,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -1288,7 +1288,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -1310,7 +1310,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13435,7 +13435,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13457,7 +13457,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13479,7 +13479,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13501,7 +13501,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13523,7 +13523,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13545,7 +13545,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13567,7 +13567,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13589,7 +13589,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13611,7 +13611,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13633,7 +13633,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13655,7 +13655,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -13677,7 +13677,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": false,
-      "envelope": "clean",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },

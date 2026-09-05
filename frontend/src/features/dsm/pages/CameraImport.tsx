@@ -33,7 +33,7 @@ import type { AddressGap, ImportPlan, ImportRow } from '../types';
 const { Text, Title, Paragraph } = Typography;
 
 /** 이 화면에만 있는 글자 — 검수 촬영의 단언 대상이다. */
-export const HEADLINE = 'UX-18 카메라 벌크 등록 — 표를 먼저 봅니다 (dry-run)';
+export const HEADLINE = '카메라 일괄 등록 — 표를 먼저 봅니다';
 
 const SAMPLE = `name,code,ip_source,address,detail
 정문카메라,GATE-01,rtsp://10.0.0.11/stream,경기도 안양시 만안구 안양로 123,정문
@@ -236,9 +236,12 @@ export default function CameraImportPage() {
                   columns={columns as never}
                   pagination={{ pageSize: 25, showSizeChanger: false }}
                 />
+                {/* ★ [UX-20] 내부 함수 이름(`bulk_register._plan`)을 백틱째로 화면에
+                    적고 있었다 — 우리 서랍의 지도다(GX-COPY §1-3). 사용자에게 뜻이
+                    있는 것은 「이 표가 곧 일어날 일이다」 하나다. */}
                 <Text type="secondary">
-                  이 표와 집행은 <b>같은 판정식</b>을 씁니다(`bulk_register._plan`). 두 벌이면
-                  표에 없던 일이 일어나고, 그러면 dry-run 은 보여 주기일 뿐 약속이 아니게 됩니다.
+                  이 표는 <b>실제로 저장될 내용 그대로</b>입니다. 표에 없던 일은
+                  일어나지 않습니다.
                 </Text>
               </Space>
             )}

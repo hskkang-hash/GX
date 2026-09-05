@@ -14,10 +14,15 @@
  * `docs/contracts/detection-event.md` 다. 늘리려면 **같은 커밋에서** 셋을 함께 고친다.
  */
 
+//: ★ [UX-22 · 2026-09-26] **표시 이름을 계약 3등급에 맞췄다.** 앞판은
+//:   「위험 · 경고 · 정보」였는데 계약(DA-01 F-04)의 세 낱말은 **심각 · 경계 · 주의**다.
+//:   화면과 계약이 다른 낱말을 쓰면 검수에서 「그 등급이 없다」가 된다.
+//:   ⚠ 바꾼 것은 **표시 이름뿐**이다. 왼쪽 열쇠(`critical`/`warning`/`info`)는
+//:     계약 스키마이고 그대로 둔다 — 값을 바꾸면 계약이 바뀐다 (GX-COPY §1-2).
 export const SEVERITY_LABEL: Record<string, string> = {
-  critical: '위험',
-  warning: '경고',
-  info: '정보',
+  critical: '심각',
+  warning: '경계',
+  info: '주의',
 };
 
 /** AntD `Tag` 의 색 이름. `critical` 만 빨강이다. */
@@ -69,12 +74,21 @@ export const EVENT_TYPE_LABEL: Record<string, string> = {
  */
 export const SYSTEM_EVENT_TYPES = ['camera_down', 'storage_high'] as const;
 
-/** 상태는 **형태**로 구분한다 — 여기에 색이 없는 것이 요점이다. */
+/**
+ * 진위 축(`status`) 의 표시 이름.
+ *
+ * ★ [UX-22 · 2026-09-26] **이 축은 사용자 화면에 나란히 세우지 않는다.** 앞판은
+ *   목록에 「대응 · 상태 · 판정」 세 열을, 상세에 넷을 세웠다 — 사람이 어느 축을
+ *   보는지 모른다(GX-COPY §1-4). 사용자에게 보이는 것은 **처리 단계 한 줄 +
+ *   판정 배지** 둘뿐이고, 이 표는 관리자 자리·내부 대조용으로만 남는다.
+ * ★ 「기각」을 쓰지 않는다. 같은 뜻을 두 낱말로 부르면(상태 「기각」 · 판정 「오탐」)
+ *   같은 건이 화면에서 두 이름을 갖는다 — 사전은 **오탐** 하나로 적었다.
+ */
 export const STATUS_LABEL: Record<string, string> = {
   new: '신규',
-  confirmed: '확인',
-  rejected: '기각',
-  closed: '종료',
+  confirmed: '실제',
+  rejected: '오탐',
+  closed: '종결',
 };
 
 /**
@@ -101,12 +115,45 @@ export const VERDICT_LABEL: Record<string, string> = {
  * 뜻하면 진짜 빨강이 왔을 때 아무도 안 본다.
  * 정본: `backend/stream_monitors/models.py::DetectionEvent.ResponseState`.
  */
+//: ★ [UX-22 · 2026-09-26] 사전(GX-COPY §3)의 네 낱말로 맞췄다 —
+//:   **미처리 → 접수 → 조치 중 → 종결**. 앞판의 「발생 (미처리)」는 한 칸에 두 말이
+//:   들어 있어 단계 줄에 세우면 화살표가 무엇 사이인지 흐려진다.
 export const RESPONSE_STATE_LABEL: Record<string, string> = {
-  occurred: '발생 (미처리)',
-  acknowledged: '접수 확인',
-  in_progress: '조치중',
+  occurred: '미처리',
+  acknowledged: '접수',
+  in_progress: '조치 중',
   closed: '종결',
 };
+
+/**
+ * **처리 단계 한 줄** 의 순서 (UX-22). 화면이 이 순서로 네 칸을 그린다.
+ *
+ * ★ 이것은 「무엇을 그릴 것인가」이지 **「무엇이 가능한가」가 아니다.** 다음에 갈 수
+ *   있는 칸은 서버가 `allowed_next` 로 말한다 — 화면이 전이표를 들면 서버가 거절하는
+ *   버튼을 그리게 된다 (D-399).
+ */
+export const RESPONSE_STEPS = ['occurred', 'acknowledged', 'in_progress', 'closed'] as const;
+
+/**
+ * 단추에 쓰는 **동사꼴**. 앞판은 라벨 뒤에 「(으)로」를 붙여 화면에 「종결(으)로」가
+ * 떴다 — 프로그램이 만든 조사는 사람의 말이 아니다(GX-COPY §2). 조사를 붙이지 않고
+ * 낱말 자체를 동사로 적는다.
+ */
+export const ADVANCE_LABEL: Record<string, string> = {
+  acknowledged: '접수하기',
+  in_progress: '조치 시작',
+  closed: '종결하기',
+};
+
+export function advanceLabel(next: string): string {
+  return ADVANCE_LABEL[next] ?? RESPONSE_STATE_LABEL[next] ?? next;
+}
+
+/** 처리 단계가 몇 번째 칸인가. 모르는 값이면 `-1` — 그때는 줄을 그리지 않는다. */
+export function responseStepIndex(state: string | null | undefined): number {
+  if (!state) return -1;
+  return (RESPONSE_STEPS as readonly string[]).indexOf(state);
+}
 
 export function severityLabel(severity: string): string {
   return SEVERITY_LABEL[severity] ?? severity;

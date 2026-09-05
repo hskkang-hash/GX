@@ -1,5 +1,15 @@
 version: '3.8'
 
+# 로그 회전·상한 — 운영 compose 와 **같은 값**이다 (OPS-07 · 2026-09-24).
+# 근거·실측은 `docker-compose.yml` 머리말에 있다. 값을 두 벌로 적으면 어긋나므로
+# 여기에는 근거를 복사하지 않는다(D-369) — 다만 스테이징에만 상한이 없으면
+# 「운영은 안전한데 스테이징이 디스크를 채우는」 자리가 되므로 함께 건다.
+x-gx-logging: &gx-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   # Nginx service as reverse proxy
   nginx-stg:
@@ -14,6 +24,7 @@ services:
       - backend-stg
       - frontend-stg
     restart: unless-stopped
+    logging: *gx-logging
     networks:
       - guardianx-stg-network
 
@@ -34,6 +45,7 @@ services:
     depends_on:
       - backend-stg
     restart: unless-stopped
+    logging: *gx-logging
     networks:
       - guardianx-stg-network
 
@@ -58,6 +70,7 @@ services:
     env_file:
       - ./backend/.env.stg
     restart: unless-stopped
+    logging: *gx-logging
     networks:
       - guardianx-stg-network
     depends_on:
@@ -83,6 +96,7 @@ services:
     env_file:
       - ./backend/.env.stg
     restart: unless-stopped
+    logging: *gx-logging
     networks:
       - guardianx-stg-network
     depends_on:
@@ -95,9 +109,10 @@ services:
     ports:
       - "6380:6379"
     restart: unless-stopped
+    logging: *gx-logging
     networks:
       - guardianx-stg-network
 
 networks:
   guardianx-stg-network:
-    driver: bridge 
+    driver: bridge

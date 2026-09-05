@@ -13,7 +13,7 @@
  * ★ 「끊김」이어도 **이 화면은 계속 동작한다** (DA-03 §2-3). SDN 표시만 낮춘다.
  *   그것이 계약 §2.2-2 「일방 장애 시 타방 단독 동작」을 사람이 눈으로 보는 자리다.
  */
-import { Alert, Badge, Card, Col, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
+import { Alert, Badge, Button, Card, Col, Popover, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Main } from 'rj-core';
@@ -33,6 +33,32 @@ const REFRESH_MS = 15_000;
 
 /* ★ 표시 이름은 **사전 한 곳**에서만 온다 (P-27 · `../copy`). 화면마다 자기 표를 들면
    같은 상태가 화면마다 다른 말로 불리고, 그중 하나는 반드시 늙는다. */
+
+/**
+ * F-09 다섯 상태의 **표시 이름**. 서버가 내는 열거값을 그대로 그리면 화면에
+ * 「data」 「loading」 이 뜬다 — 영문 열거값은 사용자 본문의 자리가 아니다(GX-COPY §4).
+ *
+ * ★ 모르는 값이 오면 **원문을 그린다.** 여기 없는 상태가 생겼다는 사실이 안 보이는
+ *   것보다 낫다 — 표가 열거보다 짧다는 사실 자체는 아무도 못 본다(D-286).
+ */
+const PANEL_STATE_LABEL: Record<string, string> = {
+  data: '정상',
+  loading: '불러오는 중',
+  empty: '비어 있음',
+  error: '오류',
+  forbidden: '권한 없음',
+};
+
+/**
+ * K3 프리셋의 **표시 이름**. 앞판은 서버 값(`OPERATOR` · `MANAGER` · `BOSS`)을
+ * 첫 화면 큰 글씨로 그대로 그렸다 — 영문 열거값이다(GX-COPY §4).
+ * ⚠ 값은 계약 쪽이고 여기서는 **표시만** 바꾼다.
+ */
+const PRESET_LABEL: Record<string, string> = {
+  OPERATOR: '관제요원 화면',
+  MANAGER: '관제팀장 화면',
+  BOSS: '기관장 화면',
+};
 
 export default function ControlDashboard() {
   const navigate = useNavigate();
@@ -82,13 +108,17 @@ export default function ControlDashboard() {
           </Col>
         </Row>
 
-        {/* ① 프리셋 — 못 찾아 떨어진 상태를 **눈에 보이게** 둔다 */}
+        {/* ① 프리셋 — 못 찾아 떨어진 상태를 **눈에 보이게** 둔다
+            ★ [UX-20/UX-21 · 2026-09-26] 앞판은 설정 상수 이름(`K3_ROLE_PRESET_MAP`)을
+              본문에 적었다. 그것은 관리자의 말이고 첫 로그인한 당직자의 말이 아니다 —
+              사전(GX-COPY §2)이 이 문장을 이미 정해 두었다. 상수 이름은 관리자 자리로
+              물러난다(설정 이름을 아는 사람은 이 경고 없이도 찾아간다). */}
         {frame.data && !frame.data.preset_matched && (
           <Alert
             type="warning"
             showIcon
-            message="역할 매핑을 찾지 못해 가장 좁은 화면으로 떨어졌습니다."
-            description="관리자에게 역할–프리셋 매핑(K3_ROLE_PRESET_MAP) 등록을 요청하십시오. 지금 보이는 것이 이 계정의 전부가 아닐 수 있습니다."
+            message="화면 구성이 아직 정해지지 않았습니다."
+            description="관리자에게 문의하십시오. 지금 보이는 것이 이 계정의 전부가 아닐 수 있습니다."
           />
         )}
 
@@ -97,28 +127,56 @@ export default function ControlDashboard() {
             <Col xs={24} md={6}>
               <Card size="small">
                 <Statistic
-                  title="화면 프리셋"
-                  value={frame.data?.preset ?? '—'}
+                  title="화면 구성"
+                  value={
+                    frame.data?.preset
+                      ? (PRESET_LABEL[frame.data.preset] ?? frame.data.preset)
+                      : '—'
+                  }
+                  valueStyle={{ fontSize: 20 }}
                   suffix={
                     <Tag color={frame.data?.preset_matched ? 'green' : 'orange'}>
-                      {frame.data?.preset_matched ? '역할 매칭' : '기본값'}
+                      {frame.data?.preset_matched ? '역할에 맞춰 설정됨' : '기본값'}
                     </Tag>
                   }
                 />
               </Card>
             </Col>
-            {/* ② 5상태 — **분모를 함께 낸다.** 「정상 3칸」만 보면 전체가 3인지 30인지 모른다 */}
+            {/* ② 5상태 — **분모를 함께 낸다.** 「정상 3칸」만 보면 전체가 3인지 30인지 모른다
+                ★ [UX-20 · 2026-09-26] 앞판은 이 계수기를 **첫 화면 본문에 크게** 폈고,
+                  칸 이름이 서버 열거값 그대로라 화면에 「data 0/0 · loading 0/0 …」이
+                  떴다(결함 #4). 이것은 **우리가 화면을 점검하는 수**이지 당직자가
+                  읽을 수가 아니다 — 사전은 「사용자 화면에서 제거 · 관리자 자리로」라고
+                  적었다(GX-COPY §2).
+                  ⚠ **버리지 않는다.** F-09 AC-09 ①이 요구하는 분자·분모는 그대로 있고,
+                    「?」 뒤로 한 칸 물러났을 뿐이다 — 없애면 그 조항을 못 보인다. */}
             <Col xs={24} md={18}>
-              <Card size="small" title={`패널 상태 (전체 ${frame.data?.panel_total ?? 0}칸)`}>
-                <Space size="large" wrap>
-                  {(frame.data?.five_states ?? []).map((s) => (
-                    <Statistic
-                      key={s}
-                      title={s}
-                      value={frame.data?.state_counts?.[s] ?? 0}
-                      suffix={`/ ${frame.data?.panel_total ?? 0}`}
-                    />
-                  ))}
+              <Card size="small" title="화면 점검">
+                <Space size="small" wrap>
+                  <Text type="secondary">
+                    화면 {frame.data?.panel_total ?? 0}칸이 정상적으로 그려졌습니다.
+                  </Text>
+                  <Popover
+                    title="화면 점검 내역"
+                    content={
+                      <Space direction="vertical" size={2} style={{ maxWidth: 320 }}>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          각 칸이 다섯 상태 중 어디에 있는지 셉니다. 분모는 전체 칸 수
+                          {' '}{frame.data?.panel_total ?? 0}입니다.
+                        </Text>
+                        {(frame.data?.five_states ?? []).map((s) => (
+                          <Text key={s} style={{ fontSize: 12 }}>
+                            {PANEL_STATE_LABEL[s] ?? s}{' '}
+                            {frame.data?.state_counts?.[s] ?? 0} / {frame.data?.panel_total ?? 0}
+                          </Text>
+                        ))}
+                      </Space>
+                    }
+                  >
+                    <Button type="text" size="small" aria-label="화면 점검 설명">
+                      ?
+                    </Button>
+                  </Popover>
                 </Space>
               </Card>
             </Col>

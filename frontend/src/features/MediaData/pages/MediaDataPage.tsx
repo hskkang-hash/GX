@@ -1,4 +1,4 @@
-import { ConfigProvider, Dropdown, MenuProps } from 'antd';
+import { Alert, Button, ConfigProvider, Dropdown, MenuProps } from 'antd';
 import {
   useCallback,
   useEffect,
@@ -96,6 +96,7 @@ export const MediaDataPage = () => {
   });
   const {
     getMediaDataAPI,
+    listError,
     setPageSize,
     setCurrentPage,
     data,
@@ -976,6 +977,43 @@ export const MediaDataPage = () => {
               <MediaDataBreadcrumb
                 ref={headerPageRef}
                 items={breadcrumbItems}
+              />
+            ) : null}
+            {/* ★ [UX-10 · 2026-09-26 · 세종 P-36] **못 가져온 것을 「없다」로 그리지
+                않는다.** [실측 2026-09-14 · D-397] `/api/media-data/` 가 500 인데 이
+                자리에는 「0 of 0」 만 떠 있었다 — 당직자에게는 「영상 자료가 없다」로
+                보인다(D-378). 서버는 그때도 실패를 말하고 있었고, **화면이 안 들었다.**
+
+                이제 목록 요청이 실패하면 아래 줄이 표 위에 선다. 저장소가 죽은 것
+                (503)과 그 밖의 실패를 **다른 문장으로** 적는다 — 하나로 묶으면 저장소
+                장애가 데이터 부재로 위장된다(DA-03 §2-5 규칙 1).
+                ⚠ 표를 지우지 않는다. 앞서 받아 둔 목록이 있으면 그것은 「그때는
+                  사실이었던 것」이고, 이 줄이 그 위에 「지금은 못 가져왔다」를 덮는다. */}
+            {listError ? (
+              <Alert
+                type={listError.storageDown ? 'warning' : 'error'}
+                showIcon
+                style={{ marginBottom: '0.75rem' }}
+                message={
+                  listError.storageDown
+                    ? '저장소에 연결할 수 없습니다'
+                    : '영상 자료 목록을 불러오지 못했습니다'
+                }
+                description={
+                  listError.storageDown
+                    ? '자료가 없는 것이 아니라, 자료를 보관하는 저장소에 닿지 못했습니다. 아래 목록은 지금 이 순간의 사실이 아닙니다.'
+                    : '아래 목록은 지금 이 순간의 사실이 아닙니다. 잠시 뒤 다시 시도해 주십시오.'
+                }
+                action={
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      void getMediaDataAPI();
+                    }}
+                  >
+                    다시 시도
+                  </Button>
+                }
               />
             ) : null}
             <CustomizableTable

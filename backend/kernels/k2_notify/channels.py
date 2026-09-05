@@ -82,6 +82,62 @@ class EmailChannel:
         """이 어댑터가 쓰는 타임아웃. **빠뜨릴 수 없다** (W0-17 · C-3.3)."""
         return _email_timeout()
 
+    @staticmethod
+    def configured() -> SendOutcome:
+        """SMTP 가 **실제로 설정돼 있는가**. `ok=False` 는 회색이다 (OPS-10 · 2026-09-24).
+
+        왜 이것이 따로 필요한가 — **자리 표시자는 값처럼 보인다**
+        --------------------------------------------------------
+        `settings.EMAIL_HOST_USER` 의 기본값은 `your-email@gmail.com` 이고
+        `EMAIL_HOST_PASSWORD` 의 기본값은 `your-app-password` 다. `getattr` 로 읽으면
+        **둘 다 값이 있다.** 그래서 "설정됐는가"를 진위로 물으면 언제나 참이 나오고,
+        진짜 실패는 발송을 시도한 **뒤에야** SMTP 인증 오류로 드러난다.
+        「설정 안 함」과 「설정했는데 틀림」이 같은 모양이 되는 자리다(D-290).
+
+        그래서 자리 표시자의 목록을 설정에 두고(`EMAIL_PLACEHOLDER_VALUES`) 여기서 읽는다.
+        **판정식을 여기에 복사하지 않는다**(D-212) — 목록이 늘면 한 곳만 는다.
+
+        ★ 이 함수는 **보내 보지 않는다.** 보내 보면 그것은 이미 발송이고, 발송 시도는
+          이력을 남긴다. 「설정됐는가」를 묻는 데 이력을 만들면 이력이 오염된다.
+          그러므로 이 판정은 「보낼 수 있는 모양인가」까지이고, **실제로 도달했는가는
+          사람의 수신함만 답한다.** 그 둘을 섞지 않는 것이 OPS-10 의 요점이다.
+        """
+        placeholders = set(getattr(settings, "EMAIL_PLACEHOLDER_VALUES", None) or ("",))
+        missing = []
+        for key in ("EMAIL_HOST", "EMAIL_HOST_USER", "EMAIL_HOST_PASSWORD",
+                    "DEFAULT_FROM_EMAIL"):
+            value = (getattr(settings, key, "") or "").strip()
+            if value in placeholders:
+                missing.append(key)
+        backend = str(getattr(settings, "EMAIL_BACKEND", ""))
+        if missing:
+            return SendOutcome(
+                False,
+                "SMTP 미설정 — %s 이(가) 자리 표시자 그대로다. "
+                "값은 로컬 `.env` 로만 준다(저장소에 넣지 않는다 · D-204). "
+                "백엔드=%s" % (", ".join(missing), backend))
+        return SendOutcome(True)
+
+    @staticmethod
+    def deliverable(address: str) -> SendOutcome:
+        """이 주소로 **사람이 받을 수 있는가**. 주소가 있다와 도달한다는 다르다.
+
+        시드 사람의 주소는 `@seed.invalid` 다 — RFC 2606 이 절대 존재하지 않는다고
+        못 박은 TLD 이고, 일부러 그렇게 두었다(실수로 나가도 갈 곳이 없게). 그 주소를
+        「수신자가 있다」로 세면 **경보가 도달한다**는 거짓 초록이 선다.
+        """
+        addr = (address or "").strip().lower()
+        if not addr:
+            return SendOutcome(False, "주소가 비었다")
+        for suffix in (getattr(settings, "UNDELIVERABLE_EMAIL_SUFFIXES", None)
+                       or (".invalid",)):
+            if addr.endswith(suffix):
+                return SendOutcome(
+                    False,
+                    "%s 는 **도달할 수 없는 주소**다(%s · RFC 2606). 발송 이력은 남지만 "
+                    "사람은 받지 못한다" % (address, suffix))
+        return SendOutcome(True)
+
     def send(self, *, address: str, subject: str, body: str) -> SendOutcome:
         from django.core.mail import get_connection, send_mail
 

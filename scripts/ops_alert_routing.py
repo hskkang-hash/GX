@@ -58,7 +58,9 @@ def judge(table: list[dict] | None, channels: dict | None) -> list[tuple[str, bo
         return [("① 표를 세웠는가", False, "**못 쟀다** — DB·커널에 닿지 못했다"),
                 ("② 닿는 사람 0명", False, "못 쟀다"),
                 ("③ 미구현 채널", False, "못 쟀다"),
-                ("④ 사람에게 도달", False, "못 쟀다")]
+                ("④ 사람에게 도달", False, "못 쟀다"),
+                ("⑤ 이메일 어댑터", False, "못 쟀다"),
+                ("⑥ 등급 전수", False, "못 쟀다")]
     out = []
     out.append(("① 표를 세웠는가", bool(table),
                 "규칙 %d줄을 폈다" % len(table) if table
@@ -83,7 +85,37 @@ def judge(table: list[dict] | None, channels: dict | None) -> list[tuple[str, bo
     out.append(("④ 사람에게 도달", bool(human_rows),
                 "사람에게 닿는 규칙 %d줄" % len(human_rows) if human_rows
                 else "**모든 규칙이 `log` 다 — 사람에게 도달하는 경보가 0건이다.** "
-                     "배선은 살아 있고 수신 채널만 미정이다(DA-04 D4-1)"))
+                     "배선은 살아 있고 **주소가 오면 채널 한 칸으로 켜진다**: "
+                     "`manage.py seed_alert_routing --channel email`"))
+
+    # ── ⑤ 이메일 어댑터의 **자리**가 서 있는가 (OPS-10 · 2026-09-24) ────────
+    #
+    # ★ ④와 무엇이 다른가. ④는 「지금 사람에게 가는가」이고 ⑤는 「보낼 수 있는 모양인가」다.
+    #   둘을 한 줄로 합치면, 주소가 없어서 빨간 것과 **어댑터가 없어서** 빨간 것이 같아진다.
+    #   앞엣것은 대표의 결정 대기이고 뒤엣것은 우리가 안 만든 것이다 — 그 둘을 섞으면
+    #   「업체 결정 대기」라는 말로 우리가 안 한 일이 덮인다(D-264).
+    reg = set(channels.get("registered") or ())
+    email_ok = "email" in reg and "email" not in non_human
+    out.append(("⑤ 이메일 어댑터", email_ok,
+                "`email` 어댑터가 등록돼 있고 사람에게 도달하는 채널이다 — "
+                "규칙의 채널 한 칸을 바꾸는 것으로 켜진다"
+                if email_ok else
+                "`email` 어댑터가 **없거나** 사람에게 도달하지 않는 채널로 등록돼 있다: "
+                "등록=%s / non_human=%s" % (sorted(reg), sorted(non_human))))
+
+    # ── ⑥ 등급 전수 — **규칙이 0건인 등급이 있는가** ────────────────────────
+    #   [실측 2026-09-24 착수 전] `info`·`warning` 은 규칙 0건이었다. 규칙이 0건인 등급의
+    #   이벤트는 채널을 아무리 고쳐도 아무에게도 가지 않는다 — 채널보다 앞선 구멍이다.
+    covered = channels.get("severities_covered")
+    known = channels.get("severities_all")
+    if covered is None or known is None:
+        out.append(("⑥ 등급 전수", False, "**못 쟀다** — 등급 열거를 읽지 못했다"))
+    else:
+        naked = [s for s in known if s not in covered]
+        out.append(("⑥ 등급 전수", not naked,
+                    "등급 %d종 전부에 규칙이 있다" % len(known) if not naked
+                    else "**규칙이 0건인 등급**: %s — 이 등급의 이벤트는 채널과 무관하게 "
+                         "아무에게도 가지 않는다" % ", ".join(naked)))
     return out
 
 
@@ -117,7 +149,27 @@ def collect():
         "registered": sorted(ch.REGISTRY),
         "unavailable": dict(ch.UNAVAILABLE),
         "non_human": sorted(ch.NON_HUMAN),
+        # 등급 전수는 **모델의 열거**에서 온다. 여기 목록을 적으면 등급이 늘 때
+        # 판정기가 조용히 옛 목록을 세게 된다(D-212).
+        "severities_all": list(Event.Severity.values),
+        "severities_covered": sorted(
+            set(Rule._base_manager.values_list("severity", flat=True))),
     }
+    # ── 이메일 어댑터가 **보낼 수 있는 모양인가** (OPS-10 · 2026-09-24) ──────
+    #   판정식을 여기서 짓지 않는다 — 어댑터에게 묻는다(D-212). 어댑터가 답하는 그
+    #   문장이 곧 「왜 아직 안 나가는가」의 답이고, 그 답은 한 곳에만 있어야 한다.
+    try:
+        ready = ch.EmailChannel.configured()
+        channels["email_ready"] = bool(ready.ok)
+        channels["email_reason"] = ready.reason or "SMTP 설정이 있다"
+    except Exception as exc:                                   # noqa: BLE001
+        channels["email_ready"] = None
+        channels["email_reason"] = "**못 쟀다** — %s: %s" % (type(exc).__name__, exc)
+
+    #: 채널을 켰을 때 **실제로 메일이 날아갈 도메인**. 이름이 아니라 도메인만 센다 —
+    #: 개인 주소를 증거 문서에 적지 않기 위해서다. 그런데 도메인만으로도 답이 나온다:
+    #: 「주소가 하나도 없다」와 「이미 열두 개 있다」는 완전히 다른 결정을 요구한다.
+    channels["recipient_domains"] = {}
 
     # 규칙이 어느 소속에 걸리는지는 모델마다 칸 이름이 다르다 — K1 의 판정을 빌린다.
     from kernels.k1_event.services import _owner_field
@@ -145,7 +197,25 @@ def collect():
                 else:
                     err = None
                 mine = [p for p in people if p.rule_id == rule.pk]
+                # ★ **주소가 있다**와 **사람이 받는다**는 다르다. 시드 사람의 주소는
+                #   `@seed.invalid` 다 — 일부러 도달 불가로 두었다. 그 주소를
+                #   「수신자 1명」으로만 세면 채널을 email 로 바꾼 날 이력이 전부
+                #   실패 행이 되고, 우리는 그것을 「SMTP 가 죽었다」로 읽는다.
+                reach = 0
+                for p in {q.user_id: q for q in mine}.values():
+                    try:
+                        if ch.EmailChannel.deliverable(p.address).ok:
+                            reach += 1
+                    except Exception:                          # noqa: BLE001
+                        reach = -1
+                        break
+                for p in {q.user_id: q for q in mine}.values():
+                    dom = (p.address or "").strip().rsplit("@", 1)
+                    key = dom[1].lower() if len(dom) == 2 else "(주소없음)"
+                    channels["recipient_domains"][key] = (
+                        channels["recipient_domains"].get(key, 0) + 1)
                 table.append({
+                    "deliverable_count": reach,
                     "group": "%s(%s)" % (group.pk, getattr(group, "name", "?")),
                     "severity": rule.severity,
                     "role": getattr(rule.role, "code", "?"),
@@ -172,7 +242,9 @@ def collect():
 def self_test() -> int:
     ok = True
     chans = {"registered": ["email", "log"], "unavailable": {"sms": "미선정"},
-             "non_human": ["log"]}
+             "non_human": ["log"],
+             "severities_all": ["info", "warning", "critical"],
+             "severities_covered": ["critical", "info", "warning"]}
     ok &= all(not p for _, p, _ in judge(None, None))
 
     good = [{"group": "4(ETRI)", "severity": "critical", "role": "fire_admin",
@@ -181,18 +253,40 @@ def self_test() -> int:
 
     zero = [dict(good[0], people_count=0)]
     r = judge(zero, chans)
-    ok &= [p for _, p, _ in r] == [True, False, True, True]
+    ok &= [p for _, p, _ in r] == [True, False, True, True, True, True]
 
     sms = [dict(good[0], channels=["sms"])]
     r = judge(sms, chans)
-    ok &= [p for _, p, _ in r] == [True, True, False, True]
+    ok &= [p for _, p, _ in r] == [True, True, False, True, True, True]
 
     onlylog = [dict(good[0], channels=["log"])]
     r = judge(onlylog, chans)
-    ok &= [p for _, p, _ in r] == [True, True, True, False]
+    ok &= [p for _, p, _ in r] == [True, True, True, False, True, True]
 
     r = judge([], chans)
     ok &= not r[0][1]
+
+    # ── ⑤ 어댑터가 없는 세상 — ④와 **다른 줄**이 빨개야 한다 ────────────────
+    #   어댑터가 없으면 주소가 와도 못 보낸다. 그 사실이 ④(로그로만 간다) 뒤에
+    #   숨으면 「대표 결정 대기」라는 말로 우리가 안 만든 것이 덮인다(D-264).
+    noemail = dict(chans, registered=["log"])
+    r = judge(onlylog, noemail)
+    ok &= [p for _, p, _ in r] == [True, True, True, False, False, True]
+
+    #   등록은 돼 있는데 **사람에게 도달하지 않는 채널**로 등록된 경우도 ⑤는 빨강이다
+    fake = dict(chans, non_human=["log", "email"])
+    r = judge(onlylog, fake)
+    ok &= [p for _, p, _ in r] == [True, True, True, False, False, True]
+
+    # ── ⑥ 규칙이 0건인 등급 — [실측 2026-09-24 착수 전] info·warning 이 그랬다 ──
+    naked = dict(chans, severities_covered=["critical"])
+    r = judge(good, naked)
+    ok &= [p for _, p, _ in r] == [True, True, True, True, True, False]
+
+    # 등급 열거를 **못 읽었다** → ⑥은 초록이 아니다. 회색은 초록이 아니다(D-301)
+    blind = dict(chans, severities_all=None)
+    r = judge(good, blind)
+    ok &= [p for _, p, _ in r] == [True, True, True, True, True, False]
 
     print("self-test: %s" % ("통과" if ok else "실패"))
     return EXIT_OK if ok else EXIT_FAIL
@@ -220,15 +314,23 @@ def main() -> int:
 
     say("## 1. 발송처 표 — **누구에게**")
     say()
-    say("| 소속 | 등급 | 역할 | 채널 | 사람에게 도달 | 받는 사람 수 | 받는 사람 |")
-    say("|---|---|---|---|---|---|---|")
+    say("| 소속 | 등급 | 역할 | 채널 | 사람에게 도달 | 받는 사람 수 | 그중 **주소가 살아 있는** 사람 | 받는 사람 |")
+    say("|---|---|---|---|---|---|---|---|")
     non_human = set(channels.get("non_human") or ())
     for r in sorted(table, key=lambda x: (x["group"], x["severity"], x["role"])):
         reaches = any(c not in non_human for c in r["channels"])
-        say("| %s | %s | %s | %s | %s | %d | %s |"
+        deliverable = r.get("deliverable_count")
+        say("| %s | %s | %s | %s | %s | %d | %s | %s |"
             % (r["group"], r["severity"], r["role"], ", ".join(r["channels"]) or "없음",
                "○" if reaches else "**✗ 로그로만 간다**",
-               r["people_count"], ", ".join(r["people"]) or "**아무도 없다**"))
+               r["people_count"],
+               "못 쟀다" if deliverable is None or deliverable < 0 else str(deliverable),
+               ", ".join(r["people"]) or "**아무도 없다**"))
+    say()
+    say("★ 「받는 사람 수」와 「주소가 살아 있는 사람」이 다른 이유: 시드 사람의 주소는")
+    say("  `@seed.invalid` 다(RFC 2606 — 절대 존재하지 않는 TLD). **주소가 있다**와")
+    say("  **사람이 받는다**는 다른 사실이고, 뒤엣것이 0이면 채널을 `email` 로 바꿔도")
+    say("  이력은 전부 실패 행이 된다 — 그것은 배선의 사실이 아니라 환경의 사실이다.")
     say()
 
     say("## 2. 덮이지 않은 자리 — **아무 규칙도 없는 등급**")
@@ -265,6 +367,47 @@ def main() -> int:
     say("  검수 환경에 도달할 수신자가 없고 업체도 미정(DA-04 D4-1)이라 메일로 보내면")
     say("  이력이 **전부 실패 행**이 된다 — 그것은 배선의 사실이 아니라 환경의 사실이다.")
     say()
+    say("### 이메일 채널 — **보낼 수 있는 모양인가** [실측]")
+    say()
+    ready = channels.get("email_ready")
+    say("  · SMTP 설정: %s" % ("**섰다**" if ready else
+                              ("**못 쟀다**" if ready is None else "**미설정(회색)**")))
+    say("  · 사유: %s" % channels.get("email_reason", "?"))
+    say()
+    doms = channels.get("recipient_domains") or {}
+    say("  · **채널을 켜면 메일이 날아갈 도메인** [실측] (규칙이 고른 사람 기준 · 중복 포함):")
+    for dom, n in sorted(doms.items(), key=lambda kv: (-kv[1], kv[0])):
+        note = ""
+        if dom.endswith(".invalid"):
+            note = "  ← 도달 불가(RFC 2606). 시드 사람이다"
+        say("      %-16s %d" % (dom, n) + note)
+    say()
+    say("  ⚠ **이 표를 읽고 채널을 켜라.** 「수신 주소가 없다」가 아니다 — 규칙이 고르는")
+    say("    사람 중 상당수는 **이미 도달 가능한 주소를 갖고 있다**(개발 계정). 채널을")
+    say("    `email` 로 바꾸는 순간 그들에게 **진짜로** 메일이 나간다. 대표에게만 보내려면")
+    say("    주소를 넣는 것이 아니라 **규칙이 고르는 역할을 먼저 좁혀야 한다.**")
+    say("    주소가 0개일 것이라고 짐작하고 켜는 것이 이 절의 가장 큰 사고 가능성이다.")
+    say()
+    say("  SMTP 자격증명과 수신 주소는 **저장소에 오지 않는다**(D-204). 로컬 `.env` 로만 온다:")
+    say("  `EMAIL_HOST` · `EMAIL_HOST_USER` · `EMAIL_HOST_PASSWORD` · `DEFAULT_FROM_EMAIL` ·")
+    say("  `K2_ALERT_EMAIL_TO` · `K2_ALERT_CHANNEL`. 이름은 `backend/.env.example` 에 있다.")
+    say()
+    say("  ★ **지금 상태는 「발송까지 · 수신 대기」다.** 어댑터는 서 있고(⑤), 세 등급 전부에")
+    say("    규칙이 있고(⑥), 남은 것은 **저장소 밖에서 오는 값 둘**이다:")
+    say("      ㉠ SMTP 자격증명 (`.env` — 지금 자리 표시자 그대로다)")
+    say("      ㉡ 대표가 줄 **수신 주소**, 그리고 그 주소만 받게 할 것인지의 결정")
+    say("    ㉡이 결정이라는 것이 위 도메인 표의 뜻이다 — 주소는 이미 있고, 문제는")
+    say("    **누가 받을 것인가**다. 둘이 오면 고칠 자리는 한 줄이다:")
+    say()
+    say("    ```")
+    say("    K2_ALERT_CHANNEL=email  python manage.py seed_alert_routing --user gxprobe_e2e")
+    say("    ```")
+    say()
+    say("  ⚠ **발송 기록은 증거가 아니다.** `DeliveryRecord` 행이 생겼다는 것은 「보냈다」이지")
+    say("    「받았다」가 아니다. 이 절을 닫는 증거는 **사람이 실제로 받은 수신함 캡처**")
+    say("    하나뿐이다 — 그 캡처가 오기 전까지 이 절의 상태는 「구현」이 아니라")
+    say("    **「발송까지 · 수신 대기」**로 적는다.")
+    say()
 
     say("## 4. 판정")
     say()
@@ -274,9 +417,10 @@ def main() -> int:
     ok = all(p for _, p, _ in rows)
     say()
     say("판정 **%s**." % ("통과" if ok else "실패"))
-    say("④가 빨간 것은 **배선의 결함이 아니라 대표 결정 대기**다(DA-04 D4-1). 그 결정이")
-    say("오면 고칠 자리는 규칙의 `channels` 한 칸이고, ①②③이 초록이면 그 한 칸을 바꾸는")
-    say("것만으로 사람에게 간다 — 그것을 미리 확인해 두는 것이 이 표의 값이다.")
+    say("④가 빨간 것은 **배선의 결함이 아니라 수신 주소 대기**다. ⑤가 초록이면 어댑터는")
+    say("서 있고, ⑥이 초록이면 규칙이 빠진 등급도 없다 — 남은 것은 주소 하나이고,")
+    say("그 하나는 저장소가 아니라 사람이 준다. **그래서 이 절은 「발송까지 · 수신 대기」다.**")
+    say("문자·카톡·앱은 여전히 대표 결정 대기이고(DA-04 D4-1), 이번 턴에 만들지 않았다.")
 
     if args.evidence:
         try:

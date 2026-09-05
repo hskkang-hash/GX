@@ -1,0 +1,29 @@
+{
+  "limit_per_minute": 200,
+  "surge_factor": 1.5,
+  "calls_sent": 300,
+  "rows_created": 300,
+  "folded": 0,
+  "dropped": 0,
+  "deferred": 817,
+  "coalesced": 3383,
+  "ran_inline": 0,
+  "drained": 0,
+  "failed": 0,
+  "drop_detail": {},
+  "leftover_rows": 0,
+  "elapsed_s": 3.961,
+  "events_per_sec": 75.7,
+  "dedup_window_s": 10.0,
+  "distinct_streams": 300,
+  "cameras_in_db": 40,
+  "group_used": "4:ETRI-Group",
+  "classification_registry": "backend/tests/tenant_classification.py",
+  "planted_tables": [
+    "stream_monitors.StreamMonitor",
+    "stream_monitors.DetectionEvent"
+  ],
+  "queue_len": 817,
+  "measured_at": "2026-09-05T03:42:35+00:00",
+  "verdict": "미룬다 (소실 0)"
+}

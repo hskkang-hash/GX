@@ -77,9 +77,23 @@ class MediaDataAPI:
             #     ① `success` 를 안 내려 봉투가 **`success: true` · `status: 500`** 이었다
             #        — dj-core `BaseResponse` 의 기본값이 True 다. 안 넘기면 조용히 참이 된다
             #     ② 문구가 「operational notice」 라 말했다 — 남의 앱 이름이다
+            #
+            # ★★ [UX-10 · 2026-09-26 · 세종 P-36] **셋째를 고친다: 코드가 틀렸다.**
+            #   [실측 2026-09-04 · 조율자 V] 같은 라우트를 두 번 때려 원인을 갈랐다 —
+            #   MinIO 미연결이면 500 두 자리, 연결하면 31건 전부 2xx. 즉 이 실패는
+            #   **우리 코드가 깨진 것(500)이 아니라 딸린 저장소가 죽은 것**이다.
+            #   500 은 「우리가 깨졌다」고 말하고, 그 말은 고치는 사람을 우리 코드로
+            #   보낸다 — 볼 것이 없는 곳으로. 저장소가 죽었을 때는 **503** 이 사실이다.
+            #   ⚠ 이것이 게이트 `route-alive` 를 초록으로 만들지 않는다(D-327). 그 게이트는
+            #     `status >= 500` 을 죽은 것으로 읽고 503 도 그 안이다 — **예외를 넣지
+            #     않는다.** 이 자리는 저장소를 붙이기 전까지 빨간 채로 있는 것이 옳다.
+            #   저장소 미도달과 그 밖의 실패를 **가른다**. 하나로 묶으면 우리 코드의
+            #   버그가 「저장소가 죽었다」로 위장된다 — 그것이 이 절이 막으려는 모양의
+            #   거울상이다.
+            storage_down = not (minio_client.available and minio_client.client)
             return BaseResponse(
                 success=False,
-                status_code=500,
+                status_code=503 if storage_down else 500,
                 message=MESSAGE_ENUM.get(MESSAGE_ENUM.MEDIA_LIST_FAILED,
                                          "Failed to retrieve media list"),
                 data=[],

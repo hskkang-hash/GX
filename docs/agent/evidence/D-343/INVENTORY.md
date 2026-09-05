@@ -1,4 +1,4 @@
-# 라우트 인벤토리 — 전수 663건 [실측 2026-09-09]
+# 라우트 인벤토리 — 전수 685건 [실측 2026-09-05T09:26:14+07:00]
 
 > D-343 ①②. `docker exec gx-shell python /repo/scripts/probe_route_inventory.py` 가 낸다.
 > 런타임 ninja 레지스트리 전수 — 정적 grep 이 아니다.
@@ -10,9 +10,9 @@
 
 | 상태 | 건수 | 뜻 |
 |---|---:|---|
-| `accepts` | 515 | **지금 키가 닿는다.** dj-core `CustomJWTAuth` 가 받는다 — 좁혀지지 않은 자리 |
-| `open_anonymous` | 104 | **인증 콜백이 없다.** 키를 검사하지도 않는다 — 「거절」이 아니다 |
-| `refuses` | 34 | 우리 문지기 `JwtOrInboundKey` 가 기본값 거절로 막는다 |
+| `accepts` | 547 | **지금 키가 닿는다.** dj-core `CustomJWTAuth` 가 받는다 — 좁혀지지 않은 자리 |
+| `open_anonymous` | 72 | **인증 콜백이 없다.** 키를 검사하지도 않는다 — 「거절」이 아니다 |
+| `refuses` | 56 | 우리 문지기 `JwtOrInboundKey` 가 기본값 거절로 막는다 |
 | `unknown` | 9 | 우리가 모르는 인증 클래스. 모른다고 적는다 (D-301) |
 | `declared` | 1 | 우리가 `inbound_key=True` 로 **선언해서** 연 자리 (사유 기재) |
 
@@ -21,7 +21,7 @@
 | 갈래 | 건수 |
 |---|---:|
 | `inbound_key_allowed` | 1 |
-| `session_only` | 662 |
+| `session_only` | 684 |
 | `internal_only` | 0 |
 
 대장: `route_classes.yaml` · 래칫 기준선: `route_baseline.txt`
@@ -31,30 +31,30 @@
 | 상태 | 건수 |
 |---|---:|
 | `none` | 651 |
-| `required` | 11 |
+| `required` | 33 |
 | `exempt` | 1 |
 
 ## 4. 앱별 (상위 20)
 
 | 앱 | 라우트 | 키가 닿음 | 관문 없음 | 테넌트 범위 |
 |---|---:|---:|---:|---:|
-| `devices` | 66 | 48 | 6 | 0 |
+| `devices` | 66 | 54 | 0 | 0 |
 | `delivery` | 60 | 51 | 9 | 0 |
-| `surveillance` | 60 | 56 | 2 | 0 |
+| `surveillance` | 60 | 58 | 0 | 0 |
 | `terminals` | 55 | 46 | 9 | 0 |
 | `v1` | 45 | 24 | 21 | 0 |
+| `dsm` | 33 | 0 | 0 | 32 |
 | `orders` | 31 | 26 | 5 | 0 |
 | `advanced-table` | 29 | 28 | 1 | 0 |
-| `stream-monitors` | 28 | 8 | 11 | 1 |
+| `stream-monitors` | 28 | 19 | 0 | 1 |
 | `handover` | 25 | 25 | 0 | 0 |
 | `third-api` | 24 | 23 | 1 | 0 |
 | `operation-settings` | 20 | 20 | 0 | 0 |
-| `operational-data` | 17 | 16 | 1 | 0 |
-| `partner` | 16 | 12 | 4 | 0 |
+| `operational-data` | 17 | 17 | 0 | 0 |
+| `partner` | 16 | 16 | 0 | 0 |
 | `menu` | 15 | 15 | 0 | 0 |
 | `apikey` | 12 | 0 | 12 | 0 |
 | `user-groups` | 12 | 12 | 0 | 0 |
-| `dsm` | 11 | 0 | 0 | 10 |
 | `optimization` | 10 | 10 | 0 | 0 |
 | `print-format` | 9 | 1 | 0 | 0 |
 | `roles` | 9 | 9 | 0 | 0 |
@@ -67,7 +67,7 @@
 
 ## 6. 인증 콜백이 없는 자리 (관문 없음)
 
-전수 104건. 그중 `@path_permission` 이 **활성**인 것 24건 —
+전수 72건. 그중 `@path_permission` 이 **활성**인 것 13건 —
 그 자리는 `probe_authn_gap_calls.py` 가 **호출로** 재고 결과를 `authn_gap_calls.json` 에 남긴다 (D-210 · D-342).
 
 | 메서드 | 경로 | authz |
@@ -85,7 +85,6 @@
 | GET | `/api/apikey/keys/{api_key_id}/usage-logs` | 없음 |
 | POST | `/api/apikey/keys/{user_id}` | 없음 |
 | GET | `/api/apikey/stats` | 없음 |
-| GET | `/api/checklist-setting/categories` | 없음 |
 | GET | `/api/comment` | 없음 |
 | GET | `/api/config-management/list-optimized` | 없음 |
 | GET | `/api/delivery/drone-monitoring/drone-status` | 없음 |
@@ -97,48 +96,17 @@
 | POST | `/api/delivery/processing/assign-packages-to-drones` | 활성 |
 | GET | `/api/delivery/processing/get-drones-by-package-and-route-optimized` | 없음 |
 | POST | `/api/delivery/verification/verify-orders` | 활성 |
-| GET | `/api/devices/devices-management` | 활성 |
-| GET | `/api/devices/devices-management/{id}` | 활성 |
-| GET | `/api/devices/libraries-management` | 활성 |
-| GET | `/api/devices/libraries-management/{id}` | 활성 |
-| GET | `/api/devices/packaging-specifications` | 활성 |
-| GET | `/api/devices/packaging-specifications/{id}` | 활성 |
-| POST | `/api/dronehw/drone-communication-management/change-status` | 없음 |
-| GET | `/api/flight-log/flight-log` | 활성 |
-| DELETE | `/api/flight-log/flight-log/delete/{ids}` | 활성 |
-| GET | `/api/flight-log/flight-log/detail/{id}` | 활성 |
-| GET | `/api/flight-log/flight-log/download-log/{id}` | 활성 |
-| POST | `/api/media-data/detect-callback` | 없음 |
-| POST | `/api/media-data/upload-detection` | 없음 |
-| GET | `/api/operational-data/operational-data/{order_item_id}` | 활성 |
 | GET | `/api/orders/banks` | 없음 |
 | GET | `/api/orders/delivery-option` | 없음 |
 | GET | `/api/orders/item-types` | 없음 |
 | POST | `/api/orders/order/{id}/payment` | 활성 |
 | GET | `/api/orders/payment-methods` | 없음 |
-| POST | `/api/partner/partner-callback-mockup/delivery-status-callback` | 없음 |
-| POST | `/api/partner/partner-callback-mockup/drone-base-station-callback` | 없음 |
-| POST | `/api/partner/partner-callback-mockup/drone-user-notice-callback` | 없음 |
-| GET | `/api/partner/partner-callback-mockup/test-websocket-connection` | 없음 |
 | GET | `/api/rating` | 없음 |
 | GET | `/api/rating/featured` | 없음 |
 | GET | `/api/register-settings` | 없음 |
 | GET | `/api/source/get-html` | 없음 |
 | GET | `/api/source/get-url` | 없음 |
 | POST | `/api/source/save-html` | 없음 |
-| GET | `/api/stream-monitors/drawing/sessions` | 없음 |
-| GET | `/api/stream-monitors/drawing/sessions/{session_id}` | 없음 |
-| POST | `/api/stream-monitors/stream-monitors` | 없음 |
-| GET | `/api/stream-monitors/stream-monitors/ai-dual-stream-status` | 없음 |
-| POST | `/api/stream-monitors/stream-monitors/external-stream-monitors` | 없음 |
-| PUT | `/api/stream-monitors/stream-monitors/external-stream-monitors` | 없음 |
-| DELETE | `/api/stream-monitors/stream-monitors/external-stream-monitors/{stream_monitor_id}` | 없음 |
-| POST | `/api/stream-monitors/stream-monitors/start-ai-dual-stream` | 없음 |
-| POST | `/api/stream-monitors/stream-monitors/stop-ai-dual-stream` | 없음 |
-| POST | `/api/stream-monitors/stream-monitors/{drone_uid}/start-recording` | 없음 |
-| POST | `/api/stream-monitors/stream-monitors/{drone_uid}/stop-recording` | 없음 |
-| POST | `/api/surveillance/surveillance-profiles/drone/mark-flight-time` | 없음 |
-| POST | `/api/surveillance/survey-missions/mission/duplicate` | 없음 |
 | GET | `/api/terminals/delivery-hubs` | 활성 |
 | GET | `/api/terminals/delivery-hubs/{id}` | 활성 |
 | GET | `/api/terminals/docking-stations` | 활성 |

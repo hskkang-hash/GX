@@ -31,6 +31,24 @@
 
     ⚠ 환산은 [추정]이다. 이 판정기는 실측(한 시간 치)과 추정(하루 치)을 **갈라서** 적는다.
 
+★ 2026-09-24 — **재는 일에서 거는 일로** (차선 E)
+--------------------------------------------------
+첫 판(2026-09-04)이 답한 것은 「무엇이 무한히 쌓이는가」였고, 답은 **컨테이너 stdout
+5개 전부**였다. 그 다음 할 일은 재는 것이 아니라 **거는 것**이다. 걸었다:
+`docker-compose.yml` · `docker-compose.stg.yml` 의 모든 서비스에
+`logging.driver: json-file` + `max-size: 10m` / `max-file: 5` (앵커 하나).
+
+그런데 **거는 것과 걸린 것은 다른 사실이다.** 도커의 `LogConfig` 는 컨테이너를
+**만들 때** 굳는다 — compose 를 고쳐도 이미 떠 있는 컨테이너에는 닿지 않는다.
+그래서 이 판정기는 이제 **두 곳을 따로 읽는다**:
+
+    ㉠ **적용** — 실행 중 컨테이너의 `HostConfig.LogConfig` (도커에게 묻는다)
+    ㉡ **선언** — compose 파일의 `services.*.logging` (파일을 읽는다)
+
+그리고 셋으로 가른다: **적용됨** · **선언은 섰고 적용은 다음 재기동** ·
+**선언할 자리조차 없다**(compose 밖 `docker run` 으로 뜬 컨테이너).
+셋을 하나로 합치면 「고쳤다」와 「고친 것이 돌고 있다」가 같아진다(D-301).
+
     python scripts/ops_log_collectors.py --evidence docs/agent/evidence/OPS-07/collectors.md
     python scripts/ops_log_collectors.py --self-test     # 판정 규칙만 (도커 없이)
 
@@ -66,6 +84,27 @@ APP_CONTAINER = "gx-shell"
 #: 길면 판정기 한 번 도는 데 오래 걸린다.
 WINDOW_MINUTES = 60
 
+#: 선언이 있어야 할 자리. **여기서 값을 정하지 않는다** — 파일에서 읽는다(D-369).
+COMPOSE_FILES = ("docker-compose.yml", "docker-compose.stg.yml")
+
+#: compose 가 만들지 않은 컨테이너 → 그 컨테이너에 **대응하는 compose 서비스**.
+#:
+#: ★ 왜 이 표가 필요한가 [실측 2026-09-24]: 떠 있는 다섯 중 compose 라벨을 가진 것은
+#:   `guardianx-source-minio-1` **하나뿐**이다. 나머지 넷은 `docker run` 으로 떴다
+#:   (`docs/agent/review/LOCAL_BRINGUP_결과.md` 가 그 명령을 기록해 두었다).
+#:   그러므로 **compose 를 고치는 것만으로는 넷에 닿지 않는다.** 그 사실을 표로
+#:   적어 두지 않으면, compose 에 선언을 넣고 「걸었다」고 적게 된다 — 그것이
+#:   이 절에서 가장 하기 쉬운 거짓말이다.
+#:
+#: `None` = 대응하는 서비스가 compose 에 아예 없다. 그런 컨테이너의 상한은
+#: `docker run --log-opt max-size=… --log-opt max-file=…` 로만 걸린다.
+ADHOC_TO_SERVICE = {
+    "gx-shell": "shell",          # compose 의 `shell` 서비스와 같은 이미지·같은 자리
+    "redis": "redis",
+    "postgres": None,             # compose 에 postgres 서비스가 없다 (외부 DB 전제)
+    "gx-fe-build": None,          # 프론트 빌드용 임시 컨테이너 — compose 밖이다
+}
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 판정 규칙 — 순수 함수 (D-277)
@@ -92,6 +131,29 @@ def judge(facts: dict) -> list[tuple[str, bool, str]]:
     out.append(("③ 자라는 속도", not unmeasured,
                 "%d개의 한 시간 치를 쟀다" % len(sinks) if not unmeasured
                 else "속도를 **못 잰** 수집기: %s" % ", ".join(unmeasured)))
+
+    # ── ④ 선언 — **고치는 자리에 값이 적혀 있는가** (2026-09-24) ──────────────
+    #
+    # ★ ②와 무엇이 다른가. ②는 「지금 돌고 있는 것에 상한이 걸려 있는가」이고
+    #   ④는 「다음에 뜰 것에 상한이 걸리는가」다. 둘을 합치면 **재기동만 하면
+    #   고쳐지는 상태**와 **아무도 안 고친 상태**가 같아 보인다. 앞엣것은 「선언은
+    #   섰고 적용은 다음 재기동」이고 뒤엣것은 그냥 빨강이다(D-301).
+    decl = facts.get("declarations")
+    if decl is None:
+        out.append(("④ 선언", False,
+                    "**못 쟀다** — compose 파일을 읽지 못했다 (PyYAML 없음/파일 없음). "
+                    "회색은 초록이 아니다"))
+    else:
+        naked = [s["name"] for s in sinks
+                 if s.get("kind") == "docker" and not s.get("declared")]
+        out.append(("④ 선언", not naked,
+                    "컨테이너 수집기 전부에 상한이 **선언돼 있다**" if not naked
+                    else "**선언할 자리조차 없는 수집기**: %s — compose 밖 "
+                         "`docker run` 으로 떴다. **compose 를 고쳐도 닿지 않는다.** "
+                         "상한은 `--log-opt max-size=10m --log-opt max-file=5` 로만 걸리고, "
+                         "그 문장은 `docs/agent/RUNBOOK_로컬기동.md` STEP 2A 에 적혀 있다 — "
+                         "이 빨강은 **다음에 그 컨테이너를 띄우는 사람**이 지운다"
+                         % ", ".join(naked)))
     return out
 
 
@@ -109,7 +171,53 @@ def docker(*args: str, timeout: int = 300, binary: bool = False):
             p.stderr.decode("utf-8", "replace").strip())
 
 
-def container_sinks() -> list[dict]:
+def compose_declarations() -> dict | None:
+    """compose 파일의 `services.*.logging` 을 읽는다. **값을 여기서 정하지 않는다.**
+
+    돌려주는 것: `{서비스이름: {"driver":…, "max-size":…, "max-file":…}}`.
+    못 읽으면 `None` — **「선언이 없다」가 아니라 「못 읽었다」다**(D-301).
+    """
+    try:
+        import yaml
+    except ImportError:
+        return None
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    out: dict = {}
+    read_any = False
+    for fname in COMPOSE_FILES:
+        path = os.path.join(root, fname)
+        if not os.path.exists(path):
+            continue
+        try:
+            with io.open(path, encoding="utf-8") as f:
+                doc = yaml.safe_load(f) or {}
+        except Exception:                              # noqa: BLE001
+            continue
+        read_any = True
+        for svc, body in (doc.get("services") or {}).items():
+            log = (body or {}).get("logging") or {}
+            opts = log.get("options") or {}
+            out[svc] = {"file": fname, "driver": log.get("driver"),
+                        "max-size": opts.get("max-size"),
+                        "max-file": opts.get("max-file")}
+    return out if read_any else None
+
+
+def _compose_service_of(name: str) -> tuple[str | None, str]:
+    """이 컨테이너의 **선언 자리**는 어느 compose 서비스인가.
+
+    compose 가 만든 컨테이너는 라벨이 답한다 — 짐작하지 않는다. 라벨이 없으면
+    `docker run` 으로 뜬 것이고, 그때만 `ADHOC_TO_SERVICE` 표를 본다.
+    """
+    rc, out, _ = docker("inspect", name, "--format",
+                        '{{index .Config.Labels "com.docker.compose.service"}}')
+    svc = out.strip() if rc == 0 else ""
+    if svc and svc != "<no value>":
+        return svc, "compose 라벨"
+    return ADHOC_TO_SERVICE.get(name), "docker run — 이름 대응표"
+
+
+def container_sinks(declarations: dict | None = None) -> list[dict]:
     sinks = []
     for name in PROJECT_CONTAINERS:
         rc, out, _ = docker("inspect", name, "--format", "{{json .HostConfig.LogConfig}}")
@@ -136,11 +244,38 @@ def container_sinks() -> list[dict]:
             retention = None                    # 모르는 드라이버는 **모른다**고 적는다
             detail = "드라이버 %s — 이 판정기가 모르는 드라이버다" % driver
 
+        # ── 선언은 어디에 있는가 — **적용과 따로 읽는다** ────────────────
+        svc, how = _compose_service_of(name)
+        declared, decl_note = False, ""
+        if declarations is None:
+            decl_note = "선언을 **못 읽었다**"
+        elif svc is None:
+            decl_note = ("compose 에 대응 서비스가 **없다**(%s) — "
+                         "`docker run --log-opt` 로만 걸린다" % how)
+        else:
+            d = declarations.get(svc)
+            if d and d.get("max-size"):
+                declared = True
+                decl_note = "%s::%s 에 %s × %s 로 선언돼 있다 (%s)" % (
+                    d["file"], svc, d["max-size"], d.get("max-file") or "1", how)
+            else:
+                decl_note = "%s 서비스에 `logging` 선언이 없다 (%s)" % (svc, how)
+
+        if declared and retention == "무한":
+            # ★ 이 자리가 이번 판의 요점이다. **선언은 섰고 적용이 안 됐다** —
+            #   도커의 LogConfig 는 컨테이너를 만들 때 굳으므로, 다음 재기동에
+            #   걸린다. 그냥 「무한」으로만 적으면 아무도 안 고친 것과 같아 보인다.
+            detail = ("%s · **선언은 섰다 · 적용은 다음 재기동** — %s"
+                      % (detail, decl_note))
+        else:
+            detail = "%s · %s" % (detail, decl_note)
+
         rc, blob, _ = docker("logs", "--since", "%dm" % WINDOW_MINUTES, name,
                              binary=True)
         per_hour = len(blob) if rc == 0 else None
         sinks.append({"name": "컨테이너 stdout · %s" % name,
                       "kind": "docker", "retention": retention,
+                      "declared": declared, "declaration": decl_note,
                       "detail": detail, "bytes_per_hour": per_hour})
     return sinks
 
@@ -246,21 +381,56 @@ def self_test() -> int:
     ok = True
     ok &= all(not p for _, p, _ in judge({}))
 
-    good = {"sinks": [{"name": "a", "retention": "10m × 3", "bytes_per_hour": 100},
-                      {"name": "b", "retention": "90일 (beat x)", "bytes_per_hour": 5}]}
+    #: 선언이 다 서 있는 세상. `kind` 가 `docker` 인 것만 ④가 본다 —
+    #: DB 수집기는 compose 가 만드는 것이 아니므로 선언 대상이 아니다.
+    good = {"declarations": {"a": {"max-size": "10m"}},
+            "sinks": [{"name": "a", "kind": "docker", "retention": "10m × 3",
+                       "declared": True, "bytes_per_hour": 100},
+                      {"name": "b", "kind": "db", "retention": "90일 (beat x)",
+                       "bytes_per_hour": 5}]}
     ok &= all(p for _, p, _ in judge(good))
 
-    forever = {"sinks": [{"name": "a", "retention": "무한", "bytes_per_hour": 100}]}
+    forever = {"declarations": {}, "sinks": [
+        {"name": "a", "kind": "docker", "retention": "무한",
+         "declared": True, "bytes_per_hour": 100}]}
     r = judge(forever)
-    ok &= [p for _, p, _ in r] == [True, False, True]
+    ok &= [p for _, p, _ in r] == [True, False, True, True]
 
-    unknown = {"sinks": [{"name": "a", "retention": None, "bytes_per_hour": 100}]}
+    unknown = {"declarations": {}, "sinks": [
+        {"name": "a", "kind": "docker", "retention": None,
+         "declared": True, "bytes_per_hour": 100}]}
     r = judge(unknown)
-    ok &= [p for _, p, _ in r] == [False, True, True]
+    ok &= [p for _, p, _ in r] == [False, True, True, True]
 
-    blind = {"sinks": [{"name": "a", "retention": "10m × 3", "bytes_per_hour": None}]}
+    blind = {"declarations": {}, "sinks": [
+        {"name": "a", "kind": "docker", "retention": "10m × 3",
+         "declared": True, "bytes_per_hour": None}]}
     r = judge(blind)
-    ok &= [p for _, p, _ in r] == [True, True, False]
+    ok &= [p for _, p, _ in r] == [True, True, False, True]
+
+    # ── ④ **이번 판의 요점** ─────────────────────────────────────────────
+    #   ㉠ 적용은 됐는데 선언이 없다 → 다음 재기동에 상한이 사라진다. ④가 빨강이다.
+    #      (②만 보면 초록이고, 그 초록이 재기동 한 번에 뒤집힌다)
+    applied_not_declared = {"declarations": {}, "sinks": [
+        {"name": "a", "kind": "docker", "retention": "10m × 3",
+         "declared": False, "bytes_per_hour": 1}]}
+    r = judge(applied_not_declared)
+    ok &= [p for _, p, _ in r] == [True, True, True, False]
+
+    #   ㉡ 선언은 섰는데 적용이 아직이다 → ②는 빨강, ④는 초록.
+    #      「선언은 섰고 적용은 다음 재기동」이 정확히 이 모양이다.
+    declared_not_applied = {"declarations": {"a": {"max-size": "10m"}}, "sinks": [
+        {"name": "a", "kind": "docker", "retention": "무한",
+         "declared": True, "bytes_per_hour": 1}]}
+    r = judge(declared_not_applied)
+    ok &= [p for _, p, _ in r] == [True, False, True, True]
+
+    #   ㉢ compose 를 **못 읽었다** → ④는 초록이 아니다. 회색은 초록이 아니다(D-301)
+    cannot_read = {"declarations": None, "sinks": [
+        {"name": "a", "kind": "docker", "retention": "10m × 3",
+         "declared": True, "bytes_per_hour": 1}]}
+    r = judge(cannot_read)
+    ok &= [p for _, p, _ in r] == [True, True, True, False]
 
     print("self-test: %s" % ("통과" if ok else "실패"))
     return EXIT_OK if ok else EXIT_FAIL
@@ -287,7 +457,8 @@ def main() -> int:
 
     say("## 1. 수집기를 전수로 센다")
     say()
-    sinks = container_sinks()
+    declarations = compose_declarations()
+    sinks = container_sinks(declarations)
     dbs, dbinfo = db_sink()
     if dbs is not None:
         sinks.append(dbs)
@@ -307,6 +478,35 @@ def main() -> int:
                format(per_h * 24, ",") if per_h is not None else "—",
                unit if per_h is not None else "",
                s.get("detail", "")))
+    say()
+
+    say("### 선언 — **다음에 뜰 컨테이너에는 걸리는가** [실측]")
+    say()
+    if declarations is None:
+        say("  ⚠ compose 파일을 **못 읽었다**(PyYAML 없음/파일 없음). 「선언이 없다」가")
+        say("    아니라 「못 읽었다」다 — 회색은 초록이 아니다(D-301).")
+    else:
+        say("| compose 서비스 | 파일 | 드라이버 | max-size | max-file |")
+        say("|---|---|---|---|---|")
+        for svc, d in sorted(declarations.items()):
+            say("| `%s` | %s | %s | %s | %s |"
+                % (svc, d["file"], d.get("driver") or "**없음**",
+                   d.get("max-size") or "**없음**", d.get("max-file") or "**없음**"))
+        say()
+        say("★ **선언과 적용은 다른 사실이다.** 도커의 `LogConfig` 는 컨테이너를 **만들 때**")
+        say("  굳는다 — 위 선언은 이미 떠 있는 컨테이너에 닿지 않는다. 그래서 ②(적용)는")
+        say("  빨간 채로 두고 ④(선언)를 따로 둔다. ②가 초록이 되는 것은 **다음 재기동**")
+        say("  때이고, 지금 재기동하지 않는 이유는 다른 차선 셋이 이 컨테이너 위에서")
+        say("  일하고 있기 때문이다 — 그것은 판정기가 정할 일이 아니다.")
+        say()
+        say("★ **보존 기간은 [판정]이다** — `max-size 10m × max-file 5` = 컨테이너당 **50MB 상한**.")
+        say("  근거는 `docker-compose.yml` 머리말에 실측과 함께 적혀 있다. 요약하면:")
+        say("  가장 시끄러운 수집기(postgres · 363 KB/일 [실측])에 대해 50MB 는 약 140일 치이고,")
+        say("  그런데도 **「N일 보존」이라고 적지 않는다** — `json-file` 회전은 크기 기반이라")
+        say("  조용한 달에는 더 오래 남고 시끄러운 날에는 몇 시간 만에 밀린다. 약속할 수 있는")
+        say("  것은 상한이지 기간이 아니다. **감사에 답하는 정본은 DB 감사 로그(90일)** 이고,")
+        say("  컨테이너 stdout 은 운영 디버깅용 **단기 버퍼**다 — 이 판정이 없으면 상한을 거는")
+        say("  일이 곧 「증거를 지우는 일」이 된다.")
     say()
 
     if dbs is not None:
@@ -333,16 +533,38 @@ def main() -> int:
 
     say("## 2. 판정")
     say()
-    facts = {"sinks": sinks}
+    facts = {"sinks": sinks, "declarations": declarations}
     rows = judge(facts)
     for name, passed, why in rows:
         say("  %s %-14s %s" % ("OK  " if passed else "FAIL", name, why))
     ok = all(p for _, p, _ in rows)
     say()
-    say("판정 **%s** — 통과가 목표가 아니다. **지금 어떤 수집기가 무한히 쌓이는지**를"
-        % ("통과" if ok else "실패"))
-    say("이 표가 처음으로 말한다. 고칠지 말지는 배포 형상이 정할 일이고, 고치는 자리는")
-    say("`docker-compose.yml` 의 `logging.options.max-size`/`max-file` 하나다.")
+    say("판정 **%s**." % ("통과" if ok else "실패"))
+    say()
+    # ★ 꼬리말을 **판정 결과에서 만든다.** 고정 문장으로 두면 「④가 초록인 것을」이라고
+    #   적어 두고 ④가 빨간 날에도 그대로 나간다 — 보고서가 자기 표와 어긋나는 자리다.
+    waiting = [s2["name"] for s2 in sinks
+               if s2.get("kind") == "docker" and s2.get("declared")
+               and s2.get("retention") == "무한"]
+    naked = [s2["name"] for s2 in sinks
+             if s2.get("kind") == "docker" and not s2.get("declared")]
+    if waiting:
+        say("**선언은 섰고 적용은 다음 재기동**인 수집기 %d개: %s"
+            % (len(waiting), ", ".join(waiting)))
+        say("  고치는 자리(`docker-compose.yml` 의 `logging.options`)에는 값이 **섰고**,")
+        say("  이미 떠 있는 컨테이너에는 **닿지 않았다** — 도커의 `LogConfig` 는 컨테이너를")
+        say("  **만들 때** 굳는다. 그러므로 ②는 다음 재기동에 초록이 된다.")
+        say("  **지금 재기동하지 않는다** — 다른 차선이 `gx-shell`·`postgres`·`minio` 위에서")
+        say("  동시에 일하고 있다. 그것은 판정기가 정할 일이 아니다.")
+        say()
+    if naked:
+        say("**선언할 자리조차 없는 수집기 %d개**: %s" % (len(naked), ", ".join(naked)))
+        say("  compose 밖에서 `docker run` 으로 떴다. 이 빨강은 compose 를 고쳐서는")
+        say("  안 지워진다 — **다음에 그 컨테이너를 띄우는 사람**이 `--log-opt` 를 붙여야")
+        say("  지워진다(`docs/agent/RUNBOOK_로컬기동.md` STEP 2A).")
+        say()
+    if not waiting and not naked:
+        say("컨테이너 수집기 전부에 상한이 **걸려 있고 선언돼 있다.**")
 
     if args.evidence:
         try:
