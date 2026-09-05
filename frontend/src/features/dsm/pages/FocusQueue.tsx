@@ -29,11 +29,13 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Main } from 'rj-core';
 
-import { dsmEndpoint, dsmGet, dsmPost, DsmApiError } from '../api';
+import { dsmEndpoint, dsmGet, dsmPostQuery, DsmApiError } from '../api';
 import EventSnapshot from '../components/EventSnapshot';
 import ResponseClock from '../components/ResponseClock';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
+import { useDetectionPing } from '../hooks/useDetectionPing';
+import { dsm2Routes } from '../routes';
 import {
   advanceLabel,
   EVENT_TYPE_LABEL,
@@ -97,12 +99,23 @@ export default function FocusQueuePage() {
     },
   );
 
+  /**
+   * UX-08 — 새 탐지가 나면 **새로고침 없이** 목록이 다시 읽힌다.
+   * ★ 덤이지 바닥이 아니다: 소켓이 안 붙어도 주기 갱신이 화면을 계속 살린다.
+   */
+  useDetectionPing(queue.reload);
+
   const advance = useCallback(
     async (eventId: number, toState: string) => {
       setActing(true);
       setActionError('');
       try {
-        await dsmPost(dsmEndpoint.response(eventId), { to_state: toState });
+        // ★ 질의로 보낸다 — 본문이면 **422(인자 없음)** 다.
+        //   [실측 2026-09-05 · 없는 id 999999999 로 두드림 · 아무것도 안 씀]
+        //       본문 → 422 loc:["query","to_state"] · 질의 → 404 (행이 없다)
+        //   이 자리는 관제요원이 **미처리를 접수로 넘기는** 단추다. 422 면 넘길 수
+        //   없는데 화면은 멀쩡히 떠 있다 — 가장 늦게 발견되는 종류의 고장이다.
+        await dsmPostQuery(dsmEndpoint.response(eventId), { to_state: toState });
         queue.reload();
       } catch (err) {
         // ★ 거절은 4xx 로 온다. 그 문장을 **화면에 그대로 낸다** — 서버가 왜
@@ -125,9 +138,20 @@ export default function FocusQueuePage() {
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
         <Row justify="space-between" align="middle">
           <Col>
-            <Title level={4} style={{ margin: 0 }}>
-              {HEADLINE}
-            </Title>
+            <Space size={4} align="center">
+              <Title level={4} style={{ margin: 0 }}>
+                {HEADLINE}
+              </Title>
+              {/* UX-03 — 역할 첫 화면의 「?」. 처음 온 사람이 여기서 시작한다. */}
+              <Button
+                type="text"
+                size="small"
+                aria-label="처음 시작하기"
+                onClick={() => navigate(`${dsm2Routes.onboarding.path}?role=OPERATOR`)}
+              >
+                ?
+              </Button>
+            </Space>
           </Col>
           <Col>
             <Text type="secondary">

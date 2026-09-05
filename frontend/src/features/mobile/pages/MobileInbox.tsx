@@ -47,6 +47,12 @@ import type { DeliveryPage, EventRow, InboxRow } from '../types';
 const { Text } = Typography;
 
 /** 한 화면에 담는 발송 기록 수. 이동 중에는 길게 스크롤하지 않는다. */
+/**
+ * 이 화면에만 있는 글자 — 캡처가 이것을 보고 찍는다.
+ * ⚠ 이 상수를 고치면 `scripts/capture_screens.py` 의 사본도 **같은 커밋에서** 고친다.
+ */
+export const HEADLINE = '내게 온 이벤트';
+
 const DELIVERY_LIMIT = 50;
 
 /**
@@ -104,7 +110,7 @@ export default function MobileInbox() {
 
   return (
     <MobileShell
-      title="내게 온 이벤트"
+      title={HEADLINE}
       loadedAt={deliveries.loadedAt}
       onReload={reload}
       banner={

@@ -45,6 +45,10 @@ export const dsmEndpoint = {
   cameraAddressGap: '/api/dsm/cameras/address-gap',
   /** UX-18 벌크 등록. **`dry_run` 기본값이 참**이다 — 표가 먼저다(D-209). */
   cameraImport: '/api/dsm/cameras/import',
+  /** M3 현장 회신 — 이동 중인 사람이 한 줄을 돌려주는 자리 (쓰기). */
+  fieldReply: (id: number | string) => `/api/dsm/events/${id}/field-reply`,
+  /** M3 현장 회신 목록 (읽기). */
+  fieldReplies: (id: number | string) => `/api/dsm/events/${id}/field-replies`,
 } as const;
 
 /** DA-03 §4-3 — 로딩이 이보다 길면 그것은 로딩이 아니라 오류다. */
@@ -129,6 +133,29 @@ export function dsmPost<T>(url: string, body?: unknown): Promise<T> {
   return withTimeout(async (signal) =>
     unwrap<T>(await API.post(url, body ?? {}, { signal })),
   );
+}
+
+/**
+ * 쿼리로 POST 한다 — **본문이 아니라 질의다.**
+ *
+ * ★ [실측 2026-09-05] 이 저장소의 dsm 라우트들은 인자를 원시 타입으로 받는다
+ *   (`def camera_import(self, request, csv_text: str, dry_run: bool = True)`).
+ *   django-ninja 규약상 그것은 **질의**이고, 본문으로 보내면 돌아오는 것은
+ *   **422 · loc: ["query", …] · "Field required"** 다. 그 422 는 「값이 틀렸다」가
+ *   아니라 **「인자가 없다」**이고, 둘을 헷갈리면 한나절이 간다.
+ *
+ * ★ 이 함수가 생긴 이유: 같은 조립을 화면마다 손으로 짜다가 **두 화면이 빠뜨렸다** —
+ *   카메라 일괄 등록과 훈련 모드의 쓰기가 그렇게 422 로 죽어 있었고,
+ *   캡처는 제목 글자만 보므로 **화면은 멀쩡히 떠 있었다.** 조립을 한 곳에 둔다.
+ */
+export function dsmPostQuery<T>(
+  url: string,
+  query: Record<string, string | number | boolean>,
+): Promise<T> {
+  const qs = new URLSearchParams(
+    Object.entries(query).map(([k, v]) => [k, String(v)]),
+  ).toString();
+  return dsmPost<T>(`${url}?${qs}`);
 }
 
 /**

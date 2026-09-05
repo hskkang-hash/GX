@@ -294,3 +294,82 @@ class RedirectHiddenRoutesRejectAnonymousTest(TestCase):
                    if p not in AUTHN_REQUIRED_PATHS]
         self.assertEqual(missing, [],
                          "시험은 아는데 관문은 모르는 경로가 있다: %r" % missing)
+
+
+class FrontLineIsTheSecondDefenseTest(TestCase):
+    """★ OPS-13 · D-361 — **관문을 앞단까지 넓힌다.**
+
+        **단일 방어선은 방어선이 아니다.**
+        미들웨어는 코드이고, 코드는 리팩터링 중에 순서가 바뀐다 — 앞단은 그때 남는다.
+
+    위의 `GateIsOutsideTheCacheTest` 는 미들웨어의 **순서**를 못박는다. 그런데 못박는
+    것과 **막는 것**은 다르다: 순서가 바뀐 그 순간부터 시험이 빨개질 때까지 요청은
+    계속 지나간다. 그래서 같은 규칙을 앞단(nginx)에 한 벌 더 걸고, **두 벌이 아직
+    같은지**를 여기서 본다.
+
+    ⚠ 이 시험이 보는 것은 **설정을 만드는 규칙**이지 떠 있는 nginx 가 아니다
+      (`gx-shell` 에 저장소의 `nginx/` 가 붙지 않는다 — backend·scripts·docs 만 붙는다).
+      떠 있는 앞단은 `scripts/ops_front_line.py --probe` 가 **호출로** 잰다(D-210).
+      [실측 2026-09-05 · 턴 C] 그 실측은 18갈래 exit 0 이었다.
+    """
+
+    def setUp(self):
+        from common import front_line
+
+        self.front = front_line
+        self.conf = front_line.render_locations()
+
+    def test_front_line_covers_every_path_the_middleware_covers(self):
+        """① 앞단이 미들웨어와 **같은 자리**를 막는다 — 슬래시 변형까지."""
+        want = set()
+        for path in AUTHN_REQUIRED_PATHS:
+            want.add(path.rstrip("/"))
+            want.add(path.rstrip("/") + "/")
+        got = self.front.parse_gated_paths(self.conf)
+        self.assertEqual(
+            got, want,
+            "앞단과 미들웨어가 갈렸다:\n  앞단만: %s\n  미들웨어만: %s"
+            % (sorted(got - want), sorted(want - got)))
+
+    def test_front_line_key_allowlist_matches_the_middleware(self):
+        """② 들어오는 키의 허용 목록도 한 벌이다 (D-343 ③)."""
+        want = {(m.upper(), p.rstrip("/") or "/") for m, p in INBOUND_KEY_ALLOWED}
+        self.assertEqual(self.front.parse_key_allowed(self.conf), want)
+
+    def test_front_line_is_not_a_wall(self):
+        """③ **음성 대조** — 막지 않은 자리는 앞단도 막지 않는다.
+
+        전부 401 을 내는 앞단은 방어선이 아니라 벽이고, 벽은 첫날 치워진다.
+        치워진 앞단은 없는 앞단이다.
+        """
+        self.assertNotIn("/api/flight-log/flight-log",
+                         self.front.parse_gated_paths(self.conf))
+
+    def test_front_line_does_not_depend_on_the_middleware_order(self):
+        """④ ★ **이것이 이 절의 요점이다.**
+
+        관문을 `MIDDLEWARE` 에서 통째로 빼도 앞단의 설정은 그대로다. 두 방어선이
+        **같은 사고로 함께 무너지지 않는다**는 뜻이고, 그것이 「단일 방어선은 방어선이
+        아니다」의 집행이다.
+        """
+        stripped = [m for m in settings.MIDDLEWARE if m != GATE_MIDDLEWARE]
+        with self.settings(MIDDLEWARE=stripped):
+            self.assertNotIn(GATE_MIDDLEWARE, settings.MIDDLEWARE)
+            still = self.front.parse_gated_paths(self.front.render_locations())
+        self.assertEqual(
+            still, self.front.parse_gated_paths(self.conf),
+            "미들웨어를 빼자 앞단도 함께 사라졌다 — 그러면 방어선은 여전히 하나다")
+
+    def test_front_line_rejection_keeps_the_same_contract(self):
+        """⑤ 앞단의 거절도 **HTTP 상태로 말하고** 본문이 짧다 (D-349 · 반출 0).
+
+        그리고 **앞단의 답임을 밝힌다** — 밝히지 않으면 뒷단이 낸 401 과 구별할 수
+        없고, 구별 못 하는 증거로는 「앞단이 막았다」를 말할 수 없다.
+        """
+        rejections = [ln for ln in self.conf.splitlines() if "return 401" in ln]
+        self.assertGreaterEqual(len(rejections), len(AUTHN_REQUIRED_PATHS))
+        for line in rejections:
+            body = line.split("return 401", 1)[1]
+            self.assertLess(len(body.encode("utf-8")), 512)
+            self.assertNotIn("status_code", body)
+        self.assertIn("(front line)", self.conf)

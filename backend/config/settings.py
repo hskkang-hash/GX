@@ -202,11 +202,36 @@ API_CONTRACT_PROMOTE_ERROR_STATUS = (
 #     이 세 접두를 부르는 파일은 **0개**다.
 #     손 밖(SEC-11b): delivery 48 · terminals 38 · orders 11 은 §0.4 금지구역이고,
 #     devices 33 · handover 25 는 화면이 한 번도 부르지 않는다 — 인수자 판단이다.
+#   ★ [A2 접두 둘 · 2026-09-05 TC · 차선 S · SEC-11a] `/api/flight-log/` ·
+#     `/api/departments/` 를 더한다. **이 둘이 남은 마지막이다.**
+#     지난 턴이 이름으로 적어 둔 그대로다: 남은 224건 중 **화면이 실제로 부르는 것은
+#     7건**이고 그 7건이 이 두 접두 아래 전부 있다 —
+#       flight-log 4 (`GET …/flight-log` · `DELETE …/delete/{ids}` ·
+#                     `GET …/detail/{id}` · `GET …/download-log/{id}`)
+#       departments 3 (`POST /api/departments` · `DELETE …/delete/{department_ids}` ·
+#                      `PUT …/{department_id}`)
+#     켜면 **부르는 자리(SEC-11a)의 `authz_envelope` 가 0** 이 된다.
+#     ★ `POST /api/departments` 는 **끝의 `/` 가 없는 모음 라우트**다. `startswith`
+#       접두로는 안 걸리고, `common.api_contract.path_in_scope()` 의 둘째 규칙이
+#       그것을 메운다 — 지난 턴의 출생 표본(225 vs 224)이 바로 이 자리였다.
+#       그래서 접두는 반드시 **끝에 `/` 를 붙여** 적는다. 떼면 그 규칙이 죽는다.
+#     ★ **미리 적어 둔다 — `clean` 도 둘 줄어든다** [산술]. `envelope_state()` 는
+#       승격 접두 안이면 `authz_path_permission` 여부와 무관하게 `promoted` 로 적는다.
+#       그래서 원래 `clean` 이던 `GET /api/departments` · `GET …/{department_id}` 도
+#       `promoted` 로 옮겨 간다. 이상이 아니라 판정 순서다 — 안 적어 두면 다음 사람이
+#       「clean 이 왜 줄었나」로 읽는다(지난 턴 「승격 61건 중 authz 0건」과 같은 모양).
+#     ★ `departments` 의 뷰는 `core.user.api`(dj-core · §0.4)다. **그 파일을 고치지
+#       않는다** — 고치는 것은 우리 쪽 접두 문자열 하나이고, 미들웨어가 밖에서 상태줄을
+#       바꾼다. 금지구역 안으로 손을 넣지 않는 것이 이 방식을 고른 이유다.
+#     안전 근거 [실측]: W0-18 §2-2 무증상 실패 후보 15파일 중 이 두 접두를 부르는
+#     파일 **0개**. flight-log 호출부는 `features/FlightLogAnalysis/**` 5파일이고
+#     그 어느 것도 후보 목록에 없다. departments 는 `frontend/src` 호출부 0건이다.
 API_CONTRACT_PROMOTE_PATHS = tuple(
     p for p in os.environ.get(
         "API_CONTRACT_PROMOTE_PATHS",
         "/api/dsm/,/api/stream-monitors/,/api/surveillance/"
-        ",/api/advanced-table/,/api/config-management/,/api/user-groups/").split(",")
+        ",/api/advanced-table/,/api/config-management/,/api/user-groups/"
+        ",/api/flight-log/,/api/departments/").split(",")
     if p.strip()
 )
 
@@ -733,6 +758,29 @@ K2_ALERT_EMAIL_TO = env.list("K2_ALERT_EMAIL_TO", default=[])
 #: 시드 사람의 주소가 여기에 있다 — **주소가 있다**와 **사람이 받는다**를 가르는 칸이다.
 UNDELIVERABLE_EMAIL_SUFFIXES = (".invalid",)
 
+#: 실발송을 **허용하는 도메인** (P-41 · 2026-09-05). 여기 **없는** 도메인은 규칙의
+#: 채널이 `email` 이어도 `EmailChannel` 이 **로그 어댑터로 떨어뜨린다** — 보내고 나서
+#: 세는 것은 늦다.
+#:
+#: ⚠ **비어 있으면 아무 도메인도 실발송하지 않는다**(전부 로그). 「목록을 잊었다」가
+#:   「전부 허용」이 되면 첫 발송이 곧 사고다 — [실측 2026-09-05 · 턴 B] 규칙이 고르는
+#:   수신자 42명 중 **개발 계정이 30명**(yopmail.com 24 · seed.invalid 6)이다.
+#:
+#: ⚠ **차단 목록이 아니라 허용 목록이다.** 막을 것을 세는 방식은 내일 생길 43번째
+#:   개발 계정을 자동으로 통과시킨다. 강제: `scripts/verify_send_allowlist.py`.
+#:
+#: ★ 대조는 **정확히 같은 도메인**이다. `org.kr` 을 적어도 `city.org.kr` 은 안 나간다 —
+#:   꼬리 일치는 `notyopmail.com` 이 `yopmail.com` 을 통과하는 고전적 구멍을 만든다.
+#:   보낼 도메인은 **하나씩 적는다.**
+K2_SEND_ALLOWED_DOMAINS = env.list("K2_SEND_ALLOWED_DOMAINS", default=[])
+
+#: 운영 경보(`ops_monitor --check` 의 exit 1)를 받을 역할 코드. **U5 시스템관리자만**
+#: (P-41). 당직 관제요원에게 디스크 사용률을 보내면 그 사람은 할 수 있는 일이 없고,
+#: 다음부터 경보를 안 읽는다. 재난 알림(K2)은 이 값이 아니라 **등급 규칙**이 고른다.
+#: 「U5 시스템관리자」의 코드는 `config/k3_roles.K3_ROLE_SYSOPS` 한 곳이 답한다 —
+#: 여기 목록을 손으로 베끼면 두 벌이 되고, 두 벌은 반드시 어긋난다 (D-369).
+K2_OPS_ALERT_ROLE_CODES = env.list("K2_OPS_ALERT_ROLE_CODES", default=[])
+
 ALLOWED_IMG_EXTENSIONS = [
     ".jpg",
     ".jpeg",
@@ -762,6 +810,28 @@ CORS_ALLOW_ALL_ORIGINS = True  # Cho phép tất cả các origin trong môi tr�
 
 
 CORS_ALLOW_CREDENTIALS = True
+
+#: ★ [실측 2026-09-05 TC · 차선 Q · `scripts/walk_scenarios.py` 가 잡았다]
+#:   **이벤트 스냅샷이 브라우저에서 한 장도 안 뜬다.** 화면에는
+#:   「스냅샷을 받지 못했습니다 / Network Error」만 남고, 콘솔은 이렇게 말한다:
+#:       Access to XMLHttpRequest at '…/api/dsm/events/4803/snapshot'
+#:       has been blocked by CORS policy: Request header field **x-no-cache**
+#:       is not allowed by Access-Control-Allow-Headers in preflight response
+#:   그런데 **같은 주소를 토큰으로 직접 부르면 200 JPEG 이 온다** [실측].
+#:   즉 서버도 이미지도 멀쩡하고, 막힌 것은 **프리플라이트**다.
+#:
+#:   왜 이 헤더를 보내나 — 일부러다. `frontend/src/features/dsm/components/
+#:   EventSnapshot.tsx` 는 캐시된 바이트가 남의 이벤트 사진이 되지 않게
+#:   `X-No-Cache: true` 로 부른다(D-341 착시 ⑦). 서버도 그 헤더를 읽는다
+#:   (`common/universal_optimization.py`). **읽는 쪽과 보내는 쪽은 맞는데
+#:   브라우저가 그 사이를 막고 있었다** — 세 자리가 다 옳아 보여서 아무도 안 봤다.
+#:
+#:   ⚠ `django-cors-headers` 의 기본 허용 헤더 목록에는 이 이름이 없다. 기본값을
+#:     **덮지 않고 더한다** — 덮으면 authorization·content-type 이 함께 사라진다.
+from corsheaders.defaults import default_headers as _cors_default_headers
+
+CORS_ALLOW_HEADERS = list(_cors_default_headers) + ["x-no-cache"]
+
 CORS_EXPOSE_HEADERS = [
     "X-New-Token",
     "Token-Refreshed",
@@ -876,3 +946,41 @@ EXTERNAL_HTTP_TIMEOUT_LONG = (
     env.float("EXTERNAL_HTTP_CONNECT_TIMEOUT", default=3.0),
     env.float("EXTERNAL_HTTP_LONG_READ_TIMEOUT", default=60.0),
 )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# UX-19 나가는 웹훅 — CAP 1.2 (2026-09-05 TC · 차선 S)
+# ─────────────────────────────────────────────────────────────────────────────
+# ★ **서명키 값은 저장소에 없다** (D-204). 여기 있는 것은 **이름 → 값**의 표이고,
+#   값은 환경에서만 온다. 환경에 없으면 표가 비고, 표가 비면 그 이름의 구독은
+#   **등록 단계에서 거절**된다 — 「등록은 됐는데 보낼 수 없는 구독」을 만들지 않는다.
+#
+#   넣는 모양(환경변수 하나 · 쉼표로 여럿):
+#       WEBHOOK_SIGNING_KEYS="sdn=<값>,agency=<값>"
+#
+#   ⚠ 이 값을 `.env.example` 이나 저장소 어디에도 적지 말 것. 웹훅 서명키가 새면
+#     **누구나 우리 이름으로 경보를 낼 수 있다** — 그것이 SEC-16 이 존재하는 이유다.
+def _parse_webhook_signing_keys(raw: str) -> dict:
+    table = {}
+    for chunk in (raw or "").split(","):
+        name, sep, value = chunk.partition("=")
+        if sep and name.strip() and value.strip():
+            table[name.strip()] = value.strip()
+    return table
+
+
+WEBHOOK_SIGNING_KEYS = _parse_webhook_signing_keys(
+    os.environ.get("WEBHOOK_SIGNING_KEYS", ""))
+
+# 등록을 받아 주는 수신 URL 의 방식. **평문 http 는 기본으로 열지 않는다** —
+# 서명은 위조를 막지만 평문은 내용을 읽히는 것을 막지 못하고, CAP 본문에는
+# 위치와 시각이 들어 있다. 개발 환경에서만 `WEBHOOK_ALLOWED_SCHEMES=https,http`.
+WEBHOOK_ALLOWED_SCHEMES = tuple(
+    s.strip() for s in os.environ.get("WEBHOOK_ALLOWED_SCHEMES", "https").split(",")
+    if s.strip()
+)
+
+# CAP `<sender>` — 받는 쪽이 「누가 보냈나」로 읽는 값. **공백·쉼표를 넣을 수 없다**
+# (CAP 1.2 가 금지한다 · `common/cap_1_2.py` 가 거절한다).
+CAP_SENDER = os.environ.get("CAP_SENDER", "guardianx.local")
+CAP_SENDER_NAME = os.environ.get("CAP_SENDER_NAME", "GuardianX 관제")

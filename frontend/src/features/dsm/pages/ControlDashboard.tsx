@@ -21,6 +21,8 @@ import { Main } from 'rj-core';
 import { dsmEndpoint, dsmGet } from '../api';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
+import { useDetectionPing } from '../hooks/useDetectionPing';
+import { dsm2Routes } from '../routes';
 import { EVENT_TYPE_LABEL, labelOf, SEVERITY_COLOR, SEVERITY_ICON, SEVERITY_LABEL } from '../severity';
 import { linkStatusBadge, linkStatusLabel } from '../copy';
 import { stamp, TIMEZONE_NOTE } from '../time';
@@ -75,6 +77,15 @@ export default function ControlDashboard() {
     { refreshMs: REFRESH_MS, isEmpty: (v) => (v?.events?.length ?? 0) === 0 },
   );
 
+  /**
+   * UX-08 — 새 탐지가 나면 **새로고침 없이** 목록이 다시 읽힌다.
+   * ★ 덤이지 바닥이 아니다: 소켓이 안 붙어도 주기 갱신이 화면을 계속 살린다.
+   */
+  useDetectionPing(() => {
+    frame.reload();
+    events.reload();
+  });
+
   const openEvent = useCallback(
     (id: number) => navigate(`/dsm/events/${id}`),
     [navigate],
@@ -87,9 +98,20 @@ export default function ControlDashboard() {
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
         <Row justify="space-between" align="middle">
           <Col>
-            <Title level={4} style={{ margin: 0 }}>
-              관제 대시보드
-            </Title>
+            <Space size={4} align="center">
+              <Title level={4} style={{ margin: 0 }}>
+                관제 대시보드
+              </Title>
+              {/* UX-03 — 역할 첫 화면의 「?」. 처음 온 사람이 여기서 시작한다. */}
+              <Button
+                type="text"
+                size="small"
+                aria-label="처음 시작하기"
+                onClick={() => navigate(`${dsm2Routes.onboarding.path}?role=OPERATOR`)}
+              >
+                ?
+              </Button>
+            </Space>
           </Col>
           <Col>
             <Space size="large">

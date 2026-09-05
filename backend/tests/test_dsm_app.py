@@ -21,7 +21,7 @@ import contextlib
 from datetime import timedelta
 
 from django.apps import apps
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 #: ★ D-289 — 표본은 저장소 실물이다.
@@ -31,6 +31,13 @@ REAL_SAMPLE = (
 )
 
 
+#: ★ P-41 (2026-09-05) — **실발송 허용 도메인이 채널보다 앞에 선다.**
+#:   `EmailChannel` 은 목록 밖 도메인을 `send_mail` 앞에서 **로그 어댑터로**
+#:   떨어뜨린다. 이 픽스처를 쓰는 시험에는 「메일이 실제로 나갔다」·「F-10 의
+#:   두 점이 찍혔다」를 재는 것이 있으므로 **어느 도메인을 허용했는지 밝힌다.**
+#:   밝히지 않고 서는 초록은 운영에서 재현되지 않는다 — 운영의 목록은 비어 있다.
+#:   강제: `scripts/verify_send_allowlist.py`
+@override_settings(K2_SEND_ALLOWED_DOMAINS=["test.invalid"])
 class DsmFixture(TestCase):
     """테넌트 A/B · 스트림 · 수신 규칙. `K6Fixture` 규약을 따른다."""
 

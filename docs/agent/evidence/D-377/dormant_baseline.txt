@@ -3,7 +3,6 @@
 #   여기서 이름이 빠지는 것이 「켰다」는 뜻이다.
 A backend/common/api_contract.py::classify_permission_routes
 A backend/common/api_contract.py::process_exception
-A backend/common/ast_call_trace.py::models_touched
 A backend/common/base_model.py::process_request
 A backend/common/base_model.py::set_use_group
 A backend/common/cache_signal_protection.py::cleanup_rate_limits
@@ -265,7 +264,6 @@ A backend/surveillance/services/surveillance_profile_media_service.py::save_reco
 A backend/surveillance/services/surveillance_profile_service.py::get_active_profiles
 A backend/surveillance/services/survey_mission_service.py::export_single_mission_to_zip
 A backend/surveillance/services/survey_mission_service.py::preview
-A backend/surveillance/signals.py::video_analysis_post_save
 A backend/terminals/models.py::get_position_in_routes
 A backend/terminals/models.py::get_route_neighbors
 A backend/terminals/models.py::get_routes_count

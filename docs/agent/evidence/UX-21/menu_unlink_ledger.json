@@ -1,0 +1,362 @@
+{
+  "decision": "P-40",
+  "clause": "UX-21",
+  "entries": [
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 121,
+      "menu_path": "/survey-profile",
+      "menu_name": "Profile",
+      "role_menu_id": 559,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T03:57:42.732545+00:00",
+      "restored_at": "2026-09-05T05:28:23.747040+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 42,
+      "menu_path": "/notam",
+      "menu_name": "NOTAM",
+      "role_menu_id": 1031,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T03:57:42.734966+00:00",
+      "restored_at": "2026-09-05T05:28:23.749100+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 121,
+      "menu_path": "/survey-profile",
+      "menu_name": "Profile",
+      "role_menu_id": 674,
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T03:57:42.736241+00:00",
+      "restored_at": "2026-09-05T05:28:23.751036+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 75,
+      "menu_path": "/media-data",
+      "menu_name": "Media Data",
+      "role_menu_id": 557,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T03:57:42.737496+00:00",
+      "restored_at": "2026-09-05T05:28:23.752925+00:00"
+    },
+    {
+      "role_code": "fire_admin",
+      "role_id": 13,
+      "menu_id": 121,
+      "menu_path": "/survey-profile",
+      "menu_name": "Profile",
+      "role_menu_id": 673,
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T03:57:42.738669+00:00",
+      "restored_at": "2026-09-05T05:28:23.754992+00:00"
+    },
+    {
+      "role_code": "fire_admin",
+      "role_id": 13,
+      "menu_id": 100,
+      "menu_path": "/device",
+      "menu_name": "드론 및 로봇",
+      "role_menu_id": 683,
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T03:57:42.739828+00:00",
+      "restored_at": "2026-09-05T05:28:23.757017+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 100,
+      "menu_path": "/device",
+      "menu_name": "드론 및 로봇",
+      "role_menu_id": 684,
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T03:57:42.741191+00:00",
+      "restored_at": "2026-09-05T05:28:23.759021+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 107,
+      "menu_path": "/device",
+      "menu_name": "Drones & Robot",
+      "role_menu_id": 390,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T03:57:42.742636+00:00",
+      "restored_at": "2026-09-05T05:28:23.760980+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 95,
+      "menu_path": "/report-template",
+      "menu_name": "Report Template",
+      "role_menu_id": 408,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T03:57:42.743963+00:00",
+      "restored_at": "2026-09-05T05:28:23.762881+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 30,
+      "menu_path": "/device",
+      "menu_name": "Drones and Robots",
+      "role_menu_id": 208,
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T03:57:42.745257+00:00",
+      "restored_at": "2026-09-05T05:28:23.764824+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 110,
+      "menu_path": "/flight-log-analysis",
+      "menu_name": "Flight Log Analysis",
+      "role_menu_id": 459,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T03:57:42.746644+00:00",
+      "restored_at": "2026-09-05T05:28:23.766748+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 121,
+      "menu_path": "/survey-profile",
+      "menu_name": "Profile",
+      "role_menu_id": 559,
+      "group_id": 6,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T05:29:19.176846+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 42,
+      "menu_path": "/notam",
+      "menu_name": "NOTAM",
+      "role_menu_id": 1031,
+      "group_id": 5,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T05:29:19.179184+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 121,
+      "menu_path": "/survey-profile",
+      "menu_name": "Profile",
+      "role_menu_id": 674,
+      "group_id": 6,
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T05:29:19.180486+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 75,
+      "menu_path": "/media-data",
+      "menu_name": "Media Data",
+      "role_menu_id": 557,
+      "group_id": 5,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T05:29:19.181557+00:00"
+    },
+    {
+      "role_code": "fire_admin",
+      "role_id": 13,
+      "menu_id": 121,
+      "menu_path": "/survey-profile",
+      "menu_name": "Profile",
+      "role_menu_id": 673,
+      "group_id": 6,
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T05:29:19.182612+00:00"
+    },
+    {
+      "role_code": "fire_admin",
+      "role_id": 13,
+      "menu_id": 100,
+      "menu_path": "/device",
+      "menu_name": "드론 및 로봇",
+      "role_menu_id": 683,
+      "group_id": 6,
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T05:29:19.183784+00:00"
+    },
+    {
+      "role_code": "fire_user",
+      "role_id": 12,
+      "menu_id": 100,
+      "menu_path": "/device",
+      "menu_name": "드론 및 로봇",
+      "role_menu_id": 684,
+      "group_id": 6,
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T05:29:19.184840+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 107,
+      "menu_path": "/device",
+      "menu_name": "Drones & Robot",
+      "role_menu_id": 390,
+      "group_id": 5,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T05:29:19.185956+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 95,
+      "menu_path": "/report-template",
+      "menu_name": "Report Template",
+      "role_menu_id": 408,
+      "group_id": 5,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T05:29:19.187029+00:00"
+    },
+    {
+      "role_code": "operator",
+      "role_id": 5,
+      "menu_id": 30,
+      "menu_path": "/device",
+      "menu_name": "Drones and Robots",
+      "role_menu_id": 208,
+      "group_id": 6,
+      "before": {
+        "permit_read": true,
+        "permit_create": true,
+        "permit_update": true,
+        "permit_delete": true
+      },
+      "cut_at": "2026-09-05T05:29:19.188070+00:00"
+    },
+    {
+      "role_code": "view_only_-_anyang",
+      "role_id": 9,
+      "menu_id": 110,
+      "menu_path": "/flight-log-analysis",
+      "menu_name": "Flight Log Analysis",
+      "role_menu_id": 459,
+      "group_id": 6,
+      "before": {
+        "permit_read": true,
+        "permit_create": false,
+        "permit_update": false,
+        "permit_delete": false
+      },
+      "cut_at": "2026-09-05T05:29:19.189116+00:00"
+    }
+  ],
+  "updated_at": "2026-09-05T05:29:19.274370+00:00",
+  "write_target": "menu.RoleMenu",
+  "classification": "DEFERRED",
+  "scope": "all-tenants"
+}

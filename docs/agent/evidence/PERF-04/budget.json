@@ -1,9 +1,9 @@
 {
   "latest": {
-    "measured_at": "2026-09-05T02:50:35+00:00",
-    "api": "http://127.0.0.1:8400",
+    "measured_at": "2026-09-05T05:00:24+00:00",
+    "api": "http://gx-nginx-e:8500",
     "environment": {
-      "measured_at": "2026-09-05T02:50:35+00:00",
+      "measured_at": "2026-09-05T05:00:24+00:00",
       "python": "3.11.14",
       "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
       "cpu_count": 8,
@@ -15,19 +15,15 @@
     "co_resident": {
       "runserver_processes": [
         "python manage.py runserver 0.0.0.0:8000 --noreload",
-        "python manage.py runserver 0.0.0.0:8300 --noreload",
-        "python manage.py runserver 0.0.0.0:8400 --noreload",
-        "sh -c cd /app && DJANGO_SETTINGS_MODULE=config.settings python manage.py runserver 0.0.0.0:8300 --noreload > /tmp/c_rs83",
-        "sh -c cd /app && python manage.py runserver 0.0.0.0:8000 --noreload > /tmp/runserver.log 2>&1",
-        "sh -lc cd /app && python manage.py runserver 0.0.0.0:8400 --noreload > /tmp/q_runserver8400.log 2>&1"
+        "sh -c cd /app && python manage.py runserver 0.0.0.0:8000 --noreload > /tmp/gate8000.log 2>&1"
       ],
-      "loadavg": "0.85 0.48 0.53 1/497 140389"
+      "loadavg": "2.03 1.45 1.56 3/566 161864"
     },
-    "server_header": "WSGIServer/0.2 CPython/3.11.14",
-    "mode": "baseline",
-    "server": "runserver (개발 서버) — 합격선은 gunicorn+nginx 에서 다시 잰다",
+    "server_header": "nginx",
+    "mode": "acceptance",
+    "server": "runserver 가 아니다 — **합격선 모드**로 판정한다",
     "concurrency": 10,
-    "rounds": 10,
+    "rounds": 30,
     "repeat": 3,
     "faces": {
       "F05": {
@@ -35,25 +31,27 @@
         "budget_ms": 500.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 300,
-        "errors": 0,
-        "error_detail": [],
-        "cache_bust": true,
-        "p50_ms": 369.8,
-        "p95_ms": 524.7,
-        "p95_each": [
-          524.7,
-          540.8,
-          513.3
+        "n": 900,
+        "errors": 1,
+        "error_detail": [
+          "/api/dsm/events?limit=50 -> 502"
         ],
-        "p95_min": 513.3,
-        "p95_max": 540.8,
-        "noise": 0.052,
+        "cache_bust": true,
+        "p50_ms": 100.3,
+        "p95_ms": 166.8,
+        "p95_each": [
+          166.8,
+          149.6,
+          175.4
+        ],
+        "p95_min": 149.6,
+        "p95_max": 175.4,
+        "noise": 0.155,
         "per_call": {
           "/api/dsm/events?limit=50": {
-            "n": 100,
-            "p50_ms": 367.0,
-            "p95_ms": 513.3
+            "n": 300,
+            "p50_ms": 118.3,
+            "p95_ms": 175.4
           }
         }
       },
@@ -62,40 +60,42 @@
         "budget_ms": 800.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 300,
-        "errors": 0,
-        "error_detail": [],
-        "cache_bust": true,
-        "p50_ms": 390.4,
-        "p95_ms": 411.0,
-        "p95_each": [
-          411.0,
-          406.7,
-          415.5
+        "n": 900,
+        "errors": 1,
+        "error_detail": [
+          "/api/dsm/events/response-times -> 502"
         ],
-        "p95_min": 406.7,
-        "p95_max": 415.5,
-        "noise": 0.021,
+        "cache_bust": true,
+        "p50_ms": 125.8,
+        "p95_ms": 262.1,
+        "p95_each": [
+          164.1,
+          266.6,
+          262.1
+        ],
+        "p95_min": 164.1,
+        "p95_max": 266.6,
+        "noise": 0.391,
         "per_call": {
           "/api/dsm/dashboard/frame": {
-            "n": 30,
-            "p50_ms": 393.6,
-            "p95_ms": 412.6
+            "n": 90,
+            "p50_ms": 130.7,
+            "p95_ms": 328.8
           },
           "/api/dsm/events/queue": {
-            "n": 20,
-            "p50_ms": 396.3,
-            "p95_ms": 416.7
+            "n": 60,
+            "p50_ms": 132.5,
+            "p95_ms": 223.2
           },
           "/api/dsm/events/response-times": {
-            "n": 20,
-            "p50_ms": 390.3,
-            "p95_ms": 415.5
+            "n": 60,
+            "p50_ms": 122.2,
+            "p95_ms": 319.5
           },
           "/api/dsm/events/summary": {
-            "n": 30,
-            "p50_ms": 387.8,
-            "p95_ms": 415.3
+            "n": 90,
+            "p50_ms": 126.2,
+            "p95_ms": 262.1
           }
         }
       },
@@ -104,25 +104,27 @@
         "budget_ms": 1000.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 300,
-        "errors": 0,
-        "error_detail": [],
-        "cache_bust": true,
-        "p50_ms": 338.4,
-        "p95_ms": 511.6,
-        "p95_each": [
-          504.6,
-          511.6,
-          530.7
+        "n": 900,
+        "errors": 1,
+        "error_detail": [
+          "/api/media-data/ -> 502"
         ],
-        "p95_min": 504.6,
-        "p95_max": 530.7,
-        "noise": 0.051,
+        "cache_bust": true,
+        "p50_ms": 91.7,
+        "p95_ms": 174.4,
+        "p95_each": [
+          174.4,
+          197.1,
+          168.6
+        ],
+        "p95_min": 168.6,
+        "p95_max": 197.1,
+        "noise": 0.163,
         "per_call": {
           "/api/media-data/": {
-            "n": 100,
-            "p50_ms": 340.3,
-            "p95_ms": 530.7
+            "n": 300,
+            "p50_ms": 94.6,
+            "p95_ms": 168.6
           }
         }
       },
@@ -131,25 +133,25 @@
         "budget_ms": 300.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 300,
+        "n": 900,
         "errors": 0,
         "error_detail": [],
         "cache_bust": true,
-        "p50_ms": 344.5,
-        "p95_ms": 363.3,
+        "p50_ms": 94.7,
+        "p95_ms": 170.9,
         "p95_each": [
-          363.3,
-          357.8,
-          376.8
+          197.9,
+          166.2,
+          170.9
         ],
-        "p95_min": 357.8,
-        "p95_max": 376.8,
-        "noise": 0.052,
+        "p95_min": 166.2,
+        "p95_max": 197.9,
+        "noise": 0.185,
         "per_call": {
           "/api/dsm/dashboard/link-state": {
-            "n": 100,
-            "p50_ms": 347.8,
-            "p95_ms": 376.8
+            "n": 300,
+            "p50_ms": 99.6,
+            "p95_ms": 170.9
           }
         }
       }
@@ -233,25 +235,6 @@
   },
   "regression_tolerance": 0.2,
   "caveat": "★ 이 수는 `runserver`(개발 서버)로 잰 **기준선**이다. **합격선은 gunicorn+nginx 에서 다시 잰다**(OPS-13 뒤). 그때까지 이 초록은 「예산을 지켰다」가 아니라 **「기준선이 예산 안에 있다」**이다 — 기준선을 합격선으로 옮겨 적으면 착시 ⑤(환경)다.",
-  "mode": "baseline",
-  "pending_acceptance": [
-    {
-      "face": "F05",
-      "title": "계약 F-05 진입면 (NFR-05-1)",
-      "budget_ms": 500.0,
-      "p95_ms": 524.7,
-      "p95_min": 513.3,
-      "p95_max": 540.8,
-      "why": "기준선(runserver)에서 예산을 넘었다 — OPS-13 뒤 gunicorn+nginx 에서 다시 재야 하고, 그때는 빨강이다"
-    },
-    {
-      "face": "STATUS",
-      "title": "상태·가용성 (캐시 금지 · P-19)",
-      "budget_ms": 300.0,
-      "p95_ms": 363.3,
-      "p95_min": 357.8,
-      "p95_max": 376.8,
-      "why": "기준선(runserver)에서 예산을 넘었다 — OPS-13 뒤 gunicorn+nginx 에서 다시 재야 하고, 그때는 빨강이다"
-    }
-  ]
+  "mode": "acceptance",
+  "pending_acceptance": []
 }

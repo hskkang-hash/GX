@@ -20,10 +20,13 @@
  *   그림을 그리지 않고 **참조가 있다는 사실과 키를** 적는다. 온보딩 U3 #3 은
  *   이 턴에도 ● 가 아니다.
  *
- * ★★ **M3 현장 회신은 이 화면에 없다** [미착수 · 사유는 보고서]. 서버 면
- *   (`kernels.k1_event.reply_from_field`)은 이번 턴에 지었으나 그것을 여는 HTTP
- *   라우트가 `backend/apps/dsm/api.py`(차선 C 의 자리)에 있어야 한다. 없는 문 위에
- *   손잡이를 그리지 않는다 — **죽은 길 위의 화면 금지**(P-15).
+ * ★★ **M3 현장 회신이 이 화면에 섰다** [2026-09-05 · 차선 C].
+ *   앞판의 주석은 「문이 없어서 손잡이를 안 그렸다」였는데, **문은 이미 서 있었다**
+ *   (`POST /api/dsm/events/{id}/field-reply` · `GET …/field-replies`).
+ *   즉 없던 것은 문이 아니라 **손잡이**였고, 그동안 화면은 「보낼 수 없습니다」라고
+ *   사실과 다른 말을 하고 있었다 — 잠자는 기능의 화면판이다.
+ *   ★ 회신은 **계정이 남긴다.** 무계정 링크로 부를 수 있는 자리를 만들지 않는다.
+ *   ★ 한 줄이다. 사진 첨부는 이 문의 칸이 아니다 — 없는 칸에 손잡이를 그리지 않는다.
  */
 import { Alert, Button, Card, Descriptions, Input, Modal, Space, Tag, Typography, message } from 'antd';
 import { useCallback, useState } from 'react';
@@ -62,9 +65,22 @@ const ADDRESS_STATUS_LABEL: Record<string, string> = {
   disabled: '조회 대상 아님 (좌표 없음)',
 };
 
+/**
+ * 이 화면에만 있는 글자 — 캡처가 이것을 보고 찍는다.
+ * ⚠ 이 상수를 고치면 `scripts/capture_screens.py` 의 사본도 **같은 커밋에서** 고친다.
+ */
+export const FIELD_REPLY_HEADLINE = '현장 회신 — 본 것을 한 줄로';
+
+interface FieldReplyRow {
+  reply_id: number;
+  text: string;
+  author_name: string;
+}
+
 export default function MobileEventDetail() {
   const { id } = useParams<{ id: string }>();
   const [busy, setBusy] = useState('');
+  const [replyText, setReplyText] = useState('');
 
   const event = useDsmResource<EventDetailView>(
     () => dsmGet<EventDetailView>(mobileEndpoint.eventDetail(id!)),
@@ -138,6 +154,34 @@ export default function MobileEventDetail() {
     },
     [id, event],
   );
+
+  /** M3 — 이 이벤트에 달린 현장 회신. 빈 것과 오류를 갈라 그린다. */
+  const replies = useDsmResource<{ total: number; replies: FieldReplyRow[] }>(
+    () => dsmGet(mobileEndpoint.fieldReplies(id!)),
+    [id],
+    { enabled: Boolean(id), isEmpty: (v) => (v?.replies?.length ?? 0) === 0 },
+  );
+
+  /**
+   * M3 — 한 줄을 돌려준다.
+   * ★ 질의로 보낸다(본문이면 422 · 인자 없음). 조립은 `mobilePostWithQuery` 한 곳이다.
+   */
+  const sendFieldReply = useCallback(async () => {
+    if (!id) return;
+    const text = replyText.trim();
+    if (!text) return;
+    setBusy('field-reply');
+    try {
+      await mobilePostWithQuery(mobileEndpoint.fieldReply(id), { text });
+      setReplyText('');
+      message.success('회신을 보냈습니다.');
+      replies.reload();
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '회신을 보내지 못했습니다.');
+    } finally {
+      setBusy('');
+    }
+  }, [id, replyText, replies]);
 
   const e = event.data;
 
@@ -348,17 +392,42 @@ export default function MobileEventDetail() {
                   </Space>
                 )}
 
-                <Alert
-                  type="warning"
-                  showIcon
-                  message="현장 회신은 아직 보낼 수 없습니다"
-                  description={
-                    <Text style={{ fontSize: 12 }}>
-                      회신하기는 준비 중입니다. 지금은 이 화면에서 보낼 수 없어
-                      단추를 두지 않았습니다 — 눌러도 아무 일이 없는 단추를 두지 않습니다.
-                    </Text>
-                  }
-                />
+                {/* M3 — 현장 회신 한 줄. 「도착 · 사진 한 장 · 한 줄」 중 한 줄이다. */}
+                <Card size="small" title={FIELD_REPLY_HEADLINE}>
+                  <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                    <Input.TextArea
+                      rows={2}
+                      maxLength={500}
+                      value={replyText}
+                      placeholder="현장에서 본 것을 한 줄로 적습니다."
+                      onChange={(ev) => setReplyText(ev.target.value)}
+                    />
+                    <Button
+                      type="primary"
+                      block
+                      style={{ minHeight: TOUCH_MIN }}
+                      loading={busy === 'field-reply'}
+                      disabled={replyText.trim().length === 0}
+                      onClick={sendFieldReply}
+                    >
+                      회신 보내기
+                    </Button>
+                    <StateBoundary
+                      state={replies.state}
+                      reason={replies.reason}
+                      onRetry={replies.reload}
+                      emptyText="아직 회신이 없습니다."
+                    >
+                      <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                        {(replies.data?.replies ?? []).map((r) => (
+                          <Text key={r.reply_id} style={{ fontSize: 12 }}>
+                            {r.author_name || '이름 없음'} · {r.text}
+                          </Text>
+                        ))}
+                      </Space>
+                    </StateBoundary>
+                  </Space>
+                </Card>
               </Space>
             </Card>
           </Space>

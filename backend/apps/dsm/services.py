@@ -406,9 +406,56 @@ def notify_event(*, scope: TenantScope, event_id: int, channels=None):
     ★ 중복 억제(F-04 5분)도 K2 가 한다. `respect_suppression` 를 끄지 않는다 —
       끄는 것은 운영 판단이지 App 의 기본값이 아니다.
     """
+    from common import webhook_outbox
     from kernels.k2_notify import send
 
-    return send(scope=scope, event_id=event_id, channels=channels)
+    records = send(scope=scope, event_id=event_id, channels=channels)
+    if not records:
+        # ★ **접혔으면 웹훅도 안 나간다** (F-04 5분 중복 억제).
+        #   K2 가 빈 값을 돌려주는 경우는 억제뿐이다(수신자 0명은 예외를 던진다).
+        #   여기서 웹훅만 내보내면 5분 안에 같은 경보가 상급기관에 두 번 간다 —
+        #   억제는 **채널의 규칙이 아니라 알림의 규칙**이다. 판정은 K2 가 하고
+        #   App 은 그 결과를 따를 뿐이다(App 은 규칙을 들지 않는다 · DA-04 §1-1).
+        return records
+    # ★ UX-19 — 구독 기관에게는 **CAP 1.2** 로 나간다. 구독이 0개면 빈 값이고,
+    #   그때 이 줄은 아무 일도 하지 않는다 — 켜기 전과 후가 같다.
+    return tuple(records) + webhook_outbox.dispatch_event(
+        scope=scope, event_id=event_id, channels=channels)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# UX-19 웹훅 구독 (F-05 등록 위) — **문은 얇다. 규칙은 커널과 규약이 든다.**
+# ═══════════════════════════════════════════════════════════════════════════
+def register_webhook_subscription(*, scope: TenantScope, endpoint_url: str,
+                                  signing_key_ref: str, event_types=None,
+                                  min_severity: str = "",
+                                  payload_format: str = "json"):
+    """구독을 등록한다 (F-05 · UX-19). **K1 의 공개 면을 그대로 부른다.**
+
+    App 이 `common.webhook_outbox.register` 를 직접 부르지 않는 이유: DA-04 §2 K1 표가
+    구독을 커널의 공개 면 여섯 중 하나로 정해 두었다. App 이 그 이름을 건너뛰면
+    표와 코드가 갈리고, 갈리면 어느 쪽이 계약인지 아무도 모른다(D-227).
+    """
+    from kernels.k1_event import subscribe
+
+    return subscribe(
+        scope=scope, webhook_url=endpoint_url, signing_key_ref=signing_key_ref,
+        filters={"event_types": event_types, "min_severity": min_severity,
+                 "payload_format": payload_format})
+
+
+def webhook_subscriptions(*, scope: TenantScope):
+    """내 테넌트의 구독 전부. 남의 것은 보이지 않는다."""
+    from common import webhook_outbox
+
+    return webhook_outbox.list_subscriptions(scope=scope)
+
+
+def revoke_webhook_subscription(*, scope: TenantScope, subscription_id: int):
+    """구독을 끈다. **행은 남는다** — 지우면 그 구독이 무엇을 받았는지가 함께 사라진다."""
+    from common import webhook_outbox
+
+    return webhook_outbox.revoke(scope=scope, subscription_id=subscription_id)
 
 
 def delivery_history(*, scope: TenantScope, event_id: int | None = None,

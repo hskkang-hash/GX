@@ -533,23 +533,35 @@ def close_event(event_id: int, *, scope: TenantScope) -> EventView:
 # ═══════════════════════════════════════════════════════════════════════════
 def subscribe(*, scope: TenantScope, webhook_url: str,
               filters: dict | None = None, signing_key_ref: str = ""):
-    """이벤트 Webhook 구독 (F-05).
+    """이벤트 Webhook 구독 (F-05). **선행 셋이 답해졌다 — 2026-09-05 TC · UX-19.**
 
-    ★ **구현하지 않았다.** 이름만 세워 두는 이유는 DA-04 §2 K1 표가 정한 공개 면이
-      6개이고, 그중 하나가 빠져 있다는 사실을 **표와 코드 양쪽에서 보이게** 하기 위해서다.
-      `verify_kernel_map.py` 가 티켓 매핑에 대해 하는 일과 같은 계열이다.
+    ★ 이 함수는 2026-08 부터 **이름만** 서 있었고 `NotImplementedYet` 을 던졌다.
+      그 독스트링이 적어 둔 선행 셋이 각각 이렇게 답해졌다:
 
-    조용히 `None` 을 돌려주지 않는다. `detect_and_save` 가 정확히 그 모양이었다 —
-    독스트링은 "저장한다"고 적혀 있고 본문은 비어 있어서, 부르는 쪽은 저장된 줄 알았다.
-    **없는 것은 없다고 말한다.**
+        ① 서명키를 어디에 두는가        `settings.WEBHOOK_SIGNING_KEYS` 가 **이름 → 값**의
+                                        표이고 값은 환경에서만 온다. 표에는 이름만 남는다(D-204).
+        ② 재시도·지수 백오프·타임아웃    SEC-16 `common/webhook_contract.RetryPolicy`
+                                        (5회 · 지수 백오프 · 포기를 행으로).
+                                        타임아웃은 `common/external_http.py`(D-212).
+        ③ 구독의 테넌트 소유 판정        구독은 `scope.require_actor()` 없이 태어나지 않고,
+                                        읽기·해지는 `filter_by_group_field`/`assert_scoped`
+                                        를 지난다. **무계정 구독이 없다**(P-37).
 
-    선행 판정 필요:
-      · 서명키를 어디에 두는가 (D-204 — 저장소 밖).
-      · 재시도·지수 백오프 정책. 외부 호출이므로 타임아웃 필수 (W0-17 · C-3.3).
-      · 구독 자체가 테넌트 자원이다 — 남의 테넌트 이벤트를 구독하지 못하게 막는 자리.
+    ★ **커널이 저장소를 고르지 않는다.** 실제 등록은 `common/webhook_outbox.py` 가
+      한다 — 그 모듈이 표와 CAP 번역과 규약을 잇는다. 이 함수는 DA-04 §2 K1 표가
+      정한 **공개 면의 이름**이고, 이름이 가리키는 곳이 바뀌어도 표는 안 바뀐다.
+
+    `filters` 는 이 커널의 낱말로 받는다(`event_types` · `min_severity`) — 부르는
+    쪽이 저장 모델의 칸 이름을 알아야 하면 그 순간 모델이 계약이 된다.
     """
-    raise NotImplementedYet(
-        "K1.subscribe(F-05 Webhook)은 아직 구현되지 않았다. "
-        "서명키 보관·재시도 정책·구독의 테넌트 소유 판정이 선행이다 — "
-        "W2-2 이후 별 티켓으로 연다. 지금은 이름만 서 있다"
+    from common import webhook_outbox
+
+    options = dict(filters or {})
+    return webhook_outbox.register(
+        scope=scope,
+        endpoint_url=webhook_url,
+        signing_key_ref=signing_key_ref,
+        event_types=options.get("event_types"),
+        min_severity=options.get("min_severity", ""),
+        payload_format=options.get("payload_format", "json"),
     )

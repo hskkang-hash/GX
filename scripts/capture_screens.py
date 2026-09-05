@@ -60,6 +60,11 @@ PROBE_TAG = "gxprobe-D384-screen"
 #: 쓰지 않는다 — 이것은 **화면 캡처 실행**이고, 이름이 그 사실을 말해야 한다.
 SCENARIO = "SCREENS-1"
 
+#: 데스크톱과 휴대전화 두 크기. 「M1~M3 는 잰 적이 없다」를 끝내는 자리다.
+DESKTOP_VIEWPORT = {"width": 1440, "height": 900}
+#: 390×844 — U3 시나리오가 적은 폭이다. 480 로 좁아지는 모바일 껍데기가 이 안에 든다.
+MOBILE_VIEWPORT = {"width": 390, "height": 844}
+
 ROOT = Path(__file__).resolve().parent.parent
 
 #: 증거를 어디에 남기나. 컨테이너에서는 저장소가 `/repo` 로, 문서 트리가 `/docs` 로
@@ -152,6 +157,28 @@ TARGETS = [
     {"step": 24, "route": "/dsm/cameras/import",
      "slug": "dsm_cameras_import_dryrun",
      "must_see": "카메라 일괄 등록 — 표를 먼저 봅니다"},
+    # ── [2026-09-05 · 차선 C] **세 장을 더하고, 처음으로 휴대전화 크기로 찍는다.**
+    #
+    #    ★ 앞의 24 장은 전부 1440×900 이다. U3(이동 중 수신)는 **잰 적이 없었다** —
+    #      데스크톱 폭에서 뜨는 모바일 화면은 사람이 실제로 보는 그 화면이 아니다.
+    #      그래서 항목마다 `viewport` 를 둘 수 있게 했고, 없으면 데스크톱이다.
+    #    ⚠ 페이지를 새로 만들지 않고 **같은 페이지의 크기만 바꾼다.** 새 페이지를
+    #      만들면 로그인 세션이 따라오지 않아 전부 `/login` 으로 튕긴다.
+    {"step": 25, "route": "/dsm/cameras/address",
+     "slug": "dsm_cameras_address_fill",
+     "must_see": "카메라 주소 채우기 — 한 대씩"},
+    {"step": 26, "route": "/start?role=OPERATOR",
+     "slug": "dsm_onboarding_start",
+     "must_see": "처음 시작하기 — 첫 근무일에 혼자 시작하기"},
+    #: M1 — 휴대전화의 첫 화면. `MobileInbox.HEADLINE` 원문이다.
+    {"step": 27, "route": "/m/inbox", "viewport": MOBILE_VIEWPORT,
+     "slug": "m1_mobile_inbox",
+     "must_see": "내게 온 이벤트"},
+    #: M3 — 현장 회신. `MobileEventDetail.FIELD_REPLY_HEADLINE` 원문이다.
+    #: ⚠ 「현장 상세」로 단언하지 않는다 — 그것은 M2 의 글자이고, M3 가 없어도 뜬다.
+    {"step": 28, "route": "/m/events/{event_id}", "viewport": MOBILE_VIEWPORT,
+     "slug": "m3_mobile_field_reply",
+     "must_see": "현장 회신 — 본 것을 한 줄로"},
 ]
 
 #: ★ [실측 2026-09-13 · D-386] 열어 보고 **찍지 못한 화면**. 목록에 남긴다 —
@@ -388,7 +415,7 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
 
     with sync_playwright() as p:
         browser = p.chromium.launch(args=["--no-sandbox"])
-        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page = browser.new_page(viewport=DESKTOP_VIEWPORT)
         page.on("pageerror", lambda e: page_errors.append(str(e)[:200]))
         page.on("response", lambda r: seen_calls.append(
             (r.request.method, r.url, r.status)))
@@ -411,6 +438,9 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
             for t in TARGETS:
                 route = t["route"].replace("{event_id}", str(event_id))
                 seen_calls.clear()
+                # ★ 크기를 **항목이 정한다.** 같은 페이지의 크기만 바꾼다 —
+                #   새 페이지를 만들면 로그인 세션이 안 따라온다.
+                page.set_viewport_size(t.get("viewport", DESKTOP_VIEWPORT))
                 page.goto(f"{web}{route}", wait_until="networkidle", timeout=60_000)
                 page.wait_for_timeout(6_000)
                 body = page.inner_text("body")

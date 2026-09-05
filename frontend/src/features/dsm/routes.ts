@@ -21,4 +21,18 @@ export const dsm2Routes = {
   drill: { title: '훈련 모드', path: '/dsm/drill' },
   /** UX-18 벌크 등록 (dry-run 먼저). */
   cameraImport: { title: '카메라 벌크 등록', path: '/dsm/cameras/import' },
+  /**
+   * UX-02 관리 화면 — 카메라 한 대의 설치 주소를 **화면에서** 채운다.
+   * ⚠ `/dsm/cameras/import` 와 형제다. 변수 조각이 없으므로 서로 삼키지 않는다.
+   */
+  cameraAddress: { title: '카메라 주소 채우기', path: '/dsm/cameras/address' },
+  /**
+   * UX-03 온보딩 — 「처음 시작하기」.
+   *
+   * ★ 이 하나만 **관문 밖**에 선다. 로그인 화면의 「처음이세요?」가 여기로 오기
+   *   때문이다 — 관문 안에 두면 처음 오는 사람이 못 본다.
+   *   그래도 규약을 안 깬다: 이 화면은 **사용자 자료를 한 건도 부르지 않는다**
+   *   (서버 호출 0건 · 정적 글자뿐). 무계정 금지는 자료를 보이는 링크의 규약이다.
+   */
+  onboarding: { title: '처음 시작하기', path: '/start' },
 } as const;

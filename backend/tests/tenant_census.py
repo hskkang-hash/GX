@@ -411,6 +411,9 @@ CENSUS: dict[str, tuple[str, str, str, int | None, str]] = {
     "stream_monitors.ThresholdSetting":
         ("GAP", "no_route", "fk", 0,
          "인구조사(덤프 집계)에 없었다 — 행이 0이라 안 보였다. **아직 안 쓴 것이지 안전한 것이 아니다** / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),
+    "stream_monitors.WebhookSubscription":
+        ("GAP", "no_route", "fk", 0,
+         "2026-09-05 TC UX-19 로 신설(마이그 0028). 인구조사(2026-08-14 덤프)에 **없었던 것이 아니라 그때 존재하지 않았다** — 행 0 은 아티팩트가 아니라 신설 직후의 사실이다. 소유는 등록 시점에 서버가 박는다(common.webhook_outbox.register 가 get_user_group(actor) 를 행에 넣는다) — 요청이 「누구 것으로 만들지」를 말할 수 있는 인자가 없다. 격리 단언은 backend/tests/test_s_webhook_outbox.py::CrossTenantTest 가 네 갈래로 잰다: 남의 구독이 보이지 않는다 · 남의 구독을 못 끈다(거절 + **안 꺼진 것**까지) · 제 것은 꺼진다(양성 대조) · 남의 테넌트 이벤트가 내 주소로 안 나간다. 쓰기 면 둘(등록·해지)은 tests/test_tenant_isolation.WRITE_NO_PROBE 의 kernels.k1_event.subscribe 한 줄이 사유와 함께 가리킨다 / 도달: 라우트가 닿는다 — POST·GET /api/dsm/webhook-subscriptions 와 DELETE …/{subscription_id}. 행 0 이라 P0 문턱(50) 미만이다"),
     "stream_monitors.Zone":
         ("GAP", "no_route", "fk", 0,
          "2026-09-01 D-299 로 신설(마이그 0019). 인구조사(2026-08-14 덤프)에 **없었던 것이 아니라 그때 존재하지 않았다** — 행 0 은 아티팩트가 아니라 신설 직후의 사실이다. 소유는 dj-core BaseModel 의 group FK 로 첫 행부터 붙고, 판정 서비스(stream_monitors.services.zones)는 스코프로 좁힌 뒤에만 구역을 돌려준다. 격리 단언은 backend/tests/test_zone_judgment.py 의 test_isolation_another_tenant_cannot_see_our_zones 가 양방향으로 잰다. 구역을 **만드는** 공개 면은 아직 없으므로 쓰기 IDOR 표면도 아직 없다 — 생기면 WRITE_PROBES 에 함께 등재한다(D-290) / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),

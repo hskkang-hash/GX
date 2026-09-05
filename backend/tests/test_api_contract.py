@@ -482,10 +482,15 @@ class ScopedPromotionForContractSurfaceTest(TestCase):
     #   화면 캡처 24장이 실제로 부른 접두 ∩ 봉투가 갈리는 자리(authz_envelope).
     #   화면이 열리는 순간 이 셋이 다 불린다 — 여기서 거부가 200 으로 나가면
     #   **모든 화면이 그 거부를 삼킨다.**
+    #   ★ [2026-09-05 TC] 접두 둘을 더했다 — **남은 마지막 7건**이 이 아래 있다.
+    #     flight-log 4 · departments 3. 켜면 부르는 자리의 `authz_envelope` 가 0 이다.
     CALLED_PREFIX_SAMPLES = (
         ("/api/advanced-table/select-data", "화면 24장 전부가 부르는 테마·표 데이터"),
         ("/api/config-management/list-optimized", "화면 24장 전부가 부르는 설정"),
         ("/api/user-groups/gen-schema", "권한 스키마 — 화면 호출 51건"),
+        ("/api/flight-log/flight-log", "비행로그 목록 — 화면이 부르는 4건 중 하나"),
+        ("/api/flight-log/detail/1", "비행로그 상세"),
+        ("/api/departments/1", "부서 수정 — 뷰는 dj-core(§0.4)이고 밖에서 승격한다"),
     )
 
     def test_called_surfaces_are_promoted(self):
@@ -507,6 +512,25 @@ class ScopedPromotionForContractSurfaceTest(TestCase):
         self.assertEqual(
             self._promote("/api/user-groups").status_code, 403,
             "모음 라우트(끝의 / 없음)가 승격에서 빠졌다 — 접두마다 이 자리가 샌다",
+        )
+        # ★ [2026-09-05 TC] 같은 모양이 이번 접두에도 있다 — `POST /api/departments`.
+        #   정본 7건 중 하나이고, 이 줄이 없으면 접두를 켜고도 그 한 건이 남는다.
+        self.assertEqual(
+            self._promote("/api/departments").status_code, 403,
+            "`POST /api/departments`(모음 라우트)가 승격에서 빠졌다 — 정본이 이름으로 "
+            "적어 둔 7건 중 하나다",
+        )
+
+    def test_a_different_prefix_that_only_looks_like_departments_is_not_promoted(self):
+        """음성 대조 [2026-09-05 TC] — `/api/v1/auth/departments` 는 **다른 문**이다.
+
+        접두 `/api/departments/` 는 `startswith` 로도 모음 규칙으로도 저 경로에
+        걸리지 않는다. 걸린다면 그것은 우리가 재지 않은 자리까지 상태줄을 바꾼 것이고,
+        그 자리는 로그인 직후 화면이 부르는 자리다.
+        """
+        self.assertEqual(
+            self._promote("/api/v1/auth/departments").status_code, 200,
+            "부서 접두가 인증 면의 다른 경로까지 끌고 왔다",
         )
 
     def test_lookalike_prefix_is_not_promoted(self):

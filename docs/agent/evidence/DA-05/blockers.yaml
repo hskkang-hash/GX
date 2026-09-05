@@ -186,14 +186,54 @@ blockers:
   #   09-26 P-28 이 UX-21 을 등재하며 「라우트는 그대로 두고 메뉴 등재를 뺀다」고 적었다.
   #   방침은 옳았고 **전제가 틀렸다** — 우리가 뺄 수 있는 등재가 있다고 보았는데 없었다.
   - id: MENU_REGISTRY_LIVES_IN_DJCORE_DB
-    title: 사이드바 메뉴 정본이 **dj-core DB(`core.menu.models.Menu`) 107행**이다 — 우리 코드에 등재가 없다
+    # ⚠ 이 제목의 첫 판은 「107행」이라고 적었다. **틀렸다** — 실측은 Menu **131행** ·
+    #   RoleMenu 969행이고, 107 은 **관리자 한 사람이 보는 메뉴 수**였다(차선 C 가 갈랐다).
+    #   조율자가 세어 본 수가 아니라 **옮겨 적은 수**를 썼다. 같은 턴에 CLOCK.md 를 만들며
+    #   적은 것과 같은 종류의 오류다 — **수를 옮길 때는 그 수가 무엇의 수인지 함께 옮긴다.**
+    title: 사이드바 메뉴 정본이 **dj-core DB(`core.menu.models.Menu` · 131행)** 다 — 우리 코드에 등재가 없다
     unlock_type: DEV
-    unlock_owner: 대표 (DB 행 제거 = 삭제 · 위임 밖 · 세종 §5 승인 요청)
-    blocks: [UX-21]
-    since: "2026-09-27"
-    blocked_now: true
-    verified_at: "2026-09-27"
+    unlock_owner: 대표 (승인 완료 · 세종 P-40 이 집행 지시) — **해소는 우리 층에서 했다**
+    blocks: []
+    since: "2026-09-05"   # 기계 시계 (P-44 · 순번을 날짜로 적던 것을 바로잡았다 · docs/agent/CLOCK.md)
+    resolved_at: "2026-09-05"
+    blocked_now: false
+    verified_at: "2026-09-05"
     verified_by: |
+      ★ **해소 [실측 2026-09-05 · 턴 C 차선 C · 세종 P-40 승인]**
+
+        열쇠는 **삭제 승인이 아니었다.** 「메뉴 행을 지운다」가 유일한 길이라고 본 것이
+        틀린 전제였다 — 사이드바가 보는 것은 `Menu` 행이 아니라 `RoleMenu` 의
+        `permit_read` 칸이다(`core.menu.models.get_user_menu_structure` 가
+        `permit_read=True` 로 거른다). 그러므로 **행을 하나도 안 지우고** 끊을 수 있다.
+
+        [끊기 전 → 끊은 뒤 · 개발 DB 실측] 관제 역할(U1·U2·U4)의 대상 메뉴 연결
+            fire_user            2 → 0     (/device · /survey-profile)
+            surveillance_operation 0 → 0
+            operator             1 → 0     (/device)
+            fire_admin           2 → 0     (/device · /survey-profile)
+            surveillance_order   0 → 0
+            view_only_-_anyang   6 → 0     (/device · /flight-log-analysis ·
+                                            /media-data · /notam ·
+                                            /report-template · /survey-profile)
+            ─────────────────────────────  **합계 11 → 0**
+            admin (U5)           8 → 8     **유지** (P-40 그대로)
+        [삭제 0건] Menu 131행 · RoleMenu 969행 — **끊기 전후가 같다.**
+        [되돌릴 수 있다] 11 → 0 → **11** → 0 을 같은 DB 에서 실제로 왕복했다.
+        [★ 그리는 쪽에서도 쟀다 — 「명령이 돌았다」와 「메뉴가 사라졌다」는 다른 사실이다]
+        서버가 실제로 그려 주는 트리(`core.menu.get_user_menu_structure`)를 역할별
+        실사용자로 펼쳐 셌다:
+            fire_user   (fire_user1)   메뉴 17 · **대상 노출 0**
+            operator    (operator_user) 메뉴 20 · **대상 노출 0**
+            fire_admin  (fire_user1)   메뉴 17 · **대상 노출 0**
+            view_only_-_anyang (anyang_sv) 메뉴 27 · **대상 노출 0**
+            admin  (son)               메뉴 107 · 대상 노출 **11 유지** ← U5
+        「107행」의 정체가 여기서 드러난다 — 그것은 메뉴 표의 크기가 아니라
+        **관리자 한 사람이 보는 메뉴의 수**였다.
+
+        시험 `backend/tests/test_c_menu_exposure.py` **9 passed** —
+        「지우지 않았는가 · 사라지는가 · 장부대로 되돌아오는가 · U5 는 남는가 ·
+        두 번 돌려도 같은가」 다섯을 따로 묻는다.
+
       [실측 2026-09-27 · 턴 B 차선 C] 사이드바는 서버가 준 `menusWithPermissions` 로
       그린다. 그 목록의 정본은 **DB 의 `core.menu.models.Menu` 107행**이고, 드론 Device ·
       NOTAM · 비행로그 · 조사 프로파일 · 영문 CRUD 가 전부 그 안에 있다.
@@ -209,14 +249,36 @@ blockers:
         다음 사람은 어느 쪽이 정본인지 모른다. 그것은 이 저장소가 두 표를 두지 않기로 한
         규칙(D-346)의 화면판이다.
     unlock_step: |
-      대표 승인 **한 줄**이면 열린다 — 「관제 역할에서 이 메뉴들을 뺀다」(드론 Device ·
-      NOTAM · 비행로그 · 조사 프로파일 · 영문 CRUD 4장). 승인이 오면 그 행들의
-      **역할-메뉴 연결만** 끊는다 — **메뉴 행 자체도, 라우트도 지우지 않는다.**
-      되돌리기는 연결을 다시 잇는 것이고, 그래서 이 해소는 되돌릴 수 있다.
-      승인 전까지 UX-21 의 화면 쪽 셋(로고·첫 화면 문장·개발 계수기)은 이미 닫혀 있다.
-      ★ 이것은 **하루짜리도 계약 리스크도 아니다** — 승인 대기 한 줄이다.
-        그러므로 다른 잠금 뒤에 숨겨 두지 않고 세종 §5 승인 요청에 이름으로 올린다.
-    state_in_code: frontend/src/App.tsx — 서버가 준 `menusWithPermissions` 를 그대로 그린다. 우리 층에 메뉴 등재 코드 0건(`grep -rn 'role_menus|user_menus' backend/` → 0), 정본은 dj-core `core.menu.models.Menu` 107행
+      (해소 완료 · 2026-09-05) 집행과 되돌리기가 **관리 명령 두 벌**로 서 있다.
+      배포한 환경마다 시드처럼 한 번 돌리면 된다:
+
+          python manage.py unlink_control_role_menus --all-tenants --dry-run  # 표가 먼저다
+          python manage.py unlink_control_role_menus --all-tenants            # 집행
+          python manage.py unlink_control_role_menus --all-tenants --check    # 남으면 exit 1
+          python manage.py unlink_control_role_menus --group 6                # 한 소속만
+          python manage.py relink_control_role_menus                          # 되돌리기
+
+      ★★ **`--group` 또는 `--all-tenants` 를 반드시 준다 — 기본값이 없다.**
+        [실측 2026-09-05 · 커밋 훅이 물어서 재게 됐다] `core.menu.RoleMenu` 는
+        분류 등록부에서 **DEFERRED**(「일부만 공용일 수 있다」)이고, 실물은
+        **969행 중 926행이 소속을 갖는다**(그룹 4·5·6·7 · 소속 없음 43).
+        즉 **공용 마스터가 아니다** — 안 가리고 끊으면 남의 소속까지 끊긴다.
+        이번 집행은 `--all-tenants` 였고 **소속 5(4건) · 소속 6(7건)** 에 걸렸다.
+        두 명령은 돌 때마다 등록부에 분류를 다시 물어 출력하고, 분류가 바뀌면 **멈춘다.**
+
+      ★ 되돌리기는 **장부대로**다. 표만 보고 켜면 끊기 전부터 꺼져 있던 연결까지
+        켜서 **없던 권한을 준다** — 그것은 되돌리기가 아니라 새 부여다.
+        장부: docs/agent/evidence/UX-21/menu_unlink_ledger.json
+      ⚠ 새 환경에서는 **한 번 돌려야 한다.** 안 돌리면 그 환경의 관제 역할에는
+        드론·항공·영문 CRUD 가 그대로 보인다 — 코드가 아니라 데이터이기 때문이다.
+    state_in_code: |
+      backend/common/menu_exposure.py — 무엇을(메뉴 8자리) · 누구에게서(U1·U2·U4) 의 **표 한 벌**
+        + 분류 등재 참조(classification_of · assert_classification_unchanged) ·
+      docs/agent/evidence/UX-21/README.md — **다음 사람에게 세 줄**(전역이다 · 되돌리는 명령 · 장부 자리) ·
+      backend/common/management/commands/unlink_control_role_menus.py — 집행(dry-run · check) ·
+      backend/common/management/commands/relink_control_role_menus.py — 되돌리기(장부대로) ·
+      backend/tests/test_c_menu_exposure.py — 회귀 9건 ·
+      frontend/src/components/InheritedScreen/ — U5 에 남는 인수 화면 8장의 **한국어 헤더 한 줄**
 
   # ★ D-397 — **화면 16장을 여는 중에 나왔다.** 그리고 둘을 가른다:
   #   ① 이 환경에서 500 인 것 — 원인은 MinIO 부재다. 환경이다

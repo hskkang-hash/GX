@@ -247,11 +247,16 @@ routes:
   "DELETE /api/dsm/settings/api-keys/{int:key_id}": session_only
   "POST /api/dsm/settings/api-keys/{int:key_id}/rotate": session_only
   "POST /api/dsm/settings/grade-rules": session_only
+  "GET /api/dsm/settings/notice-draft": session_only
+  "GET /api/dsm/settings/privacy-collection": session_only
   "GET /api/dsm/settings/thresholds": session_only
   "POST /api/dsm/settings/thresholds": session_only
   "GET /api/dsm/settings/zones": session_only
   "POST /api/dsm/settings/zones": session_only
   "GET /api/dsm/settings/{domain}": session_only
+  "GET /api/dsm/webhook-subscriptions": session_only
+  "POST /api/dsm/webhook-subscriptions": session_only
+  "DELETE /api/dsm/webhook-subscriptions/{int:subscription_id}": session_only
   "GET /api/file/get-file": session_only
   "POST /api/file/upload-file": session_only
   "GET /api/file/user-file": session_only

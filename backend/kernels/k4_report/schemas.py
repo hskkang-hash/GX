@@ -130,3 +130,73 @@ class ReportContext:
             "sources_failed": list(self.sources_failed),
             "manual_fields": list(self.manual_fields),
         }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# UX-14 월간 1쪽 「이번 달 우리 센터」 — **서식의 변수를 여기 등재한다**
+# (세종 서식: docs/design/GX-REPORT_월간1쪽_이번달우리센터_서식_v0.1.md · 턴 C 차선 E)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 왜 이름을 코드에 등재하는가
+#   서식은 문서에 있고 치환은 코드가 한다. 두 자리가 갈리면 **템플릿이 빈 칸을
+#   조용히 그린다** — `{{ p95_ack }}` 는 값이 없어도 오류를 내지 않고 빈 문자열이 되고,
+#   그 종이는 「95%가 없었다」가 아니라 「95%가 0이었다」처럼 읽힌다. K4 가 세 변수
+#   (`events`·`actions`·`captures`)를 이름으로 잠근 것과 **같은 이유**다(D-285 ②).
+#   ⚠ 이름을 늘리거나 줄이려면 서식과 이 튜플을 **같은 커밋에서** 고친다.
+MONTHLY_VARIABLES: tuple[str, ...] = (
+    # ① 대응 시간 — 자동 종결·시드·훈련을 뺀 분모 위에서만 뜻이 있다
+    "p50_ack", "p95_ack", "p50_arrive", "p95_arrive", "delta_ack",
+    # ② 이벤트
+    "n_events", "n_true", "n_false", "n_open",
+    "n_fire", "n_flood", "n_zone", "n_sys",
+    # ③ 오탐률 추세
+    "fpr_m2", "fpr_m1", "fpr_m0", "top3_noisy",
+    # ④ 카메라 가동률
+    "n_cam_ok", "n_cam", "pct_cam", "hrs_down", "n_cluster",
+    # ⑤ 알림
+    "n_sent", "n_delivered", "n_acked", "n_renotify",
+    # ⑥ 훈련·점검
+    "n_drill", "n_backup_ok", "n_backup", "restore_test",
+    # 봉인·출처 — **이 둘이 없으면 종이가 자기 출처를 못 말한다**
+    "daily_anchor_hash", "pct_live", "pct_seed",
+    # 머리글
+    "tenant_name", "period_label",
+)
+
+#: 월간 집계의 **분모에서 빼는** 세 가지 (서식 「규칙」 · D-293 정신).
+#:
+#: ★ 왜 셋인가 — 셋 다 **사람이 대응하지 않은 이벤트**이고, 분모에 들면 대응 시간이
+#:   좋아 보인다:
+#:     `auto_closed` 오탐 자동 종결은 0초에 가깝다 — 오탐이 많은 달일수록 빨라 보인다
+#:     `seed`       시드 자료는 사람이 만든 표본이지 현장이 아니다
+#:     `drill`      훈련은 일부러 낸 것이고 알림도 사람에게 안 갔다
+#:   ⚠ 값이 없으면 「해당 없음」이다 — **0으로 적지 않는다**(서식 규칙).
+MONTHLY_EXCLUDED_FROM_DENOMINATOR: tuple[str, ...] = ("auto_closed", "seed", "drill")
+
+
+#: ★ 이름 앞의 `_` 는 실수가 아니다 — **커널 공개 면이 아니다**(C-3.1 · D-281).
+#:   커널의 공개 함수는 `*, scope: TenantScope` 를 받아야 하고, 받지 않으면
+#:   `verify_tenant_scope` 가 멈춘다. 그런데 이 함수는 **DB 를 보지 않는다** —
+#:   부르는 쪽이 이미 스코프로 고른 줄을 받아 세기만 한다. 여기에 `scope` 를 달면
+#:   그것은 **아무것도 막지 않는 표식**이고, 표식만 남은 문지기가 착시 ①이다.
+#:   그래서 스코프를 다는 대신 **공개 면이 아니라고 이름으로 말한다.**
+def _monthly_counted(rows: Any) -> tuple[list, dict[str, int]]:
+    """분모에 드는 줄과 **뺀 건수**를 함께 낸다 (D-301).
+
+    각 줄은 `MONTHLY_EXCLUDED_FROM_DENOMINATOR` 의 이름을 **속성이나 키로** 가질 수
+    있고, 참이면 빠진다. ★ 뺀 수를 함께 내지 않으면 다음 사람이 이 분모를 원본
+    건수로 읽는다 — 그 순간 「빼고 잰 것」과 「원래 그만큼이었던 것」이 같아진다.
+    """
+    def flag(row, name: str) -> bool:
+        if isinstance(row, dict):
+            return bool(row.get(name))
+        return bool(getattr(row, name, False))
+
+    counted, excluded = [], {name: 0 for name in MONTHLY_EXCLUDED_FROM_DENOMINATOR}
+    for row in rows:
+        hit = [n for n in MONTHLY_EXCLUDED_FROM_DENOMINATOR if flag(row, n)]
+        for name in hit:
+            excluded[name] += 1
+        if not hit:
+            counted.append(row)
+    return counted, excluded

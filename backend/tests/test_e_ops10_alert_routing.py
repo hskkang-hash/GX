@@ -131,6 +131,61 @@ class DeliverableAddressTest(TestCase):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# 실발송 허용 도메인 — **채널보다 앞에 선다** (P-41 · 2026-09-05 · 턴 C)
+# ═══════════════════════════════════════════════════════════════════════════
+class SendAllowlistTest(TestCase):
+    """[실측 2026-09-05 · 턴 B] 규칙이 고르는 수신자 42명 중 **30명이 개발 계정**이다
+    (yopmail.com 24 · seed.invalid 6). 채널만 `email` 로 바꾸면 그 30명에게 진짜로
+    나간다. 그래서 어댑터가 **보내기 직전에** 도메인을 보고 목록 밖이면 로그로 떨어뜨린다.
+
+    ⚠ 여기서 재는 것은 **판정 문장이 아니라 발송함**이다. 「막는다고 말한다」와
+      「안 나갔다」는 다른 사실이고, 뒤엣것만 증거다.
+    """
+
+    def _send(self, address):
+        from django.core import mail
+
+        from kernels.k2_notify.channels import EmailChannel
+
+        mail.outbox = []
+        outcome = EmailChannel().send(address=address, subject="[시험]",
+                                      body="허용 목록 시험")
+        return outcome, len(mail.outbox)
+
+    @override_settings(K2_SEND_ALLOWED_DOMAINS=["city-real.test"])
+    def test_a_domain_outside_the_list_does_not_leave(self) -> None:
+        """**음성 대조** — 물지 않는 문지기는 세워 둔 것과 같다."""
+        outcome, outbox = self._send("dev-account-12@yopmail.com")
+        self.assertEqual(0, outbox, "목록 밖 도메인으로 메일이 실제로 나갔습니다.")
+        self.assertFalse(outcome.ok)
+        self.assertIn("로그", outcome.reason,
+                      "막기만 하고 로그 어댑터로 떨어뜨리지 않으면 그 통지는 "
+                      "**없었던 일**이 됩니다.")
+
+    @override_settings(K2_SEND_ALLOWED_DOMAINS=["city-real.test"])
+    def test_a_domain_on_the_list_does_leave(self) -> None:
+        """**양성 대조** — 전부 막는 문지기는 고장난 문지기다."""
+        outcome, outbox = self._send("duty@city-real.test")
+        self.assertEqual(1, outbox)
+        self.assertTrue(outcome.ok, outcome.reason)
+
+    @override_settings(K2_SEND_ALLOWED_DOMAINS=[])
+    def test_an_empty_list_sends_nothing(self) -> None:
+        """「목록을 잊었다」가 「전부 허용」이 되면 잊은 날이 사고 나는 날이다."""
+        outcome, outbox = self._send("duty@city-real.test")
+        self.assertEqual(0, outbox)
+        self.assertFalse(outcome.ok)
+
+    @override_settings(K2_SEND_ALLOWED_DOMAINS=["yopmail.com"])
+    def test_a_suffix_match_does_not_carry_a_stranger(self) -> None:
+        """꼬리 일치를 쓰면 `notyopmail.com` 이 허용 목록을 타고 나간다."""
+        from kernels.k2_notify.channels import EmailChannel
+
+        self.assertFalse(EmailChannel.send_allowed("x@notyopmail.com").ok)
+        self.assertTrue(EmailChannel.send_allowed("x@yopmail.com").ok)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # 등급 × 역할 표 — **세 등급 전부에 규칙이 서는가**
 # ═══════════════════════════════════════════════════════════════════════════
 class RoutingMatrixTest(TestCase):
@@ -185,6 +240,13 @@ class RoutingMatrixTest(TestCase):
 # ═══════════════════════════════════════════════════════════════════════════
 # ③ 주소가 살아 있으면 **나간다** · 채널이 log 면 **안 나간다**
 # ═══════════════════════════════════════════════════════════════════════════
+#: ★ P-41 (2026-09-05) — **실발송 허용 도메인이 채널보다 앞에 선다.**
+#:   `EmailChannel` 은 목록 밖 도메인을 `send_mail` 앞에서 **로그 어댑터로**
+#:   떨어뜨린다. 그래서 「메일이 실제로 나갔다」를 재는 시험은 **어느 도메인을
+#:   허용했는지 스스로 밝혀야** 한다. 밝히지 않고 초록이 서면 그 초록은
+#:   운영에서 재현되지 않는다 — 운영의 목록은 비어 있기 때문이다.
+#:   강제: `scripts/verify_send_allowlist.py`
+@override_settings(K2_SEND_ALLOWED_DOMAINS=["example-real.test"])
 class OneAddressAwayTest(TestCase):
     """「주소 하나만 넣으면 나간다」를 **실물로** 보인다.
 

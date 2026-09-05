@@ -59,6 +59,7 @@ import logoExpandedDarkModeDefault from './assets/images/logo-full-white.png';
 import logoLightModeDefault from './assets/images/logo-short-black.png';
 import logoDarkModeDefault from './assets/images/logo-short-white.png';
 import backgroundImageDefault from './assets/images/backgroundLogin.png';
+import InheritedScreen from './components/InheritedScreen';
 import { FileManagement } from './components/FileManagement/FileManagement';
 import { FormNavigationBlocker } from './components/FormNavigationBlocker';
 import GlobalNotifications from './components/GlobalNotifications';
@@ -198,6 +199,8 @@ const DsmEventDetail = lazy(() => import('./features/dsm/pages/EventDetail'));
 const DsmFocusQueue = lazy(() => import('./features/dsm/pages/FocusQueue'));
 const DsmDrillMode = lazy(() => import('./features/dsm/pages/DrillMode'));
 const DsmCameraImport = lazy(() => import('./features/dsm/pages/CameraImport'));
+const DsmOnboarding = lazy(() => import('./features/dsm/pages/Onboarding'));
+const DsmCameraAddress = lazy(() => import('./features/dsm/pages/CameraAddress'));
 /**
  * 모바일 — 이동 중 수신 모드 (U3 · 차선 D).
  *
@@ -292,19 +295,41 @@ const Sidebar = () => {
   );
 };
 
+/**
+ * UX-03 — 로그인 화면의 「처음이세요?」.
+ *
+ * ★ 인수 화면(`LoginPage`)을 **고치지 않는다.** 링크는 우리 층에서 그 아래에
+ *   한 줄로 얹는다 — 고치면 그 화면이 인수 자산이 아니라 우리 빚이 된다.
+ * ★ 첫 근무일의 사람은 아직 계정이 손에 익지 않았다. 문서가 저장소에만 있으면
+ *   그것은 「있다」이지 「쓴다」가 아니다.
+ */
+const FirstTimeLink = () => (
+  <div style={{ textAlign: 'center', padding: '12px 0' }}>
+    <a href={dsm2Routes.onboarding.path}>처음이세요?</a>
+  </div>
+);
+
 const Login = () => {
   const { isMobile } = useMobileContext();
   const navigate = useNavigate();
 
   if (isMobile) {
-    return <LoginMobile logoImage={logoExpandedLightModeDefault} />;
+    return (
+      <>
+        <LoginMobile logoImage={logoExpandedLightModeDefault} />
+        <FirstTimeLink />
+      </>
+    );
   }
 
   return (
-    <LoginPage
-      logoImage={logoExpandedLightModeDefault}
-      navigate={navigate}
-    />
+    <>
+      <LoginPage
+        logoImage={logoExpandedLightModeDefault}
+        navigate={navigate}
+      />
+      <FirstTimeLink />
+    </>
   );
 };
 
@@ -394,6 +419,19 @@ function App() {
   initialServices(import.meta.env.VITE_API_URL);
 
   const router = createBrowserRouter([
+    /**
+     * UX-03 온보딩 — **관문 밖에 서는 유일한 화면.**
+     *
+     * 로그인 화면의 「처음이세요?」와 역할 첫 화면의 「?」가 둘 다 여기로 온다.
+     * 관문 안에 두면 처음 오는 사람이 못 보고, 관문 밖 공개 가지(`PublicRouter
+     * restricted`) 안에 두면 **이미 로그인한 사람이 튕긴다** — 그래서 어느 쪽에도
+     * 넣지 않고 맨 앞에 홀로 둔다.
+     *
+     * ★ 규약을 깨지 않는다: 이 화면은 서버를 한 번도 부르지 않는다(정적 글자뿐).
+     * ⚠ 정적 경로라 아래 공개 가지의 `*` 가 삼키지 않는다 — 라우터는 별표보다
+     *   글자를 먼저 고른다. 그래도 **맨 앞에 둔다**: 순서를 외우는 것보다 안전하다.
+     */
+    { path: dsm2Routes.onboarding.path, element: <DsmOnboarding /> },
     {
       element: <PublicRouter restricted={true} />,
       children: [
@@ -442,6 +480,7 @@ function App() {
             { path: dsm2Routes.focusQueue.path, element: <DsmFocusQueue /> },
             { path: dsm2Routes.drill.path, element: <DsmDrillMode /> },
             { path: dsm2Routes.cameraImport.path, element: <DsmCameraImport /> },
+            { path: dsm2Routes.cameraAddress.path, element: <DsmCameraAddress /> },
             {
               path: CustomRoutes.dsm.eventDetail.path,
               element: <DsmEventDetail />,
@@ -461,19 +500,40 @@ function App() {
               element: <AddUser />,
             },
             { path: CustomRouters.home.path, element: <RootRedirect /> },
-            { path: CustomRouters.menu.path, element: <MenuManagement /> },
+            {
+              path: CustomRouters.menu.path,
+              element: (
+                <InheritedScreen title="메뉴 관리">
+                  <MenuManagement />
+                </InheritedScreen>
+              ),
+            },
             {
               path: CustomRouters.menu.subRoutes.addMenu.path,
               element: <AddMenu />,
             },
             { path: CustomRouters.profile.path, element: <ProfilePage /> },
-            { path: CustomRouters.role.path, element: <RoleManagement /> },
+            {
+              path: CustomRouters.role.path,
+              element: (
+                <InheritedScreen title="역할 관리">
+                  <RoleManagement />
+                </InheritedScreen>
+              ),
+            },
             { path: CustomRouters.config.path, element: <ConfigManagement /> },
             {
               path: CustomRouters.config.subRoutes.editConfig.path,
               element: <EditConfig />,
             },
-            { path: CustomRoutes.device.path, element: <ListDevice /> },
+            {
+              path: CustomRoutes.device.path,
+              element: (
+                <InheritedScreen title="드론·로봇 장비 등록">
+                  <ListDevice />
+                </InheritedScreen>
+              ),
+            },
             {
               path: CustomRoutes.device.subRoutes.addNewDevice.path,
               element: <FormAddNewDevice />,
@@ -554,7 +614,11 @@ function App() {
             // Survey Profile
             {
               path: CustomRoutes.surveyProfile.path,
-              element: <SurveillanceProfile />,
+              element: (
+                <InheritedScreen title="조사 프로파일">
+                  <SurveillanceProfile />
+                </InheritedScreen>
+              ),
             },
             {
               path: CustomRoutes.surveyProfile.subRoutes.addNewSurveyProfile
@@ -633,7 +697,11 @@ function App() {
             },
             {
               path: CustomRoutes.noTam.path,
-              element: <NoTam />,
+              element: (
+                <InheritedScreen title="항공 고시보">
+                  <NoTam />
+                </InheritedScreen>
+              ),
             },
             {
               path: '*',
@@ -756,7 +824,11 @@ function App() {
             // Report Template
             {
               path: CustomRoutes.reportTemplate.path,
-              element: <ReportTemplate />,
+              element: (
+                <InheritedScreen title="보고서 서식">
+                  <ReportTemplate />
+                </InheritedScreen>
+              ),
             },
             {
               path: CustomRoutes.reportTemplate.subRoutes.addNewReportTemplate
@@ -823,7 +895,11 @@ function App() {
             // Flight Log Analysis
             {
               path: CustomRoutes.flightLogAnalysis.path,
-              element: <FlightLogAnalysis />,
+              element: (
+                <InheritedScreen title="비행 기록 분석">
+                  <FlightLogAnalysis />
+                </InheritedScreen>
+              ),
             },
 
             // Mission
@@ -871,7 +947,11 @@ function App() {
             },
             {
               path: CustomRoutes.mediaData.path,
-              element: <MediaDataPage />,
+              element: (
+                <InheritedScreen title="영상 자료">
+                  <MediaDataPage />
+                </InheritedScreen>
+              ),
             },
             {
               path: CustomRoutes.mediaData.subRoutes.videoAnalysis.path,

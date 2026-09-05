@@ -4,4 +4,4 @@
 #   declared       = 코드가 들어오는 키를 받겠다고 선언한 자리
 #   open_anonymous = 인증 콜백이 아예 없는 자리 (관문 없음 — 「거절」이 아니다)
 declared	1
-open_anonymous	100
+open_anonymous	72

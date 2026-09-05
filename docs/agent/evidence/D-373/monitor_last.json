@@ -1,18 +1,18 @@
 {
-  "measured_at": "2026-09-05T02:56:08+00:00",
+  "measured_at": "2026-09-05T05:12:46+00:00",
   "verdict": "ALARM",
   "report": {
-    "measured_at": "2026-09-05T02:56:08+00:00",
+    "measured_at": "2026-09-05T05:12:46+00:00",
     "signals": {
       "db_ping_ms": {
-        "value": 0.34,
+        "value": 0.24,
         "verdict": "OK",
         "note": ""
       },
       "cache_alive": {
         "value": true,
         "verdict": "OK",
-        "note": "왕복 0.6ms"
+        "note": "왕복 0.5ms"
       },
       "object_store_alive": {
         "value": false,
@@ -30,7 +30,7 @@
         "note": ""
       },
       "db_size_gb": {
-        "value": 0.03,
+        "value": 0.031,
         "verdict": "OK",
         "note": ""
       },

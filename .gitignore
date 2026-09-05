@@ -94,3 +94,9 @@ backend/_fe_dist*/
 
 # 고정 설치된 외부 도구 (scripts/secret_scanner.lock.json) — 저장소가 드는 것은 lock 이지 물건이 아니다
 tools/
+
+# ── OPS-13 앞단 관문은 **생성물이다** ────────────────────────────────────
+# 정본은 `backend/common/access_gate.py` 의 목록이고 생성기는 `common/front_line.py`.
+# 만들어진 설정을 저장소에 담으면 목록이 두 벌이 되고, 두 벌은 반드시 어긋난다(D-369).
+# 앞단을 세울 때 `scripts/ops_front_line.py --render` 로 그 자리에서 만든다.
+nginx/generated/

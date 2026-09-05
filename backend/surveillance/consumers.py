@@ -103,6 +103,29 @@ class SurveillanceProfileNotificationConsumer(AsyncWebsocketConsumer):
             )
         )
 
+    async def detection_message(self, event):
+        """새 탐지가 났다는 **신호 하나**를 내보낸다 (UX-08).
+
+        ★ 이 핸들러가 없는 채로 `broadcast_detection_message` 를 부르면 Channels 가
+          `No handler for message type detection_message` 로 죽고, **그 그룹에 붙은
+          모든 관제 세션이 끊긴다.** 「켜기」는 시그널 주석을 지우는 일이 아니라
+          받는 쪽을 먼저 세우는 일이다 — 받는 쪽 없이 켜면 켜는 순간이 사고다.
+
+        ★ 여기로 나가는 것은 **카드가 아니라 신호**다. 화면은 이것을 받고 자기
+          목록 문을 다시 부른다. 카드를 여기서 만들면 화면이 그리는 목록과
+          서버가 정하는 목록(5분 창 묶음 · 알림 억제)이 **두 벌**이 되고,
+          두 벌은 반드시 어긋난다. 무엇이 한 장인지는 목록 문 한 곳이 정한다.
+        """
+        await self.send(
+            json.dumps(
+                {
+                    "type": "detection_message",
+                    "timestamp": event.get("timestamp"),
+                    "message": event.get("message", {}),
+                }
+            )
+        )
+
     async def surveillance_activation(self, event):
         await self.send(
             json.dumps(
@@ -137,5 +160,3 @@ class SurveillanceProfileNotificationConsumer(AsyncWebsocketConsumer):
         except Exception as exc:
             logger.exception("[SURVEILLANCE][WS] Error resolving user groups: %s", exc)
             return []
-
-

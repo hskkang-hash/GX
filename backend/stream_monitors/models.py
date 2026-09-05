@@ -922,3 +922,60 @@ class CredentialRecord(BaseModel):
 
     def __str__(self):
         return f"{self.name}[{self.status}]"
+
+
+class WebhookSubscription(BaseModel):
+    """UX-19 — **나가는 웹훅의 구독 한 줄.** 누가 · 어디로 · 무엇을 · 어떤 키로.
+
+    왜 새 표를 만들었나 [판정 2026-09-05 · 차선 S]
+    ---------------------------------------------
+    현장 회신(D-차선 D)은 새 표를 피해 감사 표로 갔다. 여기서는 그럴 수 없다:
+    구독은 **바뀌는 상태**(켜고 끄고 지운다)이고, 감사 표는 **바뀌지 않는 사실**의
+    자리다. 바뀌는 것을 감사에 넣으면 「지금 켜져 있는가」를 감사 행을 되짚어
+    계산해야 하고, 그 계산은 곧 두 벌이 된다.
+    `NotificationRule` 에 얹는 것도 아니다 — 그 표는 **역할**을 가리키고 사람에게
+    간다. 구독은 기관의 URL 로 간다. 한 표에 두 뜻을 넣으면 마지막에 쓴 사람이
+    앞사람의 뜻을 덮는다(`status`/`response_state` 를 가른 D-399 와 같은 이유).
+
+    ★ **서명키 값은 여기 없다** (D-204 · `CredentialRecord` 와 같은 규약)
+    ---------------------------------------------------------------------
+    `signing_key_ref` 는 **이름**이다. 값은 환경변수에만 있고, 이 표에는 그것을
+    담을 칸 자체가 없다. 칸이 있으면 언젠가 채워지고, 채워진 값은 덤프·백업·화면·
+    로그로 흘러나간다. 웹훅 서명키가 새면 **누구나 우리 이름으로 경보를 낼 수 있다.**
+
+    ★ 소유 테넌트는 기저의 `group` FK 다 (`BaseModel` 이 준다 · D-292 실측).
+      `BaseModelWithGroup` 은 DEPRECATED 이고 신규 상속은 게이트가 막는다(D-295).
+
+    ★ **무계정 구독이 없다** (세종 §4-4 · P-37). `created_by` 없이 태어나는 행이
+      없다 — 구독은 로그인한 계정이 등록하고, 그 계정의 테넌트가 곧 구독의 테넌트다.
+      URL 하나가 계정이 되는 순간, 그것은 우리가 관리하지 않는 계정이다.
+    """
+
+    class PayloadFormat(models.TextChoices):
+        JSON = "json", "CAP 1.2 (JSON)"
+        XML = "xml", "CAP 1.2 (XML)"
+
+    #: 우리가 POST 하는 곳. **평문 http 는 등록 단계에서 거절한다**(SEC-10 과 같은 이유) —
+    #: 서명이 있어도 본문은 평문으로 지나간다.
+    endpoint_url = models.URLField(max_length=500)
+    #: 서명키의 **이름**. 값이 아니다. `settings.WEBHOOK_SIGNING_KEYS` 가 이름을 값에 잇는다.
+    signing_key_ref = models.CharField(max_length=64)
+    #: 어떤 이벤트를 받을 것인가. **빈 목록은 「전부」다** — 「아무것도 아님」이 아니다.
+    #: 그 구별을 이름으로 남기려고 `is_active` 를 따로 둔다: 끄는 것은 여기가 아니다.
+    event_types = models.JSONField(default=list, blank=True)
+    #: 이 등급 **이상**만 보낸다. 비면 전부.
+    min_severity = models.CharField(max_length=16, blank=True, default="")
+    payload_format = models.CharField(
+        max_length=8, choices=PayloadFormat.choices, default=PayloadFormat.JSON)
+    is_active = models.BooleanField(default=True, db_index=True)
+    #: 마지막으로 **성공한** 발송. 비어 있으면 「한 번도 도달한 적 없다」다 —
+    #: 「보낸 적 없음」과 「보내려다 실패」는 발송 이력(`DeliveryRecord`)이 가른다.
+    last_delivered_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "gx_webhook_subscription"
+        ordering = ["id"]
+        indexes = [models.Index(fields=["is_active"])]
+
+    def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
+        return f"webhook#{self.pk}[{'on' if self.is_active else 'off'}]"

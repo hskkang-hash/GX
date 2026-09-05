@@ -25,7 +25,7 @@ import { Alert, Button, Card, Col, Input, Row, Space, Statistic, Table, Tag, Typ
 import { useCallback, useState } from 'react';
 import { Main } from 'rj-core';
 
-import { dsmEndpoint, dsmGet, dsmPost } from '../api';
+import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import type { AddressGap, ImportPlan, ImportRow } from '../types';
@@ -60,7 +60,10 @@ export default function CameraImportPage() {
       setBusy(true);
       setError('');
       try {
-        const result = await dsmPost<ImportPlan>(dsmEndpoint.cameraImport, {
+        // ★ 질의로 보낸다. 본문으로 보내면 **422(인자 없음)** 다 —
+        //   [실측 2026-09-05] 이 자리가 실제로 그렇게 죽어 있었고, 캡처는 제목만
+        //   보므로 화면은 떠 있었다. 「떠 있다」와 「된다」는 다른 사실이다.
+        const result = await dsmPostQuery<ImportPlan>(dsmEndpoint.cameraImport, {
           csv_text: csvText,
           dry_run: dryRun,
         });

@@ -182,12 +182,31 @@ def _rel(p: Path) -> str:
 # ===========================================================================
 # ㉠ 호출 없음 — 정의는 있으나 운영 코드가 그 이름을 부르지 않는다
 # ===========================================================================
-def audit_uncalled(trees):
+def audit_uncalled(trees, ref_only_trees=None):
     """(모수, 잠든 것, 라벨별 (운영참조, 시험참조)).
 
     참조는 **정의 밖의 이름 등장**으로 센다 — 호출·속성·문자열 셋 다. 호출만 세면
     `handlers = [foo, bar]` 처럼 **넘겨서 부르는 자리**를 놓치고, 그러면 살아 있는 것을
     잠들었다고 말한다. 이 판정기는 그 반대로 틀리게 두었다(놓치는 쪽으로).
+
+    ★★ `ref_only_trees` — **부르는 쪽으로만 세고 모수에는 안 넣는 나무** (2026-09-05 TC)
+    -------------------------------------------------------------------------------
+    [실측 2026-09-05 · 턴 C 병합] `backend/common/front_line.py` 의 셋
+    (`parse_gated_paths`·`parse_key_allowed`·`render_locations`)이 **잠들었다**고 나왔다.
+    그런데 `scripts/ops_front_line.py` 가 셋을 **전부 부르고 있었다** — 그 파일이
+    앞단(nginx) 설정을 만들어 내는 우리 운영 도구다.
+
+    뿌리는 코드가 아니라 **이 판정기의 눈**이었다: 참조를 `backend/**` 안에서만 찾았다.
+    독스트링은 「**운영 코드가** 그 이름을 부르지 않는다」라고 적어 놓고, 실제로는
+    「backend 안의 코드가 부르지 않는다」를 재고 있었다 — **주장보다 좁게 재고 있었다.**
+
+    그래서 참조 스캔만 `scripts/**` 로 넓힌다. **모수는 넓히지 않는다** —
+    scripts 의 함수까지 모수에 넣으면 판정기·프로브의 내부 도우미가 전부 「잠들었다」로
+    쏟아지고, 그 소음이 진짜 하나를 덮는다. **넓히는 것은 보는 눈이지 재는 대상이 아니다.**
+
+    ⚠ 이것은 게이트를 무르게 하는 변경이 아니다. 무르게 하는 변경은 「부르는 곳이 없는데
+      통과시키는 것」이고, 이것은 「부르는 곳이 있는데 못 보던 것을 보는 것」이다.
+      둘을 헷갈리면 다음에 진짜 면제를 이 이름으로 밀어 넣게 된다.
     """
     defs: dict[str, list[str]] = defaultdict(list)      # 이름 -> [라벨]
     for path, tree in trees.items():
@@ -208,6 +227,34 @@ def audit_uncalled(trees):
     names = set(defs)
     prod_refs: dict[str, int] = defaultdict(int)
     test_refs: dict[str, int] = defaultdict(int)
+
+    #: ★★ `scripts/**` 의 참조는 **가져온 이름만** 센다 — 맨이름 등장으로 세면 안 된다.
+    #:   [실측 2026-09-05 · 첫 판이 그렇게 셌고 13건이 깨어났는데 그중 여럿이 가짜였다]
+    #:     · `probe_commented_guards.py` 는 `oauth2_required` 를 **감사 대상으로 찾는다** —
+    #:       부르는 것이 아니라 **찾는** 것이다. 그것을 「부른다」로 세면 정반대다.
+    #:     · `classify_dormant.py` 는 **잠든 이름을 나열하는 도구**다. 맨이름으로 세면
+    #:       **잠든 것을 적어 둔 도구가 잠든 것을 깨운다** — 판정기가 자기 꼬리를 문다.
+    #:     · `setUp` 처럼 흔한 이름은 아무 도구에나 있어서 backend 의 동명이인을 전부 깨운다.
+    #:   그래서 여기서는 `from <모듈> import <이름>` 과 `import <모듈>` + `<모듈>.<이름>`
+    #:   만 인정한다. **가져오는 것은 쓰겠다는 선언이고, 이름을 적는 것은 아니다.**
+    for tree in (ref_only_trees or {}).values():
+        imported: set[str] = set()
+        modules: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                for a in node.names:
+                    imported.add(a.asname or a.name)
+            elif isinstance(node, ast.Import):
+                for a in node.names:
+                    modules.add((a.asname or a.name).rsplit(".", 1)[-1])
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Name) and node.id in names and node.id in imported:
+                prod_refs[node.id] += 1
+            elif (isinstance(node, ast.Attribute) and node.attr in names
+                  and isinstance(node.value, ast.Name) and node.value.id in modules):
+                prod_refs[node.attr] += 1
+
+    #: 모수는 위에서 `trees` 로만 세웠다. backend 안의 참조는 종전 규칙 그대로.
     for path, tree in trees.items():
         is_test = _is_test(path)
         bucket = test_refs if is_test else prod_refs
@@ -761,7 +808,11 @@ def main() -> int:
               "0건을 통과로 읽지 않는다 (D-301)")
         return 1
 
-    pa, da, ca = audit_uncalled(trees)
+    #: ★ 참조만 세는 나무 — `scripts/**` 는 우리 운영 도구다(앞단 설정 생성·백업·판정기).
+    #:   모수에는 안 넣는다. 자세한 사유는 `audit_uncalled` 독스트링.
+    tool_trees = parse_all(iter_py(ROOT / "scripts")) if (ROOT / "scripts").is_dir() else {}
+
+    pa, da, ca = audit_uncalled(trees, tool_trees)
     pb, db, wb = audit_unscheduled(trees)
     pc, dc, wc, uc = audit_empty_config(trees)
 
@@ -770,6 +821,11 @@ def main() -> int:
     print(f"[DORMANT] ㉠ 호출 없음  모수 {len(pa):5}  "
           f"(backend/** 함수 정의 · 사적 `_`·프레임워크 훅 {len(FRAMEWORK_HOOKS)}종·"
           f"진입 데코 {len(ENTRY_DECORATORS)}종 제외)  -> **{len(da)}건**")
+    #: ★ 무엇을 부르는 쪽으로 셌는지 **매 실행에 적는다** — 이 줄이 없으면 「부르는 곳이
+    #:   없다」가 「내가 본 곳에 없다」와 구별되지 않는다. 2026-09-05 에 실제로 갈렸다.
+    print(f"[DORMANT]   부르는 쪽: backend/**(맨이름·속성·문자열) + "
+          f"scripts/**({len(tool_trees)}개 · **가져온 이름만**) "
+          f"— 도구가 감사 대상으로 *찾는* 이름은 부른 것이 아니다")
     print(f"[DORMANT] ㉡ 주기 없음  모수 {len(pb):5}  "
           f"(celery 태스크 전수 + 주석으로 꺼진 beat 항목)  -> **{len(db)}건**")
     print(f"[DORMANT] ㉢ 설정 빔    모수 {len(pc):5}  "

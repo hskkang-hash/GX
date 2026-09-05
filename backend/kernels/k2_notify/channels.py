@@ -32,6 +32,40 @@ log = logging.getLogger(__name__)
 #: 운영 경로는 항상 `settings.EMAIL_TIMEOUT` 을 읽는다.
 FALLBACK_EMAIL_TIMEOUT = 10.0
 
+#: 실발송 허용 도메인을 **못 읽었을 때**의 값 (P-41 · 2026-09-05).
+#:
+#: ★ **빈 튜플이다.** 타임아웃의 바닥값과 방향이 반대인 이유: 타임아웃을 못 읽으면
+#:   위험한 쪽은 「무한 대기」이므로 값을 **채워** 준다. 허용 목록을 못 읽으면 위험한
+#:   쪽은 「전부 나간다」이므로 **비워** 둔다. 바닥값은 언제나 사고가 아닌 쪽이다.
+FALLBACK_SEND_ALLOWED_DOMAINS: tuple[str, ...] = ()
+
+
+def _allowed_domains() -> frozenset[str]:
+    """실발송이 허용된 도메인. 설정을 읽고, **없으면 빈 집합**이다.
+
+    ⚠ 빈 집합은 「제한 없음」이 아니라 **「아무 데도 안 보냄」**이다. 목록을 잊은 것과
+      전부 허용한 것이 같은 모양이 되면(D-290), 잊은 날 42명에게 진짜로 나간다.
+    """
+    raw = getattr(settings, "K2_SEND_ALLOWED_DOMAINS", None)
+    if raw is None:
+        raw = FALLBACK_SEND_ALLOWED_DOMAINS
+    if isinstance(raw, str):                 # `env.list` 를 안 거친 손 설정을 받아 준다
+        raw = raw.split(",")
+    out = set()
+    for item in raw:
+        # `@example.com` · ` Example.COM ` · `example.com.` 을 같은 것으로 읽는다.
+        name = str(item).strip().lower().lstrip("@").rstrip(".")
+        if name:
+            out.add(name)
+    return frozenset(out)
+
+
+def _domain_of(address: str) -> str:
+    """주소의 도메인. 「주소가 아니다」는 **빈 문자열**로 돌려준다 — 그리고 빈 도메인은
+    어떤 허용 목록에도 들지 못하므로, 이상한 주소는 **자동으로 막히는 쪽**으로 간다."""
+    parts = (address or "").strip().lower().rsplit("@", 1)
+    return parts[1].rstrip(".") if len(parts) == 2 else ""
+
 
 def _email_timeout() -> float:
     """설정을 읽고, 없으면 바닥값. **밑줄로 시작하는 이유는 커널 규약이다** —
@@ -138,11 +172,63 @@ class EmailChannel:
                     "사람은 받지 못한다" % (address, suffix))
         return SendOutcome(True)
 
+    @staticmethod
+    def send_allowed(address: str) -> SendOutcome:
+        """이 주소로 **실제로 보내도 되는가** (P-41 · 2026-09-05 · 세종 판정).
+
+        `deliverable()` 과 무엇이 다른가 — **닿는가**와 **보내도 되는가**는 다른 질문
+        ------------------------------------------------------------------------
+        `deliverable()` 은 「이 주소에 사람이 있는가」를 묻는다(`.invalid` 는 없다).
+        이것은 「사람이 있어도 **지금 우리가 보내도 되는가**」를 묻는다. 개발 계정
+        `@yopmail.com` 24개는 **닿는다.** 닿기 때문에 위험하다 —
+        [실측 2026-09-05 · 턴 B] 규칙이 고르는 수신자 42명 중 30명이 개발 계정이다.
+
+        ★ **허용 목록이다.** 여기 없는 도메인은 전부 막힌다. 차단 목록으로 만들면
+          내일 생길 43번째 개발 계정이 자동으로 통과한다 — 실수의 방향이 사고 쪽이다.
+        ★ **정확히 같은 도메인**만 통과한다. 꼬리 일치를 쓰면 `notyopmail.com` 이
+          `yopmail.com` 을 타고 나간다.
+        """
+        allowed = _allowed_domains()
+        domain = _domain_of(address)
+        if not allowed:
+            return SendOutcome(
+                False,
+                "실발송 허용 도메인 목록이 **비어 있다** — 아무 도메인도 실발송하지 "
+                "않는다(P-41). 이것은 「제한 없음」이 아니라 「아무 데도 안 보냄」이다. "
+                "보낼 도메인은 `K2_SEND_ALLOWED_DOMAINS` 에 하나씩 적는다")
+        if not domain:
+            return SendOutcome(False, f"주소에서 도메인을 읽지 못했다: {address!r}")
+        if domain not in allowed:
+            return SendOutcome(
+                False,
+                "%s 는 **실발송 허용 도메인 목록 밖**이다(P-41). 허용된 것: %s"
+                % (domain, ", ".join(sorted(allowed))))
+        return SendOutcome(True)
+
     def send(self, *, address: str, subject: str, body: str) -> SendOutcome:
         from django.core.mail import get_connection, send_mail
 
         if not address:
             return SendOutcome(False, "수신 주소가 비었다 — 보낼 곳이 없다")
+
+        # ★★ **허용 목록이 채널보다 앞에 선다** (P-41 · 2026-09-05).
+        #    「보내기로 정했다」(채널=email)와 「이 사람에게 보내도 된다」는 다른 판단이고,
+        #    뒤엣것을 앞엣것이 대신하게 두면 **첫 발송이 곧 사고**다.
+        #
+        #    ⚠ 이 판정은 `send_mail` **앞**에 있어야 한다. 보내고 나서 세는 것은 늦다 —
+        #      나간 메일은 취소되지 않는다. 게이트(`scripts/verify_send_allowlist.py`)가
+        #      낱말이 아니라 **AST 로** 이 순서를 본다.
+        #
+        #    ⚠ 떨어뜨린 뒤 `ok=True` 를 내지 않는다. 로그에 닿은 것을 사람에게 닿았다고
+        #      말하면 그것이 「조용한 성공」이다(D-284). 대신 **사유가 행에 남는다** —
+        #      발송 이력의 `failure_reason` 에 「목록 밖」이 적히고, 화면은 그것을 읽는다.
+        gate = self.send_allowed(address)
+        if not gate.ok:
+            fallback = REGISTRY.get(LogChannel.name) or LogChannel()
+            fallback.send(address=address, subject=subject, body=body)
+            return SendOutcome(
+                False, f"실발송 차단 — 로그 어댑터로 떨어뜨렸다. {gate.reason}"[:240])
+
         try:
             connection = get_connection(timeout=self.timeout())
             sent = send_mail(

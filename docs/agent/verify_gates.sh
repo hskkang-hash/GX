@@ -640,6 +640,37 @@ gate_deprecated_base() {
 # ★ 셋을 한 수로 합치지 않는다 — 고치는 방법이 다르다:
 #     ㉠ 호출 없음 → 배선   ㉡ 주기 없음 → 등록   ㉢ 설정 빔 → 데이터
 # ─────────────────────────────────────────────────────────────────────────────
+# GATE: post-arg-style — 화면이 본문으로 보내는데 서버는 질의를 기다리는가 (2026-09-05 TC)
+#
+# ★ **출생 표본 셋** — 그날 실제로 422 를 내던 자리들이다:
+#   카메라 일괄 등록 · 훈련 모드 · 「지금 처리할 것」의 처리 단계 넘기기.
+#   셋 다 **화면은 멀쩡히 떠 있었다** — 캡처가 제목만 단언하므로 초록이 났다.
+#   단추를 누르는 사람만 아는 고장이고, 그 사람이 첫 근무일의 관제요원이다.
+gate_post_arg_style() {
+  local out rc nposts
+  if out=$($PY scripts/verify_post_arg_style.py --self-test 2>&1); then
+    pass "판정기 자기시험 통과 (양성 6 · 음성 5 — 출생 표본 셋 포함)"
+  else
+    fail "판정기 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_post_arg_style.py 2>&1); rc=$?
+  nposts=$(echo "$out" | grep -o "POST [0-9]*건" | head -1 | tr -dc "0-9")
+  inputs "${nposts:-0}" "dsm 진입면의 POST 라우트 (술어=Python AST · route.post 데코레이터)" \
+         "POST 라우트를 한 건도 못 읽었다" || return 1
+
+  echo "$out" | grep -E "^\[POSTARG\] (POST 인자 방식|\[입력\] 화면 면|잇지 못한)" | sed 's/^/        /'
+  case $rc in
+    0) pass "$(echo "$out" | tail -1)"; return 0 ;;
+    2) fail "판정 불가 — 잴 것을 못 찾았다 (회색은 초록이 아니다)"
+       echo "$out" | sed 's/^/        /'; return 1 ;;
+    *) fail "본문/질의가 어긋난 자리가 있다 — 그 단추는 눌러도 422 다"
+       echo "$out" | sed 's/^/        /'; return 1 ;;
+  esac
+}
+
 gate_dormant() {
   head_ "GATE dormant — 잠자는 기능 래칫 (D-377 착시 ⑨)"
   local out rc
@@ -845,6 +876,7 @@ _dispatch_gate() {
     ui-library)         gate_ui_library ;;
     forbidden-zone)     gate_forbidden_zone ;;
     dormant)            gate_dormant ;;
+    post-arg-style)     gate_post_arg_style ;;
     route-alive)        gate_route_alive ;;
     contract-route-reach) gate_contract_route_reach ;;
     *) echo "알 수 없는 게이트: $1"; exit 2 ;;
@@ -878,7 +910,7 @@ run_gate() {
 }
 
 # ★ ui-secrets 가 secrets 바로 뒤다 — **V 의 첫 판정기**(09-26 §6).
-ALL_GATES=(secrets ui-secrets ui-copy bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach)
+ALL_GATES=(secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {

@@ -115,6 +115,25 @@ def _link_payload(link, request) -> dict:
     return payload
 
 
+def _subscription_payload(sub) -> dict:
+    """구독 → 화면·연동 담당자가 읽는 dict.
+
+    ★ **서명키 값을 담는 칸이 없다** (D-204). 여기 한 칸을 만들면 그 값이 화면과
+      브라우저 개발자 도구와 로그에 남는다. 웹훅 서명키가 새면 **누구나 우리 이름으로
+      경보를 낼 수 있다** — 그것이 SEC-16 이 존재하는 이유다. 나가는 것은 **이름**뿐이다.
+    """
+    return {
+        "subscription_id": sub.subscription_id,
+        "endpoint_url": sub.endpoint_url,
+        "signing_key_ref": sub.signing_key_ref,
+        "event_types": list(sub.event_types),
+        "min_severity": sub.min_severity,
+        "payload_format": sub.payload_format,
+        "is_active": sub.is_active,
+        "last_delivered_at": sub.last_delivered_at,
+    }
+
+
 # ★ 접두어를 비운다. `config/urls.py` 가 이미 `api/dsm/` 로 마운트하므로 여기서 다시
 #   "/dsm" 을 붙이면 **`/api/dsm/dsm/...` 가 된다** — 기존 앱들이 실제로 그 모양이다
 #   (`/api/stream-monitors/stream-monitors/...`). 새로 만드는 것까지 그럴 이유는 없다.
@@ -566,6 +585,86 @@ class DsmAPI:
              "sent_at": r.sent_at}
             for r in records]}
 
+    # ── UX-19 외부 웹훅 구독 — **CAP 1.2 로 낸다** (2026-09-05 TC · 차선 S) ──
+    #
+    # ★ **새 인증 경로를 만들지 않았다** (세종 §4-4 · P-37).
+    #   셋 다 `JwtOrInboundKey()` **기본값**이다 — 기본값은 「들어오는 키 거절」이고,
+    #   `common/inbound_api_key.py` 의 규약 ③이 쓰기에 키를 열어 주는 것을 아예 막는다.
+    #   `INBOUND_KEY_ALLOWED` 를 한 줄도 넓히지 않았다. 구독은 **계정이 등록한다.**
+    # ★ 무계정 링크가 없다: 구독의 주인은 요청자의 테넌트이고 서버가 정한다.
+    #   요청이 「누구 것으로 만들지」를 말할 수 있는 인자가 없다.
+    @route.post("/webhook-subscriptions", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-19 구독 등록 — 남의 테넌트 이벤트를 내 주소로 받게 "
+                          "만들 수 없다 (쓰기 IDOR). 구독은 한 번 걸면 그 뒤로는 "
+                          "부르지 않아도 계속 나간다")
+    def create_webhook_subscription(self, request, endpoint_url: str,
+                                    signing_key_ref: str,
+                                    event_types: str = "", min_severity: str = "",
+                                    payload_format: str = "json"):
+        """이벤트를 **표준(OASIS CAP 1.2)** 으로 받을 주소를 등록한다 (F-05 · UX-19).
+
+        ★ 우리 스키마로 내보내지 않는다. 상급기관·SDN·에스비 App 이 각자 파싱하면
+          **우리가 바뀔 때마다 셋이 깨진다.**
+
+        `signing_key_ref` 는 서명키의 **이름**이다 — 값이 아니다. 값은 환경에만 있고
+        (D-204), 이름을 못 풀면 **등록 단계에서 거절한다**: 등록은 됐는데 보낼 수 없는
+        구독은 「등록했으니 오겠지」라고 믿는 상대를 만든다.
+
+        거절을 4xx 로 나눈다: 403 요청자 없음(시스템 스코프) · 422 값이 계약 밖
+        (평문 http · 내부망 주소 · 모르는 서명키 이름 · 구독 상한).
+        """
+        from common.tenant_scope import SystemScopeCannotRead
+        from common.webhook_outbox import WebhookSubscriptionError
+
+        types = tuple(t.strip() for t in (event_types or "").split(",") if t.strip())
+        try:
+            sub = services.register_webhook_subscription(
+                scope=_scope(request), endpoint_url=endpoint_url,
+                signing_key_ref=signing_key_ref, event_types=types,
+                min_severity=min_severity, payload_format=payload_format)
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except WebhookSubscriptionError as exc:
+            raise HttpError(422, str(exc))
+        return _subscription_payload(sub)
+
+    @route.get("/webhook-subscriptions", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-19 구독 목록 — 남의 테넌트 수신 주소가 보이면 안 된다")
+    def list_webhook_subscriptions(self, request):
+        """내 테넌트의 구독 전부. **서명키 값은 나가지 않는다** — 이름만 나간다."""
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            rows = services.webhook_subscriptions(scope=_scope(request))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        return {"total": len(rows),
+                "subscriptions": [_subscription_payload(r) for r in rows]}
+
+    @route.delete("/webhook-subscriptions/{int:subscription_id}",
+                  auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-19 구독 해지 — 남의 구독을 끌 수 없다 (쓰기 IDOR). "
+                          "끄면 그 기관의 경보가 조용히 멈춘다")
+    def delete_webhook_subscription(self, request, subscription_id: int):
+        """구독을 끈다. **행을 지우지 않는다** — 무엇을 받았는지가 함께 사라진다.
+
+        404 는 **남의 구독**일 때도 난다. 403 을 내면 「그 번호는 있는데 네 것이
+        아니다」가 새고, 존재 여부가 새는 것도 누출이다(`assert_scoped` 규약).
+        """
+        from common.tenant_scope import SystemScopeCannotRead
+        from common.webhook_outbox import WebhookSubscriptionError
+
+        try:
+            sub = services.revoke_webhook_subscription(
+                scope=_scope(request), subscription_id=subscription_id)
+        except Http404:
+            raise HttpError(404, "그런 구독이 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except WebhookSubscriptionError as exc:
+            raise HttpError(422, str(exc))
+        return _subscription_payload(sub)
+
     @route.get("/deliveries", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-10 발송 이력 — 수신자 주소가 새면 안 된다")
     def deliveries(self, request, event_id: int | None = None,
@@ -946,6 +1045,42 @@ class DsmAPI:
     def settings_zones(self, request):
         """`GET /settings/{domain}` 의 `domain=zones` **바로 그것**이다."""
         return self._setting_overview(request, "zones")
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # LAW-02 · LAW-03 — 서식의 「제품 자동」 칸 (턴 C · 차선 E · CPO 문서 배선)
+    # ═══════════════════════════════════════════════════════════════════════
+    #
+    # ⚠ **선언 순서가 곧 라우팅이다** — 이 둘은 바로 아래 `/settings/{domain}` 보다
+    #   **위**에 있어야 한다. 아래로 내리면 `domain="notice-draft"` 로 삼켜지고,
+    #   그 순간 이 라우트는 404 도 아니고 501("설정 영역이 아니다")로 답한다 —
+    #   **있는데 없는 것처럼 보이는** 가장 나쁜 모양이다 (D-410).
+    # ⚠ 문안은 세종(CPO)의 것이고 법률대리인이 대조한다. 여기서 하는 일은 **배선**뿐이고,
+    #   그래서 대장 상태는 「구현」이 아니라 **미측정**이다.
+
+    @route.get("/settings/notice-draft", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="LAW-02 고지 초안 — 남의 테넌트 카메라 수가 보이면 안 된다")
+    def law02_notice_draft(self, request):
+        """LAW-02 안내판·운영방침의 **「제품 자동」 칸**을 설정값으로 채운다.
+
+        못 채운 칸은 **비운 채로 `확인`** 이라고 적는다. 기본값(예: 「30일」)으로
+        메우면 그 순간 안내판이 거짓말을 시작하고, 게시된 고지는 되돌릴 수 없다.
+        """
+        from apps.dsm.legal_notice import notice_draft
+
+        return notice_draft(scope=_scope(request))
+
+    @route.get("/settings/privacy-collection", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="LAW-03 수집 항목 표 — 설정 면과 같은 문지기를 쓴다")
+    def law03_collection_table(self, request):
+        """LAW-03 §1 수집 항목 표를 **모델에서 만든다.**
+
+        손으로 적은 표는 모델이 바뀌어도 그대로 남는다 — 그 표는 「이것만 모읍니다」
+        라고 말하면서 실제로는 다른 것을 모으는 문서가 된다. 그래서 항목마다 어느
+        모델의 어느 칸인지를 못박고, 갈린 자리를 `drifted` 로 낸다.
+        """
+        from apps.dsm.legal_notice import collection_table
+
+        return collection_table()
 
     @route.get("/settings/{domain}", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-12 설정 — 남의 테넌트 설정이 보이면 안 된다")

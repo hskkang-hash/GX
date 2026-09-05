@@ -19,7 +19,7 @@ from pathlib import Path
 
 from django.apps import apps
 from django.core import mail
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from adapters import juso
 from common.tenant_scope import TenantScope
@@ -269,6 +269,13 @@ class DegradedOperationTest(_EventFixture):
         self.assertIn("안양천서로", view.address)
 
 
+#: ★ P-41 (2026-09-05) — **실발송 허용 도메인이 채널보다 앞에 선다.**
+#:   `EmailChannel` 은 목록 밖 도메인을 `send_mail` 앞에서 **로그 어댑터로**
+#:   떨어뜨린다. 그래서 「메일이 실제로 나갔다」를 재는 시험은 **어느 도메인을
+#:   허용했는지 스스로 밝혀야** 한다. 밝히지 않고 초록이 서면 그 초록은
+#:   운영에서 재현되지 않는다 — 운영의 목록은 비어 있기 때문이다.
+#:   강제: `scripts/verify_send_allowlist.py`
+@override_settings(K2_SEND_ALLOWED_DOMAINS=["test.invalid"])
 class AlertBodyTest(_EventFixture):
     """상태에 따라 **알림 문장이 갈리는가** — 갈리지 않으면 받는 사람은 구별할 수 없다."""
 

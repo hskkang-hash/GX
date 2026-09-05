@@ -22,10 +22,17 @@ from datetime import timedelta
 
 from django.apps import apps
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 
+#: ★ P-41 (2026-09-05) — **실발송 허용 도메인이 채널보다 앞에 선다.**
+#:   `EmailChannel` 은 목록 밖 도메인을 `send_mail` 앞에서 **로그 어댑터로**
+#:   떨어뜨린다. 그래서 「메일이 실제로 나갔다」를 재는 시험은 **어느 도메인을
+#:   허용했는지 스스로 밝혀야** 한다. 밝히지 않고 초록이 서면 그 초록은
+#:   운영에서 재현되지 않는다 — 운영의 목록은 비어 있기 때문이다.
+#:   강제: `scripts/verify_send_allowlist.py`
+@override_settings(K2_SEND_ALLOWED_DOMAINS=["test.invalid"])
 class K2Fixture(TestCase):
     """테넌트 A/B · 각자의 스트림 · 역할 하나 · 수신 규칙 하나."""
 

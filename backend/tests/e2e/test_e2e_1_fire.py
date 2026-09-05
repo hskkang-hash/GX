@@ -41,7 +41,7 @@ from datetime import timedelta
 from django.apps import apps
 from django.core import mail
 from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from tests.e2e.e2e_contract import SCENARIOS, StepLedger
@@ -63,6 +63,12 @@ CAMERA_ADDRESS = "경기도 안양시 만안구 안양로 123"
 CAMERA_ADDRESS_DETAIL = "정문"
 
 
+#: ★ P-41 (2026-09-05) — **실발송 허용 도메인이 채널보다 앞에 선다.**
+#:   `EmailChannel` 은 목록 밖 도메인을 `send_mail` 앞에서 **로그 어댑터로**
+#:   떨어뜨린다. 이 시나리오는 「메일이 실제로 나갔다」를 재므로 **어느 도메인을
+#:   허용했는지 스스로 밝힌다.** 운영의 목록은 비어 있고, 그것이 기본값이다.
+#:   강제: `scripts/verify_send_allowlist.py`
+@override_settings(K2_SEND_ALLOWED_DOMAINS=["test.invalid"])
 class _FireScenario(TestCase):
     """화재 시나리오의 픽스처 — 테넌트 A(우리) · 테넌트 B(남).
 

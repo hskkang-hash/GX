@@ -20,7 +20,7 @@ import { Alert, Button, Card, Col, Descriptions, Input, Row, Space, Statistic, S
 import { useCallback, useState } from 'react';
 import { Main } from 'rj-core';
 
-import { dsmEndpoint, dsmGet, dsmPost } from '../api';
+import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { absolute, stamp } from '../time';
@@ -75,7 +75,8 @@ export default function DrillModePage() {
       setBusy(true);
       setError('');
       try {
-        await dsmPost(dsmEndpoint.drill, { enabled: next, reason });
+        // ★ 질의로 보낸다 — 본문이면 422(인자 없음). [실측 2026-09-05]
+        await dsmPostQuery(dsmEndpoint.drill, { enabled: next, reason });
         setReason('');
         state.reload();
         report.reload();

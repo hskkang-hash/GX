@@ -32,7 +32,7 @@ import { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Main } from 'rj-core';
 
-import { dsmEndpoint, dsmGet, dsmPost } from '../api';
+import { dsmEndpoint, dsmGet, dsmPost, dsmPostQuery } from '../api';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import {
@@ -117,17 +117,16 @@ export default function EventDetail() {
   }, [id, deliveries]);
 
   /**
-   * ★ 질의문자열로 보낸다. 이 라우트들의 인자는 django-ninja 기본값에 따라
-   *   **본문이 아니라 질의**다 — 본문으로 보내면 422 가 나고, 그 422 는
-   *   「값이 틀렸다」가 아니라 「인자가 없다」다. 둘을 헷갈리면 한나절이 간다.
+   * ★ 이 화면의 쓰기는 **질의**로 보낸다 — 본문으로 보내면 422 가 나고,
+   *   그 422 는 「값이 틀렸다」가 아니라 「인자가 없다」다.
+   *
+   * ★★ [2026-09-05] **감싸는 함수를 없앴다.** 이 화면은 원래 맞게 짰지만, 조립을
+   *   화면마다 손으로 짜는 동안 **세 자리가 빠졌다**(카메라 일괄 등록 · 훈련 모드 ·
+   *   「지금 처리할 것」의 처리 단계 넘기기). 맞게 짠 사본이 하나 있다는 사실이
+   *   오히려 「손으로 짜도 된다」로 읽혔다. 이제 부르는 이름은 `dsmPostQuery`
+   *   하나뿐이고, 게이트가 그 이름 하나만 지키면 된다 —
+   *   **판정기가 믿어야 할 이름이 적을수록 판정기가 덜 틀린다.**
    */
-  const postWith = useCallback(
-    (url: string, query: Record<string, string>) => {
-      const qs = new URLSearchParams(query).toString();
-      return dsmPost(`${url}?${qs}`);
-    },
-    [],
-  );
 
   /**
    * U1 #11 「진위 판단 — 진짜인가 오탐인가」.
@@ -171,7 +170,7 @@ export default function EventDetail() {
         onOk: async () => {
           setBusy('review');
           try {
-            await postWith(dsmEndpoint.review(id), { verdict, reason });
+            await dsmPostQuery(dsmEndpoint.review(id), { verdict, reason });
             message.success('판정을 기록했습니다.');
             event.reload();
           } catch (err) {
@@ -183,7 +182,7 @@ export default function EventDetail() {
         },
       });
     },
-    [id, event, postWith],
+    [id, event],
   );
 
   /** 대응 진행 한 칸 (D-399). 되돌림(종결 → 조치중)은 **사유가 필수**다. */
@@ -193,7 +192,7 @@ export default function EventDetail() {
       const send = async (reason: string) => {
         setBusy(toState);
         try {
-          await postWith(dsmEndpoint.response(id), { to_state: toState, reason });
+          await dsmPostQuery(dsmEndpoint.response(id), { to_state: toState, reason });
           message.success(`처리 단계를 「${labelOf(RESPONSE_STATE_LABEL, toState)}」 단계로 옮겼습니다.`);
           event.reload();
         } catch (err) {
@@ -231,7 +230,7 @@ export default function EventDetail() {
         onOk: () => send(reason),
       });
     },
-    [id, event, postWith],
+    [id, event],
   );
 
   const e = event.data;

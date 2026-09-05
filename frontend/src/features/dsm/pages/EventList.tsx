@@ -27,6 +27,7 @@ import { linkStatusBadge, linkStatusLabel } from '../copy';
 import { VerdictBadge } from '../components/ResponseSteps';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
+import { useDetectionPing } from '../hooks/useDetectionPing';
 import {
   EVENT_TYPE_LABEL,
   labelOf,
@@ -226,6 +227,15 @@ export default function EventList() {
     [],
     { enabled: active.key === 'system', refreshMs: REFRESH_MS },
   );
+
+  /**
+   * UX-08 — 새 탐지가 나면 **새로고침 없이** 목록이 다시 읽힌다.
+   * ★ 덤이지 바닥이 아니다: 소켓이 안 붙어도 주기 갱신이 화면을 계속 살린다.
+   */
+  useDetectionPing(() => {
+    events.reload();
+    summary.reload();
+  });
 
   const rows = useMemo(() => events.data?.events ?? [], [events.data]);
 

@@ -309,4 +309,41 @@ def publish_detections(
             "LABEL_TO_EVENT_TYPE 에 없다. 이 목록이 그 표를 늘릴 근거다 (D-273)",
             stream_monitor_id, result.unmapped_labels,
         )
+
+    # ★ [UX-08 · 2026-09-05] **관제 화면을 한 번 두드린다.**
+    #
+    #   왜 여기인가: 관제 화면(대시보드·이벤트 목록·단일 초점 큐)이 읽는 것은
+    #   `DetectionEvent` 이고, 그 행이 태어나는 자리가 여기다. 잠자던 시그널은
+    #   `VideoAnalysis` 에 붙어 있어 **켜도 이 화면에는 한 장도 안 붙는다** —
+    #   두 화면을 헷갈리면 켜 놓고 「안 뜬다」를 다시 찾게 된다.
+    #
+    #   ★ 보내는 것은 **신호 하나**다. 카드도, 건수도 아니다. 무엇이 한 장인지는
+    #     목록 문 한 곳이 정한다(5분 이어붙이는 창) — 두 벌을 만들지 않는다.
+    #   ★ **접힌 것도 두드린다.** 접힘은 카드의 `×N` 을 올리므로 화면이 바뀐다.
+    #     새로 만들어진 것만 두드리면 「7건이 났는데 화면은 그대로」가 된다.
+    #   ★ 실패해도 위로 던지지 않는다 — 화면 갱신이 못 나갔다고 탐지 기록이
+    #     실패해서는 안 된다. 화면은 주기 갱신이라는 바닥을 여전히 갖고 있다.
+    if result.created or result.folded:
+        from common.live_ping import ping_detection
+
+        ping_detection(tenant_code=_tenant_code_of(stream_monitor_id),
+                       reason="detection")
     return result
+
+
+def _tenant_code_of(stream_monitor_id: int):
+    """그 카메라의 주인 테넌트 코드. 못 찾으면 None — **전역 방으로만 나간다.**
+
+    ⚠ 못 찾았다고 남의 방에 넣지 않는다. 두드림 자체에는 자료가 없지만,
+      방을 잘못 고르면 **남의 화면이 우리 때문에 다시 읽는다.**
+    """
+    try:
+        from stream_monitors.models import StreamMonitor
+
+        cam = StreamMonitor.objects.filter(pk=stream_monitor_id).only("group_id").first()
+        group = getattr(cam, "group", None)
+        if group is None:
+            return None
+        return getattr(group, "code", None) or getattr(group, "id", None)
+    except Exception:  # noqa: BLE001 — 두드림 때문에 기록이 죽지 않는다
+        return None

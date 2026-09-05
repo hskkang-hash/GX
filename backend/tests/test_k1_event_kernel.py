@@ -484,21 +484,24 @@ class KernelScopeSignatureTest(K1Fixture):
             + "\n".join(f"  {n:20s} {w}" for n, w, _ in table),
         )
 
-    def test_subscribe_requires_scope_before_it_raises(self) -> None:
-        """[D-281] 구현이 없어도 스코프는 먼저 걸린다.
+    def test_subscribe_requires_scope_before_anything_else(self) -> None:
+        """[D-281] **스코프가 다른 무엇보다 먼저 걸린다.**
 
-        `subscribe` 는 부르면 `NotImplementedYet` 을 던진다. 그런데 **스코프 없이 불렀을
-        때도** 그것이 나오면, 이 함수는 "구현이 없어서 안전한" 것이지 "스코프를 요구해서
-        안전한" 것이 아니다. 구현이 들어오는 날 그 차이가 드러난다 — 지금 갈라 둔다.
+        ★ 이 시험은 2026-08 부터 「구현이 없어도 스코프가 먼저 걸린다」를 재고 있었고,
+          그때 적어 둔 문장이 이것이었다: *"구현이 들어오는 날 그 차이가 드러난다 —
+          지금 갈라 둔다."* **그날이 왔다** (2026-09-05 TC · UX-19). 구현이 들어온
+          뒤에도 순서는 그대로여야 한다 — 스코프 없이 부르면 **인자를 보기도 전에**
+          `TypeError` 다. 여기서 서명키 오류나 URL 오류가 먼저 나오면, 그것은
+          「사람 없이도 인자 검사까지는 지나간다」는 뜻이고 그 자리가 다음 구멍이다.
         """
+        from common.webhook_outbox import WebhookSubscriptionError
         from kernels.k1_event import services as k1
-        from kernels.k1_event.exceptions import NotImplementedYet
 
         with self.assertRaises(TypeError):
             k1.subscribe(webhook_url="https://test.invalid/hook")
 
-        # scope 를 주면 그때서야 "구현이 없다"가 나온다.
-        with self.assertRaises(NotImplementedYet):
+        # scope 를 주면 그때서야 **인자**가 판정된다 — 서명키 이름이 비었으므로 거절.
+        with self.assertRaises(WebhookSubscriptionError):
             k1.subscribe(scope=self.scope_a, webhook_url="https://test.invalid/hook")
 
     def test_system_scope_cannot_read(self) -> None:
