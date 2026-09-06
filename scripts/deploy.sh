@@ -31,7 +31,23 @@
 #   scripts/deploy.sh --strict-walk       걷기가 **회색이어도** 되돌린다
 #   scripts/deploy.sh --skip-build        이미 빌드된 산출물로 배치만 다시 한다
 #   scripts/deploy.sh --allow-dirty       프런트 작업본이 더러워도 진행(아래 ★)
-#   scripts/deploy.sh --self-test         판정 규칙만 (도커 없이 · 되돌리기 결정표)
+#   scripts/deploy.sh --self-test         판정 규칙만 (도커 없이 · 되돌리기 결정표 · 프로필 관문)
+#   scripts/deploy.sh --profile prod --target staging   운영 프로필로 스테이징에 올린다
+#
+# ★ **프로필** (P-75 · SEC-18 · 2026-09-06 턴 H) — 기본은 `dev`/`local`, **지금 그대로**다.
+#   `--profile dev|prod`  백엔드가 어느 설정으로 뜨는가 (`config.settings` / `config.settings_prod`)
+#   `--target local|staging|production`  이 번들이 어디에 서는가. staging·production 은 **공개 URL** 이다.
+#   규칙 셋:
+#     ① 개발 프로필로 공개 URL 을 열려 하면 **배치 거부**한다. [실측 2026-09-06 턴 G]
+#        아무 선언 없이 뜨는 `config.settings` 는 SECRET_KEY=자리표 · DEBUG=True ·
+#        ALLOWED_HOSTS=[*] · 쿠키 둘 주석이다 — 여는 순간 트레이스백·Host 무제한·세션 위조.
+#     ② prod 프로필이면 **어디에 서든** `verify_prod_settings.py` 5/5 를 먼저 잰다.
+#        초록이 아니면 배치하지 않는다(회색도 아니다 — 회색은 exit 2).
+#     ③ 로컬·개발 배치는 **막지 않는다.** 막으면 그것은 보안이 아니라 고장이다.
+#   `GX_DEPLOY_PROFILE` · `GX_DEPLOY_TARGET` 환경변수로도 같은 값을 준다.
+#   ⚠ **지금 이 명령은 목적지가 staging 이어도 원격에 밀지 않는다** — 스테이징 서버가
+#     아직 없다(대표 승인 대기 · RESUME_NEXT §3). 목적지는 지금 「무엇을 허락하는가」를
+#     정하는 값이고, 원격 배선은 서버가 서면 이 자리에 잇는다. 그때 이 관문은 이미 서 있다.
 #
 # ★ **작업본이 더러우면 번들이 거짓말을 한다.** 번들에는 `GX_COMMIT:<HEAD>` 가 박히는데
 #   내용은 커밋되지 않은 코드다. 게이트는 그 둘을 구별할 수 없으므로 **여기서 막는다.**
@@ -68,19 +84,63 @@ EVID="$ROOT/docs/agent/evidence/P-64"
 LOG="$EVID/deploy_${WHEN}.log"
 
 DO_WALK=1; STRICT_WALK=0; SKIP_BUILD=0; ALLOW_DIRTY=0; SELF_TEST=0
+# ── 프로필·목적지 (P-75 · SEC-18 · 2026-09-06 턴 H · 차선 S) ────────────────
+#   프로필 = 백엔드가 어느 설정으로 뜨는가 (dev = `config.settings` · prod = `config.settings_prod`)
+#   목적지 = 이 번들이 어디에 서는가 (local = 지금 이 기계 · staging/production = **공개 URL**)
+#   기본은 **지금 도는 그대로**다 — dev/local. 매 턴 끝의 로컬 배치가 이 파일을 부른다.
+PROFILE="${GX_DEPLOY_PROFILE:-dev}"
+TARGET="${GX_DEPLOY_TARGET:-local}"
+PENDING=""
 for a in "$@"; do
+  # `--profile prod` 와 `--profile=prod` 를 **둘 다** 받는다 — 지시서는 앞엣것으로 적혔고
+  # 손으로 치는 사람은 뒤엣것을 친다. 형식 때문에 배치가 막히는 일은 없어야 한다.
+  if [ -n "$PENDING" ]; then
+    case "$PENDING" in profile) PROFILE="$a" ;; target) TARGET="$a" ;; esac
+    PENDING=""; continue
+  fi
   case "$a" in
+    --profile) PENDING=profile ;;
+    --target) PENDING=target ;;
     --no-walk) DO_WALK=0 ;;
     --strict-walk) STRICT_WALK=1 ;;
     --skip-build) SKIP_BUILD=1 ;;
     --allow-dirty) ALLOW_DIRTY=1 ;;
     --self-test) SELF_TEST=1 ;;
-    -h|--help) sed -n '3,45p' "$0"; exit 0 ;;
+    --profile=*) PROFILE="${a#--profile=}" ;;
+    --target=*) TARGET="${a#--target=}" ;;
+    -h|--help) sed -n '3,52p' "$0"; exit 0 ;;
     *) echo "[DEPLOY] 모르는 인자: $a"; exit 2 ;;
   esac
 done
 
 say() { echo "[DEPLOY] $*"; }
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 프로필 관문 — **순수 함수다** (P-75 · SEC-18 · 2026-09-06 턴 H · 차선 S)
+# ═══════════════════════════════════════════════════════════════════════════
+# 무엇을 막는가 — **개발 프로필로 공개 URL 을 여는 것**
+# [실측 2026-09-06 · 턴 G] 아무 선언 없이 뜨는 `config.settings` 는
+#   `SECRET_KEY="your-secret-key-here"` · `DEBUG=True` · `ALLOWED_HOSTS=["*"]` ·
+#   쿠키 둘 주석이다. 그 프로필로 스테이징·운영을 열면 **여는 순간** 트레이스백 노출 ·
+#   Host 무제한 · 저장소에 적힌 키로 세션 위조다. 배치는 그 자리를 지나간다 —
+#   그러니 **배치가 막는다**.
+#
+# 입력: 프로필(dev|prod) · 목적지(local|staging|production)
+# 출력: "간다:0" 그대로 진행 · "게이트먼저:0" `verify_prod_settings.py` 5/5 를 먼저 잰다
+#       "거부:1" 배치하지 않는다 · "회색:2" **모르는 이름은 초록이 아니다**
+#
+# ★ 로컬·개발은 **지금 그대로 간다.** 이 관문이 매 턴 끝의 로컬 배치를 막으면
+#   그것은 보안이 아니라 고장이다.
+profile_gate() {
+  local profile="$1" target="$2"
+  case "$profile" in dev|prod) ;; *) echo "회색:2"; return ;; esac
+  case "$target" in local|staging|production) ;; *) echo "회색:2"; return ;; esac
+  # prod 프로필은 **어디에 서든** 게이트를 먼저 지난다. 프로필을 말만 바꾸고
+  # 선언을 안 심은 채 뜨는 것이 정확히 우리가 막는 것이다.
+  [ "$profile" = "prod" ] && { echo "게이트먼저:0"; return; }
+  [ "$target" = "local" ] && { echo "간다:0"; return; }
+  echo "거부:1"
+}
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 되돌리기 결정 — **순수 함수다** (D-277). 자기시험이 합성 입력을 먹인다
@@ -145,12 +205,35 @@ self_test() {
   for s in webgate walk build; do
     case "$(decide "$s" 2 0)" in *:0) bad+=("$s 에서 회색이 exit 0 으로 샌다");; esac
   done
+
+  # ── 프로필 관문 (P-75 · SEC-18) ─────────────────────────────────────────
+  pchk() { # pchk <기대> <프로필> <목적지> <사유>
+    got="$(profile_gate "$2" "$3")"
+    [ "$got" = "$1" ] || bad+=("profile_gate($2,$3) = $got — 기대 $1: $4")
+  }
+  # ★ **출생 표본** — 이 관문을 만들게 한 그날의 설정(2026-09-06 턴 G 실측):
+  #   `SECRET_KEY="your-secret-key-here"` · `DEBUG=True` · `ALLOWED_HOSTS=["*"]` ·
+  #   쿠키 둘 주석. **그 프로필로 공개 URL 을 여는 배치**가 첫 표본이다.
+  pchk "거부:1" dev staging    "개발 프로필로 스테이징을 연다 — 트레이스백·Host 무제한·세션 위조"
+  pchk "거부:1" dev production "개발 프로필로 운영을 연다"
+  # ★ 지금 도는 로컬 배치는 **계속 돈다** — 이 줄이 빨개지면 턴이 못 닫힌다
+  pchk "간다:0" dev local      "로컬·개발 배치가 막힌다(이 관문의 고장)"
+  # prod 프로필은 어디에 서든 5/5 를 먼저 잰다 — 이름만 prod 인 것을 막는다
+  pchk "게이트먼저:0" prod staging    "prod 프로필인데 판정기를 안 부른다"
+  pchk "게이트먼저:0" prod production "prod 프로필인데 판정기를 안 부른다"
+  pchk "게이트먼저:0" prod local      "로컬이라고 prod 프로필의 판정을 건너뛴다"
+  # 모르는 이름은 **초록이 아니다** (D-301)
+  pchk "회색:2" staging staging "프로필 자리에 목적지를 넣었는데 통과한다"
+  pchk "회색:2" dev stg         "모르는 목적지 이름이 통과한다"
+  pchk "회색:2" prod ''         "목적지가 비었는데 통과한다"
+
   if [ "${#bad[@]}" -gt 0 ]; then
     say "자기시험 실패 — 명령을 먼저 의심한다 (D-350):"
     printf '    %s\n' "${bad[@]}"
     return $EXIT_FAIL
   fi
   say "자기시험 통과 — 출생 표본 3(09-04 번들) · 배치 전 3 · 걷기 4 · 회색 누출 3"
+  say "자기시험 통과 — 프로필 관문 9(출생 표본 2 = 개발 프로필로 공개 URL · 로컬 1 · prod 3 · 회색 3)"
   return $EXIT_OK
 }
 
@@ -160,6 +243,28 @@ mkdir -p "$EVID"
 exec > >(tee -a "$LOG") 2>&1
 say "═══ P-64 배치 명령 · $WHEN ═══"
 self_test || exit $EXIT_FAIL
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ⓪′ 프로필 관문 — **아무것도 짓기 전에** 먼저 답한다 (P-75 · SEC-18)
+# ═══════════════════════════════════════════════════════════════════════════
+say "[프로필] $PROFILE · [목적지] $TARGET  (기본은 dev/local — 지금 도는 그대로)"
+GATE="$(profile_gate "$PROFILE" "$TARGET")"
+case "$GATE" in
+  거부:*)
+    say "**배치 거부** — 개발 프로필($PROFILE)로 $TARGET 을 열지 않는다."
+    # ⚠ 이 줄에 역따옴표를 쓰지 않는다 — 큰따옴표 안의 역따옴표는 **명령 치환**이라
+    #   `config.settings: command not found` 가 배치 로그에 찍힌다 [실측 2026-09-06].
+    say "  [실측 2026-09-06 · 턴 G] config.settings 는 아무 선언 없이 뜨면"
+    say "    SECRET_KEY=자리표 · DEBUG=True · ALLOWED_HOSTS=[*] · 쿠키 둘 주석 이다."
+    say "  여는 순간 트레이스백 노출 · Host 무제한 · **저장소에 적힌 키로 세션 위조**다."
+    say "  → 운영 프로필로 다시 부른다: scripts/deploy.sh --profile prod --target $TARGET"
+    say "    (선언 이름은 저장소 뿌리 .env.example 의 「운영 프로필 선언」 절)"
+    exit $EXIT_FAIL ;;
+  회색:*)
+    say "**못 쟀다** — 모르는 프로필·목적지 이름이다(프로필=$PROFILE · 목적지=$TARGET)."
+    say "  프로필 dev|prod · 목적지 local|staging|production. **모르는 이름은 초록이 아니다**"
+    exit $EXIT_GRAY ;;
+esac
 
 # ═══════════════════════════════════════════════════════════════════════════
 # ⓪ 먼저 신원을 정한다 — **커밋 40자리.** `--short` 는 부딪힐 수 있다
@@ -192,6 +297,39 @@ fi
 for c in "$BUILDER" "$SERVER"; do
   docker inspect "$c" >/dev/null 2>&1 || { say "**못 쟀다** — 컨테이너 $c 가 없다"; exit $EXIT_GRAY; }
 done
+
+# ── prod 프로필이면 **여기서 5/5 를 잰다** (P-75 · SEC-18) ───────────────────
+# ★ 판정기를 새로 짓지 않는다(이 파일의 불변 ②). `verify_prod_settings.py` 가
+#   운영 프로필을 **실제로 아홉 번 띄워** 닫혀 있는지 판정한다. 이 파일은 순서만 안다.
+# ⚠ 컨테이너 안에서 돈다 — 호스트에는 Django·dj-core 가 없다. 파이프를 쓰지 않는다
+#   (`| tail` 은 앞 명령의 종료 코드를 덮는다).
+if [ "$GATE" = "게이트먼저:0" ]; then
+  say "[0/6] 운영 프로필 판정 — verify_prod_settings.py (선언이 빠지면 기동을 거부하는가)"
+  PRODGATE_LOG="$EVID/prod_settings_${WHEN}.log"
+  # 드릴 스위치(증거용) — `GX_PROD_GATE_BACKEND=<dir>` 를 주면 판정기가 그 자리의
+  #   `config/` 를 본다. **이 관문이 빨강일 때 실제로 배치를 막는지**를 재기 위한 것이다
+  #   (망가뜨린 사본을 컨테이너 `/tmp` 에 두고 겨눈다 — 저장소는 안 건드린다).
+  PRODGATE_ARGS=""
+  [ -n "${GX_PROD_GATE_BACKEND:-}" ] && PRODGATE_ARGS="--backend ${GX_PROD_GATE_BACKEND}" \
+    && say "      ⚠ 드릴: 판정기가 ${GX_PROD_GATE_BACKEND} 를 본다 (증거용 · 평시에는 비어 있다)"
+  MSYS_NO_PATHCONV=1 docker exec "$SERVER" python /repo/scripts/verify_prod_settings.py $PRODGATE_ARGS > "$PRODGATE_LOG" 2>&1
+  rc=$?
+  sed 's/^/[DEPLOY]     /' "$PRODGATE_LOG" | tail -12
+  say "      판정 종료코드=$rc · 전문 → $PRODGATE_LOG"
+  # 도커가 명령 자체를 못 돌린 것(125·126·127)은 **실패가 아니라 못 잰 것**이다
+  case "$rc" in 125|126|127) rc=2 ;; esac
+  if [ "$rc" = "2" ]; then
+    say "**못 쟀다** — 운영 프로필을 못 띄웠다(회색). **회색은 통과가 아니다**(D-301)."
+    say "  자리는 안 바꿨다 — 이전 번들이 그대로 선다"
+    exit $EXIT_GRAY
+  fi
+  if [ "$rc" != "0" ]; then
+    say "**배치 거부** — 운영 프로필이 5/5 가 아니다. **이 게이트 초록 없이 공개 URL 을 열지 않는다**"
+    say "  자리는 안 바꿨다 — 이전 번들이 그대로 선다"
+    exit $EXIT_FAIL
+  fi
+  say "      운영 프로필 5/5 — 선언이 서 있고, 빠지면 뜨지 않는다"
+fi
 
 # 자격증명은 저장소 밖에서 (D-204). 걷기에만 쓴다
 if [ -f "$ROOT/.env.gates" ]; then set -a; . "$ROOT/.env.gates"; set +a; fi

@@ -17,11 +17,31 @@
  * 채우고, 401 을 보면 재발급을 시도하고, 실패하면 로그인 화면으로 튕긴다 —
  * 셋 다 월 화면이 원하는 동작이 아니다. 그래서 이 파일은 **맨 요청기**를 쓴다.
  *
- * ★ 토큰은 **주소창에서 한 번만** 받는다
- * --------------------------------------
- * 관제실 대형 화면에는 자판이 없다. 사람이 할 수 있는 일은 주소를 한 번 여는 것뿐이고,
- * 그래서 `?token=` 으로 받는다. 받은 즉시 주소창에서 **지운다** — 지우지 않으면
- * 그 화면을 찍은 사진 한 장이 곧 토큰이 된다(관제실 화면은 사진에 자주 찍힌다).
+ * ★★ 토큰은 **조각부(#)로 받는다 — 질의부(?)가 아니다** [P-78 ④ · 2026-09-06 턴 H]
+ * ------------------------------------------------------------------------------
+ * 종전 판은 `?token=` 으로 받고 곧바로 주소창에서 지웠다. 그 지움은 **사진 한 장이
+ * 곧 토큰이 되는 위험**을 막았고 그것은 옳았다. 그런데 UX-24c 가 자기 손으로 적은
+ * 닫는 조건 ①은 **다른 위험**을 금지하고 있었다:
+ *
+ *     「쿼리 파라미터는 접근로그에 남으므로 안 된다」
+ *
+ * 그리고 그 조건은 그대로 깨져 있었다 [실측 · 직전 턴 검수]: 주소창을 지워도
+ * **이미 나간 요청은 못 지운다.** 앞단이 적는 것은 요청 줄이고, 그 줄은
+ * `GET /wall?token=<토큰> HTTP/1.1` 이다. 지워지는 것은 주소창이지 로그가 아니다.
+ *
+ * 그래서 **받는 자리를 바꿨다.** 조각부는 규약상 요청에 실리지 않는다 — 브라우저가
+ * 서버로 보내지 않고(따라서 어떤 앞단도 적을 수 없다), 다른 사이트로 나가는
+ * `Referer` 에도 붙지 않는다. 즉 이 한 글자(`?` → `#`)가 조건 ①을 **구조로** 닫는다.
+ *
+ *     열 때   https://<주소>/wall#token=<토큰>
+ *     남는 것 앞단 접근로그에 `GET /wall HTTP/1.1` — 토큰이 없다
+ *
+ * 받은 즉시 주소창에서도 지운다 — 종전 판이 막은 위험(사진)도 그대로 막는다.
+ *
+ * ⚠ **옛 주소(`?token=`)를 더는 받지 않는다.** 받아 주면 조건 ①이 계속 깨진 채로
+ *   산다. 대신 **조용히 무시하지 않는다**: 그러면 대형 화면이 로그인 화면을 띄운
+ *   채 밤을 새우고, 아침에 「월이 죽었다」만 남는다. 왜 안 열리는지와 누구에게 갈지를
+ *   화면이 말한다(`WALL_TOKEN_LEGACY_QUERY_NOTICE`).
  *
  * ⚠ 저장 자리는 이 브라우저의 로컬 저장소다. 대형 화면은 밤중에 스스로 새로고침하고,
  *   그때마다 사람이 주소를 다시 칠 수는 없다. 대신 **12시간이 지나면 서버가 거절**하고,
@@ -31,8 +51,15 @@
 /** 이 토큰이 실리는 자리. 로그인 자리가 **아니다**. */
 export const WALL_TOKEN_HEADER = 'X-GX-Wall-Token';
 
-/** 주소로 받는 이름. */
+/** 주소로 받는 이름. **조각부**에서 이 이름으로 온다 (`#token=…`). */
 export const WALL_TOKEN_PARAM = 'token';
+
+/**
+ * 옛 주소(`?token=`)로 들어왔을 때 화면이 하는 말.
+ * 「관리자에게 받으십시오」까지 적는다 — 대형 화면 앞에는 고칠 사람이 없다.
+ */
+export const WALL_TOKEN_LEGACY_QUERY_NOTICE =
+  '이 주소로는 월 모드를 열 수 없습니다. 관리자에게 새 주소를 받으십시오.';
 
 /** 이 브라우저에 적어 두는 이름. */
 export const WALL_TOKEN_STORAGE_KEY = 'gx.wall.display.token';
@@ -78,21 +105,48 @@ export function clearWallToken(): void {
  * 돌려주는 값은 「지금 월 토큰이 있는가」다. 앱이 라우터를 세우기 **전에** 한 번 부른다 —
  * 세운 뒤에 부르면 첫 화면이 이미 로그인 관문을 지나간 뒤다.
  */
+let legacyQuerySeen = false;
+
+/** 옛 주소(`?token=`)로 들어왔는가 — 화면이 이 사실을 말한다. */
+export function wallTokenLegacyQuery(): boolean {
+  return legacyQuerySeen;
+}
+
 export function adoptWallToken(): boolean {
   if (typeof window === 'undefined') return false;
-  let received: string | null = null;
   try {
     const url = new URL(window.location.href);
-    received = url.searchParams.get(WALL_TOKEN_PARAM);
-    if (received && received.trim()) {
-      storage()?.setItem(WALL_TOKEN_STORAGE_KEY, received.trim());
-      // 주소창에서 지운다. 남겨 두면 이 화면을 찍은 사진이 곧 토큰이다.
+
+    // ── 옛 주소 — **받지 않는다.** 다만 그 사실을 적고 주소에서 지운다 ─────
+    if (url.searchParams.get(WALL_TOKEN_PARAM)) {
+      legacyQuerySeen = true;
       url.searchParams.delete(WALL_TOKEN_PARAM);
       window.history.replaceState(
         null,
         '',
         url.pathname + (url.search || '') + (url.hash || ''),
       );
+    }
+
+    // ── 조각부에서 받는다. 이 값은 **서버로 나간 적이 없다.** ──────────────
+    const hash = (window.location.hash || '').replace(/^#/, '');
+    if (hash) {
+      const received = new URLSearchParams(hash).get(WALL_TOKEN_PARAM);
+      if (received && received.trim()) {
+        storage()?.setItem(WALL_TOKEN_STORAGE_KEY, received.trim());
+        legacyQuerySeen = false;
+        // 주소창에서도 지운다. 남겨 두면 이 화면을 찍은 사진이 곧 토큰이다.
+        const rest = new URLSearchParams(hash);
+        rest.delete(WALL_TOKEN_PARAM);
+        const tail = rest.toString();
+        window.history.replaceState(
+          null,
+          '',
+          window.location.pathname +
+            (window.location.search || '') +
+            (tail ? `#${tail}` : ''),
+        );
+      }
     }
   } catch {
     /* 주소를 못 읽었다. 저장된 값이 있으면 그것으로 돈다. */
@@ -172,10 +226,9 @@ export async function wallGet<T>(
         504,
       );
     }
-    throw new WallTokenError(
-      err instanceof Error ? err.message : '요청이 실패했습니다.',
-      0,
-    );
+    // ★ [P-78 ① · 턴 H] **원문을 싣지 않는다.** 이 자리에서 `err.message` 를
+    //   실으면 화면에 「Failed to fetch」가 그대로 뜬다 — 사전이 금지한 그 모양이다.
+    throw new WallTokenError('서버에 연결하지 못했습니다.', 0);
   }
   clearTimeout(timer);
 

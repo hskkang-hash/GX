@@ -1,0 +1,53 @@
+{
+  "web": "http://localhost:3406",
+  "api": "http://localhost:8402",
+  "legacy_query": {
+    "opened": "/wall?token=gxwall1.eyJleHAiOjE3ODg3MzQ3NjcsImlhdCI6MTc4ODY5MTU2NywianRpIjoiMjM2NTBkYjhiZDI5ZWU2YiIsInNjb3BlIjoid2FsbCIsInNjcmVlbiI6Ii93YWxsIiwic3ViIjoxMTQsInYiOjF9.1iDZIM_IDWpr8p_c6lVqSOHDc9lNOu5fS58xJIG6h50",
+    "access_log": [
+      "\"GET /wall?token=gxwall1.eyJleHAiOjE3ODg3MzQ3NjcsImlhdCI6MTc4ODY5MTU2NywianRpIjoiMjM2NTBkYjhiZDI5ZWU2YiIsInNjb3BlIjoid2FsbCIsInNjcmVlbiI6Ii93YWxsIiwic3ViIjoxMTQsInYiOjF9.1iDZIM_IDWpr8p_c6lVqSOHDc9lNOu5fS58xJIG6h50 HTTP/1.1\""
+    ],
+    "url_after": "http://localhost:3406/wall",
+    "api_calls": [
+      "GET http://localhost:8402/api/config-management/list-optimized"
+    ],
+    "carried_wall_header": [],
+    "body_head": "이 주소로는 월 모드를 열 수 없습니다. 관리자에게 새 주소를 받으십시오. | 버전 e96ab7d · 장애 신고 창구 미등록",
+    "shot": "wall_query_refused.png"
+  },
+  "fragment": {
+    "opened": "/wall#token=gxwall1.eyJleHAiOjE3ODg3MzQ3NjcsImlhdCI6MTc4ODY5MTU2NywianRpIjoiMjM2NTBkYjhiZDI5ZWU2YiIsInNjb3BlIjoid2FsbCIsInNjcmVlbiI6Ii93YWxsIiwic3ViIjoxMTQsInYiOjF9.1iDZIM_IDWpr8p_c6lVqSOHDc9lNOu5fS58xJIG6h50",
+    "access_log": [
+      "\"GET /wall HTTP/1.1\""
+    ],
+    "url_after": "http://localhost:3406/wall",
+    "api_calls": [
+      "GET http://localhost:8402/api/config-management/list-optimized",
+      "GET http://localhost:8402/api/dsm/cameras/pulse",
+      "GET http://localhost:8402/api/dsm/events/queue"
+    ],
+    "carried_wall_header": [
+      "http://localhost:8402/api/dsm/cameras/pulse",
+      "http://localhost:8402/api/dsm/events/queue"
+    ],
+    "body_head": "월 모드 | 월 표시 토큰으로 열림 · 자동 갱신 중 · 마지막 갱신 5초 전 | 지도 | 지도에 표시할 위치가 없습니다. | 지금 처리할 것 | ■ 심각 · 침수 ×5 | 시드 카메라 (검수용) · 조치 중 | 69시간 53분 | ■ 심각 · 화재 ×5 | 시드 카메라 (검수용) · 조치 중 | 69시간 38분 | ▲ 경계 · 저장 용량 임계 | 시드 카메라 (검수용) · 미처리 | 70시간 35분 | ▲ 경계 · 카메라 무응답 | 시드 카메라 (검수용) · 미처리 | 70시간 32분 | ▲ 경계 · 침입 ×5 | 시드 카메라 (검수용) · 조치 중 | 70시간 8분 | ● 주의 · 사람 ×5 | 시드 ",
+    "shot": "wall_fragment.png"
+  },
+  "desk_login_url": "http://localhost:3406/profile",
+  "desk_before": {
+    "url": "http://localhost:3406/dsm/queue",
+    "sees_queue": true
+  },
+  "wall_while_desk": {
+    "url": "http://localhost:3406/wall",
+    "carried": [
+      "http://localhost:8402/api/dsm/cameras/pulse",
+      "http://localhost:8402/api/dsm/events/queue"
+    ],
+    "body_head": "월 모드 | 월 표시 토큰으로 열림 · 자동 갱신 중 · 마지막 갱신 5초 전 | 지도 | 지도에 표시할 위치가 없습니다. | 지금 처리할 것 | ■ 심각 · 침수 ×5 | 시드 카메라 (검수용) · 조치 중 | 69시간 54분 | ■ 심각 · 화재 ×5 | 시드 카메라 (검수용) · 조치 중 | 69시간 39분 | ▲ 경계 · 저장 용량 임계 | 시드 카메라 (검수용) · 미처리 | 70시간 36분 | "
+  },
+  "desk_after": {
+    "url": "http://localhost:3406/dsm/queue",
+    "sees_queue": true,
+    "bounced_to_login": false
+  }
+}

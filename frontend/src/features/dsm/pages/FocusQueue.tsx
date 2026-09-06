@@ -59,7 +59,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Main } from 'rj-core';
 
-import { dsmEndpoint, dsmGet, dsmPostQuery, DsmApiError } from '../api';
+import { dsmEndpoint, dsmGet, dsmPostQueryOnce, intentKey } from '../api';
+import { userFacingError } from '../copy';
 import EventSnapshot from '../components/EventSnapshot';
 import ResponseClock from '../components/ResponseClock';
 import ShortcutHelp from '../components/ShortcutHelp';
@@ -191,17 +192,23 @@ export default function FocusQueuePage() {
         //       본문 → 422 loc:["query","to_state"] · 질의 → 404 (행이 없다)
         //   이 자리는 관제요원이 **미처리를 접수로 넘기는** 단추다. 422 면 넘길 수
         //   없는데 화면은 멀쩡히 떠 있다 — 가장 늦게 발견되는 종류의 고장이다.
-        await dsmPostQuery(dsmEndpoint.response(eventId), { to_state: toState });
+        // ★ **접수 — 멱등 키를 싣는 문 ②**(키보드로 일하는 화면). 여기가 두 번 눌리는
+        //   확률이 가장 높다: 숫자 키는 사람이 「먹었나?」 싶으면 곧바로 다시 누른다.
+        await dsmPostQueryOnce(
+          dsmEndpoint.response(eventId),
+          { to_state: toState },
+          intentKey(`q.response:${eventId}:${toState}`),
+        );
         // 키보드로 일하는 사람은 **눌린 것을 눈으로 확인할 시간이 없다.**
         // 이 한 음이 없으면 같은 키를 두 번 누른다.
         sound.play('actionEcho');
         queue.reload();
       } catch (err) {
-        // ★ 거절은 4xx 로 온다. 그 문장을 **화면에 그대로 낸다** — 서버가 왜
+        // ★ 거절은 4xx 로 온다. **서버가 쓴 한국어 사유는 그대로 낸다** — 서버가 왜
         //   거절했는지가 화면에 안 닿으면 사용자는 「버튼이 안 먹는다」로 읽는다.
-        const message = err instanceof Error ? err.message : String(err);
-        const status = err instanceof DsmApiError ? err.status : 0;
-        setActionError(`${message}${status ? ` (${status})` : ''}`);
+        // ★★ [P-78 ① · 턴 H] 그런데 응답이 없으면 이 자리에 axios 원문이 들어온다.
+        //   서버가 쓴 문장과 전송 계층이 만든 문장을 가르는 것이 `userFacingError` 다.
+        setActionError(userFacingError('FocusQueue.act', err, '요청이 처리되지 않았습니다.'));
       } finally {
         setActing(false);
       }
@@ -299,7 +306,7 @@ export default function FocusQueuePage() {
 
         <StateBoundary
           state={queue.state}
-          reason={queue.reason}
+          reason={queue.reason} status={queue.status}
           onRetry={queue.reload}
           emptyText="지금 열려 있는 이벤트가 없습니다 — 평온합니다."
         >

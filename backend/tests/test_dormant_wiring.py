@@ -84,6 +84,48 @@ class BeatScheduleWiringTest(TestCase):
 class TurnedOnTasksActuallyRunTest(TestCase):
     """②③ 켠 것이 **실행되고 판정을 돌려준다.**"""
 
+    def setUp(self):
+        """★★ **앞 시험이 스레드에 남긴 요청을 지운다.**
+
+        [실측 2026-09-06 · 턴 H · 차선 E] 이 파일은 **혼자 돌리면 8 passed** 인데
+        `test_l_retention.py`·`test_be_purge.py` 뒤에 붙여 돌리면 아래 시험 하나가
+        **teardown 에서** 죽었다(단언은 통과한 뒤였다):
+
+            ForeignKeyViolation: logger_auditlogs_created_by_id …
+            Key (created_by_id)=(24) is not present in table "user_coreuser"
+
+        dj-core `BaseModel.save()` 는 `get_current_request()` 의 thread-local 에서
+        현재 사용자를 읽어 `created_by` 를 자동으로 채운다. 앞 파일이 HTTP 를 때리고
+        남긴 요청이 스레드에 그대로 있으면, 그 파일의 트랜잭션이 되감긴 뒤에도
+        **없는 사용자 pk 가 이 파일의 행에 찍힌다.** 원인이 이 파일처럼 보이지만
+        아니다 — 지우고 시작한다.
+        """
+        super().setUp()
+        import contextlib as _contextlib
+
+        self._thread_local = None
+        self._prev_request = None
+        with _contextlib.suppress(Exception):
+            from core.middleware.refresh_token import thread_local
+
+            self._thread_local = thread_local
+            self._prev_request = getattr(thread_local, "request", None)
+            if hasattr(thread_local, "request"):
+                delattr(thread_local, "request")
+        self.addCleanup(self._restore_thread_request)
+
+    def _restore_thread_request(self):
+        import contextlib as _contextlib
+
+        if self._thread_local is None:
+            return
+        with _contextlib.suppress(Exception):
+            if self._prev_request is None:
+                if hasattr(self._thread_local, "request"):
+                    delattr(self._thread_local, "request")
+            else:
+                self._thread_local.request = self._prev_request
+
     def test_audit_purge_beat_runs_and_reports_what_it_did(self):
         from common.ops_tasks import ops_audit_purge_beat
 
@@ -93,8 +135,11 @@ class TurnedOnTasksActuallyRunTest(TestCase):
         #   제품 기본값이 없어졌기 때문**이고, 선언 없는 환경(시험 DB 가 그렇다)에서
         #   파기가 **안 도는 것이 옳은 답**이다. 이 목록에 안 넣으면 옳은 답이
         #   빨강으로 나오고, 그 빨강을 「고치면」 기본값이 되살아난다.
+        # ★ 2026-09-06 · 턴 H · OPS-07b — `SKIPPED_UNREVERSIBLE` 이 늘었다.
+        #   되돌림 저널을 못 뜨는 자리에서 파기가 **안 도는 것이 옳은 답**이다.
         self.assertIn(payload["verdict"],
-                      {"OK", "UNKNOWN", "ALARM", "SKIPPED", "SKIPPED_UNDECLARED"})
+                      {"OK", "UNKNOWN", "ALARM", "SKIPPED", "SKIPPED_UNDECLARED",
+                       "SKIPPED_UNREVERSIBLE"})
         if payload["verdict"] == "SKIPPED_UNDECLARED":
             # 건너뛴 것은 **왜 건너뛰었는지**를 말해야 한다 (D-290).
             self.assertIn("reason", payload,

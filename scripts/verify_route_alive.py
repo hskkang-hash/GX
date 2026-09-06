@@ -172,7 +172,8 @@ def login(api: str, user: str, password: str) -> str | None:
 
 
 def hit(api: str, method: str, path: str, token: str | None,
-        *, with_body: bool = False) -> int | tuple[int, bytes]:
+        *, with_body: bool = False,
+        headers: dict[str, str] | None = None) -> int | tuple[int, bytes]:
     """문 하나를 두드린다. `with_body` 면 `(상태, 본문)` 을 함께 돌려준다.
 
     ★ 본문 갈래는 `verify_contract_route_reach` 가 쓴다 — 그 판정기는 목록 응답에서
@@ -184,6 +185,11 @@ def hit(api: str, method: str, path: str, token: str | None,
     req = urllib.request.Request(api + path, method=method)
     if token:
         req.add_header("Authorization", f"Bearer {token}")
+    #: ★ [P-79 · 2026-09-06] 부르는 쪽이 **자기 요청에 표를 달 수 있게** 한다.
+    #:   계량기(`verify_perf_budget`)가 「이 5xx 는 누가 만든 것인가」를 말하려면
+    #:   요청에 이름이 있어야 한다 — 이름 없는 트래픽은 나중에 아무 사유나 붙는다.
+    for _k, _v in (headers or {}).items():
+        req.add_header(_k, _v)
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             return (r.status, r.read()) if with_body else r.status

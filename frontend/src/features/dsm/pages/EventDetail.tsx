@@ -32,7 +32,15 @@ import { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Main } from 'rj-core';
 
-import { dsmEndpoint, dsmGet, dsmPost, dsmPostQuery } from '../api';
+import {
+  dsmEndpoint,
+  dsmGet,
+  dsmPost,
+  dsmPostQuery,
+  dsmPostQueryOnce,
+  intentKey,
+} from '../api';
+import { userFacingError } from '../copy';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import {
@@ -110,7 +118,7 @@ export default function EventDetail() {
       message.info('발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.');
       deliveries.reload();
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '발송 요청이 실패했습니다.');
+      message.error(userFacingError('EventDetail.notify', err, '발송 요청이 실패했습니다.'));
     } finally {
       setSending(false);
     }
@@ -170,11 +178,17 @@ export default function EventDetail() {
         onOk: async () => {
           setBusy('review');
           try {
-            await dsmPostQuery(dsmEndpoint.review(id), { verdict, reason });
+            // ★ **판정 — 멱등 키를 싣는 문 ①.** 같은 판정을 두 번 누르면
+            //   요청은 하나이고, 두 번째 누름은 첫 번째의 결과를 받는다.
+            await dsmPostQueryOnce(
+              dsmEndpoint.review(id),
+              { verdict, reason },
+              intentKey(`review:${id}:${verdict}`),
+            );
             message.success('판정을 기록했습니다.');
             event.reload();
           } catch (err) {
-            message.error(err instanceof Error ? err.message : '판정이 실패했습니다.');
+            message.error(userFacingError('EventDetail.review', err, '판정이 실패했습니다.'));
             throw err;   // 모달을 닫지 않는다 — 실패했는데 닫히면 성공처럼 보인다
           } finally {
             setBusy('');
@@ -192,11 +206,18 @@ export default function EventDetail() {
       const send = async (reason: string) => {
         setBusy(toState);
         try {
-          await dsmPostQuery(dsmEndpoint.response(id), { to_state: toState, reason });
+          // ★ **접수·처리 단계 — 멱등 키를 싣는 문 ②.**
+          await dsmPostQueryOnce(
+            dsmEndpoint.response(id),
+            { to_state: toState, reason },
+            intentKey(`response:${id}:${toState}`),
+          );
           message.success(`처리 단계를 「${labelOf(RESPONSE_STATE_LABEL, toState)}」 단계로 옮겼습니다.`);
           event.reload();
         } catch (err) {
-          message.error(err instanceof Error ? err.message : '처리 단계를 옮기지 못했습니다.');
+          message.error(
+            userFacingError('EventDetail.advance', err, '처리 단계를 옮기지 못했습니다.'),
+          );
           throw err;
         } finally {
           setBusy('');
@@ -256,7 +277,7 @@ export default function EventDetail() {
           </Col>
         </Row>
 
-        <StateBoundary state={event.state} reason={event.reason} onRetry={event.reload}>
+        <StateBoundary state={event.state} reason={event.reason} status={event.status} onRetry={event.reload}>
           {e && (
             <Card size="small">
               <Descriptions size="small" column={{ xs: 1, sm: 2, lg: 3 }} bordered>
@@ -328,7 +349,7 @@ export default function EventDetail() {
           >
             <StateBoundary
               state={timeline.state}
-              reason={timeline.reason}
+              reason={timeline.reason} status={timeline.status}
               onRetry={timeline.reload}
             >
               {timeline.data ? (
@@ -495,7 +516,7 @@ export default function EventDetail() {
               ★ [UX-20] 제목에서 절 ID(F-10)를 뺐다 — 절 이름은 제목이 아니다. */}
           <StateBoundary
             state={deliveries.state}
-            reason={deliveries.reason}
+            reason={deliveries.reason} status={deliveries.status}
             onRetry={deliveries.reload}
             emptyText="발송 기록이 없습니다. (요청은 성공했고 0건입니다)"
           >

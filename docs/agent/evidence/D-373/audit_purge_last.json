@@ -1,8 +1,11 @@
 {
-  "measured_at": "2026-09-06T08:45:28+00:00",
-  "verdict": "SKIPPED_UNDECLARED",
-  "retention_days": null,
-  "source": "미선언 — 심을 값 365일은 있으나 아직 심지 않았다 (scripts/seed_retention_declaration.py)",
+  "measured_at": "2026-09-06T11:05:31+00:00",
+  "verdict": "SKIPPED_UNREVERSIBLE",
+  "retention_days": 365,
+  "source": "선언 System > security.audit_log_retention_days (U5 설정 화면 · dj-core 가 읽는 자리)",
   "purged": 0,
-  "reason": "감사 로그 보존 일수가 **선언되지 않았다** — 한 행도 지우지 않는다. dj-core 의 코드 기본값 90은 아무도 정한 적이 없는 수이고(OPS-07b 실측), 그 수로 지우면 되돌릴 수 없다. 선언 자리: AdminConfig System > security.audit_log_retention_days (U5) · 개발·스테이징은 config/retention_seed.py"
+  "journal": {
+    "dir": "/backup/audit_purge_journal"
+  },
+  "reason": "되돌림 저널을 뜨지 못했다 — **한 행도 지우지 않는다**(호출 0). dj-core 의 삭제는 하드 삭제라 저널이 없으면 되돌릴 수 없다(OPS-07b). RuntimeError: 저널 자리 '/backup/audit_purge_journal' 가 **별도 볼륨으로 안 붙어 있다** — 여기 뜨면 컨테이너를 다시 만드는 순간 저널이 사라지고, 그 전까지 「되돌릴 수 있다」가 초록으로 보인다. 붙이는 법은 docker-compose 의 볼륨 선언(OPS_BACKUP_VOLUME)이고 그것은 컨테이너 재생성이 필요하다"
 }

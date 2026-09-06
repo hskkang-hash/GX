@@ -140,7 +140,7 @@ export default function CameraGridPage() {
 
         <StateBoundary
           state={pulse.state}
-          reason={pulse.reason}
+          reason={pulse.reason} status={pulse.status}
           onRetry={pulse.reload}
           emptyText="등록된 카메라가 없습니다."
         >

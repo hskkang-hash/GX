@@ -142,7 +142,7 @@ export default function SystemSettings() {
       <Card title="영상 보관 기간">
         <StateBoundary
           state={retention.state}
-          reason={retention.reason}
+          reason={retention.reason} status={retention.status}
           onRetry={retention.reload}
         >
           <Descriptions
@@ -183,7 +183,7 @@ export default function SystemSettings() {
       <Card title="백업">
         <StateBoundary
           state={backup.state}
-          reason={backup.reason}
+          reason={backup.reason} status={backup.status}
           onRetry={backup.reload}
         >
           <Descriptions

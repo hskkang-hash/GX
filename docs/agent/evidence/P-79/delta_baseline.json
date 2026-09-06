@@ -1,0 +1,61 @@
+{
+ "schema": 1,
+ "threshold": 0.2,
+ "runs": [
+  {
+   "suite": "backend-unit",
+   "recorded_at": "2026-09-06T10:34:47+00:00",
+   "commit": "e96ab7d",
+   "command": "docker exec -e DJANGO_SETTINGS_MODULE=config.settings -e DB_TEST_NAME=test_gx_q gx-shell python -m pytest tests -q --nomigrations -p no:randomly --ignore=tests/e2e",
+   "tests": 1147,
+   "errors": 0,
+   "duration_s": 487.4,
+   "counts": {
+    "passed": 1144,
+    "skipped": 3,
+    "warnings": 34
+   },
+   "summary_line": "1144 passed, 3 skipped, 34 warnings in 487.40s (0:08:07)",
+   "source": "기계",
+   "reason": "",
+   "env": {
+    "missing": [],
+    "checked": [
+     "minio",
+     "smtp",
+     "mount",
+     "session"
+    ]
+   },
+   "note": "턴 H · 차선 Q · 1벌째 (같은 HEAD 에서 두 벌 — 이 도구의 잡음 바닥을 재려고)"
+  },
+  {
+   "suite": "backend-unit",
+   "recorded_at": "2026-09-06T10:45:29+00:00",
+   "commit": "e96ab7d",
+   "command": "docker exec -e DJANGO_SETTINGS_MODULE=config.settings -e DB_TEST_NAME=test_gx_q gx-shell python -m pytest tests -q --nomigrations -p no:randomly --ignore=tests/e2e",
+   "tests": 1152,
+   "errors": 4,
+   "duration_s": 633.16,
+   "counts": {
+    "failed": 4,
+    "passed": 1145,
+    "skipped": 3,
+    "warnings": 34
+   },
+   "summary_line": "4 failed, 1145 passed, 3 skipped, 34 warnings in 633.16s (0:10:33)",
+   "source": "기계",
+   "reason": "",
+   "env": {
+    "missing": [],
+    "checked": [
+     "minio",
+     "smtp",
+     "mount",
+     "session"
+    ]
+   },
+   "note": "턴 H · 차선 Q · 2벌째 — 같은 HEAD, 1벌째 직후. 실행 도중 옆 차선이 test_be_purge.py·audit_purge_journal.py 를 고치고 있었다(컨테이너 ps 로 확인: 그 차선이 같은 파일들로 pytest 를 돌리는 중)"
+  }
+ ]
+}

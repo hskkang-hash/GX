@@ -26,6 +26,7 @@ import { useCallback, useState } from 'react';
 import { Main } from 'rj-core';
 
 import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
+import { userFacingError } from '../copy';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import type { AddressGap, ImportPlan, ImportRow } from '../types';
@@ -76,7 +77,7 @@ export default function CameraImportPage() {
           gap.reload();
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        setError(userFacingError('CameraImport', err, '요청이 실패했습니다.'));
       } finally {
         setBusy(false);
       }
@@ -137,7 +138,7 @@ export default function CameraImportPage() {
         </Title>
 
         {/* 「주소 없는 카메라 N대」 배지 — **분모와 함께** 낸다 (D-301). */}
-        <StateBoundary state={gap.state} reason={gap.reason} onRetry={gap.reload}>
+        <StateBoundary state={gap.state} reason={gap.reason} status={gap.status} onRetry={gap.reload}>
           {gap.data ? (
             <Card size="small">
               <Row gutter={24} align="middle">

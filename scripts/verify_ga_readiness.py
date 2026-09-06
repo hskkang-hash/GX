@@ -309,6 +309,28 @@ def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, 
                     hands_todo["none"] = hands_todo.get("none", 0) + 1
         counts[area["id"]] = c
 
+    # ── P-81 · 대장 id 는 **유일하다** (2026-09-06 · 턴 H) ──────────────────
+    #   ★ **출생 표본**: 턴 G 에 새 절을 `SEC-14` 로 등재했는데 그 id 는 이미
+    #     「익명 반출 0건」이 쓰고 있었다. YAML 은 같은 id 를 **두 항목으로 그냥 싣고**,
+    #     이 판정기는 절을 세기만 했으므로 **아무 색도 안 났다** — 대장이 조용히 겹쳤다.
+    #     세종·영실 둘 다 못 봤다. 사람이 두 번 놓친 자리는 사람을 한 번 더 세우는 것이
+    #     아니라 **게이트를 세우는 자리**다(D-286).
+    #   ⚠ 겹친 id 는 「어느 쪽이 진짜인가」를 아무도 못 답하게 만든다. 증명·상태·손이
+    #     둘로 갈리고, 절 수는 그대로라 **수가 안 움직인다**. 조용한 것이 가장 나쁘다.
+    seen: dict[str, str] = {}
+    for area in areas:
+        for clause in (area.get("clauses") or []):
+            cid = (clause.get("id") or "").strip()
+            if not cid:
+                continue
+            if cid in seen:
+                problems.append(
+                    "대장 id 가 겹친다: %s — 영역 %s 와 영역 %s 에 둘 다 있다. "
+                    "겹친 id 는 「어느 쪽이 진짜인가」를 아무도 못 답하게 만든다"
+                    % (cid, seen[cid], area["id"]))
+            else:
+                seen[cid] = area["id"]
+
     weights = sum(a["weight"] for a in areas)
     if weights != 100:
         problems.insert(0, "가중치 합이 %d 다 — 100 이 아니면 아래 수는 전부 무의미하다" % weights)

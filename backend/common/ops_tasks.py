@@ -77,6 +77,25 @@ def _load(name: str):
 
 
 def _write_evidence(name: str, payload: dict) -> str | None:
+    """판정을 증거 파일에 남긴다. **시험 중에는 남기지 않는다.**
+
+    ★ [실측 2026-09-06 · 턴 H · 차선 E] 이 함수가 **시험 DB 의 수로 운영 증거를
+      덮고 있었다.** `tests/test_dormant_wiring.py` 와 이번 턴의 새 시험이
+      `ops_audit_purge_beat()` 을 부르는데, `gx-shell` 에는 `/docs` 가 붙어 있어
+      그 호출이 `D-373/audit_purge_last.json` 을 **진짜로 고쳤다**:
+
+          시험 뒤 파일 : {"verdict": "SKIPPED_UNDECLARED", "purged": 0}   ← 시험 DB 의 사실
+          개발 DB 의 사실 : {"verdict": "SKIPPED_UNREVERSIBLE", "purged": 0}
+
+      즉 증거 파일을 읽은 사람은 **개발 환경이 미선언이라고 읽는다.** 아니다.
+      시험 DB 에 선언이 없었을 뿐이다. 「어느 DB 에서 난 수인가」가 사라지면
+      그 파일은 증거가 아니라 소음이다.
+
+    `PYTEST_CURRENT_TEST` 는 pytest 가 시험 하나마다 세우고 끝나면 지운다 —
+    「시험 중인가」를 깃발이 아니라 **사실**로 묻는 자리다.
+    """
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return None
     try:
         out_dir = Path(EVIDENCE_DIR)
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -653,6 +672,32 @@ def ops_audit_purge_beat() -> dict:
         _write_evidence("audit_purge_last", payload)
         return payload
 
+    #: ★★ OPS-07b 의 남은 조건 — **되돌릴 수 없으면 지우지 않는다.**
+    #:   dj-core 의 삭제는 하드다(`_base_manager` 는 safedelete 매니저가 아니다).
+    #:   그러므로 부르기 **전에** 지워질 행을 저널로 뜬다. 저널을 못 뜨면
+    #:   dj-core 를 **호출 0** 으로 두고 돌아선다 — 「지웠는데 되돌릴 수 없다」보다
+    #:   「안 지웠다」가 언제나 낫다. 감사 기록은 지운 뒤에 아쉬워할 자료가 아니다.
+    from common import audit_purge_journal as journal_mod
+
+    try:
+        journal = journal_mod.write_journal(declared)
+        #: 저널을 뜬 **직후** 다시 재서, 그 사이 만료선을 넘어간 행을 센다.
+        journal["boundary_crossed"] = journal_mod.count_boundary_crossed(
+            declared, journal.get("cutoff") or "")
+    except Exception as exc:                       # noqa: BLE001
+        payload = {"measured_at": stamp, "verdict": "SKIPPED_UNREVERSIBLE",
+                   "retention_days": declared,
+                   "source": audit_retention_source(),
+                   "purged": 0,
+                   "journal": {"dir": journal_mod.journal_dir()},
+                   "reason": ("되돌림 저널을 뜨지 못했다 — **한 행도 지우지 "
+                              "않는다**(호출 0). dj-core 의 삭제는 하드 삭제라 "
+                              "저널이 없으면 되돌릴 수 없다(OPS-07b). "
+                              f"{type(exc).__name__}: {exc}")[:400]}
+        logger.error("[OPS][AUDIT] %s", payload["reason"])
+        _write_evidence("audit_purge_last", payload)
+        return payload
+
     try:
         before = AuditLogs._base_manager.count()
         purge_old_audit_logs()
@@ -661,7 +706,30 @@ def ops_audit_purge_beat() -> dict:
                    "retention_days": declared,
                    "source": audit_retention_source(),
                    "rows_before": before, "rows_after": after,
-                   "purged": before - after}
+                   "purged": before - after,
+                   "journal": journal,
+                   "undo": ("scripts/ops_audit_purge_undo.py --journal "
+                            f"{journal.get('path')} --apply"
+                            if journal.get("path") else
+                            "지운 행이 없어 되돌릴 것도 없다")}
+        #: ★ **저널에 없는 행이 지워졌는가** — 이 수를 **정확히** 잰다.
+        #:
+        #:   `rows_before - rows_after` 로는 못 잰다. 이 표는 살아 있고 다른 쪽이
+        #:   그 사이에 감사 줄을 쓴다 — 실제로 한 실행에서 저널 3행을 지웠는데
+        #:   `purged` 가 **2** 로 나왔다[실측 2026-09-06 · 그 사이 1행이 들어왔다].
+        #:   순증감으로 삭제를 세면 남이 쓴 만큼 틀린다.
+        #:
+        #:   되돌릴 수 없는 삭제가 생기는 자리는 정확히 하나다: 저널을 뜬 시각과
+        #:   dj-core 가 자르는 시각 **사이에 만료선을 넘어간 행**. 그 창을 그대로
+        #:   센다. 창은 밀리초이고 그 행은 이미 365일 지난 행이라 거의 언제나 0이지만,
+        #:   **0일 것 같은 것을 0이라고 적지 않는다** (D-301).
+        crossed = int(journal.get("boundary_crossed") or 0)
+        payload["unjournaled_deletes"] = crossed
+        if crossed > 0:
+            payload["verdict"] = "ALARM"
+            payload["reason"] = (
+                f"저널에 없는 행 {crossed}건이 지워졌다 — 저널을 뜬 뒤 dj-core 가 "
+                "자르기 전 사이에 만료선을 넘어간 행이다. 그만큼은 되돌릴 수 없다")
         logger.info("[OPS][AUDIT] 보존기간 집행 — %d일 선언 · %d건 중 %d건 정리 "
                     "(남은 %d건)", declared, before, before - after, after)
     except Exception as exc:                       # noqa: BLE001

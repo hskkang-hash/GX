@@ -148,7 +148,7 @@ export default function ControlDashboard() {
           />
         )}
 
-        <StateBoundary state={frame.state} reason={frame.reason} onRetry={frame.reload}>
+        <StateBoundary state={frame.state} reason={frame.reason} status={frame.status} onRetry={frame.reload}>
           <Row gutter={[16, 16]}>
             <Col xs={24} md={6}>
               <Card size="small">
@@ -216,7 +216,7 @@ export default function ControlDashboard() {
         >
           <StateBoundary
             state={events.state}
-            reason={events.reason}
+            reason={events.reason} status={events.status}
             onRetry={events.reload}
             emptyText="최근 이벤트가 없습니다. (요청은 성공했고 0건입니다)"
           >

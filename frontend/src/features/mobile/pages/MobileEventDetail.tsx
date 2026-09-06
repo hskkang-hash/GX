@@ -79,7 +79,14 @@ import {
   SEVERITY_LABEL,
 } from '../../dsm/severity';
 import { absolute, relative } from '../../dsm/time';
-import { dsmGet, DsmApiError, mobileEndpoint, mobilePostWithQuery } from '../api';
+import {
+  dsmGet,
+  DsmApiError,
+  intentKey,
+  mobileEndpoint,
+  mobilePostWithQueryOnce,
+} from '../api';
+import { userFacingError } from '@/features/dsm/copy';
 import MobileShell, { TOUCH_MIN } from '../components/MobileShell';
 import { mobileRoutes } from '../routes';
 import type { ClipTicket, EventDetailView } from '../types';
@@ -150,14 +157,19 @@ export default function MobileEventDetail() {
       const send = async (reason: string) => {
         setBusy(toState);
         try {
-          await mobilePostWithQuery(mobileEndpoint.response(id), {
-            to_state: toState,
-            reason,
-          });
+          // ★ **접수·처리 단계 — 멱등 키를 싣는 문 ②**(휴대전화 쪽).
+          //   이동 중인 사람의 화면이라 두 번 눌릴 확률이 가장 높은 자리다.
+          await mobilePostWithQueryOnce(
+            mobileEndpoint.response(id),
+            { to_state: toState, reason },
+            intentKey(`m.response:${id}:${toState}`),
+          );
           message.success(`「${labelOf(RESPONSE_STATE_LABEL, toState)}」 단계로 옮겼습니다.`);
           event.reload();
         } catch (err) {
-          message.error(err instanceof Error ? err.message : '처리 단계를 옮기지 못했습니다.');
+          message.error(
+            userFacingError('MobileEventDetail.advance', err, '처리 단계를 옮기지 못했습니다.'),
+          );
           throw err; // 모달을 닫지 않는다 — 실패했는데 닫히면 성공처럼 보인다
         } finally {
           setBusy('');
@@ -206,12 +218,19 @@ export default function MobileEventDetail() {
     if (!text) return;
     setBusy('field-reply');
     try {
-      await mobilePostWithQuery(mobileEndpoint.fieldReply(id), { text });
+      // ★ **현장 회신 — 멱등 키를 싣는 문 ③.**
+      await mobilePostWithQueryOnce(
+        mobileEndpoint.fieldReply(id),
+        { text },
+        intentKey(`m.field-reply:${id}:${text}`),
+      );
       setReplyText('');
       message.success('회신을 보냈습니다.');
       replies.reload();
     } catch (err) {
-      message.error(err instanceof Error ? err.message : '회신을 보내지 못했습니다.');
+      message.error(
+        userFacingError('MobileEventDetail.fieldReply', err, '회신을 보내지 못했습니다.'),
+      );
     } finally {
       setBusy('');
     }
@@ -228,7 +247,7 @@ export default function MobileEventDetail() {
     >
       <StateBoundary
         state={event.state}
-        reason={event.reason}
+        reason={event.reason} status={event.status}
         onRetry={event.reload}
         emptyText="이벤트를 찾지 못했습니다."
       >
@@ -353,7 +372,7 @@ export default function MobileEventDetail() {
                   <Text strong>구간 티켓</Text>
                   <StateBoundary
                     state={clip.state}
-                    reason={clip.reason}
+                    reason={clip.reason} status={clip.status}
                     onRetry={clip.reload}
                     emptyText="이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다)."
                   >
@@ -448,7 +467,7 @@ export default function MobileEventDetail() {
                     </Button>
                     <StateBoundary
                       state={replies.state}
-                      reason={replies.reason}
+                      reason={replies.reason} status={replies.status}
                       onRetry={replies.reload}
                       emptyText="아직 회신이 없습니다."
                     >

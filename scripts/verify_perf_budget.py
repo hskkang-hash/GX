@@ -218,6 +218,27 @@ WARMUP_ROUNDS = 1
 
 DEFAULT_EVIDENCE_PARTS = ("agent", "evidence", "PERF-04", "budget.json")
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 주입한 5xx 는 SLA 의 5xx 가 아니다 — **그러나 빼기가 손잡이가 되면 안 된다**
+# (P-79 · 2026-09-06 · 턴 H · 차선 Q)
+# ═══════════════════════════════════════════════════════════════════════════
+#: 계량이 자기 요청에 다는 표. 앞단 로그에서 **계량 트래픽을 이름으로** 가려낼 수 있게 한다.
+#: 이름 없는 트래픽에는 나중에 아무 사유나 붙는다 — 그것이 P-71 의 「환경」이었다.
+PROBE_HEADER = "X-GX-Probe"
+PROBE_VALUE = "perf-budget"
+
+#: 일부러 고장 내는 요청에 다는 표. **이 표가 붙은 요청의 5xx 만** SLA 분모에서 뺀다.
+INJECT_HEADER = "X-GX-Fault-Inject"
+
+#: ★ **이 게이트가 일부러 고장 내는 호출.** 비어 있다 — 이 계량은 주입하지 않는다.
+#:   비어 있다는 사실 자체가 「뺄 것이 없다」의 근거이고, 증거에 `subtracted: 0` 으로
+#:   적힌다. 여기에 무엇이든 들어오면 그 요청의 5xx 는 분모에서 빠지고 **뺀 건수와
+#:   사유가 함께 적힌다.**
+#:
+#:   ⚠ **빼기는 「빨강을 없애는 손잡이」가 아니다.** 표가 없는 5xx 는 502 든 500 이든
+#:     빠지지 않는다 — 사용자에게는 같은 고장이다. 자기시험 갈래가 그것을 지킨다.
+INJECTED_CALLS: frozenset = frozenset()
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 판정 규칙 — **순수 함수다** (D-277). 자기시험이 합성 수치를 먹인다
@@ -433,6 +454,11 @@ def judge_availability(faces: dict | None, *, budget: float = ERROR_BUDGET) -> l
 
     n = sum(int(f.get("n") or 0) for f in faces.values())
     five = four = 0
+    #: ★ [P-79] **주입한 5xx 는 SLA 의 5xx 가 아니다** — 일부러 만든 고장이기 때문이다.
+    #:   그러나 뺀 건수와 사유를 **함께** 적지 않으면 이 빼기는 「빨강을 없애는 손잡이」가
+    #:   된다. 그래서 0건이어도 적는다 — 0 이라고 적힌 줄이 「뺄 것이 없었다」의 증거다.
+    injected = 0
+    codes: dict = {}
     guessed = False
     per: list[str] = []
     for key in sorted(faces):
@@ -440,11 +466,25 @@ def judge_availability(faces: dict | None, *, budget: float = ERROR_BUDGET) -> l
         a, b, g = _split_errors(f)
         five += a
         four += b
+        injected += int(f.get("errors_5xx_injected") or 0)
+        for code, cnt in (f.get("errors_5xx_by_status") or {}).items():
+            codes[str(code)] = codes.get(str(code), 0) + int(cnt)
         guessed = guessed or g
         fn = int(f.get("n") or 0)
         per.append(f"{key} {a + b}/{fn}" + (f"={(a + b) / fn:.2%}" if fn else ""))
     detail = " · ".join(per)
     tail = " · ⚠ 갈래를 `error_detail` 로 **추정**했다(낡은 증거)" if guessed else ""
+    #: 주입분을 **분자에서도 분모에서도** 뺀다 — 보내지 않았어야 할 요청이므로.
+    five = max(0, five - injected)
+    n = max(0, n - injected)
+    ledger = (f" · 주입 제외 **{injected}건**"
+              + (f"(표 `{INJECT_HEADER}` 가 붙은 요청)" if injected
+                 else "(뺀 것이 없다 — 이 계량은 주입하지 않는다)"))
+    if codes:
+        ledger += " · 5xx 코드별 " + " ".join(f"{c}×{v}" for c, v in sorted(codes.items()))
+    #: 회색 갈래에서도 보이게 `detail` 에 붙인다 — 못 잰 자리에서도 「무엇을 뺐는가」는
+    #: 말해야 한다. 안 보이는 빼기가 손잡이가 된다.
+    detail += ledger
 
     if not n:
         out.append((name5, GRAY, "**못 쟀다** — 표본 0건"))
@@ -762,6 +802,42 @@ def self_test() -> int:
         bad.append("4,000건 오류 0건이 초록이 아니다 — 3/n 규칙을 넘겼는데도 회색이면 "
                    "이 갈래는 영원히 회색이다")
 
+    # ── ★ [P-79 · 2026-09-06] **주입한 5xx 는 SLA 의 5xx 가 아니다.** 그러나
+    #    빼기가 「빨강을 없애는 손잡이」가 되면 안 된다. 갈래 셋으로 잠근다.
+    #
+    #    출생 표본: 턴 G 의 0.139%(5/3,600)는 **전부 502**였고 주입은 한 건도 없었다.
+    #    같은 시각 다른 차선이 돌린 오류 주입은 브라우저 안에서 끝나(walk_states —
+    #    Playwright 요청 가로채기) **서버에 닿지 않았다.** 뺄 것이 없었다는 뜻이고,
+    #    그 사실은 「뺐다」는 말이 아니라 **0 이라고 적힌 줄**이 증명해야 한다.
+    inj = verdicts(judge_availability(
+        {"F05": {"n": 4000, "errors": 8, "errors_5xx": 8, "errors_4xx": 0,
+                 "errors_5xx_injected": 8,
+                 "errors_5xx_by_status": {"503": 8}}}))
+    if inj.get("[전체] 가용성 · 5xx ≤ 0.1%") != PASS:
+        bad.append("주입 표가 붙은 5xx 8건을 SLA 분자에서 빼지 않았다 — "
+                   "일부러 만든 고장은 가용성의 고장이 아니다")
+    if "주입 제외 **8건**" not in " ".join(w for _n, _v, w in judge_availability(
+            {"F05": {"n": 4000, "errors": 8, "errors_5xx": 8, "errors_4xx": 0,
+                     "errors_5xx_injected": 8,
+                     "errors_5xx_by_status": {"503": 8}}})):
+        bad.append("뺀 건수를 사유에 안 적었다 — **적히지 않는 빼기가 손잡이가 된다**")
+
+    #    ⚠ 표가 없는 5xx 는 **502 든 500 이든 빠지지 않는다.** 사용자에게는 같은 고장이다.
+    notinj = verdicts(judge_availability(
+        {"F05": {"n": 3600, "errors": 5, "errors_5xx": 5, "errors_4xx": 0,
+                 "errors_5xx_injected": 0,
+                 "errors_5xx_by_status": {"502": 5}}}))
+    if notinj.get("[전체] 가용성 · 5xx ≤ 0.1%") != FAIL:
+        bad.append("★ **출생 표본**(턴 G · 502 5/3,600 = 0.139%)이 빨강이 아니다 — "
+                   "주입이 아닌 502 를 빼면 그 빼기는 빨강을 없애는 손잡이다")
+
+    #    뺄 것이 없어도 **0 이라고 적는다** — 0 이라고 적힌 줄이 「뺄 것이 없었다」의 증거다.
+    if "주입 제외 **0건**(뺀 것이 없다" not in " ".join(w for _n, _v, w in
+            judge_availability({"F05": {"n": 3600, "errors": 5, "errors_5xx": 5,
+                                        "errors_4xx": 0, "errors_5xx_injected": 0,
+                                        "errors_5xx_by_status": {"502": 5}}})):
+        bad.append("주입 0건을 적지 않는다 — 안 적힌 0 은 「안 쟀다」와 구분되지 않는다")
+
     # **4xx 는 다른 고장이다.** 유효한 주소에 유효한 토큰으로 두드린 자리다.
     contract = verdicts(judge_availability(
         {"F05": {"n": 4000, "errors": 1, "errors_5xx": 0, "errors_4xx": 1}}))
@@ -931,8 +1007,13 @@ def measure(api: str, token: str, *, concurrency: int, rounds: int,
     from verify_route_alive import hit                    # noqa: PLC0415
 
     def one(path: str):
+        #: ★ [P-79] 계량 요청에 이름을 단다. 주입하는 호출이면 주입 표까지 단다 —
+        #:   그래야 나중에 「이 5xx 는 누가 만든 것인가」를 사유가 아니라 **표**로 답한다.
+        headers = {PROBE_HEADER: PROBE_VALUE}
+        if path in INJECTED_CALLS:
+            headers[INJECT_HEADER] = "1"
         started = time.perf_counter()
-        status = hit(api, "GET", _bust(path), token)
+        status = hit(api, "GET", _bust(path), token, headers=headers)
         return path, status, (time.perf_counter() - started) * 1000.0
 
     passes: list[dict] = []
@@ -954,6 +1035,11 @@ def _one_pass(one, *, concurrency: int, rounds: int) -> dict:
             #: ★ **갈래를 재는 순간에 센다** (P-53). `error_detail` 은 중복을 지운
             #:   목록이라 나중에 세면 건수를 잃는다 — 502 여덟 건이 한 줄로 접힌다.
             by_kind = {"5xx": 0, "4xx": 0, "other": 0}
+            #: ★ [P-79] **주입한 5xx** 와 상태 코드별 건수. 앞의 것은 SLA 분모에서
+            #:   빼고(뺀 건수를 적는다), 뒤의 것은 502(앞단)와 500(응용)을 **보이게만**
+            #:   한다 — 보이는 것과 빼는 것은 다른 일이다.
+            injected5 = 0
+            by_status: dict = {}
             for round_no in range(rounds + WARMUP_ROUNDS):
                 batch = [face.calls[i % len(face.calls)] for i in range(concurrency)]
                 for path, status, elapsed in pool.map(one, batch):
@@ -962,6 +1048,9 @@ def _one_pass(one, *, concurrency: int, rounds: int) -> dict:
                     if not (200 <= status < 300):
                         errors.append(f"{path} -> {status}")
                         by_kind[_bucket(status)] += 1
+                        by_status[str(status)] = by_status.get(str(status), 0) + 1
+                        if _bucket(status) == "5xx" and path in INJECTED_CALLS:
+                            injected5 += 1
                     samples.append(elapsed)
                     per_call.setdefault(path, []).append(elapsed)
             faces[key] = {
@@ -974,6 +1063,9 @@ def _one_pass(one, *, concurrency: int, rounds: int) -> dict:
                 #: 틀린 것 안에서 다시 **가용성(5xx)** 과 **계약(4xx)** 을 가른다.
                 "errors_5xx": by_kind["5xx"],
                 "errors_4xx": by_kind["4xx"],
+                #: ★ [P-79] 주입 표가 붙은 요청의 5xx. **이것만** 분모에서 뺀다
+                "errors_5xx_injected": injected5,
+                "errors_5xx_by_status": dict(sorted(by_status.items())),
                 "error_detail": sorted(set(errors))[:6],
                 "cache_bust": True,      # 위 `_bust` 가 매 호출 다른 값을 붙였다
                 "p50_ms": round(percentile(samples, 50), 1) if samples else 0.0,
@@ -998,6 +1090,11 @@ def _fold(passes: list[dict], *, concurrency: int) -> dict:
         errors = sum(p[key]["errors"] for p in passes)
         five = sum(p[key].get("errors_5xx", 0) for p in passes)
         four = sum(p[key].get("errors_4xx", 0) for p in passes)
+        inj = sum(p[key].get("errors_5xx_injected", 0) for p in passes)
+        by_status: dict = {}
+        for p in passes:
+            for code, cnt in (p[key].get("errors_5xx_by_status") or {}).items():
+                by_status[code] = by_status.get(code, 0) + cnt
         detail = sorted({d for p in passes for d in p[key]["error_detail"]})[:6]
         out[key] = {
             "title": face.title,
@@ -1008,6 +1105,8 @@ def _fold(passes: list[dict], *, concurrency: int) -> dict:
             "errors": errors,
             "errors_5xx": five,
             "errors_4xx": four,
+            "errors_5xx_injected": inj,
+            "errors_5xx_by_status": dict(sorted(by_status.items())),
             "error_detail": detail,
             "cache_bust": True,          # 매 호출 다른 `?bust=` 를 붙였다
             "p50_ms": round(statistics.median(p50s), 1),

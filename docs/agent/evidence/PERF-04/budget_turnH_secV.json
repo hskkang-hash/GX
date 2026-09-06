@@ -1,0 +1,292 @@
+{
+  "latest": {
+    "measured_at": "2026-09-06T10:37:43+00:00",
+    "api": "http://gx-nginx-e:8500",
+    "environment": {
+      "measured_at": "2026-09-06T10:37:43+00:00",
+      "python": "3.11.14",
+      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+      "cpu_count": 8,
+      "gpu": "없음 (이 환경에 GPU 가 붙어 있지 않다 — AI 추론은 외부 서버가 한다)",
+      "cgroup_memory_max": "max",
+      "cgroup_cpu_max": "max 100000",
+      "mem_total": "8062592 kB"
+    },
+    "co_resident": {
+      "runserver_processes": [
+        "python manage.py runserver 0.0.0.0:8000 --noreload",
+        "python manage.py runserver 0.0.0.0:8400 --noreload",
+        "python manage.py runserver 0.0.0.0:8401 --noreload",
+        "sh -c cd /app && DJANGO_SETTINGS_MODULE=config.settings python manage.py runserver 0.0.0.0:8000 --noreload > /tmp/gate80",
+        "sh -lc cd /app && DJANGO_SETTINGS_MODULE=config.settings python manage.py runserver 0.0.0.0:8400 --noreload > /tmp/lane_",
+        "sh -lc cd /app && DJANGO_SETTINGS_MODULE=config.settings python manage.py runserver 0.0.0.0:8401 --noreload > /tmp/lane_"
+      ],
+      "loadavg": "6.69 4.49 2.32 6/702 25998"
+    },
+    "server_header": "nginx",
+    "mode": "acceptance",
+    "server": "runserver 가 아니다 — **합격선 모드**로 판정한다",
+    "concurrency": 10,
+    "rounds": 30,
+    "repeat": 3,
+    "faces": {
+      "F05": {
+        "title": "계약 F-05 진입면 (NFR-05-1)",
+        "budget_ms": 500.0,
+        "concurrency": 10,
+        "repeats": 3,
+        "n": 900,
+        "errors": 1,
+        "errors_5xx": 1,
+        "errors_4xx": 0,
+        "errors_5xx_injected": 0,
+        "errors_5xx_by_status": {
+          "502": 1
+        },
+        "error_detail": [
+          "/api/dsm/events?limit=50 -> 502"
+        ],
+        "cache_bust": true,
+        "p50_ms": 152.4,
+        "p95_ms": 276.6,
+        "p95_each": [
+          258.5,
+          297.3,
+          276.6
+        ],
+        "p95_min": 258.5,
+        "p95_max": 297.3,
+        "noise": 0.14,
+        "per_call": {
+          "/api/dsm/events?limit=50": {
+            "n": 300,
+            "p50_ms": 170.6,
+            "p95_ms": 276.6
+          }
+        }
+      },
+      "SCREEN": {
+        "title": "화면 API",
+        "budget_ms": 800.0,
+        "concurrency": 10,
+        "repeats": 3,
+        "n": 900,
+        "errors": 1,
+        "errors_5xx": 1,
+        "errors_4xx": 0,
+        "errors_5xx_injected": 0,
+        "errors_5xx_by_status": {
+          "502": 1
+        },
+        "error_detail": [
+          "/api/dsm/events/queue -> 502"
+        ],
+        "cache_bust": true,
+        "p50_ms": 180.8,
+        "p95_ms": 345.4,
+        "p95_each": [
+          355.7,
+          316.6,
+          345.4
+        ],
+        "p95_min": 316.6,
+        "p95_max": 355.7,
+        "noise": 0.113,
+        "per_call": {
+          "/api/dsm/dashboard/frame": {
+            "n": 90,
+            "p50_ms": 187.8,
+            "p95_ms": 345.4
+          },
+          "/api/dsm/events/queue": {
+            "n": 60,
+            "p50_ms": 196.1,
+            "p95_ms": 424.1
+          },
+          "/api/dsm/events/response-times": {
+            "n": 60,
+            "p50_ms": 170.2,
+            "p95_ms": 361.2
+          },
+          "/api/dsm/events/summary": {
+            "n": 90,
+            "p50_ms": 175.2,
+            "p95_ms": 321.4
+          }
+        }
+      },
+      "MEDIA": {
+        "title": "스냅샷·미디어",
+        "budget_ms": 1000.0,
+        "concurrency": 10,
+        "repeats": 3,
+        "n": 900,
+        "errors": 2,
+        "errors_5xx": 2,
+        "errors_4xx": 0,
+        "errors_5xx_injected": 0,
+        "errors_5xx_by_status": {
+          "502": 2
+        },
+        "error_detail": [
+          "/api/media-data/ -> 502"
+        ],
+        "cache_bust": true,
+        "p50_ms": 141.3,
+        "p95_ms": 274.1,
+        "p95_each": [
+          274.1,
+          334.8,
+          240.7
+        ],
+        "p95_min": 240.7,
+        "p95_max": 334.8,
+        "noise": 0.343,
+        "per_call": {
+          "/api/media-data/": {
+            "n": 300,
+            "p50_ms": 126.3,
+            "p95_ms": 240.7
+          }
+        }
+      },
+      "STATUS": {
+        "title": "상태·가용성 (캐시 금지 · P-19)",
+        "budget_ms": 300.0,
+        "concurrency": 10,
+        "repeats": 3,
+        "n": 900,
+        "errors": 0,
+        "errors_5xx": 0,
+        "errors_4xx": 0,
+        "errors_5xx_injected": 0,
+        "errors_5xx_by_status": {},
+        "error_detail": [],
+        "cache_bust": true,
+        "p50_ms": 137.1,
+        "p95_ms": 228.5,
+        "p95_each": [
+          218.6,
+          306.2,
+          228.5
+        ],
+        "p95_min": 218.6,
+        "p95_max": 306.2,
+        "noise": 0.383,
+        "per_call": {
+          "/api/dsm/dashboard/link-state": {
+            "n": 300,
+            "p50_ms": 137.1,
+            "p95_ms": 228.5
+          }
+        }
+      }
+    }
+  },
+  "baseline": {
+    "measured_at": "2026-09-06T10:34:18+00:00",
+    "server": "runserver (개발 서버)",
+    "note": "면별 기준선의 출처는 각 항목의 `source` 다. PERF-01 에서 온 수는 그 파일이 잰 동시성의 수이고, 동시성이 다르면 이 게이트는 회귀를 **회색**으로 낸다 — 다른 것 둘을 견주지 않기 위해서다.",
+    "faces": {
+      "F05": {
+        "p95_ms": 429.8,
+        "concurrency": 10,
+        "source": "PERF-01 load.json · 가장 느린 자리 /api/dsm/events?limit=50",
+        "covered_calls": [
+          "/api/dsm/events?limit=50"
+        ]
+      },
+      "SCREEN": {
+        "p95_ms": 590.2,
+        "concurrency": 10,
+        "source": "PERF-01 load.json · 가장 느린 자리 /api/dsm/events/queue",
+        "covered_calls": [
+          "/api/dsm/dashboard/frame",
+          "/api/dsm/events/queue",
+          "/api/dsm/events/response-times",
+          "/api/dsm/events/summary"
+        ]
+      },
+      "MEDIA": {
+        "p95_ms": 183.6,
+        "concurrency": 10,
+        "source": "이번 측정 — PERF-01 에 이 면이 없다(첫 수)"
+      },
+      "STATUS": {
+        "p95_ms": 416.8,
+        "concurrency": 10,
+        "source": "PERF-01 load.json · 가장 느린 자리 /api/dsm/dashboard/link-state",
+        "covered_calls": [
+          "/api/dsm/dashboard/link-state"
+        ]
+      }
+    }
+  },
+  "budget_table": {
+    "F05": {
+      "title": "계약 F-05 진입면 (NFR-05-1)",
+      "budget_ms": 500.0,
+      "source": "계약 F-05 「OpenAPI 제공 · p95 500ms」 (kernels/k1_event/services.py 머리말)",
+      "calls": [
+        "/api/dsm/events?limit=50"
+      ]
+    },
+    "SCREEN": {
+      "title": "화면 API",
+      "budget_ms": 800.0,
+      "source": "세종 위임 판정 P-34",
+      "calls": [
+        "/api/dsm/events/summary",
+        "/api/dsm/dashboard/frame",
+        "/api/dsm/events/queue",
+        "/api/dsm/events/response-times"
+      ]
+    },
+    "MEDIA": {
+      "title": "스냅샷·미디어",
+      "budget_ms": 1000.0,
+      "source": "세종 위임 판정 P-34",
+      "calls": [
+        "/api/media-data/"
+      ]
+    },
+    "STATUS": {
+      "title": "상태·가용성 (캐시 금지 · P-19)",
+      "budget_ms": 300.0,
+      "source": "세종 위임 판정 P-34 · 캐시 금지는 P-19 · D-413",
+      "calls": [
+        "/api/dsm/dashboard/link-state"
+      ]
+    }
+  },
+  "regression_tolerance": 0.2,
+  "error_budget": 0.001,
+  "availability_history": [
+    {
+      "measured_at": "2026-09-06T10:34:18+00:00",
+      "n": 1200,
+      "errors_5xx": 1,
+      "rate": 0.00083,
+      "loadavg": "4.19 2.34 1.26 4/666 24954",
+      "mode": "acceptance",
+      "rounds": 10,
+      "repeat": 3,
+      "concurrency": 10
+    },
+    {
+      "measured_at": "2026-09-06T10:37:43+00:00",
+      "n": 3600,
+      "errors_5xx": 4,
+      "rate": 0.00111,
+      "loadavg": "6.69 4.49 2.32 6/702 25998",
+      "mode": "acceptance",
+      "rounds": 30,
+      "repeat": 3,
+      "concurrency": 10
+    }
+  ],
+  "error_budget_source": "SLA 가용성 99.9% 의 월 단위 환산 — 세종 판정 P-53 · LAW-05 SLA 초안. 이 게이트가 정한 수가 아니라 옮겨 적은 수다",
+  "caveat": "★ 이 수는 `runserver`(개발 서버)로 잰 **기준선**이다. **합격선은 gunicorn+nginx 에서 다시 잰다**(OPS-13 뒤). 그때까지 이 초록은 「예산을 지켰다」가 아니라 **「기준선이 예산 안에 있다」**이다 — 기준선을 합격선으로 옮겨 적으면 착시 ⑤(환경)다.",
+  "mode": "acceptance",
+  "pending_acceptance": []
+}

@@ -1,7 +1,5 @@
 {
-  "measured_at": "2026-09-06T08:45:28+00:00",
-  "verdict": "UNKNOWN",
-  "out_dir": "/backup",
-  "separate_volume": false,
-  "reason": "보관처 '/backup' 가 **별도 볼륨으로 안 붙어 있다** — 여기에 뜨면 컨테이너와 함께 사라지고, 그 전까지 「파일이 생겼다」가 초록으로 보인다. 붙이는 법은 docker-compose 의 볼륨 선언(OPS_BACKUP_VOLUME)이고, 그것은 컨테이너 재생성이 필요하다"
+  "measured_at": "2026-09-06T11:06:45+00:00",
+  "verdict": "SKIPPED_UNDECLARED",
+  "reason": "백업 목적지가 **선언되지 않았다**(`OPS_BACKUP_DIR`) — **어디에 뜰지 모르는 백업은 백업이 아니다.** 기본 경로를 지어내지 않는다 (D-280 · P-67). 선언 자리: U5 설정 화면 · 개발·스테이징은 config/retention_seed.py"
 }

@@ -25,7 +25,20 @@ interface Options<T> {
 export interface Resource<T> {
   state: WidgetState;
   data: T | null;
+  /**
+   * 왜 실패했나 — **관리자·개발자 자리의 값이다.** 화면은 이 값을 그리지 않는다.
+   *
+   * ⚠ [P-78 · 2026-09-06 턴 H] 이 자리에는 서버 원문도 axios 원문도 들어온다.
+   *   종전에는 `StateBoundary` 가 이것을 사용자 자리에 그대로 그렸고, 여섯 화면에서
+   *   「Network Error」가 사람의 자리에 떴다. 이제 그 값은 콘솔로만 간다.
+   */
   reason: string;
+  /**
+   * 실패의 **상태 코드**. 사전 문구가 여기서 갈린다 —
+   * 응답이 없었나(0) · 늦었나(504) · 서버가 답은 했나(5xx) · 권한인가(401·403).
+   * 성공했으면 0 이다.
+   */
+  status: number;
   reload: () => void;
   /** 마지막으로 성공한 시각. 「언제 것인가」가 없는 화면은 낡은 줄을 모른다. */
   loadedAt: Date | null;
@@ -41,6 +54,7 @@ export function useDsmResource<T>(
   const [state, setState] = useState<WidgetState>(enabled ? 'loading' : 'empty');
   const [data, setData] = useState<T | null>(null);
   const [reason, setReason] = useState('');
+  const [status, setStatus] = useState(0);
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
   const [tick, setTick] = useState(0);
 
@@ -63,6 +77,7 @@ export function useDsmResource<T>(
         hasValue.current = true;
         setData(value);
         setReason('');
+        setStatus(0);
         setLoadedAt(new Date());
         setState(isEmpty && isEmpty(value) ? 'empty' : 'data');
       })
@@ -74,6 +89,7 @@ export function useDsmResource<T>(
         //   「고장」과 「내 권한이 아님」을 구별하지 못한다 (DA-03 §2-5).
         setState(status === 403 || status === 401 ? 'forbidden' : 'error');
         setReason(message);
+        setStatus(status);
       });
 
     return () => {
@@ -88,5 +104,5 @@ export function useDsmResource<T>(
     return () => clearInterval(id);
   }, [refreshMs, enabled, reload]);
 
-  return { state, data, reason, reload, loadedAt };
+  return { state, data, reason, status, reload, loadedAt };
 }

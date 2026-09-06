@@ -26,7 +26,6 @@ import {
   GlobalLoading,
   initialServices,
   LoadingProvider,
-  LoginPage,
   MenuManagement,
   NewPasswordPage,
   PrivateRouter,
@@ -93,6 +92,7 @@ import { AddNoticeManagement } from './features/Handover/pages/tabs/NoticeManage
 import LibraryDroneList from './features/LibraryDrone';
 import FormAddNewLibrary from './features/LibraryDrone/add/FormAddNewLibrary';
 import EditLibraryForm from './features/LibraryDrone/edit/EditLibraryForm';
+import LoginDesktop from './features/login/LoginDesktop';
 import LoginMobile from './features/LoginMobile';
 import ForgotPasswordMobile from './features/LoginMobile/ForgotPasswordMobile';
 import NewPasswordMobile from './features/LoginMobile/NewPasswordMobile';
@@ -165,7 +165,11 @@ import { CustomRoutes } from './services/API';
 import BuildVersion from './features/dsm/components/BuildVersion';
 import { KICK_SENTENCE } from './features/dsm/constants/kick';
 import { dsm2Routes } from './features/dsm/routes';
-import { adoptWallToken } from './features/dsm/wallToken';
+import {
+  adoptWallToken,
+  WALL_TOKEN_LEGACY_QUERY_NOTICE,
+  wallTokenLegacyQuery,
+} from './features/dsm/wallToken';
 import { ClearStoreOnRouteChange } from './utils/ClearStoreOnRouteChange';
 
 dayjs.extend(customParseFormat);
@@ -349,7 +353,6 @@ const FirstTimeLink = () => (
 
 const Login = () => {
   const { isMobile } = useMobileContext();
-  const navigate = useNavigate();
 
   /*
     P-59 — 로그인 화면은 **관문 밖**이라 `PrivateLayout` 아래에 없다. 그래서 여기
@@ -372,10 +375,20 @@ const Login = () => {
 
   return (
     <>
-      <LoginPage
-        logoImage={logoExpandedLightModeDefault}
-        navigate={navigate}
-      />
+      {/*
+        ★★ [P-78 ② ③ · 2026-09-06 턴 H] **인수 로그인 화면을 우리 층의 것으로 바꿨다.**
+
+        직전 턴의 실측: 500·503·403·타임아웃·서버 다운 **다섯 갈래 전부**에서
+        화면이 실패를 한 마디도 안 했고, 빠르게 두 번 누르면 요청이 두 번 나갔다.
+        원인은 글자가 아니라 **사실이 흐르는 길**이었다 — 인수 화면이 쓰는 로그인 훅이
+        실패를 접으면서 상태 코드를 버린다. 감싸는 것으로는 못 고치는 자리다.
+
+        ⚠ 인수 화면(`LoginPage`)을 **한 자도 고치지 않았다.** 같은 문을 우리 층에서
+          부르고, 성공한 뒤의 절차(토큰·프로필·첫 화면)는 그 부품의 훅을 그대로 쓴다.
+        ⚠ 일회용 비밀번호(OTP) 갈래는 우리가 그리지 않는다 — 그 갈래를 만나면
+          화면이 사실을 말한다. 없는 화면을 지어내지 않는다.
+      */}
+      <LoginDesktop logoImage={logoExpandedLightModeDefault} />
       <FirstTimeLink />
       <BuildVersion />
     </>
@@ -509,6 +522,43 @@ function App() {
      *   같은 경로는 안 불린다 — 토큰이 없으면 이 줄 자체가 **없다**(빈 배열).
      *   토큰 없이 `/wall` 을 열면 종전 그대로 관문이 판정하고 로그인으로 튕긴다.
      */
+    /*
+     * ★ [P-78 ④ · 2026-09-06 턴 H] **옛 주소로 온 대형 화면에게 말한다.**
+     *
+     *   `?token=` 은 더는 받지 않는다(접근로그에 남는다 — UX-24c 닫는 조건 ①).
+     *   그런데 그냥 안 받으면 관문이 로그인 화면으로 튕기고, **자판도 사람도 없는
+     *   대형 화면**은 그 화면을 띄운 채 밤을 샌다. 아침에 남는 것은 「월이 죽었다」
+     *   한 줄이고 원인은 아무 데도 없다. 그래서 관문 밖에 **말하는 자리 하나**를 둔다.
+     *   이 화면은 서버를 한 번도 부르지 않는다 — 글자뿐이다.
+     */
+    ...(!wallByToken && wallTokenLegacyQuery()
+      ? [
+          {
+            path: dsm2Routes.wall.path,
+            element: (
+              <>
+                <div
+                  style={{
+                    minHeight: '100vh',
+                    background: '#0b0d12',
+                    color: '#ffd666',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 32,
+                    fontSize: 36,
+                    lineHeight: 1.5,
+                    textAlign: 'center',
+                  }}
+                >
+                  {WALL_TOKEN_LEGACY_QUERY_NOTICE}
+                </div>
+                <BuildVersion />
+              </>
+            ),
+          },
+        ]
+      : []),
     ...(wallByToken
       ? [
           {

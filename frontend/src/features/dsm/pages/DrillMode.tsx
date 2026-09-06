@@ -21,6 +21,7 @@ import { useCallback, useState } from 'react';
 import { Main } from 'rj-core';
 
 import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
+import { dataSourceBadge, userFacingError } from '../copy';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { absolute, stamp } from '../time';
@@ -83,7 +84,7 @@ export default function DrillModePage() {
       } catch (err) {
         // 400(사유 없음) · 403(남의 테넌트) 를 **그대로 보여 준다.** 하나로 묶으면
         // 무엇을 고쳐 다시 보낼지 화면이 말하지 못한다 (D-290).
-        setError(err instanceof Error ? err.message : String(err));
+        setError(userFacingError('DrillMode', err, '요청이 실패했습니다.'));
       } finally {
         setBusy(false);
       }
@@ -106,7 +107,7 @@ export default function DrillModePage() {
 
         {error ? <Alert type="error" showIcon message="거절되었습니다." description={error} /> : null}
 
-        <StateBoundary state={state.state} reason={state.reason} onRetry={state.reload}>
+        <StateBoundary state={state.state} reason={state.reason} status={state.status} onRetry={state.reload}>
           {current ? (
             <Card
               title={
@@ -115,7 +116,14 @@ export default function DrillModePage() {
                   <Tag color={current.drill_mode ? 'red' : 'green'}>
                     {current.drill_mode ? '훈련 중 — 알림이 사람에게 가지 않습니다' : '실운영'}
                   </Tag>
-                  <Tag>data_source = {current.data_source}</Tag>
+                  {/*
+                    ★ [P-78 · 턴 H] 종전에는 여기에 「data_source = live」가 그대로
+                      떴다 — 사전이 §2·§4 두 곳에서 금지한 영문 열거값이다.
+                      **시드·훈련일 때만** 사람의 말로 그린다(실운영은 평상이다).
+                  */}
+                  {dataSourceBadge(current.data_source) ? (
+                    <Tag>{dataSourceBadge(current.data_source)}</Tag>
+                  ) : null}
                 </Space>
               }
             >
@@ -155,7 +163,7 @@ export default function DrillModePage() {
           ) : null}
         </StateBoundary>
 
-        <StateBoundary state={report.state} reason={report.reason} onRetry={report.reload}>
+        <StateBoundary state={report.state} reason={report.reason} status={report.status} onRetry={report.reload}>
           {r ? (
             <Card title="훈련 종료 보고서 1장">
               {!r.measurable ? (

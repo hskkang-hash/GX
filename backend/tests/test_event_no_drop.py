@@ -239,6 +239,12 @@ class InvalidationDeferredNotDroppedTest(SimpleTestCase):
 # ═══════════════════════════════════════════════════════════════════════════
 # ③ 등급 — **심각 등급은 어떤 경우에도 버리지 않는다.** 이건 상수다
 # ═══════════════════════════════════════════════════════════════════════════
+#: 큐를 채우려 시도하는 최대 바퀴 수. 흘리개가 비우는 속도가 채우는 속도를 넘으면
+#: 영원히 안 차므로 **유한하게** 시도하고, 못 채우면 그 사실로 실패한다 —
+#: 무한 재시도는 「못 쟀다」를 「통과」로 바꾸는 가장 흔한 길이다.
+DEFER_ROUNDS_MAX = 5
+
+
 class SeverityNeverDroppedTest(SimpleTestCase):
 
     def setUp(self) -> None:
@@ -269,10 +275,34 @@ class SeverityNeverDroppedTest(SimpleTestCase):
             pass
 
         sender = _Sender("detectionevent")
-        for pk in range(DEFER_QUEUE_MAX):
-            SignalProtection.defer(handler, sender, _Row(pk), {},
-                                   priority=PRIORITY_CRITICAL,
-                                   model_name="detectionevent")
+
+        # ★ **큐를 채웠다는 것을 먼저 확인한다** [실측 2026-09-06 · 턴 H]
+        #   `_defer_queue` 는 **클래스 전역**이고 `_flush_loop` 이라는 데몬 스레드가
+        #   그것을 비운다. 그 스레드는 첫 미룸 때 뜨고 **멈추는 손잡이가 없다.**
+        #   그래서 이 파일을 혼자 돌리면(스레드가 안 뜬다) 통과하고, 앞선 시험이
+        #   실제 m2m 무효화를 한 뒤에 돌면 채우는 사이 흘리개가 비워서
+        #   `queued != run_now` 로 **진다.** 그날 실제로 그랬다:
+        #     혼자: 8 passed · 묶음(1,149): 이 한 건만 실패
+        #   ⚠ 그 빨강은 **규칙이 틀렸다는 뜻이 아니라 경주에서 졌다는 뜻**이다.
+        #     둘을 같은 색으로 내면 다음 사람이 D-367 ③ 을 의심하게 된다 —
+        #     의심해야 할 것은 이 시험의 격리다.
+        #   그래서 **차오를 때까지 보충**하고, 그래도 안 차면 그 사실로 실패한다.
+        pk = 0
+        for _ in range(DEFER_ROUNDS_MAX):
+            if SignalProtection.defer_stats()["queue_len"] >= DEFER_QUEUE_MAX:
+                break
+            for _ in range(DEFER_QUEUE_MAX):
+                SignalProtection.defer(handler, sender, _Row(pk), {},
+                                       priority=PRIORITY_CRITICAL,
+                                       model_name="detectionevent")
+                pk += 1
+        queued_len = SignalProtection.defer_stats()["queue_len"]
+        self.assertGreaterEqual(
+            queued_len, DEFER_QUEUE_MAX,
+            f"큐를 못 채웠다({queued_len}/{DEFER_QUEUE_MAX}) — 흘리개 스레드가 "
+            f"채우는 속도보다 빠르게 비웠다. **이것은 D-367 ③ 의 반증이 아니라 "
+            f"이 시험이 자기 상태를 못 세웠다는 뜻이다.**")
+
         outcome = SignalProtection.defer(handler, sender, _Row(10 ** 9), {},
                                          priority=PRIORITY_CRITICAL,
                                          model_name="detectionevent")

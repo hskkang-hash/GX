@@ -17,6 +17,14 @@ import logoImageDefault from '@/assets/images/Full Version-Black.png';
 import '@/assets/styles/LoginMobile.scss';
 import { CustomRoutes } from '@/services/API';
 import { schemaLogin } from '@/services/schemaForm';
+import {
+  ALREADY_SUBMITTING,
+  EMPTY_PASSWORD,
+  EMPTY_USERNAME,
+  judgeLoginFailure,
+  SUBMITTING,
+} from '@/features/login/loginCopy';
+import { loginInFlight, requestLogin } from '@/features/login/loginRequest';
 
 interface FormData {
   username: string;
@@ -29,7 +37,7 @@ const LoginMobile = ({ logoImage }: { logoImage: string }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-  const { loginAPI, getProfileAPI } = useAPILogin();
+  const { getProfileAPI } = useAPILogin();
   const login = useLogin();
 
   const [showEndSession, setShowEndSession] = useState(false);
@@ -49,15 +57,35 @@ const LoginMobile = ({ logoImage }: { logoImage: string }) => {
     formState: { isSubmitting },
   } = methods;
 
+  /**
+   * ★★ [P-78 ② ③ · 2026-09-06 턴 H] **다섯 갈래를 여기서도 말한다.**
+   *
+   *   종전에는 `loginAPI` 가 접어 준 `message` 를 그대로 그렸다. 그 값은 응답이
+   *   없으면(서버 다운 · 타임아웃) `undefined` 이고, 그러면 이 화면은 **아무것도
+   *   안 그렸다.** 이동 중인 사람의 화면에서 침묵은 「내가 잘못 눌렀나」로 읽힌다.
+   *   그래서 데스크톱과 **같은 판정 함수**를 쓴다 — 두 화면이 다른 말을 하지 않게.
+   */
   const onSubmit = async (data: FormData) => {
-    const {
-      success,
-      data: userData,
-      message,
-      existing_session,
-    } = await loginAPI(data.username, data.password, data.end_previous_session);
+    const id = (data.username || '').trim();
+    const pw = data.password || '';
+    if (!id || !pw) {
+      setErrorMessage(!id ? EMPTY_USERNAME : EMPTY_PASSWORD);
+      return;
+    }
+    if (loginInFlight()) {
+      setErrorMessage(ALREADY_SUBMITTING);
+      return;
+    }
+    setErrorMessage(SUBMITTING);
+    const outcome = await requestLogin(id, pw, Boolean(data.end_previous_session));
+    const body = (outcome.body ?? null) as Record<string, any> | null;
+    const auth = (body?.auth_status ?? {}) as Record<string, unknown>;
+    const success = outcome.status === 200 && Boolean(body?.success) && Boolean(body?.user);
+    const userData = (body?.user ?? {}) as Record<string, any>;
+    const existing_session = Boolean(auth.existing_session);
 
     if (success) {
+      setErrorMessage('');
       // First login with basic info
       login({
         token: userData.access_token,
@@ -81,9 +109,10 @@ const LoginMobile = ({ logoImage }: { logoImage: string }) => {
         }
       }
     } else if (existing_session) {
+      setErrorMessage('');
       setShowEndSession(true);
     } else {
-      setErrorMessage(message);
+      setErrorMessage(judgeLoginFailure(outcome).text);
     }
   };
 

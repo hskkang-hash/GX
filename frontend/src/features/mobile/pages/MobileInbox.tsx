@@ -29,6 +29,7 @@ import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import StateBoundary from '../../dsm/components/StateBoundary';
+import { failureHint } from '../../dsm/copy';
 import { useDsmResource } from '../../dsm/hooks/useDsmResource';
 import {
   EVENT_TYPE_LABEL,
@@ -156,11 +157,24 @@ export default function MobileInbox() {
             )}
           </Space>
           {events.state === 'error' || events.state === 'forbidden' ? (
+            /*
+              ★★ [P-78 ① · 2026-09-06 턴 H] **여기가 여섯 번째 자리였다.**
+                `StateBoundary` 를 고쳐도 이 상자는 안 고쳐졌다 — 상자를 손으로
+                한 번 더 짠 자리이기 때문이다. [실측] 이 줄에 「Request failed with
+                status code」가 그대로 떴다. 좁은 문 하나로 다 막았다고 믿은 순간
+                문 밖에 서 있던 자리다.
+              ★ 제목이 「불러오지 못했습니다」로 시작한다 — 이 화면은 발송 기록은
+                그렸으므로 통째 실패가 아니고, 그래서 **무엇을 못 받았는지**를 잇는다.
+            */
             <Alert
               type="info"
               showIcon
-              message="이벤트 속성(유형·등급·발생시각)을 못 받았습니다 — 발송 기록만 보입니다."
-              description={events.reason}
+              message={
+                events.state === 'forbidden'
+                  ? '이벤트 속성에 대한 권한이 없습니다 — 발송 기록만 보입니다.'
+                  : '이벤트 속성을 불러오지 못했습니다 — 발송 기록만 보입니다.'
+              }
+              description={failureHint(events.status)}
             />
           ) : null}
         </Space>
@@ -168,7 +182,7 @@ export default function MobileInbox() {
     >
       <StateBoundary
         state={deliveries.state}
-        reason={deliveries.reason}
+        reason={deliveries.reason} status={deliveries.status}
         onRetry={deliveries.reload}
         emptyText="이 테넌트에 남은 발송 기록이 0건입니다. (알림이 실패한 것이 아니라, 나간 알림이 없습니다.)"
       >

@@ -62,11 +62,15 @@ SEED: dict[str, object] = {
     # 목적지 **별도 볼륨 `/backup`** (OPS-12a). 「같은 디스크는 백업이 아니다」 —
     # 이 경로는 백업 컨테이너 **안**의 자리이고, 그 뒤를 받치는 것은
     # 도커 볼륨 `OPS_BACKUP_VOLUME` 이다. 저장소 작업복사본이 아니다.
+    # ★ 감사 로그 파기의 **되돌림 저널**도 이 칸 아래에 산다 (OPS-07b · 턴 H):
+    #   `/backup/audit_purge_journal/`. 이름을 하나 더 만들지 않았다 — 저널의 자리가
+    #   백업과 갈라질 이유가 없고, 아무도 안 채우는 이름은 안 켠 스위치다(D-377).
     "OPS_BACKUP_DIR": "/backup",
     "OPS_BACKUP_VOLUME": "gx_backup_vault_e",
 
     # 백업 보존 **14일**.
     "OPS_BACKUP_RETENTION_DAYS": 14,
+
 
     # 복구 시험 **주 1회 자동** (`ops_restore` dry-run → RTO 실측 기록).
     "OPS_RESTORE_DRILL_ENABLED": True,

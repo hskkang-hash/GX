@@ -25,9 +25,18 @@
  *   차선 D 보고서의 「조율자 조각」에 있다(`mine: bool = False`).
  * ─────────────────────────────────────────────────────────────────────────────
  */
-import { dsmEndpoint, dsmGet, dsmPost, dsmPostQuery, DsmApiError, LOAD_TIMEOUT_MS } from '../dsm/api';
+import {
+  dsmEndpoint,
+  dsmGet,
+  dsmPost,
+  dsmPostQuery,
+  dsmPostQueryOnce,
+  intentKey,
+  DsmApiError,
+  LOAD_TIMEOUT_MS,
+} from '../dsm/api';
 
-export { dsmGet, dsmPost, dsmPostQuery, DsmApiError, LOAD_TIMEOUT_MS };
+export { dsmGet, dsmPost, dsmPostQuery, DsmApiError, LOAD_TIMEOUT_MS, intentKey };
 
 /**
  * 모바일이 쓰는 문 넷. **전부 이미 서 있는 문이다** — 새로 뚫은 것이 하나도 없다.
@@ -62,4 +71,16 @@ export function mobilePostWithQuery<T>(url: string, query: Record<string, string
   // ★ 조립을 **두 벌 두지 않는다** — 같은 조립을 화면마다 손으로 짜다가 두 화면이
   //   빠뜨렸고, 그 둘은 422 로 죽어 있었다 [실측 2026-09-05]. 이제 한 곳이다.
   return dsmPostQuery<T>(url, query);
+}
+
+/**
+ * 같은 조립에 **멱등 키**를 얹은 것 (P-78 ③). 접수·회신 두 문이 이것으로 나간다.
+ * 두 번 눌려도 요청은 하나이고, 두 번째 누름은 첫 번째의 결과를 받는다.
+ */
+export function mobilePostWithQueryOnce<T>(
+  url: string,
+  query: Record<string, string>,
+  idempotencyKey: string,
+): Promise<T> {
+  return dsmPostQueryOnce<T>(url, query, idempotencyKey);
 }

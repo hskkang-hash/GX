@@ -789,6 +789,12 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 # 켤 때는 둘을 **함께** 준다 — 보관처 없이 켜면 태스크가 판정 불가로 멈춘다.
 OPS_BACKUP_SCHEDULE_ENABLED = env.bool("OPS_BACKUP_SCHEDULE_ENABLED", default=False)
 OPS_BACKUP_DIR = env.str("OPS_BACKUP_DIR", default="")
+#: ★ OPS-07b — 감사 로그 파기의 **되돌림 저널**도 이 칸 아래에 산다
+#:   (`<OPS_BACKUP_DIR>/audit_purge_journal/`). **설정 이름을 하나 더 만들지
+#:   않았다** — 아무도 안 채우는 이름은 아무도 안 켠 스위치이고(D-377 착시 ⑨),
+#:   저널의 자리는 백업과 갈라질 이유가 없다. 이 칸이 비면 파기는 **돌지
+#:   않는다** — 되돌릴 수 없는 파기는 하지 않는다. 규약:
+#:   `backend/common/audit_purge_journal.py`.
 CELERY_BEAT_SYNC_EVERY = 30  # Sync every 30 seconds (reduced load)
 CELERY_BEAT_MAX_LOOP_INTERVAL = 300  # Max 5 minutes between checks
 
@@ -941,9 +947,23 @@ except Exception:                                   # noqa: BLE001
     # **못 읽었다는 사실이 이 갈래 자체로 남는다** — 조용히 비우지 않는다.
     _WALL_TOKEN_HEADER = "X-GX-Wall-Token"
 
+#: ★ [P-78 ③ · 2026-09-06 · 차선 C] **세 번째로 같은 자리다.**
+#:
+#:   판정·접수·회신 세 문에 멱등 키(`Idempotency-Key`)를 싣기로 했다. 그 이름이
+#:   이 목록에 없으면 브라우저는 프리플라이트에서 막고 **요청 자체를 안 보낸다** —
+#:   증상은 「단추를 눌렀는데 아무 일도 안 일어난다」이고, 콘솔에도 서버에도
+#:   원인이 안 남는다. 위 두 주석(`x-no-cache` · 월 표시 토큰)이 적어 둔 함정이
+#:   그대로다.
+#:
+#:   ⚠ **서버는 아직 이 이름을 읽지 않는다.** 여기 올린 것은 「브라우저가 보내도
+#:     된다」까지이고, 같은 키로 두 번 온 요청을 하나로 접는 일은 **아직 없다.**
+#:     그 일이 서기 전까지 이중 제출을 막는 것은 화면 쪽뿐이다 —
+#:     `frontend/src/features/dsm/api.ts` 의 날아가는 약속 재사용.
+#:     허용 목록에 이름이 있다는 것과 그 규약이 산다는 것은 다른 사실이다.
 CORS_ALLOW_HEADERS = list(_cors_default_headers) + [
     "x-no-cache",
     _WALL_TOKEN_HEADER.lower(),
+    "idempotency-key",
 ]
 
 CORS_EXPOSE_HEADERS = [

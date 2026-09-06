@@ -77,11 +77,41 @@ export const LOAD_TIMEOUT_MS = 10_000;
 
 export class DsmApiError extends Error {
   readonly status: number;
-  constructor(message: string, status: number) {
+  /**
+   * 이 문장을 **서버가 썼는가.**
+   *
+   * ★ [P-78 · 2026-09-06 턴 H] 이 한 칸이 「화면에 그려도 되는 사유」와
+   *   「그리면 안 되는 원문」을 가른다. 서버가 준 한국어 사유(「표의 3행에 필요한
+   *   값이 없습니다.」)는 사용자의 말이고, axios 가 만든 문장(「Network Error」)은
+   *   아니다. 종전에는 둘이 같은 `message` 칸에 담겨 **구별할 방법이 없었다** —
+   *   그래서 화면이 둘 다 그렸고, 여섯 화면에서 원문이 사람의 자리에 떴다.
+   */
+  readonly fromServer: boolean;
+  constructor(message: string, status: number, fromServer = false) {
     super(message);
     this.name = 'DsmApiError';
     this.status = status;
+    this.fromServer = fromServer;
   }
+}
+
+/**
+ * 봉투의 사유 한 줄을 **문자열로** 꺼낸다.
+ *
+ * ⚠ [실측] 이 저장소의 로그인 면은 사유를 `{en, ko, vi, th}` 로 준다. 그 객체를
+ *   그대로 `Error` 에 넣으면 화면에 **`[object Object]`** 가 뜬다 — 사유가 통째로
+ *   사라진 자리이고, `walk_states` 의 원문 표본 목록에 이름으로 올라 있다.
+ */
+function pickMessage(value: unknown): string | undefined {
+  if (typeof value === 'string') return value.trim() || undefined;
+  if (value && typeof value === 'object') {
+    const bag = value as Record<string, unknown>;
+    for (const key of ['ko', 'en']) {
+      const v = bag[key];
+      if (typeof v === 'string' && v.trim()) return v.trim();
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -100,19 +130,21 @@ function unwrap<T>(res: any): T {
   //   `message` 만 읽던 동안 404 의 사유가 **화면에 닿지 않았다** — 사용자는
   //   「요청이 실패했습니다 (404)」만 보고, 그것이 「없다」인지 「못 가져왔다」인지 모른다.
   //   둘을 가르는 문장이 서버에 있는데 화면이 안 읽는 것은 D-284 의 조용한 판이다.
-  const detail: string | undefined =
-    typeof body?.detail === 'string' ? body.detail : undefined;
+  const detail: string | undefined = pickMessage(body?.detail);
+  const said: string | undefined = pickMessage(body?.message) ?? detail;
 
   if (httpStatus >= 400) {
     throw new DsmApiError(
-      body?.message ?? detail ?? `요청이 실패했습니다 (${httpStatus})`,
+      said ?? `요청이 실패했습니다 (${httpStatus})`,
       httpStatus,
+      said !== undefined,
     );
   }
   if (bodyStatus !== undefined && bodyStatus >= 400) {
     throw new DsmApiError(
-      body?.message ?? detail ?? `요청이 거절되었습니다 (${bodyStatus})`,
+      said ?? `요청이 거절되었습니다 (${bodyStatus})`,
       bodyStatus,
+      said !== undefined,
     );
   }
   // 봉투 안에 `data` 가 있으면 그것이 값이고, 없으면 본문 자체가 값이다.
@@ -134,11 +166,11 @@ async function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>): Promise
     }
     if (err instanceof DsmApiError) throw err;
     const status = err?.response?.status ?? 0;
-    const body = err?.response?.data;
-    throw new DsmApiError(
-      body?.message ?? err?.message ?? '요청이 실패했습니다.',
-      status,
-    );
+    const said = pickMessage(err?.response?.data?.message);
+    // ★ `err.message` 를 **`fromServer` 로 세우지 않는다.** 그 자리가 axios 가
+    //   「Network Error」를 넣는 자리다 — 서버가 쓴 문장이 아니다.
+    throw new DsmApiError(said ?? err?.message ?? '요청이 실패했습니다.', status,
+      said !== undefined);
   } finally {
     clearTimeout(timer);
   }
@@ -262,3 +294,169 @@ export const dsmSystemEndpoint = {
    */
   backupDeclaration: '/api/dsm/ops/backup/declaration',
 } as const;
+
+/* ════════════════════════════════════════════════════════════════════════
+ * 이중 제출 0 — **멱등 키** (P-78 ③ · 2026-09-06 턴 H)
+ * ════════════════════════════════════════════════════════════════════════
+ *
+ * 무엇이 문제였나 [실측 · 직전 턴 walk_states]
+ * -------------------------------------------
+ * 로그인에서 빠르게 두 번 누르면 요청이 **2번** 나갔다. 단추에 `loading` 이 걸려
+ * 있었는데도 그랬다 — 리액트의 상태는 **다음 그림에서** 반영되고, 사람의 두 번째
+ * 클릭은 그 그림보다 빠르다. 즉 **단추 잠금만으로는 못 막는다.**
+ *
+ * ★ 그래서 잠금을 **요청 자리**에 둔다. 같은 의도(같은 멱등 키)가 이미 날아가
+ *   있으면 새 요청을 만들지 않고 **그 약속을 그대로 돌려준다.** 두 번째 클릭은
+ *   첫 번째의 결과를 받는다 — 삼킨 것이 아니라 **같은 것을 받은 것**이다.
+ *
+ * ⚠ **서버 신호 대기.** 이 저장소의 어느 라우트도 `Idempotency-Key` 를 아직 읽지
+ *   않는다 [실측 · 저장소 전수 검색 0건]. 그러므로 이 헤더는 지금 **서버에서 아무
+ *   일도 하지 않는다.** 그래도 싣는 이유는 두 가지다:
+ *     ① 브라우저 쪽 중복은 이 키가 **실제로** 막는다(위 약속 재사용).
+ *     ② 서버가 이 규약을 받는 날, 화면을 다시 고칠 필요가 없다.
+ *   없는 것을 있는 것처럼 적지 않는다 — 서버 면이 설 때까지 이 문단이 그 사실이다.
+ *
+ * ⚠⚠ **머리글자는 CORS 허용 목록에 이름이 있어야 브라우저가 보낸다.**
+ *   월 표시 토큰이 정확히 이 자리에서 한 턴을 버렸다(`x-gx-wall-token` 이 목록에
+ *   없어 브라우저가 그 문을 한 번도 안 불렀다). 그래서 이 이름도 함께 올렸다:
+ *   `config/settings.py` 의 `CORS_ALLOW_HEADERS`. 목록에 없으면 증상은 조용하다 —
+ *   **요청 자체가 안 나간다.**
+ */
+
+/** 멱등 키가 실리는 자리. 이름을 두 벌로 적지 않는다. */
+export const IDEMPOTENCY_HEADER = 'Idempotency-Key';
+
+/**
+ * 키 하나에 약속 하나. **끝난 뒤에도 잠시 들고 있는다.**
+ *
+ * ⚠⚠ [실측 2026-09-06 · 턴 H] 처음에는 끝나는 즉시 지웠다. 그런데 시험 도구가
+ *   두 번 누르는 간격보다 **첫 응답이 더 빨랐고**(가짜 응답은 즉시 온다),
+ *   그래서 두 번째 누름이 「이미 끝난 의도」를 새 요청으로 만들었다 — 요청 2건.
+ *   사람의 손도 같다: 응답이 20ms 에 오는 자리에서 더블클릭은 언제나 두 번 나간다.
+ *   **날아가는 동안만 막는 것은 이중 제출을 못 막는다.** 잠시 더 들고 있어야 한다.
+ *
+ * ★ 그 「잠시」가 곧 멱등 창이다. 창 안에서 같은 키는 **같은 답**을 받는다 —
+ *   서버가 이 규약을 받는 날 서버가 할 일과 정확히 같은 일이다.
+ */
+const IDEMPOTENT_WINDOW_MS = 2_000;
+
+interface Entry {
+  promise: Promise<unknown>;
+  settledAt: number | null;
+}
+
+const entries = new Map<string, Entry>();
+
+function live(key: string): Promise<unknown> | null {
+  const e = entries.get(key);
+  if (!e) return null;
+  if (e.settledAt !== null && Date.now() - e.settledAt > IDEMPOTENT_WINDOW_MS) {
+    entries.delete(key);
+    return null;
+  }
+  return e.promise;
+}
+
+function remember<T>(key: string, promise: Promise<T>): Promise<T> {
+  const entry: Entry = { promise, settledAt: null };
+  entries.set(key, entry);
+  promise
+    .catch(() => undefined)
+    .finally(() => {
+      entry.settledAt = Date.now();
+    });
+  return promise;
+}
+
+/**
+ * 새 멱등 키 한 장. **의도가 시작될 때 한 번** 만들고, 재시도에는 같은 것을 쓴다.
+ *
+ * `crypto.randomUUID` 가 없는 환경(오래된 브라우저·비보안 문맥)에서도 돌아야 한다 —
+ * 없으면 화면 전체가 그 자리에서 죽고, 그것은 이 절이 막으려던 것보다 큰 고장이다.
+ */
+export function newIdempotencyKey(): string {
+  try {
+    const c = globalThis.crypto as Crypto | undefined;
+    if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  } catch {
+    /* 아래로 내려간다 */
+  }
+  return `gx-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
+ * 질의로 POST 하되 **같은 키가 날아가 있으면 새로 안 보낸다.**
+ *
+ * 돌려주는 값은 언제나 그 의도의 결과다 — 두 번째 누름도 **성공을 본다.**
+ * 「눌렀는데 아무 일도 안 일어났다」로 보이지 않게 하는 것이 이 규약의 절반이다.
+ */
+export function dsmPostQueryOnce<T>(
+  url: string,
+  query: Record<string, string | number | boolean>,
+  idempotencyKey: string,
+): Promise<T> {
+  const existing = live(idempotencyKey);
+  if (existing) return existing as Promise<T>;
+
+  const qs = new URLSearchParams(
+    Object.entries(query).map(([k, v]) => [k, String(v)]),
+  ).toString();
+
+  return remember(
+    idempotencyKey,
+    withTimeout<T>(async (signal) =>
+      unwrap<T>(
+        await API.post(`${url}?${qs}`, {}, {
+          signal,
+          headers: { [IDEMPOTENCY_HEADER]: idempotencyKey },
+        }),
+      ),
+    ),
+  );
+}
+
+/** 본문으로 POST 하는 자리의 같은 규약(현장 회신 · 알림 발송). */
+export function dsmPostOnce<T>(
+  url: string,
+  body: unknown,
+  idempotencyKey: string,
+): Promise<T> {
+  const existing = live(idempotencyKey);
+  if (existing) return existing as Promise<T>;
+
+  return remember(
+    idempotencyKey,
+    withTimeout<T>(async (signal) =>
+      unwrap<T>(
+        await API.post(url, body ?? {}, {
+          signal,
+          headers: { [IDEMPOTENCY_HEADER]: idempotencyKey },
+        }),
+      ),
+    ),
+  );
+}
+
+/** 이 키가 아직 살아 있는가(날아가는 중이거나 멱등 창 안이거나). */
+export function isInFlight(idempotencyKey: string): boolean {
+  return live(idempotencyKey) !== null;
+}
+
+/**
+ * 같은 **의도**에는 같은 키를 준다 — 두 번 눌린 것과 다시 눌린 것을 가른다.
+ *
+ *   두 번 눌렸다 = 앞의 요청이 **아직 날아가는 중** → 같은 키 → 요청 하나
+ *   다시 눌렀다  = 앞의 요청이 **끝났다**(실패했거나 사람이 또 하고 싶다) → 새 키
+ *
+ * ★ 이 구별이 이 함수의 전부다. 키를 언제나 새로 만들면 두 번 눌림이 안 막히고,
+ *   키를 영원히 고정하면 **실패한 뒤 다시 시도할 수 없다.** 둘 다 결함이다.
+ */
+const intentKeys = new Map<string, string>();
+
+export function intentKey(intent: string): string {
+  const live = intentKeys.get(intent);
+  if (live && isInFlight(live)) return live;
+  const fresh = newIdempotencyKey();
+  intentKeys.set(intent, fresh);
+  return fresh;
+}

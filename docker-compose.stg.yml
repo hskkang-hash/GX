@@ -67,6 +67,17 @@ services:
       - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
       - REDIS_HOST=redis-stg
       - REDIS_PORT=6379
+      # ★ 스테이징은 **운영 프로필로만 뜬다** (P-75 · SEC-18 · 2026-09-06 턴 H · 차선 S).
+      #   `config.settings` 는 아무 선언 없이 뜨면 SECRET_KEY=자리표 · DEBUG=True ·
+      #   ALLOWED_HOSTS=[*] · 쿠키 평문이다. 스테이징은 **공개 URL** 이므로 그 프로필로
+      #   세우지 않는다. `deploy.sh` 도 같은 것을 막지만(프로필 관문), compose 로 직접
+      #   세우는 길이 남아 있으면 관문은 우회된다 — 그래서 여기에도 적는다.
+      # ⚠ 이 프로필은 선언이 없으면 **기동을 거부한다**(ImproperlyConfigured). 뜨기 전에
+      #   `backend/.env.stg` 에 넷을 채운다: DJANGO_SECRET_KEY(50자 이상 · 자리표 금지) ·
+      #   DJANGO_ALLOWED_HOSTS(`*` 금지) · DJANGO_CSRF_TRUSTED_ORIGINS(스킴 포함) ·
+      #   DJANGO_DEBUG(운영 프로필은 읽지 않는다 · False 고정).
+      #   판정: docker exec <컨테이너> python /repo/scripts/verify_prod_settings.py  → 5/5
+      - DJANGO_SETTINGS_MODULE=config.settings_prod
     env_file:
       - ./backend/.env.stg
     restart: unless-stopped
@@ -97,6 +108,17 @@ services:
       - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
       - REDIS_HOST=redis-stg
       - REDIS_PORT=6379
+      # ★ 스테이징은 **운영 프로필로만 뜬다** (P-75 · SEC-18 · 2026-09-06 턴 H · 차선 S).
+      #   `config.settings` 는 아무 선언 없이 뜨면 SECRET_KEY=자리표 · DEBUG=True ·
+      #   ALLOWED_HOSTS=[*] · 쿠키 평문이다. 스테이징은 **공개 URL** 이므로 그 프로필로
+      #   세우지 않는다. `deploy.sh` 도 같은 것을 막지만(프로필 관문), compose 로 직접
+      #   세우는 길이 남아 있으면 관문은 우회된다 — 그래서 여기에도 적는다.
+      # ⚠ 이 프로필은 선언이 없으면 **기동을 거부한다**(ImproperlyConfigured). 뜨기 전에
+      #   `backend/.env.stg` 에 넷을 채운다: DJANGO_SECRET_KEY(50자 이상 · 자리표 금지) ·
+      #   DJANGO_ALLOWED_HOSTS(`*` 금지) · DJANGO_CSRF_TRUSTED_ORIGINS(스킴 포함) ·
+      #   DJANGO_DEBUG(운영 프로필은 읽지 않는다 · False 고정).
+      #   판정: docker exec <컨테이너> python /repo/scripts/verify_prod_settings.py  → 5/5
+      - DJANGO_SETTINGS_MODULE=config.settings_prod
     env_file:
       - ./backend/.env.stg
     restart: unless-stopped
@@ -132,6 +154,17 @@ services:
       - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
       - REDIS_HOST=redis-stg
       - REDIS_PORT=6379
+      # ★ 스테이징은 **운영 프로필로만 뜬다** (P-75 · SEC-18 · 2026-09-06 턴 H · 차선 S).
+      #   `config.settings` 는 아무 선언 없이 뜨면 SECRET_KEY=자리표 · DEBUG=True ·
+      #   ALLOWED_HOSTS=[*] · 쿠키 평문이다. 스테이징은 **공개 URL** 이므로 그 프로필로
+      #   세우지 않는다. `deploy.sh` 도 같은 것을 막지만(프로필 관문), compose 로 직접
+      #   세우는 길이 남아 있으면 관문은 우회된다 — 그래서 여기에도 적는다.
+      # ⚠ 이 프로필은 선언이 없으면 **기동을 거부한다**(ImproperlyConfigured). 뜨기 전에
+      #   `backend/.env.stg` 에 넷을 채운다: DJANGO_SECRET_KEY(50자 이상 · 자리표 금지) ·
+      #   DJANGO_ALLOWED_HOSTS(`*` 금지) · DJANGO_CSRF_TRUSTED_ORIGINS(스킴 포함) ·
+      #   DJANGO_DEBUG(운영 프로필은 읽지 않는다 · False 고정).
+      #   판정: docker exec <컨테이너> python /repo/scripts/verify_prod_settings.py  → 5/5
+      - DJANGO_SETTINGS_MODULE=config.settings_prod
     env_file:
       - ./backend/.env.stg
     restart: unless-stopped

@@ -37,6 +37,7 @@ import { useCallback, useState } from 'react';
 import { Main } from 'rj-core';
 
 import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
+import { userFacingError } from '../copy';
 import AutoAnalysisNotice from '../components/AutoAnalysisNotice';
 import RetentionNotice from '../components/RetentionNotice';
 import StateBoundary from '../components/StateBoundary';
@@ -121,7 +122,7 @@ export default function PrivacyRequestsPage() {
         dsmEndpoint.privacyRequestDetail(receiptNo)));
     } catch (err) {
       setDetail(null);
-      setError(err instanceof Error ? err.message : String(err));
+      setError(userFacingError('PrivacyRequests', err, '요청이 실패했습니다.'));
     }
   }, []);
 
@@ -143,7 +144,7 @@ export default function PrivacyRequestsPage() {
       list.reload();
       openDetail(created.receipt_no);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(userFacingError('PrivacyRequests', err, '요청이 실패했습니다.'));
     } finally {
       setBusy(false);
     }
@@ -157,7 +158,7 @@ export default function PrivacyRequestsPage() {
       setMasked(await dsmGet<MaskedView>(
         dsmEndpoint.privacyRequestMasked(selected)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(userFacingError('PrivacyRequests', err, '요청이 실패했습니다.'));
     } finally {
       setBusy(false);
     }
@@ -175,7 +176,7 @@ export default function PrivacyRequestsPage() {
       await openDetail(selected);
       list.reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(userFacingError('PrivacyRequests', err, '요청이 실패했습니다.'));
     } finally {
       setBusy(false);
     }
@@ -243,7 +244,7 @@ export default function PrivacyRequestsPage() {
             <Card title="접수된 청구" size="small">
               <StateBoundary
                 state={list.state}
-                reason={list.reason}
+                reason={list.reason} status={list.status}
                 onRetry={list.reload}
                 emptyText="접수된 청구가 없습니다."
               >

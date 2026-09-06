@@ -1,0 +1,96 @@
+{
+  "measured_at": "2026-09-06T10:58:57+00:00",
+  "environment": "development",
+  "retention_days": 365,
+  "journal_dir": "/backup/audit_purge_journal",
+  "total_before": 22475,
+  "expired_rows_not_mine": 0,
+  "cutoff": "2025-09-06T10:58:57.085604+00:00",
+  "probe_pks": [
+    161096,
+    161099,
+    161100
+  ],
+  "probe_create_datetime": "2025-08-30T10:58:57.085604+00:00",
+  "fingerprint_before": "4b319ba7415480b8fd86cb3c3ca8384ee41eaa89ef29dae0efe10ae84d5f7886",
+  "purge_payload": {
+    "measured_at": "2026-09-06T10:58:57+00:00",
+    "verdict": "OK",
+    "retention_days": 365,
+    "source": "선언 System > security.audit_log_retention_days (U5 설정 화면 · dj-core 가 읽는 자리)",
+    "rows_before": 22480,
+    "rows_after": 22477,
+    "purged": 3,
+    "journal": {
+      "path": "/backup/audit_purge_journal/audit_purge_20260906T105857Z.json",
+      "rows": 3,
+      "sha256": "4b319ba7415480b8fd86cb3c3ca8384ee41eaa89ef29dae0efe10ae84d5f7886",
+      "bytes": 12750,
+      "cutoff": "2025-09-06T10:58:57.190818+00:00",
+      "dir": "/backup/audit_purge_journal",
+      "separate_volume": true,
+      "why": "",
+      "boundary_crossed": 0
+    },
+    "undo": "scripts/ops_audit_purge_undo.py --journal /backup/audit_purge_journal/audit_purge_20260906T105857Z.json --apply",
+    "unjournaled_deletes": 0
+  },
+  "rows_after_purge": 0,
+  "restore": {
+    "in_journal": 3,
+    "restored": 3,
+    "would_restore": 3,
+    "already_present": 0,
+    "dry_run": false,
+    "sha256_check": {
+      "ok": true,
+      "actual": "4b319ba7415480b8fd86cb3c3ca8384ee41eaa89ef29dae0efe10ae84d5f7886",
+      "expected": "4b319ba7415480b8fd86cb3c3ca8384ee41eaa89ef29dae0efe10ae84d5f7886",
+      "why": ""
+    }
+  },
+  "rows_after_restore": 3,
+  "fingerprint_after": "4b319ba7415480b8fd86cb3c3ca8384ee41eaa89ef29dae0efe10ae84d5f7886",
+  "cleanup_deleted": [
+    3,
+    {
+      "logger.AuditLogs": 3
+    }
+  ],
+  "probe_rows_left": 0,
+  "total_after": 22477,
+  "total_drift_others": 2,
+  "verdicts": [
+    {
+      "name": "① 파기가 돌았는가",
+      "ok": true,
+      "why": "판정 'OK' · "
+    },
+    {
+      "name": "② 저널이 떴는가",
+      "ok": true,
+      "why": "저널 /backup/audit_purge_journal/audit_purge_20260906T105857Z.json"
+    },
+    {
+      "name": "③ 행이 정말 없어졌는가",
+      "ok": true,
+      "why": "심은 3행 중 남은 0행"
+    },
+    {
+      "name": "④ 행이 돌아왔는가",
+      "ok": true,
+      "why": "3/3행"
+    },
+    {
+      "name": "⑤ **같은 행인가** (직렬화 지문 sha256)",
+      "ok": true,
+      "why": "지문이 같다"
+    },
+    {
+      "name": "⑥ 심은 표본이 표에서 사라졌는가",
+      "ok": true,
+      "why": "남은 표본 0행 · 표 총량 22,475 → 22,477 (+2 — 이 사이 다른 차선이 쓴 줄이다. 판정이 아니라 관찰이다)"
+    }
+  ],
+  "verdict": "OK"
+}

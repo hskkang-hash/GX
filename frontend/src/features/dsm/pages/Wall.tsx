@@ -48,7 +48,12 @@ import {
   tierOf,
 } from '../time';
 import type { FocusQueue as FocusQueueView, QueueCard } from '../types';
-import { hasWallToken, wallGet } from '../wallToken';
+import {
+  hasWallToken,
+  wallGet,
+  WALL_TOKEN_LEGACY_QUERY_NOTICE,
+  wallTokenLegacyQuery,
+} from '../wallToken';
 
 /** 20초. 대형 화면은 사람이 손대지 않으므로 **주기가 유일한 생명줄**이다. */
 const REFRESH_MS = 20_000;
@@ -195,6 +200,11 @@ export default function Wall() {
    *   가른다 — 화면 안에서 섞이지 않는다.
    */
   const wallMode = useMemo(() => hasWallToken(), []);
+  /**
+   * ★ [P-78 ④ · 턴 H] 옛 주소(`?token=`)로 들어왔는가.
+   *   조용히 무시하면 대형 화면이 로그인 화면을 띄운 채 밤을 샌다.
+   */
+  const legacyQuery = useMemo(() => wallTokenLegacyQuery(), []);
 
   const fetchQueue = useCallback(
     () =>
@@ -284,6 +294,22 @@ export default function Wall() {
           </span>
         </div>
       </header>
+
+      {legacyQuery && !wallMode ? (
+        <div
+          style={{
+            fontSize: 32,
+            color: '#ffd666',
+            border: '1px solid #7a5b00',
+            background: '#241d05',
+            borderRadius: 8,
+            padding: 16,
+            marginBottom: 16,
+          }}
+        >
+          {WALL_TOKEN_LEGACY_QUERY_NOTICE}
+        </div>
+      ) : null}
 
       {noRight ? (
         <div

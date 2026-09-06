@@ -22,6 +22,7 @@ import { Alert, Button, Card, Descriptions, Form, Input, Space, Table, Typograph
 import { useCallback, useMemo, useState } from 'react';
 
 import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
+import { userFacingError } from '../copy';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 
@@ -109,7 +110,7 @@ export default function CameraAddress() {
         }
       } catch (err) {
         // 400·403 을 한 낱말로 묶지 않는다 — 무엇을 고쳐 다시 보낼지 화면이 말해야 한다.
-        setError(err instanceof Error ? err.message : String(err));
+        setError(userFacingError('CameraAddress', err, '요청이 실패했습니다.'));
       } finally {
         setBusy(false);
       }
@@ -127,7 +128,7 @@ export default function CameraAddress() {
         </Title>
 
         {/* 분모를 함께 낸다 — 「3대」만 보면 4 중 3인지 400 중 3인지 모른다. */}
-        <StateBoundary state={gap.state} reason={gap.reason} onRetry={gap.reload}>
+        <StateBoundary state={gap.state} reason={gap.reason} status={gap.status} onRetry={gap.reload}>
           <Card size="small">
             <Descriptions size="small" column={3}>
               <Descriptions.Item label="카메라">

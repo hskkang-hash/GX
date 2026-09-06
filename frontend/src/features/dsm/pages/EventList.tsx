@@ -262,7 +262,7 @@ export default function EventList() {
         <Card size="small" title={`요약 한 줄 · 지난 ${RECENT_HOURS}시간`}>
           <StateBoundary
             state={summary.state}
-            reason={summary.reason}
+            reason={summary.reason} status={summary.status}
             onRetry={summary.reload}
           >
             {summary.data && (
@@ -365,7 +365,7 @@ export default function EventList() {
             판정하는 쪽이 둘이면 한쪽은 반드시 틀린다. */}
         {active.key === 'system' && (
           <Card size="small" title="연계 상태 (지금 이 순간)">
-            <StateBoundary state={link.state} reason={link.reason} onRetry={link.reload}>
+            <StateBoundary state={link.state} reason={link.reason} status={link.status} onRetry={link.reload}>
               {link.data && (
                 <Space direction="vertical">
                   <Space size="small">
@@ -388,7 +388,7 @@ export default function EventList() {
 
         <StateBoundary
             state={events.state}
-            reason={events.reason}
+            reason={events.reason} status={events.status}
             onRetry={events.reload}
             emptyText="조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)"
           >

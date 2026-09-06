@@ -177,7 +177,7 @@ export default function Metering() {
 
         <StateBoundary
           state={usage.state}
-          reason={usage.reason}
+          reason={usage.reason} status={usage.status}
           onRetry={usage.reload}
         >
           <>
@@ -241,7 +241,7 @@ export default function Metering() {
 
         <StateBoundary
           state={series.state}
-          reason={series.reason}
+          reason={series.reason} status={series.status}
           onRetry={series.reload}
         >
           <Card size="small" title="달별 사용량">

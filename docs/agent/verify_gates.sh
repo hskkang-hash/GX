@@ -914,9 +914,11 @@ gate_ui_copy() {
   # ★ **출생 표본** (D-310) — `verify_ui_copy.py::BIRTH_SAMPLES` 셋이 그날 화면의
   #   제목과 문단 그대로다: 「UX-17 …」 · 「`response_state=occurred` 로 걸러 준 …」 ·
   #   「data_source = live」. 셋 중 하나라도 못 잡으면 자기시험이 빨개진다.
+  #   ★ **출생 표본 ②** (P-77) — `BIRTH_JSX` 둘은 낡은 정규식 파서가 통째로 못 보던
+  #   JSX 본문이다(보간이 낀 자리). 파서가 다시 눈이 멀면 여기서 빨개진다.
   local out rc nfiles
   if out=$($PY scripts/verify_ui_copy.py --self-test 2>&1); then
-    pass "판정기 자기시험 통과 (양성 3 — 그날 화면의 제목·문단 그대로)"
+    pass "판정기 자기시험 통과 (양성 3 문구 + 2 JSX 파서 — 그날 화면 그대로)"
   else
     fail "판정기 자기시험 실패 — 이 게이트는 눈이 멀었다"
     echo "$out" | sed 's/^/        /'
@@ -927,10 +929,18 @@ gate_ui_copy() {
   nfiles=$(echo "$out" | grep -o "\[입력\] [0-9]*개 화면 파일" | tr -dc "0-9")
   inputs "${nfiles:-0}" "화면 파일의 사용자 본문 (문자열 몸통·JSX 본문)"     "화면 파일을 한 개도 못 읽었다" || return 1
 
-  echo "$out" | grep -E "^\[COPY\] 잔여" | sed 's/^/        /'
+  # ★ [P-77 · 2026-09-06 · 턴 H] **첫 줄이 본 비율이다.** 커버리지를 모르는 게이트는
+  #   판정한 것이 아니다 — 화면 글자의 42%를 못 보던 그날의 파서도 「잔여 0 · 통과」였다.
+  echo "$out" | grep -E "^\[COPY\] (\*\*본 비율|잔여)" | sed 's/^/        /'
   case $rc in
     0) pass "$(echo "$out" | tail -1)"; return 0 ;;
-    2) skip "기준선이 없다" "(python scripts/verify_ui_copy.py --freeze)"; return 0 ;;
+    2) if echo "$out" | grep -q "본 비율.*기준.*아래"; then
+         skip "본 비율이 기준 아래다 — 파서가 화면 글자의 일부를 못 본다" \
+              "(못 본 자리에서 나온 「잔여 0」은 사실이 아니다 · P-77)"
+       else
+         skip "기준선이 없다" "(python scripts/verify_ui_copy.py --freeze)"
+       fi
+       return 0 ;;
     *) fail "새로 생긴 대장 언어가 있다 — 사전에 없는 문구는 만들지 않는다"
        echo "$out" | sed 's/^/        /'; return 1 ;;
   esac
