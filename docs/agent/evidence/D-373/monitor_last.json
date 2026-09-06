@@ -1,18 +1,18 @@
 {
-  "measured_at": "2026-09-06T11:56:59+00:00",
+  "measured_at": "2026-09-06T12:11:59+00:00",
   "verdict": "ALARM",
   "report": {
-    "measured_at": "2026-09-06T11:56:59+00:00",
+    "measured_at": "2026-09-06T12:11:59+00:00",
     "signals": {
       "db_ping_ms": {
-        "value": 7.94,
+        "value": 8.26,
         "verdict": "OK",
         "note": ""
       },
       "cache_alive": {
         "value": true,
         "verdict": "OK",
-        "note": "왕복 1.6ms"
+        "note": "왕복 1.7ms"
       },
       "object_store_alive": {
         "value": true,
@@ -20,7 +20,7 @@
         "note": "저장소가 답했다 · 버킷 guardianx-dev 있음"
       },
       "latest_event_age_min": {
-        "value": 4242.5,
+        "value": 4257.5,
         "verdict": "ALARM",
         "note": ""
       },
@@ -40,9 +40,9 @@
         "note": "밀린 것이 0건 — 지연 없음 [실측]"
       },
       "audit_write_rate_per_min": {
-        "value": 8.9,
+        "value": 22.8,
         "verdict": "OK",
-        "note": "최근 10분간 `logger_auditlogs` 에 들어온 행/분 [실측] · 마지막 쓰기 2026-09-06T11:52:10+00:00 (임계 없음 — **세어 두는 수**다. 조용한 밤에 0인 것은 장애가 아니다)"
+        "note": "최근 10분간 `logger_auditlogs` 에 들어온 행/분 [실측] · 마지막 쓰기 2026-09-06T12:11:58+00:00 (임계 없음 — **세어 두는 수**다. 조용한 밤에 0인 것은 장애가 아니다)"
       },
       "db_size_gb": {
         "value": 0.134,

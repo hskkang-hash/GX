@@ -1,0 +1,166 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "web": "http://localhost:3010",
+  "api": "http://localhost:8010",
+  "when": "2026-09-06T12:11:27",
+  "names_from_perf_load": {
+    "S1": "목록 — 관제요원이 가장 자주 여는 자리",
+    "S2": "대시보드 — 첫 화면 한 벌",
+    "S3": "단일 초점 — 가장 급한 하나"
+  },
+  "walks": {
+    "S1": {
+      "clicks": 2,
+      "ms": 17789,
+      "steps": [
+        {
+          "n": 1,
+          "what": "주소 /dsm/events",
+          "ok": true,
+          "ms": 6636,
+          "settle_ms": 5000,
+          "net_ms": 1636
+        },
+        {
+          "n": 2,
+          "what": "button 「미처리」 누름",
+          "ok": true,
+          "ms": 5054,
+          "settle_ms": 5000,
+          "net_ms": 54
+        },
+        {
+          "n": 3,
+          "what": "표 1번째 줄 누름",
+          "ok": true,
+          "ms": 6099,
+          "settle_ms": 6000,
+          "net_ms": 99
+        }
+      ],
+      "completed": true,
+      "failed_at": null,
+      "net_ms": 1789
+    },
+    "S2": {
+      "clicks": 1,
+      "ms": 11583,
+      "steps": [
+        {
+          "n": 1,
+          "what": "주소 /dsm/dashboard",
+          "ok": true,
+          "ms": 6521,
+          "settle_ms": 5000,
+          "net_ms": 1521
+        },
+        {
+          "n": 2,
+          "what": "글자 「전체 목록」 누름",
+          "ok": true,
+          "ms": 5062,
+          "settle_ms": 5000,
+          "net_ms": 62
+        }
+      ],
+      "completed": true,
+      "failed_at": null,
+      "net_ms": 1583
+    },
+    "S3": {
+      "clicks": 1,
+      "ms": 11720,
+      "steps": [
+        {
+          "n": 1,
+          "what": "주소 /dsm/queue",
+          "ok": true,
+          "ms": 6687,
+          "settle_ms": 5000,
+          "net_ms": 1687
+        },
+        {
+          "n": 2,
+          "what": "button 「상세 열기」 누름",
+          "ok": true,
+          "ms": 5033,
+          "settle_ms": 5000,
+          "net_ms": 33
+        }
+      ],
+      "completed": true,
+      "failed_at": null,
+      "net_ms": 1720
+    }
+  },
+  "console_errors": {
+    "login": [
+      "console.error: Failed to load resource: the server responded with a status of 404 (File not found) ← http://localhost:3010/Inter/Inter-VariableFont_opsz,wght.ttf",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: New order notification WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: 🚨 Partner callback WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: 🚨 Partner callback WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: 🚨 Partner callback WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js"
+    ],
+    "S1": [
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: New order notification WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: Failed to load resource: the server responded with a status of 404 (File not found) ← http://localhost:3010/Inter/Inter-VariableFont_opsz,wght.ttf",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: 🚨 Partner callback WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) ← http://localhost:8010/api/user-groups/gen-schema?raw=false",
+      "console.error: WebSocket connection to 'ws://localhost:8010/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/useDetectionPing-CZkFj9Sx.js",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: 🚨 Partner callback WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: 🚨 Partner callback WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: 🚨 Partner callback WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js"
+    ],
+    "S2": [
+      "console.error: Failed to load resource: the server responded with a status of 404 (File not found) ← http://localhost:3010/Inter/Inter-VariableFont_opsz,wght.ttf",
+      "console.error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) ← http://localhost:8010/api/user-groups/gen-schema?raw=false",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: New order notification WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: WebSocket connection to 'ws://localhost:8010/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/useDetectionPing-CZkFj9Sx.js",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: 🚨 Partner callback WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: 🚨 Partner callback WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: WebSocket connection to 'ws://localhost:8010/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/useDetectionPing-CZkFj9Sx.js"
+    ],
+    "S3": [
+      "console.error: Failed to load resource: the server responded with a status of 404 (File not found) ← http://localhost:3010/Inter/Inter-VariableFont_opsz,wght.ttf",
+      "console.error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) ← http://localhost:8010/api/user-groups/gen-schema?raw=false",
+      "console.error: WebSocket connection to 'ws://localhost:8010/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/useDetectionPing-CZkFj9Sx.js",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: 🚨 Partner callback WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: New order notification WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404 ← http://localhost:3010/assets/index-GXx2Nv43.js",
+      "console.error: 🚨 Partner callback WebSocket error: Event ← http://localhost:3010/assets/index-GXx2Nv43.js"
+    ]
+  },
+  "session_closed": true,
+  "not_walked": {
+    "S4": "부하용 혼합 시나리오 — 동시 호출이라 사람의 걸음으로 환산되지 않는다"
+  },
+  "api_failures": {
+    "S1": [
+      "422 GET http://localhost:8010/api/user-groups/gen-schema?raw=false"
+    ],
+    "S2": [
+      "422 GET http://localhost:8010/api/user-groups/gen-schema?raw=false"
+    ],
+    "S3": [
+      "422 GET http://localhost:8010/api/user-groups/gen-schema?raw=false"
+    ]
+  },
+  "session_lost": false
+}
