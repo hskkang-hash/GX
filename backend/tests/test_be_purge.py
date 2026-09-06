@@ -32,6 +32,7 @@ from django.apps import apps
 from django.test import override_settings
 from django.utils import timezone
 
+from apps.dsm.legal_notice import RETENTION_SETTING_NAMES
 from tests.test_dsm_app import DsmFixture
 
 #: ★ D-289 — 표본은 저장소 실물이다. 합성 더미를 지우지 않는다.
@@ -68,8 +69,16 @@ class PurgeFixture(DsmFixture):
 
     #: 테넌트 A 만 30일을 선언한 상태. B 는 **선언하지 않았다.**
     def declared_a_only(self):
+        """A 만 선언하고 **B 는 미선언으로 둔다.**
+
+        ★ 2026-09-06 · P-67 — 전역 선언(`VIDEO_RETENTION_DAYS`)도 **함께 꺼야** 한다.
+          개발 환경은 `config/retention_seed.py` 가 전역 30일을 선언하므로, 테넌트 표만
+          비우면 B 도 전역 선언으로 **파기 대상이 되고** 「미선언 테넌트」라는 표본이
+          이 시험에서 사라진다. 그러면 이 파일의 절반이 조용히 뜻을 잃는다.
+        """
+        blank = {name: None for name in RETENTION_SETTING_NAMES}
         return override_settings(
-            VIDEO_RETENTION_DAYS_BY_TENANT={self.group_a.pk: 30})
+            VIDEO_RETENTION_DAYS_BY_TENANT={self.group_a.pk: 30}, **blank)
 
 
 class TheDeleteIsRealTest(PurgeFixture):
@@ -149,19 +158,30 @@ class DeclarationComesFirstTest(PurgeFixture):
                         "★ 선언하지 않은 테넌트의 영상을 지웠다 — 우리가 남의 자료를 "
                         "버린 것이다")
 
-    def test_the_product_default_is_not_a_purge_order(self):
-        """제품 기본값 30일이 있어도 **선언이 없으면 파기하지 않는다.**
+    def test_there_is_no_product_default_to_purge_by(self):
+        """**제품 기본값이 아예 없다** — 선언이 없으면 수가 나오지 않는다 (P-67).
 
-        `retention_days()` 는 언제나 30을 낸다(안내판에는 그것이 옳다).
-        `declared_retention_days()` 는 `None` 을 내야 한다 — 두 함수가 같은 값을
-        내기 시작하면 「선언이 먼저다」가 사라진다.
+        ★ 이 시험은 2026-09-06 에 **뜻이 뒤집혔다. 지우지 않고 남긴다.**
+          예전 이름은 `test_the_product_default_is_not_a_purge_order` 였고,
+          「`retention_days()` 는 언제나 30을 낸다(안내판에는 그것이 옳다) ·
+          `declared_retention_days()` 만 None 을 낸다」를 지켰다.
+          세종 판정 P-67 이 그 30을 지웠다: 안내판에 빈 칸을 게시하는 것이,
+          아무도 정하지 않은 수를 게시하는 것보다 낫다. 지금은 **둘 다 None** 이고,
+          그래서 안내판이 「미선언」을 그대로 보인다.
         """
-        from apps.dsm.retention import (DEFAULT_RETENTION_DAYS,
-                                        declared_retention_days, retention_days)
+        from apps.dsm.retention import (declared_retention_days, policy,
+                                        retention_days)
 
-        with override_settings(VIDEO_RETENTION_DAYS_BY_TENANT={}):
-            self.assertEqual(retention_days(), DEFAULT_RETENTION_DAYS)
+        blank = {name: None for name in RETENTION_SETTING_NAMES}
+        with override_settings(VIDEO_RETENTION_DAYS_BY_TENANT={}, **blank):
+            self.assertIsNone(retention_days(),
+                              "코드 기본값이 되살아났다 — P-67 이 지운 자리다")
             self.assertIsNone(declared_retention_days(self.group_a.pk))
+            board = policy()
+            self.assertFalse(board["declared"])
+            self.assertIsNone(board["retention_days"])
+            self.assertFalse(board["enforced"],
+                             "선언이 없는데 「자동으로 지워집니다」가 참이다")
 
     def test_declared_tenants_lists_only_the_declared(self):
         from apps.dsm.retention import declared_tenants
@@ -173,11 +193,21 @@ class DeclarationComesFirstTest(PurgeFixture):
                          "선언하지 않은 테넌트가 파기 대상 목록에 올랐다")
 
     def test_a_zero_declaration_is_not_a_declaration(self):
-        """0일 선언은 「즉시 파기」다 — **선언으로 세지 않는다.**"""
+        """0일 선언은 「즉시 파기」다 — **선언으로 세지 않는다.**
+
+        ⚠ 전역 선언도 **함께 꺼야** 한다 — `declared_a_only()` 가 적어 둔 것과 같은
+          사유다. 개발 환경은 `config/retention_seed.py` 가 전역 30일을 선언하므로,
+          테넌트 값만 0 으로 두면 이 함수는 전역 30 으로 되돌아간다.
+          [실측 2026-09-06 · 전 시험 1141 중 1건] `AssertionError: 30 is not None` —
+          **그 30 은 결함이 아니라 이 시험이 자기 표본을 안 세운 것**이었다.
+          그러면 이 시험은 「0은 선언이 아니다」가 아니라 **「이 환경에 전역 선언이
+          있는가」**를 재게 된다.
+        """
         from apps.dsm.retention import declared_retention_days
 
-        with override_settings(VIDEO_RETENTION_DAYS_BY_TENANT={
-                self.group_a.pk: 0}):
+        blank = {name: None for name in RETENTION_SETTING_NAMES}
+        with override_settings(
+                VIDEO_RETENTION_DAYS_BY_TENANT={self.group_a.pk: 0}, **blank):
             self.assertIsNone(declared_retention_days(self.group_a.pk))
 
     def test_the_periodic_run_only_touches_declared_tenants(self):

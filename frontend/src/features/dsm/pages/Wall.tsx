@@ -25,11 +25,11 @@
  *   있고, 여기서 고칠 수 있는 자리가 아니다. 이 화면이 할 수 있는 일은 세션이 끊겼을
  *   때 **그 사실을 크게 말하는 것**뿐이고, 그것은 아래 권한 갈래가 한다.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { dsmEndpoint, dsmGet } from '../api';
-import { useCameraPulse } from '../hooks/useCameraPulse';
+import { CAMERA_PULSE_PATH, useCameraPulse } from '../hooks/useCameraPulse';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { isTypingTarget } from '../hooks/useQueueKeys';
 import {
@@ -48,6 +48,7 @@ import {
   tierOf,
 } from '../time';
 import type { FocusQueue as FocusQueueView, QueueCard } from '../types';
+import { hasWallToken, wallGet } from '../wallToken';
 
 /** 20초. 대형 화면은 사람이 손대지 않으므로 **주기가 유일한 생명줄**이다. */
 const REFRESH_MS = 20_000;
@@ -117,7 +118,7 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
  * ⚠ 이것은 실제 지도가 아니라 **좌표의 상대 위치**다. 배경 지도가 필요하면
  *   조율자가 열쇠와 함께 배선한다.
  * ═══════════════════════════════════════════════════════════════════════════ */
-function Scatter({ cards }: { cards: QueueCard[] }) {
+function Scatter({ cards, broken }: { cards: QueueCard[]; broken: boolean }) {
   const points = cards
     .map((c) => ({ card: c, lat: c.lat, lng: c.lng }))
     .filter((p): p is { card: QueueCard; lat: number; lng: number } =>
@@ -126,7 +127,16 @@ function Scatter({ cards }: { cards: QueueCard[] }) {
     );
 
   if (points.length === 0) {
-    return <div style={DIM_LINE}>지도에 표시할 위치가 없습니다.</div>;
+    // ★ **못 가져온 것과 없는 것은 다른 사실이다.** 큐가 실패한 채로 「위치가
+    //   없습니다」라고 적으면 그 문장은 「평온하다」로 읽힌다 — 이 화면이 가장
+    //   피해야 할 모양이고, 이 파일의 머리말이 처음부터 그것을 적어 두었다.
+    return (
+      <div style={DIM_LINE}>
+        {broken
+          ? '지도에 표시할 위치를 불러오지 못했습니다.'
+          : '지도에 표시할 위치가 없습니다.'}
+      </div>
+    );
   }
 
   const lats = points.map((p) => p.lat);
@@ -173,12 +183,38 @@ function Scatter({ cards }: { cards: QueueCard[] }) {
 export default function Wall() {
   const [now, setNow] = useState(() => Date.now());
 
-  const queue = useDsmResource<FocusQueueView>(
-    () => dsmGet(dsmEndpoint.eventsQueue, { limit: 200 }),
-    [],
-    { refreshMs: REFRESH_MS },
+  /*
+   * ★ 이 화면은 **두 가지 방법으로 열린다** (P-74 · 턴 G).
+   *
+   *   ㉠ 월 표시 토큰 — 세션을 세우지 않는다. 그래서 이 화면을 켜도 관제요원의
+   *      자리 화면이 죽지 않는다. 이 제품은 동시 접속이 하나이고, 그것은 설정이
+   *      아니라 자료구조라 여기서 고칠 수 있는 자리가 아니다.
+   *   ㉡ 로그인 세션 — 종전 그대로. 자리에 앉은 사람이 이 화면을 잠깐 볼 때다.
+   *
+   * ⚠ 두 자격증명을 **함께** 실으면 서버가 거절한다. 그래서 갈래를 부르는 자리에서
+   *   가른다 — 화면 안에서 섞이지 않는다.
+   */
+  const wallMode = useMemo(() => hasWallToken(), []);
+
+  const fetchQueue = useCallback(
+    () =>
+      wallMode
+        ? wallGet<FocusQueueView>(dsmEndpoint.eventsQueue, { limit: 200 })
+        : dsmGet<FocusQueueView>(dsmEndpoint.eventsQueue, { limit: 200 }),
+    [wallMode],
   );
-  const pulse = useCameraPulse(REFRESH_MS);
+  const fetchPulse = useCallback(
+    () =>
+      wallMode
+        ? wallGet<unknown>(CAMERA_PULSE_PATH)
+        : dsmGet<unknown>(CAMERA_PULSE_PATH),
+    [wallMode],
+  );
+
+  const queue = useDsmResource<FocusQueueView>(fetchQueue, [fetchQueue], {
+    refreshMs: REFRESH_MS,
+  });
+  const pulse = useCameraPulse(REFRESH_MS, fetchPulse);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
@@ -210,6 +246,8 @@ export default function Wall() {
 
   const stale = queue.state === 'error';
   const noRight = queue.state === 'forbidden';
+  /** 큐를 **못 가져왔다**. 「0건」과 절대 같은 그림이 되면 안 되는 상태다. */
+  const queueBroken = stale || noRight;
   const shown = cards.slice(0, QUEUE_ROWS);
   const hidden = Math.max(cards.length - shown.length, 0);
 
@@ -232,6 +270,12 @@ export default function Wall() {
       >
         <div style={{ fontSize: 40, fontWeight: 800 }}>월 모드</div>
         <div style={{ fontSize: 28, color: DIM, textAlign: 'right' }}>
+          {/*
+            ★ 이 화면이 **무엇으로 열렸는지**를 화면이 스스로 말한다. 두 방법은
+              겉이 똑같고, 그래서 「자리 화면이 왜 죽었나」를 나중에 아무도 못 가린다.
+          */}
+          <span>{wallMode ? '월 표시 토큰으로 열림' : '로그인 세션으로 열림'}</span>
+          <span> · </span>
           <span>자동 갱신 중</span>
           <span> · </span>
           <span>
@@ -253,7 +297,9 @@ export default function Wall() {
             marginBottom: 16,
           }}
         >
-          이 항목에 대한 권한이 없습니다. 다시 로그인해 주십시오.
+          {wallMode
+            ? '월 표시 토큰이 만료되었거나 회수되었습니다. 관리자에게 새 토큰을 받으십시오.'
+            : '이 항목에 대한 권한이 없습니다. 다시 로그인해 주십시오.'}
         </div>
       ) : null}
 
@@ -282,12 +328,25 @@ export default function Wall() {
         }}
       >
         <Panel title="지도">
-          <Scatter cards={cards} />
+          <Scatter
+            cards={cards}
+            broken={queueBroken && cards.length === 0}
+          />
         </Panel>
 
         <Panel title="지금 처리할 것">
           {queue.state === 'loading' ? <div style={DIM_LINE}>불러오는 중입니다.</div> : null}
-          {queue.state !== 'loading' && cards.length === 0 ? (
+          {/*
+            ★ **여기가 이 화면에서 가장 위험한 두 줄이었다.** 종전 조건은
+              「로딩이 아니고 카드가 0장」이었다. 첫 호출이 실패하면 카드는 0장이고,
+              그래서 화면은 **「평온합니다」**라고 적었다 — 못 가져온 밤에.
+              머리말이 처음부터 금지한 그 모양을 정작 이 칸이 하고 있었다.
+              이제 「0건」은 **가져왔을 때만** 말한다.
+          */}
+          {queueBroken && cards.length === 0 ? (
+            <div style={DIM_LINE}>지금 처리할 것을 불러오지 못했습니다.</div>
+          ) : null}
+          {!queueBroken && queue.state !== 'loading' && cards.length === 0 ? (
             <div style={DIM_LINE}>지금 열려 있는 이벤트가 없습니다 — 평온합니다.</div>
           ) : null}
           {shown.map((card) => {

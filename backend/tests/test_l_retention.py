@@ -81,18 +81,29 @@ class TheNumberIsDeclaredOnceTest(DsmFixture):
 
         0일 보존은 「즉시 삭제」라는 뜻이고, 오타 하나가 그 뜻을 갖게 두면
         되돌릴 수 없는 일이 조용히 일어난다.
+
+        ★ 2026-09-06 · P-67 — **되돌아갈 곳이 바뀌었다.** 예전에는 오타가 제품
+          기본값 30으로 되돌아갔다. 그 기본값이 사라졌으므로 지금은 **미선언**
+          (`None`) 으로 간다. 목적은 그때나 지금이나 같다: 오타가 파기 명령이
+          되지 않게 한다. 달라진 것은 「그래서 며칠 지우나」가 아니라
+          **「그래서 안 지운다」**가 됐다는 것이고, 그쪽이 더 안전한 쪽이다.
         """
         from django.test import override_settings
 
-        from apps.dsm.retention import DEFAULT_RETENTION_DAYS, retention_days
+        from apps.dsm.legal_notice import RETENTION_SETTING_NAMES
+        from apps.dsm.retention import retention_days
 
-        with override_settings(VIDEO_RETENTION_DAYS=0):
-            self.assertEqual(retention_days(), DEFAULT_RETENTION_DAYS)
-        with override_settings(VIDEO_RETENTION_DAYS="이레"):
-            self.assertEqual(retention_days(), DEFAULT_RETENTION_DAYS)
-        with override_settings(VIDEO_RETENTION_DAYS=7):
+        blank = {name: None for name in RETENTION_SETTING_NAMES}
+        with override_settings(**dict(blank, VIDEO_RETENTION_DAYS=0)):
+            self.assertIsNone(retention_days())
+        with override_settings(**dict(blank, VIDEO_RETENTION_DAYS="이레")):
+            self.assertIsNone(retention_days())
+        with override_settings(**dict(blank, VIDEO_RETENTION_DAYS=7)):
             self.assertEqual(retention_days(), 7,
                              "운영자가 정한 값이 이겨야 한다")
+        with override_settings(**blank):
+            self.assertIsNone(retention_days(),
+                              "코드 기본값이 되살아났다 — P-67 이 지운 자리다")
 
 
 class DryRunIsTheDefaultTest(DsmFixture):

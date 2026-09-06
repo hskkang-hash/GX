@@ -1,12 +1,12 @@
 {
-  "measured_at": "2026-09-05T14:32:42+00:00",
+  "measured_at": "2026-09-06T08:48:41+00:00",
   "due": 1,
   "policy_days": 90,
   "overlap_days": 7,
   "keys": [
     {
       "key_id": 44,
-      "prefix": "0fnmpvzd",
+      "prefix": "R7fmncc-",
       "owner": "key_owner_a",
       "age_days": 95,
       "days_left": 364,

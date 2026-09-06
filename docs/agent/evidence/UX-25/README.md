@@ -222,3 +222,24 @@ python manage.py relink_control_role_menus --bundle P-61-U1 --all-tenants
 
 **행은 한 줄도 지우지 않았다.** 지우면 되돌릴 때 id 가 바뀌고, 그 id 를 적어 둔 자리가
 조용히 끊긴다.
+
+---
+
+## 9. 턴 G 이어붙임 — **역할 넷을 실제 로그인으로 찍었다** (2026-09-06 · 차선 C)
+
+턴 F 의 이 문서 §5 는 U5 를 **「링크 표만 — 시드 계정이 없다」**로 적었다. 그 자리를 메웠다.
+
+| 역할 | 사이드바(역할 코드별 최대) | 제품 화면 | 잰 방법 | 화면 |
+|---|---|---|---|---|
+| U1 관제요원 | 5줄 | 5장 | 링크 표 + **실제 로그인** | `shots/sidebar_U1_gxseed_u1_operator.png` |
+| U2 관제팀장 | 21줄 | 7장 | 링크 표 + **실제 로그인** | `shots/sidebar_U2_gxseed_u2_manager.png` |
+| U4 재난안전과 | 26줄 | 2장 | 링크 표 + **실제 로그인** | `shots/sidebar_U4_gxseed_u4_official.png` |
+| **U5 관리자** | **71줄** | **4장** | 링크 표 + **실제 로그인** ← 처음이다 | `shots/sidebar_U5_gxseed_u5_sysop.png` |
+
+- U5 시드 사람 `gxseed_u5_sysop`(역할 `admin`)이 **실제 HTTP 경로**로 생겼다
+  (`POST /api/v1/user/create-user` → 200). `is_superuser=False · is_staff=False`.
+- 「두 눈 대조」가 **3 → 4 역할**로 늘었다. U5 의 70줄은 그전까지 아무도 로그인해서
+  본 적 없는 재현이었다 — 이제 71줄(제품 4)로 **눈으로 재진다.**
+- U5 제품 줄이 3 → 4 가 된 이유: P-61 의 「백업·보존」 자리에 화면이 생겨
+  (`/dsm/system` 「보존·백업 설정」) `P61_NO_SCREEN_YET` 에서 표로 **옮겼다**(§6 갱신).
+- 자세한 것과 촬영 명령: `../P-74/README.md`.

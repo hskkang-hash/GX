@@ -59,4 +59,10 @@ export const dsm2Routes = {
    * ★ 세는 화면이지 만드는 화면이 아니다 — 여기서 아무것도 생성하지 않는다.
    */
   metering: { title: '이번 달 사용량', path: '/dsm/metering' },
+  /**
+   * P-67 보존·백업 선언 — **U5 관리자 자리.** 선언하지 않은 항목에 빨강 배지가 뜨고,
+   * 그 상태에서는 파기도 백업도 돌지 않는다.
+   * ⚠ `/dsm/metering` 과 형제다(변수 조각 없음 — 서로 삼키지 않는다).
+   */
+  systemSettings: { title: '보존·백업 설정', path: '/dsm/system' },
 } as const;

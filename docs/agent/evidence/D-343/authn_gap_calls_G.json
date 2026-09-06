@@ -1,0 +1,241 @@
+{
+  "note": "D-342 · D-343 ① — @path_permission 은 활성인데 auth= 가 없는 자리를 익명으로 때린 결과. 캐시 우회(X-No-Cache) 상태에서 쟀다(D-341).",
+  "measured_at": "",
+  "cache_handling": "우회 — X-No-Cache 헤더 (D-341)",
+  "control_closed": [
+    {
+      "path": "/api/terminals/days-of-week",
+      "status": 401,
+      "effective": 401,
+      "envelope_split": false,
+      "bytes": 26,
+      "verdict": "authn_blocked",
+      "note": ""
+    },
+    {
+      "path": "/api/terminals/terminal-types",
+      "status": 401,
+      "effective": 401,
+      "envelope_split": false,
+      "bytes": 26,
+      "verdict": "authn_blocked",
+      "note": ""
+    },
+    {
+      "path": "/api/dronehw/drone-communication-management/online-drones",
+      "status": 401,
+      "effective": 401,
+      "envelope_split": false,
+      "bytes": 26,
+      "verdict": "authn_blocked",
+      "note": ""
+    }
+  ],
+  "control_ok": true,
+  "totals": {
+    "gap_routes": 23,
+    "with_authz": 13,
+    "without_any_gate": 10,
+    "called_get": 16,
+    "not_called_write": 7,
+    "by_verdict": {
+      "authz_blocked": 9,
+      "authn_blocked": 7
+    },
+    "envelope_split": 9
+  },
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/api/delivery/drone-monitoring/drone-status",
+      "view": "delivery.views.api.DroneMonitoringController.get_drone_status_monitoring",
+      "authz": false,
+      "status": 401,
+      "effective": 401,
+      "envelope_split": false,
+      "bytes": 63,
+      "verdict": "authn_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/etri-mock/test-scenarios",
+      "view": "delivery.views.api.EtriMockController.get_test_scenarios",
+      "authz": false,
+      "status": 401,
+      "effective": 401,
+      "envelope_split": false,
+      "bytes": 63,
+      "verdict": "authn_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/delivery/processing/get-drones-by-package-and-route-optimized",
+      "view": "delivery.views.api.ProcessingController.get_drones_by_package_and_route_optimized",
+      "authz": false,
+      "status": 401,
+      "effective": 401,
+      "envelope_split": false,
+      "bytes": 63,
+      "verdict": "authn_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/orders/banks",
+      "view": "orders.views.order_views.BankAPI.get_banks",
+      "authz": false,
+      "status": 401,
+      "effective": 401,
+      "envelope_split": false,
+      "bytes": 63,
+      "verdict": "authn_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/orders/delivery-option",
+      "view": "orders.views.order_views.DeliveryOptionAPI.get_delivery_options",
+      "authz": false,
+      "status": 401,
+      "effective": 401,
+      "envelope_split": false,
+      "bytes": 63,
+      "verdict": "authn_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/orders/item-types",
+      "view": "orders.views.item_views.ItemTypesAPI.get_item_types",
+      "authz": false,
+      "status": 401,
+      "effective": 401,
+      "envelope_split": false,
+      "bytes": 63,
+      "verdict": "authn_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/orders/payment-methods",
+      "view": "orders.views.payment_views.PaymentMethodsAPI.get_payment_methods",
+      "authz": false,
+      "status": 401,
+      "effective": 401,
+      "envelope_split": false,
+      "bytes": 63,
+      "verdict": "authn_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/terminals/delivery-hubs",
+      "view": "terminals.views.terminal_views.DeliveryHubController.list_delivery_hubs",
+      "authz": true,
+      "status": 200,
+      "effective": 403,
+      "envelope_split": true,
+      "bytes": 328,
+      "verdict": "authz_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/terminals/delivery-hubs/{id}",
+      "view": "terminals.views.terminal_views.DeliveryHubController.get_delivery_hub",
+      "authz": true,
+      "status": 200,
+      "effective": 403,
+      "envelope_split": true,
+      "bytes": 328,
+      "verdict": "authz_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/terminals/docking-stations",
+      "view": "terminals.views.terminal_views.DockingStationController.list_docking_stations",
+      "authz": true,
+      "status": 200,
+      "effective": 403,
+      "envelope_split": true,
+      "bytes": 328,
+      "verdict": "authz_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/terminals/docking-stations/{id}",
+      "view": "terminals.views.terminal_views.DockingStationController.get_docking_station",
+      "authz": true,
+      "status": 200,
+      "effective": 403,
+      "envelope_split": true,
+      "bytes": 328,
+      "verdict": "authz_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/terminals/infrastructures",
+      "view": "terminals.views.terminal_views.InfrastructureController.list_infrastructures",
+      "authz": true,
+      "status": 200,
+      "effective": 403,
+      "envelope_split": true,
+      "bytes": 328,
+      "verdict": "authz_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/terminals/infrastructures/{id}",
+      "view": "terminals.views.terminal_views.InfrastructureController.get_infrastructure",
+      "authz": true,
+      "status": 200,
+      "effective": 403,
+      "envelope_split": true,
+      "bytes": 328,
+      "verdict": "authz_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/terminals/terminals",
+      "view": "terminals.views.terminal_views.TerminalsController.list_terminals",
+      "authz": true,
+      "status": 200,
+      "effective": 403,
+      "envelope_split": true,
+      "bytes": 328,
+      "verdict": "authz_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/terminals/terminals/{id}",
+      "view": "terminals.views.terminal_views.TerminalsController.get_terminal",
+      "authz": true,
+      "status": 200,
+      "effective": 403,
+      "envelope_split": true,
+      "bytes": 328,
+      "verdict": "authz_blocked",
+      "note": ""
+    },
+    {
+      "method": "GET",
+      "path": "/api/terminals/terminals/{id}/operating-times",
+      "view": "terminals.views.terminal_views.TerminalsController.get_terminal_operating_times",
+      "authz": true,
+      "status": 200,
+      "effective": 403,
+      "envelope_split": true,
+      "bytes": 328,
+      "verdict": "authz_blocked",
+      "note": ""
+    }
+  ]
+}

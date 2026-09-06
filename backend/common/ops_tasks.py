@@ -94,6 +94,32 @@ def backup_schedule_enabled() -> bool:
     return bool(getattr(settings, "OPS_BACKUP_SCHEDULE_ENABLED", False))
 
 
+def backup_dir_is_separate_volume(out_dir: str):
+    """보관처가 **정말 다른 볼륨인가.** 못 재면 `None` 이고, 그것은 참이 아니다.
+
+    ★ 왜 이 검사가 필요한가 (OPS-12a · P-67 「목적지 별도 볼륨 `/backup`」)
+      선언은 `/backup` 이라고 적을 수 있다. 그런데 그 경로가 **볼륨으로 안 붙어
+      있으면** `mkdir` 이 컨테이너 루트 파일시스템에 평범한 폴더를 만들고, 백업은
+      거기 떨어진다 — 컨테이너를 다시 만드는 순간 사라지고, 그 전까지는
+      **「파일이 생겼다」가 초록으로 보인다.** 그것이 이 절의 착시다.
+
+      리눅스에서 마운트 경계는 `st_dev` 로 드러난다. 루트와 장치 번호가 같으면
+      그 경로는 **붙은 볼륨이 아니다.**
+
+    Returns:
+        참(다른 장치) · 거짓(루트와 같은 장치) · `None`(못 쟀다).
+    """
+    try:
+        target = Path(out_dir)
+        probe = target if target.exists() else target.parent
+        if not probe.exists():
+            return None
+        return os.stat(str(probe)).st_dev != os.stat("/").st_dev
+    except OSError as exc:                         # noqa: BLE001
+        logger.warning("[OPS][BACKUP] 보관처가 별도 볼륨인지 못 쟀다: %s", exc)
+        return None
+
+
 def ops_status() -> dict:
     """감시·백업 주기의 **지금 상태**. 「켰다고 적는 것」과 「켜진 것」을 가른다 (D-284)."""
     return {
@@ -221,10 +247,28 @@ def ops_backup_beat() -> dict:
 
     out_dir = getattr(settings, "OPS_BACKUP_DIR", "") or ""
     if not out_dir:
-        payload = {"measured_at": stamp, "verdict": "UNKNOWN",
-                   "reason": ("백업 주기는 켜졌는데 `OPS_BACKUP_DIR` 이 비었다 — "
+        payload = {"measured_at": stamp, "verdict": "SKIPPED_UNDECLARED",
+                   "reason": ("백업 목적지가 **선언되지 않았다**(`OPS_BACKUP_DIR`) — "
                               "**어디에 뜰지 모르는 백업은 백업이 아니다.** "
-                              "기본 경로를 지어내지 않는다 (D-280)")}
+                              "기본 경로를 지어내지 않는다 (D-280 · P-67). "
+                              "선언 자리: U5 설정 화면 · 개발·스테이징은 "
+                              "config/retention_seed.py")}
+        logger.error("[OPS][BACKUP] %s", payload["reason"])
+        _write_evidence("backup_last", payload)
+        return payload
+
+    #: ★ 「같은 디스크는 백업이 아니다」 — 선언이 `/backup` 이어도 **붙어 있어야** 한다.
+    separate = backup_dir_is_separate_volume(out_dir)
+    if separate is not True:
+        payload = {"measured_at": stamp, "verdict": "UNKNOWN",
+                   "out_dir": out_dir, "separate_volume": separate,
+                   "reason": (f"보관처 {out_dir!r} 가 **별도 볼륨으로 안 붙어 있다**"
+                              if separate is False else
+                              f"보관처 {out_dir!r} 가 별도 볼륨인지 **못 쟀다**")
+                             + " — 여기에 뜨면 컨테이너와 함께 사라지고, 그 전까지 "
+                               "「파일이 생겼다」가 초록으로 보인다. 붙이는 법은 "
+                               "docker-compose 의 볼륨 선언(OPS_BACKUP_VOLUME)이고, "
+                               "그것은 컨테이너 재생성이 필요하다"}
         logger.error("[OPS][BACKUP] %s", payload["reason"])
         _write_evidence("backup_last", payload)
         return payload
@@ -259,6 +303,194 @@ def ops_backup_beat() -> dict:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# 운영 자동화 ②b — **복구 시험이 주 1회 저절로 돈다** (P-67 · OPS-19 · 2026-09-06)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+#     **복구를 해 보지 않은 백업은 백업이 아니다** (D-354 ①).
+#
+# 그 문장은 2026-08-29 부터 이 저장소에 있었고, 복구를 **사람이 한 번** 해 본
+# 기록도 있다(`docs/agent/evidence/D-354/restore_run.md`). 없던 것은 둘이다:
+#     ㉠ **주기** — 손으로 하는 복구 시험은 바쁜 달에 안 한다.
+#     ㉡ **RTO** — 「살아났다」만 있고 **몇 분 걸렸는지가 없었다.** SLA 초안
+#        (GX-LAW-05)이 약속하려는 것은 「살아난다」가 아니라 **「30분 안에」**다.
+#        재지 않은 수를 약속하면 그것은 종이다.
+#
+# ★ 왜 `ops_backup_beat` 이 복구까지 하지 않는가 — 그 파일이 이미 답했다:
+#   「복구는 사람이 확인하는 일이고, 자동 복구는 운영 DB 를 건드리는 일이다.」
+#   그 판단은 유효하다. 그래서 이 태스크도 **운영 DB 를 건드리지 않는다** —
+#   `restore_check_` 로 시작하는 임시 DB 에 되살리고 지운다.
+#
+# ⚠ **이 환경에서는 회색이 나온다. 그 사실을 덮지 않는다** [실측 2026-09-06]:
+#   앱 컨테이너의 `pg_restore` 는 17.7 이고 DB 서버는 18.1 이다. 낮은 판의
+#   클라이언트는 높은 판의 덤프를 읽지 못한다 — `ops_backup.py` 머리말이 적어 둔
+#   바로 그 사고다. 그래서 이 태스크는 판을 **먼저 재고**, 안 맞으면 exit 2 에
+#   해당하는 `UNKNOWN` 을 낸다. 「못 쟀다」를 「복구 성공」으로 적지 않는다.
+#   고치는 자리는 코드가 아니라 **워커 이미지의 postgresql-client 판**이다.
+def restore_drill_enabled() -> bool:
+    """복구 시험 주기가 켜져 있는가. **선언이 없으면 안 돈다** (P-67)."""
+    return bool(getattr(settings, "OPS_RESTORE_DRILL_ENABLED", False))
+
+
+def _pg(cmd: list, env_extra=None, timeout: int = 1800):
+    """`pg_*` 를 부른다. `(rc, stdout, stderr)`. 값(비밀번호)은 로그에 안 적는다."""
+    import subprocess
+
+    env = dict(os.environ)
+    env.update(env_extra or {})
+    p = subprocess.run(cmd, capture_output=True, text=True, errors="replace",
+                       timeout=timeout, env=env)
+    return p.returncode, (p.stdout or "").strip(), (p.stderr or "").strip()
+
+
+def _newest_dump(out_dir: str):
+    """보관처에서 **가장 최근** 덤프 하나. 없으면 `None`."""
+    try:
+        dumps = sorted(Path(out_dir).rglob("*.dump"),
+                       key=lambda f: f.stat().st_mtime, reverse=True)
+    except OSError:
+        return None
+    return dumps[0] if dumps else None
+
+
+@shared_task(name="common.ops_restore_drill_beat")
+def ops_restore_drill_beat() -> dict:
+    """주 1회 **복구 시험(dry-run)** — 임시 DB 에 되살리고 **RTO 를 분으로 잰다.**
+
+    ★ 원본을 건드리지 않는 세 겹은 `scripts/ops_restore.py` 와 같은 규약이다:
+      ㉠ 대상 이름이 원본과 같으면 시작하지 않는다
+      ㉡ 대상 이름은 `restore_check_` 로 시작해야 한다
+      ㉢ 끝나면 지운다 — 실패해도 지운다(`finally`)
+    """
+    started = datetime.now(timezone.utc)
+    stamp = started.isoformat(timespec="seconds")
+
+    if not restore_drill_enabled():
+        payload = {"measured_at": stamp, "verdict": "SKIPPED",
+                   "reason": ("복구 시험 주기가 선언되지 않았다 "
+                              "(`OPS_RESTORE_DRILL_ENABLED`). 백업은 뜨는데 "
+                              "살아나는지는 아무도 안 본다")}
+        logger.info("[OPS][RESTORE] 건너뜀 — %s", payload["reason"])
+        _write_evidence("restore_drill_last", payload)
+        return payload
+
+    out_dir = getattr(settings, "OPS_BACKUP_DIR", "") or ""
+    if not out_dir:
+        payload = {"measured_at": stamp, "verdict": "SKIPPED_UNDECLARED",
+                   "reason": "백업 목적지가 선언되지 않았다 — 살릴 것이 없다 (P-67)"}
+        logger.info("[OPS][RESTORE] 건너뜀 — %s", payload["reason"])
+        _write_evidence("restore_drill_last", payload)
+        return payload
+
+    dump = _newest_dump(out_dir)
+    if dump is None:
+        payload = {"measured_at": stamp, "verdict": "UNKNOWN", "out_dir": out_dir,
+                   "reason": (f"보관처 {out_dir!r} 에 덤프가 **하나도 없다.** "
+                              "「백업이 0회」와 「복구가 실패」는 다른 사실이다")}
+        logger.error("[OPS][RESTORE] %s", payload["reason"])
+        _write_evidence("restore_drill_last", payload)
+        return payload
+
+    db = settings.DATABASES["default"]
+    source = db.get("NAME") or ""
+    target = "restore_check_" + started.strftime("%Y%m%d%H%M%S")
+    if not target.startswith("restore_check_") or target == source:
+        payload = {"measured_at": stamp, "verdict": "ALARM",
+                   "reason": "복구 대상 이름이 안전 규약을 어겼다 — 시작하지 않는다"}
+        _write_evidence("restore_drill_last", payload)
+        return payload
+
+    conn = ["-h", str(db.get("HOST") or "localhost"),
+            "-p", str(db.get("PORT") or 5432), "-U", str(db.get("USER") or "")]
+    penv = {"PGPASSWORD": str(db.get("PASSWORD") or "")}
+
+    #: ★ 판을 **먼저** 잰다. 안 맞으면 복구는 시작도 못 하고, 그 사실은 환경의
+    #:   사실이지 백업의 사실이 아니다 — 색을 옮겨 붙이지 않는다(P-70).
+    rc, client_ver, err = _pg(["pg_restore", "--version"], timeout=60)
+    if rc != 0:
+        payload = {"measured_at": stamp, "verdict": "UNKNOWN",
+                   "reason": f"`pg_restore` 를 부르지 못했다: {err or client_ver}"}
+        logger.error("[OPS][RESTORE] %s", payload["reason"])
+        _write_evidence("restore_drill_last", payload)
+        return payload
+    rc, server_ver, err = _pg(["psql", *conn, "-d", source, "-tAc",
+                               "SHOW server_version"], penv, timeout=60)
+    server_ver = server_ver if rc == 0 else ""
+
+    def _major(text):
+        import re
+        m = re.search(r"(\d+)", text or "")
+        return int(m.group(1)) if m else None
+
+    cmaj, smaj = _major(client_ver), _major(server_ver)
+    if cmaj is not None and smaj is not None and cmaj < smaj:
+        payload = {"measured_at": stamp, "verdict": "UNKNOWN",
+                   "client": client_ver, "server": server_ver, "dump": str(dump),
+                   "reason": (f"클라이언트 판({cmaj})이 서버 판({smaj})보다 낮다 — "
+                              "낮은 판은 높은 판의 덤프를 읽지 못한다. **환경의 "
+                              "사실**이고, 고치는 자리는 워커 이미지의 "
+                              "postgresql-client 다. 못 잰 것을 「복구 성공」으로 "
+                              "적지 않는다")}
+        logger.error("[OPS][RESTORE] %s", payload["reason"])
+        _write_evidence("restore_drill_last", payload)
+        return payload
+
+    commands, notes, ok = [], [], False
+    t0 = datetime.now(timezone.utc)
+    try:
+        rc, _, err = _pg(["psql", *conn, "-d", "postgres", "-c",
+                          f'CREATE DATABASE "{target}"'], penv, timeout=300)
+        commands.append(f'psql -d postgres -c CREATE DATABASE "{target}" (rc={rc})')
+        if rc != 0:
+            notes.append(f"임시 DB 를 만들지 못했다: {err[:200]}")
+            raise RuntimeError(err[:200])
+
+        rc, _, err = _pg(["pg_restore", "--no-owner", "--no-privileges",
+                          *conn, "-d", target, str(dump)], penv)
+        commands.append(f"pg_restore --no-owner --no-privileges -d {target} "
+                        f"{dump.name} (rc={rc})")
+        #: `pg_restore` 는 경고만으로도 rc=1 을 낸다. **행이 살아났는가**로 판정한다.
+        rc2, rows, _ = _pg(["psql", *conn, "-d", target, "-tAc",
+                            "SELECT count(*) FROM information_schema.tables "
+                            "WHERE table_schema='public'"], penv, timeout=300)
+        tables = int(rows) if rc2 == 0 and rows.isdigit() else None
+        rc3, srows, _ = _pg(["psql", *conn, "-d", source, "-tAc",
+                             "SELECT count(*) FROM information_schema.tables "
+                             "WHERE table_schema='public'"], penv, timeout=300)
+        src_tables = int(srows) if rc3 == 0 and srows.isdigit() else None
+        ok = bool(tables) and tables == src_tables
+        if not ok:
+            notes.append(f"표 수가 어긋났다 — 원본 {src_tables} · 복구 {tables}")
+    except Exception as exc:                       # noqa: BLE001
+        notes.append(f"{type(exc).__name__}: {exc}"[:300])
+        tables = src_tables = None
+    finally:
+        rc, _, _ = _pg(["psql", *conn, "-d", "postgres", "-c",
+                        f'DROP DATABASE IF EXISTS "{target}"'], penv, timeout=600)
+        commands.append(f'psql -d postgres -c DROP DATABASE "{target}" (rc={rc})')
+        if rc != 0:
+            notes.append(f"임시 DB `{target}` 를 못 지웠다 — 사람이 지워야 한다")
+
+    seconds = (datetime.now(timezone.utc) - t0).total_seconds()
+    payload = {
+        "measured_at": stamp,
+        "verdict": "OK" if ok else "ALARM",
+        "dump": str(dump), "dump_bytes": dump.stat().st_size,
+        "source_db": source, "target_db": target,
+        "tables_source": src_tables, "tables_restored": tables,
+        #: ★ **RTO 는 분으로 적는다** — SLA 가 분으로 약속하기 때문이다.
+        "rto_seconds": round(seconds, 1),
+        "rto_minutes": round(seconds / 60.0, 2),
+        "commands": commands, "notes": notes,
+        "scope": ("DB 만이다. 객체저장(영상·캡처)은 이 시험에 **안 들어 있다** — "
+                  "DB 만 살아나면 「영상이 있었다고 말하는 DB」가 된다"),
+    }
+    logger.info("[OPS][RESTORE] 복구 시험 %s — 표 %s/%s · RTO %.2f분",
+                payload["verdict"], tables, src_tables, payload["rto_minutes"])
+    _write_evidence("restore_drill_last", payload)
+    return payload
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # 운영 자동화 ③ — **감사 로그 보존기간 집행** (D-377 · 착시 ⑨ 전수에서 나왔다)
 # ═══════════════════════════════════════════════════════════════════════════
 #
@@ -280,12 +512,23 @@ def ops_backup_beat() -> dict:
 # ---------------------------------------------------------------
 #     백업 : 「어디에 얼마나 오래 쌓을 것인가」 — 제품 안에 **답이 없다.**
 #            기본값으로 켜면 우리가 남의 디스크에 대해 그 답을 정하는 것이 된다. → 끈다
-#     정리 : 「감사 로그를 며칠 보관할 것인가」 — 제품 안에 **이미 답이 있다.**
-#            `System > security.audit_log_retention_days` (기본 90). 고객이 정한 값이다.
+#     정리 : 「감사 로그를 며칠 보관할 것인가」 — 고객이 정하는 값이다.
 #
-#     ★ 그러니 정리를 꺼 두는 것은 **고객이 정한 보존기간이 아무 일도 하지 않는다**는
-#       뜻이다. 설정은 있는데 그 설정이 도는 자리가 없는 것 — 그것이 착시 ⑨ 다.
-#       켜는 것이 그 설정을 처음으로 **뜻있게** 만든다.
+# ⛔ **위 두 줄에 「제품 안에 이미 답이 있다 · 기본 90」이라고 적혀 있었다. 거짓이었다.**
+#    지우지 않고 남긴다 — 어떻게 틀렸는지가 판정보다 값나간다.
+#
+#    [실측 2026-09-05 · 턴 F 차선 E · OPS-07b] `AdminConfig::System` 에
+#    `security.audit_log_retention_days` 가 **없다.** 90은 dj-core
+#    `purge_old_audit_logs` 의 **코드 기본값**이다 — 아무도 정한 적이 없다.
+#    [재확인 2026-09-06 · 턴 G] 개발 DB 의 `System` 행에 `security` 키 자체가 없다.
+#
+#    즉 「고객이 정한 값이다」가 아니라 **「아무도 안 정했는데 90일에 지운다」**였다.
+#    그리고 그 삭제는 `_base_manager.delete()` = **하드 삭제**다(되돌릴 수 없다).
+#
+# ★ 그래서 P-67 뒤로 이 태스크는 **선언을 요구한다** (2026-09-06 · 차선 G):
+#     선언이 있으면  → 그 수로 지운다
+#     선언이 없으면  → **한 행도 안 지운다.** 조용히 넘기지 않고 감사에 남긴다.
+#   dj-core 태스크는 우리가 못 고치므로(§0.4), **부르지 않는 것**이 우리가 쥔 손잡이다.
 #
 # ★ 왜 dj-core 태스크를 beat 에 직접 걸지 않고 여기서 감싸는가
 # ------------------------------------------------------------
@@ -300,12 +543,78 @@ def audit_purge_enabled() -> bool:
     return bool(getattr(settings, "OPS_AUDIT_PURGE_ENABLED", True))
 
 
+#: 감사 로그 보존 일수를 선언하는 자리 — **고객의 선언이 언제나 이긴다.**
+#: dj-core 가 읽는 자리와 **같은 자리**를 읽는다. 두 벌로 두면 우리가 「선언됐다」고
+#: 판정한 뒤 dj-core 가 다른 수로 지우는 상태가 된다(D-369).
+AUDIT_RETENTION_CONFIG = ("System", "security.audit_log_retention_days")
+
+#: 개발·스테이징이 **그 자리에 심을 수** (`config/retention_seed.py` · 365).
+#: ⚠ 이 값은 **읽는 자리가 아니라 심는 값**이다. 판정은 언제나 위
+#:   `AUDIT_RETENTION_CONFIG` 한 자리에서만 한다 — 아래 함수의 머리말이 그 사유다.
+AUDIT_RETENTION_SETTING = "AUDIT_LOG_RETENTION_DAYS"
+
+
+def audit_retention_declared_days():
+    """감사 로그 보존 일수. **선언이 없으면 `None`** — 지어낸 수로 지우지 않는다.
+
+    ★ **왜 우리 쪽 설정(`AUDIT_LOG_RETENTION_DAYS`)을 읽지 않는가** — 그것이
+      가장 그럴듯한 함정이기 때문이다.
+
+      실제로 지우는 것은 dj-core `purge_old_audit_logs` 이고, 그 함수는
+      `AdminConfig::System > security.audit_log_retention_days` **하나만** 읽는다
+      (없으면 코드 기본값 90). 우리는 그 함수를 고칠 수 없다(§0.4).
+      그러니 우리 쪽 설정을 「선언됐다」의 근거로 삼으면 이렇게 된다:
+
+          우리 층 판정: 「365일로 선언됐다 — 돌려도 된다」
+          실제 삭제  : **90일 기준으로 하드 삭제**
+
+      「선언한 수」와 「지우는 수」가 갈리는 그 상태가 이 저장소가 가장 두려워하는
+      모양이다(D-369). 그래서 **dj-core 가 읽는 자리 하나만** 읽는다.
+      개발·스테이징의 365는 `scripts/seed_retention_declaration.py` 가 **그 자리에
+      심는다** — 설정에 적어 두는 것이 아니라 심어야 뜻이 생긴다.
+
+    Returns:
+        선언된 일수(양의 정수) 또는 `None`(미선언). `None` 은 0일이 아니다.
+    """
+    name, path = AUDIT_RETENTION_CONFIG
+    try:
+        from core.configuration.utils import get_config_value_by_path
+
+        raw = get_config_value_by_path(name, path, None)
+    except Exception as exc:                       # noqa: BLE001
+        # 못 읽은 것을 「미선언」과 같은 쪽(안 지운다)으로 보내되, 사유는 남긴다.
+        logger.warning("[OPS][AUDIT] %s::%s 를 읽지 못했다: %s", name, path, exc)
+        return None
+    if raw is None:
+        return None
+    try:
+        days = int(raw)
+    except (TypeError, ValueError):
+        logger.warning("[OPS][AUDIT] 보존 일수 %r 를 읽지 못했다 — **미선언으로 본다**",
+                       raw)
+        return None
+    return days if days > 0 else None
+
+
+def audit_retention_source() -> str:
+    """그 수가 **어디서 왔는가.** 값만 보이면 다음 사람이 출처를 못 되짚는다."""
+    name, path = AUDIT_RETENTION_CONFIG
+    if audit_retention_declared_days() is not None:
+        return f"선언 {name} > {path} (U5 설정 화면 · dj-core 가 읽는 자리)"
+    seeded = getattr(settings, AUDIT_RETENTION_SETTING, None)
+    if seeded is not None:
+        return (f"미선언 — 심을 값 {seeded}일은 있으나 아직 심지 않았다 "
+                f"(scripts/seed_retention_declaration.py)")
+    return "미선언"
+
+
 @shared_task(name="common.ops_audit_purge_beat")
 def ops_audit_purge_beat() -> dict:
-    """감사 로그 보존기간을 집행한다 — **고객이 정한 일수 그대로.**
+    """감사 로그 보존기간을 집행한다 — **선언된 일수 그대로. 선언이 없으면 안 돈다.**
 
-    ★ 보존기간을 여기서 정하지 않는다. dj-core 의 설정을 읽는 것이 그 태스크의 몫이고,
-      우리는 **몇 건이 남았고 몇 건이 사라졌는지**를 적는다. 두 벌로 정하면 어긋난다(D-369).
+    ★ 보존기간을 여기서 정하지 않는다. 우리는 **선언이 있는지**를 묻고, 없으면
+      dj-core 태스크를 **부르지 않는다**. 부르면 그 안의 코드 기본값 90이 돌고,
+      그것은 아무도 정하지 않은 수로 되돌릴 수 없게 지우는 일이다(P-67 · OPS-07b).
     """
     stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
     if not audit_purge_enabled():
@@ -313,6 +622,23 @@ def ops_audit_purge_beat() -> dict:
                    "reason": ("OPS_AUDIT_PURGE_ENABLED 가 거짓이다 — 보존기간을 "
                               "집행하지 않는다. 감사 로그는 무한히 쌓인다")}
         logger.info("[OPS][AUDIT] 건너뜀 — %s", payload["reason"])
+        return payload
+
+    #: ★ P-67 — **선언이 먼저다.** 여기서 돌아서는 것이 이 태스크의 가장 중요한 갈래다.
+    declared = audit_retention_declared_days()
+    if declared is None:
+        payload = {"measured_at": stamp, "verdict": "SKIPPED_UNDECLARED",
+                   "retention_days": None,
+                   "source": audit_retention_source(),
+                   "purged": 0,
+                   "reason": ("감사 로그 보존 일수가 **선언되지 않았다** — 한 행도 "
+                              "지우지 않는다. dj-core 의 코드 기본값 90은 아무도 "
+                              "정한 적이 없는 수이고(OPS-07b 실측), 그 수로 지우면 "
+                              "되돌릴 수 없다. 선언 자리: AdminConfig System > "
+                              "security.audit_log_retention_days (U5) · "
+                              "개발·스테이징은 config/retention_seed.py")}
+        logger.info("[OPS][AUDIT] 건너뜀 — 보존 일수 미선언 (호출 0)")
+        _write_evidence("audit_purge_last", payload)
         return payload
 
     try:
@@ -332,10 +658,12 @@ def ops_audit_purge_beat() -> dict:
         purge_old_audit_logs()
         after = AuditLogs._base_manager.count()
         payload = {"measured_at": stamp, "verdict": "OK",
+                   "retention_days": declared,
+                   "source": audit_retention_source(),
                    "rows_before": before, "rows_after": after,
                    "purged": before - after}
-        logger.info("[OPS][AUDIT] 보존기간 집행 — %d건 중 %d건 정리 (남은 %d건)",
-                    before, before - after, after)
+        logger.info("[OPS][AUDIT] 보존기간 집행 — %d일 선언 · %d건 중 %d건 정리 "
+                    "(남은 %d건)", declared, before, before - after, after)
     except Exception as exc:                       # noqa: BLE001
         payload = {"measured_at": stamp, "verdict": "ALARM",
                    "reason": f"{type(exc).__name__}: {exc}"[:300]}

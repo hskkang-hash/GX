@@ -1,0 +1,98 @@
+{
+  "require": [
+    "mount",
+    "minio",
+    "smtp",
+    "session"
+  ],
+  "age_sec": 0.0,
+  "facts": {
+    "measured_at": 1788679576.403757,
+    "config": "[[[\"frontend\", \"frontend\", \"gx-shell\", \"/repo/frontend\"], [\"backend\", \"backend\", \"gx-shell\", \"/app\"], [\"scripts\", \"scripts\", \"gx-shell\", \"/repo/scripts\"], [\"docs\", \"docs\", \"gx-shell\", \"/docs\"]], \"guardianx-source-minio-1\", \"http://localhost:9000/minio/health/live\", \"http://localhost:8025/api/v1/messages?limit=1\", [\"http://localhost:8000\", \"http://localhost:8500\", \"http://localhost:8000\"], \"gxprobe_s\", \"s\"]",
+    "minio": {
+      "container": "guardianx-source-minio-1",
+      "running": true,
+      "url": "http://localhost:9000/minio/health/live",
+      "http_ok": true,
+      "status": 200,
+      "error": null
+    },
+    "smtp": {
+      "url": "http://localhost:8025/api/v1/messages?limit=1",
+      "http_ok": true,
+      "status": 200,
+      "error": null
+    },
+    "mount": [
+      {
+        "name": "frontend",
+        "host_path": "frontend",
+        "container": "gx-shell",
+        "container_path": "/repo/frontend",
+        "host": 1007,
+        "container_n": 1007,
+        "state": "match"
+      },
+      {
+        "name": "backend",
+        "host_path": "backend",
+        "container": "gx-shell",
+        "container_path": "/app",
+        "host": 1026,
+        "container_n": 1026,
+        "state": "match"
+      },
+      {
+        "name": "scripts",
+        "host_path": "scripts",
+        "container": "gx-shell",
+        "container_path": "/repo/scripts",
+        "host": 122,
+        "container_n": 122,
+        "state": "match"
+      },
+      {
+        "name": "docs",
+        "host_path": "docs",
+        "container": "gx-shell",
+        "container_path": "/docs",
+        "host": 424,
+        "container_n": 424,
+        "state": "match"
+      }
+    ],
+    "session": {
+      "url": "http://localhost:8500/api/v1/auth/login",
+      "holder": "gxprobe_s",
+      "lane": "s",
+      "dedicated": true,
+      "existing_session": true,
+      "logged_in": false,
+      "message": "You have an active session in another location. Please choose to continue or end the previous session."
+    }
+  },
+  "rows": [
+    {
+      "name": "minio",
+      "verdict": "ok",
+      "why": "guardianx-source-minio-1 떠 있고 http://localhost:9000/minio/health/live → 200"
+    },
+    {
+      "name": "smtp",
+      "verdict": "ok",
+      "why": "수신함 http://localhost:8025/api/v1/messages?limit=1 → 200"
+    },
+    {
+      "name": "mount",
+      "verdict": "ok",
+      "why": "호스트 = 컨테이너 — frontend 1007 · backend 1026 · scripts 122 · docs 424"
+    },
+    {
+      "name": "session",
+      "verdict": "ok",
+      "why": "점유자 `gxprobe_s` = **이 차선 전용 계정**(차선 s) — 앞선 창은 우리 것이다. 동시 접속 1(UX-24 · §0.4)을 차선 이름으로 가른 자리"
+    }
+  ],
+  "missing": [],
+  "exit": 0
+}

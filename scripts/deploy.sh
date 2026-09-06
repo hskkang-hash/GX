@@ -269,7 +269,7 @@ rc=$?
 
 say "      배치 전 게이트 — 푼 번들이 $COMMIT 라고 말하는가 (P-59)"
 MSYS_NO_PATHCONV=1 docker exec -e GX_COMMIT="$COMMIT" "$SERVER" \
-  python /repo/scripts/verify_bundle_hash.py --dist "$NEW"
+  python /repo/scripts/verify_bundle_hash.py --dist "$NEW" --no-deploy-evidence
 rc=$?
 case "$(decide predeploy $rc)" in
   안바꿨다:*)
@@ -367,25 +367,59 @@ PY
   return 1
 }
 
-say "[5/6] 번들 해시 게이트 — 서버가 내는 번들 == HEAD ?"
+# =========================================================================
+# P-72 — **배치 증거를 먼저 쓰고, 게이트는 그것과 맞춘다** (2026-09-06 · 턴 G · 차선 S)
+#
+#   옛 규칙은 「서버 번들 == HEAD」였다. 그래서 배치를 마친 뒤 **보고서 한 장을
+#   커밋하는 것만으로** 게이트가 빨개졌다 — 코드는 한 줄도 안 움직였는데.
+#   그 빨강이 가리키는 사실은 「서버가 낡은 코드를 낸다」가 아니라 「문서가 하나
+#   늘었다」였다. 사실과 색이 어긋나는 게이트는 곧 무시당한다(D-353).
+#
+#   이제 배치한 커밋을 `docs/agent/evidence/deploy/` 에 적고, 게이트는 둘을 함께 본다:
+#     (1) 서버 번들 == **증거에 적힌 배치 커밋**
+#     (2) HEAD - 배치 커밋 차이가 `docs/**` 뿐
+#   증거는 **게이트가 돌기 전에** 쓴다 — 게이트가 물어야 할 것이 그 증거이기 때문이다.
+#
+# ⚠ **컨테이너에는 `.git` 이 없다** [실측 2026-09-06]. (2)는 저장소가 있는 여기(호스트)
+#   에서 재서 `GX_DRIFT_JSON` 으로 넘긴다 — 사람이 기억할 절차를 만들지 않는다(D-286).
+# =========================================================================
+DEPLOY_EVID="$ROOT/docs/agent/evidence/deploy"
+mkdir -p "$DEPLOY_EVID"
+cat > "$DEPLOY_EVID/${WHEN}.json" <<JSONEOF
+{
+  "deploy_commit": "$COMMIT",
+  "deployed_at": "$(date -Iseconds)",
+  "deployed_by": "scripts/deploy.sh",
+  "server": "$SERVER:$LIVE -> $WEB",
+  "gate_evidence": "docs/agent/evidence/P-64/bundle_gate_${WHEN}.json",
+  "deploy_log": "docs/agent/evidence/P-64/deploy_${WHEN}.log",
+  "note": "P-72 — 무엇을 배치했는가의 정본. 번들 해시 게이트는 HEAD 가 아니라 이 커밋과 맞춘다."
+}
+JSONEOF
+say "      배치 증거 -> docs/agent/evidence/deploy/${WHEN}.json (P-72)"
+GX_DRIFT_JSON="$(python "$ROOT/scripts/verify_bundle_hash.py" --emit-drift --deploy-commit "$COMMIT" 2>/dev/null)"
+export GX_DRIFT_JSON
+
+say "[5/6] 번들 해시 게이트 — 서버가 내는 번들 == **배치 커밋**? (P-72)"
 ensure_spa
 if [ "${GX_DEPLOY_FORCE_FAIL:-}" = "gate" ]; then
   say "      ⚠ 드릴: GX_DEPLOY_FORCE_FAIL=gate — 게이트를 일부러 빨강으로 만든다"
   rc=1
 else
-  MSYS_NO_PATHCONV=1 docker exec -e GX_COMMIT="$COMMIT" "$SERVER" \
+  MSYS_NO_PATHCONV=1 docker exec -e GX_COMMIT="$COMMIT" -e GX_DRIFT_JSON "$SERVER" \
     python /repo/scripts/verify_bundle_hash.py --web "$WEB" \
+    --deploy-evidence /docs/agent/evidence/deploy \
     --out "/docs/agent/evidence/P-64/bundle_gate_${WHEN}.json"
   rc=$?
 fi
 case "$(decide webgate $rc)" in
   되돌린다:*)
-    say "**실패(exit $rc)** — 서버가 내는 번들이 HEAD 라고 말하지 못한다"
+    say "**실패(exit $rc)** — 서버가 내는 번들이 **배치 커밋**이라고 말하지 못한다"
     rollback
     say "**exit 1 · 배치 취소** — 화면에서 본 것을 「병합된 코드」라고 부를 수 없다(P-59)"
     exit $EXIT_FAIL ;;
 esac
-say "      게이트 통과 — 3002 가 내는 번들 = $COMMIT"
+say "      게이트 통과 — 3002 가 내는 번들 = 배치 커밋 $COMMIT (P-72)"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # ⑥ walk_scenarios 1회 — **배치된 번들 위를 사람처럼 지나간다**

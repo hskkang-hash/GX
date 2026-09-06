@@ -1,18 +1,18 @@
 {
-  "measured_at": "2026-09-05T14:52:29+00:00",
+  "measured_at": "2026-09-06T08:56:59+00:00",
   "verdict": "ALARM",
   "report": {
-    "measured_at": "2026-09-05T14:52:29+00:00",
+    "measured_at": "2026-09-06T08:56:59+00:00",
     "signals": {
       "db_ping_ms": {
-        "value": 8.35,
+        "value": 8.32,
         "verdict": "OK",
         "note": ""
       },
       "cache_alive": {
         "value": true,
         "verdict": "OK",
-        "note": "왕복 1.6ms"
+        "note": "왕복 1.7ms"
       },
       "object_store_alive": {
         "value": true,
@@ -20,7 +20,7 @@
         "note": "저장소가 답했다 · 버킷 guardianx-dev 있음"
       },
       "latest_event_age_min": {
-        "value": 2978.0,
+        "value": 4062.5,
         "verdict": "ALARM",
         "note": ""
       },
@@ -30,22 +30,22 @@
         "note": ""
       },
       "audit_queue_backlog": {
-        "value": 37,
+        "value": 0,
         "verdict": "OK",
-        "note": "밀린 감사 쓰기 [실측] · 담긴 큐 {\"'default\\\\x06\\\\x169'\": 37} — ⚠ `LLEN default` 하나만 재면 **언제나 0**이다 — kombu 가 우선순위마다 **다른 키**를 쓴다(이름 뒤 두 바이트 + 우선순위 숫자). 임계는 건수가 아니라 **지연**에 건다"
+        "note": "밀린 감사 쓰기 [실측] · 담긴 큐 없음 — ⚠ `LLEN default` 하나만 재면 **언제나 0**이다 — kombu 가 우선순위마다 **다른 키**를 쓴다(이름 뒤 두 바이트 + 우선순위 숫자). 임계는 건수가 아니라 **지연**에 건다"
       },
       "audit_queue_lag_sec": {
-        "value": 47.6,
+        "value": 0.0,
         "verdict": "OK",
-        "note": "밀린 37건 ÷ 쓰는 속도 46.60건/분 [실측 둘] = 47.6초 [추정]"
+        "note": "밀린 것이 0건 — 지연 없음 [실측]"
       },
       "audit_write_rate_per_min": {
-        "value": 46.6,
+        "value": 9.1,
         "verdict": "OK",
-        "note": "최근 10분간 `logger_auditlogs` 에 들어온 행/분 [실측] · 마지막 쓰기 2026-09-05T14:52:29+00:00 (임계 없음 — **세어 두는 수**다. 조용한 밤에 0인 것은 장애가 아니다)"
+        "note": "최근 10분간 `logger_auditlogs` 에 들어온 행/분 [실측] · 마지막 쓰기 2026-09-06T08:50:18+00:00 (임계 없음 — **세어 두는 수**다. 조용한 밤에 0인 것은 장애가 아니다)"
       },
       "db_size_gb": {
-        "value": 0.098,
+        "value": 0.123,
         "verdict": "OK",
         "note": ""
       },
@@ -76,9 +76,9 @@
       }
     },
     "heartbeat_late": {
-      "value": 10,
-      "verdict": "ALARM",
-      "note": "발송 기록이 **한 건도 없다** — 08:00 알림이 선 적이 없다"
+      "value": 0,
+      "verdict": "OK",
+      "note": "오늘 것이 왔거나 아직 유예 안이다 — 본 테넌트 10"
     }
   }
 }

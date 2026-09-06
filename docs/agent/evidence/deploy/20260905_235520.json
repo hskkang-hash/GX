@@ -1,0 +1,10 @@
+{
+  "deploy_commit": "c86b678dfda96ebcdc764da212e54fc9a7a42a59",
+  "deployed_at": "2026-09-05T23:55:20+07:00",
+  "deployed_by": "scripts/deploy.sh (턴 F · 조율자)",
+  "server": "gx-shell:/app/_fe_dist → http://localhost:3002",
+  "bundle_assets": ["/assets/index-KtOB6Mu5.js", "/assets/router-CWOBuQ2U.js"],
+  "gate_evidence": "docs/agent/evidence/P-64/bundle_gate_20260905_235520.json",
+  "deploy_log": "docs/agent/evidence/P-64/deploy_20260905_235520.log",
+  "note": "P-72 — 이 파일이 「무엇을 배치했는가」의 정본이다. 번들 해시 게이트는 서버가 내는 번들을 HEAD 가 아니라 이 커밋과 맞추고, HEAD 와 이 커밋 사이의 차이가 docs/** 뿐인지를 따로 잰다. 이 파일은 배치한 사람이 쓰고, deploy.sh 가 배치 성공 직후 자동으로 남긴다."
+}

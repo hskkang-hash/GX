@@ -918,7 +918,33 @@ CORS_ALLOW_CREDENTIALS = True
 #:     **덮지 않고 더한다** — 덮으면 authorization·content-type 이 함께 사라진다.
 from corsheaders.defaults import default_headers as _cors_default_headers
 
-CORS_ALLOW_HEADERS = list(_cors_default_headers) + ["x-no-cache"]
+#: ★ [실측 2026-09-06 · P-74 · 차선 C] **두 번째로 같은 자리에 걸렸다.**
+#:
+#:   월 표시 토큰(UX-24a)은 서버 면이 완전히 서 있었다 — 서명·수명·회수·쓰기 0 을
+#:   탐침이 전부 재서 초록이었다. 그런데 그 탐침은 **서버에서 서버로** 부른 것이었고,
+#:   브라우저를 처음 붙인 이번 턴에 화면이 이렇게 나왔다:
+#:
+#:       월 화면은 뜬다 · 「월 표시 토큰으로 열림」도 뜬다 ·
+#:       그런데 **우리 API 로 나간 요청이 0건이다** (실측 · 기록된 우리 호출 1건)
+#:
+#:   막힌 자리는 서버도 화면도 아니라 **프리플라이트**였다. 커스텀 헤더는 CORS
+#:   허용 목록에 이름이 있어야 브라우저가 보낸다. 위 `x-no-cache` 와 **똑같은 모양**이고,
+#:   그 주석이 「세 자리가 다 옳아 보여서 아무도 안 봤다」고 적어 둔 그 자리다.
+#:
+#:   ★ 이름을 손으로 적지 않는다 — `common.wall_token.WALL_TOKEN_HEADER` 한 곳에서
+#:     읽는다. 두 벌로 적으면 헤더 이름이 바뀌는 날 한쪽만 바뀌고, 그때 증상은
+#:     **똑같이 「요청 0건」**이다(원인은 안 보이고 결과만 같다).
+try:
+    from common.wall_token import WALL_TOKEN_HEADER as _WALL_TOKEN_HEADER
+except Exception:                                   # noqa: BLE001
+    # settings 를 세우는 도중이라 앱 모듈을 못 읽을 수 있다. 그때는 이름을 적되
+    # **못 읽었다는 사실이 이 갈래 자체로 남는다** — 조용히 비우지 않는다.
+    _WALL_TOKEN_HEADER = "X-GX-Wall-Token"
+
+CORS_ALLOW_HEADERS = list(_cors_default_headers) + [
+    "x-no-cache",
+    _WALL_TOKEN_HEADER.lower(),
+]
 
 CORS_EXPOSE_HEADERS = [
     "X-New-Token",
@@ -1072,3 +1098,42 @@ WEBHOOK_ALLOWED_SCHEMES = tuple(
 # (CAP 1.2 가 금지한다 · `common/cap_1_2.py` 가 거절한다).
 CAP_SENDER = os.environ.get("CAP_SENDER", "guardianx.local")
 CAP_SENDER_NAME = os.environ.get("CAP_SENDER_NAME", "GuardianX 관제")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# P-67 — **보존 일수·백업의 기본값은 없다. 선언만 있다** (2026-09-06 · 차선 E)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# ★ 위 `OPS_BACKUP_SCHEDULE_ENABLED`/`OPS_BACKUP_DIR` 두 줄이 「끈 채로 · 빈 채로」
+#   서 있던 자리다. 그것은 기본값이 아니라 **미선언**이었고, 그래서 백업이
+#   한 번도 저장된 적이 없었다(OPS-19). 고치는 방법은 코드에 수를 적는 것이
+#   아니라 **선언한 사람과 환경을 적는 것**이다.
+#
+# ★ 순서가 곧 내용이다 (지시서 §4 함정 ①): 시드가 **먼저** 서고, 그 다음에
+#   `apps/dsm/retention.py` 의 코드 기본값이 사라진다. 거꾸로 하면 그 사이
+#   개발 환경의 파기·백업이 조용히 멈춘다.
+#
+# ★ 환경변수가 언제나 이긴다 — `os.environ` 에 그 이름이 있으면 시드는 비켜선다.
+#   그래서 「이미 선언된 이름」을 `settings` 가 아니라 **환경**에서 읽는다:
+#   위에서 `env.bool(..., default=False)` 로 읽은 False 는 「거짓으로 선언했다」와
+#   「아무도 안 정했다」를 구별하지 못한다(D-290).
+from config.retention_seed import declarations as _retention_declarations  # noqa: E402
+
+_RETENTION_DECLARED = _retention_declarations(
+    GUARDIANX_ENVIRONMENT,
+    [name for name in ("AUDIT_LOG_RETENTION_DAYS", "VIDEO_RETENTION_DAYS",
+                       "OPS_BACKUP_SCHEDULE_ENABLED", "OPS_BACKUP_DIR",
+                       "OPS_BACKUP_VOLUME", "OPS_BACKUP_RETENTION_DAYS",
+                       "OPS_RESTORE_DRILL_ENABLED")
+     if os.environ.get(name) not in (None, "")],
+)
+for _name, _value in _RETENTION_DECLARED.items():
+    globals()[_name] = _value
+
+#: 이 환경이 **무엇을 선언했는지** 그대로 남긴다. 판정기·화면(U5 미선언 배지)이
+#: 「누가 정했는가」를 되짚는 자리다 — 값만 보이면 다음 사람이 출처를 못 찾는다.
+RETENTION_DECLARATION_SOURCE = (
+    "개발·스테이징 선언 (세종 P-67 · config/retention_seed.py)"
+    if _RETENTION_DECLARED else
+    "선언 없음 — 고객이 U5 설정 화면에서 선언한다"
+)

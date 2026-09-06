@@ -10,16 +10,27 @@
 
 그래서 이 파일에는 수(數)와 **지우는 손**이 함께 있다. 하나만 있으면 안 된다.
 
-왜 30인가 — **우리가 지어낸 수가 아니다**
------------------------------------------
-차선 E 가 지난 턴에 30을 적지 **않은** 것은 옳았다: 그때는 지우는 손이 없었고,
-없는 집행 위에 적힌 수는 그 순간 안내판을 거짓말로 만든다(D-301 · D-316).
+왜 이제 **기본값이 없는가** — P-67 (2026-09-06 · 세종 판정 · 차선 E 집행)
+-------------------------------------------------------------------------
+이 자리에는 「왜 30인가」가 적혀 있었다. 수의 출처는 세종의 서식이었고
+(GX-LAW-02 고지 **초안**의 안내판 칸 「기본 30일」) 그것은 사실이었다.
+**틀린 것은 수가 아니라 자리다.**
 
-지금 기본값을 두는 이유는 **집행이 생겼기 때문**이다. 그리고 그 수의 출처는
-세종(CPO)이 쓴 서식이다 — docs/design/GX-LAW-02_영상정보처리기기_고지_초안_v0.1.md
-의 안내판 칸: 「보관 기간 : 보존 일수 — 설정에서 자동 · **기본 30일**」.
-우리가 법조문을 읽고 정한 수가 **아니다.** 그 대조는 여전히 법률대리인의 몫이고,
-RETENTION_LEGAL_REVIEW 가 그 사실을 응답에 싣는다.
+    서식의 30 = 「안내판을 이렇게 인쇄한다」는 **초안의 예시**
+    코드의 30 = 「남의 영상을 30일에 지운다」는 **집행 명령**
+
+앞엣것을 뒤엣것으로 옮겨 적는 순간, 아무도 정하지 않은 수가 되돌릴 수 없는 일을
+하게 된다. 그래서 P-67 이 셋을 갈랐다:
+
+    ㉠ **코드 기본값 없음.** 미선언이면 `retention_days()` 가 `None` 을 내고
+      파기·백업이 **돌지 않는다**(그리고 그 사실이 감사에 남는다).
+    ㉡ **개발·스테이징은 선언**한다 — `backend/config/retention_seed.py`
+      (감사 로그 365 · 스냅샷·구간 참조 30 · 백업 매일 03:00 · 목적지 `/backup` ·
+       백업 보존 14 · 복구 시험 주 1회). 선언에는 임자와 환경이 있다.
+    ㉢ **운영 값은 고객이 U5 설정 화면에서 선언**한다. 코드가 정하지 않는다.
+
+법조문 대조는 여전히 법률대리인의 몫이고, RETENTION_LEGAL_REVIEW 가 그 사실을
+응답에 싣는다 — 선언된 수가 **법적으로 맞는 수인지**는 여기서 답하지 않는다.
 
     ★ 운영자가 값을 정하면 **그 값이 이긴다** (VIDEO_RETENTION_DAYS 등).
       감사 로그 정리(ops-audit-purge-daily)가 「고객이 정한 일수 그대로」 지우는 것과
@@ -64,17 +75,30 @@ log = logging.getLogger("guardianx.law02a.retention")
 LOGGER_NAME = "guardianx.law02a.retention"
 TAG = "[LAW-02a]"
 
-#: 서식이 적은 기본값. **출처는 위 머리말** — 우리가 고른 수가 아니다.
-DEFAULT_RETENTION_DAYS: int = 30
+#: ★ **여기에 기본값이 있었다** — `DEFAULT_RETENTION_DAYS: int = 30` (P-67 로 지웠다).
+#:
+#:   세종 판정 P-67 (2026-09-06): 「보존 일수·백업 목적지·일정에 **코드 기본값 없음.**
+#:   미선언 테넌트 = 파기·백업 **돌지 않음**.」
+#:
+#:   지운 사유는 「30이 틀린 수라서」가 아니다. **아무도 정하지 않았는데 수가 나오는
+#:   자리**였기 때문이다. 서식에 30이 적혀 있어도 그것은 GX-LAW-02 **초안**의 수이고,
+#:   이 코드가 그 수를 남의 자료에 대한 파기 명령으로 바꾸고 있었다.
+#:   개발·스테이징의 수는 이제 `config/retention_seed.py` 가 **선언**한다 —
+#:   선언에는 임자와 환경이 있고, 기본값에는 없다. 운영 값은 고객이 U5 에서 정한다.
+#:
+#:   ⚠ 다시 넣지 마라. 넣는 순간 「보존 30일」이 다시 아무도 정하지 않은 수가 되고,
+#:     `scripts/verify_retention_declared.py` 의 정적 검사가 빨개진다.
 
 #: 운영자가 값을 정하는 자리. legal_notice 와 **같은 목록을 쓴다** —
 #: 두 벌로 적으면 안내판이 보는 수와 삭제가 보는 수가 갈리고, 그것이 최악이다.
 SETTING_NAMES: tuple[str, ...] = RETENTION_SETTING_NAMES
 
-#: ★ 법률 검토 대기. 30일이 이 용도에 **법적으로 맞는 수인지**는 여기서 답하지 않는다.
+#: ★ 법률 검토 대기. **선언된 수가 이 용도에 법적으로 맞는지**는 여기서 답하지 않는다.
+#:   P-67 뒤로 이 문장이 가리키는 것은 「제품 기본값」이 아니라 **선언된 값**이다 —
+#:   개발·스테이징은 세종 선언, 운영은 고객(U5)의 선언이고, 둘 다 조문 대조 전이다.
 RETENTION_LEGAL_REVIEW: str = (
-    "보존 일수의 법정 기준 대조는 법률대리인의 판정이다. 이 값의 출처는 "
-    "GX-LAW-02 고지 초안 서식이며, 조문 대조 전이다."
+    "보존 일수의 법정 기준 대조는 법률대리인의 판정이다. 이 수는 제품 기본값이 "
+    "아니라 **선언된 값**이며(P-67 · 코드 기본값 없음), 조문 대조 전이다."
 )
 
 #: 주기 집행 태스크의 이름. **beat 표에 이 이름이 있는지로 「도는가」를 잰다** —
@@ -92,12 +116,20 @@ AUDIT_ID_SAMPLE = 200
 # ═══════════════════════════════════════════════════════════════════════════
 # 1. 수 — **선언된 자리와 그 출처를 함께 낸다**
 # ═══════════════════════════════════════════════════════════════════════════
-def retention_days() -> int:
-    """영상 보존 일수. **언제나 수가 나온다** — 이제 선언된 자리가 있다.
+def retention_days() -> int | None:
+    """영상 보존 일수. **선언이 없으면 수가 나오지 않는다** (`None`).
 
-    운영자가 정한 값이 있으면 그것이 이기고, 없으면 서식의 기본값이다.
-    0 이하·정수가 아닌 값은 **기본값으로 되돌린다**: 0일 보존은 「즉시 삭제」라는
-    뜻이 되고, 설정 오타 하나가 그 뜻을 갖게 두지 않는다.
+    ★ 2026-09-06 · P-67 — 이 함수는 예전에 **언제나 수를 냈다**(없으면 30).
+      그 갈래가 「아무도 정하지 않았는데 수가 나오는」 자리였고, 그 수를
+      `sweep()` 이 파기 명령으로 읽었다. 지금은 셋 다 같은 답을 낸다:
+          미선언 → `None` → 안내판은 「미선언」 · 파기는 **안 돈다**.
+
+    ★ `None` 은 **0일이 아니다.** 0일은 「즉시 지운다」이고 `None` 은
+      「지우지 않는다」다 — 되돌릴 수 없는 쪽으로 틀리지 않는 것이 기본이다.
+
+    0 이하·정수가 아닌 값도 `None` 이다. 예전에는 그것이 **기본값으로 되돌아갔는데**,
+    되돌아갈 기본값이 없으므로 이제는 **미선언과 같게 다룬다** — 설정 오타 하나가
+    파기 명령이 되지 않게 하는 것이 그때나 지금이나 이 갈래의 목적이다.
     """
     for name in SETTING_NAMES:
         value = getattr(settings, name, None)
@@ -106,22 +138,29 @@ def retention_days() -> int:
         try:
             days = int(value)
         except (TypeError, ValueError):
-            log.warning("[LAW-02a] %s=%r 를 일수로 읽지 못했다 — 기본값을 쓴다",
-                        name, value)
-            return DEFAULT_RETENTION_DAYS
+            log.warning("[LAW-02a] %s=%r 를 일수로 읽지 못했다 — **미선언으로 본다**. "
+                        "지어낸 수로 지우지 않는다", name, value)
+            return None
         if days <= 0:
-            log.warning("[LAW-02a] %s=%r 는 0 이하다 — 기본값을 쓴다", name, days)
-            return DEFAULT_RETENTION_DAYS
+            log.warning("[LAW-02a] %s=%r 는 0 이하다 — 「즉시 파기」라는 뜻이 되므로 "
+                        "**선언으로 세지 않는다**", name, days)
+            return None
         return days
-    return DEFAULT_RETENTION_DAYS
+    return None
 
 
 def retention_source() -> str:
-    """그 수가 **어디서 왔는가.** 값만 보이면 다음 사람이 출처를 못 되짚는다."""
+    """그 수가 **어디서 왔는가.** 값만 보이면 다음 사람이 출처를 못 되짚는다.
+
+    ★ P-67 뒤로 「제품 기본값」이라는 출처는 **없다.** 선언이 없으면 출처도 없고,
+      그 사실을 「미선언」이라는 낱말 하나로 말한다 — 화면(U5)의 빨강 배지가
+      이 문자열을 그대로 읽는다.
+    """
     for name in SETTING_NAMES:
         if getattr(settings, name, None) is not None:
-            return f"운영 설정 {name}"
-    return "제품 기본값 (GX-LAW-02 고지 초안 서식)"
+            declared = getattr(settings, "RETENTION_DECLARATION_SOURCE", "")
+            return f"운영 설정 {name}" + (f" · {declared}" if declared else "")
+    return "미선언"
 
 
 def sweep_is_scheduled() -> bool:
@@ -145,12 +184,18 @@ def sweep_is_scheduled() -> bool:
 def policy() -> dict[str, Any]:
     """제품이 선언하는 보존 정책 한 벌. **화면과 안내판이 같은 것을 읽는다.**"""
     days = retention_days()
+    declared = days is not None
     return {
         "retention_days": days,
+        "declared": declared,
         "source": retention_source(),
-        "cutoff": (timezone.now() - timedelta(days=days)).isoformat(),
+        "cutoff": ((timezone.now() - timedelta(days=days)).isoformat()
+                   if declared else None),
         #: ★ 「지워진다」를 약속하는 자리. 주기가 안 걸려 있으면 **거짓이다.**
-        "enforced": sweep_is_scheduled(),
+        #:   그리고 **선언이 없으면 그것도 거짓이다** (P-67) — 주기는 도는데
+        #:   지울 수를 아무도 안 정했으면 아무것도 안 지워진다. 두 조건이 다 참일
+        #:   때만 안내판이 「자동으로 지워집니다」를 인쇄할 수 있다.
+        "enforced": declared and sweep_is_scheduled(),
         "beat_task": BEAT_TASK_NAME,
         "irreversible": True,
         "targets": [t.label for t in TARGETS],
@@ -323,9 +368,36 @@ def sweep(*, days=None, dry_run: bool = True, actor=None, reason: str = "") -> d
     Returns:
         판정 한 벌. dry_run 이면 deleted 는 **전부 0** 이다 — 그것을 시험이 잰다.
     """
-    days = int(days) if days is not None else retention_days()
-    cutoff = timezone.now() - timedelta(days=days)
     started = timezone.now().isoformat(timespec="seconds")
+    days = int(days) if days is not None else retention_days()
+    if days is None:
+        #: ★ P-67 — **선언이 먼저다.** 예전에는 여기서 제품 기본값 30이 나왔고,
+        #:   이 함수는 **전역**이므로 그 30이 전 테넌트의 영상을 지웠다.
+        #:   미선언은 「0건 지웠다」가 아니라 **「돌지 않았다」**이고, 그 둘을
+        #:   가르는 것이 감사에 남는 이 한 줄이다 (D-290).
+        payload = {
+            "measured_at": started, "verdict": SKIPPED_UNDECLARED,
+            "retention_days": None, "source": retention_source(),
+            "cutoff": None, "dry_run": bool(dry_run), "targets": [],
+            "expired_total": 0, "deleted_total": 0,
+            "objects_deleted_total": 0, "object_failure_total": 0,
+            "unknown_targets": [], "irreversible": True,
+            "why": ("영상 보존 일수가 선언되지 않았다 — 지우지 않는다. "
+                    "코드 기본값은 없다(P-67). 선언 자리: U5 설정 화면 · "
+                    "개발·스테이징은 config/retention_seed.py"),
+        }
+        entry = audit_writer.write(
+            logger_name=LOGGER_NAME, tag=TAG, actor=actor,
+            action=SWEEP_SKIPPED_ACTION, outcome=audit_writer.ALLOWED,
+            reason=(reason or payload["why"])[:400],
+            before={"retention_days": None},
+            after={k: v for k, v in payload.items() if k != "measured_at"})
+        payload["audit_id"] = entry.audit_id
+        payload["row_hash"] = entry.row_hash
+        log.info("[LAW-02a] 전역 집행 건너뜀 — 보존 일수 미선언 (감사 %s)",
+                 entry.audit_id)
+        return payload
+    cutoff = timezone.now() - timedelta(days=days)
 
     targets = [_sweep_target(t, cutoff=cutoff, dry_run=dry_run) for t in TARGETS]
     payload = {
@@ -395,6 +467,10 @@ def sweep(*, days=None, dry_run: bool = True, actor=None, reason: str = "") -> d
 #        「지웠다」와 「원래 없었다」가 같은 상태가 되면 안 된다(D-290).
 #
 # ⚠ 되돌릴 수 없다 — dry_run=True 가 여기서도 기본값이다 (D-209).
+#
+# ⚠ 위 2절의 `sweep()` 이 이 절의 `SKIPPED_UNDECLARED` · `SWEEP_SKIPPED_ACTION` 을
+#   쓴다. 파이썬은 **부를 때** 이름을 찾으므로 순서는 문제가 아니지만, 판정 낱말을
+#   두 벌로 두지 않으려고 일부러 이 자리 하나에 모았다 (D-369).
 
 #: 테넌트별 보존 일수 선언 자리. {group_id: days}. **운영자가 채운다.**
 #: 여기 없는 테넌트는 파기 대상이 아니다 — 「선언이 먼저다」가 그 뜻이다.
@@ -404,6 +480,10 @@ TENANT_RETENTION_SETTING = "VIDEO_RETENTION_DAYS_BY_TENANT"
 PURGE_ACTION = "law02a:purge"
 PURGE_PREVIEW_ACTION = "law02a:purge_preview"
 PURGE_SKIPPED_ACTION = "law02a:purge_skipped"
+
+#: 전역 집행(`sweep`)이 **미선언이라 돌지 않은** 것을 적는 자리 (P-67).
+#: 「0건 지웠다」와 「돌지 않았다」를 같은 줄로 적으면 구별이 사라진다.
+SWEEP_SKIPPED_ACTION = "law02a:retention_sweep_skipped"
 
 #: 파기 판정 셋. 자유 문자열을 만들지 않는다 — 넷째가 생기면 집계가 갈린다.
 PURGED = "PURGED"
@@ -436,21 +516,13 @@ def _tenant_map() -> dict:
 def _global_declared_days():
     """운영자가 **전역으로** 선언한 일수. 없으면 None.
 
-    ★ `retention_days()` 와 다른 함수인 이유: 저쪽은 **언제나 수를 낸다**(없으면
-      제품 기본값 30). 안내판에는 그것이 옳다 — 빈 칸을 게시할 수는 없으니까.
-      그러나 파기는 다르다. **아무도 선언하지 않았는데 30일에 지우기 시작하면**
-      그 30은 우리가 남의 자료에 대해 내린 명령이 된다. 여기서는 None 이 나온다.
+    ★ 2026-09-06 · P-67 — 이 함수는 `retention_days()` 를 **그대로 부른다.**
+      예전에는 둘이 달랐다: 저쪽은 언제나 수를 냈고(기본값 30) 이쪽만 None 을 냈다.
+      기본값이 사라진 지금 **둘은 같은 질문**이고, 술어를 두 벌로 두면 반드시
+      어긋난다 — 어긋난 뒤에는 안내판이 보는 수와 파기가 보는 수가 갈리고
+      그것이 이 파일이 가장 두려워하는 상태다(D-369).
     """
-    for name in SETTING_NAMES:
-        value = getattr(settings, name, None)
-        if value is None:
-            continue
-        try:
-            days = int(value)
-        except (TypeError, ValueError):
-            return None
-        return days if days > 0 else None
-    return None
+    return retention_days()
 
 
 def declared_retention_days(group_id):

@@ -150,6 +150,65 @@ FORBIDDEN_PATHS=(
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
+# env: — **판정 전에 환경을 먼저 잰다** (세종 판정 P-70 · 2026-09-06 · 턴 G)
+#
+# ★ 무엇을 막는가 — **게이트 여섯이 유령 파일 953개를 훑고 있었다**
+#   [실측 2026-09-05 · docs/agent/evidence/P-55/window_20260905_2247.md]
+#   `gx-shell` 의 `/repo/frontend` 가 마운트가 아니라 **사본**이었다. 그 사본에는
+#   파일이 1,956개, 호스트 저장소에는 1,003개 — **953개가 유령**이었고 컨테이너
+#   안에서 도는 게이트 여섯이 그것을 훑으며 색을 내고 있었다.
+#   그때 나온 색은 제품의 색이 아니었다. **환경이 어긋난 것이 제품 결함처럼 보였다.**
+#
+#   그래서 모든 게이트는 **자기가 무엇을 딛고 서는지 먼저 말한다.**
+#
+#       env_require mount session     ← 이 환경이 없으면 잴 수 없다
+#       env_none "사유"               ← 딛는 환경이 없다(호스트 저장소 파일만 본다)
+#
+#   환경이 빠지면 **회색(exit 2) + 사유 = 환경 이름**. 빨강과 절대 섞지 않는다 —
+#   섞으면 「환경을 세우면 사라지는 빨강」이 쌓이고, 그런 빨강을 몇 번 본 사람은
+#   게이트를 끈다(D-353). 꺼진 게이트는 아무것도 안 지킨다.
+#
+# ★ 재는 몸통은 **`scripts/gate_env.py` 한 곳**이다. 열두 게이트에 복붙하면 열두 벌이
+#   서로 달라지고, 달라진 판정식 복사본 하나가 D-212 였다. 여기 있는 것은 부르는 줄뿐이다.
+#
+# 환경 이름 넷 (`scripts/gate_env.py`):
+#   minio   MinIO 도달(컨테이너 · 9000 health) · smtp  SMTP 수신함(mailpit) 도달
+#   mount   **마운트 일치**(호스트가 세는 파일 수 = 컨테이너가 보는 파일 수)
+#   session 세션 점유자 — 동시 접속 1(UX-24 · §0.4)에서 **누가 잡고 있는가**
+# ─────────────────────────────────────────────────────────────────────────────
+GATE_ENV_MARK='[환경]'
+
+# 차선 이름 다섯 중 **탐침 계정** — 차선마다 다른 사람이라야 세션 빼앗김이 없다.
+#   `GX_LANE=s` → `gxprobe_s`. `.env.gates`(저장소 밖 · .gitignore)가 비밀번호를 준다.
+export GX_LANE="${GX_LANE:-}"
+if [ -z "${GX_PROBE_PASSWORD:-}" ] && [ -f "$REPO_ROOT/.env.gates" ]; then
+  # ⚠ 값을 출력하지 않는다. 이름만 저장소에 남는다 (D-204).
+  set -a; . "$REPO_ROOT/.env.gates" >/dev/null 2>&1 || true; set +a
+fi
+
+# env_require <환경 이름…> — 빠지면 **회색**을 내고 rc=2. 게이트는 `|| return 2`.
+env_require() {
+  local out rc miss
+  out=$($PY "$REPO_ROOT/scripts/gate_env.py" --require "$@" --quiet 2>&1); rc=$?
+  if [ $rc -eq 0 ]; then
+    printf '  %s%s 딛는 환경: %s — 다 있다%s\n' "$DIM" "$GATE_ENV_MARK" "$*" "$RST"
+    return 0
+  fi
+  printf '  %s%s 미비 — 딛는 환경: %s%s\n' "$DIM" "$GATE_ENV_MARK" "$*" "$RST"
+  echo "$out" | sed 's/^/        /'
+  miss=$(printf '%s' "$out" | sed -n 's/.*환경 미비: \([^*]*\)\*\*.*/\1/p' | head -1)
+  # ★ 회색의 사유는 **환경 이름**이다. 「못 잼」이라고만 적으면 무엇을 세워야 하는지
+  #   아무도 모르고, 모르는 빚은 갚히지 않는다 (P-12 ①).
+  skip "환경 미비 — ${miss:-판정 불가}" "(환경의 사실이다 · 제품의 빨강이 아니다 · P-70)"
+  return 2
+}
+
+# env_none <사유> — 딛는 환경이 없다고 **명시**한다. 적지 않은 것과 없는 것은 다르다.
+env_none() {
+  printf '  %s%s 딛는 환경 없음 — %s%s\n' "$DIM" "$GATE_ENV_MARK" "${1:-호스트 저장소 파일만 본다}" "$RST"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # GATE: secrets — .env* 에 실값 0개  (절대금지 #5)
 #
 # .env.example 한 장을 훑는 판정기. **게이트와 자기시험이 같은 것을 쓴다** —
@@ -200,6 +259,7 @@ PYEOF
 }
 
 gate_secrets() {
+  env_none "호스트 저장소의 .env.example · 스캐너 · git 이력만 본다"
   head_ "GATE secrets — .env.example 실값 검사"
   local files found=0
 
@@ -263,6 +323,7 @@ gate_secrets() {
 # GATE: bypass — performance_bypass_models 에 업무 모델 없음  (절대금지 #6)
 # ─────────────────────────────────────────────────────────────────────────────
 gate_bypass() {
+  env_require mount || return 2   # backend/common/base_model.py 를 읽는다
   head_ "GATE bypass — 권한 우회 목록 검사"
   local f="backend/common/base_model.py"
   [ -f "$f" ] || { fail "$f 없음"; return 1; }
@@ -358,6 +419,7 @@ REQUIRED_ISOLATION_MODELS=(Order Terminal StreamMonitor Dashboard Device
                            ChecklistSetting SurveillanceProfile Handover ReportTemplate)
 
 gate_isolation() {
+  env_require mount || return 2   # backend/tests 를 읽는다
   head_ "GATE isolation — 테넌트 격리 테스트"
   local f="backend/tests/test_tenant_isolation.py"
   if [ ! -f "$f" ]; then
@@ -407,6 +469,7 @@ gate_isolation() {
 # GATE: model-inheritance — 신규 Django 모델 BaseModelWithGroup 상속  (부록 A)
 # ─────────────────────────────────────────────────────────────────────────────
 gate_model_inheritance() {
+  env_require mount || return 2   # backend/**/models.py 를 읽는다
   head_ "GATE model-inheritance — 신규 모델 상속 검사"
   has_baseline || { skip "베이스라인 없음 — 신규/기존 구분 불가" "($(baseline_note))"; return 0; }
   local changed nchanged
@@ -485,6 +548,7 @@ PYEOF
 # GATE: ui-library — 신규 FE 파일에 MUI/Bootstrap 금지  (부록 A)
 # ─────────────────────────────────────────────────────────────────────────────
 gate_ui_library() {
+  env_require mount || return 2   # frontend/src 를 읽는다 — 유령 953의 자리
   head_ "GATE ui-library — 신규 FE 화면 AntD 전용"
   has_baseline || { skip "베이스라인 없음 — 신규/기존 구분 불가" "($(baseline_note))"; return 0; }
   local changed
@@ -519,6 +583,7 @@ gate_ui_library() {
 # 티켓의 reuse_targets 에 명시된 경로는 예외 (spec이 지목한 경우)
 # ─────────────────────────────────────────────────────────────────────────────
 gate_forbidden_zone() {
+  env_none "베이스라인 대비 git diff — 저장소 자체가 대상이다"
   head_ "GATE forbidden-zone — §0.4 금지구역 변경 검사"
   has_baseline || { skip "베이스라인 없음 — 변경분 판별 불가" "($(baseline_note))"; return 0; }
   local changed nchanged
@@ -598,6 +663,7 @@ baseline_note() {
 # 둘을 한 함수에 넣지 않는 이유는 실패 사유가 다르기 때문이다 — 한 칸에 두면
 # 빨간불의 뜻이 둘이 되고, 뜻이 둘인 빨간불은 읽히지 않는다.
 gate_deprecated_base() {
+  env_require mount || return 2   # backend 소스를 읽는다
   head_ "GATE deprecated-base — DEPRECATED 기저 클래스 상속 검사 (D-295)"
   local out rc
 
@@ -647,6 +713,7 @@ gate_deprecated_base() {
 #   셋 다 **화면은 멀쩡히 떠 있었다** — 캡처가 제목만 단언하므로 초록이 났다.
 #   단추를 누르는 사람만 아는 고장이고, 그 사람이 첫 근무일의 관제요원이다.
 gate_post_arg_style() {
+  env_require mount || return 2   # frontend/src 를 읽는다 — 유령 953의 자리
   local out rc nposts
   if out=$($PY scripts/verify_post_arg_style.py --self-test 2>&1); then
     pass "판정기 자기시험 통과 (양성 6 · 음성 5 — 출생 표본 셋 포함)"
@@ -672,6 +739,7 @@ gate_post_arg_style() {
 }
 
 gate_dormant() {
+  env_require mount || return 2   # backend 설정·celery 표를 읽는다
   head_ "GATE dormant — 잠자는 기능 래칫 (D-377 착시 ⑨)"
   local out rc
 
@@ -727,6 +795,7 @@ gate_dormant() {
 #   때려 보지 못한 것을 초록으로 적는 것이 이 게이트가 막으려는 바로 그 병이다(D-301).
 # ─────────────────────────────────────────────────────────────────────────────
 gate_route_alive() {
+  env_require mount session minio || return 2   # HTTP 로 때린다 · 컨테이너 위임 · 저장소
   head_ "GATE route-alive — 화면이 쓰는 라우트가 살아 있나 (D-386)"
   # ★ **출생 표본** (D-310) — `verify_route_alive.py::BIRTH_SAMPLE` 에 그날의 세 값이
   #   박혀 있다: GET · /api/dsm/events · **500** [실측 2026-09-12].
@@ -770,6 +839,7 @@ gate_route_alive() {
 #   U6 는 HTTP 로만 들어온다 — **함수는 문이 아니다**(착시 ⑨ 배선형).
 # ─────────────────────────────────────────────────────────────────────────────
 gate_contract_route_reach() {
+  env_require mount session || return 2   # HTTP 로 때린다 · 컨테이너 위임
   head_ "GATE contract-route-reach — 계약 진입면이 HTTP 로 닿나 (D-410)"
   local out rc
   if out=$($PY scripts/verify_contract_route_reach.py --self-test 2>&1); then
@@ -807,6 +877,7 @@ gate_contract_route_reach() {
 # ⚠ 두 면 중 프런트만 본다(호스트에서 도는 갈래). API 응답 갈래는 서버가 필요하고,
 #   그것은 컨테이너에서 `--api` 로 잰다 — **못 잰 것을 초록으로 세지 않는다.**
 gate_ui_secrets() {
+  env_require mount || return 2   # frontend/src 를 읽는다 — 유령 953의 자리
   # ★ **출생 표본** (D-310) — `verify_ui_secrets.py::BIRTH_SAMPLE` 에 그날 화면에
   #   실제로 떠 있던 문단의 첫 줄이 박혀 있다(상대사명 · 계약번호 · 조항).
   #   자기시험이 그 문자열을 못 잡으면 이 게이트는 시작하지 못한다.
@@ -839,6 +910,7 @@ gate_ui_secrets() {
 #   **새로 생기는 것**이다. 처음부터 exit 1 로 두면 사람이 게이트를 끄고,
 #   꺼진 게이트는 없는 게이트보다 나쁘다.
 gate_ui_copy() {
+  env_require mount || return 2   # frontend/src 를 읽는다 — 유령 953의 자리
   # ★ **출생 표본** (D-310) — `verify_ui_copy.py::BIRTH_SAMPLES` 셋이 그날 화면의
   #   제목과 문단 그대로다: 「UX-17 …」 · 「`response_state=occurred` 로 걸러 준 …」 ·
   #   「data_source = live」. 셋 중 하나라도 못 잡으면 자기시험이 빨개진다.
@@ -901,7 +973,12 @@ run_gate() {
   _dispatch_gate "$1" > "$log" 2>&1
   rc=$?
   cat "$log"
-  if ! grep -qF "$GATE_INPUTS_MARK" "$log"; then
+  # ★ [P-70 · 2026-09-06] **환경이 빠져 회색이 된 게이트는 건수를 말할 수 없다.**
+  #   잴 자리가 없어서 안 잰 것이지 「건수 없는 게이트」가 아니다. 그것을 빨강으로
+  #   바꾸면 환경 결함이 다시 제품 결함의 색을 입는다 — 이 절이 없애려던 바로 그 자리다.
+  if grep -qF "$GATE_ENV_MARK 미비" "$log"; then
+    :
+  elif ! grep -qF "$GATE_INPUTS_MARK" "$log"; then
     fail "게이트 '$1' 이 입력 건수를 말하지 않았다 ← D-301 (건수 없는 게이트는 게이트가 아니다)"
     rc=1
   fi

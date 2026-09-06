@@ -128,10 +128,26 @@ export function readPulse(payload: unknown): PulseView {
   return { understood: true, rows, total: rows.length };
 }
 
-export function useCameraPulse(refreshMs: number): Resource<PulseView> {
+/**
+ * 이 칸이 문을 부르는 **방법**. 기본은 로그인 세션이다.
+ *
+ * ★ [턴 G · 차선 C] 월 화면은 세션 없이도 뜬다(월 표시 토큰). 그때 이 칸이 부르는
+ *   요청기는 다른 것이어야 한다 — 로그인 자리와 머리글자를 **함께** 실으면 서버가
+ *   자격증명 둘로 보고 그 자리에서 거절한다. 그래서 부르는 법을 인자로 받는다.
+ *   ⚠ 훅 안에서 「월인가」를 스스로 판단하지 않는다. 그러면 이 칸이 화면의 모드를
+ *     알게 되고, 다음 화면이 이 훅을 쓸 때 그 판단이 조용히 따라간다.
+ */
+export type PulseFetcher = () => Promise<unknown>;
+
+const sessionFetcher: PulseFetcher = () => dsmGet<unknown>(CAMERA_PULSE_PATH);
+
+export function useCameraPulse(
+  refreshMs: number,
+  fetchRaw: PulseFetcher = sessionFetcher,
+): Resource<PulseView> {
   return useDsmResource<PulseView>(
-    async () => readPulse(await dsmGet<unknown>(CAMERA_PULSE_PATH)),
-    [],
+    async () => readPulse(await fetchRaw()),
+    [fetchRaw],
     { refreshMs },
   );
 }

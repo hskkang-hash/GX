@@ -1,0 +1,206 @@
+{
+  "captured_at": "2026-09-06T07:23:10",
+  "web": "http://127.0.0.1:3403",
+  "api": "http://localhost:8401",
+  "shots": [
+    {
+      "what": "토큰 없이 /wall",
+      "detail": "도착 http://127.0.0.1:3403/login · 월 화면 글자 없다",
+      "file": "/docs/agent/evidence/P-74/shots/wall_without_token.png"
+    },
+    {
+      "what": "토큰으로 /wall — 화면",
+      "detail": "도착 http://127.0.0.1:3403/wall · 「월 표시 토큰으로 열림」 있다",
+      "file": "/docs/agent/evidence/P-74/shots/wall_with_token.png"
+    },
+    {
+      "what": "토큰으로 /wall — 요청",
+      "detail": "머리글자를 실은 문 2건 · 200 2건 (['/api/dsm/cameras/pulse', '/api/dsm/events/queue'])",
+      "file": null
+    },
+    {
+      "what": "토큰으로 /wall — 세션",
+      "detail": "로그인 문을 **한 번도 안 불렀다** (세션을 안 세운다)",
+      "file": null
+    },
+    {
+      "what": "토큰으로 /wall — 자격증명 하나",
+      "detail": "머리글자와 로그인 자리를 함께 실은 요청 0건",
+      "file": null
+    },
+    {
+      "what": "U1 사이드바",
+      "detail": "/dsm/queue · 기다린 줄 3개 전부 있다",
+      "file": "/docs/agent/evidence/UX-25/shots/sidebar_U1_gxseed_u1_operator.png"
+    },
+    {
+      "what": "U2 사이드바",
+      "detail": "/dsm/queue · 기다린 줄 3개 전부 있다",
+      "file": "/docs/agent/evidence/UX-25/shots/sidebar_U2_gxseed_u2_manager.png"
+    },
+    {
+      "what": "U4 사이드바",
+      "detail": "/dsm/events · 기다린 줄 2개 전부 있다",
+      "file": "/docs/agent/evidence/UX-25/shots/sidebar_U4_gxseed_u4_official.png"
+    },
+    {
+      "what": "U5 사이드바",
+      "detail": "/dsm/system · 기다린 줄 3개 전부 있다",
+      "file": "/docs/agent/evidence/UX-25/shots/sidebar_U5_gxseed_u5_sysop.png"
+    },
+    {
+      "what": "U5 시스템 — 미선언 배지",
+      "detail": "「미선언」 없다 · 「서버 신호 대기」 있다 · 보존 선언 문을 1번 불렀다 [('GET', '/api/dsm/law/retention', 200)]",
+      "file": "/docs/agent/evidence/P-74/shots/u5_system_undeclared.png"
+    },
+    {
+      "what": "U5 시스템 — 빨강 배지 (응답 주입)",
+      "detail": "주입한 미선언 응답으로 「미선언」 떴다 · 「보관 기간이 선언되지 않았습니다.」 떴다 — **이 환경이 미선언이라는 뜻이 아니다**",
+      "file": "/docs/agent/evidence/P-74/shots/u5_system_undeclared_injected.png"
+    }
+  ],
+  "misses": [],
+  "wall_calls": [
+    {
+      "method": "GET",
+      "path": "/api/config-management/list-optimized",
+      "status": 200,
+      "wall_header": false,
+      "authorization": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/cameras/pulse",
+      "status": 200,
+      "wall_header": true,
+      "authorization": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/events/queue?limit=200",
+      "status": 200,
+      "wall_header": true,
+      "authorization": false
+    }
+  ],
+  "wall_page_errors": [],
+  "u5_calls": [
+    {
+      "method": "GET",
+      "path": "/api/config-management/list-optimized",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/get-user-detail/115",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-profiles/115/",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/?page_size=10000&current_page=1",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/get-user-detail/115",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/?page_size=10000&current_page=1",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/departments/?page_size=10000&current_page=1&group__id=4",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/menu/menus?page_size=10000",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/config-management/list-optimized",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/law/retention",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/ops/backup/declaration",
+      "status": 404
+    },
+    {
+      "method": "GET",
+      "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/menu/menus?page_size=10000",
+      "status": 200
+    }
+  ],
+  "u5_declared_here": true,
+  "u5_injected_body": "훈련 모드\n카메라 일괄 등록\n이번 달 사용량\n보존·백업 설정\nDashboard\nDelivery\nSurveillance\nDelivery Management\nGCS\nData Analysis\nDrones/Robots and Docking Station\nAsset\nDelivery Settings\nOperating Equipment\nOperator\nServer Monitoring\nUsage\nMetadata\nAdmin\n보존·백업 설정 — 선언하지 않으면 돌지 않습니다\n보존 일수와 백업은 코드가 정하지 않습니다. 선언한 사람과 환경이 있어야 돌아갑니다. 아래에 빨강 배지가 있으면 그 항목은 아직 아무도 정하지 않았고, 그 상태에서는 파기도 백업도 실행되지 않습니다.\n영상 보관 기간\n보관 기간\t\n미선언\n보관 기간이 지난 영상 지우기가 실행되지 않습니다.\n\n누가 정했나\t미선언\n자동으로 도는가\t돌지 않습니다\n보관 기간이 선언되지 않았습니다.\n선언하기 전에는 아무것도 지우지 않습니다. 지우는 쪽으로 틀리지 않기 위해서입니다.\n백업\n백업 목적지\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 일정\t\n서버 신호 대기\n이 값을 읽는 자"
+}

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""U1·U2·U4 역할 사람이 **지금 이 환경에 있는가** — 다섯 수를 잰다 (2026-09-04 · E3).
+"""U1·U2·U4·U5 역할 사람이 **지금 이 환경에 있는가** — 다섯 수를 잰다 (2026-09-04 · E3).
+
+★ [2026-09-06 · 턴 G] U5(`admin`)가 넷째로 들어왔다. 그 사람이 생기기 전까지
+  `verify_sidebar` 의 U5 사이드바 수는 **아무도 로그인해서 본 적 없는 재현**이었다.
 
     "첫 일: 시드 확장 — U2·U4 역할 사람 각 1명(`data_source=seed`)"
         — RESUME_NEXT 2026-09-04 §E3
@@ -19,10 +22,12 @@
 
 재는 것 다섯
 ------------
-  ① 시드 사람 3명 (U1·U2·U4) 이 있고 **표식 셋**을 다 갖췄는가
+  ① 시드 사람 4명 (U1·U2·U4·U5) 이 있고 **표식 셋**을 다 갖췄는가
   ② 각자의 역할이 정확히 하나이고, 기대한 코드인가
   ③ K3 가 그 사람에게 주는 프리셋이 기대값인가 (`matched=True`)
-  ④ K2 `critical` 수신자에 그 세 역할이 **각각 1명 이상** 잡히는가
+  ④ K2 `critical` 수신자에 **경보 자리로 선언한** 역할이 각각 1명 이상 잡히는가
+     — 선언은 `seed_role_users.SEED_PEOPLE["alarm_destination"]` 한 곳이다. 면제가
+       아니라 선언이고, 칸을 안 적으면 **엄한 쪽**(경보 자리)으로 본다
      — 「역할을 가진 사람이 있다」와 「알림이 그 사람에게 간다」는 다른 사실이다(D-301)
   ⑤ **첫 로그인 역할 매핑 경고**가 남아 있는가 (2026-09-24 추가)
      `get_preset` 은 매핑을 못 찾으면 `matched=False` 로 가장 좁은 화면에 떨어뜨리고
@@ -57,11 +62,17 @@ except (AttributeError, OSError):
 #: 이 상수는 커맨드 모듈을 못 읽었을 때의 마지막 그물이다.
 FALLBACK_EXPECT = (
     {"key": "U1", "username": "gxseed_u1_operator",
-     "role_code": "fire_user", "expect_preset": "OPERATOR"},
+     "role_code": "fire_user", "expect_preset": "OPERATOR",
+     "alarm_destination": True},
     {"key": "U2", "username": "gxseed_u2_manager",
-     "role_code": "fire_admin", "expect_preset": "MANAGER"},
+     "role_code": "fire_admin", "expect_preset": "MANAGER",
+     "alarm_destination": True},
     {"key": "U4", "username": "gxseed_u4_official",
-     "role_code": "view_only_-_anyang", "expect_preset": "EXECUTIVE"},
+     "role_code": "view_only_-_anyang", "expect_preset": "EXECUTIVE",
+     "alarm_destination": True},
+    {"key": "U5", "username": "gxseed_u5_sysop",
+     "role_code": "admin", "expect_preset": "MANAGER",
+     "alarm_destination": False},
 )
 FALLBACK_MARKER = "GX-SEED-ROLE"
 
@@ -121,12 +132,29 @@ def judge(found: dict, expect: tuple) -> list[tuple[str, bool, str]]:
     if by_role is None:
         out.append(("K2 수신자", False, "**못 쟀다** — K2 를 부르지 못했다"))
     else:
-        want = [s["role_code"] for s in expect]
+        # ★ **경보가 갈 자리로 선언된 역할만** 잰다 (2026-09-06 · 턴 G).
+        #
+        #   왜 「시드 역할 전부」가 아닌가: U5(`admin`)를 심자마자 이 줄이 빨개졌다.
+        #   K2 규칙 어디도 `admin` 을 가리키지 않기 때문이다. 그 빨강을 지우는 가장
+        #   빠른 길은 `admin` 에게 critical 규칙을 만드는 것이고, 그러면 **판정기가
+        #   알림 정책을 발명한다** — 재난 경보를 누가 받는지는 판정기가 정할 일이
+        #   아니다(D-264: 결함을 지우려고 결정을 뒤집지 않는다).
+        #
+        #   ⚠ 이것은 면제가 아니라 **선언**이다. 칸을 안 적은 역할은 종전대로
+        #     「경보가 갈 자리」로 본다 — 기본값이 엄한 쪽이어야 다음 사람이
+        #     칸을 빠뜨렸을 때 조용히 통과하지 않는다.
+        want = [s["role_code"] for s in expect
+                if s.get("alarm_destination", True)]
+        aside = [(s["role_code"], by_role.get(s["role_code"], 0)) for s in expect
+                 if not s.get("alarm_destination", True)]
         zero = [c for c in want if by_role.get(c, 0) < 1]
-        out.append(("K2 수신자", not zero,
-                    "critical 수신자 %d명 · %s" % (found.get("recipients_total", -1),
-                                                json.dumps(by_role, ensure_ascii=False))
-                    if not zero else
+        note = "critical 수신자 %d명 · %s" % (
+            found.get("recipients_total", -1),
+            json.dumps(by_role, ensure_ascii=False))
+        if aside:
+            note += " · 경보 자리가 **아니라고 선언한** 역할: %s" % ", ".join(
+                "%s(%d명)" % (c, n) for c, n in aside)
+        out.append(("K2 수신자", not zero, note if not zero else
                     "규칙은 있는데 **닿는 사람이 0명**인 역할: %s" % ", ".join(zero)))
 
     # ⑤ 매핑 경고 — **빠뜨린 것만** 센다 (㉡). ㉠·역할 0개는 아래에서 실측으로 찍는다.
@@ -312,6 +340,21 @@ def self_test() -> int:
     unreached = dict(good)
     unreached["recipients_by_role"] = {"operator": 12}
     r = judge(unreached, expect)
+    ok &= [p for _, p, _ in r] == [True, True, True, False, True]
+
+    # ── ④ 선언 갈래 — **경보 자리가 아니라고 선언한 역할**은 0명이어도 초록 ──
+    #   [출생 표본 2026-09-06] U5(`admin`)를 심자마자 ④가 빨개졌다. 그 빨강은
+    #   결함이 아니라 **물음이 틀린 것**이었다.
+    declared_aside = dict(good)
+    declared_aside["recipients_by_role"] = {
+        "fire_user": 1, "operator": 12, "fire_admin": 1, "view_only_-_anyang": 1}
+    r = judge(declared_aside, expect)          # expect 의 U5 는 alarm_destination=False
+    ok &= all(p for _, p, _ in r)
+    #: ⚠ 그리고 **선언하지 않으면 여전히 빨강이어야 한다** — 기본값이 엄한 쪽이다.
+    #:   이 줄이 없으면 「칸을 빠뜨리면 통과」가 되고, 그것이 곧 조용한 면제다.
+    unmarked = tuple({k: v for k, v in s.items() if k != "alarm_destination"}
+                     for s in expect)
+    r = judge(declared_aside, unmarked)
     ok &= [p for _, p, _ in r] == [True, True, True, False, True]
 
     # ── ⑤ 매핑 경고 — **㉠(선언된 결정)과 ㉡(빠뜨린 것)을 가르는가** ──────

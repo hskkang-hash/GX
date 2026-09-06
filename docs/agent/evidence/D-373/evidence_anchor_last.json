@@ -1,11 +1,11 @@
 {
-  "measured_at": "2026-09-04T07:39:50+00:00",
+  "measured_at": "2026-09-05T17:05:00+00:00",
   "verdict": "OK",
-  "day": "2026-09-03",
-  "anchor": "",
-  "anchor_line": "[LAW-08] 2026-09-03 증거 해시 앵커 — 그날 감사 기록 없음",
-  "total": 291,
-  "chained": 2,
+  "day": "2026-09-05",
+  "anchor": "0aad76b8c382022d8096352d053e32b53ca46b8646185b3cd80950cd179492de",
+  "anchor_line": "[LAW-08] 2026-09-05 증거 해시 앵커 SHA-256: 0aad76b8c382022d8096352d053e32b53ca46b8646185b3cd80950cd179492de",
+  "total": 382,
+  "chained": 93,
   "breaks": 0,
   "hashed_fields": [
     "id",

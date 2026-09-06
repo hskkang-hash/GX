@@ -371,6 +371,22 @@ def collect() -> dict:
     out["object_store"] = placed is not None
 
     saved = getattr(settings, retention.TENANT_RETENTION_SETTING, None)
+
+    #: ★ **전역 선언도 함께 꺼야 「미선언 테넌트」라는 표본이 생긴다** (P-67 · 2026-09-06).
+    #:
+    #:   [실측 2026-09-06] 이 판정기가 ⑤에서 빨개졌다 — 그런데 파기가 틀린 것이
+    #:   아니었다. 세종 판정 P-67 이 개발·스테이징에 **전역 보존 일수 30일을 선언**했고
+    #:   (`config/retention_seed.py`), 전역 선언은 **모든 테넌트를 선언된 것으로 만든다.**
+    #:   즉 이 도구가 만든 `gx-purge-probe-undeclared-*` 테넌트도 선언된 상태였고,
+    #:   그것을 지운 것은 **옳은 동작**이었다.
+    #:
+    #:   그러므로 여기서 고칠 것은 파기가 아니라 **표본을 만드는 손**이다: 미선언
+    #:   갈래를 재려면 선언을 **정말로** 없애야 한다. 안 그러면 이 칸은
+    #:   「파기가 선언을 지키는가」가 아니라 「이 환경에 전역 선언이 있는가」를 잰다.
+    saved_globals = {name: getattr(settings, name, None)
+                     for name in retention.SETTING_NAMES}
+    for name in retention.SETTING_NAMES:
+        setattr(settings, name, None)
     try:
         with transaction.atomic():
             g_declared = UserGroup._base_manager.create(
@@ -454,6 +470,10 @@ def collect() -> dict:
                 delattr(settings, retention.TENANT_RETENTION_SETTING)
         else:
             setattr(settings, retention.TENANT_RETENTION_SETTING, saved)
+        #: 전역 선언을 **원래대로 돌려놓는다.** 안 돌려놓으면 이 프로세스가 이어서
+        #: 하는 모든 일이 「보존 미선언」 위에서 돌고, 그것은 조용한 오염이다.
+        for name, value in saved_globals.items():
+            setattr(settings, name, value)
 
     #: ② 객체 — **행을 되돌린 뒤에도 바이트는 안 돌아온다.** 그것이 파기다.
     if placed:

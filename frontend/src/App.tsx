@@ -165,6 +165,7 @@ import { CustomRoutes } from './services/API';
 import BuildVersion from './features/dsm/components/BuildVersion';
 import { KICK_SENTENCE } from './features/dsm/constants/kick';
 import { dsm2Routes } from './features/dsm/routes';
+import { adoptWallToken } from './features/dsm/wallToken';
 import { ClearStoreOnRouteChange } from './utils/ClearStoreOnRouteChange';
 
 dayjs.extend(customParseFormat);
@@ -222,6 +223,10 @@ const DsmPrivacyRequests = lazy(
 );
 /** 턴 E · OPS-16 계량 표. */
 const DsmMetering = lazy(() => import('./features/dsm/pages/Metering'));
+/** 턴 G · P-67 보존·백업 선언 (U5 관리자). 미선언은 빨강으로 말한다. */
+const DsmSystemSettings = lazy(
+  () => import('./features/dsm/pages/SystemSettings'),
+);
 /**
  * 모바일 — 이동 중 수신 모드 (U3 · 차선 D).
  *
@@ -469,6 +474,20 @@ const PrivateLayout = () => {
 function App() {
   initialServices(import.meta.env.VITE_API_URL);
 
+  /*
+   * ★ P-74 — **월 표시 토큰을 라우터보다 먼저 받는다** (턴 G · 차선 C).
+   *
+   * 주소에 실려 온 토큰을 여기서 받아 적고 주소창에서 지운다. 라우터를 세운 뒤에
+   * 부르면 이미 관문이 한 번 판정한 뒤이고, 그러면 토큰을 들고 온 대형 화면이
+   * **로그인 화면으로 튕긴 다음에야** 토큰을 알게 된다.
+   *
+   * 돌려주는 값이 곧 갈래다: 토큰이 있으면 월 화면은 관문 **밖**에 선다.
+   * 무계정 링크 금지를 깨는 것이 아니다 — 월 표시 토큰은 서버가 서명해 발급하고
+   * 12시간 뒤 죽고 읽기 문 둘만 여는 **자격증명**이다. 없는 사람에게는 아무것도
+   * 열리지 않는다(아래 관문 안 갈래가 그대로 남아 있다).
+   */
+  const wallByToken = adoptWallToken();
+
   const router = createBrowserRouter([
     /**
      * UX-03 온보딩 — **관문 밖에 서는 유일한 화면.**
@@ -483,6 +502,32 @@ function App() {
      *   글자를 먼저 고른다. 그래도 **맨 앞에 둔다**: 순서를 외우는 것보다 안전하다.
      */
     { path: dsm2Routes.onboarding.path, element: <DsmOnboarding /> },
+    /*
+     * UX-24c 월 모드 — **월 표시 토큰이 있을 때만** 관문 밖에 선다.
+     *
+     * ⚠ 라우터는 먼저 선언된 자리를 고른다. 그래서 이 줄이 있으면 아래 관문 안의
+     *   같은 경로는 안 불린다 — 토큰이 없으면 이 줄 자체가 **없다**(빈 배열).
+     *   토큰 없이 `/wall` 을 열면 종전 그대로 관문이 판정하고 로그인으로 튕긴다.
+     */
+    ...(wallByToken
+      ? [
+          {
+            path: dsm2Routes.wall.path,
+            /*
+              ★ 버전 한 줄을 **함께** 세운다. P-59 는 「모든 화면이 자기 버전을
+                말한다」이고, 종전에는 관문 안에 한 번 두는 것으로 족했다. 이 갈래는
+                관문 밖이라 그 한 번이 안 닿는다 — 고객 지원이 「지금 무엇이 떠
+                있나」를 묻는 자리는 대형 화면에서도 똑같이 있다.
+            */
+            element: (
+              <>
+                <DsmWall />
+                <BuildVersion />
+              </>
+            ),
+          },
+        ]
+      : []),
     {
       element: <PublicRouter restricted={true} />,
       children: [
@@ -547,6 +592,12 @@ function App() {
               element: <DsmPrivacyRequests />,
             },
             { path: dsm2Routes.metering.path, element: <DsmMetering /> },
+            // ── 턴 G · P-67 보존·백업 선언 (U5) ─────────────────────────
+            //   ⚠ `/dsm/metering` 과 형제다. 변수 조각이 없으므로 삼키지 않는다.
+            {
+              path: dsm2Routes.systemSettings.path,
+              element: <DsmSystemSettings />,
+            },
             {
               path: CustomRoutes.dsm.eventDetail.path,
               element: <DsmEventDetail />,

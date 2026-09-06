@@ -57,6 +57,7 @@ import argparse
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -70,6 +71,13 @@ except (AttributeError, OSError):
 
 #: 목적지 볼륨. 차선 E3 의 접두(`e_`)를 꼬리에 단다 — 다른 차선의 것과 안 겹친다.
 DEST_VOLUME = "gx_backup_vault_e"
+
+#: 그 볼륨이 **컨테이너 안에서 붙는 자리.** 세종 판정 P-67 이 정했다(2026-09-06):
+#: 「목적지 **별도 볼륨 `/backup`**」. 그 전에는 `/vault` 였고 뜻은 같았는데,
+#: 이름이 두 벌이면 `settings.OPS_BACKUP_DIR` 이 가리키는 자리와 이 스크립트가
+#: 뜨는 자리가 갈린다 — 갈리면 「백업이 있다」와 「거기 있다」가 다른 말이 된다(D-369).
+#: ⚠ 이 경로는 `--rm` 컨테이너 **안**의 자리라서 호스트에는 없다. 실체는 볼륨이다.
+MOUNT_PATH = "/backup"
 
 #: **절대 목적지가 될 수 없는 볼륨.** DB 가 사는 곳에 그 DB 의 백업을 두지 않는다.
 FORBIDDEN_DEST = {"gx_pgdata"}
@@ -127,7 +135,7 @@ def judge(facts: dict) -> list[tuple[str, bool, str]]:
 # ═══════════════════════════════════════════════════════════════════════════
 def docker(*args: str, timeout: int = 900) -> tuple[int, str, str]:
     env = dict(os.environ)
-    env["MSYS_NO_PATHCONV"] = "1"           # Git Bash 가 /vault 를 C:\ 로 바꾸지 않게
+    env["MSYS_NO_PATHCONV"] = "1"           # Git Bash 가 /backup 을 C:\ 로 바꾸지 않게
     p = subprocess.run(["docker", *args], capture_output=True, text=True,
                        errors="replace", timeout=timeout, env=env)
     return p.returncode, p.stdout.strip(), p.stderr.strip()
@@ -262,15 +270,15 @@ def main() -> int:
     say("`aborting because of server version mismatch` 로 죽는다. 그래서 **DB 컨테이너와")
     say("같은 이미지**(`%s`)를 하나 띄워 그 안의 `pg_dump` 를 쓴다." % image)
     say()
-    dump_cmd = ("pg_dump -h %s -p %s -U %s -d %s -Fc -f /vault/%s"
+    dump_cmd = ("pg_dump -h %s -p %s -U %s -d %s -Fc -f %s/%s"
                 % (creds["DB_HOST"], creds.get("DB_PORT", "5432"),
-                   creds["DB_USER"], creds["DB_NAME"], fname))
+                   creds["DB_USER"], creds["DB_NAME"], MOUNT_PATH, fname))
     say("```")
-    say("docker run --rm --network %s -v %s:/vault \\" % (net, dest))
+    say("docker run --rm --network %s -v %s:%s \\" % (net, dest, MOUNT_PATH))
     say("    -e PGPASSWORD=**** %s \\" % image)
     say("    %s" % dump_cmd)
     rc, out, err = docker(
-        "run", "--rm", "--network", net, "-v", "%s:/vault" % dest,
+        "run", "--rm", "--network", net, "-v", "%s:%s" % (dest, MOUNT_PATH),
         "-e", "PGPASSWORD=%s" % creds["DB_PASSWORD"], image,
         "sh", "-c", dump_cmd)
     say("rc=%d" % rc)
@@ -290,13 +298,21 @@ def main() -> int:
     say("보는 것이 이 단계의 전부다.")
     say()
     say("```")
-    read_cmd = ("ls -l /vault/%s && sha256sum /vault/%s && "
-                "pg_restore --list /vault/%s | wc -l" % (fname, fname, fname))
-    say("docker run --rm -v %s:/vault %s sh -c '<ls · sha256sum · pg_restore --list | wc -l>'"
-        % (dest, image))
-    rc, out, err = docker("run", "--rm", "-v", "%s:/vault" % dest, image,
+    read_cmd = ("ls -l {m}/{f} && sha256sum {m}/{f} && "
+                "pg_restore --list {m}/{f} | wc -l".format(m=MOUNT_PATH, f=fname))
+    say("docker run --rm -v %s:%s %s sh -c '<ls · sha256sum · pg_restore --list | wc -l>'"
+        % (dest, MOUNT_PATH, image))
+    rc, out, err = docker("run", "--rm", "-v", "%s:%s" % (dest, MOUNT_PATH), image,
                           "sh", "-c", read_cmd)
     for line in (out or "").splitlines():
+        #: ⚠ `.gitleaks.toml` 의 `gx-agent-docs-hex` 는 `docs/agent/**` 의 32자 이상
+        #:   16진수를 **실값 인용**으로 본다. `sha256sum` 의 출력 줄에는 그 낱말이
+        #:   없으므로 그대로 적으면 게이트가 빨개진다 — 이 파일이 만든 증거가
+        #:   비밀 유출로 잡히는 것이다. 허용 표식은 **같은 줄의 `sha256`** 이다.
+        #:   [실측 2026-09-06] 앞 판의 증거 파일은 사람이 손으로 꼬리말을 붙여
+        #:   통과시키고 있었다 — 손에 맡긴 절차는 다음 실행에서 빠진다(D-286).
+        if re.fullmatch(r"[0-9a-f]{32,}\s+\S+", line.strip()):
+            line += "   # sha256sum 출력 — 내용 해시이지 자격증명이 아니다"
         say(line)
     if err:
         say(err.splitlines()[-1])

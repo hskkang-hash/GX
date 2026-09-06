@@ -89,7 +89,17 @@ class TurnedOnTasksActuallyRunTest(TestCase):
 
         payload = ops_audit_purge_beat()
         self.assertIn("verdict", payload)
-        self.assertIn(payload["verdict"], {"OK", "UNKNOWN", "ALARM", "SKIPPED"})
+        # ★ 2026-09-06 · P-67 — `SKIPPED_UNDECLARED` 가 늘었다. **보존 일수에
+        #   제품 기본값이 없어졌기 때문**이고, 선언 없는 환경(시험 DB 가 그렇다)에서
+        #   파기가 **안 도는 것이 옳은 답**이다. 이 목록에 안 넣으면 옳은 답이
+        #   빨강으로 나오고, 그 빨강을 「고치면」 기본값이 되살아난다.
+        self.assertIn(payload["verdict"],
+                      {"OK", "UNKNOWN", "ALARM", "SKIPPED", "SKIPPED_UNDECLARED"})
+        if payload["verdict"] == "SKIPPED_UNDECLARED":
+            # 건너뛴 것은 **왜 건너뛰었는지**를 말해야 한다 (D-290).
+            self.assertIn("reason", payload,
+                          "미선언이라 건너뛰었다면서 사유 칸이 없다 — "
+                          "「조용히 안 돈 것」과 구별되지 않는다")
         if payload["verdict"] == "OK":
             # 「돌았다」가 아니라 **「무엇을 했다」**를 말해야 한다 (D-290).
             for key in ("rows_before", "rows_after", "purged"):

@@ -134,6 +134,8 @@ SEED_PEOPLE = (
         "username": SEED_PREFIX + "u1_operator",
         "role_code": "fire_user",
         "expect_preset": "OPERATOR",
+        # ★ 경보가 **갈 자리**다. 아래 U5 와 가르는 칸이고, 판정기가 이 칸을 읽는다.
+        "alarm_destination": True,
         "display": "%s U1 관제요원(화재)" % SEED_NAME_PREFIX,
         "why": "화면 앞에 앉아 이벤트를 처리하는 사람. K3 OPERATOR 프리셋. "
                "★ 이 자리는 **경보가 갈 곳**이다 — K2 규칙 `critical/fire_user` 는 "
@@ -145,6 +147,7 @@ SEED_PEOPLE = (
         "username": SEED_PREFIX + "u2_manager",
         "role_code": "fire_admin",
         "expect_preset": "MANAGER",
+        "alarm_destination": True,
         "display": "%s U2 관제팀장/상황실장" % SEED_NAME_PREFIX,
         "why": "규칙·임계값·수신자를 정하는 사람. K3 MANAGER 프리셋(위젯 편집 4종)",
     },
@@ -153,8 +156,47 @@ SEED_PEOPLE = (
         "username": SEED_PREFIX + "u4_official",
         "role_code": "view_only_-_anyang",
         "expect_preset": "EXECUTIVE",
+        "alarm_destination": True,
         "display": "%s U4 재난안전과 담당 공무원" % SEED_NAME_PREFIX,
         "why": "열람 전용. K3 EXECUTIVE 프리셋 — 편집 위젯 0종이 정상이다",
+    },
+    {
+        "key": "U5",
+        "username": SEED_PREFIX + "u5_sysop",
+        "role_code": "admin",
+        # K3 는 운영자를 EXECUTIVE 가 아니라 **MANAGER** 로 본다 —
+        # 프리셋은 「권한의 높낮이가 아니라 범위의 넓이」이기 때문이다(k3_roles 머리말).
+        "expect_preset": "MANAGER",
+        # ★ **경보가 가는 자리가 아니다.** 그리고 이것은 면제가 아니라 **선언**이다.
+        #   [실측 2026-09-06 · 이 사람을 심자마자 `verify_seed_roles` ④가 빨개졌다]
+        #     「규칙은 있는데 닿는 사람이 0명인 역할: admin」
+        #   판정기는 시드 역할 넷 전부에 critical 수신자가 1명 이상 있기를 요구했다.
+        #   그 요구는 U1·U2·U4 에는 옳다 — 그 셋은 경보를 받아 움직이는 사람이다.
+        #   U5 는 시스템을 운영하는 사람이고, K2 규칙 어디도 `admin` 을 가리키지
+        #   않는다. 빨강을 지우는 가장 빠른 길은 `admin` 에게 critical 규칙을
+        #   하나 만드는 것인데, 그러면 **판정기가 알림 정책을 발명하게 된다** —
+        #   재난 경보를 누가 받는가는 시드가 정할 일이 아니다(D-264 와 같은 모양).
+        #   그래서 규칙을 만들지 않고 **이 칸으로 말한다.**
+        "alarm_destination": False,
+        "alarm_why": (
+            "K2 규칙 넷(fire_user·operator·fire_admin·view_only_-_anyang) 어디도 "
+            "admin 을 가리키지 않는다. 시스템 관리자는 경보를 받아 출동하는 사람이 "
+            "아니라 설정을 정하는 사람이다 — 받아야 한다면 그 판정은 세종의 것이지 "
+            "시드의 것이 아니다"
+        ),
+        "display": "%s U5 시스템 관리자" % SEED_NAME_PREFIX,
+        "why": (
+            "시스템을 운영하는 사람. 보존·백업 선언(P-67)과 사용자·역할이 이 자리다. "
+            "★ 왜 이 턴에 더했나 [실측 2026-09-05 · verify_sidebar]: U5 만 "
+            "**시드 계정이 없어서** 사이드바를 링크 표(ORM 재현)로만 쟀다. 그 재현이 "
+            "맞는지 아무도 확인한 적이 없었고, 판정기의 「두 눈 대조」는 U1·U2·U4 "
+            "셋에서만 돌았다. U5 의 70줄은 **아무도 눈으로 본 적 없는 수**였다. "
+            "이 사람이 생기면 그 수도 실제 로그인으로 재진다. "
+            "⚠ `admin` 은 **테넌트 역할**이지 전역 관리자가 아니다 — 이 계정도 "
+            "다른 시드와 똑같이 `is_superuser=False · is_staff=False` 로 만든다. "
+            "전역 관리자를 시드로 만들면 그 계정은 격리를 지나가고, 그때부터 "
+            "이 저장소의 테넌트 시험은 전부 의미를 잃는다"
+        ),
     },
 )
 

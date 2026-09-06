@@ -79,8 +79,23 @@ INBOUND_KEY_ALLOWED: frozenset[tuple[str, str]] = frozenset({
 #: ★ `item-types` 는 터지므로 데이터가 안 나가지만 **함께 올린다.** 한 자리를 막고
 #:   옆자리를 열면 사고는 그대로이고, 터지던 것이 고쳐지는 날 그 자리가 열린 채로 남는다.
 #: `backend/orders/` 는 §0.4 다 — 라우트를 고치지 않고 **우리 층에서 막는다**(D-357).
+#: ★ 2026-09-06 하나가 더 올랐다 (차선 V) — **터지는 바람에 안 보이던 자리다.**
+#: [실측 2026-09-06] `probe_authn_gap_calls.py` 가 이 자리를 `reached_no_data`(422)로 냈다.
+#: 422 는 **관문의 답이 아니라 스키마 검증의 답**이다 — 프로브가 필수 질의값을 안 줘서
+#: 났을 뿐이고, 익명은 이미 라우팅과 검증을 지나 **핸들러까지 닿아 있었다.**
+#: 값을 채워 다시 익명으로 불렀다:
+#:     GET /api/delivery/processing/get-drones-by-package-and-route-optimized
+#:         ?package_id=1&route_id=1   → **422** ·
+#:         본문: "type object 'ProcessingRepository' has no attribute
+#:                get_drones_by_operation_and_route_optimized"
+#: 즉 **데이터가 안 나가는 이유가 관문이 아니라 저장소 메서드가 없는 것**이다.
+#: 이 라우트는 `auth=` 도 `@path_permission` 도 없고(둘 다 없는 자리), 그 오타가
+#: 고쳐지는 날 익명에게 드론 목록(unit_id · 배터리 · 적재량 · 터미널명 · ETA)이 나간다.
+#: 위 `item-types` 와 **같은 사유로 같이 올린다** — 「터지니까 안전하다」는 관문이 아니다.
+#: `backend/delivery/` 는 §0.4 라 라우트 선언을 못 고친다 — 우리 층에서 막는다(D-348 · D-357).
 AUTHN_REQUIRED_PATHS: tuple[str, ...] = (
     "/api/delivery/drone-monitoring/drone-status",
+    "/api/delivery/processing/get-drones-by-package-and-route-optimized",
     "/api/delivery/etri-mock/test-scenarios",
     "/api/delivery/etri-mock/receive-delivery",
     "/api/orders/banks",

@@ -81,24 +81,36 @@ app.conf.beat_schedule = {
         "schedule": 300.0,
     },
     "ops-audit-purge-daily": {
-        # ★ 백업과 달리 **기본으로 켠다.** 보존기간의 답이 제품 안에 이미 있기 때문이다
-        #   (`System > security.audit_log_retention_days`, 기본 90일).
-        #   꺼 두면 **고객이 정한 보존기간이 아무 일도 하지 않는다** — 그것이 착시 ⑨ 다.
-        #   03:10 — 백업(03:30)보다 **앞이다.** 지우기 전의 상태가 백업에 담기면
-        #   정리와 백업이 서로를 되돌릴 수 없게 된다.
+        # ⛔ **여기 「기본 90일」이라고 적혀 있었다. 거짓이었다** (P-67 · 2026-09-06).
+        #   지우지 않고 남긴다: `AdminConfig::System` 에 `security.audit_log_retention_days`
+        #   가 **없었고**[실측 2026-09-05 OPS-07b · 재확인 09-06], 90은 dj-core
+        #   `purge_old_audit_logs` 의 **코드 기본값**이었다 — 아무도 정한 적이 없다.
+        #   즉 이 줄은 「고객이 정한 보존기간을 집행한다」가 아니라
+        #   **「아무도 안 정한 수로 감사 기록을 하드 삭제한다」**였다.
+        #
+        # ★ 지금은 `common.ops_audit_purge_beat` 가 **선언을 먼저 묻는다.**
+        #   미선언이면 dj-core 태스크를 **부르지 않는다**(호출 0) — 그리고
+        #   「미선언이라 건너뛴다」를 증거에 남긴다. 조용히 넘기지 않는다(D-290).
+        #
+        #   02:40 — 백업(03:00)보다 **앞이다.** 지우기 전의 상태가 백업에 담기면
+        #   정리와 백업이 서로를 되돌릴 수 없게 된다. (백업이 03:30 → 03:00 으로
+        #   당겨졌으므로 이 줄도 함께 당긴다 — 순서가 뜻이지 시각이 뜻이 아니다.)
         "task": "common.ops_audit_purge_beat",
-        "schedule": crontab(hour=3, minute=10),
+        "schedule": crontab(hour=2, minute=40),
     },
     "law02a-video-retention-sweep": {
         # ★ LAW-02a 영상 보존기간 집행 — **안내판에 인쇄되는 수가 여기서 참이 된다.**
-        #   03:20 — 감사 정리(03:10) 뒤, 백업(03:30) **앞**이다. 앞에 두는 이유는
-        #   ③이 적어 둔 것과 같다: 지우기 전의 상태가 백업에 담기면 정리와 백업이
+        #   02:50 — 감사 정리(02:40) 뒤, 백업(03:00) **앞**이다. 앞에 두는 이유는
+        #   위가 적어 둔 것과 같다: 지우기 전의 상태가 백업에 담기면 정리와 백업이
         #   서로를 되돌릴 수 없게 된다.
         #   ⚠ 이 줄을 지우면 「보관 기간이 지난 영상은 자동으로 지워집니다」가
         #     거짓이 된다. 지우려면 그 문장을 화면에서 함께 내려야 한다 —
         #     `retention.policy()['enforced']` 가 이 줄의 실재를 그대로 잰다.
+        #   ★ P-67 뒤로 `policy()['enforced']` 는 **두 조건이 다 참일 때만** 참이다:
+        #     이 줄이 있고(주기) 보존 일수가 선언돼 있을 것(수). 주기만 있고 수가
+        #     없으면 아무것도 안 지워지는데 「지워집니다」가 초록으로 나갔다.
         "task": "common.video_retention_sweep_beat",
-        "schedule": crontab(hour=3, minute=20),
+        "schedule": crontab(hour=2, minute=50),
     },
     "sec-key-rotation-watch-daily": {
         # SEC-07 — 돌려야 할 들어오는 키를 **말한다.** 돌리지는 않는다.
@@ -109,12 +121,30 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=3, minute=50),
     },
     "ops-backup-daily": {
-        # ★ 이 주기는 등록되지만 **태스크가 스스로 꺼져 있다**
-        #   (`OPS_BACKUP_SCHEDULE_ENABLED` 기본 False).
-        #   여기서 빼지 않고 등록해 두는 이유: 빼 두면 켜는 날 **아무도 이 자리를 못 찾는다.**
-        #   등록해 두면 「꺼져 있다」가 로그에 매일 한 줄로 보인다 — 조용한 부재보다 낫다(D-290).
+        # ★ **매일 03:00** — 세종 판정 P-67 이 정한 시각이다(2026-09-06).
+        #   그 전까지 이 줄은 03:30 에 있었고 **태스크가 스스로 꺼져 있었다**
+        #   (`OPS_BACKUP_SCHEDULE_ENABLED` 기본 False · `OPS_BACKUP_DIR` 빈 문자열).
+        #   그래서 「등록돼 있는데 백업이 한 번도 저장된 적 없다」였다 — OPS-19 가
+        #   태어난 자리이자 착시 ⑨(등록만 하고 안 도는 것)의 원형이다.
+        #
+        # ★ 지금 켜 주는 것은 코드의 기본값이 **아니다.** 개발·스테이징이 선언했다:
+        #   `backend/config/retention_seed.py` (켬 · 목적지 `/backup` · 보존 14일).
+        #   운영에서는 그 시드가 한 칸도 안 읽히므로 **여전히 꺼져 있고**, 그것이 옳다 —
+        #   「어디에 얼마나 오래 쌓을 것인가」는 고객이 U5 에서 정한다.
         "task": "common.ops_backup_beat",
-        "schedule": crontab(hour=3, minute=30),
+        "schedule": crontab(hour=3, minute=0),
+    },
+    "ops-restore-drill-weekly": {
+        # ★ **복구 시험 주 1회 자동** — 세종 판정 P-67 (2026-09-06).
+        #   「복구를 해 보지 않은 백업은 백업이 아니다」(D-354 ①)를 **주기로** 만든 자리다.
+        #   백업(03:00)에서 세 시간 뒤 일요일 06:00 — 그날치 백업이 다 뜬 뒤에 잰다.
+        #
+        # ⚠ 이 태스크는 **원본 DB 를 건드리지 않는다.** `restore_check_` 로 시작하는
+        #   임시 DB 에 되살리고 지운다(`scripts/ops_restore.py` 의 세 겹 안전장치와 같은 규약).
+        #   그리고 **RTO 를 분으로 재서 기록한다** — 「살아난다」만으로는 SLA 의
+        #   복구 목표(GX-LAW-05 · RTO 30분)를 약속할 수 없다.
+        "task": "common.ops_restore_drill_beat",
+        "schedule": crontab(hour=6, minute=0, day_of_week=0),
     },
     # ── 2파 (2026-09-24) — 차선 Q 가 함수를 짓고 조율자가 주기를 건다 ────────
     "ops14-heartbeat-digest": {

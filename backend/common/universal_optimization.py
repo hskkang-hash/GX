@@ -169,6 +169,35 @@ class UniversalOptimizer:
                            # 무효화 신호가 없다. 늦은 참은 이 도메인에서 거짓과 같은 값이다
         'link-state',      # 연계 상태 — 끊긴 뒤에도 붙어 있다고 말하는 것이 가장 나쁜 실패다
 
+        # ============ 바깥 소스를 읽는 자리 — 전수 훑기로 찾은 셋 (P-19 · 2026-09-06 차선 V) ==
+        # ★ [실측 2026-09-06] `should_cache_request` 의 술어 그대로 전수를 다시 셌다:
+        #   GET 328건 중 **캐시를 지나는 것 97건**(등재부에 있고 · 우회에 안 걸리는 것).
+        #   그 97건의 **핸들러 함수 본문**에서 바깥 의존까지의 호출 사슬을 따라간 결과,
+        #   아래 셋이 **바깥에서 바뀌는 것을 읽으면서 캐시를 지나고 있었다.**
+        #   `media-data`(D-412) 와 **같은 얼굴**이다 — 적중한 본문은 언제나 200 이므로
+        #   바깥이 죽어도 「가져왔다」고 말한다.
+        #
+        #     /api/checklist-setting
+        #         checklist_setting/views.py::ChecklistSettingController.list 이
+        #         `{FLIGHTBRID_URL}/api/drone/health/sensor-status/{device_id}` 를 부른다.
+        #         **드론 센서 건강**이 응답에 실린다 — 상태를 묻는 질문이다.
+        #     /api/dashboard/dashboard/check-health/{drone_id}
+        #         dashboard/services/dashboard_service.py::check_drone_health 가
+        #         `{FLIGHTBRID_URL}api/drone/health/hover-sensors/{unit_id}` 를 부른다.
+        #     /api/surveillance/surveillance-profiles/...
+        #         surveillance_profile_view.py::get_profile 이 FlightLogService 로
+        #         **비행 로그 원자료**를 끌어와 `minio_client.save_json` 으로 저장한다.
+        #         적중하면 그 저장이 **아예 일어나지 않고** 지난 본문이 나간다.
+        #         (같은 면의 `test-upload-profile-to-flightbird` 는 GET 인데 바깥으로
+        #          POST 한다 — 캐시되면 「시험했다」가 시험 없이 초록이 된다.)
+        #
+        # ⚠ 앞의 둘은 경로가 그 자리만 가리키지만, 셋째는 목록·상세가 같은 접두라
+        #   **면 전체**가 캐시 밖이 된다. `dsm/` 와 같은 판단이다: 늦은 참이 거짓과 같은
+        #   값인 도메인에서는 면 단위로 끊는다. 속도보다 **질문에 답하는 것**이 먼저다.
+        'checklist-setting',
+        'check-health',
+        'surveillance-profiles',
+
         # ============ TASK STATUS (MUST bypass - cần real-time progress) ============
         'task-status', 'upload-status', 'check-task',
         'job-status', 'background-task',
