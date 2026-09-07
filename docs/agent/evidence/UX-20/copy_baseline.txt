@@ -1,6 +1,3 @@
 # UX-20 제품 언어 — **오늘의 빚**. 줄이는 것만 허용한다 (래칫 · D-311).
 # 열쇠: 파일<TAB>패턴<TAB>발췌(공백 정규화). 줄 번호는 쓰지 않는다.
-# 잠근 날: 2026-09-06(턴 H · P-77 JSX 전수 파서로 다시 잼) · 2건 · 본 비율 100%
-
-frontend/src/features/dsm/pages/DrillMode.tsx	출처 칩	data_source =
-frontend/src/features/dsm/pages/FocusQueue.tsx	절 ID	— 위 두 수가 다른 것이 그 약속의 증거이고, F-14 통계는 왼쪽 수를 봅니다.
+# 잠근 날: 2026-09-06(턴 I) · 0건 · 본 비율 100%

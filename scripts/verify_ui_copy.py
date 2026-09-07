@@ -550,7 +550,7 @@ def main() -> int:
         BASELINE.parent.mkdir(parents=True, exist_ok=True)
         lines = ["# UX-20 제품 언어 — **오늘의 빚**. 줄이는 것만 허용한다 (래칫 · D-311).",
                  "# 열쇠: 파일<TAB>패턴<TAB>발췌(공백 정규화). 줄 번호는 쓰지 않는다.",
-                 f"# 잠근 날: 2026-09-06(턴 H · P-77 JSX 전수 파서로 다시 잼) · "
+                 f"# 잠근 날: 2026-09-06(턴 I) · "
                  f"{len(set(map(key, findings)))}건 · 본 비율 {ratio:.0%}",
                  ""]
         lines += sorted({key(f) for f in findings})
@@ -582,8 +582,13 @@ def main() -> int:
               "사전에 없는 문구는 만들지 않는다 (docs/design/GX-COPY_v1.md)")
         return 1
 
-    if not baseline:
-        print("[COPY] 기준선이 없다 — `--freeze` 로 오늘의 빚을 먼저 잠근다")
+    #: ★ [P-87 · 2026-09-06 턴 I] **「파일이 없다」와 「빚이 0이다」는 다른 칸이다.**
+    #:   여기가 `if not baseline:` 이었다 — 빚을 전부 갚고 기준선을 0건으로 잠그면
+    #:   그 순간 게이트가 「기준선이 없다 · 회색」을 냈다. 다 갚은 것이 못 잰 것과
+    #:   같은 칸에 들어간 것이다. 「없다」는 **파일의 부재**로만 판정한다.
+    if not BASELINE.exists():
+        print("[COPY] **판정 불가** — 기준선 파일이 없다 "
+              "(`--freeze` 로 오늘의 빚을 먼저 잠근다)")
         return 2
     print("[COPY] 통과 — 새로 생긴 대장 언어 0건")
     return 0

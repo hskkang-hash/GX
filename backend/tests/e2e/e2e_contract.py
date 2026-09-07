@@ -397,13 +397,21 @@ class StepLedger:
           않는다(D-274). 실측으로 그렇게 됐다: E2E-2 의 첫 증거가 4단계 중 잠긴 둘을
           지운 채 "2/2" 로 나왔다.
         """
-        scenario.evidence_dir.mkdir(parents=True, exist_ok=True)
-        path = scenario.evidence_dir / "steps.md"
-        body = self.render(scenario.steps)
-        path.write_text(
-            f"# {scenario.code} — {scenario.title}\n\n"
-            f"해금 단계 {len(scenario.active_steps)}/{len(scenario.steps)}\n\n"
-            f"```\n{body}\n```\n",
-            encoding="utf-8",
-        )
+        #: ★ [P-87 4 · 턴 I] **일부러 쓰는 자리는 이름을 대고 연다.**
+        #:   증거 폴더 격리 가드(`common.evidence_guard`)는 시험 중 `docs/agent/evidence/**`
+        #:   쓰기를 통째로 막는다 — 시험 DB 의 수가 운영 증거를 덮던 사고 때문이다.
+        #:   E2E 는 자기 증거를 남기는 것이 일이므로 예외이고, 그 예외는 환경변수가
+        #:   아니라 **여기 한 줄**로만 열린다(통째로 끄는 손잡이는 켜 둔 채 잊힌다).
+        from common.evidence_guard import allow_evidence_writes
+
+        with allow_evidence_writes(f"E2E {scenario.code} 단계표"):
+            scenario.evidence_dir.mkdir(parents=True, exist_ok=True)
+            path = scenario.evidence_dir / "steps.md"
+            body = self.render(scenario.steps)
+            path.write_text(
+                f"# {scenario.code} — {scenario.title}\n\n"
+                f"해금 단계 {len(scenario.active_steps)}/{len(scenario.steps)}\n\n"
+                f"```\n{body}\n```\n",
+                encoding="utf-8",
+            )
         return path

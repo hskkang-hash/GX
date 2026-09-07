@@ -303,6 +303,25 @@ API_CONTRACT_PROMOTE_PATHS = tuple(
         ",/api/advanced-table/,/api/config-management/,/api/user-groups/"
         ",/api/flight-log/,/api/departments/"
         ",/api/partner/,/api/third-api/"
+        # ★ [P-88 · 2026-09-07 턴 J · 조율자] **반경 1.** 접두는 `/api/devices/` 가
+        #   아니라 `/api/devices/devices-management` 다 — 세종이 이의 ②를 수용했다.
+        #   `/api/devices/` 를 켰다면 인벤토리 **66건**이 같이 뒤집힌다(cameras 9 ·
+        #   packaging-specifications 9 · libraries-management 7 · 부품표 5×6 …).
+        #   빨간 자리는 **1건**이고, 그 자리를 덮는 가장 작은 접두가 이것이다(11건).
+        #   「전/후 없이 켜지 않는다」를 지키려면 전/후를 잰 만큼만 켜야 한다.
+        #
+        #   전/후 [실측 2026-09-07 · 계정 `gxprobe_e2e` · 같은 요청]:
+        #     전  HTTP **200** + `{"success": false, "status_code": 403,
+        #         "message": "Permission denied."}`  → 화면은 **빈 표**를 그린다.
+        #         사람은 「자료가 없다」로 읽는다. 오류율 대시보드도 성공으로 센다(D-358)
+        #     후  HTTP **403**                        → 「볼 권한이 없습니다」
+        #
+        #   ★ 세 턴 동안 「거절 계정이 없어 못 잰다」고 적혀 있었다 — **있었다.**
+        #     `.env.gates` 의 `gxprobe_e2e`(route-alive 탐침)가 이 라우트에서
+        #     그대로 거절당한다. 없다고 적힌 것을 찾아보지 않은 것이 세 턴의 값이다.
+        #   ⚠ 되돌리기: 이 줄을 뺀다. 되돌릴 조건 — `/device` 화면에서 권한 거절이
+        #     **스피너 고착**으로 나타나면. 지금은 우리 층 전역 거절 처리기가 받는다.
+        ",/api/devices/devices-management"
         # ★ [SEC-11a · 2026-09-05 턴 F · 차선 S] 잔여 205 → 193.
         #   이 둘은 잔여 안에서 **우리가 읽을 수 있는 화면**이 부르는 유일한 자리다.
         #   승격을 정하기 전에 그 화면들의 오류 처리를 전부 읽었다 [실측]:
@@ -955,11 +974,12 @@ except Exception:                                   # noqa: BLE001
 #:   원인이 안 남는다. 위 두 주석(`x-no-cache` · 월 표시 토큰)이 적어 둔 함정이
 #:   그대로다.
 #:
-#:   ⚠ **서버는 아직 이 이름을 읽지 않는다.** 여기 올린 것은 「브라우저가 보내도
-#:     된다」까지이고, 같은 키로 두 번 온 요청을 하나로 접는 일은 **아직 없다.**
-#:     그 일이 서기 전까지 이중 제출을 막는 것은 화면 쪽뿐이다 —
-#:     `frontend/src/features/dsm/api.ts` 의 날아가는 약속 재사용.
-#:     허용 목록에 이름이 있다는 것과 그 규약이 산다는 것은 다른 사실이다.
+#:   ★ [P-87 · 2026-09-06 턴 I · 차선 C] **이제 서버가 이 이름을 읽는다.**
+#:     위 문단은 턴 H 까지 「서버는 아직 이 이름을 읽지 않는다」였고 그것이 참이었다.
+#:     `common/idempotency.py` 의 `@idempotent` 가 **판정·접수·회신·발송** 네 문에
+#:     붙었다 — 창 안의 같은 (사람·문·키) 는 손을 대지 않고 그때 준 답을 받는다.
+#:     허용 목록에 이름이 있다는 것과 그 규약이 산다는 것은 다른 사실이고,
+#:     지금은 **둘 다** 참이다.
 CORS_ALLOW_HEADERS = list(_cors_default_headers) + [
     "x-no-cache",
     _WALL_TOKEN_HEADER.lower(),

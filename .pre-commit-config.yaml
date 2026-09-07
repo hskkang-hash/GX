@@ -279,22 +279,46 @@ repos:
   # 같은 커밋에서 두 번 돌려 다른 수가 나오면, 그건 세는 도구가 아니라 추정하는 도구다.
   - repo: local
     hooks:
+      # ★ [실측 2026-09-07 · 턴 J] **훅을 나란히 돌리면 세션을 서로 빼앗는다.**
+      #   이 저장소는 동시 접속 1개다(UX-24 · §0.4). 아래 훅 둘은 안에서
+      #   `verify_ga_readiness` 를 부르고, 그것은 다시 로그인하는 판정기 여섯을 부른다.
+      #   pre-commit 은 훅을 병렬로 돌리므로 **손으로 부르면 초록, 훅이 부르면 빨강**이
+      #   났다 — 갈린 것은 제품이 아니라 **누가 먼저 세션을 잡았는가**다.
+      #   `require_serial` 이 그 자리다. 판정기는 한 자도 안 고친다.
       - id: gx-measure-repro
         name: 측정 재현성 검사 (D-344)
         entry: python scripts/verify_measure_repro.py
         language: system
         pass_filenames: false
+        require_serial: true
         files: '^scripts/(probe|verify)_.*\.py$'
 
   # ── D-346: 상용 오픈 기준 ──────────────────────────────────────────────
   # 계약 39절을 다 채워도 상용은 절반이다. 증명 없는 칸은 '구현' 으로 적을 수 없다.
   - repo: local
     hooks:
+      # ★ [2026-09-07 · 턴 I] **불일치는 커밋을 막고, 「못 쟀다」는 막지 않는다** (P-70).
+      #   차선 S 가 이 판정기에 대장↔게이트 대조를 넣으면서 exit 2(회색)가 생겼다.
+      #   회색의 사유는 지금 PERF-04 하나이고 그것은 제품이 아니라 환경이다
+      #   (`runserver` 한 프로세스라 꼬리 잡음 27~55% > 문턱 20% · gunicorn+nginx 뒤에 뜻이 선다).
+      #   그대로 두면 **환경이 낫기 전까지 이 저장소는 아무것도 커밋할 수 없다.**
+      #   그런 빨강을 몇 번 본 사람은 훅을 끄고, 꺼진 훅은 아무것도 안 지킨다(D-353).
+      #   그래서 **판정기는 그대로 회색을 낸다**(손으로 부르면 여전히 exit 2) —
+      #   막는 자리만 좁힌다: **exit 1(대장과 게이트의 색이 갈렸다)일 때만 멈춘다.**
+      #   ⚠ 회색을 초록이라고 말하는 것이 아니다. 회색 줄은 그대로 출력에 남고,
+      #     사람이 그것을 읽는다. 막지 않을 뿐이다.
+      # ★ [실측 2026-09-07 · 턴 J] **훅을 나란히 돌리면 세션을 서로 빼앗는다.**
+      #   이 저장소는 동시 접속 1개다(UX-24 · §0.4). 아래 훅 둘은 안에서
+      #   `verify_ga_readiness` 를 부르고, 그것은 다시 로그인하는 판정기 여섯을 부른다.
+      #   pre-commit 은 훅을 병렬로 돌리므로 **손으로 부르면 초록, 훅이 부르면 빨강**이
+      #   났다 — 갈린 것은 제품이 아니라 **누가 먼저 세션을 잡았는가**다.
+      #   `require_serial` 이 그 자리다. 판정기는 한 자도 안 고친다.
       - id: gx-ga-readiness
         name: 상용 오픈 기준 8영역 검사 (D-346)
-        entry: python scripts/verify_ga_readiness.py
+        entry: bash -c 'python scripts/verify_ga_readiness.py; rc=$?; if [ "$rc" = "1" ]; then exit 1; fi; if [ "$rc" != "0" ]; then echo "[HOOK] 위는 회색(exit $rc)이다 — 커밋을 막지 않는다(P-70). 초록이라는 뜻이 아니다."; fi; exit 0'
         language: system
         pass_filenames: false
+        require_serial: true
         files: '^docs/agent/evidence/(D-346|D-309|DA-05)/.*$'
 
   # ── D-347: 피드백 콘솔 화면 ────────────────────────────────────────────

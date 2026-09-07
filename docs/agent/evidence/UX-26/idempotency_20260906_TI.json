@@ -1,0 +1,82 @@
+{
+ "api": "http://127.0.0.1:8300",
+ "login_status": 200,
+ "measured_at": "2026-09-06T20:29:49",
+ "events_seen": 22,
+ "A_notify": {
+  "door": "POST /api/dsm/events/{id}/notify",
+  "row_table": "stream_monitors.DeliveryRecord",
+  "skipped": [
+   {
+    "event_id": 4798,
+    "status": 200,
+    "total": 0,
+    "why": "F-04 5분 억제 또는 수신자 0 — 행이 안 늘어 대조군이 안 선다"
+   },
+   {
+    "event_id": 4799,
+    "status": 200,
+    "total": 0,
+    "why": "F-04 5분 억제 또는 수신자 0 — 행이 안 늘어 대조군이 안 선다"
+   },
+   {
+    "event_id": 4800,
+    "status": 200,
+    "total": 0,
+    "why": "F-04 5분 억제 또는 수신자 0 — 행이 안 늘어 대조군이 안 선다"
+   },
+   {
+    "event_id": 4801,
+    "status": 200,
+    "total": 0,
+    "why": "F-04 5분 억제 또는 수신자 0 — 행이 안 늘어 대조군이 안 선다"
+   }
+  ],
+  "event_id": 4802,
+  "idempotency_header_sent": "gx-TI-c-notify-4802-1788701388",
+  "first": {
+   "status": 200,
+   "total": 15
+  },
+  "second": {
+   "status": 200,
+   "total": 15
+  },
+  "rows_before": 137,
+  "rows_after_first": 152,
+  "rows_after_second": 152,
+  "delta_same_key_total": 15,
+  "same_body_replayed": false
+ },
+ "B_field_reply": {
+  "door": "POST /api/dsm/events/{id}/field-reply",
+  "row_source": "GET /api/dsm/events/{id}/field-replies -> total",
+  "event_id": 4798,
+  "idempotency_header_sent": "gx-TI-c-reply-4798-1788701388",
+  "rows_before": 4,
+  "same_key_first": {
+   "status": 200,
+   "reply_id": 163817,
+   "rows_after": 5,
+   "delta": 1
+  },
+  "same_key_second": {
+   "status": 200,
+   "reply_id": 163817,
+   "rows_after": 5,
+   "delta": 0
+  },
+  "same_body_replayed": true,
+  "control_other_key": {
+   "status": 200,
+   "rows_after": 6,
+   "delta": 1
+  },
+  "control_no_header": {
+   "status": 200,
+   "rows_after": 7,
+   "delta": 1
+  },
+  "total_delta_4_calls": 3
+ }
+}

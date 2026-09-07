@@ -92,6 +92,20 @@ def cited_paths(text: str) -> list[str]:
     return out
 
 
+#: 이름만 적힌 도구를 저장소 안에서 한 번 더 찾는다. 첫 하나만 돌려준다 —
+#: 여럿이면 대장이 애매한 것이고, 그것도 사람이 고칠 자리다.
+def _by_basename(path: str) -> str:
+    name = path.rsplit("/", 1)[-1]
+    if not name or name.startswith("*"):
+        return ""
+    for hit in sorted(ROOT.rglob(name)):
+        if any(part in (".git", "node_modules", "__pycache__", ".venv")
+               for part in hit.parts):
+            continue
+        return hit.relative_to(ROOT).as_posix()
+    return ""
+
+
 def judge(dec: dict) -> list[str]:
     """결정문 하나에 대한 문제 목록. 빈 목록이면 통과."""
     did = dec.get("id", "?")
@@ -123,11 +137,27 @@ def judge(dec: dict) -> list[str]:
         #   D-286 이 막으려던 "문서로만 있는 절차" 그 자체다.
         if path.startswith("docs/"):
             continue
-        if not (ROOT / path).exists():
+        if (ROOT / path).exists():
+            continue
+        #: ★ [실측 2026-09-06 · 턴 I] **없는 것과 경로가 안 적힌 것은 다르다.**
+        #:   대장은 오래도록 맨 파일이름만 적어 왔다(`test_api_contract.py :: 31건`).
+        #:   그 파일은 `backend/tests/` 에 **실재한다.** 그런데 이 판정기는 뿌리 기준
+        #:   경로만 보고 「없는 도구는 문서다」를 냈다 — **있는 도구를 없다고 말하는
+        #:   빨강**이다. 그런 빨강을 몇 번 본 사람은 이 게이트를 끈다(D-353).
+        #:   그래서 이름으로 한 번 더 찾는다. 어디에도 없으면 그때가 진짜 빨강이다.
+        #:   ⚠ 느슨해진 것이 아니다: **하나도 못 찾으면 여전히 빨강**이고,
+        #:     찾았을 때는 **어디서 찾았는지**를 말해 다음 사람이 대장을 고칠 수 있게 한다.
+        found = _by_basename(path)
+        if found:
             problems.append(
-                f"{did}: `enforced_by` 가 가리킨 {path} 가 저장소에 없다 — "
-                f"없는 도구는 문서다"
+                f"{did}: `enforced_by` 가 **경로 없이** {path} 라고만 적었다 — "
+                f"실물은 {found} 다. 대장의 경로를 그것으로 고쳐라 (없는 것이 아니라 못 찾는 것)"
             )
+            continue
+        problems.append(
+            f"{did}: `enforced_by` 가 가리킨 {path} 가 저장소에 없다 — "
+            f"없는 도구는 문서다"
+        )
     return problems
 
 

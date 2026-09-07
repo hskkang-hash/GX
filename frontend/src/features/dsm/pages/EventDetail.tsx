@@ -35,7 +35,7 @@ import { Main } from 'rj-core';
 import {
   dsmEndpoint,
   dsmGet,
-  dsmPost,
+  dsmPostOnce,
   dsmPostQuery,
   dsmPostQueryOnce,
   intentKey,
@@ -112,7 +112,13 @@ export default function EventDetail() {
     if (!id) return;
     setSending(true);
     try {
-      await dsmPost(dsmEndpoint.notify(id));
+      // ★ **마지막으로 남아 있던 이중 제출의 문** (P-87 · 턴 I · 차선 C).
+      //   판정·접수·회신 셋은 턴 H 에 멱등 키를 받았는데 **발송만 맨몸이었다.**
+      //   그리고 이 문은 누를 때마다 `DeliveryRecord` **행을 만든다** — 두 번 누르면
+      //   같은 사람에게 두 통이 가고, 발송 이력에 같은 발송이 두 줄로 남는다.
+      //   창 안의 같은 의도는 같은 답을 받는다. 서버도 이 키를 읽는다
+      //   (`backend/common/idempotency.py` · `dsm.events.notify`).
+      await dsmPostOnce(dsmEndpoint.notify(id), {}, intentKey(`notify:${id}`));
       // ★ 「보냈다」가 아니라 **「발송을 요청했다」**고 말한다. 성공 여부는 아래
       //   이력이 말한다 — 실패도 200 이고, 실패는 행으로 보인다 (F-10).
       message.info('발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.');

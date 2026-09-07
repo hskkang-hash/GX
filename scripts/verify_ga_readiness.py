@@ -18,6 +18,29 @@
   ⑤ '잠김' 의 blocker id 가 `DA-05/blockers.yaml` 에 실재하는가
   ⑥ '미착수'·'미측정' 에 사유가 있는가 (사유 없는 빈칸은 잊은 것과 구별되지 않는다)
   ⑦ 영역 ①은 **계약 절 대장에서 파생**한다 — 절 상태를 두 곳에 적지 않는다
+  ⑧ ★★ **대장 상태와 게이트 색이 같은가** (P-85 · 2026-09-06 턴 I) — 아래를 보라
+
+★★ P-85 [세종 판정 2026-09-06 · 턴 I] — **대장 상태와 게이트 색은 같아야 한다**
+------------------------------------------------------------------------------
+출생 표본은 `SEC-18` 이다. `scripts/verify_prod_settings.py` 가 **5/5 초록**을 내고
+있는데 대장의 그 자리는 **미착수**였다. 아무 색도 안 났다 — 이 판정기가 절의 *모양*
+(상태·증명·사유)만 보고 그 절이 가리키는 **게이트를 부르지 않았기** 때문이다.
+
+    갈리는 방향은 둘이다. 둘 다 exit 1 이다.
+
+    ① 게이트 **초록** · 대장 **미구현**  → 다 해 놓고 안 적었다.
+       수가 실제보다 **낮게** 나가고, 낮은 수를 보는 사람은 이미 닫힌 것을 또 연다
+    ② 대장 **구현** · 게이트 **빨강**   → 적어 놓고 무너졌다. **이쪽이 더 나쁘다** —
+       대장이 「닫혔다」고 말하는 동안 그 자리는 열려 있다
+
+그래서 절마다 `gate:` 칸에 **그 절을 지키는 판정기의 이름**을 적고, 이 판정기가
+그것을 실제로 **부른다**(읽어서 답하지 않는다 · D-210).
+
+    exit 0 초록 · exit 1 빨강 · exit 2 **회색**(못 쟀다 — 컨테이너가 필요한 게이트 등)
+
+회색은 갈림으로 세지 않는다. 대신 **몇 개를 못 쟀는지 말한다** — 「검사 못함」과
+「0건 검사」를 가르는 그 규칙 그대로다(D-301). 못 부른 것을 초록으로 세면 이 검사
+자체가 거짓 초록이 된다.
 
 ★ 출생 표본 (D-310)
 -------------------
@@ -38,8 +61,11 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
+import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import yaml
@@ -111,6 +137,12 @@ def judge_clause(clause: dict, *, exists, blocker_ids: set[str]) -> list[str]:
         elif blocker not in blocker_ids:
             out.append("%s: blocker «%s» 가 잠금 대장에 없다" % (cid, blocker))
 
+    #: ★ P-85 — `gate:` 는 **그 절을 지키는 판정기의 이름**이다. 없는 이름을 적으면
+    #:   불일치 검사가 그 절을 조용히 건너뛰고, 건너뛴 절은 지켜지는 것처럼 보인다.
+    gate = (clause.get("gate") or "").strip()
+    if gate and not exists(gate):
+        out.append("%s: gate 가 가리킨 «%s» 가 없다 — 없는 판정기는 아무것도 안 지킨다" % (cid, gate))
+
     if status in NEEDS_WHY and not (clause.get("why") or "").strip():
         out.append("%s: '%s' 인데 사유가 없다 — 잊은 것과 구별되지 않는다" % (cid, status))
 
@@ -118,6 +150,180 @@ def judge_clause(clause: dict, *, exists, blocker_ids: set[str]) -> list[str]:
     blocker = (clause.get("blocker") or "").strip()
     if blocker and blocker not in blocker_ids:
         out.append("%s: blocker «%s» 가 잠금 대장에 없다" % (cid, blocker))
+    return out
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ⑧ 대장 ↔ 게이트 불일치 (P-85)
+# ═══════════════════════════════════════════════════════════════════════════
+
+#: 게이트 하나에 주는 시간. 넘으면 **회색**이다 — 죽은 게이트를 초록으로 세지 않는다.
+#: ⚠ 짧게 두는 이유: 이 검사가 느리면 사람이 `--no-gates` 로 끄고, 꺼진 게이트는
+#:   아무것도 안 지킨다(D-353). 다른 게이트를 **또 부르는** 게이트(예:
+#:   `verify_measure_repro.py`)는 여기서 가리키지 않는다 — 그것 하나가 4분을 먹었다.
+GATE_TIMEOUT_S = 120
+
+#: 자기 자신은 부르지 않는다. 부르면 무한히 자기를 부른다.
+GATE_SELF = "scripts/verify_ga_readiness.py"
+
+GATE_GREEN, GATE_RED, GATE_GREY = 0, 1, 2
+
+
+def judge_gate_alignment(cid: str, status: str, rc, gate: str) -> str | None:
+    """대장의 상태와 게이트의 색이 갈리는가. **판정식은 여기 한 곳에만 둔다** (D-212).
+
+    rc 가 None 이거나 2 면 **못 쟀다**(회색) — 갈림이 아니다. 회색을 갈림으로 세면
+    컨테이너가 없는 자리마다 빨강이 서고, 그런 빨강을 몇 번 본 사람은 게이트를 끈다(D-353).
+    """
+    if rc is None or rc == GATE_GREY:
+        return None
+    if rc == GATE_GREEN and status != DONE:
+        return ("%s: 게이트 «%s» 가 **초록**인데 대장은 '%s' 다 — 다 해 놓고 안 적었다. "
+                "수가 실제보다 낮게 나가고, 낮은 수를 보는 사람은 이미 닫힌 것을 또 연다 (P-85)"
+                % (cid, gate, status))
+    if rc == GATE_RED and status == DONE:
+        return ("%s: 대장은 '구현' 인데 게이트 «%s» 가 **빨강**이다 — 적어 놓고 무너졌다. "
+                "대장이 「닫혔다」고 말하는 동안 그 자리는 열려 있다 (P-85)"
+                % (cid, gate))
+    return None
+
+
+#: ★ [실측 2026-09-06 · 턴 I · 조율자] **호스트에서 부르면 넷이 회색이었다.**
+#:   첫 실행에서 못 잰 6절 중 넷(`verify_purge` · `verify_alarm_budget` ×2 ·
+#:   `verify_camera_pulse`)이 낸 마지막 줄은 판정이 아니라 **사용법 안내**였다:
+#:   「컨테이너 안에서 DJANGO_SETTINGS_MODULE 를 주고 돌린다」. Django 가 필요한
+#:   판정기이고 호스트에는 dj-core 가 없다 — 그것은 제품의 회색이 아니라 **부르는
+#:   자리를 틀린 회색**이다. 회색 여섯을 그대로 두면 P-85 는 그 여섯 절에서
+#:   **아무것도 대조하지 않는다** — 대조하지 않는 검사가 초록처럼 보이는 자리다.
+#:   그래서 그 자리를 이 저장소의 기존 문으로 넘긴다(`verify_route_alive` 와 같은 위임).
+#:   ⚠ 비밀번호는 **이름만** 넘긴다 — `docker exec -e NAME`(값 없이)은 제 환경에서
+#:     값을 가져가므로 프로세스 목록에 안 남는다.
+NEEDS_DJANGO = (
+    "verify_purge.py", "verify_alarm_budget.py", "verify_camera_pulse.py",
+    "verify_migrations.py", "verify_minio.py", "ops_alert_routing.py",
+)
+PASS_BY_NAME = ("MINIO_ENDPOINT", "MINIO_ACCESS_KEY", "MINIO_SECRET_KEY",
+                "MINIO_ROOT_USER", "MINIO_ROOT_PASSWORD", "MINIO_BUCKET_NAME")
+
+
+#: ★ [실측 2026-09-07 · 턴 I · 조율자] **판정기가 부르는 사람의 셸에 기대고 있었다.**
+#:   컨테이너로 넘기는 판정기들은 MinIO 자격증명과 차선 이름을 환경에서 받는데,
+#:   그 값을 **부르는 사람이 export 해 주어야** 했다. 손으로 부르면 초록, pre-commit
+#:   훅이 부르면 회색 — **같은 나무인데 부르는 자리에 따라 색이 달랐다.**
+#:   회색은 초록이 아니므로 훅은 옳게 멈췄지만, 멈춘 이유는 제품이 아니라 환경이다(P-70).
+#:   값이 사는 자리는 저장소 밖 한 곳이다 — 여기서 **직접 읽는다.**
+#:   ⚠ 이미 환경에 있는 값은 덮지 않는다(CI 가 준 값이 파일에 지면 안 된다).
+_LOCAL_ENV_FILES = (".env.gates", ".env.local", ".env")
+_LOCAL_ENV_KEYS = ("GX_API", "GX_ROUTE_CONTAINER", "GX_ROUTE_USER", "GX_ROUTE_PASSWORD",
+                   "GX_PROBE_USER", "GX_PROBE_PASSWORD", "GX_SEED_ROLE_PASSWORD",
+                   "MINIO_ENDPOINT", "MINIO_ACCESS_KEY", "MINIO_SECRET_KEY",
+                   "MINIO_ROOT_USER", "MINIO_ROOT_PASSWORD", "MINIO_BUCKET_NAME")
+
+
+def _load_local_env() -> None:
+    for name in _LOCAL_ENV_FILES:
+        f = ROOT / name
+        if not f.is_file():
+            continue
+        try:
+            text = f.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for line in text.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            k = k.strip()
+            if k in _LOCAL_ENV_KEYS and not os.environ.get(k):
+                os.environ[k] = v.strip().strip('"').strip("'")
+    #: MinIO 는 저장소 안에서 이름이 둘이다(`ROOT_USER` 는 compose 가 읽고
+    #: `ACCESS_KEY` 는 판정기가 읽는다). 한 자리에서 이어 준다 — 두 벌은 어긋난다(D-369).
+    if not os.environ.get("MINIO_ACCESS_KEY") and os.environ.get("MINIO_ROOT_USER"):
+        os.environ["MINIO_ACCESS_KEY"] = os.environ["MINIO_ROOT_USER"]
+    if not os.environ.get("MINIO_SECRET_KEY") and os.environ.get("MINIO_ROOT_PASSWORD"):
+        os.environ["MINIO_SECRET_KEY"] = os.environ["MINIO_ROOT_PASSWORD"]
+    os.environ.setdefault("MINIO_ENDPOINT", "minio:9000")
+    #: 게이트를 **전수로** 부르는 자리는 검증 차선(V)이다 — 「다섯째 이름」(P-70).
+    #: 이 이름이 없으면 세션 판정기가 「차선 전용 계정이 아니다」로 회색을 낸다.
+    if not os.environ.get("GX_LANE") and os.environ.get("GX_PROBE_USER", "").endswith("_v"):
+        os.environ["GX_LANE"] = "v"
+
+
+def _container() -> str:
+    return os.environ.get("GX_ROUTE_CONTAINER", "").strip()
+
+
+def run_gate(rel: str) -> tuple[int | None, str]:
+    """게이트를 **부른다** — 읽어서 답하지 않는다 (D-210). (종료코드, 마지막 줄)."""
+    path = ROOT / rel
+    if not path.exists():
+        return None, "그 파일이 없다"
+    env = dict(os.environ, PYTHONIOENCODING="utf-8")
+    name = rel.rsplit("/", 1)[-1]
+    cont = _container()
+    if name in NEEDS_DJANGO and cont:
+        #: 컨테이너의 WORKDIR 은 `/app`(=호스트 `backend/`)이고 판정기는 `/repo/scripts`
+        #: 에 붙는다. `cd /repo` 로 부르면 `config`·`tests` 를 못 찾는다(마운트가 셋이라
+        #: `/repo/backend` 와 `/app` 이 같은 디렉터리인데 경로가 다르다).
+        cmd = ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=config.settings",
+               "-e", "PYTHONIOENCODING=utf-8"]
+        for k in PASS_BY_NAME:
+            cmd += ["-e", k]
+        cmd += [cont, "python", "/repo/" + rel]
+    else:
+        cmd = [sys.executable, str(path)]
+    try:
+        done = subprocess.run(
+            cmd, cwd=str(ROOT), env=env,
+            capture_output=True, timeout=GATE_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return None, "%d초 안에 안 끝났다" % GATE_TIMEOUT_S
+    except OSError as exc:                                   # noqa: BLE001
+        return None, "부르지 못했다: %s" % exc
+    text = (done.stdout or b"").decode("utf-8", "replace").strip().splitlines()
+    return done.returncode, (text[-1][:120] if text else "")
+
+
+def collect_gates(areas: list[dict]) -> list[tuple[str, str, str]]:
+    """(절 id, 상태, 게이트 경로) — `gate:` 를 적은 절만."""
+    out = []
+    for area in areas:
+        for clause in (area.get("clauses") or []):
+            gate = (clause.get("gate") or "").strip()
+            if gate:
+                out.append(((clause.get("id") or "?").strip(),
+                            (clause.get("status") or "").strip(), gate))
+    return out
+
+
+#: ★ [실측 2026-09-07 · 턴 I · `verify_measure_repro` 가 잡음] **로그인하는 게이트를
+#:   나란히 부르면 색이 흔들린다.** 이 저장소는 **동시 접속 1개**다(UX-24 · §0.4).
+#:   16벌을 한꺼번에 부르면 뒤에 로그인한 쪽이 앞선 쪽의 세션을 빼앗고, 빼앗긴 쪽은
+#:   「로그인으로 못 쟀다」를 낸다 — **같은 나무를 두 번 재면 다른 수가 나온다.**
+#:   두 벌을 견주자 「색이 같다 21」과 「색이 같다 20」이 나왔고, 갈린 것은 제품이 아니라
+#:   **누가 먼저 세션을 잡았는가**였다. 재현되지 않는 측정은 측정이 아니다(D-344).
+#:   그래서 **로그인하는 판정기만 줄 세운다.** 나머지는 그대로 나란히 부른다 —
+#:   전부 직렬로 돌리면 이 검사가 몇 분씩 걸리고, 느린 검사는 결국 꺼진다(D-353).
+SERIAL_GATES = (
+    "verify_sidebar.py", "verify_route_alive.py", "verify_contract_route_reach.py",
+    "verify_screens.py", "verify_write_auth.py", "verify_seed_roles.py",
+)
+
+
+def measure_gates(pairs: list[tuple[str, str, str]]) -> dict[str, tuple]:
+    """게이트를 **한 벌씩만** 부른다 (한 게이트를 여러 절이 가리킬 수 있다)."""
+    names = sorted({g for _cid, _st, g in pairs if g != GATE_SELF})
+    if not names:
+        return {}
+    serial = [n for n in names if n.rsplit("/", 1)[-1] in SERIAL_GATES]
+    parallel = [n for n in names if n not in serial]
+    out: dict[str, tuple] = {}
+    if parallel:
+        with ThreadPoolExecutor(max_workers=16) as pool:
+            out.update(zip(parallel, pool.map(run_gate, parallel)))
+    for n in serial:                      # 세션을 쥐는 것들 — 한 번에 하나씩
+        out[n] = run_gate(n)
     return out
 
 
@@ -239,6 +445,43 @@ def self_test() -> int:
         "넷 밖의 상태를 잡는다",
         any("넷 밖이다" in p for p in problems({"id": "X", "status": "검토중"}))))
 
+    # ── ⑧ 대장 ↔ 게이트 불일치 (P-85) ────────────────────────────────────
+    #: ★★ **출생 표본** — 2026-09-06. `verify_prod_settings.py` 가 5/5 초록인데
+    #:   대장의 SEC-18 은 '미착수' 였고, **아무 색도 안 났다.**
+    checks.append((
+        "★★ 출생표본 — 게이트 초록 · 대장 '미착수' 를 잡는다 (P-85)",
+        judge_gate_alignment("SEC-18", "미착수", GATE_GREEN, "g.py") is not None))
+    checks.append((
+        "★★ 반대 방향 — 대장 '구현' · 게이트 빨강을 잡는다 (이쪽이 더 나쁘다)",
+        judge_gate_alignment("X", DONE, GATE_RED, "g.py") is not None))
+    checks.append((
+        "게이트 초록 · 대장 '구현' 은 통과 (음성 대조)",
+        judge_gate_alignment("X", DONE, GATE_GREEN, "g.py") is None))
+    checks.append((
+        "게이트 빨강 · 대장 '미착수' 는 통과 — 색이 같다 (음성 대조)",
+        judge_gate_alignment("X", "미착수", GATE_RED, "g.py") is None))
+    checks.append((
+        "★ 게이트 초록 · 대장 '잠김' 도 잡는다 (미측정·잠김 전부)",
+        judge_gate_alignment("X", "잠김", GATE_GREEN, "g.py") is not None))
+    checks.append((
+        "★ 회색(exit 2)은 갈림이 아니다 — 못 잰 것을 빨강으로 세지 않는다 (D-301)",
+        judge_gate_alignment("X", DONE, GATE_GREY, "g.py") is None))
+    checks.append((
+        "★ 부르지 못한 게이트(None)도 갈림이 아니다 — 따로 센다",
+        judge_gate_alignment("X", DONE, None, "g.py") is None))
+    checks.append((
+        "★ gate 가 없는 파일을 가리키면 잡는다",
+        any("아무것도 안 지킨다" in p for p in problems(
+            {"id": "X", "status": "구현", "proof": "backend/tests/x.py",
+             "gate": "scripts/없다.py"}))))
+    checks.append((
+        "실재하는 gate 는 통과한다 (음성 대조)",
+        not problems({"id": "X", "status": "구현", "proof": "backend/tests/x.py",
+                      "gate": "backend/tests/x.py"})))
+    checks.append((
+        "★ 한 게이트를 여러 절이 가리켜도 **한 번만** 부른다",
+        len({g for _c, _s, g in [("A", "구현", "x.py"), ("B", "구현", "x.py")]}) == 1))
+
     # 가중 합계 계산 — 손으로 검산할 수 있는 표본
     total, _ = score(
         [{"id": "a", "name": "A", "weight": 20}, {"id": "b", "name": "B", "weight": 80}],
@@ -338,10 +581,13 @@ def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, 
 
 
 def main() -> int:
+    _load_local_env()
     ap = argparse.ArgumentParser()
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--table", action="store_true")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--no-gates", action="store_true",
+                    help="대장↔게이트 불일치 검사를 건너뛴다 (P-85 · 건너뛰면 그렇게 적는다)")
     args = ap.parse_args()
 
     if args.self_test:
@@ -398,14 +644,51 @@ def main() -> int:
     else:
         print("[GA] 손 안 도달율 **판정 불가** — 분모가 0 이하다 (분류가 어긋났다)")
 
+    # ── ⑧ 대장 ↔ 게이트 불일치 (P-85) ──────────────────────────────────────
+    pairs = collect_gates(areas)
+    #: ★ 규칙 ① — **못 잰 것은 초록이 아니다.** 부르지 못한 게이트가 하나라도 있으면
+    #:   빨강이 없어도 이 실행은 **회색(exit 2)** 이다. `--no-gates` 로 초록을 살 수 없다.
+    unmeasured = 0
+    if args.no_gates:
+        unmeasured = len(pairs)
+        print("[GA] [입력] 대장↔게이트 불일치 검사 **건너뜀**(--no-gates) — 절 %d개가 "
+              "게이트를 가리키고 있는데 부르지 않았다. 이 실행은 그 자리를 **못 잰 것**이다"
+              % len(pairs))
+    elif not pairs:
+        print("[GA] ⚠ `gate:` 를 적은 절이 **0개**다 — 불일치 검사가 아무것도 안 본다 (D-301)")
+    else:
+        results = measure_gates(pairs)
+        grey, aligned = [], 0
+        for cid, status, gate in pairs:
+            if gate == GATE_SELF:
+                continue
+            rc, tail = results.get(gate, (None, "부르지 못했다"))
+            bad = judge_gate_alignment(cid, status, rc, gate)
+            if bad:
+                problems.append(bad + "  ← 게이트 마지막 줄: %s" % tail)
+            elif rc is None or rc == GATE_GREY:
+                grey.append("%s ← %s (%s)" % (cid, gate, tail or "exit 2"))
+            else:
+                aligned += 1
+        unmeasured = len(grey)
+        print("[GA] [입력] 대장↔게이트 %d절 · 게이트 %d벌 — 색이 같다 %d · **못 쟀다 %d**"
+              % (len(pairs), len(results), aligned, len(grey)))
+        for g in grey:
+            print("[GA]   ? 못 쟀다: %s" % g)
+
     if args.list or args.table:
         _print_table(areas, counts, rows, total, markdown=args.table)
 
     if problems:
         for p in problems:
             print("[GA] FAIL %s" % p)
+        #: 실패가 있으면 회색이 함께 있어도 **1** 이다 — 실패가 「모른다」 뒤에 숨으면 안 된다.
         return 1
-    print("[GA] 통과 — 절마다 상태·증명·사유가 실재한다")
+    if unmeasured:
+        print("[GA] **회색(exit 2)** — 절마다 상태·증명·사유는 실재한다. 그러나 게이트 색을 "
+              "%d절에서 **못 쟀다.** 못 잰 것은 초록이 아니다 (D-301 · 규칙 ①)" % unmeasured)
+        return 2
+    print("[GA] 통과 — 절마다 상태·증명·사유가 실재하고, 대장 상태와 게이트 색이 같다 (P-85)")
     return 0
 
 

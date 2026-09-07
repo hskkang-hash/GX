@@ -298,7 +298,7 @@ def collect_django(facts: dict, say) -> None:
         from django.test.utils import override_settings
 
         from apps.dsm import retention
-        from common import ops_tasks
+        from common import evidence_guard, ops_tasks
     except Exception as exc:                                   # noqa: BLE001
         say(f"{TAG} [환경] Django 를 세우지 못했다 — ①②⑥은 **회색**이다: "
             f"{type(exc).__name__}: {exc}"[:200])
@@ -368,7 +368,15 @@ def collect_django(facts: dict, say) -> None:
     real_load = ops_tasks._load
     ops_tasks._load = lambda name: _Spy()
     try:
-        with override_settings(OPS_BACKUP_SCHEDULE_ENABLED=True, OPS_BACKUP_DIR=""):
+        #: ★ [P-87 4 · 2026-09-06 턴 I · 차선 E 가 잡음] **여기가 샜다.**
+        #:   설정을 일부러 비워 놓고 백업 주기를 부르는 이 한 줄이
+        #:   `docs/agent/evidence/D-373/backup_last.json` 을 `SKIPPED_UNDECLARED` 로
+        #:   덮었다. 이 환경의 사실은 `OPS_BACKUP_DIR='/backup'` 인데도 그랬다 —
+        #:   파일을 읽은 사람은 **환경이 미선언이라고 읽는다.**
+        #:   `PYTEST_CURRENT_TEST` 가드는 이것을 못 막았다. 판정기는 시험이 아니다.
+        #:   물어야 할 것은 「시험 중인가」가 아니라 **「이 수가 진짜 상태에서 났는가」**다.
+        with evidence_guard.synthetic_run(
+                "verify_retention_declared — OPS_BACKUP_DIR 을 비워 놓고 물어본다"),                 override_settings(OPS_BACKUP_SCHEDULE_ENABLED=True, OPS_BACKUP_DIR=""):
             out = ops_tasks.ops_backup_beat()
         facts["backup_calls_undeclared"] = hits["n"]
         facts["backup_verdict_undeclared"] = out.get("verdict")

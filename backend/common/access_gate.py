@@ -20,8 +20,12 @@ forbidden-zone 게이트가 STOP 으로 잡았다. **게이트는 제 일을 했
      ★ 라우트 선언의 `JwtOrInboundKey` 와 **같은 규칙을 한 겹 밖에서** 건다.
        선언은 우리가 고칠 수 있는 라우트만 덮고, 이 미들웨어는 **전부**를 덮는다 —
        §0.4 경로를 포함해서.
-  ② **익명 거절** (D-348) — `AUTHN_REQUIRED_PREFIXES` 에 오른 경로는 자격증명 없는
+  ② **익명 거절** (D-348) — `AUTHN_REQUIRED_PATHS` 에 오른 경로는 자격증명 없는
      요청을 401 로 끊는다. 인증 관문이 라우트에 없어도 여기서 끊긴다.
+     ★ [P-83 · 2026-09-06] 이 규칙이 `AUTHN_SURFACE` 면제보다 **앞**에 선다.
+       넓은 면제(「인증 면은 비켜 준다」) 아래에 좁은 사고
+       (`/api/v1/auth/reset-password-for-user` — 익명이 남의 비밀번호를 바꾼다)가
+       숨어 있었다. **손으로 이름을 적은 것이 규칙보다 세다.**
 
 ★ 자리 — **캐시보다 바깥이어야 한다** (D-341 착시 ⑦)
 ----------------------------------------------------
@@ -102,6 +106,58 @@ AUTHN_REQUIRED_PATHS: tuple[str, ...] = (
     "/api/orders/delivery-option",
     "/api/orders/payment-methods",
     "/api/orders/item-types",
+    # ★★ 2026-09-06 턴 I · 차선 S — **다섯이 더 올랐다. 이번엔 읽기가 아니라 쓰기다** (P-83)
+    #
+    # 어떻게 드러났나: `probe_write_surface.py` 가 턴 H 까지 **빈 본문 `{}`** 하나만
+    # 던지고 「도달 못 하면 관문이 섰다」로 셌다. 그 17자리 중 13자리의 실제 답은
+    # **422 — 스키마 검증 실패**였다. 422 는 「인증 없이도 여기까지 왔다」는 뜻이지
+    # 관문이 아니다. 스키마를 통과하는 최소 본문을 만들어 다시 던지자 다섯 자리에서
+    # 익명이 **핸들러까지 닿았다**(D-334 대체물 · 본체는 한 줄도 안 돌았다):
+    #
+    #   POST /api/v1/auth/reset-password-for-user  ★★ 본문 {id, new_password} 만으로
+    #        **아무 사용자의 비밀번호를 바꾼다.** 핸들러에 권한 검사가 **한 줄도 없다**
+    #        (dj-core `core/api/v1/auth.py:2286` — 데코레이터도 없다). 계정 탈취다
+    #   POST /api/v1/user/create-user             ★ 문서엔 "Requires admin privileges",
+    #        코드엔 그 검사가 없다. `@ratelimit`·`@csrf_protect` 뿐이다
+    #   POST /api/v1/auth/register                ★ 익명이 계정을 만든다. 이 제품은
+    #        관리자가 계정을 내주는 B2B 운영 도구다 — 자가 가입 면이 아니다
+    #   POST /api/source/save-html                ★ 익명이 템플릿 디렉터리에 파일을 쓰고
+    #        `os.remove()` 로 기존 파일을 지운다
+    #   PUT  /api/advanced-table/column-order     핸들러 안에 `check_permission` 이
+    #        있지만 그 판정은 **핸들러 안**이고, 결과를 200 봉투에 담는다(D-349 착시 ⑧).
+    #        관문은 봉투 밖에 있어야 한다 — 닫힌 쪽을 택한다
+    #
+    # ★ 다섯 다 **dj-core**(`/usr/local/.../core/`) 안이다 — §0.4 금지구역이라
+    #   라우트 선언을 못 고친다. D-348 그대로 **우리 층에서 길목을 막는다.**
+    #   `@csrf_protect` 가 붙은 자리도 함께 올린다: CSRF 는 남의 사이트가 시키는
+    #   요청을 막는 장치이지 **직접 때리는 익명**을 막는 장치가 아니다. 스크립트는
+    #   쿠키를 먼저 받아 오면 그만이다 — 관문으로 세지 않는다.
+    "/api/v1/auth/reset-password-for-user",
+    "/api/v1/auth/register",
+    "/api/v1/user/create-user",
+    "/api/source/save-html",
+    "/api/advanced-table/column-order",
+)
+
+#: ★★ **경로 틀(`{id}`)로 선언된 자리는 이름으로 못 막는다** — 2026-09-06 턴 I · P-83
+#:
+#: 위 `AUTHN_REQUIRED_PATHS` 는 **정확히 같은 글자**만 막는다. 그런데 실측으로 드러난
+#: 무관문 쓰기 자리 중 셋은 경로에 파라미터가 있다:
+#:
+#:     POST /api/apikey/keys/{api_key_id}/regenerate          익명이 남의 키를 재발급
+#:     POST /api/apikey/keys/{user_id}                        익명이 **남의 이름으로 키를 만든다**
+#:     POST /api/third-api/api-key-management/keys/{user_id}  같은 컨트롤러의 다른 입구
+#:
+#: [실측 2026-09-06 · `probe_write_surface.py`] 익명이 이 자리들의 핸들러에 닿았고
+#: 그 핸들러는 `APIKey.create_key(...)` · `deactivate(...)` 를 부른다. **API 키를
+#: 익명이 만들 수 있으면 그 뒤의 모든 관문은 의미가 없다** — 키가 곧 자격증명이다.
+#:
+#: 그래서 **접두**로 막는다. 이 두 접두 아래는 전부 API 키 관리 면이고, 아직 로그인하지
+#: 못한 사람이 부를 자리가 하나도 없다 (`PUBLIC_BY_DESIGN` 판단 기준 그대로).
+#: 한 자리를 막고 옆자리를 열면 사고는 그대로다 — 그래서 읽기 면까지 함께 덮는다.
+AUTHN_REQUIRED_PREFIXES: tuple[str, ...] = (
+    "/api/apikey/",                      # inbound 키 발급 면 — 남이 우리를 부를 때 쓸 키다
+    "/api/third-api/api-key-management/",  # 같은 inbound 계열
 )
 
 #: 이 관문이 보는 면. API 밖(관리자·정적·문서)은 종전대로 둔다 — 넓히면 로그인 화면까지 막는다.
@@ -143,6 +199,10 @@ class AccessGateMiddleware:
         self.get_response = get_response
         self._allowed = {(m.upper(), _normalize(p)) for m, p in INBOUND_KEY_ALLOWED}
         self._authn_required = tuple(_normalize(p) for p in AUTHN_REQUIRED_PATHS)
+        #: 접두는 끝에 `/` 를 붙여 둔다 — 안 붙이면 `/api/apikeys-public` 처럼
+        #: **이름이 겹치는 남의 자리**까지 함께 막힌다.
+        self._authn_prefixes = tuple(
+            p if p.endswith("/") else p + "/" for p in AUTHN_REQUIRED_PREFIXES)
 
     def __call__(self, request):
         verdict = self.judge(
@@ -156,6 +216,15 @@ class AccessGateMiddleware:
         return self.get_response(request)
 
     # ── 술어 — 요청 객체 없이 시험할 수 있게 순수 함수로 둔다 ──────────────────
+    def _is_authn_required(self, path: str) -> bool:
+        """이 경로가 **익명 거절 자리**인가 — 이름으로든, 접두로든.
+
+        ★ 두 목록을 여기 한 곳에서 합친다(D-212). `judge()` 안에 흩으면 한쪽만
+          고쳐지는 날이 오고, 그날 「목록에는 있는데 안 막히는」 자리가 생긴다.
+        """
+        norm = _normalize(path)
+        return norm in self._authn_required or (norm + "/").startswith(self._authn_prefixes)
+
     def judge(self, *, method: str, path: str, has_inbound_key: bool,
               has_credentials: bool) -> str | None:
         """거절 사유를 돌려준다. 통과면 None.
@@ -165,6 +234,21 @@ class AccessGateMiddleware:
         """
         if not path.startswith(API_PREFIX):
             return None
+
+        # ★★ [P-83 · 2026-09-06 턴 I] **이름을 적은 자리는 규칙보다 세다.**
+        #
+        #   `AUTHN_SURFACE` 는 「로그인·토큰 면은 비켜 준다」는 **넓은 규칙**이고,
+        #   그 규칙 아래에 `/api/v1/auth/reset-password-for-user` 가 숨어 있었다 —
+        #   익명이 `{id, new_password}` 만 보내면 아무 계정의 비밀번호가 바뀐다.
+        #   넓은 면제가 좁은 사고를 덮은 모양이다.
+        #
+        #   그래서 **손으로 이름을 적은 경로**는 인증 면 안에 있어도 막는다.
+        #   순서가 곧 규칙이다: 이름이 먼저, 규칙이 나중.
+        #   (규칙을 좁히지 않고 예외를 앞에 두는 이유 — `AUTHN_SURFACE` 를 손보면
+        #    로그인 길이 함께 흔들린다. 흔들리면 아무도 못 들어온다.)
+        if not has_credentials and self._is_authn_required(path):
+            return "authentication required"
+
         if AUTHN_SURFACE.match(path):
             return None
 
@@ -175,7 +259,7 @@ class AccessGateMiddleware:
             return "inbound key is not allowed on this route"
 
         # ② 익명 거절 (D-348) — 라우트에 관문이 없어도 여기서 끊는다.
-        if not has_credentials and _normalize(path) in self._authn_required:
-            return "authentication required"
+        #   ★ 판정은 **위로 올라갔다**(P-83). 여기 한 벌 더 두면 판정식 복사본이
+        #     둘이 되고, 갈린 복사본 하나가 D-212 였다. 그래서 부르지 않고 가리킨다.
 
         return None

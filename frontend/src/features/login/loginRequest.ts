@@ -106,8 +106,11 @@ export async function requestLogin(
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      // ⚠ 서버 신호 대기 — 이 저장소의 어느 라우트도 아직 이 이름을 읽지 않는다.
-      //   싣는 이유는 브라우저 쪽 중복 억제와, 서버가 받는 날의 준비다.
+      // ⚠ **이 문은 아직 서버가 키를 안 본다** [실측 2026-09-06 · 턴 I].
+      //   `@idempotent` 가 붙은 곳은 판정·접수·회신·발송 네 문이고 로그인은 아니다.
+      //   그리고 여기서는 **매 시도마다 새 키**를 만든다 — 로그인의 「같은 의도」는
+      //   (아이디·비밀번호·세션 끊기) 세 값이지 키가 아니기 때문이다. 이중 제출을
+      //   막는 것은 아래 `flight`·`lastOutcome` 창이고, 이 머리글자는 규약을 위해 싣는다.
       [IDEMPOTENCY_HEADER]: newIdempotencyKey(),
     };
     const csrf = csrfToken();

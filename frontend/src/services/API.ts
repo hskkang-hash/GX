@@ -5,6 +5,10 @@ import {
   isSessionEvicted,
   sessionEndedAnnounced,
 } from '@/features/session/sessionEnded';
+import {
+  isPermissionDenied,
+  announcePermissionDenied,
+} from '@/features/session/permissionDenied';
 
 export const CustomRoutes = {
   qrCode: '/qr-code',
@@ -1044,6 +1048,14 @@ const noteEvictionOn401 = {
     const body = error?.response?.data;
     if (status === 401 && isSessionEvicted(body)) {
       announceSessionEnded(body);
+    }
+    // ★ [P-88 · 2026-09-07 턴 J] **승격은 반쪽이면 더 나쁘다.**
+    //   이 턴에 `GET /api/devices/devices-management` 의 권한 거절을 200 봉투에서
+    //   진짜 403 으로 승격했다(전/후 실측 200 → 403). 승격만 하고 앞단이 조용하면
+    //   빈 표가 **빈 표 + 멈춘 스피너**가 된다 — 그건 나아진 것이 아니다.
+    //   여기서는 **알리기만 하고 오류를 그대로 다시 던진다** — 401 갈래와 같은 규율이다.
+    if (isPermissionDenied(status)) {
+      announcePermissionDenied(body, error?.config?.url ?? '');
     }
     return Promise.reject(error);
   },

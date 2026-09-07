@@ -33,6 +33,7 @@ from django.test import Client, TestCase
 
 from common.access_gate import (
     AUTHN_REQUIRED_PATHS,
+    AUTHN_REQUIRED_PREFIXES,
     INBOUND_KEY_ALLOWED,
     AccessGateMiddleware,
 )
@@ -331,6 +332,20 @@ class FrontLineIsTheSecondDefenseTest(TestCase):
             "앞단과 미들웨어가 갈렸다:\n  앞단만: %s\n  미들웨어만: %s"
             % (sorted(got - want), sorted(want - got)))
 
+    def test_front_line_covers_every_prefix_the_middleware_covers(self):
+        """①-b ★ [P-83] **접두도 두 벌이다.**
+
+        경로 틀(inbound 키: `/api/apikey/keys/{user_id}`)은 이름으로 못 막는다. 미들웨어가 접두로
+        막았는데 앞단이 이름으로만 막으면, 미들웨어가 빠지는 날 그 자리는 **앞단이
+        모르는 자리**가 된다 — 두 방어선이 아니라 하나가 된다.
+        """
+        want = {p if p.endswith("/") else p + "/" for p in AUTHN_REQUIRED_PREFIXES}
+        got = self.front.parse_gated_prefixes(self.conf)
+        self.assertEqual(
+            got, want,
+            "앞단과 미들웨어의 **접두**가 갈렸다 — 앞단만: %s / 미들웨어만: %s"
+            % (sorted(got - want), sorted(want - got)))
+
     def test_front_line_key_allowlist_matches_the_middleware(self):
         """② 들어오는 키의 허용 목록도 한 벌이다 (D-343 ③)."""
         want = {(m.upper(), p.rstrip("/") or "/") for m, p in INBOUND_KEY_ALLOWED}
@@ -373,3 +388,131 @@ class FrontLineIsTheSecondDefenseTest(TestCase):
             self.assertLess(len(body.encode("utf-8")), 512)
             self.assertNotIn("status_code", body)
         self.assertIn("(front line)", self.conf)
+
+
+#: ★★ **세 번째 출생 표본** — 2026-09-06 턴 I (P-83). 앞의 둘과 성격이 또 다르다.
+#:
+#:   첫째 표본  보였는데 §0.4 라 못 닫은 자리 (읽기)
+#:   둘째 표본  301 뒤에 숨어 안 보이던 자리 (읽기)
+#:   ★셋째 표본 **422 뒤에 숨어 있던 자리 — 그리고 이것은 쓰기다**
+#:
+#: `probe_write_surface.py` 는 턴 H 까지 빈 본문 `{}` 하나를 던지고 「도달 못 하면
+#: 관문이 섰다」로 셌다. 그 17자리 중 **13자리의 실제 답이 422**였다. 422 는
+#: 「인증 없이도 여기까지 왔고 본문 형식에서 떨어졌다」는 뜻이지 관문이 아니다 —
+#: **401·403 과 422 는 다른 칸이다**(P-83). 스키마를 통과하는 최소 본문을 만들어
+#: 다시 던지자 다섯 자리에서 익명이 핸들러까지 닿았다.
+#:
+#: `(경로, 메서드, 익명이 그 자리에서 할 수 있던 일)`
+FORMERLY_HIDDEN_BY_SCHEMA_ERROR = (
+    ("/api/v1/auth/reset-password-for-user", "POST",
+     "아무 사용자의 비밀번호를 바꾼다 — 핸들러에 권한 검사가 한 줄도 없다"),
+    ("/api/v1/user/create-user", "POST",
+     "계정을 만든다 — 문서엔 admin 필요, 코드엔 그 검사가 없다"),
+    ("/api/v1/auth/register", "POST", "계정을 만든다 — 자가 가입 면이 아니다"),
+    ("/api/source/save-html", "POST", "템플릿 디렉터리에 파일을 쓰고 기존 파일을 지운다"),
+    ("/api/advanced-table/column-order", "PUT", "남의 그리드 설정을 바꾼다"),
+)
+
+
+class WriteSurfaceHiddenBySchemaErrorTest(TestCase):
+    """★★ P-83 — **422 를 관문으로 세지 않는다.** 그 착각이 게이트를 거짓 초록으로 만들었다.
+
+    이 시험이 못박는 것은 관문 다섯이 아니라 **판정의 칸**이다:
+
+        401 · 403  관문           — 막았다
+        422        도달·검증 실패 — **막지 않았다.** 본문만 맞추면 그대로 들어간다
+        404 · 405  도달 실패      — 그 자리에 그 메서드가 없다
+
+    셋을 한 칸에 넣으면 「관문 17」 같은 수가 나오고, 그 수를 보는 사람은
+    **열일곱 자리가 지켜지고 있다**고 읽는다. 실제로 그랬던 것은 둘이었다.
+    """
+
+    def setUp(self):
+        # 캐시 처리: 우회 — 관문을 재는 시험이 캐시를 재면 안 된다 (D-341).
+        self.client = Client(raise_request_exception=False, **NO_CACHE)
+        self.gate = AccessGateMiddleware(lambda request: None)
+
+    def test_every_hidden_write_path_is_actually_declared(self):
+        """① 시험이 아는 다섯이 **선언 목록에 실재**한다 (시험만 알고 코드는 모르는 상태를 막는다)."""
+        missing = [p for p, _m, _w in FORMERLY_HIDDEN_BY_SCHEMA_ERROR
+                   if p not in AUTHN_REQUIRED_PATHS]
+        self.assertEqual(missing, [],
+                         "시험은 아는데 관문은 모르는 쓰기 경로가 있다: %r" % missing)
+
+    def test_anonymous_write_gets_401_with_a_schema_passing_body(self):
+        """② ★ **스키마를 통과하는 본문으로** 때린다 — 빈 본문으로 재면 422 가 나오고,
+        422 를 관문으로 읽는 것이 바로 이번에 잡은 거짓 초록이다.
+
+        본문에 실제 값을 담아 보내도 **401** 이어야 한다. 핸들러는 한 줄도 안 돈다.
+        """
+        bodies = {
+            "/api/v1/auth/reset-password-for-user": {"id": 1, "new_password": "GxProbe!2026"},
+            "/api/v1/user/create-user": {"username": "gxprobe_gate", "email":
+                                         "gxprobe@example.invalid", "password": "GxProbe!2026"},
+            "/api/v1/auth/register": {"username": "gxprobe_gate2", "email":
+                                      "gxprobe2@example.invalid", "password": "GxProbe!2026"},
+            "/api/advanced-table/column-order": [],
+        }
+        wrong = []
+        for path, method, what in FORMERLY_HIDDEN_BY_SCHEMA_ERROR:
+            if path == "/api/source/save-html":
+                resp = self.client.post(path, data={"menu_id": "1", "url": "https://x.invalid/"})
+            else:
+                url = path
+                if path == "/api/advanced-table/column-order":
+                    url = path + "?grid_id=1&user_id=1"
+                resp = self.client.generic(
+                    method, url, data=json.dumps(bodies[path]).encode(),
+                    content_type="application/json", **NO_CACHE)
+            if resp.status_code != 401:
+                wrong.append("%s %s -> %s (익명이 %s)" % (method, path, resp.status_code, what))
+        self.assertEqual(
+            wrong, [], "★ 익명이 쓰기 면에 다시 닿는다:\n  " + "\n  ".join(wrong))
+
+    def test_the_gate_beats_the_authn_surface_exemption(self):
+        """③ ★★ **넓은 면제 아래 좁은 사고가 숨어 있었다.**
+
+        `AUTHN_SURFACE` 는 「`/api/v1/auth/...` 는 비켜 준다」는 규칙이다. 그 규칙이
+        `reset-password-for-user` 를 함께 비켜 주고 있었다 — 익명이 `{id, new_password}`
+        만 보내면 아무 계정의 비밀번호가 바뀌는 자리를.
+
+        **이름을 적은 것이 규칙보다 세다.** 순서가 그 집행이다.
+        """
+        for path in ("/api/v1/auth/reset-password-for-user", "/api/v1/auth/register"):
+            self.assertIsNotNone(
+                self.gate.judge(method="POST", path=path,
+                                has_inbound_key=False, has_credentials=False),
+                "%s 가 인증 면 면제에 묻혔다 — 이름이 규칙보다 세야 한다" % path)
+
+    def test_login_still_works_after_the_reordering(self):
+        """④ **음성 대조** — 순서를 바꾸면서 로그인 길을 막지 않았다.
+
+        관문이 문을 잠그고 열쇠를 삼키면 이 시스템에는 아무도 들어올 수 없다.
+        ③만 있으면 그 사고를 못 잡는다.
+        """
+        for path in ("/api/v1/auth/login", "/api/v1/auth/logout",
+                     "/api/v1/auth/forgot-password", "/api/v1/auth/reset-password",
+                     "/api/token/pair", "/api/token/refresh"):
+            self.assertIsNone(
+                self.gate.judge(method="POST", path=path,
+                                has_inbound_key=False, has_credentials=False),
+                "%s 가 막혔다 — 아무도 들어올 수 없다" % path)
+
+    def test_credentialed_requests_are_not_touched(self):
+        """⑤ **음성 대조** — 자격증명을 들고 온 요청은 이 관문이 한 자도 안 만진다.
+
+        전부 401 을 내는 관문은 관문이 아니라 벽이고, 벽은 첫날 치워진다.
+        """
+        for path, method, _w in FORMERLY_HIDDEN_BY_SCHEMA_ERROR:
+            self.assertIsNone(
+                self.gate.judge(method=method, path=path,
+                                has_inbound_key=False, has_credentials=True),
+                "%s 가 인증된 요청까지 막았다" % path)
+
+    def test_trailing_slash_does_not_open_a_hole(self):
+        """⑥ `/path` 를 막고 `/path/` 를 열어 두면 막은 것이 아니다."""
+        for path, method, _w in FORMERLY_HIDDEN_BY_SCHEMA_ERROR:
+            self.assertIsNotNone(
+                self.gate.judge(method=method, path=path + "/",
+                                has_inbound_key=False, has_credentials=False),
+                "%s/ 가 열려 있다" % path)

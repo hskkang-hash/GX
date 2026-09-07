@@ -48,6 +48,8 @@ from pathlib import Path
 from celery import shared_task
 from django.conf import settings
 
+from common import evidence_guard
+
 logger = logging.getLogger("ops")
 
 #: 저장소 안의 도구를 부른다. 컨테이너에서 `/repo` 로 마운트되고, 없으면 **없다고 적는다** —
@@ -76,6 +78,16 @@ def _load(name: str):
     return None
 
 
+def _db_name() -> str:
+    """지금 붙어 있는 DB 이름. 못 물으면 빈 문자열 — **지어내지 않는다.**"""
+    try:
+        from django.db import connection
+
+        return str(connection.settings_dict.get("NAME") or "")
+    except Exception:                                  # noqa: BLE001
+        return ""
+
+
 def _write_evidence(name: str, payload: dict) -> str | None:
     """판정을 증거 파일에 남긴다. **시험 중에는 남기지 않는다.**
 
@@ -91,16 +103,35 @@ def _write_evidence(name: str, payload: dict) -> str | None:
       시험 DB 에 선언이 없었을 뿐이다. 「어느 DB 에서 난 수인가」가 사라지면
       그 파일은 증거가 아니라 소음이다.
 
-    `PYTEST_CURRENT_TEST` 는 pytest 가 시험 하나마다 세우고 끝나면 지운다 —
-    「시험 중인가」를 깃발이 아니라 **사실**로 묻는 자리다.
+    ★ [P-87 ④ · 2026-09-06 턴 I] **그 검사는 여기 한 곳에만 있었다.**
+      증거 폴더에 쓰는 자리는 이 함수 하나가 아니다(장부 명령 둘 · 등재부 하나 ·
+      시험 안의 부트스트랩 하나 · 시험이 불러 쓰는 `scripts/` 의 도구들).
+      한 자리만 막은 가드는 「막혀 있다」는 착시를 준다 — 그래서 술어를
+      `common.evidence_guard` 한 자리로 옮기고, 그 아래에 **바닥 그물**을 깔았다.
     """
-    if os.environ.get("PYTEST_CURRENT_TEST"):
+    why = evidence_guard.blocked_reason(Path(EVIDENCE_DIR) / f"{name}.json",
+                                        who="ops_tasks._write_evidence",
+                                        db_name=_db_name())
+    if why:
+        logger.info("[OPS] 증거를 안 남겼다 — %s", why)
         return None
     try:
         out_dir = Path(EVIDENCE_DIR)
         out_dir.mkdir(parents=True, exist_ok=True)
         out = out_dir / f"{name}.json"
-        out.write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=str),
+        #: ★ **어느 DB 에서 난 수인가를 파일에 적는다** (P-87 4 · 턴 I).
+        #:   가드가 새는 날은 또 온다. 그때 이 칸이 있으면 다음 사람이 파일만 보고
+        #:   「이건 시험 DB 의 수다」를 알 수 있다 — 가드는 막고, 이 칸은 **말한다.**
+        stamped = dict(payload)
+        stamped["_written_from"] = {"db": _db_name(),
+                                    "under_pytest": evidence_guard.under_pytest()}
+        #: ★ [2026-09-07 턴 J] **끝에 줄바꿈을 남긴다.** 없으면 pre-commit 의
+        #:   `end-of-file-fixer` 가 매번 이 파일을 고치고, 훅이 파일을 고치면
+        #:   커밋은 언제나 중단된다 — 그리고 이 태스크가 다시 돌면 다시 벗겨진다.
+        #:   **커밋이 영원히 안 되는 고리**였다(턴 J 에 실제로 세 번 돌았다).
+        #:   POSIX 텍스트 파일의 규약이기도 하다.
+        out.write_text(json.dumps(stamped, ensure_ascii=False, indent=2, default=str) + "
+",
                        encoding="utf-8")
         return str(out)
     except OSError as exc:

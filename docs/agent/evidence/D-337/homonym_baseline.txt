@@ -9,6 +9,7 @@
 # 형식:  <이름키> <탭> <파일> <탭> <건수>
 
 api_key	backend/apps/dsm/services.py	3
+api_key	backend/common/access_gate.py	2
 api_key	backend/common/cache_hint_registry.py	1
 api_key	backend/common/key_rotation.py	3
 api_key	backend/common/universal_optimization.py	4
@@ -39,3 +40,13 @@ api_key	scripts/verify_commented_guards.py	1
 api_key	scripts/verify_contract_route_reach.py	3
 api_key	scripts/verify_homonyms.py	6
 api_key	scripts/verify_threshold_table.py	1
+
+# ★ 2026-09-07 · 턴 I — 기준선 150 → 152 (+2). **정당한 올림이다.**
+#   두 건 다 `backend/common/access_gate.py` 의 AUTHN_REQUIRED_PREFIXES 안에 든
+#   **남의 라우트 경로 문자열**이다: "/api/apikey/" · "/api/third-api/api-key-management/".
+#   그 경로는 dj-core 가 여는 문의 실제 주소라 **우리가 이름을 못 바꾼다**(§0.4).
+#   같은 줄에 `# inbound …` 주석을 붙였지만 이 판정기는 주석을 지우고 보므로
+#   수식어로 세지 않는다 — 그 규칙이 옳다(주석은 코드가 아니다).
+#   왜 이 줄들이 생겼나: 익명이 **API 키를 발급받을 수 있던 문**을 접두로 막은 자리다
+#   (D-368 · P-83 · 턴 I). 이름을 못 고치니 **문은 닫고 이름값은 기준선으로 갚는다.**
+#   갚는 법: dj-core 가 그 경로를 바꾸거나, 우리 앞단에서 별칭을 세우는 날.

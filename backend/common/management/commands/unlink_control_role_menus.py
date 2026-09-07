@@ -62,6 +62,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from common import evidence_guard
 from common.menu_exposure import (
     BUNDLE_IDS,
     EXPECTED_CLASSIFICATION,
@@ -218,9 +219,16 @@ class Command(BaseCommand):
                 r.save(update_fields=list(PERMIT_FIELDS))
 
         ledger["updated_at"] = datetime.now(dt_timezone.utc).isoformat()
-        ledger_path.parent.mkdir(parents=True, exist_ok=True)
-        ledger_path.write_text(json.dumps(ledger, ensure_ascii=False, indent=2),
-                               encoding="utf-8")
+        #: ★ [P-87 ④ · 턴 I] **시험 중에는 장부를 안 쓴다.** 장부는 되돌리기의
+        #:   유일한 근거이고(OPS-07b), 시험 DB 의 연결 상태로 그 파일을 덮으면
+        #:   되돌릴 수 있다고 믿은 채 되돌릴 수 없게 된다.
+        written = evidence_guard.write_text_guarded(
+            ledger_path, json.dumps(ledger, ensure_ascii=False, indent=2),
+            who="unlink_control_role_menus 장부")
+        if written is None:
+            self.stdout.write(self.style.WARNING(
+                "장부를 **안 썼다** — 시험 중이다 (증거 폴더 격리 가드 · P-87 ④). "
+                "끊은 연결은 그대로이고, 되돌리려면 시험 밖에서 다시 돌린다"))
 
         self.stdout.write(self.style.SUCCESS(
             "끊었다: %d개 연결 · 소속 %s · 장부 %s (행은 하나도 지우지 않았다)"

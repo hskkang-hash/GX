@@ -124,6 +124,15 @@ def judge(table: list[dict] | None, channels: dict | None) -> list[tuple[str, bo
 # ═══════════════════════════════════════════════════════════════════════════
 def collect():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    #: ★ [실측 2026-09-06 · 턴 I · 조율자] **컨테이너 안에서 부르면 `config` 를 못 찾았다.**
+    #:   `gx-shell` 의 마운트는 셋이 따로다: `/app`(=호스트 `backend/`) · `/repo/{backend,
+    #:   scripts}` · `/docs`. `/repo/backend` 와 `/app` 은 **같은 디렉터리인데 경로가 다르고**,
+    #:   `/repo/scripts/…` 로 부르면 `sys.path[0]` 이 `/repo/scripts` 라 `config` 가 안 잡힌다.
+    #:   그 실패는 exit 2(회색)로 나오고, **회색은 P-85 대조에서 「아무것도 안 잰 칸」**이 된다 —
+    #:   대장과 게이트가 갈려 있어도 아무 말이 없다. `verify_purge.py` · `verify_seed_p20.py`
+    #:   가 이미 같은 한 줄로 이 자리를 지난다. 세 벌째지만 **복사가 아니라 같은 사실**이다.
+    if os.path.isdir("/app") and "/app" not in sys.path:
+        sys.path.insert(0, "/app")
     try:
         import django
         django.setup()

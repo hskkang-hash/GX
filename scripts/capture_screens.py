@@ -193,6 +193,66 @@ TARGETS = [
      "must_see": "현장 회신 — 본 것을 한 줄로"},
 ]
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 로그인 실패 **다섯 갈래** — 그리고 **각 갈래의 출처가 다르다** (턴 I · 차선 C)
+# ═══════════════════════════════════════════════════════════════════════════
+# 왜 이 다섯을 여기서 찍나 [P-78 ② · 턴 H 가 문구를 세웠다]
+# ------------------------------------------------------------------------
+# 다섯 갈래 문구는 이미 있고 이미 한 번 찍혔다 — `docs/agent/evidence/P-78/shots/`.
+# 그런데 그 다섯 장은 **검수 콘솔에 없다.** 인덱스 밖의 PNG 이고, 어디서 온 화면인지
+# 콘솔이 말하지 않는다. 그리고 고객이 로그인 실패 화면을 볼 때 가장 먼저 묻는 것이
+# 정확히 그것이다: **「이건 진짜로 서버가 그렇게 답한 건가, 우리가 지어낸 건가?」**
+#
+# ★ 그 답이 갈래마다 다르다. 그래서 한 값으로 적을 수 없다:
+#     · 비밀번호 틀림 — **실측**. 아무것도 가로채지 않았다. 진짜 서버가 거절한다
+#     · 잠김 · 권한 없음 · 서버 오류 · 연결 끊김 — **모의**. 응답을 가로채 지어냈다.
+#       계정을 진짜로 잠그거나 서버를 진짜로 죽여서 찍지 않는다 — 그것은 이 실행체가
+#       할 일이 아니고, 하려 들면 다른 차선의 서버를 무너뜨린다
+#
+# ⚠ **없는 계정으로 두드린다.** 실재 계정으로 「비밀번호 틀림」을 찍으면 실패 횟수가
+#   쌓이고 다섯 번째에 그 계정이 **진짜로 잠긴다** — 캡처 한 장 때문에 다음 차선이
+#   못 들어간다. 화면은 「아이디가 틀렸다」와 「비밀번호가 틀렸다」를 **한 문장으로 접으므로**
+#   (`loginCopy.judgeLoginFailure` — 계정 존재 여부를 남에게 알리지 않는다) 이 갈래의
+#   화면은 없는 계정으로도 **똑같다.**
+#
+# ⚠ `must_see` 는 `frontend/src/features/login/loginCopy.ts` 의 **원문 사본**이다.
+#   그 파일이 바뀌면 여기도 같은 커밋에서 바꾼다 (TARGETS 의 `must_see` 와 같은 규약).
+LOGIN_NOBODY = "gxprobe_없는계정_ti"        # 실재하지 않는다 — 잠글 계정이 없다
+
+LOGIN_BRANCHES = [
+    {"step": "L1", "kind": "credentials", "slug": "login_credentials",
+     "must_see": "아이디 또는 비밀번호가 올바르지 않습니다.",
+     "inject": None,
+     "data_source": "실측",
+     "why": "가로채지 않았다 — 진짜 서버(8000)가 거절한 답이다"},
+    {"step": "L2", "kind": "locked", "slug": "login_locked",
+     "must_see": "계정이 잠겼습니다.",
+     "inject": {"status": 423,
+                "body": {"success": False, "status": 423,
+                         "message": {"ko": "계정이 잠겼습니다."},
+                         "lock_minutes": 12, "lock_seconds": 34}},
+     "data_source": "모의",
+     "why": "서버의 잠금 본문 모양을 주입했다 — 계정을 진짜로 잠그지 않는다"},
+    {"step": "L3", "kind": "forbidden", "slug": "login_forbidden",
+     "must_see": "이 계정에는 접근 권한이 없습니다.",
+     "inject": {"status": 403,
+                "body": {"success": False, "status": 403,
+                         "message": {"ko": "권한이 없습니다."}}},
+     "data_source": "모의",
+     "why": "403 을 주입했다 — 권한 없는 실재 계정을 만들어 찍지 않는다"},
+    {"step": "L4", "kind": "server", "slug": "login_server_error",
+     "must_see": "지금 로그인할 수 없습니다.",
+     "inject": {"status": 500, "html": True},
+     "data_source": "모의",
+     "why": "500 을 주입했다 · 본문은 HTML(장고 오류 쪽) — 그 바이트가 화면에 새는지도 본다"},
+    {"step": "L5", "kind": "network", "slug": "login_network",
+     "must_see": "서버에 연결하지 못했습니다.",
+     "inject": {"abort": True},
+     "data_source": "모의",
+     "why": "연결 자체를 끊었다 — axios 원문이 태어나던 자리"},
+]
+
+
 #: ★ [실측 2026-09-13 · D-386] 열어 보고 **찍지 못한 화면**. 목록에 남긴다 —
 #:   못 찍은 것을 목록에서 지우면 「안 해 본 것」과 「해 봤더니 안 되는 것」이 같아진다.
 #:   `/users` 는 API 6건이 전부 200 인 채로 **본문 글자 수가 0** 이었다(빈 화면).
@@ -452,6 +512,64 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
         page.on("response", lambda r: seen_calls.append(
             (r.request.method, r.url, r.status)))
         try:
+            # ═══ 로그인 실패 **다섯 갈래** — 들어가기 **전에** 찍는다 (턴 I · 차선 C) ═══
+            #   ★ 순서가 뜻이다: 성공한 세션을 만든 뒤에 실패를 찍으려면 로그아웃해야 하고,
+            #     그러면 그 뒤 28장이 세션을 잃는다. 실패는 **문 앞에서** 찍는 것이 맞다.
+            for b in LOGIN_BRANCHES:
+                inj = b.get("inject")
+                handler_name = "**/api/v1/auth/login"
+
+                def _make(inj):
+                    def _h(route):
+                        if inj.get("abort"):
+                            route.abort()                     # 연결 자체를 끊는다
+                        elif inj.get("html"):
+                            route.fulfill(status=inj["status"], content_type="text/html",
+                                          body="<html><body><h1>Server Error (500)</h1></body></html>")
+                        else:
+                            route.fulfill(status=inj["status"], content_type="application/json",
+                                          body=json.dumps(inj["body"], ensure_ascii=False))
+                    return _h
+
+                if inj:
+                    page.route(handler_name, _make(inj))
+                try:
+                    page.goto(f"{web}/login", wait_until="networkidle", timeout=60_000)
+                    page.wait_for_timeout(1_500)
+                    fields = page.locator("input")
+                    if fields.count() < 2:
+                        raise RuntimeError("로그인 화면에 입력칸이 둘 미만이다 — 화면이 안 떴다")
+                    fields.nth(0).fill(LOGIN_NOBODY)
+                    fields.nth(1).fill("틀린비밀번호-ti")
+                    page.get_by_role("button", name="Log In").click()
+                    page.wait_for_timeout(4_000)
+                    body_text = page.inner_text("body")
+                    step = f"{SCENARIO}/{b['step']}"
+                    if b["must_see"] not in body_text:
+                        misses.append({"step": b["step"], "route": "/login",
+                                       "must_see": b["must_see"],
+                                       "why": f"실패 갈래 «{b['kind']}» 의 문구가 화면에 없다",
+                                       "body": body_text[:200]})
+                        print(f"[SHOT] X /login «{b['kind']}»: 「{b['must_see']}」 가 "
+                              f"화면에 없다 — 찍지 않는다. 본문: {body_text[:160]!r}")
+                        continue
+                    when = datetime.now().replace(microsecond=0)
+                    rel = "%s/%s/%s.png" % (SCENARIO, role, b["slug"])
+                    out = SCREENS / rel
+                    out.parent.mkdir(parents=True, exist_ok=True)
+                    page.screenshot(path=str(out))
+                    steps[step] = when.isoformat()
+                    entries.append({
+                        "route": "/login", "user_role": role, "scenario": step,
+                        "captured_at": when.isoformat(), "file": rel,
+                        #: ★ **갈래마다 다른 값이다.** 한 값으로 적으면 이 칸이 상수가 된다
+                        "data_source": "%s (%s)" % (b["data_source"], b["why"]),
+                    })
+                    print(f"[SHOT] {rel} — 실패 갈래 «{b['kind']}» · 출처 {b['data_source']}")
+                finally:
+                    if inj:
+                        page.unroute(handler_name)
+
             page.goto(f"{web}/login", wait_until="networkidle", timeout=60_000)
             page.wait_for_timeout(1_500)
             fields = page.locator("input")
@@ -552,6 +670,12 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                 entries.append({
                     "route": route, "user_role": role, "scenario": step,
                     "captured_at": when.isoformat(), "file": rel,
+                    #: ★ [턴 I · 차선 C] **항목이 자기 출처를 들고 다닌다.** 예전에는
+                    #:   `_rewrite_index` 가 모든 줄에 `시드` 를 박았다 — 채워진 칸이었지
+                    #:   잰 칸이 아니었다. 기본값은 여전히 「시드」다: 이 실행체는 씨앗을
+                    #:   심고 그 씨앗이 그린 화면을 찍기 때문이다. 다른 값이 필요한 항목은
+                    #:   `TARGETS` 에서 스스로 말한다.
+                    "data_source": t.get("data_source", "시드"),
                 })
                 print(f"[SHOT] {rel} — 「{t['must_see']}」 확인 후 캡처")
         finally:
@@ -603,10 +727,16 @@ def _rewrite_index(entries: list) -> None:
         #:   실제 사고는 아니다. 검수에서 고객이 그것을 구분할 수 있어야 하고,
         #:   구분 못 하면 「시드 화면」이 「현장 화면」으로 읽힌다 — 그건 착시가 아니라
         #:   거짓말이다(D-284). 실행체가 직접 쓴다 — 손으로 옮겨 적지 않는다.
-        "    data_source: 시드",
+        #: ★★ [턴 I · 차선 C] **여기 상수 `시드` 가 박혀 있었다.** 그래서 이 칸은
+        #:   29장 내내 같은 값이었고, 같은 값만 나오는 칸은 출처가 아니라 상수다.
+        #:   이제 **항목이 들고 온 값**을 쓴다 — 로그인 실패 다섯 갈래는 이 한 줄
+        #:   때문에 서로 다른 출처(실측 1 · 모의 4)로 콘솔에 뜬다.
+        "    data_source: {data_source}",
         "",
     ))
-    body = "".join(row.format(**e) for e in entries)
+    body = "".join(row.format(data_source=e.get("data_source", "시드"),
+                              **{k: v for k, v in e.items() if k != "data_source"})
+                   for e in entries)
     index.write_text(head + _INDEX_HEAD + body, encoding="utf-8")
     print(f"[SHOT] 인덱스 갱신 — {index.name} 에 {len(entries)}장")
 
@@ -633,7 +763,12 @@ def main() -> int:
             print(f"[SHOT] {name} 에 닿지 못했다 ({url}): {type(exc).__name__} {exc}")
             print("[SHOT] 판정 불가 — 실행되지 않은 캡처를 성공으로 적지 않는다 (D-301)")
             return EXIT_UNDECIDABLE
-    print(f"[SHOT] [입력] API {args.api} · 화면 {args.web} · 대상 {len(TARGETS)}장")
+    #: ★ [턴 I · 차선 C] 대상은 **둘을 더한 수**다 — 로그인 실패 다섯 갈래 + 화면 28장.
+    #:   더하지 않으면 다섯 장이 늘어난 것만으로 이 명령이 빨개진다(수가 안 맞아서).
+    #:   그 빨강은 「못 찍었다」가 아니라 **「셈이 낡았다」**이고, 가장 헷갈리는 종류다.
+    print(f"[SHOT] [입력] API {args.api} · 화면 {args.web} · "
+          f"대상 {len(TARGETS) + len(LOGIN_BRANCHES)}장"
+          f" (화면 {len(TARGETS)} + 로그인 실패 갈래 {len(LOGIN_BRANCHES)})")
     if args.dry_run:
         print("[SHOT] --dry-run — 두 자리 다 서 있다")
         return EXIT_OK
@@ -713,10 +848,11 @@ def main() -> int:
         #   ⚠ 그리고 이 실행의 증거는 **불완전하다**: 이 함수는 시작하면서 PNG 폴더를
         #     비우므로, 튕긴 실행은 앞선 온전한 벌을 **덮는다.** 다시 찍어야 한다.
         print(f"[SHOT] **판정 불가(exit 2)** — 세션을 빼앗겼다. 이번 벌은 "
-              f"{len(got['entries'])}/{len(TARGETS)}장에서 끊겼고, 이 실행이 앞선 벌을 "
+              f"{len(got['entries'])}/{len(TARGETS) + len(LOGIN_BRANCHES)}장에서 끊겼고, 이 실행이 앞선 벌을 "
               f"**덮었다.** 동시 접속 1개인 창을 확보한 뒤 **다시 찍는다**")
         return EXIT_UNDECIDABLE
-    return EXIT_OK if len(got["entries"]) == len(TARGETS) else EXIT_FAIL
+    return (EXIT_OK if len(got["entries"]) == len(TARGETS) + len(LOGIN_BRANCHES)
+            else EXIT_FAIL)
 
 
 if __name__ == "__main__":

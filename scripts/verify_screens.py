@@ -67,6 +67,22 @@ except (AttributeError, OSError):
 #:   (D-284). 비어 있으면 이 게이트가 멈춘다: 출처 없는 화면은 싣지 않는다.
 META_FIELDS = ("route", "user_role", "scenario", "captured_at", "data_source")
 
+#: ★ [P-9 확장 · 2026-09-06 턴 I · 차선 C] **어휘를 정하고, 콘솔이 그것을 말한다.**
+#:
+#:   턴 H 까지 이 칸은 「비어 있지 않은가」만 봤고, 실행체(`capture_screens.py`)는
+#:   **모든 항목에 `시드` 를 박아 넣고 있었다** [실측 · `_rewrite_index` 의 상수 줄].
+#:   그래서 이 칸은 채워져 있었지만 **아무것도 재지 않았다** — 29장이 전부 같은 값을
+#:   들고 있으면 그것은 출처가 아니라 상수다. 채워진 칸과 잰 칸은 다른 것이다(D-323).
+#:
+#:   세 가지만 받는다. 셋의 뜻은 **「화면에 뜬 수가 어디서 왔는가」**다:
+#:     실측 — 제품이 실제로 들고 있는 값. 아무도 심지 않았고 아무도 가로채지 않았다
+#:     시드 — 우리가 시험용으로 **심은** 값. 화면은 진짜지만 **사고는 진짜가 아니다**
+#:     모의 — 응답을 **가로채 지어낸** 값. 서버는 이 요청을 본 적조차 없을 수 있다
+#:
+#:   ★ 어휘 밖의 이름은 **초록이 아니다.** 「seed」·「실제」·「live」 가 섞이기 시작하면
+#:     검수 자리에서 세 칸이 다시 한 칸이 된다 — 이 칸을 만든 이유가 사라진다.
+DATA_SOURCES = ("실측", "시드", "모의")
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 술어 — 파일 없이 시험할 수 있게 순수 함수로
@@ -137,6 +153,14 @@ def judge_entry(entry: dict, *, exists, run_log: dict, tolerance_min: int) -> li
     if missing:
         out.append("%s: 메타가 비었다 — %s" % (label, ", ".join(missing)))
 
+    #: 출처는 **어휘 안**이어야 한다. 꼬리표(괄호 설명)는 붙여도 되지만 머리는 셋 중 하나다.
+    src = str(entry.get("data_source") or "").strip()
+    if src and not any(src == v or src.startswith(v + " ") or src.startswith(v + "(")
+                       for v in DATA_SOURCES):
+        out.append("%s: 출처 이름이 어휘 밖이다 — «%s» (받는 것: %s). "
+                   "이름이 흩어지면 검수에서 세 칸이 다시 한 칸이 된다"
+                   % (label, src, " · ".join(DATA_SOURCES)))
+
     rel = str(entry.get("file") or "").strip()
     if not rel:
         out.append("%s: file 이 없다" % label)
@@ -165,6 +189,38 @@ def judge_entry(entry: dict, *, exists, run_log: dict, tolerance_min: int) -> li
                        "시험이 지나간 화면이 아니다"
                        % (rel, when.isoformat(), ran.isoformat(), tolerance_min))
     return out
+
+
+def source_tally(entries) -> dict:
+    """검수 콘솔의 **출처 셈**. 어휘 밖·빈 칸은 삼키지 않고 따로 센다.
+
+    ★ 이 함수가 이 게이트의 ④ 다 [턴 I · 차선 C]. 앞의 셋은 「싣지 않는다」를
+      집행하고, 이것은 **「무엇을 보고 있는지 말한다」**를 집행한다. 검수자가
+      스물아홉 장을 같은 눈으로 보면 시드 화면이 현장 화면으로 읽힌다 —
+      그 오독을 막는 것은 잠금이 아니라 **표시**다.
+    """
+    out = {v: 0 for v in DATA_SOURCES}
+    out["(빈칸)"] = 0
+    out["(어휘 밖)"] = 0
+    for e in entries or ():
+        src = str((e or {}).get("data_source") or "").strip()
+        if not src:
+            out["(빈칸)"] += 1
+            continue
+        for v in DATA_SOURCES:
+            if src == v or src.startswith(v + " ") or src.startswith(v + "("):
+                out[v] += 1
+                break
+        else:
+            out["(어휘 밖)"] += 1
+    return out
+
+
+def tally_line(tally: dict) -> str:
+    """셈을 한 줄로. **0 인 칸도 적는다** — 안 적으면 「없다」와 「안 셌다」가 같아진다."""
+    head = " · ".join("%s %d" % (v, tally.get(v, 0)) for v in DATA_SOURCES)
+    tail = "".join(" · %s %d" % (k, tally[k]) for k in ("(빈칸)", "(어휘 밖)") if tally.get(k))
+    return head + tail
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -220,6 +276,20 @@ def self_test() -> int:
          any("자리가 규약과 다르다" in x
              for x in p(dict(good, file="E2E-1/OPERATOR/handover_note.png"),
                         exists=lambda r: True))),
+        # ── ★ 출생 표본 [턴 I · 차선 C] — **출처 칸이 상수였다**
+        #    실행체가 29장 전부에 `시드` 를 박고 있었고, 이 게이트는 「비었는가」만 봤다.
+        #    아래 넷이 그 자리를 잠근다: 어휘를 벗어난 이름 · 셈 · 표시.
+        ("★ 출처 이름이 어휘 밖이면 잡는다 (seed·live 가 섞이면 세 칸이 한 칸이 된다)",
+         any("어휘 밖" in x for x in p(dict(good, data_source="seed")))),
+        ("어휘 안이면 통과한다 — 실측", not p(dict(good, data_source="실측"))),
+        ("어휘 안이면 통과한다 — 모의(꼬리표 붙여도 받는다)",
+         not p(dict(good, data_source="모의 (403 을 주입했다)"))),
+        ("★ 검수 콘솔의 셈이 갈래를 가른다 — 실측 1 · 모의 2 · 빈칸 1",
+         source_tally([{"data_source": "실측"}, {"data_source": "모의 (주입)"},
+                       {"data_source": "모의"}, {}])
+         == {"실측": 1, "시드": 0, "모의": 2, "(빈칸)": 1, "(어휘 밖)": 0}),
+        ("★ 셈은 0 인 칸도 말한다 — 「없다」와 「안 셌다」가 같아지지 않게",
+         tally_line({"실측": 0, "시드": 3, "모의": 0}) == "실측 0 · 시드 3 · 모의 0"),
     ]
     bad = 0
     for label, ok in checks:
@@ -292,16 +362,28 @@ def main() -> int:
             print("[SCREENS] FAIL 0장의 사유가 잠금 대장에 없다 — 사유가 문서에만 있으면 늙는다")
             return 1
 
+    #: ★ [턴 I · 차선 C] **검수 콘솔이 출처를 말한다.** 이 줄이 없던 동안 `data_source`
+    #:   는 판정에만 쓰이고 사람 눈에는 한 번도 안 보였다 — 재기만 하고 말하지 않는
+    #:   칸은 검수자에게 없는 칸이다.
+    tally = source_tally(entries)
+    print("[SCREENS] 출처(data_source) — %s" % tally_line(tally))
+    if tally.get("(빈칸)") or tally.get("(어휘 밖)"):
+        print("[SCREENS] ⚠ 출처를 말하지 않는 캡처가 있다 — 아래 FAIL 줄이 이름을 댄다")
+
     if args.list:
+        print("  %-28s %-10s %-10s %-8s %s"
+              % ("route", "role", "scenario", "출처", "file"))
         for entry in entries:
-            print("  %-28s %-10s %-10s %s" % (entry.get("route"), entry.get("user_role"),
-                                              entry.get("scenario"), entry.get("file")))
+            print("  %-28s %-10s %-10s %-8s %s"
+                  % (entry.get("route"), entry.get("user_role"), entry.get("scenario"),
+                     str(entry.get("data_source") or "(빈칸)")[:8], entry.get("file")))
 
     if problems:
         for p in problems:
             print("[SCREENS] FAIL %s" % p)
         return 1
-    print("[SCREENS] 통과 — 실린 화면은 전부 실제 실행 캡처다 (지금 %d장)" % len(entries))
+    print("[SCREENS] 통과 — 실린 화면은 전부 실제 실행 캡처다 (지금 %d장 · 출처 %s)"
+          % (len(entries), tally_line(tally)))
     return 0
 
 

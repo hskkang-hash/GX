@@ -250,8 +250,18 @@ def audit_uncalled(trees, ref_only_trees=None):
         for node in ast.walk(tree):
             if isinstance(node, ast.Name) and node.id in names and node.id in imported:
                 prod_refs[node.id] += 1
+            #: ★ [실측 2026-09-06 · 턴 I · 조율자] **`from pkg import module` 도 모듈을
+            #:   가져오는 것이다.** 이 줄은 `import pkg.module` 만 모듈로 셌고,
+            #:   `from common import evidence_guard` 로 가져온 뒤
+            #:   `evidence_guard.synthetic_run(...)` 로 **실제로 부르는** 자리를 못 봤다.
+            #:   그래서 판정기 안에서 이미 도는 함수가 「잠들었다」로 나왔다 —
+            #:   **깨어 있는 것을 잠들었다고 말하는 빨강**이고, 그런 빨강은 게이트를 끄게 한다.
+            #:   ⚠ 느슨해진 것이 아니다: 여전히 **가져온 이름**을 통한 참조만 센다.
+            #:     맨이름 등장(`ast.Name` 인데 import 없음)은 종전대로 안 센다 —
+            #:     「감사 대상으로 찾는 이름」을 「부른 이름」으로 세던 그 사고가 그 규칙이다.
             elif (isinstance(node, ast.Attribute) and node.attr in names
-                  and isinstance(node.value, ast.Name) and node.value.id in modules):
+                  and isinstance(node.value, ast.Name)
+                  and (node.value.id in modules or node.value.id in imported)):
                 prod_refs[node.attr] += 1
 
     #: 모수는 위에서 `trees` 로만 세웠다. backend 안의 참조는 종전 규칙 그대로.

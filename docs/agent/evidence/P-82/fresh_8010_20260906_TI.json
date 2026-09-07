@@ -1,0 +1,16 @@
+{
+  "api": "http://localhost:8010",
+  "port": "8010",
+  "container": "gx-shell",
+  "pid": "556",
+  "boot_epoch": 1788700857,
+  "boot": "2026-09-06 22:20:57",
+  "live_commit": "abbdf36",
+  "head_commit": "abbdf36",
+  "source_epoch": 1788701058,
+  "source": "2026-09-06 22:24:18",
+  "source_why": "작업본 backend/config/settings.py",
+  "verdict": "LIVE_OLDER_THAN_SOURCE",
+  "exit": 2,
+  "measured_at": "2026-09-06 22:24:40"
+}

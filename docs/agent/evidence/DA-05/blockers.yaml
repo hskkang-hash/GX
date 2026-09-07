@@ -1548,3 +1548,58 @@ blockers:
       scripts/verify_write_auth.py — 그 JSON 을 읽어 「쓰는 자리 0건」으로 초록을 낸다.
       docs/agent/evidence/D-368/write_surface.json — 신선본(2026-09-06T10:40:30Z · 이번 턴에 다시 만들었다).
       backend/common/access_gate.py — 같은 교훈이 **읽기 쪽에는** 이미 적혀 있는 자리(주석).
+
+  - id: DEVICE_SCREEN_AUTHZ_ENVELOPE_UNMEASURABLE
+    title: "`/device` 화면이 부르는 라우트가 **권한 거절을 200 봉투에 담는다** — 그리고 그 화면의 오류 처리를 우리가 읽을 수 없다"
+    unlock_type: DEV
+    unlock_owner: 우리 (개발) + rj-core 소유팀 — 승격 여부는 **거절 계정 하나**가 있어야 정한다
+    blocks: [D-349, SEC-11a, "턴 I 커밋"]
+    since: "2026-09-07"
+    blocked_now: true
+    why: |
+      권한 거절이 HTTP 200 으로 나가면 **화면은 「빈 표」를 그리고 사람은 「자료가 없다」로
+      읽는다.** 「볼 권한이 없다」와 「볼 것이 없다」는 다른 문장이고, 둘을 같은 화면으로
+      그리는 것이 SEC-11a·P-35 가 막으려는 자리다. 오류율 대시보드도 그 거절을
+      **성공으로 센다**(D-358). 고치려면 봉투를 승격해야 하는데, 승격이 안전한지는
+      **거절 계정 하나가 있어야** 잴 수 있고 그 계정이 저장소에 없다.
+    verified_at: "2026-09-07"
+    verified_by: |
+      [실측 2026-09-07 · 턴 I · 조율자]
+      `scripts/verify_envelope.py` 가 **빨강**이다:
+        화면이 부르는 면: 고유 호출 39건 → 봉투 갈림 **1건** (여기는 래칫이 아니라 0이다)
+          GET /api/devices/devices-management  ← 화면 `/device`
+      ★ **이것은 이번 턴이 만든 결함이 아니라 이번 턴에 보이게 된 결함이다.**
+        HEAD 에서는 같은 검사가 「고유 호출 36건 · 갈림 0건」이었다. 36 → 39 로 는 것은
+        차선 C 가 촬영을 다시 돌려 **그 화면이 원래 부르던 호출을 처음으로 기록**했기 때문이다.
+        `/device` 화면은 HEAD 에도 있었고, 그 호출만 기록에 없었다.
+        **못 보던 것이 보이게 된 것을 「새 결함」으로 적으면 다음 사람이 촬영을 안 돌린다.**
+      뿌리: dj-core `path_permission` 이 권한 거절을 `success:false` + `status_code` 로
+        **200 봉투 안에** 담는다(착시 ⑧). 우리는 그 데코레이터를 못 고친다(§0.4).
+      우리가 가진 유일한 손잡이: `settings.API_CONTRACT_PROMOTE_PATHS` 에 접두를 넣어
+        미들웨어가 그 봉투를 진짜 HTTP 상태로 **승격**하게 하는 것.
+    unlock_step: |
+      ① **거절 계정 하나를 만든다** — `/device` 를 볼 권한이 없는 시드 사용자.
+         지금 저장소에는 그런 계정이 없다(턴 F·G·I 세 턴 연속 같은 사유).
+      ② 그 계정으로 `/device` 를 열어 **승격 전/후를 나란히 잰다**:
+         승격 전 = 200 + 빈 표(오늘 · 차선 C 가 실제로 본 화면) / 승격 후 = 403 + ?
+      ③ ②에서 스피너가 고착되지 않으면 `API_CONTRACT_PROMOTE_PATHS` 에
+         `/api/devices/devices-management` 를 넣는다. 고착되면 SEC-11b 로 넘긴다.
+    internal_alternative_considered: |
+      재지 않고 그냥 승격하는 것. 또는 `verify_envelope.py` 에 rj-core 화면 예외 칸을 만드는 것.
+    why_not: |
+      ㉠ **재지 않고 켜는 것은 판정이 아니라 도박이다** — 이 저장소가 같은 자리에서 이미
+        내린 판정이다(`settings.py` 의 roles·user-profiles·levels 주석: 「그 화면의 오류
+        처리를 이 저장소에서 읽을 수 없다 — 못 재는 것을 켜는 것은 도박이다」).
+        `/device` 도 같다: rj-core 가 그리는 화면이라 `try/catch/finally` 를 읽을 자리가 없다.
+        차선 S 가 이번 턴 SEC-11a 에서 같은 결론을 **수로** 냈다(프런트 오류 처리 11파일 ·
+        `try` 0 · 전역 거절 처리기 0건 → 승격하면 스피너 고착).
+      ㉡ **판정기에 예외 칸을 여는 것은 이 자리에서 하면 안 된다.** 그 변경이 필요할 수는
+        있으나, **자기 커밋을 통과시키려고 판정기를 고치는 것**은 이 저장소가 가장 경계하는
+        모양이다. 게이트가 지시보다 위다(D-327). 그래서 **커밋을 막힌 채로 둔다.**
+    state_in_code: |
+      backend/devices/views/device_views.py — `list_devices` 에 `path_permission("read")` 가 붙어
+        있고, 그 거절이 200 봉투로 나간다.
+      backend/common/api_contract.py — 승격 미들웨어(우리 것) · 접두 목록으로 켠다.
+      backend/config/settings.py — `API_CONTRACT_PROMOTE_PATHS` · 지금 목록에 devices 없음.
+      docs/agent/evidence/D-386/screen_routes.json — `/device` 항목에 그 호출이 **이번 턴부터** 있다.
+      frontend/src/services/API.ts — `deviceManagement: '/api/devices/devices-management'`

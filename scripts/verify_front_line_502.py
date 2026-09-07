@@ -61,10 +61,12 @@ from __future__ import annotations
 
 import argparse
 import io
+import json
 import os
 import re
 import subprocess
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
@@ -190,6 +192,264 @@ def verdict(rows: list[tuple[str, str, str]]) -> int:
     return EXIT_OK
 
 
+# P-84 — **5xx 는 두 줄로 적는다** (세종 판정 · 2026-09-06 · 턴 I)
+# ═══════════════════════════════════════════════════════════════════════════
+#: ★ 무엇이 이 절을 만들었나 [실측 2026-09-06 · 턴 H → 턴 I 정정]
+#:
+#:   턴 H 의 5xx 0.139%(502 5건/3,600)는 **개발 기계에서 난 수**다. 같은 순간
+#:   그 기계에는 차선들의 runserver 여섯 대가 돌고 있었고 loadavg 는 3.57 이었다.
+#:   그 수를 SLA 로 적으면 「제품이 0.139% 로 실패한다」로 읽힌다 — 아니다.
+#:   **우리 개발 기계가 그만큼 붐볐다**는 말이다.
+#:
+#:   그렇다고 그 수를 지우지 않는다(P-84). 지우면 「개발 기계에서 502 가 난다」는
+#:   사실도 함께 사라진다. 그래서 **두 줄로 적는다**:
+#:
+#:       ① 개발 기계 수     참고. runserver 몇 대 · loadavg 얼마를 **같은 줄에** 적는다
+#:       ② 운영형 인스턴스   `gx-gunicorn-e` / `gx-nginx-e`. **SLA 정본은 이것뿐이다**
+#:
+#:   ②를 못 재면 **「SLA 미측정 · 사유: 운영형 인스턴스 없음」**(회색)이다 —
+#:   ①의 수를 SLA 칸에 옮겨 적는 길은 없다.
+#:
+#:   ⚠ 「오류 주입을 SLA 에서 뺀다」는 **철회됐다**(P-84). 주입은 Playwright 가로채기라
+#:     서버에 닿은 적이 없다 — 앞단 로그에 그 요청이 없다. 뺄 건수는 0 이고,
+#:     여기서도 아무것도 빼지 않는다. 빼기는 손잡이가 되고, 손잡이는 당겨진다.
+
+#: 가용성 예산. 정본은 `verify_perf_budget` 의 예산표이고 여기서 **베끼지 않는다** —
+#: `sla_budget()` 이 그 파일에서 읽어 온다. 이 상수는 그 파일을 못 읽을 때의 바닥이다.
+SLA_BUDGET_FALLBACK = 0.001
+
+#: ① 개발 기계 — P-82 로 배치 대상이 된 runserver. ② 운영형 — 앞단 nginx.
+DEV_API_DEFAULT = "http://127.0.0.1:8010"
+PROD_API_DEFAULT = "http://gx-nginx-e:8500"
+SLA_ROUNDS = 200
+SLA_CONCURRENCY = 10
+
+
+def _scripts_dir_on_path() -> None:
+    d = os.path.dirname(os.path.abspath(__file__))
+    if d not in sys.path:
+        sys.path.insert(0, d)
+
+
+def sla_budget() -> float:
+    """가용성 예산. **정본은 예산표 한 자리다** — 여기 수를 베끼지 않는다(D-369)."""
+    _scripts_dir_on_path()
+    try:
+        from verify_perf_budget import ERROR_BUDGET            # noqa: PLC0415
+
+        return float(ERROR_BUDGET)
+    except Exception:                                          # noqa: BLE001
+        return SLA_BUDGET_FALLBACK
+
+
+def sla_calls() -> tuple:
+    """때릴 문들. **정본은 `verify_perf_budget.FACES`** — 두 벌을 두지 않는다(D-369)."""
+    _scripts_dir_on_path()
+    from verify_perf_budget import FACES                       # noqa: PLC0415
+
+    return tuple(c for face in FACES.values() for c in face.calls)
+
+
+def co_resident() -> dict:
+    """이 기계에 **누가 같이 살고 있는가.** ①의 수는 이것 없이는 읽을 수 없다."""
+    _scripts_dir_on_path()
+    try:
+        from verify_perf_budget import _co_resident            # noqa: PLC0415
+
+        return _co_resident()
+    except Exception:                                          # noqa: BLE001
+        return {"runserver_processes": None, "loadavg": None}
+
+
+def sample_5xx(api: str, token: str, calls, *, rounds: int = SLA_ROUNDS,
+               concurrency: int = SLA_CONCURRENCY) -> dict:
+    """한 대상에 요청을 던지고 **5xx 를 센다.** 못 닿으면 `unreachable` 에 사유.
+
+    ★ 0(도달 못 함)은 5xx 쪽으로 센다 — 손님에게는 같은 고장이다.
+    """
+    import concurrent.futures
+    import urllib.error
+    import urllib.request
+
+    plan = [calls[i % len(calls)] for i in range(rounds * len(calls))]
+
+    def one(path: str) -> int:
+        sep = "&" if "?" in path else "?"
+        url = api + path + sep + "_gxts=" + str(time.time_ns())
+        req = urllib.request.Request(url)
+        req.add_header("Authorization", "Bearer " + token)
+        req.add_header("X-GX-Probe", "sla-5xx")
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                return int(r.status)
+        except urllib.error.HTTPError as e:
+            return int(e.code)
+        except Exception:                                       # noqa: BLE001
+            return 0
+
+    codes: dict = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
+        for code in pool.map(one, plan):
+            codes[code] = codes.get(code, 0) + 1
+    n = sum(codes.values())
+    five = sum(v for c, v in codes.items() if c == 0 or 500 <= c <= 599)
+    return {"api": api, "n": n, "n5xx": five,
+            "by_status": {str(c): v for c, v in sorted(codes.items())},
+            "unreachable": None}
+
+
+def judge_sla(dev, prod, co: dict, budget: float) -> tuple:
+    """두 줄을 만든다. **판정은 ②만 한다.**"""
+    lines: list = []
+    need = int(round(1.0 / budget)) if budget else 0
+
+    # ── ① 개발 기계 수 — 참고 ─────────────────────────────────────────────
+    procs = [c for c in (co.get("runserver_processes") or []) if "runserver" in c]
+    where = "runserver %d대 · loadavg %s" % (len(procs), co.get("loadavg") or "못 읽음")
+    if dev is None or dev.get("unreachable"):
+        lines.append("[5XX] 1) **개발 기계 수** — 못 쟀다 (%s) · %s"
+                     % ((dev or {}).get("unreachable") or "대상 없음", where))
+    else:
+        rate = 100.0 * dev["n5xx"] / dev["n"] if dev["n"] else 0.0
+        lines.append("[5XX] 1) **개발 기계 수 (참고)** %s — 5xx %d/%d = %.3f%% · %s"
+                     % (dev["api"], dev["n5xx"], dev["n"], rate, where))
+        lines.append("[5XX]    ^ **이 수는 SLA 가 아니다.** 같은 기계에서 차선들의 "
+                     "runserver 가 함께 돈다 — 재는 것은 제품이 아니라 이 기계의 붐빔이다")
+
+    # ── ② 운영형 인스턴스 — SLA 정본 ──────────────────────────────────────
+    if prod is None or prod.get("unreachable"):
+        why = (prod or {}).get("unreachable") or "gx-gunicorn-e / gx-nginx-e 에 못 닿았다"
+        lines.append("[5XX] 2) **SLA 미측정 · 사유: 운영형 인스턴스 없음** (%s)" % why)
+        lines.append("[5XX] **회색(exit 2)** — 1)의 수를 SLA 칸에 옮겨 적는 길은 없다")
+        return EXIT_UNDECIDABLE, lines
+
+    rate = prod["n5xx"] / prod["n"] if prod["n"] else 0.0
+    codes = " ".join("%s x%d" % (c, v) for c, v in prod["by_status"].items())
+    lines.append("[5XX] 2) **운영형 인스턴스 (SLA 정본)** %s — 5xx %d/%d = %.3f%% "
+                 "(예산 %.1f%%) · 코드별 %s"
+                 % (prod["api"], prod["n5xx"], prod["n"], 100.0 * rate,
+                    100.0 * budget, codes or "없음"))
+    if prod["n"] == 0:
+        lines.append("[5XX] **못 쟀다(exit 2)** — 표본이 0건이다")
+        return EXIT_UNDECIDABLE, lines
+    if prod["n5xx"] == 0 and prod["n"] < need:
+        lines.append("[5XX] **못 쟀다(exit 2)** — 5xx 0건이지만 표본 %d건은 예산 %.1f%% 를 "
+                     "판정할 수 없다(최소 %d건). 0 은 「예산 안」이 아니라 「아직 모른다」다"
+                     % (prod["n"], 100.0 * budget, need))
+        return EXIT_UNDECIDABLE, lines
+    if rate > budget:
+        lines.append("[5XX] **빨강(exit 1)** — 운영형 인스턴스의 5xx 가 예산을 넘었다. "
+                     "**아무것도 빼지 않았다**(주입 분리는 P-84 로 철회 · 뺄 건수 0)")
+        return EXIT_FAIL, lines
+    lines.append("[5XX] **초록(exit 0)** — 운영형 인스턴스의 5xx 가 예산 안이다")
+    return EXIT_OK, lines
+
+
+def sla_self_test() -> list:
+    """P-84 의 규칙 셋을 표본으로 박는다. 실패 사유 목록을 돌려준다."""
+    bad: list = []
+    co = {"runserver_processes": ["python manage.py runserver 0.0.0.0:8000"], "loadavg": "3.57"}
+
+    # ① 운영형이 없으면 **회색**이다 — 개발 기계 수가 SLA 칸으로 넘어오지 않는다
+    rc, lines = judge_sla({"api": "d", "n": 3600, "n5xx": 5, "by_status": {"502": 5}},
+                          None, co, 0.001)
+    text = "\n".join(lines)
+    if rc != EXIT_UNDECIDABLE:
+        bad.append("운영형 인스턴스가 없는데 회색이 아니다")
+    if "SLA 미측정" not in text or "운영형 인스턴스 없음" not in text:
+        bad.append("운영형이 없을 때의 사유 문구가 없다")
+    if "0.139" in text.replace("0.139%", "0.139"):
+        pass
+    if "SLA 정본" in text:
+        bad.append("SLA 정본 줄이 없는데 있는 것처럼 적었다")
+
+    # ② 개발 기계 수 줄에는 runserver 대수와 loadavg 가 **같은 줄에** 있어야 한다
+    if "runserver 1대" not in text or "loadavg 3.57" not in text:
+        bad.append("개발 기계 수 줄에 runserver 대수·loadavg 가 없다 — "
+                   "그 둘이 없으면 그 수는 읽을 수 없다")
+
+    # ③ 표본이 예산을 판정할 수 없으면 5xx 0건도 **회색**이다
+    rc, lines = judge_sla(None, {"api": "p", "n": 400, "n5xx": 0, "by_status": {"200": 400}},
+                          co, 0.001)
+    if rc != EXIT_UNDECIDABLE:
+        bad.append("표본 400건에 예산 0.1% 를 판정했다 — 0 은 「아직 모른다」다")
+
+    # ④ 예산을 넘으면 빨강. **아무것도 빼지 않는다**
+    rc, lines = judge_sla(None, {"api": "p", "n": 3600, "n5xx": 5, "by_status": {"502": 5}},
+                          co, 0.001)
+    if rc != EXIT_FAIL:
+        bad.append("5xx 5/3,600 = 0.139% 가 예산 0.1% 를 넘었는데 빨강이 아니다")
+    if "빼지 않았다" not in "\n".join(lines):
+        bad.append("주입 분리 철회(뺀 건수 0)를 말하지 않는다")
+
+    # ⑤ 예산 안이면 초록
+    rc, _ = judge_sla(None, {"api": "p", "n": 3600, "n5xx": 2, "by_status": {"502": 2}},
+                      co, 0.001)
+    if rc != EXIT_OK:
+        bad.append("5xx 2/3,600 = 0.056% 는 예산 안인데 초록이 아니다")
+    return bad
+
+
+def run_sla(args) -> int:
+    """1)2)를 **차례로** 잰다. 동시에 안 재는 이유: 탐침 계정은 동시 접속 1개다 —
+    둘을 겹쳐 로그인하면 앞의 토큰이 죽고, 죽은 토큰으로 잰 401 은 5xx 가 아니라서
+    **오류율이 0 으로 보인다.** 그것이 이 판정기가 낼 수 있는 가장 나쁜 거짓 초록이다."""
+    _scripts_dir_on_path()
+    from verify_route_alive import login                        # noqa: PLC0415
+
+    bad = sla_self_test()
+    for b in bad:
+        print("[5XX] 자기시험 FAIL %s" % b)
+    if bad:
+        print("[5XX] 자기시험 %d건 실패 — 판정기를 먼저 의심한다 (D-350)" % len(bad))
+        return EXIT_FAIL
+    print("[5XX] 자기시험 통과 — P-84 갈래 5")
+
+    budget = sla_budget()
+    calls = sla_calls()
+    co = co_resident()
+    user, pw = args.user, args.password
+    if not pw:
+        print("[5XX] **못 쟀다(exit 2)** — 탐침 비밀번호가 없다 "
+              "(저장소 밖 `.env.gates` 의 `GX_PROBE_PASSWORD`)")
+        return EXIT_UNDECIDABLE
+
+    out = {}
+    for name, api in (("dev", args.dev_api), ("prod", args.prod_api)):
+        if not api:
+            out[name] = {"unreachable": "대상을 안 줬다"}
+            continue
+        token = login(api, user, pw)
+        if not token:
+            out[name] = {"unreachable": "%s 에 로그인하지 못했다" % api, "api": api}
+            continue
+        out[name] = sample_5xx(api, token, calls, rounds=args.rounds)
+
+    rc, lines = judge_sla(out.get("dev"), out.get("prod"), co, budget)
+    print("[5XX] [입력] 문 %d종 · 라운드 %d · 동시 %d · 계정 %s · 예산 %.1f%%"
+          % (len(calls), args.rounds, SLA_CONCURRENCY, user, 100.0 * budget))
+    for ln in lines:
+        print(ln)
+
+    if args.evidence:
+        payload = {"measured_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                   "budget": budget, "co_resident": co,
+                   "dev_reference": out.get("dev"), "prod_sla": out.get("prod"),
+                   "verdict_exit": rc, "lines": lines,
+                   "note": ("P-84 — 5xx 는 두 줄. SLA 정본은 2)(운영형 인스턴스)뿐이다. "
+                            "주입 분리는 철회됐다(뺀 건수 0)")}
+        try:
+            os.makedirs(os.path.dirname(args.evidence) or ".", exist_ok=True)
+            with io.open(args.evidence, "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False, indent=1)
+            print("[5XX] 증거를 적었다: %s" % args.evidence)
+        except OSError as exc:
+            print("[5XX] 증거를 못 적었다: %s" % exc)
+    return rc
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 수집
 # ═══════════════════════════════════════════════════════════════════════════
@@ -205,11 +465,35 @@ def docker(*args: str, binary: bool = False, timeout: int = 300):
 
 
 def read_access(container: str, path: str, since_line: int) -> list[str] | None:
+    """앞단 접근로그를 읽는다 — **파일이면 파일에서, 표준출력이면 도커에서.**
+
+    ★ [실측 2026-09-06 · 턴 I · 조율자] **이 판정기는 두 턴 동안 회색이었고, 그 회색의
+      원인은 우리가 고친 다른 것이었다.** OPS-07(로그 상한)을 갚으려고 앞단 설정을
+      `access_log /dev/stdout gx;` 로 바꿨다 — 컨테이너 **안의 파일**에는 도커의
+      `--log-opt` 도 logrotate 도 안 닿아 무한히 쌓이기 때문이다. 옳은 조치였다.
+      그런데 이 판정기는 여전히 `/var/log/nginx/gx-front.access.log` 를 열고 있었고,
+      없는 파일이니 **「못 쟀다」**를 냈다. 그 회색이 SLA 정본(P-84 ②)을 가리고 있었다.
+
+      **한쪽을 고치면 다른 쪽이 눈이 먼다** — 이 저장소가 반복해 만난 모양이고,
+      여기서는 「로그를 어디에 적는가」와 「로그를 어디서 읽는가」가 두 자리에 따로 있었다.
+      그래서 **둘 다 본다**: 파일이 있으면 파일, 없으면 `docker logs`.
+      ⚠ 회색을 초록으로 바꾼 것이 아니다 — **읽을 자리를 하나 더 안 것**이고,
+        둘 다 없으면 여전히 회색이다.
+    """
     rc, out, _ = docker("exec", container, "sh", "-c",
                         "sed -n '%d,$p' %s" % (since_line + 1, path), binary=False)
+    if rc == 0:
+        lines = [l for l in out.splitlines() if l.strip()]
+        if lines:
+            return lines
+    #: 표준출력으로 나가는 형상 — `docker logs` 가 그 자리다. 앞머리 타임스탬프는
+    #: 붙이지 않는다(`-t` 없이 읽는다): 아래 `parse_access` 는 접근로그 **원문**을 판다.
+    rc, out, errout = docker("logs", container)
     if rc != 0:
         return None
-    return [l for l in out.splitlines() if l.strip()]
+    joined = out + chr(10) + errout
+    lines = [l for l in joined.splitlines() if l.strip()]
+    return lines[since_line:] if lines else None
 
 
 def read_restarts(container: str) -> list[datetime] | None:
@@ -375,9 +659,24 @@ def main() -> int:
     ap.add_argument("--since-line", type=int, default=0,
                     help="이 줄 **다음**부터 읽는다. 부하 직전의 `wc -l` 을 넣어라")
     ap.add_argument("--evidence", default="")
+    #: P-84 — 5xx 를 **두 줄로** 잰다. 이 갈래는 로그를 안 읽고 직접 때린다.
+    ap.add_argument("--sla-5xx", action="store_true",
+                    help="P-84 — 1) 개발 기계 수(참고) 2) 운영형 인스턴스 수(SLA 정본)")
+    ap.add_argument("--dev-api", default=DEV_API_DEFAULT)
+    ap.add_argument("--prod-api", default=PROD_API_DEFAULT)
+    ap.add_argument("--rounds", type=int, default=SLA_ROUNDS)
+    ap.add_argument("--user", default=os.environ.get("GX_PROBE_USER", "gxprobe_q"))
+    ap.add_argument("--password", default=os.environ.get("GX_PROBE_PASSWORD", ""))
     args = ap.parse_args()
 
+    if args.sla_5xx:
+        return run_sla(args)
     if args.self_test:
+        rc_sla = sla_self_test()
+        for b in rc_sla:
+            print("[5XX] 자기시험 FAIL %s" % b)
+        if rc_sla:
+            return EXIT_FAIL
         return self_test()
     rc = self_test()
     if rc != EXIT_OK:

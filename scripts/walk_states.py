@@ -81,9 +81,20 @@ CANON_ROWS = ("로그인", "지금 처리할 것", "이벤트 목록", "이벤�
 CANON_COLS = ("화면", "주요 버튼", "메뉴·링크", "폼(검증·오류)",
               "오류 흐름(500·503·403·타임아웃)", "빈 상태", "모바일 390")
 #: 원표가 「—」로 둔 자리. **내가 정한 것이 아니다** — 원표를 읽어서 옮긴다.
+#:
+#: ★ [P-87 5 · 2026-09-06 턴 I] **여섯이다. 일곱이 아니었다** — 턴 H 가 정본을
+#:   기계로 세어 세 칸이 어긋난 것을 잡았고(§9-1), 표를 고치는 것은 이 파일의 일이다:
+#:
+#:     로그인 / 모바일 390      정본 ☐ → 「—」로 접혀 있었다   ← **재야 하는 칸이다**
+#:     이벤트 상세 / 모바일 390  정본 ☐ → 「—」로 접혀 있었다   ← **재야 하는 칸이다**
+#:     이벤트 상세 / 빈 상태     정본 「—」 → 빈칸으로 세고 있었다
+#:
+#:   ⚠ **해당 없음으로 접힌 칸은 영영 안 재진다.** 「—」는 채움으로도 안 세지만
+#:     남은 일로도 안 세이므로, 잘못 접힌 칸 하나는 표에서 **통째로 사라진다.**
+#:     그래서 정본을 다시 읽어 여섯으로 맞췄다 — 남은 일이 하나 늘었고, 그것이 옳다.
 CANON_NA = {
-    ("로그인", "메뉴·링크"), ("로그인", "빈 상태"), ("로그인", "모바일 390"),
-    ("이벤트 상세", "폼(검증·오류)"), ("이벤트 상세", "모바일 390"),
+    ("로그인", "메뉴·링크"), ("로그인", "빈 상태"),
+    ("이벤트 상세", "폼(검증·오류)"), ("이벤트 상세", "빈 상태"),
     ("카메라 일괄 등록", "메뉴·링크"), ("보고서", "폼(검증·오류)"),
 }
 
@@ -390,11 +401,29 @@ def to_cells(result: dict) -> dict:
                     note += " — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
                 cells[row]["오류 흐름(500·503·403·타임아웃)"] = {"mark": mark,
                                                                  "note": note}
+            elif missed:
+                #: ★ **빈칸에도 사유를 적는다** (P-87 5 · 턴 I). 빈칸의 사유가 표 밖에
+                #:   있으면 그 표는 읽을 수 없다 — 「화면이 나빠서」와 「도구가 못 재서」가
+                #:   같은 칸이 된다.
+                why = judged[missed[0]][1] if judged.get(missed[0]) else ""
+                cells[row]["오류 흐름(500·503·403·타임아웃)"] = {
+                    "mark": "",
+                    "note": f"**못 쟀다** — 주입 {len(missed)}갈래가 이 화면에 안 닿았다. "
+                            f"{str(why)[:160]}"}
 
         # ── 빈 상태 ───────────────────────────────────────────────────────
         emp = s.get("empty")
+        if emp is None and s.get("reached") and cells[row]["빈 상태"]["mark"] != "—":
+            cells[row]["빈 상태"] = {
+                "mark": "",
+                "note": "**못 쟀다** — 이 화면은 목록에서 열어 도달한다(주소가 없다). "
+                        "빈 응답 주입은 주소로 다시 여는 자리에서만 돌고, 이 화면은 "
+                        "그 자리를 안 지난다"}
         if emp is not None and cells[row]["빈 상태"]["mark"] != "—":
             ok, why = judge_empty_probe(emp)
+            if ok is None:
+                cells[row]["빈 상태"] = {
+                    "mark": "", "note": str(why)[:220]}
             if ok is not None:
                 cells[row]["빈 상태"] = {
                     "mark": "◐",       # ★ **빈 테넌트가 아니라 빈 응답 주입이다** — 일부다
@@ -405,6 +434,9 @@ def to_cells(result: dict) -> dict:
         frm = s.get("form")
         if frm is not None and cells[row]["폼(검증·오류)"]["mark"] != "—":
             ok, why = judge_form_probe(frm)
+            if ok is None:
+                cells[row]["폼(검증·오류)"] = {
+                    "mark": "", "note": str(why)[:220]}
             if ok is not None:
                 pressed = [k for k in ("required", "format", "reject422")
                            if frm.get(k) is not None]
@@ -429,8 +461,17 @@ def to_cells(result: dict) -> dict:
         #   안 누른 칸에 `◐` 를 주면 **표가 저절로 차오르고**(D-327) 그 수는 「눌러
         #   봤다」로 읽힌다. 목록은 다음 사람에게 쓸모가 있으므로 **사유로만** 남기고,
         #   칸은 **빈칸**이다. 이 도구는 쓰기 가드 때문에 쓰기 단추를 누르지 않는다.
+        pr = s.get("press")
+        if pr:
+            if cells[row]["주요 버튼"]["mark"] != "—":
+                mark, note = judge_press(pr, "pressed")
+                cells[row]["주요 버튼"] = {"mark": mark, "note": note}
+            if cells[row]["메뉴·링크"]["mark"] != "—":
+                mark, note = judge_press(pr, "linked")
+                cells[row]["메뉴·링크"] = {"mark": mark, "note": note}
+
         inv = s.get("buttons")
-        if inv and cells[row]["주요 버튼"]["mark"] == "":
+        if inv and not pr and cells[row]["주요 버튼"]["mark"] == "":
             names = [b for b in inv if b]
             if names:
                 cells[row]["주요 버튼"] = {
@@ -604,13 +645,72 @@ def self_test() -> int:
         if row not in CANON_ROWS:
             bad.append(f"「{row}」 는 정본 표에 없는 행 이름이다 — 표를 새로 지었다")
 
+    # ── 누르기 (P-87 5 · 턴 I) — **세는 것과 누르는 것은 다른 칸이다** ──────
+    seen_only = {"buttons_seen": ["새로고침", "저장"], "links_seen": [],
+                 "skipped_global": {"buttons": [], "links": []},
+                 "pressed": [], "linked": []}
+    if judge_press(seen_only, "pressed")[0] != "":
+        bad.append("단추를 **보기만** 했는데 칸에 표를 줬다 — 세는 것은 누르는 것이 아니다")
+    all_pressed = {"buttons_seen": ["새로고침"], "links_seen": [],
+                   "skipped_global": {"buttons": [], "links": []},
+                   "pressed": [{"name": "새로고침", "clicked": True,
+                                "navigated_to": None, "blocked_writes": [],
+                                "raw_error": []}], "linked": []}
+    if judge_press(all_pressed, "pressed")[0] != "●":
+        bad.append("보이는 단추를 전부 눌렀는데 ● 가 아니다")
+    part = dict(all_pressed, buttons_seen=["새로고침", "Dashboard"],
+                skipped_global={"buttons": ["Dashboard"], "links": []})
+    mark, note = judge_press(part, "pressed")
+    if mark != "◐" or "안 눌렀다" not in note:
+        bad.append("전역 사이드바를 일부러 안 눌렀는데 그 사실이 칸에 없다")
+    guarded = {"buttons_seen": ["적용"], "links_seen": [],
+               "skipped_global": {"buttons": [], "links": []},
+               "pressed": [{"name": "적용", "clicked": True, "navigated_to": None,
+                            "blocked_writes": ["POST /api/dsm/x"],
+                            "raw_error": []}], "linked": []}
+    if "가드가 막았다" not in judge_press(guarded, "pressed")[1]:
+        bad.append("쓰기 단추를 눌러 가드가 막았는데 그 사실을 안 적는다 — "
+                   "「눌렀다」와 「서버에 나갔다」는 다른 사실이다")
+    red = {"buttons_seen": ["열기"], "links_seen": [],
+           "skipped_global": {"buttons": [], "links": []},
+           "pressed": [{"name": "열기", "clicked": True, "navigated_to": None,
+                        "blocked_writes": [], "raw_error": ["Network Error"]}],
+           "linked": []}
+    if "**빨강**" not in judge_press(red, "pressed")[1]:
+        bad.append("누른 뒤 화면에 오류 원문이 떴는데 빨강으로 안 적는다")
+    if judge_press({"buttons_seen": [], "links_seen": [],
+                    "skipped_global": {}, "pressed": [], "linked": []},
+                   "pressed")[0] != "":
+        bad.append("누를 것이 없었던 자리를 채움으로 셌다 — 못 쟀다는 통과가 아니다")
+    #: ★ 링크가 0개인 화면에서 **이동을 일으킨 단추**가 그 자리를 채운다.
+    moved_only = {"buttons_seen": ["목록"], "links_seen": [],
+                  "skipped_global": {"buttons": [], "links": []},
+                  "pressed": [{"name": "목록", "clicked": True,
+                               "navigated_to": "/dsm/events", "blocked_writes": [],
+                               "raw_error": []}], "linked": []}
+    mark, note = judge_press(moved_only, "linked")
+    if mark != "◐" or "주소가 바뀐" not in note:
+        bad.append("링크가 0개인데 이동을 일으킨 단추를 안 세었다 — "
+                   "사용자에게 링크는 「눌렀더니 주소가 바뀌는 것」이다")
+    if judge_press({"buttons_seen": [], "links_seen": [],
+                    "skipped_global": {}, "pressed": [], "linked": []},
+                   "linked")[0] != "":
+        bad.append("링크도 0 · 이동한 단추도 0 인데 채움으로 셌다")
+    if _is_global_nav("Delivery Hub and Route") is not True or _is_global_nav("새로고침"):
+        bad.append("전역 사이드바 술어가 틀렸다")
+    #: ★ 로그아웃을 누르면 뒤의 모든 화면이 로그인 화면이 된다 (동시 접속 1개).
+    if not _never_press("로그아웃") or not _never_press("Logout")             or _never_press("저장"):
+        bad.append("누르면 안 되는 단추(로그아웃) 술어가 틀렸다 — "
+                   "누르는 순간 뒤의 측정이 전부 로그인 화면을 본다")
+
     if bad:
         print(f"{TAG} 자기시험 실패 — 판정기를 먼저 의심한다 (D-350):")
         for b in bad:
             print("    " + b)
         return EXIT_FAIL
     print(f"{TAG} 자기시험 통과 — **출생 표본 3**(빈 화면 · 스피너 고착 · Network Error) "
-          f"· 403 갈래 2 · 빈 상태 3 · 폼 3 · 못 쟀다 6 · 표 채우기 7 · 원문 3 · 이름 2")
+          f"· 403 갈래 2 · 빈 상태 3 · 폼 3 · 못 쟀다 6 · 표 채우기 7 · 원문 3 · 이름 2 "
+          f"· **누르기 8**(P-87 5)")
     return EXIT_OK
 
 
@@ -736,6 +836,326 @@ def _goto(page, web: str, route: str, see: str | None) -> tuple:
         return True, ""
     except Exception as exc:                                    # noqa: BLE001
         return False, f"{type(exc).__name__}: {exc}"[:200]
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# P-87 ⑤ — **누른다.** 「주요 버튼」·「메뉴·링크」 두 열 (2026-09-06 · 턴 I · 차선 Q)
+# ═══════════════════════════════════════════════════════════════════════════
+#: ★ 무엇이 이 절을 만들었나 [실측 2026-09-06 · 턴 G → 턴 I]
+#:
+#:   턴 G 는 「주요 버튼」 칸에 **「보이는 단추 N개」만 적고 빈칸으로 뒀다.** 옳았다 —
+#:   세는 것은 누르는 것이 아니다. 그런데 그 뒤 두 턴 동안 그 열은 그대로 비어 있었고,
+#:   비어 있는 이유가 「화면에 결함이 있어서」가 아니라 **「도구가 안 눌러서」**라는 것을
+#:   표만 보고는 알 수 없다. 빈칸의 사유가 표 밖에 있으면 그 표는 읽을 수 없다.
+#:
+#:   그래서 **누른다.** 쓰기는 여전히 안 나간다 — `_install_write_guard` 가 비-GET
+#:   `/api/` 를 네트워크 앞에서 막는다. 누른 뒤 그 가드가 무엇을 막았는지 **이름으로**
+#:   적으므로, 「쓰기 단추였다」와 「안 눌렀다」가 같은 칸에 들어가지 않는다.
+#:
+#:   ⚠ **전역 사이드바는 안 누른다.** Dashboard·Delivery·GCS… 는 §0.4 금지구역
+#:     화면으로 가고, 그 화면의 결함은 우리 판정 대상이 아니다. 안 누른 것을
+#:     **이름으로** 적는다 — 그래서 그 칸은 `●` 가 아니라 `◐` 다.
+
+#: 전역 사이드바 단추·링크. 여기로 가면 §0.4 금지구역 화면이다.
+GLOBAL_NAV_PREFIX = ("Dashboard", "Delivery", "GCS", "Drones/Robots", "Orders",
+                     "Terminal", "Partner")
+
+#: ★ **누르면 안 되는 단추.** 이 환경은 동시 접속 1개다 — 로그아웃을 누르면 그 뒤의
+#:   모든 화면이 로그인 화면이 되고, 도구는 그것을 「문구가 없다」로 적는다.
+#:   턴 G 가 정확히 그 사고를 겪었다(§8-5 8번). 이름으로 막는다.
+NEVER_PRESS = ("로그아웃", "Logout", "Log Out", "Sign out", "Sign Out", "나가기")
+
+#: 한 화면에서 누를 최대 개수. 표는 「전부 눌렀는가」를 묻지 「몇 개인가」를 묻지 않는다.
+PRESS_LIMIT = 10
+
+
+def _is_global_nav(name: str) -> bool:
+    n = (name or "").strip()
+    return any(n.startswith(p) for p in GLOBAL_NAV_PREFIX)
+
+
+def _never_press(name: str) -> bool:
+    n = (name or "").strip()
+    return any(w.lower() in n.lower() for w in NEVER_PRESS)
+
+
+def _press_one(page, web: str, route: str, see, kind: str, name: str,
+               blocked: list) -> dict:
+    """하나를 누르고 **무슨 일이 났는지** 적는다. 누른 뒤 반드시 원래 자리로 돌아온다."""
+    before_url = page.url
+    before_blocked = len(blocked)
+    out = {"kind": kind, "name": name, "clicked": False, "navigated_to": None,
+           "blocked_writes": [], "raw_error": [], "error": None}
+    try:
+        roles = BUTTONISH_ROLES if kind == "button" else LINKISH_ROLES
+        loc = None
+        for role in roles:
+            cand = page.get_by_role(role, name=name, exact=True)
+            if cand.count():
+                loc = cand
+                break
+        if loc is None:
+            out["error"] = "다시 못 찾았다(화면이 바뀌었다)"
+            return out
+        loc.first.click(timeout=8_000)
+        out["clicked"] = True
+        page.wait_for_timeout(1_800)
+        if page.url != before_url:
+            out["navigated_to"] = page.url.replace(web, "")
+        out["blocked_writes"] = list(blocked[before_blocked:])
+        out["raw_error"] = [w for w, _ in scan_raw_error(_visible_text(page))]
+    except Exception as exc:                                    # noqa: BLE001
+        out["error"] = f"{type(exc).__name__}: {exc}"[:160]
+    finally:
+        try:
+            if route and page.url != before_url:
+                _goto(page, web, route, see)
+            elif route:
+                pass
+        except Exception:                                       # noqa: BLE001
+            pass
+    return out
+
+
+#: 「메뉴·링크」에 해당하는 역할들. `<a>` 만 보면 이 앱에서는 **0개**가 나온다 —
+#: 이 SPA 는 이동을 전부 단추로 한다 [실측 2026-09-06 · 턴 I: 여덟 화면 전부 link 0].
+LINKISH_ROLES = ("link", "menuitem", "tab")
+
+#: 「주요 버튼」에 해당하는 역할들. 훈련 모드 **켜기**는 `<button>` 이 아니라 스위치다 —
+#: 역할을 좁게 보면 원표가 이름으로 요구한 그 단추를 영영 못 누른다.
+BUTTONISH_ROLES = ("button", "switch", "checkbox")
+
+
+def _names_by_roles(page, roles) -> list:
+    """이 역할들로 화면에 **보이는** 것들의 이름."""
+    out: list = []
+    for role in roles:
+        try:
+            loc = page.get_by_role(role)
+            n = loc.count()
+        except Exception:                                       # noqa: BLE001
+            continue
+        for i in range(min(n, 30)):
+            try:
+                el = loc.nth(i)
+                if not el.is_visible():
+                    continue
+                name = (el.inner_text() or el.get_attribute("aria-label") or "")
+                name = name.strip().replace(chr(10), " ")
+                if name and name not in out:
+                    out.append(name[:30])
+            except Exception:                                   # noqa: BLE001
+                continue
+    return out
+
+
+def _link_names(page) -> list:
+    """화면에 **보이는** 앱 안 링크·메뉴·탭의 이름."""
+    return _names_by_roles(page, LINKISH_ROLES)
+
+
+def probe_press(page, web: str, route, see, blocked: list) -> dict:
+    """이 화면의 단추와 링크를 **누른다**. 전역 사이드바는 빼고 이름으로 적는다."""
+    buttons = _names_by_roles(page, BUTTONISH_ROLES)
+    links = _link_names(page)
+    skipped_b = [n for n in buttons if _is_global_nav(n)]
+    skipped_l = [n for n in links if _is_global_nav(n)]
+    danger_b = [n for n in buttons if _never_press(n)]
+    danger_l = [n for n in links if _never_press(n)]
+    todo_b = [n for n in buttons
+              if not _is_global_nav(n) and not _never_press(n)][:PRESS_LIMIT]
+    todo_l = [n for n in links
+              if not _is_global_nav(n) and not _never_press(n)][:PRESS_LIMIT]
+    skipped_b = skipped_b + danger_b
+    skipped_l = skipped_l + danger_l
+
+    pressed = [_press_one(page, web, route, see, "button", n, blocked) for n in todo_b]
+    linked = [_press_one(page, web, route, see, "link", n, blocked) for n in todo_l]
+    return {"buttons_seen": buttons, "links_seen": links,
+            "skipped_global": {"buttons": skipped_b, "links": skipped_l},
+            "pressed": pressed, "linked": linked}
+
+
+def judge_press(probe, what: str) -> tuple:
+    """`(mark, note)` — `what` 은 "pressed" 또는 "linked".
+
+    ★ **누른 것과 안 누른 것을 이름으로 가른다.** 「가드가 막았다」는 눌렀는데 쓰기가
+      안 나간 것이고, 「전역 사이드바」는 일부러 안 누른 것이다 — 둘은 다른 칸이다.
+    """
+    if not probe:
+        return "", "**안 눌렀다** — 이 화면에서 누르기를 돌리지 않았다"
+    items = probe.get(what) or []
+    seen = probe.get("buttons_seen" if what == "pressed" else "links_seen") or []
+    skipped = (probe.get("skipped_global") or {}).get(
+        "buttons" if what == "pressed" else "links") or []
+    if not seen and what == "linked":
+        #: ★ **이 앱은 이동을 단추로 한다** [실측 2026-09-06 · 턴 I · 여덟 화면 전부 link 0].
+        #:   그래서 「메뉴·링크」를 `<a>` 로만 물으면 여덟 칸이 영영 빈다. 물어야 할 것은
+        #:   **「눌렀더니 주소가 바뀌었는가」**다 — 그것이 사용자에게 링크다.
+        moved = [i for i in (probe.get("pressed") or [])
+                 if i.get("clicked") and i.get("navigated_to")]
+        if not moved:
+            return "", ("**누를 것이 없었다** — 이 화면에 링크·메뉴·탭이 0개이고, "
+                        "눌러서 **주소가 바뀐 단추**도 0개다 (못 쟀다이지 통과가 아니다)")
+        return "◐", ("이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. "
+                     "눌러서 **주소가 바뀐** 단추 %d개: %s"
+                     % (len(moved), ", ".join("「%s」→%s" % (i["name"], i["navigated_to"])
+                                              for i in moved[:4])))
+    if not seen:
+        return "", ("**누를 것이 없었다** — 이 화면에 단추·스위치가 "
+                    "하나도 안 보였다(못 쟀다이지 통과가 아니다)")
+    ok = [i for i in items if i.get("clicked")]
+    if not ok:
+        return "", "**안 눌렀다** — 보이는 %d개를 하나도 못 눌렀다" % len(seen)
+
+    guarded = [i for i in ok if i.get("blocked_writes")]
+    moved = [i for i in ok if i.get("navigated_to")]
+    reds = [i for i in ok if i.get("raw_error")]
+    mark = "●" if not skipped and len(ok) == len(seen) else "◐"
+    bits = ["눌렀다 %d/%d개: %s"
+            % (len(ok), len(seen), ", ".join("「%s」" % i["name"] for i in ok[:6]))]
+    if moved:
+        bits.append("이동 %d개(%s)"
+                    % (len(moved), ", ".join(str(i["navigated_to"]) for i in moved[:3])))
+    if guarded:
+        bits.append("쓰기 단추 %d개는 **가드가 막았다**(서버에 안 나갔다): %s"
+                    % (len(guarded), ", ".join("「%s」" % i["name"] for i in guarded[:3])))
+    if skipped:
+        bits.append("전역 사이드바 %d개는 **안 눌렀다**(§0.4 금지구역 화면으로 간다): %s"
+                    % (len(skipped), ", ".join("「%s」" % n for n in skipped[:4])))
+    if reds:
+        bits.append("— **빨강** 누른 뒤 화면에 오류 원문: "
+                    + "; ".join("「%s」→%s" % (i["name"], "·".join(i["raw_error"][:2]))
+                                for i in reds[:3]))
+    return mark, " · ".join(bits)[:600]
+
+
+#: 제출처럼 보이는 단추 이름. **여기 없는 이름은 제출로 안 본다** — 아무 단추나 눌러
+#: 「폼을 눌렀다」고 적으면 그 칸은 거짓이다.
+SUBMIT_WORDS = ("저장", "적용", "등록", "보내기", "전송", "확인", "검색", "조회",
+                "추가", "생성", "제출", "회신", "요청", "실행", "켜기", "시작")
+
+#: 형식이 틀린 값 하나. 숫자 칸·주소 칸·날짜 칸 어디에 넣어도 틀린 값이다.
+BAD_VALUE = "!!not-a-valid-value!!"
+
+
+def _submit_button(page):
+    """이 화면의 **제출 단추**. 못 찾으면 `None` — 없는 것을 지어내지 않는다."""
+    try:
+        loc = page.get_by_role("button")
+        for i in range(min(loc.count(), 30)):
+            b = loc.nth(i)
+            try:
+                if not b.is_visible():
+                    continue
+                name = (b.inner_text() or "").strip()
+                if _is_global_nav(name) or _never_press(name):
+                    continue
+                if any(w in name for w in SUBMIT_WORDS):
+                    return b, name
+            except Exception:                                   # noqa: BLE001
+                continue
+    except Exception:                                           # noqa: BLE001
+        return None
+    return None
+
+
+def _text_inputs(page):
+    """보이는 글자 입력칸들."""
+    out = []
+    try:
+        loc = page.locator("input:not([type=hidden]):not([type=checkbox])"
+                           ":not([type=radio]), textarea")
+        for i in range(min(loc.count(), 12)):
+            f = loc.nth(i)
+            try:
+                if f.is_visible():
+                    out.append(f)
+            except Exception:                                   # noqa: BLE001
+                continue
+    except Exception:                                           # noqa: BLE001
+        return out
+    return out
+
+
+def _probe_form_any(page, web: str, route, see, blocked: list) -> dict:
+    """★ **이 화면에 폼이 있으면 눌러 본다** (P-87 5 · 턴 I).
+
+    두 갈래만 본다 — 필수 빈값 · 형식 오류. 그리고 **이중 제출**을 센다.
+    서버 거절(422)은 이 화면의 계약을 모르므로 **안 만든다**: 모르는 계약에
+    지어낸 422 를 먹이면 그 빨강은 내가 만든 것이다 (D-322).
+
+    ⚠ 폼이 없으면 `undecidable` 이고, 그 칸은 **빈칸으로 남는다.** 없는 폼을
+      「통과」로 세면 표가 저절로 차오른다 (D-327).
+    """
+    try:
+        fields = _text_inputs(page)
+        found = _submit_button(page)
+        if not fields:
+            return {"undecidable": True,
+                    "why": "이 화면에 글자 입력칸이 하나도 안 보인다 — 누를 폼이 없다"}
+        if not found:
+            names = _button_names(page)
+            return {"undecidable": True,
+                    "why": ("제출처럼 보이는 단추가 없다(보이는 단추: %s) — "
+                            "아무 단추나 눌러 「폼을 눌렀다」고 적지 않는다"
+                            % ", ".join(names[:6]))}
+        btn, btn_name = found
+        out: dict = {"where": btn_name}
+
+        # ① 필수 빈값 — 전부 비우고 누른다.
+        for f in fields:
+            try:
+                f.fill("")
+            except Exception:                                   # noqa: BLE001
+                continue
+        before = _visible_text(page)
+        n0 = len(blocked)
+        btn.click(timeout=8_000)
+        page.wait_for_timeout(2_000)
+        after = _visible_text(page)
+        added = after.replace(before, "")
+        out["required"] = {
+            "message_shown": bool(added.strip()) or "필수" in after or "입력" in added,
+            "added_text": added[:300], "raw_hits": [w for w, _ in scan_raw_error(after)],
+            "blocked_writes": list(blocked[n0:])}
+
+        # ② 형식 오류 — 첫 칸에 명백히 틀린 값.
+        _goto(page, web, route, see)
+        fields = _text_inputs(page)
+        if fields:
+            fields[0].fill(BAD_VALUE)
+        found = _submit_button(page)
+        if found:
+            btn, _ = found
+            before = _visible_text(page)
+            sent0 = len(blocked)
+            btn.click(timeout=8_000)
+            #: ★ **이중 제출** — 곧바로 한 번 더. 요청이 두 번 나가면 빨강이다.
+            try:
+                btn.click(delay=0, timeout=4_000)
+            except Exception:                                   # noqa: BLE001
+                pass
+            page.wait_for_timeout(2_500)
+            after = _visible_text(page)
+            added = after.replace(before, "")
+            out["format"] = {
+                "message_shown": bool(added.strip()) or "올바르지" in after
+                or "형식" in after or "않습니다" in after,
+                "added_text": added[:300],
+                "raw_hits": [w for w, _ in scan_raw_error(after)]}
+            out["double_submit"] = {"requests": len(blocked) - sent0,
+                                    "where": btn_name,
+                                    "note": ("쓰기 가드가 막은 비-GET 요청 수로 센다 — "
+                                             "서버에는 한 건도 안 나갔다")}
+        return out
+    except Exception as exc:                                    # noqa: BLE001
+        return {"undecidable": True, "why": f"{type(exc).__name__}: {exc}"[:200]}
+    finally:
+        try:
+            _goto(page, web, route, see)
+        except Exception:                                       # noqa: BLE001
+            pass
 
 
 #: 주입 네 갈래. **원표가 이름으로 요구한 것 그대로다** — 500·503·403·타임아웃.
@@ -1175,7 +1595,10 @@ def _recon(page, web: str, spec: dict) -> list:
 
 
 def run(*, web: str, api: str, user: str, password: str,
-        only: list | None = None) -> dict:
+        only: list | None = None, press: bool = False,
+        press_only: bool = False) -> dict:
+    """`press` 면 단추·링크를 **누른다**(P-87 5 · 턴 I). `press_only` 면 주입을 건너뛴다 —
+    누르기만 다시 재는 짧은 벌이다(주입 한 벌은 화면당 1분 넘게 걸린다)."""
     from playwright.sync_api import sync_playwright
 
     blocked: list = []
@@ -1239,8 +1662,35 @@ def run(*, web: str, api: str, user: str, password: str,
                         except Exception:                       # noqa: BLE001
                             pass
                 s["errors"] = errs
+                #: ★ [턴 I] **로그인 / 모바일 390 은 재야 하는 칸이다**(정본 ☐).
+                #:   앞선 판은 이 칸을 「—」로 접어 두어 영영 안 재졌다.
+                try:
+                    page.set_viewport_size(MOBILE)
+                    page.wait_for_timeout(800)
+                    page.goto(f"{web}/login", wait_until="networkidle", timeout=60_000)
+                    page.wait_for_timeout(1_500)
+                    if page.locator("input").count() >= 2:
+                        s["widths"].append(390)
+                except Exception:                               # noqa: BLE001
+                    pass
+                finally:
+                    page.set_viewport_size(DESKTOP)
+                    page.wait_for_timeout(400)
 
             _login(page, web, user, password)
+            if press and "로그인" in result["screens"]:
+                #: ★ 「Log In」은 **`_login()` 이 실제로 누른다.** 그 사실을 여기 적는다 —
+                #:   같은 단추를 한 번 더 누르는 것은 같은 사실을 두 번 세는 것이다.
+                ls = result["screens"]["로그인"]
+                ls["press"] = {
+                    "buttons_seen": ls.get("buttons") or ["Log In"],
+                    "links_seen": [],
+                    "skipped_global": {"buttons": [], "links": []},
+                    "pressed": [{"kind": "button", "name": "Log In", "clicked": True,
+                                 "navigated_to": page.url.replace(web, ""),
+                                 "blocked_writes": [], "raw_error": [],
+                                 "error": None}],
+                    "linked": []}
 
             for name in todo:
                 if name == "로그인":
@@ -1272,7 +1722,23 @@ def run(*, web: str, api: str, user: str, password: str,
                     if ok:
                         s["widths"] = [1440]
                         s["buttons"] = _button_names(page)
-                        if s["route"]:
+                        if press:
+                            s["press"] = probe_press(page, web, s.get("route"),
+                                                     spec.get("see"), blocked)
+                        #: ★ [턴 I] **이벤트 상세 / 모바일 390 도 재야 하는 칸이다**(정본 ☐).
+                        try:
+                            page.set_viewport_size(MOBILE)
+                            page.wait_for_timeout(800)
+                            ok2, _ = _goto(page, web, s["route"], spec.get("see"))
+                            if ok2:
+                                s["widths"].append(390)
+                        except Exception:                       # noqa: BLE001
+                            pass
+                        finally:
+                            page.set_viewport_size(DESKTOP)
+                            page.wait_for_timeout(400)
+                            _goto(page, web, s["route"], spec.get("see"))
+                        if s["route"] and not press_only:
                             spec = dict(spec, route=s["route"])
                             s["errors"] = _probe_errors(context, page, web, api,
                                                         name, spec)
@@ -1292,6 +1758,26 @@ def run(*, web: str, api: str, user: str, password: str,
                     continue
                 s["widths"].append(1440)
                 s["buttons"] = _button_names(page)
+                if press:
+                    s["press"] = probe_press(page, web, spec["route"],
+                                             spec.get("see"), blocked)
+                    _goto(page, web, spec["route"], spec.get("see"))
+                    #: 폼 갈래가 따로 없는 화면만 — 있는 화면(로그인·CSV)은 그쪽이 정본이다.
+                    if not spec.get("form"):
+                        s["form"] = _probe_form_any(page, web, spec["route"],
+                                                    spec.get("see"), blocked)
+                if press_only:
+                    #: 누르기만 재는 짧은 벌 — 390px 만 한 번 더 열고 다음 화면으로.
+                    try:
+                        page.set_viewport_size(MOBILE)
+                        page.wait_for_timeout(800)
+                        ok2, _ = _goto(page, web, spec["route"], spec.get("see"))
+                        if ok2:
+                            s["widths"].append(390)
+                    finally:
+                        page.set_viewport_size(DESKTOP)
+                        page.wait_for_timeout(400)
+                    continue
 
                 # ★ **주입 전에** 기준선과 진짜 응답을 잡는다.
                 base_body, real_bodies = _baseline(page, web, spec)
@@ -1391,6 +1877,14 @@ def main() -> int:
     ap.add_argument("--json-out", default="")
     ap.add_argument("--render-md", default="",
                     help="이미 잰 states.json 을 표 마크다운으로만 낸다(브라우저 없이)")
+    #: P-87 5 (턴 I) — 「주요 버튼」·「메뉴·링크」 두 열을 **누르기로** 채운다.
+    ap.add_argument("--press", action="store_true",
+                    help="단추·링크를 누른다(쓰기는 가드가 막는다)")
+    ap.add_argument("--press-only", action="store_true",
+                    help="주입을 건너뛰고 **누르기만** 잰다 — 짧은 벌")
+    ap.add_argument("--merge-json", default="",
+                    help="앞선 states.json 을 **바탕으로 깔고** 이번 벌을 얹는다. "
+                         "짧은 벌이 앞 벌의 주입 결과를 지우지 않게 하는 자리다")
     args = ap.parse_args()
 
     if args.render_md:
@@ -1412,10 +1906,35 @@ def main() -> int:
     only = [s.strip() for s in args.only.split(",") if s.strip()] or None
     try:
         result = run(web=args.web, api=args.api, user=args.user,
-                     password=args.password, only=only)
+                     password=args.password, only=only,
+                     press=args.press or args.press_only,
+                     press_only=args.press_only)
     except Exception as exc:                                    # noqa: BLE001
         print(f"{TAG} **판정 불가** — 못 눌렀다: {type(exc).__name__}: {exc}")
         return EXIT_UNDECIDABLE
+
+    #: ★ **짧은 벌이 긴 벌을 지우지 않는다.** `--press-only` 는 주입을 안 재므로
+    #:   그 결과만 저장하면 「오류 흐름」 열이 통째로 비고, 그 빈칸은 「안 눌렀다」로
+    #:   읽힌다 — 실제로는 **이 벌이 그것을 재지 않았을 뿐**이다. 그래서 앞 벌을
+    #:   바탕에 깔고 이번 벌의 칸만 얹는다. 두 벌의 시각을 **둘 다** 적는다.
+    if args.merge_json:
+        try:
+            base = json.loads(Path(args.merge_json).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            print(f"{TAG} **판정 불가** — 바탕 벌을 못 읽었다: {exc}")
+            return EXIT_UNDECIDABLE
+        merged = dict(base)
+        merged["merged_from"] = {"path": args.merge_json, "when": base.get("when")}
+        merged["when_press"] = result.get("when")
+        screens = {k: dict(v) for k, v in (base.get("screens") or {}).items()}
+        for name, s_new in (result.get("screens") or {}).items():
+            screens.setdefault(name, {}).update(
+                {k: v for k, v in s_new.items() if v not in (None, [], {})})
+        merged["screens"] = screens
+        merged["blocked_writes"] = ((base.get("blocked_writes") or [])
+                                    + (result.get("blocked_writes") or []))
+        merged["session_closed"] = result.get("session_closed")
+        result = merged
 
     cells = to_cells(result)
     counts = count_cells(cells)

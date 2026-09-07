@@ -794,6 +794,38 @@ gate_dormant() {
 # ⚠ 서버가 안 떠 있거나 자격증명이 없으면 **SKIP(판정 불가)** 이다. 통과가 아니다 —
 #   때려 보지 못한 것을 초록으로 적는 것이 이 게이트가 막으려는 바로 그 병이다(D-301).
 # ─────────────────────────────────────────────────────────────────────────────
+# ★ P-82 (2026-09-06 · 턴 I) — **게이트가 때리는 서버가 지금 코드를 무는가.**
+#   턴 H 에 게이트 12종이 이틀 동안 초록이었고, 그 초록은 이틀 전 코드에 대한 것이었다.
+#   V 가 첫째로 부른다: 이 게이트가 회색이면 **아래 게이트들의 색은 어제의 색**이다.
+gate_live_freshness() {
+  head_ "GATE live-freshness — 대상 서버 · 기동 시각 · 커밋 (P-82)"
+  # ★ **출생 표본** (D-310) — `verify_live_freshness.py::BIRTH_SAMPLE` 에 턴 H 의 그 사례가
+  #   박혀 있다: 8000 이 문 프로세스가 **2026-09-05 14:41** 에 떴고 `backend/` 는 그 뒤
+  #   여러 번 바뀌었으며 `GX_COMMIT` 은 없었다 → **회색**. 아래 자기시험이 그 표본을
+  #   판정하고, 판정이 어긋나면 이 게이트는 시작하지 않는다.
+  local out rc
+  if out=$($PY scripts/verify_live_freshness.py --self-test 2>&1); then
+    pass "탐지기 자기시험 통과 (판정 규칙 6종 · 빨강이 회색을 이긴다)"
+  else
+    fail "탐지기 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_live_freshness.py 2>&1); rc=$?
+  # 입력 = **때린 서버 1대**. 못 찾으면 0 이고, 그 0 의 사유는 판정문이 말한다.
+  local n=1
+  echo "$out" | grep -q '기동 모름' && n=0
+  inputs "$n" "게이트가 때리는 서버 (GX_API)" "그 포트를 문 프로세스를 못 찾았다 — 서버가 안 떴다" || return 1
+  echo "$out" | grep -m1 -E '^\[FRESH\] 대상 서버' | sed 's/^/        /'
+  case $rc in
+    0) pass "$(echo "$out" | grep -m1 -E '^\[FRESH\] 통과 —' || echo '[FRESH] 통과')" ;;
+    1) fail "$(echo "$out" | grep -m1 -E '^\[FRESH\] \*\*빨강\*\*' || echo '[FRESH] 서버가 다른 커밋을 문다')" ;;
+    *) skip "$(echo "$out" | grep -m1 -E '^\[FRESH\] \*\*판정 불가' || echo '[FRESH] 판정 불가')" "(회색은 초록이 아니다 · D-301)" ;;
+  esac
+  return $rc
+}
+
 gate_route_alive() {
   env_require mount session minio || return 2   # HTTP 로 때린다 · 컨테이너 위임 · 저장소
   head_ "GATE route-alive — 화면이 쓰는 라우트가 살아 있나 (D-386)"
@@ -959,6 +991,7 @@ _dispatch_gate() {
     forbidden-zone)     gate_forbidden_zone ;;
     dormant)            gate_dormant ;;
     post-arg-style)     gate_post_arg_style ;;
+    live-freshness)     gate_live_freshness ;;
     route-alive)        gate_route_alive ;;
     contract-route-reach) gate_contract_route_reach ;;
     *) echo "알 수 없는 게이트: $1"; exit 2 ;;
@@ -997,7 +1030,7 @@ run_gate() {
 }
 
 # ★ ui-secrets 가 secrets 바로 뒤다 — **V 의 첫 판정기**(09-26 §6).
-ALL_GATES=(secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach)
+ALL_GATES=(live-freshness secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {

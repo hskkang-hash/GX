@@ -1,0 +1,131 @@
+{
+ "api": "http://127.0.0.1:8000",
+ "login_status": 200,
+ "have_token": true,
+ "probes": {
+  "GET /api/dsm/dashboard/frame": {
+   "status": 200,
+   "head": "{\"preset\": \"OPERATOR\", \"preset_matched\": false, \"five_states\": [\"data\", \"loading\", \"empty\", \"error\", \"forbidden\"], \"stat"
+  },
+  "GET /api/dsm/dashboard/link-state": {
+   "status": 200,
+   "head": "{\"status\": \"waiting\"}"
+  },
+  "GET /api/dsm/events?limit=5": {
+   "status": 200,
+   "head": "{\"total\": 5, \"events\": [{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict"
+  },
+  "GET /api/dsm/events?limit=50&response_state=occurred": {
+   "status": 200,
+   "head": "{\"total\": 5, \"events\": [{\"event_id\": 4803, \"event_type\": \"flood\", \"severity\": \"critical\", \"status\": \"new\", \"verdict\": nu"
+  },
+  "GET /api/dsm/events/summary?hours=12": {
+   "status": 200,
+   "head": "{\"hours\": 12, \"since\": \"2026-09-06T01:43:26.204Z\", \"until\": \"2026-09-06T13:43:26.204Z\", \"unhandled\": 0, \"unhandled_cappe"
+  },
+  "GET /api/dsm/events/summary?hours=168": {
+   "status": 200,
+   "head": "{\"hours\": 168, \"since\": \"2026-08-30T13:43:26.250Z\", \"until\": \"2026-09-06T13:43:26.250Z\", \"unhandled\": 5, \"unhandled_capp"
+  },
+  "GET /api/dsm/events?event_type=camera_down,storage_high": {
+   "status": 200,
+   "head": "{\"total\": 2, \"events\": [{\"event_id\": 4818, \"event_type\": \"camera_down\", \"severity\": \"warning\", \"status\": \"new\", \"verdict"
+  },
+  "GET /api/dsm/events/4798": {
+   "status": 200,
+   "head": "{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurre"
+  },
+  "GET /api/dsm/events/4798/response-times": {
+   "status": 404,
+   "head": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n  <title>P"
+  },
+  "GET /api/dsm/events/4798/field-replies": {
+   "status": 200,
+   "head": "{\"total\": 7, \"replies\": [{\"reply_id\": 163819, \"event_id\": 4798, \"text\": \"\\ud134 I \\ucc28\\uc120 C \\uba71\\ub4f1 \\uc2e4\\uce"
+  },
+  "GET /api/dsm/events/4798/snapshot": {
+   "status": 200,
+   "head": "����\u0000\u0010JFIF\u0000\u0001\u0001\u0000\u0000\u0001\u0000\u0001\u0000\u0000��\u0000C\u0000\u0004\u0003\u0003\u0003\u0003\u0002\u0004\u0003\u0003\u0003\u0004\u0004\u0004\u0005\u0006\n\u0006\u0006\u0005\u0005\u0006\f\b\t\u0007\n\u000e\f\u000f\u000e\u000e\f\r\r\u000f\u0011\u0016\u0013\u000f\u0010\u0015\u0011\r\r\u0013\u001a\u0013\u0015\u0017\u0018\u0019\u0019\u0019\u000f\u0012\u001b\u001d\u001b\u0018\u001d\u0016\u0018\u0019\u0018��\u0000C\u0001\u0004\u0004\u0004\u0006\u0005\u0006\u000b\u0006\u0006\u000b\u0018\u0010\r\u0010\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+  },
+  "GET /api/dsm/events/4798/clip": {
+   "status": 404,
+   "head": "{\"detail\": \"\\uc774 \\uc774\\ubca4\\ud2b8\\uc5d0\\ub294 \\uc601\\uc0c1 \\uad6c\\uac04 \\ucc38\\uc870\\uac00 \\uc5c6\\ub2e4 \\u2014 \\uadf"
+  },
+  "GET /api/dsm/cameras/pulse": {
+   "status": 200,
+   "head": "{\"now\": \"2026-09-06T13:43:26.565Z\", \"rules\": {\"pulse_timeout_seconds\": 300, \"cluster_window_seconds\": 300, \"cluster_min_"
+  },
+  "GET /api/dsm/cameras/address-gap": {
+   "status": 200,
+   "head": "{\"total\": 4, \"with_address\": 1, \"without_address\": 3, \"marked_but_blank\": 0, \"coverage\": 0.25, \"measurable\": true}"
+  },
+  "GET /api/dsm/deliveries?limit=5": {
+   "status": 200,
+   "head": "{\"total\": 5, \"deliveries\": [{\"delivery_id\": 252, \"event_id\": 4798, \"recipient_id\": 101, \"channel\": \"log\", \"succeeded\": t"
+  },
+  "GET /api/dsm/deliveries?limit=5&mine=true": {
+   "status": 200,
+   "head": "{\"total\": 0, \"deliveries\": []}"
+  },
+  "GET /api/dsm/reports/templates": {
+   "status": 200,
+   "head": "{\"total\": 1, \"templates\": [{\"template_id\": 7, \"name\": \"Template\", \"is_default\": false, \"is_enabled\": true, \"usage_count\""
+  },
+  "GET /api/dsm/settings/api-keys": {
+   "status": 405,
+   "head": "Method not allowed"
+  },
+  "GET /api/dsm/webhook-subscriptions": {
+   "status": 200,
+   "head": "{\"total\": 0, \"subscriptions\": []}"
+  },
+  "GET /api/dsm/settings/thresholds": {
+   "status": 403,
+   "head": "{\"detail\": \"\\uc124\\uc815 \\ubcc0\\uacbd \\uad8c\\ud55c\\uc774 \\uc5c6\\ub294 \\uacc4\\uc815 (\\uac10\\uc0ac #165105)\"}"
+  },
+  "GET /api/dsm/ops/backup/declaration": {
+   "status": 404,
+   "head": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n  <title>P"
+  },
+  "PROPFIND /api/dsm/events/4798/review": {
+   "status": 405,
+   "meaning": "라우트 있음(405)"
+  },
+  "PROPFIND /api/dsm/events/4798/response": {
+   "status": 405,
+   "meaning": "라우트 있음(405)"
+  },
+  "PROPFIND /api/dsm/events/4798/field-reply": {
+   "status": 405,
+   "meaning": "라우트 있음(405)"
+  },
+  "PROPFIND /api/dsm/events/4798/notify": {
+   "status": 405,
+   "meaning": "라우트 있음(405)"
+  },
+  "PROPFIND /api/dsm/cameras/import": {
+   "status": 405,
+   "meaning": "라우트 있음(405)"
+  },
+  "PROPFIND /api/dsm/settings/api-keys": {
+   "status": 405,
+   "meaning": "라우트 있음(405)"
+  },
+  "PROPFIND /api/dsm/webhook-subscriptions": {
+   "status": 405,
+   "meaning": "라우트 있음(405)"
+  },
+  "PROPFIND /api/dsm/drill": {
+   "status": 405,
+   "meaning": "라우트 있음(405)"
+  },
+  "PROPFIND /api/dsm/settings/grade-rules": {
+   "status": 405,
+   "meaning": "라우트 있음(405)"
+  },
+  "ANON GET /api/dsm/events?limit=1": {
+   "status": 401
+  }
+ },
+ "event_id": 4798
+}

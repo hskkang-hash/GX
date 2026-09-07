@@ -1,0 +1,16 @@
+{
+  "web": "http://localhost:3002",
+  "user": "gxprobe_e2e",
+  "console": [
+    "error: Failed to load resource: the server responded with a status of 404 (File not found)",
+    "error: New order notification WebSocket error: Event",
+    "error: 🚨 Partner callback WebSocket error: Event"
+  ],
+  "when": "2026-09-07T06:19:09",
+  "after_login_url": "http://localhost:3002/login",
+  "url": "http://localhost:3002/login",
+  "text_head": "ID\nPassword\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 abbdf36 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+  "spinner_visible": 0,
+  "says_permission": false,
+  "says_empty": false
+}

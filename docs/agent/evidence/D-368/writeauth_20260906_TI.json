@@ -1,0 +1,1108 @@
+{
+  "decision": "D-368 · P-83",
+  "probe_mode": "schema-passing-body",
+  "probe_contract": {
+    "gate_statuses": [
+      401,
+      403
+    ],
+    "validation_statuses": [
+      400,
+      422
+    ],
+    "unreachable_statuses": [
+      404,
+      405
+    ],
+    "max_rounds": 16
+  },
+  "measured_at": "2026-09-06T13:26:29+00:00",
+  "note": "관문 없는(=auth= 콜백 없는) 쓰기 라우트 전수. **스키마를 통과하는 최소 본문**을 인증 없이 보내 도달을 **호출**로 재고, 쓰는가는 **정적**으로 판정했다 — 두 방법이 다르다는 사실을 writes_by 에 적었다 (D-322). 관문은 401/403 뿐이고 422 는 도달·검증 실패, 404/405 는 도달 실패다 (P-83)",
+  "totals": {
+    "routes": 30,
+    "by_verdict": {
+      "gated": 2,
+      "public_by_design": 11,
+      "read_only_in_practice": 9,
+      "schema_rejected": 1,
+      "unreachable": 2,
+      "writes": 5
+    }
+  },
+  "routes": [
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/delivery/drone-monitoring/drone-status",
+      "app": "delivery",
+      "view": "delivery.views.api.post_drone_status_monitoring",
+      "reached": false,
+      "status": 401,
+      "note": "",
+      "rounds": 1,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 401,
+          "sent": {}
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "gated"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/delivery/etri-mock/receive-delivery",
+      "app": "delivery",
+      "view": "delivery.views.api.mock_receive_delivery",
+      "reached": false,
+      "status": 401,
+      "note": "",
+      "rounds": 1,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 401,
+          "sent": {}
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "gated"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/token/pair",
+      "app": "token",
+      "view": "ninja_jwt.controller.obtain_token",
+      "reached": false,
+      "status": 404,
+      "note": "",
+      "rounds": 1,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 404,
+          "sent": {}
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "public_by_design"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/token/refresh",
+      "app": "token",
+      "view": "ninja_jwt.controller.refresh_token",
+      "reached": false,
+      "status": 400,
+      "note": "검증 실패인데 오류 목록을 못 읽었다: '{\"detail\": \"Invalid input.\", \"code\": \"invalid\", \"refresh\": \"token is required\"}'",
+      "rounds": 1,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 400,
+          "sent": {}
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "public_by_design"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/token/verify",
+      "app": "token",
+      "view": "ninja_jwt.controller.verify_token",
+      "reached": false,
+      "status": 400,
+      "note": "검증 실패인데 오류 목록을 못 읽었다: '{\"detail\": \"Invalid input.\", \"code\": \"invalid\", \"token\": \"token is required\"}'",
+      "rounds": 1,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 400,
+          "sent": {}
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "public_by_design"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/v1/auth/delete-session",
+      "app": "v1",
+      "view": "core.api.v1.auth.delete_user_session",
+      "reached": false,
+      "status": 422,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [
+        "query.data(dict_type)"
+      ],
+      "sent": {
+        "body": {},
+        "query": {
+          "data": "1"
+        },
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 422,
+          "sent": {}
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 get_or_create, save() 호출",
+      "verdict": "public_by_design"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/v1/auth/forgot-password",
+      "app": "v1",
+      "view": "core.api.v1.auth.forgot_password",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "email": "gxprobe@example.invalid"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "email": "gxprobe@example.invalid"
+          }
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "public_by_design"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/v1/auth/login",
+      "app": "v1",
+      "view": "core.api.v1.auth.login_user",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "username": "1",
+          "password": "GxProbe!2026"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "username": "1",
+            "password": "GxProbe!2026"
+          }
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 get_or_create, save() 호출",
+      "verdict": "public_by_design"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/v1/auth/logout",
+      "app": "v1",
+      "view": "core.api.v1.auth.logout_user",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 1,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 500,
+          "sent": {}
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "public_by_design"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/v1/auth/otp/reset",
+      "app": "v1",
+      "view": "core.api.v1.auth.reset_otp",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "username": "1"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "username": "1"
+          }
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 get_or_create, save() 호출",
+      "verdict": "public_by_design"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/v1/auth/otp/verify",
+      "app": "v1",
+      "view": "core.api.v1.auth.verify_otp_code",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "username": "1",
+          "otp_code": "1"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "username": "1",
+            "otp_code": "1"
+          }
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 save() 호출",
+      "verdict": "public_by_design"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/v1/auth/refresh-token",
+      "app": "v1",
+      "view": "core.api.v1.auth.refresh_token",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "refresh_token": "1"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "refresh_token": "1"
+          }
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 save() 호출",
+      "verdict": "public_by_design"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/v1/auth/reset-password",
+      "app": "v1",
+      "view": "core.api.v1.auth.reset_password",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "token": "1",
+          "new_password": "GxProbe!2026"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "token": "1",
+            "new_password": "GxProbe!2026"
+          }
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 save() 호출",
+      "verdict": "public_by_design"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/apikey/bulk-deactivate",
+      "app": "apikey",
+      "view": "core.apikey_account.api.bulk_deactivate",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "api_key_ids": [
+            1
+          ]
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "api_key_ids": [
+              1
+            ]
+          }
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "read_only_in_practice"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/apikey/keys",
+      "app": "apikey",
+      "view": "core.apikey_account.api.create_api_key",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "name": "1"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "name": "1"
+          }
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "read_only_in_practice"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/apikey/keys/{api_key_id}/regenerate",
+      "app": "apikey",
+      "view": "core.apikey_account.api.regenerate_api_key",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 1,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 500,
+          "sent": {}
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "read_only_in_practice"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/apikey/keys/{user_id}",
+      "app": "apikey",
+      "view": "core.apikey_account.api.create_api_key_for_user",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "name": "1"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "name": "1"
+          }
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "read_only_in_practice"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/delivery/etri-integration/receive-from-etri",
+      "app": "delivery",
+      "view": "delivery.views.api.receive_status_from_etri",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "CONTROL_ID": "1",
+          "USER_ID": "1",
+          "ORG_ID": "1",
+          "RECEIPT_ID": "1",
+          "MISSION_ID": "1",
+          "RECEIPT_DATE": "1",
+          "MISSION_STATUS": "1",
+          "CANCEL_REJECT_REASON": "1",
+          "MISSION_DATE": "1",
+          "DRONE_PATH_DISTANCE": "1",
+          "DRONE_PATH": "1",
+          "ROBOT_PATH_DISTANCE": "1",
+          "ROBOT_PATH": "1",
+          "DOCKING_POINT": "1"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "CONTROL_ID": "1",
+            "USER_ID": "1",
+            "ORG_ID": "1",
+            "RECEIPT_ID": "1",
+            "MISSION_ID": "1",
+            "RECEIPT_DATE": "1",
+            "MISSION_STATUS": "1",
+            "CANCEL_REJECT_REASON": "1",
+            "MISSION_DATE": "1",
+            "DRONE_PATH_DISTANCE": "1",
+            "DRONE_PATH": "1",
+            "ROBOT_PATH_DISTANCE": "1",
+            "ROBOT_PATH": "1",
+            "DOCKING_POINT": "1"
+          }
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "read_only_in_practice"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/delivery/processing/assign-packages-to-drone",
+      "app": "delivery",
+      "view": "delivery.views.api.assign_packages_to_drone",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": [],
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": []
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "read_only_in_practice"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/delivery/verification/verify-orders",
+      "app": "delivery",
+      "view": "delivery.views.api.verify_orders",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "operation_ids": [
+            1
+          ]
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "operation_ids": [
+              1
+            ]
+          }
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "read_only_in_practice"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/orders/order/{id}/payment",
+      "app": "orders",
+      "view": "orders.views.order_views.payment_order",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 1,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 500,
+          "sent": {}
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "read_only_in_practice"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/third-api/api-key-management/keys/{user_id}",
+      "app": "third-api",
+      "view": "core.apikey_account.api.create_api_key_for_user",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "name": "1"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "name": "1"
+          }
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "read_only_in_practice"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/delivery/processing/assign-packages-to-drones",
+      "app": "delivery",
+      "view": "delivery.views.api.assign_packages_to_drones",
+      "reached": false,
+      "status": 422,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [
+        "body.data.drone_ids.0.drone_id(missing)",
+        "body.data.drone_ids.0.orders(missing)"
+      ],
+      "sent": {
+        "body": {
+          "route_id": "1",
+          "drone_ids": [
+            1
+          ]
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 422,
+          "sent": {
+            "route_id": "1",
+            "drone_ids": [
+              1
+            ]
+          }
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "schema_rejected"
+    },
+    {
+      "method": "PATCH",
+      "methods": "PATCH",
+      "path": "/api/apikey/keys/{api_key_id}",
+      "app": "apikey",
+      "view": "core.apikey_account.api.update_api_key",
+      "reached": false,
+      "status": 405,
+      "note": "",
+      "rounds": 1,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 405,
+          "sent": {}
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 save() 호출",
+      "verdict": "unreachable"
+    },
+    {
+      "method": "DELETE",
+      "methods": "DELETE",
+      "path": "/api/apikey/keys/{api_key_id}",
+      "app": "apikey",
+      "view": "core.apikey_account.api.delete_api_key",
+      "reached": false,
+      "status": 405,
+      "note": "",
+      "rounds": 1,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 405,
+          "sent": {}
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 delete() 호출",
+      "verdict": "unreachable"
+    },
+    {
+      "method": "PUT",
+      "methods": "PUT",
+      "path": "/api/advanced-table/column-order",
+      "app": "advanced-table",
+      "view": "core.advanced_table.api.update_column_order",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": [],
+        "query": {
+          "grid_id": "1",
+          "user_id": "1"
+        },
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": []
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 get_or_create, save() 호출",
+      "verdict": "writes"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/source/save-html",
+      "app": "source",
+      "view": "core.sourcedemo.services.source_services.save_html",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {
+          "menu_id": "1"
+        },
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "menu_id": "1"
+          }
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 remove() 호출",
+      "verdict": "writes"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/v1/auth/register",
+      "app": "v1",
+      "view": "core.api.v1.auth.register_user",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "username": "1",
+          "email": "gxprobe@example.invalid",
+          "password": "GxProbe!2026"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "username": "1",
+            "email": "gxprobe@example.invalid",
+            "password": "GxProbe!2026"
+          }
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 add, create, save() 호출",
+      "verdict": "writes"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/v1/auth/reset-password-for-user",
+      "app": "v1",
+      "view": "core.api.v1.auth.reset_password_for_user",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "id": "1",
+          "new_password": "GxProbe!2026"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "id": "1",
+            "new_password": "GxProbe!2026"
+          }
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 save() 호출",
+      "verdict": "writes"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/v1/user/create-user",
+      "app": "v1",
+      "view": "core.api.v1.user.create_user",
+      "reached": true,
+      "status": 500,
+      "note": "",
+      "rounds": 2,
+      "unresolved": [],
+      "sent": {
+        "body": {
+          "username": "1",
+          "email": "gxprobe@example.invalid",
+          "password": "GxProbe!2026"
+        },
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 422,
+          "sent": {}
+        },
+        {
+          "round": 2,
+          "status": 500,
+          "sent": {
+            "username": "1",
+            "email": "gxprobe@example.invalid",
+            "password": "GxProbe!2026"
+          }
+        }
+      ],
+      "writes": true,
+      "writes_by": "[정적] 핸들러 본문에 add, create() 호출",
+      "verdict": "writes"
+    }
+  ]
+}

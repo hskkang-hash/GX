@@ -51,6 +51,11 @@
     python scripts/verify_delta.py --suite backend-unit
     python scripts/verify_delta.py --list
 
+빨강에는 **사유 이름**이 붙는다 (P-87 · 턴 I) — `BASELINE_STALE` · `DIRTY_RUN` ·
+`SUITE_SHRANK` · `GATE_SCOPE_WIDENED` · `REAL_REGRESSION` · `SPEEDUP_SUSPECT` ·
+`SLOWDOWN_UNEXPLAINED` · `ENV_UNNAMED`. 「무엇이 줄었다」만 말하는 빨강은 읽은 사람의
+할 일을 정해 주지 않는다. **이름은 종료 코드를 바꾸지 않는다.**
+
 종료 코드: **0 초록 · 1 빨강 · 2 회색(견줄 점이 없다)**.
 호스트에서 돈다 — Django 가 필요 없다. 읽는 것은 pytest 가 마지막에 적은 한 줄이다.
 """
@@ -154,7 +159,111 @@ def _ratio(old: float, new: float) -> float | None:
     return (new - old) / old
 
 
-def judge(old: dict, new: dict, threshold: float = THRESHOLD) -> tuple[int, list[str]]:
+# ═══════════════════════════════════════════════════════════════════════════
+# 사유 이름 — **「무엇이 줄었다」는 판정이 아니다** (P-87 · 2026-09-06 · 턴 I)
+# ═══════════════════════════════════════════════════════════════════════════
+#: ★ 무엇이 이 표를 만들었나 [실측 2026-09-06 · 턴 I]
+#:
+#:   이 판정기가 처음 낸 exit 1 은 이렇게 말했다:
+#:
+#:       **빨강** 오류가 0 → 4 로 4건 늘었다
+#:       **빨강** 소요가 +29.9% 움직였다
+#:
+#:   틀린 말은 하나도 없는데 **읽은 사람이 할 일이 정해지지 않는다.** 오류 4건이
+#:   코드가 만든 것인지 · 기준선이 낡아 엉뚱한 두 점을 견준 것인지 · 시험이 도는
+#:   동안 옆 차선이 같은 파일을 고치고 있었던 것인지가 갈리지 않기 때문이다.
+#:   그 셋은 **할 일이 완전히 다르다**(고친다 / 다시 잰다 / 다시 돌린다).
+#:
+#:   P-71 이 정확히 이 자리였다. 차선 셋이 같은 빨강을 「환경」이라고 불렀고 셋 다
+#:   틀렸다. 이름 없는 사유는 그때도 아무 일도 하지 않았다. 그래서 **모든 빨강은
+#:   이름을 가진다** — 이름이 없는 빨강이 하나라도 나오면 그것은 이 판정기의 결함이고,
+#:   자기시험이 그것을 잡는다(`UNNAMED_RED`).
+#:
+#:   ⚠ 이름은 **종료 코드를 바꾸지 않는다.** 사유가 「기준선이 낡았다」여도 빨강은
+#:     빨강이다 — 사유를 붙여 초록으로 내리는 순간 이 표가 거짓 초록의 도구가 된다.
+CAUSE_TEXT: dict[str, str] = {
+    "ENV_UNNAMED":
+        "사유란에 「환경」이라 적었는데 `env` 블록에 이름이 없다 — "
+        "할 일: `gate_env.py --json` 이 낸 이름을 붙이고 다시 적는다",
+    "BASELINE_STALE":
+        "뒤 점의 커밋이 저장소 HEAD 가 아니다 — 이 판정은 **지금 코드를 안 본다**. "
+        "할 일: HEAD 에서 한 벌 돌려 `--record` 로 적고 다시 판정한다",
+    "DIRTY_RUN":
+        "두 점의 **커밋이 같은데** 수가 달라졌다 — 같은 코드에서 다른 수가 나왔으면 "
+        "원인은 코드가 아니다(동시 차선·오염된 시험 DB·경주). "
+        "할 일: 조용한 창에서 다시 돌린다",
+    "SUITE_SHRANK":
+        "걷힌 시험이 문턱 밖으로 **줄었다** — 0건 수집은 초록처럼 보인다(P-71). "
+        "할 일: 무엇이 안 걷혔는지 이름을 댄다",
+    "GATE_SCOPE_WIDENED":
+        "걷힌 시험이 문턱 밖으로 **늘었다** — 판정 범위가 넓어졌다. "
+        "할 일: 늘어난 시험 이름을 대고, 늘어난 것이 맞으면 기준선을 갱신한다",
+    "REAL_REGRESSION":
+        "커밋이 움직였고 오류가 늘었다 — **코드가 원인일 자리다**. "
+        "할 일: 늘어난 실패의 이름을 대고 고친다",
+    "SPEEDUP_SUSPECT":
+        "소요가 문턱 밖으로 **줄었다** — 아무것도 안 하면 빨리 끝난다(P-71). "
+        "할 일: 시험 수가 그대로인지 먼저 본다",
+    "SLOWDOWN_UNEXPLAINED":
+        "소요가 문턱 밖으로 **늘었다** — 느려진 만큼 무엇이 늘었는지 이름이 필요하다",
+    "UNNAMED_RED":
+        "빨강인데 이름이 붙지 않았다 — **이 판정기의 결함이다**(사유 표에 빠진 갈래). "
+        "할 일: `CAUSE_TEXT` 에 갈래를 추가한다",
+}
+
+#: 우선순위. **위에 있는 것이 아래를 설명한다** — 같은 커밋에서 수가 달라졌으면
+#: 그 뒤의 「오류가 늘었다」는 코드 이야기가 아니다.
+CAUSE_ORDER = ("ENV_UNNAMED", "BASELINE_STALE", "DIRTY_RUN", "SUITE_SHRANK",
+               "GATE_SCOPE_WIDENED", "REAL_REGRESSION", "SPEEDUP_SUSPECT",
+               "SLOWDOWN_UNEXPLAINED", "UNNAMED_RED")
+
+
+def classify(old: dict, new: dict, threshold: float = THRESHOLD,
+             head: str = "") -> list[str]:
+    """빨강의 **사유 이름들** — 우선순위 순. 빨강이 아니면 빈 목록.
+
+    `head` 를 주면 `BASELINE_STALE` 을 함께 본다(비우면 그 갈래는 판정하지 않는다 —
+    git 이 없는 자리에서 「낡았다」를 지어내지 않기 위해서다).
+    """
+    found: set[str] = set()
+
+    reason = (new.get("reason") or "").strip()
+    named = [str(x) for x in (new.get("env") or {}).get("missing", [])]
+    if "환경" in reason and not named:
+        found.add("ENV_UNNAMED")
+
+    rt = _ratio(old["tests"], new["tests"])
+    rd = _ratio(old["duration_s"], new["duration_s"])
+    errors_up = new["errors"] > old["errors"]
+    moved = (errors_up
+             or (rt is not None and abs(rt) > threshold)
+             or (rd is not None and abs(rd) > threshold))
+
+    old_c, new_c = str(old.get("commit", "")), str(new.get("commit", ""))
+    if moved and old_c and new_c and old_c == new_c:
+        found.add("DIRTY_RUN")
+    if moved and head and new_c and new_c != head:
+        found.add("BASELINE_STALE")
+
+    if rt is not None and rt < -threshold:
+        found.add("SUITE_SHRANK")
+    if rt is not None and rt > threshold:
+        found.add("GATE_SCOPE_WIDENED")
+    if errors_up and old_c and new_c and old_c != new_c:
+        found.add("REAL_REGRESSION")
+    if rd is not None and rd < -threshold:
+        found.add("SPEEDUP_SUSPECT")
+    if rd is not None and rd > threshold:
+        found.add("SLOWDOWN_UNEXPLAINED")
+
+    #: 빨강인데 이름이 하나도 없으면 **그 사실 자체를 이름으로 낸다.**
+    if moved and not found:
+        found.add("UNNAMED_RED")
+    return [c for c in CAUSE_ORDER if c in found]
+
+
+def judge(old: dict, new: dict, threshold: float = THRESHOLD,
+          head: str = "") -> tuple[int, list[str]]:
     """`(종료코드, 말할 줄들)` — 두 점을 견준다.
 
     ★ **여기가 이 도구의 심장이다.** 20% 밖의 변화는 회색이 될 수 없다.
@@ -209,6 +318,13 @@ def judge(old: dict, new: dict, threshold: float = THRESHOLD) -> tuple[int, list
         lines.append(f"{TAG}   사유: {reason}")
 
     if red:
+        #: ★ **사유 이름이 먼저 온다** (P-87). 「무엇이 줄었다」만 말하는 빨강은
+        #:   읽은 사람의 할 일을 정해 주지 않는다.
+        names = classify(old, new, threshold, head)
+        lines.append(f"{TAG} **빨강 사유** {' · '.join(names)} "
+                     f"(첫 사유 `{names[0]}`)")
+        for nm in names:
+            lines.append(f"{TAG}   `{nm}` — {CAUSE_TEXT[nm]}")
         for r_ in red:
             lines.append(f"{TAG} **빨강** {r_}")
         lines.append(f"{TAG} ±{threshold:.0%} 밖의 변화는 **회색이 될 수 없다** — "
@@ -285,13 +401,77 @@ def self_test() -> int:
     if rc != EXIT_OK:
         bad.append("앞이 0 인 자리에서 비율을 만들어 빨강을 냈다")
 
+    # ── ⑧ ★ **모든 빨강은 이름을 가진다** (P-87 · 턴 I)
+    #        이름 없는 빨강이 나오면 그것은 판정기의 결함이다. 여기가 그 자리를 지킨다.
+    reds = (
+        ({"tests": 21, "errors": 0, "duration_s": 31.04, "commit": "aaa"},
+         {"tests": 21, "errors": 21, "duration_s": 3.66, "commit": "bbb"}),
+        ({"tests": 1147, "errors": 0, "duration_s": 487.4, "commit": "e96ab7d"},
+         {"tests": 1152, "errors": 4, "duration_s": 633.16, "commit": "e96ab7d"}),
+        ({"tests": 1000, "errors": 0, "duration_s": 100.0, "commit": "aaa"},
+         {"tests": 100, "errors": 0, "duration_s": 90.0, "commit": "bbb"}),
+    )
+    for a_, b2 in reds:
+        rc, lines = judge(a_, b2)
+        text = chr(10).join(lines)
+        if rc != EXIT_FAIL:
+            bad.append(f"빨강이어야 할 표본이 빨강이 아니다: {b2}")
+            continue
+        if "**빨강 사유**" not in text:
+            bad.append(f"빨강인데 **사유 이름**이 없다: {b2}")
+        if "UNNAMED_RED" in text:
+            bad.append(f"사유 표에 갈래가 빠졌다(UNNAMED_RED): {b2}")
+
+    # ── ⑨ REAL_REGRESSION 과 DIRTY_RUN 은 **같은 자리가 아니다**
+    #        커밋이 움직였고 오류가 늘었다 → 코드가 원인일 자리 (고친다)
+    got = classify({"tests": 21, "errors": 0, "duration_s": 31.0, "commit": "aaa"},
+                   {"tests": 21, "errors": 3, "duration_s": 31.2, "commit": "bbb"})
+    if got != ["REAL_REGRESSION"]:
+        bad.append(f"커밋이 다른데 오류가 는 자리를 REAL_REGRESSION 이라 안 했다: {got}")
+    #        커밋이 같은데 수가 달라졌다 → 코드가 원인일 수 없다 (다시 돌린다)
+    got = classify({"tests": 21, "errors": 0, "duration_s": 31.0, "commit": "aaa"},
+                   {"tests": 21, "errors": 3, "duration_s": 31.2, "commit": "aaa"})
+    if got != ["DIRTY_RUN"]:
+        bad.append(f"같은 커밋에서 수가 달라진 자리를 DIRTY_RUN 이라 안 했다: {got}")
+
+    # ── ⑩ BASELINE_STALE 은 **HEAD 를 줬을 때만** 판정한다 (없는 사실을 짓지 않는다)
+    pair = ({"tests": 21, "errors": 0, "duration_s": 31.0, "commit": "aaa"},
+            {"tests": 21, "errors": 3, "duration_s": 31.2, "commit": "bbb"})
+    if "BASELINE_STALE" in classify(*pair):
+        bad.append("HEAD 를 주지 않았는데 BASELINE_STALE 을 지어냈다")
+    if "BASELINE_STALE" not in classify(*pair, head="zzz"):
+        bad.append("뒤 점이 HEAD 가 아닌데 BASELINE_STALE 을 안 냈다")
+    if "BASELINE_STALE" in classify(*pair, head="bbb"):
+        bad.append("뒤 점이 HEAD 인데 BASELINE_STALE 을 냈다")
+
+    # ── ⑪ 시험 수가 준 자리와 넌 자리는 이름이 다르다
+    got = classify({"tests": 1000, "errors": 0, "duration_s": 100.0, "commit": "aaa"},
+                   {"tests": 100, "errors": 0, "duration_s": 95.0, "commit": "bbb"})
+    if "SUITE_SHRANK" not in got or "GATE_SCOPE_WIDENED" in got:
+        bad.append(f"시험 수가 준 자리를 SUITE_SHRANK 라 안 했다: {got}")
+    got = classify({"tests": 100, "errors": 0, "duration_s": 100.0, "commit": "aaa"},
+                   {"tests": 1000, "errors": 0, "duration_s": 105.0, "commit": "bbb"})
+    if "GATE_SCOPE_WIDENED" not in got or "SUITE_SHRANK" in got:
+        bad.append(f"시험 수가 는 자리를 GATE_SCOPE_WIDENED 라 안 했다: {got}")
+
+    # ── ⑫ 초록에는 사유가 붙지 않는다 (이름이 빨강을 만들어 내면 안 된다)
+    if classify({"tests": 1144, "errors": 0, "duration_s": 233.5, "commit": "aaa"},
+                {"tests": 1150, "errors": 0, "duration_s": 245.0, "commit": "bbb"}):
+        bad.append("문턱 안의 초록에 사유 이름이 붙었다")
+
+    # ── ⑬ 사유 표에 구멍이 없다 — 우선순위 목록과 설명이 같은 집합인가
+    if set(CAUSE_ORDER) != set(CAUSE_TEXT):
+        bad.append("CAUSE_ORDER 와 CAUSE_TEXT 가 어긋난다 — "
+                   "이름은 있는데 설명이 없거나 그 반대다")
+
     for b_ in bad:
         print(f"{TAG} 자기시험 FAIL {b_}")
     if bad:
         print(f"{TAG} 자기시험 {len(bad)}건 실패 — 판정기를 먼저 의심한다 (D-350)")
         return EXIT_FAIL
     print(f"{TAG} 자기시험 통과 — ★ **출생 표본**(21 errors in 3.66s → 빨강) 포함 "
-          f"갈래 7")
+          f"갈래 13 · 사유 이름 {len(CAUSE_ORDER)}종 "
+          f"({' · '.join(CAUSE_ORDER)})")
     return EXIT_OK
 
 
@@ -300,7 +480,7 @@ def runs_of(runs: list[dict], suite: str) -> list[dict]:
     return [r for r in runs if r.get("suite") == suite]
 
 
-def compare(runs: list[dict], suite: str) -> tuple[int, list[str]]:
+def compare(runs: list[dict], suite: str, head: str = "") -> tuple[int, list[str]]:
     """한 갈래의 **가장 최근 두 점**을 견준다."""
     mine = runs_of(runs, suite)
     if len(mine) < 2:
@@ -309,11 +489,11 @@ def compare(runs: list[dict], suite: str) -> tuple[int, list[str]]:
             "견줄 것이 없다. 다음 실행을 `--record` 로 적으면 그때 판정한다 "
             "(견줄 것 없이 내는 초록은 아무것도 재지 않은 것이다 · D-301)"]
     old, new = mine[-2], mine[-1]
-    head = [f"{TAG} 갈래 `{suite}` — "
+    head_lines = [f"{TAG} 갈래 `{suite}` — "
             f"{old.get('commit', '?')}({old.get('recorded_at', '?')[:16]}) → "
             f"{new.get('commit', '?')}({new.get('recorded_at', '?')[:16]})"]
-    rc, lines = judge(old, new)
-    return rc, head + lines
+    rc, lines = judge(old, new, THRESHOLD, head)
+    return rc, head_lines + lines
 
 
 def main() -> int:
@@ -328,6 +508,8 @@ def main() -> int:
     ap.add_argument("--reason", default="", help="사유. 「환경」이면 --env-json 이 필요하다")
     ap.add_argument("--env-json", default="", help="gate_env.py --json 이 낸 파일")
     ap.add_argument("--note", default="")
+    ap.add_argument("--baseline-why", default="",
+                    help="기준선을 이 실행으로 갱신하는 **사유**. 파일에 남고 판정 때 읽힌다")
     args = ap.parse_args()
 
     if args.self_test:
@@ -370,6 +552,11 @@ def main() -> int:
             "note": args.note,
         }
         runs.append(row)
+        if args.baseline_why:
+            notes = list(data.get("baseline_notes") or [])
+            notes.append({"at": row["recorded_at"], "commit": row["commit"],
+                          "why": args.baseline_why})
+            data["baseline_notes"] = notes
         data["runs"] = runs
         data["threshold"] = THRESHOLD
         data["schema"] = 1
@@ -384,6 +571,12 @@ def main() -> int:
     suites = sorted({r.get("suite", "?") for r in runs})
     print(f"{TAG} [입력] {len(runs)}점 · 갈래 {len(suites)}종 "
           f"({', '.join(suites) or '없음'}) · 문턱 ±{THRESHOLD:.0%}")
+    #: ★ [P-87 · 턴 I] **기준선을 갱신한 사유는 파일 안에 있고, 여기서 읽어 말한다.**
+    #:   갱신 사유가 파일에만 있고 아무도 안 읽으면 그것은 없는 것과 같다 —
+    #:   다음 사람은 「왜 이 두 점을 견주고 있는가」를 모른 채 색만 본다.
+    for note in (data.get("baseline_notes") or [])[-2:]:
+        print(f"{TAG} [기준선 갱신] {note.get('at', '?')[:19]} · "
+              f"{note.get('why', '(사유 없음)')}")
     if not runs:
         print(f"{TAG} **못 쟀다** — 기준선이 비어 있다. `--record` 로 첫 점을 적는다 "
               "(0점 판정과 판정 못 함은 다르다 · D-301)")
@@ -396,8 +589,11 @@ def main() -> int:
                   f"오류 {r.get('errors', 0):>3} · {r.get('duration_s', 0):>8.2f}s")
 
     worst = EXIT_OK
+    head = head_commit()
+    if head == "알 수 없음":
+        head = ""
     for suite in ([args.suite] if args.suite else suites):
-        rc, lines = compare(runs, suite)
+        rc, lines = compare(runs, suite, head)
         for ln in lines:
             print(ln)
         if rc == EXIT_FAIL:

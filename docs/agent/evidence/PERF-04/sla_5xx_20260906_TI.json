@@ -1,0 +1,43 @@
+{
+ "measured_at": "2026-09-06T14:39:07+00:00",
+ "budget": 0.001,
+ "co_resident": {
+  "runserver_processes": [
+   "python manage.py runserver 0.0.0.0:8000 --noreload",
+   "python manage.py runserver 0.0.0.0:8010 --noreload",
+   "python manage.py runserver 0.0.0.0:8300 --noreload",
+   "sh -c cd /app && python manage.py runserver 0.0.0.0:8000 --noreload > /tmp/gate8000.log 2>&1",
+   "sh -c cd /app && python manage.py runserver 0.0.0.0:8010 --noreload > /tmp/gate8010.log 2>&1",
+   "sh -c cd /app && python manage.py runserver 0.0.0.0:8300 --noreload > /tmp/gate8300.log 2>&1"
+  ],
+  "loadavg": "1.81 2.62 2.97 1/615 13000"
+ },
+ "dev_reference": {
+  "api": "http://127.0.0.1:8010",
+  "n": 3605,
+  "n5xx": 10,
+  "by_status": {
+   "0": 10,
+   "200": 3595
+  },
+  "unreachable": null
+ },
+ "prod_sla": {
+  "api": "http://gx-nginx-e:8500",
+  "n": 3605,
+  "n5xx": 3,
+  "by_status": {
+   "200": 3602,
+   "502": 3
+  },
+  "unreachable": null
+ },
+ "verdict_exit": 0,
+ "lines": [
+  "[5XX] 1) **개발 기계 수 (참고)** http://127.0.0.1:8010 — 5xx 10/3605 = 0.277% · runserver 6대 · loadavg 1.81 2.62 2.97 1/615 13000",
+  "[5XX]    ^ **이 수는 SLA 가 아니다.** 같은 기계에서 차선들의 runserver 가 함께 돈다 — 재는 것은 제품이 아니라 이 기계의 붐빔이다",
+  "[5XX] 2) **운영형 인스턴스 (SLA 정본)** http://gx-nginx-e:8500 — 5xx 3/3605 = 0.083% (예산 0.1%) · 코드별 200 x3602 502 x3",
+  "[5XX] **초록(exit 0)** — 운영형 인스턴스의 5xx 가 예산 안이다"
+ ],
+ "note": "P-84 — 5xx 는 두 줄. SLA 정본은 2)(운영형 인스턴스)뿐이다. 주입 분리는 철회됐다(뺀 건수 0)"
+}

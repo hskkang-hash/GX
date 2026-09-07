@@ -90,7 +90,15 @@ except (AttributeError, OSError):
 PROJECT_CONTAINERS = ("gx-shell", "postgres", "redis",
                       "guardianx-source-minio-1", "gx-fe-build",
                       "gx-nginx-e", "gx-gunicorn-e",
-                      "gx-celery-e", "gx-beat-e")
+                      "gx-celery-e", "gx-beat-e",
+                      # ★ [실측 2026-09-06 · 턴 I · 차선 E] ①이 이 이름으로 빨갰다.
+                      #   턴 G 에 차선 E 가 mailpit(P-68 · 로컬 SMTP 수신함)을 세워
+                      #   놓고 **이 목록에 넣지 않았다.** 그래서 이 판정기는 떠 있는
+                      #   수집기 하나를 **못 보는 채로** 나머지를 초록으로 셌다 —
+                      #   낡은 인벤토리가 게이트를 눈멀게 하는 그 얼굴이다(D-369).
+                      #   ⚠ 계측기라서 빼는 것이 아니다: 계측기도 stdout 에 쌓고,
+                      #     안 세는 통은 가득 차도 아무도 모른다.
+                      "guardianx-source-mailpit-1")
 
 #: 「우리 것」을 이름으로 가른다 — ⑤가 목록 밖 컨테이너를 찾을 때 쓴다.
 #: 남의 컨테이너(다른 제품)를 우리 빨강으로 세지 않기 위한 좁힘이다.

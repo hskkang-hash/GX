@@ -7369,7 +7369,7 @@ decisions:
     ▣ **SEC-11a 닫힘 — 224 → 217 · 화면이 부르는 authz_envelope 7 → 0.**
       접두 둘(`/api/flight-log/` · `/api/departments/`)을 **정본 한 곳**
       (`settings.API_CONTRACT_PROMOTE_PATHS`)에 더한 것뿐 — 금지구역 파일은 안 건드렸다.
-      미들웨어가 **밖에서** 상태줄을 바꾼다. `test_api_contract.py` 31 passed.
+      미들웨어가 **밖에서** 상태줄을 바꾼다. `backend/tests/test_api_contract.py` 31 passed.
 
     ▣ **SEC-08 닫힘 — PASS 6 · FAIL 0 · 회색 0 · 익명 2xx 누출 0건.**
       ★ 첫 실행의 FAIL 하나를 차선 S 가 **스스로 갈랐다**: 같은 서버에서 이번 턴 신설
@@ -7396,7 +7396,7 @@ decisions:
   enforced_by: |
     · backend/common/cap_1_2.py · backend/common/webhook_outbox.py
     · backend/stream_monitors/migrations/0028_webhooksubscription.py
-    · backend/tests/test_s_webhook_outbox.py :: 43건 · test_api_contract.py :: 31건
+    · backend/tests/test_s_webhook_outbox.py :: 43건 · backend/tests/test_api_contract.py :: 31건
     · scripts/probe_self_pentest.py :: 자기시험 17건 · 도달 증명 · 회색 규칙
     · backend/config/settings.py :: API_CONTRACT_PROMOTE_PATHS (접두 둘 추가)
   affects: [D-286, D-301, D-327, D-349, D-368, D-377, D-400, D-410, D-430, D-434]
@@ -7516,7 +7516,7 @@ decisions:
     · nginx/gx-front.conf · nginx/gx-proxy.inc · backend/gunicorn.conf.py (되돌린 사유 포함)
     · backend/common/front_line.py · scripts/ops_front_line.py :: --probe 18갈래
     · backend/tests/test_access_gate.py :: 23건 (FrontLineIsTheSecondDefenseTest 5)
-    · backend/common/management/commands/migrate_bootstrap.py · test_e_ops03_migrate_bootstrap.py
+    · backend/common/management/commands/migrate_bootstrap.py · backend/tests/test_e_ops03_migrate_bootstrap.py
     · backend/apps/dsm/legal_notice.py · backend/tests/test_e_cpo_doc_wiring.py
     · docs/agent/evidence/OPS-13/{front_line,proxy_502_opinion}_20260905_TC.md
   affects: [D-283, D-286, D-301, D-361, D-431, D-434]
@@ -7594,7 +7594,9 @@ decisions:
       두면 처음 온 사람이 못 본다).
   enforced_by: |
     · scripts/verify_post_arg_style.py (신설 · ALL_GATES 13종) — 서버는 AST · 화면은 괄호 균형
-    · backend/common/menu_exposure.py · {unlink,relink}_control_role_menus.py
+    · backend/common/menu_exposure.py
+    · backend/common/management/commands/unlink_control_role_menus.py
+    · backend/common/management/commands/relink_control_role_menus.py
     · backend/tests/test_c_menu_exposure.py :: 9건
     · docs/agent/evidence/UX-21/menu_unlink_ledger.json — 연결마다 before (되돌리기 장부)
     · frontend/src/features/dsm/pages/{FocusQueue,CameraImport,DrillMode,EventDetail}.tsx

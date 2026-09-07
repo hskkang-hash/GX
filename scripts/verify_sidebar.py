@@ -567,7 +567,21 @@ def main() -> int:
         print("  [실측] 로그인으로 재지 못한 역할이 있다 — U5(관리자)는 이 저장소에 "
               "시드 계정이 없다. 그 수는 **링크 표의 재현**이다.")
 
-    return EXIT_OK if all(p for _, p, _ in rows) else EXIT_FAIL
+    #: ★ [차선 S 실측 2026-09-06 · 턴 I] **「못 쟀다」를 빨강으로 내고 있었다.**
+    #:   로그인이 안 되면 다섯 칸이 전부 실패로 채워지고 그대로 exit 1 이 됐다 —
+    #:   같은 시각대에 색이 흔들렸고, 그 빨강은 제품이 아니라 환경의 사실이었다(P-70).
+    #:   순서는 **빨강이 회색을 이긴다**: 진짜 실패가 하나라도 있으면 빨강이고,
+    #:   실패가 전부 「못 쟀다」일 때만 회색이다. 회색은 초록이 아니다(D-301).
+    failed = [(k, why) for k, ok, why in rows if not ok]
+    if not failed:
+        return EXIT_OK
+    unmeasured = [k for k, why in failed if "못 쟀다" in (why or "")]
+    if len(unmeasured) == len(failed):
+        print("  **판정 불가(회색)** — 실패한 %d칸이 전부 「못 쟀다」다 (%s). "
+              "환경의 사실이지 제품의 빨강이 아니다 (P-70)"
+              % (len(failed), ", ".join(unmeasured)))
+        return EXIT_UNDECIDABLE
+    return EXIT_FAIL
 
 
 if __name__ == "__main__":

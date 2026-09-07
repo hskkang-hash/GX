@@ -1,9 +1,6 @@
 {
-  "note": "D-368 래칫 기준선. **`writes` 는 여기 없다** — 그 갈래에는 래칫이 없고 0건이 절대선이다.",
-  "frozen_at": "2026-08-30T06:07:30+00:00",
-  "read_only_in_practice": 4,
-  "rejected_elsewhere": 28,
-  "public_by_design": 11,
+  "note": "D-368 · P-83 래칫 기준선. **`writes` 도 `gated` 도 여기 없다** — `writes` 에는 래칫이 아니라 0건 절대선이 걸리고, `gated`(관문)는 늘어야 하는 갈래라 래칫을 걸지 않는다.",
+  "frozen_at": "2026-09-06T13:44:48+00:00",
   "public_by_design_paths": [
     "/api/token/pair",
     "/api/token/refresh",
@@ -16,5 +13,10 @@
     "/api/v1/auth/otp/verify",
     "/api/v1/auth/refresh-token",
     "/api/v1/auth/reset-password"
-  ]
+  ],
+  "read_only_in_practice": 5,
+  "schema_rejected": 0,
+  "unreachable": 0,
+  "blocked_other": 0,
+  "public_by_design": 11
 }

@@ -1,5 +1,5 @@
 {
-  "measured_at": "2026-09-06T11:06:45+00:00",
+  "measured_at": "2026-09-06T13:49:34+00:00",
   "verdict": "SKIPPED_UNDECLARED",
   "reason": "백업 목적지가 **선언되지 않았다**(`OPS_BACKUP_DIR`) — **어디에 뜰지 모르는 백업은 백업이 아니다.** 기본 경로를 지어내지 않는다 (D-280 · P-67). 선언 자리: U5 설정 화면 · 개발·스테이징은 config/retention_seed.py"
 }

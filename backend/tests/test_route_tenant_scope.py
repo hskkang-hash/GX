@@ -59,12 +59,21 @@ def _load_baseline() -> dict | None:
         return None
 
 
-def _write_baseline(payload: dict) -> None:
-    BASELINE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    BASELINE_PATH.write_text(
+def _write_baseline(payload: dict) -> str | None:
+    """등재부를 만든다 — **시험 중에는 안 만든다** (P-87 4 · 턴 I).
+
+    ★ 여기가 「시험이 운영 증거를 쓰는」 자리였다. 등재부가 없을 때만 도는 길이라
+      평소엔 안 보이지만, 없는 날 한 번 돌면 **시험 DB 의 수가 그대로 대장이 된다.**
+      그 대장은 그 뒤 모든 판정의 기준이 되고, 아무도 그것이 시험에서 났다는 것을
+      모른다. 만들 자리는 시험이 아니라
+      `scripts/verify_tenant_scope.py --write-baseline` 이다.
+    """
+    from common import evidence_guard
+
+    return evidence_guard.write_text_guarded(
+        BASELINE_PATH,
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+        who="test_route_tenant_scope 등재부 부트스트랩")
 
 
 class ServiceLayerGroupSelectionTest(SimpleTestCase):
@@ -219,7 +228,7 @@ class RouteTenantScopeTest(SimpleTestCase):
 
         baseline = _load_baseline()
         if baseline is None:
-            _write_baseline(
+            written = _write_baseline(
                 {
                     "note": (
                         "W0-14 미분류 라우트 잔여 대장. 이 수는 줄어들기만 해야 한다. "
@@ -232,10 +241,16 @@ class RouteTenantScopeTest(SimpleTestCase):
                     "no_auth": s["no_auth"],
                 }
             )
+            if written is None:
+                self.skipTest(
+                    "등재부가 없고 **시험 중이라 만들지 않았다** (P-87 4 · 턴 I). "
+                    "시험 DB 의 수로 대장을 세우면 그 뒤 모든 판정이 그 수를 "
+                    "기준으로 삼는다. 만들 자리는 "
+                    "`python scripts/verify_tenant_scope.py --write-baseline` 이다")
             print(
-                f"[TENANT_SCOPE] 대장을 새로 만들었습니다: {BASELINE_PATH}\n"
-                "               이 파일을 커밋해야 다음 실행부터 증가 금지가 걸립니다."
+                f"[TENANT_SCOPE] 대장을 새로 만들었습니다: {BASELINE_PATH}"
             )
+            print("               이 파일을 커밋해야 다음 실행부터 증가 금지가 걸립니다.")
             return
 
         self.assertLessEqual(

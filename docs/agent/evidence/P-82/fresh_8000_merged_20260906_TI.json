@@ -1,0 +1,16 @@
+{
+  "api": "http://localhost:8000",
+  "port": "8000",
+  "container": "gx-shell",
+  "pid": "19198",
+  "boot_epoch": 1788739075,
+  "boot": "2026-09-07 08:57:55",
+  "live_commit": "abbdf36",
+  "head_commit": "abbdf36",
+  "source_epoch": 1788702712,
+  "source": "2026-09-06 22:51:52",
+  "source_why": "작업본 backend/common/ops_tasks.py",
+  "verdict": "FRESH",
+  "exit": 0,
+  "measured_at": "2026-09-07 08:58:17"
+}

@@ -50,6 +50,7 @@ from django.http import Http404, HttpResponse
 from ninja.errors import HttpError
 from ninja_extra import api_controller, route
 
+from common.idempotency import idempotent
 from common.inbound_api_key import JwtOrInboundKey
 from common.wall_token import JwtOrWallToken
 from common.tenant_roles import is_global_admin, is_tenant_admin
@@ -439,6 +440,7 @@ class DsmAPI:
     # ── 대응 진행 축 (D-399) ─────────────────────────────────────────────
     @route.post("/events/{int:event_id}/response", auth=JwtOrInboundKey())
     @tenant_scoped(reason="대응 진행 쓰기 — 남의 이벤트를 접수·종결할 수 없다 (쓰기 IDOR)")
+    @idempotent("dsm.events.response")
     def advance_response(self, request, event_id: int, to_state: str,
                          reason: str = ""):
         """대응 진행을 한 칸 옮긴다 (D-399). 발생 → 접수 확인 → 조치중 → 종결.
@@ -473,6 +475,7 @@ class DsmAPI:
     # ── 현장 회신 (U3 #9 · 차선 D 가 커널을, 조율자가 문을) ───────────────
     @route.post("/events/{int:event_id}/field-reply", auth=JwtOrInboundKey())
     @tenant_scoped(reason="현장 회신 쓰기 — 남의 이벤트에 회신을 남길 수 없다 (쓰기 IDOR)")
+    @idempotent("dsm.events.field-reply")
     def field_reply(self, request, event_id: int, text: str):
         """이동 중인 사람이 한 줄을 돌려준다 (M3).
 
@@ -516,6 +519,7 @@ class DsmAPI:
     # ── 판정 축 (P-16 · 오탐 ②) ──────────────────────────────────────────
     @route.post("/events/{int:event_id}/review", auth=JwtOrInboundKey())
     @tenant_scoped(reason="판정 쓰기 — 남의 이벤트를 오탐이라 판정할 수 없다 (쓰기 IDOR)")
+    @idempotent("dsm.events.review")
     def review_event(self, request, event_id: int, verdict: str, reason: str = ""):
         """이 탐지가 진짜인가를 판정한다 — `confirmed` / `rejected` (F-14 의 입력).
 
@@ -557,6 +561,7 @@ class DsmAPI:
     # ── F-10 알림 발송 ───────────────────────────────────────────────────
     @route.post("/events/{int:event_id}/notify", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-10 발송 — 남의 이벤트로 발송을 일으킬 수 없다 (쓰기 IDOR)")
+    @idempotent("dsm.events.notify")
     def notify(self, request, event_id: int):
         """F-10 발송. **실패도 200 이고, 실패는 행으로 보인다.**
 

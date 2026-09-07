@@ -33,6 +33,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from common import evidence_guard
 from common.menu_exposure import (
     BUNDLE_IDS,
     EXPECTED_CLASSIFICATION,
@@ -140,8 +141,13 @@ class Command(BaseCommand):
                 restored += 1
 
         ledger["updated_at"] = datetime.now(dt_timezone.utc).isoformat()
-        ledger_path.write_text(json.dumps(ledger, ensure_ascii=False, indent=2),
-                               encoding="utf-8")
+        #: ★ [P-87 ④ · 턴 I] 시험 중에는 장부를 안 쓴다 — `unlink` 쪽과 같은 자리.
+        written = evidence_guard.write_text_guarded(
+            ledger_path, json.dumps(ledger, ensure_ascii=False, indent=2),
+            who="relink_control_role_menus 장부")
+        if written is None:
+            self.stdout.write(self.style.WARNING(
+                "장부를 **안 썼다** — 시험 중이다 (증거 폴더 격리 가드 · P-87 ④)"))
 
         self.stdout.write(self.style.SUCCESS(
             "되이었다: %d개 · 되살아난 연결 %d" % (restored, live_link_count())))

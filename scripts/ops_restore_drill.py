@@ -210,9 +210,23 @@ def main() -> int:
         return EXIT_UNDECIDABLE
 
     # ── 백업 볼륨에서 가장 최근 덤프를 고른다 ─────────────────────────────
+    #
+    # ⚠ **여기가 뿌리만 보고 있었다** [실측 2026-09-06 · 턴 I · 차선 E].
+    #   원래 줄은 `ls -1t /backup/*.dump` 였다. 그런데 **주기(`ops_backup_beat`)가
+    #   뜨는 자리는 뿌리가 아니라 날짜 칸** `/backup/<YYYYMMDD>/` 이다. 그래서 이
+    #   판정기는 사람이 손으로 뜬 뿌리의 덤프만 되살려 보고 있었고,
+    #   **저절로 뜬 덤프는 복구 시험을 한 번도 받은 적이 없었다.**
+    #   「복구를 해 보지 않은 백업은 백업이 아니다」(D-354 ①)가 정확히
+    #   주기가 만든 파일에 대해서만 거짓으로 남아 있던 자리다.
+    #
+    # ★ 짝인 `common/ops_tasks.py::_newest_dump` 는 이미 `rglob("*.dump")` 로
+    #   **재귀**다. 즉 두 벌이 어긋나 있었다(D-369). `find` 로 맞춘다 —
+    #   판정 대상이 같아야 두 자리의 초록이 같은 뜻이다.
     rc, listing, err = docker(
         "run", "--rm", "-v", "%s:%s:ro" % (args.volume, MOUNT_PATH), image,
-        "sh", "-c", "ls -1t %s/*.dump 2>/dev/null | head -1" % MOUNT_PATH,
+        "sh", "-c",
+        "find %s -type f -name '*.dump' -printf '%%T@ %%p\n' 2>/dev/null "
+        "| sort -rn | head -1 | cut -d' ' -f2-" % MOUNT_PATH,
         timeout=300)
     dump = (listing or "").strip().splitlines()
     dump = dump[0] if dump else ""

@@ -43,6 +43,7 @@ import re
 
 from common.access_gate import (
     AUTHN_REQUIRED_PATHS,
+    AUTHN_REQUIRED_PREFIXES,
     INBOUND_KEY_ALLOWED,
     _normalize,
 )
@@ -95,6 +96,17 @@ def gated_paths() -> tuple[str, ...]:
     return tuple(sorted(set(out)))
 
 
+def gated_prefixes() -> tuple[str, ...]:
+    """★ [P-83 · 2026-09-06] 앞단이 **접두로** 401 을 내야 하는 자리.
+
+    경로 틀(inbound 키: `/api/apikey/keys/{user_id}`)은 이름으로 못 막는다 — 미들웨어가 접두로
+    막았으니 앞단도 접두로 막아야 두 방어선이 **같은 자리**를 덮는다. 한쪽만 접두면
+    「미들웨어를 빼도 앞단이 남는다」가 그 자리에서 거짓이 된다.
+    """
+    return tuple(sorted({p if p.endswith("/") else p + "/"
+                         for p in AUTHN_REQUIRED_PREFIXES}))
+
+
 def key_allowed() -> tuple[tuple[str, str], ...]:
     """들어오는 키가 닿아도 되는 (메서드, 경로). 나머지는 앞단에서 끊긴다."""
     return tuple(sorted((m.upper(), _normalize(p)) for m, p in INBOUND_KEY_ALLOWED))
@@ -113,6 +125,23 @@ def render_locations() -> str:
             f"        {PROXY_INCLUDE}\n"
             f"    }}\n"
         )
+
+    parts.append("\n    # ── ①-b 익명 거절 · 접두 (P-83) — 경로 틀은 이름으로 못 막는다 ──\n")
+    for prefix in gated_prefixes():
+        # `^~` 는 **정규식 위치보다 먼저** 잡는 접두 일치다. 붙이지 않으면 아래
+        # `location /` 가 먼저 잡혀 이 블록이 죽는 배치가 생긴다.
+        parts.append(
+            f"    location ^~ {prefix} {{\n"
+            f"        {CREDENTIAL_FOLD}\n"
+            f"        if ({CREDENTIAL_PROBE} = \"\") {{ {DENY_ANON} }}\n"
+            f"        {PROXY_INCLUDE}\n"
+            f"    }}\n"
+        )
+        # ⚠ 접두의 **슬래시 없는 자기 자신**(`/api/apikey`)은 여기서 내지 않는다.
+        #   `location = <경로>` 로 내면 `parse_gated_paths()` 가 그것을 「이름으로 선언한
+        #   자리」로 되읽고, 선언 목록(`AUTHN_REQUIRED_PATHS`)과 갈려 자기시험이 빨개진다.
+        #   그 자리는 라우트가 아니고(`/api/apikey` 는 아무것도 아니다) 미들웨어가
+        #   여전히 덮는다 — 앞단이 덜 덮는 쪽이지 **더 덮어서 사고를 내는 쪽**이 아니다.
 
     parts.append("\n    # ── ② 들어오는 키 기본값 거절 (D-343 ③) — 선언한 자리에만 닿는다 ──\n")
     for method, path in key_allowed():
@@ -142,6 +171,17 @@ def render_locations() -> str:
 #   그래서 시험은 이 함수로 **설정 원문에서** 읽어 선언과 견준다.
 # ═══════════════════════════════════════════════════════════════════════════
 _LOCATION = re.compile(r"^\s*location\s*=\s*(\S+)\s*\{", re.MULTILINE)
+_LOCATION_PREFIX = re.compile(r"^\s*location\s*\^~\s*(\S+)\s*\{", re.MULTILINE)
+
+
+def parse_gated_prefixes(conf: str) -> set[str]:
+    """설정 원문에서 **접두로** 익명 401 을 내는 위치를 읽는다 (P-83)."""
+    out: set[str] = set()
+    for match in _LOCATION_PREFIX.finditer(conf):
+        body = _block_body(conf, match.end())
+        if "authentication required" in body:
+            out.add(match.group(1))
+    return out
 
 
 def parse_gated_paths(conf: str) -> set[str]:

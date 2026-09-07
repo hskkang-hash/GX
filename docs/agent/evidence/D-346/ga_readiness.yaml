@@ -13,6 +13,16 @@
 #     → '구현' 에는 `proof` 가 있어야 하고, 그 **파일이 실재**해야 한다 (없는 시험은 문서다)
 #   · '잠김' 에는 `blocker` 가 있어야 하고 `DA-05/blockers.yaml` 에 그 id 가 있어야 한다
 #   · '미착수' 와 '미측정' 에는 `why` 가 있어야 한다 — 사유 없는 빈칸은 잊은 것과 구별되지 않는다
+#   · ★★ [P-85 · 2026-09-06 턴 I] `gate:` 칸 — **그 절을 지키는 판정기의 이름**을 적는다.
+#     게이트는 판정기를 **부르고**, 대장 상태와 색이 갈리면 exit 1 이다:
+#         게이트 초록 · 대장 미구현  → 다 해 놓고 안 적었다 (수가 실제보다 낮게 나간다)
+#         대장 구현 · 게이트 빨강    → 적어 놓고 무너졌다 (**이쪽이 더 나쁘다**)
+#     회색(exit 2)은 갈림이 아니라 **못 잰 것**이다 — 따로 세고, 하나라도 있으면 exit 2.
+#     ⚠ **아무 게이트나 적으면 안 된다.** 여기 적을 수 있는 것은
+#       **그 게이트의 초록이 곧 이 절의 닫힘인** 판정기뿐이다. 래칫형 게이트
+#       (「새로 생긴 것 0건」)의 초록은 「늘지 않았다」이지 「닫혔다」가 아니다 —
+#       그런 게이트를 미구현 절에 붙이면 **없는 갈림**이 매번 빨강으로 선다.
+#       예: SEC-11a 는 `verify_envelope.py`(래칫)가 초록이어도 잠김이 옳다. 그래서 안 붙인다.
 #
 # 가중치는 [판정]이다 — 세종이 정했다. 각 절의 상태는 [실측]이다 — 여기서 갈아 끼운다.
 #
@@ -47,6 +57,7 @@ areas:
       - id: SEC-01
         title: 들어오는 키의 수용 면을 **라우트마다 선언**하게 한다 (기본값 거절)
         status: 구현
+        gate: scripts/verify_route_inventory.py
         proof: backend/tests/test_f05_inbound_api_key.py
 
       - id: SEC-02
@@ -90,6 +101,7 @@ areas:
       - id: SEC-04
         title: 우리 층에 **인증 관문 없는 라우트** 0건
         status: 구현
+        gate: scripts/verify_authn_paths.py
         proof: backend/tests/test_authn_gap_closed.py
         note: |
           ★ [실측 2026-09-26 · 차선 S] **28 → 0.** 우리 층 28자리에 인증 관문을 걸었다
@@ -126,11 +138,13 @@ areas:
       - id: SEC-05
         title: 시크릿이 커밋되는 것을 막는다
         status: 구현
+        gate: scripts/verify_secret_scan.py
         proof: .gitleaks.toml
 
       - id: SEC-06
         title: 나가는 키(자격증명)를 코드가 아니라 저장처에 둔다
         status: 구현
+        gate: scripts/verify_credential_store.py
         proof: backend/tests/test_k5_credential_store.py
 
       - id: SEC-07
@@ -273,6 +287,23 @@ areas:
             안 했으므로 접두를 늘리지 않았다 — 얇은 술어 위에서 늘리면 **이른 초록**이
             또 난다. 이번 턴 차선 S 는 SEC-18(운영 프로필)을 했다.
 
+          ★★ **[실측 2026-09-06 · 턴 I · 차선 S] 193 그대로. 갚은 것은 수가 아니라 술어다.**
+            잠금 `SEC11A_REMAINDER_MEASURED_TOO_THIN` 이 요구한 ①(닫는 조건의 술어를
+            **캡처 교집합 → 프런트 원본 교집합**으로)을 이번 턴에 갚았다 [실측]:
+              프런트 `frontend/src/**` 809파일에서 `/api/...` 리터럴 **261종**을 전수로 긁어
+              잔여 193 과 접두 교집합 → **부르는 것 150** (§0.4 79 = terminals 38 ·
+              delivery 30 · orders 11 → SEC-11b) · **우리 층 71** (devices 33 · handover 25 ·
+              operational-data 8 · report-template 5) · 안 부르는 것 43.
+            ★ **7 이 아니라 71 이다.** 캡처 술어는 잔여의 10분의 1만 보고 있었다 —
+              그 술어로 닫으면 **이른 초록**이 난다. 정본 술어를 71 로 갈아 끼운다.
+            ⚠ 접두는 하나도 안 켰다. 사유(우회 아님): ① 다음 58(devices·handover)의 문턱은
+              백엔드가 아니라 **프런트 오류 처리 11파일**이고 그 자리는 이번 턴 차선 S 의
+              손 밖이다(지시서가 `frontend/` 를 금했다) ② 가장 싼 13(operational-data·
+              report-template)은 부르는 훅 셋에서 `finally` 가 매번 하나씩 모자란다
+              (5·7·6 대 4·6·5) — 스피너를 끄는 것은 catch 가 아니라 finally 다
+              ③ 같은 턴에 다른 차선이 화면 위에서 걷고 있다(빨강의 주인을 못 가른다).
+            증거: docs/agent/evidence/SEC-11a/턴I_잔여193그대로_얇은술어를_두껍게_바꿨다.md
+
           ★ **닫지 못했다. 「대부분 갚았다」가 아니라 7건이다.** 다음 턴에 접두 둘
             (`flight-log` · `departments`)이면 0이 된다 — 「한 번에 하나씩」 규율 때문에
             셋에서 멈췄다. 증명: `test_api_contract.py` **30 passed**(금지구역 5접두 음성
@@ -296,17 +327,20 @@ areas:
       - id: SEC-12
         title: 주석 처리된 권한 뒤의 **열린 문** 0건
         status: 구현
+        gate: scripts/verify_commented_guards.py
         proof: backend/tests/test_commented_guards.py
 
       - id: SEC-13
         title: 캐시가 관문 판정을 대신하지 않는다
         status: 구현
+        gate: scripts/verify_cache_bypass.py
         proof: scripts/verify_cache_bypass.py
 
       # ── 턴 G 신규 등재 (2026-09-06 · 차선 V 발견 · 조율자 판정기) ────────
       - id: SEC-18
         title: 보안 설정의 **기본값이 닫힌 쪽**이다 — 잊은 사람을 벌하지 않는다
         status: 미착수
+        gate: scripts/verify_settings_fail_closed.py
         hand: in
         proof: scripts/verify_settings_fail_closed.py
         why: |
@@ -359,10 +393,46 @@ areas:
             재기동 창 → **그 다음** 코드 기본값 제거 → 이 절이 닫힌다.
         blocker: SETTINGS_FAIL_OPEN_DEFAULTS
 
+      # ★★ [P-85 · 2026-09-06 턴 I · 차선 S] **게이트 초록 · 대장 미착수** 를 여기서 갚는다.
+      #   세종이 본 것은 참이다: `scripts/verify_prod_settings.py` 가 **5/5 초록**인데
+      #   대장의 그 자리는 미착수였다. 다만 그 초록이 닫는 것은 **SEC-18 이 아니다** —
+      #   SEC-18 이 묻는 것은 「개발 소스가 아무 선언 없이 뜨면 무엇이 되는가」이고
+      #   그 답은 오늘도 **5/5 빨강**이다(`verify_settings_fail_closed.py` rc=1 · 실측).
+      #
+      #   한 절에 두 사실이 들어 있었다. 그래서 **쪼갠다**(D-314: 「부분」은 상태가 아니라
+      #   아직 안 쪼갠 것의 이름이다). SEC-18 의 id 는 재활용하지 않는다 —
+      #   같은 이름 아래 다른 것을 넣으면 대장이 또 조용히 갈린다(D-337 · P-81).
+      #
+      #     SEC-18   개발 소스의 **기본값**이 닫힌 쪽인가   → 아직 빨강. 미착수 그대로
+      #     SEC-18a  **운영 프로필**이 선언 없이는 뜨지 않는가 → 5/5 초록. 여기서 닫힌다
+      #
+      #   이렇게 두면 두 게이트의 색과 두 절의 상태가 **한 짝씩 맞는다** — 그것이 P-85 다.
+      - id: SEC-18a
+        title: 운영 프로필이 **선언 없이는 뜨지 않는다** — 열린 기본값으로 상용에 서지 못한다
+        status: 구현
+        gate: scripts/verify_prod_settings.py
+        proof: scripts/verify_prod_settings.py
+        note: |
+          [실측 2026-09-06 · 턴 I · 차선 S 재확인] `python scripts/verify_prod_settings.py`
+          **exit 0 · 5/5**:
+            SECRET_KEY     선언 없음→기동 거부 · 자리표→거부 · 길이 103
+            DEBUG          기본 False · `DJANGO_DEBUG=true` 를 줘도 False (환경변수로 못 켠다)
+            ALLOWED_HOSTS  선언대로 · 선언 없음→거부 · `*`→거부
+            COOKIES        여섯 다 닫힘 (개발 프로필 대조: 3/6 이 열려 있다)
+            ORIGINS_TLS    출처 2 · 스킴 없음→거부 · HSTS 31536000s · 프록시 머리글자
+          다섯 수마다 **음성 대조를 실제로 띄워서** 보인다(9판) — 읽어서 답하지 않았다(D-210).
+          몸통: `backend/config/settings_prod.py` (P-75) · 배치 관문: `scripts/deploy.sh`
+          (개발 프로필로 스테이징·운영을 열려 하면 배치 거부 exit 1).
+          ⚠ 이 절은 **RC-1 의 전제**이지 SEC-18 의 닫힘이 아니다. 둘을 섞으면
+            **기본값이 열린 채로 절이 닫힌다** — 그 문장은 SEC-18 의 사유에 그대로 있다.
+          ⚠ 게이트가 자기 배너에 `[SEC-18]` 을 찍는다(파일은 차선 S 소유가 아니다).
+            **그 배너를 SEC-18a 로 읽어라** — 세종이 절을 잘못 본 것이 이 배너 때문이다.
+
       # ── PRD v2.5 신규 (2026-09-24 · P-26 등재) ──────────────────────────
       - id: SEC-16
         title: 웹훅 서명·재시도 규약 (HMAC · 스키마 버전 헤더 · 지수 백오프 5회)
         status: 구현
+        gate: scripts/verify_webhook_contract.py
         origin: PRD-2.5
         proof: scripts/verify_webhook_contract.py
         why: |
@@ -413,6 +483,7 @@ areas:
       - id: SEC-17
         title: 화면·응답에 **상대사명·계약번호·조항·내부 경로 0건** (판정기 상시화)
         status: 구현
+        gate: scripts/verify_ui_secrets.py
         proof: scripts/verify_ui_secrets.py
         origin: PRD-2.6
         hand: in
@@ -443,11 +514,13 @@ areas:
       - id: ISO-02
         title: 격리가 게이트로 상시 검사된다
         status: 구현
+        gate: scripts/verify_tenant_scope.py
         proof: scripts/verify_tenant_scope.py
 
       - id: ISO-03
         title: 새 라우트가 테넌트 범위를 **선언**하고 태어난다
         status: 구현
+        gate: scripts/verify_route_scope_declared.py
         proof: scripts/verify_route_scope_declared.py
         note: |
           [실측 2026-09-24 · 차선 S] **두 실험의 차이가 이 게이트의 존재 이유다.**
@@ -673,8 +746,25 @@ areas:
       #   제안했고 조율자가 채택한다 — LAW-02a 와 같은 판단이다(손 안의 일은 절이지 잠금이 아니다).
       - id: OPS-13a
         title: 앞단이 뒷단의 **워커 재활용을 삼킨다** — 502 3건 / 3,600 (0.083%)
-        status: 구현
+        status: 미착수
+        gate: scripts/verify_front_line_502.py
         proof: scripts/verify_front_line_502.py
+        note_turn_i: |
+          ★ [실측 2026-09-07 · 턴 I · 조율자] **구현 → 미착수로 되돌린다. 상태를 내리는 것이
+          이번 턴의 산출이다.**
+          이 절은 턴 D 에 「구현」으로 닫혔고, 그 뒤 **두 턴 동안 판정기가 회색**이었다 —
+          앞단 설정을 `access_log /dev/stdout` 으로 바꾼 뒤(OPS-07 로그 상한을 갚느라)
+          판정기가 여전히 파일을 열고 있었기 때문이다. **닫힌 절 위에서 판정기가 눈이 멀면
+          아무도 그것을 모른다** — 대장은 계속 「구현」이라고 말한다.
+          읽을 자리를 고쳐서 처음으로 다시 쟀고, **빨강**이 났다:
+            앞단 접근로그 13,619줄 · 502 **13건** · 정상 200 **12,426건** → **0.105%**
+            워커 재활용 61건 · **같은 초의 재활용으로 설명되지 않는 502 가 7건**
+            앞단이 재시도 138건 중 125건을 되살렸다(손님은 200 을 봤다) · 새어 나간 502 13건
+          ★ 이 수가 **P-84 의 정본 줄 ②**다 — 개발 기계의 runserver 수가 아니라
+            **운영형 인스턴스**(gx-nginx-e 앞단 · gx-gunicorn-e 뒷단)에서 난 수다.
+            턴 H 까지 SLA 에 적히던 0.139% 는 개발 기계 수였고, 정본이 아니었다.
+          ⚠ 7건은 **다른 결함**이다. 알려진 창(재활용)에 묻지 마라 — 판정기가 그 문장을
+            자기 출력에 박아 두었다.
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 E] 세종이 등재한 이 절의 내용은 「**하지 말아야 할 것 넷**」이고,
             넷을 실측으로 채웠다(턴 C 가 겪은 하나 + 이번 턴 넷 = 여섯).
@@ -762,6 +852,28 @@ areas:
       - id: OPS-10
         title: 경보 발송처 (누구에게 · 어떤 경로로)
         status: 미착수
+        gate: scripts/ops_alert_routing.py
+        gate_why: |
+          ⚠ **처음에 `verify_alarm_budget.py` 를 적었다가 P-85 검사에 걸렸다** — 그것은
+          초록인데 이 절은 미착수라 「다 해 놓고 안 적었다」가 났다. 그 판정기는 QA-12
+          (시험이 경보 건수를 내는가)를 재지 이 절(사람에게 도달하는가)을 재지 않는다.
+          **초록인 게이트를 아무 절에나 달면 대장이 스스로를 부풀린다.**
+          이 절의 판정기는 `ops_alert_routing.py` 이고 오늘 **빨강**이다 — 색이 맞다.
+        note_turn_i: |
+          [실측 2026-09-06 · 턴 I · 차선 E] **발송 경로와 운영 수신처는 다른 칸이다 — 갈라 적는다.**
+            · **발송 경로 ✔** — `k2_notify/services.py::send()` 전 구간을 실제로 태웠다.
+              mailpit 수신함에 한 통이 실재한다(id `7TqZLu6wm2eB1VI99IvnPB` ·
+              `[GuardianX] 경고 — 저장 용량 임계` · `gx-alerts@` → `ops-duty@` · 총량 3→4).
+              `DeliveryRecord` 120→121행 · id=361 `channel=email succeeded=True`.
+              ★ **음성 대조군을 같이 냈다** — 허용목록 밖 주소는 **안 도착**(4→4)하고
+                막힌 사유가 행에 남는다(id=362 `succeeded=False`). 무엇이든 초록으로
+                만드는 측정이 아니라는 것을 그 한 건이 보인다.
+            · **운영 수신처 ✗ 대표 대기** — 주소와 발송 업체. 변동 없음.
+          ⚠ `ops_alert_routing` ④는 **여전히 빨강**(규칙 9줄 전부 `log`). 켜지 않았다 —
+            켜면 개발 DB 의 사람 주소 30명(yopmail 24 · seed.invalid 6)에게 **진짜로 나간다.**
+            그것을 막는 것은 `K2_SEND_ALLOWED_DOMAINS` 한 줄이고, 이름은 `.env.example` 에 섰다.
+          그러므로 「경보 발송처 0」은 이 턴부터 **틀린 문장**이다. 옳은 문장:
+            **경로는 섰고 수신처가 없다.**
         why: |
           감시는 exit 1 까지 만들었다. 그 1 을 **사람에게 보내는 자리**는 고객 환경마다 다르다.
           여기서 정하면 그 환경에서만 도는 감시가 된다. 설치 시 정한다.
@@ -859,6 +971,7 @@ areas:
       - id: OPS-07b
         title: DB 감사 로그 보존 — 보존 일수를 **선언하고** 파기가 되돌릴 수 있어야 한다
         status: 구현
+        gate: scripts/verify_purge.py
         proof: backend/tests/test_be_purge.py
         hand: in
         why: |
@@ -955,6 +1068,31 @@ areas:
         title: 백업이 **주기로 돈다** — 손으로 뜬 덤프는 RPO 가 아니다
         status: 미착수
         hand: in
+        gate_missing_why: |
+          이 절을 판정하는 게이트는 **아직 없다.** `ops_restore_drill.py` 는 「복구가
+          되는가」를 재지 「주기가 스스로 돌았는가」를 재지 않는다 — 그것을 근거로 달면
+          초록인 게이트 때문에 이 절이 「다 해 놓고 안 적었다」로 읽힌다(조율자가 턴 I 에
+          실제로 그렇게 적었다가 P-85 검사에 걸렸다). 필요한 판정기는
+          「마지막 자동 덤프의 나이 < 주기 + 여유」를 재는 것이고, 그것은
+          `gx-celery-e` 에 마운트가 붙은 뒤에야 초록이 될 수 있다.
+        note_turn_i: |
+          [실측 2026-09-06 · 턴 I · 차선 E] **닫는 조건 셋 중 둘이 갚였다. ③이 남았다.**
+            ① 보관처·기간  ✔ `gx_backup_vault_e:/backup`
+            ② 일정 켜기    ✔ `common.ops_backup_beat` (crontab `0 3 * * *` · 선언에서 읽었다)
+            ③ **사람 손 0 덤프** ◐ 파일은 났다 — `/backup/20260906/db_database_guardianx_
+               20260906T{132227,132334}Z.dump` 각 22,166,024바이트 · 태스크 벽시계 1.53초 ·
+               다른 컨테이너(alpine)에서 읽힘 확인. **그러나 그 둘은 사람이 태운 것**이고
+               주기가 스스로 돈 표본은 **0**이다.
+          ★ 그래서 **RPO 수는 「부분 실측」으로만 적는다** — 회수점 나이 0.4분 ·
+            회수점 유효성 표 223/223 · 복구 0.13분. **회수점 간격(RPO 상한)은 못 쟀다.**
+            「할 수 있다」와 「하고 있다」는 다르다 — 이 절이 처음부터 그렇게 적혀 있다.
+          ★★ 덤으로 잡은 것: **주기 덤프는 복구 시험을 한 번도 받은 적이 없었다.**
+            `ops_restore_drill.py` 가 `/backup/*.dump` 로 **뿌리만** 봤고, 짝인
+            `common/ops_tasks.py::_newest_dump` 는 `rglob` 재귀였다 — **두 벌이 어긋나 있었다.**
+            맞춘 뒤 드릴이 실제로 주기 덤프를 되살렸다(223/223).
+          남은 것(사람): `gx-celery-e` 를 `-v gx_backup_vault_e:/backup` + pg18 이미지로 재생성.
+            그것 없이는 03:00 주기가 매일 돌면서 매일 UNKNOWN 이다.
+            명령 그대로: docs/agent/evidence/OPS-19/RPO_실증_20260906_TI.md §5
         why: |
           ★ [실측 2026-09-05 · 턴 F 차선 E · LAW-05 를 쓰다가 나왔다] OPS-04(뜬다)·OPS-05(살린다)·
           OPS-09(영상)는 전부 「구현」이다 — 그런데 **한 번도 저절로 돈 적이 없다.**
@@ -1058,6 +1196,7 @@ areas:
       - id: OPS-15
         title: 카메라 맥박 군집 두절 (구역 3중 2 · 5분) → `camera_cluster_down`
         status: 구현
+        gate: scripts/verify_camera_pulse.py
         proof: scripts/verify_camera_pulse.py
         origin: PRD-2.5
         note: |
@@ -1230,6 +1369,7 @@ areas:
       - id: PERF-04
         title: 응답시간 예산과 그 회귀 감시
         status: 구현
+        gate: scripts/verify_perf_budget.py
         proof: scripts/verify_perf_budget.py
         note_closed: |
           ★ **[실측 2026-09-05 · 턴 E · P-53] 게이트가 이제 넷으로 갈라 낸다** — 응답시간 · 회귀 ·
@@ -1352,6 +1492,7 @@ areas:
       - id: QA-03
         title: 규칙이 문서가 아니라 게이트로 강제된다
         status: 구현
+        gate: scripts/verify_decision_tools.py
         proof: scripts/verify_decision_tools.py
 
       - id: QA-04
@@ -1488,6 +1629,7 @@ areas:
       - id: QA-12
         title: 알림 예산 시뮬레이션 (최근 7일 · 시간당 6건 주황 경고)
         status: 구현
+        gate: scripts/verify_alarm_budget.py
         proof: scripts/verify_alarm_budget.py
         origin: PRD-2.5
         note: |
@@ -1833,6 +1975,7 @@ areas:
       - id: UX-15
         title: 키보드·사운드 (J/K 이동 · 1/2/3 판정 · Enter 상세 · M 음소거 · 사운드 3종)
         status: 구현
+        gate: scripts/verify_wall_keys.py
         proof: scripts/verify_wall_keys.py
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 C1] 판정기 술어 6종 전부 PASS · 자기시험 양성 6 · 음성 10.
@@ -1859,6 +2002,7 @@ areas:
       - id: UX-16
         title: 월(Wall) 모드 `/wall` — 지도 + 미처리 큐 + 카메라 맥박
         status: 구현
+        gate: scripts/verify_wall_keys.py
         proof: scripts/verify_wall_keys.py
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 C1] `/wall` 세 칸(지도 · 지금 처리할 것 · 카메라 상태) ·
@@ -1978,6 +2122,7 @@ areas:
       - id: UX-20
         title: 제품 언어 — 화면이 우리 대장의 말로 말하지 않는다
         status: 구현
+        gate: scripts/verify_ui_copy.py
         origin: PRD-2.6
         proof: scripts/verify_ui_copy.py
         why: |
@@ -2294,6 +2439,7 @@ areas:
       - id: UX-25
         title: 제품 화면이 **사이드바에 있다** — 관제요원이 URL 을 치지 않고 갈 수 있다
         status: 구현
+        gate: scripts/verify_sidebar.py
         proof: scripts/verify_sidebar.py
         hand: in
         note_closed: |
@@ -2343,6 +2489,7 @@ areas:
       - id: LAW-01
         title: 계약 11조 — 영상 반출 4규약
         status: 구현
+        gate: scripts/verify_clip_extraction.py
         proof: backend/tests/test_clip_playback.py
 
       - id: LAW-02
@@ -2373,6 +2520,7 @@ areas:
       - id: LAW-02a
         title: 영상 **보존 일수**를 제품이 선언한다 (그리고 그대로 지운다)
         status: 구현
+        gate: scripts/verify_retention_declared.py
         proof: backend/tests/test_l_retention.py
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 L] 13 passed. 보존 일수를 `apps/dsm/retention.py` 가 선언하고
@@ -2456,6 +2604,23 @@ areas:
         title: SLA (가용성·응답·복구 목표)
         status: 미측정
         hand: in
+        gate_missing_why: |
+          SLA 는 **수 셋의 합**이라 게이트 하나로 판정되지 않는다. RTO 만
+          `ops_restore_drill.py` 가 받치고, RPO·가용성은 각각 OPS-19 와 스테이징을
+          기다린다. 게이트 하나를 근거로 달면 셋 중 하나의 초록이 셋 전부의 초록처럼
+          읽힌다 — 이 저장소가 「한 갈래만 재면 어느 쪽이든 그럴듯하다」로 부르는 자리다.
+        note_turn_i: |
+          [실측 2026-09-06 · 턴 I · 차선 E · P-86] **상태는 미측정 그대로다 — 바뀐 것은
+          「왜 미측정인가」가 문서 밖이 아니라 문서 안에 있다는 것이다.**
+          `docs/design/GX-LAW-05_SLA_초안_v0.2.md` §0-A 「받칠 수 셋」 표:
+            RTO   0.13분   **실측**   — 근거 `ops_restore_drill.py` (표 223/223)
+            RPO   부분실측  대기      — 회수점 나이 0.4분은 쟀고 **간격(상한)은 못 쟀다.**
+                                       대기 조건: `gx-celery-e` 에 `/backup` 마운트(사람)
+            가용성 미측정   대기      — 대기 조건: 운영형 인스턴스 30일. 지금 있는 수
+                                       (gx-gunicorn-e 연속 31.0시간·재기동 0)는 **안에서 잰
+                                       수**라 가용성이 아니다 — 참고로만 적었다.
+          ★ 회색은 회색이되 **방치가 아니다**: 미측정의 사유와 그 사유를 푸는 조건이
+            약속 문서 자체에 적혀 있다. 고객에게 못 지킬 수를 적는 것보다 낫다.
         hand_why: |
           약속을 쓰는 것도, 그 약속을 받칠 수를 재는 것도 **손 안**이다.
           다만 두 칸(가용성 · RPO)은 **공개 URL 과 도는 백업**을 기다린다 —
@@ -2549,6 +2714,7 @@ areas:
       - id: LAW-08
         title: 증거 해시 체인 (`prev_hash`/`hash` · 일일 종이 앵커)
         status: 구현
+        gate: scripts/verify_evidence_chain.py
         proof: backend/tests/test_s_evidence_chain.py
         origin: PRD-2.5
         note: |

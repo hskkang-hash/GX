@@ -1,8 +1,8 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
-  "captured_at": "2026-09-05T21:22:48",
-  "screens_total": 28,
-  "routes_total": 27,
+  "captured_at": "2026-09-06T20:41:58",
+  "screens_total": 31,
+  "routes_total": 25,
   "screens": {
     "/dsm/dashboard": [
       {
@@ -78,7 +78,7 @@
         "status": 200
       }
     ],
-    "/dsm/events/9713": [
+    "/dsm/events/9751": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -91,17 +91,17 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=9713",
+        "path": "/api/dsm/deliveries?event_id=9751",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9713",
+        "path": "/api/dsm/events/9751",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9713/timeline",
+        "path": "/api/dsm/events/9751/timeline",
         "status": 200
       },
       {
@@ -123,6 +123,16 @@
     "/device": [
       {
         "method": "GET",
+        "path": "/api/advanced-table/grid-management/12/detail",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/grid-management?menu_id=30",
+        "status": 200
+      },
+      {
+        "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name",
         "status": 200
       },
@@ -138,29 +148,7 @@
       },
       {
         "method": "GET",
-        "path": "/api/menu/menus?page_size=10000",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
-        "status": 200
-      }
-    ],
-    "/roles": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/config-management/list-optimized",
+        "path": "/api/devices/devices-management?page_size=25&current_page=1&depth=2",
         "status": 200
       },
       {
@@ -281,7 +269,7 @@
       },
       {
         "method": "GET",
-        "path": "/api/v1/user/get-user-detail/105",
+        "path": "/api/v1/user/get-user-detail/114",
         "status": 200
       }
     ],
@@ -303,64 +291,37 @@
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-04T17:00:00%2B00:00&end_date=2026-09-05T16:59:59%2B00:00&limit=100&page=1&page_size=5",
-        "status": 403
+        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-05T17:00:00%2B00:00&end_date=2026-09-06T16:59:59%2B00:00&limit=100&page=1&page_size=5",
+        "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-08-29T17:00:00%2B00:00&end_date=2026-09-05T16:59:59%2B00:00",
-        "status": 403
+        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-05T17:00:00%2B00:00&end_date=2026-09-12T16:59:59%2B00:00",
+        "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-05",
-        "status": 403
+        "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-06",
+        "status": 200
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/drone-status-overview",
-        "status": 403
+        "status": 200
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/today-profiles-polygon",
-        "status": 403
+        "status": 200
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4",
-        "status": 403
+        "status": 200
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/weather-setting",
-        "status": 403
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
-        "status": 200
-      }
-    ],
-    "/survey-profile": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/config-management/list-optimized",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/menu/menus?page_size=10000",
         "status": 200
       },
       {
@@ -388,7 +349,7 @@
       {
         "method": "GET",
         "path": "/api/media-data/?page_size=25&current_page=1",
-        "status": 503
+        "status": 200
       },
       {
         "method": "GET",
@@ -646,7 +607,7 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events?limit=50&since=2026-09-05T02:21:23.132Z&until=2026-09-05T14:21:23.132Z",
+        "path": "/api/dsm/events?limit=50&since=2026-09-06T01:40:32.062Z&until=2026-09-06T13:40:32.062Z",
         "status": 200
       },
       {
@@ -758,7 +719,7 @@
       {
         "method": "GET",
         "path": "/api/dsm/events/4805/snapshot",
-        "status": 503
+        "status": 200
       },
       {
         "method": "GET",
@@ -931,7 +892,7 @@
         "status": 200
       }
     ],
-    "/m/events/9713": [
+    "/m/events/9751": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -944,17 +905,17 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9713",
+        "path": "/api/dsm/events/9751",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9713/clip",
+        "path": "/api/dsm/events/9751/clip",
         "status": 404
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9713/field-replies",
+        "path": "/api/dsm/events/9751/field-replies",
         "status": 200
       },
       {
