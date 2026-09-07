@@ -469,11 +469,23 @@ PY"
 # ⑤ 번들 해시 게이트 — **서버가 내는 것**을 문다. dist 는 곁길이다
 # ═══════════════════════════════════════════════════════════════════════════
 ensure_spa() {
-  # 3002 가 닫혀 있으면 SPA 정적 서버를 세운다. **열려 있으면 건드리지 않는다**
-  MSYS_NO_PATHCONV=1 docker exec "$SERVER" python -c \
-    "import socket,sys;s=socket.socket();s.settimeout(2);sys.exit(0 if s.connect_ex(('127.0.0.1',$SPA_PORT))==0 else 1)" \
-    >/dev/null 2>&1 && return 0
-  say "      SPA($SPA_PORT) 가 닫혀 있다 — 세운다"
+  # ★ [실측 2026-09-07 · 턴 J] **포트가 열려 있다 ≠ 서버가 답한다.**
+  #   이 함수는 TCP `connect_ex` 만 보고 「살아 있다」로 읽었다. 그런데 배치는
+  #   `_fe_dist` 를 **디렉터리째 바꿔치기**하고, 서버는 뜰 때 `os.chdir(ROOT)` 를
+  #   했으므로 그 순간 **cwd 의 아이노드가 사라진다.** 소켓은 그대로 열려 있고
+  #   요청마다 죽는다 — `RemoteDisconnected`.
+  #   그래서 배치 두 번이 연달아 「번들을 못 읽었다(회색)」로 되돌려졌고,
+  #   되돌린 뒤에도 3002 를 못 읽어 **되돌리기가 됐는지조차 못 쟀다.**
+  #   이 파일의 불변 ①(「실패해도 이전 번들이 계속 서비스된다」)이 그 자리에서 깨진다.
+  #   → 살아 있음을 **실제 HTTP 요청**으로 묻고, 답하지 않으면 다시 세운다.
+  if MSYS_NO_PATHCONV=1 docker exec "$SERVER" python -c \
+    "import urllib.request,sys
+try: urllib.request.urlopen('http://127.0.0.1:$SPA_PORT/index.html',timeout=4).read(64)
+except Exception: sys.exit(1)" >/dev/null 2>&1; then
+    return 0
+  fi
+  say "      SPA($SPA_PORT) 가 **답하지 않는다** — 다시 세운다 (포트가 열려 있어도)"
+  MSYS_NO_PATHCONV=1 docker exec "$SERVER" sh -c "pkill -f gx_spa_server; exit 0" >/dev/null 2>&1
   MSYS_NO_PATHCONV=1 docker exec -i "$SERVER" sh -c "cat > /tmp/gx_spa_server.py" <<'PY'
 # SPA 정적 서버 — 알 수 없는 경로는 index.html 로 되돌린다(클라이언트 라우팅)
 import os, sys
@@ -490,7 +502,11 @@ class H(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")   # 캐시가 장애를 덮는다
         super().end_headers()
-os.chdir(ROOT)
+    def __init__(self, *a, **k):
+        # ★ `os.chdir(ROOT)` 를 쓰지 않는다 — 배치가 이 디렉터리를 **통째로 바꿔치기**하면
+        #   cwd 의 아이노드가 사라지고, 소켓은 열린 채 요청마다 죽는다(턴 J 실측).
+        #   `directory=` 는 요청마다 경로를 다시 풀므로 바꿔치기를 견딘다.
+        super().__init__(*a, directory=ROOT, **k)
 ThreadingHTTPServer(("0.0.0.0", PORT), H).serve_forever()
 PY
   MSYS_NO_PATHCONV=1 docker exec -d -e GX_LIVE_DIR="$LIVE" -e GX_SPA_PORT="$SPA_PORT" \

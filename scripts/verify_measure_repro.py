@@ -90,11 +90,54 @@ def normalize(text: str) -> str:
     return text.replace("\r\n", "\n").strip()
 
 
+#: ★ [실측 2026-09-07 · 턴 J] **재현성을 재는 일이 재는 대상을 바꾸고 있었다.**
+#:   여기서 부르는 판정기 여럿이 도는 김에 `docs/agent/evidence/**` 에 제 산출을 쓴다.
+#:   이 파일은 그 판정기를 **두 번씩** 부르므로, 커밋 훅으로 돌 때마다 증거 파일이
+#:   흔들렸고 pre-commit 은 「files were modified by this hook」으로 커밋을 막았다.
+#:   턴 J 에 그 고리에 여섯 번 걸렸다.
+#:   ⚠ 더 나쁜 것은 **판정 자체가 오염된다**는 것이다: 1회차가 쓴 증거를 2회차가 읽으면
+#:     「두 번 같은 수」는 재현성이 아니라 **자기가 방금 쓴 것을 다시 읽은 것**이다.
+#:   → 부르기 전에 **깨끗하던 증거 파일**을 적어 두고, 부른 뒤 그중 더러워진 것만
+#:     되돌린다. 이미 더러웠던 파일은 **건드리지 않는다** — 그것은 남의 작업본이다.
+EVIDENCE_DIR = "docs/agent/evidence"
+
+
+def _clean_evidence_files() -> set[str]:
+    """지금 git 이 「깨끗하다」고 보는 증거 파일들. 되돌려도 되는 자리다."""
+    ls = subprocess.run(["git", "ls-files", EVIDENCE_DIR], cwd=ROOT,
+                        capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if ls.returncode != 0:
+        return set()
+    tracked = {l.strip() for l in ls.stdout.splitlines() if l.strip()}
+    st = subprocess.run(["git", "status", "--porcelain", "--", EVIDENCE_DIR], cwd=ROOT,
+                        capture_output=True, text=True, encoding="utf-8", errors="replace")
+    dirty = {l[3:].strip().strip('"') for l in st.stdout.splitlines() if l[3:].strip()}
+    return tracked - dirty
+
+
+def _restore(paths: set[str]) -> int:
+    """그중 지금 더러운 것만 되돌린다. 되돌린 건수를 돌려준다."""
+    st = subprocess.run(["git", "status", "--porcelain", "--", EVIDENCE_DIR], cwd=ROOT,
+                        capture_output=True, text=True, encoding="utf-8", errors="replace")
+    now_dirty = {l[3:].strip().strip('"') for l in st.stdout.splitlines() if l[3:].strip()}
+    touched = sorted(paths & now_dirty)
+    if not touched:
+        return 0
+    subprocess.run(["git", "checkout", "--", *touched], cwd=ROOT,
+                   capture_output=True, text=True)
+    return len(touched)
+
+
 def run(argv: tuple[str, ...]) -> str:
+    before = _clean_evidence_files()
     proc = subprocess.run(
         [sys.executable, *argv], cwd=ROOT, capture_output=True, text=True,
         encoding="utf-8", errors="replace",
     )
+    n = _restore(before)
+    if n:
+        print("[MEASURE-REPRO]   (%s 가 증거 %d개를 고쳤다 — 되돌렸다. "
+              "재는 일이 대상을 바꾸면 그것은 측정이 아니다)" % (argv[-1].rsplit("/", 1)[-1], n))
     return proc.stdout + proc.stderr
 
 

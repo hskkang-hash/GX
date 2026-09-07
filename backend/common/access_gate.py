@@ -137,6 +137,44 @@ AUTHN_REQUIRED_PATHS: tuple[str, ...] = (
     "/api/v1/user/create-user",
     "/api/source/save-html",
     "/api/advanced-table/column-order",
+    # ★★ 2026-09-07 턴 J · 차선 S — **하나가 더 올랐다. 이번엔 정적 판정이 틀렸다** (D-368 ③)
+    #
+    #   POST /api/delivery/etri-integration/receive-from-etri
+    #
+    # 이 자리는 세 턴 동안 `read_only_in_practice`(도달은 하되 **안 쓴다**) 칸에
+    # 앉아 있었다. 그 판정의 근거는 `writes_by: "[정적] 핸들러 본문에 쓰기 호출 없음"`
+    # 이었고, 그 술어는 **핸들러 본문 한 겹만** 본다. 한 겹 더 따라가면 이렇다:
+    #
+    #   delivery/views/api.py:1623   DeliverySystem.receive_status_from_etri(etri_data, request)
+    #     → delivery/services/etri_service.py:368  EtriService.receive_status_from_etri
+    #       → :417  _update_delivery_status(...)
+    #           delivery_operation.order.status = OrderStatus.objects.get(code='cancelled')
+    #           delivery_operation.order.save()          ← 남의 주문을 **취소한다**
+    #           delivery_operation.save()
+    #           OrderService.create_order_history(...)   ← 이력까지 쓴다
+    #
+    # **익명이 `RECEIPT_ID` 하나만 알면 남의 배송을 취소·완료 처리할 수 있다.**
+    #
+    # 전/후 [실측 2026-09-07 · 인증 없음 · 없는 id `999999999` · 행 53,411 · 모델 117]:
+    #   전  HTTP **400** `{"message": "Delivery operation with ID 999999999 not found"}`
+    #       ← 핸들러가 **실제로 돌았다**(조회까지 갔다). 행수·최신수정시각 변화 0
+    #       ⚠ 「행이 안 늘었다」는 「안 쓴다」가 아니다 — **없는 id 라서** 못 쓴 것이다.
+    #         실재 id 로는 두드리지 않는다(그것이 곧 사고다). 그래서 「쓴다」의 근거는
+    #         호출 그래프이고, 「이 입력으로는 안 썼다」의 근거는 위 실측이다. 둘을 섞지 않는다
+    #   후  HTTP **401** (자격증명 없음)
+    #
+    # 왜 이 목록인가: `backend/delivery/` 는 §0.4 라 `@route.post("/receive-from-etri")`
+    # 에 `auth=` 를 붙일 수 없다. D-348 이 만든 자리가 정확히 이것이다.
+    # 옆자리 점검 [실측 · 인벤토리 전수]: `/api/delivery/etri-*` 12자리 중 익명인 것은
+    # 이것과 mock 둘뿐이고 **mock 둘은 이미 이 목록에 있다**. 즉 진짜 입구만 열려 있었다.
+    #
+    # ⚠ 되돌리기: 이 한 줄을 뺀다. 되돌릴 조건 — ETRI 가 **자격증명을 하나도 안 싣고**
+    #   호출하는 것이 계약으로 확인되면. 그때도 완전 개방이 아니라 `INBOUND_KEY_ALLOWED`
+    #   에 (POST, 이 경로)를 올리는 쪽이 옳다. 이 관문은 자격증명의 **있음**만 보므로
+    #   (`_has_credentials`), ETRI 가 `Authorization` 이나 `X-API-Key` 를 아무거나 실으면
+    #   지금도 그대로 지나간다 — 막히는 것은 **아무것도 안 싣고 오는 요청**뿐이다.
+    # ★ 세종 미판정 · 기본값(닫힌 쪽·되돌릴 수 있는 쪽) 택함.
+    "/api/delivery/etri-integration/receive-from-etri",
 )
 
 #: ★★ **경로 틀(`{id}`)로 선언된 자리는 이름으로 못 막는다** — 2026-09-06 턴 I · P-83

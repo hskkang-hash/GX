@@ -504,6 +504,21 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
     #: 브라우저가 부른 것을 그대로 적고, `verify_route_alive.py` 가 그 목록을 때린다(D-386).
     api_calls: dict[str, list] = {}
     seen_calls: list = []
+    #: ★ [실측 2026-09-07 · 턴 J · 차선 C] **찍은 화면은 API 기록 자리를 반드시 갖는다.**
+    #:
+    #:   `test_captured_screens_and_recorded_routes_agree` 가 빨갰다:
+    #:       「`/login` 를 찍었는데 그 화면이 부른 API 가 기록되지 않았다」
+    #:   시험이 옳았다. 로그인 실패 다섯 갈래(턴 I 에 늘린 것)는 `entries` 에는
+    #:   다섯 줄을 넣으면서 `api_calls` 에는 **한 자도 안 적었다** — 그래서
+    #:   인덱스에는 있고 기록에는 없는 화면이 생겼고, 그 화면 몫만큼
+    #:   `verify_route_alive` 는 **때릴 것을 잃었다**(D-301: 때릴 것이 없는 판정기는
+    #:   조용히 초록이 된다).
+    #:
+    #:   ⚠ **빈 목록을 사유 없이 남기지 않는다.** 「0건」과 「안 재 봤다」는 다른
+    #:     사실이고, 사유가 없으면 다음 사람이 그 둘을 구별할 수 없다. 아래
+    #:     `api_notes` 가 자리마다 그 한 줄을 들고 있다 — 목록이 비어도 **왜 비었는지**는
+    #:     파일에 남는다.
+    api_notes: dict[str, str] = {}
 
     with sync_playwright() as p:
         browser = p.chromium.launch(args=["--no-sandbox"])
@@ -534,6 +549,7 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                 if inj:
                     page.route(handler_name, _make(inj))
                 try:
+                    seen_calls.clear()
                     page.goto(f"{web}/login", wait_until="networkidle", timeout=60_000)
                     page.wait_for_timeout(1_500)
                     fields = page.locator("input")
@@ -565,7 +581,29 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                         #: ★ **갈래마다 다른 값이다.** 한 값으로 적으면 이 칸이 상수가 된다
                         "data_source": "%s (%s)" % (b["data_source"], b["why"]),
                     })
-                    print(f"[SHOT] {rel} — 실패 갈래 «{b['kind']}» · 출처 {b['data_source']}")
+                    #: ★ [턴 J · 차선 C] **이 화면이 부른 것을 여기서 적는다.**
+                    #:   ⚠ **주입한 응답은 세지 않는다.** L2~L5 의 로그인 응답은
+                    #:     playwright 가 만들어 낸 것이고 **서버에 닿은 적이 없다** —
+                    #:     그것을 「브라우저가 실제로 부른 것」 파일에 적으면 그 파일이
+                    #:     거짓말을 하고, `verify_route_alive` 가 있지도 않은 상태값을
+                    #:     기준으로 삼는다. 진짜로 나간 것(L1 의 401, 화면이 곁들여 부른
+                    #:     설정 문 따위)만 남긴다.
+                    real = {(m, u[len(api):], st) for m, u, st in seen_calls
+                            if u.startswith(api + "/api/")
+                            and not (inj and u.endswith("/api/v1/auth/login"))}
+                    api_calls["/login"] = sorted(
+                        set(api_calls.get("/login", ())) | real)
+                    if real:
+                        api_notes["/login"] = (
+                            "로그인 실패 갈래에서 **서버에 실제로 나간 것만** 적었다 — "
+                            "주입(L2~L5)한 응답은 서버에 닿지 않았으므로 세지 않는다")
+                    else:
+                        api_notes.setdefault("/login", (
+                            f"이 갈래(«{b['kind']}»)에서 서버로 나간 우리 API 가 0건이다 — "
+                            f"로그인 응답을 주입/차단했고 화면이 그 밖의 문을 부르지 않았다. "
+                            f"0건은 통과가 아니라 **0건**이다 (D-301)"))
+                    print(f"[SHOT] {rel} — 실패 갈래 «{b['kind']}» · 출처 {b['data_source']}"
+                          f" · 실제로 나간 우리 API {len(real)}건")
                 finally:
                     if inj:
                         page.unroute(handler_name)
@@ -628,6 +666,8 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                     (m, u[len(api):], st)
                     for m, u, st in seen_calls
                     if u.startswith(api + "/api/")})
+                api_notes.setdefault(
+                    route, "화면을 열고 브라우저가 부른 것을 그대로 적었다")
                 #: ★ [실측 2026-09-14 · D-397] 이 접두 대조가 **조용히 0건을 낼 수 있다.**
                 #:   `--api http://127.0.0.1:8000` 을 줬는데 번들은 `http://localhost:8000`
                 #:   을 부르면 한 건도 안 맞는다. 화면은 다 떴고 데이터도 다 그려졌는데
@@ -682,7 +722,7 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
             browser.close()
 
     return {"entries": entries, "steps": steps, "page_errors": page_errors,
-            "api_calls": api_calls, "misses": misses,
+            "api_calls": api_calls, "api_notes": api_notes, "misses": misses,
             "session_lost": session_lost}
 
 
@@ -809,6 +849,24 @@ def main() -> int:
     #   그래서 자기가 만든 것에 속지 않는다.
     routes_out = (SCREENS.parent.parent / "D-386" / "screen_routes.json")
     routes_out.parent.mkdir(parents=True, exist_ok=True)
+    # ★★ [실측 2026-09-07 · 턴 J · 차선 C] **찍은 화면마다 자리를 만든다 — 비어도.**
+    #
+    #   빨갰던 시험: 「`/login` 를 찍었는데 그 화면이 부른 API 가 기록되지 않았다」.
+    #   원인은 위 로그인 갈래가 `api_calls` 를 안 건드린 것이었고 거기서 고쳤다.
+    #   그래도 **이 그물을 둔다**: 앞으로 누가 화면을 늘리면서 기록을 잊으면
+    #   `screens` 에 그 라우트가 아예 없어지고, 없는 자리는 **아무도 못 센다.**
+    #   여기서 빈 목록 + 사유로 자리를 만들면 그 자리가 눈에 보이고,
+    #   시험은 「비었다」로 **빨개진다** — 그것이 옳다. 빈 기록은 통과가 아니다(D-301).
+    #
+    #   ⚠ 사유 없는 빈 목록은 만들지 않는다. 「0건이다」와 「안 재 봤다」가 같아지면
+    #     다음 사람이 같은 자리를 다시 판다.
+    api_notes = dict(got.get("api_notes", {}))
+    shot_routes = {e["route"] for e in got["entries"]}
+    for r in sorted(shot_routes - set(got["api_calls"])):
+        got["api_calls"][r] = []
+        api_notes[r] = ("찍었는데 이 화면이 부른 우리 API 를 **기록하지 못했다** — "
+                        "기록기가 이 갈래에서 `api_calls` 를 채우지 않았다. "
+                        "빈 목록은 통과가 아니다 (D-301)")
     routes_out.write_text(json.dumps({
         "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
         "captured_at": datetime.now().replace(microsecond=0).isoformat(),
@@ -821,6 +879,10 @@ def main() -> int:
                         for m, p, st in v] for k, v in got["api_calls"].items()},
         #: ★ P-9 — **데이터 출처를 화면마다 말한다.** 시드로 찍은 화면은 실제 화면이지만
         #:   **실제 사고는 아니다.** 고객이 검수에서 그것을 구분할 수 있어야 한다.
+        #: ★ [턴 J · 차선 C] **자리마다 한 줄.** 목록이 비어 있을 때 그것이
+        #:   「이 화면은 우리 API 를 안 부른다」인지 「기록기가 못 적었다」인지를
+        #:   여기서 가른다 — 가르지 않으면 다음 사람이 그 둘을 같은 것으로 읽는다.
+        "api_notes": api_notes,
         "data_source": "시드 (K1 record_detection 실제 경로 · 실제 사고 아님)",
         "blank_screens": KNOWN_BLANK,
         #: 못 찍은 것을 **왜 못 찍었는지로 갈라** 적는다 (D-396). 한 칸에 두면

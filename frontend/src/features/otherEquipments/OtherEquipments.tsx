@@ -18,6 +18,7 @@ import { formatEnabled } from '@/utils/formatColumns';
 import { isEmptyObject, remToPx } from '@/utils/utils';
 
 import useEquipment from './hooks/useEquipment';
+import { failureLine } from '@/features/session/apiFailure';
 
 const ListDevice = () => {
   const [objSearch, setObjSearch] = useState({});
@@ -44,23 +45,32 @@ const ListDevice = () => {
 
   const fetchOtherEquipments = async () => {
     setLoading(true);
-
-    const { success, message, data, totalItem, totalPage } =
-      await getEquipmentList({
-        pageSize,
-        currentPage,
-        objSearch,
-      });
-    if (success) {
-      setData({
-        data: data,
-        totalItem: totalItem,
-        totalPage: totalPage,
-      });
-    } else {
-      ToastTopHelper.error(message);
+    // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **스피너를 끄는 것은 `finally` 다.**
+    //   종전에는 마지막 줄의 `setLoading(false)` 하나가 전부였다. `await` 가 거절되면
+    //   그 줄에 **닿지 못하고** 스피너가 그대로 남는다 — W0-18 §2-1 이 이름 붙인 모양이고,
+    //   접두 승격이 켜지는 순간 실제로 그렇게 된다(200 봉투가 예외가 되므로).
+    try {
+      const { success, message, data, totalItem, totalPage } =
+        await getEquipmentList({
+          pageSize,
+          currentPage,
+          objSearch,
+        });
+      if (success) {
+        setData({
+          data: data,
+          totalItem: totalItem,
+          totalPage: totalPage,
+        });
+      } else {
+        ToastTopHelper.error(message);
+      }
+    } catch (error) {
+      // 거절을 **말한다.** 사전 문구다 — 여기서 문장을 짓지 않는다(GX-COPY 규칙 1).
+      ToastTopHelper.error(failureLine('OtherEquipments.fetch', error));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -76,6 +86,7 @@ const ListDevice = () => {
   const handleActionEquipment = useCallback(
     async (action: 'activate' | 'deactivate') => {
       const listId = selectedRows?.map((item) => item.id).join(',');
+      try {
       const { success, message } = await (
         action === 'activate' ? activeEquipmentAPI : deactiveEquipmentAPI
       )({
@@ -105,6 +116,11 @@ const ListDevice = () => {
         ToastTopHelper.success(message);
       } else {
         ToastTopHelper.error(message);
+      }
+      } catch (error) {
+        // ★ [SEC-11a ② · 턴 J · 차선 C] 쓰기 단추가 **조용히 실패하지 않게** 한다.
+        //   아무 말 없는 단추는 고장으로 읽히고, 사람은 한 번 더 누른다(P-78 ③).
+        ToastTopHelper.error(failureLine('OtherEquipments.action', error));
       }
     },
     [data.data, selectedRows], // eslint-disable-line react-hooks/exhaustive-deps

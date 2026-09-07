@@ -22,6 +22,7 @@ import i18n from '../../../../../i18n';
 import { useDateFormat, useTimezoneCode } from '../../../hooks/useDateFormat';
 import { formatDate } from '../../../utils/dateFormat';
 import { useNoticeManagement } from './hooks/useNoticeManagement';
+import { failureLine } from '@/features/session/apiFailure';
 
 export const AddNoticeManagement = () => {
   const { t } = useTranslation();
@@ -47,12 +48,19 @@ export const AddNoticeManagement = () => {
 
   const handleAddNotice = useCallback(
     async (data: { content: string; files: File[] }) => {
+    // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **거절을 삼키지 않는다.**
+    //   `try` 가 하나도 없던 파일이다. 접두 승격이 켜지면 이 `await` 는 예외로 끝나고,
+    //   전역 `unhandledrejection` 처리기는 이 저장소에 0건이다 — 즉 **조용히 멈춘다.**
+      try {
       const { success, message } = await addNoticeAPI(data);
       if (success) {
         ToastTopHelper.success(message);
         navigate(CustomRoutes.handover.path + '?tab=notice-management');
       } else {
         ToastTopHelper.error(message);
+      }
+      } catch (error) {
+        ToastTopHelper.error(failureLine('AddNoticeManagement.add', error));
       }
     },
     [addNoticeAPI, navigate],

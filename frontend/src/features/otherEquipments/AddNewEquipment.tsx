@@ -27,6 +27,7 @@ import { SelectOption } from '../../components/selects/CustomSelect';
 import { CheckRoleAccount } from '../../utils/CheckRoleAccount';
 import useCommonAPI from '../useCommonAPI/useAPI';
 import useEquipment from './hooks/useEquipment';
+import { failureLine } from '@/features/session/apiFailure';
 
 interface AddEquipmentFormData {
   data: {
@@ -139,13 +140,24 @@ export default function AddNewEquipment() {
     setClickSave(true);
     const payload = parseEquipmentFormData(data);
     console.log(payload);
-    const { success, message } = await createEquipment(payload);
-    if (success) {
-      ToastTopHelper.success(message);
-      navigate(CustomRoutes.otherEquipments.path);
-    } else {
-      ToastTopHelper.error(message);
+    // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **저장 단추가 조용히 실패하지 않는다.**
+    //   `try` 가 없던 종전에는 거절이 예외가 되는 순간 이 함수가 그 자리에서 끝났다 —
+    //   토스트도 없고 `setClickSave(true)` 만 남아, 사람은 저장된 줄 알고 화면을 떠났다.
+    //   **삼킨 것을 삼켰다고 말한다.**
+    try {
+      const { success, message } = await createEquipment(payload);
+      if (success) {
+        ToastTopHelper.success(message);
+        navigate(CustomRoutes.otherEquipments.path);
+      } else {
+        ToastTopHelper.error(message);
+      }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('AddNewEquipment.submit', error));
     }
+    // ⚠ `finally` 를 두지 않았다. 이 화면에는 끌 스피너가 없고(`setLoading` 은 주석이다),
+    //   `setClickSave` 는 **떠나기 막는 자물쇠**여서 여기서 되돌리면 성공 뒤 이동 중에
+    //   경고 상자가 뜬다. 끌 것이 없는 자리에 `finally` 를 두는 것은 형식이지 고침이 아니다.
   };
 
   const handleCancel = () => {

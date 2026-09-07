@@ -1,0 +1,40 @@
+{
+  "commit": "778dad36db15001e49b62a1fa6b8b753e9cd9458",
+  "commit_source": "GX_COMMIT 환경변수",
+  "bundle": null,
+  "deploy": {
+    "commit": "778dad36db15001e49b62a1fa6b8b753e9cd9458",
+    "source": "/docs/agent/evidence/deploy/20260907_165642.json",
+    "deployed_at": "2026-09-07T16:57:49+09:00"
+  },
+  "deploy_source": "배치 증거 20260907_165642.json",
+  "drift": {
+    "paths": [],
+    "ancestor": true,
+    "error": null,
+    "source": "GX_DRIFT_JSON (호스트가 재서 넘겼다)"
+  },
+  "doc_only_prefixes": [
+    "docs/"
+  ],
+  "sidecar": null,
+  "token_prefix": "GX_COMMIT:",
+  "rows": [
+    {
+      "name": "번들이 자기 커밋을 말한다",
+      "verdict": "gray",
+      "why": "**못 쟀다** — 번들을 읽지 못했다 (서버가 섰는가 · `--dist` 자리가 맞는가). 못 읽은 것은 낡은 것과 다르다"
+    },
+    {
+      "name": "번들 해시 = **배치 커밋**",
+      "verdict": "gray",
+      "why": "**못 쟀다** — 번들이 없다"
+    },
+    {
+      "name": "HEAD − 배치 커밋 차이가 `docs/**` 뿐",
+      "verdict": "gray",
+      "why": "**못 쟀다** — 번들이 없다. 번들을 못 읽은 자리에서 배치 이후 표류를 재면 한 고장을 두 번 센다"
+    }
+  ],
+  "exit": 2
+}

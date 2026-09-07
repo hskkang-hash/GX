@@ -19,6 +19,7 @@ import { useHandover } from '../../../hooks/useHandover';
 import { CompletedNoticeState, NoticeManagementState } from '../../../types';
 import EditNotice from '../NoticeManagement/EditNotice';
 import { useCompletedNotice } from './hooks/useCompletedNotice';
+import { failureLine } from '@/features/session/apiFailure';
 
 export const CompletedNotice = ({
   headerPageRef,
@@ -72,14 +73,21 @@ export const CompletedNotice = ({
 
   const handleDeleteNotice = useCallback(async () => {
     if (!selectedIdNotice) return;
-    const { success, message } = await deleteNoticeAPI(selectedIdNotice);
-    if (success) {
-      ToastTopHelper.success(message);
+    // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **거절을 삼키지 않는다.**
+    try {
+      const { success, message } = await deleteNoticeAPI(selectedIdNotice);
+      if (success) {
+        ToastTopHelper.success(message);
+        getCompletedNoticeAPI();
+        getSliderDataAPI();
+      } else {
+        ToastTopHelper.error(message);
+      }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('CompletedNotice.delete', error));
+    } finally {
+      // 확인 상자는 **어느 갈래에서도 닫힌다.** 열린 채로 남은 상자는 고장으로 읽힌다.
       setShowDeleteNotice(false);
-      getCompletedNoticeAPI();
-      getSliderDataAPI();
-    } else {
-      ToastTopHelper.error(message);
     }
   }, [
     selectedIdNotice,

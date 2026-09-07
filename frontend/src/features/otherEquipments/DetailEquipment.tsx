@@ -25,6 +25,7 @@ import { schemaOtherEquipments } from '@/services/schemaForm';
 import { CheckRoleAccount } from '../../utils/CheckRoleAccount';
 import useCommonAPI from '../useCommonAPI/useAPI';
 import useEquipment from './hooks/useEquipment';
+import { failureLine } from '@/features/session/apiFailure';
 
 interface EquipmentFormData {
   data: {
@@ -185,14 +186,21 @@ export default function DetailEquipment() {
   const onSubmit = async (data: EquipmentFormData) => {
     setLoading(true);
     const payload = parseEquipmentFormData(data);
-    const { success, message } = await updateEquipment(payload, Number(id));
-    if (success) {
+    // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **`setLoading(false)` 가 두 갈래에만 있었다.**
+    //   성공과 실패에는 있고 **거절(예외)에는 없다** — 그 갈래로 빠지면 저장 스피너가
+    //   영영 돈다. 두 줄을 `finally` 한 곳으로 모은다: 갈래가 늘어나도 다시 안 샌다.
+    try {
+      const { success, message } = await updateEquipment(payload, Number(id));
+      if (success) {
+        ToastTopHelper.success(message);
+        navigate(CustomRoutes.otherEquipments.path);
+      } else {
+        ToastTopHelper.error(message);
+      }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('DetailEquipment.submit', error));
+    } finally {
       setLoading(false);
-      ToastTopHelper.success(message);
-      navigate(CustomRoutes.otherEquipments.path);
-    } else {
-      setLoading(false);
-      ToastTopHelper.error(message);
     }
   };
 
@@ -202,12 +210,21 @@ export default function DetailEquipment() {
 
   useEffect(() => {
     const fetchDetailEquipment = async () => {
-      const { success, data } = await getDetailEquipment(Number(id));
-      if (success) {
-        reset({
-          data: mergeData(data),
-          group: data?.group,
-        });
+      // ★ [SEC-11a ② · 턴 J · 차선 C] 종전에는 `success` 가 거짓이면 **아무 말도 없었다** —
+      //   빈 서식이 그려지고 사람은 「자료가 없다」로 읽는다. 거절은 「없다」가 아니다.
+      try {
+        const { success, data } = await getDetailEquipment(Number(id));
+        if (success) {
+          reset({
+            data: mergeData(data),
+            group: data?.group,
+          });
+        }
+        // ⚠ `success === false` 갈래는 **여기서 새로 말하지 않는다.** 그 갈래의 사유는
+        //   훅이 들고 있고, 없는 사유를 사전 문구로 지어 붙이면 「연결 실패」가 아닌 것을
+        //   「연결 실패」라고 적게 된다. 모르는 것을 아는 척하지 않는다(D-322).
+      } catch (error) {
+        ToastTopHelper.error(failureLine('DetailEquipment.fetch', error));
       }
     };
     fetchDetailEquipment();

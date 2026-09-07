@@ -338,7 +338,77 @@ API_CONTRACT_PROMOTE_PATHS = tuple(
         #     **스피너 고착**으로 나타나면(W0-18 §2-1) 그때가 되돌릴 때다.
         #     지금은 네 화면 전부 `finally` 로 스피너를 끄고, 전역
         #     `unhandledrejection` 처리기는 저장소에 **0건**이다 [실측].
-        ",/api/dashboard/,/api/checklist-setting/").split(",")
+        ",/api/dashboard/,/api/checklist-setting/"
+        # ★ [SEC-11a · 2026-09-07 턴 J · 차선 S] 잔여 185 → 136. **접두 넷 · 49건.**
+        #   세 턴 동안 「거절 계정이 없어 승격 안전성을 못 잰다」로 잠겨 있던 자리다.
+        #   `.env.gates` 의 `gxprobe_e2e` 가 **역할이 하나도 없는 계정**이고
+        #   (`user.roles.all()` 이 빈 쿼리셋 → `core/role/permission.py:_check_path_permission`
+        #   이 `has no roles` 로 False 를 낸다), 그래서 `@path_permission` 이 붙은
+        #   모든 라우트에서 **방법·경로와 무관하게** 거절된다. 그 계정으로 쟀다.
+        #
+        #   전/후 [실측 2026-09-07 · gxprobe_e2e · 같은 요청 · GET 만]:
+        #     전  HTTP **200** + `{"success": false, "status_code": 403, ...}`  (17자리)
+        #     후  HTTP **403**
+        #   ⚠ 쓰기(POST/PUT/DELETE)는 두드리지 않았다 — 같은 데코레이터·같은 계정이라
+        #     판정이 같다는 것은 **추론**이고 실측이 아니다. 그렇게 적어 둔다.
+        #
+        #   접두마다 **반경을 세고** 켰다(빨강의 반경만큼만 자른다 · 턴 K §1 이의 ①):
+        #     /api/operational-data/                반경 17 (authz 8 · clean 9 무영향)
+        #     /api/handover/handover/               반경 25 (authz 25)
+        #     /api/devices/libraries-management/    반경  7 (authz 7)
+        #     /api/devices/packaging-specifications/ 반경 9 (authz 9)
+        #   ★ `/api/handover/` 가 아니라 `/api/handover/handover/` 인 이유:
+        #     `test_forbidden_zone_prefixes_stay_out` 이 `/api/handover/list` 가
+        #     승격되지 않는 것을 못박는다. 실재 25건은 전부 `handover/handover/` 아래라
+        #     한 칸 더 들어가면 그 시험을 건드리지 않고 25건을 전부 덮는다.
+        #   ★ `/api/devices/` 가 아닌 이유: 그 접두의 반경은 66이고 cameras 9 가
+        #     그 안에 있다(아래 「안 켠 것」).
+        #
+        #   화면 쪽 [실측 · 원본 줄 단위]: 이 넷을 부르는 훅 전부가 `try/catch` 로
+        #   **되던지지 않고 값을 돌려준다** — 그래서 거절이 컴포넌트까지 안 올라간다.
+        #     useHandover · useComments · useCompletedNotice · useHandoverManagement ·
+        #     useNoticeManagement · useLibrary · packaging/useAPI · partnerManagement/useAPI ·
+        #     operationalData/useAPI · useOperationalNotice · useFileManagement
+        #   `showLoading()` 을 켜는 자리는 전부 `finally { hideLoading() }` 를 갖는다 —
+        #   턴 I 가 「finally 가 하나씩 모자란다」고 적어 둔 그 한 자리는 셋 다
+        #   **스피너를 켜지 않는 함수**였다(`getFieldsTemplate` ×2 는 `/api/print-format/`
+        #   을 부르고, `uploadFileOperationalData` 는 showLoading 자체가 없다).
+        #
+        #   ⚠ 되돌리기: 이 네 줄 중 해당 줄을 뺀다. 되돌릴 조건 — 그 화면에서
+        #     권한 거절이 **스피너 고착**으로 나타나면(W0-18 §2-1).
+        #
+        #   ★ 안 켠 것 — 사유를 이름으로 (SEC-11a 잔여 136 중 우리 층 14):
+        #     `/api/devices/cameras/` 9건 — **턴 안에서 사유가 사라졌다. 그래서 켰다.**
+        #        처음 적은 사유: `features/otherEquipments/hooks/useEquipment.ts` 의 다섯 함수
+        #        (`getEquipmentList` · `getDetailEquipment` · `createEquipment` ·
+        #        `updateEquipment` · `changeStatusEquipment`)가 `showLoading()` 뒤
+        #        `await API.*` 를 **try 없이** 불렀다 → 승격하면 `hideLoading()` 이
+        #        영원히 안 돌아 **스피너 고착**. 그 파일은 `frontend/` 라 차선 S 의 손 밖이었다.
+        #        ★ 같은 턴에 **차선 C 가 다섯 다 `try/catch/finally` 로 감쌌다** — 이 주석에
+        #          이름으로 적어 둔 것을 그대로 읽고 고쳤다. 다시 세었다 [실측 2026-09-07]:
+        #          `await API.*` 를 부르는 7함수 **전부** try·finally·hideLoading 을 갖는다.
+        #          부르는 쪽(`OtherEquipments.tsx` · `DetailEquipment.tsx`)도 `success` 로 갈린다.
+        #          벽이 없어졌으므로 **사유를 지우고 켠다** — 사유가 사라졌는데 줄만 남기면
+        #          그 줄이 다음 턴의 거짓 벽이 된다.
+        #        전/후 [실측 · gxprobe_e2e]: 200+봉투403 → HTTP 403 (아래 넷과 같은 방식)
+        #     `/api/report-template/` 5건 — 이 접두는 `backend/tests/test_api_contract.py`
+        #        의 **B 부류 표본**이다(`ROUTE_LIST_SCHEMA` · `ROUTE_FORMERLY_SWALLOWED`).
+        #        `test_flag_off_list_schema_route_still_raises`(500 을 못박는다)와
+        #        `test_flag_off_formerly_swallowed_route_keeps_200`(200 을 못박는다)이
+        #        바로 이 두 경로에서 「플래그 OFF 되돌림」을 증명한다. 켜면 그 둘이
+        #        빨개지는데 그것은 「고쳤다」가 아니라 **계약 시험의 표본을 말없이
+        #        바꾼 것**이다(D-327). 표본을 옮기는 것은 차선 S 소유 밖이다.
+        #        ⚠ 화면 쪽은 안전하다(`useReportTemplate.ts` 6함수 전부 try/catch/finally) —
+        #          막는 것은 제품이 아니라 **표본 소유**다. 다음 턴에 표본을 옮기면 켤 수 있다.
+        #        ★ 같이 남는 P1: `GET /api/report-template` 는 지금 권한 거절에
+        #          **HTTP 500 + pydantic 역추적 전문**을 본문으로 돌려준다 [실측
+        #          2026-09-07 · gxprobe_e2e]. 승격하면 `process_exception` 이 403 으로
+        #          되살리므로 역추적 유출도 같이 닫힌다 — 표본을 옮길 값이 그것이다.
+        ",/api/operational-data/"
+        ",/api/handover/handover/"
+        ",/api/devices/libraries-management/"
+        ",/api/devices/packaging-specifications/"
+        ",/api/devices/cameras/").split(",")
     if p.strip()
 )
 

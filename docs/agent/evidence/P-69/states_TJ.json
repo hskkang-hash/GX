@@ -1,0 +1,862 @@
+{
+  "when": "2026-09-07T07:26:07",
+  "web": "http://localhost:3013",
+  "api": "http://localhost:8000",
+  "names_from_perf_load": {
+    "S1": "목록 — 관제요원이 가장 자주 여는 자리",
+    "S2": "대시보드 — 첫 화면 한 벌",
+    "S3": "단일 초점 — 가장 급한 하나"
+  },
+  "screens": {
+    "로그인": {
+      "route": "/login",
+      "reached": true,
+      "widths": [
+        1440,
+        390
+      ],
+      "form": {
+        "required": {
+          "message_shown": true,
+          "added_text": "ID\n아이디를 입력해 주십시오.\nPassword\n비밀번호를 입력해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "raw_hits": []
+        },
+        "format": {
+          "message_shown": true,
+          "raw_hits": []
+        },
+        "double_submit": {
+          "requests": 1,
+          "where": "로그인"
+        }
+      },
+      "buttons": [
+        "Log In"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "ID\nPassword\n지금 로그인할 수 없습니다. 잠시 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/login"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "ID\nPassword\n지금 로그인할 수 없습니다. 잠시 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/login"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "ID\nPassword\n이 계정에는 접근 권한이 없습니다. 관리자에게 문의해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/login"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "ID\nPassword\n지금 로그인할 수 없습니다. 잠시 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/login"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "ID\nPassword\n서버에 연결하지 못했습니다. 연결을 확인한 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/login"
+        }
+      },
+      "press": {
+        "buttons_seen": [
+          "Log In"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Log In",
+            "clicked": true,
+            "navigated_to": "/profile",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      }
+    },
+    "지금 처리할 것": {
+      "route": "/dsm/queue",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "?",
+        "단축키",
+        "소리 켜기",
+        "상세 열기",
+        "다시 시도",
+        "종결하기 (3)",
+        "열기"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Collapse sidebar",
+          "?",
+          "단축키",
+          "소리 켜기",
+          "상세 열기",
+          "다시 시도",
+          "종결하기 (3)",
+          "열기"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Collapse sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "?",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "단축키",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "소리 켜기",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "상세 열기",
+            "clicked": true,
+            "navigated_to": "/dsm/events/4805",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "다시 시도",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "종결하기 (3)",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [
+              "POST http://localhost:8000/api/dsm/events/4805/response?to_state=closed"
+            ],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "열기",
+            "clicked": true,
+            "navigated_to": "/dsm/events/4800",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "undecidable": true,
+        "why": "이 화면에 글자 입력칸이 하나도 안 보인다 — 누를 폼이 없다"
+      },
+      "baseline_len": 890,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/dsm/events/queue",
+        "/api/menu/menus",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/dsm/queue"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/dsm/queue"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 열 수 없습니다.\n/api/dsm/events/queue\n닫기\nGuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n이 항목에 대한 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다.\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/dsm/queue"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n응답이 늦어 불러오지 못했습니다.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/dsm/queue"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n서버에 연결하지 못했습니다. 연결을 확인해 주십시오.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/dsm/queue"
+        }
+      },
+      "empty": {
+        "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n갱신 14:29 · 0초 전 · 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n지금 열려 있는 이벤트가 없습니다 — 평온합니다.\n버전 778dad3 · 장애 신고 창구 미등록",
+        "empty_text": "지금 열려 있는 이벤트가 없습니다 — 평온합니다.",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/dsm/events/queue",
+          "/api/menu/menus",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      }
+    },
+    "이벤트 목록": {
+      "route": "/dsm/events",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "미처리 보기",
+        "지난 12시간 보기",
+        "내 담당 보기",
+        "시스템 보기",
+        "새로고침",
+        "?"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Expand sidebar",
+          "미처리 보기",
+          "지난 12시간 보기",
+          "내 담당 보기",
+          "시스템 보기",
+          "새로고침",
+          "?"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Expand sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "미처리 보기",
+            "clicked": true,
+            "navigated_to": "/dsm/events?preset=unhandled",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "지난 12시간 보기",
+            "clicked": true,
+            "navigated_to": "/dsm/events?preset=recent",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "내 담당 보기",
+            "clicked": true,
+            "navigated_to": "/dsm/events?preset=mine",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "시스템 보기",
+            "clicked": true,
+            "navigated_to": "/dsm/events?preset=system",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "새로고침",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "?",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "undecidable": true,
+        "why": "제출처럼 보이는 단추가 없다(보이는 단추: 미처리 보기, 지난 12시간 보기, 내 담당 보기, 시스템 보기, 새로고침, ?) — 아무 단추나 눌러 「폼을 눌렀다」고 적지 않는다"
+      },
+      "baseline_len": 541,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/dsm/events",
+        "/api/dsm/events/summary",
+        "/api/menu/menus",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/dsm/events"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/dsm/events"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 열 수 없습니다.\n/api/dsm/events\n/api/dsm/events/summary\n닫기\n이벤트 목록\n요약 한 줄 · 지난 12시간\n이 항목에 대한 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다.\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n이 항목에 대한 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다.\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/dsm/events"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n응답이 늦어 불러오지 못했습니다.\n다시 시도\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n응답이 늦어 불러오지 못했습니다.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/dsm/events"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n서버에 연결하지 못했습니다. 연결을 확인해 주십시오.\n다시 시도\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n서버에 연결하지 못했습니다. 연결을 확인해 주십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3013/dsm/events"
+        }
+      },
+      "empty": {
+        "body_text": "이벤트 목록\n갱신 14:31 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+        "empty_text": "조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/dsm/events",
+          "/api/dsm/events/summary",
+          "/api/menu/menus",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      }
+    },
+    "이벤트 상세": {
+      "route": "/dsm/events/4803",
+      "widths": [
+        1440
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "← 목록",
+        "알림 보내기",
+        "다시 시도",
+        "실제로 판정",
+        "오탐으로 판정",
+        "접수하기"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Collapse sidebar",
+          "← 목록",
+          "알림 보내기",
+          "다시 시도",
+          "실제로 판정",
+          "오탐으로 판정",
+          "접수하기"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Collapse sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "← 목록",
+            "clicked": true,
+            "navigated_to": "/dsm/events",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "알림 보내기",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "TimeoutError: Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for get_by_role(\"button\", name=\"알림 보내기\", exact=True).first\n    - locator resolved to"
+          },
+          {
+            "kind": "button",
+            "name": "다시 시도",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "TimeoutError: Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for get_by_role(\"button\", name=\"다시 시도\", exact=True).first\n    - locator resolved to "
+          },
+          {
+            "kind": "button",
+            "name": "실제로 판정",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "오탐으로 판정",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "접수하기",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          }
+        ],
+        "linked": []
+      },
+      "errors": {
+        "500": {
+          "undecidable": true,
+          "why": "로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+        },
+        "503": {
+          "undecidable": true,
+          "why": "로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+        },
+        "403": {
+          "undecidable": true,
+          "why": "로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+        },
+        "timeout": {
+          "undecidable": true,
+          "why": "로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+        },
+        "netfail": {
+          "undecidable": true,
+          "why": "로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+        }
+      }
+    },
+    "관리·설정": {
+      "route": "/dsm/drill",
+      "widths": [],
+      "mobile_only": false,
+      "reached": false,
+      "reach_error": "로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+    },
+    "카메라 일괄 등록": {
+      "route": "/dsm/cameras/import",
+      "widths": [],
+      "mobile_only": false,
+      "reached": false,
+      "reach_error": "로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+    },
+    "모바일 M1~M3": {
+      "route": "/m/inbox",
+      "widths": [],
+      "mobile_only": true,
+      "reached": false,
+      "reach_error": "로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+    },
+    "보고서": {
+      "route": "/report-template",
+      "widths": [],
+      "mobile_only": false,
+      "recon": [
+        "/api/config-management/list-optimized"
+      ],
+      "api_used": "/api/config-management/list-optimized",
+      "reached": false,
+      "reach_error": "로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+    }
+  },
+  "blocked_writes": [
+    "POST http://localhost:8000/api/dsm/events/4805/response?to_state=closed"
+  ],
+  "session_closed": true,
+  "how": "Playwright 요청 가로채기 — 주입한 요청은 네트워크로 나가지 않는다",
+  "session_released_before": true,
+  "cells": {
+    "로그인": {
+      "화면": {
+        "mark": "●",
+        "note": "/login 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "●",
+        "note": "눌렀다 1/1개: 「Log In」 · 이동 1개(/profile)"
+      },
+      "메뉴·링크": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "폼(검증·오류)": {
+        "mark": "◐",
+        "note": "눌렀다 필수 빈값·형식 오류 · 이중 제출 1회 — 통과"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "지금 처리할 것": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/queue 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 6/8개: 「Collapse sidebar」, 「단축키」, 「상세 열기」, 「다시 시도」, 「종결하기 (3)」, 「열기」 · 이동 2개(/dsm/events/4805, /dsm/events/4800) · 쓰기 단추 1개는 **가드가 막았다**(서버에 안 나갔다): 「종결하기 (3)」"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 2개: 「상세 열기」→/dsm/events/4805, 「열기」→/dsm/events/4800"
+      },
+      "폼(검증·오류)": {
+        "mark": "",
+        "note": "**못 쟀다** — 이 화면에 글자 입력칸이 하나도 안 보인다 — 누를 폼이 없다"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — 통과"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "이벤트 목록": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/events 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 6/7개: 「Expand sidebar」, 「미처리 보기」, 「지난 12시간 보기」, 「내 담당 보기」, 「시스템 보기」, 「새로고침」 · 이동 4개(/dsm/events?preset=unhandled, /dsm/events?preset=recent, /dsm/events?preset=mine)"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 4개: 「미처리 보기」→/dsm/events?preset=unhandled, 「지난 12시간 보기」→/dsm/events?preset=recent, 「내 담당 보기」→/dsm/events?preset=mine, 「시스템 보기」→/dsm/events?preset=system"
+      },
+      "폼(검증·오류)": {
+        "mark": "",
+        "note": "**못 쟀다** — 제출처럼 보이는 단추가 없다(보이는 단추: 미처리 보기, 지난 12시간 보기, 내 담당 보기, 시스템 보기, 새로고침, ?) — 아무 단추나 눌러 「폼을 눌렀다」고 적지 않는다"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — 통과"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "이벤트 상세": {
+      "화면": {
+        "mark": "◐",
+        "note": "/dsm/events/4803 를 1440px 에서 열었다 — 한 폭만 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 2/7개: 「Collapse sidebar」, 「← 목록」 · 이동 1개(/dsm/events)"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 1개: 「← 목록」→/dsm/events"
+      },
+      "폼(검증·오류)": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "",
+        "note": "**못 쟀다** — 주입 5갈래가 이 화면에 안 닿았다. **못 쟀다** — 로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+      },
+      "빈 상태": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "모바일 390": {
+        "mark": "",
+        "note": ""
+      }
+    },
+    "관리·설정": {
+      "화면": {
+        "mark": "",
+        "note": "못 열었다 — 로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+      },
+      "주요 버튼": {
+        "mark": "",
+        "note": ""
+      },
+      "메뉴·링크": {
+        "mark": "",
+        "note": ""
+      },
+      "폼(검증·오류)": {
+        "mark": "",
+        "note": ""
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "",
+        "note": ""
+      },
+      "빈 상태": {
+        "mark": "",
+        "note": ""
+      },
+      "모바일 390": {
+        "mark": "",
+        "note": ""
+      }
+    },
+    "카메라 일괄 등록": {
+      "화면": {
+        "mark": "",
+        "note": "못 열었다 — 로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+      },
+      "주요 버튼": {
+        "mark": "",
+        "note": ""
+      },
+      "메뉴·링크": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "폼(검증·오류)": {
+        "mark": "",
+        "note": ""
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "",
+        "note": ""
+      },
+      "빈 상태": {
+        "mark": "",
+        "note": ""
+      },
+      "모바일 390": {
+        "mark": "",
+        "note": ""
+      }
+    },
+    "모바일 M1~M3": {
+      "화면": {
+        "mark": "",
+        "note": "못 열었다 — 로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+      },
+      "주요 버튼": {
+        "mark": "",
+        "note": ""
+      },
+      "메뉴·링크": {
+        "mark": "",
+        "note": ""
+      },
+      "폼(검증·오류)": {
+        "mark": "",
+        "note": ""
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "",
+        "note": ""
+      },
+      "빈 상태": {
+        "mark": "",
+        "note": ""
+      },
+      "모바일 390": {
+        "mark": "",
+        "note": ""
+      }
+    },
+    "보고서": {
+      "화면": {
+        "mark": "",
+        "note": "못 열었다 — 로그인 화면으로 튕겼다 — 세션을 빼앗겼을 수 있다"
+      },
+      "주요 버튼": {
+        "mark": "",
+        "note": ""
+      },
+      "메뉴·링크": {
+        "mark": "",
+        "note": ""
+      },
+      "폼(검증·오류)": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "",
+        "note": ""
+      },
+      "빈 상태": {
+        "mark": "",
+        "note": ""
+      },
+      "모바일 390": {
+        "mark": "",
+        "note": ""
+      }
+    }
+  },
+  "counts": {
+    "full": 10,
+    "partial": 10,
+    "na": 6,
+    "blank": 30,
+    "counted": 20,
+    "total": 56
+  }
+}

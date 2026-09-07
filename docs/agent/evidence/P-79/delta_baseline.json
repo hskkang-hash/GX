@@ -90,6 +90,11 @@
    "at": "2026-09-06T14:20:00+00:00",
    "commit": "abbdf36",
    "why": "턴 I 마감 벌은 **적지 않았다** — 1,181개 중 1,178 passed / 1 failed / 소요 1,045.48s. 실패 1건은 tests/test_screens_browser.py::test_captured_screens_and_recorded_routes_agree 이고 옆 차선(C)이 같은 순간 capture_screens 로 /login 만 다시 찍는 중이었다(D-347/screens 가 22:41 에 NO_ROLE 한 갈래로 다시 쓰였다). 소요도 같은 이유로 +93% 다. 이 벌을 기준선에 적으면 다음 턴이 오염된 점과 견주게 되고 그것이 이번 턴이 물려받은 병(DIRTY_RUN)이다. 적은 점은 13:39 의 조용한 벌(1,169 · 오류 0 · 541.50s)이다."
+  },
+  {
+   "at": "2026-09-07T07:22:55+00:00",
+   "commit": "778dad3",
+   "why": "턴 J · 차선 Q — **이번 벌은 점으로 적지 않는다(DIRTY_RUN).** 잰 것: HEAD 778dad3 · backend-unit · 1,182개 중 1,171 passed / 9 failed / 2 skipped / 667.18s (명령: docker exec -e DJANGO_SETTINGS_MODULE=config.settings -e DB_TEST_NAME=test_gx_q gx-shell python -m pytest tests -q --nomigrations -p no:randomly --ignore=tests/e2e). 왜 안 적나: 잰 순간 작업본이 **60파일 더러웠고** 그 수정이 도는 중이었다 — 차선 C 가 capture_screens 로 화면을 다시 찍는 중(D-347/screens PNG 다수 삭제·수정) · 조율자가 backend/config/settings.py 를 P-88' 승격 접두로 고치는 중 · 차선 E 가 purge·dormant beat 를 손대는 중. 실패 9건이 정확히 그 세 자리다: test_api_contract.py::test_flag_off_keeps_legacy_200(승격 접두) · test_be_purge.py x2(감사 purge 저널 자리) · test_dormant_wiring.py x6(beat 배선). **코드 회귀가 아니라 오염된 창이다.** 이 점을 적으면 다음 턴이 오염된 점과 견주게 된다 — 턴 I 가 같은 자리에서 내린 판단과 같다. 다음 조용한 창(커밋 뒤)에서 한 벌 돌려 --record 로 적을 것. 함께: 이번 턴에 verify_delta 에 dirty_files 를 넣어 **커밋이 움직여도** 더러운 창의 빨강을 DIRTY_RUN 으로 이름 붙이게 했다(종전엔 REAL_REGRESSION 으로 잘못 불렸다)."
   }
  ]
 }

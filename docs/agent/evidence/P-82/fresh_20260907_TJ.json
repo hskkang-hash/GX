@@ -1,0 +1,16 @@
+{
+  "api": "http://localhost:8000",
+  "port": "8000",
+  "container": "gx-shell",
+  "pid": "27698",
+  "boot_epoch": 1788763648,
+  "boot": "2026-09-07 15:47:28",
+  "live_commit": "778dad3",
+  "head_commit": "778dad3",
+  "source_epoch": 1788763424,
+  "source": "2026-09-07 15:43:44",
+  "source_why": "backend/ 마지막 커밋",
+  "verdict": "FRESH",
+  "exit": 0,
+  "measured_at": "2026-09-07 15:47:43"
+}

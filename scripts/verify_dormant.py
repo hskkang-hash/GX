@@ -47,6 +47,7 @@ import json
 import re
 import sys
 from collections import defaultdict
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -804,8 +805,24 @@ def main() -> int:
     ap.add_argument("--predicate", choices=["a", "b", "c"])
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--freeze", action="store_true")
+    #: ★ [P-91 · 2026-09-07 턴 J · 차선 S] **이름을 대고 잠근다.**
+    #   `--freeze` 는 기준선을 **통째로 다시 쓴다**. 그래서 한 차선이 제 빚 셋을
+    #   잠그려고 그것을 부르면 **다른 차선이 이번 턴에 낳은 빚까지 같이 사면된다** —
+    #   그리고 사면된 자리는 아무 흔적도 남기지 않는다. 실제로 이 턴에 잠글 것은
+    #   셋인데 위반은 열둘이었다(나머지 아홉은 다른 차선이 낳았다).
+    #   그래서 「잠근다」를 **이름 단위**로 쪼갠다. 사유는 비울 수 없다 —
+    #   이름 없는 면제는 다음 사람이 지울 수 없다(`allow_evidence_writes` 와 같은 규율).
+    ap.add_argument("--freeze-name", metavar="LABEL", action="append", default=[],
+                    help="이 이름 하나만 기준선에 더한다(반복 가능) · --why 필수")
+    ap.add_argument("--why", metavar="TEXT",
+                    help="--freeze-name 의 사유와 **해제 조건**. 비울 수 없다")
     ap.add_argument("--json", metavar="PATH")
     args = ap.parse_args()
+
+    if args.freeze_name and not str(args.why or "").strip():
+        print("[DORMANT] `--freeze-name` 에는 `--why` 가 있어야 한다 — "
+              "사유와 해제 조건 없이 잠그면 그것은 잠금이 아니라 삭제다")
+        return 1
 
     if args.self_test:
         return self_test()
@@ -895,6 +912,34 @@ def main() -> int:
                             encoding="utf-8")
         print(f"[DORMANT] 기준선 {len(labeled)}건 기록 — {_rel(BASELINE)}")
         return 0
+
+    if args.freeze_name:
+        # ★ 잠글 수 있는 것은 **지금 실제로 자고 있는 이름**뿐이다. 없는 이름을
+        #   기준선에 넣으면 그 줄은 영원히 아무것도 안 막으면서 목록만 늘린다.
+        unknown = [n for n in args.freeze_name if n not in labeled]
+        if unknown:
+            print("[DORMANT] 그런 이름이 지금 자고 있지 않다 — 잠글 것이 없다:")
+            for n in unknown:
+                print(f"  · {n}")
+            print("  `--census` 로 이름을 그대로 베껴라(술어 접두 `A `/`B `/`C ` 포함)")
+            return 1
+        existing = load_baseline()
+        already = [n for n in args.freeze_name if n in existing]
+        add = [n for n in args.freeze_name if n not in existing]
+        body = BASELINE.read_text(encoding="utf-8") if BASELINE.exists() else _BASELINE_HEADER
+        if add:
+            _nl = chr(10)
+            body = body.rstrip(_nl) + _nl + _nl.join(
+                [f"# [잠금 {date.today().isoformat()}] {args.why.strip()}"]
+                + sorted(add)) + _nl
+            BASELINE.parent.mkdir(parents=True, exist_ok=True)
+            BASELINE.write_text(body, encoding="utf-8")
+        print(f"[DORMANT] 이름으로 잠갔다 {len(add)}건 · 이미 잠겨 있던 것 {len(already)}건 "
+              f"— {_rel(BASELINE)}")
+        for n in add:
+            print(f"  · {n}")
+        print(f"  사유·해제 조건: {args.why.strip()}")
+        # ★ 잠근 뒤에도 **판정은 이어서 돈다** — 남의 빚이 남아 있으면 여기서 빨강이다.
 
     baseline = load_baseline()
     if not baseline:

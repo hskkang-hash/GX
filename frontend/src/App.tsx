@@ -44,6 +44,7 @@ import {
  *   (`reason_code: session_evicted`)이 온 401 에서만 그린다.
  */
 import { SessionEndedNotice } from '@/features/session/SessionEndedNotice';
+import { PermissionDeniedNotice } from '@/features/session/PermissionDeniedNotice';
 
 /**
  * ★ [UX-21 · 2026-09-26 · 차선 C] **로고 자산의 이름에서 공백을 뺐다.**
@@ -1146,6 +1147,10 @@ function App() {
     <AuthProvider>
       {/* 관문 안팎 어디서 끊기든 같은 한 줄이 뜬다 — 라우터보다 바깥에 둔다. */}
       <SessionEndedNotice />
+      {/* P-88 · 2026-09-07 턴 J · 차선 C — 403 을 **말하는** 자리.
+          같은 이유로 라우터 바깥이다: 어느 화면이 막히든 같은 한 줄이 뜬다.
+          ⚠ `SessionEndedNotice` 와 달리 뒤를 막지 않는다 — 막힌 것은 문 하나다. */}
+      <PermissionDeniedNotice />
       <LoadingProvider>
         <ConfigDataWrap>
           <ConfigSystemProvider>

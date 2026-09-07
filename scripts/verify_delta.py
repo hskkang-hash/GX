@@ -50,13 +50,22 @@
     python scripts/verify_delta.py                      # 갈래마다 최근 두 점을 견준다
     python scripts/verify_delta.py --suite backend-unit
     python scripts/verify_delta.py --list
+    python scripts/verify_delta.py --baseline-note "이번 벌은 오염돼 안 적는다 — …"
+
+★ [P-93 · 턴 J] `--baseline-note` — **기준선을 안 옮기기로 한 것도 판단이다.**
+  점은 안 적고 사유만 적는다. 턴 I 는 오염된 마감 벌을 적지 않기로 옳게 정했지만,
+  그 사유를 남길 길이 「적으면서 사유를 다는 것」뿐이었다 — 판단과 사유가 다른 자리에
+  있었다. 이제 같은 자리에 있다.
 
 빨강에는 **사유 이름**이 붙는다 (P-87 · 턴 I) — `BASELINE_STALE` · `DIRTY_RUN` ·
 `SUITE_SHRANK` · `GATE_SCOPE_WIDENED` · `REAL_REGRESSION` · `SPEEDUP_SUSPECT` ·
 `SLOWDOWN_UNEXPLAINED` · `ENV_UNNAMED`. 「무엇이 줄었다」만 말하는 빨강은 읽은 사람의
 할 일을 정해 주지 않는다. **이름은 종료 코드를 바꾸지 않는다.**
 
-종료 코드: **0 초록 · 1 빨강 · 2 회색(견줄 점이 없다)**.
+종료 코드: **0 초록 · 1 빨강 · 2 회색**.
+회색은 둘이다 — ① 견줄 점이 없다 ② **가장 최근 점이 HEAD 가 아니다**(P-93 · 턴 J).
+②를 초록으로 내던 자리가 있었다: 낡은 두 점이 서로 조용하면 이 도구가 「초록」을 냈고,
+그 초록은 **지금 코드를 한 줄도 안 본 초록**이었다. 못 잰 것을 초록으로 적지 않는다.
 호스트에서 돈다 — Django 가 필요 없다. 읽는 것은 pytest 가 마지막에 적은 한 줄이다.
 """
 from __future__ import annotations
@@ -140,6 +149,41 @@ def save(data: dict) -> None:
                         encoding="utf-8")
 
 
+def append_note(data: dict, why: str, *, commit: str, at: str) -> dict:
+    """`baseline_notes` 에 한 줄 더한다 — **`runs` 는 건드리지 않는다.**
+
+    ★ [P-93 · 턴 J] 왜 이 함수가 따로 있나:
+
+        턴 I 는 마감 벌을 **적지 않기로** 정했다(옆 차선의 파일 수정과 겹친 오염된 벌).
+        그 판단은 옳았는데, 그것을 파일에 적을 길이 `--record --baseline-why` 뿐이었다 —
+        **적지 않기로 한 벌을 적어야만 사유를 남길 수 있었다.** 그래서 그 사유는
+        다음 점의 꼬리에 붙어서야 겨우 남았다.
+
+        기준선을 **안 옮기기로 한 것도 판단이다.** 판단에는 사유가 있어야 하고,
+        사유는 판단과 같은 자리에 있어야 한다. 그래서 `--baseline-note` 를 둔다.
+    """
+    notes = list(data.get("baseline_notes") or [])
+    notes.append({"at": at, "commit": commit, "why": why})
+    data["baseline_notes"] = notes
+    return data
+
+
+def dirty_files() -> int:
+    """잰 순간 **작업본이 몇 파일 더러웠는가**. 못 물으면 `-1`(모른다 ≠ 0).
+
+    ★ 0 과 「모른다」를 가른다. 0 으로 적으면 「깨끗한 창에서 쟀다」가 되고,
+      그것이 이 저장소가 계속 만나는 거짓말(D-301)이다.
+    """
+    try:
+        out = subprocess.run(["git", "-C", str(ROOT), "status", "--porcelain"],
+                             capture_output=True, text=True, timeout=60)
+        if out.returncode != 0:
+            return -1
+        return len([ln for ln in out.stdout.splitlines() if ln.strip()])
+    except Exception:                                   # noqa: BLE001
+        return -1
+
+
 def head_commit() -> str:
     try:
         out = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"],
@@ -189,8 +233,9 @@ CAUSE_TEXT: dict[str, str] = {
         "뒤 점의 커밋이 저장소 HEAD 가 아니다 — 이 판정은 **지금 코드를 안 본다**. "
         "할 일: HEAD 에서 한 벌 돌려 `--record` 로 적고 다시 판정한다",
     "DIRTY_RUN":
-        "두 점의 **커밋이 같은데** 수가 달라졌다 — 같은 코드에서 다른 수가 나왔으면 "
-        "원인은 코드가 아니다(동시 차선·오염된 시험 DB·경주). "
+        "**오염된 창에서 난 수다** — 두 점의 커밋이 같은데 수가 달라졌거나(같은 코드에서 "
+        "다른 수), 잰 순간 **작업본이 더러웠다**(미커밋 파일이 있었다 · 동시 차선·"
+        "오염된 시험 DB·경주). 원인은 이 커밋의 코드가 아니다. "
         "할 일: 조용한 창에서 다시 돌린다",
     "SUITE_SHRANK":
         "걷힌 시험이 문턱 밖으로 **줄었다** — 0건 수집은 초록처럼 보인다(P-71). "
@@ -241,6 +286,19 @@ def classify(old: dict, new: dict, threshold: float = THRESHOLD,
 
     old_c, new_c = str(old.get("commit", "")), str(new.get("commit", ""))
     if moved and old_c and new_c and old_c == new_c:
+        found.add("DIRTY_RUN")
+    #: ★ [P-93 · 턴 J] **커밋이 움직여도 오염은 오염이다.**
+    #:
+    #:   종전 판은 DIRTY_RUN 을 「두 점의 커밋이 같은데 수가 달라졌다」로만 잡았다.
+    #:   그러면 **커밋이 움직인 위에 미커밋 작업본이 얹힌 벌**은 잡히지 않고
+    #:   `REAL_REGRESSION`(= 코드가 원인일 자리)으로 이름 붙는다. 할 일이 갈린다:
+    #:   하나는 「고친다」이고 하나는 「조용한 창에서 다시 돌린다」다.
+    #:
+    #:   [실측 2026-09-07 · 턴 J] 이 벌이 정확히 그랬다 — HEAD 778dad3 위에 작업본
+    #:   60파일이 얹혀 있었고(차선 C 가 화면을 다시 찍는 중 · 조율자가 settings.py 를
+    #:   고치는 중), 실패 9건은 전부 그 차선들의 자리였다. 커밋이 움직였다는 이유로
+    #:   그것을 REAL_REGRESSION 이라 부르면 **엉뚱한 사람이 엉뚱한 것을 고치러 간다.**
+    if moved and int(new.get("dirty_files") or 0) > 0:
         found.add("DIRTY_RUN")
     if moved and head and new_c and new_c != head:
         found.add("BASELINE_STALE")
@@ -330,6 +388,23 @@ def judge(old: dict, new: dict, threshold: float = THRESHOLD,
         lines.append(f"{TAG} ±{threshold:.0%} 밖의 변화는 **회색이 될 수 없다** — "
                      "회색은 「못 쟀다」이지 「봐도 되는 변화」가 아니다")
         return EXIT_FAIL, lines
+
+    #: ★ [P-93 · 턴 J] **HEAD 에서 잰 점이 없으면 초록이 아니라 회색이다.**
+    #:
+    #:   종전 판은 `BASELINE_STALE` 을 **빨강일 때만** 붙였다(`if moved and …`).
+    #:   그래서 낡은 두 점이 서로 조용하면 이 도구는 **「초록」**을 냈다 —
+    #:   지금 코드를 한 줄도 안 보고서. 그것이 이 저장소가 P-93 에서 96종을 훑으며
+    #:   찾던 바로 그 모양이다: **판정기가 읽는 자리가 지금이 아닌데 색은 초록.**
+    #:
+    #:   [실측 2026-09-07 · 턴 J] HEAD 가 `778dad3` 인데 가장 최근 점은 `abbdf36`
+    #:   이었고, 이 도구는 `초록` 을 냈다. 「못 쟀다」와 「봐도 된다」는 다른 말이다.
+    if head and str(new.get("commit", "")) != head:
+        lines.append(f"{TAG} **회색(exit 2)** — 가장 최근 점의 커밋 "
+                     f"`{new.get('commit', '?')}` 이 HEAD `{head}` 가 아니다. "
+                     f"셋 다 문턱 안이지만 **이 판정은 지금 코드를 안 봤다** — "
+                     f"못 잰 것을 초록으로 적지 않는다 (D-301 · `BASELINE_STALE`)")
+        lines.append(f"{TAG}   할 일: HEAD 에서 한 벌 돌려 `--record` 로 적고 다시 판정한다")
+        return EXIT_GRAY, lines
     lines.append(f"{TAG} 초록 — 셋 다 ±{threshold:.0%} 안이고 오류가 늘지 않았다")
     return EXIT_OK, lines
 
@@ -464,13 +539,68 @@ def self_test() -> int:
         bad.append("CAUSE_ORDER 와 CAUSE_TEXT 가 어긋난다 — "
                    "이름은 있는데 설명이 없거나 그 반대다")
 
+    # ── ⑯ [P-93 · 턴 J] **HEAD 가 아닌 점 위의 「조용함」은 초록이 아니다** ────
+    quiet_old = {"tests": 1152, "errors": 0, "duration_s": 600.0, "commit": "aaa"}
+    quiet_new = {"tests": 1169, "errors": 0, "duration_s": 610.0, "commit": "bbb"}
+    rc_q, _ = judge(quiet_old, quiet_new, THRESHOLD, head="zzz")
+    if rc_q != EXIT_GRAY:
+        bad.append(f"HEAD 가 아닌 점 위의 조용함을 초록으로 냈다 (exit {rc_q}) — "
+                   "지금 코드를 안 보고 낸 초록이다")
+    rc_q2, _ = judge(quiet_old, quiet_new, THRESHOLD, head="bbb")
+    if rc_q2 != EXIT_OK:
+        bad.append(f"HEAD 인 점 위의 조용함을 초록으로 안 냈다 (exit {rc_q2})")
+    rc_q3, _ = judge(quiet_old, quiet_new, THRESHOLD, head="")
+    if rc_q3 != EXIT_OK:
+        bad.append("HEAD 를 모르는데 회색을 지어냈다 — 없는 사실을 짓지 않는다")
+
+    # ── ⑮ [P-93 · 턴 J] **더러운 작업본에서 난 빨강은 DIRTY_RUN 이다** ────────
+    #    커밋이 움직였어도 그렇다. 「고친다」와 「다시 돌린다」를 가르는 이름이다.
+    dirty = classify({"tests": 1169, "errors": 0, "duration_s": 541.5, "commit": "aaa"},
+                     {"tests": 1182, "errors": 9, "duration_s": 667.2, "commit": "bbb",
+                      "dirty_files": 60})
+    if "DIRTY_RUN" not in dirty:
+        bad.append(f"더러운 작업본에서 난 빨강을 DIRTY_RUN 이라 안 했다: {dirty}")
+    if dirty and dirty[0] != "DIRTY_RUN":
+        bad.append(f"DIRTY_RUN 이 첫 사유가 아니다 — 할 일이 뒤바뀐다: {dirty}")
+    clean = classify({"tests": 1169, "errors": 0, "duration_s": 541.5, "commit": "aaa"},
+                     {"tests": 1182, "errors": 9, "duration_s": 667.2, "commit": "bbb",
+                      "dirty_files": 0})
+    if "DIRTY_RUN" in clean:
+        bad.append(f"깨끗한 창인데 DIRTY_RUN 을 지어냈다: {clean}")
+    if "REAL_REGRESSION" not in clean:
+        bad.append(f"깨끗한 창의 오류 증가를 REAL_REGRESSION 이라 안 했다: {clean}")
+    #    「모른다(-1)」를 「더럽다」로도 「깨끗하다」로도 세지 않는다
+    unknown = classify({"tests": 1169, "errors": 0, "duration_s": 541.5, "commit": "aaa"},
+                       {"tests": 1182, "errors": 9, "duration_s": 667.2, "commit": "bbb",
+                        "dirty_files": -1})
+    if "DIRTY_RUN" in unknown:
+        bad.append(f"작업본 상태를 모르는데 DIRTY_RUN 을 지어냈다: {unknown}")
+    #    초록에는 더러워도 이름이 안 붙는다 (이름이 빨강을 만들어 내면 안 된다)
+    if classify({"tests": 1169, "errors": 0, "duration_s": 541.5, "commit": "aaa"},
+                {"tests": 1170, "errors": 0, "duration_s": 545.0, "commit": "bbb",
+                 "dirty_files": 60}):
+        bad.append("문턱 안의 초록에 DIRTY_RUN 이 붙었다")
+
+    # ── ⑭ [P-93 · 턴 J] **안 옮기기로 한 것도 사유가 남는다** ─────────────────
+    #    `append_note` 는 사유만 적고 `runs` 를 늘리지 않는다. 늘리면 그것이 곧
+    #    「적지 않기로 한 벌을 적은 것」이고, 다음 턴이 그 점과 견주게 된다.
+    d0 = {"schema": 1, "runs": [{"suite": "s", "tests": 1}], "baseline_notes": []}
+    d1 = append_note(dict(d0), "오염된 벌이라 안 적는다", commit="abc", at="2026-09-07T00:00:00+00:00")
+    if len(d1["runs"]) != 1:
+        bad.append("append_note 가 runs 를 건드렸다 — 사유만 적어야 한다")
+    if len(d1["baseline_notes"]) != 1 or "안 적는다" not in d1["baseline_notes"][0]["why"]:
+        bad.append("append_note 가 사유를 안 적었다")
+    d2 = append_note(d1, "두 번째 사유", commit="abc", at="2026-09-07T00:01:00+00:00")
+    if len(d2["baseline_notes"]) != 2:
+        bad.append("사유가 덮어써졌다 — 사유는 쌓이는 것이지 갈리는 것이 아니다")
+
     for b_ in bad:
         print(f"{TAG} 자기시험 FAIL {b_}")
     if bad:
         print(f"{TAG} 자기시험 {len(bad)}건 실패 — 판정기를 먼저 의심한다 (D-350)")
         return EXIT_FAIL
     print(f"{TAG} 자기시험 통과 — ★ **출생 표본**(21 errors in 3.66s → 빨강) 포함 "
-          f"갈래 13 · 사유 이름 {len(CAUSE_ORDER)}종 "
+          f"갈래 16 · 사유 이름 {len(CAUSE_ORDER)}종 "
           f"({' · '.join(CAUSE_ORDER)})")
     return EXIT_OK
 
@@ -510,6 +640,8 @@ def main() -> int:
     ap.add_argument("--note", default="")
     ap.add_argument("--baseline-why", default="",
                     help="기준선을 이 실행으로 갱신하는 **사유**. 파일에 남고 판정 때 읽힌다")
+    ap.add_argument("--baseline-note", default="",
+                    help="**점을 안 적고 사유만** 적는다 — 기준선을 옮기지 않기로 한 판단의 사유")
     args = ap.parse_args()
 
     if args.self_test:
@@ -519,6 +651,19 @@ def main() -> int:
 
     data = load()
     runs: list[dict] = data.get("runs", [])
+
+    #: ★ 안 옮기기로 한 것도 판단이고, 판단에는 사유가 있어야 한다 (P-93 · 턴 J).
+    if args.baseline_note:
+        if args.record:
+            print(f"{TAG} --baseline-note 와 --record 를 같이 쓰지 않는다 — "
+                  "적을 거면 `--baseline-why` 가 그 자리다")
+            return EXIT_GRAY
+        at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        save(append_note(data, args.baseline_note, commit=args.commit or head_commit(), at=at))
+        print(f"{TAG} [사유] 기준선을 **옮기지 않았고** 사유를 적었다 — "
+              f"{BASELINE.relative_to(ROOT).as_posix()}")
+        print(f"{TAG}   {args.baseline_note}")
+        return EXIT_OK
 
     if args.record:
         if not args.suite or not args.from_file:
@@ -550,6 +695,10 @@ def main() -> int:
             "reason": args.reason,
             "env": env,
             "note": args.note,
+            #: ★ 잰 순간의 작업본 상태를 **점과 함께** 적는다 (P-93 · 턴 J).
+            #:   나중에 기억으로 복원할 수 없는 사실이고, 이것이 없으면 오염된 벌이
+            #:   `REAL_REGRESSION` 으로 이름 붙는다.
+            "dirty_files": dirty_files(),
         }
         runs.append(row)
         if args.baseline_why:

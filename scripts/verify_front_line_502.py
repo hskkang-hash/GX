@@ -10,6 +10,25 @@
 어느 표를 봐야 하는지 모른다. 이 파일은 **부하를 걸지 않는다** — 그 부하가 남긴
 자국 둘(앞단 접근로그 · 뒷단 재활용 로그)을 **맞대어 읽을** 뿐이다.
 
+★ **[2026-09-07 · 턴 J · P-92] 「설명되지 않는 502 7건」의 정체는 결함이 아니라 이 판정기였다.**
+
+    두 자리가 틀려 있었다. 둘 다 **판정기 쪽**이다.
+
+      ㉠ **자국이 예고였다.** `Autorestarting worker after current request.` 는 선언이고,
+         손님의 연결을 실제로 끊는 것은 그 0.13~0.25초 뒤의 **`Worker exiting (pid: N)`** 이다.
+      ㉡ **창이 요청의 끝 한 점이었다.** 접근로그의 시각은 요청이 **끝난** 순간이고 초 단위인데,
+         재활용은 요청이 **도는 동안** 일어난다. 끝 한 점만 보면 짧은 요청은 언제나 무죄가 된다.
+
+    고친 뒤 같은 표본에서 **13/13 이 설명되고**, 음성 대조는 **18.8%** 에 머문다(차 81%p).
+    ⚠ **자를 바꿔 빨강을 초록으로 만든 것이 아니다** — 바꾼 자에도 **음성 대조를 그대로 댔고**,
+      종전 자의 수(±0초 · 미설명 7건)를 표와 판정문에서 **지우지 않았다.** 대조 없이 창만
+      넓혔다면 그것은 예외 칸이다(D-327).
+
+    그리고 502 13건에 **남은 결함 하나에는 이름이 생겼다** — 판정기가 아니라 앞단에 있다:
+    **OPS-13b · 앞단의 재시도가 두 번에서 멈춘다**(`upstream gx_app` 에 같은 서버가 두 줄이고
+    `proxy_next_upstream_tries` 선언이 없다 → 끊긴 연결을 연달아 둘 뽑으면 세 번째 기회가 없다).
+    **회색** — 고쳐서 502 가 주는지는 재지 않았다. 증거: `docs/agent/evidence/OPS-13a/미설명7_20260907_TJ.md`
+
     ① 앞단 접근로그   `gx-nginx-e:/var/log/nginx/gx-front.access.log`
     ② 뒷단 재활용     `docker logs -t gx-gunicorn-e` 의 `Autorestarting worker`
 
@@ -96,6 +115,10 @@ _ACCESS = re.compile(
     r'^(?P<addr>\S+) \[(?P<t>\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}) (?P<tz>[+-]\d{4})\]'
     r' "(?P<req>[^"]*)" (?P<status>\d{3}) \S+ (?P<rt>\S+) "(?P<up>[^"]*)"')
 _DOCKER_TS = re.compile(r'^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})')
+#: ★ [실측 2026-09-07 · 턴 J] **초로 자르면 자국을 흘린다.** `docker logs -t` 는
+#:   마이크로초까지 적는데 위 정규식은 초까지만 받는다. 같은 초에 여러 번 난 재활용이
+#:   하나로 뭉개졌고, 그래서 `Autorestarting` 164줄이 판정기 안에서는 더 적게 보였다.
+_DOCKER_TS_US = re.compile(r'^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\.(\d{1,9})')
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -107,6 +130,32 @@ def coincidence(events: list[datetime], marks: list[datetime], window: int) -> i
         return 0
     span = timedelta(seconds=window)
     return sum(1 for e in events if any(abs(e - m) <= span for m in marks))
+
+
+def span_coincidence(events: list[tuple[datetime, float]],
+                    marks: list[datetime]) -> int:
+    """`events` 중 **요청이 살아 있던 구간** 안에 `marks` 를 가진 것의 수.
+
+    ★ **왜 점이 아니라 구간인가** [실측 2026-09-07 · 턴 J · P-92]
+      접근로그의 시각은 요청이 **끝난** 순간이고 **초 단위**다. 워커 재활용은 요청이
+      **도는 동안** 일어난다. 끝 한 점만 보면 `rt=0.234` 인 요청은 0.234초 전의 자국을
+      통째로 놓친다 — 그리고 짧은 요청일수록 **언제나 무죄**가 된다.
+
+      구간 = `[끝 - request_time, 끝 + 1초)`.
+      뒤를 1초 늘린 것은 실제 끝이 `[t, t+1)` 어딘가라 그렇다(초 단위 기록).
+
+    ⚠ 이 함수는 창을 **넓힌다**. 넓힌 창은 그 자체로는 아무것도 증명하지 않는다 —
+      **반드시 음성 대조(정상 200)에 같은 자를 대고 갈리는지 보아야 한다**(③).
+    """
+    if not marks:
+        return 0
+    n = 0
+    for when, rt in events:
+        lo = when - timedelta(seconds=max(rt, 0.0))
+        hi = when + timedelta(seconds=1)
+        if any(lo <= m < hi for m in marks):
+            n += 1
+    return n
 
 
 def judge(facts: dict) -> list[tuple[str, str, str]]:
@@ -143,22 +192,48 @@ def judge(facts: dict) -> list[tuple[str, str, str]]:
         out.append(("③ 대조 분리", "gray", "502 가 없어 갈릴 것이 없다"))
     else:
         same502 = facts["hit502"][0]
-        unexplained = n502 - same502
-        out.append(("② 설명", "pass" if unexplained == 0 else "fail",
-                    "502 %d건 전부가 재활용과 **같은 초**에 났다" % n502
-                    if unexplained == 0 else
-                    "**같은 초의 재활용으로 설명되지 않는 502 가 %d건** — 알려진 창에 "
-                    "묻지 마라. 이것은 다른 결함이다" % unexplained))
+        old_unexplained = n502 - same502
 
-        pos = 100.0 * facts["hit502"][0] / n502
-        neg = 100.0 * facts["hit200"][0] / n200 if n200 else 0.0
+        # ★ [2026-09-07 · 턴 J · P-92] **자국과 창을 둘 다 고쳤다.**
+        #   `hit502_span` 이 있으면 그것으로 잰다 — 없으면(합성 표·옛 호출) 종전대로.
+        #     자국: `Autorestarting`(예고) → **`Worker exiting`**(연결이 실제로 끊기는 순간)
+        #     창  : 요청의 **끝 한 점** → 요청이 **살아 있던 구간**
+        #   왜 이것이 「예외 칸 열기」가 아닌가: 종전 수를 **지우지 않고 같은 줄에 남긴다**.
+        #   그리고 ③의 음성 대조를 **같은 자로 다시 잰다** — 자를 바꾸면서 대조를 안 바꾸면
+        #   그것이 거짓 초록이다.
+        has_span = facts.get("hit502_span") is not None
+        if has_span:
+            hit = facts["hit502_span"]
+            unexplained = n502 - hit
+            why_ok = ("502 %d건 **전부**가 `Worker exiting` 을 요청 구간 안에 갖는다 "
+                      "(종전 자 ±0초·`Autorestarting` 로는 미설명 %d건이었다 — "
+                      "그 %d건은 다른 결함이 아니라 **판정기의 눈**이었다)"
+                      % (n502, old_unexplained, old_unexplained))
+            why_bad = ("**요청 구간 안의 `Worker exiting` 으로도 설명되지 않는 502 가 %d건** "
+                       "— 알려진 창에 묻지 마라. 이것은 다른 결함이다" % unexplained)
+        else:
+            unexplained = old_unexplained
+            why_ok = "502 %d건 전부가 재활용과 **같은 초**에 났다" % n502
+            why_bad = ("**같은 초의 재활용으로 설명되지 않는 502 가 %d건** — 알려진 창에 "
+                       "묻지 마라. 이것은 다른 결함이다" % unexplained)
+        out.append(("② 설명", "pass" if unexplained == 0 else "fail",
+                    why_ok if unexplained == 0 else why_bad))
+
+        if has_span:
+            pos = 100.0 * facts["hit502_span"] / n502
+            neg = 100.0 * facts["hit200_span"] / n200 if n200 else 0.0
+            label = "요청 구간 · `Worker exiting`"
+        else:
+            pos = 100.0 * facts["hit502"][0] / n502
+            neg = 100.0 * facts["hit200"][0] / n200 if n200 else 0.0
+            label = "같은 초"
         gap = pos - neg
         out.append(("③ 대조 분리", "pass" if gap >= SEPARATION_PP else "gray",
-                    "같은 초 — 502 %.0f%% 대 정상 %.0f%% (차 %.0f%%p ≥ %.0f%%p)"
-                    % (pos, neg, gap, SEPARATION_PP) if gap >= SEPARATION_PP else
-                    "같은 초 — 502 %.0f%% 대 정상 %.0f%% (차 %.0f%%p < %.0f%%p). "
+                    "%s — 502 %.0f%% 대 정상 %.0f%% (차 %.0f%%p ≥ %.0f%%p)"
+                    % (label, pos, neg, gap, SEPARATION_PP) if gap >= SEPARATION_PP else
+                    "%s — 502 %.0f%% 대 정상 %.0f%% (차 %.0f%%p < %.0f%%p). "
                     "**갈리지 않는다** — 이 창은 아무것도 안 가른다. 회색이지 빨강이 아니다"
-                    % (pos, neg, gap, SEPARATION_PP)))
+                    % (label, pos, neg, gap, SEPARATION_PP)))
 
     # ── ④ 삼킴 ────────────────────────────────────────────────────────────
     retried = facts.get("retried", 0)
@@ -496,6 +571,44 @@ def read_access(container: str, path: str, since_line: int) -> list[str] | None:
     return lines[since_line:] if lines else None
 
 
+def read_marks(container: str) -> tuple[list[datetime], list[datetime]] | None:
+    """뒷단의 자국 **둘**을 마이크로초까지 읽는다.
+
+    ㉠ `Autorestarting worker after current request.` — **예고**다. 워커는 이 줄을 적고도
+       「지금 처리 중인 요청을 마치고」 나간다.
+    ㉡ `Worker exiting (pid: N)` — **손님의 연결이 실제로 끊기는 순간**이다.
+
+    ★ [실측 2026-09-07 · 턴 J] 둘 사이는 0.13~0.25초 벌어진다. 판정기가 ㉠만 보던 동안
+      그 틈에 빠진 502 가 **7건**이었고, 판정기는 그것을 「설명되지 않는 다른 결함」으로
+      적었다. **자국이 예고였던 것이지 결함이 둘이었던 것이 아니다.**
+    """
+    rc, out, errout = docker("logs", "-t", container)
+    if rc != 0:
+        return None
+    out = out + chr(10) + errout
+    ann: list[datetime] = []
+    exits: list[datetime] = []
+    for line in out.splitlines():
+        is_ann = "Autorestarting" in line
+        is_exit = ("Worker exiting (pid" in line) and ("cleaning" not in line)
+        if not (is_ann or is_exit):
+            continue
+        m = _DOCKER_TS_US.match(line)
+        if m:
+            # `docker logs -t` 의 앞머리는 **언제나 UTC** 다(컨테이너 안 시계를 믿지 않는다).
+            when = (datetime.strptime(m.group(1), "%Y-%m-%dT%H:%M:%S")
+                    .replace(tzinfo=timezone.utc)
+                    + timedelta(microseconds=int((m.group(2) + "000000")[:6])))
+        else:
+            m = _DOCKER_TS.match(line)
+            if not m:
+                continue
+            when = (datetime.strptime(m.group(1), "%Y-%m-%dT%H:%M:%S")
+                    .replace(tzinfo=timezone.utc))
+        (ann if is_ann else exits).append(when)
+    return ann, exits
+
+
 def read_restarts(container: str) -> list[datetime] | None:
     # ⚠ **stderr 를 함께 읽는다.** gunicorn 의 `Autorestarting` 은 **에러 로그**로 나가고,
     #   stdout 만 읽으면 재활용이 **0건으로 보인다** — 그러면 이 판정기는 「설명되지 않는
@@ -519,20 +632,27 @@ def read_restarts(container: str) -> list[datetime] | None:
 
 
 def parse_access(lines: list[str]) -> dict:
+    """★ [2026-09-07 · 턴 J] **`$request_time` 을 버리지 않는다.**
+    종전 판은 시각만 들고 나왔고, 그래서 「요청이 얼마나 오래 살아 있었는가」를
+    판정기가 알 수 없었다. `err`·`ok` 는 이제 `(끝난 시각, request_time)` 짝이다."""
     err, ok, retried, rescued = [], [], 0, 0
     for line in lines:
         m = _ACCESS.match(line)
         if not m:
             continue
         when = datetime.strptime(m.group("t") + m.group("tz"), "%d/%b/%Y:%H:%M:%S%z")
+        try:
+            rt = float(m.group("rt"))
+        except (TypeError, ValueError):
+            rt = 0.0
         status = m.group("status")
         multi = "," in m.group("up")
         if multi:
             retried += 1
         if status == "502":
-            err.append(when)
+            err.append((when, rt))
         elif status.startswith("2"):
-            ok.append(when)
+            ok.append((when, rt))
             if multi:
                 rescued += 1
     return {"err": err, "ok": ok, "retried": retried, "rescued": rescued}
@@ -565,6 +685,44 @@ def self_test() -> int:
         bad.append("±5초 창을 못 셌다")
     if coincidence([at(10)], [], 5) != 0:
         bad.append("자국이 없는데 겹침을 셌다")
+
+    # ①′ **구간 겹침** — 턴 J 가 고친 자. 양성·음성을 함께 둔다 (P-92)
+    #   요청이 10.00 에 끝나고 rt=0.30 이면 구간은 [09.70, 11.00) 이다.
+    if span_coincidence([(at(10), 0.30)], [at(10) - timedelta(milliseconds=200)]) != 1:
+        bad.append("요청이 도는 동안 난 자국을 못 셌다 — 이것이 미설명 7건의 정체였다")
+    if span_coincidence([(at(10), 0.30)], [at(10) - timedelta(milliseconds=400)]) != 0:
+        bad.append("구간 **밖**(0.4초 전)의 자국을 안에 있다고 셌다")
+    if span_coincidence([(at(10), 0.30)], [at(10) + timedelta(milliseconds=900)]) != 1:
+        bad.append("끝 초 안(+0.9초)의 자국을 못 셌다 — 접근로그 시각은 초 단위다")
+    if span_coincidence([(at(10), 0.30)], [at(12)]) != 0:
+        bad.append("2초 뒤의 자국을 구간 안으로 셌다")
+    if span_coincidence([(at(10), 0.30)], []) != 0:
+        bad.append("자국이 없는데 구간 겹침을 셌다")
+    if span_coincidence([], [at(10)]) != 0:
+        bad.append("요청이 없는데 구간 겹침을 셌다")
+
+    # ①″ **자를 바꿔도 대조가 안 갈리면 회색이다** — 자만 바꾸고 초록을 얻지 않는다
+    span_flat = {"n502": 10, "n200": 100, "n_restarts": 50,
+                 "hit502": [3, 5, 9], "hit200": [10, 40, 90],
+                 "hit502_span": 10, "hit200_span": 96,
+                 "retried": 20, "rescued": 10}
+    if verdict(judge(span_flat)) != EXIT_UNDECIDABLE:
+        bad.append("구간으로 100% 대 96% 인데 회색이 아니다 — 넓힌 창은 그 자체로 무죄가 아니다")
+
+    # ①‴ **구간으로 전부 설명되고 잘 갈리면 초록** — 턴 J 가 실제로 본 모양
+    span_ok = {"n502": 13, "n200": 400, "n_restarts": 61,
+               "hit502": [6, 13, 13], "hit200": [70, 162, 310],
+               "hit502_span": 13, "hit200_span": 75,
+               "retried": 138, "rescued": 125}
+    if verdict(judge(span_ok)) != EXIT_OK:
+        bad.append("구간 13/13 · 음성 18.8% (차 81%p) 인데 초록이 아니다")
+    #   그리고 **종전 자의 미설명 7건이 판정문에 남아 있어야 한다**
+    if not any("7건" in why for _, _, why in judge(span_ok)):
+        bad.append("자를 바꾸면서 종전 수(미설명 7건)를 지웠다 — 지우면 무엇이 바뀌었는지 사라진다")
+    #   구간으로도 설명이 안 되면 그때는 여전히 빨강이다
+    span_bad = dict(span_ok, hit502_span=9)
+    if verdict(judge(span_bad)) != EXIT_FAIL:
+        bad.append("구간으로도 4건이 설명 안 되는데 빨강이 아니다")
 
     # ② **양성 대조** — 턴 C 가 실제로 본 모양(502 90% · 정상 21%)은 초록이어야 한다
     good = {"n502": 20, "n200": 174, "n_restarts": 86,
@@ -632,6 +790,9 @@ def self_test() -> int:
     got = parse_access([line])
     if len(got["err"]) != 1 or got["retried"] != 1 or got["rescued"] != 0:
         bad.append("502 재시도 줄을 제대로 못 팠다: %s" % got)
+    # ⑨′ **`$request_time` 을 같이 들고 나왔는가** — 이것이 없으면 구간을 못 그린다
+    if not got["err"] or abs(got["err"][0][1] - 0.379) > 1e-9:
+        bad.append("접근로그의 request_time 을 흘렸다 — 구간을 그릴 수 없다: %s" % got)
     line200 = ('172.18.0.4 [05/Sep/2026:06:19:06 +0000] "GET /x HTTP/1.1" 200 900 0.2 '
                '"172.18.0.6:8000, 172.18.0.6:8000" 0.1, 0.1')
     got = parse_access([line200])
@@ -643,8 +804,8 @@ def self_test() -> int:
         for b in bad:
             print("    " + b)
         return EXIT_FAIL
-    print("[502] 자기시험 통과 — 겹침 4 · 양성 1 · 음성 1 · 초록 1 · 앞단없음 1 · "
-          "502없음 1 · 회색 1 · 솎기 1 · 되읽기 2")
+    print("[502] 자기시험 통과 — 겹침 4 · **구간겹침 6** · 양성 1 · 음성 1 · 초록 1 · "
+          "앞단없음 1 · 502없음 1 · 회색 2 · **구간초록 2** · 솎기 1 · 되읽기 3")
     _ = good_rows
     return EXIT_OK
 
@@ -689,7 +850,8 @@ def main() -> int:
         log.append(line)
 
     lines = read_access(args.front, args.access_path, args.since_line)
-    restarts = read_restarts(args.back)
+    marks = read_marks(args.back)
+    restarts, exits = (marks if marks else (None, None))
     if lines is None or restarts is None:
         print("[502] **판정 불가(exit 2)** — 로그에 닿지 못했다 "
               "(앞단 %s · 뒷단 %s)" % (args.front, args.back))
@@ -697,24 +859,38 @@ def main() -> int:
 
     parsed = parse_access(lines)
     err, ok = parsed["err"], parsed["ok"]
-    if err or ok:
-        lo = min((err + ok))
-        hi = max((err + ok))
-        restarts = [r for r in restarts if lo - timedelta(seconds=10) <= r
-                    <= hi + timedelta(seconds=10)]
+    err_t = [e[0] for e in err]
+    ok_t = [o[0] for o in ok]
+    if err_t or ok_t:
+        lo = min(err_t + ok_t)
+        hi = max(err_t + ok_t)
+        keep = lambda xs: [r for r in xs if lo - timedelta(seconds=10) <= r
+                           <= hi + timedelta(seconds=10)]
+        restarts = keep(restarts)
+        exits = keep(exits)
     control = thin(ok, CONTROL_SAMPLE)
+    control_t = [c[0] for c in control]
+    restarts_sec = [r.replace(microsecond=0) for r in restarts]
 
     facts = {
         "n502": len(err), "n200": len(control), "n_restarts": len(restarts),
-        "hit502": [coincidence(err, restarts, w) for w in WINDOWS_SEC],
-        "hit200": [coincidence(control, restarts, w) for w in WINDOWS_SEC],
+        "n_exits": len(exits),
+        # 종전 자는 **종전 그대로** 재서 나란히 보인다. 뒷단 자국을 µs 까지 읽게 되면서
+        # `±0초`(=같은 초)의 뜻이 「같은 마이크로초」로 바뀌어 버리므로, 이 세 줄에서만
+        # 초로 도로 자른다. **자를 바꾼 자리를 스스로 적는 것**이 이 판정기의 규약이다.
+        "hit502": [coincidence(err_t, restarts_sec, w) for w in WINDOWS_SEC],
+        "hit200": [coincidence(control_t, restarts_sec, w) for w in WINDOWS_SEC],
+        # ★ 옳은 자국(연결이 실제로 끊기는 순간) × 옳은 창(요청이 살아 있던 구간)
+        "hit502_span": span_coincidence(err, exits),
+        "hit200_span": span_coincidence(control, exits),
         "retried": parsed["retried"], "rescued": parsed["rescued"],
     }
 
     say("## 502 는 언제 나는가 — **대조와 함께** [실측]")
     say()
-    say("읽은 것: 앞단 접근로그 %d줄(%d번째 줄 다음부터) · 뒷단 재활용 %d건"
-        % (len(lines), args.since_line, len(restarts)))
+    say("읽은 것: 앞단 접근로그 %d줄(%d번째 줄 다음부터) · 뒷단 자국 둘 — "
+        "예고(`Autorestarting`) %d건 · **종료(`Worker exiting`) %d건**"
+        % (len(lines), args.since_line, len(restarts), len(exits)))
     say("표본: 502 **%d건** · 정상 200 %d건(대조로 %d건 솎음) · 재시도 %d건 · "
         "되살림 %d건" % (len(err), len(ok), len(control),
                         parsed["retried"], parsed["rescued"]))
@@ -728,6 +904,14 @@ def main() -> int:
             % ("**±0초 (같은 초)**" if w == 0 else "±%d초" % w,
                facts["hit502"][i], len(err), p,
                facts["hit200"][i], len(control), q))
+    say("| **요청 구간 × `Worker exiting`** | %d/%d = %.0f%% | %d/%d = %.0f%% |"
+        % (facts["hit502_span"], len(err),
+           100.0 * facts["hit502_span"] / len(err) if err else 0.0,
+           facts["hit200_span"], len(control),
+           100.0 * facts["hit200_span"] / len(control) if control else 0.0))
+    say()
+    say("★ 마지막 줄이 판정에 쓰는 자다. 위 세 줄은 **종전 자**이고 지우지 않는다 —")
+    say("  지우면 「무엇을 바꿔서 설명이 되었는가」가 사라진다(P-92 · 턴 J).")
     say()
     say("★ **대조가 없으면 이 표를 못 읽는다.** 재활용이 잦으면 창을 넓히는 것만으로")
     say("  무엇이든 재활용 옆에 놓인다 — 위 표의 아래 줄들이 그 사실을 스스로 말한다.")

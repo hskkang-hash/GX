@@ -13,6 +13,7 @@ import {
   HeaderWithBtn,
   ROLE_PERMISSION,
   selectActiveMenuCombined,
+  ToastTopHelper,
 } from 'rj-core';
 
 import { CustomRoutes } from '../../../services/API';
@@ -25,6 +26,7 @@ import { useHandover } from '../hooks/useHandover';
 import CompletedNotice from './tabs/CompletedNotice';
 import HandoverManagement from './tabs/HandoverManagement';
 import NoticeManagement from './tabs/NoticeManagement';
+import { failureLine } from '@/features/session/apiFailure';
 
 type TabKey = 'handover-management' | 'notice-management' | 'completed-notice';
 
@@ -242,25 +244,45 @@ export const HandoverPage = () => {
 
   const handleDownloadHandover = useCallback(async () => {
     if (searchDateTime.startDate && searchDateTime.endDate) {
-      await downloadHandoverAPI({
-        start_date: searchDateTime.startDate.format('YYYY-MM-DD'),
-        end_date: searchDateTime.endDate.format('YYYY-MM-DD'),
-      });
+      // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **돌려준 값을 버리고 있었다.**
+      //   `downloadHandoverAPI` 는 `{success, message}` 를 돌려주는데 종전에는 그것을
+      //   **읽지도 않았다** — 내려받기가 실패해도 화면은 한 자도 말하지 않았고,
+      //   사람은 파일이 오는 줄 알고 기다렸다. 그리고 `try` 도 없어 거절은 예외로 샜다.
+      try {
+        const { success, message } = await downloadHandoverAPI({
+          start_date: searchDateTime.startDate.format('YYYY-MM-DD'),
+          end_date: searchDateTime.endDate.format('YYYY-MM-DD'),
+        });
+        if (!success) {
+          ToastTopHelper.error(message);
+        }
+      } catch (error) {
+        ToastTopHelper.error(failureLine('HandoverPage.downloadHandover', error));
+      }
     }
   }, [downloadHandoverAPI, searchDateTime]);
 
   const handleDownloadCsv = useCallback(
     async (selectedFields: string[]) => {
-      if (activeKey === 'notice-management') {
-        await downloadNoticeAPI({
-          selectedFields,
-          objSearch: objSearchNotice,
-        });
-      } else if (activeKey === 'completed-notice') {
-        await downloadCompletedNoticeAPI({
-          selectedFields,
-          objSearch: objSearchCompleted,
-        });
+      // ★ [SEC-11a ② · 턴 J · 차선 C] 위와 같은 자리 — 돌려준 값을 버렸고 `try` 가 없었다.
+      try {
+        const result =
+          activeKey === 'notice-management'
+            ? await downloadNoticeAPI({
+                selectedFields,
+                objSearch: objSearchNotice,
+              })
+            : activeKey === 'completed-notice'
+              ? await downloadCompletedNoticeAPI({
+                  selectedFields,
+                  objSearch: objSearchCompleted,
+                })
+              : null;
+        if (result && !result.success) {
+          ToastTopHelper.error(result.message);
+        }
+      } catch (error) {
+        ToastTopHelper.error(failureLine('HandoverPage.downloadCsv', error));
       }
     },
     [

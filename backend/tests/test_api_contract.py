@@ -43,7 +43,26 @@ from common.api_contract import (
 # ═══════════════════════════════════════════════════════════════════════════
 
 #: A — `response=` 선언이 없다. 거부가 200 + 본문으로 나간다.
-ROUTE_NO_SCHEMA = "/api/devices/devices-management"
+#
+#: ★ [P-88′ 뒤처리 · 2026-09-07 턴 J · 차선 S] 표본을 **금지구역으로 옮겼다.**
+#:   왜: 조율자가 이 턴에 `/api/devices/devices-management` 를 승격 접두에 넣었고,
+#:   그 순간 `test_flag_off_keeps_legacy_200` 이 빨개졌다 [실측 · 403 != 200].
+#:   시험이 틀린 것이 아니다 — **표본이 승격돼 버려서** 「플래그 OFF 면 200 이다」를
+#:   더 이상 그 자리에서 보일 수 없게 된 것이다. 시험의 기대를 403 으로 고치면
+#:   그것은 되돌림 성질을 **증명하지 않고 지우는 것**이다(D-327).
+#:
+#:   그래서 표본을 **앞으로도 승격되지 않을 자리**로 옮긴다. 같은 파일의
+#:   `test_forbidden_zone_prefixes_stay_out` 이 §0.4(delivery·orders·terminals)는
+#:   우리가 승격하지 않는다고 못박고 있으니, 그 안의 A 부류 라우트는 표본으로
+#:   안정하다 — 다음 턴에 누가 접두를 하나 더 켜도 이 시험은 안 흔들린다.
+#:
+#:   고른 자리 [실측 2026-09-07 · gxprobe_e2e]:
+#:     GET /api/delivery/delivery/operations
+#:       → HTTP **200** + `{"success": false, "status_code": 403, ...}`  (A 부류)
+#:     (`classify_permission_routes()` 도 이 라우트를 `A_no_schema` 로 분류한다)
+#:   ⚠ 읽기만 한다 — §0.4 는 그 앱의 **코드**를 못 고치는 것이지, 시험이 그 경로를
+#:     두드리는 것까지 막지 않는다(이 파일은 이미 §0.4 경로를 이름으로 쓰고 있다).
+ROUTE_NO_SCHEMA = "/api/delivery/delivery/operations"
 
 #: B — `response=List[…]`. 거부 dict 를 pydantic 이 거절해 예외가 된다.
 ROUTE_LIST_SCHEMA = "/api/report-template/"

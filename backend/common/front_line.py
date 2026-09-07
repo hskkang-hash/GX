@@ -162,7 +162,55 @@ def render_locations() -> str:
         f"        {PROXY_INCLUDE}\n"
         "    }\n"
     )
-    return "".join(parts)
+    conf = "".join(parts)
+    _assert_round_trip(conf)
+    return conf
+
+
+def _assert_round_trip(conf: str) -> None:
+    """★ [P-91 · 2026-09-07 턴 J · 차선 S] **생성기가 제 출력을 되읽는다.**
+
+    왜 여기인가 — `parse_gated_prefixes` 가 **아무도 안 부르는 함수**였다.
+    ------------------------------------------------------------------
+    되읽기 셋(`parse_gated_paths`·`parse_key_allowed`·`parse_gated_prefixes`)은
+    아래 §되읽기의 규율(「빈 집합끼리 일치로 초록이 나면 안 된다」)을 위해 태어났다.
+    그런데 **접두 쪽만 부르는 데가 없었다**: `scripts/ops_front_line.py --check` 는
+    `parse_gated_paths`·`parse_key_allowed` 둘만 견주고 `^~` 블록은 안 본다
+    (`ops_front_line.py:122~140` [실측 2026-09-07]). 그래서 `verify_dormant` 가
+    이 함수를 ㉠「호출 없음」으로 잡았다 — **옳은 관찰이다.** 접두 블록이
+    통째로 빠져도 오늘의 드리프트 검사는 초록이었다.
+
+    고르는 길은 둘이었다: ① 잠그고 사유를 적는다 ② 잇는다.
+    `scripts/ops_*` 는 차선 S 소유 밖이라 `--check` 를 못 고치는데, 되읽기를
+    **생성기 자신**에 걸면 소유 안에서 같은 것을 얻는다 — 그리고 더 낫다:
+    `--check` 는 사람이 부를 때만 도는데, 이 자리는 **설정을 낼 때마다** 돈다.
+
+    무엇을 막는가: 선언 목록(`AUTHN_REQUIRED_PATHS`·`AUTHN_REQUIRED_PREFIXES`·
+    `INBOUND_KEY_ALLOWED`)과 **낸 설정**이 갈리면 여기서 예외로 선다.
+    조용히 반쪽짜리 nginx 설정을 내보내지 않는다 — 앞단이 덜 덮으면 그것은
+    「두 번째 방어선이 있다」는 착시다.
+
+    ⚠ 되돌리기: 이 호출 한 줄을 뺀다. 그럴 조건 — 되읽기가 생성기보다 느슨해서
+      **정상 설정을 거절하는** 일이 생기면(그때는 되읽기가 틀린 것이니 그쪽을 고친다).
+    """
+    bad: list[str] = []
+    got_paths = parse_gated_paths(conf)
+    if got_paths != set(gated_paths()):
+        bad.append(f"익명 401 경로가 갈렸다: 선언에만 {sorted(set(gated_paths()) - got_paths)} · "
+                   f"설정에만 {sorted(got_paths - set(gated_paths()))}")
+    got_prefixes = parse_gated_prefixes(conf)
+    if got_prefixes != set(gated_prefixes()):
+        bad.append(f"익명 401 **접두**가 갈렸다: 선언에만 "
+                   f"{sorted(set(gated_prefixes()) - got_prefixes)} · "
+                   f"설정에만 {sorted(got_prefixes - set(gated_prefixes()))}")
+    got_keys = parse_key_allowed(conf)
+    if got_keys != set(key_allowed()):
+        bad.append(f"키 허용이 갈렸다: 선언에만 {sorted(set(key_allowed()) - got_keys)} · "
+                   f"설정에만 {sorted(got_keys - set(key_allowed()))}")
+    if bad:
+        raise AssertionError(
+            "앞단 설정이 선언과 갈렸다 — 이 설정을 내보내면 앞단이 덜 덮는다:" + "\n  "
+            + "\n  ".join(bad))
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -480,7 +480,19 @@ def scan_no_route_models() -> list[str]:
     import ast as _ast
 
     census = ROOT / "backend" / "tests" / "tenant_census.py"
-    routes = ROOT / "docs" / "agent" / "evidence" / "W0-14" / "openapi_routes.json"
+    #: ★ [실측 2026-09-07 · 턴 J · 차선 Q 가 잡음] **이 칸은 거짓 초록이었다.**
+    #:   여기가 읽던 `W0-14/openapi_routes.json` 은 **2026-08-22 · 531라우트**다.
+    #:   살아 있는 실측본(`D-343/route_inventory.json`)은 같은 날 **705라우트** —
+    #:   즉 이 칸은 **99경로를 한 개도 안 보고** 「라우트가 안 생겼다」를 냈다.
+    #:   D-272 가 이 칸을 만든 이유가 「라우트 하나가 추가되면 no_route 는 조용히
+    #:   거짓이 된다」인데, **그 추가를 못 보는 사진**을 들고 있었다.
+    #:   → 살아 있는 인벤토리를 **먼저** 보고, 없을 때만 옛 사진으로 떨어진다.
+    #:     그리고 어느 쪽을 봤는지·언제 것인지를 **출력에 적는다**(D-301).
+    routes = ROOT / "docs" / "agent" / "evidence" / "D-343" / "route_inventory.json"
+    routes_why = "D-343/route_inventory.json (살아 있는 실측본)"
+    if not routes.is_file():
+        routes = ROOT / "docs" / "agent" / "evidence" / "W0-14" / "openapi_routes.json"
+        routes_why = "W0-14/openapi_routes.json (**옛 사진** — 살아 있는 실측본이 없다)"
     if not census.is_file() or not routes.is_file():
         return [f"인구조사·라우트 실측본을 못 찾았다 ({census.name} · {routes.name}) — "
                 f"못 읽은 채 통과시키지 않는다"]
@@ -500,7 +512,14 @@ def scan_no_route_models() -> list[str]:
         return ["tenant_census.CENSUS 를 읽지 못했다 — 형태가 바뀌었다면 게이트도 함께 고쳐라"]
 
     import json as _json
-    paths = list(_json.loads(routes.read_text(encoding="utf-8"))["routes"])
+    #: 두 사진은 모양이 다르다. `W0-14` 는 경로 문자열의 목록이고,
+    #: `D-343` 은 라우트 객체의 목록이다(`{"method":…, "path":…}`). 둘 다 받는다 —
+    #: 모양을 하나로 맞추려고 살아 있는 쪽을 버리면 그것이 거짓 초록의 뿌리다.
+    _raw = _json.loads(routes.read_text(encoding="utf-8"))
+    _rows = _raw.get("routes") or _raw.get("items") or []
+    paths = [r if isinstance(r, str) else (r.get("path") or "") for r in _rows]
+    paths = [p for p in paths if p]
+    _stamp = _raw.get("measured_at") or _raw.get("generated_at") or "시각 미기재"
     problems = []
     n = 0
     for label, entry in table.items():
@@ -515,7 +534,10 @@ def scan_no_route_models() -> list[str]:
                     f"{label} 은 no_route 로 등재돼 있는데 라우트가 실재한다: {path} — "
                     f"인구조사를 다시 만들고 그 모델을 재검사하라 (D-272)")
                 break
-    print(f"[SCOPE] no_route 등재 {n}종 — 라우트 신설 여부 대조 (D-272)")
+    #: ★ **무엇을 몇 건 보고 한 말인지 적는다**(D-301). 이 줄이 없어서
+    #:   531라우트짜리 옛 사진으로 낸 초록이 두 달 동안 초록으로 보였다.
+    print(f"[SCOPE] no_route 등재 {n}종 — 라우트 {len(paths)}건과 대조 (D-272) · "
+          f"실측본 {routes_why} · 잰 때 {_stamp}")
     return problems
 
 

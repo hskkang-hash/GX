@@ -1,0 +1,106 @@
+{
+  "web": "http://localhost:3002",
+  "label": "roles_old",
+  "route": "/roles",
+  "login_inputs": 2,
+  "end_session_dialog": true,
+  "url_after_login": "http://localhost:3002/profile",
+  "url": "http://localhost:3002/roles",
+  "body_len": 118,
+  "body_head": "역할 관리 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\nAdd New Role\nDelete\n\t\nName\n\t\nIs Default\n\t\nRole Menu\n1\n버전 abbdf36 · 장애 신고 창구 미등록",
+  "notice_present": 0,
+  "copy_present": false,
+  "copy_exact": false,
+  "must_see": "Add New Role",
+  "must_see_present": true,
+  "body_full_len": 118,
+  "spinner_visible": [],
+  "req_all": [
+    "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "/api/config-management/list-optimized",
+    "/api/menu/menus?page_size=10000",
+    "/api/user-groups/gen-schema?group_id=4&raw=false",
+    "/api/user-groups/gen-schema?group_id=4&raw=true"
+  ],
+  "api_all": [
+    [
+      "GET",
+      "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      200
+    ],
+    [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+    ],
+    [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=false",
+      200
+    ],
+    [
+      "GET",
+      "/api/config-management/list-optimized",
+      200
+    ],
+    [
+      "GET",
+      "/api/menu/menus?page_size=10000",
+      200
+    ],
+    [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+    ]
+  ],
+  "api_403": [],
+  "api_devices": [],
+  "console_errors": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (File not found)"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404"
+    },
+    {
+      "type": "error",
+      "text": "New order notification WebSocket error: Event"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404"
+    },
+    {
+      "type": "error",
+      "text": "🚨 Partner callback WebSocket error: Event"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404"
+    },
+    {
+      "type": "error",
+      "text": "🚨 Partner callback WebSocket error: Event"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404"
+    },
+    {
+      "type": "error",
+      "text": "🚨 Partner callback WebSocket error: Event"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404"
+    },
+    {
+      "type": "error",
+      "text": "🚨 Partner callback WebSocket error: Event"
+    }
+  ],
+  "console_all_n": 46
+}

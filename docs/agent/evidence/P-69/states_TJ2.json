@@ -1,0 +1,1553 @@
+{
+  "when": "2026-09-07T07:36:09",
+  "web": "http://localhost:3014",
+  "api": "http://localhost:8000",
+  "names_from_perf_load": {
+    "S1": "목록 — 관제요원이 가장 자주 여는 자리",
+    "S2": "대시보드 — 첫 화면 한 벌",
+    "S3": "단일 초점 — 가장 급한 하나"
+  },
+  "screens": {
+    "로그인": {
+      "route": "/login",
+      "reached": true,
+      "widths": [
+        1440,
+        390
+      ],
+      "form": {
+        "required": {
+          "message_shown": true,
+          "added_text": "ID\n아이디를 입력해 주십시오.\nPassword\n비밀번호를 입력해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "raw_hits": []
+        },
+        "format": {
+          "message_shown": true,
+          "raw_hits": []
+        },
+        "double_submit": {
+          "requests": 1,
+          "where": "로그인"
+        }
+      },
+      "buttons": [
+        "Log In"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "ID\nPassword\n지금 로그인할 수 없습니다. 잠시 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/login"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "ID\nPassword\n지금 로그인할 수 없습니다. 잠시 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/login"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "ID\nPassword\n이 계정에는 접근 권한이 없습니다. 관리자에게 문의해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/login"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "ID\nPassword\n지금 로그인할 수 없습니다. 잠시 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/login"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "ID\nPassword\n서버에 연결하지 못했습니다. 연결을 확인한 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 778dad3 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/login"
+        }
+      },
+      "press": {
+        "buttons_seen": [
+          "Log In"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Log In",
+            "clicked": true,
+            "navigated_to": "/profile",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      }
+    },
+    "지금 처리할 것": {
+      "route": "/dsm/queue",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "Dashboard",
+        "Delivery",
+        "GCS",
+        "Drones/Robots and Docking Stat",
+        "Delivery Hub and Route",
+        "Delivery Settings",
+        "?",
+        "단축키",
+        "소리 켜기",
+        "상세 열기",
+        "다시 시도",
+        "종결하기 (3)",
+        "열기"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Collapse sidebar",
+          "Dashboard",
+          "Delivery",
+          "GCS",
+          "Drones/Robots and Docking Stat",
+          "Delivery Hub and Route",
+          "Delivery Settings",
+          "?",
+          "단축키",
+          "소리 켜기",
+          "상세 열기",
+          "다시 시도",
+          "종결하기 (3)",
+          "열기"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [
+            "Dashboard",
+            "Delivery",
+            "GCS",
+            "Drones/Robots and Docking Stat",
+            "Delivery Hub and Route",
+            "Delivery Settings"
+          ],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Collapse sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "?",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "단축키",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "소리 켜기",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "상세 열기",
+            "clicked": true,
+            "navigated_to": "/dsm/events/4805",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "다시 시도",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "종결하기 (3)",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [
+              "POST http://localhost:8000/api/dsm/events/4805/response?to_state=closed"
+            ],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "열기",
+            "clicked": true,
+            "navigated_to": "/dsm/events/4800",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "undecidable": true,
+        "why": "이 화면에 글자 입력칸이 하나도 안 보인다 — 누를 폼이 없다"
+      },
+      "baseline_len": 887,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/dsm/events/queue",
+        "/api/menu/menus",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/queue"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/queue"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 열 수 없습니다.\n/api/dsm/events/queue\n닫기\nGuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n이 항목에 대한 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다.\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/queue"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n응답이 늦어 불러오지 못했습니다.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/queue"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n서버에 연결하지 못했습니다. 연결을 확인해 주십시오.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/queue"
+        }
+      },
+      "empty": {
+        "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n갱신 14:39 · 0초 전 · 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n지금 열려 있는 이벤트가 없습니다 — 평온합니다.\n버전 778dad3 · 장애 신고 창구 미등록",
+        "empty_text": "지금 열려 있는 이벤트가 없습니다 — 평온합니다.",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/dsm/events/queue",
+          "/api/menu/menus",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      }
+    },
+    "이벤트 목록": {
+      "route": "/dsm/events",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "미처리 보기",
+        "지난 12시간 보기",
+        "내 담당 보기",
+        "시스템 보기",
+        "새로고침",
+        "?"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Expand sidebar",
+          "Dashboard",
+          "Delivery",
+          "GCS",
+          "Drones/Robots and Docking Stat",
+          "Delivery Hub and Route",
+          "Delivery Settings",
+          "미처리 보기",
+          "지난 12시간 보기",
+          "내 담당 보기",
+          "시스템 보기",
+          "새로고침",
+          "?"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [
+            "Dashboard",
+            "Delivery",
+            "GCS",
+            "Drones/Robots and Docking Stat",
+            "Delivery Hub and Route",
+            "Delivery Settings"
+          ],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Expand sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "미처리 보기",
+            "clicked": true,
+            "navigated_to": "/dsm/events?preset=unhandled",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "지난 12시간 보기",
+            "clicked": true,
+            "navigated_to": "/dsm/events?preset=recent",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "내 담당 보기",
+            "clicked": true,
+            "navigated_to": "/dsm/events?preset=mine",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "시스템 보기",
+            "clicked": true,
+            "navigated_to": "/dsm/events?preset=system",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "새로고침",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "?",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "undecidable": true,
+        "why": "제출처럼 보이는 단추가 없다(보이는 단추: Dashboard, Delivery, GCS, Drones/Robots and Docking Stat, Delivery Hub and Route, Delivery Settings) — 아무 단추나 눌러 「폼을 눌렀다」고 적지 않는다"
+      },
+      "baseline_len": 639,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/dsm/events",
+        "/api/dsm/events/summary",
+        "/api/menu/menus",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "Dashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/events"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "Dashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/events"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 열 수 없습니다.\n/api/dsm/events\n/api/dsm/events/summary\n닫기\nDashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n이벤트 목록\n요약 한 줄 · 지난 12시간\n이 항목에 대한 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다.\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n이 항목에 대한 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다.\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/events"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n응답이 늦어 불러오지 못했습니다.\n다시 시도\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n응답이 늦어 불러오지 못했습니다.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/events"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n서버에 연결하지 못했습니다. 연결을 확인해 주십시오.\n다시 시도\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n서버에 연결하지 못했습니다. 연결을 확인해 주십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/events"
+        }
+      },
+      "empty": {
+        "body_text": "이벤트 목록\n갱신 14:41 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+        "empty_text": "조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/dsm/events",
+          "/api/dsm/events/summary",
+          "/api/menu/menus",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      }
+    },
+    "이벤트 상세": {
+      "route": "/dsm/events/4803",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "Dashboard",
+        "Delivery",
+        "GCS",
+        "Drones/Robots and Docking Stat",
+        "Delivery Hub and Route",
+        "Delivery Settings",
+        "← 목록",
+        "알림 보내기",
+        "다시 시도",
+        "실제로 판정",
+        "오탐으로 판정",
+        "접수하기"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Collapse sidebar",
+          "Dashboard",
+          "Delivery",
+          "GCS",
+          "Drones/Robots and Docking Stat",
+          "Delivery Hub and Route",
+          "Delivery Settings",
+          "← 목록",
+          "알림 보내기",
+          "다시 시도",
+          "실제로 판정",
+          "오탐으로 판정",
+          "접수하기"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [
+            "Dashboard",
+            "Delivery",
+            "GCS",
+            "Drones/Robots and Docking Stat",
+            "Delivery Hub and Route",
+            "Delivery Settings"
+          ],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Collapse sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "← 목록",
+            "clicked": true,
+            "navigated_to": "/dsm/events",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "알림 보내기",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [
+              "POST http://localhost:8000/api/dsm/events/4803/notify"
+            ],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "다시 시도",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "실제로 판정",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "오탐으로 판정",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "접수하기",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [
+              "POST http://localhost:8000/api/dsm/events/4803/response?to_state=acknowledged&reason="
+            ],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "← 목록\n이벤트 상세 #4803\n알림 보내기\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/events/4803"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "← 목록\n이벤트 상세 #4803\n알림 보내기\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/events/4803"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 열 수 없습니다.\n/api/dsm/events/4803\n/api/dsm/events/4803/timeline\n닫기\n← 목록\n이벤트 상세 #4803\n알림 보내기\n이 항목에 대한 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/events/4803"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "← 목록\n이벤트 상세 #4803\n알림 보내기\n불러오지 못했습니다.\n응답이 늦어 불러오지 못했습니다.\n다시 시도\n발송 이력\n불러오지 못했습니다.\n응답이 늦어 불러오지 못했습니다.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/events/4803"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "← 목록\n이벤트 상세 #4803\n알림 보내기\n불러오지 못했습니다.\n서버에 연결하지 못했습니다. 연결을 확인해 주십시오.\n다시 시도\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\nlog\t\t성공\t2026-09-03 20:17:36 · 3일 전\t\n표기 시간대: Asia/Seoul\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/events/4803"
+        }
+      }
+    },
+    "관리·설정": {
+      "route": "/dsm/drill",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [],
+      "press": {
+        "buttons_seen": [
+          "Expand sidebar",
+          "Dashboard",
+          "Delivery",
+          "GCS",
+          "Drones/Robots and Docking Stat",
+          "Delivery Hub and Route",
+          "Delivery Settings"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [
+            "Dashboard",
+            "Delivery",
+            "GCS",
+            "Drones/Robots and Docking Stat",
+            "Delivery Hub and Route",
+            "Delivery Settings"
+          ],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Expand sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "undecidable": true,
+        "why": "제출처럼 보이는 단추가 없다(보이는 단추: Dashboard, Delivery, GCS, Drones/Robots and Docking Stat, Delivery Hub and Route, Delivery Settings) — 아무 단추나 눌러 「폼을 눌렀다」고 적지 않는다"
+      },
+      "baseline_len": 0,
+      "real_api_seen": [],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "Dashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n훈련 모드 — 켜면 알림이 사람에게 가지 않습니다\n이 스위치는 알림을 끕니다 — 배선됨(2026-09-24).\n켜져 있는 동안 이 기관의 알림은 실제로 나가지 않습니다 — 소방·팀장에게 문자가 가지 않습니다. 아래 「실채널 발송」 수가 0이 아니면 그것은 훈련 밖에서 난 발송입니다. 끄는 것을 잊으면 진짜 경보도 사람에게 가지 않습니다.\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/drill"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "Dashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n훈련 모드 — 켜면 알림이 사람에게 가지 않습니다\n이 스위치는 알림을 끕니다 — 배선됨(2026-09-24).\n켜져 있는 동안 이 기관의 알림은 실제로 나가지 않습니다 — 소방·팀장에게 문자가 가지 않습니다. 아래 「실채널 발송」 수가 0이 아니면 그것은 훈련 밖에서 난 발송입니다. 끄는 것을 잊으면 진짜 경보도 사람에게 가지 않습니다.\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/drill"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 열 수 없습니다.\n/api/dsm/drill\n/api/dsm/drill/report\n닫기\nDashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n훈련 모드 — 켜면 알림이 사람에게 가지 않습니다\n이 스위치는 알림을 끕니다 — 배선됨(2026-09-24).\n켜져 있는 동안 이 기관의 알림은 실제로 나가지 않습니다 — 소방·팀장에게 문자가 가지 않습니다. 아래 「실채널 발송」 수가 0이 아니면 그것은 훈련 밖에서 난 발송입니다. 끄는 것을 잊으면 진짜 경보도 사람에게 가지 않습니다.\n이 항목에 대한 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다.\n이 항목에 대한 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다.\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/drill"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "Dashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n훈련 모드 — 켜면 알림이 사람에게 가지 않습니다\n이 스위치는 알림을 끕니다 — 배선됨(2026-09-24).\n켜져 있는 동안 이 기관의 알림은 실제로 나가지 않습니다 — 소방·팀장에게 문자가 가지 않습니다. 아래 「실채널 발송」 수가 0이 아니면 그것은 훈련 밖에서 난 발송입니다. 끄는 것을 잊으면 진짜 경보도 사람에게 가지 않습니다.\n불러오지 못했습니다.\n응답이 늦어 불러오지 못했습니다.\n다시 시도\n불러오지 못했습니다.\n응답이 늦어 불러오지 못했습니다.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/drill"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "Dashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n훈련 모드 — 켜면 알림이 사람에게 가지 않습니다\n이 스위치는 알림을 끕니다 — 배선됨(2026-09-24).\n켜져 있는 동안 이 기관의 알림은 실제로 나가지 않습니다 — 소방·팀장에게 문자가 가지 않습니다. 아래 「실채널 발송」 수가 0이 아니면 그것은 훈련 밖에서 난 발송입니다. 끄는 것을 잊으면 진짜 경보도 사람에게 가지 않습니다.\n불러오지 못했습니다.\n서버에 연결하지 못했습니다. 연결을 확인해 주십시오.\n다시 시도\n불러오지 못했습니다.\n서버에 연결하지 못했습니다. 연결을 확인해 주십시오.\n다시 시도\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/drill"
+        }
+      },
+      "empty": {
+        "undecidable": true,
+        "why": "이 화면이 받은 진짜 응답을 못 잡았다 — 빈 모양을 지어내지 않는다"
+      }
+    },
+    "카메라 일괄 등록": {
+      "route": "/dsm/cameras/import",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "Dashboard",
+        "Delivery",
+        "GCS",
+        "Drones/Robots and Docking Stat",
+        "Delivery Hub and Route",
+        "Delivery Settings",
+        "예시 채우기",
+        "② 표 먼저 보기 (dry-run)"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Collapse sidebar",
+          "Dashboard",
+          "Delivery",
+          "GCS",
+          "Drones/Robots and Docking Stat",
+          "Delivery Hub and Route",
+          "Delivery Settings",
+          "예시 채우기",
+          "② 표 먼저 보기 (dry-run)"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [
+            "Dashboard",
+            "Delivery",
+            "GCS",
+            "Drones/Robots and Docking Stat",
+            "Delivery Hub and Route",
+            "Delivery Settings"
+          ],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Collapse sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "예시 채우기",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "② 표 먼저 보기 (dry-run)",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [
+              "POST http://localhost:8000/api/dsm/cameras/import?csv_text=name%2Ccode%2Cip_source%2Caddress%2Cdetail%0A%EC%A0%95%EB%AC%B8%EC%B9%B4%EB%A9%94%EB%9D%BC%2CGATE-01%2Crtsp%3A%2F%2F10.0.0.11%2Fstream%2C%EA%"
+            ],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "baseline_len": 296,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/dsm/cameras/address-gap",
+        "/api/menu/menus",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/cameras/import"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/cameras/import"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 열 수 없습니다.\n/api/dsm/cameras/address-gap\n닫기\n카메라 일괄 등록 — 표를 먼저 봅니다\n이 항목에 대한 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/cameras/import"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n불러오지 못했습니다.\n응답이 늦어 불러오지 못했습니다.\n다시 시도\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/cameras/import"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n불러오지 못했습니다.\n서버에 연결하지 못했습니다. 연결을 확인해 주십시오.\n다시 시도\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/dsm/cameras/import"
+        }
+      },
+      "empty": {
+        "body_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n주소 없는 카메라\n3/ 0대\n「3대」만 보면 그것이 40 중 39인지 400 중 39인지 모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다. 지금 채워진 비율 25%.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 778dad3 · 장애 신고 창구 미등록",
+        "empty_text": "",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/dsm/cameras/address-gap",
+          "/api/menu/menus",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      },
+      "form": {
+        "format": {
+          "message_shown": true,
+          "added_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n주소 없는 카메라\n3/ 4대\n「3대」만 보면 그것이 40 중 39인지 400 중 39인지 모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다. 지금 채워진 비율 25%.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n거절되었습니다.\n시험 도구가 막았습니다.\n버전 778",
+          "raw_hits": []
+        },
+        "double_submit": {
+          "requests": 1,
+          "where": "표 먼저 보기"
+        },
+        "reject422": {
+          "message_shown": true,
+          "added_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n주소 없는 카메라\n3/ 4대\n「3대」만 보면 그것이 40 중 39인지 400 중 39인지 모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다. 지금 채워진 비율 25%.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n거절되었습니다.\n표의 3행에 필요한 값이 없습니다.\n",
+          "raw_hits": []
+        }
+      }
+    },
+    "모바일 M1~M3": {
+      "route": "/m/inbox",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": true,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "새로고침",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+        "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+        "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+        "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+        "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+        "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+        "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+        "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+        "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+        "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+        "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 "
+      ],
+      "press": {
+        "buttons_seen": [
+          "Expand sidebar",
+          "Dashboard",
+          "Delivery",
+          "GCS",
+          "Drones/Robots and Docking Stat",
+          "Delivery Hub and Route",
+          "Delivery Settings",
+          "새로고침",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+          "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+          "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+          "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+          "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+          "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+          "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+          "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+          "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+          "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 ",
+          "■ 심각 화재 #4799 시드 카메라 (검수용) 접수 "
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [
+            "Dashboard",
+            "Delivery",
+            "GCS",
+            "Drones/Robots and Docking Stat",
+            "Delivery Hub and Route",
+            "Delivery Settings"
+          ],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Expand sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "새로고침",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "■ 심각 화재 #4798 시드 카메라 (검수용) 조치 ",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "undecidable": true,
+        "why": "이 화면에 글자 입력칸이 하나도 안 보인다 — 누를 폼이 없다"
+      },
+      "baseline_len": 3661,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/dsm/deliveries",
+        "/api/dsm/events",
+        "/api/menu/menus",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "Dashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n내게 온 이벤트\n새로고침\n기준 14:48 · 0초 전 · 표기 시간대: Asia/Seoul\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n이벤트 속성을 불러오지 못했습니다 — 발송 기록만 보입니다.\n잠시 뒤 다시 시도해 주십시오.\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4802\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:29\n등급 미상\n유형 미상\n#4802\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:29\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/m/inbox"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "Dashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n내게 온 이벤트\n새로고침\n기준 14:48 · 0초 전 · 표기 시간대: Asia/Seoul\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n이벤트 속성을 불러오지 못했습니다 — 발송 기록만 보입니다.\n잠시 뒤 다시 시도해 주십시오.\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4802\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:29\n등급 미상\n유형 미상\n#4802\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:29\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/m/inbox"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 열 수 없습니다.\n/api/dsm/events\n닫기\nDashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n내게 온 이벤트\n새로고침\n기준 14:48 · 0초 전 · 표기 시간대: Asia/Seoul\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n이벤트 속성에 대한 권한이 없습니다 — 발송 기록만 보입니다.\n다시 로그인하면 보일 수 있습니다.\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4802\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:29\n등급 미상\n유형 미상\n#4802\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:29\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/m/inbox"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "Dashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n내게 온 이벤트\n새로고침\n기준 14:48 · 10초 전 · 표기 시간대: Asia/Seoul\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n이벤트 속성을 불러오지 못했습니다 — 발송 기록만 보입니다.\n응답이 늦어 불러오지 못했습니다.\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4802\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:29\n등급 미상\n유형 미상\n#4802\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:29\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/m/inbox"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "Dashboard\nDelivery\nGCS\nDrones/Robots and Docking Station\nDelivery Hub and Route\nDelivery Settings\n내게 온 이벤트\n새로고침\n기준 14:49 · 0초 전 · 표기 시간대: Asia/Seoul\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n이벤트 속성을 불러오지 못했습니다 — 발송 기록만 보입니다.\n서버에 연결하지 못했습니다. 연결을 확인해 주십시오.\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4798\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4799\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4800\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4801\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:17\n등급 미상\n유형 미상\n#4802\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:29\n등급 미상\n유형 미상\n#4802\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 발송 20:29\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/m/inbox"
+        }
+      },
+      "empty": {
+        "body_text": "내게 온 이벤트\n새로고침\n기준 14:49 · 0초 전 · 표기 시간대: Asia/Seoul\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n0\n발송 기록 0건 (이 페이지 · 최대 50)\n발송 실패 0건\n이 테넌트에 남은 발송 기록이 0건입니다. (알림이 실패한 것이 아니라, 나간 알림이 없습니다.)\n버전 778dad3 · 장애 신고 창구 미등록",
+        "empty_text": "이 테넌트에 남은 발송 기록이 0건입니다. (알림이 실패한 것이 아니라, 나간 알림이 없습니다.)",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/dsm/deliveries",
+          "/api/dsm/events",
+          "/api/menu/menus",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      }
+    },
+    "보고서": {
+      "route": "/report-template",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "recon": [
+        "/api/print-format/print-formats/print-formats/fields/model",
+        "/api/menu/menus",
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/user-groups/gen-schema"
+      ],
+      "api_used": "/api/print-format/print-formats/print-formats/fields/model",
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "Dashboard",
+        "Delivery",
+        "GCS",
+        "Drones/Robots and Docking Stat",
+        "Delivery Hub and Route",
+        "Delivery Settings",
+        "1"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Collapse sidebar",
+          "Dashboard",
+          "Delivery",
+          "GCS",
+          "Drones/Robots and Docking Stat",
+          "Delivery Hub and Route",
+          "Delivery Settings",
+          "Previous page",
+          "1",
+          "Next page"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [
+            "Dashboard",
+            "Delivery",
+            "GCS",
+            "Drones/Robots and Docking Stat",
+            "Delivery Hub and Route",
+            "Delivery Settings"
+          ],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Collapse sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "Previous page",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "TimeoutError: Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for get_by_role(\"button\", name=\"Previous page\", exact=True).first\n    - locator reso"
+          },
+          {
+            "kind": "button",
+            "name": "1",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "다시 못 찾았다(화면이 바뀌었다)"
+          },
+          {
+            "kind": "button",
+            "name": "Next page",
+            "clicked": false,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "TimeoutError: Locator.click: Timeout 8000ms exceeded.\nCall log:\n  - waiting for get_by_role(\"button\", name=\"Next page\", exact=True).first\n    - locator resolved"
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "undecidable": true,
+        "why": "제출처럼 보이는 단추가 없다(보이는 단추: 1) — 아무 단추나 눌러 「폼을 눌렀다」고 적지 않는다"
+      },
+      "baseline_len": 83,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/menu/menus",
+        "/api/print-format/print-formats/print-formats/fields/model",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "undecidable": true,
+          "why": "주입해도 본문이 기준선과 **한 글자도 다르지 않다** — 이 화면은 `/api/print-format/print-formats/print-formats/fields/model` 의 실패에 반응하지 않는다(또는 그 자리를 안 부른다). 「오류를 잘 그렸다」로 셀 수 없다"
+        },
+        "503": {
+          "undecidable": true,
+          "why": "주입해도 본문이 기준선과 **한 글자도 다르지 않다** — 이 화면은 `/api/print-format/print-formats/print-formats/fields/model` 의 실패에 반응하지 않는다(또는 그 자리를 안 부른다). 「오류를 잘 그렸다」로 셀 수 없다"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 열 수 없습니다.\n/api/print-format/print-formats/print-formats/fields/model\n닫기\n보고서 서식 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\n\t\nUsage Count\n\t\n1\n버전 778dad3 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3014/report-template"
+        },
+        "timeout": {
+          "undecidable": true,
+          "why": "주입해도 본문이 기준선과 **한 글자도 다르지 않다** — 이 화면은 `/api/print-format/print-formats/print-formats/fields/model` 의 실패에 반응하지 않는다(또는 그 자리를 안 부른다). 「오류를 잘 그렸다」로 셀 수 없다"
+        },
+        "netfail": {
+          "undecidable": true,
+          "why": "주입해도 본문이 기준선과 **한 글자도 다르지 않다** — 이 화면은 `/api/print-format/print-formats/print-formats/fields/model` 의 실패에 반응하지 않는다(또는 그 자리를 안 부른다). 「오류를 잘 그렸다」로 셀 수 없다"
+        }
+      },
+      "empty": {
+        "body_text": "보고서 서식 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\nAdd New Template\nDelete\n\t\nUsage Count\n\t\n1\n버전 778dad3 · 장애 신고 창구 미등록",
+        "empty_text": "",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/menu/menus",
+          "/api/print-format/print-formats/print-formats/fields/model",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      }
+    }
+  },
+  "blocked_writes": [
+    "POST http://localhost:8000/api/dsm/events/4805/response?to_state=closed",
+    "POST http://localhost:8000/api/dsm/events/4803/notify",
+    "POST http://localhost:8000/api/dsm/events/4803/response?to_state=acknowledged&reason=",
+    "POST http://localhost:8000/api/dsm/cameras/import?csv_text=name%2Ccode%2Cip_source%2Caddress%2Cdetail%0A%EC%A0%95%EB%AC%B8%EC%B9%B4%EB%A9%94%EB%9D%BC%2CGATE-01%2Crtsp%3A%2F%2F10.0.0.11%2Fstream%2C%EA%",
+    "POST http://localhost:8000/api/dsm/cameras/import?csv_text=%EC%9D%B4%EA%B1%B4%2Ccsv%EA%B0%80%2C%EC%95%84%EB%8B%88%EB%8B%A4%0A%40%40%40%2C%2C%2C&dry_run=true"
+  ],
+  "session_closed": true,
+  "how": "Playwright 요청 가로채기 — 주입한 요청은 네트워크로 나가지 않는다",
+  "session_released_before": true,
+  "cells": {
+    "로그인": {
+      "화면": {
+        "mark": "●",
+        "note": "/login 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "●",
+        "note": "눌렀다 1/1개: 「Log In」 · 이동 1개(/profile)"
+      },
+      "메뉴·링크": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "폼(검증·오류)": {
+        "mark": "◐",
+        "note": "눌렀다 필수 빈값·형식 오류 · 이중 제출 1회 — 통과"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "지금 처리할 것": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/queue 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 6/14개: 「Collapse sidebar」, 「단축키」, 「상세 열기」, 「다시 시도」, 「종결하기 (3)」, 「열기」 · 이동 2개(/dsm/events/4805, /dsm/events/4800) · 쓰기 단추 1개는 **가드가 막았다**(서버에 안 나갔다): 「종결하기 (3)」 · 전역 사이드바 6개는 **안 눌렀다**(§0.4 금지구역 화면으로 간다): 「Dashboard」, 「Delivery」, 「GCS」, 「Drones/Robots and Docking Stat」"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 2개: 「상세 열기」→/dsm/events/4805, 「열기」→/dsm/events/4800"
+      },
+      "폼(검증·오류)": {
+        "mark": "",
+        "note": "**못 쟀다** — 이 화면에 글자 입력칸이 하나도 안 보인다 — 누를 폼이 없다"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — 통과"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "이벤트 목록": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/events 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 6/13개: 「Expand sidebar」, 「미처리 보기」, 「지난 12시간 보기」, 「내 담당 보기」, 「시스템 보기」, 「새로고침」 · 이동 4개(/dsm/events?preset=unhandled, /dsm/events?preset=recent, /dsm/events?preset=mine) · 전역 사이드바 6개는 **안 눌렀다**(§0.4 금지구역 화면으로 간다): 「Dashboard」, 「Delivery」, 「GCS」, 「Drones/Robots and Docking Stat」"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 4개: 「미처리 보기」→/dsm/events?preset=unhandled, 「지난 12시간 보기」→/dsm/events?preset=recent, 「내 담당 보기」→/dsm/events?preset=mine, 「시스템 보기」→/dsm/events?preset=system"
+      },
+      "폼(검증·오류)": {
+        "mark": "",
+        "note": "**못 쟀다** — 제출처럼 보이는 단추가 없다(보이는 단추: Dashboard, Delivery, GCS, Drones/Robots and Docking Stat, Delivery Hub and Route, Delivery Settings) — 아무 단추나 눌러 「폼을 눌렀다」고 적지 않는다"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — 통과"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "이벤트 상세": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/events/4803 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 7/13개: 「Collapse sidebar」, 「← 목록」, 「알림 보내기」, 「다시 시도」, 「실제로 판정」, 「오탐으로 판정」 · 이동 1개(/dsm/events) · 쓰기 단추 2개는 **가드가 막았다**(서버에 안 나갔다): 「알림 보내기」, 「접수하기」 · 전역 사이드바 6개는 **안 눌렀다**(§0.4 금지구역 화면으로 간다): 「Dashboard」, 「Delivery」, 「GCS」, 「Drones/Robots and Docking Stat」"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 1개: 「← 목록」→/dsm/events"
+      },
+      "폼(검증·오류)": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "관리·설정": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/drill 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 1/7개: 「Expand sidebar」 · 전역 사이드바 6개는 **안 눌렀다**(§0.4 금지구역 화면으로 간다): 「Dashboard」, 「Delivery」, 「GCS」, 「Drones/Robots and Docking Stat」"
+      },
+      "메뉴·링크": {
+        "mark": "",
+        "note": "**누를 것이 없었다** — 이 화면에 링크·메뉴·탭이 0개이고, 눌러서 **주소가 바뀐 단추**도 0개다 (못 쟀다이지 통과가 아니다)"
+      },
+      "폼(검증·오류)": {
+        "mark": "",
+        "note": "**못 쟀다** — 제출처럼 보이는 단추가 없다(보이는 단추: Dashboard, Delivery, GCS, Drones/Robots and Docking Stat, Delivery Hub and Route, Delivery Settings) — 아무 단추나 눌러 「폼을 눌렀다」고 적지 않는다"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "",
+        "note": "**못 쟀다** — 이 화면이 받은 진짜 응답을 못 잡았다 — 빈 모양을 지어내지 않는다"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "카메라 일괄 등록": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/cameras/import 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 3/9개: 「Collapse sidebar」, 「예시 채우기」, 「② 표 먼저 보기 (dry-run)」 · 쓰기 단추 1개는 **가드가 막았다**(서버에 안 나갔다): 「② 표 먼저 보기 (dry-run)」 · 전역 사이드바 6개는 **안 눌렀다**(§0.4 금지구역 화면으로 간다): 「Dashboard」, 「Delivery」, 「GCS」, 「Drones/Robots and Docking Stat」"
+      },
+      "메뉴·링크": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "폼(검증·오류)": {
+        "mark": "◐",
+        "note": "눌렀다 형식 오류·서버 거절(422) · 이중 제출 1회 — 통과"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — **빨강** 빈 상태를 말하는 문구가 **없다** — 화면이 0건을 침묵으로 그렸다"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "모바일 M1~M3": {
+      "화면": {
+        "mark": "●",
+        "note": "/m/inbox 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 2/30개: 「Expand sidebar」, 「새로고침」 · 전역 사이드바 6개는 **안 눌렀다**(§0.4 금지구역 화면으로 간다): 「Dashboard」, 「Delivery」, 「GCS」, 「Drones/Robots and Docking Stat」"
+      },
+      "메뉴·링크": {
+        "mark": "",
+        "note": "**누를 것이 없었다** — 이 화면에 링크·메뉴·탭이 0개이고, 눌러서 **주소가 바뀐 단추**도 0개다 (못 쟀다이지 통과가 아니다)"
+      },
+      "폼(검증·오류)": {
+        "mark": "",
+        "note": "**못 쟀다** — 이 화면에 글자 입력칸이 하나도 안 보인다 — 누를 폼이 없다"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — 통과"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "보고서": {
+      "화면": {
+        "mark": "●",
+        "note": "/report-template 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 1/10개: 「Collapse sidebar」 · 전역 사이드바 6개는 **안 눌렀다**(§0.4 금지구역 화면으로 간다): 「Dashboard」, 「Delivery」, 「GCS」, 「Drones/Robots and Docking Stat」"
+      },
+      "메뉴·링크": {
+        "mark": "",
+        "note": "**누를 것이 없었다** — 이 화면에 링크·메뉴·탭이 0개이고, 눌러서 **주소가 바뀐 단추**도 0개다 (못 쟀다이지 통과가 아니다)"
+      },
+      "폼(검증·오류)": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "◐",
+        "note": "눌렀다 403 / 못 눌렀다 500·503·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — **빨강** 빈 상태를 말하는 문구가 **없다** — 화면이 0건을 침묵으로 그렸다"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    }
+  },
+  "counts": {
+    "full": 24,
+    "partial": 18,
+    "na": 6,
+    "blank": 8,
+    "counted": 42,
+    "total": 56
+  }
+}

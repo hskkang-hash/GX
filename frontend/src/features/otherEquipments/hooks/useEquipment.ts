@@ -1,6 +1,7 @@
 import { useLoadingContext } from 'rj-core';
 
 import API, { endpoint } from '@/services/API';
+import { failureLine } from '@/features/session/apiFailure';
 
 const useEquipment = () => {
   const { showLoading, hideLoading } = useLoadingContext();
@@ -33,35 +34,53 @@ const useEquipment = () => {
         params.sort_obj = objSearch.sortParams;
       }
     }
-    showLoading();
-    const { success, message, data, total_items, total_pages } = await API.get(
-      'api/devices/cameras',
-      { params },
-    );
-    if (success) {
-      hideLoading();
-    } else {
+    // ★ [SEC-11a · 2026-09-07 턴 J · 차선 C] **`showLoading()` 뒤에 `try` 가 없었다.**
+    //   차선 S 가 `settings.py` 주석에 이 파일과 이 다섯 함수를 **이름으로** 적어 두었다:
+    //   「`/api/devices/cameras/` 9건을 안 켠 사유 — 승격하면 거절이 예외가 되고
+    //     `hideLoading()` 이 영원히 안 돈다 = **스피너 고착**. 그 파일은 `frontend/` 라
+    //     차선 S 의 손 밖이다.」 그 손이 이 차선이다. 여기가 그 자리다.
+    //   ⚠ `if (success) hideLoading(); else hideLoading();` 은 갈래가 둘인 척하지만
+    //     **한 갈래도 예외를 안 덮는다.** `finally` 한 곳으로 모은다.
+    try {
+      const { success, message, data, total_items, total_pages } = await API.get(
+        'api/devices/cameras',
+        { params },
+      );
+      return {
+        success,
+        message,
+        data,
+        totalItem: total_items,
+        totalPage: total_pages,
+      };
+    } catch (error) {
+      // 거절을 **값으로** 돌려준다 — 부르는 쪽(`OtherEquipments.tsx`)이 그 값으로
+      // 사람에게 말한다. 되던지면 그 화면의 `catch` 가 받고, 그것도 이제 있다.
+      return {
+        success: false,
+        message: failureLine('useEquipment.list', error),
+        data: [],
+        totalItem: 0,
+        totalPage: 0,
+      };
+    } finally {
       hideLoading();
     }
-    return {
-      success,
-      message,
-      data,
-      totalItem: total_items,
-      totalPage: total_pages,
-    };
   };
 
   const getDetailEquipment = async (id: number) => {
     showLoading();
+    // ★ [SEC-11a · 2026-09-07 턴 J · 차선 C] **`showLoading()` 뒤에 `try` 가 없었다.**
+    //   차선 S 가 `settings.py` 주석에 이 파일과 이 다섯 함수를 **이름으로** 적어 두었다:
+    //   「`/api/devices/cameras/` 9건을 안 켠 사유 — 승격하면 거절이 예외가 되고
+    //     `hideLoading()` 이 영원히 안 돈다 = **스피너 고착**. 그 파일은 `frontend/` 라
+    //     차선 S 의 손 밖이다.」 그 손이 이 차선이다. 여기가 그 자리다.
+    //   ⚠ `if (success) hideLoading(); else hideLoading();` 은 갈래가 둘인 척하지만
+    //     **한 갈래도 예외를 안 덮는다.** `finally` 한 곳으로 모은다.
+    try {
     const { success, message, data } = await API.get(
       endpoint.detailEquipment(id, false),
     );
-    if (success) {
-      hideLoading();
-    } else {
-      hideLoading();
-    }
     return {
       success,
       message,
@@ -108,53 +127,95 @@ const useEquipment = () => {
           : null,
       },
     };
+    } catch (error) {
+      // ⚠ **`data` 를 지어내지 않는다.** 위 매핑은 `data.resolution.width` 처럼
+      //   깊이 파고든다 — 거절 갈래에서 빈 껍데기를 만들어 돌려주면 그 껍데기가
+      //   서식에 그려지고 「값이 없다」가 「빈 값으로 저장됨」이 된다.
+      return {
+        success: false,
+        message: failureLine('useEquipment.detail', error),
+        data: null,
+      };
+    } finally {
+      hideLoading();
+    }
   };
 
   const createEquipment = async (data) => {
-    showLoading();
-    const { success, message } = await API.post('api/devices/cameras', data);
-    if (success) {
-      hideLoading();
-    } else {
+    // ★ [SEC-11a · 2026-09-07 턴 J · 차선 C] **`showLoading()` 뒤에 `try` 가 없었다.**
+    //   차선 S 가 `settings.py` 주석에 이 파일과 이 다섯 함수를 **이름으로** 적어 두었다:
+    //   「`/api/devices/cameras/` 9건을 안 켠 사유 — 승격하면 거절이 예외가 되고
+    //     `hideLoading()` 이 영원히 안 돈다 = **스피너 고착**. 그 파일은 `frontend/` 라
+    //     차선 S 의 손 밖이다.」 그 손이 이 차선이다. 여기가 그 자리다.
+    //   ⚠ `if (success) hideLoading(); else hideLoading();` 은 갈래가 둘인 척하지만
+    //     **한 갈래도 예외를 안 덮는다.** `finally` 한 곳으로 모은다.
+    try {
+      const { success, message } = await API.post('api/devices/cameras', data);
+      return {
+        success,
+        message,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: failureLine('useEquipment.create', error),
+      };
+    } finally {
       hideLoading();
     }
-    return {
-      success,
-      message,
-    };
   };
 
   const updateEquipment = async (data, id: number) => {
-    showLoading();
-    const { success, message } = await API.put(
-      `api/devices/cameras/${id}`,
-      data,
-    );
-    if (success) {
-      hideLoading();
-    } else {
+    // ★ [SEC-11a · 2026-09-07 턴 J · 차선 C] **`showLoading()` 뒤에 `try` 가 없었다.**
+    //   차선 S 가 `settings.py` 주석에 이 파일과 이 다섯 함수를 **이름으로** 적어 두었다:
+    //   「`/api/devices/cameras/` 9건을 안 켠 사유 — 승격하면 거절이 예외가 되고
+    //     `hideLoading()` 이 영원히 안 돈다 = **스피너 고착**. 그 파일은 `frontend/` 라
+    //     차선 S 의 손 밖이다.」 그 손이 이 차선이다. 여기가 그 자리다.
+    //   ⚠ `if (success) hideLoading(); else hideLoading();` 은 갈래가 둘인 척하지만
+    //     **한 갈래도 예외를 안 덮는다.** `finally` 한 곳으로 모은다.
+    try {
+      const { success, message } = await API.put(
+        `api/devices/cameras/${id}`,
+        data,
+      );
+      return {
+        success,
+        message,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: failureLine('useEquipment.update', error),
+      };
+    } finally {
       hideLoading();
     }
-    return {
-      success,
-      message,
-    };
   };
 
   const changeStatusEquipment = async ({ ids }) => {
-    showLoading();
-    const { success, message } = await API.put(
-      endpoint.changeStatusEquipment(ids),
-    );
-    if (success) {
-      hideLoading();
-    } else {
+    // ★ [SEC-11a · 2026-09-07 턴 J · 차선 C] **`showLoading()` 뒤에 `try` 가 없었다.**
+    //   차선 S 가 `settings.py` 주석에 이 파일과 이 다섯 함수를 **이름으로** 적어 두었다:
+    //   「`/api/devices/cameras/` 9건을 안 켠 사유 — 승격하면 거절이 예외가 되고
+    //     `hideLoading()` 이 영원히 안 돈다 = **스피너 고착**. 그 파일은 `frontend/` 라
+    //     차선 S 의 손 밖이다.」 그 손이 이 차선이다. 여기가 그 자리다.
+    //   ⚠ `if (success) hideLoading(); else hideLoading();` 은 갈래가 둘인 척하지만
+    //     **한 갈래도 예외를 안 덮는다.** `finally` 한 곳으로 모은다.
+    try {
+      const { success, message } = await API.put(
+        endpoint.changeStatusEquipment(ids),
+      );
+      return {
+        success,
+        message,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: failureLine('useEquipment.changeStatus', error),
+      };
+    } finally {
       hideLoading();
     }
-    return {
-      success,
-      message,
-    };
   };
 
   const activeEquipmentAPI = async ({

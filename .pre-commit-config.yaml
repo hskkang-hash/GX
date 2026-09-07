@@ -81,11 +81,18 @@ repos:
   # 커널은 아직 한 줄도 없으므로 **여기서만은 빚 0 으로 시작할 수 있다.**
   - repo: local
     hooks:
+      # ★ [실측 2026-09-07 · 턴 J] **한 사진을 여럿이 나눠 본다.**
+      #   아래 훅들은 `docs/agent/evidence/D-343/route_inventory.json` 같은 **공유
+      #   스냅샷**을 읽고, 그중 일부는 그것을 다시 뜬다. pre-commit 이 훅을 병렬로
+      #   돌리므로 읽는 쪽이 **쓰는 중간**을 잡았고, 실패하는 훅이 커밋할 때마다
+      #   달라졌다(tenant-scope ↔ measure-repro). 손으로 부르면 둘 다 초록이다.
+      #   갈린 것은 제품이 아니라 **누가 그 사진을 먼저 잡았는가**다.
       - id: gx-tenant-scope
         name: 커널 테넌트 스코프 + 신규 경로 트립와이어 (C-3.1 · D-275 §5-1)
         entry: python scripts/verify_tenant_scope.py
         language: system
         pass_filenames: false
+        require_serial: true
         # ★ 트립와이어가 붙으면서 대상이 **backend 전 파이썬**으로 넓어졌다 (D-275 §5-1).
         #   새 라우트는 어느 views.py 에서든 생긴다 — 좁은 필터는 곧 감긴 눈이다.
         #   4초 걸린다. 커밋마다 4초로 "문지기 없는 새 경로"를 사는 것이 값싸다.
@@ -273,6 +280,7 @@ repos:
         entry: python scripts/verify_route_inventory.py
         language: system
         pass_filenames: false
+        require_serial: true   # 공유 스냅샷을 다시 뜬다 — 위 §gx-tenant-scope 주석
         files: '^(backend/.*\.py|docs/agent/evidence/D-343/.*)$'
 
   # ── D-344: 측정 재현성 ─────────────────────────────────────────────────
@@ -338,11 +346,18 @@ repos:
   # 거기서 200 봉투에 담긴 실패는 에스비 App 이 성공으로 읽는다.
   - repo: local
     hooks:
+      # ★ [실측 2026-09-07 · 턴 J] **한 사진을 여럿이 나눠 본다.**
+      #   아래 훅들은 `docs/agent/evidence/D-343/route_inventory.json` 같은 **공유
+      #   스냅샷**을 읽고, 그중 일부는 그것을 다시 뜬다. pre-commit 이 훅을 병렬로
+      #   돌리므로 읽는 쪽이 **쓰는 중간**을 잡았고, 실패하는 훅이 커밋할 때마다
+      #   달라졌다(tenant-scope ↔ measure-repro). 손으로 부르면 둘 다 초록이다.
+      #   갈린 것은 제품이 아니라 **누가 그 사진을 먼저 잡았는가**다.
       - id: gx-envelope
         name: 봉투 불일치 검사 (D-349)
         entry: python scripts/verify_envelope.py
         language: system
         pass_filenames: false
+        require_serial: true
         files: '^(backend/.*\.py|docs/agent/evidence/(D-343|D-349)/.*)$'
 
   # ── P-27 · SEC-17: 화면·응답에 상대사명·계약번호·조항·내부 경로 0건 ─────
@@ -375,6 +390,17 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
+      # ★ [실측 2026-09-07 · 턴 J] **컴파일되지 않는 코드가 HEAD 에 들어갔다.**
+      #   조율자가 `ops_tasks.py:133` 에 문자열 안 줄바꿈을 **진짜 줄바꿈으로** 써서
+      #   SyntaxError 를 커밋했다(`778dad3`). `git status` 는 깨끗했고 게이트 14종은
+      #   초록이었다 — **아무도 「이 파일이 파싱되는가」를 보지 않았기 때문이다.**
+      #   단위 시험은 그 편집 **전에** 돌았다. 즉 시험은 이 자리를 구조적으로 못 본다.
+      #   ⚠ 값이 큰 이유: 그 파일이 `common.tasks` 의 임포트 사슬에 있어
+      #     **주기 태스크가 하나도 등록되지 않는다.** `gx-celery-e` 는 옛 코드를 물고
+      #     살아 있어 조용했고, **다음 재기동에서 죽는다** — 그리고 OPS-19(RPO)를 닫는
+      #     유일한 길이 그 재기동이다. 차선 E 가 태스크를 태우려다 발견했다.
+      #   0.3초짜리 검사 하나가 그 하루를 막는다.
+      - id: check-ast
       - id: detect-private-key
       - id: check-added-large-files
         args: ["--maxkb=4096"]

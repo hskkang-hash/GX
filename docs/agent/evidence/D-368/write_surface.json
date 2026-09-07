@@ -16,14 +16,14 @@
     ],
     "max_rounds": 16
   },
-  "measured_at": "2026-09-06T13:44:36+00:00",
+  "measured_at": "2026-09-07T07:43:42+00:00",
   "note": "관문 없는(=auth= 콜백 없는) 쓰기 라우트 전수. **스키마를 통과하는 최소 본문**을 인증 없이 보내 도달을 **호출**로 재고, 쓰는가는 **정적**으로 판정했다 — 두 방법이 다르다는 사실을 writes_by 에 적었다 (D-322). 관문은 401/403 뿐이고 422 는 도달·검증 실패, 404/405 는 도달 실패다 (P-83)",
   "totals": {
     "routes": 30,
     "by_verdict": {
-      "gated": 14,
+      "gated": 15,
       "public_by_design": 11,
-      "read_only_in_practice": 5
+      "read_only_in_practice": 4
     }
   },
   "routes": [
@@ -229,6 +229,34 @@
       "path": "/api/delivery/drone-monitoring/drone-status",
       "app": "delivery",
       "view": "delivery.views.api.post_drone_status_monitoring",
+      "reached": false,
+      "status": 401,
+      "note": "",
+      "rounds": 1,
+      "unresolved": [],
+      "sent": {
+        "body": {},
+        "query": {},
+        "form": {},
+        "path": {}
+      },
+      "rounds_log": [
+        {
+          "round": 1,
+          "status": 401,
+          "sent": {}
+        }
+      ],
+      "writes": false,
+      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
+      "verdict": "gated"
+    },
+    {
+      "method": "POST",
+      "methods": "POST",
+      "path": "/api/delivery/etri-integration/receive-from-etri",
+      "app": "delivery",
+      "view": "delivery.views.api.receive_status_from_etri",
       "reached": false,
       "status": 401,
       "note": "",
@@ -795,69 +823,6 @@
       "writes": true,
       "writes_by": "[정적] 핸들러 본문에 save, set_password() 호출",
       "verdict": "public_by_design"
-    },
-    {
-      "method": "POST",
-      "methods": "POST",
-      "path": "/api/delivery/etri-integration/receive-from-etri",
-      "app": "delivery",
-      "view": "delivery.views.api.receive_status_from_etri",
-      "reached": true,
-      "status": 500,
-      "note": "",
-      "rounds": 2,
-      "unresolved": [],
-      "sent": {
-        "body": {
-          "CONTROL_ID": "1",
-          "USER_ID": "1",
-          "ORG_ID": "1",
-          "RECEIPT_ID": "1",
-          "MISSION_ID": "1",
-          "RECEIPT_DATE": "1",
-          "MISSION_STATUS": "1",
-          "CANCEL_REJECT_REASON": "1",
-          "MISSION_DATE": "1",
-          "DRONE_PATH_DISTANCE": "1",
-          "DRONE_PATH": "1",
-          "ROBOT_PATH_DISTANCE": "1",
-          "ROBOT_PATH": "1",
-          "DOCKING_POINT": "1"
-        },
-        "query": {},
-        "form": {},
-        "path": {}
-      },
-      "rounds_log": [
-        {
-          "round": 1,
-          "status": 422,
-          "sent": {}
-        },
-        {
-          "round": 2,
-          "status": 500,
-          "sent": {
-            "CONTROL_ID": "1",
-            "USER_ID": "1",
-            "ORG_ID": "1",
-            "RECEIPT_ID": "1",
-            "MISSION_ID": "1",
-            "RECEIPT_DATE": "1",
-            "MISSION_STATUS": "1",
-            "CANCEL_REJECT_REASON": "1",
-            "MISSION_DATE": "1",
-            "DRONE_PATH_DISTANCE": "1",
-            "DRONE_PATH": "1",
-            "ROBOT_PATH_DISTANCE": "1",
-            "ROBOT_PATH": "1",
-            "DOCKING_POINT": "1"
-          }
-        }
-      ],
-      "writes": false,
-      "writes_by": "[정적] 핸들러 본문에 쓰기 호출 없음",
-      "verdict": "read_only_in_practice"
     },
     {
       "method": "POST",

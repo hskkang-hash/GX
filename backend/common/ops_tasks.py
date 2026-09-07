@@ -130,8 +130,7 @@ def _write_evidence(name: str, payload: dict) -> str | None:
         #:   커밋은 언제나 중단된다 — 그리고 이 태스크가 다시 돌면 다시 벗겨진다.
         #:   **커밋이 영원히 안 되는 고리**였다(턴 J 에 실제로 세 번 돌았다).
         #:   POSIX 텍스트 파일의 규약이기도 하다.
-        out.write_text(json.dumps(stamped, ensure_ascii=False, indent=2, default=str) + "
-",
+        out.write_text(json.dumps(stamped, ensure_ascii=False, indent=2, default=str) + "\n",
                        encoding="utf-8")
         return str(out)
     except OSError as exc:

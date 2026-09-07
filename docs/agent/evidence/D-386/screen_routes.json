@@ -1,9 +1,21 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
-  "captured_at": "2026-09-06T20:41:58",
-  "screens_total": 31,
-  "routes_total": 25,
+  "captured_at": "2026-09-07T14:15:00",
+  "screens_total": 33,
+  "routes_total": 28,
   "screens": {
+    "/login": [
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/auth/login",
+        "status": 400
+      }
+    ],
     "/dsm/dashboard": [
       {
         "method": "GET",
@@ -78,7 +90,7 @@
         "status": 200
       }
     ],
-    "/dsm/events/9751": [
+    "/dsm/events/49305": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -91,17 +103,17 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=9751",
+        "path": "/api/dsm/deliveries?event_id=49305",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9751",
+        "path": "/api/dsm/events/49305",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9751/timeline",
+        "path": "/api/dsm/events/49305/timeline",
         "status": 200
       },
       {
@@ -123,16 +135,6 @@
     "/device": [
       {
         "method": "GET",
-        "path": "/api/advanced-table/grid-management/12/detail",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/grid-management?menu_id=30",
-        "status": 200
-      },
-      {
-        "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name",
         "status": 200
       },
@@ -148,7 +150,29 @@
       },
       {
         "method": "GET",
-        "path": "/api/devices/devices-management?page_size=25&current_page=1&depth=2",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/roles": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
         "status": 200
       },
       {
@@ -269,7 +293,7 @@
       },
       {
         "method": "GET",
-        "path": "/api/v1/user/get-user-detail/114",
+        "path": "/api/v1/user/get-user-detail/105",
         "status": 200
       }
     ],
@@ -291,37 +315,64 @@
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-05T17:00:00%2B00:00&end_date=2026-09-06T16:59:59%2B00:00&limit=100&page=1&page_size=5",
-        "status": 200
+        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-06T17:00:00%2B00:00&end_date=2026-09-07T16:59:59%2B00:00&limit=100&page=1&page_size=5",
+        "status": 403
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-05T17:00:00%2B00:00&end_date=2026-09-12T16:59:59%2B00:00",
-        "status": 200
+        "status": 403
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-06",
-        "status": 200
+        "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-07",
+        "status": 403
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/drone-status-overview",
-        "status": 200
+        "status": 403
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/today-profiles-polygon",
-        "status": 200
+        "status": 403
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4",
-        "status": 200
+        "status": 403
       },
       {
         "method": "GET",
         "path": "/api/surveillance/surveillance-dashboard/weather-setting",
+        "status": 403
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/survey-profile": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
         "status": 200
       },
       {
@@ -349,7 +400,7 @@
       {
         "method": "GET",
         "path": "/api/media-data/?page_size=25&current_page=1",
-        "status": 200
+        "status": 503
       },
       {
         "method": "GET",
@@ -607,7 +658,7 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events?limit=50&since=2026-09-06T01:40:32.062Z&until=2026-09-06T13:40:32.062Z",
+        "path": "/api/dsm/events?limit=50&since=2026-09-06T19:13:38.436Z&until=2026-09-07T07:13:38.436Z",
         "status": 200
       },
       {
@@ -719,7 +770,7 @@
       {
         "method": "GET",
         "path": "/api/dsm/events/4805/snapshot",
-        "status": 200
+        "status": 503
       },
       {
         "method": "GET",
@@ -892,7 +943,7 @@
         "status": 200
       }
     ],
-    "/m/events/9751": [
+    "/m/events/49305": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -905,17 +956,17 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9751",
+        "path": "/api/dsm/events/49305",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9751/clip",
+        "path": "/api/dsm/events/49305/clip",
         "status": 404
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/9751/field-replies",
+        "path": "/api/dsm/events/49305/field-replies",
         "status": 200
       },
       {
@@ -929,6 +980,36 @@
         "status": 200
       }
     ]
+  },
+  "api_notes": {
+    "/login": "로그인 실패 갈래에서 **서버에 실제로 나간 것만** 적었다 — 주입(L2~L5)한 응답은 서버에 닿지 않았으므로 세지 않는다",
+    "/dsm/dashboard": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/events": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/events/49305": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/device": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/roles": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/menu": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/configuration-management": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/profile": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/surveillance-dashboard": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/survey-profile": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/media-data": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/flight-log-analysis": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/multi-stream-monitor": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/operation-settings": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/report-template": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/notam": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/events?preset=unhandled": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/events?preset=recent": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/events?preset=mine": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/events?preset=system": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/queue": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/drill": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/cameras/import": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/cameras/address": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/start?role=OPERATOR": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/m/inbox": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/m/events/49305": "화면을 열고 브라우저가 부른 것을 그대로 적었다"
   },
   "data_source": "시드 (K1 record_detection 실제 경로 · 실제 사고 아님)",
   "blank_screens": [

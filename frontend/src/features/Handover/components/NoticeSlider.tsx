@@ -12,6 +12,7 @@ import {
 
 import { useHandover } from '../hooks/useHandover';
 import { NoticeManagementState } from '../types';
+import { failureLine } from '@/features/session/apiFailure';
 
 const CardItem = ({
   index,
@@ -190,14 +191,24 @@ export const NoticeSlider = ({
 
   const handleComplete = useCallback(
     async (id: number | null) => {
+      // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **거절을 삼키지 않는다.**
+      //   `try` 가 없던 자리다. 접두 승격이 켜지면 이 `await` 는 예외로 끝나고,
+      //   전역 `unhandledrejection` 처리기는 이 저장소에 0건이다 — 즉 **조용히 멈춘다.**
       if (!id) return;
-      const { success, message } = await completeNoticeAPI(id);
-      if (success) {
-        ToastTopHelper.success(message);
-        handleRefresh();
+      try {
+        const { success, message } = await completeNoticeAPI(id);
+        if (success) {
+          ToastTopHelper.success(message);
+          handleRefresh();
+          setShowCompleteNotice({ show: false, id: null });
+        } else {
+          ToastTopHelper.error(message || 'Failed to complete notice');
+        }
+      } catch (error) {
+        ToastTopHelper.error(failureLine('NoticeSlider.complete', error));
+      } finally {
+        // 확인 상자를 **반드시 닫는다.** 열린 채로 남으면 사람이 같은 단추를 또 누른다.
         setShowCompleteNotice({ show: false, id: null });
-      } else {
-        ToastTopHelper.error(message || 'Failed to complete notice');
       }
     },
     [completeNoticeAPI, handleRefresh],
@@ -205,14 +216,23 @@ export const NoticeSlider = ({
 
   const handleDelete = useCallback(
     async (id: number | null) => {
+      // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **거절을 삼키지 않는다.**
+      //   `try` 가 없던 자리다. 접두 승격이 켜지면 이 `await` 는 예외로 끝나고,
+      //   전역 `unhandledrejection` 처리기는 이 저장소에 0건이다 — 즉 **조용히 멈춘다.**
       if (!id) return;
-      const { success, message } = await deleteNoticeAPI(id);
-      if (success) {
-        ToastTopHelper.success(message);
-        handleRefresh();
+      try {
+        const { success, message } = await deleteNoticeAPI(id);
+        if (success) {
+          ToastTopHelper.success(message);
+          handleRefresh();
+          setShowDeleteNotice({ show: false, id: null });
+        } else {
+          ToastTopHelper.error(message || 'Failed to delete notice');
+        }
+      } catch (error) {
+        ToastTopHelper.error(failureLine('NoticeSlider.delete', error));
+      } finally {
         setShowDeleteNotice({ show: false, id: null });
-      } else {
-        ToastTopHelper.error(message || 'Failed to delete notice');
       }
     },
     [deleteNoticeAPI, handleRefresh],

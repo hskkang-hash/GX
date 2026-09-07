@@ -24,6 +24,7 @@ import { useDateTimeFormat } from '../../../../hooks/useDateFormat';
 import { HandoverNoticeState } from '../../../../types';
 import { formatDateTime } from '../../../../utils/dateFormat';
 import { useHandoverManagement } from '../hooks/useHandoverManagement';
+import { failureLine } from '@/features/session/apiFailure';
 
 export interface ItemCardRef {
   isDirty: boolean;
@@ -86,20 +87,30 @@ export const ItemCard = forwardRef<
       is_notice: boolean;
     }): Promise<boolean> => {
       const formValues = values || getValues();
-      const { success, message } = await createNoticeHandoverAPI({
-        handover_doc_id: item.handover_doc_id,
-        content: formValues.content,
-        is_notice: formValues.is_notice,
-        content_id: item.id,
-        is_edit: item.is_edit,
-      });
-      if (success) {
-        ToastTopHelper.success(message);
-        reset(formValues);
-        handleGetListNoticeHandover(item.id);
-        return true;
-      } else {
+      // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **거절이 「저장됨」으로 읽히지 않게 한다.**
+      //   이 함수는 `boolean` 을 돌려주고, 그 값으로 화면을 떠날지 말지가 갈린다.
+      //   `try` 가 없던 종전에는 거절이 예외가 되어 **`false` 조차 못 돌려줬다** —
+      //   부르는 쪽의 `await` 도 같이 터지고, 사람은 아무 말도 못 듣는다.
+      try {
+        const { success, message } = await createNoticeHandoverAPI({
+          handover_doc_id: item.handover_doc_id,
+          content: formValues.content,
+          is_notice: formValues.is_notice,
+          content_id: item.id,
+          is_edit: item.is_edit,
+        });
+        if (success) {
+          ToastTopHelper.success(message);
+          reset(formValues);
+          handleGetListNoticeHandover(item.id);
+          return true;
+        }
         ToastTopHelper.error(message);
+        return false;
+      } catch (error) {
+        ToastTopHelper.error(failureLine('ItemCard.save', error));
+        // **거짓 `true` 를 돌려주지 않는다.** 저장 못 한 것을 저장했다고 답하면
+        // 부르는 쪽이 서식을 깨끗한 것으로 표시하고 사람은 글을 잃는다.
         return false;
       }
     };
@@ -120,16 +131,23 @@ export const ItemCard = forwardRef<
     }));
 
     const handleDelete = async () => {
-      const { success, message } = await deleteNoticeHandoverAPI({
-        content_id: item.id,
-        handover_doc_id: item.handover_doc_id,
-      });
-      if (success) {
-        ToastTopHelper.success(message);
-        handleGetListNoticeHandover(item.id);
+      // ★ [SEC-11a ② · 턴 J · 차선 C] 같은 파일 둘째 자리 — 여기도 `try` 가 없었다.
+      try {
+        const { success, message } = await deleteNoticeHandoverAPI({
+          content_id: item.id,
+          handover_doc_id: item.handover_doc_id,
+        });
+        if (success) {
+          ToastTopHelper.success(message);
+          handleGetListNoticeHandover(item.id);
+        } else {
+          ToastTopHelper.error(message);
+        }
+      } catch (error) {
+        ToastTopHelper.error(failureLine('ItemCard.delete', error));
+      } finally {
+        // 확인 상자는 **어느 갈래에서도 닫힌다.**
         setShowModalDelete(false);
-      } else {
-        ToastTopHelper.error(message);
       }
     };
 

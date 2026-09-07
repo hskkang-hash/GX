@@ -17,6 +17,7 @@ import { COLUMNS_NOTICE_MANAGEMENT } from '../../../dataExample';
 import { NoticeManagementState } from '../../../types';
 import EditNotice from './EditNotice';
 import { useNoticeManagement } from './hooks/useNoticeManagement';
+import { failureLine } from '@/features/session/apiFailure';
 
 export const NoticeManagement = ({
   headerPageRef,
@@ -61,6 +62,10 @@ export const NoticeManagement = ({
 
   const handleCompleteNotice = useCallback(async () => {
     if (!selectedIdNotice) return;
+    // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **거절을 삼키지 않는다.**
+    //   `try` 가 하나도 없던 파일이다. 접두 승격이 켜지면 이 `await` 는 예외로 끝나고,
+    //   전역 `unhandledrejection` 처리기는 이 저장소에 0건이다 — 즉 **조용히 멈춘다.**
+    try {
     const { success, message } = await completeNoticeAPI(selectedIdNotice);
     if (success) {
       ToastTopHelper.success(message);
@@ -70,6 +75,12 @@ export const NoticeManagement = ({
       setOpenOffcanvas(false);
     } else {
       ToastTopHelper.error(message);
+    }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('NoticeManagement.complete', error));
+    } finally {
+      // 확인 상자는 **어느 갈래에서도 닫힌다.**
+      setShowCompleteNotice(false);
     }
   }, [completeNoticeAPI, selectedIdNotice, getNoticeManagementAPI]);
 

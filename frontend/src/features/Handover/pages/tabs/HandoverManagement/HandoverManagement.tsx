@@ -28,6 +28,7 @@ import {
 import { formatDate } from '../../../utils/dateFormat';
 import { CreateHandoverModal } from './components/CreateHandoverModal';
 import { useHandoverManagement } from './hooks/useHandoverManagement';
+import { failureLine } from '@/features/session/apiFailure';
 
 const SHIFT_STATUS = {
   HAVE_SHIFTS: 'have_shifts',
@@ -146,7 +147,11 @@ export const HandoverManagement = ({
   );
 
   const handleDelete = useCallback(async () => {
+    // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **거절을 삼키지 않는다.**
+    //   `try` 가 하나도 없던 파일이다. 접두 승격이 켜지면 이 `await` 는 예외로 끝나고,
+    //   전역 `unhandledrejection` 처리기는 이 저장소에 0건이다 — 즉 **조용히 멈춘다.**
     const ids = selectedRows.map((item) => item.id);
+    try {
     const { success, message, failed } = await deleteShiftHandoverAPI(ids);
     if (success && failed.length === 0) {
       ToastTopHelper.success(message);
@@ -166,6 +171,9 @@ export const HandoverManagement = ({
       });
     } else {
       ToastTopHelper.error(message);
+    }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('HandoverManagement.delete', error));
     }
   }, [
     deleteShiftHandoverAPI,
@@ -336,17 +344,22 @@ export const HandoverManagement = ({
 
   const handleCreateShiftLog = useCallback(async () => {
     if (createShiftLogData?.date && createShiftLogData?.shift_id) {
-      const { success, message } =
-        await createShiftHandoverAPI(createShiftLogData);
-      if (success) {
-        ToastTopHelper.success(message);
-        setShowCreateLog(false);
-        getHandoverManagementAPI({
-          start_date_time: searchDateTime.startDate?.format('YYYY-MM-DD') || '',
-          end_date_time: searchDateTime.endDate?.format('YYYY-MM-DD') || '',
-        });
-      } else {
-        ToastTopHelper.error(message);
+      // ★ [SEC-11a ② · 턴 J · 차선 C] 만들기 단추가 **조용히 실패하지 않게** 한다.
+      try {
+        const { success, message } =
+          await createShiftHandoverAPI(createShiftLogData);
+        if (success) {
+          ToastTopHelper.success(message);
+          setShowCreateLog(false);
+          getHandoverManagementAPI({
+            start_date_time: searchDateTime.startDate?.format('YYYY-MM-DD') || '',
+            end_date_time: searchDateTime.endDate?.format('YYYY-MM-DD') || '',
+          });
+        } else {
+          ToastTopHelper.error(message);
+        }
+      } catch (error) {
+        ToastTopHelper.error(failureLine('HandoverManagement.createShiftLog', error));
       }
     }
   }, [
@@ -359,16 +372,21 @@ export const HandoverManagement = ({
 
   const handleCreateHandover = useCallback(
     async (data: { date: string; shift_id: number | null }) => {
-      const { success, message } = await createShiftHandoverAPI(data);
-      if (success) {
-        ToastTopHelper.success(message);
-        setShowCreateHandover(false);
-        getHandoverManagementAPI({
-          start_date_time: searchDateTime.startDate?.format('YYYY-MM-DD') || '',
-          end_date_time: searchDateTime.endDate?.format('YYYY-MM-DD') || '',
-        });
-      } else {
-        ToastTopHelper.error(message);
+      // ★ [SEC-11a ② · 턴 J · 차선 C] 같은 자리 둘째 — 여기도 `try` 가 없었다.
+      try {
+        const { success, message } = await createShiftHandoverAPI(data);
+        if (success) {
+          ToastTopHelper.success(message);
+          setShowCreateHandover(false);
+          getHandoverManagementAPI({
+            start_date_time: searchDateTime.startDate?.format('YYYY-MM-DD') || '',
+            end_date_time: searchDateTime.endDate?.format('YYYY-MM-DD') || '',
+          });
+        } else {
+          ToastTopHelper.error(message);
+        }
+      } catch (error) {
+        ToastTopHelper.error(failureLine('HandoverManagement.createHandover', error));
       }
     },
     [

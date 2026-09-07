@@ -23,6 +23,7 @@ import { NoticeManagementState } from '../../../types';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { useNoticeManagement } from './hooks/useNoticeManagement';
 import './styles/EditNotice.scss';
+import { failureLine } from '@/features/session/apiFailure';
 
 const EditNotice = ({
   noticeId,
@@ -80,6 +81,11 @@ const EditNotice = ({
 
   const getDetailNotice = useCallback(async () => {
     if (!noticeId) return;
+    // ★ [SEC-11a ② · 2026-09-07 턴 J · 차선 C] **거절을 삼키지 않는다.**
+    //   이 파일에는 `await` 가 여덟인데 `try` 가 **하나도 없었다.** 접두 승격이 켜지면
+    //   그 여덟이 전부 예외로 끝나고, 전역 `unhandledrejection` 처리기는 0건이다 —
+    //   즉 서식이 빈 채로 뜨고 단추는 아무 말도 안 한다.
+    try {
     const { success, data, message } =
       await getNoticeManagementByIdAPI(noticeId);
     if (success) {
@@ -96,6 +102,9 @@ const EditNotice = ({
       });
     } else {
       ToastTopHelper.error(message);
+    }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('EditNotice.detail', error));
     }
   }, [noticeId, methods, getNoticeManagementByIdAPI]);
 
@@ -157,7 +166,14 @@ const EditNotice = ({
           is_update: false,
         };
 
-    await actionCommentAPI(params);
+    // ★ [SEC-11a ② · 턴 J · 차선 C] 돌려준 값을 **읽지도 않던** 자리다 —
+    //   댓글이 안 달려도 화면은 목록만 새로 그리고 아무 말도 안 했다.
+    try {
+      await actionCommentAPI(params);
+    } catch (error) {
+      ToastTopHelper.error(failureLine('EditNotice.comment', error));
+      return;
+    }
 
     // Refresh comments from page 1
     setComments([]);
@@ -172,6 +188,7 @@ const EditNotice = ({
 
   const onDeleteComment = async (id: string | number): Promise<void> => {
     if (!noticeId) return;
+    try {
     const { success, message } = await deleteCommentAPI({
       comment_id: Number(id),
     });
@@ -188,6 +205,9 @@ const EditNotice = ({
       });
     } else {
       ToastTopHelper.error(message);
+    }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('EditNotice.deleteComment', error));
     }
   };
 
@@ -206,67 +226,87 @@ const EditNotice = ({
   const onSubmit = async (data: { content: string; files: File[] }) => {
     const { content, files } = data;
 
-    const { success, message } = await addNoticeAPI({
-      id: noticeId,
-      content,
-      files,
-    });
-    if (success) {
-      ToastTopHelper.success(message);
-      onClose();
-      handleRefresh();
-    } else {
-      ToastTopHelper.error(message);
+    try {
+      const { success, message } = await addNoticeAPI({
+        id: noticeId,
+        content,
+        files,
+      });
+      if (success) {
+        ToastTopHelper.success(message);
+        onClose();
+        handleRefresh();
+      } else {
+        ToastTopHelper.error(message);
+      }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('EditNotice.submit', error));
     }
   };
 
   const handleCompleteNotice = async () => {
     if (!noticeId) return;
-    const { success, message } = await completeNoticeAPI(noticeId);
-    if (success) {
-      ToastTopHelper.success(message);
-      onClose();
-      handleRefresh();
-    } else {
-      ToastTopHelper.error(message);
+    try {
+      const { success, message } = await completeNoticeAPI(noticeId);
+      if (success) {
+        ToastTopHelper.success(message);
+        onClose();
+        handleRefresh();
+      } else {
+        ToastTopHelper.error(message);
+      }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('EditNotice.complete', error));
     }
   };
 
   const handleCancelCompletedNotice = async () => {
     if (!noticeId) return;
-    const { success, message } = await cancelCompletedNoticeAPI(noticeId);
-    if (success) {
-      ToastTopHelper.success(message);
-      onClose();
-      handleRefresh();
-    } else {
-      ToastTopHelper.error(message);
+    try {
+      const { success, message } = await cancelCompletedNoticeAPI(noticeId);
+      if (success) {
+        ToastTopHelper.success(message);
+        onClose();
+        handleRefresh();
+      } else {
+        ToastTopHelper.error(message);
+      }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('EditNotice.cancelCompleted', error));
     }
   };
 
   const handleDeleteNotice = async () => {
     if (!noticeId) return;
-    const { success, message } = await deleteNoticeAPI(noticeId);
-    if (success) {
-      ToastTopHelper.success(message);
-      handleRefresh();
-      getDetailNotice();
+    try {
+      const { success, message } = await deleteNoticeAPI(noticeId);
+      if (success) {
+        ToastTopHelper.success(message);
+        handleRefresh();
+        getDetailNotice();
 
-      !isCompletedNotice && onClose();
-    } else {
-      ToastTopHelper.error(message);
+        !isCompletedNotice && onClose();
+      } else {
+        ToastTopHelper.error(message);
+      }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('EditNotice.delete', error));
     }
   };
 
   const handleRestoreNotice = async () => {
     if (!noticeId) return;
-    const { success, message } = await restoreNoticeAPI(noticeId);
-    if (success) {
-      ToastTopHelper.success(message);
-      handleRefresh();
-      getDetailNotice();
-    } else {
-      ToastTopHelper.error(message);
+    try {
+      const { success, message } = await restoreNoticeAPI(noticeId);
+      if (success) {
+        ToastTopHelper.success(message);
+        handleRefresh();
+        getDetailNotice();
+      } else {
+        ToastTopHelper.error(message);
+      }
+    } catch (error) {
+      ToastTopHelper.error(failureLine('EditNotice.restore', error));
     }
   };
 
