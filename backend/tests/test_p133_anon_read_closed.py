@@ -51,7 +51,12 @@ import json
 
 from django.test import Client, TestCase
 
-from common.access_gate import AUTHN_REQUIRED_PATHS, AccessGateMiddleware
+from common.access_gate import (
+    ANON_PROJECTION_MAX_BYTES,
+    ANON_PUBLIC_PROJECTIONS,
+    AUTHN_REQUIRED_PATHS,
+    AccessGateMiddleware,
+)
 from tests.no_cache import NO_CACHE
 
 #: ★ **출생 표본** — `(경로, 그날 익명이 받은 바이트)`. 이 다섯이 P-133 이 태어난 이유다.
@@ -76,8 +81,13 @@ EMPTY_ONLY_BY_ACCIDENT = (
     ("/api/v1/auth/teams", 81),
 )
 
+#: ★ [D-461 · 2026-09-15 턴 P] 다섯 중 하나는 **닫지 않고 좁혔다.** 로그인 화면(§0.4 rj-core)이
+#:   로그인 전에 부르는 자리라, 닫자 로그인 부제목이 사라지고 배치의 걷기가 되돌렸다.
+#:   원 응답 16,436 B 는 여전히 안 나간다 — 공개 두 칸만 새로 만든 응답이 나간다(아래 ⑦).
+PROJECTED_NOT_CLOSED = ("/api/config-management/list-optimized",)
+
 #: 이 파일이 익명에게 401 을 요구하는 자리 전부.
-ALL_CLOSED = ANON_READ_LEAKS + EMPTY_ONLY_BY_ACCIDENT
+ALL_CLOSED = tuple(x for x in ANON_READ_LEAKS if x[0] not in PROJECTED_NOT_CLOSED)     + EMPTY_ONLY_BY_ACCIDENT
 
 #: ★ **음성 대조** — 공개가 설계인 문. 아직 로그인하지 못한 사람이 부르는 자리다.
 #: (`scripts/probe_read_surface.py::PUBLIC_READ_BY_DESIGN` 과 같은 판단 기준.)
@@ -122,7 +132,7 @@ class AnonymousReadLeaksAreClosedTest(TestCase):
 
     def test_no_payload_leaks_in_the_rejection(self):
         """② 거절 본문에 원래 자료가 섞여 나가지 않는다 — 109KB 가 나가던 자리다."""
-        for path, was in ANON_READ_LEAKS:
+        for path, was in ALL_CLOSED:
             resp = self.client.get(path, follow=True)
             body = resp.content or b""
             self.assertLess(
@@ -231,3 +241,83 @@ class DeclaredPathsMatchThisTestTest(TestCase):
         for path, _bytes in ALL_CLOSED:
             self.assertIn(path, gated, "앞단이 %s 를 모른다" % path)
             self.assertIn(path + "/", gated, "앞단이 %s/ 를 모른다" % path)
+
+
+class LoginConfigIsProjectedNotLeakedTest(TestCase):
+    """⑦ [D-461] 로그인 화면이 로그인 전에 읽는 **두 칸만** 나간다 — 원 응답의 보안 정책은 안 나간다.
+
+    출생 표본: 원 응답 16,436 B 의 `System` 묶음에는 `cidr`·`security`·`otp`·`validation`·`domain`
+    이 함께 들어 있었다. 투영은 원 응답을 **거르지 않고 새로 만든다** — 그래서 아래 표에 없는
+    칸은 이름조차 본문에 나올 수 없어야 한다.
+    """
+
+    PATH = PROJECTED_NOT_CLOSED[0]
+    #: 원 응답에 실제로 있던 보안 칸들 — 투영 본문에 **글자로도** 나오면 안 된다.
+    FORBIDDEN = ("cidr", "security", "otp", "validation", "domain", "refresh_time", "Operation")
+
+    def setUp(self):
+        from core.configuration.models import AdminConfig
+        self.client = Client(raise_request_exception=False, **NO_CACHE)
+        AdminConfig.objects.create(
+            name="System", is_active=True, is_sensitive=False, description="t",
+            settings={"subtitle": {"ko": "AI기반 드론.로봇 통합 운영 서비스", "en": "AI-based"},
+                      "cidr": ["10.0.0.0/8"], "security": {"lock": 5}, "otp": {"on": True},
+                      "validation": {"min": 8}, "domain": "x.invalid", "refresh_time": 60})
+        # ★ 이 환경의 실제 행처럼 **비활성**으로 둔다 — 원 뷰는 이것도 실었고 로그인 화면은 읽었다.
+        AdminConfig.objects.create(
+            name="system_register", is_active=False, is_sensitive=False, description="t",
+            settings={"is_allow_register": {"value": False, "description": "Allow register"}})
+        AdminConfig.objects.create(
+            name="Operation", is_active=True, is_sensitive=False, description="t",
+            settings={"secret_ops": {"value": "do-not-leak"}})
+
+    def _get(self, path=None, **kw):
+        resp = self.client.get(path or self.PATH, follow=True, **kw)
+        return resp, json.loads((resp.content or b"{}").decode("utf-8", "replace"))
+
+    def test_anonymous_gets_only_the_two_public_cells(self):
+        resp, body = self._get()
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.get("X-GX-Public-Projection"), "login-config")
+        folded = {r["name"]: r["settings"] for r in body["data"]}   # rj-core `bM` 과 같은 접기
+        self.assertEqual(set(folded), {"System", "system_register"})
+        self.assertEqual(set(folded["System"]), {"subtitle"})
+        self.assertEqual(set(folded["system_register"]), {"is_allow_register"})
+        self.assertEqual(folded["System"]["subtitle"]["ko"], "AI기반 드론.로봇 통합 운영 서비스")
+
+    def test_security_policy_never_appears_even_as_a_word(self):
+        resp, _ = self._get()
+        text = resp.content.decode("utf-8", "replace")
+        for word in self.FORBIDDEN + ("do-not-leak", "10.0.0.0"):
+            self.assertNotIn(word, text, "투영 본문에 %r 가 나왔다 — 거름이 아니라 누출이다" % word)
+        self.assertLess(len(resp.content), ANON_PROJECTION_MAX_BYTES)
+
+    def test_name_parameter_is_honoured_and_cannot_widen(self):
+        _, one = self._get(self.PATH + "?name=System")
+        self.assertEqual([r["name"] for r in one["data"]], ["System"])
+        _, other = self._get(self.PATH + "?name=Operation")
+        self.assertEqual(other["data"], [], "허용 목록 밖의 이름을 달라고 하면 빈 목록이어야 한다")
+
+    def test_trailing_slash_is_the_same_projection(self):
+        resp, _ = self._get(self.PATH + "/")
+        self.assertEqual(resp.get("X-GX-Public-Projection"), "login-config")
+
+    def test_sensitive_group_is_withheld_even_if_named(self):
+        from core.configuration.models import AdminConfig
+        AdminConfig.objects.filter(name="System").update(is_sensitive=True)
+        _, body = self._get()
+        self.assertNotIn("System", [r["name"] for r in body["data"]])
+
+    def test_credential_bearing_request_is_not_projected(self):
+        resp = self.client.get(self.PATH, follow=True,
+                               HTTP_AUTHORIZATION="Bearer not-a-real-token-000000")
+        self.assertIsNone(resp.get("X-GX-Public-Projection"),
+                          "자격증명을 들고 온 요청까지 투영했다 — 인증 사용자의 화면이 줄어든다")
+
+    def test_projection_is_declared_and_not_double_gated(self):
+        """선언은 한 자리 — 401 목록에도 있으면 투영보다 거절이 먼저 나갈 수 있다. 앞단도 막으면 운영 모양(8500)에서 로그인 부제목이 다시 빈다."""
+        from common import front_line
+        self.assertIn(self.PATH, ANON_PUBLIC_PROJECTIONS)
+        self.assertNotIn(self.PATH, AUTHN_REQUIRED_PATHS)
+        gated = front_line.parse_gated_paths(front_line.render_locations())
+        self.assertNotIn(self.PATH, gated, "앞단이 투영 자리를 401 로 막는다")

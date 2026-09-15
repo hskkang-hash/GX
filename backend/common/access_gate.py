@@ -242,7 +242,8 @@ AUTHN_REQUIRED_PATHS: tuple[str, ...] = (
     "/api/v1/auth/timezones",
     "/api/v1/auth/groups",
     "/api/v1/auth/languages",
-    "/api/config-management/list-optimized",
+    # "/api/config-management/list-optimized" — ★ D-461: 닫지 않고 **좁혔다**.
+    #   로그인 화면(rj-core)이 로그인 전에 부른다. 아래 `ANON_PUBLIC_PROJECTIONS` 참조.
     "/api/register-settings",
     # ★ 같은 실측이 **옆자리 셋**을 함께 냈다 — 「비었으니 안전하다」가 아니다 (D-301)
     #
@@ -288,6 +289,29 @@ AUTHN_REQUIRED_PREFIXES: tuple[str, ...] = (
 )
 
 #: 이 관문이 보는 면. API 밖(관리자·정적·문서)은 종전대로 둔다 — 넓히면 로그인 화면까지 막는다.
+#: ★★ [D-461 · 2026-09-15 턴 P] **닫은 문 하나가 로그인 화면의 부제목을 지웠다 — 막지 않고 좁힌다.**
+#:   P-133 이 익명에게 닫은 `/api/config-management/list-optimized`(16,436 B)를 로그인 화면이
+#:   **로그인 전에** 부른다. 부르는 쪽은 `frontend/src` 가 아니라 §0.4 `rj-core` 다
+#:   (`rj-core.umd.js` · `fetchDataDev` → `configManagementDev` · `?name=<묶음>`) — 그래서 P-133 의
+#:   `frontend/src` 전수 검색에 안 잡혔다. 닫은 뒤 로그인 화면은 `System.subtitle`
+#:   (「AI기반 드론.로봇 통합 운영 서비스」)을 잃었고, 콘솔에 401 + 「Token refresh failed」 두 줄을
+#:   남겨 배치의 걷기 게이트가 **배치를 되돌렸다** [실측 2026-09-15 · walk_20260915_142614].
+#:   원 응답의 `System` 묶음은 `cidr`·`security`·`otp`·`validation`·`domain` 을 함께 싣는다 —
+#:   다시 여는 것은 답이 아니다. 로그인 컴포넌트가 로그인 전에 읽는 **두 칸만** 우리 층에서
+#:   **새로 만들어** 낸다. 원 응답을 거르지 않는 이유: 거르면 거름망의 구멍이 곧 누출이다.
+#:   만들면 여기 적지 않은 것은 나갈 수 없다(거부 기본값 · D-284).
+#:   rj-core 는 `data` 를 `name → settings` 로 접는다(`bM`) — 그래서 칸은 이 둘로 충분하다.
+#:   ⚠ 되돌리기: 이 항목을 지우고 경로를 `AUTHN_REQUIRED_PATHS` 로 되돌린다(로그인 부제목이 다시 빈다).
+ANON_PUBLIC_PROJECTIONS: dict[str, dict[str, tuple[str, ...]]] = {
+    "/api/config-management/list-optimized": {
+        "System": ("subtitle",),                       # 로그인 화면 부제목
+        "system_register": ("is_allow_register",),     # 「회원가입」 링크를 그릴지
+    },
+}
+#: 투영 응답의 크기 상한 — 넘으면 **닫는다**(투영이 자라는 것은 누출이 자라는 것이다).
+ANON_PROJECTION_MAX_BYTES = 1024
+
+
 API_PREFIX = "/api/"
 
 #: 인증 면 자체. 여기까지 막으면 **아무도 키를 받을 수 없다** — 관문이 문을 잠그고 열쇠를 삼킨다.
@@ -332,6 +356,12 @@ class AccessGateMiddleware:
             p if p.endswith("/") else p + "/" for p in AUTHN_REQUIRED_PREFIXES)
 
     def __call__(self, request):
+        # ★ D-461 — 자격증명이 없는 GET 이 공개 투영 자리를 부르면, 뒷단에 닿기 전에 여기서 답한다.
+        if not _has_credentials(request):
+            projected = self._anon_projection(request)
+            if projected is not None:
+                return projected
+
         verdict = self.judge(
             method=request.method,
             path=request.path,
@@ -351,6 +381,37 @@ class AccessGateMiddleware:
             return rejection
 
         return self.get_response(request)
+
+    # ── D-461 — 공개 투영. 원 응답을 거르지 않고 **허용한 칸만 새로 만든다** ──────
+    @staticmethod
+    def _anon_projection(request):
+        """익명 GET 이 `ANON_PUBLIC_PROJECTIONS` 의 자리를 부르면 공개 칸만 담은 응답. 아니면 `None`."""
+        if request.method != "GET":
+            return None
+        spec = ANON_PUBLIC_PROJECTIONS.get(_normalize(request.path))
+        if spec is None:
+            return None
+        from core.configuration.models import AdminConfig   # dj-core — 읽기만 (§0.4)
+
+        wanted = (request.GET.get("name") or "").strip()
+        names = [n for n in spec if not wanted or wanted == n]
+        rows = []
+        #: `is_sensitive` 로 표시된 묶음은 이름이 허용 목록에 있어도 **내지 않는다**(닫힌 쪽).
+        #: `is_active` 로는 거르지 않는다 — 원 뷰가 거르지 않았다. 이 환경의 `system_register` 는
+        #: `is_active=False` 인데 원 응답 16,436 B 의 `data[6]` 에 들어 있었고 로그인 화면은 그 값을
+        #: 읽어 왔다 [실측 2026-09-15]. 여기서 거르면 운영자가 가입을 켜도 로그인 화면만 모른다.
+        for cfg in AdminConfig.objects.filter(name__in=names, is_sensitive=False):
+            src = cfg.settings or {}
+            rows.append({"name": cfg.name,
+                         "settings": {k: src[k] for k in spec.get(cfg.name, ()) if k in src}})
+        resp = JsonResponse({"success": True, "status": 200, "count": len(rows), "data": rows})
+        if len(resp.content) > ANON_PROJECTION_MAX_BYTES:
+            logger.warning("[ACCESS-GATE] 공개 투영이 %d바이트 — 상한 %d 를 넘어 닫는다: %s",
+                           len(resp.content), ANON_PROJECTION_MAX_BYTES, request.path)
+            return _denied("authentication required")
+        resp["X-GX-Public-Projection"] = "login-config"
+        resp["Cache-Control"] = "no-store"
+        return resp
 
     # ── P-113 — 한 자리짜리 재인증 규칙. 길목은 여기, 판정은 저기 ────────────
     @staticmethod
