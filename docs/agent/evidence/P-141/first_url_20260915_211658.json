@@ -1,0 +1,82 @@
+{
+  "what": "P-141 · AC-1 — 역할 계정 화면 로그인 직후 첫 주소 (값 없음)",
+  "how": "gx-shell playwright · SPA http://localhost:3002 · API 번들 그대로(localhost:8000) · verify_click_completes.ui_login 과 같은 손",
+  "measured": "20260915_211658",
+  "rows": [
+    {
+      "persona": "U1",
+      "user": "gxseed_u1_operator",
+      "viewport": [
+        1440,
+        900
+      ],
+      "mobile": false,
+      "expect": "/dsm/queue",
+      "got": "/dsm/queue",
+      "ok": true,
+      "headline_seen": true,
+      "on_profile": false,
+      "screenshot": "docs/agent/evidence/P-141/first_url/20260915_211658_U1_1440px.png"
+    },
+    {
+      "persona": "U2",
+      "user": "gxseed_u2_manager",
+      "viewport": [
+        1440,
+        900
+      ],
+      "mobile": false,
+      "expect": "/dsm/events",
+      "got": "/dsm/events",
+      "ok": true,
+      "headline_seen": null,
+      "on_profile": false,
+      "screenshot": "docs/agent/evidence/P-141/first_url/20260915_211658_U2_1440px.png"
+    },
+    {
+      "persona": "U4",
+      "user": "gxseed_u4_official",
+      "viewport": [
+        1440,
+        900
+      ],
+      "mobile": false,
+      "expect": "/dsm/events?period=d7",
+      "got": "/dsm/events?period=d7",
+      "ok": true,
+      "headline_seen": null,
+      "on_profile": false,
+      "screenshot": "docs/agent/evidence/P-141/first_url/20260915_211658_U4_1440px.png"
+    },
+    {
+      "persona": "U5",
+      "user": "gxseed_u5_sysop",
+      "viewport": [
+        1440,
+        900
+      ],
+      "mobile": false,
+      "expect": "/dsm/dashboard",
+      "got": "/dsm/dashboard",
+      "ok": true,
+      "headline_seen": null,
+      "on_profile": false,
+      "screenshot": "docs/agent/evidence/P-141/first_url/20260915_211658_U5_1440px.png"
+    },
+    {
+      "persona": "U3",
+      "user": "gxseed_u1_operator",
+      "viewport": [
+        390,
+        844
+      ],
+      "mobile": true,
+      "expect": "/m/inbox",
+      "got": "/m/inbox",
+      "ok": true,
+      "headline_seen": null,
+      "on_profile": false,
+      "screenshot": "docs/agent/evidence/P-141/first_url/20260915_211658_U3_390px.png"
+    }
+  ]
+}
