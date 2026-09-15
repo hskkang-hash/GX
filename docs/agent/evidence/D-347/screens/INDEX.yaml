@@ -87,206 +87,505 @@ screens:
   #   로그인으로 튕긴 뒤 찍은 PNG 도 파일은 생기므로, 「파일이 생겼다」를 성공으로
   #   두면 이 인덱스가 거짓말을 싣게 된다.
   #
-  #   ⚠ [실측 2026-09-13 · D-386] 역할은 **`NO_ROLE`** 이다. 이 계정은 제품의 `role` 이
-  #     **비어 있다** — 1차판이 `OPERATOR` 라 적어 두었던 자리이고, 그것은 진술이지
-  #     실측이 아니었다(D-323). 지금은 제품이 들고 있는 값을 읽어 적는다.
-  #     그리고 그 사실이 화면 하나를 설명한다: `/users` 는 **본문 0자**로 떴다.
-  #     빈 화면은 찍지 않았고 결함으로 등재했다(RJCORE_BLANK_ON_NO_PERMISSION).
+  #   ★★ [실측 2026-09-07 · P-98] **앞선 33장은 전부 역할 없는 계정이 찍은 것이었다.**
+  #     `gxprobe_e2e` 의 역할 목록은 비어 있다(`user.roles` = []). 그 벌은 「제품이
+  #     된다」의 증거가 아니라 **「역할 없는 사람에게 무엇이 보이는가」**의 측정이었고,
+  #     그 자체로 값이 있으므로 지우지 않고 옮겼다:
+  #         docs/agent/evidence/P-98/denied/  (33장 · 판정문 FINDINGS.md 와 함께)
+  #     이번 벌은 **역할을 실제로 가진 계정 넷**으로 다시 찍는다. 그래서 항목마다
+  #     `viewed_by` 가 붙는다 — 「누가 봤나」를 인덱스가 말하지 않으면 같은 사고가
+  #     또 난다. 그 한 칸이 없어서 33장이 넉 달치 인수 증거 행세를 했다.
+  #
+  #   ⚠ `user_role` 은 계정의 **역할 코드**다(fire_user·fire_admin·admin·
+  #     view_only_-_anyang). `NO_ROLE` 이 보이면 그것은 화면의 사실이 아니라
+  #     **계정의 사실**이고, 그 줄은 인수 증거가 아니다.
   - route: /login
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/L1
-    captured_at: "2026-09-07T14:10:42"
-    file: SCREENS-1/NO_ROLE/login_credentials.png
+    captured_at: "2026-09-07T16:51:28"
+    file: SCREENS-1/fire_user/login_credentials.png
     data_source: 실측 (가로채지 않았다 — 진짜 서버(8000)가 거절한 답이다)
+    persona: U1
+    viewed_by: "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중"
+    calls:
+      - "GET /api/config-management/list-optimized 200"
+      - "POST /api/v1/auth/login 400"
   - route: /login
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/L2
-    captured_at: "2026-09-07T14:10:50"
-    file: SCREENS-1/NO_ROLE/login_locked.png
+    captured_at: "2026-09-07T16:51:35"
+    file: SCREENS-1/fire_user/login_locked.png
     data_source: 모의 (서버의 잠금 본문 모양을 주입했다 — 계정을 진짜로 잠그지 않는다)
+    persona: U1
+    viewed_by: "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중"
+    calls:
+      - "GET /api/config-management/list-optimized 200"
   - route: /login
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/L3
-    captured_at: "2026-09-07T14:10:57"
-    file: SCREENS-1/NO_ROLE/login_forbidden.png
+    captured_at: "2026-09-07T16:51:43"
+    file: SCREENS-1/fire_user/login_forbidden.png
     data_source: 모의 (403 을 주입했다 — 권한 없는 실재 계정을 만들어 찍지 않는다)
+    persona: U1
+    viewed_by: "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중"
+    calls:
+      - "GET /api/config-management/list-optimized 200"
   - route: /login
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/L4
-    captured_at: "2026-09-07T14:11:05"
-    file: SCREENS-1/NO_ROLE/login_server_error.png
+    captured_at: "2026-09-07T16:51:50"
+    file: SCREENS-1/fire_user/login_server_error.png
     data_source: 모의 (500 을 주입했다 · 본문은 HTML(장고 오류 쪽) — 그 바이트가 화면에 새는지도 본다)
+    persona: U1
+    viewed_by: "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중"
+    calls:
+      - "GET /api/config-management/list-optimized 200"
   - route: /login
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/L5
-    captured_at: "2026-09-07T14:11:12"
-    file: SCREENS-1/NO_ROLE/login_network.png
+    captured_at: "2026-09-07T16:51:58"
+    file: SCREENS-1/fire_user/login_network.png
     data_source: 모의 (연결 자체를 끊었다 — axios 원문이 태어나던 자리)
+    persona: U1
+    viewed_by: "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중"
+    calls:
+      - "GET /api/config-management/list-optimized 200"
   - route: /dsm/dashboard
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/1
-    captured_at: "2026-09-07T14:11:31"
-    file: SCREENS-1/NO_ROLE/dsm_dashboard.png
+    captured_at: "2026-09-07T16:52:18"
+    file: SCREENS-1/fire_user/dsm_dashboard.png
     data_source: 시드
+    persona: U1
+    viewed_by: "U1 · gxseed_u1_operator · fire_user · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/dashboard/frame 200"
+      - "GET /api/dsm/events?limit=10 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /dsm/events
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/2
-    captured_at: "2026-09-07T14:11:39"
-    file: SCREENS-1/NO_ROLE/dsm_events.png
+    captured_at: "2026-09-07T16:52:25"
+    file: SCREENS-1/fire_user/dsm_events.png
     data_source: 시드
-  - route: /dsm/events/49305
-    user_role: NO_ROLE
+    persona: U1
+    viewed_by: "U1 · gxseed_u1_operator · fire_user · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/events/summary?hours=12 200"
+      - "GET /api/dsm/events?limit=50&response_state=occurred 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /dsm/events/99554
+    user_role: fire_user
     scenario: SCREENS-1/3
-    captured_at: "2026-09-07T14:11:48"
-    file: SCREENS-1/NO_ROLE/dsm_events_49305.png
+    captured_at: "2026-09-07T16:52:33"
+    file: SCREENS-1/fire_user/dsm_events_99554.png
     data_source: 시드
-  - route: /device
-    user_role: NO_ROLE
-    scenario: SCREENS-1/4
-    captured_at: "2026-09-07T14:11:56"
-    file: SCREENS-1/NO_ROLE/device.png
-    data_source: 시드
-  - route: /roles
-    user_role: NO_ROLE
-    scenario: SCREENS-1/5
-    captured_at: "2026-09-07T14:12:03"
-    file: SCREENS-1/NO_ROLE/roles.png
-    data_source: 시드
-  - route: /menu
-    user_role: NO_ROLE
-    scenario: SCREENS-1/6
-    captured_at: "2026-09-07T14:12:10"
-    file: SCREENS-1/NO_ROLE/menu.png
-    data_source: 시드
-  - route: /configuration-management
-    user_role: NO_ROLE
-    scenario: SCREENS-1/7
-    captured_at: "2026-09-07T14:12:19"
-    file: SCREENS-1/NO_ROLE/configuration-management.png
-    data_source: 시드
-  - route: /profile
-    user_role: NO_ROLE
-    scenario: SCREENS-1/8
-    captured_at: "2026-09-07T14:12:26"
-    file: SCREENS-1/NO_ROLE/profile.png
-    data_source: 시드
-  - route: /surveillance-dashboard
-    user_role: NO_ROLE
-    scenario: SCREENS-1/9
-    captured_at: "2026-09-07T14:12:33"
-    file: SCREENS-1/NO_ROLE/surveillance-dashboard.png
-    data_source: 시드
-  - route: /survey-profile
-    user_role: NO_ROLE
-    scenario: SCREENS-1/10
-    captured_at: "2026-09-07T14:12:40"
-    file: SCREENS-1/NO_ROLE/survey-profile.png
-    data_source: 시드
-  - route: /media-data
-    user_role: NO_ROLE
-    scenario: SCREENS-1/11
-    captured_at: "2026-09-07T14:12:49"
-    file: SCREENS-1/NO_ROLE/media-data.png
-    data_source: 시드
-  - route: /flight-log-analysis
-    user_role: NO_ROLE
-    scenario: SCREENS-1/12
-    captured_at: "2026-09-07T14:12:57"
-    file: SCREENS-1/NO_ROLE/flight-log-analysis.png
-    data_source: 시드
-  - route: /multi-stream-monitor
-    user_role: NO_ROLE
-    scenario: SCREENS-1/13
-    captured_at: "2026-09-07T14:13:05"
-    file: SCREENS-1/NO_ROLE/multi-stream-monitor.png
-    data_source: 시드
-  - route: /operation-settings
-    user_role: NO_ROLE
-    scenario: SCREENS-1/14
-    captured_at: "2026-09-07T14:13:12"
-    file: SCREENS-1/NO_ROLE/operation-settings.png
-    data_source: 시드
-  - route: /report-template
-    user_role: NO_ROLE
-    scenario: SCREENS-1/15
-    captured_at: "2026-09-07T14:13:20"
-    file: SCREENS-1/NO_ROLE/report-template.png
-    data_source: 시드
-  - route: /notam
-    user_role: NO_ROLE
-    scenario: SCREENS-1/16
-    captured_at: "2026-09-07T14:13:29"
-    file: SCREENS-1/NO_ROLE/notam.png
-    data_source: 시드
+    persona: U1
+    viewed_by: "U1 · gxseed_u1_operator · fire_user · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/deliveries?event_id=99554 200"
+      - "GET /api/dsm/events/99554 200"
+      - "GET /api/dsm/events/99554/timeline 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /dsm/events?preset=unhandled
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/17
-    captured_at: "2026-09-07T14:13:37"
-    file: SCREENS-1/NO_ROLE/dsm_events_preset_unhandled.png
+    captured_at: "2026-09-07T16:52:40"
+    file: SCREENS-1/fire_user/dsm_events_preset_unhandled.png
     data_source: 시드
+    persona: U1
+    viewed_by: "U1 · gxseed_u1_operator · fire_user · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/events/summary?hours=12 200"
+      - "GET /api/dsm/events?limit=50&response_state=occurred 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /dsm/events?preset=recent
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/18
-    captured_at: "2026-09-07T14:13:45"
-    file: SCREENS-1/NO_ROLE/dsm_events_preset_recent.png
+    captured_at: "2026-09-07T16:52:48"
+    file: SCREENS-1/fire_user/dsm_events_preset_recent.png
     data_source: 시드
+    persona: U1
+    viewed_by: "U1 · gxseed_u1_operator · fire_user · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/events/summary?hours=12 200"
+      - "GET /api/dsm/events?limit=50&since=2026-09-06T21:52:42.428Z&until=2026-09-07T09:52:42.428Z 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /dsm/events?preset=mine
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/19
-    captured_at: "2026-09-07T14:13:53"
-    file: SCREENS-1/NO_ROLE/dsm_events_preset_mine.png
+    captured_at: "2026-09-07T16:52:55"
+    file: SCREENS-1/fire_user/dsm_events_preset_mine.png
     data_source: 시드
+    persona: U1
+    viewed_by: "U1 · gxseed_u1_operator · fire_user · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/events/summary?hours=12 200"
+      - "GET /api/dsm/events?limit=50&mine=true 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /dsm/events?preset=system
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/20
-    captured_at: "2026-09-07T14:14:00"
-    file: SCREENS-1/NO_ROLE/dsm_events_preset_system.png
+    captured_at: "2026-09-07T16:53:03"
+    file: SCREENS-1/fire_user/dsm_events_preset_system.png
     data_source: 시드
-  - route: /dsm/events/49305
-    user_role: NO_ROLE
+    persona: U1
+    viewed_by: "U1 · gxseed_u1_operator · fire_user · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/dashboard/link-state 200"
+      - "GET /api/dsm/events/summary?hours=12 200"
+      - "GET /api/dsm/events?limit=50&event_type=camera_down,storage_high 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /dsm/events/99554
+    user_role: fire_user
     scenario: SCREENS-1/21
-    captured_at: "2026-09-07T14:14:07"
-    file: SCREENS-1/NO_ROLE/dsm_events_id_verdict_panel.png
+    captured_at: "2026-09-07T16:53:12"
+    file: SCREENS-1/fire_user/dsm_events_id_verdict_panel.png
     data_source: 시드
+    persona: U1
+    viewed_by: "U1 · gxseed_u1_operator · fire_user · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/deliveries?event_id=99554 200"
+      - "GET /api/dsm/events/99554 200"
+      - "GET /api/dsm/events/99554/timeline 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /dsm/queue
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/22
-    captured_at: "2026-09-07T14:14:15"
-    file: SCREENS-1/NO_ROLE/dsm_queue_focus.png
+    captured_at: "2026-09-07T16:53:19"
+    file: SCREENS-1/fire_user/dsm_queue_focus.png
     data_source: 시드
+    persona: U1
+    viewed_by: "U1 · gxseed_u1_operator · fire_user · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/events/4805/snapshot 200"
+      - "GET /api/dsm/events/queue?limit=200 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /multi-stream-monitor
+    user_role: fire_admin
+    scenario: SCREENS-1/13
+    captured_at: "2026-09-07T16:53:43"
+    file: SCREENS-1/fire_admin/multi-stream-monitor.png
+    data_source: 시드
+    persona: U2
+    viewed_by: "U2 · gxseed_u2_manager · fire_admin · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/stream-monitors/stream-monitors 200"
+      - "GET /api/stream-monitors/stream-monitors/ai-models 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /dsm/drill
-    user_role: NO_ROLE
+    user_role: fire_admin
     scenario: SCREENS-1/23
-    captured_at: "2026-09-07T14:14:22"
-    file: SCREENS-1/NO_ROLE/dsm_drill_mode.png
+    captured_at: "2026-09-07T16:53:51"
+    file: SCREENS-1/fire_admin/dsm_drill_mode.png
     data_source: 시드
+    persona: U2
+    viewed_by: "U2 · gxseed_u2_manager · fire_admin · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/drill 200"
+      - "GET /api/dsm/drill/report 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /dsm/cameras/import
-    user_role: NO_ROLE
+    user_role: fire_admin
     scenario: SCREENS-1/24
-    captured_at: "2026-09-07T14:14:29"
-    file: SCREENS-1/NO_ROLE/dsm_cameras_import_dryrun.png
+    captured_at: "2026-09-07T16:54:00"
+    file: SCREENS-1/fire_admin/dsm_cameras_import_dryrun.png
     data_source: 시드
+    persona: U2
+    viewed_by: "U2 · gxseed_u2_manager · fire_admin · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/cameras/address-gap 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /dsm/cameras/address
-    user_role: NO_ROLE
+    user_role: fire_admin
     scenario: SCREENS-1/25
-    captured_at: "2026-09-07T14:14:36"
-    file: SCREENS-1/NO_ROLE/dsm_cameras_address_fill.png
+    captured_at: "2026-09-07T16:54:07"
+    file: SCREENS-1/fire_admin/dsm_cameras_address_fill.png
     data_source: 시드
+    persona: U2
+    viewed_by: "U2 · gxseed_u2_manager · fire_admin · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/cameras/address-gap 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /start?role=OPERATOR
-    user_role: NO_ROLE
+    user_role: fire_admin
     scenario: SCREENS-1/26
-    captured_at: "2026-09-07T14:14:45"
-    file: SCREENS-1/NO_ROLE/start_onboarding.png
+    captured_at: "2026-09-07T16:54:15"
+    file: SCREENS-1/fire_admin/start_onboarding.png
     data_source: 시드
+    persona: U2
+    viewed_by: "U2 · gxseed_u2_manager · fire_admin · 1440px"
+    calls:
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /m/inbox
-    user_role: NO_ROLE
+    user_role: fire_user
     scenario: SCREENS-1/27
-    captured_at: "2026-09-07T14:14:52"
-    file: SCREENS-1/NO_ROLE/m_inbox_m1.png
+    captured_at: "2026-09-07T16:54:36"
+    file: SCREENS-1/fire_user/m_inbox_m1.png
     data_source: 시드
-  - route: /m/events/49305
-    user_role: NO_ROLE
+    persona: U3
+    viewed_by: "U3 · gxseed_u1_operator · fire_user · 390px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/deliveries?limit=50 200"
+      - "GET /api/dsm/events?limit=200 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /m/events/99554
+    user_role: fire_user
     scenario: SCREENS-1/28
-    captured_at: "2026-09-07T14:15:00"
-    file: SCREENS-1/NO_ROLE/m_events_id_m3_field_reply.png
+    captured_at: "2026-09-07T16:54:44"
+    file: SCREENS-1/fire_user/m_events_id_m3_field_reply.png
     data_source: 시드
+    persona: U3
+    viewed_by: "U3 · gxseed_u1_operator · fire_user · 390px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/events/99554 200"
+      - "GET /api/dsm/events/99554/clip 404"
+      - "GET /api/dsm/events/99554/field-replies 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /surveillance-dashboard
+    user_role: view_only_-_anyang
+    scenario: SCREENS-1/9
+    captured_at: "2026-09-07T16:55:09"
+    file: SCREENS-1/view_only_-_anyang/surveillance-dashboard.png
+    data_source: 시드
+    persona: U4
+    viewed_by: "U4 · gxseed_u4_official · view_only_-_anyang · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-06T17:00:00%2B00:00&end_date=2026-09-07T16:59:59%2B00:00&limit=100&page=1&page_size=5 403"
+      - "GET /api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-05T17:00:00%2B00:00&end_date=2026-09-12T16:59:59%2B00:00 403"
+      - "GET /api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-07 403"
+      - "GET /api/surveillance/surveillance-dashboard/drone-status-overview 403"
+      - "GET /api/surveillance/surveillance-dashboard/today-profiles-polygon 403"
+      - "GET /api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4 403"
+      - "GET /api/surveillance/surveillance-dashboard/weather-setting 403"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /media-data
+    user_role: view_only_-_anyang
+    scenario: SCREENS-1/11
+    captured_at: "2026-09-07T16:55:17"
+    file: SCREENS-1/view_only_-_anyang/media-data.png
+    data_source: 시드
+    persona: U4
+    viewed_by: "U4 · gxseed_u4_official · view_only_-_anyang · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/media-data/?page_size=25&current_page=1 200"
+      - "GET /api/media-data?page_size=25&current_page=1 301"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/stream-monitors/stream-monitors/ai-models 200"
+      - "GET /api/user-groups/?page_size=10000&current_page=1 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /flight-log-analysis
+    user_role: view_only_-_anyang
+    scenario: SCREENS-1/12
+    captured_at: "2026-09-07T16:55:25"
+    file: SCREENS-1/view_only_-_anyang/flight-log-analysis.png
+    data_source: 시드
+    persona: U4
+    viewed_by: "U4 · gxseed_u4_official · view_only_-_anyang · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/flight-log/flight-log/?page_size=25&current_page=1 403"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/?page_size=10000&current_page=1 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /report-template
+    user_role: view_only_-_anyang
+    scenario: SCREENS-1/15
+    captured_at: "2026-09-07T16:55:32"
+    file: SCREENS-1/view_only_-_anyang/report-template.png
+    data_source: 시드
+    persona: U4
+    viewed_by: "U4 · gxseed_u4_official · view_only_-_anyang · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /notam
+    user_role: view_only_-_anyang
+    scenario: SCREENS-1/16
+    captured_at: "2026-09-07T16:55:40"
+    file: SCREENS-1/view_only_-_anyang/notam.png
+    data_source: 시드
+    persona: U4
+    viewed_by: "U4 · gxseed_u4_official · view_only_-_anyang · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/?page_size=10000&current_page=1 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      - "POST /api/proxy/notam 200"
+  - route: /device
+    user_role: admin
+    scenario: SCREENS-1/4
+    captured_at: "2026-09-07T16:56:00"
+    file: SCREENS-1/admin/device.png
+    data_source: 시드
+    persona: U5
+    viewed_by: "U5 · gxseed_u5_sysop · admin · 1440px"
+    calls:
+      - "GET /api/advanced-table/grid-management/50/detail 200"
+      - "GET /api/advanced-table/grid-management?menu_id=107 200"
+      - "GET /api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name 200"
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/devices/devices-management?page_size=25&current_page=1&depth=2 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /roles
+    user_role: admin
+    scenario: SCREENS-1/5
+    captured_at: "2026-09-07T16:56:08"
+    file: SCREENS-1/admin/roles.png
+    data_source: 시드
+    persona: U5
+    viewed_by: "U5 · gxseed_u5_sysop · admin · 1440px"
+    calls:
+      - "GET /api/advanced-table/grid-management/10/detail 200"
+      - "GET /api/advanced-table/grid-management?menu_id=107 200"
+      - "GET /api/advanced-table/grid-management?menu_id=5 200"
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/roles/?page_size=25&current_page=1 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /menu
+    user_role: admin
+    scenario: SCREENS-1/6
+    captured_at: "2026-09-07T16:56:15"
+    file: SCREENS-1/admin/menu.png
+    data_source: 시드
+    persona: U5
+    viewed_by: "U5 · gxseed_u5_sysop · admin · 1440px"
+    calls:
+      - "GET /api/advanced-table/grid-management/9/detail 200"
+      - "GET /api/advanced-table/grid-management?menu_id=4 200"
+      - "GET /api/advanced-table/grid-management?menu_id=5 200"
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/menu/menus?page_size=25&current_page=1 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /configuration-management
+    user_role: admin
+    scenario: SCREENS-1/7
+    captured_at: "2026-09-07T16:56:23"
+    file: SCREENS-1/admin/configuration-management.png
+    data_source: 시드
+    persona: U5
+    viewed_by: "U5 · gxseed_u5_sysop · admin · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/config-management/list?page_size=25&current_page=1 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/?page_size=10000&current_page=1 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /profile
+    user_role: admin
+    scenario: SCREENS-1/8
+    captured_at: "2026-09-07T16:56:30"
+    file: SCREENS-1/admin/profile.png
+    data_source: 시드
+    persona: U5
+    viewed_by: "U5 · gxseed_u5_sysop · admin · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/departments/?page_size=10000&current_page=1&group__id=4 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/?page_size=10000&current_page=1 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      - "GET /api/v1/user/get-user-detail/115 200"
+  - route: /operation-settings
+    user_role: admin
+    scenario: SCREENS-1/14
+    captured_at: "2026-09-07T16:56:46"
+    file: SCREENS-1/admin/operation-settings.png
+    data_source: 시드
+    persona: U5
+    viewed_by: "U5 · gxseed_u5_sysop · admin · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
