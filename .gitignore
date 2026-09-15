@@ -100,3 +100,7 @@ tools/
 # 만들어진 설정을 저장소에 담으면 목록이 두 벌이 되고, 두 벌은 반드시 어긋난다(D-369).
 # 앞단을 세울 때 `scripts/ops_front_line.py --render` 로 그 자리에서 만든다.
 nginx/generated/
+
+# P-136 — 원격이 열리는 날 첫 push 를 5분으로 만드는 git bundle(저장소 전체의 사본).
+# 저장소가 자기 사본을 나르지 않는다 — 번들은 저장소 밖으로 옮겨 쓰는 물건이다.
+docs/agent/evidence/bundles/*.bundle

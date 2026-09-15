@@ -1,0 +1,184 @@
+{
+  "when": "20260915_194428",
+  "what": "P-135 게이트 계정 비밀번호 회전 — 값 없음(이름·길이·sha256[:12]만)",
+  "keys": {
+    "GX_ROUTE_PASSWORD_ROLE0": {
+      "accounts": [
+        "gxprobe_e2e"
+      ],
+      "old_len": 26,
+      "new_len": 24,
+      "new_sha12": "cf998b6d12d1"
+    },
+    "GX_SEED_ROLE_PASSWORD": {
+      "accounts": [
+        "gxseed_u5_sysop",
+        "gxseed_u2_manager",
+        "gxseed_u4_official",
+        "gxseed_u1_operator"
+      ],
+      "old_len": 18,
+      "new_len": 24,
+      "new_sha12": "de08e1f17eb3"
+    },
+    "GX_PROBE_PASSWORD": {
+      "accounts": [
+        "gxprobe_v",
+        "gxprobe_e",
+        "gxprobe_s",
+        "gxprobe_q",
+        "gxprobe_c"
+      ],
+      "old_len": 18,
+      "new_len": 24,
+      "new_sha12": "a7c0ebcbb722"
+    }
+  },
+  "grep": [
+    {
+      "path": "~\\.claude\\projects\\c--GuardianX\\6afda0c7-d897-455d-a3ce-bda9a5f96ece.jsonl",
+      "counts": {
+        "GX_ROUTE_PASSWORD_ROLE0": 2
+      },
+      "scrubbed": true
+    },
+    {
+      "path": "~\\.claude\\projects\\c--GuardianX\\bf947deb-29c3-4bc2-ab15-a9b4f27b7f99.jsonl",
+      "counts": {
+        "GX_PROBE_PASSWORD": 6
+      },
+      "scrubbed": true
+    },
+    {
+      "path": "~\\.claude\\projects\\c--GuardianX\\bf947deb-29c3-4bc2-ab15-a9b4f27b7f99\\subagents\\agent-a9291db3b1476408f.jsonl",
+      "counts": {
+        "GX_PROBE_PASSWORD": 1
+      },
+      "scrubbed": true
+    },
+    {
+      "path": "~\\.claude\\projects\\c--GuardianX\\f2a30b3b-dfbd-4ba6-b446-935d940a0f17\\subagents\\agent-a59f78cafacbbffea.jsonl",
+      "counts": {
+        "GX_SEED_ROLE_PASSWORD": 4
+      },
+      "scrubbed": true
+    },
+    {
+      "path": "~\\.claude\\projects\\c--GuardianX\\f2a30b3b-dfbd-4ba6-b446-935d940a0f17\\subagents\\agent-a96972ca9cd0acd82.jsonl",
+      "counts": {
+        "GX_SEED_ROLE_PASSWORD": 2
+      },
+      "scrubbed": true
+    }
+  ],
+  "git_history_commits": {
+    "GX_ROUTE_PASSWORD_ROLE0": [],
+    "GX_SEED_ROLE_PASSWORD": [],
+    "GX_PROBE_PASSWORD": []
+  },
+  "logins": [
+    {
+      "user": "gxprobe_e2e",
+      "key": "GX_ROUTE_PASSWORD_ROLE0",
+      "ok": true
+    },
+    {
+      "user": "gxseed_u5_sysop",
+      "key": "GX_SEED_ROLE_PASSWORD",
+      "ok": true
+    },
+    {
+      "user": "gxseed_u2_manager",
+      "key": "GX_SEED_ROLE_PASSWORD",
+      "ok": true
+    },
+    {
+      "user": "gxseed_u4_official",
+      "key": "GX_SEED_ROLE_PASSWORD",
+      "ok": true
+    },
+    {
+      "user": "gxseed_u1_operator",
+      "key": "GX_SEED_ROLE_PASSWORD",
+      "ok": true
+    },
+    {
+      "user": "gxprobe_v",
+      "key": "GX_PROBE_PASSWORD",
+      "ok": true
+    },
+    {
+      "user": "gxprobe_e",
+      "key": "GX_PROBE_PASSWORD",
+      "ok": true
+    },
+    {
+      "user": "gxprobe_s",
+      "key": "GX_PROBE_PASSWORD",
+      "ok": true
+    },
+    {
+      "user": "gxprobe_q",
+      "key": "GX_PROBE_PASSWORD",
+      "ok": true
+    },
+    {
+      "user": "gxprobe_c",
+      "key": "GX_PROBE_PASSWORD",
+      "ok": true
+    }
+  ],
+  "logins_host_unreachable": [
+    {
+      "user": "gxprobe_e2e",
+      "key": "GX_ROUTE_PASSWORD_ROLE0",
+      "ok": false
+    },
+    {
+      "user": "gxseed_u5_sysop",
+      "key": "GX_SEED_ROLE_PASSWORD",
+      "ok": false
+    },
+    {
+      "user": "gxseed_u2_manager",
+      "key": "GX_SEED_ROLE_PASSWORD",
+      "ok": false
+    },
+    {
+      "user": "gxseed_u4_official",
+      "key": "GX_SEED_ROLE_PASSWORD",
+      "ok": false
+    },
+    {
+      "user": "gxseed_u1_operator",
+      "key": "GX_SEED_ROLE_PASSWORD",
+      "ok": false
+    },
+    {
+      "user": "gxprobe_v",
+      "key": "GX_PROBE_PASSWORD",
+      "ok": false
+    },
+    {
+      "user": "gxprobe_e",
+      "key": "GX_PROBE_PASSWORD",
+      "ok": false
+    },
+    {
+      "user": "gxprobe_s",
+      "key": "GX_PROBE_PASSWORD",
+      "ok": false
+    },
+    {
+      "user": "gxprobe_q",
+      "key": "GX_PROBE_PASSWORD",
+      "ok": false
+    },
+    {
+      "user": "gxprobe_c",
+      "key": "GX_PROBE_PASSWORD",
+      "ok": false
+    }
+  ],
+  "logins_where": "gx-shell 안 http://127.0.0.1:8000 — 호스트에서는 8000 에 닿지 않는다(gx-shell 은 포트를 공개하지 않는다 · 게이트는 gx-shell 에 위임한다)"
+}

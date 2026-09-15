@@ -1,0 +1,371 @@
+{
+ "measured_at": "20260915T1053Z",
+ "smoke": false,
+ "requests_per_run": 3600,
+ "concurrency": 10,
+ "probe_path": "/admin/login/",
+ "back_cmd_delta": {
+  "max_requests": 50,
+  "jitter": 10,
+  "graceful_timeout": 30
+ },
+ "back_env_names": 42,
+ "back_env_override": [
+  "REDIS_HOST → gx-redis-iso (감사 쓰기 격리)"
+ ],
+ "config_sha256_12": {
+  "gx-front.conf": "61aa9b017d18",
+  "gx-proxy.inc": "4c60c45e6de2",
+  "generated/gx-gate.conf": "5fb27db71f17",
+  "iso/gx-front-iso-A.conf": "50e3cb72c740",
+  "iso/gx-front-iso-B.conf": "b6fde9fc6ef4"
+ },
+ "untouched_before": {
+  "gx-shell": "2026-09-15T04:23:22.0615688Z running restarts=0",
+  "gx-gunicorn-e": "2026-09-15T06:42:21.380782706Z running restarts=0",
+  "gx-nginx-e": "2026-09-15T04:23:22.0665568Z running restarts=0",
+  "gx-celery-e": "2026-09-15T04:23:21.9986275Z running restarts=0",
+  "gx-beat-e": "2026-09-15T04:24:27.209310281Z running restarts=1",
+  "postgres": "2026-09-15T04:23:21.9489655Z running restarts=0",
+  "redis": "2026-09-15T04:23:21.9396731Z running restarts=0",
+  "guardianx-source-minio-1": "2026-09-15T04:23:22.1501756Z running restarts=0",
+  "guardianx-source-mailpit-1": "2026-09-15T04:23:22.1368637Z running restarts=0",
+  "gx-fe-build": "2026-09-15T04:23:22.18171Z running restarts=0"
+ },
+ "runs": {
+  "A": {
+   "conf": "gx-front-iso-A.conf",
+   "front_effective": {
+    "nginx_T_rc": 0,
+    "peer_lines": 1,
+    "tries_3": 1,
+    "next_upstream": 1,
+    "non_idempotent": 2
+   },
+   "load": {
+    "t0": "10:54:02",
+    "t1": "10:56:18",
+    "t0_iso": "2026-09-15T10:54:02.969054+00:00",
+    "t1_iso": "2026-09-15T10:56:18.248562+00:00",
+    "n": 3600,
+    "concurrency": 10,
+    "elapsed_s": 135.28,
+    "warmup_codes": {
+     "200": 40
+    },
+    "codes": {
+     "200": 3559,
+     "500": 12,
+     "502": 29
+    }
+   },
+   "stats": {
+    "access_lines_in_window": 3600,
+    "by_status": {
+     "200": 3559,
+     "500": 12,
+     "502": 29
+    },
+    "n502": 29,
+    "retried": 171,
+    "rescued_2xx": 166,
+    "attempts_hist": {
+     "1": 3429,
+     "2": 146,
+     "3": 16,
+     "4": 6,
+     "5": 2,
+     "6": 1
+    },
+    "shapes_502": {
+     "peer": 25,
+     "peer, peer": 3,
+     "peer, peer, peer": 1
+    },
+    "samples_502": [
+     "172.18.0.14 [15/Sep/2026:10:54:06 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.019 \"172.18.0.12:8000\" 0.019",
+     "172.18.0.14 [15/Sep/2026:10:54:15 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.002 \"172.18.0.12:8000\" 0.003",
+     "172.18.0.14 [15/Sep/2026:10:54:16 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.003 \"172.18.0.12:8000, 172.18.0.12:8000\" 0.000, 0.003",
+     "172.18.0.14 [15/Sep/2026:10:54:30 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.022 \"172.18.0.12:8000\" 0.023",
+     "172.18.0.14 [15/Sep/2026:10:54:39 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.001 \"172.18.0.12:8000\" 0.000",
+     "172.18.0.14 [15/Sep/2026:10:54:39 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.010 \"172.18.0.12:8000\" 0.010"
+    ],
+    "front_error_marks": {
+     "recv() failed (104": 230,
+     "upstream prematurely closed": 8,
+     "connect() failed (111": 0,
+     "no live upstreams": 0,
+     "upstream timed out": 0,
+     "writev() failed": 0
+    },
+    "back_marks_in_window": {
+     "Autorestarting": 67,
+     "Worker_exiting": 64,
+     "Booting_worker": 61
+    }
+   },
+   "judge_verify_front_line_502": {
+    "exit": 1,
+    "rows": [
+     "OK   ① 표본         502 29건 · 대조 200 400건 · 재활용 67건",
+     "FAIL ② 설명         **요청 구간 안의 `Worker exiting` 으로도 설명되지 않는 502 가 1건** — 알려진 창에 묻지 마라. 이것은 다른 결함이다",
+     "OK   ③ 대조 분리      요청 구간 · `Worker exiting` — 502 97% 대 정상 65% (차 32%p ≥ 30%p)",
+     "OK   ④ 삼킴         앞단이 재시도 171건 중 **166건을 되살렸다**(손님은 200 을 봤다) · 새어 나간 502 29건",
+     "OK   ⑤ 뒷단 부재      이 판의 502 는 **전부 살아 있는 뒷단이 낸 것**이다 — 뺀 것이 없다"
+    ],
+    "evidence": "docs/agent/evidence/P-137/judge_20260915T1053Z_A.md"
+   }
+  },
+  "B": {
+   "conf": "gx-front-iso-B.conf",
+   "front_effective": {
+    "nginx_T_rc": 0,
+    "peer_lines": 3,
+    "tries_3": 1,
+    "next_upstream": 1,
+    "non_idempotent": 2
+   },
+   "load": {
+    "t0": "10:56:32",
+    "t1": "10:58:18",
+    "t0_iso": "2026-09-15T10:56:32.924130+00:00",
+    "t1_iso": "2026-09-15T10:58:18.507903+00:00",
+    "n": 3600,
+    "concurrency": 10,
+    "elapsed_s": 105.58,
+    "warmup_codes": {
+     "200": 40
+    },
+    "codes": {
+     "200": 3580,
+     "500": 10,
+     "502": 10
+    }
+   },
+   "stats": {
+    "access_lines_in_window": 3600,
+    "by_status": {
+     "200": 3580,
+     "500": 10,
+     "502": 10
+    },
+    "n502": 10,
+    "retried": 195,
+    "rescued_2xx": 183,
+    "attempts_hist": {
+     "1": 3405,
+     "2": 159,
+     "3": 26,
+     "4": 10
+    },
+    "shapes_502": {
+     "peer, peer, peer, gx_app": 10
+    },
+    "samples_502": [
+     "172.18.0.14 [15/Sep/2026:10:56:39 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 4.932 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 4.907, 0.025, 0.001, 0.000",
+     "172.18.0.14 [15/Sep/2026:10:56:39 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 5.144 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 5.111, 0.033, 0.000, 0.000",
+     "172.18.0.14 [15/Sep/2026:10:56:58 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 1.160 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.831, 0.329, 0.000, 0.000",
+     "172.18.0.14 [15/Sep/2026:10:56:58 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 1.235 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.906, 0.329, 0.001, 0.000",
+     "172.18.0.14 [15/Sep/2026:10:57:24 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.393 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.120, 0.000, 0.274, 0.000",
+     "172.18.0.14 [15/Sep/2026:10:57:24 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.756 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.477, 0.274, 0.004, 0.000"
+    ],
+    "front_error_marks": {
+     "recv() failed (104": 230,
+     "upstream prematurely closed": 11,
+     "connect() failed (111": 0,
+     "no live upstreams": 10,
+     "upstream timed out": 0,
+     "writev() failed": 0
+    },
+    "back_marks_in_window": {
+     "Autorestarting": 67,
+     "Worker_exiting": 63,
+     "Booting_worker": 61
+    }
+   },
+   "judge_verify_front_line_502": {
+    "exit": 2,
+    "rows": [
+     "OK   ① 표본         502 10건 · 대조 200 400건 · 재활용 67건",
+     "OK   ② 설명         502 10건 **전부**가 `Worker exiting` 을 요청 구간 안에 갖는다 (종전 자 ±0초·`Autorestarting` 로는 미설명 6건이었다 — 그 6건은 다른 결함이 아니라 **판정기의 눈**이었다)",
+     "GRAY ③ 대조 분리      요청 구간 · `Worker exiting` — 502 100% 대 정상 76% (차 24%p < 30%p). **갈리지 않는다** — 이 창은 아무것도 안 가른다. 회색이지 빨강이 아니다",
+     "OK   ④ 삼킴         앞단이 재시도 195건 중 **183건을 되살렸다**(손님은 200 을 봤다) · 새어 나간 502 10건",
+     "OK   ⑤ 뒷단 부재      이 판의 502 는 **전부 살아 있는 뒷단이 낸 것**이다 — 뺀 것이 없다"
+    ],
+    "evidence": "docs/agent/evidence/P-137/judge_20260915T1053Z_B.md"
+   }
+  },
+  "A2": {
+   "conf": "gx-front-iso-A.conf",
+   "front_effective": {
+    "nginx_T_rc": 0,
+    "peer_lines": 1,
+    "tries_3": 1,
+    "next_upstream": 1,
+    "non_idempotent": 2
+   },
+   "load": {
+    "t0": "10:58:27",
+    "t1": "10:59:43",
+    "t0_iso": "2026-09-15T10:58:27.635400+00:00",
+    "t1_iso": "2026-09-15T10:59:43.111992+00:00",
+    "n": 3600,
+    "concurrency": 10,
+    "elapsed_s": 75.48,
+    "warmup_codes": {
+     "200": 40
+    },
+    "codes": {
+     "200": 3567,
+     "502": 33
+    }
+   },
+   "stats": {
+    "access_lines_in_window": 3600,
+    "by_status": {
+     "200": 3567,
+     "502": 33
+    },
+    "n502": 33,
+    "retried": 192,
+    "rescued_2xx": 185,
+    "attempts_hist": {
+     "1": 3408,
+     "2": 151,
+     "3": 27,
+     "4": 12,
+     "5": 1,
+     "6": 1
+    },
+    "shapes_502": {
+     "peer": 26,
+     "peer, peer": 7
+    },
+    "samples_502": [
+     "172.18.0.14 [15/Sep/2026:10:58:27 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.001 \"172.18.0.12:8000\" 0.001",
+     "172.18.0.14 [15/Sep/2026:10:58:28 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.000 \"172.18.0.12:8000\" 0.001",
+     "172.18.0.14 [15/Sep/2026:10:58:28 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.001 \"172.18.0.12:8000\" 0.001",
+     "172.18.0.14 [15/Sep/2026:10:58:32 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.007 \"172.18.0.12:8000\" 0.007",
+     "172.18.0.14 [15/Sep/2026:10:58:37 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.008 \"172.18.0.12:8000, 172.18.0.12:8000\" 0.003, 0.005",
+     "172.18.0.14 [15/Sep/2026:10:58:38 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.012 \"172.18.0.12:8000\" 0.013"
+    ],
+    "front_error_marks": {
+     "recv() failed (104": 263,
+     "upstream prematurely closed": 20,
+     "connect() failed (111": 0,
+     "no live upstreams": 0,
+     "upstream timed out": 0,
+     "writev() failed": 0
+    },
+    "back_marks_in_window": {
+     "Autorestarting": 70,
+     "Worker_exiting": 64,
+     "Booting_worker": 65
+    }
+   },
+   "judge_verify_front_line_502": {
+    "exit": 2,
+    "rows": [
+     "OK   ① 표본         502 33건 · 대조 200 400건 · 재활용 73건",
+     "OK   ② 설명         502 33건 **전부**가 `Worker exiting` 을 요청 구간 안에 갖는다 (종전 자 ±0초·`Autorestarting` 로는 미설명 0건이었다 — 그 0건은 다른 결함이 아니라 **판정기의 눈**이었다)",
+     "GRAY ③ 대조 분리      요청 구간 · `Worker exiting` — 502 100% 대 정상 82% (차 18%p < 30%p). **갈리지 않는다** — 이 창은 아무것도 안 가른다. 회색이지 빨강이 아니다",
+     "OK   ④ 삼킴         앞단이 재시도 192건 중 **185건을 되살렸다**(손님은 200 을 봤다) · 새어 나간 502 33건",
+     "OK   ⑤ 뒷단 부재      이 판의 502 는 **전부 살아 있는 뒷단이 낸 것**이다 — 뺀 것이 없다"
+    ],
+    "evidence": "docs/agent/evidence/P-137/judge_20260915T1053Z_A2.md"
+   }
+  },
+  "B2": {
+   "conf": "gx-front-iso-B.conf",
+   "front_effective": {
+    "nginx_T_rc": 0,
+    "peer_lines": 3,
+    "tries_3": 1,
+    "next_upstream": 1,
+    "non_idempotent": 2
+   },
+   "load": {
+    "t0": "10:59:53",
+    "t1": "11:01:10",
+    "t0_iso": "2026-09-15T10:59:53.366107+00:00",
+    "t1_iso": "2026-09-15T11:01:10.242410+00:00",
+    "n": 3600,
+    "concurrency": 10,
+    "elapsed_s": 76.88,
+    "warmup_codes": {
+     "200": 40
+    },
+    "codes": {
+     "200": 3589,
+     "502": 11
+    }
+   },
+   "stats": {
+    "access_lines_in_window": 3600,
+    "by_status": {
+     "200": 3589,
+     "502": 11
+    },
+    "n502": 11,
+    "retried": 215,
+    "rescued_2xx": 204,
+    "attempts_hist": {
+     "1": 3385,
+     "2": 184,
+     "3": 20,
+     "4": 11
+    },
+    "shapes_502": {
+     "peer, peer, peer, gx_app": 11
+    },
+    "samples_502": [
+     "172.18.0.14 [15/Sep/2026:10:59:54 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.105 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.051, 0.000, 0.054, 0.000",
+     "172.18.0.14 [15/Sep/2026:11:00:14 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.126 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.126, 0.000, 0.000, 0.000",
+     "172.18.0.14 [15/Sep/2026:11:00:18 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 1.003 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.268, 0.420, 0.314, 0.000",
+     "172.18.0.14 [15/Sep/2026:11:00:18 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.659 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.348, 0.312, 0.000, 0.000",
+     "172.18.0.14 [15/Sep/2026:11:00:19 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.916 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.425, 0.312, 0.178, 0.000",
+     "172.18.0.14 [15/Sep/2026:11:00:24 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.684 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.527, 0.156, 0.001, 0.000"
+    ],
+    "front_error_marks": {
+     "recv() failed (104": 248,
+     "upstream prematurely closed": 9,
+     "connect() failed (111": 0,
+     "no live upstreams": 11,
+     "upstream timed out": 0,
+     "writev() failed": 0
+    },
+    "back_marks_in_window": {
+     "Autorestarting": 68,
+     "Worker_exiting": 64,
+     "Booting_worker": 64
+    }
+   },
+   "judge_verify_front_line_502": {
+    "exit": 2,
+    "rows": [
+     "OK   ① 표본         502 11건 · 대조 200 400건 · 재활용 68건",
+     "OK   ② 설명         502 11건 **전부**가 `Worker exiting` 을 요청 구간 안에 갖는다 (종전 자 ±0초·`Autorestarting` 로는 미설명 3건이었다 — 그 3건은 다른 결함이 아니라 **판정기의 눈**이었다)",
+     "GRAY ③ 대조 분리      요청 구간 · `Worker exiting` — 502 100% 대 정상 72% (차 28%p < 30%p). **갈리지 않는다** — 이 창은 아무것도 안 가른다. 회색이지 빨강이 아니다",
+     "OK   ④ 삼킴         앞단이 재시도 215건 중 **204건을 되살렸다**(손님은 200 을 봤다) · 새어 나간 502 11건",
+     "OK   ⑤ 뒷단 부재      이 판의 502 는 **전부 살아 있는 뒷단이 낸 것**이다 — 뺀 것이 없다"
+    ],
+    "evidence": "docs/agent/evidence/P-137/judge_20260915T1053Z_B2.md"
+   }
+  }
+ },
+ "iso_broker_queued_tasks": 14455,
+ "iso_left_after_cleanup": [],
+ "untouched_after": {
+  "gx-shell": "2026-09-15T04:23:22.0615688Z running restarts=0",
+  "gx-gunicorn-e": "2026-09-15T06:42:21.380782706Z running restarts=0",
+  "gx-nginx-e": "2026-09-15T04:23:22.0665568Z running restarts=0",
+  "gx-celery-e": "2026-09-15T04:23:21.9986275Z running restarts=0",
+  "gx-beat-e": "2026-09-15T04:24:27.209310281Z running restarts=1",
+  "postgres": "2026-09-15T04:23:21.9489655Z running restarts=0",
+  "redis": "2026-09-15T04:23:21.9396731Z running restarts=0",
+  "guardianx-source-minio-1": "2026-09-15T04:23:22.1501756Z running restarts=0",
+  "guardianx-source-mailpit-1": "2026-09-15T04:23:22.1368637Z running restarts=0",
+  "gx-fe-build": "2026-09-15T04:23:22.18171Z running restarts=0"
+ },
+ "untouched_unchanged": true
+}

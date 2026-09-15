@@ -1,0 +1,124 @@
+{
+ "measured_at": "20260915T1052Z",
+ "smoke": true,
+ "requests_per_run": 300,
+ "concurrency": 10,
+ "probe_path": "/admin/login/",
+ "back_cmd_delta": {
+  "max_requests": 50,
+  "jitter": 10,
+  "graceful_timeout": 30
+ },
+ "back_env_names": 42,
+ "back_env_override": [
+  "REDIS_HOST → gx-redis-iso (감사 쓰기 격리)"
+ ],
+ "config_sha256_12": {
+  "gx-front.conf": "61aa9b017d18",
+  "gx-proxy.inc": "4c60c45e6de2",
+  "generated/gx-gate.conf": "5fb27db71f17",
+  "iso/gx-front-iso-A.conf": "50e3cb72c740",
+  "iso/gx-front-iso-B.conf": "b6fde9fc6ef4"
+ },
+ "untouched_before": {
+  "gx-shell": "2026-09-15T04:23:22.0615688Z running restarts=0",
+  "gx-gunicorn-e": "2026-09-15T06:42:21.380782706Z running restarts=0",
+  "gx-nginx-e": "2026-09-15T04:23:22.0665568Z running restarts=0",
+  "gx-celery-e": "2026-09-15T04:23:21.9986275Z running restarts=0",
+  "gx-beat-e": "2026-09-15T04:24:27.209310281Z running restarts=1",
+  "postgres": "2026-09-15T04:23:21.9489655Z running restarts=0",
+  "redis": "2026-09-15T04:23:21.9396731Z running restarts=0",
+  "guardianx-source-minio-1": "2026-09-15T04:23:22.1501756Z running restarts=0",
+  "guardianx-source-mailpit-1": "2026-09-15T04:23:22.1368637Z running restarts=0",
+  "gx-fe-build": "2026-09-15T04:23:22.18171Z running restarts=0"
+ },
+ "runs": {
+  "A": {
+   "conf": "gx-front-iso-A.conf",
+   "front_effective": {
+    "nginx_T_rc": 0,
+    "peer_lines": 1,
+    "tries_3": 1,
+    "next_upstream": 1,
+    "non_idempotent": 2
+   },
+   "load": {
+    "t0": "10:53:08",
+    "t1": "10:53:15",
+    "t0_iso": "2026-09-15T10:53:08.625411+00:00",
+    "t1_iso": "2026-09-15T10:53:15.620316+00:00",
+    "n": 300,
+    "concurrency": 10,
+    "elapsed_s": 6.99,
+    "warmup_codes": {
+     "200": 40
+    },
+    "codes": {
+     "200": 298,
+     "502": 2
+    }
+   },
+   "stats": {
+    "access_lines_in_window": 300,
+    "by_status": {
+     "200": 298,
+     "502": 2
+    },
+    "n502": 2,
+    "retried": 8,
+    "rescued_2xx": 8,
+    "attempts_hist": {
+     "1": 292,
+     "2": 7,
+     "3": 1
+    },
+    "shapes_502": {
+     "peer": 2
+    },
+    "samples_502": [
+     "172.18.0.14 [15/Sep/2026:10:53:10 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.002 \"172.18.0.12:8000\" 0.002",
+     "172.18.0.14 [15/Sep/2026:10:53:14 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.001 \"172.18.0.12:8000\" 0.000"
+    ],
+    "front_error_marks": {
+     "recv() failed (104": 11,
+     "upstream prematurely closed": 0,
+     "connect() failed (111": 0,
+     "no live upstreams": 0,
+     "upstream timed out": 0,
+     "writev() failed": 0
+    },
+    "back_marks_in_window": {
+     "Autorestarting": 5,
+     "Worker_exiting": 5,
+     "Booting_worker": 4
+    }
+   },
+   "judge_verify_front_line_502": {
+    "exit": 2,
+    "rows": [
+     "OK   ① 표본         502 2건 · 대조 200 298건 · 재활용 5건",
+     "OK   ② 설명         502 2건 **전부**가 `Worker exiting` 을 요청 구간 안에 갖는다 (종전 자 ±0초·`Autorestarting` 로는 미설명 0건이었다 — 그 0건은 다른 결함이 아니라 **판정기의 눈**이었다)",
+     "GRAY ③ 대조 분리      요청 구간 · `Worker exiting` — 502 100% 대 정상 85% (차 15%p < 30%p). **갈리지 않는다** — 이 창은 아무것도 안 가른다. 회색이지 빨강이 아니다",
+     "OK   ④ 삼킴         앞단이 재시도 8건 중 **8건을 되살렸다**(손님은 200 을 봤다) · 새어 나간 502 2건",
+     "OK   ⑤ 뒷단 부재      이 판의 502 는 **전부 살아 있는 뒷단이 낸 것**이다 — 뺀 것이 없다"
+    ],
+    "evidence": "docs/agent/evidence/P-137/judge_20260915T1052Z_A.md"
+   }
+  }
+ },
+ "iso_broker_queued_tasks": 338,
+ "iso_left_after_cleanup": [],
+ "untouched_after": {
+  "gx-shell": "2026-09-15T04:23:22.0615688Z running restarts=0",
+  "gx-gunicorn-e": "2026-09-15T06:42:21.380782706Z running restarts=0",
+  "gx-nginx-e": "2026-09-15T04:23:22.0665568Z running restarts=0",
+  "gx-celery-e": "2026-09-15T04:23:21.9986275Z running restarts=0",
+  "gx-beat-e": "2026-09-15T04:24:27.209310281Z running restarts=1",
+  "postgres": "2026-09-15T04:23:21.9489655Z running restarts=0",
+  "redis": "2026-09-15T04:23:21.9396731Z running restarts=0",
+  "guardianx-source-minio-1": "2026-09-15T04:23:22.1501756Z running restarts=0",
+  "guardianx-source-mailpit-1": "2026-09-15T04:23:22.1368637Z running restarts=0",
+  "gx-fe-build": "2026-09-15T04:23:22.18171Z running restarts=0"
+ },
+ "untouched_unchanged": true
+}

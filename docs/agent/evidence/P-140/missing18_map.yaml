@@ -1,0 +1,262 @@
+# P-140 · 「아직 없는 기능 18」 ↔ 대장 절 ID — 턴 Q · 차선 Q · 2026-09-15
+#
+# 원목록 [실측]
+#   docs/agent/evidence/P-118/click_completes.json (measured_at 2026-09-15T06:54:33Z) 의 회색 19 중
+#   「정본이 「없음」이라 적은 자리」 18행. 판정문 docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:73-92.
+#   회색 19 중 U2#3(이벤트 등급 재판정)은 「되돌리기 (사유 필수)를 화면에서 못 찾았다」(:75) —
+#   정본 없음이 아니라 단추 부재라 18에 넣지 않는다.
+#
+# 매핑 정본 [인용]
+#   docs/design/PRD_v1.1_부속서A_기능설명서_업무플로우_화면구성도_20260915.md §1 「요구 ID」 열
+#   (사람 6 × 20 = 120행 표 — 온보딩 48행은 그 부분집합이고 행 번호가 같다).
+#   절 원문: docs/design/PRD_v1.1_상용정본_20260915.md §5 (:171-251).
+#   세종 초안(docs/agent/RESUME_NEXT.md:63)은 이것으로 덮는다 — 어긋난 자리는 아래 `seojong_draft_diff`.
+#
+# 규칙
+#   · 새 절 ID 0. 이 파일은 절을 만들지 않는다.
+#   · 대장 등재는 docs/agent/evidence/D-346/ga_readiness.yaml 영역 7 「턴 Q 등재」 블록.
+#     분모는 산출기(scripts/verify_ga_readiness.py)가 센다 — 여기 적은 수는 이 파일 rows 를 센 값뿐이다.
+#   · class: s5 = PRD v1.1 §5 절 · ledger = §5 밖이지만 이미 대장에 있는 절 · none = 매핑 안 됨.
+
+meta:
+  judgment: P-140
+  lane: Q
+  measured_at: "2026-09-15"
+  source_rows: docs/agent/evidence/P-118/click_completes.json
+  source_judgement: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt
+  map_canon: docs/design/PRD_v1.1_부속서A_기능설명서_업무플로우_화면구성도_20260915.md
+  clause_canon: docs/design/PRD_v1.1_상용정본_20260915.md
+  ledger: docs/agent/evidence/D-346/ga_readiness.yaml
+  new_clause_ids: 0
+
+summary:
+  rows: 18
+  class_s5: 15        # U1#4 U2#6 U2#9 U2#16 U3#16 U4#1 U4#5 U4#7 U4#15 U4#16 U5#1 U5#5 U5#9 U5#10 U6#14
+  class_ledger: 3     # U3#14 U4#9 → LAW-01 · U5#4 → UX-18
+  class_none: 0
+  registered_this_turn: [UX-32, UX-23′, UX-35, UX-40, UX-41, UX-42, UX-43, UX-43-M4, UX-01′, API-02]
+  not_registered_secondary: [UX-28′, RPT-01, UX-47, CH-01, CH-03]
+  not_registered_why: |
+    행마다 부속서A 「요구 ID」 열의 **첫 ID** 만 대장에 올렸다. 둘째 ID 는 그 행의 곁가지이고
+    (라이브 메뉴 정리 · HWPX · 상급기관 배지 · 채널 결정), 그 절의 닫힘이 이 18행의 닫힘이
+    아니다. 올릴지는 조율자 판정 — 가정으로 보고한다.
+
+rows:
+  - row: U1#4
+    flow: 실시간 스트림 열기
+    grey_why: 인수 스트림 화면에 서버 값이 드러나는 칸이 없다 (GET /api/stream-monitors/stream-monitors · 이름 타일뿐)
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:74
+    ids: [UX-23′, UX-28′]
+    map_ref: PRD_v1.1_부속서A:27
+    prd_ref: [PRD_v1.1_상용정본:193, PRD_v1.1_상용정본:180]
+    class: s5
+    ledger_before: 없음 (v1.0 절 UX-23 은 구현 · ga_readiness.yaml:2420 — v1.1 확장 UX-23′ 은 없었다)
+    registered: UX-23′
+
+  - row: U2#6
+    flow: 상황보고서 생성
+    grey_why: 서버 문(GET /api/dsm/reports/templates · api.py:750)은 서 있으나 부르는 화면이 없다 · /report-template 은 인수 운송장 서식
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:76
+    ids: [UX-40]
+    map_ref: PRD_v1.1_부속서A:56
+    prd_ref: [PRD_v1.1_상용정본:226]
+    class: s5
+    ledger_before: 없음
+    registered: UX-40
+
+  - row: U2#9
+    flow: 요원별 처리 현황
+    grey_why: 집계 면 없다 — 사람별로 세는 자리가 없다
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:77
+    ids: [UX-35]
+    map_ref: PRD_v1.1_부속서A:59
+    prd_ref: [PRD_v1.1_상용정본:203]
+    class: s5
+    ledger_before: 없음
+    registered: UX-35
+
+  - row: U2#16
+    flow: 알림 규칙 확인
+    grey_why: 조회 라우트·화면 없다 · 규칙 0건
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:78
+    ids: [UX-43]
+    map_ref: PRD_v1.1_부속서A:66
+    prd_ref: [PRD_v1.1_상용정본:238]
+    class: s5
+    ledger_before: 없음
+    registered: UX-43
+
+  - row: U3#14
+    flow: 해당 카메라 모바일 실시간
+    grey_why: 구간 티켓은 계약 11조 잠김
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:79
+    ids: [LAW-01]
+    map_ref: PRD_v1.1_부속서A:91
+    prd_ref: []
+    class: ledger
+    ledger_before: LAW-01 「계약 11조 — 영상 반출 4규약」 구현 · ga_readiness.yaml:2635
+    registered: null
+    note: 부속서A 가 이 행을 「⊘ · 계약 11조 — v1.1 밖(잠김 정본)」으로 적었다. §5 에 절이 없는 것이 정본이다 — 새 절을 만들지 않는다.
+
+  - row: U3#16
+    flow: 근무 외 알림 차단
+    grey_why: 알림 채널 결정 대기
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:80
+    ids: [UX-43-M4]
+    map_ref: PRD_v1.1_부속서A:93
+    prd_ref: [PRD_v1.1_상용정본:214]
+    class: s5
+    ledger_before: 없음
+    registered: UX-43-M4
+
+  - row: U4#1
+    flow: 주간 상황 요약
+    grey_why: 라우트는 hours=168 을 받지만 누를 자리가 없다
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:81
+    ids: [UX-32]
+    map_ref: PRD_v1.1_부속서A:105
+    prd_ref: [PRD_v1.1_상용정본:179]
+    class: s5
+    ledger_before: 없음
+    registered: UX-32
+    note: 세종 초안의 「UX-32-U4」는 PRD·부속서 어디에도 없는 ID 다(PRD :207 에는 UX-32-U2 뿐). U4 7일 홈은 UX-32 본문(:179 「U4 무슨 일 있었나(7d)」)에 있다 — UX-32 로 적는다.
+
+  - row: U4#5
+    flow: 월간 보고서 자동 생성
+    grey_why: 월간 보고서를 만드는 문(POST /api/dsm/reports)도 그리는 화면도 없다 (roleNav.ts:143 P61_NO_SCREEN_YET)
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:82
+    ids: [UX-40]
+    map_ref: PRD_v1.1_부속서A:109
+    prd_ref: [PRD_v1.1_상용정본:226]
+    class: s5
+    ledger_before: 없음
+    registered: UX-40
+
+  - row: U4#7
+    flow: 보고서 다운로드
+    grey_why: 서버 문은 GET /api/dsm/events/{id}/report.pdf 하나(api.py:802)인데 누르는 화면이 라우터에 없다
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:83
+    ids: [UX-40, RPT-01]
+    map_ref: PRD_v1.1_부속서A:111
+    prd_ref: [PRD_v1.1_상용정본:226, PRD_v1.1_상용정본:227]
+    class: s5
+    ledger_before: 없음
+    registered: UX-40
+
+  - row: U4#9
+    flow: 증빙 영상 확인
+    grey_why: 추출은 계약 11조 설계 잠금(영구) — 이 행은 ●가 될 수 없다
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:84
+    ids: [LAW-01]
+    map_ref: PRD_v1.1_부속서A:113
+    prd_ref: []
+    class: ledger
+    ledger_before: LAW-01 구현 · ga_readiness.yaml:2635
+    registered: null
+    note: 부속서A 가 「◐(설계 잠금) — v1.1도 ◐ 정본」으로 적었다. 계약 절 F-09-c3(영상 3초 재생)도 잠김이다(D-309/contract_ac_ledger.yaml:277-280).
+
+  - row: U4#15
+    flow: 상급기관 제출 자료
+    grey_why: 상급기관 서식 T4
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:85
+    ids: [UX-40, UX-47]
+    map_ref: PRD_v1.1_부속서A:119
+    prd_ref: [PRD_v1.1_상용정본:226, PRD_v1.1_상용정본:206]
+    class: s5
+    ledger_before: 없음
+    registered: UX-40
+    note: 세종 초안은 UX-47 하나로 적었다. 부속서A 는 UX-40·UX-47 둘이고 §5 UX-40 AC 가 이 행(U4#15)을 이름으로 부른다(:226) — 첫 ID 는 UX-40 이다.
+
+  - row: U4#16
+    flow: 감사 대응 이력
+    grey_why: 감사는 쌓이는데 볼 자리가 없다
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:86
+    ids: [UX-41]
+    map_ref: PRD_v1.1_부속서A:120
+    prd_ref: [PRD_v1.1_상용정본:228]
+    class: s5
+    ledger_before: 없음
+    registered: UX-41
+
+  - row: U5#1
+    flow: 사용자 계정 생성
+    grey_why: 단추(App.tsx:728 「사용자 추가」)는 서식 화면 링크 · 그 문은 프리플라이트 401 (P-125 A절)
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:87
+    ids: [UX-42]
+    map_ref: PRD_v1.1_부속서A:132
+    prd_ref: [PRD_v1.1_상용정본:236]
+    class: s5
+    ledger_before: 없음
+    registered: UX-42
+
+  - row: U5#4
+    flow: 카메라 등록
+    grey_why: 자리는 /dsm/cameras/import 이나 「표 먼저, 그 다음 적용」 세 걸음 · 한 번 누름으로 재는 정본이 없다
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:88
+    ids: [UX-18]
+    map_ref: PRD_v1.1_부속서A:135
+    prd_ref: []
+    class: ledger
+    ledger_before: UX-18 「벌크 등록 — CSV(주소 열 포함)」 구현 · ga_readiness.yaml:2200
+    registered: null
+    note: 기능이 없는 행이 아니다 — 「한 번 누름」으로 재는 **측정 정본**이 없는 행이다. 닫는 쪽은 절이 아니라 게이트의 기대식(세 걸음 걷기)이다.
+
+  - row: U5#5
+    flow: 카메라 설치 주소 입력
+    grey_why: 단추 「표 먼저 보기」·「채우기」(CameraAddress.tsx:177·185)가 입력 전 잠김 · 두 걸음
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:89
+    ids: [UX-01′]
+    map_ref: PRD_v1.1_부속서A:136
+    prd_ref: [PRD_v1.1_상용정본:242]
+    class: s5
+    ledger_before: 없음 (v1.0 절 UX-01 은 커맨드 · 구현 · ga_readiness.yaml:1798 — 다른 절)
+    registered: UX-01′
+
+  - row: U5#9
+    flow: 알림 규칙 설정
+    grey_why: 설정 화면·라우트 없다
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:90
+    ids: [UX-43]
+    map_ref: PRD_v1.1_부속서A:140
+    prd_ref: [PRD_v1.1_상용정본:238]
+    class: s5
+    ledger_before: 없음
+    registered: UX-43
+
+  - row: U5#10
+    flow: 알림 채널 설정
+    grey_why: 알림 채널 결정 대기(대표)
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:91
+    ids: [UX-43, CH-01, CH-03]
+    map_ref: PRD_v1.1_부속서A:141
+    prd_ref: [PRD_v1.1_상용정본:238, PRD_v1.1_상용정본:216, PRD_v1.1_상용정본:217]
+    class: s5
+    ledger_before: 없음
+    registered: UX-43
+    note: 부속서A 는 「UX-43·CH」로만 적었다(CH 번호 없음). 채널 종류는 CH-01(문자 · 대표 결정)·CH-03(웹푸시)이 진다.
+
+  - row: U6#14
+    flow: 스키마 버전 확인
+    grey_why: 없음 — 스키마 버전
+    grey_ref: docs/agent/evidence/P-118/judgement_20260915_0654Z.txt:92
+    ids: [API-02]
+    map_ref: PRD_v1.1_부속서A:172
+    prd_ref: [PRD_v1.1_상용정본:249]
+    class: s5
+    ledger_before: 없음
+    registered: API-02
+
+# 세종 초안(RESUME_NEXT.md:63)과 실측이 갈린 자리
+seojong_draft_diff:
+  - what: 「18 중 16은 §5 에 이미 절 · 나머지 2(주간 요약·상급기관 서식)는 UX-32-U4·UX-47」
+    measured: §5 절 15 · §5 밖 기존 대장 절 3(LAW-01 ×2 · UX-18) · 매핑 안 됨 0. 주간 요약은 UX-32, 상급기관 제출은 UX-40(첫 ID)·UX-47.
+  - what: 「UX-32-U4」
+    measured: 없는 ID 다 — PRD v1.1 에는 UX-32 와 UX-32-U2(:207)만 있다. 새 ID 를 만들지 않고 UX-32 로 적었다.
+  - what: 초안의 이름 목록(오탐률 UX-36 · 재판정 UX-37 · 검색 UX-38 · 통계 UX-39 · 시스템 UX-44 · 웹훅 필터 API-01 · M3 UX-45)
+    measured: |
+      이 일곱은 P-118 의 「정본 없음」 18행에 **없다**. 초안은 120행 표의 기능 이름을 적었고
+      18행을 행 ID 로 적지 않았다. 대조:
+        UX-37 재판정 → U2#3 은 회색이지만 사유가 「단추 못 찾음」(:75)이라 18 밖
+        UX-38 검색 → U4#8 초록(:45) · UX-44 시스템 → U5#14·#15 초록(:56-57)
+        UX-45 M3 → U3#3 은 빨강(:36) — 회색이 아니다
+        UX-36 · UX-39 · API-01 → 해당 행(U2#10·#11 · U4#2~4 · U6#5·#6)이 48행 밖이다

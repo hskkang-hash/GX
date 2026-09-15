@@ -1,0 +1,31 @@
+# WO-GX-20260915-01 §4.1 「쓰기 면(파 1 첫 30분 선등록)」 — 턴 Q 조율자 등록부
+#
+# 왜 먼저 적나 — 새 쓰기 면이 태어나기 **전에** 이름·차선·자리를 적어 두면, 병합 때
+#   「이 표에 없는 쓰기 라우트」가 곧 소유권 밖에서 태어난 것이 된다(한 파일은 한 차선).
+# 언제 `born: true` 가 되나 — 라우트가 실재하고 ISO-03(테넌트 스코프) · SEC-04(인증 관문) ·
+#   계약 도달을 통과했을 때. 조율자가 병합 때 적는다. 차선이 스스로 참으로 바꾸지 않는다.
+# ⚠ 지시서(WO-01 §6 파 1 조율자 · AC-9)는 「13」이라 적었다. §4.1 표의 쓰기 면 칸을 한 줄씩
+#   옮기면 아래 줄 수가 된다 — 수는 이 파일을 세는 쪽이 낸다(분모는 손으로 적지 않는다).
+#   `me/notify-prefs` 는 F(스키마)와 U3(라우트) 두 칸에 나오므로 한 줄로 합쳤다.
+#   어긋남은 턴 Q 보고의 가정 목록에 적는다.
+# 경로는 지시서의 이름을 그대로 옮긴 **자리 이름**이다 — 최종 경로는 태어날 때 차선이 정하고
+#   조율자가 `path` 칸을 채운다.
+
+surfaces:
+  - {id: WS-01, lane: F,   surface: onboarding/progress,        module: backend/apps/dsm/onboarding.py, born: false}
+  - {id: WS-02, lane: U3,  surface: me/notify-prefs,            module: backend/apps/dsm/api_u3.py,     born: false, note: "스키마는 F(dsm_notify_prefs)"}
+  - {id: WS-03, lane: U1,  surface: handover,                   module: backend/apps/dsm/api_u1.py,     born: false}
+  - {id: WS-04, lane: U1,  surface: "events/{id}/note",         module: backend/apps/dsm/api_u1.py,     born: false}
+  - {id: WS-05, lane: U1,  surface: "review+response 트랜잭션", module: backend/apps/dsm/api_u1.py,     born: false, note: "AC-2 · services.review_and_acknowledge"}
+  - {id: WS-06, lane: U3,  surface: field-photo,                module: backend/apps/dsm/api_u3.py,     born: false, note: "스키마는 F(dsm_field_photo)"}
+  - {id: WS-07, lane: U3,  surface: me/notify-report,           module: backend/apps/dsm/api_u3.py,     born: false}
+  - {id: WS-08, lane: U3,  surface: push-subscriptions,         module: backend/apps/dsm/api_u3.py,     born: false}
+  - {id: WS-09, lane: U24, surface: upper-report,               module: backend/apps/dsm/api_u24.py,    born: false, note: "스키마는 F(dsm_upper_report_flag)"}
+  - {id: WS-10, lane: U24, surface: thresholds/simulate,        module: backend/apps/dsm/api_u24.py,    born: false}
+  - {id: WS-11, lane: U24, surface: "reports/{id}/send",        module: backend/apps/dsm/api_u24.py,    born: false}
+  - {id: WS-12, lane: U24, surface: report_run,                 module: backend/apps/dsm/api_u24.py,    born: false, note: "스키마는 F(dsm_report_run) · 배치가 쓰는 면"}
+  - {id: WS-13, lane: U56, surface: people,                     module: backend/apps/dsm/api_u56.py,    born: false}
+  - {id: WS-14, lane: U56, surface: "notify-rules(+test)",      module: backend/apps/dsm/api_u56.py,    born: false}
+  - {id: WS-15, lane: U56, surface: system/restart-request,     module: backend/apps/dsm/api_u56.py,    born: false}
+  - {id: WS-16, lane: U56, surface: "cameras/{id}/address",     module: backend/apps/dsm/api_u56.py,    born: false}
+  - {id: WS-17, lane: U56, surface: "webhook filters",          module: backend/apps/dsm/api_u56.py,    born: false, note: "스키마는 F(webhook_subscription.filters)"}

@@ -1,0 +1,97 @@
+{
+ "measured_at": "2026-09-15T10:50:48+00:00",
+ "vault_dir": "~/.guardianx-secrets/ (저장소 밖 · D-002)",
+ "vault_files": [
+  "cred3_20260915.env",
+  "cred3_20260915_alter_db_role.sql"
+ ],
+ "rules_from_code": {
+  "CRED_MIN_LEN": 20,
+  "PLACEHOLDER_WORDS": [
+   "change_me",
+   "changeme",
+   "your-",
+   "please-change",
+   "example",
+   "placeholder",
+   "minioadmin",
+   "secret-key"
+  ],
+  "SECRET_KEY_MIN_LEN": 50,
+  "SECRET_KEY_PLACEHOLDERS": [
+   "your-secret-key-here",
+   "change_me",
+   "changeme",
+   "django-insecure",
+   "secret-key",
+   "please-change"
+  ]
+ },
+ "values": {
+  "MINIO_ACCESS_KEY": {
+   "len": 20,
+   "sha256_12": "d4e6bd794209",
+   "min_len_ok": true,
+   "placeholder_words_hit": [],
+   "secret_key_placeholder_hit": [],
+   "alnum_only": true
+  },
+  "MINIO_SECRET_KEY": {
+   "len": 40,
+   "sha256_12": "bf911201930e",
+   "min_len_ok": true,
+   "placeholder_words_hit": [],
+   "secret_key_placeholder_hit": [],
+   "alnum_only": true
+  },
+  "DB_PASSWORD": {
+   "len": 32,
+   "sha256_12": "4227dc29c19a",
+   "min_len_ok": true,
+   "placeholder_words_hit": [],
+   "secret_key_placeholder_hit": [],
+   "alnum_only": true
+  },
+  "DJANGO_SECRET_KEY": {
+   "len": 64,
+   "sha256_12": "a28e7eda11f7",
+   "min_len_ok": true,
+   "placeholder_words_hit": [],
+   "secret_key_placeholder_hit": [],
+   "alnum_only": true
+  }
+ },
+ "all_distinct": true,
+ "minio_access_ne_secret": true,
+ "minio_access_le_20": true,
+ "minio_secret_le_40": true,
+ "probe_gx_shell_settings_prod": {
+  "current_container_values": {
+   "booted": true,
+   "profile": "prod",
+   "MINIO_ACCESS_LEN": 5,
+   "MINIO_SECRET_LEN": 5,
+   "MINIO_SAME": true,
+   "MINIO_PLACEHOLDER": [],
+   "DB_PASSWORD_LEN": 5,
+   "DB_PLACEHOLDER": [],
+   "SECRET_KEY_LEN": 103,
+   "SECRET_KEY_IS_PLACEHOLDER": false,
+   "SECRET_KEY_PLACEHOLDER_WORD": []
+  },
+  "new_values": {
+   "booted": true,
+   "profile": "prod",
+   "MINIO_ACCESS_LEN": 20,
+   "MINIO_SECRET_LEN": 40,
+   "MINIO_SAME": false,
+   "MINIO_PLACEHOLDER": [],
+   "DB_PASSWORD_LEN": 32,
+   "DB_PLACEHOLDER": [],
+   "SECRET_KEY_LEN": 64,
+   "SECRET_KEY_IS_PLACEHOLDER": false,
+   "SECRET_KEY_PLACEHOLDER_WORD": []
+  }
+ },
+ "note": "값은 이 파일에 없다 — 이름·길이·sha256 앞 12자·판정뿐. current_container_values 의 SECRET_KEY_LEN 은 판정기의 합성 키(GOOD_SECRET)의 길이다 (verify_prod_settings._child_env 가 DJANGO_* 를 지우고 GOOD_DECL 을 싣는다) — 앱이 든 33자 키는 이 줄에 안 보인다."
+}

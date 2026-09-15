@@ -137,9 +137,15 @@ def srv_reflect(get, field):
 
 FLOWS = (
     # ── U1 · 관제요원 ────────────────────────────────────────────────────
+    #: ★ [P-141 · 턴 Q] 첫 화면이 역할 홈이 됐다(`features/nav/roleHome.ts` · P-131 사양).
+    #:  관제요원의 홈은 `/dsm/queue` 이고 그 화면의 정본 제목은 `FocusQueue.tsx:108`
+    #:  `HEADLINE` 「지금 처리할 것 — 가장 급한 하나」다. 기대식은 그 뒤 반쪽만 쓴다 —
+    #:  앞 반쪽 「지금 처리할 것」은 **사이드바 줄 이름**(`roleNav.ts:83`)이라 `/profile`
+    #:  에 떨어져도 화면에 뜬다. 그 글자를 기대하면 종전 빨강이 거짓 초록으로 바뀐다.
+    #:  종전 기대식(「관제·대시보드·이벤트·GuardianX」)은 역할 홈이 없던 시절의 짐작이었다.
     F("U1#1", "교대 시작 — 로그인", "u1", "/login", btn("로그인"),
       ("POST", r"/api/v1/auth/login$"),
-      {"kind": "route_change", "from": "/login"}, ["관제", "대시보드", "이벤트", "GuardianX"]),
+      {"kind": "route_change", "from": "/login"}, ["가장 급한 하나"]),
     #: ★ [P-132 · 2026-09-11] `preset` 은 **화면에 한 번도 안 뜨는 값**이다 —
     #:  `ControlDashboard.tsx:158` 이 `PRESET_LABEL` 로 「관제요원 화면」이라 부른다.
     #:  화면이 서버 값을 **그대로 적는** 자리는 `panel_total` 하나다:
@@ -231,9 +237,14 @@ FLOWS = (
     #: ★ [P-132] 화면에 「발송」이라는 단추는 **없다.** UX-20 이 「규칙대로 발송」을
     #:  **「알림 보내기」**로 바꿨고(`EventDetail.tsx:279-287`), 종전 기대식의 「발송」은
     #:  본문 아무 데나 걸리는 글자를 잡아 눌러 **호출 0건을 제품의 빨강으로 팔았다**.
+    #: ★ [P-141 · 턴 Q · 차선 Q 3종 분류: 기대식 오류] 종전 재조회 `deliveries?limit=1` 의
+    #:  `total` 은 **돌려준 행 수**(`api.py:700` `len(rows)`)라 1 을 넘을 수 없다 — 발송 행이
+    #:  실제로 늘어도(턴 P 관측 06:53:16~17) 1 → 1 로 「그대로」였다. 이 사건의 이력만
+    #:  거르고 상한을 넉넉히 둬야 N → N+k 가 보인다. 중복 억제(F-04 5분)로 0 통이면 여전히
+    #:  빨강이고, 그때 화면은 「새로 보낸 알림이 없습니다」라고 말한다(`EventDetail.tsx`).
     F("U3#1", "알림 수신", "u3", "/dsm/events/{event}", btn("알림 보내기"),
       ("POST", r"/api/dsm/events/\d+/notify"),
-      srv_change("/api/dsm/deliveries?limit=1", "total"), ["발송", "알림"]),
+      srv_change("/api/dsm/deliveries?event_id={event}&limit=500", "total"), ["발송", "알림"]),
     F("U3#2", "위치 확인 — 어디로 가나", "u3", "/m/events/{event}", goto(),
       ("GET", r"/api/dsm/events/\d+$"),
       srv_reflect("/api/dsm/events/{event}", "address"), ["어디로", "주소", "위치"]),
@@ -1289,7 +1300,12 @@ API_PATHS = {
     #: ★ [P-132] `http://` 로 두드려 400 을 받고 있었다 — 「평문으로 보내면 서명이
     #:  위조는 막아도 **내용을 읽히는 것**은 막지 못합니다」. 제품이 옳고 **요청이
     #:  틀렸다.** 그 400 을 「값이 안 바뀌었다」로 적으면 내 오타를 제품의 빨강으로 판다.
-    "U6#4": ("/api/dsm/webhook-subscriptions?endpoint_url=https://localhost:9/p118"
+    #: ★ [P-141 · 턴 Q · 차선 Q 3종 분류: 기대식 오류] `https://localhost:9` 는 **422** 였다 —
+    #:  `webhook_outbox.py:173-175` 가 「우리 서버 자신을 가리키는 주소」를 막는다. 제품이
+    #:  옳고 요청이 틀렸다(서명키 검사는 그 뒤라 닿지도 못했다). `.invalid` 는 RFC 6761 이
+    #:  **절대 풀리지 않는다**고 정한 이름이다 — 등록 검사(이름 · IP 리터럴)는 통과하고,
+    #:  나중에 발송이 떠도 밖의 실제 호스트를 두드리지 않는다.
+    "U6#4": ("/api/dsm/webhook-subscriptions?endpoint_url=https://p118-gate.invalid/p118"
              "&signing_key_ref=p118-gate&event_types=fire"),
     #: 다음 단계는 **제품이 말해 주는 것**을 쓴다(`allowed_next`). 아무 값이나 밀어
     #:  넣으면 409「앞으로만 간다」가 오고 그것은 제품이 옳은 자리다.

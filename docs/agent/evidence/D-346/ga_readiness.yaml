@@ -2628,6 +2628,132 @@ areas:
             **빼는 일만 하고 있으면 더할 것이 없다는 사실이 안 보인다.**
           ⚠ 우리가 할 수 있는 일이다(시드 명령 한 자리). 막는 것은 **정본을 고치는 판정**이다.
 
+      # ── 턴 Q 등재 (2026-09-15 · 차선 Q · P-140) ──────────────────────────
+      #   PRD v1.1 §5 절 가운데 「아직 없는 기능 18」(P-118 회색 · 정본 없음 18행)이
+      #   가리키는 절 중 이 대장에 **없던 것**만 올린다. 행 ID ↔ 절 ID 표:
+      #     docs/agent/evidence/P-140/missing18_map.yaml (정본: PRD v1.1 부속서A §1 「요구 ID」 열)
+      #   ★ 새 절 ID 0 — 전부 PRD v1.1 §5 에 이미 있는 ID 다.
+      #   ★ 분모를 여기 적지 않는다 — 산출기가 센다. 이 등재로 영역 7 의 수는 **내려간다.**
+      #     못 한 것을 대장에 안 적는 것이 수를 지키는 길이 아니다 (D-301).
+      #   ★ `gate:` 를 달지 않았다 — 그 초록이 곧 이 절의 닫힘인 판정기가 아직 없다 (P-85).
+      #   ★ 행마다 부속서A 의 **첫 요구 ID** 만 올렸다. 둘째 ID(UX-28′ · RPT-01 · UX-47 ·
+      #     CH-01/03)는 올리지 않았다 — 조율자 판정 대기.
+      #   ★ API-02 를 이 영역에 둔 것은 U6 연계 면의 선례(UX-19 웹훅)를 따른 것이다.
+      - id: UX-32
+        title: 로그인 뒤 첫 화면은 역할 홈 (U1 지금 처리할 것 · U2·U4 무슨 일 있었나 · U5 관리자 홈)
+        status: 미착수
+        hand: in
+        origin: PRD-v1.1 §5.1
+        why: |
+          [실측 2026-09-15 · P-118] U1#1 빨강 — 로그인 뒤 `/profile`(인수 화면
+          「Personal Information」)에 떨어진다 (click_completes.json U1#1 state.after).
+          U4#1 「주간 상황 요약」은 「누를 자리가 없다」 회색이고(judgement_20260915_0654Z.txt:81)
+          그 자리가 이 절의 U4 7일 홈이다(부속서A §1.4 #1).
+          이번 턴 F 차선이 짓는 중이다(RESUME_NEXT P-141). 닫는 조건: 역할 계정 4 → 첫 URL 역할 홈 4/4.
+
+      - id: UX-23′
+        title: 카메라 격자 자동 순회(4×4 · 30초) · 맥박 없음 = 검은 칸 · 칸 클릭 → 그 카메라 라이브
+        status: 미측정
+        hand: in
+        hand_why: |
+          격자·맥박은 우리 층 화면이다(UX-23 구현) — 순회·라이브 연결은 우리가 짓는다.
+        origin: PRD-v1.1 §5.2
+        why: |
+          v1.0 절 UX-23(구현)의 v1.1 확장이다. 격자 화면에 「자동 순회」 글자는 이미 있다
+          [실측 2026-09-15 · click_completes.json U1#3 text_after] — 그러나 30초 순회 동작 ·
+          4×4 전환 · 칸 클릭 → 라이브를 **잰 적이 없다**. U1#4 「실시간 스트림 열기」는
+          「인수 스트림 화면에 서버 값 칸이 없다」 회색이다(judgement_20260915_0654Z.txt:74 ·
+          부속서A §1.1 #4 → UX-23′·UX-28′). 증명 없는 칸은 구현이 아니다.
+
+      - id: UX-35
+        title: 요원별 처리 현황 (기간 × 요원별 접수·종결·평균 대응 시간·오탐 판정 수 · 서버 집계)
+        status: 미착수
+        hand: in
+        origin: PRD-v1.1 §5.3
+        why: |
+          [실측 2026-09-15] U2#9 「요원별 처리 현황」 회색 — 「집계 면 없다 — 사람별로 세는
+          자리가 없다」(judgement_20260915_0654Z.txt:77). `by-reviewer` 는 backend 에서
+          `apps/dsm/stats.py:13` 주석에만 있다 — 라우트 선언 0 · 화면 0 [grep 2026-09-15].
+
+      - id: UX-40
+        title: 보고서 3종 (사건 1쪽 · 이번 달 우리 센터 · 상급기관 제출용) · PDF 기본 · HWPX
+        status: 미착수
+        hand: in
+        origin: PRD-v1.1 §5.5
+        why: |
+          [실측 2026-09-15 · P-118] 네 행이 이 절을 가리킨다 — U2#6 · U4#5 · U4#7 · U4#15
+          (judgement_20260915_0654Z.txt:76·82·83·85). 서버 문 둘은 서 있다
+          (`GET /api/dsm/reports/templates` api.py:750 · `GET /api/dsm/events/{id}/report.pdf`
+          api.py:802) — 그러나 그것을 누르는 화면이 라우터에 없고, 월간 자동본을 만드는 문
+          (`POST /api/dsm/reports`)도 없다. `/report-template` 은 인수 운송장 서식이다.
+          HWPX 는 RPT-01(대표 결정 ⑤)이 따로 진다.
+
+      - id: UX-41
+        title: 감사 기록 조회 (누가·언제·무엇을 · 필터 · 해시 체인 검증 표시 · CSV)
+        status: 미착수
+        hand: in
+        origin: PRD-v1.1 §5.5
+        why: |
+          [실측 2026-09-15] U4#16 「감사 대응 이력」 회색 — 「감사는 쌓이는데 볼 자리가
+          없다」(judgement_20260915_0654Z.txt:86). `GET /api/dsm/audit` 라우트 0 · 화면 0
+          [grep 2026-09-15].
+
+      - id: UX-42
+        title: 사람·역할 화면 (우리 층) — 추가 · 역할 변경 · 비활성화 · 초대 메일
+        status: 미착수
+        hand: in
+        origin: PRD-v1.1 §5.6
+        why: |
+          [실측 2026-09-15] U5#1 「사용자 계정 생성」 회색 — 단추(App.tsx:728 「사용자 추가」)는
+          인수 서식 화면으로 가는 링크이고 그 문은 프리플라이트 401 로 끊겨 있다
+          (judgement_20260915_0654Z.txt:87 · P-125 A절). 우리 층 사람·역할 화면이 없다.
+
+      - id: UX-43
+        title: 알림 받는 사람·채널 — 등급별 수신 역할·사람 · 심각 수신자 0명 금지 · 규칙 시험 발송
+        status: 미착수
+        hand: in
+        origin: PRD-v1.1 §5.6
+        why: |
+          [실측 2026-09-15] 세 행이 이 절을 가리킨다 — U2#16 알림 규칙 확인 · U5#9 알림 규칙
+          설정 · U5#10 알림 채널 설정(judgement_20260915_0654Z.txt:78·90·91). 규칙을 읽거나
+          쓰는 라우트 0(`notify-rules` grep backend 0) · 화면 0.
+          같은 관측에서 발송 행이 전부 「(수신자 없음) · 로그에 기록됨(사람에게 안 감)」이다
+          (click_completes.json U3#1 text_after) — 사람에게 가는 규칙이 없다.
+          채널 종류(문자·웹푸시)는 CH-01/CH-03(대표 결정 ①)이 따로 진다 — 규칙은 손 안이다.
+
+      - id: UX-43-M4
+        title: M4 내 설정 — 근무 외 알림 차단 · 담당 구역 · 채널 선택
+        status: 미착수
+        hand: in
+        origin: PRD-v1.1 §5.4
+        why: |
+          [실측 2026-09-15] U3#16 「근무 외 알림 차단」 회색(judgement_20260915_0654Z.txt:80).
+          `GET/PUT /api/dsm/me/notify-prefs` 라우트 0 · 화면 0 [grep 2026-09-15] —
+          모델 선언은 있다(backend/stream_monitors/models.py:1097). 모델은 문이 아니다.
+
+      - id: UX-01′
+        title: 카메라 주소 한 대 고치기 전용 문 — 일괄 등록 문을 타지 않는다
+        status: 미착수
+        hand: in
+        origin: PRD-v1.1 §5.6
+        why: |
+          [실측 2026-09-15] U5#5 「카메라 설치 주소 입력」 회색 — 단추 「표 먼저 보기」·「채우기」
+          (CameraAddress.tsx:177·185)가 입력 전에는 잠겨 있고 「표 먼저, 그 다음 채움」 두 걸음이다
+          (judgement_20260915_0654Z.txt:89). 한 대 고치기 문(PATCH …/cameras/{id}/address) 0
+          [grep 2026-09-15] — 지금은 일괄 등록 문(`POST /api/dsm/cameras/import`)을 탄다
+          (onboarding_48.md:302). v1.0 절 UX-01(커맨드 · 구현)과 다른 절이다.
+
+      - id: API-02
+        title: 연계 헬스체크 · 스키마 버전 헤더 · 요청 한도 헤더 · 재시도 규약 문서
+        status: 미착수
+        hand: in
+        origin: PRD-v1.1 §5.7
+        why: |
+          [실측 2026-09-15] U6#14 「스키마 버전 확인」 회색(judgement_20260915_0654Z.txt:92).
+          `GET /api/dsm/health` 0 · 응답 헤더 `X-GX-Schema-Version` 0 [grep backend 2026-09-15].
+          웹훅의 `X-GX-Schema`(backend/common/webhook_contract.py:104)는 **발송 헤더**이지
+          API 응답 헤더가 아니다. U6#15 연계 헬스는 지금 `/api/dsm/dashboard/link-state` 가 대신한다.
+
   - id: "8"
     name: 법·인증 (개인정보·GS·SLA)
     weight: 5
