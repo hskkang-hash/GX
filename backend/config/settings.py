@@ -118,6 +118,13 @@ MIDDLEWARE = [
     'core.middleware.superuser_must_change_pass.EnforceSuperuserPasswordChangeMiddleware',
     "django.middleware.common.CommonMiddleware",
     "django.middleware.gzip.GZipMiddleware",  # 🚀 PERFORMANCE: Compress responses to reduce network transfer time
+    # ★ [P-100 · 2026-09-07 턴 K · 차선 B] 5xx 본문에서 내부를 걷어내는 한 겹.
+    #   **줄을 새로 넣었다**(기존 줄은 한 자도 안 고쳤다). 자리는 GZip **바로 아래**:
+    #     ① GZip 보다 안쪽 — 압축 전 본문을 봐야 표지를 읽는다.
+    #     ② 5xx 를 만드는 다른 어떤 겹보다도 바깥 — 그래야 그 본문이 이 겹을 지난다.
+    #   상태줄은 안 고친다. 하는 일은 「무엇이 샜나」뿐이다.
+    #   되돌리기는 `SAFE_ERROR_BODY = False` 한 줄이다.
+    "common.error_body.SafeErrorBodyMiddleware",
     "core.middleware.csrf_exempt_swagger.CSRFExemptSwaggerMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -139,6 +146,18 @@ MIDDLEWARE = [
     #   캐시 안쪽에 두면 열려 있던 동안 익명으로 채워진 항목이 관문을 지나지 않고 그대로 나간다.
     #   §0.4 금지구역의 라우트도 이 한 겹이 덮는다. 파일은 한 줄도 건드리지 않는다.
     "common.access_gate.AccessGateMiddleware",
+    # ★ [P-105 · 2026-09-07 턴 M · 차선 B] **역할 0 관문.** 줄을 새로 넣었다
+    #   (기존 줄은 한 자도 안 고쳤다). 자리는 `AccessGateMiddleware` **바로 아래** —
+    #   세 조건을 동시에 만족하는 자리가 여기뿐이다:
+    #     ① 응답 캐시(`UniversalCacheMiddleware`)보다 **바깥** — 안쪽에 두면 역할이
+    #        있던 동안 채워진 항목이 관문을 지나지 않고 그대로 나간다(D-341 착시 ⑦)
+    #     ② `AccessGateMiddleware` **다음** — 익명은 401, 역할 0 은 403.
+    #        순서가 「누구인지 모른다」와 「누구인지는 아는데 안 된다」를 가른다(D-290)
+    #     ③ dj-core `JWTUserRestoreMiddleware`(위쪽)보다 **아래** — 그 겹이 세워 준
+    #        `request.user` 만 본다. 토큰을 또 풀면 인증기가 둘이 된다(D-337 계열)
+    #   반경 [실측 2026-09-07 · 런타임 열거]: 705 오퍼레이션 / 578 경로 / 876 URL 패턴.
+    #   되돌리기는 `ROLE_GATE_ENABLED = False` 한 줄이다.
+    "common.role_gate.RoleGateMiddleware",
     # ★ [UX-24 · 2026-09-05 턴 E · 차선 S] 동시 세션 상한 한 겹. **줄을 새로 넣었다**
     #   (기존 줄은 한 자도 안 고쳤다). 자리는 `ApiContractStatusMiddleware` 바로 위 —
     #   같은 두 조건을 만족해야 한다: 캐시보다 바깥 · GZip 보다 안쪽(본문을 JSON 으로
@@ -177,6 +196,67 @@ MIDDLEWARE = [
 API_CONTRACT_PROMOTE_ERROR_STATUS = (
     os.environ.get("API_CONTRACT_PROMOTE_ERROR_STATUS", "false").lower() == "true"
 )
+
+# ── SEC-18 ⑥ **예외 응답이 본문에 내부를 싣지 않는다** (P-100 · 2026-09-07 · 차선 B) ──
+#
+# 운영 프로필 계약의 여섯째 수다. 앞의 다섯(`config/settings_prod.py` ①~⑤ ·
+# `scripts/verify_prod_settings.py` 가 **실제로 띄워서** 재는 그 다섯)은 전부
+# 「닫힌 쪽이 기본이고 열린 값은 선언으로만 열린다」는 같은 모양이다. 이 수도 같다.
+#
+#   ⑥ 5xx 응답 본문에 `Traceback` · `pydantic` · `File "` · 내부 파일경로가
+#      **한 자도 없다.** 기본 True(닫힌 쪽) · 선언으로만 끌 수 있다.
+#
+# 왜 다섯이 아니라 여섯이어야 했나 — **출생 표본** [실측 2026-09-07 · P-100]
+#     GET /api/report-template/  (권한 없는 계정)  ->  HTTP 500 · text/plain 951바이트
+#         Traceback (most recent call last):
+#           File "/usr/local/lib/python3.11/site-packages/ninja_extra/operation.py", line 216
+#           ... pydantic_core._pydantic_core.ValidationError
+#   ②(DEBUG=False)만으로는 이 자리가 안 닫힌다: 개발 프로필로 뜬 판이 **바로 이 본문**을
+#   내보내고 있었고, 운영 프로필로 떠도 `DEBUG=False` 는 django-ninja 의 역추적만 막을 뿐
+#   「본문에 무엇이 실렸나」를 아무도 재지 않았다. 재지 않는 것은 계약이 아니다(D-301).
+#
+# ★ 관측 이름 — 판정기가 읽을 자리는 `settings.SAFE_ERROR_BODY` 하나다.
+#   (`scripts/verify_prod_settings.py` 의 PROBE 는 지금 다섯 수의 이름만 찍는다.
+#    여섯째를 세려면 그 PROBE 와 `judge()` 에 이 이름 한 줄이 더 있어야 하고,
+#    그 파일은 게이트 소유라 이 차선이 건드리지 않는다 — P-100 보고에 그대로 적었다.)
+#
+# 구현·사유는 `common/error_body.py`. 되돌리기는 이 한 줄이다(D-212).
+SAFE_ERROR_BODY = (
+    os.environ.get("SAFE_ERROR_BODY", "true").lower() == "true"
+)
+
+# ── P-105 역할 0 관문 (2026-09-07 턴 M · 차선 B) ─────────────────────────────
+#
+#   True (기본)  `user.roles` 가 비어 있는 계정은 API 면에서 **403** 을 받는다.
+#                닿는 자리는 `common/role_gate.py::ROLE_ZERO_ALLOWED` 에 손으로
+#                적어 둔 것들(로그인 절차 + 역할 대기 문 하나)뿐이다.
+#   False        미들웨어가 경로에 있어도 **한 요청도 안 막는다.** 역할 대기 문은 남는다.
+#
+# 무엇이 이 줄을 만들게 했나 [실측 2026-09-07 · `gxprobe_e2e` · roles == []]:
+#   화면이 실제로 부르는 53자리 중 **21자리가 200 + 실자료**였다 — 사건 목록(카메라명·
+#   시각·판정) · 배송 · 사용자 그룹 · **남의 계정 전문**(`get-user-detail/115`).
+#   같은 순간 역할 보유 계정이 본 수는 22 였다. 즉 역할 0 은 운영자와 **거의 같은 것**을
+#   보고 있었고, 「인증됐다」와 「봐도 된다」 사이에 아무것도 서 있지 않았다.
+#
+# ★ 이 판정을 `getattr(u, "role", None)` 으로 내지 않는다 — 이 제품에 그 필드는 **없고**,
+#   없는 것을 읽으면 언제나 None 이 나온다. 그 None 을 측정으로 읽은 것이 이 사고를
+#   세 턴 동안 덮었다. 역할은 M2M `user.roles` 다.
+#
+# 구현·사유는 `common/role_gate.py`. 계약은
+# `docs/agent/evidence/P-105/backend/CONTRACT.md`. 되돌리기는 이 한 줄이다(D-212).
+ROLE_GATE_ENABLED = (
+    os.environ.get("ROLE_GATE_ENABLED", "true").lower() == "true"
+)
+
+#: 역할을 줄 수 있는 관리자를 DB 에서 못 찾았을 때 화면이 부를 이름. **비어 있으면
+#: 이름 없는 문장**으로 나간다 — 아무 이름이나 지어 넣으면 화면이 틀린 사람에게
+#: 연락하라고 말한다(D-290 · D-301).
+# ⚠ **`ROLE_REQUEST_ADMIN_NAME` 을 두지 않았다** [실측 2026-09-07 · `verify_dormant.py`
+#   가 잡았다: "㉢ 설정 빔 — 새로 만드는 것은 켜진 상태로 태어나야 한다"].
+#   처음에는 「관리자를 DB 에서 못 찾았을 때 쓸 이름」으로 이 값을 두었다. 그런데
+#   기본값이 빈 문자열이면 그 분기는 **한 번도 안 도는 코드**이고, 값을 채워 넣으면
+#   그때부터 화면이 **DB 가 아니라 설정 파일이 말하는 사람**에게 연락하라고 말한다.
+#   둘 다 원하지 않는다. 못 찾으면 `source="none"` 으로 **없다고 낸다**(D-290 · D-301).
 
 # ── UX-24 동시 세션 상한 (2026-09-05 턴 E · 차선 S) ─────────────────────────
 #
@@ -391,19 +471,21 @@ API_CONTRACT_PROMOTE_PATHS = tuple(
         #          벽이 없어졌으므로 **사유를 지우고 켠다** — 사유가 사라졌는데 줄만 남기면
         #          그 줄이 다음 턴의 거짓 벽이 된다.
         #        전/후 [실측 · gxprobe_e2e]: 200+봉투403 → HTTP 403 (아래 넷과 같은 방식)
-        #     `/api/report-template/` 5건 — 이 접두는 `backend/tests/test_api_contract.py`
-        #        의 **B 부류 표본**이다(`ROUTE_LIST_SCHEMA` · `ROUTE_FORMERLY_SWALLOWED`).
-        #        `test_flag_off_list_schema_route_still_raises`(500 을 못박는다)와
-        #        `test_flag_off_formerly_swallowed_route_keeps_200`(200 을 못박는다)이
-        #        바로 이 두 경로에서 「플래그 OFF 되돌림」을 증명한다. 켜면 그 둘이
-        #        빨개지는데 그것은 「고쳤다」가 아니라 **계약 시험의 표본을 말없이
-        #        바꾼 것**이다(D-327). 표본을 옮기는 것은 차선 S 소유 밖이다.
-        #        ⚠ 화면 쪽은 안전하다(`useReportTemplate.ts` 6함수 전부 try/catch/finally) —
-        #          막는 것은 제품이 아니라 **표본 소유**다. 다음 턴에 표본을 옮기면 켤 수 있다.
-        #        ★ 같이 남는 P1: `GET /api/report-template` 는 지금 권한 거절에
-        #          **HTTP 500 + pydantic 역추적 전문**을 본문으로 돌려준다 [실측
-        #          2026-09-07 · gxprobe_e2e]. 승격하면 `process_exception` 이 403 으로
-        #          되살리므로 역추적 유출도 같이 닫힌다 — 표본을 옮길 값이 그것이다.
+        # ★ [P-100 · 2026-09-07 턴 K · 차선 B] **반경 5.** `/api/report-template/` 를 켠다.
+        #   앞판이 「다음 턴에 표본을 옮기면 켤 수 있다」고 이름으로 적어 둔 그 줄이다.
+        #   막고 있던 것은 제품이 아니라 **계약 시험의 표본 소유**였고, 이번 턴에
+        #   `backend/tests/test_api_contract.py` 의 표본을 실제로 옮겼다:
+        #     ROUTE_LIST_SCHEMA        /api/report-template  →  /api/delivery/processing/drones
+        #       (§0.4 안이라 우리가 **앞으로도 승격하지 않는다** — ROUTE_NO_SCHEMA 를
+        #        턴 J 에 옮긴 것과 같은 사유다. B 부류 7건 중 5건이 delivery 다)
+        #     ROUTE_FORMERLY_SWALLOWED /api/report-template/1 은 **그대로 둔다** —
+        #       C→A 로 고친 8건 중 GET 인 것이 이 하나뿐이다. 대신 되돌림 시험이
+        #       **지렛대 둘**(플래그 OFF + 이 접두 제거)을 다 내리고 200 을 확인한다.
+        #       기대를 403 으로 고쳐 지우지 않았다(D-327).
+        #   무엇이 닫히나 [실측 2026-09-07 · gxseed_u4_official(view_only)]:
+        #     GET /api/report-template/  500 + pydantic 역추적 전문 → **403 + 봉투**
+        #   ⚠ 화면 쪽은 안전하다 — `useReportTemplate.ts` 6함수 전부 try/catch/finally.
+        ",/api/report-template/"
         ",/api/operational-data/"
         ",/api/handover/handover/"
         ",/api/devices/libraries-management/"

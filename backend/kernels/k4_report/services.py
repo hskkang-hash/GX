@@ -267,6 +267,53 @@ def render(
     return outcome.pdf
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 3-b. render_html — **서식이 저장소 표에 없을 때** (P-125 · UX-30 · 2026-09-10)
+# ═══════════════════════════════════════════════════════════════════════════
+def render_html(*, scope: TenantScope, html: str, renderer: str | None = None) -> bytes:
+    """부르는 쪽이 만든 HTML 한 장을 PDF 로 찍는다. **표를 거치지 않는다.**
+
+    왜 `render` 로 안 되나 — 실측이 이유다 (P-125 · 2026-09-10)
+    -----------------------------------------------------------
+    `render` 는 `ReportTemplate` **행**을 찍는다. 그런데 이 저장소의 그 표에 있는
+    19행은 **전부 택배 운송장**이다(택배 제품에서 온 행들이고, `{{ order__sender_name }}`
+    ·`{{ order__delivery_fee__value }}` 를 담는다). 재난안전과 공무원이
+    `GET /api/dsm/reports/7.pdf` 를 부르면 **배송 완료 보고서**가 나왔고,
+    `?event_id=` 를 붙여도 바이트가 **한 글자도 바뀌지 않았다** — 그 템플릿에는
+    `{{ events }}` 도 `{{ actions }}` 도 없으므로 `_fill` 이 바꿀 자리가 없기 때문이다.
+
+    사건 보고서 서식은 **계약이 정한 1쪽 서식**이고(UX-30), 고객이 편집하는 표의 행이
+    아니다. 표에 우리 서식 행을 심으면 ① 테넌트마다 한 행씩 심어야 하고 ② 고객이
+    그 행을 지우거나 고치는 순간 감사에 나가는 종이의 모양이 바뀐다.
+    그래서 **서식은 코드에, 값은 컨텍스트에** 둔다.
+
+    ★ 그래도 엔진은 여기서만 부른다. App 이 `report_template.utils` 를 직접 부르면
+      **엔진 호출 자리가 두 곳**이 되고, 엔진을 갈아 끼우는 날 한쪽이 남는다 —
+      `renderers.py` 모듈 독스트링이 막으려는 바로 그 모양이다.
+
+    ★ `usage_count` 를 올리지 않는다. 그 수는 **표의 행**이 몇 번 쓰였나이고,
+      여기에는 행이 없다. 없는 행의 수를 올리면 U2 의 분모가 거짓이 된다.
+    """
+    scope.require_actor()
+    if not (html or "").strip():
+        raise InvalidReportInput(
+            "찍을 HTML 이 비었다 — 빈 종이를 성공으로 내보내지 않는다 (D-284).")
+
+    engine = renderer_registry.get(renderer)
+    if engine is None:
+        raise InvalidReportInput(
+            f"renderer={renderer!r} 가 등록되지 않았다. "
+            f"등록된 것: {', '.join(sorted(renderer_registry.REGISTRY))}")
+
+    outcome = engine.render(html=html)
+    if not outcome.ok:
+        raise RenderFailed(f"보고서 렌더 실패 (engine={engine.name}): {outcome.reason}")
+    # ★ `render` 와 **같은 판정**이다 — 어댑터가 성공이라 해도 0바이트는 성공이 아니다.
+    if not outcome.pdf:
+        raise RenderFailed(f"엔진 {engine.name} 이 0바이트를 냈다 — 빈 PDF 는 성공이 아니다")
+    return outcome.pdf
+
+
 #: 불완전 보고서에 반드시 찍히는 표시. **템플릿이 무엇이든 남는다.**
 INCOMPLETE_BANNER = "[GuardianX] 이 보고서는 불완전합니다"
 

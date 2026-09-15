@@ -78,7 +78,25 @@ DENY_KEY = ('return 401 \'{"detail":"Unauthorized",'
 #:   `set` 으로 한 변수에 접고 그 변수를 본다. ★ 앞단은 **기동을 거부하는 방식으로**
 #:   틀림을 알렸다 — 조용히 통과시키지 않았다. 그것이 앞단을 방어선으로 쓸 수 있는 이유다.
 CREDENTIAL_PROBE = "$gx_cred"
-CREDENTIAL_FOLD = 'set $gx_cred "$http_authorization$http_x_api_key$cookie_sessionid";'
+#: ★ [턴 O · 2026-09-10 · 영실 · B 차선 진단] **CORS 프리플라이트에는 자격이 없다.**
+#:
+#:   실측: `OPTIONS /api/v1/user/create-user` → **401** · `update-user` → 200 ·
+#:   같은 프리플라이트에 `Authorization` 을 손으로 붙이면 → 200 · nginx 를 빼고
+#:   장고에 직접 → 200. 즉 막은 것은 **앞단**이다.
+#:
+#:   프리플라이트는 **규격상 자격을 싣지 않는다**(fetch 규격). 그런데 이 접기는
+#:   「자격이 하나도 없으면 거절」이라 프리플라이트를 언제나 거절했고, 브라우저는
+#:   그 401 을 보고 **본 요청을 아예 보내지 않는다.** 화면에는 오류조차 안 뜬다 —
+#:   그래서 「사용자 추가」의 「저장」이 **눌러도 아무 일이 없었다**(U5 첫날 ①).
+#:
+#:   ⚠ 구멍이 아니다: 프리플라이트는 본문이 없고 상태를 바꾸지 않는다. **진짜 POST 는
+#:     여전히 자격을 싣고 오고 여전히 이 접기가 잰다.** 여는 것은 `OPTIONS` 한 메서드뿐이다.
+#:   ⚠ 앞단 자기검사는 `"authentication required"` · `gx_key_denied` 를 술어로 쓴다 —
+#:     이 줄은 그 술어를 건드리지 않는다.
+CREDENTIAL_FOLD = (
+    'set $gx_cred "$http_authorization$http_x_api_key$cookie_sessionid"; '
+    'if ($request_method = OPTIONS) { set $gx_cred "preflight"; }'
+)
 
 
 def _variants(path: str) -> tuple[str, str]:

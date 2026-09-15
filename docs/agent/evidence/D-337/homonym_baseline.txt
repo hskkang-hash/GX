@@ -8,6 +8,7 @@
 #
 # 형식:  <이름키> <탭> <파일> <탭> <건수>
 
+
 api_key	backend/apps/dsm/services.py	3
 api_key	backend/common/access_gate.py	2
 api_key	backend/common/cache_hint_registry.py	1
@@ -36,6 +37,7 @@ api_key	backend/third_api/services/anyang_services.py	1
 api_key	backend/third_api/test_api.py	11
 api_key	backend/third_api/views/api_key_controller.py	1
 api_key	scripts/verify_authn_paths.py	1
+api_key	scripts/verify_click_completes.py	3
 api_key	scripts/verify_commented_guards.py	1
 api_key	scripts/verify_contract_route_reach.py	3
 api_key	scripts/verify_homonyms.py	6
@@ -50,3 +52,12 @@ api_key	scripts/verify_threshold_table.py	1
 #   왜 이 줄들이 생겼나: 익명이 **API 키를 발급받을 수 있던 문**을 접두로 막은 자리다
 #   (D-368 · P-83 · 턴 I). 이름을 못 고치니 **문은 닫고 이름값은 기준선으로 갚는다.**
 #   갚는 법: dj-core 가 그 경로를 바꾸거나, 우리 앞단에서 별칭을 세우는 날.
+
+# ★ 2026-09-15 · 턴 P — 기준선 152 → 155 (+3). **정당한 올림이다.**
+#   세 건 다 `scripts/verify_click_completes.py:372-374` 의 **서버가 정한 이름 문자열**이다:
+#   경로 "/api/dsm/settings/api-keys" · 설정 도메인 "api_keys" · 응답 필드 "api_key".
+#   판정기의 기대식은 정본(서버 응답·라우트)에서 뽑아야 하므로(P-132) 이름을 바꾸면
+#   **다른 것을 재게 된다.** 같은 커밋에서 우리 식별자인 단독 `auth` 셋은 이름을 고쳤다
+#   (`test_role_gate.py` → `authn_headers` · `verify_error_body.py` → `authn_header`).
+#   ⚠ `--freeze` 는 이 파일을 통째로 다시 써서 **사람이 적은 근거 문단을 지운다**(이번에 실제로
+#     지웠다 — 턴 I 문단을 HEAD 에서 되살렸다). 얼린 뒤에는 `git diff` 로 근거 문단을 확인할 것.

@@ -55,6 +55,13 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # ★ D-411 — `core.urls` **보다 먼저.** 아래로 내리면 문이 다시 열린다.
     path("api/token/pair", _gone),
+    # ★ [P-105 · 2026-09-07 턴 M · 차선 B] 역할 대기 화면의 문. **`core.urls` 보다 먼저.**
+    #   `core.urls` 는 `api/` 전체를 include 하고 그 안에 `/v1/...` 라우터들이 산다.
+    #   지금은 `core` 안에 `v1/access` 가 없으므로 뒤에 두어도 닿지만, **선언 순서가 곧
+    #   라우팅**이다(D-411 이 같은 성질을 반대로 썼다 — 먼저 선언해 문을 닫았다).
+    #   dj-core 가 언젠가 같은 이름을 들이면 우리 문이 조용히 삼켜지고, 그때 나타나는
+    #   증상은 오류가 아니라 **404 하나**다. 앞에 둔다.
+    path("api/v1/access/", include("apps.access.urls")),  # 역할 대기 (P-105)
     path("api/", include("core.urls")),  # APIs core
     path("api/devices/", include("devices.urls")),  # APIs devices
     path("api/delivery/", include("delivery.urls")),  # APIs delivery

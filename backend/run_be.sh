@@ -71,21 +71,29 @@ celery -A config beat -l INFO &
 sleep 3
 
 # grid_data path: backend/common/grid_data.py
-# python manage.py initialize_base_data 
+# python manage.py initialize_base_data
 # python manage.py initialize_menu_data
 # python manage.py initialize_grid_data --grid-data-path=backend/common/grid_data.py
 # python manage.py add_use_group_config
 python devices/init_base_device_data.py
+# ★ [턴 O · 2026-09-10 · 영실] **여기가 공유 비밀번호 74개의 발원지였다.**
+#   위 다섯 줄은 주석이지만, 주석은 다음 사람이 **그대로 복사하는 서식**이다.
+#   실측: 계정 114개 중 **74개**가 한 단어를 쓰고 있었고(73 활성), 그 안에 이
+#   저장소의 **유일한 superuser 와 역할 superuser 13개 중 8개**가 들어 있었다.
+#   값은 회전으로 무력화했다(74/74 검증 · 새 값은 저장소 밖). 서식도 함께 고친다 —
+#   값을 지우고 패턴을 남기면 같은 일이 다음 설치에서 다시 벌어진다.
+#   ⚠ `GX_SEED_ADMIN_PASSWORD` 는 **선언하지 않으면 빈 값**이고, 그러면 이 명령은
+#     계정을 만들지 못한다 — 그것이 의도다(자리표로 계정이 태어나지 않는다).
 # python manage.py create_default_superuser --is-superuser --is-staff
-# python manage.py create_default_superuser --username=phatlh --email=phatlh@yopmail.com --password=Admin@123 --first-name=Phat --last-name=Le --language=en
-# python manage.py create_default_superuser --username=man --email=man@yopmail.com --password=Admin@123 --first-name=Man --last-name=Lu --language=en
-# python manage.py create_default_superuser --username=son --email=son@yopmail.com --password=Admin@123 --first-name=Son --last-name=Nguyen --language=en
-# python manage.py create_default_superuser --username=tuan --email=tuan@yopmail.com --password=Admin@123 --first-name=Tuan --last-name=Tran --language=en
-# python manage.py create_default_superuser --username=huy --email=huy@yopmail.com --password=Admin@123 --first-name=Huy --last-name=Nguyen --language=en
-# python manage.py create_default_superuser --username=thanh --email=thanh@yopmail.com --password=Admin@123 --first-name=Thanh --last-name=Tran --language=en
-# python manage.py create_default_superuser --username=rin --email=rin@yopmail.com --password=Admin@123 --first-name=Rin --last-name=Tran --language=en
-# python manage.py create_default_superuser --username=thao --email=thao@yopmail.com --password=Admin@123 --first-name=Thao --last-name=Tran --language=en
-# python manage.py create_default_superuser --username=chi --email=chi@yopmail.com --password=Admin@123 --first-name=Chi --last-name=Nguyen --language=en
+# python manage.py create_default_superuser --username=phatlh --email=phatlh@yopmail.com --password="$GX_SEED_ADMIN_PASSWORD" --first-name=Phat --last-name=Le --language=en
+# python manage.py create_default_superuser --username=man --email=man@yopmail.com --password="$GX_SEED_ADMIN_PASSWORD" --first-name=Man --last-name=Lu --language=en
+# python manage.py create_default_superuser --username=son --email=son@yopmail.com --password="$GX_SEED_ADMIN_PASSWORD" --first-name=Son --last-name=Nguyen --language=en
+# python manage.py create_default_superuser --username=tuan --email=tuan@yopmail.com --password="$GX_SEED_ADMIN_PASSWORD" --first-name=Tuan --last-name=Tran --language=en
+# python manage.py create_default_superuser --username=huy --email=huy@yopmail.com --password="$GX_SEED_ADMIN_PASSWORD" --first-name=Huy --last-name=Nguyen --language=en
+# python manage.py create_default_superuser --username=thanh --email=thanh@yopmail.com --password="$GX_SEED_ADMIN_PASSWORD" --first-name=Thanh --last-name=Tran --language=en
+# python manage.py create_default_superuser --username=rin --email=rin@yopmail.com --password="$GX_SEED_ADMIN_PASSWORD" --first-name=Rin --last-name=Tran --language=en
+# python manage.py create_default_superuser --username=thao --email=thao@yopmail.com --password="$GX_SEED_ADMIN_PASSWORD" --first-name=Thao --last-name=Tran --language=en
+# python manage.py create_default_superuser --username=chi --email=chi@yopmail.com --password="$GX_SEED_ADMIN_PASSWORD" --first-name=Chi --last-name=Nguyen --language=en
 
 
 # # initialize default data

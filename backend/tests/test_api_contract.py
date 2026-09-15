@@ -65,10 +65,38 @@ from common.api_contract import (
 ROUTE_NO_SCHEMA = "/api/delivery/delivery/operations"
 
 #: B — `response=List[…]`. 거부 dict 를 pydantic 이 거절해 예외가 된다.
-ROUTE_LIST_SCHEMA = "/api/report-template/"
+#
+#: ★ [P-100 · 2026-09-07 턴 K · 차선 B] 표본을 **금지구역으로 옮겼다** — 턴 J 에
+#:   `ROUTE_NO_SCHEMA` 를 옮긴 것과 **같은 사유 · 같은 방식**이다.
+#:   왜: 이 턴에 `/api/report-template/` 를 승격 접두에 넣었다(P-100 (a) — 권한 거절이
+#:   HTTP 500 + pydantic 역추적 전문이던 자리다). 그 순간
+#:   `test_flag_off_list_schema_route_still_raises` 가 빨개진다 [승격되면 403 != 500].
+#:   시험이 틀린 것이 아니다 — **표본이 승격돼 버려서** 「플래그 OFF 면 예외가 그대로
+#:   흐른다」를 더 이상 그 자리에서 보일 수 없게 된 것이다. 기대를 403 으로 고치면
+#:   그것은 되돌림 성질을 **증명하지 않고 지우는 것**이다(D-327).
+#:
+#:   고른 자리 — §0.4(delivery·orders·terminals)는 `test_forbidden_zone_prefixes_stay_out`
+#:   이 「우리가 승격하지 않는다」를 못박고 있으니 그 안의 B 부류는 표본으로 안정하다.
+#:   B 부류 7건의 실측 분포 [2026-09-07 · `classify_permission_routes()`]:
+#:     GET /api/checklist-setting                      (**이미** 승격 접두 안이다 — 못 고른다)
+#:     GET /api/delivery/cancelled/cancelled-operations
+#:     GET /api/delivery/completed/arrived-operations
+#:     GET /api/delivery/completed/completed-operations
+#:     GET /api/delivery/processing/drones              ← 이것을 고른다
+#:     GET /api/delivery/processing/routes
+#:     GET /api/report-template                        (이번 턴에 승격됐다)
+#:   ⚠ 읽기만 한다 — §0.4 는 그 앱의 **코드**를 못 고치는 것이지, 시험이 그 경로를
+#:     두드리는 것까지 막지 않는다.
+ROUTE_LIST_SCHEMA = "/api/delivery/processing/drones"
 
 #: C 였던 것 — `response=<단일 스키마>` 선언 때문에 거부가 `{}` 로 소멸하던 라우트.
 #: P-W0-18-1 A 안 적용으로 선언을 뗐고, 이제 A 부류로서 승격된다. 부류는 0 이 됐다.
+#:
+#: ★ [P-100] 이 표본은 **옮기지 않았다.** C→A 로 고친 8건(report_template 4 ·
+#:   checklist_setting 4) 중 **GET 인 것이 이 하나뿐**이고, 나머지 일곱은
+#:   POST·PUT·DELETE 다 — 쓰기 경로를 실재 id 로 두드리는 표본은 만들지 않는다.
+#:   대신 되돌림 시험이 **지렛대 둘**을 다 내린다(아래
+#:   `test_revert_restores_legacy_200` 의 설명). 기대를 고쳐 지우지 않았다.
 ROUTE_FORMERLY_SWALLOWED = "/api/report-template/1"
 
 
@@ -268,20 +296,44 @@ class PermissionDeniedStatusTest(_DeniedUserMixin, TestCase):
         self.assertIs(body.get("success"), False, "거부 본문이 다시 소멸했다")
         self.assertEqual(body.get("status_code"), 403)
 
-    @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=False)
-    def test_flag_off_formerly_swallowed_route_keeps_200(self):
+    @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=False,
+                       API_CONTRACT_PROMOTE_PATHS=())
+    def test_revert_restores_legacy_200(self):
         """OFF 되돌림도 그대로 성립하는가.
 
-        선언 제거는 되돌림 경로를 건드리지 않아야 한다 — 플래그 하나로 전부 원복된다는
+        선언 제거는 되돌림 경로를 건드리지 않아야 한다 — 되돌리면 전부 원복된다는
         하위호환 약속이 이 라우트에서도 유효하다는 뜻이다.
         단, 본문은 **더 이상 `{}` 가 아니다.** 거부 dict 가 그대로 실려 나간다 —
-        선언을 떼서 얻은 것이 바로 이것이고, 플래그로 되돌아가지 않는 유일한 변화다.
+        선언을 떼서 얻은 것이 바로 이것이고, 되돌려도 돌아가지 않는 유일한 변화다.
+
+        ★ [P-100 · 2026-09-07] **지렛대가 둘이 됐다.** 이 턴에
+          `/api/report-template/` 가 `API_CONTRACT_PROMOTE_PATHS` 에 들어갔고,
+          그 접두는 **전역 플래그와 무관하게** 승격한다(D-349 ③ · 설계 그대로).
+          그러므로 이 라우트의 되돌림은
+              ① `API_CONTRACT_PROMOTE_ERROR_STATUS = False`  **그리고**
+              ② 접두 목록에서 `/api/report-template/` 제거
+          둘 다다. 시험이 재는 것은 **그 되돌림이 실제로 200 을 되돌려 주는가**이고,
+          앞판이 재던 성질과 같은 성질이다. 기대를 403 으로 바꿔 성질을 지우지 않았다
+          (D-327). 이름을 `test_flag_off_...` 에서 바꾼 것도 그래서다 —
+          지렛대가 둘인데 이름이 하나를 말하면 다음 사람이 잘못 읽는다.
         """
         resp = self.client.get(ROUTE_FORMERLY_SWALLOWED, **self.headers)
         self.assertEqual(resp.status_code, 200)
         body = json.loads(resp.content)
         self.assertIs(body.get("success"), False)
         self.assertEqual(body.get("status_code"), 403)
+
+    @override_settings(API_CONTRACT_PROMOTE_ERROR_STATUS=False)
+    def test_scoped_prefix_promotes_with_flag_off(self):
+        """**접두는 전역 플래그를 안 본다** (D-349 ③ · P-100 으로 report-template 추가).
+
+        이것이 이번 턴에 새로 생긴 계약이다: 전역 플래그가 꺼져 있어도 접두 안의
+        경로는 403 으로 나간다. 위 되돌림 시험과 **짝**이다 — 하나는 「되돌리면
+        200 이다」를, 이것은 「되돌리지 않으면 403 이다」를 잰다.
+        """
+        resp = self.client.get(ROUTE_FORMERLY_SWALLOWED, **self.headers)
+        self.assertEqual(resp.status_code, 403)
+        self.assertIs(json.loads(resp.content).get("success"), False)
 
     # ── 정상 응답은 건드리지 않는다 ───────────────────────────────────────
 

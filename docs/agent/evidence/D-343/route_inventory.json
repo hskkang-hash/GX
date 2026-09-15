@@ -1,35 +1,35 @@
 {
   "note": "D-343 ①② 라우트 인벤토리 전수. inbound_key=accepts 가 「지금 키가 닿는 자리」다. classification 의 기본값은 session_only — 판단이 서지 않으면 좁은 쪽(D-343 ②).",
-  "measured_at": "2026-09-07T14:42:43+07:00",
+  "measured_at": "2026-09-15T11:27:53+07:00",
   "totals": {
-    "routes": 705,
+    "routes": 708,
     "by_inbound_key": {
-      "accepts": 547,
-      "refuses": 76,
+      "accepts": 549,
+      "refuses": 77,
       "open_anonymous": 72,
       "unknown": 9,
       "declared": 1
     },
     "by_classification": {
-      "session_only": 704,
+      "session_only": 707,
       "inbound_key_allowed": 1
     },
     "by_tenant_scope": {
       "none": 651,
-      "required": 53,
-      "exempt": 1
+      "required": 54,
+      "exempt": 3
     },
     "by_authn": {
-      "CustomJWTAuth": 547,
-      "JwtOrInboundKey": 75,
+      "CustomJWTAuth": 549,
+      "JwtOrInboundKey": 76,
       "": 72,
       "JWTAuth": 9,
       "JwtOrWallToken": 2
     },
     "by_envelope": {
-      "promoted": 332,
-      "clean": 246,
-      "authz_envelope": 127
+      "promoted": 338,
+      "clean": 248,
+      "authz_envelope": 122
     },
     "authz_path_permission": 296
   },
@@ -4830,6 +4830,29 @@
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
     {
+      "method": "GET",
+      "path": "/api/dsm/events/{int:event_id}/report.pdf",
+      "app": "dsm",
+      "view": "apps.dsm.api.DsmAPI.event_report_pdf",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
       "method": "POST",
       "path": "/api/dsm/events/{int:event_id}/response",
       "app": "dsm",
@@ -9519,7 +9542,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -9541,7 +9564,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -9563,7 +9586,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -9585,7 +9608,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -9607,7 +9630,7 @@
       "inbound_key_reason": "",
       "tenant_scope": "none",
       "authz_path_permission": true,
-      "envelope": "authz_envelope",
+      "envelope": "promoted",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },
@@ -14273,6 +14296,50 @@
       "tenant_scope": "none",
       "authz_path_permission": true,
       "envelope": "authz_envelope",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/access/role-pending",
+      "app": "v1",
+      "view": "apps.access.api.AccessAPI.role_pending",
+      "authn": "CustomJWTAuth",
+      "authn_chain": [
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "accepts",
+      "inbound_key_reason": "",
+      "tenant_scope": "exempt",
+      "authz_path_permission": false,
+      "envelope": "clean",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/access/role-requests",
+      "app": "v1",
+      "view": "apps.access.api.AccessAPI.role_requests",
+      "authn": "CustomJWTAuth",
+      "authn_chain": [
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "accepts",
+      "inbound_key_reason": "",
+      "tenant_scope": "exempt",
+      "authz_path_permission": false,
+      "envelope": "clean",
       "classification": "session_only",
       "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
     },

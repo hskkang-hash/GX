@@ -58,7 +58,11 @@ from common.tenant_scope import TenantScope, tenant_scoped
 from core.api.v1.auth import CustomJWTAuth
 
 from apps.dsm import services
-from apps.dsm.exceptions import PermissionDeniedForSetting, SettingNotAvailable
+from apps.dsm.exceptions import (
+    IncidentReportUnavailable,
+    PermissionDeniedForSetting,
+    SettingNotAvailable,
+)
 
 
 def _scope(request) -> TenantScope:
@@ -783,6 +787,47 @@ class DsmAPI:
         response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = (
             f'attachment; filename="guardianx-report-{template_id}.pdf"')
+        return response
+
+    # ── UX-30 사건 보고서 1쪽 (P-125 · 2026-09-10 · 차선 B) ────────────────
+    #
+    # ★ **경로의 숫자가 사건 id 다.** 위 `reports/{template_id}.pdf` 의 숫자는 저장소
+    #   템플릿 표의 행 번호이고, 그 표의 19행은 전부 택배 운송장이다 — 그래서
+    #   `reports/7.pdf` 는 「배송 완료 보고서」를 냈고 `?event_id=` 를 붙여도 바이트가
+    #   **한 글자도 안 바뀌었다**(그 서식에 `{{ events }}` 가 없어 꽂을 자리가 없다).
+    #   이 라우트는 서식을 요청이 못 고른다. 사건 하나 → 1쪽 서식 하나다.
+    #
+    # ★ 화면이 부를 주소는 **이것 하나**다:
+    #       GET /api/dsm/events/{event_id}/report.pdf
+    @route.get("/events/{int:event_id}/report.pdf", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-30 사건 보고서 — 남의 사건이 종이로 나가면 IDOR 이다")
+    def event_report_pdf(self, request, event_id: int):
+        """AC UX-30 — 사건 1건의 **1쪽 PDF**. 택배 칸 0개.
+
+        상태를 뭉치지 않는다 — 뭉치면 운영자가 어디를 고칠지 모른다:
+            401 인증 없음 · 404 없는/남의 사건 ·
+            409 사건은 있는데 지금 찍을 수 없다(출처 실패·렌더 실패·발생 시각 없음)
+
+        ★ `attachment` 다. 스냅샷(`inline`)과 반대인 이유: 이 문서는 **받아서 보관하고
+          결재에 올리는 종이**다 — 화면에 띄우고 마는 그림이 아니다.
+        """
+        try:
+            pdf = services.incident_report(scope=_scope(request), event_id=event_id)
+        except Http404 as exc:
+            raise HttpError(404, str(exc) or "그런 사건이 없습니다.")
+        except (IncidentReportUnavailable, SettingNotAvailable) as exc:
+            raise HttpError(409, f"지금은 보고서를 만들 수 없습니다 — {exc}")
+
+        response = HttpResponse(pdf, content_type="application/pdf")
+        # ★ 파일 이름을 두 벌로 낸다. `filename*` 이 없으면 한글 이름이 깨지고,
+        #   `filename` 만 없으면 옛 브라우저가 이름을 못 읽는다.
+        response["Content-Disposition"] = (
+            f'attachment; filename="guardianx-incident-{event_id}.pdf"; '
+            f"filename*=UTF-8''guardianx-%EC%82%AC%EA%B1%B4%EB%B3%B4%EA%B3%A0%EC%84%9C"
+            f"-{event_id}.pdf")
+        # 보고서는 사람마다 다른 종이다 — 중간 캐시에 남기지 않는다 (P-19 스냅샷과 같은 규약).
+        response["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+        response["X-Content-Type-Options"] = "nosniff"
         return response
 
     # ── F-09 영상 재생 — 계약 11조(원본 영상 무반출)가 여기서 걸린다 (D-306) ──

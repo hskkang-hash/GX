@@ -30,12 +30,20 @@ from kernels.k4_report.services import (
     build_context,
     list_templates,
     render,
+    render_html,
     render_period,
 )
 
 __all__ = [
-    # DA-04 §2 K4 공개 면 3개 + 확장 1개(미구현)
+    # DA-04 §2 K4 공개 면 3개 + 확장 2개(`render_html` 실재 · `render_period` 미구현)
+    #
+    # ★ `render_html` 은 **DA-04 §2 K4 표에 아직 없는 이름**이다 (P-125 · 2026-09-10).
+    #   표를 고치는 권한이 이 차선에 없어 코드만 먼저 섰고, 그 사실을 여기 적어 둔다 —
+    #   적어 두지 않으면 다음 사람이 표와 코드 중 어느 쪽이 뒤처졌는지 못 읽는다.
+    #   ⚠ 인계: DA-04 §2 K4 「공개 면」 열에 `render_html`(서식이 표에 없는 1쪽 보고서)
+    #     한 줄을 더해야 표와 코드가 같아진다.
     "render",
+    "render_html",
     "build_context",
     "list_templates",
     "render_period",

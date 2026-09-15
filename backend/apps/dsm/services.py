@@ -37,7 +37,11 @@ from common.tenant_scope import TenantScope
 
 import adapters.sdn as sdn
 from apps.dsm import audit
-from apps.dsm.exceptions import PermissionDeniedForSetting, SettingNotAvailable
+from apps.dsm.exceptions import (
+    IncidentReportUnavailable,
+    PermissionDeniedForSetting,
+    SettingNotAvailable,
+)
 
 log = logging.getLogger(__name__)
 
@@ -512,6 +516,57 @@ def build_report(*, scope: TenantScope, template_id: int,
                             since=since, until=until)
     return render(scope=scope, template_id=template_id, context=context,
                   allow_incomplete=allow_incomplete)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# UX-30 사건 보고서 1쪽 (P-125 · 2026-09-10 · 차선 B)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 왜 `build_report` 로 안 되나 — **경로의 숫자가 다른 것을 가리킨다.**
+#   `build_report` 의 `template_id` 는 **저장소 표의 행 번호**이고, 그 표에 있는 19행은
+#   전부 택배 운송장이다. 재난안전과 공무원이 `reports/7.pdf` 를 부르면
+#   「배송 완료 보고서」가 나왔고 `?event_id=` 를 붙여도 바이트가 같았다 —
+#   그 서식에는 `{{ events }}` 가 없어 꽂을 자리가 없었기 때문이다(P-125 실측).
+#   그래서 이 함수는 **사건 id 를 경로로 받는다.** 서식이 무엇인지는 요청이 못 고른다.
+#
+# ★ 서식은 `apps/dsm/incident_report.py` 한 곳에 있고, 찍는 일은 K4 가 한다.
+#   App 은 여전히 **조립부**다 — 값을 커널에서 받아 서식에 넘기고, 바이트를 돌려준다.
+def incident_report(*, scope: TenantScope, event_id: int) -> bytes:
+    """사건 하나의 **1쪽 PDF** (UX-30 · 「택배 필드 0」).
+
+    좁히기는 커널이 한다 — 남의 사건은 `build_context` 안의 K1 문지기가 **404** 로 막는다.
+    여기서 두 번째 필터를 짜지 않는다 (D-212).
+
+    Raises:
+        Http404: 없는 사건이거나 남의 사건.
+        IncidentReportUnavailable: 사건은 있는데 지금 찍을 수 없다 (409).
+    """
+    from kernels.k4_report import RenderFailed, build_context, render_html
+
+    from apps.dsm import incident_report as form
+
+    context = build_context(scope=scope, event_id=event_id)
+    events = list(getattr(context, "events", ()) or ())
+    if not events:
+        # ★ 출처가 답을 안 준 것과 「그런 사건이 없다」는 다른 상태다. 여기까지 왔다는 것은
+        #   404 가 아니었다는 뜻이므로 **409** 이고, 사유를 함께 낸다 (D-290).
+        raise IncidentReportUnavailable(
+            "사건 자료를 가져오지 못해 보고서를 만들 수 없습니다 — "
+            f"실패한 출처 {list(context.sources_failed) or ['(사유 미기재)']}")
+
+    clock = response_clock(scope=scope, event_id=event_id)
+    actor = scope.require_actor()
+    html = form.build_html(
+        event=events[0], clock=clock, actions=context.actions,
+        tenant=form.tenant_name(actor),
+        issued_by=form.person_label(actor),
+        sources_failed=tuple(context.sources_failed),
+    )
+    try:
+        return render_html(scope=scope, html=html)
+    except RenderFailed as exc:
+        # 렌더 실패는 **지금 찍을 수 없는 상태**다. 빈 200 을 내보내지 않는다 (D-284).
+        raise IncidentReportUnavailable(f"보고서를 찍지 못했습니다 — {exc}") from exc
 
 
 # ═══════════════════════════════════════════════════════════════════════════

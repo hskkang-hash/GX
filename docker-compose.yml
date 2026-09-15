@@ -231,6 +231,20 @@ services:
       - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      # ── 백업 목적지의 **이름** (P-102 · 2026-09-07 · 턴 K · 차선 E) ──────────
+      #
+      # ★ `backend/config/settings.py` 는 `env.str("OPS_BACKUP_DIR", default="")`
+      #   으로 읽고, `backend/config/retention_seed.py` 는 `/backup` 을 기대한다.
+      #   그런데 그 이름이 **어디에도 선언돼 있지 않았다** — 그래서 값은 빈 문자열이었고,
+      #   주기 백업(`common/ops_tasks.py::ops_backup_beat`)은 두 벌(정확히 24시간 간격)
+      #   돌고도 **회수증을 한 장도 남기지 못했다** [실측 2026-09-07].
+      #   경로는 비밀이 아니다 — 그래서 여기 기본값을 적는다(`.env.example` 에 이름도 있다).
+      #
+      # ⚠ **선언과 적용은 다른 사실이다**(D-301). 이 줄은 컨테이너를 **만들 때** 굳는다.
+      #   지금 도는 `gx-celery-e`·`gx-beat-e`·`gx-shell` 은 compose 밖에서 손으로 만든
+      #   것이라 이 줄이 아직 닿지 않았다. 확인: `docker exec <c> printenv OPS_BACKUP_DIR`.
+      #   그리고 `/backup` 볼륨 자체도 같은 재생성 창에서만 붙는다(위 volumes 절 참조).
+      - OPS_BACKUP_DIR=${OPS_BACKUP_DIR:-/backup}
     env_file:
       - ./backend/.env
     restart: unless-stopped
@@ -340,6 +354,9 @@ services:
       - GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -v
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      # 백업 목적지의 이름 (P-102). 사유·주의는 `celery` 서비스의 같은 줄에 적혀 있다.
+      # ⚠ 선언은 여기 서고 **적용은 컨테이너를 다시 만들 때**다 — 지금 도는 것에는 없다.
+      - OPS_BACKUP_DIR=${OPS_BACKUP_DIR:-/backup}
     env_file:
       - ./backend/.env
     restart: unless-stopped
@@ -412,6 +429,12 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      # 백업 목적지의 이름 (P-102). 사유·주의는 `celery` 서비스의 같은 줄에 적혀 있다.
+      # ⚠ 선언은 여기 서고 **적용은 컨테이너를 다시 만들 때**다 — 지금 도는 것에는 없다.
+      - OPS_BACKUP_DIR=${OPS_BACKUP_DIR:-/backup}
+    # ★ P-128 (2026-09-11 · 차선 E) — 세 아침 연속 전체 다운. 기계가 다시 서면
+    #   컨테이너도 다시 선다. 손으로 `docker stop` 한 것은 그대로 멈춰 있는다.
+    restart: unless-stopped
     logging: *gx-logging
     networks:
       - guardianx-network

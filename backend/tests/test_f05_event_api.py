@@ -299,6 +299,27 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/metering"),                       # OPS-16 이번 달 사용량 다섯 칸
     ("GET", "/api/dsm/metering/series"),                # OPS-16 달별 사용량
     ("GET", "/api/dsm/metering/csv"),                   # OPS-16 표 내려받기
+    # ★ 2026-09-10 턴 O — **하나가 늘었다** (UX-30 · P-125 · 차선 B).
+    #   손으로 이 줄을 더하는 일이 곧 「진입면을 넓힌다」는 선언이고, 그 선언을 여기 남긴다.
+    #   이 시험이 먼저 멈춰 세웠다(56 vs 57) — **게이트가 지시보다 위다**(D-327).
+    #
+    #   왜 라우트를 냈나 — **경로의 숫자가 다른 것을 가리키고 있었다** [실측 2026-09-10].
+    #   재난안전과 공무원이 상황 보고서를 받으려고 `GET /api/dsm/reports/7.pdf` 를 불렀고,
+    #   나온 것은 **「배송 완료 보고서」**(Sender Name · Delivery Fee · ETRI Receipt ID)였다.
+    #   `?event_id=4802` 를 붙여도 본문이 그대로였다 — `reports/{template_id}.pdf` 의 숫자는
+    #   **템플릿 표의 행 번호**이고, 그 표의 19행이 전부 택배 운송장이며, K4 의 치환은
+    #   `{{ events }}` 등 일곱 이름만 바꾸는데 그 서식에는 그 일곱이 하나도 없었기 때문이다.
+    #   → 요청이 서식을 고르는 한 이 사고는 되풀이된다. 이 문은 **사건 id 를 경로로 받고
+    #     서식은 코드가 정한다**(`apps/dsm/incident_report.py` · 1쪽 · 택배 칸 0).
+    #
+    #   문지기: `@tenant_scoped`(남의 사건이 종이로 나가면 IDOR) +
+    #           `JwtOrInboundKey`(**키 거절 — 기본값**. 종이는 사람이 받는 것이고,
+    #           들어오는 키에 보고서를 열어 주면 키 하나가 사건 전건의 사본을 뜬다).
+    #   ⚠ **읽기 전용이다** — 행을 하나도 만들지 않는다(`usage_count` 도 안 올린다).
+    #     쓰기 면이 아니므로 WRITE_PROBES 대상이 아니다(P-8).
+    #   ⚠ `/events/{int:event_id}/snapshot`·`/timeline` 과 형제다. 끝 조각이 달라
+    #     서로 삼키지 않는다(D-410).
+    ("GET", "/api/dsm/events/{int:event_id}/report.pdf"),   # UX-30 사건 보고서 1쪽
 })
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**

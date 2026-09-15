@@ -238,6 +238,7 @@ routes:
   "GET /api/dsm/events/{int:event_id}/field-replies": session_only
   "POST /api/dsm/events/{int:event_id}/field-reply": session_only
   "POST /api/dsm/events/{int:event_id}/notify": session_only
+  "GET /api/dsm/events/{int:event_id}/report.pdf": session_only
   "POST /api/dsm/events/{int:event_id}/response": session_only
   "POST /api/dsm/events/{int:event_id}/review": session_only
   "GET /api/dsm/events/{int:event_id}/snapshot": session_only
@@ -674,6 +675,8 @@ routes:
   "GET /api/user-profiles/user/{user_id}": session_only
   "GET /api/user-profiles/{profile_id}": session_only
   "PUT /api/user-profiles/{profile_id}": session_only
+  "GET /api/v1/access/role-pending": session_only
+  "GET /api/v1/access/role-requests": session_only
   "DELETE /api/v1/auth/account": session_only
   "POST /api/v1/auth/change-password": session_only
   "POST /api/v1/auth/create-language": session_only

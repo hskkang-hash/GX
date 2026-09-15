@@ -46,11 +46,14 @@ forbidden-zone 게이트가 STOP 으로 잡았다. **게이트는 제 일을 했
 """
 from __future__ import annotations
 
+import logging
 import re
 
 from django.http import JsonResponse
 
 from common.inbound_api_key import carries_inbound_key
+
+logger = logging.getLogger(__name__)
 
 #: ★ **들어오는 키가 닿아도 되는 자리 — 전부.** 이 집합이 곧 개방 선언이다(D-343 ②).
 #: 늘리는 일은 손으로 이 줄을 더하는 일이고, 그 손이 「진입면을 넓힌다」는 선언이다.
@@ -175,6 +178,92 @@ AUTHN_REQUIRED_PATHS: tuple[str, ...] = (
     #   지금도 그대로 지나간다 — 막히는 것은 **아무것도 안 싣고 오는 요청**뿐이다.
     # ★ 세종 미판정 · 기본값(닫힌 쪽·되돌릴 수 있는 쪽) 택함.
     "/api/delivery/etri-integration/receive-from-etri",
+    # ★★ 2026-09-10 턴 O · 차선 S — **하나가 더 올랐다. 익명이 남의 2FA 를 끈다** (P-113)
+    #
+    #   POST /api/v1/auth/otp/reset   본문 {"username": "..."} 하나
+    #
+    # dj-core `core/api/v1/auth.py:1990 reset_otp` 에 권한 검사가 **한 줄도 없다.**
+    # 핸들러는 `pyotp.random_base32()` 로 비밀키를 새로 심고
+    # `opt_mandatory=False` · `otp_is_verified=False` 로 **2단계 인증을 꺼 버린다.**
+    #
+    # 전/후 [실측 2026-09-10 · TARGET=8500 · 인증 없음 · 없는 이름 `gx_nonexistent_probe_zzz`]:
+    #   전  HTTP **404** {"success":false,...,"ko":"사용자를 찾을 수 없습니다"}
+    #       <- 핸들러가 **실제로 돌았다**(조회까지 갔다). 404 는 관문의 답이 아니다(P-83).
+    #       ⚠ 실재 사용자명으로는 **일부러 두드리지 않았다** — 그 한 번이 곧 사고다.
+    #   후  HTTP **401** (자격증명 없음)
+    #
+    # ★ `AUTHN_SURFACE`(인증 면 면제)가 이 자리를 덮고 있었다 —
+    #   `reset-password-for-user` 와 **정확히 같은 모양의 사고**다(P-83).
+    #   그래서 **같은 자리에 이름을 적는다.** 이름이 규칙보다 세다.
+    # ★ 익명 401 은 이 한 줄이 낸다. 「본인 재인증 · 관리자+감사」 규칙은
+    #   `common/otp_reset_guard.py` 가 낸다 — 아래 `__call__` 에서 부른다.
+    # ⚠ 되돌리기: 이 한 줄을 뺀다(익명 개방으로 되돌아간다).
+    "/api/v1/auth/otp/reset",
+    # ★★ 2026-09-11 턴 P · 차선 S — **다섯이 더 올랐다. 익명이 자료를 200 으로 받던 자리 전부**(P-133)
+    #
+    # 어떻게 재나: `scripts/probe_anon_read.py` (이번에 만든 익명 전용 탐침 —
+    # 로그인하지 않는다). 라우터 전수 **읽기 331자리**를 자격증명 없이 불렀고,
+    # 빨강 술어(`probe_read_surface.has_data`: 2xx · 거부 봉투 아님 · 봉투를 걷어내고도
+    # 남는 것이 있음)로 센 결과 [실측 2026-09-11]:
+    #
+    #     GET /api/v1/auth/timezones                 200 · 109,309 B · 598덩이
+    #     GET /api/config-management/list-optimized  200 ·  16,436 B ·  12덩이
+    #     GET /api/v1/auth/groups                    200 ·   1,685 B ·  10덩이
+    #     GET /api/v1/auth/languages                 200 ·     466 B ·   3덩이
+    #     GET /api/register-settings                 200 ·     182 B ·   1덩이
+    #
+    # ★ 다섯 다 **dj-core**(`/usr/local/lib/python3.11/site-packages/core/`) 안이다 —
+    #   `core.api.v1.auth.get_timezones` · `get_groups` · `get_languages` ·
+    #   `core.configuration.api.list_configs_optimized` · `core.user.api.get_register_settings`.
+    #   §0.4 금지구역(읽기전용)이라 라우트 선언에 `auth=` 를 못 붙인다.
+    #   D-348 그대로 **길목을 우리 층에서 막는다.**
+    #
+    # ★ 앞의 셋이 `AUTHN_SURFACE`(인증 면 면제) 아래 숨어 있었다 —
+    #   `reset-password-for-user`(P-83) · `otp/reset`(P-113) 과 **정확히 같은 모양**이다.
+    #   이름을 적은 자리가 규칙보다 세다 — 그래서 같은 자리에 이름을 적는다.
+    #
+    # ★ 공개가 설계인가 — **아니다. 부르는 쪽이 없다** [실측 2026-09-11]
+    #   `frontend/src` 전수 검색: 다섯 경로 중 어느 것도 **한 번도 불리지 않는다**
+    #   (히트 0). 로그인 화면이 로그인 전에 부르는 자리는 `/api/v1/auth/login`
+    #   하나다 (`frontend/src/features/login/loginRequest.ts:22` · `LOGIN_PATH`).
+    #   언어 목록은 프런트 정적 자원(`src/i18n`)이 낸다 — 이 문이 아니다.
+    #   그래서 **허용 목록으로 좁히지 않고 닫는다**(`PUBLIC_READ_BY_DESIGN` 판단 기준:
+    #   「아직 로그인하지 못한 사람이 부르는 자리인가」 — 다섯 다 아니다).
+    #   → 109KB 타임존 목록을 「우리 층 정적 목록(1KB)」으로 갈음하는 안은
+    #     **필요 없다** — 갈음할 수요 자체가 없다. 수요가 생기는 날
+    #     (예: 자가가입 화면이 생긴다) 그때 그 목록을 만들어 여는 쪽이 옳다.
+    #   `/api/register-settings` 는 `{"is_allow_register": false}` 하나를 낸다 —
+    #   자가가입이 꺼져 있다는 관리 설정이고, 그 설정이 가리키는
+    #   `/api/v1/auth/register` 는 **이미 이 목록에 있다**(P-83). 한 자리를 막고
+    #   그 자리를 설명하는 옆자리를 열어 두면 사고는 그대로다.
+    #
+    # ⚠ 되돌리기: 해당 줄을 뺀다. 인증된 사용자는 이 줄들과 무관하다 —
+    #   이 관문은 `_has_credentials` 가 거짓일 때만 말한다(사용자 회귀 0의 근거).
+    "/api/v1/auth/timezones",
+    "/api/v1/auth/groups",
+    "/api/v1/auth/languages",
+    "/api/config-management/list-optimized",
+    "/api/register-settings",
+    # ★ 같은 실측이 **옆자리 셋**을 함께 냈다 — 「비었으니 안전하다」가 아니다 (D-301)
+    #
+    # [실측 2026-09-11 · 익명 · 캐시 우회 없음]
+    #     GET /api/v1/auth/departments  200 · 87 B · {"data": []}
+    #     GET /api/v1/auth/positions    200 · 85 B · {"data": []}
+    #     GET /api/v1/auth/teams        200 · 81 B · {"data": []}
+    #
+    # 빨강 술어는 이 셋을 **회색**으로 놓는다 — 봉투를 걷어내니 비었기 때문이다.
+    # 그러나 비어 있는 이유는 관문이 아니라 **이 환경의 그 표에 행이 없어서**다.
+    # 바로 옆의 `/api/v1/auth/groups` 가 증거다: 같은 컨트롤러 · 같은 모양인데
+    # 행이 10개 있어서 **빨강**이었다. 행이 있는 환경에서는 이 셋도 똑같이 나간다
+    # (부서·직위·팀 이름은 조직도다 — 테넌트 자료다).
+    #
+    # 「검사 못함 ≠ 0건 검사」(D-301) + 「한 자리를 막고 옆자리를 열면 사고는 그대로다」.
+    # 모르는 쪽은 **닫힌 쪽**으로 기운다 (D-284).
+    # 부르는 쪽 점검 [실측]: `frontend/src` 전수 검색 히트 **0**. 로그인 전에 부르는
+    # 자리가 아니다. 인증 사용자는 그대로다 — 이 관문은 자격증명이 **없을 때만** 말한다.
+    "/api/v1/auth/departments",
+    "/api/v1/auth/positions",
+    "/api/v1/auth/teams",
 )
 
 #: ★★ **경로 틀(`{id}`)로 선언된 자리는 이름으로 못 막는다** — 2026-09-06 턴 I · P-83
@@ -251,7 +340,53 @@ class AccessGateMiddleware:
         )
         if verdict is not None:
             return _denied(verdict)
+
+        # ★★ [P-113 · 2026-09-10 턴 O] **2FA 초기화는 재인증을 요구한다.**
+        #   위 규칙은 「아무것도 안 들고 왔는가」만 본다(이 관문의 본래 질문).
+        #   그러나 이 한 자리는 그것으로 부족하다 — 로그인만 했으면 남의 2FA 를
+        #   끌 수 있어서는 안 된다. 판정식은 `otp_reset_guard` 한 곳에 둔다(D-212).
+        #   같은 길목에서 부르되 **이 파일에 판정을 복사하지 않는다.**
+        rejection = self._otp_reset_rejection(request)
+        if rejection is not None:
+            return rejection
+
         return self.get_response(request)
+
+    # ── P-113 — 한 자리짜리 재인증 규칙. 길목은 여기, 판정은 저기 ────────────
+    @staticmethod
+    def _otp_reset_rejection(request):
+        """`POST /api/v1/auth/otp/reset` 에만 걸리는 규칙. 그 밖에는 `None`."""
+        from common import otp_reset_guard as guard
+
+        if not guard.enabled():
+            return None
+        if not guard.is_guarded(method=request.method, path=request.path):
+            return None
+
+        user = getattr(request, "user", None)
+        body = guard.read_body(request)
+        outcome = guard.judge(user=user, body=body)
+        if outcome is None:
+            return None
+
+        status, reason, needs_audit = outcome
+        target = str((body or {}).get("username") or "")
+
+        if status is None and needs_audit:
+            # 관리자가 **남의 계정**을 초기화한다 — 감사 한 줄이 조건이다(규칙 ④).
+            try:
+                guard.write_audit(actor=user, target=target, allowed=True,
+                                  reason=reason, status=200)
+            except Exception:                             # noqa: BLE001
+                logger.exception("[P-113] 감사에 남기지 못했다 — 통과시키지 않는다")
+                return JsonResponse(
+                    {"detail": "Forbidden", "reason": guard.REASON_AUDIT_FAILED},
+                    status=403)
+            return None
+
+        if status == 403:
+            return JsonResponse({"detail": "Forbidden", "reason": reason}, status=403)
+        return _denied(reason)
 
     # ── 술어 — 요청 객체 없이 시험할 수 있게 순수 함수로 둔다 ──────────────────
     def _is_authn_required(self, path: str) -> bool:
