@@ -386,6 +386,20 @@ repos:
         pass_filenames: false
         files: '^(frontend/src/features/(dsm|mobile)/.*\.(ts|tsx)|scripts/verify_ui_copy\.py|docs/agent/evidence/UX-20/.*)$'
 
+  # ── P-135 · 게이트는 값을 출력하지 않는다 — 이름만 ──────────────────────
+  # [실측 2026-09-15 · 턴 P] 진단 출력에 게이트 계정 비밀번호가 찍혔다. 저장소에는 안
+  # 들어갔지만 세션 기록 5개에 남아 있었다(회전 뒤 스크럽 · evidence/P-135). 저장소에
+  # 들어가는 길은 증거 파일이다 — 게이트가 찍은 것을 증거로 옮기는 순간 값이 커밋된다.
+  # 그래서 증거가 바뀌는 커밋마다 `.env`·`.env.gates` 의 값이 docs 에 있는지 본다.
+  - repo: local
+    hooks:
+      - id: gx-no-secret-echo
+        name: 값 반향 검사 (P-135 · 게이트는 값을 출력하지 않는다)
+        entry: python scripts/verify_no_secret_echo.py
+        language: system
+        pass_filenames: false
+        files: '^(docs/agent/.*|docs/review/.*|scripts/verify_no_secret_echo\.py)$'
+
   # ── 기본 위생 ───────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

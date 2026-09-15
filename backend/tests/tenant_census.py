@@ -387,6 +387,24 @@ CENSUS: dict[str, tuple[str, str, str, int | None, str]] = {
     "stream_monitors.DrawingSession":
         ("GAP", "via_parent", "fk", 1,
          "인구조사에 없었는데 **1행이 있다** — 0행 아티팩트가 아니라 집계 누락이다 / 도달: 자기 pk 경로는 없다. 부모 pk 경로 6개 · 목록 1 · 본문지목쓰기 2 로 닿는다 (예: /api/stream-monitors/drawing/sessions/{session_id}) — 부모 경로 스코프와 자식 필터를 **둘 다** 시험한다"),
+    "stream_monitors.DsmFieldPhoto":
+        ("GAP", "no_route", "fk", 0,
+         "2026-09-15 WO-01 §5 「데이터」로 신설(마이그 0029_v11_tables · 턴 Q 차선 F-DB · D-463). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다 — 행 0 은 신설 직후의 사실이다. 소유는 dj-core BaseModel 의 group FK(stream_monitors.models.TenantModel 추상)로 첫 행부터 붙는다. 격리 단언은 backend/tests/test_v11_tables.py 의 V11TenantIsolationTest 가 잰다(B 에 안 보임 · A 양성 대조 · _base_manager 실재). ★ 쓰는 라우트가 이번 턴 섰다 — POST /api/dsm/events/{id}/field-photo(U3). 사건을 거쳐 닿는다(services.event_detail 의 get_event 문지기가 남의 사건을 404). 격리는 backend/tests/test_u3_field_photo_route.py 가 함께 잰다. 커널 쓰기 함수가 아니라 App 층(apps/dsm/field.py) 쓰기라 WRITE_PROBES(커널 쓰기 대장)의 대상이 아니다 / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),
+    "stream_monitors.DsmHandover":
+        ("GAP", "no_route", "fk", 0,
+         "2026-09-15 WO-01 §5 「데이터」로 신설(마이그 0029_v11_tables · 턴 Q 차선 F-DB · D-463). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다 — 행 0 은 신설 직후의 사실이다. 소유는 dj-core BaseModel 의 group FK(stream_monitors.models.TenantModel 추상)로 첫 행부터 붙는다. 격리 단언은 backend/tests/test_v11_tables.py 의 V11TenantIsolationTest 가 잰다(B 에 안 보임 · A 양성 대조 · _base_manager 실재). 쓰는 라우트는 아직 없다 — U1 차선 인계 자동 초안(UX-34 · 파 1 턴 2)이 연다 / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),
+    "stream_monitors.DsmNotifyPrefs":
+        ("GAP", "no_route", "fk", 0,
+         "2026-09-15 WO-01 §5 「데이터」로 신설(마이그 0029_v11_tables · 턴 Q 차선 F-DB · D-463). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다 — 행 0 은 신설 직후의 사실이다. 소유는 dj-core BaseModel 의 group FK(stream_monitors.models.TenantModel 추상)로 첫 행부터 붙는다. 격리 단언은 backend/tests/test_v11_tables.py 의 V11TenantIsolationTest 가 잰다(B 에 안 보임 · A 양성 대조 · _base_manager 실재). 쓰는 라우트는 아직 없다 — U3 차선 me/notify-prefs(UX-43-M4 · UX-48)가 연다 / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),
+    "stream_monitors.DsmOnboardingProgress":
+        ("GAP", "no_route", "fk", 0,
+         "2026-09-15 WO-01 §5 「데이터」로 신설(마이그 0029_v11_tables · 턴 Q 차선 F-DB · D-463). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다 — 행 0 은 신설 직후의 사실이다. 소유는 dj-core BaseModel 의 group FK(stream_monitors.models.TenantModel 추상)로 첫 행부터 붙는다. 격리 단언은 backend/tests/test_v11_tables.py 의 V11TenantIsolationTest 가 잰다(B 에 안 보임 · A 양성 대조 · _base_manager 실재). 쓰는 라우트는 아직 없다 — F 차선 온보딩 진행률(UX-46 · 파 1 턴 2)이 연다 / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),
+    "stream_monitors.DsmReportRun":
+        ("GAP", "no_route", "fk", 0,
+         "2026-09-15 WO-01 §5 「데이터」로 신설(마이그 0029_v11_tables · 턴 Q 차선 F-DB · D-463). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다 — 행 0 은 신설 직후의 사실이다. 소유는 dj-core BaseModel 의 group FK(stream_monitors.models.TenantModel 추상)로 첫 행부터 붙는다. 격리 단언은 backend/tests/test_v11_tables.py 의 V11TenantIsolationTest 가 잰다(B 에 안 보임 · A 양성 대조 · _base_manager 실재). 쓰는 자리는 아직 없다 — U24 차선 월간 자동본 배치(UX-40 · 파 3)가 연다 / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),
+    "stream_monitors.DsmUpperReportFlag":
+        ("GAP", "no_route", "fk", 0,
+         "2026-09-15 WO-01 §5 「데이터」로 신설(마이그 0029_v11_tables · 턴 Q 차선 F-DB · D-463). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다 — 행 0 은 신설 직후의 사실이다. 소유는 dj-core BaseModel 의 group FK(stream_monitors.models.TenantModel 추상)로 첫 행부터 붙는다. 격리 단언은 backend/tests/test_v11_tables.py 의 V11TenantIsolationTest 가 잰다(B 에 안 보임 · A 양성 대조 · _base_manager 실재). 쓰는 라우트는 아직 없다 — U24 차선 상급 보고 체크(UX-47 · 파 2)가 연다 / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),
     "stream_monitors.EventClip":
         ("GAP", "no_route", "fk", 0,
          "2026-09-02 D-306 으로 신설(마이그 0021). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다. 소유는 **이벤트에서 물려받는다**(stream_monitors.services.clips._own) — 주인 없는 행은 §0.4 의 created_by__isnull OR 절을 타고 모두에게 보인다(W0-13 이 되돌린 상태). 격리 단언은 backend/tests/test_clip_playback.py 의 test_the_clip_inherits_the_tenant_from_the_event 와 규약 ①(test_rule1_another_tenant_gets_404)이 함께 잰다. 쓰기 면은 이벤트 생성 경로 안 한 곳뿐이고 HTTP 로 만드는 경로는 없다 — 생기면 WRITE_PROBES 에 함께 등재한다(D-290) / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),

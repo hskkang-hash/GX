@@ -398,6 +398,64 @@ def review_event(*, scope: TenantScope, event_id: int, verdict: str,
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# U1 큐 카드 키 1 — 판정 + 접수를 **한 사건**으로 (WO-01 §5 · AC-2 · 턴 Q)
+# ═══════════════════════════════════════════════════════════════════════════
+def review_and_acknowledge(*, scope: TenantScope, event_id: int, reason: str = ""):
+    """큐 카드에서 키 **1** — 「이것은 실제다, 그리고 내가 접수한다」를 **한 번의 쓰기**로.
+
+    ★ 왜 새 함수가 필요한가. 판정과 접수는 각자 옳게 갈라져 있다(D-399, 두 축) —
+      `review_event`(위)가 판정을, `advance_response`(위)가 접수를 진다. 그런데
+      **키 1 을 누르는 사람에게는 하나의 행동**이다. 화면이 두 번 HTTP 를 왕복하면
+      첫 호출이 성공하고 둘째가 실패했을 때 「판정은 됐는데 접수는 안 됐다」는
+      **반쪽짜리 사건**이 생긴다. WO-01 §5 는 이것을 한 트랜잭션으로 요구한다 —
+      실패는 **둘 다** 일어나지 않은 것으로.
+
+    ★ **App 은 규칙을 다시 만들지 않는다.** 판정값 검증·전이표·문지기·감사는 전부
+      바로 위 두 함수(곧 K1)에 그대로 있다 — 이 함수는 고치지 않는다(WO-01 소유
+      규약 「신설 함수만」). 이 함수가 더하는 것은 **트랜잭션 경계 하나**뿐이다.
+
+    ★ **판정값은 여기서 고정한다 — 확인(진짜) 한 갈래뿐이다.** 「접수」는 실제
+      사건에만 뜻이 있다. 진짜가 아니라는 판정은 이미 `review_event` 가 보내는
+      신호를 받아 대응 축도 **함께 자동으로 닫는** 별도 경로가 있고(P-16), 그
+      경로 위에 「접수」를 얹으면 이미 닫힌 사건을 다시 여는 모양이 된다 — 하지
+      않는다. 그 갈래(오탐 3택)는 기존 판정 문을 그대로 쓴다(재사용 · WO-01 §5).
+
+    ★ **감사는 한 행이다.** 판정 함수는 감사를 쓰지 않는다(신호만 보낸다) — 그래서
+      이 조합이 실제로 남기는 감사 행은 접수 함수가 쓰는 **그 한 행**뿐이다. 두
+      벌을 만들지 않았다: `reason` 에 둘을 함께 적어 **한 행이 두 일을 말하게** 한다.
+
+    Raises:
+        판정 함수가 던지는 것 그대로(Http404 · `SystemScopeCannotRead` ·
+        `InvalidEventInput`) · 접수 함수가 던지는 것 그대로(`ResponseTransitionForbidden`
+        · `ResponseTransitionNeedsReason` · `ResponseTransitionNeedsManager`).
+        어느 쪽이 던지든 **트랜잭션 전체가 롤백된다** — 판정만 되고 접수가 안
+        되는 상태는 존재하지 않는다.
+    """
+    from django.db import transaction
+
+    ack_reason = (reason or "").strip() or (
+        "판정(확인) + 접수 — 한 트랜잭션(review_and_acknowledge · 큐 카드 키 1)")
+
+    with transaction.atomic():
+        # ① 판정 — 이 탐지는 진짜다.
+        reviewed = review_event(scope=scope, event_id=event_id,
+                                verdict="confirmed", reason=reason)
+        # ② 접수 — **같은 트랜잭션 안**이다. 여기서 실패하면(예: 이미 종결된 사건)
+        #    ①도 함께 롤백된다 — with 블록을 벗어나는 예외가 전체를 되돌린다.
+        advanced = advance_response(scope=scope, event_id=event_id,
+                                    to_state="acknowledged", reason=ack_reason)
+
+    return {
+        "event_id": reviewed.event_id, "status": reviewed.status,
+        "verdict": reviewed.verdict,
+        "reviewed_by_id": reviewed.reviewed_by_id, "reviewed_at": reviewed.reviewed_at,
+        "reject_reason": reviewed.reject_reason,
+        "response_state": advanced["to"], "allowed_next": advanced["allowed_next"],
+        "audit_id": advanced["audit_id"],
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # F-10 알림 발송
 # ═══════════════════════════════════════════════════════════════════════════
 def notify_event(*, scope: TenantScope, event_id: int, channels=None):

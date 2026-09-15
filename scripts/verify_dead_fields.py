@@ -88,6 +88,33 @@ M2M_WRITE_CALLS = frozenset({"set", "add", "remove", "clear"})
 #: 등재는 면제가 아니라 **선언**이다 — 여기 이름을 적는 일이 곧 "이것이 아직 배선되지
 #: 않았음을 알고 있다"는 진술이고, 그 진술은 다음 사람이 읽는다 (D-264 · D-281 계열).
 DECLARED_UNWIRED: dict[str, str] = {
+    # ── D-463 · 2026-09-15 턴 Q — **v1.1 표 일곱은 배선보다 먼저 태어났다.**
+    #    WO-01 §5 가 스키마 일곱을 파 1 에 **한 벌로** 내라고 정했다(마이그레이션 두 벌 금지).
+    #    그래서 칸이 라우트보다 먼저 섰다 — 이것이 착시 ⑥(D-304)의 모양이라는 것을 안다.
+    #    각 줄은 **누가 · 언제 배선하는가**를 적는다. 배선되면 이 게이트가 「등재를 지워라」로
+    #    빨개진다(D-338 선례) — 이 등재는 면제가 아니라 **만료일이 적힌 이름표**다.
+    **{f"stream_monitors.DsmHandover.{f}": (
+        "D-463. 인계 자동 초안(UX-34)의 칸 — U1 차선 파 1 턴 2 `/handover/draft` 가 쓴다. "
+        "그 전까지 이 표는 빈다(행 0 · 인구조사 NEW_SINCE_CENSUS).")
+       for f in ("handled_count", "system_event_count", "unresolved_count",
+                 "unresolved_event_ids")},
+    **{f"stream_monitors.DsmNotifyPrefs.{f}": (
+        "D-463. 근무 외 차단·구역 선호(UX-43-M4 · UX-48)의 칸 — U3 차선 파 2 턴 4 "
+        "`me/notify-prefs` 가 쓴다. 그 전까지 K2 는 이 표를 읽지 않는다(규칙이 정한 대로 보낸다).")
+       for f in ("quiet_start", "quiet_end", "zone_ids")},
+    **{f"stream_monitors.DsmOnboardingProgress.{f}": (
+        "D-463. 온보딩 진행률(UX-46)의 칸 — F 차선 파 1 턴 2 자동 완료 훅이 쓴다. "
+        "카드의 완료는 서버 기록이 닫는다(WO-01 §12) — 그 기록이 `source_ref` 다.")
+       for f in ("card_key", "source_ref")},
+    **{f"stream_monitors.DsmReportRun.{f}": (
+        "D-463. 월간 자동본 실행 기록(UX-40)의 칸 — U24 차선 파 3 턴 5 `monthly_report.py` "
+        "배치가 쓴다.")
+       for f in ("trigger", "period_start", "period_end")},
+    "stream_monitors.DsmUpperReportFlag.reported_at": (
+        "D-463. 상급기관 보고 표시(UX-47)의 칸 — U24 차선 파 2 턴 4 상급 보고 체크가 쓴다."),
+    "stream_monitors.WebhookSubscription.filters": (
+        "D-463. 웹훅 구독 필터(API-01)의 칸 — U56 차선 파 2 턴 4 webhook filters 가 쓴다. "
+        "기본 `{}` 는 「거르지 않는다」라 기존 구독의 동작은 그대로다(event_types·min_severity 가 거른다)."),
     # ── D-330 카메라 설치 주소 — **2026-09-07 지웠다 (D-338).**
     #    세 줄이 여기 있었다. 「운영자가 채우는 값이라 코드가 안 쓴다」가 사유였다.
     #    ★ 그 사유는 틀리지 않았지만 **결론이 틀렸다.** 채우는 수단이 없으면 그 값은

@@ -320,6 +320,14 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     #   ⚠ `/events/{int:event_id}/snapshot`·`/timeline` 과 형제다. 끝 조각이 달라
     #     서로 삼키지 않는다(D-410).
     ("GET", "/api/dsm/events/{int:event_id}/report.pdf"),   # UX-30 사건 보고서 1쪽
+    # ★ [턴 Q · WO-01 §4.2] **다섯이 늘었다** — 차선 라우터 모듈(`api_u1/u3/u24.py`)에서
+    #   태어났다. 넷 다 `JwtOrInboundKey()` 기본값(들어오는 키 거절) + `@tenant_scoped`.
+    #   새 인증 경로는 없다 — 차선 파일의 `_scope()` 는 `api.py::_scope` 와 같은 세 줄이다.
+    ("POST", "/api/dsm/events/{int:event_id}/review-and-acknowledge"),  # U1 · AC-2 판정+접수 한 트랜잭션
+    ("POST", "/api/dsm/events/{int:event_id}/field-photo"),             # U3 · UX-45 현장 사진 올리기
+    ("GET", "/api/dsm/stats/summary"),                                  # U24 · UX-39 통계 요약
+    ("GET", "/api/dsm/stats/by-reviewer"),                              # U24 · UX-35 요원별
+    ("GET", "/api/dsm/stats/false-positive"),                           # U24 · UX-36 오탐률
 })
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**

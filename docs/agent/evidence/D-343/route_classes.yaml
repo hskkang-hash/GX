@@ -235,12 +235,14 @@ routes:
   "GET /api/dsm/events/{int:event_id}": session_only
   "GET /api/dsm/events/{int:event_id}/clip": session_only
   "GET /api/dsm/events/{int:event_id}/clip/stream": session_only
+  "POST /api/dsm/events/{int:event_id}/field-photo": session_only
   "GET /api/dsm/events/{int:event_id}/field-replies": session_only
   "POST /api/dsm/events/{int:event_id}/field-reply": session_only
   "POST /api/dsm/events/{int:event_id}/notify": session_only
   "GET /api/dsm/events/{int:event_id}/report.pdf": session_only
   "POST /api/dsm/events/{int:event_id}/response": session_only
   "POST /api/dsm/events/{int:event_id}/review": session_only
+  "POST /api/dsm/events/{int:event_id}/review-and-acknowledge": session_only
   "GET /api/dsm/events/{int:event_id}/snapshot": session_only
   "GET /api/dsm/events/{int:event_id}/timeline": session_only
   "GET /api/dsm/law/ai-act/duties": session_only
@@ -270,6 +272,9 @@ routes:
   "GET /api/dsm/settings/zones": session_only
   "POST /api/dsm/settings/zones": session_only
   "GET /api/dsm/settings/{domain}": session_only
+  "GET /api/dsm/stats/by-reviewer": session_only
+  "GET /api/dsm/stats/false-positive": session_only
+  "GET /api/dsm/stats/summary": session_only
   "GET /api/dsm/webhook-subscriptions": session_only
   "POST /api/dsm/webhook-subscriptions": session_only
   "DELETE /api/dsm/webhook-subscriptions/{int:subscription_id}": session_only

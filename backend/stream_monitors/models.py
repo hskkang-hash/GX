@@ -965,6 +965,9 @@ class WebhookSubscription(BaseModel):
     event_types = models.JSONField(default=list, blank=True)
     #: 이 등급 **이상**만 보낸다. 비면 전부.
     min_severity = models.CharField(max_length=16, blank=True, default="")
+    #: API-01 구독 필터 — `{"zone": [...], "severity": [...], "type": [...]}` (부속서 A U6#5·#6 ·
+    #: WO-01 §5 「데이터」). **빈 dict 는 「거르지 않는다」다** — `event_types` 의 빈 목록과 같은 뜻.
+    filters = models.JSONField(default=dict, blank=True)
     payload_format = models.CharField(
         max_length=8, choices=PayloadFormat.choices, default=PayloadFormat.JSON)
     is_active = models.BooleanField(default=True, db_index=True)
@@ -979,3 +982,260 @@ class WebhookSubscription(BaseModel):
 
     def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
         return f"webhook#{self.pk}[{'on' if self.is_active else 'off'}]"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DSM v1.1 신규 테이블 6 (+ 위 `WebhookSubscription.filters`) — WO-01 §5 「데이터」
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 왜 이 앱(stream_monitors)인가 [판정 2026-09-15 · 턴 Q 차선 F-DB]
+#   `apps.dsm` 은 INSTALLED_APPS 에 없다 — models.py 도 migrations 도 없는 **라우트·서비스
+#   패키지**다. DSM 의 표는 전부 여기 산다(DetectionEvent · NotificationRule · Zone ·
+#   WebhookSubscription · k5_credential_record). 새 앱을 세우면 settings 를 고치고
+#   마이그레이션이 두 벌이 된다. 여기 두면 **한 벌**이다(지시서가 요구한 모양).
+#   표 이름은 `db_table` 로 `dsm_*` 을 박는다 — 앱 라벨이 아니라 이름이 소속을 말한다
+#   (PRD v1.1 §9 「앱 테이블은 접두」).
+#
+# 왜 models_v11.py 로 가르지 않았나
+#   `scripts/verify_dead_fields.py` 의 모수가 `backend/**/models.py` 이름 그대로다(216행).
+#   다른 이름의 파일에 두면 새 필드가 그 게이트 **밖**에서 태어난다 — 초록이 아니라 안 잰 것이다.
+#
+# 무엇을 만들지 않았나 — 정본(PRD v1.1 §5 · 부속서 A)에 없는 칸은 없다
+#   · 인계 확인 체크(`handover/{id}/ack`)는 지침 보강 DSM-U2-05 의 것이다 — v1.1 일곱 밖.
+#   · 보고서 산출물 객체 키 — `render(report_run) -> bytes`(WO-01 §5 HWPX)가 실행 기록에서
+#     다시 만든다. 파일을 따로 두면 기록과 파일이 두 벌이 된다.
+#   · M2M 은 쓰지 않는다 — 조인 표가 생기면 「스키마 변경은 이 일곱뿐」이 깨진다.
+#     여러 개를 가리키는 칸은 id 목록(JSON)이다.
+
+
+class TenantModel(BaseModel):
+    """지시서·설계서가 부르는 **`TenantModel`** 의 실체 — 새 v1.1 표가 전부 이것을 상속한다.
+
+    · 테넌트: dj-core `BaseModel` 이 준다 — `group` FK + `CustomManagerGroup`(스레드의 요청자
+      group 으로 `objects` 를 좁힌다) + safedelete. `BaseModelWithGroup` 은 DEPRECATED(D-295).
+    · ★ `purpose_code` **필수**: 이 행을 **무슨 목적으로** 처리했는가(설계서 §3 ③ 목적 코드 ·
+      예 `dsm.monitor`). 기본값이 없고 빈 문자열은 **DB 가 거절한다**(CHECK). Django 의
+      `blank=False` 는 폼 검증일 뿐이라 `objects.create(...)` 는 빈 값을 그대로 넣는다 —
+      필수를 말로만 두면 첫 서비스 코드가 빈 값으로 채운다.
+
+    ⚠ 이 클래스는 **추상**이다 — 표가 없다. 공통 `common/` 로 옮기는 것은 WO-02 의 몫이다.
+    """
+
+    purpose_code = models.CharField(max_length=64)
+
+    class Meta:
+        abstract = True
+        ordering = ["-id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=~models.Q(purpose_code=""),
+                name="%(app_label)s_%(class)s_purpose_code_required"),
+        ]
+
+
+class DsmHandover(TenantModel):
+    """UX-34 — **교대 인계 메모 한 건.** 쓴 사람 = `created_by` · 시각 = `created_on`.
+
+    자동 초안이 세 수를 본문에 넣고, 사람은 특이사항 한 줄만 쓴다(PRD §5.2 UX-34).
+    다음 근무자 역할 홈 상단의 「최신 1」은 이 표의 테넌트 최신 행이다(UX-32-U2).
+    세 수를 칸으로 두는 이유 — 「상태는 칸으로」(WO-01 §12). 본문 글자에서 수를 다시
+    뽑으면 홈 카드와 메모가 다른 수를 말할 수 있다.
+    """
+
+    #: 자동 초안 본문 — 미처리·시스템 사건·내가 처리한 건수가 삽입된 글.
+    body = models.TextField()
+    #: 사람이 쓰는 특이사항 한 줄. 비어도 된다(자동 초안만으로 인계가 성립한다).
+    note = models.CharField(max_length=255, blank=True, default="")
+    #: ★ 세 수에는 **기본값이 없다** — 0 은 「셌더니 0」이지 「안 셌다」가 아니다.
+    unresolved_count = models.PositiveIntegerField()
+    system_event_count = models.PositiveIntegerField()
+    handled_count = models.PositiveIntegerField()
+    #: 부속서 A U1#20 「인계 메모에 미처리 목록 자동 첨부」 — DetectionEvent id 목록.
+    unresolved_event_ids = models.JSONField(default=list, blank=True)
+
+    class Meta(TenantModel.Meta):
+        db_table = "dsm_handover"
+
+    def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
+        return f"handover#{self.pk}"
+
+
+class DsmFieldPhoto(TenantModel):
+    """UX-45 · UX-26 — **현장 사진 한 장**(`POST /events/{id}/field-photo`).
+
+    파일은 여기 없다. MinIO 객체 **키**만 둔다 — `DetectionEvent.snapshot_path` ·
+    `EventClip.object_key` 와 같은 모양. 올린 사람 = `created_by` · 시각 = `created_on`.
+    보존은 영상·스냅샷과 같은 선언값을 따른다(PRD §9 보관·파기 · LAW-02a).
+    """
+
+    event = models.ForeignKey(
+        DetectionEvent, on_delete=models.CASCADE, related_name="field_photos")
+    #: MinIO 객체 키. 빈 키의 사진 행은 뜻이 없다 — DB 가 거절한다.
+    object_key = models.CharField(max_length=512)
+    #: 형식 — `image/jpeg` 등. 렌더가 이 값으로 응답 헤더를 낸다(UX-26 「200 image/jpeg」).
+    content_type = models.CharField(max_length=64)
+    size_bytes = models.PositiveIntegerField()
+
+    class Meta(TenantModel.Meta):
+        db_table = "dsm_field_photo"
+        constraints = [
+            *TenantModel.Meta.constraints,
+            models.CheckConstraint(
+                condition=~models.Q(object_key=""),
+                name="dsm_field_photo_object_key_required"),
+        ]
+        indexes = [
+            # 사건 상세·M2 → 그 사건의 사진 목록 (EventClip 과 같은 경로)
+            models.Index(fields=["event", "-id"]),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
+        return f"field_photo#{self.pk}@event{self.event_id}"
+
+
+class DsmNotifyPrefs(TenantModel):
+    """UX-43-M4 — **내 알림 설정**(`GET/PUT /api/dsm/me/notify-prefs`). 계정당 살아 있는 행 1.
+
+    이 설정은 규칙(`NotificationRule`)이 고른 수신을 **좁히기만** 한다 — 넓히지 못한다.
+    그래서 비어 있는 칸의 뜻은 전부 「좁히지 않는다」다(`WebhookSubscription.event_types` 와 같은 규약).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="dsm_notify_prefs")
+    #: 근무 외 차단 시간대(KST · SET-01). 둘 다 비면 차단 없음 · **하나만 채울 수 없다**(CHECK).
+    #: 끝이 시작보다 이르면 자정을 넘는 구간이다(예 22:00 → 07:00).
+    quiet_start = models.TimeField(null=True, blank=True)
+    quiet_end = models.TimeField(null=True, blank=True)
+    #: 담당 구역 — `Zone` id 목록. **빈 목록 = 전 구역.**
+    zone_ids = models.JSONField(default=list, blank=True)
+    #: 받을 채널 — `email` · `sms` · `webpush` 중에서. **빈 목록 = 규칙이 정한 채널 그대로.**
+    channels = models.JSONField(default=list, blank=True)
+
+    class Meta(TenantModel.Meta):
+        db_table = "dsm_notify_prefs"
+        constraints = [
+            *TenantModel.Meta.constraints,
+            # 소프트 삭제된 옛 행은 세지 않는다 — 살아 있는 설정이 둘이면 어느 쪽이 이기는지 모른다.
+            models.UniqueConstraint(
+                fields=["user"], condition=models.Q(deleted__isnull=True),
+                name="dsm_notify_prefs_one_live_per_user"),
+            models.CheckConstraint(
+                condition=(models.Q(quiet_start__isnull=True, quiet_end__isnull=True)
+                           | models.Q(quiet_start__isnull=False, quiet_end__isnull=False)),
+                name="dsm_notify_prefs_quiet_window_whole"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
+        return f"notify_prefs@user{self.user_id}"
+
+
+class DsmOnboardingProgress(TenantModel):
+    """UX-46 — **온보딩 카드 한 장의 완료.** 행이 있으면 닫혔다 · 없으면 아직이다.
+
+    ★ 사람이 체크하지 않는다 — 서버 기록이 닫는다(WO-01 §12 · PRD §7.1).
+      그래서 `source_ref`(닫은 기록의 이름 · 예 `review#123`) 없이는 행이 태어나지 못한다.
+      근거 없이 닫힌 카드는 「체크했다」와 구별되지 않는다.
+    진행률 % 의 분모(역할별 카드 ≤ 7)는 코드가 정한다 — 표에 적지 않는다(분모는 손으로 적지 않는다).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name="dsm_onboarding_progress")
+    #: 카드 키 — 역할을 앞에 붙인다(예 `u1.handover`). PRD §7.2 의 카드 한 장.
+    card_key = models.CharField(max_length=64)
+    completed_at = models.DateTimeField()
+    #: 이 카드를 닫은 서버 기록.
+    source_ref = models.CharField(max_length=128)
+
+    class Meta(TenantModel.Meta):
+        db_table = "dsm_onboarding_progress"
+        constraints = [
+            *TenantModel.Meta.constraints,
+            models.UniqueConstraint(
+                fields=["user", "card_key"], condition=models.Q(deleted__isnull=True),
+                name="dsm_onboarding_one_live_per_card"),
+            models.CheckConstraint(
+                condition=~models.Q(source_ref=""),
+                name="dsm_onboarding_source_ref_required"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
+        return f"onboarding[{self.card_key}]@user{self.user_id}"
+
+
+class DsmReportRun(TenantModel):
+    """UX-40 — **보고서 실행 기록 한 건**(사건 1쪽 · 「이번 달 우리 센터」 · 상급기관 제출용).
+
+    월간본은 매월 1일 03:00 배치가 이 표에 한 행을 남긴다(부속서 A 243행). 사람 손 없이
+    나왔는가(PRD §7.4)는 `trigger` 칸이 말한다. 산출물은 `render(report_run) -> bytes` 가
+    이 행에서 다시 만든다(WO-01 §5 HWPX 인터페이스) — 「특이사항」을 고치면 재생성된다.
+    """
+
+    class Kind(models.TextChoices):
+        INCIDENT = "incident", "사건 보고서"
+        MONTHLY = "monthly", "이번 달 우리 센터"
+        UPPER = "upper", "상급기관 제출용"
+
+    class Trigger(models.TextChoices):
+        AUTO = "auto", "자동 생성"
+        MANUAL = "manual", "사람이 요청"
+
+    class Status(models.TextChoices):
+        SUCCEEDED = "succeeded", "생성됨"
+        FAILED = "failed", "생성 실패"
+
+    #: ★ 세 칸에는 기본값이 없다 — 누가·무엇을·어떻게 끝났는지는 실행한 쪽이 말한다.
+    kind = models.CharField(max_length=16, choices=Kind.choices, db_index=True)
+    trigger = models.CharField(max_length=16, choices=Trigger.choices)
+    status = models.CharField(max_length=16, choices=Status.choices)
+    #: 사건 보고서·상급 보고의 대상 사건. 사건이 보존 기한으로 파기돼도 **실행 기록은 남는다**.
+    event = models.ForeignKey(
+        DetectionEvent, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="report_runs")
+    #: 집계 구간(월간본). 사건 보고서는 비어 있다.
+    period_start = models.DateTimeField(null=True, blank=True)
+    period_end = models.DateTimeField(null=True, blank=True)
+    #: 「특이사항」 — 자동본을 사람이 고치는 칸(부속서 A U2#7).
+    note = models.TextField(blank=True, default="")
+    #: ★ `failed` 면 **반드시 채워진다**(CHECK) — 사유 없는 실패는 「없다」와 「못 했다」를
+    #:   가르지 못한다(`EventClip.unavailable_reason` 과 같은 규약).
+    failure_reason = models.CharField(max_length=255, blank=True, default="")
+
+    class Meta(TenantModel.Meta):
+        db_table = "dsm_report_run"
+        constraints = [
+            *TenantModel.Meta.constraints,
+            models.CheckConstraint(
+                condition=models.Q(status="succeeded") | ~models.Q(failure_reason=""),
+                name="dsm_report_run_failure_has_reason"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
+        return f"report_run#{self.pk}[{self.kind}/{self.status}]"
+
+
+class DsmUpperReportFlag(TenantModel):
+    """UX-47 — **상급기관 보고 완료 체크**(사람 · `POST /events/{id}/upper-report`). 사건당 살아 있는 행 1.
+
+    「보고 대상」 배지(심각 + 실제)는 **규칙이지 저장값이 아니다** — 사건의 등급·판정에서 매번
+    계산한다. 저장하면 재판정(UX-37) 뒤에 배지가 낡는다. 여기 남는 것은 사람의 체크뿐이다:
+    누가 = `created_by` · 체크 시각 = `created_on` · 실제로 보고한 시각 = `reported_at`.
+    체크 해제는 소프트 삭제다(감사가 그 전이를 남긴다).
+    """
+
+    event = models.ForeignKey(
+        DetectionEvent, on_delete=models.CASCADE, related_name="upper_report_flags")
+    #: 실제로 보고한 시각 — 전화로 03:10 에 보고하고 03:30 에 체크할 수 있다.
+    reported_at = models.DateTimeField()
+
+    class Meta(TenantModel.Meta):
+        db_table = "dsm_upper_report_flag"
+        constraints = [
+            *TenantModel.Meta.constraints,
+            models.UniqueConstraint(
+                fields=["event"], condition=models.Q(deleted__isnull=True),
+                name="dsm_upper_report_one_live_per_event"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
+        return f"upper_report@event{self.event_id}"

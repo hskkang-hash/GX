@@ -285,6 +285,30 @@ NEW_SINCE_CENSUS: dict[str, str] = {
         "(test_rule1_another_tenant_gets_404)이 함께 잰다. "
         "쓰기 면은 이벤트 생성 경로 안 한 곳뿐이고 HTTP 로 만드는 경로는 없다 — "
         "생기면 WRITE_PROBES 에 함께 등재한다(D-290)",
+    # ── 2026-09-15 턴 Q · WO-01 §5 「데이터」 — v1.1 표 여섯(마이그 0029_v11_tables · D-463) ──
+    **{label: (
+        "2026-09-15 WO-01 §5 「데이터」로 신설(마이그 0029_v11_tables · 턴 Q 차선 F-DB · D-463). "
+        "인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다 — 행 0 은 신설 "
+        "직후의 사실이다. 소유는 dj-core BaseModel 의 group FK(stream_monitors.models.TenantModel "
+        "추상)로 첫 행부터 붙는다. 격리 단언은 backend/tests/test_v11_tables.py 의 "
+        "V11TenantIsolationTest 가 잰다(B 에 안 보임 · A 양성 대조 · _base_manager 실재). "
+        + extra) for label, extra in (
+        ("stream_monitors.DsmHandover",
+         "쓰는 라우트는 아직 없다 — U1 차선 인계 자동 초안(UX-34 · 파 1 턴 2)이 연다"),
+        ("stream_monitors.DsmFieldPhoto",
+         "★ 쓰는 라우트가 이번 턴 섰다 — POST /api/dsm/events/{id}/field-photo(U3). 사건을 "
+         "거쳐 닿는다(services.event_detail 의 get_event 문지기가 남의 사건을 404). 격리는 "
+         "backend/tests/test_u3_field_photo_route.py 가 함께 잰다. 커널 쓰기 함수가 아니라 "
+         "App 층(apps/dsm/field.py) 쓰기라 WRITE_PROBES(커널 쓰기 대장)의 대상이 아니다"),
+        ("stream_monitors.DsmNotifyPrefs",
+         "쓰는 라우트는 아직 없다 — U3 차선 me/notify-prefs(UX-43-M4 · UX-48)가 연다"),
+        ("stream_monitors.DsmOnboardingProgress",
+         "쓰는 라우트는 아직 없다 — F 차선 온보딩 진행률(UX-46 · 파 1 턴 2)이 연다"),
+        ("stream_monitors.DsmReportRun",
+         "쓰는 자리는 아직 없다 — U24 차선 월간 자동본 배치(UX-40 · 파 3)가 연다"),
+        ("stream_monitors.DsmUpperReportFlag",
+         "쓰는 라우트는 아직 없다 — U24 차선 상급 보고 체크(UX-47 · 파 2)가 연다"),
+    )},
 }
 
 
