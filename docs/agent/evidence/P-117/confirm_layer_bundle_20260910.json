@@ -1,0 +1,32 @@
+{
+  "판정": "P-117 / FC §3′ 2행 재측 — 확인창(Modal.confirm) 층이 번들에 실재하는가",
+  "TARGET": "gx-shell:/app/_fe_dist (SPA 3002 가 내는 그 자리) · 배치 20260910_170452 · 커밋 6cf2c19",
+  "AS": "(자격증명 없음 — 배치된 번들 바이트를 읽는다)",
+  "SOURCE": "배치된 dist 와 **직전 dist 사본**(/app/_fe_dist_prev_170452) — 갈래 둘을 나란히 읽는다",
+  "잰_때": "2026-09-10T17:22:22+09:00",
+  "술어": "`@ant-design/v5-patch-for-react-19` 는 antd 의 `unstableSetRender` 에 react-19 용 렌더러를 건다. 그 본문(`container._reactRoot ||= createRoot(container)`)이 번들에 있으면 정적 메서드(Modal.confirm · message.*)가 포털을 만들 수 있다.",
+  "갈래": {
+    "양성 · 새 번들 /app/_fe_dist/assets/index-C2YT13PY.js": {
+      "_reactRoot 출현": 4,
+      "패치 본문": "YD(function(e,r){r._reactRoot||(r._reactRoot=Pst.createRoot(r));var a=r._reactRoot;return a.render(e),function(){…",
+      "읽는 법": "`YD(...)` 가 `unstableSetRender` 다 — 인자가 patch 패키지의 본문 그대로다"
+    },
+    "음성 · 직전 번들 /app/_fe_dist_prev_170452/assets/index-B0dA0E3o.js": {
+      "_reactRoot 출현": 1,
+      "그 한 건": "a=a._reactRootContainer — **react 자신의 내부 이름**이고 patch 와 무관하다",
+      "패치 본문": "없다"
+    }
+  },
+  "판정_결과": "확인창 층은 이제 번들에 **있다**. 09-08 손 점검이 본 「.ant-modal 0 · [role=dialog] 0 · body.children 1」의 원인은 이 배치로 사라졌다.",
+  "그래도_1_이_아닌_이유": [
+    "번들에 있는 것과 **눌러서 끝나는 것**은 다른 사실이다 — 이번 턴에 역할 계정으로 누른 왕복이 없다(역할 계정은 다른 차선이 쥐고 있다).",
+    "그 칸은 `scripts/verify_click_completes.py`(Q 차선 신설)가 낸다. 그때까지 2행은 **0.5**다."
+  ],
+  "곁에서_잰_것 · 판정 라우트 실재": {
+    "TARGET": "http://localhost:8500",
+    "AS": "gxprobe_c",
+    "POST /api/dsm/events/99999999/review": "422 · {\"detail\":[{\"type\":\"missing\",\"loc\":[\"query\",\"verdict\"],\"msg\":\"Field required\"}]}",
+    "읽는 법": "405 가 아니라 422 다 — **라우트가 실재하고 검증까지 닿는다**. 없는 사건 번호로 두드렸으므로 쓰기가 일어나지 않았다.",
+    "계약 대조": "화면은 `dsmPostQueryOnce(dsmEndpoint.review(id), {verdict, reason}, …)` 로 **질의 문자열**에 싣는다(frontend/src/features/dsm/pages/EventDetail.tsx:189) — 서버가 요구하는 자리(`loc: query`)와 같다. 계약은 안 갈렸다."
+  }
+}

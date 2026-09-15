@@ -287,4 +287,12 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header, account_as  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target="저장소 " + (os.environ.get("MINIO_ENDPOINT") or "minio:9000") + " + " + os.environ.get("GX_API", "http://localhost:8000"),
+        as_="저장소 쪽: MINIO_ROOT_USER/MINIO_ROOT_PASSWORD (호스트 .env · **앱의 자격이 아니다**) · 라우트 쪽: " + account_as(),
+        source="살아 있는 저장소 + 살아 있는 서버 응답 (HTTP)",
+        reason="root 로 재는 것은 **저장소 자체가 살아 있는가**뿐이다. 앱이 닿는지는 여기서 재지지 않는다 — 앱이 든 MINIO_ACCESS_KEY/SECRET_KEY 의 모양은 `verify_prod_settings.py` ⑦ 이 잰다 (턴 L: 둘 다 5자·같은 문자열 → 503)",
+    )
     sys.exit(main())

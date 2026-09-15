@@ -32,6 +32,7 @@ import argparse
 import json
 import os
 import re
+import time
 import sys
 import urllib.error
 import urllib.request
@@ -114,6 +115,8 @@ def load_routes(path: Path) -> tuple[list[tuple[str, str]], list[str]]:
 #:   그 401 에 가려 보이지 않았다. 이 파일 첫머리가 「가장 나쁜 실패」라 적어 둔 바로 그것이다.
 #:   `/api/v1/auth/login` 이 세션을 세우는 진짜 문이다 — **먼저 시도한다.**
 LOGIN_PATHS = ("/api/v1/auth/login", "/api/token/pair")
+#: 로그인 속도 제한(IP · 분당 5회)을 만났을 때 기다리는 시간 — 창 60초 + 여유 1초 (D-460)
+RATE_LIMIT_WAIT_S = 61
 
 
 def _extract_token(data: object) -> str | None:
@@ -136,7 +139,7 @@ def _extract_token(data: object) -> str | None:
     return None
 
 
-def login(api: str, user: str, password: str) -> str | None:
+def login(api: str, user: str, password: str, _rate_waited: bool = False) -> str | None:
     """제품의 로그인으로 토큰을 받는다. **못 받으면 못 받았다고 말한다** — 익명으로 때려
     401 만 잔뜩 보고 「전부 살아 있다」로 적는 것이 이 판정기의 가장 나쁜 실패다.
 
@@ -156,6 +159,21 @@ def login(api: str, user: str, password: str) -> str | None:
         except urllib.error.HTTPError as e:
             if e.code in (404, 405):
                 continue
+            #: ★★ [D-460 · 2026-09-15 턴 P] **로그인에는 속도 제한이 있다 — IP 기준 분당 5회.**
+            #:   dj-core `core/api/v1/auth.py:348` `@ratelimit(key='ip', rate='5/m', block=True)`.
+            #:   게이트는 전부 `gx-shell` 한 IP 에서 로그인하므로 **계정이 달라도 5회를 나눠 쓴다.**
+            #:   대장 게이트를 두 번 돌리면 1회차 꼬리(seed_roles·sidebar·write_auth 의 역할별
+            #:   로그인)가 2회차 머리(authn_paths·contract_route_reach)의 몫을 먹어 **2회차만**
+            #:   `403 135B` 를 받았다 [실측: 8000 로그 · measure_repro 두 회차가 갈린 자리].
+            #:   제품의 보안 장치라 풀지 않는다 — 게이트가 **기다린다.** 한 번만 다시 묻고,
+            #:   그래도 막히면 전과 같이 「못 받았다」(회색)로 둔다. 기다린 사실은 적는다.
+            if e.code == 403 and not _rate_waited:
+                print(f"[ALIVE] 로그인 {path} → HTTP 403 — 로그인 속도 제한(IP · 분당 5회)으로 "
+                      f"보고 {RATE_LIMIT_WAIT_S}초 기다렸다 한 번 더 묻는다")
+                sys.stdout.flush()
+                time.sleep(RATE_LIMIT_WAIT_S)
+                _rate_waited = True
+                return login(api, user, password, _rate_waited=True)
             print(f"[ALIVE] 로그인 {path} → HTTP {e.code}")
             continue
         except Exception as exc:                       # noqa: BLE001
@@ -321,6 +339,41 @@ LOCAL_ENV_KEYS = ("GX_API", "GX_ROUTE_USER", "GX_ROUTE_PASSWORD", "GX_ROUTE_CONT
                   "MINIO_BUCKET_NAME")
 
 
+#: ★★ [D-457 · 2026-09-11 턴 P] **셸과 게이트가 같은 파일을 다르게 읽고 있었다.**
+#:   `.env.gates` 는 사람이 `set -a; . ./.env.gates` 로도 소싱하는 파일이고, 그래서
+#:   `GX_ROUTE_PASSWORD=${GX_SEED_ROLE_PASSWORD}` 처럼 **다른 이름을 가리키는 줄**이 산다.
+#:   셸은 그것을 펼쳐 18자 비밀번호로 읽고, 이 로더는 **펼치지 않아** 리터럴 24자
+#:   `${GX_SEED_ROLE_PASSWORD}` 를 그대로 비밀번호로 보냈다 — 제품은 400 을 냈고
+#:   게이트는 「제품 로그인에서 토큰을 못 받았다 · **판정 불가**」로 회색이 됐다.
+#:   [실측 A/B 2026-09-11] 같은 판정기가, 같은 서버·같은 계정에:
+#:       A(환경 없이 · 이 로더가 읽음) → `HTTP 400` · 판정 불가
+#:       B(셸이 펼친 값을 환경으로 준 뒤) → `로그인 성공` · **통과**
+#:   회색의 원인은 제품이 아니라 **읽는 눈**이었다. 그 회색이 SEC-04 · PERF-04 를
+#:   덮고 있었고, 영역 ① 의 28절이 같은 자격으로 회색이었다.
+#:   ⚠ 주석 자르기(`#` 이후 버리기)는 **하지 않는다** — 비밀번호에 `#` 이 들어갈 수 있고,
+#:     그것을 자르면 이번과 **반대 방향의 같은 사고**가 난다. 펼치는 것만 고친다.
+_ENV_REF = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)")
+
+
+def expand_env_refs(value: str, local: dict[str, str] | None = None,
+                    _depth: int = 0) -> str:
+    """`${NAME}` · `$NAME` 을 셸과 같은 뜻으로 펼친다. 같은 파일의 앞줄 → `os.environ` 순.
+
+    못 찾는 이름은 **그대로 둔다**(셸은 빈 문자열로 지우지만, 여기서는 지우면
+    「빈 비밀번호로 로그인 성공」 같은 조용한 거짓이 생긴다 — 남겨 두면 눈에 띈다).
+    """
+    if "$" not in value or _depth > 4:
+        return value
+    src = local or {}
+
+    def _sub(m: "re.Match[str]") -> str:
+        name = m.group(1) or m.group(2)
+        got = src.get(name) or os.environ.get(name)
+        return got if got is not None else m.group(0)
+
+    return expand_env_refs(_ENV_REF.sub(_sub, value), local, _depth + 1)
+
+
 def load_local_env() -> list[str]:
     """로컬(gitignored) env 파일에서 `GX_*` 이름만 읽어 환경에 채운다. 읽은 파일을 돌려준다."""
     read: list[str] = []
@@ -333,15 +386,25 @@ def load_local_env() -> list[str]:
         except OSError:
             continue
         took = False
+        #: ★ 같은 파일 안의 **앞줄**이 뒷줄의 참조를 채운다 — 셸 소싱과 같은 순서다.
+        #:   `LOCAL_ENV_KEYS` 밖의 이름도 여기에는 담는다(가리키는 쪽이 그 이름일 수 있다).
+        seen: dict[str, str] = {}
         for line in text.splitlines():
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
                 continue
             k, _, v = line.partition("=")
             k = k.strip()
+            raw = expand_env_refs(v.strip().strip('"').strip("'"), seen)
+            seen[k] = raw
             if k not in LOCAL_ENV_KEYS or os.environ.get(k):
                 continue
-            os.environ[k] = v.strip().strip('"').strip("'")
+            #: 펼친 뒤에도 `${` 가 남으면 **가리키는 이름이 그 파일에 없다** — 조용히
+            #:   틀린 자격으로 때리지 않도록 이름을 말한다(값은 말하지 않는다).
+            if "${" in raw or (raw.startswith("$") and len(raw) > 1):
+                print(f"[ALIVE] ⚠ {name}: {k} 가 못 펼친 참조를 들고 있다 — "
+                      f"가리키는 이름이 그 파일에 없다 (값은 적지 않는다)")
+            os.environ[k] = raw
             took = True
         if took:
             read.append(name)
@@ -483,4 +546,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header, account_as  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target=os.environ.get("GX_API", "http://localhost:8000") + " (gx-shell 안 · 호스트에 포트가 없다)",
+        as_=account_as(),
+        source="살아 있는 서버 응답 (HTTP) — 사진도 손 목록도 아니다",
+    )
     sys.exit(main())

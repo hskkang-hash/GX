@@ -1,0 +1,15 @@
+{
+  "dump": "/backup/database_guardianx_20260907T191153.dump",
+  "dump_bytes": 40242094,
+  "dump_sha256": "9e35e04b9c21a998bcf6edaf4ec4513c7baa227a79a1b23988bfba1882e6db93",
+  "source_db": "database_guardianx",
+  "target_db": "restore_check_20260907101209",
+  "volume": "gx_backup_vault_e",
+  "tables_restored": 223,
+  "tables_source": 223,
+  "target_dropped": true,
+  "rto_seconds": 8.5,
+  "rto_minutes": 0.14,
+  "measured_at": "2026-09-07T10:12:09+00:00",
+  "scope": "DB 만이다. 객체저장(영상·캡처)은 이 시험에 들어 있지 않다 — DB 만 살아나면 「영상이 있었다고 말하는 DB」가 된다"
+}

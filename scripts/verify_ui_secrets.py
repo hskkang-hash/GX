@@ -372,4 +372,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header, account_as  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target="frontend/src (정적) + " + os.environ.get("GX_API", "http://localhost:8000"),
+        as_=account_as(),
+        source="프런트 소스 트리 + 살아 있는 서버 응답 (HTTP)",
+    )
     raise SystemExit(main())

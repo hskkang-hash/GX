@@ -1,6 +1,10 @@
 {
-  "measured_at": "2026-09-06T07:14:59+00:00",
+  "measured_at": "2026-09-12T23:00:00+00:00",
   "verdict": "UNKNOWN",
   "out_dir": "/backup",
-  "reason": "보관처 '/backup' 에 덤프가 **하나도 없다.** 「백업이 0회」와 「복구가 실패」는 다른 사실이다"
+  "reason": "보관처 '/backup' 에 덤프가 **하나도 없다.** 「백업이 0회」와 「복구가 실패」는 다른 사실이다",
+  "_written_from": {
+    "db": "database_guardianx",
+    "under_pytest": false
+  }
 }

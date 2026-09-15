@@ -1,0 +1,167 @@
+{
+  "decision": "P-109",
+  "measured_at": "2026-09-07T11:45:48+00:00",
+  "how": "모두 실서버(`http://localhost:8000`, gx-shell 안)에 **익명으로 실제 호출**해서 쟀다. 부작용이 없도록 빈 목록·없는 id 만 썼고, delivery·orders 36개 표의 행 합계를 전/후로 셌다 (17,298 → 17,298).",
+  "public_writes_7": [
+    {
+      "path": "/api/v1/auth/login",
+      "reason": "로그인 — 토큰을 받으러 오는 자리다",
+      "rate_limit": "@ratelimit(key='ip', rate='5/m', method='POST', block=True)  [dj-core core/api/v1/auth.py:348]",
+      "signature_or_otp": "없음 (자격증명 자체를 낸다)",
+      "verdict": "초록",
+      "why": "IP 당 분 5회로 묶여 있다 — 무차별 대입이 값싸지 않다"
+    },
+    {
+      "path": "/api/v1/auth/forgot-password",
+      "reason": "비밀번호 분실 — 로그인할 수 없는 사람이 부른다",
+      "rate_limit": "@ratelimit(key='ip', rate='3/h', block=True) + @csrf_protect  [:1318]",
+      "signature_or_otp": "없음",
+      "verdict": "초록",
+      "why": "IP 당 시간 3회"
+    },
+    {
+      "path": "/api/v1/auth/reset-password",
+      "reason": "재설정 — 메일로 받은 토큰으로 부른다",
+      "rate_limit": "@ratelimit(key='ip', rate='15/h', block=True) + @csrf_protect  [:1453]",
+      "signature_or_otp": "본문에 **메일로 받은 재설정 토큰**",
+      "verdict": "초록",
+      "why": "둘 다 있다"
+    },
+    {
+      "path": "/api/v1/auth/refresh-token",
+      "reason": "토큰 갱신 — 유효한 접근 토큰이 없는 상태가 정상이다",
+      "rate_limit": "**없음**",
+      "signature_or_otp": "본문의 refresh token 을 서명 검증하고 블랙리스트를 대조한다  [:1642]",
+      "verdict": "초록",
+      "why": "서명이 곧 관문이다 — 토큰 없이는 한 걸음도 못 간다"
+    },
+    {
+      "path": "/api/v1/auth/logout",
+      "reason": "로그아웃 — 이미 만료된 토큰으로도 불려야 한다",
+      "rate_limit": "**없음**",
+      "signature_or_otp": "핸들러 첫 줄이 `get_authenticated_user_from_request()` — 없으면 401  [:831]",
+      "verdict": "초록",
+      "why": "익명은 401 을 받고 끝난다"
+    },
+    {
+      "path": "/api/v1/auth/otp/verify",
+      "reason": "OTP 확인 — 로그인 절차의 두 번째 단계",
+      "rate_limit": "**없음**",
+      "signature_or_otp": "본문에 otp_code 6자리 — 그러나 그것이 **맞히려는 대상**이다. 시도 횟수 계수기도 없다  [:1883]",
+      "verdict": "회색",
+      "why": "익명이 username 하나만 알면 6자리 코드를 **무제한으로** 시도할 수 있다. 속도 제한도 잠금도 없다 — 「공개여도 되는 면」인지 이 증거로는 말할 수 없다. [실측 2026-09-07 · 익명 · 없는 사용자명] HTTP 404 「User not found」 — 관문 없이 핸들러까지 닿는다. 실재 사용자명으로는 두드리지 않았다"
+    },
+    {
+      "path": "/api/v1/auth/otp/reset",
+      "reason": "OTP 재설정 — 로그인 절차 안에 있다",
+      "rate_limit": "**없음**",
+      "signature_or_otp": "**없음** — 본문은 `{username}` 하나뿐이다  [:1990]",
+      "verdict": "회색 (일곱 중 가장 나쁘다)",
+      "why": "핸들러가 하는 일 [소스 실측 core/api/v1/auth.py:2050-2055]: `pyotp.random_base32()` 로 **새 OTP 비밀을 굽고** `otp_is_verified=False` · `opt_mandatory=False` 로 내리고 Profile 을 `is_temporary=True` 로 덮어쓴다. 곧 **익명이 남의 사용자명만 알면 그 계정의 2단계 인증을 되돌릴 수 있다.** [실측 2026-09-07 · 익명 · 없는 사용자명 `gxnosuchuser_zzz_probe`] HTTP 404 「User not found」 — 관문 없이 핸들러까지 닿았다. ★ 실재 사용자명으로는 **두드리지 않았다** — 그것이 곧 사고다"
+    }
+  ],
+  "write_auth_greys_8": [
+    {
+      "path": "POST /api/token/pair",
+      "was": "500 · 그 밖의 상태",
+      "now": "**404**",
+      "measured": "[실측 2026-09-07 턴 M · 익명 · 빈 본문 · 실서버 HTTP] Django 기본 404 HTML 2,638 B",
+      "verdict": "회색 해소 → **그 주소가 없다**",
+      "note": "쓰기 탐침의 `PUBLIC_BY_DESIGN` 에 이름이 올라 있으나 그 자리는 실재하지 않는다. 선언에서 뺄 이름이다"
+    },
+    {
+      "path": "POST /api/token/refresh",
+      "was": "400",
+      "now": "400 `{\"refresh\":\"token is required\"}`",
+      "measured": "[실측 · 익명 · 빈 본문] HTTP 400 · 79 B",
+      "verdict": "회색 유지 — 이름과 사유로 잠근다",
+      "note": "관문은 **본문의 refresh 토큰 서명 검증**이다. 토큰 없이는 400 에서 끝나고, 토큰이 있으면 그것이 자격증명이다. 「관문이 없다」가 아니라 「관문이 본문 안에 있다」"
+    },
+    {
+      "path": "POST /api/token/verify",
+      "was": "400",
+      "now": "400 `{\"token\":\"token is required\"}`",
+      "measured": "[실측 · 익명 · 빈 본문] HTTP 400 · 77 B",
+      "verdict": "회색 유지 — 이름과 사유로 잠근다",
+      "note": "위와 같다. 검사받을 토큰을 본문으로 내는 자리다"
+    },
+    {
+      "path": "POST /api/v1/auth/delete-session",
+      "was": "422",
+      "now": "422 `loc=[\"query\",\"data\"]`",
+      "measured": "[실측 · 익명 · 빈 본문] HTTP 422 · 84 B",
+      "verdict": "회색 유지 — **못 쟀다**",
+      "note": "필수 값이 본문이 아니라 **질의**에 있다. 쓰기 탐침은 본문만 채우므로 그 자리를 못 넘는다. 채워서 두드리면 **남의 세션을 끊을 수 있어** 두드리지 않았다 — 「몰랐다」를 「없었다」로 두지 않는다"
+    },
+    {
+      "path": "POST /api/delivery/processing/assign-packages-to-drone",
+      "was": "500 · 탐침 인공물(대체물이 @path_permission 을 함께 지웠다)",
+      "now": "**HTTP 200 + `{\"success\": false, \"message\": \"Permission denied.\"}`**",
+      "measured": "[실측 2026-09-07 턴 M · 익명 · **스키마를 통과하는 본문** `[]`(빈 목록) · 실서버 HTTP] 328 B. 전/후 delivery·orders 36개 표 행 합계 **17,298 → 17,298** (변화 0)",
+      "verdict": "회색 해소 → **거부**",
+      "note": "턴 J 의 추측이 맞았다 — 대체물이 지운 `@path_permission` 이 실제로는 서 있다. 다만 그 거부가 **200 봉투** 안에 있다 (D-349 착시 ⑧, 따로 등재된 결함)"
+    },
+    {
+      "path": "POST /api/delivery/processing/assign-packages-to-drones",
+      "was": "500 · 탐침 인공물",
+      "now": "**HTTP 200 + Permission denied 봉투**",
+      "measured": "[실측 · 익명 · 본문 `{route_id:999999999, drone_ids:[], package_ids:[], assignments:[]}`] 328 B · 행 변화 0",
+      "verdict": "회색 해소 → **거부**",
+      "note": "위와 같다"
+    },
+    {
+      "path": "POST /api/delivery/verification/verify-orders",
+      "was": "500 · 탐침 인공물",
+      "now": "**HTTP 200 + Permission denied 봉투**",
+      "measured": "[실측 · 익명 · 본문 `{operation_ids: []}`] 328 B · 행 변화 0",
+      "verdict": "회색 해소 → **거부**",
+      "note": "위와 같다"
+    },
+    {
+      "path": "POST /api/orders/order/{id}/payment",
+      "was": "500 · 탐침 인공물",
+      "now": "**HTTP 200 + Permission denied 봉투**",
+      "measured": "[실측 · 익명 · 없는 id `999999999` · 빈 본문] 328 B · 행 변화 0",
+      "verdict": "회색 해소 → **거부**",
+      "note": "위와 같다"
+    }
+  ],
+  "rotation_list": [
+    {
+      "name": "MinIO 루트 자격증명 (`MINIO_ROOT_USER` · `MINIO_ROOT_PASSWORD` — 호스트 `.env`)",
+      "why": "저장소 밖 파일에 평문으로 있고 컨테이너가 그대로 쓴다",
+      "status": "이미 알려진 자리"
+    },
+    {
+      "name": "앱의 MinIO 자격증명 (`MINIO_ACCESS_KEY` · `MINIO_SECRET_KEY`)",
+      "why": "[지문 실측] 둘 다 sha256[:12]=`b5a2c9625061` · **길이 5** — 두 값이 **같고** 자리표시자다. 이 때문에 `/api/media-data` 가 503 을 낸다",
+      "status": "교체 대상 (회전이 아니라 **채워 넣기**)"
+    },
+    {
+      "name": "`anyang / Admin@123`",
+      "why": "알려진 약한 자격증명",
+      "status": "이미 알려진 자리"
+    },
+    {
+      "name": "★★ **`Admin@123` 을 쓰는 계정 74개** (전체 113 중 · 활성 73)",
+      "why": "[실측 2026-09-07 턴 M · `check_password` 전수 · 값은 어디에도 적지 않는다] `anyang` 한 자리가 아니라 **74자리**다. 그중에 이 저장소의 **유일한 superuser**(`phatlh`)가 들어 있다. 한 사람이 그 한 낱말을 알면 74개 계정과 관리자 권한이 함께 열린다",
+      "status": "★ 새로 찾음 — 전수 회전 필요"
+    },
+    {
+      "name": "`DJANGO_SECRET_KEY` 의 **저장소에 적힌 기본값** (`backend/config/settings.py:28`)",
+      "why": "[지문 실측] 저장소 기본값 sha256[:12]=`55a2aa619c85` · 길이 20. 지금 도는 키는 `2bf9799b0713` · 길이 33 이라 **이 환경은 기본값을 안 쓴다**. 그러나 `NINJA_JWT[\"SIGNING_KEY\"] = SECRET_KEY` 이므로, 환경변수를 안 넣은 배포는 **저장소에 적힌 값으로 JWT 를 서명한다** — 저장소를 본 사람이 아무 토큰이나 만들 수 있다",
+      "status": "★ 새로 찾음 — 기본값 제거 + 회전"
+    },
+    {
+      "name": "`WEBHOOK_SIGNING_KEYS`",
+      "why": "[실측] 지금 **0개**다 — 웹훅이 서명 없이 나간다/들어온다. 회전이 아니라 **도입** 대상",
+      "status": "★ 새로 찾음"
+    },
+    {
+      "name": "탐침·씨앗 계정 (`gxprobe_*` · `gxseed_*`) 과 `.env.gates` 의 세 비밀번호",
+      "why": "제품 DB 에 실재하는 계정이다. 상용으로 나가면 **회전이 아니라 삭제** 대상이다. ★ 이번 턴 실측: `.env.gates` 의 `GX_PROBE_PASSWORD` 는 `gxprobe_e2e` 의 비밀번호가 **아니다**(그 계정 것은 `GX_ROUTE_PASSWORD` 다). 이름과 값이 어긋나 있으면 다음 사람이 잠금까지 시도를 태운다 — 실제로 이번에 3/5 를 봤다",
+      "status": "★ 새로 찾음 — 이름 정리 + 상용 전 삭제"
+    }
+  ],
+  "value_policy": "값은 어디에도 적지 않는다. 대조가 필요하면 sha256[:12] 와 길이만 적는다 (D-204)"
+}

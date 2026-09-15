@@ -41,14 +41,40 @@
 ★ **회색은 초록이 아니다. 그러나 빨강도 아니다** (P-70). 못 잰 것을 빨강으로
   내면 「환경을 세우면 사라지는 빨강」이 쌓이고, 그런 빨강을 본 사람은 게이트를 끈다.
 
+★★ **[P-116 · 2026-09-10 · 턴 O] 한 서버만 재면 낡음의 대부분을 못 본다.**
+
+    [실측 2026-09-08] 백업 주기가 **24시간 두 번** 동안 꺼진 것처럼 보였다.
+    설정은 내내 `True` 였다. 낡은 것은 설정이 아니라 **`gx-celery-e` 작업자 프로세스**다 —
+    2026-09-05 에 떠서 씨앗 이전 코드를 메모리에 물고 있었다.
+
+    그 프로세스는 `GX_API` 가 가리키는 서버가 **아니다.** 위쪽 판정기는 그것을
+    **구조적으로 볼 수 없었다** — 없는 눈은 감은 눈보다 나쁘다. 안 보이니까
+    「전부 최신이다」가 계속 초록으로 나왔다.
+
+    그래서 자리를 **다섯**으로 늘렸다. 각자 **자기 소스**에 대해 잰다:
+
+      `gx-gunicorn-e` · `gx-celery-e` · `gx-beat-e` → `backend/**.py`
+      `gx-nginx-e`                                  → `nginx/**.conf`·`.inc`
+      `gx-shell` 안의 `runserver`                    → `backend/**.py`
+
+    ⚠ 나무를 안 갈라 놓으면 판정이 거짓말한다 — `gx-nginx-e` 를 `backend/` 로 재면
+      앞단 설정을 고쳐도 초록이고, gunicorn 을 `nginx/` 로 재면 코드를 고쳐도 초록이다.
+
 쓰는 법
 -------
     python scripts/verify_live_freshness.py --self-test
-    python scripts/verify_live_freshness.py                 # GX_API 를 잰다
-    python scripts/verify_live_freshness.py --api http://localhost:8000
-    python scripts/verify_live_freshness.py --json docs/agent/evidence/P-82/fresh.json
+    python scripts/verify_live_freshness.py                 # GX_API 한 자리만 (P-82)
+    python scripts/verify_live_freshness.py --all           # **다섯 자리** (P-116)
+    python scripts/verify_live_freshness.py --all --json docs/agent/evidence/P-116/fresh.json
+    python scripts/verify_live_freshness.py --prove-stale   # 음성 대조 (아래)
 
-종료 코드: 0 신선 · 1 다르다(빨강) · 2 판정 불가(회색)
+★ `--prove-stale` 이 왜 따로 있나 — **자기시험은 상수를 못 잡는다.**
+  `decide()` 표를 먹이는 자기시험은 판정 *식*이 맞는지만 본다. 실제로 재는 경로가
+  「늘 초록」인 상수여도 그 시험은 통과한다. `--prove-stale` 은 **살아 있는 다섯 자리를
+  그대로 재고** 비교 대상 시각만 「지금」으로 민다 — 다섯이 **모두 회색**으로 뒤집혀야 한다.
+  하나라도 초록이면 그 초록은 측정이 아니다.
+
+종료 코드: 0 신선 · 1 다르다(빨강) · 2 판정 불가(회색) · `--all` 은 **가장 나쁜 것**
 """
 from __future__ import annotations
 
@@ -60,6 +86,12 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from verify_route_alive import (  # noqa: E402  — **같은 눈으로 읽는다** (D-369)
+    expand_env_refs,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
@@ -88,15 +120,21 @@ def load_local_env() -> list[str]:
         except OSError:
             continue
         took = False
+        seen: dict[str, str] = {}
         for line in text.splitlines():
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
                 continue
             k, _, v = line.partition("=")
             k = k.strip()
+            #: ★ [D-457] `${NAME}` 참조를 셸과 같은 뜻으로 펼친다 — 안 펼치면
+            #:   리터럴이 값으로 나가 판정기가 회색이 된다 (verify_route_alive 참조).
+            #:   ⚠ 거르기 **앞에서** 담는다 — 가리키는 이름이 `LOCAL_ENV_KEYS` 밖일 수 있다.
+            raw = expand_env_refs(v.strip().strip('"').strip("'"), seen)
+            seen[k] = raw
             if k not in LOCAL_ENV_KEYS or os.environ.get(k):
                 continue
-            os.environ[k] = v.strip().strip('"').strip("'")
+            os.environ[k] = raw
             took = True
         if took:
             read.append(name)
@@ -145,6 +183,157 @@ def source_time() -> tuple[int, str]:
 def port_of(api: str) -> str:
     m = re.search(r":(\d+)", api)
     return m.group(1) if m else "8000"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# P-116 — **한 서버가 아니라 모든 프로세스**
+# ══════════════════════════════════════════════════════════════════════════════
+#: [실측 2026-09-08 · P-116] 백업 주기가 24시간 두 번 동안 꺼진 것처럼 보였다.
+#: 설정은 내내 `True` 였다. 낡은 것은 **설정이 아니라 작업자 프로세스**였다 —
+#: 2026-09-05 에 떠서 씨앗 이전 코드를 메모리에 물고 있었다. 그 프로세스는
+#: `GX_API` 가 가리키는 서버가 **아니다.** 서버 하나만 재는 판정기는 그것을 못 본다.
+#:
+#: ★ 그래서 재는 자리는 다섯이다. **각자 자기 소스**에 대해 잰다 —
+#:   `gx-nginx-e` 를 `backend/` 로 재면 nginx 설정을 고쳐도 초록이고,
+#:   gunicorn 을 `nginx/` 로 재면 코드를 고쳐도 초록이다.
+PROCESSES = (
+    {
+        "key": "gx-gunicorn-e",
+        "container": "gx-gunicorn-e",
+        "match": "gunicorn",
+        "role": "API (nginx `upstream gx_app` 의 peer)",
+        "sources": (("backend", ".py"),),
+    },
+    {
+        "key": "gx-celery-e",
+        "container": "gx-celery-e",
+        "match": "celery -A config worker",
+        "role": "작업자 — **예약 백업이 실제로 도는 자리** (P-116 출생 표본)",
+        "sources": (("backend", ".py"),),
+    },
+    {
+        "key": "gx-beat-e",
+        "container": "gx-beat-e",
+        "match": "celery -A config beat",
+        "role": "스케줄러 — 백업 주기를 쏘는 자리",
+        "sources": (("backend", ".py"),),
+    },
+    {
+        "key": "gx-nginx-e",
+        "container": "gx-nginx-e",
+        "match": "nginx: master process",
+        "role": "앞단 (`-c /etc/nginx/gx/gx-front.conf`)",
+        "sources": (("nginx", ".conf"), ("nginx", ".inc")),
+    },
+    {
+        "key": "gx-shell:runserver",
+        "container": "gx-shell",
+        "match": "manage.py runserver",
+        "role": "게이트가 때리는 개발 서버 (`GX_API`)",
+        "sources": (("backend", ".py"),),
+    },
+)
+
+#: ★ **`nginx:alpine` 에는 파이썬이 없다** [실측 2026-09-10 · 턴 O].
+#:   `python -c` 로 캐는 위쪽 `PROBE_SRC` 는 앞단을 영원히 회색으로 만든다 —
+#:   「도구가 없어서 못 잰다」는 **못 잰 것이지 초록이 아니다**. 그래서 이 조각은
+#:   busybox `sh` + `awk` 만 쓴다. 백엔드 이미지와 `nginx:alpine` 둘 다에서 돈다.
+SH_PROBE = r"""
+TOK="$1"
+now=$(date +%s)
+up=$(awk '{print $1}' /proc/uptime)
+tck=$(getconf CLK_TCK 2>/dev/null)
+[ -n "$tck" ] || tck=100
+best=""; bestpid=""; bestcl=""
+for p in /proc/[0-9]*; do
+  [ -r "$p/cmdline" ] || continue
+  cl=$(tr '\0' ' ' < "$p/cmdline" 2>/dev/null)
+  [ -n "$cl" ] || continue
+  case "$cl" in *"$TOK"*) ;; *) continue ;; esac
+  # 자기 자신(docker exec 가 띄운 sh -c 래퍼)은 TOK 를 인자로 달고 있다. 반드시 뺀다.
+  case "$cl" in "sh -c "*|"/bin/sh -c "*|"bash -c "*) continue ;; esac
+  stt=$(awk '{ i=index($0,") "); s=substr($0,i+2); split(s,f," "); print f[20] }' "$p/stat" 2>/dev/null)
+  [ -n "$stt" ] || continue
+  # ★ 맞는 것이 여럿이면 **가장 먼저 뜬 것**(마스터)을 고른다. 일꾼은 죽으면 다시
+  #   태어나므로 일꾼의 기동 시각은 코드를 언제 읽었는지를 말하지 않는다.
+  if [ -z "$best" ] || [ "$stt" -lt "$best" ]; then
+    best=$stt; bestpid=${p#/proc/}; bestcl=$cl
+  fi
+done
+if [ -z "$best" ]; then echo "GXFRESH found=0"; exit 0; fi
+boot=$(awk -v n="$now" -v u="$up" -v s="$best" -v t="$tck" 'BEGIN{printf "%d", n-(u-s/t)}')
+echo "GXFRESH found=1"
+echo "GXFRESH pid=$bestpid"
+echo "GXFRESH boot_epoch=$boot"
+echo "GXFRESH cmdline=$(echo "$bestcl" | cut -c1-160)"
+if [ -r "/proc/$bestpid/environ" ]; then
+  tr '\0' '\n' < "/proc/$bestpid/environ" 2>/dev/null | grep -E '^(GX_COMMIT|DJANGO_SETTINGS_MODULE)=' | sed 's/^/GXFRESH env_/'
+fi
+"""
+
+
+def probe_sh(container: str, token: str) -> dict:
+    """컨테이너 안에서 `token` 을 문 **가장 먼저 뜬** 프로세스의 기동 시각을 캔다.
+
+    파이썬을 쓰지 않는다 — 앞단(`nginx:alpine`)에 파이썬이 없기 때문이다.
+    """
+    rc, out = _run(["docker", "exec", container, "sh", "-c", SH_PROBE, "gxfresh", token])
+    got: dict = {"found": False, "env": {}}
+    saw = False
+    for ln in out.splitlines():
+        ln = ln.strip()
+        if not ln.startswith("GXFRESH "):
+            continue
+        saw = True
+        k, _, v = ln[len("GXFRESH "):].partition("=")
+        if k == "found":
+            got["found"] = (v == "1")
+        elif k in ("pid", "boot_epoch"):
+            got[k] = int(v) if v.lstrip("-").isdigit() else 0
+        elif k == "cmdline":
+            got["cmdline"] = v
+        elif k.startswith("env_"):
+            got["env"][k[4:]] = v
+    if not saw:
+        return {"found": False, "env": {}, "error": "LIVE_NO_CONTAINER",
+                "detail": out.strip().replace("\n", " ")[:200]}
+    if not got["found"]:
+        got["error"] = "LIVE_NO_PROCESS"
+    return got
+
+
+#: `git ls-files` 는 나무당 한 번만 부른다 (다섯 자리가 같은 나무를 공유한다).
+_LS_CACHE: dict[str, list[str]] = {}
+
+
+def _ls_tree(tree: str) -> list[str]:
+    if tree not in _LS_CACHE:
+        rc, out = _run(["git", "-C", str(ROOT), "ls-files", tree])
+        _LS_CACHE[tree] = out.splitlines() if rc == 0 else []
+    return _LS_CACHE[tree]
+
+
+def source_time_for(sources: tuple) -> tuple[int, str]:
+    """**그 프로세스가 실제로 실행하는 것들**의 가장 최근 시각 — 커밋과 작업본 중 큰 쪽.
+
+    `source_time()` 과 같은 규칙이되 나무가 여럿이고 확장자가 자리마다 다르다.
+    """
+    best, why = 0, "없음"
+    for tree, ext in sources:
+        rc, out = _run(["git", "-C", str(ROOT), "log", "-1", "--format=%ct", "--", tree])
+        if rc == 0 and out.strip().isdigit() and int(out.strip()) > best:
+            best, why = int(out.strip()), tree + "/ 마지막 커밋"
+        for rel in _ls_tree(tree):
+            rel = rel.strip()
+            if not rel.endswith(ext):
+                continue
+            try:
+                m = int((ROOT / rel).stat().st_mtime)
+            except OSError:
+                continue
+            if m > best:
+                best, why = m, "작업본 " + rel
+    return best, why
 
 
 #: 컨테이너 안에서 도는 조각. **`/proc` 만 읽는다** — `curl` 도 `ps -o lstart` 도
@@ -230,6 +419,21 @@ BIRTH_SAMPLE = {
 }
 
 
+#: ★ **출생 표본 둘** (P-116 · 2026-09-08) — 이 확장을 만들게 한 **바로 그 사례**다.
+#:   백업 주기가 24시간 두 번 동안 꺼진 것처럼 보였다. 설정은 내내 `True` 였다.
+#:   낡은 것은 **`gx-celery-e` 작업자 프로세스**다 — 2026-09-05 에 떠서 씨앗 이전
+#:   코드를 물고 있었다. 위쪽 `BIRTH_SAMPLE` 은 `GX_API` 서버만 재므로 이것을
+#:   **구조적으로 볼 수 없었다.** 자리를 다섯으로 늘린 이유가 정확히 이 한 줄이다.
+#:   이 표본이 초록이 되는 날, 이 확장은 눈이 먼 것이다.
+BIRTH_SAMPLE_WORKER = {
+    "key": "gx-celery-e",
+    "boot_epoch": 1788586860,     # 2026-09-05 14:41 — 작업자가 뜬 시각
+    "source_epoch": 1788825600,   # 2026-09-08 09:00 — 그 뒤 backend/ 가 바뀐 시각(씨앗)
+    "live_commit": "",            # GX_COMMIT 없이 떴다 → 시각만이 증거다
+    "expect": (EXIT_UNDECIDABLE, "LIVE_OLDER_THAN_SOURCE"),
+}
+
+
 SELF_CASES = (
     ((True,  False, True),  (EXIT_FAIL, "LIVE_COMMIT_MISMATCH")),
     ((True,  False, False), (EXIT_FAIL, "LIVE_COMMIT_MISMATCH")),   # 빨강이 회색을 이긴다
@@ -254,9 +458,26 @@ def self_test() -> int:
               "코드를 물고 있던 그 사례)이 " + str(got) + " 로 판정된다. 기대는 " +
               str(b["expect"]) + " — 이 도구는 자기가 태어난 이유를 못 잡는다")
         return EXIT_FAIL
+    #: 둘째 출생 표본 — **낡은 작업자**. 판정기가 낡은 것을 실제로 잡는지 여기서 본다.
+    w = BIRTH_SAMPLE_WORKER
+    got = decide(bool(w["live_commit"]), False, w["boot_epoch"] >= w["source_epoch"])
+    if got != w["expect"]:
+        print("[FRESH] 자기시험 **실패** — **출생 표본 2**(P-116 · gx-celery-e 가 "
+              "2026-09-05 코드를 물고 백업 주기를 이틀 죽인 그 사례)이 " + str(got) +
+              " 로 판정된다. 기대는 " + str(w["expect"]) + " — 이 확장은 자기가 "
+              "태어난 이유를 못 잡는다")
+        return EXIT_FAIL
+    #: 그리고 **반대쪽**도 본다. 낡은 것만 잡고 새 것도 잡으면 그것은 판정기가 아니라
+    #:   상수다(D-301). 같은 표본을 소스보다 **뒤에** 뜬 것으로 바꾸면 초록이어야 한다.
+    fresh_got = decide(False, False, (w["source_epoch"] + 60) >= w["source_epoch"])
+    if fresh_got != (EXIT_OK, "FRESH"):
+        print("[FRESH] 자기시험 **실패** — 같은 표본을 소스보다 뒤에 띄웠는데도 " +
+              str(fresh_got) + " 다. 판정기가 아니라 상수다")
+        return EXIT_FAIL
     print("[FRESH] 자기시험 통과 — 판정 규칙 " + str(len(SELF_CASES)) +
-          "종 + **출생 표본** (턴 H 의 8000: 기동 2026-09-05 14:41 · 소스 09-06 · "
-          "GX_COMMIT 없음 → 회색) · 빨강이 회색을 이긴다")
+          "종 + **출생 표본 2**: ① 턴 H 의 8000(기동 2026-09-05 14:41 · 소스 09-06 "
+          "→ 회색) ② P-116 의 gx-celery-e(기동 2026-09-05 · 소스 09-08 → 회색, "
+          "같은 표본을 소스 뒤로 옮기면 초록) · 빨강이 회색을 이긴다")
     return EXIT_OK
 
 
@@ -264,18 +485,133 @@ def fmt(epoch: int) -> str:
     return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(epoch)) if epoch else "모름"
 
 
+def run_all(json_path: str = "") -> int:
+    """다섯 자리를 **각자 자기 소스**에 대해 재고 한 표로 낸다 (P-116).
+
+    돌려주는 값은 **가장 나쁜 것**이다 — 넷이 초록이고 하나가 회색이면 회색이다.
+    한 자리라도 못 재면 「전부 최신이다」는 말은 그 순간 거짓이 된다.
+    """
+    head = head_commit()
+    rows, worst = [], EXIT_OK
+    for spec in PROCESSES:
+        src_epoch, src_why = source_time_for(spec["sources"])
+        info = probe_sh(spec["container"], spec["match"])
+        if not info.get("found"):
+            why = info.get("error", "LIVE_NO_PROCESS")
+            rows.append({"key": spec["key"], "role": spec["role"], "boot": 0,
+                         "boot_str": "모름", "verdict": why, "exit": EXIT_UNDECIDABLE,
+                         "source_epoch": src_epoch, "source_why": src_why,
+                         "live_commit": "", "pid": 0, "delta_min": 0,
+                         "detail": info.get("detail", "")})
+            worst = max(worst, EXIT_UNDECIDABLE)
+            continue
+        boot = int(info["boot_epoch"])
+        live_commit = info.get("env", {}).get("GX_COMMIT", "")
+        commit_known = bool(live_commit and head)
+        commit_same = bool(commit_known and (live_commit.startswith(head[:7])
+                                             or head.startswith(live_commit[:7])))
+        rc, why = decide(commit_known, commit_same, boot >= src_epoch)
+        rows.append({"key": spec["key"], "role": spec["role"], "boot": boot,
+                     "boot_str": fmt(boot), "verdict": why, "exit": rc,
+                     "source_epoch": src_epoch, "source_why": src_why,
+                     "live_commit": live_commit, "pid": info.get("pid", 0),
+                     "delta_min": (boot - src_epoch) // 60, "detail": ""})
+        #: 빨강이 회색을 이긴다 — 회색(2)보다 빨강(1)이 나쁘다. max() 로는 못 고른다.
+        worst = EXIT_FAIL if (rc == EXIT_FAIL or worst == EXIT_FAIL) else max(worst, rc)
+
+    mark = {EXIT_OK: "초록", EXIT_FAIL: "**빨강**", EXIT_UNDECIDABLE: "**회색**"}
+    print("[FRESH] ══ 다섯 자리 · 각자 자기 소스에 대해 (P-116) · HEAD " +
+          (head or "모름") + " ══")
+    print("[FRESH] " + "자리".ljust(20) + " " + "판정".ljust(8) + " " +
+          "기동".ljust(20) + " 소스대비  사유")
+    for r in rows:
+        d = ("+" + str(r["delta_min"]) if r["delta_min"] >= 0 else str(r["delta_min"])) + "분"
+        print("[FRESH] " + r["key"].ljust(20) + " " + mark[r["exit"]].ljust(8) + " " +
+              r["boot_str"].ljust(20) + " " + d.ljust(9) + " " + r["verdict"])
+        print("[FRESH]   └ " + r["role"] + " · 소스 " + fmt(r["source_epoch"]) +
+              " (" + r["source_why"] + ")" +
+              (" · " + r["detail"] if r["detail"] else ""))
+    if worst == EXIT_OK:
+        print("[FRESH] 통과 — 다섯 자리가 **모두** 자기 소스보다 뒤에 떴다")
+    else:
+        bad = [r["key"] + "(" + r["verdict"] + ")" for r in rows if r["exit"] != EXIT_OK]
+        print("[FRESH] " + mark[worst] + " — " + ", ".join(bad) +
+              ". **한 자리라도 못 재면 「전부 최신」은 거짓이다** (D-301)")
+
+    if json_path:
+        out = Path(json_path)
+        if not out.is_absolute():
+            out = ROOT / out
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({
+            "head_commit": head, "worst_exit": worst,
+            "measured_at": fmt(int(time.time())), "processes": rows,
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
+        print("[FRESH] 증거: " + json_path)
+    return worst
+
+
+def prove_stale() -> int:
+    """**살아 있는 다섯 자리로 음성 대조를 한다** — 판정기가 상수가 아님을 보인다.
+
+    자기시험(`decide()` 표)은 판정 *식*이 맞는지만 본다. 그것은 실제로 재는 경로가
+    **초록을 늘 뱉는 상수**여도 통과한다 [실측 2026-09-10 · 턴 O 에 실제로 의심한 자리].
+    그래서 여기서는 **똑같은 살아 있는 측정**을 그대로 쓰되 소스 시각만 「지금」으로
+    옮긴다. 기동은 전부 그보다 앞이므로 다섯이 **모두 회색**이어야 한다.
+    하나라도 초록이면 그 자리의 초록은 측정이 아니라 상수다.
+
+    ★ `backend/**` 를 건드리지 않는다 — 파일을 만지는 대신 **비교 대상 시각만** 민다.
+    """
+    now = int(time.time())
+    print("[FRESH] ══ 음성 대조 — 소스 시각을 「지금」(" + fmt(now) +
+          ") 으로 밀면 다섯이 **모두 회색**이어야 한다 ══")
+    bad, seen = [], 0
+    for spec in PROCESSES:
+        info = probe_sh(spec["container"], spec["match"])
+        if not info.get("found"):
+            print("[FRESH]   " + spec["key"].ljust(20) + " 건너뜀 — " +
+                  info.get("error", "LIVE_NO_PROCESS") + " (잴 프로세스가 없다)")
+            continue
+        seen += 1
+        boot = int(info["boot_epoch"])
+        rc, why = decide(False, False, boot >= now)
+        ok = (rc, why) == (EXIT_UNDECIDABLE, "LIVE_OLDER_THAN_SOURCE")
+        print("[FRESH]   " + spec["key"].ljust(20) + ("회색 " if ok else "**초록** ") +
+              "기동 " + fmt(boot) + " → " + why + ("" if ok else "  ← 상수 의심"))
+        if not ok:
+            bad.append(spec["key"])
+    if seen == 0:
+        print("[FRESH] **회색** — 잴 프로세스가 하나도 없어 음성 대조를 못 했다")
+        return EXIT_UNDECIDABLE
+    if bad:
+        print("[FRESH] **빨강** — " + ", ".join(bad) + " 가 낡은데도 초록이다. "
+              "이 판정기의 초록은 측정이 아니다")
+        return EXIT_FAIL
+    print("[FRESH] 음성 대조 통과 — 살아 있는 " + str(seen) +
+          "자리가 **모두** 회색으로 뒤집혔다. 초록은 상수가 아니라 측정이다")
+    return EXIT_OK
+
+
 def main() -> int:
     load_local_env()
-    ap = argparse.ArgumentParser(description="게이트가 때리는 서버가 지금 코드를 무는가 (P-82)")
+    ap = argparse.ArgumentParser(description="게이트가 때리는 서버가 지금 코드를 무는가 (P-82/P-116)")
     ap.add_argument("--api", default=os.environ.get("GX_API", "http://localhost:8000"))
     ap.add_argument("--json", metavar="PATH")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--all", action="store_true",
+                    help="다섯 프로세스를 각자 자기 소스에 대해 잰다 (P-116)")
+    ap.add_argument("--prove-stale", action="store_true",
+                    help="음성 대조 — 소스를 「지금」으로 밀어 다섯이 회색으로 뒤집히는지 본다")
     args = ap.parse_args()
 
     if args.self_test:
         return self_test()
     if self_test() != EXIT_OK:
         return EXIT_FAIL
+    if args.prove_stale:
+        return prove_stale()
+    if args.all:
+        return run_all(args.json or "")
 
     api, port = args.api, port_of(args.api)
     cont = os.environ.get("GX_ROUTE_CONTAINER", "").strip()
@@ -344,4 +680,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target=os.environ.get("GX_API", "http://localhost:8000") + " (gx-shell 안 · 호스트에 포트가 없다)",
+        as_="익명 — 기동 시각·커밋만 묻는다 (자격 없이 답하는 자리다)",
+        source="살아 있는 서버가 스스로 낸 기동 시각·커밋 (HTTP)",
+    )
     sys.exit(main())

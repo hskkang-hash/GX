@@ -1,0 +1,33 @@
+{
+  "ticket": "P-123 / UX-31 ① — 알림 이력이 「성공」이라 적는 동안 사람에게 간 것은 0건",
+  "measured_at": "2026-09-10 (turn O, lane C2)",
+  "how": "docs/agent/evidence/P-123/measure_deliveries.py — 실제 로그인(gxseed_u1_operator) · API 는 gx-nginx-e:8500 · 화면은 localhost:3002 안 번들",
+  "api": {
+    "url": "GET /api/dsm/deliveries?limit=200",
+    "status": 200,
+    "rows": 165,
+    "channel": { "log": 163, "email": 2 },
+    "succeeded": { "true": 164, "false": 1 },
+    "recipient_blank": "165 / 165",
+    "recipient_id_null": 0,
+    "sample_row": {
+      "delivery_id": 252, "event_id": 4798, "recipient_id": 101,
+      "channel": "log", "succeeded": true, "failure_reason": null,
+      "sent_at": "2026-09-03T13:17:35.581Z"
+    }
+  },
+  "mailbox": { "endpoint": "http://mailpit:8025/api/v1/messages", "messages_count": 0 },
+  "verdict": "succeeded=true 164건 중 163건이 채널 `log` 다. `log` 는 사람이 아니라 로그에 도달한다(backend/kernels/k2_notify/channels.py::LogChannel). 메일함은 0통이다 — 화면이 「성공」이라 적은 동안 사람에게 간 것은 0건이다.",
+  "screen_after": {
+    "screen": "/m/inbox (390x844 · gxseed_u1_operator)",
+    "bundle": "index-BI-bNF4L.js",
+    "rows_rendered": 50,
+    "「로그에 기록됨(사람에게 안 감)」": 50,
+    "옛 문구 「· 발송 HH:MM」": 0
+  },
+  "not_yet_applied": {
+    "file": "frontend/src/features/dsm/pages/EventDetail.tsx (데스크 「발송 이력」 표)",
+    "why": "이번 턴 다른 차선(Frontend Agent A)이 그 파일을 들고 있어 손대지 않았다",
+    "ready": "frontend/src/features/dsm/deliveryOutcome.tsx 의 `deliveryOutcomeColumns` 로 두 칸(수신자·결과)을 바꿔 끼우면 된다"
+  }
+}

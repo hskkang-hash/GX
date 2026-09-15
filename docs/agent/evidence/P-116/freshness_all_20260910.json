@@ -1,0 +1,77 @@
+{
+  "head_commit": "6cf2c19",
+  "worst_exit": 2,
+  "measured_at": "2026-09-10 17:22:21",
+  "processes": [
+    {
+      "key": "gx-gunicorn-e",
+      "role": "API (nginx `upstream gx_app` 의 peer)",
+      "boot": 1789028525,
+      "boot_str": "2026-09-10 17:22:05",
+      "verdict": "LIVE_OLDER_THAN_SOURCE",
+      "exit": 2,
+      "source_epoch": 1789028526,
+      "source_why": "작업본 backend/apps/dsm/services.py",
+      "live_commit": "",
+      "pid": 1,
+      "delta_min": -1,
+      "detail": ""
+    },
+    {
+      "key": "gx-celery-e",
+      "role": "작업자 — **예약 백업이 실제로 도는 자리** (P-116 출생 표본)",
+      "boot": 1789027437,
+      "boot_str": "2026-09-10 17:03:57",
+      "verdict": "LIVE_OLDER_THAN_SOURCE",
+      "exit": 2,
+      "source_epoch": 1789028526,
+      "source_why": "작업본 backend/apps/dsm/services.py",
+      "live_commit": "",
+      "pid": 1,
+      "delta_min": -19,
+      "detail": ""
+    },
+    {
+      "key": "gx-beat-e",
+      "role": "스케줄러 — 백업 주기를 쏘는 자리",
+      "boot": 1789027436,
+      "boot_str": "2026-09-10 17:03:56",
+      "verdict": "LIVE_OLDER_THAN_SOURCE",
+      "exit": 2,
+      "source_epoch": 1789028526,
+      "source_why": "작업본 backend/apps/dsm/services.py",
+      "live_commit": "",
+      "pid": 1,
+      "delta_min": -19,
+      "detail": ""
+    },
+    {
+      "key": "gx-nginx-e",
+      "role": "앞단 (`-c /etc/nginx/gx/gx-front.conf`)",
+      "boot": 1789027440,
+      "boot_str": "2026-09-10 17:04:00",
+      "verdict": "FRESH",
+      "exit": 0,
+      "source_epoch": 1788775777,
+      "source_why": "작업본 nginx/gx-front.conf",
+      "live_commit": "",
+      "pid": 1,
+      "delta_min": 4194,
+      "detail": ""
+    },
+    {
+      "key": "gx-shell:runserver",
+      "role": "게이트가 때리는 개발 서버 (`GX_API`)",
+      "boot": 1789027870,
+      "boot_str": "2026-09-10 17:11:10",
+      "verdict": "LIVE_OLDER_THAN_SOURCE",
+      "exit": 2,
+      "source_epoch": 1789028526,
+      "source_why": "작업본 backend/apps/dsm/services.py",
+      "live_commit": "",
+      "pid": 791,
+      "delta_min": -11,
+      "detail": ""
+    }
+  ]
+}

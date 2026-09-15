@@ -1,0 +1,33 @@
+[PERF-BUDGET] 자기시험 통과 — 초록 1 · 예산초과 2(모드별) · **회귀 1** · **P-53 응답시간/오류율 가르기 10**(출생 표본 턴 D 502 8건 포함) · 출생 표본 1(캐시 적중) · 회색 3 · 동시성 대조 2 · 잡음 대조 3 · 걸침 대조 3 · **회귀 걸침 3** · **모드 7** · 종료코드 7 · 구조 3 · 표 대조 2
+[ALIVE] 로그인 성공: /api/v1/auth/login
+[PERF-BUDGET] [입력] http://gx-nginx-e:8500 · 면 4종 · 동시 10 · 30라운드 (워밍업 1라운드 버림) · **호출마다 ?bust=**
+[PERF-BUDGET] [모드] acceptance ← Server: 'nginx'  (저절로 골랐다)
+[PERF-BUDGET]   1차: F05 p95 535ms · SCREEN p95 437ms · MEDIA p95 328ms · STATUS p95 234ms
+[PERF-BUDGET]   2차: F05 p95 309ms · SCREEN p95 314ms · MEDIA p95 241ms · STATUS p95 305ms
+[PERF-BUDGET]   3차: F05 p95 351ms · SCREEN p95 358ms · MEDIA p95 288ms · STATUS p95 209ms
+[PERF-BUDGET]   F05    계약 F-05 진입면 (NFR-05-1)         n=900  p95(가운데)   351.1ms [309–535] · 잡음 64% · 오류 2 (5xx 2 · 4xx 0)
+[PERF-BUDGET]   SCREEN 화면 API                         n=900  p95(가운데)   357.5ms [314–437] · 잡음 35% · 오류 1 (5xx 1 · 4xx 0)
+[PERF-BUDGET]   MEDIA  스냅샷·미디어                        n=900  p95(가운데)   287.8ms [241–328] · 잡음 30% · 오류 3 (5xx 3 · 4xx 0)
+[PERF-BUDGET]   STATUS 상태·가용성 (캐시 금지 · P-19)          n=900  p95(가운데)   233.9ms [209–305] · 잡음 41% · 오류 1 (5xx 1 · 4xx 0)
+[PERF-BUDGET] 기준선 F05    p95   429.8ms (동시 10) ← PERF-01 load.json · 가장 느린 자리 /api/dsm/events?limit=50
+[PERF-BUDGET] 기준선 SCREEN p95   590.2ms (동시 10) ← PERF-01 load.json · 가장 느린 자리 /api/dsm/events/queue
+[PERF-BUDGET] 기준선 MEDIA  p95   287.8ms (동시 10) ← 이번 측정 — PERF-01 에 이 면이 없다(첫 수)
+[PERF-BUDGET] 기준선 STATUS p95   416.8ms (동시 10) ← PERF-01 load.json · 가장 느린 자리 /api/dsm/dashboard/link-state
+[PERF-BUDGET] 기록 → /repo/docs/agent/evidence/OPS-13b/perf_run2_control.json
+[PERF-BUDGET]   F05 캐시 금지 (P-19)                                     이 면은 캐시 금지 면이 아니다 — 검사하지 않는다
+[PERF-BUDGET]   SCREEN 캐시 금지 (P-19)                                  이 면은 캐시 금지 면이 아니다 — 검사하지 않는다
+[PERF-BUDGET]   MEDIA 캐시 금지 (P-19)                                   이 면은 캐시 금지 면이 아니다 — 검사하지 않는다
+[PERF-BUDGET]   STATUS 캐시 금지 (P-19)                                  1자리 전부 `BYPASS_PATTERNS` 에 걸린다
+[PERF-BUDGET] ? F05 계약 F-05 진입면 (NFR-05-1) · 예산 500ms                **판정 불가** — 3벌의 p95 가 309–535ms 로 예산 500ms 를 **걸친다.** 넘은 벌도 있고 든 벌도 있다 — 이 환경에서는 이 면을 판정할 수 없다 (OPS-13 뒤 gunicorn+nginx 에서 다시 잰다)
+[PERF-BUDGET] ? F05 계약 F-05 진입면 (NFR-05-1) · 회귀 +20%                 **판정 불가** — 측정 잡음 64% 가 문턱 20% 보다 크다 (p95 308.6–534.8ms · 3벌). `runserver` 는 한 프로세스라 꼬리가 스케줄러를 탄다 — 회귀 감시는 gunicorn+nginx 뒤에 뜻이 선다 (OPS-13)
+[PERF-BUDGET]   SCREEN 화면 API · 예산 800ms                             p95(가운데) 358ms ≤ 800ms (n=900 · 오류 1 · 3벌 314–437ms) · ⚠ 표본에 오류 1건(0.11%)이 섞였다 — 이 칸은 **응답시간만** 판정한다. 오류율은 아래 「[전체] 가용성」 칸이 낸다 (P-53)
+[PERF-BUDGET] ? SCREEN 화면 API · 회귀 +20%                              **판정 불가** — 측정 잡음 35% 가 문턱 20% 보다 크다 (p95 313.6–437.2ms · 3벌). `runserver` 는 한 프로세스라 꼬리가 스케줄러를 탄다 — 회귀 감시는 gunicorn+nginx 뒤에 뜻이 선다 (OPS-13)
+[PERF-BUDGET]   MEDIA 스냅샷·미디어 · 예산 1000ms                            p95(가운데) 288ms ≤ 1000ms (n=900 · 오류 3 · 3벌 241–328ms) · ⚠ 표본에 오류 3건(0.33%)이 섞였다 — 이 칸은 **응답시간만** 판정한다. 오류율은 아래 「[전체] 가용성」 칸이 낸다 (P-53)
+[PERF-BUDGET] ? MEDIA 스냅샷·미디어 · 회귀 +20%                              **판정 불가** — 측정 잡음 30% 가 문턱 20% 보다 크다 (p95 240.6–327.5ms · 3벌). `runserver` 는 한 프로세스라 꼬리가 스케줄러를 탄다 — 회귀 감시는 gunicorn+nginx 뒤에 뜻이 선다 (OPS-13)
+[PERF-BUDGET] ? STATUS 상태·가용성 (캐시 금지 · P-19) · 예산 300ms              **판정 불가** — 3벌의 p95 가 209–305ms 로 예산 300ms 를 **걸친다.** 넘은 벌도 있고 든 벌도 있다 — 이 환경에서는 이 면을 판정할 수 없다 (OPS-13 뒤 gunicorn+nginx 에서 다시 잰다)
+[PERF-BUDGET] ? STATUS 상태·가용성 (캐시 금지 · P-19) · 회귀 +20%               **판정 불가** — 측정 잡음 41% 가 문턱 20% 보다 크다 (p95 209.2–305.4ms · 3벌). `runserver` 는 한 프로세스라 꼬리가 스케줄러를 탄다 — 회귀 감시는 gunicorn+nginx 뒤에 뜻이 선다 (OPS-13)
+[PERF-BUDGET] X [전체] 가용성 · 5xx ≤ 0.1%                                5xx 7/3,600 = **0.194%** > 0.1% (SLA 가용성 99.9% 월 환산 · 세종 P-53) · 면별 F05 2/900=0.22% · MEDIA 3/900=0.33% · SCREEN 1/900=0.11% · STATUS 1/900=0.11% · 주입 제외 **0건**(뺀 것이 없다 — 이 계량은 주입하지 않는다) · 5xx 코드별 502×7 — **응답시간이 아니라 가용성이 빨갛다.** 고칠 자리는 예산 표가 아니라 앞단·워커다
+[PERF-BUDGET]   [전체] 계약 · 4xx 0건                                     4xx 0/3,600
+[PERF-BUDGET] ★ 이 수는 **합격선 모드**로 잰 것이다 — 대상이 runserver 가 아니다(Server: 'nginx'). 절대 예산도 빨강이고, 위 단서(기준선)는 이 수에 붙지 않는다
+[PERF-BUDGET] 잰 때 2026-09-07T09:53:07+00:00 · 기준선 2026-09-07T09:53:07+00:00
+[PERF-BUDGET] 실패 — 위의 X 가 그 자리다. **X 가 어느 칸인지 보라**(세종 P-53): 「· 예산 …ms」는 **응답시간**(PERF-04) · 「· 회귀 +20%」는 회귀 · 「[전체] 가용성」은 **오류율**(OPS-13a 앞단·워커)이다. 셋은 다른 고장이고 고칠 자리도 다르다

@@ -1,0 +1,4 @@
+window 09:44:14-09:49:30  lines=3722  [('200', 3722)]  retried=30 rescued=30
+  status=200 tries=2 has_gx_app=False  x25
+  status=200 tries=3 has_gx_app=False  x4
+  status=200 tries=4 has_gx_app=False  x1

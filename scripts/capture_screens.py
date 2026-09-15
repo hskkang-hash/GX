@@ -31,8 +31,14 @@ D-381 이 문턱을 낮춘 그대로다: **타입오류 3229건이 있어도 번
     · 화면     기본 http://localhost:3002   (`--web`) — `vite build` 산출물을 SPA 로 서빙
     · 계정     `--user` / `--password`
 
-    python scripts/capture_screens.py --user gxprobe_e2e --password ****
+    python scripts/capture_screens.py --user gxseed_u1_operator --password ****            --persona all                            # U1→U2→U3→U4→U5 를 차례로
     python scripts/capture_screens.py --dry-run     # 씨앗·정리 없이 도달만 본다
+
+★★ [P-98 · 2026-09-07] **한 벌은 다섯 사람의 벌이다.** 그 전까지 33장은 전부 한 계정
+   (`gxprobe_e2e`)이 찍었고, 그 계정의 역할 목록은 **비어 있었다** — 33장이 「제품이
+   된다」가 아니라 「역할 없는 사람에게 무엇이 보이는가」를 찍고 있었던 것이다.
+   화면마다 `persona` 가 붙었고, 인덱스의 `viewed_by` 가 그것을 말한다.
+   역할이 0개인 계정으로는 **찍지 않는다**(판정 불가 · exit 2).
 
 ⚠ 계정은 **이 실행체가 만들지 않는다.** 사람이 만든 계정을 받아 쓴다 — 스크립트가
   계정을 만들면 그 계정의 존재를 아무도 대장에서 못 찾고, 비밀번호가 소스에 박힌다.
@@ -55,6 +61,35 @@ EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
 #: 이 실행체가 만든 씨앗에만 붙는 표. **지울 때의 유일한 근거**다.
 PROBE_TAG = "gxprobe-D384-screen"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 누가 봤나 — **역할 없는 계정으로 찍은 33장은 인수 증거가 아니었다** (P-98)
+# ═══════════════════════════════════════════════════════════════════════════
+# [실측 2026-09-07] 앞선 33장은 전부 `gxprobe_e2e` 로 찍혔고, 그 계정의 역할 목록은
+# **비어 있다**(`user.roles` = []). 그 벌은 「제품이 돈다」를 보여 준 것이 아니라
+# **「역할 없는 사람에게 무엇이 보이는가」**를 보여 준 것이다 — 뜻이 있는 측정이지만
+# 인수 증거는 아니다. 그 벌은 `docs/agent/evidence/P-98/denied/` 로 옮겨 두었다.
+#
+# ★ 그리고 **왜 아무도 못 봤나**가 이 파일 안에 있었다: `read_role()` 이 `user.role`
+#   (단수 · 이 제품에 **존재하지 않는 필드**)을 읽었다. 없는 필드는 `None` 이고,
+#   `None` 은 `NO_ROLE` 로 적혔다. 역할이 **있는** 계정도 똑같이 `NO_ROLE` 로 적힌다 —
+#   즉 이 칸은 「역할이 없다」가 아니라 **「읽는 곳을 틀렸다」**를 말하고 있었다.
+#   제품이 실제로 들고 있는 자리는 `user.roles` (M2M) 다.
+#
+# ★ 페르소나는 **계정이 아니라 자리**다. U3 은 새 계정이 아니라 **U1 이 390px 에서**
+#   보는 화면이다 — 폭이 다르면 사람이 보는 화면이 다르고, 그것이 U3 의 전부다.
+PERSONAS = {
+    "U1": {"username": "gxseed_u1_operator", "role": "fire_user",
+           "label": "관제요원", "note": "상황실에서 이벤트를 받는 사람"},
+    "U2": {"username": "gxseed_u2_manager", "role": "fire_admin",
+           "label": "팀장", "note": "훈련·일괄등록·온보딩을 여는 사람"},
+    "U3": {"username": "gxseed_u1_operator", "role": "fire_user",
+           "label": "관제요원(이동 중)", "note": "U1 과 **같은 계정** · 390px"},
+    "U4": {"username": "gxseed_u4_official", "role": "view_only_-_anyang",
+           "label": "재난안전과", "note": "읽기 전용으로 상황을 보는 사람"},
+    "U5": {"username": "gxseed_u5_sysop", "role": "admin",
+           "label": "관리자", "note": "장비·역할·메뉴·설정을 만지는 사람"},
+}
 
 #: 시나리오 코드. E2E-1·2·3 은 업무 시나리오 등재부(`e2e_contract.py`)의 것이므로
 #: 쓰지 않는다 — 이것은 **화면 캡처 실행**이고, 이름이 그 사실을 말해야 한다.
@@ -84,30 +119,30 @@ SCREENS = _screens_dir()
 #: 무엇을 찍나. `must_see` 는 **그 화면에만 있는 글자**다 — 로그인으로 튕겼는지
 #: 빈 껍데기가 떴는지를 이것 하나로 가른다.
 TARGETS = [
-    {"step": 1, "route": "/dsm/dashboard", "must_see": "관제 대시보드"},
-    {"step": 2, "route": "/dsm/events", "must_see": "이벤트 목록"},
-    {"step": 3, "route": "/dsm/events/{event_id}", "must_see": "이벤트 상세"},
+    {"step": 1, "persona": "U1", "route": "/dsm/dashboard", "must_see": "관제 대시보드"},
+    {"step": 2, "persona": "U1", "route": "/dsm/events", "must_see": "이벤트 목록"},
+    {"step": 3, "persona": "U1", "route": "/dsm/events/{event_id}", "must_see": "이벤트 상세"},
     # ── D-386 [실측 2026-09-13] 다섯 장을 더한다. 셋은 우리가 만든 화면이고
     #    이 다섯은 **인수받은 화면**이다 — 남의 화면을 여는 것이 값이 큰 이유는
     #    우리가 한 번도 열어 본 적 없는 배선이 거기 있기 때문이다.
     #    `must_see` 는 **실제로 띄워 보고** 그 화면에만 있는 글자로 골랐다(추측 아님).
-    {"step": 4, "route": "/device", "must_see": "Add New Device"},
-    {"step": 5, "route": "/roles", "must_see": "Add New Role"},
-    {"step": 6, "route": "/menu", "must_see": "Menu Management"},
-    {"step": 7, "route": "/configuration-management", "must_see": "Is Active?"},
-    {"step": 8, "route": "/profile", "must_see": "Personal Information"},
+    {"step": 4, "persona": "U5", "route": "/device", "must_see": "Add New Device"},
+    {"step": 5, "persona": "U5", "route": "/roles", "must_see": "Add New Role"},
+    {"step": 6, "persona": "U5", "route": "/menu", "must_see": "Menu Management"},
+    {"step": 7, "persona": "U5", "route": "/configuration-management", "must_see": "Is Active?"},
+    {"step": 8, "persona": "U5", "route": "/profile", "must_see": "Personal Information"},
     # ── D-396 [실측 2026-09-14] 여덟 장을 더해 **16/16** 을 채운다.
     #    고른 기준: 재난안전·감시 국면에 닿는 화면 우선 (§0.4 배송·주문·터미널은 뺐다).
     #    `must_see` 는 **후보 16개를 실제로 열어 본문을 읽고** 골랐다 — 추측이 아니다.
     #    (정찰 결과: 찍을 수 있는 것 13 · 찍을 수 없는 것 3. 셋은 아래 KNOWN_* 에 남긴다)
-    {"step": 9, "route": "/surveillance-dashboard", "must_see": "Last Updated"},
-    {"step": 10, "route": "/survey-profile", "must_see": "Add New Profile"},
-    {"step": 11, "route": "/media-data", "must_see": "No preview available."},
-    {"step": 12, "route": "/flight-log-analysis", "must_see": "Drone State Prediction"},
-    {"step": 13, "route": "/multi-stream-monitor", "must_see": "Participants"},
-    {"step": 14, "route": "/operation-settings", "must_see": "API URL"},
-    {"step": 15, "route": "/report-template", "must_see": "Usage Count"},
-    {"step": 16, "route": "/notam", "must_see": "SNOWTAM"},
+    {"step": 9, "persona": "U4", "route": "/surveillance-dashboard", "must_see": "Last Updated"},
+    {"step": 10, "persona": "U5", "route": "/survey-profile", "must_see": "Add New Profile"},
+    {"step": 11, "persona": "U4", "route": "/media-data", "must_see": "No preview available."},
+    {"step": 12, "persona": "U4", "route": "/flight-log-analysis", "must_see": "Drone State Prediction"},
+    {"step": 13, "persona": "U2", "route": "/multi-stream-monitor", "must_see": "Participants"},
+    {"step": 14, "persona": "U5", "route": "/operation-settings", "must_see": "API URL"},
+    {"step": 15, "persona": "U4", "route": "/report-template", "must_see": "Usage Count"},
+    {"step": 16, "persona": "U4", "route": "/notam", "must_see": "SNOWTAM"},
     # ── [차선 C · 2026-09-23] **W1 관제 프리셋 넷 + W2 판정 칸** 다섯 장을 더해
     #    16 → 21 장으로 간다. 앞의 16 장과 다른 점이 하나 있다: 이 다섯은 **같은
     #    라우트를 질의로 가른 화면**이다. 프리셋을 화면 안 상태로만 뒀으면 여기에
@@ -124,21 +159,21 @@ TARGETS = [
     #      고치고 여기를 안 고치면 다음 촬영이 전부 빨개진다 — 그 빨강은 화면의 결함이
     #      아니라 사본이 뒤처졌다는 뜻이고, 그것이 가장 헷갈리는 종류의 빨강이다.
     #      ⚠ 화면 문구를 또 바꾸면 **같은 커밋에서** 이 줄들도 바꾼다.
-    {"step": 17, "route": "/dsm/events?preset=unhandled",
+    {"step": 17, "persona": "U1", "route": "/dsm/events?preset=unhandled",
      "slug": "dsm_events_preset_unhandled",
      "must_see": "미처리 — 아직 아무도 손대지 않은 것"},
-    {"step": 18, "route": "/dsm/events?preset=recent",
+    {"step": 18, "persona": "U1", "route": "/dsm/events?preset=recent",
      "slug": "dsm_events_preset_recent",
      "must_see": "지난 12시간 — 이 시간 창 안에 난 것"},
-    {"step": 19, "route": "/dsm/events?preset=mine",
+    {"step": 19, "persona": "U1", "route": "/dsm/events?preset=mine",
      "slug": "dsm_events_preset_mine",
      "must_see": "내 담당 — 내가 판정한 이벤트"},
-    {"step": 20, "route": "/dsm/events?preset=system",
+    {"step": 20, "persona": "U1", "route": "/dsm/events?preset=system",
      "slug": "dsm_events_preset_system",
      "must_see": "시스템 — 설비 자신이 낸 신호"},
     #: W2 상세의 판정·대응 칸. 상세 화면 자체는 step 3 이 이미 찍는다 —
     #: 여기서 단언하는 것은 **누를 자리가 생겼다**는 사실이다(U1 #11).
-    {"step": 21, "route": "/dsm/events/{event_id}",
+    {"step": 21, "persona": "U1", "route": "/dsm/events/{event_id}",
      "slug": "dsm_events_id_verdict_panel",
      "must_see": "처리 단계 · 진위 판정"},
     # ── [2파 병합 · 2026-09-24] **세 장을 더해 21 → 24 장으로 간다.**
@@ -148,13 +183,13 @@ TARGETS = [
     #
     #    ⚠ `must_see` 는 각 페이지의 `HEADLINE` 상수 원문이다. 공통 글자로 단언하면
     #      **다른 화면이 떠도 초록**이 된다 — 프리셋 넷에서 배운 것과 같은 함정이다.
-    {"step": 22, "route": "/dsm/queue",
+    {"step": 22, "persona": "U1", "route": "/dsm/queue",
      "slug": "dsm_queue_focus",
      "must_see": "지금 처리할 것 — 가장 급한 하나"},
-    {"step": 23, "route": "/dsm/drill",
+    {"step": 23, "persona": "U2", "route": "/dsm/drill",
      "slug": "dsm_drill_mode",
      "must_see": "훈련 모드 — 켜면 알림이 사람에게 가지 않습니다"},
-    {"step": 24, "route": "/dsm/cameras/import",
+    {"step": 24, "persona": "U2", "route": "/dsm/cameras/import",
      "slug": "dsm_cameras_import_dryrun",
      "must_see": "카메라 일괄 등록 — 표를 먼저 봅니다"},
     # ── [2026-09-05 · 차선 C] **세 장을 더하고, 처음으로 휴대전화 크기로 찍는다.**
@@ -164,10 +199,10 @@ TARGETS = [
     #      그래서 항목마다 `viewport` 를 둘 수 있게 했고, 없으면 데스크톱이다.
     #    ⚠ 페이지를 새로 만들지 않고 **같은 페이지의 크기만 바꾼다.** 새 페이지를
     #      만들면 로그인 세션이 따라오지 않아 전부 `/login` 으로 튕긴다.
-    {"step": 25, "route": "/dsm/cameras/address",
+    {"step": 25, "persona": "U2", "route": "/dsm/cameras/address",
      "slug": "dsm_cameras_address_fill",
      "must_see": "카메라 주소 채우기 — 한 대씩"},
-    {"step": 26, "route": "/start?role=OPERATOR",
+    {"step": 26, "persona": "U2", "route": "/start?role=OPERATOR",
      # ★ [2026-09-05 · 턴 E] 규약은 «<route 뿌리>[_꼬리표]» 다. 이 화면의 뿌리는
      #   `/dsm/...` 이 아니라 **`/start`** 다 — 온보딩만 관문 밖 최상위에 서기 때문이다.
      #   1차판 `dsm_onboarding_start` 는 뿌리를 잘못 붙였고, **이번에 처음 찍혀서** 이제 보였다.
@@ -181,14 +216,14 @@ TARGETS = [
     #:   `m1_mobile_inbox` 는 뿌리가 `m_inbox` 가 아니라 **빨강**이었다.
     #:   이 어긋남이 두 턴 동안 안 보인 이유: 촬영이 17번에서 죽어 **27·28번까지
     #:   가 본 적이 없었다.** 죽는 도구는 자기 뒤에 있는 결함을 함께 숨긴다.
-    {"step": 27, "route": "/m/inbox", "viewport": MOBILE_VIEWPORT,
+    {"step": 27, "persona": "U3", "route": "/m/inbox", "viewport": MOBILE_VIEWPORT,
      "slug": "m_inbox_m1",
      "must_see": "내게 온 이벤트"},
     #: M3 — 현장 회신. `MobileEventDetail.FIELD_REPLY_HEADLINE` 원문이다.
     #: ⚠ 「현장 상세」로 단언하지 않는다 — 그것은 M2 의 글자이고, M3 가 없어도 뜬다.
     #: 뿌리는 `m_events_<id>` 이고, `route_stems` 가 숫자 자리를 `id` 로 눕힌 것도
     #: 받아 준다 — 씨앗 id 는 실행마다 바뀌므로 **눕힌 쪽**을 쓴다(step 21 과 같다).
-    {"step": 28, "route": "/m/events/{event_id}", "viewport": MOBILE_VIEWPORT,
+    {"step": 28, "persona": "U3", "route": "/m/events/{event_id}", "viewport": MOBILE_VIEWPORT,
      "slug": "m_events_id_m3_field_reply",
      "must_see": "현장 회신 — 본 것을 한 줄로"},
 ]
@@ -220,12 +255,12 @@ TARGETS = [
 LOGIN_NOBODY = "gxprobe_없는계정_ti"        # 실재하지 않는다 — 잠글 계정이 없다
 
 LOGIN_BRANCHES = [
-    {"step": "L1", "kind": "credentials", "slug": "login_credentials",
+    {"step": "L1", "persona": "U1", "kind": "credentials", "slug": "login_credentials",
      "must_see": "아이디 또는 비밀번호가 올바르지 않습니다.",
      "inject": None,
      "data_source": "실측",
      "why": "가로채지 않았다 — 진짜 서버(8000)가 거절한 답이다"},
-    {"step": "L2", "kind": "locked", "slug": "login_locked",
+    {"step": "L2", "persona": "U1", "kind": "locked", "slug": "login_locked",
      "must_see": "계정이 잠겼습니다.",
      "inject": {"status": 423,
                 "body": {"success": False, "status": 423,
@@ -233,19 +268,19 @@ LOGIN_BRANCHES = [
                          "lock_minutes": 12, "lock_seconds": 34}},
      "data_source": "모의",
      "why": "서버의 잠금 본문 모양을 주입했다 — 계정을 진짜로 잠그지 않는다"},
-    {"step": "L3", "kind": "forbidden", "slug": "login_forbidden",
+    {"step": "L3", "persona": "U1", "kind": "forbidden", "slug": "login_forbidden",
      "must_see": "이 계정에는 접근 권한이 없습니다.",
      "inject": {"status": 403,
                 "body": {"success": False, "status": 403,
                          "message": {"ko": "권한이 없습니다."}}},
      "data_source": "모의",
      "why": "403 을 주입했다 — 권한 없는 실재 계정을 만들어 찍지 않는다"},
-    {"step": "L4", "kind": "server", "slug": "login_server_error",
+    {"step": "L4", "persona": "U1", "kind": "server", "slug": "login_server_error",
      "must_see": "지금 로그인할 수 없습니다.",
      "inject": {"status": 500, "html": True},
      "data_source": "모의",
      "why": "500 을 주입했다 · 본문은 HTML(장고 오류 쪽) — 그 바이트가 화면에 새는지도 본다"},
-    {"step": "L5", "kind": "network", "slug": "login_network",
+    {"step": "L5", "persona": "U1", "kind": "network", "slug": "login_network",
      "must_see": "서버에 연결하지 못했습니다.",
      "inject": {"abort": True},
      "data_source": "모의",
@@ -257,9 +292,26 @@ LOGIN_BRANCHES = [
 #:   못 찍은 것을 목록에서 지우면 「안 해 본 것」과 「해 봤더니 안 되는 것」이 같아진다.
 #:   `/users` 는 API 6건이 전부 200 인 채로 **본문 글자 수가 0** 이었다(빈 화면).
 #:   결함으로 등재했다: DA-05/blockers.yaml :: RJCORE_BLANK_ON_NO_PERMISSION
+#: ★★ [실측 2026-09-07 · P-98] **역할 있는 계정으로 다시 쟀다. 답이 갈렸다.**
+#:   앞선 두 줄은 「빈 화면이 난다」까지만 알았고 **왜인지는 몰랐다.** 이제 안다 —
+#:   같은 화면이 `admin` 에게는 그려진다:
+#:       /users     역할 0개 → 본문 0자   ·  admin → **29행 + Add New User**  [실측]
+#:       /handover  역할 0개 → 본문 0자   ·  admin → **8행 + Create A Handover** [실측]
+#:   즉 이 둘의 빈 화면은 **권한 때문**이고, 결함은 「못 본다」가 아니라
+#:   **「못 본다고 말하지 않는다」**다. RJCORE_BLANK_ON_NO_PERMISSION 의 정확한 모양이다.
+#:
+#:   ⚠ 그러나 `/handover` 는 **`fire_user` 에게도 본문 68자**다 [실측] — 곁줄만 있고
+#:     내용이 없다. 그 화면의 자리(「인계 메모」)는 U1 의 곁줄에 **버젓이 있다.**
+#:     관제요원이 자기 곁줄에서 누를 수 있는 자리가 눌러도 아무것도 없는 상태다.
 KNOWN_BLANK = [
-    {"route": "/users", "why": "본문 0자 · API 6건 200 · JS 오류 0건 — 권한 없는 화면이 "
-                               "안내 대신 빈 화면을 낸다 (DA-03 §3-4 위반 · rj-core §0.4)"},
+    {"route": "/users", "why": "역할 0개: 본문 0자 · API 6건 200 · JS 오류 0건 — 안내 대신 "
+                               "빈 화면. **admin 으로는 29행이 그려진다**(권한 때문이다) "
+                               "(DA-03 §3-4 위반 · rj-core §0.4)"},
+    {"route": "/survey-profile", "role_checked": ["admin", "fire_admin", "fire_user"],
+     "why": "★ [P-98] **역할이 있으면 더 안 보인다.** 역할 0개에서는 `Add New Profile` "
+            "단추라도 떴는데, admin·fire_admin·fire_user 셋 다 **머리줄뿐**이다 "
+            "(본문 296·172·103자 · API 전부 200 · JS 오류 0건). 권한이 올라갔는데 "
+            "화면이 줄었다 — 이 뒤집힘은 권한 결함이 아니라 화면 결함이다"},
     # ★ [실측 2026-09-14 · D-396] **두 번째 빈 화면.** `/users` 와 같은 모양이다 —
     #   API 실패 0건 · JS 오류 0건인 채로 본문만 0자다. 한 건이면 그 화면의 사정이지만
     #   **둘이면 성질**이다. RJCORE_BLANK_ON_NO_PERMISSION 에 표본을 더했다.
@@ -269,13 +321,20 @@ KNOWN_BLANK = [
 #: ★ [실측 2026-09-14 · D-396] 열었더니 **다른 화면이 떴다.** 빈 화면과는 다른 결함이다 —
 #:   빈 화면은 「왔는데 아무것도 없다」이고, 이것은 **「거기 갈 수 없다」**이다.
 #:   둘을 한 칸에 두면 고치는 사람이 어디를 볼지 모른다 (D-377 ㉠㉡㉢ 를 가른 것과 같은 이유).
-#:   ⚠ 이 계정의 `role` 은 `NO_ROLE` 이다 — 역할이 있는 계정에서는 다를 수 있고,
-#:     그것은 **아직 재 보지 않았다.** 「권한 때문」이라고 적지 않는다 (D-322).
+#:   ⚠ 1차판은 「이 계정의 `role` 은 `NO_ROLE` 이다 — 역할이 있는 계정에서는 다를 수
+#:     있고, 그것은 **아직 재 보지 않았다**」로 끝났다. [P-98 · 2026-09-07] **재 봤다.**
+#:     `admin` 으로도 둘 다 `/profile` 로 간다 — 권한이 아니라 **라우팅**이다.
 KNOWN_REDIRECT = [
     {"route": "/monitoring-dashboard", "landed": "/profile",
-     "why": "요청한 경로가 아니라 이 계정의 홈 화면이 떴다 — 라우트에 도달하지 못한다"},
+     "role_checked": ["admin"],
+     "why": "요청한 경로가 아니라 이 계정의 홈 화면이 떴다 — 라우트에 도달하지 못한다. "
+            "★ [P-98 2026-09-07] **`admin` 으로 다시 쟀다: 똑같이 /profile 로 간다.** "
+            "위 주석이 열어 둔 물음(「역할이 있으면 다를 수 있다」)의 답이 나왔다 — "
+            "**권한 문제가 아니다.** 최고 권한에서도 못 간다"},
     {"route": "/intergrated-dashboard", "landed": "/profile",
-     "why": "같음. 둘 다 App.tsx 의 별도 라우트 묶음(189~211줄)에 있다"},
+     "role_checked": ["admin"],
+     "why": "같음 — `admin` 에서도 /profile 로 간다 [P-98 실측]. "
+            "둘 다 App.tsx 의 별도 라우트 묶음(189~211줄)에 있다"},
 ]
 
 try:
@@ -452,33 +511,117 @@ def _release_session(username: str) -> None:
     _ = apps  # django.setup() 만 필요했다
 
 
-def read_role(username: str) -> str:
-    """찍은 사람의 역할을 **제품이 들고 있는 값**에서 읽는다 (D-323).
+def read_roles(username: str) -> list:
+    """찍은 사람의 역할을 **제품이 들고 있는 자리**에서 읽는다 (D-323).
 
-    ★ 1차판은 `role = "OPERATOR"` 로 박혀 있었다. 바로 위 주석이 「우리가 정해서 적지
-      않는다」라고 말하면서 정해서 적고 있었다 — 그리고 그 진술은 **틀렸다**:
-      이 계정의 `role` 은 [실측] **None** 이다. 그래서 `/users` 가 빈 화면으로 떴다.
-      인덱스에 OPERATOR 라 적혔으면 그 사실이 통째로 가려졌을 것이다.
+    ★★ [실측 2026-09-07 · P-98] **두 판 연속으로 틀린 자리다.**
+      1차판: `role = "OPERATOR"` 로 박아 두었다 — 진술이지 실측이 아니었다.
+      2차판: `getattr(u, "role", None)` 로 읽었다 — 실측처럼 보였지만 이 제품에
+             **`role` 이라는 단수 필드는 없다.** `getattr` 의 기본값이 조용히
+             `None` 을 돌려주고, 그 `None` 이 `NO_ROLE` 로 적혔다.
+      그래서 33장 전부가 `NO_ROLE` 로 표시됐고, 그 표시는 **역할이 있는 계정에서도
+      똑같이 나온다.** 즉 이 칸은 아무것도 재고 있지 않았다 — 채워진 칸과 잰 칸은
+      다르다. `getattr(x, "없는이름", None)` 은 **측정처럼 생긴 상수**다.
+
+      제품이 실제로 들고 있는 자리는 **`user.roles` (M2M)** 다 [실측]:
+          gxprobe_e2e        roles=[]                    ← 그래서 앞의 33장이 무효였다
+          gxseed_u1_operator roles=[fire_user]
+          gxseed_u2_manager  roles=[fire_admin]
+          gxseed_u4_official roles=[view_only_-_anyang]
+          gxseed_u5_sysop    roles=[admin]
+
+    ⚠ 목록을 돌려준다 — 여러 역할을 가진 계정을 한 값으로 접으면 그 순간 다시
+      「채워진 칸」이 된다. 파일 자리에 쓰는 이름은 `role_slug()` 가 따로 만든다.
     """
     apps = _django()
     from django.contrib.auth import get_user_model
     u = get_user_model()._base_manager.filter(username=username).first()
-    role = getattr(getattr(u, "role", None), "code", None) or getattr(u, "role", None)
+    if u is None:
+        raise RuntimeError(f"계정이 없다: {username} — 없는 계정으로 찍지 않는다")
+    codes = []
+    mgr = getattr(u, "roles", None)
+    if mgr is not None and hasattr(mgr, "all"):
+        for r in mgr.all():
+            code = getattr(r, "code", None) or getattr(r, "name", None) or str(r)
+            if code:
+                codes.append(str(code))
     _ = apps
-    return str(role) if role else "NO_ROLE"
+    return codes
+
+
+def role_slug(codes: list) -> str:
+    """파일 자리에 쓸 역할 이름 하나. **역할이 없으면 `NO_ROLE` 이라고 적는다.**
+
+    ★ `NO_ROLE` 은 이제 **드문 값**이어야 한다. 읽는 곳이 맞으면 역할 있는 계정에서
+      이 값이 나올 수 없다 — 나오면 그것은 화면의 사실이 아니라 **계정의 사실**이고,
+      그 벌은 인수 증거로 쓰지 않는다 (P-98).
+    """
+    return "+".join(codes) if codes else "NO_ROLE"
+
+
+def _wait_login_form(page) -> None:
+    """로그인 칸이 **그려질 때까지** 기다린다 (P-98).
+
+    * [실측 2026-09-07] 1차판은 `networkidle` 뒤 **1.5초 고정**이었다. 그 1.5초는
+      두 번은 맞고 한 번은 틀린다 — 실제로 다섯 페르소나 벌의 첫 이동이
+      「입력칸이 둘 미만」으로 죽었다. 그 빨강은 **화면의 결함이 아니라 기다림의
+      결함**이고, 둘을 구별 못 하면 없는 결함을 쫓게 된다.
+      `networkidle` 은 «요청이 멎었다»이지 «React 가 그렸다»가 아니다.
+    """
+    try:
+        page.wait_for_selector("input", state="visible", timeout=30_000)
+    except Exception as exc:                              # noqa: BLE001
+        print("[SHOT] 로그인 칸을 30초 기다렸으나 안 떴다: %s %s"
+              % (type(exc).__name__, exc), file=sys.stderr)
+    page.wait_for_timeout(1_500)
+
+
+def _confirm_end_session(page) -> bool:
+    """「다른 기기에서 쓰이고 있다」 창이 떴으면 **확인을 누른다** (P-98).
+
+    ★ 이 창은 제품의 진짜 갈래다(`end_previous_session`). 누르지 않고 서버 쪽에서
+      토큰을 지워 우회할 수도 있지만, 그러면 우리가 찍는 화면이 **고객이 볼 화면이
+      아니게 된다** — 이 실행체가 D-347 ①로 금지한 바로 그것이다.
+    ⚠ 창이 없으면 **아무 일도 하지 않는다.** 「없었다」와 「눌렀다」는 다른 사실이므로
+      돌려주는 값으로 가른다.
+    """
+    try:
+        btn = page.get_by_role("button", name="Confirm")
+        if btn.count() and btn.first.is_visible():
+            btn.first.click()
+            page.wait_for_timeout(9_000)
+            return True
+    except Exception as exc:                              # noqa: BLE001
+        print(f"[SHOT] 세션 종료 확인창 처리 건너뜀: {type(exc).__name__} {exc}",
+              file=sys.stderr)
+    return False
 
 
 def capture(*, web: str, user: str, password: str, event_id: int, role: str,
-            api: str) -> dict:
+            api: str, persona: str, reset: bool) -> dict:
     from playwright.sync_api import sync_playwright
 
     # ★ 이번 실행이 남길 자리를 **먼저 비운다.** 이벤트 상세의 경로에는 그때그때의
     #   id 가 들어가므로, 비우지 않으면 지난 실행의 PNG 가 남아 인덱스와 어긋난다 —
     #   `verify_screens.py` 는 인덱스에 없는 PNG 를 「어디서 온 화면인지 말하지
     #   않는다」로 실패시킨다. 그 실패는 옳고, **비우는 것이 이쪽의 몫**이다.
+    #
+    # ★★ [P-98 · 2026-09-07] 그런데 **한 벌이 다섯 사람의 벌이 되면** 이 줄이 정확히
+    #   반대로 나쁘다: U2 를 찍는 순간 U1 의 아홉 장이 사라지고, 인덱스만 남는다.
+    #   그래서 비우는 것은 **`--reset` 을 받은 첫 실행 한 번뿐**이다. 그 뒤의 실행은
+    #   자기 페르소나가 남길 자리만 덮어쓴다 — 남의 자리는 건드리지 않는다.
+    #   ⚠ 비우기를 안 하면 지난 실행의 유령 PNG 가 남을 수 있다. 그 유령은
+    #     `verify_screens.py` 가 「인덱스에 없는 캡처」로 **빨갛게** 잡는다 — 잡히는
+    #     것이 옳다. 조용히 지우는 것보다 소리 나게 걸리는 편이 낫다.
     import shutil
-    shutil.rmtree(SCREENS / SCENARIO, ignore_errors=True)
+    if reset:
+        shutil.rmtree(SCREENS / SCENARIO, ignore_errors=True)
+        print(f"[SHOT] --reset — {SCENARIO} 아래를 비웠다. 이 벌의 첫 페르소나다")
     SCREENS.mkdir(parents=True, exist_ok=True)
+    #: 이 실행이 찍을 것만 고른다. 「누가 봤나」는 항목이 스스로 들고 있다.
+    my_login = [b for b in LOGIN_BRANCHES if b.get("persona") == persona]
+    my_targets = [t for t in TARGETS if t.get("persona") == persona]
+    who = "%s · %s · %s" % (persona, user, role)
     entries, steps, page_errors = [], {}, []
     #: ★ [2026-09-05 · 턴 E · 차선 Q] **못 찍은 것 하나가 나머지를 삼키지 않는다.**
     #:   [실측] 이 파일은 첫 불일치에서 `raise` 했고, 17번(`?preset=unhandled`)의
@@ -530,7 +673,7 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
             # ═══ 로그인 실패 **다섯 갈래** — 들어가기 **전에** 찍는다 (턴 I · 차선 C) ═══
             #   ★ 순서가 뜻이다: 성공한 세션을 만든 뒤에 실패를 찍으려면 로그아웃해야 하고,
             #     그러면 그 뒤 28장이 세션을 잃는다. 실패는 **문 앞에서** 찍는 것이 맞다.
-            for b in LOGIN_BRANCHES:
+            for b in my_login:
                 inj = b.get("inject")
                 handler_name = "**/api/v1/auth/login"
 
@@ -551,7 +694,7 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                 try:
                     seen_calls.clear()
                     page.goto(f"{web}/login", wait_until="networkidle", timeout=60_000)
-                    page.wait_for_timeout(1_500)
+                    _wait_login_form(page)
                     fields = page.locator("input")
                     if fields.count() < 2:
                         raise RuntimeError("로그인 화면에 입력칸이 둘 미만이다 — 화면이 안 떴다")
@@ -580,6 +723,13 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                         "captured_at": when.isoformat(), "file": rel,
                         #: ★ **갈래마다 다른 값이다.** 한 값으로 적으면 이 칸이 상수가 된다
                         "data_source": "%s (%s)" % (b["data_source"], b["why"]),
+                        #: ★★ [P-98] **누가 봤나.** 이 칸이 없던 동안 33장 전부가
+                        #:   역할 없는 계정의 화면이었고, 인덱스는 그것을 말하지 않았다.
+                        #:   ⚠ 로그인 실패 다섯 갈래는 **로그인 전**이다 — 아직 아무도
+                        #:     아니다. 그 사실을 「U1 이 봤다」로 적으면 그것이 거짓이 된다.
+                        "persona": persona,
+                        "viewed_by": "(로그인 전 · 아직 누구도 아니다) — %s 실행 중" % who,
+                        "calls": [],
                     })
                     #: ★ [턴 J · 차선 C] **이 화면이 부른 것을 여기서 적는다.**
                     #:   ⚠ **주입한 응답은 세지 않는다.** L2~L5 의 로그인 응답은
@@ -593,6 +743,11 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                             and not (inj and u.endswith("/api/v1/auth/login"))}
                     api_calls["/login"] = sorted(
                         set(api_calls.get("/login", ())) | real)
+                    #: ★ [P-98] **이 화면이 부른 것**을 그 화면의 항목에 붙인다.
+                    #:   `screen_routes.json` 은 라우트로 묶여 있어서 한 라우트가 여러
+                    #:   장을 낼 때(로그인 다섯 장) 어느 장이 무엇을 불렀는지 못 가른다.
+                    entries[-1]["calls"] = ["%s %s %s" % (m, pth, st)
+                                            for m, pth, st in sorted(real)]
                     if real:
                         api_notes["/login"] = (
                             "로그인 실패 갈래에서 **서버에 실제로 나간 것만** 적었다 — "
@@ -609,7 +764,7 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                         page.unroute(handler_name)
 
             page.goto(f"{web}/login", wait_until="networkidle", timeout=60_000)
-            page.wait_for_timeout(1_500)
+            _wait_login_form(page)
             fields = page.locator("input")
             if fields.count() < 2:
                 raise RuntimeError("로그인 화면에 입력칸이 둘 미만이다 — 화면이 안 떴다")
@@ -617,13 +772,27 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
             fields.nth(1).fill(password)
             page.get_by_role("button", name="Log In").click()
             page.wait_for_timeout(9_000)
+            # ★★ [실측 2026-09-07 · P-98] **여기서 U1 이 못 들어갔다.**
+            #   본문에 「End Session」이 떴다 — 제품이 「이 계정이 다른 기기에서
+            #   쓰이고 있다. 앞 세션을 끊고 들어갈까?」를 **묻는 창**을 띄운 것이다
+            #   (`LoginDesktop.tsx` · `end_previous_session`). 역할 없는 계정
+            #   `gxprobe_e2e` 로 찍던 동안에는 이 창을 본 적이 없었고 — 아무도 그
+            #   계정을 안 썼기 때문이다. **실제로 쓰이는 계정으로 옮기자마자** 제품의
+            #   이 갈래가 처음 실행됐다. 역할 있는 계정으로 찍는 것이 왜 값이 큰지의
+            #   작은 표본이다: 남이 쓰는 계정이라야 「남이 쓰고 있다」가 재현된다.
+            #
+            #   ⚠ 창을 **끄지 않고 누른다.** 서버의 동시 접속 판정을 우회하면 그것은
+            #     고객이 볼 화면이 아니게 된다 — 사람이 하는 그대로 「확인」을 누른다.
+            if _confirm_end_session(page):
+                print("[SHOT] 다른 기기 세션 종료 확인창을 눌렀다 — "
+                      "end_previous_session 갈래를 사람이 하는 그대로 지났다")
             if page.url.rstrip("/").endswith("/login"):
                 raise RuntimeError(
                     f"로그인 뒤에도 로그인 화면이다 ({page.url}) — "
                     f"본문: {page.inner_text('body')[:160]!r}")
 
 
-            for t in TARGETS:
+            for t in my_targets:
                 route = t["route"].replace("{event_id}", str(event_id))
                 seen_calls.clear()
                 # ★ 크기를 **항목이 정한다.** 같은 페이지의 크기만 바꾼다 —
@@ -662,10 +831,14 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                 #:   1차판은 뒤엣것이 앞엣것의 기록을 **덮었다** — 인덱스는 21장인데
                 #:   이 파일은 20자리였고, 사라진 한 자리만큼 `verify_route_alive` 가
                 #:   때릴 것을 잃었다. **때릴 것이 줄어든 판정기는 조용히 더 초록이 된다**(D-301).
-                api_calls[route] = sorted(set(api_calls.get(route, ())) | {
-                    (m, u[len(api):], st)
-                    for m, u, st in seen_calls
-                    if u.startswith(api + "/api/")})
+                #: ★ [P-98] **이 한 장이 부른 것**을 먼저 따로 센다. 아래 `api_calls`
+                #:   는 라우트로 합치므로(같은 라우트 두 장) 항목에 그대로 붙이면
+                #:   앞 장의 호출이 뒷 장의 기록에 섞인다 — 「이 화면이 무엇을 불렀나」를
+                #:   묻는 자리에서 그 섞임은 오답이다.
+                this_screen = sorted({(m, u[len(api):], st)
+                                      for m, u, st in seen_calls
+                                      if u.startswith(api + "/api/")})
+                api_calls[route] = sorted(set(api_calls.get(route, ())) | set(this_screen))
                 api_notes.setdefault(
                     route, "화면을 열고 브라우저가 부른 것을 그대로 적었다")
                 #: ★ [실측 2026-09-14 · D-397] 이 접두 대조가 **조용히 0건을 낼 수 있다.**
@@ -716,6 +889,14 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                     #:   심고 그 씨앗이 그린 화면을 찍기 때문이다. 다른 값이 필요한 항목은
                     #:   `TARGETS` 에서 스스로 말한다.
                     "data_source": t.get("data_source", "시드"),
+                    #: ★★ [P-98] **누가 봤나.** 페르소나 · 계정 · 역할코드.
+                    #:   `user_role` 만으로는 U1 과 U3 이 구별되지 않는다 — 둘은 같은
+                    #:   계정이고 **폭만 다르다**. 구별이 필요한 이유: U3 이 못 본 화면은
+                    #:   권한 문제가 아니라 **화면 폭** 문제다.
+                    "persona": t.get("persona"),
+                    "viewed_by": who + (" · %dpx" % t.get("viewport", DESKTOP_VIEWPORT)["width"]),
+                    "calls": ["%s %s %s" % (m, pth, st)
+                              for m, pth, st in this_screen],
                 })
                 print(f"[SHOT] {rel} — 「{t['must_see']}」 확인 후 캡처")
         finally:
@@ -739,11 +920,18 @@ _INDEX_HEAD = """screens:
   #   로그인으로 튕긴 뒤 찍은 PNG 도 파일은 생기므로, 「파일이 생겼다」를 성공으로
   #   두면 이 인덱스가 거짓말을 싣게 된다.
   #
-  #   ⚠ [실측 2026-09-13 · D-386] 역할은 **`NO_ROLE`** 이다. 이 계정은 제품의 `role` 이
-  #     **비어 있다** — 1차판이 `OPERATOR` 라 적어 두었던 자리이고, 그것은 진술이지
-  #     실측이 아니었다(D-323). 지금은 제품이 들고 있는 값을 읽어 적는다.
-  #     그리고 그 사실이 화면 하나를 설명한다: `/users` 는 **본문 0자**로 떴다.
-  #     빈 화면은 찍지 않았고 결함으로 등재했다(RJCORE_BLANK_ON_NO_PERMISSION).
+  #   ★★ [실측 2026-09-07 · P-98] **앞선 33장은 전부 역할 없는 계정이 찍은 것이었다.**
+  #     `gxprobe_e2e` 의 역할 목록은 비어 있다(`user.roles` = []). 그 벌은 「제품이
+  #     된다」의 증거가 아니라 **「역할 없는 사람에게 무엇이 보이는가」**의 측정이었고,
+  #     그 자체로 값이 있으므로 지우지 않고 옮겼다:
+  #         docs/agent/evidence/P-98/denied/  (33장 · 판정문 FINDINGS.md 와 함께)
+  #     이번 벌은 **역할을 실제로 가진 계정 넷**으로 다시 찍는다. 그래서 항목마다
+  #     `viewed_by` 가 붙는다 — 「누가 봤나」를 인덱스가 말하지 않으면 같은 사고가
+  #     또 난다. 그 한 칸이 없어서 33장이 넉 달치 인수 증거 행세를 했다.
+  #
+  #   ⚠ `user_role` 은 계정의 **역할 코드**다(fire_user·fire_admin·admin·
+  #     view_only_-_anyang). `NO_ROLE` 이 보이면 그것은 화면의 사실이 아니라
+  #     **계정의 사실**이고, 그 줄은 인수 증거가 아니다.
 """
 
 
@@ -772,23 +960,174 @@ def _rewrite_index(entries: list) -> None:
         #:   이제 **항목이 들고 온 값**을 쓴다 — 로그인 실패 다섯 갈래는 이 한 줄
         #:   때문에 서로 다른 출처(실측 1 · 모의 4)로 콘솔에 뜬다.
         "    data_source: {data_source}",
+        #: ★★ [P-98 · 2026-09-07] **누가 봤나.** 이 칸이 없던 동안 인덱스는 33장 전부가
+        #:   역할 없는 계정의 화면이라는 사실을 **한 번도 말하지 않았다.** `user_role`
+        #:   칸은 있었지만 거기 적힌 `NO_ROLE` 이 「역할이 없다」인지 「읽는 곳이
+        #:   틀렸다」인지 아무도 몰랐다 — 실제로는 후자였고, 그래서 아무도 안 봤다.
+        #:   페르소나·계정·역할·폭을 **한 줄에** 적는다: 검수자가 한 눈에 읽어야 한다.
+        "    persona: {persona}",
+        "    viewed_by: \"{viewed_by}\"",
+        #: ★ **이 화면이 부른 라우트.** 라우트로 묶인 `D-386/screen_routes.json` 은
+        #:   같은 라우트의 두 장을 못 가른다. 여기는 **장 단위**다 — 0건이면 0건이
+        #:   그대로 보인다(빈 목록은 통과가 아니다 · D-301).
+        "    calls:{calls}",
         "",
     ))
+
+    def _calls(e) -> str:
+        got = e.get("calls") or []
+        if not got:
+            return " []   # 0건 — 이 화면은 우리 API 를 부르지 않았다"
+        return "\n" + "\n".join('      - "%s"' % c for c in got)
+
     body = "".join(row.format(data_source=e.get("data_source", "시드"),
-                              **{k: v for k, v in e.items() if k != "data_source"})
+                              persona=e.get("persona") or "(없음)",
+                              viewed_by=e.get("viewed_by") or "(적히지 않았다)",
+                              calls=_calls(e),
+                              **{k: v for k, v in e.items()
+                                 if k not in ("data_source", "persona",
+                                              "viewed_by", "calls")})
                    for e in entries)
     index.write_text(head + _INDEX_HEAD + body, encoding="utf-8")
     print(f"[SHOT] 인덱스 갱신 — {index.name} 에 {len(entries)}장")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 역할 0개 — **찍지 않는다**의 예외 하나 (P-105 · 턴 M · 차선 C)
+# ═══════════════════════════════════════════════════════════════════════════
+# ★ 위 `read_roles()` 가 역할 0개 계정에서 **판정 불가로 멈추는 것은 그대로 옳다.**
+#   P-98 이 막은 것은 「역할 없는 계정으로 찍은 33장을 **인수 증거로** 싣는 일」이다.
+#
+#   그런데 P-105 에서 역할 0개 계정이 볼 화면이 **제품의 화면 하나로 정해졌다**
+#   (온보딩 0행 · 「역할이 아직 없습니다」). 그 화면은 역할 0개 계정으로만 찍을 수
+#   있다 — 역할이 있으면 뜨지 않기 때문이다. 그래서 **그 화면 하나만** 예외로 둔다.
+#
+# ⚠ 이 모드는 `SCREENS-1` 인덱스에 **넣지 않는다.** 넣으면 P-98 이 지운 혼동이
+#   그대로 돌아온다(역할 없는 벌이 역할 있는 벌 행세를 한다). 자리는 따로다:
+#       docs/agent/evidence/P-105/frontend/shots/
+#   `verify_screens.py` 는 이 자리를 보지 않는다 — 보면 안 된다.
+#
+# ⚠ 그리고 이 모드는 **한 장을 찍는 것이 아니라 규칙을 확인한다**: 종전에 자료를
+#   그리던 경로들을 그대로 다시 밟아, 그 자리마다 이 화면이 뜨는지 본다.
+#   「한 화면만 보인다」는 한 장으로는 증명되지 않는다 — 나머지가 안 보여야 참이다.
+ROLE0_HEADLINE = "역할이 아직 없습니다"
+
+#: 종전에 **실제 자료를 그리던** 경로에서 골랐다 [실측 2026-09-07 · P-98/denied].
+#: 첫 항목이 대표 장면이고, 나머지는 「여기도 이 화면인가」를 묻는 자리다.
+ROLE0_ROUTES = [
+    "/dsm/events",
+    "/dsm/dashboard",
+    "/profile",
+    "/notam",
+    "/multi-stream-monitor",
+    "/m/inbox",
+]
+
+
+def capture_role0(*, web: str, user: str, password: str, out: Path) -> int:
+    """역할 0개 계정으로 들어가 **그 하나뿐인 화면**을 찍는다 (P-105).
+
+    돌려주는 값은 종료 코드다. 문구가 없으면 **찍지 않고 빨강**이다 —
+    「파일이 생겼다」는 성공이 아니라는 이 파일의 규율은 여기서도 같다.
+    """
+    from playwright.sync_api import sync_playwright
+
+    codes = read_roles(user)
+    if codes:
+        print(f"[SHOT] ★ «{user}» 에 역할이 있다({codes}) — 이 모드는 **역할 0개** "
+              f"계정의 화면을 찍는 자리다. 역할이 있으면 그 화면은 뜨지 않는다")
+        return EXIT_UNDECIDABLE
+    print(f"[SHOT] {user} · 역할 **0개** [실측] — P-105 0행의 화면을 찍는다")
+
+    out.mkdir(parents=True, exist_ok=True)
+    shots, misses, page_errors = [], [], []
+    with sync_playwright() as p:
+        browser = p.chromium.launch(args=["--no-sandbox"])
+        page = browser.new_page(viewport=DESKTOP_VIEWPORT)
+        page.on("pageerror", lambda e: page_errors.append(str(e)[:200]))
+        try:
+            page.goto(f"{web}/login", wait_until="networkidle", timeout=60_000)
+            _wait_login_form(page)
+            fields = page.locator("input")
+            if fields.count() < 2:
+                raise RuntimeError("로그인 화면에 입력칸이 둘 미만이다 — 화면이 안 떴다")
+            fields.nth(0).fill(user)
+            fields.nth(1).fill(password)
+            page.get_by_role("button", name="Log In").click()
+            page.wait_for_timeout(9_000)
+            if _confirm_end_session(page):
+                print("[SHOT] 다른 기기 세션 종료 확인창을 눌렀다")
+            if page.url.rstrip("/").endswith("/login"):
+                raise RuntimeError(
+                    f"로그인 뒤에도 로그인 화면이다 ({page.url}) — "
+                    f"본문: {page.inner_text('body')[:200]!r}")
+
+            for i, route in enumerate(ROLE0_ROUTES):
+                # 대표 장면(첫 자리)만 두 크기로 찍는다. 나머지는 「여기도 그 화면인가」를
+                # 묻는 자리이므로 데스크톱 한 장이면 족하다.
+                sizes = ([("desktop", DESKTOP_VIEWPORT), ("390", MOBILE_VIEWPORT)]
+                         if i == 0 else [("desktop", DESKTOP_VIEWPORT)])
+                for label, vp in sizes:
+                    page.set_viewport_size(vp)
+                    page.goto(f"{web}{route}", wait_until="networkidle", timeout=60_000)
+                    page.wait_for_timeout(4_000)
+                    if page.url.rstrip("/").endswith("/login"):
+                        misses.append({"route": route, "why": "세션을 빼앗겼다",
+                                       "landed": page.url})
+                        print(f"[SHOT] ★ {route}: 세션을 빼앗겼다 — 멈춘다")
+                        break
+                    body = page.inner_text("body")
+                    if ROLE0_HEADLINE not in body:
+                        misses.append({"route": route, "size": label,
+                                       "why": "역할 0개 화면이 아니다",
+                                       "body": body[:240]})
+                        print(f"[SHOT] X {route} [{label}]: 「{ROLE0_HEADLINE}」 가 "
+                              f"없다 — 이 자리는 아직 다른 것을 그린다. "
+                              f"본문: {body[:200]!r}")
+                        continue
+                    slug = route.strip("/").replace("/", "_") or "root"
+                    rel = f"role0_{slug}_{label}.png"
+                    page.screenshot(path=str(out / rel), full_page=(label == "390"))
+                    shots.append({"route": route, "size": label, "file": rel,
+                                  "body_len": len(body)})
+                    print(f"[SHOT] {rel} — 「{ROLE0_HEADLINE}」 [실측]")
+        finally:
+            browser.close()
+
+    (out / "role0_run.json").write_text(json.dumps(
+        {"captured_at": datetime.now().isoformat(timespec="seconds"),
+         "user": user, "roles": [], "headline": ROLE0_HEADLINE,
+         "routes_tried": ROLE0_ROUTES, "shots": shots,
+         "misses": misses, "page_errors": page_errors},
+        ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"[SHOT] 찍은 것 {len(shots)}장 · 못 찍은 자리 {len(misses)} · "
+          f"JS 오류 {len(page_errors)}건 → {out}")
+    return EXIT_OK if shots and not misses else EXIT_FAIL
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="화면 캡처 실행체 (D-347 · D-384 ②)")
     ap.add_argument("--api", default="http://localhost:8000")
     ap.add_argument("--web", default="http://localhost:3002")
-    ap.add_argument("--user", required=True)
-    ap.add_argument("--password", required=True)
+    ap.add_argument("--user", required=True,
+                    help="첫 페르소나의 계정 — `--persona all` 이면 U1 의 계정이어야 한다")
+    ap.add_argument("--password", required=True,
+                    help="네 시드 계정은 **같은 비밀번호**를 쓴다 ($GX_SEED_ROLE_PASSWORD)")
+    #: ★★ [P-98] **한 벌은 다섯 사람의 벌이다.** 33장을 한 계정으로 찍던 동안
+    #:   그 계정이 역할 없는 계정이라는 사실을 아무도 못 봤다. 이제 화면마다
+    #:   「누가 보는 화면인가」가 `TARGETS` 에 적혀 있고, 이 인자가 그 중 하나를 고른다.
+    #:   `all` 은 U1→U2→U3→U4→U5 를 **차례로** 찍는다 — 이 환경은 동시 접속 1개다.
+    ap.add_argument("--persona", default="all",
+                    choices=["all"] + sorted(PERSONAS),
+                    help="U1 관제요원 · U2 팀장 · U3 관제요원(390px) · "
+                         "U4 재난안전과 · U5 관리자 · all(차례로 전부)")
     ap.add_argument("--dry-run", action="store_true",
                     help="씨앗·캡처 없이 두 자리에 닿는지만 본다")
+    #: ★ [P-105 · 턴 M] **역할 0개 계정의 화면 하나.** 위 `read_roles()` 의 멈춤을
+    #:   지나가는 유일한 길이고, 산출은 `SCREENS-1` 인덱스 **밖**에 남는다.
+    ap.add_argument("--role0", action="store_true",
+                    help="역할이 **0개**인 계정으로 P-105 0행의 화면을 찍는다 "
+                         "(인덱스에 넣지 않는다 — 자리는 P-105/frontend/shots/)")
     args = ap.parse_args()
 
     import urllib.error
@@ -809,19 +1148,101 @@ def main() -> int:
     print(f"[SHOT] [입력] API {args.api} · 화면 {args.web} · "
           f"대상 {len(TARGETS) + len(LOGIN_BRANCHES)}장"
           f" (화면 {len(TARGETS)} + 로그인 실패 갈래 {len(LOGIN_BRANCHES)})")
+    _split = {}
+    for _x in list(TARGETS) + list(LOGIN_BRANCHES):
+        _split[_x.get("persona")] = _split.get(_x.get("persona"), 0) + 1
+    print("[SHOT] [나눔] " + " · ".join(
+        f"{k} {PERSONAS[k]['label']}({PERSONAS[k]['role']}) {v}장"
+        for k, v in sorted(_split.items())))
     if args.dry_run:
         print("[SHOT] --dry-run — 두 자리 다 서 있다")
         return EXIT_OK
 
-    _release_session(args.user)
-    role = read_role(args.user)
-    print(f"[SHOT] 찍는 사람의 역할 = {role} (제품이 들고 있는 값 · D-323)")
-    event_id = seed_events(args.user)
+    #: ★ [P-105] 역할 0개 모드는 씨앗도 인덱스도 건드리지 않는다 — 여기서 갈라진다.
+    if args.role0:
+        for base in (ROOT / "docs", Path("/docs")):
+            if (base / "agent" / "evidence").is_dir():
+                out = base / "agent" / "evidence" / "P-105" / "frontend" / "shots"
+                break
+        else:
+            out = ROOT / "docs" / "agent" / "evidence" / "P-105" / "frontend" / "shots"
+        return capture_role0(web=args.web, user=args.user,
+                             password=args.password, out=out)
+
+    order = sorted(PERSONAS) if args.persona == "all" else [args.persona]
+    #: ★ 목표 장수는 **고른 페르소나의 몫**이다. `all` 이면 33 그대로이고,
+    #:   한 사람만 고르면 그 사람 몫이다 — 33 으로 재면 언제나 빨갛다.
+    want_n = len([x for x in list(TARGETS) + list(LOGIN_BRANCHES)
+                  if x.get("persona") in order])
+    if args.persona != "all":
+        print(f"[SHOT] ⚠ **한 사람만 찍는다({args.persona} · {want_n}장).** 인덱스는 "
+              f"이 실행이 찍은 것만 싣게 되고, 남은 페르소나의 PNG 는 "
+              f"`verify_screens.py` 가 「인덱스에 없는 캡처」로 빨갛게 잡는다. "
+              f"온전한 벌은 `--persona all` 이다")
+
+    # ★★ [P-98] **역할을 먼저 읽고, 없으면 찍지 않는다.**
+    #   이 여섯 줄이 앞선 33장을 막았을 것이다. 역할 없는 계정으로 찍은 화면은
+    #   「제품이 된다」의 증거가 아니라 「역할 없는 사람에게 무엇이 보이는가」의
+    #   측정이고, 둘을 같은 폴더에 두면 뒤엣것이 앞엣것 행세를 한다.
+    roles: dict = {}
+    for pn in order:
+        want = PERSONAS[pn]["username"]
+        got_codes = read_roles(want)
+        roles[pn] = role_slug(got_codes)
+        print(f"[SHOT] {pn} {PERSONAS[pn]['label']} · {want} · "
+              f"역할 {got_codes or '**없음**'} (제품이 들고 있는 값 · D-323)")
+        if not got_codes:
+            print(f"[SHOT] ★ {pn} 의 계정 «{want}» 에 역할이 **한 개도 없다.** "
+                  f"역할 없는 계정으로 찍은 화면은 인수 증거가 아니다 — 찍지 않는다 (P-98)")
+            return EXIT_UNDECIDABLE
+        if got_codes != [PERSONAS[pn]["role"]]:
+            print(f"[SHOT] ★ {pn} 의 역할이 대장과 다르다: 실측 {got_codes} · "
+                  f"대장 {[PERSONAS[pn]['role']]} — 대장을 고치거나 계정을 고친 뒤 다시 온다")
+            return EXIT_UNDECIDABLE
+    if args.persona != "all" and args.user != PERSONAS[order[0]]["username"]:
+        print(f"[SHOT] ★ --persona {order[0]} 의 계정은 "
+              f"«{PERSONAS[order[0]]['username']}» 인데 --user 는 «{args.user}» 다 — "
+              f"둘이 어긋나면 인덱스의 「누가 봤나」가 거짓이 된다")
+        return EXIT_UNDECIDABLE
+
+    #: 씨앗은 **한 번만** 심는다. 네 계정이 같은 소속(ETRI-Group)이므로 같은 행을 본다.
+    #: 페르소나마다 다시 심으면 이벤트 id 가 바뀌고, 그러면 U1 이 찍은 상세 화면의
+    #: 파일 이름과 U3 이 찍은 것이 서로 다른 사건을 가리킨다.
+    _release_session(PERSONAS[order[0]]["username"])
+    event_id = seed_events(PERSONAS[order[0]]["username"])
+    merged: dict = {"entries": [], "steps": {}, "page_errors": [],
+                    "api_calls": {}, "api_notes": {}, "misses": [],
+                    "session_lost": False}
+    per_persona: dict = {}
     try:
-        got = capture(web=args.web, user=args.user, password=args.password,
-                      event_id=event_id, role=role, api=args.api)
+        for i, pn in enumerate(order):
+            who = PERSONAS[pn]
+            print(f"[SHOT] ═══ {pn} {who['label']} · {who['username']} · "
+                  f"{roles[pn]} — {who['note']} ═══")
+            #: ⚠ **동시 접속 1개다.** 페르소나를 넘어갈 때마다 앞 계정의 흔적을 푼다.
+            _release_session(who["username"])
+            got = capture(web=args.web, user=who["username"],
+                          password=args.password, event_id=event_id,
+                          role=roles[pn], api=args.api, persona=pn,
+                          reset=(i == 0 and args.persona == "all"))
+            per_persona[pn] = len(got["entries"])
+            merged["entries"] += got["entries"]
+            merged["steps"].update(got["steps"])
+            merged["page_errors"] += got["page_errors"]
+            merged["misses"] += got["misses"]
+            merged["api_notes"].update(got["api_notes"])
+            for r, v in got["api_calls"].items():
+                merged["api_calls"][r] = sorted(
+                    set(merged["api_calls"].get(r, ())) | set(v))
+            if got["session_lost"]:
+                merged["session_lost"] = True
+                print(f"[SHOT] ★ {pn} 에서 세션을 빼앗겼다 — 뒤의 페르소나는 찍지 않는다")
+                break
     finally:
         print(f"[SHOT] 씨앗 정리: {clean_events()}")
+    got = merged
+    print("[SHOT] 페르소나별 장수: "
+          + " · ".join(f"{k} {v}장" for k, v in per_persona.items()))
 
     (SCREENS / "run_log.json").write_text(json.dumps({
         "harness": "scripts/capture_screens.py",
@@ -884,6 +1305,14 @@ def main() -> int:
         #:   여기서 가른다 — 가르지 않으면 다음 사람이 그 둘을 같은 것으로 읽는다.
         "api_notes": api_notes,
         "data_source": "시드 (K1 record_detection 실제 경로 · 실제 사고 아님)",
+        #: ★★ [P-98] **누가 봤나 — 장 단위로.** 라우트로 묶인 위 `screens` 만으로는
+        #:   같은 라우트를 두 사람이 봤을 때 누가 무엇을 받았는지 못 가른다.
+        "viewers": [{"file": e["file"], "route": e["route"],
+                     "persona": e.get("persona"), "viewed_by": e.get("viewed_by"),
+                     "user_role": e.get("user_role"),
+                     "data_source": e.get("data_source"),
+                     "calls": e.get("calls") or []}
+                    for e in got["entries"]],
         "blank_screens": KNOWN_BLANK,
         #: 못 찍은 것을 **왜 못 찍었는지로 갈라** 적는다 (D-396). 한 칸에 두면
         #: 「안 해 본 것」과 「해 봤더니 안 되는 것」이 같아지고, 둘을 합치면
@@ -910,11 +1339,10 @@ def main() -> int:
         #   ⚠ 그리고 이 실행의 증거는 **불완전하다**: 이 함수는 시작하면서 PNG 폴더를
         #     비우므로, 튕긴 실행은 앞선 온전한 벌을 **덮는다.** 다시 찍어야 한다.
         print(f"[SHOT] **판정 불가(exit 2)** — 세션을 빼앗겼다. 이번 벌은 "
-              f"{len(got['entries'])}/{len(TARGETS) + len(LOGIN_BRANCHES)}장에서 끊겼고, 이 실행이 앞선 벌을 "
+              f"{len(got['entries'])}/{want_n}장에서 끊겼고, 이 실행이 앞선 벌을 "
               f"**덮었다.** 동시 접속 1개인 창을 확보한 뒤 **다시 찍는다**")
         return EXIT_UNDECIDABLE
-    return (EXIT_OK if len(got["entries"]) == len(TARGETS) + len(LOGIN_BRANCHES)
-            else EXIT_FAIL)
+    return EXIT_OK if len(got["entries"]) == want_n else EXIT_FAIL
 
 
 if __name__ == "__main__":

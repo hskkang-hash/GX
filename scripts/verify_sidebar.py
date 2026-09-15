@@ -585,4 +585,12 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header, roles_of  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target=os.environ.get("GX_API", "http://localhost:8000") + " (gx-shell 안 · 호스트에 포트가 없다)",
+        as_="시드 역할 계정 " + "/".join(sorted(HTTP_ACCOUNTS.values())) + " · " + " · ".join(roles_of(u) for u in sorted(HTTP_ACCOUNTS.values())) + " · 자격 이름 GX_SEED_ROLE_PASSWORD (값 아님)",
+        source="살아 있는 서버 응답 (HTTP) + gx-shell ORM 대조",
+        reason="메뉴는 역할마다 다르다 — 한 계정으로 재면 다른 역할의 메뉴는 안 재진다",
+    )
     raise SystemExit(main())

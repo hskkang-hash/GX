@@ -388,4 +388,12 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header, file_stamp  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target="화면 사진 " + str(SCREENS.relative_to(ROOT)).replace("\\", "/") + " (판정은 호스트에서 돈다)",
+        as_="이 게이트 자신은 자격 없이 인덱스를 읽는다. **사진을 찍은 계정**은 장마다 `viewed_by` 가 적는다 — U1 gxseed_u1_operator/fire_user · U2 gxseed_u2_manager/fire_admin · U4 gxseed_u4_official/view_only_-_anyang · U5 gxseed_u5_sysop/admin · 자격 이름 GX_SEED_ROLE_PASSWORD",
+        source=file_stamp(INDEX) + " + " + file_stamp(ROOT / "docs/agent/evidence/D-347/screens/run_log.json"),
+        reason="32장 중 6장은 U5 sysop(admin) 으로 찍었다 — 관리자 화면은 관리자만 볼 수 있기 때문이고, 나머지 26장은 역할 계정이다. 역할 0 계정으로 찍은 사진은 이 인덱스에 없다(턴 L 이 P-98/denied 로 뺐다)",
+    )
     raise SystemExit(main())

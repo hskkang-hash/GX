@@ -1,0 +1,23 @@
+{
+  "when": "2026-09-07T10:15:31",
+  "api": "http://localhost:8020",
+  "as": "gxseed_u4_official",
+  "calls": [
+    {
+      "label": "report-template list",
+      "method": "GET",
+      "path": "/api/report-template/",
+      "status": 500,
+      "len": 135173,
+      "markers_present": [
+        "Traceback",
+        "pydantic",
+        "File \"",
+        "site-packages",
+        "/app/",
+        "/usr/local/lib"
+      ],
+      "body_first_400": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">\n  <meta name=\"robots\" content=\"NONE,NOARCHIVE\">\n  <title>ValidationError\n          at /api/report-template/</title>\n  <style>\n    html * { padding:0; margin:0; }\n    body * { padding:10px 20px; }\n    body * * { padding:0; }\n    body { font-family: sans-serif; background-color:#fff; color:#"
+    }
+  ]
+}

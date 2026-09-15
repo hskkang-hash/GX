@@ -1,0 +1,1944 @@
+{
+  "label": "AFTER-8000-재기동",
+  "api": "http://localhost:8000",
+  "no_cache_header": false,
+  "ran_at": "2026-09-07T11:58:03",
+  "routes_probed": 54,
+  "accounts": {
+    "gxprobe_e2e": {
+      "note": "SUBJECT  roles=[]",
+      "login_status": 200,
+      "token": true,
+      "login_error": null,
+      "routes": {
+        "GET /api/advanced-table/grid-management/10/detail": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/advanced-table/grid-management/50/detail": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/advanced-table/grid-management/9/detail": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=107": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=4": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=5": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/config-management/list-optimized": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/config-management/list?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/departments/?page_size=10000&current_page=1&group__id=4": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/devices/devices-management?page_size=25&current_page=1&depth=2": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/cameras/address-gap": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/dashboard/frame": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/dashboard/link-state": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/deliveries?event_id=99554": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/deliveries?limit=50": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/drill": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/drill/report": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events/4805/snapshot": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events/99554": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events/99554/clip": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events/99554/field-replies": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events/99554/timeline": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events/queue?limit=200": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events/summary?hours=12": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events?limit=10": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events?limit=200": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events?limit=50&event_type=camera_down,storage_high": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events?limit=50&mine=true": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events?limit=50&response_state=occurred": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/dsm/events?limit=50&since=2026-09-06T21:52:42.428Z&until=2026-09-07T09:52:42.428Z": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/flight-log/flight-log/?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/media-data/?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/media-data?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/menu/menus?page_size=10000": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/menu/menus?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/roles/?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/stream-monitors/stream-monitors": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/stream-monitors/stream-monitors/ai-models": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-06T17:00:00%2B00:00&end_date=2026-09-07T16:59:59%2B00:00&limit=100&page=1&page_size=5": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-05T17:00:00%2B00:00&end_date=2026-09-12T16:59:59%2B00:00": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-07": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/surveillance/surveillance-dashboard/drone-status-overview": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/surveillance/surveillance-dashboard/today-profiles-polygon": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/surveillance/surveillance-dashboard/weather-setting": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/user-groups/?page_size=10000&current_page=1": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/v1/user/get-user-detail/115": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "POST /api/proxy/notam": {
+          "status": 403,
+          "bytes": 399,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"status_code\": 403, \"code\": \"role_required\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c"
+        },
+        "GET /api/v1/access/role-pending": {
+          "status": 200,
+          "bytes": 520,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"state\": \"pending\", \"message\": \"\\uc5ed\\ud560\\uc774 \\uc544\\uc9c1 \\uc5c6\\uc2b5\\ub2c8\\ub2e4 \\u2014 \\uad00\\ub9ac\\uc790(UserAdmin)\\uc5d0\\uac8c \\uc5ed\\ud560 \\ubd80\\uc5ec\\ub97c \\uc694\\uccad\\ud588\\uc2b5\\ub2c"
+        }
+      },
+      "session_evictions": 1
+    },
+    "gxseed_u1_operator": {
+      "note": "CONTROL  fire_user",
+      "login_status": 200,
+      "token": true,
+      "login_error": null,
+      "routes": {
+        "GET /api/advanced-table/grid-management/10/detail": {
+          "status": 200,
+          "bytes": 5489,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 10, \"name\": \"Role Management\", \"label\": \"Role Management\", \"menu_id\": 5, \"menu_name\": \"\\uc5ed\\ud560 \\uad00\\ub9ac\", \"menu_pat"
+        },
+        "GET /api/advanced-table/grid-management/50/detail": {
+          "status": 200,
+          "bytes": 24999,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 50, \"name\": \"Drones & Robots\", \"label\": \"Drones & Robots\", \"menu_id\": 107, \"menu_name\": \"Drones & Robot\", \"menu_path\": \"/dev"
+        },
+        "GET /api/advanced-table/grid-management/9/detail": {
+          "status": 200,
+          "bytes": 9141,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 9, \"name\": \"Menu Management\", \"label\": \"Menu Management\", \"menu_id\": 4, \"menu_name\": \"\\uba54\\ub274 \\uad00\\ub9ac\", \"menu_path"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=107": {
+          "status": 200,
+          "bytes": 173,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 0, \"grids\": []}"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=4": {
+          "status": 200,
+          "bytes": 173,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 0, \"grids\": []}"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=5": {
+          "status": 200,
+          "bytes": 173,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 0, \"grids\": []}"
+        },
+        "GET /api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name": {
+          "status": 200,
+          "bytes": 1185,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Data retrieved successfully\", \"total_pages\": 1, \"page_size\": 1000, \"current_page\": 1, \"count\": 5, \"data\": [{\"id\": 1, \"deleted\": null, \"deleted_by_cascade\":"
+        },
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true": {
+          "status": 200,
+          "bytes": 500,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Data retrieved successfully\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 2, \"data\": [{\"id\": 2, \"deleted\": null, \"deleted_by_cascade\": f"
+        },
+        "GET /api/config-management/list-optimized": {
+          "status": 200,
+          "bytes": 16436,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 12, \"data\": [{\"id\": 13, \"deleted\": null, \"deleted_by_casca"
+        },
+        "GET /api/config-management/list?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/departments/?page_size=10000&current_page=1&group__id=4": {
+          "status": 200,
+          "bytes": 61,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total_pages\": 1, \"current_page\": 1, \"count\": 0, \"data\": []}"
+        },
+        "GET /api/devices/devices-management?page_size=25&current_page=1&depth=2": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/dsm/cameras/address-gap": {
+          "status": 200,
+          "bytes": 114,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 4, \"with_address\": 1, \"without_address\": 3, \"marked_but_blank\": 0, \"coverage\": 0.25, \"measurable\": true}"
+        },
+        "GET /api/dsm/dashboard/frame": {
+          "status": 200,
+          "bytes": 683,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"preset\": \"OPERATOR\", \"preset_matched\": true, \"five_states\": [\"data\", \"loading\", \"empty\", \"error\", \"forbidden\"], \"state_counts\": {\"data\": 1, \"loading\": 0, \"empty\": 1, \"error\": 0, \"forbidden\": 0}, \"pa"
+        },
+        "GET /api/dsm/dashboard/link-state": {
+          "status": 200,
+          "bytes": 21,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"status\": \"waiting\"}"
+        },
+        "GET /api/dsm/deliveries?event_id=99554": {
+          "status": 200,
+          "bytes": 30,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"deliveries\": []}"
+        },
+        "GET /api/dsm/deliveries?limit=50": {
+          "status": 200,
+          "bytes": 8035,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 50, \"deliveries\": [{\"delivery_id\": 252, \"event_id\": 4798, \"recipient_id\": 101, \"channel\": \"log\", \"succeeded\": true, \"failure_reason\": null, \"sent_at\": \"2026-09-03T13:17:35.581Z\"}, {\"delivery"
+        },
+        "GET /api/dsm/drill": {
+          "status": 200,
+          "bytes": 150,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"group_id\": 4, \"drill_mode\": false, \"since\": null, \"by\": \"\", \"reason\": \"\", \"last_action\": \"\", \"channel_while_drilling\": \"log\", \"data_source\": \"live\"}"
+        },
+        "GET /api/dsm/drill/report": {
+          "status": 200,
+          "bytes": 217,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"group_id\": 4, \"measurable\": false, \"reason\": \"\\uc774 \\ud14c\\ub10c\\ud2b8\\ub294 \\ud6c8\\ub828 \\ubaa8\\ub4dc\\ub97c \\ud55c \\ubc88\\ub3c4 \\ucf20 \\uc801\\uc774 \\uc5c6\\uc2b5\\ub2c8\\ub2e4.\", \"started_at\": null, "
+        },
+        "GET /api/dsm/events/4805/snapshot": {
+          "status": 503,
+          "bytes": 137,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"\\uc800\\uc7a5\\uc18c \\uc5f0\\uacb0 \\uc548 \\ub428 \\u2014 MinIO \\uac00 \\uc9c0\\uae08 \\uc0ac\\uc6a9 \\ubd88\\uac00 \\uc0c1\\ud0dc\\ub2e4\"}"
+        },
+        "GET /api/dsm/events/99554": {
+          "status": 404,
+          "bytes": 49,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"Not Found: DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/99554/clip": {
+          "status": 404,
+          "bytes": 38,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/99554/field-replies": {
+          "status": 404,
+          "bytes": 77,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"\\uadf8\\ub7f0 \\uc774\\ubca4\\ud2b8\\uac00 \\uc5c6\\uc2b5\\ub2c8\\ub2e4.\"}"
+        },
+        "GET /api/dsm/events/99554/timeline": {
+          "status": 404,
+          "bytes": 49,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"Not Found: DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/queue?limit=200": {
+          "status": 200,
+          "bytes": 3945,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"now\": \"2026-09-07T11:58:09.935Z\", \"total_events\": 22, \"card_total\": 6, \"sample_capped\": false, \"window_seconds\": 300, \"tier_thresholds_sec\": [30, 120, 300, 480], \"focus\": {\"event_id\": 4805, \"event_t"
+        },
+        "GET /api/dsm/events/summary?hours=12": {
+          "status": 200,
+          "bytes": 284,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"hours\": 12, \"since\": \"2026-09-06T23:58:10.398Z\", \"until\": \"2026-09-07T11:58:10.398Z\", \"unhandled\": 0, \"unhandled_capped\": false, \"unhandled_cap\": 500, \"false_positive\": 0, \"reviewed\": 0, \"unreviewed"
+        },
+        "GET /api/dsm/events?limit=10": {
+          "status": 200,
+          "bytes": 4146,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 10, \"events\": [{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T13:14:31.580Z\", \"last_seen_at\": null"
+        },
+        "GET /api/dsm/events?limit=200": {
+          "status": 200,
+          "bytes": 8963,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 22, \"events\": [{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T13:14:31.580Z\", \"last_seen_at\": null"
+        },
+        "GET /api/dsm/events?limit=50&event_type=camera_down,storage_high": {
+          "status": 200,
+          "bytes": 731,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 2, \"events\": [{\"event_id\": 4818, \"event_type\": \"camera_down\", \"severity\": \"warning\", \"status\": \"new\", \"verdict\": null, \"occurred_at\": \"2026-09-03T12:14:31.580Z\", \"last_seen_at\": null, \"strea"
+        },
+        "GET /api/dsm/events?limit=50&mine=true": {
+          "status": 200,
+          "bytes": 26,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"events\": []}"
+        },
+        "GET /api/dsm/events?limit=50&response_state=occurred": {
+          "status": 200,
+          "bytes": 1940,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 5, \"events\": [{\"event_id\": 4803, \"event_type\": \"flood\", \"severity\": \"critical\", \"status\": \"new\", \"verdict\": null, \"occurred_at\": \"2026-09-03T12:59:31.580Z\", \"last_seen_at\": null, \"stream_mon"
+        },
+        "GET /api/dsm/events?limit=50&since=2026-09-06T21:52:42.428Z&until=2026-09-07T09:52:42.428Z": {
+          "status": 200,
+          "bytes": 26,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"events\": []}"
+        },
+        "GET /api/flight-log/flight-log/?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/media-data/?page_size=25&current_page=1": {
+          "status": 503,
+          "bytes": 89,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": false, \"status\": 503, \"message\": \"Failed to retrieve media list\", \"data\": []}"
+        },
+        "GET /api/media-data?page_size=25&current_page=1": {
+          "status": 503,
+          "bytes": 89,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": false, \"status\": 503, \"message\": \"Failed to retrieve media list\", \"data\": []}"
+        },
+        "GET /api/menu/menus?page_size=10000": {
+          "status": 200,
+          "bytes": 2999,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Successfully retrieved menus.\", \"total_pages\": 1, \"page_size\": 10000, \"current_page\": 1, \"count\": 5, \"menus\": [{\"id\": 132, \"menu_name\": \"\\uc9c0\\uae08 \\ucc9"
+        },
+        "GET /api/menu/menus?page_size=25&current_page=1": {
+          "status": 200,
+          "bytes": 2996,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Successfully retrieved menus.\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 5, \"menus\": [{\"id\": 132, \"menu_name\": \"\\uc9c0\\uae08 \\ucc98\\u"
+        },
+        "GET /api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation": {
+          "status": 200,
+          "bytes": 11270,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "[{\"name\": \"deliveryoperation\", \"field_type\": null, \"label\": \"Delivery Operation\", \"is_required\": null, \"fields\": [{\"name\": \"id\", \"field_type\": \"number\", \"label\": \"Id\", \"is_required\": false, \"fields\": "
+        },
+        "GET /api/roles/?page_size=25&current_page=1": {
+          "status": 200,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/stream-monitors/stream-monitors": {
+          "status": 200,
+          "bytes": 2057,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Stream monitors fetched successfully.\", \"data\": [{\"drone\": 27, \"is_visualize\": true, \"is_active\": true, \"drone_id\": 27, \"created_by_id\": null, \"group_id\": "
+        },
+        "GET /api/stream-monitors/stream-monitors/ai-models": {
+          "status": 200,
+          "bytes": 1673,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"AI models retrieved successfully.\", \"data\": [{\"id\": 7, \"created_on\": \"2025-11-07T10:40:35Z\", \"name\": \"Fire Smoke\", \"description\": \"AI model for detecting f"
+        },
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-06T17:00:00%2B00:00&end_date=2026-09-07T16:59:59%2B00:00&limit=100&page=1&page_size=5": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-05T17:00:00%2B00:00&end_date=2026-09-12T16:59:59%2B00:00": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-07": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/drone-status-overview": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/today-profiles-polygon": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/weather-setting": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/user-groups/?page_size=10000&current_page=1": {
+          "status": 200,
+          "bytes": 823,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total_pages\": 1, \"current_page\": 1, \"count\": 1, \"data\": [{\"settings\": {\"payment\": {\"active\": false}, \"use_map\": {\"select_map\": {\"kakao_map\": true, \"google_map\": false}, \"country_code\": \"KR\"}, \"send_"
+        },
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false": {
+          "status": 200,
+          "bytes": 2031,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Group settings schema generated successfully\", \"schema\": {\"$schema\": \"http://json-schema.org/schema#\", \"type\": \"object\", \"properties\": {\"payment\": {\"type\":"
+        },
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true": {
+          "status": 200,
+          "bytes": 407,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Group settings schema generated successfully\", \"schema\": {\"payment\": {\"active\": false}, \"use_map\": {\"select_map\": {\"kakao_map\": true, \"google_map\": false},"
+        },
+        "GET /api/v1/user/get-user-detail/115": {
+          "status": 200,
+          "bytes": 5487,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"User details retrieved\", \"user\": {\"id\": 115, \"username\": \"gxseed_u5_sysop\", \"email\": \"gxseed_u5_sysop@seed.invalid\", \"first_name\": \"[\\uc2dc\\ub4dc] U5 \\uc2d"
+        },
+        "POST /api/proxy/notam": {
+          "status": 502,
+          "bytes": 74,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"error\": \"Upstream API error: Expecting value: line 4 column 1 (char 6)\"}"
+        },
+        "GET /api/v1/access/role-pending": {
+          "status": 200,
+          "bytes": 450,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"state\": \"has_roles\", \"message\": \"\\uc5ed\\ud560\\uc774 \\ubd80\\uc5ec\\ub418\\uc5b4 \\uc788\\uc2b5\\ub2c8\\ub2e4.\", \"user\": {\"username\": \"gxseed_u1_operator\", \"display_name\": \"[\\uc2dc\\ub4dc] U1 \\uad00\\uc81c\\uc"
+        }
+      },
+      "session_evictions": 0
+    },
+    "gxseed_u2_manager": {
+      "note": "CONTROL  fire_admin",
+      "login_status": 200,
+      "token": true,
+      "login_error": null,
+      "routes": {
+        "GET /api/advanced-table/grid-management/10/detail": {
+          "status": 200,
+          "bytes": 5489,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 10, \"name\": \"Role Management\", \"label\": \"Role Management\", \"menu_id\": 5, \"menu_name\": \"\\uc5ed\\ud560 \\uad00\\ub9ac\", \"menu_pat"
+        },
+        "GET /api/advanced-table/grid-management/50/detail": {
+          "status": 200,
+          "bytes": 24999,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 50, \"name\": \"Drones & Robots\", \"label\": \"Drones & Robots\", \"menu_id\": 107, \"menu_name\": \"Drones & Robot\", \"menu_path\": \"/dev"
+        },
+        "GET /api/advanced-table/grid-management/9/detail": {
+          "status": 200,
+          "bytes": 9141,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 9, \"name\": \"Menu Management\", \"label\": \"Menu Management\", \"menu_id\": 4, \"menu_name\": \"\\uba54\\ub274 \\uad00\\ub9ac\", \"menu_path"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=107": {
+          "status": 200,
+          "bytes": 173,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 0, \"grids\": []}"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=4": {
+          "status": 200,
+          "bytes": 173,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 0, \"grids\": []}"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=5": {
+          "status": 200,
+          "bytes": 173,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 0, \"grids\": []}"
+        },
+        "GET /api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name": {
+          "status": 200,
+          "bytes": 1185,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Data retrieved successfully\", \"total_pages\": 1, \"page_size\": 1000, \"current_page\": 1, \"count\": 5, \"data\": [{\"id\": 1, \"deleted\": null, \"deleted_by_cascade\":"
+        },
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true": {
+          "status": 200,
+          "bytes": 500,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Data retrieved successfully\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 2, \"data\": [{\"id\": 2, \"deleted\": null, \"deleted_by_cascade\": f"
+        },
+        "GET /api/config-management/list-optimized": {
+          "status": 200,
+          "bytes": 16436,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 12, \"data\": [{\"id\": 13, \"deleted\": null, \"deleted_by_casca"
+        },
+        "GET /api/config-management/list?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/departments/?page_size=10000&current_page=1&group__id=4": {
+          "status": 200,
+          "bytes": 61,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total_pages\": 1, \"current_page\": 1, \"count\": 0, \"data\": []}"
+        },
+        "GET /api/devices/devices-management?page_size=25&current_page=1&depth=2": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/dsm/cameras/address-gap": {
+          "status": 200,
+          "bytes": 114,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 4, \"with_address\": 1, \"without_address\": 3, \"marked_but_blank\": 0, \"coverage\": 0.25, \"measurable\": true}"
+        },
+        "GET /api/dsm/dashboard/frame": {
+          "status": 200,
+          "bytes": 682,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"preset\": \"MANAGER\", \"preset_matched\": true, \"five_states\": [\"data\", \"loading\", \"empty\", \"error\", \"forbidden\"], \"state_counts\": {\"data\": 1, \"loading\": 0, \"empty\": 1, \"error\": 0, \"forbidden\": 0}, \"pan"
+        },
+        "GET /api/dsm/dashboard/link-state": {
+          "status": 200,
+          "bytes": 21,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"status\": \"waiting\"}"
+        },
+        "GET /api/dsm/deliveries?event_id=99554": {
+          "status": 200,
+          "bytes": 30,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"deliveries\": []}"
+        },
+        "GET /api/dsm/deliveries?limit=50": {
+          "status": 200,
+          "bytes": 8035,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 50, \"deliveries\": [{\"delivery_id\": 252, \"event_id\": 4798, \"recipient_id\": 101, \"channel\": \"log\", \"succeeded\": true, \"failure_reason\": null, \"sent_at\": \"2026-09-03T13:17:35.581Z\"}, {\"delivery"
+        },
+        "GET /api/dsm/drill": {
+          "status": 200,
+          "bytes": 150,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"group_id\": 4, \"drill_mode\": false, \"since\": null, \"by\": \"\", \"reason\": \"\", \"last_action\": \"\", \"channel_while_drilling\": \"log\", \"data_source\": \"live\"}"
+        },
+        "GET /api/dsm/drill/report": {
+          "status": 200,
+          "bytes": 217,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"group_id\": 4, \"measurable\": false, \"reason\": \"\\uc774 \\ud14c\\ub10c\\ud2b8\\ub294 \\ud6c8\\ub828 \\ubaa8\\ub4dc\\ub97c \\ud55c \\ubc88\\ub3c4 \\ucf20 \\uc801\\uc774 \\uc5c6\\uc2b5\\ub2c8\\ub2e4.\", \"started_at\": null, "
+        },
+        "GET /api/dsm/events/4805/snapshot": {
+          "status": 503,
+          "bytes": 137,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"\\uc800\\uc7a5\\uc18c \\uc5f0\\uacb0 \\uc548 \\ub428 \\u2014 MinIO \\uac00 \\uc9c0\\uae08 \\uc0ac\\uc6a9 \\ubd88\\uac00 \\uc0c1\\ud0dc\\ub2e4\"}"
+        },
+        "GET /api/dsm/events/99554": {
+          "status": 404,
+          "bytes": 49,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"Not Found: DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/99554/clip": {
+          "status": 404,
+          "bytes": 38,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/99554/field-replies": {
+          "status": 404,
+          "bytes": 77,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"\\uadf8\\ub7f0 \\uc774\\ubca4\\ud2b8\\uac00 \\uc5c6\\uc2b5\\ub2c8\\ub2e4.\"}"
+        },
+        "GET /api/dsm/events/99554/timeline": {
+          "status": 404,
+          "bytes": 49,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"Not Found: DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/queue?limit=200": {
+          "status": 200,
+          "bytes": 3945,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"now\": \"2026-09-07T11:58:21.113Z\", \"total_events\": 22, \"card_total\": 6, \"sample_capped\": false, \"window_seconds\": 300, \"tier_thresholds_sec\": [30, 120, 300, 480], \"focus\": {\"event_id\": 4805, \"event_t"
+        },
+        "GET /api/dsm/events/summary?hours=12": {
+          "status": 200,
+          "bytes": 284,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"hours\": 12, \"since\": \"2026-09-06T23:58:21.207Z\", \"until\": \"2026-09-07T11:58:21.207Z\", \"unhandled\": 0, \"unhandled_capped\": false, \"unhandled_cap\": 500, \"false_positive\": 0, \"reviewed\": 0, \"unreviewed"
+        },
+        "GET /api/dsm/events?limit=10": {
+          "status": 200,
+          "bytes": 4146,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 10, \"events\": [{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T13:14:31.580Z\", \"last_seen_at\": null"
+        },
+        "GET /api/dsm/events?limit=200": {
+          "status": 200,
+          "bytes": 8963,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 22, \"events\": [{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T13:14:31.580Z\", \"last_seen_at\": null"
+        },
+        "GET /api/dsm/events?limit=50&event_type=camera_down,storage_high": {
+          "status": 200,
+          "bytes": 731,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 2, \"events\": [{\"event_id\": 4818, \"event_type\": \"camera_down\", \"severity\": \"warning\", \"status\": \"new\", \"verdict\": null, \"occurred_at\": \"2026-09-03T12:14:31.580Z\", \"last_seen_at\": null, \"strea"
+        },
+        "GET /api/dsm/events?limit=50&mine=true": {
+          "status": 200,
+          "bytes": 26,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"events\": []}"
+        },
+        "GET /api/dsm/events?limit=50&response_state=occurred": {
+          "status": 200,
+          "bytes": 1940,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 5, \"events\": [{\"event_id\": 4803, \"event_type\": \"flood\", \"severity\": \"critical\", \"status\": \"new\", \"verdict\": null, \"occurred_at\": \"2026-09-03T12:59:31.580Z\", \"last_seen_at\": null, \"stream_mon"
+        },
+        "GET /api/dsm/events?limit=50&since=2026-09-06T21:52:42.428Z&until=2026-09-07T09:52:42.428Z": {
+          "status": 200,
+          "bytes": 26,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"events\": []}"
+        },
+        "GET /api/flight-log/flight-log/?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/media-data/?page_size=25&current_page=1": {
+          "status": 503,
+          "bytes": 89,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": false, \"status\": 503, \"message\": \"Failed to retrieve media list\", \"data\": []}"
+        },
+        "GET /api/media-data?page_size=25&current_page=1": {
+          "status": 503,
+          "bytes": 89,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": false, \"status\": 503, \"message\": \"Failed to retrieve media list\", \"data\": []}"
+        },
+        "GET /api/menu/menus?page_size=10000": {
+          "status": 200,
+          "bytes": 13313,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Successfully retrieved menus.\", \"total_pages\": 1, \"page_size\": 10000, \"current_page\": 1, \"count\": 13, \"menus\": [{\"id\": 132, \"menu_name\": \"\\uc9c0\\uae08 \\ucc"
+        },
+        "GET /api/menu/menus?page_size=25&current_page=1": {
+          "status": 200,
+          "bytes": 13310,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Successfully retrieved menus.\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 13, \"menus\": [{\"id\": 132, \"menu_name\": \"\\uc9c0\\uae08 \\ucc98\\"
+        },
+        "GET /api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation": {
+          "status": 200,
+          "bytes": 11270,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "[{\"name\": \"deliveryoperation\", \"field_type\": null, \"label\": \"Delivery Operation\", \"is_required\": null, \"fields\": [{\"name\": \"id\", \"field_type\": \"number\", \"label\": \"Id\", \"is_required\": false, \"fields\": "
+        },
+        "GET /api/roles/?page_size=25&current_page=1": {
+          "status": 200,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/stream-monitors/stream-monitors": {
+          "status": 200,
+          "bytes": 2057,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Stream monitors fetched successfully.\", \"data\": [{\"drone\": 27, \"is_visualize\": true, \"is_active\": true, \"drone_id\": 27, \"created_by_id\": null, \"group_id\": "
+        },
+        "GET /api/stream-monitors/stream-monitors/ai-models": {
+          "status": 200,
+          "bytes": 1673,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"AI models retrieved successfully.\", \"data\": [{\"id\": 7, \"created_on\": \"2025-11-07T10:40:35Z\", \"name\": \"Fire Smoke\", \"description\": \"AI model for detecting f"
+        },
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-06T17:00:00%2B00:00&end_date=2026-09-07T16:59:59%2B00:00&limit=100&page=1&page_size=5": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-05T17:00:00%2B00:00&end_date=2026-09-12T16:59:59%2B00:00": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-07": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/drone-status-overview": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/today-profiles-polygon": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/weather-setting": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/user-groups/?page_size=10000&current_page=1": {
+          "status": 200,
+          "bytes": 823,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total_pages\": 1, \"current_page\": 1, \"count\": 1, \"data\": [{\"settings\": {\"payment\": {\"active\": false}, \"use_map\": {\"select_map\": {\"kakao_map\": true, \"google_map\": false}, \"country_code\": \"KR\"}, \"send_"
+        },
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false": {
+          "status": 200,
+          "bytes": 2031,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Group settings schema generated successfully\", \"schema\": {\"$schema\": \"http://json-schema.org/schema#\", \"type\": \"object\", \"properties\": {\"payment\": {\"type\":"
+        },
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true": {
+          "status": 200,
+          "bytes": 407,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Group settings schema generated successfully\", \"schema\": {\"payment\": {\"active\": false}, \"use_map\": {\"select_map\": {\"kakao_map\": true, \"google_map\": false},"
+        },
+        "GET /api/v1/user/get-user-detail/115": {
+          "status": 200,
+          "bytes": 5487,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"User details retrieved\", \"user\": {\"id\": 115, \"username\": \"gxseed_u5_sysop\", \"email\": \"gxseed_u5_sysop@seed.invalid\", \"first_name\": \"[\\uc2dc\\ub4dc] U5 \\uc2d"
+        },
+        "POST /api/proxy/notam": {
+          "status": 502,
+          "bytes": 74,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"error\": \"Upstream API error: Expecting value: line 4 column 1 (char 6)\"}"
+        },
+        "GET /api/v1/access/role-pending": {
+          "status": 200,
+          "bytes": 461,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"state\": \"has_roles\", \"message\": \"\\uc5ed\\ud560\\uc774 \\ubd80\\uc5ec\\ub418\\uc5b4 \\uc788\\uc2b5\\ub2c8\\ub2e4.\", \"user\": {\"username\": \"gxseed_u2_manager\", \"display_name\": \"[\\uc2dc\\ub4dc] U2 \\uad00\\uc81c\\ud3"
+        }
+      },
+      "session_evictions": 0
+    },
+    "gxseed_u4_official": {
+      "note": "CONTROL  view_only_-_anyang",
+      "login_status": 200,
+      "token": true,
+      "login_error": null,
+      "routes": {
+        "GET /api/advanced-table/grid-management/10/detail": {
+          "status": 200,
+          "bytes": 5489,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 10, \"name\": \"Role Management\", \"label\": \"Role Management\", \"menu_id\": 5, \"menu_name\": \"\\uc5ed\\ud560 \\uad00\\ub9ac\", \"menu_pat"
+        },
+        "GET /api/advanced-table/grid-management/50/detail": {
+          "status": 200,
+          "bytes": 24999,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 50, \"name\": \"Drones & Robots\", \"label\": \"Drones & Robots\", \"menu_id\": 107, \"menu_name\": \"Drones & Robot\", \"menu_path\": \"/dev"
+        },
+        "GET /api/advanced-table/grid-management/9/detail": {
+          "status": 200,
+          "bytes": 9141,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 9, \"name\": \"Menu Management\", \"label\": \"Menu Management\", \"menu_id\": 4, \"menu_name\": \"\\uba54\\ub274 \\uad00\\ub9ac\", \"menu_path"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=107": {
+          "status": 200,
+          "bytes": 173,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 0, \"grids\": []}"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=4": {
+          "status": 200,
+          "bytes": 173,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 0, \"grids\": []}"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=5": {
+          "status": 200,
+          "bytes": 173,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 0, \"grids\": []}"
+        },
+        "GET /api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name": {
+          "status": 200,
+          "bytes": 1185,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Data retrieved successfully\", \"total_pages\": 1, \"page_size\": 1000, \"current_page\": 1, \"count\": 5, \"data\": [{\"id\": 1, \"deleted\": null, \"deleted_by_cascade\":"
+        },
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true": {
+          "status": 200,
+          "bytes": 500,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Data retrieved successfully\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 2, \"data\": [{\"id\": 2, \"deleted\": null, \"deleted_by_cascade\": f"
+        },
+        "GET /api/config-management/list-optimized": {
+          "status": 200,
+          "bytes": 16436,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 12, \"data\": [{\"id\": 13, \"deleted\": null, \"deleted_by_casca"
+        },
+        "GET /api/config-management/list?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/departments/?page_size=10000&current_page=1&group__id=4": {
+          "status": 200,
+          "bytes": 61,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total_pages\": 1, \"current_page\": 1, \"count\": 0, \"data\": []}"
+        },
+        "GET /api/devices/devices-management?page_size=25&current_page=1&depth=2": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/dsm/cameras/address-gap": {
+          "status": 200,
+          "bytes": 114,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 4, \"with_address\": 1, \"without_address\": 3, \"marked_but_blank\": 0, \"coverage\": 0.25, \"measurable\": true}"
+        },
+        "GET /api/dsm/dashboard/frame": {
+          "status": 200,
+          "bytes": 684,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"preset\": \"EXECUTIVE\", \"preset_matched\": true, \"five_states\": [\"data\", \"loading\", \"empty\", \"error\", \"forbidden\"], \"state_counts\": {\"data\": 1, \"loading\": 0, \"empty\": 1, \"error\": 0, \"forbidden\": 0}, \"p"
+        },
+        "GET /api/dsm/dashboard/link-state": {
+          "status": 200,
+          "bytes": 21,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"status\": \"waiting\"}"
+        },
+        "GET /api/dsm/deliveries?event_id=99554": {
+          "status": 200,
+          "bytes": 30,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"deliveries\": []}"
+        },
+        "GET /api/dsm/deliveries?limit=50": {
+          "status": 200,
+          "bytes": 8035,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 50, \"deliveries\": [{\"delivery_id\": 252, \"event_id\": 4798, \"recipient_id\": 101, \"channel\": \"log\", \"succeeded\": true, \"failure_reason\": null, \"sent_at\": \"2026-09-03T13:17:35.581Z\"}, {\"delivery"
+        },
+        "GET /api/dsm/drill": {
+          "status": 200,
+          "bytes": 150,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"group_id\": 4, \"drill_mode\": false, \"since\": null, \"by\": \"\", \"reason\": \"\", \"last_action\": \"\", \"channel_while_drilling\": \"log\", \"data_source\": \"live\"}"
+        },
+        "GET /api/dsm/drill/report": {
+          "status": 200,
+          "bytes": 217,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"group_id\": 4, \"measurable\": false, \"reason\": \"\\uc774 \\ud14c\\ub10c\\ud2b8\\ub294 \\ud6c8\\ub828 \\ubaa8\\ub4dc\\ub97c \\ud55c \\ubc88\\ub3c4 \\ucf20 \\uc801\\uc774 \\uc5c6\\uc2b5\\ub2c8\\ub2e4.\", \"started_at\": null, "
+        },
+        "GET /api/dsm/events/4805/snapshot": {
+          "status": 503,
+          "bytes": 137,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"\\uc800\\uc7a5\\uc18c \\uc5f0\\uacb0 \\uc548 \\ub428 \\u2014 MinIO \\uac00 \\uc9c0\\uae08 \\uc0ac\\uc6a9 \\ubd88\\uac00 \\uc0c1\\ud0dc\\ub2e4\"}"
+        },
+        "GET /api/dsm/events/99554": {
+          "status": 404,
+          "bytes": 49,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"Not Found: DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/99554/clip": {
+          "status": 404,
+          "bytes": 38,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/99554/field-replies": {
+          "status": 404,
+          "bytes": 77,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"\\uadf8\\ub7f0 \\uc774\\ubca4\\ud2b8\\uac00 \\uc5c6\\uc2b5\\ub2c8\\ub2e4.\"}"
+        },
+        "GET /api/dsm/events/99554/timeline": {
+          "status": 404,
+          "bytes": 49,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"Not Found: DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/queue?limit=200": {
+          "status": 200,
+          "bytes": 3945,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"now\": \"2026-09-07T11:58:38.239Z\", \"total_events\": 22, \"card_total\": 6, \"sample_capped\": false, \"window_seconds\": 300, \"tier_thresholds_sec\": [30, 120, 300, 480], \"focus\": {\"event_id\": 4805, \"event_t"
+        },
+        "GET /api/dsm/events/summary?hours=12": {
+          "status": 200,
+          "bytes": 284,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"hours\": 12, \"since\": \"2026-09-06T23:58:38.337Z\", \"until\": \"2026-09-07T11:58:38.337Z\", \"unhandled\": 0, \"unhandled_capped\": false, \"unhandled_cap\": 500, \"false_positive\": 0, \"reviewed\": 0, \"unreviewed"
+        },
+        "GET /api/dsm/events?limit=10": {
+          "status": 200,
+          "bytes": 4146,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 10, \"events\": [{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T13:14:31.580Z\", \"last_seen_at\": null"
+        },
+        "GET /api/dsm/events?limit=200": {
+          "status": 200,
+          "bytes": 8963,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 22, \"events\": [{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T13:14:31.580Z\", \"last_seen_at\": null"
+        },
+        "GET /api/dsm/events?limit=50&event_type=camera_down,storage_high": {
+          "status": 200,
+          "bytes": 731,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 2, \"events\": [{\"event_id\": 4818, \"event_type\": \"camera_down\", \"severity\": \"warning\", \"status\": \"new\", \"verdict\": null, \"occurred_at\": \"2026-09-03T12:14:31.580Z\", \"last_seen_at\": null, \"strea"
+        },
+        "GET /api/dsm/events?limit=50&mine=true": {
+          "status": 200,
+          "bytes": 26,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"events\": []}"
+        },
+        "GET /api/dsm/events?limit=50&response_state=occurred": {
+          "status": 200,
+          "bytes": 1940,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 5, \"events\": [{\"event_id\": 4803, \"event_type\": \"flood\", \"severity\": \"critical\", \"status\": \"new\", \"verdict\": null, \"occurred_at\": \"2026-09-03T12:59:31.580Z\", \"last_seen_at\": null, \"stream_mon"
+        },
+        "GET /api/dsm/events?limit=50&since=2026-09-06T21:52:42.428Z&until=2026-09-07T09:52:42.428Z": {
+          "status": 200,
+          "bytes": 26,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"events\": []}"
+        },
+        "GET /api/flight-log/flight-log/?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/media-data/?page_size=25&current_page=1": {
+          "status": 503,
+          "bytes": 89,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": false, \"status\": 503, \"message\": \"Failed to retrieve media list\", \"data\": []}"
+        },
+        "GET /api/media-data?page_size=25&current_page=1": {
+          "status": 503,
+          "bytes": 89,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": false, \"status\": 503, \"message\": \"Failed to retrieve media list\", \"data\": []}"
+        },
+        "GET /api/menu/menus?page_size=10000": {
+          "status": 200,
+          "bytes": 15397,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Successfully retrieved menus.\", \"total_pages\": 1, \"page_size\": 10000, \"current_page\": 1, \"count\": 10, \"menus\": [{\"id\": 133, \"menu_name\": \"\\ubb34\\uc2a8 \\uc7"
+        },
+        "GET /api/menu/menus?page_size=25&current_page=1": {
+          "status": 200,
+          "bytes": 15394,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Successfully retrieved menus.\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 10, \"menus\": [{\"id\": 133, \"menu_name\": \"\\ubb34\\uc2a8 \\uc77c "
+        },
+        "GET /api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation": {
+          "status": 200,
+          "bytes": 11270,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "[{\"name\": \"deliveryoperation\", \"field_type\": null, \"label\": \"Delivery Operation\", \"is_required\": null, \"fields\": [{\"name\": \"id\", \"field_type\": \"number\", \"label\": \"Id\", \"is_required\": false, \"fields\": "
+        },
+        "GET /api/roles/?page_size=25&current_page=1": {
+          "status": 200,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/stream-monitors/stream-monitors": {
+          "status": 200,
+          "bytes": 2057,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Stream monitors fetched successfully.\", \"data\": [{\"drone\": 27, \"is_visualize\": true, \"is_active\": true, \"drone_id\": 27, \"created_by_id\": null, \"group_id\": "
+        },
+        "GET /api/stream-monitors/stream-monitors/ai-models": {
+          "status": 200,
+          "bytes": 1673,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"AI models retrieved successfully.\", \"data\": [{\"id\": 7, \"created_on\": \"2025-11-07T10:40:35Z\", \"name\": \"Fire Smoke\", \"description\": \"AI model for detecting f"
+        },
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-06T17:00:00%2B00:00&end_date=2026-09-07T16:59:59%2B00:00&limit=100&page=1&page_size=5": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-05T17:00:00%2B00:00&end_date=2026-09-12T16:59:59%2B00:00": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-07": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/drone-status-overview": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/today-profiles-polygon": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/weather-setting": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/user-groups/?page_size=10000&current_page=1": {
+          "status": 200,
+          "bytes": 823,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total_pages\": 1, \"current_page\": 1, \"count\": 1, \"data\": [{\"settings\": {\"payment\": {\"active\": false}, \"use_map\": {\"select_map\": {\"kakao_map\": true, \"google_map\": false}, \"country_code\": \"KR\"}, \"send_"
+        },
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false": {
+          "status": 200,
+          "bytes": 2031,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Group settings schema generated successfully\", \"schema\": {\"$schema\": \"http://json-schema.org/schema#\", \"type\": \"object\", \"properties\": {\"payment\": {\"type\":"
+        },
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true": {
+          "status": 200,
+          "bytes": 407,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Group settings schema generated successfully\", \"schema\": {\"payment\": {\"active\": false}, \"use_map\": {\"select_map\": {\"kakao_map\": true, \"google_map\": false},"
+        },
+        "GET /api/v1/user/get-user-detail/115": {
+          "status": 200,
+          "bytes": 5487,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"User details retrieved\", \"user\": {\"id\": 115, \"username\": \"gxseed_u5_sysop\", \"email\": \"gxseed_u5_sysop@seed.invalid\", \"first_name\": \"[\\uc2dc\\ub4dc] U5 \\uc2d"
+        },
+        "POST /api/proxy/notam": {
+          "status": 502,
+          "bytes": 74,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"error\": \"Upstream API error: Expecting value: line 4 column 1 (char 6)\"}"
+        },
+        "GET /api/v1/access/role-pending": {
+          "status": 200,
+          "bytes": 483,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"state\": \"has_roles\", \"message\": \"\\uc5ed\\ud560\\uc774 \\ubd80\\uc5ec\\ub418\\uc5b4 \\uc788\\uc2b5\\ub2c8\\ub2e4.\", \"user\": {\"username\": \"gxseed_u4_official\", \"display_name\": \"[\\uc2dc\\ub4dc] U4 \\uc7ac\\ub09c\\uc"
+        }
+      },
+      "session_evictions": 0
+    },
+    "gxseed_u5_sysop": {
+      "note": "CONTROL  admin",
+      "login_status": 200,
+      "token": true,
+      "login_error": null,
+      "routes": {
+        "GET /api/advanced-table/grid-management/10/detail": {
+          "status": 200,
+          "bytes": 5489,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 10, \"name\": \"Role Management\", \"label\": \"Role Management\", \"menu_id\": 5, \"menu_name\": \"\\uc5ed\\ud560 \\uad00\\ub9ac\", \"menu_pat"
+        },
+        "GET /api/advanced-table/grid-management/50/detail": {
+          "status": 200,
+          "bytes": 24999,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 50, \"name\": \"Drones & Robots\", \"label\": \"Drones & Robots\", \"menu_id\": 107, \"menu_name\": \"Drones & Robot\", \"menu_path\": \"/dev"
+        },
+        "GET /api/advanced-table/grid-management/9/detail": {
+          "status": 200,
+          "bytes": 9141,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": null, \"grid_management\": {\"id\": 9, \"name\": \"Menu Management\", \"label\": \"Menu Management\", \"menu_id\": 4, \"menu_name\": \"\\uba54\\ub274 \\uad00\\ub9ac\", \"menu_path"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=107": {
+          "status": 200,
+          "bytes": 318,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 1, \"grids\": [{\"id\": 50, \"name\": \"Drones & "
+        },
+        "GET /api/advanced-table/grid-management?menu_id=4": {
+          "status": 200,
+          "bytes": 315,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 1, \"grids\": [{\"id\": 9, \"name\": \"Menu Manag"
+        },
+        "GET /api/advanced-table/grid-management?menu_id=5": {
+          "status": 200,
+          "bytes": 316,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Grid management settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 10, \"current_page\": 1, \"count\": 1, \"grids\": [{\"id\": 10, \"name\": \"Role Mana"
+        },
+        "GET /api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name": {
+          "status": 200,
+          "bytes": 1185,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Data retrieved successfully\", \"total_pages\": 1, \"page_size\": 1000, \"current_page\": 1, \"count\": 5, \"data\": [{\"id\": 1, \"deleted\": null, \"deleted_by_cascade\":"
+        },
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true": {
+          "status": 200,
+          "bytes": 500,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Data retrieved successfully\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 2, \"data\": [{\"id\": 2, \"deleted\": null, \"deleted_by_cascade\": f"
+        },
+        "GET /api/config-management/list-optimized": {
+          "status": 200,
+          "bytes": 16436,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Settings retrieved successfully\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 12, \"data\": [{\"id\": 13, \"deleted\": null, \"deleted_by_casca"
+        },
+        "GET /api/config-management/list?page_size=25&current_page=1": {
+          "status": 200,
+          "bytes": 1666,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Settings retrieved successfully\", \"result\": {\"data\": [{\"name\": \"Add more packages\", \"id\": 3, \"description\": \"Add more packages\", \"is_active\": false, \"is_se"
+        },
+        "GET /api/departments/?page_size=10000&current_page=1&group__id=4": {
+          "status": 200,
+          "bytes": 61,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total_pages\": 1, \"current_page\": 1, \"count\": 0, \"data\": []}"
+        },
+        "GET /api/devices/devices-management?page_size=25&current_page=1&depth=2": {
+          "status": 200,
+          "bytes": 3781,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Devices fetched successfully\", \"data\": [{\"id\": 33, \"created_on\": \"2025-11-07T02:11:53Z\", \"modified_on\": \"2026-01-14T00:27:43Z\", \"note\": null, \"serial_numbe"
+        },
+        "GET /api/dsm/cameras/address-gap": {
+          "status": 200,
+          "bytes": 114,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 4, \"with_address\": 1, \"without_address\": 3, \"marked_but_blank\": 0, \"coverage\": 0.25, \"measurable\": true}"
+        },
+        "GET /api/dsm/dashboard/frame": {
+          "status": 200,
+          "bytes": 682,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"preset\": \"MANAGER\", \"preset_matched\": true, \"five_states\": [\"data\", \"loading\", \"empty\", \"error\", \"forbidden\"], \"state_counts\": {\"data\": 1, \"loading\": 0, \"empty\": 1, \"error\": 0, \"forbidden\": 0}, \"pan"
+        },
+        "GET /api/dsm/dashboard/link-state": {
+          "status": 200,
+          "bytes": 21,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"status\": \"waiting\"}"
+        },
+        "GET /api/dsm/deliveries?event_id=99554": {
+          "status": 200,
+          "bytes": 30,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"deliveries\": []}"
+        },
+        "GET /api/dsm/deliveries?limit=50": {
+          "status": 200,
+          "bytes": 8035,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 50, \"deliveries\": [{\"delivery_id\": 252, \"event_id\": 4798, \"recipient_id\": 101, \"channel\": \"log\", \"succeeded\": true, \"failure_reason\": null, \"sent_at\": \"2026-09-03T13:17:35.581Z\"}, {\"delivery"
+        },
+        "GET /api/dsm/drill": {
+          "status": 200,
+          "bytes": 150,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"group_id\": 4, \"drill_mode\": false, \"since\": null, \"by\": \"\", \"reason\": \"\", \"last_action\": \"\", \"channel_while_drilling\": \"log\", \"data_source\": \"live\"}"
+        },
+        "GET /api/dsm/drill/report": {
+          "status": 200,
+          "bytes": 217,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"group_id\": 4, \"measurable\": false, \"reason\": \"\\uc774 \\ud14c\\ub10c\\ud2b8\\ub294 \\ud6c8\\ub828 \\ubaa8\\ub4dc\\ub97c \\ud55c \\ubc88\\ub3c4 \\ucf20 \\uc801\\uc774 \\uc5c6\\uc2b5\\ub2c8\\ub2e4.\", \"started_at\": null, "
+        },
+        "GET /api/dsm/events/4805/snapshot": {
+          "status": 503,
+          "bytes": 137,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"\\uc800\\uc7a5\\uc18c \\uc5f0\\uacb0 \\uc548 \\ub428 \\u2014 MinIO \\uac00 \\uc9c0\\uae08 \\uc0ac\\uc6a9 \\ubd88\\uac00 \\uc0c1\\ud0dc\\ub2e4\"}"
+        },
+        "GET /api/dsm/events/99554": {
+          "status": 404,
+          "bytes": 49,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"Not Found: DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/99554/clip": {
+          "status": 404,
+          "bytes": 38,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/99554/field-replies": {
+          "status": 404,
+          "bytes": 77,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"\\uadf8\\ub7f0 \\uc774\\ubca4\\ud2b8\\uac00 \\uc5c6\\uc2b5\\ub2c8\\ub2e4.\"}"
+        },
+        "GET /api/dsm/events/99554/timeline": {
+          "status": 404,
+          "bytes": 49,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"detail\": \"Not Found: DetectionEvent not found\"}"
+        },
+        "GET /api/dsm/events/queue?limit=200": {
+          "status": 200,
+          "bytes": 3945,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"now\": \"2026-09-07T11:58:47.520Z\", \"total_events\": 22, \"card_total\": 6, \"sample_capped\": false, \"window_seconds\": 300, \"tier_thresholds_sec\": [30, 120, 300, 480], \"focus\": {\"event_id\": 4805, \"event_t"
+        },
+        "GET /api/dsm/events/summary?hours=12": {
+          "status": 200,
+          "bytes": 284,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"hours\": 12, \"since\": \"2026-09-06T23:58:47.598Z\", \"until\": \"2026-09-07T11:58:47.598Z\", \"unhandled\": 0, \"unhandled_capped\": false, \"unhandled_cap\": 500, \"false_positive\": 0, \"reviewed\": 0, \"unreviewed"
+        },
+        "GET /api/dsm/events?limit=10": {
+          "status": 200,
+          "bytes": 4146,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 10, \"events\": [{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T13:14:31.580Z\", \"last_seen_at\": null"
+        },
+        "GET /api/dsm/events?limit=200": {
+          "status": 200,
+          "bytes": 8963,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 22, \"events\": [{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T13:14:31.580Z\", \"last_seen_at\": null"
+        },
+        "GET /api/dsm/events?limit=50&event_type=camera_down,storage_high": {
+          "status": 200,
+          "bytes": 731,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 2, \"events\": [{\"event_id\": 4818, \"event_type\": \"camera_down\", \"severity\": \"warning\", \"status\": \"new\", \"verdict\": null, \"occurred_at\": \"2026-09-03T12:14:31.580Z\", \"last_seen_at\": null, \"strea"
+        },
+        "GET /api/dsm/events?limit=50&mine=true": {
+          "status": 200,
+          "bytes": 26,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"events\": []}"
+        },
+        "GET /api/dsm/events?limit=50&response_state=occurred": {
+          "status": 200,
+          "bytes": 1940,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total\": 5, \"events\": [{\"event_id\": 4803, \"event_type\": \"flood\", \"severity\": \"critical\", \"status\": \"new\", \"verdict\": null, \"occurred_at\": \"2026-09-03T12:59:31.580Z\", \"last_seen_at\": null, \"stream_mon"
+        },
+        "GET /api/dsm/events?limit=50&since=2026-09-06T21:52:42.428Z&until=2026-09-07T09:52:42.428Z": {
+          "status": 200,
+          "bytes": 26,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"total\": 0, \"events\": []}"
+        },
+        "GET /api/flight-log/flight-log/?page_size=25&current_page=1": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/media-data/?page_size=25&current_page=1": {
+          "status": 503,
+          "bytes": 89,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": false, \"status\": 503, \"message\": \"Failed to retrieve media list\", \"data\": []}"
+        },
+        "GET /api/media-data?page_size=25&current_page=1": {
+          "status": 503,
+          "bytes": 89,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"success\": false, \"status\": 503, \"message\": \"Failed to retrieve media list\", \"data\": []}"
+        },
+        "GET /api/menu/menus?page_size=10000": {
+          "status": 200,
+          "bytes": 38919,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Successfully retrieved menus.\", \"total_pages\": 1, \"page_size\": 10000, \"current_page\": 1, \"count\": 19, \"menus\": [{\"id\": 138, \"menu_name\": \"\\ud6c8\\ub828 \\uba"
+        },
+        "GET /api/menu/menus?page_size=25&current_page=1": {
+          "status": 200,
+          "bytes": 38916,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Successfully retrieved menus.\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 19, \"menus\": [{\"id\": 138, \"menu_name\": \"\\ud6c8\\ub828 \\ubaa8\\"
+        },
+        "GET /api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation": {
+          "status": 200,
+          "bytes": 11270,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "[{\"name\": \"deliveryoperation\", \"field_type\": null, \"label\": \"Delivery Operation\", \"is_required\": null, \"fields\": [{\"name\": \"id\", \"field_type\": \"number\", \"label\": \"Id\", \"is_required\": false, \"fields\": "
+        },
+        "GET /api/roles/?page_size=25&current_page=1": {
+          "status": 200,
+          "bytes": 6377,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Roles retrieved successfully\", \"total_pages\": 1, \"page_size\": 25, \"current_page\": 1, \"count\": 15, \"roles\": [{\"id\": 3, \"deleted\": null, \"deleted_by_cascade\""
+        },
+        "GET /api/stream-monitors/stream-monitors": {
+          "status": 200,
+          "bytes": 2057,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Stream monitors fetched successfully.\", \"data\": [{\"drone\": 27, \"is_visualize\": true, \"is_active\": true, \"drone_id\": 27, \"created_by_id\": null, \"group_id\": "
+        },
+        "GET /api/stream-monitors/stream-monitors/ai-models": {
+          "status": 200,
+          "bytes": 1673,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"AI models retrieved successfully.\", \"data\": [{\"id\": 7, \"created_on\": \"2025-11-07T10:40:35Z\", \"name\": \"Fire Smoke\", \"description\": \"AI model for detecting f"
+        },
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-06T17:00:00%2B00:00&end_date=2026-09-07T16:59:59%2B00:00&limit=100&page=1&page_size=5": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-05T17:00:00%2B00:00&end_date=2026-09-12T16:59:59%2B00:00": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-07": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/drone-status-overview": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/today-profiles-polygon": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/surveillance/surveillance-dashboard/weather-setting": {
+          "status": 403,
+          "bytes": 328,
+          "has_rows": false,
+          "envelope_denial": true,
+          "head": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0"
+        },
+        "GET /api/user-groups/?page_size=10000&current_page=1": {
+          "status": 200,
+          "bytes": 823,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"total_pages\": 1, \"current_page\": 1, \"count\": 1, \"data\": [{\"settings\": {\"payment\": {\"active\": false}, \"use_map\": {\"select_map\": {\"kakao_map\": true, \"google_map\": false}, \"country_code\": \"KR\"}, \"send_"
+        },
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false": {
+          "status": 200,
+          "bytes": 2031,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Group settings schema generated successfully\", \"schema\": {\"$schema\": \"http://json-schema.org/schema#\", \"type\": \"object\", \"properties\": {\"payment\": {\"type\":"
+        },
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true": {
+          "status": 200,
+          "bytes": 407,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"Group settings schema generated successfully\", \"schema\": {\"payment\": {\"active\": false}, \"use_map\": {\"select_map\": {\"kakao_map\": true, \"google_map\": false},"
+        },
+        "GET /api/v1/user/get-user-detail/115": {
+          "status": 200,
+          "bytes": 5487,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"success\": true, \"status\": 200, \"message\": \"User details retrieved\", \"user\": {\"id\": 115, \"username\": \"gxseed_u5_sysop\", \"email\": \"gxseed_u5_sysop@seed.invalid\", \"first_name\": \"[\\uc2dc\\ub4dc] U5 \\uc2d"
+        },
+        "POST /api/proxy/notam": {
+          "status": 502,
+          "bytes": 74,
+          "has_rows": false,
+          "envelope_denial": false,
+          "head": "{\"error\": \"Upstream API error: Expecting value: line 4 column 1 (char 6)\"}"
+        },
+        "GET /api/v1/access/role-pending": {
+          "status": 200,
+          "bytes": 442,
+          "has_rows": true,
+          "envelope_denial": false,
+          "head": "{\"state\": \"has_roles\", \"message\": \"\\uc5ed\\ud560\\uc774 \\ubd80\\uc5ec\\ub418\\uc5b4 \\uc788\\uc2b5\\ub2c8\\ub2e4.\", \"user\": {\"username\": \"gxseed_u5_sysop\", \"display_name\": \"[\\uc2dc\\ub4dc] U5 \\uc2dc\\uc2a4\\ud15c"
+        }
+      },
+      "session_evictions": 0
+    }
+  }
+}

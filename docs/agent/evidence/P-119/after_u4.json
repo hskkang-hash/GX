@@ -1,0 +1,3429 @@
+{
+  "decision": "P-119 · SEC-20",
+  "probe_mode": "live-router-authenticated-stub",
+  "denominator": {
+    "source": "live-router",
+    "write_method_rows": 377,
+    "write_methods": [
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE"
+    ]
+  },
+  "measured_at": "2026-09-10T08:20:35+00:00",
+  "users": [
+    {
+      "user": "gxseed_u4_official",
+      "user_id": 109,
+      "roles": [
+        "view_only_-_anyang"
+      ],
+      "is_staff": false,
+      "is_superuser": false,
+      "totals": {
+        "routes": 377,
+        "blocked": 367,
+        "allowed": 10
+      },
+      "blocked_codes": {
+        "read_only_role": 367
+      },
+      "routes": [
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/advanced-table/column-order"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/advanced-table/column-settings"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/advanced-table/column-settings/default"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/advanced-table/column-settings/page-size"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/advanced-table/column-settings/reset"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/advanced-table/column-settings/user-default"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/advanced-table/grid-management"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/advanced-table/grid-management/{grid_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/advanced-table/grid-management/{grid_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/advanced-table/search-conditions"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/advanced-table/search-conditions"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/advanced-table/search-conditions/user"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/advanced-table/search-conditions/user"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/advanced-table/translations/sync"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/apikey/bulk-deactivate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/apikey/keys"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/apikey/keys/{api_key_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PATCH",
+          "path": "/api/apikey/keys/{api_key_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/apikey/keys/{api_key_id}/regenerate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/apikey/keys/{user_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/checklist-setting"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/checklist-setting/categories"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/checklist-setting/categories/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/checklist-setting/delete/{ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/checklist-setting/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/checklist-setting/{id}/activate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/comment"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/config-management/create"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/config-management/delete"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/config-management/update"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/config-management/update-settings"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/config-management/upload-file"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dashboard/dashboard/refresh"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dashboard/dashboard/refresh-default"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dashboard/dashboard/weather-setting"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/cancelled/cancel-order/{operation_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/completed/arrived-order/{operation_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/completed/complete-order/{operation_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/completed/complete-orders"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/drone-monitoring/drone-status"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/etri-integration/receive-from-etri"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/etri-integration/send-to-etri/{operation_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/etri-mock/receive-delivery"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/etri-mock/send-status-update"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/order-confirmation/{package_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/processing/approve-flight"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/processing/assign-packages-to-drone"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/processing/assign-packages-to-drones"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/processing/cancel-awaiting-order"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/processing/cancel-flight"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/processing/change-drone"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/processing/start-mission-to-gcs"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/processing/update-delivery-event"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/delivery/processing/update-drone/{operation_item_id}/{drone_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/delivery/processing/update-is-arrived/{operation_item_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/delivery/processing/update-is-delivered/{operation_item_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/delivery/processing/update-route/{operation_id}/{route_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/delivery/processing/update-status/{operation_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/processing/upload-mission-to-gcs"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/returned/execute-pending-timeout"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/returned/execute-processed"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/returned/execute-returned"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/verification/cancel-order/{operation_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/delivery/verification/verify-orders"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/departments"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/departments/delete/{department_ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/departments/{department_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/battery-types"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/battery-types/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/battery-types/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/cameras"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/cameras/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/cameras/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/cameras/{id}/activate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/cameras/{id}/change-status"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/cameras/{id}/deactivate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/devices-management"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/devices-management/common/add-to-groups"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/devices-management/delete/{ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/devices-management/{ids}/activate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/devices-management/{ids}/change-status"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/devices-management/{ids}/deactivate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/devices-management/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/devices-management/{id}/active"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/devices-management/{id}/detach-file/{file_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/gnss-systems"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/gnss-systems/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/gnss-systems/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/image-stabilizations"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/image-stabilizations/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/image-stabilizations/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/imus"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/imus/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/imus/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/libraries-management"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/libraries-management/libraries/{ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/libraries-management/{ids}/change-status"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/libraries-management/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/libraries-management/{id}/detach-file/{file_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/motor-types"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/motor-types/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/motor-types/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/packaging-specifications"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/packaging-specifications/{ids}/activate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/packaging-specifications/{ids}/change-active"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/packaging-specifications/{ids}/change-status"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/packaging-specifications/{ids}/deactivate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/packaging-specifications/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/packaging-specifications/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/devices/protocols"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/devices/protocols/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/devices/protocols/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dronehw/drone-communication-management/change-status"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/cameras/import"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/drill"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/events/{int:event_id}/field-reply"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/events/{int:event_id}/notify"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/events/{int:event_id}/response"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/events/{int:event_id}/review"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/law/privacy-requests"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/law/privacy-requests/{receipt_no}/reply"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/law/purge"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/law/retention/sweep"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/settings/api-keys"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/dsm/settings/api-keys/{int:key_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/settings/api-keys/{int:key_id}/rotate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/settings/grade-rules"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/settings/thresholds"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/settings/zones"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/dsm/webhook-subscriptions"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/dsm/webhook-subscriptions/{int:subscription_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/file/upload-file"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/flight-log/flight-log/delete/{ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/handover/handover/content"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/content"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/content/contents"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/content/handover-duty-detail"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/handover/handover/management"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/management"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/management/download-management"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/handover/handover/notice"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/notice"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/handover/handover/notice-comment"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/notice-comment"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/notice/download-completed-notice"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/notice/download-notice"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/notice/notice-process"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/notice/notice-restore"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/handover/handover/shift"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/shift"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/handover/handover/shift"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/handover/handover/shift/work-shift-config"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/levels"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/levels/delete/{level_ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/levels/{level_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/logger/{log_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/media-data/detect"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/media-data/detect-callback"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/media-data/download"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/media-data/preview"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/media-data/upload-detection"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/menu/menu-role-management"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/menu/menus"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/menu/menus/{menu_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/menu/menus/{menu_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/menu/menus/{menu_id}/role-permissions"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/menu/menus/{menu_id}/role-permissions/{role_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/menu/tabs"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/menu/tabs/{tab_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/menu/tabs/{tab_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/menu/tabs/{tab_id}/role-permissions"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/menu/tabs/{tab_id}/role-permissions/{role_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/operation-settings/menu-integration/create-defaults/{menu_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/operation-settings/operation-settings"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/operation-settings/operation-settings/{setting_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/operation-settings/operation-settings/{setting_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-log-drone"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-log-robot"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-video-drone"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/operational-data/operational-data/{order_item_id}/upload-operational-video-robot"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/operational-data/operational-notice"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/operational-data/operational-notice/change-status/{notice_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/operational-data/operational-notice/delete/{notice_ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/operational-data/operational-notice/{notice_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/optimization/optimization/trigger-cache-warming"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/optimization/optimization/trigger-computation"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/orders/external-order-statuses"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/orders/external-order-statuses/external-order-statuses/{external_status_ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/orders/external-order-statuses/{external_status_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/orders/order"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/orders/order-status-mappings"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/orders/order-status-mappings/delete/{group_ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/orders/order-status-mappings/update/{group_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/orders/order/settings/allow-order-in-bad-weather"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/orders/order/{id}/cancel-order"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/orders/order/{id}/change-status"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/orders/order/{id}/payment"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/orders/order/{id}/refund"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/orders/order/{id}/return-order"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/partner/api/partners"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/partner/api/partners/delete/{partner_ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/partner/api/partners/refresh-token/{partner_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/partner/api/partners/{partner_id}/api-callbacks"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/partner/api/partners/{partner_id}/api-key"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/partner/api/partners/{partner_id}/regenerate-api-key"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/partner/api/partners/{partner_id}/revoke-refresh-token"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/partner/api/partners/{partner_id}/toggle-status"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/partner/partner-callback-mockup/delivery-status-callback"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/partner/partner-callback-mockup/drone-base-station-callback"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/partner/partner-callback-mockup/drone-user-notice-callback"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/positions"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/positions/delete/{position_ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/positions/{position_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/print-format/print-formats"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/print-format/print-formats/print-formats/{print_format_id}/print"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/print-format/print-formats/{print_format_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/print-format/print-formats/{print_format_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/rating"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/report-template"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/report-template/delete/{ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/report-template/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/roles"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/roles/menu-permissions/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/roles/users-to-role/{role_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/roles/{role_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/roles/{role_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/setting/add"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/setting/edit/{setting_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/source/save-html"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/drawing/elements"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/stream-monitors/drawing/elements/{element_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/stream-monitors/drawing/elements/{element_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/drawing/sessions"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/stream-monitors/drawing/sessions/{session_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/stream-monitors/drawing/sessions/{session_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/drawing/sessions/{session_id}/clear"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/drawing/sessions/{session_id}/join"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/drawing/sessions/{session_id}/leave"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/stream-monitors"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/stream-monitors/capture"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/stream-monitors/external-stream-monitors"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/stream-monitors/stream-monitors/external-stream-monitors"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/stream-monitors/stream-monitors/external-stream-monitors/{stream_monitor_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/stream-monitors/pause-record"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/stream-monitors/resume-record"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/stream-monitors/start-ai-dual-stream"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/stream-monitors/start-record"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/stream-monitors/stop-ai-dual-stream"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/stream-monitors/stop-record"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/stream-monitors/{drone_uid}/start-recording"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/stream-monitors/stream-monitors/{drone_uid}/stop-recording"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/surveillance-profiles"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/surveillance-profiles/drone/mark-flight-time"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/approve"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/cancel"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/cancel-profile"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/change-drone"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/check-complete"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/completed-profile"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/download-analysis-for-profile"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/reject"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/scheduled-activation"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/stop-repeat"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/tasks"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/surveillance/surveillance-profiles/{profile_id}/tasks/{task_type}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions/activate/{ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions/deactivate/{ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions/export/{mission_ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions/mission/drone-division/{survey_mission_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions/mission/duplicate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions/mission/import-plan"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions/mission/import-routes"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions/mission/import-routes-simple"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions/mission/review-mission"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/surveillance/survey-missions/mission/{survey_mission_ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/surveillance/survey-missions/{survey_mission_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions/{survey_mission_id}/approve"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/surveillance/survey-missions/{survey_mission_id}/reject"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/teams"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/teams/delete/{team_ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/teams/{team_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/terminals/days-of-week"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/terminals/days-of-week/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/days-of-week/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/terminals/delivery-hubs"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/delivery-hubs/{ids}/activate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/delivery-hubs/{ids}/deactivate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/delivery-hubs/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/terminals/docking-stations"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/docking-stations/{ids}/activate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/docking-stations/{ids}/deactivate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/docking-stations/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/terminals/functions/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/terminals/infrastructures"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/infrastructures/{ids}/activate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/infrastructures/{ids}/deactivate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/infrastructures/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/terminals/qground-control/export-plan"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/terminals/qground-control/import-plan"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/terminals/qground-control/import-plans"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/terminals/routes"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/terminals/routes/delete/{ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/routes/{ids}/activate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/routes/{ids}/change-status"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/routes/{ids}/deactivate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/routes/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/terminals/terminal-types"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/terminal-types/{ids}/change-status"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/terminals/terminal-types/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/terminal-types/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/terminals/terminals"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/terminals/terminals/delete/{ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/terminals/{ids}/activate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/terminals/{ids}/deactivate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/terminals/terminals/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/DroneBaseStation"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/DroneUserNotice"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/api-key-management/bulk-deactivate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/api-key-management/keys"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/third-api/api-key-management/keys/{api_key_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PATCH",
+          "path": "/api/third-api/api-key-management/keys/{api_key_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/api-key-management/keys/{api_key_id}/regenerate"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/api-key-management/keys/{user_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/api/orders/order"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/api/orders/order/cancel"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/api/orders/order/drone-location"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/api/route/status"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/callback"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/delivery/confirmation/{operation_id}/photo"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/third-party-integration/create-order"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/third-api/third-party-integration/save-shipping-result-data"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/token/pair"
+        },
+        {
+          "status": 400,
+          "reached": false,
+          "code": "invalid",
+          "verdict": "allowed",
+          "body": "",
+          "method": "POST",
+          "path": "/api/token/refresh"
+        },
+        {
+          "status": 400,
+          "reached": false,
+          "code": "invalid",
+          "verdict": "allowed",
+          "body": "",
+          "method": "POST",
+          "path": "/api/token/verify"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/topic"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/topic/following/{topic_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/topic/following/{topic_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/user-groups"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/user-groups/delete/{group_ids}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/user-groups/refresh-cache"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/user-groups/refresh-user-cache/{user_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/user-groups/update-settings"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/user-groups/update-settings-direct"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/user-groups/update/{group_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/user-groups/validate-user-cache/{user_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/user-profiles"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/user-profiles/delete/{profile_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/user-profiles/{profile_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/v1/auth/account"
+        },
+        {
+          "status": 401,
+          "reached": false,
+          "code": "",
+          "verdict": "allowed",
+          "body": "",
+          "method": "POST",
+          "path": "/api/v1/auth/change-password"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/auth/create-language"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/v1/auth/delete-language/{ids}"
+        },
+        {
+          "status": 422,
+          "reached": false,
+          "code": "",
+          "verdict": "allowed",
+          "body": "",
+          "method": "POST",
+          "path": "/api/v1/auth/delete-session"
+        },
+        {
+          "status": 401,
+          "reached": false,
+          "code": "",
+          "verdict": "allowed",
+          "body": "",
+          "method": "POST",
+          "path": "/api/v1/auth/end-session"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/auth/forgot-password"
+        },
+        {
+          "status": 422,
+          "reached": false,
+          "code": "",
+          "verdict": "allowed",
+          "body": "",
+          "method": "POST",
+          "path": "/api/v1/auth/login"
+        },
+        {
+          "status": 500,
+          "reached": true,
+          "code": "",
+          "verdict": "allowed",
+          "body": "",
+          "method": "POST",
+          "path": "/api/v1/auth/logout"
+        },
+        {
+          "status": 401,
+          "reached": false,
+          "code": "",
+          "verdict": "allowed",
+          "body": "",
+          "method": "POST",
+          "path": "/api/v1/auth/otp/reset"
+        },
+        {
+          "status": 422,
+          "reached": false,
+          "code": "",
+          "verdict": "allowed",
+          "body": "",
+          "method": "POST",
+          "path": "/api/v1/auth/otp/verify"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/v1/auth/profile"
+        },
+        {
+          "status": 422,
+          "reached": false,
+          "code": "",
+          "verdict": "allowed",
+          "body": "",
+          "method": "POST",
+          "path": "/api/v1/auth/refresh-token"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/auth/register"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/auth/reset-password"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/auth/reset-password-for-user"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "PUT",
+          "path": "/api/v1/auth/update-language/{id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/otp/verify"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/user/activate-user"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/user/create-user"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/user/deactivate-user"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "DELETE",
+          "path": "/api/v1/user/delete-user/{user_id}"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/user/notification-channels/subscribe"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/user/reject-user"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/user/settings/update"
+        },
+        {
+          "status": 403,
+          "reached": false,
+          "code": "read_only_role",
+          "verdict": "blocked",
+          "body": "{\"success\": false, \"status_code\": 403, \"code\": \"read_only_role\", \"detail\": \"Forbidden\", \"message\": {\"ko\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\uacc4\\uc815\\uc785\\ub2c8\\ub2e4 \\u2014 \\uc774 \\uc791\\uc5c5\\uc740 \\uc",
+          "method": "POST",
+          "path": "/api/v1/user/update-user/{user_id}/{profile}"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "tag": "after",
+  "at": "2026-09-10T08:39:20",
+  "web": "http://localhost:3002",
+  "user": "gxseed_u2_manager",
+  "presets": {
+    "all": {
+      "rows": 22,
+      "closed": 9
+    },
+    "unhandled": {
+      "rows": 2,
+      "closed": 0
+    },
+    "recent": {
+      "rows": 0,
+      "closed": 0
+    },
+    "mine": {
+      "rows": 0,
+      "closed": 0
+    },
+    "system": {
+      "rows": 2,
+      "closed": 0
+    }
+  },
+  "walk": {
+    "window_typed": {
+      "since": "2026-09-03 13:04",
+      "until": "2026-09-03 13:24"
+    },
+    "window_in_url": "http://localhost:3002/dsm/events?preset=all&period=custom&since=2026-09-03T13%3A04%3A00.000Z&until=2026-09-03T13%3A24%3A00.000Z",
+    "rows_in_window": 4,
+    "row_found": true,
+    "rows_text": [
+      "■ 심각\t화재\t시드 카메라 (검수용)\t조치 중\t실제\t13:14 · 6일 전",
+      "■ 심각\t화재\t시드 카메라 (검수용)\t조치 중\t실제\t13:11 · 6일 전",
+      "■ 심각\t화재\t시드 카메라 (검수용)\t조치 중\t실제\t13:08 · 6일 전",
+      "■ 심각\t화재\t시드 카메라 (검수용)\t종결\t실제\t13:05 · 6일 전"
+    ],
+    "event_id": "4798",
+    "detail_shows_time": true,
+    "seconds": 12.71,
+    "steps": [
+      {
+        "step": "전체 보기",
+        "t": 1.27
+      },
+      {
+        "step": "기간 직접 입력 (2026-09-03 13:04 ~ 2026-09-03 13:24)",
+        "t": 8.61
+      },
+      {
+        "step": "사건 하나를 열었다",
+        "t": 12.7
+      }
+    ]
+  },
+  "closed_reachable_distinct": 9
+}

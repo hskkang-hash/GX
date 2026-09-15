@@ -464,6 +464,111 @@ def _norm(s: str) -> str:
     return s
 
 
+# ---------------------------------------------------------------------------
+# P-93 / P-104 — **판정기가 읽는 자리는 앱이 쓰는 자리여야 한다**
+# ---------------------------------------------------------------------------
+#: 살아 있는 라우터 실측 하한. 2026-09-07T14:42 · 컨테이너 `gx-shell` 에서
+#: `_iter_ninja_apis()` 전수 열거로 **705 오퍼레이션 · 578 경로**를 셌다.
+#: 이보다 적게 세면 그것은 「라우트가 줄었다」가 아니라 **열거기나 사진이 낡았다**이다.
+#: 수를 낮추려면 그 자리에서 다시 재고 사유를 함께 적어라 — 조용히 낮추면
+#: 「못 본 경로」가 다시 초록 뒤에 숨는다 (D-301).
+ROUTE_OPS_FLOOR = 705
+ROUTE_PATH_FLOOR = 578
+
+#: ★ 2026-08-22 · 531경로짜리 **폐기된 사진**. 여기를 다시 읽는 코드가 생기지 않도록
+#:   이름을 남겨 둔다 — 이 판정기는 이 파일을 **읽지 않는다**(읽으면 위반으로 낸다).
+DEPRECATED_ROUTE_SNAPSHOT = ROOT / "docs" / "agent" / "evidence" / "W0-14" / "openapi_routes.json"
+LIVE_ROUTE_INVENTORY = ROOT / "docs" / "agent" / "evidence" / "D-343" / "route_inventory.json"
+
+
+def _live_router_paths() -> tuple[list[str], str] | None:
+    """**살아 있는 라우터**에서 직접 열거한다 (Django 가 서는 자리에서만).
+
+    ★ P-93 — *판정기가 읽는 근거는 앱이 쓰는 근거여야 한다.*
+      이 판정기는 pre-commit(호스트, Django 없음)에서도 돌아야 하므로 여기서
+      실패해도 멈추지 않는다. 대신 **살아 있는 실측본**(아래)으로 떨어지고,
+      떨어진 사실과 그 실측본의 시각을 출력에 적는다.
+
+    돌려주는 것은 (경로 목록, 어디서 왔는지) 이고, 못 서면 None 이다.
+    """
+    if os.environ.get("GX_SCOPE_NO_LIVE_ROUTER"):
+        return None                     # 시험용 탈출구 — 기본값은 언제나 「살아 있는 쪽부터」
+    #: ⚠ `DJANGO_SETTINGS_MODULE` 가 **이미 서 있을 때만** 앱을 세운다. 호스트에서
+    #:   설정 이름을 우리가 지어 넣으면 반쯤 선 Django 가 남고, 그 반쪽이 아래
+    #:   `common.tenant_tripwire` 판정에 조용히 섞인다. 살아 있는 라우터를 보는
+    #:   자리는 컨테이너이고, 그 자리는 이 변수를 언제나 준다.
+    if not os.environ.get("DJANGO_SETTINGS_MODULE"):
+        return None
+    try:
+        import django                                    # noqa: PLC0415
+        django.setup()
+        from common.tenant_scope import _iter_ninja_apis, _join   # noqa: PLC0415
+    except Exception:                                    # noqa: BLE001
+        return None                                      # 호스트에는 앱이 없다 — 정상이다
+    try:
+        paths: list[str] = []
+        for mount, api in _iter_ninja_apis():
+            for prefix, router in getattr(api, "_routers", []) or []:
+                for op_path, pv in getattr(router, "path_operations", {}).items():
+                    for op in pv.operations:
+                        for _m in op.methods:
+                            paths.append(_join(mount, prefix, op_path))
+    except Exception as exc:                             # noqa: BLE001
+        return None if not paths else (paths, f"살아 있는 라우터(부분 열거 — {exc})")
+    if not paths:
+        return None
+    return paths, "살아 있는 라우터 직접 열거 (_iter_ninja_apis)"
+
+
+def _route_paths() -> tuple[list[str], str, str, list[str]]:
+    """라우트 목록을 **살아 있는 자리에서** 가져온다. (경로들, 출처, 잰 때, 위반)."""
+    problems: list[str] = []
+    live = _live_router_paths()
+
+    inv_paths: list[str] = []
+    inv_stamp = "시각 미기재"
+    if LIVE_ROUTE_INVENTORY.is_file():
+        import json as _json                             # noqa: PLC0415
+        _raw = _json.loads(LIVE_ROUTE_INVENTORY.read_text(encoding="utf-8"))
+        _rows = _raw.get("routes") or _raw.get("items") or []
+        inv_paths = [p for p in
+                     (r if isinstance(r, str) else (r.get("path") or "") for r in _rows) if p]
+        inv_stamp = _raw.get("measured_at") or _raw.get("generated_at") or "시각 미기재"
+
+    if live is not None:
+        paths, why = live
+        #: 살아 있는 라우터와 실측본이 갈리면 **실측본이 낡은 것**이다. 조용히 넘기면
+        #: 다음 사람이 낡은 사진을 근거로 초록을 낸다 — 이 게이트가 태어난 이유 그대로다.
+        if inv_paths and len(inv_paths) < len(paths):
+            problems.append(
+                f"라우트 실측본이 낡았다: D-343/route_inventory.json 은 {len(inv_paths)}건 "
+                f"(잰 때 {inv_stamp}) 인데 살아 있는 라우터는 {len(paths)}건이다 — "
+                f"`docker exec gx-shell python /repo/scripts/probe_route_inventory.py "
+                f"/docs/agent/evidence/D-343/route_inventory.json` 로 다시 재라 (P-93)")
+        return paths, why, "지금 (살아 있는 라우터)", problems
+
+    if not inv_paths:
+        #: ★ 여기서 **옛 사진으로 떨어지지 않는다.** 폐기된 사진으로 낸 초록이
+        #:   두 달 동안 초록으로 보였다(P-104). 못 읽었으면 통과가 아니라 실패다.
+        problems.append(
+            f"살아 있는 라우트 실측본이 없다: "
+            f"{LIVE_ROUTE_INVENTORY.relative_to(ROOT).as_posix()} — "
+            f"폐기된 옛 사진("
+            f"{DEPRECATED_ROUTE_SNAPSHOT.relative_to(ROOT).as_posix()} · 2026-08-22 · 531경로)"
+            f"으로 **떨어지지 않는다.** 컨테이너에서 다시 재라 (P-93 · P-104)")
+        return [], "없음", "못 쟀다", problems
+
+    #: 사진을 읽는 자리에는 **바닥**을 둔다. 사진이 줄면 그것은 라우트가 줄어서가
+    #: 아니라 사진이 낡아서다 — 0건 위의 「위반 0」은 초록이 아니다 (D-301).
+    if len(inv_paths) < ROUTE_OPS_FLOOR:
+        problems.append(
+            f"라우트 실측본이 {len(inv_paths)}건이다 — 실측 하한 {ROUTE_OPS_FLOOR}건"
+            f"(2026-09-07 살아 있는 라우터 전수)보다 적다. 사진이 낡았거나 열거기가 "
+            f"고장 났다. 적은 수로 낸 「라우트가 안 생겼다」는 판정이 아니다 (D-301)")
+    return (inv_paths, "D-343/route_inventory.json (살아 있는 실측본 — 라우터가 쓴 것)",
+            inv_stamp, problems)
+
+
 def scan_no_route_models() -> list[str]:
     """`no_route` 로 등재된 모델에 **라우트가 생겼는지** 본다 (D-272).
 
@@ -474,28 +579,22 @@ def scan_no_route_models() -> list[str]:
     그 사실은 조용히 거짓이 되고, 아무도 그 모델을 다시 보지 않는다 —
     인구조사가 행 0 인 모델 25종을 못 보던 것과 같은 모양이다.
 
-    Django 없이 판정한다: 커밋된 인구조사(`tenant_census.py`)와
-    라우트 실측본(`openapi_routes.json`)만 읽는다. pre-commit 에서 돌아야 하기 때문이다.
+    ★ [실측 2026-09-07 · 턴 K · P-104] **이 칸은 거짓 초록이었다.**
+      여기가 읽던 `W0-14/openapi_routes.json` 은 **2026-08-22 · 531경로**다.
+      살아 있는 라우터는 같은 날 **705 오퍼레이션 · 578 경로** — 즉 이 칸은
+      **새로 난 경로를 한 개도 안 보고** 「라우트가 안 생겼다」를 냈다.
+      D-272 가 이 칸을 만든 이유가 「라우트 하나가 추가되면 no_route 는 조용히
+      거짓이 된다」인데, **그 추가를 못 보는 사진**을 들고 있었다.
+
+      → P-93: **판정기가 읽는 자리는 앱이 쓰는 자리여야 한다.**
+        ① 살아 있는 라우터(컨테이너에서 돌 때) ② 라우터가 쓴 실측본(호스트)
+        ③ **옛 사진으로는 떨어지지 않는다** — 못 읽었으면 통과가 아니라 실패다.
     """
     import ast as _ast
 
     census = ROOT / "backend" / "tests" / "tenant_census.py"
-    #: ★ [실측 2026-09-07 · 턴 J · 차선 Q 가 잡음] **이 칸은 거짓 초록이었다.**
-    #:   여기가 읽던 `W0-14/openapi_routes.json` 은 **2026-08-22 · 531라우트**다.
-    #:   살아 있는 실측본(`D-343/route_inventory.json`)은 같은 날 **705라우트** —
-    #:   즉 이 칸은 **99경로를 한 개도 안 보고** 「라우트가 안 생겼다」를 냈다.
-    #:   D-272 가 이 칸을 만든 이유가 「라우트 하나가 추가되면 no_route 는 조용히
-    #:   거짓이 된다」인데, **그 추가를 못 보는 사진**을 들고 있었다.
-    #:   → 살아 있는 인벤토리를 **먼저** 보고, 없을 때만 옛 사진으로 떨어진다.
-    #:     그리고 어느 쪽을 봤는지·언제 것인지를 **출력에 적는다**(D-301).
-    routes = ROOT / "docs" / "agent" / "evidence" / "D-343" / "route_inventory.json"
-    routes_why = "D-343/route_inventory.json (살아 있는 실측본)"
-    if not routes.is_file():
-        routes = ROOT / "docs" / "agent" / "evidence" / "W0-14" / "openapi_routes.json"
-        routes_why = "W0-14/openapi_routes.json (**옛 사진** — 살아 있는 실측본이 없다)"
-    if not census.is_file() or not routes.is_file():
-        return [f"인구조사·라우트 실측본을 못 찾았다 ({census.name} · {routes.name}) — "
-                f"못 읽은 채 통과시키지 않는다"]
+    if not census.is_file():
+        return [f"인구조사를 못 찾았다 ({census.name}) — 못 읽은 채 통과시키지 않는다"]
 
     tree = _ast.parse(census.read_text(encoding="utf-8"))
     table = None
@@ -511,16 +610,11 @@ def scan_no_route_models() -> list[str]:
     if table is None:
         return ["tenant_census.CENSUS 를 읽지 못했다 — 형태가 바뀌었다면 게이트도 함께 고쳐라"]
 
-    import json as _json
-    #: 두 사진은 모양이 다르다. `W0-14` 는 경로 문자열의 목록이고,
-    #: `D-343` 은 라우트 객체의 목록이다(`{"method":…, "path":…}`). 둘 다 받는다 —
-    #: 모양을 하나로 맞추려고 살아 있는 쪽을 버리면 그것이 거짓 초록의 뿌리다.
-    _raw = _json.loads(routes.read_text(encoding="utf-8"))
-    _rows = _raw.get("routes") or _raw.get("items") or []
-    paths = [r if isinstance(r, str) else (r.get("path") or "") for r in _rows]
-    paths = [p for p in paths if p]
-    _stamp = _raw.get("measured_at") or _raw.get("generated_at") or "시각 미기재"
-    problems = []
+    paths, routes_why, _stamp, problems = _route_paths()
+    if not paths:
+        #: 라우트를 한 건도 못 셌다. **0건 위의 「위반 0」은 초록이 아니다** (D-301).
+        print(f"[SCOPE] no_route 대조 **못 했다** — 라우트 0건 · 출처 {routes_why}")
+        return problems
     n = 0
     for label, entry in table.items():
         if entry[1] != "no_route":
@@ -536,8 +630,8 @@ def scan_no_route_models() -> list[str]:
                 break
     #: ★ **무엇을 몇 건 보고 한 말인지 적는다**(D-301). 이 줄이 없어서
     #:   531라우트짜리 옛 사진으로 낸 초록이 두 달 동안 초록으로 보였다.
-    print(f"[SCOPE] no_route 등재 {n}종 — 라우트 {len(paths)}건과 대조 (D-272) · "
-          f"실측본 {routes_why} · 잰 때 {_stamp}")
+    print(f"[SCOPE] no_route 등재 {n}종 — 라우트 {len(paths)}건(고유 {len(set(paths))}경로)과 "
+          f"대조 (D-272) · 출처 {routes_why} · 잰 때 {_stamp}")
     return problems
 
 
@@ -617,4 +711,16 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header, file_stamp  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
+        as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
+        #: ★ 출생 표본 ① 이 바로 이 게이트다 — 8월 사진(531)을 읽으며 초록이었다.
+        #:   지금은 살아 있는 라우터를 순회하고, 그 사진은 **하한 대조로만** 쓴다.
+        #:   그래서 사진의 날짜를 여기 그대로 적는다 — 날짜 없는 사진은 다시 그 사고다.
+        source=("살아 있는 라우터 (gx-shell 안 django-ninja 레지스트리를 순회한다 · "
+                "ROUTE_OPS_FLOOR=%d 아래면 회색) · 하한 대조로만 쓰는 옛 사진: %s"
+                % (ROUTE_OPS_FLOOR, file_stamp(DEPRECATED_ROUTE_SNAPSHOT))),
+    )
     raise SystemExit(main())

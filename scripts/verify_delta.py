@@ -753,4 +753,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header, file_stamp  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target="--command 로 준 시험 명령의 출력 (기본은 gx-shell 안 pytest)",
+        as_="(계정 없음) — 시험 러너가 낸 요약 줄을 읽는다",
+        source="이번에 돌린 시험 출력 + " + file_stamp(BASELINE),
+    )
     raise SystemExit(main())

@@ -1,0 +1,35 @@
+{
+ "reqs": [
+  [
+   "GET",
+   "/api/dsm/deliveries?event_id=4808",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/4808",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/4808/timeline",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/4808/snapshot",
+   200
+  ],
+  [
+   "POST",
+   "/api/dsm/events/4808/response?to_state=acknowledged&reason=",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/4808",
+   200
+  ]
+ ],
+ "console": []
+}

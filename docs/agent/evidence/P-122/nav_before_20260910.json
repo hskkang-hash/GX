@@ -1,0 +1,278 @@
+[
+ {
+  "bucket": "U1",
+  "user": "gxseed_u1_operator",
+  "end_session_dialog": true,
+  "url_after_login": "http://localhost:3002/profile",
+  "top_level": 5,
+  "rows": [
+   {
+    "text": "지금 처리할 것",
+    "expandable": false
+   },
+   {
+    "text": "무슨 일 있었나",
+    "expandable": false
+   },
+   {
+    "text": "카메라 격자",
+    "expandable": false
+   },
+   {
+    "text": "인계 메모",
+    "expandable": false
+   },
+   {
+    "text": "처음이세요",
+    "expandable": false
+   }
+  ],
+  "total": 5,
+  "ko": 5,
+  "en": 0,
+  "en_labels": [],
+  "bundle": "//dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry,http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js,http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js,http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js,http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js,/assets/index-C2YT13PY.js,https://maps.googleapis.com/maps/api/js?key=AIzaSyCNl4oBiZOTV9Y_3d67zmsgXRbR1Q2GHhg&language=en&libraries=places&solution_channel=GMP_visgl_rgmlibrary_v1_default&loading=async&callback=__googleMapsCallback__,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places_impl.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/controls.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/common.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/util.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/main.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/map.js"
+ },
+ {
+  "bucket": "U2",
+  "user": "gxseed_u2_manager",
+  "end_session_dialog": true,
+  "url_after_login": "http://localhost:3002/profile",
+  "top_level": 13,
+  "rows": [
+   {
+    "text": "지금 처리할 것",
+    "expandable": false
+   },
+   {
+    "text": "무슨 일 있었나",
+    "expandable": false
+   },
+   {
+    "text": "카메라 격자",
+    "expandable": false
+   },
+   {
+    "text": "인계 메모",
+    "expandable": false
+   },
+   {
+    "text": "처음이세요",
+    "expandable": false
+   },
+   {
+    "text": "관제 현황",
+    "expandable": false
+   },
+   {
+    "text": "훈련 모드",
+    "expandable": false
+   },
+   {
+    "text": "Dashboard",
+    "expandable": false
+   },
+   {
+    "text": "Surveillance",
+    "expandable": true
+   },
+   {
+    "text": "GCS",
+    "expandable": true
+   },
+   {
+    "text": "Asset",
+    "expandable": true
+   },
+   {
+    "text": "Delivery Settings",
+    "expandable": false
+   },
+   {
+    "text": "Admin",
+    "expandable": true
+   }
+  ],
+  "total": 13,
+  "ko": 7,
+  "en": 6,
+  "en_labels": [
+   "Dashboard",
+   "Surveillance",
+   "GCS",
+   "Asset",
+   "Delivery Settings",
+   "Admin"
+  ],
+  "bundle": "//dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry,http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js,http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js,http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js,http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js,/assets/index-C2YT13PY.js,https://maps.googleapis.com/maps/api/js?key=AIzaSyCNl4oBiZOTV9Y_3d67zmsgXRbR1Q2GHhg&language=en&libraries=places&solution_channel=GMP_visgl_rgmlibrary_v1_default&loading=async&callback=__googleMapsCallback__,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/common.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places_impl.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/controls.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/util.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/main.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/map.js"
+ },
+ {
+  "bucket": "U4",
+  "user": "gxseed_u4_official",
+  "end_session_dialog": true,
+  "url_after_login": "http://localhost:3002/profile",
+  "top_level": 10,
+  "rows": [
+   {
+    "text": "무슨 일 있었나",
+    "expandable": false
+   },
+   {
+    "text": "열람·삭제 청구",
+    "expandable": false
+   },
+   {
+    "text": "Dashboard",
+    "expandable": true
+   },
+   {
+    "text": "Delivery",
+    "expandable": true
+   },
+   {
+    "text": "Surveillance",
+    "expandable": true
+   },
+   {
+    "text": "GCS",
+    "expandable": true
+   },
+   {
+    "text": "Data Analysis",
+    "expandable": true
+   },
+   {
+    "text": "Asset",
+    "expandable": true
+   },
+   {
+    "text": "Operator",
+    "expandable": true
+   },
+   {
+    "text": "Admin",
+    "expandable": true
+   }
+  ],
+  "total": 10,
+  "ko": 2,
+  "en": 8,
+  "en_labels": [
+   "Dashboard",
+   "Delivery",
+   "Surveillance",
+   "GCS",
+   "Data Analysis",
+   "Asset",
+   "Operator",
+   "Admin"
+  ],
+  "bundle": "//dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry,http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js,http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js,http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js,http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js,/assets/index-C2YT13PY.js,https://maps.googleapis.com/maps/api/js?key=AIzaSyCNl4oBiZOTV9Y_3d67zmsgXRbR1Q2GHhg&language=en&libraries=places&solution_channel=GMP_visgl_rgmlibrary_v1_default&loading=async&callback=__googleMapsCallback__,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/util.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/controls.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places_impl.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/common.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/main.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/map.js"
+ },
+ {
+  "bucket": "U5",
+  "user": "gxseed_u5_sysop",
+  "end_session_dialog": true,
+  "url_after_login": "http://localhost:3002/profile",
+  "top_level": 19,
+  "rows": [
+   {
+    "text": "훈련 모드",
+    "expandable": false
+   },
+   {
+    "text": "카메라 일괄 등록",
+    "expandable": false
+   },
+   {
+    "text": "이번 달 사용량",
+    "expandable": false
+   },
+   {
+    "text": "보존·백업 설정",
+    "expandable": false
+   },
+   {
+    "text": "Dashboard",
+    "expandable": true
+   },
+   {
+    "text": "Delivery",
+    "expandable": true
+   },
+   {
+    "text": "Surveillance",
+    "expandable": true
+   },
+   {
+    "text": "Delivery Management",
+    "expandable": false
+   },
+   {
+    "text": "GCS",
+    "expandable": true
+   },
+   {
+    "text": "Data Analysis",
+    "expandable": true
+   },
+   {
+    "text": "Drones/Robots and Docking Station",
+    "expandable": true
+   },
+   {
+    "text": "Asset",
+    "expandable": true
+   },
+   {
+    "text": "Delivery Settings",
+    "expandable": true
+   },
+   {
+    "text": "Operating Equipment",
+    "expandable": true
+   },
+   {
+    "text": "Operator",
+    "expandable": true
+   },
+   {
+    "text": "Server Monitoring",
+    "expandable": true
+   },
+   {
+    "text": "Usage",
+    "expandable": true
+   },
+   {
+    "text": "Metadata",
+    "expandable": true
+   },
+   {
+    "text": "Admin",
+    "expandable": true
+   }
+  ],
+  "total": 19,
+  "ko": 4,
+  "en": 15,
+  "en_labels": [
+   "Dashboard",
+   "Delivery",
+   "Surveillance",
+   "Delivery Management",
+   "GCS",
+   "Data Analysis",
+   "Drones/Robots and Docking Station",
+   "Asset",
+   "Delivery Settings",
+   "Operating Equipment",
+   "Operator",
+   "Server Monitoring",
+   "Usage",
+   "Metadata",
+   "Admin"
+  ],
+  "bundle": "//dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry,http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js,http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js,http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js,http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js,/assets/index-C2YT13PY.js,https://maps.googleapis.com/maps/api/js?key=AIzaSyCNl4oBiZOTV9Y_3d67zmsgXRbR1Q2GHhg&language=en&libraries=places&solution_channel=GMP_visgl_rgmlibrary_v1_default&loading=async&callback=__googleMapsCallback__,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/util.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/controls.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places_impl.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/common.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/main.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/util.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/controls.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places_impl.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places.js,https://maps.googleapis.com/maps-api-v3/api/js/66/4d/map.js"
+ }
+]

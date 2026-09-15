@@ -713,4 +713,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target=(os.environ.get("GX_WEB", "") or "(--web 없음 · --dist 로 읽는다)") + " · 번들은 컨테이너 안 3002 에 있다",
+        as_="익명 — 브라우저와 같은 자리에서 자격 없이 번들을 받는다",
+        source="살아 있는 웹서버가 준 번들 바이트 (또는 --dist 의 빌드 산출물)",
+    )
     sys.exit(main())

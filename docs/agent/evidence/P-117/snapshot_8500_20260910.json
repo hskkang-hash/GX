@@ -1,0 +1,56 @@
+{
+  "판정": "P-117 / FC §3′ 8행 재측",
+  "TARGET": "http://localhost:8500 (nginx → gunicorn · 진짜 MinIO 자격)",
+  "AS": "gxprobe_c (Bearer · 차선 P 전용 계정)",
+  "SOURCE": "살아 있는 서버가 준 바이트",
+  "잰_때": "2026-09-10T17:21:42+09:00",
+  "왜": "턴 M 의 503 은 8000(runserver · MinIO 자격이 자리표시자)에서 잰 수였다. 같은 라우트를 8500 에서 잰다.",
+  "표본": [
+    {
+      "event_id": 4805,
+      "status": 200,
+      "content_type": "image/jpeg",
+      "bytes": 37596,
+      "sha256_12": "7b5e039e4770",
+      "jpeg_magic": "ffd8ff"
+    },
+    {
+      "event_id": 4802,
+      "status": 200,
+      "content_type": "image/jpeg",
+      "bytes": 37585,
+      "sha256_12": "ecf824134134",
+      "jpeg_magic": "ffd8ff"
+    },
+    {
+      "event_id": 4798,
+      "status": 200,
+      "content_type": "image/jpeg",
+      "bytes": 37462,
+      "sha256_12": "83e4d14900c8",
+      "jpeg_magic": "ffd8ff"
+    },
+    {
+      "event_id": 4799,
+      "status": 200,
+      "content_type": "image/jpeg",
+      "bytes": 37424,
+      "sha256_12": "c1c3d4765559",
+      "jpeg_magic": "ffd8ff"
+    },
+    {
+      "event_id": 4800,
+      "status": 200,
+      "content_type": "image/jpeg",
+      "bytes": 37544,
+      "sha256_12": "b51ffbff5a71",
+      "jpeg_magic": "ffd8ff"
+    }
+  ],
+  "캐시_대조": {
+    "4805_재요청_bytes": 37596,
+    "4805_재요청_sha256_12": "7b5e039e4770",
+    "읽는_법": "표본마다 sha 가 다르고 같은 사건도 재요청마다 바이트가 달라진다 — 소인에 열람 시각이 찍히기 때문이다. 캐시된 한 벌이 아니다."
+  },
+  "아직_못_잰_것": "화면이 그 바이트를 <img> 로 그리는가. 09-08 손 점검은 DOM `<img>` 0 · 「사진을 불러오지 못했습니다」를 봤다(GX-REVIEW v2 §…67행). 오늘 차선 P 는 역할 계정을 쓰지 않았다(다른 차선이 쥐고 있다) — 그 칸은 verify_click_completes 가 낸다."
+}

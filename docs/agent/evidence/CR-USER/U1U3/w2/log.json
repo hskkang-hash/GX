@@ -1,0 +1,1060 @@
+{
+ "log": {
+  "steps": [
+   {
+    "url": "http://localhost:3002/profile",
+    "chars": 515,
+    "step": "A0_login"
+   },
+   {
+    "url": "http://localhost:3002/dsm/events/4813",
+    "final": "http://localhost:3002/dsm/events/4813",
+    "chars": 845,
+    "body": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #4813\n알림 보내기\n등급\t● 주의\t유형\t사람\t처리 단계\t미처리\n판정\t미판정\t발생 시각\t2026-09-03 12:29:31 · 4일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t아직 아무도 판정하지 않음\t판정 사유\t—\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n사진을 불러오지 못했습니다\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n111시간 50분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:29:31\t② 접수 확인\t아직 아무도 접수하지 않았습니다\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 0건 — 아직 한 칸도 움직이지 않았습니다.\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n1미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n미판정\n다음 단계\n접수하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "api": [
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=false",
+      200
+     ],
+     [
+      "GET",
+      "/api/config-management/list-optimized",
+      200
+     ],
+     [
+      "GET",
+      "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/deliveries?event_id=4813",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/4813",
+      200
+     ],
+     [
+      "GET",
+      "/api/menu/menus?page_size=10000",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/4813/timeline",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/4813/snapshot",
+      200
+     ]
+    ],
+    "step": "B1_detail_4813"
+   },
+   {
+    "api": [],
+    "chars": 845,
+    "dialog": null,
+    "textareas": 0,
+    "body_tail": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #4813\n알림 보내기\n등급\t● 주의\t유형\t사람\t처리 단계\t미처리\n판정\t미판정\t발생 시각\t2026-09-03 12:29:31 · 4일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t아직 아무도 판정하지 않음\t판정 사유\t—\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n사진을 불러오지 못했습니다\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n111시간 51분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:29:31\t② 접수 확인\t아직 아무도 접수하지 않았습니다\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 0건 — 아직 한 칸도 움직이지 않았습니다.\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n1미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n미판정\n다음 단계\n접수하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "step": "B2_click_실제로판정"
+   },
+   {
+    "url": "http://localhost:3002/dsm/events/4813",
+    "final": "http://localhost:3002/dsm/events/4813",
+    "chars": 845,
+    "body": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #4813\n알림 보내기\n등급\t● 주의\t유형\t사람\t처리 단계\t미처리\n판정\t미판정\t발생 시각\t2026-09-03 12:29:31 · 4일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t아직 아무도 판정하지 않음\t판정 사유\t—\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n사진을 불러오지 못했습니다\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n111시간 51분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:29:31\t② 접수 확인\t아직 아무도 접수하지 않았습니다\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 0건 — 아직 한 칸도 움직이지 않았습니다.\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n1미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n미판정\n다음 단계\n접수하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "api": [
+     [
+      "GET",
+      "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/config-management/list-optimized",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/deliveries?event_id=4813",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=false",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/4813",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/4813/timeline",
+      200
+     ],
+     [
+      "GET",
+      "/api/menu/menus?page_size=10000",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/4813/snapshot",
+      200
+     ]
+    ],
+    "step": "B4_detail_after_verdict"
+   },
+   {
+    "api": [
+     [
+      "POST",
+      "/api/dsm/events/4813/response?to_state=acknowledged&reason=",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/4813",
+      200
+     ]
+    ],
+    "body_tail": "트 상세 #4813\n알림 보내기\n등급\t● 주의\t유형\t사람\t처리 단계\t접수\n판정\t미판정\t발생 시각\t2026-09-03 12:29:31 · 4일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t아직 아무도 판정하지 않음\t판정 사유\t—\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n사진을 불러오지 못했습니다\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n111시간 51분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:29:31\t② 접수 확인\t아직 아무도 접수하지 않았습니다\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 0건 — 아직 한 칸도 움직이지 않았습니다.\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n미판정\n다음 단계\n조치 시작\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "step": "B5_double_click_접수하기"
+   },
+   {
+    "url": "http://localhost:3002/handover",
+    "final": "http://localhost:3002/handover",
+    "chars": 68,
+    "body": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n인계 메모\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "api": [
+     [
+      "GET",
+      "/api/handover/handover/notice?page_size=1000000&current_page=1&is_processed=false",
+      200
+     ],
+     [
+      "GET",
+      "/api/config-management/list-optimized",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=false",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/menu/menus?page_size=10000",
+      200
+     ]
+    ],
+    "step": "B6_handover"
+   },
+   {
+    "root_html_len": 7449,
+    "main_area": 42,
+    "step": "B6b_handover_dom"
+   },
+   {
+    "url": "http://localhost:3002/dsm/dashboard",
+    "final": "http://localhost:3002/dsm/dashboard",
+    "chars": 575,
+    "body": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n자동 분석 안내\n이 알림은 자동 분석 결과이며, 관제요원이 최종 확인합니다.\n관제 대시보드\n?\n연계 대기\n갱신 04:20 · 0초 전\n화면 구성\n관제요원 화면역할에 맞춰 설정됨\n화면 점검\n화면 2칸이 정상적으로 그려졌습니다.\n?\n최근 이벤트\n전체 목록\n등급\t유형\t카메라\t발생\n■ 심각\t화재\t시드 카메라 (검수용)\t13:14 · 4일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:11 · 4일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:08 · 4일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:05 · 4일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:02 · 4일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:59 · 4일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:56 · 4일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:53 · 4일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:50 · 4일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:47 · 4일 전\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "api": [
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=false",
+      200
+     ],
+     [
+      "GET",
+      "/api/config-management/list-optimized",
+      200
+     ],
+     [
+      "GET",
+      "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events?limit=10",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/dashboard/frame",
+      200
+     ],
+     [
+      "GET",
+      "/api/menu/menus?page_size=10000",
+      200
+     ]
+    ],
+    "step": "B7_dashboard"
+   },
+   {
+    "url": "http://localhost:3002/m/events/4804",
+    "final": "http://localhost:3002/m/events/4804",
+    "chars": 483,
+    "body": "← 목록\n#4804 현장 상세\n새로고침\n기준 04:21 · 0초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n침수\n접수\n미판정\n발생 4일 전 (2026-09-03 12:56:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\nguardianx-dev/detections/119/20260903/125631_580118.jpg\n사진이 있지만 이 화면에서는 아직 볼 수 없습니다\n사진은 보관되어 있습니다. 휴대전화 화면에서 여는 길이 아직 열리지 않았습니다 — 관제 화면에서 확인하십시오.\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n2접수\n3조치 중\n4종결\n조치 시작\n현장 회신 — 본 것을 한 줄로\n회신 보내기\n아직 회신이 없습니다.\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "api": [
+     [
+      "GET",
+      "/api/config-management/list-optimized",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=false",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/4804",
+      200
+     ],
+     [
+      "GET",
+      "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/4804/field-replies",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/4804/clip",
+      404
+     ]
+    ],
+    "step": "C1_m_event_4804"
+   },
+   {
+    "buttons": [
+     "← 목록",
+     "새로고침",
+     "조치 시작",
+     "회신 보내기"
+    ],
+    "imgs": [],
+    "step": "C1b_m_buttons"
+   },
+   {
+    "clicked": null,
+    "api": [],
+    "body_tail": "← 목록\n#4804 현장 상세\n새로고침\n기준 04:21 · 0초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n침수\n접수\n미판정\n발생 4일 전 (2026-09-03 12:56:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\nguardianx-dev/detections/119/20260903/125631_580118.jpg\n사진이 있지만 이 화면에서는 아직 볼 수 없습니다\n사진은 보관되어 있습니다. 휴대전화 화면에서 여는 길이 아직 열리지 않았습니다 — 관제 화면에서 확인하십시오.\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n2접수\n3조치 중\n4종결\n조치 시작\n현장 회신 — 본 것을 한 줄로\n회신 보내기\n아직 회신이 없습니다.\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "step": "C2_m_response_click"
+   },
+   {
+    "filled": true,
+    "api": [
+     [
+      "POST",
+      "/api/dsm/events/4804/field-reply?text=%ED%98%84%EC%9E%A5+%EB%8F%84%EC%B0%A9%2C+%EC%97%B0%EA%B8%B0+%EC%97%86%EC%9D%8C+%EC%9D%B4%EC%83%81+%EC%97%86%EC%9D%8C+%28%EA%B4%80%EC%A0%9C%EC%9A%94%EC%9B%90+%EC%8B%9C%ED%97%98%29",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/4804/field-replies",
+      200
+     ]
+    ],
+    "body_tail": "← 목록\n#4804 현장 상세\n새로고침\n기준 04:21 · 7초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n침수\n접수\n미판정\n발생 4일 전 (2026-09-03 12:56:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\nguardianx-dev/detections/119/20260903/125631_580118.jpg\n사진이 있지만 이 화면에서는 아직 볼 수 없습니다\n사진은 보관되어 있습니다. 휴대전화 화면에서 여는 길이 아직 열리지 않았습니다 — 관제 화면에서 확인하십시오.\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n2접수\n3조치 중\n4종결\n조치 시작\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · 현장 도착, 연기 없음 이상 없음 (관제요원 시험)\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "step": "C3_m_field_reply"
+   },
+   {
+    "api": [],
+    "body_tail": "← 목록\n#4804 현장 상세\n새로고침\n기준 04:21 · 7초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n침수\n접수\n미판정\n발생 4일 전 (2026-09-03 12:56:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\nguardianx-dev/detections/119/20260903/125631_580118.jpg\n사진이 있지만 이 화면에서는 아직 볼 수 없습니다\n사진은 보관되어 있습니다. 휴대전화 화면에서 여는 길이 아직 열리지 않았습니다 — 관제 화면에서 확인하십시오.\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n2접수\n3조치 중\n4종결\n조치 시작\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · 현장 도착, 연기 없음 이상 없음 (관제요원 시험)\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "step": "C4_m_empty_reply"
+   },
+   {
+    "url": "http://localhost:3002/m/inbox",
+    "final": "http://localhost:3002/m/inbox",
+    "chars": 3563,
+    "body": "내게 온 이벤트\n새로고침\n기준 04:21 · 0초 전 · 표기 시간대: Asia/Seoul\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 4일 전 (13:14)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n접수\n발생 4일 전 (13:11)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n접수\n발생 4일 전 (13:11)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n접수\n발생 4일 전 (13:11)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n접수\n발생 4일 전 (13:11)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n접수\n발생 4일 전 (13:11)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n접수\n발생 4일 전 (13:11)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n접수\n발생 4일 전 (13:11)\n· 채널 log\n· 발송 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n접수\n발생",
+    "api": [
+     [
+      "GET",
+      "/api/dsm/deliveries?limit=50",
+      200
+     ],
+     [
+      "GET",
+      "/api/config-management/list-optimized",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events?limit=200",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=false",
+      200
+     ]
+    ],
+    "step": "C5_m_inbox"
+   },
+   {
+    "url": "http://localhost:3002/m/events/99999999",
+    "final": "http://localhost:3002/m/events/99999999",
+    "chars": 113,
+    "body": "← 목록\n현장 상세\n새로고침\n아직 값을 받지 못했습니다 · 표기 시간대: Asia/Seoul\n불러오지 못했습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "api": [
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=false",
+      200
+     ],
+     [
+      "GET",
+      "/api/config-management/list-optimized",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/99999999",
+      404
+     ],
+     [
+      "GET",
+      "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/99999999/field-replies",
+      404
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events/99999999/clip",
+      404
+     ]
+    ],
+    "step": "C6_m_event_404"
+   },
+   {
+    "url": "http://localhost:3002/dsm/dashboard",
+    "final": "http://localhost:3002/dsm/dashboard",
+    "chars": 538,
+    "body": "자동 분석 안내\n이 알림은 자동 분석 결과이며, 관제요원이 최종 확인합니다.\n관제 대시보드\n?\n연계 대기\n갱신 04:21 · 0초 전\n화면 구성\n관제요원 화면역할에 맞춰 설정됨\n화면 점검\n화면 2칸이 정상적으로 그려졌습니다.\n?\n최근 이벤트\n전체 목록\n등급\t유형\t카메라\t발생\n■ 심각\t화재\t시드 카메라 (검수용)\t13:14 · 4일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:11 · 4일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:08 · 4일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:05 · 4일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:02 · 4일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:59 · 4일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:56 · 4일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:53 · 4일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:50 · 4일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:47 · 4일 전\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "api": [
+     [
+      "GET",
+      "/api/config-management/list-optimized",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=false",
+      200
+     ],
+     [
+      "GET",
+      "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/events?limit=10",
+      200
+     ],
+     [
+      "GET",
+      "/api/dsm/dashboard/frame",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ]
+    ],
+    "step": "C7_m_dashboard_390"
+   },
+   {
+    "url": "http://localhost:3002/multi-stream-monitor",
+    "final": "http://localhost:3002/multi-stream-monitor",
+    "chars": 107,
+    "body": "📡\nGD-150Q\n0 Participants\nAI\n📡\nH40\n0 Participants\nAI\n📡\nNBP-DR-P2\n0 Participants\nAI\n버전 6cf2c19 · 장애 신고 창구 미등록",
+    "api": [
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=false",
+      200
+     ],
+     [
+      "GET",
+      "/api/config-management/list-optimized",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/advanced-table/select-data?model_name=theme&distinct=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/user-groups/gen-schema?group_id=4&raw=true",
+      200
+     ],
+     [
+      "GET",
+      "/api/stream-monitors/stream-monitors",
+      200
+     ],
+     [
+      "GET",
+      "/api/stream-monitors/stream-monitors/ai-models",
+      200
+     ],
+     [
+      "GET",
+      "/api/stream-monitors/stream-monitors/ai-models",
+      200
+     ],
+     [
+      "GET",
+      "/api/stream-monitors/stream-monitors/ai-models",
+      200
+     ]
+    ],
+    "step": "C8_m_stream_390"
+   }
+  ],
+  "requests": [
+   {
+    "m": "GET",
+    "u": "/api/config-management/list-optimized",
+    "s": 200
+   },
+   {
+    "m": "POST",
+    "u": "/api/v1/auth/login",
+    "s": 200
+   },
+   {
+    "m": "POST",
+    "u": "/api/v1/auth/login",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-profiles/110/",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/v1/user/get-user-detail/110",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/?page_size=10000&current_page=1",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "https://maps.googleapis.com/maps/api/js?key=AIzaSyCNl4oBiZOTV9Y_3d67zmsgXRbR1Q2GHhg&language=en&libraries=places&solution_channel=GMP_visgl_rgmlibrary_v1_default&loading=async&callback=__googleMapsCallback__",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/menu/menus?page_size=10000",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=false",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/?page_size=10000&current_page=1",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "https://maps.googleapis.com/maps-api-v3/api/js/66/3d/places_impl.js",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "https://maps.googleapis.com/maps-api-v3/api/js/66/3d/controls.js",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/v1/user/get-user-detail/110",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "https://maps.googleapis.com/maps-api-v3/api/js/66/3d/common.js",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "https://maps.googleapis.com/maps-api-v3/api/js/66/3d/main.js",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "https://maps.googleapis.com/maps-api-v3/api/js/66/3d/places.js",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "https://maps.googleapis.com/maps-api-v3/api/js/66/3d/util.js",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/departments/?page_size=10000&current_page=1&group__id=4",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "https://maps.googleapis.com/maps-api-v3/api/js/66/3d/map.js",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "https://maps.googleapis.com/maps/api/mapsjs/gen_204?csp_test=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=false",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/config-management/list-optimized",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/deliveries?event_id=4813",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/4813",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/menu/menus?page_size=10000",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/4813/timeline",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/4813/snapshot",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/config-management/list-optimized",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/deliveries?event_id=4813",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=false",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/4813",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/4813/timeline",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/menu/menus?page_size=10000",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/4813/snapshot",
+    "s": 200
+   },
+   {
+    "m": "POST",
+    "u": "/api/dsm/events/4813/response?to_state=acknowledged&reason=",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/4813",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/handover/handover/notice?page_size=1000000&current_page=1&is_processed=false",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/config-management/list-optimized",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=false",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/menu/menus?page_size=10000",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=false",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/config-management/list-optimized",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events?limit=10",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/dashboard/frame",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/menu/menus?page_size=10000",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events?limit=10",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/dashboard/frame",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/config-management/list-optimized",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=false",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/4804",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/4804/field-replies",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/4804/clip",
+    "s": 404
+   },
+   {
+    "m": "POST",
+    "u": "/api/dsm/events/4804/field-reply?text=%ED%98%84%EC%9E%A5+%EB%8F%84%EC%B0%A9%2C+%EC%97%B0%EA%B8%B0+%EC%97%86%EC%9D%8C+%EC%9D%B4%EC%83%81+%EC%97%86%EC%9D%8C+%28%EA%B4%80%EC%A0%9C%EC%9A%94%EC%9B%90+%EC%8B%9C%ED%97%98%29",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/4804/field-replies",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/deliveries?limit=50",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/config-management/list-optimized",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events?limit=200",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=false",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=false",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/config-management/list-optimized",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/99999999",
+    "s": 404
+   },
+   {
+    "m": "GET",
+    "u": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/99999999/field-replies",
+    "s": 404
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events/99999999/clip",
+    "s": 404
+   },
+   {
+    "m": "GET",
+    "u": "/api/config-management/list-optimized",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=false",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/events?limit=10",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/dsm/dashboard/frame",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=false",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/config-management/list-optimized",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/user-groups/gen-schema?group_id=4&raw=true",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/stream-monitors/stream-monitors",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/stream-monitors/stream-monitors/ai-models",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/stream-monitors/stream-monitors/ai-models",
+    "s": 200
+   },
+   {
+    "m": "GET",
+    "u": "/api/stream-monitors/stream-monitors/ai-models",
+    "s": 200
+   }
+  ],
+  "console": []
+ },
+ "bodies": {
+  "/api/dsm/deliveries?event_id=4813#200": "{\"total\": 0, \"deliveries\": []}",
+  "/api/dsm/events/4813/snapshot#200": "BYTES 37566",
+  "/api/dsm/events/4813/response?to_state=acknowledged&reason=#200": "{\"event_id\": 4813, \"from\": \"occurred\", \"to\": \"acknowledged\", \"allowed_next\": [\"in_progress\"], \"audit_id\": 196097}",
+  "/api/handover/handover/notice?page_size=1000000&current_page=1&is_processed=false#200": "{\"success\": true, \"status\": 200, \"message\": \"Handover notices fetched successfully\", \"data\": [], \"total_pages\": 1, \"total_items\": 0, \"current_page\": 1}",
+  "/api/dsm/events/4804/field-reply?text=%ED%98%84%EC%9E%A5+%EB%8F%84%EC%B0%A9%2C+%EC%97%B0%EA%B8%B0+%EC%97%86%EC%9D%8C+%EC%9D%B4%EC%83%81+%EC%97%86%EC%9D%8C+%28%EA%B4%80%EC%A0%9C%EC%9A%94%EC%9B%90+%EC%8B%9C%ED%97%98%29#200": "{\"reply_id\": 196182, \"event_id\": 4804, \"text\": \"\\ud604\\uc7a5 \\ub3c4\\ucc29, \\uc5f0\\uae30 \\uc5c6\\uc74c \\uc774\\uc0c1 \\uc5c6\\uc74c (\\uad00\\uc81c\\uc694\\uc6d0 \\uc2dc\\ud5d8)\", \"author_id\": 110, \"author_name\": \"gxseed_u1_operator\"}",
+  "/api/dsm/deliveries?limit=50#200": "{\"total\": 50, \"deliveries\": [{\"delivery_id\": 252, \"event_id\": 4798, \"recipient_id\": 101, \"channel\": \"log\", \"succeeded\": true, \"failure_reason\": null, \"sent_at\": \"2026-09-03T13:17:35.581Z\"}, {\"delivery_id\": 251, \"event_id\": 4798, \"recipient_id\": 64, \"channel\": \"log\", \"succeeded\": true, \"failure_reason\": null, \"sent_at\": \"2026-09-03T13:17:35.541Z\"}, {\"delivery_id\": 250, \"event_id\": 4798, \"recipient_id\": 62, \"channel\": \"log\", \"succeeded\": true, \"failure_reason\": null, \"sent_at\": \"2026-09-03T13:17:35.500Z\"}, {\"delivery_id\": 249, \"event_id\": 4798, \"recipient_id\": 61, \"channel\": \"log\", \"succeeded\": "
+ }
+}

@@ -86,6 +86,14 @@ DEV_MODULE = "config.settings"
 GOOD_SECRET = "gx-verify-" + ("z9Qm4Ld7Rt2Xv6Bn1Cw8Hj3Kp5Sy0Fa" * 3)   # 50자 이상 · 자리표 아님
 GOOD_HOSTS = "stg.guardianx.example.kr,guardianx.example.kr"
 GOOD_ORIGINS = "https://stg.guardianx.example.kr,https://guardianx.example.kr"
+#: ⑦ 이 쓰는 「제대로 된 모양」의 자격 하나. 20자 이상 · 자리표 아님.
+GOOD_MINIO = "gxverify-Rt2Xv6Bn1Cw8Hj3Kp5Sy"
+
+#: 세 음성 대조가 공유하는 「나머지는 다 제대로」 선언 한 벌.
+GOOD_DECL = {NAME_SECRET: GOOD_SECRET, NAME_HOSTS: GOOD_HOSTS, NAME_ORIGINS: GOOD_ORIGINS}
+
+#: ⑦ 의 하한. `.env.example` 이 선언한 형식과 같은 수다. 서명 키는 ①이 50자를 따로 본다.
+CRED_MIN_LEN = 20
 
 #: 자식 파이썬이 돌릴 탐침. **앱 레지스트리를 세우지 않는다** — 우리가 묻는 것은 설정이고,
 #: `django.setup()` 은 MinIO 같은 곁길을 두드려 판정과 무관한 소음·지연을 만든다.
@@ -107,8 +115,39 @@ print("GXPROD " + json.dumps({
     "SECURE_PROXY_SSL_HEADER": list(getattr(s, "SECURE_PROXY_SSL_HEADER", []) or []),
     "SECRET_KEY_LEN": len(s.SECRET_KEY or ""),
     "SECRET_KEY_IS_PLACEHOLDER": "your-secret-key-here" in (s.SECRET_KEY or ""),
+    "SAFE_ERROR_BODY": getattr(s, "SAFE_ERROR_BODY", None),
+    "ERROR_BODY_MIDDLEWARE": any("SafeErrorBody" in m for m in getattr(s, "MIDDLEWARE", [])),
+    # ⑦ 자격의 **모양** (P-107 · 턴 M) — 값은 절대 내보내지 않는다. 길이와 같음 여부만.
+    "MINIO_ACCESS_LEN": len(getattr(s, "MINIO_ACCESS_KEY", "") or ""),
+    "MINIO_SECRET_LEN": len(getattr(s, "MINIO_SECRET_KEY", "") or ""),
+    "MINIO_SAME": (_h(getattr(s, "MINIO_ACCESS_KEY", "")) ==
+                   _h(getattr(s, "MINIO_SECRET_KEY", ""))),
+    "MINIO_PLACEHOLDER": _ph(getattr(s, "MINIO_ACCESS_KEY", ""),
+                             getattr(s, "MINIO_SECRET_KEY", "")),
+    "DB_PASSWORD_LEN": len(_db(s).get("PASSWORD") or ""),
+    "DB_PLACEHOLDER": _ph(_db(s).get("PASSWORD") or "", _db(s).get("USER") or ""),
+    "SECRET_KEY_PLACEHOLDER_WORD": _ph(getattr(s, "SECRET_KEY", "") or ""),
 }, ensure_ascii=False))
 """
+
+#: 탐침 앞에 붙는 도우미 셋. **값을 문자열로 내보내는 자리가 하나도 없다** —
+#: 길이 · 해시 동일성 · 자리표 여부만 넘어온다 (머리글 규칙과 같은 원칙).
+PROBE = r"""
+import hashlib, json
+def _h(v):
+    v = v or ""
+    return hashlib.sha256(v.encode("utf-8", "replace")).hexdigest() if v else ""
+_PLACEHOLDER_WORDS = ("change_me", "changeme", "your-", "please-change",
+                      "example", "placeholder", "minioadmin", "secret-key")
+def _ph(*values):
+    return [w for w in _PLACEHOLDER_WORDS
+            if any(w in (v or "").lower() for v in values)]
+def _db(s):
+    try:
+        return s.DATABASES["default"]
+    except Exception:
+        return {}
+""" + PROBE
 
 #: 아홉 번 띄운다. `(설정모듈, 그 판에서 **선언한 것만**)`.
 #: ★ 선언하지 않은 이름은 자식 환경에서 **지운다** — 지금 컨테이너에 실려 있는 개발
@@ -127,6 +166,17 @@ CASES = {
     "no_origins": (PROD_MODULE, {NAME_SECRET: GOOD_SECRET, NAME_HOSTS: GOOD_HOSTS}),
     "origins_no_scheme": (PROD_MODULE, {NAME_SECRET: GOOD_SECRET, NAME_HOSTS: GOOD_HOSTS,
                                         NAME_ORIGINS: "guardianx.example.kr"}),
+    # ⑦ 자격의 모양 — **자리표로는 뜨면 안 된다** (P-107 · 턴 M)
+    #   ★ 출생 표본: [실측 2026-09-07 · gx-shell] 앱이 든 `MINIO_ACCESS_KEY` 와
+    #     `MINIO_SECRET_KEY` 는 **둘 다 5자이고 sha256 이 같다**(같은 문자열이다).
+    #     그런데 앱은 그 자격으로 **떠 있고**, 화면이 부르는 라우트 둘이 503 을 낸다.
+    #     자리표는 도는 앱이 아니라 **기동 실패**여야 한다.
+    "placeholder_minio": (PROD_MODULE, dict(GOOD_DECL, MINIO_ACCESS_KEY="CHANGE_ME",
+                                            MINIO_SECRET_KEY="CHANGE_ME")),
+    "short_minio": (PROD_MODULE, dict(GOOD_DECL, MINIO_ACCESS_KEY="abc12",
+                                      MINIO_SECRET_KEY="abc12")),
+    "same_minio": (PROD_MODULE, dict(GOOD_DECL, MINIO_ACCESS_KEY=GOOD_MINIO,
+                                     MINIO_SECRET_KEY=GOOD_MINIO)),
     # 대조 — **개발 프로필**은 같은 자리에서 무엇을 하는가. 판정의 조건이 아니라 증거다
     # (코드의 열린 기본값이 재기동 뒤에 사라지면 이 줄의 내용이 바뀐다. 그래도 ④는 산다).
     "dev_profile": (DEV_MODULE, {}),
@@ -229,6 +279,65 @@ def judge(observations: dict) -> list:
                     "출처 %d개 · 선언 없음→거부 %s · 스킴 없음→거부 %s · HSTS %ds · 프록시 %r"
                     % (len(origins), "O" if no_origins else "**X 떴다**",
                        "O" if no_scheme else "**X 떴다**", hsts, proxy)))
+
+    # ⑥ 예외 응답이 **본문에 내부를 싣지 않는다** (P-100 · 턴 L)
+    #
+    #   이 자리가 열려 있으면 다른 500 도 다 말한다. 그날 실측된 것: 익명이
+    #   `Authorization: Bearer <아무거나>` 를 붙이면 **705/705 라우트**가 165KB
+    #   장고 디버그 전문을 냈다 — 존재하지 않는 라우트까지. URL 해석 **앞**이었다.
+    #
+    #   ★ 두 관측을 **함께** 본다. 스위치만 켜고 그물이 안 실리면 아무 일도 안 일어나고,
+    #     그물만 실리고 스위치가 꺼져 있으면 그물이 통과시킨다. 하나만 재면
+    #     「켰다」가 「막힌다」로 읽힌다 — 이 게이트가 다섯 자리에서 배운 것과 같다.
+    if not full:
+        out.append(("ERROR_BODY", False, "재지 못했다 — 판이 안 떴다"))
+    else:
+        flag = full.get("SAFE_ERROR_BODY")
+        net = full.get("ERROR_BODY_MIDDLEWARE")
+        out.append(("ERROR_BODY", flag is True and net is True,
+                    "스위치 %r · 그물 실림 %r%s"
+                    % (flag, net,
+                       "" if (flag is True and net is True)
+                       else " — **켜진 쪽과 실린 쪽이 함께여야 한다**")))
+
+    # ⑦ 자격의 **모양** — 자리표로는 뜨지 않는다 (P-107 · 턴 M)
+    #
+    #   ★ 출생 표본 [실측 2026-09-07 · gx-shell]: 앱이 든 `MINIO_ACCESS_KEY` 와
+    #     `MINIO_SECRET_KEY` 는 **둘 다 5자이고 sha256 이 같다** — 같은 문자열이다.
+    #     그 자격으로 앱은 **떠 있었고**, 화면이 부르는 라우트 둘이 503 을 냈다.
+    #     턴 L 은 그 503 의 원인을 다른 데서 찾았다. 원인은 여기였다.
+    #
+    #   ★ 두 가지를 **함께** 본다 — 지금 뜬 판의 자격이 제 모양인가, 그리고
+    #     **자리표를 주면 거부하는가.** 앞엣것만 보면 「이 판에는 마침 좋은 값이
+    #     들어 있었다」가 초록이 되고, 뒤엣것만 보면 도는 앱의 5자를 아무도 안 본다.
+    if not full:
+        out.append(("CREDENTIAL_FORMAT", False, "재지 못했다 — 판이 안 떴다"))
+    else:
+        a_len = full.get("MINIO_ACCESS_LEN", 0)
+        s_len = full.get("MINIO_SECRET_LEN", 0)
+        same = bool(full.get("MINIO_SAME"))
+        db_len = full.get("DB_PASSWORD_LEN", 0)
+        ph = (list(full.get("MINIO_PLACEHOLDER") or [])
+              + list(full.get("DB_PLACEHOLDER") or [])
+              + list(full.get("SECRET_KEY_PLACEHOLDER_WORD") or []))
+        sk_len = full.get("SECRET_KEY_LEN", 0)
+
+        shape_ok = (a_len >= CRED_MIN_LEN and s_len >= CRED_MIN_LEN
+                    and db_len >= CRED_MIN_LEN and sk_len >= CRED_MIN_LEN
+                    and not same and not ph)
+        refused_ph = _refused(observations, "placeholder_minio")
+        refused_short = _refused(observations, "short_minio")
+        refused_same = _refused(observations, "same_minio")
+        ok = shape_ok and refused_ph and refused_short and refused_same
+        out.append(("CREDENTIAL_FORMAT", ok,
+                    "MinIO 접근/비밀 %d·%d자%s · DB 비밀 %d자 · 서명 키 %d자 · 자리표 %s "
+                    "| 자리표→거부 %s · 5자→거부 %s · 둘이 같음→거부 %s"
+                    % (a_len, s_len,
+                       " **둘이 같은 문자열이다**" if same else "",
+                       db_len, sk_len, ph or "없음",
+                       "O" if refused_ph else "**X 떴다**",
+                       "O" if refused_short else "**X 떴다**",
+                       "O" if refused_same else "**X 떴다**")))
     return out
 
 
@@ -245,6 +354,10 @@ _CLOSED_SETTINGS = {
     "SECURE_HSTS_SECONDS": 31536000,
     "SECURE_PROXY_SSL_HEADER": ["HTTP_X_FORWARDED_PROTO", "https"],
     "SECRET_KEY_LEN": 86, "SECRET_KEY_IS_PLACEHOLDER": False,
+    "SAFE_ERROR_BODY": True, "ERROR_BODY_MIDDLEWARE": True,
+    "MINIO_ACCESS_LEN": 24, "MINIO_SECRET_LEN": 40, "MINIO_SAME": False,
+    "MINIO_PLACEHOLDER": [], "DB_PASSWORD_LEN": 32, "DB_PLACEHOLDER": [],
+    "SECRET_KEY_PLACEHOLDER_WORD": [],
 }
 
 
@@ -261,7 +374,8 @@ def _closed_observations() -> dict:
              "SECURE_HSTS_SECONDS": 0, "SECURE_PROXY_SSL_HEADER": [],
              "SECRET_KEY_LEN": 33, "SECRET_KEY_IS_PLACEHOLDER": False}}}
     for name in ("no_secret", "placeholder_secret", "no_hosts", "star_hosts",
-                 "no_origins", "origins_no_scheme"):
+                 "no_origins", "origins_no_scheme",
+                 "placeholder_minio", "short_minio", "same_minio"):
         o[name] = {"refused": True, "settings": None}
     return o
 
@@ -279,6 +393,12 @@ def _birth_sample_observations() -> dict:
         "CSRF_TRUSTED_ORIGINS": ["http://localhost:8000", "http://127.0.0.1:8000"],
         "SECURE_HSTS_SECONDS": 0, "SECURE_PROXY_SSL_HEADER": [],
         "SECRET_KEY_LEN": len("your-secret-key-here"), "SECRET_KEY_IS_PLACEHOLDER": True,
+        #: ★ ⑦ 의 출생 표본은 그날이 아니라 **턴 L(2026-09-07)** 이다 — 그리고 지금도
+        #:   같다: 앱이 든 MinIO 자격은 5자이고 접근키와 비밀키가 **같은 문자열**이다.
+        #:   그 자격으로 앱은 떠 있었고, 화면 라우트 둘이 503 이었다.
+        "MINIO_ACCESS_LEN": 5, "MINIO_SECRET_LEN": 5, "MINIO_SAME": True,
+        "MINIO_PLACEHOLDER": [], "DB_PASSWORD_LEN": 8, "DB_PLACEHOLDER": ["change_me"],
+        "SECRET_KEY_PLACEHOLDER_WORD": ["your-"],
     }
     o = {}
     for name in CASES:
@@ -299,7 +419,7 @@ def self_test() -> int:
         print("%s X 닫힌 관측을 빨강으로 읽는다: %s"
               % (TAG, [n for n, p, _ in rows if not p]))
     else:
-        print("%s O 닫힌 관측 5/5 초록 (양성 대조)" % TAG)
+        print("%s O 닫힌 관측 %d/%d 초록 (양성 대조)" % (TAG, len(rows), len(rows)))
 
     # 변이 — 다섯 수마다 하나씩. **그 수만** 빨개져야 한다
     mutants = {}
@@ -313,6 +433,13 @@ def self_test() -> int:
     mutants["COOKIES"] = ("CSRF 쿠키가 평문 위로 흐른다", m)
     m = _closed_observations(); m["origins_no_scheme"] = {"refused": False, "settings": dict(_CLOSED_SETTINGS)}
     mutants["ORIGINS_TLS"] = ("스킴 없는 출처를 받아들이고 떴다", m)
+    m = _closed_observations(); m["full"]["settings"] = dict(_CLOSED_SETTINGS, SAFE_ERROR_BODY=False)
+    mutants["ERROR_BODY"] = ("그물은 실렸는데 스위치가 꺼졌다", m)
+    #: ⑦ — **도는 앱의 자격이 5자이고 접근·비밀이 같다** (턴 L 의 그 자리)
+    m = _closed_observations()
+    m["full"]["settings"] = dict(_CLOSED_SETTINGS, MINIO_ACCESS_LEN=5,
+                                 MINIO_SECRET_LEN=5, MINIO_SAME=True)
+    mutants["CREDENTIAL_FORMAT"] = ("MinIO 접근·비밀이 5자이고 같은 문자열이다", m)
 
     caught = 0
     for name, (label, obs) in mutants.items():
@@ -331,14 +458,16 @@ def self_test() -> int:
         print("%s X 출생 표본을 다 못 잡는다: %s — 이 도구가 태어난 사유가 안 재진다"
               % (TAG, [n for n, p, _ in born if p]))
     else:
-        print("%s O 출생 표본 5/5 빨강 — 2026-09-06 의 settings.py 를 그대로 잡는다" % TAG)
+        print("%s O 출생 표본 %d/%d 빨강 — 2026-09-06 의 settings.py 와 "
+              "턴 L 의 5자 자리표 자격을 그대로 잡는다" % (TAG, len(born), len(born)))
 
     # 관측 0건은 **초록이 아니다** (D-301)
     if any(p for _, p, _ in judge({})):
         ok = False
         print("%s X 관측 0건을 초록으로 읽는다 — 못 잰 것이 통과가 되지 않는다" % TAG)
     else:
-        print("%s O 관측 0건은 다섯 다 빨강 (회색이 초록이 되지 않는다)" % TAG)
+        print("%s O 관측 0건은 %d 수 다 빨강 (회색이 초록이 되지 않는다)"
+              % (TAG, len(judge({}))))
     return EXIT_OK if ok else EXIT_FAIL
 
 
@@ -488,4 +617,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target="gx-shell 컨테이너에서 파이썬을 %d번 **실제로 띄운다** (config.settings_prod / config.settings)" % len(CASES),
+        as_="(계정 없음) — 자식 프로세스의 환경에 선언 이름만 준다: DJANGO_SECRET_KEY · DJANGO_ALLOWED_HOSTS · DJANGO_CSRF_TRUSTED_ORIGINS (값은 이 판정 안에서만 산다) · 앱이 든 MINIO_ACCESS_KEY/MINIO_SECRET_KEY 는 **길이와 같음 여부만** 본다",
+        source="뜬 판이 스스로 낸 django.conf.settings — 소스에 적힌 글자가 아니다",
+    )
     raise SystemExit(main())

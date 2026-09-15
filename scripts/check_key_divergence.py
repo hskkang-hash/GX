@@ -25,6 +25,16 @@ CLIENT_KEY = "VITE_CGS_APIKEY"
 PLACEHOLDER = re.compile(r"^\s*$|^your[-_]|[-_]here$|^change[-_]?me", re.I)
 
 
+def _expand(value: str, seen: dict[str, str]) -> str:
+    """`${NAME}` 을 셸과 같은 뜻으로 펼친다 (D-457). 못 펼치면 그대로 둔다."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from verify_route_alive import expand_env_refs  # noqa: PLC0415
+    except Exception:                                    # noqa: BLE001
+        return value
+    return expand_env_refs(value, seen)
+
+
 def read_env(path: Path) -> dict[str, str]:
     values: dict[str, str] = {}
     try:
@@ -36,7 +46,11 @@ def read_env(path: Path) -> dict[str, str]:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, _, val = line.partition("=")
-        values[key.strip()] = val.strip().strip('"').strip("'")
+        #: ★ [D-457] `${NAME}` 을 펼친다 — 안 펼치면 두 파일이 **같은 리터럴**
+        #:   `${GX_MAP_KEY}` 를 들고 있을 때 「같은 키를 서버·클라이언트가 나눠 쓴다」는
+        #:   **없는 사고**가 서고, 반대로 진짜 같은 값을 가리키는 두 참조는 놓친다.
+        #:   펼치는 눈은 `verify_route_alive` 한 벌이다 (D-369).
+        values[key.strip()] = _expand(val.strip().strip('"').strip("'"), values)
     return values
 
 

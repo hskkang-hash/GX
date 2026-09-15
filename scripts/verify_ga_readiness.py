@@ -61,6 +61,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -220,6 +221,16 @@ _LOCAL_ENV_KEYS = ("GX_API", "GX_ROUTE_CONTAINER", "GX_ROUTE_USER", "GX_ROUTE_PA
                    "MINIO_ROOT_USER", "MINIO_ROOT_PASSWORD", "MINIO_BUCKET_NAME")
 
 
+def _expand(value: str, seen: dict[str, str]) -> str:
+    """`${NAME}` 을 셸과 같은 뜻으로 펼친다. 펼치는 눈은 `verify_route_alive` 한 벌이다."""
+    try:
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from verify_route_alive import expand_env_refs  # noqa: PLC0415
+    except Exception:                                    # noqa: BLE001
+        return value
+    return expand_env_refs(value, seen)
+
+
 def _load_local_env() -> None:
     for name in _LOCAL_ENV_FILES:
         f = ROOT / name
@@ -229,14 +240,26 @@ def _load_local_env() -> None:
             text = f.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
+        #: ★★ [D-457 · 2026-09-11 턴 P] **이 로더가 세 벌째였고, 셋이 어긋났다.**
+        #:   `.env.gates` 에는 `GX_ROUTE_PASSWORD=${GX_SEED_ROLE_PASSWORD}` 처럼
+        #:   **다른 이름을 가리키는 줄**이 산다(사람이 셸로도 소싱하는 파일이라서).
+        #:   안 펼치면 리터럴 `${GX_SEED_ROLE_PASSWORD}` 가 값이 되고, 이 자리는
+        #:   **부모**라서 그 오염된 값이 자식 판정기에게 그대로 내려간다 —
+        #:   자식은 「이미 환경에 있는 값은 덮지 않는다」를 지키느라 **제 파일을 안 읽는다.**
+        #:   그래서 판정기를 손으로 부르면 초록, `verify_ga_readiness` 로 부르면 회색이었다
+        #:   (P-70 이 적어 둔 「부르는 자리에 따라 색이 달랐다」와 **같은 모양 · 다른 뿌리**).
+        #:   펼치는 눈은 한 벌이다 — `verify_route_alive.expand_env_refs` 를 부른다(D-369).
+        seen: dict[str, str] = {}
         for line in text.splitlines():
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
                 continue
             k, _, v = line.partition("=")
             k = k.strip()
+            raw = _expand(v.strip().strip('"').strip("'"), seen)
+            seen[k] = raw
             if k in _LOCAL_ENV_KEYS and not os.environ.get(k):
-                os.environ[k] = v.strip().strip('"').strip("'")
+                os.environ[k] = raw
     #: MinIO 는 저장소 안에서 이름이 둘이다(`ROOT_USER` 는 compose 가 읽고
     #: `ACCESS_KEY` 는 판정기가 읽는다). 한 자리에서 이어 준다 — 두 벌은 어긋난다(D-369).
     if not os.environ.get("MINIO_ACCESS_KEY") and os.environ.get("MINIO_ROOT_USER"):
@@ -305,9 +328,19 @@ def collect_gates(areas: list[dict]) -> list[tuple[str, str, str]]:
 #:   **누가 먼저 세션을 잡았는가**였다. 재현되지 않는 측정은 측정이 아니다(D-344).
 #:   그래서 **로그인하는 판정기만 줄 세운다.** 나머지는 그대로 나란히 부른다 —
 #:   전부 직렬로 돌리면 이 검사가 몇 분씩 걸리고, 느린 검사는 결국 꺼진다(D-353).
+#: ★★ [D-459 · 2026-09-15 턴 P · `verify_measure_repro` 가 또 잡음] 목록이 **닫혀 있지 않았다.**
+#:   커밋 훅에서 이 판정기를 두 번 돌리자 1회차 「못 쟀다 1」 · 2회차 「못 쟀다 2」 —
+#:   2회차에만 SEC-04 가 「제품 로그인에서 토큰을 못 받았다」로 회색이었다. SEC-04 의 판정기
+#:   `verify_authn_paths.py` 는 `verify_route_alive.login` 으로 **같은 계정에 로그인**하는데
+#:   이 목록에 없어서 병렬 묶음에서 돌았다. D-457 로 그 판정기가 비로소 로그인하게 되자
+#:   턴 I 의 사고가 **같은 모양으로 다시** 났다 — 로그인하게 된 판정기는 줄에 서야 한다.
+#:   `verify_feature_reach.py` 는 스스로는 로그인하지 않지만 F-05 절을 재려고
+#:   `verify_contract_route_reach.py`(로그인)를 **안에서 부른다** — 그래서 같이 줄 세운다.
 SERIAL_GATES = (
     "verify_sidebar.py", "verify_route_alive.py", "verify_contract_route_reach.py",
     "verify_screens.py", "verify_write_auth.py", "verify_seed_roles.py",
+    "verify_authn_paths.py",
+    "verify_feature_reach.py",
 )
 
 
@@ -345,6 +378,58 @@ def score(areas: list[dict], counts: dict[str, dict[str, int]]) -> tuple[float, 
 # ═══════════════════════════════════════════════════════════════════════════
 # 읽기
 # ═══════════════════════════════════════════════════════════════════════════
+
+#: 영역 게이트가 남긴 한 줄. 표 아래에 그대로 찍는다 — **왜 그 수가 나왔는지**가
+#: 수와 같은 화면에 있어야 한다.
+AREA_GATE_NOTE: dict[str, str] = {}
+
+
+def reach_counts(gate_rel: str) -> tuple[dict[str, int], str, str]:
+    """영역의 `gate:` 를 **부른다**(읽어서 답하지 않는다 · D-210).
+
+    돌려주는 것: (상태 셈, 한 줄 설명, 못 부른 사유)
+
+    ★ 왜 게이트가 세는가 (P-106 · 턴 M) — 절이 스스로 적은 `state` 를 세면 그 영역은
+      **자기 신고**다. 턴 L 까지 영역 ①이 정확히 그랬고, 그 자기 신고가 가중 20%를
+      들고 있었다. 이제 사슬(절↔화면↔라우트↔역할 계정의 200↔data_source)이 이어진
+      절만 구현이다. **못 이은 절은 미측정**이고, 미측정은 분모에 남는다 —
+      그래서 수가 내려간다. 내려간 수가 지금 아는 것의 전부다 (D-301).
+    """
+    path = ROOT / gate_rel
+    if not path.is_file():
+        return {}, "", "영역 게이트 «%s» 가 없다 — 못 잰 것이다" % gate_rel
+    try:
+        proc = subprocess.run([sys.executable or "python", str(path), "--json"],
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              timeout=1800, cwd=str(ROOT))
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {}, "", "영역 게이트 «%s» 를 못 불렀다: %s" % (gate_rel, exc)
+    text = proc.stdout.decode("utf-8", "replace")
+    start = text.find("{")
+    if start < 0:
+        return {}, "", ("영역 게이트 «%s» 가 셈을 내지 않았다 (exit %d) — "
+                        "판정이 아니라 도구 고장이다" % (gate_rel, proc.returncode))
+    try:
+        data = json.loads(text[start:])
+    except ValueError as exc:
+        return {}, "", "영역 게이트 «%s» 의 셈을 못 읽었다: %s" % (gate_rel, exc)
+
+    green = int(data.get("구현", 0))
+    grey = int(data.get("미측정", 0))
+    locked = int(data.get("잠김", 0))
+    red = int(data.get("빨강", 0))
+    #: ★ 빨강은 **갈림**이다 — 대장이 「구현」이라 적은 자리에서 게이트가 무너졌다.
+    #:   상태 네 낱말 안에서는 「미측정」에 담되(구현이 아니다), 갈림으로 **말한다**.
+    counts = {DONE: green, "미측정": grey + red, "잠김": locked}
+    note = ("게이트 «%s» 가 셌다 — 도달 %d · **못 이음(회색) %d** · 끊김(빨강) %d · 잠김 %d"
+            % (gate_rel, green, grey, red, locked))
+    why = ""
+    if red:
+        bad = [r.get("id") for r in (data.get("rows") or []) if r.get("color") == "빨강"]
+        why = ("영역 게이트 «%s» 가 **빨강 %d절**을 냈다: %s — 대장이 「구현」이라 적어 둔 "
+               "자리에서 사슬이 끊겼다 (P-85 갈림 ②)" % (gate_rel, red, bad[:8]))
+    return counts, note, why
+
 
 def contract_clause_counts() -> dict[str, int]:
     """영역 ①은 계약 절 대장에서 **파생한다** — 절 상태를 두 곳에 적지 않는다.
@@ -523,11 +608,21 @@ def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, 
     for area in areas:
         c: dict[str, int] = {}
         if area.get("derived_from"):
-            derived = contract_clause_counts()
-            if not derived:
-                problems.append("영역 %s: %s 에서 절을 읽지 못했다 — 판정이 아니라 열거기 고장이다"
-                                % (area["id"], area["derived_from"]))
-            c = derived
+            #: ★★ [P-106 · 턴 M] 영역에 `gate:` 가 붙으면 **세는 쪽이 바뀐다.**
+            #:   절이 스스로 적은 `state` 를 세는 것이 아니라, 게이트를 **불러**
+            #:   도달한 절만 구현으로 센다. 이 한 자리가 가중 20%였다.
+            if area.get("gate"):
+                derived, note, why = reach_counts(area["gate"])
+                if why:
+                    problems.append("영역 %s: %s" % (area["id"], why))
+                AREA_GATE_NOTE[area["id"]] = note
+                c = derived
+            else:
+                derived = contract_clause_counts()
+                if not derived:
+                    problems.append("영역 %s: %s 에서 절을 읽지 못했다 — 판정이 아니라 "
+                                    "열거기 고장이다" % (area["id"], area["derived_from"]))
+                c = derived
         else:
             clauses = area.get("clauses") or []
             if not clauses:
@@ -611,6 +706,8 @@ def main() -> int:
     for aid, name, weight, d, n, ratio, weighted in rows:
         print("  %-2s %-22s 가중 %2d%%  절 %2d/%-2d = %3.0f%%  →  %5.2f"
               % (aid, name, weight, d, n, ratio * 100, weighted))
+        if AREA_GATE_NOTE.get(aid):
+            print("     ↳ %s" % AREA_GATE_NOTE[aid])
     print("[GA] ★ 상용 오픈 가중 합계 **%.1f%%** [실측]" % total)
     print("[GA] (계약 축과 합치지 않는다 — D-345. 계약 절은 영역 ①이 그대로 인용한다)")
 
@@ -717,4 +814,11 @@ def _print_table(areas, counts, rows, total, *, markdown: bool) -> None:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header, file_stamp  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target="대장 " + str(LEDGER.relative_to(ROOT)).replace("\\", "/") + " · 그리고 절이 가리키는 게이트들을 **실제로 부른다**",
+        as_="이 게이트 자신은 자격 없이 대장을 읽는다 — 부르는 게이트마다 **제 머리글(TARGET/AS/SOURCE)** 을 낸다",
+        source=file_stamp(LEDGER) + " + " + file_stamp(CONTRACT) + " + " + file_stamp(BLOCKERS),
+    )
     raise SystemExit(main())

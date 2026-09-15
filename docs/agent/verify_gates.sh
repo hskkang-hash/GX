@@ -899,6 +899,53 @@ gate_contract_route_reach() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# GATE: click-completes — **누른 뒤를 본다** (P-118 · 턴 O)
+#
+# ★ **출생 표본** (D-310): 2026-09-08, 제품의 핵심 동작 「실제로 판정」이 여러 턴 동안
+#   **0.5 「구현」**으로 채점됐다. 근거는 「상세 화면에 판정 칸이 그려졌다」였다.
+#   사람이 그것을 눌렀더니 — **네트워크 요청 0 · 확인창 0 · 토스트 0 · 오류 0**,
+#   판정은 그대로 「미판정」이었다. `react 19` + `antd 5` 가 요구하는
+#   `@ant-design/v5-patch-for-react-19` 가 **선언만 되고 import 되지 않아** 제품의
+#   `Modal.confirm` 과 `message.*` 가 한 번도 뜬 적이 없었다.
+#
+#   왜 아무 게이트도 못 잡았나 — 그것이 이 게이트의 전부다:
+#     `capture_screens.py` 는 **화면을 열어 찍는다.** 확인창은 **누른 뒤에** 뜬다.
+#     그러므로 촬영 경로에 없었다. 이 저장소의 어떤 게이트도 **누른 뒤**를 보지 않았다.
+#
+#   그래서 이 게이트는 48행마다 네 칸을 본다: ① 누를 것 ② 기대 호출 ③ **새 GET 으로**
+#   확인한 상태 변화 ④ 기대 화면 문구. 넷이 다 서야 초록이다.
+#
+# ⚠ 색을 섞지 않는다 — 누를 자리를 **못 찾았으면 회색**(못 쟀다)이고, 찾아서 눌렀는데
+#   안 끝나면 **빨강**(안 된다)이다. 그 둘을 한 칸에 넣으면 이 도구가 태어난 사유가 지워진다.
+# ⚠ 실측은 브라우저가 필요하다(gx-shell · Playwright). 게이트는 **커밋된 증거를 읽는다** —
+#   게이트가 매번 브라우저를 띄우면 환경이 죽을 때 게이트가 **초록으로** 죽는다.
+#   증거가 낡으면 판정기가 스스로 회색을 낸다(MAX_AGE_HOURS).
+gate_click_completes() {
+  env_none "판정은 저장소의 실측 증거를 읽는다 (실측은 python scripts/verify_click_completes.py --measure)"
+  local out rc n
+  if out=$($PY scripts/verify_click_completes.py --self-test 2>&1); then
+    pass "판정기 자기시험 통과 (양성 38 · 식 자기수용 38 · 변이 9 · **출생 표본 3 빨강** · 관측0=회색48 · 면제칸 없음)"
+  else
+    fail "판정기 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_click_completes.py 2>&1); rc=$?
+  n=$(echo "$out" | grep -m1 -o '\[입력\] [0-9]*건' | tr -dc '0-9')
+  inputs "${n:-0}" "온보딩 48행 — 누른 뒤 네 칸(누를 것·기대 호출·상태 변화·화면 문구)"   "48행 표를 못 읽었다" || return 1
+  echo "$out" | grep -m1 -E '^\[P-118\] \*\*[0-9]+/48\*\*' | sed 's/^/        /'
+  echo "$out" | grep -E '^\[P-118\] ★' | sed 's/^/        /'
+  case $rc in
+    0) pass "$(echo "$out" | grep -m1 -E '^\[P-118\] 48/48' || echo '[P-118] 48/48')"
+       return 0 ;;
+    2) skip "판정 불가 — 실측 증거가 없거나 낡았다"                    "(python scripts/verify_click_completes.py --measure · 통과가 아니다 · D-301)"; return 0 ;;
+    *) fail "누른 뒤가 안 끝나는 자리가 있다 — **그려진 것으로 점수를 주지 않는다**"
+       echo "$out" | sed 's/^/        /'; return 1 ;;
+  esac
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # GATE: ui-secrets — **화면이 우리 서랍을 열어 보여 주는가** (P-27 · SEC-17)
 #
 # ★ **출생 표본** (D-310): 2026-09-25, `preset=system` 화면의 「연계 상태」 상자가
@@ -992,8 +1039,10 @@ _dispatch_gate() {
     dormant)            gate_dormant ;;
     post-arg-style)     gate_post_arg_style ;;
     live-freshness)     gate_live_freshness ;;
+    gate-header)        gate_gate_header ;;
     route-alive)        gate_route_alive ;;
     contract-route-reach) gate_contract_route_reach ;;
+    click-completes)    gate_click_completes ;;
     *) echo "알 수 없는 게이트: $1"; exit 2 ;;
   esac
 }
@@ -1029,8 +1078,53 @@ run_gate() {
   return $rc
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# GATE: gate-header — **게이트가 자기가 무엇을 쟀는지 먼저 말한다** (P-107 · 턴 M)
+#
+# ★ 출생 표본 (D-310) — 턴 L 이 연 게이트 넷은 **넷 다 초록**이었고, 넷 다 제품이
+#   아닌 것을 재고 있었다: 8월 라우트 사진(531 vs 살아 있는 705) · 손으로 적은 분모
+#   30(살아 있는 쓰기 표면 377) · **역할 0 계정**으로 걸은 화면 걷기 · 호스트 **root**
+#   자격으로 잰 저장소 200(앱의 자격은 5자 자리표이고 앱은 503).
+#   넷의 공통점은 색이 아니다 — **무엇을 쟀는지 아무도 말하지 않았다.**
+#
+#   그래서 머리글 세 줄(TARGET/AS/SOURCE)이 없는 게이트는 **회색**이다. 통과가 아니다.
+#   이 게이트는 세 줄이 **적혀 있는지**가 아니라 **찍히는지**를 본다 — 게이트를
+#   실제로 연다(D-210).
+# ─────────────────────────────────────────────────────────────────────────────
+gate_gate_header() {
+  head_ "GATE gate-header — 머리글 TARGET/AS/SOURCE · 파이프 exit (P-107)"
+  local out rc n
+
+  if out=$($PY scripts/verify_gate_header.py --self-test 2>&1); then
+    pass "판정기 자기시험 통과 (양성 3 · 변이 3 · 출생 표본 4)"
+  else
+    fail "판정기 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_gate_header.py 2>&1); rc=$?
+
+  # D-301 — 몇 개를 **실제로 열었는지** 말한다. 열지 못했으면 0건이고, 0건은 통과가 아니다.
+  n=$(echo "$out" | grep -o '실제로 연 것 [0-9]*개' | grep -o '[0-9]*' | head -1)
+  inputs "${n:-0}" "머리글을 받으려고 **실제로 연** 게이트 수"          "게이트를 하나도 못 열었다 — 판정이 아니라 열거기·파이썬 고장이다" || return 1
+
+  echo "$out" | grep -E "^\[P-107\] 수|^  [OX]  " | sed 's/^/        /'
+  if [ $rc -eq 0 ]; then
+    pass "$(echo "$out" | tail -1)"
+    return 0
+  fi
+  if [ $rc -eq 2 ]; then
+    skip "gate-header" "못 쟀다 (exit 2) — 회색은 통과가 아니다"
+    return 2
+  fi
+  fail "머리글이 없거나 어긋난 게이트가 있다 — **무엇을 쟀는지 말하지 않은 초록은 초록이 아니다**"
+  echo "$out" | sed 's/^/        /'
+  return 1
+}
+
 # ★ ui-secrets 가 secrets 바로 뒤다 — **V 의 첫 판정기**(09-26 §6).
-ALL_GATES=(live-freshness secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach)
+ALL_GATES=(live-freshness gate-header secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach click-completes)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {

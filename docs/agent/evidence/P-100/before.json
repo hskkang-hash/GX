@@ -1,0 +1,38 @@
+{
+  "when": "2026-09-07T09:39:09",
+  "api": "http://localhost:8000",
+  "as": "gxseed_u4_official",
+  "calls": [
+    {
+      "label": "report-template list",
+      "method": "GET",
+      "path": "/api/report-template/",
+      "status": 500,
+      "len": 951,
+      "markers_present": [
+        "Traceback",
+        "pydantic",
+        "File \""
+      ],
+      "body_first_400": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/ninja_extra/operation.py\", line 216, in run\n    _processed_results = self._result_to_response(\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/ninja/operation.py\", line 280, in _result_to_response\n    validated_object = response_model.model_validate(\n               "
+    },
+    {
+      "label": "report-template detail",
+      "method": "GET",
+      "path": "/api/report-template/1",
+      "status": 200,
+      "len": 328,
+      "markers_present": [],
+      "body_first_400": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0e32\\u0e23\\u0e40\\u0e02\\u0e49\\u0e32\\u0e16\\u0e36\\u0e07\\u0e16\\u0e39\\u0e01\\u0e1b\\u0e0f\\u0e34\\u0e40\\u0e2a\\u0e18\"}, \"status_code\": 403}"
+    },
+    {
+      "label": "dsm(control promoted)",
+      "method": "GET",
+      "path": "/api/dsm/reports/templates",
+      "status": 200,
+      "len": 127,
+      "markers_present": [],
+      "body_first_400": "{\"total\": 1, \"templates\": [{\"template_id\": 7, \"name\": \"Template\", \"is_default\": false, \"is_enabled\": true, \"usage_count\": 46}]}"
+    }
+  ]
+}

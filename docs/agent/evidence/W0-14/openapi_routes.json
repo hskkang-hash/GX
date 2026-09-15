@@ -1,5 +1,9 @@
 {
-  "note": "W0-14 · openapi 실측 라우트 대장 (경로+메서드). 격리 시험 api_base 근거.",
+  "폐기": "2026-09-07 · 턴 K · P-104",
+  "폐기_사유": "2026-08-22 에 찍은 **사진**이다(531경로). 살아 있는 라우터는 2026-09-07 실측으로 705 오퍼레이션 · 578 경로 — 이 파일은 그 사이에 난 경로를 **한 개도 담고 있지 않다.** 그런데 판정기가 이것을 읽고 「라우트가 안 생겼다」를 냈다: `verify_tenant_scope.py` 의 no_route 대조가 두 달 동안 못 보는 눈으로 초록을 냈다. P-93 — **판정기가 읽는 자리는 앱이 쓰는 자리여야 한다.** 기록으로 남기되 판정 근거로는 쓰지 않는다. 지우지 않는 이유는 `tenant_census.py` 의 사유문과 W0-14 의 여러 산출물이 이 사진을 인용하고 있어서다 — 지우면 그 인용이 「무엇을 보고 한 말인지」를 잃는다.",
+  "대체": "docs/agent/evidence/D-343/route_inventory.json — scripts/probe_route_inventory.py 가 살아 있는 라우터에서 전수 열거해 쓴다. 읽는 자리: scripts/verify_tenant_scope.py::_route_paths()",
+  "폐기_후_읽으면": "verify_tenant_scope.py 는 이 파일로 **떨어지지 않는다.** 실측본이 없으면 통과가 아니라 위반이다 (D-301).",
+  "note": "[폐기 2026-09-07 · P-104] W0-14 · openapi 실측 라우트 대장 (경로+메서드). 격리 시험 api_base 근거.",
   "schema_count": 21,
   "route_count": 531,
   "failed_schemas": {},

@@ -1,11 +1,11 @@
 {
-  "measured_at": "2026-09-06T17:05:00+00:00",
+  "measured_at": "2026-09-15T04:24:45+00:00",
   "verdict": "OK",
-  "day": "2026-09-06",
-  "anchor": "a26f0496038a4ec5e6156fb2550dd7d077f403d546699e949f0a4c1be478688b",
-  "anchor_line": "[LAW-08] 2026-09-06 증거 해시 앵커 SHA-256: a26f0496038a4ec5e6156fb2550dd7d077f403d546699e949f0a4c1be478688b",
-  "total": 521,
-  "chained": 232,
+  "day": "2026-09-14",
+  "anchor": "",
+  "anchor_line": "[LAW-08] 2026-09-14 증거 해시 앵커 — 그날 감사 기록 없음",
+  "total": 1053,
+  "chained": 764,
   "breaks": 0,
   "hashed_fields": [
     "id",
@@ -22,5 +22,9 @@
     "target_user_id",
     "data_before",
     "data_after"
-  ]
+  ],
+  "_written_from": {
+    "db": "database_guardianx",
+    "under_pytest": false
+  }
 }

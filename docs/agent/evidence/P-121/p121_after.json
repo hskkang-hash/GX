@@ -1,0 +1,144 @@
+{
+  "tag": "after",
+  "at": "2026-09-10T08:27:35",
+  "web": "http://localhost:3002",
+  "screens": [
+    {
+      "screen": "desktop_detail",
+      "url": "/dsm/events/4798",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "snapshot_calls": [
+        {
+          "url": "/dsm/events/4798/snapshot",
+          "status": 200,
+          "bytes": 37477
+        }
+      ],
+      "blob_imgs": [
+        {
+          "w": 640,
+          "h": 360
+        }
+      ],
+      "drawn": true,
+      "shows_fail_line": false,
+      "shows_none_line": false,
+      "shows_false_instruction": false,
+      "console": [],
+      "retry": {
+        "found": false,
+        "calls_before": 1,
+        "calls_after": 1,
+        "issued": false
+      },
+      "shot": "after_desktop_detail.png"
+    },
+    {
+      "screen": "desktop_queue",
+      "url": "/dsm/queue",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "snapshot_calls": [
+        {
+          "url": "/dsm/events/4805/snapshot",
+          "status": 200,
+          "bytes": 37632
+        }
+      ],
+      "blob_imgs": [
+        {
+          "w": 640,
+          "h": 360
+        }
+      ],
+      "drawn": true,
+      "shows_fail_line": false,
+      "shows_none_line": false,
+      "shows_false_instruction": false,
+      "console": [],
+      "shot": "after_desktop_queue.png"
+    },
+    {
+      "screen": "mobile_detail",
+      "url": "/m/events/4798",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "snapshot_calls": [
+        {
+          "url": "/dsm/events/4798/snapshot",
+          "status": 200,
+          "bytes": 37499
+        }
+      ],
+      "blob_imgs": [
+        {
+          "w": 640,
+          "h": 360
+        }
+      ],
+      "drawn": true,
+      "shows_fail_line": false,
+      "shows_none_line": false,
+      "shows_false_instruction": false,
+      "console": [],
+      "retry": {
+        "found": false,
+        "calls_before": 1,
+        "calls_after": 1,
+        "issued": false
+      },
+      "shot": "after_mobile_detail.png"
+    },
+    {
+      "screen": "desktop_nosnap",
+      "url": "/dsm/events/4818",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "snapshot_calls": [],
+      "blob_imgs": [],
+      "drawn": false,
+      "shows_fail_line": false,
+      "shows_none_line": true,
+      "shows_false_instruction": false,
+      "console": [],
+      "shot": "after_desktop_nosnap.png"
+    },
+    {
+      "screen": "desktop_forced500",
+      "url": "/dsm/events/4798",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "snapshot_calls": [
+        {
+          "url": "/dsm/events/4798/snapshot",
+          "status": 500,
+          "bytes": 27
+        }
+      ],
+      "blob_imgs": [],
+      "drawn": false,
+      "shows_fail_line": true,
+      "shows_none_line": false,
+      "shows_false_instruction": false,
+      "console": [],
+      "retry": {
+        "found": true,
+        "calls_before": 1,
+        "calls_after": 2,
+        "issued": true
+      },
+      "shot": "after_desktop_forced500.png"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "commit": "6cf2c19fe0fa96d784f5f6188850db3d9e1ead62",
+  "commit_source": "GX_COMMIT 환경변수",
+  "bundle": {
+    "source": "서버 http://localhost:3002",
+    "assets": [
+      "/assets/index-CjPCdFqO.js",
+      "/assets/router-DVUMBcBr.js"
+    ],
+    "commits": [
+      "6cf2c19fe0fa96d784f5f6188850db3d9e1ead62"
+    ],
+    "html_only": []
+  },
+  "deploy": {
+    "commit": "6cf2c19fe0fa96d784f5f6188850db3d9e1ead62",
+    "source": "/docs/agent/evidence/deploy/20260910_180131.json",
+    "deployed_at": "2026-09-10T18:02:57+09:00"
+  },
+  "deploy_source": "배치 증거 20260910_180131.json",
+  "drift": {
+    "paths": [],
+    "ancestor": true,
+    "error": null,
+    "source": "GX_DRIFT_JSON (호스트가 재서 넘겼다)"
+  },
+  "doc_only_prefixes": [
+    "docs/"
+  ],
+  "sidecar": null,
+  "token_prefix": "GX_COMMIT:",
+  "rows": [
+    {
+      "name": "번들이 자기 커밋을 말한다",
+      "verdict": "pass",
+      "why": "`GX_COMMIT:6cf2c19…` ← /assets/index-CjPCdFqO.js, /assets/router-DVUMBcBr.js · 서버 http://localhost:3002"
+    },
+    {
+      "name": "번들 해시 = **배치 커밋**",
+      "verdict": "pass",
+      "why": "6cf2c19 = 6cf2c19 — 서버가 내는 번들이 **배치 커밋**이다 ← /docs/agent/evidence/deploy/20260910_180131.json"
+    },
+    {
+      "name": "HEAD − 배치 커밋 차이가 `docs/**` 뿐",
+      "verdict": "pass",
+      "why": "HEAD = 배치 커밋 6cf2c19 — 배치 뒤 커밋이 없다"
+    }
+  ],
+  "exit": 0
+}

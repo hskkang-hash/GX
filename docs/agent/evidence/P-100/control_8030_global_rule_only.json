@@ -1,0 +1,16 @@
+{
+  "when": "2026-09-07T10:15:33",
+  "api": "http://localhost:8030",
+  "as": "gxseed_u4_official",
+  "calls": [
+    {
+      "label": "report-template list",
+      "method": "GET",
+      "path": "/api/report-template/",
+      "status": 500,
+      "len": 245,
+      "markers_present": [],
+      "body_first_400": "{\"success\": false, \"status_code\": 500, \"message\": \"\\uc11c\\ubc84\\uac00 \\uc694\\uccad\\uc744 \\ucc98\\ub9ac\\ud558\\uc9c0 \\ubabb\\ud588\\uc2b5\\ub2c8\\ub2e4. \\uad00\\ub9ac\\uc790\\uc5d0\\uac8c \\ubb38\\uc758\\ud558\\uc138\\uc694.\", \"detail\": \"Internal server error\"}"
+    }
+  ]
+}

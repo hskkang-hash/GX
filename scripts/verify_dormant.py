@@ -75,6 +75,13 @@ FRAMEWORK_HOOKS = {
     "get_serializer", "get_serializer_class", "get_permissions", "has_permission",
     "has_object_permission", "form_valid", "form_invalid", "dispatch",
     "get", "post", "put", "patch", "options", "head",
+    # Django 미들웨어 훅 — `MIDDLEWARE` 에 오른 클래스의 이 메서드는 **Django 가 부른다.**
+    #   ★ [D-458 · 2026-09-15 턴 P] 이 다섯이 빠져 있어서 `common/error_body.py::
+    #     SafeErrorBodyMiddleware.process_exception`(settings.py:127 에 등록 · 운영이 부른다)을
+    #     「호출 없음 · 새로 태어난 잠자는 함수」로 **빨강**을 냈다. 게이트 기대식 오류다 —
+    #     `get`·`post` 가 여기 있는 것과 같은 이유로 여기 있어야 한다.
+    "process_request", "process_view", "process_exception", "process_response",
+    "process_template_response",
     # DRF / ninja / serializer
     "to_representation", "to_internal_value", "validate", "create", "update",
     "resolve", "run_validation",
@@ -979,4 +986,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
+    gate_header(__file__)
     sys.exit(main())

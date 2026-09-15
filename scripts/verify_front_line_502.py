@@ -178,6 +178,15 @@ def judge(facts: dict) -> list[tuple[str, str, str]]:
     elif n200 == 0:
         out.append(("① 표본", "gray",
                     "**음성 대조가 없다**(정상 200 이 0건) — 양성만으로는 표를 못 읽는다"))
+    elif n502 == 0 and (facts.get("n_outage", 0) or facts.get("n_blind", 0)):
+        # ★ [턴 P] **뺐더니 0 이 된 것을 「502 가 없었다」로 적지 않는다.**
+        #   이 0 은 「502 가 안 났다」가 아니라 「잴 수 있는 502 가 없었다」다.
+        out.append(("① 표본", "gray",
+                    "살아 있는 뒷단이 낸 502 가 **0건**이다 — 그러나 창 밖으로 뺀 502 가 "
+                    "%d건 있다(뒷단 부재 %d · 뒷단 로그 밖 %d). 이 0 은 「502 가 안 났다」가 "
+                    "아니라 **「잴 수 있는 502 가 없었다」**다"
+                    % (facts.get("n_outage", 0) + facts.get("n_blind", 0),
+                       facts.get("n_outage", 0), facts.get("n_blind", 0))))
     elif n502 == 0:
         out.append(("① 표본", "pass",
                     "이번 부하에서 502 **0건** — 맞댈 양성이 없다. "
@@ -256,6 +265,25 @@ def judge(facts: dict) -> list[tuple[str, str, str]]:
                     "삼킬 것이 있었는데(재시도 %d · 502 %d) 되살린 건수가 **0**이다 — "
                     "`proxy_next_upstream` 이 빠졌거나 갈 peer 가 없다. 이 상태의 502 수는 "
                     "뒷단이 아니라 **앞단**의 수다" % (retried, n502)))
+
+    # ── ⑤ 뒷단 부재 — **뺀 것을 제 이름으로 적는다** (턴 P) ────────────────
+    #   이 줄은 **초록을 못 준다.** 창 밖이 하나라도 있으면 회색이다 — 그 판은
+    #   「부하 한 벌」이 아니라 여러 날의 기록이 섞인 것이고, 섞인 기록으로는
+    #   OPS-13a 를 못 잰다. **회색은 초록이 아니다**(D-301).
+    n_out = facts.get("n_outage", 0)
+    n_blind = facts.get("n_blind", 0)
+    n_boot = facts.get("n_backend_restarts", 0)
+    if n_out == 0 and n_blind == 0:
+        out.append(("⑤ 뒷단 부재", "pass",
+                    "이 판의 502 는 **전부 살아 있는 뒷단이 낸 것**이다 — 뺀 것이 없다"))
+    else:
+        out.append(("⑤ 뒷단 부재", "gray",
+                    "**%d건을 창 밖으로 뺐다** — 뒷단 부재 %d건(재기동 %d회 · 앞단은 "
+                    "`connect() 111 refused` 를 적었다 · 재활용이 아니다) · 뒷단 로그 밖 "
+                    "%d건(맞댈 자국이 아예 없는 구간). **이 판은 부하 한 벌이 아니다** — "
+                    "`verify_perf_budget --measure` 로 부하를 걸고 그 시각 창"
+                    "(`--since-time`/`--until-time`)으로 다시 불러라 (P-101)"
+                    % (n_out + n_blind, n_out, n_boot, n_blind)))
     return out
 
 
@@ -631,6 +659,102 @@ def read_restarts(container: str) -> list[datetime] | None:
     return stamps
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ★ [실측 2026-09-11 · 턴 P · 차선 B · P-85] **뒷단이 아예 없던 구간을 「다른 결함」으로
+#   적고 있었다.** 이 판정기가 세 번째로 눈을 뜬 자리다(턴 D stderr · 턴 I 읽을 자리 ·
+#   오늘 **볼 수 있었던 구간**).
+#
+#   창 없이 부른 판이 빨강이었다: 502 **226건** 중 요청 구간 안의 `Worker exiting` 으로
+#   설명되지 않는 것이 **198건**. 판정기는 자기 규약대로 「이것은 다른 결함이다」라고
+#   적었다. 그 198건을 하나씩 갈랐고, **하나도 제품 결함이 아니었다**:
+#
+#     ㉠ **194건 — 뒷단이 그 순간 없었다.** 앞단 오류로그가 전부
+#        `connect() failed (111: Connection refused)` 이고, 뒷단 로그에는 그 앞뒤로
+#        `Handling signal: term` … `Listening at:` 가 있다. 09-10 하루에 **재기동 7번**,
+#        창 길이 10~22초. 재활용(연결이 끊김)이 아니라 **문이 닫혀 있었다**.
+#        `Connection refused` 는 앞단 오류로그에서 **192건**이고, 이 창들에 놓인 502 는 194건이다.
+#     ㉡ **10건 — 뒷단 로그가 시작되기 전이다.** 앞단 로그는 09-05T04:00 부터,
+#        뒷단 로그는 **09-06T14:37** 부터다(회전이 앞머리를 버렸다). 그 사이의 502 는
+#        **맞댈 자국이 아예 없다** — 설명될 수 없는 것을 「미설명」이라 적으면
+#        다음 사람은 없는 결함을 찾으러 간다.
+#
+#   ⚠ **이것은 자를 넓혀 빨강을 초록으로 바꾼 것이 아니다.** 근거 넷:
+#     · 두 갈래 다 **기계적으로 관측된 사실**이지 추정이 아니다(앞단 오류로그의 문구 ·
+#       뒷단의 기동 로그). 턴 D 가 「재활용을 끄니 502 0」으로 인과를 보인 것과 같은 종류다.
+#     · **지우지 않는다.** ⑤ 가 제 줄로 건수를 적고, 표의 머리에 종전 총수(226)가 남는다.
+#     · **음성 대조에 같은 자를 댄다** — 같은 구간의 정상 200 도 대조에서 뺀다.
+#     · ⑤ 는 **초록을 못 준다.** 창 밖이 하나라도 있으면 **회색**이고, 회색은 초록이 아니다.
+#   ⚠ 그리고 **뺀 뒤에도 빨강은 남았다**: 살아 있는 뒷단이 낸 502 22건 중 **3건이 여전히
+#     미설명**이다(09-07 09:51 둘 · 09-08 04:21 하나 — 전부 `recv() 104 reset by peer`).
+#     자를 바꿔 빨강이 사라졌다면 그 자를 의심해야 했을 것이다. 사라지지 않았다.
+def read_lifecycle(container: str) -> tuple:
+    """뒷단의 **생사**를 읽는다 — `(처음 보인 시각, [(내려간 시각, 다시 선 시각), …])`.
+
+    ㉠ `Handling signal: term` / `Shutting down` — 문이 닫히는 순간
+    ㉡ `Listening at:` — 문이 다시 열리는 순간
+
+    그 사이에 앞단이 받은 요청은 `connect() failed (111: Connection refused)` 가 되고,
+    그것은 **워커 재활용이 아니다**. 재활용은 연결이 **끊기는** 것이고, 이것은 연결이
+    **맺히지 않는** 것이다 — 앞단 오류로그의 문구가 둘을 갈라 준다(`recv()` 대 `connect()`).
+
+    못 읽으면 `(None, [])` 를 돌려준다 — 그때는 아무것도 빼지 않는다(모르면 안 뺀다).
+    """
+    rc, out, errout = docker("logs", "-t", container)
+    if rc != 0:
+        return (None, [])
+    out = out + chr(10) + errout
+    first = None
+    downs: list[datetime] = []
+    ups: list[datetime] = []
+    for line in out.splitlines():
+        m = _DOCKER_TS_US.match(line)
+        if m:
+            when = (datetime.strptime(m.group(1), "%Y-%m-%dT%H:%M:%S")
+                    .replace(tzinfo=timezone.utc)
+                    + timedelta(microseconds=int((m.group(2) + "000000")[:6])))
+        else:
+            m = _DOCKER_TS.match(line)
+            if not m:
+                continue
+            when = (datetime.strptime(m.group(1), "%Y-%m-%dT%H:%M:%S")
+                    .replace(tzinfo=timezone.utc))
+        if first is None:
+            first = when
+        if "Handling signal: term" in line or "Handling signal: quit" in line:
+            downs.append(when)
+        elif "Listening at:" in line:
+            ups.append(when)
+    outages = []
+    for d in downs:
+        after = [u for u in ups if u > d]
+        if after:
+            outages.append((d, min(after)))
+    return (first, outages)
+
+
+def partition_by_backend(events: list, first_seen, outages: list) -> tuple:
+    """요청을 셋으로 가른다 — `(살아 있는 뒷단, 뒷단 부재, 뒷단 로그 밖)`.
+
+    `events` 는 `(끝난 시각, request_time)` 짝이고, 창은 `span_coincidence` 와 **같은 자**
+    `[끝 - rt, 끝 + 1초)` 를 쓴다. 자를 두 벌 두면 어느 자로 뺐는지 아무도 모른다.
+
+    ⚠ **모르면 안 뺀다.** `first_seen` 이 `None` 이면(뒷단 로그를 못 읽음) 아무것도
+      「로그 밖」으로 보내지 않는다 — 못 읽은 것을 빼기의 근거로 쓰면 그것이 거짓 초록이다.
+    """
+    live, outage, blind = [], [], []
+    for ev in events:
+        when, rt = ev
+        lo = when - timedelta(seconds=max(rt, 0.0))
+        hi = when + timedelta(seconds=1)
+        if first_seen is not None and hi <= first_seen:
+            blind.append(ev)
+        elif any(not (hi <= a or lo >= b) for a, b in outages):
+            outage.append(ev)
+        else:
+            live.append(ev)
+    return live, outage, blind
+
+
 def parse_access(lines: list[str]) -> dict:
     """★ [2026-09-07 · 턴 J] **`$request_time` 을 버리지 않는다.**
     종전 판은 시각만 들고 나왔고, 그래서 「요청이 얼마나 오래 살아 있었는가」를
@@ -656,6 +780,42 @@ def parse_access(lines: list[str]) -> dict:
             if multi:
                 rescued += 1
     return {"err": err, "ok": ok, "retried": retried, "rescued": rescued}
+
+
+#: ★ **[P-101 · 2026-09-07 · 턴 K] `--since-line` 은 도는 로그 위에서 미끄러진다.**
+#:
+#:   이 판정기가 읽는 자리는 `docker logs` 다(앞단이 `/dev/stdout` 으로 적으므로).
+#:   그리고 그 로그는 `json-file` **회전**을 받는다(`--log-opt max-size=10m max-file=5`).
+#:   회전이 앞머리를 버리면 **줄 번호가 통째로 앞으로 당겨진다.** 그러면 부하 직전에
+#:   적어 둔 `wc -l` 은 부하 **한복판**을 가리키게 되고, 판정기는 그 앞부분을 못 본다.
+#:
+#:   [실측 2026-09-07 · 턴 K] 이 턴에 실제로 그랬다. 같은 부하 한 벌을
+#:     · 줄 번호 창으로 세니  3,760줄 · 502 **0건**
+#:     · 시각 창으로 세니     3,722줄 · 502 **2건**
+#:   **회전이 502 2건을 창 밖으로 밀어냈다.** 그 0 은 고쳐서 난 0 이 아니라
+#:   **못 본 0** 이다 — 이 저장소가 가장 싫어하는 종류의 초록이다(D-301).
+#:
+#:   그래서 `--since-time`/`--until-time` 을 둔다. 시각은 회전과 무관하다.
+#:   `--since-line` 은 남긴다(옛 증거를 되읽을 때 쓴다) — 대신 쓰면 경고를 낸다.
+def clip_by_time(lines: list, since: str, until: str) -> list:
+    """접근로그 줄을 **그 줄이 적힌 시각**으로 자른다. `HH:MM:SS` 또는 빈 문자열.
+
+    ⚠ 하루를 넘기는 창은 이 함수가 다루지 않는다 — 부하 한 벌은 분 단위다.
+      넘겨야 할 일이 생기면 그때 날짜를 받게 고쳐라. 지금 넘기면 **안 쓰는 코드**다.
+    """
+    if not since and not until:
+        return lines
+    lo = since or "00:00:00"
+    hi = until or "23:59:59"
+    out = []
+    for line in lines:
+        m = _ACCESS.match(line)
+        if not m:
+            continue
+        clock = m.group("t").split(":", 1)[1]      # DD/Mon/YYYY:HH:MM:SS → HH:MM:SS
+        if lo <= clock <= hi:
+            out.append(line)
+    return out
 
 
 def thin(items: list, cap: int) -> list:
@@ -779,6 +939,25 @@ def self_test() -> int:
     if verdict(judge({})) != EXIT_UNDECIDABLE:
         bad.append("못 쟀는데 회색이 아니다")
 
+    # ⑦′ **시각 창** — 회전에 미끄러지지 않는 자 (P-101 · 턴 K)
+    sample = [
+        '1.2.3.4 [07/Sep/2026:09:39:00 +0000] "GET /a HTTP/1.1" 200 9 0.1 "u" 0.1',
+        '1.2.3.4 [07/Sep/2026:09:41:02 +0000] "GET /b HTTP/1.1" 502 150 0.2 "u" 0.2',
+        '1.2.3.4 [07/Sep/2026:09:44:20 +0000] "GET /c HTTP/1.1" 200 9 0.1 "u" 0.1',
+        'nginx: some non-access line',
+    ]
+    if len(clip_by_time(sample, "09:39:50", "09:44:13")) != 1:
+        bad.append("시각 창이 구간 안의 줄만 남기지 못한다")
+    if clip_by_time(sample, "09:39:50", "09:44:13")[0].find("502") < 0:
+        bad.append("시각 창이 남긴 줄이 창 안의 그 줄이 아니다")
+    if len(clip_by_time(sample, "", "")) != len(sample):
+        bad.append("창을 안 주면 원본 그대로여야 한다")
+    if len(clip_by_time(sample, "09:45:00", "")) != 0:
+        bad.append("창 뒤로 벗어난 줄을 남겼다")
+    # ★ **음성 대조** — 시각 창은 접근로그가 아닌 줄을 남기지 않는다
+    if any("non-access" in x for x in clip_by_time(sample, "00:00:00", "23:59:59")):
+        bad.append("접근로그가 아닌 줄을 창 안에 넣었다")
+
     # ⑧ 솎기는 **고르게** — 앞도 뒤도 남아야 한다
     sampled = thin(list(range(1000)), 10)
     if len(sampled) != 10 or sampled[0] != 0 or sampled[-1] < 800:
@@ -799,13 +978,66 @@ def self_test() -> int:
     if got["rescued"] != 1 or len(got["ok"]) != 1:
         bad.append("되살아난 200 을 못 셌다: %s" % got)
 
+    # ⑩ **뒷단 부재 가르기** — 턴 P 가 고친 자. 양성·음성을 함께 둔다
+    #   창: 09:00:10 에 문이 닫히고 09:00:30 에 다시 열렸다. 로그는 08:00:00 부터 보인다.
+    seen = datetime(2026, 9, 10, 8, 0, 0, tzinfo=timezone.utc)
+    outw = [(datetime(2026, 9, 10, 9, 0, 10, tzinfo=timezone.utc),
+             datetime(2026, 9, 10, 9, 0, 30, tzinfo=timezone.utc))]
+    ev_live = (datetime(2026, 9, 10, 9, 0, 45, tzinfo=timezone.utc), 0.1)   # 문 열린 뒤
+    ev_out = (datetime(2026, 9, 10, 9, 0, 20, tzinfo=timezone.utc), 0.0)    # 창 한복판
+    ev_edge = (datetime(2026, 9, 10, 9, 0, 10, tzinfo=timezone.utc), 0.5)   # 걸쳐 있다
+    ev_blind = (datetime(2026, 9, 10, 7, 0, 0, tzinfo=timezone.utc), 0.1)   # 로그 시작 전
+    live, outage, blind = partition_by_backend(
+        [ev_live, ev_out, ev_edge, ev_blind], seen, outw)
+    if [e[0] for e in live] != [ev_live[0]]:
+        bad.append("문이 열려 있던 502 를 창 밖으로 뺐다 — **빼기가 너무 넓다**")
+    if len(outage) != 2:
+        bad.append("문이 닫혀 있던 창의 502 를 못 갈랐다 (걸친 것 포함): %s" % outage)
+    if [e[0] for e in blind] != [ev_blind[0]]:
+        bad.append("뒷단 로그가 시작되기 전의 502 를 못 갈랐다")
+    # ⑩′ **모르면 안 뺀다** — 뒷단 로그를 못 읽었으면(첫 시각 None · 창 없음) 전부 산 것으로 본다
+    live2, out2, blind2 = partition_by_backend(
+        [ev_live, ev_out, ev_edge, ev_blind], None, [])
+    if len(live2) != 4 or out2 or blind2:
+        bad.append("뒷단 로그를 못 읽었는데 무언가를 뺐다 — 모르는 것은 빼기의 근거가 아니다")
+
+    # ⑩″ **빼기가 빨강을 지울 수 없다** — 살아 있는 502 에 미설명이 남으면 여전히 빨강
+    still_red = {"n502": 22, "n200": 400, "n_restarts": 61,
+                 "hit502": [10, 14, 14], "hit200": [60, 150, 300],
+                 "hit502_span": 19, "hit200_span": 60,
+                 "retried": 138, "rescued": 125,
+                 "n502_total": 226, "n_outage": 194, "n_blind": 10,
+                 "n_backend_restarts": 7}
+    rows = judge(still_red)
+    if verdict(rows) != EXIT_FAIL:
+        bad.append("창 밖을 빼고도 미설명 3건이 남았는데 빨강이 아니다 — "
+                   "빼기로 빨강을 지웠다면 그 빼기를 의심해야 한다")
+    if not any(n == "⑤ 뒷단 부재" and v == "gray" for n, v, _ in rows):
+        bad.append("창 밖이 204건인데 ⑤ 가 회색이 아니다 — 뺀 판은 부하 한 벌이 아니다")
+    if not any("194" in why and "10" in why for n, _, why in rows if n == "⑤ 뒷단 부재"):
+        bad.append("뺀 건수를 제 줄에 안 적었다 — 지우면 무엇을 뺐는지 사라진다")
+
+    # ⑩‴ **다 빼서 0 이 되면 초록이 아니라 회색이다**
+    all_gone = dict(still_red, n502=0, hit502=[0, 0, 0], hit502_span=0)
+    rows = judge(all_gone)
+    if verdict(rows) != EXIT_UNDECIDABLE:
+        bad.append("뺀 뒤 502 가 0건인데 회색이 아니다")
+    if not any(n == "① 표본" and v == "gray" for n, v, _ in rows):
+        bad.append("「잴 수 있는 502 가 없었다」를 「502 가 안 났다」로 적었다")
+
+    # ⑩⁗ **음성 대조** — 뺄 것이 없으면 ⑤ 는 초록이고 판정을 흐리지 않는다
+    nothing_out = dict(clean, n502_total=8, n_outage=0, n_blind=0, n_backend_restarts=0)
+    if verdict(judge(nothing_out)) != EXIT_OK:
+        bad.append("뺄 것이 없는 표가 ⑤ 때문에 초록을 잃었다")
+
     if bad:
         print("[502] 자기시험 **실패** — 판정기를 먼저 의심한다 (D-350):")
         for b in bad:
             print("    " + b)
         return EXIT_FAIL
     print("[502] 자기시험 통과 — 겹침 4 · **구간겹침 6** · 양성 1 · 음성 1 · 초록 1 · "
-          "앞단없음 1 · 502없음 1 · 회색 2 · **구간초록 2** · 솎기 1 · 되읽기 3")
+          "앞단없음 1 · 502없음 1 · 회색 2 · **구간초록 2** · 솎기 1 · 되읽기 3 · "
+          "**뒷단부재 9**(빼기 3 · 모르면안뺌 1 · 빼도빨강 3 · 다빼면회색 2)")
     _ = good_rows
     return EXIT_OK
 
@@ -818,7 +1050,13 @@ def main() -> int:
     ap.add_argument("--back", default=BACK_CONTAINER)
     ap.add_argument("--access-path", default=ACCESS_PATH)
     ap.add_argument("--since-line", type=int, default=0,
-                    help="이 줄 **다음**부터 읽는다. 부하 직전의 `wc -l` 을 넣어라")
+                    help="이 줄 **다음**부터 읽는다. ⚠ 도는 로그에서는 미끄러진다 — "
+                         "`--since-time` 을 써라")
+    ap.add_argument("--since-time", default="",
+                    help="`HH:MM:SS`(앞단이 적는 시간대 그대로). **회전과 무관하다** — "
+                         "부하 한 벌을 자를 때는 이쪽을 쓴다 (P-101)")
+    ap.add_argument("--until-time", default="",
+                    help="`HH:MM:SS`. 비우면 끝까지")
     ap.add_argument("--evidence", default="")
     #: P-84 — 5xx 를 **두 줄로** 잰다. 이 갈래는 로그를 안 읽고 직접 때린다.
     ap.add_argument("--sla-5xx", action="store_true",
@@ -857,8 +1095,22 @@ def main() -> int:
               "(앞단 %s · 뒷단 %s)" % (args.front, args.back))
         return EXIT_UNDECIDABLE
 
+    if args.since_time or args.until_time:
+        lines = clip_by_time(lines, args.since_time, args.until_time)
+    elif args.since_line:
+        print("[502] ⚠ `--since-line` 은 **도는 로그에서 미끄러진다**(json-file 회전). "
+              "이번 판이 못 본 502 가 있을 수 있다 — `--since-time` 을 권한다 (P-101)")
+
     parsed = parse_access(lines)
-    err, ok = parsed["err"], parsed["ok"]
+    #: ★ [턴 P] **볼 수 있었던 구간만 판정한다.** 종전 판은 자국을 접근로그 구간으로
+    #:   잘랐지만(`keep`), 그 **반대쪽 자르기가 없었다** — 뒷단 로그가 시작되기도 전의
+    #:   502 와 뒷단이 아예 내려가 있던 창의 502 를 「설명되지 않는 다른 결함」으로 세었다.
+    #:   뺀 것은 ⑤ 가 제 줄로 적고, 종전 총수는 아래 표 머리에 그대로 남는다.
+    first_seen, outages = read_lifecycle(args.back)
+    err_all, ok_all = parsed["err"], parsed["ok"]
+    err, err_out, err_blind = partition_by_backend(err_all, first_seen, outages)
+    #: **음성 대조에 같은 자를 댄다** — 뺀 구간의 정상 200 도 대조에서 뺀다 (P-92)
+    ok, ok_out, ok_blind = partition_by_backend(ok_all, first_seen, outages)
     err_t = [e[0] for e in err]
     ok_t = [o[0] for o in ok]
     if err_t or ok_t:
@@ -875,6 +1127,9 @@ def main() -> int:
     facts = {
         "n502": len(err), "n200": len(control), "n_restarts": len(restarts),
         "n_exits": len(exits),
+        "n502_total": len(err_all),
+        "n_outage": len(err_out), "n_blind": len(err_blind),
+        "n_backend_restarts": len(outages),
         # 종전 자는 **종전 그대로** 재서 나란히 보인다. 뒷단 자국을 µs 까지 읽게 되면서
         # `±0초`(=같은 초)의 뜻이 「같은 마이크로초」로 바뀌어 버리므로, 이 세 줄에서만
         # 초로 도로 자른다. **자를 바꾼 자리를 스스로 적는 것**이 이 판정기의 규약이다.
@@ -888,12 +1143,26 @@ def main() -> int:
 
     say("## 502 는 언제 나는가 — **대조와 함께** [실측]")
     say()
-    say("읽은 것: 앞단 접근로그 %d줄(%d번째 줄 다음부터) · 뒷단 자국 둘 — "
+    where = ("시각 창 %s–%s" % (args.since_time or "처음", args.until_time or "끝")
+             if (args.since_time or args.until_time)
+             else "%d번째 줄 다음부터 · ⚠ 회전에 미끄러질 수 있는 자" % args.since_line)
+    say("읽은 것: 앞단 접근로그 %d줄(%s) · 뒷단 자국 둘 — "
         "예고(`Autorestarting`) %d건 · **종료(`Worker exiting`) %d건**"
-        % (len(lines), args.since_line, len(restarts), len(exits)))
-    say("표본: 502 **%d건** · 정상 200 %d건(대조로 %d건 솎음) · 재시도 %d건 · "
-        "되살림 %d건" % (len(err), len(ok), len(control),
-                        parsed["retried"], parsed["rescued"]))
+        % (len(lines), where, len(restarts), len(exits)))
+    say("뒷단 생사: 로그가 보이는 처음 %s · **재기동 %d회**(문이 닫혀 있던 창)"
+        % (first_seen.isoformat(timespec="seconds") if first_seen else "못 읽음",
+           len(outages)))
+    say("표본: 502 **%d건**(전체 %d건 중 · 뒷단 부재 %d건 · 뒷단 로그 밖 %d건을 뺐다) · "
+        "정상 200 %d건(전체 %d건 중 같은 자로 %d건을 뺐다 · 대조로 %d건 솎음) · "
+        "재시도 %d건 · 되살림 %d건"
+        % (len(err), len(err_all), len(err_out), len(err_blind),
+           len(ok), len(ok_all), len(ok_out) + len(ok_blind), len(control),
+           parsed["retried"], parsed["rescued"]))
+    say("★ **뺀 수를 지우지 않는다**(P-92): 종전 판은 502 %d건 전부를 ②에 넣었고, "
+        "그래서 미설명 %d건을 「다른 결함」이라 적었다. 그중 %d건은 결함이 아니라 "
+        "**뒷단이 그 순간 없었던 것**이고 %d건은 **맞댈 자국이 없는 구간**이었다."
+        % (len(err_all), len(err_all) - span_coincidence(err_all, exits),
+           len(err_out), len(err_blind)))
     say()
     say("| 창 | 502 | 정상 200 (대조) |")
     say("|---|---|---|")

@@ -36,6 +36,7 @@ import argparse
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -54,6 +55,24 @@ EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
 #: 임시 DB 이름의 앞머리. 이걸로 시작하지 않는 이름에는 복구하지 않는다.
 SCRATCH_PREFIX = "restore_check_"
+
+
+def scratch_name(now: str, lane: str = "") -> str:
+    """복구가 들어갈 **격리 DB 이름**.
+
+    ★ [P-102 · 2026-09-07 · 턴 K] 차선 이름(`DB_TEST_NAME`)을 이름 안에 넣는다.
+      까닭은 `DB_TEST_NAME` 이 이 저장소에서 「차선마다 갈라 쓰는 격리 DB」의 정본
+      이름이기 때문이다(P-18 · D-416). 차선 넷이 같은 기계에서 동시에 복구 시험을
+      돌리면 시각 문자열만으로는 같은 초에 부딪칠 수 있고, 부딪치면 한쪽이
+      「이미 있다」로 죽는다.
+
+    ⚠ **앞머리(`restore_check_`)는 그대로 둔다.** `guard()` 가 그것으로 원본 덮어쓰기를
+      막는다 — 이 함수는 이름을 **더 길게** 만들 뿐 안전 규약을 느슨하게 하지 않는다.
+      `DB_TEST_NAME` 을 **그대로** 대상으로 삼지 않는 이유도 그것이다: 그 DB 는
+      다른 차선의 시험이 쓰고 있는 실물이고, 거기에 복구를 부으면 예행이 아니라 사고다.
+    """
+    slug = re.sub(r"[^A-Za-z0-9_]", "_", lane or "").strip("_")
+    return SCRATCH_PREFIX + (slug + "_" if slug else "") + now
 
 
 def guard(target: str, source: str) -> str | None:
@@ -117,6 +136,20 @@ def self_test() -> int:
         ("임시 이름이면 통과한다",
          guard("restore_check_20260909", "database_guardianx") is None),
         ("빈 이름은 거부한다", guard("", "database_guardianx") is not None),
+        # ★ P-102 — 차선 이름을 넣어도 **안전 규약은 그대로**여야 한다
+        ("차선 이름(DB_TEST_NAME)이 이름 안에 들어간다",
+         scratch_name("20260907", "test_gx_e") == "restore_check_test_gx_e_20260907"),
+        ("차선 이름이 없으면 종전 그대로다",
+         scratch_name("20260907", "") == "restore_check_20260907"),
+        ("★ 차선 이름을 넣어도 guard 를 통과한다 — 앞머리를 잃지 않는다",
+         guard(scratch_name("20260907", "test_gx_e"), "database_guardianx") is None),
+        ("★ 차선 이름이 원본 이름이어도 원본을 덮지 않는다",
+         guard(scratch_name("20260907", "database_guardianx"),
+               "database_guardianx") is None
+         and scratch_name("20260907", "database_guardianx") != "database_guardianx"),
+        ("차선 이름의 위험한 글자는 걸러진다",
+         scratch_name("20260907", 'x"; DROP DATABASE y --') .startswith(
+             "restore_check_x_") and '"' not in scratch_name("20260907", 'x"y')),
         ("행 수가 같으면 어긋남 0", compare_rows({"a": 3, "b": 0}, {"a": 3, "b": 0}) == []),
         ("★ 행 수가 다르면 잡는다 — 파일이 생긴 것은 복구가 아니다",
          compare_rows({"a": 3}, {"a": 2}) != []),
@@ -278,7 +311,8 @@ def main() -> int:
         return EXIT_UNDECIDABLE
 
     source = (manifest.get("db_settings") or {}).get("name", "")
-    target = SCRATCH_PREFIX + datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    target = scratch_name(datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S"),
+                          os.environ.get("DB_TEST_NAME", ""))
     reason = guard(target, source)
     if reason:
         print("[OPS-RESTORE] 중단 — %s" % reason)

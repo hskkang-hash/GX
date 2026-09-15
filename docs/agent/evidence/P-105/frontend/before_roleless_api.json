@@ -1,0 +1,1156 @@
+{
+ "/configuration-management": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/config-management/list?page_size=25&current_page=1",
+   "status": 403,
+   "bytes": 328,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/?page_size=10000&current_page=1",
+   "status": 200,
+   "bytes": 823,
+   "rows": 1
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/device": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name",
+   "status": 200,
+   "bytes": 1185,
+   "rows": 5
+  },
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/dsm/cameras/address": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/cameras/address-gap",
+   "status": 200,
+   "bytes": 114,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/dsm/cameras/import": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/cameras/address-gap",
+   "status": 200,
+   "bytes": 114,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/dsm/dashboard": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/dashboard/frame",
+   "status": 200,
+   "bytes": 260,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events?limit=10",
+   "status": 200,
+   "bytes": 4146,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/dsm/drill": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/drill",
+   "status": 200,
+   "bytes": 150,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/drill/report",
+   "status": 200,
+   "bytes": 217,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/dsm/events": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/events/summary?hours=12",
+   "status": 200,
+   "bytes": 284,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events?limit=50&response_state=occurred",
+   "status": 200,
+   "bytes": 1940,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/dsm/events/49305": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/deliveries?event_id=49305",
+   "status": 200,
+   "bytes": 30,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events/49305",
+   "status": 404,
+   "bytes": 49,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events/49305/timeline",
+   "status": 404,
+   "bytes": 49,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/dsm/events?preset=mine": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/events/summary?hours=12",
+   "status": 200,
+   "bytes": 284,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events?limit=50&mine=true",
+   "status": 200,
+   "bytes": 5420,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/dsm/events?preset=recent": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/events/summary?hours=12",
+   "status": 200,
+   "bytes": 284,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events?limit=50&since=2026-09-06T19:13:38.436Z&until=2026-09-07T07:13:38.436Z",
+   "status": 200,
+   "bytes": 26,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/dsm/events?preset=system": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/dashboard/link-state",
+   "status": 200,
+   "bytes": 21,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events/summary?hours=12",
+   "status": 200,
+   "bytes": 284,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events?limit=50&event_type=camera_down,storage_high",
+   "status": 200,
+   "bytes": 731,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/dsm/events?preset=unhandled": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/events/summary?hours=12",
+   "status": 200,
+   "bytes": 284,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events?limit=50&response_state=occurred",
+   "status": 200,
+   "bytes": 1940,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/dsm/queue": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/events/4805/snapshot",
+   "status": 503,
+   "bytes": 137,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events/queue?limit=200",
+   "status": 200,
+   "bytes": 3945,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/flight-log-analysis": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/flight-log/flight-log/?page_size=25&current_page=1",
+   "status": 403,
+   "bytes": 328,
+   "rows": null
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/?page_size=10000&current_page=1",
+   "status": 200,
+   "bytes": 823,
+   "rows": 1
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/login": [
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  }
+ ],
+ "/m/events/49305": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/events/49305",
+   "status": 404,
+   "bytes": 49,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events/49305/clip",
+   "status": 404,
+   "bytes": 38,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events/49305/field-replies",
+   "status": 404,
+   "bytes": 77,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/m/inbox": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/dsm/deliveries?limit=50",
+   "status": 200,
+   "bytes": 8035,
+   "rows": null
+  },
+  {
+   "path": "/api/dsm/events?limit=200",
+   "status": 200,
+   "bytes": 8963,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/media-data": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/media-data/?page_size=25&current_page=1",
+   "status": 503,
+   "bytes": 89,
+   "rows": 0
+  },
+  {
+   "path": "/api/media-data?page_size=25&current_page=1",
+   "status": 503,
+   "bytes": 89,
+   "rows": 0
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/stream-monitors/stream-monitors/ai-models",
+   "status": 200,
+   "bytes": 1673,
+   "rows": 4
+  },
+  {
+   "path": "/api/user-groups/?page_size=10000&current_page=1",
+   "status": 200,
+   "bytes": 823,
+   "rows": 1
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/menu": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/multi-stream-monitor": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/stream-monitors/stream-monitors",
+   "status": 200,
+   "bytes": 2057,
+   "rows": 3
+  },
+  {
+   "path": "/api/stream-monitors/stream-monitors/ai-models",
+   "status": 200,
+   "bytes": 1673,
+   "rows": 4
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/notam": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/?page_size=10000&current_page=1",
+   "status": 200,
+   "bytes": 823,
+   "rows": 1
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  },
+  {
+   "path": "/api/proxy/notam",
+   "status": 400,
+   "bytes": 32,
+   "rows": null
+  }
+ ],
+ "/operation-settings": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/profile": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/departments/?page_size=10000&current_page=1&group__id=4",
+   "status": 200,
+   "bytes": 61,
+   "rows": 0
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/?page_size=10000&current_page=1",
+   "status": 200,
+   "bytes": 823,
+   "rows": 1
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  },
+  {
+   "path": "/api/v1/user/get-user-detail/105",
+   "status": 200,
+   "bytes": 4919,
+   "rows": null
+  }
+ ],
+ "/report-template": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation",
+   "status": 200,
+   "bytes": 11270,
+   "rows": 1
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/roles": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/start?role=OPERATOR": [
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/surveillance-dashboard": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-06T17:00:00%2B00:00&end_date=2026-09-07T16:59:59%2B00:00&limit=100&page=1&page_size=5",
+   "status": 403,
+   "bytes": 328,
+   "rows": null
+  },
+  {
+   "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-05T17:00:00%2B00:00&end_date=2026-09-12T16:59:59%2B00:00",
+   "status": 403,
+   "bytes": 328,
+   "rows": null
+  },
+  {
+   "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-07",
+   "status": 403,
+   "bytes": 328,
+   "rows": null
+  },
+  {
+   "path": "/api/surveillance/surveillance-dashboard/drone-status-overview",
+   "status": 403,
+   "bytes": 328,
+   "rows": null
+  },
+  {
+   "path": "/api/surveillance/surveillance-dashboard/today-profiles-polygon",
+   "status": 403,
+   "bytes": 328,
+   "rows": null
+  },
+  {
+   "path": "/api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4",
+   "status": 403,
+   "bytes": 328,
+   "rows": null
+  },
+  {
+   "path": "/api/surveillance/surveillance-dashboard/weather-setting",
+   "status": 403,
+   "bytes": 328,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ],
+ "/survey-profile": [
+  {
+   "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   "status": 200,
+   "bytes": 500,
+   "rows": 2
+  },
+  {
+   "path": "/api/config-management/list-optimized",
+   "status": 200,
+   "bytes": 16436,
+   "rows": 12
+  },
+  {
+   "path": "/api/menu/menus?page_size=10000",
+   "status": 200,
+   "bytes": 158,
+   "rows": 0
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+   "status": 200,
+   "bytes": 2031,
+   "rows": null
+  },
+  {
+   "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+   "status": 200,
+   "bytes": 407,
+   "rows": null
+  }
+ ]
+}

@@ -224,4 +224,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
+    gate_header(__file__)
     sys.exit(main())

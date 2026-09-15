@@ -1,0 +1,27 @@
+{
+  "created_at": "2026-09-07T10:11:16+00:00",
+  "db_settings": {
+    "name": "database_guardianx",
+    "host": "localhost",
+    "port": "5432",
+    "user": "postgres"
+  },
+  "db": {
+    "file": "db_database_guardianx_20260907T101116Z.dump",
+    "bytes": 40242096,
+    "sha256": "8b6391e80c3f134b793949263cc7f85a9fbc8a8bab6aabda7e31b292ffb99a5e",
+    "via": "docker:postgres",
+    "client_version": "pg_dump (PostgreSQL) 18.1 (Debian 18.1-1.pgdg13+2)",
+    "command": [
+      "docker exec postgres pg_dump -Fc -h localhost -p 5432 -U postgres -d database_guardianx -f /tmp/db_database_guardianx_20260907T101116Z.dump",
+      "docker cp postgres:/tmp/db_database_guardianx_20260907T101116Z.dump 'C:\\Users\\hskka\\AppData\\Local\\Temp\\claude\\c--GuardianX\\f2a30b3b-dfbd-4ba6-b446-935d940a0f17\\scratchpad\\backup\\db_database_guardianx_20260907T101116Z.dump'"
+    ],
+    "rows": {
+      "stream_monitors_streammonitor": 40,
+      "stream_monitors_detectionevent": 22,
+      "stream_monitors_eventclip": 22,
+      "user_coreuser": 113,
+      "auth_group": 0
+    }
+  }
+}

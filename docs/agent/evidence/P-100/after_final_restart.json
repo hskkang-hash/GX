@@ -1,0 +1,34 @@
+{
+  "when": "2026-09-07T10:21:23",
+  "api": "http://localhost:8000",
+  "as": "gxseed_u4_official",
+  "calls": [
+    {
+      "label": "report-template list",
+      "method": "GET",
+      "path": "/api/report-template/",
+      "status": 403,
+      "len": 328,
+      "markers_present": [],
+      "body_first_400": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0e32\\u0e23\\u0e40\\u0e02\\u0e49\\u0e32\\u0e16\\u0e36\\u0e07\\u0e16\\u0e39\\u0e01\\u0e1b\\u0e0f\\u0e34\\u0e40\\u0e2a\\u0e18\"}, \"status_code\": 403}"
+    },
+    {
+      "label": "report-template detail",
+      "method": "GET",
+      "path": "/api/report-template/1",
+      "status": 403,
+      "len": 328,
+      "markers_present": [],
+      "body_first_400": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0e32\\u0e23\\u0e40\\u0e02\\u0e49\\u0e32\\u0e16\\u0e36\\u0e07\\u0e16\\u0e39\\u0e01\\u0e1b\\u0e0f\\u0e34\\u0e40\\u0e2a\\u0e18\"}, \"status_code\": 403}"
+    },
+    {
+      "label": "report-template no-slash",
+      "method": "GET",
+      "path": "/api/report-template",
+      "status": 403,
+      "len": 328,
+      "markers_present": [],
+      "body_first_400": "{\"success\": false, \"message\": {\"en\": \"Permission denied.\", \"ko\": \"\\uad8c\\ud55c\\uc774 \\uac70\\ubd80\\ub418\\uc5c8\\uc2b5\\ub2c8\\ub2e4.\", \"vi\": \"T\\u1eeb ch\\u1ed1i quy\\u1ec1n truy c\\u1eadp.\", \"th\": \"\\u0e01\\u0e32\\u0e23\\u0e40\\u0e02\\u0e49\\u0e32\\u0e16\\u0e36\\u0e07\\u0e16\\u0e39\\u0e01\\u0e1b\\u0e0f\\u0e34\\u0e40\\u0e2a\\u0e18\"}, \"status_code\": 403}"
+    }
+  ]
+}

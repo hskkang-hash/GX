@@ -1,0 +1,2 @@
+172.18.0.4 [07/Sep/2026:11:18:01 +0000] "GET /api/dsm/events/summary?bust=1788779881640154728 HTTP/1.1" 502 150 0.001 "172.18.0.6:8000" 0.001
+     30 recv() failed (104: Connection reset by peer)

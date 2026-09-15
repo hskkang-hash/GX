@@ -1,0 +1,472 @@
+{
+  "note": "P-106 · FC 18행 ↔ 역할 계정 화면 32장 행별 대조. 정본은 GX-FCPR §3′-1 의 표이고 이 파일은 그것을 기계가 읽는 꼴로 옮긴 것이다 — 값을 여기서 고치지 마라.",
+  "measured_at": "2026-09-07T20:35",
+  "lane": "P",
+  "judgment": "P-106",
+  "head": "6cf2c19",
+  "source_doc": "docs/design/GX-FCPR_기능완결성_상용준비_셈법_v0.1.md#3-1",
+  "screens_index": "docs/agent/evidence/D-347/screens/INDEX.yaml",
+  "screen_routes": "docs/agent/evidence/D-386/screen_routes.json",
+  "screens_total": 32,
+  "dominant_fact": "32장의 DSM 제품 라우트 호출은 전부 GET 이다 — 쓰기 호출 0건. 페인이 쓰기로 풀리는 행(2·7·11·13·14·17)은 이 벌로 1이 될 수 없다.",
+  "write_calls_in_screens": [
+    "SCREENS-1/fire_user/login_credentials.png :: POST /api/v1/auth/login 400",
+    "SCREENS-1/view_only_-_anyang/notam.png :: POST /api/proxy/notam 200"
+  ],
+  "rows_with_screen_evidence": [
+    1,
+    2,
+    3,
+    4,
+    6,
+    7,
+    8,
+    13,
+    14,
+    15,
+    16,
+    18
+  ],
+  "rows_without_any_screen": [
+    5,
+    9,
+    10,
+    11,
+    12,
+    17
+  ],
+  "fc_lower_sum": 7.5,
+  "fc_upper_sum": 9.5,
+  "fc_lower_pct": 41.7,
+  "fc_upper_pct": 52.8,
+  "rows": [
+    {
+      "no": 1,
+      "user": "U1",
+      "pain": "처리한 것과 안 한 것이 섞인다",
+      "value": "1",
+      "evidence": "docs/agent/evidence/D-347/screens/SCREENS-1/fire_user/dsm_events_preset_unhandled.png",
+      "tag": "실측",
+      "why": "**역할 계정 화면 왕복 실측** — U1 `gxseed_u1_operator` fire_user 1440px 가 「미처리 보기」 7건·「처리 단계」 축·단일 초점 큐를 실제로 봤다 · `GET /api/dsm/events?limit=50&response_state=occurred 200` + `GET /api/dsm/events/queue?limit=200 200` · 시험 `backend/tests/test_c_w1_presets.py` [44 passed 2026-09-07]",
+      "screens": [
+        "SCREENS-1/fire_user/dsm_events_preset_unhandled.png"
+      ],
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/events/summary?hours=12 200",
+        "GET /api/dsm/events?limit=50&response_state=occurred 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ],
+      "viewed_by": [
+        "U1 · gxseed_u1_operator · fire_user · 1440px"
+      ],
+      "data_source": [
+        "시드"
+      ],
+      "evidence_exists": true
+    },
+    {
+      "no": 2,
+      "user": "U1",
+      "pain": "오탐을 표시할 자리가 없다",
+      "value": "0.5",
+      "evidence": "docs/agent/evidence/D-347/screens/SCREENS-1/fire_user/dsm_events_id_verdict_panel.png",
+      "tag": "실측",
+      "why": "상세에 「실제로 판정」·「오탐으로 판정」·사유 칸이 실제로 그려졌다 · 그러나 32장 어디에도 `POST /api/dsm/events/{event_id}/review` 호출 **0건**(전 화면이 읽기뿐) · 큐 화면에는 판정 단추가 없다(「종결하기」뿐) — PRD 의 「큐에서는 못 함」이 픽셀로 확인됐다",
+      "screens": [
+        "SCREENS-1/fire_user/dsm_events_id_verdict_panel.png"
+      ],
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/deliveries?event_id=99554 200",
+        "GET /api/dsm/events/99554 200",
+        "GET /api/dsm/events/99554/timeline 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ],
+      "viewed_by": [
+        "U1 · gxseed_u1_operator · fire_user · 1440px"
+      ],
+      "data_source": [
+        "시드"
+      ],
+      "evidence_exists": true
+    },
+    {
+      "no": 3,
+      "user": "U1",
+      "pain": "아무 일 없는 8시간",
+      "value": "0.5",
+      "evidence": "docs/agent/evidence/D-347/screens/SCREENS-1/fire_user/dsm_events_preset_system.png",
+      "tag": "실측",
+      "why": "「시스템 보기」가 카메라 무응답·저장 임계를 보여 주나 화면이 스스로 「카메라 응답 여부와 저장 용량은 아직 이 화면에서 볼 수 없습니다」라 적는다 · `/handover` 화면은 **본문 0자**(D-386 `blank_screens`) · 자동 순회 라우트 0건. PRD 표는 「못 함」 · PRD 요약은 「반」 — **어긋남**",
+      "screens": [
+        "SCREENS-1/fire_user/dsm_events_preset_system.png"
+      ],
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/dashboard/link-state 200",
+        "GET /api/dsm/events/summary?hours=12 200",
+        "GET /api/dsm/events?limit=50&event_type=camera_down,storage_high 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ],
+      "viewed_by": [
+        "U1 · gxseed_u1_operator · fire_user · 1440px"
+      ],
+      "data_source": [
+        "시드"
+      ],
+      "evidence_exists": true
+    },
+    {
+      "no": 4,
+      "user": "U2",
+      "pain": "밤사이 무슨 일이",
+      "value": "1",
+      "evidence": "docs/agent/evidence/D-347/screens/SCREENS-1/fire_user/dsm_events_preset_recent.png",
+      "tag": "실측",
+      "why": "**역할 계정 화면 왕복 실측** — 요약 한 줄(미처리 2 · 오탐 0 · 미판정 2)과 두 끝 닫힌 12시간 창이 실제로 그려졌다 · `GET /api/dsm/events/summary?hours=12 200` + `GET /api/dsm/events?limit=50&since=…&until=… 200` · 시험 `test_c_w1_presets.py` [44 passed]. ⚠ 캡처 계정은 U1 fire_user — U2 fire_admin 으로 S2 를 완주한 화면은 아직 없다",
+      "screens": [
+        "SCREENS-1/fire_user/dsm_events_preset_recent.png"
+      ],
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/events/summary?hours=12 200",
+        "GET /api/dsm/events?limit=50&since=2026-09-06T21:52:42.428Z&until=2026-09-07T09:52:42.428Z 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ],
+      "viewed_by": [
+        "U1 · gxseed_u1_operator · fire_user · 1440px"
+      ],
+      "data_source": [
+        "시드"
+      ],
+      "evidence_exists": true
+    },
+    {
+      "no": 5,
+      "user": "U2",
+      "pain": "어느 카메라가 시끄러운가",
+      "value": "0",
+      "evidence": "docs/agent/evidence/D-343/route_inventory.json",
+      "tag": "실측",
+      "why": "카메라별 소음·빈도 순위 라우트 **0건** · 32장 중 그 물음에 답하는 화면 **0장** — 화면 대조로도 움직이지 않는다",
+      "screens": [],
+      "calls": null,
+      "viewed_by": null,
+      "data_source": null,
+      "evidence_exists": true
+    },
+    {
+      "no": 6,
+      "user": "U2",
+      "pain": "누가 무엇을 처리했나",
+      "value": "0.5",
+      "evidence": "docs/agent/evidence/D-347/screens/SCREENS-1/fire_user/dsm_events_preset_mine.png",
+      "tag": "실측",
+      "why": "화면이 스스로 「내 담당 — 내가 판정한 이벤트」라 적는다(0건) · `GET /api/dsm/events?limit=50&mine=true 200` · **남이 무엇을 처리했는지 보는 자리는 32장에 없다**",
+      "screens": [
+        "SCREENS-1/fire_user/dsm_events_preset_mine.png"
+      ],
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/events/summary?hours=12 200",
+        "GET /api/dsm/events?limit=50&mine=true 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ],
+      "viewed_by": [
+        "U1 · gxseed_u1_operator · fire_user · 1440px"
+      ],
+      "data_source": [
+        "시드"
+      ],
+      "evidence_exists": true
+    },
+    {
+      "no": 7,
+      "user": "U3",
+      "pain": "새벽에 문자만 받고 뭘 할지 모른다",
+      "value": "0.5",
+      "evidence": "docs/agent/evidence/D-347/screens/SCREENS-1/fire_user/m_events_id_m3_field_reply.png",
+      "tag": "실측",
+      "why": "390px 역할 계정으로 M1 받은함·M2 현장 상세가 실제로 떴다 · 그러나 화면이 답해야 할 것이 전부 비었다 — 설치 주소 「미입력」 · 스냅샷 참조 없음 · 구간 티켓 `GET /api/dsm/events/99554/clip **404**` · 「접수하기」 POST 호출 0건",
+      "screens": [
+        "SCREENS-1/fire_user/m_events_id_m3_field_reply.png"
+      ],
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/events/99554 200",
+        "GET /api/dsm/events/99554/clip 404",
+        "GET /api/dsm/events/99554/field-replies 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ],
+      "viewed_by": [
+        "U3 · gxseed_u1_operator · fire_user · 390px"
+      ],
+      "data_source": [
+        "시드"
+      ],
+      "evidence_exists": true
+    },
+    {
+      "no": 8,
+      "user": "U3",
+      "pain": "사진 한 장이 문장 열 줄보다 낫다",
+      "value": "못 쟀다",
+      "evidence": "docs/agent/evidence/D-347/screens/SCREENS-1/fire_user/dsm_queue_focus.png",
+      "tag": "회색",
+      "why": "**환경이 막았다** — 큐 카드가 「사진을 불러오지 못했습니다」를 그렸고 `GET /api/dsm/events/4805/snapshot` 은 오늘 재측에서 **503 「저장소 연결 안 됨 — MinIO」**(앱의 MinIO 자격이 자리표시자). 제품의 사실이 아니라 측정대의 사실이라 0 으로도 0.5 로도 못 센다. ⚠ INDEX 는 이 한 줄을 **200** 으로 적었다 — 픽셀과 어긋난다",
+      "screens": [
+        "SCREENS-1/fire_user/dsm_queue_focus.png"
+      ],
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/events/4805/snapshot 200",
+        "GET /api/dsm/events/queue?limit=200 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ],
+      "viewed_by": [
+        "U1 · gxseed_u1_operator · fire_user · 1440px"
+      ],
+      "data_source": [
+        "시드"
+      ],
+      "evidence_exists": true
+    },
+    {
+      "no": 9,
+      "user": "U3",
+      "pain": "새벽에 다 받는다 → 끈다",
+      "value": "0",
+      "evidence": "docs/agent/evidence/D-343/route_inventory.json",
+      "tag": "손 밖",
+      "why": "정숙시간·근무 외 차단 라우트 **0건** · 화면 0장 · 알림 채널은 대표 결정 대기 → 상한 1",
+      "screens": [],
+      "calls": null,
+      "viewed_by": null,
+      "data_source": null,
+      "evidence_exists": true
+    },
+    {
+      "no": 10,
+      "user": "U4",
+      "pain": "pdf만 주면 다시 타이핑한다",
+      "value": "0",
+      "evidence": "docs/agent/evidence/D-343/route_inventory.json",
+      "tag": "실측",
+      "why": "`hwpx` 라우트 **0건** · `/report-template` 화면은 OEM 의 `DeliveryOperation` 서식이다(`print-formats/fields/model?model_name=DeliveryOperation 200`) — 그 화면은 이 페인의 답이 아니다 · 손 안(E 차선)이므로 상한도 0",
+      "screens": [],
+      "calls": null,
+      "viewed_by": null,
+      "data_source": null,
+      "evidence_exists": true
+    },
+    {
+      "no": 11,
+      "user": "U4",
+      "pain": "「내 모습 지워 달라」에 답할 자리",
+      "value": "0.5",
+      "evidence": "backend/tests/test_l_privacy_request.py",
+      "tag": "실측",
+      "why": "**손 밖이 아니다** — 대장 LAW-07 `status: 구현` · 라우트 6 실재 · 시험 20 passed · 그러나 **32장 중 `/api/dsm/law/privacy-requests` 를 부른 화면 0장** · 오늘 역할 없는 계정으로 GET 하면 403(관리자 전용) — 화면 왕복 미실측",
+      "screens": [],
+      "calls": null,
+      "viewed_by": null,
+      "data_source": null,
+      "evidence_exists": true
+    },
+    {
+      "no": 12,
+      "user": "U4",
+      "pain": "감사에서 살아남는 기록",
+      "value": "0.5",
+      "evidence": "docs/agent/evidence/OPS-07b/감사로그_보존_선언.md",
+      "tag": "실측",
+      "why": "쌓임 실재(90일 · beat) · **읽는 라우트 0건** · 화면 0장",
+      "screens": [],
+      "calls": null,
+      "viewed_by": null,
+      "data_source": null,
+      "evidence_exists": true
+    },
+    {
+      "no": 13,
+      "user": "U5",
+      "pain": "카메라 40대 주소를 손으로",
+      "value": "0.5",
+      "evidence": "docs/agent/evidence/D-347/screens/SCREENS-1/fire_admin/dsm_cameras_import_dryrun.png",
+      "tag": "실측",
+      "why": "화면은 완성돼 있다(주소 없는 카메라 **4/5대** · CSV 칸 · dry-run 단추) · 그러나 그 화면이 부른 것은 `GET /api/dsm/cameras/address-gap 200` **뿐**이고 `POST /api/dsm/cameras/import` 호출 0건 — CSV 칸이 빈 채 찍혔고 dry-run 단추는 꺼져 있다",
+      "screens": [
+        "SCREENS-1/fire_admin/dsm_cameras_import_dryrun.png"
+      ],
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/cameras/address-gap 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ],
+      "viewed_by": [
+        "U2 · gxseed_u2_manager · fire_admin · 1440px"
+      ],
+      "data_source": [
+        "시드"
+      ],
+      "evidence_exists": true
+    },
+    {
+      "no": 14,
+      "user": "U5",
+      "pain": "훈련 때 실제 알림이 나간다",
+      "value": "0.5",
+      "evidence": "docs/agent/evidence/D-347/screens/SCREENS-1/fire_admin/dsm_drill_mode.png",
+      "tag": "실측",
+      "why": "훈련 모드 화면이 역할 계정으로 실제로 떴다 · `GET /api/dsm/drill 200` · `GET /api/dsm/drill/report 200` · 그러나 화면이 「이 테넌트는 훈련 모드를 한 번도 켠 적이 없습니다」라 적는다 — 켜는 `POST /api/dsm/drill` 호출 0건",
+      "screens": [
+        "SCREENS-1/fire_admin/dsm_drill_mode.png"
+      ],
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/drill 200",
+        "GET /api/dsm/drill/report 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ],
+      "viewed_by": [
+        "U2 · gxseed_u2_manager · fire_admin · 1440px"
+      ],
+      "data_source": [
+        "시드"
+      ],
+      "evidence_exists": true
+    },
+    {
+      "no": 15,
+      "user": "U5",
+      "pain": "서버가 죽으면 아무도 모른다",
+      "value": "0.5",
+      "evidence": "scripts/ops_monitor.py",
+      "tag": "실측",
+      "why": "(규칙 ① — 화면 근거는 3행이 이미 쓴다) 「연계 상태(지금 이 순간)」가 `dsm_events_preset_system.png` 에 있고 `GET /api/dsm/dashboard/link-state 200` · 그러나 서버가 죽었을 때 사람에게 가는 것은 OPS-14 생존 알림이고 **그 왕복을 보여 주는 화면은 32장에 없다**",
+      "screens": [
+        "SCREENS-1/fire_user/dsm_events_preset_system.png"
+      ],
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/dashboard/link-state 200",
+        "GET /api/dsm/events/summary?hours=12 200",
+        "GET /api/dsm/events?limit=50&event_type=camera_down,storage_high 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ],
+      "viewed_by": [
+        "U1 · gxseed_u1_operator · fire_user · 1440px"
+      ],
+      "data_source": [
+        "시드"
+      ],
+      "evidence_exists": true
+    },
+    {
+      "no": 16,
+      "user": "U5",
+      "pain": "관리 화면이 남의 제품",
+      "value": "0",
+      "evidence": "docs/agent/evidence/D-347/screens/SCREENS-1",
+      "tag": "실측",
+      "why": "**이제 사진으로 증명됐다** — 32장 중 11장이 남의 제품이다(device·roles·menu·configuration-management·profile·operation-settings·surveillance-dashboard·media-data·flight-log-analysis·notam·multi-stream-monitor) · 왼쪽 메뉴가 영문(Dashboard·Surveillance·GCS·Asset·Delivery Settings·Admin) · `verify_sidebar` 실측 admin **71줄**(제품 4) · view_only **26줄**(제품 2)",
+      "screens": [
+        "SCREENS-1/admin/configuration-management.png",
+        "SCREENS-1/admin/device.png",
+        "SCREENS-1/admin/menu.png",
+        "SCREENS-1/admin/operation-settings.png",
+        "SCREENS-1/admin/profile.png",
+        "SCREENS-1/admin/roles.png",
+        "SCREENS-1/fire_admin/multi-stream-monitor.png",
+        "SCREENS-1/view_only_-_anyang/flight-log-analysis.png",
+        "SCREENS-1/view_only_-_anyang/media-data.png",
+        "SCREENS-1/view_only_-_anyang/notam.png",
+        "SCREENS-1/view_only_-_anyang/surveillance-dashboard.png"
+      ],
+      "calls": null,
+      "viewed_by": [
+        "U2 · gxseed_u2_manager · fire_admin · 1440px",
+        "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+        "U5 · gxseed_u5_sysop · admin · 1440px"
+      ],
+      "data_source": null,
+      "evidence_exists": true,
+      "screens_note": "근거 경로 칸은 규칙 ①(한 산출물은 한 행에) 때문에 다른 것을 가리킨다 — 이 열한 장이 이 행이 실제로 본 화면이다"
+    },
+    {
+      "no": 17,
+      "user": "U6",
+      "pain": "계속 물어봐야 한다",
+      "value": "0.5",
+      "evidence": "scripts/verify_webhook_contract.py",
+      "tag": "실측",
+      "why": "**손 밖이 아니다** — 라우트 3 실재 · `test_s_webhook_contract.py` 32 passed · 게이트 실재 · U6 은 개발자라 답이 화면이 아니다 — **화면 대조로 움직일 수 있는 행이 아니다**",
+      "screens": [],
+      "calls": null,
+      "viewed_by": null,
+      "data_source": null,
+      "evidence_exists": true
+    },
+    {
+      "no": 18,
+      "user": "전원",
+      "pain": "화면이 무슨 말인지 모르겠다",
+      "value": "0.5",
+      "evidence": "scripts/verify_ui_copy.py",
+      "tag": "실측",
+      "why": "(규칙 ① — 화면 벌 근거는 16행이 쓴다) **화면 확인됨 · 절반이다** — DSM 화면 넷(지금 처리할 것 · 무슨 일 있었나 · 카메라 격자 · 인계 메모)의 우리말이 픽셀로 실측됐고 `verify_ui_copy` 잔여 0 · 본 비율 100% · 그러나 **같은 계정이 보는 관리·OEM 화면 11장은 영문 메뉴 그대로**다 — 「전원」의 절반이 안 풀렸다",
+      "screens": [
+        "SCREENS-1/admin/configuration-management.png",
+        "SCREENS-1/admin/device.png",
+        "SCREENS-1/admin/menu.png",
+        "SCREENS-1/admin/operation-settings.png",
+        "SCREENS-1/admin/profile.png",
+        "SCREENS-1/admin/roles.png",
+        "SCREENS-1/fire_admin/multi-stream-monitor.png",
+        "SCREENS-1/view_only_-_anyang/flight-log-analysis.png",
+        "SCREENS-1/view_only_-_anyang/media-data.png",
+        "SCREENS-1/view_only_-_anyang/notam.png",
+        "SCREENS-1/view_only_-_anyang/surveillance-dashboard.png"
+      ],
+      "calls": null,
+      "viewed_by": [
+        "U2 · gxseed_u2_manager · fire_admin · 1440px",
+        "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+        "U5 · gxseed_u5_sysop · admin · 1440px"
+      ],
+      "data_source": null,
+      "evidence_exists": true,
+      "screens_note": "근거 경로 칸은 규칙 ①(한 산출물은 한 행에) 때문에 다른 것을 가리킨다 — 이 열한 장이 이 행이 실제로 본 화면이다"
+    }
+  ]
+}

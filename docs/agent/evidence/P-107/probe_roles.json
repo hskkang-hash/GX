@@ -1,0 +1,46 @@
+{
+ "measured_at": "2026-09-15T13:25:03",
+ "source": "docker exec <gx-shell> · django ORM · u.roles.all()",
+ "users": {
+  "gxprobe_e2e": {
+   "roles": [],
+   "is_superuser": false,
+   "is_active": true
+  },
+  "gxprobe_v": {
+   "roles": [
+    "user"
+   ],
+   "is_superuser": false,
+   "is_active": true
+  },
+  "gxseed_u1_operator": {
+   "roles": [
+    "fire_user"
+   ],
+   "is_superuser": false,
+   "is_active": true
+  },
+  "gxseed_u2_manager": {
+   "roles": [
+    "fire_admin"
+   ],
+   "is_superuser": false,
+   "is_active": true
+  },
+  "gxseed_u4_official": {
+   "roles": [
+    "view_only_-_anyang"
+   ],
+   "is_superuser": false,
+   "is_active": true
+  },
+  "gxseed_u5_sysop": {
+   "roles": [
+    "admin"
+   ],
+   "is_superuser": false,
+   "is_active": true
+  }
+ }
+}

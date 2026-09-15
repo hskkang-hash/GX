@@ -1,9 +1,9 @@
 {
   "latest": {
-    "measured_at": "2026-09-05T10:37:10+00:00",
+    "measured_at": "2026-09-15T05:06:32+00:00",
     "api": "http://gx-nginx-e:8500",
     "environment": {
-      "measured_at": "2026-09-05T10:37:10+00:00",
+      "measured_at": "2026-09-15T05:06:32+00:00",
       "python": "3.11.14",
       "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
       "cpu_count": 8,
@@ -15,15 +15,15 @@
     "co_resident": {
       "runserver_processes": [
         "python manage.py runserver 0.0.0.0:8000 --noreload",
-        "sh -c cd /app && python manage.py runserver 0.0.0.0:8000 --noreload > /tmp/gate8000.log 2>&1"
+        "sh -c cd /app && python manage.py runserver 0.0.0.0:8000 --noreload > /tmp/gx_runserver8000.log 2>&1"
       ],
-      "loadavg": "5.01 2.03 0.79 3/581 196781"
+      "loadavg": "3.67 2.96 2.05 1/532 4811"
     },
     "server_header": "nginx",
     "mode": "acceptance",
     "server": "runserver 가 아니다 — **합격선 모드**로 판정한다",
     "concurrency": 10,
-    "rounds": 30,
+    "rounds": 26,
     "repeat": 3,
     "faces": {
       "F05": {
@@ -31,27 +31,33 @@
         "budget_ms": 500.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 900,
-        "errors": 0,
-        "errors_5xx": 0,
+        "n": 780,
+        "errors": 1,
+        "errors_5xx": 1,
         "errors_4xx": 0,
-        "error_detail": [],
-        "cache_bust": true,
-        "p50_ms": 149.3,
-        "p95_ms": 295.9,
-        "p95_each": [
-          188.3,
-          295.9,
-          423.4
+        "errors_5xx_injected": 0,
+        "errors_5xx_by_status": {
+          "502": 1
+        },
+        "error_detail": [
+          "/api/dsm/events?limit=50 -> 502"
         ],
-        "p95_min": 188.3,
-        "p95_max": 423.4,
-        "noise": 0.795,
+        "cache_bust": true,
+        "p50_ms": 113.5,
+        "p95_ms": 213.4,
+        "p95_each": [
+          165.6,
+          225.1,
+          213.4
+        ],
+        "p95_min": 165.6,
+        "p95_max": 225.1,
+        "noise": 0.279,
         "per_call": {
           "/api/dsm/events?limit=50": {
-            "n": 300,
-            "p50_ms": 149.3,
-            "p95_ms": 423.4
+            "n": 260,
+            "p50_ms": 114.6,
+            "p95_ms": 213.4
           }
         }
       },
@@ -60,44 +66,48 @@
         "budget_ms": 800.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 900,
+        "n": 780,
         "errors": 1,
         "errors_5xx": 1,
         "errors_4xx": 0,
+        "errors_5xx_injected": 0,
+        "errors_5xx_by_status": {
+          "502": 1
+        },
         "error_detail": [
           "/api/dsm/events/response-times -> 502"
         ],
         "cache_bust": true,
-        "p50_ms": 156.2,
-        "p95_ms": 294.0,
+        "p50_ms": 134.0,
+        "p95_ms": 237.9,
         "p95_each": [
-          267.8,
-          294.0,
-          348.3
+          290.0,
+          229.9,
+          237.9
         ],
-        "p95_min": 267.8,
-        "p95_max": 348.3,
-        "noise": 0.274,
+        "p95_min": 229.9,
+        "p95_max": 290.0,
+        "noise": 0.253,
         "per_call": {
           "/api/dsm/dashboard/frame": {
-            "n": 90,
-            "p50_ms": 161.4,
-            "p95_ms": 352.0
+            "n": 78,
+            "p50_ms": 130.8,
+            "p95_ms": 303.9
           },
           "/api/dsm/events/queue": {
-            "n": 60,
-            "p50_ms": 164.7,
-            "p95_ms": 371.7
+            "n": 52,
+            "p50_ms": 150.9,
+            "p95_ms": 242.4
           },
           "/api/dsm/events/response-times": {
-            "n": 60,
-            "p50_ms": 148.4,
-            "p95_ms": 362.5
+            "n": 52,
+            "p50_ms": 133.5,
+            "p95_ms": 247.2
           },
           "/api/dsm/events/summary": {
-            "n": 90,
-            "p50_ms": 149.0,
-            "p95_ms": 277.5
+            "n": 78,
+            "p50_ms": 133.5,
+            "p95_ms": 205.7
           }
         }
       },
@@ -106,27 +116,29 @@
         "budget_ms": 1000.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 900,
+        "n": 780,
         "errors": 0,
         "errors_5xx": 0,
         "errors_4xx": 0,
+        "errors_5xx_injected": 0,
+        "errors_5xx_by_status": {},
         "error_detail": [],
         "cache_bust": true,
-        "p50_ms": 112.7,
-        "p95_ms": 241.0,
+        "p50_ms": 103.8,
+        "p95_ms": 186.6,
         "p95_each": [
-          228.2,
-          241.0,
-          307.9
+          186.6,
+          177.6,
+          228.4
         ],
-        "p95_min": 228.2,
-        "p95_max": 307.9,
-        "noise": 0.331,
+        "p95_min": 177.6,
+        "p95_max": 228.4,
+        "noise": 0.272,
         "per_call": {
           "/api/media-data/": {
-            "n": 300,
-            "p50_ms": 112.0,
-            "p95_ms": 307.9
+            "n": 260,
+            "p50_ms": 106.1,
+            "p95_ms": 228.4
           }
         }
       },
@@ -135,29 +147,29 @@
         "budget_ms": 300.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 900,
-        "errors": 2,
-        "errors_5xx": 2,
+        "n": 780,
+        "errors": 0,
+        "errors_5xx": 0,
         "errors_4xx": 0,
-        "error_detail": [
-          "/api/dsm/dashboard/link-state -> 502"
-        ],
+        "errors_5xx_injected": 0,
+        "errors_5xx_by_status": {},
+        "error_detail": [],
         "cache_bust": true,
-        "p50_ms": 122.7,
-        "p95_ms": 261.7,
+        "p50_ms": 106.3,
+        "p95_ms": 181.2,
         "p95_each": [
-          338.5,
-          261.7,
-          195.6
+          181.2,
+          217.6,
+          164.1
         ],
-        "p95_min": 195.6,
-        "p95_max": 338.5,
-        "noise": 0.546,
+        "p95_min": 164.1,
+        "p95_max": 217.6,
+        "noise": 0.295,
         "per_call": {
           "/api/dsm/dashboard/link-state": {
-            "n": 300,
-            "p50_ms": 112.7,
-            "p95_ms": 195.6
+            "n": 260,
+            "p50_ms": 105.5,
+            "p95_ms": 164.1
           }
         }
       }
@@ -269,6 +281,28 @@
       "repeat": 3,
       "concurrency": 10,
       "source": "턴 E 재측 — 게이트가 낸 수"
+    },
+    {
+      "measured_at": "2026-09-15T04:59:05+00:00",
+      "n": 1200,
+      "errors_5xx": 0,
+      "rate": 0.0,
+      "loadavg": "2.92 2.41 1.54 2/529 4364",
+      "mode": "acceptance",
+      "rounds": 10,
+      "repeat": 3,
+      "concurrency": 10
+    },
+    {
+      "measured_at": "2026-09-15T05:06:32+00:00",
+      "n": 3120,
+      "errors_5xx": 2,
+      "rate": 0.00064,
+      "loadavg": "3.67 2.96 2.05 1/532 4811",
+      "mode": "acceptance",
+      "rounds": 26,
+      "repeat": 3,
+      "concurrency": 10
     }
   ]
 }

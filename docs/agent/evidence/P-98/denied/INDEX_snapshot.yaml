@@ -1,0 +1,292 @@
+# 피드백 콘솔 화면 인덱스 — **실제 실행 캡처만** (D-347)
+#
+# ═══════════════════════════════════════════════════════════════════════════
+# ★ [실측 2026-09-12 · D-384 ②] **3장이 섰다.** 0장이던 두 턴이 끝났다.
+#
+#   풀린 것은 「화면을 만든 것」이 아니라 **찍을 수 있게 된 것** 둘이다:
+#     ① 브라우저 구동체를 세웠다 — playwright chromium (`scripts/capture_screens.py`)
+#     ② **빌드가 1회 성공했다** — `vite build` 66초 · exit 0.
+#        D-381 이 문턱을 낮춘 그대로다: 타입오류 3229건이 있어도 번들은 만들어진다.
+#        **타입검사와 번들링은 다른 일**이고, 스크린샷에 필요한 것은 후자다.
+#
+#   ★ 그리고 이 세 장은 **결함 하나를 잡고 나서야** 찍혔다:
+#     첫 시도에서 `이벤트 목록` 화면이 「불러오지 못했습니다 · status code 500」 이었다.
+#     `/api/dsm/events` 가 pydantic `QueryParams is not fully defined` 로 죽고 있었다 —
+#     `from __future__ import annotations` + `@tenant_scoped` 가 겹쳐 주석이 안 풀린 것.
+#     **단위 시험 530건이 전부 초록인 채로** 그 라우트는 운영에서 죽어 있었다(착시 ⑨).
+#     화면을 띄운 첫 순간에 나왔다 — **화면이 시험이었다.**
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# D-347 이 정한 것:
+#     ① **E2E 실행 중에 찍는다.** 별도로 화면을 만들어 찍지 마라 —
+#        **시험이 지나간 그 화면**이어야 한다
+#     ④ 개인정보·실제 영상 프레임이 들어간 캡처는 넣지 마라. 시험 데이터만
+#
+# [실측 2026-09-08] 지금 E2E 는 `django.test.TestCase` 다. HTTP 를 때리고 DB·메일을
+# 단언한다 — **브라우저를 열지 않는다.** 즉 시험이 지나가는 자리에 **화면이 없다.**
+# 브라우저 구동체(playwright·selenium)는 requirements 에 없다.
+#
+# 그래서 한 장도 넣지 않았다. 화면을 따로 띄워 찍으면 그것은
+#   · 「시험이 지나간 그 화면」이 아니고(① 위반)
+#   · **고객이 보는 자리에 실제가 아닌 화면**이 된다 — 착시가 아니라 **거짓말**이다(D-284)
+#
+# 잠금: DA-05/blockers.yaml :: BROWSER_E2E_HARNESS (blocked_now: true)
+# 강제: scripts/verify_screens.py — 항목마다 파일 실재 · 메타 4칸 · E2E 로그 시각 ±5분
+#
+# ───────────────────────────────────────────────────────────────────────────
+# 항목 형식 (한 장에 다섯 칸. 넷은 메타, 하나는 파일)
+#
+#   - route: /dashboard              # 어느 경로의 화면인가
+#     user_role: OPERATOR            # 어느 사용자로 찍었나
+#     scenario: E2E-1/8              # 어느 시나리오의 몇 단계인가
+#     captured_at: "2026-09-08T11:20:03"   # 찍힌 시각 (E2E 로그와 ±5분 안이어야 한다)
+#     file: E2E-1/OPERATOR/dashboard.png   # screens/ 아래 상대 경로 · 폭 1440 · PNG
+# ───────────────────────────────────────────────────────────────────────────
+
+meta:
+  decision: D-347
+  updated_at: "2026-09-08"
+  width_px: 1440
+  format: png
+  root: docs/agent/evidence/D-347/screens
+  #: E2E 실행 로그. 여기 시각과 캡처 시각을 ±5분으로 대조한다.
+  #: 아직 없다 — 브라우저 E2E 가 서면 그 실행이 만든다.
+  run_log: docs/agent/evidence/D-347/screens/run_log.json
+  tolerance_minutes: 5
+  #: [실측] 이 실행체가 찍는다. 씨앗은 시험 데이터뿐이고 끝나면 지운다(D-347 ④).
+  harness: scripts/capture_screens.py
+  empty_reason: |
+    브라우저를 여는 E2E 가 없다 (BROWSER_E2E_HARNESS).
+    **찍을 화면이 실행 중에 존재하지 않는다.** 만들어 찍는 것은 D-347 ①이 금지한다.
+
+    ★ [실측 2026-09-11 · D-371] 사유가 **한 겹 바뀌었다.** 지우지 않고 덧붙인다:
+      화면 셋은 이제 **코드에 있다** — frontend/src/features/dsm/pages/
+        ControlDashboard.tsx (관제 대시보드) · EventList.tsx · EventDetail.tsx
+      즉 「그릴 화면이 없다」는 더 이상 사유가 아니다. 남은 사유는 둘이다:
+        ① 브라우저 구동체가 여전히 없다 (playwright·selenium 어느 것도 requirements 에 없음)
+        ② 이 작업 환경에 프런트 의존 설치본이 없다 — `frontend/node_modules` 부재.
+           있는 것은 컨테이너 `gx-fe-build` 뿐이고, 그 안의 `rj-core` 판이 저장소와
+           어긋나 저장소 전체 타입오류 **3229건**이 난다 [실측].
+           (**새 화면 셋에서 난 오류는 0건**이다 — 어긋난 것은 기존 화면과 rj-core 다)
+      ★ [실측 2026-09-12] **둘 다 풀렸다.** 사유를 지우지 않고 이력으로 남긴다 —
+        ①은 `scripts/capture_screens.py`(playwright chromium)로, ②는 빌드 1회 성공으로.
+        지금은 **0장이 아니므로 이 사유는 더 이상 적용되지 않는다.**
+        ⚠ 남은 사실 하나: 타입오류 3229건은 **그대로다.** 빌드가 서는 것과 타입이
+          깨끗한 것은 다른 일이고, 이번에 푼 것은 앞의 것뿐이다 (D-381).
+  expected_when_unlocked: |
+    E2E-1(화재) · E2E-2(침수) 의 화면 단계마다 역할 1개 이상.
+    최소 대상: 로그인 · 대시보드 · 이벤트 목록 · 이벤트 상세(영상 구간) · 보고서.
+
+screens:
+  # ★ 아래는 `scripts/capture_screens.py` 가 **실행하면서 직접 쓴다.** 손으로 고치지 말 것 —
+  #   손으로 옮겨 적으면 이벤트 id 하나가 어긋나는 날 인덱스가 거짓말을 하고,
+  #   그 거짓말은 고객이 보는 자리에 실린다 (D-284).
+  #
+  #   전부 **브라우저가 실제로 지나간 화면**이다. 이 실행체는 화면마다
+  #   「그 화면에만 있는 글자」를 먼저 찾고, 못 찾으면 **찍지 않고 실패한다** —
+  #   로그인으로 튕긴 뒤 찍은 PNG 도 파일은 생기므로, 「파일이 생겼다」를 성공으로
+  #   두면 이 인덱스가 거짓말을 싣게 된다.
+  #
+  #   ⚠ [실측 2026-09-13 · D-386] 역할은 **`NO_ROLE`** 이다. 이 계정은 제품의 `role` 이
+  #     **비어 있다** — 1차판이 `OPERATOR` 라 적어 두었던 자리이고, 그것은 진술이지
+  #     실측이 아니었다(D-323). 지금은 제품이 들고 있는 값을 읽어 적는다.
+  #     그리고 그 사실이 화면 하나를 설명한다: `/users` 는 **본문 0자**로 떴다.
+  #     빈 화면은 찍지 않았고 결함으로 등재했다(RJCORE_BLANK_ON_NO_PERMISSION).
+  - route: /login
+    user_role: NO_ROLE
+    scenario: SCREENS-1/L1
+    captured_at: "2026-09-07T14:10:42"
+    file: SCREENS-1/NO_ROLE/login_credentials.png
+    data_source: 실측 (가로채지 않았다 — 진짜 서버(8000)가 거절한 답이다)
+  - route: /login
+    user_role: NO_ROLE
+    scenario: SCREENS-1/L2
+    captured_at: "2026-09-07T14:10:50"
+    file: SCREENS-1/NO_ROLE/login_locked.png
+    data_source: 모의 (서버의 잠금 본문 모양을 주입했다 — 계정을 진짜로 잠그지 않는다)
+  - route: /login
+    user_role: NO_ROLE
+    scenario: SCREENS-1/L3
+    captured_at: "2026-09-07T14:10:57"
+    file: SCREENS-1/NO_ROLE/login_forbidden.png
+    data_source: 모의 (403 을 주입했다 — 권한 없는 실재 계정을 만들어 찍지 않는다)
+  - route: /login
+    user_role: NO_ROLE
+    scenario: SCREENS-1/L4
+    captured_at: "2026-09-07T14:11:05"
+    file: SCREENS-1/NO_ROLE/login_server_error.png
+    data_source: 모의 (500 을 주입했다 · 본문은 HTML(장고 오류 쪽) — 그 바이트가 화면에 새는지도 본다)
+  - route: /login
+    user_role: NO_ROLE
+    scenario: SCREENS-1/L5
+    captured_at: "2026-09-07T14:11:12"
+    file: SCREENS-1/NO_ROLE/login_network.png
+    data_source: 모의 (연결 자체를 끊었다 — axios 원문이 태어나던 자리)
+  - route: /dsm/dashboard
+    user_role: NO_ROLE
+    scenario: SCREENS-1/1
+    captured_at: "2026-09-07T14:11:31"
+    file: SCREENS-1/NO_ROLE/dsm_dashboard.png
+    data_source: 시드
+  - route: /dsm/events
+    user_role: NO_ROLE
+    scenario: SCREENS-1/2
+    captured_at: "2026-09-07T14:11:39"
+    file: SCREENS-1/NO_ROLE/dsm_events.png
+    data_source: 시드
+  - route: /dsm/events/49305
+    user_role: NO_ROLE
+    scenario: SCREENS-1/3
+    captured_at: "2026-09-07T14:11:48"
+    file: SCREENS-1/NO_ROLE/dsm_events_49305.png
+    data_source: 시드
+  - route: /device
+    user_role: NO_ROLE
+    scenario: SCREENS-1/4
+    captured_at: "2026-09-07T14:11:56"
+    file: SCREENS-1/NO_ROLE/device.png
+    data_source: 시드
+  - route: /roles
+    user_role: NO_ROLE
+    scenario: SCREENS-1/5
+    captured_at: "2026-09-07T14:12:03"
+    file: SCREENS-1/NO_ROLE/roles.png
+    data_source: 시드
+  - route: /menu
+    user_role: NO_ROLE
+    scenario: SCREENS-1/6
+    captured_at: "2026-09-07T14:12:10"
+    file: SCREENS-1/NO_ROLE/menu.png
+    data_source: 시드
+  - route: /configuration-management
+    user_role: NO_ROLE
+    scenario: SCREENS-1/7
+    captured_at: "2026-09-07T14:12:19"
+    file: SCREENS-1/NO_ROLE/configuration-management.png
+    data_source: 시드
+  - route: /profile
+    user_role: NO_ROLE
+    scenario: SCREENS-1/8
+    captured_at: "2026-09-07T14:12:26"
+    file: SCREENS-1/NO_ROLE/profile.png
+    data_source: 시드
+  - route: /surveillance-dashboard
+    user_role: NO_ROLE
+    scenario: SCREENS-1/9
+    captured_at: "2026-09-07T14:12:33"
+    file: SCREENS-1/NO_ROLE/surveillance-dashboard.png
+    data_source: 시드
+  - route: /survey-profile
+    user_role: NO_ROLE
+    scenario: SCREENS-1/10
+    captured_at: "2026-09-07T14:12:40"
+    file: SCREENS-1/NO_ROLE/survey-profile.png
+    data_source: 시드
+  - route: /media-data
+    user_role: NO_ROLE
+    scenario: SCREENS-1/11
+    captured_at: "2026-09-07T14:12:49"
+    file: SCREENS-1/NO_ROLE/media-data.png
+    data_source: 시드
+  - route: /flight-log-analysis
+    user_role: NO_ROLE
+    scenario: SCREENS-1/12
+    captured_at: "2026-09-07T14:12:57"
+    file: SCREENS-1/NO_ROLE/flight-log-analysis.png
+    data_source: 시드
+  - route: /multi-stream-monitor
+    user_role: NO_ROLE
+    scenario: SCREENS-1/13
+    captured_at: "2026-09-07T14:13:05"
+    file: SCREENS-1/NO_ROLE/multi-stream-monitor.png
+    data_source: 시드
+  - route: /operation-settings
+    user_role: NO_ROLE
+    scenario: SCREENS-1/14
+    captured_at: "2026-09-07T14:13:12"
+    file: SCREENS-1/NO_ROLE/operation-settings.png
+    data_source: 시드
+  - route: /report-template
+    user_role: NO_ROLE
+    scenario: SCREENS-1/15
+    captured_at: "2026-09-07T14:13:20"
+    file: SCREENS-1/NO_ROLE/report-template.png
+    data_source: 시드
+  - route: /notam
+    user_role: NO_ROLE
+    scenario: SCREENS-1/16
+    captured_at: "2026-09-07T14:13:29"
+    file: SCREENS-1/NO_ROLE/notam.png
+    data_source: 시드
+  - route: /dsm/events?preset=unhandled
+    user_role: NO_ROLE
+    scenario: SCREENS-1/17
+    captured_at: "2026-09-07T14:13:37"
+    file: SCREENS-1/NO_ROLE/dsm_events_preset_unhandled.png
+    data_source: 시드
+  - route: /dsm/events?preset=recent
+    user_role: NO_ROLE
+    scenario: SCREENS-1/18
+    captured_at: "2026-09-07T14:13:45"
+    file: SCREENS-1/NO_ROLE/dsm_events_preset_recent.png
+    data_source: 시드
+  - route: /dsm/events?preset=mine
+    user_role: NO_ROLE
+    scenario: SCREENS-1/19
+    captured_at: "2026-09-07T14:13:53"
+    file: SCREENS-1/NO_ROLE/dsm_events_preset_mine.png
+    data_source: 시드
+  - route: /dsm/events?preset=system
+    user_role: NO_ROLE
+    scenario: SCREENS-1/20
+    captured_at: "2026-09-07T14:14:00"
+    file: SCREENS-1/NO_ROLE/dsm_events_preset_system.png
+    data_source: 시드
+  - route: /dsm/events/49305
+    user_role: NO_ROLE
+    scenario: SCREENS-1/21
+    captured_at: "2026-09-07T14:14:07"
+    file: SCREENS-1/NO_ROLE/dsm_events_id_verdict_panel.png
+    data_source: 시드
+  - route: /dsm/queue
+    user_role: NO_ROLE
+    scenario: SCREENS-1/22
+    captured_at: "2026-09-07T14:14:15"
+    file: SCREENS-1/NO_ROLE/dsm_queue_focus.png
+    data_source: 시드
+  - route: /dsm/drill
+    user_role: NO_ROLE
+    scenario: SCREENS-1/23
+    captured_at: "2026-09-07T14:14:22"
+    file: SCREENS-1/NO_ROLE/dsm_drill_mode.png
+    data_source: 시드
+  - route: /dsm/cameras/import
+    user_role: NO_ROLE
+    scenario: SCREENS-1/24
+    captured_at: "2026-09-07T14:14:29"
+    file: SCREENS-1/NO_ROLE/dsm_cameras_import_dryrun.png
+    data_source: 시드
+  - route: /dsm/cameras/address
+    user_role: NO_ROLE
+    scenario: SCREENS-1/25
+    captured_at: "2026-09-07T14:14:36"
+    file: SCREENS-1/NO_ROLE/dsm_cameras_address_fill.png
+    data_source: 시드
+  - route: /start?role=OPERATOR
+    user_role: NO_ROLE
+    scenario: SCREENS-1/26
+    captured_at: "2026-09-07T14:14:45"
+    file: SCREENS-1/NO_ROLE/start_onboarding.png
+    data_source: 시드
+  - route: /m/inbox
+    user_role: NO_ROLE
+    scenario: SCREENS-1/27
+    captured_at: "2026-09-07T14:14:52"
+    file: SCREENS-1/NO_ROLE/m_inbox_m1.png
+    data_source: 시드
+  - route: /m/events/49305
+    user_role: NO_ROLE
+    scenario: SCREENS-1/28
+    captured_at: "2026-09-07T14:15:00"
+    file: SCREENS-1/NO_ROLE/m_events_id_m3_field_reply.png
+    data_source: 시드

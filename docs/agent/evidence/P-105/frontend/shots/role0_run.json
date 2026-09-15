@@ -1,0 +1,60 @@
+{
+ "captured_at": "2026-09-07T18:37:54",
+ "user": "gxprobe_e2e",
+ "roles": [],
+ "headline": "역할이 아직 없습니다",
+ "routes_tried": [
+  "/dsm/events",
+  "/dsm/dashboard",
+  "/profile",
+  "/notam",
+  "/multi-stream-monitor",
+  "/m/inbox"
+ ],
+ "shots": [
+  {
+   "route": "/dsm/events",
+   "size": "desktop",
+   "file": "role0_dsm_events_desktop.png",
+   "body_len": 97
+  },
+  {
+   "route": "/dsm/events",
+   "size": "390",
+   "file": "role0_dsm_events_390.png",
+   "body_len": 97
+  },
+  {
+   "route": "/dsm/dashboard",
+   "size": "desktop",
+   "file": "role0_dsm_dashboard_desktop.png",
+   "body_len": 97
+  },
+  {
+   "route": "/profile",
+   "size": "desktop",
+   "file": "role0_profile_desktop.png",
+   "body_len": 97
+  },
+  {
+   "route": "/notam",
+   "size": "desktop",
+   "file": "role0_notam_desktop.png",
+   "body_len": 97
+  },
+  {
+   "route": "/multi-stream-monitor",
+   "size": "desktop",
+   "file": "role0_multi-stream-monitor_desktop.png",
+   "body_len": 97
+  },
+  {
+   "route": "/m/inbox",
+   "size": "desktop",
+   "file": "role0_m_inbox_desktop.png",
+   "body_len": 97
+  }
+ ],
+ "misses": [],
+ "page_errors": []
+}

@@ -1,6 +1,6 @@
 {
-  "note": "D-368 · P-83 래칫 기준선. **`writes` 도 `gated` 도 여기 없다** — `writes` 에는 래칫이 아니라 0건 절대선이 걸리고, `gated`(관문)는 늘어야 하는 갈래라 래칫을 걸지 않는다.",
-  "frozen_at": "2026-09-06T13:44:48+00:00",
+  "note": "D-368 · P-83 · P-99 래칫 기준선. **`writes` 도 `gated` 도 여기 없다** — `writes` 에는 래칫이 아니라 0건 절대선이 걸리고, `gated`(관문)는 늘어야 하는 갈래라 래칫을 걸지 않는다. ★ `buckets` 는 P-99 의 세 칸 기준선이다: `public_reachable` 과 `grey` 는 늘 수 없고 `auth_required` 만 늘 수 있다. `write_method_rows` 는 **분모 자체의 기준선**이다 — 분모는 살아 있는 라우터에서 세며, 줄어들면 손으로 추린 것이다.",
+  "frozen_at": "2026-09-07T09:54:26+00:00",
   "public_by_design_paths": [
     "/api/token/pair",
     "/api/token/refresh",
@@ -14,7 +14,14 @@
     "/api/v1/auth/refresh-token",
     "/api/v1/auth/reset-password"
   ],
-  "read_only_in_practice": 5,
+  "buckets": {
+    "auth_required": 362,
+    "public_reachable": 7,
+    "grey": 8
+  },
+  "write_method_rows": 377,
+  "denominator_source": "live-router",
+  "read_only_in_practice": 4,
   "schema_rejected": 0,
   "unreachable": 0,
   "blocked_other": 0,

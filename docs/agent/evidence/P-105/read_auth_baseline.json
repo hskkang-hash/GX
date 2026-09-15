@@ -1,0 +1,17 @@
+{
+  "note": "P-105 래칫 기준선. ★ `red` 칸에는 래칫이 아니라 **0건 절대선**이 걸린다 — 이 수가 0 보다 크면 게이트는 언제나 exit 1 이다. 여기 적힌 red 수는 **면제가 아니라 기록**이다(오늘 몇 자리였는지). `green` 만 늘 수 있고 `public_by_design`·`grey` 는 줄기만 한다.",
+  "frozen_at": "2026-09-07T11:35:22+00:00",
+  "buckets": {
+    "red": 95,
+    "green": 130,
+    "public_by_design": 2,
+    "grey": 102
+  },
+  "read_method_rows": 329,
+  "denominator_source": "live-router",
+  "public_read_by_design_paths": [
+    "/api/v1/auth/csrf-token",
+    "/api/v1/health"
+  ],
+  "role0_allowed_paths": []
+}

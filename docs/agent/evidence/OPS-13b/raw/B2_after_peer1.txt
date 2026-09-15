@@ -1,0 +1,6 @@
+window 09:53:38-09:57:30  lines=3722  [('200', 3720), ('502', 2)]  retried=34 rescued=34
+    172.18.0.4 [07/Sep/2026:09:53:49 +0000] "GET /api/dsm/events?limit=50&bust=1788774829857717116 HTTP/1.1" 502 150 0.004 "172.18.0.6:8000" 0.004
+    172.18.0.4 [07/Sep/2026:09:54:34 +0000] "GET /api/dsm/dashboard/link-state?bust=1788774874793172821 HTTP/1.1" 502 150 0.001 "172.18.0.6:8000" 0.000
+  status=200 tries=2 has_gx_app=False  x32
+  status=200 tries=3 has_gx_app=False  x2
+  status=502 tries=1 has_gx_app=False  x2

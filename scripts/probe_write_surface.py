@@ -27,6 +27,43 @@
     빠진 칸을 채우고 다시 던지기를 되풀이한다(최대 ``MAX_ROUNDS`` 바퀴).
     추정하지 않는다(D-280): 채운 근거는 매 바퀴 ``rounds_log`` 에 남는다.
 
+★★ P-99 [2026-09-07 · 턴 K] — **분모를 손으로 적지 않는다**
+------------------------------------------------------------
+턴 J 까지 이 탐침의 분모는 **정적으로 추린 부분집합**이었다: `auth_callbacks` 가
+비어 있는 쓰기 라우트만 세고 나머지는 `continue` 로 넘겼다. 그래서 분모가 **30자리**로
+나왔고, 게이트는 그 30 위에서 초록을 냈다.
+
+    「auth= 콜백이 있으니 관문이 있을 것이다」 — 그것은 **추정**이다 (D-280 금지).
+    그리고 그 30 **바깥**에서 P0 이 나왔다:
+    `POST /api/delivery/etri-integration/receive-from-etri` (턴 J).
+
+이제 분모는 **살아 있는 라우터 전수**다. `auth_callbacks` 유무로 거르지 않고,
+한 자리가 POST·PUT 둘을 받으면 **두 줄**로 센다 — 분모는 (경로, 메서드) 쌍이다.
+[실측 2026-09-07 · 라우터 전수 705행 중 쓰기 메서드 377행]
+
+★ 덤으로 잡힌 측정기의 병 (D-350 — 측정기를 먼저 의심한다)
+    `_join()` 은 **끝의 빗금을 지운다.** `/api/roles/` 를 `/api/roles` 로 때리면
+    Django 의 `APPEND_SLASH` 가 POST 를 리다이렉트하지 못하고 **500** 을 낸다.
+    그 자리들은 관문이 있는데도 그 밖의 상태로 떨어졌다 — 29자리가 그랬다.
+    그래서 **보고하는 경로**(`path`, D-343 인벤토리와 맞춘다)와 **때리는 주소**
+    (`probe_url`, 끝 빗금을 살린다)를 따로 둔다.
+
+★★ 세 칸 (P-99) — 게이트가 보는 것은 이 셋이다
+------------------------------------------------
+    인증 필수  auth_required     익명이 **401/403** 을 받았다 [실측, 실제로 불렀다]
+    공개 도달  public_reachable  익명이 핸들러 자리까지 **갔다**.
+                                 → `PUBLIC_BY_DESIGN` 에 **사유와 함께** 이름이
+                                   있어야 한다. 없으면 **빨강**이다
+    회색       grey              **못 쟀다.** 초록이 아니다
+
+★ 「도달」이 탐침 인공물인 자리 (턴 J 실측)
+    대체물은 `view_func` 를 통째로 갈아끼운다 — 그러면 뷰에 붙은 dj-core
+    `@path_permission` **도 같이 사라진다.** 그래서 그 자리는 익명이 실제로는 403 을
+    받는데도 탐침에는 「도달했다」로 보인다. 턴 J 가 네 자리를 그렇게 확인했다
+    (행수·최신수정시각 앞뒤 0 변화 · 본문 `status_code:403`).
+    그래서 `_path_override` 가 붙은 뷰에서 「도달·안 씀」이 나오면 **공개로 세지 않고
+    회색에 둔다.** 「관문이 있다」로 승격시키지도 않는다 — 권한 대장은 인증이 아니다(D-342).
+
 여섯 갈래 (P-83 이 넷을 여섯으로 쪼갰다)
 ----------------------------------------
     writes                 익명이 핸들러 자리에 **도달**하고, 그 핸들러가 **쓴다**
@@ -104,7 +141,15 @@ PUBLIC_BY_DESIGN: dict[str, str] = {
     "/api/v1/auth/forgot-password": "비밀번호 분실 — 로그인할 수 없는 사람이 부른다",
     "/api/v1/auth/reset-password": "재설정 — 메일로 받은 토큰으로 부른다",
     "/api/v1/auth/otp/verify": "OTP 확인 — 로그인 절차의 두 번째 단계",
-    "/api/v1/auth/otp/reset": "OTP 재설정 — 로그인 절차 안에 있다",
+    # ★★ [P-113 · 2026-09-10 턴 O · 차선 S] `/api/v1/auth/otp/reset` 를 **내렸다.**
+    #   여기 있던 사유는 「OTP 재설정 — 로그인 절차 안에 있다」였고, 그 문장이
+    #   **거짓을 덮고 있었다**: 그 자리는 익명이 `{"username": "..."}` 하나로
+    #   **아무 계정의 2단계 인증을 끄는** 자리였다(dj-core `reset_otp` 에 권한 검사
+    #   한 줄 없음 · `opt_mandatory=False` · `otp_is_verified=False` · 비밀키 재발급).
+    #   [실측 2026-09-10 · TARGET=8500] 익명 **404 -> 401**.
+    #   선언 목록은 **면제 목록이 아니다** — 한 줄 사유가 틀리면 그 줄을 지우는 것이
+    #   고치는 방법이다. 이제 이 자리는 실측으로 `gated` 여야 하고, 그렇지 않으면
+    #   빨강으로 떠야 옳다.
     "/api/v1/auth/delete-session": "세션 정리 — 로그인 실패 경로에서 불린다",
 }
 
@@ -124,6 +169,51 @@ WRITE_CALL_PREFIXES = ("create", "delete", "update", "save", "insert", "bulk_",
 
 VERDICTS = ("writes", "read_only_in_practice", "gated", "schema_rejected",
             "unreachable", "blocked_other", "public_by_design")
+
+#: ★★ P-99 세 칸. 일곱 갈래는 **재는 눈금**이고, 이 셋은 **게이트가 읽는 칸**이다.
+BUCKET_AUTH = "auth_required"        # 인증 필수 — 401/403 [실측]
+BUCKET_PUBLIC = "public_reachable"   # 공개 도달 — 선언 목록에 있어야 한다
+BUCKET_GREY = "grey"                 # 회색 — 못 쟀다. **초록이 아니다**
+BUCKETS = (BUCKET_AUTH, BUCKET_PUBLIC, BUCKET_GREY)
+
+
+def bucket(verdict: str, authz_path_permission: bool = False):
+    """일곱 갈래를 **세 칸**으로 접는다. (칸, 근거) 를 돌려준다 (P-99).
+
+    ★ 판정식을 한 곳에만 둔다 (D-212). 게이트는 이 칸을 다시 계산해서 증거와 대조한다.
+    """
+    if verdict == "gated":
+        return BUCKET_AUTH, "익명이 401/403 을 받았다 [실측]"
+    if verdict == "writes":
+        # 도달했고 그 핸들러가 쓴다 — `@path_permission` 이 있어도 공개로 센다.
+        # 모르는 쪽은 위험한 쪽으로 기운다 (D-284).
+        return BUCKET_PUBLIC, "익명이 핸들러 자리에 도달했고 그 핸들러가 쓴다"
+    if verdict == "read_only_in_practice":
+        if authz_path_permission:
+            # ★ 턴 J 실측 — 대체물이 `@path_permission` 을 함께 지웠다.
+            return (BUCKET_GREY,
+                    "도달은 **탐침 인공물**이다 — 대체물이 @path_permission 을 함께 "
+                    "지웠다. 익명이 실제로 무엇을 받는지 이 탐침으로는 못 쟀다 (턴 J)")
+        return BUCKET_PUBLIC, "익명이 핸들러 자리에 도달했다 (핸들러는 안 쓴다 — 정적 판정)"
+    if verdict == "public_by_design":
+        # ★ P-99 이후 이 갈래는 `bucket()` 에 오지 않는다 — 칸은 **실측**으로 정한다.
+        #   옛 증거를 다시 읽을 때를 위해 남겨 둔다.
+        return BUCKET_PUBLIC, "선언된 공개 면 (실측이 아닌 이름표로 접은 옛 칸)"
+    if verdict == "schema_rejected":
+        return BUCKET_GREY, "스키마를 맞추고도 400/422 — 그 뒤에 관문이 있는지 못 쟀다"
+    if verdict == "unreachable":
+        return BUCKET_GREY, "404/405 — 그 주소에 그 메서드가 없다. 관문은 못 쟀다"
+    return BUCKET_GREY, "그 밖의 상태 — 관문은 못 쟀다"
+
+
+def is_red(row: dict) -> bool:
+    """★ **공개 도달인데 선언 목록에 없다** → 빨강 (P-99).
+
+    공개 도달 칸은 면제 칸이 아니다. 그 칸에 앉으려면 `PUBLIC_BY_DESIGN` 에
+    **한 줄 사유와 함께** 이름이 있어야 한다. 없으면 표적이다.
+    """
+    return (row.get("bucket") == BUCKET_PUBLIC
+            and row.get("path") not in PUBLIC_BY_DESIGN)
 
 
 class _Reached(Exception):
@@ -450,14 +540,16 @@ def handler_writes(view_func):
     return False, "[정적] 핸들러 본문에 쓰기 호출 없음"
 
 
-def classify(reached: bool, writes: bool, path: str, status) -> str:
-    """여섯 갈래. **판정식을 한 곳에만 둔다** (D-212).
+def classify_measured(reached: bool, writes: bool, status) -> str:
+    """★ **잰 것만** 말한다 — 선언 목록을 보지 않는다 (P-99).
+
+    선언은 사람이 적은 문장이고 측정은 서버가 낸 답이다. 둘을 한 함수에 섞으면
+    `/api/token/pair` 처럼 **선언은 공개인데 실측은 404** 인 자리가 「공개 도달」로
+    보고된다 — 가 보지도 않은 자리를 「갔다」고 적는 것이다 (D-301 금지).
 
     ★ P-83: 관문은 **401/403 뿐**이다. 422 는 「도달했으나 검증에 떨어짐」이고
       404/405 는 「도달 실패」다 — 셋을 한 칸에 넣으면 게이트가 거짓 초록을 낸다.
     """
-    if path in PUBLIC_BY_DESIGN:
-        return "public_by_design"
     if reached:
         return "writes" if writes else "read_only_in_practice"
     if status in GATE_STATUSES:
@@ -469,7 +561,40 @@ def classify(reached: bool, writes: bool, path: str, status) -> str:
     return "blocked_other"
 
 
+def classify(reached: bool, writes: bool, path: str, status) -> str:
+    """일곱 갈래 = 실측 여섯 + **선언** 하나. 판정식은 한 곳에만 둔다 (D-212).
+
+    선언(`public_by_design`)은 **면제가 아니라 이름표**다. P-99 부터 이 이름표는
+    세 칸(`bucket`)을 정하지 않는다 — 정하는 것은 `classify_measured` 다.
+    이름표가 하는 일은 딱 하나: **빨강을 지운다** (`is_red`).
+    """
+    if path in PUBLIC_BY_DESIGN:
+        return "public_by_design"
+    return classify_measured(reached, writes, status)
+
+
+def probe_url(canonical: str, mount: str, prefix: str, op_path: str) -> str:
+    """**때리는 주소.** `_join` 이 지운 끝 빗금을 되살린다 (D-350).
+
+    보고하는 경로(`canonical`)는 D-343 인벤토리와 같은 모양이어야 하므로 건드리지
+    않는다. 그러나 그 모양으로 POST 를 때리면 `APPEND_SLASH` 가 500 을 낸다 —
+    관문이 있는데도 「그 밖의 상태」로 떨어진다. 두 값을 따로 둔다.
+    """
+    raw = re.sub(r"/{2,}", "/", "/" + "".join(x or "" for x in (mount, prefix, op_path)))
+    if raw.endswith("/") and canonical != "/":
+        return canonical + "/"
+    return canonical
+
+
 def collect():
+    """★ P-99 — 분모는 **살아 있는 라우터 전수**다. 손으로 추리지 않는다.
+
+    거르는 것은 단 하나: **쓰기 메서드가 아닌 것.** `auth_callbacks` 유무로는
+    거르지 않는다 — 「콜백이 있으니 막혔을 것」은 추정이고(D-280), 턴 J 의 P0 은
+    바로 그 추정이 만든 사각지대 **바깥**이 아니라 **안**에 있었다.
+
+    한 자리가 POST·PUT 을 함께 받으면 **두 줄**이 된다. 분모는 (경로, 메서드) 쌍이다.
+    """
     from common.tenant_scope import _iter_ninja_apis, _join
 
     rows = []
@@ -481,32 +606,59 @@ def collect():
                     writes_methods = [m for m in methods if m in WRITE_METHODS]
                     if not writes_methods:
                         continue
-                    if getattr(op, "auth_callbacks", None):
-                        continue                        # 인증 관문이 있다
                     path = _join(mount, prefix, op_path)
+                    url = probe_url(path, mount, prefix, op_path)
                     view = getattr(op, "view_func", None)
                     does_write, why = handler_writes(view) if view else (True, "핸들러 없음")
-                    probe = schema_probe(op, path, writes_methods[0])
-                    rows.append({
-                        "method": writes_methods[0],
-                        "methods": ",".join(sorted(set(methods))),
-                        "path": path,
-                        "app": path.strip("/").split("/")[1] if path.count("/") > 1 else "",
-                        "view": "%s.%s" % (getattr(view, "__module__", "?"),
-                                           getattr(view, "__name__", "?")),
-                        "reached": probe["reached"],
-                        "status": probe["status"],
-                        "note": probe["note"],
-                        "rounds": probe["rounds"],
-                        "unresolved": probe["unresolved"],
-                        "sent": probe["sent"],
-                        "rounds_log": probe["rounds_log"],
-                        "writes": does_write,
-                        "writes_by": why,
-                        "verdict": classify(probe["reached"], does_write, path,
-                                            probe["status"]),
-                    })
-    rows.sort(key=lambda r: (r["verdict"], r["path"]))
+
+                    # 선언된 인증 콜백 — **판정에 쓰지 않는다.** 실측 곁에 적어 두는
+                    # 참고값이다. 콜백이 있다고 관문이 섰다고 세면 그것이 추정이다.
+                    auth_names = []
+                    for cb in (getattr(op, "auth_callbacks", None) or []):
+                        for klass in type(cb).__mro__:
+                            if klass is not object and klass.__name__ not in auth_names:
+                                auth_names.append(klass.__name__)
+                    # dj-core 권한 대장. **인증이 아니다**(D-342). 대체물이 이것을
+                    # 함께 지우므로 「도달」이 인공물인지 가르는 데 쓴다 (턴 J).
+                    has_authz = bool(getattr(view, "_path_override", None))
+
+                    for method in writes_methods:
+                        probe = schema_probe(op, url, method)
+                        # 실측 갈래가 **칸**을 정한다. 선언은 빨강만 지운다 (P-99).
+                        measured = classify_measured(probe["reached"], does_write,
+                                                     probe["status"])
+                        verdict = classify(probe["reached"], does_write, path,
+                                           probe["status"])
+                        box, box_by = bucket(measured, has_authz)
+                        row = {
+                            "method": method,
+                            "methods": ",".join(sorted(set(methods))),
+                            "path": path,
+                            "probe_url": url,
+                            "app": path.strip("/").split("/")[1] if path.count("/") > 1 else "",
+                            "view": "%s.%s" % (getattr(view, "__module__", "?"),
+                                               getattr(view, "__name__", "?")),
+                            "authn": auth_names[0] if auth_names else "",
+                            "authn_chain": auth_names,
+                            "authz_path_permission": has_authz,
+                            "reached": probe["reached"],
+                            "status": probe["status"],
+                            "note": probe["note"],
+                            "rounds": probe["rounds"],
+                            "unresolved": probe["unresolved"],
+                            "sent": probe["sent"],
+                            "rounds_log": probe["rounds_log"],
+                            "writes": does_write,
+                            "writes_by": why,
+                            "verdict": verdict,
+                            "measured_verdict": measured,
+                            "declared_public": path in PUBLIC_BY_DESIGN,
+                            "bucket": box,
+                            "bucket_by": box_by,
+                        }
+                        row["red"] = is_red(row)
+                        rows.append(row)
+    rows.sort(key=lambda r: (r["bucket"], r["verdict"], r["path"], r["method"]))
     return rows
 
 
@@ -528,6 +680,64 @@ def self_test() -> int:
          classify(False, True, "/x", 500) == "blocked_other"),
         ("★ 선언된 면은 도달하고 써도 표적이 아니다",
          classify(True, True, "/api/v1/auth/login", None) == "public_by_design"),
+
+        # ★★ P-99 — **선언은 측정을 덮지 않는다**
+        ("★★ 선언된 면이라도 **실측 갈래**는 잰 대로 남는다 "
+         "(/api/token/pair 는 실제로 404 였다 — 「갔다」고 적지 않는다)",
+         classify_measured(False, True, 404) == "unreachable"),
+        ("★★ 선언된 면의 실측이 404 면 칸은 **회색**이다 — 공개 도달로 세지 않는다",
+         bucket(classify_measured(False, True, 404))[0] == BUCKET_GREY),
+        ("★ 선언된 면의 실측이 도달이면 칸은 공개 도달이다",
+         bucket(classify_measured(True, False, None))[0] == BUCKET_PUBLIC),
+        ("★ 실측 갈래에는 선언 칸이 없다 (여섯 갈래뿐)",
+         classify_measured(True, True, None) == "writes"),
+
+        # ★★ P-99 — 세 칸으로 접기. 게이트가 읽는 것은 이 칸이다
+        ("★★ 401/403 만 **인증 필수** 칸에 들어간다",
+         bucket("gated")[0] == BUCKET_AUTH),
+        ("★★ 도달·쓴다는 **공개 도달**이다 (권한 대장이 있어도 — D-284)",
+         bucket("writes", True)[0] == BUCKET_PUBLIC),
+        ("★★ 422 는 **회색**이다 — 인증 필수 칸에 들어가지 않는다",
+         bucket("schema_rejected")[0] == BUCKET_GREY),
+        ("★ 404/405 도 회색이다 (막혔다로 세지 않는다)",
+         bucket("unreachable")[0] == BUCKET_GREY),
+        ("★ 그 밖의 상태도 회색이다 (500 을 관문으로 세지 않는다)",
+         bucket("blocked_other")[0] == BUCKET_GREY),
+        ("★ 선언된 공개 면은 **공개 도달** 칸이다 (회색으로 숨기지 않는다)",
+         bucket("public_by_design")[0] == BUCKET_PUBLIC),
+        ("★★ 턴 J — `@path_permission` 이 붙은 「도달·안 씀」은 **회색**이다 "
+         "(대체물이 그 대장을 함께 지웠다)",
+         bucket("read_only_in_practice", True)[0] == BUCKET_GREY),
+        ("★ 권한 대장이 **없으면** 「도달·안 씀」은 공개 도달이다 (음성 대조)",
+         bucket("read_only_in_practice", False)[0] == BUCKET_PUBLIC),
+        ("★ 세 칸 말고는 나오지 않는다",
+         all(bucket(v)[0] in BUCKETS for v in VERDICTS)),
+        ("★ 칸마다 **근거 한 줄**이 붙는다 (칸만 적고 이유를 안 적지 않는다)",
+         all(bucket(v)[1] for v in VERDICTS)),
+
+        # ★★ P-99 — 빨강의 정의: 공개 도달인데 선언에 없다
+        ("★★ 공개 도달인데 선언 목록에 없으면 **빨강**이다",
+         is_red({"bucket": BUCKET_PUBLIC, "path": "/api/surprise"})),
+        ("★ 선언 목록에 있으면 빨강이 아니다 (음성 대조)",
+         not is_red({"bucket": BUCKET_PUBLIC, "path": "/api/v1/auth/login"})),
+        ("★ 인증 필수 칸은 선언에 없어도 빨강이 아니다",
+         not is_red({"bucket": BUCKET_AUTH, "path": "/api/surprise"})),
+        ("★ 회색은 빨강이 아니다 — 그러나 초록도 아니다 (게이트가 exit 2 로 낸다)",
+         not is_red({"bucket": BUCKET_GREY, "path": "/api/surprise"})),
+        ("★ 선언 목록의 **모든** 이름에 사유 한 줄이 붙어 있다",
+         all(isinstance(v, str) and v.strip() for v in PUBLIC_BY_DESIGN.values())),
+
+        # ★ 측정기의 병 — 끝 빗금 (D-350)
+        ("★★ `/api/roles/` 를 끝 빗금 없이 때리면 APPEND_SLASH 가 500 을 낸다 — "
+         "때리는 주소는 빗금을 살린다",
+         probe_url("/api/roles", "/api/", "/roles", "/") == "/api/roles/"),
+        ("★ 끝 빗금이 없던 자리는 그대로 둔다 (음성 대조)",
+         probe_url("/api/token/pair", "/api/", "/token", "/pair") == "/api/token/pair"),
+        ("★ 라우터 접두가 통째로 빗금인 자리도 살린다",
+         probe_url("/api/checklist-setting", "/api/checklist-setting/", "/", "")
+         == "/api/checklist-setting/"),
+        ("보고하는 경로는 인벤토리와 같은 모양으로 남는다 (빗금이 붙지 않는다)",
+         probe_url("/api/x/y", "/api/", "/x", "/y") == "/api/x/y"),
 
         # 본문 만들기 — 서버가 불러 주는 대로 받아쓴다
         ("★ missing 을 이름으로 채운다",
@@ -627,11 +837,44 @@ def main() -> int:
     counts = {}
     for r in rows:
         counts[r["verdict"]] = counts.get(r["verdict"], 0) + 1
+    boxes = {b: sum(1 for r in rows if r["bucket"] == b) for b in BUCKETS}
+    reds = [r for r in rows if r.get("red")]
+
+    # ★ 분모의 출처를 **증거 안에** 적는다 (D-301). 게이트는 이 칸을 보고
+    #   「손으로 추린 분모인가」를 가른다.
+    router_rows = 0
+    try:
+        from common.tenant_scope import _iter_ninja_apis
+        for _mount, _api in _iter_ninja_apis():
+            for _prefix, _router in getattr(_api, "_routers", []) or []:
+                for _op_path, _pv in (getattr(_router, "path_operations", {}) or {}).items():
+                    for _op in getattr(_pv, "operations", []) or []:
+                        router_rows += len([m for m in (getattr(_op, "methods", []) or [])])
+    except Exception:                                     # pragma: no cover
+        router_rows = 0
+
     payload = {
-        "decision": "D-368 · P-83",
+        "decision": "D-368 · P-83 · P-99",
         # ★ 게이트는 이 표시를 보고 「스키마 본문으로 잰 증거인가」를 가른다.
         #   빈 본문 하나로 잰 옛 증거는 이 표시가 없어 초록을 못 낸다.
-        "probe_mode": "schema-passing-body",
+        #   ★★ P-99 로 표시를 올렸다 — 분모가 바뀌면 **증거도 다시 떠야 한다.**
+        "probe_mode": "live-router-schema-passing-body",
+        "denominator": {
+            "source": "live-router",
+            "how": ("django-ninja 레지스트리 전수(`_iter_ninja_apis` → `_routers` → "
+                    "`path_operations` → `operations`). 거른 것은 **쓰기 메서드가 "
+                    "아닌 것 하나뿐**이다 — `auth_callbacks` 유무로는 거르지 않는다"),
+            "router_method_rows": router_rows,
+            "write_method_rows": len(rows),
+            "write_methods": list(WRITE_METHODS),
+            "by_method": {m: sum(1 for r in rows if r["method"] == m)
+                          for m in WRITE_METHODS},
+        },
+        "buckets": boxes,
+        "public_by_design_declared": dict(sorted(PUBLIC_BY_DESIGN.items())),
+        "red": [{"method": r["method"], "path": r["path"], "view": r["view"],
+                 "verdict": r["verdict"], "status": r["status"],
+                 "why": r["bucket_by"]} for r in reds],
         "probe_contract": {
             "gate_statuses": list(GATE_STATUSES),
             "validation_statuses": list(VALIDATION_STATUSES),
@@ -639,20 +882,30 @@ def main() -> int:
             "max_rounds": MAX_ROUNDS,
         },
         "measured_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "note": ("관문 없는(=auth= 콜백 없는) 쓰기 라우트 전수. **스키마를 통과하는 "
-                 "최소 본문**을 인증 없이 보내 도달을 **호출**로 재고, 쓰는가는 "
-                 "**정적**으로 판정했다 — 두 방법이 다르다는 사실을 writes_by 에 "
-                 "적었다 (D-322). 관문은 401/403 뿐이고 422 는 도달·검증 실패, "
-                 "404/405 는 도달 실패다 (P-83)"),
-        "totals": {"routes": len(rows), "by_verdict": counts},
+        "note": ("★ P-99 — 분모는 **살아 있는 라우터의 쓰기 메서드 전수**다 "
+                 "(경로×메서드). `auth=` 콜백 유무로 추리지 않는다: 그 추정이 "
+                 "턴 J 의 P0 을 분모 밖에 두었다. **스키마를 통과하는 최소 본문**을 "
+                 "인증 없이 보내 도달을 **호출**로 재고, 쓰는가는 **정적**으로 "
+                 "판정했다 — 두 방법이 다르다는 사실을 writes_by 에 적었다 (D-322). "
+                 "관문은 401/403 뿐이고 422 는 도달·검증 실패, 404/405 는 도달 "
+                 "실패다 (P-83). 세 칸은 인증 필수·공개 도달·회색이고, 공개 도달인데 "
+                 "선언 목록에 없으면 빨강이다 (P-99)"),
+        "totals": {"routes": len(rows), "by_verdict": counts, "by_bucket": boxes,
+                   "red": len(reds)},
         "routes": rows,
     }
     with open(args.out, "w", encoding="utf-8") as fh:
         json.dump(payload, fh, ensure_ascii=False, indent=2)
-    print("[WRITESURFACE] 관문 없는 쓰기 라우트 **%d자리** → %s" % (len(rows), args.out))
+    print("[WRITESURFACE] 쓰기 면 **전수 %d자리** (라우터 %d행 중 · 분모=살아 있는 "
+          "라우터) → %s" % (len(rows), router_rows, args.out))
+    print("    ★ 인증 필수 %d · 공개 도달 %d · 회색 %d · **빨강 %d**"
+          % (boxes[BUCKET_AUTH], boxes[BUCKET_PUBLIC], boxes[BUCKET_GREY], len(reds)))
     for k in VERDICTS:
         if counts.get(k):
             print("    %-24s %3d자리" % (k, counts[k]))
+    for r in reds:
+        print("    ★빨강 %s %s (%s) — %s"
+              % (r["method"], r["path"], r["view"], r["bucket_by"]))
     return 0
 
 

@@ -1,0 +1,98 @@
+{
+  "ticket": "P-118",
+  "lane": "Q (QA/E2E)",
+  "principle": "그려졌다 != 동작한다 — 누른 뒤를 보지 않은 초록은 초록이 아니다",
+  "gate": "scripts/verify_click_completes.py",
+  "denominator": "48 = 6 personas x 8 flows (docs/agent/onboarding_48.md)",
+  "predicate_4_cells": [
+    "누르는 것(control)",
+    "기대 호출(method+path)",
+    "기대 상태 변화(fresh GET, value really changed)",
+    "기대 화면 문구(text after)"
+  ],
+  "bundle_check": {
+    "question": "was the v5-patch-for-react-19 bundle actually being served when measured?",
+    "how": "grep the exact patch signature `_reactRoot||(` in the entry chunk that http://localhost:3002/ links",
+    "pre_fix_bundle": {
+      "dir": "/app/_fe_dist_prev_170452",
+      "entry": "index-B0dA0E3o.js",
+      "patch_signature": 0,
+      "only": "_reactRootContainer (React internals, not the patch)"
+    },
+    "at_final_measurement": {
+      "dir": "/app/_fe_dist",
+      "entry": "index-CU5Zm3W3.js",
+      "mtime_utc": "2026-09-10T08:40:22Z",
+      "patch_signature": 1,
+      "gx_commit": "6cf2c19fe0fa96d784f5f6188850db3d9e1ead62"
+    },
+    "note": "`unstableSetRender` itself is minified away; `_reactRoot||(` is the surviving render-adapter signature"
+  },
+  "runs": [
+    {
+      "at": "2026-09-10T08:24:19Z",
+      "score": "4/48",
+      "green": 4,
+      "red": 16,
+      "grey": 28,
+      "valid": false,
+      "why_discarded": "harness defect — only U1 was logged into the browser; U2..U5 walked an unauthenticated SPA, and U6#1/#4 were malformed (JSON body to query-param routes -> 422). Instrumentation failures, not product reds."
+    },
+    {
+      "at": "2026-09-10T08:32:37Z",
+      "score": "10/48",
+      "green": 10,
+      "red": 11,
+      "grey": 27,
+      "valid": false,
+      "why_discarded": "U1 login still in flight at sample time ('로그인 중입니다…') -> U1 all grey. Fixed by waiting on navigation instead of a fixed sleep."
+    },
+    {
+      "at": "2026-09-10T08:39:22Z",
+      "score": "9/48",
+      "green": 9,
+      "red": 12,
+      "grey": 27,
+      "valid": true,
+      "note": "U1#11 green. U2 session killed mid-walk by another lane (one session per account)."
+    },
+    {
+      "at": "2026-09-10T08:46:01Z",
+      "score": "11/48",
+      "green": 11,
+      "red": 13,
+      "grey": 24,
+      "valid": true,
+      "final": true,
+      "note": "U1#11 green again (reproducible). U3#3 photo render turned green (Frontend lane landed between runs). U2 could not log in at all this run -> 8 grey."
+    }
+  ],
+  "verdict_flow_before_after": {
+    "flow": "U1#11 진위 판단 — 「실제로 판정」",
+    "before": {
+      "when": "2026-09-08",
+      "source": "docs/agent/evidence/CR-USER/",
+      "control_found": true,
+      "requests_fired": 0,
+      "dialog": 0,
+      "toast": 0,
+      "verdict_after": "미판정 (unchanged)",
+      "old_score": "0.5 「그려졌다」",
+      "this_gate_reads_it": "RED (encoded as BIRTH_SAMPLE)"
+    },
+    "after": {
+      "when": "2026-09-10T08:46:01Z",
+      "call": "POST /api/dsm/events/4804/review?verdict=confirmed&reason=P-118…",
+      "state": "verdict None -> 'confirmed' (confirmed by fresh GET)",
+      "text": "「판정」 on screen",
+      "this_gate_reads_it": "GREEN — all four cells"
+    }
+  },
+  "target": {
+    "spa": "http://localhost:3002 (/app/_fe_dist, inside gx-shell)",
+    "api": "http://gx-nginx-e:8500 (nginx->gunicorn, real MinIO credentials)",
+    "note": "the bundle hardcodes http://localhost:8000; the driver reroutes that to a private proxy port so the measurement does NOT go through the other lane's dev runserver on :8000 (placeholder MinIO -> photo routes 503 there only)"
+  },
+  "grey_is_not_green": "exit 2 when any flow could not be measured; exit 1 when any flow was measured and did not complete",
+  "no_exception_slot": "D-327 — judge() takes observations only; _no_exception_slot() greps this file for KNOWN_GOOD/WAIVER/... and for flow keys inside judge_one()"
+}

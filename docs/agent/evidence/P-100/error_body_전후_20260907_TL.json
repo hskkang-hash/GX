@@ -1,0 +1,34 @@
+{
+ "gate": "scripts/verify_error_body.py",
+ "predicate": "5xx 본문에 Traceback · pydantic · File \" · 내부 경로 0",
+ "legs": [
+  "anon",
+  "bad_token(Authorization: Bearer <쓰레기>)"
+ ],
+ "before": {
+  "color": "빨강",
+  "counts": {
+   "sampled": 1410,
+   "unreached": 0,
+   "five_xx": 709,
+   "leaking_5xx": 709,
+   "leaking_other": 0,
+   "substituted": 754,
+   "routes": 705,
+   "source": "live-router"
+  }
+ },
+ "after": {
+  "color": "초록",
+  "counts": {
+   "sampled": 1410,
+   "unreached": 0,
+   "five_xx": 709,
+   "leaking_5xx": 0,
+   "leaking_other": 0,
+   "substituted": 754,
+   "routes": 705,
+   "source": "live-router"
+  }
+ }
+}

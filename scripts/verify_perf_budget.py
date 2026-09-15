@@ -1424,4 +1424,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header, account_as  # P-107 — TARGET/AS/SOURCE
+    gate_header(
+        __file__,
+        target=os.environ.get("GX_API", "http://localhost:8000") + " (gx-shell 안 · 호스트에 포트가 없다)",
+        as_=account_as(),
+        source="살아 있는 서버 응답 (HTTP) — 사진도 손 목록도 아니다",
+    )
     sys.exit(main())

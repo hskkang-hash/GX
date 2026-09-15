@@ -1,0 +1,1343 @@
+{
+  "decision": "P-105",
+  "source": "docs/agent/evidence/P-98/denied/screen_routes_snapshot.json (턴 L 브라우저가 실제로 부른 것) × docs/agent/evidence/P-105/read_surface.json (턴 M 실측)",
+  "note": "P-98 이 33장을 눈으로 열어 센 것: 실제 자료를 그린 화면 **15장** · 제대로 거부한 화면 2장 · 빈 표만 낸 화면 7장. 이 표는 그 화면들이 부른 **GET 라우트**를 턴 M 의 네 칸 판정에 얹은 것이다. ★ 28개 화면 **전부**가 빨강 GET 을 최소 한 자리씩 부른다 — 화면이 빈 표를 그린 7장도 그렇다 (그 화면들은 자료를 받고도 안 그린 것이지 못 받은 것이 아니다).",
+  "screens_total": 33,
+  "screens_listed": 28,
+  "distinct_red_routes_called_by_screens": [
+    "/api/config-management/list-optimized",
+    "/api/dsm/cameras/address-gap",
+    "/api/dsm/dashboard/frame",
+    "/api/dsm/deliveries",
+    "/api/dsm/drill",
+    "/api/dsm/drill/report",
+    "/api/dsm/events",
+    "/api/dsm/events/queue",
+    "/api/dsm/events/summary",
+    "/api/menu/menus",
+    "/api/stream-monitors/stream-monitors",
+    "/api/stream-monitors/stream-monitors/ai-models",
+    "/api/user-groups",
+    "/api/v1/user/get-user-detail/{user_id}"
+  ],
+  "distinct_red_routes_count": 14,
+  "read_surface_red_total": 95,
+  "measured_at": "2026-09-07T11:44:37+00:00",
+  "screens": {
+    "/login": {
+      "get_calls": 1,
+      "red": 1,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        }
+      ],
+      "other": []
+    },
+    "/dsm/dashboard": {
+      "get_calls": 7,
+      "red": 4,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/dashboard/frame",
+          "bucket": "red",
+          "bytes": 684,
+          "units": 7
+        },
+        {
+          "path": "/api/dsm/events",
+          "bucket": "red",
+          "bytes": 8963,
+          "units": 1
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/dsm/events": {
+      "get_calls": 7,
+      "red": 4,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/events/summary",
+          "bucket": "red",
+          "bytes": 284,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/events",
+          "bucket": "red",
+          "bytes": 8963,
+          "units": 1
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/dsm/events/49305": {
+      "get_calls": 8,
+      "red": 3,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/deliveries",
+          "bucket": "red",
+          "bytes": 16044,
+          "units": 1
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/dsm/events/{int:event_id}",
+          "bucket": "grey",
+          "bytes": 49,
+          "units": 0
+        },
+        {
+          "path": "/api/dsm/events/{int:event_id}/timeline",
+          "bucket": "grey",
+          "bytes": 49,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/device": {
+      "get_calls": 6,
+      "red": 2,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/roles": {
+      "get_calls": 5,
+      "red": 2,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/menu": {
+      "get_calls": 5,
+      "red": 2,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/configuration-management": {
+      "get_calls": 7,
+      "red": 3,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        },
+        {
+          "path": "/api/user-groups",
+          "bucket": "red",
+          "bytes": 823,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/config-management/list",
+          "bucket": "green",
+          "bytes": 328,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/profile": {
+      "get_calls": 8,
+      "red": 4,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        },
+        {
+          "path": "/api/user-groups",
+          "bucket": "red",
+          "bytes": 823,
+          "units": 1
+        },
+        {
+          "path": "/api/v1/user/get-user-detail/{user_id}",
+          "bucket": "red",
+          "bytes": 4170,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/departments",
+          "bucket": "grey",
+          "bytes": 61,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/surveillance-dashboard": {
+      "get_calls": 12,
+      "red": 2,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages",
+          "bucket": "green",
+          "bytes": 328,
+          "units": 0
+        },
+        {
+          "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-overview",
+          "bucket": "green",
+          "bytes": 328,
+          "units": 0
+        },
+        {
+          "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview",
+          "bucket": "green",
+          "bytes": 328,
+          "units": 0
+        },
+        {
+          "path": "/api/surveillance/surveillance-dashboard/drone-status-overview",
+          "bucket": "green",
+          "bytes": 328,
+          "units": 0
+        },
+        {
+          "path": "/api/surveillance/surveillance-dashboard/today-profiles-polygon",
+          "bucket": "green",
+          "bytes": 328,
+          "units": 0
+        },
+        {
+          "path": "/api/surveillance/surveillance-dashboard/today-region-drones",
+          "bucket": "green",
+          "bytes": 328,
+          "units": 0
+        },
+        {
+          "path": "/api/surveillance/surveillance-dashboard/weather-setting",
+          "bucket": "green",
+          "bytes": 328,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/survey-profile": {
+      "get_calls": 5,
+      "red": 2,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/media-data": {
+      "get_calls": 9,
+      "red": 4,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        },
+        {
+          "path": "/api/stream-monitors/stream-monitors/ai-models",
+          "bucket": "red",
+          "bytes": 1673,
+          "units": 4
+        },
+        {
+          "path": "/api/user-groups",
+          "bucket": "red",
+          "bytes": 823,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/media-data",
+          "bucket": "grey",
+          "bytes": 89,
+          "units": 0
+        },
+        {
+          "path": "/api/media-data",
+          "bucket": "grey",
+          "bytes": 89,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/flight-log-analysis": {
+      "get_calls": 7,
+      "red": 3,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        },
+        {
+          "path": "/api/user-groups",
+          "bucket": "red",
+          "bytes": 823,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/flight-log/flight-log",
+          "bucket": "green",
+          "bytes": 328,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/multi-stream-monitor": {
+      "get_calls": 7,
+      "red": 4,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        },
+        {
+          "path": "/api/stream-monitors/stream-monitors",
+          "bucket": "red",
+          "bytes": 2057,
+          "units": 3
+        },
+        {
+          "path": "/api/stream-monitors/stream-monitors/ai-models",
+          "bucket": "red",
+          "bytes": 1673,
+          "units": 4
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/operation-settings": {
+      "get_calls": 5,
+      "red": 2,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/report-template": {
+      "get_calls": 6,
+      "red": 2,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/print-format/print-formats/print-formats/fields/model",
+          "bucket": "grey",
+          "bytes": 245,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/notam": {
+      "get_calls": 6,
+      "red": 3,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        },
+        {
+          "path": "/api/user-groups",
+          "bucket": "red",
+          "bytes": 823,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/dsm/events?preset=unhandled": {
+      "get_calls": 7,
+      "red": 4,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/events/summary",
+          "bucket": "red",
+          "bytes": 284,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/events",
+          "bucket": "red",
+          "bytes": 8963,
+          "units": 1
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/dsm/events?preset=recent": {
+      "get_calls": 7,
+      "red": 4,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/events/summary",
+          "bucket": "red",
+          "bytes": 284,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/events",
+          "bucket": "red",
+          "bytes": 8963,
+          "units": 1
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/dsm/events?preset=mine": {
+      "get_calls": 7,
+      "red": 4,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/events/summary",
+          "bucket": "red",
+          "bytes": 284,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/events",
+          "bucket": "red",
+          "bytes": 8963,
+          "units": 1
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/dsm/events?preset=system": {
+      "get_calls": 8,
+      "red": 4,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/events/summary",
+          "bucket": "red",
+          "bytes": 284,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/events",
+          "bucket": "red",
+          "bytes": 8963,
+          "units": 1
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/dsm/dashboard/link-state",
+          "bucket": "grey",
+          "bytes": 21,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/dsm/queue": {
+      "get_calls": 7,
+      "red": 3,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/events/queue",
+          "bucket": "red",
+          "bytes": 3939,
+          "units": 8
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/dsm/events/{int:event_id}/snapshot",
+          "bucket": "grey",
+          "bytes": 38,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/dsm/drill": {
+      "get_calls": 7,
+      "red": 4,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/drill",
+          "bucket": "red",
+          "bytes": 150,
+          "units": 8
+        },
+        {
+          "path": "/api/dsm/drill/report",
+          "bucket": "red",
+          "bytes": 217,
+          "units": 5
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/dsm/cameras/import": {
+      "get_calls": 6,
+      "red": 3,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/cameras/address-gap",
+          "bucket": "red",
+          "bytes": 114,
+          "units": 5
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/dsm/cameras/address": {
+      "get_calls": 6,
+      "red": 3,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/cameras/address-gap",
+          "bucket": "red",
+          "bytes": 114,
+          "units": 5
+        },
+        {
+          "path": "/api/menu/menus",
+          "bucket": "red",
+          "bytes": 155,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/start?role=OPERATOR": {
+      "get_calls": 3,
+      "red": 1,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/m/inbox": {
+      "get_calls": 6,
+      "red": 3,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        },
+        {
+          "path": "/api/dsm/deliveries",
+          "bucket": "red",
+          "bytes": 16044,
+          "units": 1
+        },
+        {
+          "path": "/api/dsm/events",
+          "bucket": "red",
+          "bytes": 8963,
+          "units": 1
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    },
+    "/m/events/49305": {
+      "get_calls": 7,
+      "red": 1,
+      "red_routes": [
+        {
+          "path": "/api/config-management/list-optimized",
+          "bucket": "red",
+          "bytes": 16436,
+          "units": 12
+        }
+      ],
+      "other": [
+        {
+          "path": "/api/advanced-table/select-data",
+          "bucket": "grey",
+          "bytes": 67,
+          "units": 0
+        },
+        {
+          "path": "/api/dsm/events/{int:event_id}",
+          "bucket": "grey",
+          "bytes": 49,
+          "units": 0
+        },
+        {
+          "path": "/api/dsm/events/{int:event_id}/clip",
+          "bucket": "grey",
+          "bytes": 38,
+          "units": 0
+        },
+        {
+          "path": "/api/dsm/events/{int:event_id}/field-replies",
+          "bucket": "grey",
+          "bytes": 77,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        },
+        {
+          "path": "/api/user-groups/gen-schema",
+          "bucket": "grey",
+          "bytes": 63,
+          "units": 0
+        }
+      ]
+    }
+  }
+}

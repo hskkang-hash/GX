@@ -1,0 +1,607 @@
+{
+  "decision": "P-112",
+  "measured_at": "2026-09-10T08:58:50+00:00",
+  "old_password_sha256_12": "e86f78a8a3ca",
+  "old_password_length": 9,
+  "accounts_total": 114,
+  "rotated": 74,
+  "verified_new": 74,
+  "still_on_old_password": 0,
+  "never_touch_hit": [],
+  "new_length": 24,
+  "note": "값은 저장소 밖 원장에만 있다. 이 파일에는 sha256[:12] 와 길이만 있다 (D-335 규약 ④).",
+  "accounts": [
+    {
+      "id": 2,
+      "username": "admin",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "aae4e85a02e4",
+      "new_length": 24
+    },
+    {
+      "id": 3,
+      "username": "phatlh",
+      "active": true,
+      "is_superuser": true,
+      "new_sha256_12": "050f8632a096",
+      "new_length": 24
+    },
+    {
+      "id": 4,
+      "username": "man",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "b0ab39ea9d81",
+      "new_length": 24
+    },
+    {
+      "id": 6,
+      "username": "tuan",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "53a5619073eb",
+      "new_length": 24
+    },
+    {
+      "id": 7,
+      "username": "huy",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "ea0c1b8d4406",
+      "new_length": 24
+    },
+    {
+      "id": 8,
+      "username": "thanh",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "bfe183dcfd59",
+      "new_length": 24
+    },
+    {
+      "id": 9,
+      "username": "rin",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "436bee9390ff",
+      "new_length": 24
+    },
+    {
+      "id": 10,
+      "username": "thao",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "928d2b776f9a",
+      "new_length": 24
+    },
+    {
+      "id": 11,
+      "username": "chi",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "a3fe1ee09457",
+      "new_length": 24
+    },
+    {
+      "id": 12,
+      "username": "kimchi",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "d497d4a7ec9d",
+      "new_length": 24
+    },
+    {
+      "id": 13,
+      "username": "kimchi1",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "8da324b4120e",
+      "new_length": 24
+    },
+    {
+      "id": 14,
+      "username": "order_user",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "d81fe5cb65d4",
+      "new_length": 24
+    },
+    {
+      "id": 15,
+      "username": "operator_user",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "b81793d16da5",
+      "new_length": 24
+    },
+    {
+      "id": 16,
+      "username": "operator_chi",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "e632de3e42ec",
+      "new_length": 24
+    },
+    {
+      "id": 17,
+      "username": "order_chi",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "0907455b6d40",
+      "new_length": 24
+    },
+    {
+      "id": 18,
+      "username": "order_user_1",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "6b290416e20c",
+      "new_length": 24
+    },
+    {
+      "id": 19,
+      "username": "order_user_2",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "699000df82eb",
+      "new_length": 24
+    },
+    {
+      "id": 20,
+      "username": "order_user_3",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "363acea574af",
+      "new_length": 24
+    },
+    {
+      "id": 21,
+      "username": "order_user_4",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "1ed1e4e5e08c",
+      "new_length": 24
+    },
+    {
+      "id": 22,
+      "username": "order_user_5",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "6ec19759cce5",
+      "new_length": 24
+    },
+    {
+      "id": 23,
+      "username": "operator_user_1",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "1c5710999c77",
+      "new_length": 24
+    },
+    {
+      "id": 24,
+      "username": "operator_user_2",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "3df77767eca5",
+      "new_length": 24
+    },
+    {
+      "id": 25,
+      "username": "operator_user_3",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "1ad9a34d2a64",
+      "new_length": 24
+    },
+    {
+      "id": 26,
+      "username": "operator_user_4",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "32c7f7279f63",
+      "new_length": 24
+    },
+    {
+      "id": 27,
+      "username": "operator_user_5",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "45f99597bb20",
+      "new_length": 24
+    },
+    {
+      "id": 30,
+      "username": "kimchi2",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "9d010802d7ca",
+      "new_length": 24
+    },
+    {
+      "id": 32,
+      "username": "anyang",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "2d402955494b",
+      "new_length": 24
+    },
+    {
+      "id": 34,
+      "username": "gaion02",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "440050f6ce1d",
+      "new_length": 24
+    },
+    {
+      "id": 35,
+      "username": "gaion03",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "4101b379ffd8",
+      "new_length": 24
+    },
+    {
+      "id": 36,
+      "username": "gaion04",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "af71c64f1196",
+      "new_length": 24
+    },
+    {
+      "id": 37,
+      "username": "gaion05",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "d5e057a8867b",
+      "new_length": 24
+    },
+    {
+      "id": 38,
+      "username": "gaion06",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "dae231ffcad0",
+      "new_length": 24
+    },
+    {
+      "id": 39,
+      "username": "gaion07",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "047985491ebb",
+      "new_length": 24
+    },
+    {
+      "id": 40,
+      "username": "gaion08",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "2a11cbc98751",
+      "new_length": 24
+    },
+    {
+      "id": 41,
+      "username": "gaion09",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "5071d47d5fb3",
+      "new_length": 24
+    },
+    {
+      "id": 42,
+      "username": "gaion10",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "ae8776e9bee3",
+      "new_length": 24
+    },
+    {
+      "id": 46,
+      "username": "anyang05",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "aea17083c2c0",
+      "new_length": 24
+    },
+    {
+      "id": 47,
+      "username": "anyang06",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "38051bf3f364",
+      "new_length": 24
+    },
+    {
+      "id": 51,
+      "username": "anyang08",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "89065241a339",
+      "new_length": 24
+    },
+    {
+      "id": 52,
+      "username": "anyang09",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "1a667e216e1c",
+      "new_length": 24
+    },
+    {
+      "id": 53,
+      "username": "anyang11",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "e7a782da6fa2",
+      "new_length": 24
+    },
+    {
+      "id": 56,
+      "username": "anyang12",
+      "active": false,
+      "is_superuser": false,
+      "new_sha256_12": "e93174e6c94c",
+      "new_length": 24
+    },
+    {
+      "id": 57,
+      "username": "ksyong1071",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "55b483bc43e1",
+      "new_length": 24
+    },
+    {
+      "id": 64,
+      "username": "oper_chi",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "1d05d55769e4",
+      "new_length": 24
+    },
+    {
+      "id": 67,
+      "username": "jcbae",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "81004458459d",
+      "new_length": 24
+    },
+    {
+      "id": 68,
+      "username": "muniru",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "40e03d0b1550",
+      "new_length": 24
+    },
+    {
+      "id": 69,
+      "username": "thai01",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "791284623e1c",
+      "new_length": 24
+    },
+    {
+      "id": 70,
+      "username": "thai02",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "21419f16641b",
+      "new_length": 24
+    },
+    {
+      "id": 71,
+      "username": "thai03",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "b24e2fbd0ae0",
+      "new_length": 24
+    },
+    {
+      "id": 72,
+      "username": "thai04",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "8c097f419c64",
+      "new_length": 24
+    },
+    {
+      "id": 73,
+      "username": "thai05",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "6769f2c38ca4",
+      "new_length": 24
+    },
+    {
+      "id": 75,
+      "username": "thai06",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "f9e17efead02",
+      "new_length": 24
+    },
+    {
+      "id": 77,
+      "username": "thai07",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "b2f51ebcaf89",
+      "new_length": 24
+    },
+    {
+      "id": 80,
+      "username": "dronerobot_user_1",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "79fb28bd4351",
+      "new_length": 24
+    },
+    {
+      "id": 81,
+      "username": "dronerobot_user_2",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "90b240bde6c2",
+      "new_length": 24
+    },
+    {
+      "id": 82,
+      "username": "fire_user1",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "d240b52f399a",
+      "new_length": 24
+    },
+    {
+      "id": 83,
+      "username": "fire_user2",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "314b569ed53f",
+      "new_length": 24
+    },
+    {
+      "id": 84,
+      "username": "dronerobot01",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "0bc845566809",
+      "new_length": 24
+    },
+    {
+      "id": 85,
+      "username": "dronerobot02",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "1dad699f5ca8",
+      "new_length": 24
+    },
+    {
+      "id": 86,
+      "username": "dronerobot03",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "81af6579524e",
+      "new_length": 24
+    },
+    {
+      "id": 87,
+      "username": "dronerobot04",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "5a6c4f965bf6",
+      "new_length": 24
+    },
+    {
+      "id": 88,
+      "username": "dronerobot_user_3",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "5098a8cc0cd2",
+      "new_length": 24
+    },
+    {
+      "id": 89,
+      "username": "ldkF",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "6a9b3326f644",
+      "new_length": 24
+    },
+    {
+      "id": 90,
+      "username": "hansF",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "f6cacbf5286e",
+      "new_length": 24
+    },
+    {
+      "id": 91,
+      "username": "rin_superuser",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "05432a8c77d0",
+      "new_length": 24
+    },
+    {
+      "id": 92,
+      "username": "tuan_superuser",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "e34e5c5b5848",
+      "new_length": 24
+    },
+    {
+      "id": 93,
+      "username": "gaion01_test",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "9248ddbbb2c5",
+      "new_length": 24
+    },
+    {
+      "id": 94,
+      "username": "firedrone01",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "9fe2dd19eace",
+      "new_length": 24
+    },
+    {
+      "id": 95,
+      "username": "firedrone02",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "4ffc17424034",
+      "new_length": 24
+    },
+    {
+      "id": 97,
+      "username": "gongju_admin01",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "9b2a445a3d9c",
+      "new_length": 24
+    },
+    {
+      "id": 98,
+      "username": "gongju_operator01",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "892381225183",
+      "new_length": 24
+    },
+    {
+      "id": 99,
+      "username": "gongju_order01",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "0230b21abb7c",
+      "new_length": 24
+    },
+    {
+      "id": 100,
+      "username": "gongju_sv01",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "d67d22fd71f9",
+      "new_length": 24
+    },
+    {
+      "id": 104,
+      "username": "gaion11",
+      "active": true,
+      "is_superuser": false,
+      "new_sha256_12": "35ab92c68d31",
+      "new_length": 24
+    }
+  ]
+}
