@@ -1,6 +1,6 @@
 {
-  "measured_at": "2026-09-10T08:46:01Z",
-  "event_id": 4804,
+  "measured_at": "2026-09-15T06:54:33Z",
+  "event_id": 4808,
   "api": "http://gx-nginx-e:8500",
   "spa": "http://localhost:3002",
   "observations": {
@@ -58,6 +58,36 @@
         },
         {
           "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places_impl.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/controls.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/common.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/util.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/main.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
           "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
           "status": null
         },
@@ -83,33 +113,13 @@
         },
         {
           "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places_impl.js",
+          "url": "https://maps.googleapis.com/maps/api/mapsjs/gen_204?csp_test=true",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/places.js",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/controls.js",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/common.js",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/util.js",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/main.js",
-          "status": null
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/map.js",
+          "status": 200
         },
         {
           "method": "GET",
@@ -122,8 +132,8 @@
         "before": "http://localhost:3002/login",
         "after": "http://localhost:3002/profile"
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\nPersonal Information\nAdd Profile Picture\nEmail *\nID *\nFirst Name *\nLast Name *\nPhone Number\nHome Screen Setting *\nSelect...\nTheme\nDark\nLight\nPassword Settings\nChange Password\nGroup *\nETRI-Group\nDepartment\nSelect...\nTeam\nSelect...\nPosition\nSelect...\nAddress\n*\nSearch address\nLanguage\nSelect...\nTimezone\nSelect...\nDate Format\nSelect...\nTime Format\nSelect...\nNumber Format\nSelect...\nDecimals\n2\nCurrency Symbol\nSelect...\nSymbol Placement\nAfter\nSave Changes\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:41:23Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\nPersonal Information\nAdd Profile Picture\nEmail *\nID *\nFirst Name *\nLast Name *\nPhone Number\nHome Screen Setting *\nSelect...\nTheme\nDark\nLight\nPassword Settings\nChange Password\nAddress\n*\nSearch address\nLanguage\nSelect...\nTimezone\nSelect...\nDate Format\nSelect...\nTime Format\nSelect...\nNumber Format\nSelect...\nDecimals\n2\nCurrency Symbol\nSelect...\nSymbol Placement\nAfter\nSave Changes\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:52:13Z"
     },
     "U1#2": {
       "control": {
@@ -144,7 +154,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
           "status": 200
         },
         {
@@ -184,22 +194,22 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ControlDashboard-CRYweSL_.js",
+          "url": "http://localhost:3002/assets/ControlDashboard-DhGT-CAr.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/AutoAnalysisNotice-Cqe3wBj9.js",
+          "url": "http://localhost:3002/assets/AutoAnalysisNotice-CfBbwH6X.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-D--oyvMo.js",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
           "status": 200
         },
         {
@@ -214,12 +224,12 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-TZX4MQdt.js",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DLl_rriB.js",
+          "url": "http://localhost:3002/assets/index-BPXFXngL.js",
           "status": 200
         },
         {
@@ -281,34 +291,15 @@
       "state": {
         "kind": "server_reflect",
         "get": "/api/dsm/dashboard/frame",
-        "field": "preset",
-        "before": "OPERATOR",
-        "after": "OPERATOR",
-        "on_screen": false
+        "field": "panel_total",
+        "before": 2,
+        "after": 2,
+        "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n자동 분석 안내\n이 알림은 자동 분석 결과이며, 관제요원이 최종 확인합니다.\n관제 대시보드\n?\n연계 대기\n갱신 08:41 · 0초 전\n화면 구성\n관제요원 화면역할에 맞춰 설정됨\n화면 점검\n화면 2칸이 정상적으로 그려졌습니다.\n?\n최근 이벤트\n전체 목록\n등급\t유형\t카메라\t발생\n■ 심각\t화재\t시드 카메라 (검수용)\t13:14 · 6일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:11 · 6일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:08 · 6일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:05 · 6일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:02 · 6일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:59 · 6일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:56 · 6일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:53 · 6일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:50 · 6일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:47 · 6일 전\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:41:27Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n자동 분석 안내\n이 알림은 자동 분석 결과이며, 관제요원이 최종 확인합니다.\n관제 대시보드\n?\n연계 대기\n갱신 06:52 · 0초 전\n화면 구성\n관제요원 화면역할에 맞춰 설정됨\n화면 점검\n화면 2칸이 정상적으로 그려졌습니다.\n?\n최근 이벤트\n전체 목록\n등급\t유형\t카메라\t발생\n■ 심각\t화재\t시드 카메라 (검수용)\t13:14 · 11일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:11 · 11일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:08 · 11일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:05 · 11일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:02 · 11일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:59 · 11일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:56 · 11일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:53 · 11일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:50 · 11일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:47 · 11일 전\n표기 시간대: Asia/Seoul\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:52:17Z"
     },
     "U1#3": {
-      "control": {
-        "found": true,
-        "clicked": true,
-        "name": "화면 열기"
-      },
-      "calls": [],
-      "state": {
-        "kind": "server_reflect",
-        "get": "/api/dsm/cameras/pulse",
-        "field": "counts",
-        "before": 3,
-        "after": null,
-        "error": "다시 읽기 HTTP 401",
-        "on_screen": false
-      },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n카메라 격자\n1 / 1\n자동 순회\n응답 없음 4대 (전체 4대)\n그중 4대는 응답을 받은 적이 없습니다.\n안양천서로카메라\n응답 없음\n응답을 받은 적이 없습니다.\nGD-150Q\n응답 없음\n응답을 받은 적이 없습니다.\nH40\n응답 없음\n응답을 받은 적이 없습니다.\nNBP-DR-P2\n응답 없음\n응답을 받은 적이 없습니다.\n자동 갱신 중 · 마지막 갱신 0초 전 · 표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:41:45Z"
-    },
-    "U1#4": {
       "control": {
         "found": true,
         "clicked": true,
@@ -317,7 +308,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://localhost:3002/multi-stream-monitor",
+          "url": "http://localhost:3002/dsm/cameras/grid",
           "status": 200
         },
         {
@@ -327,7 +318,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
           "status": 200
         },
         {
@@ -367,12 +358,22 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "url": "http://localhost:3002/assets/CameraGrid-By71Xfo0.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
           "status": 200
         },
         {
@@ -382,7 +383,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/stream-monitors/stream-monitors",
+          "url": "http://localhost:8000/api/dsm/cameras/pulse",
           "status": null
         },
         {
@@ -417,65 +418,32 @@
         },
         {
           "method": "GET",
+          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
           "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
           "status": 404
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/stream-monitors/stream-monitors/ai-models",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/stream-monitors/stream-monitors/ai-models",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/stream-monitors/stream-monitors/ai-models",
-          "status": null
-        },
-        {
-          "method": "POST",
-          "url": "https://gx-streaming-api.gaion.dev/webrtc/stream/D-1758174445245/whep",
-          "status": null
-        },
-        {
-          "method": "POST",
-          "url": "https://gx-streaming-api.gaion.dev/webrtc/stream/a92e640d-ed1c-49a3-b994-5c916e327956/whep",
-          "status": null
-        },
-        {
-          "method": "POST",
-          "url": "https://gx-streaming-api.gaion.dev/webrtc/stream/cbd9d5d9-5c85-4786-919f-013e2b8aa66b/whep",
-          "status": null
-        },
-        {
-          "method": "POST",
-          "url": "https://gx-streaming-api.gaion.dev/webrtc/stream/a92e640d-ed1c-49a3-b994-5c916e327956/whep",
-          "status": null
-        },
-        {
-          "method": "POST",
-          "url": "https://gx-streaming-api.gaion.dev/webrtc/stream/cbd9d5d9-5c85-4786-919f-013e2b8aa66b/whep",
-          "status": null
-        },
-        {
-          "method": "POST",
-          "url": "https://gx-streaming-api.gaion.dev/webrtc/stream/D-1758174445245/whep",
-          "status": null
         }
       ],
       "state": {
         "kind": "server_reflect",
         "get": "/api/dsm/cameras/pulse",
-        "field": "counts",
-        "before": 3,
-        "after": 3,
-        "on_screen": false
+        "field": "total",
+        "before": 4,
+        "after": 4,
+        "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n📡\nGD-150Q\n0 Participants\nAI\n📡\nH40\n0 Participants\nAI\n📡\nNBP-DR-P2\n0 Participants\nAI\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:41:50Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n카메라 격자\n1 / 1\n자동 순회\n응답 없음 4대 (전체 4대)\n그중 4대는 응답을 받은 적이 없습니다.\n안양천서로카메라\n응답 없음\n응답을 받은 적이 없습니다.\nGD-150Q\n응답 없음\n응답을 받은 적이 없습니다.\nH40\n응답 없음\n응답을 받은 적이 없습니다.\nNBP-DR-P2\n응답 없음\n응답을 받은 적이 없습니다.\n자동 갱신 중 · 마지막 갱신 0초 전 · 표기 시간대: Asia/Seoul\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:52:20Z"
+    },
+    "U1#4": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 인수 스트림 화면에 서버 값이 드러나는 칸이 없다 (실측: GET /api/stream-monitors/stream-monitors · 화면은 이름 타일뿐)"
+      },
+      "measured_at": "2026-09-15T06:52:20Z"
     },
     "U1#8": {
       "control": {
@@ -496,7 +464,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
           "status": 200
         },
         {
@@ -536,17 +504,17 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventList-C_yecwGG.js",
+          "url": "http://localhost:3002/assets/EventList-DpeHuYfc.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-C78ua1ZO.js",
+          "url": "http://localhost:3002/assets/ResponseSteps-BioSYVwh.js",
           "status": 200
         },
         {
@@ -556,7 +524,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-D--oyvMo.js",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
           "status": 200
         },
         {
@@ -566,7 +534,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-TZX4MQdt.js",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
           "status": 200
         },
         {
@@ -633,8 +601,8 @@
         "after": 20,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n이벤트 목록\n갱신 08:41 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n2건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t발생\n▲ 경계\t카메라 무응답\t시드 카메라 (검수용)\t미처리\t미판정\t12:14 · 6일 전\n▲ 경계\t저장 용량 임계\t시드 카메라 (검수용)\t미처리\t미판정\t12:11 · 6일 전\n1\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:41:53Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n이벤트 목록\n갱신 06:52 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n2건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t발생\n▲ 경계\t카메라 무응답\t시드 카메라 (검수용)\t미처리\t미판정\t12:14 · 11일 전\n▲ 경계\t저장 용량 임계\t시드 카메라 (검수용)\t미처리\t미판정\t12:11 · 11일 전\n1\n표기 시간대: Asia/Seoul\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:52:23Z"
     },
     "U1#9": {
       "control": {
@@ -645,7 +613,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://localhost:3002/dsm/events/4804",
+          "url": "http://localhost:3002/dsm/events/4808",
           "status": 200
         },
         {
@@ -655,7 +623,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
           "status": 200
         },
         {
@@ -695,17 +663,22 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventDetail-Ve7a7NMg.js",
+          "url": "http://localhost:3002/assets/EventDetail-BFa_Rpaf.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-D--oyvMo.js",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/deliveryOutcome-Be7pLSGS.js",
           "status": 200
         },
         {
@@ -715,27 +688,27 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventSnapshot-DWqQkYxf.js",
+          "url": "http://localhost:3002/assets/EventSnapshot-CdVi3dlm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseClock-BtShB6oC.js",
+          "url": "http://localhost:3002/assets/ResponseClock-Bo2pjewm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-TZX4MQdt.js",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-C78ua1ZO.js",
+          "url": "http://localhost:3002/assets/ResponseSteps-BioSYVwh.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-Dzt1K-QH.js",
+          "url": "http://localhost:3002/assets/index-CN-Hlydt.js",
           "status": 200
         },
         {
@@ -745,17 +718,17 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804",
+          "url": "http://localhost:8000/api/dsm/events/4808",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/deliveries?event_id=4804",
+          "url": "http://localhost:8000/api/dsm/deliveries?event_id=4808",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804/timeline",
+          "url": "http://localhost:8000/api/dsm/events/4808/timeline",
           "status": null
         },
         {
@@ -800,7 +773,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804/snapshot",
+          "url": "http://localhost:8000/api/dsm/events/4808/snapshot",
           "status": null
         }
       ],
@@ -808,12 +781,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/events/{event}",
         "field": "event_id",
-        "before": 4804,
-        "after": 4804,
+        "before": 4808,
+        "after": 4808,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #4804\n알림 보내기\n등급\t■ 심각\t유형\t침수\t처리 단계\t조치 중\n판정\t미판정\t발생 시각\t2026-09-03 12:56:31 · 6일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t아직 아무도 판정하지 않음\t판정 사유\t—\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n163시간 45분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:56:31\t② 접수 확인\t2026-09-03 13:17:32 · +21분 1초\t③ 조치 착수\t2026-09-08 04:23:59 · +111시간 27분\n④ 종결\t아직 열려 있습니다\n전이 2건 — 2026-09-03 13:17:32 occurred→acknowledged (gxprobe_e2e) · 2026-09-08 04:23:59 acknowledged→in_progress (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n미판정\n다음 단계\n종결하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:41:57Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #4808\n알림 보내기\n등급\t▲ 경계\t유형\t침입\t처리 단계\t접수\n판정\t미판정\t발생 시각\t2026-09-03 12:44:31 · 11일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t아직 아무도 판정하지 않음\t판정 사유\t—\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n282시간 7분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:44:31\t② 접수 확인\t2026-09-08 04:38:39 · +111시간 54분\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 1건 — 2026-09-08 04:38:39 occurred→acknowledged (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n미판정\n다음 단계\n조치 시작\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:52:27Z"
     },
     "U1#11": {
       "control": {
@@ -824,12 +797,12 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://localhost:8000/api/dsm/events/4804/review?verdict=confirmed&reason=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29",
+          "url": "http://localhost:8000/api/dsm/events/4808/review?verdict=confirmed&reason=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804",
+          "url": "http://localhost:8000/api/dsm/events/4808",
           "status": null
         }
       ],
@@ -840,8 +813,8 @@
         "before": null,
         "after": "confirmed"
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #4804\n알림 보내기\n등급\t■ 심각\t유형\t침수\t처리 단계\t조치 중\n판정\t실제\t발생 시각\t2026-09-03 12:56:31 · 6일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t#110 · 08:42 · 0초 전\t판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n163시간 45분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:56:31\t② 접수 확인\t2026-09-03 13:17:32 · +21분 1초\t③ 조치 착수\t2026-09-08 04:23:59 · +111시간 27분\n④ 종결\t아직 열려 있습니다\n전이 2건 — 2026-09-03 13:17:32 occurred→acknowledged (gxprobe_e2e) · 2026-09-08 04:23:59 acknowledged→in_progress (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n종결하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:42:07Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #4808\n알림 보내기\n등급\t▲ 경계\t유형\t침입\t처리 단계\t접수\n판정\t실제\t발생 시각\t2026-09-03 12:44:31 · 11일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t#110 · 06:52 · 0초 전\t판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n282시간 8분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:44:31\t② 접수 확인\t2026-09-08 04:38:39 · +111시간 54분\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 1건 — 2026-09-08 04:38:39 occurred→acknowledged (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n조치 시작\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:52:36Z"
     },
     "U1#19": {
       "control": {
@@ -862,7 +835,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
           "status": 200
         },
         {
@@ -902,7 +875,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
           "status": 200
         },
         {
@@ -963,866 +936,20 @@
       ],
       "state": {
         "kind": "server_reflect",
-        "get": "/api/dsm/events?limit=5",
-        "field": "events",
-        "before": 5,
-        "after": null,
-        "error": "다시 읽기 HTTP 502",
+        "get": "/api/dsm/events/summary?hours=24",
+        "field": "unhandled",
+        "before": 0,
+        "after": 0,
         "on_screen": false
       },
-      "text_after": "아직 인계 메모가 없습니다.\n이 자리에 지난 교대가 남긴 말이 뜹니다. 지금은 남긴 말이 없습니다. (사이드바의 「인계 메모」로 들어오면 탭이 함께 뜹니다)\n인계 메모 쓰기\n교대 마무리 초안\n미처리·판정 수를 읽지 못했습니다.\n초안의 숫자 자리는 비워 두었습니다. 화면에서 확인하고 손으로 적어 주십시오 — 못 읽은 것을 0으로 적지 않습니다.\n[교대 인계 초안] 2026. 9. 10. 오전 8:42:09\n미처리: 못 읽었습니다 (숫자를 확인하고 손으로 적어 주십시오)\n오늘 판정: 못 읽었습니다\n\n넘기는 말:\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:42:12Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n인계 메모\n아직 인계 메모가 없습니다.\n이 자리에 지난 교대가 남긴 말이 뜹니다. 지금은 남긴 말이 없습니다. (사이드바의 「인계 메모」로 들어오면 탭이 함께 뜹니다)\n인계 메모 쓰기\n교대 마무리 초안\n[교대 인계 초안] 2026. 9. 15. 오전 6:52:37\n미처리: 0건\n오늘 판정: 0건 (아직 안 본 것 0건)\n\n넘기는 말:\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:52:39Z"
     },
     "U2#1": {
       "control": {
-        "found": false,
-        "why": "그 사람으로 **화면에 들어가지 못했다** (gxseed_u2_manager · /login 에 머문다)"
-      },
-      "measured_at": "2026-09-10T08:42:42Z"
-    },
-    "U2#2": {
-      "control": {
-        "found": false,
-        "why": "그 사람으로 **화면에 들어가지 못했다** (gxseed_u2_manager · /login 에 머문다)"
-      },
-      "measured_at": "2026-09-10T08:42:42Z"
-    },
-    "U2#3": {
-      "control": {
-        "found": false,
-        "why": "그 사람으로 **화면에 들어가지 못했다** (gxseed_u2_manager · /login 에 머문다)"
-      },
-      "measured_at": "2026-09-10T08:42:42Z"
-    },
-    "U2#4": {
-      "control": {
-        "found": false,
-        "why": "그 사람으로 **화면에 들어가지 못했다** (gxseed_u2_manager · /login 에 머문다)"
-      },
-      "measured_at": "2026-09-10T08:42:42Z"
-    },
-    "U2#6": {
-      "control": {
-        "found": false,
-        "why": "그 사람으로 **화면에 들어가지 못했다** (gxseed_u2_manager · /login 에 머문다)"
-      },
-      "measured_at": "2026-09-10T08:42:42Z"
-    },
-    "U2#9": {
-      "control": {
-        "found": false,
-        "why": "그 사람으로 **화면에 들어가지 못했다** (gxseed_u2_manager · /login 에 머문다)"
-      },
-      "measured_at": "2026-09-10T08:42:42Z"
-    },
-    "U2#16": {
-      "control": {
-        "found": false,
-        "why": "그 사람으로 **화면에 들어가지 못했다** (gxseed_u2_manager · /login 에 머문다)"
-      },
-      "measured_at": "2026-09-10T08:42:42Z"
-    },
-    "U2#19": {
-      "control": {
-        "found": false,
-        "why": "그 사람으로 **화면에 들어가지 못했다** (gxseed_u2_manager · /login 에 머문다)"
-      },
-      "measured_at": "2026-09-10T08:42:42Z"
-    },
-    "U3#1": {
-      "control": {
-        "found": true,
-        "clicked": true,
-        "name": "발송"
-      },
-      "calls": [],
-      "state": {
-        "kind": "server_change",
-        "get": "/api/dsm/deliveries?limit=1",
-        "field": "total",
-        "before": 1,
-        "after": 1
-      },
-      "text_after": "← 목록\n이벤트 상세 #4804\n알림 보내기\n등급\t■ 심각\n유형\t침수\n처리 단계\t조치 중\n판정\t실제\n발생 시각\t2026-09-03 12:56:31 · 6일 전\n마지막 관측\t—\n카메라\t시드 카메라 (검수용)\n확신도\t—\n좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\n영상 구간\t없음\n판정자\t#110 · 08:42 · 1분 전\n판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n163시간 47분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:56:31\n② 접수 확인\t2026-09-03 13:17:32 · +21분 1초\n③ 조치 착수\t2026-09-08 04:23:59 · +111시간 27분\n④ 종결\t아직 열려 있습니다\n전이 2건 — 2026-09-03 13:17:32 occurred→acknowledged (gxprobe_e2e) · 2026-09-08 04:23:59 acknowledged→in_progress (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n종결하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:43:44Z"
-    },
-    "U3#2": {
-      "control": {
         "found": true,
         "clicked": true,
         "name": "화면 열기"
-      },
-      "calls": [
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/m/events/4804",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/MobileEventDetail-C1k1-pcL.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/EventSnapshot-DWqQkYxf.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-D--oyvMo.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-C78ua1ZO.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/time-TZX4MQdt.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/MobileShell-DBgFcdSX.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-Dzt1K-QH.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804/clip",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804/field-replies",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/config-management/list-optimized",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?raw=false",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804/snapshot",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
-          "status": 404
-        }
-      ],
-      "state": {
-        "kind": "server_reflect",
-        "get": "/api/dsm/events/{event}",
-        "field": "address",
-        "before": "경기도 안양시 만안구 안양천서로 100 (시드 카메라)",
-        "after": "경기도 안양시 만안구 안양천서로 100 (시드 카메라)",
-        "on_screen": true
-      },
-      "text_after": "← 목록\n#4804 현장 상세\n새로고침\n기준 08:43 · 0초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n침수\n조치 중\n실제\n발생 6일 전 (2026-09-03 12:56:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n접수\n3조치 중\n4종결\n종결하기\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · 현장 도착, 연기 없음 이상 없음 (관제요원 시험)\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:43:53Z"
-    },
-    "U3#3": {
-      "control": {
-        "found": true,
-        "clicked": true,
-        "name": "화면 열기"
-      },
-      "calls": [
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/m/events/4804",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/MobileEventDetail-C1k1-pcL.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/EventSnapshot-DWqQkYxf.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-D--oyvMo.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-C78ua1ZO.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/time-TZX4MQdt.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/MobileShell-DBgFcdSX.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-Dzt1K-QH.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804/clip",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804/field-replies",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/config-management/list-optimized",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?raw=false",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804/snapshot",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
-          "status": 404
-        }
-      ],
-      "state": {
-        "kind": "server_reflect",
-        "get": "/api/dsm/events/{event}",
-        "field": "snapshot_path",
-        "before": "guardianx-dev/detections/119/20260903/125631_580118.jpg",
-        "after": "guardianx-dev/detections/119/20260903/125631_580118.jpg",
-        "on_screen": true
-      },
-      "text_after": "← 목록\n#4804 현장 상세\n새로고침\n기준 08:44 · 0초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n침수\n조치 중\n실제\n발생 6일 전 (2026-09-03 12:56:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n접수\n3조치 중\n4종결\n종결하기\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · 현장 도착, 연기 없음 이상 없음 (관제요원 시험)\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:44:02Z"
-    },
-    "U3#7": {
-      "control": {
-        "found": true,
-        "clicked": true,
-        "name": "도착"
-      },
-      "calls": [],
-      "state": {
-        "kind": "server_change",
-        "get": "/api/dsm/events/{event}",
-        "field": "response_state",
-        "before": "in_progress",
-        "after": null,
-        "error": "다시 읽기 HTTP 401"
-      },
-      "text_after": "← 목록\n#4804 현장 상세\n새로고침\n기준 08:44 · 0초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n침수\n조치 중\n실제\n발생 6일 전 (2026-09-03 12:56:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n접수\n3조치 중\n4종결\n종결하기\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · 현장 도착, 연기 없음 이상 없음 (관제요원 시험)\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:44:17Z"
-    },
-    "U3#9": {
-      "control": {
-        "found": false,
-        "why": "「회신」를 화면에서 못 찾았다 (/m/events/4804)"
-      },
-      "calls": [
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/m/events/4804",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/MobileEventDetail-C1k1-pcL.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/EventSnapshot-DWqQkYxf.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-D--oyvMo.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-C78ua1ZO.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/time-TZX4MQdt.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/MobileShell-DBgFcdSX.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-Dzt1K-QH.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804/clip",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4804/field-replies",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/config-management/list-optimized",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?raw=false",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
-          "status": 200
-        },
-        {
-          "method": "POST",
-          "url": "http://localhost:8000/api/v1/auth/refresh-token",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
-          "status": 404
-        }
-      ],
-      "measured_at": "2026-09-10T08:44:23Z"
-    },
-    "U3#14": {
-      "control": {
-        "found": false,
-        "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 구간 티켓은 계약 11조 잠김"
-      },
-      "measured_at": "2026-09-10T08:44:23Z"
-    },
-    "U3#16": {
-      "control": {
-        "found": false,
-        "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 알림 채널 결정 대기"
-      },
-      "measured_at": "2026-09-10T08:44:23Z"
-    },
-    "U3#19": {
-      "control": {
-        "found": true,
-        "clicked": true,
-        "name": "화면 열기"
-      },
-      "calls": [],
-      "state": {
-        "kind": "server_reflect",
-        "get": "/api/dsm/deliveries?limit=20&mine=true",
-        "field": "deliveries",
-        "before": null,
-        "after": null,
-        "error": "다시 읽기 HTTP 401",
-        "on_screen": false
-      },
-      "text_after": "내게 온 이벤트\n새로고침\n기준 08:44 · 0초 전 · 표기 시간대: Asia/Seoul\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 6일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4802\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:02)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:29\n■ 심각\n화재\n#4802\n시드 카메라 (검수용)\n종결\n발생 6일 전 (13:02)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:29\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:44:44Z"
-    },
-    "U4#1": {
-      "control": {
-        "found": false,
-        "why": "정본이 「없음」이라 적은 자리 — 정본: 라우트는 hours=168 을 받지만 **누를 자리가 없다**"
-      },
-      "measured_at": "2026-09-10T08:44:53Z"
-    },
-    "U4#5": {
-      "control": {
-        "found": false,
-        "why": "「생성」를 화면에서 못 찾았다 (/report-template)"
-      },
-      "calls": [
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/report-template",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/config-management/list-optimized",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
-          "status": 404
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/logoguax.svg",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/logoguax.svg",
-          "status": 200
-        }
-      ],
-      "measured_at": "2026-09-10T08:44:57Z"
-    },
-    "U4#7": {
-      "control": {
-        "found": false,
-        "why": "「다운로드」를 화면에서 못 찾았다 (/report-template)"
-      },
-      "calls": [
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/report-template",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/config-management/list-optimized",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
-          "status": 404
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/logoguax.svg",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/logoguax.svg",
-          "status": 200
-        }
-      ],
-      "measured_at": "2026-09-10T08:45:01Z"
-    },
-    "U4#8": {
-      "control": {
-        "found": false,
-        "why": "「조회」를 화면에서 못 찾았다 (/dsm/events)"
       },
       "calls": [
         {
@@ -1837,7 +964,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
           "status": 200
         },
         {
@@ -1877,17 +1004,17 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventList-C_yecwGG.js",
+          "url": "http://localhost:3002/assets/EventList-DpeHuYfc.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-C78ua1ZO.js",
+          "url": "http://localhost:3002/assets/ResponseSteps-BioSYVwh.js",
           "status": 200
         },
         {
@@ -1897,7 +1024,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-D--oyvMo.js",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
           "status": 200
         },
         {
@@ -1907,7 +1034,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-TZX4MQdt.js",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
           "status": 200
         },
         {
@@ -1966,555 +1093,1331 @@
           "status": 404
         }
       ],
-      "measured_at": "2026-09-10T08:45:05Z"
+      "state": {
+        "kind": "server_reflect",
+        "get": "/api/dsm/events/summary?hours=12",
+        "field": "unhandled",
+        "before": 0,
+        "after": 0,
+        "on_screen": false
+      },
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 06:52 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n2건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t발생\n▲ 경계\t카메라 무응답\t시드 카메라 (검수용)\t미처리\t미판정\t12:14 · 11일 전\n▲ 경계\t저장 용량 임계\t시드 카메라 (검수용)\t미처리\t미판정\t12:11 · 11일 전\n1\n표기 시간대: Asia/Seoul\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:52:51Z"
     },
-    "U4#9": {
+    "U2#2": {
       "control": {
         "found": true,
         "clicked": true,
-        "name": "영상"
+        "name": "화면 열기"
       },
-      "calls": [],
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/dsm/events?preset=unhandled",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/EventList-DpeHuYfc.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ResponseSteps-BioSYVwh.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/useDetectionPing-B91nBAJz.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events?limit=50&response_state=occurred",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/summary?hours=12",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/config-management/list-optimized",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 404
+        }
+      ],
+      "state": {
+        "kind": "server_reflect",
+        "get": "/api/dsm/events?limit=50&response_state=occurred",
+        "field": "events",
+        "before": 2,
+        "after": 2,
+        "on_screen": true
+      },
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 06:52 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n2건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t발생\n▲ 경계\t카메라 무응답\t시드 카메라 (검수용)\t미처리\t미판정\t12:14 · 11일 전\n▲ 경계\t저장 용량 임계\t시드 카메라 (검수용)\t미처리\t미판정\t12:11 · 11일 전\n1\n표기 시간대: Asia/Seoul\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:52:54Z"
+    },
+    "U2#3": {
+      "control": {
+        "found": false,
+        "why": "「되돌리기 \\(사유 필수\\)」를 화면에서 못 찾았다 (/dsm/events/4808)"
+      },
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/dsm/events/4808",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/EventDetail-BFa_Rpaf.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/deliveryOutcome-Be7pLSGS.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/EventSnapshot-CdVi3dlm.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ResponseClock-Bo2pjewm.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ResponseSteps-BioSYVwh.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CN-Hlydt.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/deliveries?event_id=4808",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808/timeline",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/config-management/list-optimized",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 404
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808/snapshot",
+          "status": null
+        }
+      ],
+      "measured_at": "2026-09-15T06:52:58Z"
+    },
+    "U2#4": {
+      "control": {
+        "found": true,
+        "clicked": true,
+        "name": "화면 열기"
+      },
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/dsm/events/4808",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/EventDetail-BFa_Rpaf.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/deliveryOutcome-Be7pLSGS.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/EventSnapshot-CdVi3dlm.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ResponseClock-Bo2pjewm.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ResponseSteps-BioSYVwh.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CN-Hlydt.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/deliveries?event_id=4808",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808/timeline",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/config-management/list-optimized",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 404
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808/snapshot",
+          "status": null
+        }
+      ],
       "state": {
         "kind": "server_reflect",
         "get": "/api/dsm/events/{event}",
-        "field": "clip_path",
-        "before": null,
-        "after": null,
+        "field": "severity",
+        "before": "warning",
+        "after": "warning",
+        "on_screen": true
+      },
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n← 목록\n이벤트 상세 #4808\n알림 보내기\n등급\t▲ 경계\t유형\t침입\t처리 단계\t접수\n판정\t실제\t발생 시각\t2026-09-03 12:44:31 · 11일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t#110 · 06:52 · 27초 전\t판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n282시간 8분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:44:31\t② 접수 확인\t2026-09-08 04:38:39 · +111시간 54분\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 1건 — 2026-09-08 04:38:39 occurred→acknowledged (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n조치 시작\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:53:01Z"
+    },
+    "U2#6": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 서버 문(GET /api/dsm/reports/templates · api.py:750)은 서 있으나 그것을 부르는 화면이 없다. /report-template 은 인수 자산의 운송장 서식이다"
+      },
+      "measured_at": "2026-09-15T06:53:01Z"
+    },
+    "U2#9": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본: 집계 면 없다 — 사람별로 세는 자리가 없다"
+      },
+      "measured_at": "2026-09-15T06:53:01Z"
+    },
+    "U2#16": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본: 조회 라우트·화면 없다 · 규칙 0건"
+      },
+      "measured_at": "2026-09-15T06:53:01Z"
+    },
+    "U2#19": {
+      "control": {
+        "found": true,
+        "clicked": true,
+        "name": "화면 열기"
+      },
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/dsm/events?preset=system",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/EventList-DpeHuYfc.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ResponseSteps-BioSYVwh.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/useDetectionPing-B91nBAJz.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events?limit=50&event_type=camera_down,storage_high",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/summary?hours=12",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/dashboard/link-state",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/config-management/list-optimized",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 404
+        }
+      ],
+      "state": {
+        "kind": "server_reflect",
+        "get": "/api/dsm/events?limit=50&event_type=camera_down,storage_high",
+        "field": "events",
+        "before": 2,
+        "after": 2,
+        "on_screen": true
+      },
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 06:53 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n2건\n?\n시스템 — 설비 자신이 낸 신호\n현장에서 난 일이 아니라 카메라·저장 장치 같은 설비 자신의 상태입니다. 아래 「연계 상태」는 지난 일이 아니라 지금 이 순간의 신호라 따로 놓았습니다.\n연계 상태 (지금 이 순간)\n연계 대기\n이 목록은 설비 자신이 낸 신호입니다. 카메라 응답 여부와 저장 용량은 아직 이 화면에서 볼 수 없습니다 — 여기 없는 것은 아직 없는 것입니다.\n등급\t유형\t카메라\t처리 단계\t판정\t발생\n▲ 경계\t카메라 무응답\t시드 카메라 (검수용)\t미처리\t미판정\t12:14 · 11일 전\n▲ 경계\t저장 용량 임계\t시드 카메라 (검수용)\t미처리\t미판정\t12:11 · 11일 전\n1\n표기 시간대: Asia/Seoul\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:53:04Z"
+    },
+    "U3#1": {
+      "control": {
+        "found": true,
+        "clicked": true,
+        "name": "알림 보내기"
+      },
+      "calls": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8000/api/dsm/events/4808/notify",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/deliveries?event_id=4808",
+          "status": null
+        }
+      ],
+      "state": {
+        "kind": "server_change",
+        "get": "/api/dsm/deliveries?limit=1",
+        "field": "total",
+        "before": 1,
+        "after": 1
+      },
+      "text_after": "← 목록\n이벤트 상세 #4808\n알림 보내기\n등급\t▲ 경계\n유형\t침입\n처리 단계\t접수\n판정\t실제\n발생 시각\t2026-09-03 12:44:31 · 11일 전\n마지막 관측\t—\n카메라\t시드 카메라 (검수용)\n확신도\t—\n좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\n영상 구간\t없음\n판정자\t#110 · 06:52 · 45초 전\n판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n282시간 8분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:44:31\n② 접수 확인\t2026-09-08 04:38:39 · +111시간 54분\n③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 1건 — 2026-09-08 04:38:39 occurred→acknowledged (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n조치 시작\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:17 · 0초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:17 · 0초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:17 · 0초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:17 · 0초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:16 · 0초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:16 · 0초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:16 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:16 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:16 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:16 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:16 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:16 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:16 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:16 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-15 06:53:16 · 1초 전\t\n표기 시간대: Asia/Seoul\n버전 5d2d728 · 장애 신고 창구 미등록\n발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.",
+      "measured_at": "2026-09-15T06:53:22Z"
+    },
+    "U3#2": {
+      "control": {
+        "found": true,
+        "clicked": true,
+        "name": "화면 열기"
+      },
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/m/events/4808",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/MobileEventDetail-Il9kmwl4.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/EventSnapshot-CdVi3dlm.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ResponseSteps-BioSYVwh.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/MobileShell-D-TJVe5-.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CN-Hlydt.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808/clip",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808/field-replies",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/config-management/list-optimized",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?raw=false",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 404
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808/snapshot",
+          "status": null
+        }
+      ],
+      "state": {
+        "kind": "server_reflect",
+        "get": "/api/dsm/events/{event}",
+        "field": "address",
+        "before": "경기도 안양시 만안구 안양천서로 100 (시드 카메라)",
+        "after": "경기도 안양시 만안구 안양천서로 100 (시드 카메라)",
+        "on_screen": true
+      },
+      "text_after": "← 목록\n#4808 현장 상세\n새로고침\n기준 06:53 · 0초 전 · 표기 시간대: Asia/Seoul\n▲ 경계\n침입\n접수\n실제\n발생 11일 전 (2026-09-03 12:44:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n2접수\n3조치 중\n4종결\n조치 시작\n현장 회신 — 본 것을 한 줄로\n회신 보내기\n아직 회신이 없습니다.\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:53:25Z"
+    },
+    "U3#3": {
+      "control": {
+        "found": true,
+        "clicked": true,
+        "name": "화면 열기"
+      },
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/m/events/4808",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/MobileEventDetail-Il9kmwl4.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/EventSnapshot-CdVi3dlm.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ResponseSteps-BioSYVwh.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/MobileShell-D-TJVe5-.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CN-Hlydt.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808/clip",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808/field-replies",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/config-management/list-optimized",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?raw=false",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 404
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808/snapshot",
+          "status": null
+        }
+      ],
+      "state": {
+        "kind": "server_reflect",
+        "get": "/api/dsm/events/{event}",
+        "field": "snapshot_path",
+        "before": "guardianx-dev/detections/119/20260903/124431_580118.jpg",
+        "after": "guardianx-dev/detections/119/20260903/124431_580118.jpg",
         "on_screen": false
       },
-      "text_after": "무슨 일 있었나\n열람·삭제 청구\n← 목록\n이벤트 상세 #4804\n알림 보내기\n등급\t■ 심각\t유형\t침수\t처리 단계\t조치 중\n판정\t실제\t발생 시각\t2026-09-03 12:56:31 · 6일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t#110 · 08:42 · 3분 전\t판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n163시간 48분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n① 발생\t2026-09-03 12:56:31\t② 접수 확인\t2026-09-03 13:17:32 · +21분 1초\t③ 조치 착수\t2026-09-08 04:23:59 · +111시간 27분\n④ 종결\t아직 열려 있습니다\n전이 2건 — 2026-09-03 13:17:32 occurred→acknowledged (gxprobe_e2e) · 2026-09-08 04:23:59 acknowledged→in_progress (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n종결하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\nlog\t\t성공\t2026-09-03 13:17:36 · 6일 전\t\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:45:15Z"
+      "text_after": "← 목록\n#4808 현장 상세\n새로고침\n기준 06:53 · 0초 전 · 표기 시간대: Asia/Seoul\n▲ 경계\n침입\n접수\n실제\n발생 11일 전 (2026-09-03 12:44:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n2접수\n3조치 중\n4종결\n조치 시작\n현장 회신 — 본 것을 한 줄로\n회신 보내기\n아직 회신이 없습니다.\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:53:28Z"
+    },
+    "U3#7": {
+      "control": {
+        "found": true,
+        "clicked": true,
+        "name": "접수하기|조치 시작|종결하기"
+      },
+      "calls": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8000/api/dsm/events/4808/response?to_state=in_progress&reason=",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808",
+          "status": null
+        }
+      ],
+      "state": {
+        "kind": "server_change",
+        "get": "/api/dsm/events/{event}",
+        "field": "response_state",
+        "before": "acknowledged",
+        "after": "in_progress"
+      },
+      "text_after": "← 목록\n#4808 현장 상세\n새로고침\n기준 06:53 · 0초 전 · 표기 시간대: Asia/Seoul\n▲ 경계\n침입\n조치 중\n실제\n발생 11일 전 (2026-09-03 12:44:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n접수\n3조치 중\n4종결\n종결하기\n현장 회신 — 본 것을 한 줄로\n회신 보내기\n아직 회신이 없습니다.\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:53:37Z"
+    },
+    "U3#9": {
+      "control": {
+        "found": true,
+        "clicked": true,
+        "name": "회신 보내기"
+      },
+      "calls": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8000/api/dsm/events/4808/field-reply?text=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29+%E2%80%94+%ED%98%84%EC%9E%A5+%EC%9D%B4%EC%83%81+%EC%97%86%EC%9D%8C",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/4808/field-replies",
+          "status": null
+        }
+      ],
+      "state": {
+        "kind": "server_change",
+        "get": "/api/dsm/events/{event}/field-replies",
+        "field": "replies",
+        "before": 0,
+        "after": 1
+      },
+      "text_after": "← 목록\n#4808 현장 상세\n새로고침\n기준 06:53 · 3초 전 · 표기 시간대: Asia/Seoul\n▲ 경계\n침입\n조치 중\n실제\n발생 11일 전 (2026-09-03 12:44:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n접수\n3조치 중\n4종결\n종결하기\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:53:47Z"
+    },
+    "U3#14": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 구간 티켓은 계약 11조 잠김"
+      },
+      "measured_at": "2026-09-15T06:53:47Z"
+    },
+    "U3#16": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 알림 채널 결정 대기"
+      },
+      "measured_at": "2026-09-15T06:53:47Z"
+    },
+    "U3#19": {
+      "control": {
+        "found": true,
+        "clicked": true,
+        "name": "화면 열기"
+      },
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/m/inbox",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/MobileInbox-DTGx8UG5.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/deliveryOutcome-Be7pLSGS.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/time-31Sm2NDL.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/MobileShell-D-TJVe5-.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/deliveries?limit=50",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events?limit=200",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/config-management/list-optimized",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?raw=false",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 404
+        }
+      ],
+      "state": {
+        "kind": "server_reflect",
+        "get": "/api/dsm/deliveries?limit=20&mine=true",
+        "field": "deliveries",
+        "before": 4,
+        "after": 4,
+        "on_screen": true
+      },
+      "text_after": "내게 온 이벤트\n새로고침\n기준 06:53 · 0초 전 · 표기 시간대: Asia/Seoul\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 11일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4802\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:02)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:29\n■ 심각\n화재\n#4802\n시드 카메라 (검수용)\n종결\n발생 11일 전 (13:02)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:29\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:53:52Z"
+    },
+    "U4#1": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본: 라우트는 hours=168 을 받지만 **누를 자리가 없다**"
+      },
+      "measured_at": "2026-09-15T06:53:59Z"
+    },
+    "U4#5": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 월간 보고서를 만드는 문도(POST /api/dsm/reports 없음) 그리는 화면도 없다 (roleNav.ts:143 P61_NO_SCREEN_YET 「보고서」)"
+      },
+      "measured_at": "2026-09-15T06:53:59Z"
+    },
+    "U4#7": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 서버 문은 GET /api/dsm/events/{id}/report.pdf 하나인데 그것을 누르는 화면이 라우터에 없다 (api.py:802 · 프런트 참조 0건)"
+      },
+      "measured_at": "2026-09-15T06:53:59Z"
+    },
+    "U4#8": {
+      "control": {
+        "found": true,
+        "clicked": true,
+        "name": "^7일$"
+      },
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events?limit=50&response_state=occurred&since=2026-09-08T06:54:03.389Z&until=2026-09-15T06:54:03.389Z",
+          "status": null
+        }
+      ],
+      "state": {
+        "kind": "server_reflect",
+        "get": "/api/dsm/events?limit=20",
+        "field": "events",
+        "before": 20,
+        "after": 20,
+        "on_screen": true
+      },
+      "text_after": "무슨 일 있었나\n열람·삭제 청구\n이벤트 목록\n갱신 06:54 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 2026-09-08 06:54 ~ 2026-09-15 06:54\n열기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:54:09Z"
+    },
+    "U4#9": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본: 추출은 계약 11조 설계 잠금(영구) — 이 행은 ●가 될 수 없다 · 화면에 단추가 없다(EventDetail.tsx:345 는 표의 이름칸 「영상 구간」이다)"
+      },
+      "measured_at": "2026-09-15T06:54:09Z"
     },
     "U4#11": {
       "control": {
         "found": true,
         "clicked": true,
         "name": "화면 열기"
-      },
-      "calls": [
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/device",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ListDevice-D_-0nrYr.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/useAPI-CYOlA-y4.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ListDevice-BYA7E8kR.css",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/config-management/list-optimized",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
-          "status": 404
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/grid-management?menu_id=133",
-          "status": null
-        }
-      ],
-      "state": {
-        "kind": "server_reflect",
-        "get": "/api/dsm/cameras/address-gap",
-        "field": "total",
-        "before": 5,
-        "after": 5,
-        "on_screen": false
-      },
-      "text_after": "무슨 일 있었나\n열람·삭제 청구\n드론·로봇 장비 등록 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\n\t\nStatus\n\t\nIn Use\n\t\nStatus\nSelect\n\t\nImage\n\t\nColor\n1\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:45:19Z"
-    },
-    "U4#15": {
-      "control": {
-        "found": false,
-        "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 상급기관 서식 T4"
-      },
-      "measured_at": "2026-09-10T08:45:19Z"
-    },
-    "U4#16": {
-      "control": {
-        "found": false,
-        "why": "정본이 「없음」이라 적은 자리 — 정본: 감사는 쌓이는데 **볼 자리가 없다**"
-      },
-      "measured_at": "2026-09-10T08:45:19Z"
-    },
-    "U5#1": {
-      "control": {
-        "found": false,
-        "why": "「추가」를 화면에서 못 찾았다 (/users)"
-      },
-      "calls": [
-        {
-          "method": "GET",
-          "url": "https://maps.googleapis.com/maps/api/mapsjs/gen_204?csp_test=true",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/map.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/users",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/config-management/list-optimized",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
-          "status": 404
-        }
-      ],
-      "measured_at": "2026-09-10T08:45:38Z"
-    },
-    "U5#2": {
-      "control": {
-        "found": true,
-        "clicked": true,
-        "name": "화면 열기"
-      },
-      "calls": [
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/roles",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/config-management/list-optimized",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
-          "status": 404
-        }
-      ],
-      "state": {
-        "kind": "server_reflect",
-        "get": "/api/dsm/dashboard/frame",
-        "field": "preset",
-        "before": "MANAGER",
-        "after": "MANAGER",
-        "on_screen": false
-      },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n역할 관리 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\n\t\nName\n\t\nIs Default\n\t\nRole Menu\n1\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:45:42Z"
-    },
-    "U5#4": {
-      "control": {
-        "found": false,
-        "why": "「추가」를 화면에서 못 찾았다 (/device)"
-      },
-      "calls": [
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/device",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ListDevice-D_-0nrYr.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/useAPI-CYOlA-y4.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/ListDevice-BYA7E8kR.css",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/config-management/list-optimized",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
-          "status": 404
-        }
-      ],
-      "measured_at": "2026-09-10T08:45:47Z"
-    },
-    "U5#5": {
-      "control": {
-        "found": false,
-        "why": "「저장」를 화면에서 못 찾았다 (/dsm/cameras/address)"
       },
       "calls": [
         {
@@ -2529,7 +2432,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
           "status": 200
         },
         {
@@ -2569,22 +2472,22 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/CameraAddress-DLzrkjvl.js",
+          "url": "http://localhost:3002/assets/CameraAddress-Bl9t54ko.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-D--oyvMo.js",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-Dzt1K-QH.js",
+          "url": "http://localhost:3002/assets/index-CN-Hlydt.js",
           "status": 200
         },
         {
@@ -2638,21 +2541,189 @@
           "status": 404
         }
       ],
-      "measured_at": "2026-09-10T08:45:51Z"
+      "state": {
+        "kind": "server_reflect",
+        "get": "/api/dsm/cameras/address-gap",
+        "field": "total",
+        "before": 5,
+        "after": 5,
+        "on_screen": true
+      },
+      "text_after": "무슨 일 있었나\n열람·삭제 청구\n카메라 주소 채우기 — 한 대씩\n카메라\n5대\n\t\n주소 있음\n3대\n\t\n주소 없음\n2대\n한 대의 주소를 채웁니다\n카메라 이름\n도로명주소\n현장 표현\n표 먼저 보기\n채우기\n표를 본 뒤에만 채웁니다. 틀린 주소는 없는 주소보다 나쁩니다 — 알림에 그대로 나가 사람을 엉뚱한 곳으로 보냅니다.\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:54:12Z"
+    },
+    "U4#15": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 상급기관 서식 T4"
+      },
+      "measured_at": "2026-09-15T06:54:12Z"
+    },
+    "U4#16": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본: 감사는 쌓이는데 **볼 자리가 없다**"
+      },
+      "measured_at": "2026-09-15T06:54:12Z"
+    },
+    "U5#1": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 단추는 있으나(App.tsx:728 「사용자 추가」) 그것은 서식 화면으로 가는 링크다. 계정 생성은 다음 화면의 서식을 채워야 끝난다 · 그 문은 프리플라이트 401 로 끊겨 있다(P-125 A절 · 보안 차선)"
+      },
+      "measured_at": "2026-09-15T06:54:20Z"
+    },
+    "U5#2": {
+      "control": {
+        "found": true,
+        "clicked": true,
+        "name": "화면 열기"
+      },
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/roles",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=870a771f76e5c20977610bb7c48854af&libraries=services,clusterer,drawing,geometry",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/roles/?page_size=1&current_page=1",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/config-management/list-optimized",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 404
+        }
+      ],
+      "state": {
+        "kind": "server_reflect",
+        "get": "/api/roles/?page_size=1&current_page=1",
+        "field": "count",
+        "before": 15,
+        "after": 15,
+        "on_screen": true
+      },
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n역할 관리 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\n서버에는 역할 15개가 있습니다.\n아래 표가 비어 있다면 그것은 「없다」가 아니라 이 화면이 목록을 그리지 못한 것입니다. 새로 고쳐도 같으면 관리자에게 알려 주십시오.\n\t\nName\n\t\nIs Default\n\t\nRole Menu\n1\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:54:23Z"
+    },
+    "U5#4": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 자리는 /dsm/cameras/import(routes.ts:23 · roleNav.ts:132)이나 「표 먼저, 그 다음 적용」이 세 걸음이고 매번 새 시험 자료가 필요하다. 한 번 누름으로 재는 정본이 없다"
+      },
+      "measured_at": "2026-09-15T06:54:23Z"
+    },
+    "U5#5": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 단추는 「표 먼저 보기」·「채우기」(CameraAddress.tsx:177·185)이고 둘 다 입력 전에는 잠겨 있다. 「표 먼저, 그 다음 채움」이 두 걸음이다"
+      },
+      "measured_at": "2026-09-15T06:54:23Z"
     },
     "U5#9": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 설정 화면·라우트 없다"
       },
-      "measured_at": "2026-09-10T08:45:51Z"
+      "measured_at": "2026-09-15T06:54:23Z"
     },
     "U5#10": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 알림 채널 결정 대기(대표)"
       },
-      "measured_at": "2026-09-10T08:45:51Z"
+      "measured_at": "2026-09-15T06:54:23Z"
     },
     "U5#14": {
       "control": {
@@ -2673,7 +2744,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
           "status": 200
         },
         {
@@ -2713,22 +2784,22 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/SystemSettings-CdXV7bAK.js",
+          "url": "http://localhost:3002/assets/SystemSettings-DzhET25W.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-D--oyvMo.js",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-Dzt1K-QH.js",
+          "url": "http://localhost:3002/assets/index-CN-Hlydt.js",
           "status": 200
         },
         {
@@ -2795,8 +2866,8 @@
         "after": "waiting",
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n보존·백업 설정 — 선언하지 않으면 돌지 않습니다\n보존 일수와 백업은 코드가 정하지 않습니다. 선언한 사람과 환경이 있어야 돌아갑니다. 아래에 빨강 배지가 있으면 그 항목은 아직 아무도 정하지 않았고, 그 상태에서는 파기도 백업도 실행되지 않습니다.\n영상 보관 기간\n보관 기간\t30일\n누가 정했나\t운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 P-67 · config/retention_seed.py)\n자동으로 도는가\t매일 자동으로 지웁니다\n백업\n백업 목적지\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 일정\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 보관 기간\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n복구 시험\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n누가 정했나\t서버 신호 대기\n백업 선언을 읽는 자리가 아직 없습니다.\n이 칸이 회색인 동안에는 백업이 선언되었는지 이 화면이 답하지 못합니다. 빨강이 아닌 이유가 그것입니다.\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:45:55Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n보존·백업 설정 — 선언하지 않으면 돌지 않습니다\n보존 일수와 백업은 코드가 정하지 않습니다. 선언한 사람과 환경이 있어야 돌아갑니다. 아래에 빨강 배지가 있으면 그 항목은 아직 아무도 정하지 않았고, 그 상태에서는 파기도 백업도 실행되지 않습니다.\n영상 보관 기간\n보관 기간\t30일\n누가 정했나\t운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 P-67 · config/retention_seed.py)\n자동으로 도는가\t매일 자동으로 지웁니다\n백업\n백업 목적지\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 일정\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 보관 기간\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n복구 시험\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n누가 정했나\t서버 신호 대기\n백업 선언을 읽는 자리가 아직 없습니다.\n이 칸이 회색인 동안에는 백업이 선언되었는지 이 화면이 답하지 못합니다. 빨강이 아닌 이유가 그것입니다.\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:54:27Z"
     },
     "U5#15": {
       "control": {
@@ -2817,7 +2888,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-CU5Zm3W3.js",
+          "url": "http://localhost:3002/assets/index-CHVE-Spf.js",
           "status": 200
         },
         {
@@ -2857,22 +2928,22 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-DGp3U9Re.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-BvccVqM0.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/SystemSettings-CdXV7bAK.js",
+          "url": "http://localhost:3002/assets/SystemSettings-DzhET25W.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-D--oyvMo.js",
+          "url": "http://localhost:3002/assets/StateBoundary-lcs81kGi.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-Dzt1K-QH.js",
+          "url": "http://localhost:3002/assets/index-CN-Hlydt.js",
           "status": 200
         },
         {
@@ -2939,8 +3010,8 @@
         "after": "waiting",
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n보존·백업 설정 — 선언하지 않으면 돌지 않습니다\n보존 일수와 백업은 코드가 정하지 않습니다. 선언한 사람과 환경이 있어야 돌아갑니다. 아래에 빨강 배지가 있으면 그 항목은 아직 아무도 정하지 않았고, 그 상태에서는 파기도 백업도 실행되지 않습니다.\n영상 보관 기간\n보관 기간\t30일\n누가 정했나\t운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 P-67 · config/retention_seed.py)\n자동으로 도는가\t매일 자동으로 지웁니다\n백업\n백업 목적지\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 일정\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 보관 기간\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n복구 시험\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n누가 정했나\t서버 신호 대기\n백업 선언을 읽는 자리가 아직 없습니다.\n이 칸이 회색인 동안에는 백업이 선언되었는지 이 화면이 답하지 못합니다. 빨강이 아닌 이유가 그것입니다.\n버전 6cf2c19 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-10T08:45:59Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n보존·백업 설정 — 선언하지 않으면 돌지 않습니다\n보존 일수와 백업은 코드가 정하지 않습니다. 선언한 사람과 환경이 있어야 돌아갑니다. 아래에 빨강 배지가 있으면 그 항목은 아직 아무도 정하지 않았고, 그 상태에서는 파기도 백업도 실행되지 않습니다.\n영상 보관 기간\n보관 기간\t30일\n누가 정했나\t운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 P-67 · config/retention_seed.py)\n자동으로 도는가\t매일 자동으로 지웁니다\n백업\n백업 목적지\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 일정\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 보관 기간\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n복구 시험\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n누가 정했나\t서버 신호 대기\n백업 선언을 읽는 자리가 아직 없습니다.\n이 칸이 회색인 동안에는 백업이 선언되었는지 이 화면이 답하지 못합니다. 빨강이 아닌 이유가 그것입니다.\n버전 5d2d728 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-15T06:54:30Z"
     },
     "U6#1": {
       "control": {
@@ -2963,8 +3034,8 @@
         "after": null,
         "on_screen": true
       },
-      "text_after": "{\"detail\": \"\\uc124\\uc815 \\ubcc0\\uacbd \\uad8c\\ud55c\\uc774 \\uc5c6\\ub294 \\uacc4\\uc815 (\\uac10\\uc0ac #201753)\"}",
-      "measured_at": "2026-09-10T08:46:00Z"
+      "text_after": "{\"detail\": \"\\uc124\\uc815 \\ubcc0\\uacbd \\uad8c\\ud55c\\uc774 \\uc5c6\\ub294 \\uacc4\\uc815 (\\uac10\\uc0ac #211637)\"}",
+      "measured_at": "2026-09-15T06:54:32Z"
     },
     "U6#2": {
       "control": {
@@ -2988,7 +3059,7 @@
         "on_screen": true
       },
       "text_after": "{\"total\": 5, \"events\": [{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T13:14:31.580Z\", \"last_seen_at\": null, \"stream_monitor_id\": 119, \"stream_monitor_name\": \"\\uc2dc\\ub4dc \\uce74\\uba54\\ub77c (\\uac80\\uc218\\uc6a9)\", \"lat\": null, \"lng\": null, \"snapshot_path\": \"guardianx-dev/detections/119/20260903/131431_58011",
-      "measured_at": "2026-09-10T08:46:00Z"
+      "measured_at": "2026-09-15T06:54:32Z"
     },
     "U6#3": {
       "control": {
@@ -2999,7 +3070,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/4804",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/4808",
           "status": 200
         }
       ],
@@ -3007,12 +3078,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/events/{event}",
         "field": "event_id",
-        "before": 4804,
-        "after": 4804,
+        "before": 4808,
+        "after": 4808,
         "on_screen": true
       },
-      "text_after": "{\"event_id\": 4804, \"event_type\": \"flood\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T12:56:31.580Z\", \"last_seen_at\": null, \"stream_monitor_id\": 119, \"stream_monitor_name\": \"\\uc2dc\\ub4dc \\uce74\\uba54\\ub77c (\\uac80\\uc218\\uc6a9)\", \"confidence\": null, \"bbox\": null, \"snapshot_path\": \"guardianx-dev/detections/119/20260903/125631_580118.jpg\", \"clip_p",
-      "measured_at": "2026-09-10T08:46:00Z"
+      "text_after": "{\"event_id\": 4808, \"event_type\": \"intrusion\", \"severity\": \"warning\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T12:44:31.580Z\", \"last_seen_at\": null, \"stream_monitor_id\": 119, \"stream_monitor_name\": \"\\uc2dc\\ub4dc \\uce74\\uba54\\ub77c (\\uac80\\uc218\\uc6a9)\", \"confidence\": null, \"bbox\": null, \"snapshot_path\": \"guardianx-dev/detections/119/20260903/124431_580118.jpg\", \"cli",
+      "measured_at": "2026-09-15T06:54:32Z"
     },
     "U6#4": {
       "control": {
@@ -3023,7 +3094,7 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/webhook-subscriptions?endpoint_url=http://localhost:9/p118&signing_key_ref=p118-gate&event_types=fire",
+          "url": "http://gx-nginx-e:8500/api/dsm/webhook-subscriptions?endpoint_url=https://localhost:9/p118&signing_key_ref=p118-gate&event_types=fire",
           "status": 422
         }
       ],
@@ -3035,8 +3106,8 @@
         "after": 0,
         "on_screen": true
       },
-      "text_after": "{\"detail\": \"\\uc218\\uc2e0 URL \\uc758 \\ubc29\\uc2dd\\uc774 https \\uac00 \\uc544\\ub2d9\\ub2c8\\ub2e4(\\ubc1b\\uc740 \\uac83: http). \\ud3c9\\ubb38\\uc73c\\ub85c \\ubcf4\\ub0b4\\uba74 \\uc11c\\uba85\\uc774 \\uc704\\uc870\\ub294 \\ub9c9\\uc544\\ub3c4 **\\ub0b4\\uc6a9\\uc744 \\uc77d\\ud788\\ub294 \\uac83**\\uc740 \\ub9c9\\uc9c0 \\ubabb\\ud569\\ub2c8\\ub2e4.\"}",
-      "measured_at": "2026-09-10T08:46:00Z"
+      "text_after": "{\"detail\": \"\\uc6b0\\ub9ac \\uc11c\\ubc84 \\uc790\\uc2e0\\uc744 \\uac00\\ub9ac\\ud0a4\\ub294 \\uc8fc\\uc18c\\ub294 \\ub4f1\\ub85d\\ud560 \\uc218 \\uc5c6\\uc2b5\\ub2c8\\ub2e4.\"}",
+      "measured_at": "2026-09-15T06:54:32Z"
     },
     "U6#9": {
       "control": {
@@ -3047,7 +3118,7 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/4804/response?to_state=closed&reason=P-118",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/4808/response?to_state=closed&reason=P-118",
           "status": 200
         }
       ],
@@ -3059,8 +3130,8 @@
         "after": "closed",
         "on_screen": true
       },
-      "text_after": "{\"event_id\": 4804, \"from\": \"in_progress\", \"to\": \"closed\", \"allowed_next\": [\"in_progress\"], \"audit_id\": 201758}",
-      "measured_at": "2026-09-10T08:46:01Z"
+      "text_after": "{\"event_id\": 4808, \"from\": \"in_progress\", \"to\": \"closed\", \"allowed_next\": [\"in_progress\"], \"audit_id\": 211641}",
+      "measured_at": "2026-09-15T06:54:33Z"
     },
     "U6#12": {
       "control": {
@@ -3082,14 +3153,14 @@
         "after": "401"
       },
       "text_after": "{\"detail\": \"Unauthorized\"}",
-      "measured_at": "2026-09-10T08:46:01Z"
+      "measured_at": "2026-09-15T06:54:33Z"
     },
     "U6#14": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 스키마 버전"
       },
-      "measured_at": "2026-09-10T08:46:01Z"
+      "measured_at": "2026-09-15T06:54:33Z"
     },
     "U6#15": {
       "control": {
@@ -3113,7 +3184,7 @@
         "on_screen": true
       },
       "text_after": "{\"status\": \"waiting\"}",
-      "measured_at": "2026-09-10T08:46:01Z"
+      "measured_at": "2026-09-15T06:54:33Z"
     }
   }
 }
