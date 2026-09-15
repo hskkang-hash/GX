@@ -25,6 +25,7 @@ import {
   SUBMITTING,
 } from '@/features/login/loginCopy';
 import { loginInFlight, requestLogin } from '@/features/login/loginRequest';
+import { resolveHome } from '@/features/nav/roleHome';
 
 interface FormData {
   username: string;
@@ -96,7 +97,8 @@ const LoginMobile = ({ logoImage }: { logoImage: string }) => {
 
       i18n.changeLanguage(userData?.language?.code || 'en');
       // Then fetch full profile
-      const { success: profileSuccess } = await getProfileAPI(userData.user_id);
+      const profile = await getProfileAPI(userData.user_id);
+      const profileSuccess = Boolean(profile?.success);
 
       if (profileSuccess) {
         const currentParams = new URLSearchParams(location.search);
@@ -105,7 +107,17 @@ const LoginMobile = ({ logoImage }: { logoImage: string }) => {
         if (dataValue) {
           navigate(`${CustomRoutes.qrCode}?dataQRCode=${dataValue}`);
         } else {
-          navigate(CustomRoutes.qrCode);
+          // ★ [P-141 · 턴 Q · 차선 F] 첫 화면은 `features/nav/roleHome.ts` 한 곳이 정한다.
+          //   휴대전화의 U1 → `/m/inbox`, 나머지는 지금 가던 곳(QR). 역할은 **받은 프로필**에서
+          //   읽는다 — 이 화면은 프로필을 저장소에 올리지 않으므로 저장소에는 역할이 없다.
+          //   고른 홈(①)은 종전에도 안 봤다 — 그 규칙을 바꾸지 않는다(`honorSetting: false`).
+          navigate(
+            resolveHome([profile?.data, userData], {
+              device: 'mobile',
+              fallback: CustomRoutes.qrCode,
+              honorSetting: false,
+            }).path,
+          );
         }
       }
     } else if (existing_session) {

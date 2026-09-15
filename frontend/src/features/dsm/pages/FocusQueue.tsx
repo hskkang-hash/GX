@@ -24,6 +24,9 @@
  * ★ 버튼 셋은 **서버가 준 `allowed_next`** 로 그린다. 화면이 전이표를 따로 들면
  *   **서버가 거절하는 버튼**을 그리게 된다 (D-399).
  *
+ * ★ 자료 읽기·쓰기는 이제 `useFocusQueue()`(같은 폴더 `hooks/`)가 진다 — 이 화면은
+ *   그 훅이 낸 값을 **그리기만** 한다(WO-01 §4.1 U1 소유 · 턴 Q).
+ *
  * ═══════════════════════════════════════════════════════════════════════════
  * UX-15 **키보드 · 소리** (차선 C1 · 2026-09-05)
  * ═══════════════════════════════════════════════════════════════════════════
@@ -34,16 +37,19 @@
  * 1 · 2 · 3 을 **무엇에 붙였나** [판단과 그 사유]
  * ---------------------------------------------
  * 이 저장소의 축은 둘이다 — **판정**(실제 / 오탐)과 **처리 단계**(미처리 → 접수 →
- * 조치 중 → 종결). 사전 규칙 4 는 「한 화면에 축은 하나」이고, **이 화면이 이미 가진
- * 축은 처리 단계 하나뿐**이다(단추가 `allowed_next` 로만 그려진다 · 판정 단추는
- * 이 화면에 없다). 그래서 단축키도 **처리 단계**에 붙였다. 판정 단축키를 여기 붙이면
- * 축이 둘이 되고, 축이 둘이면 사람이 어느 축을 눌렀는지 모른다.
+ * 조치 중 → 종결). 붙인 자리는 **고정**이다: 1=실제로 확인·접수 · 2=조치 시작 ·
+ * 3=종결하기.
  *
- * 붙인 자리는 **고정**이다: 1=접수하기 · 2=조치 시작 · 3=종결하기.
- * ★ `allowed_next` 의 **순서**에 붙이지 않았다. 순서에 붙이면 카드마다 1 의 뜻이
- *   달라진다 — 미처리 카드에서 1 은 접수인데 접수된 카드에서 1 은 조치 시작이 된다.
- *   관제실에서 **뜻이 흔들리는 키**는 오조작을 만든다. 고정으로 두고, 서버가 허락한
- *   칸만 살린다(D-399 는 그대로다 — 화면은 여전히 자기 전이표를 갖지 않는다).
+ * ★★ [WO-01 §5 · AC-2 · 턴 Q] **키 1 의 뜻이 바뀌었다.** 종전에는 접수(대응 진행
+ *   한 칸)만이었다. 이제는 **판정(확인) + 접수를 한 트랜잭션으로 묶는 문**
+ *   (`review-and-acknowledge`)을 부른다 — 「이 탐지는 진짜다, 그리고 내가
+ *   접수한다」가 사람에게는 한 번의 행동이기 때문이고, 두 번 왕복하면 첫 호출만
+ *   성공했을 때 반쪽짜리 사건(판정은 됐는데 접수는 안 됨)이 생긴다. 2·3 은 그대로
+ *   대응 진행만 옮긴다 — 이미 판정된 사건에 다시 판정을 얹을 이유가 없다.
+ *
+ * ★ 오탐(이 탐지는 가짜다)은 **숫자 키에 없다.** 판정 단추를 셋째 축으로 얹으면
+ *   「1·2·3」이 어떤 턴에는 처리 단계이고 어떤 턴에는 판정이 되어 뜻이 흔들린다 —
+ *   관제실에서 뜻이 흔들리는 키는 오조작을 만든다. 오탐은 **이름 붙은 단추**로만 연다.
  *
  * ★ 숫자 키는 **가장 급한 하나**에만 든다. 대기 카드에는 서버가 `allowed_next` 를
  *   주지 않으므로(그 필드는 `focus` 에만 온다) 화면이 지어낼 수 없다. J·K·Enter 는
@@ -53,14 +59,20 @@
  *   `useCriticalAlarm` 에 있다. 음소거이거나 브라우저가 소리를 잠가 두었으면
  *   화면이 **먼저** 「소리가 꺼져 있습니다」로 말한다 — 안 울리는 이유를 모르면
  *   사용자는 조용한 화면을 「사건이 없다」로 읽는다.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * UX-25 **토스트를 쓰지 않는다** (턴 Q)
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 쓰기 성공을 알리는 `message.success(...)` 를 이 화면에 두지 않는다. 결과는
+ * 카드의 상태 칸(`response_state` 태그)이 스스로 「접수」 등으로 보인다 —
+ * **상태는 칸으로**(불변). 소리(`actionEcho`)만 「눌린 것을 먹었다」는 즉각 신호를 준다.
  */
 import { Alert, Badge, Button, Card, Col, Row, Space, Statistic, Tag, Typography } from 'antd';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Main } from 'rj-core';
 
-import { dsmEndpoint, dsmGet, dsmPostQueryOnce, intentKey } from '../api';
-import { userFacingError } from '../copy';
+import { FALSE_POSITIVE_REASONS, REJECT_LABEL, REVIEW_AND_ACK_LABEL } from '../copy';
 import EventSnapshot from '../components/EventSnapshot';
 import ResponseClock from '../components/ResponseClock';
 import ShortcutHelp from '../components/ShortcutHelp';
@@ -68,8 +80,8 @@ import StateBoundary from '../components/StateBoundary';
 import { KICK_SENTENCE } from '../constants/kick';
 import { useAlertSound } from '../hooks/useAlertSound';
 import { useCriticalAlarm } from '../hooks/useCriticalAlarm';
-import { useDsmResource } from '../hooks/useDsmResource';
 import { useDetectionPing } from '../hooks/useDetectionPing';
+import { useFocusQueue } from '../hooks/useFocusQueue';
 import { useQueueKeys } from '../hooks/useQueueKeys';
 import { dsm2Routes } from '../routes';
 import {
@@ -81,12 +93,10 @@ import {
   SEVERITY_ICON,
   SEVERITY_LABEL,
 } from '../severity';
-import { FALLBACK_TIER_THRESHOLDS_SEC, stamp, TIMEZONE_NOTE } from '../time';
-import type { FocusQueue as FocusQueueView, QueueCard } from '../types';
+import { stamp, TIMEZONE_NOTE } from '../time';
+import type { QueueCard } from '../types';
 
 const { Text, Title, Paragraph } = Typography;
-
-const REFRESH_MS = 15_000;
 
 /**
  * 숫자 키 → 처리 단계. **고정이다** (위 머리말의 판단).
@@ -129,23 +139,21 @@ function CardHead({ card }: { card: QueueCard }) {
 
 export default function FocusQueuePage() {
   const navigate = useNavigate();
-  const [acting, setActing] = useState(false);
-  const [actionError, setActionError] = useState<string>('');
   const [showKeys, setShowKeys] = useState(false);
+  /** 오탐 사유 3택을 펼쳤는가 — 토스트 대신 **칸 하나를 펼치는** 가벼운 확인. */
+  const [pickingReject, setPickingReject] = useState(false);
   /** 0 은 초점 카드, 1 부터가 대기 카드다. **선택은 읽는 일**이다. */
   const [selected, setSelected] = useState(0);
   const rowRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const sound = useAlertSound();
 
-  const queue = useDsmResource<FocusQueueView>(
-    () => dsmGet(dsmEndpoint.eventsQueue, { limit: 200 }),
-    [],
-    {
-      refreshMs: REFRESH_MS,
-      isEmpty: (v) => (v?.total_events ?? 0) === 0,
-    },
-  );
+  // ★ [UX-15] 키보드로 일하는 사람은 눌린 것을 눈으로 확인할 시간이 없다 — 쓰기가
+  //   성공한 직후 한 음(`actionEcho`)을 울린다. 이 한 음이 없으면 같은 키를 두 번 누른다.
+  const { queue, cards, focus, thresholds, acting, actionError, advance,
+    reviewAndAcknowledge, reject } = useFocusQueue({
+    onActionSuccess: () => sound.play('actionEcho'),
+  });
 
   /**
    * UX-08 — 새 탐지가 나면 **새로고침 없이** 목록이 다시 읽힌다.
@@ -154,15 +162,6 @@ export default function FocusQueuePage() {
   useDetectionPing(queue.reload);
 
   const data = queue.data;
-  const focus = data?.focus ?? null;
-
-  /** 초점 하나 + 대기 카드들. **여기서 거르지도 정렬하지도 않는다** — 서버 순서 그대로다. */
-  const cards = useMemo<QueueCard[]>(
-    () => (focus ? [focus, ...(data?.queue ?? [])] : [...(data?.queue ?? [])]),
-    [focus, data],
-  );
-
-  const thresholds = data?.tier_thresholds_sec ?? [...FALLBACK_TIER_THRESHOLDS_SEC];
 
   // ★ 심각만 · 묶음은 1회. 문지기는 훅 안에 있다.
   useCriticalAlarm({
@@ -182,52 +181,38 @@ export default function FocusQueuePage() {
     rowRefs.current[selected]?.scrollIntoView({ block: 'nearest' });
   }, [selected]);
 
-  const advance = useCallback(
-    async (eventId: number, toState: string) => {
-      setActing(true);
-      setActionError('');
-      try {
-        // ★ 질의로 보낸다 — 본문이면 **422(인자 없음)** 다.
-        //   [실측 2026-09-05 · 없는 id 999999999 로 두드림 · 아무것도 안 씀]
-        //       본문 → 422 loc:["query","to_state"] · 질의 → 404 (행이 없다)
-        //   이 자리는 관제요원이 **미처리를 접수로 넘기는** 단추다. 422 면 넘길 수
-        //   없는데 화면은 멀쩡히 떠 있다 — 가장 늦게 발견되는 종류의 고장이다.
-        // ★ **접수 — 멱등 키를 싣는 문 ②**(키보드로 일하는 화면). 여기가 두 번 눌리는
-        //   확률이 가장 높다: 숫자 키는 사람이 「먹었나?」 싶으면 곧바로 다시 누른다.
-        await dsmPostQueryOnce(
-          dsmEndpoint.response(eventId),
-          { to_state: toState },
-          intentKey(`q.response:${eventId}:${toState}`),
-        );
-        // 키보드로 일하는 사람은 **눌린 것을 눈으로 확인할 시간이 없다.**
-        // 이 한 음이 없으면 같은 키를 두 번 누른다.
-        sound.play('actionEcho');
-        queue.reload();
-      } catch (err) {
-        // ★ 거절은 4xx 로 온다. **서버가 쓴 한국어 사유는 그대로 낸다** — 서버가 왜
-        //   거절했는지가 화면에 안 닿으면 사용자는 「버튼이 안 먹는다」로 읽는다.
-        // ★★ [P-78 ① · 턴 H] 그런데 응답이 없으면 이 자리에 axios 원문이 들어온다.
-        //   서버가 쓴 문장과 전송 계층이 만든 문장을 가르는 것이 `userFacingError` 다.
-        setActionError(userFacingError('FocusQueue.act', err, '요청이 처리되지 않았습니다.'));
-      } finally {
-        setActing(false);
-      }
-    },
-    [queue, sound],
-  );
+  // 카드가 바뀌면 열어 둔 오탐 사유 칸을 닫는다 — 다른 카드에 잘못 적용되는 것을 막는다.
+  useEffect(() => {
+    setPickingReject(false);
+  }, [focus?.event_id]);
 
   /**
    * 숫자 키 한 번. **서버가 허락한 칸이 아니면 아무 일도 안 한다** —
    * 화면이 전이표를 들지 않기 때문이고, 안 드는 것이 이 화면의 성질이다.
+   *
+   * ★ 슬롯 0(`acknowledged`)만 **판정+접수 한 트랜잭션**을 부른다 — 위 머리말 참조.
    */
   const onStep = useCallback(
     (slot: number) => {
       const target = STEP_SLOTS[slot];
       if (!target || !focus || acting) return;
       if (!(focus.allowed_next ?? []).includes(target)) return;
-      void advance(focus.event_id, target);
+      if (target === 'acknowledged') {
+        void reviewAndAcknowledge(focus.event_id);
+      } else {
+        void advance(focus.event_id, target);
+      }
     },
-    [focus, acting, advance],
+    [focus, acting, advance, reviewAndAcknowledge],
+  );
+
+  const onReject = useCallback(
+    (reasonLabel: string) => {
+      if (!focus || acting) return;
+      setPickingReject(false);
+      void reject(focus.event_id, reasonLabel);
+    },
+    [focus, acting, reject],
   );
 
   useQueueKeys({
@@ -376,18 +361,25 @@ export default function FocusQueuePage() {
 
                           {/* ★ 버튼은 서버가 준 `allowed_next` 로만 그린다 —
                               화면이 전이표를 들면 서버가 거절하는 버튼을 그리게 된다.
-                              숫자는 **고정 자리**다: 접수 1 · 조치 시작 2 · 종결 3. */}
+                              숫자는 **고정 자리**다: 실제로 확인·접수 1 · 조치 시작 2 ·
+                              종결 3. `acknowledged` 로 가는 단추만 판정+접수 한
+                              트랜잭션을 부른다(WO-01 §5 AC-2 · 머리말 참조). */}
                           <Space wrap>
                             {(focus.allowed_next ?? []).map((next) => {
                               const slot = (STEP_SLOTS as readonly string[]).indexOf(next);
+                              const isAck = next === 'acknowledged';
                               return (
                                 <Button
                                   key={next}
                                   type="primary"
                                   loading={acting}
-                                  onClick={() => advance(focus.event_id, next)}
+                                  onClick={() =>
+                                    isAck
+                                      ? reviewAndAcknowledge(focus.event_id)
+                                      : advance(focus.event_id, next)
+                                  }
                                 >
-                                  {advanceLabel(next)}
+                                  {isAck ? REVIEW_AND_ACK_LABEL : advanceLabel(next)}
                                   {slot >= 0 ? ` (${slot + 1})` : ''}
                                 </Button>
                               );
@@ -397,7 +389,29 @@ export default function FocusQueuePage() {
                                 더 갈 곳이 없습니다 — 이 사건은 마지막 단계입니다.
                               </Text>
                             ) : null}
+                            {/* ★ 오탐은 **이름 붙은 단추**로만 연다 — 숫자 키에 얹으면
+                                1·2·3 의 뜻이 처리 단계와 판정 사이에서 흔들린다(머리말).
+                                이미 판정된 사건에는 다시 판정을 묻지 않는다. */}
+                            {!focus.verdict ? (
+                              <Button danger loading={acting}
+                                onClick={() => setPickingReject((v) => !v)}>
+                                {REJECT_LABEL}
+                              </Button>
+                            ) : null}
                           </Space>
+
+                          {pickingReject ? (
+                            <Card size="small" title="오탐 사유">
+                              <Space wrap>
+                                {FALSE_POSITIVE_REASONS.map((r) => (
+                                  <Button key={r.code} size="small" loading={acting}
+                                    onClick={() => onReject(r.label)}>
+                                    {r.label}
+                                  </Button>
+                                ))}
+                              </Space>
+                            </Card>
+                          ) : null}
 
                           {focus.count > 1 ? (
                             <Alert

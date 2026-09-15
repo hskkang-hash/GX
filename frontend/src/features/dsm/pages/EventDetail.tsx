@@ -119,10 +119,28 @@ export default function EventDetail() {
       //   같은 사람에게 두 통이 가고, 발송 이력에 같은 발송이 두 줄로 남는다.
       //   창 안의 같은 의도는 같은 답을 받는다. 서버도 이 키를 읽는다
       //   (`backend/common/idempotency.py` · `dsm.events.notify`).
-      await dsmPostOnce(dsmEndpoint.notify(id), {}, intentKey(`notify:${id}`));
+      const res = await dsmPostOnce<{ total?: number; deliveries?: { succeeded?: boolean }[] }>(
+        dsmEndpoint.notify(id), {}, intentKey(`notify:${id}`),
+      );
       // ★ 「보냈다」가 아니라 **「발송을 요청했다」**고 말한다. 성공 여부는 아래
       //   이력이 말한다 — 실패도 200 이고, 실패는 행으로 보인다 (F-10).
-      message.info('발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.');
+      // ★★ [턴 Q · P-141 · P-129 대조표] **조용한 0 을 없앤다.** 서버가 중복 억제(F-04
+      //   5분)로 한 통도 안 만들면 200 에 `total: 0` 이 온다(`api.py::notify`). 이 자리는
+      //   그 응답을 버리고 「요청했습니다」만 말했다 — 그래서 「눌렀는데 발송 수가 그대로」가
+      //   원인 없이 보였다. 이제 0 이면 0 이라고 말한다(수신자 0명은 409 로 아래 catch 가 말한다).
+      const total = typeof res?.total === 'number' ? res.total : null;
+      const failed = (res?.deliveries ?? []).filter((d) => d?.succeeded === false).length;
+      if (total === 0) {
+        message.warning('새로 보낸 알림이 없습니다. 같은 사건의 알림은 5분 안에 다시 보내지 않습니다. 아래 발송 이력을 확인하십시오.');
+      } else if (total !== null && failed > 0) {
+        message.warning(`알림 ${total}건 중 ${failed}건이 실패했습니다. 아래 발송 이력에서 사유를 확인하십시오.`);
+      } else {
+        message.info(
+          total !== null
+            ? `알림 ${total}건 발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.`
+            : '발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.',
+        );
+      }
       deliveries.reload();
     } catch (err) {
       message.error(userFacingError('EventDetail.notify', err, '발송 요청이 실패했습니다.'));

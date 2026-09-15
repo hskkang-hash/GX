@@ -247,3 +247,33 @@ export function dataSourceBadge(value: string | undefined): string | null {
   if (!value) return null;
   return DATA_SOURCE_LABEL[value.toLowerCase()] ?? null;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+ * U1 — 큐 카드 키 1(판정+접수) · 오탐 사유 3택 (WO-01 §5 · AC-2 · 턴 Q)
+ * ════════════════════════════════════════════════════════════════════════
+ *
+ * ★ 끝에 붙인다. 이번 턴에도 이 파일을 여러 차선이 함께 읽는다 — 위쪽에 줄을
+ *   끼우면 충돌하고, 충돌한 사전 파일은 화면 전체를 못 세운다(위 다른 절과 같은
+ *   규약 · `docs/design/GX-COPY_v1.md` §5 에도 같은 절을 올린다).
+ *
+ * ★ **서버에 오탐 사유의 정해진 목록(enum)이 아직 없다** — `/review` 라우트의
+ *   `reason` 은 여전히 자유 텍스트다(`kernels/k1_event/services.py::review_event`).
+ *   그래서 아래 세 문장은 **화면이 미리 채우는 값**일 뿐 새 계약이 아니다. 서버가
+ *   정해진 목록을 갖게 되면(K6 오탐 학습 어휘) 그 값으로 이 목록을 갈아 끼운다.
+ */
+export interface FalsePositiveReasonOption {
+  code: string;
+  label: string;
+}
+
+export const FALSE_POSITIVE_REASONS: FalsePositiveReasonOption[] = [
+  { code: 'not_person', label: '사람이 아님(동물·사물)' },
+  { code: 'camera_glitch', label: '카메라 오작동·화면 이상' },
+  { code: 'other', label: '기타' },
+];
+
+/** 큐 카드 키 1 — 판정(확인)+접수를 한 번에 묶는 단추의 말. */
+export const REVIEW_AND_ACK_LABEL = '실제로 확인 · 접수';
+
+/** 오탐 선택 단추의 말. */
+export const REJECT_LABEL = '오탐으로 판정';

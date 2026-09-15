@@ -184,6 +184,7 @@ import { CustomRoutes } from './services/API';
 import BuildVersion from './features/dsm/components/BuildVersion';
 import { KICK_SENTENCE } from './features/dsm/constants/kick';
 import { dsm2Routes } from './features/dsm/routes';
+import { resolveHome } from './features/nav/roleHome'; // P-141 · 첫 화면은 이 한 곳이 정한다
 import {
   adoptWallToken,
   WALL_TOKEN_LEGACY_QUERY_NOTICE,
@@ -453,6 +454,7 @@ const NewPassword = () => {
 
 const RootRedirect = () => {
   const userInfo = useUserInfo();
+  const { isMobile } = useMobileContext();
   if (!userInfo) {
     return (
       <Navigate
@@ -462,24 +464,20 @@ const RootRedirect = () => {
     );
   }
 
-  const homeScreenPath = userInfo?.settings?.home_screen_setting__path;
-  const homeScreenId = userInfo?.settings?.home_screen_setting_id;
-
-  if (homeScreenPath && homeScreenPath !== '/' && homeScreenId) {
-    return (
-      <Navigate
-        to={`${homeScreenPath}?menuId=${homeScreenId}`}
-        replace
-      />
-    );
-  } else {
-    return (
-      <Navigate
-        to={CustomRouters.profile.path}
-        replace
-      />
-    );
-  }
+  // ★ [P-141] 첫 화면은 `features/nav/roleHome.ts` **한 곳**이 정한다 — 로그인 화면과
+  //   같은 함수다(종전에는 같은 판단을 여기와 LoginDesktop 이 두 벌로 했다 · P-131 사양 §1).
+  //   ① 고른 홈 ② 역할의 홈 ③ `/profile`(지금 가던 곳).
+  return (
+    <Navigate
+      to={
+        resolveHome(userInfo, {
+          device: isMobile ? 'mobile' : 'desktop',
+          fallback: CustomRouters.profile.path,
+        }).path
+      }
+      replace
+    />
+  );
 };
 
 const PrivateLayout = () => {

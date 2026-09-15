@@ -72,6 +72,23 @@
  *       ⓑ 테넌트마다 하나 — 관제 대표번호. 「관제에 건다」에 맞는다.
  *     ⓑ 가 한 칸으로 서고 ⓐ 는 카메라 수만큼 채워 넣어야 한다 — 비어 있는
  *     ⓐ 는 다시 「없는 것에 그린 손잡이」가 된다. 판단을 청한다.
+ *
+ * ★★ **지도 앱 링크를 그렸다** [P-141 · 2026-09-15 턴 Q · 차선 U3].
+ *
+ *   UX-45 원문: 「주소 · 지도 앱 링크(`geo:`/카카오맵 URL)」. 전화 버튼과 달리
+ *   이 칸은 **있는 칸으로만** 선다 — `e.lat`·`e.lng`(좌표, F-09 상세가 이미 낸다)와
+ *   `e.address`(사람이 읽는 위치, FX-5)가 그것이다. 새 서버 칸을 열지 않았다.
+ *
+ *   ★ `geo:` 를 안 쓰고 **카카오맵 웹 링크**로 갔다. `geo:` 는 iOS Safari 가
+ *     알아듣지 못한다(지도 앱이 없으면 그냥 죽은 링크) — 이동 중인 사람의 기기가
+ *     무엇인지 화면은 모른다. 카카오맵 링크는 앱이 있으면 앱을, 없으면 웹을 연다 —
+ *     두 플랫폼에서 **똑같이 산다.**
+ *   ★ 좌표가 있으면 지도에 **정확한 점**을 찍는다(`map/link/map`). 좌표가 없고
+ *     주소만 있으면 **검색**으로 연다(`map/link/search`) — 검색은 점보다 부정확하지만
+ *     주소마저 없는 것보다는 낫다. 둘 다 없으면 링크 자체를 그리지 않는다
+ *     (`address_status` 문장이 이미 그 부재를 적고 있다 — 두 번 말하지 않는다).
+ *   ★ 새 탭/외부 앱으로 연다(`target="_blank"`) — 이 화면을 잃지 않는다. 이동 중인
+ *     사람이 지도를 본 뒤 다시 돌아와 다음 버튼을 눌러야 한다.
  */
 import { Button, Card, Collapse, Descriptions, Input, Modal, Space, Tag, Typography, message } from 'antd';
 import { useCallback, useState } from 'react';
@@ -123,6 +140,29 @@ const ADDRESS_STATUS_LABEL: Record<string, string> = {
  * ⚠ 이 상수를 고치면 `scripts/capture_screens.py` 의 사본도 **같은 커밋에서** 고친다.
  */
 export const FIELD_REPLY_HEADLINE = '현장 회신 — 본 것을 한 줄로';
+
+/** 지도 버튼의 말. GX-COPY_v1.md §5 「2026-09-15 턴 Q 추가」와 같은 문구다. */
+export const MAP_LINK_LABEL = '지도에서 보기';
+
+/**
+ * 사건 위치를 여는 카카오맵 링크를 만든다. **있는 칸만** 쓴다 — 지어내지 않는다.
+ * 좌표가 있으면 점(`map/link/map`), 좌표는 없고 주소만 있으면 검색(`map/link/search`),
+ * 둘 다 없으면 `null`(화면은 아무것도 그리지 않는다).
+ */
+export function mapLinkUrl(
+  lat: number | null | undefined,
+  lng: number | null | undefined,
+  address: string | null | undefined,
+): string | null {
+  if (lat != null && lng != null) {
+    return `https://map.kakao.com/link/map/사건위치,${lat},${lng}`;
+  }
+  const trimmed = address?.trim();
+  if (trimmed) {
+    return `https://map.kakao.com/link/search/${encodeURIComponent(trimmed)}`;
+  }
+  return null;
+}
 
 interface FieldReplyRow {
   reply_id: number;
@@ -329,6 +369,18 @@ export default function MobileEventDetail() {
                   )}
                 </Descriptions.Item>
               </Descriptions>
+              {/* ★ [P-141 · 턴 Q] 좌표 또는 주소가 있을 때만 그린다 — 없는 칸에
+                  손잡이를 그리지 않는다(이 화면이 전화 버튼에서 이미 지킨 규약). */}
+              {(() => {
+                const href = mapLinkUrl(e.lat, e.lng, e.address);
+                return href ? (
+                  <a href={href} target="_blank" rel="noreferrer">
+                    <Button block style={{ minHeight: TOUCH_MIN, marginTop: 8 }}>
+                      {MAP_LINK_LABEL}
+                    </Button>
+                  </a>
+                ) : null;
+              })()}
             </Card>
 
             {/* ③ 무엇을 보나 — 스냅샷 참조 · 구간 티켓 */}

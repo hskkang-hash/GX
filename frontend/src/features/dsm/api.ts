@@ -12,6 +12,8 @@
  */
 import API from '@/services/API';
 
+import { unwrap as adapterUnwrap } from './adapter';
+
 /** 화면이 부르는 자리. 문자열을 화면 코드에 흩지 않는다 — 한 곳에서만 정한다. */
 export const dsmEndpoint = {
   dashboardFrame: '/api/dsm/dashboard/frame',
@@ -115,40 +117,36 @@ function pickMessage(value: unknown): string | undefined {
 }
 
 /**
- * 봉투를 벗긴다. **HTTP 상태와 본문 상태를 둘 다** 본다.
+ * 봉투를 벗긴다. **해석은 `./adapter.ts::unwrap()` 한 곳이 한다** (P-129 · ADP-01 · 턴 Q).
  *
- * 본문에 `status_code` 가 있고 그것이 4xx·5xx 면 **봉투가 200 이어도 오류다.**
- * 없으면 그대로 통과 — 없는 것을 있다고 가정하지 않는다.
+ * 여기서 하는 일은 판정 결과를 **던지는 것**뿐이다 — 이 파일의 부르는 쪽 전부가
+ * `DsmApiError` 를 받도록 짜여 있고, 그 계약은 바꾸지 않는다.
+ *
+ * ★ [P-129 · 턴 Q] 종전 이 함수가 어댑터로 옮기며 **고친 것 둘**:
+ *   ① `res?.status` 를 HTTP 상태로 읽었다 — 인터셉터가 **본문**을 주므로(아래 P-121)
+ *      그 자리는 HTTP 상태가 아니라 **본문의 `status` 칸**이다(사건 상태 문자열 등).
+ *      숫자 `status` 를 싣는 본문이 오면 거짓 실패가 났다. 이제 상태는 인터셉터가
+ *      해소했다는 사실(2xx)과 거절 갈래의 `err.response.status` 로만 읽는다.
+ *   ② `body?.data ?? body` — **맨몸 본문에 `data` 칸이 있으면 안쪽만** 돌려줬다.
+ *      봉투의 `data` 와 도메인의 `data` 를 가르지 못한 것이다. 어댑터는 `success` 불리언이
+ *      있을 때만 봉투로 읽는다. [실측 · grep] 지금 `/api/dsm/**` 응답에 맨몸 `data` 칸은 0.
+ *   그리고 봉투의 `success:false` 는 상태가 200 이어도 **실패다**(DA-03 §0-1 — 둘 다 본다).
+ *
+ * ★ [차선 D · 2026-09-04] 사유가 `detail` 로 오는 자리가 있다 — 어댑터가 `message` 다음에
+ *   `detail` 을 읽는다. 둘을 가르는 문장이 서버에 있는데 화면이 안 읽는 것은 D-284 의 조용한 판이다.
  */
-function unwrap<T>(res: any): T {
-  const httpStatus: number = res?.status ?? 0;
-  const body = res?.data ?? res;
-  const bodyStatus: number | undefined =
-    typeof body?.status_code === 'number' ? body.status_code : undefined;
-
-  // ★ [차선 D · 2026-09-04] 사유가 `detail` 로 오는 자리가 있다.
-  //   `message` 만 읽던 동안 404 의 사유가 **화면에 닿지 않았다** — 사용자는
-  //   「요청이 실패했습니다 (404)」만 보고, 그것이 「없다」인지 「못 가져왔다」인지 모른다.
-  //   둘을 가르는 문장이 서버에 있는데 화면이 안 읽는 것은 D-284 의 조용한 판이다.
-  const detail: string | undefined = pickMessage(body?.detail);
-  const said: string | undefined = pickMessage(body?.message) ?? detail;
-
-  if (httpStatus >= 400) {
+function unwrap<T>(res: unknown): T {
+  const r = adapterUnwrap<T>(res);
+  if (!r.ok) {
+    const status = r.status ?? 0;
     throw new DsmApiError(
-      said ?? `요청이 실패했습니다 (${httpStatus})`,
-      httpStatus,
-      said !== undefined,
+      r.message ??
+        (status > 0 ? `요청이 거절되었습니다 (${status})` : '응답을 알아보지 못했습니다.'),
+      status,
+      r.message !== null,
     );
   }
-  if (bodyStatus !== undefined && bodyStatus >= 400) {
-    throw new DsmApiError(
-      said ?? `요청이 거절되었습니다 (${bodyStatus})`,
-      bodyStatus,
-      said !== undefined,
-    );
-  }
-  // 봉투 안에 `data` 가 있으면 그것이 값이고, 없으면 본문 자체가 값이다.
-  return (body?.data ?? body) as T;
+  return r.data as T;
 }
 
 /** 10초를 넘기면 **오류로 전이한다.** 취소도 함께 건다 — 버려진 요청은 낭비다. */
@@ -166,7 +164,11 @@ async function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>): Promise
     }
     if (err instanceof DsmApiError) throw err;
     const status = err?.response?.status ?? 0;
-    const said = pickMessage(err?.response?.data?.message);
+    // ★ [P-129 · 턴 Q] 거절 갈래도 **어댑터로 읽는다.** 인터셉터는 4xx·5xx 를 여기로 보내므로
+    //   ninja `HttpError` 의 사유(`{detail: "그런 이벤트가 없습니다."}`)는 이 자리에만 온다.
+    //   종전에는 `.message` 만 읽어 그 문장이 버려지고 axios 의 영문 문장이 대신 떴다.
+    const said =
+      adapterUnwrap(err?.response?.data, status || null).message ?? undefined;
     // ★ `err.message` 를 **`fromServer` 로 세우지 않는다.** 그 자리가 axios 가
     //   「Network Error」를 넣는 자리다 — 서버가 쓴 문장이 아니다.
     throw new DsmApiError(said ?? err?.message ?? '요청이 실패했습니다.', status,

@@ -45,6 +45,7 @@ import {
 } from 'rj-core';
 
 import { CustomRoutes } from '@/services/API';
+import { resolveHome } from '@/features/nav/roleHome';
 
 import {
   ALREADY_SUBMITTING,
@@ -121,12 +122,14 @@ export default function LoginDesktop({ logoImage }: { logoImage: string }) {
         navigate(`${CustomRoutes.qrCode}?dataQRCode=${qr}`);
         return;
       }
-      const home = info?.settings?.home_screen_setting__path;
-      const homeId = info?.settings?.home_screen_setting_id;
+      // ★ [P-141 · 턴 Q · 차선 F] 첫 화면은 `features/nav/roleHome.ts` **한 곳**이 정한다 —
+      //   ① 고른 홈 ② 역할의 홈 ③ `/profile`. 역할은 **프로필 응답(`info`)** 에만 실린다
+      //   (로그인 응답 `user` 에는 `roles` 가 없다 — roleHome.ts 머리말). 그래서 `info` 가 먼저다.
       navigate(
-        home && home !== '/' && homeId
-          ? `${home}?menuId=${homeId}`
-          : CustomRouters.profile.path,
+        resolveHome([info, user], {
+          device: 'desktop',
+          fallback: CustomRouters.profile.path,
+        }).path,
       );
     },
     [
