@@ -40,8 +40,9 @@ import {
   dsmPostQueryOnce,
   intentKey,
 } from '../api';
-import { userFacingError } from '../copy';
+import { userFacingError, isNotFound, NOT_FOUND_TITLE_EVENT } from '../copy';
 import StateBoundary from '../components/StateBoundary';
+import { deliveryOutcomeColumns } from '../deliveryOutcome';
 import { useDsmResource } from '../hooks/useDsmResource';
 import {
   EVENT_TYPE_LABEL,
@@ -277,13 +278,25 @@ export default function EventDetail() {
           <Col>
             {/* ★ [UX-20] 「규칙대로 발송」 → 「알림 보내기」. 「규칙대로」가 무엇인지는
                 이 화면 앞에서 알 수 없다 (GX-COPY §2). */}
-            <Button type="primary" loading={sending} onClick={notify}>
-              알림 보내기
-            </Button>
+            {/* ★ [P-123 · 턴 O 병합] **없는 사건에 알림을 보낼 수는 없다.**
+                404 화면에서도 이 단추가 살아 있었다(실측 count 1). 없는 번호로 알림을
+                쏘게 두는 것은 「다시 시도해 보십시오」와 같은 종류의 거짓 안내다.
+                경계 **밖**에 있어서 안 가려졌으므로, 여기서 상태를 보고 접는다. */}
+            {!isNotFound(event.status) && (
+              <Button type="primary" loading={sending} onClick={notify}>
+                알림 보내기
+              </Button>
+            )}
           </Col>
         </Row>
 
-        <StateBoundary state={event.state} reason={event.reason} status={event.status} onRetry={event.reload}>
+        {/* ★ notFoundTitle — 이 화면은 **무엇이** 없는지 안다. 경계의 기본 문구는
+            「없는 항목입니다」이고(같은 경계를 카메라·계량·열람청구도 쓴다),
+            사건 상세에서만 「없는 사건입니다」로 좁힌다. */}
+        <StateBoundary
+          state={event.state} reason={event.reason} status={event.status}
+          onRetry={event.reload} notFoundTitle={NOT_FOUND_TITLE_EVENT}
+        >
           {e && (
             <Card size="small">
               <Descriptions size="small" column={{ xs: 1, sm: 2, lg: 3 }} bordered>
@@ -533,13 +546,14 @@ export default function EventDetail() {
               dataSource={deliveries.data?.deliveries ?? []}
               columns={[
                 { title: '채널', dataIndex: 'channel', width: 110 },
-                { title: '수신자', dataIndex: 'recipient', ellipsis: true },
-                {
-                  title: '결과',
-                  dataIndex: 'succeeded',
-                  width: 90,
-                  render: (v: boolean) => (v ? '성공' : '실패'),
-                },
+                // ★ [P-123 · 턴 O 병합] 「성공」이 **거짓말이었다.**
+                //   실측 2026-09-10: `GET /api/dsm/deliveries?limit=200` → 165행 ·
+                //   채널 `log` 163 · `succeeded=true` **164** · **수신자 칸 165/165 공백** ·
+                //   메일함 **0건**. 즉 초록 「성공」 164줄 옆에서 받은 사람은 0명이었다.
+                //   화재 알림에서 「화면이 초록인 것」과 「사람이 받은 것」의 차이는 사람의 목숨이다.
+                //   실제 SMTP 는 대표 결정 대기 — 그때까지 **화면이 정직해야 한다**.
+                //   두 열의 몸통은 `deliveryOutcome.tsx` 에 한 벌로 있다(모바일 수신함과 같은 말).
+                ...deliveryOutcomeColumns,
                 {
                   // 실패에는 시각이 없다 — K2 가 찍지 않는다. 그 사실을 그대로 그린다.
                   title: '발송 시각',

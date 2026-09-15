@@ -13,12 +13,23 @@
  * ★ 전이표를 화면이 들지 않는다. 서버가 준 `allowed_next` 만 그린다 — 화면이 표를
  *   따로 들면 **서버가 거절하는 버튼**을 그리게 된다 (D-399).
  *
- * ★★ [실측 2026-09-04 · 차선 D] **스냅샷 바이트를 내보내는 라우트가 없다.**
- *   `snapshot_path` 는 MinIO 객체 키 문자열이고(`guardianx-dev/detections/…jpg`),
- *   `/api/dsm/` 어느 문도 그 바이트를 내보내지 않는다. 프리사인드 URL 을 화면에서
- *   만들지 않았다 — 그것은 **무계정 링크**이고 불변 제약이 금지한다. 그래서 이 화면은
- *   그림을 그리지 않고 **참조가 있다는 사실과 키를** 적는다. 온보딩 U3 #3 은
- *   이 턴에도 ● 가 아니다.
+ * ★★ [P-121 · 2026-09-10 턴 O · 실측] **사진을 그린다. 문은 이미 서 있었다.**
+ *
+ *   앞판의 주석은 「스냅샷 바이트를 내보내는 라우트가 없다」였다(2026-09-04).
+ *   그 뒤 P-25 가 `GET /api/dsm/events/{id}/snapshot` 을 세웠고 — 인증 뒤에 서고
+ *   소인이 찍혀 나오는, 무계정 링크가 아닌 문이다 — 그런데 **이 화면은 그 사실을
+ *   모른 채로 남았다.** 그래서 화면에는 이렇게 떠 있었다:
+ *
+ *       「휴대전화 화면에서 여는 길이 아직 열리지 않았습니다 —
+ *         관제 화면에서 확인하십시오.」
+ *
+ *   두 문장 다 거짓이었다. 길은 열려 있었고, **관제 화면도 같은 이유로 사진을
+ *   못 그리고 있었다**(P-121 ① — `res.data` 가 Blob 이 아니었다). 즉 이 안내는
+ *   고장 하나를 가리키며 **다른 고장으로 사람을 보내는 표지판**이었다.
+ *   현장으로 가는 사람이 차를 세우고 관제에 전화를 건다 — 거기서도 못 본다.
+ *
+ *   지운 것은 문장이고, 그 자리에 선 것은 `EventSnapshot` — 관제 화면과 **같은
+ *   부품**이다. 두 벌로 두지 않는다: 갈리는 쪽은 언제나 오류 처리다.
  *
  * ★★ **M3 현장 회신이 이 화면에 섰다** [2026-09-05 · 차선 C].
  *   앞판의 주석은 「문이 없어서 손잡이를 안 그렸다」였는데, **문은 이미 서 있었다**
@@ -62,10 +73,11 @@
  *     ⓑ 가 한 칸으로 서고 ⓐ 는 카메라 수만큼 채워 넣어야 한다 — 비어 있는
  *     ⓐ 는 다시 「없는 것에 그린 손잡이」가 된다. 판단을 청한다.
  */
-import { Alert, Button, Card, Descriptions, Input, Modal, Space, Tag, Typography, message } from 'antd';
+import { Button, Card, Collapse, Descriptions, Input, Modal, Space, Tag, Typography, message } from 'antd';
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import EventSnapshot from '../../dsm/components/EventSnapshot';
 import StateBoundary from '../../dsm/components/StateBoundary';
 import { useDsmResource } from '../../dsm/hooks/useDsmResource';
 import ResponseSteps, { VerdictBadge } from '../../dsm/components/ResponseSteps';
@@ -332,33 +344,39 @@ export default function MobileEventDetail() {
               >
                 <div>
                   <Text strong>스냅샷</Text>
+                  {/* ★★ [P-121] **거짓 표지판을 지우고 사진을 그린다.**
+                      「관제 화면에서 확인하십시오」는 열려 있는 문을 닫혔다고 말하면서
+                      **같이 고장 나 있던 화면**으로 사람을 보내고 있었다.
+                      ★ 부품은 관제 화면과 **한 벌**이다(`EventSnapshot`). 없다 · 못 받았다 ·
+                        받았다 셋을 가르는 규율도 거기 한 곳에 있다.
+                      ★ 경로 문자열은 **접었다.** 이동 중인 사람의 화면에서 첫 자리는
+                        사진이지 객체 키가 아니다 — 키는 인계·문의에 쓰이므로 버리지 않고
+                        「참조 보기」 아래에 둔다. */}
                   {e.snapshot_path ? (
                     <>
-                      <Paragraph
-                        copyable={{ text: e.snapshot_path }}
-                        style={{ fontSize: 12, marginBottom: 4, wordBreak: 'break-all' }}
-                      >
-                        {e.snapshot_path}
-                      </Paragraph>
-                      {/* ★ 그림을 그리지 않는 이유를 적는다. 빈 자리는 「사진이 없다」로 읽힌다.
-                          ★ [UX-20 · 2026-09-26] 앞판은 저장소 제품 이름과 내부 경로
-                            (`/api/dsm/`)를 백틱째로 화면에 적었다 — 「어디에 없는지」는
-                            사용자에게 뜻이 없고, 읽는 사람에게는 우리 서랍의 지도다
-                            (GX-COPY §1-3 · §4).
-                          (내부 사실 · 화면에 적지 않는다: MinIO 객체 참조이고, 이 바이트를
-                           내보내는 라우트가 `/api/dsm/` 에 아직 없다 [실측 2026-09-04].
-                           화면이 직접 프리사인드 URL 을 만들면 무계정 링크가 되므로
-                           만들지 않았다.) */}
-                      <Alert
-                        type="info"
-                        showIcon
-                        message="사진이 있지만 이 화면에서는 아직 볼 수 없습니다"
-                        description={
-                          <Text style={{ fontSize: 12 }}>
-                            사진은 보관되어 있습니다. 휴대전화 화면에서 여는 길이 아직
-                            열리지 않았습니다 — 관제 화면에서 확인하십시오.
-                          </Text>
-                        }
+                      <div style={{ marginTop: 6 }}>
+                        <EventSnapshot
+                          eventId={e.event_id}
+                          snapshotPath={e.snapshot_path}
+                          compact
+                          alt="현장 스냅샷"
+                        />
+                      </div>
+                      <Collapse
+                        ghost
+                        size="small"
+                        items={[{
+                          key: 'ref',
+                          label: <Text style={{ fontSize: 12 }}>참조 보기</Text>,
+                          children: (
+                            <Paragraph
+                              copyable={{ text: e.snapshot_path }}
+                              style={{ fontSize: 12, marginBottom: 0, wordBreak: 'break-all' }}
+                            >
+                              {e.snapshot_path}
+                            </Paragraph>
+                          ),
+                        }]}
                       />
                     </>
                   ) : (

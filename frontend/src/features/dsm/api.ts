@@ -222,22 +222,119 @@ export function dsmPostQuery<T>(
  * 그래서 axios 로 받아 objectURL 을 만든다. 부르는 쪽은 **반드시 `revoke` 를 부른다** —
  * 안 부르면 카드가 갱신될 때마다 blob 이 쌓여 관제 화면이 밤새 메모리를 먹는다.
  */
+export interface SnapshotBytes {
+  url: string;
+  revoke: () => void;
+  /** 실제로 받은 바이트 수. **증거의 단위**다 — 0 이면 그림이 아니다. */
+  bytes: number;
+  /** 서버가 뭐라고 부르는 바이트인가 (`image/jpeg`). */
+  contentType: string;
+}
+
+/**
+ * 봉투를 벗은 응답에서 **바이트를 찾는다.**
+ *
+ * ★★ [P-121 · 2026-09-10 턴 O · 실측] **여기가 사진이 죽던 자리다.**
+ *
+ *   `createApiClient` 가 다는 응답 인터셉터는 (rj-core dist 실측)
+ *
+ *       interceptors.response.use((i) => { …; return i.data; }, …)
+ *
+ *   즉 `API.get()` 이 돌려주는 것은 **AxiosResponse 가 아니라 본문**이다.
+ *   `responseType:'blob'` 이면 그 본문이 **Blob 자체**다. 그런데 이 함수는
+ *   `res.data` 를 읽고 있었고, Blob 에 `.data` 는 없다 —
+ *
+ *       URL.createObjectURL(undefined) → TypeError
+ *
+ *   그 TypeError 는 async 함수 안에서 나므로 **콘솔에 뜨지 않는다.** 부르는 쪽의
+ *   `.catch` 가 삼키고 화면에는 「사진을 불러오지 못했습니다」가 뜬다 — 서버는
+ *   **200 으로 37KB 를 보냈는데도**. [실측: XHR 200 · 37,472 bytes · 그려진 픽셀 0]
+ *
+ *   `dsmGet` 이 멀쩡했던 이유는 `unwrap()` 이 `res?.data ?? res` 로 **두 모양을
+ *   다 받기** 때문이다. 그 관용이 여기에만 없었다.
+ *
+ *   ⚠ 그래서 이 함수는 **모양을 가정하지 않는다.** Blob 이면 Blob, 봉투면 봉투 안.
+ *     인터셉터가 언젠가 원래 모양으로 돌아와도 이 함수는 그대로 산다.
+ */
+function pickBlob(res: unknown): Blob | undefined {
+  if (typeof Blob !== 'undefined' && res instanceof Blob) return res;
+  const inner = (res as { data?: unknown } | null | undefined)?.data;
+  if (typeof Blob !== 'undefined' && inner instanceof Blob) return inner;
+  return undefined;
+}
+
+/** 오류 본문이 Blob 으로 오는 자리(`responseType:'blob'`)에서 **사유 한 줄**을 꺼낸다. */
+async function reasonFromBlob(body: unknown): Promise<string | undefined> {
+  const blob = pickBlob(body);
+  if (!blob) return pickMessage((body as { detail?: unknown })?.detail)
+    ?? pickMessage((body as { message?: unknown })?.message);
+  try {
+    const text = await blob.text();
+    const parsed = JSON.parse(text);
+    return pickMessage(parsed?.message) ?? pickMessage(parsed?.detail);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * ★ P-25 — **인증 헤더가 실리는 경로로** 스냅샷을 받는다.
+ *
+ * 왜 `<img src="/api/dsm/events/1/snapshot">` 이면 안 되나: 브라우저의 이미지 요청은
+ * 이 앱의 axios 인터셉터를 지나지 않는다. 토큰이 안 실리고, 그러면 **401 이 오고
+ * 화면에는 깨진 이미지 아이콘**이 뜬다 — 그 아이콘은 「스냅샷이 없다」와 구별되지
+ * 않는다(D-290). 서명 URL 로 여는 길은 **무계정 링크 금지**로 막혀 있다.
+ *
+ * 그래서 axios 로 받아 objectURL 을 만든다. 부르는 쪽은 **반드시 `revoke` 를 부른다** —
+ * 안 부르면 카드가 갱신될 때마다 blob 이 쌓여 관제 화면이 밤새 메모리를 먹는다.
+ *
+ * ★ [P-121] **상태를 잃지 않는다.** 인터셉터가 본문만 돌려주므로 성공 갈래에는
+ *   HTTP 상태가 없다 — 그래서 실패는 **거절 갈래에서** 읽는다(`err.response.status`).
+ *   종전에는 그 상태가 어디에도 없어 저장소 장애(503)가 「사진을 불러오지 못했습니다」로
+ *   뭉개졌다. 503 과 4xx 는 **다른 사실**이고 화면이 다른 문장을 쓴다(UX-10).
+ */
 export async function fetchSnapshotUrl(
   eventId: number | string,
-): Promise<{ url: string; revoke: () => void }> {
-  const res = await API.get(dsmEndpoint.snapshot(eventId), {
-    responseType: 'blob',
-    // 캐시가 장애를 덮는다(P-19 · UniversalCacheMiddleware 는 적중 본문을 언제나
-    // 200 으로 되살린다). 스냅샷은 소인에 **열람 시각**이 찍혀 나오므로 캐시된
-    // 바이트는 남의 시각을 보여 준다 — 그것은 소인의 뜻을 지운다.
-    headers: { 'X-No-Cache': 'true' },
-  });
-  const status: number = res?.status ?? 0;
-  if (status >= 400) {
-    throw new DsmApiError(`스냅샷을 받지 못했습니다 (${status})`, status);
+): Promise<SnapshotBytes> {
+  let res: unknown;
+  try {
+    res = await API.get(dsmEndpoint.snapshot(eventId), {
+      responseType: 'blob',
+      // 캐시가 장애를 덮는다(P-19 · UniversalCacheMiddleware 는 적중 본문을 언제나
+      // 200 으로 되살린다). 스냅샷은 소인에 **열람 시각**이 찍혀 나오므로 캐시된
+      // 바이트는 남의 시각을 보여 준다 — 그것은 소인의 뜻을 지운다.
+      headers: { 'X-No-Cache': 'true' },
+    });
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number; data?: unknown } ; message?: string };
+    const status = e?.response?.status ?? 0;
+    const said = await reasonFromBlob(e?.response?.data);
+    // ★ 상태 0 은 **HTTP 대답이 아예 없었다**는 뜻이다(끊김·취소). 4xx/5xx 와
+    //   같은 문장으로 적으면 「서버가 거절했다」는 거짓이 된다.
+    throw new DsmApiError(
+      said ?? (status > 0
+        ? `사진을 받지 못했습니다 (${status})`
+        : '사진을 받는 중에 연결이 끊겼습니다.'),
+      status,
+      said !== undefined,
+    );
   }
-  const url = URL.createObjectURL(res.data as Blob);
-  return { url, revoke: () => URL.revokeObjectURL(url) };
+
+  const blob = pickBlob(res);
+  if (!blob) {
+    // 여기 오면 **응답 모양이 바뀐 것**이다. 조용히 빈 그림을 그리지 않는다.
+    throw new DsmApiError('사진 바이트를 못 알아봤습니다.', 0);
+  }
+  if (blob.size === 0) {
+    throw new DsmApiError('사진이 0바이트로 왔습니다.', 0);
+  }
+  const url = URL.createObjectURL(blob);
+  return {
+    url,
+    revoke: () => URL.revokeObjectURL(url),
+    bytes: blob.size,
+    contentType: blob.type || '',
+  };
 }
 
 /**

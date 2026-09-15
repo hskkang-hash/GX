@@ -45,6 +45,18 @@ import {
  */
 import { SessionEndedNotice } from '@/features/session/SessionEndedNotice';
 import { PermissionDeniedNotice } from '@/features/session/PermissionDeniedNotice';
+/**
+ * ★ [P-105 · 2026-09-07 턴 M · 차선 C] **역할 0개 계정이 볼 화면은 하나다.**
+ *   온보딩 표 0행. 근거와 규율은 `features/session/rolePending.ts` 머리말에 있다.
+ */
+import { hasNoRoles } from '@/features/session/rolePending';
+import { RolePendingScreen } from '@/features/session/RolePendingScreen';
+/**
+ * ★ [P-122 · UX-28 · 턴 O · 차선 C2] **역할마다 사이드바에 서는 줄을 표대로 자른다.**
+ *   그리는 것이 없다 — 인수 사이드바가 읽는 목록을 갈아 끼운다.
+ *   표와 근거는 `features/nav/roleNav.ts` 머리말에 있다. **가림이지 자물쇠가 아니다.**
+ */
+import RoleNavFilter from '@/features/nav/RoleNavFilter';
 
 /**
  * ★ [UX-21 · 2026-09-26 · 차선 C] **로고 자산의 이름에서 공백을 뺐다.**
@@ -68,6 +80,12 @@ import logoLightModeDefault from './assets/images/logo-short-black.png';
 import logoDarkModeDefault from './assets/images/logo-short-white.png';
 import backgroundImageDefault from './assets/images/backgroundLogin.png';
 import InheritedScreen from './components/InheritedScreen';
+/**
+ * ★ [P-123 · UX-31 ④ · 턴 O · 차선 C2] **빈 표가 「없다」로 읽히던 자리.**
+ *   인수 목록 화면 위에 **우리가 직접 센 수**를 한 줄 얹는다. 실측과 규율은
+ *   `components/InheritedScreen/ListRealityNote.tsx` 머리말에 있다.
+ */
+import ListRealityNote from './components/InheritedScreen/ListRealityNote';
 import { FileManagement } from './components/FileManagement/FileManagement';
 import { FormNavigationBlocker } from './components/FormNavigationBlocker';
 import GlobalNotifications from './components/GlobalNotifications';
@@ -465,9 +483,40 @@ const RootRedirect = () => {
 };
 
 const PrivateLayout = () => {
+  const privateUserInfo = useUserInfo();
+
+  /*
+   * ★ [P-105 · 턴 M · 차선 C] **역할이 0개면 여기서 끝난다.**
+   *
+   * 이 자리가 관문 안 **모든** 화면의 유일한 부모다(월 모드도 사이드바 화면도
+   * 이 아래에 있다). 그래서 가림을 화면마다 붙이지 않고 여기 한 번 둔다 —
+   * 화면마다 붙이면 다음에 생기는 화면이 그 규칙 밖에서 태어난다.
+   *
+   * ⚠ `<Outlet/>` 을 그리는 것은 `PrivateRouter` 다. 여기서 그것을 안 그리면
+   *   **자식 라우트가 아예 안 뜬다** — 사이드바도 표도 없다. 그것이 이 결정이
+   *   요구하는 바다: 「볼 수 있는 화면이 정확히 하나」.
+   *
+   * ⚠ 로그인하지 않은 사람은 여기 걸리지 않는다 — `hasNoRoles` 는 `userInfo` 가
+   *   없으면 거짓이고, 그 사람은 아래 `PrivateRouter` 가 `/login` 으로 보낸다.
+   *   `roles` 가 아직 안 온 동안에도 거짓이다(머리말의 「모르는 동안에는 거짓」).
+   *
+   * ⚠ **이것은 자물쇠가 아니다.** 문은 여전히 열려 있고, 닫는 것은 뒷단의 일이다
+   *   (P-105 · 서버가 403 을 내기 전까지 자료는 샌다 — `rolePending.ts` 머리말).
+   */
+  if (hasNoRoles(privateUserInfo)) {
+    return <RolePendingScreen />;
+  }
+
   return (
     <>
       <PrivateRouter redirectPath="/login" />
+      {/*
+        P-122 · UX-28 — 사이드바 줄 자르기. **관문 안 모든 화면의 유일한 부모**에
+        한 번 둔다(위 P-105 와 같은 자리·같은 이유): 화면마다 붙이면 다음에 생기는
+        화면이 그 규칙 밖에서 태어난다. 휴대전화 화면에는 사이드바가 없지만,
+        그때도 목록은 같은 자리에서 온다 — 여기 한 번이면 둘 다 덮인다.
+      */}
+      <RoleNavFilter />
       <ClearStoreOnRouteChange />
       <GlobalNotifications />
       <PartnerCallbackNotificationPopup />
@@ -662,7 +711,26 @@ function App() {
               path: mobileRoutes.eventDetail.path,
               element: <MobileEventDetail />,
             },
-            { path: CustomRouters.user.path, element: <UserManagement /> },
+            {
+              /*
+                P-123 · UX-31 ④ — **빈 표가 「없다」로 읽히던 자리** (턴 O · 차선 C2).
+                [실측] 서버는 사용자 30명을 내주는데 이 화면은 90바이트였다(표 요소 0개).
+                인수 화면은 못 고친다(§0.4) — 위에 **직접 세어서** 한 줄을 얹는다.
+                근거는 `components/InheritedScreen/ListRealityNote.tsx` 머리말에 있다.
+              */
+              path: CustomRouters.user.path,
+              element: (
+                <>
+                  <ListRealityNote
+                    countUrl="/api/v1/user/list/"
+                    noun="사용자"
+                    addPath={CustomRouters.user.subRoutes.addUser.path}
+                    addLabel="사용자 추가"
+                  />
+                  <UserManagement />
+                </>
+              ),
+            },
             {
               path: CustomRouters.user.subRoutes.addUser.path,
               element: <AddUser />,
@@ -685,6 +753,8 @@ function App() {
               path: CustomRouters.role.path,
               element: (
                 <InheritedScreen title="역할 관리">
+                  {/* P-123 · UX-31 ④ — 서버 15행 · 화면 0행이던 자리. 위 `/users` 와 같은 규율. */}
+                  <ListRealityNote countUrl="/api/roles/" noun="역할" />
                   <RoleManagement />
                 </InheritedScreen>
               ),

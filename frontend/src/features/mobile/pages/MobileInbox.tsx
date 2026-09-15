@@ -30,6 +30,16 @@ import { useNavigate } from 'react-router-dom';
 
 import StateBoundary from '../../dsm/components/StateBoundary';
 import { failureHint } from '../../dsm/copy';
+/**
+ * ★ [P-123 · UX-31 ① · 턴 O · 차선 C2] **「성공」이 사람에게 갔다는 뜻이 아니다.**
+ *   말은 `features/dsm/deliveryOutcome.tsx` 한 곳에서 온다 — 데스크 표와 이 카드가
+ *   같은 말을 써야 한 쪽만 고치는 날이 안 온다. 실측·근거는 그 파일 머리말에 있다.
+ */
+import {
+  LOG_CHANNEL_NOTE,
+  OUTCOME_LOG_ONLY,
+  reachesAPerson,
+} from '../../dsm/deliveryOutcome';
 import { useDsmResource } from '../../dsm/hooks/useDsmResource';
 import {
   EVENT_TYPE_LABEL,
@@ -275,12 +285,30 @@ export default function MobileInbox() {
                     >
                       · 채널 {delivery.channel}
                     </Text>
-                    {delivery.succeeded ? (
+                    {delivery.succeeded && !reachesAPerson(delivery.channel) ? (
+                      /*
+                        ★★ [P-123 · UX-31 ①] **여기 「발송 12:03」이라고 적혀 있었다.**
+                          채널이 `log` 인 줄에도 그렇게 적었고, 그 시각은 「사람이 받은
+                          시각」으로 읽힌다. 실제로는 로그 한 줄이 남은 시각이다 —
+                          [실측 2026-09-10] 같은 시각 메일함 0통. 그래서 시각 앞에
+                          **무엇이 일어났는지**를 먼저 적는다.
+                      */
+                      <Text
+                        type="warning"
+                        style={{ fontSize: 12 }}
+                        title={LOG_CHANNEL_NOTE}
+                      >
+                        · {OUTCOME_LOG_ONLY} {shortAbsolute(delivery.sent_at)}
+                      </Text>
+                    ) : delivery.succeeded ? (
                       <Text
                         type="secondary"
                         style={{ fontSize: 12 }}
                       >
+                        {/* ★ 이 라우트는 이름이 아니라 `recipient_id` 만 낸다 —
+                            없으면 「받는 사람 없음」이라 적고, 이름을 지어내지 않는다. */}
                         · 발송 {shortAbsolute(delivery.sent_at)}
+                        {delivery.recipient_id === null ? ' · 받는 사람 없음' : ''}
                       </Text>
                     ) : (
                       // ★ 실패는 시각 칸이 「—」다. 0초가 아니다 — 못 보낸 것은 빠른 것이 아니다.

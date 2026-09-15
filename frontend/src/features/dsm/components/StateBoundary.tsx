@@ -33,7 +33,9 @@ import { ReactNode, useEffect } from 'react';
 import {
   FAILURE_TITLE,
   FORBIDDEN_TITLE,
+  NOT_FOUND_TITLE,
   failureHint,
+  isNotFound,
   reportFailure,
 } from '../copy';
 import type { WidgetState } from '../types';
@@ -51,6 +53,13 @@ interface Props {
   status?: number;
   /** 오류에서만 쓴다. 없으면 재시도 단추를 그리지 않는다(누를 것이 없는 단추는 거짓말). */
   onRetry?: () => void;
+  /**
+   * 404 상자의 제목 — **무엇이 없는지는 부르는 쪽만 안다.**
+   *
+   * 안 주면 「없는 항목입니다.」다. 사건 상세라면 `NOT_FOUND_TITLE_EVENT`
+   * (「없는 사건입니다.」)를 준다. 여기서 짐작하지 않는다(P-123 · UX-31 ③).
+   */
+  notFoundTitle?: string;
   emptyText?: string;
   /** 이 상자가 어느 화면의 어느 칸인가 — 콘솔 줄에 붙는다. */
   where?: string;
@@ -62,6 +71,7 @@ export default function StateBoundary({
   reason,
   status,
   onRetry,
+  notFoundTitle = NOT_FOUND_TITLE,
   emptyText = '표시할 항목이 없습니다.',
   where = 'StateBoundary',
   children,
@@ -86,6 +96,28 @@ export default function StateBoundary({
         showIcon
         message={FORBIDDEN_TITLE}
         description={failureHint(403)}
+      />
+    );
+  }
+
+  /*
+   * ★★ [P-123 · UX-31 ③ · 턴 O] **404 는 오류 상자가 아니다.**
+   *
+   *   before: 「불러오지 못했습니다. 잠시 뒤 다시 시도해 주십시오.」 + 「다시 시도」
+   *   after : 「없는 사건입니다.(부르는 쪽이 준 말) 주소를 확인해 주십시오. …」
+   *
+   *   빨강(`error`)이 아니라 안내(`info`)이고, **「다시 시도」를 그리지 않는다** —
+   *   `onRetry` 를 받았어도 안 그린다. 없는 것을 다시 부르는 단추는 거짓말이다.
+   *   `state` 는 여전히 `error` 다(부르는 쪽의 5상태 계약을 안 바꾼다). 갈리는 것은
+   *   **그리는 그림**뿐이고, 그래서 이 갈래는 부르는 쪽 스물세 곳을 안 고치고 산다.
+   */
+  if (state === 'error' && isNotFound(status)) {
+    return (
+      <Alert
+        type="info"
+        showIcon
+        message={notFoundTitle}
+        description={failureHint(status)}
       />
     );
   }

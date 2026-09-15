@@ -79,7 +79,26 @@ export function linkStatusBadge(status: string | undefined): 'success' | 'proces
  */
 
 /** 실패의 갈래. **사람이 다음에 할 일이 다르면 다른 갈래다.** */
-export type FailureKind = 'network' | 'timeout' | 'server' | 'forbidden' | 'unknown';
+export type FailureKind =
+  | 'network'
+  | 'timeout'
+  | 'server'
+  | 'forbidden'
+  /**
+   * ★★ [P-123 · UX-31 ③ · 2026-09-10 턴 O] **404 는 실패가 아니라 부재다.**
+   *
+   *   [실측 2026-09-10] 없는 사건 번호로 상세를 열면 화면이 이렇게 말했다:
+   *       「불러오지 못했습니다. 잠시 뒤 다시 시도해 주십시오.」  + 「다시 시도」
+   *   그 문장은 **거짓 약속**이다. 잠시 뒤에 다시 시도해도 그 사건은 영영 없다.
+   *   그 화면에서 사람은 기다리고, 새로 고치고, 다시 기다린다 — 그리고 옆에
+   *   **「알림 보내기」가 살아 있었다.** 없는 사건에 알림을 보내는 단추다.
+   *
+   *   그래서 404 를 **다른 갈래**로 뽑는다. 다른 갈래라야 화면이 다른 상자를
+   *   그리고(오류 빨강이 아니라 안내), 「다시 시도」를 **안 그린다** —
+   *   누를 것이 없는 단추는 거짓말이다(`StateBoundary` 의 `onRetry` 규율과 같은 말).
+   */
+  | 'notfound'
+  | 'unknown';
 
 /**
  * 상태 코드 하나를 갈래로 옮긴다. **순수 함수다** — 시험이 이것만으로 전부 잰다.
@@ -89,6 +108,8 @@ export type FailureKind = 'network' | 'timeout' | 'server' | 'forbidden' | 'unkn
  */
 export function failureKind(status: number | undefined): FailureKind {
   if (status === 403 || status === 401) return 'forbidden';
+  // 404 는 「지금 못 가져왔다」가 아니라 「그것이 없다」다. 다시 시도할 것이 없다.
+  if (status === 404) return 'notfound';
   if (status === 504 || status === 408) return 'timeout';
   if (status === undefined || status === 0) return 'network';
   if (status >= 500) return 'server';
@@ -102,17 +123,42 @@ export const FAILURE_TITLE = '불러오지 못했습니다.';
 /** 권한없음 상자의 제목. 오류와 **다른 상자**다 (DA-03 §2-5). */
 export const FORBIDDEN_TITLE = '이 항목에 대한 권한이 없습니다.';
 
+/**
+ * 없는 것의 제목 — **오류가 아니다.**
+ *
+ * ★ 기본값이 「항목」인 이유: 이 상자는 사건·청구·카메라·발송 어디에서나 쓰인다.
+ *   무엇이 없는지 아는 것은 **부르는 쪽**이므로, 아는 화면은 `notFoundTitle` 로
+ *   자기 말을 준다(사건 화면이라면 「없는 사건입니다」). 모르는 자리에서
+ *   「없는 사건입니다」라고 적으면 그것은 없는 사실을 말하는 것이다.
+ */
+export const NOT_FOUND_TITLE = '없는 항목입니다.';
+
+/** 사건 화면이 쓰는 말. 글자를 화면에 흩지 않기 위해 여기 둔다(P-123 · UX-31 ③). */
+export const NOT_FOUND_TITLE_EVENT = '없는 사건입니다.';
+
 /** 제목 아래 한 줄 — **사용자가 다음에 할 일**을 적는다. */
 const FAILURE_HINT: Record<FailureKind, string> = {
   network: '서버에 연결하지 못했습니다. 연결을 확인해 주십시오.',
   timeout: '응답이 늦어 불러오지 못했습니다.',
   server: '잠시 뒤 다시 시도해 주십시오.',
   forbidden: '다시 로그인하면 보일 수 있습니다.',
+  // ★ 「다시 시도」를 권하지 않는다 — 다시 해도 없다. 사람이 할 일은 **되돌아가는** 것이다.
+  notfound: '주소를 확인해 주십시오. 지워졌거나 처음부터 없던 번호입니다.',
   unknown: '잠시 뒤 다시 시도해 주십시오.',
 };
 
 export function failureHint(status: number | undefined): string {
   return FAILURE_HINT[failureKind(status)];
+}
+
+/**
+ * 이 상태 코드가 **없음**인가. 화면이 「다시 시도」와 실행 단추를 **끄는** 자리다.
+ *
+ * ★ 함수 하나로 내주는 이유: 판정이 두 벌이 되면(`status === 404` 를 화면마다 적으면)
+ *   한 화면만 고치는 날 나머지가 옛말이 된다(D-212).
+ */
+export function isNotFound(status: number | undefined): boolean {
+  return failureKind(status) === 'notfound';
 }
 
 /**

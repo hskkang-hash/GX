@@ -17,8 +17,8 @@
  * ★ 세 상태를 **가른다**: 없다(경로 자체가 빈 문자열) · 못 받았다 · 받았다.
  *   셋을 한 그림으로 그리면 저장소 장애가 「스냅샷 없는 이벤트」로 보인다.
  */
-import { Alert, Skeleton, Typography } from 'antd';
-import { useEffect, useState } from 'react';
+import { Alert, Button, Skeleton, Typography } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
 
 import { DsmApiError, fetchSnapshotUrl } from '../api';
 
@@ -30,6 +30,11 @@ interface Props {
   snapshotPath?: string;
   height?: number;
   alt?: string;
+  /**
+   * 손바닥 화면. **높이를 화면이 정하게 둔다** — 이동 중인 사람의 화면에서
+   * 220px 고정은 사진을 우표로 만든다 (P-121 · 모바일도 같은 사진을 본다).
+   */
+  compact?: boolean;
 }
 
 export default function EventSnapshot({
@@ -37,6 +42,7 @@ export default function EventSnapshot({
   snapshotPath,
   height = 220,
   alt = '이벤트 스냅샷',
+  compact = false,
 }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<{ message: string; status: number } | null>(null);
@@ -83,6 +89,8 @@ export default function EventSnapshot({
     };
   }, [eventId, snapshotPath, nonce]);
 
+  const retry = useCallback(() => setNonce((n) => n + 1), []);
+
   if (!snapshotPath) {
     return (
       <Text type="secondary">
@@ -90,7 +98,9 @@ export default function EventSnapshot({
       </Text>
     );
   }
-  if (loading && !url) return <Skeleton.Image active style={{ width: '100%', height }} />;
+  if (loading && !url) {
+    return <Skeleton.Image active style={{ width: '100%', height: compact ? 180 : height }} />;
+  }
   if (error) {
     // ★ 503 은 **저장소가 죽은 것**이다(UX-10). 「스냅샷이 없다」와 다른 사실이므로
     //   다른 문장으로 적는다 — 하나로 묶으면 장애가 데이터 부재로 위장된다.
@@ -99,21 +109,43 @@ export default function EventSnapshot({
     //   그대로 냈고, 화면에 「Network Error」가 떴다 — 그것은 axios 의 말이지
     //   당직자의 말이 아니다(GX-COPY §2). 원문은 콘솔·관리자 자리에 남기고 화면에는
     //   사용자 언어 한 줄과 **누를 것**(다시 시도)을 낸다.
+    //
+    // ★★ [P-121 · 2026-09-10 턴 O] **「불러오지 못했습니다」는 서버가 거절했을 때만
+    //   쓴다.** 앞판은 상태를 안 가리고 그 한 문장을 냈고, 서버가 **200 으로 37KB 를
+    //   보낸 화면**에도 그 빨강이 떠 있었다 — 앞단이 바이트를 못 꺼낸 것인데 화면은
+    //   **서버 탓**으로 적었다. 거짓 사유는 없는 사유보다 나쁘다: 사람이 저장소를
+    //   보러 간다.
+    //
+    //   이제 셋을 가른다.
+    //     503        저장소가 죽었다 (UX-10) — 이벤트 자체는 정상이다
+    //     그 밖 4xx/5xx  서버가 **거절했다** — 여기서만 「불러오지 못했습니다」
+    //     상태 0     HTTP 대답이 아예 없었다(끊김) — 서버 탓으로 적지 않는다
     const storageDown = error.status === 503;
+    const serverRefused = error.status >= 400 && !storageDown;
+    const message = storageDown
+      ? '저장소에 연결할 수 없습니다'
+      : serverRefused
+        ? '사진을 불러오지 못했습니다'
+        : '사진을 받는 중에 연결이 끊겼습니다';
+    const description = storageDown
+      ? '이벤트 자체는 정상입니다 — 사진을 보관하는 저장소에 닿지 못했습니다.'
+      : serverRefused
+        ? '잠시 뒤 다시 시도해 주십시오.'
+        : '서버가 거절한 것이 아닙니다 — 대답이 오기 전에 끊겼습니다. 다시 시도해 주십시오.';
     return (
       <Alert
-        type={storageDown ? 'warning' : 'error'}
+        type={serverRefused ? 'error' : 'warning'}
         showIcon
-        message={storageDown ? '저장소에 연결할 수 없습니다' : '사진을 불러오지 못했습니다'}
-        description={
-          storageDown
-            ? '이벤트 자체는 정상입니다 — 사진을 보관하는 저장소에 닿지 못했습니다.'
-            : '잠시 뒤 다시 시도해 주십시오.'
-        }
+        message={message}
+        description={description}
         action={
-          <a onClick={() => setNonce((n) => n + 1)} role="button">
+          // ★ [P-121] `<a onClick>` 을 **누를 것**으로 바꿨다. 앵커는 href 가 없으면
+          //   키보드 초점을 안 받고 Enter 로도 안 눌린다 — 관제실에는 마우스를 안 쓰는
+          //   자리가 있다. 누름은 `nonce` 를 올리고, 그 값이 아래 effect 의 인자라
+          //   **요청이 실제로 한 번 더 나간다**(검수는 요청 수로 잰다).
+          <Button size="small" onClick={retry}>
             다시 시도
-          </a>
+          </Button>
         }
       />
     );
@@ -123,7 +155,15 @@ export default function EventSnapshot({
       <img
         src={url ?? ''}
         alt={alt}
-        style={{ width: '100%', height, objectFit: 'contain', background: '#000' }}
+        style={{
+          width: '100%',
+          // ★ 손바닥 화면에서는 높이를 **고정하지 않는다** — 가로에 맞춰 접힌다.
+          height: compact ? 'auto' : height,
+          maxHeight: compact ? '60vh' : undefined,
+          objectFit: 'contain',
+          background: '#000',
+          display: 'block',
+        }}
       />
       <figcaption>
         {/* ★ [UX-20] 절 ID(P-25)를 뺐다 — 절 이름은 사용자 본문의 자리가 아니다. */}

@@ -4,7 +4,8 @@
  * ★ 필터는 **서버가 건다.** 목록을 다 받아 화면에서 거르면 두 가지가 동시에 깨진다:
  *     ① 격리 — 화면이 거르기 전의 목록은 이미 브라우저에 와 있다
  *     ② F-05 p95 — 분모가 커질수록 느려지고, 그 느림은 로컬에서 안 보인다
- *   그래서 프리셋 넷은 **전부 질의로 나간다.** 이 파일에는 `rows.filter(...)` 가
+ *   그래서 프리셋 **다섯**(P-120 에서 「전체」가 더해졌다)과 **기간**은 전부
+ *   질의로 나간다. 이 파일에는 `rows.filter(...)` 가
  *   한 줄도 없고, 없는 것이 이 화면의 성질이다 — 있으면 페이지 밖 이벤트가
  *   **없는 것이 된다**(온보딩 U2 #2 가 막혀 있던 정확한 이유).
  *
@@ -17,8 +18,12 @@
  *
  * ★ 등급은 색 + 아이콘 + 라벨 셋으로 낸다. 색만 쓰면 색각 이상이 못 읽는다 (DA-03 §2-2).
  */
-import { Alert, Badge, Button, Card, Col, Popover, Row, Select, Space, Table, Tag, Typography } from 'antd';
-import { useCallback, useMemo } from 'react';
+import {
+  Alert, Badge, Button, Card, Col, DatePicker, Input, Popover, Row, Segmented,
+  Select, Space, Table, Tag, Typography,
+} from 'antd';
+import dayjs, { type Dayjs } from 'dayjs';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Main } from 'rj-core';
 
@@ -49,7 +54,7 @@ const PAGE_SIZE = 50;
 const RECENT_HOURS = 12;
 
 /**
- * W1 프리셋 넷 (P-13).
+ * W1 프리셋 — 넷이었고 **다섯이 되었다** (P-13 · P-120).
  *
  * `query` 가 **그대로 서버로 나간다.** 화면이 뒤에서 한 번 더 거르지 않는다 —
  * 그 한 줄이 생기는 순간 「서버 필터」라는 말이 거짓이 된다.
@@ -57,7 +62,7 @@ const RECENT_HOURS = 12;
  * ⚠ `system` 은 목록에 더해 **카드 하나**를 더 단다(연계 상태). 그 사유는 아래
  *   `SYSTEM_NOTE` 에 적혀 있다 — 이벤트와 「지금 이 순간의 신호」는 다른 것이다.
  */
-type PresetKey = 'unhandled' | 'recent' | 'mine' | 'system';
+type PresetKey = 'all' | 'unhandled' | 'recent' | 'mine' | 'system';
 
 interface PresetDef {
   key: PresetKey;
@@ -92,6 +97,39 @@ interface PresetDef {
  *     system    : `event_type` 으로 서버가 거른다
  */
 const PRESETS: PresetDef[] = [
+  /**
+   * ★★ [P-120 · UX-27 · 2026-09-10 턴 O] **「전체」가 없었다 — 그래서 종결된 사건은
+   *   어느 화면에도 없었다.**
+   *
+   *   [실측 2026-09-10 · TARGET=http://localhost:8500 · gxseed_u2_manager]
+   *   이 테넌트의 이벤트는 22건이고, 그중 **종결(closed) 8건**이다. 프리셋 넷이
+   *   각각 서버에서 데려오는 수는 이랬다:
+   *
+   *       미처리(`response_state=occurred`)          2건 — 종결 0
+   *       지난 12시간(`since`/`until`)                0건 — 자료가 7일 전이다
+   *       내 담당(`mine=true`)                        0건 — 종결 0
+   *       시스템(`event_type=camera_down,…`)          2건 — 종결 0
+   *                                       ────────────────────────
+   *                                       종결 도달 가능  **0 / 8**
+   *
+   *   기본은 「미처리」다. 즉 화면을 열면 22건 중 2건이 보이고, **종결된 8건은 어느
+   *   프리셋으로도 닿지 않았다.** 대시보드의 「최근 이벤트 10건」에서 밀려나는 순간
+   *   그 사건은 이 제품에서 **없는 것**이 된다 — 감사 질문(「12일 03시 14분에 무슨
+   *   일이 있었나」)이 1단계에서 막힌 정확한 자리다.
+   *
+   *   고친 것은 한 칸이다: **거르지 않는 질의**를 하나 세웠다. 화면이 받아서 거르는
+   *   것이 아니라, 서버에 「처리 단계로 거르지 말라」고 말하는 것이다 —
+   *   그래서 이 프리셋에도 `rows.filter(...)` 는 없다.
+   */
+  {
+    key: 'all',
+    label: '전체 보기',
+    headline: '전체 — 처리 단계를 가리지 않고 전부',
+    why:
+      '처리 단계로 거르지 않은 목록입니다. 종결된 사건도 여기에 있습니다. ' +
+      '언제 일어난 일인지 알면 아래 기간을 좁혀 보십시오.',
+    query: {},
+  },
   {
     key: 'unhandled',
     label: '미처리 보기',
@@ -156,6 +194,118 @@ const SYSTEM_NOTE =
   '이 목록은 설비 자신이 낸 신호입니다. 카메라 응답 여부와 저장 용량은 ' +
   '아직 이 화면에서 볼 수 없습니다 — 여기 없는 것은 아직 없는 것입니다.';
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * P-120 / UX-27 — **기간** (2026-09-10 턴 O · 차선 C1)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * 감사 질문은 언제나 **날짜로** 온다: 「12일 03시 14분에 무슨 일이 있었나」.
+ * 종전 이 화면에는 날짜 칸이 한 개도 없었다 — 「지난 12시간」 하나뿐이었고,
+ * 그 창은 어제 것도 못 본다.
+ *
+ * ★ **서버가 거른다.** [실측 2026-09-10 · `backend/apps/dsm/api.py::events`]
+ *   이 라우트가 받는 인자는 `since · until · event_type · severity ·
+ *   response_state · mine · limit` 이다. 기간은 `since`/`until` 로 **그대로 나간다** —
+ *   화면이 받아서 자르지 않는다.
+ *
+ * ★ 두 끝을 **둘 다** 보낸다. 여는 쪽만 보내면 창이 아니라 반직선이 된다.
+ *
+ * ★ 창은 **주소에 산다**(`?period=` · `?since=` · `?until=`). 감사에서 건네줄 링크가
+ *   그것이고, 「내가 무엇을 보고 그렇게 말했는가」를 링크가 재현한다.
+ */
+type PeriodKey = 'none' | 'today' | 'd7' | 'd30' | 'custom';
+
+const PERIODS: { key: PeriodKey; label: string }[] = [
+  { key: 'none', label: '전체 기간' },
+  { key: 'today', label: '오늘' },
+  { key: 'd7', label: '7일' },
+  { key: 'd30', label: '30일' },
+  { key: 'custom', label: '직접 입력' },
+];
+
+function parsePeriod(value: string | null): PeriodKey {
+  const hit = PERIODS.find((x) => x.key === value);
+  return hit ? hit.key : 'none';
+}
+
+/**
+ * 창의 두 끝을 정한다. **한 곳에서만 정한다** — 두 곳에서 정하면 위의 요약 한 줄과
+ * 아래 표가 다른 창을 말하게 되고, 그 어긋남은 화면에서 안 보인다.
+ *
+ * ⚠ 이 함수는 `now` 를 **인자로 받는다.** 안에서 `new Date()` 를 부르면 15초 갱신마다
+ *   창이 미끄러지고, 미끄러지는 창은 같은 링크로 같은 목록을 재현하지 못한다.
+ */
+function windowOf(
+  period: PeriodKey,
+  preset: PresetKey,
+  customSince: string | null,
+  customUntil: string | null,
+  now: Date,
+): { since?: string; until?: string; label: string } {
+  const end = dayjs(now);
+  if (period === 'today') {
+    return {
+      since: end.startOf('day').toDate().toISOString(),
+      until: end.endOf('day').toDate().toISOString(),
+      label: `${end.format('YYYY-MM-DD')} 하루`,
+    };
+  }
+  if (period === 'd7' || period === 'd30') {
+    const days = period === 'd7' ? 7 : 30;
+    const start = end.subtract(days, 'day');
+    return {
+      since: start.toDate().toISOString(),
+      until: end.toDate().toISOString(),
+      label: `${start.format('YYYY-MM-DD HH:mm')} ~ ${end.format('YYYY-MM-DD HH:mm')}`,
+    };
+  }
+  if (period === 'custom') {
+    // ★ 한쪽만 채웠으면 **그 한쪽만 보낸다.** 나머지를 화면이 지어내지 않는다 —
+    //   지어낸 끝은 사용자가 정한 적 없는 창이고, 그 창의 0건은 거짓말이다.
+    const a = customSince ? dayjs(customSince) : null;
+    const b = customUntil ? dayjs(customUntil) : null;
+    if (!a?.isValid() && !b?.isValid()) {
+      return { label: '직접 입력 — 아직 고르지 않았습니다 (전체 기간을 봅니다)' };
+    }
+    return {
+      since: a?.isValid() ? a.toDate().toISOString() : undefined,
+      until: b?.isValid() ? b.toDate().toISOString() : undefined,
+      label: `${a?.isValid() ? a.format('YYYY-MM-DD HH:mm') : '처음'} ~ ${
+        b?.isValid() ? b.format('YYYY-MM-DD HH:mm') : '지금'}`,
+    };
+  }
+  // 기간을 안 고른 채로 「지난 12시간 보기」를 누른 것 — 그 프리셋이 곧 창이다.
+  if (preset === 'recent') {
+    const start = end.subtract(RECENT_HOURS, 'hour');
+    return {
+      since: start.toDate().toISOString(),
+      until: end.toDate().toISOString(),
+      label: `${start.format('YYYY-MM-DD HH:mm')} ~ ${end.format('YYYY-MM-DD HH:mm')}`,
+    };
+  }
+  return { label: '전체 기간 — 시간으로 거르지 않습니다' };
+}
+
+/**
+ * ★★ **사건번호로 여는 칸 — 그리고 카메라 이름으로는 못 찾는다는 사실** (P-120)
+ *
+ *   [실측 2026-09-10 · TARGET=http://localhost:8500]
+ *     GET /api/dsm/events?q=… / &search=… / &event_no=… / &camera=…
+ *       → 넷 **전부** 22건(= 안 거른 전부)을 돌려준다. 즉 **읽지 않는 인자**다.
+ *     라우트 서명에도 없다(`backend/apps/dsm/api.py::events`).
+ *
+ *   그래서 카메라 이름 검색은 **짓지 않았다.** 목록을 받아 화면에서 이름을 대조하면
+ *   상한 50건 밖의 카메라는 「그런 카메라 없음」이 되고, 그것은 검색이 아니라
+ *   **거짓말하는 검색**이다 (DA-04 · 이 화면의 첫 규약).
+ *
+ *   사건번호는 다르다. `GET /api/dsm/events/{id}` 는 **실재하는 문**이고
+ *   (없으면 404 로 답한다 — 실측), 그 문을 두드리는 것은 목록을 거르는 일이 아니다.
+ *   그래서 이 칸은 「거르기」가 아니라 **「열기」**다. 이름도 그렇게 붙였다.
+ */
+const CAMERA_SEARCH_GRAY =
+  '카메라 이름으로 찾는 기능은 아직 없습니다. ' +
+  '지금은 기간을 좁힌 뒤 「카메라」 칸을 눈으로 훑는 것이 유일한 길입니다.';
+
 function parsePreset(value: string | null): PresetKey {
   const hit = PRESETS.find((p) => p.key === value);
   return hit ? hit.key : 'unhandled';
@@ -168,7 +318,13 @@ export default function EventList() {
   const preset = parsePreset(params.get('preset'));
   const severity = params.get('severity') ?? undefined;
   const eventType = params.get('event_type') ?? undefined;
+  const period = parsePeriod(params.get('period'));
+  const customSince = params.get('since');
+  const customUntil = params.get('until');
   const active = PRESETS.find((p) => p.key === preset)!;
+
+  /** 「사건번호로 열기」 칸의 글자. **주소에 두지 않는다** — 아직 안 누른 검색어다. */
+  const [eventNo, setEventNo] = useState('');
 
   /** 주소 한 칸만 바꾼다 — 나머지 조건은 유지된다(프리셋을 바꿔도 등급 필터가 살아 있다). */
   const setParam = useCallback(
@@ -188,22 +344,43 @@ export default function EventList() {
    *   창이 미끄러지면 15초마다 다른 모수를 보게 되고, 그러면 요약 한 줄과 목록이
    *   서로 다른 창을 말한다. `preset` 이 바뀔 때만 잡는다.
    */
+  /**
+   * ★ [P-120] 창은 **한 곳**에서 나온다(`windowOf`). 프리셋이 창을 따로 계산하던
+   *   가지를 지웠다 — 두 곳에서 계산하면 「지난 12시간」과 기간 단추가 서로 다른
+   *   `since` 를 보내고, 어느 쪽이 이겼는지는 화면에 안 나온다.
+   */
+  const win = useMemo(
+    () => windowOf(period, preset, customSince, customUntil, new Date()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [period, preset, customSince, customUntil],
+  );
+
   const serverQuery = useMemo(() => {
     const base: Record<string, string | number | boolean> = {
       limit: PAGE_SIZE,
       ...(severity ? { severity } : {}),
       ...(eventType ? { event_type: eventType } : {}),
       ...active.query,
+      ...(win.since ? { since: win.since } : {}),
+      ...(win.until ? { until: win.until } : {}),
     };
-    if (active.key === 'recent') {
-      const until = new Date();
-      const since = new Date(until.getTime() - RECENT_HOURS * 3600_000);
-      base.since = since.toISOString();
-      base.until = until.toISOString();
-    }
     return base;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preset, severity, eventType]);
+  }, [preset, severity, eventType, win]);
+
+  /**
+   * 「사건번호로 열기」 — **거르지 않는다. 연다.**
+   * 상세 화면이 서버에 다시 묻고, 없으면 서버가 404 로 답한다. 화면이 「없다」를
+   * 지어내지 않는 이유가 그것이다.
+   */
+  const openByNo = useCallback(
+    (raw: string) => {
+      const no = raw.trim();
+      if (!no) return;
+      navigate(`/dsm/events/${encodeURIComponent(no)}`);
+    },
+    [navigate],
+  );
 
   const events = useDsmResource<{ total: number; events: EventRow[] }>(
     () => dsmGet(dsmEndpoint.events, serverQuery),
@@ -306,6 +483,70 @@ export default function EventList() {
                 </Button>
               ))}
             </Space>
+            {/* ── [P-120] 기간 · 한 줄 ─────────────────────────────────────
+                ★ 이 줄이 생기기 전까지 이 화면에는 **날짜 칸이 하나도 없었다.**
+                  감사 질문은 언제나 날짜로 온다.
+                ★ 고른 창은 **글자로 다시 적는다**(아래 「보고 있는 기간」).
+                  단추가 눌린 모양만으로는 「어디부터 어디까지인가」를 말하지 못하고,
+                  그 문장이 없으면 사람이 자기가 본 창을 보고서에 옮겨 적지 못한다. */}
+            <Space wrap align="center">
+              <Text type="secondary">기간</Text>
+              <Segmented
+                value={period}
+                onChange={(v) => setParam('period', String(v))}
+                options={PERIODS.map((x) => ({ value: x.key, label: x.label }))}
+              />
+              {period === 'custom' && (
+                <DatePicker.RangePicker
+                  showTime={{ format: 'HH:mm' }}
+                  format="YYYY-MM-DD HH:mm"
+                  allowEmpty={[true, true]}
+                  value={[
+                    customSince && dayjs(customSince).isValid() ? dayjs(customSince) : null,
+                    customUntil && dayjs(customUntil).isValid() ? dayjs(customUntil) : null,
+                  ] as [Dayjs | null, Dayjs | null]}
+                  onChange={(vals) => {
+                    const next = new URLSearchParams(params);
+                    next.set('period', 'custom');
+                    const a = vals?.[0];
+                    const b = vals?.[1];
+                    if (a) next.set('since', a.toDate().toISOString());
+                    else next.delete('since');
+                    if (b) next.set('until', b.toDate().toISOString());
+                    else next.delete('until');
+                    setParams(next, { replace: false });
+                  }}
+                />
+              )}
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                보고 있는 기간: {win.label}
+              </Text>
+            </Space>
+
+            {/* ── [P-120] 사건번호로 열기 ──────────────────────────────────
+                ★ 「찾기」가 아니라 **「열기」**다. 목록을 거르는 것이 아니라
+                  그 사건의 문을 두드린다 — 없으면 상세 화면이 서버의 404 를 그린다.
+                ★ 카메라 이름 검색은 **회색이다.** 서버가 그 인자를 안 받는다는 사실을
+                  화면에서 숨기지 않는다 — 있는 척한 검색은 없는 검색보다 나쁘다. */}
+            <Space wrap align="center">
+              <Input.Search
+                allowClear
+                placeholder="사건번호"
+                enterButton="열기"
+                style={{ width: 240 }}
+                value={eventNo}
+                onChange={(e) => setEventNo(e.target.value)}
+                onSearch={openByNo}
+              />
+              <Popover content={<div style={{ maxWidth: 300 }}>{CAMERA_SEARCH_GRAY}</div>}>
+                <Input
+                  disabled
+                  style={{ width: 200 }}
+                  placeholder="카메라 이름 — 아직 못 찾습니다"
+                />
+              </Popover>
+            </Space>
+
             <Space wrap>
               <Select
                 allowClear

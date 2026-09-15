@@ -18,6 +18,11 @@ import {
 
 import { CustomRoutes } from '../../../services/API';
 import { CsvSettingsModal } from '../components/CsvSettingsModal';
+/**
+ * ★ [P-123 · UX-31 ② · 턴 O · 차선 C2] **빈 화면을 글자로 바꾼다.**
+ *   근거와 실측은 `components/ShiftHandoverPanel.tsx` 머리말에 있다.
+ */
+import ShiftHandoverPanel from '../components/ShiftHandoverPanel';
 import {
   COLUMNS_COMPLETED_NOTICE,
   COLUMNS_NOTICE_MANAGEMENT,
@@ -390,6 +395,24 @@ export const HandoverPage = () => {
         buttons={buttonsViewInTab(activeKey as TabKey)}
         hasLineBottom={false}
       />
+      {/*
+        P-123 · UX-31 ② — **탭이 하나도 없을 때 이 화면은 68바이트였다.**
+
+        `availableTabKeys` 는 `currentMenu?.tabs` 에서 온다. 사이드바를 안 거치고
+        주소로 들어오거나 탭 권한이 없으면 0이 되고, 그러면 아래 `CustomTabs` 도
+        `ActiveTabComponent` 도 **아무것도 안 그린다**. 그 빈 상자는 「인계가 없다」로
+        읽히지만 실제로 일어난 일은 「이 화면이 자기가 무엇인지 모른다」다 —
+        DA-03 §2-5 가 금지한 모양(빈 것과 못 부른 것이 같은 그림).
+
+        ⚠ 탭이 있을 때는 **아무것도 바꾸지 않는다.** 인수 화면의 갈래를 건드리면
+          그 화면이 인수 자산이 아니라 우리 빚이 된다.
+      */}
+      {availableTabKeys.length === 0 ? (
+        <ShiftHandoverPanel
+          composePath={CustomRoutes.handover.subRoutes.addNoticeManagement.path}
+          reasonLine="이 자리에 지난 교대가 남긴 말이 뜹니다. 지금은 남긴 말이 없습니다. (사이드바의 「인계 메모」로 들어오면 탭이 함께 뜹니다)"
+        />
+      ) : null}
       <CustomTabs
         onChange={(key: string) => {
           if (!isValidTabKey(key)) {
