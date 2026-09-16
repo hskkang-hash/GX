@@ -223,6 +223,11 @@ const DsmControlDashboard = lazy(
   () => import('./features/dsm/pages/ControlDashboard'),
 );
 const DsmEventList = lazy(() => import('./features/dsm/pages/EventList'));
+/**
+ * P-147 역할 홈 2단계 — **한 라우트, 역할마다 다른 띠** (턴 R · 차선 F).
+ * 경로는 `features/dsm/routes.ts` 한 곳에서 정한다(아래 다른 화면들과 같은 규약).
+ */
+const DsmRoleHome = lazy(() => import('./features/dsm/pages/Home'));
 const DsmEventDetail = lazy(() => import('./features/dsm/pages/EventDetail'));
 /**
  * 2파 DSM 화면 셋 (차선 C · 2026-09-24) — UX-13 · UX-17 · UX-18.
@@ -250,6 +255,14 @@ const DsmMetering = lazy(() => import('./features/dsm/pages/Metering'));
 /** 턴 G · P-67 보존·백업 선언 (U5 관리자). 미선언은 빨강으로 말한다. */
 const DsmSystemSettings = lazy(
   () => import('./features/dsm/pages/SystemSettings'),
+);
+/** UX-35 요원별 현황 — 골격 (차선 U24 · 턴 R). */
+const DsmTeamStatus = lazy(() => import('./features/dsm/pages/TeamStatus'));
+/** S-14 사람·역할 — UX-42 (차선 U56 · 턴 R). */
+const DsmPeople = lazy(() => import('./features/dsm/pages/People'));
+/** S-16 알림 받는 사람·채널 — 골격 · UX-43 (차선 U56 · 턴 R). */
+const DsmNotifySettings = lazy(
+  () => import('./features/dsm/pages/NotifySettings'),
 );
 /**
  * 모바일 — 이동 중 수신 모드 (U3 · 차선 D).
@@ -672,6 +685,9 @@ function App() {
               element: <DsmControlDashboard />,
             },
             { path: CustomRoutes.dsm.events.path, element: <DsmEventList /> },
+            // ── 턴 R · P-147 역할 홈 (U2·U4·U5) ─────────────────────────
+            //   ⚠ `/dsm/events/:id` 의 변수 조각 밑이 아니다 — 다른 가지라 삼킴이 없다.
+            { path: dsm2Routes.roleHome.path, element: <DsmRoleHome /> },
             // ── 2파 · UX-13 · UX-17 · UX-18 (차선 C) ─────────────────────
             //   ⚠ `/dsm/events/:id` 가 변수 조각이라 `/dsm/events/...` 리터럴을
             //     삼킬 수 있다 — 그래서 큐는 `/dsm/queue` 로 **다른 가지**에 둔다.
@@ -695,6 +711,20 @@ function App() {
             {
               path: dsm2Routes.systemSettings.path,
               element: <DsmSystemSettings />,
+            },
+            // ── 턴 R · UX-35 요원별 현황 골격 (차선 U24) ─────────────────
+            //   ⚠ `/dsm/metering` · `/dsm/system` 과 형제다(변수 조각 없음).
+            {
+              path: dsm2Routes.teamStatus.path,
+              element: <DsmTeamStatus />,
+            },
+            // ── 턴 R · S-14 사람·역할 · S-16 알림 골격 (차선 U56) ────────
+            //   ⚠ `/dsm/metering` · `/dsm/system` · `/dsm/team-status` 와
+            //     형제다(변수 조각 없음 — 서로 삼키지 않는다).
+            { path: dsm2Routes.people.path, element: <DsmPeople /> },
+            {
+              path: dsm2Routes.notifySettings.path,
+              element: <DsmNotifySettings />,
             },
             {
               path: CustomRoutes.dsm.eventDetail.path,

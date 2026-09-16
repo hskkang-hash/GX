@@ -40,6 +40,11 @@ export const dsmEndpoint = {
   responseTimes: '/api/dsm/events/response-times',
   /** UX-14 네 시각 타임라인. */
   timeline: (id: number | string) => `/api/dsm/events/${id}/timeline`,
+  /**
+   * UX-35 요원별 처리 현황 (차선 U24 · 턴 R). `apps/dsm/api_u24.py::stats_by_reviewer` —
+   * 60초 캐시가 허용된 집계다(WO-01 §5 · 시계·건강 보드가 아니다).
+   */
+  statsByReviewer: '/api/dsm/stats/by-reviewer',
   /** UX-17 훈련 모드 스위치(GET 상태 · POST 전환). **한 경로 두 메서드**다. */
   drill: '/api/dsm/drill',
   drillReport: '/api/dsm/drill/report',
@@ -427,6 +432,29 @@ export const dsmSystemEndpoint = {
  *   **요청 자체가 안 나간다.**
  */
 
+/**
+ * P-147 역할 홈 · UX-46 온보딩 진행률 — **끝에 상수만 더한다** (턴 R · 차선 F).
+ *
+ * ★ 위쪽 객체 리터럴에 줄을 끼우지 않는 이유는 앞의 세 묶음과 같다 — 같은 턴에 여러
+ *   차선이 이 파일을 읽고, 충돌한 상수 파일은 화면 전체를 못 세운다.
+ *
+ * ★ **홈이 부르는 문은 거의 다 이미 있다.** 띠의 세 수는 `dsmEndpoint.eventsSummary` 가
+ *   내고, 카메라 건강은 `cameraPulse`·`cameraAddressGap` 이 낸다. 같은 수를 내는 문을
+ *   하나 더 열지 않는다 — 두 문이 갈리면 홈과 목록이 다른 수를 말한다.
+ */
+export const dsmHomeEndpoint = {
+  /** UX-46 「처음 시작하기」 카드와 진행률. **닫는 문(POST)은 없다** — 서버 기록이 닫는다. */
+  onboardingProgress: '/api/dsm/onboarding/progress',
+  /** UX-39 기간 집계. 합계는 같은 기간의 목록 수와 같다(서버가 같은 함수를 부른다). */
+  statsSummary: '/api/dsm/stats/summary',
+} as const;
+
+/*
+ * ⚠ 「요원별 처리 현황」의 경로는 **여기 적지 않는다.** 같은 턴에 차선 U24 가
+ *   `dsmEndpoint.statsByReviewer` 로 이미 올렸다 — 같은 주소를 두 상수로 두면 한쪽만
+ *   고쳐지는 날 화면이 갈린다(D-212). 홈은 그 상수를 그대로 부른다.
+ */
+
 /** 멱등 키가 실리는 자리. 이름을 두 벌로 적지 않는다. */
 export const IDEMPOTENCY_HEADER = 'Idempotency-Key';
 
@@ -547,6 +575,31 @@ export function isInFlight(idempotencyKey: string): boolean {
 }
 
 /**
+ * S-14 「사람·역할」· P-145 웹훅 서명키 — **차선 U56 · 턴 R**.
+ *
+ * ★ 끝에 붙인다. 위쪽 `dsmEndpoint` 리터럴에 줄을 끼우면 같은 턴의 다른 차선과
+ *   충돌하고, 충돌한 상수 파일은 화면 전체를 못 세운다 — 위 세 상수 묶음과 같은 규약.
+ *
+ * ⚠ 경로가 `/settings/people` 이 아니라 `/settings/people/create` 인 이유:
+ *   `/settings/people`(한 조각)은 `api.py` 의 `GET /settings/{domain}` 에 삼켜져
+ *   POST 가 405 를 낸다(라우트 삼킴 · `api_u56.py` 머리말에 실측을 남겼다).
+ */
+export const dsmU56Endpoint = {
+  /** UX-42 #1·#2 — 계정 생성(+역할). */
+  peopleCreate: '/api/dsm/settings/people/create',
+  /** UX-42 #3 — 계정 비활성화. **행을 지우지 않는다.** */
+  peopleDeactivate: (userId: number | string) =>
+    `/api/dsm/settings/people/${userId}/deactivate`,
+  /**
+   * P-145 — 서명키를 **서버가 만들어** 구독에 물린다. 값은 **응답에 한 번만** 있다 —
+   * 이 화면은 그 값을 옮겨 적을 자리(복사 버튼)만 주고, 어디에도 다시 저장하지 않는다.
+   */
+  webhookSubscriptionIssue: '/api/dsm/settings/webhook-subscriptions/issue',
+  /** 구독 목록 — 이름(`signing_key_ref`)만 있고 값은 없다. 기존 F-05 문(`api.py`) 그대로. */
+  webhookSubscriptions: '/api/dsm/webhook-subscriptions',
+} as const;
+
+/**
  * 같은 **의도**에는 같은 키를 준다 — 두 번 눌린 것과 다시 눌린 것을 가른다.
  *
  *   두 번 눌렸다 = 앞의 요청이 **아직 날아가는 중** → 같은 키 → 요청 하나
@@ -563,4 +616,21 @@ export function intentKey(intent: string): string {
   const fresh = newIdempotencyKey();
   intentKeys.set(intent, fresh);
   return fresh;
+}
+
+/**
+ * M3 사진 올리기 — **본문이 파일이다** (2026-09-16 · 턴 R · 차선 U3).
+ *
+ * ★ 끝에 붙인다 — 위 규약과 같다(`dsmMeteringEndpoint` 머리말). 이 파일을 여러
+ *   차선이 읽는 턴에 위쪽 리터럴이나 함수 사이에 줄을 끼우면 충돌한다.
+ *
+ * `dsmPost` 는 언제나 JSON 본문을 보낸다. 사진은 `multipart/form-data` 로 가야
+ * 서버(`ninja.File` · `apps/dsm/api_u3.py::upload_field_photo`)가 읽는다 —
+ * axios 는 `FormData` 를 주면 boundary 를 스스로 채운다. **`Content-Type` 을
+ * 손으로 적지 않는다** — 적으면 boundary 가 빠져 서버가 본문을 못 연다.
+ */
+export function dsmPostForm<T>(url: string, form: FormData): Promise<T> {
+  return withTimeout(async (signal) =>
+    unwrap<T>(await API.post(url, form, { signal })),
+  );
 }

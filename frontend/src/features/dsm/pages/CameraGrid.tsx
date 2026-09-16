@@ -100,6 +100,15 @@ export default function CameraGridPage() {
               <Text type="secondary">
                 {grid.pageIndex + 1} / {grid.pageCount}
               </Text>
+              {/* ★ 순회는 「온통 검은 쪽」을 건너뛴다(UX-23′) — 그 쪽의 검은 칸은
+                  여전히 그려진다(표시는 그대로), 다만 순회가 30초씩 거기 머물지
+                  않는다. 건너뛴 사실을 침묵하지 않는다 — 조용히 건너뛰면
+                  「순회가 이상하게 짧다」로만 보인다. */}
+              {grid.rotating && grid.skippedAllDeadPages > 0 ? (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  온통 무응답인 {grid.skippedAllDeadPages}쪽은 순회에서 건너뜁니다.
+                </Text>
+              ) : null}
               {/* ★ 쪽이 하나뿐이면 **누를 수 없게** 둔다. 감추지 않는 이유: 감추면
                   「이 화면에 순회가 없다」와 「지금은 넘길 쪽이 없다」가 같은 그림이
                   되고, 그 둘은 다른 사실이다(D-290). 누를 수 없는 이유는 아래

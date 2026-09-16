@@ -65,4 +65,27 @@ export const dsm2Routes = {
    * ⚠ `/dsm/metering` 과 형제다(변수 조각 없음 — 서로 삼키지 않는다).
    */
   systemSettings: { title: '보존·백업 설정', path: '/dsm/system' },
+  /**
+   * UX-35 요원별 처리 현황 — **골격** (차선 U24 · 턴 R). `stats.by-reviewer` 를 그대로 연다.
+   * ⚠ `/dsm/metering` · `/dsm/system` 과 형제다(변수 조각 없음 — 서로 삼키지 않는다).
+   */
+  teamStatus: { title: '요원별 현황', path: '/dsm/team-status' },
+  /**
+   * P-147 역할 홈 2단계 — **홈은 목록이 아니다** (턴 R · 차선 F).
+   * 한 라우트이고 역할마다 다른 띠를 그린다(부속서 A S-01b·c·d 가 셋 다 이 경로로 적었다).
+   *
+   * ⚠ `/dsm/events/:id` 의 변수 조각 밑이 아니다 — 다른 가지라 서로 삼키지 않는다.
+   * ★ U1 의 홈은 여기가 아니라 `/dsm/queue` 그대로다 — 이미 선 자리를 옮기지 않는다.
+   */
+  roleHome: { title: '역할 홈', path: '/dsm/home' },
+  /**
+   * S-14 「사람·역할」 — 계정 만들기 · 비활성화 (턴 R · 차선 U56 · UX-42).
+   * ⚠ `/dsm/system` · `/dsm/team-status` 와 형제다(변수 조각 없음 — 서로 삼키지 않는다).
+   */
+  people: { title: '사람·역할', path: '/dsm/people' },
+  /**
+   * S-16 「알림 받는 사람·채널」 — **골격** (턴 R · 차선 U56 · UX-43). 규칙 표시까지만.
+   * ⚠ 위와 같은 이유로 형제 경로들과 삼키지 않는다.
+   */
+  notifySettings: { title: '알림 받는 사람·채널', path: '/dsm/notify' },
 } as const;

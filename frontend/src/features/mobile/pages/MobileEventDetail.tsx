@@ -91,7 +91,8 @@
  *     사람이 지도를 본 뒤 다시 돌아와 다음 버튼을 눌러야 한다.
  */
 import { Button, Card, Collapse, Descriptions, Input, Modal, Space, Tag, Typography, message } from 'antd';
-import { useCallback, useState } from 'react';
+import type { ChangeEvent } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import EventSnapshot from '../../dsm/components/EventSnapshot';
@@ -110,6 +111,7 @@ import {
 import { absolute, relative } from '../../dsm/time';
 import {
   dsmGet,
+  dsmPostForm,
   DsmApiError,
   intentKey,
   mobileEndpoint,
@@ -140,6 +142,15 @@ const ADDRESS_STATUS_LABEL: Record<string, string> = {
  * ⚠ 이 상수를 고치면 `scripts/capture_screens.py` 의 사본도 **같은 커밋에서** 고친다.
  */
 export const FIELD_REPLY_HEADLINE = '현장 회신 — 본 것을 한 줄로';
+
+/**
+ * [P-148·UX-45 · 턴 R] M3 사진 섹션 표제. 캡처가 이 글자를 보고 찍는다 —
+ * 고치면 `scripts/capture_screens.py` 사본도 같은 커밋에서 고친다.
+ */
+export const FIELD_PHOTO_HEADLINE = '현장 사진 — 한 장 올리기';
+
+/** 사진이 받는 형식 셋 — `backend/apps/dsm/field.py::ALLOWED_CONTENT_TYPES` 와 같다. */
+const FIELD_PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
 
 /** 지도 버튼의 말. GX-COPY_v1.md §5 「2026-09-15 턴 Q 추가」와 같은 문구다. */
 export const MAP_LINK_LABEL = '지도에서 보기';
@@ -288,6 +299,77 @@ export default function MobileEventDetail() {
     }
   }, [id, replyText, replies]);
 
+  /**
+   * M3 — 사진 한 장 올리기 (UX-45 · 2026-09-16 턴 R). 문은 이미 턴 Q 에 섰다
+   * (`POST …/field-photo`) — 이번 턴은 **화면 배선**이다. **선택**이다 — 실패해도
+   * 다음 단계(한 줄 · 완료)로 그대로 간다(design 문서 §2 「강제하면 새 장애물」).
+   */
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoCount, setPhotoCount] = useState(0);
+
+  const pickFieldPhoto = useCallback(() => {
+    photoInputRef.current?.click();
+  }, []);
+
+  const uploadFieldPhoto = useCallback(
+    async (file: File) => {
+      if (!id) return;
+      setPhotoBusy(true);
+      try {
+        const form = new FormData();
+        // ★ 필드 이름은 서버와 같아야 한다 — `api_u3.py::upload_field_photo` 의
+        //   `photo: UploadedFile = File(...)`.
+        form.append('photo', file);
+        await dsmPostForm(mobileEndpoint.fieldPhoto(id), form);
+        setPhotoCount((n) => n + 1);
+        message.success('사진을 올렸습니다.');
+      } catch (err) {
+        message.error(
+          userFacingError('MobileEventDetail.fieldPhoto', err, '사진을 올리지 못했습니다.'),
+        );
+      } finally {
+        setPhotoBusy(false);
+      }
+    },
+    [id],
+  );
+
+  const onFieldPhotoChosen = useCallback(
+    (ev: ChangeEvent<HTMLInputElement>) => {
+      const file = ev.target.files?.[0];
+      ev.target.value = ''; // 같은 파일을 다시 골라도 change 가 다시 뜨게 비운다
+      if (file) void uploadFieldPhoto(file);
+    },
+    [uploadFieldPhoto],
+  );
+
+  /**
+   * M3 — 오탐 회신 「가 보니 아무것도 없다」(UX-45 5행). **새 문이 아니다** —
+   * 관제 화면(`EventDetail.tsx`)의 「오탐으로 판정」과 같은 `review` 다. 도착·접수는
+   * 이미 별도 버튼으로 끝났으므로 U1 큐 카드의 트랜잭션과 겹치지 않게 **단독 호출**만 쓴다.
+   */
+  const reportFalsePositive = useCallback(async () => {
+    if (!id) return;
+    setBusy('false-positive');
+    try {
+      // ★ **오탐 회신 — 멱등 키를 싣는 문 ④.**
+      await mobilePostWithQueryOnce(
+        mobileEndpoint.review(id),
+        { verdict: 'rejected', reason: '현장 확인 — 가 보니 아무것도 없음' },
+        intentKey(`m.review:${id}:rejected`),
+      );
+      message.success('오탐으로 기록했습니다.');
+      event.reload();
+    } catch (err) {
+      message.error(
+        userFacingError('MobileEventDetail.falsePositive', err, '오탐 기록을 보내지 못했습니다.'),
+      );
+    } finally {
+      setBusy('');
+    }
+  }, [id, event]);
+
   const e = event.data;
 
   return (
@@ -412,6 +494,8 @@ export default function MobileEventDetail() {
                           snapshotPath={e.snapshot_path}
                           compact
                           alt="현장 스냅샷"
+                          // [P-148 · 턴 R] 판정기가 찾는 표식 — img[data-gx=snapshot] 1개.
+                          dataGx="snapshot"
                         />
                       </div>
                       <Collapse
@@ -515,6 +599,33 @@ export default function MobileEventDetail() {
                   </Space>
                 )}
 
+                {/* M3 — 사진 한 장. 「도착 · 사진 · 한 줄 · 오탐 · 완료」 중 사진(선택). */}
+                <Card size="small" title={FIELD_PHOTO_HEADLINE}>
+                  <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept={FIELD_PHOTO_ACCEPT}
+                      capture="environment"
+                      hidden
+                      onChange={onFieldPhotoChosen}
+                    />
+                    <Button
+                      block
+                      style={{ minHeight: TOUCH_MIN }}
+                      loading={photoBusy}
+                      onClick={pickFieldPhoto}
+                    >
+                      사진 올리기
+                    </Button>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {photoCount > 0
+                        ? `이번 화면에서 ${photoCount}장을 올렸습니다.`
+                        : '선택입니다 — 안 올려도 다음으로 갑니다.'}
+                    </Text>
+                  </Space>
+                </Card>
+
                 {/* M3 — 현장 회신 한 줄. 「도착 · 사진 한 장 · 한 줄」 중 한 줄이다. */}
                 <Card size="small" title={FIELD_REPLY_HEADLINE}>
                   <Space direction="vertical" size="small" style={{ width: '100%' }}>
@@ -551,6 +662,17 @@ export default function MobileEventDetail() {
                     </StateBoundary>
                   </Space>
                 </Card>
+
+                {/* M3 — 오탐 회신. 「가 보니 아무것도 없다」 · 완료(위 다음 단계)와 서로 배타. */}
+                <Button
+                  block
+                  type="dashed"
+                  style={{ minHeight: TOUCH_MIN }}
+                  loading={busy === 'false-positive'}
+                  onClick={reportFalsePositive}
+                >
+                  오탐 — 가 보니 아무것도 없음
+                </Button>
               </Space>
             </Card>
           </Space>

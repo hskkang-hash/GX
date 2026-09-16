@@ -10,10 +10,11 @@
  *   모르는 화면은 **낡은 판단**을 만든다.
  */
 import { Button, Space, Typography } from 'antd';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { stamp, TIMEZONE_NOTE } from '../../dsm/time';
+import { ensureFieldPushServiceWorker } from '../push';
 
 const { Text, Title } = Typography;
 
@@ -41,6 +42,12 @@ export default function MobileShell({
   children,
 }: Props) {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // [CH-03 · 턴 R] 골격만 — 등록만 하고 아무것도 묻지 않는다(권한·구독은 다음 턴).
+    // 실패해도 이 화면은 그대로 쓴다 — 알림은 부가 기능이지 이 화면의 본업이 아니다.
+    void ensureFieldPushServiceWorker();
+  }, []);
 
   return (
     <div

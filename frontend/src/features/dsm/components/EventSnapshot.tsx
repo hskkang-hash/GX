@@ -35,6 +35,13 @@ interface Props {
    * 220px 고정은 사진을 우표로 만든다 (P-121 · 모바일도 같은 사진을 본다).
    */
   compact?: boolean;
+  /**
+   * [P-148 · 턴 R] `<img>` 에 다는 `data-gx` 표식. **판정기가 찾는 자리다** —
+   * `scripts/verify_click_completes.py` 의 사진 술어(U3#3)가
+   * `img[data-gx="snapshot"]` 하나를 찾아 `naturalWidth` 를 잰다. 지정하지
+   * 않으면 속성을 안 단다 — 다른 화면(관제 상세·초점 큐)은 영향이 없다.
+   */
+  dataGx?: string;
 }
 
 export default function EventSnapshot({
@@ -43,6 +50,7 @@ export default function EventSnapshot({
   height = 220,
   alt = '이벤트 스냅샷',
   compact = false,
+  dataGx,
 }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<{ message: string; status: number } | null>(null);
@@ -155,6 +163,7 @@ export default function EventSnapshot({
       <img
         src={url ?? ''}
         alt={alt}
+        data-gx={dataGx}
         style={{
           width: '100%',
           // ★ 손바닥 화면에서는 높이를 **고정하지 않는다** — 가로에 맞춰 접힌다.

@@ -39,7 +39,12 @@
  *   기본값으로 간다 — 자기 것이 아닌 홈을 보여 주는 것보다 지금 가던 곳이 낫다(사양 §3).
  *   역할 0 은 어차피 `App.tsx` 의 `PrivateLayout` 이 `RolePendingScreen` 으로 가린다.
  */
-import { CustomRoutes } from '@/services/API';
+/*
+ * ⚠ [턴 R · P-147] `CustomRoutes` 가져오기를 **뺐다.** U2·U4·U5 의 홈이 `/dsm/events` ·
+ *   `/dsm/dashboard` 에서 `/dsm/home` 으로 옮겨 가면서 이 파일이 그 상수를 한 번도 안
+ *   쓰게 됐다. 안 쓰는 가져오기를 남기면 다음 사람이 「여기가 아직 그 화면을 가리킨다」로
+ *   읽는다 — 홈의 경로는 이제 `features/dsm/routes.ts` 한 곳에서만 온다.
+ */
 import { dsm2Routes } from '@/features/dsm/routes';
 import { mobileRoutes } from '@/features/mobile/routes';
 
@@ -48,19 +53,34 @@ import { bucketOf, roleCodesOf, type NavBucket } from './roleNav';
 /**
  * 역할의 홈 (사양 §2 표). 경로는 **라우트 상수에서** 읽는다 — 문자열을 여기서 짓지 않는다.
  *
- *   U1 관제요원    지금 처리할 것         `/dsm/queue`             등록 `App.tsx:681`
- *   U2 관제팀장    무슨 일 있었나(밤사이)  `/dsm/events`            등록 `App.tsx:676`
- *   U4 재난안전과  무슨 일 있었나(7일)     `/dsm/events?period=d7`  같은 화면 · `EventList.tsx:221`
- *   U5 관리자      관제 대시보드          `/dsm/dashboard`         등록 `App.tsx:673`
+ *   U1 관제요원    지금 처리할 것         `/dsm/queue`   (그대로 — 이미 초록인 자리를 옮기지 않는다)
+ *   U2 관제팀장    무슨 일 있었나(밤사이)  `/dsm/home`
+ *   U4 재난안전과  지난 7일               `/dsm/home`
+ *   U5 관리자      관리자 홈              `/dsm/home`
  *
- * ⚠ 사양 §5 의 미정 셋은 **표대로 둔다**(선언이다 · 면제가 아니다):
- *   U2 의 「밤사이」 창(12h ↔ 24h) · U4 에 `?preset=` 도 걸 것인가 · U5 홈이 대시보드가 맞는가.
+ * ★★ [P-147 · 턴 R] **목록은 홈이 아니다.**
+ *   ----------------------------------------------------------------
+ *   턴 Q 는 셋을 목록·대시보드로 **리다이렉트**했다(`/dsm/events` · `?period=d7` ·
+ *   `/dsm/dashboard`). 1단계로는 옳았다 — 아무 데도 안 가던 것이 자기 화면으로 갔다.
+ *   그러나 정본(부속서 A S-01b·c·d)이 말하는 홈은 **띠 3수와 카드 넷**이고, 목록은
+ *   그 홈에서 **1클릭으로 가는 곳**이다. 목록을 홈으로 두면 「무슨 일 있었나」를
+ *   사람이 표에서 세어야 한다 — 세는 일을 사람에게 돌려주는 화면은 홈이 아니다.
+ *
+ *   그래서 셋을 한 라우트(`/dsm/home`)로 모으고, **띠를 역할마다 다르게 그린다**
+ *   (`features/dsm/pages/Home.tsx`). 세 벌의 화면을 만들지 않는 이유는 이 파일이
+ *   사양 §1 에서 배운 것과 같다 — 같은 판단이 여러 벌이면 반드시 어긋난다.
+ *
+ *   ⚠ **U1 은 옮기지 않았다.** `/dsm/queue` 는 이미 「가장 급한 하나」를 그리는 홈이고
+ *     (부속서 A 는 S-01a 를 그 경로로 적는다), 그 자리는 이미 초록이다.
+ *
+ * ⚠ 사양 §5 의 미정 하나는 **표대로 둔다**: U2 의 「밤사이」 창(12h ↔ 24h) —
+ *   홈의 기본 창은 12h 이고 화면에서 7d 로 바꿀 수 있다.
  */
 export const ROLE_HOME: Readonly<Record<NavBucket, string>> = {
   U1: dsm2Routes.focusQueue.path,
-  U2: CustomRoutes.dsm.events.path,
-  U4: `${CustomRoutes.dsm.events.path}?period=d7`,
-  U5: CustomRoutes.dsm.dashboard.path,
+  U2: dsm2Routes.roleHome.path,
+  U4: dsm2Routes.roleHome.path,
+  U5: dsm2Routes.roleHome.path,
 };
 
 /**

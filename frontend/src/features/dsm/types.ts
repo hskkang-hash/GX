@@ -111,6 +111,32 @@ export interface DeliveryRow {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+ * UX-35 요원별 처리 현황 — `GET /api/dsm/stats/by-reviewer` (차선 U24 · 턴 R)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ★ 서버(`apps/dsm/stats.py::stats_by_reviewer`)는 아직 **이름을 붙이지 않는다** —
+ *   판정자는 `reviewed_by_id` 하나뿐이고 사람 이름은 이 집계에 없다(가정 · 골격).
+ *   화면이 이름을 지어내면 그 이름은 서버가 준 적 없는 값이라 D-286 을 어긴다.
+ */
+export interface ReviewerRow {
+  reviewer_id: number;
+  reviewed_total: number;
+  closed_total: number;
+  false_positive_total: number;
+  /** `null` = 아직 아무것도 못 쟀다(판정에 시각이 없던 행). 0으로 지어내지 않는다. */
+  avg_response_seconds: number | null;
+}
+
+export interface ByReviewerResponse {
+  since: string;
+  until: string;
+  reviewers: ReviewerRow[];
+  total_reviewed: number;
+  capped: boolean;
+  row_cap: number;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
  * UX-13 단일 초점 큐 · UX-14 대응 시계 (차선 C · 2026-09-24)
  * ═══════════════════════════════════════════════════════════════════════════ */
 

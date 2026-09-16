@@ -29,6 +29,7 @@ import {
   dsmEndpoint,
   dsmGet,
   dsmPost,
+  dsmPostForm,
   dsmPostQuery,
   dsmPostQueryOnce,
   intentKey,
@@ -36,7 +37,7 @@ import {
   LOAD_TIMEOUT_MS,
 } from '../dsm/api';
 
-export { dsmGet, dsmPost, dsmPostQuery, DsmApiError, LOAD_TIMEOUT_MS, intentKey };
+export { dsmGet, dsmPost, dsmPostForm, dsmPostQuery, DsmApiError, LOAD_TIMEOUT_MS, intentKey };
 
 /**
  * 모바일이 쓰는 문 넷. **전부 이미 서 있는 문이다** — 새로 뚫은 것이 하나도 없다.
@@ -60,6 +61,19 @@ export const mobileEndpoint = {
    */
   fieldReply: dsmEndpoint.fieldReply,
   fieldReplies: dsmEndpoint.fieldReplies,
+  /**
+   * M3 「사진 한 장 올리기」(UX-45 · 2026-09-16 턴 R). 문은 이미 턴 Q 에 섰다
+   * (`POST …/field-photo` · `apps/dsm/api_u3.py::upload_field_photo`) — 이번
+   * 턴은 **화면 배선**이다(선택 → 업로드 → 완료 배지).
+   */
+  fieldPhoto: (id: number | string) => `/api/dsm/events/${id}/field-photo`,
+  /**
+   * M3 「오탐 회신 — 가 보니 아무것도 없다」(UX-45 5행). **새 문이 아니다** —
+   * U1 이 이미 쓰는 그 `review` 다(`EventDetail.tsx` 「오탐으로 판정」과 같은 문).
+   * M3 는 도착·접수가 이미 끝난 뒤에 부르므로 **`review` 단독 호출**만 쓴다 —
+   * U1 큐 카드의 `review_and_acknowledge` 트랜잭션과 겹치지 않는다.
+   */
+  review: dsmEndpoint.review,
 } as const;
 
 /**
