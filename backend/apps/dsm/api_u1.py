@@ -19,7 +19,7 @@ from common.idempotency import idempotent
 from common.inbound_api_key import JwtOrInboundKey
 from common.tenant_scope import TenantScope, tenant_scoped
 
-from apps.dsm import services
+from apps.dsm import event_note_service, handover_service, services
 
 
 def _scope(request) -> TenantScope:
@@ -83,3 +83,86 @@ class DsmU1API:
             raise HttpError(400, str(exc))
         except services.ResponseTransitionForbidden as exc:
             raise HttpError(409, str(exc))
+
+    # ── UX-34 교대 인계 자동 초안 (WO-01 §5 · 턴 R) ─────────────────────────
+    #
+    # ★ 서버가 쓰고 사람이 고친다 — 빈 칸을 사람이 채우는 것이 아니다. 셈은
+    #   `handover_service.build_draft` 가 K1(`services.recent_events`)을 그대로
+    #   불러 옮길 뿐이고, 여기서 다시 세지 않는다.
+    # ★ 다음 근무자 홈 카드는 `latest()`(아래)가 여는 자리를 F 차선이 그린다 —
+    #   이 파일은 라우트·응답까지만 연다(§0.4 는 아니지만 차선 경계는 지킨다).
+    @route.get("/handover/draft", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="교대 인계 초안 — 남의 테넌트 미처리 수·사건 id 가 섞이면 "
+                         "격리 실패다")
+    def handover_draft_preview(self, request, hours: int = 24):
+        """GET — **저장하지 않는다.** 사람이 고치기 전 미리보기.
+
+        닫는 조건(RESUME_NEXT 턴 R · U1): 본문이 4줄 이상이고, 그 시간대 실제
+        사건에서 나왔음을 `unresolved_event_ids`(사건 id)로 보인다.
+        """
+        try:
+            return handover_service.preview(scope=_scope(request), hours=hours)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+
+    @route.post("/handover/draft", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="교대 인계 초안 저장 — 남의 테넌트에 인계 메모를 쓸 수 "
+                         "없다 (쓰기 IDOR)")
+    @idempotent("dsm.handover.draft.save")
+    def handover_draft_save(self, request, hours: int = 24, note: str = ""):
+        """POST — 초안을 `DsmHandover` 한 행으로 적는다. `note` 는 사람이 더하는
+        특이사항 한 줄(비어도 인계는 성립한다)."""
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return handover_service.save(scope=_scope(request), hours=hours, note=note)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except handover_service.HandoverRejected as exc:
+            raise HttpError(422, str(exc))
+
+    @route.get("/handover/latest", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="다음 근무자 홈 카드 — 남의 테넌트 인계 메모가 보이면 "
+                         "격리 실패다")
+    def handover_latest(self, request):
+        """GET — 이 테넌트 최신 인계 메모 한 건(UX-32-U2 「최신 1」).
+
+        ★ 홈에 그리는 것은 F 차선의 몫이다(P-147) — 여기서는 응답만 연다.
+        """
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return handover_service.latest(scope=_scope(request))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
+    # ── 사건에 메모 남기기 (부속서A U1 #15 · UX-34) ─────────────────────────
+    @route.post("/events/{int:event_id}/note", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="사건 메모 — 남의 테넌트 사건에 메모를 남길 수 없다 "
+                         "(쓰기 IDOR)")
+    def add_event_note(self, request, event_id: int, text: str):
+        """메모 1 → 타임라인에 표시(완결 조건). 저장 자리는 감사 표(재사용) —
+        `event_note_service` 머리말 참조."""
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return event_note_service.add_note(
+                scope=_scope(request), event_id=event_id, text=text)
+        except Http404:
+            raise HttpError(404, "그런 이벤트가 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except ValueError as exc:
+            raise HttpError(422, str(exc))
+
+    @route.get("/events/{int:event_id}/note", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="사건 메모 조회 — 남의 테넌트 사건 메모가 보이면 격리 "
+                         "실패다")
+    def list_event_notes(self, request, event_id: int):
+        try:
+            return {"notes": event_note_service.list_notes(
+                scope=_scope(request), event_id=event_id)}
+        except Http404:
+            raise HttpError(404, "그런 이벤트가 없습니다.")

@@ -58,6 +58,13 @@ from kernels.k5_trust.inbound_keys import (  # noqa: F401
     revoke_key,
     rotate_key,
 )
+from kernels.k5_trust.webhook_signing_keys import (  # noqa: F401
+    IssuedSigningKey,
+    SigningKeyNameCollision,
+    generate_signing_key,
+    rotate_signing_key,
+    signing_key_name_for,
+)
 from kernels.k5_trust.exceptions import (  # noqa: F401
     CredentialNotDeclared,
     CredentialNotUsable,
@@ -111,6 +118,14 @@ __all__ = [
     "InboundKeyView",
     "IssuedKey",
     "InboundKeyNotFound",
+    # ★ P-145 · 턴 R — **나가는** 웹훅 서명키를 우리가 만든다. `inbound_keys` 와
+    #   같은 이유로 표 ②(credentials.py)에 넣지 않는다(D-337 · 어휘는 빌려 쓰되
+    #   표는 다르다). 값은 발급 응답에 한 번만 — `credentials.py` 를 보지 않는다.
+    "generate_signing_key",
+    "rotate_signing_key",
+    "signing_key_name_for",
+    "IssuedSigningKey",
+    "SigningKeyNameCollision",
     # 상태 5값 (D-328)
     "ABSENT",
     "PRESENT",

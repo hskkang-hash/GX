@@ -188,6 +188,94 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 
 # ─────────────────────────────────────────────────────────────────────────────
+# ⑦ 자격의 **모양** — 짧은 값 · 같은 값 · 자리표로는 **뜨지 않는다**
+#    (P-107 · 턴 M / P-151 · 턴 R · blockers.yaml:1654 `unlock_step` ③)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# ★ 무엇이 이 절을 만들게 했나 [실측 2026-09-07 · 턴 L · gx-shell]
+#   앱이 든 `MINIO_ACCESS_KEY` 와 `MINIO_SECRET_KEY` 는 **둘 다 5자이고 sha256 이 같다**
+#   — 같은 문자열이다. 그 자격으로 앱은 **떠 있었고**, 화면이 부르는 라우트 둘이 503 을
+#   냈다. 턴 L 은 그 503 의 원인을 다른 데서 찾았다. 원인은 여기였다.
+#   **자리표는 도는 앱이 아니라 기동 실패여야 한다.**
+#
+# ★ 왜 「경고만 찍고 뜨는」 것이 안 되는가 — 그것은 가드가 아니다. 경고는 로그에
+#   묻히고, 묻힌 경고 뒤에서 5자 자격이 여섯 달을 돌았다. ①~⑤ 와 **같은 줄에**
+#   `_fail()` 로 쌓아 함께 거부한다.
+#
+# ★ 접근키 == 비밀키는 「짧다」와 **다른 종류의 결함**이다 — 접근키는 사용자 이름처럼
+#   로그·URL 에 남는 쪽이고 비밀키는 안 남는 쪽이다. 둘이 같으면 접근키가 남는
+#   모든 자리에 **비밀키가 같이 남아 있다**(blockers.yaml:1644).
+#
+# ⚠ **값을 메시지에 싣지 않는다.** 이 절이 밖으로 내보내는 것은 이름 · 길이 ·
+#   「같다/다르다」 · 자리표 낱말뿐이다 (P-135 불변 · `verify_no_secret_echo`).
+
+#: 자격의 하한. `.env.example` 이 선언한 형식이고 `verify_prod_settings.CRED_MIN_LEN`
+#: 과 **같은 수**다. 서명 키는 ①이 50자를 따로 본다(이 절은 20자만 다시 본다).
+CRED_MIN_LEN = 20
+
+#: 「저장소·예시·기본값을 읽은 사람이 아는 값」의 낱말. 판정기
+#: `verify_prod_settings.PROBE._PLACEHOLDER_WORDS` 와 **같은 목록**이다 —
+#: 둘이 갈리면 코드는 거부하는데 판정기는 초록을 내거나 그 반대가 된다.
+CREDENTIAL_PLACEHOLDER_WORDS = (
+    "change_me", "changeme", "your-", "please-change",
+    "example", "placeholder", "minioadmin", "secret-key",
+)
+
+
+def _placeholder_words(*values) -> list:
+    """주어진 값들에 박힌 자리표 낱말. **값은 안 돌려준다** — 낱말만."""
+    return [w for w in CREDENTIAL_PLACEHOLDER_WORDS
+            if any(w in (v or "").lower() for v in values)]
+
+
+def _from_settings(name: str) -> str:
+    """앱이 **실제로 쓰는** 값. `config.settings` 가 환경에서 읽어 세운 그 자리다.
+
+    ★ 여기서 `os.environ` 을 다시 읽지 않는 것이 중요하다 — 앱은 환경이 아니라
+      `django.conf.settings` 를 본다. 둘이 갈리면(기본값·형변환) 가드는 환경을
+      검사하고 앱은 다른 값으로 돈다.
+    """
+    return (globals().get(name) or "").strip()
+
+
+_minio_access = _from_settings("MINIO_ACCESS_KEY")
+_minio_secret = _from_settings("MINIO_SECRET_KEY")
+try:
+    _db_default = globals().get("DATABASES", {})["default"]
+except (KeyError, TypeError):
+    _db_default = {}
+_db_password = (_db_default.get("PASSWORD") or "").strip()
+_db_user = (_db_default.get("USER") or "").strip()
+
+for _name, _value in (("MINIO_ACCESS_KEY", _minio_access),
+                      ("MINIO_SECRET_KEY", _minio_secret),
+                      ("DB_PASSWORD", _db_password)):
+    if not _value:
+        _fail("%s 가 비어 있다 — 운영 프로필은 자격 없이 뜨지 않는다" % _name)
+    elif len(_value) < CRED_MIN_LEN:
+        _fail("%s 가 %d자다 — 하한은 %d자다. **짧은 자격으로 뜬 앱이 곧 사고다**"
+              % (_name, len(_value), CRED_MIN_LEN))
+
+#: 접근키와 비밀키가 **같은 문자열**이면 거부. 길이가 같은 것이 아니라 값이 같은 것을
+#: 본다 — 비교만 하고 어느 쪽도 밖으로 내보내지 않는다.
+if _minio_access and _minio_secret and _minio_access == _minio_secret:
+    _fail("MINIO_ACCESS_KEY 와 MINIO_SECRET_KEY 가 **같은 문자열이다**(둘 다 %d자) — "
+          "접근키는 로그·URL 에 남는 쪽이고 비밀키는 안 남는 쪽이다. 둘이 같으면 "
+          "접근키가 남는 모든 자리에 비밀키가 같이 남는다" % len(_minio_access))
+
+_cred_placeholders = _placeholder_words(_minio_access, _minio_secret,
+                                        _db_password, _db_user, _secret)
+if _cred_placeholders:
+    _fail("자격에 자리표 낱말이 남아 있다(%s) — **저장소·예시를 읽은 사람이 아는 값**은 "
+          "자격이 아니다. 네 이름(MINIO_ACCESS_KEY · MINIO_SECRET_KEY · DB_PASSWORD · "
+          "DJANGO_SECRET_KEY) 을 저장소 밖 금고의 값으로 채워라"
+          % ", ".join(_cred_placeholders))
+
+#: 이 프로필이 ⑦ 을 **실제로 보고 있다**는 것을 판정기·다음 사람이 되짚는 자리.
+#: (값이 아니라 「검사했다」는 사실이다.)
+CREDENTIAL_GUARD = "SEC-18-⑦"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # **거부는 조용하지 않다** — 모아서 한 번에 말한다
 # ─────────────────────────────────────────────────────────────────────────────
 # ★ 첫 실패에서 바로 죽지 않고 다섯을 다 본 뒤 말한다: 한 번 고치고 다시 죽는 것을

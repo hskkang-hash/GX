@@ -9,6 +9,7 @@ from django.urls import path
 from ninja_extra import NinjaExtraAPI
 
 from apps.dsm.api import DsmAPI
+from apps.dsm.api_f import DsmFAPI
 from apps.dsm.api_u1 import DsmU1API
 from apps.dsm.api_u3 import DsmU3API
 from apps.dsm.api_u24 import DsmU24API
@@ -22,9 +23,12 @@ dsm_api = NinjaExtraAPI(urls_namespace="dsm")
 #: ★ [턴 Q · WO-01 §4.2] 사용자축 차선 라우터 넷은 기존 둘 **뒤에** 붙인다 — 선언 순서가
 #:   곧 라우팅이라, 뒤에 붙은 것은 앞의 경로를 가리지 못한다. 기존 라우트는 `api.py` 에
 #:   그대로 둔다(옮기면 무엇이 무엇을 삼키는지가 바뀐다). 한 파일은 한 차선.
+#: ★ [턴 R · 차선 F] `DsmFAPI`(온보딩 진행률)도 **뒤에** 붙인다 — 같은 규약이다.
+#:   새 경로(`/onboarding/...`)는 앞 컨트롤러의 변수 조각 밑에 없으므로 삼킴이 없다.
 dsm_api.register_controllers(
     DsmAPI, DsmLawAPI,
     DsmU1API, DsmU3API, DsmU24API, DsmU56API,
+    DsmFAPI,
 )
 
 urlpatterns = [

@@ -100,6 +100,14 @@ def is_tenant_admin(user: Any) -> bool:
 
     역할 코드가 맞아도 **그 역할의 group 이 요청자의 group 과 다르면 거짓**이다.
     코드 문자열만 보고 통과시키면 다른 테넌트의 admin 역할을 얻어 붙이는 경로가 열린다.
+
+    ★ P-146 · SEC-22 — `config/k3_roles.py::K3_ROLES_WITH_TENANT_SETTINGS_ACCESS`
+      (지금 값은 `admin` 하나)도 **자기 소속 안에서만** 이 판정을 받는다. 계정마다
+      `tenant_admin_<group_id>` 역할을 따로 만들어 붙이지 않는다 — 그 붙이기는
+      게이트의 증거이지 제품의 증거가 아니었다(evidence/P-141). 매핑은 저 표
+      **한 곳**에 적혀 있고(표를 두 벌 두지 않는다 · D-212), 여기서는 **읽기만** 한다.
+      판정식은 여전히 이 함수 하나다 — 늘어난 것은 "어떤 역할 코드를 인정하는가"
+      뿐이고, "테넌트 경계를 넘는가"는 그대로 이 함수가 정한다.
     """
     if not user or not getattr(user, "is_authenticated", False):
         return False
@@ -108,4 +116,11 @@ def is_tenant_admin(user: Any) -> bool:
     group = get_user_group(user)
     if group is None:
         return False
-    return tenant_admin_role_code(group.id) in _role_codes(user)
+    codes = _role_codes(user)
+    if tenant_admin_role_code(group.id) in codes:
+        return True
+    from config.k3_roles import (  # noqa: PLC0415  (표를 두 벌 두지 않기 위해 지연 임포트)
+        K3_ROLES_WITH_TENANT_SETTINGS_ACCESS,
+    )
+
+    return bool(codes & set(K3_ROLES_WITH_TENANT_SETTINGS_ACCESS))

@@ -93,19 +93,21 @@ DECLARED_UNWIRED: dict[str, str] = {
     #    그래서 칸이 라우트보다 먼저 섰다 — 이것이 착시 ⑥(D-304)의 모양이라는 것을 안다.
     #    각 줄은 **누가 · 언제 배선하는가**를 적는다. 배선되면 이 게이트가 「등재를 지워라」로
     #    빨개진다(D-338 선례) — 이 등재는 면제가 아니라 **만료일이 적힌 이름표**다.
-    **{f"stream_monitors.DsmHandover.{f}": (
-        "D-463. 인계 자동 초안(UX-34)의 칸 — U1 차선 파 1 턴 2 `/handover/draft` 가 쓴다. "
-        "그 전까지 이 표는 빈다(행 0 · 인구조사 NEW_SINCE_CENSUS).")
-       for f in ("handled_count", "system_event_count", "unresolved_count",
-                 "unresolved_event_ids")},
+    # ── D-463 인계 자동 초안(UX-34) 넷 — **2026-09-16 턴 R 에 지웠다.**
+    #    `handled_count` · `system_event_count` · `unresolved_count` ·
+    #    `unresolved_event_ids` 가 여기 있었다. 사유는 「U1 차선 파 1 턴 2 가 쓴다」였고,
+    #    **그 턴이 왔다** — `apps/dsm/handover_service.py` 가 넷을 쓴다.
+    #    ★ 이 게이트가 먼저 알아냈다: 쓰기가 생기자 「등재를 지워라」로 빨개졌다.
+    #      등재는 면제가 아니라 **만료일이 적힌 이름표**라고 적어 둔 그대로다.
     **{f"stream_monitors.DsmNotifyPrefs.{f}": (
         "D-463. 근무 외 차단·구역 선호(UX-43-M4 · UX-48)의 칸 — U3 차선 파 2 턴 4 "
         "`me/notify-prefs` 가 쓴다. 그 전까지 K2 는 이 표를 읽지 않는다(규칙이 정한 대로 보낸다).")
        for f in ("quiet_start", "quiet_end", "zone_ids")},
-    **{f"stream_monitors.DsmOnboardingProgress.{f}": (
-        "D-463. 온보딩 진행률(UX-46)의 칸 — F 차선 파 1 턴 2 자동 완료 훅이 쓴다. "
-        "카드의 완료는 서버 기록이 닫는다(WO-01 §12) — 그 기록이 `source_ref` 다.")
-       for f in ("card_key", "source_ref")},
+    # ── D-463 온보딩 진행률(UX-46) 둘 — **2026-09-16 턴 R 에 지웠다.**
+    #    `card_key` · `source_ref` 가 여기 있었다. 사유는 「F 차선 파 1 턴 2 자동 완료
+    #    훅이 쓴다」였고, **그 턴이 왔다** — `apps/dsm/onboarding.py` 가 둘을 쓴다.
+    #    카드의 완료는 서버 기록이 닫는다(WO-01 §12) — 그 기록이 `source_ref` 였고,
+    #    이제 그 이름이 실제로 채워진다.
     **{f"stream_monitors.DsmReportRun.{f}": (
         "D-463. 월간 자동본 실행 기록(UX-40)의 칸 — U24 차선 파 3 턴 5 `monthly_report.py` "
         "배치가 쓴다.")
