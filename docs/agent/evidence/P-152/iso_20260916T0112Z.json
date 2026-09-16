@@ -1,0 +1,96 @@
+{
+ "measured_at": "20260916T0112Z",
+ "smoke": true,
+ "requests": 300,
+ "concurrency": 10,
+ "probe_path": "/admin/login/",
+ "back_cmd_delta": {
+  "max_requests": 50,
+  "jitter": 10,
+  "graceful_timeout": 30
+ },
+ "back_env_names": 42,
+ "back_env_override": [
+  "REDIS_HOST → gx-redis-i152 (감사 쓰기 격리)"
+ ],
+ "config_sha256_12": {
+  "gx-front.conf": "61aa9b017d18",
+  "gx-proxy.inc": "4c60c45e6de2",
+  "generated/gx-gate.conf": "5fb27db71f17",
+  "iso/gx-front-iso-B.conf": "e8d0c7d3ce27"
+ },
+ "untouched_before": {
+  "gx-shell": "2026-09-15T04:23:22.0615688Z running restarts=0",
+  "gx-gunicorn-e": "2026-09-15T11:27:44.984898174Z running restarts=0",
+  "gx-nginx-e": "2026-09-15T04:23:22.0665568Z running restarts=0",
+  "gx-celery-e": "2026-09-15T11:24:35.14410663Z running restarts=0",
+  "gx-beat-e": "2026-09-15T11:24:36.51176697Z running restarts=0",
+  "postgres": "2026-09-15T04:23:21.9489655Z running restarts=0",
+  "redis": "2026-09-15T04:23:21.9396731Z running restarts=0",
+  "guardianx-source-minio-1": "2026-09-15T04:23:22.1501756Z running restarts=0",
+  "guardianx-source-mailpit-1": "2026-09-15T04:23:22.1368637Z running restarts=0",
+  "gx-fe-build": "2026-09-15T04:23:22.18171Z running restarts=0"
+ },
+ "front_effective": {
+  "nginx_T_rc": 0,
+  "peer_lines": 3,
+  "tries_3": 1,
+  "next_upstream": 1,
+  "non_idempotent": 2
+ },
+ "load": {
+  "t0": "01:12:27",
+  "t1": "01:12:32",
+  "t0_iso": "2026-09-16T01:12:27.278347+00:00",
+  "t1_iso": "2026-09-16T01:12:32.348918+00:00",
+  "n": 300,
+  "concurrency": 10,
+  "elapsed_s": 5.07,
+  "warmup_codes": {
+   "200": 40
+  },
+  "codes": {
+   "200": 298,
+   "500": 2
+  }
+ },
+ "stats": {
+  "access_lines_in_window": 300,
+  "by_status": {
+   "200": 298,
+   "500": 2
+  },
+  "n502": 0,
+  "retried": 13,
+  "rescued_2xx": 13,
+  "attempts_hist": {
+   "1": 287,
+   "2": 13
+  },
+  "shapes_502": {},
+  "front_error_marks_total": {
+   "recv() failed (104": 13
+  },
+  "back_marks_in_window": {
+   "Autorestarting": 4,
+   "Worker_exiting": 4,
+   "Booting_worker": 4
+  }
+ },
+ "rows": [],
+ "iso_broker_queued_tasks": 338,
+ "iso_left_after_cleanup": [],
+ "untouched_after": {
+  "gx-shell": "2026-09-15T04:23:22.0615688Z running restarts=0",
+  "gx-gunicorn-e": "2026-09-15T11:27:44.984898174Z running restarts=0",
+  "gx-nginx-e": "2026-09-15T04:23:22.0665568Z running restarts=0",
+  "gx-celery-e": "2026-09-15T11:24:35.14410663Z running restarts=0",
+  "gx-beat-e": "2026-09-15T11:24:36.51176697Z running restarts=0",
+  "postgres": "2026-09-15T04:23:21.9489655Z running restarts=0",
+  "redis": "2026-09-15T04:23:21.9396731Z running restarts=0",
+  "guardianx-source-minio-1": "2026-09-15T04:23:22.1501756Z running restarts=0",
+  "guardianx-source-mailpit-1": "2026-09-15T04:23:22.1368637Z running restarts=0",
+  "gx-fe-build": "2026-09-15T04:23:22.18171Z running restarts=0"
+ },
+ "untouched_unchanged": true
+}

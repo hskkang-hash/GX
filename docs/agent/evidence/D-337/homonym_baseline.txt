@@ -32,7 +32,7 @@ api_key	backend/tests/test_k3_role_frame.py	6
 api_key	backend/tests/test_k5_credential_store.py	4
 api_key	backend/tests/test_s_wall_token.py	4
 api_key	backend/tests/test_tenant_isolation.py	1
-api_key	backend/tests/test_u56_settings_api_keys.py	4
+api_key	backend/tests/test_u56_settings_api_keys.py	6
 api_key	backend/third_api/schema.py	3
 api_key	backend/third_api/services/anyang_services.py	1
 api_key	backend/third_api/test_api.py	11
@@ -69,3 +69,12 @@ api_key	scripts/verify_threshold_table.py	1
 #   경로는 서버 라우트의 실제 주소라 시험이 이름을 바꾸면 **다른 문을 두드리게 된다** — 턴 P 문단과
 #   같은 사유다. 우리 식별자에는 이번 턴 새 단독 `api_key` 가 0건이다.
 #   ⚠ 이번에도 `--freeze` 가 위 두 문단(턴 I · 턴 P)을 지웠다 — HEAD 에서 되살리고 데이터 한 줄만 끼웠다.
+#
+# ── 턴 R (2026-09-16) — 같은 파일이 4 → 6 으로 늘었다 (159 → 161).
+#   U56 차선이 P-146(관리자 역할 매핑)을 증명하면서 같은 경로 문자열을 두 번 더 썼다:
+#   `?name=u56-p146-role-mapping` · `?name=u56-p146-orphan` — 둘 다 **서버가 정한 주소**
+#   "/api/dsm/settings/api-keys" 이고, 시험이 이름을 바꾸면 다른 문을 두드리게 된다.
+#   우리 식별자에는 이번 턴에도 새 단독 `api_key` 가 **0건**이다.
+#   ⚠ 이번에는 `--freeze` 를 **부르지 않았다.** 데이터 한 줄(4→6)만 손으로 고쳤다 —
+#     턴 Q 가 「freeze 가 사람의 문단을 지운다」를 실측으로 남겼기 때문이다.
+#     기준선은 기계가 쓰고 사유는 사람이 쓴다. 두 벌을 한 명령으로 덮지 않는다.

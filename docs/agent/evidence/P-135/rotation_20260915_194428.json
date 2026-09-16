@@ -132,52 +132,52 @@
     {
       "user": "gxprobe_e2e",
       "key": "GX_ROUTE_PASSWORD_ROLE0",
-      "ok": false
+      "ok": true
     },
     {
       "user": "gxseed_u5_sysop",
       "key": "GX_SEED_ROLE_PASSWORD",
-      "ok": false
+      "ok": true
     },
     {
       "user": "gxseed_u2_manager",
       "key": "GX_SEED_ROLE_PASSWORD",
-      "ok": false
+      "ok": true
     },
     {
       "user": "gxseed_u4_official",
       "key": "GX_SEED_ROLE_PASSWORD",
-      "ok": false
+      "ok": true
     },
     {
       "user": "gxseed_u1_operator",
       "key": "GX_SEED_ROLE_PASSWORD",
-      "ok": false
+      "ok": true
     },
     {
       "user": "gxprobe_v",
       "key": "GX_PROBE_PASSWORD",
-      "ok": false
+      "ok": true
     },
     {
       "user": "gxprobe_e",
       "key": "GX_PROBE_PASSWORD",
-      "ok": false
+      "ok": true
     },
     {
       "user": "gxprobe_s",
       "key": "GX_PROBE_PASSWORD",
-      "ok": false
+      "ok": true
     },
     {
       "user": "gxprobe_q",
       "key": "GX_PROBE_PASSWORD",
-      "ok": false
+      "ok": true
     },
     {
       "user": "gxprobe_c",
       "key": "GX_PROBE_PASSWORD",
-      "ok": false
+      "ok": true
     }
   ],
   "logins_where": "gx-shell 안 http://127.0.0.1:8000 — 호스트에서는 8000 에 닿지 않는다(gx-shell 은 포트를 공개하지 않는다 · 게이트는 gx-shell 에 위임한다)"

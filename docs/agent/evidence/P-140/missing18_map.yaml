@@ -252,6 +252,16 @@ seojong_draft_diff:
     measured: §5 절 15 · §5 밖 기존 대장 절 3(LAW-01 ×2 · UX-18) · 매핑 안 됨 0. 주간 요약은 UX-32, 상급기관 제출은 UX-40(첫 ID)·UX-47.
   - what: 「UX-32-U4」
     measured: 없는 ID 다 — PRD v1.1 에는 UX-32 와 UX-32-U2(:207)만 있다. 새 ID 를 만들지 않고 UX-32 로 적었다.
+    reconfirmed_turn_r: |
+      [실측 2026-09-16 · 턴 R · 차선 F] 세종 판정(RESUME_NEXT §2 P-147 머리 · §1 5ⓐ)에 따라
+      매핑 파일 전수를 다시 봤다. **이 파일이 절 ID 로 적은 값은 이미 UX-32 다**
+      (U4#1 행 `ids: [UX-32]` · `registered: UX-32`) — 고칠 줄이 없었다.
+      저장소 전수 grep 으로 「UX-32-U4」가 남은 자리는 **산문 여섯 줄뿐**이고 그 여섯은
+      전부 「그 ID 는 없다」를 적는 문장이다(작업지시서 2 · RESUME_NEXT 2 · 이 파일 3 ·
+      WO 보고 1 · 아카이브 1). 대장(`ga_readiness.yaml:2642`)도 UX-32 다.
+      그래서 **PRD 도 대장도 건드리지 않았다** — 고칠 것이 없다는 것이 이 턴의 실측이다.
+      ⚠ 모델 주석 한 줄(`backend/stream_monitors/models.py` DsmHandover)이 U2 홈을
+      「UX-32-U2」로 부른다 — 그것은 PRD :207 에 **실재하는 ID** 라 정정 대상이 아니다.
   - what: 초안의 이름 목록(오탐률 UX-36 · 재판정 UX-37 · 검색 UX-38 · 통계 UX-39 · 시스템 UX-44 · 웹훅 필터 API-01 · M3 UX-45)
     measured: |
       이 일곱은 P-118 의 「정본 없음」 18행에 **없다**. 초안은 120행 표의 기능 이름을 적었고

@@ -93,7 +93,7 @@ CLICK_WINDOW_MS = 4500
 # 그 행은 **관측에서 회색**으로 떨어진다 — 판정기가 이름을 보고 봐주는 것이 아니다.
 # ──────────────────────────────────────────────────────────────────────────
 def F(key, title, actor, screen, control, call, state, text, confirm=None, note="",
-      fill=None):
+      fill=None, img_check=False):
     """한 흐름.
 
     `fill` — 누르기 **전에** 채워야 하는 글상자의 `placeholder` (P-132).
@@ -101,11 +101,19 @@ def F(key, title, actor, screen, control, call, state, text, confirm=None, note=
       (「회신 보내기」는 글이 비면 `disabled` 다 — `MobileEventDetail.tsx:481`).
       채우지 않고 눌러 「안 눌린다」를 적으면 **제품의 규율을 고장으로 파는 것**이다.
       ★ 이것은 면제가 아니다 — 채운 뒤에도 ②③④ 는 그대로 다 서야 한다.
+
+    `img_check` — [P-148] 이 행의 술어 ④「화면이 말한다」를 **글자 대신 그림**으로 잰다.
+      사진은 낱말로 못 잰다 — 「스냅샷」이라는 표제는 실패 화면에도 뜬다(성공·실패가 같은
+      글자를 쓴다). 그래서 셋을 본다: `img[data-gx=snapshot]` 1개 · `naturalWidth>0` ·
+      응답 200 image/jpeg. 셋이 다 서야 초록이고, 「불러오지 못했습니다」는 실제
+      4xx/5xx 일 때만 나와야 한다 — 이 셋이 서 있는데 그 문구가 함께 뜨면 그 자체가
+      모순이라 빨강이다 (`_cell_img` 마지막 검사).
     """
     return {
         "key": key, "title": title, "actor": actor, "screen": screen,
         "control": control, "confirm": confirm, "call": call,
         "state": state, "text": text, "note": note, "fill": fill,
+        "img_check": img_check,
     }
 
 
@@ -248,9 +256,14 @@ FLOWS = (
     F("U3#2", "위치 확인 — 어디로 가나", "u3", "/m/events/{event}", goto(),
       ("GET", r"/api/dsm/events/\d+$"),
       srv_reflect("/api/dsm/events/{event}", "address"), ["어디로", "주소", "위치"]),
+    #: ★ [P-148 · 턴 R] **사진 술어를 켠다.** 「사진」·「스냅샷」은 실패 화면(표제)에도
+    #:  뜨는 낱말이라 종전 문구 검사는 성공·실패를 못 가른다 — 그래서 이 행은 판정
+    #:  술어가 없어 빨강이었다. `img_check=True` 가 ④를 글자 대신 그림으로 재게 한다
+    #:  (`img[data-gx=snapshot]` 1개 · `naturalWidth>0` · 응답 200 image/jpeg).
     F("U3#3", "상황 사진 1장 보기", "u3", "/m/events/{event}", goto(),
       ("GET", r"/api/dsm/events/\d+/snapshot"),
-      srv_reflect("/api/dsm/events/{event}", "snapshot_path"), ["사진", "스냅샷"]),
+      srv_reflect("/api/dsm/events/{event}", "snapshot_path"), ["사진", "스냅샷"],
+      img_check=True),
     #: ★ [P-132] 「도착」이라는 단추도 **없다.** 다음 단계 단추의 이름은 서버가 주는
     #:  `allowed_next` 를 `advanceLabel()` 이 옮긴 셋뿐이다
     #:  (`severity.ts:143-145` 접수하기 · 조치 시작 · 종결하기 ·
@@ -381,8 +394,14 @@ FLOWS = (
     # 사람이 아니다. **면이 곧 API** 이므로 「누르는 것」은 HTTP 호출 자체다.
     F("U6#1", "API 키로 인증", "u6", None, api(),
       ("POST", r"/api/dsm/settings/api-keys"),
-      srv_change("/api/dsm/settings/api_keys", "total"), ["key", "api_key"],
-      note="읽는 자리는 `/settings/{domain}` 이고 domain 은 `api_keys` 다 (하이픈 아니다)"),
+      srv_change("/api/dsm/settings/api_keys", "inbound"), ["key", "api_key"],
+      note="읽는 자리는 `/settings/{domain}` 이고 domain 은 `api_keys` 다 (하이픈 아니다). "
+           "★ [D-470 · 턴 R] 보는 칸이 `total` 이었는데 **그 응답에 그런 칸은 없다** — "
+           "`services.setting_overview(domain='api_keys')` 가 내는 것은 "
+           "outbound · inbound · inbound_api_type · inbound_capability · api_keys 다섯이다. "
+           "없는 칸은 앞뒤가 늘 None 이라 `server_change` 가 「그대로다」로 읽었고, "
+           "그래서 **제품이 고쳐진 뒤에도 빨강이었다**(POST 200 실측 · P-146 배선 확인). "
+           "키를 발급하면 늘어나는 것은 들어오는 키 목록이므로 `inbound` 를 본다."),
     F("U6#2", "이벤트 목록 조회", "u6", None, api(),
       ("GET", r"/api/dsm/events(\?|$)"),
       srv_reflect("/api/dsm/events?limit=5", "events"), ["events", "total"]),
@@ -485,6 +504,34 @@ def _cell_text(flow, o):
     return False, "기대한 말(%s) 중 아무것도 화면에 없다" % " · ".join(want)
 
 
+def _cell_img(o):
+    """P-148 사진 술어 — 술어 ④「화면이 말한다」를 **글자 대신 그림**으로 잰다.
+
+    「사진」·「스냅샷」이라는 표제는 실패 화면에도 뜨는 낱말이라 `_cell_text` 로는
+    성공·실패를 못 가른다. 그래서 셋을 본다 — 셋이 다 서야 초록이다:
+        ① `img[data-gx=snapshot]` 가 **1개** 있다 (0 = 안 그렸다 · 2+ = 중복 태그)
+        ② 그 이미지의 `naturalWidth > 0` 이다 (태그는 있는데 그림이 안 채워진 것과 가른다)
+        ③ 그 이미지가 받은 응답이 `200 image/jpeg` 다 (다른 상태·형식은 성공이 아니다)
+    ★ 반증 한 줄 — 셋이 다 섰는데 화면이 그래도 「불러오지 못했습니다」라고 말하면
+      그 자체가 모순이다(그 문구는 실제 4xx/5xx 일 때만 나와야 한다). 그 모순을 초록으로
+      내보내지 않는다.
+    """
+    img = o.get("img") or {}
+    n = img.get("count")
+    if n != 1:
+        return False, "img[data-gx=snapshot] 가 %r개다 (1개여야 한다)" % n
+    if not img.get("natural_width"):
+        return False, "naturalWidth 가 0이다 — 태그는 있는데 그림이 안 채워졌다"
+    resp = img.get("response") or {}
+    status, ctype = resp.get("status"), resp.get("content_type") or ""
+    if status != 200 or "image/jpeg" not in ctype:
+        return False, ("사진 응답이 200 image/jpeg 가 아니다 (status=%r content-type=%r)"
+                        % (status, resp.get("content_type")))
+    if "불러오지 못했습니다" in (o.get("text_after") or ""):
+        return False, "셋이 다 섰는데 화면이 그래도 「불러오지 못했습니다」라고 말한다 — 모순"
+    return True, "img 1개 · naturalWidth=%s · 200 image/jpeg" % img.get("natural_width")
+
+
 def judge_one(flow, o):
     """한 흐름 → (색, 한 줄, 네 칸). **관측이 없으면 회색이다 — 0 이 아니라 회색.**"""
     cells = {"control": None, "call": None, "state": None, "text": None}
@@ -522,7 +569,11 @@ def judge_one(flow, o):
         # ★★ **이 턴 결함의 가족** — 요청은 나갔는데 값이 안 바뀌었다
         return RED, "요청은 나갔는데 %s" % why_s, cells
 
-    ok_t, why_t = _cell_text(flow, o)
+    if flow.get("img_check"):
+        # [P-148] 이 행은 글자가 아니라 그림으로 「화면이 말한다」를 잰다.
+        ok_t, why_t = _cell_img(o)
+    else:
+        ok_t, why_t = _cell_text(flow, o)
     cells["text"] = ok_t
     if ok_t is None:
         return GREY, "기대 문구가 선언되지 않았다", cells
@@ -584,12 +635,17 @@ def _good(flow):
         st.update(after=st.get("field"))
     method, pat = flow["call"]
     sample = "http://localhost:8000" + sample_url(pat)
-    return {
+    out = {
         "control": {"found": True, "clicked": True, "name": "x"},
         "calls": [{"method": method, "url": sample, "status": 200}],
         "state": st,
         "text_after": " ".join(flow["text"]) if flow["text"] else "",
     }
+    if flow.get("img_check"):
+        # [P-148] 셋이 다 선 사진 관측 — 양성 대조의 재료.
+        out["img"] = {"count": 1, "natural_width": 640,
+                      "response": {"status": 200, "content_type": "image/jpeg"}}
+    return out
 
 
 def _all_good():
@@ -995,6 +1051,21 @@ def walk(persona, account, viewport, flows, event_id):
                 break
     page.on("response", on_resp)
 
+    #: [P-148] 사진 술어 전용 — **`calls` 와 따로** 잡는다. 상세 화면은 먼저 이벤트를
+    #:   읽고 그 응답이 온 **뒤에야** 사진을 잇달아 부른다(순차 연쇄). goto 행은 본문을
+    #:   붙잡는 순간 `calls` 를 비우므로(`del calls[:]`, 아래) 늦게 오는 사진 응답은
+    #:   그 순간 이후 갈 곳이 없다 — 그래서 흐름 전체에 걸쳐 **따로** 살아남는 자리를 둔다.
+    img_resp = {}
+
+    def on_img_resp(r):
+        try:
+            if re.search(r"/snapshot(\?|$)", r.url):
+                img_resp["status"] = r.status
+                img_resp["content_type"] = r.headers.get("content-type")
+        except Exception:
+            pass
+    page.on("response", on_img_resp)
+
     relogin = [0]                    # 다시 들어간 횟수 — 로그인은 IP 당 5/분이다
 
     def ui_login():
@@ -1042,6 +1113,7 @@ def walk(persona, account, viewport, flows, event_id):
 
     for f in flows:
         del calls[:]                 # ★ 흐름마다 **새로 센다** — 앞 화면의 호출이 섞이지 않는다
+        img_resp.clear()             # [P-148] 사진 술어도 흐름마다 새로 센다
         tok = seen_auth[0] or tok    # 앱이 쓰는 자격을 그대로 쓴다
         key = f["key"]
         screen = (f["screen"] or "").replace("{event}", str(event_id))
@@ -1168,6 +1240,7 @@ def walk(persona, account, viewport, flows, event_id):
         except Exception:
             pass
 
+        img_obs = None
         if f["control"]["kind"] == "goto":
             # 「누르는 것」 = 그 화면을 여는 것. **비어 있으면 누를 자리가 없다**
             if len(body_before.strip()) < 40:
@@ -1175,6 +1248,33 @@ def walk(persona, account, viewport, flows, event_id):
                                    % len(body_before.strip())},
                      calls=list(calls))
                 continue
+            if f.get("img_check"):
+                # [P-148] **더 기다린다.** 사진은 이벤트 GET 이 끝난 뒤에야 잇달아 불려서
+                #   위 2.5초 낮잠만으로는 그림이 안 채워진 채로 잡힐 수 있다. 그림이
+                #   채워지거나(성공) 오류 문구가 뜨거나(실패) 둘 중 하나가 설 때까지
+                #   기다린다 — 그래도 안 서면 그때는 있는 그대로 잰다.
+                try:
+                    page.wait_for_function(
+                        "() => { var i = document.querySelector('img[data-gx=\"snapshot\"]'); "
+                        "return (i && i.complete && i.naturalWidth > 0) || "
+                        "document.body.innerText.indexOf('불러오지 못했습니다') >= 0 || "
+                        "document.body.innerText.indexOf('저장소에 연결할 수 없습니다') >= 0; }",
+                        timeout=8000)
+                except Exception:
+                    pass
+                try:
+                    body_before = page.inner_text("body")
+                except Exception:
+                    pass
+                try:
+                    ev = page.evaluate(
+                        "() => { var els = document.querySelectorAll('img[data-gx=\"snapshot\"]'); "
+                        "if (els.length !== 1) return {count: els.length}; "
+                        "var el = els[0]; return {count: 1, natural_width: el.naturalWidth}; }")
+                except Exception:
+                    ev = {"count": 0}
+                img_obs = dict(ev or {"count": 0})
+                img_obs["response"] = dict(img_resp)
             got = list(calls); del calls[:]
             text_after = body_before
         else:
@@ -1244,12 +1344,19 @@ def walk(persona, account, viewport, flows, event_id):
             if st["kind"] == "server_reflect":
                 a = st.get("after")
                 hay = (text_after or "")
-                st["on_screen"] = bool(a) and (str(a) in hay or any(
-                    w.lower() in hay.lower() for w in ["행", "건", "개"]) and len(hay) > 400)
+                if f.get("img_check"):
+                    # [P-148] 사진 경로 문자열은 화면에 글자로 안 뜬다(접힌 「참조 보기」
+                    #   안에만 있다) — 실제로 그려졌는지는 술어 ④(img 판정)가 잰다.
+                    #   여기서는 서버가 그 값 자체를 냈는지만 본다(데이터 존재).
+                    st["on_screen"] = bool(a)
+                else:
+                    st["on_screen"] = bool(a) and (str(a) in hay or any(
+                        w.lower() in hay.lower() for w in ["행", "건", "개"]) and len(hay) > 400)
 
         note(key, control={"found": True, "clicked": True,
                            "name": f["control"].get("name", "화면 열기")},
-             calls=got, state=st, text_after=(text_after or "")[:6000])
+             calls=got, state=st, text_after=(text_after or "")[:6000],
+             **({"img": img_obs} if img_obs is not None else {}))
 
     ctx.close()
 
@@ -1362,12 +1469,47 @@ def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://loca
         print("%s 증거를 꺼내지 못했다" % TAG)
         return EXIT_UNDECIDABLE
     EVIDENCE.mkdir(parents=True, exist_ok=True)
-    OBSERVED.write_text(got.stdout.decode("utf-8", "replace"), encoding="utf-8")
+    # ★ [SEC-05 · 턴 R] **저장소에 남는 순간에만** 가린다 — 컨테이너 안 드라이버는
+    #   원본 URL 로 상태코드를 맞춰야 하기 때문이다(`on_resp` 는 `c["url"] == r.url`).
+    #   요청을 잡는 자리에서 가리면 응답이 짝을 못 찾아 **모든 상태코드가 None** 이 되고,
+    #   판정기는 401·403 을 그것으로 가르므로 여정 전체가 무너진다.
+    OBSERVED.write_text(_redact_credentials(got.stdout.decode("utf-8", "replace")),
+                        encoding="utf-8")
     print("%s 실측 기록 → %s" % (TAG, OBSERVED.relative_to(ROOT)))
     return EXIT_OK
 
 
 # ──────────────────────────────────────────────────────────────────────────
+#: ★ [SEC-05 · 턴 R] 증거는 **자격을 나르지 않는다.**
+#:
+#: [실측 2026-09-16] 브라우저가 지도를 그리려고 부른
+#: `dapi.kakao.com/v2/maps/sdk.js?appkey=…` 가 그대로 증거에 적혔고,
+#: `verify_secret_scan` 이 「저장소가 나른다」로 멈춰 세웠다. 그 키는 번들에 구워져
+#: 나가는 공개용 클라이언트 키라 **유출은 아니지만**, 이 파일은 우리가 **커밋하는**
+#: 파일이다 — 저장소가 그것을 나르기 시작하면 다음에 진짜로 새는 값과 구별되지 않는다.
+#:
+#: 허용 목록(`.gitleaksignore`)에 넣어 스캐너를 무르게 하는 길은 쓰지 않았다 —
+#: 그 길은 **다음에 진짜로 새는 값을 가린다**(같은 턴에 `P-151/iso_guard.py` 에서도
+#: 같은 판단을 했다: 스캐너는 뜻이 아니라 모양을 본다).
+#:
+#: ⚠ 범위를 **좁게** 잡는다. 우리 라우트의 질의(`event_id`·`limit`·`name`·`preset`)는
+#:   `_cell_call` 이 정규식으로 맞추는 자리라 건드리면 멀쩡한 초록이 빨강이 된다.
+#:   그래서 **자격 이름이 붙은 값만** 가린다.
+#: ⚠ 문자 클래스에 역슬래시를 넣지 않는다 — 값은 JSON 문자열 안에 있어 `&` 아니면
+#:   `"` 에서 끝난다. 역슬래시를 넣으면 이 줄을 셸로 옮겨 적는 날 조용히 깨진다
+#:   (실측: 같은 패턴을 heredoc 으로 넣다 두 번 깨졌다).
+_CRED_IN_URL = re.compile(
+    r'([?&](?:appkey|api_?key|token|secret|password|access_key|signature)=)([^&"]+)',
+    re.I)
+
+
+def _redact_credentials(text: str) -> str:
+    """증거 원문에서 자격이 실린 질의 값을 가린다. **이름과 자리는 남긴다** —
+    무엇이 불렸는지는 증거이고, 그 값만 증거가 아니다."""
+    return _CRED_IN_URL.sub(lambda m: m.group(1) + "REDACTED-자격은-증거에-적지-않는다",
+                            text)
+
+
 def load():
     if not OBSERVED.exists():
         return None, "증거가 없다 (%s)" % OBSERVED.relative_to(ROOT)

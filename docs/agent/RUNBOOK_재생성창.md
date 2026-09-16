@@ -15,8 +15,28 @@
 | # | 무엇 | 확인 | 지금 |
 |---|---|---|---|
 | a | 새 자격 금고 파일 2 | `ls ~/.guardianx-secrets/` → `cred3_20260915.env` · `cred3_20260915_alter_db_role.sql` | [실측 09-15] 섰다 · 형식: `evidence/P-138/vault_prepared_20260915.json` |
-| b | ⑦ 가드 패치(`settings_prod.py` · 소유 차선) | 20자 미만 · 접근키==비밀키 · 자리표 낱말 → `[SEC-18]` 거부 (blockers.yaml:1654) | **없다** — 이것 없이 7/7 은 불가(아래 ④) |
+| b | ⑦ 가드 패치(`settings_prod.py` · 소유 차선) | 20자 미만 · 접근키==비밀키 · 자리표 낱말 → `[SEC-18]` 거부 (blockers.yaml:1654) | **섰다** [실측 2026-09-16 · 턴 R · P-151] — 코드는 들어갔고 격리에서 **7/7**. 증거 `evidence/P-151/iso_guard_20260916T0114Z.json` · 아래 §b′ |
 | c | 다른 차선 정지 | 시험 DB 연결 0 · 큐 0 (`RUNBOOK_로컬기동.md` STEP 2B ⓪㉠ · ③) | 창 직전 |
+
+**b′ 가드는 이미 섰다 — 창에서 할 일이 하나 줄었다** [실측 2026-09-16 · 턴 R · 차선 E · P-151]
+
+`backend/config/settings_prod.py` 에 ⑦ 절이 들어갔다(`CRED_MIN_LEN 20` · `CREDENTIAL_PLACEHOLDER_WORDS` 8낱말 ·
+접근키==비밀키 거부 · `CREDENTIAL_GUARD = "SEC-18-⑦"`). 값을 읽는 자리는 환경이 아니라 **앱이 실제로 쓰는
+`django.conf.settings`** 다(`MINIO_ACCESS_KEY`·`MINIO_SECRET_KEY`·`DATABASES["default"]["PASSWORD"]`).
+
+* **격리에서 7/7** — `python docs/agent/evidence/P-151/iso_guard.py` 가 `gx-shell` 의 환경 41개를 뜨고
+  자격 **넷만** 금고(`cred3_20260915.env`)의 새 값으로 갈아 낀 컨테이너 `gx_e` 를 세운 뒤,
+  그 안에서 `verify_prod_settings.py --no-delegate` → **`통과 7/7` · exit 0**.
+  ⑦ 줄이 `MinIO 접근/비밀 20·40자 · DB 비밀 32자 · 자리표 없음 | 자리표→거부 O · 5자→거부 O · 둘이 같음→거부 O` —
+  금고 증거(`evidence/P-138/vault_prepared_20260915.json`)의 길이와 같다(창 전 조건 ㉡ 충족).
+* **나쁜 값은 실제로 못 뜬다** — 같은 컨테이너에서 여덟 판을 띄웠다. 짧은 값 · 둘이 같은 값 · 자리표 · 짧은 DB 비밀
+  네 가지가 **설정 기동**과 **`gunicorn --check-config`** 두 자리 모두에서 exit 1 · `[SEC-18]` 거부.
+  좋은 값 두 판만 떴다. **경고를 찍고 뜨는 자리는 하나도 없다.**
+* ⚠ **그러나 지금 도는 컨테이너에서는 이 가드가 빨강을 만든다** — 그것이 옳고, blockers.yaml:1636 의 A/B 가
+  예고한 그대로다. 호스트에서 `python scripts/verify_prod_settings.py`(= `gx-shell` 위임)를 지금 부르면
+  기준판 `full` 이 **거부**되고 일곱 수가 전부 「재지 못했다 — 판이 안 떴다」가 되어 **실패 7/7 · exit 1** 이다.
+  `gx-shell` 의 MinIO 자격이 아직 5자이기 때문이다. **이 빨강은 창의 ② 가 끝나야 초록이 된다** —
+  ②를 건너뛰고 ④만 부르면 7/7 이 아니라 0/7 을 본다. 순서를 쪼개지 말라는 말이 이 뜻이다.
 
 ---
 
@@ -121,6 +141,57 @@ python scripts/verify_live_freshness.py --all; echo "EXIT=$?"
 [코드 grep: `common/wall_token.py:142` · `stream_monitors/services/clips.py:187` · `partner/utils/partner_utils.py:444` 모두 HMAC 서명]. 자료 손실 없음 · 재로그인만.
 
 **창에서 하지 않는 것**: P-137 앞단 재시도(peer 세 줄) 본 서버 적용 — 다음 턴(판정). 격리 수: `evidence/P-137/`.
+
+---
+
+## ⑥ 재부팅 전/후 실측 — **세션 밖에서 잰다** (G5 · 턴 R 차선 E)
+
+Docker 자동 시작을 켠 뒤 **재부팅에서 열 컨테이너가 스스로 돌아오는지**를 아직 안 쟀다(G5 「재부팅 미실측」).
+재부팅은 이 세션을 끊으므로 **집행자가 재부팅을 실행하지 않는다** — 아래 「전」은 이미 적혔고, 「후」는 재부팅 뒤
+새 세션에서 같은 명령 넷을 그대로 부르면 된다.
+
+**전 [실측 2026-09-16 09:0x · 재부팅 직전 · HEAD `5a403ef`]**
+
+| 무엇 | 값 |
+|---|---|
+| 도는 컨테이너 | **10** (gx-shell · gx-gunicorn-e · gx-celery-e · gx-beat-e · gx-nginx-e · postgres · redis · minio-1 · mailpit-1 · gx-fe-build) |
+| 재시작 정책 | 다섯 자리 모두 **`unless-stopped`** [`docker inspect .HostConfig.RestartPolicy.Name`] |
+| 기동 시각(UTC · `StartedAt`) | gx-gunicorn-e `2026-09-15T11:27:44Z` · gx-celery-e `11:24:35Z` · gx-beat-e `11:24:36Z` · gx-nginx-e `04:23:22Z` · gx-shell `04:23:22Z` |
+| `verify_live_freshness --all` | **exit 1 · 빨강** — 넷이 회색(`LIVE_OLDER_THAN_SOURCE`) · `gx-shell:runserver` 빨강(`LIVE_COMMIT_MISMATCH`) |
+
+⚠ **이 빨강은 재부팅이 만든 것이 아니다** — 작업본이 소스 시각을 앞으로 당겨서다(이 턴에 `settings_prod.py` 를
+고쳤다). 재부팅 뒤 같은 빨강이 나오면 **그것은 같은 사유**이고, 재부팅의 결함이 아니다.
+「후」를 읽을 때 이 줄을 먼저 본다 — 안 그러면 없는 고장을 찾으러 간다.
+
+**후 — 재부팅 뒤 새 세션에서 이 넷을 순서대로**
+
+```bash
+cd /c/GuardianX/guardianx-source
+# ㉠ 열이 스스로 돌아왔는가 (Docker Desktop 자동 시작 + unless-stopped)
+docker ps --format '{{.Names}}\t{{.Status}}' | sort          # 10줄이어야 한다
+docker inspect gx-gunicorn-e gx-celery-e gx-beat-e gx-nginx-e gx-shell \
+  --format '{{.Name}} {{.State.StartedAt}} restarts={{.RestartCount}} {{.HostConfig.RestartPolicy.Name}}'
+# ㉡ **낡음** — 다섯 자리가 각자 자기 소스에 대해 (P-116)
+python scripts/verify_live_freshness.py --all; echo "EXIT=$?"
+# ㉢ 앞단이 뒷단 이름을 **다시 풀었는가** — 재부팅으로 gunicorn 의 IP 가 바뀌면 reload 없이 전부 502 다(③의 ★)
+curl -s -o /dev/null -w 'front=%{http_code}\n' http://localhost:8500/admin/login/     # 200
+# ㉣ 곁것들이 실제로 살아 있는가 (MinIO 없이 뜬 runserver 가 503 을 낸 P-150 ②의 그 자리)
+MSYS_NO_PATHCONV=1 docker exec -e PYTHONIOENCODING=utf-8 gx-celery-e python -c \
+  "import sys;sys.path.insert(0,'/repo/scripts');import ops_monitor as m;s=m.collect()['signals'];[print(k,s[k]['value'],s[k]['verdict']) for k in ('db_ping_ms','object_store_alive','storage_used_pct')]"
+```
+
+**읽는 법 — 셋**
+
+1. **열이 아니면 빨강이다.** 몇이 안 왔는지, 그 컨테이너의 `RestartPolicy` 가 무엇인지 함께 적는다.
+   `unless-stopped` 인데 안 왔으면 자동 시작이 아니라 **그 컨테이너의 고장**이다.
+2. `live_freshness` 는 **기동 시각이 소스보다 뒤여야** 초록이다. 재부팅은 기동 시각을 **지금**으로 당기므로
+   ㉡ 의 회색 넷은 재부팅만으로 **사라져야 한다**. 안 사라지면 그 자리는 안 뜬 것이다.
+   `gx-shell:runserver` 의 `LIVE_COMMIT_MISMATCH` 는 **커밋의 문제**라 재부팅으로 안 사라진다 — 그것까지
+   초록을 기대하지 않는다.
+3. **㉢ 이 502 면 재부팅의 대표 고장이다** — 앞단은 upstream 이름을 기동·reload 때만 푼다.
+   고치는 법은 ③의 마지막 두 줄(`nginx -t` → `nginx -s reload`)이고, **재기동이 아니다**.
+
+⚠ **「후」를 안 쟀으면 G5 는 회색이다.** 재부팅했는데 안 쟀다면 「재부팅 됐다」가 아니라 **「안 쟀다」**로 적는다.
 
 ---
 

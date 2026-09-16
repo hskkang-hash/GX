@@ -328,6 +328,48 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/stats/summary"),                                  # U24 · UX-39 통계 요약
     ("GET", "/api/dsm/stats/by-reviewer"),                              # U24 · UX-35 요원별
     ("GET", "/api/dsm/stats/false-positive"),                           # U24 · UX-36 오탐률
+    # ★ [턴 R · WO-01 §5 · 차선 U1] **다섯이 늘었다** — UX-34 인계 자동 초안 ·
+    #   사건 메모(부속서A #15). 전부 `api_u1.py`(같은 차선 파일)에서 태어났다.
+    #   문지기: 전건 `@tenant_scoped` + `JwtOrInboundKey()` 기본값(들어오는 키 거절).
+    #   새 인증 경로는 없다 — 이 파일의 `_scope()` 는 `api.py::_scope` 와 같은 세 줄이다.
+    #
+    #   왜 라우트를 냈나 — 서버가 초안을 쓰고 사람이 고친다(UX-34). 셈은
+    #   `apps.dsm.services.recent_events`(K1)를 그대로 옮길 뿐이고, 저장은
+    #   `stream_monitors.models.DsmHandover`(턴 Q 가 세운 표)에 한다.
+    #   `/handover/latest` 는 다음 근무자 홈 카드가 읽을 자리(그리는 것은 F 차선 몫).
+    #   메모는 새 표를 두지 않고 `common/audit_writer.py`(F-12 감사와 같은 표)를
+    #   재사용한다 — 사건별 이름(`event_note:{id}`)으로 가른다.
+    ("GET", "/api/dsm/handover/draft"),                                 # U1 · UX-34 초안 미리보기(저장 안 함)
+    ("POST", "/api/dsm/handover/draft"),                                # U1 · UX-34 초안 저장
+    ("GET", "/api/dsm/handover/latest"),                                # U1 · UX-32-U2 다음 근무자 카드 자리
+    ("POST", "/api/dsm/events/{int:event_id}/note"),                    # U1 · 부속서A #15 사건 메모 남기기
+    ("GET", "/api/dsm/events/{int:event_id}/note"),                     # U1 · 부속서A #15 사건 메모 조회
+    # ★ [턴 R · 병합] **넷이 늘었다** — 차선 F 하나 · 차선 U56 셋. 손으로 이 줄들을 더하는
+    #   일이 곧 「진입면을 넓힌다」는 선언이고, 그 선언을 여기 남긴다.
+    #
+    #   ★ 이 넷은 **조율자가 병합에서 등재했다.** 차선 셋(U1·U3·U56)이 각자 「내 것은
+    #     등재했고 남은 빨강은 내 결함이 아니다」로 보고했고, 셋 다 옳았다 — 229줄이
+    #     이미 적어 둔 그 자리다: **두 차선에 걸친 자리는 조율자가 병합에서 맞춘다.**
+    #     그것이 이 시험이 병합 때 빨개지는 이유이자 값이다. U56 은 자기 셋만 채워도
+    #     F 의 한 줄이 비어 여전히 빨갛다는 것을 보고 **손대지 않았다** — 옳은 판단이다.
+    #
+    #   문지기: 전건 `@tenant_scoped` + `JwtOrInboundKey()` 기본값(들어오는 키 거절).
+    #   새 인증 경로는 없다 — 차선 파일의 `_scope()` 는 `api.py::_scope` 와 같은 세 줄이다.
+    #
+    #   ⚠ 진행률은 **읽기 전용이다**(쓰기 면이 아니므로 WRITE_PROBES 대상이 아니다 · P-8).
+    #     다만 그 읽기가 **자동 완료 훅을 태운다** — 카드를 닫는 것은 사람의 체크가 아니라
+    #     서버 기록이다(WO-01 §12). 그래서 읽는 것만으로 온보딩 행이 늘 수 있다.
+    #   ⚠ 사람 셋은 **관리자만**이다. `people/{int:user_id}/deactivate` 는 남의 계정을
+    #     끄는 문이라 문지기가 둘(테넌트 + 역할)이다.
+    #   ⚠ `webhook-subscriptions/issue` 는 **기존 `POST /webhook-subscriptions` 옆의 다른
+    #     문이다**(226줄). 등록은 구독만 만들고, 이 문은 구독 + 서명키를 한 동작으로 낸다 —
+    #     키 값은 **이 응답에 한 번만** 실리고 그 뒤로는 해시만 남는다(D-335 ④).
+    #     한 문에 두 뜻을 담지 않은 이유는 `/law/purge` 와 `/law/retention/sweep` 을
+    #     가른 것과 같다(276줄): 되돌릴 수 없는 것이 섞이면 손이 미끄러진다.
+    ("GET", "/api/dsm/onboarding/progress"),                            # F · UX-46 온보딩 진행률
+    ("POST", "/api/dsm/settings/people/create"),                        # U56 · S-14 사람 만들기 ★쓰기
+    ("POST", "/api/dsm/settings/people/{int:user_id}/deactivate"),      # U56 · S-14 사람 비활성화 ★쓰기
+    ("POST", "/api/dsm/settings/webhook-subscriptions/issue"),          # U56 · P-145 구독+서명키 발급 ★쓰기
 })
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**

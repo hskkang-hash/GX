@@ -1,8 +1,8 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
-  "captured_at": "2026-09-07T16:56:46",
-  "screens_total": 32,
-  "routes_total": 27,
+  "captured_at": "2026-09-16T08:29:02",
+  "screens_total": 28,
+  "routes_total": 33,
   "screens": {
     "/login": [
       {
@@ -1007,6 +1007,43 @@
         "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
         "status": 200
       }
+    ],
+    "/m/events/173337": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/173337",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/173337/clip",
+        "status": 404
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/173337/field-replies",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
     ]
   },
   "api_notes": {
@@ -1036,7 +1073,8 @@
     "/menu": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/configuration-management": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/profile": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/operation-settings": "화면을 열고 브라우저가 부른 것을 그대로 적었다"
+    "/operation-settings": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/m/events/173337": "화면을 열고 브라우저가 부른 것을 그대로 적었다"
   },
   "data_source": "시드 (K1 record_detection 실제 경로 · 실제 사고 아님)",
   "viewers": [
@@ -1561,6 +1599,23 @@
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
       ]
+    },
+    {
+      "file": "SCREENS-1/fire_user/m_events_id_m3_field_reply.png",
+      "route": "/m/events/173337",
+      "persona": "U3",
+      "viewed_by": "U3 · gxseed_u1_operator · fire_user · 390px",
+      "user_role": "fire_user",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/events/173337 200",
+        "GET /api/dsm/events/173337/clip 404",
+        "GET /api/dsm/events/173337/field-replies 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
     }
   ],
   "blank_screens": [
@@ -1571,6 +1626,19 @@
     {
       "route": "/handover",
       "why": "본문 0자 · API 실패 0건 · JS 오류 0건 — /users 와 같은 모양"
+    },
+    {
+      "route": "/users",
+      "why": "역할 0개: 본문 0자 · API 6건 200 · JS 오류 0건 — 안내 대신 빈 화면. **admin 으로는 29행이 그려진다**(권한 때문이다) (DA-03 §3-4 위반 · rj-core §0.4)"
+    },
+    {
+      "route": "/survey-profile",
+      "role_checked": [
+        "admin",
+        "fire_admin",
+        "fire_user"
+      ],
+      "why": "★ [P-98] **역할이 있으면 더 안 보인다.** 역할 0개에서는 `Add New Profile` 단추라도 떴는데, admin·fire_admin·fire_user 셋 다 **머리줄뿐**이다 (본문 296·172·103자 · API 전부 200 · JS 오류 0건). 권한이 올라갔는데 화면이 줄었다 — 이 뒤집힘은 권한 결함이 아니라 화면 결함이다"
     }
   ],
   "redirected_screens": [
@@ -1583,6 +1651,23 @@
       "route": "/intergrated-dashboard",
       "landed": "/profile",
       "why": "같음. 둘 다 App.tsx 의 별도 라우트 묶음(189~211줄)에 있다"
+    },
+    {
+      "route": "/monitoring-dashboard",
+      "landed": "/profile",
+      "role_checked": [
+        "admin"
+      ],
+      "why": "요청한 경로가 아니라 이 계정의 홈 화면이 떴다 — 라우트에 도달하지 못한다. ★ [P-98 2026-09-07] **`admin` 으로 다시 쟀다: 똑같이 /profile 로 간다.** 위 주석이 열어 둔 물음(「역할이 있으면 다를 수 있다」)의 답이 나왔다 — **권한 문제가 아니다.** 최고 권한에서도 못 간다"
+    },
+    {
+      "route": "/intergrated-dashboard",
+      "landed": "/profile",
+      "role_checked": [
+        "admin"
+      ],
+      "why": "같음 — `admin` 에서도 /profile 로 간다 [P-98 실측]. 둘 다 App.tsx 의 별도 라우트 묶음(189~211줄)에 있다"
     }
-  ]
+  ],
+  "_restored_note": "2026-09-16 turn R - capture_screens.py 가 이 대장을 이번 실행분 2항목만 남기고 덮어썼다(screens 27 -> 2 - viewers 32 -> 2). 조율자가 HEAD + 이번 턴 갱신분으로 다시 세웠다 (D-473). viewers 는 라우트가 아니라 **기록 전체**로 묶는다 - 라우트로 묶으면 같은 화면을 본 다른 역할 계정이 지워진다(P-98 이 33장을 걸러낸 그 칸이다. 조율자가 첫 병합에서 실제로 4건을 이렇게 잃었고, 세어 보고 되찾았다). 이 파일은 verify_feature_reach / verify_envelope / verify_route_alive 셋의 입력이다."
 }

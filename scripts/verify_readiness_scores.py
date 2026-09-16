@@ -456,6 +456,123 @@ def parse_fcpr_stated(text: str) -> dict:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# P-149 — **PR 15관문 · CR 8조건 산출기** (턴 R · 차선 Q)
+#
+# 왜 이 절이 생겼나
+# -----------------
+#   첫 표의 「PR · CR」 칸이 **회색 — 산출기 없음**으로 여러 턴 서 있었다. 그런데
+#   정본은 이미 둘 다 있었다: PR 15관문은 `GX-FCPR §2`, CR 8조건은
+#   `GX-REVIEW §1` 이다. 없던 것은 셈법이 아니라 **그 표를 읽는 코드**였고,
+#   그래서 그 수는 매번 사람이 **인용**했다(09-08 손 점검 20.0 · 12.5).
+#   인용한 수는 정본이 바뀌어도 안 바뀐다 — 그것이 이 도구가 막는 병이다(P-93).
+#
+# ★ 이 산출기가 **하지 않는** 것
+#   · 값을 코드에 베끼지 않는다 — 표를 읽는다.
+#   · 읽을 수 없는 칸을 0 으로도 1 로도 세지 않는다 — **회색**이고, 하한·상한이 갈린다.
+#   · 「끝나는가」 술어의 PR 15칸을 **행별로** 내지 않는다. 그 술어의 per-row 정본이
+#     저장소에 없기 때문이다(§12 는 합계 한 줄뿐). 없는 표를 지어내지 않는다.
+# ═══════════════════════════════════════════════════════════════════════════
+
+#: CR 8조건(§1)의 「지금 [실측]」 칸 → 값. 「반」만 0.5 이고 나머지는 끝났거나 아니다.
+CR8_VALUE = {"없다": 0.0, "아니다": 0.0, "반": 0.5,
+             "끝난다": 1.0, "그렇다": 1.0, "해결": 1.0}
+CR8_ROWS = 8
+
+
+def parse_pr_rubric(text: str) -> list[dict]:
+    """`GX-FCPR §2` — PR **관문 15항목의 이름표**를 읽는다 (값이 아니라 눈금이다).
+
+    표의 꼴: `| 관문 | # | 항목 | 1 | 0.5 | 0 | 근거 출처 |` — 번호가 **둘째 칸**이라
+    `col=1` 로 고른다. 그래서 §3′-2(번호가 첫 칸)와 §3(세종 값 표)은 안 걸린다.
+    관문 이름은 세 줄에 한 번만 적혀 있으므로 **이어받는다**.
+    """
+    blocks = parse_numbered_grid(text, PR_ROWS, col=1)
+    if not blocks:
+        return []
+    out, gate = [], ""
+    for r in blocks[-1]:
+        c = r["cells"]
+        g = _plain(c[0]) if c else ""
+        m = re.match(r"(G[1-5])", g)
+        if m:
+            gate = m.group(1)
+        out.append({"no": r["no"], "gate": gate,
+                    "item": _plain(c[2]) if len(c) > 2 else "",
+                    "source": _plain(c[6]) if len(c) > 6 else ""})
+    return out
+
+
+def parse_cr8(text: str) -> list[dict]:
+    """`GX-REVIEW §1` — **돈을 내는 8조건**과 그 「지금 [실측]」 칸을 읽는다.
+
+    표의 꼴: `| ① | 조건 | 술어 | **반** — … |`. 값 칸은 문장이라 **맨 앞 낱말**만
+    본다 — 뒤의 사유는 사람이 읽을 것이고, 값은 그 첫 낱말이 정한다.
+    아는 낱말이 아니면 `None`(**회색**)이다. 모르는 것을 0 으로 세지 않는다.
+    """
+    rows = []
+    for line in text.splitlines():
+        s = line.strip()
+        if not s.startswith("|"):
+            continue
+        c = _cells(s)
+        if len(c) < 4:
+            continue
+        sym = _plain(c[0])
+        if len(sym) != 1 or sym not in CIRCLED[:CR8_ROWS]:
+            continue
+        raw = _plain(c[3])
+        m = re.match(r"(없다|아니다|반|끝난다|그렇다|해결)", raw)
+        rows.append({"no": CIRCLED.index(sym) + 1, "cond": _plain(c[1]),
+                     "raw": raw, "value": CR8_VALUE[m.group(1)] if m else None})
+    return rows
+
+
+def judge_cr8(rows: list[dict]) -> tuple[dict, list[str]]:
+    """8조건 → 하한·상한. **회색은 0 으로도 1 로도 세지 않는다**(CR 9항목과 같은 규칙)."""
+    bad = []
+    if len(rows) != CR8_ROWS:
+        bad.append("CR8: 조건이 여덟이 아니다 (%d개) — 분모가 흔들리면 아래 수는 무의미하다"
+                   % len(rows))
+    known = sum(r["value"] for r in rows if r["value"] is not None)
+    unmeasured = sum(1 for r in rows if r["value"] is None)
+    n = len(rows) or CR8_ROWS
+    for r in rows:
+        if r["value"] is None:
+            bad.append("CR8 %d(%s): 「지금」 칸 %r 을 못 읽었다 — 표의 모양이 바뀌었다면 "
+                       "**이 도구도 함께 고쳐라**" % (r["no"], r["cond"][:18], r["raw"][:24]))
+    return {"known": known, "unmeasured": unmeasured, "n": n,
+            "lower": known / n * 100.0, "upper": (known + unmeasured) / n * 100.0,
+            "rows": rows}, bad
+
+
+def cross_check_pr(rubric: list[dict], measured: list[dict]) -> list[str]:
+    """§2 의 눈금(15항목)과 §3′-2 의 값(15행)이 **같은 표를 말하는가**.
+
+    분모가 같아도 항목이 어긋나면 두 표는 다른 것을 재고 있는 것이다 —
+    그때 낸 수는 둘 중 어느 쪽의 수도 아니다.
+    """
+    bad = []
+    if not rubric:
+        return ["PR: `GX-FCPR §2` 에서 **관문 15항목 표**를 못 찾았다 — 눈금 없이 낸 값은 "
+                "무엇을 잰 수인지 말할 수 없다"]
+    if len(rubric) != PR_ROWS:
+        bad.append("PR: §2 의 항목이 %d개다 — 셈법이 못박은 분모는 %d다"
+                   % (len(rubric), PR_ROWS))
+    by_no = {r["no"]: r for r in measured}
+    for item in rubric:
+        m = by_no.get(item["no"])
+        if not m:
+            bad.append("PR %d: §2 에 있는 항목이 §3′-2 실측 표에 **없다**" % item["no"])
+            continue
+        cells = m.get("cells") or []
+        got_gate = _plain(cells[1]) if len(cells) > 1 else ""
+        if item["gate"] and got_gate and item["gate"] != got_gate:
+            bad.append("PR %d: 관문이 갈린다 — §2 는 %s · §3′-2 는 %s"
+                       % (item["no"], item["gate"], got_gate))
+    return bad
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # 자기시험 — 출생 표본을 첫 갈래로 둔다 (D-310)
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -610,6 +727,49 @@ def self_test(verbose: bool = True) -> int:
                             "**PR = 7.0 ÷ 15 = 46.7%**")
     ok("문서가 적어 둔 FC·PR 수를 집는다",
        lo2 == {"fc_lower": 38.9, "fc_upper": 44.4, "pr": 46.7})
+
+    # ── ★ P-149 — PR 15관문 눈금(§2) · CR 8조건(§1) 산출기 ────────────────────
+    rub_src = "\n".join(
+        ["| 관문 | # | 항목 | 1 | 0.5 | 0 | 근거 출처 |", "|---|---|---|---|---|---|---|"]
+        + ["| %s | %d | 항목%d | 가 | 나 | 다 | `verify_x` |"
+           % ("**G%d 이름**" % (i // 3 + 1) if i % 3 == 0 else "", i + 1, i + 1)
+           for i in range(PR_ROWS)])
+    rub = parse_pr_rubric(rub_src)
+    ok("★ §2 의 관문 15항목을 읽는다 (번호가 **둘째 칸**인 표)", len(rub) == PR_ROWS)
+    ok("★ 관문 이름은 세 줄에 한 번만 적혀도 **이어받는다**",
+       [r["gate"] for r in rub][:4] == ["G1", "G1", "G1", "G2"])
+    ok("★ 음성 · §3′-2(번호가 첫 칸)는 §2 눈금 표로 안 집힌다",
+       parse_pr_rubric(_grid(PR_ROWS, "0.5")) == [])
+
+    cr8_src = "\n".join([
+        "| # | 조건 | 술어 | 지금 [실측] |", "|---|---|---|---|",
+        "| ① | 바깥에서 URL | 술어 | **없다** — 공개 URL 0 |",
+        "| ② | 계정이 안전하다 | 술어 | **반** — 74계정 공유 |",
+        "| ③ | 첫 근무일 | 술어 | **아니다** — 확인창 사망 |",
+        "| ④ | 보고서 | 술어 | **아니다** — 영문 CRUD |",
+        "| ⑤ | 알림 | 술어 | **아니다** — channel=log |",
+        "| ⑥ | SLA | 술어 | **아니다** — 운영 서버 0 |",
+        "| ⑦ | 가격표 | 술어 | **아니다** — 빈칸 |",
+        "| ⑧ | 감사 60초 | 술어 | **반** — 날짜로 찾는 길 없음 |"])
+    c8 = parse_cr8(cr8_src)
+    ok("★ 8조건의 「지금」 칸을 **맨 앞 낱말**로 읽는다 (뒤 사유는 사람 몫)",
+       [r["value"] for r in c8] == [0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5])
+    res8, bad8 = judge_cr8(c8)
+    ok("★ CR8 = 1.0 ÷ 8 = 12.5% · 회색 0", abs(res8["lower"] - 12.5) < 0.01 and not bad8)
+    unk = parse_cr8(cr8_src.replace("**없다** — 공개 URL 0", "**곧 된다** — 다음 턴"))
+    res9, bad9 = judge_cr8(unk)
+    ok("★ 음성 · 모르는 낱말은 **회색** — 0 으로도 1 로도 안 센다 (하한≠상한)",
+       unk[0]["value"] is None and res9["upper"] - res9["lower"] > 1.0 and bad9)
+    ok("★ 음성 · 여덟이 아니면 잡는다", any("여덟이 아니다" in b for b in judge_cr8(c8[:7])[1]))
+
+    meas15 = read_measured_grid(_grid(PR_ROWS, "0.5"), PR_ROWS)
+    for i, r in enumerate(meas15):
+        r["cells"] = [str(r["no"]), "G%d" % (i // 3 + 1), "항목", "0.5", "e", "실측"]
+    ok("★ §2 눈금과 §3′-2 값이 **같은 표를 말하면** 어긋남 0", not cross_check_pr(rub, meas15))
+    meas15[4]["cells"][1] = "G5"
+    ok("★ 음성 · 관문이 갈리면 잡는다 (분모가 같아도 다른 것을 잰 것이다)",
+       any("관문이 갈린다" in b for b in cross_check_pr(rub, meas15)))
+    ok("★ 음성 · §2 를 못 읽으면 **회색 사유**가 나온다", cross_check_pr([], meas15))
 
     # ── P-117 · 첫 표 — **두 술어를 섞지 않는다** ──────────────────────────
     #    ★ 출생 표본 ③: 09-08 손 점검이 낸 33.3/20.0/12.5 와 이 도구가 문서에서
@@ -1086,6 +1246,67 @@ def main() -> int:
               "위 수가 그보다 낮은 것은 후퇴가 아니라 반납이다" % TAG)
     red.extend(fp["red"])
     gray.extend(fp["gray"])
+
+    # ── ④ P-149 — PR 15관문(§2 눈금) · CR 8조건(§1) **첫 판** ─────────────────
+    #    ★ 이 두 수는 여태 사람이 **인용**하던 자리다(09-08 손 점검 20.0 · 12.5).
+    #      인용한 수는 정본이 바뀌어도 안 바뀐다 — 그래서 여기서 **읽어서 다시 센다**.
+    print("")
+    review_text = REVIEW_DOC.read_text(encoding="utf-8", errors="replace") \
+        if REVIEW_DOC.is_file() else ""
+
+    if not fcpr_text:
+        gray.append("PR15: 셈법 문서가 없다 — 관문 눈금을 못 읽는다")
+    else:
+        rubric = parse_pr_rubric(
+            slice_section(fcpr_text, "## 2. PR", "## 3. 세종") or fcpr_text)
+        print("%s [PR15] 눈금 `%s` §2 — 관문 %s · 항목 **%d**"
+              % (TAG, FCPR_DOC.name,
+                 " ".join(sorted({r["gate"] for r in rubric if r["gate"]})) or "?",
+                 len(rubric)))
+        if fp.get("pr"):
+            bad_pr = cross_check_pr(rubric, fp["pr"]["rows"])
+            red.extend("PR15: " + b for b in bad_pr)
+            if not bad_pr:
+                print("%s ★ **PR(15관문) %.1f%%** (%.1f/%d) [실측 · 「있는가」 술어 · "
+                      "§2 눈금 ↔ §3′-2 값 어긋남 **0**]"
+                      % (TAG, fp["pr"]["lower"], fp["pr"]["lower_sum"], PR_ROWS))
+        else:
+            gray.append("PR15: §3′-2 실측 표를 못 읽었다 — 눈금은 있고 값이 없다")
+        #: ★ 「끝나는가」 술어의 PR 은 **행별 정본이 없다.** §12 는 합계 한 줄뿐이다.
+        #:   없는 표를 지어내지 않는다 — 그 칸은 회색이고, 인용으로만 나간다.
+        gray.append("PR15(「끝나는가」 술어): 15칸을 **행별로** 적은 정본이 저장소에 없다 "
+                    "(`%s` §12 는 합계 한 줄뿐) — 없는 표를 지어내지 않는다. "
+                    "그 술어의 PR 은 **인용**이지 이 산출기의 수가 아니다" % REVIEW_DOC.name)
+
+    if not review_text:
+        gray.append("CR8: `%s` 가 없다 — 8조건의 정본이 없다. 셈법 없는 수를 지어내지 않는다"
+                    % REVIEW_DOC.name)
+    else:
+        cr8_rows = parse_cr8(
+            slice_section(review_text, "## 1. 상용서비스", "## 2.") or review_text)
+        cr8, bad8 = judge_cr8(cr8_rows)
+        red.extend("CR8: " + b for b in bad8)
+        print("%s [CR8] 셈법 `%s` §1 — **돈을 내는 8조건** · 값 {0, 0.5, 1}"
+              % (TAG, REVIEW_DOC.name))
+        print("%s [CR8] 조건값: %s" % (TAG, " · ".join(
+            "%s=%s" % (CIRCLED[r["no"] - 1],
+                       UNMEASURED if r["value"] is None else ("%g" % r["value"]))
+            for r in cr8_rows)))
+        if cr8["unmeasured"]:
+            print("%s ★ **CR(8조건) 하한 %.1f%% · 상한 %.1f%%** [실측 · 회색 %d조건]"
+                  % (TAG, cr8["lower"], cr8["upper"], cr8["unmeasured"]))
+        else:
+            print("%s ★ **CR(8조건) %.1f%%** (%.1f/%d) [실측 · 문서 표를 다시 셈 · 회색 0]"
+                  % (TAG, cr8["lower"], cr8["known"], cr8["n"]))
+        #: 문서가 §12 에 적어 둔 수와 대조한다 — CR 9항목·FC 와 **같은 자리**의 검사다.
+        h = parse_handson(review_text).get("CR")
+        if h and abs(h["pct"] - cr8["lower"]) > 0.15:
+            red.append("CR8: 문서 §12 가 적은 %.1f%% ≠ §1 표를 다시 센 %.1f%% — "
+                       "**문서와 코드가 갈렸다.** 수를 맞추지 말고 어느 쪽이 틀렸는지 "
+                       "정하고 그쪽을 고쳐라" % (h["pct"], cr8["lower"]))
+        elif h:
+            print("%s [CR8] §12 가 적어 둔 %.1f%% 와 같다 — 문서와 코드가 안 갈렸다"
+                  % (TAG, h["pct"]))
 
     # ── 판정 ────────────────────────────────────────────────────────────────
     print("")

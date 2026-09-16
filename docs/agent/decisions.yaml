@@ -8259,3 +8259,248 @@ decisions:
     · scripts/verify_click_completes.py :: FLOWS U1#1 · U3#1 · API_PATHS U6#4
     · docs/agent/evidence/P-141/classify_red7.md
   affects: [D-327]
+
+- id: D-467
+  author_tree_id: "대표 직접 지시(2026-09-16 · 영실 Code 세션) · 세종 턴 R P-144"
+  title: "P-90 운영 읽기 4건 — 대표 승인은 도착했고, 주소는 오지 않았다"
+  status: decided
+  raised_by: "대표 2026-09-16 · 영실 세션 · 턴 R 조율자 항목 ④"
+  decision: |
+    ▣ 대표가 집행자(영실) 세션에 직접 적었다 — 문구 그대로:
+      「P-90 운영 공개 진입면 읽기 4건 보내라 — 익명 GET 4 · 본문 저장 0 · 대표 2026-09-16」
+      P-144 의 집행 조건 ①(집행자 세션에 대표가 직접)은 **성립했다.** 문서 인용이 아니다.
+    ▣ 그럼에도 **집행하지 않았다 — 운영 주소가 없다.** 실측:
+      · .env.gates 의 GX_API 는 http://localhost (우리 컨테이너)
+      · decisions.yaml 에 P-90 주소 항목 0
+      · 저장소 전체의 실재 외부 .kr 주소는 backend/third_api/common/utils.py:54-66 의
+        delivery.whee-param.kr · dev.whee-param.kr 뿐 — 이것은 **배송(ETRI) 제3자 연계**
+        주소이지 GuardianX 안양 운영계가 아니다. 이름이 비슷하다고 두드리면 그것은
+        남의 서버를 두드리는 것이다.
+    ▣ 근거는 우리가 이미 세운 원칙이다(evidence/P-90/commands.md §4):
+      **승인에는 주소가 붙어야 한다. 「보내라」는 대상을 포함해야 명령이다.**
+      **대상 없는 승인을 받은 쪽이 대상을 추정하면, 그 순간 그것은 승인받지 않은 행위다.**
+      P-144 가 「문서는 승인이 아니다」를 세웠듯, 이 줄은 「승인은 대상을 포함한다」를 세운다.
+    ▣ 다음: 대표가 주소 한 줄(https://…)을 적으면 그 턴에 probe_spec.md §2 그대로 —
+      익명 GET 4 · 본문 저장 0(-o /dev/null) · 4건 밖 0 · 같은 날 재발송 0 — 실행하고
+      상태코드·바이트·Content-Type·X-GX-Public-Projection 유무 4줄만 남긴다.
+      같이 주시면 좋은 것: 허용 IP 제한 유무 · 보내도 되는 시간대.
+    ▣ 정본 충돌 하나를 적어 둔다: evidence/P-90 에 사양이 둘 있다 —
+      probe_spec.md(익명 GET 4 · 공개 진입면)와 commands.md(HEAD/OPTIONS 4 · 관문 0 자리).
+      대표 문구가 「익명 GET 4」이고 턴 R §2 P-144 가 probe_spec.md 를 지목하므로
+      **probe_spec.md 가 정본**이다. commands.md 는 §4 원칙 문서로만 남긴다.
+  enforced_by: |
+    · scripts/verify_external_sources.py — **이것이 실제 집행자다.** 운영 주소가 코드에
+      들어오는 순간 이 게이트가 본다(제3자 외부 주소 등재부). 주소가 저장소에 없다는
+      사실도 이 게이트가 지키는 사실이고, 누가 조용히 한 줄 적으면 여기서 멈춘다.
+    · scripts/verify_no_secret_echo.py — 탐침이 실행되면 결과에 자격이 섞이지 않는지.
+    · docs/agent/evidence/P-90/probe_spec.md (정본 · §2 명령 — 실행할 때 그대로 따른다)
+    · docs/agent/evidence/P-90/commands.md §4 (원칙 — 승인에는 주소가 붙는다)
+    · docs/agent/RESUME_NEXT.md §2 P-144 · §4 ③
+  affects: [D-461, D-462]
+
+- id: D-468
+  author_tree_id: "세종 지시서 턴 R(2026-09-16) · 조율자 병합"
+  title: "병합에서 게이트 넷을 닫았다 — 넷 다 차선이 못 닫는 자리였다"
+  status: decided
+  raised_by: "영실(조율자) 2026-09-16 턴 R 병합"
+  decision: |
+    ▣ **진입면 대장 +4** (`test_f05_event_api.py::EVENT_ENTRY_SURFACE`) — F 하나
+      (`onboarding/progress`) · U56 셋(`settings/people/create` ·
+      `settings/people/{int:user_id}/deactivate` · `settings/webhook-subscriptions/issue`).
+      차선 셋(U1·U3·U56)이 각자 「내 것은 등재했고 남은 빨강은 내 결함이 아니다」로
+      보고했고 **셋 다 옳았다.** 그 파일이 이미 적어 둔 규약 그대로다 —
+      **두 차선에 걸친 자리는 조율자가 병합에서 맞춘다.** U56 은 자기 셋만 채워도
+      F 의 한 줄이 비어 여전히 빨갛다는 것을 보고 손대지 않았다. 12 passed.
+    ▣ **dead_fields 등재 6줄 만료 → 지움** — D-463 이 「U1 차선 파 1 턴 2 가 쓴다」·
+      「F 차선 파 1 턴 2 가 쓴다」로 적어 둔 `DsmHandover` 넷 · `DsmOnboardingProgress`
+      둘. **그 턴이 왔다.** 게이트가 먼저 알아냈다(쓰기가 생기자 「등재를 지워라」로
+      빨개졌다) — 등재는 면제가 아니라 **만료일이 적힌 이름표**라고 적어 둔 그대로다.
+      D-338 선례대로 지운 자리에 「왜 지웠나」를 남겼다. 새 빚 0.
+    ▣ **homonyms 기준선 4 → 6 (159 → 161)** — U56 의 새 시험이 같은 **서버가 정한
+      경로 문자열** "/api/dsm/settings/api-keys" 를 두 번 더 썼다. 우리 식별자에는
+      새 단독 `api_key` 가 0건이다. ★ `--freeze` 를 **부르지 않았다** — 턴 Q 가
+      「freeze 가 사람의 문단을 지운다」를 실측으로 남겼기 때문이다. 데이터 한 줄만
+      손으로 고쳤다. **기준선은 기계가 쓰고 사유는 사람이 쓴다.**
+    ▣ **cache_bypass 표기 1건** — F 의 `test_onboarding_progress.py` 가 익명 401 을
+      묻느라 스택을 타는데 선언이 없었다. `NO_CACHE` 우회 + 「캐시 처리: 우회」 한 줄.
+      관문이 열려 있던 동안 채워진 항목을 돌려받으면 **고친 뒤에도 초록**이 된다(D-341 착시 ⑦).
+  enforced_by: |
+    · backend/tests/test_f05_event_api.py :: EVENT_ENTRY_SURFACE
+    · scripts/verify_dead_fields.py :: DECLARED_UNWIRED
+    · docs/agent/evidence/D-337/homonym_baseline.txt
+    · backend/tests/test_onboarding_progress.py
+  affects: [D-463, D-337, D-341, D-285]
+
+- id: D-469
+  author_tree_id: "세종 판정 P-145(턴 R) · verify_tenant_scope 실측"
+  title: "커널에 숫자를 건네지 않는다 — 서명키 셋은 scope 를 받는다"
+  status: decided
+  raised_by: "verify_tenant_scope 위반 6건 (2026-09-16 · 조율자 병합)"
+  decision: |
+    ▣ U56 이 P-145 로 만든 `kernels/k5_trust/webhook_signing_keys.py` 의 공개 함수 셋
+      (`generate_signing_key` · `rotate_signing_key` · `signing_key_name_for`)이
+      **키워드 전용 `scope: TenantScope` 없이** 태어났다. 게이트가 6건으로 멈춰 세웠다.
+    ▣ 고친 방향 — 형제 파일 `inbound_keys.py` 의 관례를 **그대로** 따른다(판정식을 새로
+      짓지 않는다 · D-212): 1차는 **시그니처**가 막고(테넌트 없이는 호출 자체가 불가능),
+      2차는 `_group_of(scope)` 가 막는다. 그 함수는 시스템 스코프를 거절하고
+      `require_user_group`(없으면 **멈춘다**)을 부른다 — `get_user_group`(있으면 준다)이
+      아니다. 커널(L3)에서 `@tenant_scoped` 는 `request` 가 없어 **표식만 남기고 아무것도
+      막지 못한다**(착시 ①).
+    ▣ ★ `signing_key_name_for` 는 1차판이 `group_id: int` 를 받았다. **숫자를 받으면
+      「어느 테넌트의 이름인가」를 커널이 아니라 호출자가 정하게 된다** — 다음 호출자가
+      다른 숫자를 넣는 날 아무도 막지 못한다. 그래서 부르는 쪽
+      (`apps/dsm/webhook_key_service.py`)의 `require_user_group(actor)` 두 줄을 지우고
+      소속을 커널이 직접 묻게 했다.
+    ▣ 결과: 커널 공개 함수 53/53 시그니처 · 문지기 호출 40 → 43 · `[SCOPE] 통과`.
+      U56 시험 3 passed(HTTP 경로로만 두드리므로 시험은 안 고쳤다).
+    ▣ ⚠ 남은 사실 하나 — `rotate_signing_key` 는 **부르는 자리가 한 곳도 없다**(전수 확인).
+      `verify_dormant` 는 기준선 안이라 통과했지만, 문 없는 함수다. 다음 턴에 회전 라우트를
+      내거나 지운다. 지금 지우지 않는 이유는 삭제가 대표 결정이기 때문이다.
+  enforced_by: |
+    · scripts/verify_tenant_scope.py (C-3.1 · D-281)
+    · backend/kernels/k5_trust/webhook_signing_keys.py :: _group_of
+    · backend/apps/dsm/webhook_key_service.py
+  affects: [D-281, D-212, D-335]
+
+- id: D-470
+  author_tree_id: "턴 R 병합 · click_completes 단독 재측 · D-466 후속"
+  title: "판정기 기대식 둘 — 하나는 고쳤고 하나는 고치지 않았다(관측이 없다)"
+  status: decided
+  raised_by: "영실(조율자) 2026-09-16 · 여정 재측 빨강 7의 3종 분류"
+  decision: |
+    ▣ **고친 것 — U6#1.** `srv_change("/api/dsm/settings/api_keys", "total")` 이
+      **그 응답에 한 번도 없었던 칸**을 보고 있었다. `services.setting_overview
+      (domain="api_keys")` 가 내는 것은 outbound · inbound · inbound_api_type ·
+      inbound_capability · api_keys 다섯이다. 없는 칸은 앞뒤가 늘 None 이므로
+      `server_change` 의 before==after 가 참이 되고, **제품이 고쳐진 뒤에도 빨강**이었다.
+      실측으로 제품 쪽을 먼저 확인했다: `POST /api/dsm/settings/api-keys` → **200** ·
+      `is_tenant_admin(gxseed_u5_sysop)` → **True**(P-146 배선). 키를 발급하면 늘어나는
+      것은 들어오는 키 목록이므로 보는 칸을 `inbound` 로 바꿨다.
+    ▣ **고치지 않은 것 — U1#19 · U2#1 · U2#2.** 원인은 안다:
+      `verify_click_completes.py:473` 이 `after in (None, "", [], {}, 0)` 로
+      **참값 0·빈 목록과 「칸이 없다」를 한 묶음**으로 읽는다. 차선 둘(U1 · Q)이 서로
+      모르게 같은 자리를 짚었고, U1 은 curl 로 `200 {"unhandled": 0}` 까지 확인했다.
+      ★ **그런데도 고치지 않는다.** 둘을 가르려면 관측기가 「그 칸이 응답에 있었는가」를
+      기록해야 하는데, 지금 증거(before·after·on_screen)에는 그 자리가 없다. 관측 없이
+      판정만 고치면 **빨강이 거짓 초록으로 바뀐다** — 턴 Q 가 U3#3 에서 거부한 바로
+      그 일이다(D-466). 빨강으로 둔다.
+    ▣ 다음 턴 몫: 관측기에 `had_field` 를 더하고(있었는가 / 없었는가) 473줄을
+      **값의 참거짓이 아니라 칸의 있고 없음**으로 가른 뒤 셋을 다시 잰다.
+    ▣ 남은 빨강의 3종(재측 2026-09-16T03:06Z · 23/48):
+      · 기대식 오류 3 — U1#19 · U2#1 · U2#2 (위 · 관측 대기)
+      · 데이터·설계 2 — U3#1(5분 중복 억제 · F-04 설계대로) · U6#4(서명키 값이 그
+        환경에 없어 제품이 옳게 422)
+      · 데이터 상태 1 — U6#9(사건 4798 이 이미 종결이다. **U24 차선이 재판정을
+        실측하면서 바꾼 상태**이고 되돌리지 않았다 — 판정은 감사 기록이다)
+      · 고침 1 — U6#1(이 결정)
+  enforced_by: |
+    · scripts/verify_click_completes.py :: FLOWS U6#1 · _cell_state(server_change)
+    · docs/agent/evidence/P-118/click_completes.json (관측 정본)
+    · backend/apps/dsm/services.py :: setting_overview(domain="api_keys")
+  affects: [D-466, D-327, D-301]
+
+- id: D-471
+  author_tree_id: "턴 R · click_completes 단독 재측 2회 · 빨강 3의 뿌리 대조"
+  title: "여정 판정기가 「한 번만 참인 상태」를 잰다 — 제품이 옳을수록 두 번째 실행에서 빨개진다"
+  status: decided
+  raised_by: "영실(조율자) 2026-09-16 · U1#11 이 새로 빨강이 된 자리"
+  decision: |
+    ▣ 재측 둘을 나란히 놓으니 빨강 셋이 **서로 다른 이름으로 같은 모양**이었다:
+      · U1#11 진위 판단 — 「`verdict` 가 그대로다(confirmed)」 ← **앞선 실행이 이미 판정했다**
+      · U3#1  알림 수신 — 「`total` 이 그대로다」 ← **5분 중복 억제**(F-04 설계대로)
+      · U6#9  상태 갱신 — 403 ← **U24 차선이 재판정을 실측하며 그 사건을 종결로 바꿨다**
+      셋 다 `server_change`(before ≠ after)를 보는 쓰기 흐름이고, 셋 다 **누르는 대상이
+      매번 같은 시드 사건**(#4798)이다. 앞선 실행이 값을 바꿔 두면 다음 실행은 같은 단추를
+      눌러도 before == after 가 된다 — **제품이 옳게 동작한 결과가 빨강으로 나온다.**
+    ▣ ★ 이 빨강을 **제품 결함으로 읽지 않는다.** 그렇게 읽으면 멀쩡한 코드를 고치기
+      시작한다. 가르는 법: 증거(`evidence/P-118/click_completes.json`)의 `calls` 에서
+      **요청의 상태코드**를 먼저 본다 — 200 인데 `state.before == state.after` 면
+      제품이 아니라 **데이터 상태**다. U6#1 이 그 반대 사례였다(200 인데 판정기가 없는
+      칸을 보고 있었다 · D-470).
+    ▣ 고치는 길(다음 턴): 쓰기 흐름은 매 실행마다 **새 사건을 시드**하거나 측정 전에
+      상태를 되돌린 뒤 누른다. ⚠ 되돌림은 **감사 기록**이라 함부로 하지 않는다 —
+      U24 차선이 4798 의 판정을 바꾸고 되돌리지 않은 것도 같은 이유였고, 그 판단은 옳았다.
+      시드가 답이다(되돌림이 아니라).
+    ▣ 이번 턴 수: **23/48**(초록 23 · 빨강 7 · 회색 18 · 단독 세션 03:36Z).
+      턴 Q 의 24/48 보다 하나 내려갔고 **내려간 대로 적는다.** 다만 두 수는 조건이 다르다 —
+      턴 Q 는 차선 일곱이 같은 역할 계정으로 동시에 누르는 중에 쟀고(그 경합이 값을
+      20↔22 로 흔드는 것을 Q 차선이 실측했다), 이번은 병합 뒤 단독이다.
+      안에서 바뀐 둘: U6#1 → 초록(D-470 정정) · U1#11 → 빨강(위 · 데이터 상태).
+    ▣ 원칙 등재: **누르는 측정은 자기가 재는 상태를 바꾼다.** 그래서 같은 수를 두 번
+      재려면 **같은 출발 상태**를 두 번 만들어야 한다. 그러지 않은 수는 재현 가능한 수가
+      아니고, 재현되지 않는 수로는 오르내림을 말할 수 없다.
+  enforced_by: |
+    · scripts/verify_click_completes.py :: FLOWS(쓰기 흐름) · _cell_state(server_change)
+    · docs/agent/evidence/P-118/click_completes.json (관측 정본 · calls 의 상태코드)
+    · scripts/verify_measure_repro.py (측정 재현성 — 같은 출발 상태를 요구하는 자리)
+  affects: [D-470, D-466, D-344]
+
+- id: D-472
+  author_tree_id: "턴 R 병합 · SEC-05 두 번째 자리 · verify_secret_scan"
+  title: "증거는 자격을 나르지 않는다 — 가림은 잡는 자리가 아니라 적는 자리에서 한다"
+  status: decided
+  raised_by: "verify_ga_readiness FAIL SEC-05 (2026-09-16 · click_completes.json:883)"
+  decision: |
+    ▣ 내가 U6#1 을 고쳐 다시 재게 만든 `evidence/P-118/click_completes.json` 을 스캐너가
+      `generic-api-key` 로 잡았다. U6#1 은 **API 키를 발급하는 흐름**이라 **내 정정이 만든
+      유출인지부터** 확인했다 — 아니었다. 브라우저가 지도를 그리려고 부른
+      `dapi.kakao.com/…?appkey=…`(번들에 구워져 나가는 공개용 클라이언트 키)가 **16건**
+      기록된 것이고 길이는 전부 32, 서로 같은 값 하나였다. 우리 제품 키는 0건.
+    ▣ ★ 그래도 넘기지 않았다. 이 파일은 우리가 **커밋하는** 파일이다 — 저장소가 그 값을
+      나르기 시작하면 **다음에 진짜로 새는 값과 구별되지 않는다.** 허용 목록
+      (`.gitleaksignore`)으로 스캐너를 무르게 하는 길은 쓰지 않았다. 같은 턴
+      `P-151/iso_guard.py` 에서도 같은 판단을 했다: **스캐너는 뜻이 아니라 모양을 본다.**
+    ▣ ★★ **가리는 자리가 판단의 전부였다.** 요청을 잡는 `on_req` 에서 가리면
+      `on_resp` 가 `c["url"] == r.url` 로 짝을 못 찾아 **모든 호출의 상태코드가 None**
+      이 되고, 판정기는 401·403 을 그것으로 가르므로 여정 48행이 통째로 무너진다.
+      그래서 **저장소에 적는 순간** 한 곳(`OBSERVED.write_text`)에서만 가린다 —
+      컨테이너 안 드라이버는 원본으로 짝을 맞추고, 남는 파일만 깨끗하다.
+    ▣ 범위도 좁혔다 — **자격 이름이 붙은 값만**(appkey · api_key · token · secret ·
+      password · access_key · signature). 우리 라우트의 질의(`event_id`·`limit`·`name`·
+      `preset`)는 `_cell_call` 이 정규식으로 맞추는 자리라, 질의를 통째로 지우면
+      **멀쩡한 초록이 빨강이 된다.**
+    ▣ 검증(고친 뒤에 잰 것): 집계 **23/48 불변**(사람별까지 동일 — 가림이 URL 맞추기를
+      깨지 않았다) · `verify_secret_scan` **통과**(저장소가 나르는 자리 0건 · 이력 0건).
+    ▣ 작은 규약 하나 — 이 정규식의 문자 클래스에 **역슬래시를 넣지 않는다.** 값은 JSON
+      문자열 안이라 `&` 아니면 `"` 에서 끝나고, 역슬래시를 넣으면 그 줄을 셸로 옮겨
+      적는 날 조용히 깨진다(실측: 같은 패턴을 heredoc 으로 넣다 두 번 깨졌다).
+  enforced_by: |
+    · scripts/verify_click_completes.py :: _redact_credentials · _CRED_IN_URL
+    · scripts/verify_secret_scan.py (SEC-05 — 저장소가 나르는 자리)
+    · docs/agent/evidence/P-118/click_completes.json (가린 뒤의 정본)
+  affects: [D-311, D-319, D-204]
+
+- id: D-473
+  author_tree_id: "턴 R 병합 · verify_screens 가 커밋 ③을 막았다"
+  title: "캡처 생성기가 대장을 지웠다 — 32항목이 2항목이 되고 30장이 출처를 잃었다"
+  status: decided
+  raised_by: "verify_screens FAIL 30건 (2026-09-16 · 커밋 ③ 세 번째 시도)"
+  decision: |
+    ▣ U3 차선이 `scripts/capture_screens.py` 를 돌리자 `D-347/screens/INDEX.yaml` 이
+      **이번 실행분 2항목만 남기고** 다시 쓰였다(32 → 2). 짝인 `run_log.json` 도 같이
+      지워졌다(1,513B → 232B · 32단계 → 2단계). **디스크의 PNG 30장은 그대로 남았다** —
+      그래서 그 순간 30장이 전부 「출처 없는 캡처」가 되었다.
+    ▣ **게이트가 먼저 알아냈다.** `verify_screens` 가 30건으로 커밋 ③을 멈춰 세웠다.
+      아무도 지웠다고 말하지 않았고, 지워진 것은 지워진 것이 보이지 않는다 —
+      게이트가 없었으면 이 커밋으로 캡처 30장의 출처가 영영 사라졌을 것이다.
+    ▣ 처방은 **HEAD + 이번 턴 갱신분**이다(턴 Q 의 인구조사 D-45x 와 같은 처방).
+      생성기 출력만 남기면 지워진 것이 안 보인다.
+      ⚠ 그 파일의 머리에 「손으로 고치지 말 것」이 적혀 있다. 어긋나 보이지만 여기서 한
+        일은 내용을 짓는 것이 아니라 **덮어쓰기를 되돌린 것**이다.
+      ⚠ 다시 찍힌 두 항목(SCREENS-1/27 · 28)만 **이번 턴 판을 얹었다.** PNG 파일은 U3 가
+        09-16 에 덮어썼으므로, HEAD 의 09-07 시각을 되살리면 인덱스가 **09-07 에 찍었다고
+        말하면서 09-16 파일을 가리키게** 된다 — 이 파일이 가장 경계하는 거짓말이다(D-284).
+        사건 id 도 99554 → 173337 로 함께 옮겼다. `run_log` 의 그 두 단계도 같이 옮겼다
+        (게이트가 캡처 시각과 ±5분으로 대조한다). 나머지 30단계는 09-07 그대로 둔다 —
+        그 캡처들은 실제로 그때 찍혔다.
+    ▣ **남은 결함(다음 턴 · F 또는 U3 차선): `capture_screens.py` 가 누적하지 않고
+      덮어쓴다.** 이번엔 조율자가 되살렸지만, 다음 실행도 같은 일을 한다. 생성기가
+      고쳐지기 전까지 **이 파일을 건드리는 실행 뒤에는 반드시 항목 수를 센다.**
+    ▣ 이 턴의 세 번째 같은 모양이다 — 턴 Q 인구조사 · 이번 INDEX · 그리고 `--freeze` 가
+      사람의 문단을 지우는 자리(D-337). **생성기는 자기가 만든 것만 안다.** 사람이 쌓은
+      것과 기계가 낸 것이 한 파일에 있으면, 기계에게 그 파일을 통째로 주지 않는다.
+  enforced_by: |
+    · scripts/verify_screens.py (항목마다 파일 실재 · run_log 와 ±5분)
+    · docs/agent/evidence/D-347/screens/INDEX.yaml (되살린 32항목 · 머리에 경위)
+    · docs/agent/evidence/D-347/screens/run_log.json
+  affects: [D-347, D-284, D-337]

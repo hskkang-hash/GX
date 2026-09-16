@@ -12,10 +12,10 @@
 #   조율자가 `path` 칸을 채운다.
 
 surfaces:
-  - {id: WS-01, lane: F,   surface: onboarding/progress,        module: backend/apps/dsm/onboarding.py, born: false}
+  - {id: WS-01, lane: F,   surface: onboarding/progress,        module: backend/apps/dsm/api_f.py,      born: true,  path: "GET /api/dsm/onboarding/progress", note: "턴 R · 셈은 onboarding.py · 진입면 등재 완료"}
   - {id: WS-02, lane: U3,  surface: me/notify-prefs,            module: backend/apps/dsm/api_u3.py,     born: false, note: "스키마는 F(dsm_notify_prefs)"}
-  - {id: WS-03, lane: U1,  surface: handover,                   module: backend/apps/dsm/api_u1.py,     born: false}
-  - {id: WS-04, lane: U1,  surface: "events/{id}/note",         module: backend/apps/dsm/api_u1.py,     born: false}
+  - {id: WS-03, lane: U1,  surface: handover,                   module: backend/apps/dsm/api_u1.py,     born: true,  path: "GET|POST /api/dsm/handover/draft · GET /api/dsm/handover/latest", note: "턴 R · UX-34"}
+  - {id: WS-04, lane: U1,  surface: "events/{id}/note",         module: backend/apps/dsm/api_u1.py,     born: true,  path: "POST|GET /api/dsm/events/{int:event_id}/note", note: "턴 R · 새 표 없이 audit_writer 재사용"}
   - {id: WS-05, lane: U1,  surface: "review+response 트랜잭션", module: backend/apps/dsm/api_u1.py,     born: false, note: "AC-2 · services.review_and_acknowledge"}
   - {id: WS-06, lane: U3,  surface: field-photo,                module: backend/apps/dsm/api_u3.py,     born: false, note: "스키마는 F(dsm_field_photo)"}
   - {id: WS-07, lane: U3,  surface: me/notify-report,           module: backend/apps/dsm/api_u3.py,     born: false}
@@ -24,8 +24,23 @@ surfaces:
   - {id: WS-10, lane: U24, surface: thresholds/simulate,        module: backend/apps/dsm/api_u24.py,    born: false}
   - {id: WS-11, lane: U24, surface: "reports/{id}/send",        module: backend/apps/dsm/api_u24.py,    born: false}
   - {id: WS-12, lane: U24, surface: report_run,                 module: backend/apps/dsm/api_u24.py,    born: false, note: "스키마는 F(dsm_report_run) · 배치가 쓰는 면"}
-  - {id: WS-13, lane: U56, surface: people,                     module: backend/apps/dsm/api_u56.py,    born: false}
+  - {id: WS-13, lane: U56, surface: people,                     module: backend/apps/dsm/api_u56.py,    born: true,  path: "POST /api/dsm/settings/people/create · POST /api/dsm/settings/people/{int:user_id}/deactivate", note: "턴 R · people.py 배선 = 잠든 코드 깨움"}
   - {id: WS-14, lane: U56, surface: "notify-rules(+test)",      module: backend/apps/dsm/api_u56.py,    born: false}
   - {id: WS-15, lane: U56, surface: system/restart-request,     module: backend/apps/dsm/api_u56.py,    born: false}
   - {id: WS-16, lane: U56, surface: "cameras/{id}/address",     module: backend/apps/dsm/api_u56.py,    born: false}
   - {id: WS-17, lane: U56, surface: "webhook filters",          module: backend/apps/dsm/api_u56.py,    born: false, note: "스키마는 F(webhook_subscription.filters)"}
+
+# ── 턴 R 병합 (2026-09-16 · 조율자) ─────────────────────────────────────────
+# 태어난 것 넷: WS-01 · WS-03 · WS-04 · WS-13. 넷 다 `EVENT_ENTRY_SURFACE` 에 이름으로
+# 등재됐고(그 손이 곧 「진입면을 넓힌다」는 선언이다), 문지기는 전건
+# `@tenant_scoped` + `JwtOrInboundKey()` 기본값(들어오는 키 거절)이다.
+#
+# ⚠ **이 표에 없는 쓰기 면이 하나 태어났다** — `POST /api/dsm/settings/webhook-subscriptions/issue`
+#   (U56 · P-145 구독+서명키 한 동작). 선등록 표는 이 면을 예상하지 못했다: 파 1 계획에서
+#   U56 의 웹훅 항목은 WS-17 「filters」 하나였고, 「서명키를 우리가 만든다」는 판정(P-145)이
+#   턴 R 에 와서야 섰기 때문이다. 이 표의 값은 **없던 면이 조용히 태어나는 것을 막는 것**이므로,
+#   빠뜨린 사실을 지우지 않고 여기 적는다 — 선등록이 실패한 자리도 기록이다.
+#   다음 파의 선등록은 「세종 판정이 그 턴에 새로 서는 면」 자리를 함께 잡는다.
+#
+# ⚠ WS-14 `notify-rules` 는 **태어나지 않았다.** U56 이 화면 골격만 세웠고
+#   `GET/POST /settings/notify-rules` 는 저장소에 없다(차선이 실측으로 확인). born: false 유지.

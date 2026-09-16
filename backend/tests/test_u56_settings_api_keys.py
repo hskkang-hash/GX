@@ -39,6 +39,26 @@ class ApiKeyIssueDoorTest(DsmFixture):
         super().setUp()
         self.client = Client(raise_request_exception=False, **NO_CACHE)
 
+    def tearDown(self):
+        """★ [실측 · 턴 R] `thread_local.request` 를 이 시험 뒤에도 비운다.
+
+        `DsmFixture.setUpTestData` 는 **클래스당 한 번만** 그 값을 지운다(맨 머리말
+        참고). 한 시험이 HTTP 요청으로 만든 사용자(예: 소속 없는 `admin` 대조군
+        계정)가 그 요청의 스레드 지역 변수에 남으면, 그 시험의 트랜잭션은 롤백돼도
+        `thread_local.request.user` 는 파이썬 프로세스 메모리에 그대로 남는다.
+        알파벳 순으로 **다음 시험 메서드**가 role M2M 신호(`created_by=<그 유령
+        사용자>`)를 태우면 `IntegrityError` 로 죽는다 — 코드 결함이 아니라 시험
+        간 오염이다(메모리 「스레드에 남은 요청이 거짓 초록을 만든다」와 같은 뿌리,
+        다만 여기서는 초록이 아니라 죽음으로 나타난다). 매 시험 뒤 지운다.
+        """
+        import contextlib
+
+        with contextlib.suppress(Exception):
+            from core.middleware.refresh_token import thread_local
+
+            thread_local.request = None
+        super().tearDown()
+
     # ── 자격 ─────────────────────────────────────────────────────────────
     def _tenant_admin_user(self):
         """`self.user_a` 에 `tenant_admin_<group_a>` 역할을 **더한다** — 대체하지 않는다.
@@ -51,6 +71,21 @@ class ApiKeyIssueDoorTest(DsmFixture):
         Role = apps.get_model("role", "Role")
         code = tenant_admin_role_code(self.group_a.pk)
         role, _ = Role.objects.get_or_create(code=code, defaults={"role_name": code})
+        role = self._own(role, self.group_a)
+        self.user_a.roles.add(role)
+        self.user_a.refresh_from_db()
+        return self.user_a
+
+    def _admin_role_user(self):
+        """`self.user_a` 에 `admin`(K3 SYSOP · U5 시드 계정과 **같은 역할 코드**)을 더한다.
+
+        ★ 이 도우미는 위 `_tenant_admin_user` 와 **일부러 다르다** — `tenant_admin_4` 를
+          붙이지 않는다. `gxseed_u5_sysop` 은 실제로 `admin` 하나만 갖고(시드 정의
+          그대로), 턴 R 이 닫는 것은 정확히 "이 역할 하나로도 지나가는가"다
+          (P-146 · `config/k3_roles.py::K3_ROLES_WITH_TENANT_SETTINGS_ACCESS`).
+        """
+        Role = apps.get_model("role", "Role")
+        role, _ = Role.objects.get_or_create(code="admin", defaults={"role_name": "admin"})
         role = self._own(role, self.group_a)
         self.user_a.roles.add(role)
         self.user_a.refresh_from_db()
@@ -91,6 +126,58 @@ class ApiKeyIssueDoorTest(DsmFixture):
         self.assertIn("secret", body, "발급 응답에 secret 칸이 없습니다.")
         self.assertTrue(body["secret"], "secret 이 비어 있습니다.")
         self.assertIn("audit_id", body, "발급이 감사에 남지 않았습니다 (AC-12).")
+
+    def test_admin_role_issues_a_key_over_http_via_role_mapping(self):
+        """★ P-146 닫는 조건 — `tenant_admin_<group>` 을 **따로 붙이지 않고**,
+        `admin`(U5 시드 계정이 실제로 갖는 역할) 하나만으로 200 을 받는다.
+
+        턴 Q 는 탐침 계정에 `tenant_admin_4` 를 손으로 붙여서 닫았다 — 그것은
+        게이트의 증거였다. 이 시험은 **역할 자체**에 권한이 매핑됐는가를 잰다.
+        """
+        admin = self._admin_role_user()
+        resp = self.client.post(
+            "/api/dsm/settings/api-keys?name=u56-p146-role-mapping",
+            **self._bearer(admin), **{"HTTP_X_NO_CACHE": "true"})
+        self.assertEqual(
+            200, resp.status_code,
+            (resp.content or b"")[:400].decode("utf-8", "replace"))
+        body = json.loads(resp.content.decode("utf-8"))
+        self.assertIn("secret", body, "발급 응답에 secret 칸이 없습니다.")
+        self.assertTrue(body["secret"], "secret 이 비어 있습니다.")
+        self.assertIn("audit_id", body, "발급이 감사에 남지 않았습니다 (AC-12).")
+
+        from common.tenant_roles import is_global_admin
+
+        self.assertFalse(
+            is_global_admin(admin),
+            "admin 역할이 전역 관리자로 판정됐습니다 — 테넌트 경계를 넘으면 안 됩니다.")
+
+    def test_admin_role_grants_no_cross_tenant_key_visibility(self):
+        """★ 대조군 — `admin` 역할은 **소속 없이는** 여전히 못 지난다.
+
+        `admin` 코드 자체에는 group_id 가 박혀 있지 않다(`tenant_admin_4` 와 달리
+        이름만으로는 어느 테넌트인지 모른다). 그 격리는 역할 코드가 아니라
+        `TenantScope`/`get_user_group` 이 한다 — 소속이 없는 계정은 role 이
+        `admin` 이어도 발급 문 앞에서 멈춘다(`kernels.k5_trust.inbound_keys._group_of`
+        가 `require_user_group` 로 막는 자리와 같은 판단).
+        """
+        Role = apps.get_model("role", "Role")
+        role, _ = Role.objects.get_or_create(code="admin", defaults={"role_name": "admin"})
+
+        CoreUser = apps.get_model("user", "CoreUser")
+        orphan = CoreUser.objects.create_user(
+            username="dsm_orphan_admin", password="test-only-not-a-secret",
+            is_active=True, email="dsm_orphan_admin@test.invalid")
+        orphan.roles.add(role)
+
+        resp = self.client.post(
+            "/api/dsm/settings/api-keys?name=u56-p146-orphan",
+            **self._bearer(orphan), **{"HTTP_X_NO_CACHE": "true"})
+        self.assertEqual(
+            403, resp.status_code,
+            "소속(group)이 없는 admin 역할 계정이 발급 문을 지났습니다 — "
+            "역할 매핑이 소속 확인을 건너뛴 것일 수 있습니다: "
+            + (resp.content or b"")[:400].decode("utf-8", "replace"))
 
     def test_a_plain_role_still_gets_403_not_weakened(self):
         """★ 대조군 — 역할이 없는 계정(`dsm_watch_a`)은 **여전히** 403 이다.

@@ -1,0 +1,590 @@
+{
+ "measured_at": "20260916T0118Z",
+ "smoke": false,
+ "requests": 3600,
+ "concurrency": 10,
+ "probe_path": "/admin/login/",
+ "back_cmd_delta": {
+  "max_requests": 50,
+  "jitter": 10,
+  "graceful_timeout": 30
+ },
+ "back_env_names": 42,
+ "back_env_override": [
+  "REDIS_HOST → gx-redis-i152 (감사 쓰기 격리)"
+ ],
+ "config_sha256_12": {
+  "gx-front.conf": "61aa9b017d18",
+  "gx-proxy.inc": "4c60c45e6de2",
+  "generated/gx-gate.conf": "5fb27db71f17",
+  "iso/gx-front-iso-B.conf": "e8d0c7d3ce27"
+ },
+ "untouched_before": {
+  "gx-shell": "2026-09-15T04:23:22.0615688Z running restarts=0",
+  "gx-gunicorn-e": "2026-09-15T11:27:44.984898174Z running restarts=0",
+  "gx-nginx-e": "2026-09-15T04:23:22.0665568Z running restarts=0",
+  "gx-celery-e": "2026-09-15T11:24:35.14410663Z running restarts=0",
+  "gx-beat-e": "2026-09-15T11:24:36.51176697Z running restarts=0",
+  "postgres": "2026-09-15T04:23:21.9489655Z running restarts=0",
+  "redis": "2026-09-15T04:23:21.9396731Z running restarts=0",
+  "guardianx-source-minio-1": "2026-09-15T04:23:22.1501756Z running restarts=0",
+  "guardianx-source-mailpit-1": "2026-09-15T04:23:22.1368637Z running restarts=0",
+  "gx-fe-build": "2026-09-15T04:23:22.18171Z running restarts=0"
+ },
+ "front_effective": {
+  "nginx_T_rc": 0,
+  "peer_lines": 3,
+  "tries_3": 1,
+  "next_upstream": 1,
+  "non_idempotent": 2
+ },
+ "load": {
+  "t0": "01:18:22",
+  "t1": "01:19:53",
+  "t0_iso": "2026-09-16T01:18:22.628188+00:00",
+  "t1_iso": "2026-09-16T01:19:53.327478+00:00",
+  "n": 3600,
+  "concurrency": 10,
+  "elapsed_s": 90.7,
+  "warmup_codes": {
+   "200": 40
+  },
+  "codes": {
+   "200": 3590,
+   "500": 2,
+   "502": 8
+  }
+ },
+ "stats": {
+  "access_lines_in_window": 3600,
+  "by_status": {
+   "200": 3590,
+   "500": 2,
+   "502": 8
+  },
+  "n502": 8,
+  "retried": 189,
+  "rescued_2xx": 181,
+  "attempts_hist": {
+   "1": 3411,
+   "2": 162,
+   "3": 19,
+   "4": 8
+  },
+  "shapes_502": {
+   "peer, peer, peer, gx_app": 8
+  },
+  "front_error_marks_total": {
+   "recv() failed (104": 218,
+   "upstream prematurely closed": 6,
+   "no live upstreams": 8
+  },
+  "back_marks_in_window": {
+   "Autorestarting": 69,
+   "Worker_exiting": 65,
+   "Booting_worker": 65
+  }
+ },
+ "rows": [
+  {
+   "n": 1,
+   "at": "2026-09-16T01:18:44+00:00",
+   "span": "[01:18:44 − 0.680s, +1s)",
+   "request": "GET /admin/login/ HTTP/1.1",
+   "status": "502",
+   "request_time": 0.68,
+   "upstream_addrs": [
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "gx_app"
+   ],
+   "upstream_times": [
+    0.186,
+    0.0,
+    0.493,
+    0.0
+   ],
+   "shape": "peer, peer, peer, gx_app",
+   "marks_in_span": [
+    {
+     "at": "2026-09-16T01:18:43.356591+00:00",
+     "kind": "Worker_exiting",
+     "pid": 84
+    },
+    {
+     "at": "2026-09-16T01:18:44.115961+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:18:44.257206+00:00",
+     "kind": "Worker_exiting",
+     "pid": 92
+    }
+   ],
+   "front_error_marks_same_second": {
+    "recv() failed (104": 15,
+    "no live upstreams": 4,
+    "upstream prematurely closed": 1
+   },
+   "raw": "172.18.0.14 [16/Sep/2026:01:18:44 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.680 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.186, 0.000, 0.493, 0.000",
+   "분류": "재시도 3회 소진(`no live upstreams`) · 워커 재활용 순간",
+   "근거": "요청 구간 안에 `Worker exiting` 2건(pid 84,92) · 시도 2/4 가 0.05초 미만 — 죽어 가는 워커의 연결을 연달아 집었다"
+  },
+  {
+   "n": 2,
+   "at": "2026-09-16T01:18:44+00:00",
+   "span": "[01:18:44 − 1.457s, +1s)",
+   "request": "GET /admin/login/ HTTP/1.1",
+   "status": "502",
+   "request_time": 1.457,
+   "upstream_addrs": [
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "gx_app"
+   ],
+   "upstream_times": [
+    0.809,
+    0.647,
+    0.001,
+    0.0
+   ],
+   "shape": "peer, peer, peer, gx_app",
+   "marks_in_span": [
+    {
+     "at": "2026-09-16T01:18:43.140296+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:18:43.188604+00:00",
+     "kind": "Worker_exiting",
+     "pid": 89
+    },
+    {
+     "at": "2026-09-16T01:18:43.300155+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:18:43.356591+00:00",
+     "kind": "Worker_exiting",
+     "pid": 84
+    },
+    {
+     "at": "2026-09-16T01:18:44.115961+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:18:44.257206+00:00",
+     "kind": "Worker_exiting",
+     "pid": 92
+    }
+   ],
+   "front_error_marks_same_second": {
+    "recv() failed (104": 18,
+    "upstream prematurely closed": 2,
+    "no live upstreams": 4
+   },
+   "raw": "172.18.0.14 [16/Sep/2026:01:18:44 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 1.457 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.809, 0.647, 0.001, 0.000",
+   "분류": "재시도 3회 소진(`no live upstreams`) · 워커 재활용 순간",
+   "근거": "요청 구간 안에 `Worker exiting` 3건(pid 89,84,92) · 시도 2/4 가 0.05초 미만 — 죽어 가는 워커의 연결을 연달아 집었다"
+  },
+  {
+   "n": 3,
+   "at": "2026-09-16T01:18:44+00:00",
+   "span": "[01:18:44 − 1.744s, +1s)",
+   "request": "GET /admin/login/ HTTP/1.1",
+   "status": "502",
+   "request_time": 1.744,
+   "upstream_addrs": [
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "gx_app"
+   ],
+   "upstream_times": [
+    1.094,
+    0.65,
+    0.0,
+    0.0
+   ],
+   "shape": "peer, peer, peer, gx_app",
+   "marks_in_span": [
+    {
+     "at": "2026-09-16T01:18:42.333032+00:00",
+     "kind": "Worker_exiting",
+     "pid": 79
+    },
+    {
+     "at": "2026-09-16T01:18:43.140296+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:18:43.188604+00:00",
+     "kind": "Worker_exiting",
+     "pid": 89
+    },
+    {
+     "at": "2026-09-16T01:18:43.300155+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:18:43.356591+00:00",
+     "kind": "Worker_exiting",
+     "pid": 84
+    },
+    {
+     "at": "2026-09-16T01:18:44.115961+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:18:44.257206+00:00",
+     "kind": "Worker_exiting",
+     "pid": 92
+    }
+   ],
+   "front_error_marks_same_second": {
+    "recv() failed (104": 18,
+    "upstream prematurely closed": 2,
+    "no live upstreams": 4
+   },
+   "raw": "172.18.0.14 [16/Sep/2026:01:18:44 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 1.744 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 1.094, 0.650, 0.000, 0.000",
+   "분류": "재시도 3회 소진(`no live upstreams`) · 워커 재활용 순간",
+   "근거": "요청 구간 안에 `Worker exiting` 4건(pid 79,89,84,92) · 시도 2/4 가 0.05초 미만 — 죽어 가는 워커의 연결을 연달아 집었다"
+  },
+  {
+   "n": 4,
+   "at": "2026-09-16T01:18:44+00:00",
+   "span": "[01:18:44 − 1.754s, +1s)",
+   "request": "GET /admin/login/ HTTP/1.1",
+   "status": "502",
+   "request_time": 1.754,
+   "upstream_addrs": [
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "gx_app"
+   ],
+   "upstream_times": [
+    1.104,
+    0.647,
+    0.003,
+    0.0
+   ],
+   "shape": "peer, peer, peer, gx_app",
+   "marks_in_span": [
+    {
+     "at": "2026-09-16T01:18:42.333032+00:00",
+     "kind": "Worker_exiting",
+     "pid": 79
+    },
+    {
+     "at": "2026-09-16T01:18:43.140296+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:18:43.188604+00:00",
+     "kind": "Worker_exiting",
+     "pid": 89
+    },
+    {
+     "at": "2026-09-16T01:18:43.300155+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:18:43.356591+00:00",
+     "kind": "Worker_exiting",
+     "pid": 84
+    },
+    {
+     "at": "2026-09-16T01:18:44.115961+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:18:44.257206+00:00",
+     "kind": "Worker_exiting",
+     "pid": 92
+    }
+   ],
+   "front_error_marks_same_second": {
+    "recv() failed (104": 18,
+    "upstream prematurely closed": 2,
+    "no live upstreams": 4
+   },
+   "raw": "172.18.0.14 [16/Sep/2026:01:18:44 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 1.754 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 1.104, 0.647, 0.003, 0.000",
+   "분류": "재시도 3회 소진(`no live upstreams`) · 워커 재활용 순간",
+   "근거": "요청 구간 안에 `Worker exiting` 4건(pid 79,89,84,92) · 시도 2/4 가 0.05초 미만 — 죽어 가는 워커의 연결을 연달아 집었다"
+  },
+  {
+   "n": 5,
+   "at": "2026-09-16T01:19:06+00:00",
+   "span": "[01:19:06 − 1.135s, +1s)",
+   "request": "GET /admin/login/ HTTP/1.1",
+   "status": "502",
+   "request_time": 1.135,
+   "upstream_addrs": [
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "gx_app"
+   ],
+   "upstream_times": [
+    0.648,
+    0.487,
+    0.001,
+    0.0
+   ],
+   "shape": "peer, peer, peer, gx_app",
+   "marks_in_span": [
+    {
+     "at": "2026-09-16T01:19:05.068919+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:05.122918+00:00",
+     "kind": "Worker_exiting",
+     "pid": 159
+    },
+    {
+     "at": "2026-09-16T01:19:05.810311+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:05.907291+00:00",
+     "kind": "Worker_exiting",
+     "pid": 164
+    },
+    {
+     "at": "2026-09-16T01:19:06.320156+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:06.420188+00:00",
+     "kind": "Worker_exiting",
+     "pid": 166
+    },
+    {
+     "at": "2026-09-16T01:19:06.583855+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:06.591575+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:06.691431+00:00",
+     "kind": "Worker_exiting",
+     "pid": 165
+    }
+   ],
+   "front_error_marks_same_second": {
+    "recv() failed (104": 22,
+    "no live upstreams": 1
+   },
+   "raw": "172.18.0.14 [16/Sep/2026:01:19:06 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 1.135 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.648, 0.487, 0.001, 0.000",
+   "분류": "재시도 3회 소진(`no live upstreams`) · 워커 재활용 순간",
+   "근거": "요청 구간 안에 `Worker exiting` 4건(pid 159,164,166,165) · 시도 2/4 가 0.05초 미만 — 죽어 가는 워커의 연결을 연달아 집었다"
+  },
+  {
+   "n": 6,
+   "at": "2026-09-16T01:19:16+00:00",
+   "span": "[01:19:16 − 0.222s, +1s)",
+   "request": "GET /admin/login/ HTTP/1.1",
+   "status": "502",
+   "request_time": 0.222,
+   "upstream_addrs": [
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "gx_app"
+   ],
+   "upstream_times": [
+    0.219,
+    0.0,
+    0.003,
+    0.0
+   ],
+   "shape": "peer, peer, peer, gx_app",
+   "marks_in_span": [
+    {
+     "at": "2026-09-16T01:19:15.797225+00:00",
+     "kind": "Worker_exiting",
+     "pid": 199
+    },
+    {
+     "at": "2026-09-16T01:19:16.612310+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:16.632860+00:00",
+     "kind": "Worker_exiting",
+     "pid": 205
+    },
+    {
+     "at": "2026-09-16T01:19:16.794300+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:16.920423+00:00",
+     "kind": "Worker_exiting",
+     "pid": 204
+    }
+   ],
+   "front_error_marks_same_second": {
+    "recv() failed (104": 10,
+    "no live upstreams": 2
+   },
+   "raw": "172.18.0.14 [16/Sep/2026:01:19:16 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.222 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.219, 0.000, 0.003, 0.000",
+   "분류": "재시도 3회 소진(`no live upstreams`) · 워커 재활용 순간",
+   "근거": "요청 구간 안에 `Worker exiting` 3건(pid 199,205,204) · 시도 3/4 가 0.05초 미만 — 죽어 가는 워커의 연결을 연달아 집었다"
+  },
+  {
+   "n": 7,
+   "at": "2026-09-16T01:19:16+00:00",
+   "span": "[01:19:16 − 0.210s, +1s)",
+   "request": "GET /admin/login/ HTTP/1.1",
+   "status": "502",
+   "request_time": 0.21,
+   "upstream_addrs": [
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "gx_app"
+   ],
+   "upstream_times": [
+    0.21,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "shape": "peer, peer, peer, gx_app",
+   "marks_in_span": [
+    {
+     "at": "2026-09-16T01:19:15.797225+00:00",
+     "kind": "Worker_exiting",
+     "pid": 199
+    },
+    {
+     "at": "2026-09-16T01:19:16.612310+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:16.632860+00:00",
+     "kind": "Worker_exiting",
+     "pid": 205
+    },
+    {
+     "at": "2026-09-16T01:19:16.794300+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:16.920423+00:00",
+     "kind": "Worker_exiting",
+     "pid": 204
+    }
+   ],
+   "front_error_marks_same_second": {
+    "recv() failed (104": 10,
+    "no live upstreams": 2
+   },
+   "raw": "172.18.0.14 [16/Sep/2026:01:19:16 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.210 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.210, 0.000, 0.000, 0.000",
+   "분류": "재시도 3회 소진(`no live upstreams`) · 워커 재활용 순간",
+   "근거": "요청 구간 안에 `Worker exiting` 3건(pid 199,205,204) · 시도 3/4 가 0.05초 미만 — 죽어 가는 워커의 연결을 연달아 집었다"
+  },
+  {
+   "n": 8,
+   "at": "2026-09-16T01:19:29+00:00",
+   "span": "[01:19:29 − 0.790s, +1s)",
+   "request": "GET /admin/login/ HTTP/1.1",
+   "status": "502",
+   "request_time": 0.79,
+   "upstream_addrs": [
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "172.18.0.12:8000",
+    "gx_app"
+   ],
+   "upstream_times": [
+    0.395,
+    0.394,
+    0.001,
+    0.0
+   ],
+   "shape": "peer, peer, peer, gx_app",
+   "marks_in_span": [
+    {
+     "at": "2026-09-16T01:19:28.531948+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:28.576821+00:00",
+     "kind": "Worker_exiting",
+     "pid": 246
+    },
+    {
+     "at": "2026-09-16T01:19:28.755958+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:28.797488+00:00",
+     "kind": "Worker_exiting",
+     "pid": 245
+    },
+    {
+     "at": "2026-09-16T01:19:28.871323+00:00",
+     "kind": "Autorestarting",
+     "pid": null
+    },
+    {
+     "at": "2026-09-16T01:19:29.011669+00:00",
+     "kind": "Worker_exiting",
+     "pid": 244
+    }
+   ],
+   "front_error_marks_same_second": {
+    "recv() failed (104": 5,
+    "upstream prematurely closed": 1,
+    "no live upstreams": 1
+   },
+   "raw": "172.18.0.14 [16/Sep/2026:01:19:29 +0000] \"GET /admin/login/ HTTP/1.1\" 502 150 0.790 \"172.18.0.12:8000, 172.18.0.12:8000, 172.18.0.12:8000, gx_app\" 0.395, 0.394, 0.001, 0.000",
+   "분류": "재시도 3회 소진(`no live upstreams`) · 워커 재활용 순간",
+   "근거": "요청 구간 안에 `Worker exiting` 3건(pid 246,245,244) · 시도 2/4 가 0.05초 미만 — 죽어 가는 워커의 연결을 연달아 집었다"
+  }
+ ],
+ "iso_broker_queued_tasks": 3630,
+ "iso_left_after_cleanup": [],
+ "untouched_after": {
+  "gx-shell": "2026-09-15T04:23:22.0615688Z running restarts=0",
+  "gx-gunicorn-e": "2026-09-15T11:27:44.984898174Z running restarts=0",
+  "gx-nginx-e": "2026-09-15T04:23:22.0665568Z running restarts=0",
+  "gx-celery-e": "2026-09-15T11:24:35.14410663Z running restarts=0",
+  "gx-beat-e": "2026-09-15T11:24:36.51176697Z running restarts=0",
+  "postgres": "2026-09-15T04:23:21.9489655Z running restarts=0",
+  "redis": "2026-09-15T04:23:21.9396731Z running restarts=0",
+  "guardianx-source-minio-1": "2026-09-15T04:23:22.1501756Z running restarts=0",
+  "guardianx-source-mailpit-1": "2026-09-15T04:23:22.1368637Z running restarts=0",
+  "gx-fe-build": "2026-09-15T04:23:22.18171Z running restarts=0"
+ },
+ "untouched_unchanged": true
+}

@@ -1,0 +1,280 @@
+{
+ "measured_at": "20260916T0114Z",
+ "container": "gx_e",
+ "image": "guardianx-backend:latest",
+ "env_names_from": "gx-shell",
+ "env_name_count": 41,
+ "credentials_swapped": [
+  "MINIO_ACCESS_KEY",
+  "MINIO_SECRET_KEY",
+  "DB_PASSWORD",
+  "DJANGO_SECRET_KEY"
+ ],
+ "shape_before_swap(gx-shell)": {
+  "MINIO_ACCESS_KEY": {
+   "len": 5,
+   "sha256_12": "b5a2c9625061"
+  },
+  "MINIO_SECRET_KEY": {
+   "len": 5,
+   "sha256_12": "b5a2c9625061"
+  },
+  "DB_PASSWORD": {
+   "len": 5,
+   "sha256_12": "8c6976e5b541"
+  },
+  "DJANGO_SECRET_KEY": {
+   "len": 33,
+   "sha256_12": "2bf9799b0713"
+  }
+ },
+ "shape_after_swap(new)": {
+  "MINIO_ACCESS_KEY": {
+   "len": 20,
+   "sha256_12": "d4e6bd794209"
+  },
+  "MINIO_SECRET_KEY": {
+   "len": 40,
+   "sha256_12": "bf911201930e"
+  },
+  "DB_PASSWORD": {
+   "len": 32,
+   "sha256_12": "4227dc29c19a"
+  },
+  "DJANGO_SECRET_KEY": {
+   "len": 64,
+   "sha256_12": "a28e7eda11f7"
+  }
+ },
+ "minio_access_eq_secret_before": true,
+ "minio_access_eq_secret_after": false,
+ "untouched_before": {
+  "gx-shell": "2026-09-15T04:23:22.0615688Z running restarts=0",
+  "gx-gunicorn-e": "2026-09-15T11:27:44.984898174Z running restarts=0",
+  "gx-nginx-e": "2026-09-15T04:23:22.0665568Z running restarts=0",
+  "gx-celery-e": "2026-09-15T11:24:35.14410663Z running restarts=0",
+  "gx-beat-e": "2026-09-15T11:24:36.51176697Z running restarts=0",
+  "postgres": "2026-09-15T04:23:21.9489655Z running restarts=0",
+  "redis": "2026-09-15T04:23:21.9396731Z running restarts=0",
+  "guardianx-source-minio-1": "2026-09-15T04:23:22.1501756Z running restarts=0",
+  "guardianx-source-mailpit-1": "2026-09-15T04:23:22.1368637Z running restarts=0",
+  "gx-fe-build": "2026-09-15T04:23:22.18171Z running restarts=0"
+ },
+ "verify_prod_settings": {
+  "exit": 0,
+  "rows": [
+   "[SEC-18] 수 7",
+   "  O  SECRET_KEY     선언 없음→거부 O · 자리표→거부 O · 길이 103",
+   "  O  DEBUG          기본 False · DJANGO_DEBUG=true 를 줘도 False",
+   "  O  ALLOWED_HOSTS  선언대로 ['stg.guardianx.example.kr', 'guardianx.example.kr'] · 선언 없음→거부 O · `*`→거부 O",
+   "  O  COOKIES        여섯 다 닫혔다 · 개발 프로필 대조: 3/6 이 열려 있다 ['SESSION_COOKIE_SECURE', 'CSRF_COOKIE_SECURE', 'CSRF_COOKIE_HTTPONLY']",
+   "  O  ORIGINS_TLS    출처 2개 · 선언 없음→거부 O · 스킴 없음→거부 O · HSTS 31536000s · 프록시 ['HTTP_X_FORWARDED_PROTO', 'https']",
+   "  O  ERROR_BODY     스위치 True · 그물 실림 True",
+   "  O  CREDENTIAL_FORMAT MinIO 접근/비밀 20·40자 · DB 비밀 32자 · 서명 키 103자 · 자리표 없음 | 자리표→거부 O · 5자→거부 O · 둘이 같음→거부 O",
+   "[SEC-18] 통과 7/7 — 운영 프로필로 뜨면 닫혀 있고, 선언이 빠지면 **뜨지 않는다**"
+  ],
+  "stdout": [
+   "[SEC-18] O 닫힌 관측 7/7 초록 (양성 대조)",
+   "[SEC-18] O 변이 7/7 를 잡는다 (음성 대조 · 규칙)",
+   "[SEC-18] O 출생 표본 7/7 빨강 — 2026-09-06 의 settings.py 와 턴 L 의 5자 자리표 자격을 그대로 잡는다",
+   "[SEC-18] O 관측 0건은 7 수 다 빨강 (회색이 초록이 되지 않는다)",
+   "[SEC-18] [입력] /app · 판 12개를 **실제로 띄운다**",
+   "    full               떴다 ",
+   "    no_secret          거부 · DJANGO_SECRET_KEY 가 선언되지 않았다 — 운영 프로필은 서명 키 없이 뜨지 않는다. 만드는 법: python -c \"import secrets;print(secrets.token_urlsafe(64))\"",
+   "    placeholder_secret 거부 · DJANGO_SECRET_KEY 가 자리표다(your-secret-key-here, secret-key) — **저장소를 읽은 사람이 아는 값**으로는 세션을 서명할 수 없다",
+   "    debug_on           떴다 ",
+   "    no_hosts           거부 · DJANGO_ALLOWED_HOSTS 가 선언되지 않았다 — 어떤 Host 머리글자를 받을지 정하지 않은 채로 공개 URL 을 열지 않는다 (예: guardianx.example.kr,stg.guardianx.example.kr)",
+   "    star_hosts         거부 · DJANGO_ALLOWED_HOSTS 에 `*` 가 있다(['*']) — 어떤 Host 든 받는 것은 선언이 아니라 선언의 부재다",
+   "    no_origins         거부 · DJANGO_CSRF_TRUSTED_ORIGINS 가 선언되지 않았다 — 개발 프로필의 기본값은 `http://localhost:8000` 두 개다. 그 값으로 공개 URL 을 열면 폼 제출이 막힌다 (예: https://guardianx.example.kr)",
+   "    origins_no_scheme  거부 · DJANGO_CSRF_TRUSTED_ORIGINS 에 스킴이 없다(['guardianx.example.kr']) — Django 4+ 는 스킴을 요구한다",
+   "    placeholder_minio  거부 · MINIO_ACCESS_KEY 가 9자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**",
+   "    short_minio        거부 · MINIO_ACCESS_KEY 가 5자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**",
+   "    same_minio         거부 · MINIO_ACCESS_KEY 와 MINIO_SECRET_KEY 가 **같은 문자열이다**(둘 다 29자) — 접근키는 로그·URL 에 남는 쪽이고 비밀키는 안 남는 쪽이다. 둘이 같으면 접근키가 남는 모든 자리에 비밀키가 같이 남는다",
+   "    dev_profile        떴다 ",
+   "[SEC-18] 수 7",
+   "  O  SECRET_KEY     선언 없음→거부 O · 자리표→거부 O · 길이 103",
+   "  O  DEBUG          기본 False · DJANGO_DEBUG=true 를 줘도 False",
+   "  O  ALLOWED_HOSTS  선언대로 ['stg.guardianx.example.kr', 'guardianx.example.kr'] · 선언 없음→거부 O · `*`→거부 O",
+   "  O  COOKIES        여섯 다 닫혔다 · 개발 프로필 대조: 3/6 이 열려 있다 ['SESSION_COOKIE_SECURE', 'CSRF_COOKIE_SECURE', 'CSRF_COOKIE_HTTPONLY']",
+   "  O  ORIGINS_TLS    출처 2개 · 선언 없음→거부 O · 스킴 없음→거부 O · HSTS 31536000s · 프록시 ['HTTP_X_FORWARDED_PROTO', 'https']",
+   "  O  ERROR_BODY     스위치 True · 그물 실림 True",
+   "  O  CREDENTIAL_FORMAT MinIO 접근/비밀 20·40자 · DB 비밀 32자 · 서명 키 103자 · 자리표 없음 | 자리표→거부 O · 5자→거부 O · 둘이 같음→거부 O",
+   "[SEC-18] 통과 7/7 — 운영 프로필로 뜨면 닫혀 있고, 선언이 빠지면 **뜨지 않는다**",
+   "",
+   "[P-107] TARGET=gx-shell 컨테이너에서 파이썬을 12번 **실제로 띄운다** (config.settings_prod / config.settings)",
+   "[P-107] AS=(계정 없음) — 자식 프로세스의 환경에 선언 이름만 준다: DJANGO_SECRET_KEY · DJANGO_ALLOWED_HOSTS · DJANGO_CSRF_TRUSTED_ORIGINS (값은 이 판정 안에서만 산다) · 앱이 든 MINIO_ACCESS_KEY/MINIO_SECRET_KEY 는 **길이와 같음 여부만** 본다",
+   "[P-107] SOURCE=뜬 판이 스스로 낸 django.conf.settings — 소스에 적힌 글자가 아니다"
+  ]
+ },
+ "boot_trials": [
+  {
+   "case": "good(새 값 4)",
+   "where": "settings 기동",
+   "exit": 0,
+   "booted": true,
+   "refused_by_guard": false,
+   "refusal_lines": [],
+   "tail": [
+    "BASE_DIR /app",
+    "BOOTED profile=prod guard=SEC-18-⑦"
+   ]
+  },
+  {
+   "case": "short_minio",
+   "where": "settings 기동",
+   "exit": 1,
+   "booted": false,
+   "refused_by_guard": true,
+   "refusal_lines": [
+    "· MINIO_ACCESS_KEY 가 5자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**",
+    "· MINIO_SECRET_KEY 가 5자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**",
+    "· MINIO_ACCESS_KEY 와 MINIO_SECRET_KEY 가 **같은 문자열이다**(둘 다 5자) — 접근키는 로그·URL 에 남는 쪽이고 비밀키는 안 남는 쪽이다. 둘이 같으면 접근키가 남는 모든 자리에 비밀키가 같이 남는다"
+   ],
+   "tail": [
+    "  · MINIO_SECRET_KEY 가 5자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**",
+    "  · MINIO_ACCESS_KEY 와 MINIO_SECRET_KEY 가 **같은 문자열이다**(둘 다 5자) — 접근키는 로그·URL 에 남는 쪽이고 비밀키는 안 남는 쪽이다. 둘이 같으면 접근키가 남는 모든 자리에 비밀키가 같이 남는다",
+    "[SEC-18] 채울 이름은 저장소 뿌리 `.env.example` 의 「운영 프로필 선언」 절에 있다. 개발은 `DJANGO_SETTINGS_MODULE=config.settings` 로 그대로 뜬다."
+   ]
+  },
+  {
+   "case": "same_minio",
+   "where": "settings 기동",
+   "exit": 1,
+   "booted": false,
+   "refused_by_guard": true,
+   "refusal_lines": [
+    "· MINIO_ACCESS_KEY 와 MINIO_SECRET_KEY 가 **같은 문자열이다**(둘 다 29자) — 접근키는 로그·URL 에 남는 쪽이고 비밀키는 안 남는 쪽이다. 둘이 같으면 접근키가 남는 모든 자리에 비밀키가 같이 남는다"
+   ],
+   "tail": [
+    "django.core.exceptions.ImproperlyConfigured: [SEC-18] 운영 프로필 기동 거부 — 선언이 1건 빠졌거나 열린 쪽이다:",
+    "  · MINIO_ACCESS_KEY 와 MINIO_SECRET_KEY 가 **같은 문자열이다**(둘 다 29자) — 접근키는 로그·URL 에 남는 쪽이고 비밀키는 안 남는 쪽이다. 둘이 같으면 접근키가 남는 모든 자리에 비밀키가 같이 남는다",
+    "[SEC-18] 채울 이름은 저장소 뿌리 `.env.example` 의 「운영 프로필 선언」 절에 있다. 개발은 `DJANGO_SETTINGS_MODULE=config.settings` 로 그대로 뜬다."
+   ]
+  },
+  {
+   "case": "placeholder_minio",
+   "where": "settings 기동",
+   "exit": 1,
+   "booted": false,
+   "refused_by_guard": true,
+   "refusal_lines": [
+    "· 자격에 자리표 낱말이 남아 있다(change_me, minioadmin) — **저장소·예시를 읽은 사람이 아는 값**은 자격이 아니다. 네 이름(MINIO_ACCESS_KEY · MINIO_SECRET_KEY · DB_PASSWORD · DJANGO_SECRET_KEY) 을 저장소 밖 금고의 값으로 채워라"
+   ],
+   "tail": [
+    "django.core.exceptions.ImproperlyConfigured: [SEC-18] 운영 프로필 기동 거부 — 선언이 1건 빠졌거나 열린 쪽이다:",
+    "  · 자격에 자리표 낱말이 남아 있다(change_me, minioadmin) — **저장소·예시를 읽은 사람이 아는 값**은 자격이 아니다. 네 이름(MINIO_ACCESS_KEY · MINIO_SECRET_KEY · DB_PASSWORD · DJANGO_SECRET_KEY) 을 저장소 밖 금고의 값으로 채워라",
+    "[SEC-18] 채울 이름은 저장소 뿌리 `.env.example` 의 「운영 프로필 선언」 절에 있다. 개발은 `DJANGO_SETTINGS_MODULE=config.settings` 로 그대로 뜬다."
+   ]
+  },
+  {
+   "case": "short_db",
+   "where": "settings 기동",
+   "exit": 1,
+   "booted": false,
+   "refused_by_guard": true,
+   "refusal_lines": [
+    "· DB_PASSWORD 가 5자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**"
+   ],
+   "tail": [
+    "django.core.exceptions.ImproperlyConfigured: [SEC-18] 운영 프로필 기동 거부 — 선언이 1건 빠졌거나 열린 쪽이다:",
+    "  · DB_PASSWORD 가 5자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**",
+    "[SEC-18] 채울 이름은 저장소 뿌리 `.env.example` 의 「운영 프로필 선언」 절에 있다. 개발은 `DJANGO_SETTINGS_MODULE=config.settings` 로 그대로 뜬다."
+   ]
+  },
+  {
+   "case": "good(새 값 4)",
+   "where": "gunicorn --check-config",
+   "exit": 0,
+   "booted": true,
+   "refused_by_guard": false,
+   "refusal_lines": [],
+   "tail": [
+    "requests.exceptions.ConnectionError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x7e27e4a98d50>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)\"))",
+    "ERROR Error ensuring index exists: ConnectionError(HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x7e27e4a98d50>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)\"))) caused by: ConnectionError(HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x7e27e4a98d50>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)\")))",
+    "INFO [SAFE_ERROR_BODY] ninja API 23개에 안전 예외 처리기를 달았다"
+   ]
+  },
+  {
+   "case": "short_minio",
+   "where": "gunicorn --check-config",
+   "exit": 1,
+   "booted": false,
+   "refused_by_guard": true,
+   "refusal_lines": [
+    "· MINIO_ACCESS_KEY 가 5자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**",
+    "· MINIO_SECRET_KEY 가 5자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**",
+    "· MINIO_ACCESS_KEY 와 MINIO_SECRET_KEY 가 **같은 문자열이다**(둘 다 5자) — 접근키는 로그·URL 에 남는 쪽이고 비밀키는 안 남는 쪽이다. 둘이 같으면 접근키가 남는 모든 자리에 비밀키가 같이 남는다"
+   ],
+   "tail": [
+    "  · MINIO_SECRET_KEY 가 5자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**",
+    "  · MINIO_ACCESS_KEY 와 MINIO_SECRET_KEY 가 **같은 문자열이다**(둘 다 5자) — 접근키는 로그·URL 에 남는 쪽이고 비밀키는 안 남는 쪽이다. 둘이 같으면 접근키가 남는 모든 자리에 비밀키가 같이 남는다",
+    "[SEC-18] 채울 이름은 저장소 뿌리 `.env.example` 의 「운영 프로필 선언」 절에 있다. 개발은 `DJANGO_SETTINGS_MODULE=config.settings` 로 그대로 뜬다."
+   ]
+  },
+  {
+   "case": "same_minio",
+   "where": "gunicorn --check-config",
+   "exit": 1,
+   "booted": false,
+   "refused_by_guard": true,
+   "refusal_lines": [
+    "· MINIO_ACCESS_KEY 와 MINIO_SECRET_KEY 가 **같은 문자열이다**(둘 다 29자) — 접근키는 로그·URL 에 남는 쪽이고 비밀키는 안 남는 쪽이다. 둘이 같으면 접근키가 남는 모든 자리에 비밀키가 같이 남는다"
+   ],
+   "tail": [
+    "django.core.exceptions.ImproperlyConfigured: [SEC-18] 운영 프로필 기동 거부 — 선언이 1건 빠졌거나 열린 쪽이다:",
+    "  · MINIO_ACCESS_KEY 와 MINIO_SECRET_KEY 가 **같은 문자열이다**(둘 다 29자) — 접근키는 로그·URL 에 남는 쪽이고 비밀키는 안 남는 쪽이다. 둘이 같으면 접근키가 남는 모든 자리에 비밀키가 같이 남는다",
+    "[SEC-18] 채울 이름은 저장소 뿌리 `.env.example` 의 「운영 프로필 선언」 절에 있다. 개발은 `DJANGO_SETTINGS_MODULE=config.settings` 로 그대로 뜬다."
+   ]
+  },
+  {
+   "case": "placeholder_minio",
+   "where": "gunicorn --check-config",
+   "exit": 1,
+   "booted": false,
+   "refused_by_guard": true,
+   "refusal_lines": [
+    "· 자격에 자리표 낱말이 남아 있다(change_me, minioadmin) — **저장소·예시를 읽은 사람이 아는 값**은 자격이 아니다. 네 이름(MINIO_ACCESS_KEY · MINIO_SECRET_KEY · DB_PASSWORD · DJANGO_SECRET_KEY) 을 저장소 밖 금고의 값으로 채워라"
+   ],
+   "tail": [
+    "django.core.exceptions.ImproperlyConfigured: [SEC-18] 운영 프로필 기동 거부 — 선언이 1건 빠졌거나 열린 쪽이다:",
+    "  · 자격에 자리표 낱말이 남아 있다(change_me, minioadmin) — **저장소·예시를 읽은 사람이 아는 값**은 자격이 아니다. 네 이름(MINIO_ACCESS_KEY · MINIO_SECRET_KEY · DB_PASSWORD · DJANGO_SECRET_KEY) 을 저장소 밖 금고의 값으로 채워라",
+    "[SEC-18] 채울 이름은 저장소 뿌리 `.env.example` 의 「운영 프로필 선언」 절에 있다. 개발은 `DJANGO_SETTINGS_MODULE=config.settings` 로 그대로 뜬다."
+   ]
+  },
+  {
+   "case": "short_db",
+   "where": "gunicorn --check-config",
+   "exit": 1,
+   "booted": false,
+   "refused_by_guard": true,
+   "refusal_lines": [
+    "· DB_PASSWORD 가 5자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**"
+   ],
+   "tail": [
+    "django.core.exceptions.ImproperlyConfigured: [SEC-18] 운영 프로필 기동 거부 — 선언이 1건 빠졌거나 열린 쪽이다:",
+    "  · DB_PASSWORD 가 5자다 — 하한은 20자다. **짧은 자격으로 뜬 앱이 곧 사고다**",
+    "[SEC-18] 채울 이름은 저장소 뿌리 `.env.example` 의 「운영 프로필 선언」 절에 있다. 개발은 `DJANGO_SETTINGS_MODULE=config.settings` 로 그대로 뜬다."
+   ]
+  }
+ ],
+ "bad_case_labels": {
+  "short_minio": "MinIO 접근·비밀이 5자",
+  "same_minio": "MinIO 접근키 == 비밀키 (둘 다 29자 · 길이는 넉넉하다)",
+  "placeholder_minio": "MinIO 자격이 자리표 그대로",
+  "short_db": "DB 비밀이 5자"
+ },
+ "iso_left_after_cleanup": [],
+ "untouched_after": {
+  "gx-shell": "2026-09-15T04:23:22.0615688Z running restarts=0",
+  "gx-gunicorn-e": "2026-09-15T11:27:44.984898174Z running restarts=0",
+  "gx-nginx-e": "2026-09-15T04:23:22.0665568Z running restarts=0",
+  "gx-celery-e": "2026-09-15T11:24:35.14410663Z running restarts=0",
+  "gx-beat-e": "2026-09-15T11:24:36.51176697Z running restarts=0",
+  "postgres": "2026-09-15T04:23:21.9489655Z running restarts=0",
+  "redis": "2026-09-15T04:23:21.9396731Z running restarts=0",
+  "guardianx-source-minio-1": "2026-09-15T04:23:22.1501756Z running restarts=0",
+  "guardianx-source-mailpit-1": "2026-09-15T04:23:22.1368637Z running restarts=0",
+  "gx-fe-build": "2026-09-15T04:23:22.18171Z running restarts=0"
+ },
+ "untouched_unchanged": true
+}
