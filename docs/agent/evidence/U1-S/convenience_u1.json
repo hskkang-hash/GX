@@ -1,0 +1,63 @@
+{
+  "schema": "gx.convenience.u1.v1",
+  "lane": "U1",
+  "turn": "S",
+  "what": "편리성 지표 #1~#3(관제요원 축)의 기준선·목표와, 화면이 실제로 잰 값이 쌓이는 자리. 판정은 이 파일이 하지 않는다 — 수를 적을 뿐이고 견주는 일은 표와 사람이 한다.",
+  "rules": [
+    "대장은 줄지 않는다 — runs 는 덧붙이기만 한다(merge_convenience_u1.py 가 줄면 멈춘다).",
+    "재지 못한 칸은 null 이다. 0 으로 적지 않는다 — 0 은 '재 봤더니 0' 이고 null 은 '못 쟀다' 다.",
+    "첫 수는 기준선이지 합격선이 아니다. 이 파일에 합격·불합격 칸이 없는 이유다."
+  ],
+  "measured_by": {
+    "where": "브라우저 안 — frontend/src/features/dsm/metrics.ts",
+    "storage": "localStorage 'gx.u1.convenience.v1' (한 브라우저 · 상한 60건)",
+    "handoff": "window.__gxConvenience.export() 가 JSON 을 낸다. 걷는 도구가 그것을 꺼내 scripts/merge_convenience_u1.py 로 이 파일에 덧붙인다.",
+    "not_sent_to_server": "계측을 위해 새 쓰기 면을 열지 않았다. 관제 화면에서 나가는 요청을 늘리지 않는다.",
+    "personal_data": "없다 — 지표 이름·대상 종류·클릭 수·밀리초·시각만 남는다. 회신 본문은 한 자도 안 남는다."
+  },
+  "metrics": [
+    {
+      "id": "u1_handle_event",
+      "row": 1,
+      "user": "U1",
+      "indicator": "사건 1건 처리 액션 수(판정에서 접수까지)",
+      "baseline": "5 액션 · 끝나지 않음",
+      "target": "1클릭(키 1)",
+      "multiple": "5배",
+      "unit": "clicks",
+      "wired_at": "pages/FocusQueue.tsx — 초점 카드가 뜰 때 시작 · 판정+접수 성공에서 멈춤",
+      "measured": null,
+      "measured_at": null,
+      "why_null": "이 턴에 브라우저 측정을 돌리지 않았다(화면 동시 접속 1개 · 측정은 단독 세션의 일이다). 훅은 섰고 값은 아직 없다."
+    },
+    {
+      "id": "u1_handover_note",
+      "row": 2,
+      "user": "U1",
+      "indicator": "교대 인계 메모 작성",
+      "baseline": "본문 0자 · 수기 15분",
+      "target": "3분 이하",
+      "multiple": "5배",
+      "unit": "elapsed_ms",
+      "wired_at": "features/Handover/components/ShiftHandoverPanel.tsx — 인계 자리가 뜰 때 시작 · 초안 복사 또는 쓰기에서 멈춤",
+      "measured": null,
+      "measured_at": null,
+      "why_null": "같다 — 훅만 섰다."
+    },
+    {
+      "id": "u1_dead_camera_check",
+      "row": 3,
+      "user": "U1",
+      "indicator": "죽은 카메라 확인",
+      "baseline": "40대 수동 순회 20분",
+      "target": "0분(배지 자동) · 확인 1클릭",
+      "multiple": "20배 이상",
+      "unit": "clicks",
+      "wired_at": "pages/CameraGrid.tsx — 화면이 뜰 때 시작 · 무응답 수가 화면에 적힐 때 멈춤",
+      "measured": null,
+      "measured_at": null,
+      "why_null": "같다 — 훅만 섰다."
+    }
+  ],
+  "runs": []
+}

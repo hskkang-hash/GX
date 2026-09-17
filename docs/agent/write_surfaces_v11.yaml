@@ -13,19 +13,19 @@
 
 surfaces:
   - {id: WS-01, lane: F,   surface: onboarding/progress,        module: backend/apps/dsm/api_f.py,      born: true,  path: "GET /api/dsm/onboarding/progress", note: "턴 R · 셈은 onboarding.py · 진입면 등재 완료"}
-  - {id: WS-02, lane: U3,  surface: me/notify-prefs,            module: backend/apps/dsm/api_u3.py,     born: false, note: "스키마는 F(dsm_notify_prefs)"}
+  - {id: WS-02, lane: U3,  surface: me/notify-prefs,            module: backend/apps/dsm/api_u3.py,     born: true,  path: "GET /api/dsm/me/notify-prefs · PUT /api/dsm/me/notify-prefs", note: "턴 S · 진입면 등재 완료 · 자기 것만 만진다(남의 것을 가리킬 인자가 시그니처에 없다) · 스키마는 F(dsm_notify_prefs)"}
   - {id: WS-03, lane: U1,  surface: handover,                   module: backend/apps/dsm/api_u1.py,     born: true,  path: "GET|POST /api/dsm/handover/draft · GET /api/dsm/handover/latest", note: "턴 R · UX-34"}
   - {id: WS-04, lane: U1,  surface: "events/{id}/note",         module: backend/apps/dsm/api_u1.py,     born: true,  path: "POST|GET /api/dsm/events/{int:event_id}/note", note: "턴 R · 새 표 없이 audit_writer 재사용"}
   - {id: WS-05, lane: U1,  surface: "review+response 트랜잭션", module: backend/apps/dsm/api_u1.py,     born: false, note: "AC-2 · services.review_and_acknowledge"}
   - {id: WS-06, lane: U3,  surface: field-photo,                module: backend/apps/dsm/api_u3.py,     born: false, note: "스키마는 F(dsm_field_photo)"}
   - {id: WS-07, lane: U3,  surface: me/notify-report,           module: backend/apps/dsm/api_u3.py,     born: false}
-  - {id: WS-08, lane: U3,  surface: push-subscriptions,         module: backend/apps/dsm/api_u3.py,     born: false}
+  - {id: WS-08, lane: U3,  surface: push-subscriptions,         module: backend/apps/dsm/api_u3.py,     born: true,  path: "POST /api/dsm/push-subscriptions · GET /api/dsm/push-subscriptions · DELETE /api/dsm/push-subscriptions/{int:subscription_id} · GET /api/dsm/push-subscriptions/vapid-key", note: "턴 S · 진입면 등재 완료 · 키로 기기를 등록할 수 없다(JwtOrInboundKey 기본값 거절) — 열면 키 하나가 남의 휴대전화를 울리는 관이 된다"}
   - {id: WS-09, lane: U24, surface: upper-report,               module: backend/apps/dsm/api_u24.py,    born: false, note: "스키마는 F(dsm_upper_report_flag)"}
-  - {id: WS-10, lane: U24, surface: thresholds/simulate,        module: backend/apps/dsm/api_u24.py,    born: false}
+  - {id: WS-10, lane: U24, surface: thresholds/simulate,        module: backend/apps/dsm/api_u24.py,    born: true,  path: "POST /api/dsm/stats/thresholds/simulate", note: "턴 S · 진입면 등재 완료 · **아무것도 저장하지 않는다**(POST 는 인자가 본문에 실려서다) — WRITE_PROBES 대상 아님"}
   - {id: WS-11, lane: U24, surface: "reports/{id}/send",        module: backend/apps/dsm/api_u24.py,    born: false}
   - {id: WS-12, lane: U24, surface: report_run,                 module: backend/apps/dsm/api_u24.py,    born: false, note: "스키마는 F(dsm_report_run) · 배치가 쓰는 면"}
   - {id: WS-13, lane: U56, surface: people,                     module: backend/apps/dsm/api_u56.py,    born: true,  path: "POST /api/dsm/settings/people/create · POST /api/dsm/settings/people/{int:user_id}/deactivate", note: "턴 R · people.py 배선 = 잠든 코드 깨움"}
-  - {id: WS-14, lane: U56, surface: "notify-rules(+test)",      module: backend/apps/dsm/api_u56.py,    born: false}
+  - {id: WS-14, lane: U56, surface: "notify-rules(+test)",      module: backend/apps/dsm/api_u56.py,    born: true,  path: "GET /api/dsm/settings/notify-rules/list · POST /api/dsm/settings/notify-rules/save · POST /api/dsm/settings/notify-rules/test", note: "턴 S · 진입면 등재 완료 · save 는 **심각 등급 수신자 0 을 409 로 거부**(커널에서 atomic 롤백) · test 는 훈련 채널 전용(채널 인자 없음)"}
   - {id: WS-15, lane: U56, surface: system/restart-request,     module: backend/apps/dsm/api_u56.py,    born: false}
   - {id: WS-16, lane: U56, surface: "cameras/{id}/address",     module: backend/apps/dsm/api_u56.py,    born: false}
   - {id: WS-17, lane: U56, surface: "webhook filters",          module: backend/apps/dsm/api_u56.py,    born: false, note: "스키마는 F(webhook_subscription.filters)"}
@@ -44,3 +44,55 @@ surfaces:
 #
 # ⚠ WS-14 `notify-rules` 는 **태어나지 않았다.** U56 이 화면 골격만 세웠고
 #   `GET/POST /settings/notify-rules` 는 저장소에 없다(차선이 실측으로 확인). born: false 유지.
+
+# ── 턴 S 선등록 (2026-09-16 · 조율자 20분 ⑤) ────────────────────────────────
+# 지시서 §3 조율자 ⑤ 「쓰기 면 선등록 — 웹푸시 구독 · 알림 규칙 · 재판정 · 회신」.
+# 넷을 표에 대 보니 **새 줄이 필요한 것은 하나도 없었다.** 그 사실이 이 턴의 선등록이다:
+#
+#   웹푸시 구독 → **WS-08** (U3 · push-subscriptions) — 이번 턴 목표. 파 1 에 자리만 잡고
+#                 안 태어난 줄이다. 차선 U3 에게 「네가 낸 경로 문자열을 그대로 보고하라」고
+#                 일렀다 — 내가 짐작해서 `path` 를 채우면 그 순간 선등록이 추측이 된다.
+#   알림 규칙   → **WS-14** (U56 · notify-rules(+test)) — 이번 턴 목표. 위 ⚠ 가 적은 그 줄.
+#   재판정     → **새 면이 아니다.** `POST /api/dsm/events/{int:event_id}/review` 가 이미
+#                 서 있고(진입면 등재 완료 · D-290 으로 거절을 422/404/403 으로 나눴다),
+#                 U24 가 하는 일은 **목록 화면에도 그 버튼을 다는 것**이다. 문이 아니라 손잡이다.
+#   회신       → **새 면이 아니다.** `POST /api/dsm/events/{int:event_id}/field-reply` 에
+#                 `kind` 칸이 붙는다(U3). 같은 문에 칸이 느는 것은 진입면이 넓어지는 것과
+#                 다르다 — 그러나 **문지기는 다시 본다**: kind 마다 쓰는 사람이 다르면
+#                 한 라우트가 여러 권한을 겸하게 되고, 그것이 IDOR 이 태어나는 모양이다.
+#                 병합 때 조율자가 `test_f05_event_api` 가 아니라 **테넌트 격리 시험**으로 잰다.
+#
+# ⚠ 이번 턴 차선 셋(U1·U24·U56)은 `backend/apps/dsm/api.py` 를 못 고친다 — **U3 한 차선만**
+#   고친다. 한 파일을 두 차선이 같은 턴에 고치면 충돌하고, 충돌한 라우트는 **라우팅 침묵**이
+#   된다(D-410). 나머지 셋은 커널·서비스까지 짓고 **배선 명세 한 줄**을 조율자에게 넘기며,
+#   문을 다는 것도 이 표의 `path` 칸을 채우는 것도 병합에서 조율자가 한다.
+#   → 그래서 이번 턴에 이 표가 `born: true` 로 바뀌는 줄은 **병합 뒤에야** 생긴다.
+#
+# ⚠ 또 하나 — 턴 R 의 실패를 되풀이하지 않기 위해: 위 ⚠ 가 적은 「세종 판정이 그 턴에 새로
+#   서는 면」 자리다. 이번 턴 판정은 P-154~P-158 이고 **그중 쓰기 면을 새로 내는 판정은
+#   없다**(전부 대장·상태 파일·측정 규약·push). 그래서 이번 턴에 표 밖에서 태어날 면을
+#   예상하지 못할 자리는 **U3 의 웹푸시 발송 쪽**뿐이다 — 구독(WS-08)은 표에 있으나
+#   「발송」은 없다. 발송이 라우트로 태어나면 그것은 표 밖의 면이고, 병합에서 그 사실을
+#   지우지 않고 여기 적는다.
+
+# ── 턴 S 병합 결과 (2026-09-16 · 조율자) ───────────────────────────────────
+# 태어난 것 넷: WS-02 · WS-08 · WS-10 · WS-14. 넷 다 `EVENT_ENTRY_SURFACE` 에 이름으로
+# 등재했다(이번 턴 진입면 **16줄** — U1 1 · U24 4 · U56 4 · U3 7).
+#
+# ⚠ **표 밖에서 하나가 태어났다 — 그리고 이번엔 그 자리를 미리 적어 두었다.**
+#   `POST /api/dsm/push-subscriptions/test-send` (U3 · 「내 기기로 지금 한 통」).
+#   위 선등록 블록의 마지막 문단이 **「예상 못 할 자리는 U3 의 발송 쪽뿐」** 이라 적었고,
+#   실제로 거기서 났다. 턴 R 에는 표 밖 탄생을 **사후에** 발견했는데(`webhook-subscriptions/
+#   issue`), 이번에는 **어디서 날지를 먼저 적고 그 자리에서 났다.** 표의 값은 「빠짐없이
+#   예언하는 것」이 아니라 **밖에서 태어난 것을 드러내는 것**이므로, 적중도 누락과 똑같이
+#   기록한다. 다음 파의 선등록은 「구독」과 「발송」을 **처음부터 두 줄로** 잡는다.
+#
+# ⚠ **U3 가 청한 커널 공개 한 줄은 넣지 않았다** —
+#   `send_webpush(*, scope, subscription, title, body)` (구현은 `k2_notify/channels.py::
+#   WebPushChannel.send` 에 이미 있다). 지금 넣으면 **아무도 부르지 않는 공개 면**이 되고,
+#   그것이 이번 턴에 우리를 문 바로 그 잠든 코드다(D-377 「켜진 상태로 태어나야 한다」).
+#   부를 쪽(U3 의 실발송)과 **같은 커밋에서** 연다. 그때까지 U3 의 화면은 「발송 문이 아직
+#   없다」를 빈칸이 아니라 말로 적고 있다.
+#   ⚠ 실발송 전제가 더 있다: `pywebpush`·`py_vapid`·`http_ece`·`ecdsa` 미설치 · VAPID 환경
+#     변수 3개 없음 · 받을 기기 없음. 그래서 잠금화면 도달 캡처는 **이번 턴에 없다** —
+#     「못 했다」이지 「했는데 안 됐다」가 아니다.

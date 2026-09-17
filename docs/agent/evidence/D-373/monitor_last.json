@@ -1,18 +1,18 @@
 {
-  "measured_at": "2026-09-06T12:11:59+00:00",
+  "measured_at": "2026-09-17T01:10:37+00:00",
   "verdict": "ALARM",
   "report": {
-    "measured_at": "2026-09-06T12:11:59+00:00",
+    "measured_at": "2026-09-17T01:10:37+00:00",
     "signals": {
       "db_ping_ms": {
-        "value": 8.26,
+        "value": 2.51,
         "verdict": "OK",
         "note": ""
       },
       "cache_alive": {
         "value": true,
         "verdict": "OK",
-        "note": "왕복 1.7ms"
+        "note": "왕복 1.6ms"
       },
       "object_store_alive": {
         "value": true,
@@ -20,37 +20,37 @@
         "note": "저장소가 답했다 · 버킷 guardianx-dev 있음"
       },
       "latest_event_age_min": {
-        "value": 4257.5,
+        "value": 19436.1,
         "verdict": "ALARM",
         "note": ""
       },
       "unsent_deliveries": {
-        "value": 0,
+        "value": 1,
         "verdict": "OK",
         "note": ""
       },
       "audit_queue_backlog": {
-        "value": 0,
+        "value": 18,
         "verdict": "OK",
-        "note": "밀린 감사 쓰기 [실측] · 담긴 큐 없음 — ⚠ `LLEN default` 하나만 재면 **언제나 0**이다 — kombu 가 우선순위마다 **다른 키**를 쓴다(이름 뒤 두 바이트 + 우선순위 숫자). 임계는 건수가 아니라 **지연**에 건다"
+        "note": "밀린 감사 쓰기 [실측] · 담긴 큐 {\"'default\\\\x06\\\\x169'\": 18} — ⚠ `LLEN default` 하나만 재면 **언제나 0**이다 — kombu 가 우선순위마다 **다른 키**를 쓴다(이름 뒤 두 바이트 + 우선순위 숫자). 임계는 건수가 아니라 **지연**에 건다"
       },
       "audit_queue_lag_sec": {
-        "value": 0.0,
+        "value": 234.8,
         "verdict": "OK",
-        "note": "밀린 것이 0건 — 지연 없음 [실측]"
+        "note": "밀린 18건 ÷ 쓰는 속도 4.60건/분 [실측 둘] = 234.8초 [추정]"
       },
       "audit_write_rate_per_min": {
-        "value": 22.8,
+        "value": 4.6,
         "verdict": "OK",
-        "note": "최근 10분간 `logger_auditlogs` 에 들어온 행/분 [실측] · 마지막 쓰기 2026-09-06T12:11:58+00:00 (임계 없음 — **세어 두는 수**다. 조용한 밤에 0인 것은 장애가 아니다)"
+        "note": "최근 10분간 `logger_auditlogs` 에 들어온 행/분 [실측] · 마지막 쓰기 2026-09-17T01:10:36+00:00 (임계 없음 — **세어 두는 수**다. 조용한 밤에 0인 것은 장애가 아니다)"
       },
       "db_size_gb": {
-        "value": 0.134,
+        "value": 0.267,
         "verdict": "OK",
         "note": ""
       },
       "cameras": {
-        "value": 40,
+        "value": 41,
         "verdict": "OK",
         "note": "등록 카메라 수 — 늘고 줄어드는 것이 보인다"
       },
@@ -60,9 +60,9 @@
         "note": "켜져 있고 **전에 울린 적 있는데** 24시간 조용한 것: 없음 — 「죽었다」가 아니라 **「가서 봐라」**다"
       },
       "cameras_never_seen": {
-        "value": 39,
+        "value": 40,
         "verdict": "OK",
-        "note": "켜져 있는 39대 중 **한 번도 이벤트를 낸 적 없는** 것 — 설치 미완·외부 드론일 수 있다. 경보가 아니라 **세어 두는 수**다 (임계 없음)"
+        "note": "켜져 있는 40대 중 **한 번도 이벤트를 낸 적 없는** 것 — 설치 미완·외부 드론일 수 있다. 경보가 아니라 **세어 두는 수**다 (임계 없음)"
       },
       "storage_used_gb": {
         "value": 0.0006,
@@ -70,15 +70,19 @@
         "note": "버킷 guardianx-dev 객체 합계 0.0006GB"
       },
       "storage_used_pct": {
-        "value": null,
-        "verdict": "UNKNOWN",
-        "note": "용량 상한이 선언되지 않았다(GX_STORAGE_CAPACITY_GB) — **분모 없이 「몇 % 찼나」에 답하지 않는다**(D-301)"
+        "value": 0.0,
+        "verdict": "OK",
+        "note": "상한 50GB (GX_STORAGE_CAPACITY_GB 가 선언)"
       }
     },
     "heartbeat_late": {
-      "value": 10,
-      "verdict": "ALARM",
-      "note": "발송 기록이 **한 건도 없다** — 08:00 알림이 선 적이 없다"
+      "value": 0,
+      "verdict": "OK",
+      "note": "오늘 것이 왔거나 아직 유예 안이다 — 본 테넌트 10"
     }
+  },
+  "_written_from": {
+    "db": "database_guardianx",
+    "under_pytest": false
   }
 }

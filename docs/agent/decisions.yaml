@@ -8504,3 +8504,228 @@ decisions:
     · docs/agent/evidence/D-347/screens/INDEX.yaml (되살린 32항목 · 머리에 경위)
     · docs/agent/evidence/D-347/screens/run_log.json
   affects: [D-347, D-284, D-337]
+
+- id: D-474
+  author_tree_id: "턴 S 조율자 · 대표 지시 2026-09-16"
+  title: "push 집행 — 권한 한 줄이 열리자 넉 턴 묵은 커밋이 원격에 섰다"
+  status: decided
+  raised_by: "대표 · 「/permissions에 Bash(git push:*) 허용」 (2026-09-16)"
+  decision: |
+    ▣ 전제는 턴 R 에 이미 다 서 있었다 — gitleaks 129커밋 전수 0 · 원격 브랜치 0 ·
+      Private 확인. **막던 것은 오직 `git push` 의 실행 권한 한 줄**이었고, 그것을
+      우회하지 않고 대표께 올린 것이 옳았다(턴 R 에 세 번 막혔고 세 번 다 멈췄다).
+    ▣ 집행 [실측 2026-09-16 · 턴 S]: `master`·`turn-p`·`turn-q` **셋 다 새 브랜치**로,
+      태그 넷(`pre-turn-p`·`pre-turn-q`·`pre-turn-r`·`rc-sdn-excl-0.1`) 전부. exit 0.
+      원격은 `https://github.com/hskkang-hash/GX`.
+    ▣ 지시서 §4 는 `turn-r` 브랜치도 적었으나 **그런 브랜치는 없다** — 턴 R 의 커밋 넷은
+      `turn-q` 위에 쌓였고 `master` 가 그 자리로 앞감겼다. 없는 이름을 만들어 맞추지
+      않았다. 승인에 적힌 대상과 저장소의 사실이 어긋나면 **저장소의 사실을 적는다.**
+    ▣ 이 뒤로 커밋은 로컬과 원격 두 자리에 있다. push 가 늦어져 잃은 것은 없었다 —
+      늦은 동안에도 커밋은 로컬 `master` 에 안전했다.
+  enforced_by: |
+    · scripts/verify_secret_scan.py (push 의 전제 — gitleaks 전수 0 · 이것이 빨강이면 push 하지 않는다)
+    · scripts/verify_no_secret_echo.py (매 커밋 · 값 반향 0)
+    · .gitignore:106 (docs/agent/evidence/bundles/*.bundle — 번들은 저장소에 담지 않는다)
+  affects: [D-461]
+
+- id: D-475
+  author_tree_id: "턴 S 조율자 · 대표 결정 ③"
+  title: "재생성 창 — 2026-09-17 14:00 · 창 전 전제 a·b 는 D-1 에 섰다"
+  status: decided
+  raised_by: "대표 · 「가드 7/7이 섰으니 창 09-17 14:00 해라」 (2026-09-16)"
+  decision: |
+    ▣ 대표가 창 일시를 정했다: **2026-09-17(목) 14:00~14:30**. 절차는 손대지 않은
+      `docs/agent/RUNBOOK_재생성창.md` ⓪~⑤ 그대로 — 자격 3 · `/backup` 마운트 ·
+      운영 프로필 7/7 · 상한 반영.
+    ▣ **D-1(오늘) 잔여 확인 [실측 2026-09-16 · 턴 S]**
+      ㉠ 전제 a — 금고 파일 **둘 다 있다**(`cred3_20260915.env` ·
+         `cred3_20260915_alter_db_role.sql`). 이름만 확인했고 값은 열지 않았다.
+      ㉡ 전제 b — ⑦ 가드 패치 **섰다**(턴 R · P-151 · 격리에서 7/7 ·
+         증거 `evidence/P-151/iso_guard_20260916T0114Z.json`).
+      ㉢ 전제 c — 「다른 차선 정지」는 **창 직전**이다. 오늘 세울 수 없고, 오늘 세웠다고
+         적으면 그것이 거짓 초록이다.
+      ㉣ 컨테이너 **열 다** 돌고 있다.
+    ▣ ⚠ 창을 여는 순간 `verify_prod_settings` 는 ②가 끝나기 전까지 **0/7** 이다 —
+      runbook 이 예고한 그대로이고 고장이 아니다. **순서를 쪼개지 않는다**: b 만 먼저
+      하면 기준판이 거부되어 1/7, ②③만 하고 b 를 빼면 6/7 이다. 6/7 을 구현으로 적지
+      않는다(blockers.yaml:1657).
+    ▣ ⚠ 서명 키가 바뀌므로 창 전 세션·토큰·월 토큰·클립 서명 URL 은 전부 무효다.
+      **저장 암호화에는 안 쓰인다** — 자료 손실 없음 · 재로그인만.
+  enforced_by: |
+    · docs/agent/RUNBOOK_재생성창.md (⓪~⑤ · 되돌리기 포함)
+    · scripts/verify_prod_settings.py (닫는 조건 ㉠~㉣ · 7/7)
+    · docs/agent/evidence/DA-05/blockers.yaml:1606 PLACEHOLDER_CREDENTIALS_BAKED_INTO_CONTAINERS
+  affects: [P-138, P-139, P-151]
+
+- id: D-476
+  author_tree_id: "턴 S 조율자 · P-155"
+  title: "5분마다 스스로 쓰는 파일을 저장소 밖으로 — 애먼 훅이 범인으로 지목되던 자리"
+  status: decided
+  raised_by: "턴 R · 커밋 ③ 네 번째 막힘 (gx-tool-selftest 오지목)"
+  decision: |
+    ▣ `ops_monitor_beat` 이 beat 일정으로 **5분마다** `D-373/monitor_last.json` 을 다시
+      썼다(`measured_at`·`db_ping_ms`·캐시 왕복 ms 가 매번 바뀐다). 훅이 도는 동안 그
+      파일이 바뀌면 pre-commit 은 전후를 비교해 **「files were modified by this hook」**
+      으로 되돌리고, **엉뚱한 훅을 범인으로 적는다.** 턴 R 에 `gx-tool-selftest` 가
+      그렇게 지목됐고 그 판정기를 따로 돌리면 exit 0 이었다 — 멀쩡한 게이트를 의심하며
+      한 번을 버렸다.
+    ▣ 가른 것은 **뜻**이다. 「지금 상태」와 「지나온 자취」는 다른 것이다:
+      · 지금 상태 → `GX_OPS_STATE_DIR`(기본 `/var/lib/gx/state`) · 5분마다 덮어씀 · 저장소 밖
+      · 지나온 자취 → `D-373/monitor_summary.jsonl` · **판정이 바뀐 줄만** append
+      「OK 가 또 OK 였다」를 5분마다 적으면 그것은 자취가 아니라 소음이고, 소음은 커밋을
+      막는다. 그래서 같은 판정이 이어지면 **아무것도 쓰지 않는다.**
+    ▣ 옛 파일은 `.gitignore` + `git rm --cached` 로 추적에서 뺐다. **읽는 게이트는 0개**
+      였다(`grep -rn monitor_last scripts/` → 없음) — 그래서 옮겨도 잃는 판정이 없다.
+      `backup_last`·`restore_drill_last` 등 나머지는 드물게 돌고 게이트가 읽으므로
+      `_write_evidence` 그대로 둔다. **한 함수를 통째로 옮기지 않고 쓰는 자리만 갈랐다.**
+    ▣ ⚠ 상태를 못 남기는 것은 **감시가 죽은 것이 아니다.** 판정은 이미 났고 호출자에게
+      돌아간다 — 거기서 예외를 올리면 감시가 저장소 사정으로 죽는다.
+  enforced_by: |
+    · backend/common/ops_tasks.py (STATE_DIR · _write_monitor_state · _append_monitor_summary)
+    · .gitignore (docs/agent/evidence/D-373/monitor_last.json)
+  affects: [D-373, D-301]
+
+- id: D-477
+  author_tree_id: "턴 S 조율자 · P-154"
+  title: "대장 병합은 한 곳에서 — 열쇠가 좁으면 병합이 곧 삭제다"
+  status: decided
+  raised_by: "턴 R · 조율자가 viewers 4건을 스스로 지웠다 (자진)"
+  decision: |
+    ▣ 턴 R 에 생성기가 대장 넷을 덮었고(D-473), 그것을 **되살리던 조율자가 같은 죄를
+      지었다** — `viewers` 를 **라우트 이름으로** 묶어 32 → 28 로 만들었다. 같은 화면을
+      다른 역할 계정이 본 기록 **4건**이 그렇게 사라졌다. 세어 보고 찾았다.
+    ▣ 가르는 문장: **열쇠가 좁으면 병합은 곧 삭제다.** 접힌 줄은 사라진 줄과 구별되지
+      않는다(D-301 의 대장판). 그래서 `scripts/ledger_merge.py` 의 기본 열쇠는
+      **기록 전체**(`record_key` — 정렬된 JSON)다. 한 칸이라도 다르면 다른 기록으로 센다.
+    ▣ 줄면 **예외로 멈춘다**(`assert_not_shrunk`). 경고로 두면 콘솔 한 줄이 되고, 콘솔
+      한 줄은 다음 사람이 안 읽는다 — 턴 R 에 이것이 경고였다면 30장이 출처를 잃은 채
+      커밋됐을 것이다.
+    ▣ 자기시험에 **★ 출생 표본 4**를 박았다. 그중 하나는 **반례**다: 라우트로 묶으면
+      두 기록이 한 줄로 접히는 것을 실제로 보인다 — 잡아야 할 것을 못 잡는 판정기는
+      초록을 낼 자격이 없다.
+    ▣ 이 모듈은 **쓰는 자리를 대신하지 않는다.** 캡처 도구의 append 전환은 차선 Q,
+      HEAD 대조 게이트(`verify_ledger_monotonic`)는 차선 F 가 이 모듈을 불러 세운다 —
+      병합 함수는 **한 곳**이어야 잠든 코드 게이트가 두 벌을 잡을 수 있다.
+  enforced_by: |
+    · scripts/ledger_merge.py (record_key · merge_records · assert_not_shrunk · self_test 표본 4)
+    · scripts/verify_ledger_monotonic.py (차선 F 신설 · 대장 4종 HEAD 대조)
+  affects: [D-473, D-311, D-301]
+
+- id: D-478
+  author_tree_id: "턴 S 조율자 ① · verify_seed_roles 가 빨강을 냈다"
+  title: "tenant_admin_<테넌트번호> 는 이름으로 막을 수 없다 — 테넌트가 늘면 구멍도 는다"
+  status: open
+  raised_by: "scripts/verify_seed_roles.py exit 1 (2026-09-16 · 턴 S 조율자 ①)"
+  decision: |
+    ▣ 판정기가 하나로 빨개졌다 — **`tenant_admin_4`(1명)가 매핑도 선언도 없다.**
+      들고 있는 사람을 세어 보니 **`gxprobe_q` 한 명**이었다. `k3_roles.py:101` 이 그
+      경위를 이미 적어 두었다: 턴 Q 가 SEC-22 를 재려고 탐침 계정에 그 역할을 **손으로
+      붙였다**(evidence/P-141/u56_sec22_role_grant.md). 고객이 닿는 구멍이 아니다.
+    ▣ **그러나 「선언 목록에 이름을 적는다」는 처방은 틀렸다.** `is_tenant_admin` 이
+      인정하는 역할 코드는 `tenant_admin_<group_id>` — **테넌트마다 새로 만들어지는
+      이름**이다. `K3_ROLE_PRESET_MAP` 과 `K3_UNMAPPED_BY_DECISION` 은 둘 다 **글자
+      그대로의 키**로 찾는다. 그러니 `tenant_admin_4` 를 적어 초록을 만들면 다음 테넌트가
+      `tenant_admin_5` 를 만들고 같은 빨강이 다시 뜬다 — **이름으로 막으면 테넌트 수만큼
+      구멍이 는다.** 그것은 고침이 아니라 이번 판의 빨강만 지우는 일이다.
+    ▣ **지금 고치지 않았다.** 이유 둘: ㉠ `config/k3_roles.py`·`k3_dashboard/presets.py`
+      는 커널·설정이고 이번 턴 차선 다섯이 도는 중이다 — 조율자가 ① 칸에서 커널을 고치면
+      그것이 소유권 밖의 수정이다. ㉡ 지금 실제 피해가 **없다**: 매핑이 없으면
+      `FALLBACK_PRESET = OPERATOR`(가장 좁은 것)로 떨어지고 `services.py:125` 가 경고를
+      남긴다 — 넓은 쪽으로 새지 않는다. **빨강을 회색으로 바꾸지 않고 빨강으로 둔다.**
+    ▣ 고칠 자리(다음 턴 · 차선 F 또는 U56): `_role_preset_map()` 이 **글자 일치만** 본다.
+      `tenant_admin_<숫자>` 를 **한 규칙**으로 인정하게 하고(프리셋은 `admin` 과 같은
+      MANAGER — `K3_ROLES_WITH_TENANT_SETTINGS_ACCESS = K3_ROLE_SYSOPS` 가 이미 그렇게
+      말한다), 판정식은 `common/tenant_roles.py::is_tenant_admin` 한 곳에 그대로 둔다
+      (D-212 — 표를 두 벌 두지 않는다).
+    ▣ 곁가지 [실측]: 역할이 **0개**인 활성 계정 둘 — `gxprobe_e2e` · `order_cn_001`.
+      매핑의 문제가 아니라 계정의 문제다. 판정기는 세기만 한다.
+  enforced_by: |
+    · scripts/verify_seed_roles.py (매핑 경고 — 지금 exit 1 · 이 빨강이 이 항목의 살아 있는 증거다)
+    · backend/config/k3_roles.py (K3_ROLE_PRESET_MAP · K3_UNMAPPED_BY_DECISION 정본)
+    · backend/kernels/k3_dashboard/presets.py (_role_preset_map · FALLBACK_PRESET)
+  affects: [D-212, D-264, P-146]
+
+- id: D-479
+  author_tree_id: "턴 S · 차선 U24 가 자기 청을 뒤집었다 · 조율자 수용"
+  title: "카메라 확신도 문턱을 표에 넣지 않는다 — 읽는 자리가 0.0 으로 박혀 있다"
+  status: decided
+  raised_by: "U24 차선 (2026-09-16 · 조율자가 used_by 를 물은 뒤)"
+  decision: |
+    ▣ U24 가 `kernels/k5_trust/thresholds.py` 에 카메라별 확신도 문턱 한 줄을 청했다.
+      범위는 문제가 아니었다 — `SCOPE_CAMERA` 는 이미 있고 `SCOPE_LEVELS` 에도 들어 있다.
+      막힌 것은 `ThresholdDef.used_by` 였다: 주석이 그 칸을 **「표와 코드가 갈리는 것을
+      막는 유일한 끈」** 이라 못박는다. 조율자가 지어내지 않고 **차선에게 실제 자리를
+      물었고**, 차선이 파 보고 **자기 청을 철회했다.**
+    ▣ 읽는 자리는 있다 — `stream_monitors/services/detection_event_bridge.py:229` 가
+      `confidence < MIN_CONFIDENCE` 로 거른다. 그런데 114행이 `MIN_CONFIDENCE = 0.0`
+      **하드코딩**이고, 그 위 주석이 이미 판정을 적어 두었다: 「0.0 이다 — **거르지
+      않는다.** 문턱값은 U1 의 오탐률 분모를 직접 깎으므로 숫자를 고르는 것 자체가
+      판정이고, 그 판정의 근거가 될 **실데이터가 아직 없다.** "일단 0.5" 가 들어오는
+      순간 오탐률은 **문턱값이 만든 수**가 된다.」
+      → 이 키가 표에 없는 것은 **누락이 아니라 판정이었다.**
+    ▣ 지금 행을 넣으면 화면에서 저장도 되고 재조회도 되는데 **탐지는 여전히 0.0 을
+      읽는다** — 「저장했습니다」가 뜨고 값이 되돌아오는데 세상은 그대로다. 그리고
+      `used_by` 는 **끊긴 끈을 이어졌다고 적는 칸**이 된다. 빈칸보다 그쪽이 나쁘다.
+      「문은 있는데 손잡이가 없다」의 정확히 뒤집힌 판이다.
+    ▣ **순서가 거꾸로였다.** 근거가 먼저다 — U24 의 시뮬이 카메라별로 「이 문턱이면
+      시간당 N건」을 실측으로 낸다. 그것이 저 주석이 기다리는 「K6 의 실측 분포」다.
+      쌓인 뒤에 bridge 를 표에 물리고, **그때** 행을 넣는다.
+    ▣ 그날을 위해 넷을 적어 둔다(지금 넣지 않는다):
+      `key=camera.confidence_floor` · `unit=ratio`(0.0~1.0 — `%` 로 적으면 저장 값과
+      모델 값의 축이 갈린다) · `used_by=("…detection_event_bridge.py:MIN_CONFIDENCE",)`
+      — **그 파일이 상수 대신 표를 읽은 뒤에만 참이다** · `why` 는 위 주석 그대로.
+      `default=None`(「0 이다」가 아니라 「아직 없다」) · `applies_to=SCOPE_CAMERA` ·
+      `contract_fixed=False`.
+    ▣ U2 온보딩 #11 은 그래서 **부분 닫힘**이다 — 시뮬·저장·재조회는 실재하고 시험이
+      재지만, 슬라이더 축(확신도)과 저장 축(항목 단위)이 **일부러 갈라져 있고** 화면이
+      그 사실을 적는다. 합쳐 보이게 만드는 것이 이 턴의 유혹이었고 안 했다.
+  enforced_by: |
+    · backend/stream_monitors/services/detection_event_bridge.py:108-114 (판정을 적은 주석 · MIN_CONFIDENCE = 0.0)
+    · backend/kernels/k5_trust/thresholds.py (THRESHOLDS — 이 키가 **없다**는 것이 이 결정의 집행이다)
+    · scripts/verify_threshold_table.py (새 매직 넘버 래칫)
+  affects: [D-290, D-301, D-311]
+
+- id: D-480
+  author_tree_id: "턴 S 조율자 · 차선 F 가 조율자의 지목을 바로잡았다"
+  title: "§0.4 금지구역 게이트는 있었다 — 없던 것은 커밋 자리였다 (조율자 오판 1건 포함)"
+  status: decided
+  raised_by: "조율자 (2026-09-16 · 병합 전 훅 전수 확인) → 차선 F 가 정정"
+  decision: |
+    ▣ **조율자가 틀렸다. 먼저 그것부터 적는다.**
+      차선 셋(F·U1·U24)이 「`forbidden-zone` 게이트 PASS · 위반 0」을 보고했다. 조율자가
+      `.pre-commit-config.yaml` 훅 35개와 `scripts/` 를 뒤졌는데 그 이름이 없어서
+      **「없는 게이트의 초록을 보고했다」고 세 차선을 지목했다.** 틀린 지목이었다 —
+      **판정기는 있었다**: `docs/agent/verify_gates.sh:585 `gate_forbidden_zone()`,
+      `ALL_GATES`(1127행)에 등재, 금지 경로 정본은 같은 파일 **144행 `FORBIDDEN_PATHS`**
+      여덟 줄이다. 차선들은 그 셸 러너를 돌렸고, **보고는 사실이었다.**
+      조율자가 `scripts/` 와 pre-commit 두 자리만 보고 **차선이 실제로 쓰는 러너를 안 봤다.**
+      「없는 근거를 대지 마라」는 판정은 옳지만, 그 판정을 **근거 없이 남에게 씌운 것**이
+      같은 죄다. 영실 오판으로 센다.
+    ▣ **진짜로 빠져 있던 것은 「커밋 자리」다.** 게이트는 셸 러너에서만 돌았고
+      pre-commit 에는 없었다 — 즉 **사람이 부를 때만 서는 문**이었다. 금지구역 변경은
+      아무 파일을 고치다가도 나므로, 부를 때만 서는 문은 안 선 문과 가깝다.
+    ▣ 처방(차선 F · 이번 턴): **새 판정기를 짓지 않았다.** 지으면 금지 경로 목록이
+      두 벌이 되고 두 벌은 반드시 어긋난다(D-369). `.pre-commit-config.yaml` 에 훅 한 줄만
+      더했다 — `gx-forbidden-zone` · `entry: bash docs/agent/verify_gates.sh --gate
+      forbidden-zone` · **`always_run: true`**(`files:` 로 좁히면 그 게이트가 자기가 막을
+      자리를 안 본다).
+    ▣ **빨강을 실측했다** — 「막는다」가 아니라 「막히는 것」을 봤다 [턴 S · F]:
+      금지 패턴 probe 1개 → `[입력] 72건` · `FAIL … ← STOP(blocked)` · **exit 1**,
+      probe 제거 → `[입력] 71건` · **exit 0**. 분모가 71→72→71 로 실제로 움직인다.
+      그 71 은 조율자가 diff 로 손수 센 71(고침 46 · 새 파일 24 · 삭제 1)과 **같다** —
+      서로 다른 두 셈이 같은 수를 냈다.
+    ▣ 이번 턴 §0.4 실측: 위반 **0건** · rj-core·dj-core **0건** · 바뀐 backend 최상위는
+      `apps`·`common`·`kernels`·`tests` 뿐.
+    ▣ **남은 약점 셋** — 막지 않았고, 안 막았다는 것을 적는다:
+      ㉠ 베이스라인이 없으면 이 게이트는 **SKIP 하고 0 을 낸다** — 회색인데 훅에서는
+        통과로 읽힌다. 회색을 커밋 차단으로 올릴지는 P-70 의 반대편이라 판정이 필요하다.
+      ㉡ 티켓의 `reuse_targets` 에 이름이 있으면 금지구역 변경이 **허용**된다
+        (`verify_gates.sh:608`). 지금 그 길로 지나간 파일은 0건이지만 문은 열려 있다.
+      ㉢ `FORBIDDEN_PATHS` 와 WO §4.1 의 금지 문장은 **사람 눈으로만** 묶여 있다. WO 쪽은
+        기계가 읽을 목록이 아니라 **산문**이다 — 그래서 「WO 를 읽어 대조하라」는 지금
+        구조로 불가능하다. 문서를 기계가 읽을 목록으로 바꾸는 것은 다음 턴 일이다.
+  enforced_by: |
+    · .pre-commit-config.yaml (gx-forbidden-zone · always_run · 커밋 자리)
+    · docs/agent/verify_gates.sh:144 FORBIDDEN_PATHS (경로 정본 · 한 벌)
+    · docs/agent/verify_gates.sh:585 gate_forbidden_zone() · ALL_GATES:1127
+  affects: [D-301, D-327, D-369]
