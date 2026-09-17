@@ -105,7 +105,7 @@
   {
    "id": "F-09-c2",
    "color": "초록",
-   "why": "이벤트 클릭 → 상세. 그 클릭이 실제로 부른 라우트가 200 이다 ← 화면 /dsm/events/99554 · /api/dsm/events/99554 200 · 역할 fire_user · 시드 | SCREENS-1/fire_user/dsm_events_99554.png"
+   "why": "이벤트 클릭 → 상세. 그 클릭이 실제로 부른 라우트가 200 이다 ← 화면 /dsm/events/{id} · /api/dsm/events/{id} 200 · 역할 fire_user · 시드 | SCREENS-1/fire_user/dsm_events_id_verdict_panel.png"
   },
   {
    "id": "F-09-c3",
@@ -125,7 +125,7 @@
   {
    "id": "F-10-c3",
    "color": "초록",
-   "why": "발송 기록이 이벤트 상세에서 실제로 조회된다 (deliveries?event_id=…) ← 화면 /dsm/events/99554 · /api/dsm/deliveries 200 · 역할 fire_user · 시드 | SCREENS-1/fire_user/dsm_events_99554.png"
+   "why": "발송 기록이 이벤트 상세에서 실제로 조회된다 (deliveries?event_id=…) ← 화면 /dsm/events/{id} · /api/dsm/deliveries 200 · 역할 fire_user · 시드 | SCREENS-1/fire_user/dsm_events_id_verdict_panel.png"
   },
   {
    "id": "F-11-c1",
@@ -195,7 +195,7 @@
   {
    "id": "F-14-c1",
    "color": "초록",
-   "why": "사람의 판정이 남는 자리(판정 패널·타임라인)를 역할 계정이 200 으로 봤다 ← 화면 /dsm/events/99554 · /api/dsm/events/99554/timeline 200 · 역할 fire_user · 시드 | SCREENS-1/fire_user/dsm_events_id_verdict_panel.png"
+   "why": "사람의 판정이 남는 자리(판정 패널·타임라인)를 역할 계정이 200 으로 봤다 ← 화면 /dsm/events/{id} · /api/dsm/events/{id}/timeline 200 · 역할 fire_user · 시드 | SCREENS-1/fire_user/dsm_events_id_verdict_panel.png"
   },
   {
    "id": "F-14-c2",

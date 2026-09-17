@@ -1,0 +1,543 @@
+[
+  {
+    "route": "/login",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/L1",
+    "captured_at": "2026-09-17T08:25:42",
+    "file": "SCREENS-1/fire_user/login_credentials.png",
+    "data_source": "실측 (가로채지 않았다 — 진짜 서버(8000)가 거절한 답이다)",
+    "persona": "U1",
+    "viewed_by": "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중",
+    "calls": [
+      "GET /api/config-management/list-optimized 200",
+      "POST /api/v1/auth/login 400"
+    ]
+  },
+  {
+    "route": "/login",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/L2",
+    "captured_at": "2026-09-17T08:25:49",
+    "file": "SCREENS-1/fire_user/login_locked.png",
+    "data_source": "모의 (서버의 잠금 본문 모양을 주입했다 — 계정을 진짜로 잠그지 않는다)",
+    "persona": "U1",
+    "viewed_by": "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중",
+    "calls": [
+      "GET /api/config-management/list-optimized 200"
+    ]
+  },
+  {
+    "route": "/login",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/L3",
+    "captured_at": "2026-09-17T08:25:56",
+    "file": "SCREENS-1/fire_user/login_forbidden.png",
+    "data_source": "모의 (403 을 주입했다 — 권한 없는 실재 계정을 만들어 찍지 않는다)",
+    "persona": "U1",
+    "viewed_by": "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중",
+    "calls": [
+      "GET /api/config-management/list-optimized 200"
+    ]
+  },
+  {
+    "route": "/login",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/L4",
+    "captured_at": "2026-09-17T08:26:04",
+    "file": "SCREENS-1/fire_user/login_server_error.png",
+    "data_source": "모의 (500 을 주입했다 · 본문은 HTML(장고 오류 쪽) — 그 바이트가 화면에 새는지도 본다)",
+    "persona": "U1",
+    "viewed_by": "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중",
+    "calls": [
+      "GET /api/config-management/list-optimized 200"
+    ]
+  },
+  {
+    "route": "/login",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/L5",
+    "captured_at": "2026-09-17T08:26:11",
+    "file": "SCREENS-1/fire_user/login_network.png",
+    "data_source": "모의 (연결 자체를 끊었다 — axios 원문이 태어나던 자리)",
+    "persona": "U1",
+    "viewed_by": "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중",
+    "calls": [
+      "GET /api/config-management/list-optimized 200"
+    ]
+  },
+  {
+    "route": "/dsm/dashboard",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/1",
+    "captured_at": "2026-09-17T08:26:31",
+    "file": "SCREENS-1/fire_user/dsm_dashboard.png",
+    "data_source": "시드",
+    "persona": "U1",
+    "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/dashboard/frame 200",
+      "GET /api/dsm/events?limit=10 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/events",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/2",
+    "captured_at": "2026-09-17T08:26:39",
+    "file": "SCREENS-1/fire_user/dsm_events.png",
+    "data_source": "시드",
+    "persona": "U1",
+    "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/events/summary?hours=12 200",
+      "GET /api/dsm/events?limit=50&response_state=occurred 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/events/204342",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/3",
+    "captured_at": "2026-09-17T08:26:46",
+    "file": "SCREENS-1/fire_user/dsm_events_204342.png",
+    "data_source": "시드",
+    "persona": "U1",
+    "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/deliveries?event_id=204342 200",
+      "GET /api/dsm/events/204342 200",
+      "GET /api/dsm/events/204342/timeline 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/events?preset=unhandled",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/17",
+    "captured_at": "2026-09-17T08:26:54",
+    "file": "SCREENS-1/fire_user/dsm_events_preset_unhandled.png",
+    "data_source": "시드",
+    "persona": "U1",
+    "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/events/summary?hours=12 200",
+      "GET /api/dsm/events?limit=50&response_state=occurred 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/events?preset=recent",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/18",
+    "captured_at": "2026-09-17T08:27:02",
+    "file": "SCREENS-1/fire_user/dsm_events_preset_recent.png",
+    "data_source": "시드",
+    "persona": "U1",
+    "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/events/summary?hours=12 200",
+      "GET /api/dsm/events?limit=50&since=2026-09-16T13:26:55.303Z&until=2026-09-17T01:26:55.303Z 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/events?preset=mine",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/19",
+    "captured_at": "2026-09-17T08:27:09",
+    "file": "SCREENS-1/fire_user/dsm_events_preset_mine.png",
+    "data_source": "시드",
+    "persona": "U1",
+    "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/events/summary?hours=12 200",
+      "GET /api/dsm/events?limit=50&mine=true 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/events?preset=system",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/20",
+    "captured_at": "2026-09-17T08:27:17",
+    "file": "SCREENS-1/fire_user/dsm_events_preset_system.png",
+    "data_source": "시드",
+    "persona": "U1",
+    "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/dashboard/link-state 200",
+      "GET /api/dsm/events/summary?hours=12 200",
+      "GET /api/dsm/events?limit=50&event_type=camera_down,storage_high 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/events/204342",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/21",
+    "captured_at": "2026-09-17T08:27:25",
+    "file": "SCREENS-1/fire_user/dsm_events_id_verdict_panel.png",
+    "data_source": "시드",
+    "persona": "U1",
+    "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/deliveries?event_id=204342 200",
+      "GET /api/dsm/events/204342 200",
+      "GET /api/dsm/events/204342/timeline 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/queue",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/22",
+    "captured_at": "2026-09-17T08:27:33",
+    "file": "SCREENS-1/fire_user/dsm_queue_focus.png",
+    "data_source": "시드",
+    "persona": "U1",
+    "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/events/4805/snapshot 200",
+      "GET /api/dsm/events/queue?limit=200 200",
+      "GET /api/dsm/queue/field-signals?event_ids=4805,4800,204340,4819,4818,4810,204341,4815,204343,204342 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/multi-stream-monitor",
+    "user_role": "fire_admin",
+    "scenario": "SCREENS-1/13",
+    "captured_at": "2026-09-17T08:27:56",
+    "file": "SCREENS-1/fire_admin/multi-stream-monitor.png",
+    "data_source": "시드",
+    "persona": "U2",
+    "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/stream-monitors/stream-monitors 200",
+      "GET /api/stream-monitors/stream-monitors/ai-models 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/drill",
+    "user_role": "fire_admin",
+    "scenario": "SCREENS-1/23",
+    "captured_at": "2026-09-17T08:28:03",
+    "file": "SCREENS-1/fire_admin/dsm_drill_mode.png",
+    "data_source": "시드",
+    "persona": "U2",
+    "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/drill 200",
+      "GET /api/dsm/drill/report 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/cameras/import",
+    "user_role": "fire_admin",
+    "scenario": "SCREENS-1/24",
+    "captured_at": "2026-09-17T08:28:11",
+    "file": "SCREENS-1/fire_admin/dsm_cameras_import_dryrun.png",
+    "data_source": "시드",
+    "persona": "U2",
+    "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/cameras/address-gap 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/cameras/address",
+    "user_role": "fire_admin",
+    "scenario": "SCREENS-1/25",
+    "captured_at": "2026-09-17T08:28:19",
+    "file": "SCREENS-1/fire_admin/dsm_cameras_address_fill.png",
+    "data_source": "시드",
+    "persona": "U2",
+    "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/cameras/address-gap 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/start?role=OPERATOR",
+    "user_role": "fire_admin",
+    "scenario": "SCREENS-1/26",
+    "captured_at": "2026-09-17T08:28:26",
+    "file": "SCREENS-1/fire_admin/start_onboarding.png",
+    "data_source": "시드",
+    "persona": "U2",
+    "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+    "calls": [
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/m/inbox",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/27",
+    "captured_at": "2026-09-17T08:28:46",
+    "file": "SCREENS-1/fire_user/m_inbox_m1.png",
+    "data_source": "시드",
+    "persona": "U3",
+    "viewed_by": "U3 · gxseed_u1_operator · fire_user · 390px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/deliveries?limit=50 200",
+      "GET /api/dsm/events?limit=200 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/m/events/204342",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/28",
+    "captured_at": "2026-09-17T08:28:54",
+    "file": "SCREENS-1/fire_user/m_events_id_m3_field_reply.png",
+    "data_source": "시드",
+    "persona": "U3",
+    "viewed_by": "U3 · gxseed_u1_operator · fire_user · 390px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/events/204342 200",
+      "GET /api/dsm/events/204342/clip 404",
+      "GET /api/dsm/events/204342/field-replies 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/surveillance-dashboard",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/9",
+    "captured_at": "2026-09-17T08:29:19",
+    "file": "SCREENS-1/view_only_-_anyang/surveillance-dashboard.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-16T17:00:00%2B00:00&end_date=2026-09-17T16:59:59%2B00:00&limit=100&page=1&page_size=5 403",
+      "GET /api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-12T17:00:00%2B00:00&end_date=2026-09-19T16:59:59%2B00:00 403",
+      "GET /api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-17 403",
+      "GET /api/surveillance/surveillance-dashboard/drone-status-overview 403",
+      "GET /api/surveillance/surveillance-dashboard/today-profiles-polygon 403",
+      "GET /api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4 403",
+      "GET /api/surveillance/surveillance-dashboard/weather-setting 403",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/media-data",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/11",
+    "captured_at": "2026-09-17T08:29:28",
+    "file": "SCREENS-1/view_only_-_anyang/media-data.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/media-data/?page_size=25&current_page=1 200",
+      "GET /api/media-data?page_size=25&current_page=1 301",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/stream-monitors/stream-monitors/ai-models 200",
+      "GET /api/user-groups/?page_size=10000&current_page=1 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/flight-log-analysis",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/12",
+    "captured_at": "2026-09-17T08:29:36",
+    "file": "SCREENS-1/view_only_-_anyang/flight-log-analysis.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/flight-log/flight-log/?page_size=25&current_page=1 403",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/?page_size=10000&current_page=1 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/report-template",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/15",
+    "captured_at": "2026-09-17T08:29:44",
+    "file": "SCREENS-1/view_only_-_anyang/report-template.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/notam",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/16",
+    "captured_at": "2026-09-17T08:29:52",
+    "file": "SCREENS-1/view_only_-_anyang/notam.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/?page_size=10000&current_page=1 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200",
+      "POST /api/proxy/notam 403"
+    ]
+  },
+  {
+    "route": "/menu",
+    "user_role": "admin",
+    "scenario": "SCREENS-1/6",
+    "captured_at": "2026-09-17T08:30:29",
+    "file": "SCREENS-1/admin/menu.png",
+    "data_source": "시드",
+    "persona": "U5",
+    "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/configuration-management",
+    "user_role": "admin",
+    "scenario": "SCREENS-1/7",
+    "captured_at": "2026-09-17T08:30:37",
+    "file": "SCREENS-1/admin/configuration-management.png",
+    "data_source": "시드",
+    "persona": "U5",
+    "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/config-management/list?page_size=25&current_page=1 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/?page_size=10000&current_page=1 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/profile",
+    "user_role": "admin",
+    "scenario": "SCREENS-1/8",
+    "captured_at": "2026-09-17T08:30:46",
+    "file": "SCREENS-1/admin/profile.png",
+    "data_source": "시드",
+    "persona": "U5",
+    "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/departments/?page_size=10000&current_page=1&group__id=4 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/?page_size=10000&current_page=1 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200",
+      "GET /api/v1/user/get-user-detail/115 200"
+    ]
+  },
+  {
+    "route": "/operation-settings",
+    "user_role": "admin",
+    "scenario": "SCREENS-1/14",
+    "captured_at": "2026-09-17T08:31:02",
+    "file": "SCREENS-1/admin/operation-settings.png",
+    "data_source": "시드",
+    "persona": "U5",
+    "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  }
+]

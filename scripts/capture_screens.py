@@ -116,6 +116,86 @@ def _screens_dir() -> Path:
 
 SCREENS = _screens_dir()
 
+# ═══════════════════════════════════════════════════════════════════════════
+# P-154 · **대장은 줄지 않는다** — 생성기는 합쳐 쓰고, 이번 실행분은 따로 둔다 (턴 S · 조율자)
+# ═══════════════════════════════════════════════════════════════════════════
+#: ★ 턴 R 에 이 도구가 INDEX(32→2) · run_log(32단계→2) · screen_routes(27→2)를 **이번 실행분만
+#:   남기고** 다시 썼다. 셋째는 게이트 셋의 입력이라 상용 63.2 · 영역 ① 3/39 가 보고에
+#:   실릴 뻔했다(D-473). 생성기는 자기가 만든 것만 안다 — 그래서 대장을 통째로 주지 않는다.
+#: ★ 열쇠는 **PNG 파일 경로**다. 경로에 역할이 들어 있어(`<벌>/<ROLE>/<route>.png`) 「같은
+#:   화면을 다른 역할이 본 기록」이 접히지 않고, 같은 파일을 다시 찍으면 그 항목만 새 판이
+#:   된다. **라우트로 묶으면 접힌다** — 조율자가 턴 R 에 그렇게 4건을 지웠다(D-477).
+#: ★ 줄면 **예외로 멈춘다**(`assert_not_shrunk`). 경고는 다음 사람이 안 읽는다.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ledger_merge import assert_not_shrunk, merge_records  # noqa: E402
+
+RUNS_DIR = SCREENS.parent.parent / "P-157" / "runs"
+RUN_STAMP = datetime.now().strftime("%Y%m%dT%H%M%S")
+
+
+def _by_file(r) -> str:
+    return str(r.get("file", "")) if isinstance(r, dict) else str(r)
+
+
+def _keep_run_copy(name: str, text: str) -> None:
+    """이번 실행분 **그대로** — 대장과 별도로. 합친 뒤에는 무엇이 이번 것인지 못 가른다."""
+    d = RUNS_DIR / RUN_STAMP
+    d.mkdir(parents=True, exist_ok=True)
+    (d / name).write_text(text, encoding="utf-8")
+
+
+def _existing_index_entries() -> list:
+    """대장 INDEX.yaml 의 screens 목록. 없으면 빈 목록 — 깨졌으면 **멈춘다**(합치지 못하면 쓰지 않는다)."""
+    p = SCREENS / "INDEX.yaml"
+    if not p.is_file():
+        return []
+    text = p.read_text(encoding="utf-8")
+    try:
+        import yaml
+        doc = yaml.safe_load(text) or {}
+        return list(doc.get("screens") or [])
+    except ImportError:
+        #: ★ gx-shell 에는 PyYAML 이 없다 [실측 2026-09-17]. 이 파일은 우리가 쓰는 모양이
+        #:   정해져 있으니(아래 `row`) 그 모양만 읽는 작은 파서로 대신한다 — 컨테이너에서
+        #:   합치기가 죽으면 INDEX 만 옛 시각을 가리키는 **거짓 색인**이 남는다(D-473).
+        return _parse_index_plain(text)
+
+
+def _parse_index_plain(text: str) -> list:
+    """`screens:` 아래의 `  - route:` 항목만 읽는다. `row` 템플릿이 쓰는 모양 그대로."""
+    body = text.partition("screens:")[2]
+    out, cur, in_calls = [], None, False
+    for line in body.splitlines():
+        if line.startswith("  - route:"):
+            cur = {"route": line.split(":", 1)[1].strip(), "calls": []}
+            out.append(cur); in_calls = False
+            continue
+        if cur is None or not line.startswith("    "):
+            continue
+        s = line.strip()
+        if in_calls and s.startswith("- "):
+            cur["calls"].append(s[2:].strip().strip('"'))
+            continue
+        in_calls = False
+        if ":" not in s:
+            continue
+        k, v = s.split(":", 1)
+        k, v = k.strip(), v.strip()
+        if k == "calls":
+            in_calls = not v.startswith("[")
+            continue
+        if v.startswith('"') and '"' in v[1:]:
+            v = v[1:v.rindex('"')]
+        cur[k] = v
+    return out
+
+
+def _read_json_ledger(p: Path) -> dict:
+    """대장 JSON. 없으면 빈 벌 — 깨졌으면 멈춘다."""
+    if not p.is_file():
+        return {}
+    return json.loads(p.read_text(encoding="utf-8"))
+
 #: 무엇을 찍나. `must_see` 는 **그 화면에만 있는 글자**다 — 로그인으로 튕겼는지
 #: 빈 껍데기가 떴는지를 이것 하나로 가른다.
 TARGETS = [
@@ -974,6 +1054,15 @@ def _rewrite_index(entries: list) -> None:
         "",
     ))
 
+    #: ★ P-154 — 이번 실행분은 runs/ 에, 대장에는 **옛 항목 + 이번 항목**을 쓴다.
+    fresh_entries = list(entries)
+    _keep_run_copy("INDEX_entries.json",
+                   json.dumps(fresh_entries, ensure_ascii=False, indent=2, default=str))
+    head_entries = _existing_index_entries()
+    entries = merge_records(head_entries, fresh_entries, key=_by_file)
+    assert_not_shrunk("INDEX.yaml", len(head_entries), len(entries))
+    print(f"[SHOT] 대장 INDEX 합침 — 옛 {len(head_entries)}장 + 이번 {len(fresh_entries)}장 → {len(entries)}장")
+
     def _calls(e) -> str:
         got = e.get("calls") or []
         if not got:
@@ -1244,14 +1333,23 @@ def main() -> int:
     print("[SHOT] 페르소나별 장수: "
           + " · ".join(f"{k} {v}장" for k, v in per_persona.items()))
 
-    (SCREENS / "run_log.json").write_text(json.dumps({
+    fresh_log = {
         "harness": "scripts/capture_screens.py",
         "scenario": SCENARIO,
         "ran_at": datetime.now().replace(microsecond=0).isoformat(),
         "steps": got["steps"],
         #: 브라우저가 뱉은 오류를 **숨기지 않는다.** 0건이면 0건이라고 적힌다.
         "page_errors": got["page_errors"],
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    }
+    #: ★ P-154 — 단계는 **합집합**(같은 단계는 새 판이 이긴다) · 오류는 이번 실행의 것
+    #:   (지난 실행의 오류는 runs/ 사본과 git 이력에 있다 — 대장에 영원히 쌓으면 이번 것이 안 보인다).
+    _keep_run_copy("run_log.json", json.dumps(fresh_log, ensure_ascii=False, indent=2))
+    old_log = _read_json_ledger(SCREENS / "run_log.json")
+    merged_log = dict(fresh_log)
+    merged_log["steps"] = {**(old_log.get("steps") or {}), **fresh_log["steps"]}
+    assert_not_shrunk("run_log.json steps", len(old_log.get("steps") or {}), len(merged_log["steps"]))
+    (SCREENS / "run_log.json").write_text(
+        json.dumps(merged_log, ensure_ascii=False, indent=2), encoding="utf-8")
 
     # ★★ [실측 2026-09-05 · 턴 E] **이 두 줄이 판정기를 두 턴 동안 속였다.**
     #
@@ -1288,7 +1386,7 @@ def main() -> int:
         api_notes[r] = ("찍었는데 이 화면이 부른 우리 API 를 **기록하지 못했다** — "
                         "기록기가 이 갈래에서 `api_calls` 를 채우지 않았다. "
                         "빈 목록은 통과가 아니다 (D-301)")
-    routes_out.write_text(json.dumps({
+    fresh_doc = {
         "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
         "captured_at": datetime.now().replace(microsecond=0).isoformat(),
         #: ★ 키는 **라우트**이고, 화면 수와 다를 수 있다 — 한 라우트가 두 장을 낼 수 있기
@@ -1318,7 +1416,24 @@ def main() -> int:
         #: 「안 해 본 것」과 「해 봤더니 안 되는 것」이 같아지고, 둘을 합치면
         #: 「아무것도 없다」와 「거기 갈 수 없다」도 같아진다.
         "redirected_screens": KNOWN_REDIRECT,
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    }
+    #: ★ P-154 — 대장에는 합쳐 쓴다. `screens` 는 라우트 합집합(새 판이 이긴다) · `viewers` 는
+    #:   **파일 경로** 열쇠(같은 화면을 다른 역할이 본 기록은 다른 파일이다) · `api_notes` 는
+    #:   이번에 호출을 기록한 라우트의 옛 사유를 **지운다**(「못 적었다」가 「적었다」 뒤에 남으면 거짓).
+    _keep_run_copy("screen_routes.json", json.dumps(fresh_doc, ensure_ascii=False, indent=2))
+    old_doc = _read_json_ledger(routes_out)
+    merged = dict(fresh_doc)
+    merged["screens"] = {**(old_doc.get("screens") or {}), **fresh_doc["screens"]}
+    merged["api_notes"] = {k: v for k, v in (old_doc.get("api_notes") or {}).items()
+                           if k not in fresh_doc["screens"]}
+    merged["api_notes"].update(fresh_doc["api_notes"])
+    merged["viewers"] = merge_records(list(old_doc.get("viewers") or []), fresh_doc["viewers"], key=_by_file)
+    merged["screens_total"] = len(merged["viewers"])
+    merged["routes_total"] = len(merged["screens"])
+    assert_not_shrunk("screen_routes.json screens", len(old_doc.get("screens") or {}), len(merged["screens"]))
+    assert_not_shrunk("screen_routes.json viewers", len(old_doc.get("viewers") or []), len(merged["viewers"]))
+    routes_out.write_text(json.dumps(merged, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"[SHOT] 대장 screen_routes 합침 — 자리 {len(old_doc.get('screens') or {})} → {merged['routes_total']} · 화면 {len(old_doc.get('viewers') or [])} → {merged['screens_total']}")
     print(f"[SHOT] 화면이 부른 API 기록: {routes_out}")
 
     _rewrite_index(got["entries"])

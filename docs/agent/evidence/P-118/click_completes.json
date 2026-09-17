@@ -1,7 +1,7 @@
 {
-  "measured_at": "2026-09-16T03:36:17Z",
-  "event_id": 4798,
-  "api": "http://gx-nginx-e:8500",
+  "measured_at": "2026-09-17T01:24:04Z",
+  "event_id": 204340,
+  "api": "http://localhost:8000",
   "spa": "http://localhost:3002",
   "observations": {
     "U1#1": {
@@ -11,11 +11,6 @@
         "name": "로그인"
       },
       "calls": [
-        {
-          "method": "POST",
-          "url": "http://localhost:8000/api/v1/auth/login",
-          "status": null
-        },
         {
           "method": "POST",
           "url": "http://localhost:8000/api/v1/auth/login",
@@ -58,6 +53,11 @@
         },
         {
           "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/util.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
           "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/controls.js",
           "status": 200
         },
@@ -78,12 +78,17 @@
         },
         {
           "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/util.js",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/main.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/main.js",
+          "url": "https://maps.googleapis.com/maps/api/mapsjs/gen_204?csp_test=true",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/map.js",
           "status": 200
         },
         {
@@ -113,27 +118,27 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/FocusQueue-Cin3Eew9.js",
+          "url": "http://localhost:3002/assets/FocusQueue-B1pAzOkW.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventSnapshot-BbNwdqL6.js",
+          "url": "http://localhost:3002/assets/EventSnapshot-DJiZ2fbh.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseClock-_jnblGzk.js",
+          "url": "http://localhost:3002/assets/ResponseClock-BwGE3eSx.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
@@ -148,12 +153,12 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DmOGbwJZ.js",
+          "url": "http://localhost:3002/assets/index-YuIF2z6P.js",
           "status": 200
         },
         {
@@ -163,17 +168,12 @@
         },
         {
           "method": "GET",
-          "url": "https://maps.googleapis.com/maps/api/mapsjs/gen_204?csp_test=true",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/4d/map.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
           "url": "http://localhost:8000/api/dsm/events/4805/snapshot",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/queue/field-signals?event_ids=4805,4800,4819,4818,4810,4815,204341,204340",
           "status": null
         }
       ],
@@ -182,8 +182,8 @@
         "before": "http://localhost:3002/login",
         "after": "http://localhost:3002/dsm/queue"
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\nGuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 끄기\n갱신 03:33 · 0초 전 · 표기 시간대: Asia/Seoul\n이벤트(원본 건수)\n22\n카드(5분 창 묶음)\n6\n같은 카메라·같은 유형이 5분 창 안에 연속으로 나면 카드 한 장에 「×N」으로 묶입니다. 이벤트는 접지 않습니다 — 위 두 수가 다른 것이 그 약속의 증거이고, 통계는 왼쪽 수(이벤트 원본 건수)를 셉니다.\n■ 심각\n침수\n시드 카메라 (검수용)\n조치 중\n×5\n상세 열기\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n대응 시계 · 발생 12:53 · 12일 전\n302시간 40분\n8분 경과 — 가장 오래 기다린 사건\n종결하기 (3)\n이 카드에 5건이 묶여 있습니다.\n이벤트 id: 4807, 4806, 4805, 4804, 4803 — 카드만 묶였고 기록은 그대로입니다.\n대기 카드 5장\n■ 심각\n화재\n시드 카메라 (검수용)\n조치 중\n×5\n발생 13:08 · 12일 전\n302시간 25분\n8분 경과 — 가장 오래 기다린 사건\n열기\n▲ 경계\n저장 용량 임계\n시드 카메라 (검수용)\n조치 중\n발생 12:11 · 12일 전\n303시간 22분\n8분 경과 — 가장 오래 기다린 사건\n열기\n▲ 경계\n카메라 무응답\n시드 카메라 (검수용)\n조치 중\n발생 12:14 · 12일 전\n303시간 19분\n8분 경과 — 가장 오래 기다린 사건\n열기\n▲ 경계\n침입\n시드 카메라 (검수용)\n조치 중\n×5\n발생 12:38 · 12일 전\n302시간 55분\n8분 경과 — 가장 오래 기다린 사건\n열기\n● 주의\n사람\n시드 카메라 (검수용)\n조치 중\n×5\n발생 12:23 · 12일 전\n303시간 10분\n8분 경과 — 가장 오래 기다린 사건\n열기\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:33:50Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\nGuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 끄기\n갱신 01:21 · 0초 전 · 표기 시간대: Asia/Seoul\n이벤트(원본 건수)\n24\n카드(5분 창 묶음)\n8\n같은 카메라·같은 유형이 5분 창 안에 연속으로 나면 카드 한 장에 「×N」으로 묶입니다. 이벤트는 접지 않습니다 — 위 두 수가 다른 것이 그 약속의 증거이고, 통계는 왼쪽 수(이벤트 원본 건수)를 셉니다.\n■ 심각\n침수\n시드 카메라 (검수용)\n조치 중\n×5\n상세 열기\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n대응 시계 · 발생 12:53 · 13일 전\n324시간 28분\n8분 경과 — 가장 오래 기다린 사건\n종결하기 (3)\n이 카드에 5건이 묶여 있습니다.\n이벤트 id: 4807, 4806, 4805, 4804, 4803 — 카드만 묶였고 기록은 그대로입니다.\n종결 확인 — 현장이 조치를 마쳤다고 알린 사건\n배선 대기\n지원 요청 표시는 현장 회신이 그 표시를 달고 올 때 이 자리에 뜹니다.\n현장 회신에 「지원 요청」·「조치 완료」 표시가 아직 붙지 않았습니다. 아래 한 줄은 이 칸이 어떻게 보일지 세워 둔 검수용 예시이고, 실제 회신이 아닙니다.\n시드(검수용)\n현장 요원\n[조치완료] 잔불 없음, 철수합니다 (검수용 예시)\n종결하기\n대기 카드 7장\n■ 심각\n화재\n시드 카메라 (검수용)\n조치 중\n×5\n발생 13:08 · 13일 전\n324시간 13분\n8분 경과 — 가장 오래 기다린 사건\n열기\n▲ 경계\n저장 용량 임계\n시드 카메라 (검수용)\n조치 중\n발생 12:11 · 13일 전\n325시간 10분\n8분 경과 — 가장 오래 기다린 사건\n열기\n▲ 경계\n카메라 무응답\n시드 카메라 (검수용)\n조치 중\n발생 12:14 · 13일 전\n325시간 7분\n8분 경과 — 가장 오래 기다린 사건\n열기\n▲ 경계\n침입\n시드 카메라 (검수용)\n조치 중\n×5\n발생 12:38 · 13일 전\n324시간 43분\n8분 경과 — 가장 오래 기다린 사건\n열기\n● 주의\n사람\n시드 카메라 (검수용)\n조치 중\n×5\n발생 12:23 · 13일 전\n324시간 58분\n8분 경과 — 가장 오래 기다린 사건\n열기\n▲ 경계\n침수\ngxprobe-D384-screen 캡처용 카메라\n미처리\n발생 01:16 · 5분 전\n5분 35초\n5분 경과\n열기\n■ 심각\n화재\ngxprobe-D384-screen 캡처용 카메라\n미처리\n발생 01:18 · 3분 전\n3분 35초\n2분 경과\n열기\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:21:36Z"
     },
     "U1#2": {
       "control": {
@@ -204,7 +204,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -244,22 +244,22 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ControlDashboard-45o-2VPL.js",
+          "url": "http://localhost:3002/assets/ControlDashboard-B9b0f_5o.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/AutoAnalysisNotice-BZw9D___.js",
+          "url": "http://localhost:3002/assets/AutoAnalysisNotice-DIQfloxo.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
@@ -269,17 +269,17 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DmOGbwJZ.js",
+          "url": "http://localhost:3002/assets/index-YuIF2z6P.js",
           "status": 200
         },
         {
@@ -346,8 +346,8 @@
         "after": 2,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n자동 분석 안내\n이 알림은 자동 분석 결과이며, 관제요원이 최종 확인합니다.\n관제 대시보드\n?\n연계 대기\n갱신 03:33 · 0초 전\n화면 구성\n관제요원 화면역할에 맞춰 설정됨\n화면 점검\n화면 2칸이 정상적으로 그려졌습니다.\n?\n최근 이벤트\n전체 목록\n등급\t유형\t카메라\t발생\n■ 심각\t화재\t시드 카메라 (검수용)\t13:14 · 12일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:11 · 12일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:08 · 12일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:05 · 12일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:02 · 12일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:59 · 12일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:56 · 12일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:53 · 12일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:50 · 12일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:47 · 12일 전\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:33:54Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n자동 분석 안내\n이 알림은 자동 분석 결과이며, 관제요원이 최종 확인합니다.\n관제 대시보드\n?\n연계 대기\n갱신 01:21 · 0초 전\n화면 구성\n관제요원 화면역할에 맞춰 설정됨\n화면 점검\n화면 2칸이 정상적으로 그려졌습니다.\n?\n최근 이벤트\n전체 목록\n등급\t유형\t카메라\t발생\n■ 심각\t화재\tgxprobe-D384-screen 캡처용 카메라\t01:18 · 3분 전\n▲ 경계\t침수\tgxprobe-D384-screen 캡처용 카메라\t01:16 · 5분 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:14 · 13일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:11 · 13일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:08 · 13일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:05 · 13일 전\n■ 심각\t화재\t시드 카메라 (검수용)\t13:02 · 13일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:59 · 13일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:56 · 13일 전\n■ 심각\t침수\t시드 카메라 (검수용)\t12:53 · 13일 전\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:21:39Z"
     },
     "U1#3": {
       "control": {
@@ -368,7 +368,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -408,22 +408,22 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/CameraGrid-BKVofw_G.js",
+          "url": "http://localhost:3002/assets/CameraGrid-BJG3rpS_.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
@@ -486,14 +486,14 @@
         "on_screen": true
       },
       "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n카메라 격자\n1 / 1\n자동 순회\n응답 없음 4대 (전체 4대)\n그중 4대는 응답을 받은 적이 없습니다.\n안양천서로카메라\n응답 없음\n응답을 받은 적이 없습니다.\nGD-150Q\n응답 없음\n응답을 받은 적이 없습니다.\nH40\n응답 없음\n응답을 받은 적이 없습니다.\nNBP-DR-P2\n응답 없음\n응답을 받은 적이 없습니다.\n자동 갱신 중 · 마지막 갱신 0초 전 · 표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:33:57Z"
+      "measured_at": "2026-09-17T01:21:43Z"
     },
     "U1#4": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 인수 스트림 화면에 서버 값이 드러나는 칸이 없다 (실측: GET /api/stream-monitors/stream-monitors · 화면은 이름 타일뿐)"
       },
-      "measured_at": "2026-09-16T03:33:57Z"
+      "measured_at": "2026-09-17T01:21:43Z"
     },
     "U1#8": {
       "control": {
@@ -514,7 +514,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -554,27 +554,27 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventList-OFMdhAOM.js",
+          "url": "http://localhost:3002/assets/EventList-D5uiOTP-.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-Bz0yLc_6.js",
+          "url": "http://localhost:3002/assets/ResponseSteps-D7wGzhIi.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
@@ -584,7 +584,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
@@ -651,8 +651,8 @@
         "after": 20,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n이벤트 목록\n갱신 03:33 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:34:01Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n이벤트 목록\n갱신 01:21 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 2건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 2건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n2건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t발생\n■ 심각\t화재\tgxprobe-D384-screen 캡처용 카메라\t미처리\t미판정\t\n실제\n오탐\n\t01:18 · 3분 전\n▲ 경계\t침수\tgxprobe-D384-screen 캡처용 카메라\t미처리\t미판정\t\n실제\n오탐\n\t01:16 · 5분 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:21:46Z"
     },
     "U1#9": {
       "control": {
@@ -663,7 +663,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://localhost:3002/dsm/events/4798",
+          "url": "http://localhost:3002/dsm/events/204340",
           "status": 200
         },
         {
@@ -673,7 +673,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -713,52 +713,52 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventDetail-Bzzs5uOp.js",
+          "url": "http://localhost:3002/assets/EventDetail-BHxNsYjh.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/deliveryOutcome-C_3BJ6d9.js",
+          "url": "http://localhost:3002/assets/deliveryOutcome-C3MpJNE5.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventSnapshot-BbNwdqL6.js",
+          "url": "http://localhost:3002/assets/EventSnapshot-DJiZ2fbh.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseClock-_jnblGzk.js",
+          "url": "http://localhost:3002/assets/ResponseClock-BwGE3eSx.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-Bz0yLc_6.js",
+          "url": "http://localhost:3002/assets/ResponseSteps-D7wGzhIi.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-BjuBB518.js",
+          "url": "http://localhost:3002/assets/index-hWefHU1j.js",
           "status": 200
         },
         {
@@ -768,17 +768,17 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798",
+          "url": "http://localhost:8000/api/dsm/events/204340",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/deliveries?event_id=4798",
+          "url": "http://localhost:8000/api/dsm/deliveries?event_id=204340",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798/timeline",
+          "url": "http://localhost:8000/api/dsm/events/204340/timeline",
           "status": null
         },
         {
@@ -820,23 +820,18 @@
           "method": "GET",
           "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
           "status": 404
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798/snapshot",
-          "status": null
         }
       ],
       "state": {
         "kind": "server_reflect",
         "get": "/api/dsm/events/{event}",
         "field": "event_id",
-        "before": 4798,
-        "after": 4798,
+        "before": 204340,
+        "after": 204340,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #4798\n알림 보내기\n등급\t■ 심각\t유형\t화재\t처리 단계\t종결\n판정\t실제\t발생 시각\t2026-09-03 13:14:31 · 12일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t#110 · 03:03 · 30분 전\t판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n총 301시간 50분\n종결됨 · 시계 멈춤\n한 번 닫혔다가 다시 열렸습니다 (3회).\n종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다.\n① 발생\t2026-09-03 13:14:31\t② 접수 확인\t2026-09-03 13:22:46 · +8분 15초\t③ 조치 착수\t2026-09-04 00:22:17 · +11시간 7분\n④ 종결\t2026-09-16 03:04:45 · +301시간 50분\n전이 9건 — 2026-09-03 13:22:46 occurred→acknowledged (gxprobe_e2e) · 2026-09-04 00:22:17 acknowledged→in_progress (gxprobe_e2e) · 2026-09-16 01:13:39 in_progress→closed (규칙) · 2026-09-16 01:38:49 closed→in_progress (gxseed_u2_manager) · 2026-09-16 01:39:29 in_progress→closed (gxseed_u1_operator) · 2026-09-16 01:45:48 closed→in_progress (gxseed_u2_manager) · 2026-09-16 01:46:28 in_progress→closed (gxseed_u1_operator) · 2026-09-16 03:04:05 closed→in_progress (gxseed_u2_manager) · 2026-09-16 03:04:45 in_progress→closed (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n되돌리기 (사유 필수)\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:34:04Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #204340\n알림 보내기\n등급\t■ 심각\t유형\t화재\t처리 단계\t미처리\n판정\t미판정\t발생 시각\t2026-09-17 01:18:00 · 3분 전\t마지막 관측\t—\n카메라\tgxprobe-D384-screen 캡처용 카메라\t확신도\t—\t좌표\t—\n주소\t— (조회 대상 아님 (좌표 없음))\t영상 구간\t없음\n판정자\t아직 아무도 판정하지 않음\t판정 사유\t—\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n3분 48초\n2분 경과 · 폴백 문턱\n① 발생\t2026-09-17 01:18:00\t② 접수 확인\t아직 아무도 접수하지 않았습니다\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 0건 — 아직 한 칸도 움직이지 않았습니다.\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n1미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n미판정\n다음 단계\n접수하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:21:49Z"
     },
     "U1#11": {
       "control": {
@@ -847,12 +842,12 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://localhost:8000/api/dsm/events/4798/review?verdict=confirmed&reason=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29",
+          "url": "http://localhost:8000/api/dsm/events/204340/review?verdict=confirmed&reason=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798",
+          "url": "http://localhost:8000/api/dsm/events/204340",
           "status": null
         }
       ],
@@ -860,11 +855,11 @@
         "kind": "server_change",
         "get": "/api/dsm/events/{event}",
         "field": "verdict",
-        "before": "confirmed",
+        "before": null,
         "after": "confirmed"
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #4798\n알림 보내기\n등급\t■ 심각\t유형\t화재\t처리 단계\t종결\n판정\t실제\t발생 시각\t2026-09-03 13:14:31 · 12일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t#110 · 03:34 · 0초 전\t판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n총 301시간 50분\n종결됨 · 시계 멈춤\n한 번 닫혔다가 다시 열렸습니다 (3회).\n종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다.\n① 발생\t2026-09-03 13:14:31\t② 접수 확인\t2026-09-03 13:22:46 · +8분 15초\t③ 조치 착수\t2026-09-04 00:22:17 · +11시간 7분\n④ 종결\t2026-09-16 03:04:45 · +301시간 50분\n전이 9건 — 2026-09-03 13:22:46 occurred→acknowledged (gxprobe_e2e) · 2026-09-04 00:22:17 acknowledged→in_progress (gxprobe_e2e) · 2026-09-16 01:13:39 in_progress→closed (규칙) · 2026-09-16 01:38:49 closed→in_progress (gxseed_u2_manager) · 2026-09-16 01:39:29 in_progress→closed (gxseed_u1_operator) · 2026-09-16 01:45:48 closed→in_progress (gxseed_u2_manager) · 2026-09-16 01:46:28 in_progress→closed (gxseed_u1_operator) · 2026-09-16 03:04:05 closed→in_progress (gxseed_u2_manager) · 2026-09-16 03:04:45 in_progress→closed (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n되돌리기 (사유 필수)\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:34:13Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #204340\n알림 보내기\n등급\t■ 심각\t유형\t화재\t처리 단계\t미처리\n판정\t실제\t발생 시각\t2026-09-17 01:18:00 · 3분 전\t마지막 관측\t—\n카메라\tgxprobe-D384-screen 캡처용 카메라\t확신도\t—\t좌표\t—\n주소\t— (조회 대상 아님 (좌표 없음))\t영상 구간\t없음\n판정자\t#110 · 01:21 · 0초 전\t판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n3분 58초\n2분 경과 · 폴백 문턱\n① 발생\t2026-09-17 01:18:00\t② 접수 확인\t아직 아무도 접수하지 않았습니다\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 0건 — 아직 한 칸도 움직이지 않았습니다.\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n1미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n접수하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:21:59Z"
     },
     "U1#19": {
       "control": {
@@ -885,7 +880,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -925,7 +920,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
@@ -988,12 +983,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/events/summary?hours=24",
         "field": "unhandled",
-        "before": 0,
-        "after": 0,
-        "on_screen": false
+        "before": 2,
+        "after": 2,
+        "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n인계 메모\n아직 인계 메모가 없습니다.\n이 자리에 지난 교대가 남긴 말이 뜹니다. 지금은 남긴 말이 없습니다. (사이드바의 「인계 메모」로 들어오면 탭이 함께 뜹니다)\n인계 메모 쓰기\n교대 마무리 초안\n[교대 인계 초안] 2026. 9. 16. 오전 3:34:15\n미처리: 0건\n오늘 판정: 0건 (아직 안 본 것 0건)\n\n넘기는 말:\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:34:17Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n인계 메모\n아직 인계 메모가 없습니다.\n이 자리에 지난 교대가 남긴 말이 뜹니다. 지금은 남긴 말이 없습니다. (사이드바의 「인계 메모」로 들어오면 탭이 함께 뜹니다)\n인계 메모 쓰기\n교대 마무리 초안\n[교대 인계 초안] 2026. 9. 17. 오전 1:22:00\n미처리: 2건\n오늘 판정: 1건 (아직 안 본 것 1건)\n\n넘기는 말:\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:22:02Z"
     },
     "U2#1": {
       "control": {
@@ -1014,7 +1009,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -1054,27 +1049,27 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventList-OFMdhAOM.js",
+          "url": "http://localhost:3002/assets/EventList-D5uiOTP-.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-Bz0yLc_6.js",
+          "url": "http://localhost:3002/assets/ResponseSteps-D7wGzhIi.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
@@ -1084,7 +1079,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
@@ -1147,12 +1142,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/events/summary?hours=12",
         "field": "unhandled",
-        "before": 0,
-        "after": 0,
-        "on_screen": false
+        "before": 2,
+        "after": 2,
+        "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 03:34 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:34:28Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 01:22 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 2건 · 오탐 0건 / 판정 1건 · 오탐률 0.0% · 미판정 1건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n2건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t발생\n■ 심각\t화재\tgxprobe-D384-screen 캡처용 카메라\t미처리\t실제\t\n실제\n오탐\n\t01:18 · 4분 전\n▲ 경계\t침수\tgxprobe-D384-screen 캡처용 카메라\t미처리\t미판정\t\n실제\n오탐\n\t01:16 · 6분 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:22:14Z"
     },
     "U2#2": {
       "control": {
@@ -1173,7 +1168,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -1213,27 +1208,27 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventList-OFMdhAOM.js",
+          "url": "http://localhost:3002/assets/EventList-D5uiOTP-.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-Bz0yLc_6.js",
+          "url": "http://localhost:3002/assets/ResponseSteps-D7wGzhIi.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
@@ -1243,7 +1238,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
@@ -1306,51 +1301,22 @@
         "kind": "server_reflect",
         "get": "/api/dsm/events?limit=50&response_state=occurred",
         "field": "events",
-        "before": 0,
-        "after": 0,
-        "on_screen": false
+        "before": 2,
+        "after": 2,
+        "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 03:34 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:34:32Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 01:22 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 2건 · 오탐 0건 / 판정 1건 · 오탐률 0.0% · 미판정 1건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n2건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t발생\n■ 심각\t화재\tgxprobe-D384-screen 캡처용 카메라\t미처리\t실제\t\n실제\n오탐\n\t01:18 · 4분 전\n▲ 경계\t침수\tgxprobe-D384-screen 캡처용 카메라\t미처리\t미판정\t\n실제\n오탐\n\t01:16 · 6분 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:22:17Z"
     },
     "U2#3": {
       "control": {
-        "found": true,
-        "clicked": true,
-        "name": "되돌리기 \\(사유 필수\\)"
-      },
-      "calls": [
-        {
-          "method": "POST",
-          "url": "http://localhost:8000/api/dsm/events/4798/response?to_state=in_progress&reason=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29",
-          "status": null
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798",
-          "status": null
-        }
-      ],
-      "state": {
-        "kind": "server_change",
-        "get": "/api/dsm/events/{event}",
-        "field": "response_state",
-        "before": "closed",
-        "after": "in_progress"
-      },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n← 목록\n이벤트 상세 #4798\n알림 보내기\n등급\t■ 심각\t유형\t화재\t처리 단계\t조치 중\n판정\t실제\t발생 시각\t2026-09-03 13:14:31 · 12일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t#110 · 03:34 · 28초 전\t판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n총 301시간 50분\n종결됨 · 시계 멈춤\n한 번 닫혔다가 다시 열렸습니다 (3회).\n종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다.\n① 발생\t2026-09-03 13:14:31\t② 접수 확인\t2026-09-03 13:22:46 · +8분 15초\t③ 조치 착수\t2026-09-04 00:22:17 · +11시간 7분\n④ 종결\t2026-09-16 03:04:45 · +301시간 50분\n전이 9건 — 2026-09-03 13:22:46 occurred→acknowledged (gxprobe_e2e) · 2026-09-04 00:22:17 acknowledged→in_progress (gxprobe_e2e) · 2026-09-16 01:13:39 in_progress→closed (규칙) · 2026-09-16 01:38:49 closed→in_progress (gxseed_u2_manager) · 2026-09-16 01:39:29 in_progress→closed (gxseed_u1_operator) · 2026-09-16 01:45:48 closed→in_progress (gxseed_u2_manager) · 2026-09-16 01:46:28 in_progress→closed (gxseed_u1_operator) · 2026-09-16 03:04:05 closed→in_progress (gxseed_u2_manager) · 2026-09-16 03:04:45 in_progress→closed (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n종결하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:34:41Z"
-    },
-    "U2#4": {
-      "control": {
-        "found": true,
-        "clicked": true,
-        "name": "화면 열기"
+        "found": false,
+        "why": "「되돌리기 \\(사유 필수\\)」를 화면에서 못 찾았다 (/dsm/events/204340)"
       },
       "calls": [
         {
           "method": "GET",
-          "url": "http://localhost:3002/dsm/events/4798",
+          "url": "http://localhost:3002/dsm/events/204340",
           "status": 200
         },
         {
@@ -1360,7 +1326,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -1400,52 +1366,52 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventDetail-Bzzs5uOp.js",
+          "url": "http://localhost:3002/assets/EventDetail-BHxNsYjh.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/deliveryOutcome-C_3BJ6d9.js",
+          "url": "http://localhost:3002/assets/deliveryOutcome-C3MpJNE5.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventSnapshot-BbNwdqL6.js",
+          "url": "http://localhost:3002/assets/EventSnapshot-DJiZ2fbh.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseClock-_jnblGzk.js",
+          "url": "http://localhost:3002/assets/ResponseClock-BwGE3eSx.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-Bz0yLc_6.js",
+          "url": "http://localhost:3002/assets/ResponseSteps-D7wGzhIi.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-BjuBB518.js",
+          "url": "http://localhost:3002/assets/index-hWefHU1j.js",
           "status": 200
         },
         {
@@ -1455,17 +1421,17 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798",
+          "url": "http://localhost:8000/api/dsm/events/204340",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/deliveries?event_id=4798",
+          "url": "http://localhost:8000/api/dsm/deliveries?event_id=204340",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798/timeline",
+          "url": "http://localhost:8000/api/dsm/events/204340/timeline",
           "status": null
         },
         {
@@ -1507,46 +1473,11 @@
           "method": "GET",
           "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
           "status": 404
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798/snapshot",
-          "status": null
         }
       ],
-      "state": {
-        "kind": "server_reflect",
-        "get": "/api/dsm/events/{event}",
-        "field": "severity",
-        "before": "critical",
-        "after": "critical",
-        "on_screen": true
-      },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n← 목록\n이벤트 상세 #4798\n알림 보내기\n등급\t■ 심각\t유형\t화재\t처리 단계\t조치 중\n판정\t실제\t발생 시각\t2026-09-03 13:14:31 · 12일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t없음\n판정자\t#110 · 03:34 · 33초 전\t판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n302시간 20분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n한 번 닫혔다가 다시 열렸습니다 (4회).\n종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다.\n① 발생\t2026-09-03 13:14:31\t② 접수 확인\t2026-09-03 13:22:46 · +8분 15초\t③ 조치 착수\t2026-09-04 00:22:17 · +11시간 7분\n④ 종결\t아직 열려 있습니다\n전이 10건 — 2026-09-03 13:22:46 occurred→acknowledged (gxprobe_e2e) · 2026-09-04 00:22:17 acknowledged→in_progress (gxprobe_e2e) · 2026-09-16 01:13:39 in_progress→closed (규칙) · 2026-09-16 01:38:49 closed→in_progress (gxseed_u2_manager) · 2026-09-16 01:39:29 in_progress→closed (gxseed_u1_operator) · 2026-09-16 01:45:48 closed→in_progress (gxseed_u2_manager) · 2026-09-16 01:46:28 in_progress→closed (gxseed_u1_operator) · 2026-09-16 03:04:05 closed→in_progress (gxseed_u2_manager) · 2026-09-16 03:04:45 in_progress→closed (gxseed_u1_operator) · 2026-09-16 03:34:37 closed→in_progress (gxseed_u2_manager)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n종결하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:34:45Z"
+      "measured_at": "2026-09-17T01:22:21Z"
     },
-    "U2#6": {
-      "control": {
-        "found": false,
-        "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 서버 문(GET /api/dsm/reports/templates · api.py:750)은 서 있으나 그것을 부르는 화면이 없다. /report-template 은 인수 자산의 운송장 서식이다"
-      },
-      "measured_at": "2026-09-16T03:34:45Z"
-    },
-    "U2#9": {
-      "control": {
-        "found": false,
-        "why": "정본이 「없음」이라 적은 자리 — 정본: 집계 면 없다 — 사람별로 세는 자리가 없다"
-      },
-      "measured_at": "2026-09-16T03:34:45Z"
-    },
-    "U2#16": {
-      "control": {
-        "found": false,
-        "why": "정본이 「없음」이라 적은 자리 — 정본: 조회 라우트·화면 없다 · 규칙 0건"
-      },
-      "measured_at": "2026-09-16T03:34:45Z"
-    },
-    "U2#19": {
+    "U2#4": {
       "control": {
         "found": true,
         "clicked": true,
@@ -1555,7 +1486,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://localhost:3002/dsm/events?preset=system",
+          "url": "http://localhost:3002/dsm/events/204340",
           "status": 200
         },
         {
@@ -1565,7 +1496,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -1605,27 +1536,227 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventList-OFMdhAOM.js",
+          "url": "http://localhost:3002/assets/EventDetail-BHxNsYjh.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-Bz0yLc_6.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "url": "http://localhost:3002/assets/deliveryOutcome-C3MpJNE5.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/EventSnapshot-DJiZ2fbh.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ResponseClock-BwGE3eSx.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ResponseSteps-D7wGzhIi.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-hWefHU1j.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/204340",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/deliveries?event_id=204340",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/events/204340/timeline",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/config-management/list-optimized",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 404
+        }
+      ],
+      "state": {
+        "kind": "server_reflect",
+        "get": "/api/dsm/events/{event}",
+        "field": "severity",
+        "before": "critical",
+        "after": "critical",
+        "on_screen": true
+      },
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n← 목록\n이벤트 상세 #204340\n알림 보내기\n등급\t■ 심각\t유형\t화재\t처리 단계\t미처리\n판정\t실제\t발생 시각\t2026-09-17 01:18:00 · 4분 전\t마지막 관측\t—\n카메라\tgxprobe-D384-screen 캡처용 카메라\t확신도\t—\t좌표\t—\n주소\t— (조회 대상 아님 (좌표 없음))\t영상 구간\t없음\n판정자\t#110 · 01:21 · 28초 전\t판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n4분 23초\n2분 경과 · 폴백 문턱\n① 발생\t2026-09-17 01:18:00\t② 접수 확인\t아직 아무도 접수하지 않았습니다\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 0건 — 아직 한 칸도 움직이지 않았습니다.\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n1미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n접수하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:22:24Z"
+    },
+    "U2#6": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 서버 문(GET /api/dsm/reports/templates · api.py:750)은 서 있으나 그것을 부르는 화면이 없다. /report-template 은 인수 자산의 운송장 서식이다"
+      },
+      "measured_at": "2026-09-17T01:22:24Z"
+    },
+    "U2#9": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본: 집계 면 없다 — 사람별로 세는 자리가 없다"
+      },
+      "measured_at": "2026-09-17T01:22:24Z"
+    },
+    "U2#16": {
+      "control": {
+        "found": false,
+        "why": "정본이 「없음」이라 적은 자리 — 정본: 조회 라우트·화면 없다 · 규칙 0건"
+      },
+      "measured_at": "2026-09-17T01:22:24Z"
+    },
+    "U2#19": {
+      "control": {
+        "found": true,
+        "clicked": true,
+        "name": "화면 열기"
+      },
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/dsm/events?preset=system",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=REDACTED-자격은-증거에-적지-않는다&libraries=services,clusterer,drawing,geometry",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/EventList-D5uiOTP-.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ResponseSteps-D7wGzhIi.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
@@ -1635,7 +1766,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
@@ -1707,8 +1838,8 @@
         "after": 2,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 03:34 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n2건\n?\n시스템 — 설비 자신이 낸 신호\n현장에서 난 일이 아니라 카메라·저장 장치 같은 설비 자신의 상태입니다. 아래 「연계 상태」는 지난 일이 아니라 지금 이 순간의 신호라 따로 놓았습니다.\n연계 상태 (지금 이 순간)\n연계 대기\n이 목록은 설비 자신이 낸 신호입니다. 카메라 응답 여부와 저장 용량은 아직 이 화면에서 볼 수 없습니다 — 여기 없는 것은 아직 없는 것입니다.\n등급\t유형\t카메라\t처리 단계\t판정\t발생\n▲ 경계\t카메라 무응답\t시드 카메라 (검수용)\t조치 중\t실제\t12:14 · 12일 전\n▲ 경계\t저장 용량 임계\t시드 카메라 (검수용)\t조치 중\t실제\t12:11 · 12일 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:34:48Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 01:22 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 2건 · 오탐 0건 / 판정 1건 · 오탐률 0.0% · 미판정 1건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n2건\n?\n시스템 — 설비 자신이 낸 신호\n현장에서 난 일이 아니라 카메라·저장 장치 같은 설비 자신의 상태입니다. 아래 「연계 상태」는 지난 일이 아니라 지금 이 순간의 신호라 따로 놓았습니다.\n연계 상태 (지금 이 순간)\n연계 대기\n이 목록은 설비 자신이 낸 신호입니다. 카메라 응답 여부와 저장 용량은 아직 이 화면에서 볼 수 없습니다 — 여기 없는 것은 아직 없는 것입니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t발생\n▲ 경계\t카메라 무응답\t시드 카메라 (검수용)\t조치 중\t실제\t\n실제\n오탐\n\t12:14 · 13일 전\n▲ 경계\t저장 용량 임계\t시드 카메라 (검수용)\t조치 중\t실제\t\n실제\n오탐\n\t12:11 · 13일 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:22:28Z"
     },
     "U3#1": {
       "control": {
@@ -1719,12 +1850,12 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://localhost:8000/api/dsm/events/4798/notify",
+          "url": "http://localhost:8000/api/dsm/events/204340/notify",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/deliveries?event_id=4798",
+          "url": "http://localhost:8000/api/dsm/deliveries?event_id=204340",
           "status": null
         }
       ],
@@ -1732,11 +1863,11 @@
         "kind": "server_change",
         "get": "/api/dsm/deliveries?event_id={event}&limit=500",
         "field": "total",
-        "before": 12,
-        "after": 12
+        "before": 0,
+        "after": 16
       },
-      "text_after": "← 목록\n이벤트 상세 #4798\n알림 보내기\n등급\t■ 심각\n유형\t화재\n처리 단계\t조치 중\n판정\t실제\n발생 시각\t2026-09-03 13:14:31 · 12일 전\n마지막 관측\t—\n카메라\t시드 카메라 (검수용)\n확신도\t—\n좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\n영상 구간\t없음\n판정자\t#110 · 03:34 · 51초 전\n판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n302시간 20분\n8분 경과 — 가장 오래 기다린 사건 · 폴백 문턱\n한 번 닫혔다가 다시 열렸습니다 (4회).\n종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다.\n① 발생\t2026-09-03 13:14:31\n② 접수 확인\t2026-09-03 13:22:46 · +8분 15초\n③ 조치 착수\t2026-09-04 00:22:17 · +11시간 7분\n④ 종결\t아직 열려 있습니다\n전이 10건 — 2026-09-03 13:22:46 occurred→acknowledged (gxprobe_e2e) · 2026-09-04 00:22:17 acknowledged→in_progress (gxprobe_e2e) · 2026-09-16 01:13:39 in_progress→closed (규칙) · 2026-09-16 01:38:49 closed→in_progress (gxseed_u2_manager) · 2026-09-16 01:39:29 in_progress→closed (gxseed_u1_operator) · 2026-09-16 01:45:48 closed→in_progress (gxseed_u2_manager) · 2026-09-16 01:46:28 in_progress→closed (gxseed_u1_operator) · 2026-09-16 03:04:05 closed→in_progress (gxseed_u2_manager) · 2026-09-16 03:04:45 in_progress→closed (gxseed_u1_operator) · 2026-09-16 03:34:37 closed→in_progress (gxseed_u2_manager)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n종결하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-03 13:17:35 · 12일 전\t\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록\n새로 보낸 알림이 없습니다. 같은 사건의 알림은 5분 안에 다시 보내지 않습니다. 아래 발송 이력을 확인하십시오.",
-      "measured_at": "2026-09-16T03:35:05Z"
+      "text_after": "← 목록\n이벤트 상세 #204340\n알림 보내기\n등급\t■ 심각\n유형\t화재\n처리 단계\t미처리\n판정\t실제\n발생 시각\t2026-09-17 01:18:00 · 4분 전\n마지막 관측\t—\n카메라\tgxprobe-D384-screen 캡처용 카메라\n확신도\t—\n좌표\t—\n주소\t— (조회 대상 아님 (좌표 없음))\n영상 구간\t없음\n판정자\t#110 · 01:21 · 46초 전\n판정 사유\tP-118 게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n4분 44초\n2분 경과 · 폴백 문턱\n① 발생\t2026-09-17 01:18:00\n② 접수 확인\t아직 아무도 접수하지 않았습니다\n③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 0건 — 아직 한 칸도 움직이지 않았습니다.\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n1미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n다음 단계\n접수하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은 알림 발송이지 유관기관 통보가 아닙니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 0초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 0초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 0초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 0초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 0초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:40 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:39 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:39 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:39 · 1초 전\t\nlog\t(수신자 없음)\t로그에 기록됨(사람에게 안 감)\t2026-09-17 01:22:39 · 1초 전\t\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록\n알림 16건 발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.",
+      "measured_at": "2026-09-17T01:22:45Z"
     },
     "U3#2": {
       "control": {
@@ -1747,7 +1878,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://localhost:3002/m/events/4798",
+          "url": "http://localhost:3002/m/events/204340",
           "status": 200
         },
         {
@@ -1757,7 +1888,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -1797,62 +1928,62 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/MobileEventDetail-ByE7l0Rq.js",
+          "url": "http://localhost:3002/assets/MobileEventDetail-chkq7kur.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventSnapshot-BbNwdqL6.js",
+          "url": "http://localhost:3002/assets/EventSnapshot-DJiZ2fbh.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-Bz0yLc_6.js",
+          "url": "http://localhost:3002/assets/ResponseSteps-D7wGzhIi.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/MobileShell-lmCIc1tc.js",
+          "url": "http://localhost:3002/assets/MobileShell-DgGjLnIe.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-BjuBB518.js",
+          "url": "http://localhost:3002/assets/index-hWefHU1j.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798",
+          "url": "http://localhost:8000/api/dsm/events/204340",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798/clip",
+          "url": "http://localhost:8000/api/dsm/events/204340/clip",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798/field-replies",
+          "url": "http://localhost:8000/api/dsm/events/204340/field-replies",
           "status": null
         },
         {
@@ -1879,23 +2010,18 @@
           "method": "GET",
           "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
           "status": 404
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798/snapshot",
-          "status": null
         }
       ],
       "state": {
         "kind": "server_reflect",
         "get": "/api/dsm/events/{event}",
         "field": "address",
-        "before": "경기도 안양시 만안구 안양천서로 100 (시드 카메라)",
-        "after": "경기도 안양시 만안구 안양천서로 100 (시드 카메라)",
-        "on_screen": true
+        "before": null,
+        "after": null,
+        "on_screen": false
       },
-      "text_after": "← 목록\n#4798 현장 상세\n새로고침\n기준 03:35 · 0초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n화재\n조치 중\n실제\n발생 12일 전 (2026-09-03 13:14:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n지도에서 보기\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n접수\n3조치 중\n4종결\n종결하기\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388 C\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388 B\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346 C\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346 B\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346\ngxprobe_e2e · 차선 C 점검 회신\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:35:09Z"
+      "text_after": "← 목록\n#204340 현장 상세\n새로고침\n기준 01:22 · 0초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n화재\n미처리\n실제\n발생 4분 전 (2026-09-17 01:18:00)\n어디로 가나\n카메라\ngxprobe-D384-screen 캡처용 카메라\n\n\n설치 주소\n미입력 — 조회 대상 아님 (좌표 없음)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 이벤트에는 스냅샷 참조가 없습니다.\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n현장 조치\n1미처리\n2접수\n3조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t아직\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n접수하기\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\n아직 회신이 없습니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:22:48Z"
     },
     "U3#3": {
       "control": {
@@ -1906,7 +2032,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://localhost:3002/m/events/4798",
+          "url": "http://localhost:3002/m/events/204340",
           "status": 200
         },
         {
@@ -1916,7 +2042,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -1956,62 +2082,62 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/MobileEventDetail-ByE7l0Rq.js",
+          "url": "http://localhost:3002/assets/MobileEventDetail-chkq7kur.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/EventSnapshot-BbNwdqL6.js",
+          "url": "http://localhost:3002/assets/EventSnapshot-DJiZ2fbh.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ResponseSteps-Bz0yLc_6.js",
+          "url": "http://localhost:3002/assets/ResponseSteps-D7wGzhIi.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/MobileShell-lmCIc1tc.js",
+          "url": "http://localhost:3002/assets/MobileShell-DgGjLnIe.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-BjuBB518.js",
+          "url": "http://localhost:3002/assets/index-hWefHU1j.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798",
+          "url": "http://localhost:8000/api/dsm/events/204340",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798/clip",
+          "url": "http://localhost:8000/api/dsm/events/204340/clip",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798/field-replies",
+          "url": "http://localhost:8000/api/dsm/events/204340/field-replies",
           "status": null
         },
         {
@@ -2038,31 +2164,22 @@
           "method": "GET",
           "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
           "status": 404
-        },
-        {
-          "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798/snapshot",
-          "status": null
         }
       ],
       "state": {
         "kind": "server_reflect",
         "get": "/api/dsm/events/{event}",
         "field": "snapshot_path",
-        "before": "guardianx-dev/detections/119/20260903/131431_580118.jpg",
-        "after": "guardianx-dev/detections/119/20260903/131431_580118.jpg",
-        "on_screen": true
+        "before": "",
+        "after": "",
+        "on_screen": false
       },
-      "text_after": "← 목록\n#4798 현장 상세\n새로고침\n기준 03:35 · 0초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n화재\n조치 중\n실제\n발생 12일 전 (2026-09-03 13:14:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n지도에서 보기\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n접수\n3조치 중\n4종결\n종결하기\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388 C\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388 B\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346 C\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346 B\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346\ngxprobe_e2e · 차선 C 점검 회신\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "text_after": "← 목록\n#204340 현장 상세\n새로고침\n기준 01:22 · 0초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n화재\n미처리\n실제\n발생 4분 전 (2026-09-17 01:18:00)\n어디로 가나\n카메라\ngxprobe-D384-screen 캡처용 카메라\n\n\n설치 주소\n미입력 — 조회 대상 아님 (좌표 없음)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 이벤트에는 스냅샷 참조가 없습니다.\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n현장 조치\n1미처리\n2접수\n3조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t아직\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n접수하기\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\n아직 회신이 없습니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음 · 장애 신고 창구 미등록",
       "img": {
-        "count": 1,
-        "natural_width": 640,
-        "response": {
-          "status": 200,
-          "content_type": "image/jpeg"
-        }
+        "count": 0,
+        "response": {}
       },
-      "measured_at": "2026-09-16T03:35:12Z"
+      "measured_at": "2026-09-17T01:23:00Z"
     },
     "U3#7": {
       "control": {
@@ -2073,12 +2190,12 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://localhost:8000/api/dsm/events/4798/response?to_state=closed&reason=",
+          "url": "http://localhost:8000/api/dsm/events/204340/response?to_state=acknowledged&reason=",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798",
+          "url": "http://localhost:8000/api/dsm/events/204340",
           "status": null
         }
       ],
@@ -2086,11 +2203,11 @@
         "kind": "server_change",
         "get": "/api/dsm/events/{event}",
         "field": "response_state",
-        "before": "in_progress",
-        "after": "closed"
+        "before": "occurred",
+        "after": "acknowledged"
       },
-      "text_after": "← 목록\n#4798 현장 상세\n새로고침\n기준 03:35 · 0초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n화재\n종결\n실제\n발생 12일 전 (2026-09-03 13:14:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n지도에서 보기\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n접수\n조치 중\n4종결\n되돌리기 → 조치 시작\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388 C\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388 B\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346 C\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346 B\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346\ngxprobe_e2e · 차선 C 점검 회신\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:35:22Z"
+      "text_after": "← 목록\n#204340 현장 상세\n새로고침\n기준 01:23 · 0초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n화재\n접수\n실제\n발생 5분 전 (2026-09-17 01:18:00)\n어디로 가나\n카메라\ngxprobe-D384-screen 캡처용 카메라\n\n\n설치 주소\n미입력 — 조회 대상 아님 (좌표 없음)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 이벤트에는 스냅샷 참조가 없습니다.\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n현장 조치\n미처리\n2접수\n3조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t아직\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n조치 시작\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\n아직 회신이 없습니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:23:09Z"
     },
     "U3#9": {
       "control": {
@@ -2101,12 +2218,12 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://localhost:8000/api/dsm/events/4798/field-reply?text=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29+%E2%80%94+%ED%98%84%EC%9E%A5+%EC%9D%B4%EC%83%81+%EC%97%86%EC%9D%8C",
+          "url": "http://localhost:8000/api/dsm/events/204340/field-reply?kind=note&text=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29+%E2%80%94+%ED%98%84%EC%9E%A5+%EC%9D%B4%EC%83%81+%EC%97%86%EC%9D%8C",
           "status": null
         },
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events/4798/field-replies",
+          "url": "http://localhost:8000/api/dsm/events/204340/field-replies",
           "status": null
         }
       ],
@@ -2114,25 +2231,25 @@
         "kind": "server_change",
         "get": "/api/dsm/events/{event}/field-replies",
         "field": "replies",
-        "before": 10,
-        "after": 11
+        "before": 0,
+        "after": 1
       },
-      "text_after": "← 목록\n#4798 현장 상세\n새로고침\n기준 03:35 · 3초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n화재\n종결\n실제\n발생 12일 전 (2026-09-03 13:14:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n지도에서 보기\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n현장 조치\n미처리\n접수\n조치 중\n4종결\n되돌리기 → 조치 시작\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388 C\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388 B\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701388\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346 C\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346 B\ngxprobe_c · 턴 I 차선 C 멱등 실측 1788701346\ngxprobe_e2e · 차선 C 점검 회신\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:35:31Z"
+      "text_after": "← 목록\n#204340 현장 상세\n새로고침\n기준 01:23 · 3초 전 · 표기 시간대: Asia/Seoul\n■ 심각\n화재\n접수\n실제\n발생 5분 전 (2026-09-17 01:18:00)\n어디로 가나\n카메라\ngxprobe-D384-screen 캡처용 카메라\n\n\n설치 주소\n미입력 — 조회 대상 아님 (좌표 없음)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 이벤트에는 스냅샷 참조가 없습니다.\n구간 티켓\n이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다).\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n현장 조치\n미처리\n2접수\n3조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t1건\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n조치 시작\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:23:19Z"
     },
     "U3#14": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 구간 티켓은 계약 11조 잠김"
       },
-      "measured_at": "2026-09-16T03:35:31Z"
+      "measured_at": "2026-09-17T01:23:19Z"
     },
     "U3#16": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 알림 채널 결정 대기"
       },
-      "measured_at": "2026-09-16T03:35:31Z"
+      "measured_at": "2026-09-17T01:23:19Z"
     },
     "U3#19": {
       "control": {
@@ -2153,7 +2270,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -2193,37 +2310,37 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/MobileInbox-CdUvJGHh.js",
+          "url": "http://localhost:3002/assets/MobileInbox-C43Pt2j-.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/deliveryOutcome-C_3BJ6d9.js",
+          "url": "http://localhost:3002/assets/deliveryOutcome-C3MpJNE5.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/severity-DWe1FThN.js",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/time-C8R76_ok.js",
+          "url": "http://localhost:3002/assets/time-SKTsGU2A.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/MobileShell-lmCIc1tc.js",
+          "url": "http://localhost:3002/assets/MobileShell-DgGjLnIe.js",
           "status": 200
         },
         {
@@ -2266,33 +2383,33 @@
         "kind": "server_reflect",
         "get": "/api/dsm/deliveries?limit=20&mine=true",
         "field": "deliveries",
-        "before": 7,
-        "after": 7,
+        "before": 8,
+        "after": 8,
         "on_screen": true
       },
-      "text_after": "내게 온 이벤트\n새로고침\n기준 03:35 · 0초 전 · 표기 시간대: Asia/Seoul\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 12일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4801\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:05)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4802\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:02)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:29\n■ 심각\n화재\n#4802\n시드 카메라 (검수용)\n종결\n발생 12일 전 (13:02)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:29\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:35:35Z"
+      "text_after": "내게 온 이벤트\n새로고침\n기준 01:23 · 0초 전 · 표기 시간대: Asia/Seoul\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#204340\ngxprobe-D384-screen 캡처용 카메라\n접수\n발생 5분 전 (01:18)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 01:22\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 13일 전 (13:14)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4799\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:11)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n■ 심각\n화재\n#4800\n시드 카메라 (검수용)\n조치 중\n발생 13일 전 (13:08)\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:17\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:23:22Z"
     },
     "U4#1": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 라우트는 hours=168 을 받지만 **누를 자리가 없다**"
       },
-      "measured_at": "2026-09-16T03:35:43Z"
+      "measured_at": "2026-09-17T01:23:30Z"
     },
     "U4#5": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 월간 보고서를 만드는 문도(POST /api/dsm/reports 없음) 그리는 화면도 없다 (roleNav.ts:143 P61_NO_SCREEN_YET 「보고서」)"
       },
-      "measured_at": "2026-09-16T03:35:43Z"
+      "measured_at": "2026-09-17T01:23:30Z"
     },
     "U4#7": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 서버 문은 GET /api/dsm/events/{id}/report.pdf 하나인데 그것을 누르는 화면이 라우터에 없다 (api.py:802 · 프런트 참조 0건)"
       },
-      "measured_at": "2026-09-16T03:35:43Z"
+      "measured_at": "2026-09-17T01:23:30Z"
     },
     "U4#8": {
       "control": {
@@ -2303,7 +2420,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://localhost:8000/api/dsm/events?limit=50&response_state=occurred&since=2026-09-09T03:35:46.965Z&until=2026-09-16T03:35:46.965Z",
+          "url": "http://localhost:8000/api/dsm/events?limit=50&response_state=occurred&since=2026-09-10T01:23:34.062Z&until=2026-09-17T01:23:34.062Z",
           "status": null
         }
       ],
@@ -2315,15 +2432,15 @@
         "after": 20,
         "on_screen": true
       },
-      "text_after": "무슨 일 있었나\n열람·삭제 청구\n이벤트 목록\n갱신 03:35 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 2026-09-09 03:35 ~ 2026-09-16 03:35\n열기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:35:52Z"
+      "text_after": "무슨 일 있었나\n열람·삭제 청구\n이벤트 목록\n갱신 01:23 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 1건 · 오탐 0건 / 판정 1건 · 오탐률 0.0% · 미판정 1건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 2026-09-10 01:23 ~ 2026-09-17 01:23\n열기\n등급 전체\n유형 전체\n새로고침\n1건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t발생\n▲ 경계\t침수\tgxprobe-D384-screen 캡처용 카메라\t미처리\t미판정\t\n실제\n오탐\n\t01:16 · 7분 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:23:39Z"
     },
     "U4#9": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 추출은 계약 11조 설계 잠금(영구) — 이 행은 ●가 될 수 없다 · 화면에 단추가 없다(EventDetail.tsx:345 는 표의 이름칸 「영상 구간」이다)"
       },
-      "measured_at": "2026-09-16T03:35:52Z"
+      "measured_at": "2026-09-17T01:23:39Z"
     },
     "U4#11": {
       "control": {
@@ -2344,7 +2461,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -2384,22 +2501,27 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/CameraAddress-hjPfPxGV.js",
+          "url": "http://localhost:3002/assets/CameraAddress-DplyNSTN.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/FailureNotice-CC-QGmPQ.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-BjuBB518.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-hWefHU1j.js",
           "status": 200
         },
         {
@@ -2457,33 +2579,33 @@
         "kind": "server_reflect",
         "get": "/api/dsm/cameras/address-gap",
         "field": "total",
-        "before": 5,
-        "after": 5,
+        "before": 6,
+        "after": 6,
         "on_screen": true
       },
-      "text_after": "무슨 일 있었나\n열람·삭제 청구\n카메라 주소 채우기 — 한 대씩\n카메라\n5대\n\t\n주소 있음\n3대\n\t\n주소 없음\n2대\n한 대의 주소를 채웁니다\n카메라 이름\n도로명주소\n현장 표현\n표 먼저 보기\n채우기\n표를 본 뒤에만 채웁니다. 틀린 주소는 없는 주소보다 나쁩니다 — 알림에 그대로 나가 사람을 엉뚱한 곳으로 보냅니다.\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:35:56Z"
+      "text_after": "무슨 일 있었나\n열람·삭제 청구\n카메라 주소 채우기 — 한 대씩\n카메라\n6대\n\t\n주소 있음\n3대\n\t\n주소 없음\n3대\n한 대의 주소를 채웁니다\n카메라 이름\n도로명주소\n현장 표현\n표 먼저 보기\n채우기\n표를 본 뒤에만 채웁니다. 틀린 주소는 없는 주소보다 나쁩니다 — 알림에 그대로 나가 사람을 엉뚱한 곳으로 보냅니다.\n버전 알 수 없음 · 장애 신고 창구 미등록",
+      "measured_at": "2026-09-17T01:23:43Z"
     },
     "U4#15": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 상급기관 서식 T4"
       },
-      "measured_at": "2026-09-16T03:35:56Z"
+      "measured_at": "2026-09-17T01:23:43Z"
     },
     "U4#16": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 감사는 쌓이는데 **볼 자리가 없다**"
       },
-      "measured_at": "2026-09-16T03:35:56Z"
+      "measured_at": "2026-09-17T01:23:43Z"
     },
     "U5#1": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 단추는 있으나(App.tsx:728 「사용자 추가」) 그것은 서식 화면으로 가는 링크다. 계정 생성은 다음 화면의 서식을 채워야 끝난다 · 그 문은 프리플라이트 401 로 끊겨 있다(P-125 A절 · 보안 차선)"
       },
-      "measured_at": "2026-09-16T03:36:04Z"
+      "measured_at": "2026-09-17T01:23:51Z"
     },
     "U5#2": {
       "control": {
@@ -2504,7 +2626,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -2544,7 +2666,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
@@ -2607,35 +2729,35 @@
         "on_screen": true
       },
       "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n역할 관리 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\n서버에는 역할 16개가 있습니다.\n아래 표가 비어 있다면 그것은 「없다」가 아니라 이 화면이 목록을 그리지 못한 것입니다. 새로 고쳐도 같으면 관리자에게 알려 주십시오.\n\t\nName\n\t\nIs Default\n\t\nRole Menu\n1\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:36:07Z"
+      "measured_at": "2026-09-17T01:23:54Z"
     },
     "U5#4": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 자리는 /dsm/cameras/import(routes.ts:23 · roleNav.ts:132)이나 「표 먼저, 그 다음 적용」이 세 걸음이고 매번 새 시험 자료가 필요하다. 한 번 누름으로 재는 정본이 없다"
       },
-      "measured_at": "2026-09-16T03:36:07Z"
+      "measured_at": "2026-09-17T01:23:54Z"
     },
     "U5#5": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본 없음 — 단추는 「표 먼저 보기」·「채우기」(CameraAddress.tsx:177·185)이고 둘 다 입력 전에는 잠겨 있다. 「표 먼저, 그 다음 채움」이 두 걸음이다"
       },
-      "measured_at": "2026-09-16T03:36:07Z"
+      "measured_at": "2026-09-17T01:23:54Z"
     },
     "U5#9": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 설정 화면·라우트 없다"
       },
-      "measured_at": "2026-09-16T03:36:07Z"
+      "measured_at": "2026-09-17T01:23:54Z"
     },
     "U5#10": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 알림 채널 결정 대기(대표)"
       },
-      "measured_at": "2026-09-16T03:36:07Z"
+      "measured_at": "2026-09-17T01:23:54Z"
     },
     "U5#14": {
       "control": {
@@ -2656,7 +2778,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -2696,22 +2818,22 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/SystemSettings-BbYP4oGV.js",
+          "url": "http://localhost:3002/assets/SystemSettings-BAqTPqgm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-BjuBB518.js",
+          "url": "http://localhost:3002/assets/index-hWefHU1j.js",
           "status": 200
         },
         {
@@ -2779,7 +2901,7 @@
         "on_screen": true
       },
       "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n보존·백업 설정 — 선언하지 않으면 돌지 않습니다\n보존 일수와 백업은 코드가 정하지 않습니다. 선언한 사람과 환경이 있어야 돌아갑니다. 아래에 빨강 배지가 있으면 그 항목은 아직 아무도 정하지 않았고, 그 상태에서는 파기도 백업도 실행되지 않습니다.\n영상 보관 기간\n보관 기간\t30일\n누가 정했나\t운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 P-67 · config/retention_seed.py)\n자동으로 도는가\t매일 자동으로 지웁니다\n백업\n백업 목적지\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 일정\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 보관 기간\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n복구 시험\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n누가 정했나\t서버 신호 대기\n백업 선언을 읽는 자리가 아직 없습니다.\n이 칸이 회색인 동안에는 백업이 선언되었는지 이 화면이 답하지 못합니다. 빨강이 아닌 이유가 그것입니다.\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:36:11Z"
+      "measured_at": "2026-09-17T01:23:58Z"
     },
     "U5#15": {
       "control": {
@@ -2800,7 +2922,7 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-DBU-7Yoi.js",
+          "url": "http://localhost:3002/assets/index-BWVm7DkB.js",
           "status": 200
         },
         {
@@ -2840,22 +2962,22 @@
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/ConfigDataWrap-NQTOacxR.js",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-CbyFHQQ6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/SystemSettings-BbYP4oGV.js",
+          "url": "http://localhost:3002/assets/SystemSettings-BAqTPqgm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/StateBoundary-Cgg9jqEa.js",
+          "url": "http://localhost:3002/assets/StateBoundary-L2y0B-HX.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://localhost:3002/assets/index-BjuBB518.js",
+          "url": "http://localhost:3002/assets/index-hWefHU1j.js",
           "status": 200
         },
         {
@@ -2923,7 +3045,7 @@
         "on_screen": true
       },
       "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n보존·백업 설정 — 선언하지 않으면 돌지 않습니다\n보존 일수와 백업은 코드가 정하지 않습니다. 선언한 사람과 환경이 있어야 돌아갑니다. 아래에 빨강 배지가 있으면 그 항목은 아직 아무도 정하지 않았고, 그 상태에서는 파기도 백업도 실행되지 않습니다.\n영상 보관 기간\n보관 기간\t30일\n누가 정했나\t운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 P-67 · config/retention_seed.py)\n자동으로 도는가\t매일 자동으로 지웁니다\n백업\n백업 목적지\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 일정\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n백업 보관 기간\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n복구 시험\t\n서버 신호 대기\n이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.\n\n누가 정했나\t서버 신호 대기\n백업 선언을 읽는 자리가 아직 없습니다.\n이 칸이 회색인 동안에는 백업이 선언되었는지 이 화면이 답하지 못합니다. 빨강이 아닌 이유가 그것입니다.\n버전 알 수 없음 · 장애 신고 창구 미등록",
-      "measured_at": "2026-09-16T03:36:14Z"
+      "measured_at": "2026-09-17T01:24:01Z"
     },
     "U6#1": {
       "control": {
@@ -2934,7 +3056,7 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/settings/api-keys?name=p118-gate",
+          "url": "http://localhost:8000/api/dsm/settings/api-keys?name=p118-gate",
           "status": 200
         }
       ],
@@ -2942,12 +3064,12 @@
         "kind": "server_change",
         "get": "/api/dsm/settings/api_keys",
         "field": "inbound",
-        "before": 4,
-        "after": 5,
+        "before": 5,
+        "after": 6,
         "on_screen": true
       },
-      "text_after": "{\"key_id\": 40, \"name\": \"p118-gate\", \"prefix\": \"p17rGSaV\", \"api_type\": \"GuardianX \\uc7ac\\ub09c \\uc774\\ubca4\\ud2b8 OpenAPI (\\uacc4\\uc57d F-05)\", \"capability\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\u00b7 \\ub2ff\\ub294 \\uc790\\ub9ac 1\\uacf3 \\u2014 GET /api/dsm/events\", \"status\": \"typed\", \"is_active\": true, \"expires_at\": \"2026-12-15T03:36:16.174Z\", \"secret\": \"p17rGSaVTua8nfnROMY5yhdwg5_CpPCgPVj-hTHTTM4\", \"audit_id",
-      "measured_at": "2026-09-16T03:36:16Z"
+      "text_after": "{\"key_id\": 41, \"name\": \"p118-gate\", \"prefix\": \"cDQC1UPo\", \"api_type\": \"GuardianX \\uc7ac\\ub09c \\uc774\\ubca4\\ud2b8 OpenAPI (\\uacc4\\uc57d F-05)\", \"capability\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\u00b7 \\ub2ff\\ub294 \\uc790\\ub9ac 1\\uacf3 \\u2014 GET /api/dsm/events\", \"status\": \"typed\", \"is_active\": true, \"expires_at\": \"2026-12-16T01:24:03.357Z\", \"secret\": \"cDQC1UPoAWerAOxy26zGtxNRTdna5VBC6VwWuhpsNtM\", \"audit_id",
+      "measured_at": "2026-09-17T01:24:03Z"
     },
     "U6#2": {
       "control": {
@@ -2958,7 +3080,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events?limit=5",
+          "url": "http://localhost:8000/api/dsm/events?limit=5",
           "status": 200
         }
       ],
@@ -2970,8 +3092,8 @@
         "after": 5,
         "on_screen": true
       },
-      "text_after": "{\"total\": 5, \"events\": [{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T13:14:31.580Z\", \"last_seen_at\": null, \"stream_monitor_id\": 119, \"stream_monitor_name\": \"\\uc2dc\\ub4dc \\uce74\\uba54\\ub77c (\\uac80\\uc218\\uc6a9)\", \"lat\": null, \"lng\": null, \"snapshot_path\": \"guardianx-dev/detections/119/20260903/131431_58011",
-      "measured_at": "2026-09-16T03:36:16Z"
+      "text_after": "{\"total\": 5, \"events\": [{\"event_id\": 204340, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-17T01:18:00.472Z\", \"last_seen_at\": null, \"stream_monitor_id\": 3569, \"stream_monitor_name\": \"gxprobe-D384-screen \\ucea1\\ucc98\\uc6a9 \\uce74\\uba54\\ub77c\", \"lat\": null, \"lng\": null, \"snapshot_path\": \"\", \"response_state\": \"acknowledged\"}, {\"ev",
+      "measured_at": "2026-09-17T01:24:03Z"
     },
     "U6#3": {
       "control": {
@@ -2982,7 +3104,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/4798",
+          "url": "http://localhost:8000/api/dsm/events/204340",
           "status": 200
         }
       ],
@@ -2990,12 +3112,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/events/{event}",
         "field": "event_id",
-        "before": 4798,
-        "after": 4798,
+        "before": 204340,
+        "after": 204340,
         "on_screen": true
       },
-      "text_after": "{\"event_id\": 4798, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-03T13:14:31.580Z\", \"last_seen_at\": null, \"stream_monitor_id\": 119, \"stream_monitor_name\": \"\\uc2dc\\ub4dc \\uce74\\uba54\\ub77c (\\uac80\\uc218\\uc6a9)\", \"confidence\": null, \"bbox\": null, \"snapshot_path\": \"guardianx-dev/detections/119/20260903/131431_580118.jpg\", \"clip_pa",
-      "measured_at": "2026-09-16T03:36:16Z"
+      "text_after": "{\"event_id\": 204340, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-17T01:18:00.472Z\", \"last_seen_at\": null, \"stream_monitor_id\": 3569, \"stream_monitor_name\": \"gxprobe-D384-screen \\ucea1\\ucc98\\uc6a9 \\uce74\\uba54\\ub77c\", \"confidence\": null, \"bbox\": null, \"snapshot_path\": \"\", \"clip_path\": null, \"address\": null, \"address_status\": \"",
+      "measured_at": "2026-09-17T01:24:03Z"
     },
     "U6#4": {
       "control": {
@@ -3006,7 +3128,7 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/webhook-subscriptions?endpoint_url=https://p118-gate.invalid/p118&signing_key_ref=p118-gate&event_types=fire",
+          "url": "http://localhost:8000/api/dsm/webhook-subscriptions?endpoint_url=https://p118-gate.invalid/p118&signing_key_ref=p118-gate&event_types=fire",
           "status": 422
         }
       ],
@@ -3019,7 +3141,7 @@
         "on_screen": true
       },
       "text_after": "{\"detail\": \"\\uc11c\\uba85\\ud0a4 'p118-gate' \\uc758 \\uac12\\uc744 \\uc774 \\ud658\\uacbd\\uc5d0\\uc11c \\ucc3e\\uc744 \\uc218 \\uc5c6\\uc2b5\\ub2c8\\ub2e4. \\uac12\\uc740 \\uc800\\uc7a5\\uc18c\\uac00 \\uc544\\ub2c8\\ub77c \\ud658\\uacbd\\uc5d0 \\ub461\\ub2c8\\ub2e4 \\u2014 \\uac12\\uc744 \\ub123\\uc740 \\ub4a4 \\ub2e4\\uc2dc \\ub4f1\\ub85d\\ud574 \\uc8fc\\uc138\\uc694.\"}",
-      "measured_at": "2026-09-16T03:36:16Z"
+      "measured_at": "2026-09-17T01:24:03Z"
     },
     "U6#9": {
       "control": {
@@ -3030,20 +3152,20 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/4798/response?to_state=in_progress&reason=P-118",
-          "status": 403
+          "url": "http://localhost:8000/api/dsm/events/204340/response?to_state=in_progress&reason=P-118",
+          "status": 200
         }
       ],
       "state": {
         "kind": "server_change",
         "get": "/api/dsm/events/{event}",
         "field": "response_state",
-        "before": "closed",
-        "after": "closed",
+        "before": "acknowledged",
+        "after": "in_progress",
         "on_screen": true
       },
-      "text_after": "{\"detail\": \"closed \\u2192 in_progress \\ub97c \\uac70\\uc808\\ud588\\ub2e4: \\ub418\\ub3cc\\ub9bc\\uc740 \\uad00\\uc81c\\ud300\\uc7a5(K3 MANAGER \\uc774\\uc0c1)\\ub9cc \\ud55c\\ub2e4\"}",
-      "measured_at": "2026-09-16T03:36:16Z"
+      "text_after": "{\"event_id\": 204340, \"from\": \"acknowledged\", \"to\": \"in_progress\", \"allowed_next\": [\"closed\"], \"audit_id\": 230293}",
+      "measured_at": "2026-09-17T01:24:04Z"
     },
     "U6#12": {
       "control": {
@@ -3054,7 +3176,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events?limit=1",
+          "url": "http://localhost:8000/api/dsm/events?limit=1",
           "status": 401
         }
       ],
@@ -3065,14 +3187,14 @@
         "after": "401"
       },
       "text_after": "{\"detail\": \"Unauthorized\"}",
-      "measured_at": "2026-09-16T03:36:16Z"
+      "measured_at": "2026-09-17T01:24:04Z"
     },
     "U6#14": {
       "control": {
         "found": false,
         "why": "정본이 「없음」이라 적은 자리 — 정본: 없음 — 스키마 버전"
       },
-      "measured_at": "2026-09-16T03:36:16Z"
+      "measured_at": "2026-09-17T01:24:04Z"
     },
     "U6#15": {
       "control": {
@@ -3083,7 +3205,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/dashboard/link-state",
+          "url": "http://localhost:8000/api/dsm/dashboard/link-state",
           "status": 200
         }
       ],
@@ -3096,7 +3218,7 @@
         "on_screen": true
       },
       "text_after": "{\"status\": \"waiting\", \"detail\": \"\\uc678\\ubd80 \\uc5f0\\uacc4 \\uaddc\\uaca9\\uc744 \\uc544\\uc9c1 \\ubc1b\\uc9c0 \\ubabb\\ud588\\uc2b5\\ub2c8\\ub2e4. \\uc900\\ube44\\ub418\\uba74 \\uc790\\ub3d9\\uc73c\\ub85c \\uc5f0\\uacb0\\ub418\\uba70, \\uadf8\\ub54c\\uae4c\\uc9c0 \\ub2e4\\ub978 \\uae30\\ub2a5\\uc740 \\uadf8\\ub300\\ub85c \\ub3d9\\uc791\\ud569\\ub2c8\\ub2e4.\"}",
-      "measured_at": "2026-09-16T03:36:16Z"
+      "measured_at": "2026-09-17T01:24:04Z"
     }
   }
 }

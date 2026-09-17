@@ -120,15 +120,15 @@ REACH_MAP: dict[str, dict] = {
         "why": "저장된 이벤트가 목록 화면에 실제로 실려 나온다 — 역할 fire_user 가 200 으로 봤다",
     },
     "F-09-c2": {
-        "screen": "/dsm/events/99554", "api": "/api/dsm/events/99554", "expect": 200,
+        "screen": "/dsm/events/{id}", "api": "/api/dsm/events/{id}", "expect": 200,
         "why": "이벤트 클릭 → 상세. 그 클릭이 실제로 부른 라우트가 200 이다",
     },
     "F-10-c3": {
-        "screen": "/dsm/events/99554", "api": "/api/dsm/deliveries", "expect": 200,
+        "screen": "/dsm/events/{id}", "api": "/api/dsm/deliveries", "expect": 200,
         "why": "발송 기록이 이벤트 상세에서 실제로 조회된다 (deliveries?event_id=…)",
     },
     "F-14-c1": {
-        "screen": "/dsm/events/99554", "api": "/api/dsm/events/99554/timeline",
+        "screen": "/dsm/events/{id}", "api": "/api/dsm/events/{id}/timeline",
         "expect": 200, "file_hint": "verdict_panel",
         "why": "사람의 판정이 남는 자리(판정 패널·타임라인)를 역할 계정이 200 으로 봤다",
     },
@@ -191,6 +191,19 @@ def role_of(entry: dict) -> tuple[str, str]:
     return role, ""
 
 
+#: ★ [턴 S · 조율자] **사건 번호는 사슬의 일부가 아니다.** 이 표는 사건 상세를 `/dsm/events/99554`
+#:   로 — 턴 L 의 씨앗 번호 그대로 — 못박고 있었다. 씨앗은 매 회 실제 경로로 새로 만든다(P-156)
+#:   는 규약과 정면으로 어긋난다: 이번 턴 새 씨앗(204342)의 화면이 정확히 같은 셋
+#:   (`events/{id}` 200 · `deliveries` 200 · `timeline` 200)을 불렀는데 세 절이 회색이 됐다 —
+#:   제품 사슬은 그대로였고 **판정기가 지난 씨앗의 번호를 들고 있었다**(D-470 계열).
+#:   숫자만으로 된 경로 조각을 `{id}` 로 접어 견준다. 그 밖의 글자는 그대로 정확히 맞아야 한다.
+def _slot(path: str) -> str:
+    """`/dsm/events/204342` → `/dsm/events/{id}`. 숫자만인 조각만 접는다."""
+    head, q, query = str(path).partition("?")
+    parts = ["{id}" if seg.isdigit() else seg for seg in head.split("/")]
+    return "/".join(parts) + (q + query if q else "")
+
+
 def call_status(calls, api: str):
     """그 화면이 부른 것 중 `api` 로 시작하는 첫 호출의 상태. 없으면 `None`."""
     for c in calls or []:
@@ -198,7 +211,7 @@ def call_status(calls, api: str):
         if len(parts) < 3:
             continue
         path, status = parts[1], parts[-1]
-        if path.startswith(api):
+        if _slot(path).startswith(_slot(api)):
             try:
                 return int(status)
             except ValueError:
@@ -335,7 +348,7 @@ def judge_clause(cid: str, clause: dict, *, screens: list, gate_rc: dict,
     expect = link.get("expect", 200)
     hint = link.get("file_hint", "")
 
-    cands = [e for e in screens if (e.get("route") or "") == want_screen]
+    cands = [e for e in screens if _slot(e.get("route") or "") == _slot(want_screen)]
     if hint:
         narrowed = [e for e in cands if hint in (e.get("file") or "")]
         cands = narrowed or cands
@@ -469,6 +482,15 @@ def BIRTH_SAMPLE() -> dict:
 
 def self_test() -> int:
     ok = True
+    # ★ 출생 표본 (턴 S) — 씨앗 번호가 바뀌어도 사슬은 같은 사슬이다 · 숫자 아닌 조각은 안 접는다
+    assert _slot("/dsm/events/204342") == "/dsm/events/{id}" == _slot("/dsm/events/99554")
+    assert _slot("/api/dsm/events/7/timeline") == "/api/dsm/events/{id}/timeline"
+    assert _slot("/dsm/events?preset=unhandled") == "/dsm/events?preset=unhandled"
+    assert _slot("/api/dsm/settings/zones") == "/api/dsm/settings/zones"   # 글자는 그대로
+    assert call_status(["GET /api/dsm/events/204342 200"], "/api/dsm/events/{id}") == 200
+    assert call_status(["GET /api/dsm/events/204342/timeline 200"], "/api/dsm/events/{id}") == 200
+    assert call_status(["GET /api/dsm/eventsX/1 200"], "/api/dsm/events/{id}") is None
+    print("%s O 씨앗 번호를 접어 견준다 (204342 == 99554 == {id} · 글자 조각은 그대로)" % TAG)
 
     def say(good, label):
         nonlocal ok
