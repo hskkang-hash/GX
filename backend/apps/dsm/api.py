@@ -193,8 +193,17 @@ class DsmAPI:
                until: datetime | None = None,
                event_type: str | None = None, severity: str | None = None,
                response_state: str | None = None, mine: bool = False,
+               stream_monitor_id: int | None = None,
                limit: int = 50):
         """F-09 이벤트 목록.
+
+        ★ 2026-09-17 (턴 T · 차선 U3) — `stream_monitor_id` 가 더해졌다. M2 「이 카메라
+          7일」절이 `stream_monitor_id=<id>&since=<7일 전>` 으로 부른다 — 새 라우트가
+          아니라 **있던 목록에 필터 하나**다. 커널 `query_events` 는 이 인자를 처음부터
+          받았다(`k1_event/services.py:376`) — HTTP 로 여는 것뿐이다.
+          (병합 · 조율자) 처음엔 `services.recent_events` 가 이 인자를 안 받아 여기서 커널을
+            직접 불렀고, 진입면 시험이 「K1 소비 App 이 둘」로 막았다 — 인자를 services 로
+            옮겨 App 은 하나다. 필터는 한 층(커널)에만 있다.
 
         ★ NFR-09-1 — 스트리밍 서버가 죽어도 이 목록은 200 이다.
           여기서 스트리밍을 부르지 않는 것이 그 성질의 전부다.
@@ -240,7 +249,9 @@ class DsmAPI:
         rows = services.recent_events(scope=scope, since=since, until=until,
                                       event_type=types, severity=severity,
                                       response_state=response_state,
-                                      reviewed_by_id=reviewed_by_id, limit=limit)
+                                      reviewed_by_id=reviewed_by_id,
+                                      stream_monitor_id=stream_monitor_id,
+                                      limit=limit)
         return {"total": len(rows), "events": [
             {"event_id": e.event_id, "event_type": e.event_type,
              "severity": e.severity, "status": e.status, "verdict": e.verdict,

@@ -39,3 +39,7 @@ pyproj==3.7.1
 opencv-python==4.11.0.86
 grpcio==1.76.0
 grpcio-tools==1.76.0
+# 웹푸시 발송기 (P-160 · 턴 T · 2026-09-17) — MPL-2.0 / MPL-2.0 / MIT · cryptography 43.0.3 · cffi 1.17.1(dj-core 고정)과 pip check 깨끗
+pywebpush==1.14.1
+py-vapid==1.9.1
+http-ece==1.2.1

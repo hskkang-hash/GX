@@ -152,6 +152,23 @@ def count_run_log(data: bytes):
     return _json_len(data, "steps")
 
 
+def count_walk(data: bytes):
+    """UX-WALK 걷기 대장 → `(실행 수, 셈법)`. `runs` 가 있으면 그 길이, 없으면(옛 모양) 1회."""
+    text = _text(data)
+    if text is None:
+        return None, "UTF-8 로 못 읽었다"
+    try:
+        doc = json.loads(text)
+    except ValueError as exc:
+        return None, "JSON 이 깨졌다 (%s)" % type(exc).__name__
+    if not isinstance(doc, dict):
+        return None, "JSON 최상위가 사전이 아니다"
+    runs = doc.get("runs")
+    if isinstance(runs, list):
+        return len(runs), "JSON 의 runs 배열 길이"
+    return 1, "옛 모양(runs 없음) — 실행 1회로 읽는다"
+
+
 def count_screen_routes(data: bytes):
     """D-386 화면↔라우트 → `(자리 수, 셈법)`. 27자리가 2자리가 되던 칸."""
     return _json_len(data, "screens")
@@ -176,6 +193,10 @@ LEDGERS: tuple[tuple[str, str, object, str], ...] = (
     ("screen_routes.json", "docs/agent/evidence/D-386/screen_routes.json",
      count_screen_routes, "자리"),
     ("row_map.json", "docs/agent/evidence/P-142/row_map.json", count_row_map, "행"),
+    # ★ 2026-09-17 (턴 T · Q · P-159 ③) 걷기 대장 — 통째 덮어쓰던 것을 runs 합치기로 바꿨다.
+    #   HEAD 판(runs 없는 옛 모양)은 실행 1회로 읽는다 — 옛 판을 0 으로 읽으면 첫 합치기가 「줄지
+    #   않음」을 잴 수 없다.
+    ("walk.json", "docs/agent/evidence/UX-WALK/walk.json", count_walk, "회"),
 )
 
 
@@ -245,6 +266,9 @@ BIRTH_SAMPLE = (
     ("run_log.json", 32, 2, "단계"),
     ("screen_routes.json", 27, 2, "자리"),
     ("row_map.json", 25, 0, "행"),
+    # 턴 T (Q · P-159 ③) — 걷기 대장은 통째 덮어쓰기라 매 회 1 → 1 이었다(줄지도 늘지도 않는
+    # 것처럼 보였다). runs 합치기 뒤 첫 실측은 1 → 2. 여기선 「1 회 → 0 회(파일이 빈 사전)」를 출생 표본으로.
+    ("walk.json", 1, 0, "회"),
 )
 
 #: ★★ **출생 표본 ②** — 되살리다 지은 죄. `viewers` 를 **라우트 이름으로** 묶어
@@ -343,7 +367,7 @@ def self_test() -> int:
           count_index(commented)[0] == count_index(_INDEX_BYTES)[0])
 
     # ⑧ 대장 넷이 **이름으로** 등재돼 있다 — 하나가 빠지면 그 대장은 아무도 안 본다
-    check("대장 4종이 등재돼 있다", len(LEDGERS) == 4
+    check("대장 5종이 등재돼 있다 (턴 T 에 walk.json 이 늘었다)", len(LEDGERS) == 5
           and {r[0] for r in LEDGERS} == {n for n, _b, _a, _u in BIRTH_SAMPLE})
 
     if bad:

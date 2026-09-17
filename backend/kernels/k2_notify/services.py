@@ -48,6 +48,7 @@ from common.tenant_filters import assert_scoped, filter_by_group_field, get_user
 from common.ai_act_notice import notice_line
 from common.tenant_scope import TenantScope
 from kernels.k2_notify import channels as channel_registry
+from kernels.k2_notify import webpush as webpush_gate
 from kernels.k2_notify.exceptions import (
     EventNotFound,
     InvalidNotifyInput,
@@ -238,14 +239,22 @@ def resolve_recipients(
                 if key in seen:
                     continue  # 규칙 둘이 같은 역할을 가리켜도 두 번 보내지 않는다
                 seen.add(key)
-                out.append(Recipient(
-                    user_id=user.pk,
-                    display_name=getattr(user, "username", "") or str(user.pk),
-                    address=getattr(user, "email", "") or "",
-                    channel=str(channel),
-                    rule_id=rule.pk,
-                    role_code=getattr(rule.role, "code", "") or "",
-                ))
+                # ★ [턴 T · U3 · P-160] `webpush` 의 주소는 메일이 아니라 **구독 한 벌**이다.
+                #   기기마다 한 통 — 구독 0인 사람은 **빠진다**(주소 없는 편지는 「보냈다」로
+                #   적히지 않는다 · `webpush.py` 머리말 ①).
+                if str(channel) == webpush_gate.WEBPUSH:
+                    addresses = webpush_gate._subscription_addresses(user.pk)
+                else:
+                    addresses = (getattr(user, "email", "") or "",)
+                for address in addresses:
+                    out.append(Recipient(
+                        user_id=user.pk,
+                        display_name=getattr(user, "username", "") or str(user.pk),
+                        address=address,
+                        channel=str(channel),
+                        rule_id=rule.pk,
+                        role_code=getattr(rule.role, "code", "") or "",
+                    ))
     return tuple(out)
 
 
@@ -491,6 +500,10 @@ def suppress(*, scope: TenantScope, event_id: int) -> bool:
         event__event_type=event.event_type,
         occurred_at__lt=event.occurred_at,
         occurred_at__gte=event.occurred_at - SUPPRESS_WINDOW,
+    ).exclude(
+        # ★ [턴 T · U3] 훈련(시험) 발송은 억제 근거가 아니다 — 시험 한 통이 다음 진짜
+        #   경보를 삼키면 안 된다(`webpush.py` 머리말 ②).
+        recipient_address__startswith=webpush_gate.DRILL_ADDRESS_PREFIX,
     ).exists()
 
 
@@ -590,7 +603,8 @@ def _send_one(event, recipient: Recipient) -> DeliveryView:
     row = Delivery._base_manager.create(
         event=event,
         recipient_id=recipient.user_id,
-        recipient_address=recipient.address,
+        # ⚠ 구독 JSON 은 행에 적지 않는다 — 지문 12자로 접는다(`webpush.py` 머리말 ⚠).
+        recipient_address=webpush_gate._address_label(recipient.address),
         channel=channel,
         occurred_at=event.occurred_at,
         succeeded=False,
@@ -598,6 +612,18 @@ def _send_one(event, recipient: Recipient) -> DeliveryView:
         retry_count=0,
     )
     _inherit_owner(row, event)
+
+    # ★ [턴 T · U3 · M4] 사람의 설정이 **지금 이 채널**을 막으면 보내지 않는다 — 그리고
+    #   그 사실을 행에 **사유 이름**으로 남긴다(`quiet_hours` · `channel_not_chosen`).
+    #   행이 없으면 「보낸 적 없음」과 「막혀서 안 보냄」이 같아진다(D-290).
+    #   ⚠ 훈련 모드(`log`)는 막지 않는다 — 훈련은 사람의 채널이 아니라 로그로 가고,
+    #     막으면 「훈련에서 몇 통이 갔을 것인가」를 세지 못한다.
+    blocked = (None if channel == DRILL_CHANNEL
+               else webpush_gate._blocked_reason(recipient.user_id, recipient.channel))
+    if blocked:
+        row.succeeded, row.sent_at, row.failure_reason = False, None, blocked
+        row.save(update_fields=["succeeded", "sent_at", "failure_reason"])
+        return _to_view(row)
 
     adapter = channel_registry.get(channel)
     if adapter is None:

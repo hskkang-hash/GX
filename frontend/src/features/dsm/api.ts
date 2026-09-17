@@ -676,13 +676,15 @@ export function dsmDelete<T>(url: string): Promise<T> {
  * ★ 끝에 붙인다 — 위 네 묶음과 같은 규약이다(같은 턴에 여러 차선이 이 파일을 읽고,
  *   충돌한 상수 파일은 화면 전체를 못 세운다).
  *
- * ★ **읽기 하나뿐이다.** 종결은 이미 있는 대응 진행 문(`dsmEndpoint.response`)이
- *   한다 — 같은 일을 하는 문을 하나 더 열지 않는다. 이 문이 답하는 것은
- *   「현장이 뭐라고 했나」 하나다.
+ * ★ 읽기 하나 + 쓰기 하나. 종결 확인 카드의 「확인」은 `confirmDone` 이고, 그 문은
+ *   서버가 K1 전이표대로 기록을 `closed` 까지 옮긴다(턴 T · P-164 U1 ①) — 화면은
+ *   전이표를 들지 않는다. 대응 진행 문(`dsmEndpoint.response`)은 그대로 살아 있다.
  */
 export const dsmU1Endpoint = {
   /** 화면이 지금 그린 카드의 사건 번호만 물어본다(쉼표로 이어 보낸다). */
   queueFieldSignals: '/api/dsm/queue/field-signals',
+  /** 종결 확인 「확인」 — 조치 완료 회신이 온 열린 사건의 기록을 닫는다(409 = 확인할 것 없음). */
+  confirmDone: (eventId: number) => `/api/dsm/queue/field-signals/${eventId}/confirm-done`,
 } as const;
 
 /**
@@ -710,6 +712,23 @@ export const dsmU24Endpoint = {
 } as const;
 
 /**
+ * 턴 T · 차선 U24 — 통계 축 5 · CSV · 상급 보고 체크 · 감사 읽기 (P-164 U24).
+ * `apps/dsm/api_u24.py` 의 턴 T 절과 짝이다. 끝에 붙인다(위 묶음들과 같은 규약).
+ */
+export const dsmU24StatsEndpoint = {
+  /** 축 5(카메라 · 유형 · 심각도 · 판정 · 시간대) — `total` 은 목록 수와 같아야 한다. */
+  axes: '/api/dsm/stats/axes',
+  /** 「표 내려받기」 — UTF-8 BOM CSV. 서버 라우트다(화면이 파일을 만들지 않는다). */
+  exportCsv: '/api/dsm/stats/export.csv',
+  /** 목록이 한 번에 묻는 자리 — `event_ids=1,2,3`. */
+  upperReportFlags: '/api/dsm/events/upper-report/flags',
+  /** POST = 체크 · DELETE = 해제. 같은 경로다. */
+  upperReport: (eventId: number) => `/api/dsm/events/${eventId}/upper-report`,
+  /** 감사 읽기 — 필터 3(기간 · 행위자 · 행위 종류) + 쪽. U2·U4·U5 만 200. */
+  audit: '/api/dsm/audit',
+} as const;
+
+/**
  * S-16 「알림 받는 사람·채널」 · S-15 「내 정보」 — **차선 U56 · 턴 S** (UX-43 · UX-42-me).
  *
  * ★ 끝에 붙인다 — 위 묶음들과 같은 규약이다(같은 턴에 여러 차선이 이 파일을 읽고,
@@ -732,4 +751,80 @@ export const dsmU56NotifyEndpoint = {
   test: '/api/dsm/settings/notify-rules/test',
   /** S-15 「내 정보」 — 읽기뿐. 「내 알림 설정」 쓰기는 U3 의 WS-02 다. */
   me: '/api/dsm/me',
+} as const;
+
+/**
+ * 「표 내려받기」 — 통계 CSV 를 **서버 라우트**에서 받아 파일로 넘긴다 (턴 T · U24).
+ *
+ * ★ 화면이 CSV 를 만들지 않는다 — 파일의 수와 화면의 수가 갈리는 첫 자리가 「화면이
+ *   자기 표를 파일로 적는 것」이다. 서버가 같은 집계를 그대로 편다(BOM 포함).
+ * ★ `X-No-Cache` — 응답 캐시가 장애를 덮는다(P-19). 보고서에 붙는 파일이 60초 전 값이면
+ *   그 값이 「지금 값」으로 남는다.
+ * ★ 실패는 `fetchSnapshotUrl` 과 같은 결로 읽는다 — 상태 0 은 대답이 없었다는 뜻이다.
+ */
+export async function downloadStatsCsv(
+  params: Record<string, unknown>,
+): Promise<{ bytes: number }> {
+  let res: unknown;
+  try {
+    res = await API.get(dsmU24StatsEndpoint.exportCsv, {
+      params,
+      responseType: 'blob',
+      headers: { 'X-No-Cache': 'true' },
+    });
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number; data?: unknown } };
+    const status = e?.response?.status ?? 0;
+    const said = await reasonFromBlob(e?.response?.data);
+    throw new DsmApiError(
+      said ?? (status > 0
+        ? `표를 받지 못했습니다 (${status})`
+        : '표를 받는 중에 연결이 끊겼습니다.'),
+      status,
+      said !== undefined,
+    );
+  }
+  const blob = pickBlob(res);
+  if (!blob) throw new DsmApiError('표 바이트를 못 알아봤습니다.', 0);
+  if (blob.size === 0) throw new DsmApiError('표가 0바이트로 왔습니다.', 0);
+  const url = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'gx-stats.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    // 다음 틱에 놓는다 — 같은 틱에 놓으면 브라우저가 파일을 열기 전에 주소가 죽는다.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  return { bytes: blob.size };
+}
+
+/**
+ * S-17 「외부 연계」 — API 키 발급·폐기 · 웹훅 구독(+서명키) · **filters** · health (턴 T · 차선 U56).
+ *
+ * ★ 끝에 붙인다 — 위 묶음들과 같은 규약(한 턴에 여러 차선이 이 파일을 읽는다).
+ * ★ 비밀은 **응답에 한 번만** 온다(API 키 `secret` · 웹훅 `signing_key_secret`). 이 묶음은
+ *   그 값을 저장하는 자리를 두지 않는다 — 화면이 sha256 앞 12자와 길이만 남긴다.
+ * ⚠ `filters` 는 JSON 문자열을 **질의**로 보낸다(`dsmPostQuery` 관용 · 본문이 아니다).
+ * ⚠ 구독 목록(`GET /webhook-subscriptions`)에는 filters 칸이 없다 — 구독마다
+ *   `webhookFilters(id)` 를 GET 해서 채운다(그 목록 문은 U3 소유 `api.py` 라 안 넓혔다).
+ */
+export const dsmU56IntegrationEndpoint = {
+  /** F-05 키 발급 — 응답의 `secret` 은 한 번만. */
+  apiKeyIssue: '/api/dsm/settings/api-keys',
+  /** F-05 키 폐기 — 행은 남고 꺼진다. */
+  apiKeyRevoke: (keyId: number | string) => `/api/dsm/settings/api-keys/${keyId}`,
+  /** 키 목록·범위(capability)는 설정 조회 문 `domain=api_keys` 가 낸다(하이픈 아니다). */
+  apiKeysOverview: '/api/dsm/settings/api_keys',
+  /** 구독 해지 — 기존 F-05 문(`api.py`). */
+  webhookRevoke: (subscriptionId: number | string) =>
+    `/api/dsm/webhook-subscriptions/${subscriptionId}`,
+  /** WS-17 — 구독 한 줄의 filters 읽기(GET)·쓰기(POST · `filters=<JSON>` 질의). */
+  webhookFilters: (subscriptionId: number | string) =>
+    `/api/dsm/settings/webhook-subscriptions/${subscriptionId}/filters`,
+  /** 인증 없이 200/503 — 상태 이름만. */
+  health: '/api/dsm/health',
 } as const;

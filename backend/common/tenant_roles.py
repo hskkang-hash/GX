@@ -33,6 +33,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from django.conf import settings
@@ -54,10 +55,48 @@ def trusts_legacy_superuser() -> bool:
     return bool(getattr(settings, "TENANT_TRUST_LEGACY_SUPERUSER", True))
 
 
+def tenant_admin_role_prefix() -> str:
+    """테넌트 운영 역할 코드의 머리 — 설정 한 곳(`TENANT_ADMIN_ROLE_PREFIX`)에서 읽는다."""
+    return str(getattr(settings, "TENANT_ADMIN_ROLE_PREFIX", "tenant_admin") or "tenant_admin")
+
+
 def tenant_admin_role_code(group_id: Any) -> str:
     """테넌트 운영 역할의 코드 규약 — `<prefix>_<group_id>`."""
-    prefix = getattr(settings, "TENANT_ADMIN_ROLE_PREFIX", "tenant_admin")
-    return f"{prefix}_{group_id}"
+    return f"{tenant_admin_role_prefix()}_{group_id}"
+
+
+def is_tenant_admin_role_code(code: Any) -> bool:
+    """이 역할 **코드**가 테넌트 운영 역할의 모양인가 — **이름 열거가 아니라 패턴**이다 (SEC-22 · D-478).
+
+    받는 것:   `tenant_admin` · `tenant_admin_7` · `tenant_admin_<숫자>`
+    안 받는 것: `tenant_administrator_x`(머리만 같다) · `xtenant_admin_1`(앞에 글자) ·
+               `tenant_admin_` · `tenant_admin_a` · `tenant_admin_7_x` · 빈 값
+
+    ★ 왜 패턴인가 — 테넌트가 하나 생길 때마다 `tenant_admin_<group_id>` 가 새로 생긴다.
+      글자 그대로의 이름 목록으로 막으면 **테넌트 수만큼 구멍이 는다**(D-478). 패턴 하나가
+      「이 모양의 역할은 전부 테넌트 운영 역할이다」를 말하고, 어느 테넌트의 것인가는
+      `tenant_admin_role_group_id` 가 뒤에서 읽는다.
+    ★ 이 함수는 **코드 모양만** 본다 — 사람이 그 테넌트에 속하는가는 `is_tenant_admin(user)`
+      가 판정한다(경계는 넘지 못한다). 둘을 합치지 않는다: 프리셋 매핑(K3)처럼 「이 역할이
+      운영 역할인가」만 묻는 자리와, 「이 사람이 이 테넌트의 운영자인가」를 묻는 자리는 다르다.
+    """
+    if not isinstance(code, str) or not code:
+        return False
+    return _tenant_admin_pattern().fullmatch(code) is not None
+
+
+def tenant_admin_role_group_id(code: Any) -> int | None:
+    """`tenant_admin_<n>` 의 `n`. 접미 없는 `tenant_admin` 이면 None(테넌트 미지정)."""
+    if not is_tenant_admin_role_code(code):
+        return None
+    m = _tenant_admin_pattern().fullmatch(code)
+    tail = m.group(1) if m else None
+    return int(tail) if tail else None
+
+
+def _tenant_admin_pattern() -> "re.Pattern[str]":
+    # 설정이 바뀌면 패턴도 따라간다 — 값을 모듈에 박지 않는다.
+    return re.compile(r"^" + re.escape(tenant_admin_role_prefix()) + r"(?:_(\d+))?$")
 
 
 def _role_codes(user: Any) -> set[str]:
@@ -117,7 +156,11 @@ def is_tenant_admin(user: Any) -> bool:
     if group is None:
         return False
     codes = _role_codes(user)
-    if tenant_admin_role_code(group.id) in codes:
+    # ★ 패턴으로 알아보고(`is_tenant_admin_role_code`), **자기 테넌트 번호**인 것만 통과시킨다.
+    #   `tenant_admin_<남의 번호>` 는 모양은 맞지만 경계를 넘으므로 거짓이다.
+    #   접미 없는 `tenant_admin` 은 어느 테넌트인지 말하지 않으므로 여기서는 통과시키지 않는다 —
+    #   그 이름을 인정하려면 K3 표(`K3_ROLES_WITH_TENANT_SETTINGS_ACCESS`)에 올린다(D-212 · 표 한 벌).
+    if any(tenant_admin_role_group_id(c) == group.id for c in codes if is_tenant_admin_role_code(c)):
         return True
     from config.k3_roles import (  # noqa: PLC0415  (표를 두 벌 두지 않기 위해 지연 임포트)
         K3_ROLES_WITH_TENANT_SETTINGS_ACCESS,

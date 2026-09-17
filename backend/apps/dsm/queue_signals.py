@@ -45,6 +45,23 @@ U3 차선의 M3 설계(`docs/workorders/WO-GX-20260915-01/U3_M3_시트_설계.md
 ⚠ `kind` 는 `field_replies` 의 값(`FieldReply`)에 **아직 없는 칸**이다(턴 S 실측).
   그래서 (나)는 값에 그 이름이 생기는 날 저절로 살아난다 — `getattr` 로 묻고,
   없으면 없는 대로 (가)만으로 판정한다. 없는 칸을 있는 척하지 않는다.
+
+배선됨 — U3 가 고른 길은 (다) **저장 문자열의 정형 접두** [턴 T · 실측]
+-----------------------------------------------------------------------
+U3 는 둘 중 어느 쪽도 아닌 셋째 길로 갔다: `POST …/field-reply?kind=done` 이
+저장 문자열 머리에 `[FIELD:done] ` 를 붙이고(`apps/dsm/field.py::compose_reply`),
+읽는 쪽은 `field.split_reply()` 로 종류와 깨끗한 본문을 되찾는다. 이 모듈은 그
+**같은 함수**로 읽는다 — 접두 문법을 여기서 다시 적지 않는다(두 벌은 갈린다).
+(가)·(나)는 그대로 둔다: 되읽기는 좁히지 않는다.
+
+★ 사람의 자리에 접두가 보이면 그 판정의 실패다(`field.py` 머리말) — 그래서 이
+  모듈이 내는 본문(`support_text`·`action_done_text`·`last_text`)은 **깨끗한
+  본문**이다.
+
+★ **닫힌 사건은 종결 확인 카드에서 빠진다.** 종결은 서버 기록(`response_state`)이
+  닫는 것이고(불변 「온보딩 카드의 완료는 서버 기록이 닫는다」), 카드는 그 기록을
+  되읽어 그린다 — 회신이 남아 있어도 기록이 `closed` 면 `action_done` 은 거짓이다.
+  그래서 「확인 → 기록 닫힘 → 재조회 0」이 서버에서 선다.
 """
 from __future__ import annotations
 
@@ -52,7 +69,13 @@ from typing import Any
 
 from django.http import Http404
 
-from apps.dsm import services
+from apps.dsm import field, services
+
+#: 종결된 기록의 상태 이름. 커널 상수(`kernels.k1_event.response_flow.CLOSED`)와 같은
+#: 값이지만 커널을 import 하지 않는다(F-05 — App 소비자는 `services` 하나).
+#: 갈리는지는 시험이 본다(`test_u1_queue_field_signals::ConfirmDoneTest`).
+CLOSED_STATE = "closed"
+OCCURRED_STATE = "occurred"
 
 #: 한 번에 물을 수 있는 사건 수의 천장. 화면이 그리는 카드 수(초점 1 + 대기 몇 장)를
 #: 넘길 이유가 없다 — 큐 전체(200)를 물으면 그만큼 읽기가 나간다.
@@ -76,8 +99,16 @@ def _kind_of(reply: Any) -> str:
     return str(value).strip().lower() if value else ""
 
 
+def _split(reply: Any) -> tuple[str, str]:
+    """저장 문자열 → (U3 접두의 종류, 깨끗한 본문). 접두가 없으면 종류는 `note` 다."""
+    stored = (getattr(reply, "text", "") or "")
+    name, body = field.split_reply(stored)
+    return name, body.strip()
+
+
 def _text_of(reply: Any) -> str:
-    return (getattr(reply, "text", "") or "").strip()
+    """사람의 자리에 놓을 본문 — **접두를 뗀** 것."""
+    return _split(reply)[1]
 
 
 def _starts_with_marker(text: str, markers: tuple[str, ...]) -> bool:
@@ -88,8 +119,8 @@ def _starts_with_marker(text: str, markers: tuple[str, ...]) -> bool:
 def classify(reply: Any) -> str:
     """회신 한 줄 → `"support"` · `"done"` · `""`(그냥 한 줄).
 
-    ★ **순수 함수다** — 시험이 DB 없이 이 갈래 전부를 잰다. 그리고 두 후보(접두·칸)를
-      한 자리에서 읽으므로, 어느 쪽으로 정해지든 고칠 자리가 하나다.
+    ★ **순수 함수다** — 시험이 DB 없이 이 갈래 전부를 잰다. 세 후보(칸 · U3 저장
+      접두 · 화면 접두)를 한 자리에서 읽으므로, 어느 쪽으로 정해지든 고칠 자리가 하나다.
     """
     kind = _kind_of(reply)
     if kind in SUPPORT_KINDS:
@@ -97,7 +128,13 @@ def classify(reply: Any) -> str:
     if kind in DONE_KINDS:
         return "done"
 
-    text = _text_of(reply)
+    #: (다) U3 가 실제로 쓰는 길 — `[FIELD:done] …`. `note` 는 「그냥 한 줄」이다.
+    stored_kind, text = _split(reply)
+    if stored_kind in SUPPORT_KINDS:
+        return "support"
+    if stored_kind in DONE_KINDS:
+        return "done"
+
     if _starts_with_marker(text, SUPPORT_MARKERS):
         return "support"
     if _starts_with_marker(text, DONE_MARKERS):
@@ -113,6 +150,12 @@ def _signal_for(*, scope, event_id: int) -> dict | None:
     except Http404:
         # ★ 남의 테넌트 사건도 없는 사건도 여기로 온다. **같은 답을 준다.**
         return None
+
+    #: 서버 기록 — 종결 확인 카드가 되읽는 값. 문지기는 위에서 이미 지났다.
+    state = services.response_state(scope=scope, event_id=event_id)
+    response_state = str(state.get("response_state") or "")
+    allowed_next = list(state.get("allowed_next") or [])
+    is_closed = response_state == CLOSED_STATE
 
     support_text = ""
     done_text = ""
@@ -141,11 +184,73 @@ def _signal_for(*, scope, event_id: int) -> dict | None:
         "typed_total": typed,
         "support_requested": bool(support_text),
         "support_text": support_text,
-        "action_done": bool(done_text),
+        #: ★ 「조치 완료」는 **기록이 아직 열려 있을 때만** 카드가 된다. 닫힌 기록의
+        #: 회신은 남아 있어도 확인할 것이 없다 — 그래서 확인 → 닫힘 → 재조회 0 이다.
+        "action_done": bool(done_text) and not is_closed,
         "action_done_text": done_text,
+        "response_state": response_state,
+        "allowed_next": allowed_next,
+        "closed": is_closed,
         "last_text": last_text,
         "last_author": last_author,
     }
+
+
+class ConfirmDoneRejected(Exception):
+    """확인할 「조치 완료」가 없다(409) — 회신이 없거나 기록이 이미 닫혀 있다."""
+
+
+def confirm_done(*, scope, event_id: int) -> dict:
+    """종결 확인 카드의 「확인」 — **서버 기록을 닫는다.**
+
+    ★ 규칙은 K1 이 든다. 전이표(`occurred → acknowledged → in_progress → closed` ·
+      건너뛰기 없음)·감사·문지기는 전부 `services.advance_response`(그 뒤 K1)에 있고,
+      여기서는 그 문을 **갈 수 있는 만큼 앞으로** 부를 뿐이다. `acknowledged` 에서
+      누르면 두 칸(조치 착수 → 종결)이 각각 감사에 남는다 — 한 칸으로 접지 않는다.
+    ★ `occurred`(아무도 접수 안 함)에서는 닫히지 않는다 — 접수한 사람이 없는 종결은
+      K1 이 거절하고(D-290), 이 함수는 그 거절을 좁히지 않는다(409 로 나간다).
+    ★ 확인할 것이 없으면(조치 완료 회신 0 · 이미 닫힘) 아무것도 옮기지 않는다 —
+      「확인」이 회신 없는 사건을 닫는 단추가 되면 그것은 거짓말이다.
+
+    Returns:
+        닫힌 뒤의 신호 한 줄(`_signal_for` 와 같은 모양) + `steps`(옮긴 칸들).
+    Raises:
+        Http404: 남의/없는 사건(문지기 그대로).
+        ConfirmDoneRejected: 확인할 조치 완료가 없다.
+        services.ResponseTransitionForbidden 등: K1 의 거절 그대로.
+    """
+    before = _signal_for(scope=scope, event_id=event_id)
+    if before is None:
+        raise Http404("그런 이벤트가 없습니다.")
+    if not before["action_done"]:
+        raise ConfirmDoneRejected(
+            "확인할 조치 완료 회신이 없거나 기록이 이미 닫혀 있습니다 — "
+            "확인은 현장이 「조치 완료」를 보낸 열린 사건에서만 기록을 닫습니다.")
+
+    if before["response_state"] == OCCURRED_STATE:
+        raise ConfirmDoneRejected(
+            "아직 아무도 접수하지 않은 사건입니다 — 접수(키 1)가 먼저입니다. "
+            "접수한 사람이 없는 종결은 만들지 않습니다.")
+
+    steps: list[str] = []
+    allowed = list(before["allowed_next"])
+    #: 앞으로만, 한 칸씩. 전이표의 길이가 상한이라 무한히 돌 수 없다(4칸).
+    for _ in range(4):
+        if CLOSED_STATE in allowed:
+            moved = services.advance_response(
+                scope=scope, event_id=event_id, to_state=CLOSED_STATE)
+            steps.append(CLOSED_STATE)
+            break
+        forward = [s for s in allowed if s != CLOSED_STATE]
+        if not forward:
+            break
+        moved = services.advance_response(
+            scope=scope, event_id=event_id, to_state=forward[0])
+        steps.append(forward[0])
+        allowed = list(moved.get("allowed_next") or [])
+
+    after = _signal_for(scope=scope, event_id=event_id) or before
+    return {"steps": steps, "signal": after}
 
 
 def queue_field_signals(*, scope, event_ids: list[int]) -> dict:

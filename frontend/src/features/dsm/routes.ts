@@ -110,4 +110,9 @@ export const dsm2Routes = {
    *   이므로(`features/nav/roleHome.ts`) 그 자리를 옮기면 첫 화면 규칙이 바뀐다.
    */
   me: { title: '내 정보', path: '/dsm/me' },
+  /**
+   * 외부 연계 — API 키 발급·범위·폐기 · 웹훅 구독 + filters (턴 T · 차선 U56 · WS-17).
+   * ⚠ `/dsm/me` · `/dsm/notify` 와 형제다(변수 조각 없음 — 서로 삼키지 않는다).
+   */
+  integrations: { title: '외부 연계', path: '/dsm/integrations' },
 } as const;

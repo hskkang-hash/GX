@@ -112,6 +112,11 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # ★ [P-164 · 2026-09-17 턴 T · 차선 U56] 스키마 버전 헤더 `X-GX-Schema: 1.1` 한 겹.
+    #   **줄을 새로 넣었다**(기존 줄은 한 자도 안 고쳤다). 자리는 **맨 위** — 바깥일수록
+    #   안쪽 어느 겹이 답하든(캐시 적중 · 관문 401 · 5xx 표지) 전부 지난다.
+    #   본문·상태줄은 안 만진다. 되돌리기는 `SCHEMA_HEADER_ENABLED = False` 한 줄이다.
+    "common.schema_header.SchemaHeaderMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -125,6 +130,13 @@ MIDDLEWARE = [
     #   상태줄은 안 고친다. 하는 일은 「무엇이 샜나」뿐이다.
     #   되돌리기는 `SAFE_ERROR_BODY = False` 한 줄이다.
     "common.error_body.SafeErrorBodyMiddleware",
+    # ★ [SEC-21 · 2026-09-17 턴 T · 차선 F] 율제한 초과(`Ratelimited`)를 **429 JSON · 한국어 ·
+    #   남은 초**로 낸다. **줄을 새로 넣었다**(기존 줄은 한 자도 안 고쳤다). 자리는
+    #   `SafeErrorBodyMiddleware` **바로 아래** — `process_exception` 은 안쪽부터 불리므로
+    #   이 겹이 먼저 `Ratelimited` 를 받고, 그 밖의 예외는 그대로 위로 지나간다.
+    #   dj-core 의 `@ratelimit` 은 §0.4 라 못 고친다 — 길목에서 답 모양만 바꾼다(D-348).
+    #   되돌리기는 이 줄 하나를 빼는 것이다(영문 HTML 403 으로 돌아간다).
+    "common.rate_limit_body.RateLimitBodyMiddleware",
     "core.middleware.csrf_exempt_swagger.CSRFExemptSwaggerMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",

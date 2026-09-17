@@ -64,6 +64,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+#: ★ [P-156 · 턴 T · 차선 Q] probe 표식 규약 — 씨앗 카메라 표를 **한 곳**(`probe_marks.py`)에서 가져온다.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from probe_marks import PROBE_TAG  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 EVIDENCE = ROOT / "docs" / "agent" / "evidence" / "P-118"
 OBSERVED = EVIDENCE / "click_completes.json"
@@ -378,8 +382,13 @@ FLOWS = (
     F("U5#5", "카메라 설치 주소 입력", "u5", None, None, None, None, [],
       note="정본 없음 — 단추는 「표 먼저 보기」·「채우기」(CameraAddress.tsx:177·185)이고 "
            "둘 다 입력 전에는 잠겨 있다. 「표 먼저, 그 다음 채움」이 두 걸음이다"),
-    F("U5#9", "알림 규칙 설정", "u5", None, None, None, None, [],
-      note="정본: 설정 화면·라우트 없다"),
+    #: ★ [턴 T · U56] 설정 화면(`/dsm/notify`)이 턴 S 에 섰고, 「끄기/켜기」 한 번 누름이
+    #:  턴 T 에 생겼다(NotifySettings.tsx · `data-gx=notify-rule-saved`). 옛 note 「화면·라우트
+    #:  없다」는 턴 S 이후 옛말이었다 — 정본 없음을 그대로 두면 영원히 회색이다.
+    #:  ⚠ 심각 등급 행은 서버가 409 로 막는다(심각 0명 금지) — 정보/경고 행의 단추를 누른다.
+    F("U5#9", "알림 규칙 설정", "u5", "/dsm/notify", btn("^(끄기|켜기)$"),
+      ("POST", r"/api/dsm/settings/notify-rules/save"),
+      srv_reflect("/api/dsm/settings/notify-rules/list", "rules"), ["저장했습니다", "규칙 #"]),
     F("U5#10", "알림 채널 설정", "u5", None, None, None, None, [],
       note="정본: 없음 — 알림 채널 결정 대기(대표)"),
     F("U5#14", "시스템 상태 확인", "u5", "/dsm/system", goto(),
@@ -1116,9 +1125,13 @@ def walk(persona, account, viewport, flows, event_id):
         img_resp.clear()             # [P-148] 사진 술어도 흐름마다 새로 센다
         tok = seen_auth[0] or tok    # 앱이 쓰는 자격을 그대로 쓴다
         key = f["key"]
-        screen = (f["screen"] or "").replace("{event}", str(event_id))
+        # ★ [P-162 · 턴 T · U3#3] 흐름마다 **다른 표본**을 쓸 수 있다 — 사진 술어는 `snapshot_path`
+        #   가 비어 있지 않은 사건이어야 한다(참조 없는 씨앗은 GET 이 안 나가는 것이 옳다 —
+        #   턴 S 빨강은 표본 선택이었다). `SPEC["event_by_flow"]` 에 있으면 그 사건, 없으면 공용.
+        flow_event = (SPEC.get("event_by_flow") or {}).get(key, event_id)
+        screen = (f["screen"] or "").replace("{event}", str(flow_event))
         st = dict(f["state"] or {})
-        gp = (st.get("get") or "").replace("{event}", str(event_id))
+        gp = (st.get("get") or "").replace("{event}", str(flow_event))
 
         # ── 누르기 전 상태 (새 GET) ──
         before = None
@@ -1364,8 +1377,28 @@ def walk(persona, account, viewport, flows, event_id):
 # 이벤트 하나 고르기 — **판정이 안 된 것**이라야 U1#11 이 잴 것이 있다
 tok0 = login_api(SPEC["pick_user"], SPEC["pick_pw"])
 code, ev = get("/api/dsm/events?limit=50", tok0)
-unv = [e["event_id"] for e in (ev or {}).get("events", []) if not e.get("verdict")]
-EVENT = unv[0] if unv else ((ev or {}).get("events") or [{}])[0].get("event_id")
+# ★ [P-156 · 턴 T · 차선 Q] **지난 회의 probe 씨앗은 표본에서 뺀다.** 목록 문은 `track_id` 를
+#   안 내므로(api.py:244) 씨앗 카메라 이름(`probe_tag` 로 시작)으로 가른다 — 씨앗은 전부 그 카메라에
+#   심긴다. 이번 회에 심은 것(`keep_event_ids`)만 남긴다. 규약과 순수 함수는 `scripts/probe_marks.py`
+#   (`is_probe` · `exclude`) — 이 줄은 그 필터의 HTTP 판이다. 둘이 갈리면 그쪽이 정본이다.
+_ptag = SPEC.get("probe_tag") or ""
+_keep = set(int(x) for x in (SPEC.get("keep_event_ids") or []))
+_all = list((ev or {}).get("events", []))
+_rows = [e for e in _all
+         if not (_ptag and str(e.get("stream_monitor_name") or "").startswith(_ptag)
+                 and int(e.get("event_id") or 0) not in _keep)]
+print("[P-118] 표본 %d건 중 probe 제외 %d건 (남긴 이번 씨앗 %d)"
+      % (len(_all), len(_all) - len(_rows), len(_keep)), file=sys.stderr)
+unv = [e["event_id"] for e in _rows if not e.get("verdict")]
+EVENT = unv[0] if unv else (_rows or [{}])[0].get("event_id")
+# ★ [P-162 · 턴 T] U3#3 표본 — `snapshot_path` 가 비어 있지 않은 사건. 없으면 공용 표본을 쓰고
+#   그 사실을 적는다(그때 U3#3 빨강은 「참조 없는 표본」이지 제품이 아니다 — 3종 분류 데이터 상태).
+_snap = [e["event_id"] for e in _rows if e.get("snapshot_path")]
+SPEC.setdefault("event_by_flow", {})
+if _snap and "U3#3" not in SPEC["event_by_flow"]:
+    SPEC["event_by_flow"]["U3#3"] = _snap[0]
+print("[P-118] U3#3 표본: %s (snapshot_path 있는 사건 %d건)"
+      % (SPEC["event_by_flow"].get("U3#3", "공용 — 참조 있는 사건 없음"), len(_snap)), file=sys.stderr)
 
 for persona in SPEC["order"]:
     p = SPEC["personas"][persona]
@@ -1381,7 +1414,8 @@ for persona in SPEC["order"]:
 
 browser.close(); pw.stop(); srv.shutdown()
 open(OUT, "w", encoding="utf-8").write(json.dumps(
-    {"measured_at": NOW(), "event_id": EVENT, "api": API, "spa": SPA,
+    {"measured_at": NOW(), "event_id": EVENT, "event_by_flow": SPEC.get("event_by_flow") or {},
+     "api": API, "spa": SPA,
      "observations": results}, ensure_ascii=False, indent=2))
 print("WROTE %s · %d행" % (OUT, len(results)))
 '''
@@ -1423,7 +1457,8 @@ API_PATHS = {
 API_BODIES = {}
 
 
-def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://localhost:3002"):
+def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://localhost:3002",
+            keep_event_ids=()):
     pw_role = os.environ.get("GX_SEED_ROLE_PASSWORD") or ""
     pw_probe = os.environ.get("GX_PROBE_PASSWORD") or ""
     if not pw_role or not pw_probe:
@@ -1448,6 +1483,8 @@ def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://loca
         #   쓰인다(사람 순서가 U1…U6 이고 U6 이 마지막이다).
         "admin_account": ["gxseed_u5_sysop", pw_role],
         "pick_user": "gxprobe_q", "pick_pw": pw_probe,
+        # ★ [P-156] probe 표식 — 지난 회 씨앗 제외 · 이번 회 씨앗 유지 (`scripts/probe_marks.py`)
+        "probe_tag": PROBE_TAG, "keep_event_ids": list(keep_event_ids or []),
     }
     env = dict(os.environ, MSYS_NO_PATHCONV="1")
     # 드라이버 소스는 **파일로** 넣고, SPEC 은 **stdin 으로** 넣는다 — 두 번에 나눈다
@@ -1533,6 +1570,8 @@ def main() -> int:
     ap.add_argument("--container", default="gx-shell")
     ap.add_argument("--api", default="http://gx-nginx-e:8500")
     ap.add_argument("--spa", default="http://localhost:3002")
+    ap.add_argument("--keep-event", type=int, action="append", default=[],
+                    help="[P-156] 이번 회에 심은 probe 씨앗 id — 표본에서 빼지 않는다 (여러 번 가능)")
     args = ap.parse_args()
 
     if args.self_test:
@@ -1542,7 +1581,7 @@ def main() -> int:
         if rc != EXIT_OK:
             print("%s 자기시험이 깨졌다 — 재지 않는다" % TAG)
             return rc
-        return measure(args.container, args.api, args.spa)
+        return measure(args.container, args.api, args.spa, keep_event_ids=args.keep_event)
     if args.list:
         for f in FLOWS:
             print("%-7s %-26s | 누르는 것 %-14s | 기대 호출 %-8s %-42s | 상태 %-15s | 문구 %s"

@@ -138,6 +138,8 @@ BUCKETS = (BUCKET_RED, BUCKET_GREEN, BUCKET_PUBLIC, BUCKET_GREY)
 #:   여기 없는데 익명이 자료를 읽으면 **빨강**이다.
 PUBLIC_READ_BY_DESIGN: dict[str, str] = {
     "/api/v1/health": "생존 확인 — 로드밸런서·감시기가 자격증명 없이 부른다. 테넌트 자료가 아니다",
+    "/api/dsm/health": "생존 확인 — 인증 없이 부른다 · 검사 이름과 상태 이름(ok/fail)뿐 · 테넌트 "
+                       "자료·호스트명 없음 (턴 T U56 · tests/test_f05_event_api.py::PUBLIC_ENTRY_BY_DESIGN 과 한 쌍)",
     "/api/v1/auth/csrf-token": "CSRF 토큰 — **로그인하기 전에** 받아야 한다. 토큰이 있어야 "
                                "받을 수 있으면 로그인할 수 없다",
     # ★ [D-461 · 2026-09-15 턴 P] 로그인 화면(§0.4 rj-core)이 **로그인 전에** 부른다.

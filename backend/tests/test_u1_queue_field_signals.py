@@ -234,3 +234,151 @@ class TheDoorIsNotOpenToAnonymousTest(TestCase):
         self.assertEqual(
             404, resp.status_code,
             "없는 경로가 404 가 아닙니다 — 위 시험의 401 이 무엇을 뜻하는지 알 수 없습니다.")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 T · P-164 U1 ① — 종결 확인 카드 ↔ U3 `field-reply kind=done` 배선
+# ═══════════════════════════════════════════════════════════════════════════
+class U3StoredFormIsReadTest(TestCase):
+    """U3 가 실제로 쓰는 저장 모양(`[FIELD:done] …`)을 **같은 함수**로 되읽는다."""
+
+    def test_the_u3_stored_prefix_is_classified(self) -> None:
+        from apps.dsm import field, queue_signals
+
+        stored_done, _ = field.compose_reply(kind="done", text="")
+        stored_support, _ = field.compose_reply(kind="support", text="사다리차")
+        stored_note, _ = field.compose_reply(kind="note", text="연기 없음")
+
+        self.assertEqual("done", queue_signals.classify(SimpleNamespace(text=stored_done)))
+        self.assertEqual("support", queue_signals.classify(SimpleNamespace(text=stored_support)))
+        self.assertEqual("", queue_signals.classify(SimpleNamespace(text=stored_note)))
+
+    def test_the_prefix_never_reaches_a_human_slot(self) -> None:
+        """★ 접두가 사람의 자리에 보이면 U3 판정의 실패다 — 본문은 깨끗해야 한다."""
+        from apps.dsm import field, queue_signals
+
+        stored, clean = field.compose_reply(kind="done", text="잔불 없음")
+        self.assertEqual(clean, queue_signals._text_of(SimpleNamespace(text=stored)))
+        self.assertNotIn("[FIELD:", clean)
+
+    def test_the_closed_name_matches_the_kernel(self) -> None:
+        """두 벌 상수 — 갈리는지를 시험이 본다(F-05 규약대로 커널을 여기서만 본다)."""
+        from apps.dsm import queue_signals
+        from kernels.k1_event import response_flow
+
+        self.assertEqual(response_flow.CLOSED, queue_signals.CLOSED_STATE)
+        self.assertEqual(response_flow.OCCURRED, queue_signals.OCCURRED_STATE)
+
+
+class ConfirmDoneTest(DsmFixture):
+    """회신 있음 → 카드 1 · 확인 → 기록 닫힘 → 재조회 0 — **서버 기록이 닫는다.**"""
+
+    def _done_reply(self, eid: int) -> None:
+        """U3 의 실제 쓰기 모양 그대로 — `compose_reply` 가 만든 문자열을 커널로."""
+        from apps.dsm import field, services
+
+        stored, _ = field.compose_reply(kind="done", text="")
+        services.field_reply(scope=self.scope_a, event_id=eid, text=stored)
+
+    def test_confirm_closes_the_record_and_the_card_goes_to_zero(self) -> None:
+        from apps.dsm import queue_signals, services
+
+        eid = self._event(self.stream_a)
+        services.advance_response(scope=self.scope_a, event_id=eid, to_state="acknowledged")
+        self._done_reply(eid)
+
+        before = queue_signals.queue_field_signals(scope=self.scope_a, event_ids=[eid])
+        self.assertEqual(1, before["action_done_count"], "회신 있음 → 카드 1 이어야 한다")
+        self.assertTrue(before["wired"])
+        self.assertEqual("acknowledged", before["signals"][0]["response_state"])
+        self.assertNotIn("[FIELD:", before["signals"][0]["action_done_text"])
+
+        out = queue_signals.confirm_done(scope=self.scope_a, event_id=eid)
+        self.assertEqual(["in_progress", "closed"], out["steps"], "한 칸씩 · 건너뛰기 없음")
+        self.assertEqual("closed", out["signal"]["response_state"])
+
+        # ★ 서버 기록으로 되읽는다 — 함수의 반환값이 아니라 새 GET.
+        state = services.response_state(scope=self.scope_a, event_id=eid)
+        self.assertEqual("closed", state["response_state"])
+
+        after = queue_signals.queue_field_signals(scope=self.scope_a, event_ids=[eid])
+        self.assertEqual(0, after["action_done_count"], "확인 뒤 재조회는 0 이어야 한다")
+        self.assertTrue(after["signals"][0]["closed"])
+        # 회신 자체는 남는다 — 지운 것이 아니라 기록이 닫힌 것이다.
+        self.assertEqual(1, after["signals"][0]["reply_total"])
+
+    def test_without_a_done_reply_nothing_moves(self) -> None:
+        """「확인」은 회신 없는 사건을 닫는 단추가 아니다 — 409 · 기록 그대로."""
+        from apps.dsm import queue_signals, services
+
+        eid = self._event(self.stream_a)
+        services.advance_response(scope=self.scope_a, event_id=eid, to_state="acknowledged")
+
+        with self.assertRaises(queue_signals.ConfirmDoneRejected):
+            queue_signals.confirm_done(scope=self.scope_a, event_id=eid)
+        self.assertEqual(
+            "acknowledged",
+            services.response_state(scope=self.scope_a, event_id=eid)["response_state"])
+
+    def test_before_acknowledgement_it_does_not_close(self) -> None:
+        """접수한 사람이 없는 종결은 만들지 않는다(D-290)."""
+        from apps.dsm import queue_signals, services
+
+        eid = self._event(self.stream_a)
+        self._done_reply(eid)
+
+        with self.assertRaises(queue_signals.ConfirmDoneRejected):
+            queue_signals.confirm_done(scope=self.scope_a, event_id=eid)
+        self.assertEqual(
+            "occurred",
+            services.response_state(scope=self.scope_a, event_id=eid)["response_state"])
+
+    def test_pressing_twice_is_rejected_the_second_time_and_stays_closed(self) -> None:
+        from apps.dsm import queue_signals, services
+
+        eid = self._event(self.stream_a)
+        services.advance_response(scope=self.scope_a, event_id=eid, to_state="acknowledged")
+        self._done_reply(eid)
+        queue_signals.confirm_done(scope=self.scope_a, event_id=eid)
+
+        with self.assertRaises(queue_signals.ConfirmDoneRejected):
+            queue_signals.confirm_done(scope=self.scope_a, event_id=eid)
+        self.assertEqual(
+            "closed",
+            services.response_state(scope=self.scope_a, event_id=eid)["response_state"])
+
+    def test_someone_elses_event_is_404(self) -> None:
+        from django.http import Http404
+
+        from apps.dsm import queue_signals
+
+        theirs = self._event(self.stream_b)
+        with self.assertRaises(Http404):
+            queue_signals.confirm_done(scope=self.scope_a, event_id=theirs)
+
+
+class ConfirmDoneDoorTest(TestCase):
+    """SEC-04 — 새 문도 계정 뒤에 선다. 실재하지 않는 id 로 두드린다."""
+
+    def setUp(self):
+        import contextlib
+
+        with contextlib.suppress(Exception):
+            from core.middleware.refresh_token import thread_local
+
+            thread_local.request = None
+        super().setUp()
+
+        from tests.no_cache import NO_CACHE
+
+        self.client = Client(**NO_CACHE)
+
+    def test_anonymous_is_rejected_and_the_route_exists(self) -> None:
+        resp = self.client.post(
+            "/api/dsm/queue/field-signals/999999999/confirm-done")
+        self.assertIn(resp.status_code, (401, 403),
+                      f"익명에게 {resp.status_code} 를 냈습니다.")
+        # 음성 대조 — 없는 경로는 404 다.
+        gone = self.client.post(
+            "/api/dsm/queue/field-signals/999999999/confirm-done-does-not-exist")
+        self.assertEqual(404, gone.status_code)

@@ -14,9 +14,10 @@
  * ★ **못 읽은 것을 「없다」로 그리지 않는다.** `wired` 가 거짓이면 화면은
  *   「배선 대기」라고 적는다 — 회신은 오는데 종류가 아직 안 달린 상태가 실재한다.
  */
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { dsmGet, dsmU1Endpoint } from '../api';
+import { dsmGet, dsmPostQueryOnce, dsmU1Endpoint, intentKey } from '../api';
+import { userFacingError } from '../copy';
 import { useDsmResource } from './useDsmResource';
 
 /** 한 사건의 신호. **서버가 정한 이름을 그대로 쓴다.** */
@@ -27,10 +28,21 @@ export interface QueueFieldSignal {
   typed_total: number;
   support_requested: boolean;
   support_text: string;
+  /** 조치 완료 회신이 있고 **기록이 아직 열려 있다** — 닫힌 기록은 거짓이다(턴 T). */
   action_done: boolean;
   action_done_text: string;
+  /** 서버 기록의 처리 단계 — 카드가 되읽는 값. */
+  response_state: string;
+  allowed_next: string[];
+  closed: boolean;
   last_text: string;
   last_author: string;
+}
+
+/** 「확인」의 응답 — 옮긴 칸들과 닫힌 뒤의 신호. */
+export interface ConfirmDoneResult {
+  steps: string[];
+  signal: QueueFieldSignal;
 }
 
 export interface QueueFieldSignals {
@@ -60,6 +72,17 @@ export interface UseQueueSignalsResult {
   wired: boolean;
   /** 한 번이라도 답을 받았는가. 거짓이면 아직 아무 말도 하지 않는다. */
   loaded: boolean;
+  /** 회신은 왔는데 종류가 하나도 안 달린 수 — 「배선 대기」를 가르는 분모. */
+  replyTotal: number;
+  /**
+   * 종결 확인 「확인」 — 서버 기록을 닫고 신호를 다시 읽는다(턴 T · P-164 U1 ①).
+   * 성공하면 닫힌 뒤의 응답을, 실패하면 `confirmError` 에 한 줄을 남기고 `null` 을 준다.
+   */
+  confirmDone: (eventId: number) => Promise<ConfirmDoneResult | null>;
+  confirming: boolean;
+  confirmError: string;
+  /** 큐 쪽이 상태를 옮긴 뒤 신호도 같이 다시 읽게 한다. */
+  reload: () => void;
 }
 
 export function useQueueSignals(eventIds: number[]): UseQueueSignalsResult {
@@ -89,11 +112,44 @@ export function useQueueSignals(eventIds: number[]): UseQueueSignalsResult {
     [data],
   );
 
+  const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState('');
+  const reload = resource.reload;
+
+  const confirmDone = useCallback(
+    async (eventId: number): Promise<ConfirmDoneResult | null> => {
+      setConfirming(true);
+      setConfirmError('');
+      try {
+        const out = await dsmPostQueryOnce<ConfirmDoneResult>(
+          dsmU1Endpoint.confirmDone(eventId),
+          {},
+          intentKey(`q.confirm-done:${eventId}`),
+        );
+        reload();
+        return out;
+      } catch (err) {
+        setConfirmError(
+          userFacingError('FocusQueue.confirmDone', err, '종결 확인이 처리되지 않았습니다.'),
+        );
+        return null;
+      } finally {
+        setConfirming(false);
+      }
+    },
+    [reload],
+  );
+
   return {
     byEvent,
     supportCount: data?.support_count ?? 0,
     doneSignals,
     wired: Boolean(data?.wired),
     loaded: resource.state === 'data' || resource.state === 'empty',
+    replyTotal: data?.reply_total ?? 0,
+    confirmDone,
+    confirming,
+    confirmError,
+    reload,
   };
 }

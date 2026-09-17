@@ -74,6 +74,16 @@ from kernels.k2_notify.rule_admin import (
     save_rule,
     send_test_notification,
 )
+# ★ [턴 T · 차선 U3 · P-160 ③] 웹푸시 발송 문 — **부르는 쪽과 같은 커밋에 열린다**
+#   (`apps/dsm/notify_prefs.send_test_push` 가 이 이름을 부른다 · `webpush.py` 머리말).
+#   턴 S 에 이 한 줄을 넣지 않은 이유(아무도 안 부르는 공개 면 = 잠든 코드)가 이번에 풀렸다.
+from kernels.k2_notify.webpush import (
+    CHANNEL_NOT_CHOSEN_REASON,
+    QUIET_HOURS_REASON,
+    WebPushNotConfigured,
+    send_webpush,
+    webpush_missing_env,
+)
 
 __all__ = [
     # DA-04 §2 K2 공개 면 4개
@@ -101,6 +111,14 @@ __all__ = [
     "my_notify_reach",
     "CRITICAL",
     "NotifyReach",
+    # ★ 턴 T · U3 (P-160 ③) — 웹푸시 「내 기기로 지금 한 통」. 행은 `channel=webpush` 로
+    #   남고 훈련 표식(`drill:`)을 달아 5분 억제의 근거가 되지 않는다.
+    "send_webpush",
+    "webpush_missing_env",
+    "WebPushNotConfigured",
+    #: M4 설정이 발송을 막았을 때 행에 남는 사유 **이름** — 화면·시험이 같은 글자를 본다.
+    "QUIET_HOURS_REASON",
+    "CHANNEL_NOT_CHOSEN_REASON",
     # ★ 차선 Q (2026-09-04) OPS-14 생존 알림 — **매일 08:00 1통. 안 오면 장애다.**
     #   격리 대장(`tests/test_tenant_isolation.WRITE_NO_PROBE`)에 **선등재된 이름**이고,
     #   면이 실제로 열렸으므로 그 줄은 probe 로 옮겨져야 한다(P-8).

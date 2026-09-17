@@ -308,3 +308,72 @@ def split_reply(stored: str) -> tuple[str, str]:
         #: 계약 밖 접두는 **본문을 통째로** 돌려준다 — 접두를 떼면 그 사실이 사라진다.
         return name, raw
     return name, body
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# M1 「처리함」 — 내가 회신한 사건 (턴 T · 차선 U3)
+# ═══════════════════════════════════════════════════════════════════════════
+#: 회신 감사 행의 이름 — `kernels/k1_event/field_reply.py::LOGGER_NAME · ACTION` 과 **글자가
+#: 같아야 한다**(커널 비공개 모듈은 App 이 import 하지 못한다 · D-278).
+#: `tests/test_u3_handled_events.py` 가 두 벌이 갈리는 것을 본다.
+FIELD_REPLY_LOGGER = "guardianx.dsm.field_reply"
+FIELD_REPLY_ACTION = "field_reply"
+
+
+def handled_events(*, scope, limit: int = 50) -> list[dict]:
+    """내가 현장 회신(`field_reply`)을 낸 사건들 — **최근 회신 순**, 사건마다 한 줄.
+
+    회신의 정본은 감사 한 줄이다(`kernels/k1_event/field_reply.py`). 여기서는 **내**
+    줄만 읽고(`user_id`), 사건은 커널 `get_event` 문지기를 지나 가져온다 — 남의 사건
+    번호가 섞여 있어도(있을 수 없지만) 404 로 빠진다.
+    """
+    from django.apps import apps
+
+    from apps.dsm import services as _services   # 커널은 services 한 곳만 부른다(F-05 「하나로만」)
+
+    actor = scope.require_actor()
+    AuditLogs = apps.get_model("logger", "AuditLogs")
+    rows = (AuditLogs._base_manager
+            .filter(logger_name=FIELD_REPLY_LOGGER, api_name=FIELD_REPLY_ACTION,
+                    user_id=getattr(actor, "pk", None))
+            .order_by("-id")[:2000])
+    seen: dict[int, dict] = {}
+    for row in rows:
+        raw = getattr(row, "data_after", None)
+        payload = raw if isinstance(raw, dict) else {}
+        if isinstance(raw, (str, bytes)):
+            try:
+                import json
+
+                payload = json.loads(raw) or {}
+            except (ValueError, TypeError):
+                payload = {}
+        event_id = payload.get("event_id")
+        if not isinstance(event_id, int) or event_id in seen:
+            continue
+        seen[event_id] = {
+            "last_reply_at": getattr(row, "create_datetime", None)
+                             or getattr(row, "created_on", None),
+            "last_reply_text": split_reply(str(payload.get("text") or ""))[1][:120],
+            "last_reply_kind": split_reply(str(payload.get("text") or ""))[0],
+        }
+        if len(seen) >= limit:
+            break
+
+    out: list[dict] = []
+    for event_id, meta in seen.items():
+        try:
+            e = _services.event_detail(scope=scope, event_id=event_id)
+        except Exception:      # noqa: BLE001 — 404(남의 것·지워진 것)는 목록에서 빠진다
+            continue
+        out.append({
+            "event_id": e.event_id, "event_type": e.event_type,
+            "severity": e.severity, "status": e.status, "verdict": e.verdict,
+            "occurred_at": e.occurred_at, "last_seen_at": e.last_seen_at,
+            "stream_monitor_id": e.stream_monitor_id,
+            "stream_monitor_name": e.stream_monitor_name,
+            "lat": e.lat, "lng": e.lng, "snapshot_path": e.snapshot_path,
+            "response_state": e.response_state,
+            **meta,
+        })
+    return out

@@ -27,7 +27,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Main } from 'rj-core';
 
-import { dsmEndpoint, dsmGet, dsmPostQueryOnce, intentKey } from '../api';
+import {
+  dsmDelete, dsmEndpoint, dsmGet, dsmPostQueryOnce, dsmU24StatsEndpoint, intentKey,
+} from '../api';
 import { linkStatusBadge, linkStatusLabel, userFacingError } from '../copy';
 import { VerdictBadge } from '../components/ResponseSteps';
 import StateBoundary from '../components/StateBoundary';
@@ -43,7 +45,7 @@ import {
   SYSTEM_EVENT_TYPES,
 } from '../severity';
 import { absolute, stamp, TIMEZONE_NOTE } from '../time';
-import type { EventRow, EventSummary } from '../types';
+import type { EventRow, EventSummary, UpperReportFlags } from '../types';
 
 const { Text, Title } = Typography;
 
@@ -489,6 +491,45 @@ export default function EventList() {
 
   const rows = useMemo(() => events.data?.events ?? [], [events.data]);
 
+  /**
+   * ★ [턴 T · 차선 U24 · P-164 ②] **상급 보고 체크** — 목록에서 토글.
+   *   모델 칸은 이미 있다(`DsmUpperReportFlag` · 실측). 체크 여부는 **서버가 말한다** —
+   *   목록의 사건 id 로 한 번에 묻고(`upper-report/flags`), 누른 뒤에는 **다시 읽는다**.
+   *   화면이 자기 상태를 먼저 켜지 않는다 — 켰다가 서버가 거절하면 「했다」가 거짓이 된다.
+   *   서버 값이 오지 않으면(실패·403) 칸에 「확인 못 함」이라고 적는다 — 회색이지 초록이 아니다.
+   *   감사는 서버가 남긴다(성공·실패 모두) — 화면은 감사 번호를 안내 문장에 실을 뿐이다.
+   */
+  const idsKey = useMemo(() => rows.map((r) => r.event_id).join(','), [rows]);
+  const flags = useDsmResource<UpperReportFlags>(
+    () => dsmGet<UpperReportFlags>(dsmU24StatsEndpoint.upperReportFlags, { event_ids: idsKey }),
+    [idsKey],
+    { enabled: idsKey.length > 0 },
+  );
+  const [flagBusyId, setFlagBusyId] = useState<number | null>(null);
+  const toggleUpperReport = useCallback(
+    async (eventId: number, flagged: boolean) => {
+      setFlagBusyId(eventId);
+      try {
+        const out = flagged
+          ? await dsmDelete<{ audit_id: number }>(dsmU24StatsEndpoint.upperReport(eventId))
+          : await dsmPostQueryOnce<{ audit_id: number }>(
+              dsmU24StatsEndpoint.upperReport(eventId),
+              { reason: '목록에서 체크' },
+              intentKey(`upper-report:${eventId}`),
+            );
+        message.success(
+          `${flagged ? '상급 보고 체크를 풀었습니다' : '상급 보고로 표시했습니다'} (감사 #${out.audit_id}).`,
+        );
+        flags.reload(); // 누른 뒤를 본다 — 응답이 아니라 다시 읽은 값이 증거다
+      } catch (err) {
+        message.error(userFacingError('EventList.upperReport', err, '상급 보고 표시를 바꾸지 못했습니다.'));
+      } finally {
+        setFlagBusyId(null);
+      }
+    },
+    [flags],
+  );
+
   return (
     <Main>
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
@@ -782,6 +823,35 @@ export default function EventList() {
                       </Button>
                     </Space>
                   ),
+                },
+                {
+                  // ★ [턴 T · 차선 U24] 상급 보고 체크 — 서버 값으로만 그린다(위 머리말).
+                  title: '상급 보고',
+                  key: 'upper_report',
+                  width: 120,
+                  render: (_v: unknown, row: EventRow) => {
+                    const flag = flags.data?.flags?.[String(row.event_id)];
+                    const known = flags.state === 'data' || flags.state === 'empty';
+                    return (
+                      <Space size={4} onClick={(ev) => ev.stopPropagation()}>
+                        {!known ? (
+                          <Text type="secondary" style={{ fontSize: 12 }}>
+                            {flags.state === 'loading' ? '확인 중' : '확인 못 함'}
+                          </Text>
+                        ) : (
+                          <Button
+                            size="small"
+                            type={flag ? 'primary' : 'default'}
+                            loading={flagBusyId === row.event_id}
+                            title={flag?.reported_at ? `보고 시각 ${absolute(flag.reported_at)}` : '상급 보고로 표시'}
+                            onClick={() => toggleUpperReport(row.event_id, Boolean(flag))}
+                          >
+                            {flag ? '보고함' : '보고 표시'}
+                          </Button>
+                        )}
+                      </Space>
+                    );
+                  },
                 },
                 {
                   title: '발생',

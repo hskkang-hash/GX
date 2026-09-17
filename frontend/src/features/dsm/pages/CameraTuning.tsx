@@ -31,6 +31,14 @@
  *   0%가 아니라 「아직 잴 수 없음」이고, 확신도가 비어 있는 사건만 있는 카메라의
  *   시뮬은 시간당 0건이 아니라 「잴 수 없음」이다. 0으로 적으면 판정을 미루기만
  *   해도 지표가 좋아지고, 문턱을 올리면 알림이 사라진 것처럼 보인다.
+ *
+ * ★ 턴 T (P-164 U24 ④·⑤ · D-479) — **두 축의 이름을 화면 문구로 가른다.**
+ *   슬라이더 위에는 「시뮬 축 — 확신도」, 저장 칸 위에는 「저장 축 — 항목 단위」라고
+ *   **다른 말로** 적는다. 같은 말(「문턱」)로 뭉개면 사람은 슬라이더 값이 저장되는 줄
+ *   안다 — 저장되지 않는다(D-479: 탐지는 여전히 0.0 을 읽는다). 「갈라 둔 것이 옳다」.
+ *   그리고 화면이 **둘로 열린다**: `mode="false-positive"`(정본 `/dsm/stats/false-positive` ·
+ *   통계 축 — 오탐률 표만) · `mode="tuning"`(`/dsm/cameras/tuning` · 카메라 축 — 표는
+ *   고르는 자리이고 시뮬·저장이 본문). 파일은 하나다 — 두 벌을 두지 않는다.
  */
 import {
   Alert,
@@ -51,6 +59,7 @@ import {
   message,
 } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   dsmPostQuery,
@@ -60,6 +69,7 @@ import {
   intentKey,
 } from '../api';
 import { userFacingError } from '../copy';
+import { dsmU24Routes } from '../routes.u24';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { absolute } from '../time';
@@ -83,7 +93,17 @@ function rateLine(row: CameraFalsePositiveRow): string {
   return `${Math.round(row.false_positive_rate * 100)}% (${row.false_positive}/${row.reviewed})`;
 }
 
-export default function CameraTuning() {
+export type CameraTuningMode = 'false-positive' | 'tuning';
+
+/** 화면 문구 — 두 축의 이름. GX-COPY 정본에 없어 **사전 등재 요청**(보고에 한 줄). */
+const AXIS_COPY = {
+  simulate: '시뮬 축 — 확신도 (0~1 · 모델이 낸 값 · 저장되지 않음)',
+  save: '저장 축 — 항목 단위 (서버가 정한 단위 · 사유를 적어야 저장됨)',
+} as const;
+
+export default function CameraTuning({ mode = 'tuning' }: { mode?: CameraTuningMode } = {}) {
+  const navigate = useNavigate();
+  const isFpOnly = mode === 'false-positive';
   const [days, setDays] = useState<number>(7);
   const [cameraId, setCameraId] = useState<number | null>(null);
   const [thresholdKey, setThresholdKey] = useState<string | undefined>();
@@ -228,8 +248,13 @@ export default function CameraTuning() {
   return (
     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
       <Title level={4} style={{ margin: 0 }}>
-        카메라 오탐률 · 임계값
+        {isFpOnly ? '카메라 오탐률' : '카메라 임계값 튜닝'}
       </Title>
+      <Text type="secondary" style={{ fontSize: 12 }}>
+        {isFpOnly
+          ? '통계 축의 화면입니다 — 오탐률 표만 있습니다. 문턱을 옮기거나 저장하려면 카메라 축의 「임계값 튜닝」으로 갑니다.'
+          : '카메라 축의 화면입니다 — 위 표에서 카메라를 고르고 아래에서 문턱을 옮겨 보고(시뮬 축) 저장합니다(저장 축). 두 축은 다른 칸입니다.'}
+      </Text>
 
       {/* ── 어느 카메라가 시끄러운가 ─────────────────────────────────────── */}
       <Card
@@ -243,6 +268,15 @@ export default function CameraTuning() {
               options={DAY_OPTIONS.map((d) => ({ value: d, label: `${d}일` }))}
             />
             <Button onClick={cameras.reload}>새로고침</Button>
+            {isFpOnly ? (
+              <Button onClick={() => navigate(dsmU24Routes.cameraTuning.path)}>
+                임계값 튜닝으로
+              </Button>
+            ) : (
+              <Button onClick={() => navigate(dsmU24Routes.falsePositive.path)}>
+                오탐률 통계로
+              </Button>
+            )}
           </Space>
         }
       >
@@ -312,8 +346,9 @@ export default function CameraTuning() {
         </StateBoundary>
       </Card>
 
-      {/* ── 문턱을 옮겨 보기 (시뮬) ──────────────────────────────────────── */}
-      <Card size="small" title="문턱을 옮겨 보기">
+      {/* ── 문턱을 옮겨 보기 (시뮬) — 카메라 축(튜닝)에서만 ─────────────────── */}
+      {!isFpOnly && (
+      <Card size="small" title="문턱을 옮겨 보기 (시뮬 축)">
         {!cameraId ? (
           <Text type="secondary">
             위 표에서 카메라를 한 대 고르면 여기에서 문턱을 옮겨 볼 수 있습니다.
@@ -328,7 +363,7 @@ export default function CameraTuning() {
             />
             <Row gutter={16} align="middle">
               <Col xs={24} md={14}>
-                <Text type="secondary">확신도 문턱</Text>
+                <Text type="secondary">{AXIS_COPY.simulate}</Text>
                 <Slider
                   min={0}
                   max={1}
@@ -404,9 +439,11 @@ export default function CameraTuning() {
           </Space>
         )}
       </Card>
+      )}
 
-      {/* ── 저장 · 재조회 ────────────────────────────────────────────────── */}
-      <Card size="small" title="임계값 저장">
+      {/* ── 저장 · 재조회 — 카메라 축(튜닝)에서만 ──────────────────────────── */}
+      {!isFpOnly && (
+      <Card size="small" title="임계값 저장 (저장 축)">
         <StateBoundary
           state={keys.state}
           reason={keys.reason}
@@ -416,9 +453,11 @@ export default function CameraTuning() {
           emptyText="카메라마다 따로 정할 수 있는 임계값 항목이 아직 없습니다."
         >
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            <Text type="secondary">{AXIS_COPY.save}</Text>
             <Text type="secondary">
               고칠 항목은 서버가 알려 준 것만 고를 수 있습니다. 바꿀 수 없도록 정해진
-              값은 이 목록에 없습니다.
+              값은 이 목록에 없습니다. 위 슬라이더(시뮬 축)의 값은 여기로 저절로 오지
+              않습니다 — 「슬라이더 값 넣기」를 눌러 옮겨 담을 때만 옵니다.
             </Text>
             <Space wrap align="center">
               <Select
@@ -486,6 +525,7 @@ export default function CameraTuning() {
           </Space>
         </StateBoundary>
       </Card>
+      )}
     </Space>
   );
 }

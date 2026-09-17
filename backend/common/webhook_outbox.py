@@ -290,7 +290,17 @@ _SEVERITY_ORDER = ("info", "warning", "critical")
 
 
 def _passes_filter(row, event) -> bool:
-    """이 구독이 이 이벤트를 받는가. **빈 목록은 「전부」다.**"""
+    """이 구독이 이 이벤트를 받는가. **빈 목록은 「전부」다.**
+
+    ★ 2026-09-17 (턴 T · U56 · 병합 조율자) — WS-17 `filters`(종류·심각도·카메라)가
+      먼저 거른다. 판정은 App 쪽 `subscription_accepts` 한 곳에 있고 여기서는 부르기만
+      한다(D-377 「부르는 쪽과 같은 커밋」 — tests/test_u56_webhook_filters.py 의 xfail 을
+      이 줄과 함께 뗐다).
+    """
+    from apps.dsm.webhook_key_service import subscription_accepts
+
+    if not subscription_accepts(getattr(row, "filters", None), event):
+        return False
     types = tuple(row.event_types or ())
     if types and event.event_type not in types:
         return False

@@ -190,3 +190,41 @@ class DsmU1API:
         raw = [part for part in (event_ids or "").split(",") if part.strip()]
         return queue_signals.queue_field_signals(
             scope=_scope(request), event_ids=raw)
+
+    # ── 종결 확인 카드의 「확인」 — 서버 기록을 닫는다 (턴 T · P-164 U1 ①) ────
+    #
+    # ★ 경로는 `/queue/...` 가지 — 앞 컨트롤러의 `/events/{id}/...` 패턴에 안 걸린다.
+    # ★ 규칙은 K1 이 든다(`queue_signals.confirm_done` 머리말). 이 문은 「현장이
+    #   조치 완료를 보낸 열린 사건」에서만 기록을 `closed` 까지 옮기고, 그 밖에는
+    #   409 다 — 회신 없는 사건을 닫는 단추는 거짓말이다.
+    # ★ 조율자 등재용 경로 문자열: `POST /api/dsm/queue/field-signals/{event_id}/confirm-done`
+    @route.post("/queue/field-signals/{int:event_id}/confirm-done",
+                auth=JwtOrInboundKey())
+    @tenant_scoped(reason="종결 확인 — 남의 테넌트 사건을 닫을 수 없다 (쓰기 IDOR)")
+    @idempotent("dsm.queue.field-signals.confirm-done")
+    def confirm_done(self, request, event_id: int):
+        """「확인」 한 번 → `acknowledged`/`in_progress` 에서 `closed` 까지(감사는 칸마다).
+
+        거절을 4xx 로 나눈다 — 소비 함수가 던지는 것을 **그대로** 옮긴다:
+          404  없는 이벤트 · 남의 테넌트 이벤트
+          409  확인할 조치 완료 회신이 없다 · 이미 닫혔다 · 아직 접수 전(`occurred`) ·
+               K1 전이 거절
+          403  요청자가 없다(시스템 스코프) · 되돌림 권한(이 문은 앞으로만 간다)
+        """
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return queue_signals.confirm_done(
+                scope=_scope(request), event_id=event_id)
+        except Http404:
+            raise HttpError(404, "그런 이벤트가 없습니다.")
+        except queue_signals.ConfirmDoneRejected as exc:
+            raise HttpError(409, str(exc))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except services.ResponseTransitionNeedsManager as exc:
+            raise HttpError(403, str(exc))
+        except services.ResponseTransitionNeedsReason as exc:
+            raise HttpError(400, str(exc))
+        except services.ResponseTransitionForbidden as exc:
+            raise HttpError(409, str(exc))

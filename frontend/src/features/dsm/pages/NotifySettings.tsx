@@ -316,8 +316,30 @@ export default function NotifySettingsPage() {
                   {
                     title: '켜짐',
                     dataIndex: 'is_active',
-                    render: (on: boolean) =>
-                      on ? <Tag color="green">켜짐</Tag> : <Tag>꺼짐</Tag>,
+                    // ★ [턴 T · U5#9 「누른 뒤」] 한 번 누름으로 규칙 하나가 바뀌는 자리.
+                    //   같은 저장 문(`notify-rules/save`)에 켜짐만 뒤집어 보낸다 — 심각을
+                    //   0명으로 만드는 끄기는 서버가 409 로 거절하고 그 사유가 아래 칸에 뜬다.
+                    render: (on: boolean, row: RuleRow) => (
+                      <Space size="small">
+                        {on ? <Tag color="green">켜짐</Tag> : <Tag>꺼짐</Tag>}
+                        <Button
+                          size="small"
+                          disabled={saving}
+                          onClick={() =>
+                            onSave({
+                              severity: row.severity,
+                              role_code: row.role_code,
+                              channels: row.channels,
+                              zone: row.zone ?? '',
+                              is_active: !on,
+                              rule_id: String(row.rule_id),
+                            })
+                          }
+                        >
+                          {on ? '끄기' : '켜기'}
+                        </Button>
+                      </Space>
+                    ),
                   },
                   {
                     title: '',
@@ -405,6 +427,7 @@ export default function NotifySettingsPage() {
               ) : null}
               {saved ? (
                 <Alert
+                  data-gx="notify-rule-saved"
                   style={{ marginTop: 12 }}
                   type="success"
                   showIcon

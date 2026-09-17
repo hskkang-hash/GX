@@ -501,7 +501,11 @@ class KernelPublicSurfaceTest(TestCase):
                "save_rule",
                "send_test_notification",
                # ★ S-15 「내 정보」의 읽기 면. 쓰기(`me/notify-prefs`)는 U3 의 WS-02 다.
-               "my_notify_reach"]
+               "my_notify_reach",
+               # ★ 턴 T · U3 (P-160 ③) — 웹푸시 발송 문. 부르는 쪽(`notify_prefs.
+               #   send_test_push`)과 같은 커밋에서 열렸다.
+               "send_webpush", "webpush_missing_env", "WebPushNotConfigured",
+               "QUIET_HOURS_REASON", "CHANNEL_NOT_CHOSEN_REASON"]
 
     def test_public_surface_matches_da04(self) -> None:
         from kernels import k2_notify

@@ -251,6 +251,9 @@ def collect() -> tuple[dict, tuple, str | None]:
 
             mapping = set(getattr(dj_settings, "K3_ROLE_PRESET_MAP", None) or {})
             declared = set(getattr(dj_settings, "K3_UNMAPPED_BY_DECISION", None) or {})
+            # ★ 2026-09-17 (턴 T · SEC-22 · D-478) — `tenant_admin_<n>` 은 패턴으로 매핑된다.
+            #   판정식은 복제하지 않고 커널과 같은 함수를 부른다(`common.tenant_roles`).
+            from common.tenant_roles import is_tenant_admin_role_code as _is_tenant_admin_code
             holes, by_decision, roleless = {}, {}, []
             for u in User._base_manager.filter(
                     userprofilelink__group=group, is_active=True).distinct():
@@ -258,7 +261,7 @@ def collect() -> tuple[dict, tuple, str | None]:
                 if not codes:
                     roleless.append(u.username)
                     continue
-                if any(c in mapping for c in codes):
+                if any(c in mapping or _is_tenant_admin_code(c) for c in codes):
                     continue                       # 하나라도 매핑되면 경고가 안 뜬다
                 for c in codes:
                     bucket = by_decision if c in declared else holes

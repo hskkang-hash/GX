@@ -60,7 +60,10 @@ from pathlib import Path
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
 #: 이 실행체가 만든 씨앗에만 붙는 표. **지울 때의 유일한 근거**다.
-PROBE_TAG = "gxprobe-D384-screen"
+#: ★ [P-156 · 턴 T · 차선 Q] 값은 `scripts/probe_marks.py` 가 **하나로** 든다 — 여기와 판정기가
+#:   다른 표를 들면 「제외 필터」가 아무것도 못 거른다. 두 벌로 두지 않는다.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from probe_marks import PROBE_TAG, mark_string as _probe_mark_string, mark as _probe_mark  # noqa: E402
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 누가 봤나 — **역할 없는 계정으로 찍은 33장은 인수 증거가 아니었다** (P-98)
@@ -131,6 +134,8 @@ from ledger_merge import assert_not_shrunk, merge_records  # noqa: E402
 
 RUNS_DIR = SCREENS.parent.parent / "P-157" / "runs"
 RUN_STAMP = datetime.now().strftime("%Y%m%dT%H%M%S")
+#: 이번 회가 심은 씨앗 id — 판정 뒤 `probe_marks.mark` 로 표시하고 정리한다 (P-156).
+SEEDED_EVENT_IDS: list = []
 
 
 def _by_file(r) -> str:
@@ -541,8 +546,14 @@ def seed_events(username: str, n: int = 2) -> int:
             severity=("critical" if i == 0 else "warning"),
             occurred_at=now - timedelta(minutes=2 * (i + 1)),
             snapshot_path="",          # MinIO 부재 — 비어 있는 채로 둔다 (P-9)
+            #: ★ [P-156] 심는 순간부터 **어느 회의 씨앗인지** 적는다(`track_id` — 화면이 안 그리는
+            #:   자유 칸 · `probe_marks` 규약). 판정 뒤 `judged=1` 을 덧붙이고, 다음 회의 표본은
+            #:   이 표식(또는 씨앗 카메라 이름)으로 걸러진다. 정리(`clean_events`)가 못 돈 회의
+            #:   씨앗도 이 표식 덕에 다음 표본에 안 섞인다.
+            track_id=_probe_mark_string(RUN_STAMP),
         )
         first = first or result.event_id
+        SEEDED_EVENT_IDS.append(result.event_id)
     _ = DE  # 위 주석의 대상이었던 이름 — 지우지 않고 남긴다
     return first
 
@@ -677,6 +688,21 @@ def _confirm_end_session(page) -> bool:
     return False
 
 
+def replace_plan(scenario_dir: Path, role: str) -> dict:
+    """「대체」 규칙의 셈 — **지우지 않고** 무엇이 대체되고 무엇이 남는지 센다 (P-159 ③).
+
+    같은 파일명은 새 것으로 대체(쓰기가 곧 대체다) · 없는 파일명은 남긴다 · 지우지 않는다.
+    돌려주는 것은 수뿐이다: `existing`(지금 있는 PNG 전부) · `same_role`(이 역할 폴더의 PNG).
+    """
+    if not scenario_dir.is_dir():
+        return {"existing": 0, "same_role": 0}
+    pngs = list(scenario_dir.rglob("*.png"))
+    #: 폴더 이름은 역할 코드다(`<벌>/<ROLE>/<slug>.png` · 예 `FIRE_USER`) — 페르소나가 아니라 역할로 묶인다.
+    #: 정확한 대체 목록은 쓰는 순간 파일명으로 정해진다 — 여기서는 수만 센다.
+    return {"existing": len(pngs),
+            "same_role": sum(1 for p in pngs if p.parent.name.lower() == str(role).lower())}
+
+
 def capture(*, web: str, user: str, password: str, event_id: int, role: str,
             api: str, persona: str, reset: bool) -> dict:
     from playwright.sync_api import sync_playwright
@@ -693,10 +719,18 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
     #   ⚠ 비우기를 안 하면 지난 실행의 유령 PNG 가 남을 수 있다. 그 유령은
     #     `verify_screens.py` 가 「인덱스에 없는 캡처」로 **빨갛게** 잡는다 — 잡히는
     #     것이 옳다. 조용히 지우는 것보다 소리 나게 걸리는 편이 낫다.
-    import shutil
+    # ★★★ [P-159 ③ · 턴 T · 차선 Q] **비우지 않는다 — 「대체」 규칙이다.**
+    #   위 두 문단이 말한 「첫 페르소나에서 한 번 비운다」는 P-154 뒤에는 틀린 처방이다:
+    #   대장(INDEX · run_log · screen_routes)은 이제 **옛 항목 + 이번 항목**으로 합쳐 쓰는데,
+    #   PNG 만 비우면 대장은 32장을 말하고 디스크에는 이번 장만 남는다 — 대장이 가리키는
+    #   파일이 없는 상태가 「줄지 않았다」 게이트를 통과한 채 커밋된다.
+    #   규칙: 같은 파일명이면 **새 것으로 대체** · 이번에 안 찍은 파일명은 **남긴다** · **지우지 않는다.**
+    #   (`replace_plan` 이 무엇이 대체되고 무엇이 남는지 미리 센다 — 셈은 콘솔에 적힌다.)
+    #   유령이 걱정되면 대장과 디스크를 **대조**한다(`verify_screens.py`) — 지우는 것으로 맞추지 않는다.
     if reset:
-        shutil.rmtree(SCREENS / SCENARIO, ignore_errors=True)
-        print(f"[SHOT] --reset — {SCENARIO} 아래를 비웠다. 이 벌의 첫 페르소나다")
+        plan = replace_plan(SCREENS / SCENARIO, role)
+        print(f"[SHOT] 첫 페르소나 — 「대체」 규칙: 지우지 않는다 · 있는 파일 {plan['existing']}장 "
+              f"(이 역할 폴더 {plan['same_role']}장은 같은 이름이면 새 것으로 대체 · 나머지는 남긴다)")
     SCREENS.mkdir(parents=True, exist_ok=True)
     #: 이 실행이 찍을 것만 고른다. 「누가 봤나」는 항목이 스스로 들고 있다.
     my_login = [b for b in LOGIN_BRANCHES if b.get("persona") == persona]
@@ -1328,6 +1362,12 @@ def main() -> int:
                 print(f"[SHOT] ★ {pn} 에서 세션을 빼앗겼다 — 뒤의 페르소나는 찍지 않는다")
                 break
     finally:
+        #: ★ [P-156] **판정 뒤 표시 → 정리** 순서다. 정리가 실패해도 표시는 남아 다음 표본에서 빠진다.
+        try:
+            n_marked = _probe_mark(SEEDED_EVENT_IDS, RUN_STAMP, judged=True)
+            print(f"[SHOT] probe 표시(judged=1): {n_marked}/{len(SEEDED_EVENT_IDS)}건")
+        except Exception as exc:                        # noqa: BLE001
+            print(f"[SHOT] ⚠ probe 표시 실패 — {type(exc).__name__}: {exc}", file=sys.stderr)
         print(f"[SHOT] 씨앗 정리: {clean_events()}")
     got = merged
     print("[SHOT] 페르소나별 장수: "

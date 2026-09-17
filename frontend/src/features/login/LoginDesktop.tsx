@@ -26,7 +26,7 @@
  * ★ 오류는 **머무는 줄**로 그린다. 토스트로 띄우면 몇 초 뒤 사라지고, 사라진 문구는
  *   「말한 적 없음」과 구별되지 않는다 — 직전 턴이 1.5초·6초 두 번 읽은 이유가 그것이다.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -52,6 +52,7 @@ import {
   EMPTY_PASSWORD,
   EMPTY_USERNAME,
   judgeLoginFailure,
+  rateLimitedLine,
   SUBMITTING,
 } from './loginCopy';
 import { loginInFlight, requestLogin } from './loginRequest';
@@ -81,6 +82,11 @@ export default function LoginDesktop({ logoImage }: { logoImage: string }) {
   const [passwordError, setPasswordError] = useState('');
   /** 다섯 갈래 중 하나. **머무는 줄이다.** */
   const [failure, setFailure] = useState('');
+  /**
+   * 율제한(SEC-21)의 **남은 초**. 서버가 준 수에서 1초씩 내려가고, 0 이 되면 기다림이 끝났다고
+   * 말한다. 다른 갈래에서는 `null` — 세어 내릴 수가 없다.
+   */
+  const [retryLeft, setRetryLeft] = useState<number | null>(null);
   const [progress, setProgress] = useState('');
   const [showEndSession, setShowEndSession] = useState(false);
   /**
@@ -169,6 +175,7 @@ export default function LoginDesktop({ logoImage }: { logoImage: string }) {
       }
 
       setFailure('');
+      setRetryLeft(null);
       setProgress(SUBMITTING);
       const outcome = await requestLogin(id, pw, endPreviousSession);
       setProgress('');
@@ -191,10 +198,24 @@ export default function LoginDesktop({ logoImage }: { logoImage: string }) {
       }
 
       // ②③④⑤ — 다섯 갈래는 **한 곳에서** 갈린다.
-      setFailure(judgeLoginFailure(outcome).text);
+      const judged = judgeLoginFailure(outcome);
+      setFailure(judged.text);
+      // ③′ 율제한이면 서버가 준 초를 들고 **세어 내린다** — 사람이 새로 고치지 않아도 수가 줄어든다.
+      setRetryLeft(judged.kind === 'rate_limited' && typeof judged.retryAfterSeconds === 'number'
+        ? judged.retryAfterSeconds
+        : null);
     },
     [afterLogin, password, username],
   );
+
+  // 율제한 카운트다운 — 1초마다 한 칸. 0 에 닿으면 멈추고 「지금 다시 시도할 수 있습니다」로 바뀐다.
+  useEffect(() => {
+    if (retryLeft === null) return undefined;
+    setFailure(rateLimitedLine(retryLeft));
+    if (retryLeft <= 0) return undefined;
+    const t = setTimeout(() => setRetryLeft((n) => (n === null ? null : n - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [retryLeft]);
 
   if (otpBranch) {
     return (

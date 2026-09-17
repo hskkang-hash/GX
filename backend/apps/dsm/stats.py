@@ -31,6 +31,7 @@ AC-5(§3) *"합계 = 목록 수"* 는 `/api/dsm/events` 목록과 이 집계가 
 """
 from __future__ import annotations
 
+import codecs
 import hashlib
 import json
 from collections import Counter
@@ -596,3 +597,131 @@ def camera_threshold(*, scope: TenantScope, camera_id: int, key: str) -> dict:
     except ThresholdNotSet:
         return {"key": key, "camera_id": camera_id, "value": None, "set": False}
     return {"key": key, "camera_id": camera_id, "value": value, "set": True}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 7. stats_axes — UX-39 통계 화면의 **축 5** + CSV (턴 T · P-164 U24 ①)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 축 이름은 **실측**이다 — `EventView`(kernels/k1_event/schemas.py) 에 있는 칸만 축이
+#   된다: 카메라(`stream_monitor_id/name`) · 유형(`event_type`) · 심각도(`severity`) ·
+#   판정(`verdict` — 미판정은 `unreviewed` 로 따로 센다) · 시간대(`occurred_at` 의 시).
+#   「구역」은 행에 없다(Zone 은 카메라 묶음이지 사건 칸이 아니다 — 실측) — 지어내지 않고
+#   가정 목록에 남긴다. 축이 다섯인 것은 정본이 다섯을 불러서가 아니라 **행이 다섯을
+#   들고 있어서**다.
+#
+# ★ 「합계 = 목록 수」(AC-5) — 이 함수도 `services.recent_events` 를 **같은 인자로**
+#   부른다. 화면은 이 `total` 을 같은 창의 `GET /events?limit=<row_cap>` 의 `total`
+#   과 대조해 다르면 빨강으로 적는다(`TeamStatus` 의 「합계 = 행 합」 규약).
+#   그리고 **각 축의 건수 합은 `total` 과 같다** — 어느 행도 어느 칸에 두 번 세어지지
+#   않고, 어느 행도 빠지지 않는다(시험이 다섯 축 전부를 대조한다).
+
+#: 축의 이름과 사람이 읽는 제목. **화면이 이 이름을 손으로 들지 않는다** — 응답에 실린다.
+AXES = (
+    ("camera", "카메라"),
+    ("event_type", "유형"),
+    ("severity", "심각도"),
+    ("verdict", "판정"),
+    ("hour", "시간대"),
+)
+
+#: 미판정 행의 판정 축 키. `verdict` 가 `None` 인 것을 빈 문자열로 뭉개지 않는다 —
+#: 「아직 아무도 판정하지 않았다」는 판정값이 아니라 **판정의 부재**다(D-290).
+UNREVIEWED_KEY = "unreviewed"
+
+
+def _axis_rows(counter: Counter, labels: dict | None = None) -> list[dict]:
+    """Counter → 화면 행. 건수 내림차순 · 같은 건수면 키 오름차순(결과가 흔들리지 않게)."""
+    labels = labels or {}
+    rows = [{"key": str(k), "label": labels.get(k, str(k)), "count": int(n)}
+            for k, n in counter.items()]
+    rows.sort(key=lambda r: (-r["count"], r["key"]))
+    return rows
+
+
+def stats_axes(
+    *,
+    scope: TenantScope,
+    since: datetime | None = None,
+    until: datetime | None = None,
+    event_type: str | list[str] | None = None,
+    severity: str | list[str] | None = None,
+) -> dict:
+    """UX-39 통계 화면 — 기간 내 사건을 **축 다섯**으로 접는다. 나눗셈이 없다(건수뿐).
+
+    ★ 시간대는 **서버 시간대**(`settings.TIME_ZONE`)의 시(0~23)다 — 어느 시간대인지를
+      `hour_tz` 로 함께 낸다. 화면이 브라우저 시간대로 다시 접으면 두 곳이 갈린다.
+    """
+    actor = scope.require_actor()
+    since, until = _resolve_window(since, until)
+
+    key = _cache_key("axes", actor, since=since, until=until,
+                     event_type=event_type, severity=severity)
+    cached = _cache_get(key)
+    if cached is not None:
+        return cached
+
+    rows = services.recent_events(scope=scope, since=since, until=until,
+                                  event_type=event_type, severity=severity,
+                                  limit=_ROW_CAP + 1)
+    capped = len(rows) > _ROW_CAP
+    rows = rows[:_ROW_CAP]
+
+    camera_names = {e.stream_monitor_id: (e.stream_monitor_name or f"카메라 {e.stream_monitor_id}")
+                    for e in rows}
+    hour_labels = {h: f"{h:02d}시" for h in range(24)}
+    verdict_labels = {UNREVIEWED_KEY: "미판정"}
+
+    axes = {
+        "camera": _axis_rows(Counter(e.stream_monitor_id for e in rows), camera_names),
+        "event_type": _axis_rows(Counter(e.event_type for e in rows)),
+        "severity": _axis_rows(Counter(e.severity for e in rows)),
+        "verdict": _axis_rows(
+            Counter((e.verdict if e.verdict is not None else UNREVIEWED_KEY) for e in rows),
+            verdict_labels),
+        "hour": _axis_rows(
+            Counter(timezone.localtime(e.occurred_at).hour for e in rows), hour_labels),
+    }
+
+    payload = {
+        "since": since.isoformat(),
+        "until": until.isoformat(),
+        "total": len(rows),
+        "axes": axes,
+        "axis_titles": {k: t for k, t in AXES},
+        "axis_order": [k for k, _ in AXES],
+        "hour_tz": str(timezone.get_current_timezone()),
+        "capped": capped,
+        "row_cap": _ROW_CAP,
+    }
+    _cache_set(key, payload)
+    return payload
+
+
+#: CSV 의 첫 글자 — 한글이 엑셀에서 깨지지 않게 UTF-8 BOM 을 앞에 둔다.
+#: (`codecs.BOM_UTF8` 을 푼 것 — 보이지 않는 글자를 소스에 직접 두면 편집기가 조용히 지운다.)
+CSV_BOM = codecs.BOM_UTF8.decode("utf-8")
+CSV_HEADER = ("axis", "axis_title", "key", "label", "count")
+
+
+def stats_axes_csv(**kwargs) -> str:
+    """`stats_axes` 를 **그대로** CSV 로 편다 — 여기서 다시 세지 않는다.
+
+    행 수 = 다섯 축의 행 수 합 + 머리 1 + 합계 1. 마지막 「합계」 행은 `total` 이라
+    화면의 수와 파일의 수를 사람이 대조할 수 있다. 값은 `csv` 모듈이 인용한다 —
+    카메라 이름에 쉼표가 있어도 칸이 밀리지 않는다.
+    """
+    import csv
+    import io
+
+    payload = stats_axes(**kwargs)
+    buf = io.StringIO()
+    writer = csv.writer(buf, lineterminator="\n")
+    writer.writerow(CSV_HEADER)
+    for axis in payload["axis_order"]:
+        title = payload["axis_titles"][axis]
+        for r in payload["axes"][axis]:
+            writer.writerow((axis, title, r["key"], r["label"], r["count"]))
+    writer.writerow(("total", "합계", "", f"{payload['since']} ~ {payload['until']}",
+                     payload["total"]))
+    return CSV_BOM + buf.getvalue()

@@ -56,6 +56,55 @@ ROOT = Path(__file__).resolve().parent.parent
 #: 달라진다 — 데스크톱에서 누를 수 있는 자리는 모바일의 증거가 아니다.
 VIEWPORT = {"width": 390, "height": 844}
 
+# ═══════════════════════════════════════════════════════════════════════════
+# P-154 잔여 · P-159 ③ — **대장은 줄지 않는다**: `walk.json` 을 덮어쓰지 않고 합쳐 쓴다 (턴 T · 차선 Q)
+# ═══════════════════════════════════════════════════════════════════════════
+#: ★ 종전에는 `UX-WALK/walk.json` 을 **이번 실행분 하나로 덮어썼다** — 같은 파일이 직전 걷기 하나만
+#:   말했고, 지난 회는 손으로 이름을 바꿔 둔 사본(`walk_20260906_TG.json` …)에만 남았다. 그것은
+#:   생성기가 대장을 이번 실행분만 남기고 다시 쓰는 턴 R 의 모양과 같다(D-473).
+#:   이제 `capture_screens._rewrite_index` 와 **같은 방식**이다:
+#:     · 이번 실행분은 **그대로** `UX-WALK/runs/walk_<stamp>.json` 에 (무엇이 이번 것인지 못 가리지 않게)
+#:     · 대장 `walk.json` 은 `{"runs": [옛 것 …, 이번 것]}` — `ledger_merge.merge_records` 로 합치고
+#:       `assert_not_shrunk` 로 **줄면 멈춘다**(예외 · 경고 아님).
+#:   HEAD 의 `walk.json` 은 `runs` 없이 실행 하나가 통째다 — 그 판은 **실행 1건**으로 읽는다(옛 판을 버리지 않는다).
+#: ★ 열쇠는 `when`(걷기 시각)이다 — 같은 시각을 다시 쓰면 그 판만 새 것이 되고, 다른 시각은 전부 남는다.
+#:   기록 전체를 열쇠로 쓰면 같은 걷기를 두 번 저장했을 때 두 줄이 되므로, 여기서만 `when` 으로 좁힌다
+#:   (걷기 하나는 시각 하나다 — 화면 대장의 「같은 라우트 다른 사람」 함정이 여기엔 없다).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ledger_merge import assert_not_shrunk, merge_records  # noqa: E402
+
+
+def _by_when(r) -> str:
+    return str(r.get("when", "")) if isinstance(r, dict) else str(r)
+
+
+def ledger_runs(doc) -> list:
+    """대장 문서 → 실행 목록. `runs` 가 있으면 그것, 없으면(HEAD 판) 문서 하나가 실행 하나다. 빈 문서는 0건."""
+    if not isinstance(doc, dict) or not doc:
+        return []
+    if isinstance(doc.get("runs"), list):
+        return list(doc["runs"])
+    return [doc]
+
+
+def merge_walk_ledger(old_doc, fresh: dict) -> dict:
+    """옛 대장 + 이번 실행 → 새 대장. **줄면 예외.** 순수 함수 — 파일을 만지지 않는다(자기시험이 여기를 두드린다)."""
+    old_runs = ledger_runs(old_doc)
+    runs = merge_records(old_runs, [fresh], key=_by_when)
+    assert_not_shrunk("walk.json runs", len(old_runs), len(runs))
+    return {"ledger": "scripts/walk_scenarios.py", "latest_when": fresh.get("when"),
+            "runs": runs}
+
+
+def _read_json(p: Path):
+    if not p.is_file():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        #: 깨진 대장은 **합치지 못하면 쓰지 않는다** — 빈 것으로 읽어 덮어쓰면 그것이 곧 삭제다.
+        raise RuntimeError(f"대장 {p} 를 읽지 못했다({type(exc).__name__}) — 합치지 못하면 쓰지 않는다") from exc
+
 
 def _scenario_names() -> dict:
     """S1·S2·S3 의 이름을 **`perf_load` 에서 가져온다.** 여기서 다시 짓지 않는다.
@@ -289,12 +338,30 @@ def self_test() -> int:
                 bad.append(f"{key} 의 {i+1}번째 걸음에 `see` 가 없다 — 단언 없는 걸음은 "
                            f"「눌렀다」만 남기고 「그래서 무엇이 떴는가」를 안 남긴다")
 
+    # ★ P-159 ③ — 대장 합치기 (파일 없이 · 순수 함수)
+    head_style = {"when": "2026-09-05T14:51:34", "walks": {"S1": {}}}      # HEAD 판: runs 없이 실행 하나
+    fresh = {"when": "2026-09-17T15:00:00", "walks": {"S1": {}}}
+    m = merge_walk_ledger(head_style, fresh)
+    if len(m["runs"]) != 2 or m["runs"][0]["when"] != head_style["when"] or m["latest_when"] != fresh["when"]:
+        bad.append("HEAD 판(runs 없음) + 이번 1회 가 2회가 아니다 — 옛 판을 버렸다")
+    m2 = merge_walk_ledger(m, dict(fresh, walks={"S2": {}}))
+    if len(m2["runs"]) != 2 or m2["runs"][1]["walks"] != {"S2": {}}:
+        bad.append("같은 `when` 을 다시 쓰면 그 판만 새 것이 돼야 하는데 그렇지 않다")
+    if len(merge_walk_ledger({}, fresh)["runs"]) != 1:
+        bad.append("빈 대장 + 이번 1회 가 1회가 아니다")
+    try:
+        from ledger_merge import LedgerShrank
+        assert_not_shrunk("표본", 3, 1)
+        bad.append("3 → 1 인데 멈추지 않았다 — 대장은 줄지 않는다")
+    except LedgerShrank:
+        pass
+
     if bad:
         print(f"{TAG} 자기시험 실패 — 판정기를 먼저 의심한다 (D-350):")
         for b in bad:
             print("    " + b)
         return EXIT_FAIL
-    print(f"{TAG} 자기시험 통과 — 초록 1 · 출생 표본 1 · 음성 4 · 판정 불가 2 · 걸음표 검사")
+    print(f"{TAG} 자기시험 통과 — 초록 1 · 출생 표본 1 · 음성 4 · 판정 불가 2 · 걸음표 검사 · 대장 합치기 4")
     return EXIT_OK
 
 
@@ -594,11 +661,18 @@ def main() -> int:
     out = Path(args.json_out) if args.json_out else _evidence_dir() / "walk.json"
     try:
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps(result, ensure_ascii=False, indent=2),
-                       encoding="utf-8")
-        print(f"{TAG} [증거] {out}")
-    except OSError as exc:
-        print(f"{TAG} ⚠ 증거를 못 남겼다: {exc}")
+        #: ★ P-154 — 이번 실행분은 runs/ 에 그대로, 대장에는 옛 실행 + 이번 실행을 합쳐 쓴다.
+        stamp = str(result.get("when") or datetime.now().isoformat()).replace(":", "").replace("-", "")
+        run_copy = out.parent / "runs" / f"walk_{stamp}.json"
+        run_copy.parent.mkdir(parents=True, exist_ok=True)
+        run_copy.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        old_doc = _read_json(out)
+        merged = merge_walk_ledger(old_doc, result)
+        out.write_text(json.dumps(merged, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"{TAG} [증거] 이번 실행 {run_copy}")
+        print(f"{TAG} [대장] {out} — 옛 {len(ledger_runs(old_doc))}회 + 이번 1회 → {len(merged['runs'])}회 (줄지 않았다)")
+    except (OSError, RuntimeError) as exc:
+        print(f"{TAG} ⚠ 증거를 못 남겼다: {type(exc).__name__}: {exc}")
 
     print(f"{TAG} " + {
         EXIT_OK: "통과 — 세 시나리오를 걸었고 콘솔은 조용했다. "

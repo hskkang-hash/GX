@@ -139,11 +139,23 @@ export function cancelMetric(metric: ConvenienceMetric): void {
   pending.delete(metric);
 }
 
+/** 아직 안 끝난 측정 — 「왜 값이 없나」를 V 가 볼 수 있게 함께 낸다(수는 아니다). */
+export interface ConvenienceInFlight {
+  metric: ConvenienceMetric;
+  subject: string;
+  clicks_so_far: number;
+  elapsed_ms_so_far: number;
+}
+
 export interface ConvenienceExport {
   schema: string;
   generated_at: string;
   notes: Record<string, string>;
   runs: ConvenienceRun[];
+  /** 끝나지 않은 측정들. `runs` 에 들어가지 않고 대장에도 안 붙는다 — 진단용이다. */
+  in_flight: ConvenienceInFlight[];
+  /** 이 브라우저의 저장이 살아 있는가. 거짓이면 `runs` 는 이번 화면 수명 동안의 값도 못 담는다. */
+  storage_ok: boolean;
 }
 
 /**
@@ -152,12 +164,36 @@ export interface ConvenienceExport {
  * ★ 판정을 담지 않는다 — 기준선·목표와 견주는 일은 표가 한다.
  */
 export function exportConvenience(): ConvenienceExport {
+  const now = Date.now();
+  const inFlight: ConvenienceInFlight[] = [];
+  pending.forEach((live, metric) => {
+    inFlight.push({
+      metric,
+      subject: live.subject,
+      clicks_so_far: live.clicks,
+      elapsed_ms_so_far: Math.max(0, now - live.startedAt),
+    });
+  });
   return {
     schema: 'gx.convenience.u1.v1',
     generated_at: new Date().toISOString(),
     notes: METRIC_NOTE,
     runs: readRuns(),
+    in_flight: inFlight,
+    storage_ok: storageOk(),
   };
+}
+
+/** 저장이 되는가 — 한 번 써 보고 지운다. 비공개 창·차단 환경이면 거짓이다. */
+function storageOk(): boolean {
+  try {
+    const probe = `${STORAGE_KEY}.probe`;
+    window.localStorage.setItem(probe, '1');
+    window.localStorage.removeItem(probe);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** 다음 측정을 위해 비운다. **사람이 부르는 자리**다(자동으로 안 지운다). */
@@ -182,6 +218,8 @@ declare global {
       export: () => ConvenienceExport;
       reset: () => void;
     };
+    /** 같은 것의 짧은 이름 — 지시서(턴 T)가 부르는 철자. `JSON.stringify(window.__gxMetrics())`. */
+    __gxMetrics?: () => ConvenienceExport;
   }
 }
 
@@ -190,4 +228,5 @@ if (typeof window !== 'undefined') {
     export: exportConvenience,
     reset: resetConvenience,
   };
+  window.__gxMetrics = exportConvenience;
 }

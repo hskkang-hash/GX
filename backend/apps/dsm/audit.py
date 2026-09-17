@@ -96,3 +96,140 @@ def entries(*, action: str | None = None, limit: int = 100) -> tuple[AuditEntry,
       이 함수를 라우트에 직접 노출하지 않는 이유이기도 하다.
     """
     return audit_writer.read(logger_name=LOGGER_NAME, action=action, limit=limit)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 T (P-164 U24 ②·③) — 사건 행위 감사 채널 + **테넌트로 좁힌 읽기**
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 사건 행위(상급 보고 체크 · 해제)는 F-12 설정 감사와 **다른 `logger_name`** 에 쓴다.
+#   `LOGGER_NAME` 은 「F-12 설정 감사 전건」을 세는 이름이다(D-285 ②) — 거기에 사건
+#   행위를 섞으면 그 전건이 조용히 늘고, 검수가 세는 수가 바뀐다. 쓰는 손은 여전히
+#   `common/audit_writer.write` 하나다(두 벌을 만들지 않는다).
+EVENT_LOGGER_NAME = "guardianx.u24.events"
+EVENT_TAG = "[U24-EVENT]"
+
+#: 감사 읽기 라우트가 여는 채널. 여기 없는 이름은 그 라우트로 안 나간다 —
+#: dj-core 가 같은 표에 쌓는 API 접근 로그 전체가 화면으로 새지 않게 하는 울타리다.
+READABLE_LOGGER_NAMES = (LOGGER_NAME, EVENT_LOGGER_NAME)
+
+#: 한 쪽의 상한. 화면 표 한 장이 감당하는 수 — 더 크면 「60초 안 도달」이 먼저 깨진다.
+PAGE_SIZE_MAX = 200
+
+
+def record_event_action(
+    *,
+    scope: TenantScope,
+    action: str,
+    outcome: str,
+    reason: str,
+    before: Any = None,
+    after: Any = None,
+    api_name: str = "",
+    api_method: str = "",
+    status_http: int | None = None,
+) -> AuditEntry:
+    """사건 행위 감사 한 줄(`EVENT_LOGGER_NAME`). `record()` 와 같은 규약 — 실패는 올라간다."""
+    entry = audit_writer.write(
+        logger_name=EVENT_LOGGER_NAME, tag=EVENT_TAG, actor=scope.actor,
+        action=action, outcome=outcome, reason=reason,
+        before=before, after=after,
+        api_name=api_name, api_method=api_method, status_http=status_http,
+    )
+    log.info("[U24-EVENT] %s %s actor=%s reason=%s",
+             action, outcome, entry.actor_id, reason)
+    return entry
+
+
+def _tenant_actor_ids(actor) -> "list[int] | None":
+    """요청자와 **같은 테넌트**의 사용자 pk 목록. 전역 관리자면 `None`(좁히지 않는다).
+
+    감사 표(`logger.AuditLogs`)에는 group 칸이 없다 — 행의 테넌트는 **행위자의 소속**
+    으로만 정해진다. 그래서 테넌트 좁히기는 `user_id ∈ 우리 테넌트 사용자` 다.
+    행위자가 없는 행(`user_id` null · 시스템 행위)은 소속을 말할 수 없으므로 테넌트
+    사용자에게는 **안 보인다** — 닫는 쪽이 기본값이다(`filter_users_by_group` 과 같은 규약).
+    """
+    from django.apps import apps
+
+    from common.tenant_filters import filter_users_by_group
+    from common.tenant_roles import is_global_admin
+
+    if is_global_admin(actor):
+        return None
+    CoreUser = apps.get_model("user", "CoreUser")
+    qs = filter_users_by_group(CoreUser._base_manager.all(), actor)
+    return list(qs.values_list("pk", flat=True))
+
+
+def read_page(
+    *,
+    scope: TenantScope,
+    since=None,
+    until=None,
+    actor_id: int | None = None,
+    action: str | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> dict:
+    """감사 이력을 **요청자의 테넌트로 좁혀** 한 쪽 낸다 (P-164 U24 ③ · 필터 3 + 쪽).
+
+    `entries()` 와 다른 점은 단 하나 — **여기서는 좁힌다.** `entries()` 는 검수가 「전건」을
+    세는 자리라 좁히지 않았고, 그래서 라우트에 직접 노출하지 않았다. 이 함수는 화면에
+    나가는 자리이므로 좁히는 판단을 **여기서** 한다(머리말 규약 그대로 — 판단은 라우트
+    쪽 몫이고, 이 함수가 그 라우트의 뒷면이다).
+
+    필터 셋: 기간(`since`·`until` — `create_datetime`) · 행위자(`actor_id` — `user_id`) ·
+    행위 종류(`action` — `api_name` 앞머리 일치 · 대소문자 무시).
+    """
+    from common.tenant_filters import get_user_group
+
+    actor = scope.require_actor()
+    if page < 1:
+        raise ValueError(f"page 는 1 이상이다 — page={page}")
+    if not (1 <= page_size <= PAGE_SIZE_MAX):
+        raise ValueError(f"page_size 는 1~{PAGE_SIZE_MAX} 다 — page_size={page_size}")
+
+    Model = audit_writer._model()
+    qs = Model._base_manager.filter(logger_name__in=READABLE_LOGGER_NAMES)
+
+    allowed_ids = _tenant_actor_ids(actor)
+    if allowed_ids is not None:
+        if get_user_group(actor) is None:
+            qs = qs.none()  # 소속 없는 계정 — 닫는 쪽이 기본값
+        else:
+            qs = qs.filter(user_id__in=allowed_ids)
+    if since is not None:
+        qs = qs.filter(create_datetime__gte=since)
+    if until is not None:
+        qs = qs.filter(create_datetime__lte=until)
+    if actor_id is not None:
+        qs = qs.filter(user_id=actor_id)
+    if action:
+        qs = qs.filter(api_name__istartswith=action)
+
+    total = qs.count()
+    start = (page - 1) * page_size
+    rows = list(qs.order_by("-id")[start:start + page_size])
+    items = [
+        {
+            "audit_id": r.pk,
+            "at": r.create_datetime.isoformat() if r.create_datetime else None,
+            "channel": r.logger_name,
+            "outcome": ALLOWED if r.level_name == "INFO" else DENIED,
+            "action": r.api_name or "",
+            "method": r.api_method or "",
+            "actor_id": r.user_id,
+            "actor": r.username or "",
+            "reason": r.note or "",
+            "status_http": r.status_http,
+        }
+        for r in rows
+    ]
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "pages": (total + page_size - 1) // page_size if total else 0,
+        "channels": list(READABLE_LOGGER_NAMES),
+    }

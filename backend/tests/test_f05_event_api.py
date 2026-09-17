@@ -418,7 +418,31 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/api/dsm/settings/people/create"),                        # U56 · S-14 사람 만들기 ★쓰기
     ("POST", "/api/dsm/settings/people/{int:user_id}/deactivate"),      # U56 · S-14 사람 비활성화 ★쓰기
     ("POST", "/api/dsm/settings/webhook-subscriptions/issue"),          # U56 · P-145 구독+서명키 발급 ★쓰기
+    # ★ 2026-09-17 **열하나가 늘었다** — 턴 T 파 2 「닿기」 (차선 U1 1 · U3 1 · U24 6 · U56 3).
+    #   이 목록은 손이 아니라 이 시험이 뱉은 「새로 생긴 것」이다(병합 · 조율자).
+    #   선등록(write_surfaces_v11.yaml 턴 T 블록)이 미리 적은 「표 밖 자리」 셋이 전부 났다:
+    #   ① U24 CSV 반출 ② U1 종결 닫기 ③ U3 M1 처리함(목록 필터로 못 열어 라우트가 됐다).
+    #   ⚠ `GET /health` 는 **인증 없는 유일한 진입면**이다 — 아래 PUBLIC_ENTRY_BY_DESIGN 에 사유.
+    ("POST", "/api/dsm/queue/field-signals/{int:event_id}/confirm-done"),   # U1 · 종결 확인 = 서버 기록이 닫는다 ★쓰기
+    ("GET", "/api/dsm/me/handled-events"),                                  # U3 · M1 처리함(내 회신 낸 사건)
+    ("GET", "/api/dsm/stats/axes"),                                         # U24 · 통계 축 5
+    ("GET", "/api/dsm/stats/export.csv"),                                   # U24 · CSV 반출(UTF-8 BOM · no-store)
+    ("GET", "/api/dsm/events/upper-report/flags"),                          # U24 · 상급 보고 표시 조회
+    ("POST", "/api/dsm/events/{int:event_id}/upper-report"),                # U24 · 상급 보고 표시 ★쓰기
+    ("DELETE", "/api/dsm/events/{int:event_id}/upper-report"),              # U24 · 상급 보고 해제(소프트) ★쓰기
+    ("GET", "/api/dsm/audit"),                                              # U24 · 감사 읽기(U2·U4·U5 · 필터 3)
+    ("GET", "/api/dsm/health"),                                             # U56 · 생존 확인 · 인증 없음(아래 사유)
+    ("GET", "/api/dsm/settings/webhook-subscriptions/{int:subscription_id}/filters"),   # U56 · WS-17
+    ("POST", "/api/dsm/settings/webhook-subscriptions/{int:subscription_id}/filters"),  # U56 · WS-17 ★쓰기
 })
+
+#: 인증 없이 열리는 진입면 — **이름과 사유로** 잠근다. 늘면 여기 사유가 먼저 늘어야 한다.
+#:   `GET /health` (턴 T · U56): 생존 확인은 정의상 로그인 전에 부른다. 응답은 검사 이름과
+#:   상태 이름(ok/fail) 뿐 — 테넌트 자료·호스트명·값 없음(tests/test_u56_health.py 가 못박음).
+#:   같은 이름을 `scripts/probe_read_surface.py::PUBLIC_READ_BY_DESIGN` 에도 올렸다(P-133 계열).
+PUBLIC_ENTRY_BY_DESIGN: dict[tuple[str, str], str] = {
+    ("GET", "/api/dsm/health"): "생존 확인 — 로그인 전에 부른다 · 검사 이름과 상태 이름뿐",
+}
 
 #: K1 커널을 소비하는 모듈 전수 → **왜 소비하는가.**
 #:
@@ -605,7 +629,11 @@ class EntrySurfaceIsLockedTest(SimpleTestCase):
 
     def test_every_entry_route_is_authenticated(self) -> None:
         naked = [(r.method, r.path) for r in self._dsm_routes() if not r.has_auth]
-        self.assertEqual([], naked, f"인증 없는 진입면: {naked}")
+        for key in naked:
+            self.assertGreater(len(PUBLIC_ENTRY_BY_DESIGN.get(key, "").strip()), 10,
+                               f"인증 없는 진입면인데 사유가 없습니다: {key}")
+        self.assertEqual(sorted(PUBLIC_ENTRY_BY_DESIGN), sorted(naked),
+                         f"인증 없는 진입면: {naked} · 사유 등재: {sorted(PUBLIC_ENTRY_BY_DESIGN)}")
 
     def test_every_entry_route_is_tenant_scoped(self) -> None:
         """문지기 없는 경로가 하나 생기면 그 순간 다시 샌다 (D-275 §5-1)."""

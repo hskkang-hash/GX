@@ -25,6 +25,25 @@
     python scripts/merge_convenience_u1.py --dump <브라우저가 낸 JSON 경로>
     python scripts/merge_convenience_u1.py --self-test
 
+V 단독 세션이 값을 내는 순서 [턴 T]
+----------------------------------
+  ① 브라우저(U1 계정 · SPA)에서 세 화면을 지나며 조작한다 — 어떤 조작 뒤 어떤 키에
+     값이 생기는지는 `docs/agent/evidence/U1-S/convenience_u1.json` 의 `wired_at` 과
+     아래 표가 말한다:
+       u1_handle_event     /dsm/queue 초점 카드 뜸(시작) → 키 1(판정+접수) 성공 **또는**
+                           종결 확인 「확인 — 종결」 성공(끝) → runs 에 1줄
+       u1_handover_note    /handover 인계 자리 뜸(시작) → 「초안 가져오기」 또는
+                           「인계 메모 쓰기」 누름(끝) → runs 에 1줄
+       u1_dead_camera_check /dsm/cameras/grid 뜸(시작) → 무응답 수가 화면에 적힘(끝 ·
+                           클릭 0 이 정상) → runs 에 1줄
+  ② 같은 페이지에서 `JSON.stringify(window.__gxMetrics())` (또는
+     `window.__gxConvenience.export()`) 를 evaluate 해 파일로 받는다 —
+     `docs/agent/evidence/U1/convenience_dump_<UTC>.json`. `in_flight` 가 비어 있지
+     않으면 그 지표는 **끝나지 않은 것**이다(수가 아니다) · `storage_ok=false` 면 그
+     브라우저는 저장이 막힌 것이다.
+  ③ `python scripts/merge_convenience_u1.py --dump <그 파일>` — 자기시험(실물 표본
+     포함)을 지나 대장에 덧붙인다. 종료 0 · 「N줄 → N+k줄」 이 첫 값이다.
+
 종료 코드: 0 붙였다 · 1 붙이다 멈췄다(줄었다·모양이 다르다) · 2 못 붙였다(파일 없음)
 """
 from __future__ import annotations
@@ -156,10 +175,45 @@ def self_test() -> int:
         print(f"{TAG} 자기시험 FAIL 남의 모양을 받았다")
         fails += 1
 
+    # ④ [턴 T] **실물 표본** — 저장소의 실제 대장 + 가짜 값 1 → 줄지 않고 정확히 1 는다.
+    #    합성 `base` 만 재면 실제 대장의 모양(metrics 넷 · runs 0)이 바뀌었을 때 못 본다.
+    #    파일에는 쓰지 않는다 — 표본은 읽기다.
+    if LEDGER.exists():
+        try:
+            real = json.loads(LEDGER.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            print(f"{TAG} 자기시험 FAIL 실물 대장을 못 읽었다: {exc}")
+            fails += 1
+        else:
+            before = len(real.get("runs") or [])
+            fake = {"schema": SCHEMA, "runs": [
+                {"metric": "u1_handle_event", "subject": "self-test",
+                 "clicks": 1, "elapsed_ms": 1000, "completed": True,
+                 "at": "1970-01-01T00:00:00Z"}]}
+            grown, added_real = merge(real, fake)
+            if added_real != 1 or len(grown["runs"]) != before + 1:
+                print(f"{TAG} 자기시험 FAIL 실물 대장 {before}줄 + 1 이 "
+                      f"{len(grown['runs'])}줄이 됐다")
+                fails += 1
+            if {m.get("id") for m in grown.get("metrics") or []} != {
+                    "u1_handle_event", "u1_handover_note", "u1_dead_camera_check"}:
+                print(f"{TAG} 자기시험 FAIL 실물 대장의 지표 셋이 아니다")
+                fails += 1
+            # 브라우저 덤프의 진단 칸(in_flight · storage_ok)은 **붙이지 않는다** —
+            # 대장에는 끝난 측정만 든다.
+            noisy = dict(fake, in_flight=[{"metric": "u1_handover_note"}], storage_ok=True)
+            same, added_noisy = merge(real, noisy)
+            if added_noisy != 1 or "in_flight" in same:
+                print(f"{TAG} 자기시험 FAIL 진단 칸이 대장에 새었다")
+                fails += 1
+    else:
+        print(f"{TAG} 자기시험 FAIL 실물 대장이 없다: {LEDGER}")
+        fails += 1
+
     if fails:
         print(f"{TAG} 자기시험 {fails}건 실패")
         return EXIT_FAIL
-    print(f"{TAG} 자기시험 통과 — 양성 2 · 음성 3")
+    print(f"{TAG} 자기시험 통과 — 양성 2 · 음성 3 · 실물 표본 1(대장 줄지 않음)")
     return EXIT_OK
 
 

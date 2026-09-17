@@ -2188,6 +2188,30 @@ WRITE_NO_PROBE: dict[str, str] = {
         "(`kernels.k1_event.subscribe` 줄과 **같은 모양**이다). "
         "채널을 인자로 받지 않는 것도 같은 계열의 잠금이다 — 고를 수 있으면 언젠가 "
         "실채널이 선택되고, 「시험」이라 부르며 나간 문자는 취소되지 않는다.",
+    # ★ 2026-09-17 (턴 T · 병합 조율자) — 판별기가 사각 둘을 고치자 **새로 보인 넷**.
+    #   넷 다 새 쓰기 면이 아니라 **전부터 쓰던 면**이다 — 옛 판별기가 「함수 안 import」와
+    #   「dict.update」에서 눈이 멀어 못 봤을 뿐이다(D-301 의 이 파일 판 · 두 번째).
+    #   등재는 면제가 아니다: 각 줄이 「누가 남의 것을 재는가」를 이름으로 가리킨다.
+    "kernels.k2_notify.send_webpush":
+        "다른 파일이 잰다 — tests/test_u3_webpush_send.py::CrossTenantWriteTest(남의 사건 → "
+        "404 · 행 0) · TestSendRouteTest(제 사건 → 행 1). 시그니처 `send_webpush(*, scope, "
+        "subscription, title, body, event_id)` — event_id 는 커널 `get_event(scope)` 문지기를 "
+        "지난 뒤에만 행이 선다(턴 T · U3 · P-160).",
+    "kernels.k2_notify.notice_false_positive":
+        "시그니처 `(*, scope, event_id)` — 남의 event_id 는 커널 문지기(get_event 404)에서 "
+        "끊긴다. 잰 자리: tests/test_k2_notify_kernel.py(원 수신자 1회 · 받을 사람 없음은 빈 "
+        "튜플). 쓰기는 `_send_one` 위임(발송 이력 행) — 옛 판별기가 못 본 바로 그 모양.",
+    "kernels.k2_notify.heartbeat_watch":
+        "시그니처 `(*, scope, now)` — 남의 것을 가리킬 인자가 **없다**(subscribe 줄과 같은 "
+        "모양). 자기 테넌트의 심박 부재를 사건으로 세우는 dead man's switch 절반. 잰 자리: "
+        "tests/test_q_heartbeat_digest.py.",
+    "stream_monitors.services.camera_pulse.scan_clusters":
+        "시그니처 `(*, scope, now, create_events, group)` — ⚠ **`group=` 은 스코프를 우회한다** "
+        "(`camera_pulse._scoped:316` — group 이 오면 actor 를 보지 않고 그 그룹으로 좁힌다). "
+        "지금 부르는 자리 둘은 그 인자를 안 넘긴다(`ops_tasks.camera_pulse_scan_beat` 시스템 "
+        "스코프 · `apps/dsm/services.py:1227` create_events=False 판정만). 그래서 오늘은 새는 "
+        "길이 없지만 **인자는 남의 것을 가리킬 수 있다** — 다음 턴 WriteProbe(남의 group → 남의 "
+        "테넌트 사건 0행)로 옮긴다. 읽기 격리는 tests/test_q_camera_pulse.py 331줄이 잰다.",
 }
 
 
@@ -2422,56 +2446,18 @@ class TenantIsolationWriteTest(TenantFixtureMixin, TestCase):
 
     @staticmethod
     def _writes_to_db(func) -> bool:
-        """이 공개 함수가 DB 를 바꾸는가.
+        """이 공개 함수가 DB 를 바꾸는가 — 판별은 `tests.test_u56_writes_to_db_judge` 가 한다.
 
-        `@transaction.atomic` 은 **쓰기에만** 붙는다(읽기에 붙일 이유가 없다).
-        완벽한 판별은 아니지만 **추측이 아니라 코드에 있는 표식**이고, 놓치는 쪽으로
-        틀리면 위의 단언이 조용히 통과한다 — 그래서 소스 본문도 함께 본다.
+        ★ 2026-09-17 (턴 T · 차선 U56 · 병합 조율자) — 이 자리에 있던 판별기(09-22 · 09-04 판)는
+          **사각 둘**을 갖고 있었다: ① 한 단계 위임을 「모듈 이름공간의 이름」으로만 따라가
+          **함수 안에서 import 한 이름**은 못 봤다 ② `.update(` 를 dict.update 에도 쓰기로 읽었다.
+          새 판별기는 자기시험 4(위임 양성 · dict.update 음성 · 직접 양성 · 읽기 음성)를 갖고,
+          실물에서 쓰기 면 **11 → 17** 을 냈다 — 새로 보인 여섯은 아래 대장에 이름으로 있다.
+          옛 본문은 git 이력에 있다(`git show pre-turn-t:backend/tests/test_tenant_isolation.py`).
         """
-        import inspect
-        import re
+        from tests.test_u56_writes_to_db_judge import writes_to_db
 
-        markers = (".create(", ".save(", ".update(", ".delete(", "NotImplementedYet")
-
-        def _src(fn):
-            try:
-                return inspect.getsource(getattr(fn, "__wrapped__", fn))
-            except (OSError, TypeError):
-                return ""
-
-        src = _src(func)
-        if any(m in src for m in markers):
-            return True
-
-        # ★ 2026-09-22 (P-20) — **한 단계 위임까지 따라간다.**
-        #
-        #   [실측] 이 판별기는 `kernels.k2_notify.send` 를 **읽기로 봤다.** 그 함수는
-        #   행을 만들지 않고 `_send_one()` 에게 시키며, 표식은 그 안에 있다. 같은 이유로
-        #   `suppress`·`notice_false_positive` 도 안 보였다 — 그런데 그날 시드가
-        #   `send` 하나로 **발송 이력 120행**을 만들었다. 즉 대장은 **자기가 안 보는
-        #   곳에서 늘어난 쓰기 면을 초록으로 통과**시키고 있었다(D-301 의 이 파일 판).
-        #
-        #   왜 한 단계만인가 — 끝까지 따라가면 결국 ORM 이 나오므로 **모든 함수가
-        #   쓰기**가 된다. 한 단계는 「공개 면이 자기 모듈의 사설 헬퍼에게 시킨다」는
-        #   실제 모양을 덮으면서, 판별을 뜻 있게 남긴다. 두 단계가 필요한 자리가
-        #   나오면 그때 늘린다 — **그 사례를 보고 나서** 늘린다.
-        module = inspect.getmodule(getattr(func, "__wrapped__", func))
-        if module is None:
-            return False
-        # ★ 2026-09-04 (차선 D 가 잡은 남은 반쪽) — **다른 모듈에서 들여온 이름**도 본다.
-        #   [실측] `kernels.k2_notify.renotify` 는 `send()` 하나로 `DeliveryRecord` 행을
-        #   만드는데 판별기는 그것을 **읽기로 봤다**: 09-22 판은 같은 모듈의 `_` 헬퍼만
-        #   따라갔고, `send` 는 `_` 로 시작하지 않으며 다른 모듈에서 들어온 이름이다.
-        #   선등재가 없었으면 **조용히 통과했을 자리**다.
-        #   → 부르는 이름을 **그 모듈의 이름 공간에서** 찾는다(들여온 것 포함).
-        #   ⚠ 여전히 **한 단계만**이다 — 끝까지 따라가면 결국 ORM 이 나오고,
-        #     그러면 모든 함수가 쓰기가 된다.
-        for name in set(re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*\(", src)):
-            helper = getattr(module, name, None)
-            if callable(helper) and not inspect.isclass(helper):
-                if any(m in _src(helper) for m in markers):
-                    return True
-        return False
+        return writes_to_db(func)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -65,8 +65,9 @@ export const SETTINGS_HEADLINE = '내 알림 설정';
 /** 채널 이름표. 서버가 정한 이름(`allowed_channels`)에 사람의 말을 입힌다. */
 const CHANNEL_LABEL: Record<string, string> = {
   email: '메일',
-  sms: '문자',
   webpush: '이 기기 알림(웹푸시)',
+  // ★ [턴 T · 대표 결정 ①] 문자(`sms`)는 선택지가 아니다 — 서버 `allowed_channels`
+  //   에서 빠졌고, 여기도 이름표를 두지 않는다(옛 행에 남은 이름은 그대로 글자로 뜬다).
 };
 
 interface NotifyPrefsView {
@@ -77,6 +78,17 @@ interface NotifyPrefsView {
   saved: boolean;
   allowed_channels: string[];
   note: string;
+  /** 「관리자 승인 필요」 — **서버가 내는 값**. 화면은 판정하지 않고 적는다. */
+  approval: { status: string; items: string[]; note: string };
+}
+
+/**
+ * 누른 뒤의 **상태 칸** — 토스트가 아니다(사라지는 말은 판정기도 사람도 못 본다).
+ * `data-gx` 표식은 V 단독 세션의 판정기가 찾는 자리다.
+ */
+interface ActionOutcome {
+  ok: boolean;
+  text: string;
 }
 
 export default function MobileSettings() {
@@ -99,6 +111,8 @@ export default function MobileSettings() {
   const [thisDevice, setThisDevice] = useState('');
   const [pushBusy, setPushBusy] = useState('');
   const [testResult, setTestResult] = useState<TestSendResult | null>(null);
+  const [saveOutcome, setSaveOutcome] = useState<ActionOutcome | null>(null);
+  const [testOutcome, setTestOutcome] = useState<ActionOutcome | null>(null);
 
   /** 서버 값이 오면 입력칸의 **출발점**으로 삼는다 — 화면이 값을 지어내지 않는다. */
   useEffect(() => {
@@ -130,12 +144,14 @@ export default function MobileSettings() {
         zone_ids: zones.trim(),
         channels: channels.join(','),
       });
-      message.success('알림 설정을 저장했습니다.');
+      // ★ 토스트가 아니라 **상태 칸**에 적는다 — 서버가 돌려준 값으로 다시 그린다.
+      setSaveOutcome({ ok: true, text: '저장됨 — 서버에 반영된 값으로 다시 읽었습니다.' });
       prefs.reload();
     } catch (err) {
-      message.error(
-        userFacingError('MobileSettings.save', err, '설정을 저장하지 못했습니다.'),
-      );
+      setSaveOutcome({
+        ok: false,
+        text: userFacingError('MobileSettings.save', err, '설정을 저장하지 못했습니다.'),
+      });
     } finally {
       setSaving(false);
     }
@@ -181,12 +197,21 @@ export default function MobileSettings() {
     try {
       const result = await sendTestPush();
       setTestResult(result);
-      // ★ 「보냈다」고만 말하지 않는다 — **모수와 함께** 적는다(D-301).
-      message.info(`기기 ${result.devices}대 중 ${result.sent}대로 보냈습니다.`);
+      // ★ 「보냈다」고만 말하지 않는다 — **모수와 함께**, 그리고 **행 번호와 함께** 적는다
+      //   (D-301 · P-160 ③: 이제 `deliveries` 행이 남는다 — 그 번호가 증거다).
+      const ref = result.delivery_id ?? '?';
+      setTestOutcome({
+        ok: result.succeeded,
+        text: result.succeeded
+          ? `보냄 — 기기 ${result.devices}대 중 ${result.sent}대 · 발송 이력 #${ref} (webpush)`
+          : `못 보냄 — 발송 이력 #${ref} · 사유: ${result.failure_reason ?? '사유 없음'}`,
+      });
     } catch (err) {
-      message.error(
-        userFacingError('MobileSettings.testSend', err, '시험 알림을 보내지 못했습니다.'),
-      );
+      setTestResult(null);
+      setTestOutcome({
+        ok: false,
+        text: userFacingError('MobileSettings.testSend', err, '시험 알림을 보내지 못했습니다.'),
+      });
     } finally {
       setPushBusy('');
     }
@@ -261,19 +286,28 @@ export default function MobileSettings() {
               </Space>
             )}
 
-            {testResult ? (
+            {testOutcome ? (
               <Alert
-                type={testResult.sent > 0 ? 'success' : 'warning'}
+                type={testOutcome.ok ? 'success' : 'warning'}
                 showIcon
-                message={`기기 ${testResult.devices}대 중 ${testResult.sent}대로 보냈습니다.`}
+                data-gx="push-test-outcome"
+                message={testOutcome.text}
                 description={
-                  <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                    {testResult.results.map((r) => (
-                      <Text key={r.endpoint_sha12} style={{ fontSize: 12 }}>
-                        {r.label} — {r.sent ? '보냄' : `못 보냄: ${r.reason}`}
-                      </Text>
-                    ))}
-                  </Space>
+                  testResult ? (
+                    <Space direction="vertical" size={2} style={{ width: '100%' }}>
+                      {testResult.results.map((r) => (
+                        <Text key={r.endpoint_sha12} style={{ fontSize: 12 }}>
+                          {r.label} — {r.succeeded ? '보냄' : `못 보냄: ${r.failure_reason ?? r.reason}`}
+                          {r.delivery_id ? ` · 이력 #${r.delivery_id}` : ''}
+                        </Text>
+                      ))}
+                      {testResult.drill_mode ? (
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          훈련 모드 — 제목이 [훈련] 으로 시작합니다.
+                        </Text>
+                      ) : null}
+                    </Space>
+                  ) : null
                 }
               />
             ) : null}
@@ -383,12 +417,47 @@ export default function MobileSettings() {
               >
                 설정 저장
               </Button>
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              {saveOutcome ? (
+                <Alert
+                  type={saveOutcome.ok ? 'success' : 'error'}
+                  showIcon
+                  data-gx="prefs-save-outcome"
+                  message={saveOutcome.text}
+                />
+              ) : null}
+              <Text type="secondary" style={{ fontSize: 12 }} data-gx="prefs-saved-state">
                 {prefs.data?.saved
                   ? '저장된 설정이 있습니다.'
                   : '아직 정하지 않았습니다 — 규칙이 정한 대로 받습니다.'}
               </Text>
             </Space>
+
+            <Card
+              size="small"
+              title="관리자 승인 필요"
+              styles={{ body: { padding: 12 } }}
+              data-gx="prefs-approval"
+            >
+              {/* ★ 서버가 낸 값만 적는다 — 화면이 「승인 필요」를 판정하지 않는다. */}
+              <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                <Space size={6} wrap>
+                  <Text style={{ fontSize: 12 }}>승인 상태</Text>
+                  <Tag color={prefs.data?.approval?.status === 'not_required' ? 'default' : 'orange'}>
+                    {prefs.data?.approval?.status === 'not_required'
+                      ? '승인 필요 없음'
+                      : (prefs.data?.approval?.status ?? '알 수 없음')}
+                  </Tag>
+                </Space>
+                {(prefs.data?.approval?.items ?? []).length > 0 ? (
+                  <Text style={{ fontSize: 12 }}>
+                    승인 대기 항목: {(prefs.data?.approval?.items ?? []).join(', ')}
+                  </Text>
+                ) : null}
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {prefs.data?.approval?.note}
+                </Text>
+              </Space>
+            </Card>
           </Space>
         </StateBoundary>
       </Space>

@@ -406,3 +406,145 @@ export interface CameraThresholdValue {
   value: number | null;
   set: boolean;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * 턴 T · 차선 U24 — 통계 축 5 · 상급 보고 체크 · 감사 읽기 (P-164 U24)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/** 축 하나의 행 — 서버가 준 키·이름·건수. **화면이 세지 않는다.** */
+export interface StatsAxisRow {
+  key: string;
+  label: string;
+  count: number;
+}
+
+/**
+ * `GET /api/dsm/stats/axes` — 축 이름은 서버가 준다(`axis_order` · `axis_titles`).
+ * 화면이 축 이름을 손으로 들면 행에 축이 늘거나 줄 때 화면만 옛말이 된다.
+ *
+ * ★ `total` 은 같은 창의 `GET /events` 목록 수와 같아야 한다 — 화면이 둘을 나란히
+ *   적고 다르면 빨강으로 말한다(`TeamStatus` 의 「합계 = 행 합」과 같은 규약).
+ */
+export interface StatsAxesResponse {
+  since: string;
+  until: string;
+  total: number;
+  axes: Record<string, StatsAxisRow[]>;
+  axis_titles: Record<string, string>;
+  axis_order: string[];
+  /** 시간대 축이 어느 시간대의 시인가 — 서버 시간대. 화면이 다시 접지 않는다. */
+  hour_tz: string;
+  capped: boolean;
+  row_cap: number;
+}
+
+/** 상급 보고 체크 한 건. `flagged` 가 거짓이면 체크가 **없는** 것이다. */
+export interface UpperReportFlag {
+  event_id: number;
+  flagged: boolean;
+  reported_at: string | null;
+  checked_at: string | null;
+  checked_by_id: number | null;
+  audit_id?: number;
+  created?: boolean;
+}
+
+/** `GET /api/dsm/events/upper-report/flags` — 체크된 사건만 돌아온다(키는 event_id 문자열). */
+export interface UpperReportFlags {
+  flags: Record<string, UpperReportFlag>;
+  total: number;
+  capped: boolean;
+}
+
+/** 감사 한 줄 — `audit.py` 가 남긴 것을 읽은 모양. `outcome` 은 allowed | denied 둘뿐. */
+export interface AuditItem {
+  audit_id: number;
+  at: string | null;
+  channel: string;
+  outcome: 'allowed' | 'denied' | string;
+  action: string;
+  method: string;
+  actor_id: number | null;
+  actor: string;
+  reason: string;
+  status_http: number | null;
+}
+
+export interface AuditPage {
+  items: AuditItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  pages: number;
+  channels: string[];
+}
+
+// ── S-17 「외부 연계」 (턴 T · 차선 U56) — 비밀 값을 담는 타입은 응답 한 번뿐이다 ──
+
+/** 인바운드 API 키 한 줄 — **값 칸이 없다**(`GET /settings/api_keys`). */
+export interface InboundApiKeyRow {
+  key_id: number;
+  name: string;
+  prefix: string;
+  status: string;
+  is_active: boolean;
+  created_at?: string | null;
+  last_used?: string | null;
+  expires_at?: string | null;
+}
+
+/** `GET /api/dsm/settings/api_keys` — 범위(capability)는 키마다가 아니라 **한 벌**이다. */
+export interface ApiKeysOverview {
+  inbound: InboundApiKeyRow[];
+  inbound_api_type: string;
+  inbound_capability: string;
+  outbound?: unknown[];
+}
+
+/** 발급 응답 — `secret` 은 이 응답에만 있다. 화면은 지문·길이만 남긴다. */
+export interface ApiKeyIssued extends InboundApiKeyRow {
+  secret: string;
+  audit_id: number;
+}
+
+/** WS-17 구독 필터 — 빈 객체는 「거르지 않는다」. */
+export interface WebhookFilters {
+  type?: string[];
+  severity?: string[];
+  camera?: string[];
+}
+
+/** 구독 한 줄(`GET /webhook-subscriptions`) — 서명키는 **이름**뿐. filters 는 따로 GET 한다. */
+export interface WebhookSubscriptionRow {
+  subscription_id: number;
+  endpoint_url: string;
+  signing_key_ref: string;
+  event_types: string[];
+  min_severity: string;
+  payload_format: string;
+  is_active: boolean;
+  last_delivered_at?: string | null;
+}
+
+/** 발급 응답 — `signing_key_secret` 은 이 응답에만 있다. */
+export interface WebhookIssued extends WebhookSubscriptionRow {
+  signing_key_name: string;
+  signing_key_secret: string;
+  filters: WebhookFilters;
+  audit_id: number;
+}
+
+export interface WebhookFiltersView {
+  subscription_id: number;
+  filters: WebhookFilters;
+  is_active: boolean;
+  audit_id?: number;
+}
+
+/** `GET /api/dsm/health` — 이름과 상태 이름뿐. */
+export interface DsmHealth {
+  status: 'ok' | 'fail';
+  schema: string;
+  checks: Record<string, 'ok' | 'fail'>;
+  failed: string[];
+}

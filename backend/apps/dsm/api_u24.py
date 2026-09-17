@@ -228,3 +228,248 @@ class DsmU24API:
             raise HttpError(404, str(exc) or "그런 카메라가 없습니다.")
         except PermissionDenied as exc:
             raise HttpError(403, str(exc))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 턴 T (P-164 U24) — 통계 축 5 · CSV · 상급 보고 체크 · 감사 읽기
+    # ══════════════════════════════════════════════════════════════════════
+
+    # ── UX-39 통계 화면 — 축 5 (카메라 · 유형 · 심각도 · 판정 · 시간대) ──────
+    @route.get("/stats/axes", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-39 통계 축 — 남의 테넌트 건수가 섞이면 격리 실패다")
+    def stats_axes(self, request, since: datetime | None = None,
+                   until: datetime | None = None,
+                   event_type: str | None = None, severity: str | None = None):
+        """기간 내 사건을 축 다섯으로 접는다. `total` 은 같은 창의 `GET /events` 목록 수와
+        같다(AC-5) — 화면이 둘을 나란히 적고 다르면 빨강으로 말한다.
+        """
+        try:
+            return stats.stats_axes(
+                scope=_scope(request), since=since, until=until,
+                event_type=_split_multi(event_type), severity=_split_multi(severity))
+        except stats.StatsInputError as exc:
+            raise HttpError(400, str(exc))
+
+    @route.get("/stats/export.csv", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-39 통계 CSV — 남의 테넌트 건수가 파일로 나가면 격리 실패다")
+    def stats_export_csv(self, request, since: datetime | None = None,
+                         until: datetime | None = None,
+                         event_type: str | None = None, severity: str | None = None):
+        """「표 내려받기」(GX-COPY 정본) — `stats_axes` 를 그대로 CSV 로. UTF-8 BOM ·
+        `text/csv; charset=utf-8` · 파일 이름은 `Content-Disposition` 이 든다.
+        ⚠ 이 라우트는 **응답 캐시를 타면 안 된다**(`Cache-Control: no-store`) — 파일은
+          사람이 보고서에 붙이는 것이라 60초 전 값이 「지금 값」으로 남는다.
+        """
+        from django.http import HttpResponse
+
+        try:
+            text = stats.stats_axes_csv(
+                scope=_scope(request), since=since, until=until,
+                event_type=_split_multi(event_type), severity=_split_multi(severity))
+        except stats.StatsInputError as exc:
+            raise HttpError(400, str(exc))
+        resp = HttpResponse(text.encode("utf-8"), content_type="text/csv; charset=utf-8")
+        resp["Content-Disposition"] = 'attachment; filename="gx-stats.csv"'
+        resp["Cache-Control"] = "no-store"
+        return resp
+
+    # ── UX-47 상급 보고 체크 (모델 `DsmUpperReportFlag` — 실측: 이미 있다) ───────
+    #
+    # ★ 경로 `/events/{id}/upper-report` 는 모델 머리말이 적은 그 이름이다. `api.py` 의
+    #   `/events/{int:event_id}` 밑에 변수 조각이 하나뿐이고 `upper-report` 는 정수가
+    #   아니라 삼킴이 없다(`api_u1.py` 의 `/events/{id}/note` 와 같은 자리).
+    # ★ 같은 리터럴 경로에 POST(체크)와 DELETE(해제)를 **함께** 선언한다 — 한 경로 =
+    #   한 PathView 라 갈라 선언하면 뒤의 것이 405 다(메모리 「라우트 삼킴 함정」).
+    # ★ 해제는 소프트 삭제다(모델 머리말) — 「체크했다가 풀었다」가 행으로 남는다.
+    # ★ 감사는 **성공도 실패도** 남긴다(`audit.record_event_action`) — 감사에 못 남기면
+    #   체크도 일어나지 않는다(`audit.py` 머리말 규약).
+    @route.get("/events/upper-report/flags", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-47 상급 보고 표시 — 남의 테넌트 사건의 체크가 보이면 격리 실패다")
+    def upper_report_flags(self, request, event_ids: str = ""):
+        """목록 화면이 한 번에 묻는 자리 — `event_ids=1,2,3` → 체크된 것만 돌려준다.
+        비어 있으면 **이 테넌트의 체크 전부**(상한 `_FLAG_CAP`)."""
+        return _upper_report_flags(scope=_scope(request), event_ids=event_ids)
+
+    @route.post("/events/{int:event_id}/upper-report", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-47 상급 보고 체크 — 남의 테넌트 사건에 체크를 남기면 격리 실패다")
+    def upper_report_set(self, request, event_id: int,
+                         reported_at: datetime | None = None, reason: str = ""):
+        """체크. `reported_at` 을 안 주면 지금이다(전화로 03:10 에 보고하고 03:30 에
+        체크하는 사람은 시각을 준다). 이미 체크돼 있으면 **그 행을 그대로** 낸다(멱등)."""
+        return _upper_report_set(scope=_scope(request), event_id=event_id,
+                                 reported_at=reported_at, reason=reason)
+
+    @route.delete("/events/{int:event_id}/upper-report", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-47 상급 보고 해제 — 남의 테넌트 사건의 체크를 풀면 격리 실패다")
+    def upper_report_clear(self, request, event_id: int, reason: str = ""):
+        """해제(소프트 삭제). 체크가 없으면 404 — 「풀 것이 없다」를 200 으로 덮지 않는다."""
+        return _upper_report_clear(scope=_scope(request), event_id=event_id, reason=reason)
+
+    # ── 감사 읽기 (P-164 U24 ③) — U2 · U4 · U5 만 ─────────────────────────────
+    @route.get("/audit", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="감사 읽기 — 남의 테넌트 행위자의 감사 행이 보이면 격리 실패다")
+    def audit_read(self, request, since: datetime | None = None,
+                   until: datetime | None = None, actor_id: int | None = None,
+                   action: str | None = None, page: int = 1, page_size: int = 50):
+        """`audit.py` 가 남긴 것을 읽는다 — 필터 3(기간 · 행위자 · 행위 종류) + 쪽.
+
+        ★ **누가 읽나**: U2(관제팀장 — `K3_ROLE_MANAGERS`) · U4(지자체 담당관 — 읽기 전용
+          `view_only*`) · U5(운영자 — `K3_ROLE_SYSOPS` · 테넌트 관리자 · 전역 관리자).
+          관제요원(U1)·현장(U3)은 403 — 남의 행위 이력은 팀장의 자리다.
+          역할 표는 `config/k3_roles.py` **한 곳**을 읽는다(두 벌을 두지 않는다).
+        ★ 테넌트 좁히기는 `audit.read_page` 가 한다 — 여기서 다시 하지 않는다.
+        """
+        from apps.dsm import audit
+
+        scope = _scope(request)
+        denial = _audit_reader_denial(scope.actor)
+        if denial:
+            raise HttpError(403, denial)
+        try:
+            return audit.read_page(scope=scope, since=since, until=until,
+                                   actor_id=actor_id, action=action,
+                                   page=page, page_size=page_size)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 T — 라우트 뒷면. 얇게 둔다: 모델은 `stream_monitors.DsmUpperReportFlag`(실측 · 있다),
+# 감사는 `apps/dsm/audit.py`, 사건 문지기는 `services.event_detail`(남의 것은 404).
+# ═══════════════════════════════════════════════════════════════════════════
+
+#: ISO-03 목적 선언 — 이 파일에서만 쓴다.
+_UPPER_REPORT_PURPOSE = "dsm.upper_report"
+#: 한 번에 돌려주는 체크 수 상한(`stats._ROW_CAP` 과 같은 발상).
+_FLAG_CAP = 2000
+
+
+def _audit_reader_denial(user) -> str | None:
+    """감사 읽기 권한 — 허용이면 `None`, 아니면 사유 한 줄. **판정식을 새로 쓰지 않는다**:
+    전역·테넌트 관리자는 `common.tenant_roles`, 읽기 전용은 `common.role_gate`,
+    팀장·운영자 역할 코드는 `config.k3_roles` 표를 그대로 읽는다."""
+    from common.role_gate import is_read_only
+    from common.tenant_roles import is_global_admin, is_tenant_admin
+    from config.k3_roles import K3_ROLE_MANAGERS, K3_ROLE_SYSOPS
+
+    if is_global_admin(user) or is_tenant_admin(user) or is_read_only(user):
+        return None
+    roles = getattr(user, "roles", None)
+    codes = set(roles.values_list("code", flat=True)) if roles is not None else set()
+    if codes & (set(K3_ROLE_MANAGERS) | set(K3_ROLE_SYSOPS)):
+        return None
+    return "감사 이력은 관제팀장 · 지자체 담당관 · 운영자만 볼 수 있습니다."
+
+
+def _flag_model():
+    from django.apps import apps
+
+    return apps.get_model("stream_monitors", "DsmUpperReportFlag")
+
+
+def _iso(value) -> str | None:
+    return value.isoformat() if value is not None else None
+
+
+def _flag_row(row) -> dict:
+    #: 시각은 ISO 문자열로 — 이 dict 가 그대로 감사 `data_before/after`(JSON 칸)에 들어간다.
+    return {
+        "event_id": row.event_id,
+        "flagged": True,
+        "reported_at": _iso(row.reported_at),
+        "checked_at": _iso(getattr(row, "created_on", None)),
+        "checked_by_id": getattr(row, "created_by_id", None),
+    }
+
+
+def _live_flags(group):
+    #: `_base_manager` + `deleted__isnull` + `group` 명시 — `objects` 는 스레드에 남은
+    #: 요청의 group 으로 좁히므로(메모리 「스레드에 남은 요청」) 여기서는 우연에 안 기댄다.
+    return _flag_model()._base_manager.filter(group=group, deleted__isnull=True)
+
+
+def _upper_report_flags(*, scope: TenantScope, event_ids: str) -> dict:
+    from common.tenant_filters import get_user_group
+
+    actor = scope.require_actor()
+    group = get_user_group(actor)
+    if group is None:
+        return {"flags": {}, "total": 0, "capped": False}
+    qs = _live_flags(group)
+    if event_ids.strip():
+        try:
+            ids = [int(x) for x in event_ids.split(",") if x.strip()]
+        except ValueError:
+            raise HttpError(400, "event_ids 는 쉼표로 구분한 정수다")
+        qs = qs.filter(event_id__in=ids)
+    rows = list(qs.order_by("-id")[:_FLAG_CAP + 1])
+    capped = len(rows) > _FLAG_CAP
+    rows = rows[:_FLAG_CAP]
+    return {"flags": {str(r.event_id): _flag_row(r) for r in rows},
+            "total": len(rows), "capped": capped}
+
+
+def _upper_report_set(*, scope: TenantScope, event_id: int,
+                      reported_at: datetime | None, reason: str) -> dict:
+    from django.http import Http404
+    from django.utils import timezone
+
+    from common.tenant_filters import get_user_group
+
+    from apps.dsm import audit, services
+
+    actor = scope.require_actor()
+    action = f"upper_report:set:{event_id}"
+    try:
+        services.event_detail(scope=scope, event_id=event_id)
+    except Http404:
+        #: 남의 사건 · 없는 사건 — **실패도 감사에 남는다**(AC-12 규약). 존재 여부는
+        #: 응답에 새지 않는다(404 하나).
+        audit.record_event_action(scope=scope, action=action, outcome=audit.DENIED,
+                                  reason="사건이 없거나 남의 테넌트다", api_name=action,
+                                  api_method="POST", status_http=404)
+        raise HttpError(404, "그런 사건이 없습니다.")
+    group = get_user_group(actor)
+    if group is None:
+        raise HttpError(403, "소속 조직이 없어 체크를 남길 수 없습니다.")
+
+    existing = _live_flags(group).filter(event_id=event_id).first()
+    if existing is not None:
+        entry = audit.record_event_action(
+            scope=scope, action=action, outcome=audit.ALLOWED,
+            reason=reason or "이미 체크됨 — 그대로", before=_flag_row(existing),
+            after=_flag_row(existing), api_name=action, api_method="POST",
+            status_http=200)
+        return {**_flag_row(existing), "audit_id": entry.audit_id, "created": False}
+
+    row = _flag_model().objects.create(
+        event_id=event_id, reported_at=reported_at or timezone.now(),
+        group=group, purpose_code=_UPPER_REPORT_PURPOSE)
+    entry = audit.record_event_action(
+        scope=scope, action=action, outcome=audit.ALLOWED,
+        reason=reason or "상급 보고 체크", before=None, after=_flag_row(row),
+        api_name=action, api_method="POST", status_http=200)
+    return {**_flag_row(row), "audit_id": entry.audit_id, "created": True}
+
+
+def _upper_report_clear(*, scope: TenantScope, event_id: int, reason: str) -> dict:
+    from common.tenant_filters import get_user_group
+
+    from apps.dsm import audit
+
+    actor = scope.require_actor()
+    action = f"upper_report:clear:{event_id}"
+    group = get_user_group(actor)
+    row = _live_flags(group).filter(event_id=event_id).first() if group else None
+    if row is None:
+        audit.record_event_action(scope=scope, action=action, outcome=audit.DENIED,
+                                  reason="풀 체크가 없다", api_name=action,
+                                  api_method="DELETE", status_http=404)
+        raise HttpError(404, "이 사건에는 상급 보고 체크가 없습니다.")
+    before = _flag_row(row)
+    row.delete()  # safedelete — 소프트 삭제. 행은 남고 `deleted` 가 찍힌다.
+    entry = audit.record_event_action(
+        scope=scope, action=action, outcome=audit.ALLOWED,
+        reason=reason or "상급 보고 체크 해제", before=before,
+        after={"event_id": event_id, "flagged": False},
+        api_name=action, api_method="DELETE", status_http=200)
+    return {"event_id": event_id, "flagged": False, "audit_id": entry.audit_id}

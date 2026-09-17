@@ -74,16 +74,13 @@ import { Main } from 'rj-core';
 
 import {
   CLOSE_CONFIRM_EMPTY,
-  CLOSE_CONFIRM_OPEN_INSTEAD,
   CLOSE_CONFIRM_TITLE,
-  dataSourceBadge,
   FALSE_POSITIVE_REASONS,
   REJECT_LABEL,
   REVIEW_AND_ACK_LABEL,
   SUPPORT_BADGE_LABEL,
   SUPPORT_WAITING_NOTE,
   WIRING_WAITING_LABEL,
-  WIRING_WAITING_NOTE,
 } from '../copy';
 import EventSnapshot from '../components/EventSnapshot';
 import ResponseClock from '../components/ResponseClock';
@@ -119,6 +116,9 @@ const { Text, Title, Paragraph } = Typography;
  */
 const STEP_SLOTS = ['acknowledged', 'in_progress', 'closed'] as const;
 
+/** 종결 확인 카드의 단추 — 「확인」 한 번이 서버 기록을 닫는다(턴 T). */
+export const CLOSE_CONFIRM_BUTTON = '확인 — 종결';
+
 /** 이 화면에만 있는 글자 — 검수 촬영의 단언 대상이다. */
 export const HEADLINE = '지금 처리할 것 — 가장 급한 하나';
 
@@ -127,18 +127,6 @@ export const HEADLINE = '지금 처리할 것 — 가장 급한 하나';
  * 화면이 더 물으면 서버가 잘라서 답하고, 잘린 줄은 아무도 못 본다.
  */
 const SIGNAL_ASK_CAP = 30;
-
-/**
- * 「배선 대기」일 때 종결 확인 칸이 **어떻게 보일지** 세워 두는 한 줄.
- *
- * ★ **실제 회신이 아니다.** 시드 배지를 달고 단추는 눌리지 않는다 — 검수용 예시가
- *   진짜 사건으로 읽히면 그것은 지어낸 자료다. 빈 칸으로 두지 않는 이유는 그 반대편에
- *   있다: 빈 칸은 「현장이 아무 말도 안 했다」로 읽히는데, 참은 「표시가 아직 안 붙는다」다.
- */
-const SEED_DONE_EXAMPLE = {
-  who: '현장 요원',
-  text: '[조치완료] 잔불 없음, 철수합니다 (검수용 예시)',
-};
 
 function eventPath(id: number): string {
   return `/dsm/events/${id}`;
@@ -512,88 +500,82 @@ export default function FocusQueuePage() {
               )}
 
               {/*
-                ★ [턴 S] **종결 확인 카드** — 현장이 「조치를 마쳤다」고 알린 사건을 모아
-                  관제가 **한 번 눌러 종결**한다.
+                ★ [턴 S → 턴 T] **종결 확인 카드** — 현장이 「조치를 마쳤다」고 알린 사건을
+                  모아 관제가 **「확인」 한 번으로 종결**한다.
 
-                ★ 종결 단추는 **초점 카드에만** 살아 있다. 갈 수 있는 다음 칸을 서버가
-                  초점에만 주기 때문이다 — 대기 카드에 그리면 화면이 자기 전이표를 든
-                  것이 되고, 서버가 거절하는 단추가 생긴다. 나머지는 상세로 보낸다.
+                ★ 실자료다. U3 의 `POST …/field-reply?kind=done` 이 저장한 회신을 서버
+                  (`/queue/field-signals`)가 되읽어 낸다 — 시드 예시는 뗐다(턴 T).
+                  회신이 없으면 빈 상태 문구다. 회신은 오는데 종류 표시가 0건이면 그 수를
+                  적는다 — 「없음」과 「못 읽음」은 다른 사실이다.
 
-                ★ 「없음」과 「배선 대기」를 가른다. 회신에 종류 표시가 아직 안 붙는
-                  동안에는 **시드 한 줄**로 이 칸이 어떻게 보일지 세워 두고, 그것이
-                  검수용임을 배지로 적는다.
+                ★ 「확인」은 `POST …/confirm-done` 이고 **서버 기록이 닫는다**(K1 전이표
+                  대로 `acknowledged → in_progress → closed` · 화면은 전이표를 들지
+                  않는다). 접수 전(`occurred`)이면 서버가 409 로 거절하고 그 말을 그대로
+                  적는다 — 그 사건은 먼저 접수(키 1)해야 한다.
               */}
-              <Card size="small" title={CLOSE_CONFIRM_TITLE}>
-                {!signals.wired ? (
-                  <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                    <Space size={8} wrap>
-                      <Tag color="processing">{WIRING_WAITING_LABEL}</Tag>
-                      <Text type="secondary">{SUPPORT_WAITING_NOTE}</Text>
-                    </Space>
-                    <Text type="secondary">{WIRING_WAITING_NOTE}</Text>
-                    <Row
-                      align="middle"
-                      gutter={12}
-                      style={{ borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
-                    >
-                      <Col flex="auto">
-                        <Space size={6} wrap>
-                          <Tag>{dataSourceBadge('seed')}</Tag>
-                          <Text strong>{SEED_DONE_EXAMPLE.who}</Text>
-                          <Text type="secondary">{SEED_DONE_EXAMPLE.text}</Text>
-                        </Space>
-                      </Col>
-                      <Col>
-                        {/* 누를 수 없다 — 없는 사건을 종결하는 단추는 거짓말이다. */}
-                        <Button type="primary" disabled>
-                          {advanceLabel('closed')}
-                        </Button>
-                      </Col>
-                    </Row>
+              <Card size="small" title={CLOSE_CONFIRM_TITLE} data-gx="close-confirm-card">
+                {signals.confirmError ? (
+                  <Alert
+                    type="error"
+                    showIcon
+                    message="종결 확인이 거절되었습니다."
+                    description={signals.confirmError}
+                    style={{ marginBottom: 8 }}
+                  />
+                ) : null}
+                {signals.doneSignals.length === 0 ? (
+                  <Space direction="vertical" size={4}>
+                    <Text type="secondary" data-gx="close-confirm-empty">{CLOSE_CONFIRM_EMPTY}</Text>
+                    {!signals.wired && signals.replyTotal > 0 ? (
+                      <Space size={8} wrap>
+                        <Tag color="processing">{WIRING_WAITING_LABEL}</Tag>
+                        <Text type="secondary">
+                          회신 {signals.replyTotal}건이 왔지만 「지원 요청」·「조치 완료」 표시가
+                          붙은 것은 0건입니다. {SUPPORT_WAITING_NOTE}
+                        </Text>
+                      </Space>
+                    ) : null}
                   </Space>
-                ) : signals.doneSignals.length === 0 ? (
-                  <Text type="secondary">{CLOSE_CONFIRM_EMPTY}</Text>
                 ) : (
                   <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                    {signals.doneSignals.map((s) => {
-                      const canClose =
-                        focus?.event_id === s.event_id &&
-                        (focus?.allowed_next ?? []).includes('closed');
-                      return (
-                        <Row
-                          key={s.event_id}
-                          align="middle"
-                          gutter={12}
-                          style={{ borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
-                        >
-                          <Col flex="auto">
-                            <Space size={6} wrap>
-                              <Text strong>사건 {s.event_id}</Text>
-                              <Text type="secondary">{s.last_author}</Text>
-                              <Text>{s.action_done_text}</Text>
-                            </Space>
-                          </Col>
-                          <Col>
-                            {canClose ? (
-                              <Button
-                                type="primary"
-                                loading={acting}
-                                onClick={() => {
-                                  countClick('u1_handle_event');
-                                  void advance(s.event_id, 'closed');
-                                }}
-                              >
-                                {advanceLabel('closed')}
-                              </Button>
-                            ) : (
-                              <Button onClick={() => navigate(eventPath(s.event_id))}>
-                                {CLOSE_CONFIRM_OPEN_INSTEAD}
-                              </Button>
-                            )}
-                          </Col>
-                        </Row>
-                      );
-                    })}
+                    {signals.doneSignals.map((s) => (
+                      <Row
+                        key={s.event_id}
+                        align="middle"
+                        gutter={12}
+                        style={{ borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
+                        data-gx="close-confirm-row"
+                        data-gx-event={s.event_id}
+                      >
+                        <Col flex="auto">
+                          <Space size={6} wrap>
+                            <Text strong>사건 {s.event_id}</Text>
+                            <Tag>{labelOf(RESPONSE_STATE_LABEL, s.response_state)}</Tag>
+                            <Text type="secondary">{s.last_author}</Text>
+                            <Text>{s.action_done_text}</Text>
+                          </Space>
+                        </Col>
+                        <Col>
+                          <Button
+                            type="primary"
+                            loading={signals.confirming}
+                            disabled={acting}
+                            data-gx="close-confirm-button"
+                            onClick={() => {
+                              countClick('u1_handle_event');
+                              void signals.confirmDone(s.event_id).then((out) => {
+                                if (out) {
+                                  if (focus?.event_id === s.event_id) finishMetric('u1_handle_event');
+                                  queue.reload();
+                                }
+                              });
+                            }}
+                          >
+                            {CLOSE_CONFIRM_BUTTON}
+                          </Button>
+                        </Col>
+                      </Row>
+                    ))}
                   </Space>
                 )}
               </Card>

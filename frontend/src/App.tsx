@@ -184,6 +184,7 @@ import { CustomRoutes } from './services/API';
 import BuildVersion from './features/dsm/components/BuildVersion';
 import { KICK_SENTENCE } from './features/dsm/constants/kick';
 import { dsm2Routes } from './features/dsm/routes';
+import { dsmU24Redirects, dsmU24Routes } from './features/dsm/routes.u24';
 import { resolveHome } from './features/nav/roleHome'; // P-141 · 첫 화면은 이 한 곳이 정한다
 import {
   adoptWallToken,
@@ -249,6 +250,10 @@ const DsmWall = lazy(() => import('./features/dsm/pages/Wall'));
 const DsmCameraGrid = lazy(() => import('./features/dsm/pages/CameraGrid'));
 // ★ 턴 S · 차선 U24 (S-10) — 조율자가 단 짝. `routes.ts` 의 `cameraTuning` 과 둘이 서야 주소가 산다.
 const DsmCameraTuning = lazy(() => import('./features/dsm/pages/CameraTuning'));
+// ── 턴 T (차선 U24 · U56 · 조율자 배선) ──────────────────────────────────
+const DsmStats = lazy(() => import('./features/dsm/pages/Stats'));
+const DsmAuditLog = lazy(() => import('./features/dsm/pages/AuditLog'));
+const DsmIntegrations = lazy(() => import('./features/dsm/pages/Integrations'));
 const DsmPrivacyRequests = lazy(
   () => import('./features/dsm/pages/PrivacyRequests'),
 );
@@ -703,7 +708,22 @@ function App() {
             { path: dsm2Routes.focusQueue.path, element: <DsmFocusQueue /> },
             { path: dsm2Routes.drill.path, element: <DsmDrillMode /> },
             { path: dsm2Routes.cameraImport.path, element: <DsmCameraImport /> },
-            { path: dsm2Routes.cameraTuning.path, element: <DsmCameraTuning /> },
+            // ── 턴 T · P-164 U24 ⑤ 정본 경로 ─────────────────────────────
+            //   `/dsm/cameras/tuning` 은 튜닝 절(카메라 축) · 오탐률 표는 통계 축
+            //   `/dsm/stats/false-positive` 가 정본. 옛 이름은 redirect 로 남긴다(줄지 않는다).
+            //   ⚠ `/dsm/stats` 와 `/dsm/stats/false-positive` 는 리터럴 둘 — 변수 조각이
+            //     없으므로 서로 삼키지 않는다.
+            { path: dsm2Routes.cameraTuning.path, element: <DsmCameraTuning mode="tuning" /> },
+            {
+              path: dsmU24Routes.falsePositive.path,
+              element: <DsmCameraTuning mode="false-positive" />,
+            },
+            { path: dsmU24Routes.stats.path, element: <DsmStats /> },
+            { path: dsmU24Routes.auditLog.path, element: <DsmAuditLog /> },
+            ...dsmU24Redirects.map((r) => ({
+              path: r.from,
+              element: <Navigate to={r.to} replace />,
+            })),
             { path: dsm2Routes.cameraAddress.path, element: <DsmCameraAddress /> },
             // ── 턴 D · UX-23 · LAW-07 ────────────────────────────────────
             {
@@ -738,6 +758,8 @@ function App() {
             // ── 턴 S · S-15 내 정보 (차선 U56) ───────────────────────────
             //   ⚠ `/dsm/notify` · `/dsm/people` 과 형제다(변수 조각 없음).
             { path: dsm2Routes.me.path, element: <DsmMe /> },
+            // ── 턴 T · 외부 연계 (차선 U56 · WS-17) — `/dsm/me` 와 형제 ──────
+            { path: dsm2Routes.integrations.path, element: <DsmIntegrations /> },
             {
               path: CustomRoutes.dsm.eventDetail.path,
               element: <DsmEventDetail />,

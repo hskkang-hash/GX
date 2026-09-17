@@ -102,22 +102,34 @@ class DsmU3API:
     @tenant_scoped(reason="시험 발송 — 남의 기기를 울릴 수 없다. 받는 사람은 "
                           "요청자 자신뿐이고 고를 인자가 없다")
     @idempotent("dsm.push-subscriptions.test-send")
-    def push_test_send(self, request, title: str = "", body: str = ""):
+    def push_test_send(self, request, title: str = "", body: str = "",
+                       event_id: int | None = None):
         """내 기기로 **훈련 알림**을 한 번 보낸다 — 잠금화면 도달을 사람이 눈으로 본다.
 
         ⚠ **표 밖에서 태어난 면이다.** 선등록표(`docs/agent/write_surfaces_v11.yaml`)의
           WS-08 은 「구독」이고 발송은 그 표에 없다 — 조율자가 턴 S 선등록에서 바로 이
           자리를 「예상하지 못할 자리」로 지목했다. 지우지 않고 보고에 적는다.
-        ⚠ `DeliveryRecord` 행을 만들지 않는다 — 이것은 경보가 아니다. 그 표에 끼우면
-          F-10 지연 통계가 경보 아닌 것을 세고, 5분 억제가 **다음 진짜 경보를 삼킨다.**
+        ★ [턴 T · P-160 ③] **행이 남는다** — `deliveries` `channel=webpush`, 훈련 표식
+          (`drill:`)을 달아 5분 억제의 근거가 되지 않는다. 응답에 `delivery_id` ·
+          `succeeded` · `failure_reason`(이름·문장 — 값 아님)이 실린다.
+        상태: 401 익명 · 403 시스템 스코프 · 409 매달 사건 0건 · 422 기기 0대 ·
+              503 VAPID 자격 없음(`missing_env` 이름 목록 · 행 0).
         """
         try:
             return prefs.send_test_push(
-                scope=_scope(request), title=title, body=body)
+                scope=_scope(request), title=title, body=body, event_id=event_id)
         except SystemScopeCannotRead as exc:
             raise HttpError(403, str(exc))
         except prefs.PushSubscriptionRejected as exc:
             raise HttpError(422, str(exc))
+        except prefs.PushSendNoEvent as exc:
+            raise HttpError(409, str(exc))
+        except prefs.PushSendNotConfigured as exc:
+            #: 503 본문에 **이름 목록**을 싣는다 — 화면이 「무엇을 채우면 되는가」를 그대로 보인다.
+            #: `HttpError` 본문은 문장 하나다(ninja `_default_http_error` 가 `str(exc)`).
+            #: 그래서 이름 목록을 문장 **안에** `missing_env=NAME,NAME` 꼴로 싣는다 —
+            #: 화면·시험은 이 꼴을 읽는다. 값은 없다.
+            raise HttpError(503, f"{exc} missing_env={','.join(exc.missing_env)}")
 
     @route.post("/push-subscriptions", auth=JwtOrInboundKey())
     @tenant_scoped(reason="웹푸시 구독 등록 — 남의 계정에 내 기기를 물릴 수 없다 "
@@ -173,6 +185,21 @@ class DsmU3API:
             raise HttpError(403, str(exc))
         except prefs.PushSubscriptionNotFound as exc:
             raise HttpError(404, str(exc))
+
+    # ── M1 「처리함」 (턴 T · P-164 U3) ───────────────────────────────────
+    #
+    # ★ **읽기뿐**이다. 「내가 처리한 사건」 = 내가 현장 회신(`field-reply`)을 낸 사건.
+    #   회신은 감사 한 줄이 정본이라(`k1_event/field_reply.py`) 이벤트 표에 「내가
+    #   회신했다」는 칸이 없다 — 그래서 기존 목록 라우트의 필터 인자로는 열 수 없었고
+    #   여기 라우트 하나를 세운다. 사건마다 커널 `get_event` 문지기를 지난다(남의 것은
+    #   404 → 목록에서 빠진다 — 존재도 새지 않는다).
+    @route.get("/me/handled-events", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="내가 회신한 사건 목록 — 남의 회신·남의 사건이 섞이면 격리 실패다")
+    def my_handled_events(self, request, limit: int = 50):
+        """내가 현장 회신을 낸 사건들, **최근 회신 순**. 모수(`total`)와 함께 낸다."""
+        scope = _scope(request)
+        rows = field.handled_events(scope=scope, limit=max(1, min(limit, 200)))
+        return {"total": len(rows), "events": rows}
 
     # ── M4 「내 알림 설정」 (WS-02 · UX-43-M4 · 턴 S 골격) ────────────────
     #

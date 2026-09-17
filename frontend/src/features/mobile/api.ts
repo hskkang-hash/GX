@@ -99,6 +99,12 @@ export const mobileEndpoint = {
   pushVapidKey: '/api/dsm/push-subscriptions/vapid-key',
   pushTestSend: '/api/dsm/push-subscriptions/test-send',
   notifyPrefs: '/api/dsm/me/notify-prefs',
+  /**
+   * M1 「처리함」(턴 T · P-164 U3) — 내가 현장 회신을 낸 사건들. **읽기뿐**이다.
+   * 회신은 감사 한 줄이 정본이라 이벤트 표에 「내가 회신했다」 칸이 없고, 그래서
+   * 기존 목록의 필터 인자로는 못 열어 라우트 하나가 섰다(`api_u3.py::my_handled_events`).
+   */
+  handledEvents: '/api/dsm/me/handled-events',
 } as const;
 
 /**

@@ -49,7 +49,7 @@ from datetime import time as _time
 from django.apps import apps
 
 from common import audit_writer
-from common.tenant_filters import get_user_group
+from common.tenant_filters import filter_by_group_field, get_user_group
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 0. 이름 — **이 문자열들로 전건을 뽑는다** (D-285 ②)
@@ -75,7 +75,16 @@ MAX_SUBSCRIPTIONS_PER_USER = 10
 
 #: M4 가 고를 수 있는 채널. `DsmNotifyPrefs.channels` 주석이 선언한 셋 그대로다 —
 #: 이름이 갈리면 저장은 되는데 아무 채널도 안 맞는 설정이 생긴다.
-ALLOWED_PREF_CHANNELS = ("email", "sms", "webpush")
+#: ★ [턴 T · 대표 결정 ① 「이메일 + 웹푸시」] `sms` 는 **선택지에서 뺀다**(CH-01 문자 범위 밖).
+#:   DB 스키마 주석은 셋을 적고 있지만 화면이 고를 수 있는 것은 이 둘이다 — 옛 행에 `sms`
+#:   가 남아 있어도 읽기는 그대로 내고, 새로 저장할 때만 거절한다.
+ALLOWED_PREF_CHANNELS = ("email", "webpush")
+
+#: 「관리자 승인 필요」 칸 — **서버가 내는 값**이다. 지금 이 설정의 항목 셋(차단 시간대 ·
+#: 담당 구역 · 채널)은 전부 본인이 정하는 것이라 승인 대상이 **없다**. 대상이 생기면
+#: 이 목록에 이름이 들어오고 `status` 가 `pending` 으로 바뀐다 — 화면은 이 값을 그대로 적는다.
+APPROVAL_STATUS_NOT_REQUIRED = "not_required"
+APPROVAL_ITEMS: tuple[str, ...] = ()
 
 #: 이 파일이 만드는 설정 행의 목적 코드(ISO-03 · 설계서 §3 ③).
 PURPOSE_CODE = "dsm.notify_prefs"
@@ -91,6 +100,10 @@ class PushSubscriptionNotFound(Exception):
     ★ 남의 구독일 때도 이것이다. 403 을 내면 「그 번호는 있는데 네 것이 아니다」가
       새고, 존재 여부가 새는 것도 누출이다(`delete_webhook_subscription` 과 같은 판정).
     """
+
+
+class PushSendNoEvent(Exception):
+    """시험 발송을 매달 사건이 없다(409)."""
 
 
 class NotifyPrefsRejected(Exception):
@@ -348,11 +361,8 @@ def unsubscribe(*, scope, subscription_id: int) -> dict:
 DRILL_TITLE = "[훈련] GuardianX 알림 시험"
 DRILL_BODY = "이 알림은 시험입니다 — 출동하지 마십시오."
 
-#: 커널 공개 면에 **웹푸시 발송 문이 아직 없을 때**의 사유.
-#:
-#: ★ 이것은 회색이 아니라 **선언된 부재**다 — 무엇이 없고 누가 그것을 다는지까지
-#:   적는다. 「보내지 못했습니다」만 남기면 사람은 자기 기기를 의심하고, 그 의심은
-#:   고칠 수 있는 자리(커널 공개 면 한 줄)에서 사람을 멀어지게 한다.
+#: 턴 S 의 사유 문장 — **이제 쓰이지 않는다.** 이름은 남긴다: 턴 S 화면 문구·보고가 이 이름을
+#: 인용했고, 「문이 없었다」는 사실은 지워지지 않는다(D-284). 문은 턴 T 에 열렸다(P-160 ③).
 KERNEL_SENDER_MISSING = (
     "웹푸시 발송 문이 커널 공개 면에 아직 없습니다 — `kernels.k2_notify` 가 "
     "`send_webpush` 를 내주면 이 자리가 그대로 씁니다. 어댑터(`WebPushChannel`)는 "
@@ -360,46 +370,44 @@ KERNEL_SENDER_MISSING = (
 )
 
 
-def send_test_push(*, scope, title: str = "", body: str = "") -> dict:
-    """내 기기들로 **훈련 알림**을 한 번 보낸다.
+class PushSendNotConfigured(Exception):
+    """VAPID 자격·발송기가 이 환경에 없다. `missing_env` 는 **이름 목록**이다 — 값이 아니다."""
 
-    왜 `DeliveryRecord` 행을 만들지 않는가 — **이것은 경보가 아니다**
-    ------------------------------------------------------------------
-    그 표는 F-10 의 30초 두 점(`occurred_at → sent_at`)을 재는 자리이고 K2 의 5분
-    억제가 세는 표다. 시험 발송을 거기 끼우면 지연 통계가 **경보가 아닌 것**을
-    경보로 세고, 억제가 이것을 최근 발송으로 읽어 **그 다음 진짜 경보를 삼킨다**
-    (`notice_false_positive` 가 같은 이유로 행을 안 만든다).
+    def __init__(self, missing_env: list[str], reason: str) -> None:
+        self.missing_env = list(missing_env)
+        super().__init__(reason)
 
-    ★ **받는 사람은 요청자 자신뿐이다.** 남의 기기를 고를 인자가 없다 — 있으면
-      그 문이 곧 「남의 휴대전화를 울리는 문」이 된다.
-    ★ 훈련 모드(UX-17)면 그 사실을 **응답에 적는다.** 채널을 바꾸지는 않는다:
-      이 발송의 목적이 「내 기기에 실제로 뜨는가」를 보는 것이라, 로그로 떨어뜨리면
-      그 질문에 영원히 답하지 못한다. 대신 **본문이 자신을 훈련이라 말한다.**
+
+def _anchor_event_id(scope, event_id: int | None):
+    """시험 발송 행이 매달릴 **훈련 사건**. 준 것이 없으면 내 기관의 가장 최근 사건.
+
+    왜 사건이 필요한가 — `deliveries` 는 사건에 매달린 표다(F-10 의 두 점). 사건 없는
+    행은 만들 수 없고, 만들면 그 표의 뜻이 바뀐다. 사건이 0건이면 **없다고 말한다**
+    (409) — 지어내지 않는다.
     """
-    #: ★★ **커널의 공개 면만 만진다** (D-278 · DA-04 §1-4 · 게이트 `verify_layers`).
-    #:
-    #:   앞판은 `from kernels.k2_notify import channels` 였고 그것이 **계층 위반**이다:
-    #:   `channels` 는 커널의 비공개 모듈이라 App 이 그 안을 열면 커널 로직이 App 으로
-    #:   새고, 그러면 「본체=가이온 / 신규 연계=공동」(계약 8조3항)의 경계가 코드에서
-    #:   사라진다. 재사용 편의 문제가 아니라 **IP 방어**다.
-    #:
-    #:   ★ 그래서 이 함수는 **커널을 부르지 않는다.** 세 번 시도해 세 번 다 막혔고,
-    #:     막은 것이 옳다 — 그 과정이 곧 판정이다:
-    #:       ① `from kernels.k2_notify import channels`        금지① 비공개 모듈
-    #:       ② `from kernels import k2_notify`                 금지② 패키지 통째
-    #:       ③ `from kernels.k2_notify import send_webpush`    금지① — 그 이름이
-    #:          아직 `__all__` 에 없어 게이트가 **비공개 모듈로 읽는다**
-    #:     ③이 말하는 것은 분명하다: **없는 공개 이름은 부를 수 없다.** 그래서 부르지
-    #:     않고, 없다고 말한다(`KERNEL_SENDER_MISSING`).
-    #:
-    #:   ⚠ `kernels/k2_notify/__init__.py` 는 이번 턴 U56 차선이 고치는 파일이라
-    #:     내가 손대지 않는다 — 한 파일을 두 차선이 고치면 충돌하고, 충돌한 것이
-    #:     초기화 순서면 부분 초기화된 패키지를 만진다. 조율자에게 한 줄로 청했다.
-    #:
-    #:   ★★ **그렇다고 웹푸시가 죽은 것이 아니다.** 어댑터(`WebPushChannel`)는 K2 의
-    #:     채널 등록부에 **이름으로 서 있고**, 규칙이 고른 수신자의 채널이 `webpush` 면
-    #:     커널의 발송 경로(`_send_one` → 등록부)가 그것을 그대로 쓴다. 문이 없는 것은
-    #:     **「내 기기로 지금 한 통」이라는 App 쪽 편의**뿐이다.
+    Event = apps.get_model("stream_monitors", "DetectionEvent")
+    if event_id:
+        return int(event_id)
+    qs = filter_by_group_field(Event._base_manager.all(), scope.actor, field="group")
+    latest = qs.order_by("-occurred_at", "-id").values_list("pk", flat=True).first()
+    return latest
+
+
+def send_test_push(*, scope, title: str = "", body: str = "",
+                   event_id: int | None = None) -> dict:
+    """내 기기들로 **훈련 알림**을 한 번 보낸다 — 커널의 `send_webpush` 문을 탄다(P-160 ③).
+
+    ★ 턴 S 까지 이 함수는 커널을 부르지 않았다 — 공개 이름이 없었기 때문이다. 턴 T 에
+      그 이름이 **부르는 쪽(여기)과 같은 커밋**에 열렸고, 이제 한 통이 실제로 나간다.
+    ★ **행은 남는다** — `deliveries` `channel=webpush`. 다만 훈련 표식(`drill:`)을 달아
+      5분 억제의 근거가 되지 않는다(턴 S 시험이 지키던 「다음 진짜 경보를 삼키지 않는다」는
+      그대로 선다 — 방법이 「행을 안 만든다」에서 「행에 표식을 단다」로 바뀌었다).
+    ★ 받는 사람은 요청자 자신뿐이다. 남의 기기를 고를 인자가 없다.
+    ★ 본문이 자신을 훈련이라 말한다 — 제목이 `[훈련]` 으로 시작하지 않으면 붙인다.
+    ★ 자격이 없으면 503 감(`PushSendNotConfigured` · `missing_env` 이름 목록) — 행 0.
+    """
+    from kernels.k2_notify import (
+        WebPushNotConfigured, send_webpush, webpush_missing_env)
     from stream_monitors.services.drill import is_drill_mode
 
     actor = scope.require_actor()
@@ -409,28 +417,44 @@ def send_test_push(*, scope, title: str = "", body: str = "") -> dict:
             "등록된 기기가 없습니다 — 먼저 이 기기에서 「알림 받기」를 켜 주십시오. "
             "(구독 0건과 발송 실패는 다른 사실입니다.)")
 
+    missing = webpush_missing_env(scope=scope)
+    if missing:
+        raise PushSendNotConfigured(
+            missing, "웹푸시 자격이 이 환경에 없습니다 — 비어 있는 환경변수: "
+                     + ", ".join(missing) + ". 값은 저장소 밖 `.env` 로만 줍니다(D-204).")
+
+    anchor = _anchor_event_id(scope, event_id)
+    if not anchor:
+        raise PushSendNoEvent(
+            "시험 발송을 매달 사건이 이 기관에 없습니다 — 발송 이력은 사건에 매달리는 "
+            "표라 사건 0건이면 한 통도 기록할 수 없습니다.")
+
     group = get_user_group(actor)
     drill = is_drill_mode(group_id=getattr(group, "pk", None))
 
-    #: 커널이 내주는 웹푸시 발송 문. **아직 공개 면에 없다** — 조율자에게 한 줄로
-    #: 청했고(`kernels/k2_notify/__init__.py` 는 이번 턴 U56 차선이 고치는 파일이라
-    #: 내가 손대지 않는다), 병합에서 달리면 이 코드가 **그날 바로** 쓴다.
     subject = (title or "").strip() or DRILL_TITLE
+    if not subject.startswith("[훈련]"):
+        subject = "[훈련] " + subject
     message = (body or "").strip() or DRILL_BODY
 
     results = []
     for row in rows:
-        #: ★ **한 통도 나가지 않는다** — 문이 설 때까지. 그리고 그 사실을 기기마다
-        #:   적는다: 0 을 「보냈다」로 적지 않고, 「못 보냈다」를 사유 없이 적지도 않는다.
-        #:   (구독은 진짜로 저장돼 있다 — 문이 서는 날 이 목록이 그대로 받는다.)
-        outcome_ok, reason = False, KERNEL_SENDER_MISSING
+        subscription = {"endpoint": row["_endpoint"],
+                        "keys": {"p256dh": row["_p256dh"], "auth": row["_auth"]}}
+        try:
+            view = send_webpush(scope=scope, subscription=subscription,
+                                title=subject, body=message, event_id=anchor)
+        except WebPushNotConfigured as exc:
+            raise PushSendNotConfigured(exc.missing_env, str(exc)) from exc
         results.append({
             "endpoint_sha12": row["endpoint_sha12"],
             "label": row["label"],
-            "sent": outcome_ok,
-            #: ⚠ 실패 사유는 **사람의 자리에 그대로 간다** — 화면이 「보내지 못했다」만
-            #:   적으면 자격이 없는 것인지 기기가 만료된 것인지 아무도 모른다.
-            "reason": reason,
+            "sent": bool(view.succeeded),
+            "delivery_id": view.delivery_id,
+            "succeeded": bool(view.succeeded),
+            #: 실패 사유는 **이름·문장**이지 값이 아니다 — 어댑터가 예외 종류만 남긴다.
+            "failure_reason": view.failure_reason,
+            "reason": view.failure_reason or "",
         })
 
     sent = sum(1 for r in results if r["sent"])
@@ -440,15 +464,23 @@ def send_test_push(*, scope, title: str = "", body: str = "") -> dict:
         reason=f"웹푸시 시험 발송 — 기기 {len(results)}대 중 {sent}대 성공"
                + (" (훈련 모드)" if drill else ""),
         after={"action": ACTION_TEST_SEND, "devices": len(results), "sent": sent,
-               "drill_mode": drill},
+               "drill_mode": drill, "event_id": anchor,
+               "delivery_ids": [r["delivery_id"] for r in results]},
         api_name=ACTION_TEST_SEND, api_method="POST",
     )
+    first = results[0]
     return {
         "devices": len(results),
         #: 0 을 「없음」으로 적지 않는다 — **모수와 함께** 적는다(D-301).
         "sent": sent,
         "drill_mode": drill,
         "title": subject,
+        "event_id": anchor,
+        "channel": "webpush",
+        #: 첫 기기의 결과를 위로 올린다 — 화면 상태 칸 한 줄이 이 셋을 읽는다.
+        "delivery_id": first["delivery_id"],
+        "succeeded": first["succeeded"],
+        "failure_reason": first["failure_reason"],
         "results": results,
     }
 
@@ -501,6 +533,13 @@ def _view(row) -> dict:
         "channels": list(getattr(row, "channels", None) or []),
         "saved": row is not None,
         "allowed_channels": list(ALLOWED_PREF_CHANNELS),
+        #: 「관리자 승인 필요」 — 서버 판정. 화면은 이 두 칸을 그대로 적는다.
+        "approval": {
+            "status": APPROVAL_STATUS_NOT_REQUIRED,
+            "items": list(APPROVAL_ITEMS),
+            "note": ("이 설정의 항목은 본인이 정합니다 — 관리자 승인이 필요한 항목이 "
+                     "지금은 없습니다."),
+        },
         "note": ("빈 칸은 「좁히지 않는다」는 뜻입니다 — 이 설정은 규칙이 고른 수신을 "
                  "좁히기만 하고 넓히지 못합니다."),
     }

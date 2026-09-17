@@ -37,6 +37,7 @@ export type LoginFailureKind =
   | 'empty'
   | 'credentials'
   | 'locked'
+  | 'rate_limited'
   | 'forbidden'
   | 'server'
   | 'network';
@@ -45,6 +46,11 @@ export interface LoginFailure {
   kind: LoginFailureKind;
   /** 화면에 그리는 줄. **이것 말고 다른 것은 그리지 않는다.** */
   text: string;
+  /**
+   * 율제한(SEC-21)일 때 서버가 준 **남은 초**. 화면은 이 수로 「N초 뒤 다시」를 세어 내린다.
+   * 다른 갈래에는 없다 — 없는 수를 지어내지 않는다.
+   */
+  retryAfterSeconds?: number;
 }
 
 /** 빈 값 — 칸 옆에 붙는다. */
@@ -89,6 +95,33 @@ export function readAttempts(said: string | undefined): { now: number; max: numb
   return { now, max };
 }
 
+/**
+ * 율제한(SEC-21) — 너무 잦은 시도. **몇 초 뒤인지**가 이 문장의 값이다.
+ * 서버(`common/rate_limit_body.py::rate_limited_message`)와 **같은 글자**다 — 화면이 세어 내리며
+ * 다시 그릴 때도 서버가 처음 준 문장과 모양이 같아야 사람이 「다른 오류」로 읽지 않는다.
+ * 0 이 되면 「지금 다시 시도할 수 있습니다」— 기다림이 끝났음을 말한다.
+ */
+export function rateLimitedLine(seconds: number): string {
+  const s = Math.max(0, Math.trunc(seconds || 0));
+  if (s <= 0) return '지금 다시 시도할 수 있습니다.';
+  return `요청이 너무 잦습니다. ${s}초 뒤 다시 시도해 주십시오.`;
+}
+
+/**
+ * 서버 본문에서 율제한의 **남은 초**를 읽는다. 없으면 `null` — 지어내지 않는다.
+ * 읽는 순서: 본문 `retry_after_seconds`(SEC-21 규약) → `Retry-After` 헤더(초 단위 정수).
+ */
+export function readRetryAfter(body: unknown, retryAfterHeader?: string | null): number | null {
+  const bag = (body ?? null) as Record<string, unknown> | null;
+  const fromBody = bag && typeof bag.retry_after_seconds === 'number' ? bag.retry_after_seconds : null;
+  if (fromBody !== null && Number.isFinite(fromBody) && fromBody >= 0) return Math.trunc(fromBody);
+  if (retryAfterHeader) {
+    const n = Number(retryAfterHeader.trim());
+    if (Number.isFinite(n) && n >= 0) return Math.trunc(n);
+  }
+  return null;
+}
+
 /** 잠금 — **언제 풀리는지**가 이 문장의 값이다. */
 export function lockedLine(minutes: number, seconds: number): string {
   const m = Math.max(0, Math.trunc(minutes || 0));
@@ -121,6 +154,8 @@ export interface LoginAttemptFacts {
   timedOut?: boolean;
   /** 연결 자체가 안 됐는가. */
   offline?: boolean;
+  /** `Retry-After` 헤더(있으면). 율제한의 남은 초를 본문이 안 줄 때의 둘째 길이다. */
+  retryAfterHeader?: string | null;
 }
 
 /**
@@ -130,6 +165,7 @@ export interface LoginAttemptFacts {
  *   ① 연결이 없었다      — 서버는 이 요청을 본 적이 없다
  *   ② 잠금               — 본문이 잠금 시각을 들고 있으면 다른 모든 것보다 앞이다
  *   ③ 서버가 아프다(5xx) — 사용자의 입력 문제가 **아니다**
+ *   ③′ 율제한(429)       — 너무 잦다 · **몇 초 뒤**인지 안다 (SEC-21)
  *   ④ 권한 없음(403)
  *   ⑤ 그 밖의 거절       — 아이디·비밀번호
  */
@@ -152,6 +188,16 @@ export function judgeLoginFailure(facts: LoginAttemptFacts): LoginFailure {
   const lockSeconds = body && typeof body.lock_seconds === 'number' ? body.lock_seconds : null;
   if (lockMinutes !== null || lockSeconds !== null) {
     return { kind: 'locked', text: lockedLine(lockMinutes ?? 0, lockSeconds ?? 0) };
+  }
+
+  // ★ 율제한(SEC-21) — 잠금 다음 · 5xx 앞. [실측 2026-09-17] 종전에는 이 답이 영문 HTML 403 이라
+  //   「접근 권한 없음 · 관리자 문의」로 읽혔다 — 사람이 할 일은 **기다림**인데 다른 일을 시켰다.
+  //   지금 서버는 429 JSON 에 `retry_after_seconds` 를 싣는다. 429 인데 초가 없으면 수를
+  //   지어내지 않고 초 없는 문장(「잠시 뒤」)으로 말한다.
+  const retryAfter = readRetryAfter(body, facts.retryAfterHeader);
+  if (facts.status === 429 || (retryAfter !== null && body?.code === 'rate_limited')) {
+    if (retryAfter === null) return { kind: 'rate_limited', text: SERVER };
+    return { kind: 'rate_limited', text: rateLimitedLine(retryAfter), retryAfterSeconds: retryAfter };
   }
 
   if (facts.status >= 500) {

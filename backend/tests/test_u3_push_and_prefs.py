@@ -314,32 +314,29 @@ class PushTestSendTest(_PushFixture):
             self._send(self.user_a)
         self.assertEqual(422, caught.exception.status_code)
 
-    def test_a_test_send_creates_no_delivery_rows(self) -> None:
+    def test_without_vapid_env_it_is_503_and_no_row(self) -> None:
+        """④' [턴 T] 문이 열렸다 — 행은 **훈련 표식**으로 남고(`tests/test_u3_webpush_send.py`),
+        자격이 없는 환경에서는 **행 0 · 503 · 이름 목록**이다."""
+        import os
+        from ninja.errors import HttpError
+
         Delivery = apps.get_model("stream_monitors", "DeliveryRecord")
         self._subscribe(self.user_a)
         before = Delivery._base_manager.count()
-
-        result = self._send(self.user_a)
-
-        self.assertEqual(before, Delivery._base_manager.count(),
-                         "시험 발송이 발송 이력에 행을 남겼습니다 — F-10 지연 통계가 "
-                         "경보 아닌 것을 세고, 5분 억제가 다음 진짜 경보를 삼킵니다.")
-        #: 0 을 「없음」으로 적지 않는다 — **모수와 함께** 낸다(D-301).
-        self.assertEqual(1, result["devices"])
-        self.assertIn("sent", result)
-        self.assertLessEqual(result["sent"], result["devices"])
-        for row in result["results"]:
-            if not row["sent"]:
-                self.assertTrue(row["reason"], "실패 사유가 비었습니다.")
+        empty = {"GX_VAPID_PUBLIC_KEY": "", "GX_VAPID_PRIVATE_KEY": "", "GX_VAPID_SUBJECT": ""}
+        with mock.patch.dict(os.environ, empty):
+            with self.assertRaises(HttpError) as caught:
+                self._send(self.user_a)
+        self.assertEqual(503, caught.exception.status_code)
+        self.assertIn("missing_env=", str(caught.exception))
+        self.assertEqual(before, Delivery._base_manager.count())
 
     def test_the_body_says_it_is_a_drill(self) -> None:
         """★ 잠금화면에 이 글자가 뜬다 — 없으면 시험 한 번이 출동 한 번이 된다."""
         from apps.dsm import notify_prefs
 
-        self._subscribe(self.user_a)
-        result = self._send(self.user_a)
-        self.assertIn("훈련", result["title"])
         self.assertIn("훈련", notify_prefs.DRILL_TITLE)
+        #: 사람이 제목을 줘도 `[훈련]` 이 앞에 붙는다 — 실제 발송 시험은 `test_u3_webpush_send.py`.
 
 
 class NotifyPrefsRouteTest(_PushFixture):

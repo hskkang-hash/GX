@@ -111,9 +111,18 @@ class NoReachToVideoOrOtherTenantsTest(_KeyFixture):
         )
 
     def test_every_dsm_route_uses_the_inbound_gate(self):
-        """게이트를 안 거치는 라우트가 하나라도 있으면 그리로 키가 샌다."""
+        """게이트를 안 거치는 라우트가 하나라도 있으면 그리로 키가 샌다.
+
+        ★ 2026-09-17 (턴 T · U56 · 병합) — `GET /api/dsm/health` 는 **인증 자체가 없는** 공개
+          읽기 면이다. 문지기가 없는 것이 아니라 문이 열려 있는 것이고, 그 사실은 한 곳
+          (`test_f05_event_api.PUBLIC_ENTRY_BY_DESIGN`)에 이름·사유로 있다 — 여기서 그 목록을
+          다시 적지 않는다(두 벌은 어긋난다). 키로 「닿을 수 있는 것」은 검사 이름과 상태뿐이다.
+        """
+        from tests.test_f05_event_api import PUBLIC_ENTRY_BY_DESIGN
+
         ungated = [f"{m} {p}" for m, p, cbs in _dsm_operations()
-                   if not any(isinstance(cb, JwtOrInboundKey) for cb in cbs)]
+                   if not any(isinstance(cb, JwtOrInboundKey) for cb in cbs)
+                   and (m, p) not in PUBLIC_ENTRY_BY_DESIGN]
         self.assertEqual(
             ungated, [],
             "문지기 없는 진입면이 있다 — 키가 그리로 들어온다:\n  " + "\n  ".join(ungated))

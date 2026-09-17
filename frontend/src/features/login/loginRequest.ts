@@ -30,6 +30,8 @@ export interface LoginOutcome {
   body: unknown;
   timedOut: boolean;
   offline: boolean;
+  /** `Retry-After` 헤더(율제한 · SEC-21). 없으면 `null`. 본문이 JSON 이 아니어도 이 값은 남는다. */
+  retryAfterHeader?: string | null;
 }
 
 function apiBase(): string {
@@ -150,7 +152,13 @@ export async function requestLogin(
       // 않는다** — 그 자리가 「<!DOCTYPE」이 사용자 자리에 뜨는 문이다.
       body = null;
     }
-    return { status: res.status, body, timedOut: false, offline: false };
+    let retryAfterHeader: string | null = null;
+    try {
+      retryAfterHeader = res.headers.get('Retry-After');
+    } catch {
+      retryAfterHeader = null;
+    }
+    return { status: res.status, body, timedOut: false, offline: false, retryAfterHeader };
   };
 
   flight = run()

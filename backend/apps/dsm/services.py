@@ -177,8 +177,14 @@ def recent_events(*, scope: TenantScope, since: datetime | None = None,
                   until: datetime | None = None,
                   event_type=None, severity=None, response_state=None,
                   reviewed_by_id: int | None = None,
+                  stream_monitor_id: int | None = None,
                   limit: int = 50):
     """F-09 이벤트 목록. K1 을 그대로 부른다 — 필터도 커널이 건다.
+
+    ★ 2026-09-17 (턴 T · 병합 · 조율자) — `stream_monitor_id` 가 더해졌다(U3 M2 「이 카메라
+      7일」). U3 는 이 파일 소유가 아니라 `api.py` 에서 커널을 직접 불렀고, 그 순간
+      `test_f05_event_api` 가 「K1 소비 App 이 둘」로 빨개졌다 — 옳은 빨강이다. 인자를
+      여기로 옮겨 **App 은 여전히 하나**다.
 
     ★ NFR-09-1 — 외부 의존(스트리밍 서버)이 죽어도 이 목록은 산다.
       여기서 스트리밍을 부르지 않는 것이 그 성질의 전부다.
@@ -193,6 +199,7 @@ def recent_events(*, scope: TenantScope, since: datetime | None = None,
                         event_type=event_type,
                         severity=severity, response_state=response_state,
                         reviewed_by_id=reviewed_by_id,
+                        stream_monitor_id=stream_monitor_id,
                         limit=limit)
 
 

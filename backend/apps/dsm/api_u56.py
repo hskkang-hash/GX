@@ -48,6 +48,69 @@ def _bearer_header(request) -> dict:
     return {"HTTP_AUTHORIZATION": header}
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# `GET /api/dsm/health` 의 검사 셋 — db · cache · queue (턴 T · 차선 U56)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 값은 **상태 이름**뿐이다. 예외의 문장·호스트명·포트·버전은 응답에 싣지 않는다 —
+#   이 문은 자격증명 없이 열려 있고, 열린 문으로 나가는 글자는 전부 정찰 자료다.
+# ★ 검사는 `HEALTH_CHECKS` 딕셔너리에 이름 → 호출로 둔다. 시험이 하나를 죽는 것으로
+#   바꿔 503 을 잰다(monkeypatch) — 운영에서 바꾸는 자리가 아니다.
+SCHEMA_VERSION = "1.1"
+
+
+def _check_db() -> None:
+    from django.db import connection
+
+    with connection.cursor() as cur:
+        cur.execute("SELECT 1")
+        cur.fetchone()
+
+
+def _check_cache() -> None:
+    from django.core.cache import cache
+
+    key = "gx:health:ping"
+    cache.set(key, "1", timeout=5)
+    # 값이 안 돌아와도 죽은 것은 아니다(dummy 캐시) — 예외만 죽음으로 본다.
+    cache.get(key)
+
+
+def _check_queue() -> None:
+    """발송 대기열의 중개자(Celery broker)에 닿는가. 설정이 없으면 「없음」이지 죽음이 아니다."""
+    from django.conf import settings as dj_settings
+
+    url = getattr(dj_settings, "CELERY_BROKER_URL", "") or ""
+    if not url or getattr(dj_settings, "CELERY_TASK_ALWAYS_EAGER", False):
+        return
+    try:
+        from kombu import Connection
+    except ImportError:  # pragma: no cover - kombu 없는 환경은 검사 자체가 없다
+        return
+    with Connection(url, connect_timeout=2) as conn:
+        conn.ensure_connection(max_retries=1, interval_start=0, interval_step=0)
+
+
+HEALTH_CHECKS = {"db": _check_db, "cache": _check_cache, "queue": _check_queue}
+
+
+def run_health_checks() -> dict:
+    """`{"status": "ok"|"fail", "schema": "1.1", "checks": {이름: "ok"|"fail"}, "failed": [...]}`."""
+    checks: dict[str, str] = {}
+    failed: list[str] = []
+    for name, fn in HEALTH_CHECKS.items():
+        try:
+            fn()
+            checks[name] = "ok"
+        except Exception:  # noqa: BLE001 — 사유는 로그로만, 응답엔 이름만
+            import logging
+            logging.getLogger(__name__).warning("[HEALTH] 검사 실패: %s", name, exc_info=True)
+            checks[name] = "fail"
+            failed.append(name)
+    return {"status": "ok" if not failed else "fail", "schema": SCHEMA_VERSION,
+            "checks": checks, "failed": failed}
+
+
 @api_controller("", tags=["DSM — U5·U6 관리자·연계 (WO-01 차선 U56)"])
 class DsmU56API:
     """U56 차선의 새 라우트가 태어나는 자리(턴 Q 조율자 분할 · 처음엔 비어 있다)."""
@@ -138,8 +201,11 @@ class DsmU56API:
                          "자격을 여는 쓰기다. 설정 문(F-12)과 같은 무게로 지킨다")
     def issue_webhook_subscription(self, request, endpoint_url: str,
                                    event_types: str = "", min_severity: str = "",
-                                   payload_format: str = "json"):
+                                   payload_format: str = "json", filters: str = ""):
         """P-145 — **서명키를 우리가 만들어** 구독에 물린다. 값은 응답에 **한 번만**.
+
+        ★ [턴 T · WS-17] `filters` 는 JSON 문자열 `{"type":[..],"severity":[..],"camera":[..]}` —
+          질의 인자로 받는다(이 저장소의 dsm 라우트 관용 · `dsmPostQuery`). 모양이 틀리면 400.
 
         ★ 기존 `POST /webhook-subscriptions`(`api.py`)를 대신하지 않는다 — 그 문은
           "이름을 이미 아는 상대"(운영자가 미리 값을 나눈 자리)를 위해 그대로 남는다.
@@ -149,6 +215,7 @@ class DsmU56API:
           `signing_key_ref`(이름)만 있고 값은 없다(`api.py::_subscription_payload`).
         """
         from apps.dsm.exceptions import PermissionDeniedForSetting
+        from apps.dsm.webhook_key_service import InvalidWebhookFilters
         from apps.dsm.webhook_key_service import issue_webhook_subscription as _issue
         from common.tenant_scope import SystemScopeCannotRead
         from common.webhook_outbox import WebhookSubscriptionError
@@ -158,7 +225,9 @@ class DsmU56API:
             result = _issue(
                 scope=_scope(request), endpoint_url=endpoint_url,
                 event_types=types, min_severity=min_severity,
-                payload_format=payload_format)
+                payload_format=payload_format, filters=filters or None)
+        except InvalidWebhookFilters as exc:
+            raise HttpError(400, str(exc))
         except PermissionDeniedForSetting as exc:
             raise HttpError(403, exc.reason)
         except SystemScopeCannotRead as exc:
@@ -166,6 +235,88 @@ class DsmU56API:
         except WebhookSubscriptionError as exc:
             raise HttpError(422, str(exc))
         return result
+
+    # ── WS-17 「webhook filters」 — 사건 종류 · 심각도 · 카메라 (턴 T · 차선 U56) ──
+    #
+    # ⚠ 같은 함정 — 세 조각(`/settings/webhook-subscriptions/{id}/filters`)이라
+    #   `/settings/{domain}`(한 조각)에 안 삼켜진다. GET·POST 를 **같은 경로 문자열**에
+    #   붙여 한 PathView 에 세운다(D-410 · `api.py` 의 thresholds 와 같은 모양).
+    # ★ 목록 문(`GET /webhook-subscriptions` · `api.py` U3 소유)의 응답에는 filters 칸이
+    #   없다 — 그래서 읽기 문을 여기 따로 둔다. 왕복(저장 → 재조회)은 이 두 문으로 잰다.
+    # ★ 발송기가 이 칸을 읽는 한 줄(`webhook_outbox._passes_filter`)은 이 차선 소유
+    #   밖이다 — 등록 요청(보고 ③). 그 줄이 서기 전까지 filters 는 「저장되지만 거르지
+    #   않는다」이고, 화면이 그 사실을 말로 적는다(`Integrations.tsx`).
+    @route.get("/settings/webhook-subscriptions/{int:subscription_id}/filters",
+               auth=JwtOrInboundKey())
+    @tenant_scoped(reason="WS-17 구독 필터 조회 — 남의 구독은 404(존재도 새지 않는다)")
+    def webhook_subscription_filters_get(self, request, subscription_id: int):
+        """구독 한 줄의 filters. 빈 객체는 「거르지 않는다」다."""
+        from django.http import Http404
+
+        from apps.dsm.webhook_key_service import get_subscription_filters
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return get_subscription_filters(
+                scope=_scope(request), subscription_id=subscription_id)
+        except Http404:
+            raise HttpError(404, "그런 구독이 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
+    @route.post("/settings/webhook-subscriptions/{int:subscription_id}/filters",
+                auth=JwtOrInboundKey())
+    @tenant_scoped(reason="WS-17 구독 필터 저장 — 남의 구독의 수신 범위를 바꿀 수 없다 "
+                          "(쓰기 IDOR). 문지기는 guard_setting(F-12 와 같은 무게)")
+    def webhook_subscription_filters_set(self, request, subscription_id: int,
+                                         filters: str = "{}"):
+        """filters 를 저장한다. `filters` 는 JSON 문자열(질의 인자) — 틀리면 400.
+
+        ★ 400 은 「요청이 틀렸다」(모르는 키 · JSON 아님) · 403 은 관리자가 아니다 ·
+          404 는 남의 구독(존재도 새지 않는다).
+        """
+        from django.http import Http404
+
+        from apps.dsm.exceptions import PermissionDeniedForSetting
+        from apps.dsm.webhook_key_service import (InvalidWebhookFilters,
+                                                  set_subscription_filters)
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return set_subscription_filters(
+                scope=_scope(request), subscription_id=subscription_id,
+                filters=filters)
+        except InvalidWebhookFilters as exc:
+            raise HttpError(400, str(exc))
+        except PermissionDeniedForSetting as exc:
+            raise HttpError(403, exc.reason)
+        except Http404:
+            raise HttpError(404, "그런 구독이 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
+    # ── `GET /api/dsm/health` — 인증 없이 · 상태 이름만 (턴 T · 차선 U56) ──
+    #
+    # ★ **자격증명이 없어도 200** 이다 — 로드밸런서·감시기가 부른다. 그래서 나가는 것은
+    #   상태 **이름**뿐이다(`ok`/`fail`) · 비밀·호스트명·버전 문자열·오류 본문이 없다.
+    #   본문에 자료가 없으므로 익명 401 게이트(P-133 · `probe_read_surface.PUBLIC_READ_BY_DESIGN`)
+    #   에는 **이름으로 올린다**(등록 요청 · 그 파일은 이 차선 소유가 아니다).
+    # ★ `auth=None` 이 명시다 — 컨트롤러 기본이 없어도 「안 적었다」와 「공개다」는 다르다.
+    # ★ 검사 하나라도 죽으면 **503** 과 그 검사의 이름 — 200 으로 삼키면 감시기가 못 본다.
+    # ⚠ 한 조각(`/health`)인데도 안전한 이유는 `/me` 와 같다 — `api.py` 의 변수 조각은
+    #   `/settings/{domain}` 하나뿐이다.
+    @route.get("/health", auth=None)
+    @tenant_scoped(required=False,
+                   reason="생존 확인 — 테넌트 자료가 아니다. 나가는 것은 검사 이름과 "
+                          "상태 이름뿐(비밀·호스트명 없음)")
+    def health(self, request):
+        from django.http import JsonResponse
+
+        body = run_health_checks()
+        status = 200 if body["status"] == "ok" else 503
+        resp = JsonResponse(body, status=status)
+        resp["Cache-Control"] = "no-store"
+        return resp
 
     # ═══════════════════════════════════════════════════════════════════════
     # S-16 「알림 받는 사람·채널」 — UX-43 · WS-14 (턴 S · 차선 U56)

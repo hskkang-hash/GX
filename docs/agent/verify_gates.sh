@@ -600,13 +600,22 @@ gate_forbidden_zone() {
     allow=$(tq "$TICKET_ID" reuse_targets 2>/dev/null || true)
   fi
 
-  local rc=0
+  # ★ [D-480 ㉡ · 2026-09-17 턴 T · 차선 U56] **반경 좁은 것 하나를 좁혔다.**
+  #   종전은 `grep -qF "$f"` — 부분 문자열이라 `reuse_targets` 에 `backend/delivery/`(디렉터리
+  #   한 줄)만 있어도 그 아래 **모든** 파일이 허용되고, `api.py` 한 글자가 `delivery/api.py`
+  #   와 `orders/api.py` 를 함께 열었다. 이제는 **경로 전체가 한 낱말로** 있어야 한다
+  #   (앞뒤가 경로 글자가 아닌 자리 · 디렉터리 이름으로는 못 연다).
+  #   허용으로 지나간 건수는 **통과 줄에 같이 찍는다** — 「변경 0건」이 「허용 N건」을 덮지 않게.
+  #   ㉠(베이스라인 없으면 SKIP·0) · ㉢(WO 산문 대조)은 이 줄이 손대지 않는다 — 넘김.
+  local rc=0 allowed_n=0 f_re
   for f in $changed; do
     for p in "${FORBIDDEN_PATHS[@]}"; do
       case "$f" in
         *"$p"*)
-          if [ -n "$allow" ] && echo "$allow" | grep -qF "$f"; then
-            skip "$f — 금지구역이나 티켓 spec이 명시적으로 지목 (허용)"
+          f_re=$(printf '%s' "$f" | sed 's/[][\.*^$/]/\\&/g')
+          if [ -n "$allow" ] && printf '%s\n' "$allow" | grep -qE "(^|[^A-Za-z0-9_./-])${f_re}([^A-Za-z0-9_./-]|$)"; then
+            skip "$f — 금지구역이나 티켓 reuse_targets 가 **경로 전체를** 지목 (허용)"
+            allowed_n=$((allowed_n+1))
           else
             fail "$f — §0.4 금지구역 변경 ← STOP(blocked)"
             rc=1
@@ -615,7 +624,7 @@ gate_forbidden_zone() {
       esac
     done
   done
-  [ $rc -eq 0 ] && pass "금지구역 변경 0건"
+  [ $rc -eq 0 ] && pass "금지구역 변경 0건 (티켓 허용으로 지나간 것 ${allowed_n}건)"
   return $rc
 }
 

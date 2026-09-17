@@ -118,11 +118,13 @@ DECLARED_UNWIRED: dict[str, str] = {
         "D-463. 월간 자동본 실행 기록(UX-40)의 칸 — U24 차선 파 3 턴 5 `monthly_report.py` "
         "배치가 쓴다.")
        for f in ("trigger", "period_start", "period_end")},
-    "stream_monitors.DsmUpperReportFlag.reported_at": (
-        "D-463. 상급기관 보고 표시(UX-47)의 칸 — U24 차선 파 2 턴 4 상급 보고 체크가 쓴다."),
-    "stream_monitors.WebhookSubscription.filters": (
-        "D-463. 웹훅 구독 필터(API-01)의 칸 — U56 차선 파 2 턴 4 webhook filters 가 쓴다. "
-        "기본 `{}` 는 「거르지 않는다」라 기존 구독의 동작은 그대로다(event_types·min_severity 가 거른다)."),
+    # ── D-463 둘 — **2026-09-17 턴 T 에 지웠다(차선 F · 게이트가 먼저 알아냈다).**
+    #    `DsmUpperReportFlag.reported_at`(사유 「U24 파 2 턴 4 상급 보고 체크가 쓴다」) ·
+    #    `WebhookSubscription.filters`(사유 「U56 파 2 턴 4 webhook filters 가 쓴다」) 가 여기 있었다.
+    #    **그 턴이 왔다** — 같은 턴에 U24(`apps/dsm/api_u24.py`) · U56(`webhook filters`) 이 둘을 쓰자
+    #    이 판정기가 「등재를 지워라」로 빨개졌다(exit 1 · 2건). 등재는 면제가 아니라 만료일이 적힌
+    #    이름표다. ⚠ 이 삭제는 **그 배선과 같은 커밋 셋에 들어가야 한다** — 배선 없이 이 삭제만
+    #    가면 같은 게이트가 「죽은 필드」로 반대쪽에서 빨개진다.
     # ── D-330 카메라 설치 주소 — **2026-09-07 지웠다 (D-338).**
     #    세 줄이 여기 있었다. 「운영자가 채우는 값이라 코드가 안 쓴다」가 사유였다.
     #    ★ 그 사유는 틀리지 않았지만 **결론이 틀렸다.** 채우는 수단이 없으면 그 값은

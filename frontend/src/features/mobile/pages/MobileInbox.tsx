@@ -24,8 +24,8 @@
  * ★ 한 줄을 누르면 목록의 값을 물려주지 않고 **상세를 서버에 다시 묻는다** —
  *   물려 쓰면 문지기가 목록에만 서고 상세에 안 선다(IDOR 이 나는 자리).
  */
-import { Alert, Badge, Card, Empty, Space, Tag, Typography } from 'antd';
-import { useCallback, useMemo } from 'react';
+import { Alert, Badge, Card, Empty, Segmented, Space, Tag, Typography } from 'antd';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import StateBoundary from '../../dsm/components/StateBoundary';
@@ -80,6 +80,23 @@ interface EventPage {
   events?: EventRow[];
 }
 
+/**
+ * 「처리함」 한 줄 — 사건 속성 + 내 마지막 회신(종류·시각·앞 120자).
+ * 서버(`GET /api/dsm/me/handled-events`)가 **내 회신**으로 좁혀 낸다 — 화면은 거르지 않는다.
+ */
+interface HandledRow extends EventRow {
+  last_reply_at: string | null;
+  last_reply_kind: string;
+  last_reply_text: string;
+}
+
+interface HandledPage {
+  total: number;
+  events: HandledRow[];
+}
+
+type InboxTab = 'inbox' | 'handled';
+
 export default function MobileInbox() {
   const navigate = useNavigate();
 
@@ -111,10 +128,19 @@ export default function MobileInbox() {
     [deliveries.data, eventById],
   );
 
+  // ★ [턴 T · P-164 U3] 「처리함」 — 내가 현장 회신을 낸 사건. **서버가 좁힌다.**
+  const [tab, setTab] = useState<InboxTab>('inbox');
+  const handled = useDsmResource<HandledPage>(
+    () => dsmGet<HandledPage>(mobileEndpoint.handledEvents, { limit: DELIVERY_LIMIT }),
+    [],
+    { isEmpty: (v) => (v?.events?.length ?? 0) === 0 },
+  );
+
   const reload = useCallback(() => {
     deliveries.reload();
     events.reload();
-  }, [deliveries, events]);
+    handled.reload();
+  }, [deliveries, events, handled]);
 
   const total = deliveries.data?.total ?? 0;
   const failed = rows.filter((r) => !r.delivery.succeeded).length;
@@ -130,6 +156,24 @@ export default function MobileInbox() {
           size={6}
           style={{ width: '100%' }}
         >
+          {/* ★ 탭 둘 — 「내게 온 것」과 「내가 처리한 것」. 처리함은 서버가 내 회신으로 좁힌다. */}
+          <Segmented
+            block
+            value={tab}
+            onChange={(v) => setTab(v as InboxTab)}
+            options={[
+              { label: '내게 온 이벤트', value: 'inbox' },
+              { label: `처리함 ${handled.data?.total ?? 0}`, value: 'handled' },
+            ]}
+            data-gx="inbox-tabs"
+          />
+          {tab === 'handled' ? (
+            <Text style={{ fontSize: 13 }} data-gx="handled-scope">
+              내가 현장 회신을 낸 사건 {handled.data?.total ?? 0}건 (이 페이지 · 최대 {DELIVERY_LIMIT}) — 최근 회신 순
+            </Text>
+          ) : null}
+          {tab === 'inbox' ? (
+          <>
           {/* ★ 범위를 먼저 적는다 — 무엇을 보고 있는지 모르는 목록은 근거가 아니다. */}
           {/* ★ [UX-20 · 2026-09-26] 앞판은 서버 인자 이름(`mine`)과 라우트
               (`GET /api/dsm/deliveries`)를 백틱째로 화면에 적었다 — 백틱은 렌더되지
@@ -187,9 +231,57 @@ export default function MobileInbox() {
               description={failureHint(events.status)}
             />
           ) : null}
+          </>
+          ) : null}
         </Space>
       }
     >
+      {tab === 'handled' ? (
+        <StateBoundary
+          state={handled.state}
+          reason={handled.reason}
+          status={handled.status}
+          onRetry={handled.reload}
+          emptyText="아직 내가 회신한 사건이 0건입니다. (사건 상세의 「현장 회신」을 보내면 여기에 쌓입니다.)"
+        >
+          <Space direction="vertical" size={8} style={{ width: '100%' }} data-gx="handled-list">
+            {(handled.data?.events ?? []).map((e) => (
+              <Card
+                key={e.event_id}
+                size="small"
+                hoverable
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate(mobileEventDetailPath(e.event_id))}
+                onKeyDown={(ev) => {
+                  if (ev.key === 'Enter' || ev.key === ' ') navigate(mobileEventDetailPath(e.event_id));
+                }}
+                style={{ minHeight: TOUCH_MIN * 1.6, cursor: 'pointer' }}
+                styles={{ body: { padding: 12 } }}
+              >
+                <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                  <Space size={6} wrap>
+                    <Tag color={SEVERITY_COLOR[e.severity]}>
+                      {SEVERITY_ICON[e.severity]} {labelOf(SEVERITY_LABEL, e.severity)}
+                    </Tag>
+                    <Text strong>{labelOf(EVENT_TYPE_LABEL, e.event_type)}</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>#{e.event_id}</Text>
+                    <Tag>{labelOf(RESPONSE_STATE_LABEL, e.response_state)}</Tag>
+                  </Space>
+                  <Text style={{ fontSize: 13 }}>{e.stream_monitor_name || '카메라 미상'}</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    발생 {relative(e.occurred_at)} ({shortAbsolute(e.occurred_at)})
+                    {e.last_reply_at ? ` · 내 회신 ${shortAbsolute(e.last_reply_at)}` : ''}
+                  </Text>
+                  <Text style={{ fontSize: 12 }}>
+                    [{e.last_reply_kind}] {e.last_reply_text || '(본문 없음)'}
+                  </Text>
+                </Space>
+              </Card>
+            ))}
+          </Space>
+        </StateBoundary>
+      ) : (
       <StateBoundary
         state={deliveries.state}
         reason={deliveries.reason} status={deliveries.status}
@@ -326,6 +418,7 @@ export default function MobileInbox() {
           })}
         </Space>
       </StateBoundary>
+      )}
     </MobileShell>
   );
 }

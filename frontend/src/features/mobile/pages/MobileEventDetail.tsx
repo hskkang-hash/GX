@@ -93,7 +93,7 @@
 import { Button, Card, Collapse, Descriptions, Input, Modal, Space, Tag, Typography, message } from 'antd';
 import type { ChangeEvent } from 'react';
 import { useCallback, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import EventSnapshot from '../../dsm/components/EventSnapshot';
 import StateBoundary from '../../dsm/components/StateBoundary';
@@ -120,7 +120,8 @@ import {
 import { userFacingError } from '@/features/dsm/copy';
 import MobileShell, { TOUCH_MIN } from '../components/MobileShell';
 import { mobileRoutes } from '../routes';
-import type { ClipTicket, EventDetailView } from '../types';
+import { mobileEventDetailPath } from '../routes';
+import type { ClipTicket, EventDetailView, EventRow } from '../types';
 
 const { Text, Paragraph } = Typography;
 
@@ -148,6 +149,11 @@ export const FIELD_REPLY_HEADLINE = '현장 회신 — 본 것을 한 줄로';
  * 고치면 `scripts/capture_screens.py` 사본도 같은 커밋에서 고친다.
  */
 export const FIELD_PHOTO_HEADLINE = '현장 사진 — 한 장 올리기';
+
+/** [턴 T] 「이 카메라 7일」 절의 표제와 창. 서버 필터(`stream_monitor_id` + `since`)로 좁힌다. */
+export const SAME_CAMERA_HEADLINE = '이 카메라 7일';
+const SAME_CAMERA_DAYS = 7;
+const SAME_CAMERA_LIMIT = 20;
 
 /** 사진이 받는 형식 셋 — `backend/apps/dsm/field.py::ALLOWED_CONTENT_TYPES` 와 같다. */
 const FIELD_PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
@@ -287,6 +293,24 @@ export default function MobileEventDetail() {
       });
     },
     [id, event],
+  );
+
+  /**
+   * [턴 T · P-164 U3] 「이 카메라 7일」 — 같은 카메라의 지난 7일 사건.
+   * **새 라우트가 아니다** — 기존 목록(`GET /api/dsm/events`)에 `stream_monitor_id` +
+   * `since` 필터다. 서버가 좁힌다(화면이 받아 거르면 페이지 밖 사건이 없는 것이 된다).
+   * 상세가 서기 전(카메라 번호를 모를 때)에는 부르지 않는다.
+   */
+  const cameraId = event.data?.stream_monitor_id ?? null;
+  const sameCamera = useDsmResource<{ total: number; events: EventRow[] }>(
+    () =>
+      dsmGet<{ total: number; events: EventRow[] }>(mobileEndpoint.events, {
+        stream_monitor_id: String(cameraId),
+        since: new Date(Date.now() - SAME_CAMERA_DAYS * 24 * 3600 * 1000).toISOString(),
+        limit: SAME_CAMERA_LIMIT,
+      }),
+    [cameraId],
+    { enabled: cameraId !== null, isEmpty: (v) => (v?.events?.length ?? 0) === 0 },
   );
 
   /** M3 — 이 이벤트에 달린 현장 회신. 빈 것과 오류를 갈라 그린다. */
@@ -681,6 +705,45 @@ export default function MobileEventDetail() {
                     ) : null}
                   </StateBoundary>
                 </div>
+              </Space>
+            </Card>
+
+            {/* ③-b 이 카메라 7일 — 같은 자리에서 무엇이 반복되나 (턴 T · P-164 U3) */}
+            <Card
+              size="small"
+              title={SAME_CAMERA_HEADLINE}
+              styles={{ body: { padding: 12 } }}
+              data-gx="same-camera-7d"
+            >
+              <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {e.stream_monitor_name || '카메라 미상'} · 지난 {SAME_CAMERA_DAYS}일 ·{' '}
+                  {sameCamera.data ? `${sameCamera.data.total}건 (이 페이지 · 최대 ${SAME_CAMERA_LIMIT})` : '—'}
+                </Text>
+                <StateBoundary
+                  state={sameCamera.state}
+                  reason={sameCamera.reason}
+                  status={sameCamera.status}
+                  onRetry={sameCamera.reload}
+                  emptyText={`이 카메라에서 지난 ${SAME_CAMERA_DAYS}일 동안 다른 사건이 0건입니다.`}
+                >
+                  <Space direction="vertical" size={2} style={{ width: '100%' }}>
+                    {(sameCamera.data?.events ?? []).map((row) => (
+                      <Space key={row.event_id} size={6} wrap>
+                        {row.event_id === e.event_id ? (
+                          <Tag color="blue">이 사건</Tag>
+                        ) : (
+                          <Link to={mobileEventDetailPath(row.event_id)}>#{row.event_id}</Link>
+                        )}
+                        <Tag color={SEVERITY_COLOR[row.severity]}>{labelOf(SEVERITY_LABEL, row.severity)}</Tag>
+                        <Text style={{ fontSize: 12 }}>{labelOf(EVENT_TYPE_LABEL, row.event_type)}</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          {relative(row.occurred_at)} · {labelOf(RESPONSE_STATE_LABEL, row.response_state)}
+                        </Text>
+                      </Space>
+                    ))}
+                  </Space>
+                </StateBoundary>
               </Space>
             </Card>
 

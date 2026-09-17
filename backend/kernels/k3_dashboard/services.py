@@ -40,7 +40,7 @@ from typing import Any, Callable, Iterable
 from django.apps import apps
 
 from common.tenant_filters import filter_by_group_field
-from common.tenant_roles import is_global_admin
+from common.tenant_roles import is_global_admin, is_tenant_admin_role_code
 from common.tenant_scope import TenantScope
 from kernels.k3_dashboard.exceptions import InvalidLayoutInput
 from kernels.k3_dashboard.presets import (
@@ -105,6 +105,9 @@ def get_preset(*, scope: TenantScope) -> PresetView:
     # 좁은 쪽을 주면 관리자 역할을 겸한 사람이 관리자 화면을 못 본다 — 그것은
     # "안 보인다"로 즉시 신고되지만, 여기서 좁히면 U3 가 깨진다.
     matched = [mapping[c] for c in codes if c in mapping]
+    # ★ 2026-09-17 (턴 T · F · SEC-22 · D-478) — `tenant_admin_<n>` 은 글자 일치가 아니라
+    #   **패턴**으로 관리자 프리셋에 닿는다. 판정식은 `common.tenant_roles` 한 곳.
+    matched += [Preset.MANAGER for c in codes if is_tenant_admin_role_code(c) and c not in mapping]
     if matched:
         preset = max(matched, key=lambda p: p.rank)
         return PresetView(

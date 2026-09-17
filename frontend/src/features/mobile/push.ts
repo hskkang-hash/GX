@@ -57,7 +57,25 @@ export interface TestSendResult {
   sent: number;
   drill_mode: boolean;
   title: string;
-  results: { endpoint_sha12: string; label: string; sent: boolean; reason: string }[];
+  /**
+   * [턴 T · P-160 ③] 이제 **행이 남는다** — `deliveries` `channel=webpush`. 첫 기기의
+   * 셋을 위로 올린 것이고, 기기마다의 값은 `results[]` 에 있다.
+   * `failure_reason` 은 사유 **이름·문장**이지 값이 아니다.
+   */
+  event_id: number | null;
+  channel: 'webpush';
+  delivery_id: number | null;
+  succeeded: boolean;
+  failure_reason: string | null;
+  results: {
+    endpoint_sha12: string;
+    label: string;
+    sent: boolean;
+    reason: string;
+    delivery_id: number | null;
+    succeeded: boolean;
+    failure_reason: string | null;
+  }[];
 }
 
 /**
