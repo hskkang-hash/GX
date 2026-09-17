@@ -8756,7 +8756,7 @@ decisions:
       창 뒤에 넣는다(창 안에서 7/7 을 재는데 항목이 8 이 되면 창의 수가 아니다).
   enforced_by: |
     · backend/requirements.txt (세 줄) · backend/.env.example (이름 3)
-    · scripts/verify_no_secret_echo.py · verify_secret_scan.py (값 반향 0)
+    · scripts/verify_no_secret_echo.py · scripts/verify_secret_scan.py (값 반향 0)
   affects: [D-335, D-377]
 
 - id: D-482
@@ -8821,3 +8821,81 @@ decisions:
     · backend/tests/test_p133_anon_read_closed.py · scripts/probe_read_surface.py
     · backend/tests/test_f05_event_api.py::test_every_entry_route_is_authenticated (사유 없는 공개 = 빨강)
   affects: [D-461, D-478]
+
+- id: D-485
+  author_tree_id: "턴 T 조율자=집행자 · 대표 「창 열어라」"
+  title: "재생성 창 집행 — 자격 3 · /backup · 운영 프로필 7/7 · storage_used_pct 가 수가 됐다 · 되돌리기 없음"
+  status: decided
+  raised_by: "대표 결정 ③(D-475 · 09-17 14:00) → 대표 한 줄 16:5x → 집행 16:54~17:05"
+  decision: |
+    ▣ RUNBOOK_재생성창 ⓪~⑤ 를 **그대로** 집행했다(기록은 그 문서의 「집행 기록」 절). 닫힌 것 넷:
+      **자격 3**(P-138 · DB 역할 SCRAM · MinIO 루트 · 앱 env-file 넷) · **`/backup` 마운트**(OPS-12a ·
+      celery·beat·shell · 장치 번호가 `/` 와 다르다) · **SEC-18a 7/7**(㉠ EXIT 0 ㉡ 20·40·32자 ㉢ 음성 셋
+      ㉣ 선언 없음→거부) · **상한 반영**(P-139 · `GX_STORAGE_CAPACITY_GB=50` → `storage_used_pct` UNKNOWN→0.0).
+    ▣ D-475 의 시각(14:00)과 실제 집행(16:54)이 다르다 — 집행자는 세션에 있었고 대표의 한 줄이 16:5x 에
+      왔다. **주소 있는 승인의 시각은 그 한 줄이 정한다.** 미리 열지 않았다.
+    ▣ 창 안에서 다른 변경을 섞지 않았다: P-161(앞단 순서)은 창 뒤 별건으로 격리 전/후를 재고 넣었고,
+      `verify_prod_settings` VAPID 형식 검사 +1 은 **넣지 않았다** — 운영 모양 컨테이너의 env-file 에 VAPID 가
+      없어(값을 싣는 것은 `.env*` 실값 변경 = 대표 결정) 지금 넣으면 게이트가 회색(exit 2)이 되고 그 회색은
+      창의 수가 아니다. 다음 턴 대표 결정 뒤 같은 커밋에 넣는다.
+    ▣ 남긴 사실: 잔존 시험 DB 4(`test_gx_lane_u24` 등)는 지우지 않았다(삭제는 대표) · 창 전 세션·토큰은 전부
+      무효(서명 키 바뀜 · 자료 손실 없음 · 재로그인만).
+  enforced_by: |
+    · docs/agent/RUNBOOK_재생성창.md 「집행 기록 2026-09-17」 · scripts/verify_prod_settings.py (7/7)
+    · C:/GuardianX-vault/recreate/ (startedat.pre · *.env · *.new.env · 회수증)
+  affects: [D-475, D-378, D-301]
+
+- id: D-486
+  author_tree_id: "턴 T 조율자 · P-160 ④ · 대표 「탐침 실행 허용」"
+  title: "웹푸시가 데스크톱 Chrome 에 닿았다(제품 경로 · 훈련 채널) — 그리고 구독 비밀이 쿼리 문자열로 접근 로그에 남는다"
+  status: decided
+  raised_by: "세종 P-160 닫는 조건 셋 → 조율자 실측 17:15"
+  decision: |
+    ▣ **닿았다** [실측 2026-09-17 17:15 · 호스트 Chrome(channel=chrome · 390px) · 계정 gxseed_u1_operator]:
+      로그인 → `/m/settings` 「알림 받기」 → `GET vapid-key` 200 → 브라우저 구독(endpoint host
+      `fcm.googleapis.com` · sha12 `dc716379fa14`) → `POST /push-subscriptions` 200 → 「시험 알림 보내기 (훈련)」
+      → `POST test-send` 200 → **`deliveries #481 channel=webpush succeeded=true failure_reason=None`
+      `recipient_address=drill:webpush:…`** → 서비스워커가 실제로 띄운 알림 1:
+      `[훈련] GuardianX 알림 시험 / 이 알림은 시험입니다 — 출동하지 마십시오.` 증거 `evidence/P-160/`
+      (캡처 2 · JSON · 드라이버). 닫는 조건 셋(도달 캡처 1 · webpush 행 succeeded 1 · 훈련 채널) 다 섰다.
+      운영 알림은 한 건도 나가지 않았다(발송 1 = 훈련 표식 행).
+    ▣ 이것은 **잠금화면이 아니다** — 데스크톱 Chrome 의 알림이다. 잠금화면은 스테이징(대표 결정 ②) 뒤 휴대폰.
+    ▣ 그 전에 파이프라인만 따로 재 봤다(제품 무관 탐침 페이지 · 같은 VAPID): 구독 → pywebpush **201** → 도달.
+      제품 경로에서 첫 시도가 `/login` 에 멈춘 것은 앞 세션 끊기 확인창(「Confirm」)을 안 누른 **탐침의 결함**이었다
+      (`verify_click_completes.settle_login` 과 같은 처리를 넣자 통과) — 제품이 아니다.
+    ▣ ⚠ **결함 하나를 누른 뒤에 봤다** — `POST /api/dsm/push-subscriptions?endpoint=…&p256dh=…&auth_secret=…`
+      구독 비밀 셋이 **쿼리 문자열**로 간다(ninja 기본 인자 = query). 그 줄이 runserver 접근 로그에 **2건**
+      그대로 남았다(값은 인용하지 않는다). 운영이면 nginx·gunicorn 접근 로그에 기기 비밀이 쌓인다 — p256dh·auth 가
+      새면 그 기기로 **누구나** 알림을 보낼 수 있다. 다음 턴 U3 첫 일: 본문(JSON Schema)으로 옮기고
+      `test_u3_push_and_prefs` 에 「쿼리에 비밀 이름이 없다」 시험 1 · `verify_no_secret_echo` 계열에 접근 로그 표본.
+      증거 JSON 의 쿼리 값은 전부 `<redacted>` 로 지웠다(P-135).
+    ▣ 호스트 Chrome 이 gx-shell 의 3002/8000 에 닿게 **임시 포워더 컨테이너**(127.0.0.1 만 · `forward.py`)를
+      세웠다 지웠다 — 컨테이너 수는 10 으로 돌아왔다.
+  enforced_by: |
+    · docs/agent/evidence/P-160/webpush_arrival_20260917.json (calls · 알림 1 · 값 redacted)
+    · docs/agent/evidence/P-160/arrival_m4_20260917.png · docs/agent/evidence/P-160/run_product.py
+    · backend/tests/test_u3_webpush_send.py (mock 경로) — 실도달은 이 증거 하나
+  affects: [D-481, D-335, D-377]
+
+- id: D-487
+  author_tree_id: "턴 T 조율자 · 자진"
+  title: "조율자가 V 단독 세션 중에 게이트를 돌려 세션을 빼앗았다 — 「경합 중에 잰 수는 수가 아니다」의 반대편은 「재는 동안 조율자도 로그인하지 않는다」"
+  status: decided
+  raised_by: "V 단독 세션 (2026-09-17 17:23 · 캡처 1차 세션 상실 · 429) → 조율자 오판으로 센다"
+  decision: |
+    ▣ **조율자가 틀렸다.** V 가 캡처 1차를 걷는 동안 조율자가 호스트에서 `verify_ga_readiness.py` 를 돌렸고,
+      그 안의 `verify_sidebar` 가 gxseed 계정 넷으로 **HTTP 로그인**했다(계정당 세션 1 · `end_previous_session`).
+      V 의 U1 첫 화면이 `/login` 으로 튕겼고 율제한 429 도 났다. V 가 원인을 잡아 끝을 기다린 뒤 재실행했다 —
+      **1차 수는 버렸고 2차 수만 수다.** 1차의 대장 합침도 줄지 않았다(32→32 · 30→30).
+    ▣ 「경합 중에 잰 수는 수가 아니다」는 차선에게만 하던 말이었다. 게이트 산출기도 로그인을 한다 —
+      **V 단독 세션 동안 조율자는 로그인하는 어떤 도구도 부르지 않는다**(`verify_ga_readiness` · `verify_sidebar` ·
+      `verify_route_alive` · `probe_read_surface` 계열). 필요하면 V 가 끝난 뒤. 다음 턴 지시문 §3 에 한 줄.
+    ▣ 같은 자리에서 드러난 도구 사실 둘(V 실측): ① `capture_screens` 는 끝에 자기 씨앗을 지운다(`clean_events`) —
+      Q 가 적은 「씨앗 id 를 `--keep-event` 로 넘긴다」 배선은 **넘길 id 가 없다.** V 는 `seed_events` 를 ORM 으로
+      따로 심어 넘겼다(P-156 ① 부합). 다음 턴 Q: capture 가 씨앗 id 를 `runs/<stamp>/seeds.json` 에 남기고
+      정리는 FC 뒤에 하도록. ② 씨앗 사건은 `address` 가 비어 U3#2 가 데이터 상태 빨강 — `seed_events` 가
+      K1 `record_detection(address=)` 를 채워야 한다(Q 파일).
+  enforced_by: |
+    · docs/agent/evidence/P-157/runs/20260917T082308 (버린 1차) · 20260917T083052 (2차 · 수)
+    · docs/agent/evidence/P-118/click_completes.json (3차 · 28/48)
+  affects: [D-457, D-475, D-483]

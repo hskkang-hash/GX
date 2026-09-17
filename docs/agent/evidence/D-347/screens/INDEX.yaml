@@ -102,7 +102,7 @@ screens:
   - route: /login
     user_role: fire_user
     scenario: SCREENS-1/L1
-    captured_at: "2026-09-17T08:25:42"
+    captured_at: "2026-09-17T15:31:04"
     file: SCREENS-1/fire_user/login_credentials.png
     data_source: 실측 (가로채지 않았다 — 진짜 서버(8000)가 거절한 답이다)
     persona: U1
@@ -113,7 +113,7 @@ screens:
   - route: /login
     user_role: fire_user
     scenario: SCREENS-1/L2
-    captured_at: "2026-09-17T08:25:49"
+    captured_at: "2026-09-17T15:31:11"
     file: SCREENS-1/fire_user/login_locked.png
     data_source: 모의 (서버의 잠금 본문 모양을 주입했다 — 계정을 진짜로 잠그지 않는다)
     persona: U1
@@ -123,7 +123,7 @@ screens:
   - route: /login
     user_role: fire_user
     scenario: SCREENS-1/L3
-    captured_at: "2026-09-17T08:25:56"
+    captured_at: "2026-09-17T15:31:18"
     file: SCREENS-1/fire_user/login_forbidden.png
     data_source: 모의 (403 을 주입했다 — 권한 없는 실재 계정을 만들어 찍지 않는다)
     persona: U1
@@ -133,7 +133,7 @@ screens:
   - route: /login
     user_role: fire_user
     scenario: SCREENS-1/L4
-    captured_at: "2026-09-17T08:26:04"
+    captured_at: "2026-09-17T15:31:25"
     file: SCREENS-1/fire_user/login_server_error.png
     data_source: 모의 (500 을 주입했다 · 본문은 HTML(장고 오류 쪽) — 그 바이트가 화면에 새는지도 본다)
     persona: U1
@@ -143,7 +143,7 @@ screens:
   - route: /login
     user_role: fire_user
     scenario: SCREENS-1/L5
-    captured_at: "2026-09-17T08:26:11"
+    captured_at: "2026-09-17T15:31:32"
     file: SCREENS-1/fire_user/login_network.png
     data_source: 모의 (연결 자체를 끊었다 — axios 원문이 태어나던 자리)
     persona: U1
@@ -153,7 +153,7 @@ screens:
   - route: /dsm/dashboard
     user_role: fire_user
     scenario: SCREENS-1/1
-    captured_at: "2026-09-17T08:26:31"
+    captured_at: "2026-09-17T15:31:52"
     file: SCREENS-1/fire_user/dsm_dashboard.png
     data_source: 시드
     persona: U1
@@ -169,7 +169,7 @@ screens:
   - route: /dsm/events
     user_role: fire_user
     scenario: SCREENS-1/2
-    captured_at: "2026-09-17T08:26:39"
+    captured_at: "2026-09-17T15:32:00"
     file: SCREENS-1/fire_user/dsm_events.png
     data_source: 시드
     persona: U1
@@ -178,6 +178,7 @@ screens:
       - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
       - "GET /api/config-management/list-optimized 200"
       - "GET /api/dsm/events/summary?hours=12 200"
+      - "GET /api/dsm/events/upper-report/flags?event_ids=231071,231072 200"
       - "GET /api/dsm/events?limit=50&response_state=occurred 200"
       - "GET /api/menu/menus?page_size=10000 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
@@ -185,7 +186,7 @@ screens:
   - route: /dsm/events?preset=unhandled
     user_role: fire_user
     scenario: SCREENS-1/17
-    captured_at: "2026-09-17T08:26:54"
+    captured_at: "2026-09-17T15:32:15"
     file: SCREENS-1/fire_user/dsm_events_preset_unhandled.png
     data_source: 시드
     persona: U1
@@ -194,6 +195,7 @@ screens:
       - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
       - "GET /api/config-management/list-optimized 200"
       - "GET /api/dsm/events/summary?hours=12 200"
+      - "GET /api/dsm/events/upper-report/flags?event_ids=231071,231072 200"
       - "GET /api/dsm/events?limit=50&response_state=occurred 200"
       - "GET /api/menu/menus?page_size=10000 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
@@ -201,7 +203,7 @@ screens:
   - route: /dsm/events?preset=recent
     user_role: fire_user
     scenario: SCREENS-1/18
-    captured_at: "2026-09-17T08:27:02"
+    captured_at: "2026-09-17T15:32:23"
     file: SCREENS-1/fire_user/dsm_events_preset_recent.png
     data_source: 시드
     persona: U1
@@ -210,14 +212,15 @@ screens:
       - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
       - "GET /api/config-management/list-optimized 200"
       - "GET /api/dsm/events/summary?hours=12 200"
-      - "GET /api/dsm/events?limit=50&since=2026-09-16T13:26:55.303Z&until=2026-09-17T01:26:55.303Z 200"
+      - "GET /api/dsm/events/upper-report/flags?event_ids=231071,231072 200"
+      - "GET /api/dsm/events?limit=50&since=2026-09-16T20:32:16.645Z&until=2026-09-17T08:32:16.645Z 200"
       - "GET /api/menu/menus?page_size=10000 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /dsm/events?preset=mine
     user_role: fire_user
     scenario: SCREENS-1/19
-    captured_at: "2026-09-17T08:27:09"
+    captured_at: "2026-09-17T15:32:31"
     file: SCREENS-1/fire_user/dsm_events_preset_mine.png
     data_source: 시드
     persona: U1
@@ -226,6 +229,7 @@ screens:
       - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
       - "GET /api/config-management/list-optimized 200"
       - "GET /api/dsm/events/summary?hours=12 200"
+      - "GET /api/dsm/events/upper-report/flags?event_ids=4798,4799,4803,4804,4808,4809,4813,4814,4818,4819 200"
       - "GET /api/dsm/events?limit=50&mine=true 200"
       - "GET /api/menu/menus?page_size=10000 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
@@ -233,7 +237,7 @@ screens:
   - route: /dsm/events?preset=system
     user_role: fire_user
     scenario: SCREENS-1/20
-    captured_at: "2026-09-17T08:27:17"
+    captured_at: "2026-09-17T15:32:39"
     file: SCREENS-1/fire_user/dsm_events_preset_system.png
     data_source: 시드
     persona: U1
@@ -243,14 +247,15 @@ screens:
       - "GET /api/config-management/list-optimized 200"
       - "GET /api/dsm/dashboard/link-state 200"
       - "GET /api/dsm/events/summary?hours=12 200"
+      - "GET /api/dsm/events/upper-report/flags?event_ids=4818,4819 200"
       - "GET /api/dsm/events?limit=50&event_type=camera_down,storage_high 200"
       - "GET /api/menu/menus?page_size=10000 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
-  - route: /dsm/events/204342
+  - route: /dsm/events/231071
     user_role: fire_user
     scenario: SCREENS-1/21
-    captured_at: "2026-09-17T08:27:25"
+    captured_at: "2026-09-17T15:32:46"
     file: SCREENS-1/fire_user/dsm_events_id_verdict_panel.png
     data_source: 시드
     persona: U1
@@ -258,16 +263,16 @@ screens:
     calls:
       - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
       - "GET /api/config-management/list-optimized 200"
-      - "GET /api/dsm/deliveries?event_id=204342 200"
-      - "GET /api/dsm/events/204342 200"
-      - "GET /api/dsm/events/204342/timeline 200"
+      - "GET /api/dsm/deliveries?event_id=231071 200"
+      - "GET /api/dsm/events/231071 200"
+      - "GET /api/dsm/events/231071/timeline 200"
       - "GET /api/menu/menus?page_size=10000 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /dsm/queue
     user_role: fire_user
     scenario: SCREENS-1/22
-    captured_at: "2026-09-17T08:27:33"
+    captured_at: "2026-09-17T15:32:54"
     file: SCREENS-1/fire_user/dsm_queue_focus.png
     data_source: 시드
     persona: U1
@@ -277,14 +282,14 @@ screens:
       - "GET /api/config-management/list-optimized 200"
       - "GET /api/dsm/events/4805/snapshot 200"
       - "GET /api/dsm/events/queue?limit=200 200"
-      - "GET /api/dsm/queue/field-signals?event_ids=4805,4800,204340,4819,4818,4810,204341,4815,204343,204342 200"
+      - "GET /api/dsm/queue/field-signals?event_ids=4805,4800,4819,4818,4810,4815,231072,231071 200"
       - "GET /api/menu/menus?page_size=10000 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /multi-stream-monitor
     user_role: fire_admin
     scenario: SCREENS-1/13
-    captured_at: "2026-09-17T08:27:56"
+    captured_at: "2026-09-17T15:33:16"
     file: SCREENS-1/fire_admin/multi-stream-monitor.png
     data_source: 시드
     persona: U2
@@ -300,7 +305,7 @@ screens:
   - route: /dsm/drill
     user_role: fire_admin
     scenario: SCREENS-1/23
-    captured_at: "2026-09-17T08:28:03"
+    captured_at: "2026-09-17T15:33:23"
     file: SCREENS-1/fire_admin/dsm_drill_mode.png
     data_source: 시드
     persona: U2
@@ -316,7 +321,7 @@ screens:
   - route: /dsm/cameras/import
     user_role: fire_admin
     scenario: SCREENS-1/24
-    captured_at: "2026-09-17T08:28:11"
+    captured_at: "2026-09-17T15:33:31"
     file: SCREENS-1/fire_admin/dsm_cameras_import_dryrun.png
     data_source: 시드
     persona: U2
@@ -331,7 +336,7 @@ screens:
   - route: /dsm/cameras/address
     user_role: fire_admin
     scenario: SCREENS-1/25
-    captured_at: "2026-09-17T08:28:19"
+    captured_at: "2026-09-17T15:33:39"
     file: SCREENS-1/fire_admin/dsm_cameras_address_fill.png
     data_source: 시드
     persona: U2
@@ -346,7 +351,7 @@ screens:
   - route: /start?role=OPERATOR
     user_role: fire_admin
     scenario: SCREENS-1/26
-    captured_at: "2026-09-17T08:28:26"
+    captured_at: "2026-09-17T15:33:47"
     file: SCREENS-1/fire_admin/start_onboarding.png
     data_source: 시드
     persona: U2
@@ -358,7 +363,7 @@ screens:
   - route: /m/inbox
     user_role: fire_user
     scenario: SCREENS-1/27
-    captured_at: "2026-09-17T08:28:46"
+    captured_at: "2026-09-17T15:34:07"
     file: SCREENS-1/fire_user/m_inbox_m1.png
     data_source: 시드
     persona: U3
@@ -368,12 +373,13 @@ screens:
       - "GET /api/config-management/list-optimized 200"
       - "GET /api/dsm/deliveries?limit=50 200"
       - "GET /api/dsm/events?limit=200 200"
+      - "GET /api/dsm/me/handled-events?limit=50 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
-  - route: /m/events/204342
+  - route: /m/events/231071
     user_role: fire_user
     scenario: SCREENS-1/28
-    captured_at: "2026-09-17T08:28:54"
+    captured_at: "2026-09-17T15:34:14"
     file: SCREENS-1/fire_user/m_events_id_m3_field_reply.png
     data_source: 시드
     persona: U3
@@ -381,15 +387,16 @@ screens:
     calls:
       - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
       - "GET /api/config-management/list-optimized 200"
-      - "GET /api/dsm/events/204342 200"
-      - "GET /api/dsm/events/204342/clip 404"
-      - "GET /api/dsm/events/204342/field-replies 200"
+      - "GET /api/dsm/events/231071 200"
+      - "GET /api/dsm/events/231071/clip 404"
+      - "GET /api/dsm/events/231071/field-replies 200"
+      - "GET /api/dsm/events?stream_monitor_id=3946&since=2026-09-10T08:34:08.328Z&limit=20 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
   - route: /surveillance-dashboard
     user_role: view_only_-_anyang
     scenario: SCREENS-1/9
-    captured_at: "2026-09-17T08:29:19"
+    captured_at: "2026-09-17T15:34:37"
     file: SCREENS-1/view_only_-_anyang/surveillance-dashboard.png
     data_source: 시드
     persona: U4
@@ -410,7 +417,7 @@ screens:
   - route: /media-data
     user_role: view_only_-_anyang
     scenario: SCREENS-1/11
-    captured_at: "2026-09-17T08:29:28"
+    captured_at: "2026-09-17T15:34:45"
     file: SCREENS-1/view_only_-_anyang/media-data.png
     data_source: 시드
     persona: U4
@@ -428,7 +435,7 @@ screens:
   - route: /flight-log-analysis
     user_role: view_only_-_anyang
     scenario: SCREENS-1/12
-    captured_at: "2026-09-17T08:29:36"
+    captured_at: "2026-09-17T15:34:53"
     file: SCREENS-1/view_only_-_anyang/flight-log-analysis.png
     data_source: 시드
     persona: U4
@@ -444,7 +451,7 @@ screens:
   - route: /report-template
     user_role: view_only_-_anyang
     scenario: SCREENS-1/15
-    captured_at: "2026-09-17T08:29:44"
+    captured_at: "2026-09-17T15:35:01"
     file: SCREENS-1/view_only_-_anyang/report-template.png
     data_source: 시드
     persona: U4
@@ -459,7 +466,7 @@ screens:
   - route: /notam
     user_role: view_only_-_anyang
     scenario: SCREENS-1/16
-    captured_at: "2026-09-17T08:29:52"
+    captured_at: "2026-09-17T15:35:09"
     file: SCREENS-1/view_only_-_anyang/notam.png
     data_source: 시드
     persona: U4
@@ -511,7 +518,7 @@ screens:
   - route: /menu
     user_role: admin
     scenario: SCREENS-1/6
-    captured_at: "2026-09-17T08:30:29"
+    captured_at: "2026-09-17T15:35:46"
     file: SCREENS-1/admin/menu.png
     data_source: 시드
     persona: U5
@@ -525,7 +532,7 @@ screens:
   - route: /configuration-management
     user_role: admin
     scenario: SCREENS-1/7
-    captured_at: "2026-09-17T08:30:37"
+    captured_at: "2026-09-17T15:35:54"
     file: SCREENS-1/admin/configuration-management.png
     data_source: 시드
     persona: U5
@@ -541,7 +548,7 @@ screens:
   - route: /profile
     user_role: admin
     scenario: SCREENS-1/8
-    captured_at: "2026-09-17T08:30:46"
+    captured_at: "2026-09-17T15:36:03"
     file: SCREENS-1/admin/profile.png
     data_source: 시드
     persona: U5
@@ -558,7 +565,7 @@ screens:
   - route: /operation-settings
     user_role: admin
     scenario: SCREENS-1/14
-    captured_at: "2026-09-17T08:31:02"
+    captured_at: "2026-09-17T15:36:19"
     file: SCREENS-1/admin/operation-settings.png
     data_source: 시드
     persona: U5
@@ -583,6 +590,23 @@ screens:
       - "GET /api/dsm/deliveries?event_id=204342 200"
       - "GET /api/dsm/events/204342 200"
       - "GET /api/dsm/events/204342/timeline 200"
+      - "GET /api/menu/menus?page_size=10000 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
+      - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+  - route: /dsm/events/231071
+    user_role: fire_user
+    scenario: SCREENS-1/3
+    captured_at: "2026-09-17T15:32:08"
+    file: SCREENS-1/fire_user/dsm_events_231071.png
+    data_source: 시드
+    persona: U1
+    viewed_by: "U1 · gxseed_u1_operator · fire_user · 1440px"
+    calls:
+      - "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200"
+      - "GET /api/config-management/list-optimized 200"
+      - "GET /api/dsm/deliveries?event_id=231071 200"
+      - "GET /api/dsm/events/231071 200"
+      - "GET /api/dsm/events/231071/timeline 200"
       - "GET /api/menu/menus?page_size=10000 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=false 200"
       - "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"

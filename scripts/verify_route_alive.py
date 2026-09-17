@@ -167,11 +167,21 @@ def login(api: str, user: str, password: str, _rate_waited: bool = False) -> str
             #:   `403 135B` 를 받았다 [실측: 8000 로그 · measure_repro 두 회차가 갈린 자리].
             #:   제품의 보안 장치라 풀지 않는다 — 게이트가 **기다린다.** 한 번만 다시 묻고,
             #:   그래도 막히면 전과 같이 「못 받았다」(회색)로 둔다. 기다린 사실은 적는다.
-            if e.code == 403 and not _rate_waited:
-                print(f"[ALIVE] 로그인 {path} → HTTP 403 — 로그인 속도 제한(IP · 분당 5회)으로 "
-                      f"보고 {RATE_LIMIT_WAIT_S}초 기다렸다 한 번 더 묻는다")
+            #: ★ 2026-09-17 (턴 T · SEC-21 · 차선 F) — 그 403 HTML 이 **429 JSON + `Retry-After`** 가 됐다.
+            #:   제품이 옳게 바뀌자 이 기다림이 눈이 멀어 `verify_measure_repro` 가 두 회차를 갈랐다
+            #:   (2회차 F-05 셋 회색 · 영역 ① 7 → 4). 429 도 같은 자리이고, 남은 초는 서버가 준다.
+            if e.code in (403, 429) and not _rate_waited:
+                wait = RATE_LIMIT_WAIT_S
+                try:
+                    ra = int((e.headers.get("Retry-After") or "").strip() or 0)
+                    if 0 < ra <= 120:
+                        wait = ra + 1
+                except (ValueError, AttributeError):
+                    pass
+                print(f"[ALIVE] 로그인 {path} → HTTP {e.code} — 로그인 속도 제한(IP · 분당 5회)으로 "
+                      f"보고 {wait}초 기다렸다 한 번 더 묻는다")
                 sys.stdout.flush()
-                time.sleep(RATE_LIMIT_WAIT_S)
+                time.sleep(wait)
                 _rate_waited = True
                 return login(api, user, password, _rate_waited=True)
             print(f"[ALIVE] 로그인 {path} → HTTP {e.code}")

@@ -1,0 +1,68 @@
+[
+  {
+    "route": "/login",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/L1",
+    "captured_at": "2026-09-17T15:23:38",
+    "file": "SCREENS-1/fire_user/login_credentials.png",
+    "data_source": "실측 (가로채지 않았다 — 진짜 서버(8000)가 거절한 답이다)",
+    "persona": "U1",
+    "viewed_by": "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중",
+    "calls": [
+      "GET /api/config-management/list-optimized 200",
+      "POST /api/v1/auth/login 400"
+    ]
+  },
+  {
+    "route": "/login",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/L2",
+    "captured_at": "2026-09-17T15:23:46",
+    "file": "SCREENS-1/fire_user/login_locked.png",
+    "data_source": "모의 (서버의 잠금 본문 모양을 주입했다 — 계정을 진짜로 잠그지 않는다)",
+    "persona": "U1",
+    "viewed_by": "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중",
+    "calls": [
+      "GET /api/config-management/list-optimized 200"
+    ]
+  },
+  {
+    "route": "/login",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/L3",
+    "captured_at": "2026-09-17T15:23:53",
+    "file": "SCREENS-1/fire_user/login_forbidden.png",
+    "data_source": "모의 (403 을 주입했다 — 권한 없는 실재 계정을 만들어 찍지 않는다)",
+    "persona": "U1",
+    "viewed_by": "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중",
+    "calls": [
+      "GET /api/config-management/list-optimized 200"
+    ]
+  },
+  {
+    "route": "/login",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/L4",
+    "captured_at": "2026-09-17T15:24:00",
+    "file": "SCREENS-1/fire_user/login_server_error.png",
+    "data_source": "모의 (500 을 주입했다 · 본문은 HTML(장고 오류 쪽) — 그 바이트가 화면에 새는지도 본다)",
+    "persona": "U1",
+    "viewed_by": "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중",
+    "calls": [
+      "GET /api/config-management/list-optimized 200"
+    ]
+  },
+  {
+    "route": "/login",
+    "user_role": "fire_user",
+    "scenario": "SCREENS-1/L5",
+    "captured_at": "2026-09-17T15:24:07",
+    "file": "SCREENS-1/fire_user/login_network.png",
+    "data_source": "모의 (연결 자체를 끊었다 — axios 원문이 태어나던 자리)",
+    "persona": "U1",
+    "viewed_by": "(로그인 전 · 아직 누구도 아니다) — U1 · gxseed_u1_operator · fire_user 실행 중",
+    "calls": [
+      "GET /api/config-management/list-optimized 200"
+    ]
+  }
+]

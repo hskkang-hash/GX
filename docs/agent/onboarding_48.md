@@ -966,3 +966,54 @@ CPO 결정: 역할이 0개인 계정이 볼 수 있는 화면은 **정확히 하
   `알림 받는 사람·채널` · `내 정보` · `내게 온 이벤트` · `내 알림 설정` · `요원별 현황`)을 등재하면 문구 「정본 없음」 6행이 채워진다 —
   차선 F(사전 소유) 몫. ② U24·U56·U3 가 이번 턴 짓는 자리 7행(U4 #15·#16 · U5 #14 · U6 #14·#15 · U3 #16 실자료 · U4 #7 단추)은
   병합 뒤 그 차선이 경로·문구 칸을 채운다.
+
+---
+
+## ★ 2026-09-17 턴 T · P-165 ④ — **온보딩 48행 첫 수: 16.0/48** (두 칸 채운 22행을 셋째 술어로 잼 · V 단독)
+
+**분모 48 = 이 파일의 행 수 · 두 칸 채운 22행만 쟀다 · 정본 없음 26행은 회색 그대로다(초록이 아니다).**
+22행 중 **● 초록 14 · ◐ 반 4 · ○ 빨강 4 · 못 잰 회색 0** → 합 **16.0/48** [실측 2026-09-17 18:07~18:26 KST · gx-shell 안 playwright · SPA 3002 + runserver 8000].
+회색 넷 턴 뒤의 첫 수다 — 목표를 두지 않았다.
+
+- 도구: `scripts/measure_onboarding_t.py`(V · 이번 턴 신설). 역할 계정으로 **실제 로그인**(U1·U3 `gxseed_u1_operator` · U2 `gxseed_u2_manager` · U4 `gxseed_u4_official` · U5 `gxseed_u5_sysop` · 계정 바꿀 때 61초) → 정본 경로 goto → 누를 문구 **보임** → 셋째 술어. 재조회는 같은 컨테이너의 ORM([서버 기록]) 또는 브라우저가 실제로 부른 응답([API 호출])이다 — 화면이 그린 값이 아니다.
+- 증거: `docs/agent/evidence/P-159/onboarding_measure_20260917T090709.json`(22행 · 2차 실행) + `…_20260917T092422.json`(U1 7행 재측 · U1#2 기대식 고침 뒤) · `…_085714_attempt1.json`(1차 · ORM 비동기 차단으로 3사람 예외 — 수로 쓰지 않는다).
+- 표본: 사진·주소 있는 사건 4798 · 이번 회 씨앗 231075(심각)·231076(주의) — `capture_screens.seed_events` 로 심고 `probe_marks` 표식.
+- 규칙: 초록 = 문구 보임 + 술어 섬 · 정본이 「◐ 상한」이라 적은 행(U1#2 · U4#8 · U5#15 %없음 · U2#4 셋 중 하나 빠짐)은 서도 ◐ · 술어 거짓 = 빨강 · 못 잰 행 = 회색. **빨강을 회색으로 바꾸지 않았다.**
+
+| 행 | 정본 경로 | 문구 | 술어 | 상태 | 근거 (JSON 의 evidence 앞부분) |
+|---|---|---|---|---|---|
+| U1#1 | `/login` | 보임 | 섬 | **●** (1.0) | login POST [200, 200] · 프로필 200=True (/api/v1/user/get-user-detail — 정본은 auth/profile 이라 적었고 SPA 는 get-user-detail 을 부른다 · 기대식 오류) · 문장=True · 처음이세요?=True |
+| U1#2 | `/dsm/dashboard` | 보임 | 섬 | **◐** (0.5) | 배지=['연계 대기'] · frame 200=True · frame.link=waiting · link-state 따로 호출 [] (기대식 오류 — 화면은 frame 의 link 를 그린다) · ◐ 상한(카메라 정상/이상 칸 없음 — 정본 표기) |
+| U1#3 | `/dsm/cameras/grid` | 보임 | 섬 | **●** (1.0) | pulse 200=True · 「응답 없음」/「마지막 응답」 6회 · 격자=True 순회=True |
+| U1#8 | `/dsm/events` | 보임 | 섬 | **●** (1.0) | 단추=['미처리 보기', '지난 12시간 보기', '내 담당 보기', '시스템 보기'] · GET events 200=True · 처리 단계 값 3칸 ['미처리'] |
+| U1#9 | `/dsm/events/:id` | 보임 | 섬 | **●** (1.0) | 배지=['심각'] · GET events/4798 200=True |
+| U1#11 | `/dsm/queue` | 안 보임 | 안 섬 | **○** (0.0) | 큐 화면에 「실제로 확인 · 접수」 이 보이지 않는다 — 보이는 단추 ['종결하기'] · 초점 사건이 미처리가 아니면 이 단추는 없다(데이터 상태) · 본문 '지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\nGuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n갱신 09:25' |
+| U1#19 | `/dsm/home → /handover` | 보임 | 섬 | **●** (1.0) | 눌렀다=True · 도달=True (http://localhost:3002/handover) · 본문 249자 (P-98 68자 그대로면 빨강) · 앞부분 '지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n인계 메모\n아직 인계 메모가 없습니다.\n이 자리에 지난 교대가 남긴 말이 뜹니' |
+| U2#1 | `/dsm/events` | 보임 | 섬 | **●** (1.0) | summary?hours=12 200=True · reviewed=1 false_positive=0 measurable=True unhandled=3 · 화면 0%=True (분모 0 인 0% 만 빨강) · 없음문장=False |
+| U2#2 | `/dsm/events?preset=unhandled` | 보임 | 섬 | **●** (1.0) | GET …response_state=occurred 200=True (서버 3건) · 처리 단계 칸 3 전부 미처리=True ['미처리'] |
+| U2#4 | `/dsm/events/:id` | 보임 | 섬 | **◐** (0.5) | snapshot [200] jpeg=True · img(snapshot, naturalWidth>0)=0 · 주소 화면=True · 셋 다=False |
+| U2#6 | `/report-template` | 보임 | 안 섬 | **○** (0.0) | templates 200=False · 표 행 0 (0 이면 ◐) · 보고서 서식=True 머리줄=True · url=http://localhost:3002/report-template |
+| U2#19 | `/dsm/events?preset=system` | 보임 | 섬 | **●** (1.0) | GET event_type=… 200=True · 서버 2건 유형=['camera_down', 'storage_high'] · 둘뿐=True (0건이면 빈 상태가 그려져야 한다) |
+| U3#1 | `/dsm/events/:id → /m/inbox` | 보임 | 섬 | **●** (1.0) | POST notify [200] · deliveries 0 → 16 · 결과 문장=True · /m/inbox 카드=True |
+| U3#2 | `/m/events/:id` | 보임 | 섬 | **●** (1.0) | 어디로 가나=True · 주소 화면=True · 지도에서 보기=True |
+| U3#7 | `/m/events/:id` | 보임 | 섬 | **●** (1.0) | 단추 접수하기 · POST response [200] · 서버 재조회 occurred → acknowledged · 감사 행=-1 |
+| U3#9 | `/m/events/:id` | 보임 | 섬 | **●** (1.0) | POST field-reply [200] · field-replies total 0 → 1 (다시 읽음) |
+| U4#8 | `/dsm/events` | 보임 | 섬 | **◐** (0.5) | GET events?since= 200=True · 조합 검색(사건번호·주소·유형) 없음 → ◐ 상한(정본 표기) |
+| U4#11 | `/device` | 보임 | 안 섬 | **○** (0.0) | url=http://localhost:3002/device · 「드론·로봇 장비 등록」=True · 머리줄=True · 표 행 0 · 본문 앞 '무슨 일 있었나\n열람·삭제 청구\n드론·로봇 장비 등록 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\n\t\nStatus\n\t\nIn Use' |
+| U5#2 | `/roles` | 보임 | 안 섬 | **○** (0.0) | url=http://localhost:3002/roles · 역할 관리=True · 머리줄=True · 표 행 0 · Add New Role=False · 본문 앞 '지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n역할 관리 · 관리자 전용 화면입' |
+| U5#4 | `/dsm/cameras/import` | 보임 | 섬 | **●** (1.0) | 표 먼저 보기=True · 적용=True · POST import [200, 200] · 카메라 수 6 → 7 (서버 기록) |
+| U5#5 | `/dsm/cameras/address` | 보임 | 섬 | **●** (1.0) | 표 먼저 보기=True · 채우기=True · POST import [200, 200] · address-gap GET [200, 200] · 미입력 4 → 3 (서버 기록) |
+| U5#15 | `/dsm/metering` | 보임 | 섬 | **◐** (0.5) | metering 200=True · 화면에 %=False (없으면 ◐ — 상한 미선언) · 이번 달 사용량=True 저장 용량=True |
+
+**기대식 오류 3(정본 표의 셋째 술어가 소스와 어긋남 — 먼저 실측한 뒤 도구에서 고쳤다 · 표의 원문은 그대로 둔다)**
+- U1#1: 표는 `GET /api/v1/auth/profile 200` 이라 적었으나 SPA 가 로그인 직후 부르는 것은 `getProfileAPI = GET /api/v1/user/get-user-detail/{id}` 다(`frontend/src/features/nav/roleHome.ts:22` · runserver 로그 auth/profile 0건). 도구는 둘 다 받고 어느 쪽이 섰는지 적는다 → get-user-detail 200 · 초록.
+- U1#2: 표는 `GET /api/dsm/dashboard/link-state 200` 을 따로 요구하나 대시보드는 `frame.data.link` 를 그린다(`ControlDashboard.tsx:95` · `services.py:171`). 1차·2차 실행에서 link-state 호출 0건인데 배지 「연계 대기」가 떴다 → frame 200 + frame.link=waiting 으로 술어를 고침 · 정본의 ◐ 상한 그대로 ◐.
+- U2#1: 표의 「0% 가 뜨면 빨강」은 분모 0 을 0% 로 그리는 착시를 막는 규칙 — 서버가 `measurable=True · reviewed=1 · false_positive=0` 으로 낸 0% 는 수다 → 분모 0 인 0% 만 빨강 · 초록.
+
+**빨강 4 — 3종 분류**
+- U1#11 ○ **데이터 상태**: `/dsm/queue` 초점 사건이 「조치 중」이라 단추가 「종결하기」였다 — 미처리 심각 씨앗(231075)이 있었는데도 「가장 급한 하나」가 진행 중 사건을 앞세웠다(정렬 규칙 확인 요청 · U1 차선). 문구 「실제로 확인 · 접수」는 미처리 초점일 때만 그려진다(`FocusQueue.tsx:446 isAck`).
+- U2#6 ○ **기대식 오류(정본 표 자체)**: `/report-template` 은 `GET /api/dsm/reports/templates` 를 부르지 않는다(호출 0건 · 인수 서식 화면 · `click_completes` U2#6 note 와 같은 사실) · 표 행 0. 화면이 그 문을 부르지 않으니 술어가 설 수 없다 — 고치려면 표가 아니라 화면이 바뀌어야 한다(빨강 유지).
+- U4#11 ○ **데이터 상태(권한)**: `/device` 는 열리고 문구·머리줄 다 보이나 `view_only_-_anyang` 으로 표 행 0(P-98 과 같음 — 표가 「그대로면 빨강」이라 적은 그 자리).
+- U5#2 ○ **제품 결함 후보**: `admin`(gxseed_u5_sysop) 으로 `/roles` 에 12초 기다려도 표 행 0 · 「Add New Role」 없음 — P-98 은 15개였다. 같은 시각 `capture_screens` 도 U5 `/roles`·`/device`·`/survey-profile` 셋을 「문구 없음」으로 못 찍었다. runserver 는 `GET /api/roles/?page_size=1&current_page=1 200` 을 냈다(page_size=1). 인수 화면 셋의 표가 안 그려지는 뿌리 하나 — 다음 턴 U56/F 가 누른 뒤를 본다.
+
+**◐ 4**: U1#2(카메라 정상/이상 칸 없음 · 정본 표기) · U2#4(snapshot 200 jpeg + 주소는 섰으나 `img[src*=snapshot]` naturalWidth>0 이 0 — 데스크톱 상세는 사진을 `<img>` 로 안 그린다 · U3#3 모바일은 그린다) · U4#8(조합 검색 없음 · 정본 상한) · U5#15(`%` 없음 — 상한 미선언).

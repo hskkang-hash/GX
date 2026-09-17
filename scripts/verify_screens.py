@@ -144,7 +144,7 @@ def parse_when(value) -> datetime | None:
         return None
 
 
-def judge_entry(entry: dict, *, exists, run_log: dict, tolerance_min: int) -> list[str]:
+def judge_entry(entry: dict, *, exists, run_log: dict, tolerance_min: int, run_logs_all=None) -> list[str]:
     """화면 한 장을 판정한다."""
     label = entry.get("file") or entry.get("route") or "(이름 없음)"
     out: list[str] = []
@@ -180,14 +180,25 @@ def judge_entry(entry: dict, *, exists, run_log: dict, tolerance_min: int) -> li
     elif when is not None:
         step = str(entry.get("scenario") or "")
         ran = parse_when((run_log.get("steps") or {}).get(step))
-        if ran is None:
+        # ★ 2026-09-17 (턴 T · P-154/P-157) — 대장은 **합쳐 쓰고 줄지 않는다.** 같은 화면을 다른
+        #   씨앗 번호로 다시 찍으면 옛 항목(예: /dsm/events/204342)은 남고 합친 run_log 의 그 단계
+        #   시각은 이번 실행(231071)으로 덮인다 — 옛 항목이 「5분 넘게 벌어졌다」로 빨개지는데,
+        #   그 항목은 **자기 실행분**(P-157/runs/<stamp>/run_log.json)의 단계 시각과는 5분 안이다.
+        #   그래서 합친 로그에서 벌어지면 실행분들의 같은 단계 시각도 본다 — 어느 실행분과도 안
+        #   맞으면 그때 빨강이다. 실행분이 하나도 없으면 옛 판정 그대로다(면제가 아니다).
+        ran_runs = [parse_when((r.get("steps") or {}).get(step)) for r in (run_logs_all or [])]
+        ran_runs = [x for x in ran_runs if x is not None]
+        if ran is None and not ran_runs:
             # ★ 「E2E 중에 찍었다」가 진술로만 남는 자리다.
             out.append("%s: E2E 로그에 «%s» 단계의 시각이 없다 — "
                        "「시험 중에 찍었다」를 확인할 수 없다 (D-323)" % (rel, step))
-        elif abs(when - ran) > timedelta(minutes=tolerance_min):
-            out.append("%s: 캡처 %s 와 E2E 단계 %s 가 %d분 넘게 벌어졌다 — "
-                       "시험이 지나간 화면이 아니다"
-                       % (rel, when.isoformat(), ran.isoformat(), tolerance_min))
+        else:
+            cands = ([ran] if ran is not None else []) + ran_runs
+            if all(abs(when - x) > timedelta(minutes=tolerance_min) for x in cands):
+                out.append("%s: 캡처 %s 와 E2E 단계 %s 가 %d분 넘게 벌어졌다 — "
+                           "시험이 지나간 화면이 아니다 (실행분 %d개와도 안 맞는다)"
+                           % (rel, when.isoformat(), cands[0].isoformat(), tolerance_min,
+                              len(ran_runs)))
     return out
 
 
@@ -248,6 +259,14 @@ def self_test() -> int:
          any("확인할 수 없다" in x for x in p(good, run={"steps": {}}))),
         ("★ 출생표본 — 시각이 5분 넘게 벌어지면 잡는다",
          any("벌어졌다" in x for x in p(dict(good, captured_at="2026-09-08T11:40:00")))),
+        ("★ 턴 T — 합친 로그가 덮었어도 자기 실행분과 5분 안이면 잡지 않는다 (P-157)",
+         not any("벌어졌다" in x for x in judge_entry(
+             dict(good, captured_at="2026-09-08T11:40:00"), exists=lambda r: True, run_log=log,
+             tolerance_min=5, run_logs_all=[{"steps": {"E2E-1/8": "2026-09-08T11:41:00"}}]))),
+        ("★ 턴 T — 어느 실행분과도 안 맞으면 여전히 잡는다",
+         any("벌어졌다" in x for x in judge_entry(
+             dict(good, captured_at="2026-09-08T11:40:00"), exists=lambda r: True, run_log=log,
+             tolerance_min=5, run_logs_all=[{"steps": {"E2E-1/8": "2026-09-08T12:30:00"}}]))),
         ("★ 없는 파일을 적으면 잡는다",
          any("파일이 없다" in x for x in p(dict(good, file="E2E-1/OPERATOR/없다.png")))),
         ("메타 한 칸이 비면 잡는다",
@@ -332,13 +351,22 @@ def main() -> int:
         except ValueError:
             run_log = {}
 
-    print("[SCREENS] [입력] 인덱스 항목 %d장 · E2E 로그 %s · 허용 오차 ±%d분"
-          % (len(entries), "있음" if run_log else "없음", tolerance))
+    # P-157 실행분 — 합친 로그가 덮은 옛 단계 시각은 여기 남아 있다
+    run_logs_all: list = []
+    for rp in sorted((ROOT / "docs/agent/evidence/P-157/runs").glob("*/run_log.json")):
+        try:
+            run_logs_all.append(json.loads(rp.read_text(encoding="utf-8")))
+        except ValueError:
+            pass
+
+    print("[SCREENS] [입력] 인덱스 항목 %d장 · E2E 로그 %s · 실행분 %d개 · 허용 오차 ±%d분"
+          % (len(entries), "있음" if run_log else "없음", len(run_logs_all), tolerance))
 
     problems: list[str] = []
     for entry in entries:
         problems += judge_entry(entry, exists=lambda rel: (SCREENS / rel).is_file(),
-                                run_log=run_log, tolerance_min=tolerance)
+                                run_log=run_log, tolerance_min=tolerance,
+                                run_logs_all=run_logs_all)
 
     # ★ 인덱스에 없는 파일 — 어디서 왔는지 모르는 화면이 콘솔에 실리지 않게 한다.
     listed = {str(e.get("file") or "") for e in entries}

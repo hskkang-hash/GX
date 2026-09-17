@@ -27,7 +27,7 @@
 * **격리에서 7/7** — `python docs/agent/evidence/P-151/iso_guard.py` 가 `gx-shell` 의 환경 41개를 뜨고
   자격 **넷만** 금고(`cred3_20260915.env`)의 새 값으로 갈아 낀 컨테이너 `gx_e` 를 세운 뒤,
   그 안에서 `verify_prod_settings.py --no-delegate` → **`통과 7/7` · exit 0**.
-  ⑦ 줄이 `MinIO 접근/비밀 20·40자 · DB 비밀 32자 · 자리표 없음 | 자리표→거부 O · 5자→거부 O · 둘이 같음→거부 O` —
+  ⑦ 줄이 `MinIO 접근/비밀 20·40자 · DB 비밀 32자 · 자리표 없음 · 자리표→거부 O · 5자→거부 O · 둘이 같음→거부 O` —
   금고 증거(`evidence/P-138/vault_prepared_20260915.json`)의 길이와 같다(창 전 조건 ㉡ 충족).
 * **나쁜 값은 실제로 못 뜬다** — 같은 컨테이너에서 여덟 판을 띄웠다. 짧은 값 · 둘이 같은 값 · 자리표 · 짧은 DB 비밀
   네 가지가 **설정 기동**과 **`gunicorn --check-config`** 두 자리 모두에서 exit 1 · `[SEC-18]` 거부.
@@ -141,6 +141,36 @@ python scripts/verify_live_freshness.py --all; echo "EXIT=$?"
 [코드 grep: `common/wall_token.py:142` · `stream_monitors/services/clips.py:187` · `partner/utils/partner_utils.py:444` 모두 HMAC 서명]. 자료 손실 없음 · 재로그인만.
 
 **창에서 하지 않는 것**: P-137 앞단 재시도(peer 세 줄) 본 서버 적용 — 다음 턴(판정). 격리 수: `evidence/P-137/`.
+
+---
+
+## ★ 집행 기록 — 2026-09-17 16:54~17:05 (턴 T · 집행자 조율자 · 대표 「창 열어라」 16:5x) [실측]
+
+D-475 는 14:00 이었고 실제로는 대표의 한 줄이 16:5x 에 왔다 — **대표의 한 줄이 시각이다.** 그 뒤 ⓪~⑤ 를
+이 문서 그대로 했고 되돌리지 않았다.
+
+| 단계 | 결과 |
+|---|---|
+| ⓪ | `startedat.pre` 8줄 · 회수증 `gx_20260917_1654.dump` 74.8MB |
+| ① | env 42·42·42·41 vars · `*.json` 4 · `root.env.pre-window` |
+| ②-a | 큐 0 → 앱 셋 stop → `ALTER ROLE`(SCRAM) **DB role OK** |
+| ②-b | 뿌리 `.env` 치환 **2** → MinIO 재생성(`StartedAt 07:56:55Z`) · 망 다시 이음 · health **200** |
+| ②-c | `.new.env` 넷 — 치환 4·4·4·4 · 없어서 더함 0 · 추가 2(`GX_STORAGE_CAPACITY_GB=50` · `OPS_BACKUP_DIR=/backup`) |
+| ③ | 넷 재생성 · `nginx -t` OK · reload · front **200** |
+| ④ | `verify_prod_settings` **통과 7/7 · EXIT=0** — ⑦ `MinIO 접근/비밀 20·40자 · DB 비밀 32자 · 서명 키 103자 · 자리표 없음 · 자리표→거부 O · 5자→거부 O · 둘이 같음→거부 O` · ①~⑤ `선언 없음→거부 O` (㉠~㉣ 넷 다) |
+| ⑤ | 넷 running · 상한 50 · `/backup` 장치 91≠2112(마운트됨) · celery 1 node · `db_ping_ms 8.5 OK` · `object_store_alive True OK` · `storage_used_pct` **UNKNOWN → 0.0 OK** · front 200 · 컨테이너 **10/10** · `live_freshness --all` 4/5 FRESH(회색 1 = `gx-shell:runserver` — 재생성으로 그 프로세스가 사라진 것 · 다시 띄운 뒤 **5/5**) |
+
+**함정 셋 — 다음 집행자에게** (절차는 안 바꿨고, 부딪힌 자리만 적는다)
+1. `docker compose up -d --force-recreate minio` 가 `POSTGRES_PASSWORD 가 없다` 로 멈춘다 — compose 의 변수 치환은
+   **파일 전체**에 걸린다(`docker-compose.yml:570` 의 mailpit 함정과 같은 것). 뿌리 `.env` 를 고치지 않고
+   `POSTGRES_PASSWORD=interpolation-only-not-used` 를 그 명령 앞에 얹는다(postgres 는 뜨지 않으므로 아무 데도 안 쓰인다).
+2. `MSYS_NO_PATHCONV=1` 아래에서는 `--env-file /c/…` 가 **호스트 경로로 안 풀린다**(「cannot find the path」) —
+   `C:/GuardianX-vault/recreate/…` 처럼 Windows 모양으로 적는다. ③ 의 `R=` 이 그 자리다.
+3. ③ 은 `gx-shell` 을 새로 만들므로 **그 안에 pip 로 넣어 둔 것(playwright 1.62 · 브라우저 캐시 656MB · pywebpush)과
+   `/tmp` 의 SPA 서버 · runserver 가 사라진다.** 창 직전 `C:/GuardianX-vault/recreate/gx-shell-extras/` 에 복사해 두고
+   창 뒤 되넣었다(docker cp + pip install · 6분). 절차 변경이 아니라 보존이다.
+⚠ P-161(창 뒤 별건)로 앞단이 `resolve` 를 쓰게 되어 ③ 마지막의 `nginx -s reload` 는 이제 **필요 없다**(뒷단 새 IP 를
+  10초 안에 스스로 푼다 · 격리 실측 ⓒ). 그래도 줄은 지우지 않는다 — 해가 없고, 되돌렸을 때 그 줄이 필요하다.
 
 ---
 

@@ -1,0 +1,134 @@
+{
+  "measured_at": "2026-09-17T09:25:43Z",
+  "stamp": "20260917T092423",
+  "web": "http://localhost:3002",
+  "denominator": 48,
+  "two_column_rows": 22,
+  "no_canonical_rows_gray": 26,
+  "rows_attempted": 7,
+  "rows_measured": 7,
+  "green": 5,
+  "half": 1,
+  "red": 1,
+  "gray_measured_fail": 0,
+  "score_sum": 5.5,
+  "score_over_48": "5.5/48",
+  "sample": {
+    "snap_event": 4798,
+    "seed_a": 231075,
+    "seed_b": 231076,
+    "probe_camera": "GX-ONB-V-20260917T092423"
+  },
+  "logins": [
+    {
+      "persona": "U1",
+      "user": "gxseed_u1_operator",
+      "ok": true,
+      "url": "http://localhost:3002/dsm/queue",
+      "end_previous_session": true,
+      "login_posts": [
+        200,
+        200
+      ],
+      "profile_200": true,
+      "profile_endpoint": "/api/v1/user/get-user-detail",
+      "login_body_has_product_line": true,
+      "login_body_has_first_time": true,
+      "why": ""
+    }
+  ],
+  "rows": [
+    {
+      "row": "U1#1",
+      "route": "/login",
+      "url": "http://localhost:3002/dsm/queue",
+      "phrase_seen": true,
+      "predicate": true,
+      "verdict": "green",
+      "score": 1.0,
+      "cap_half": false,
+      "measured": true,
+      "evidence": "login POST [200, 200] · 프로필 200=True (/api/v1/user/get-user-detail — 정본은 auth/profile 이라 적었고 SPA 는 get-user-detail 을 부른다 · 기대식 오류) · 문장=True · 처음이세요?=True",
+      "measured_at": "2026-09-17T09:24:44Z"
+    },
+    {
+      "row": "U1#2",
+      "route": "/dsm/dashboard",
+      "url": "http://localhost:3002/dsm/dashboard",
+      "phrase_seen": true,
+      "predicate": true,
+      "verdict": "half",
+      "score": 0.5,
+      "cap_half": true,
+      "measured": true,
+      "evidence": "배지=['연계 대기'] · frame 200=True · frame.link=waiting · link-state 따로 호출 [] (기대식 오류 — 화면은 frame 의 link 를 그린다) · ◐ 상한(카메라 정상/이상 칸 없음 — 정본 표기)",
+      "measured_at": "2026-09-17T09:24:56Z"
+    },
+    {
+      "row": "U1#3",
+      "route": "/dsm/cameras/grid",
+      "url": "http://localhost:3002/dsm/cameras/grid",
+      "phrase_seen": true,
+      "predicate": true,
+      "verdict": "green",
+      "score": 1.0,
+      "cap_half": false,
+      "measured": true,
+      "evidence": "pulse 200=True · 「응답 없음」/「마지막 응답」 6회 · 격자=True 순회=True",
+      "measured_at": "2026-09-17T09:25:04Z"
+    },
+    {
+      "row": "U1#8",
+      "route": "/dsm/events",
+      "url": "http://localhost:3002/dsm/events",
+      "phrase_seen": true,
+      "predicate": true,
+      "verdict": "green",
+      "score": 1.0,
+      "cap_half": false,
+      "measured": true,
+      "evidence": "단추=['미처리 보기', '지난 12시간 보기', '내 담당 보기', '시스템 보기'] · GET events 200=True · 처리 단계 값 3칸 ['미처리']",
+      "measured_at": "2026-09-17T09:25:11Z"
+    },
+    {
+      "row": "U1#9",
+      "route": "/dsm/events/:id",
+      "url": "http://localhost:3002/dsm/events/4798",
+      "phrase_seen": true,
+      "predicate": true,
+      "verdict": "green",
+      "score": 1.0,
+      "cap_half": false,
+      "measured": true,
+      "evidence": "배지=['심각'] · GET events/4798 200=True",
+      "measured_at": "2026-09-17T09:25:19Z"
+    },
+    {
+      "row": "U1#11",
+      "route": "/dsm/queue",
+      "url": "http://localhost:3002/dsm/queue",
+      "phrase_seen": false,
+      "predicate": false,
+      "verdict": "red",
+      "score": 0.0,
+      "cap_half": false,
+      "measured": true,
+      "evidence": "큐 화면에 「실제로 확인 · 접수」 이 보이지 않는다 — 보이는 단추 ['종결하기'] · 초점 사건이 미처리가 아니면 이 단추는 없다(데이터 상태) · 본문 '지금 처리할 것\\n무슨 일 있었나\\n카메라 격자\\n인계 메모\\n처음이세요\\nGuardianX는 대응 시간을 잽니다.\\n지금 처리할 것 — 가장 급한 하나\\n?\\n단축키\\n소리 켜기\\n갱신 09:25'",
+      "measured_at": "2026-09-17T09:25:27Z"
+    },
+    {
+      "row": "U1#19",
+      "route": "/dsm/home → /handover",
+      "url": "http://localhost:3002/handover",
+      "phrase_seen": true,
+      "predicate": true,
+      "verdict": "green",
+      "score": 1.0,
+      "cap_half": false,
+      "measured": true,
+      "evidence": "눌렀다=True · 도달=True (http://localhost:3002/handover) · 본문 249자 (P-98 68자 그대로면 빨강) · 앞부분 '지금 처리할 것\\n무슨 일 있었나\\n카메라 격자\\n인계 메모\\n처음이세요\\n인계 메모\\n아직 인계 메모가 없습니다.\\n이 자리에 지난 교대가 남긴 말이 뜹니'",
+      "measured_at": "2026-09-17T09:25:43Z"
+    }
+  ],
+  "rule": "초록 = 문구 보임 + 셋째 술어 섬 · 정본이 ◐ 상한이라 적은 행은 반 · 술어 거짓 = 빨강 · 못 잰 행 = 회색(초록이 아니다) · 정본 없음 26행은 회색 그대로"
+}

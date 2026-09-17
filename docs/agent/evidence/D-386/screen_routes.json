@@ -1,8 +1,8 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
-  "captured_at": "2026-09-17T08:31:03",
-  "screens_total": 34,
-  "routes_total": 30,
+  "captured_at": "2026-09-17T15:36:19",
+  "screens_total": 35,
+  "routes_total": 32,
   "screens": {
     "/login": [
       {
@@ -67,6 +67,11 @@
       {
         "method": "GET",
         "path": "/api/dsm/events/summary?hours=12",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/upper-report/flags?event_ids=231071,231072",
         "status": 200
       },
       {
@@ -150,6 +155,11 @@
       },
       {
         "method": "GET",
+        "path": "/api/dsm/events/upper-report/flags?event_ids=231071,231072",
+        "status": 200
+      },
+      {
+        "method": "GET",
         "path": "/api/dsm/events?limit=50&response_state=occurred",
         "status": 200
       },
@@ -187,7 +197,12 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events?limit=50&since=2026-09-16T13:26:55.303Z&until=2026-09-17T01:26:55.303Z",
+        "path": "/api/dsm/events/upper-report/flags?event_ids=231071,231072",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events?limit=50&since=2026-09-16T20:32:16.645Z&until=2026-09-17T08:32:16.645Z",
         "status": 200
       },
       {
@@ -220,6 +235,11 @@
       {
         "method": "GET",
         "path": "/api/dsm/events/summary?hours=12",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/upper-report/flags?event_ids=4798,4799,4803,4804,4808,4809,4813,4814,4818,4819",
         "status": 200
       },
       {
@@ -266,6 +286,11 @@
       },
       {
         "method": "GET",
+        "path": "/api/dsm/events/upper-report/flags?event_ids=4818,4819",
+        "status": 200
+      },
+      {
+        "method": "GET",
         "path": "/api/dsm/events?limit=50&event_type=camera_down,storage_high",
         "status": 200
       },
@@ -308,7 +333,7 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/queue/field-signals?event_ids=4805,4800,204340,4819,4818,4810,204341,4815,204343,204342",
+        "path": "/api/dsm/queue/field-signals?event_ids=4805,4800,4819,4818,4810,4815,231072,231071",
         "status": 200
       },
       {
@@ -501,6 +526,11 @@
       {
         "method": "GET",
         "path": "/api/dsm/events?limit=200",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/me/handled-events?limit=50",
         "status": 200
       },
       {
@@ -1108,6 +1138,90 @@
         "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
         "status": 200
       }
+    ],
+    "/dsm/events/231071": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/deliveries?event_id=231071",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/231071",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/231071/timeline",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/m/events/231071": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/231071",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/231071/clip",
+        "status": 404
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/231071/field-replies",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events?stream_monitor_id=3946&since=2026-09-10T08:34:08.328Z&limit=20",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
     ]
   },
   "api_notes": {
@@ -1116,10 +1230,12 @@
     "/device": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/roles": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/m/events/173337": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/events/204342": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/m/events/204342": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/login": "로그인 실패 갈래에서 **서버에 실제로 나간 것만** 적었다 — 주입(L2~L5)한 응답은 서버에 닿지 않았으므로 세지 않는다",
     "/dsm/dashboard": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/dsm/events": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/dsm/events/204342": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/events/231071": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/dsm/events?preset=unhandled": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/dsm/events?preset=recent": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/dsm/events?preset=mine": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
@@ -1131,7 +1247,7 @@
     "/dsm/cameras/address": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/start?role=OPERATOR": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/m/inbox": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/m/events/204342": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/m/events/231071": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/surveillance-dashboard": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/media-data": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/flight-log-analysis": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
@@ -1228,6 +1344,7 @@
         "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
         "GET /api/config-management/list-optimized 200",
         "GET /api/dsm/events/summary?hours=12 200",
+        "GET /api/dsm/events/upper-report/flags?event_ids=231071,231072 200",
         "GET /api/dsm/events?limit=50&response_state=occurred 200",
         "GET /api/menu/menus?page_size=10000 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
@@ -1263,6 +1380,7 @@
         "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
         "GET /api/config-management/list-optimized 200",
         "GET /api/dsm/events/summary?hours=12 200",
+        "GET /api/dsm/events/upper-report/flags?event_ids=231071,231072 200",
         "GET /api/dsm/events?limit=50&response_state=occurred 200",
         "GET /api/menu/menus?page_size=10000 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
@@ -1280,7 +1398,8 @@
         "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
         "GET /api/config-management/list-optimized 200",
         "GET /api/dsm/events/summary?hours=12 200",
-        "GET /api/dsm/events?limit=50&since=2026-09-16T13:26:55.303Z&until=2026-09-17T01:26:55.303Z 200",
+        "GET /api/dsm/events/upper-report/flags?event_ids=231071,231072 200",
+        "GET /api/dsm/events?limit=50&since=2026-09-16T20:32:16.645Z&until=2026-09-17T08:32:16.645Z 200",
         "GET /api/menu/menus?page_size=10000 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
@@ -1297,6 +1416,7 @@
         "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
         "GET /api/config-management/list-optimized 200",
         "GET /api/dsm/events/summary?hours=12 200",
+        "GET /api/dsm/events/upper-report/flags?event_ids=4798,4799,4803,4804,4808,4809,4813,4814,4818,4819 200",
         "GET /api/dsm/events?limit=50&mine=true 200",
         "GET /api/menu/menus?page_size=10000 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
@@ -1315,6 +1435,7 @@
         "GET /api/config-management/list-optimized 200",
         "GET /api/dsm/dashboard/link-state 200",
         "GET /api/dsm/events/summary?hours=12 200",
+        "GET /api/dsm/events/upper-report/flags?event_ids=4818,4819 200",
         "GET /api/dsm/events?limit=50&event_type=camera_down,storage_high 200",
         "GET /api/menu/menus?page_size=10000 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
@@ -1323,7 +1444,7 @@
     },
     {
       "file": "SCREENS-1/fire_user/dsm_events_id_verdict_panel.png",
-      "route": "/dsm/events/204342",
+      "route": "/dsm/events/231071",
       "persona": "U1",
       "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
       "user_role": "fire_user",
@@ -1331,9 +1452,9 @@
       "calls": [
         "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
         "GET /api/config-management/list-optimized 200",
-        "GET /api/dsm/deliveries?event_id=204342 200",
-        "GET /api/dsm/events/204342 200",
-        "GET /api/dsm/events/204342/timeline 200",
+        "GET /api/dsm/deliveries?event_id=231071 200",
+        "GET /api/dsm/events/231071 200",
+        "GET /api/dsm/events/231071/timeline 200",
         "GET /api/menu/menus?page_size=10000 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
@@ -1351,7 +1472,7 @@
         "GET /api/config-management/list-optimized 200",
         "GET /api/dsm/events/4805/snapshot 200",
         "GET /api/dsm/events/queue?limit=200 200",
-        "GET /api/dsm/queue/field-signals?event_ids=4805,4800,204340,4819,4818,4810,204341,4815,204343,204342 200",
+        "GET /api/dsm/queue/field-signals?event_ids=4805,4800,4819,4818,4810,4815,231072,231071 200",
         "GET /api/menu/menus?page_size=10000 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
@@ -1448,13 +1569,14 @@
         "GET /api/config-management/list-optimized 200",
         "GET /api/dsm/deliveries?limit=50 200",
         "GET /api/dsm/events?limit=200 200",
+        "GET /api/dsm/me/handled-events?limit=50 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
       ]
     },
     {
       "file": "SCREENS-1/fire_user/m_events_id_m3_field_reply.png",
-      "route": "/m/events/204342",
+      "route": "/m/events/231071",
       "persona": "U3",
       "viewed_by": "U3 · gxseed_u1_operator · fire_user · 390px",
       "user_role": "fire_user",
@@ -1462,9 +1584,10 @@
       "calls": [
         "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
         "GET /api/config-management/list-optimized 200",
-        "GET /api/dsm/events/204342 200",
-        "GET /api/dsm/events/204342/clip 404",
-        "GET /api/dsm/events/204342/field-replies 200",
+        "GET /api/dsm/events/231071 200",
+        "GET /api/dsm/events/231071/clip 404",
+        "GET /api/dsm/events/231071/field-replies 200",
+        "GET /api/dsm/events?stream_monitor_id=3946&since=2026-09-10T08:34:08.328Z&limit=20 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
       ]
@@ -1693,6 +1816,24 @@
         "GET /api/dsm/deliveries?event_id=204342 200",
         "GET /api/dsm/events/204342 200",
         "GET /api/dsm/events/204342/timeline 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/fire_user/dsm_events_231071.png",
+      "route": "/dsm/events/231071",
+      "persona": "U1",
+      "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
+      "user_role": "fire_user",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/deliveries?event_id=231071 200",
+        "GET /api/dsm/events/231071 200",
+        "GET /api/dsm/events/231071/timeline 200",
         "GET /api/menu/menus?page_size=10000 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"

@@ -423,10 +423,16 @@ areas:
       #   이렇게 두면 두 게이트의 색과 두 절의 상태가 **한 짝씩 맞는다** — 그것이 P-85 다.
       - id: SEC-18a
         title: 운영 프로필이 **선언 없이는 뜨지 않는다** — 열린 기본값으로 상용에 서지 못한다
-        status: 잠김
+        status: 구현
         gate: scripts/verify_prod_settings.py
         proof: scripts/verify_prod_settings.py
-        hand: out
+        note_closed: |
+          ★ **닫혔다 [실측 2026-09-17 17:03 · 턴 T · 재생성 창 ④ · D-485]** — 창 안에서 자격 3 과 가드 한 벌을
+          **함께** 내렸고, 그 뒤 `python scripts/verify_prod_settings.py` → **통과 7/7 · EXIT=0**:
+          ⑦ `MinIO 접근/비밀 20·40자 · DB 비밀 32자 · 서명 키 103자 · 자리표 없음 · 자리표→거부 O · 5자→거부 O ·
+          둘이 같음→거부 O` · ①~⑤ `선언 없음→거부 O`. 닫는 조건 ㉠~㉣ 넷 다(runbook ④). 아래 `hand: out` 이하는
+          닫히기 전의 기록이라 지우지 않는다 — 「왜 창에서만 닫히는가」가 거기 있다.
+        hand_was: out
         hand_why: |
           남은 한 수(⑦ 자격의 모양)는 **컨테이너 재생성 창**에서만 닫힌다 — 그 창은 대표 승인이다.
           자격은 `.env` 가 아니라 **컨테이너 생성 시각에 굳은 환경**에 들어 있고(실측), 코드로는

@@ -1,0 +1,63 @@
+{
+  "measured_at": "2026-09-17T17:14:51",
+  "spa": "http://localhost:3002",
+  "user": "gxseed_u1_operator",
+  "calls": [
+    {
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "/api/v1/auth/login",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "/api/dsm/deliveries?limit=<redacted>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "/api/dsm/push-subscriptions",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "/api/dsm/push-subscriptions/vapid-key",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "/api/dsm/push-subscriptions?endpoint=<redacted>&p256dh=<redacted>&auth_secret=<redacted>&label=<redacted>",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "url": "/api/dsm/push-subscriptions",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "/api/dsm/push-subscriptions/test-send?",
+      "status": 200
+    }
+  ],
+  "after_login_url": "http://localhost:3002/m/inbox",
+  "subscribe_button_found": true,
+  "browser_subscription": {
+    "present": true,
+    "endpoint_host": "fcm.googleapis.com",
+    "endpoint_sha12": "dc716379fa14"
+  },
+  "test_button_found": true,
+  "push_test_outcome_text": "보냄 — 기기 1대 중 1대 · 발송 이력 #481 (webpush)\nWin32 · 2026. 9. 17. — 보냄 · 이력 #481",
+  "notifications_shown": [
+    {
+      "title": "[훈련] GuardianX 알림 시험",
+      "body": "이 알림은 시험입니다 — 출동하지 마십시오."
+    }
+  ],
+  "redaction": "쿼리 문자열의 값은 전부 <redacted> — 구독 endpoint·p256dh·auth 는 기기 비밀이다(P-135)"
+}

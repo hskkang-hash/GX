@@ -916,6 +916,19 @@ def admin_token():
     if len(acc) == 2:
         try:
             _ADMIN[0] = login_api(acc[0], acc[1])
+        except U.HTTPError as e:
+            # ★ [실측 2026-09-17 · 턴 T · V] SEC-21 율제한(IP 당 로그인 5회/분)이 이번 턴 생겼다.
+            #   U5·U6 의 화면 로그인(각 2회) + 표본 고르기 1회 뒤의 여섯째 로그인이 **429** 를 받아
+            #   U6#1 이 「관리자 자격으로 들어가지 못했다」 회색이 됐다 — 제품이 아니라 이 도구의 박자다.
+            #   429 면 61초 기다려 **한 번만** 다시 얻는다. 다른 오류는 그대로 None(회색).
+            _ADMIN[0] = None
+            if e.code == 429:
+                print("[P-118] 관리자 로그인 429(율제한) — 61초 뒤 한 번 다시", file=sys.stderr)
+                time.sleep(61)
+                try:
+                    _ADMIN[0] = login_api(acc[0], acc[1])
+                except Exception:
+                    _ADMIN[0] = None
         except Exception:
             _ADMIN[0] = None
     return _ADMIN[0]
