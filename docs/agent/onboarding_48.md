@@ -842,3 +842,127 @@ CPO 결정: 역할이 0개인 계정이 볼 수 있는 화면은 **정확히 하
 > 늘어난 것은 **48행 밖에 있던 사람 하나가 처음으로 표에 적혔다**는 사실이다.
 > 그 사람은 지금까지 표에 없었고, 없는 동안 **실제 자료 22건을 보고 있었다**
 > (`docs/agent/evidence/P-105/frontend/before_roleless_api.json`).
+
+---
+
+## ★ 2026-09-17 턴 T · P-159 ① — **48행에 「정본 경로 · 누를 문구 · 셋째 술어」 세 칸을 채웠다** (차선 Q)
+
+**이 절은 수를 내지 않는다.** 재는 것은 V 단독 세션의 일이고(차선 금지 규약 — 차선은 브라우저를 재지 않는다),
+여기서 하는 일은 V 가 **무엇을 누르고 무엇을 보면 초록인지**를 행마다 적어 두는 것이다. 회색 넷 턴의 원인이
+「잴 사람이 없었다」만이 아니라 **「무엇을 누를지 적힌 데가 없었다」**였으므로, 먼저 적는다.
+
+**술어 셋 (이 표의 칸 셋)** [실측 · 소스 2026-09-17 12:3x]
+- **정본 경로** — SPA 라우트. 실재 근거는 넷뿐이다: `frontend/src/features/dsm/routes.ts`(`dsm2Routes`) ·
+  `routes.u24.ts`(`dsmU24Routes` — 조율자가 `routes.ts` 에 병합 완료 · `cameraTuning` 하나) ·
+  `frontend/src/features/mobile/routes.ts`(`mobileRoutes`) · `frontend/src/App.tsx` 등록 줄. 인수 화면(`/login` ·
+  `/device` · `/handover` · `/report-template` · `/multi-stream-monitor` · `/users` · `/roles`)은 dj-core 의
+  `CustomRouters`/`services/API.ts` `CustomRoutes` 를 `App.tsx` 가 등록한 것이다 — 「인수」라고 적는다.
+  **화면이 없으면 「정본 없음」** — 문(API)만 있는 행은 문을 괄호에 적되 경로 칸은 정본 없음이다(착시 ⑨ 함수는 문이 아니다).
+- **누를 문구** — 정본은 둘뿐이다: `docs/design/GX-COPY_v1.md` 와 `frontend/src/features/dsm/copy.ts`(+ 같은 사전의
+  코드 반쪽 `severity.ts`). **그 두 파일에 글자 그대로 있는 문자열만** 적는다. 화면 파일 안에만 사는 문구(`HEADLINE` 상수 ·
+  `routes.ts` 의 `title`)는 **정본이 아니다** — 그런 행은 「정본 없음」이고, 참고로 그 로컬 문구를 괄호에 적는다(짐작이 아니라
+  소스 사실). 누르는 행동이 없는 행(보기만 하는 행)은 화면에 떠야 할 **단언 문구**를 적는다.
+- **셋째 술어** — V 가 누른 뒤 무엇을 보면 초록인가. 셋 중 하나로 적는다: **[서버 기록]**(행이 늘거나 값이 바뀜) ·
+  **[화면 상태]**(문구·요소가 뜸) · **[API 호출]**(브라우저가 그 URL 을 실제로 부름 · 상태코드). 하나만으로 초록이 되지
+  않는 행은 둘을 `+` 로 잇는다.
+
+⚠ 문구 칸의 문자열은 **정본에 있고 + 어느 화면 파일이 실제로 그리는지** 둘 다 grep 으로 확인했다(2026-09-17 12:4x · 21문구 중 렌더 0 이던 둘 — `먼저 표로 보기`·오탐 사유 3택 — 은 해당 칸에서 뺐거나 경고를 달았다). 로그인 문장은 `copy.ts` 의 `PRODUCT_LINE` 이 아니라 같은 글자의 `KICK_SENTENCE` 가 그린다.
+⚠ **「정본 없음」은 회색이다 — 초록도 빨강도 아니다.** 이 표는 상태 열을 움직이지 않는다(위 표들의 값은 그대로다).
+⚠ U6 여덟 행은 기계 사용자다 — 문구 칸이 애초에 없다. 「정본 없음(기계)」으로 적고 **따로 센다**.
+⚠ 이번 턴 다른 차선이 짓는 중인 자리(U24 `Stats`·`AuditLog`·상급 보고 · U56 `Integrations`·`health`·`X-GX-Schema` · U3 M4 실자료)는
+**HEAD 에 없으므로 정본 없음**이다 — 병합 뒤 그 차선이 이 칸을 채운다(아래 등록 요청 참조).
+
+**두 칸 채운 행 22/48 · 정본 없음 26/48** [실측 · 파일의 행을 세어 냈다 — 분모 48 = 표 6 × 8행] — 정본 없음 26 의 내역: **U6 기계 8**(문구 칸이 없는 행 — 그중 #14·#15 는 경로도 없음) · 사람 행 중 경로는 있으나 **문구만 사전 밖 10** · 사람 행 중 **경로 자체가 없음 8**. (8+10+8 = 26) 두 칸 채운 22행이 V 가 셋째 술어로 잴 행이다.
+
+### U1 · 관제요원 (1440px · `gxseed_u1_operator` · `fire_user`)
+
+| # | flow | 정본 경로 | 누를 문구 (GX-COPY 정본) | 셋째 술어 (V 가 볼 것) |
+|---|---|---|---|---|
+| 1 | 교대 시작 — 로그인 | `/login` (인수 · `App.tsx:656` `CustomRouters.login`) | `GuardianX는 대응 시간을 잽니다.` (GX-COPY 턴 E · `copy.ts:515` `PRODUCT_LINE` — 실제 그리는 줄은 `App.tsx:389` `KICK_SENTENCE`(`constants/kick.ts:16` · 같은 글자) · `PRODUCT_LINE` 자체는 부르는 곳 0 [grep]) · 링크 `처음이세요?` (`copy.ts:386` · `App.tsx:391`) — 로그인 단추 자체는 dj-core 영문(정본 밖) | [API 호출] `POST /api/v1/auth/login` 200 → `GET /api/v1/auth/profile` 200 + [화면 상태] 로그인 화면에 위 문장 1개 |
+| 2 | 전체 상황판 한눈에 | `/dsm/dashboard` (`services/API.ts:23` `CustomRoutes.dsm.dashboard` · `App.tsx:692`) | 연계 배지 `연계 정상` / `연계 대기` / `연계 끊김` (`copy.ts:24-30` · GX-COPY §3) | [API 호출] `GET /api/dsm/dashboard/frame` 200 + `GET /api/dsm/dashboard/link-state` 200 + [화면 상태] 배지 셋 중 하나 ≥ 1 — ⚠ 카메라 정상/이상 칸은 여전히 없다(◐ 유지 근거) |
+| 3 | 죽은 카메라 확인 | `/dsm/cameras/grid` (`dsm/routes.ts` `cameraGrid` · `App.tsx:710`) | `카메라 격자` · `자동 순회` / `순회 멈춤` · `응답 없음` (`copy.ts:443-446` · GX-COPY 턴 D) | [API 호출] `GET /api/dsm/cameras/pulse` 200 + [화면 상태] 타일에 `응답 없음` 또는 `마지막 응답 N분 전` ≥ 1 (개발 DB 는 무응답 카메라가 다수) |
+| 4 | 실시간 스트림 열기 | `/multi-stream-monitor` (인수 · `services/API.ts:417` · `App.tsx:1143`) | **정본 없음** (화면 단언 글자가 영문 `Participants` · `InheritedScreen` 8화면 밖) | [화면 상태] 라우트 도달 + 스트림 요소 ≥ 1 — 문구 정본이 없으므로 이 행은 회색 |
+| 8 | 이벤트 목록 확인 | `/dsm/events` (`services/API.ts:24` · `App.tsx:695`) | 단추 `미처리 보기` / `지난 12시간 보기` / `내 담당 보기` / `시스템 보기` (`copy.ts:519-522` · GX-COPY 턴 E) | [API 호출] `GET /api/dsm/events` 200 + [화면 상태] 열 `처리 단계` 값이 `미처리`·`접수`·`조치 중`·`종결` 중(GX-COPY §3) |
+| 9 | 이벤트 상세 열기 | `/dsm/events/:id` (`services/API.ts:25` · `App.tsx:742`) | 등급 배지 `심각` / `경계` / `주의` (`severity.ts:23-25` · GX-COPY §3) | [API 호출] `GET /api/dsm/events/{id}` 200 (목록에서 고른 값이 아니라 서버 재조회) + [화면 상태] 등급 배지 1 |
+| 11 | 진위 판단 — 진짜인가 오탐인가 | `/dsm/queue` (`dsm/routes.ts` `focusQueue` · `App.tsx:703`) · `/dsm/events/:id` | `실제로 확인 · 접수` (`copy.ts:273` · GX-COPY 턴 Q U1) / `오탐으로 판정` (`copy.ts:276`) — ⚠ 사유 3택(`copy.ts:267-269` `REJECT_REASONS`)은 사전엔 있으나 **부르는 화면 0**[grep] — 단언에 쓰지 말 것 | [API 호출] `POST /api/dsm/events/{id}/review-and-acknowledge` 또는 `…/review` 200 + [서버 기록] 재조회 `verdict` 채워짐 · 배지 `실제`/`오탐` (`severity.ts:89-90`) |
+| 19 | 교대 인계 메모 | `/handover` (인수 · `services/API.ts:462` · `App.tsx:1214`) — 여는 카드는 `/dsm/home` (`Home.tsx:373` `CustomRoutes.handover.path`) | `인계 메모` · `인계 읽기` · `인계 메모 쓰기` · `아직 인계 메모가 없습니다.` (`copy.ts:401-407` `HANDOVER_COPY` — **홈 카드**의 말이다) — ⚠ `/handover` 화면 안의 글자는 dj-core 영문(사전 밖) | [화면 상태] 홈 카드 `인계 메모` 1 → 누르면 `/handover` 도달 + 본문 > 0자 (`fire_user` 로 68자였다 · P-98 — 그대로면 빨강) |
+
+### U2 · 관제팀장 (1440px · `gxseed_u2_manager` · `fire_admin`)
+
+| # | flow | 정본 경로 | 누를 문구 (GX-COPY 정본) | 셋째 술어 (V 가 볼 것) |
+|---|---|---|---|---|
+| 1 | 밤사이 요약 보기 | `/dsm/events` (`services/API.ts:24` · `App.tsx:695`) | `지난 12시간 보기` (`copy.ts:520`) · 분모 0 이면 `아직 판정한 이벤트가 없습니다` (GX-COPY §2) | [API 호출] `GET /api/dsm/events/summary?hours=12` 200 + [화면 상태] 요약 칸에 수치 또는 위 문장 — `0%` 가 뜨면 빨강 |
+| 2 | 미처리 이벤트 확인 | `/dsm/events?preset=unhandled` (같은 라우트 · 질의만) | `미처리 보기` (`copy.ts:519`) | [API 호출] 브라우저가 `GET /api/dsm/events?limit=50&response_state=occurred` 를 부름(서버가 거른다 — `rows.filter` 0줄) + [화면 상태] `처리 단계` 열 전부 `미처리` |
+| 3 | 이벤트 등급 재판정 | **정본 없음** (등급을 다시 매기는 화면 칸 없음 · 문 `POST /api/dsm/events/{id}/review` 는 진위 축) | **정본 없음** | (회색) 재판정 칸이 생기면 [서버 기록] `severity` 변경 + 감사 행 |
+| 4 | 심각 이벤트 상황 판단 | `/dsm/events/:id` (`App.tsx:742`) | 등급 배지 `심각` (`severity.ts:23` · GX-COPY §3 「빨강은 이 등급 전용」) | [API 호출] `GET /api/dsm/events/{id}/snapshot` 200 `image/jpeg` + [화면 상태] DOM `<img>` ≥ 1 (P-162 와 같은 자리) · 주소 칸 비어 있지 않음 — 둘 중 하나라도 빠지면 ◐ |
+| 6 | 상황보고서 생성 | `/report-template` (인수 · `services/API.ts:377` · `App.tsx:1107`) | `보고서 서식` (GX-COPY 2026-09-05 표 「여덟 화면의 우리말 이름」) · 머리줄 `관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.` (`copy.ts:504` · GX-COPY) | [API 호출] `GET /api/dsm/reports/templates` 200 + [화면 상태] 표 행 ≥ 1 — `fire_admin` 으로 행 0 · 열 1 이었다(P-98 · 그대로면 ◐) |
+| 9 | 요원별 처리 현황 | `/dsm/team-status` (`dsm/routes.ts` `teamStatus` · `App.tsx:727`) | **정본 없음** (로컬: `routes.ts` title `요원별 현황` · `TeamStatus.tsx:217` `내가 판정한 사건 보기` — 사전 미등재) | [API 호출] `GET /api/dsm/stats/by-reviewer` 200 + [화면 상태] 표 행 ≥ 1 (`요원` 열) |
+| 16 | 알림 규칙 확인 | `/dsm/notify` (`dsm/routes.ts` `notifySettings` · `App.tsx:735`) | **정본 없음** (로컬: `NotifySettings.tsx:56` `HEADLINE` `알림 받는 사람·채널` · 카드 `규칙 — 등급 × 역할 × 채널` — 사전 미등재) | [API 호출] `GET /api/dsm/settings/notify-rules/list` 200 + [화면 상태] 규칙 표 행 ≥ 1 (규칙 0건이면 「없다」가 떠야 하고 빈 표는 빨강) |
+| 19 | 장애 판단 — 시스템인가 현장인가 | `/dsm/events?preset=system` (같은 라우트 · 질의만) | `시스템 보기` (`copy.ts:522`) | [API 호출] `GET /api/dsm/events?event_type=camera_down,storage_high` 200 + [화면 상태] 유형 열이 그 둘뿐 |
+
+### U3 · 이동 중 (390×844 · `gxseed_u1_operator` · `fire_user`)
+
+| # | flow | 정본 경로 | 누를 문구 (GX-COPY 정본) | 셋째 술어 (V 가 볼 것) |
+|---|---|---|---|---|
+| 1 | 알림 수신 | `/m/inbox` (`mobile/routes.ts` `inbox` · `App.tsx:749`) — 발송은 `/dsm/events/:id` 의 「알림 보내기」 | `알림 보내기` (GX-COPY §2 「규칙대로 발송 → 알림 보내기」) · 결과 문장 `알림 N건 발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.` (GX-COPY 턴 Q 조율자) — ⚠ 받은함 머리글 `내게 온 이벤트` 는 로컬(`MobileInbox.tsx:65`) | [서버 기록] `POST /api/dsm/events/{id}/notify` 200 → `GET /api/dsm/deliveries?event_id={id}` `total` +N + [화면 상태] `/m/inbox` 에 그 사건 카드 1 |
+| 2 | 위치 확인 — 어디로 가나 | `/m/events/:id` (`mobile/routes.ts` `eventDetail` · `App.tsx:751`) | `지도에서 보기` (GX-COPY 2026-09-15 턴 Q U3 표 · `MobileEventDetail.tsx` `MAP_LINK_LABEL`) | [화면 상태] 카드 `어디로 가나` 에 주소 문자열 + 단추 `지도에서 보기` 1 — 주소 미입력 사건이면 단추가 없어야 하고 그때는 데이터 빨강(화면 아님) |
+| 3 | 상황 사진 1장 보기 | `/m/events/:id` | **정본 없음** (성공 자리의 문구가 사전에 없다 — 실패 자리만 `사진을 불러오지 못했습니다 · 다시 시도` GX-COPY §2) | [API 호출] `GET /api/dsm/events/{id}/snapshot` 200 `image/jpeg` + [화면 상태] DOM `<img>` ≥ 1 (턴 S 빨강 · P-162 U3 첫 일) |
+| 7 | 현장 도착 보고 | `/m/events/:id` 카드 `현장 조치` | 전이 단추 `접수하기` / `조치 시작` / `종결하기` (`severity.ts:143-145` `ADVANCE_LABEL` — 사전의 코드 반쪽 · GX-COPY 본문엔 상태 낱말 `접수`·`조치 중`·`종결` §3 만) · 누른 뒤 상태 표시 `접수`/`조치 중`/`종결` (`severity.ts:124` · GX-COPY §3) — 단추는 서버 `allowed_next` 만 그린다 | [서버 기록] `POST /api/dsm/events/{id}/response` 200 → 재조회 `response_state` 전이 + 감사 행 1 |
+| 9 | 현장 상황 한 줄 보고 | `/m/events/:id` | `현장 회신 — 본 것을 한 줄로` · `회신 보내기` (`copy.ts:396-397` · GX-COPY 2026-09-05) | [서버 기록] `POST /api/dsm/events/{id}/field-reply` 200 → `GET …/field-replies` `total` +1 |
+| 14 | 해당 카메라 모바일 실시간 | **정본 없음** (계약 11조 설계 잠금) | **정본 없음** | (회색 · 잠금 — 재지 않는다) |
+| 16 | 근무 외 알림 차단 | `/m/settings` (`mobile/routes.ts` `settings` · `App.tsx:756` · 턴 S 골격) | **정본 없음** (로컬: `MobileSettings.tsx:63` `내 알림 설정` · 카드 `언제는 안 받나` — 사전 미등재 · M4 실자료는 이번 턴 U3) | [서버 기록] `PUT/POST /api/dsm/me/notify-prefs` 200 → 재조회에 차단 시간대 + 훈련 채널 발송 0 실측(P-164 U3) |
+| 19 | 내가 처리한 이벤트 목록 | `/m/inbox` | **정본 없음** (로컬 `내게 온 이벤트` · 「내 것」을 가르는 단추 문구 없음) | [API 호출] 브라우저가 `GET /api/dsm/deliveries?…&mine=true` 를 부름 — 턴 I 실측은 화면이 `mine` 을 안 불렀다(그대로면 ◐) |
+
+### U4 · 재난안전과 담당 공무원 (1440px · `gxseed_u4_official` · `view_only_-_anyang`)
+
+| # | flow | 정본 경로 | 누를 문구 (GX-COPY 정본) | 셋째 술어 (V 가 볼 것) |
+|---|---|---|---|---|
+| 1 | 주간 상황 요약 | **정본 없음** (프리셋 넷에 7일이 없다 — 서버는 `summary?hours=168` 을 받는다 · 착시 ⑨) | **정본 없음** | (회색) 7일 단추가 생기면 [API 호출] `summary?hours=168` 200 |
+| 5 | 월간 보고서 자동 생성 | **정본 없음** (자동 생성 일정 없음 · `/report-template` 은 서식 화면) | **정본 없음** | (회색) |
+| 7 | 보고서 다운로드 | **정본 없음** (서버 문 `GET /api/dsm/events/{id}/report.pdf` 하나 · 누를 단추가 화면에 없다 — `click_completes` U4#7 note 와 같다) | **정본 없음** | (회색) 단추가 생기면 [API 호출] `report.pdf` 200 `application/pdf` |
+| 8 | 특정 사건 이력 조회 | `/dsm/events` (기간 필터만) | `지난 12시간 보기` (`copy.ts:520`) — 사건번호·주소·유형 조합 검색 문구는 없음 | [API 호출] `GET /api/dsm/events?since=…` 200 — 조합 검색이 없으므로 초록이 되지 않는다(◐ 상한) |
+| 9 | 증빙 영상 확인 | `/dsm/events/:id` | **정본 없음** (클립 없음 문장은 화면 로컬 · 추출은 11조 잠금) | [API 호출] `GET /api/dsm/events/{id}/clip` 200 또는 404(「이 이벤트에 영상이 없다」) — 404 는 문 없음과 다르다 |
+| 11 | 카메라 설치 현황 | `/device` (인수 · `services/API.ts:30` · `App.tsx:811`) | `드론·로봇 장비 등록` (GX-COPY 여덟 화면 이름) · 머리줄 `관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.` (`copy.ts:504`) | [화면 상태] 표 행 ≥ 1 — `view_only_-_anyang` 으로 **0행**이었다(P-98 · 그대로면 「이 사람에게는 안 뜬다」 빨강) |
+| 15 | 상급기관 제출 자료 | **정본 없음** (`upper_report_flag` 는 이번 턴 U24 — HEAD 에 없음) | **정본 없음** | (회색 · 병합 뒤 U24 가 채운다) |
+| 16 | 감사 대응 이력 | **정본 없음** (`AuditLog.tsx` · 감사 `read` 라우트는 이번 턴 U24 — HEAD 에 없음) | **정본 없음** | (회색 · 병합 뒤 U24 가 채운다) |
+
+### U5 · 시스템 관리자 (1440px · `gxseed_u5_sysop` · `admin`)
+
+| # | flow | 정본 경로 | 누를 문구 (GX-COPY 정본) | 셋째 술어 (V 가 볼 것) |
+|---|---|---|---|---|
+| 1 | 사용자 계정 생성 | `/dsm/people` (`dsm/routes.ts` `people` · `App.tsx:733`) · 인수 `/users` | **정본 없음** (로컬: `People.tsx:27` `사람·역할 — 계정 만들기 · 비활성화` · 카드 `계정 만들기` — 사전 미등재) | [서버 기록] `POST /api/dsm/settings/people/create` 200 → 사용자 수 +1 (인수 `/users` 목록에서 확인) |
+| 2 | 역할 부여·변경 | `/roles` (인수 · dj-core `CustomRouters` · `App.tsx`) | `역할 관리` (GX-COPY 여덟 화면 이름) · 머리줄 `관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.` (`copy.ts:504`) | [화면 상태] `admin` 으로 역할 표 행 ≥ 1 + `Add New Role` (P-98 은 15개) — `fire_admin` 은 `0 of 0` |
+| 4 | 카메라 등록 | `/dsm/cameras/import` (`dsm/routes.ts` `cameraImport` · `App.tsx:705`) · 인수 `/device` | `카메라 일괄 등록` (GX-COPY §2 「UX-18 → 카메라 일괄 등록」 · `CameraImport.tsx` 렌더) · `표 먼저 보기` (`copy.ts:449` · GX-COPY 2026-09-05 · `CameraImport.tsx` 렌더) — ⚠ 턴 E 의 `먼저 표로 보기`(`copy.ts:479`)는 파기 화면 것이고 이 화면엔 없다 | [서버 기록] `POST /api/dsm/cameras/import` 200 (dry-run 뒤 실행) → 카메라 수 +N |
+| 5 | 카메라 설치 주소 입력 | `/dsm/cameras/address` (`dsm/routes.ts` `cameraAddress` · `App.tsx:707`) | `카메라 주소 채우기` · `표 먼저 보기` · `채우기` (`copy.ts:448-450` · GX-COPY 2026-09-05) | [서버 기록] `GET /api/dsm/cameras/address-gap` 의 미입력 수가 채우기 뒤 **-1** (쓰기는 `POST /api/dsm/cameras/import` 를 탄다 — 턴 E 메모) |
+| 9 | 알림 규칙 설정 | `/dsm/notify` (`App.tsx:735`) | **정본 없음** (U2 #16 과 같은 자리 — 로컬 `알림 받는 사람·채널`) | [서버 기록] `POST /api/dsm/settings/notify-rules/save` 200 → `…/list` 행 +1 · 심각 0명 저장은 **409** (턴 S) |
+| 10 | 알림 채널 설정 | `/dsm/notify` 의 채널 열(이메일·웹푸시 — 문자는 범위 밖 · 대표 결정 ①) | **정본 없음** (채널 이름 문구 사전 미등재) | [서버 기록] 규칙 저장 200 → `channel` 값 `email`/`webpush` 가 `…/list` 에 남음 |
+| 14 | 시스템 상태 확인 | **정본 없음** (관리자 화면 없음 — `/dsm/system` 은 `보존·백업 설정` · `GET /api/dsm/health` 는 이번 턴 U56) | **정본 없음** | (회색 · 병합 뒤 U56 이 채운다) |
+| 15 | 저장 용량 확인 | `/dsm/metering` (`dsm/routes.ts` `metering` · `App.tsx:717`) | `이번 달 사용량` (`copy.ts:473`) · 칸 `저장 용량` (GX-COPY 턴 E 다섯 칸) | [API 호출] `GET /api/dsm/metering` 200 + [화면 상태] `저장 용량` 칸에 수치 — 상한 미선언(`GX_STORAGE_CAPACITY_GB`)이면 % 없음 → ◐ |
+
+### U6 · 외부 연계 시스템 (기계 · `gxprobe_q` 또는 API 키 — 문구 칸 없음)
+
+| # | flow | 정본 경로 (면 = API) | 누를 문구 | 셋째 술어 (V 가 볼 것) |
+|---|---|---|---|---|
+| 1 | API 키로 인증 | `POST /api/dsm/settings/api-keys` (발급 · 관리자 자격) → 발급 키로 `GET /api/dsm/events` | 정본 없음(기계) | [API 호출] 키 200 · 익명 401 |
+| 2 | 이벤트 목록 조회 | `GET /api/dsm/events` | 정본 없음(기계) | [API 호출] 200 · 봉투 아닌 진짜 JSON (`total`·`events`) |
+| 3 | 이벤트 상세 조회 | `GET /api/dsm/events/{id}` (JWT 만 — 키는 거절 · D-371 의도된 절반) | 정본 없음(기계) | [API 호출] JWT 200 · 키 401/403 — 둘 다 그대로면 ◐ 유지 |
+| 4 | 이벤트 발생 웹훅 수신 | `POST /api/dsm/webhook-subscriptions` → 사건 생성 → outbox 발송 | 정본 없음(기계) | [서버 기록] 구독 1 → 사건 1 → `webhook_outbox` 발송 행 1(서명 헤더) |
+| 9 | 이벤트 상태 갱신 | `POST /api/dsm/events/{id}/response` · `…/review` | 정본 없음(기계) | [서버 기록] 200 → 재조회 값 변경 — ⚠ 외부 App 의 인증 경로(키/JWT)가 `authn_paths` 대장에 아직 없다 |
+| 12 | 인증 실패 처리 | `/api/dsm/**` 익명 | 정본 없음(기계) | [API 호출] 익명 읽기 5 → **401**(P-133 · 이번 턴 F) — 200 봉투가 하나라도 있으면 빨강 |
+| 14 | 스키마 버전 확인 | **정본 없음** (`X-GX-Schema: 1.1` 전 응답 헤더는 이번 턴 U56 — HEAD 에 없음) | 정본 없음(기계) | (회색 · 병합 뒤) [API 호출] 아무 응답이나 헤더 `X-GX-Schema` 1 |
+| 15 | 연계 헬스체크 | **정본 없음** (`GET /api/dsm/health` 는 이번 턴 U56 — HEAD 에는 우리 화면용 `link-state` 뿐) | 정본 없음(기계) | (회색 · 병합 뒤) [API 호출] `GET /api/dsm/health` 200 |
+
+### 세는 법 (손으로 세지 않았다)
+
+이 절의 표만 읽어 `| N |` 행을 세고, 「정본 경로」 칸과 「누를 문구」 칸 **둘 다**에 `정본 없음` 이 없는 행을
+「두 칸 채운 행」으로, 어느 한 칸이라도 `정본 없음` 인 행을 「정본 없음」으로 센다. 분모는 파일에서 센 행 수다 —
+48 이 아니면 이 절이 틀린 것이다. 셈 결과가 위 머리의 굵은 한 줄이다(셈 명령은 보고에 적었다).
+
+### 이 절이 V 에게 주는 것 · 주지 않는 것
+
+- 주는 것: 행마다 **누를 곳 · 누를 말 · 볼 것** 세 칸. V 는 두 칸 채워진 행만 셋째 술어로 잰다(P-159 · P-165 ④).
+- 주지 않는 것: **값.** 이 절의 어느 칸도 상태 열을 바꾸지 않았다. 「정본 없음」 행은 회색이고, 회색은 초록이 아니다.
+- 등록 요청(조율자): ① `docs/design/GX-COPY_v1.md` 에 로컬 `HEADLINE` 여섯(`사람·역할 — 계정 만들기 · 비활성화` ·
+  `알림 받는 사람·채널` · `내 정보` · `내게 온 이벤트` · `내 알림 설정` · `요원별 현황`)을 등재하면 문구 「정본 없음」 6행이 채워진다 —
+  차선 F(사전 소유) 몫. ② U24·U56·U3 가 이번 턴 짓는 자리 7행(U4 #15·#16 · U5 #14 · U6 #14·#15 · U3 #16 실자료 · U4 #7 단추)은
+  병합 뒤 그 차선이 경로·문구 칸을 채운다.

@@ -20,7 +20,7 @@ surfaces:
   - {id: WS-06, lane: U3,  surface: field-photo,                module: backend/apps/dsm/api_u3.py,     born: false, note: "스키마는 F(dsm_field_photo)"}
   - {id: WS-07, lane: U3,  surface: me/notify-report,           module: backend/apps/dsm/api_u3.py,     born: false}
   - {id: WS-08, lane: U3,  surface: push-subscriptions,         module: backend/apps/dsm/api_u3.py,     born: true,  path: "POST /api/dsm/push-subscriptions · GET /api/dsm/push-subscriptions · DELETE /api/dsm/push-subscriptions/{int:subscription_id} · GET /api/dsm/push-subscriptions/vapid-key", note: "턴 S · 진입면 등재 완료 · 키로 기기를 등록할 수 없다(JwtOrInboundKey 기본값 거절) — 열면 키 하나가 남의 휴대전화를 울리는 관이 된다"}
-  - {id: WS-09, lane: U24, surface: upper-report,               module: backend/apps/dsm/api_u24.py,    born: false, note: "스키마는 F(dsm_upper_report_flag)"}
+  - {id: WS-09, lane: U24, surface: upper-report,               module: backend/apps/dsm/api_u24.py,    born: true,  path: "POST /api/dsm/events/{int:event_id}/upper-report · DELETE 같은 경로(소프트 해제) · GET /api/dsm/events/upper-report/flags", note: "턴 T · 스키마는 이미 있었다(dsm_upper_report_flag · 0029) — 라우트 0 이던 것을 열었다 · 감사 채널 guardianx.u24.events(성공·실패 둘 다)"}
   - {id: WS-10, lane: U24, surface: thresholds/simulate,        module: backend/apps/dsm/api_u24.py,    born: true,  path: "POST /api/dsm/stats/thresholds/simulate", note: "턴 S · 진입면 등재 완료 · **아무것도 저장하지 않는다**(POST 는 인자가 본문에 실려서다) — WRITE_PROBES 대상 아님"}
   - {id: WS-11, lane: U24, surface: "reports/{id}/send",        module: backend/apps/dsm/api_u24.py,    born: false}
   - {id: WS-12, lane: U24, surface: report_run,                 module: backend/apps/dsm/api_u24.py,    born: false, note: "스키마는 F(dsm_report_run) · 배치가 쓰는 면"}
@@ -28,7 +28,11 @@ surfaces:
   - {id: WS-14, lane: U56, surface: "notify-rules(+test)",      module: backend/apps/dsm/api_u56.py,    born: true,  path: "GET /api/dsm/settings/notify-rules/list · POST /api/dsm/settings/notify-rules/save · POST /api/dsm/settings/notify-rules/test", note: "턴 S · 진입면 등재 완료 · save 는 **심각 등급 수신자 0 을 409 로 거부**(커널에서 atomic 롤백) · test 는 훈련 채널 전용(채널 인자 없음)"}
   - {id: WS-15, lane: U56, surface: system/restart-request,     module: backend/apps/dsm/api_u56.py,    born: false}
   - {id: WS-16, lane: U56, surface: "cameras/{id}/address",     module: backend/apps/dsm/api_u56.py,    born: false}
-  - {id: WS-17, lane: U56, surface: "webhook filters",          module: backend/apps/dsm/api_u56.py,    born: false, note: "스키마는 F(webhook_subscription.filters)"}
+  - {id: WS-17, lane: U56, surface: "webhook filters",          module: backend/apps/dsm/api_u56.py,    born: true,  path: "GET|POST /api/dsm/settings/webhook-subscriptions/{int:subscription_id}/filters · issue 에 filters 질의 인자", note: "턴 T · type·severity·camera 만(zone 은 400) · 발송기는 webhook_outbox._passes_filter 가 subscription_accepts 를 부른다(병합에서 같은 커밋에 배선 · xfail 뗌)"}
+  # ★ 턴 T 표 밖 탄생 — 선등록 블록이 미리 적은 자리 ①②③ 이 **셋 다** 났다(아래 「턴 T 병합 결과」).
+  - {id: WS-18, lane: U1,  surface: "queue/field-signals confirm-done", module: backend/apps/dsm/api_u1.py, born: true, path: "POST /api/dsm/queue/field-signals/{int:event_id}/confirm-done", note: "턴 T · 종결 확인 = 서버 기록이 닫는다(K1 advance_response 한 칸씩 · 접수 전 409 · 회신 없음 409 · 남의 사건 404) · 선등록 ② 자리"}
+  - {id: WS-19, lane: U24, surface: "stats/export.csv(반출)",   module: backend/apps/dsm/api_u24.py,    born: true,  path: "GET /api/dsm/stats/export.csv", note: "턴 T · 쓰기 아님 · 반출 면(UTF-8 BOM · no-store · attachment) · 선등록 ① 자리 · P-133 반출 대장 계열"}
+  - {id: WS-20, lane: U3,  surface: "me/handled-events(읽기)",  module: backend/apps/dsm/api_u3.py,     born: true,  path: "GET /api/dsm/me/handled-events", note: "턴 T · 쓰기 아님 · 회신 정본이 감사 행이라 목록 필터로 못 열어 라우트가 됐다 · 선등록 ③ 자리(「새 라우트 아님이 원칙」이 깨진 자리 — 그 사실을 적는다)"}
 
 # ── 턴 R 병합 (2026-09-16 · 조율자) ─────────────────────────────────────────
 # 태어난 것 넷: WS-01 · WS-03 · WS-04 · WS-13. 넷 다 `EVENT_ENTRY_SURFACE` 에 이름으로
@@ -96,3 +100,53 @@ surfaces:
 #   ⚠ 실발송 전제가 더 있다: `pywebpush`·`py_vapid`·`http_ece`·`ecdsa` 미설치 · VAPID 환경
 #     변수 3개 없음 · 받을 기기 없음. 그래서 잠금화면 도달 캡처는 **이번 턴에 없다** —
 #     「못 했다」이지 「했는데 안 됐다」가 아니다.
+
+# ── 턴 T 선등록 (2026-09-17 12:20 · 조율자 20분) ────────────────────────────
+# 지시서 §3 「쓰기 면 선등록(M4 prefs · 웹푸시 발송 · stats · audit read · webhook filters · health)」.
+# 턴 S 의 교훈 그대로 — 「구독」과 「발송」을 **처음부터 두 줄로** 잡고, 「세종 판정이 이 턴에
+# 새로 서는 면」(P-160 발송 · P-162 회귀 · P-164 다섯 차선) 자리를 먼저 적는다.
+#
+#   M4 prefs       → **새 면 아님.** `GET/PUT /api/dsm/me/notify-prefs` 가 턴 S 에 이미 섰다
+#                    (진입면 16 안). 이 턴은 같은 문에 칸이 는다(quiet_start/quiet_end · zone_ids ·
+#                    channels ∈ {email, webpush} · 승인 상태). 문지기는 다시 본다 — 채널 목록에
+#                    `sms` 가 들어오면 422 (대표 결정 ① 문자 범위 밖).
+#   웹푸시 발송    → **WS-08′ (표 밖에서 태어난 것을 이번엔 표 안에 미리 적는다)**
+#                    `POST /api/dsm/push-subscriptions/test-send` (턴 S 표 밖 탄생 · 이번 턴 실발송
+#                    경로가 이 문을 탄다 · U3). 새 라우트가 아니라 **뒤가 실제로 이어지는 것**이
+#                    이 턴의 변화다: 훈련 사건 → 규칙 → 구독자 → WebPushChannel.send → deliveries.
+#                    `send_webpush` 커널 공개는 **부르는 쪽과 같은 커밋** — 턴 S 에 안 넣은 그 줄.
+#   stats          → 읽기 면(`GET /api/dsm/stats/*` · 턴 S U24 4줄) 위의 **CSV 반출 1** —
+#                    `GET /api/dsm/stats/export.csv` 류(U24 가 낸 문자열을 그대로 받는다 · 짐작 안 함).
+#                    반출은 쓰기가 아니지만 **반출 면**이라 진입면과 반출 대장(P-133 계열) 둘 다 본다.
+#   audit read     → **읽기 면** `GET /api/dsm/audit` (U24 · 필터 3 · U2/U4/U5 만 · 테넌트 격리 시험).
+#                    쓰기 면이 아니라 이 표의 줄은 아니다 — 그러나 감사 기록은 **읽는 것도 기록**이
+#                    남는 자리라 여기 적는다.
+#   webhook filters→ **WS-17** (U56 · 파 1 계획의 그 줄 · 이번 턴 목표). 기존 `webhook-subscriptions`
+#                    body 에 filters 칸 — 새 라우트가 필요하면 U56 이 낸 문자열로.
+#   health         → **공개 읽기 면** `GET /api/dsm/health` (U56 · 인증 없음 · 200/503).
+#                    ⚠ F 의 「익명 읽기 5 → 401」(P-133) 과 **같은 턴에 반대 방향**으로 태어난다.
+#                    공개 허용 목록에 **이름으로** 올려야 하고, 병합에서 조율자가 둘을 한 표에서 본다.
+#   U1 종결 확인   → `kind=done` 회신을 닫는 서버 기록 — 새 라우트면 U1 이 낸 문자열(`api_u1.py`).
+#
+# 이 턴에 표 밖에서 태어날 수 있는 자리(미리 적는다): ① U24 CSV 반출 경로 ② U1 종결 닫기
+# ③ U3 M1 처리함/7일 필터(새 라우트 아님이 원칙 — 나면 표 밖 탄생으로 적는다).
+# ⚠ 한 파일은 한 차선 — 이번 턴 `api.py` 는 U3 · `api_f/u1/u24/u56.py` 는 각자. App.tsx·routes.ts
+#   배선은 병합에서 조율자.
+
+# ── 턴 T 병합 결과 (2026-09-17 13:1x · 조율자) ─────────────────────────────
+# 태어난 것: WS-09 · WS-17 (표 안) + WS-18 · WS-19 · WS-20 (표 밖 → 표에 새 줄로) · M4 prefs 는
+# 같은 문에 칸만 늘었다(WS-02 · 새 줄 없음) · health 는 공개 읽기 면(`test_f05_event_api.py::
+# PUBLIC_ENTRY_BY_DESIGN` + `probe_read_surface.PUBLIC_READ_BY_DESIGN` 두 곳에 이름·사유).
+# 진입면 84 → **95**(열하나 · 시험이 뱉은 목록 · U1 1 · U3 1 · U24 6 · U56 3).
+#
+# ⚠ 선등록이 「표 밖에서 태어날 자리」로 적은 셋(① U24 CSV ② U1 종결 닫기 ③ U3 처리함)이
+#   **셋 다 그 자리에서 났다.** 턴 R(사후 발견 1) → 턴 S(자리 예고 1 · 적중 1) → 턴 T(자리 예고 3 ·
+#   적중 3). 이 표의 값은 예언이 아니라 「밖에서 난 것이 드러나는가」이고, 이번엔 밖이 없었다.
+# ⚠ 웹푸시 「발송」(WS-08′) — 새 라우트는 없고 `test-send` 의 뒤가 실제로 이어졌다:
+#   `k2_notify/webpush.py::send_webpush`(공개 · 부르는 쪽과 같은 커밋 — 턴 S 에 안 넣은 그 줄)
+#   → `deliveries` 행 `channel=webpush` · `recipient_address=drill:webpush:<sha12>` · `suppress` 제외.
+#   격리 대장 `WRITE_NO_PROBE` 에 이름으로 등재(tests/test_u3_webpush_send.py 가 남의 사건 404 · 행 0 을 잰다).
+# ⚠ 진입면 시험이 병합에서 **옳은 빨강** 하나를 냈다: U3 가 `api.py`·`field.py` 에서 커널을
+#   직접 불러 「K1 소비 App 이 셋」이 됐다 — `services.recent_events(stream_monitor_id=)` ·
+#   `services.event_detail` 로 옮겨 App 은 다시 하나다. 차선이 남의 파일(services.py)을 못 고쳐
+#   생긴 모양이고, 그것이 병합에서 조율자가 할 일이다.

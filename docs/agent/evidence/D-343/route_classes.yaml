@@ -219,6 +219,7 @@ routes:
   "GET /api/dronehw/drone-communication-management/online-drones": session_only
   "GET /api/dronehw/group-management/group/{group_id}/drones": session_only
   "GET /api/dronehw/group-management/groups-with-drones": session_only
+  "GET /api/dsm/audit": session_only
   "GET /api/dsm/cameras/address-gap": session_only
   "POST /api/dsm/cameras/import": session_only
   "GET /api/dsm/cameras/pulse": session_only
@@ -232,6 +233,7 @@ routes:
   "GET /api/dsm/events/queue": session_only
   "GET /api/dsm/events/response-times": session_only
   "GET /api/dsm/events/summary": session_only
+  "GET /api/dsm/events/upper-report/flags": session_only
   "GET /api/dsm/events/{int:event_id}": session_only
   "GET /api/dsm/events/{int:event_id}/clip": session_only
   "GET /api/dsm/events/{int:event_id}/clip/stream": session_only
@@ -247,9 +249,12 @@ routes:
   "POST /api/dsm/events/{int:event_id}/review-and-acknowledge": session_only
   "GET /api/dsm/events/{int:event_id}/snapshot": session_only
   "GET /api/dsm/events/{int:event_id}/timeline": session_only
+  "DELETE /api/dsm/events/{int:event_id}/upper-report": session_only
+  "POST /api/dsm/events/{int:event_id}/upper-report": session_only
   "GET /api/dsm/handover/draft": session_only
   "POST /api/dsm/handover/draft": session_only
   "GET /api/dsm/handover/latest": session_only
+  "GET /api/dsm/health": session_only
   "GET /api/dsm/law/ai-act/duties": session_only
   "GET /api/dsm/law/privacy-requests": session_only
   "POST /api/dsm/law/privacy-requests": session_only
@@ -262,6 +267,7 @@ routes:
   "GET /api/dsm/law/retention": session_only
   "POST /api/dsm/law/retention/sweep": session_only
   "GET /api/dsm/me": session_only
+  "GET /api/dsm/me/handled-events": session_only
   "GET /api/dsm/me/notify-prefs": session_only
   "PUT /api/dsm/me/notify-prefs": session_only
   "GET /api/dsm/metering": session_only
@@ -274,6 +280,7 @@ routes:
   "GET /api/dsm/push-subscriptions/vapid-key": session_only
   "DELETE /api/dsm/push-subscriptions/{int:subscription_id}": session_only
   "GET /api/dsm/queue/field-signals": session_only
+  "POST /api/dsm/queue/field-signals/{int:event_id}/confirm-done": session_only
   "GET /api/dsm/reports/templates": session_only
   "GET /api/dsm/reports/{int:template_id}.pdf": session_only
   "POST /api/dsm/settings/api-keys": session_only
@@ -290,12 +297,16 @@ routes:
   "GET /api/dsm/settings/thresholds": session_only
   "POST /api/dsm/settings/thresholds": session_only
   "POST /api/dsm/settings/webhook-subscriptions/issue": session_only
+  "GET /api/dsm/settings/webhook-subscriptions/{int:subscription_id}/filters": session_only
+  "POST /api/dsm/settings/webhook-subscriptions/{int:subscription_id}/filters": session_only
   "GET /api/dsm/settings/zones": session_only
   "POST /api/dsm/settings/zones": session_only
   "GET /api/dsm/settings/{domain}": session_only
+  "GET /api/dsm/stats/axes": session_only
   "GET /api/dsm/stats/by-reviewer": session_only
   "GET /api/dsm/stats/camera-threshold": session_only
   "GET /api/dsm/stats/camera-thresholds": session_only
+  "GET /api/dsm/stats/export.csv": session_only
   "GET /api/dsm/stats/false-positive": session_only
   "GET /api/dsm/stats/false-positive/by-camera": session_only
   "GET /api/dsm/stats/summary": session_only

@@ -8729,3 +8729,95 @@ decisions:
     · docs/agent/verify_gates.sh:144 FORBIDDEN_PATHS (경로 정본 · 한 벌)
     · docs/agent/verify_gates.sh:585 gate_forbidden_zone() · ALL_GATES:1127
   affects: [D-301, D-327, D-369]
+
+- id: D-481
+  author_tree_id: "턴 T 조율자 · P-160 ①② 집행"
+  title: "웹푸시 VAPID 는 우리가 만든 자격이다 — 값은 금고 · 저장소에는 이름 · 꾸러미는 dj-core 고정과 맞는 판"
+  status: decided
+  raised_by: "세종 P-160 (2026-09-17) → 조율자 집행"
+  decision: |
+    ▣ **키 쌍을 만들었다** [실측 2026-09-17 12:10 · gx-shell · cryptography SECP256R1]:
+      `C:\GuardianX-vault\webpush\vapid_20260917.env` — 공개 87자(base64url · 65바이트 점) ·
+      비밀 43자(32바이트) · subject `mailto:hskkang@gaion.kr`(대표 결정 ④). 지문(sha256[:12])
+      공개 `879067f2f9a1` · 비밀 `909ed33a72ca`. `py_vapid.Vapid.from_string` 으로 되읽어
+      **쌍 일치 · 서명 OK** 를 확인했다. 값은 이 파일에도 보고에도 없다.
+    ▣ **이름은 코드가 이미 읽는 것을 썼다** — `GX_VAPID_PUBLIC_KEY · GX_VAPID_PRIVATE_KEY ·
+      GX_VAPID_SUBJECT`(`k2_notify/channels.py::WebPushChannel` · 턴 S U3). 지시서의
+      `WEBPUSH_VAPID_*` 로 **개명하지 않았다**: 실측이 정본이고, 개명은 코드·시험·문서 세 벌을
+      같은 커밋에 움직여야 하는 반경 넓은 일이라 값이 없다. `backend/.env.example` 에 이름 3.
+    ▣ **꾸러미는 최신판이 아니다 — 맞는 판이다.** `pywebpush 2.0.3` 은 `py-vapid 1.9.4` 를
+      끌고 그것은 `cryptography>=46` 을 요구하는데, 이 이미지는 dj-core 가 `cffi==1.17.1` ·
+      `cryptography 43.0.3` 에 고정돼 있다 — 올리면 `pip check` 가 깨진다(실측). 그래서
+      `pywebpush==1.14.1 · py-vapid==1.9.1 · http-ece==1.2.1`(MPL-2.0 · MPL-2.0 · MIT) —
+      `pip check` 「No broken requirements」 · `requirements.txt` 에 세 줄.
+    ▣ 게이트 서버(gx-shell runserver 8000)에는 **이름으로 실었다**(`docker exec -e NAME`) —
+      운영 모양 컨테이너(gunicorn·celery)에는 싣지 않았다: 그것은 창 뒤 env-file 의 일이고
+      **창과 다른 변경을 섞지 않는다.** 그래서 오늘 `verify_prod_settings` 형식 검사 +1 도
+      창 뒤에 넣는다(창 안에서 7/7 을 재는데 항목이 8 이 되면 창의 수가 아니다).
+  enforced_by: |
+    · backend/requirements.txt (세 줄) · backend/.env.example (이름 3)
+    · scripts/verify_no_secret_echo.py · verify_secret_scan.py (값 반향 0)
+  affects: [D-335, D-377]
+
+- id: D-482
+  author_tree_id: "턴 T 조율자 병합"
+  title: "K1 을 소비하는 App 은 하나다 — 차선이 남의 파일을 못 고쳐 커널을 직접 부른 자리를 병합에서 되돌린다"
+  status: decided
+  raised_by: "test_f05_event_api (2026-09-17 병합 · 옳은 빨강 3)"
+  decision: |
+    ▣ U3 가 `api.py`(events 목록 `stream_monitor_id`) 와 `field.py`(처리함 `get_event`) 에서
+      `kernels.k1_event` 를 **직접** 불렀다 — `services.py` 가 U3 소유가 아니어서다. 진입면
+      시험 셋이 막았다: 「라우트 모듈이 K1 을 import」 · 「K1 소비 App 이 셋」 · 「등재 없는
+      소비자 둘」. **셋 다 옳은 빨강**이고, 차선의 잘못이 아니라 「한 파일은 한 차선」의 뒷면이다.
+    ▣ 처방: `services.recent_events(stream_monitor_id=)` 한 인자 · `services.event_detail`
+      로 우회 — App 은 다시 하나. 필터는 여전히 커널 한 층에만 있다.
+    ▣ 규칙으로 올린다: **차선이 services.py 를 못 고칠 때는 커널을 직접 부르지 말고
+      「배선 명세 한 줄」로 넘긴다** — 조율자가 병합에서 services 에 인자를 연다. 이번 턴 U3 의
+      보고 ③-4 가 정확히 그 한 줄이었고, 차선은 그것을 적어 두고도 직접 불렀다 — 다음 턴
+      차선 지시문에 이 문장을 넣는다.
+  enforced_by: |
+    · backend/tests/test_f05_event_api.py::EntrySurfaceIsOneTest (셋)
+  affects: [D-285, D-377]
+
+- id: D-483
+  author_tree_id: "턴 T 조율자 병합 · 차선 U56"
+  title: "쓰기 면 판별기의 사각 둘을 고치자 넷이 새로 보였다 — 새 쓰기가 아니라 안 보이던 쓰기다 · 그중 하나는 인자가 스코프를 우회한다"
+  status: decided
+  raised_by: "차선 U56 (P-164 ⑤) · 병합에서 대장 4줄"
+  decision: |
+    ▣ `test_tenant_isolation._writes_to_db` 는 ① 함수 안에서 import 한 이름의 위임을 못 봤고
+      ② `dict.update(` 를 DB 쓰기로 읽었다. 새 판별기(`tests/test_u56_writes_to_db_judge.py` ·
+      자기시험 4)로 위임하자 쓰기 면 **11 → 17**, 격리 대장 밖이 **넷**: `send_webpush`(턴 T 신설) ·
+      `notice_false_positive` · `heartbeat_watch` · `camera_pulse.scan_clusters`. 뒤의 셋은
+      **전부터 쓰고 있던 면**이다 — D-301 의 이 파일 판, 두 번째.
+    ▣ 넷을 `WRITE_NO_PROBE` 에 **사유와 잰 자리**로 등재했다. ⚠ 그중 `scan_clusters` 의
+      `group=` 은 **스코프를 우회한다**(`camera_pulse._scoped:316` — group 이 오면 actor 를
+      안 본다). 오늘 부르는 자리 둘(beat 시스템 스코프 · services create_events=False)은 그
+      인자를 안 넘기므로 새는 길은 없지만, 인자는 남의 것을 가리킬 수 있다 — 등재 문장에
+      그대로 적었고 **다음 턴 WriteProbe(남의 group → 남의 테넌트 사건 0행)** 로 옮긴다.
+      「자기 그룹 검증용」이라 적으려다 코드를 읽고 고쳤다 — 등재 사유는 코드를 읽고 쓴다.
+  enforced_by: |
+    · backend/tests/test_tenant_isolation.py::WRITE_NO_PROBE (넷 · 사유)
+    · backend/tests/test_u56_writes_to_db_judge.py (자기시험 4)
+  affects: [D-290, D-301, D-281]
+
+- id: D-484
+  author_tree_id: "턴 T 조율자 · 차선 F"
+  title: "「익명 읽기 5 → 401」 이월 표식은 낡은 것이었다 — 턴 P 에 닫혔고 오늘 0/347"
+  status: decided
+  raised_by: "차선 F (P-164 F ③ · 네 턴째 이월)"
+  decision: |
+    ▣ 다섯(`/api/v1/auth/timezones` · `/api/config-management/list-optimized` · `/api/v1/auth/groups`
+      · `/api/v1/auth/languages` · `/api/register-settings`)은 턴 P 의 `access_gate.AUTHN_REQUIRED_PATHS`
+      로 이미 닫혀 있었다. 오늘 익명 탐침 전수 **347자리 · 빨강 0 · 초록 334 · 공개 3 · 회색 10**.
+      로그인 부제목은 371B 투영(`ANON_PUBLIC_PROJECTIONS`)으로 좁혀 유지 — 되돌린 것 없음.
+    ▣ 네 턴을 이월한 것은 **일이 아니라 표식**이었다. 지시서가 이월 항목을 옮겨 적을 때 실측 없이
+      옮기면 이렇게 된다 — 다음 턴부터 이월 항목은 **첫 20분에 조율자가 전/후 수를 한 번 재고**
+      옮긴다(재지 않은 이월은 회색).
+    ▣ 같은 턴에 반대 방향 하나가 태어났다: `GET /api/dsm/health` **공개**(U56). 두 곳에 이름·
+      사유(`test_f05_event_api.PUBLIC_ENTRY_BY_DESIGN` · `probe_read_surface.PUBLIC_READ_BY_DESIGN`).
+      「익명에게 닫는다」와 「공개한다」는 같은 대장에서 이름으로 갈린다.
+  enforced_by: |
+    · backend/tests/test_p133_anon_read_closed.py · scripts/probe_read_surface.py
+    · backend/tests/test_f05_event_api.py::test_every_entry_route_is_authenticated (사유 없는 공개 = 빨강)
+  affects: [D-461, D-478]
