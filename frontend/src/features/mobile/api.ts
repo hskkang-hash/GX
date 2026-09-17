@@ -26,18 +26,30 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 import {
+  dsmDelete,
   dsmEndpoint,
   dsmGet,
   dsmPost,
   dsmPostForm,
   dsmPostQuery,
   dsmPostQueryOnce,
+  dsmPut,
   intentKey,
   DsmApiError,
   LOAD_TIMEOUT_MS,
 } from '../dsm/api';
 
-export { dsmGet, dsmPost, dsmPostForm, dsmPostQuery, DsmApiError, LOAD_TIMEOUT_MS, intentKey };
+export {
+  dsmDelete,
+  dsmGet,
+  dsmPost,
+  dsmPostForm,
+  dsmPostQuery,
+  dsmPut,
+  DsmApiError,
+  LOAD_TIMEOUT_MS,
+  intentKey,
+};
 
 /**
  * 모바일이 쓰는 문 넷. **전부 이미 서 있는 문이다** — 새로 뚫은 것이 하나도 없다.
@@ -74,6 +86,19 @@ export const mobileEndpoint = {
    * U1 큐 카드의 `review_and_acknowledge` 트랜잭션과 겹치지 않는다.
    */
   review: dsmEndpoint.review,
+  /**
+   * CH-03 웹푸시 구독 (2026-09-16 · 턴 S · WS-08) · M4 내 알림 설정 (WS-02).
+   *
+   * ★ 끝에 붙인다 — 이 파일을 여러 차선이 읽는 턴에 위쪽 줄 사이에 끼우면 충돌한다.
+   * ★ 문자열을 화면 코드에 흩지 않는다. 다만 이 다섯은 `dsmEndpoint`(공용부 ·
+   *   F 소유)가 아니라 **여기** 있다: 웹푸시와 M4 는 모바일만 쓰는 문이고,
+   *   공용부에 두면 관제 화면이 안 쓰는 이름이 그 파일에 쌓인다.
+   */
+  pushSubscriptions: '/api/dsm/push-subscriptions',
+  pushSubscription: (id: number | string) => `/api/dsm/push-subscriptions/${id}`,
+  pushVapidKey: '/api/dsm/push-subscriptions/vapid-key',
+  pushTestSend: '/api/dsm/push-subscriptions/test-send',
+  notifyPrefs: '/api/dsm/me/notify-prefs',
 } as const;
 
 /**

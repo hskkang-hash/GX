@@ -44,8 +44,15 @@ function reviewAndAcknowledgePath(eventId: number | string): string {
 }
 
 export interface UseFocusQueueOptions {
-  /** 쓰기 하나가 성공한 **직후**(재조회 전) 부르는 곁가지 — 화면이 소리를 얹는 자리. */
-  onActionSuccess?: () => void;
+  /**
+   * 쓰기 하나가 성공한 **직후**(재조회 전) 부르는 곁가지 — 화면이 소리를 얹는 자리.
+   *
+   * ★ [턴 S] **무엇이 성공했는지를 함께 준다.** 소리는 셋 다 같지만 계측은 다르다 —
+   *   「사건 1건 처리」의 시계는 **접수에서 멈추고** 오탐에서는 멈추지 않는다.
+   *   인자가 없으면 부르는 쪽이 어느 쓰기였는지 짐작해야 하고, 짐작한 계측은 수가 아니다.
+   *   값은 `review-ack` · `reject` · `advance:<다음 칸>` 셋이다.
+   */
+  onActionSuccess?: (what: string) => void;
 }
 
 export interface UseFocusQueueResult {
@@ -101,7 +108,7 @@ export function useFocusQueue(options: UseFocusQueueOptions = {}): UseFocusQueue
           { to_state: toState },
           intentKey(`q.response:${eventId}:${toState}`),
         );
-        onActionSuccess?.();
+        onActionSuccess?.(`advance:${toState}`);
         queue.reload();
       } catch (err) {
         setActionError(userFacingError('FocusQueue.advance', err, '요청이 처리되지 않았습니다.'));
@@ -122,7 +129,7 @@ export function useFocusQueue(options: UseFocusQueueOptions = {}): UseFocusQueue
           {},
           intentKey(`q.review-ack:${eventId}`),
         );
-        onActionSuccess?.();
+        onActionSuccess?.('review-ack');
         queue.reload();
       } catch (err) {
         setActionError(
@@ -146,7 +153,7 @@ export function useFocusQueue(options: UseFocusQueueOptions = {}): UseFocusQueue
           { verdict: 'rejected', reason: reasonLabel },
           intentKey(`q.review:${eventId}:rejected`),
         );
-        onActionSuccess?.();
+        onActionSuccess?.('reject');
         queue.reload();
       } catch (err) {
         setActionError(userFacingError('FocusQueue.reject', err, '오탐 판정이 처리되지 않았습니다.'));

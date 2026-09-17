@@ -27,14 +27,13 @@
  *   부르는 쪽 스물세 곳을 하나씩 고치는 길도 있었지만, 그 길은 **다음에 생길
  *   스물네 번째 자리를 못 막는다.** 좁은 문 하나가 넓은 규율보다 낫다.
  */
-import { Alert, Empty, Skeleton } from 'antd';
+import { Alert, Button, Empty, Skeleton, Space, Typography } from 'antd';
 import { ReactNode, useEffect } from 'react';
 
 import {
-  FAILURE_TITLE,
-  FORBIDDEN_TITLE,
   NOT_FOUND_TITLE,
-  failureHint,
+  emptySpeech,
+  failureSpeech,
   isNotFound,
   reportFailure,
 } from '../copy';
@@ -66,6 +65,42 @@ interface Props {
   children: ReactNode;
 }
 
+const { Text } = Typography;
+
+/**
+ * UX-31′ 의 ②와 ③ — **왜 그런가**와 **지금 무엇을 하면 되나**를 두 줄로.
+ *
+ * ★ 한 줄로 이어 붙이지 않는 이유: 사람은 두 번째 문장에서 「그래서 내가 뭘 하나」를
+ *   찾는다. 한 덩어리면 그 문장이 사유에 묻힌다.
+ */
+function TwoLines({ why, next }: { why: string; next: string }) {
+  return (
+    <Space direction="vertical" size={2}>
+      <span>{why}</span>
+      <span>{next}</span>
+    </Space>
+  );
+}
+
+/**
+ * UX-31′ 의 ④ — **누를 것.** 죽은 단추를 만들지 않는 규율이 이 조각 하나에 있다:
+ *
+ *   · 사전이 「이 갈래에는 단추가 없다」고 하면(없는 것 · 404) **안 그린다**
+ *   · 부르는 쪽이 다시 부를 방법을 안 줬으면(`onRetry` 없음) **안 그린다**
+ *   · 그린 단추는 누르면 **실제로 요청이 한 번 더 나간다** (`onRetry` 가 곧 재요청이다)
+ *
+ * ★ `<a onClick>` 이 아니라 `<Button>` 이다. 앵커는 href 가 없으면 키보드 초점을 안 받고
+ *   Enter 로도 안 눌린다 — 관제실에는 마우스를 안 쓰는 자리가 있다.
+ */
+function Retry({ label, onRetry }: { label: string | null; onRetry?: () => void }) {
+  if (!label || !onRetry) return null;
+  return (
+    <Button size="small" onClick={onRetry}>
+      {label}
+    </Button>
+  );
+}
+
 export default function StateBoundary({
   state,
   reason,
@@ -90,12 +125,16 @@ export default function StateBoundary({
   }
 
   if (state === 'forbidden') {
+    const said = failureSpeech(status ?? 403);
     return (
       <Alert
         type="warning"
         showIcon
-        message={FORBIDDEN_TITLE}
-        description={failureHint(403)}
+        message={said.what}
+        description={<TwoLines why={said.why} next={said.next} />}
+        // ★ 권한 자리에도 **누를 것**을 준다. 다시 로그인한 뒤 이 화면에서 곧장
+        //   다시 물어볼 수 있어야 하고, 이 단추는 실제로 요청을 한 번 더 낸다.
+        action={<Retry label={said.retryLabel} onRetry={onRetry} />}
       />
     );
   }
@@ -112,36 +151,49 @@ export default function StateBoundary({
    *   **그리는 그림**뿐이고, 그래서 이 갈래는 부르는 쪽 스물세 곳을 안 고치고 산다.
    */
   if (state === 'error' && isNotFound(status)) {
+    const said = failureSpeech(status, notFoundTitle);
     return (
       <Alert
         type="info"
         showIcon
-        message={notFoundTitle}
-        description={failureHint(status)}
+        message={said.what}
+        description={<TwoLines why={said.why} next={said.next} />}
+        // ★ `retryLabel` 이 `null` 인 유일한 갈래다 — 아래 `Retry` 가 **아무것도 안 그린다.**
+        action={<Retry label={said.retryLabel} onRetry={onRetry} />}
       />
     );
   }
 
   if (state === 'error') {
+    const said = failureSpeech(status);
     return (
       <Alert
         type="error"
         showIcon
-        message={FAILURE_TITLE}
-        description={failureHint(status)}
-        action={
-          onRetry ? (
-            <a onClick={onRetry} role="button">
-              다시 시도
-            </a>
-          ) : undefined
-        }
+        message={said.what}
+        description={<TwoLines why={said.why} next={said.next} />}
+        action={<Retry label={said.retryLabel} onRetry={onRetry} />}
       />
     );
   }
 
   if (state === 'empty') {
-    return <Empty description={emptyText} image={Empty.PRESENTED_IMAGE_SIMPLE} />;
+    // ★ 빈 것은 **오류가 아니다.** 「요청은 성공했고 0건」을 한 줄 더 적어 둔다 —
+    //   그 한 줄이 없으면 빈 화면과 못 가져온 화면이 같아 보인다(DA-03 §2-5).
+    const said = emptySpeech(emptyText);
+    return (
+      <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+        description={
+          <Space direction="vertical" size={2}>
+            <Text>{said.what}</Text>
+            <Text type="secondary">
+              {said.why} {said.next}
+            </Text>
+          </Space>
+        }
+      />
+    );
   }
 
   return <>{children}</>;

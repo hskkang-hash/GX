@@ -19,16 +19,16 @@
  * ★ 등급은 색 + 아이콘 + 라벨 셋으로 낸다. 색만 쓰면 색각 이상이 못 읽는다 (DA-03 §2-2).
  */
 import {
-  Alert, Badge, Button, Card, Col, DatePicker, Input, Popover, Row, Segmented,
-  Select, Space, Table, Tag, Typography,
+  Alert, Badge, Button, Card, Col, DatePicker, Input, Modal, Popover, Row, Segmented,
+  Select, Space, Table, Tag, Typography, message,
 } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Main } from 'rj-core';
 
-import { dsmEndpoint, dsmGet } from '../api';
-import { linkStatusBadge, linkStatusLabel } from '../copy';
+import { dsmEndpoint, dsmGet, dsmPostQueryOnce, intentKey } from '../api';
+import { linkStatusBadge, linkStatusLabel, userFacingError } from '../copy';
 import { VerdictBadge } from '../components/ResponseSteps';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
@@ -326,6 +326,10 @@ export default function EventList() {
   /** 「사건번호로 열기」 칸의 글자. **주소에 두지 않는다** — 아직 안 누른 검색어다. */
   const [eventNo, setEventNo] = useState('');
 
+  /** 지금 판정이 날아가는 중인 사건. **행마다 따로** 잠근다 — 하나를 누르면 표
+   *  전체가 멎는 것은 「고장」으로 읽힌다. */
+  const [busyId, setBusyId] = useState<number | null>(null);
+
   /** 주소 한 칸만 바꾼다 — 나머지 조건은 유지된다(프리셋을 바꿔도 등급 필터가 살아 있다). */
   const setParam = useCallback(
     (key: string, value?: string) => {
@@ -413,6 +417,75 @@ export default function EventList() {
     events.reload();
     summary.reload();
   });
+
+  /**
+   * ★★ **재판정 — 목록에서 바로** (부속서A 업무플로우 U2 #3 · 차선 U24 · 턴 S).
+   *
+   *   종전에는 이 단추가 **상세에만** 있었다. 그래서 팀장이 밤사이 목록을 훑다가
+   *   오탐 하나를 보면, 상세로 들어가 누르고 목록으로 돌아와 자리를 다시 찾아야
+   *   했다 — 스무 건이면 스무 번이다. 같은 문을 목록에서도 연다.
+   *
+   * ★ **문을 새로 만들지 않는다.** 부르는 곳은 상세와 **같은 판정 문**이고, 사유도
+   *   멱등 키도 같은 규약을 쓴다. 두 화면이 서로 다른 문을 부르면 한쪽만 고쳐지는
+   *   날 두 화면이 다른 일을 한다.
+   *
+   * ★ 오탐은 **사유를 받는다.** 서버가 강제하지는 않지만 화면이 먼저 묻는다 —
+   *   물어 두면 적히고, 적힌 사유가 다음 달의 같은 오탐을 줄인다.
+   *
+   * ★ 오탐으로 판정하면 **처리 단계도 함께 닫힌다.** 그 일은 화면이 하지 않는다 —
+   *   서버가 한 번의 응답으로 끝낸다. 그래서 누른 뒤에 목록과 요약을 **다시 읽는다**:
+   *   누른 것이 아니라 **누른 뒤에 서버가 말한 것**이 증거다.
+   */
+  const review = useCallback(
+    (eventId: number, verdict: 'confirmed' | 'rejected') => {
+      const isFalsePositive = verdict === 'rejected';
+      let reason = '';
+      Modal.confirm({
+        title: isFalsePositive
+          ? '이 탐지를 오탐으로 판정합니다'
+          : '이 탐지를 실제로 판정합니다',
+        content: (
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Text type="secondary">
+              {isFalsePositive
+                ? '오탐으로 판정하면 처리 단계도 함께 종결됩니다. 되돌릴 수 없습니다 — 나중에 실제로 다시 판정해도 처리 단계는 열리지 않습니다.'
+                : '판정은 종결한 뒤에도 지워지지 않습니다. 오탐률을 셀 때 이 건이 분모에 들어갑니다.'}
+            </Text>
+            <Input.TextArea
+              rows={2}
+              placeholder="사유 (개선 기록에 그대로 실립니다)"
+              onChange={(ev) => {
+                reason = ev.target.value;
+              }}
+            />
+          </Space>
+        ),
+        okText: isFalsePositive ? '오탐으로 판정' : '실제로 판정',
+        cancelText: '취소',
+        onOk: async () => {
+          setBusyId(eventId);
+          try {
+            await dsmPostQueryOnce(
+              dsmEndpoint.review(eventId),
+              { verdict, reason },
+              intentKey(`review:${eventId}:${verdict}`),
+            );
+            message.success('판정을 기록했습니다.');
+            events.reload();
+            summary.reload();
+          } catch (err) {
+            message.error(
+              userFacingError('EventList.review', err, '판정이 실패했습니다.'),
+            );
+            throw err; // 모달을 닫지 않는다 — 실패했는데 닫히면 성공처럼 보인다
+          } finally {
+            setBusyId(null);
+          }
+        },
+      });
+    },
+    [events, summary],
+  );
 
   const rows = useMemo(() => events.data?.events ?? [], [events.data]);
 
@@ -677,6 +750,38 @@ export default function EventList() {
                   dataIndex: 'verdict',
                   width: 90,
                   render: (v: string) => <VerdictBadge verdict={v} />,
+                },
+                {
+                  // ★★ [턴 S · 차선 U24] **재판정을 목록에도.** 상세에만 있던 문이다.
+                  //   ⚠ 행 클릭은 상세로 간다 — 그래서 이 칸의 누름은 **위로 안 퍼지게**
+                  //     막는다(`stopPropagation`). 안 막으면 판정을 누른 순간 상세로
+                  //     떠나고, 사람은 자기가 무엇을 눌렀는지 모른 채 화면이 바뀐다.
+                  title: '재판정',
+                  key: 'review',
+                  width: 180,
+                  render: (_v: unknown, row: EventRow) => (
+                    <Space
+                      size={4}
+                      onClick={(ev) => ev.stopPropagation()}
+                    >
+                      <Button
+                        size="small"
+                        loading={busyId === row.event_id}
+                        onClick={() => review(row.event_id, 'confirmed')}
+                      >
+                        실제
+                      </Button>
+                      {/* ⚠ 빨강을 쓰지 않는다 — 빨강은 심각 등급 전용이다. 오탐 단추가
+                          빨강이면 관제 화면에서 빨강이 두 뜻을 갖는다. */}
+                      <Button
+                        size="small"
+                        loading={busyId === row.event_id}
+                        onClick={() => review(row.event_id, 'rejected')}
+                      >
+                        오탐
+                      </Button>
+                    </Space>
+                  ),
                 },
                 {
                   title: '발생',

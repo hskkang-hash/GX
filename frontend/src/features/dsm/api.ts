@@ -634,3 +634,102 @@ export function dsmPostForm<T>(url: string, form: FormData): Promise<T> {
     unwrap<T>(await API.post(url, form, { signal })),
   );
 }
+
+/**
+ * **PUT 과 DELETE** — M4 알림 설정 · 웹푸시 구독 해지 (2026-09-16 · 턴 S · 차선 U3).
+ *
+ * ★ 끝에 붙인다 — 위 규약과 같다(`dsmPostForm` 머리말).
+ *
+ * ★★ **왜 새 파일이 아니라 여기인가.** 이 저장소에는 그동안 GET·POST 만 있었고,
+ *   구독 해지(`DELETE`)와 설정 저장(`PUT`)은 이번 턴에 처음 생겼다. 그 둘을
+ *   화면 쪽에서 `API.delete(...)` 로 직접 부르면 **봉투 판정이 두 벌**이 된다 —
+ *   `unwrap()` 은 HTTP 상태와 본문의 `success` 를 **둘 다** 보는데(D-358), 손으로
+ *   부른 자리는 그 판정을 안 지나고 「200 인데 실패」를 성공으로 그린다.
+ *   갈리는 쪽은 언제나 오류 처리다(D-349 착시 ⑧ · D-212).
+ *
+ * ★ 인자를 **질의로** 싣는 것도 같은 이유다: 이 저장소의 dsm 라우트는 인자를
+ *   원시 타입으로 받고(django-ninja 규약상 질의), 본문으로 보내면 돌아오는 것은
+ *   **422 · "Field required"** 다 — 그 422 는 「값이 틀렸다」가 아니라
+ *   「인자가 없다」이고, 둘을 헷갈리면 한나절이 간다(`dsmPostQuery` 머리말).
+ */
+export function dsmPut<T>(
+  url: string,
+  query: Record<string, string | number | boolean> = {},
+): Promise<T> {
+  const qs = new URLSearchParams(
+    Object.entries(query).map(([k, v]) => [k, String(v)]),
+  ).toString();
+  return withTimeout(async (signal) =>
+    unwrap<T>(await API.put(qs ? `${url}?${qs}` : url, {}, { signal })),
+  );
+}
+
+export function dsmDelete<T>(url: string): Promise<T> {
+  return withTimeout(async (signal) =>
+    unwrap<T>(await API.delete(url, { signal })),
+  );
+}
+
+/**
+ * 큐 카드의 **현장 신호** — 「지원 요청」 배지 · 「종결 확인」 카드 (턴 S · 차선 U1).
+ *
+ * ★ 끝에 붙인다 — 위 네 묶음과 같은 규약이다(같은 턴에 여러 차선이 이 파일을 읽고,
+ *   충돌한 상수 파일은 화면 전체를 못 세운다).
+ *
+ * ★ **읽기 하나뿐이다.** 종결은 이미 있는 대응 진행 문(`dsmEndpoint.response`)이
+ *   한다 — 같은 일을 하는 문을 하나 더 열지 않는다. 이 문이 답하는 것은
+ *   「현장이 뭐라고 했나」 하나다.
+ */
+export const dsmU1Endpoint = {
+  /** 화면이 지금 그린 카드의 사건 번호만 물어본다(쉼표로 이어 보낸다). */
+  queueFieldSignals: '/api/dsm/queue/field-signals',
+} as const;
+
+/**
+ * UX-36 카메라 오탐률·임계값 — **차선 U24 · 턴 S** (부속서A U2 #10·#11 · BF-3).
+ *
+ * ★ 끝에 붙인다 — 위쪽 `dsmEndpoint` 리터럴에 줄을 끼우면 같은 턴의 다른 차선과
+ *   충돌하고, 충돌한 상수 파일은 화면 전체를 못 세운다(위 네 상수 묶음과 같은 규약).
+ *
+ * ★★ **저장하는 문은 여기서 새로 만들지 않는다.** 임계값을 바꾸는 문은 F-12 의
+ *   `POST /api/dsm/settings/thresholds` 하나이고 이미 서 있다 — 사유가 비면 400,
+ *   계약이 못박은 값이면 409, 권한이 없으면 403(감사 번호와 함께)이다.
+ *   같은 일을 하는 문을 하나 더 열면 문지기가 두 벌이 되고, 두 벌은 어긋난다.
+ */
+export const dsmU24Endpoint = {
+  /** 「어느 카메라가 시끄러운가」 — 내림차순 · 상위 N 강조. 분모를 함께 낸다. */
+  falsePositiveByCamera: '/api/dsm/stats/false-positive/by-camera',
+  /** 슬라이더가 부르는 자리 — 「시간당 N건」. **아무것도 바꾸지 않는다.** */
+  thresholdSimulate: '/api/dsm/stats/thresholds/simulate',
+  /** 카메라별로 고칠 수 있는 임계값의 이름표. 화면이 키를 손으로 들지 않는다. */
+  cameraThresholdKeys: '/api/dsm/stats/camera-thresholds',
+  /** 「저장 → 재조회」의 재조회. 값이 없으면 `null` 이고 0 이 아니다. */
+  cameraThreshold: '/api/dsm/stats/camera-threshold',
+  /** F-12 임계값 쓰기 — **이미 있는 문**이다(위 머리말). 사유가 비면 400. */
+  settingsThresholds: '/api/dsm/settings/thresholds',
+} as const;
+
+/**
+ * S-16 「알림 받는 사람·채널」 · S-15 「내 정보」 — **차선 U56 · 턴 S** (UX-43 · UX-42-me).
+ *
+ * ★ 끝에 붙인다 — 위 묶음들과 같은 규약이다(같은 턴에 여러 차선이 이 파일을 읽고,
+ *   충돌한 상수 파일은 화면 전체를 못 세운다).
+ *
+ * ⚠ **경로가 세 조각인 이유**: `/settings/notify-rules`(두 조각)는 `api.py` 의
+ *   `GET /settings/{domain}` 에 `domain="notify-rules"` 로 **삼켜진다** — GET 은 501,
+ *   POST 는 405 가 되고, 그것은 「있는데 없는 것처럼 보이는」 가장 나쁜 모양이다(D-410).
+ *   `/settings/people/create` 가 같은 이유로 세 조각인 것과 같은 실측이다.
+ *
+ * ★ `/api/dsm/me` 는 한 조각인데도 안전하다 — `api.py` 의 변수 조각은
+ *   `/settings/{domain}` 하나뿐이고 그것은 `settings/` 로 시작하는 것만 삼킨다.
+ */
+export const dsmU56NotifyEndpoint = {
+  /** 등급별 도달 · 규칙 · 채널 · **심각이 막혔는가**를 한 번에. */
+  list: '/api/dsm/settings/notify-rules/list',
+  /** 규칙 저장. **심각을 0명으로 만드는 저장은 409** 다(400 이 아니다). */
+  save: '/api/dsm/settings/notify-rules/save',
+  /** 시험 발송 — **훈련 채널로만** 나간다. 채널을 고를 수 있는 인자가 없다. */
+  test: '/api/dsm/settings/notify-rules/test',
+  /** S-15 「내 정보」 — 읽기뿐. 「내 알림 설정」 쓰기는 U3 의 WS-02 다. */
+  me: '/api/dsm/me',
+} as const;

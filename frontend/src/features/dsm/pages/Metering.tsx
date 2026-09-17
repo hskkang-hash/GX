@@ -27,6 +27,7 @@ import { Alert, Button, Card, Col, Row, Space, Table, Tag, Typography } from 'an
 import { useCallback, useMemo, useState } from 'react';
 
 import { DsmApiError, dsmGet, dsmMeteringEndpoint } from '../api';
+import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 
@@ -173,7 +174,15 @@ export default function Metering() {
           </Button>
         </Space>
 
-        {downloadError && <Alert type="error" showIcon message={downloadError} />}
+        {/* ★ [UX-31′] 내려받기가 거절된 자리. 「다시 시도」는 **그 내려받기를** 다시 부른다. */}
+        {downloadError && (
+          <FailureNotice
+            title="표를 내려받지 못했습니다."
+            detail={downloadError}
+            busy={downloading}
+            onRetry={download}
+          />
+        )}
 
         <StateBoundary
           state={usage.state}

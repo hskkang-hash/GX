@@ -175,10 +175,35 @@ export function mapLinkUrl(
   return null;
 }
 
+/**
+ * 회신 한 줄. **`kind` 는 서버가 실제로 내는 칸이다** (2026-09-16 · 턴 S).
+ *
+ * ★ [실측] `GET /api/dsm/events/{id}/field-replies` 가 줄마다 `kind`·`kind_label` 을
+ *   싣고, 봉투에 `by_kind` 를 함께 낸다(`backend/apps/dsm/api.py::field_replies` ·
+ *   `tests/test_u3_field_reply_kind.py::test_the_list_counts_by_kind_with_its_denominator`).
+ *   그 사실을 **타입에 적는다** — 화면이 읽는 칸이 타입에 없으면 컴파일이 막히거나
+ *   `any` 로 새고, 새면 서버가 그 칸을 지우는 날 화면이 조용히 `undefined` 를 센다.
+ * ★ `text` 는 **접두가 걷힌 본문**이다. 접두(`[FIELD:support]`)는 서버가 떼고 보낸다.
+ */
 interface FieldReplyRow {
   reply_id: number;
   text: string;
   author_name: string;
+  kind: string;
+  kind_label: string;
+}
+
+/**
+ * 회신 목록의 봉투. `by_kind` 가 M3 상태 칸의 출처다.
+ *
+ * ⚠ `total` 도 `by_kind` 도 **이 페이지의 수**다(서버가 `limit` 을 받는다) —
+ *   모수와 함께 읽는다(D-301). 화면이 「지원 요청 0건」이라 적을 때 그것이
+ *   「없음」인지 「이 페이지 밖」인지는 `total` 이 말한다.
+ */
+interface FieldReplyPage {
+  total: number;
+  by_kind: Record<string, number>;
+  replies: FieldReplyRow[];
 }
 
 export default function MobileEventDetail() {
@@ -265,39 +290,110 @@ export default function MobileEventDetail() {
   );
 
   /** M3 — 이 이벤트에 달린 현장 회신. 빈 것과 오류를 갈라 그린다. */
-  const replies = useDsmResource<{ total: number; replies: FieldReplyRow[] }>(
+  const replies = useDsmResource<FieldReplyPage>(
     () => dsmGet(mobileEndpoint.fieldReplies(id!)),
     [id],
     { enabled: Boolean(id), isEmpty: (v) => (v?.replies?.length ?? 0) === 0 },
   );
 
   /**
-   * M3 — 한 줄을 돌려준다.
+   * M3 — 회신 한 건. **종류(`kind`)가 곧 시트의 어느 칸인가**다 (UX-45 여섯 칸).
+   *
    * ★ 질의로 보낸다(본문이면 422 · 인자 없음). 조립은 `mobilePostWithQuery` 한 곳이다.
+   * ★ 종류마다 멱등 키가 다르다 — 「도착」을 눌러 놓고 「지원 요청」을 누르면 그것은
+   *   **다른 의도**이고, 같은 키로 묶이면 두 번째 누름이 첫 번째의 답을 받는다.
+   * ★ 참을 돌려주면 보낸 것이다 — 부르는 쪽이 그 뒤에 무엇을 할지 정한다(상태 전이 ·
+   *   글상자 비우기). 실패했는데 다음 걸음이 일어나면 화면이 거짓말을 한다.
    */
+  const postReply = useCallback(
+    async (kind: string, text: string, busyKey: string): Promise<boolean> => {
+      if (!id) return false;
+      setBusy(busyKey);
+      try {
+        // ★ **현장 회신 — 멱등 키를 싣는 문 ③.**
+        await mobilePostWithQueryOnce(
+          mobileEndpoint.fieldReply(id),
+          text ? { kind, text } : { kind },
+          intentKey(`m.field-reply:${id}:${kind}:${text}`),
+        );
+        replies.reload();
+        return true;
+      } catch (err) {
+        message.error(
+          userFacingError('MobileEventDetail.fieldReply', err, '회신을 보내지 못했습니다.'),
+        );
+        return false;
+      } finally {
+        setBusy('');
+      }
+    },
+    [id, replies],
+  );
+
+  /**
+   * 서버가 **허락한 전이만** 태운다. 화면이 전이표를 들지 않는다 —
+   * 들면 서버가 거절하는 버튼을 그리게 된다(D-399 · 이 파일 머리말).
+   *
+   * ★ 그래서 「도착」·「조치 완료」는 **두 가지 일**을 한다: 회신은 **언제나** 남고,
+   *   상태 전이는 **허락될 때만** 일어난다. 이미 조치 중인 사건에서 「도착」을 눌러도
+   *   회신은 남아야 한다 — 그것이 관제가 기다리는 사실이기 때문이다.
+   */
+  const advanceIfAllowed = useCallback(
+    async (toState: string) => {
+      if (!(event.data?.allowed_next ?? []).includes(toState)) return;
+      try {
+        await advance(toState, false);
+      } catch {
+        /* 사유는 `advance` 가 이미 사람의 말로 적었다 — 두 번 말하지 않는다. */
+      }
+    },
+    [event.data, advance],
+  );
+
+  /** ③ 한 줄 — 본문이 필수인 칸이다(서버가 빈 본문을 거절한다). */
   const sendFieldReply = useCallback(async () => {
-    if (!id) return;
     const text = replyText.trim();
     if (!text) return;
-    setBusy('field-reply');
-    try {
-      // ★ **현장 회신 — 멱등 키를 싣는 문 ③.**
-      await mobilePostWithQueryOnce(
-        mobileEndpoint.fieldReply(id),
-        { text },
-        intentKey(`m.field-reply:${id}:${text}`),
-      );
+    if (await postReply('note', text, 'field-reply')) {
       setReplyText('');
       message.success('회신을 보냈습니다.');
-      replies.reload();
-    } catch (err) {
-      message.error(
-        userFacingError('MobileEventDetail.fieldReply', err, '회신을 보내지 못했습니다.'),
-      );
-    } finally {
-      setBusy('');
     }
-  }, [id, replyText, replies]);
+  }, [postReply, replyText]);
+
+  /**
+   * ① 도착 — 「현장에 왔다」. 글상자에 적은 것이 있으면 **그것을 함께** 보낸다.
+   *
+   * ★ 글상자를 종류마다 따로 두지 않는 이유: 이동 중인 사람의 화면에 입력칸이 여섯이면
+   *   어디에 적어야 할지가 새 장애물이 된다. 칸은 하나이고, **어느 단추를 누르는가**가
+   *   그 글의 뜻을 정한다.
+   */
+  const reportArrived = useCallback(async () => {
+    const text = replyText.trim();
+    if (await postReply('arrived', text, 'arrived')) {
+      setReplyText('');
+      message.success('도착을 기록했습니다.');
+      await advanceIfAllowed('in_progress');
+    }
+  }, [postReply, replyText, advanceIfAllowed]);
+
+  /** ⑤ 지원 요청 — U1 큐가 받는 짝이다(배지는 관제 쪽에서 뜬다). */
+  const requestSupport = useCallback(async () => {
+    const text = replyText.trim();
+    if (await postReply('support', text, 'support')) {
+      setReplyText('');
+      message.success('지원을 요청했습니다.');
+    }
+  }, [postReply, replyText]);
+
+  /** ⑥ 조치 완료 — 회신을 남기고, 서버가 허락하면 종결까지 간다. */
+  const reportDone = useCallback(async () => {
+    const text = replyText.trim();
+    if (await postReply('done', text, 'done')) {
+      setReplyText('');
+      message.success('조치 완료를 기록했습니다.');
+      await advanceIfAllowed('closed');
+    }
+  }, [postReply, replyText, advanceIfAllowed]);
 
   /**
    * M3 — 사진 한 장 올리기 (UX-45 · 2026-09-16 턴 R). 문은 이미 턴 Q 에 섰다
@@ -324,6 +420,17 @@ export default function MobileEventDetail() {
         await dsmPostForm(mobileEndpoint.fieldPhoto(id), form);
         setPhotoCount((n) => n + 1);
         message.success('사진을 올렸습니다.');
+        /*
+          ★★ [턴 S] 사진이 올라간 **뒤에** 회신 한 줄을 남긴다(`kind=photo`).
+
+          왜 필요한가: 사진 행(`dsm_field_photo`)은 섰지만 **그것을 읽는 문이 아직
+          없다**(`apps/dsm/field.py` 머리말 — 읽기 문은 다음 파). 그래서 관제 쪽
+          타임라인에는 「사진이 올라왔다」가 아무 데도 안 나타난다. 회신 한 줄이
+          그 사실을 **지금 있는 문으로** 전한다.
+          ⚠ 업로드가 성공한 뒤에만 남긴다 — 실패했는데 「사진을 올렸습니다」가
+            타임라인에 남으면 관제가 없는 사진을 기다린다.
+        */
+        await postReply('photo', '', 'photo');
       } catch (err) {
         message.error(
           userFacingError('MobileEventDetail.fieldPhoto', err, '사진을 올리지 못했습니다.'),
@@ -332,7 +439,7 @@ export default function MobileEventDetail() {
         setPhotoBusy(false);
       }
     },
-    [id],
+    [id, postReply],
   );
 
   const onFieldPhotoChosen = useCallback(
@@ -351,24 +458,46 @@ export default function MobileEventDetail() {
    */
   const reportFalsePositive = useCallback(async () => {
     if (!id) return;
+    /*
+      ★ 고정 사유 + **사람이 덧붙인 한 줄**(설계 1쪽 §1 5행 「고정 사유 버튼 하나」).
+        글상자가 비어 있어도 눌리는 이유: 「가 보니 아무것도 없음」 자체가 사유이고,
+        그것을 매번 손으로 적게 하면 이동 중인 사람 앞에 새 장애물이 선다.
+    */
+    const detail = replyText.trim();
+    const reason = detail
+      ? `현장 확인 — 가 보니 아무것도 없음 · ${detail}`
+      : '현장 확인 — 가 보니 아무것도 없음';
+
     setBusy('false-positive');
     try {
       // ★ **오탐 회신 — 멱등 키를 싣는 문 ④.**
       await mobilePostWithQueryOnce(
         mobileEndpoint.review(id),
-        { verdict: 'rejected', reason: '현장 확인 — 가 보니 아무것도 없음' },
+        { verdict: 'rejected', reason },
         intentKey(`m.review:${id}:rejected`),
       );
-      message.success('오탐으로 기록했습니다.');
-      event.reload();
     } catch (err) {
       message.error(
         userFacingError('MobileEventDetail.falsePositive', err, '오탐 기록을 보내지 못했습니다.'),
       );
-    } finally {
       setBusy('');
+      return;
     }
-  }, [id, event]);
+    setBusy('');
+
+    /*
+      ★★ 판정(`review`)과 회신(`field-reply`)은 **다른 축**이다 — 판정은 K6 오탐률의
+        분자로 가고, 회신은 관제 타임라인에 남는다. 둘 다 있어야 「현장이 가서 확인했다」가
+        관제 화면에서 보인다(판정만 남기면 수는 움직이는데 **아무 말도 안 남는다**).
+      ⚠ 판정이 실패하면 여기 오지 않는다 — 회신만 남아 「오탐이라 했는데 오탐률은
+        그대로」가 되는 자리를 만들지 않는다.
+    */
+    if (await postReply('false_positive', reason, 'false-positive')) {
+      setReplyText('');
+    }
+    message.success('오탐으로 기록했습니다.');
+    event.reload();
+  }, [id, event, replyText, postReply]);
 
   const e = event.data;
 
@@ -569,6 +698,74 @@ export default function MobileEventDetail() {
                 {/* ★ [UX-22] 처리 단계 한 줄 — 미처리 → 접수 → 조치 중 → 종결 */}
                 <ResponseSteps state={e.response_state} />
 
+                {/*
+                  ★★ M3 **상태 칸** (UX-45 여섯 칸 · 2026-09-16 턴 S).
+
+                  이 표가 이 화면의 값이다 — 단추를 누른 사람이 **무엇이 남았는지**를
+                  여기서 본다. 「보냈습니다」라는 한순간의 알림만으로는 다음 순간에
+                  아무것도 안 남고, 이동 중인 사람은 방금 누른 것이 갔는지 다시 누를지를
+                  화면에 물어야 한다.
+
+                  ★ 수의 출처는 **서버**다(`GET …/field-replies` 의 `by_kind`).
+                    화면이 자기가 센 수를 적으면 다른 기기에서 남긴 회신이 안 세어지고,
+                    그러면 「지원 요청 0건」이 실은 「이 화면이 모르는 것」이 된다.
+                  ⚠ 사진만 **이번 화면의 수**다 — 사진 목록을 내는 문이 아직 없다
+                    (`field.py` 머리말: 읽기 문은 다음 파). 그래서 그 칸은 자기가
+                    무엇을 세는지 이름으로 밝힌다.
+                */}
+                <Descriptions
+                  column={1}
+                  size="small"
+                  bordered
+                  styles={{ label: { width: 96 } }}
+                >
+                  <Descriptions.Item label="도착">
+                    {(replies.data?.by_kind?.arrived ?? 0) > 0 ? (
+                      <Tag color="green">기록됨 {replies.data?.by_kind?.arrived}건</Tag>
+                    ) : (
+                      <Text type="secondary">아직</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="사진">
+                    {photoCount > 0 ? (
+                      <Tag color="green">이번 화면에서 {photoCount}장</Tag>
+                    ) : (
+                      <Text type="secondary">아직</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="한 줄">
+                    {(replies.data?.by_kind?.note ?? 0) > 0 ? (
+                      <Tag color="green">{replies.data?.by_kind?.note}건</Tag>
+                    ) : (
+                      <Text type="secondary">아직</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="오탐 사유">
+                    {(replies.data?.by_kind?.false_positive ?? 0) > 0 ? (
+                      <Tag color="orange">기록됨</Tag>
+                    ) : (
+                      <Text type="secondary">아직</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="지원 요청">
+                    {(replies.data?.by_kind?.support ?? 0) > 0 ? (
+                      <Tag color="red">요청 {replies.data?.by_kind?.support}건</Tag>
+                    ) : (
+                      <Text type="secondary">아직</Text>
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="조치 완료">
+                    {(replies.data?.by_kind?.done ?? 0) > 0 ? (
+                      <Tag color="green">
+                        기록됨
+                        {e.response_state === 'closed' ? ' · 종결됨' : ''}
+                      </Tag>
+                    ) : (
+                      <Text type="secondary">아직</Text>
+                    )}
+                  </Descriptions.Item>
+                </Descriptions>
+
                 {(e.allowed_next ?? []).length === 0 ? (
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     지금 이 계정이 옮길 수 있는 다음 단계가 없습니다.
@@ -598,6 +795,45 @@ export default function MobileEventDetail() {
                     })}
                   </Space>
                 )}
+
+                {/*
+                  M3 — **도착 · 지원 요청 · 조치 완료** (UX-45 여섯 칸 중 셋 · 턴 S).
+
+                  ★ 이 셋은 **회신을 남기는 단추**다. 위의 「접수하기·조치 시작·종결하기」는
+                    서버가 준 `allowed_next` 를 그린 **상태 전이** 단추이고, 둘은 다른
+                    일이다 — 전이는 지금 갈 수 있는 칸이 있을 때만 그려지지만, 회신은
+                    언제나 남아야 한다(이미 조치 중인 사건에 도착해도 관제는 그 사실을
+                    기다린다). 「도착」·「완료」는 회신을 남기고 **허락된 경우에만**
+                    전이까지 태운다(`advanceIfAllowed`).
+                  ★ 글상자는 아래 하나뿐이다 — 어느 단추를 누르는가가 그 글의 뜻을 정한다.
+                */}
+                <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                  <Button
+                    block
+                    style={{ minHeight: TOUCH_MIN }}
+                    loading={busy === 'arrived'}
+                    onClick={reportArrived}
+                  >
+                    도착 보고
+                  </Button>
+                  <Button
+                    block
+                    danger
+                    style={{ minHeight: TOUCH_MIN }}
+                    loading={busy === 'support'}
+                    onClick={requestSupport}
+                  >
+                    지원 요청
+                  </Button>
+                  <Button
+                    block
+                    style={{ minHeight: TOUCH_MIN }}
+                    loading={busy === 'done'}
+                    onClick={reportDone}
+                  >
+                    조치 완료
+                  </Button>
+                </Space>
 
                 {/* M3 — 사진 한 장. 「도착 · 사진 · 한 줄 · 오탐 · 완료」 중 사진(선택). */}
                 <Card size="small" title={FIELD_PHOTO_HEADLINE}>

@@ -238,6 +238,8 @@ routes:
   "POST /api/dsm/events/{int:event_id}/field-photo": session_only
   "GET /api/dsm/events/{int:event_id}/field-replies": session_only
   "POST /api/dsm/events/{int:event_id}/field-reply": session_only
+  "GET /api/dsm/events/{int:event_id}/note": session_only
+  "POST /api/dsm/events/{int:event_id}/note": session_only
   "POST /api/dsm/events/{int:event_id}/notify": session_only
   "GET /api/dsm/events/{int:event_id}/report.pdf": session_only
   "POST /api/dsm/events/{int:event_id}/response": session_only
@@ -245,6 +247,9 @@ routes:
   "POST /api/dsm/events/{int:event_id}/review-and-acknowledge": session_only
   "GET /api/dsm/events/{int:event_id}/snapshot": session_only
   "GET /api/dsm/events/{int:event_id}/timeline": session_only
+  "GET /api/dsm/handover/draft": session_only
+  "POST /api/dsm/handover/draft": session_only
+  "GET /api/dsm/handover/latest": session_only
   "GET /api/dsm/law/ai-act/duties": session_only
   "GET /api/dsm/law/privacy-requests": session_only
   "POST /api/dsm/law/privacy-requests": session_only
@@ -256,9 +261,19 @@ routes:
   "GET /api/dsm/law/purge/tenants": session_only
   "GET /api/dsm/law/retention": session_only
   "POST /api/dsm/law/retention/sweep": session_only
+  "GET /api/dsm/me": session_only
+  "GET /api/dsm/me/notify-prefs": session_only
+  "PUT /api/dsm/me/notify-prefs": session_only
   "GET /api/dsm/metering": session_only
   "GET /api/dsm/metering/csv": session_only
   "GET /api/dsm/metering/series": session_only
+  "GET /api/dsm/onboarding/progress": session_only
+  "GET /api/dsm/push-subscriptions": session_only
+  "POST /api/dsm/push-subscriptions": session_only
+  "POST /api/dsm/push-subscriptions/test-send": session_only
+  "GET /api/dsm/push-subscriptions/vapid-key": session_only
+  "DELETE /api/dsm/push-subscriptions/{int:subscription_id}": session_only
+  "GET /api/dsm/queue/field-signals": session_only
   "GET /api/dsm/reports/templates": session_only
   "GET /api/dsm/reports/{int:template_id}.pdf": session_only
   "POST /api/dsm/settings/api-keys": session_only
@@ -266,15 +281,25 @@ routes:
   "POST /api/dsm/settings/api-keys/{int:key_id}/rotate": session_only
   "POST /api/dsm/settings/grade-rules": session_only
   "GET /api/dsm/settings/notice-draft": session_only
+  "GET /api/dsm/settings/notify-rules/list": session_only
+  "POST /api/dsm/settings/notify-rules/save": session_only
+  "POST /api/dsm/settings/notify-rules/test": session_only
+  "POST /api/dsm/settings/people/create": session_only
+  "POST /api/dsm/settings/people/{int:user_id}/deactivate": session_only
   "GET /api/dsm/settings/privacy-collection": session_only
   "GET /api/dsm/settings/thresholds": session_only
   "POST /api/dsm/settings/thresholds": session_only
+  "POST /api/dsm/settings/webhook-subscriptions/issue": session_only
   "GET /api/dsm/settings/zones": session_only
   "POST /api/dsm/settings/zones": session_only
   "GET /api/dsm/settings/{domain}": session_only
   "GET /api/dsm/stats/by-reviewer": session_only
+  "GET /api/dsm/stats/camera-threshold": session_only
+  "GET /api/dsm/stats/camera-thresholds": session_only
   "GET /api/dsm/stats/false-positive": session_only
+  "GET /api/dsm/stats/false-positive/by-camera": session_only
   "GET /api/dsm/stats/summary": session_only
+  "POST /api/dsm/stats/thresholds/simulate": session_only
   "GET /api/dsm/webhook-subscriptions": session_only
   "POST /api/dsm/webhook-subscriptions": session_only
   "DELETE /api/dsm/webhook-subscriptions/{int:subscription_id}": session_only

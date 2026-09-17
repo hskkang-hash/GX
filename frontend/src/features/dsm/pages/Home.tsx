@@ -43,8 +43,15 @@ import { Main, useUserInfo } from 'rj-core';
 
 import { dsmEndpoint, dsmGet, dsmHomeEndpoint } from '../api';
 import StateBoundary from '../components/StateBoundary';
-import { linkStatusBadge, linkStatusLabel } from '../copy';
+import {
+  HANDOVER_COPY,
+  METERING_COPY,
+  ONBOARDING_COPY,
+  linkStatusBadge,
+  linkStatusLabel,
+} from '../copy';
 import { useDsmResource } from '../hooks/useDsmResource';
+import { CustomRoutes } from '@/services/API';
 import { bucketOf, type NavBucket } from '@/features/nav/roleNav';
 import { homeRoleCodes } from '@/features/nav/roleHome';
 import { dsm2Routes } from '../routes';
@@ -148,7 +155,19 @@ function unhandledLine(s: EventSummary | null): string {
   return s.unhandled_capped ? `${s.unhandled}건 이상` : `${s.unhandled}건`;
 }
 
-/** 카드 한 장 — 제목 · 수(있으면) · 1클릭. */
+/**
+ * 카드 한 장 — 제목 · 수(있으면) · **누르면 그 화면으로 간다.**
+ *
+ * ★★ [턴 S · 차선 F] **카드 전체가 누를 것이다.** 종전에는 카드 안의 작은 단추 하나만
+ *   눌렸다. 사람은 카드를 누르고, 아무 일도 안 일어나면 그 카드를 **장식**으로 읽는다 —
+ *   홈이 「무슨 일 있었나」를 말하고도 다음 걸음을 못 주는 자리가 거기였다.
+ *
+ * ★ 마우스가 없어도 간다: `role`·`tabIndex` 를 주고 Enter·Space 를 받는다. 관제실에는
+ *   키보드만 쓰는 자리가 있고, 갈 수 없는 카드는 그 사람에게 없는 카드다.
+ *
+ * ★ **갈 곳이 없으면 누를 것도 없다**(`onAction` 없음) — 카드는 그대로 두되 눌리는
+ *   시늉을 하지 않는다. 누르면 아무 일도 안 나는 카드는 죽은 단추와 같은 거짓말이다.
+ */
 function HomeCard({
   title,
   value,
@@ -162,8 +181,24 @@ function HomeCard({
   actionLabel?: string;
   onAction?: () => void;
 }) {
+  const clickable = Boolean(onAction);
   return (
-    <Card size="small" title={title} style={{ height: '100%' }}>
+    <Card
+      size="small"
+      title={title}
+      hoverable={clickable}
+      style={{ height: '100%', cursor: clickable ? 'pointer' : 'default' }}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={onAction}
+      onKeyDown={(ev) => {
+        if (!onAction) return;
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          onAction();
+        }
+      }}
+    >
       <Space direction="vertical" size={4} style={{ width: '100%' }}>
         {value ? (
           <Text strong style={{ fontSize: 18 }}>
@@ -174,7 +209,11 @@ function HomeCard({
         {actionLabel && onAction ? (
           <Button
             size="small"
-            onClick={onAction}
+            // 카드가 이미 그 일을 하므로 단추는 **같은 일을 한 번만** 시킨다.
+            onClick={(ev) => {
+              ev.stopPropagation();
+              onAction();
+            }}
           >
             {actionLabel}
           </Button>
@@ -211,21 +250,23 @@ function OnboardingBand({ onOpen }: { onOpen: (path: string) => void }) {
               wrap
               align="center"
             >
-              <Text strong>처음 시작하기</Text>
+              <Text strong>{ONBOARDING_COPY.start}</Text>
               <Progress
                 percent={data.percent ?? 0}
                 size="small"
                 style={{ width: 160 }}
               />
+              {/* ★ [턴 S] **수를 글자로도 적는다.** 막대만 있으면 「어디까지 왔나」를
+                  눈대중으로 읽게 되고, 눈대중은 보고에 못 쓴다. */}
               <Text type="secondary">
-                {data.done}/{data.total} 끝났습니다. 하면 저절로 닫힙니다.
+                {ONBOARDING_COPY.progress(data.done, data.total, data.percent ?? 0)}
               </Text>
               <Button
                 size="small"
                 type="link"
                 onClick={() => setOpen((v) => !v)}
               >
-                {open ? '접기' : '펼치기'}
+                {open ? ONBOARDING_COPY.collapse : ONBOARDING_COPY.expand}
               </Button>
             </Space>
             {open ? (
@@ -251,7 +292,7 @@ function OnboardingBand({ onOpen }: { onOpen: (path: string) => void }) {
                 ))}
                 {data.blocked.length ? (
                   <Text type="secondary">
-                    아직 세지 못하는 카드 {data.blocked_total}장:{' '}
+                    {ONBOARDING_COPY.blockedLine(data.blocked_total)}:{' '}
                     {data.blocked.map((b) => b.title).join(' · ')}
                   </Text>
                 ) : null}
@@ -324,6 +365,13 @@ export default function RoleHome() {
    */
   const unhandledList = '/dsm/events?preset=unhandled';
 
+  /**
+   * 인계가 사는 자리. **문자열을 화면 코드에 흩지 않는다** — 라우트 상수에서 읽는다.
+   * 종전에는 이 카드가 `/handover` 를 손으로 적고 있었고, 그 주소가 바뀌는 날
+   * 카드만 옛말이 된다(옛말이 된 것은 안 보인다 · D-212).
+   */
+  const handoverPath = CustomRoutes.handover.path;
+
   const title =
     bucket === 'U2'
       ? '무슨 일 있었나'
@@ -383,20 +431,73 @@ export default function RoleHome() {
           />
         ) : null}
 
+        {/* ── U1 본문 — **띠만 서고 비어 있던 자리** (턴 S · 차선 F) ─────────
+            관제요원의 홈은 `/dsm/queue` 그대로다(이미 초록인 자리를 옮기지 않는다).
+            그러나 주소로 이 화면에 온 관제요원에게 **안내 한 줄만** 주던 것이 종전이고,
+            안내는 화면이 아니다. 네 장을 준다 — 넷 다 **눌리고, 실재하는 화면으로 간다.** */}
         {bucket === 'U1' ? (
-          <Alert
-            type="info"
-            showIcon
-            message="관제요원의 홈은 지금 처리할 것입니다."
-            action={
-              <Button
-                size="small"
-                onClick={() => go(dsm2Routes.focusQueue.path)}
+          <>
+            <Alert
+              type="info"
+              showIcon
+              message="관제요원의 홈은 지금 처리할 것입니다."
+              action={
+                <Button
+                  size="small"
+                  onClick={() => go(dsm2Routes.focusQueue.path)}
+                >
+                  지금 처리할 것 열기
+                </Button>
+              }
+            />
+            <Row gutter={[12, 12]}>
+              <Col
+                xs={24}
+                md={6}
               >
-                지금 처리할 것 열기
-              </Button>
-            }
-          />
+                <HomeCard
+                  title="지금 처리할 것"
+                  value={unhandledLine(summary.data)}
+                  note="가장 급한 하나부터 봅니다."
+                  actionLabel="큐 열기"
+                  onAction={() => go(dsm2Routes.focusQueue.path)}
+                />
+              </Col>
+              <Col
+                xs={24}
+                md={6}
+              >
+                <HomeCard
+                  title={HANDOVER_COPY.title}
+                  note={HANDOVER_COPY.lead}
+                  actionLabel={HANDOVER_COPY.read}
+                  onAction={() => go(handoverPath)}
+                />
+              </Col>
+              <Col
+                xs={24}
+                md={6}
+              >
+                <HomeCard
+                  title="카메라 격자"
+                  note="응답 없는 카메라를 한눈에 봅니다."
+                  actionLabel="격자 열기"
+                  onAction={() => go(dsm2Routes.cameraGrid.path)}
+                />
+              </Col>
+              <Col
+                xs={24}
+                md={6}
+              >
+                <HomeCard
+                  title="사건 찾기"
+                  note="기간과 카메라, 유형으로 찾습니다."
+                  actionLabel="사건 목록 열기"
+                  onAction={() => go('/dsm/events')}
+                />
+              </Col>
+            </Row>
+          </>
         ) : null}
 
         {/* ── 띠 — 세 수. 화면이 세지 않는다 ─────────────────────────── */}
@@ -508,10 +609,10 @@ export default function RoleHome() {
               md={6}
             >
               <HomeCard
-                title="인계 메모"
-                note="이전 근무자가 남긴 한 줄입니다."
-                actionLabel="인계 읽기"
-                onAction={() => go('/handover')}
+                title={HANDOVER_COPY.title}
+                note={HANDOVER_COPY.lead}
+                actionLabel={HANDOVER_COPY.read}
+                onAction={() => go(handoverPath)}
               />
             </Col>
           </Row>
@@ -566,9 +667,14 @@ export default function RoleHome() {
                 xs={24}
                 md={6}
               >
+                {/* ★ [턴 S] **갈 곳 없는 카드를 하나 없앴다.** 「자동본을 여는 화면이
+                    아직 없습니다」는 참이었지만, 같은 물음(이번 달 우리 센터가 얼마나
+                    썼나)에 답하는 화면은 이미 서 있다 — 카드가 그리로 간다. */}
                 <HomeCard
-                  title="이번 달 우리 센터"
-                  note="자동본을 여는 화면이 아직 없습니다."
+                  title={METERING_COPY.title}
+                  note="카메라 대수 · 쓰는 사람 수 · 사건 수 · 보낸 알림 수 · 저장 용량을 셉니다."
+                  actionLabel="사용량 열기"
+                  onAction={() => go(dsm2Routes.metering.path)}
                 />
               </Col>
               <Col

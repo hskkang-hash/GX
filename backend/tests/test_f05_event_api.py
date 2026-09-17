@@ -189,6 +189,54 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     #   ★ 나가는 바이트에는 **소인**이 있다(테넌트명·열람 시각). 저장은 못 막지만
     #     출처는 남는다 — `backend/tests/test_snapshot_route.py` 규약 넷이 잰다.
     ("GET", "/api/dsm/events/{int:event_id}/snapshot"),
+    # ★ 2026-09-16 **아홉이 늘었다** — 턴 S 파 2 「짓기」 (차선 U1·U24·U56).
+    #   손으로 이 줄들을 더하는 일이 곧 「진입면을 넓힌다」는 선언이고, 그 선언을 여기 남긴다.
+    #   이 시험이 먼저 멈춰 세웠다(68 대 84) — **게이트가 지시보다 위다**(D-327).
+    #
+    #   ★ **수를 손으로 세지 않았다.** 차선 셋이 보고한 수가 서로 달랐고(16 · 4 · 선언 21줄),
+    #     살아 있는 라우터와 이 명부를 대조하는 이 시험이 **이름으로 16건**을 뱉었다.
+    #     그중 아홉이 여기 있다 — 나머지 일곱(웹푸시 구독 다섯 · 내 알림 설정 둘)은
+    #     차선 U3 가 **아직 `api.py` 를 고치는 중**이라 등재하지 않았다. 안 굳은 주소를
+    #     조율자가 먼저 박으면 그것은 등재가 아니라 추측이다(P-90 에서 배운 것과 같은 말:
+    #     대상 없는 승인을 받은 쪽이 대상을 추정하면 그 순간 승인받지 않은 행위다).
+    #
+    #   문지기: 전건 `@tenant_scoped` + `JwtOrInboundKey()` 기본값(**들어오는 키 거절**).
+    ("GET",  "/api/dsm/queue/field-signals"),        # U1 · 큐 「지원 요청」 배지
+    # ★ U24 넷 — 통계·시뮬. **쓰기는 하나뿐**이고 그것도 아무것도 저장하지 않는다:
+    #   `thresholds/simulate` 는 「이 문턱이면 시간당 N건」을 세어 답할 뿐이다(POST 인 것은
+    #   인자가 본문에 실리기 때문이지 쓰기여서가 아니다). 그래서 WRITE_PROBES 대상이 아니다.
+    ("POST", "/api/dsm/stats/thresholds/simulate"),  # U24 · 임계 시뮬 (저장 0)
+    ("GET",  "/api/dsm/stats/false-positive/by-camera"),  # U24 · 오탐률 상위 카메라
+    ("GET",  "/api/dsm/stats/camera-thresholds"),    # U24 · 카메라별 문턱 목록
+    ("GET",  "/api/dsm/stats/camera-threshold"),     # U24 · 한 대의 문턱
+    # ★ U56 넷 — 알림 규칙(등급 × 역할 × 채널)과 「내 정보」.
+    #   ⚠ `notify-rules/save` 는 **심각 등급에 받는 사람 0 을 거부한다**(409). 그 거부가
+    #     이 면의 요점이다 — 저장은 됐는데 아무도 안 받는 규칙은 「설정했다」는 착각만 남긴다.
+    #   ⚠ `notify-rules/test` 는 **훈련 채널로만** 나간다(채널 인자가 없다). 시험 발송이
+    #     실제 수신함에 닿을 수 있으면 그것은 시험이 아니라 발송이다.
+    ("GET",  "/api/dsm/settings/notify-rules/list"),  # U56 · S-16 규칙 목록
+    ("POST", "/api/dsm/settings/notify-rules/save"),  # U56 · S-16 저장 ★쓰기 (409 · 수신자 0 거부)
+    ("POST", "/api/dsm/settings/notify-rules/test"),  # U56 · S-16 시험 발송 (훈련 채널 전용)
+    ("GET",  "/api/dsm/me"),                          # U56 · S-15 내 정보 (읽기 전용)
+    # ★ 2026-09-16 **일곱이 더 늘었다** — 같은 턴 차선 U3(웹푸시 구독 · 내 알림 설정).
+    #   위 아홉과 **커밋이 갈라지지 않도록** 같은 표에 함께 적는다. 앞서 아홉만 적은 것은
+    #   그때 U3 가 아직 `api.py` 를 고치는 중이어서다 — **안 굳은 주소를 조율자가 먼저
+    #   박으면 그것은 등재가 아니라 추측이다.** 차선이 자기 경로를 글자 그대로 보고한
+    #   뒤에 적는다(그 목록과 이 줄들을 대조했다).
+    #
+    #   문지기: 전건 `@tenant_scoped` + `JwtOrInboundKey()` 기본값(**들어오는 키 거절**).
+    #   ⚠ `push-subscriptions` 는 **기기를 등록하는 면**이다. 키로 기기를 등록할 수 있으면
+    #     키 하나가 「남의 휴대전화를 울리는 관」이 된다 — api-keys 셋에 키를 안 연 것과
+    #     같은 이유다.
+    #   ⚠ `me/notify-prefs` 는 **자기 것만** 만진다. 남의 것을 가리킬 인자가 시그니처에
+    #     없다(D-281 「시그니처가 1차」).
+    ("GET",    "/api/dsm/push-subscriptions/vapid-key"),                # U3 · 공개키 상태
+    ("POST",   "/api/dsm/push-subscriptions/test-send"),                # U3 · 내 기기로 한 통 ★쓰기
+    ("POST",   "/api/dsm/push-subscriptions"),                          # U3 · 기기 등록 ★쓰기
+    ("GET",    "/api/dsm/push-subscriptions"),                          # U3 · 내 기기 목록
+    ("DELETE", "/api/dsm/push-subscriptions/{int:subscription_id}"),    # U3 · 해지 ★쓰기
+    ("GET",    "/api/dsm/me/notify-prefs"),                             # U3 · WS-02 내 알림 설정
+    ("PUT",    "/api/dsm/me/notify-prefs"),                             # U3 · WS-02 저장 ★쓰기
     # ★ 2026-09-24 **여덟이 늘었다** — 차선 C 2파 (UX-13 · UX-14 · UX-17 · UX-18).
     #   손으로 이 줄들을 더하는 일이 곧 「진입면을 넓힌다」는 선언이고, 그 선언을 여기 남긴다.
     #   이 시험이 먼저 멈춰 세웠다(25 vs 33) — 게이트가 지시보다 위다(D-327).

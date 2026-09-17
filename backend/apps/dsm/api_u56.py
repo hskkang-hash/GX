@@ -166,3 +166,137 @@ class DsmU56API:
         except WebhookSubscriptionError as exc:
             raise HttpError(422, str(exc))
         return result
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # S-16 「알림 받는 사람·채널」 — UX-43 · WS-14 (턴 S · 차선 U56)
+    # ═══════════════════════════════════════════════════════════════════════
+    #
+    # ⚠ **경로가 세 조각인 이유** — 위 people 과 **같은 함정**이다 [실측 · 턴 R·S].
+    #   `/settings/notify-rules`(두 조각)는 `api.py` 의 `GET /settings/{domain}` 에
+    #   `domain="notify-rules"` 로 **삼켜진다.** 삼켜지면 GET 은 501(「설정 영역이
+    #   아니다」)을 내고 POST 는 405 다 — **있는데 없는 것처럼 보이는** 가장 나쁜 모양
+    #   (D-410). 그래서 `/settings/notify-rules/{list,save,test}` 세 조각으로 연다.
+    #   ⚠ 404 를 만나면 PROPFIND 로 한 번 더 두드려라 — 라우트가 있으면 405, 없으면 404 다.
+    #
+    # ★ 문지기는 `guard_setting` 하나다 (F-12 의 유일한 판정식 · D-212). 여기서 새
+    #   판정을 짓지 않는다 — 알림 규칙은 「누가 재난을 아는가」를 정하는 설정이고,
+    #   임계값·구역과 **같은 무게**로 지킨다.
+    @route.get("/settings/notify-rules/list", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-43 알림 규칙 조회 — 남의 테넌트가 누구에게 재난을 "
+                          "알리는지는 남의 정보다")
+    def notify_rules_list(self, request):
+        """S-16 화면이 읽는 한 묶음 — 등급별 도달 · 규칙 · 채널 · **심각이 막혔는가**.
+
+        ★ `critical_blocked` 를 **같은 응답에** 실어 준다. 화면이 한 번 더 물어야 하면
+          그 사이에 「규칙은 있는데 아무에게도 안 간다」가 안 보이고, 그것이 이 화면이
+          막으려는 상태 그 자체다.
+        """
+        from apps.dsm.services import guard_setting
+        from kernels.k2_notify import notify_rule_overview
+
+        scope = _scope(request)
+        access = guard_setting(
+            scope=scope, action="read:notify-rules", api_method="GET")
+        if not access.allowed:
+            raise HttpError(403, access.reason)
+        return notify_rule_overview(scope=scope)
+
+    @route.post("/settings/notify-rules/save", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-43 알림 규칙 저장 — 남의 테넌트 규칙을 바꾸면 그쪽 "
+                          "당직자가 재난을 못 듣는다 (쓰기 IDOR)")
+    def notify_rules_save(self, request, severity: str, role_code: str,
+                          channels: str, zone: str = "", is_active: bool = True,
+                          rule_id: int = 0):
+        """규칙 하나를 저장한다. **심각을 0명으로 만드는 저장은 409 다.**
+
+        ★ 409 이지 400 이 아니다 — 요청이 틀린 게 아니라(400) **지금 상태에서 할 수
+          없는 일**이다. `notify` 라우트가 `NoRecipients` 를 409 로 내는 것과 같은 자리·
+          같은 뜻이다(알림 체계가 꺼지는 것을 200 으로 삼키지 않는다).
+        ★ `channels` 는 쉼표로 구분한 문자열이다 — `event_types`·`role_ids` 와 같은 관용.
+        ★ `rule_id=0` 이 「새로 만든다」다. ninja 질의 인자에 `None` 기본값을 두면
+          「안 줬다」와 「0 을 줬다」가 같은 모양이 되므로 0 을 없음으로 읽는다.
+        """
+        from apps.dsm.services import guard_setting
+        from kernels.k2_notify import (CriticalWithoutRecipients,
+                                       InvalidNotifyInput,
+                                       NotifyPermissionDenied, save_rule)
+
+        scope = _scope(request)
+        access = guard_setting(
+            scope=scope, action="write:notify-rules:%s:%s" % (severity, role_code),
+            api_method="POST")
+        if not access.allowed:
+            raise HttpError(403, access.reason)
+
+        names = [c.strip() for c in (channels or "").split(",") if c.strip()]
+        try:
+            view = save_rule(
+                scope=scope, severity=severity, role_code=role_code,
+                channels=names, zone=(zone or "").strip() or None,
+                is_active=is_active, rule_id=rule_id or None)
+        except CriticalWithoutRecipients as exc:
+            raise HttpError(409, str(exc))
+        except NotifyPermissionDenied as exc:
+            raise HttpError(403, str(exc))
+        except InvalidNotifyInput as exc:
+            raise HttpError(400, str(exc))
+        return {"rule_id": view.rule_id, "severity": view.severity,
+                "role_code": view.role_code, "zone": view.zone,
+                "channels": list(view.channels), "is_active": view.is_active,
+                "audit_id": access.audit_id}
+
+    @route.post("/settings/notify-rules/test", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-43 시험 발송 — 남의 테넌트 수신자에게 발송을 일으킬 "
+                          "수 없다 (쓰기 IDOR)")
+    def notify_rules_test(self, request, severity: str = "critical"):
+        """시험 발송 — **훈련 채널로만 나간다.**
+
+        ★ 채널을 인자로 받지 않는다. 고를 수 있으면 언젠가 실채널이 선택되고, 그날
+          「시험」이라 부르며 당직자 휴대전화가 울린다 — 나간 메일은 취소되지 않는다.
+        ★ 응답의 `reaches_people` 은 **언제나 거짓**이다. 화면이 「보냈습니다」만 그리면
+          사람은 자기 수신함을 확인하러 간다.
+        """
+        from apps.dsm.services import guard_setting
+        from kernels.k2_notify import (CriticalWithoutRecipients,
+                                       InvalidNotifyInput, send_test_notification)
+
+        scope = _scope(request)
+        access = guard_setting(
+            scope=scope, action="write:notify-rules:test:%s" % severity,
+            api_method="POST")
+        if not access.allowed:
+            raise HttpError(403, access.reason)
+        try:
+            result = send_test_notification(scope=scope, severity=severity)
+        except CriticalWithoutRecipients as exc:
+            raise HttpError(409, str(exc))
+        except InvalidNotifyInput as exc:
+            raise HttpError(400, str(exc))
+        return {**result, "audit_id": access.audit_id}
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # S-15 「내 정보」 — UX-42-me (턴 S · 차선 U56)
+    # ═══════════════════════════════════════════════════════════════════════
+    #
+    # ★ **`guard_setting` 이 없다.** 이 문은 설정이 아니라 **자기 자신**이다 — 로그인한
+    #   사람은 누구나 자기 정보를 본다. 관리자만 지나게 하면 관제요원이 「내가 무슨
+    #   알림을 받는가」를 영영 못 본다(온보딩 U1 #7 「내 정보 확인」이 그 자리다).
+    # ★ 남의 것을 가리킬 인자가 **없다.** 소속·계정은 `scope` 가 정하고, 커널의
+    #   `my_notify_reach` 는 `scope.require_actor()` 로만 사람을 고른다(D-281 시그니처가 1차).
+    # ⚠ 경로가 한 조각(`/me`)인데도 안전한 이유: `api.py` 의 와일드카드는
+    #   `/settings/{domain}` **하나뿐**이고 그것은 `settings/` 로 시작하는 것만 삼킨다
+    #   [실측 — `@route.*("/{` 전수 0건]. `/me` 를 가릴 변수 조각이 없다.
+    @route.get("/me", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-42-me 내 정보 — 자기 계정의 수신 상태만. 남의 것을 "
+                          "가리킬 인자가 시그니처에 없다")
+    def me(self, request):
+        """S-15 「내 정보」 — 나는 누구이고 **무엇을 받는가.**
+
+        ★ 「내 알림 설정」의 **쓰기**(조용 시간·구역·채널 좁히기 · `DsmNotifyPrefs`)는
+          여기 없다 — 그 면은 등록부의 **WS-02(lane U3)** 다. 한 표에 두 차선의 손이
+          닿으면 그 표가 곧 당직자의 수신 여부다. 응답의 `prefs_surface_open: false` 가
+          「설정이 없다」가 아니라 **「설정 화면이 아직 없다」**를 말해 준다.
+        """
+        from kernels.k2_notify import my_notify_reach
+
+        return my_notify_reach(scope=_scope(request))

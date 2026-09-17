@@ -19,7 +19,7 @@ from common.idempotency import idempotent
 from common.inbound_api_key import JwtOrInboundKey
 from common.tenant_scope import TenantScope, tenant_scoped
 
-from apps.dsm import event_note_service, handover_service, services
+from apps.dsm import event_note_service, handover_service, queue_signals, services
 
 
 def _scope(request) -> TenantScope:
@@ -166,3 +166,27 @@ class DsmU1API:
                 scope=_scope(request), event_id=event_id)}
         except Http404:
             raise HttpError(404, "그런 이벤트가 없습니다.")
+
+    # ── 큐 카드의 현장 신호 — 「지원 요청」 배지 · 「종결 확인」 카드 (턴 S) ──
+    #
+    # ★ **새 가지에 둔다.** 경로가 `/queue/...` 라 기존 `/events/...`(앞 컨트롤러)
+    #   어느 패턴에도 걸리지 않는다 — 라우트 삼킴을 순서로 외우지 않고 **삼킬 수
+    #   없는 자리**에 두는 것이 이 저장소의 관례다(`features/dsm/routes.ts` 머리말).
+    # ★ **읽기다.** 아무것도 만들지 않고 아무 상태도 옮기지 않는다 — 종결은 여전히
+    #   기존 대응 진행 문(`POST …/response`)이 한다. 이 문은 「현장이 뭐라고 했나」만
+    #   답하고, 누르는 것은 화면이 그 답을 보고 사람에게 시킨다.
+    @route.get("/queue/field-signals", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="큐 카드의 현장 회신 신호 — 남의 테넌트 사건의 회신이 "
+                         "보이면 격리 실패다 (읽기 IDOR)")
+    def queue_field_signals(self, request, event_ids: str = ""):
+        """화면이 지금 그린 카드의 사건 번호들에 대한 현장 신호.
+
+        `event_ids` 는 쉼표로 이은 사건 번호다(상한 `queue_signals.MAX_EVENT_IDS`).
+        **화면이 물은 것만 읽는다** — 큐 전체를 훑지 않는 이유는 그 모듈 머리말에 있다.
+
+        ★ 남의/없는 사건은 목록에서 **조용히 빠진다**(404 를 따로 내지 않는다).
+          존재 여부도 누출이라, 물은 수(`asked`)와 읽은 수(`read`)만 함께 낸다.
+        """
+        raw = [part for part in (event_ids or "").split(",") if part.strip()]
+        return queue_signals.queue_field_signals(
+            scope=_scope(request), event_ids=raw)

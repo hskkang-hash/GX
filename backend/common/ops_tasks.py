@@ -59,6 +59,21 @@ SCRIPTS_DIRS = ("/repo/scripts", "/app/../scripts")
 #: 판정을 남기는 자리. 로그만 남기면 지나간 판정을 되짚을 수 없다.
 EVIDENCE_DIR = "/docs/agent/evidence/D-373"
 
+#: ★ P-155 — **5분마다 스스로 쓰는 파일은 저장소 안에 두지 않는다** (턴 S · 조율자).
+#:   `ops_monitor_beat` 은 beat 일정으로 **5분마다** 돈다. 그 판정을 저장소 안
+#:   (`D-373/monitor_last.json`)에 쓰면 훅이 도는 동안 그 파일이 바뀌고, pre-commit 은
+#:   전후를 비교해 **「files were modified by this hook」** 으로 커밋을 되돌린다.
+#:   그리고 되돌릴 때 **애먼 훅이 범인으로 지목된다** — 턴 R 에 `gx-tool-selftest` 가
+#:   그렇게 지목됐고, 그 판정기를 따로 돌리면 exit 0 이었다. 멀쩡한 게이트를 의심하며
+#:   한 번을 버렸다.
+#:
+#:   가르는 자리는 **뜻**이다: 「지금 상태」와 「지나온 자취」는 다른 것이다.
+#:   5분마다 덮어써야 하는 것이 앞이고(저장소 밖), 남겨야 하는 것이 뒤다(증거에 append).
+STATE_DIR = os.environ.get("GX_OPS_STATE_DIR", "/var/lib/gx/state")
+
+#: 증거에 남는 쪽. **판정이 바뀐 줄만** 쌓인다 — 「OK 가 또 OK 였다」는 자취가 아니다.
+MONITOR_SUMMARY = "monitor_summary.jsonl"
+
 
 def _load(name: str):
     """`scripts/` 의 도구 하나를 모듈로 불러온다. 못 부르면 `None` — 조용히 넘기지 않는다."""
@@ -138,6 +153,74 @@ def _write_evidence(name: str, payload: dict) -> str | None:
         return None
 
 
+def _append_monitor_summary(verdict: str, payload: dict) -> None:
+    """감시 판정이 **바뀐 때만** 증거에 한 줄 더한다 (P-155).
+
+    ★ 왜 「바뀐 때만」인가
+      5분마다 「OK」를 적으면 그것은 자취가 아니라 **소음**이고, 소음은 저장소를
+      5분마다 더럽혀 커밋을 막는다(턴 R 에 세 번). 사람이 되짚고 싶은 것은
+      「언제부터 나빠졌나 · 언제 돌아왔나」이지 「그 사이에도 계속 OK 였다」가 아니다.
+    ⚠ 이 파일은 **덮어쓰지 않는다** — 오직 append. 덮어쓰는 순간 대장이 줄고,
+      대장은 줄지 않는다(턴 S 불변).
+    """
+    path = Path(EVIDENCE_DIR) / MONITOR_SUMMARY
+    why = evidence_guard.blocked_reason(path, who="ops_tasks._append_monitor_summary",
+                                        db_name=_db_name())
+    if why:
+        logger.info("[OPS] 요약을 안 남겼다 — %s", why)
+        return
+    try:
+        prev = ""
+        if path.is_file():
+            lines = [ln for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+            if lines:
+                prev = str(json.loads(lines[-1]).get("verdict") or "")
+        if prev == verdict:
+            return                                     # ★ 안 바뀌었으면 **안 쓴다**
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps({
+                "measured_at": payload.get("measured_at"),
+                "verdict": verdict,
+                "from": prev or "(처음)",
+                "state_file": STATE_DIR + "/monitor_last.json",
+                "note": payload.get("reason") or
+                        "감시 3종 — 자세한 수는 저장소 밖 상태 파일에 있다 (P-155)",
+                "_written_from": {"db": _db_name(),
+                                  "under_pytest": evidence_guard.under_pytest()},
+            }, ensure_ascii=False, default=str) + "\n")
+    except (OSError, ValueError) as exc:               # noqa: BLE001
+        logger.warning("[OPS][MONITOR] 요약을 남기지 못했다: %s", exc)
+
+
+def _write_monitor_state(payload: dict) -> str | None:
+    """감시 판정 — **지금 상태는 저장소 밖에, 바뀐 자취만 증거에** (P-155).
+
+    옛 이름은 `_write_evidence("monitor_last", …)` 였고, 그 한 줄이 저장소 안의
+    파일을 5분마다 고쳤다. 함수를 가른 것이 처방이다 — 부르는 자리를 고치는 것이
+    아니라 **쓰는 자리**를 갈랐다.
+    """
+    written = None
+    try:
+        state = Path(STATE_DIR)
+        state.mkdir(parents=True, exist_ok=True)
+        out = state / "monitor_last.json"
+        stamped = dict(payload)
+        stamped["_written_from"] = {"db": _db_name(),
+                                    "under_pytest": evidence_guard.under_pytest()}
+        out.write_text(
+            json.dumps(stamped, ensure_ascii=False, indent=2, default=str) + "\n",
+            encoding="utf-8")
+        written = str(out)
+    except OSError as exc:                             # noqa: BLE001
+        # ⚠ 상태를 못 남긴 것은 **감시가 죽은 것이 아니다.** 판정은 이미 났고
+        #   호출자에게 돌아간다 — 여기서 예외를 올리면 감시가 저장소 사정으로 죽는다.
+        logger.warning("[OPS][MONITOR] 상태를 남기지 못했다 (%s): %s", STATE_DIR, exc)
+
+    _append_monitor_summary(str(payload.get("verdict") or "UNKNOWN"), payload)
+    return written
+
+
 def backup_schedule_enabled() -> bool:
     """백업 주기가 켜져 있는가. **기본값은 꺼짐**이고, 그것이 판단이다(머리말)."""
     return bool(getattr(settings, "OPS_BACKUP_SCHEDULE_ENABLED", False))
@@ -197,7 +280,7 @@ def ops_monitor_beat() -> dict:
                    "reason": (f"ops_monitor.py 를 찾지 못했다 (찾은 자리: "
                               f"{', '.join(SCRIPTS_DIRS)}) — **정상이 아니라 판정 불가**다")}
         logger.error("[OPS][MONITOR] %s", payload["reason"])
-        _write_evidence("monitor_last", payload)
+        _write_monitor_state(payload)
         return payload
 
     try:
@@ -206,7 +289,7 @@ def ops_monitor_beat() -> dict:
         payload = {"measured_at": stamp, "verdict": "UNKNOWN",
                    "reason": f"{type(exc).__name__}: {exc}"[:300]}
         logger.exception("[OPS][MONITOR] 감시가 터졌다 — 판정 불가")
-        _write_evidence("monitor_last", payload)
+        _write_monitor_state(payload)
         return payload
 
     verdicts = [v for v in _iter_verdicts(report)]

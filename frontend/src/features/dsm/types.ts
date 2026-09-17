@@ -322,3 +322,87 @@ export interface AddressGap {
   coverage: number | null;
   measurable: boolean;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * UX-36 카메라 오탐률 · 임계값 (차선 U24 · 턴 S · 부속서A U2 #10·#11)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * 카메라 한 대의 오탐률 한 줄.
+ *
+ * ★ `false_positive_rate` 가 `null` 인 것과 `0` 인 것은 **다른 사실**이다 —
+ *   앞은 「그 카메라를 한 번도 판정한 적이 없다」이고 뒤는 「재 봤더니 0이다」다.
+ *   `measurable` 이 그 둘을 가르고, 서버는 못 재는 행을 정렬 맨 뒤로 보낸다.
+ */
+export interface CameraFalsePositiveRow {
+  stream_monitor_id: number;
+  stream_monitor_name: string;
+  false_positive: number;
+  reviewed: number;
+  unreviewed: number;
+  false_positive_rate: number | null;
+  measurable: boolean;
+  /** 서버가 매긴 상위 N. **화면이 세지 않는다** — 세면 두 곳이 갈린다. */
+  top: boolean;
+}
+
+export interface CameraFalsePositiveResponse {
+  since: string;
+  until: string;
+  cameras: CameraFalsePositiveRow[];
+  /** 분모 — 이 창에 사건을 낸 카메라 수. 상한에 닿으면 `camera_capped` 가 참이다. */
+  camera_total: number;
+  top_n: number;
+  capped: boolean;
+  row_cap: number;
+  camera_capped: boolean;
+  camera_cap: number;
+}
+
+/**
+ * 슬라이더 시뮬 결과 — 「최근 N일 기준 시간당 몇 건」.
+ *
+ * ★ `events_per_hour` 가 `null` 이면 **잴 수 없다**(확신도가 있는 사건이 0건).
+ *   0.0 으로 그리면 「문턱을 올렸더니 알림이 사라졌다」는 거짓 안심이 된다.
+ * ★ 「많다」의 문턱은 `noisy_per_hour` 로 **서버가 준다.** 화면이 6 을 들지 않는다.
+ */
+export interface ThresholdSimulation {
+  since: string;
+  until: string;
+  days: number;
+  camera_id: number;
+  confidence_min: number;
+  events_total: number;
+  graded_total: number;
+  /** 확신도가 비어 있어 어떤 문턱으로도 가를 수 없는 사건 수. */
+  unknown_confidence: number;
+  kept: number;
+  dropped: number;
+  window_hours: number;
+  events_per_hour: number | null;
+  current_per_hour: number | null;
+  measurable: boolean;
+  noisy_per_hour: number;
+  noisy: boolean;
+  /** 참이면 표본 상한에 닿았다 — 그 카메라의 옛 사건이 이 셈 밖에 있다. */
+  sample_capped: boolean;
+  row_cap: number;
+}
+
+/** 카메라별로 고칠 수 있는 임계값의 이름표. **값은 여기 없다.** */
+export interface CameraThresholdKey {
+  key: string;
+  title: string;
+  unit: string;
+  /** 표 ①이 정한 기본값. `null` 이면 **기본값이 아직 없다**(0 이 아니다). */
+  default: number | null;
+  applies_to: string;
+}
+
+/** 「저장 → 재조회」의 재조회 결과. `set` 이 거짓이면 값이 **없는** 것이다. */
+export interface CameraThresholdValue {
+  key: string;
+  camera_id: number;
+  value: number | null;
+  set: boolean;
+}

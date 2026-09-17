@@ -23,6 +23,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
 import { userFacingError } from '../copy';
+import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 
@@ -83,6 +84,8 @@ export default function CameraAddress() {
   const [done, setDone] = useState<ImportPlan | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  /** ★ [UX-31′] 표를 보려던 것인가 채우려던 것인가 — 「다시 시도」가 그 둘을 안 바꾼다. */
+  const [lastDryRun, setLastDryRun] = useState<boolean | null>(null);
 
   const gap = useDsmResource<AddressGap>(
     () => dsmGet(dsmEndpoint.cameraAddressGap),
@@ -95,6 +98,7 @@ export default function CameraAddress() {
     async (dryRun: boolean) => {
       setBusy(true);
       setError('');
+      setLastDryRun(dryRun);
       try {
         // ★ 질의로 보낸다 — 본문이면 422(인자 없음)다.
         const result = await dsmPostQuery<ImportPlan>(dsmEndpoint.cameraImport, {
@@ -192,7 +196,19 @@ export default function CameraAddress() {
           </Text>
         </Card>
 
-        {error && <Alert type="error" showIcon message={error} />}
+        {/* ★ [UX-31′] 네 문장 + **살아 있는 단추** — 방금 보낸 그 요청을 그대로 다시 낸다. */}
+        {error && (
+          <FailureNotice
+            title={
+              lastDryRun === false
+                ? '주소를 채우지 못했습니다.'
+                : '표를 만들지 못했습니다.'
+            }
+            detail={error}
+            busy={busy}
+            onRetry={lastDryRun === null ? undefined : () => run(lastDryRun)}
+          />
+        )}
 
         {plan?.fatal && <Alert type="warning" showIcon message={plan.fatal} />}
 

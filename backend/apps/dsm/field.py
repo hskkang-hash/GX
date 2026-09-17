@@ -39,6 +39,7 @@
 """
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime
 from typing import Any
@@ -172,3 +173,138 @@ def save_field_photo(
         "content_type": photo.content_type,
         "size_bytes": photo.size_bytes,
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# M3 현장 회신의 **종류**(`kind`) — UX-45 여섯 칸 (2026-09-16 · 턴 S · 차선 U3)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 왜 새 표도, 새 칸도, 커널 수정도 아닌가 [판정 · 턴 S]
+# -----------------------------------------------------
+# 회신은 감사 한 줄이 정본이다(`kernels/k1_event/field_reply.py` 머리말 ③). 거기에
+# `kind` 를 담는 길이 셋 있었다:
+#
+#     ① 커널 시그니처에 `kind` 를 더한다      가장 곧다. 그러나 그 파일은 K1 이고
+#                                            이번 턴 U3 의 소유가 아니다 — 같은 턴에
+#                                            두 차선이 한 파일을 고치면 충돌하고,
+#                                            충돌한 라우트는 라우팅 침묵이 된다.
+#     ② App 이 감사 행을 **직접** 쓴다        문지기(`get_event` 404)·길이 검증이
+#                                            **두 벌**이 된다. 두 벌은 반드시 갈리고,
+#                                            갈리는 쪽은 언제나 거절 경로다(D-212).
+#     ③ 저장 문자열에 **정형 접두**를 붙인다  ← 이것으로 갔다.
+#
+# ③은 설계 1쪽(`U3_M3_시트_설계.md` §1 「지원 요청」)이 이미 후보로 적어 둔 길이다.
+# 커널의 문지기·길이 검증·감사 규약을 **한 벌 그대로** 지나고, 저장된 과거 회신은
+# 접두가 없으므로 `note` 로 읽힌다 — 새 칸이 「과거가 비어 있다」로 태어나는 문제가
+# 없다(`event_timeline` 이 칸 셋을 안 만든 것과 같은 판단).
+#
+# ⚠ 그래서 **화면은 접두를 보지 않는다.** 라우트가 `kind` 와 깨끗한 `text` 로 갈라
+#   내보낸다(`api.py::field_reply` · `field_replies`). 접두가 사람의 자리에 보이면
+#   그것은 이 판정의 실패다.
+class UnknownReplyKind(Exception):
+    """계약 밖의 종류. **422 다** — 문법은 맞고 값이 계약 밖이다(D-290)."""
+
+
+#: UX-45 M3 시트의 여섯 칸. **이름으로 잠근다**(D-285 ②) — 수가 아니라 이름이다.
+#:
+#: 각 칸: (사람이 읽는 이름, 본문이 비었을 때 대신 적는 말, 본문이 필수인가)
+#:
+#: ★ 본문이 필수인 둘(`note`·`false_positive`)에는 **기본 문구가 없다.** 「본 것을
+#:   한 줄로」와 「가 보니 아무것도 없었다」는 사람이 적어야 뜻이 있고, 기본 문구를
+#:   깔면 아무도 안 적은 회신이 **적은 것처럼** 쌓인다(D-284 의 조용한 판).
+#: ★ 나머지 넷에는 기본 문구가 있다 — 그 넷은 **누름 자체가 사실**이다(도착했다 ·
+#:   사진을 올렸다 · 지원이 필요하다 · 조치를 끝냈다). 빈 회신을 커널이 거절하므로
+#:   (그 규약은 옳다) 누름의 사실을 문장으로 옮기는 것이 이 자리의 일이다.
+REPLY_KINDS: dict[str, tuple[str, str, bool]] = {
+    "arrived":        ("도착",      "현장에 도착했습니다.", False),
+    "photo":          ("사진",      "현장 사진을 올렸습니다.", False),
+    "note":           ("한 줄",     "", True),
+    "false_positive": ("오탐 사유", "", True),
+    "support":        ("지원 요청", "추가 지원을 요청합니다.", False),
+    "done":           ("조치 완료", "현장 조치를 마쳤습니다.", False),
+}
+
+#: 기본값. 접두가 없는 **과거 회신 전부**가 이것으로 읽힌다 — 「한 줄」이 그 시절의
+#: 유일한 종류였으므로 이 기본값은 추측이 아니라 사실이다.
+DEFAULT_REPLY_KIND = "note"
+
+#: 저장 문자열의 접두 모양. `[FIELD:support] 인력 2명` 처럼 앞에 붙는다.
+_KIND_TAG = "[FIELD:%s]"
+_KIND_TAG_RE = re.compile(r"^\[FIELD:([a-z_]{1,32})\]\s?(.*)$", re.DOTALL)
+
+#: 커널이 받는 한 줄의 상한(`kernels/k1_event/field_reply.py::MAX_REPLY_CHARS`).
+#:
+#: ⚠ **두 벌이다.** 여기서 커널을 import 하지 않는 이유는 F-05 다: K1 의 App 소비자는
+#:   `apps/dsm/services.py` **하나**여야 하고(`test_f05_event_api::K1_CONSUMERS`),
+#:   이 파일이 커널을 직접 부르면 그 시험이 멈춘다. `drill.py::DRILL_CHANNEL` 이
+#:   같은 이유로 `LogChannel.name` 을 두 벌 든 자리와 같은 모양이고, 같은 처방을
+#:   쓴다 — **갈리는지는 시험이 본다**(`tests/test_u3_field_reply_kind.py`).
+KERNEL_REPLY_CHARS = 500
+
+
+def normalize_kind(kind: str | None) -> str:
+    """종류 이름을 계약 안의 값으로 만든다. 계약 밖이면 **던진다.**
+
+    ★ 모르는 값을 `note` 로 **접지 않는다.** 접으면 화면의 오타 하나가 「지원 요청」을
+      조용히 「한 줄」로 바꾸고, 관제 큐의 지원 요청 배지가 영영 안 뜬다 — 그 고장은
+      아무 데서도 안 보인다(착시 ⑧ 「조용한 성공」).
+    """
+    name = (kind or "").strip() or DEFAULT_REPLY_KIND
+    if name not in REPLY_KINDS:
+        raise UnknownReplyKind(
+            f"현장 회신 종류 {name!r} 는 계약 밖입니다. "
+            f"쓸 수 있는 것: {', '.join(REPLY_KINDS)}")
+    return name
+
+
+def kind_label(kind: str) -> str:
+    """사람이 읽는 이름. 모르는 값은 **그 값 그대로** 돌려준다 — 읽기는 막지 않는다.
+
+    ⚠ 쓰기(`normalize_kind`)와 읽기가 다른 엄격도를 갖는 것은 뜻이 있다: 계약 밖
+      값이 저장돼 버린 과거가 있으면 그것을 **보여는 줘야** 고칠 수 있다.
+    """
+    row = REPLY_KINDS.get(kind)
+    return row[0] if row else kind
+
+
+def compose_reply(*, kind: str, text: str) -> tuple[str, str]:
+    """(저장할 문자열, 깨끗한 본문). 커널에 넘기기 **직전**의 모양을 만든다.
+
+    거절 둘 — 둘 다 `FieldReplyRejected` 가 아니라 부르는 쪽이 422 로 옮긴다:
+        · 본문이 필수인 종류인데 비었다  → 기본 문구로 채우지 않는다(위 ★)
+        · 접두까지 세어 커널 상한을 넘는다 → **잘라 저장하지 않는다**(커널과 같은 규약)
+    """
+    name = normalize_kind(kind)
+    label, fallback, text_required = REPLY_KINDS[name]
+    body = (text or "").strip()
+
+    if not body:
+        if text_required:
+            raise UnknownReplyKind(
+                f"「{label}」에는 본문이 필요합니다. 기본 문구로 채우지 않습니다 — "
+                f"아무도 안 적은 회신이 적은 것처럼 쌓이기 때문입니다.")
+        body = fallback
+
+    prefix = _KIND_TAG % name
+    room = KERNEL_REPLY_CHARS - len(prefix) - 1
+    if len(body) > room:
+        raise UnknownReplyKind(
+            f"현장 회신이 {len(body)}자입니다. 「{label}」의 상한은 {room}자 — "
+            f"잘라 저장하지 않습니다: 잘린 회신은 뜻이 뒤집힐 수 있습니다.")
+    return f"{prefix} {body}", body
+
+
+def split_reply(stored: str) -> tuple[str, str]:
+    """저장된 문자열 → (종류, 사람이 읽는 본문).
+
+    접두가 없으면 `note` 다 — **접두가 생기기 전의 회신 전부**가 그것이다.
+    """
+    raw = stored or ""
+    matched = _KIND_TAG_RE.match(raw)
+    if not matched:
+        return DEFAULT_REPLY_KIND, raw
+    name, body = matched.group(1), matched.group(2)
+    if name not in REPLY_KINDS:
+        #: 계약 밖 접두는 **본문을 통째로** 돌려준다 — 접두를 떼면 그 사실이 사라진다.
+        return name, raw
+    return name, body

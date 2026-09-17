@@ -33,13 +33,14 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Main } from 'rj-core';
 
 import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
 import { userFacingError } from '../copy';
 import AutoAnalysisNotice from '../components/AutoAnalysisNotice';
 import RetentionNotice from '../components/RetentionNotice';
+import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 
@@ -106,6 +107,15 @@ export default function PrivacyRequestsPage() {
   const [error, setError] = useState('');
   const [form] = Form.useForm();
   const [replyText, setReplyText] = useState('');
+  /**
+   * ★ [UX-31′ · 턴 S] **방금 실패한 그 일**을 들고 있는 자리.
+   *
+   * 이 화면에는 쓰는 문이 넷이고(조회 · 접수 · 마스킹본 · 회신) 실패 상자는 하나다.
+   * 상자가 「다시 시도」를 그리려면 **어느 일이 실패했는지**를 알아야 한다 —
+   * 모르면 그 단추는 아무 일도 안 하거나 엉뚱한 일을 하고, 둘 다 거짓말이다.
+   * 실패한 자리에서 자기를 다시 부르는 함수를 여기 넣는다.
+   */
+  const retry = useRef<(() => void) | null>(null);
 
   const list = useDsmResource<RequestList>(
     () => dsmGet(dsmEndpoint.privacyRequests),
@@ -122,7 +132,10 @@ export default function PrivacyRequestsPage() {
         dsmEndpoint.privacyRequestDetail(receiptNo)));
     } catch (err) {
       setDetail(null);
-      setError(userFacingError('PrivacyRequests', err, '요청이 실패했습니다.'));
+      retry.current = () => {
+        void openDetail(receiptNo);
+      };
+      setError(userFacingError('PrivacyRequests', err, '청구를 불러오지 못했습니다.'));
     }
   }, []);
 
@@ -144,7 +157,10 @@ export default function PrivacyRequestsPage() {
       list.reload();
       openDetail(created.receipt_no);
     } catch (err) {
-      setError(userFacingError('PrivacyRequests', err, '요청이 실패했습니다.'));
+      retry.current = () => {
+        void submit(values);
+      };
+      setError(userFacingError('PrivacyRequests', err, '청구를 접수하지 못했습니다.'));
     } finally {
       setBusy(false);
     }
@@ -158,7 +174,10 @@ export default function PrivacyRequestsPage() {
       setMasked(await dsmGet<MaskedView>(
         dsmEndpoint.privacyRequestMasked(selected)));
     } catch (err) {
-      setError(userFacingError('PrivacyRequests', err, '요청이 실패했습니다.'));
+      retry.current = () => {
+        void loadMasked();
+      };
+      setError(userFacingError('PrivacyRequests', err, '마스킹본을 불러오지 못했습니다.'));
     } finally {
       setBusy(false);
     }
@@ -176,7 +195,10 @@ export default function PrivacyRequestsPage() {
       await openDetail(selected);
       list.reload();
     } catch (err) {
-      setError(userFacingError('PrivacyRequests', err, '요청이 실패했습니다.'));
+      retry.current = () => {
+        void sendReply();
+      };
+      setError(userFacingError('PrivacyRequests', err, '회신을 보내지 못했습니다.'));
     } finally {
       setBusy(false);
     }
@@ -192,8 +214,14 @@ export default function PrivacyRequestsPage() {
         {/* 청구인이 가장 먼저 묻는 것 — 얼마나 보관하는가. 수는 서버가 선언한다. */}
         <RetentionNotice />
 
+        {/* ★ [UX-31′] 네 문장 + **살아 있는 단추** — 방금 실패한 그 일을 다시 부른다. */}
         {error ? (
-          <Alert type="error" showIcon message="요청이 처리되지 않았습니다." description={error} />
+          <FailureNotice
+            title="요청이 처리되지 않았습니다."
+            detail={error}
+            busy={busy}
+            onRetry={retry.current ?? undefined}
+          />
         ) : null}
 
         <Row gutter={16}>

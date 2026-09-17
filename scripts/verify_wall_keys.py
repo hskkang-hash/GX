@@ -189,12 +189,49 @@ def check_wall_refresh(src: str) -> list[str]:
     return bad
 
 
-def check_wall_voice(src: str) -> list[str]:
+#: ★ [턴 S · 조율자] **말은 사전에서 온다.** UX-31′ 로 월 모드의 실패 문장이 `copy.ts`
+#:   (`WALL_COPY` · `CAMERA_COPY`)로 옮겨 갔다. 술어 ⑤ 는 글자를 `Wall.tsx` 안에서만 찾았고,
+#:   그래서 **제품은 그대로 말하는데 판정기만 빨개졌다** — D-470 이 이름 붙인 그 모양이다.
+#:   글자를 화면에 되돌려 놓는 쪽은 택하지 않았다(그러면 사전이 두 벌이 된다).
+#:   대신 판정기가 참조를 **풀어 읽는다**: `WALL_COPY.stale` 을 보면 `copy.ts` 의 그 블록에서
+#:   값을 꺼내 소스 뒤에 붙이고, 그 다음에야 글자를 찾는다.
+#:   ⚠ **없는 이름을 가리키면 풀리지 않는다** — 그러면 글자가 없으니 그대로 빨강이다. 그것이
+#:     옳다: 사전에 없는 말을 화면이 부르는 것은 「말하는 자리가 없다」와 같은 사실이다.
+COPY_TS = f"{FE}/copy.ts"
+_COPY_REF = re.compile(r"(?<![A-Za-z0-9_])(WALL_COPY|CAMERA_COPY)[.]([A-Za-z_][A-Za-z0-9_]*)")
+
+
+def _copy_value(copy_src: str, block: str, name: str):
+    """`export const <block> = { … } as const;` 안에서 `name: '…'` 하나를 꺼낸다."""
+    m = re.search(rf"export const {block}\s*=\s*\{{(.*?)\}}\s*as const", copy_src, re.S)
+    if not m:
+        return None
+    v = re.search(rf"(?m)^\s*{name}\s*:\s*'([^']*)'", m.group(1))
+    return v.group(1) if v else None
+
+
+def inline_copy_refs(src: str, copy_src=None) -> str:
+    """상수 참조를 사전 값으로 풀어 소스 뒤에 붙인다. 못 푼 참조는 그대로 둔다."""
+    refs = sorted(set(_COPY_REF.findall(src)))
+    if not refs:
+        return src
+    if copy_src is None:
+        cp = Path(__file__).resolve().parents[1] / COPY_TS
+        copy_src = cp.read_text(encoding="utf-8") if cp.is_file() else ""
+    found = [_copy_value(copy_src, b, n) for b, n in refs]
+    return src + "\n" + "\n".join(v for v in found if v)
+
+
+def check_wall_voice(src: str, copy_src=None) -> list[str]:
     """⑤ 갱신이 실패했을 때 월 모드가 **그 사실을 말한다** (칸마다 따로).
+
+    ★ 상수(`WALL_COPY.*` · `CAMERA_COPY.*`)로 말해도 인정한다 — 단 사전에 그 이름이
+      **실제로** 있어야 한다. `inline_copy_refs` 가 푼다.
 
     ★ 사전 밖 낱말은 여기서 재지 않는다 — `verify_ui_copy.py` 의 자리다.
       여기서 재는 것은 「말하는 자리가 실재하는가」 하나다.
     """
+    src = inline_copy_refs(src, copy_src)
     bad: list[str] = []
     if "불러오지 못했습니다" not in src:
         bad.append("못 가져온 것을 말하는 자리가 없다")
@@ -503,6 +540,22 @@ setInterval(() => setNow(Date.now()), 5000);
 <div>불러오지 못했습니다. 아래는 마지막으로 받은 내용입니다.</div>
 <div>카메라 상태를 불러오지 못했습니다.</div>
 """
+
+#: ★ 출생 표본 ⑤′ — 문장이 화면이 아니라 **사전**에 있고 화면은 이름으로 부른다 (턴 S).
+GOOD_COPY_TS = """
+export const WALL_COPY = {
+  stale: '불러오지 못했습니다. 아래는 마지막으로 받은 내용입니다.',
+  calm: '평온합니다.',
+} as const;
+export const CAMERA_COPY = {
+  broken: '카메라 상태를 불러오지 못했습니다.',
+} as const;
+"""
+GOOD_WALL_COPYREF = GOOD_WALL.replace(
+    "<div>불러오지 못했습니다. 아래는 마지막으로 받은 내용입니다.</div>", "<div>{WALL_COPY.stale}</div>"
+).replace("<div>카메라 상태를 불러오지 못했습니다.</div>", "<div>{CAMERA_COPY.broken}</div>")
+#: 음성 ⑤′ — 사전에 **없는** 이름을 부른다. 풀리지 않으니 글자가 없고, 그래서 빨강이어야 한다.
+BAD_WALL_COPYREF_MISSING = GOOD_WALL_COPYREF.replace("{WALL_COPY.stale}", "{WALL_COPY.nope}")
 #: 음성 ⑤ — 24 미만이 **한 줄** 섞였다. 3m 밖에서 그 줄만 없다.
 BAD_WALL_SMALL = GOOD_WALL + "\nconst NOTE = { fontSize: 12 };\n"
 #: 음성 ⑥ — 크기 선언이 **아예 없다**. 라이브러리 기본값 14 가 그린다 — 통과가 아니다.
@@ -625,6 +678,8 @@ def self_test() -> int:
         ("③ 좋은 월 모드 글자", check_wall_font, GOOD_WALL),
         ("④ 좋은 월 모드 갱신", check_wall_refresh, GOOD_WALL),
         ("⑤ 좋은 월 모드 실패 문장", check_wall_voice, GOOD_WALL),
+        ("⑤′ 상수로 말하는 월 모드 (사전을 풀어 읽는다)",
+         lambda s: check_wall_voice(s, copy_src=GOOD_COPY_TS), GOOD_WALL_COPYREF),
         ("⑥ 좋은 큐 배선", check_wiring, GOOD_QUEUE),
         ("⑦ 자리로 고르는 배선 — IME 재현", check_ime_replay, GOOD_IME_KEYS),
     )
@@ -635,6 +690,7 @@ def self_test() -> int:
             fails += 1
 
     negatives = (
+        ("⑤′ 사전에 없는 이름을 부른다", lambda s: check_wall_voice(s, copy_src=GOOD_COPY_TS), BAD_WALL_COPYREF_MISSING),
         ("입력창 갈래 없음", check_keys, BAD_KEYS_NO_GUARD),
         ("입력창 갈래 안 불림", check_keys, BAD_KEYS_UNUSED),
         ("등급 문지기 없음", check_sound, BAD_ALARM_NO_GATE),

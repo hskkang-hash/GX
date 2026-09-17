@@ -22,6 +22,7 @@ import { Main } from 'rj-core';
 
 import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
 import { dataSourceBadge, userFacingError } from '../copy';
+import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { absolute, stamp } from '../time';
@@ -61,6 +62,8 @@ export default function DrillModePage() {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  /** 마지막으로 시도한 전환. 「다시 시도」가 **그 요청을** 다시 내기 위한 값이다. */
+  const [lastIntent, setLastIntent] = useState<boolean | null>(null);
 
   const state = useDsmResource<DrillState>(() => dsmGet(dsmEndpoint.drill), [], {
     refreshMs: 30_000,
@@ -75,6 +78,9 @@ export default function DrillModePage() {
     async (next: boolean) => {
       setBusy(true);
       setError('');
+      // ★ [UX-31′ · 턴 S] **무엇을 다시 할지 기억한다.** 실패 상자의 「다시 시도」가
+      //   누를 것이 되려면 화면이 「방금 무슨 요청이었나」를 들고 있어야 한다.
+      setLastIntent(next);
       try {
         // ★ 질의로 보낸다 — 본문이면 422(인자 없음). [실측 2026-09-05]
         await dsmPostQuery(dsmEndpoint.drill, { enabled: next, reason });
@@ -105,7 +111,15 @@ export default function DrillModePage() {
 
         <Alert type="warning" showIcon message="이 스위치는 알림을 끕니다 — 배선됨(2026-09-24)." description={WIRED_NOTE} />
 
-        {error ? <Alert type="error" showIcon message="거절되었습니다." description={error} /> : null}
+        {/* ★ [UX-31′] 네 문장 + **살아 있는 단추**. 누르면 방금 그 전환을 다시 보낸다. */}
+        {error ? (
+          <FailureNotice
+            title="훈련 모드를 바꾸지 못했습니다."
+            detail={error}
+            busy={busy}
+            onRetry={lastIntent === null ? undefined : () => toggle(lastIntent)}
+          />
+        ) : null}
 
         <StateBoundary state={state.state} reason={state.reason} status={state.status} onRetry={state.reload}>
           {current ? (

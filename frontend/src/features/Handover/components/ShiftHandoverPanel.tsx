@@ -29,11 +29,12 @@
  *   고장난 화면을 구별하지 못한다(D-301).
  */
 import { Alert, Button, Card, Empty, Space, Typography } from 'antd';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { dsmEndpoint, dsmGet } from '@/features/dsm/api';
 import { useDsmResource } from '@/features/dsm/hooks/useDsmResource';
+import { countClick, finishMetric, startMetric } from '@/features/dsm/metrics';
 import type { EventSummary } from '@/features/dsm/types';
 
 const { Paragraph, Text } = Typography;
@@ -85,7 +86,29 @@ export default function ShiftHandoverPanel({ composePath, reasonLine }: Props) {
     [summary.state, summary.data],
   );
 
-  const compose = useCallback(() => navigate(composePath), [navigate, composePath]);
+  /*
+   * 편리성 계측 #2 — **교대 인계 메모 작성** (턴 S · 차선 U1).
+   *
+   * 시계는 **이 자리가 뜬 때** 시작한다. 사람이 인계를 시작하는 순간이 곧 이 화면을
+   * 보는 순간이기 때문이다. 멈추는 자리는 둘이다: 초안을 **가져갔을 때**(복사) 또는
+   * 메모를 **쓰러 갔을 때**. 둘 다 「사람이 이 초안으로 다음 일을 했다」는 뜻이다.
+   *
+   * ★ 안 멈추고 화면을 떠나면 **아무 수도 안 남는다** — 하다 만 것은 수가 아니다.
+   */
+  useEffect(() => {
+    startMetric('u1_handover_note', 'shift');
+  }, []);
+
+  const compose = useCallback(() => {
+    countClick('u1_handover_note');
+    finishMetric('u1_handover_note');
+    navigate(composePath);
+  }, [navigate, composePath]);
+
+  const onCopied = useCallback(() => {
+    countClick('u1_handover_note');
+    finishMetric('u1_handover_note');
+  }, []);
 
   return (
     <Space
@@ -125,7 +148,11 @@ export default function ShiftHandoverPanel({ composePath, reasonLine }: Props) {
           />
         ) : null}
         <Paragraph
-          copyable={{ text: draft, tooltips: ['초안 복사', '복사했습니다'] }}
+          copyable={{
+            text: draft,
+            tooltips: ['초안 복사', '복사했습니다'],
+            onCopy: onCopied,
+          }}
           style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}
         >
           {draft}

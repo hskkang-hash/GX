@@ -247,6 +247,8 @@ const DsmCameraAddress = lazy(() => import('./features/dsm/pages/CameraAddress')
  */
 const DsmWall = lazy(() => import('./features/dsm/pages/Wall'));
 const DsmCameraGrid = lazy(() => import('./features/dsm/pages/CameraGrid'));
+// ★ 턴 S · 차선 U24 (S-10) — 조율자가 단 짝. `routes.ts` 의 `cameraTuning` 과 둘이 서야 주소가 산다.
+const DsmCameraTuning = lazy(() => import('./features/dsm/pages/CameraTuning'));
 const DsmPrivacyRequests = lazy(
   () => import('./features/dsm/pages/PrivacyRequests'),
 );
@@ -260,10 +262,12 @@ const DsmSystemSettings = lazy(
 const DsmTeamStatus = lazy(() => import('./features/dsm/pages/TeamStatus'));
 /** S-14 사람·역할 — UX-42 (차선 U56 · 턴 R). */
 const DsmPeople = lazy(() => import('./features/dsm/pages/People'));
-/** S-16 알림 받는 사람·채널 — 골격 · UX-43 (차선 U56 · 턴 R). */
+/** S-16 알림 받는 사람·채널 — UX-43 (차선 U56 · 턴 R 골격 → 턴 S 실자료). */
 const DsmNotifySettings = lazy(
   () => import('./features/dsm/pages/NotifySettings'),
 );
+/** S-15 내 정보 — UX-42-me (차선 U56 · 턴 S). 읽기뿐이다(설정 쓰기는 U3 의 WS-02). */
+const DsmMe = lazy(() => import('./features/dsm/pages/Me'));
 /**
  * 모바일 — 이동 중 수신 모드 (U3 · 차선 D).
  *
@@ -275,6 +279,10 @@ const DsmNotifySettings = lazy(
 const MobileInbox = lazy(() => import('./features/mobile/pages/MobileInbox'));
 const MobileEventDetail = lazy(
   () => import('./features/mobile/pages/MobileEventDetail'),
+);
+/** M4 「내 알림 설정」 — 근무 외 시간 · 담당 구역 · 채널 · 이 기기 알림 (턴 S · 차선 U3). */
+const MobileSettings = lazy(
+  () => import('./features/mobile/pages/MobileSettings'),
 );
 /**
  * W0-4 — 데모·목업 화면 격리
@@ -695,6 +703,7 @@ function App() {
             { path: dsm2Routes.focusQueue.path, element: <DsmFocusQueue /> },
             { path: dsm2Routes.drill.path, element: <DsmDrillMode /> },
             { path: dsm2Routes.cameraImport.path, element: <DsmCameraImport /> },
+            { path: dsm2Routes.cameraTuning.path, element: <DsmCameraTuning /> },
             { path: dsm2Routes.cameraAddress.path, element: <DsmCameraAddress /> },
             // ── 턴 D · UX-23 · LAW-07 ────────────────────────────────────
             {
@@ -726,6 +735,9 @@ function App() {
               path: dsm2Routes.notifySettings.path,
               element: <DsmNotifySettings />,
             },
+            // ── 턴 S · S-15 내 정보 (차선 U56) ───────────────────────────
+            //   ⚠ `/dsm/notify` · `/dsm/people` 과 형제다(변수 조각 없음).
+            { path: dsm2Routes.me.path, element: <DsmMe /> },
             {
               path: CustomRoutes.dsm.eventDetail.path,
               element: <DsmEventDetail />,
@@ -739,6 +751,9 @@ function App() {
               path: mobileRoutes.eventDetail.path,
               element: <MobileEventDetail />,
             },
+            //   M4 「내 알림 설정」 — 리터럴 한 조각이라 `/m/events/:id` 와
+            //   서로 삼키지 않는다(선언 순서가 곧 라우팅이다).
+            { path: mobileRoutes.settings.path, element: <MobileSettings /> },
             {
               /*
                 P-123 · UX-31 ④ — **빈 표가 「없다」로 읽히던 자리** (턴 O · 차선 C2).

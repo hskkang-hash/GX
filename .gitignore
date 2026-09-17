@@ -104,3 +104,8 @@ nginx/generated/
 # P-136 — 원격이 열리는 날 첫 push 를 5분으로 만드는 git bundle(저장소 전체의 사본).
 # 저장소가 자기 사본을 나르지 않는다 — 번들은 저장소 밖으로 옮겨 쓰는 물건이다.
 docs/agent/evidence/bundles/*.bundle
+
+# ★ P-155 — 5분마다 스스로 쓰는 감시 상태는 저장소 안에 두지 않는다 (턴 S).
+#   덮어쓰는 것은 `GX_OPS_STATE_DIR`(기본 /var/lib/gx/state), 증거에 남는 것은
+#   `monitor_summary.jsonl` 의 **판정이 바뀐 줄만**이다.
+docs/agent/evidence/D-373/monitor_last.json

@@ -492,7 +492,16 @@ class KernelPublicSurfaceTest(TestCase):
                # ★ 차선 D (2026-09-04) — 재알림 N분. `WRITE_NO_PROBE` 에
                #   선등재된 이름을 그대로 쓴다. DA-04 §2 K2 표와
                #   `kernels/k2_notify/__init__.py` 를 같은 커밋에서 고쳤다.
-               "renotify"]
+               "renotify",
+               # ★ 턴 S · 차선 U56 (WS-14 · UX-43) — S-16 「알림 받는 사람·채널」.
+               #   읽기(`notify_rule_overview`) · 저장(`save_rule` — 심각 0명 금지) ·
+               #   시험 발송(`send_test_notification` — 훈련 채널로만).
+               #   DA-04 §2 K2 표와 `kernels/k2_notify/__init__.py` 를 같은 커밋에서 고쳤다.
+               "notify_rule_overview",
+               "save_rule",
+               "send_test_notification",
+               # ★ S-15 「내 정보」의 읽기 면. 쓰기(`me/notify-prefs`)는 U3 의 WS-02 다.
+               "my_notify_reach"]
 
     def test_public_surface_matches_da04(self) -> None:
         from kernels import k2_notify

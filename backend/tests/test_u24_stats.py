@@ -25,6 +25,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from urllib.parse import urlencode
 
 from django.core.cache import cache
 from django.test import TestCase
@@ -299,3 +300,329 @@ class CacheTest(StatsFixture):
         third = stats.stats_summary(scope=self.scope_a, since=since)
         self.assertEqual(2, third["total"],
                          "캐시를 비운 뒤에도 새 이벤트가 안 잡힙니다 — 집계 자체가 고장입니다")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ⑦ UX-36 카메라별 오탐률 — 부속서A U2 #10 「내림차순 · 상위 3 강조」 (턴 S)
+# ═══════════════════════════════════════════════════════════════════════════
+BY_CAMERA = "/api/dsm/stats/false-positive/by-camera"
+SIMULATE = "/api/dsm/stats/thresholds/simulate"
+CAMERA_THRESHOLD = "/api/dsm/stats/camera-threshold"
+CAMERA_THRESHOLD_KEYS = "/api/dsm/stats/camera-thresholds"
+
+#: 표 ①에서 **카메라별로 둘 수 있고 계약이 못박지 않은** 키. 이 시험이 이 키를 쓰는
+#: 이유는 그것이 지금 표에 실제로 있는 유일한 그런 키이기 때문이다 — 없는 키를
+#: 지어내면 시험이 저장소가 아니라 상상을 잰다(D-289).
+CAMERA_KEY = "waterlevel.baseline"
+
+
+class CameraFixture(StatsFixture):
+    """같은 테넌트에 카메라 **셋**. 한 대만으로는 「내림차순」을 잴 수 없다.
+
+    ★ 카메라를 `setUpTestData`(클래스 한 번)에서 만든다 — `setUp`(시험마다)이 아니다.
+      [실측] `setUp` 에서 만들었더니 같은 테넌트의 사건을 판정하는 순간
+      `DetectionEvent.DoesNotExist` 가 났다: 오탐 판정이 자동 종결 신호를 타고
+      다시 사건을 **테넌트로 좁혀** 읽는데, 그 좁히기가 이 시점의 소유 관계를
+      못 따라왔다. `DsmFixture` 가 `stream_a`·`stream_b` 를 만드는 자리와 **같은
+      자리**에 두면 사라진다 — 픽스처가 저장소의 관례를 벗어난 것이 원인이었지
+      제품 결함이 아니다.
+    """
+
+    @classmethod
+    def setUpTestData(cls) -> None:  # noqa: N802 (Django 규약)
+        super().setUpTestData()
+        cls.stream_a2 = cls._stream("dsm-stream-A2", cls.group_a)
+        cls.stream_a3 = cls._stream("dsm-stream-A3", cls.group_a)
+
+    def setUp(self) -> None:
+        super().setUp()
+        # ★★ **스레드에 남은 요청을 지운다 — 시험마다.** [실측 · 격리 A/B 8칸]
+        #
+        #   증상: 이 클래스의 시험 둘이 `_judge(...)` 첫 줄에서
+        #   `DetectionEvent.DoesNotExist` 로 죽었다. 같은 한 줄을 격리해서 돌리면
+        #   여덟 자리가 **전부 초록**이었다 — 카메라를 더한 것도, 판정 순서도,
+        #   사건을 여러 건 만든 것도 범인이 아니었다(가설 셋 기각).
+        #
+        #   범인은 **앞 시험이 남긴 요청**이다. 한 클래스 안에서 `test_anonymous...`
+        #   가 이름순으로 **먼저** 돌며 익명으로 HTTP 를 때리고, 그 요청이 스레드에
+        #   남는다. 그 뒤 ORM 의 기본 관리자가 그 남은 요청으로 테넌트를 좁히므로
+        #   **뒤따르는 시험에서 행이 통째로 안 보인다.** 오탐 판정은 자동 종결
+        #   신호를 타고 사건을 다시 읽으므로 바로 그 자리에서 죽었다.
+        #
+        #   ⚠ 이것은 제품 결함이 아니라 **시험 위생**이다. 그리고 「HTTP 를 때린
+        #     시험 뒤에 objects 가 빈다」는 이 저장소가 이미 아는 함정이다 —
+        #     `DsmFixture.setUpTestData` 가 같은 줄을 클래스 머리에서 한 번 쓴다.
+        #     한 번으로는 모자라다: 오염은 **시험마다** 새로 생긴다.
+        import contextlib
+
+        with contextlib.suppress(Exception):
+            from core.middleware.refresh_token import thread_local
+
+            thread_local.request = None
+
+    def _event_with_confidence(self, stream, confidence, *, event_type="fire"):
+        """확신도를 실은 사건 하나. `DsmFixture._event` 는 확신도를 안 싣는다.
+
+        ★ `occurred_at` 을 60초씩 벌린다 — 기록 단계 중복 억제창(10초) 안에 같은
+          카메라·같은 유형이 연달아 들어가면 **한 건으로 접히고**, 접힌 표본으로는
+          「몇 건이 남나」를 못 잰다(`DsmFixture._event` 와 같은 이유).
+        """
+        from kernels.k1_event import record_detection
+
+        self._nth = getattr(self, "_nth", 0) + 1
+        when = timezone.now() - timedelta(seconds=60 * self._nth)
+        return record_detection(
+            scope=self.scope_pipe, stream_monitor_id=stream.pk,
+            event_type=event_type, severity="critical", occurred_at=when,
+            confidence=confidence,
+            snapshot_path=f"minio://dsm/{self._nth}.jpg").event_id
+
+
+class FalsePositiveByCameraTest(CameraFixture):
+    def test_cameras_are_ordered_by_rate_with_unmeasurable_last(self) -> None:
+        """내림차순 · 판정 0건인 카메라는 **맨 뒤** · 상위 N 은 잴 수 있는 행에만."""
+        noisy = [self._event(self.stream_a) for _ in range(3)]
+        self._judge(noisy[0], "rejected", scope=self.scope_a)
+        self._judge(noisy[1], "rejected", scope=self.scope_a)
+        self._judge(noisy[2], "confirmed", scope=self.scope_a)
+
+        quiet = [self._event(self.stream_a2) for _ in range(2)]
+        self._judge(quiet[0], "confirmed", scope=self.scope_a)
+
+        self._event(self.stream_a3)          # 미판정만 — 잴 수 없는 카메라
+
+        resp = self.client.get(BY_CAMERA, {"days": 7, "top_n": 1},
+                               **_bearer(self.user_a))
+        self.assertEqual(200, resp.status_code, resp.content)
+        body = resp.json()
+        cams = body["cameras"]
+        self.assertEqual(3, len(cams), f"카메라 3대가 나와야 합니다: {cams}")
+
+        by_id = {c["stream_monitor_id"]: c for c in cams}
+        self.assertAlmostEqual(2 / 3, by_id[self.stream_a.pk]["false_positive_rate"])
+        self.assertEqual(0.0, by_id[self.stream_a2.pk]["false_positive_rate"])
+        self.assertIsNone(
+            by_id[self.stream_a3.pk]["false_positive_rate"],
+            "판정 0건인 카메라의 오탐률이 0.0 으로 나왔습니다 — 「오탐이 없다」와 "
+            "「아직 잴 수 없다」가 같은 값이 됐습니다(D-290)")
+
+        self.assertEqual(self.stream_a.pk, cams[0]["stream_monitor_id"],
+                         f"오탐률이 높은 카메라가 맨 위가 아닙니다: {cams}")
+        self.assertEqual(self.stream_a3.pk, cams[-1]["stream_monitor_id"],
+                         "판정 0건인 카메라가 맨 뒤가 아닙니다 — 조용한 카메라로 "
+                         "보입니다")
+
+        self.assertTrue(cams[0]["top"])
+        self.assertEqual(
+            1, sum(1 for c in cams if c["top"]),
+            "top_n=1 인데 상위 표시가 여럿입니다 — 화면이 서버의 순위를 못 믿게 됩니다")
+        self.assertFalse(by_id[self.stream_a3.pk]["top"],
+                         "잴 수 없는 카메라에 순위를 줬습니다 — 판정을 안 한 것이 "
+                         "상이 됩니다")
+
+    def test_numerator_and_denominator_come_with_the_rate(self) -> None:
+        """비율만 내지 않는다 — 분자·분모를 함께 낸다."""
+        ids = [self._event(self.stream_a) for _ in range(2)]
+        self._judge(ids[0], "rejected", scope=self.scope_a)
+
+        resp = self.client.get(BY_CAMERA, {"days": 7}, **_bearer(self.user_a))
+        row = next(c for c in resp.json()["cameras"]
+                   if c["stream_monitor_id"] == self.stream_a.pk)
+        self.assertEqual(1, row["false_positive"])
+        self.assertEqual(1, row["reviewed"])
+        self.assertEqual(1, row["unreviewed"])
+
+    def test_other_tenants_cameras_do_not_appear(self) -> None:
+        for _ in range(2):
+            self._event(self.stream_b)
+        self._event(self.stream_a)
+
+        resp = self.client.get(BY_CAMERA, {"days": 7}, **_bearer(self.user_a))
+        self.assertEqual(200, resp.status_code, resp.content)
+        ids = {c["stream_monitor_id"] for c in resp.json()["cameras"]}
+        self.assertNotIn(self.stream_b.pk, ids,
+                         "테넌트 B 의 카메라가 테넌트 A 의 표에 나왔습니다")
+
+    def test_anonymous_is_401(self) -> None:
+        self.assertEqual(401, self.client.get(BY_CAMERA).status_code)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ⑧ UX-36 시뮬 「시간당 N건」 — 부속서A U2 #11 · BF-3 4단계 (턴 S)
+# ═══════════════════════════════════════════════════════════════════════════
+class SimulateThresholdTest(CameraFixture):
+    def _simulate(self, user, **params):
+        return self.client.post(f"{SIMULATE}?{urlencode(params)}", **_bearer(user))
+
+    def test_threshold_keeps_only_events_at_or_above_it(self) -> None:
+        for c in (0.9, 0.8, 0.3):
+            self._event_with_confidence(self.stream_a, c)
+
+        resp = self._simulate(self.user_a, camera_id=self.stream_a.pk,
+                              confidence_min=0.5, days=7)
+        self.assertEqual(200, resp.status_code, resp.content)
+        body = resp.json()
+
+        self.assertTrue(body["measurable"])
+        self.assertEqual(3, body["graded_total"])
+        self.assertEqual(0, body["unknown_confidence"])
+        self.assertEqual(2, body["kept"])
+        self.assertEqual(1, body["dropped"])
+        #: 「시간당 N건」 — 화면이 이 수를 만들지 않는다. 서버가 낸 수를 그대로 쓴다.
+        self.assertAlmostEqual(2 / body["window_hours"], body["events_per_hour"])
+        self.assertAlmostEqual(3 / body["window_hours"], body["current_per_hour"])
+        #: 「많다」의 문턱도 서버가 낸다 — 화면이 6 을 들고 있으면 두 곳이 갈린다.
+        self.assertEqual(6.0, body["noisy_per_hour"])
+        self.assertFalse(body["noisy"])
+
+    def test_events_without_confidence_are_not_counted_as_kept(self) -> None:
+        """확신도가 없는 사건만 있으면 **잴 수 없다** — 시간당 0건이 아니다."""
+        for _ in range(3):
+            self._event(self.stream_a)          # confidence 를 안 싣는다
+
+        body = self._simulate(self.user_a, camera_id=self.stream_a.pk,
+                              confidence_min=0.5, days=7).json()
+        self.assertEqual(3, body["events_total"])
+        self.assertEqual(0, body["graded_total"])
+        self.assertEqual(3, body["unknown_confidence"])
+        self.assertFalse(body["measurable"])
+        self.assertIsNone(
+            body["events_per_hour"],
+            "가를 수 있는 사건이 0건인데 시간당 0.0건이라고 답했습니다 — "
+            "「문턱을 올렸더니 알림이 사라졌다」는 거짓 안심이 됩니다(D-290)")
+
+    def test_simulation_writes_nothing(self) -> None:
+        """시뮬은 **아무것도 바꾸지 않는다** — 누르는 것과 바뀌는 것을 가른다."""
+        from kernels.k5_trust import ThresholdNotSet, resolve_threshold
+
+        self._event_with_confidence(self.stream_a, 0.9)
+        self._simulate(self.user_a, camera_id=self.stream_a.pk,
+                       confidence_min=0.5, days=7)
+        with self.assertRaises(ThresholdNotSet):
+            resolve_threshold(CAMERA_KEY, scope=self.scope_a,
+                              camera_id=self.stream_a.pk)
+
+    def test_confidence_outside_zero_to_one_is_400(self) -> None:
+        for bad in (-0.1, 1.5):
+            with self.subTest(confidence_min=bad):
+                resp = self._simulate(self.user_a, camera_id=self.stream_a.pk,
+                                      confidence_min=bad, days=7)
+                self.assertEqual(400, resp.status_code, resp.content)
+
+    def test_other_tenants_camera_yields_zero_not_a_leak(self) -> None:
+        """남의 카메라 id 를 넣어도 **0건**이다 — 이름도 존재 여부도 안 나간다."""
+        self._event_with_confidence(self.stream_b, 0.9)
+
+        body = self._simulate(self.user_a, camera_id=self.stream_b.pk,
+                              confidence_min=0.5, days=7).json()
+        self.assertEqual(0, body["events_total"])
+        self.assertNotIn("stream_monitor_name", body)
+
+    def test_anonymous_is_401(self) -> None:
+        resp = self.client.post(
+            f"{SIMULATE}?{urlencode({'camera_id': 1, 'confidence_min': 0.5})}")
+        self.assertEqual(401, resp.status_code)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ⑨ 「저장(사유) → 재조회」 — 부속서A U2 #11 완결 조건 (턴 S)
+# ═══════════════════════════════════════════════════════════════════════════
+THRESHOLD_WRITE = "/api/dsm/settings/thresholds"
+
+
+class SaveThenReadBackTest(CameraFixture):
+    """★ 이 시험이 이 화면의 **완결 조건**이다 — 저장한 값이 실제로 되돌아오는가.
+
+    쓰는 문은 F-12 의 임계값 문 하나(이미 있던 것)이고, 읽는 문만 이번에 열었다.
+    둘이 같은 값을 말하지 않으면 화면의 「저장했습니다」는 아무것도 증명하지 않는다.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        from common.tenant_roles import tenant_admin_role_code
+
+        #: 임계값을 바꾸는 것은 관리 역할의 일이다(F-12 문지기). 그 역할 없이 재면
+        #: 이 시험은 403 을 재게 되고, 그것은 이 절이 묻는 것이 아니다.
+        self.user_a.roles.add(
+            self._own(self._role(tenant_admin_role_code(self.group_a.pk)),
+                      self.group_a))
+        self.user_a.refresh_from_db()
+
+    def _save(self, *, value, reason, user=None, camera=None):
+        params = urlencode({
+            "key": CAMERA_KEY, "value": value, "reason": reason,
+            "scope_level": "camera",
+            "scope_ref": (camera or self.stream_a).pk,
+        })
+        return self.client.post(f"{THRESHOLD_WRITE}?{params}",
+                                **_bearer(user or self.user_a))
+
+    def _read_back(self, *, user=None, camera=None):
+        return self.client.get(
+            CAMERA_THRESHOLD,
+            {"camera_id": (camera or self.stream_a).pk, "key": CAMERA_KEY},
+            **_bearer(user or self.user_a))
+
+    def test_unset_reads_back_as_null_not_zero(self) -> None:
+        resp = self._read_back()
+        self.assertEqual(200, resp.status_code, resp.content)
+        body = resp.json()
+        self.assertFalse(body["set"])
+        self.assertIsNone(
+            body["value"],
+            "값이 없는데 0 이라고 답했습니다 — 「기준선이 0」으로 읽히면 모든 신호가 "
+            "초과가 됩니다")
+
+    def test_save_then_read_back_returns_the_saved_value(self) -> None:
+        saved = self._save(value=42.5, reason="장마철 상향 — 야간 오탐 다수")
+        self.assertEqual(200, saved.status_code, saved.content)
+
+        resp = self._read_back()
+        self.assertEqual(200, resp.status_code, resp.content)
+        body = resp.json()
+        self.assertTrue(body["set"])
+        self.assertEqual(
+            42.5, body["value"],
+            "저장한 값이 되돌아오지 않았습니다 — 화면의 「저장했습니다」가 "
+            "아무것도 증명하지 못합니다")
+
+    def test_second_save_wins_and_is_visible_immediately(self) -> None:
+        """재조회는 **캐시를 타지 않는다** — 캐시가 있으면 방금 바꾼 값이 안 보인다."""
+        self._save(value=10, reason="첫 값")
+        self._save(value=20, reason="다시 올림 — 여전히 시끄러움")
+        self.assertEqual(20, self._read_back().json()["value"],
+                         "두 번째 저장이 안 보입니다 — 응답 캐시가 변경을 덮고 "
+                         "있습니다(QA-05)")
+
+    def test_empty_reason_is_rejected(self) -> None:
+        """**사유 없이는 못 바꾼다.** 무엇에서 무엇으로는 표가 알고 왜는 여기뿐이다."""
+        resp = self._save(value=7, reason="   ")
+        self.assertEqual(400, resp.status_code, resp.content)
+        self.assertFalse(self._read_back().json()["set"],
+                         "사유가 비었는데 값이 저장됐습니다")
+
+    def test_key_list_offers_only_per_camera_editable_keys(self) -> None:
+        resp = self.client.get(CAMERA_THRESHOLD_KEYS, **_bearer(self.user_a))
+        self.assertEqual(200, resp.status_code, resp.content)
+        keys = resp.json()["keys"]
+        self.assertIn(CAMERA_KEY, {k["key"] for k in keys})
+        for k in keys:
+            self.assertEqual(
+                "camera", k["applies_to"],
+                f"카메라별로 둘 수 없는 항목이 화면 목록에 있습니다: {k}")
+        #: 계약이 못박은 값은 목록에 없다 — 옮길 수 있는 것처럼 그려 놓고 저장에서
+        #: 거절하는 것이 거짓말이기 때문이다.
+        self.assertNotIn("notify.suppress_window", {k["key"] for k in keys})
+        self.assertNotIn("notify.max_latency", {k["key"] for k in keys})
+
+    def test_unknown_key_is_400(self) -> None:
+        resp = self.client.get(
+            CAMERA_THRESHOLD,
+            {"camera_id": self.stream_a.pk, "key": "no.such.key"},
+            **_bearer(self.user_a))
+        self.assertEqual(400, resp.status_code, resp.content)
+
+    def test_other_tenants_camera_is_refused(self) -> None:
+        resp = self._read_back(camera=self.stream_b)
+        self.assertIn(resp.status_code, (403, 404),
+                      f"남의 카메라 기준선을 읽었습니다: {resp.status_code} {resp.content}")

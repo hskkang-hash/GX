@@ -50,6 +50,18 @@ export const dsm2Routes = {
    */
   cameraGrid: { title: '카메라 격자', path: '/dsm/cameras/grid' },
   /**
+   * S-10 카메라 오탐률·임계값 — 차선 U24 가 `routes.u24.ts` 로 넘긴 조각을
+   * 조율자가 여기 병합했다 (턴 S · WO-01 §4.2).
+   *
+   * ⚠ `/dsm/cameras/import` · `/dsm/cameras/address` · `/dsm/cameras/grid` 와
+   *   **형제다**(변수 조각 없음 — 서로 삼키지 않는다). 이 가지 아래에
+   *   `/dsm/cameras/:id` 같은 변수 경로를 만들지 말 것: 그 순간 순서가 곧
+   *   라우팅이 되고, 삼켜진 경로는 **조용한 404** 로 나타난다(D-410).
+   * ⚠ 조각 파일만으로는 화면이 안 열린다 — `App.tsx` 등록이 짝이다. 둘 다 서야
+   *   주소가 산다.
+   */
+  cameraTuning: { title: '카메라 오탐률·임계값', path: '/dsm/cameras/tuning' },
+  /**
    * LAW-07 개인정보 열람·삭제 청구 — 접수 → 마스킹본 조회 → 회신 기록.
    * ★ 원본은 이 화면을 통해 나가지 않는다. 화면이 부르는 것은 **마스킹본**뿐이다.
    */
@@ -84,8 +96,18 @@ export const dsm2Routes = {
    */
   people: { title: '사람·역할', path: '/dsm/people' },
   /**
-   * S-16 「알림 받는 사람·채널」 — **골격** (턴 R · 차선 U56 · UX-43). 규칙 표시까지만.
+   * S-16 「알림 받는 사람·채널」 (턴 R 골격 → **턴 S 실자료** · 차선 U56 · UX-43).
+   * 등급 × 역할 × 채널 · 심각 0명 저장 금지 · 시험 발송(훈련 채널).
    * ⚠ 위와 같은 이유로 형제 경로들과 삼키지 않는다.
    */
   notifySettings: { title: '알림 받는 사람·채널', path: '/dsm/notify' },
+  /**
+   * S-15 「내 정보」 — 나는 누구이고 무엇을 받는가 (턴 S · 차선 U56 · UX-42-me).
+   *
+   * ⚠ `/dsm/notify` · `/dsm/people` 과 형제다(변수 조각 없음 — 서로 삼키지 않는다).
+   * ★ 인수 자산의 `/profile` 을 **대신하지 않는다.** 그 화면은 그대로 두고, 이것은
+   *   우리 층의 「내 정보」다 — 역할 홈이 못 정할 때 가는 기본값이 여전히 `/profile`
+   *   이므로(`features/nav/roleHome.ts`) 그 자리를 옮기면 첫 화면 규칙이 바뀐다.
+   */
+  me: { title: '내 정보', path: '/dsm/me' },
 } as const;

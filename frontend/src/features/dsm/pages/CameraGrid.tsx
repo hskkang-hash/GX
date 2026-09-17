@@ -27,11 +27,13 @@
  *   그리지 않는다 — 타일은 카메라의 **상태**를 말하고, 그 이상을 말하지 않는다.
  */
 import { Alert, Button, Card, Col, Row, Space, Tag, Typography } from 'antd';
+import { useEffect } from 'react';
 import { Main } from 'rj-core';
 
 import StateBoundary from '../components/StateBoundary';
 import { useCameraGrid } from '../hooks/useCameraGrid';
 import type { CameraPulseRow } from '../hooks/useCameraGrid';
+import { countClick, finishMetric, startMetric } from '../metrics';
 import { relative, TIMEZONE_NOTE } from '../time';
 
 const { Text, Title } = Typography;
@@ -86,6 +88,24 @@ export default function CameraGridPage() {
   const now = pulse.loadedAt ?? new Date();
   const counts = pulse.data?.counts;
 
+  /*
+   * 편리성 계측 #3 — **죽은 카메라 확인** (턴 S · 차선 U1).
+   *
+   * 기준선은 「40대를 사람이 하나씩 순회한다」이고 목표는 **0분 · 배지 자동**이다.
+   * 그래서 여기서 재는 것은 「사람이 몇 번 눌러야 아는가」다 — 화면이 무응답 수를
+   * 스스로 적는 순간 시계가 멈추고, 그때까지의 **클릭 수가 0이면 그것이 목표의 증거**다.
+   *
+   * ★ 수를 판정하지 않는다. 0이든 3이든 적기만 한다 — 첫 수는 기준선이지 합격선이 아니다.
+   */
+  useEffect(() => {
+    startMetric('u1_dead_camera_check', 'grid');
+  }, []);
+
+  useEffect(() => {
+    // 머리 한 줄(무응답 N대 / 전체 N대)이 실제로 그려진 그 순간이다.
+    if (counts) finishMetric('u1_dead_camera_check');
+  }, [counts]);
+
   return (
     <Main>
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
@@ -114,7 +134,12 @@ export default function CameraGridPage() {
                   되고, 그 둘은 다른 사실이다(D-290). 누를 수 없는 이유는 아래
                   안내에 적는다 — 이유 없는 회색 단추는 고장으로 읽힌다. */}
               <Button
-                onClick={grid.toggleRotate}
+                onClick={() => {
+                  // 아직 수가 안 떴는데 사람이 눌렀다면 그 누름도 세어야 한다 —
+                  // 세지 않으면 「0클릭으로 알았다」가 거짓이 된다.
+                  countClick('u1_dead_camera_check');
+                  grid.toggleRotate();
+                }}
                 disabled={grid.pageCount <= 1}
                 title={
                   grid.pageCount <= 1

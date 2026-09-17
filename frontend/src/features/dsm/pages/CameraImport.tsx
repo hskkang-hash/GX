@@ -27,6 +27,7 @@ import { Main } from 'rj-core';
 
 import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
 import { userFacingError } from '../copy';
+import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import type { AddressGap, ImportPlan, ImportRow } from '../types';
@@ -53,6 +54,12 @@ export default function CameraImportPage() {
   const [applied, setApplied] = useState<ImportPlan | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  /**
+   * ★ [UX-31′ · 턴 S] 마지막으로 보낸 것이 **표 보기(dry-run)였나 적용이었나.**
+   * 실패 상자의 「다시 시도」가 그 둘을 헷갈리면 **표만 보려던 사람이 쓰기를 한다.**
+   * 그래서 기억해 두고 그 요청만 그대로 다시 낸다.
+   */
+  const [lastDryRun, setLastDryRun] = useState<boolean | null>(null);
 
   const gap = useDsmResource<AddressGap>(() => dsmGet(dsmEndpoint.cameraAddressGap), []);
 
@@ -60,6 +67,7 @@ export default function CameraImportPage() {
     async (dryRun: boolean) => {
       setBusy(true);
       setError('');
+      setLastDryRun(dryRun);
       try {
         // ★ 질의로 보낸다. 본문으로 보내면 **422(인자 없음)** 다 —
         //   [실측 2026-09-05] 이 자리가 실제로 그렇게 죽어 있었고, 캡처는 제목만
@@ -207,7 +215,20 @@ export default function CameraImportPage() {
           </Space>
         </Card>
 
-        {error ? <Alert type="error" showIcon message="거절되었습니다." description={error} /> : null}
+        {/* ★ [UX-31′] 네 문장 + **살아 있는 단추**. 표를 보려던 것인지 적용하려던 것인지
+            기억한 그대로 다시 보낸다 — 단추가 하는 일이 바뀌지 않는다. */}
+        {error ? (
+          <FailureNotice
+            title={
+              lastDryRun === false
+                ? '이 표를 적용하지 못했습니다.'
+                : '표를 만들지 못했습니다.'
+            }
+            detail={error}
+            busy={busy}
+            onRetry={lastDryRun === null ? undefined : () => run(lastDryRun)}
+          />
+        ) : null}
 
         {plan ? (
           <Card

@@ -29,6 +29,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { dsmEndpoint, dsmGet } from '../api';
+import { CAMERA_COPY, RETRY_KEY_HINT, WALL_COPY } from '../copy';
 import { CAMERA_PULSE_PATH, useCameraPulse } from '../hooks/useCameraPulse';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { isTypingTarget } from '../hooks/useQueueKeys';
@@ -341,7 +342,12 @@ export default function Wall() {
             marginBottom: 16,
           }}
         >
-          불러오지 못했습니다. 아래는 마지막으로 받은 내용입니다.
+          {/* ★ [UX-31′ · 턴 S] 네 문장을 이 화면의 말로 — ①무슨 일 ②왜(낡은 값이다)
+              ③지금 무엇 ④누를 것. 이 화면에는 마우스가 없으므로 ④는 **키**다. */}
+          <div>{WALL_COPY.stale}</div>
+          <div style={{ fontSize: 24, color: DIM, marginTop: 8 }}>
+            {RETRY_KEY_HINT}
+          </div>
         </div>
       ) : null}
 
@@ -370,10 +376,10 @@ export default function Wall() {
               이제 「0건」은 **가져왔을 때만** 말한다.
           */}
           {queueBroken && cards.length === 0 ? (
-            <div style={DIM_LINE}>지금 처리할 것을 불러오지 못했습니다.</div>
+            <div style={DIM_LINE}>{WALL_COPY.queueBroken}</div>
           ) : null}
           {!queueBroken && queue.state !== 'loading' && cards.length === 0 ? (
-            <div style={DIM_LINE}>지금 열려 있는 이벤트가 없습니다 — 평온합니다.</div>
+            <div style={DIM_LINE}>{WALL_COPY.calm}</div>
           ) : null}
           {shown.map((card) => {
             const elapsed =
@@ -429,7 +435,7 @@ export default function Wall() {
 
         <Panel title="카메라 상태">
           {pulseBroken ? (
-            <div style={DIM_LINE}>카메라 상태를 불러오지 못했습니다.</div>
+            <div style={DIM_LINE}>{CAMERA_COPY.broken}</div>
           ) : null}
           {!pulseBroken && pulse.state === 'loading' ? (
             <div style={DIM_LINE}>불러오는 중입니다.</div>
@@ -475,7 +481,7 @@ export default function Wall() {
         </Panel>
       </div>
 
-      <div style={{ ...DIM_LINE, marginTop: 16 }}>단축키 R — 다시 시도</div>
+      <div style={{ ...DIM_LINE, marginTop: 16 }}>{RETRY_KEY_HINT}</div>
     </div>
   );
 }

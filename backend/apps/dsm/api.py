@@ -480,7 +480,8 @@ class DsmAPI:
     @route.post("/events/{int:event_id}/field-reply", auth=JwtOrInboundKey())
     @tenant_scoped(reason="현장 회신 쓰기 — 남의 이벤트에 회신을 남길 수 없다 (쓰기 IDOR)")
     @idempotent("dsm.events.field-reply")
-    def field_reply(self, request, event_id: int, text: str):
+    def field_reply(self, request, event_id: int, text: str = "",
+                    kind: str = "note"):
         """이동 중인 사람이 한 줄을 돌려준다 (M3).
 
         ★ **문이 없으면 커널 면은 잠든 것이다.** 차선 D 가 커널과 시험을 세웠고
@@ -488,13 +489,40 @@ class DsmAPI:
           그 빨강이 이 문을 만들게 했다(D-377).
         ★ 회신은 **계정이 남긴다.** 무계정 링크로 부를 수 있는 자리를 만들지 않는다.
 
-        거절을 4xx 로 나눈다: 404 없는·남의 이벤트 · 422 빈 글 · 403 요청자 없음(시스템 스코프).
+        ★★ [턴 S · 차선 U3] **`kind` 가 붙었다 — 진입면은 넓어지지 않았다.**
+          UX-45 M3 시트의 여섯 칸(도착 · 사진 · 한 줄 · 오탐 사유 · 지원 요청 ·
+          조치 완료)을 **한 문**으로 받는다. 같은 문지기(`@tenant_scoped` +
+          `JwtOrInboundKey`) · 같은 커널(`reply_from_field`) · 같은 감사 계열이고,
+          바뀐 것은 **저장 문자열의 접두**뿐이다(`apps/dsm/field.py::compose_reply`).
+
+          왜 커널에 칸을 더하지 않았나: 그 파일은 K1 이고 이번 턴 U3 의 소유가
+          아니다 — 한 파일을 두 차선이 같은 턴에 고치면 충돌하고, 충돌한 라우트는
+          **라우팅 침묵**이 된다. 판정과 사유는 `field.py` 의 kind 절에 적었다.
+
+          ⚠ 접두는 **사람의 자리에 보이지 않는다.** 이 라우트가 `kind` 와 깨끗한
+            `text` 로 갈라 내보낸다 — 화면이 접두를 보면 그것은 이 판정의 실패다.
+          ⚠ `text` 의 기본값이 빈 문자열인 이유: 「도착」·「지원 요청」처럼 **누름
+            자체가 사실**인 칸이 있다. 그 넷은 `field.py` 가 정한 문구로 채워지고,
+            「한 줄」·「오탐 사유」 둘은 **여전히 본문이 필수**다(빈 회신을 기본
+            문구로 메우면 아무도 안 적은 회신이 적은 것처럼 쌓인다).
+
+        거절을 4xx 로 나눈다: 404 없는·남의 이벤트 · 422 빈 글·모르는 종류 ·
+        403 요청자 없음(시스템 스코프).
         """
         from common.tenant_scope import SystemScopeCannotRead
 
+        from apps.dsm import field
+
+        #: ★ 커널에 닿기 **전에** 종류를 가른다. 모르는 종류를 `note` 로 접지 않는다 —
+        #:   접으면 화면의 오타 하나가 「지원 요청」을 조용히 「한 줄」로 바꾼다.
+        try:
+            stored, _clean = field.compose_reply(kind=kind, text=text)
+        except field.UnknownReplyKind as exc:
+            raise HttpError(422, str(exc))
+
         try:
             reply = services.field_reply(
-                scope=_scope(request), event_id=event_id, text=text)
+                scope=_scope(request), event_id=event_id, text=stored)
         except Http404:
             raise HttpError(404, "그런 이벤트가 없습니다.")
         except SystemScopeCannotRead as exc:
@@ -503,22 +531,44 @@ class DsmAPI:
             raise HttpError(422, str(exc))
         # ★ 내는 칸은 `FieldReply` 가 **실제로 가진 것**뿐이다. 지어내지 않는다 —
         #   없는 칸을 읽어 라우트가 부르는 즉시 죽은 사례가 이 파일에 이미 있다(D-410).
+        #   `kind` 는 지어낸 칸이 아니라 **저장된 문자열에서 되읽은 값**이다.
+        name, body = field.split_reply(reply.text)
         return {"reply_id": reply.reply_id, "event_id": reply.event_id,
-                "text": reply.text, "author_id": reply.author_id,
+                "kind": name, "kind_label": field.kind_label(name),
+                "text": body, "author_id": reply.author_id,
                 "author_name": reply.author_name}
 
     @route.get("/events/{int:event_id}/field-replies", auth=JwtOrInboundKey())
     @tenant_scoped(reason="현장 회신 읽기 — 남의 이벤트 회신이 보이면 안 된다")
     def field_replies(self, request, event_id: int, limit: int = 50):
-        """그 이벤트에 달린 현장 회신들. 이벤트 문지기를 먼저 지난다."""
+        """그 이벤트에 달린 현장 회신들. 이벤트 문지기를 먼저 지난다.
+
+        ★★ [턴 S] **`by_kind` 를 함께 낸다** — M3 시트의 상태 칸이 읽는 값이다.
+          화면이 목록을 받아 스스로 세지 않는 이유는 목록에 `limit` 이 있어서다:
+          상한 밖의 회신이 안 세어지고, 그러면 「지원 요청 0건」이 실은
+          「이 페이지에 없음」이 된다 — 그 사실이 화면에 안 나온다(D-301 · 모수).
+          ⚠ 그래서 `by_kind` 도 **이 페이지의 수**다. 모수(`total`)를 함께 낸다.
+        """
+        from apps.dsm import field
+
         try:
             rows = services.field_replies(
                 scope=_scope(request), event_id=event_id, limit=limit)
         except Http404:
             raise HttpError(404, "그런 이벤트가 없습니다.")
-        return {"total": len(rows), "replies": [
-            {"reply_id": r.reply_id, "event_id": r.event_id, "text": r.text,
-             "author_id": r.author_id, "author_name": r.author_name} for r in rows]}
+
+        replies = []
+        by_kind: dict[str, int] = {}
+        for r in rows:
+            name, body = field.split_reply(r.text)
+            by_kind[name] = by_kind.get(name, 0) + 1
+            replies.append({
+                "reply_id": r.reply_id, "event_id": r.event_id,
+                "kind": name, "kind_label": field.kind_label(name),
+                "text": body, "author_id": r.author_id,
+                "author_name": r.author_name,
+            })
+        return {"total": len(rows), "by_kind": by_kind, "replies": replies}
 
     # ── 판정 축 (P-16 · 오탐 ②) ──────────────────────────────────────────
     @route.post("/events/{int:event_id}/review", auth=JwtOrInboundKey())

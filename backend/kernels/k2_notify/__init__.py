@@ -14,6 +14,7 @@ App(L4)이 만질 수 있는 것은 여기 있는 이름뿐이다. `scripts/veri
   두 벌로 적재하면 알림과 보고서가 다른 말을 한다 (DA-04 K2 이중 AC).
 """
 from kernels.k2_notify.exceptions import (
+    CriticalWithoutRecipients,
     EventNotFound,
     InvalidNotifyInput,
     NotifyPermissionDenied,
@@ -62,6 +63,17 @@ from kernels.k2_notify.services import (
     send,
     suppress,
 )
+# ★ [턴 S · 차선 U56 · WS-14] S-16 「알림 받는 사람·채널」의 서버 면.
+#   **`services` 뒤에 온다** — `rule_admin` 이 `services` 를 부르므로 순서가 곧 초기화
+#   순서다. 앞에 두면 부분 초기화된 패키지를 만진다.
+from kernels.k2_notify.rule_admin import (
+    CRITICAL,
+    NotifyReach,
+    my_notify_reach,
+    notify_rule_overview,
+    save_rule,
+    send_test_notification,
+)
 
 __all__ = [
     # DA-04 §2 K2 공개 면 4개
@@ -77,6 +89,18 @@ __all__ = [
     #   격리 대장(`tests/test_tenant_isolation.WRITE_NO_PROBE`)에 **선등재된 이름**이고,
     #   면이 실제로 열렸으므로 그 줄은 probe 로 옮겨져야 한다(P-8).
     "save_notification_rule",
+    # ★ 턴 S · 차선 U56 (WS-14) — S-16 「알림 받는 사람·채널」(UX-43).
+    #   `save_rule` 은 `save_notification_rule` **위에** 선다: 종전 문은 「규칙 한 줄이
+    #   말이 되는가」를 묻고(시드도 지난다), 이 문은 「저장 뒤에도 심각이 사람에게
+    #   닿는가」를 묻는다(사람의 화면만 지난다). 두 문턱을 한 함수에 섞으면 시드가
+    #   첫 규칙을 세우는 순간 스스로 막힌다 — `rule_admin` 머리말 참조.
+    "notify_rule_overview",
+    "save_rule",
+    "send_test_notification",
+    #: S-15 「내 정보」 — **읽기뿐이다.** 「내 알림 설정」의 쓰기 면은 WS-02(U3).
+    "my_notify_reach",
+    "CRITICAL",
+    "NotifyReach",
     # ★ 차선 Q (2026-09-04) OPS-14 생존 알림 — **매일 08:00 1통. 안 오면 장애다.**
     #   격리 대장(`tests/test_tenant_isolation.WRITE_NO_PROBE`)에 **선등재된 이름**이고,
     #   면이 실제로 열렸으므로 그 줄은 probe 로 옮겨져야 한다(P-8).
@@ -106,6 +130,9 @@ __all__ = [
     "InvalidNotifyInput",
     "NotifyPermissionDenied",
     "NoRecipients",
+    # ★ 턴 S · U56 — 「저장하면 심각이 0명이 된다」. `NoRecipients`(발송 시점)와
+    #   **다른 사실**이다: 그쪽은 꺼진 것을 알리고 이쪽은 꺼지는 것을 막는다.
+    "CriticalWithoutRecipients",
     "NotImplementedYet",
     # 계약이 정한 숫자 — 화면·시험·보고서가 **같은 값**을 본다 (D-212)
     "F10_MAX_LATENCY",

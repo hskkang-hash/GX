@@ -135,3 +135,96 @@ class DsmU24API:
                 event_type=_split_multi(event_type), severity=_split_multi(severity))
         except (stats.StatsInputError, InvalidMetricInput) as exc:
             raise HttpError(400, str(exc))
+
+    # ── UX-36 어느 카메라가 시끄러운가 (부속서A U2 #10) ────────────────────
+    #
+    # ★ 경로를 `/cameras/false-positive` 로 열지 않는다. 이 파일 머리말이 정한 그대로
+    #   집계는 `/stats/*` 한 이름공간에 산다 — `api.py` 의 `/cameras/*` 밑으로 들어가면
+    #   그 컨트롤러가 먼저 잡는 자리가 생기고, 그 어긋남은 **라우팅 침묵**으로 나타난다.
+    @route.get("/stats/false-positive/by-camera", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-36 카메라별 오탐률 — 남의 테넌트 카메라 이름과 판정 "
+                         "수치가 나가면 격리 실패다")
+    def stats_false_positive_by_camera(self, request, days: int | None = 7,
+                                       since: datetime | None = None,
+                                       until: datetime | None = None,
+                                       top_n: int = 3):
+        """카메라별 오탐률 **내림차순 · 상위 N 강조** (부속서A U2 #10 완결 조건).
+
+        ★ 나눗셈은 K6 이 한다 — `stats.py` 도 여기도 다시 세지 않는다.
+        ★ 판정 0건인 카메라는 `false_positive_rate: null` 이고 **정렬 맨 뒤**다.
+          「한 번도 판정 안 한 카메라」가 「오탐이 없는 카메라」로 보이면 안 된다.
+        ★ `days` 와 `since`/`until` 을 함께 주면 `since`/`until` 이 이긴다 —
+          명시한 창이 기본 창보다 세다.
+        """
+        try:
+            return stats.false_positive_by_camera(
+                scope=_scope(request), since=since, until=until,
+                days=None if since is not None else days, top_n=top_n)
+        except (stats.StatsInputError, InvalidMetricInput) as exc:
+            raise HttpError(400, str(exc))
+
+    # ── UX-36 임계값 시뮬 · 되돌려 읽기 (부속서A U2 #11 · BF-3 4~5단계) ─────
+    #
+    # ★ **쓰는 문을 새로 열지 않는다.** 임계값을 바꾸는 문은 F-12 의
+    #   `POST /api/dsm/settings/thresholds` 하나이고 이미 서 있다(사유 필수 400 ·
+    #   계약 고정 409 · 무권한 403 + 감사 번호). 같은 일을 하는 문이 둘이면
+    #   문지기가 두 벌이 되고, 두 벌은 반드시 어긋난다(D-212).
+    @route.post("/stats/thresholds/simulate", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-36 임계값 시뮬 — 남의 테넌트 사건으로 셈하면 격리 실패다")
+    def simulate_threshold(self, request, camera_id: int, confidence_min: float,
+                           days: int = 7):
+        """슬라이더가 부르는 자리 — 「최근 N일 기준 **시간당 몇 건**」.
+
+        ★ **아무것도 바꾸지 않는다.** POST 인 이유는 정본(BF-3 4단계)이 그 모양으로
+          적었고 슬라이더 값이 질의 문자열에 남으면 캐시·로그에 사람의 시행착오가
+          쌓이기 때문이다 — 저장은 아래 「저장」 단추가 F-12 문으로 한다.
+        ★ 확신도가 빈 사건은 「남는다」고 세지 않는다 — 가를 수 있는 행이 0 이면
+          `measurable: false` 이고 `events_per_hour` 는 **null** 이다(0.0 이 아니다).
+        ★ 「많다」의 문턱(시간당 6건)은 **서버가 낸다**(`noisy_per_hour`) — 화면이
+          자기 문턱을 들면 두 곳이 갈린다.
+        """
+        try:
+            return stats.simulate_threshold(
+                scope=_scope(request), camera_id=camera_id,
+                confidence_min=confidence_min, days=days)
+        except stats.StatsInputError as exc:
+            raise HttpError(400, str(exc))
+
+    @route.get("/stats/camera-thresholds", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-36 임계값 목록 — 설정 면과 같은 무게로 좁힌다")
+    def camera_threshold_keys(self, request):
+        """카메라별로 고칠 수 있는 임계값의 **이름표만**. 값은 여기서 안 나간다.
+
+        화면이 키 이름을 손으로 들지 않게 하는 자리다 — 표 ①이 늘거나 줄면
+        이 목록이 함께 움직인다. 계약이 못박은 값은 목록에 없다(슬라이더로 옮길 수
+        있는 것처럼 그려 놓고 저장에서 409 를 내는 것이 거짓말이기 때문이다).
+        """
+        return stats.camera_threshold_keys(scope=_scope(request))
+
+    @route.get("/stats/camera-threshold", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="UX-36 임계값 재조회 — 남의 카메라 기준선을 읽어 갈 수 없다")
+    def camera_threshold(self, request, camera_id: int, key: str):
+        """「저장 → **재조회**」의 재조회 (부속서A U2 #11 완결 조건).
+
+        ★ 값이 없으면 `value: null` · `set: false` 다 — **0 이 아니다.**
+        ★ 남의 카메라는 커널의 문지기(`assert_scoped`)가 끊는다. 여기서 문지기를
+          다시 세우지 않는다 — 두 벌은 반드시 어긋난다.
+
+        거절:
+          400  표 ①에 없는 키 (오타는 새 임계값이 아니다)
+          403  남의 카메라 · 404  없는 카메라
+        """
+        from django.core.exceptions import PermissionDenied
+        from django.http import Http404
+
+        from kernels.k5_trust import ThresholdNotDefined
+
+        try:
+            return stats.camera_threshold(
+                scope=_scope(request), camera_id=camera_id, key=key)
+        except ThresholdNotDefined as exc:
+            raise HttpError(400, str(exc))
+        except Http404 as exc:
+            raise HttpError(404, str(exc) or "그런 카메라가 없습니다.")
+        except PermissionDenied as exc:
+            raise HttpError(403, str(exc))

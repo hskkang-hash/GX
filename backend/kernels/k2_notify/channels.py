@@ -278,11 +278,146 @@ class LogChannel:
         return SendOutcome(True)
 
 
+class WebPushChannel:
+    """웹푸시 — **업체가 필요 없는 유일한 푸시** (CH-03 · 2026-09-16 턴 S · 차선 U3).
+
+    왜 이것은 `UNAVAILABLE` 이 아닌가
+    ---------------------------------
+    아래 `UNAVAILABLE["push"]` 는 **앱 푸시**(FCM/APNs)이고 업체·앱 배포가 선행이다.
+    웹푸시는 다르다 — 브라우저가 이미 푸시 서비스를 들고 있고, 우리가 갖출 것은
+    **VAPID 키 한 쌍**뿐이다. 그래서 자리를 비워 두지 않고 구현을 넣는다.
+
+    ★ `address` 는 **구독 한 벌**이다 — 메일 주소 자리에 JSON 이 온다:
+          `{"endpoint": "https://…", "keys": {"p256dh": "…", "auth": "…"}}`
+      왜 엔드포인트 문자열만 받지 않나: 웹푸시 본문은 **구독 키로 암호화**해야 하고
+      (RFC 8291), 키 없이 받으면 「등록은 됐는데 아무것도 안 온다」가 된다.
+      `Channel` 프로토콜을 넓히지 않은 이유는 그 프로토콜이 메일·SMS·로그와
+      공유되는 자리라서다 — 한 채널 때문에 셋의 모양을 바꾸지 않는다.
+
+    ★ **못 보내면 못 보낸다고 말한다.** 이 환경에는 지금 발송기가 없다
+      [실측 2026-09-16 · `pywebpush` 미설치 · VAPID 환경변수 3개 전부 없음].
+      그 상태에서 `ok=True` 를 내는 것이 「조용한 성공」이고(D-284), 그러면
+      **아무에게도 안 간 알림이 간 것으로** 집계된다. 사유는 행에 남는다.
+
+    ⚠ 값을 로그에 남기지 않는다 — 실패 사유에도 엔드포인트·키를 적지 않는다.
+      푸시 엔드포인트는 그 기기로 알림을 밀어 넣는 주소이고, 로그는 새는 자리다.
+    """
+
+    name = "webpush"
+
+    #: 발송기·자격의 이름. **값이 아니라 이름이다**(D-204 · 게이트는 값을 출력하지 않는다).
+    LIBRARY = "pywebpush"
+    PUBLIC_ENV = "GX_VAPID_PUBLIC_KEY"
+    PRIVATE_ENV = "GX_VAPID_PRIVATE_KEY"
+    SUBJECT_ENV = "GX_VAPID_SUBJECT"
+
+    #: 설정을 못 읽었을 때의 바닥값(초). 타임아웃과 같은 방향 — 위험한 쪽은 무한 대기다.
+    FALLBACK_TIMEOUT = 10.0
+
+    @staticmethod
+    def timeout() -> float:
+        value = getattr(settings, "K2_WEBPUSH_TIMEOUT", None)
+        try:
+            return float(value) if value else WebPushChannel.FALLBACK_TIMEOUT
+        except (TypeError, ValueError):
+            return WebPushChannel.FALLBACK_TIMEOUT
+
+    @staticmethod
+    def configured() -> SendOutcome:
+        """보낼 수 있는 모양인가. **보내 보지 않는다**(`EmailChannel.configured` 와 같은 규약).
+
+        `ok=False` 는 회색이 아니라 **선언된 부재**다 — 무엇이 없는지 이름으로 적는다.
+        """
+        import os
+
+        missing = [name for name in (WebPushChannel.PUBLIC_ENV,
+                                     WebPushChannel.PRIVATE_ENV,
+                                     WebPushChannel.SUBJECT_ENV)
+                   if not (os.environ.get(name, "") or "").strip()]
+        try:
+            import pywebpush  # noqa: F401
+        except Exception:      # noqa: BLE001 — 없는 것도 상태다
+            return SendOutcome(
+                False,
+                f"웹푸시 발송기({WebPushChannel.LIBRARY})가 이 환경에 없습니다. "
+                f"설치 전까지 웹푸시는 **보낼 수 없습니다** — 빈 성공으로 넘기지 "
+                f"않습니다." + (f" 환경변수도 비어 있습니다: {', '.join(missing)}"
+                                if missing else ""))
+        if missing:
+            return SendOutcome(
+                False,
+                "VAPID 자격이 이 환경에 없습니다 — 비어 있는 환경변수: "
+                + ", ".join(missing) + ". 값은 저장소 밖 `.env` 로만 줍니다(D-204).")
+        return SendOutcome(True)
+
+    @staticmethod
+    def _subscription(address: str) -> dict | None:
+        """`address` → 구독 사전. 못 읽으면 `None` — **지어내지 않는다.**"""
+        import json
+
+        if not address:
+            return None
+        try:
+            parsed = json.loads(address)
+        except (ValueError, TypeError):
+            return None
+        if not isinstance(parsed, dict) or not parsed.get("endpoint"):
+            return None
+        keys = parsed.get("keys")
+        if not isinstance(keys, dict) or not keys.get("p256dh") or not keys.get("auth"):
+            return None
+        return parsed
+
+    def send(self, *, address: str, subject: str, body: str) -> SendOutcome:
+        import json
+        import os
+
+        subscription = self._subscription(address)
+        if subscription is None:
+            #: ⚠ 받은 값을 사유에 **되풀이하지 않는다** — 그 값이 자격이다.
+            return SendOutcome(
+                False,
+                "구독 한 벌을 읽지 못했습니다 — endpoint 와 keys(p256dh·auth)가 "
+                "함께 있어야 합니다. 키 없이는 본문을 암호화할 수 없습니다(RFC 8291).")
+
+        ready = self.configured()
+        if not ready.ok:
+            return SendOutcome(False, ready.reason[:240])
+
+        try:
+            from pywebpush import webpush
+        except Exception as exc:      # noqa: BLE001
+            return SendOutcome(False, f"발송기를 가져오지 못했습니다: {type(exc).__name__}"[:240])
+
+        #: 서비스워커(`frontend/public/field-push-sw.js::readPayload`)가 읽는 모양.
+        #: 셋 중 하나가 없으면 그쪽이 자리표로 채운다 — 여기서 지어내지 않는다.
+        payload = json.dumps({"title": subject, "body": body, "url": "/m/inbox"})
+        try:
+            webpush(
+                subscription_info=subscription,
+                data=payload,
+                vapid_private_key=(os.environ.get(self.PRIVATE_ENV, "") or "").strip(),
+                vapid_claims={"sub": (os.environ.get(self.SUBJECT_ENV, "") or "").strip()},
+                timeout=self.timeout(),
+            )
+        except Exception as exc:      # 저하 운전 — 발송 하나가 관제를 세우지 않는다(W0-17)
+            #: ★ 예외 **종류**만 남긴다. 메시지에 엔드포인트가 실려 오는 라이브러리가 있다.
+            log.warning("[K2][WEBPUSH] 발송 실패 err=%s", type(exc).__name__)
+            return SendOutcome(
+                False,
+                f"푸시 서비스가 거절했습니다({type(exc).__name__}) — 구독이 만료됐거나 "
+                f"자격이 맞지 않습니다. 해지 후 다시 등록하면 됩니다."[:240])
+        return SendOutcome(True)
+
+
 #: 등록된 어댑터. **여기 없는 채널은 없는 채널이다** — 이름으로 잠근다 (D-285 ②).
-#: SMS·푸시·Webhook 은 업체 선정(D4-1) 후 여기에 한 줄로 들어온다.
+#: SMS·푸시(앱)·Webhook 은 업체 선정(D4-1) 후 여기에 한 줄로 들어온다.
+#: ★ 2026-09-16 (턴 S · 차선 U3) **하나가 늘었다** — `webpush`. 업체가 필요 없는
+#:   유일한 푸시라 자리를 비워 두지 않고 구현을 넣었다(위 머리말).
 REGISTRY: dict[str, Channel] = {
     EmailChannel.name: EmailChannel(),
     LogChannel.name: LogChannel(),
+    WebPushChannel.name: WebPushChannel(),
 }
 
 #: **사람에게 도달하지 않는 채널.** 검수·시드용이고, 운영 규칙에 넣으면 당직자가
@@ -295,6 +430,16 @@ UNAVAILABLE: dict[str, str] = {
     "sms": "발송 업체 미선정 (DA-04 D4-1 · 계약·비용 사안). WP-DA2b ENTRY 까지 판단 대기.",
     "push": "발송 업체 미선정 (DA-04 D4-1). 앱 푸시는 모바일 클라이언트 배포와 함께 온다.",
     "webhook": "수신 URL 의 테넌트 소유 판정과 서명키 보관이 선행 — K1.subscribe 와 같은 선행이다.",
+    # ★ [턴 S · 차선 U56] **이름이 이미 저장소에 있었다.** `stream_monitors.models
+    #   .DsmNotifyPrefs.channels` 가 「`email` · `sms` · `webpush` 중에서」라고 적어 두었는데
+    #   (마이그 0029 · 턴 Q), 이 목록에는 그 이름이 없어서 **`webpush` 규칙을 저장하면
+    #   「모르는 채널」로 400** 이었다 [실측 2026-09-16]. 스키마와 검사가 다른 이름을 쓰면
+    #   화면이 고를 수 있는 채널을 서버가 거절한다 — 두 벌이 갈린 자리다(D-212).
+    #   자리를 여기 세워 **고르고 저장까지는 되게** 한다. 발송기(VAPID·서비스워커)는
+    #   U3 차선이 짓고, 그것이 서면 `REGISTRY` 에 한 줄로 들어와 이 줄보다 먼저 잡힌다
+    #   (`_ChannelRegistry.get` 이 REGISTRY 를 먼저 본다 — 두 경로가 충돌하지 않는다).
+    "webpush": "웹푸시 발송기(VAPID 키·서비스워커)가 선행 — U3 차선이 짓는다. "
+               "이름은 `DsmNotifyPrefs.channels` 스키마가 이미 쓰고 있어 자리를 맞췄다.",
 }
 
 

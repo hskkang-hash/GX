@@ -68,11 +68,23 @@
  * **상태는 칸으로**(불변). 소리(`actionEcho`)만 「눌린 것을 먹었다」는 즉각 신호를 준다.
  */
 import { Alert, Badge, Button, Card, Col, Row, Space, Statistic, Tag, Typography } from 'antd';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Main } from 'rj-core';
 
-import { FALSE_POSITIVE_REASONS, REJECT_LABEL, REVIEW_AND_ACK_LABEL } from '../copy';
+import {
+  CLOSE_CONFIRM_EMPTY,
+  CLOSE_CONFIRM_OPEN_INSTEAD,
+  CLOSE_CONFIRM_TITLE,
+  dataSourceBadge,
+  FALSE_POSITIVE_REASONS,
+  REJECT_LABEL,
+  REVIEW_AND_ACK_LABEL,
+  SUPPORT_BADGE_LABEL,
+  SUPPORT_WAITING_NOTE,
+  WIRING_WAITING_LABEL,
+  WIRING_WAITING_NOTE,
+} from '../copy';
 import EventSnapshot from '../components/EventSnapshot';
 import ResponseClock from '../components/ResponseClock';
 import ShortcutHelp from '../components/ShortcutHelp';
@@ -83,6 +95,9 @@ import { useCriticalAlarm } from '../hooks/useCriticalAlarm';
 import { useDetectionPing } from '../hooks/useDetectionPing';
 import { useFocusQueue } from '../hooks/useFocusQueue';
 import { useQueueKeys } from '../hooks/useQueueKeys';
+import { useQueueSignals } from '../hooks/useQueueSignals';
+import type { QueueFieldSignal } from '../hooks/useQueueSignals';
+import { cancelMetric, countClick, finishMetric, startMetric } from '../metrics';
 import { dsm2Routes } from '../routes';
 import {
   advanceLabel,
@@ -107,17 +122,46 @@ const STEP_SLOTS = ['acknowledged', 'in_progress', 'closed'] as const;
 /** 이 화면에만 있는 글자 — 검수 촬영의 단언 대상이다. */
 export const HEADLINE = '지금 처리할 것 — 가장 급한 하나';
 
+/**
+ * 현장 신호를 물어볼 카드 수의 천장. **서버의 상한과 같은 수**다 —
+ * 화면이 더 물으면 서버가 잘라서 답하고, 잘린 줄은 아무도 못 본다.
+ */
+const SIGNAL_ASK_CAP = 30;
+
+/**
+ * 「배선 대기」일 때 종결 확인 칸이 **어떻게 보일지** 세워 두는 한 줄.
+ *
+ * ★ **실제 회신이 아니다.** 시드 배지를 달고 단추는 눌리지 않는다 — 검수용 예시가
+ *   진짜 사건으로 읽히면 그것은 지어낸 자료다. 빈 칸으로 두지 않는 이유는 그 반대편에
+ *   있다: 빈 칸은 「현장이 아무 말도 안 했다」로 읽히는데, 참은 「표시가 아직 안 붙는다」다.
+ */
+const SEED_DONE_EXAMPLE = {
+  who: '현장 요원',
+  text: '[조치완료] 잔불 없음, 철수합니다 (검수용 예시)',
+};
+
 function eventPath(id: number): string {
   return `/dsm/events/${id}`;
 }
 
-function CardHead({ card }: { card: QueueCard }) {
+function CardHead({ card, signal }: { card: QueueCard; signal?: QueueFieldSignal }) {
   return (
     <Space wrap size={6}>
       <Tag color={SEVERITY_COLOR[card.severity] ?? 'default'}>
         {SEVERITY_ICON[card.severity] ?? '•'}{' '}
         {labelOf(SEVERITY_LABEL, card.severity)}
       </Tag>
+      {/*
+        ★ [턴 S] **지원 요청은 등급 바로 옆이다.** 현장이 「혼자 못 한다」고 한 사건은
+          큐에서 가장 먼저 눈에 띄어야 한다 — 뒤쪽에 달면 등급·유형·카메라 이름에
+          묻힌다. 현장이 적은 말은 **손댈 때 보이게** 제목에 얹는다(본문은 종결 확인
+          칸이 그린다 — 카드 머리가 문단이 되면 큐가 목록으로 돌아간다).
+      */}
+      {signal?.support_requested ? (
+        <Tag color="error" title={signal.support_text}>
+          {SUPPORT_BADGE_LABEL}
+        </Tag>
+      ) : null}
       <Text strong>{labelOf(EVENT_TYPE_LABEL, card.event_type)}</Text>
       <Text type="secondary">{card.stream_monitor_name || '이름 없는 카메라'}</Text>
       <Tag>{labelOf(RESPONSE_STATE_LABEL, card.response_state)}</Tag>
@@ -152,7 +196,12 @@ export default function FocusQueuePage() {
   //   성공한 직후 한 음(`actionEcho`)을 울린다. 이 한 음이 없으면 같은 키를 두 번 누른다.
   const { queue, cards, focus, thresholds, acting, actionError, advance,
     reviewAndAcknowledge, reject } = useFocusQueue({
-    onActionSuccess: () => sound.play('actionEcho'),
+    onActionSuccess: (what) => {
+      sound.play('actionEcho');
+      // ★ 편리성 계측 #1 의 시계는 **접수에서 멈춘다** — 재는 것이 「판정에서 접수까지」라서다.
+      //   오탐이나 조치 시작에서 멈추면 그것은 다른 지표가 된다.
+      if (what === 'review-ack') finishMetric('u1_handle_event');
+    },
   });
 
   /**
@@ -186,6 +235,26 @@ export default function FocusQueuePage() {
     setPickingReject(false);
   }, [focus?.event_id]);
 
+  /*
+   * ★ [턴 S] **현장 신호** — 「지원 요청」 배지와 「종결 확인」 카드가 이 값으로 선다.
+   *   화면이 지금 그린 카드의 번호만 묻는다(서버도 같은 수에서 자른다).
+   */
+  const signalIds = useMemo(
+    () => cards.slice(0, SIGNAL_ASK_CAP).map((c) => c.event_id),
+    [cards],
+  );
+  const signals = useQueueSignals(signalIds);
+
+  /*
+   * 편리성 계측 #1 — **사건 1건 처리.** 초점 카드가 뜬 때 시계가 걸리고, 판정+접수가
+   * 성공한 때 멈춘다(위 `onActionSuccess`). 초점이 바뀌면 앞 사건의 측정은 **버린다** —
+   * 하다 만 것은 수가 아니다.
+   */
+  useEffect(() => {
+    if (focus) startMetric('u1_handle_event', String(focus.event_id));
+    else cancelMetric('u1_handle_event');
+  }, [focus?.event_id]);
+
   /**
    * 숫자 키 한 번. **서버가 허락한 칸이 아니면 아무 일도 안 한다** —
    * 화면이 전이표를 들지 않기 때문이고, 안 드는 것이 이 화면의 성질이다.
@@ -197,6 +266,9 @@ export default function FocusQueuePage() {
       const target = STEP_SLOTS[slot];
       if (!target || !focus || acting) return;
       if (!(focus.allowed_next ?? []).includes(target)) return;
+      // ★ 실제로 요청이 나가는 누름만 센다 — 서버가 허락하지 않은 칸의 키는
+      //   아무 일도 안 하므로 「액션」이 아니다.
+      countClick('u1_handle_event');
       if (target === 'acknowledged') {
         void reviewAndAcknowledge(focus.event_id);
       } else {
@@ -210,6 +282,7 @@ export default function FocusQueuePage() {
     (reasonLabel: string) => {
       if (!focus || acting) return;
       setPickingReject(false);
+      countClick('u1_handle_event');
       void reject(focus.event_id, reasonLabel);
     },
     [focus, acting, reject],
@@ -333,7 +406,9 @@ export default function FocusQueuePage() {
                   onClick={() => setSelected(0)}
                 >
                   <Card
-                    title={<CardHead card={focus} />}
+                    title={
+                      <CardHead card={focus} signal={signals.byEvent.get(focus.event_id)} />
+                    }
                     extra={
                       <Button type="link" onClick={() => navigate(eventPath(focus.event_id))}>
                         상세 열기
@@ -373,11 +448,12 @@ export default function FocusQueuePage() {
                                   key={next}
                                   type="primary"
                                   loading={acting}
-                                  onClick={() =>
-                                    isAck
+                                  onClick={() => {
+                                    countClick('u1_handle_event');
+                                    return isAck
                                       ? reviewAndAcknowledge(focus.event_id)
-                                      : advance(focus.event_id, next)
-                                  }
+                                      : advance(focus.event_id, next);
+                                  }}
                                 >
                                   {isAck ? REVIEW_AND_ACK_LABEL : advanceLabel(next)}
                                   {slot >= 0 ? ` (${slot + 1})` : ''}
@@ -435,6 +511,93 @@ export default function FocusQueuePage() {
                 />
               )}
 
+              {/*
+                ★ [턴 S] **종결 확인 카드** — 현장이 「조치를 마쳤다」고 알린 사건을 모아
+                  관제가 **한 번 눌러 종결**한다.
+
+                ★ 종결 단추는 **초점 카드에만** 살아 있다. 갈 수 있는 다음 칸을 서버가
+                  초점에만 주기 때문이다 — 대기 카드에 그리면 화면이 자기 전이표를 든
+                  것이 되고, 서버가 거절하는 단추가 생긴다. 나머지는 상세로 보낸다.
+
+                ★ 「없음」과 「배선 대기」를 가른다. 회신에 종류 표시가 아직 안 붙는
+                  동안에는 **시드 한 줄**로 이 칸이 어떻게 보일지 세워 두고, 그것이
+                  검수용임을 배지로 적는다.
+              */}
+              <Card size="small" title={CLOSE_CONFIRM_TITLE}>
+                {!signals.wired ? (
+                  <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                    <Space size={8} wrap>
+                      <Tag color="processing">{WIRING_WAITING_LABEL}</Tag>
+                      <Text type="secondary">{SUPPORT_WAITING_NOTE}</Text>
+                    </Space>
+                    <Text type="secondary">{WIRING_WAITING_NOTE}</Text>
+                    <Row
+                      align="middle"
+                      gutter={12}
+                      style={{ borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
+                    >
+                      <Col flex="auto">
+                        <Space size={6} wrap>
+                          <Tag>{dataSourceBadge('seed')}</Tag>
+                          <Text strong>{SEED_DONE_EXAMPLE.who}</Text>
+                          <Text type="secondary">{SEED_DONE_EXAMPLE.text}</Text>
+                        </Space>
+                      </Col>
+                      <Col>
+                        {/* 누를 수 없다 — 없는 사건을 종결하는 단추는 거짓말이다. */}
+                        <Button type="primary" disabled>
+                          {advanceLabel('closed')}
+                        </Button>
+                      </Col>
+                    </Row>
+                  </Space>
+                ) : signals.doneSignals.length === 0 ? (
+                  <Text type="secondary">{CLOSE_CONFIRM_EMPTY}</Text>
+                ) : (
+                  <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                    {signals.doneSignals.map((s) => {
+                      const canClose =
+                        focus?.event_id === s.event_id &&
+                        (focus?.allowed_next ?? []).includes('closed');
+                      return (
+                        <Row
+                          key={s.event_id}
+                          align="middle"
+                          gutter={12}
+                          style={{ borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
+                        >
+                          <Col flex="auto">
+                            <Space size={6} wrap>
+                              <Text strong>사건 {s.event_id}</Text>
+                              <Text type="secondary">{s.last_author}</Text>
+                              <Text>{s.action_done_text}</Text>
+                            </Space>
+                          </Col>
+                          <Col>
+                            {canClose ? (
+                              <Button
+                                type="primary"
+                                loading={acting}
+                                onClick={() => {
+                                  countClick('u1_handle_event');
+                                  void advance(s.event_id, 'closed');
+                                }}
+                              >
+                                {advanceLabel('closed')}
+                              </Button>
+                            ) : (
+                              <Button onClick={() => navigate(eventPath(s.event_id))}>
+                                {CLOSE_CONFIRM_OPEN_INSTEAD}
+                              </Button>
+                            )}
+                          </Col>
+                        </Row>
+                      );
+                    })}
+                  </Space>
+                )}
+              </Card>
+
               {/* 나머지 큐. 초점 하나 아래에 **작게** 둔다 — 여기가 커지면 다시 목록이 된다. */}
               <Card size="small" title={`대기 카드 ${data.queue.length}장`}>
                 <Space direction="vertical" size={8} style={{ width: '100%' }}>
@@ -458,7 +621,7 @@ export default function FocusQueuePage() {
                           style={{ borderTop: '1px solid #f0f0f0', paddingTop: 8 }}
                         >
                           <Col flex="auto">
-                            <CardHead card={card} />
+                            <CardHead card={card} signal={signals.byEvent.get(card.event_id)} />
                             <div>
                               <Text type="secondary" style={{ fontSize: 12 }}>
                                 발생 {stamp(card.occurred_at)}

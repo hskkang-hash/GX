@@ -320,3 +320,279 @@ def stats_false_positive(
     }
     _cache_set(key, payload)
     return payload
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 4. false_positive_by_camera — UX-36 「어느 카메라가 시끄러운가」
+#    (부속서A 업무플로우 U2 #10 · BF-3 3단계)
+# ═══════════════════════════════════════════════════════════════════════════
+#: 한 번에 훑는 카메라 수 상한. `_ROW_CAP` 과 같은 발상 — 카메라가 많은 테넌트에서
+#: 이 집계가 카메라마다 K6 을 한 번씩 부르므로, 상한이 없으면 목록보다 무거워진다.
+#: 닿았다는 사실은 응답이 말한다(`camera_capped`) — 조용히 자르지 않는다.
+_CAMERA_CAP = 50
+
+
+def _window_from_days(days: int | None, since: datetime | None,
+                      until: datetime | None) -> tuple[datetime, datetime]:
+    """`days=7`(정본이 부르는 모양)을 두 끝으로 편다.
+
+    ★ 두 끝을 **둘 다** 정해서 내려보낸다. 여는 쪽만 정하면 창이 아니라 반직선이
+      되고, 그러면 「지난 7일」이 「7일 전부터 미래까지」가 된다(`EventList.tsx::windowOf`
+      머리말과 같은 규약).
+    """
+    if days is not None:
+        if days <= 0:
+            raise StatsInputError(f"days 는 1 이상이다 — days={days}")
+        until = _floor_to_ttl(until or timezone.now()) if until is None else until
+        since = until - timedelta(days=days)
+    return _resolve_window(since, until)
+
+
+def false_positive_by_camera(
+    *,
+    scope: TenantScope,
+    since: datetime | None = None,
+    until: datetime | None = None,
+    days: int | None = None,
+    top_n: int = 3,
+) -> dict:
+    """카메라별 오탐률 — **내림차순 · 상위 N 강조** (부속서A U2 #10 완결 조건).
+
+    ★ **나눗셈을 여기서 하지 않는다.** 카메라마다
+      `kernels.k6_feedback.false_positive_rate(stream_monitor_id=...)` 를 부르고
+      그 결과를 그대로 옮긴다 — K6 이 이미 `stream_monitor_id` 를 받는다(실측).
+      여기서 다시 세면 같은 수를 내는 집계 경로가 둘이 되고, 갈린 수는 고객
+      앞에서 못 쓴다(DA-04 K6 표 · `stats_false_positive` 와 같은 사유).
+
+    ★ 분모 0(판정 0건)인 카메라는 `false_positive_rate: null` 이고 **0.0 이 아니다.**
+      그런 카메라는 정렬에서 **맨 뒤**로 간다 — 「한 번도 판정 안 한 카메라」가
+      「오탐이 0인 카메라」보다 조용해 보이면 안 된다(D-290).
+
+    ★ 상위 N 은 **잴 수 있는 행에만** 매긴다. 못 재는 행에 순위를 주면 그 순위는
+      판정을 안 했다는 사실을 상으로 바꾼다.
+    """
+    actor = scope.require_actor()
+    since, until = _window_from_days(days, since, until)
+    if top_n < 0:
+        raise StatsInputError(f"top_n 은 0 이상이다 — top_n={top_n}")
+
+    key = _cache_key("fp_by_camera", actor, since=since, until=until, top_n=top_n)
+    cached = _cache_get(key)
+    if cached is not None:
+        return cached
+
+    rows = services.recent_events(scope=scope, since=since, until=until,
+                                  limit=_ROW_CAP + 1)
+    capped = len(rows) > _ROW_CAP
+    rows = rows[:_ROW_CAP]
+
+    #: 이 창에 **실제로 사건을 낸** 카메라만 센다. 카메라 표를 따로 훑지 않는 이유:
+    #: 사건이 한 건도 없는 카메라는 「조용한가」를 물을 표본이 없다 — 그 카메라를
+    #: 오탐률 0% 로 적으면 꺼져 있는 카메라가 가장 좋은 카메라가 된다.
+    names: dict[int, str] = {}
+    order: list[int] = []
+    for e in rows:
+        cid = e.stream_monitor_id
+        if cid is None:
+            continue
+        if cid not in names:
+            names[cid] = e.stream_monitor_name or ""
+            order.append(cid)
+    camera_total = len(order)
+    camera_capped = camera_total > _CAMERA_CAP
+    order = order[:_CAMERA_CAP]
+
+    from kernels.k6_feedback import false_positive_rate
+
+    cameras = []
+    for cid in order:
+        rate = false_positive_rate(scope=scope, since=since, until=until,
+                                   stream_monitor_id=cid)
+        w = rate.total
+        cameras.append({
+            "stream_monitor_id": cid,
+            "stream_monitor_name": names[cid],
+            #: 비율만 내지 않는다 — 분자·분모를 함께 낸다(D-271 ③ · D-301).
+            "false_positive": w.rejected,
+            "reviewed": w.reviewed,
+            "unreviewed": w.unreviewed,
+            "false_positive_rate": w.rate,        # 분모 0 이면 **null**
+            "measurable": rate.is_measurable,
+        })
+
+    #: 못 재는 행은 맨 뒤 · 같은 비율이면 **분모가 큰 쪽**이 위다(판정 3건 중 2건보다
+    #: 판정 100건 중 66건이 더 단단한 수다).
+    cameras.sort(key=lambda r: (
+        r["false_positive_rate"] is None,
+        -(r["false_positive_rate"] or 0.0),
+        -r["reviewed"],
+        r["stream_monitor_id"],
+    ))
+
+    ranked = 0
+    for r in cameras:
+        r["top"] = bool(r["measurable"] and ranked < top_n)
+        if r["top"]:
+            ranked += 1
+
+    payload = {
+        "since": since.isoformat(),
+        "until": until.isoformat(),
+        "cameras": cameras,
+        "camera_total": camera_total,
+        "top_n": top_n,
+        "capped": capped,
+        "row_cap": _ROW_CAP,
+        "camera_capped": camera_capped,
+        "camera_cap": _CAMERA_CAP,
+    }
+    _cache_set(key, payload)
+    return payload
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 5. simulate_threshold — UX-36 「슬라이더 → 시간당 N건」 (부속서A U2 #11 · BF-3 4단계)
+# ═══════════════════════════════════════════════════════════════════════════
+#: 정본 BF-3 4단계가 이름으로 적은 문턱 — 「6건 초과 주황」. 화면이 자기 문턱을
+#: 들지 않도록 **서버가 낸다**(`FocusQueue` 의 `tier_thresholds_sec` 와 같은 규약).
+_NOISY_PER_HOUR = 6.0
+
+
+def simulate_threshold(
+    *,
+    scope: TenantScope,
+    camera_id: int,
+    confidence_min: float,
+    days: int = 7,
+) -> dict:
+    """「이 문턱이면 최근 N일 기준 **시간당 몇 건**이 남나」 — 아무것도 바꾸지 않는다.
+
+    ★ **쓰지 않는다.** 이 함수는 저장도 판정도 하지 않고 셈만 한다 — 누르는 것과
+      바뀌는 것을 가른다. 실제 변경은 `POST /api/dsm/settings/thresholds`(F-12 의
+      유일한 임계값 문)가 하고, 그 문은 **사유가 비면 400** 이다.
+
+    ★ 확신도가 **비어 있는 사건은 「남는다」고 세지 않는다.** `confidence` 가 `null`
+      인 행은 어떤 문턱으로도 가를 수 없다 — 그 수를 `unknown_confidence` 로 따로
+      내고, 가를 수 있는 행이 하나도 없으면 `measurable: false` 다. 0 건으로 내면
+      「문턱을 올렸더니 알림이 사라졌다」는 거짓 안심이 된다(D-290).
+
+    ★ 남의 카메라 id 를 넣어도 새는 것이 없다: 세는 표본은 `recent_events` 가 이미
+      요청자의 테넌트로 좁힌 사건뿐이다. 남의 카메라 id 는 **0 건**으로 떨어지고,
+      이 응답에는 카메라 이름이 없다(존재 여부가 새지 않는다 · D-269).
+    """
+    scope.require_actor()
+    if not isinstance(confidence_min, (int, float)):
+        raise StatsInputError("확신도 문턱이 숫자가 아니다")
+    if not (0.0 <= float(confidence_min) <= 1.0):
+        raise StatsInputError(
+            f"확신도 문턱은 0.0 과 1.0 사이다 — confidence_min={confidence_min}. "
+            f"모델이 내는 확신도가 그 범위이기 때문이다")
+    if days <= 0 or days > _MAX_WINDOW.days:
+        raise StatsInputError(
+            f"days 는 1 과 {_MAX_WINDOW.days} 사이다 — days={days}")
+
+    confidence_min = float(confidence_min)
+    until = _floor_to_ttl(timezone.now())
+    since = until - timedelta(days=days)
+
+    #: ⚠ **캐시를 타지 않는다.** 슬라이더를 움직인 결과가 60초 전 값이면 사람은
+    #:   자기가 방금 고른 문턱의 수를 보고 있다고 믿으면서 다른 수를 본다
+    #:   (P-19 「응답 캐시가 장애를 덮는다」의 같은 결).
+    rows = services.recent_events(scope=scope, since=since, until=until,
+                                  limit=_ROW_CAP + 1)
+    sample_capped = len(rows) > _ROW_CAP
+    rows = rows[:_ROW_CAP]
+
+    #: 카메라로 좁히는 일을 **커널이 못 해 준다** — `query_events` 에 카메라 인자가
+    #: 없다(실측). 그래서 여기서 접는다(`stats_by_reviewer` 가 요원으로 접는 것과
+    #: 같은 자리). ⚠ 표본 상한에 닿으면 그 카메라의 옛 사건이 이 셈 밖으로 나가므로
+    #: `sample_capped` 를 응답에 싣는다 — 화면이 그 사실을 적는다.
+    mine = [e for e in rows if e.stream_monitor_id == camera_id]
+    graded = [e for e in mine if e.confidence is not None]
+    kept = [e for e in graded if float(e.confidence) >= confidence_min]
+
+    hours = (until - since).total_seconds() / 3600.0
+    measurable = bool(graded) and hours > 0
+    return {
+        "since": since.isoformat(),
+        "until": until.isoformat(),
+        "days": days,
+        "camera_id": camera_id,
+        "confidence_min": confidence_min,
+        #: 분모들. 「시간당 N건」만 내면 그것이 몇 건 중 몇인지 아무도 모른다.
+        "events_total": len(mine),
+        "graded_total": len(graded),
+        "unknown_confidence": len(mine) - len(graded),
+        "kept": len(kept),
+        "dropped": len(graded) - len(kept),
+        "window_hours": hours,
+        #: 이 문턱이면 시간당 몇 건 — 가를 수 있는 행이 0 이면 **null**(0.0 이 아니다).
+        "events_per_hour": (len(kept) / hours) if measurable else None,
+        #: 지금은 시간당 몇 건. 「바꾸면 얼마나 줄어드나」는 두 수가 함께 있어야 뜻이 있다.
+        "current_per_hour": (len(mine) / hours) if hours > 0 else None,
+        "measurable": measurable,
+        #: 문턱은 서버가 낸다 — 화면이 6 을 들고 있으면 두 곳이 갈린다.
+        "noisy_per_hour": _NOISY_PER_HOUR,
+        "noisy": bool(measurable and (len(kept) / hours) > _NOISY_PER_HOUR),
+        "sample_capped": sample_capped,
+        "row_cap": _ROW_CAP,
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 6. 임계값 — **되돌려 읽는 자리** (부속서A U2 #11 「저장(사유) → 재조회」)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ **쓰는 문을 새로 만들지 않는다.** F-12 의 임계값 쓰기는
+#   `POST /api/dsm/settings/thresholds` 하나이고(사유 필수 · 계약 고정값은 409 ·
+#   무권한 403 + 감사 번호), 그 문은 이미 서 있다. 같은 일을 하는 문을 하나 더 열면
+#   문지기가 두 벌이 되고 두 벌은 반드시 어긋난다(D-212).
+#   여기 있는 것은 **읽는 쪽**뿐이다 — 저장한 값이 정말 그 카메라에 붙었는지를
+#   사람이 화면에서 확인하는 자리.
+
+
+def camera_threshold_keys(*, scope: TenantScope) -> dict:
+    """이 화면이 **카메라별로 고칠 수 있는 임계값**의 목록. 값은 내지 않는다.
+
+    ★ 화면이 키를 손으로 들지 않게 하는 것이 이 함수의 전부다. 키 이름을 화면에
+      박아 두면 표 ①(`kernels/k5_trust/thresholds.py`)이 늘거나 줄 때 화면만
+      옛말이 되고, 옛말이 된 것은 안 보인다(D-286).
+
+    ★ 계약이 못박은 값(`contract_fixed`)은 **목록에서 뺀다** — 슬라이더로 옮길 수
+      있는 것처럼 그려 놓고 저장에서 409 를 내면 그 화면이 거짓말을 한 것이다.
+    """
+    from kernels.k5_trust import list_thresholds
+
+    keys = [
+        {
+            "key": r["key"],
+            "title": r["title"],
+            "unit": r["unit"],
+            "default": r["default"],
+            "applies_to": r["applies_to"],
+        }
+        for r in list_thresholds(scope=scope)
+        if r["applies_to"] == "camera" and not r["contract_fixed"]
+    ]
+    return {"keys": keys, "total": len(keys)}
+
+
+def camera_threshold(*, scope: TenantScope, camera_id: int, key: str) -> dict:
+    """그 카메라에 **지금 유효한** 임계값. 「저장 → 재조회」의 재조회가 이것이다.
+
+    ★ 좁은 것이 이긴다(camera → tenant → global → 정의) — 그 판정은 커널
+      (`resolve_threshold`)이 한다. 여기서 다시 하지 않는다.
+
+    ★ 값이 없으면 **`null` 이고 0 이 아니다.** 0 으로 내면 「기준선이 0」으로 읽히고,
+      그러면 모든 신호가 초과가 된다(표 ① 머리말이 이름으로 막은 자리).
+
+    ★ 문지기는 커널 안에 있다 — `resolve_threshold` 가 남의 카메라 pk 에
+      `assert_scoped` 를 건다(W0-14c). 여기서 다시 세우지 않는다.
+    """
+    from kernels.k5_trust import ThresholdNotSet, resolve_threshold
+
+    try:
+        value = resolve_threshold(key, scope=scope, camera_id=camera_id)
+    except ThresholdNotSet:
+        return {"key": key, "camera_id": camera_id, "value": None, "set": False}
+    return {"key": key, "camera_id": camera_id, "value": value, "set": True}
