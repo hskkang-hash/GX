@@ -33,14 +33,17 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Main } from 'rj-core';
 
 import {
+  dsmDelete,
   dsmEndpoint,
   dsmGet,
   dsmPostOnce,
   dsmPostQuery,
   dsmPostQueryOnce,
+  dsmU1Endpoint,
   intentKey,
 } from '../api';
 import { userFacingError, isNotFound, NOT_FOUND_TITLE_EVENT } from '../copy';
+import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
 import { deliveryOutcomeColumns } from '../deliveryOutcome';
 import { useDsmResource } from '../hooks/useDsmResource';
@@ -94,6 +97,49 @@ export default function EventDetail() {
       isEmpty: (v) => (v?.deliveries?.length ?? 0) === 0,
     },
   );
+
+  /**
+   * UX-47 **상급기관 제출 표시** — 턴 T 넘김을 여기서 닫는다.
+   *
+   * ★ 문은 U24 가 이미 열었다(`api_u24.py:292·301`). 이 화면이 새로 짓는 것은
+   *   **손잡이**뿐이다(U1#11 의 진위 판정과 같은 결함 모양 — 「문은 있는데 손잡이가
+   *   없다」).
+   * ★ **상태는 칸으로**(FocusQueue.tsx 의 불변과 같다) — 토스트를 쓰지 않는다.
+   *   눌린 뒤 서버가 돌려준 `flagged` 를 그대로 그린다. 성공을 화면이 지레짐작하지
+   *   않는다.
+   */
+  const upperReport = useDsmResource<{
+    flags: Record<string, { flagged: boolean; reported_at: string | null }>;
+  }>(
+    () => dsmGet(dsmU1Endpoint.upperReportFlags, { event_ids: id }),
+    [id],
+    { enabled: Boolean(id) },
+  );
+  const [upperReportBusy, setUpperReportBusy] = useState(false);
+  const [upperReportError, setUpperReportError] = useState('');
+  const flagged = Boolean(id && upperReport.data?.flags?.[String(id)]?.flagged);
+
+  const toggleUpperReport = useCallback(async () => {
+    if (!id) return;
+    setUpperReportBusy(true);
+    setUpperReportError('');
+    try {
+      if (flagged) {
+        await dsmDelete(dsmU1Endpoint.upperReport(id));
+      } else {
+        await dsmPostQueryOnce(
+          dsmU1Endpoint.upperReport(id), {}, intentKey(`upper-report:${id}`),
+        );
+      }
+      upperReport.reload();
+    } catch (err) {
+      setUpperReportError(
+        userFacingError('EventDetail.upperReport', err, '상급기관 제출 표시를 바꾸지 못했습니다.'),
+      );
+    } finally {
+      setUpperReportBusy(false);
+    }
+  }, [id, flagged, upperReport]);
 
   /**
    * UX-14 **네 시각 타임라인.**
@@ -539,9 +585,30 @@ export default function EventDetail() {
                 처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어
                 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.
               </Text>
+              <Space wrap align="center">
+                <Text strong>상급기관 제출</Text>
+                <Button
+                  loading={upperReportBusy}
+                  onClick={toggleUpperReport}
+                  disabled={!upperReport.data}
+                >
+                  {flagged ? '제출 표시 해제' : '제출로 표시'}
+                </Button>
+                <Tag color={flagged ? 'blue' : 'default'}>
+                  {flagged ? '상급기관에 제출함' : '아직 제출 표시 없음'}
+                </Tag>
+              </Space>
+              {upperReportError && (
+                <FailureNotice
+                  title="상급기관 제출 표시를 바꾸지 못했습니다."
+                  detail={upperReportError}
+                  onRetry={toggleUpperReport}
+                  busy={upperReportBusy}
+                />
+              )}
               <Text type="secondary">
-                유관기관 통보를 적는 화면은 아직 없습니다. 아래 「발송 이력」은
-                알림 발송이지 유관기관 통보가 아닙니다.
+                이 체크는 「우리가 상급기관에 이 사건을 알렸다」는 표시일 뿐입니다 —
+                아래 「발송 이력」(알림 발송)과는 다른 사실입니다.
               </Text>
             </Space>
           </Card>

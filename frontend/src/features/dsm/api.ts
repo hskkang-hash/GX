@@ -685,6 +685,16 @@ export const dsmU1Endpoint = {
   queueFieldSignals: '/api/dsm/queue/field-signals',
   /** 종결 확인 「확인」 — 조치 완료 회신이 온 열린 사건의 기록을 닫는다(409 = 확인할 것 없음). */
   confirmDone: (eventId: number) => `/api/dsm/queue/field-signals/${eventId}/confirm-done`,
+  /**
+   * UX-47 상급기관 제출 표시/해제 — 사건 상세의 토글 (턴 U · 차선 U1).
+   *
+   * ★ 문은 **U24 가 이미 열어 두었다**(`api_u24.py:292·301` · HEAD 에 있다) — 여기서는
+   *   화면이 부르는 자리만 정한다. 새 문을 만들지 않는다.
+   * ★ 읽기 하나 + 같은 경로에 POST(체크 · 멱등)와 DELETE(해제 · 없으면 404). 응답의
+   *   `flagged` 를 그대로 그린다 — 눌렀다고 화면이 지레짐작하지 않는다(누른 뒤를 본다).
+   */
+  upperReportFlags: '/api/dsm/events/upper-report/flags',
+  upperReport: (eventId: number | string) => `/api/dsm/events/${eventId}/upper-report`,
 } as const;
 
 /**
@@ -828,3 +838,248 @@ export const dsmU56IntegrationEndpoint = {
   /** 인증 없이 200/503 — 상태 이름만. */
   health: '/api/dsm/health',
 } as const;
+
+// ── U24 턴 U ──────────────────────────────────────────────────────────────
+/**
+ * S-18 「보고서」 — 서식 3(사건 1쪽 · 「이번 달 우리 센터」 자동본 · 상급 제출용) ·
+ * 실행 기록 · **파일 2**(DOCX 정본 · PDF 병행) + 감사 CSV (턴 U · 차선 U24 · P-173).
+ *
+ * ★ 끝에 붙인다 — 같은 턴에 차선 다섯이 이 파일을 읽는다(위 묶음들과 같은 규약).
+ * ★ 「만들기」는 **본문(JSON)** 으로 보낸다(`dsmPost`). 질의가 아니다: 「특이사항」은
+ *   사람이 쓴 글이고, 질의 문자열에 실린 글은 접근 로그·브라우저 이력에 남는다
+ *   (턴 T 가 구독 비밀에서 본 그 자리 · P-166 과 같은 규약).
+ *   ⚠ 이 라우트는 서버가 `Schema` 로 받는다(`api_u24.ReportRunIn`) — `dsmPostQuery`
+ *     를 쓰면 422(`loc: ["body", …]`)다. 위 `dsmPostQuery` 머리말의 반대 자리다.
+ * ★ 파일은 **화면이 만들지 않는다.** 서버가 그 실행 기록에서 지금 다시 그려 준다 —
+ *   화면이 자기 표를 파일로 적으면 파일의 수와 화면의 수가 갈린다.
+ */
+export const dsmU24ReportEndpoint = {
+  /** GET = 실행 목록(최신 순) · POST = 만들기(본문 JSON). */
+  runs: '/api/dsm/reports/runs',
+  /** **정본**(결정 ⑤ · HWP 가 여는 DOCX). */
+  runDocx: (runId: number | string) => `/api/dsm/reports/runs/${runId}.docx`,
+  /** 병행 — 같은 글자를 PDF 로. */
+  runPdf: (runId: number | string) => `/api/dsm/reports/runs/${runId}.pdf`,
+  /** 감사 CSV — 화면 표와 **같은 함수**가 낸다. */
+  auditExportCsv: '/api/dsm/audit/export.csv',
+} as const;
+
+/** 서식 셋. 서버 `DsmReportRun.Kind` 와 같은 문자열이다 — 화면이 새 낱말을 만들지 않는다. */
+export type ReportKind = 'incident' | 'monthly' | 'upper';
+
+/** 실행 기록 한 행. 라벨(`*_label`)은 **서버가 준 말**을 그대로 쓴다. */
+export interface ReportRunRow {
+  run_id: number;
+  kind: ReportKind;
+  kind_label: string;
+  /** `auto` = 배치가 냈다 · `manual` = 사람이 눌렀다 (PRD §7.4 가 묻는 그 수). */
+  trigger: 'auto' | 'manual';
+  trigger_label: string;
+  status: 'succeeded' | 'failed';
+  status_label: string;
+  event_id: number | null;
+  period_start: string | null;
+  period_end: string | null;
+  note: string;
+  /** 실패 행에만 있다. **비어 있으면 그 행은 실패가 아니다.** */
+  failure_reason: string;
+  created_at: string | null;
+}
+
+export interface ReportRunPage {
+  runs: ReportRunRow[];
+  total: number;
+  capped: boolean;
+  kinds: { kind: ReportKind; label: string }[];
+}
+
+/** 감사 한 줄에 턴 U 가 더한 세 칸 — 해시 두 개와 **이어짐**. */
+export interface AuditChainColumns {
+  prev_hash?: string;
+  hash?: string;
+  /** `linked` 이어짐 · `broken` 끊김 · `unchained` 체인 이전 행 · `unknown` 모름(회색). */
+  chain?: 'linked' | 'broken' | 'unchained' | 'unknown';
+}
+
+export interface AuditChainCounts {
+  linked: number;
+  broken: number;
+  unchained: number;
+  unknown: number;
+}
+
+export function listReportRuns(params?: Record<string, unknown>): Promise<ReportRunPage> {
+  return dsmGet<ReportRunPage>(dsmU24ReportEndpoint.runs, params);
+}
+
+export function createReportRun(body: {
+  kind: ReportKind;
+  event_id?: number | null;
+  since?: string;
+  until?: string;
+  note?: string;
+}): Promise<ReportRunRow> {
+  return dsmPost<ReportRunRow>(dsmU24ReportEndpoint.runs, body);
+}
+
+/**
+ * 파일 하나를 **받아서 넘긴다** — 통계 CSV 의 길(`downloadStatsCsv`)과 같은 결이다.
+ *
+ * ★ 0바이트는 성공이 아니다(서버의 K4·DOCX 규약과 같은 판정) — 받은 쪽도 그렇게 센다.
+ * ★ `X-No-Cache` — 응답 캐시가 장애를 덮는다(P-19). 결재에 붙는 파일이 60초 전 값이면
+ *   그 값이 「지금 값」으로 남는다.
+ * ★ 실패 문장은 `DsmApiError` 로 올린다 — 부르는 쪽이 **상태 칸**(FailureNotice)에 적는다.
+ *   토스트로 말하지 않는다(P-173 · 새 토스트 0).
+ */
+export async function downloadDsmFile(
+  url: string,
+  filename: string,
+  what: string,
+  params?: Record<string, unknown>,
+): Promise<{ bytes: number }> {
+  let res: unknown;
+  try {
+    res = await API.get(url, {
+      params,
+      responseType: 'blob',
+      headers: { 'X-No-Cache': 'true' },
+    });
+  } catch (err: unknown) {
+    const e = err as { response?: { status?: number; data?: unknown } };
+    const status = e?.response?.status ?? 0;
+    const said = await reasonFromBlob(e?.response?.data);
+    throw new DsmApiError(
+      said ?? (status > 0
+        ? `${what}을(를) 받지 못했습니다 (${status})`
+        : `${what}을(를) 받는 중에 연결이 끊겼습니다.`),
+      status,
+      said !== undefined,
+    );
+  }
+  const blob = pickBlob(res);
+  if (!blob) throw new DsmApiError(`${what} 바이트를 못 알아봤습니다.`, 0);
+  if (blob.size === 0) throw new DsmApiError(`${what}이(가) 0바이트로 왔습니다.`, 0);
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    // 다음 틱에 놓는다 — 같은 틱에 놓으면 브라우저가 파일을 열기 전에 주소가 죽는다.
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  }
+  return { bytes: blob.size };
+}
+
+/** 보고서 파일 하나 — `fmt` 가 `docx` 면 정본, `pdf` 면 병행본. */
+export function downloadReportFile(
+  runId: number,
+  fmt: 'docx' | 'pdf',
+): Promise<{ bytes: number }> {
+  const url = fmt === 'docx'
+    ? dsmU24ReportEndpoint.runDocx(runId)
+    : dsmU24ReportEndpoint.runPdf(runId);
+  return downloadDsmFile(url, `guardianx-report-${runId}.${fmt}`,
+    fmt === 'docx' ? '보고서(DOCX)' : '보고서(PDF)');
+}
+
+/** 감사 CSV — 화면 표와 **같은 필터**를 그대로 넘긴다(다른 질의를 새로 짜지 않는다). */
+export function downloadAuditCsv(
+  params: Record<string, unknown>,
+): Promise<{ bytes: number }> {
+  return downloadDsmFile(dsmU24ReportEndpoint.auditExportCsv, 'gx-audit.csv',
+    '감사 기록 표', params);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════
+ * ── U56 턴 U ── U5 관리자 · U6 연계의 끝내기 다섯 (2026-09-18 · 차선 U56)
+ * ════════════════════════════════════════════════════════════════════════
+ *
+ * ★ **끝에 붙인다** — 위 묶음들과 같은 규약(한 턴에 여러 차선이 이 파일을 읽는다).
+ * ★ 인자는 전부 **질의**다(`dsmPostQuery` 관용). 본문으로 보내면 422 · loc:["query"] 다.
+ * ⚠ 재시작 「요청」은 **서버를 내리지 않는다.** 응답의 `executed` 가 언제나 거짓이고,
+ *   화면은 그 사실을 문장으로 그린다 — 「눌렀다」와 「일어났다」를 한 칸에 두지 않는다.
+ */
+export const dsmU56AdminEndpoint = {
+  /** WS-23 — **id 로 지목한 한 대**의 설치 주소. 만들지 않는다(없으면 404). */
+  cameraAddressOne: (cameraId: number | string) =>
+    `/api/dsm/cameras/${cameraId}/address`,
+  /** WS-22 — 재시작 **요청**(기록만 · 실행은 점검 창). */
+  restartRequest: '/api/dsm/system/restart-request',
+  /** 요청 목록 — 최근 것부터. */
+  systemRequests: '/api/dsm/system/requests',
+  /** 마지막 회수증 시각·파일·검증 가능 여부·다음 예정. 없으면 UNKNOWN(회색). */
+  backupReceipts: '/api/dsm/system/backup-receipts',
+  /** 상한 N GB · 사용 N% — 미선언이면 그 말을 문장으로 낸다. */
+  storage: '/api/dsm/system/storage',
+  /** API-03 — 키 하나의 범위(GET 조회 · POST 저장). */
+  apiKeyScopes: (keyId: number | string) =>
+    `/api/dsm/settings/api-keys/${keyId}/scopes`,
+} as const;
+
+/** 저장 용량 한 묶음. `null` 이 값이다 — 미선언은 `capacity_gb: null` 이고 0 이 아니다. */
+export interface DsmStorageDeclaration {
+  declared: boolean;
+  capacity_gb: number | null;
+  used_gb: number | null;
+  used_pct: number | null;
+  verdict: string;
+  reason: string;
+  used_note: string;
+  env_name: string;
+}
+
+/** 회수증 한 장. 못 읽은 회수증(`unreadable`)은 **없는 것보다 나쁘다** — 따로 센다. */
+export interface DsmBackupReceipt {
+  created_at: string | null;
+  db_file: string | null;
+  bytes?: number | null;
+  objects?: number | null;
+  verifiable: boolean;
+  unreadable: boolean;
+  where: string;
+}
+
+export interface DsmBackupReceipts {
+  roots: { path: string; exists: boolean }[];
+  receipts_found: number;
+  last: DsmBackupReceipt | null;
+  recent: DsmBackupReceipt[];
+  schedule_enabled: boolean;
+  next_run: string;
+  verdict: string;
+  reason: string;
+}
+
+export interface DsmSystemRequestRow {
+  request_id: number;
+  kind: string;
+  status: string;
+  status_label: string;
+  reason: string;
+  requested_by: string;
+  created_at: string | null;
+  handled_note: string;
+}
+
+export interface DsmSystemRequests {
+  total: number;
+  requests: DsmSystemRequestRow[];
+  note: string;
+}
+
+/** 한 대의 주소를 채운 결과. `was_blank` 가 「채웠다」와 「덮어썼다」를 가른다. */
+export interface DsmCameraAddressResult {
+  camera_id: number;
+  name: string;
+  install_address: string;
+  install_address_detail: string;
+  address_source: string;
+  was_blank: boolean;
+  previous_address: string;
+  audit_id?: number;
+}

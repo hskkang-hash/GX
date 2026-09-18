@@ -8,7 +8,6 @@
 #
 # 형식:  <이름키> <탭> <파일> <탭> <건수>
 
-
 api_key	backend/apps/dsm/services.py	3
 api_key	backend/common/access_gate.py	2
 api_key	backend/common/cache_hint_registry.py	1
@@ -25,56 +24,26 @@ api_key	backend/partner/services/partner_service.py	25
 api_key	backend/partner/utils/partner_utils.py	9
 api_key	backend/partner/views/partner_controller.py	8
 api_key	backend/print_format/services.py	1
+api_key	backend/stream_monitors/models.py	1
+api_key	backend/tests/tenant_census.py	1
 api_key	backend/tests/test_dsm_app.py	5
-api_key	backend/tests/test_f05_event_api.py	6
+api_key	backend/tests/test_f05_event_api.py	8
 api_key	backend/tests/test_f05_inbound_key_lifecycle.py	9
 api_key	backend/tests/test_k3_role_frame.py	6
 api_key	backend/tests/test_k5_credential_store.py	4
 api_key	backend/tests/test_s_wall_token.py	4
 api_key	backend/tests/test_tenant_isolation.py	1
 api_key	backend/tests/test_u56_settings_api_keys.py	6
+api_key	backend/tests/test_u56_turn_u_admin_surfaces.py	6
 api_key	backend/third_api/schema.py	3
 api_key	backend/third_api/services/anyang_services.py	1
 api_key	backend/third_api/test_api.py	11
 api_key	backend/third_api/views/api_key_controller.py	1
+api_key	scripts/capture_screens.py	1
 api_key	scripts/verify_authn_paths.py	1
 api_key	scripts/verify_click_completes.py	3
 api_key	scripts/verify_commented_guards.py	1
 api_key	scripts/verify_contract_route_reach.py	3
+api_key	scripts/verify_feature_reach.py	2
 api_key	scripts/verify_homonyms.py	6
 api_key	scripts/verify_threshold_table.py	1
-
-# ★ 2026-09-07 · 턴 I — 기준선 150 → 152 (+2). **정당한 올림이다.**
-#   두 건 다 `backend/common/access_gate.py` 의 AUTHN_REQUIRED_PREFIXES 안에 든
-#   **남의 라우트 경로 문자열**이다: "/api/apikey/" · "/api/third-api/api-key-management/".
-#   그 경로는 dj-core 가 여는 문의 실제 주소라 **우리가 이름을 못 바꾼다**(§0.4).
-#   같은 줄에 `# inbound …` 주석을 붙였지만 이 판정기는 주석을 지우고 보므로
-#   수식어로 세지 않는다 — 그 규칙이 옳다(주석은 코드가 아니다).
-#   왜 이 줄들이 생겼나: 익명이 **API 키를 발급받을 수 있던 문**을 접두로 막은 자리다
-#   (D-368 · P-83 · 턴 I). 이름을 못 고치니 **문은 닫고 이름값은 기준선으로 갚는다.**
-#   갚는 법: dj-core 가 그 경로를 바꾸거나, 우리 앞단에서 별칭을 세우는 날.
-
-# ★ 2026-09-15 · 턴 P — 기준선 152 → 155 (+3). **정당한 올림이다.**
-#   세 건 다 `scripts/verify_click_completes.py:372-374` 의 **서버가 정한 이름 문자열**이다:
-#   경로 "/api/dsm/settings/api-keys" · 설정 도메인 "api_keys" · 응답 필드 "api_key".
-#   판정기의 기대식은 정본(서버 응답·라우트)에서 뽑아야 하므로(P-132) 이름을 바꾸면
-#   **다른 것을 재게 된다.** 같은 커밋에서 우리 식별자인 단독 `auth` 셋은 이름을 고쳤다
-#   (`test_role_gate.py` → `authn_headers` · `verify_error_body.py` → `authn_header`).
-#   ⚠ `--freeze` 는 이 파일을 통째로 다시 써서 **사람이 적은 근거 문단을 지운다**(이번에 실제로
-#     지웠다 — 턴 I 문단을 HEAD 에서 되살렸다). 얼린 뒤에는 `git diff` 로 근거 문단을 확인할 것.
-
-# ★ 2026-09-15 · 턴 Q — 기준선 155 → 159 (+4). **정당한 올림이다.**
-#   네 건 다 `backend/tests/test_u56_settings_api_keys.py` 의 **서버가 정한 경로 문자열**
-#   "/api/dsm/settings/api-keys" 다(차선 U56 · SEC-22 — 키 발급 200 을 관리자 역할로 증명하는 시험).
-#   경로는 서버 라우트의 실제 주소라 시험이 이름을 바꾸면 **다른 문을 두드리게 된다** — 턴 P 문단과
-#   같은 사유다. 우리 식별자에는 이번 턴 새 단독 `api_key` 가 0건이다.
-#   ⚠ 이번에도 `--freeze` 가 위 두 문단(턴 I · 턴 P)을 지웠다 — HEAD 에서 되살리고 데이터 한 줄만 끼웠다.
-#
-# ── 턴 R (2026-09-16) — 같은 파일이 4 → 6 으로 늘었다 (159 → 161).
-#   U56 차선이 P-146(관리자 역할 매핑)을 증명하면서 같은 경로 문자열을 두 번 더 썼다:
-#   `?name=u56-p146-role-mapping` · `?name=u56-p146-orphan` — 둘 다 **서버가 정한 주소**
-#   "/api/dsm/settings/api-keys" 이고, 시험이 이름을 바꾸면 다른 문을 두드리게 된다.
-#   우리 식별자에는 이번 턴에도 새 단독 `api_key` 가 **0건**이다.
-#   ⚠ 이번에는 `--freeze` 를 **부르지 않았다.** 데이터 한 줄(4→6)만 손으로 고쳤다 —
-#     턴 Q 가 「freeze 가 사람의 문단을 지운다」를 실측으로 남겼기 때문이다.
-#     기준선은 기계가 쓰고 사유는 사람이 쓴다. 두 벌을 한 명령으로 덮지 않는다.

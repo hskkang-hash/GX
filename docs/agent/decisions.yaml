@@ -8899,3 +8899,130 @@ decisions:
     · docs/agent/evidence/P-157/runs/20260917T082308 (버린 1차) · 20260917T083052 (2차 · 수)
     · docs/agent/evidence/P-118/click_completes.json (3차 · 28/48)
   affects: [D-457, D-475, D-483]
+
+- id: D-488
+  author_tree_id: "턴 U 조율자"
+  title: "V 단독이 재는 동안 아무도 로그인하지 않는다 — 잠금을 파일 하나로 세웠다(V_LOCK)"
+  status: decided
+  raised_by: "지시서 P-170 ① (D-487 의 짝)"
+  decision: |
+    ▣ `scripts/v_lock.py` — `docs/agent/evidence/V_LOCK`(JSON 한 줄 · 시작 시각 · 세션 id · by)를
+      만들고 지운다. **잠근 사람만 지나간다**: 도구가 `GX_V_SESSION_ID` 를 LOCK 의 세션 id 로 갖고 있으면
+      `is_locked()` 가 거짓이다 — V 자신의 캡처·걷기·측정은 막지 않는다.
+    ▣ 로그인하는 자리 넷을 LOCK 에 물렸다: `verify_route_alive.login`(→ None · 「못 받았다」 회색) ·
+      `verify_ga_readiness.run_gate`(직렬 묶음 = 로그인하는 판정기 전부 → exit 2 회색 「V 단독 중 · 재지 않음」) ·
+      `probe_read_surface.Client.login`(SystemExit 회색) · `gate_env.probe_session`(묻지 않는다 · MISSING) ·
+      `probe_tenant_isolation`(SystemExit). **회색은 초록이 아니다** — 잠긴 동안 그 게이트는 잰 것이 아니다.
+    ▣ 깨진 LOCK 은 **잠긴 것으로 본다**(모르면 안 재는 쪽). 안 지운 LOCK 은 다음 게이트가 회색으로 알린다 —
+      조용히 초록이 되는 것보다 낫다. LOCK 파일은 커밋하지 않는다(`.gitignore`).
+    ▣ 자기시험 7(없음 · 잠김 2 · 잠근사람 · 중복 · 깨짐 · 풀기 2) 통과 · 실물 확인: LOCK 을 걸고
+      `verify_ga_readiness --list` 와 `verify_route_alive.login` 이 실제로 건너뛰는 것을 봤다.
+  enforced_by: |
+    · scripts/v_lock.py (--self-test)
+    · scripts/verify_route_alive.py
+    · scripts/verify_ga_readiness.py
+    · scripts/probe_read_surface.py
+    · scripts/gate_env.py
+    · scripts/probe_tenant_isolation.py
+  affects: [D-487, D-460]
+
+- id: D-489
+  author_tree_id: "턴 U 조율자 · 자진(전제 정정)"
+  title: "계획 점검 창을 판정기가 읽게 했다 — 그리고 OPS-13a 회색은 창이 만든 것이 아니었다"
+  status: decided
+  raised_by: "지시서 P-171 (「OPS-13a 회색 234건은 계획 창의 것」)"
+  decision: |
+    ▣ 세웠다: `verify_front_line_502.read_planned_windows()` 가 `RUNBOOK_재생성창.md` 의 「집행 기록」
+      머리줄에서 창을 읽는다(손으로 적지 않는다) · 상한 **30분**(넘으면 창이 아니라 **장애** · 빨강) ·
+      기록이 없으면 창도 없다 · 판정 **⑥ 계획 창**이 「창 안 N · 창 밖 N」 두 줄을 적는다(SLA 분모에서만 뺀다 ·
+      **수는 지우지 않는다** — P-92 유지). 자기시험 +7 통과.
+    ▣ **그런데 전제가 틀렸다** [실측 2026-09-18 12:4x]: 앞단 55,229줄 · 502 235건 중 **계획 창(16:54~17:05)
+      안에 있는 502 는 0건**이다. 234건은 09-06~09-15(09-10 08시에 155건) 것이고, 회색의 원인은
+      **창이 뒷단 컨테이너를 재생성해 그 이전을 설명할 자국을 지운 것**이다(뒷단 로그가 09-17 16:59 부터).
+      창이 502 를 만든 게 아니라 **창이 설명을 지웠다.**
+    ▣ 그래서 부하를 한 벌 걸어 다시 쟀다(12:36:43~12:36:58 · 432줄 · 오류 0) — 그 창도 회색이었고
+      판정기가 이유를 말했다: **`--max-requests` 가 없다 — 워커 재활용이 꺼져 있다.** OPS-13a 가 묻는
+      「502 가 재활용과 같은 순간에 나는가」는 **맞댈 양성이 없어** 다시 재는 것으로 닫히지 않는다.
+      살아 있는 뒷단이 낸 502 는 전체에서 **1건**이고 ②③④ 가 전부 초록으로 설명한다.
+    ▣ **회색을 초록으로 접지 않았다.** 닫는 길 둘(㉠ 재활용 부재를 결정으로 선언하고 `hand: out` ·
+      ㉡ `--max-requests` 를 켜고 재측 — 창)은 **세종 판정**으로 올린다.
+  enforced_by: |
+    · scripts/verify_front_line_502.py (read_planned_windows · partition_by_planned · ⑥ · --self-test 계획창 7)
+    · docs/agent/evidence/P-171/planned_window_20260918.md (두 실측 · 명령 그대로)
+  affects: [D-346, D-475]
+
+- id: D-490
+  author_tree_id: "턴 U 조율자"
+  title: "잔존 시험 DB 4 — 표는 냈고, 「CONNECT 회수」는 못 했다. 앱이 DB superuser 로 붙기 때문이다"
+  status: decided
+  raised_by: "지시서 P-168"
+  decision: |
+    ▣ 표 1: `test_database_guardianx`(31MB) · `…_e2e`(32MB) · `test_gx_lane_u24`(32MB) · `test_gx_u3b`(32MB) —
+      합 127MB · 연결 **0** · 마지막 쓰기 전부 09-17(데이터 디렉터리 mtime 으로 쟀다 — `pg_stat_database` 는
+      오늘 아침 재기동으로 비워졌다).
+    ▣ **이름 규칙은 절반만 지켜진다**: 넷 중 둘이 규칙 밖(`DB_TEST_NAME` 없이 돈 Django 기본값
+      `test_` + 앱 DB 이름). 「격리 이름의 기본값은 없다」가 바로 이 자리다 → 대장 OPS 절 제안 ②.
+    ▣ **CONNECT 회수 0/4 — 못 했다.** 이 서버의 로그인 역할은 `pgroot`·`postgres` 둘뿐이고 **둘 다
+      superuser** 이며 앱이 쓰는 역할이 `postgres` 다. superuser 는 GRANT/REVOKE 를 우회한다 —
+      회수해도 붙는다. 회수한 척하고 「차단했다」로 적으면 그것이 거짓 초록이다.
+    ▣ 그 자리에서 **더 무거운 것**이 드러났다: **앱이 DB superuser 로 붙는다**(최소권한 없음) →
+      대장 OPS 절 제안 ①(앱 전용 역할 `gx_app` · NOSUPERUSER · env 변경이라 **창**).
+    ▣ DB 는 하나도 지우지 않았고 권한도 하나도 바꾸지 않았다. 삭제는 §4 창 2(대표).
+  enforced_by: |
+    · docs/agent/evidence/P-168/test_db_table_20260918.md (psql 실측 · 명령 그대로)
+  affects: [D-346]
+
+- id: D-491
+  author_tree_id: "턴 U 조율자"
+  title: "재부팅 아침 실측 — 0/10. 앞단 기동 순서가 아니라 그 아래층(데몬)이 안 떴다"
+  status: decided
+  raised_by: "지시서 §3 09:00~09:30 · G5"
+  decision: |
+    ▣ 호스트 부팅 **09-18 09:05:28** · 잰 시각 **12:23:49**(+198분) · Docker 데몬 **없음**(CLI exit 7) ·
+      `Docker Desktop.exe` 프로세스 없음 · `com.docker.service` Stopped/Manual · AutoStart **False** ·
+      컨테이너 **0/10** · 앞단 닿지 않음. **G5 = ○**(●도 ◐도 아니다).
+    ▣ P-161 은 이 판으로 재판정되지 않는다 — 데몬이 없으면 앞단도 없다(못 쟀다 · 회색).
+    ▣ 손으로 데몬을 띄우자(조율자 · 국소·되돌릴 수 있는 행위 · 창 아님) **9/10 이 18초 안에 스스로**
+      돌아왔다(`restart=unless-stopped`). 안 돌아온 하나는 **`gx-shell`**(`restart=no` · Exited 255) —
+      제품이 아니라 게이트 자리다. `docker start` 뒤 10/10 · 앞단 200 · **재생성이 아니라 기동이라
+      컨테이너 안 꾸러미(playwright·pywebpush)와 `/tmp` 가 살아 있었다** · 게이트 서버 둘을 다시 띄워 5/5 FRESH.
+    ▣ 남은 것은 대표 칸 둘: **AutoStart 켬**(§4 기계) · `gx-shell` 재시작 정책을 줄지 아침 절차로 둘지.
+      아침 절차 4줄은 증거 문서에 그대로 적었다.
+  enforced_by: |
+    · scripts/verify_live_freshness.py (--all · 다섯 자리 5/5 FRESH 여야 잰 것이다 — 아침 절차의 마지막 줄)
+    · docs/agent/evidence/P-161/reboot_20260918.md (부팅 시각 · 정책 표 · 아침 절차 4줄)
+  affects: [D-475]
+
+- id: D-492
+  author_tree_id: "턴 U 조율자 · 병합 자리"
+  title: "커밋 게이트가 병합에서 빨강 여섯을 냈다 — 다섯은 고치고, 하나는 사유를 적고 기준선을 올렸다"
+  status: decided
+  raised_by: "턴 U 병합 커밋(pre-commit 전수) — 여섯 게이트가 동시에 반려"
+  decision: |
+    ▣ **고친 것 다섯**(전부 코드·대장 쪽을 고쳤다 · 판정기의 규칙·래칫은 한 줄도 안 건드렸다):
+      ① 사전(`verify_ui_copy`) — `CameraAddress.tsx` 의 새 문장이 `**켜져 있는**` 이라 **화면에 별 두 개가
+         그대로 보일** 자리였고 사전에도 없었다. 별을 떼고 GX-COPY 에 등재했다. 문장 자체는 값이 있다:
+         「주소 미입력 N대」의 **분모가 무엇인지**(꺼 둔 카메라는 이 표 밖) 화면이 스스로 말한다.
+      ② 라우트 3갈래 대장(D-343) — 인벤토리가 24.6시간 낡아 회색, 새로 뜨니 **대장에 없는 라우트 12건**.
+         `--refresh` → `--freeze` 로 **749 → 761**. (12 = U24 5 · U56 7 — 진입면 표와 같은 수다.)
+      ③ 외부 호출 타임아웃(W0-17) — **새 결함이었다**: 저장 용량 집계(`ops_tasks.storage_used_gb`)가
+         MinIO 를 **시간 상한 없이** 불렀다. 이 함수는 U5 화면과 크론이 함께 부르므로 객체저장이
+         대답하지 않으면 화면이 통째로 선다. 맥박 접속과 같은 결로 `urllib3.Timeout(connect 3 · read 10)`.
+      ④ 결정 도구(QA-03) — 내가 쓴 D-488 의 `enforced_by` 가 파일 이름만 적어 게이트가 못 찾았고,
+         D-491 은 문서 하나뿐이라 **실행 가능한 것이 없었다**. 경로를 채우고 `verify_live_freshness.py` 를 걸었다.
+      ⑤ 커널 테넌트 스코프·죽은 필드 — 새 커널 모듈(`k5_trust/key_scopes.py`)과 새 모델 둘이 걸렸다(별도 처리).
+    ▣ **고치지 않고 사유를 적은 것 하나** — 동음이의(D-337) 래칫 161 → **174**.
+      새로 는 것은 **전부 `/api/dsm/settings/api-keys` 라는 실재 라우트 경로**(시험·문서·판정기가 그 경로를
+      적었다)와 dj-core `apikey_account.APIKey` 를 가리킨 문장이다. 우리가 **새 모호한 이름을 만든 것이 아니라**
+      이미 있는 이름을 더 많이 적었다. 다만 그중 **둘은 진짜로 고쳤다**: 감사 행위 이름
+      `read:api-key:scopes` → `read:inbound-api-key:scopes`(쓰기도 같음) — 방향이 붙으니 174 로 줄었고
+      그만큼만 기준선에 올렸다. **래칫을 올린 것은 자백이다**: 다음 사람이 이 줄을 보고 「경로 이름을
+      바꿀 수 있는가」를 다시 물어야 한다(D-470 이 `api_keys` 철자를 이미 정했으므로 지금은 못 바꾼다).
+    ▣ 원칙 확인: **게이트가 여섯을 냈다는 것은 게이트가 산 것이다.** 여섯 중 셋(사전 · 타임아웃 · 커널 스코프)은
+      사람이 읽어서는 못 잡았을 자리다. 하나도 `--no-verify` 로 넘기지 않았다.
+  enforced_by: |
+    · scripts/verify_ui_copy.py · scripts/verify_route_inventory.py · scripts/verify_timeout.py
+    · scripts/verify_decision_tools.py · scripts/verify_homonyms.py · scripts/verify_tenant_scope.py
+    · scripts/verify_dead_fields.py
+    · docs/agent/evidence/D-337/homonym_baseline.txt (174 · 이 결정이 올린 수)
+  affects: [D-343, D-337, D-470, D-304]

@@ -184,7 +184,9 @@ def judge(facts: dict) -> list:
 
     # ── session ──────────────────────────────────────────────────────────
     ss = facts.get("session") or {}
-    if ss.get("no_credentials"):
+    if ss.get("skipped"):
+        out.append(("session", MISSING, "회색 — " + str(ss.get("skipped"))))
+    elif ss.get("no_credentials"):
         out.append(("session", MISSING,
                     "탐침 계정이 없다 — `GX_PROBE_USER`/`GX_PROBE_PASSWORD` "
                     "(뿌리 `.env.gates`). 남의 계정으로 로그인하면 **남의 화면이 죽는다**"))
@@ -344,6 +346,16 @@ def probe_session() -> dict:
     """
     urls = list(dict.fromkeys(b.rstrip("/") + "/api/v1/auth/login"
                               for b in API_BASES))
+    #: P-170 ① — `end_previous_session: false` 라 세션은 안 끊지만 **율제한(5회/분/IP)은 먹는다.**
+    #:   V 단독 잠금이면 묻지 않는다 — 회색.
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from v_lock import is_locked as _v_locked, GRAY_NOTE as _V_NOTE  # noqa: PLC0415
+    except ImportError:                                            # pragma: no cover
+        _v_locked, _V_NOTE = (lambda: False), ""
+    if _v_locked():
+        return {"url": urls[0], "no_credentials": False, "holder": PROBE_USER or None,
+                "skipped": _V_NOTE}
     if not PROBE_USER or not PROBE_PASSWORD:
         return {"url": urls[0], "no_credentials": True,
                 "holder": PROBE_USER or None}

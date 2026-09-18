@@ -80,6 +80,7 @@ from kernels.k2_notify.rule_admin import (
 from kernels.k2_notify.webpush import (
     CHANNEL_NOT_CHOSEN_REASON,
     QUIET_HOURS_REASON,
+    WEBPUSH,
     WebPushNotConfigured,
     send_webpush,
     webpush_missing_env,
@@ -116,6 +117,10 @@ __all__ = [
     "send_webpush",
     "webpush_missing_env",
     "WebPushNotConfigured",
+    #: [턴 U · P-173 §2 ② 실측] 채널 이름의 **하나뿐인 정본**. `apps/dsm/notify_prefs.py`
+    #:   가 이 이름 대신 리터럴 `"webpush"` 를 따로 들고 있었다 — 갈리면 다음 사람이
+    #:   어느 쪽이 맞는지 모른다(D-337 계열과 같은 결). 이제 이 상수 하나를 쓴다.
+    "WEBPUSH",
     #: M4 설정이 발송을 막았을 때 행에 남는 사유 **이름** — 화면·시험이 같은 글자를 본다.
     "QUIET_HOURS_REASON",
     "CHANNEL_NOT_CHOSEN_REASON",

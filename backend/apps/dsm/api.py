@@ -1037,21 +1037,49 @@ class DsmAPI:
     #   이 셋은 사람(JWT)만 부른다.
     @route.post("/settings/api-keys", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-05 키 발급 — 남의 테넌트 이름으로 키를 만들 수 없다")
-    def issue_api_key(self, request, name: str, expires_days: int | None = None):
+    def issue_api_key(self, request, name: str, expires_days: int | None = None,
+                      scopes: str = ""):
         """F-05 「API Key 발급」. **`secret` 이 사람에게 보이는 유일한 응답이다.**
 
         저장소는 원문을 갖지 않는다(sha256 해시만). 이 응답을 놓치면 되찾을 수 없고
         회전만 가능하다 — 되찾을 수 있다면 그것은 어딘가에 저장돼 있다는 뜻이다.
+
+        ★ [턴 U · 차선 U56 · API-03] `scopes` — **이 키가 어디까지 가는가.**
+          쉼표 문자열 또는 JSON 배열 문자열이고, 안 주면 기본은 `["events:read"]`
+          **하나**다. 기본을 전부로 두면 D-335 가 잡은 「범위 없이 이미 열어 두었다」가
+          그대로 돌아온다. 모르는 이름은 **422** 다 — 조용히 버리면 발급자는 준 줄
+          알고 상대는 못 쓴다. 이름의 정본은 `kernels/k5_trust/key_scopes.py` 하나다.
         """
-        try:
-            return services.issue_inbound_key(
-                scope=_scope(request), name=name, expires_days=expires_days)
-        except PermissionDeniedForSetting as exc:
-            raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
-        except PermissionDenied as exc:
-            raise HttpError(403, str(exc))
-        except ValueError as exc:
-            raise HttpError(400, str(exc))
+        from django.db import transaction
+
+        from kernels.k5_trust import (DEFAULT_SCOPES, InvalidScopeName,
+                                      set_key_scopes)
+
+        scope = _scope(request)
+        # ★ [턴 U 병합] 이름 검사를 **쓰는 자리 하나**로 모았다. 전에는 `normalize_scopes`
+        #   를 발급 전에 따로 불렀는데, 그것은 순수 계산이라 커널 공개 면에 둘 수 없다
+        #   (D-281 1차 — 공개 면은 `*, scope` 를 받아야 하고, 쓰지도 않을 scope 를 다는
+        #   것은 거짓 신호다). 그래서 검사는 `set_key_scopes` 안에서만 일어난다.
+        # ★ 그 대신 **발급과 범위를 한 트랜잭션으로 묶는다** — 422 가 나면 키도 함께
+        #   사라진다. 묶지 않으면 「범위 없는 키」가 남고, 그 키는 아무도 모르는 채
+        #   살아 있다(그 위험이 옛 순서가 막던 바로 그것이다). 되돌아가는 것에는
+        #   허가 감사 한 줄도 포함된다 — 일어나지 않은 발급의 허가는 기록이 아니다.
+        with transaction.atomic():
+            try:
+                issued = services.issue_inbound_key(
+                    scope=scope, name=name, expires_days=expires_days)
+            except PermissionDeniedForSetting as exc:
+                raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
+            except PermissionDenied as exc:
+                raise HttpError(403, str(exc))
+            except ValueError as exc:
+                raise HttpError(400, str(exc))
+            try:
+                view = set_key_scopes(scope=scope, key_id=issued["key_id"],
+                                      scopes=(scopes or "").strip() or DEFAULT_SCOPES)
+            except InvalidScopeName as exc:
+                raise HttpError(422, str(exc))
+        return {**issued, "scopes": list(view.scopes or [])}
 
     @route.delete("/settings/api-keys/{int:key_id}", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-05 키 폐기 — 남의 테넌트 키를 끌 수 없다")

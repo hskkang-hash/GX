@@ -407,7 +407,7 @@ def send_test_push(*, scope, title: str = "", body: str = "",
     ★ 자격이 없으면 503 감(`PushSendNotConfigured` · `missing_env` 이름 목록) — 행 0.
     """
     from kernels.k2_notify import (
-        WebPushNotConfigured, send_webpush, webpush_missing_env)
+        WEBPUSH, WebPushNotConfigured, send_webpush, webpush_missing_env)
     from stream_monitors.services.drill import is_drill_mode
 
     actor = scope.require_actor()
@@ -476,7 +476,10 @@ def send_test_push(*, scope, title: str = "", body: str = "",
         "drill_mode": drill,
         "title": subject,
         "event_id": anchor,
-        "channel": "webpush",
+        #: [P-173 §2 ②] 리터럴이 아니라 **커널의 정본 상수**다(`kernels.k2_notify.WEBPUSH`) —
+        #: 이 값이 `stream_monitors.models.DeliveryRecord.Channel` 의 선택지에도 있어야
+        #: 하는데 아직 없다(등록 요청 · U56 소유).
+        "channel": WEBPUSH,
         #: 첫 기기의 결과를 위로 올린다 — 화면 상태 칸 한 줄이 이 셋을 읽는다.
         "delivery_id": first["delivery_id"],
         "succeeded": first["succeeded"],

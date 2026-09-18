@@ -19,12 +19,18 @@ import { useCallback, useState } from 'react';
 import { Alert, Button, Card, Form, Input, InputNumber, Space, Typography } from 'antd';
 
 import { dsmPost, dsmPostQuery, dsmU56Endpoint } from '../api';
-import { userFacingError } from '../copy';
+import { HEADLINE_COPY, userFacingError } from '../copy';
 
 const { Title, Paragraph } = Typography;
 
-/** 이 화면에만 있는 글자 — 캡처가 이것을 보고 찍는다. */
-export const HEADLINE = '사람·역할 — 계정 만들기 · 비활성화';
+/**
+ * 이 화면에만 있는 글자 — 캡처가 이것을 보고 찍는다.
+ *
+ * ★ [턴 U · 차선 F 등록 요청] 지역 상수로 **두 벌** 적혀 있던 것을 사전
+ *   (`copy.ts::HEADLINE_COPY`) 하나로 모았다. 두 벌이면 사전을 고친 날 화면이
+ *   안 따라오고, 온보딩 48행의 「문구 정본 없음」이 그만큼 남는다.
+ */
+export const HEADLINE = HEADLINE_COPY.people;
 
 interface CreatedPerson {
   user_id: number;

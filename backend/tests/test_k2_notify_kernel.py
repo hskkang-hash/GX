@@ -346,6 +346,79 @@ class RecipientResolutionTest(K2Fixture):
                          "규칙 둘이 같은 역할을 가리켜 같은 사람에게 두 번 갑니다.")
 
 
+class SendPassesTheEventsZoneTest(K2Fixture):
+    """[턴 U · P-173 §2 ④ · 턴 T 넘김] `send()` 가 사건의 구역을 `resolve_recipients`
+    로 넘기는가 — **바로 위 클래스**의 시험은 `resolve_recipients` 함수 자체가 구역을
+    받으면 옳게 좁힌다는 것만 잰다. 발송 문 `send()` 가 그 인자를 **부르지 않고** 있었다
+    (턴 U 실측 · 개발 DB 에는 `Zone` 행이 0건이라 지금까지는 드러나지 않았다).
+    """
+
+    def test_a_camera_in_a_zone_notifies_only_that_zones_rule(self) -> None:
+        """카메라를 구역에 묶고 그 구역 전용 규칙을 만들면, **전역 규칙이 아니라
+        구역 규칙**의 사람에게 간다 — `send()` 가 `event.stream_monitor.zones` 를
+        읽어 `resolve_recipients(zone=...)` 로 넘길 때만 참이다."""
+        from kernels.k2_notify import send
+
+        Zone = apps.get_model("stream_monitors", "Zone")
+        zone = Zone.objects.create(name="k2-zone-anyang-1")
+        zone.cameras.add(self.stream_a)
+
+        zone_role = self._make_role("k2_zone_role", self.group_a)
+        zone_user = self._make_user("k2_zone_user", self.group_a, zone_role)
+        self._make_rule(self.group_a, zone_role, "critical", ["email"],
+                        zone="k2-zone-anyang-1")
+
+        event_id = self._event(self.stream_a, when=timezone.now())
+        records = send(scope=self.scope_a, event_id=event_id)
+
+        recipients = {r.recipient_id for r in records}
+        self.assertEqual(
+            {zone_user.pk}, recipients,
+            "카메라가 속한 구역의 규칙이 아니라 전역 규칙(`rule_a`)으로 갔습니다 — "
+            "`send()` 가 사건의 구역을 `resolve_recipients` 에 넘기지 않고 있습니다.")
+
+    def test_a_camera_in_two_zones_merges_recipients_without_duplicates(self) -> None:
+        """카메라 하나가 구역 둘에 걸치면(`Zone.cameras` M2M · 모델 머리말 「하천 합류부·
+        교차로」) 두 구역의 수신자를 **합치되**, 같은 사람·같은 채널이 두 구역 모두에
+        걸려도 두 통 가지 않는다."""
+        from kernels.k2_notify import send
+
+        Zone = apps.get_model("stream_monitors", "Zone")
+        zone1 = Zone.objects.create(name="k2-zone-1")
+        zone2 = Zone.objects.create(name="k2-zone-2")
+        zone1.cameras.add(self.stream_a)
+        zone2.cameras.add(self.stream_a)
+
+        role1 = self._make_role("k2_zone_role_1", self.group_a)
+        user1 = self._make_user("k2_zone_user_1", self.group_a, role1)
+        self._make_rule(self.group_a, role1, "critical", ["email"], zone="k2-zone-1")
+
+        role2 = self._make_role("k2_zone_role_2", self.group_a)
+        user2 = self._make_user("k2_zone_user_2", self.group_a, role2)
+        self._make_rule(self.group_a, role2, "critical", ["email"], zone="k2-zone-2")
+        # 구역 2 규칙이 구역 1 의 사람도 가리키게 해 **중복 제거**를 함께 잰다.
+        user1.roles.add(role2)
+
+        event_id = self._event(self.stream_a, when=timezone.now())
+        records = send(scope=self.scope_a, event_id=event_id)
+
+        recipients = {r.recipient_id for r in records}
+        self.assertEqual({user1.pk, user2.pk}, recipients)
+        self.assertEqual(
+            2, len(records),
+            "구역 둘에 걸린 사람에게 두 통이 갔습니다 — 합치면서 중복을 제거해야 합니다.")
+
+    def test_no_zone_on_the_camera_keeps_todays_behavior(self) -> None:
+        """[뒤로 호환] 카메라가 어느 구역에도 없으면 — 지금 모든 실측 데이터가 그렇듯 —
+        전역 규칙이 그대로 쓰인다. 이 시험이 깨지면 이번 배선이 기존 발송을 바꾼 것이다."""
+        from kernels.k2_notify import send
+
+        event_id = self._event(self.stream_a, when=timezone.now())
+        records = send(scope=self.scope_a, event_id=event_id)
+
+        self.assertEqual({self.user_a.pk}, {r.recipient_id for r in records})
+
+
 class KernelTenantScopeTest(K2Fixture):
     """알림 격리 — **남의 재난 알림이 우리에게 오지 않는다**."""
 

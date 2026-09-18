@@ -99,11 +99,13 @@ class _Fixture(TestCase):
         return request
 
     def _subscribe(self):
-        from apps.dsm.api_u3 import DsmU3API
+        """[P-166] 비밀은 본문(`PushSubscriptionIn`)으로만 조립한다 — 쿼리 인자가 아니다."""
+        from apps.dsm.api_u3 import DsmU3API, PushSubscriptionIn
 
-        return DsmU3API.create_push_subscription(
-            DsmU3API(), self._req(), endpoint=FAKE_ENDPOINT, p256dh=FAKE_P256DH,
-            auth_secret=FAKE_AUTH, label="시험용 휴대전화")
+        payload = PushSubscriptionIn(
+            endpoint=FAKE_ENDPOINT, p256dh=FAKE_P256DH, auth_secret=FAKE_AUTH,
+            label="시험용 휴대전화")
+        return DsmU3API.create_push_subscription(DsmU3API(), self._req(), payload)
 
     def _test_send(self, **kwargs):
         from apps.dsm.api_u3 import DsmU3API

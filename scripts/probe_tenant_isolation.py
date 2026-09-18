@@ -76,6 +76,9 @@ for gid, gname, uid in ACTORS:
         print("SKIP  %-14s %-12s %s" % (gname, u.username, str(e)[:70]))
         continue
     roles = ",".join(sorted(u.roles.values_list("code", flat=True)))
+    if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "docs",
+                                   "agent", "evidence", "V_LOCK")):          # P-170 ①
+        raise SystemExit("[ISO] 회색 — V 단독 중 · 재지 않음 (evidence/V_LOCK)")
     r = requests.post(BASE + "/api/v1/auth/login",
                       json={"username": u.username, "password": PW,
                             "end_previous_session": True}, timeout=90)

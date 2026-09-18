@@ -190,6 +190,55 @@ def _closed_by_retention(scope: TenantScope) -> Optional[str]:
     return f"retention:{int(days)}d" if days is not None else None
 
 
+def _closed_by_threshold_change(scope: TenantScope) -> Optional[str]:
+    """**내가** 임계값을 한 번이라도 바꿨는가 (U2 ⑤의 `thresholds 시험 1` · 턴 U).
+
+    근거는 K5 표 ① 의 변경 이력 `ThresholdChange`(무엇에서 무엇으로 · 누가 · 왜)다.
+    ★ 테넌트가 아니라 **행위자**로 좁힌다 — 전역 층(`group=null`)의 변경은 테넌트 칸이
+      비어 있어 `_tenant_rows` 로는 못 보고, 이 카드가 묻는 것은 「이 사람이 시험해 봤나」다.
+      남의 테넌트 사람의 변경은 `changed_by` 가 다르므로 내 카드를 닫지 못한다.
+    """
+    actor = scope.require_actor()
+    row = (_model("ThresholdChange")._base_manager
+           .filter(deleted__isnull=True, changed_by=actor).order_by("-id").first())
+    return f"threshold_change#{row.pk}" if row else None
+
+
+#: 시험 발송을 남기는 감사 채널 둘과 그 행위 이름. **값의 정본은 각 모듈이다** —
+#: 여기서는 이름만 모은다(두 벌이 되지 않게 모듈 상수를 그대로 읽는다).
+def _test_send_audit_channels():
+    from apps.dsm import notify_prefs
+
+    return (
+        # (logger_name, api_name 앞머리) — `kernels/k2_notify/rule_admin.py::test_send`
+        ("guardianx.dsm.notify", "dsm.notify.test_send"),
+        # `apps/dsm/notify_prefs.py::test_send`(웹푸시 · api_name = 행위 이름 그대로)
+        (notify_prefs.LOGGER_NAME, notify_prefs.ACTION_TEST_SEND),
+    )
+
+
+def _closed_by_test_send(scope: TenantScope) -> Optional[str]:
+    """**내가** 알림 채널 시험 발송을 한 번이라도 눌렀는가 (U5 ④의 `채널 시험 발송` · 턴 U).
+
+    근거는 감사 표(`logger.AuditLogs`)의 시험 발송 행이다 — 이메일 훈련 채널(K2 `test_send`)
+    이든 웹푸시(`notify_prefs.test_send`)든 **둘 다 감사에 남고**, 둘 중 하나면 닫는다.
+    ★ 행위자(`user_id`)로 좁힌다 — 감사 표에는 테넌트 칸이 없다(`audit.read_page` 와 같은
+      사실). 남의 테넌트 사람이 누른 시험 발송은 `user_id` 가 다르므로 내 카드를 못 닫는다.
+    """
+    from common import audit_writer
+
+    actor = scope.require_actor()
+    Model = audit_writer._model()
+    for logger_name, prefix in _test_send_audit_channels():
+        row = (Model._base_manager
+               .filter(logger_name=logger_name, user_id=actor.pk,
+                       api_name__startswith=prefix)
+               .order_by("-id").first())
+        if row is not None:
+            return f"audit#{row.pk}"
+    return None
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 카드 표 — PRD §7.2 그대로. 역할마다 일곱 장을 넘지 않는다
 # ═══════════════════════════════════════════════════════════════════════════
@@ -220,8 +269,10 @@ CARDS = {
              why="등급을 바꾼 기록을 사건별로 되짚는 자리가 아직 없습니다."),
         Card("u2.by_reviewer", "요원별 처리 현황 열기", "/dsm/home",
              why="집계를 본 사실이 서버에 남지 않습니다."),
+        # ★ 턴 U — BLOCKED 에서 옮김. 「카메라별 오탐률을 내주는 자리」는 아직 없지만,
+        #   PRD §7.2 가 적은 닫는 기록은 `thresholds 시험 1` 이고 그 기록(K5 변경 이력)은 있다.
         Card("u2.threshold", "시끄러운 카메라 임계값 시험", "/dsm/home",
-             why="카메라별 오탐률을 내주는 자리가 아직 없습니다."),
+             _closed_by_threshold_change),
         Card("u2.report", "사건 보고서 한 쪽 만들기", "/dsm/events", _closed_by_report_run),
         Card("u2.drill", "훈련 모드 위치 확인", "/dsm/drill", _closed_by_drill),
     ),
@@ -233,8 +284,13 @@ CARDS = {
         Card("u4.search", "사건 한 건 찾아보기", "/dsm/events",
              why="검색한 사실이 서버에 남지 않습니다."),
         Card("u4.report", "이번 달 우리 센터 확인", "/dsm/home", _closed_by_report_run),
+        # ★ 턴 U — 화면(`AuditLog.tsx`)은 이번 턴(U24)에 서는 중이지만, 조회는
+        #   읽기라 그 자체로는 서버 기록을 남기지 않습니다 — 화면이 서는 것과
+        #   이 카드가 닫히는 것은 다른 일입니다. 조회 행위가 남기는 기록(예: 감사
+        #   열람 자체의 감사)이 정해지면 술어를 답니다.
         Card("u4.audit", "처리 기록 조회", "/dsm/home",
-             why="감사 기록을 여는 화면이 아직 없습니다."),
+             why="감사 기록 조회 화면이 이번 턴(U24)에 서는 중입니다 — 조회는 읽기라 "
+                 "그 자체로는 서버 기록을 남기지 않습니다. 남길 기록이 정해지면 술어를 답니다."),
         Card("u4.privacy", "열람·삭제 청구 화면 확인", "/dsm/privacy-requests",
              why="화면을 열어 본 사실이 서버에 남지 않습니다."),
     ),
@@ -246,10 +302,12 @@ CARDS = {
              _closed_by_critical_recipients),
         Card("u5.retention", "영상 보관 기간 선언", "/dsm/system", _closed_by_retention),
         Card("u5.drill", "훈련 모드 한 번 켜 보기", "/dsm/drill", _closed_by_drill),
-        Card("u5.channel", "알림 채널 시험 발송", "/dsm/system",
-             why="채널 설정을 여는 화면이 아직 없습니다."),
+        # ★ 턴 U — BLOCKED 에서 옮김. 시험 발송은 K2 `test_send`(이메일 훈련 채널) 와
+        #   `notify_prefs.test_send`(웹푸시 · 턴 T 실측 `deliveries #481`) 둘 다 감사에 남는다.
+        Card("u5.channel", "알림 채널 시험 발송", "/dsm/system", _closed_by_test_send),
         Card("u5.backup", "백업 회수증 확인", "/dsm/system",
-             why="백업 선언을 내주는 자리가 아직 없습니다."),
+             why="백업 회수증을 내주는 자리가 이번 턴(U56) 에 서는 중입니다 — "
+                 "그 화면이 남기는 기록이 정해지면 술어를 답니다."),
     ),
 }
 

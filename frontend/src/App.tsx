@@ -253,6 +253,7 @@ const DsmCameraTuning = lazy(() => import('./features/dsm/pages/CameraTuning'));
 // ── 턴 T (차선 U24 · U56 · 조율자 배선) ──────────────────────────────────
 const DsmStats = lazy(() => import('./features/dsm/pages/Stats'));
 const DsmAuditLog = lazy(() => import('./features/dsm/pages/AuditLog'));
+const DsmReports = lazy(() => import('./features/dsm/pages/Reports'));
 const DsmIntegrations = lazy(() => import('./features/dsm/pages/Integrations'));
 const DsmPrivacyRequests = lazy(
   () => import('./features/dsm/pages/PrivacyRequests'),
@@ -720,6 +721,7 @@ function App() {
             },
             { path: dsmU24Routes.stats.path, element: <DsmStats /> },
             { path: dsmU24Routes.auditLog.path, element: <DsmAuditLog /> },
+            { path: dsmU24Routes.reports.path, element: <DsmReports /> },
             ...dsmU24Redirects.map((r) => ({
               path: r.from,
               element: <Navigate to={r.to} replace />,

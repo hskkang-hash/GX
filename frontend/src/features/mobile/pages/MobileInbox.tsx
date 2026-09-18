@@ -25,7 +25,7 @@
  *   물려 쓰면 문지기가 목록에만 서고 상세에 안 선다(IDOR 이 나는 자리).
  */
 import { Alert, Badge, Card, Empty, Segmented, Space, Tag, Typography } from 'antd';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import StateBoundary from '../../dsm/components/StateBoundary';
@@ -52,6 +52,7 @@ import {
 import { relative, shortAbsolute } from '../../dsm/time';
 import { dsmGet, mobileEndpoint } from '../api';
 import MobileShell, { TOUCH_MIN } from '../components/MobileShell';
+import { startReceiveToAck } from '../metrics';
 import { mobileEventDetailPath } from '../routes';
 import type { DeliveryPage, EventRow, InboxRow } from '../types';
 
@@ -127,6 +128,18 @@ export default function MobileInbox() {
       })),
     [deliveries.data, eventById],
   );
+
+  /**
+   * 편리성 #5 — **「받았다」의 시각.** 발송 기록이 이 목록에 처음 뜨는 순간이 이
+   * 사람에게 「받았다」다(`metrics.ts::startReceiveToAck` 머리말). 다시 읽혀도(폴링·
+   * 새로고침) 같은 사건은 다시 시작하지 않는다 — 값은 이 브라우저 안에만 남고
+   * 서버로 가지 않는다.
+   */
+  useEffect(() => {
+    (deliveries.data?.deliveries ?? []).forEach((d) => {
+      startReceiveToAck(String(d.event_id));
+    });
+  }, [deliveries.data]);
 
   // ★ [턴 T · P-164 U3] 「처리함」 — 내가 현장 회신을 낸 사건. **서버가 좁힌다.**
   const [tab, setTab] = useState<InboxTab>('inbox');

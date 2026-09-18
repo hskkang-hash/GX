@@ -30,12 +30,12 @@ import {
   Table,
   Tag,
   Typography,
-  message,
 } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { downloadStatsCsv, dsmEndpoint, dsmGet, dsmU24StatsEndpoint } from '../api';
+import FailureNotice from '../components/FailureNotice';
 import { userFacingError } from '../copy';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
@@ -57,6 +57,9 @@ export default function Stats() {
   const navigate = useNavigate();
   const [period, setPeriod] = useState<PeriodKey>('server');
   const [downloading, setDownloading] = useState(false);
+  /** 내려받기 결과·사유를 남기는 칸 — 사라지는 토스트가 아니다(P-173). */
+  const [csvError, setCsvError] = useState<{ text: string; status: number } | null>(null);
+  const [csvDone, setCsvDone] = useState<string>('');
 
   /**
    * 두 끝을 **둘 다** 보낸다 — 여는 쪽만 보내면 창이 아니라 반직선이다.
@@ -92,13 +95,25 @@ export default function Stats() {
   const listTotal = list.data?.total ?? null;
   const balanced = listTotal !== null && listTotal === serverTotal;
 
+  /**
+   * 「표 내려받기」 — 결과도 실패도 **상태 칸**에 남긴다 (턴 U · P-173 · 조율자 지시).
+   *
+   * ★ 왜 토스트를 뺐나 [차선 F 재스캔 · 2026-09-18]: 토스트는 3초 뒤 사라지고, 사라진
+   *   문장은 「안 눌렸다」와 구별되지 않는다. 그리고 실패 토스트에는 **누를 것이 없다** —
+   *   사람이 할 수 있는 일은 같은 단추를 스스로 다시 찾는 것뿐이다(`FailureNotice` 머리말).
+   *   성공도 칸에 적는다: **받은 바이트 수**가 「받았다」의 증거이고, 0바이트는 성공이 아니다.
+   */
   const download = useCallback(async () => {
     setDownloading(true);
+    setCsvError(null);
     try {
       const { bytes } = await downloadStatsCsv(query ?? {});
-      message.success(`표를 내려받았습니다 (${bytes.toLocaleString()}바이트).`);
+      setCsvDone(`${bytes.toLocaleString()}바이트`);
     } catch (err) {
-      message.error(userFacingError('Stats.download', err, '표를 내려받지 못했습니다.'));
+      setCsvError({
+        text: userFacingError('Stats.download', err, '표를 내려받지 못했습니다.'),
+        status: (err as { status?: number })?.status ?? 0,
+      });
     } finally {
       setDownloading(false);
     }
@@ -133,6 +148,25 @@ export default function Stats() {
           <Button onClick={() => navigate('/dsm/team-status')}>요원별 현황</Button>
         </Space>
       </Card>
+
+      {/* ── 내려받기 상태 칸 — 토스트를 쓰지 않는다(P-173 · 새 토스트 0) ────────── */}
+      {csvError && (
+        <FailureNotice
+          title="표를 내려받지 못했습니다."
+          detail={csvError.text}
+          status={csvError.status}
+          busy={downloading}
+          onRetry={download}
+        />
+      )}
+      {csvDone && !csvError && (
+        <Card size="small">
+          <Space wrap>
+            <Tag color="green">표를 내려받았습니다</Tag>
+            <Text type="secondary">{csvDone}</Text>
+          </Space>
+        </Card>
+      )}
 
       <Card size="small">
         <StateBoundary

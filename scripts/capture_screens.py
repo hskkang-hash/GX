@@ -136,6 +136,12 @@ RUNS_DIR = SCREENS.parent.parent / "P-157" / "runs"
 RUN_STAMP = datetime.now().strftime("%Y%m%dT%H%M%S")
 #: 이번 회가 심은 씨앗 id — 판정 뒤 `probe_marks.mark` 로 표시하고 정리한다 (P-156).
 SEEDED_EVENT_IDS: list = []
+#: ★★ [P-170 ② · 턴 U · 차선 Q] **이번 회가 심은 씨앗의 명세.** `seed_events` 가 채우고
+#:   `_write_seed_file()` 이 `P-157/runs/<RUN_STAMP>/seed.json` 으로 낸다.
+#:   턴 T 의 오판(D-487 ②)이 정확히 여기였다: 씨앗 id 배선을 옮겨 놨는데 capture 가
+#:   **스스로 씨앗을 지워서** 넘길 id 가 없었다. 지금은 **기본이 남기기**이고
+#:   지우려면 `--clean-seeds` 를 손으로 적어야 한다.
+SEED_SPEC: dict = {}
 
 
 def _by_file(r) -> str:
@@ -311,6 +317,35 @@ TARGETS = [
     {"step": 28, "persona": "U3", "route": "/m/events/{event_id}", "viewport": MOBILE_VIEWPORT,
      "slug": "m_events_id_m3_field_reply",
      "must_see": "현장 회신 — 본 것을 한 줄로"},
+    # ══ [턴 U · 차선 Q · P-169 절 1] **회색 25 의 사유가 낡아서 더한 석 장** ══════════
+    #
+    #   P-142 가 2026-09-15 에 적은 지배 사실은 이랬다:
+    #     「회색 25 가운데 24 는 그 절을 사람에게 보여 주는 화면이 제품에 없다 —
+    #      frontend/src/features 에서 `/api/dsm/settings` 를 부르는 코드가 0건이다」
+    #   [재실측 2026-09-18 · 턴 U] **그 0건이 13건이 됐다**(`frontend/src/features/dsm/api.ts`
+    #   의 `dsmU56Endpoint`·`dsmU56NotifyEndpoint`·`dsmU56IntegrationEndpoint`·
+    #   `dsmU24StatsEndpoint`). 화면도 라우터에 섰다(`routes.ts` · `routes.u24.ts`).
+    #   그런데 **찍은 적이 없어서** 그 절들은 여전히 회색이었다 — 사슬의 둘째 고리(캡처)가
+    #   비어 있었다. 사유가 낡은 것이지 제품이 없는 것이 아니다.
+    #
+    #   ⚠ 사이드바에 줄이 없어도 **주소로는 열린다**(`roleNav.NAV_HIDDEN_BUT_REACHABLE`).
+    #     여는 권한은 서버가 판정하고, 403 이면 403 인 채로 찍힌다 — 가리지 않는다.
+    #   ⚠ `must_see` 를 달지 않는다. 이 석 장은 **이번이 첫 촬영**이라 화면이 실제로 무슨
+    #     글자를 쓰는지 우리가 못 봤다. 안 본 글자를 정답으로 적으면 그 글자가 제품이
+    #     아니라 **우리 기대**를 재게 된다(P-132 가 여덟 자리에서 고친 그 모양이다).
+    #     닿았는지는 `verify_feature_reach` 가 **호출과 상태코드**로 판정한다.
+    {"step": 29, "persona": "U4", "route": "/dsm/audit",
+     "slug": "dsm_audit_read",
+     "why": "F-12-c2 성공·실패 감사로그 — 화면 AuditLog.tsx:89 가 GET /api/dsm/audit 를 "
+            "부른다. 읽는 사람은 U2·U4·U5 (api_u24.py:307 머리말)"},
+    {"step": 30, "persona": "U5", "route": "/dsm/notify",
+     "slug": "dsm_notify_recipients",
+     "why": "F-12-c3 수신자 관리 — NotifySettings.tsx:117 이 "
+            "GET /api/dsm/settings/notify-rules/list 를 부른다"},
+    {"step": 31, "persona": "U5", "route": "/dsm/integrations",
+     "slug": "dsm_integrations_api_keys",
+     "why": "F-12-c8 API 키 관리 — Integrations.tsx:159 가 "
+            "GET /api/dsm/settings/api_keys 를 부른다 (하이픈 아니다 · D-470)"},
 ]
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -470,8 +505,41 @@ def _assert_owned(label: str, group_id) -> None:
             f"「공용」과 구별되지 않는다 (D-270 ③)")
 
 
-def seed_events(username: str, n: int = 2) -> int:
+def _borrow_real_address(SM, gid):
+    """**짐작하지 않는다** — 이 소속의 실재 카메라가 이미 든 주소를 그대로 빌린다.
+
+    ★ [턴 U · 차선 Q · U3#2 빨강] 씨앗 카메라의 `install_address` 가 비어 있어서
+      사건 상세의 `address` 가 늘 빈 값이었고, 「어디로 가나」(U3#2)는 **제품이 아니라
+      씨앗 때문에** 빨강이었다. 그렇다고 여기서 주소 문자열을 지어내면 그것은
+      **모의 데이터**다 — 알림에 나가는 값과 같은 칸이라 더더욱 지어내지 않는다.
+      그래서 규칙은 하나다: **이미 DB 에 있는 실재 카메라의 주소를 재사용**하고,
+      한 대도 없으면 **빈 채로 두고 그 사실을 씨앗 명세에 적는다**(빈 것은 빈 것이다).
+
+    돌려주는 것: (install_address, install_address_detail, address_source, 빌린 카메라 pk)
+    한 대도 없으면 ("", "", "unset", None).
+    """
+    row = (SM._base_manager
+           .filter(group_id=gid)
+           .exclude(code__startswith=PROBE_TAG)
+           .exclude(install_address__isnull=True)
+           .exclude(install_address="")
+           .order_by("pk").first())
+    if row is None:
+        return "", "", "unset", None
+    return (row.install_address or "",
+            row.install_address_detail or "",
+            row.address_source or "manual",
+            row.pk)
+
+
+def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
     """★ 씨앗은 **그 계정이 실제로 볼 수 있는 자리**에 심는다.
+
+    `address` — 씨앗 카메라의 설치 주소 (턴 U · P-169 절 6 · U3#2).
+      · `None`(기본) = **DB 의 실재 카메라 주소를 재사용**한다(`_borrow_real_address`).
+        한 대도 없으면 빈 채로 두고 씨앗 명세(`SEED_SPEC`)에 「빌릴 주소 없음」을 적는다.
+      · 문자열 = 부르는 쪽이 정한 주소(V 가 특정 주소로 재야 할 때만). 지어낸 값을
+        기본으로 삼지 않는다 — 기본값은 언제나 **실재 재사용**이다.
 
     1차판은 `group` 없이 심었고, 그래서 세 화면이 전부 「0건」·「404」로 찍혔다 —
     테넌트 좁히기가 **제대로 걸린 결과**다(F-09). 격리를 끄고 찍으면 그것은 고객이 볼
@@ -510,6 +578,15 @@ def seed_events(username: str, n: int = 2) -> int:
     _assert_owned("stream_monitors.DetectionEvent", gid)
     SM = apps.get_model("stream_monitors", "StreamMonitor")
     DE = apps.get_model("stream_monitors", "DetectionEvent")
+    #: [턴 U · 절 6] 주소 있는 씨앗 — 기본은 **실재 카메라의 주소 재사용**이다.
+    if address is None:
+        addr, addr_detail, addr_src, borrowed_from = _borrow_real_address(SM, gid)
+        addr_why = ("실재 카메라 pk=%s 의 주소를 재사용" % borrowed_from
+                    if borrowed_from else
+                    "이 소속에 주소 있는 실재 카메라가 0대 — 빈 채로 둔다(짐작하지 않는다)")
+    else:
+        addr, addr_detail, addr_src, borrowed_from = address, "", "manual", None
+        addr_why = "부르는 쪽이 --seed-address 로 정한 값"
     monitor, _ = SM._base_manager.get_or_create(
         code=f"{PROBE_TAG}-CAM",
         defaults=dict(name=f"{PROBE_TAG} 캡처용 카메라", ip_source="127.0.0.1",
@@ -520,6 +597,14 @@ def seed_events(username: str, n: int = 2) -> int:
     if monitor.group_id != gid:
         monitor.group_id = gid
         monitor.save(update_fields=["group"])
+    #: 이미 있던 씨앗 카메라도 이번 회의 주소로 맞춘다 — 지난 회의 빈 주소가 남으면
+    #: 「주소를 심었다」와 「화면이 빈 주소를 그린다」가 구별되지 않는다.
+    if addr:
+        monitor.install_address = addr
+        monitor.install_address_detail = addr_detail
+        monitor.address_source = addr_src
+        monitor.save(update_fields=["install_address", "install_address_detail",
+                                    "address_source"])
     now = datetime.now(timezone.utc)
     # ★★ [실측 2026-09-16 · P-9] 1차판은 여기서 `DE._base_manager.create(...)` 로
     #   행을 **직접 만들었다.** 지시서가 정한 「실제 이벤트」의 정의로는 그것이 **모형**이다:
@@ -554,8 +639,48 @@ def seed_events(username: str, n: int = 2) -> int:
         )
         first = first or result.event_id
         SEEDED_EVENT_IDS.append(result.event_id)
+        SEED_SPEC.setdefault("events", []).append({
+            "event_id": result.event_id,
+            "event_type": ("fire" if i == 0 else "flood"),
+            "severity": ("critical" if i == 0 else "warning"),
+            "occurred_at": (now - timedelta(minutes=2 * (i + 1)))
+                           .replace(microsecond=0).isoformat(),
+        })
     _ = DE  # 위 주석의 대상이었던 이름 — 지우지 않고 남긴다
+    #: ★ [P-170 ②] **넘길 것을 여기서 적는다.** 아래 네 칸이 뒤 도구들이 읽는 전부다:
+    #:   id · severity · probe 표식 · 시각. 주소는 절 6 의 산물이라 함께 적는다.
+    SEED_SPEC.update({
+        "note": "P-170 ② 씨앗 id 파이프 — capture_screens 가 심은 것. "
+                "읽는 쪽: verify_click_completes · verify_feature_reach · measure_onboarding_t "
+                "(`--seed-file`). 이 파일은 손으로 고치지 않는다(runs/ 는 실행분이다).",
+        "run": RUN_STAMP,
+        "seeded_at": datetime.now().replace(microsecond=0).isoformat(),
+        "probe_mark": _probe_mark_string(RUN_STAMP),
+        "probe_tag": PROBE_TAG,
+        "monitor_code": monitor.code,
+        "group_id": gid,
+        "event_ids": list(SEEDED_EVENT_IDS),
+        "first_event_id": first,
+        "address": {"install_address": addr, "install_address_detail": addr_detail,
+                    "address_source": addr_src, "borrowed_from_monitor": borrowed_from,
+                    "why": addr_why},
+    })
     return first
+
+
+def _write_seed_file() -> Path | None:
+    """`runs/<RUN_STAMP>/seed.json` — **뒤 도구가 읽는 단 하나의 자리** (P-170 ②).
+
+    ★ 씨앗을 심지 않았으면 쓰지 않는다. **빈 파일을 쓰면 「최신」이 빈 것을 가리키고**,
+      그러면 뒤 도구가 지난 회의 진짜 씨앗 대신 이번 회의 빈 것을 읽는다.
+    """
+    if not SEED_SPEC.get("event_ids"):
+        return None
+    _keep_run_copy("seed.json", json.dumps(SEED_SPEC, ensure_ascii=False, indent=2))
+    p = RUNS_DIR / RUN_STAMP / "seed.json"
+    print(f"[SHOT] 씨앗 명세 → {p} (사건 {len(SEED_SPEC['event_ids'])}건 · "
+          f"표식 {SEED_SPEC['probe_mark']})")
+    return p
 
 
 def clean_events() -> dict:
@@ -1228,6 +1353,31 @@ def capture_role0(*, web: str, user: str, password: str, out: Path) -> int:
     return EXIT_OK if shots and not misses else EXIT_FAIL
 
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# [P-170 ① · 2026-09-18 턴 U · 차선 Q] **재는 동안 아무도 로그인하지 않는다**
+#
+#   턴 T 에 V 가 48행을 재는 동안 조율자가 게이트를 돌렸고, 그 안의 로그인이 V 의 세션을
+#   끊었다(계정당 세션 1개 → `end_previous_session` → 429 · D-487 ①). V 는 그 판을 버렸다.
+#   이 도구는 **로그인을 한다** — 그러므로 LOCK 을 먼저 본다.
+#
+#   ★ **잠근 사람은 지나간다**: `GX_V_SESSION_ID` 가 LOCK 의 세션과 같으면 안 막는다.
+#     그 밖의 사람에게는 **회색(exit 2)** 이다 — 회색은 초록이 아니다(D-301).
+# ═══════════════════════════════════════════════════════════════════════════
+def _v_lock_blocks(tag: str = "[SHOT]") -> bool:
+    """V 단독 세션이 잠갔고 내가 그 사람이 아니면 True — 그때는 **재지 않는다**."""
+    try:
+        from v_lock import describe, is_locked
+    except ImportError:                                   # 잠금 도구가 없으면 막지 않는다
+        return False
+    if not is_locked():
+        return False
+    print("%s ? **회색 — V 단독 중 · 재지 않음** (P-170 ① · docs/agent/evidence/V_LOCK)"
+          % tag)
+    print("%s   %s · 잠근 사람은 GX_V_SESSION_ID 를 주고 부른다" % (tag, describe()))
+    return True
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="화면 캡처 실행체 (D-347 · D-384 ②)")
     ap.add_argument("--api", default="http://localhost:8000")
@@ -1251,7 +1401,22 @@ def main() -> int:
     ap.add_argument("--role0", action="store_true",
                     help="역할이 **0개**인 계정으로 P-105 0행의 화면을 찍는다 "
                          "(인덱스에 넣지 않는다 — 자리는 P-105/frontend/shots/)")
+    #: ★★ [P-170 ② · 턴 U] **기본이 남기기로 바뀌었다.** 종전에는 `finally` 가 언제나
+    #:   `clean_events()` 를 불러 씨앗을 지웠고, 그래서 뒤 도구에 넘길 id 가 없었다
+    #:   (D-487 ② · 턴 T 오판). 지우려면 **손으로 적어야 한다.**
+    ap.add_argument("--keep-seeds", dest="keep_seeds", action="store_true", default=True,
+                    help="(기본) 씨앗을 **지우지 않는다** — runs/<stamp>/seed.json 으로 넘긴다")
+    ap.add_argument("--clean-seeds", dest="keep_seeds", action="store_false",
+                    help="캡처 뒤 씨앗을 지운다. 지우면 뒤 도구(click_completes·feature_reach·"
+                         "measure_onboarding_t)가 읽을 사건이 없다 — 정리 담당이 따로 부를 때만")
+    #: 절 6 — 기본은 **실재 카메라 주소 재사용**이다. 이 인자는 예외를 위한 것이고
+    #: 값을 적으면 씨앗 명세에 「부르는 쪽이 정한 값」으로 남는다(짐작과 구별된다).
+    ap.add_argument("--seed-address", default=None,
+                    help="씨앗 카메라의 설치 주소를 손으로 정한다(기본: DB 의 실재 카메라 재사용)")
     args = ap.parse_args()
+
+    if _v_lock_blocks():
+        return EXIT_UNDECIDABLE
 
     import urllib.error
     import urllib.request
@@ -1332,7 +1497,7 @@ def main() -> int:
     #: 페르소나마다 다시 심으면 이벤트 id 가 바뀌고, 그러면 U1 이 찍은 상세 화면의
     #: 파일 이름과 U3 이 찍은 것이 서로 다른 사건을 가리킨다.
     _release_session(PERSONAS[order[0]]["username"])
-    event_id = seed_events(PERSONAS[order[0]]["username"])
+    event_id = seed_events(PERSONAS[order[0]]["username"], address=args.seed_address)
     merged: dict = {"entries": [], "steps": {}, "page_errors": [],
                     "api_calls": {}, "api_notes": {}, "misses": [],
                     "session_lost": False}
@@ -1368,7 +1533,19 @@ def main() -> int:
             print(f"[SHOT] probe 표시(judged=1): {n_marked}/{len(SEEDED_EVENT_IDS)}건")
         except Exception as exc:                        # noqa: BLE001
             print(f"[SHOT] ⚠ probe 표시 실패 — {type(exc).__name__}: {exc}", file=sys.stderr)
-        print(f"[SHOT] 씨앗 정리: {clean_events()}")
+        #: ★ [P-170 ②] **표시 → 명세 쓰기 → (명시했을 때만) 정리.** 순서가 규약이다:
+        #:   정리가 명세보다 먼저면 뒤 도구가 읽을 것이 없고, 표시가 정리보다 나중이면
+        #:   정리가 실패한 회의 씨앗이 표식 없이 남아 다음 표본을 더럽힌다.
+        try:
+            _write_seed_file()
+        except Exception as exc:                        # noqa: BLE001
+            print(f"[SHOT] ⚠ 씨앗 명세 쓰기 실패 — {type(exc).__name__}: {exc}",
+                  file=sys.stderr)
+        if args.keep_seeds:
+            print(f"[SHOT] 씨앗 정리: 건너뜀(--keep-seeds 기본) — 사건 "
+                  f"{len(SEEDED_EVENT_IDS)}건을 남긴다. 지우려면 --clean-seeds")
+        else:
+            print(f"[SHOT] 씨앗 정리: {clean_events()}")
     got = merged
     print("[SHOT] 페르소나별 장수: "
           + " · ".join(f"{k} {v}장" for k, v in per_persona.items()))

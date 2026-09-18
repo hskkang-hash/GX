@@ -13,11 +13,37 @@
     ③ 문지기는 전부 `guard_setting`(F-12 의 유일한 판정식, D-212) — 여기서 새
        판정을 짓지 않는다.
 """
+from ninja import Schema
 from ninja.errors import HttpError
 from ninja_extra import api_controller, route
 
 from common.inbound_api_key import JwtOrInboundKey
 from common.tenant_scope import TenantScope, tenant_scoped
+
+#: 재시작 「요청」의 응답 문장. **한 곳에만 적는다** — 화면·시험·명세가 같은 글자를 읽는다.
+#: 이 문장이 거짓이 되는 날(문이 실제로 서버를 내리는 날)은 시험이 먼저 빨개진다.
+RESTART_ACK = ("요청이 기록됐습니다 — 실행은 점검 창에서 합니다. "
+               "이 단추는 서버를 내리지 않습니다.")
+
+
+class StorageOut(Schema):
+    """U5 #15 저장 용량의 **응답 모양** — OpenAPI `components.schemas` 의 첫 줄.
+
+    ★ 왜 하나라도 필요한가 (U6 #14 계열 · 턴 U): 이 저장소의 dsm 라우트는 인자를
+      원시 타입으로 받고 응답을 `dict` 로 내므로 OpenAPI 문서에 **모양이 하나도
+      없었다**. 모양이 없으면 외부 App 은 「200 이 온다」밖에 못 읽고, 그 상태의
+      명세는 명세가 아니다. 이 한 장이 그 0 을 깬다.
+    ★ `null` 이 값이다 — 상한 미선언은 `capacity_gb: null` 이고 `0` 이 아니다(D-301).
+    """
+
+    declared: bool
+    capacity_gb: float | None = None
+    used_gb: float | None = None
+    used_pct: float | None = None
+    verdict: str
+    reason: str = ""
+    used_note: str = ""
+    env_name: str = ""
 
 
 def _scope(request) -> TenantScope:
@@ -451,3 +477,286 @@ class DsmU56API:
         from kernels.k2_notify import my_notify_reach
 
         return my_notify_reach(scope=_scope(request))
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # 턴 U · 차선 U56 — 「끝내기」 다섯 (WS-22·WS-23 · API-03·04)
+    # ═══════════════════════════════════════════════════════════════════════
+    #
+    # ⚠ **경로 삼킴을 다시 세어 봤다** [실측 · 턴 U] `api.py`(먼저 등록)의 변수 조각은
+    #   `/settings/{domain}` 하나뿐이다. 아래 다섯은 조각이 둘 이상이거나 `/settings/`
+    #   로 시작하지 않으므로 삼키지 않는다:
+    #       `/cameras/{int:camera_id}/address`      (3조각 · 앞의 `/cameras/*` 는 리터럴 둘뿐)
+    #       `/system/restart-request` · `/system/requests` · `/system/backup-receipts`
+    #       `/system/storage`
+    #       `/settings/api-keys/{int:key_id}/scopes` (4조각 — `{domain}` 은 1조각만 먹는다)
+
+    # ── WS-23 「한 대 고치기」 — 카메라 주소 전용 문 (U5 #5) ────────────────
+    #
+    # 왜 전용 문을 여는가 — **일괄 등록 문이 하던 일을 그만두게 하려는 것이 아니다**
+    # -------------------------------------------------------------------------
+    # 화면(`CameraAddress.tsx`)은 지금까지 한 대의 주소를 **한 줄짜리 CSV** 로 만들어
+    # `POST /cameras/import` 에 보냈다. 그것이 옳은 임시방편이었다(같은 판정식을
+    # 두 벌로 두지 않기 위해서다). 그러나 그 길에는 **한 대를 고칠 수 없는** 성질이
+    # 둘 있다 [실측 · 턴 U]:
+    #   ① 일괄 문은 **이름으로** 카메라를 찾는다 — 이름을 바꾼 카메라는 못 찾고
+    #      **새로 만들어진다**(action=create). 「고치기」가 조용히 「만들기」가 된다.
+    #   ② 대상이 id 가 아니므로 **남의 테넌트 404** 를 잴 자리가 없다 — 남의 이름은
+    #      「없다」가 아니라 「만들겠다」가 된다.
+    # 이 문은 **id 로** 한 대를 고친다. 만들지 않는다 — 없으면 404 다.
+    @route.post("/cameras/{int:camera_id}/address", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="U5 #5 카메라 주소 한 대 — 남의 테넌트 카메라의 주소를 "
+                          "바꾸면 그 주소가 남의 알림 본문으로 나간다 (쓰기 IDOR)")
+    def set_camera_address(self, request, camera_id: int, address: str,
+                           detail: str = ""):
+        """UX-02 — **id 로 지목한 한 대**의 설치 주소를 채운다.
+
+        · 관리자만 (`guard_setting` · F-12 와 같은 문지기 · 감사 1행)
+        · 남의 테넌트 카메라는 **404** — 403 은 「있는데 못 만진다」를 알려 주고,
+          그것만으로 남의 테넌트에 그 id 가 있다는 사실이 샌다 (D-269)
+        · 빈 주소는 **422** — 「비운다」가 아니라 「값이 틀렸다」다. 지우는 문은
+          따로 세운다(지우는 쪽으로 틀리지 않는다)
+        · `address_source` 는 언제나 `manual` 이다 — 팝업으로 채워도 **출처는 사람**
+          이다(D-331). 이 문에 출처 인자를 두지 않는 이유가 그것이다.
+        """
+        from apps.dsm.services import guard_setting
+        from stream_monitors.models import StreamMonitor
+
+        scope = _scope(request)
+        value = (address or "").strip()
+        if not value:
+            # 422 — ninja 가 「인자가 없다」에 쓰는 코드와 같다. 빈 값은 값이 아니다.
+            raise HttpError(422, "주소가 비었습니다 — 빈 주소는 없는 주소보다 나쁩니다.")
+        if len(value) > 255:
+            raise HttpError(422, "주소가 255자를 넘습니다.")
+
+        access = guard_setting(
+            scope=scope, action="write:camera:address:%s" % camera_id,
+            api_method="POST")
+        if not access.allowed:
+            raise HttpError(403, access.reason)
+
+        row = _one_camera(scope, camera_id, StreamMonitor)
+        if row is None:
+            raise HttpError(404, "그런 카메라가 없습니다.")
+
+        before = row.install_address or ""
+        row.install_address = value
+        row.install_address_detail = (detail or "").strip() or None
+        row.address_source = StreamMonitor.AddressSource.MANUAL
+        row.save(update_fields=["install_address", "install_address_detail",
+                                "address_source"])
+        return {"camera_id": row.pk, "name": row.name,
+                "install_address": row.install_address,
+                "install_address_detail": row.install_address_detail or "",
+                "address_source": row.address_source,
+                #: ★ 「무엇에서 무엇으로」 — 화면이 「채웠다」와 「덮어썼다」를 가른다.
+                "was_blank": not before, "previous_address": before,
+                "audit_id": access.audit_id}
+
+    # ── WS-22 「재시작 요청」 — **기록만.** 실행은 대표·점검 창 ──────────────
+    #
+    # ★★ 이 문은 컨테이너를 **건드리지 않는다.** 건드리면 그것이 「운영계 외부 행위」이고
+    #    표의 줄이 아니라 결함이다(턴 U 선등록이 그렇게 적었다). 여기서 일어나는 일은
+    #    행 하나와 감사 한 줄이 전부이고, 응답 문장이 그 사실을 말한다.
+    @route.post("/system/restart-request", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="U5 #14 재시작 요청 — 남의 테넌트 이름으로 점검을 "
+                          "요청할 수 없다. 기록만 남는다")
+    def request_restart(self, request, reason: str):
+        """재시작을 **요청**한다. 관리자만 · 사유 필수 · 감사 1행.
+
+        ★ `status` 는 `requested` 로 태어난다. 「완료」는 실행한 사람이 적는다 —
+          이 문이 `done` 을 적으면 아무도 안 한 일이 초록이 된다.
+        """
+        from apps.dsm.services import guard_setting
+        from stream_monitors.models import DsmSystemRequest
+
+        scope = _scope(request)
+        text = (reason or "").strip()
+        if not text:
+            raise HttpError(422, "사유가 비었습니다 — 사유 없는 재시작 요청은 "
+                                 "다음 사람에게 「왜 내렸는지 모르는 정지」입니다.")
+        if len(text) > 255:
+            raise HttpError(422, "사유가 255자를 넘습니다.")
+
+        access = guard_setting(
+            scope=scope, action="write:system:restart-request", api_method="POST")
+        if not access.allowed:
+            raise HttpError(403, access.reason)
+
+        actor = scope.require_actor()
+        row = DsmSystemRequest.objects.create(
+            purpose_code="dsm.ops", kind=DsmSystemRequest.Kind.RESTART,
+            reason=text, status=DsmSystemRequest.Status.REQUESTED,
+            requested_by=actor)
+        return {"request_id": row.pk, "kind": row.kind, "status": row.status,
+                "reason": row.reason, "executed": False,
+                "message": RESTART_ACK, "audit_id": access.audit_id}
+
+    @route.get("/system/requests", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="U5 #14 요청 목록 — 남의 테넌트가 무엇을 요청했는지는 "
+                          "남의 정보다")
+    def system_requests(self, request, limit: int = 20):
+        """요청 목록 — **최근 것부터.** 관리자만. 빈 목록은 「요청이 없다」다."""
+        from apps.dsm.services import guard_setting
+        from stream_monitors.models import DsmSystemRequest
+
+        scope = _scope(request)
+        access = guard_setting(
+            scope=scope, action="read:system:requests", api_method="GET")
+        if not access.allowed:
+            raise HttpError(403, access.reason)
+
+        rows = DsmSystemRequest.objects.all().order_by("-id")[:max(1, min(limit, 100))]
+        return {
+            "total": DsmSystemRequest.objects.count(),
+            "requests": [
+                {"request_id": r.pk, "kind": r.kind, "status": r.status,
+                 "status_label": r.get_status_display(), "reason": r.reason,
+                 "requested_by": getattr(r.requested_by, "username", "") or "",
+                 "created_at": r.created_on.isoformat() if r.created_on else None,
+                 "handled_note": r.handled_note}
+                for r in rows],
+            "note": RESTART_ACK,
+        }
+
+    # ── 백업 회수증 — **실물을 읽는다. 없으면 회색이다** ─────────────────────
+    @route.get("/system/backup-receipts", auth=JwtOrInboundKey())
+    @tenant_scoped(required=False,
+                   reason="운영 기반의 사실(마지막 회수증 시각·파일 이름)이다. "
+                          "테넌트 자료가 아니라 관리자에게만 연다 — guard_setting 이 문지기")
+    def backup_receipts_view(self, request):
+        """마지막 회수증 시각 · 파일 · **검증 가능 여부** · 다음 예정.
+
+        ★ 회수증을 한 장도 못 찾으면 `verdict: "UNKNOWN"` 이다 — `0` 을 초록으로
+          적지 않는다(D-301). 「백업이 0건이다」와 「여기서 안 읽힌다」는 다른 사실이다.
+        ★ 주기가 꺼져 있으면 **「예정 없음 — 꺼짐」을 말로** 낸다. 빈 칸으로 두면
+          「아직 안 정했다」와 「꺼 두기로 했다」가 같은 그림이 된다.
+        ★ 나가지 않는 것: 회수증 안의 `db_settings`(호스트·계정) · 경로 전문 · 해시.
+        """
+        from apps.dsm.services import guard_setting
+        from common.ops_tasks import backup_receipts
+
+        scope = _scope(request)
+        access = guard_setting(
+            scope=scope, action="read:system:backup-receipts", api_method="GET")
+        if not access.allowed:
+            raise HttpError(403, access.reason)
+        return backup_receipts()
+
+    # ── 저장 상한 선언 → `storage_used_pct` (U5 #15) ────────────────────────
+    @route.get("/system/storage", auth=JwtOrInboundKey(), response=StorageOut)
+    @tenant_scoped(required=False,
+                   reason="운영 기반의 사실(상한·사용량)이다. 관리자에게만 연다")
+    def system_storage(self, request):
+        """상한 N GB · 사용 N% — **선언이 없으면 그 말을 그대로 낸다.**
+
+        ★ 판정은 `common.ops_tasks.storage_declaration()` **하나**다. 크론
+          (`scripts/ops_monitor.py`)도 같은 함수를 읽는다 — 두 자리에서 따로 재면
+          크론이 UNKNOWN 을 적는 날 이 화면이 초록을 그린다(D-212).
+        ★ 이 문에만 ninja `Schema` 를 붙였다 — OpenAPI `components.schemas` 를
+          0 에서 띄우는 자리다(U6 #14 계열 · 연계 명세가 그 스키마를 인용한다).
+        """
+        from apps.dsm.services import guard_setting
+        from common.ops_tasks import storage_declaration
+
+        scope = _scope(request)
+        access = guard_setting(
+            scope=scope, action="read:system:storage", api_method="GET")
+        if not access.allowed:
+            raise HttpError(403, access.reason)
+        return storage_declaration()
+
+    # ── API-03·04 「키 범위」 ────────────────────────────────────────────────
+    #
+    # ★ 범위의 정본은 `kernels/k5_trust/key_scopes.py` 하나다 — 이 라우트는 문지기와
+    #   오류 코드만 정한다(D-212). 모르는 이름은 **422**(값이 틀렸다) · 남의 키는
+    #   **404**(존재도 새지 않는다 · D-269) · 관리자가 아니면 **403** · 익명은 **401**.
+    @route.get("/settings/api-keys/{int:key_id}/scopes", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="API-03 키 범위 조회 — 남의 테넌트 키의 범위는 남의 정보다")
+    def api_key_scopes_get(self, request, key_id: int):
+        """이 키가 어디까지 가는가. **정한 적 없으면 그렇게 말한다**(`state: "unset"`)."""
+        from apps.dsm.services import guard_setting
+        from kernels.k5_trust import (ALLOWED_SCOPES, InboundKeyNotFound,
+                                      get_key_scopes)
+
+        scope = _scope(request)
+        access = guard_setting(
+            scope=scope, action="read:inbound-api-key:scopes:%s" % key_id, api_method="GET")
+        if not access.allowed:
+            raise HttpError(403, access.reason)
+        try:
+            _assert_key_in_tenant(scope, key_id)
+        except InboundKeyNotFound:
+            raise HttpError(404, "그런 키가 없습니다.")
+        view = get_key_scopes(scope=scope, key_id=key_id)
+        return {"key_id": key_id, "state": view.state,
+                "scopes": list(view.scopes or []),
+                "allowed": sorted(ALLOWED_SCOPES)}
+
+    @route.post("/settings/api-keys/{int:key_id}/scopes", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="API-03 키 범위 저장 — 남의 테넌트 키의 범위를 넓히면 "
+                          "그 키가 우리 자료에 닿는다 (쓰기 IDOR)")
+    def api_key_scopes_set(self, request, key_id: int, scopes: str = ""):
+        """범위를 정한다(덮어쓴다). `scopes` 는 쉼표 문자열 또는 JSON 배열 문자열.
+
+        ★ 빈 문자열은 **빈 목록**이다 — 「아무 데도 못 간다」. 기본값으로 메우지
+          않는다(메우는 자리는 발급 문 하나다).
+        """
+        from apps.dsm.services import guard_setting
+        from kernels.k5_trust import (InboundKeyNotFound, InvalidScopeName,
+                                      set_key_scopes)
+
+        scope = _scope(request)
+        access = guard_setting(
+            scope=scope, action="write:inbound-api-key:scopes:%s" % key_id, api_method="POST")
+        if not access.allowed:
+            raise HttpError(403, access.reason)
+        try:
+            _assert_key_in_tenant(scope, key_id)
+        except InboundKeyNotFound:
+            raise HttpError(404, "그런 키가 없습니다.")
+        try:
+            view = set_key_scopes(scope=scope, key_id=key_id, scopes=scopes)
+        except InvalidScopeName as exc:
+            raise HttpError(422, str(exc))
+        except InboundKeyNotFound:
+            # ★ 커널도 스스로 「내 키인가」를 본다(턴 U 병합). 위 `_assert_key_in_tenant`
+            #   가 이미 걸렀으므로 여기까지 오면 그 사이에 폐기·이관된 것이다 —
+            #   그때도 답은 **404** 다(존재도 새지 않는다 · D-269). 안 받으면 500 이 된다.
+            raise HttpError(404, "그런 키가 없습니다.")
+        return {"key_id": key_id, "state": view.state,
+                "scopes": list(view.scopes or []), "audit_id": access.audit_id}
+
+
+def _one_camera(scope, camera_id: int, model):
+    """내 테넌트의 그 카메라. 남의 것이면 **`None`**(404 로 답한다 · D-269).
+
+    ★ `objects` 의 스레드 맥락에 기대지 않는다 — 「스레드에 남은 요청」 함정.
+      소속을 손으로 물어 `group_id` 로 좁힌다.
+    """
+    from common.tenant_filters import get_user_group
+    from common.tenant_roles import is_global_admin
+
+    actor = scope.require_actor()
+    qs = model.objects.all()
+    if not is_global_admin(actor):
+        group = get_user_group(actor)
+        group_id = getattr(group, "pk", None)
+        if group_id is None:
+            return None
+        qs = qs.filter(group_id=group_id)
+    return qs.filter(pk=camera_id).first()
+
+
+def _assert_key_in_tenant(scope, key_id: int) -> None:
+    """그 키가 **내 테넌트에** 있는가. 없으면 `InboundKeyNotFound`(→ 404).
+
+    ★ 판정을 새로 짓지 않는다 — `k5_trust.list_keys` 가 이미 테넌트로 좁힌 목록을
+      낸다. 여기서 dj-core 표를 직접 뒤지면 격리 판정이 두 벌이 된다(D-212 · §0.4).
+    """
+    from kernels.k5_trust import InboundKeyNotFound, list_keys
+
+    for view in list_keys(scope=scope):
+        if view.key_id == key_id:
+            return
+    raise InboundKeyNotFound(key_id)

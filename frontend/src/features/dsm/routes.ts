@@ -115,4 +115,13 @@ export const dsm2Routes = {
    * ⚠ `/dsm/me` · `/dsm/notify` 와 형제다(변수 조각 없음 — 서로 삼키지 않는다).
    */
   integrations: { title: '외부 연계', path: '/dsm/integrations' },
+  /**
+   * 보고서 — 서식 3(사건 1쪽 · 이번 달 우리 센터 · 상급기관 제출용) · DOCX 정본 + PDF 병행
+   * (턴 U · 차선 U24 · 결정 ⑤ · WS-21).
+   * ⚠ 인수 화면 `/report-template`(택배 운송장 19행이 사는 표 · P-125)과 **다른 화면**이다 —
+   *   변수 조각이 없어 서로 삼키지 않는다.
+   * ★ 정본 선언은 `routes.u24.ts` 의 `reports` 이고 이 줄은 병합 편의를 위한 되비침이다
+   *   (턴 T `cameraTuning` 과 같은 방식 — 두 곳이 어긋나면 `verify_screens` 가 잡는다).
+   */
+  reports: { title: '보고서', path: '/dsm/reports' },
 } as const;

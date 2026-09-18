@@ -25,6 +25,7 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 import time
 import traceback
 from datetime import datetime, timezone
@@ -735,15 +736,67 @@ def rows_u5(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam):
                       cap_half=(not pct), url=url))
 
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# [P-170 ① · 2026-09-18 턴 U · 차선 Q] **재는 동안 아무도 로그인하지 않는다**
+#
+#   턴 T 에 V 가 재는 동안 조율자의 게이트가 같은 역할 계정으로 로그인해 V 의 세션을
+#   끊었다(계정당 세션 1개 → `end_previous_session` → 429 · D-487 ①). V 는 그 판을 버렸다.
+#   이 도구는 **로그인을 한다** — 그러므로 LOCK 을 먼저 본다.
+#
+#   ★ **잠근 사람은 지나간다**: `GX_V_SESSION_ID` 가 LOCK 의 세션과 같으면 안 막는다.
+#     그 밖의 사람에게는 **회색(exit 2)** 이다 — 회색은 초록이 아니다(D-301).
+# ═══════════════════════════════════════════════════════════════════════════
+def _v_lock_blocks(tag: str = TAG) -> bool:
+    """V 단독 세션이 잠갔고 내가 그 사람이 아니면 True — 그때는 **재지 않는다**."""
+    try:
+        from v_lock import describe, is_locked
+    except ImportError:                                   # 잠금 도구가 없으면 막지 않는다
+        return False
+    if not is_locked():
+        return False
+    print("%s ? **회색 — V 단독 중 · 재지 않음** (P-170 ① · docs/agent/evidence/V_LOCK)" % tag)
+    print("%s   %s · 잠근 사람은 GX_V_SESSION_ID 를 주고 부른다" % (tag, describe()))
+    return True
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="온보딩 48행 첫 수 — 두 칸 채운 22행 셋째 술어 실측 (V 단독)")
     ap.add_argument("--web", default=os.environ.get("GX_WEB", "http://localhost:3002"))
-    ap.add_argument("--snap-event", type=int, required=True, help="snapshot_path·주소가 있는 사건 id")
-    ap.add_argument("--seed-a", type=int, required=True, help="알림 보내기 표본 (심각 씨앗)")
-    ap.add_argument("--seed-b", type=int, required=True, help="전이·회신 표본 (미처리 씨앗)")
+    #: ★★ [P-170 ② · 턴 U] **씨앗 id 를 손으로 옮기지 않는다.** `capture_screens` 가 심고
+    #:   `runs/<stamp>/seed.json` 에 적은 것을 읽는다 — 셋 다 `required` 를 뗀 이유가 그것이다.
+    #:   손으로 준 값은 **언제나 이긴다**(특정 사건을 다시 재야 할 때가 있다).
+    #:   씨앗 명세도 없고 손으로도 안 주면 **판정 불가(2)** 다 — 지어낸 번호로 재지 않는다.
+    ap.add_argument("--snap-event", type=int, default=None, help="snapshot_path·주소가 있는 사건 id")
+    ap.add_argument("--seed-a", type=int, default=None, help="알림 보내기 표본 (심각 씨앗)")
+    ap.add_argument("--seed-b", type=int, default=None, help="전이·회신 표본 (미처리 씨앗)")
+    ap.add_argument("--seed-file", default=None,
+                    help="[P-170 ②] capture_screens 가 쓴 씨앗 명세 "
+                         "(기본: docs/agent/evidence/P-157/runs/ 의 최신 seed.json)")
     ap.add_argument("--out", default="")
     ap.add_argument("--only", default="", help="쉼표로 나눈 페르소나만 (예: U1,U3) — 재측용")
     args = ap.parse_args()
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    if _v_lock_blocks():
+        return 2
+    from probe_marks import load_seed                       # noqa: E402
+    seed = load_seed(args.seed_file)
+    if seed["source"]:
+        print(f"{TAG} [씨앗] {seed['source']} — 회차 {seed['run'] or '?'} · "
+              f"사건 {seed['event_ids'] or '없음'}")
+    #: 심각 씨앗 = `severity == critical` · 미처리 씨앗 = 그 밖의 첫 행. 등급은 명세가 나른다.
+    sev = seed.get("severity_by_id") or {}
+    crit = [i for i in seed["event_ids"] if sev.get(i) == "critical"]
+    rest = [i for i in seed["event_ids"] if sev.get(i) != "critical"]
+    snap_event = args.snap_event or seed["first_event_id"]
+    seed_a = args.seed_a or (crit[0] if crit else seed["first_event_id"])
+    seed_b = args.seed_b or (rest[0] if rest else None)
+    if not (snap_event and seed_a and seed_b):
+        print(f"{TAG} 잴 사건이 없다 — {seed['why'] or '씨앗 명세에 등급이 갈리는 두 행이 없다'}. "
+              f"`capture_screens.py` 를 --keep-seeds(기본)로 먼저 돌리거나 "
+              f"--snap-event/--seed-a/--seed-b 를 손으로 준다. **판정 불가**")
+        return 2
     pw = os.environ.get("GX_SEED_ROLE_PASSWORD") or ""
     if not pw:
         print(f"{TAG} 자격이 없다 — GX_SEED_ROLE_PASSWORD 를 환경으로 준다 (값은 적지 않는다)")
@@ -757,7 +810,7 @@ def main() -> int:
     # gx-shell 은 docs 를 /docs 에 마운트한다(/repo/docs 는 컨테이너 안 빈 자리 — 1차 실행이 거기 썼다)
     out = args.out or f"/docs/agent/evidence/P-159/onboarding_measure_{stamp}.json"
     only = [x.strip() for x in args.only.split(",") if x.strip()]
-    return measure(args.web, args.snap_event, args.seed_a, args.seed_b, pw, out, only=only)
+    return measure(args.web, snap_event, seed_a, seed_b, pw, out, only=only)
 
 
 if __name__ == "__main__":

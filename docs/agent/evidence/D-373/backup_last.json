@@ -1,9 +1,7 @@
 {
-  "measured_at": "2026-09-15T20:00:00+00:00",
-  "verdict": "UNKNOWN",
-  "out_dir": "/backup",
-  "separate_volume": false,
-  "reason": "보관처 '/backup' 가 **별도 볼륨으로 안 붙어 있다** — 여기에 뜨면 컨테이너와 함께 사라지고, 그 전까지 「파일이 생겼다」가 초록으로 보인다. 붙이는 법은 docker-compose 의 볼륨 선언(OPS_BACKUP_VOLUME)이고, 그것은 컨테이너 재생성이 필요하다",
+  "measured_at": "2026-09-18T03:24:37+00:00",
+  "verdict": "ALARM",
+  "reason": "RuntimeError: pg_dump 실패: pg_dump: error: aborting because of server version mismatch\npg_dump: detail: server version: 18.1 (Debian 18.1-1.pgdg13+2); pg_dump version: 17.7 (Debian 17.7-0+deb13u1)",
   "_written_from": {
     "db": "database_guardianx",
     "under_pytest": false

@@ -1,33 +1,33 @@
 {
   "note": "D-343 ①② 라우트 인벤토리 전수. inbound_key=accepts 가 「지금 키가 닿는 자리」다. classification 의 기본값은 session_only — 판단이 서지 않으면 좁은 쪽(D-343 ②).",
-  "measured_at": "2026-09-17T11:05:53+07:00",
+  "measured_at": "2026-09-18T11:44:20+07:00",
   "totals": {
-    "routes": 749,
+    "routes": 761,
     "by_inbound_key": {
       "accepts": 549,
-      "refuses": 117,
+      "refuses": 129,
       "open_anonymous": 73,
       "unknown": 9,
       "declared": 1
     },
     "by_classification": {
-      "session_only": 748,
+      "session_only": 760,
       "inbound_key_allowed": 1
     },
     "by_tenant_scope": {
       "none": 651,
-      "required": 94,
-      "exempt": 4
+      "required": 104,
+      "exempt": 6
     },
     "by_authn": {
       "CustomJWTAuth": 549,
-      "JwtOrInboundKey": 116,
+      "JwtOrInboundKey": 128,
       "": 73,
       "JWTAuth": 9,
       "JwtOrWallToken": 2
     },
     "by_envelope": {
-      "promoted": 388,
+      "promoted": 400,
       "clean": 248,
       "authz_envelope": 113
     },
@@ -4415,6 +4415,29 @@
     },
     {
       "method": "GET",
+      "path": "/api/dsm/audit/export.csv",
+      "app": "dsm",
+      "view": "apps.dsm.api_u24.DsmU24API.audit_export_csv",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
       "path": "/api/dsm/cameras/address-gap",
       "app": "dsm",
       "view": "apps.dsm.api.DsmAPI.camera_address_gap",
@@ -4467,6 +4490,29 @@
       "authn": "JwtOrWallToken",
       "authn_chain": [
         "JwtOrWallToken",
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/cameras/{int:camera_id}/address",
+      "app": "dsm",
+      "view": "apps.dsm.api_u56.DsmU56API.set_camera_address",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
         "JwtOrInboundKey",
         "CustomJWTAuth",
         "BaseJWTAuth",
@@ -5812,6 +5858,98 @@
     },
     {
       "method": "GET",
+      "path": "/api/dsm/reports/runs",
+      "app": "dsm",
+      "view": "apps.dsm.api_u24.DsmU24API.report_runs",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/reports/runs",
+      "app": "dsm",
+      "view": "apps.dsm.api_u24.DsmU24API.report_run_create",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/reports/runs/{int:run_id}.docx",
+      "app": "dsm",
+      "view": "apps.dsm.api_u24.DsmU24API.report_run_docx",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/reports/runs/{int:run_id}.pdf",
+      "app": "dsm",
+      "view": "apps.dsm.api_u24.DsmU24API.report_run_pdf",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
       "path": "/api/dsm/reports/templates",
       "app": "dsm",
       "view": "apps.dsm.api.DsmAPI.report_templates",
@@ -5907,6 +6045,52 @@
       "path": "/api/dsm/settings/api-keys/{int:key_id}/rotate",
       "app": "dsm",
       "view": "apps.dsm.api.DsmAPI.rotate_api_key",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/settings/api-keys/{int:key_id}/scopes",
+      "app": "dsm",
+      "view": "apps.dsm.api_u56.DsmU56API.api_key_scopes_get",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/settings/api-keys/{int:key_id}/scopes",
+      "app": "dsm",
+      "view": "apps.dsm.api_u56.DsmU56API.api_key_scopes_set",
       "authn": "JwtOrInboundKey",
       "authn_chain": [
         "JwtOrInboundKey",
@@ -6495,6 +6679,98 @@
       "inbound_key": "refuses",
       "inbound_key_reason": "",
       "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/system/backup-receipts",
+      "app": "dsm",
+      "view": "apps.dsm.api_u56.DsmU56API.backup_receipts_view",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "exempt",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/system/requests",
+      "app": "dsm",
+      "view": "apps.dsm.api_u56.DsmU56API.system_requests",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/system/restart-request",
+      "app": "dsm",
+      "view": "apps.dsm.api_u56.DsmU56API.request_restart",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/system/storage",
+      "app": "dsm",
+      "view": "apps.dsm.api_u56.DsmU56API.system_storage",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "exempt",
       "authz_path_permission": false,
       "envelope": "promoted",
       "classification": "session_only",

@@ -399,6 +399,12 @@ CENSUS: dict[str, tuple[str, str, str, int | None, str]] = {
     "stream_monitors.DsmOnboardingProgress":
         ("GAP", "no_route", "fk", 0,
          "2026-09-15 WO-01 §5 「데이터」로 신설(마이그 0029_v11_tables · 턴 Q 차선 F-DB · D-463). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다 — 행 0 은 신설 직후의 사실이다. 소유는 dj-core BaseModel 의 group FK(stream_monitors.models.TenantModel 추상)로 첫 행부터 붙는다. 격리 단언은 backend/tests/test_v11_tables.py 의 V11TenantIsolationTest 가 잰다(B 에 안 보임 · A 양성 대조 · _base_manager 실재). 쓰는 라우트는 아직 없다 — F 차선 온보딩 진행률(UX-46 · 파 1 턴 2)이 연다 / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),
+    "stream_monitors.DsmApiKeyScope":
+        ("GAP", "no_route", "fk", 0,
+         "2026-09-18 WO-01 파3 턴1 API-03·04 로 신설(마이그 0030_turn_u_u56 · 차선 U56). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다 — 행 0 은 신설 직후의 사실이다. 소유는 stream_monitors.models.TenantModel(dj-core BaseModel 의 group FK)로 첫 행부터 붙는다. key_id 는 dj-core apikey_account.APIKey 의 pk 를 가리키는 **정수**이고 FK 가 아니다(§0.4 — 금지구역 표에 제약을 심지 않는다). 그래서 남의 테넌트 키의 범위를 못 보게 막는 것은 이 표의 group 이고, 그 앞에 apps/dsm/api_u56.py::_assert_key_in_tenant 가 k5_trust.list_keys(이미 테넌트로 좁힌 목록)로 한 번 더 404 를 낸다. 격리 단언은 backend/tests/test_u56_turn_u_admin_surfaces.py(없는/남의 키 id → 404 · 익명 401)가 잰다 / 도달: 자기 pk 로 지목하는 경로가 없다 — 지목은 APIKey 의 pk(key_id)로 하고 그 문은 전건 @tenant_scoped + guard_setting 이다"),
+    "stream_monitors.DsmSystemRequest":
+        ("GAP", "no_route", "fk", 0,
+         "2026-09-18 WO-01 파3 턴1 WS-22 「재시작 요청」으로 신설(마이그 0030_turn_u_u56 · 차선 U56). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다. 소유는 TenantModel 의 group FK. ★ 이 표는 **요청만** 담는다 — 컨테이너를 내리는 실행은 여기 없고 점검 창(대표)의 일이다. 남의 테넌트 요청이 내 목록에 보이면 「누가 우리 시스템을 내리려 하는가」가 새는 것이라 격리가 중요하다. 격리 단언은 backend/tests/test_u56_turn_u_admin_surfaces.py::test_restart_request_is_tenant_scoped 가 잰다 (A 가 요청 → B 목록 0행) / 도달: 자기 pk 로 지목하는 경로가 없다 — 목록(GET /api/dsm/system/requests)과 쓰기(POST /api/dsm/system/restart-request) 둘 다 pk 를 인자로 받지 않는다"),
     "stream_monitors.DsmReportRun":
         ("GAP", "no_route", "fk", 0,
          "2026-09-15 WO-01 §5 「데이터」로 신설(마이그 0029_v11_tables · 턴 Q 차선 F-DB · D-463). 인구조사(2026-08-14 덤프)에 없었던 것이 아니라 그때 존재하지 않았다 — 행 0 은 신설 직후의 사실이다. 소유는 dj-core BaseModel 의 group FK(stream_monitors.models.TenantModel 추상)로 첫 행부터 붙는다. 격리 단언은 backend/tests/test_v11_tables.py 의 V11TenantIsolationTest 가 잰다(B 에 안 보임 · A 양성 대조 · _base_manager 실재). 쓰는 자리는 아직 없다 — U24 차선 월간 자동본 배치(UX-40 · 파 3)가 연다 / 도달: 실경로 추적본에 항목이 없고, 전수 라우트에도 이 모델을 가리키는 경로가 없다"),

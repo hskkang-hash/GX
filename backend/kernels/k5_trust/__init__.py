@@ -58,6 +58,17 @@ from kernels.k5_trust.inbound_keys import (  # noqa: F401
     revoke_key,
     rotate_key,
 )
+from kernels.k5_trust.key_scopes import (  # noqa: F401
+    ALLOWED_SCOPES,
+    DEFAULT_SCOPES,
+    UNSET,
+    InvalidScopeName,
+    KeyScopeDenied,
+    KeyScopeView,
+    assert_path_scope,
+    get_key_scopes,
+    set_key_scopes,
+)
 from kernels.k5_trust.webhook_signing_keys import (  # noqa: F401
     IssuedSigningKey,
     SigningKeyNameCollision,
@@ -126,6 +137,22 @@ __all__ = [
     "signing_key_name_for",
     "IssuedSigningKey",
     "SigningKeyNameCollision",
+    # ★ API-03·04 턴 U — **키의 범위**. D-335 가 잡은 「범위가 없다」의 값이다.
+    #   이름 넷뿐이고 기본은 events:read 하나다 — 기본을 전부로 두면 그 결함이 돌아온다.
+    #   ★ [턴 U 병합 · D-281] 공개 면을 **셋으로 줄였다.** 순수 계산 셋
+    #     (`normalize_scopes` · `required_scope_for_path` · `key_allows`)은 비공개가 됐고,
+    #     `request` 를 받던 `check_request_key_scope` 는 `assert_path_scope(*, scope,
+    #     key_id, path)` 로 바뀌었다 — 커널은 HTTP 를 모른다. 쓰지도 않을 `scope` 를
+    #     순수 함수에 붙이는 것이 D-281 을 지키는 방법이 아니다(`_capability_now` 선례).
+    "ALLOWED_SCOPES",
+    "DEFAULT_SCOPES",
+    "UNSET",
+    "get_key_scopes",
+    "set_key_scopes",
+    "assert_path_scope",
+    "KeyScopeView",
+    "InvalidScopeName",
+    "KeyScopeDenied",
     # 상태 5값 (D-328)
     "ABSENT",
     "PRESENT",

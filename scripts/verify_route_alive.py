@@ -146,6 +146,17 @@ def login(api: str, user: str, password: str, _rate_waited: bool = False) -> str
     ★ 여기서 토큰을 받은 것은 **아직 증거가 아니다.** 받은 토큰이 실제로 문을 여는지는
       `token_changed_anything()` 이 익명 대조로 판정한다 — 이 함수는 그것을 대신하지 않는다.
     """
+    #: ★ [P-170 ① · 2026-09-18 턴 U · D-487] **V 단독이 재는 동안은 로그인하지 않는다.**
+    #:   `docs/agent/evidence/V_LOCK` 이 있으면(그리고 내가 그 V 가 아니면) 토큰을 받지
+    #:   않고 None — 이 판정기는 「못 받았다」(회색)로 적는다. 끼어든 로그인이 V 의 세션을
+    #:   끊고 429 를 만든 것이 턴 T 의 오판 ① 이다. 회색은 초록이 아니다.
+    try:
+        from v_lock import is_locked as _v_locked, GRAY_NOTE as _V_NOTE  # noqa: PLC0415
+    except ImportError:                                            # pragma: no cover
+        _v_locked, _V_NOTE = (lambda: False), ""
+    if _v_locked():
+        print("[ALIVE] ⚠ 로그인 건너뜀 — %s" % _V_NOTE)
+        return None
     for path in LOGIN_PATHS:
         #: `end_previous_session` — 제품은 동시 접속 1개다. 이 칸이 없으면 앞선 세션
         #: 때문에 **200 + success:false** 가 돌아온다(토큰 없음) [실측].

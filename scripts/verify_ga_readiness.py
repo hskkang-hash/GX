@@ -73,6 +73,13 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 LEDGER = ROOT / "docs" / "agent" / "evidence" / "D-346" / "ga_readiness.yaml"
+#: P-170 ① — V 단독 잠금. 게이트 종료코드 2 = 회색(못 쟀다) 의 규약 그대로.
+EXIT_UNDECIDABLE_GATE = 2
+try:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from v_lock import is_locked as _v_locked, GRAY_NOTE as _V_GRAY_NOTE  # noqa: E402
+except ImportError:                                                     # pragma: no cover
+    _v_locked, _V_GRAY_NOTE = (lambda: False), "V 단독 중"
 BLOCKERS = ROOT / "docs" / "agent" / "evidence" / "DA-05" / "blockers.yaml"
 CONTRACT = ROOT / "docs" / "agent" / "evidence" / "D-309" / "contract_ac_ledger.yaml"
 
@@ -284,6 +291,11 @@ def run_gate(rel: str) -> tuple[int | None, str]:
         return None, "그 파일이 없다"
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
     name = rel.rsplit("/", 1)[-1]
+    #: ★ [P-170 ① · 2026-09-18 턴 U · D-487] **V 단독 중에는 로그인하는 게이트를 부르지 않는다.**
+    #:   `evidence/V_LOCK` 이 있으면 직렬 묶음(로그인하는 판정기)은 돌리지 않고 회색으로 적는다 —
+    #:   턴 T 에 이 판정기가 V 의 세션을 끊었다. 잠근 V 자신(`GX_V_SESSION_ID`)은 지나간다.
+    if name in SERIAL_GATES and _v_locked():
+        return EXIT_UNDECIDABLE_GATE, "회색 — " + _V_GRAY_NOTE
     cont = _container()
     if name in NEEDS_DJANGO and cont:
         #: 컨테이너의 WORKDIR 은 `/app`(=호스트 `backend/`)이고 판정기는 `/repo/scripts`
@@ -684,6 +696,9 @@ def main() -> int:
     ap.add_argument("--no-gates", action="store_true",
                     help="대장↔게이트 불일치 검사를 건너뛴다 (P-85 · 건너뛰면 그렇게 적는다)")
     args = ap.parse_args()
+    if _v_locked():
+        print("[GA] ⚠ %s — 로그인하는 게이트(직렬 묶음)는 이 실행에서 회색이다. 조율자는 V 가 끝난 뒤 "
+              "`scripts/v_lock.py --unlock` 하고 다시 잰다" % _V_GRAY_NOTE)
 
     if args.self_test:
         return self_test()

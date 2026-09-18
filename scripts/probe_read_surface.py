@@ -492,6 +492,14 @@ class Caller:
                     "err": "%s: %s" % (type(exc).__name__, exc)}
 
     def login(self, username: str, password: str) -> str:
+        #: P-170 ① — V 단독 잠금이면 로그인하지 않는다(회색으로 끝낸다 · 초록 아님).
+        try:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from v_lock import is_locked as _v_locked, GRAY_NOTE as _V_NOTE  # noqa: PLC0415
+        except ImportError:                                            # pragma: no cover
+            _v_locked, _V_NOTE = (lambda: False), ""
+        if _v_locked():
+            raise SystemExit("[READSURFACE] 회색 — 로그인 건너뜀 · " + _V_NOTE)
         r = self.call("POST", "/api/v1/auth/login",
                       body={"username": username, "password": password,
                             "end_previous_session": True})

@@ -131,6 +131,79 @@ def exclude(records, *, keep_ids=()) -> list:
 
 
 # ---------------------------------------------------------------------------
+# 씨앗 명세 파이프 — **id 를 넘기는 자리는 하나다** (P-170 ② · 턴 U · 차선 Q)
+#
+#   턴 T 의 오판(D-487 ②)이 여기였다: 씨앗 id 배선을 옮겨 놨는데 `capture_screens` 가
+#   씨앗을 **스스로 지워** 넘길 id 가 없었다. 규약을 둘로 못박는다:
+#     ① `capture_screens` 는 씨앗을 **지우지 않는다**(`--keep-seeds` 기본).
+#     ② 심은 것의 명세를 `P-157/runs/<RUN_STAMP>/seed.json` 에 쓴다.
+#   읽는 쪽(`verify_click_completes` · `verify_feature_reach` · `measure_onboarding_t`)은
+#   `--seed-file` 로 그 파일을 읽고, 안 주면 **runs/ 의 최신**을 읽는다.
+#
+#   ⚠ 「최신」은 **디렉터리 이름(시각)** 으로 고른다 — 파일 mtime 으로 고르면 git 체크아웃이
+#     전부 같은 시각으로 만들어 놓은 뒤 아무 회차나 최신이 된다.
+# ---------------------------------------------------------------------------
+#: `scripts/` 의 부모 = 저장소 뿌리. `runs/` 는 P-157 아래다(P-157 README 의 표 그대로).
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RUNS_DIR = os.path.join(_ROOT, "docs", "agent", "evidence", "P-157", "runs")
+SEED_FILE_NAME = "seed.json"
+
+
+def latest_seed_file(runs_dir: str | None = None):
+    """`runs/` 에서 **가장 나중 회차**의 `seed.json` 경로. 없으면 None."""
+    base = runs_dir or RUNS_DIR
+    if not os.path.isdir(base):
+        return None
+    stamps = sorted(d for d in os.listdir(base)
+                    if os.path.isfile(os.path.join(base, d, SEED_FILE_NAME)))
+    if not stamps:
+        return None
+    return os.path.join(base, stamps[-1], SEED_FILE_NAME)
+
+
+def load_seed(path=None, runs_dir: str | None = None) -> dict:
+    """씨앗 명세를 읽는다 — **없으면 빈 벌**이다(없는 것은 없는 것이다 · D-301).
+
+    돌려주는 벌에는 언제나 다음이 있다:
+      `event_ids`(list[int]) · `first_event_id` · `probe_mark` · `run` · `seeded_at`
+      · `severity_by_id`(dict) · `source`(읽은 파일 경로 또는 "") · `why`(못 읽은 사유)
+
+    ★ **지어내지 않는다.** 파일이 없으면 `event_ids` 는 빈 목록이고, 부르는 쪽은 그것을
+      회색으로 적어야 한다 — 빈 씨앗으로 잰 초록은 분모 0 인 초록이다.
+    """
+    empty = {"event_ids": [], "first_event_id": None, "probe_mark": "", "run": "",
+             "seeded_at": "", "severity_by_id": {}, "address": {}, "source": "", "why": ""}
+    p = path or latest_seed_file(runs_dir)
+    if not p:
+        empty["why"] = "씨앗 명세가 없다 — capture_screens 를 --keep-seeds(기본)로 먼저 돌린다"
+        return empty
+    try:
+        with open(p, encoding="utf-8") as fh:
+            doc = json.load(fh)
+    except Exception as exc:                            # noqa: BLE001
+        empty["source"] = str(p)
+        empty["why"] = "씨앗 명세를 못 읽었다(%s) — 깨진 파일로 재지 않는다" % type(exc).__name__
+        return empty
+    ids = [int(x) for x in (doc.get("event_ids") or [])]
+    sev = {}
+    for e in (doc.get("events") or []):
+        try:
+            sev[int(e.get("event_id"))] = e.get("severity") or ""
+        except (TypeError, ValueError):
+            continue
+    return {"event_ids": ids,
+            "first_event_id": doc.get("first_event_id") or (ids[0] if ids else None),
+            "probe_mark": doc.get("probe_mark") or "",
+            "run": doc.get("run") or "",
+            "seeded_at": doc.get("seeded_at") or "",
+            "severity_by_id": sev,
+            "address": doc.get("address") or {},
+            "events": doc.get("events") or [],
+            "source": str(p),
+            "why": "" if ids else "씨앗 명세는 있는데 event_ids 가 비었다"}
+
+
+# ---------------------------------------------------------------------------
 # ORM 쪽 — gx-shell 안에서만 돈다
 # ---------------------------------------------------------------------------
 def _django():
@@ -225,9 +298,46 @@ def self_test() -> int:
     if got != [10, 12]:
         bad.append("ORM 행 흉내에서 %r — dict 와 답이 다르다" % got)
 
+    # ⑤ [P-170 ② · 턴 U] 씨앗 명세 파이프 — **없으면 빈 벌 · 최신은 이름으로 고른다**
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        if latest_seed_file(td) is not None:
+            bad.append("빈 runs/ 인데 최신 씨앗을 찾았다고 한다")
+        got = load_seed(runs_dir=td)
+        if got["event_ids"] or not got["why"]:
+            bad.append("씨앗이 없는데 빈 벌·사유를 안 낸다 (없는 것은 없는 것이다)")
+        for st, ids in (("20260918T090000", [11, 12]), ("20260918T100000", [21, 22])):
+            os.makedirs(os.path.join(td, st))
+            with open(os.path.join(td, st, SEED_FILE_NAME), "w", encoding="utf-8") as fh:
+                json.dump({"run": st, "probe_mark": mark_string(st),
+                           "event_ids": ids, "first_event_id": ids[0],
+                           "seeded_at": "2026-09-18T09:00:00",
+                           "events": [{"event_id": ids[0], "severity": "critical"},
+                                      {"event_id": ids[1], "severity": "warning"}]},
+                          fh, ensure_ascii=False)
+        got = load_seed(runs_dir=td)
+        if got["event_ids"] != [21, 22] or got["run"] != "20260918T100000":
+            bad.append("최신 회차를 안 고른다: %r" % got["event_ids"])
+        if got["first_event_id"] != 21 or got["severity_by_id"].get(21) != "critical":
+            bad.append("씨앗의 첫 id·severity 를 못 읽는다")
+        if parse_mark(got["probe_mark"]) != {"run": "20260918T100000", "judged": False}:
+            bad.append("씨앗 명세의 표식이 probe 표식 규약과 어긋난다")
+        # 명시한 회차를 주면 그것을 읽는다 (최신이 아니어도)
+        old = load_seed(os.path.join(td, "20260918T090000", SEED_FILE_NAME))
+        if old["event_ids"] != [11, 12]:
+            bad.append("--seed-file 로 준 회차를 안 읽는다")
+        # 깨진 파일은 **빈 벌 + 사유**다 — 깨진 것으로 재지 않는다
+        os.makedirs(os.path.join(td, "20260918T110000"))
+        with open(os.path.join(td, "20260918T110000", SEED_FILE_NAME), "w",
+                  encoding="utf-8") as fh:
+            fh.write("{not json")
+        got = load_seed(runs_dir=td)
+        if got["event_ids"] or "못 읽었다" not in got["why"]:
+            bad.append("깨진 씨앗 명세를 읽고도 사유 없이 넘어간다")
+
     for b in bad:
         print("%s 자기시험 실패 — %s" % (TAG, b))
-    print("%s 자기시험 %s (표본 4 · 판정 9)" % (TAG, "실패" if bad else "통과"))
+    print("%s 자기시험 %s (표본 4 · 판정 9 + 씨앗 파이프 8 = 17)" % (TAG, "실패" if bad else "통과"))
     return EXIT_FAIL if bad else EXIT_OK
 
 

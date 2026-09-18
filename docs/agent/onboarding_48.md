@@ -1017,3 +1017,192 @@ CPO 결정: 역할이 0개인 계정이 볼 수 있는 화면은 **정확히 하
 - U5#2 ○ **제품 결함 후보**: `admin`(gxseed_u5_sysop) 으로 `/roles` 에 12초 기다려도 표 행 0 · 「Add New Role」 없음 — P-98 은 15개였다. 같은 시각 `capture_screens` 도 U5 `/roles`·`/device`·`/survey-profile` 셋을 「문구 없음」으로 못 찍었다. runserver 는 `GET /api/roles/?page_size=1&current_page=1 200` 을 냈다(page_size=1). 인수 화면 셋의 표가 안 그려지는 뿌리 하나 — 다음 턴 U56/F 가 누른 뒤를 본다.
 
 **◐ 4**: U1#2(카메라 정상/이상 칸 없음 · 정본 표기) · U2#4(snapshot 200 jpeg + 주소는 섰으나 `img[src*=snapshot]` naturalWidth>0 이 0 — 데스크톱 상세는 사진을 `<img>` 로 안 그린다 · U3#3 모바일은 그린다) · U4#8(조합 검색 없음 · 정본 상한) · U5#15(`%` 없음 — 상한 미선언).
+
+---
+
+## ★ 2026-09-18 턴 U — U1#11 정렬 규칙 실측 (차선 U1) · **데이터 상태 → 기대식 오류로 재분류**
+
+P-165 ④(위 1014행)가 「정렬 규칙 확인 요청」으로 이월한 것을 실측했다. **정렬은 화면이 아니라 서버가 정한다**
+(`backend/apps/dsm/services.py::focus_queue` — `FocusQueue.tsx` 머리말 그대로 "이 파일에 `sort(` 도
+`filter(` 도 없다").
+
+**정렬식** [실측 · `services.py:1113-1119` `rank()`]:
+```
+rank(card) = (0 if closed_at is None else 1,   # 안 닫힌 것이 먼저
+              -urgency_tier,                     # 경과 문턱이 높은 것이 먼저
+              -severity_weight,                  # 등급이 먼저
+              occurred_at)                       # 오래된 것이 먼저
+```
+`response_state`(occurred/acknowledged/in_progress)는 **이 식의 어느 항에도 없다.** 구분되는 것은
+`closed_at is None` 뿐이다. 그리고 `urgency_tier` 를 먹이는 `elapsed_seconds`(`response_clock.py:130-135`)는
+**닫혔을 때만 멈춘다** — 접수(`acknowledged_at`)·조치 착수(`arrived_at`)는 시계를 세우지 않는다. 그래서
+오래 열려 있는 「조치 중」 사건은 경과 문턱이 계속 올라가 갓 발생한 「미처리 심각」보다 앞설 수 있다 —
+그것이 U1#11 이 잡은 그림(씨앗 231075)이다.
+
+**DA-04/PRD 대조** [실측 · 전수 grep]: `docs/design/DA-04_공유커널_API스펙_v1.0.md` · `DA-01_요구사항정의서_v1.0.md`
+어디에도 「미처리가 진행 중보다 앞선다」또는 그 반대를 못박은 줄이 **없다.** 이 저장소에서 정렬 규칙의 정본은
+코드 자신의 주석(`services.py:1013-1017` "순서: ① 아직 안 닫힌 것 ② 경과 문턱이 높은 것 ③ 등급 ④ 오래된 것 · ⚠
+최신순이 아니다")과 그것을 잠그는 회귀 시험(`backend/tests/test_c_response_clock.py::FocusQueueTest
+::test_the_focus_is_the_oldest_open_one_not_the_newest` — "가장 오래 방치된 사건이 영원히 안 보인다"가 이
+화면의 존재 이유라고 직접 적는다)뿐이다. 이 식은 「닫히지 않은 한 계속 급해진다」이고, **그 정의 위에서는
+경과가 긴 진행 중 사건이 방금 발생한 사건을 앞서는 것이 규약이다** — 화면이 잘못 그린 것이 아니다.
+
+**판정: 제품 결함이 아니다 — 기대식 오류.** 정렬 로직·회귀 시험 모두 그대로 둔다(고치지 않았다).
+1014행의 「데이터 상태」 표기를 **기대식 오류**로 정정한다 — 씨앗 데이터가 우연히 그 모양이었던 것이 아니라,
+정렬 규칙이 원래 그렇게 정의돼 있어 그 모양이 **재현된다**(데이터를 바꿔도 같은 조건이면 같은 결과).
+
+**V 의 기대식 고침 문안(온보딩 U1#11 셋째 술어 한 줄)**: 「`/dsm/queue` 초점 카드에 `[실제로 확인 · 접수]`가
+보인다」 대신 → **「`/dsm/queue` 초점 카드의 버튼이 `focus.response_state` 와 일치한다 — `occurred` 면
+`[실제로 확인 · 접수]`, 그 밖(acknowledged/in_progress)이면 `allowed_next` 라벨(예: `[종결하기]`).
+초점이 어느 사건인지는 서버 정렬(`focus_queue.rank`)이 정하므로 술어는 그 정렬을 다시 세지 않는다.**」
+
+**영향받는 시험**(정렬을 바꾸지 않았으므로 아무것도 안 건드렸다 — 다음에 정렬을 바꿀 차선을 위해 이름만 남긴다):
+`backend/tests/test_c_response_clock.py::FocusQueueTest`(정본 회귀 · 위 인용) ·
+`backend/tests/test_u1_queue_field_signals.py`(같은 픽스처 `DsmFixture` 공유 · 정렬 자체는 안 잰다) ·
+`backend/tests/test_k1_event_kernel.py`(K1 전이표만 잰다 · 큐 정렬과 무관 — 읽어서 확인, 무변경) ·
+Q 소유 `verify_click_completes` 의 U1 행(정렬을 재는 자리가 있으면 위 정본과 같은 식을 써야 한다 — **등록
+요청**, 이 턴에 U1 이 그 파일을 고치지 않는다).
+
+닫는 조건: 위 인용·회귀 시험 확인 — **닫음**(정렬 로직 변경 없음 · 표 정정 + V 문안만).
+
+---
+
+## ★ 2026-09-18 턴 U · P-169 — **두 칸 31/48 · 정본 없음 17/48** (차선 Q · 정본 없음 26 중 9행을 채웠다)
+→ 병합 뒤(조율자 · 아래 「조율자가 채운 7행 · 갱신 2행」) **두 칸 35/48 · 정본 없음 13/48**(재계산 — 아래 세는 법)
+
+**이 절도 수를 내지 않는다.** 위 턴 T · P-159 ① 절과 같은 규약이고, 위 절은 **지우지 않는다** —
+이 절은 그 26행의 **지금 사실**을 덮어 적는다(행이 겹치면 **아래 것이 이긴다**).
+
+**무엇이 달라져서 채워졌나 — 둘뿐이다 [재실측 2026-09-18 · 차선 Q]**
+
+1. **사전이 자랐다.** `docs/design/GX-COPY_v1.md` 「2026-09-17 턴 T 추가 — 조율자 병합」 표(313~330행)가
+   턴 T 에 「화면에는 있는데 사전에는 없다」고 적어 둔 제목 **여섯**을 등재했고, 같은 글자가
+   `frontend/src/features/dsm/copy.ts`(사전의 코드 반쪽)에도 들어왔다. 그 여섯이 문구 칸을 채운다.
+2. **HEAD 가 자랐다.** 턴 T 에 「이번 턴 U24 가 짓는다 — HEAD 에 없음」이라 적은 자리 둘이
+   **이미 HEAD 에 있다**: `/dsm/audit`(`frontend/src/features/dsm/routes.u24.ts:41` · `AuditLog.tsx`)와
+   상급 보고 토글(`EventList.tsx:849` 「보고 표시」/「보고함」). 사유가 낡은 것이지 자리가 없는 것이 아니다.
+
+⚠ **짐작으로 채운 칸은 하나도 없다.** 문구는 정본(GX-COPY 또는 `copy.ts`)에 **글자 그대로** 있고,
+  그 글자를 **어느 화면 파일이 실제로 그리는지** grep 으로 확인한 것만 적었다(아래 표의 괄호가 그 자리다).
+⚠ **다른 차선이 이번 턴 짓는 자리는 비워 둔다** — U4 #5·#7 · U5 #14 · U6 #14·#15 는 「병합 뒤 그 차선 문안」
+  이라고만 적는다. 짓는 중인 화면의 문구를 우리가 지으면 그것은 제품이 아니라 우리 기대를 재게 된다.
+⚠ 정본 없음 **17** 의 내역: **U6 기계 8**(문구 칸이 애초에 없다 — 따로 센다) · 사람 행 중 **문구만 사전 밖 3**
+  (U1#4 · U3#3 · U4#9) · 사람 행 중 **경로·문구 둘 다 없음 6**(U2#3 · U3#14 · U4#1 · U4#5 · U4#7 · U5#14).
+  (8+3+6 = 17 · 26 − 9 = 17 · 22 + 9 = 31)
+
+### 채운 9행 — 정본 경로 · 누를 문구 · 셋째 술어
+
+| # | flow | 정본 경로 | 누를 문구 (정본) | 셋째 술어 (V 가 볼 것) |
+|---|---|---|---|---|
+| U2 9 | 요원별 처리 현황 | `/dsm/team-status` (`dsm/routes.ts` `teamStatus` · `App.tsx:727`) | `요원별 현황` (GX-COPY 턴 T 추가 326행 · `copy.ts` · `TeamStatus.tsx`·`Stats.tsx` 가 그린다 [grep 2026-09-18]) | [API 호출] `GET /api/dsm/stats/by-reviewer` 200 + [화면 상태] 제목 `요원별 현황` 1 · 표 행 ≥ 1 (`요원` 열) — 표가 0행이면 「없다」가 떠야 하고 빈 표는 빨강 |
+| U2 16 | 알림 규칙 확인 | `/dsm/notify` (`dsm/routes.ts` `notifySettings` · `App.tsx:735`) | `알림 받는 사람·채널` (GX-COPY 턴 T 추가 322행 · `copy.ts` · `NotifySettings.tsx:56` `HEADLINE` 이 그린다) | [API 호출] `GET /api/dsm/settings/notify-rules/list` 200 + [화면 상태] 제목 1 · 규칙 표 행 ≥ 1 (규칙 0건이면 「없다」가 떠야 하고 빈 표는 빨강) |
+| U3 16 | 근무 외 알림 차단 | `/m/settings` (`mobile/routes.ts` `settings` · `App.tsx:778`) | `내 알림 설정` (GX-COPY 턴 T 추가 325행 · `copy.ts` · `Me.tsx`·`MobileSettings` 가 그린다) | [실측 2026-09-18 · 조율자 병합] M4 **실자료가 섰다** — `MobileSettings.tsx` 에 `pushOutcome`(구독 상태 칸 · 145행) · `saveOutcome`(저장 · 145행) · `testOutcome`(시험 발송 · 206행) 이 전부 실제 서버 응답으로 채워진다(더미 아님). [서버 기록] `PUT /api/dsm/me/notify-prefs` 200(`api_u3.py:274`) → 재조회에 차단 시간대 반영 + `test()` 의 시험 발송이 `sendTestPush()` 로 실제 `deliveries` 행을 남긴다(`#{delivery_id}` 를 화면이 그대로 적는다 · P-160 ③). ⚠ 종전 문장의 「실자료가 안 서면 ◐」 단서는 **더 이상 조건문이 아니다** — 이 행은 ● 후보다 |
+| U3 19 | 내가 처리한 이벤트 목록 | `/m/inbox` (`mobile/routes.ts` `inbox` · `App.tsx:749`) | `내게 온 이벤트` (GX-COPY 턴 T 추가 324행 · `copy.ts` · `MobileInbox.tsx` 가 그린다) | [API 호출] 브라우저가 `GET /api/dsm/deliveries?…&mine=true` 를 **실제로** 부름 + [화면 상태] 제목 1 — 턴 I 실측은 화면이 `mine` 을 안 불렀다(그대로면 ◐ · 제목만으로 초록이 되지 않는다) |
+| U4 15 | 상급기관 제출 자료 | `/dsm/events` (`services/API.ts:24` · `App.tsx:695` — 행마다 상급 보고 토글) | `보고 표시` / `보고함` (GX-COPY 턴 T 추가 329행 · `EventList.tsx:849` 가 둘을 갈라 그린다 — 누르기 **전/후가 다른 말**이다) | [서버 기록] `POST /api/dsm/events/{id}/upper-report` 200 → 재조회에서 그 행의 표시가 **서버 값으로** `보고함` + [화면 상태] 두 말이 같은 화면에 동시에 있지 않을 것 |
+| U4 16 | 감사 대응 이력 | `/dsm/audit` (`dsm/routes.u24.ts:41` `auditLog` · `AuditLog.tsx`) | `N.N초 · 60초 안` (GX-COPY 턴 T 추가 330행 · **틀 문장**이다 — `AuditLog.tsx:168` 이 `{n.toFixed(1)}초 · {60}초 안` 으로 그린다. 사전의 `${n}` 틀 문장 규약과 같다) | [API 호출] `GET /api/dsm/audit` 200 (읽는 사람 U2·U4·U5 · `api_u24.py:307`) + [화면 상태] 상태 칸의 계측 값 1 · 표 행 ≥ 1 — ⚠ 이 칸은 **계측이지 토스트가 아니다**(`AuditLog.tsx:14` 머리말) |
+| U5 1 | 사용자 계정 생성 | `/dsm/people` (`dsm/routes.ts` `people` · `App.tsx:733`) · 인수 `/users` | `사람·역할 — 계정 만들기 · 비활성화` (GX-COPY 턴 T 추가 321행 · `copy.ts` · `People.tsx:27` `HEADLINE` → `:102` 가 그린다) | [서버 기록] `POST /api/dsm/settings/people/create` 200 → 사용자 수 +1 — ⚠ 문 경로는 `/settings/people` 이 아니라 `/settings/people/create` 다(`/settings/{domain}` 이 삼켜 405 를 낸다 · `api.ts` `dsmU56Endpoint` 머리말) |
+| U5 9 | 알림 규칙 설정 | `/dsm/notify` (`App.tsx:735`) | `알림 받는 사람·채널` (위 U2 16 과 같은 자리 · 같은 정본) | [서버 기록] `POST /api/dsm/settings/notify-rules/save` 200 → `…/list` 반영 · 심각 0명 저장은 **409** — ★★ 이 행의 클릭은 **되돌린다**(`verify_click_completes` U5#9 `revert_toggle` · 턴 U 절 4). 턴 T 는 pk 9 를 끈 채로 남겼고 다음 게이트가 빨강이었다 |
+| U5 10 | 알림 채널 설정 | `/dsm/notify` 의 채널 열(이메일·웹푸시 — 문자는 범위 밖 · 대표 결정 ①) | `알림 받는 사람·채널` (위와 같은 정본 — 이 화면의 제목이 **채널까지** 말한다) — ⚠ 채널 **이름**(`이메일`·`웹푸시`) 자체는 아직 사전 밖이다. 제목으로 자리를 단언하고 채널 값은 서버 기록으로 잰다 | [서버 기록] 규칙 저장 200 → `channel` 값 `email`/`webpush` 가 `…/list` 에 남음 + [화면 상태] 제목 1 |
+
+### 비워 둔 5행 — **병합 뒤 그 차선이 채운다** (짐작 금지 · 조율자가 채운다)
+
+| # | flow | 지금 HEAD 사실 | 누가 |
+|---|---|---|---|
+| U4 5 | 월간 보고서 자동 생성 | **정본 없음** — 자동 생성 배치(`monthly_report.py`)도 그리는 화면(`Reports.tsx`)도 HEAD 에 없다 [grep 2026-09-18 · `frontend/src` 에서 `api/dsm/reports` 호출 **0건**] | **병합 뒤 U24 문안** |
+| U4 7 | 보고서 다운로드 | **정본 없음** — 서버 문은 `GET /api/dsm/events/{id}/report.pdf` 하나이고 그것을 누르는 화면이 라우터에 없다. `GET /api/dsm/reports/templates` 는 라우트 대장 749 에 섰으나 프런트 호출 0건 | **병합 뒤 U24 문안**(DOCX 정본 · PDF 병행 — 결정 ⑤) |
+| U5 14 | 시스템 상태 확인 | **정본 없음** — `/dsm/system` 은 `보존·백업 설정` 화면이다. 연계 헬스(`GET /api/dsm/health`)는 이번 턴 U56 이 짓는다 | **병합 뒤 U56 문안** |
+| U6 14 | 스키마 버전 확인 | **정본 없음** — 전 응답 헤더 `X-GX-Schema` 는 이번 턴 U56 | **병합 뒤 U56 문안**(기계 행 — 문구 칸 없음) |
+| U6 15 | 연계 헬스체크 | **정본 없음** — HEAD 에는 우리 화면용 `link-state` 뿐 | **병합 뒤 U56 문안**(기계 행 — 문구 칸 없음) |
+
+### 못 채운 12행 — **사유를 지금 사실로 고쳐 적는다** (목표 13 에 4 부족 · 숨기지 않는다)
+
+- **U6 기계 8**(#1·#2·#3·#4·#9·#12 + 위 #14·#15) — 문구 칸이 **애초에 없다.** 채우는 길은 「기계 행은 문구 칸을
+  면제한다」는 셈법 변경뿐인데, 그것은 채운 것이 아니라 **분모를 깎는 것**이다. 하지 않는다(따로 센다 — 턴 T 규약 유지).
+- **U1 4** 실시간 스트림 열기(`/multi-stream-monitor`) — 화면의 단언 글자가 영문 `Participants` 이고
+  `InheritedScreen` 여덟 화면 밖이라 머리줄(`copy.ts:504`)도 안 붙는다. GX-COPY 는 「멀티 스트림은 기계의 말」이라며
+  우리 층 이름을 `카메라 격자`(133행)로 정했는데 그것은 **다른 화면**(U1 #3)이다 — 남의 이름을 빌려 적지 않는다.
+- **U3 3** 상황 사진 1장 보기 — 사전에 **실패 자리 문장만** 있다(`사진을 불러오지 못했습니다 · 다시 시도`).
+  성공 자리의 문구가 없다. 실패 문장으로 성공을 단언하면 뒤집힌 판정이 된다.
+- **U4 9** 증빙 영상 확인 — 추출은 계약 11조 설계 잠금(영구)이고, 화면의 「영상 구간」은 표의 **이름칸**이지 단추가 아니다
+  (`EventDetail.tsx:345`). GX-COPY 118행의 `영상 자료`는 인수 화면 `/media-data` 의 이름이다.
+- **U2 3** 이벤트 등급 재판정 — 등급을 다시 매기는 화면 칸이 없다(문 `…/review` 는 **진위** 축이다 · 다른 축).
+- **U3 14** 해당 카메라 모바일 실시간 — 계약 11조 설계 잠금. **이 행은 ●가 될 수 없다**(영구 회색).
+- **U4 1** 주간 상황 요약 — [턴 U 정정] 턴 T 는 「프리셋 넷에 7일이 없다」고 적었으나 **낡았다**:
+  `EventList.tsx:223` 에 `{ key: 'd7', label: '7일' }` 이 있다. 그런데 그 `7일` 은 **사전에 없다**
+  [grep `docs/design/GX-COPY_v1.md` — `7일` 0건 · 2026-09-18]. 그래서 경로 칸은 `/dsm/events` 로 서고
+  **문구 칸이 비어** 이 행은 여전히 정본 없음이다. 사전에 `7일` 한 줄이 등재되면 즉시 두 칸이 된다(등록 요청 ①).
+
+### 조율자가 채운 7행 — 병합 (2026-09-18 · 위 「비워 둔 5행」 + U4 #1 등록 요청 ① 이행)
+
+위 「비워 둔 5행」(U4 #5·#7 · U5 #14 · U6 #14·#15)과 「못 채운 12행」의 U4 #1 을, 이번 병합에서 차선들이
+실제로 지은 화면·서버로 **지금 채운다**(U24 `Reports.tsx`·`monthly_report.py`·`api_u24.py` · U56
+`SystemSettings.tsx`·`api_u56.py`·`docs/design/GX-API_연계명세_v0.1.md`). 문구는 방금 GX-COPY 턴 U 추가
+(U24 축·U56 축)에 등재한 것만 쓴다 — 코드에 같은 글자로 없는 말은 쓰지 않았다.
+
+⚠ **U4 #1 정정** — 등록 요청 ②에서 차선 U24 는 「`/dsm/stats` 의 7일 프리셋」이라 적었으나 그것은 **가정**이었다.
+`EventList.tsx:223`(`/dsm/events`)와 `Stats.tsx:52`(`/dsm/stats`) **둘 다** `7일` 라벨의 프리셋이 있다
+[grep 2026-09-18 · 둘 다 `PERIODS` 에 `d7`/`label: '7일'`]. 그러나 셋째 술어가 요구하는
+`GET /api/dsm/events?since=…`(7일 구간)를 실제로 부르는 쪽은 **`EventList.tsx`** 뿐이다 — `Stats.tsx` 의
+주 호출은 `GET /api/dsm/stats/axes` 이고, 그 안의 `events` 호출은 축 합계와 대조하는 별도 호출이다.
+그래서 정본 경로는 **`/dsm/events`** 다(이미 GX-COPY 턴 U 절이 그렇게 등재해 두었다 — U24 의 가정 쪽이 낡았다).
+
+| # | flow | 정본 경로 | 누를 문구 (정본) | 셋째 술어 (V 가 볼 것) |
+|---|---|---|---|---|
+| U4 1 | 주간 상황 요약 | `/dsm/events` (`services/API.ts:24` · `App.tsx:695`) | `7일` (GX-COPY 턴 U 추가 · `EventList.tsx:223` `PERIODS.d7` 가 그린다) | [API 호출] `GET /api/dsm/events?since=…` 200(누른 뒤 창이 지금부터 7일 전까지) — ⚠ 서버 요약 문 `summary?hours=168` 을 이 프리셋이 부르지 않는다(부르는 것은 목록 문이다) · 턴 T 착시 ⑨는 「누를 데가 없다」였을 뿐 `hours=168` 호출을 약속한 적이 없다 |
+| U4 5 | 월간 보고서 자동 생성 | `/dsm/reports` (`dsm/routes.u24.ts:53` `reports` · `App.tsx:724` — 조율자 배선 완료 [grep 2026-09-18]) | 카드 `이번 달 우리 센터` + 단추 `만들기` (GX-COPY 턴 U 추가 U24 축) | [서버 기록] `POST /api/dsm/reports/runs` 200(`api_u24.py:408`) → `stream_monitors.DsmReportRun` 행 +1, 실행 목록 「만든 쪽」 열이 `사람`. ⚠ **읽기 전용 U4(`view_only_*`)는 이 단추가 403**(플랫폼 문지기 `read_only_role` · `Reports.tsx` 머리말 실측) — 그래서 이 술어는 U4 본인이 누르는 것이 아니라 **「자동 행 ≥ 1」**(매월 1일 배치 `monthly_report.run_monthly_all` 이 남긴 `trigger=자동` 행)이다 |
+| U4 7 | 보고서 다운로드 | `/dsm/reports` (위와 같음) | `DOCX 내려받기` (정본 · 결정 ⑤ — `Reports.tsx:207,296`) | [API 호출] `GET /api/dsm/reports/runs/{id}.docx` 200(`api_u24.py:439`) · `wordprocessingml` + [화면 상태] 받은 바이트 > 1,024(`Reports.tsx:130` 이 바이트 수를 상태 칸에 적는다) |
+| U5 14 | 시스템 상태 확인 | `/dsm/system` (`dsm/routes.ts` `systemSettings` · `App.tsx:743`) | `재시작을 요청합니다` (GX-COPY 턴 U 추가 U56 축 · `SystemSettings.tsx:425`) | [서버 기록] `POST /api/dsm/system/restart-request` 200(`api_u56.py:561`) → 응답 `executed: false` + `GET /api/dsm/system/requests` 200(`api_u56.py:595`) 행 +1. ⚠ 목록 응답의 칸 이름은 `executed` 가 아니라 `status`(`"requested"` · `DsmSystemRequest.Status.REQUESTED`)다 — `executed` 는 POST 응답에만 있다(아래 「이상한 점」) |
+| U6 14 | 스키마 버전 확인 | 전 응답 헤더 `X-GX-Schema`(값 `1.1`) · `GET /api/dsm/health` 본문의 `schema` 칸(U56 · `docs/design/GX-API_연계명세_v0.1.md` §5 「스키마 버전 — `X-GX-Schema`」) | 정본 없음(기계) | [API 호출] 아무 응답이나 헤더 `X-GX-Schema` 1 · `backend/tests/test_u56_schema_header.py` 가 잠근다 |
+| U6 15 | 연계 헬스체크 | `GET /api/dsm/health`(U56 · 인증 없음 · `api_u56.py:334` · 같은 명세 §6 「헬스체크 — `GET /api/dsm/health`」) | 정본 없음(기계) | [API 호출] `GET /api/dsm/health` 200/503 — F 의 「익명 읽기 5 → 401」(P-133)과 같은 턴에 반대 방향으로 공개되며, 공개 허용 목록에 이름으로 등재돼 있다 |
+
+⚠ U6 14·U6 15 는 경로가 서도 문구 칸이 애초에 없어(기계 행) **정본 없음 집계에는 그대로 남는다** — 위
+「U6 기계 8」 규약과 같다(분모를 깎지 않는다). 두 칸이 새로 채워지는 것은 U4 1·U4 5·U4 7·U5 14 **넷뿐**이다.
+
+### 조율자 갱신 — 낡은 술어 고침 (U5 5 · U5 15 — 위 U5 표의 예전 문장은 **턴 U 이전**이라 그대로 남겨 둔다)
+
+| # | flow | 정본 경로 | 누를 문구 (정본) | 셋째 술어 (V 가 볼 것) — 갱신 |
+|---|---|---|---|---|
+| U5 5 | 카메라 설치 주소 입력 | `/dsm/cameras/address` (`dsm/routes.ts` `cameraAddress` · `App.tsx:707`) | `이 한 대 채우기` (GX-COPY 턴 U 추가 U56 축 · `CameraAddress.tsx:297`) — 위 U5 표의 예전 문구(`카메라 주소 채우기`·`표 먼저 보기`·`채우기`)는 여전히 맞지만 **아래 카드**(아직 없는 카메라를 이름으로 넣는 자리)의 것이다 | [서버 기록] `POST /api/dsm/cameras/{id}/address` 200(`api_u56.py:506`) → `GET /api/dsm/cameras/address-gap` 재조회에서 `without_address` **-1**. ⚠ [턴 U 이전] 위 U5 표 5행의 「쓰기는 `POST /api/dsm/cameras/import` 를 탄다」는 **한 대 고치기 경로에는 이제 낡았다** — 일괄 문은 **없는** 카메라를 새로 넣는 카드에만 남는다(`CameraAddress.tsx` 머리말 ①②가 일괄 문으로 한 대를 고칠 수 없는 이유 둘을 적는다: 이름 충돌로 새로 만들어짐 · 남의 것이 404 아닌 「만들겠다」가 됨) |
+| U5 15 | 저장 용량 확인 | `/dsm/system`(`GET /api/dsm/system/storage`)을 정본으로 더한다 — 위 U5 표의 `/dsm/metering`(`GET /api/dsm/metering`)은 남겨 둔다(다른 화면·다른 문 · 둘 다 유효) | `저장 용량` 카드(`SystemSettings.tsx:368`) | [API 호출] `GET /api/dsm/system/storage` 200(`api_u56.py:647` · `common/ops_tasks.py:1126` `storage_declaration()` 하나가 판정) + [화면 상태] 상한 미선언이면 `used_pct: null` + `reason` 에 `STORAGE_UNDECLARED_SENTENCE` 문장 → **◐ 상한 유지**(크론 `scripts/ops_monitor.py` 도 같은 함수를 읽으므로 화면과 크론이 서로 다른 날 다른 색을 그리지 않는다 · D-212) |
+
+### 세는 법 (손으로 세지 않았다 · 이 절과 턴 T 절을 함께 읽는다)
+
+    PYTHONIOENCODING=utf-8 python - <<'EOF'
+    import re
+    doc = open('docs/agent/onboarding_48.md', encoding='utf-8').read()
+    # 턴 T · P-159 ① 절과 턴 U · P-169 절의 표만 읽는다. 같은 행이 두 번 나오면 **아래 것이 이긴다**.
+    seg = doc.split('## ★ 2026-09-17 턴 T · P-159 ①')[1]
+    state = {}
+    who = None
+    for line in seg.splitlines():
+        m = re.match(r'#{3,4} (U\d)', line)
+        if m: who = m.group(1)
+        c = [x.strip() for x in line.strip().strip('|').split('|')] if line.startswith('|') else []
+        if len(c) >= 4 and re.fullmatch(r'(U\d )?\d+', c[0]):
+            key = (c[0] if ' ' in c[0] else '%s %s' % (who, c[0]))
+            state[key] = ('정본 없음' not in c[2]) and ('정본 없음' not in c[3])
+    full = sum(1 for v in state.values() if v)
+    print('행 %d · 두 칸 %d · 정본 없음 %d' % (len(state), full, len(state) - full))
+    EOF
+
+낸 수(재실측 · 위 「조율자가 채운 7행」 · 「조율자 갱신」 · U3 #16 갱신을 반영한 뒤): **행 48 · 두 칸 35 · 정본 없음 13.**
+48 이 아니면 이 절이 틀린 것이다(분모는 손으로 적지 않는다) — 이 줄은 위 세는 법 명령의 실제 출력을 그대로 옮긴 것이다
+(2026-09-18 · 조율자). 종전 값(행 48 · 두 칸 31 · 정본 없음 17)은 차선 Q 가 낸 것으로 위에 그대로 남아 있다.
+
+### 등록 요청 (조율자) — 아래에 이행 결과를 덧붙인다(항목은 지우지 않는다)
+
+1. **차선 F(사전 소유)**: `docs/design/GX-COPY_v1.md` 에 `7일`(기간 프리셋 · `EventList.tsx:223` 이 그린다) 한 줄 —
+   등재되면 U4 #1 이 즉시 두 칸이 된다(32/48). 지금은 **짐작하지 않고 비워 두었다**.
+   → **이행됨(2026-09-18 · 병합 이전에 이미 등재돼 있었다)**. GX-COPY 턴 U 절이 `7일` 한 줄을 갖고 있었고, 위
+   「조율자가 채운 7행」 U4 #1 이 그 경로가 `/dsm/events`(EventList.tsx)임을 확인해 두 칸으로 채웠다 — `Stats.tsx`
+   가정은 기각.
+2. **U24**: 위 「비워 둔 5행」의 U4 #5·#7 두 칸 — 병합 뒤 그 차선이 채운다.
+   → **이행됨(2026-09-18)**. `Reports.tsx`·`api_u24.py`·`routes.u24.ts`·`App.tsx` 배선이 HEAD 에 실재함을 grep 으로
+   확인하고 위 표에 채웠다.
+3. **U56**: 같은 표의 U5 #14 · U6 #14·#15 — 병합 뒤 그 차선이 채운다.
+   → **이행됨(2026-09-18)**. U5 #14 는 두 칸(경로+문구)까지, U6 #14·#15 는 경로만(기계 행 — 문구 칸은 원래 없다 ·
+   정본 없음 집계는 그대로 유지).
+4. **U3**: U3 #16 의 M4 **실자료** — 제목은 이 절이 채웠으나 값이 비면 ◐ 다(초록이 아니다).
+   → **이행됨(2026-09-18)**. `MobileSettings.tsx` 의 `pushOutcome`·`saveOutcome`·`testOutcome` 이 실제 서버
+   응답(`PUT /api/dsm/me/notify-prefs` · `sendTestPush()`)으로 채워지는 것을 확인했다 — 위 「채운 9행」 U3 16 행의
+   술어를 고쳐 적었다(◐ 조건문을 지웠다). 값이 실제로 비었는지는 V 의 몫이다(이 행은 여전히 ●가 아니라 ● 후보).

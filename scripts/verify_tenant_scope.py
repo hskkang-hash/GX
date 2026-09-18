@@ -569,6 +569,29 @@ def _route_paths() -> tuple[list[str], str, str, list[str]]:
             inv_stamp, problems)
 
 
+#: ★ [D-272 보강 · 2026-09-18 · 턴 U 병합] **이름이 같다고 같은 자원이 아니다.**
+#:
+#:   아래 대조는 「`no_route` 라 적어 둔 모델의 이름이 실제 라우트의 한 조각과 같은가」를 본다.
+#:   싼 술어이고 지금까지 옳게 잡아 왔다. 그런데 턴 U 에 **U5 의 「카메라 주소 한 대 고치기」**
+#:   (`POST /api/dsm/cameras/{int:camera_id}/address`)가 서자, 조각 `address` 가 §0.4 앱의
+#:   `delivery.Address` 와 부딪혀 **없는 결함**을 냈다. 그 라우트는 카메라(우리 층)의 주소 칸을
+#:   고치는 문이고 택배 주소 모델과 아무 관계가 없다.
+#:
+#:   ⚠ 술어를 **느슨하게 만들지 않는다.** 대신 **부딪힘을 이름으로 등재**한다 — KERNEL_PUBLIC ·
+#:     DECLARED_UNWIRED · PUBLIC_BY_DESIGN 과 같은 결이다: 면제가 아니라 **선언**이고, 사유가 없으면
+#:     못 올린다. 등재되지 않은 새 부딪힘은 여전히 빨강이다(래칫은 살아 있다).
+#:   ⚠ 등재는 **(모델, 경로) 한 쌍**으로만 한다. 모델 전체를 면제하면 그 모델에 진짜 라우트가
+#:     생기는 날 아무도 모른다.
+NO_ROUTE_NAME_COLLISION: dict[tuple[str, str], str] = {
+    ("delivery.Address", "/api/dsm/cameras/{int:camera_id}/address"):
+        "우리 층의 **카메라 설치 주소** 칸을 한 대씩 고치는 문이다(U5 #5 · 턴 U · WS-23 · "
+        "`apps/dsm/api_u56.py`). 자원은 `stream_monitors.StreamMonitor` 이고 `delivery.Address` 는 "
+        "한 번도 불리지 않는다 — 부딪힌 것은 **조각 이름**(`address`)뿐이다. "
+        "근거: 그 라우트의 문지기·시험이 전부 카메라를 잰다(`tests/test_camera_address_write.py` · "
+        "`tests/test_u56_turn_u_admin_surfaces.py`) · `delivery/` 는 §0.4 라 이 턴에 한 줄도 안 고쳤다",
+}
+
+
 def scan_no_route_models() -> list[str]:
     """`no_route` 로 등재된 모델에 **라우트가 생겼는지** 본다 (D-272).
 
@@ -616,6 +639,7 @@ def scan_no_route_models() -> list[str]:
         print(f"[SCOPE] no_route 대조 **못 했다** — 라우트 0건 · 출처 {routes_why}")
         return problems
     n = 0
+    n_collision = 0
     for label, entry in table.items():
         if entry[1] != "no_route":
             continue
@@ -624,12 +648,19 @@ def scan_no_route_models() -> list[str]:
         for path in paths:
             parts = [s for s in path.split("/") if s]
             if any(_norm(s) == _norm(model) for s in parts):
+                if (label, path) in NO_ROUTE_NAME_COLLISION:
+                    n_collision += 1
+                    continue          # 선언된 이름 부딪힘 — 사유가 위에 적혀 있다
                 problems.append(
                     f"{label} 은 no_route 로 등재돼 있는데 라우트가 실재한다: {path} — "
                     f"인구조사를 다시 만들고 그 모델을 재검사하라 (D-272)")
                 break
     #: ★ **무엇을 몇 건 보고 한 말인지 적는다**(D-301). 이 줄이 없어서
     #:   531라우트짜리 옛 사진으로 낸 초록이 두 달 동안 초록으로 보였다.
+    if n_collision:
+        #: **선언한 것은 수로 적는다** — 조용히 지나가면 다음 사람은 이 대조가 무엇을 봤는지 모른다.
+        print(f"[SCOPE] 이름 부딪힘 선언 {n_collision}건 — 조각 이름만 같고 자원이 다른 자리"
+              f"(NO_ROUTE_NAME_COLLISION · 사유 등재)")
     print(f"[SCOPE] no_route 등재 {n}종 — 라우트 {len(paths)}건(고유 {len(set(paths))}경로)과 "
           f"대조 (D-272) · 출처 {routes_why} · 잰 때 {_stamp}")
     return problems

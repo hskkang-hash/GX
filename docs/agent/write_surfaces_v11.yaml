@@ -150,3 +150,98 @@ surfaces:
 #   직접 불러 「K1 소비 App 이 셋」이 됐다 — `services.recent_events(stream_monitor_id=)` ·
 #   `services.event_detail` 로 옮겨 App 은 다시 하나다. 차선이 남의 파일(services.py)을 못 고쳐
 #   생긴 모양이고, 그것이 병합에서 조율자가 할 일이다.
+
+# ── 턴 U 선등록 (2026-09-17 21:2x · 조율자 20분 · WO 파 3 턴 1 「끝내기」) ──────────────
+# 지시서 §3 「쓰기 면 선등록(reports · report_run · audit read · restart-request · address ·
+# webhook filters · api keys)」. 턴 T 의 방식 그대로 — 새로 서는 자리를 **먼저** 적고, 병합에서
+# 「표 밖에서 난 것」을 대조한다(턴 R 사후 1 → S 예고 1/적중 1 → T 예고 3/적중 3).
+#
+#   reports        → **읽기·반출 면** `GET /api/dsm/reports/*`(U24 · 서식 3 — 사건 1쪽 ·
+#                    「이번 달 우리 센터」 자동본 · 상급 제출용) + **파일 2** (`.docx` 정본 · `.pdf`
+#                    병행 · 결정 ⑤). 기존 `GET /api/dsm/reports/templates`·`{id}.pdf`·
+#                    `events/{id}/report.pdf`(api.py · JwtOrInboundKey) 위에 선다. 반출 면이라
+#                    진입면 + 반출 대장(P-133 계열) 둘 다 본다. 택배 필드 0 은 시험이 센다.
+#   report_run     → **쓰기 면 · 새 줄 후보 WS-21** — 자동본 1건을 만드는 실행 기록
+#                    (`monthly_report.py` 배치 · 매월 1일 · 이번 턴 수동 1회). 서버 기록이
+#                    남는 자리(`report_run` 행 +1)이므로 표의 줄이다 — U24 가 낸 문자열로 적는다.
+#                    격리: 남의 테넌트 `report_run` 은 404/0행(`tests/test_tenant_isolation.py`).
+#   audit read     → 읽기 면 `GET /api/dsm/audit`(턴 T 에 섰다) — 이번 턴은 **필터 3 · 해시 체인
+#                    표시 · CSV** (`GET /api/dsm/audit/export.csv` 류 · U24 가 낸 문자열). 새 줄 아님 ·
+#                    반출 1 늘면 반출 대장에.
+#   restart-request→ **쓰기 면 · 새 줄 후보 WS-22** `POST /api/dsm/system/restart-request`(U56).
+#                    ⚠ **요청만 기록한다 — 실행은 대표·창.** 이 문이 컨테이너를 건드리면 그것이
+#                    「운영계 외부 행위」이고 표의 줄이 아니라 결함이다. 기록 행 +1 · 관리자만(U5).
+#   address        → `CameraAddress` **한 대 고치기**(U56) — 지금 쓰기는 `POST /api/dsm/cameras/import`
+#                    (일괄 등록 문)를 탄다(턴 E 메모 · onboarding U5#5). 전용 문이 서면 **새 줄 후보
+#                    WS-23** `PUT/POST /api/dsm/cameras/{id}/address` — U56 이 낸 문자열로. 서지
+#                    않으면 줄 없음(일괄 문 그대로 · 대장은 줄지 않는다).
+#   webhook filters→ WS-17(턴 T 탄생) — 이번 턴 새 줄 없음. API-03·04(키 범위 · pulse · stats)가
+#                    **읽기 면 + 키 범위 모델** 이라 쓰기 줄은 `POST /api/dsm/settings/api-keys`
+#                    (기존 · api.py) 위에 **범위(scope) 칸**이 는다 — 새 라우트 아님이 원칙.
+#   api keys       → 위와 같음. `rotate`·`delete` 기존. 범위 밖 키로 `pulse`/`stats` 를 부르면 403 —
+#                    401/403/404/422 문서(U6 #12 계열)와 같은 커밋.
+#   webpush 구독   → **WS-08 의 모양이 바뀐다**(U3 · P-166 · D-486): `POST /api/dsm/push-subscriptions`
+#                    가 `endpoint`·`p256dh`·`auth` 를 **본문(JSON)으로만** 받는다 · 쿼리에 실리면 **400**.
+#                    새 줄 아님 — 같은 줄의 규약이 바뀐다. 규약을 바꾼 차선(U3)이 이 줄을 읽는
+#                    판정기 목록(`verify_ui_secrets` · `test_u3_push_and_prefs`)을 같은 커밋에 갱신한다.
+#   저장 상한 선언 → 쓰기 면 아님(`GX_STORAGE_CAPACITY_GB` 환경 · 창 2 항목) — 화면은 읽기만.
+#   백업 회수증    → 읽기 면 `GET /api/dsm/system/backup-receipts` 류(U56 이 낸 문자열) — 새 줄 아님.
+#
+# 이 턴에 표 밖에서 태어날 수 있는 자리(미리 적는다): ① U24 DOCX 반출 경로(`.docx` 가 `.pdf` 와
+# 다른 라우트로 서면) ② U56 저장 상한 「선언」 을 화면이 쓰게 되면(환경이 아니라 DB 에 — 원칙은
+# 환경) ③ F 온보딩 자동 완료 훅이 새 `POST` 를 만들면(원칙은 기존 서버 기록이 닫는다 — 새 문 0).
+# ⚠ 한 파일은 한 차선 — 이번 턴 `api.py` 는 U56(api-keys 범위) · `api_u3.py` 는 U3 · `api_u24.py` 는
+#   U24 · `api_f.py` 는 F · `api_u1.py` 는 U1. App.tsx·routes.ts 배선은 병합에서 조율자.
+
+# ── 턴 U 병합 결과 (2026-09-18 14:2x · 조율자) ─────────────────────────────
+# 태어난 것(표 안 · 선등록이 후보 이름을 낸 그 자리 — 실제 문자열을 `api_u24.py`·
+# `api_u56.py` 에서 대조했다):
+#   WS-21  `POST /api/dsm/reports/runs`              (U24 · api_u24.py:408)
+#   WS-22  `POST /api/dsm/system/restart-request`     (U56 · api_u56.py:561)
+#   WS-23  `POST /api/dsm/cameras/{id}/address`       (U56 · api_u56.py:506)
+#
+# ⚠ **표 밖 탄생 1** — 「webhook filters·api keys」 줄은 선등록에서 "**새 라우트 아님이
+#   원칙**"(범위는 기존 `POST /api/dsm/settings/api-keys` 위에 `scopes` 칸으로 는다)이라
+#   적었고, 그 원칙은 **발급 시점**에는 정확히 지켜졌다(`api.py:1038` `issue_api_key` 가
+#   `scopes` 인자를 받는다 — 새 줄 없음, 실측). 그런데 **이미 발급된 키**의 범위를 나중에
+#   읽거나 고칠 길이 없었다 — 발급 문은 키가 태어나는 그 순간에만 불리고, 그 뒤로는 범위를
+#   다시 줄 자리가 없다. 그래서 새 라우트 **둘**이 났다:
+#     `GET  /api/dsm/settings/api-keys/{id}/scopes`   (api_u56.py:674 · api_key_scopes_get)
+#     `POST /api/dsm/settings/api-keys/{id}/scopes`   (api_u56.py:696 · api_key_scopes_set)
+#   원칙이 틀렸던 것이 아니라 **원칙이 다루는 자리(발급)와 실제로 필요한 자리(발급 뒤 조회·
+#   변경)가 달랐다** — 원칙은 좁게 옳았다.
+#
+# 예고 적중/불발 — 선등록이 미리 적은 「표 밖에서 날 자리」 셋을 하나씩 대조한다(턴 T 처럼 센다):
+#   ① U24 DOCX 반출 경로  — **밖 아님.** 선등록 자체가 `reports` 항목 밑에 "파일 2(`.docx`
+#      정본·`.pdf` 병행 · 결정 ⑤)"라고 **표 안에서** 미리 적어 뒀고, `.docx`(api_u24.py:439)와
+#      `.pdf`(api_u24.py:445)가 그 모양 그대로 섰다 — 표 밖으로 샌 것이 아니라 표가 맞았다.
+#   ② U56 저장 상한을 DB 선언으로 — **안 났다.** `common/ops_tasks.py:1126 storage_declaration()`
+#      은 여전히 `GX_STORAGE_CAPACITY_GB` 환경만 읽는다(env_name 응답 칸이 그대로 그 이름이다) —
+#      환경 그대로, 원칙 유지.
+#   ③ F 온보딩 자동 완료 훅의 새 `POST` — **안 났다.** `api_f.py` 는 `GET /onboarding/progress`
+#      하나뿐이다[grep 2026-09-18 · `@route.*(get|post|put|delete)` 전수 1건] — 기존 서버 기록이
+#      계속 닫는다.
+#   → **예고 3 · 적중 0 · 대신 예고 밖에서 하나가 났다**(위 api-keys 조회·저장 둘). 턴 R(사후
+#     발견 1) → 턴 S(예고 1·적중 1) → 턴 T(예고 3·적중 3) → 턴 U(예고 3·적중 0·사후 발견 1) —
+#     이 표는 예언이 아니라 "밖에서 난 것이 드러나는가"이고, 이번엔 **다른 문으로** 났다.
+#
+# 반출 면 +3: 보고서 `.docx`(api_u24.py:439) · 보고서 `.pdf`(api_u24.py:445) · 감사
+# `.csv`(`GET /api/dsm/audit/export.csv` · api_u24.py:349). 진입면 + 반출 대장(P-133 계열)
+# 둘 다에 이름으로 올린다(선등록이 적은 대로).
+#
+# WS-08 구독 비밀 규약 변경 — **본문 전용 · 쿼리는 400.** `POST /api/dsm/push-subscriptions`
+# 가 `endpoint`·`p256dh`·`auth_secret` 을 쿼리에서 하나라도 받으면 본문이 맞아도 400
+# (`api_u3.py:62` `_reject_secret_query` · P-166 · D-486) — 회귀는
+# `backend/tests/test_u3_push_and_prefs.py`(`test_each_secret_name_in_the_query_string_is_
+# refused_alone` 외 다수)가 **집행·검증 완료**로 잠갔다[실측 2026-09-18].
+# ⚠ **여기 한 줄을 조율자가 정정한다**(병합 보조가 「확인 못 했다」로 적었고, 그 정직함은 옳았다 —
+#   다만 **찾은 자리가 틀렸다**): 로그 마스킹은 프런트가 아니라 **앞단 설정**에 있다.
+#   `nginx/gx-front.conf` 의 `log_format gx` 에서 `$request`(쿼리 포함 전체 URI) →
+#   `$request_method $uri $server_protocol` 로 바꿨다 — `$uri` 는 정규화된 **경로만** 담아
+#   `?` 뒤가 통째로 빠진다. `nginx -t` OK → reload → **누른 뒤를 봤다**[실측 2026-09-18 13:00]:
+#     curl "http://localhost:8500/api/dsm/health?p256dh=SHOULD_NOT_APPEAR"  → 200
+#     docker logs gx-nginx-e | grep -c SHOULD_NOT_APPEAR                    → **0**
+#     같은 줄은 `"GET /api/dsm/health HTTP/1.1"` 로만 남았다.
+#   ⚠ 잃은 것도 적는다: 정상 요청의 질의 인자(`?since=…`)도 이제 앞단 로그에 안 남는다.
+#   ⚠ 이미 남은 옛 줄은 **지우지 않는다** — 회전으로 사라질 값이고, 구독은 회전(D-004)으로 죽인다.
+#   즉 P-166 의 두 짝(문 쪽 400 · 로그 쪽 마스킹)이 **둘 다** 섰다.

@@ -21,13 +21,43 @@
 import { Alert, Button, Card, Descriptions, Form, Input, Space, Table, Typography } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 
-import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
+import {
+  dsmEndpoint,
+  dsmGet,
+  dsmPostQuery,
+  dsmU56AdminEndpoint,
+  type DsmCameraAddressResult,
+} from '../api';
 import { userFacingError } from '../copy';
 import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 
 const { Title, Text } = Typography;
+
+/**
+ * ★ [턴 U · 차선 U56] **한 대를 고치는 길이 생겼다.**
+ *
+ * 여기 있던 「한 대 채우기」는 한 줄짜리 CSV 를 만들어 **일괄 등록 문**으로 보냈다.
+ * 그것이 옳은 임시방편이었지만(판정식을 두 벌로 두지 않으려고), 그 길에는 한 대를
+ * 고칠 수 없는 성질이 둘 있었다 [실측 · 턴 U]:
+ *   ① 일괄 문은 **이름으로** 찾는다 — 이름을 바꾼 카메라는 못 찾고 **새로 만들어진다.**
+ *      「고치기」가 조용히 「만들기」가 되는 자리다.
+ *   ② 대상이 id 가 아니라 이름이라 **남의 것은 404 가 아니라 「만들겠다」**가 된다.
+ *
+ * 그래서 이 화면은 이제 **표의 행마다** 그 카메라의 id 로 전용 문을 부른다
+ * (`POST /api/dsm/cameras/{id}/address`). 아래 「새 카메라를 이름으로 등록·수정」
+ * 카드는 그대로 둔다 — 아직 **없는** 카메라를 넣는 길은 여전히 일괄 문이다.
+ */
+interface CameraRow {
+  id: number;
+  name: string;
+  alive: boolean;
+}
+
+interface PulseBody {
+  cameras: CameraRow[];
+}
 
 /** 이 화면에만 있는 글자 — 캡처가 이것을 보고 찍는다. */
 export const HEADLINE = '카메라 주소 채우기 — 한 대씩';
@@ -92,6 +122,44 @@ export default function CameraAddress() {
     [],
   );
 
+  /* ── 턴 U — 표의 행마다 「이 한 대 채우기」 ────────────────────────────── */
+  const cameras = useDsmResource<PulseBody>(
+    () => dsmGet<PulseBody>(dsmEndpoint.cameraPulse),
+    [],
+  );
+  /** 지금 어느 행을 채우는 중인가(행 id). 0 이면 아무 행도 아니다. */
+  const [rowId, setRowId] = useState(0);
+  const [rowAddress, setRowAddress] = useState('');
+  const [rowBusy, setRowBusy] = useState(0);
+  const [rowError, setRowError] = useState('');
+  /** 누른 뒤의 **상태 칸** — 어느 카메라가 무엇으로 바뀌었는지 한 줄. */
+  const [rowDone, setRowDone] = useState<DsmCameraAddressResult | null>(null);
+
+  const fillOne = useCallback(
+    async (camera: CameraRow, value: string) => {
+      setRowBusy(camera.id);
+      setRowError('');
+      try {
+        const result = await dsmPostQuery<DsmCameraAddressResult>(
+          dsmU56AdminEndpoint.cameraAddressOne(camera.id),
+          { address: value },
+        );
+        setRowDone(result);
+        setRowId(0);
+        setRowAddress('');
+        // ★ 누른 뒤를 본다 — 배지를 **다시 물어** 미입력이 하나 줄었는지 확인한다.
+        gap.reload();
+      } catch (err) {
+        // 404(남의 것·없는 것) · 422(빈 주소) · 403(관리자 아님) 을 한 낱말로 묶지
+        // 않는다 — 무엇을 고쳐 다시 보낼지 화면이 말해야 한다.
+        setRowError(userFacingError('CameraAddress', err, '주소를 채우지 못했습니다.'));
+      } finally {
+        setRowBusy(0);
+      }
+    },
+    [gap],
+  );
+
   const ready = name.trim().length > 0 && address.trim().length > 0;
 
   const run = useCallback(
@@ -148,7 +216,98 @@ export default function CameraAddress() {
           </Card>
         </StateBoundary>
 
-        <Card size="small" title="한 대의 주소를 채웁니다">
+        {/* ★ 턴 U — **행마다 「이 한 대 채우기」.** id 로 전용 문을 부른다. */}
+        <StateBoundary
+          state={cameras.state}
+          reason={cameras.reason}
+          status={cameras.status}
+          onRetry={cameras.reload}
+        >
+          <Card size="small" title="등록된 카메라 — 행마다 한 대씩 채웁니다">
+            {rowDone && (
+              <Alert
+                style={{ marginBottom: 12 }}
+                type="success"
+                showIcon
+                message={`${rowDone.name} — ${
+                  rowDone.was_blank ? '주소를 채웠습니다' : '주소를 덮어썼습니다'
+                }`}
+                description={
+                  rowDone.was_blank
+                    ? rowDone.install_address
+                    : `${rowDone.previous_address} → ${rowDone.install_address}`
+                }
+              />
+            )}
+            {rowError && (
+              <FailureNotice
+                title="주소를 채우지 못했습니다."
+                detail={rowError}
+                busy={rowBusy > 0}
+              />
+            )}
+            <Table<CameraRow>
+              size="small"
+              rowKey={(r) => r.id}
+              pagination={{ pageSize: 10, size: 'small' }}
+              dataSource={cameras.data?.cameras ?? []}
+              columns={[
+                { title: '카메라', dataIndex: 'name' },
+                {
+                  title: '도로명주소',
+                  dataIndex: 'id',
+                  render: (id: number) =>
+                    rowId === id ? (
+                      <Input
+                        autoFocus
+                        value={rowAddress}
+                        onChange={(e) => setRowAddress(e.target.value)}
+                        placeholder="경기도 안양시 만안구 안양로 123"
+                      />
+                    ) : null,
+                },
+                {
+                  title: '',
+                  dataIndex: 'id',
+                  render: (id: number, row: CameraRow) =>
+                    rowId === id ? (
+                      <Space>
+                        <Button
+                          type="primary"
+                          size="small"
+                          loading={rowBusy === id}
+                          disabled={rowAddress.trim().length === 0}
+                          onClick={() => fillOne(row, rowAddress.trim())}
+                        >
+                          채우기
+                        </Button>
+                        <Button size="small" onClick={() => setRowId(0)}>
+                          그만두기
+                        </Button>
+                      </Space>
+                    ) : (
+                      <Button
+                        size="small"
+                        onClick={() => {
+                          setRowId(id);
+                          setRowAddress('');
+                          setRowError('');
+                        }}
+                      >
+                        이 한 대 채우기
+                      </Button>
+                    ),
+                },
+              ]}
+            />
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              이 표는 켜져 있는 카메라만 보여 줍니다. 꺼 둔 카메라는 여기 없습니다 —
+              「없다」가 아니라 「이 표의 밖」입니다.
+            </Text>
+          </Card>
+        </StateBoundary>
+
+        <Card size="small" title="아직 없는 카메라를 이름으로 넣습니다">
           <Form layout="vertical">
             <Form.Item label="카메라 이름" required>
               <Input

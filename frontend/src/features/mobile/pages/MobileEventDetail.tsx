@@ -92,7 +92,7 @@
  */
 import { Button, Card, Collapse, Descriptions, Input, Modal, Space, Tag, Typography, message } from 'antd';
 import type { ChangeEvent } from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import EventSnapshot from '../../dsm/components/EventSnapshot';
@@ -119,6 +119,7 @@ import {
 } from '../api';
 import { userFacingError } from '@/features/dsm/copy';
 import MobileShell, { TOUCH_MIN } from '../components/MobileShell';
+import { finishReceiveToAck } from '../metrics';
 import { mobileRoutes } from '../routes';
 import { mobileEventDetailPath } from '../routes';
 import type { ClipTicket, EventDetailView, EventRow } from '../types';
@@ -222,6 +223,15 @@ export default function MobileEventDetail() {
     [id],
     { enabled: Boolean(id) },
   );
+
+  /**
+   * 편리성 #5 — **「봤다」의 시각.** 상세가 실제로 뜬 순간이 「확인」이다
+   * (`metrics.ts::finishReceiveToAck` 머리말). M1 을 거치지 않고 바로 이 주소로
+   * 왔거나 이미 한 번 확인한 사건이면 시작이 없어 아무것도 안 남는다 — 조용한 실패다.
+   */
+  useEffect(() => {
+    if (id && event.data) finishReceiveToAck(id);
+  }, [id, event.data]);
 
   /**
    * 구간 티켓은 **부수적**이다. 없어도 상세는 선다.

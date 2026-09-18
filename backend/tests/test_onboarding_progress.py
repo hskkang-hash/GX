@@ -63,10 +63,17 @@ class _OnboardingFixture(TestCase):
         cls.user_b = cls._user("onb_manager_b", cls.group_b, "fire_admin")
         #: 역할을 못 읽는 사람 — 「모른다」가 「0%」로 둔갑하지 않는지 재는 표본이다.
         cls.user_x = cls._user("onb_stranger", cls.group_a, "some_unmapped_role")
+        #: U5(SYSOPS · `K3_ROLE_SYSOPS = ("admin",)`) 버킷 — u5.channel 카드는
+        #: U2 표에 없다(카드 표는 역할마다 다르다), 그래서 U2 표본(user_a/b)이 아니라
+        #: 이 사람들로 잰다 (턴 U).
+        cls.user_s5a = cls._user("onb_sysop_a", cls.group_a, "admin")
+        cls.user_s5b = cls._user("onb_sysop_b", cls.group_b, "admin")
 
         cls.scope_a = TenantScope.of(cls.user_a)
         cls.scope_b = TenantScope.of(cls.user_b)
         cls.scope_x = TenantScope.of(cls.user_x)
+        cls.scope_s5a = TenantScope.of(cls.user_s5a)
+        cls.scope_s5b = TenantScope.of(cls.user_s5b)
 
     @classmethod
     def _user(cls, username, group, role_code):
@@ -109,6 +116,40 @@ class _OnboardingFixture(TestCase):
         return model._base_manager.create(
             kind="monthly", trigger="auto", status="succeeded",
             group=group, purpose_code="dsm.report")
+
+    def _threshold_change(self, user):
+        """임계값 변경 이력 한 줄 — u2.threshold 카드를 닫는 **서버 기록**(턴 U).
+
+        ★ `changed_by` 로만 좁힌다(테넌트 칸이 아니다) — `_closed_by_threshold_change`
+          의 규약 그대로다. `group` 을 안 준다: 이 카드가 재는 것은 「이 사람이 시험해
+          봤나」이지 「이 테넌트가」가 아니다.
+        """
+        model = apps.get_model("stream_monitors", "ThresholdChange")
+        return model._base_manager.create(
+            key="person_confidence", scope_level="camera",
+            old_value="0.6", new_value="0.7", reason="onboarding test",
+            changed_by=user)
+
+    def _test_send_audit(self, user, *, via="webpush"):
+        """시험 발송 감사 행 한 줄 — u5.channel 카드를 닫는 **서버 기록**(턴 U).
+
+        `via="webpush"` 는 `notify_prefs.py::test_send` 채널, `via="email"` 은
+        K2 `rule_admin.py::send_test_notification` 채널 — **둘 다** 감사에 남고
+        `_closed_by_test_send` 는 둘 중 하나면 닫는다.
+        """
+        from common import audit_writer
+
+        if via == "webpush":
+            from apps.dsm import notify_prefs
+
+            logger_name, api_name = notify_prefs.LOGGER_NAME, notify_prefs.ACTION_TEST_SEND
+        else:
+            logger_name, api_name = "guardianx.dsm.notify", "dsm.notify.test_send:critical"
+        return audit_writer.write(
+            logger_name=logger_name, tag="[TEST]", actor=user,
+            action="test_send", outcome=audit_writer.ALLOWED,
+            reason="onboarding test", api_name=api_name, api_method="POST",
+            status_http=200)
 
 
 class OnboardingRouteTest(_OnboardingFixture):
@@ -248,3 +289,100 @@ class OnboardingDenominatorTest(_OnboardingFixture):
         self.assertLessEqual(
             abs((timezone.now() - out["measured_at"]).total_seconds()), 60,
             "응답의 측정 시각이 지금이 아닙니다 — 낡은 값을 그리는 화면이 됩니다.")
+
+
+class OnboardingThresholdChangeCardTest(_OnboardingFixture):
+    """u2.threshold — `ThresholdChange`(K5 표 ①) 가 닫는다 (턴 U · BLOCKED→CARDS 이월).
+
+    ★ **테넌트가 아니라 행위자로 좁힌다** — 전역 층 변경(`group=null`)도 내가 했으면
+      닫혀야 하므로, 표본은 `group` 을 주지 않고 `changed_by` 만 준다.
+    """
+
+    def test_no_record_means_not_done(self) -> None:
+        from apps.dsm import onboarding
+
+        out = onboarding.progress(scope=self.scope_a)
+        card = next(c for c in out["cards"] if c["key"] == "u2.threshold")
+        self.assertFalse(card["done"], "기록이 없는데 임계값 카드가 닫혀 있습니다.")
+
+    def test_a_change_closes_the_card_with_source_ref(self) -> None:
+        from apps.dsm import onboarding
+
+        change = self._threshold_change(self.user_a)
+        out = onboarding.progress(scope=self.scope_a)
+        card = next(c for c in out["cards"] if c["key"] == "u2.threshold")
+        self.assertTrue(card["done"], "임계값 변경 기록이 생겼는데 카드가 안 닫혔습니다.")
+        self.assertEqual(card["source_ref"], f"threshold_change#{change.pk}",
+                         "카드가 닫혔는데 무엇이 닫았는지가 응답에 없습니다.")
+
+    def test_calling_twice_writes_one_row(self) -> None:
+        from apps.dsm import onboarding
+
+        model = apps.get_model("stream_monitors", "DsmOnboardingProgress")
+        self._threshold_change(self.user_a)
+        onboarding.progress(scope=self.scope_a)
+        onboarding.progress(scope=self.scope_a)
+        rows = model._base_manager.filter(user=self.user_a, card_key="u2.threshold",
+                                          deleted__isnull=True)
+        self.assertEqual(rows.count(), 1, "같은 카드의 행이 둘입니다(멱등 실패).")
+
+    def test_another_persons_change_does_not_close_my_card(self) -> None:
+        """행위자로 좁힌다 — 같은 테넌트의 **다른 사람**이 바꿔도 내 카드는 안 닫힌다."""
+        from apps.dsm import onboarding
+
+        self._threshold_change(self.user_b)
+        theirs = onboarding.progress(scope=self.scope_a)
+        card = next(c for c in theirs["cards"] if c["key"] == "u2.threshold")
+        self.assertFalse(card["done"], "남이 바꾼 임계값 기록이 내 카드를 닫았습니다.")
+
+
+class OnboardingTestSendCardTest(_OnboardingFixture):
+    """u5.channel — 시험 발송 감사 행(K2 `test_send` 또는 `notify_prefs.test_send`) 이
+    닫는다 (턴 U · BLOCKED→CARDS 이월). 감사 표에는 테넌트 칸이 없어 **행위자로 좁힌다**
+    (`_closed_by_test_send` 의 규약 그대로) — `audit.read_page` 와 같은 사실.
+    """
+
+    def test_no_record_means_not_done(self) -> None:
+        from apps.dsm import onboarding
+
+        out = onboarding.progress(scope=self.scope_s5a)
+        card = next(c for c in out["cards"] if c["key"] == "u5.channel")
+        self.assertFalse(card["done"], "기록이 없는데 시험 발송 카드가 닫혀 있습니다.")
+
+    def test_webpush_test_send_closes_the_card(self) -> None:
+        from apps.dsm import onboarding
+
+        entry = self._test_send_audit(self.user_s5a, via="webpush")
+        out = onboarding.progress(scope=self.scope_s5a)
+        card = next(c for c in out["cards"] if c["key"] == "u5.channel")
+        self.assertTrue(card["done"], "웹푸시 시험 발송 감사가 생겼는데 카드가 안 닫혔습니다.")
+        self.assertEqual(card["source_ref"], f"audit#{entry.audit_id}")
+
+    def test_email_test_send_also_closes_the_card(self) -> None:
+        """K2 훈련 채널(이메일) 경로도 **같은 카드**를 닫는다 — 둘 중 하나면 된다."""
+        from apps.dsm import onboarding
+
+        entry = self._test_send_audit(self.user_s5b, via="email")
+        out = onboarding.progress(scope=self.scope_s5b)
+        card = next(c for c in out["cards"] if c["key"] == "u5.channel")
+        self.assertTrue(card["done"], "K2 시험 발송 감사가 생겼는데 카드가 안 닫혔습니다.")
+        self.assertEqual(card["source_ref"], f"audit#{entry.audit_id}")
+
+    def test_calling_twice_writes_one_row(self) -> None:
+        from apps.dsm import onboarding
+
+        model = apps.get_model("stream_monitors", "DsmOnboardingProgress")
+        self._test_send_audit(self.user_s5a, via="webpush")
+        onboarding.progress(scope=self.scope_s5a)
+        onboarding.progress(scope=self.scope_s5a)
+        rows = model._base_manager.filter(user=self.user_s5a, card_key="u5.channel",
+                                          deleted__isnull=True)
+        self.assertEqual(rows.count(), 1, "같은 카드의 행이 둘입니다(멱등 실패).")
+
+    def test_another_persons_test_send_does_not_close_my_card(self) -> None:
+        from apps.dsm import onboarding
+
+        self._test_send_audit(self.user_s5b, via="webpush")
+        theirs = onboarding.progress(scope=self.scope_s5a)
+        card = next(c for c in theirs["cards"] if c["key"] == "u5.channel")
+        self.assertFalse(card["done"], "남이 누른 시험 발송이 내 카드를 닫았습니다.")

@@ -301,40 +301,35 @@ def collect() -> dict:
     # ── 평상 운영 ④ 저장 용량 ─────────────────────────────────────────────
     # 용량 상한은 **환경이 선언한다.** 선언이 없으면 판정 불가다 — 「몇 % 찼나」는
     # 분모 없이 답할 수 없는 질문이고, 분모를 코드가 지어내면 그 추측이 초록이 된다.
+    #
+    # ★ [턴 U · 차선 U56] 판정을 **한 곳으로 옮겼다** — `common.ops_tasks.storage_declaration()`.
+    #   같은 질문을 관리자 화면(`GET /api/dsm/system/storage`)도 한다. 두 자리에서
+    #   따로 재면 크론이 UNKNOWN 을 적는 날 화면이 초록을 그린다 (D-212).
+    #   그 함수를 못 가져오면 **UNKNOWN 이다** — 예전 셈을 여기 되살리지 않는다
+    #   (되살리는 순간 판정이 다시 두 벌이 된다).
     try:
-        capacity_gb = float(os.environ.get(STORAGE_CAPACITY_ENV, "") or 0)
-    except ValueError:
-        capacity_gb = 0
-    used_gb, detail = None, ""
-    try:
-        from django.conf import settings as _s2
-        from minio import Minio
+        from common.ops_tasks import storage_declaration
 
-        _ep2 = str(getattr(_s2, "MINIO_ENDPOINT", "") or "")
-        for _scheme in ("http://", "https://"):
-            if _ep2.startswith(_scheme):
-                _ep2 = _ep2[len(_scheme):]
-        _b2 = getattr(_s2, "MINIO_STORAGE_MEDIA_BUCKET_NAME", "")
-        _c2 = Minio(_ep2.rstrip("/"), access_key=_s2.MINIO_ACCESS_KEY,
-                    secret_key=_s2.MINIO_SECRET_KEY,
-                    secure=bool(getattr(_s2, "MINIO_USE_HTTPS", False)))
-        total = sum(o.size or 0 for o in _c2.list_objects(_b2, recursive=True))
-        used_gb = round(total / (1024 ** 3), 4)
-        detail = "버킷 %s 객체 합계 %.4fGB" % (_b2, used_gb)
-    except Exception as exc:
-        detail = "저장소 사용량을 못 셌다: %s" % type(exc).__name__
+        decl = storage_declaration()
+    except Exception as exc:                       # noqa: BLE001
+        decl = {"used_gb": None, "used_pct": None, "declared": False,
+                "capacity_gb": None,
+                "reason": "저장 용량 판정을 못 불렀다: %s" % type(exc).__name__,
+                "used_note": "판정 함수를 못 불렀다"}
+    used_gb = decl.get("used_gb")
     out["signals"]["storage_used_gb"] = {
         "value": used_gb, "verdict": OK if used_gb is not None else UNKNOWN,
-        "note": detail}
-    if used_gb is None or capacity_gb <= 0:
+        "note": decl.get("used_note") or decl.get("reason") or ""}
+    if decl.get("used_pct") is None:
         out["signals"]["storage_used_pct"] = {
             "value": None, "verdict": UNKNOWN,
-            "note": ("용량 상한이 선언되지 않았다(%s) — **분모 없이 「몇 %% 찼나」에 답하지 "
-                     "않는다**(D-301)" % STORAGE_CAPACITY_ENV)
-                    if capacity_gb <= 0 else detail}
+            "note": decl.get("reason") or (
+                "용량 상한이 선언되지 않았다(%s) — **분모 없이 「몇 %% 찼나」에 답하지 "
+                "않는다**(D-301)" % STORAGE_CAPACITY_ENV)}
     else:
-        put("storage_used_pct", round(used_gb / capacity_gb * 100, 2),
-            "상한 %.0fGB (%s 가 선언)" % (capacity_gb, STORAGE_CAPACITY_ENV))
+        put("storage_used_pct", decl["used_pct"],
+            "상한 %.0fGB (%s 가 선언)" % (decl.get("capacity_gb") or 0,
+                                          STORAGE_CAPACITY_ENV))
     return out
 
 

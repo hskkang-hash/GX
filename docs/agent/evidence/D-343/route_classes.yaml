@@ -220,9 +220,11 @@ routes:
   "GET /api/dronehw/group-management/group/{group_id}/drones": session_only
   "GET /api/dronehw/group-management/groups-with-drones": session_only
   "GET /api/dsm/audit": session_only
+  "GET /api/dsm/audit/export.csv": session_only
   "GET /api/dsm/cameras/address-gap": session_only
   "POST /api/dsm/cameras/import": session_only
   "GET /api/dsm/cameras/pulse": session_only
+  "POST /api/dsm/cameras/{int:camera_id}/address": session_only
   "GET /api/dsm/dashboard/frame": session_only
   "GET /api/dsm/dashboard/link-state": session_only
   "GET /api/dsm/deliveries": session_only
@@ -281,11 +283,17 @@ routes:
   "DELETE /api/dsm/push-subscriptions/{int:subscription_id}": session_only
   "GET /api/dsm/queue/field-signals": session_only
   "POST /api/dsm/queue/field-signals/{int:event_id}/confirm-done": session_only
+  "GET /api/dsm/reports/runs": session_only
+  "POST /api/dsm/reports/runs": session_only
+  "GET /api/dsm/reports/runs/{int:run_id}.docx": session_only
+  "GET /api/dsm/reports/runs/{int:run_id}.pdf": session_only
   "GET /api/dsm/reports/templates": session_only
   "GET /api/dsm/reports/{int:template_id}.pdf": session_only
   "POST /api/dsm/settings/api-keys": session_only
   "DELETE /api/dsm/settings/api-keys/{int:key_id}": session_only
   "POST /api/dsm/settings/api-keys/{int:key_id}/rotate": session_only
+  "GET /api/dsm/settings/api-keys/{int:key_id}/scopes": session_only
+  "POST /api/dsm/settings/api-keys/{int:key_id}/scopes": session_only
   "POST /api/dsm/settings/grade-rules": session_only
   "GET /api/dsm/settings/notice-draft": session_only
   "GET /api/dsm/settings/notify-rules/list": session_only
@@ -311,6 +319,10 @@ routes:
   "GET /api/dsm/stats/false-positive/by-camera": session_only
   "GET /api/dsm/stats/summary": session_only
   "POST /api/dsm/stats/thresholds/simulate": session_only
+  "GET /api/dsm/system/backup-receipts": session_only
+  "GET /api/dsm/system/requests": session_only
+  "POST /api/dsm/system/restart-request": session_only
+  "GET /api/dsm/system/storage": session_only
   "GET /api/dsm/webhook-subscriptions": session_only
   "POST /api/dsm/webhook-subscriptions": session_only
   "DELETE /api/dsm/webhook-subscriptions/{int:subscription_id}": session_only

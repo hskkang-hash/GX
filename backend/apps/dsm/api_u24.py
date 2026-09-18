@@ -38,6 +38,7 @@
 """
 from datetime import datetime
 
+from ninja import Schema
 from ninja.errors import HttpError
 from ninja_extra import api_controller, route
 
@@ -71,6 +72,18 @@ def _split_multi(value: str | None) -> str | list[str] | None:
     if value and "," in value:
         return [v.strip() for v in value.split(",") if v.strip()]
     return value
+
+
+class ReportRunIn(Schema):
+    """「만들기」가 보내는 **본문(JSON)**. 질의 문자열로 받지 않는다 — 「특이사항」은 사람이
+    쓴 글이고, 질의 문자열에 실린 글은 접근 로그·캐시·브라우저 이력에 그대로 남는다
+    (턴 T 가 구독 비밀에서 본 그 자리 · P-166 과 같은 규약)."""
+
+    kind: str
+    event_id: int | None = None
+    since: datetime | None = None
+    until: datetime | None = None
+    note: str = ""
 
 
 @api_controller("", tags=["DSM — U2·U4 팀장·공무원 (WO-01 차선 U24)"])
@@ -325,11 +338,115 @@ class DsmU24API:
         if denial:
             raise HttpError(403, denial)
         try:
-            return audit.read_page(scope=scope, since=since, until=until,
-                                   actor_id=actor_id, action=action,
-                                   page=page, page_size=page_size)
+            payload = audit.read_page(scope=scope, since=since, until=until,
+                                      actor_id=actor_id, action=action,
+                                      page=page, page_size=page_size)
         except ValueError as exc:
             raise HttpError(400, str(exc))
+        #: 턴 U — 해시 체인 두 칸을 붙인다(아래 `_with_chain_columns` 머리말).
+        return _with_chain_columns(payload)
+
+    @route.get("/audit/export.csv", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="감사 CSV — 남의 테넌트 감사 행이 파일로 나가면 격리 실패다")
+    def audit_export_csv(self, request, since: datetime | None = None,
+                         until: datetime | None = None, actor_id: int | None = None,
+                         action: str | None = None, limit: int = 1000):
+        """같은 필터의 감사 이력을 **파일 한 장**으로(턴 U · P-173 U24 ④).
+
+        ★ 화면이 보는 쪽수와 **같은 함수**가 낸다 — 파일이 다른 질의를 타면 표와 파일이
+          다른 사실을 말한다. 상한(`limit`)에 닿으면 **마지막 줄에 그렇게 적는다**.
+        ★ `Cache-Control: no-store` — 파일은 사람이 보관하는 것이라, 60초 전 값이
+          「지금 값」으로 남으면 안 된다(`/stats/export.csv` 와 같은 규약).
+        """
+        from apps.dsm import audit
+
+        scope = _scope(request)
+        denial = _audit_reader_denial(scope.actor)
+        if denial:
+            raise HttpError(403, denial)
+        try:
+            text = _audit_csv(scope=scope, since=since, until=until,
+                              actor_id=actor_id, action=action, limit=limit,
+                              reader=audit.read_page)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        from django.http import HttpResponse
+
+        resp = HttpResponse(text.encode("utf-8"), content_type="text/csv; charset=utf-8")
+        resp["Content-Disposition"] = 'attachment; filename="gx-audit.csv"'
+        resp["Cache-Control"] = "no-store"
+        return resp
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 턴 U (P-173 U24) — 보고서 서식 3 · 실행 기록 · 파일 2(DOCX 정본 · PDF 병행)
+    # ══════════════════════════════════════════════════════════════════════
+    #
+    # ★ 경로가 기존 `/reports/*` 를 삼키지 않는다 [실측 확인]: `api.py` 가 먼저 선
+    #   자리는 `/reports/templates`(리터럴)와 `/reports/{int:template_id}.pdf`(정수
+    #   변환기)뿐이다. `runs` 는 정수가 아니므로 그 변환기에 걸리지 않고, 우리 컨트롤러는
+    #   그 뒤에 등록되므로 앞의 것을 가리지도 않는다(`urls.py` 규약 · 메모리 「라우트 삼킴」).
+    # ★ 누가 보나 — 관제팀장(U2) · 지자체 담당관(U4) · 운영자(U5) · 관리자. 나머지는 403.
+    #   남의 테넌트 실행 기록은 **404** 다(403 이 아니다 — 존재를 알리지 않는다).
+    @route.get("/reports/runs", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="보고서 실행 기록 — 남의 테넌트 실행이 보이면 격리 실패다")
+    def report_runs(self, request, kind: str | None = None, limit: int = 50):
+        """실행 목록 — 최신 순. 종류(`kind`)로 좁힐 수 있다."""
+        from apps.dsm import monthly_report
+
+        scope = _scope(request)
+        denial = _report_reader_denial(scope.actor)
+        if denial:
+            raise HttpError(403, denial)
+        try:
+            payload = monthly_report.list_runs(scope=scope, kind=kind, limit=limit)
+        except monthly_report.ReportRunError as exc:
+            raise HttpError(400, str(exc))
+        payload["kinds"] = [
+            {"kind": k, "label": monthly_report.KIND_LABEL[k]} for k in monthly_report.KINDS]
+        return payload
+
+    @route.post("/reports/runs", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="보고서 만들기 — 남의 테넌트 자료로 종이를 만들면 격리 실패다")
+    def report_run_create(self, request, payload: ReportRunIn):
+        """「만들기」 — 서식 셋 중 하나를 조립하고 **실행 기록 한 행**을 남긴다.
+
+        ★ 사람이 눌렀으므로 `trigger=manual` 이다. 자동본(`auto`)은 배치만 만든다 —
+          사람이 누른 것을 자동이라고 적으면 PRD §7.4 의 수가 거짓이 된다.
+        ★ 조립이 실패해도 **행은 남고**(`status=failed` + 사유) 200 이다. 실패를 404·500
+          으로 뭉치면 「시도가 없었다」와 「해 봤는데 안 됐다」를 화면이 못 가른다.
+        ★ 없는 사건 · 남의 사건은 404 이고 **행을 남기지 않는다**(행이 남으면 그 자체가
+          남의 사건의 존재를 알린다).
+        """
+        from django.http import Http404
+
+        from apps.dsm import monthly_report
+
+        scope = _scope(request)
+        denial = _report_reader_denial(scope.actor)
+        if denial:
+            raise HttpError(403, denial)
+        try:
+            run = monthly_report.create_report_run(
+                scope=scope, kind=payload.kind, trigger=monthly_report.TRIGGER_MANUAL,
+                event_id=payload.event_id, since=payload.since, until=payload.until,
+                note=payload.note)
+        except Http404:
+            raise HttpError(404, "그런 사건이 없습니다.")
+        except monthly_report.ReportRunError as exc:
+            raise HttpError(400, str(exc))
+        return monthly_report.run_row(run)
+
+    @route.get("/reports/runs/{int:run_id}.docx", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="보고서 DOCX — 남의 테넌트 종이가 나가면 격리 실패다")
+    def report_run_docx(self, request, run_id: int):
+        """**정본**(결정 ⑤ · HWP 가 여는 DOCX). 내려받을 때 다시 그린다 — 저장된 파일이 없다."""
+        return _report_file(request, run_id=run_id, fmt="docx")
+
+    @route.get("/reports/runs/{int:run_id}.pdf", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="보고서 PDF — 남의 테넌트 종이가 나가면 격리 실패다")
+    def report_run_pdf(self, request, run_id: int):
+        """병행 — 같은 글자를 기존 K4 렌더러로 찍는다."""
+        return _report_file(request, run_id=run_id, fmt="pdf")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -384,7 +501,11 @@ def _flag_row(row) -> dict:
 def _live_flags(group):
     #: `_base_manager` + `deleted__isnull` + `group` 명시 — `objects` 는 스레드에 남은
     #: 요청의 group 으로 좁히므로(메모리 「스레드에 남은 요청」) 여기서는 우연에 안 기댄다.
-    return _flag_model()._base_manager.filter(group=group, deleted__isnull=True)
+    #: ★ 턴 U — 같은 질의를 상급 제출용 보고서도 쓴다. 두 벌을 두지 않는다(D-212 계열):
+    #:   질의는 `monthly_report.live_upper_flags` 한 곳이고 여기는 그 이름을 부른다.
+    from apps.dsm import monthly_report
+
+    return monthly_report.live_upper_flags(group=group)
 
 
 def _upper_report_flags(*, scope: TenantScope, event_ids: str) -> dict:
@@ -473,3 +594,227 @@ def _upper_report_clear(*, scope: TenantScope, event_id: int, reason: str) -> di
         after={"event_id": event_id, "flagged": False},
         api_name=action, api_method="DELETE", status_http=200)
     return {"event_id": event_id, "flagged": False, "audit_id": entry.audit_id}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 U — 뒷면 ①: 감사 해시 체인 두 칸 · CSV
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ `audit.read_page` 는 두 칸을 내지 않는다(그 파일은 이번 턴 U24 소유가 아니다 —
+#   한 파일은 한 차선). 그래서 **라우트에서 칸을 더한다**: 저장된 값을 읽어 붙일 뿐,
+#   해시를 여기서 **다시 계산하지 않는다.** 다시 계산하면 「저장된 값」과 「계산한 값」이
+#   같은 이름으로 섞이고, 그 순간 검증이 자기 자신을 증명한다
+#   (`common/audit_writer.AuditEntry` 머리말이 막는 그 모양).
+# ★ 위조 여부를 판정하는 것은 여전히 `evidence_chain.verify_chain` 하나다. 이 칸이 말하는
+#   것은 **이어짐**뿐이다: 이 행의 `prev_hash` 가 바로 앞 행의 `hash` 와 같은가.
+
+#: 체인 상태 넷. 「모른다」를 지우지 않는다 — 모르는 것을 초록으로도 빨강으로도 적지 않는다.
+CHAIN_LINKED = "linked"        # 앞 행의 hash 와 이어진다
+CHAIN_BROKEN = "broken"        # 앞 행의 hash 와 다르다
+CHAIN_UNCHAINED = "unchained"  # 체인이 서기 전(LAW-08 이전)에 쌓인 행 — 두 칸이 없다
+CHAIN_UNKNOWN = "unknown"      # 앞 행을 이 화면에서 못 봤다(상한) — 회색이다
+
+#: 한 쪽의 체인 상태를 가리려고 훑는 감사 행의 상한. 넘으면 그 쪽은 `unknown` 이다.
+_CHAIN_SCAN_CAP = 3000
+#: 앞 행을 찾을 때 되돌아보는 줄 수.
+_CHAIN_BACK_CAP = 50
+#: 화면이 적는 앞자리 수(12자)는 **화면의 몫**이다 — 서버는 전체 값을 낸다.
+#: 자른 값을 서버가 내면 두 사람이 서로 다른 「해시」를 말하게 된다.
+
+
+def _audit_rows_queryset():
+    from django.apps import apps
+
+    from common import evidence_chain
+
+    return (apps.get_model("logger", "AuditLogs")._base_manager
+            .filter(logger_name__startswith=evidence_chain.CHAIN_PREFIX))
+
+
+def _chain_pair(payload) -> tuple[str, str]:
+    from common import evidence_chain
+
+    if not isinstance(payload, dict):
+        return "", ""
+    return (str(payload.get(evidence_chain.PREV_KEY) or ""),
+            str(payload.get(evidence_chain.HASH_KEY) or ""))
+
+
+def _with_chain_columns(payload: dict) -> dict:
+    """쪽 하나에 `prev_hash` · `hash` · `chain` 세 칸을 더한다.
+
+    ★ 이 쪽의 행들은 **테넌트로 걸러진 것**이라 서로 이웃이 아니다 — 그래서 「앞 행」은
+      쪽 위의 행이 아니라 **체인 전체에서 바로 앞 행**이다. 그 앞 행을 못 보면
+      `unknown` 이다(회색은 초록이 아니다).
+    """
+    items = list(payload.get("items") or ())
+    if not items:
+        payload["chain_states"] = {"linked": 0, "broken": 0, "unchained": 0, "unknown": 0}
+        return payload
+
+    from common import evidence_chain
+
+    ids = [i["audit_id"] for i in items if i.get("audit_id") is not None]
+    if not ids:
+        return payload
+    lo, hi = min(ids), max(ids)
+
+    scanned = list(_audit_rows_queryset().filter(id__gte=lo, id__lte=hi)
+                   .order_by("id").values("id", "data_after")[:_CHAIN_SCAN_CAP + 1])
+    capped = len(scanned) > _CHAIN_SCAN_CAP
+    scanned = scanned[:_CHAIN_SCAN_CAP]
+
+    #: 이 쪽보다 앞에 있는 마지막 해시 — 없으면 체인의 첫 행 자리(GENESIS)다.
+    anchor = evidence_chain.GENESIS
+    anchor_known = True
+    back = list(_audit_rows_queryset().filter(id__lt=lo).order_by("-id")
+                .values("id", "data_after")[:_CHAIN_BACK_CAP + 1])
+    if len(back) > _CHAIN_BACK_CAP:
+        anchor_known = False
+        back = back[:_CHAIN_BACK_CAP]
+    for row in back:
+        _, row_hash = _chain_pair(row.get("data_after"))
+        if row_hash:
+            anchor, anchor_known = row_hash, True
+            break
+
+    expected: dict[int, str] = {}
+    running = anchor
+    running_known = anchor_known
+    for row in scanned:
+        prev_hash, row_hash = _chain_pair(row.get("data_after"))
+        expected[row["id"]] = running if running_known else ""
+        if row_hash:
+            running, running_known = row_hash, True
+        elif prev_hash:
+            #: 두 칸이 없는 행은 체인을 끊지 않는다(체인 이전 행) — 앞 해시를 그대로 잇는다.
+            running_known = running_known
+
+    stored = {row["id"]: _chain_pair(row.get("data_after")) for row in scanned}
+    counts = {CHAIN_LINKED: 0, CHAIN_BROKEN: 0, CHAIN_UNCHAINED: 0, CHAIN_UNKNOWN: 0}
+    for item in items:
+        prev_hash, row_hash = stored.get(item.get("audit_id"), ("", ""))
+        item["prev_hash"] = prev_hash
+        item["hash"] = row_hash
+        if capped or item.get("audit_id") not in stored:
+            state = CHAIN_UNKNOWN
+        elif not row_hash:
+            state = CHAIN_UNCHAINED
+        else:
+            want = expected.get(item["audit_id"], "")
+            state = (CHAIN_UNKNOWN if not want
+                     else CHAIN_LINKED if prev_hash == want else CHAIN_BROKEN)
+        item["chain"] = state
+        counts[state] += 1
+    payload["chain_states"] = counts
+    payload["chain_scan_capped"] = capped
+    return payload
+
+
+#: CSV 의 칸 이름. 화면 표의 열과 **같은 순서**다 — 다르면 사람이 두 장을 대조할 수 없다.
+_AUDIT_CSV_HEADER = ("audit_id", "at", "outcome", "action", "method", "actor_id",
+                     "actor", "reason", "status_http", "channel", "prev_hash",
+                     "hash", "chain")
+#: CSV 한 장의 상한. 넘으면 **마지막 줄에 적는다**(잘린 표본은 잘렸다고 말한다 · D-301).
+_AUDIT_CSV_CAP = 5000
+
+
+def _audit_csv(*, scope, since, until, actor_id, action, limit: int, reader) -> str:
+    """감사 CSV 한 장 — **화면과 같은 함수**(`audit.read_page`)가 낸 쪽들을 잇는다.
+
+    다른 질의를 새로 짜지 않는 것이 요점이다: 파일이 표와 다른 사실을 말하면 둘 중
+    어느 쪽이 맞는지 아무도 모른다.
+    """
+    import csv
+    import io
+
+    from apps.dsm import stats
+
+    limit = max(1, min(int(limit or 1000), _AUDIT_CSV_CAP))
+    page_size = 200
+    rows: list[dict] = []
+    page = 1
+    total = 0
+    while len(rows) < limit:
+        payload = reader(scope=scope, since=since, until=until, actor_id=actor_id,
+                         action=action, page=page, page_size=page_size)
+        total = payload.get("total", 0)
+        chunk = _with_chain_columns(payload).get("items") or []
+        if not chunk:
+            break
+        rows.extend(chunk)
+        if page >= (payload.get("pages") or 1):
+            break
+        page += 1
+    capped = len(rows) > limit or total > limit
+    rows = rows[:limit]
+
+    buf = io.StringIO()
+    writer = csv.writer(buf, lineterminator="\n")
+    writer.writerow(_AUDIT_CSV_HEADER)
+    for r in rows:
+        writer.writerow([r.get(k, "") if r.get(k) is not None else "" for k in _AUDIT_CSV_HEADER])
+    writer.writerow(["# 전체", total, "이 파일", len(rows), "",
+                     "잘림" if capped else "전부", "", "", "", "", "", "", ""])
+    return stats.CSV_BOM + buf.getvalue()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 U — 뒷면 ②: 보고서 서식 3 · 파일 2
+# ═══════════════════════════════════════════════════════════════════════════
+def _report_reader_denial(user) -> str | None:
+    """보고서를 만들고 내려받을 수 있는 사람 — **U2 · U4** + 테넌트·전역 관리자.
+
+    ★ 판정식을 새로 쓰지 않는다 — 감사 읽기(`_audit_reader_denial`)와 같은 표
+      (`config.k3_roles` · `common.tenant_roles` · `common.role_gate`)를 읽는다.
+      U5(운영자)도 든다: 배치가 낸 자동본의 실패 사유를 볼 사람이 운영자이기 때문이다.
+    """
+    denial = _audit_reader_denial(user)
+    if denial is None:
+        return None
+    return "보고서는 관제팀장 · 지자체 담당관 · 운영자만 만들고 내려받을 수 있습니다."
+
+
+def _report_file(request, *, run_id: int, fmt: str):
+    """`.docx` · `.pdf` 공통 뒷면 — 실행 기록에서 **지금 다시 그려** 파일로 낸다.
+
+    상태를 뭉치지 않는다(`api.py::event_report_pdf` 와 같은 규약):
+        401 인증 없음 · 403 볼 수 없는 역할 · 404 없는/남의 실행 기록(또는 그 사건) ·
+        409 기록은 있는데 지금 만들 수 없다(실패 행 · 자료 없음 · 렌더 실패)
+    """
+    from urllib.parse import quote
+
+    from django.http import Http404, HttpResponse
+
+    from kernels.k4_report import InvalidReportInput, RenderFailed
+
+    from apps.dsm import docx_export, monthly_report
+    from apps.dsm.exceptions import IncidentReportUnavailable
+
+    scope = _scope(request)
+    denial = _report_reader_denial(scope.actor)
+    if denial:
+        raise HttpError(403, denial)
+    try:
+        run = monthly_report.get_run(scope=scope, run_id=run_id)
+    except Http404:
+        raise HttpError(404, "그런 보고서 실행 기록이 없습니다.")
+    try:
+        data = monthly_report.render_run(scope=scope, run=run, fmt=fmt)
+    except Http404:
+        raise HttpError(404, "그 사건을 읽을 수 없습니다 — 보고서를 만들 수 없습니다.")
+    except (monthly_report.ReportRunError, IncidentReportUnavailable,
+            docx_export.DocxRenderFailed, RenderFailed, InvalidReportInput) as exc:
+        raise HttpError(409, f"지금은 보고서를 만들 수 없습니다 — {exc}")
+
+    content_type, ext = monthly_report.FORMATS[fmt]
+    name = f"{monthly_report.KIND_LABEL.get(run.kind, '보고서')}-{run_id}.{ext}"
+    response = HttpResponse(data, content_type=content_type)
+    #: 이름을 두 벌로 낸다 — `filename*` 이 없으면 한글 이름이 깨지고, `filename` 만
+    #: 없으면 옛 브라우저가 이름을 못 읽는다(`event_report_pdf` 와 같은 자리).
+    response["Content-Disposition"] = (
+        f'attachment; filename="guardianx-report-{run_id}.{ext}"; '
+        f"filename*=UTF-8''{quote(name)}")
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response

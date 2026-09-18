@@ -18,7 +18,7 @@
  * ★ 이 파일은 **값을 화면에 그리지 않는다.** 구독 엔드포인트·키는 서버로 갈 뿐이고,
  *   화면이 받는 것은 지문 12자와 기기 이름이다(서버가 그것만 돌려준다).
  */
-import { dsmDelete, dsmGet, dsmPostQuery, mobileEndpoint } from './api';
+import { dsmDelete, dsmGet, dsmPost, dsmPostQuery, mobileEndpoint } from './api';
 
 /** 이 SW 가 응답할 스코프. `frontend/public/field-push-sw.js` 와 짝이다. */
 const SW_URL = '/field-push-sw.js';
@@ -271,7 +271,14 @@ export async function enableFieldPush(label: string): Promise<PushDeviceRow> {
   // ⑤ 서버에 등록. 인자 이름 `auth_secret` 은 서버와 같아야 한다
   //    (`api_u3.py::create_push_subscription` — 문지기 인자 `auth` 와 헷갈리지
   //    않으려고 서버가 일부러 다른 이름을 쓴다).
-  return dsmPostQuery<PushDeviceRow>(mobileEndpoint.pushSubscriptions, {
+  //
+  //    ★★ [P-166 · D-486] **본문(JSON)으로 보낸다 — 쿼리가 아니다.** 턴 T 에 이
+  //      호출이 `dsmPostQuery` 를 썼고, 구독 비밀 셋이 주소에 실려 접근 로그에
+  //      남았다(실측 2줄). 서버가 `endpoint`·`p256dh`·`auth_secret` 을 `Schema`
+  //      본문(`PushSubscriptionIn`)으로만 받게 바뀌었고(같은 턴 · 같은 커밋),
+  //      쿼리에 그 이름이 보이면 본문이 옳아도 400 을 낸다 — 그래서 이 자리도
+  //      `dsmPost`(본문)로 바꾼다. `dsmPostQuery` 로 두면 쿼리 없이도 400 이 난다.
+  return dsmPost<PushDeviceRow>(mobileEndpoint.pushSubscriptions, {
     endpoint: subscription.endpoint,
     p256dh,
     auth_secret: auth,

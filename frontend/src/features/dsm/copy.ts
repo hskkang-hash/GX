@@ -566,3 +566,26 @@ export const CLOSE_CONFIRM_EMPTY =
  *   화면이 자기 전이표를 든 것이 되고, 서버가 거절하는 단추가 생긴다.
  */
 export const CLOSE_CONFIRM_OPEN_INSTEAD = '이 사건은 상세에서 종결합니다';
+
+/**
+ * 화면 제목 HEADLINE 여섯 — **턴 T 조율자 병합 등재**(GX-COPY_v1.md §「2026-09-17 턴 T
+ * 추가 — 조율자 병합」)를 `copy.ts` 로 끌어올린 자리 (턴 U · 차선 F · §5 사전 등재 확인).
+ *
+ * ★ 왜 여기로 올리나 — 사전(GX-COPY_v1.md)에는 **등재됐고**, 코드에도 같은 글자가
+ *   `People.tsx`·`NotifySettings.tsx`·`Me.tsx`·`MobileInbox.tsx`·`MobileSettings.tsx`·
+ *   `TeamStatus.tsx` 여섯 곳에 **각자 지역 상수(또는 인라인 문자열)로** 이미 있었다
+ *   (실측 2026-09-18). 정본은 하나여야 두 벌이 어긋나지 않는다(`WALL_COPY`·`CAMERA_COPY`
+ *   와 같은 규약) — 그래서 값을 이 표로 올린다.
+ * ★ **이 표를 쓰게 만드는 것은 하지 않는다.** 각 화면이 자신의 지역 상수를 이 표를
+ *   참조하도록 바꾸는 일은 그 화면의 소유 차선의 몫이다(등록 요청 — 아래 보고 ③).
+ *   여기서는 「정본이 있다」까지만 만든다 — 남의 파일을 고치면 §0.4 밖에서도 「한 파일은
+ *   한 차선」이 깨진다.
+ */
+export const HEADLINE_COPY = {
+  people: '사람·역할 — 계정 만들기 · 비활성화',
+  notifySettings: '알림 받는 사람·채널',
+  me: '내 정보',
+  mobileInbox: '내게 온 이벤트',
+  mobileSettings: '내 알림 설정',
+  teamStatus: '요원별 현황',
+} as const;

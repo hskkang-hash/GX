@@ -133,6 +133,30 @@ REACH_MAP: dict[str, dict] = {
         "why": "사람의 판정이 남는 자리(판정 패널·타임라인)를 역할 계정이 200 으로 봤다",
     },
 
+    # ── [턴 U · P-169 절 1] 사유가 낡아서 **회색에서 끌어올린 셋** ──────────
+    #   P-142 의 지배 사실(「`/api/dsm/settings` 를 부르는 코드가 0건」 · 2026-09-15)은
+    #   2026-09-18 재실측에서 **13건**이 됐다. 화면도 라우터에 섰고 호출도 있다.
+    #   그래서 셋을 선언한다 — 그리고 이 선언은 **초록을 만들지 못한다**: 캡처가
+    #   없으면 회색이고, 캡처가 있는데 그 화면이 저 문을 안 불렀으면 **빨강**이다.
+    #   찍는 자리는 같은 커밋의 `capture_screens.TARGETS` step 29·30·31 이다.
+    "F-12-c2": {
+        "screen": "/dsm/audit", "api": "/api/dsm/audit", "expect": 200,
+        "why": "성공·실패 감사로그를 사람이 보는 자리 — `/dsm/audit` 이 그 문을 부른다 "
+               "(AuditLog.tsx:89 · 읽는 사람 U2·U4·U5)",
+    },
+    "F-12-c3": {
+        "screen": "/dsm/notify", "api": "/api/dsm/settings/notify-rules/list",
+        "expect": 200,
+        "why": "수신자(알림 규칙) 관리 화면이 규칙 목록을 실제로 읽어 그린다 "
+               "(NotifySettings.tsx:117)",
+    },
+    "F-12-c8": {
+        "screen": "/dsm/integrations", "api": "/api/dsm/settings/api_keys",
+        "expect": 200,
+        "why": "API 키 관리 화면이 키 목록·범위를 읽는다 (Integrations.tsx:159 · "
+               "domain 은 `api_keys`, 하이픈 아니다 — D-470)",
+    },
+
     # ── 화면이 아니라 **다른 게이트**로 닿는 절 ─────────────────────────
     #   U6(외부 App)은 화면이 없다 — HTTP 로만 들어온다. 그 절의 도달을 화면에서
     #   찾으면 영원히 회색이 된다. 그래서 그 절을 재는 게이트를 **부른다**(D-210).
@@ -150,26 +174,38 @@ GREY_WHY: dict[str, str] = {
     "F-01-c1": "AI 라벨 → 이벤트 변환은 화면에 나타나지 않는다. 단위 시험만 있고, 사람이 그 절을 보는 자리가 없다",
     "F-02-c1": "수위선 초과 신호를 보여 주는 화면이 32장 안에 없다",
     "F-02-c2": "30초 이내라는 **시간**은 화면 한 장으로 재지지 않는다 — 시간 게이트가 따로 있어야 한다",
-    "F-02-c3": "지점별 기준선(임계값) 설정 화면을 찍지 못했다 — `/operation-settings` 는 설정 API 를 한 건도 부르지 않았다 [실측]",
+    #: [턴 U 재판정] 옛 사유(「`/operation-settings` 는 설정 API 를 한 건도 부르지 않았다」)는
+    #:   **낡았다.** 지금 임계값을 여는 자리는 `/operation-settings` 가 아니라
+    #:   `/dsm/cameras/tuning`(`routes.u24.ts:35` · `CameraTuning.tsx`)이고, 그 화면이 부르는
+    #:   문은 `GET /api/dsm/stats/camera-thresholds`·`camera-threshold` 다 [grep 2026-09-18].
+    #:   저장 문 `POST /api/dsm/settings/thresholds` 도 라우트 대장 749 에 서 있다.
+    #:   남은 것은 하나 — **「지점별」**이다. 계약이 말하는 것은 지점(구역)별 기준선인데
+    #:   지금 문은 **카메라별**이다. 자리가 없는 것이 아니라 **다른 축**이다.
+    "F-02-c3": "[턴 U 재판정] 임계값 화면은 섰다(`/dsm/cameras/tuning` · GET /api/dsm/stats/camera-thresholds 200). 그러나 그 축은 **카메라별**이고 계약이 말하는 것은 **지점(구역)별** 기준선이다 — 다른 축의 화면을 이 절의 증거로 쓰지 않는다 [grep 2026-09-18]",
     "F-03-c1": "사람·차량 결합 판정을 보여 주는 화면이 없다",
     "F-03-c2": "등급 상향의 결과를 화면에서 확인한 장이 없다",
-    "F-03-c3": "위험구역(폴리곤) 편집 화면을 찍지 못했다",
+    "F-03-c3": "[턴 U 재확인 · 사유 그대로 참] 위험구역 문(`settings/zones`)은 대장 749 에 있는데 프런트 호출 0건이라 편집 화면이 없다 [grep 2026-09-18] — F-12-c5 와 같은 자리다",
     "F-04-c1": "「동일 이벤트」 판정은 화면에 드러나지 않는다",
     "F-04-c2": "5분 내 중복 0건은 **시간에 걸친 사실**이다 — 한 장의 화면이 답할 수 없다",
     "F-09-c1": "재난 대시보드의 5상태 중 **기본 상태 한 장**만 찍혔다. 로딩·빈·오류·권한없음 네 상태의 화면이 없다 (로그인 화면의 다섯 장은 다른 화면의 상태다)",
-    "F-10-c1": "등급별 수신그룹 설정 화면이 없다",
+    #: [턴 U 재판정] 절반만 낡았다 — **수신그룹**은 섰고(`/dsm/notify` · notify-rules)
+    #:   **등급규칙**은 안 섰다(`POST /api/dsm/settings/grade-rules` 프런트 호출 0건).
+    #:   이 절은 「등급**별**」이라 둘이 다 서야 한다. 반만 서면 회색이다.
+    "F-10-c1": "[턴 U 재판정] 수신그룹 화면은 섰다(`/dsm/notify` — F-12-c3 이 그것을 잰다). 그러나 등급규칙 문 `POST /api/dsm/settings/grade-rules` 를 부르는 화면이 0건이라 **등급별**이 서지 않는다 [grep 2026-09-18]",
     "F-10-c2": "30초 이내 — 시간이라 화면으로 안 재진다",
-    "F-11-c1": "상황 보고서 템플릿 변수 3종을 보여 주는 화면이 없다. `/report-template` 이 부른 것은 레거시 print-format(모델 DeliveryOperation)이고 계약이 말하는 상황 보고서와 이어지지 않는다 [실측]",
+    #: [턴 U 재판정] 옛 사유는 그대로 참이되 **한 조각이 더 생겼다**: 서버 문
+    #:   `GET /api/dsm/reports/templates` 가 라우트 대장 749 에 있다. 그러나
+    #:   `frontend/src` 에서 `api/dsm/reports` 를 부르는 코드는 **0건**이다 [grep 2026-09-18].
+    #:   이번 턴 U24 가 `Reports.tsx` 를 짓는다 — 그 화면이 서면 여기 한 줄을 넣는다.
+    #:   ⚠ 짓는 중인 화면을 미리 선언하지 않는다(찍히지 않으면 회색, 찍혔는데 안 부르면 빨강).
+    "F-11-c1": "[턴 U 재판정] `/report-template` 이 레거시 print-format 이라는 옛 사유는 그대로 참이다. 새 사실: 서버 문 `GET /api/dsm/reports/templates` 는 대장 749 에 섰고 프런트 호출은 0건이다 [grep 2026-09-18] — 이번 턴 U24 의 `Reports.tsx` 가 서면 REACH_MAP 에 한 줄이 든다",
     "F-11-c2": "손입력 0 은 위와 같은 이유로 못 이었다",
     "F-11-c3": "치환 결과를 보여 주는 화면이 없다",
     "F-12-c1": "무권한 차단은 **403 으로** 재야 하고 실제로 `/surveillance-dashboard` 에서 view_only 계정이 403 을 7건 받았다 [실측]. 그러나 그 라우트는 계약이 말하는 **관리자 설정**이 아니다 — 다른 자리의 403 을 이 절의 증거로 쓰지 않는다",
-    "F-12-c2": "성공·실패 감사로그를 보여 주는 화면이 없다",
-    "F-12-c3": "수신자 관리 화면이 없다",
     "F-12-c4": "위젯 관리 화면이 없다",
-    "F-12-c5": "구역 관리 화면이 없다",
-    "F-12-c6": "임계값 관리 화면이 없다",
+    "F-12-c5": "[턴 U 재확인 · 사유 그대로 참] `GET/POST /api/dsm/settings/zones` 는 라우트 대장 749 에 서 있으나 `frontend/src` 에서 그 문을 부르는 코드가 **0건**이다 [grep 2026-09-18] — 문은 있고 화면이 없다",
+    "F-12-c6": "[턴 U 재판정] 「화면이 없다」는 낡았다 — `/dsm/cameras/tuning` 이 서 있고 `GET /api/dsm/stats/camera-thresholds` 를 부른다. 그러나 이 절이 말하는 관리자 **설정** 문은 `/api/dsm/settings/thresholds` 이고 그 문을 부르는 화면은 아직 0건이다 [grep 2026-09-18 · `api.ts` 는 상수만 들고 있고 페이지가 안 쓴다]",
     "F-12-c7": "등급규칙 관리 화면이 없다",
-    "F-12-c8": "API 키 관리 화면이 없다 (진입면은 F-05 가 라우트로 잰다)",
     "F-13-c1": "「비행 명령을 전송하지 않는다」는 **하지 않음**이다. 화면에서 안 한 것을 보는 방법이 없다 — 부작위 게이트가 따로 있어야 한다",
     "F-14-c2": "월간 오탐률 산출 결과를 보여 주는 화면이 없다",
 }
@@ -686,6 +722,13 @@ def main() -> int:
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--list", action="store_true", help="절별 사슬")
     ap.add_argument("--json", action="store_true", help="영역 ① 이 쓸 셈만 (기계용)")
+    #: [P-170 ②] 씨앗 명세 — 이 게이트는 씨앗을 **고르지 않는다**(캡처 대장을 읽는다).
+    #:   그래도 읽는 이유 하나: 판정에 쓴 캡처가 **어느 회의 씨앗 위에서** 찍힌 것인지
+    #:   증거에 적기 위해서다. 회차가 다르면 같은 절이 다른 사건을 두고 초록이 된다.
+    ap.add_argument("--seed-file", default=None,
+                    help="[P-170 ②] capture_screens 가 쓴 씨앗 명세 "
+                         "(기본: docs/agent/evidence/P-157/runs/ 의 최신 seed.json) — "
+                         "이 게이트는 씨앗으로 고르지 않고 **출처만 증거에 적는다**")
     ap.add_argument("--no-gates", action="store_true",
                     help="맡긴 게이트를 부르지 않는다 (그 절은 회색이 된다)")
     args = ap.parse_args()
@@ -713,11 +756,21 @@ def main() -> int:
         print("%s ? **못 쟀다** — %s" % (TAG, exc))
         return EXIT_UNDECIDABLE
 
+    from probe_marks import load_seed                       # noqa: E402
+    seed = load_seed(args.seed_file)
+    obs["seed"] = {"run": seed["run"], "event_ids": seed["event_ids"],
+                   "probe_mark": seed["probe_mark"], "source": seed["source"],
+                   "why": seed["why"]}
+
     rows = judge(obs)
     t = tally(rows)
     a = area_one(rows)
     where = sys.stderr if args.json else sys.stdout
     rm = obs.get("row_map") or {}
+    _sd = obs["seed"]
+    print("%s [입력] 씨앗 — %s" % (TAG, ("회차 %s · 사건 %s · %s"
+          % (_sd["run"] or "?", _sd["event_ids"] or "없음", _sd["source"]))
+          if _sd["source"] else ("명세 없음 — %s" % _sd["why"])), file=where)
     print("%s [입력] 계약 절 %d개 · 화면 %d장 · 맡긴 게이트 %d벌 · 시험 다리 %d/%d절"
           % (TAG, len(obs["clauses"]), len(obs["screens"]), len(obs["gate_rc"]),
              sum(1 for v in (obs.get("proof_ok") or {}).values() if v),

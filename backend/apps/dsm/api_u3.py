@@ -6,7 +6,7 @@
 도달을 태어날 때 통과한다.
 """
 from django.http import Http404
-from ninja import File
+from ninja import File, Schema
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from ninja_extra import api_controller, route
@@ -28,6 +28,49 @@ def _scope(request) -> TenantScope:
     if user is None or not getattr(user, "is_authenticated", False):
         raise HttpError(401, "인증이 필요합니다.")
     return TenantScope.of(user)
+
+
+# ── P-166 · D-486 — 구독 비밀은 본문으로만 ──────────────────────────────────
+#
+# ⚠ 턴 T 실측: `create_push_subscription` 이 `endpoint`·`p256dh`·`auth_secret` 을
+#   **원시 타입 인자**로 받고 있었다. django-ninja 는 원시 타입 인자를 **질의**로
+#   읽는다(`api.ts::dsmPostQuery` 머리말이 같은 규약을 적어 둔 그 함정) — 그래서
+#   `POST /push-subscriptions?endpoint=…&p256dh=…&auth_secret=…` 꼴이 되고, 그 줄이
+#   그대로 접근 로그에 남았다(runserver 2줄 실측 · D-486). 기기 비밀이 새면 그
+#   기기로 누구나 알림을 보낼 수 있다.
+#
+#   고친 것: 인자를 `Schema` 타입(`PushSubscriptionIn`) 하나로 묶는다 — ninja 는
+#   `Schema` 타입 인자를 **본문**으로 읽는다(원시 타입과 반대). 그리고 **본문이
+#   옳아도** 쿼리 문자열에 비밀 이름이 하나라도 보이면 400 으로 거절한다
+#   (`_reject_secret_query`) — 낡은 클라이언트나 프록시가 값을 주소에 실어도
+#   접근 로그에 다시 새지 않는다.
+class PushSubscriptionIn(Schema):
+    """구독 등록 본문. **비밀 셋은 이 모양으로만 온다** — 질의로는 안 받는다."""
+
+    endpoint: str
+    p256dh: str
+    auth_secret: str
+    label: str = ""
+
+
+#: 쿼리 문자열에 있으면 안 되는 이름들. `auth` 도 넣는다 — 브라우저 쪽 규격
+#: 이름(`keys.auth`)이고, 누가 그 철자로 실어 보내도 걸려야 한다.
+_SECRET_QUERY_NAMES = ("endpoint", "p256dh", "auth_secret", "auth")
+
+
+def _reject_secret_query(request) -> None:
+    """쿼리 문자열에 구독 비밀 **이름**이 하나라도 있으면 400 (P-166 · D-486).
+
+    ★ 본문이 옳아도 거절한다 — 비밀이 주소에 실리는 순간 접근 로그에 남고,
+      로그 줄은 지우지 않는 것이 규약이다(D-004 회전). 애초에 못 싣게 막는다.
+    ★ 값은 읽지도 인용하지도 않는다 — **이름이 있다는 사실만으로** 거절한다.
+    """
+    present = [name for name in _SECRET_QUERY_NAMES if name in request.GET]
+    if present:
+        raise HttpError(
+            400,
+            "구독 비밀은 쿼리 문자열로 보낼 수 없습니다 — 본문(JSON)으로 보내 주십시오. "
+            f"쿼리에 있던 이름: {', '.join(present)} (값은 적지 않습니다).")
 
 
 @api_controller("", tags=["DSM — U3 현장 (WO-01 차선 U3)"])
@@ -112,9 +155,13 @@ class DsmU3API:
         ★ [턴 T · P-160 ③] **행이 남는다** — `deliveries` `channel=webpush`, 훈련 표식
           (`drill:`)을 달아 5분 억제의 근거가 되지 않는다. 응답에 `delivery_id` ·
           `succeeded` · `failure_reason`(이름·문장 — 값 아님)이 실린다.
-        상태: 401 익명 · 403 시스템 스코프 · 409 매달 사건 0건 · 422 기기 0대 ·
-              503 VAPID 자격 없음(`missing_env` 이름 목록 · 행 0).
+        ★ [P-166] `title`·`body`·`event_id` 는 비밀이 아니지만, **같은 눈으로** 봤다 —
+          이 자리에 구독 비밀 이름이 쿼리로 실려 와도 걸리도록 같은 문지기를 세운다.
+        상태: 401 익명 · 400 쿼리에 구독 비밀 이름 · 403 시스템 스코프 ·
+              409 매달 사건 0건 · 422 기기 0대 · 503 VAPID 자격 없음
+              (`missing_env` 이름 목록 · 행 0).
         """
+        _reject_secret_query(request)
         try:
             return prefs.send_test_push(
                 scope=_scope(request), title=title, body=body, event_id=event_id)
@@ -135,24 +182,30 @@ class DsmU3API:
     @tenant_scoped(reason="웹푸시 구독 등록 — 남의 계정에 내 기기를 물릴 수 없다 "
                           "(쓰기 IDOR). 구독은 한 번 걸면 계속 울린다")
     @idempotent("dsm.push-subscriptions")
-    def create_push_subscription(self, request, endpoint: str, p256dh: str,
-                                 auth_secret: str, label: str = ""):
+    def create_push_subscription(self, request, payload: PushSubscriptionIn):
         """이 기기를 등록한다.
 
-        ★ 인자 이름이 `auth_secret` 인 것은 브라우저 쪽 이름(`keys.auth`)과 **일부러
+        ★ [P-166 · D-486] 인자는 **본문(JSON) 하나**(`PushSubscriptionIn`)로만 온다 —
+          쿼리 문자열로는 안 받는다. ninja 는 원시 타입 인자를 질의로 읽는데, 구독
+          비밀 셋을 원시 타입으로 두면 그 값이 주소에 실려 접근 로그에 남는다
+          (턴 T 실측 · runserver 2줄). `Schema` 타입 인자는 본문으로 읽힌다 — 그래서
+          비밀은 본문에만 있고, 쿼리에 같은 이름이 보이면(옛 클라이언트·재생 요청 등)
+          본문이 옳아도 400 으로 거절한다(`_reject_secret_query`).
+        ★ 필드 이름이 `auth_secret` 인 것은 브라우저 쪽 이름(`keys.auth`)과 **일부러
           다르다**: `auth` 는 이 라우트의 문지기 인자(`@route.post(auth=…)`)와 같은
           낱말이라, 같은 이름을 쓰면 읽는 사람이 둘을 헷갈린다.
         ★ 응답에 **엔드포인트도 키도 실리지 않는다** — 지문 12자와 기기 이름뿐이다.
           푸시 엔드포인트는 그 기기로 알림을 밀어 넣는 주소이고, 한 번 새면 회수할 수
           없다(서명키를 한 번만 내보내는 D-335 ④ 와 같은 결).
 
-        거절을 4xx 로 나눈다: 403 요청자 없음 · 422 값이 계약 밖(평문 http · 키 누락 ·
-        기기 수 상한).
+        거절을 4xx 로 나눈다: 400 쿼리에 비밀 이름 · 403 요청자 없음 ·
+        422 값이 계약 밖(평문 http · 키 누락 · 기기 수 상한).
         """
+        _reject_secret_query(request)
         try:
             return prefs.subscribe(
-                scope=_scope(request), endpoint=endpoint, p256dh=p256dh,
-                auth_secret=auth_secret, label=label)
+                scope=_scope(request), endpoint=payload.endpoint, p256dh=payload.p256dh,
+                auth_secret=payload.auth_secret, label=payload.label)
         except SystemScopeCannotRead as exc:
             raise HttpError(403, str(exc))
         except prefs.PushSubscriptionRejected as exc:
@@ -177,7 +230,10 @@ class DsmU3API:
         """이 기기를 끈다. **행을 지우지 않는다** — 언제 무엇을 받았는지가 함께 사라진다.
 
         404 는 **남의 구독**일 때도 난다 — 존재 여부가 새는 것도 누출이다.
+        ★ [P-166] 이 자리는 비밀을 받지 않는다(경로 인자는 id 뿐) — 그래도 **같은
+          눈으로** 봤다: 누가 쿼리에 구독 비밀 이름을 실어 보내도 400 으로 걸린다.
         """
+        _reject_secret_query(request)
         try:
             return prefs.unsubscribe(
                 scope=_scope(request), subscription_id=subscription_id)

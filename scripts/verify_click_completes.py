@@ -66,7 +66,7 @@ from pathlib import Path
 
 #: ★ [P-156 · 턴 T · 차선 Q] probe 표식 규약 — 씨앗 카메라 표를 **한 곳**(`probe_marks.py`)에서 가져온다.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from probe_marks import PROBE_TAG  # noqa: E402
+from probe_marks import PROBE_TAG, load_seed  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 EVIDENCE = ROOT / "docs" / "agent" / "evidence" / "P-118"
@@ -97,8 +97,22 @@ CLICK_WINDOW_MS = 4500
 # 그 행은 **관측에서 회색**으로 떨어진다 — 판정기가 이름을 보고 봐주는 것이 아니다.
 # ──────────────────────────────────────────────────────────────────────────
 def F(key, title, actor, screen, control, call, state, text, confirm=None, note="",
-      fill=None, img_check=False):
+      fill=None, img_check=False, revert=None):
     """한 흐름.
+
+    `revert` — [★ 턴 U · 차선 Q · 조율자 실측 2026-09-17 21:0x] **상태를 바꾸는 클릭은
+      판정 뒤 같은 문으로 되돌린다.** 턴 T 의 `click_completes` 가 U5#9 「끄기/켜기」를
+      눌러 `NotificationRule` pk 9(critical · fire_user)를 **끈 채로 남겼고**, 그래서
+      다음 게이트(`verify_seed_roles` K2 수신자)가 「닿는 사람 0명」으로 빨강이 됐다.
+      게이트가 제품의 상태를 남기면 **다음 게이트가 제품 대신 우리를 잰다.**
+
+      규약: `revert_toggle()` 을 단 흐름은, 판정에 쓸 상태를 **다 읽은 뒤에** 같은 단추를
+      한 번 더 눌러 원래 값으로 돌린다. 되돌린 사실(눌렀나 · 되돌아갔나)은 관측에
+      `revert` 로 남고 보고에 셈으로 나온다.
+
+      ★ 되돌리기는 **판정을 바꾸지 않는다.** 판정은 되돌리기 전에 이미 끝난 관측으로
+        내려진다 — 되돌림이 실패해도 그 행의 빨강/초록은 그대로이고, 실패는 따로
+        「되돌리지 못한 자리」로 적힌다(빨강을 회색으로 바꾸지 않는다).
 
     `fill` — 누르기 **전에** 채워야 하는 글상자의 `placeholder` (P-132).
       왜 필요한가: 제품이 **일부러** 빈 글상자에서 단추를 잠그는 자리가 있다
@@ -117,12 +131,45 @@ def F(key, title, actor, screen, control, call, state, text, confirm=None, note=
         "key": key, "title": title, "actor": actor, "screen": screen,
         "control": control, "confirm": confirm, "call": call,
         "state": state, "text": text, "note": note, "fill": fill,
-        "img_check": img_check,
+        "img_check": img_check, "revert": revert,
     }
 
 
 def btn(name):
     return {"kind": "button", "name": name}
+
+
+def revert_toggle():
+    """**같은 문으로 되돌린다** — 판정 뒤 같은 단추를 한 번 더 누른다 (턴 U · 절 4).
+
+    껐다 켜는 한 쌍의 단추(「끄기/켜기」처럼)는 **같은 단추를 다시 누르면 원래 값**이다.
+    한쪽으로만 가는 전이(접수 → 조치 → 종결)나 **새로 만드는 문**(키 발급 · 구독)은
+    같은 단추로 돌아오지 않는다 — 그런 자리에는 이것을 달지 않는다(달면 두 번 만든다).
+    """
+    return {"kind": "same_control"}
+
+
+def no_revert(why: str):
+    """**되돌리지 않는다 — 그리고 그 사유를 적는다** (턴 U · 절 4).
+
+    한쪽으로만 가는 전이(접수 → 조치 → 종결)와 새로 만드는 문(회신 · 키 발급)은 같은
+    단추로 돌아오지 않는다. 그런 자리를 「되돌림 선언 없음」으로 두면 **잊은 것**과
+    구별되지 않으므로(D-301 의 0건 규칙과 같다) 선언은 하되 사유를 적는다.
+    """
+    return {"kind": "none", "why": why}
+
+
+def changes_state(flow) -> bool:
+    """이 흐름의 클릭이 **상태를 바꾸는가** — 단추를 눌러 쓰기 문을 부르면 그렇다.
+
+    ★ 단추 **이름**으로 가르지 않는다. 「접수하기|조치 시작|종결하기」도 이름이 갈래로
+      적혀 있지만 그것은 뒤집는 단추가 아니라 **한쪽으로만 가는 전이**다 — 다시 누르면
+      원래로 오는 게 아니라 한 걸음 더 간다. 이름이 아니라 **문의 메서드**를 본다.
+    """
+    ctrl, call = flow.get("control"), flow.get("call")
+    if not ctrl or ctrl.get("kind") != "button" or not call:
+        return False
+    return str(call[0]).upper() in ("POST", "PUT", "PATCH", "DELETE")
 
 
 def goto():
@@ -157,7 +204,9 @@ FLOWS = (
     #:  종전 기대식(「관제·대시보드·이벤트·GuardianX」)은 역할 홈이 없던 시절의 짐작이었다.
     F("U1#1", "교대 시작 — 로그인", "u1", "/login", btn("로그인"),
       ("POST", r"/api/v1/auth/login$"),
-      {"kind": "route_change", "from": "/login"}, ["가장 급한 하나"]),
+      {"kind": "route_change", "from": "/login"}, ["가장 급한 하나"],
+      revert=no_revert("로그인은 제품의 상태가 아니라 **세션**이다. 되돌림(로그아웃)을 하면 "
+                       "뒤의 일곱 행이 그 세션으로 걷지 못한다 — 되돌리는 것이 측정을 끊는다")),
     #: ★ [P-132 · 2026-09-11] `preset` 은 **화면에 한 번도 안 뜨는 값**이다 —
     #:  `ControlDashboard.tsx:158` 이 `PRESET_LABEL` 로 「관제요원 화면」이라 부른다.
     #:  화면이 서버 값을 **그대로 적는** 자리는 `panel_total` 하나다:
@@ -193,6 +242,9 @@ FLOWS = (
       btn("실제로 판정"), ("POST", r"/api/dsm/events/\d+/review"),
       srv_change("/api/dsm/events/{event}", "verdict"),
       ["판정", "실제", "확정"], confirm=btn("확인"),
+      revert=no_revert("판정은 **감사 기록이 남는 한쪽 전이**다. 되돌리면 감사에 거짓 왕복이 "
+                       "남는다(대장은 줄지 않는다). 대상은 이번 회 씨앗 사건이라 다음 회에 "
+                       "안 남는다 — 씨앗은 회마다 새로 심는다(P-156)"),
       note="확인창(Modal.confirm)을 지나는 길. 2026-09-08 에 요청 0건이었다"),
     #: ★ [P-132] 이 화면이 **실제로 그리는 수**는 이벤트 5건이 아니라 교대 초안의
     #:  「미처리: N건」이고, 그 수는 `ShiftHandoverPanel.tsx:79` 가
@@ -223,6 +275,8 @@ FLOWS = (
       ("POST", r"/api/dsm/events/\d+/response"),
       srv_change("/api/dsm/events/{event}", "response_state"),
       ["되돌", "사유"], confirm=btn("되돌리기"),
+      revert=no_revert("이 단추 **자체가 되돌림 문**이다. 한 번 더 누르면 원래로 오는 것이 "
+                       "아니라 또 되돌린다(사유가 또 하나 남는다) — 대상은 이번 회 씨앗 사건이다"),
       note="사유 필수 · 확인창을 지나는 길 · 종결된 사건에서만 그려진다"),
     F("U2#4", "심각 이벤트 상황 판단", "u2", "/dsm/events/{event}", goto(),
       ("GET", r"/api/dsm/events/\d+$"),
@@ -256,7 +310,8 @@ FLOWS = (
     #:  빨강이고, 그때 화면은 「새로 보낸 알림이 없습니다」라고 말한다(`EventDetail.tsx`).
     F("U3#1", "알림 수신", "u3", "/dsm/events/{event}", btn("알림 보내기"),
       ("POST", r"/api/dsm/events/\d+/notify"),
-      srv_change("/api/dsm/deliveries?event_id={event}&limit=500", "total"), ["발송", "알림"]),
+      srv_change("/api/dsm/deliveries?event_id={event}&limit=500", "total"), ["발송", "알림"],
+      revert=no_revert("보낸 알림은 **안 보낸 것으로 못 만든다**. 발송 기록을 지우는 것은 대장을 줄이는 일이다 — 대상은 이번 회 씨앗 사건이다")),
     F("U3#2", "위치 확인 — 어디로 가나", "u3", "/m/events/{event}", goto(),
       ("GET", r"/api/dsm/events/\d+$"),
       srv_reflect("/api/dsm/events/{event}", "address"), ["어디로", "주소", "위치"]),
@@ -277,7 +332,8 @@ FLOWS = (
     F("U3#7", "현장 도착 보고", "u3", "/m/events/{event}",
       btn("접수하기|조치 시작|종결하기"),
       ("POST", r"/api/dsm/events/\d+/response"),
-      srv_change("/api/dsm/events/{event}", "response_state"), ["접수", "조치", "종결"]),
+      srv_change("/api/dsm/events/{event}", "response_state"), ["접수", "조치", "종결"],
+      revert=no_revert("접수 → 조치 → 종결은 **한쪽으로만 가는 전이**다. 같은 단추를 다시 누르면 원래로 오는 것이 아니라 한 걸음 더 간다 — 대상은 이번 회 씨앗 사건이다")),
     #: ★ [P-132] 단추 이름은 **「회신 보내기」**다 (`MobileEventDetail.tsx:484`).
     #:  그리고 이 단추는 글상자가 비면 `disabled` 다(같은 파일 481행) —
     #:  그래서 **글을 먼저 채운다**(`fill` 은 아래 드라이버가 한다).
@@ -286,7 +342,8 @@ FLOWS = (
     F("U3#9", "현장 상황 한 줄 보고", "u3", "/m/events/{event}", btn("회신 보내기"),
       ("POST", r"/api/dsm/events/\d+/field-reply"),
       srv_change("/api/dsm/events/{event}/field-replies", "replies"), ["회신", "현장"],
-      fill="현장에서 본 것을 한 줄로 적습니다."),
+      fill="현장에서 본 것을 한 줄로 적습니다.",
+      revert=no_revert("회신은 **덧붙이는 것**이고 지우는 문이 없다(있어도 쓰지 않는다 — 대장은 줄지 않는다). 대상은 이번 회 씨앗 사건이다")),
     F("U3#14", "해당 카메라 모바일 실시간", "u3", None, None, None, None, [],
       note="정본: 없음 — 구간 티켓은 계약 11조 잠김"),
     F("U3#16", "근무 외 알림 차단", "u3", None, None, None, None, [],
@@ -386,9 +443,14 @@ FLOWS = (
     #:  턴 T 에 생겼다(NotifySettings.tsx · `data-gx=notify-rule-saved`). 옛 note 「화면·라우트
     #:  없다」는 턴 S 이후 옛말이었다 — 정본 없음을 그대로 두면 영원히 회색이다.
     #:  ⚠ 심각 등급 행은 서버가 409 로 막는다(심각 0명 금지) — 정보/경고 행의 단추를 누른다.
+    #: ★★ [턴 U · 차선 Q · 절 4] **되돌린다.** 턴 T 의 이 한 번 누름이 `NotificationRule`
+    #:  pk 9(critical · fire_user)를 끈 채로 남겼고, `verify_seed_roles` 의 K2 수신자가
+    #:  「닿는 사람 0명」으로 빨강이 됐다 [조율자 실측 2026-09-17 21:0x]. 잰 자리는
+    #:  제품이 아니라 **우리가 남긴 상태**였다. 판정 뒤 같은 단추를 한 번 더 누른다.
     F("U5#9", "알림 규칙 설정", "u5", "/dsm/notify", btn("^(끄기|켜기)$"),
       ("POST", r"/api/dsm/settings/notify-rules/save"),
-      srv_reflect("/api/dsm/settings/notify-rules/list", "rules"), ["저장했습니다", "규칙 #"]),
+      srv_reflect("/api/dsm/settings/notify-rules/list", "rules"), ["저장했습니다", "규칙 #"],
+      revert=revert_toggle()),
     F("U5#10", "알림 채널 설정", "u5", None, None, None, None, [],
       note="정본: 없음 — 알림 채널 결정 대기(대표)"),
     F("U5#14", "시스템 상태 확인", "u5", "/dsm/system", goto(),
@@ -812,6 +874,48 @@ def self_test() -> int:
             print("%s X 여섯 사람 × 여덟이 아니다 — %s" % (TAG, per))
         else:
             print("%s O 분모 48 = 여섯 사람 × 여덟 (%s)" % (TAG, per))
+
+    # ⑦ ★ [턴 U · 절 4] **상태를 바꾸는 클릭은 전부 되돌림을 선언한다** — 손 grep 대신
+    #   시험이 센다. 다음에 쓰기 흐름을 하나 더 넣는 사람이 이 주석을 못 읽어도 잡힌다.
+    writers = [f["key"] for f in FLOWS if changes_state(f)]
+    missing = [f["key"] for f in FLOWS if changes_state(f) and not f.get("revert")]
+    if missing:
+        ok = False
+        print("%s X 상태를 바꾸는 클릭인데 되돌림 선언이 없다: %s — 게이트가 남긴 상태는 "
+              "다음 게이트의 거짓 빨강이다 (턴 T · U5#9 → verify_seed_roles K2 0명)"
+              % (TAG, missing))
+    elif not writers:
+        ok = False
+        print("%s X 상태를 바꾸는 클릭이 한 자리도 없다 — 이 시험의 분모가 0이다" % TAG)
+    else:
+        back = [f["key"] for f in FLOWS
+                if changes_state(f) and (f["revert"] or {}).get("kind") == "same_control"]
+        print("%s O 상태를 바꾸는 클릭 %d자리가 모두 되돌림을 선언한다 — 같은 문으로 "
+              "되돌리는 자리 %d(%s) · 사유를 적고 안 되돌리는 자리 %d"
+              % (TAG, len(writers), len(back), " · ".join(back) or "—",
+                 len(writers) - len(back)))
+        blank = [k for k in writers
+                 if (FLOW_BY_KEY[k]["revert"] or {}).get("kind") == "none"
+                 and not (FLOW_BY_KEY[k]["revert"] or {}).get("why")]
+        if blank:
+            ok = False
+            print("%s X 사유 없는 「안 되돌림」: %s — 사유 없는 선언은 잊은 것과 "
+                  "구별되지 않는다 (D-301)" % (TAG, blank))
+
+    # ⑦-b 되돌리기는 **판정을 바꾸지 않는다** — 관측에 revert 가 있든 없든 같은 답
+    base = _all_good()
+    K2 = "U5#9"
+    if K2 in base:
+        m = _all_good()
+        m[K2] = dict(m[K2], revert={"kind": "same_control", "clicked": True,
+                                    "restored": False, "why": "안 돌아왔다"})
+        a = dict((k, c) for k, c, _w, _s, _t in judge(base))
+        b = dict((k, c) for k, c, _w, _s, _t in judge(m))
+        if a != b:
+            ok = False
+            print("%s X 되돌림 관측이 판정을 바꿨다 — 판정은 되돌리기 **전**의 관측이다" % TAG)
+        else:
+            print("%s O 되돌림 관측은 판정을 바꾸지 않는다 (실패해도 그 행의 색은 그대로)" % TAG)
 
     print("%s 자기시험 %s" % (TAG, "통과" if ok else "**실패**"))
     return EXIT_OK if ok else EXIT_FAIL
@@ -1379,10 +1483,37 @@ def walk(persona, account, viewport, flows, event_id):
                     st["on_screen"] = bool(a) and (str(a) in hay or any(
                         w.lower() in hay.lower() for w in ["행", "건", "개"]) and len(hay) > 400)
 
+        # ── ★ [턴 U · 절 4] **되돌리기 — 판정에 쓸 것을 다 읽은 뒤에** ──────────
+        #   게이트가 제품의 상태를 남기면 다음 게이트가 제품 대신 우리를 잰다
+        #   (턴 T · U5#9 → `verify_seed_roles` K2 수신자 0명).
+        rev = None
+        if ((f.get("revert") or {}).get("kind") == "same_control"
+                and f["control"] and f["control"].get("kind") == "button"):
+            rev = {"kind": f["revert"]["kind"], "clicked": False, "restored": None}
+            try:
+                el2 = find_control(page, f["control"])
+                if el2 is None:
+                    rev["why"] = "되돌릴 단추를 다시 못 찾았다 — 상태가 남는다"
+                else:
+                    el2.click(timeout=8000)
+                    page.wait_for_timeout(SPEC["window_ms"])
+                    rev["clicked"] = True
+                    if gp:
+                        _c, _j = get(gp, tok)
+                        rev["after"] = dig(_j, st.get("field"))
+                        #: 「원래대로」 = 누르기 **전에** 읽은 값과 같다.
+                        rev["restored"] = (rev["after"] == before)
+                        if not rev["restored"]:
+                            rev["why"] = ("되돌렸는데 값이 처음과 다르다 (%r → %r)"
+                                          % (before, rev["after"]))
+            except Exception as exc:                    # noqa: BLE001
+                rev["why"] = "되돌리기가 터졌다: %s" % type(exc).__name__
+
         note(key, control={"found": True, "clicked": True,
                            "name": f["control"].get("name", "화면 열기")},
              calls=got, state=st, text_after=(text_after or "")[:6000],
-             **({"img": img_obs} if img_obs is not None else {}))
+             **({"img": img_obs} if img_obs is not None else {}),
+             **({"revert": rev} if rev is not None else {}))
 
     ctx.close()
 
@@ -1470,8 +1601,48 @@ API_PATHS = {
 API_BODIES = {}
 
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# [P-170 ① · 2026-09-18 턴 U · 차선 Q] **재는 동안 아무도 로그인하지 않는다**
+#
+#   턴 T 에 V 가 재는 동안 조율자의 게이트가 같은 역할 계정으로 로그인해 V 의 세션을
+#   끊었다(계정당 세션 1개 → `end_previous_session` → 429 · D-487 ①). V 는 그 판을 버렸다.
+#   이 도구는 **로그인을 한다** — 그러므로 LOCK 을 먼저 본다.
+#
+#   ★ **잠근 사람은 지나간다**: `GX_V_SESSION_ID` 가 LOCK 의 세션과 같으면 안 막는다.
+#     그 밖의 사람에게는 **회색(exit 2)** 이다 — 회색은 초록이 아니다(D-301).
+# ═══════════════════════════════════════════════════════════════════════════
+def _v_lock_blocks(tag: str = TAG) -> bool:
+    """V 단독 세션이 잠갔고 내가 그 사람이 아니면 True — 그때는 **재지 않는다**."""
+    try:
+        from v_lock import describe, is_locked
+    except ImportError:                                   # 잠금 도구가 없으면 막지 않는다
+        return False
+    if not is_locked():
+        return False
+    print("%s ? **회색 — V 단독 중 · 재지 않음** (P-170 ① · docs/agent/evidence/V_LOCK)" % tag)
+    print("%s   %s · 잠근 사람은 GX_V_SESSION_ID 를 주고 부른다" % (tag, describe()))
+    return True
+
+
 def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://localhost:3002",
-            keep_event_ids=()):
+            keep_event_ids=(), seed_file=None):
+    if _v_lock_blocks():
+        return EXIT_UNDECIDABLE
+    #: ★★ [P-170 ② · 턴 U · 차선 Q] **씨앗 id 는 손으로 옮기지 않는다.**
+    #:   `capture_screens` 가 심고 `runs/<stamp>/seed.json` 에 적은 것을 여기서 읽는다.
+    #:   `--keep-event` 를 손으로 준 것이 있으면 그것과 **합친다**(손이 이긴다는 뜻이 아니라,
+    #:   둘 다 이번 회의 씨앗이라는 뜻이다). 파일이 없으면 빈 벌이고, 빈 벌이면 종전처럼
+    #:   손으로 준 것만 쓴다 — **지어내지 않는다**.
+    seed = load_seed(seed_file)
+    keep = list(dict.fromkeys(list(keep_event_ids or []) + list(seed["event_ids"])))
+    if seed["source"]:
+        print("%s [씨앗] %s — 회차 %s · 사건 %s · 표식 %s"
+              % (TAG, seed["source"], seed["run"] or "?", seed["event_ids"] or "없음",
+                 seed["probe_mark"] or "없음"))
+    else:
+        print("%s [씨앗] 명세 없음 — %s" % (TAG, seed["why"]))
+    keep_event_ids = keep
     pw_role = os.environ.get("GX_SEED_ROLE_PASSWORD") or ""
     pw_probe = os.environ.get("GX_PROBE_PASSWORD") or ""
     if not pw_role or not pw_probe:
@@ -1585,6 +1756,9 @@ def main() -> int:
     ap.add_argument("--spa", default="http://localhost:3002")
     ap.add_argument("--keep-event", type=int, action="append", default=[],
                     help="[P-156] 이번 회에 심은 probe 씨앗 id — 표본에서 빼지 않는다 (여러 번 가능)")
+    ap.add_argument("--seed-file", default=None,
+                    help="[P-170 ②] capture_screens 가 쓴 씨앗 명세 "
+                         "(기본: docs/agent/evidence/P-157/runs/ 의 최신 seed.json)")
     args = ap.parse_args()
 
     if args.self_test:
@@ -1594,7 +1768,8 @@ def main() -> int:
         if rc != EXIT_OK:
             print("%s 자기시험이 깨졌다 — 재지 않는다" % TAG)
             return rc
-        return measure(args.container, args.api, args.spa, keep_event_ids=args.keep_event)
+        return measure(args.container, args.api, args.spa,
+                       keep_event_ids=args.keep_event, seed_file=args.seed_file)
     if args.list:
         for f in FLOWS:
             print("%-7s %-26s | 누르는 것 %-14s | 기대 호출 %-8s %-42s | 상태 %-15s | 문구 %s"
@@ -1634,6 +1809,28 @@ def main() -> int:
         c4 = "".join("O" if cells[n] else ("?" if cells[n] is None else "X")
                      for n in ("control", "call", "state", "text"))
         print("  %s %-7s %-4s %-26s %s" % (mark[color], key, c4, flow["title"][:26], why))
+
+    # ★ [턴 U · 절 4] **되돌림 셈** — 게이트가 남긴 상태는 다음 게이트의 거짓 빨강이다
+    want_rev = [f["key"] for f in FLOWS
+                if (f.get("revert") or {}).get("kind") == "same_control"]
+    if want_rev:
+        done, failed, notrun = [], [], []
+        for k in want_rev:
+            rv = (obs.get(k) or {}).get("revert")
+            if not rv or not rv.get("clicked"):
+                (notrun if not rv else failed).append(
+                    (k, (rv or {}).get("why", "이번 판에 그 행을 못 눌렀다")))
+            elif rv.get("restored") is False:
+                failed.append((k, rv.get("why", "값이 처음과 다르다")))
+            else:
+                done.append(k)
+        print("")
+        print("%s [되돌림] 선언 %d자리 — 되돌림 %d · 못 되돌림 %d · 안 눌림 %d "
+              "(상태를 바꾸는 클릭은 판정 뒤 같은 문으로 되돌린다)"
+              % (TAG, len(want_rev), len(done), len(failed), len(notrun)))
+        for k, w in failed:
+            print("%s   ★ %s 를 되돌리지 못했다 — %s. **지금 남은 상태를 손으로 되돌린다**"
+                  % (TAG, k, w))
 
     reds = [(k, w) for k, c, w, _, _ in rows if c == RED]
     family = [(k, w) for k, w in reds if w.startswith("요청은 나갔는데")]

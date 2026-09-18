@@ -4,7 +4,7 @@
 캐시 처리: 우회 — 구독·설정은 저장 직후 다시 읽는 시험이라 응답 캐시가 적중하면
 방금 저장한 값이 가려진다(D-341). `tests.no_cache.NO_CACHE` 로 우회한다.
 
-무엇을 재는가 — 다섯
+무엇을 재는가 — 여섯
 --------------------
     ① **익명은 401**            구독은 계정이 건다. 무계정 링크 금지의 집행이다.
     ② **자격이 응답에 안 실린다**  푸시 엔드포인트는 그 기기로 알림을 밀어 넣는 주소다.
@@ -17,6 +17,11 @@
        F-10 지연 통계가 경보 아닌 것을 세고 5분 억제가 다음 진짜 경보를 삼킨다.
     ⑤ **못 보내면 못 보낸다고 말한다**  이 환경에는 발송기(`pywebpush`)도 VAPID 키도
        없다 [실측 2026-09-16]. 그 상태의 `ok=True` 가 「조용한 성공」이다(D-284).
+    ⑥ **[P-166 · D-486] 구독 비밀은 본문으로만 — 쿼리에 있으면 본문이 옳아도 400**
+       턴 T 실측: `endpoint`·`p256dh`·`auth_secret` 이 쿼리 문자열로 갔고 그 줄이
+       접근 로그에 남았다. 이 시험은 ⓐ 본문(JSON `PushSubscriptionIn`)만으로 등록이
+       되는가 ⓑ 같은 이름이 쿼리에 실리면(본문이 맞아도) 400 이고 아무것도 저장되지
+       않는가를 잰다.
 
 ★ 값은 시험에도 적지 않는다 — 여기 쓰는 엔드포인트·키는 전부 `*.invalid` 의
   **가짜**이고, 진짜 자격은 이 저장소 어디에도 없다(D-204).
@@ -86,12 +91,19 @@ class _PushFixture(TestCase):
         return request
 
     def _subscribe(self, user, *, endpoint=FAKE_ENDPOINT, p256dh=FAKE_P256DH,
-                   auth_secret=FAKE_AUTH, label="시험용 휴대전화"):
-        from apps.dsm.api_u3 import DsmU3API
+                   auth_secret=FAKE_AUTH, label="시험용 휴대전화", query=""):
+        """[P-166] 비밀은 **본문**으로만 조립한다. `query` 는 쿼리 문자열에 얹을 덩어리
+        (예: `"endpoint=x"`) — 비밀이 거기 실리면 본문이 옳아도 거절돼야 한다(⑥)."""
+        from apps.dsm.api_u3 import DsmU3API, PushSubscriptionIn
 
-        return DsmU3API.create_push_subscription(
-            DsmU3API(), self._req(user), endpoint=endpoint, p256dh=p256dh,
-            auth_secret=auth_secret, label=label)
+        path = "/api/dsm/push-subscriptions"
+        if query:
+            path = f"{path}?{query}"
+        request = RequestFactory().post(path)
+        request.user = user
+        payload = PushSubscriptionIn(
+            endpoint=endpoint, p256dh=p256dh, auth_secret=auth_secret, label=label)
+        return DsmU3API.create_push_subscription(DsmU3API(), request, payload)
 
     def _list(self, user):
         from apps.dsm.api_u3 import DsmU3API
@@ -192,6 +204,117 @@ class PushSubscriptionRouteTest(_PushFixture):
         self._subscribe(self.user_a)
         self._subscribe(self.user_a, p256dh=FAKE_P256DH + "2")
         self.assertEqual(1, self._list(self.user_a)["total"])
+
+
+class PushSubscriptionSecretsGoOnlyInTheBodyTest(_PushFixture):
+    """⑥ [P-166 · D-486] 본문은 옳게 · 쿼리에 비밀 이름이 있으면 **본문이 옳아도 400**."""
+
+    # ── ⓐ 본문(JSON Schema)만으로 등록이 된다 ───────────────────────────────
+    def test_a_body_only_request_succeeds(self) -> None:
+        saved = self._subscribe(self.user_a)
+        self.assertEqual(12, len(saved["endpoint_sha12"]))
+        self.assertEqual(1, self._list(self.user_a)["total"])
+
+    # ── ⓑ 쿼리에 비밀 이름이 하나라도 있으면 — 본문이 옳아도 400 · 저장 0 ──────
+    def test_each_secret_name_in_the_query_string_is_refused_alone(self) -> None:
+        from ninja.errors import HttpError
+
+        for name in ("endpoint", "p256dh", "auth_secret", "auth"):
+            with self.subTest(query_name=name):
+                with self.assertRaises(HttpError) as caught:
+                    self._subscribe(self.user_a, query=f"{name}=whatever")
+                self.assertEqual(400, caught.exception.status_code)
+        self.assertEqual(
+            0, self._list(self.user_a)["total"],
+            "쿼리에 비밀 이름이 있었는데도 구독이 저장됐습니다 — 본문이 옳았다는 "
+            "이유로 거절을 건너뛰면 안 됩니다.")
+
+    def test_all_three_secrets_in_the_query_together_are_refused(self) -> None:
+        from ninja.errors import HttpError
+
+        with self.assertRaises(HttpError) as caught:
+            self._subscribe(
+                self.user_a,
+                query=f"endpoint={FAKE_ENDPOINT}&p256dh={FAKE_P256DH}"
+                      f"&auth_secret={FAKE_AUTH}")
+        self.assertEqual(400, caught.exception.status_code)
+        blob = str(caught.exception)
+        for secret in (FAKE_ENDPOINT, FAKE_P256DH, FAKE_AUTH):
+            self.assertNotIn(
+                secret, blob,
+                "거절 사유 문장에 비밀 값이 그대로 인용됐습니다 — 이름만 적어야 합니다.")
+
+    def test_a_harmless_query_string_does_not_block_the_body(self) -> None:
+        """비밀이 아닌 쿼리(예: 캐시 우회 표식)는 걸리지 않는다 — 이름만 가린다."""
+        saved = self._subscribe(self.user_a, query="ignored=1")
+        self.assertEqual(12, len(saved["endpoint_sha12"]))
+
+    # ── 실물 HTTP 왕복 — ninja 라우팅을 실제로 태운다 ──────────────────────
+    def _give_role(self, user, group):
+        """이 사람에게 역할 하나를 준다 — `role_gate`(P-105)가 「역할 0」으로 403 을
+        내지 않게(`tests/test_dsm_app.py::DsmFixture._own`·`_role` 과 같은 조립).
+        이 비밀-쿼리 시험 둘만 실물 HTTP 를 태우고, 나머지는 함수를 직접 부르므로
+        미들웨어를 안 지나 이 역할이 없어도 됐다."""
+        from kernels.k1_event.services import _owner_field
+
+        Role = apps.get_model("role", "Role")
+        role = Role.objects.create(
+            role_name=f"push-test-role-{user.pk}", code=f"push_test_{user.pk}")
+        if _owner_field(type(role)) == "groups":
+            role.groups.set([group])
+        else:
+            role.group = group
+            role.save(update_fields=["group"])
+        user.roles.add(role)
+        user.refresh_from_db()
+        return user
+
+    def _bearer(self, user) -> dict:
+        import uuid
+
+        import jwt as pyjwt
+        from django.conf import settings
+        from ninja_jwt.tokens import RefreshToken
+
+        session_id = str(uuid.uuid4())
+        refresh = RefreshToken.for_user(user)
+        refresh["session_id"] = session_id
+        access = str(refresh.access_token)
+        decoded = pyjwt.decode(
+            access, settings.NINJA_JWT["SIGNING_KEY"],
+            algorithms=[settings.NINJA_JWT.get("ALGORITHM", "HS256")])
+        setter = getattr(user, "set_encrypted_session_token", None)
+        if setter is not None:
+            setter(session_id, decoded.get("jti"))
+            user.save()
+        return {"HTTP_AUTHORIZATION": "Bearer %s" % access, "HTTP_X_NO_CACHE": "true"}
+
+    def test_real_http_json_body_reaches_200_and_carries_no_secret_back(self) -> None:
+        """ninja 라우팅을 실제로 태운다 — `PushSubscriptionIn` 이 진짜 본문 파서를 탄다."""
+        self._give_role(self.user_a, self.group_a)
+        client = Client(raise_request_exception=False)
+        body = json.dumps({
+            "endpoint": FAKE_ENDPOINT, "p256dh": FAKE_P256DH,
+            "auth_secret": FAKE_AUTH, "label": "실물 HTTP 시험"})
+        resp = client.post(
+            "/api/dsm/push-subscriptions", data=body,
+            content_type="application/json", **self._bearer(self.user_a))
+        self.assertIn(resp.status_code, (200, 201), resp.content[:300])
+        blob = resp.content.decode("utf-8")
+        for secret in (FAKE_ENDPOINT, FAKE_P256DH, FAKE_AUTH):
+            self.assertNotIn(secret, blob)
+
+    def test_real_http_query_secrets_are_400_even_with_a_correct_body(self) -> None:
+        self._give_role(self.user_a, self.group_a)
+        client = Client(raise_request_exception=False)
+        body = json.dumps({
+            "endpoint": FAKE_ENDPOINT, "p256dh": FAKE_P256DH,
+            "auth_secret": FAKE_AUTH, "label": "실물 HTTP 쿼리 시험"})
+        resp = client.post(
+            "/api/dsm/push-subscriptions?endpoint=%s&p256dh=%s&auth_secret=%s" % (
+                FAKE_ENDPOINT, FAKE_P256DH, FAKE_AUTH),
+            data=body, content_type="application/json", **self._bearer(self.user_a))
+        self.assertEqual(400, resp.status_code, resp.content[:300])
 
 
 class VapidStatusTest(_PushFixture):

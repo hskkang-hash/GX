@@ -606,27 +606,16 @@ def incident_report(*, scope: TenantScope, event_id: int) -> bytes:
         Http404: 없는 사건이거나 남의 사건.
         IncidentReportUnavailable: 사건은 있는데 지금 찍을 수 없다 (409).
     """
-    from kernels.k4_report import RenderFailed, build_context, render_html
+    from kernels.k4_report import RenderFailed, render_html
 
     from apps.dsm import incident_report as form
 
-    context = build_context(scope=scope, event_id=event_id)
-    events = list(getattr(context, "events", ()) or ())
-    if not events:
-        # ★ 출처가 답을 안 준 것과 「그런 사건이 없다」는 다른 상태다. 여기까지 왔다는 것은
-        #   404 가 아니었다는 뜻이므로 **409** 이고, 사유를 함께 낸다 (D-290).
-        raise IncidentReportUnavailable(
-            "사건 자료를 가져오지 못해 보고서를 만들 수 없습니다 — "
-            f"실패한 출처 {list(context.sources_failed) or ['(사유 미기재)']}")
-
-    clock = response_clock(scope=scope, event_id=event_id)
-    actor = scope.require_actor()
-    html = form.build_html(
-        event=events[0], clock=clock, actions=context.actions,
-        tenant=form.tenant_name(actor),
-        issued_by=form.person_label(actor),
-        sources_failed=tuple(context.sources_failed),
-    )
+    # ★ [턴 U 병합 · 조율자] **조립은 한 곳이다.** 이 함수는 위 다섯 줄로 HTML 을 직접
+    #   조립했고, DOCX 정본(결정 ⑤)이 서면서 같은 조립이 `incident_report.build_incident_html`
+    #   에 두 번째로 생겼다. 두 벌이면 어느 날 한쪽만 고쳐진다 — 그래서 여기서 그 함수를
+    #   부른다. 404(남의 사건)와 409(자료 못 가져옴)는 그 함수가 종전과 같은 자리에서 낸다.
+    #   이 함수에 남는 일은 **찍는 것**뿐이다(PDF).
+    html = form.build_incident_html(scope=scope, event_id=event_id)
     try:
         return render_html(scope=scope, html=html)
     except RenderFailed as exc:

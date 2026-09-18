@@ -1239,3 +1239,90 @@ class DsmUpperReportFlag(TenantModel):
 
     def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
         return f"upper_report@event{self.event_id}"
+
+
+class DsmSystemRequest(TenantModel):
+    """턴 U · U56 — **운영계에 무엇을 해 달라는 「요청」한 줄.** 실행이 아니다.
+
+    왜 표가 필요한가 — **「눌렀다」와 「일어났다」를 절대 한 칸에 두지 않는다**
+    ---------------------------------------------------------------------
+    관리자 화면의 「재시작 요청」 단추가 컨테이너를 실제로 내리면 그것은 운영계
+    외부 행위이고, 그 권한은 이 앱에 없다(WO-01 불변 · 삭제·되돌리기·운영계는 대표).
+    그래서 이 표가 하는 일은 하나다: **누가 · 언제 · 왜 재시작을 요청했는가**를
+    남기고, 실행은 점검 창에서 사람이 한다.
+
+    ★ `status` 의 기본은 `requested` 다 — 「요청됨」이 사실이고 「완료」는 실행한
+      쪽이 적는다. 기본값을 `done` 으로 두면 아무도 안 한 일이 초록이 된다.
+    ★ `reason` 은 **비울 수 없다**(CHECK). 사유 없는 재시작 요청은 다음 사람에게
+      「왜 내렸는지 모르는 정지」이고, 그 기록으로는 재발을 못 막는다.
+    """
+
+    class Kind(models.TextChoices):
+        RESTART = "restart", "재시작 요청"
+
+    class Status(models.TextChoices):
+        REQUESTED = "requested", "요청됨 — 실행은 점검 창에서"
+        SCHEDULED = "scheduled", "점검 창에 잡힘"
+        DONE = "done", "실행됨"
+        REJECTED = "rejected", "반려됨"
+
+    kind = models.CharField(max_length=16, choices=Kind.choices,
+                            default=Kind.RESTART, db_index=True)
+    #: 왜 재시작해야 하는가. 빈 값은 DB 가 거절한다.
+    reason = models.CharField(max_length=255)
+    status = models.CharField(max_length=16, choices=Status.choices,
+                              default=Status.REQUESTED, db_index=True)
+    #: 요청한 사람. `created_by`(dj-core) 와 겹쳐 보이지만 **겹치지 않는다** —
+    #: 배치가 대신 적는 날 `created_by` 는 배치 계정이 되고 이 칸은 사람으로 남는다.
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="dsm_system_requests")
+    #: 실행한 사람이 적는 칸. 실행 전에는 비어 있다 — 「비었다」가 「아직」이다.
+    handled_note = models.CharField(max_length=255, blank=True, default="")
+
+    class Meta(TenantModel.Meta):
+        db_table = "dsm_system_request"
+        constraints = [
+            *TenantModel.Meta.constraints,
+            models.CheckConstraint(
+                condition=~models.Q(reason=""),
+                name="dsm_system_request_reason_required"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
+        return f"system_request#{self.pk}[{self.kind}/{self.status}]"
+
+
+class DsmApiKeyScope(TenantModel):
+    """턴 U · U56 — API-03·04 **들어오는 키의 범위**(scope). 키 하나에 살아 있는 행 1.
+
+    왜 우리 층에 두는가 — **dj-core 의 `apikey_account.APIKey` 는 §0.4 다**
+    -------------------------------------------------------------------
+    그 표에는 범위 칸이 없고, 우리는 그 파일을 한 줄도 고치지 않는다(D-207).
+    그래서 범위는 **우리 표**에 둔다. `key_id` 는 그 표의 pk 를 가리키는 정수이고
+    FK 가 아니다 — FK 를 걸면 우리 마이그레이션이 금지구역 표에 제약을 심는다.
+
+    ★ 없는 것과 비어 있는 것은 다르다: 행이 **없으면** 「범위를 아직 정한 적 없다」
+      이고(발급 문이 기본 `["events:read"]` 로 한 행을 만든다), 행이 있고 `scopes`
+      가 **빈 목록**이면 「아무 데도 못 간다」다. 둘을 뭉치면 범위 없는 키가
+      전부 열리는 쪽으로 틀린다 — D-335 가 잡은 바로 그 모양이다.
+    ★ 값 판정(어떤 이름이 있는가)은 `kernels/k5_trust/key_scopes.py` **한 곳**이다.
+      여기에 choices 로 또 적으면 두 벌이 되고, 두 벌은 반드시 어긋난다(D-212).
+    """
+
+    #: dj-core `apikey_account.APIKey` 의 pk. FK 아님(§0.4 — 금지구역에 제약을 심지 않는다).
+    key_id = models.PositiveIntegerField(db_index=True)
+    #: 허용 이름의 목록. `[]` 는 「아무 데도 못 간다」이지 「전부」가 아니다.
+    scopes = models.JSONField(default=list, blank=True)
+
+    class Meta(TenantModel.Meta):
+        db_table = "dsm_api_key_scope"
+        constraints = [
+            *TenantModel.Meta.constraints,
+            models.UniqueConstraint(
+                fields=["key_id"], condition=models.Q(deleted__isnull=True),
+                name="dsm_api_key_scope_one_live_per_key"),
+        ]
+
+    def __str__(self) -> str:  # pragma: no cover - 관리 화면 표시용
+        return f"api_key_scope[key={self.key_id}]"

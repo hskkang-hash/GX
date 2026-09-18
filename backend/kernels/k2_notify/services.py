@@ -548,8 +548,38 @@ def send(
 
     if recipients is None:
         group = _group_of(event)
-        recipients = resolve_recipients(
-            scope=scope, severity=event.severity, group=group)
+        # ★ [턴 U · P-173 §2 ④ 실측 · 턴 T 넘김] `resolve_recipients` 는 `zone=` 을
+        #   받아 구역 규칙을 고를 수 있는데, 이 발송 경로는 그 값을 **한 번도
+        #   넘기지 않고 있었다** — 카메라를 구역에 묶고 그 구역 전용 알림 규칙을
+        #   만들어도, 실제 발송은 언제나 전역 규칙(`zone` 빈 규칙)만 썼다. 그
+        #   차이는 지금 눈에 안 띈다 — [실측 2026-09-18 · 개발 DB] `Zone` 행 0건 ·
+        #   구역 있는 `NotificationRule` 0/9 건 · 카메라 119 도 구역 0개라, 지금은
+        #   `zone=None` 과 결과가 같다. 그래도 **와이어가 빠진 것은 사실**이고,
+        #   `Zone` 이 채워지는 날 조용히 전역 규칙으로 새는 상태였다.
+        #
+        #   카메라 하나가 구역 여럿에 걸칠 수 있다(`Zone.cameras` M2M · 모델 머리말
+        #   「하천 합류부·교차로」) — 그래서 구역마다 한 번씩 묻고 **사람·채널 단위로
+        #   합쳐 중복 제거**한다(같은 사람이 두 구역 규칙에 걸려도 두 통 가지 않는다).
+        #   구역이 없으면(지금의 모든 실측 데이터) **종전과 완전히 같다** — 뒤로
+        #   호환된다.
+        zone_names = tuple(
+            event.stream_monitor.zones.values_list("name", flat=True))
+        if zone_names:
+            seen_recipient: set[tuple[int, str]] = set()
+            merged: list[Recipient] = []
+            for zone_name in zone_names:
+                for r in resolve_recipients(
+                        scope=scope, severity=event.severity, group=group,
+                        zone=zone_name):
+                    key = (r.user_id, r.channel)
+                    if key in seen_recipient:
+                        continue
+                    seen_recipient.add(key)
+                    merged.append(r)
+            recipients = tuple(merged)
+        else:
+            recipients = resolve_recipients(
+                scope=scope, severity=event.severity, group=group)
     recipients = tuple(recipients)
     if channels is not None:
         allowed = set(channels)

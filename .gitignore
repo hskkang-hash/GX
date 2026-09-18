@@ -109,3 +109,6 @@ docs/agent/evidence/bundles/*.bundle
 #   덮어쓰는 것은 `GX_OPS_STATE_DIR`(기본 /var/lib/gx/state), 증거에 남는 것은
 #   `monitor_summary.jsonl` 의 **판정이 바뀐 줄만**이다.
 docs/agent/evidence/D-373/monitor_last.json
+
+# P-170 ① — V 단독 잠금 파일(있으면 「지금 재는 중」 · 커밋하지 않는다)
+docs/agent/evidence/V_LOCK

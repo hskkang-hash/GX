@@ -154,6 +154,14 @@ app.conf.beat_schedule = {
         "task": "common.heartbeat_digest_beat",
         "schedule": crontab(hour=8, minute=0),
     },
+    "u24-monthly-report": {
+        # ★ UX-40 월간 자동본 — **매월 1일 03:00** (턴 U · 결정 ⑤ DOCX 정본).
+        #   재난안전과(U4)는 `view_only_*` 라 **스스로 만들 수 없다**(문지기 403) — 배치가
+        #   만들어 두고 사람은 내려받는다. 이 줄이 빠지면 U4 의 월간 보고는 조용히 사라진다.
+        #   백업(03:00)과 같은 시각이지만 다른 큐·다른 자원이고, 집계는 DB 읽기뿐이다.
+        "task": "common.monthly_report_beat",
+        "schedule": crontab(day_of_month="1", hour=3, minute=0),
+    },
     "law08-evidence-anchor": {
         # ★ LAW-08 일일 앵커 — 00:05. 자정 **직후**에 어제 것을 닫는다.
         #   00:00 정각에 두면 그 순간 쓰이는 감사 행이 어제인지 오늘인지 갈린다.

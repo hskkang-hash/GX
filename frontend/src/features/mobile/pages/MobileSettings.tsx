@@ -33,7 +33,6 @@ import {
   Space,
   Tag,
   Typography,
-  message,
 } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -113,6 +112,14 @@ export default function MobileSettings() {
   const [testResult, setTestResult] = useState<TestSendResult | null>(null);
   const [saveOutcome, setSaveOutcome] = useState<ActionOutcome | null>(null);
   const [testOutcome, setTestOutcome] = useState<ActionOutcome | null>(null);
+  /**
+   * 구독·해지(다시 구독 포함)의 결과 — **[턴 U · P-166 조율자 지시] 토스트가 아니라
+   * 이 화면이 이미 쓰던 상태 칸이다.** 종전에는 `message.success/error` 단독으로
+   * 떴다(사라지는 말은 판정기도 사람도 못 본다 · `saveOutcome`·`testOutcome` 머리말과
+   * 같은 문제). 구독은 이번 턴 P-166 이 손댄 자리라 — 새로 늘리지 않고 이미 있는
+   * 규약(`ActionOutcome` + `data-gx`)에 맞춘다.
+   */
+  const [pushOutcome, setPushOutcome] = useState<ActionOutcome | null>(null);
 
   /** 서버 값이 오면 입력칸의 **출발점**으로 삼는다 — 화면이 값을 지어내지 않는다. */
   useEffect(() => {
@@ -162,13 +169,16 @@ export default function MobileSettings() {
     try {
       const label = `${navigator.platform || '휴대전화'} · ${new Date().toLocaleDateString('ko-KR')}`;
       await enableFieldPush(label);
-      message.success('이 기기로 알림을 받습니다.');
+      setPushOutcome({ ok: true, text: '이 기기로 알림을 받습니다.' });
       setThisDevice(await currentDeviceFingerprint());
       devices.reload();
     } catch (err) {
       // ★ 사유를 **그대로** 보여 준다 — 기기 설정을 고쳐야 하는지 서버를 기다려야
       //   하는지는 사람이 알아야 하고, 그 둘은 할 일이 다르다(D-290).
-      message.error(err instanceof Error ? err.message : '알림을 켜지 못했습니다.');
+      setPushOutcome({
+        ok: false,
+        text: err instanceof Error ? err.message : '알림을 켜지 못했습니다.',
+      });
     } finally {
       setPushBusy('');
     }
@@ -179,12 +189,13 @@ export default function MobileSettings() {
       setPushBusy(`off:${subscriptionId}`);
       try {
         await disableFieldPush(subscriptionId);
-        message.success('이 기기 알림을 껐습니다.');
+        setPushOutcome({ ok: true, text: '이 기기 알림을 껐습니다.' });
         devices.reload();
       } catch (err) {
-        message.error(
-          userFacingError('MobileSettings.pushOff', err, '알림을 끄지 못했습니다.'),
-        );
+        setPushOutcome({
+          ok: false,
+          text: userFacingError('MobileSettings.pushOff', err, '알림을 끄지 못했습니다.'),
+        });
       } finally {
         setPushBusy('');
       }
@@ -285,6 +296,15 @@ export default function MobileSettings() {
                 </Button>
               </Space>
             )}
+
+            {pushOutcome ? (
+              <Alert
+                type={pushOutcome.ok ? 'success' : 'error'}
+                showIcon
+                data-gx="push-subscribe-outcome"
+                message={pushOutcome.text}
+              />
+            ) : null}
 
             {testOutcome ? (
               <Alert

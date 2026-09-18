@@ -1074,3 +1074,199 @@ def video_retention_sweep_beat() -> dict:
 
     _write_evidence("video_retention_last", payload)
     return payload
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 U · 차선 U56 — **저장 상한 선언**과 **백업 회수증**. 판정은 여기 하나다 (D-212)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 왜 화면이 아니라 여기인가 — `scripts/ops_monitor.py` 와 `GET /api/dsm/system/*` 가
+# **같은 질문**을 한다(「몇 % 찼나」 · 「마지막 회수증은 언제인가」). 두 자리에서
+# 따로 판정하면 크론이 UNKNOWN 이라고 적는 날 화면은 초록을 그린다.
+
+#: 저장 상한을 **선언하는 유일한 자리**. 환경이다 — DB 가 아니다(선등록 ② 원칙).
+STORAGE_CAPACITY_ENV = "GX_STORAGE_CAPACITY_GB"
+
+#: 상한이 없을 때 화면·크론이 **똑같이** 말해야 하는 문장. 두 벌로 적지 않는다.
+STORAGE_UNDECLARED_SENTENCE = (
+    "용량 상한이 선언되지 않았습니다 (%s) — 분모 없이 「몇 %% 찼나」에 답하지 "
+    "않습니다 (D-301)." % STORAGE_CAPACITY_ENV)
+
+
+def storage_capacity_gb() -> float:
+    """선언된 상한(GB). **선언이 없으면 0** 이고 0 은 「무제한」이 아니라 「모른다」다."""
+    try:
+        return float(os.environ.get(STORAGE_CAPACITY_ENV, "") or
+                     getattr(settings, "GX_STORAGE_CAPACITY_GB", "") or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def storage_used_gb():
+    """객체저장이 실제로 쓰는 용량(GB). **못 재면 `(None, 사유)`** — 0 이 아니다."""
+    try:
+        from minio import Minio
+
+        endpoint = str(getattr(settings, "MINIO_ENDPOINT", "") or "")
+        for scheme in ("http://", "https://"):
+            if endpoint.startswith(scheme):
+                endpoint = endpoint[len(scheme):]
+        bucket = getattr(settings, "MINIO_STORAGE_MEDIA_BUCKET_NAME", "")
+        # ★ **시간 상한 없이 밖을 부르지 않는다**(W0-17 · 커밋 게이트가 잡았다).
+        #   이 함수는 화면(U5 저장 용량)과 크론이 함께 부른다 — 객체저장이 대답하지 않으면
+        #   상한이 없는 호출은 **화면을 통째로 세운다**. 집계는 「못 셌다」로 끝나면 되는 일이다.
+        #   자는 맥박 접속(`stream_monitors/utils/minio_client.py::_probe_client`)과 같은 결이다.
+        import urllib3
+
+        client = Minio(endpoint.rstrip("/"),
+                       access_key=settings.MINIO_ACCESS_KEY,
+                       secret_key=settings.MINIO_SECRET_KEY,
+                       secure=bool(getattr(settings, "MINIO_USE_HTTPS", False)),
+                       http_client=urllib3.PoolManager(
+                           timeout=urllib3.Timeout(
+                               connect=float(getattr(settings, "MINIO_STORAGE_CONNECT_TIMEOUT", 3.0)),
+                               read=float(getattr(settings, "MINIO_STORAGE_READ_TIMEOUT", 10.0)))))
+        total = sum(obj.size or 0 for obj in client.list_objects(bucket, recursive=True))
+        # ⚠ 버킷 이름은 비밀이 아니지만 접속점·자격은 **절대 나가지 않는다**.
+        return round(total / (1024 ** 3), 4), "객체저장 버킷 합계"
+    except Exception as exc:                        # noqa: BLE001
+        return None, "저장소 사용량을 못 셌습니다: %s" % type(exc).__name__
+
+
+def storage_declaration() -> dict:
+    """★ **하나의 판정.** 상한 · 사용량 · % — 셋 중 못 잰 것은 `null` 이고 UNKNOWN 이다.
+
+    화면(`GET /api/dsm/system/storage`)과 크론(`scripts/ops_monitor.py`)이 **이
+    함수 하나**를 읽는다. 「상한 미선언」과 「사용량을 못 쟀다」는 다른 사실이라
+    사유 문장도 둘로 둔다 — 뭉치면 관리자는 상한을 선언하고도 여전히 회색을 본다.
+    """
+    capacity = storage_capacity_gb()
+    used, used_note = storage_used_gb()
+    declared = capacity > 0
+    if not declared:
+        return {"declared": False, "capacity_gb": None, "used_gb": used,
+                "used_pct": None, "verdict": "UNKNOWN",
+                "reason": STORAGE_UNDECLARED_SENTENCE, "used_note": used_note,
+                "env_name": STORAGE_CAPACITY_ENV}
+    if used is None:
+        return {"declared": True, "capacity_gb": capacity, "used_gb": None,
+                "used_pct": None, "verdict": "UNKNOWN",
+                "reason": used_note, "used_note": used_note,
+                "env_name": STORAGE_CAPACITY_ENV}
+    return {"declared": True, "capacity_gb": capacity, "used_gb": used,
+            "used_pct": round(used / capacity * 100, 2), "verdict": "OK",
+            "reason": "", "used_note": used_note,
+            "env_name": STORAGE_CAPACITY_ENV}
+
+
+#: 회수증(대조표)을 찾는 뿌리. `/backup` 은 P-67 이 정한 별도 볼륨이다.
+BACKUP_RECEIPT_ROOT_ENV = "GX_BACKUP_ROOT"
+#: 대조표 파일 이름 — `scripts/ops_backup.py` 가 쓰는 그 이름이다(두 벌로 적지 않는다).
+BACKUP_MANIFEST_NAME = "manifest.json"
+
+
+def backup_receipt_roots() -> list:
+    """대조표를 찾아볼 자리들. 앞이 정본(`/backup`)이고 뒤는 증거 폴더다."""
+    roots = []
+    declared = (os.environ.get(BACKUP_RECEIPT_ROOT_ENV, "") or
+                getattr(settings, "OPS_BACKUP_DIR", "") or "/backup")
+    roots.append(str(declared))
+    evidence = getattr(settings, "OPS_BACKUP_EVIDENCE_DIR", "")
+    if evidence:
+        roots.append(str(evidence))
+    return roots
+
+
+def _manifest_is_verifiable(manifest: dict) -> bool:
+    """이 회수증으로 **복구 성공을 판정할 수 있는가.** `ops_backup.manifest_is_verifiable`
+    과 같은 규칙이다 — 파일만 있고 증인 표의 행 수가 없으면 못 한다."""
+    db = manifest.get("db") or {}
+    if not db.get("file"):
+        return False
+    rows = db.get("rows") or {}
+    return any(value is not None for value in rows.values())
+
+
+def backup_receipts(limit: int = 5) -> dict:
+    """★ **회수증을 실물로 읽는다.** 없으면 회색이다 — 0 을 초록으로 적지 않는다.
+
+    나가는 것: 시각 · 덤프 **파일 이름** · 검증 가능 여부 · 다음 예정.
+    나가지 않는 것: `db_settings`(호스트·계정·포트) · 경로 전체 · 해시 전문 —
+    이 응답은 관리자 화면이 읽지만, 회수증의 접속 정보는 화면이 알 일이 아니다.
+    """
+    found = []
+    roots_seen = []
+    for root in backup_receipt_roots():
+        base = Path(root)
+        roots_seen.append({"path": str(base), "exists": base.is_dir()})
+        if not base.is_dir():
+            continue
+        candidates = [base / BACKUP_MANIFEST_NAME]
+        try:
+            candidates += sorted(base.glob("*/" + BACKUP_MANIFEST_NAME))
+            candidates += sorted(base.glob("*/*/" + BACKUP_MANIFEST_NAME))
+        except OSError:                              # noqa: BLE001
+            pass
+        for path in candidates:
+            if not path.is_file():
+                continue
+            try:
+                body = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                # ⚠ 읽을 수 없는 회수증은 **없는 것보다 나쁘다** — 세어 둔다.
+                found.append({"created_at": None, "db_file": None,
+                              "verifiable": False, "unreadable": True,
+                              "where": path.parent.name})
+                continue
+            db = body.get("db") or {}
+            found.append({
+                "created_at": body.get("created_at"),
+                "db_file": db.get("file"),
+                "bytes": db.get("bytes"),
+                "objects": (body.get("objects") or {}).get("objects"),
+                "verifiable": _manifest_is_verifiable(body),
+                "unreadable": False,
+                "where": path.parent.name,
+            })
+    found.sort(key=lambda row: (row.get("created_at") or ""), reverse=True)
+    enabled = backup_schedule_enabled()
+    return {
+        "roots": roots_seen,
+        "receipts_found": len(found),
+        "last": found[0] if found else None,
+        "recent": found[:limit],
+        "schedule_enabled": enabled,
+        #: ★ 꺼져 있으면 **말로** 적는다. 「다음 예정 없음」만으로는 「아직 안 정했다」와
+        #:   「꺼 두기로 했다」가 구별되지 않는다.
+        "next_run": ("주기가 켜져 있습니다 — 다음 예정은 beat 일정이 정합니다."
+                     if enabled else "예정 없음 — 꺼짐 (OPS_BACKUP_SCHEDULE_ENABLED)"),
+        "verdict": "OK" if found else "UNKNOWN",
+        "reason": "" if found else (
+            "회수증(대조표)을 한 장도 못 찾았습니다 — 백업이 0건이라는 뜻이 아니라 "
+            "이 자리에서 읽히지 않는다는 뜻입니다. 0 을 초록으로 적지 않습니다."),
+    }
+
+
+@shared_task(name="common.monthly_report_beat")
+def monthly_report_beat() -> dict:
+    """UX-40 — **매월 1일 03:00, 조직마다 「이번 달 우리 센터」 한 행**(턴 U · 차선 U24 + 조율자).
+
+    ★ 왜 배치가 만드는가 — **재난안전과(U4)는 스스로 못 만든다.** `view_only_*` 는 플랫폼
+      문지기가 쓰기를 403 으로 끊는다(U24 실측). 그래서 이 자리의 규약은 「사람이 누르면
+      만들어진다」가 아니라 **「배치가 만들어 두고 사람은 내려받는다」**다. 이 태스크가
+      꺼지면 U4 의 월간 보고는 **조용히 사라진다** — 그래서 등재를 코드에 남긴다.
+    ★ 한 조직이 실패해도 다음 조직을 계속한다(`run_monthly_all`) · 실패도 **행으로** 남는다
+      (`status=failed` + 사유). 0건을 「없었다」로 읽지 않기 위해서다.
+    ★ `trigger=auto` 가 남는다 — 사람이 만든 것과 배치가 만든 것을 표가 갈라 보인다(PRD §7.4).
+    """
+    from apps.dsm.monthly_report import run_monthly_all
+
+    runs = run_monthly_all()
+    ok = sum(1 for r in runs if getattr(r, "status", "") == "succeeded")
+    payload = {"organizations": len(runs), "succeeded": ok, "failed": len(runs) - ok}
+    if payload["failed"]:
+        logger.warning("[U24-REPORT] 월간 자동본 실패 %d건 — 조직 %d 중",
+                       payload["failed"], payload["organizations"])
+    else:
+        logger.info("[U24-REPORT] 월간 자동본 %d건", ok)
+    return payload

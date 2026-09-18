@@ -434,6 +434,21 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/health"),                                             # U56 · 생존 확인 · 인증 없음(아래 사유)
     ("GET", "/api/dsm/settings/webhook-subscriptions/{int:subscription_id}/filters"),   # U56 · WS-17
     ("POST", "/api/dsm/settings/webhook-subscriptions/{int:subscription_id}/filters"),  # U56 · WS-17 ★쓰기
+    # ── 턴 U (2026-09-18 · 파 3 턴 1 「끝내기」 · 조율자 병합) ────────────────
+    #   ★ 열둘이 한 번에 늘었다. 이 표는 **먼저 늘지 않는다** — 문이 선 커밋에서 같이 는다.
+    #     늘린 근거는 차선 보고가 아니라 **시험이 뱉은 실제 라우트 목록**이다(아래 판정이 대조한다).
+    ("GET", "/api/dsm/reports/runs"),                                       # U24 · 보고서 실행 기록 목록
+    ("POST", "/api/dsm/reports/runs"),                                      # U24 · 보고서 만들기 ★쓰기(WS-21)
+    ("GET", "/api/dsm/reports/runs/{int:run_id}.docx"),                     # U24 · DOCX 정본 반출(결정 ⑤)
+    ("GET", "/api/dsm/reports/runs/{int:run_id}.pdf"),                      # U24 · PDF 병행 반출
+    ("GET", "/api/dsm/audit/export.csv"),                                   # U24 · 감사 표 반출
+    ("POST", "/api/dsm/cameras/{int:camera_id}/address"),                   # U56 · 한 대 고치기 ★쓰기(WS-23)
+    ("POST", "/api/dsm/system/restart-request"),                            # U56 · 요청만 기록 ★쓰기(WS-22 · 실행은 창)
+    ("GET", "/api/dsm/system/requests"),                                    # U56 · 요청 목록(테넌트 격리)
+    ("GET", "/api/dsm/system/backup-receipts"),                             # U56 · 회수증(없으면 UNKNOWN · 0 이 아니다)
+    ("GET", "/api/dsm/system/storage"),                                     # U56 · 상한·사용률(미선언이면 null + 문장)
+    ("GET", "/api/dsm/settings/api-keys/{int:key_id}/scopes"),              # U56 · API-03 범위 조회
+    ("POST", "/api/dsm/settings/api-keys/{int:key_id}/scopes"),             # U56 · API-03 범위 저장 ★쓰기
 })
 
 #: 인증 없이 열리는 진입면 — **이름과 사유로** 잠근다. 늘면 여기 사유가 먼저 늘어야 한다.

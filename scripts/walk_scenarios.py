@@ -585,6 +585,30 @@ def _evidence_dir() -> Path:
     return ROOT / "docs" / "agent" / "evidence" / "UX-WALK"
 
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# [P-170 ① · 2026-09-18 턴 U · 차선 Q] **재는 동안 아무도 로그인하지 않는다**
+#
+#   턴 T 에 V 가 재는 동안 조율자의 게이트가 같은 역할 계정으로 로그인해 V 의 세션을
+#   끊었다(계정당 세션 1개 → `end_previous_session` → 429 · D-487 ①). V 는 그 판을 버렸다.
+#   이 도구는 **로그인을 한다** — 그러므로 LOCK 을 먼저 본다.
+#
+#   ★ **잠근 사람은 지나간다**: `GX_V_SESSION_ID` 가 LOCK 의 세션과 같으면 안 막는다.
+#     그 밖의 사람에게는 **회색(exit 2)** 이다 — 회색은 초록이 아니다(D-301).
+# ═══════════════════════════════════════════════════════════════════════════
+def _v_lock_blocks(tag: str = TAG) -> bool:
+    """V 단독 세션이 잠갔고 내가 그 사람이 아니면 True — 그때는 **재지 않는다**."""
+    try:
+        from v_lock import describe, is_locked
+    except ImportError:                                   # 잠금 도구가 없으면 막지 않는다
+        return False
+    if not is_locked():
+        return False
+    print("%s ? **회색 — V 단독 중 · 재지 않음** (P-170 ① · docs/agent/evidence/V_LOCK)" % tag)
+    print("%s   %s · 잠근 사람은 GX_V_SESSION_ID 를 주고 부른다" % (tag, describe()))
+    return True
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="S1·S2·S3 시나리오 걷기 (390px)")
     ap.add_argument("--self-test", action="store_true")
@@ -599,6 +623,8 @@ def main() -> int:
         return self_test()
     if self_test() != EXIT_OK:
         return EXIT_FAIL
+    if _v_lock_blocks():
+        return EXIT_UNDECIDABLE
     if not args.user or not args.password:
         print(f"{TAG} **판정 불가** — 계정이 없다. 이 도구는 계정을 만들지 않는다 "
               f"(만들면 대장에 없는 계정이 생기고 비밀번호가 소스에 박힌다)")

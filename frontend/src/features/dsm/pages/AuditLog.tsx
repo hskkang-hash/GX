@@ -35,14 +35,44 @@ import {
 import dayjs, { type Dayjs } from 'dayjs';
 import { useMemo, useRef, useState } from 'react';
 
-import { dsmGet, dsmU24StatsEndpoint } from '../api';
+import {
+  downloadAuditCsv,
+  dsmGet,
+  dsmU24StatsEndpoint,
+  type AuditChainColumns,
+  type AuditChainCounts,
+} from '../api';
+import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
+import { userFacingError } from '../copy';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { absolute, stamp } from '../time';
 import type { AuditItem, AuditPage } from '../types';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
+
+/**
+ * 턴 U — 서버가 세 칸을 더 낸다(`api_u24._with_chain_columns`): `prev_hash` · `hash` ·
+ * `chain`. **`types.ts` 를 넓히지 않는다** — 그 파일은 이번 턴 U24 소유가 아니다
+ * (한 파일은 한 차선). 여기서 교차로 넓혀 쓴다.
+ */
+type AuditRow = AuditItem & AuditChainColumns;
+type AuditPageWithChain = AuditPage & {
+  chain_states?: AuditChainCounts;
+  chain_scan_capped?: boolean;
+};
+
+/** 해시를 화면에 적는 길이 — **앞 12자**. 자르는 것은 화면의 몫이고 서버는 전체를 낸다. */
+const HASH_HEAD = 12;
+
+/** 체인 상태 넷의 우리말. 「모름」을 지우지 않는다 — 회색은 초록이 아니다. */
+const CHAIN_WORD: Record<string, { label: string; color: string }> = {
+  linked: { label: '체인 이어짐', color: 'green' },
+  broken: { label: '체인 끊김', color: 'red' },
+  unchained: { label: '체인 이전 행', color: 'default' },
+  unknown: { label: '체인 모름', color: 'orange' },
+};
 
 /** 정본 문턱 — 「60초 안 도달」. 화면이 이 수를 재지 않는다 — 지시서(P-164)가 정한 수다. */
 const REACH_LIMIT_SECONDS = 60;
@@ -82,11 +112,16 @@ export default function AuditLog() {
     return q;
   }, [range, actorId, actionKey, actionText, page]);
 
-  const audit = useDsmResource<AuditPage>(
+  /** CSV — 진행 중 · 실패 사유 · 받은 바이트. **토스트를 쓰지 않는다**(P-173 · 상태 칸). */
+  const [csvBusy, setCsvBusy] = useState(false);
+  const [csvError, setCsvError] = useState<{ text: string; status: number } | null>(null);
+  const [csvDone, setCsvDone] = useState<string>('');
+
+  const audit = useDsmResource<AuditPageWithChain>(
     async () => {
       startedAt.current = performance.now();
       try {
-        const out = await dsmGet<AuditPage>(dsmU24StatsEndpoint.audit, query);
+        const out = await dsmGet<AuditPageWithChain>(dsmU24StatsEndpoint.audit, query);
         setReachSeconds((performance.now() - startedAt.current) / 1000);
         setReachOutcome('ok');
         return out;
@@ -100,8 +135,29 @@ export default function AuditLog() {
     { isEmpty: (v) => (v?.items?.length ?? 0) === 0 },
   );
 
-  const rows = audit.data?.items ?? [];
+  const rows = (audit.data?.items ?? []) as AuditRow[];
   const reached = reachSeconds !== null && reachOutcome === 'ok' && reachSeconds <= REACH_LIMIT_SECONDS;
+  const chain = audit.data?.chain_states ?? null;
+
+  /**
+   * 「표 내려받기」 — **서버 라우트**가 같은 필터로 낸다(`GET /api/dsm/audit/export.csv`).
+   * 화면이 자기 표를 파일로 적지 않는다: 그 순간 파일의 수와 화면의 수가 갈린다.
+   */
+  const downloadCsv = async () => {
+    setCsvBusy(true);
+    setCsvError(null);
+    try {
+      const { bytes } = await downloadAuditCsv(query);
+      setCsvDone(`${bytes.toLocaleString()}바이트`);
+    } catch (err) {
+      setCsvError({
+        text: userFacingError('AuditLog.csv', err, '표를 내려받지 못했습니다.'),
+        status: (err as { status?: number })?.status ?? 0,
+      });
+    } finally {
+      setCsvBusy(false);
+    }
+  };
 
   return (
     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
@@ -155,8 +211,31 @@ export default function AuditLog() {
             allowClear
           />
           <Button onClick={audit.reload}>새로고침</Button>
+          {/* 같은 필터를 그대로 서버에 넘긴다 — 파일과 표가 다른 질의를 타지 않는다. */}
+          <Button loading={csvBusy} onClick={() => void downloadCsv()}>
+            표 내려받기
+          </Button>
         </Space>
       </Card>
+
+      {/* ── CSV 실패 — 상태 칸이다(토스트가 아니다 · P-173) ─────────────────── */}
+      {csvError && (
+        <FailureNotice
+          title="감사 기록 표를 내려받지 못했습니다."
+          detail={csvError.text}
+          status={csvError.status}
+          busy={csvBusy}
+          onRetry={() => void downloadCsv()}
+        />
+      )}
+      {csvDone && !csvError && (
+        <Card size="small">
+          <Space wrap>
+            <Tag color="green">표를 내려받았습니다</Tag>
+            <Text type="secondary">{csvDone}</Text>
+          </Space>
+        </Card>
+      )}
 
       {/* ── 「60초 안 도달」 상태 칸 — 계측. 토스트가 아니다. ─────────────────── */}
       <Card size="small">
@@ -177,6 +256,20 @@ export default function AuditLog() {
               전체 {audit.data.total}건 · {audit.data.page}/{audit.data.pages || 1}쪽
             </Text>
           )}
+          {/* ── 해시 체인 요약 — 이 쪽의 행들이 앞 행과 이어져 있는가 ─────────── */}
+          {chain && (
+            <>
+              <Text type="secondary">해시 체인</Text>
+              <Tag color={chain.broken > 0 ? 'red' : 'green'}>
+                이어짐 {chain.linked} · 끊김 {chain.broken}
+              </Tag>
+              {(chain.unchained > 0 || chain.unknown > 0) && (
+                <Tag>
+                  체인 이전 {chain.unchained} · 모름 {chain.unknown}
+                </Tag>
+              )}
+            </>
+          )}
         </Space>
       </Card>
 
@@ -189,7 +282,7 @@ export default function AuditLog() {
           where="AuditLog/표"
           emptyText="조건에 맞는 감사 기록이 없습니다. (요청은 성공했고 0건입니다)"
         >
-          <Table<AuditItem>
+          <Table<AuditRow>
             size="small"
             rowKey="audit_id"
             dataSource={rows}
@@ -231,6 +324,29 @@ export default function AuditLog() {
                   v.endsWith('.events') ? '사건 행위' : v.endsWith('.settings') ? '설정 변경' : v,
               },
               { title: 'HTTP', dataIndex: 'status_http', width: 70 },
+              {
+                /**
+                 * 해시 체인 — **앞 12자 두 개와 이어짐**. 전체 값은 서버가 주고
+                 * (`title` 에 그대로 있다), 자르는 것은 화면의 몫이다.
+                 * ⚠ 이 칸이 말하는 것은 **이어짐**뿐이다. 위조 여부는
+                 *   `evidence_chain.verify_chain` 이 판정한다 — 화면이 그 판정을 흉내내지 않는다.
+                 */
+                title: '해시 체인',
+                width: 260,
+                render: (_: unknown, r) => {
+                  const word = CHAIN_WORD[r.chain ?? 'unknown'] ?? CHAIN_WORD.unknown;
+                  return (
+                    <Space direction="vertical" size={0}>
+                      <Tag color={word.color}>{word.label}</Tag>
+                      <Text type="secondary" style={{ fontSize: 11 }} title={r.hash ?? ''}>
+                        {(r.prev_hash ?? '').slice(0, HASH_HEAD) || '—'}
+                        {' → '}
+                        {(r.hash ?? '').slice(0, HASH_HEAD) || '—'}
+                      </Text>
+                    </Space>
+                  );
+                },
+              },
             ]}
           />
         </StateBoundary>

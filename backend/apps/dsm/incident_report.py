@@ -362,3 +362,247 @@ def build_html(*, event, clock: dict, actions, tenant: str, issued_by: str,
     return ("<html><head><meta charset=\"utf-8\">"
             f"<title>{escape(DOCUMENT_TITLE)} {escape(str(event_id))}</title>"
             f"<style>{_CSS}</style></head><body>{''.join(parts)}</body></html>")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 U (P-173 U24) — 서식 둘이 더 선다: 「이번 달 우리 센터」 · 상급기관 제출용
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 왜 같은 파일인가 — 이 파일은 「사건 보고서」가 아니라 **재난안전과에 나가는 종이의
+#   서식**이다. 택배 칸 금지 목록(`FORBIDDEN_FIELD_TOKENS`) · 등급/유형 낱말 ·
+#   「기록 없음」 규약 · 시간대 고지(`timezone_note`) · CSS 한 벌이 여기 있고, 서식이
+#   갈리면 종이 셋이 서로 다른 낱말을 쓰게 된다. 값을 모으는 일(집계 · 사건 조회 ·
+#   실행 기록)은 여기서 하지 않는다 — `apps/dsm/monthly_report.py` 가 한다.
+#   **이 절의 함수들은 DB 를 만지지 않는다**(인자로 받은 값만 그린다) — 그래서
+#   시험이 DB 없이 「택배 필드 0」을 셀 수 있다.
+
+#: 월간본 제목 · 상급 제출용 제목. 화면 단추(`Reports.tsx`)와 **같은 글자**여야
+#: 사람이 「그 보고서」라고 부를 수 있다.
+MONTHLY_TITLE = "이번 달 우리 센터"
+UPPER_TITLE = "상급기관 제출용 보고서"
+
+#: 자동본인가 사람이 부른 것인가 — 종이에 적는다. PRD §7.4 「사람 손 없이 나왔는가」는
+#: `DsmReportRun.trigger` 칸이 답하고, 그 답이 **종이에도** 남아야 결재가 그것을 본다.
+TRIGGER_LABEL = {"auto": "자동 생성 (사람 손 없음)", "manual": "사람이 요청"}
+
+#: 월간본 표에 싣는 축 행의 상한. 넘으면 **넘었다고 적는다**(D-301).
+AXIS_ROWS_ON_PAGE = 10
+#: 상급 제출용에 싣는 사건 줄의 상한.
+UPPER_ROWS_ON_PAGE = 40
+
+
+def _head(*, tenant: str, title: str, meta: str) -> str:
+    from django.utils import timezone
+
+    return ("<div class=\"head\">"
+            f"<div class=\"org\">{escape(tenant)}</div>"
+            f"<h1>{escape(title)}</h1>"
+            f"<div class=\"meta\">{escape(meta)} · 발행 {escape(_when(timezone.now()))}</div>"
+            "</div>")
+
+
+def _note_block(note: str) -> str:
+    """「특이사항」 — 자동본을 사람이 고치는 칸(부속서 A U2#7).
+
+    ★ 비어 있어도 **칸은 남긴다.** 칸이 사라지면 「특이사항이 없었다」와 「아무도 안
+      적었다」를 가를 수 없고, 결재자는 빈 자리를 전자로 읽는다.
+    """
+    body = (note or "").strip() or "기재된 특이사항이 없습니다."
+    return ("<h2>특이사항</h2><table><tr><td class=\"wide\">"
+            f"{escape(body)}</td></tr></table>")
+
+
+def _foot(extra: str = "") -> str:
+    return ("<div class=\"foot\">이 문서는 GuardianX 가 사건 기록에서 자동 생성했습니다. "
+            "기록이 없는 칸은 「기록 없음」으로 적습니다(0으로 적지 않습니다)."
+            f"{(' ' + escape(extra)) if extra else ''}<br>"
+            f"{escape(timezone_note())}</div>")
+
+
+def _axis_table(rows, *, key_title: str, labels: dict | None = None) -> str:
+    """축 하나를 표로. `rows` 는 `stats.stats_axes` 가 낸 행들(`key`·`label`·`count`).
+
+    ★ 행이 0 이면 **빈 표를 그리지 않는다** — 「0건이었다」를 글자로 적는다.
+      빈 표는 「아직 안 불러왔다」로도 읽힌다(분모 0 인 초록은 초록이 아니다).
+    """
+    rows = list(rows or ())
+    if not rows:
+        return ("<table><tr><td class=\"wide\">"
+                f"{escape(key_title)} — 이 기간에 해당하는 건이 0건입니다."
+                "</td></tr></table>")
+    labels = labels or {}
+    out = ["<table class=\"rows\"><tr><th>", escape(key_title), "</th><th>건수</th></tr>"]
+    for r in rows[:AXIS_ROWS_ON_PAGE]:
+        key = str(r.get("key", ""))
+        label = labels.get(key) or str(r.get("label") or key)
+        out.append(f"<tr><td>{escape(label)}</td><td>{escape(str(r.get('count', 0)))}</td></tr>")
+    out.append("</table>")
+    if len(rows) > AXIS_ROWS_ON_PAGE:
+        out.append(f"<div class=\"note\">{len(rows)}줄 중 {AXIS_ROWS_ON_PAGE}줄만 실었습니다 "
+                   "— 전체는 통계 화면에서 확인하십시오.</div>")
+    return "".join(out)
+
+
+def build_monthly_html(*, tenant: str, issued_by: str, since, until,
+                       summary: dict, axes: dict, note: str = "",
+                       trigger: str = "auto") -> str:
+    """「이번 달 우리 센터」 자동본 — **집계는 받아서 그리기만 한다.**
+
+    Args:
+        summary: `apps.dsm.stats.stats_summary` 가 낸 사전 그대로.
+        axes: `apps.dsm.stats.stats_axes` 가 낸 사전 그대로.
+        trigger: `auto` | `manual` — 종이에 적는다.
+
+    ★ 여기서 더하거나 나누지 않는다. 합계를 종이에서 다시 세면 화면의 수와 종이의
+      수가 갈리고, 갈린 두 수는 **어느 쪽이 맞는지 아무도 모른다**(AC-5 규약).
+    """
+    total = summary.get("total")
+    parts: list[str] = [
+        _head(tenant=tenant, title=MONTHLY_TITLE,
+              meta=(f"집계 기간 {_when(since)} ~ {_when(until)} · "
+                    f"{TRIGGER_LABEL.get(trigger, trigger)} · 발행자 {issued_by}")),
+    ]
+    if summary.get("capped"):
+        parts.append("<div class=\"banner\">[GuardianX] 이 보고서는 불완전합니다 — "
+                     f"집계 상한({summary.get('row_cap')}건)에 닿아 그 위는 세지 못했습니다."
+                     "</div>")
+
+    parts.append("<h2>① 이번 달 한 장 요약</h2><table>")
+    parts.append(_pair("집계 기간 시작", _when(since), "집계 기간 끝", _when(until)))
+    parts.append(_pair("전체 사건 수", UNKNOWN if total is None else f"{total}건",
+                       "생성 방식", TRIGGER_LABEL.get(trigger, trigger)))
+    parts.append("</table>")
+
+    by_sev = summary.get("by_severity") or {}
+    parts.append("<h2>② 등급별</h2><table class=\"rows\">"
+                 "<tr><th>등급</th><th>건수</th></tr>")
+    for code in ("critical", "warning", "info"):
+        #: 세 등급은 **언제나 세 줄**이다 — 0건인 등급이 사라지면 「없었다」가 표에서
+        #: 지워지고, 읽는 사람은 그 등급을 안 센 것으로 읽는다.
+        parts.append(f"<tr><td>{escape(SEVERITY_LABEL[code])}</td>"
+                     f"<td>{escape(str(by_sev.get(code, 0)))}</td></tr>")
+    parts.append("</table>")
+
+    axis_rows = (axes or {}).get("axes") or {}
+    parts.append("<h2>③ 유형별</h2>")
+    parts.append(_axis_table(axis_rows.get("event_type"), key_title="유형",
+                             labels=EVENT_TYPE_LABEL))
+    parts.append("<h2>④ 카메라별 (많은 순)</h2>")
+    parts.append(_axis_table(axis_rows.get("camera"), key_title="카메라"))
+    parts.append("<h2>⑤ 시간대별</h2>")
+    parts.append(_axis_table(axis_rows.get("hour"), key_title="시간대"))
+
+    by_state = summary.get("by_response_state") or {}
+    parts.append("<h2>⑥ 대응 진행</h2><table class=\"rows\">"
+                 "<tr><th>단계</th><th>건수</th></tr>")
+    for code, label in RESPONSE_STATE_LABEL.items():
+        parts.append(f"<tr><td>{escape(label)}</td>"
+                     f"<td>{escape(str(by_state.get(code, 0)))}</td></tr>")
+    parts.append("</table>")
+
+    parts.append(_note_block(note))
+    parts.append(_foot("집계 수는 통계 화면(같은 기간)의 수와 같은 함수에서 나옵니다."))
+    return ("<html><head><meta charset=\"utf-8\">"
+            f"<title>{escape(MONTHLY_TITLE)}</title>"
+            f"<style>{_CSS}</style></head><body>{''.join(parts)}</body></html>")
+
+
+def build_upper_html(*, tenant: str, issued_by: str, since, until,
+                     rows, note: str = "", missing: int = 0) -> str:
+    """상급기관 제출용 — **체크된 사건만** + 요약.
+
+    Args:
+        rows: 사전들. `event_id` · `occurred_at` · `severity` · `event_type` ·
+            `camera` · `verdict` · `reported_at` 칸을 본다.
+        missing: 체크는 있는데 사건을 못 읽은 수(파기·권한). **0 이 아니면 종이에 적는다** —
+            「없었다」와 「못 가져왔다」는 다른 사실이다(D-290).
+
+    ★ 체크(`DsmUpperReportFlag`)가 0건이면 **빈 표를 내지 않는다.** 「이 기간에 상급기관
+      보고 대상으로 표시된 사건이 없습니다」라고 적는다.
+    """
+    rows = list(rows or ())
+    parts: list[str] = [
+        _head(tenant=tenant, title=UPPER_TITLE,
+              meta=(f"대상 기간 {_when(since)} ~ {_when(until)} · 발행자 {issued_by}")),
+    ]
+    if missing:
+        parts.append("<div class=\"banner\">[GuardianX] 이 보고서는 불완전합니다 — "
+                     f"표시된 사건 {missing}건을 읽지 못했습니다(보존 기한 경과 또는 접근 불가)."
+                     "</div>")
+
+    sev_count = {"critical": 0, "warning": 0, "info": 0}
+    for r in rows:
+        code = r.get("severity")
+        if code in sev_count:
+            sev_count[code] += 1
+
+    parts.append("<h2>① 제출 요약</h2><table>")
+    parts.append(_pair("대상 사건 수", f"{len(rows)}건",
+                       "심각 등급", f"{sev_count['critical']}건"))
+    parts.append(_pair("경계 등급", f"{sev_count['warning']}건",
+                       "주의 등급", f"{sev_count['info']}건"))
+    parts.append("</table>")
+
+    parts.append("<h2>② 대상 사건</h2>")
+    if not rows:
+        parts.append("<table><tr><td class=\"wide\">이 기간에 상급기관 보고 대상으로 "
+                     "표시된 사건이 없습니다.</td></tr></table>")
+    else:
+        parts.append("<table class=\"rows\"><tr><th>사건번호</th><th>발생</th>"
+                     "<th>등급</th><th>유형</th><th>카메라</th><th>판정</th>"
+                     "<th>보고 시각</th></tr>")
+        for r in rows[:UPPER_ROWS_ON_PAGE]:
+            parts.append(
+                "<tr>"
+                f"<td>{escape(str(r.get('event_id', '')))}</td>"
+                f"<td>{escape(_when(r.get('occurred_at')))}</td>"
+                f"<td>{escape(_label(SEVERITY_LABEL, r.get('severity')))}</td>"
+                f"<td>{escape(_label(EVENT_TYPE_LABEL, r.get('event_type')))}</td>"
+                f"<td>{escape(str(r.get('camera') or UNKNOWN))}</td>"
+                f"<td>{escape(_label(VERDICT_LABEL, r.get('verdict'), '미판정'))}</td>"
+                f"<td>{escape(_when(r.get('reported_at')))}</td>"
+                "</tr>")
+        parts.append("</table>")
+        if len(rows) > UPPER_ROWS_ON_PAGE:
+            parts.append(f"<div class=\"note\">{len(rows)}건 중 {UPPER_ROWS_ON_PAGE}건만 "
+                         "실었습니다 — 나머지는 사건 목록 화면에서 확인하십시오.</div>")
+
+    parts.append(_note_block(note))
+    parts.append(_foot("「대상」은 사람이 남긴 상급 보고 체크입니다 — 규칙이 자동으로 "
+                       "고른 것이 아닙니다."))
+    return ("<html><head><meta charset=\"utf-8\">"
+            f"<title>{escape(UPPER_TITLE)}</title>"
+            f"<style>{_CSS}</style></head><body>{''.join(parts)}</body></html>")
+
+
+def build_incident_html(*, scope, event_id: int) -> str:
+    """사건 1쪽의 **HTML** — PDF 와 DOCX 가 같은 글자에서 나오게 하는 자리.
+
+    `apps/dsm/services.incident_report()` 는 이 조립을 자기 안에 갖고 PDF 만 냈다. DOCX
+    정본(결정 ⑤)이 서면서 같은 조립이 두 번째로 필요해졌고, **두 벌이 되면 어느 날
+    한쪽만 고쳐진다** — 그래서 조립을 여기 한 곳에 둔다.
+    ⚠ 등록 요청(조율자): `services.incident_report()` 의 조립 다섯 줄을 이 함수 호출로
+      바꾸면 조립이 하나가 된다. `services.py` 는 이번 턴 U24 소유가 아니라 손대지 않았다.
+
+    Raises:
+        Http404: 없는 사건 · 남의 사건 (문지기는 K1 이 선다 — 여기서 다시 세우지 않는다)
+        IncidentReportUnavailable: 사건은 있는데 자료를 못 가져왔다 (409)
+    """
+    from kernels.k4_report import build_context
+
+    from apps.dsm import services
+    from apps.dsm.exceptions import IncidentReportUnavailable
+
+    context = build_context(scope=scope, event_id=event_id)
+    events = list(getattr(context, "events", ()) or ())
+    if not events:
+        raise IncidentReportUnavailable(
+            "사건 자료를 가져오지 못해 보고서를 만들 수 없습니다 — "
+            f"실패한 출처 {list(context.sources_failed) or ['(사유 미기재)']}")
+    actor = scope.require_actor()
+    return build_html(
+        event=events[0],
+        clock=services.response_clock(scope=scope, event_id=event_id),
+        actions=context.actions, tenant=tenant_name(actor),
+        issued_by=person_label(actor),
+        sources_failed=tuple(context.sources_failed))

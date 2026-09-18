@@ -87,6 +87,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
@@ -95,6 +96,7 @@ try:
 except (AttributeError, OSError):
     pass
 
+ROOT = Path(__file__).resolve().parent.parent
 FRONT_CONTAINER = "gx-nginx-e"
 BACK_CONTAINER = "gx-gunicorn-e"
 ACCESS_PATH = "/var/log/nginx/gx-front.access.log"
@@ -119,6 +121,71 @@ _DOCKER_TS = re.compile(r'^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})')
 #:   마이크로초까지 적는데 위 정규식은 초까지만 받는다. 같은 초에 여러 번 난 재활용이
 #:   하나로 뭉개졌고, 그래서 `Autorestarting` 164줄이 판정기 안에서는 더 적게 보였다.
 _DOCKER_TS_US = re.compile(r'^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\.(\d{1,9})')
+
+# ═══════════════════════════════════════════════════════════════════════════
+# P-171 — **계획 점검 창은 SLA 밖이되, 수는 적는다** (세종 판정 · 2026-09-18 · 턴 U)
+# ═══════════════════════════════════════════════════════════════════════════
+#: ★ 무엇이 이 절을 만들었나 [실측 2026-09-17 · 턴 T]
+#:   재생성 창(16:54~17:05 · 대표 승인 · 시작/종료가 runbook 에 적힘)에 뒷단이 없었고,
+#:   앞단은 그 11분 동안 `connect() 111 refused` 를 234번 적었다. 이 판정기는 그것을
+#:   ⑤ 로 빼고 **회색**을 냈다 — 「이 판은 부하 한 벌이 아니다」. 규칙대로였지만 결과는
+#:   **창 하나 때문에 OPS-13a 가 통째로 회색**이 된 것이고, 상용 /100 의 회색 둘 중 하나가
+#:   거기서 났다.
+#:
+#:   ⚠ 「알려진 창에 묻지 않는다」(P-92)는 **유지한다.** 이 절이 하는 일은 묻는 것이 아니라
+#:     **가르는 것**이다: 창 안 N · 창 밖 N 을 **두 줄로 적고**, 색은 **창 밖**으로 낸다.
+#:     창 안의 수는 지워지지 않는다(표에 남고, 보고에도 두 줄로 간다).
+#:
+#:   ⚠ 창은 **손으로 적지 않는다.** `docs/agent/RUNBOOK_재생성창.md` 의 「집행 기록」 머리줄
+#:     (`## ★ 집행 기록 — 2026-09-17 16:54~17:05 …`)을 읽는다. 기록이 없으면 창도 없다 —
+#:     즉 **사전 통지·기록 없이 내린 서버는 계획 창이 아니다**(그것은 그냥 장애다).
+#:   ⚠ 상한: 한 창 **30분**. 그보다 긴 구간이 적혀 있으면 **창으로 세지 않고** 그 사실을 말한다 —
+#:     자를 넓혀 빨강을 지우는 가장 쉬운 길이 「창을 길게 적는 것」이기 때문이다.
+RUNBOOK_PATH = ROOT_DOC = "docs/agent/RUNBOOK_재생성창.md"
+PLANNED_WINDOW_MAX_MIN = 30
+_PLANNED = re.compile(
+    r"집행 기록\s*[—-]\s*(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})\s*~\s*(\d{2}):(\d{2})")
+
+
+def read_planned_windows(path: str = RUNBOOK_PATH, tz_hours: int = 9) -> tuple:
+    """runbook 의 「집행 기록」 머리줄에서 `(시작, 끝)` 을 읽는다 — **없으면 빈 튜플**.
+
+    돌려주는 것은 `(windows, skipped)`:
+      windows — 30분 이하인 창들 `[(datetime, datetime), …]`
+      skipped — 상한을 넘겨 **창으로 세지 않은** 구간 `[(문자열, 분), …]`
+    시각은 기계 시각(KST)이고 접근로그의 `+0900` 과 같은 자다.
+    """
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except OSError:
+        return ((), ())
+    tz = timezone(timedelta(hours=tz_hours))
+    windows, skipped = [], []
+    for m in _PLANNED.finditer(text):
+        y, mo, d, h1, m1, h2, m2 = (int(x) for x in m.groups())
+        lo = datetime(y, mo, d, h1, m1, tzinfo=tz)
+        hi = datetime(y, mo, d, h2, m2, tzinfo=tz)
+        if hi <= lo:                       # 자정을 넘긴 창은 이 함수가 안 다룬다
+            skipped.append(("%04d-%02d-%02d %02d:%02d~%02d:%02d" % (y, mo, d, h1, m1, h2, m2), -1))
+            continue
+        minutes = int((hi - lo).total_seconds() // 60)
+        if minutes > PLANNED_WINDOW_MAX_MIN:
+            skipped.append(("%04d-%02d-%02d %02d:%02d~%02d:%02d" % (y, mo, d, h1, m1, h2, m2), minutes))
+            continue
+        windows.append((lo, hi))
+    return (tuple(windows), tuple(skipped))
+
+
+def partition_by_planned(events: list, windows) -> tuple:
+    """요청을 `(창 밖, 창 안)` 으로 가른다 — 자는 `partition_by_backend` 와 **같다**
+    (`[끝 - request_time, 끝 + 1초)` 가 창과 겹치면 창 안)."""
+    outside, inside = [], []
+    for ev in events:
+        when, rt = ev
+        lo = when - timedelta(seconds=max(rt, 0.0))
+        hi = when + timedelta(seconds=1)
+        (inside if any(not (hi <= a or lo >= b) for a, b in windows) else outside).append(ev)
+    return outside, inside
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -273,9 +340,18 @@ def judge(facts: dict) -> list[tuple[str, str, str]]:
     n_out = facts.get("n_outage", 0)
     n_blind = facts.get("n_blind", 0)
     n_boot = facts.get("n_backend_restarts", 0)
+    n_plan = facts.get("n_planned", 0)
+    n_plan_windows = facts.get("n_planned_windows", 0)
     if n_out == 0 and n_blind == 0:
         out.append(("⑤ 뒷단 부재", "pass",
                     "이 판의 502 는 **전부 살아 있는 뒷단이 낸 것**이다 — 뺀 것이 없다"))
+    elif n_plan and n_plan >= n_out + n_blind:
+        # ★ [P-171] 뺀 것이 **전부 계획 점검 창** 안이다 — 창은 runbook 의 집행 기록에서
+        #   읽었고(손으로 적지 않는다) 30분 상한을 지킨 것만 셌다. 수는 지우지 않는다.
+        out.append(("⑤ 뒷단 부재", "pass",
+                    "뺀 %d건이 **전부 계획 점검 창 안**이다(창 %d개 · 사전 기록 있음 · "
+                    "30분 이하) — 창 안 %d · 창 밖 0. 창의 수는 지우지 않고 ⑥ 이 적는다"
+                    % (n_out + n_blind, n_plan_windows, n_plan)))
     else:
         out.append(("⑤ 뒷단 부재", "gray",
                     "**%d건을 창 밖으로 뺐다** — 뒷단 부재 %d건(재기동 %d회 · 앞단은 "
@@ -284,6 +360,25 @@ def judge(facts: dict) -> list[tuple[str, str, str]]:
                     "`verify_perf_budget --measure` 로 부하를 걸고 그 시각 창"
                     "(`--since-time`/`--until-time`)으로 다시 불러라 (P-101)"
                     % (n_out + n_blind, n_out, n_boot, n_blind)))
+
+    # ── ⑥ 계획 점검 창 — **SLA 밖이되 수는 적는다** (P-171) ────────────────
+    over = facts.get("planned_over_cap") or ()
+    if over:
+        out.append(("⑥ 계획 창", "fail",
+                    "runbook 에 **30분을 넘는 「집행 기록」 구간 %d개**가 적혀 있다(%s) — "
+                    "창으로 세지 않았다. 창을 길게 적는 것이 빨강을 지우는 가장 쉬운 길이라 "
+                    "상한을 넘긴 구간은 **창이 아니라 장애**다"
+                    % (len(over), ", ".join(t for t, _ in over))))
+    elif n_plan_windows == 0:
+        out.append(("⑥ 계획 창", "pass",
+                    "이 판의 구간에 **계획 점검 창이 없다**(runbook 「집행 기록」 0) — "
+                    "뺀 것이 있다면 그것은 창이 아니라 다른 사실이다"))
+    else:
+        out.append(("⑥ 계획 창", "pass",
+                    "**창 안 %d · 창 밖 %d** (창 %d개 · 사전 통지·시작/종료 기록 있음). "
+                    "SLA 분모에서는 창 안을 뺀다 — 그러나 **수는 여기 남는다**(P-92 유지: "
+                    "알려진 창에 묻지 않는다 · 묻는 대신 가른다)"
+                    % (n_plan, facts.get("n502", 0), n_plan_windows)))
     return out
 
 
@@ -1025,6 +1120,47 @@ def self_test() -> int:
     if not any(n == "① 표본" and v == "gray" for n, v, _ in rows):
         bad.append("「잴 수 있는 502 가 없었다」를 「502 가 안 났다」로 적었다")
 
+    # ⑪ **P-171 계획 점검 창** — 가르되 묻지 않는다 (2026-09-18 · 턴 U)
+    tz9 = timezone(timedelta(hours=9))
+    win = ((datetime(2026, 9, 17, 16, 54, tzinfo=tz9),
+            datetime(2026, 9, 17, 17, 5, tzinfo=tz9)),)
+    ev_in = (datetime(2026, 9, 17, 17, 0, 0, tzinfo=tz9), 0.1)      # 창 한복판
+    ev_edge = (datetime(2026, 9, 17, 16, 54, 30, tzinfo=tz9), 5.0)  # 창에 걸친다
+    ev_out = (datetime(2026, 9, 17, 17, 30, 0, tzinfo=tz9), 0.1)    # 창 뒤
+    free, inside = partition_by_planned([ev_in, ev_edge, ev_out], win)
+    if [e[0] for e in free] != [ev_out[0]] or len(inside) != 2:
+        bad.append("계획 창 가르기가 틀렸다(걸친 것 포함): 창밖 %s · 창안 %s" % (free, inside))
+    if partition_by_planned([ev_in], ())[0] != [ev_in]:
+        bad.append("창이 없는데 무언가를 창 안으로 넣었다 — 기록 없는 구간은 창이 아니다")
+
+    #: ⑪′ 뺀 것이 전부 창 안이면 ⑤ 는 초록이고 ⑥ 이 두 줄을 적는다 — **그러나
+    #:    창 밖에 미설명이 남으면 여전히 빨강이다**(위 still_red 와 같은 표에 창을 얹어 본다)
+    planned_all = dict(clean, n502_total=240, n_outage=234, n_blind=0,
+                       n_backend_restarts=1, n_planned=234, n_planned_windows=1)
+    rows = judge(planned_all)
+    if not any(n == "⑤ 뒷단 부재" and v == "pass" for n, v, _ in rows):
+        bad.append("뺀 것이 전부 계획 창인데 ⑤ 가 초록이 아니다 — 창은 기록된 사실이다")
+    if not any(n == "⑥ 계획 창" and "창 안 234" in why for n, _, why in rows):
+        bad.append("⑥ 이 창 안의 수를 안 적었다 — 빼고 지우면 그 창은 아무 데도 안 남는다")
+    if verdict(rows) != EXIT_OK:
+        bad.append("창 밖이 깨끗한데 판이 초록이 아니다")
+
+    still_red_planned = dict(still_red, n_planned=204, n_planned_windows=1)
+    rows = judge(still_red_planned)
+    if verdict(rows) != EXIT_FAIL:
+        bad.append("창으로 빼고도 창 밖 미설명 3건이 남았는데 빨강이 아니다 — "
+                   "계획 창은 SLA 밖일 뿐 결함을 지우지 않는다")
+
+    #: ⑪″ **30분 상한** — 길게 적은 구간은 창이 아니라 장애다(빨강)
+    over = dict(planned_all, planned_over_cap=(("2026-09-17 09:00~13:00", 240),))
+    rows = judge(over)
+    if verdict(rows) != EXIT_FAIL:
+        bad.append("30분을 넘는 「창」이 적혀 있는데 빨강이 아니다 — 자를 넓히는 가장 쉬운 길이다")
+
+    #: ⑪‴ 읽는 자리 — runbook 이 없으면 창 0(못 읽은 것을 창으로 쓰지 않는다)
+    if read_planned_windows("docs/agent/없는파일.md") != ((), ()):
+        bad.append("runbook 을 못 읽었는데 창을 만들었다")
+
     # ⑩⁗ **음성 대조** — 뺄 것이 없으면 ⑤ 는 초록이고 판정을 흐리지 않는다
     nothing_out = dict(clean, n502_total=8, n_outage=0, n_blind=0, n_backend_restarts=0)
     if verdict(judge(nothing_out)) != EXIT_OK:
@@ -1037,7 +1173,8 @@ def self_test() -> int:
         return EXIT_FAIL
     print("[502] 자기시험 통과 — 겹침 4 · **구간겹침 6** · 양성 1 · 음성 1 · 초록 1 · "
           "앞단없음 1 · 502없음 1 · 회색 2 · **구간초록 2** · 솎기 1 · 되읽기 3 · "
-          "**뒷단부재 9**(빼기 3 · 모르면안뺌 1 · 빼도빨강 3 · 다빼면회색 2)")
+          "**뒷단부재 9**(빼기 3 · 모르면안뺌 1 · 빼도빨강 3 · 다빼면회색 2) · "
+          "**계획창 7**(가르기 2 · 창안두줄 3 · 상한 1 · 못읽음 1)")
     _ = good_rows
     return EXIT_OK
 
@@ -1120,6 +1257,11 @@ def main() -> int:
                            <= hi + timedelta(seconds=10)]
         restarts = keep(restarts)
         exits = keep(exits)
+    #: ★ [P-171] **계획 점검 창을 가른다** — 창은 runbook 의 「집행 기록」에서 읽는다
+    #:   (손으로 적지 않는다). 창 안의 502 는 SLA 분모에서 빠지고 ⑥ 이 그 수를 적는다.
+    planned, planned_over = read_planned_windows(str(ROOT / RUNBOOK_PATH))
+    err_out_free, err_out_plan = partition_by_planned(err_out, planned)
+    err_blind_free, err_blind_plan = partition_by_planned(err_blind, planned)
     control = thin(ok, CONTROL_SAMPLE)
     control_t = [c[0] for c in control]
     restarts_sec = [r.replace(microsecond=0) for r in restarts]
@@ -1130,6 +1272,10 @@ def main() -> int:
         "n502_total": len(err_all),
         "n_outage": len(err_out), "n_blind": len(err_blind),
         "n_backend_restarts": len(outages),
+        # P-171 — 창 안(둘을 합쳐 센다: 뒷단 부재도 뒷단 로그 밖도 창이 설명한다)
+        "n_planned": len(err_out_plan) + len(err_blind_plan),
+        "n_planned_windows": len(planned),
+        "planned_over_cap": planned_over,
         # 종전 자는 **종전 그대로** 재서 나란히 보인다. 뒷단 자국을 µs 까지 읽게 되면서
         # `±0초`(=같은 초)의 뜻이 「같은 마이크로초」로 바뀌어 버리므로, 이 세 줄에서만
         # 초로 도로 자른다. **자를 바꾼 자리를 스스로 적는 것**이 이 판정기의 규약이다.
