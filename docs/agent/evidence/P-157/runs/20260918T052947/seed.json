@@ -1,0 +1,35 @@
+{
+  "events": [
+    {
+      "event_id": 268494,
+      "event_type": "fire",
+      "severity": "critical",
+      "occurred_at": "2026-09-18T05:27:53+00:00"
+    },
+    {
+      "event_id": 268495,
+      "event_type": "flood",
+      "severity": "warning",
+      "occurred_at": "2026-09-18T05:25:53+00:00"
+    }
+  ],
+  "note": "P-170 ② 씨앗 id 파이프 — capture_screens 가 심은 것. 읽는 쪽: verify_click_completes · verify_feature_reach · measure_onboarding_t (`--seed-file`). 이 파일은 손으로 고치지 않는다(runs/ 는 실행분이다).",
+  "run": "20260918T052947",
+  "seeded_at": "2026-09-18T12:29:53",
+  "probe_mark": "data_source=probe;run=20260918T052947",
+  "probe_tag": "gxprobe-D384-screen",
+  "monitor_code": "gxprobe-D384-screen-CAM",
+  "group_id": 4,
+  "event_ids": [
+    268494,
+    268495
+  ],
+  "first_event_id": 268494,
+  "address": {
+    "install_address": "경기도 안양시 만안구 안양천서로 100",
+    "install_address_detail": "정문",
+    "address_source": "manual",
+    "borrowed_from_monitor": 14,
+    "why": "실재 카메라 pk=14 의 주소를 재사용"
+  }
+}

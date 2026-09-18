@@ -1,8 +1,8 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
   "captured_at": "2026-09-18T12:41:37",
-  "screens_total": 39,
-  "routes_total": 37,
+  "screens_total": 33,
+  "routes_total": 28,
   "screens": {
     "/login": [
       {
@@ -95,7 +95,7 @@
         "status": 200
       }
     ],
-    "/dsm/events/99554": [
+    "/dsm/events/268496": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -108,17 +108,22 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=99554",
+        "path": "/api/dsm/deliveries?event_id=268496",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/99554",
+        "path": "/api/dsm/events/268496",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/99554/timeline",
+        "path": "/api/dsm/events/268496/timeline",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events/upper-report/flags?event_ids=268496",
         "status": 200
       },
       {
@@ -549,7 +554,7 @@
         "status": 200
       }
     ],
-    "/m/events/99554": [
+    "/m/events/268496": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -562,17 +567,22 @@
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/99554",
+        "path": "/api/dsm/events/268496",
         "status": 200
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/99554/clip",
+        "path": "/api/dsm/events/268496/clip",
         "status": 404
       },
       {
         "method": "GET",
-        "path": "/api/dsm/events/99554/field-replies",
+        "path": "/api/dsm/events/268496/field-replies",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/events?stream_monitor_id=3947&since=2026-09-11T05:38:59.323Z&limit=20",
         "status": 200
       },
       {
@@ -796,22 +806,7 @@
         "status": 403
       }
     ],
-    "/device": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/grid-management/50/detail",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/grid-management?menu_id=107",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name",
-        "status": 200
-      },
+    "/dsm/audit": [
       {
         "method": "GET",
         "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
@@ -824,59 +819,12 @@
       },
       {
         "method": "GET",
-        "path": "/api/devices/devices-management?page_size=25&current_page=1&depth=2",
+        "path": "/api/dsm/audit?page=1&page_size=50",
         "status": 200
       },
       {
         "method": "GET",
         "path": "/api/menu/menus?page_size=10000",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
-        "status": 200
-      }
-    ],
-    "/roles": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/grid-management/10/detail",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/grid-management?menu_id=107",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/grid-management?menu_id=5",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/config-management/list-optimized",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/menu/menus?page_size=10000",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/roles/?page_size=25&current_page=1",
         "status": 200
       },
       {
@@ -1023,327 +971,6 @@
         "status": 200
       }
     ],
-    "/m/events/173337": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/config-management/list-optimized",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/173337",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/173337/clip",
-        "status": 404
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/173337/field-replies",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
-        "status": 200
-      }
-    ],
-    "/dsm/events/204342": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/config-management/list-optimized",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=204342",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/204342",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/204342/timeline",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/menu/menus?page_size=10000",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
-        "status": 200
-      }
-    ],
-    "/m/events/204342": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/config-management/list-optimized",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/204342",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/204342/clip",
-        "status": 404
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/204342/field-replies",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
-        "status": 200
-      }
-    ],
-    "/dsm/events/231071": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/config-management/list-optimized",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=231071",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/231071",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/231071/timeline",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/menu/menus?page_size=10000",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
-        "status": 200
-      }
-    ],
-    "/m/events/231071": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/config-management/list-optimized",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/231071",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/231071/clip",
-        "status": 404
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/231071/field-replies",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events?stream_monitor_id=3946&since=2026-09-10T08:34:08.328Z&limit=20",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
-        "status": 200
-      }
-    ],
-    "/dsm/events/268496": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/config-management/list-optimized",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/deliveries?event_id=268496",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/268496",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/268496/timeline",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/upper-report/flags?event_ids=268496",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/menu/menus?page_size=10000",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
-        "status": 200
-      }
-    ],
-    "/m/events/268496": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/config-management/list-optimized",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/268496",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/268496/clip",
-        "status": 404
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events/268496/field-replies",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/events?stream_monitor_id=3947&since=2026-09-11T05:38:59.323Z&limit=20",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
-        "status": 200
-      }
-    ],
-    "/dsm/audit": [
-      {
-        "method": "GET",
-        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/config-management/list-optimized",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/dsm/audit?page=1&page_size=50",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/menu/menus?page_size=10000",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
-        "status": 200
-      },
-      {
-        "method": "GET",
-        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
-        "status": 200
-      }
-    ],
     "/dsm/notify": [
       {
         "method": "GET",
@@ -1420,15 +1047,6 @@
     ]
   },
   "api_notes": {
-    "/dsm/events/99554": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/m/events/99554": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/device": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/roles": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/m/events/173337": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/dsm/events/204342": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/m/events/204342": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/dsm/events/231071": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/m/events/231071": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/login": "로그인 실패 갈래에서 **서버에 실제로 나간 것만** 적었다 — 주입(L2~L5)한 응답은 서버에 닿지 않았으므로 세지 않는다",
     "/dsm/dashboard": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/dsm/events": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
@@ -1552,8 +1170,8 @@
       ]
     },
     {
-      "file": "SCREENS-1/fire_user/dsm_events_99554.png",
-      "route": "/dsm/events/99554",
+      "file": "SCREENS-1/fire_user/dsm_events_268496.png",
+      "route": "/dsm/events/268496",
       "persona": "U1",
       "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
       "user_role": "fire_user",
@@ -1561,9 +1179,10 @@
       "calls": [
         "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
         "GET /api/config-management/list-optimized 200",
-        "GET /api/dsm/deliveries?event_id=99554 200",
-        "GET /api/dsm/events/99554 200",
-        "GET /api/dsm/events/99554/timeline 200",
+        "GET /api/dsm/deliveries?event_id=268496 200",
+        "GET /api/dsm/events/268496 200",
+        "GET /api/dsm/events/268496/timeline 200",
+        "GET /api/dsm/events/upper-report/flags?event_ids=268496 200",
         "GET /api/menu/menus?page_size=10000 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
@@ -1885,39 +1504,17 @@
       ]
     },
     {
-      "file": "SCREENS-1/admin/device.png",
-      "route": "/device",
-      "persona": "U5",
-      "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
-      "user_role": "admin",
+      "file": "SCREENS-1/view_only_-_anyang/dsm_audit_read.png",
+      "route": "/dsm/audit",
+      "persona": "U4",
+      "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+      "user_role": "view_only_-_anyang",
       "data_source": "시드",
       "calls": [
-        "GET /api/advanced-table/grid-management/50/detail 200",
-        "GET /api/advanced-table/grid-management?menu_id=107 200",
-        "GET /api/advanced-table/select-data?model_name=devicestatus&multi_language=true&search_term=&page_number=1&page_size=1000&distinct=true&search_field=name 200",
         "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
         "GET /api/config-management/list-optimized 200",
-        "GET /api/devices/devices-management?page_size=25&current_page=1&depth=2 200",
+        "GET /api/dsm/audit?page=1&page_size=50 200",
         "GET /api/menu/menus?page_size=10000 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
-      ]
-    },
-    {
-      "file": "SCREENS-1/admin/roles.png",
-      "route": "/roles",
-      "persona": "U5",
-      "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
-      "user_role": "admin",
-      "data_source": "시드",
-      "calls": [
-        "GET /api/advanced-table/grid-management/10/detail 200",
-        "GET /api/advanced-table/grid-management?menu_id=107 200",
-        "GET /api/advanced-table/grid-management?menu_id=5 200",
-        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
-        "GET /api/config-management/list-optimized 200",
-        "GET /api/menu/menus?page_size=10000 200",
-        "GET /api/roles/?page_size=25&current_page=1 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
       ]
@@ -1982,94 +1579,6 @@
       "calls": [
         "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
         "GET /api/config-management/list-optimized 200",
-        "GET /api/menu/menus?page_size=10000 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
-      ]
-    },
-    {
-      "file": "SCREENS-1/fire_user/m_events_id_m3_field_reply.png",
-      "route": "/m/events/173337",
-      "persona": "U3",
-      "viewed_by": "U3 · gxseed_u1_operator · fire_user · 390px",
-      "user_role": "fire_user",
-      "data_source": "시드",
-      "calls": [
-        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
-        "GET /api/config-management/list-optimized 200",
-        "GET /api/dsm/events/173337 200",
-        "GET /api/dsm/events/173337/clip 404",
-        "GET /api/dsm/events/173337/field-replies 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
-      ]
-    },
-    {
-      "file": "SCREENS-1/fire_user/dsm_events_204342.png",
-      "route": "/dsm/events/204342",
-      "persona": "U1",
-      "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
-      "user_role": "fire_user",
-      "data_source": "시드",
-      "calls": [
-        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
-        "GET /api/config-management/list-optimized 200",
-        "GET /api/dsm/deliveries?event_id=204342 200",
-        "GET /api/dsm/events/204342 200",
-        "GET /api/dsm/events/204342/timeline 200",
-        "GET /api/menu/menus?page_size=10000 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
-      ]
-    },
-    {
-      "file": "SCREENS-1/fire_user/dsm_events_231071.png",
-      "route": "/dsm/events/231071",
-      "persona": "U1",
-      "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
-      "user_role": "fire_user",
-      "data_source": "시드",
-      "calls": [
-        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
-        "GET /api/config-management/list-optimized 200",
-        "GET /api/dsm/deliveries?event_id=231071 200",
-        "GET /api/dsm/events/231071 200",
-        "GET /api/dsm/events/231071/timeline 200",
-        "GET /api/menu/menus?page_size=10000 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
-      ]
-    },
-    {
-      "file": "SCREENS-1/fire_user/dsm_events_268496.png",
-      "route": "/dsm/events/268496",
-      "persona": "U1",
-      "viewed_by": "U1 · gxseed_u1_operator · fire_user · 1440px",
-      "user_role": "fire_user",
-      "data_source": "시드",
-      "calls": [
-        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
-        "GET /api/config-management/list-optimized 200",
-        "GET /api/dsm/deliveries?event_id=268496 200",
-        "GET /api/dsm/events/268496 200",
-        "GET /api/dsm/events/268496/timeline 200",
-        "GET /api/dsm/events/upper-report/flags?event_ids=268496 200",
-        "GET /api/menu/menus?page_size=10000 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
-        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
-      ]
-    },
-    {
-      "file": "SCREENS-1/view_only_-_anyang/dsm_audit_read.png",
-      "route": "/dsm/audit",
-      "persona": "U4",
-      "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
-      "user_role": "view_only_-_anyang",
-      "data_source": "시드",
-      "calls": [
-        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
-        "GET /api/config-management/list-optimized 200",
-        "GET /api/dsm/audit?page=1&page_size=50 200",
         "GET /api/menu/menus?page_size=10000 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"

@@ -1,11 +1,11 @@
 {
  "n": 39,
- "구현": 4,
+ "구현": 10,
  "빨강": 0,
- "미측정": 28,
+ "미측정": 22,
  "잠김": 7,
- "ratio": 0.10256410256410256,
- "weighted": 2.051282051282051,
+ "ratio": 0.2564102564102564,
+ "weighted": 5.128205128205128,
  "rows": [
   {
    "id": "F-01-c1",
@@ -59,18 +59,18 @@
   },
   {
    "id": "F-05-c1",
-   "color": "회색",
-   "why": "게이트 «scripts/verify_contract_route_reach.py» 가 **회색(exit 2)** 이다 — 못 잰 것은 통과가 아니다"
+   "color": "초록",
+   "why": "게이트 «scripts/verify_contract_route_reach.py» 초록 — 외부 App 의 진입면은 화면이 아니라 라우트다 — 그 게이트가 문을 두드린다"
   },
   {
    "id": "F-05-c2",
-   "color": "회색",
-   "why": "게이트 «scripts/verify_contract_route_reach.py» 가 **회색(exit 2)** 이다 — 못 잰 것은 통과가 아니다"
+   "color": "초록",
+   "why": "게이트 «scripts/verify_contract_route_reach.py» 초록 — 이벤트 OpenAPI 진입면 — 위와 같은 게이트가 잰다"
   },
   {
    "id": "F-05-c3",
-   "color": "회색",
-   "why": "게이트 «scripts/verify_contract_route_reach.py» 가 **회색(exit 2)** 이다 — 못 잰 것은 통과가 아니다"
+   "color": "초록",
+   "why": "게이트 «scripts/verify_contract_route_reach.py» 초록 — API Key 발급·폐기도 그 진입면 위에 있다"
   },
   {
    "id": "F-06-c1",
@@ -149,13 +149,13 @@
   },
   {
    "id": "F-12-c2",
-   "color": "회색",
-   "why": "row_map: 화면 없음 — 감사 조회 화면·라우트 0 — UX-41 미착수(P-140). 곁 증거: 위 403 이 감사 #211637 을 남겼다(실패 쪽 한 건 · 화면 아님)"
+   "color": "초록",
+   "why": "성공·실패 감사로그를 사람이 보는 자리 — `/dsm/audit` 이 그 문을 부른다 (AuditLog.tsx:89 · 읽는 사람 U2·U4·U5) ← 화면 /dsm/audit · /api/dsm/audit 200 · 역할 view_only_-_anyang · 시드 | SCREENS-1/view_only_-_anyang/dsm_audit_read.png"
   },
   {
    "id": "F-12-c3",
-   "color": "회색",
-   "why": "row_map: 화면 없음 — GET /api/dsm/settings/{domain} 실재(api.py:1143) · 부르는 화면 0"
+   "color": "초록",
+   "why": "수신자(알림 규칙) 관리 화면이 규칙 목록을 실제로 읽어 그린다 (NotifySettings.tsx:117) ← 화면 /dsm/notify · /api/dsm/settings/notify-rules/list 200 · 역할 admin · 시드 | SCREENS-1/admin/dsm_notify_recipients.png"
   },
   {
    "id": "F-12-c4",
@@ -179,8 +179,8 @@
   },
   {
    "id": "F-12-c8",
-   "color": "회색",
-   "why": "row_map: 화면 없음 — 발급 문 POST /api/dsm/settings/api-keys(api.py:977) · 화면 0(부속서A S-21 은 계획)"
+   "color": "초록",
+   "why": "API 키 관리 화면이 키 목록·범위를 읽는다 (Integrations.tsx:159 · domain 은 `api_keys`, 하이픈 아니다 — D-470) ← 화면 /dsm/integrations · /api/dsm/settings/api_keys 200 · 역할 admin · 시드 | SCREENS-1/admin/dsm_integrations_api_keys.png"
   },
   {
    "id": "F-13-c1",

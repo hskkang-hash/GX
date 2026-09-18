@@ -145,7 +145,28 @@ def exclude(records, *, keep_ids=()) -> list:
 # ---------------------------------------------------------------------------
 #: `scripts/` 의 부모 = 저장소 뿌리. `runs/` 는 P-157 아래다(P-157 README 의 표 그대로).
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RUNS_DIR = os.path.join(_ROOT, "docs", "agent", "evidence", "P-157", "runs")
+
+
+def _runs_dir() -> str:
+    """`runs/` 의 자리 — **저장소와 문서 트리가 따로 마운트된다**.
+
+    ★★ [V 고침 2026-09-18 · 턴 U] 1차판은 `_ROOT/docs/...` 로 못 박았다. 그런데
+      `gx-shell` 은 저장소를 `/repo` 로, 문서 트리를 `/docs` 로 **따로** 붙이고
+      `/repo/docs` 아래에는 증거가 없다. 그래서 `capture_screens`(컨테이너 안)는
+      `/docs/.../runs/<회차>/seed.json` 에 씨앗을 적었는데, 같은 컨테이너의
+      `measure_onboarding_t` 는 `/repo/docs/...` 를 보고 **「씨앗 명세가 없다」로
+      판정 불가(2)** 를 냈다. 파이프의 두 끝이 서로 다른 자리를 본 것이다
+      (P-170 ② 가 세운 배선의 마지막 한 칸). `capture_screens._screens_dir()` 과
+      **같은 눈**으로 고른다 — 두 벌은 반드시 어긋난다(D-369).
+    """
+    for base in (os.path.join(_ROOT, "docs"), "/docs"):
+        cand = os.path.join(base, "agent", "evidence", "P-157", "runs")
+        if os.path.isdir(cand):
+            return cand
+    return os.path.join(_ROOT, "docs", "agent", "evidence", "P-157", "runs")
+
+
+RUNS_DIR = _runs_dir()
 SEED_FILE_NAME = "seed.json"
 
 

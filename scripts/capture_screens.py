@@ -1050,7 +1050,17 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                           f"「문구가 없다」로 적으면 그 기록이 거짓이 된다")
                     break
                 body = page.inner_text("body")
-                if t["must_see"] not in body:
+                #: ★★ [V 고침 2026-09-18 · 턴 U] **`must_see` 가 없는 항목이 생겼다.**
+                #:   step 29~31(감사·수신자·API 키)은 「이번이 첫 촬영이라 화면의 글자를
+                #:   우리가 못 봤다」는 사유로 **일부러 `must_see` 를 안 달았다**(위 TARGETS
+                #:   머리말). 그런데 이 줄은 `t["must_see"]` 를 무조건 읽어 **KeyError 로
+                #:   죽었고**, 그래서 U4 의 마지막 페르소나에서 실행 전체가 멈췄다 —
+                #:   찍힌 장이 대장에 안 들어가고 뒤 도구(FC·온보딩)도 못 돌았다.
+                #:   **문구를 지어내 채우지 않는다**(그러면 제품이 아니라 우리 기대를 잰다).
+                #:   문구가 없으면 **문구 단언을 건너뛰고 찍는다** — 이 석 장의 판정은
+                #:   `verify_feature_reach` 가 **호출과 상태코드**로 한다.
+                must_see = t.get("must_see")
+                if must_see and must_see not in body:
                     misses.append({
                         "step": t["step"], "route": route,
                         "must_see": t["must_see"], "why": "문구가 화면에 없다",
@@ -1092,7 +1102,7 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                                      if "/api/" in u})
                     misses.append({
                         "step": t["step"], "route": route,
-                        "must_see": t["must_see"],
+                        "must_see": must_see or "(첫 촬영 · 기다린 글자 없음)",
                         "why": f"화면이 부른 우리 API 를 0건 기록했다 · "
                                f"`--api {api}` 와 번들 주소가 다르다 "
                                f"(실제로 부른 곳: {missed or '없음'})"})
@@ -1137,7 +1147,8 @@ def capture(*, web: str, user: str, password: str, event_id: int, role: str,
                     "calls": ["%s %s %s" % (m, pth, st)
                               for m, pth, st in this_screen],
                 })
-                print(f"[SHOT] {rel} — 「{t['must_see']}」 확인 후 캡처")
+                print("[SHOT] %s — %s" % (rel, ("「%s」 확인 후 캡처" % must_see)
+                                          if must_see else "첫 촬영(기다린 글자 없음) · 찍었다"))
         finally:
             browser.close()
 
