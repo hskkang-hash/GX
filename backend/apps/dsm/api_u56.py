@@ -44,6 +44,96 @@ class StorageOut(Schema):
     reason: str = ""
     used_note: str = ""
     env_name: str = ""
+    #: ★ [P-177] 이 %가 **무엇을 나눈 수인지** 한 문장. 상한은 선언값이고 사용량은
+    #: 객체저장 합계라 둘이 같은 그릇이 아니다 — 그 사실을 화면이 말해야 한다.
+    capacity_note: str = ""
+
+
+class CameraAddressOut(Schema):
+    """U5 #5 — 한 대의 주소를 고친 결과. `was_blank` 가 「채웠다/덮어썼다」를 가른다."""
+
+    camera_id: int
+    name: str = ""
+    install_address: str = ""
+    install_address_detail: str = ""
+    address_source: str = ""
+    was_blank: bool
+    previous_address: str = ""
+    audit_id: int | None = None
+
+
+class RestartRequestOut(Schema):
+    """WS-22 — **요청만** 기록된다. `executed` 는 언제나 거짓이고, 그것이 계약이다."""
+
+    request_id: int
+    kind: str
+    status: str
+    reason: str = ""
+    executed: bool
+    message: str
+    audit_id: int | None = None
+
+
+class SystemRequestRow(Schema):
+    request_id: int
+    kind: str
+    status: str
+    status_label: str = ""
+    reason: str = ""
+    requested_by: str = ""
+    created_at: str | None = None
+    handled_note: str | None = None
+
+
+class SystemRequestsOut(Schema):
+    total: int
+    requests: list[SystemRequestRow]
+    note: str
+
+
+class BackupRootRow(Schema):
+    path: str
+    exists: bool
+
+
+class BackupReceiptRow(Schema):
+    """회수증 한 장. **`unreadable` 이 참이면 나머지는 빈 칸이다** — 0 이 아니다."""
+
+    created_at: str | None = None
+    db_file: str | None = None
+    bytes: int | None = None
+    objects: int | None = None
+    verifiable: bool = False
+    unreadable: bool = False
+    where: str = ""
+
+
+class BackupReceiptsOut(Schema):
+    """★ `verdict: "UNKNOWN"` 이 값이다 — 못 찾은 것을 `0` 으로 적지 않는다(D-301)."""
+
+    roots: list[BackupRootRow]
+    receipts_found: int
+    last: BackupReceiptRow | None = None
+    recent: list[BackupReceiptRow]
+    schedule_enabled: bool
+    next_run: str
+    verdict: str
+    reason: str = ""
+
+
+class KeyScopesOut(Schema):
+    """API-03·04 — 이 키가 어디까지 가는가.
+
+    ★ `state` 가 `"unset"` 이면 **정한 적이 없다**이고, `scopes: []` 는 **아무 데도
+      못 간다**이다. 둘은 다른 사실이라 한 칸으로 접지 않는다.
+    ★ `allowed` 는 조회 응답에만 있다 — 저장 응답은 「무엇을 정했나」만 답한다.
+    """
+
+    key_id: int
+    state: str
+    scopes: list[str]
+    allowed: list[str] | None = None
+    audit_id: int | None = None
 
 
 def _scope(request) -> TenantScope:
@@ -503,7 +593,8 @@ class DsmU56API:
     #   ② 대상이 id 가 아니므로 **남의 테넌트 404** 를 잴 자리가 없다 — 남의 이름은
     #      「없다」가 아니라 「만들겠다」가 된다.
     # 이 문은 **id 로** 한 대를 고친다. 만들지 않는다 — 없으면 404 다.
-    @route.post("/cameras/{int:camera_id}/address", auth=JwtOrInboundKey())
+    @route.post("/cameras/{int:camera_id}/address", auth=JwtOrInboundKey(),
+                response=CameraAddressOut)
     @tenant_scoped(reason="U5 #5 카메라 주소 한 대 — 남의 테넌트 카메라의 주소를 "
                           "바꾸면 그 주소가 남의 알림 본문으로 나간다 (쓰기 IDOR)")
     def set_camera_address(self, request, camera_id: int, address: str,
@@ -558,7 +649,8 @@ class DsmU56API:
     # ★★ 이 문은 컨테이너를 **건드리지 않는다.** 건드리면 그것이 「운영계 외부 행위」이고
     #    표의 줄이 아니라 결함이다(턴 U 선등록이 그렇게 적었다). 여기서 일어나는 일은
     #    행 하나와 감사 한 줄이 전부이고, 응답 문장이 그 사실을 말한다.
-    @route.post("/system/restart-request", auth=JwtOrInboundKey())
+    @route.post("/system/restart-request", auth=JwtOrInboundKey(),
+                response=RestartRequestOut)
     @tenant_scoped(reason="U5 #14 재시작 요청 — 남의 테넌트 이름으로 점검을 "
                           "요청할 수 없다. 기록만 남는다")
     def request_restart(self, request, reason: str):
@@ -592,7 +684,8 @@ class DsmU56API:
                 "reason": row.reason, "executed": False,
                 "message": RESTART_ACK, "audit_id": access.audit_id}
 
-    @route.get("/system/requests", auth=JwtOrInboundKey())
+    @route.get("/system/requests", auth=JwtOrInboundKey(),
+               response=SystemRequestsOut)
     @tenant_scoped(reason="U5 #14 요청 목록 — 남의 테넌트가 무엇을 요청했는지는 "
                           "남의 정보다")
     def system_requests(self, request, limit: int = 20):
@@ -620,7 +713,8 @@ class DsmU56API:
         }
 
     # ── 백업 회수증 — **실물을 읽는다. 없으면 회색이다** ─────────────────────
-    @route.get("/system/backup-receipts", auth=JwtOrInboundKey())
+    @route.get("/system/backup-receipts", auth=JwtOrInboundKey(),
+               response=BackupReceiptsOut)
     @tenant_scoped(required=False,
                    reason="운영 기반의 사실(마지막 회수증 시각·파일 이름)이다. "
                           "테넌트 자료가 아니라 관리자에게만 연다 — guard_setting 이 문지기")
@@ -671,7 +765,8 @@ class DsmU56API:
     # ★ 범위의 정본은 `kernels/k5_trust/key_scopes.py` 하나다 — 이 라우트는 문지기와
     #   오류 코드만 정한다(D-212). 모르는 이름은 **422**(값이 틀렸다) · 남의 키는
     #   **404**(존재도 새지 않는다 · D-269) · 관리자가 아니면 **403** · 익명은 **401**.
-    @route.get("/settings/api-keys/{int:key_id}/scopes", auth=JwtOrInboundKey())
+    @route.get("/settings/api-keys/{int:key_id}/scopes", auth=JwtOrInboundKey(),
+               response=KeyScopesOut)
     @tenant_scoped(reason="API-03 키 범위 조회 — 남의 테넌트 키의 범위는 남의 정보다")
     def api_key_scopes_get(self, request, key_id: int):
         """이 키가 어디까지 가는가. **정한 적 없으면 그렇게 말한다**(`state: "unset"`)."""
@@ -693,7 +788,8 @@ class DsmU56API:
                 "scopes": list(view.scopes or []),
                 "allowed": sorted(ALLOWED_SCOPES)}
 
-    @route.post("/settings/api-keys/{int:key_id}/scopes", auth=JwtOrInboundKey())
+    @route.post("/settings/api-keys/{int:key_id}/scopes", auth=JwtOrInboundKey(),
+                response=KeyScopesOut)
     @tenant_scoped(reason="API-03 키 범위 저장 — 남의 테넌트 키의 범위를 넓히면 "
                           "그 키가 우리 자료에 닿는다 (쓰기 IDOR)")
     def api_key_scopes_set(self, request, key_id: int, scopes: str = ""):

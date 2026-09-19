@@ -25,6 +25,7 @@ import contextlib
 from django.apps import apps
 from django.test import Client, RequestFactory, TestCase
 from django.utils import timezone
+from ninja.errors import HttpError
 
 from common.tenant_scope import TenantScope
 from tests.no_cache import NO_CACHE
@@ -103,12 +104,62 @@ class _OnboardingFixture(TestCase):
             thread_local.request = None
         super().tearDown()
 
-    def _call(self, user):
+    def _call(self, user, persona: str = ""):
         from apps.dsm.api_f import DsmFAPI
 
         request = RequestFactory().get(PROGRESS_PATH)
         request.user = user
-        return DsmFAPI.onboarding_progress(DsmFAPI(), request)
+        return DsmFAPI.onboarding_progress(DsmFAPI(), request, persona=persona)
+
+    # ── 턴 V · 차선 F — U3·U6 카드를 닫는 서버 기록들 ────────────────────────
+    def _field_reply_audit(self, user):
+        """현장 한 줄 감사 행 — u3.field 카드를 닫는 **서버 기록**.
+
+        ★ 값의 정본은 커널이다(`kernels/k1_event/field_reply.py`). 여기서 문자열을
+          다시 적으면 두 벌이 되고, 커널이 이름을 바꾸는 날 이 시험만 초록으로 남는다.
+        """
+        from common import audit_writer
+        from kernels.k1_event.field_reply import ACTION, LOGGER_NAME
+
+        return audit_writer.write(
+            logger_name=LOGGER_NAME, tag="[TEST]", actor=user,
+            action=ACTION, outcome=audit_writer.ALLOWED,
+            reason="onboarding test", api_name=ACTION, api_method="POST",
+            status_http=200)
+
+    def _notify_prefs(self, user, group):
+        """내 알림 설정 한 행 — u3.prefs 카드를 닫는 **서버 기록**."""
+        model = apps.get_model("stream_monitors", "DsmNotifyPrefs")
+        return model._base_manager.create(
+            user=user, zone_ids=[], channels=[],
+            group=group, purpose_code="dsm.notify_prefs")
+
+    def _an_event(self):
+        """사건 한 건 — 현장 사진이 매달릴 자리. **커널의 생성 경로로** 만든다.
+
+        ★ ORM 으로 행을 찍지 않는다: 그렇게 만든 사건은 제품이 만드는 사건과 다른
+          모양일 수 있고, 다르면 이 시험은 제품이 아니라 제 손을 잰다.
+        """
+        from kernels.k1_event import record_detection
+
+        StreamMonitor = apps.get_model("stream_monitors", "StreamMonitor")
+        stream = StreamMonitor._base_manager.create(
+            name="onb-cam-a", code="onb-cam-a", ip_source="rtsp://onb.invalid/x",
+            group=self.group_a)
+        event_id = record_detection(
+            scope=self.scope_a, stream_monitor_id=stream.pk, event_type="fire",
+            severity="critical", occurred_at=timezone.now(),
+            snapshot_path="minio://dsm/onb.jpg").event_id
+        Detection = apps.get_model("stream_monitors", "DetectionEvent")
+        return Detection._base_manager.get(pk=event_id)
+
+    def _webhook_subscription(self, group, *, delivered=False):
+        """웹훅 구독 한 줄 — u6.subscription · (도달했으면) u6.delivery 를 닫는다."""
+        model = apps.get_model("stream_monitors", "WebhookSubscription")
+        return model._base_manager.create(
+            endpoint_url="https://partner.invalid/hook",
+            signing_key_ref="gx_test_key_ref", group=group,
+            last_delivered_at=timezone.now() if delivered else None)
 
     def _report_run(self, group):
         """보고서 실행 기록 한 줄 — U2 ⑥ 카드를 닫는 **서버 기록**."""
@@ -386,3 +437,193 @@ class OnboardingTestSendCardTest(_OnboardingFixture):
         theirs = onboarding.progress(scope=self.scope_s5a)
         card = next(c for c in theirs["cards"] if c["key"] == "u5.channel")
         self.assertFalse(card["done"], "남이 누른 시험 발송이 내 카드를 닫았습니다.")
+
+
+class OnboardingPersonaTest(_OnboardingFixture):
+    """턴 V · 차선 F — **역할이 아닌 사람 둘**(U3 이동 중 · U6 외부 연계).
+
+    왜 이 시험이 따로 있나
+    ----------------------
+    U1·U2·U4·U5 는 역할 코드가 있어서 `bucket_of` 가 고른다. U3 은 **상태**이고
+    (`onboarding_48.md` — 「U1·U2·U4의 이동 상태」) U6 은 **기계**라 사람 계정이 없다.
+    그래서 그 둘은 이름으로 고르고, 그 이름을 **누가 볼 수 있는지**가 규약이다.
+    규약이 없으면 남의 조직이 무엇까지 세웠는지가 카드 목록으로 샌다.
+    """
+
+    def test_no_persona_is_exactly_what_it_was(self) -> None:
+        """인자를 안 주면 **지금까지와 한 글자도 다르지 않다** — 화면이 안 바뀐다."""
+        body = self._call(self.user_a)
+        self.assertEqual("U2", body["role"])
+        self.assertEqual("U2", body["viewer_role"])
+        self.assertIsNone(body["persona"])
+
+    def test_an_operator_role_can_look_at_the_moving_mode(self) -> None:
+        """U2 가 「이동 중」을 본다 — 같은 사람의 다른 모드다."""
+        body = self._call(self.user_a, persona="U3")
+        self.assertEqual("U3", body["role"])
+        self.assertEqual("U2", body["viewer_role"])
+        self.assertEqual("U3", body["persona"])
+        keys = {c["key"] for c in body["cards"]} | {c["key"] for c in body["blocked"]}
+        self.assertEqual({"u3.login", "u3.response", "u3.field", "u3.prefs"}, keys)
+
+    def test_lowercase_and_spaces_are_the_same_name(self) -> None:
+        body = self._call(self.user_a, persona="  u3 ")
+        self.assertEqual("U3", body["role"])
+
+    def test_the_moving_mode_is_not_for_the_sysop(self) -> None:
+        """U5 는 「이동 중」의 사람이 아니다 — **403**(막혔다)이다."""
+        with self.assertRaises(HttpError) as caught:
+            self._call(self.user_s5a, persona="U3")
+        self.assertEqual(403, caught.exception.status_code)
+
+    def test_the_machine_table_belongs_to_the_sysop(self) -> None:
+        body = self._call(self.user_s5a, persona="U6")
+        self.assertEqual("U6", body["role"])
+        self.assertEqual("U5", body["viewer_role"])
+
+    def test_a_manager_cannot_read_the_machine_table(self) -> None:
+        with self.assertRaises(HttpError) as caught:
+            self._call(self.user_a, persona="U6")
+        self.assertEqual(403, caught.exception.status_code)
+
+    def test_an_unknown_persona_is_a_wrong_value_not_a_denial(self) -> None:
+        """모르는 이름은 **422**(값이 틀렸다)이다 — 「막혔다」와 「그런 것이 없다」는 다르다.
+
+        ★ 둘을 같은 코드로 내면 화면이 「권한을 받아 오라」고 말하고, 사람은 있지도
+          않은 유형의 권한을 받으러 간다.
+        """
+        with self.assertRaises(HttpError) as caught:
+            self._call(self.user_a, persona="U9")
+        self.assertEqual(422, caught.exception.status_code)
+        #: 커널 쪽 사유 코드도 같은 것을 말하는지 본다(두 벌이 어긋나지 않게).
+        from apps.dsm import onboarding
+
+        self.assertEqual((None, "unknown"), onboarding.resolve_bucket("U2", "U9"))
+
+    def test_asking_for_my_own_role_by_name_is_allowed(self) -> None:
+        body = self._call(self.user_a, persona="U2")
+        self.assertEqual("U2", body["role"])
+
+    def test_asking_for_someone_elses_role_by_name_is_not(self) -> None:
+        """남의 역할 표는 안 준다 — 카드 목록 자체가 그 조직의 상태를 말한다."""
+        with self.assertRaises(HttpError) as caught:
+            self._call(self.user_a, persona="U5")
+        self.assertEqual(403, caught.exception.status_code)
+
+    def test_every_card_table_is_reachable(self) -> None:
+        """**아무도 못 보는 표가 없다.** 닿지 않는 표를 세어 6/6 이라고 적으면 거짓이다."""
+        from apps.dsm import onboarding
+
+        reachable = {b for b, _ in onboarding._role_buckets()} | set(
+            onboarding.PERSONA_VIEWERS)
+        self.assertEqual(set(), set(onboarding.CARDS) - reachable)
+
+    def test_six_people_have_a_card_table(self) -> None:
+        """WO-01 파 3 의 「진행률 6/6」 — 표가 없는 사람의 진행률은 0 이 아니라 **없다**."""
+        from apps.dsm import onboarding
+
+        self.assertEqual({"U1", "U2", "U3", "U4", "U5", "U6"},
+                         set(onboarding.CARDS))
+
+
+class OnboardingU3CardsTest(_OnboardingFixture):
+    """U3 「이동 중」 카드 셋이 **서버 기록으로** 닫힌다 (PRD §7.2 U3)."""
+
+    def _u3(self, user):
+        return {c["key"]: c for c in self._call(user, persona="U3")["cards"]}
+
+    def test_no_record_means_not_done(self) -> None:
+        cards = self._u3(self.user_a)
+        self.assertFalse(cards["u3.field"]["done"])
+        self.assertFalse(cards["u3.prefs"]["done"])
+
+    def test_the_channel_name_is_the_same_string_the_kernel_writes(self) -> None:
+        """App 이 적어 둔 **사본**이 커널의 정본과 같은가 (D-212).
+
+        `apps/dsm/onboarding.py` 는 커널 서브모듈을 가져올 수 없다(DA-04 §1-4) —
+        그래서 감사 채널 이름을 사본으로 들고 있다. 사본은 낡는다. **시험은 App 이
+        아니므로** 커널을 그대로 읽을 수 있고, 여기서 둘을 대 본다. 커널이 이름을
+        바꾸는 날 이 줄이 먼저 빨개진다.
+        """
+        from apps.dsm import onboarding
+        from kernels.k1_event.field_reply import ACTION, LOGGER_NAME
+
+        self.assertEqual((LOGGER_NAME, ACTION), onboarding.FIELD_REPLY_CHANNEL)
+
+    def test_a_field_reply_closes_the_card_with_its_audit_row(self) -> None:
+        row = self._field_reply_audit(self.user_a)
+        cards = self._u3(self.user_a)
+        self.assertTrue(cards["u3.field"]["done"])
+        self.assertEqual("audit#%s" % row.audit_id, cards["u3.field"]["source_ref"])
+
+    def test_a_field_photo_also_closes_the_same_card(self) -> None:
+        """한 줄이 없어도 사진이면 닫는다 — 한 장의 카드에 손이 둘이다."""
+        model = apps.get_model("stream_monitors", "DsmFieldPhoto")
+        photo = model._base_manager.create(
+            event=self._an_event(), object_key="tenant-a/field/1.jpg",
+            content_type="image/jpeg", size_bytes=11,
+            group=self.group_a, purpose_code="dsm.field_photo",
+            created_by=self.user_a)
+        cards = self._u3(self.user_a)
+        self.assertTrue(cards["u3.field"]["done"])
+        self.assertEqual("field_photo#%s" % photo.pk, cards["u3.field"]["source_ref"])
+
+    def test_notify_prefs_row_closes_the_quiet_hours_card(self) -> None:
+        row = self._notify_prefs(self.user_a, self.group_a)
+        cards = self._u3(self.user_a)
+        self.assertTrue(cards["u3.prefs"]["done"])
+        self.assertEqual("notify_prefs#%s" % row.pk, cards["u3.prefs"]["source_ref"])
+
+    def test_another_persons_record_does_not_close_my_card(self) -> None:
+        """남의 회신·남의 설정은 내 카드를 못 닫는다 — 음성 대조."""
+        self._field_reply_audit(self.user_b)
+        self._notify_prefs(self.user_b, self.group_b)
+        cards = self._u3(self.user_a)
+        self.assertFalse(cards["u3.field"]["done"])
+        self.assertFalse(cards["u3.prefs"]["done"])
+
+    def test_the_login_card_stays_blocked_with_a_reason(self) -> None:
+        """「문자·푸시 링크로 열기」는 서버가 모른다 — 지우지 않고 사유와 함께 남는다."""
+        blocked = {c["key"]: c for c in self._call(self.user_a, persona="U3")["blocked"]}
+        self.assertIn("u3.login", blocked)
+        self.assertTrue(blocked["u3.login"]["why"].strip())
+
+
+class OnboardingU6CardsTest(_OnboardingFixture):
+    """U6 「외부 연계」 카드가 **연계의 실제 기록으로** 닫힌다 (PRD §7.2 U6)."""
+
+    def _u6(self, user):
+        return {c["key"]: c for c in self._call(user, persona="U6")["cards"]}
+
+    def test_no_subscription_means_not_done(self) -> None:
+        cards = self._u6(self.user_s5a)
+        self.assertFalse(cards["u6.subscription"]["done"])
+        self.assertFalse(cards["u6.delivery"]["done"])
+
+    def test_a_subscription_closes_only_the_subscription_card(self) -> None:
+        """**구독을 만든 것과 받은 것은 다른 사실이다.** 둘을 한 카드로 접지 않는다."""
+        row = self._webhook_subscription(self.group_a)
+        cards = self._u6(self.user_s5a)
+        self.assertTrue(cards["u6.subscription"]["done"])
+        self.assertEqual("webhook#%s" % row.pk, cards["u6.subscription"]["source_ref"])
+        self.assertFalse(cards["u6.delivery"]["done"])
+
+    def test_a_delivered_subscription_closes_the_delivery_card(self) -> None:
+        row = self._webhook_subscription(self.group_a, delivered=True)
+        cards = self._u6(self.user_s5a)
+        self.assertTrue(cards["u6.delivery"]["done"])
+        self.assertEqual("webhook_delivered#%s" % row.pk,
+                         cards["u6.delivery"]["source_ref"])
+
+    def test_another_tenants_subscription_does_not_close_my_card(self) -> None:
+        self._webhook_subscription(self.group_b, delivered=True)
+        cards = self._u6(self.user_s5a)
+        self.assertFalse(cards["u6.subscription"]["done"])
+        self.assertFalse(cards["u6.delivery"]["done"])
+
+    def test_health_and_key_read_stay_blocked_with_reasons(self) -> None:
+        """익명 health · 키로 읽은 사실은 서버에 안 남는다 — 지우지 않는다(D-301)."""
+        blocked = {c["key"]: c for c in self._call(self.user_s5a, persona="U6")["blocked"]}
+        self.assertEqual({"u6.health", "u6.events"}, set(blocked))
+        for card in blocked.values():
+            self.assertTrue(card["why"].strip())

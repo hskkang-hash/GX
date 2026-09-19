@@ -152,20 +152,10 @@ def render(report_run, *, html: str | None = None, scope=None) -> bytes:
     return html_to_docx_bytes(html, header=header)
 
 
-def text_of(data: bytes) -> str:
-    """완성된 DOCX 에서 **사람이 보는 글자 전부**(문단 + 표 칸 + 머리글).
-
-    시험이 「택배 필드 0」을 세는 자리다. XML 을 통째로 훑지 않는 이유: 관계 파일·스타일
-    이름에 든 영문이 본문 글자로 오인되면 그 시험은 자기 자신을 속인다.
-    """
-    from docx import Document
-
-    document = Document(io.BytesIO(data))
-    out = [p.text for p in document.paragraphs]
-    for table in document.tables:
-        for row in table.rows:
-            out.extend(cell.text for cell in row.cells)
-    for section in document.sections:
-        out.extend(p.text for p in section.header.paragraphs)
-        out.extend(p.text for p in section.footer.paragraphs)
-    return "\n".join(t for t in out if t)
+#: * [2026-09-19 · 턴 V 병합 · D-377] **`text_of` 는 여기 없다 — 시험 파일로 옮겼다.**
+#:   완성된 DOCX 에서 사람이 보는 글자를 긁어내는 함수였는데, 제품은 한 번도 부르지
+#:   않고 `backend/tests/test_u24_reports.py` 만 불렀다. 잠자는 기능 게이트(D-377)가
+#:   「새로 만드는 것은 켜진 상태로 태어나야 한다」로 잡았고, 그 빨강이 옳다 —
+#:   제품 모듈에 시험 도우미가 앉아 있으면 다음 사람은 그것을 제품 기능으로 읽는다.
+#:   기준선(`evidence/D-377/dormant_baseline.txt`)은 **줄어들기만 하므로** 등재로
+#:   덮지 않고 **자리를 옮겼다.** 쓰는 곳에 두는 것이 켜 두는 것이다.

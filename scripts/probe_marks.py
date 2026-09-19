@@ -193,7 +193,9 @@ def load_seed(path=None, runs_dir: str | None = None) -> dict:
       회색으로 적어야 한다 — 빈 씨앗으로 잰 초록은 분모 0 인 초록이다.
     """
     empty = {"event_ids": [], "first_event_id": None, "probe_mark": "", "run": "",
-             "seeded_at": "", "severity_by_id": {}, "address": {}, "source": "", "why": ""}
+             "seeded_at": "", "severity_by_id": {}, "address": {}, "source": "", "why": "",
+             #: [U1 요청 ② · 턴 V] 그림이 실린 씨앗 — 재는 쪽이 **고를 수 있게** 한다.
+             "snapshot_by_id": {}, "first_snapshot_event_id": None, "snapshot": {}}
     p = path or latest_seed_file(runs_dir)
     if not p:
         empty["why"] = "씨앗 명세가 없다 — capture_screens 를 --keep-seeds(기본)로 먼저 돌린다"
@@ -206,18 +208,29 @@ def load_seed(path=None, runs_dir: str | None = None) -> dict:
         empty["why"] = "씨앗 명세를 못 읽었다(%s) — 깨진 파일로 재지 않는다" % type(exc).__name__
         return empty
     ids = [int(x) for x in (doc.get("event_ids") or [])]
-    sev = {}
+    sev, snaps, first_snap = {}, {}, None
     for e in (doc.get("events") or []):
         try:
-            sev[int(e.get("event_id"))] = e.get("severity") or ""
+            eid = int(e.get("event_id"))
         except (TypeError, ValueError):
             continue
+        sev[eid] = e.get("severity") or ""
+        #: ★ [U1 요청 ② · 2026-09-18 턴 V] **빈 문자열은 「그림 없음」이다.**
+        #:   U2#4(심각 이벤트 상황 판단)는 그림을 보는 행이라, 그림 없는 씨앗으로 재면
+        #:   제품이 아니라 씨앗을 잰다 [U1 실측: 268496 의 snapshot 문 404 · 같은 순간 4802 는 200].
+        path = (e.get("snapshot_path") or "").strip()
+        snaps[eid] = path
+        if path and first_snap is None:
+            first_snap = eid
     return {"event_ids": ids,
             "first_event_id": doc.get("first_event_id") or (ids[0] if ids else None),
             "probe_mark": doc.get("probe_mark") or "",
             "run": doc.get("run") or "",
             "seeded_at": doc.get("seeded_at") or "",
             "severity_by_id": sev,
+            "snapshot_by_id": snaps,
+            "first_snapshot_event_id": (doc.get("snapshot") or {}).get("first_with_snapshot") or first_snap,
+            "snapshot": doc.get("snapshot") or {},
             "address": doc.get("address") or {},
             "events": doc.get("events") or [],
             "source": str(p),

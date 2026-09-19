@@ -1,7 +1,28 @@
 {
-  "measured_at": "2026-09-18T03:24:38+00:00",
-  "verdict": "UNKNOWN",
-  "reason": "OperationalError: lost synchronization with server: got message type \"e\", length 574234658\n",
+  "measured_at": "2026-09-18T17:05:00+00:00",
+  "verdict": "ALARM",
+  "day": "2026-09-18",
+  "anchor": "b972ee929c661f94352331cc52b9c67e20750c681c5246e44960180372a5bd07",
+  "anchor_line": "[LAW-08] 2026-09-18 증거 해시 앵커 SHA-256: b972ee929c661f94352331cc52b9c67e20750c681c5246e44960180372a5bd07",
+  "total": 1996,
+  "chained": 1707,
+  "breaks": 3,
+  "hashed_fields": [
+    "id",
+    "create_datetime",
+    "logger_name",
+    "level_name",
+    "msg",
+    "note",
+    "api_name",
+    "api_method",
+    "status_http",
+    "user_id",
+    "username",
+    "target_user_id",
+    "data_before",
+    "data_after"
+  ],
   "_written_from": {
     "db": "database_guardianx",
     "under_pytest": false

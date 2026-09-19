@@ -26,7 +26,9 @@
  *   403 은 상태 칸에 그대로 적힌다(숨기지 않는다 · 단추를 지우지도 않는다).
  */
 import { Button, Card, Col, Input, Row, Space, Table, Tag, Typography } from 'antd';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
+import { ownDenialPaths } from '@/features/session/permissionDenied';
 
 import {
   createReportRun,
@@ -137,6 +139,19 @@ export default function Reports() {
       setBusyFile(null);
     }
   }, []);
+
+  /**
+   * ★★ [턴 V] **이 문들의 403 은 이 화면이 적는다** — 위에서 내려오는 띠가 아니라.
+   *
+   * [실측 2026-09-17 턴 U · V · U4 로 「만들기」] 서버가 403 을 주면 두 가지가
+   * 동시에 떴다: 아래 상태 칸(네 문장 + 「다시 시도」)과 화면 맨 위 고정 띠.
+   * 띠는 덮개라 상태 칸의 **단추를 가린다.** 같은 사실을 두 번 말하면서 값 있는
+   * 쪽을 덮는 것이다. 그래서 이 화면이 임자를 선언한다.
+   *
+   * ⚠ **숨기는 것이 아니다.** 403 은 아래 상태 칸에 그대로 적히고 단추도 그대로다.
+   *   여기서 정하는 것은 **누가 말하는가**뿐이다.
+   */
+  useEffect(() => ownDenialPaths(['/api/dsm/reports/']), []);
 
   const rows = runs.data?.runs ?? [];
 

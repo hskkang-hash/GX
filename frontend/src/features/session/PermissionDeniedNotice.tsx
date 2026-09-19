@@ -29,41 +29,79 @@
  *   (차선 C ② · 프런트 오류 처리). 안내가 떴는데 그 밑에서 스피너가 계속 돌면
  *   그것은 이 파일의 빨강이 아니라 **부른 화면의 빨강**이고, 따로 적는다.
  *   여기서 남의 스피너를 끄러 가면 고칠 곳이 덮인다.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * ★★ 턴 V · 차선 U24 — **고친 것 둘** [실측 2026-09-17 턴 U · V 가 U4 로 눌렀다]
+ * ═══════════════════════════════════════════════════════════════════════════
+ * V 가 `/dsm/reports` 에서 「만들기」를 눌러 403 을 받았고, 그 자리에 흠 둘을 적었다.
+ *
+ * ① **결과줄이 읽기의 말이었다.** 서버의 큰 글자는 「읽기 전용 계정입니다 — 이 작업은
+ *    수행할 수 없습니다.」(쓰기)인데, 그 밑에 이 파일이 고정으로 붙이던 줄은
+ *    「이 자료는 지금 계정의 권한으로 열 수 없습니다.」(읽기)였다. 한 상자가 두 말을 했다.
+ *    → `COPY_DENIED_CONSEQUENCE` 로 **갈래를 갈랐다**(볼 수 없습니다 ↔ 고칠 수 없습니다).
+ *      갈래는 상태 코드가 아니라 **요청 메서드**가 정한다 — 403 하나로는 못 가른다.
+ *
+ * ② **상태 칸과 겹쳐 떴다.** 화면은 이미 제 상태 칸에 같은 403 을 적고 **거기에만
+ *    「다시 시도」가 있다.** 이 띠는 화면 맨 위 고정 덮개라 그 칸을 가린다.
+ *    → 화면이 `ownDenialPaths()` 로 **임자를 선언**하면 이 띠는 그 문들을 안 그린다.
+ *      ⚠ 선언하지 않은 화면은 **종전 그대로 띠가 그린다** — 조용히 삼키는 길을
+ *        기본으로 만들지 않는다(이 파일이 태어난 이유가 바로 그 침묵이다).
  */
 import { useEffect, useState } from 'react';
 
 import {
+  COPY_DENIED_CONSEQUENCE,
   PERMISSION_DENIED_EVENT,
+  PERMISSION_DENIED_OWNER_EVENT,
+  hasDenialOwner,
   type PermissionDeniedDetail,
 } from './permissionDenied';
 
-/** 「무엇이 막혔는가」는 결과고, 「무엇을 할 수 있는가」는 그 다음 줄이다. */
-const CONSEQUENCE = '이 자료는 지금 계정의 권한으로 열 수 없습니다.';
 const DISMISS = '닫기';
 
-/** 화면에 쌓인 거절들. `path` 가 열쇠다 — 같은 문은 겹쳐 그리지 않는다. */
+/** 화면에 쌓인 거절들. **갈래 + 문**이 열쇠다 — 같은 것은 겹쳐 그리지 않는다. */
 type Denial = PermissionDeniedDetail;
 
 export function PermissionDeniedNotice() {
   const [denials, setDenials] = useState<Denial[]>([]);
+  /** 임자 목록이 바뀔 때마다 다시 거른다. 값 자체에는 뜻이 없다 — 다시 그리는 신호다. */
+  const [ownerTick, setOwnerTick] = useState(0);
 
   useEffect(() => {
     const onDenied = (event: Event) => {
       const detail = (event as CustomEvent<PermissionDeniedDetail>).detail;
       if (!detail?.message) return;
       setDenials((prev) =>
-        prev.some((d) => d.path === detail.path) ? prev : [...prev, detail],
+        prev.some((d) => d.path === detail.path && d.kind === detail.kind)
+          ? prev
+          : [...prev, detail],
       );
     };
+    const onOwner = () => setOwnerTick((n) => n + 1);
     window.addEventListener(PERMISSION_DENIED_EVENT, onDenied);
-    return () => window.removeEventListener(PERMISSION_DENIED_EVENT, onDenied);
+    window.addEventListener(PERMISSION_DENIED_OWNER_EVENT, onOwner);
+    return () => {
+      window.removeEventListener(PERMISSION_DENIED_EVENT, onDenied);
+      window.removeEventListener(PERMISSION_DENIED_OWNER_EVENT, onOwner);
+    };
   }, []);
 
-  if (denials.length === 0) return null;
+  // ★★ 임자가 있는 문은 **그리지 않는다.** 그 화면의 상태 칸이 이미 같은 말을
+  //   하고 있고, 그 칸에는 「다시 시도」가 있다. 덮개를 한 장 더 얹으면 그 단추를
+  //   가린다 — 같은 사실을 두 번 말하면서 값 있는 쪽을 덮는다.
+  //   `ownerTick` 은 임자가 바뀐 순간 이 줄을 다시 재게 하는 신호다.
+  void ownerTick;
+  const shown = denials.filter((d) => !hasDenialOwner(d.path));
+
+  if (shown.length === 0) return null;
 
   // 서버가 보낸 문장이 여럿이면 첫 줄만 크게 쓴다 — 문장 자체는 대개 같고,
   // 다른 것은 **막힌 문**이다. 그 목록은 아래 작은 글자로 그대로 적는다.
-  const headline = denials[0].message;
+  const headline = shown[0].message;
+  // ★ 결과줄은 **갈래로 갈린다** — 읽기가 막힌 것과 쓰기가 막힌 것은 다른 사실이다.
+  //   섞여 있으면(한 화면이 읽기도 쓰기도 막혔다) 쓰기가 더 센 말이므로 그쪽으로 적는다.
+  const kind = shown.some((d) => d.kind === 'write') ? 'write' : 'read';
+  const consequence = COPY_DENIED_CONSEQUENCE[kind];
 
   return (
     <div
@@ -91,7 +129,7 @@ export function PermissionDeniedNotice() {
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>{headline}</div>
-        <div style={{ color: '#92400e' }}>{CONSEQUENCE}</div>
+        <div style={{ color: '#92400e' }}>{consequence}</div>
         <div
           style={{
             marginTop: 6,
@@ -100,8 +138,8 @@ export function PermissionDeniedNotice() {
             wordBreak: 'break-all',
           }}
         >
-          {denials.map((d) => (
-            <div key={d.path}>{d.path}</div>
+          {shown.map((d) => (
+            <div key={d.kind + ' ' + d.path}>{d.path}</div>
           ))}
         </div>
       </div>

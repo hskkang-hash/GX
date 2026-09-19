@@ -321,6 +321,7 @@ routes:
   "POST /api/dsm/stats/thresholds/simulate": session_only
   "GET /api/dsm/system/backup-receipts": session_only
   "GET /api/dsm/system/requests": session_only
+  "POST /api/dsm/system/requests/{int:request_id}/handled": session_only
   "POST /api/dsm/system/restart-request": session_only
   "GET /api/dsm/system/storage": session_only
   "GET /api/dsm/webhook-subscriptions": session_only

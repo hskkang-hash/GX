@@ -122,7 +122,66 @@ class JwtOrInboundKey(CustomJWTAuth):
             if _require_https() and not request.is_secure():
                 # ② 키가 평문으로 흐르면 키가 아니다. 사유에 키를 넣지 않는다(④).
                 return None
+            user = super().__call__(request)
+            if user is None:
+                return None                      # 인증이 안 됐다 — 401 이다
+            _assert_request_key_scope(request, user)   # 범위 밖이면 **403**
+            return user
         return super().__call__(request)
+
+
+def inbound_key_id(request: HttpRequest) -> int | None:
+    """이 요청이 들고 온 **들어오는 키의 id.** 못 찾으면 `None`.
+
+    ★ 값을 돌려주지 않는다(규약 ④) — 돌려주는 것은 **정수 하나**다. 앞 8자
+      (`prefix`)만으로 행을 찾는다. `prefix` 는 `InboundKeyView` 가 이미 사람에게
+      보여 주는 칸이고, 그것만으로는 인증되지 않는다.
+    ★ dj-core 표는 **읽기만** 한다 (§0.4 · D-207). `apps.get_model` 로 가져온다 —
+      `kernels/k5_trust/inbound_keys.py` 와 같은 규약이다.
+    """
+    raw = request.headers.get(INBOUND_KEY_HEADER) or ""
+    if not raw:
+        authn_header = request.headers.get("Authorization", "") or ""
+        head, _, rest = authn_header.partition(" ")
+        if head.lower() in INBOUND_AUTHORIZATION_SCHEMES:
+            raw = rest
+    raw = raw.strip()
+    if not raw:
+        return None
+
+    from django.apps import apps
+
+    row = (apps.get_model("apikey_account", "APIKey").objects
+           .filter(prefix=raw[:8], is_active=True)
+           .values_list("pk", flat=True).first())
+    return None if row is None else int(row)
+
+
+def _assert_request_key_scope(request: HttpRequest, user) -> None:
+    """이 키로 이 경로를 부를 수 있는가. 아니면 **403**.
+
+    ★ **요청을 아는 자리는 여기 하나다** (D-335 · `key_scopes.py` 머리말). 커널은
+      HTTP 를 모른다 — 그래서 경로와 키 id 를 **여기서** 꺼내 `assert_path_scope`
+      에 넘긴다. 판정식은 커널 한 곳이고 이 함수는 옮기기만 한다(D-212).
+    ★ 키를 못 찾으면 **막지 않는다.** 이 갈래에는 dj-core 의 파트너 키(`pk_…`)도
+      들어오는데 그 키는 `apikey_account` 행이 아니다 — 여기서 거절하면 범위와
+      무관한 갈래가 조용히 죽는다. 그 갈래의 좁히기는 `INBOUND_KEY_ALLOWED`
+      (경로 자체를 연 목록)가 이미 한 겹 하고 있다.
+    ★ 401 이 아니라 **403** 이다 — 인증은 성했고 권한이 없다(연계 명세 §4).
+    """
+    from ninja.errors import HttpError
+
+    from common.tenant_scope import TenantScope
+    from kernels.k5_trust import KeyScopeDenied, assert_path_scope
+
+    key_id = inbound_key_id(request)
+    if key_id is None:
+        return
+    try:
+        assert_path_scope(scope=TenantScope.of(user), key_id=key_id,
+                          path=request.path)
+    except KeyScopeDenied as exc:
+        raise HttpError(403, str(exc))
 
 
 def inbound_key_routes(surface) -> list[tuple[str, str]]:

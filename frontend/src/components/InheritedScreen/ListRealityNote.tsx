@@ -26,11 +26,30 @@
  * ★ 인수 화면을 한 줄도 안 고친다. 위에 한 줄을 얹을 뿐이다(`InheritedScreen` 규율).
  * ⚠ 이 줄은 **진단이지 수리가 아니다.** 표가 비는 원인은 인수 화면 안에 있고, 그것은
  *   dj-core 의 자리다. 덮지 않고 **보이게** 두는 것이 이 줄의 목적이다.
+ *
+ * ── 턴 V · 차선 U56 — `/roles` 표 0 의 **마지막 갈래를 닫는다** ──────────────────
+ *
+ * 턴 U 가 두 갈래로 갈라 놓았다: ㉠ 서버가 0행을 냈다 · ㉡ 서버는 냈는데 화면이
+ * 못 그렸다. 이번 턴에 **실제 계정으로** 갈랐다 [실측 2026-09-18 · 개발 DB · dj-core 의
+ * 판정식을 그대로 불러서]:
+ *
+ *     Role.objects.filter(deleted__isnull=True).count()            → **16**
+ *     _check_path_permission(gxseed_u5_sysop, "/roles", "read")    → **True**
+ *     _check_path_permission(gxseed_u4_official, "/roles", "read") → False
+ *     _check_path_permission(gxprobe_v, "/roles", "read")          → False
+ *
+ * ⇒ U5 시드 계정은 **문을 지나고 16행을 받는다.** 그러므로 그 계정이 본 0행은 ㉡ 이고,
+ *   그 자리는 rj-core 인수 화면 안이라 **우리 층에 고칠 것이 없다**(§0.4 · 등재 요청).
+ * ⇒ 남은 진짜 갈래는 **권한 없는 계정**이었고, 그 갈래를 이 파일이 이번에 닫는다:
+ *   거절이 **200 봉투 안에** 오기 때문에(`/api/roles/` 는 승격 목록 밖) 종전 코드는
+ *   그것을 8초 뒤 「세지 못했습니다」로 적었다 — **고장과 권한을 뭉친 문장**이다.
+ *   이제 「볼 권한이 없습니다」로 즉시 말한다. **분모 없이 답하지 않는다.**
  */
 import { Alert, Button, Space } from 'antd';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { COPY_PERMISSION_DENIED } from '@/features/session/permissionDenied';
 import API from '@/services/API';
 
 interface Props {
@@ -44,7 +63,11 @@ interface Props {
   addLabel?: string;
 }
 
-type Counted = { kind: 'loading' } | { kind: 'count'; n: number } | { kind: 'unknown' };
+type Counted =
+  | { kind: 'loading' }
+  | { kind: 'count'; n: number }
+  | { kind: 'denied'; status: number }
+  | { kind: 'unknown' };
 
 export default function ListRealityNote({ countUrl, noun, addPath, addLabel }: Props) {
   const [state, setState] = useState<Counted>({ kind: 'loading' });
@@ -68,13 +91,64 @@ export default function ListRealityNote({ countUrl, noun, addPath, addLabel }: P
       API.get(countUrl, { params: { page_size: 1, current_page: 1 } })
         .then((body: unknown) => {
           if (!alive || settled) return;
-          const n = (body as { count?: unknown } | null)?.count;
+
+          /*
+            ★★ [턴 V · 차선 U56] **거절이 200 봉투 안에 들어 있다** [실측 2026-09-18].
+
+            `/api/roles/` 는 `API_CONTRACT_PROMOTE_PATHS` 에 **없다**(settings.py 의
+            그 자리에 사유가 적혀 있다 — rj-core 화면의 오류 처리를 이 저장소에서
+            읽을 수 없어 SEC-11b 로 남겼다). 그래서 dj-core 의 권한 거절은
+            HTTP 403 이 아니라 이렇게 온다:
+
+                HTTP 200  { "success": false, "status_code": 403, "message": "Permission denied." }
+
+            이 모양은 `count` 칸이 없으므로 종전 코드에서는 **그냥 빠져나가** 8초 뒤
+            「세지 못했습니다」가 됐다. 즉 **「볼 권한이 없다」가 「고장났다」로 읽혔다**
+            (D-349 착시 ⑧ 이 앞단에 남긴 마지막 갈래). 그래서 봉투를 편다.
+            ⚠ 서버를 고치는 것이 아니다 — 승격(`API_CONTRACT_PROMOTE_PATHS`)은 반경이
+              큰 결정이고 이 차선의 것이 아니다. 여기서는 **읽고 말한다.**
+          */
+          const envelope = body as
+            | { count?: unknown; success?: unknown; status_code?: unknown }
+            | null;
+          const denied =
+            envelope?.success === false &&
+            (envelope?.status_code === 403 || envelope?.status_code === 401);
+          if (denied) {
+            settled = true;
+            setState({ kind: 'denied', status: Number(envelope?.status_code) });
+            return;
+          }
+
+          const n = envelope?.count;
           if (typeof n !== 'number') return; // 모양이 다르면 아래 시계가 판정한다
           settled = true;
           setState({ kind: 'count', n });
         })
-        .catch(() => {
-          /* 여기서 0을 만들지 않는다. 판정은 아래 시계 한 곳이 한다. */
+        .catch((err: unknown) => {
+          /*
+            ★★ [턴 V · 차선 U56] **「못 읽었다」와 「볼 권한이 없다」를 뭉치지 않는다.**
+
+            [실측 2026-09-18] `/api/roles/` 앞에는 메뉴 권한 문지기가 하나 더 있다
+            (`core/role/permission.py::path_permission("read", "/roles")`). 권한이 없는
+            계정은 **403** 을 받는다 — 그때 이 조각은 8초를 기다렸다가 「세지 못했습니다」
+            로 떨어졌다. 그 문장은 **고장**을 가리키는 말인데 실제로는 **권한**이다.
+            빈 표 밑에 그 말이 붙으면 사람은 시스템이 죽은 줄 안다.
+
+            ⚠ 그래서 **확정된 거절은 즉시 확정한다**(시계를 기다리지 않는다). 확정할 수
+              없는 실패(그물망·모양 다름)만 아래 시계가 「세지 못했습니다」로 판정한다 —
+              회색은 회색으로 남긴다(D-301).
+            ★ 낱말을 만들지 않았다 — 사전의 `COPY_PERMISSION_DENIED` 를 그대로 쓴다
+              (GX-COPY 규칙 1 · `permissionDenied.ts` 와 같은 규율).
+          */
+          const status = (err as { response?: { status?: number } } | null)?.response
+            ?.status;
+          if (status === 401 || status === 403) {
+            if (!alive || settled) return;
+            settled = true;
+            setState({ kind: 'denied', status });
+          }
+          /* 그 밖에는 여기서 0을 만들지 않는다. 판정은 아래 시계 한 곳이 한다. */
         });
     };
 
@@ -101,6 +175,24 @@ export default function ListRealityNote({ countUrl, noun, addPath, addLabel }: P
         </Button>
       </Link>
     ) : null;
+
+  if (state.kind === 'denied') {
+    return (
+      <Alert
+        type="error"
+        showIcon
+        style={{ marginBottom: 8 }}
+        message={`${noun} 목록 — ${COPY_PERMISSION_DENIED}.`}
+        description={
+          <span>
+            아래 표가 비어 있는 것은 「{noun}이(가) 없다」가 아니라{' '}
+            <strong>이 계정이 목록을 읽지 못한 것</strong>입니다 (서버 응답 {state.status}).
+            권한이 필요하면 관리자에게 요청하십시오.
+          </span>
+        }
+      />
+    );
+  }
 
   if (state.kind === 'unknown') {
     return (

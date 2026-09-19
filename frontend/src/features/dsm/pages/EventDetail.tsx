@@ -83,6 +83,33 @@ export default function EventDetail() {
   const [sending, setSending] = useState(false);
   const [busy, setBusy] = useState('');
 
+  /**
+   * UX-25′ **진위 판정이 거절된 자리** — 턴 U 넘김을 여기서 닫는다 (턴 V · 차선 U3).
+   *
+   * 무엇이 문제였나 [소스 실측 2026-09-18]
+   * ---------------------------------------
+   * 「오탐으로 판정」이 실패하면 이 화면이 하던 일은 **토스트 한 장**(`message.error`)과
+   * 열린 채로 남는 확인 창이었다. 토스트는 몇 초 뒤 스스로 사라지고, 사라진 뒤에는
+   * 화면에 **아무 자국도 없다** — 관제요원이 잠깐 눈을 돌리면 「눌렀는데 아무 일도
+   * 안 일어났다」와 「실패했다」가 같은 그림이 된다. 그 자리에서 사람은 판정이 된
+   * 줄 알고 다음 사건으로 넘어간다. 조용한 실패를 조용하게 두지 않는다.
+   *
+   * 그래서 같은 화면의 상급기관 제출 토글과 **같은 규약**으로 옮긴다 —
+   * **상태는 칸으로**(`FocusQueue.tsx` 의 불변 · `FailureNotice`).
+   *
+   * ★ 실패하면 확인 창은 **닫는다.** 종전에는 「실패했는데 닫히면 성공처럼 보인다」는
+   *   이유로 열어 두었는데, 그 이유가 성립한 것은 실패가 토스트뿐이던 때다. 이제
+   *   실패가 칸으로 남으므로 창을 열어 두면 **그 칸을 창이 가린다** — 가려진 칸은
+   *   없는 칸과 같다.
+   * ★ 「다시 시도」는 **그 판정을 그대로 다시 낸다**(`FailureNotice` 규약 ④).
+   *   그래서 마지막 시도(판정 + 사유)를 들고 있는다 — 화면을 새로 고치는 단추가 아니다.
+   */
+  const [reviewError, setReviewError] = useState('');
+  const [lastReview, setLastReview] = useState<{
+    verdict: 'confirmed' | 'rejected';
+    reason: string;
+  } | null>(null);
+
   const event = useDsmResource<EventDetailView>(
     () => dsmGet<EventDetailView>(dsmEndpoint.eventDetail(id!)),
     [id],
@@ -221,6 +248,41 @@ export default function EventDetail() {
    *   서버가 같은 응답에 결과를 실어 준다. 화면이 두 번 부르면 그 사이에
    *   두 종류의 종결이 보인다.
    */
+  /**
+   * 판정 하나를 **실제로 보낸다.** 확인 창과 「다시 시도」가 **같은 이 함수**를 부른다 —
+   * 두 벌로 두면 한쪽만 고쳐지는 날 다시 시도가 다른 요청을 낸다(D-369 의 작은 판).
+   */
+  const submitReview = useCallback(
+    async (verdict: 'confirmed' | 'rejected', reason: string) => {
+      if (!id) return;
+      setBusy('review');
+      setReviewError('');
+      setLastReview({ verdict, reason });
+      try {
+        // ★ **판정 — 멱등 키를 싣는 문 ①.** 같은 판정을 두 번 누르면
+        //   요청은 하나이고, 두 번째 누름은 첫 번째의 결과를 받는다.
+        //   그래서 「다시 시도」가 판정을 두 벌로 만들지 않는다.
+        await dsmPostQueryOnce(
+          dsmEndpoint.review(id),
+          { verdict, reason },
+          intentKey(`review:${id}:${verdict}`),
+        );
+        // ★ 성공은 **칸이 말한다** — 아래 「현재 판정」 배지가 서버가 준 값으로 다시
+        //   그려진다(UX-25). 토스트를 얹으면 같은 사실을 두 곳이 말하고, 그 둘이
+        //   어긋나는 날(되읽기 실패) 사라지는 쪽이 진실처럼 보인다.
+        setLastReview(null);
+        event.reload();
+      } catch (err) {
+        setReviewError(
+          userFacingError('EventDetail.review', err, '진위 판정을 기록하지 못했습니다.'),
+        );
+      } finally {
+        setBusy('');
+      }
+    },
+    [id, event],
+  );
+
   const review = useCallback(
     (verdict: 'confirmed' | 'rejected') => {
       if (!id) return;
@@ -246,28 +308,14 @@ export default function EventDetail() {
         ),
         okText: isFalsePositive ? '오탐으로 판정' : '실제로 판정',
         cancelText: '취소',
+        // ★ 실패해도 **던지지 않는다** — 창을 닫고 실패를 아래 칸에 남긴다.
+        //   위 머리말 참조: 열어 둔 창이 그 칸을 가린다.
         onOk: async () => {
-          setBusy('review');
-          try {
-            // ★ **판정 — 멱등 키를 싣는 문 ①.** 같은 판정을 두 번 누르면
-            //   요청은 하나이고, 두 번째 누름은 첫 번째의 결과를 받는다.
-            await dsmPostQueryOnce(
-              dsmEndpoint.review(id),
-              { verdict, reason },
-              intentKey(`review:${id}:${verdict}`),
-            );
-            message.success('판정을 기록했습니다.');
-            event.reload();
-          } catch (err) {
-            message.error(userFacingError('EventDetail.review', err, '판정이 실패했습니다.'));
-            throw err;   // 모달을 닫지 않는다 — 실패했는데 닫히면 성공처럼 보인다
-          } finally {
-            setBusy('');
-          }
+          await submitReview(verdict, reason);
         },
       });
     },
-    [id, event],
+    [id, submitReview],
   );
 
   /** 대응 진행 한 칸 (D-399). 되돌림(종결 → 조치중)은 **사유가 필수**다. */
@@ -551,6 +599,21 @@ export default function EventDetail() {
                 <Text type="secondary">현재 판정</Text>
                 <VerdictBadge verdict={e.verdict} />
               </Space>
+
+              {/* ★ 눌렀는데 저장이 안 된 자리 — **여기 남는다.** 토스트처럼 사라지지
+                  않고, 「다시 시도」가 방금 그 판정을 그대로 한 번 더 낸다. */}
+              {reviewError && (
+                <FailureNotice
+                  title="진위 판정을 기록하지 못했습니다."
+                  detail={reviewError}
+                  onRetry={
+                    lastReview
+                      ? () => void submitReview(lastReview.verdict, lastReview.reason)
+                      : undefined
+                  }
+                  busy={busy === 'review'}
+                />
+              )}
 
               <Space wrap>
                 <Text strong>다음 단계</Text>

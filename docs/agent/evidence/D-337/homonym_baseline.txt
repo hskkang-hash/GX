@@ -11,6 +11,7 @@
 api_key	backend/apps/dsm/services.py	3
 api_key	backend/common/access_gate.py	2
 api_key	backend/common/cache_hint_registry.py	1
+api_key	backend/common/inbound_api_key.py	1
 api_key	backend/common/key_rotation.py	3
 api_key	backend/common/universal_optimization.py	4
 api_key	backend/config/k3_roles.py	4
@@ -40,6 +41,7 @@ api_key	backend/third_api/services/anyang_services.py	1
 api_key	backend/third_api/test_api.py	11
 api_key	backend/third_api/views/api_key_controller.py	1
 api_key	scripts/capture_screens.py	1
+api_key	scripts/probe_key_scope_http.py	1
 api_key	scripts/verify_authn_paths.py	1
 api_key	scripts/verify_click_completes.py	3
 api_key	scripts/verify_commented_guards.py	1

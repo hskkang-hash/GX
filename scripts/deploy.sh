@@ -486,31 +486,18 @@ except Exception: sys.exit(1)" >/dev/null 2>&1; then
   fi
   say "      SPA($SPA_PORT) 가 **답하지 않는다** — 다시 세운다 (포트가 열려 있어도)"
   MSYS_NO_PATHCONV=1 docker exec "$SERVER" sh -c "pkill -f gx_spa_server; exit 0" >/dev/null 2>&1
-  MSYS_NO_PATHCONV=1 docker exec -i "$SERVER" sh -c "cat > /tmp/gx_spa_server.py" <<'PY'
-# SPA 정적 서버 — 알 수 없는 경로는 index.html 로 되돌린다(클라이언트 라우팅)
-import os, sys
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-ROOT = os.environ.get("GX_LIVE_DIR", "/app/_fe_dist")
-PORT = int(os.environ.get("GX_SPA_PORT", "3002"))
-class H(SimpleHTTPRequestHandler):
-    def translate_path(self, path):
-        p = super().translate_path(path)
-        if not os.path.exists(p) and "." not in os.path.basename(p):
-            return os.path.join(ROOT, "index.html")
-        return p
-    def log_message(self, *a): pass
-    def end_headers(self):
-        self.send_header("Cache-Control", "no-store")   # 캐시가 장애를 덮는다
-        super().end_headers()
-    def __init__(self, *a, **k):
-        # ★ `os.chdir(ROOT)` 를 쓰지 않는다 — 배치가 이 디렉터리를 **통째로 바꿔치기**하면
-        #   cwd 의 아이노드가 사라지고, 소켓은 열린 채 요청마다 죽는다(턴 J 실측).
-        #   `directory=` 는 요청마다 경로를 다시 풀므로 바꿔치기를 견딘다.
-        super().__init__(*a, directory=ROOT, **k)
-ThreadingHTTPServer(("0.0.0.0", PORT), H).serve_forever()
-PY
-  MSYS_NO_PATHCONV=1 docker exec -d -e GX_LIVE_DIR="$LIVE" -e GX_SPA_PORT="$SPA_PORT" \
-    "$SERVER" python /tmp/gx_spa_server.py
+  # ★ [2026-09-18 · 턴 V · P-182] **서버 본문을 여기 적지 않는다 — 저장소본을 복사한다.**
+  #   종전엔 이 자리에 heredoc 으로 SPA 서버 본문이 통째로 박혀 있었다. 턴 U 에 V 가
+  #   그 본문의 **거짓 초록의 씨**를 찾았다 — 파일이 없고 확장자가 없으면 무엇이든
+  #   `index.html` 을 **200** 으로 돌려주므로 `GET /api/무엇이든` 이 200+HTML 이 되고,
+  #   상태코드로 「문이 살아 있다」를 세는 도구가 그 200 을 그대로 먹는다.
+  #   고친 본문은 `scripts/gate_spa_server.py` 에 있는데 **이 heredoc 은 옛 본문
+  #   그대로였다** — 배치 한 번이면 고친 서버를 도로 덮고 씨가 다시 심긴다.
+  #   본문이 두 벌이면 고침도 두 벌 해야 하고, 한 벌은 반드시 잊힌다. 그래서 한 벌만 둔다.
+  MSYS_NO_PATHCONV=1 docker exec "$SERVER" sh -c     "cp /repo/scripts/gate_spa_server.py /tmp/gx_spa_server.py" || {
+      say "      ⚠ /repo/scripts/gate_spa_server.py 를 못 읽었다 — SPA 를 세우지 않는다"
+      return 1; }
+  MSYS_NO_PATHCONV=1 docker exec -d -e GX_LIVE_DIR="$LIVE" -e GX_SPA_PORT="$SPA_PORT"     "$SERVER" python /tmp/gx_spa_server.py
   for _ in 1 2 3 4 5 6 7 8 9 10; do
     MSYS_NO_PATHCONV=1 docker exec "$SERVER" python -c \
       "import socket,sys;s=socket.socket();s.settimeout(2);sys.exit(0 if s.connect_ex(('127.0.0.1',$SPA_PORT))==0 else 1)" \
@@ -574,6 +561,28 @@ case "$(decide webgate $rc)" in
     exit $EXIT_FAIL ;;
 esac
 say "      게이트 통과 — 3002 가 내는 번들 = 배치 커밋 $COMMIT (P-72)"
+
+# ── P-182 게이트 — **번들에 API 주소가 박혀 있나** (2026-09-18 · 턴 V) ──────────
+#   P-59 게이트는 「이 번들이 어느 커밋인가」만 묻는다. 턴 U 에 조율자가 `/app/.env`
+#   없이 지은 번들은 그 물음에 **옳게** 답했다 — 커밋은 맞았으니까. 틀린 것은
+#   `VITE_API_URL` 이 빈 문자열로 치환돼 로그인 POST 가 API 가 아니라 SPA 제 원점으로
+#   간 것이고, 그 자리를 묻는 게이트가 없어서 **아무것도 빨갛지 않은 채** V 의 측정이
+#   40분 막혔다. 두 게이트는 서로의 빈자리를 메운다: 저쪽은 신원, 이쪽은 배선.
+#   ⚠ 기대 밑동을 모르면 이 게이트는 **회색**이다 — 모르는 채로 초록을 내지 않는다.
+if [ -n "${GX_EXPECT_API_BASE:-$API}" ]; then
+  MSYS_NO_PATHCONV=1 docker exec "$SERVER"     python /repo/scripts/verify_bundle_api_base.py --spa "$WEB"     --expect "${GX_EXPECT_API_BASE:-$API}"
+  rc=$?
+  case "$(decide webgate $rc)" in
+    되돌린다:*)
+      say "**실패(exit $rc)** — 서는 번들에 API 주소가 안 박혔다(`.env` 없이 지었다)"
+      rollback
+      say "**exit 1 · 배치 취소** — 화면은 뜨지만 로그인이 API 로 가지 않는다(P-182)"
+      exit $EXIT_FAIL ;;
+  esac
+  say "      게이트 통과 — 번들에 API 밑동 ${GX_EXPECT_API_BASE:-$API} 이 박혀 있다 (P-182)"
+else
+  say "      ⚠ P-182 회색 — 기대 API 밑동을 모른다(GX_EXPECT_API_BASE 미선언)"
+fi
 
 # ═══════════════════════════════════════════════════════════════════════════
 # ⑥ walk_scenarios 1회 — **배치된 번들 위를 사람처럼 지나간다**

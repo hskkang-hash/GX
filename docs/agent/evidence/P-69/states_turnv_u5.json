@@ -1,0 +1,1851 @@
+{
+  "when": "2026-09-19T06:43:09",
+  "web": "http://localhost:3002",
+  "api": "http://localhost:8000",
+  "names_from_perf_load": {
+    "S1": "목록 — 관제요원이 가장 자주 여는 자리",
+    "S2": "대시보드 — 첫 화면 한 벌",
+    "S3": "단일 초점 — 가장 급한 하나"
+  },
+  "screens": {
+    "로그인": {
+      "route": "/login",
+      "reached": true,
+      "widths": [
+        1440,
+        390
+      ],
+      "form": {
+        "required": {
+          "message_shown": true,
+          "added_text": "ID\n아이디를 입력해 주십시오.\nPassword\n비밀번호를 입력해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 dd77b48 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "raw_hits": []
+        },
+        "format": {
+          "message_shown": true,
+          "raw_hits": []
+        },
+        "double_submit": {
+          "requests": 1,
+          "where": "로그인"
+        }
+      },
+      "buttons": [
+        "Log In"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "ID\nPassword\n지금 로그인할 수 없습니다. 잠시 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 dd77b48 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/login"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "ID\nPassword\n지금 로그인할 수 없습니다. 잠시 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 dd77b48 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/login"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "ID\nPassword\n이 계정에는 접근 권한이 없습니다. 관리자에게 문의해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 dd77b48 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/login"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "ID\nPassword\n지금 로그인할 수 없습니다. 잠시 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 dd77b48 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/login"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "ID\nPassword\n서버에 연결하지 못했습니다. 연결을 확인한 뒤 다시 시도해 주십시오.\nForgot Your Password?\nLog In\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 dd77b48 · 장애 신고 창구 미등록\n\nCopyright © Gaion Co., Ltd. All Rights Reserved.",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/login"
+        }
+      },
+      "press": {
+        "buttons_seen": [
+          "Log In"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Log In",
+            "clicked": true,
+            "navigated_to": "/dsm/home",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      }
+    },
+    "지금 처리할 것": {
+      "route": "/dsm/queue",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "지금 처리할 것",
+        "무슨 일 있었나",
+        "카메라 격자",
+        "인계 메모",
+        "처음이세요",
+        "사람",
+        "카메라 등록",
+        "백업·보존",
+        "이번 달 사용량",
+        "?",
+        "단축키",
+        "소리 켜기",
+        "상세 열기",
+        "종결하기 (3)",
+        "열기"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Collapse sidebar",
+          "지금 처리할 것",
+          "무슨 일 있었나",
+          "카메라 격자",
+          "인계 메모",
+          "처음이세요",
+          "사람",
+          "카메라 등록",
+          "백업·보존",
+          "이번 달 사용량",
+          "?",
+          "단축키",
+          "소리 켜기",
+          "상세 열기",
+          "종결하기 (3)",
+          "열기"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Collapse sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "지금 처리할 것",
+            "clicked": true,
+            "navigated_to": "/dsm/queue?menuId=132",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "무슨 일 있었나",
+            "clicked": true,
+            "navigated_to": "/dsm/events?menuId=133",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 격자",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/grid?menuId=134",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "인계 메모",
+            "clicked": true,
+            "navigated_to": "/handover?menuId=38",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "처음이세요",
+            "clicked": true,
+            "navigated_to": "/start?menuId=136",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "사람",
+            "clicked": true,
+            "navigated_to": "/users?menuId=3",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 등록",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/import?menuId=140",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "백업·보존",
+            "clicked": true,
+            "navigated_to": "/dsm/system?menuId=142",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "이번 달 사용량",
+            "clicked": true,
+            "navigated_to": "/dsm/metering?menuId=141",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "undecidable": true,
+        "why": "이 화면에 글자 입력칸이 하나도 안 보인다 — 누를 폼이 없다"
+      },
+      "baseline_len": 2095,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/dsm/events/queue",
+        "/api/dsm/queue/field-signals",
+        "/api/menu/menus",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/queue"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/queue"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 볼 수 없습니다.\n/api/dsm/events/queue\n닫기\nGuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n이 항목에 대한 권한이 없습니다.\n이 계정에는 이 항목을 볼 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다. 그래도 안 보이면 관리자에게 역할을 요청하십시오.\n다시 시도\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/queue"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n응답이 제때 오지 않았습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/queue"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n· 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n불러오지 못했습니다.\n서버에 연결하지 못했습니다.\n연결을 확인한 뒤 다시 시도해 주십시오.\n다시 시도\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/queue"
+        }
+      },
+      "empty": {
+        "body_text": "GuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 켜기\n갱신 13:47 · 0초 전 · 표기 시간대: Asia/Seoul\n소리가 꺼져 있습니다\n지금 열려 있는 이벤트가 없습니다 — 평온합니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n버전 dd77b48 · 장애 신고 창구 미등록",
+        "empty_text": "지금 열려 있는 이벤트가 없습니다 — 평온합니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/dsm/events/queue",
+          "/api/dsm/queue/field-signals",
+          "/api/menu/menus",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      }
+    },
+    "이벤트 목록": {
+      "route": "/dsm/events",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "전체 보기",
+        "미처리 보기",
+        "지난 12시간 보기",
+        "내 담당 보기",
+        "시스템 보기",
+        "열기",
+        "새로고침",
+        "?",
+        "실제",
+        "오탐",
+        "보고 표시"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Expand sidebar",
+          "지금 처리할 것",
+          "무슨 일 있었나",
+          "카메라 격자",
+          "인계 메모",
+          "처음이세요",
+          "사람",
+          "카메라 등록",
+          "백업·보존",
+          "이번 달 사용량",
+          "전체 보기",
+          "미처리 보기",
+          "지난 12시간 보기",
+          "내 담당 보기",
+          "시스템 보기",
+          "열기",
+          "새로고침",
+          "?",
+          "실제",
+          "오탐",
+          "보고 표시"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Expand sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "지금 처리할 것",
+            "clicked": true,
+            "navigated_to": "/dsm/queue?menuId=132",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "무슨 일 있었나",
+            "clicked": true,
+            "navigated_to": "/dsm/events?menuId=133",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 격자",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/grid?menuId=134",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "인계 메모",
+            "clicked": true,
+            "navigated_to": "/handover?menuId=38",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "처음이세요",
+            "clicked": true,
+            "navigated_to": "/start?menuId=136",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "사람",
+            "clicked": true,
+            "navigated_to": "/users?menuId=3",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 등록",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/import?menuId=140",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "백업·보존",
+            "clicked": true,
+            "navigated_to": "/dsm/system?menuId=142",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "이번 달 사용량",
+            "clicked": true,
+            "navigated_to": "/dsm/metering?menuId=141",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "where": "카메라 등록",
+        "required": {
+          "message_shown": true,
+          "added_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n카메라 일괄 등록 — 표를 먼저 봅니다\n주소 없는 카메라\n2/ 9대\n「2대」만 보면 그것이 40 중 39인지 400 중 39인지 모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다. 지금 채워진 비율 78%.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV",
+          "raw_hits": [],
+          "blocked_writes": []
+        },
+        "format": {
+          "message_shown": true,
+          "added_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n카메라 일괄 등록 — 표를 먼저 봅니다\n주소 없는 카메라\n2/ 9대\n「2대」만 보면 그것이 40 중 39인지 400 중 39인지 모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다. 지금 채워진 비율 78%.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV",
+          "raw_hits": []
+        },
+        "double_submit": {
+          "requests": 0,
+          "where": "카메라 등록",
+          "note": "쓰기 가드가 막은 비-GET 요청 수로 센다 — 서버에는 한 건도 안 나갔다"
+        }
+      },
+      "baseline_len": 823,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/dsm/events",
+        "/api/dsm/events/summary",
+        "/api/dsm/events/upper-report/flags",
+        "/api/menu/menus",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/events"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/events"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 볼 수 없습니다.\n/api/dsm/events\n/api/dsm/events/summary\n닫기\n지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n이벤트 목록\n요약 한 줄 · 지난 12시간\n이 항목에 대한 권한이 없습니다.\n이 계정에는 이 항목을 볼 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다. 그래도 안 보이면 관리자에게 역할을 요청하십시오.\n다시 시도\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n이 항목에 대한 권한이 없습니다.\n이 계정에는 이 항목을 볼 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다. 그래도 안 보이면 관리자에게 역할을 요청하십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/events"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n응답이 제때 오지 않았습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n응답이 제때 오지 않았습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/events"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n이벤트 목록\n요약 한 줄 · 지난 12시간\n불러오지 못했습니다.\n서버에 연결하지 못했습니다.\n연결을 확인한 뒤 다시 시도해 주십시오.\n다시 시도\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n불러오지 못했습니다.\n서버에 연결하지 못했습니다.\n연결을 확인한 뒤 다시 시도해 주십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/events"
+        }
+      },
+      "empty": {
+        "body_text": "이벤트 목록\n갱신 13:51 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 건 · 오탐 건 / 판정 건 · 아직 판정한 이벤트가 없습니다 · 미판정 건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n표기 시간대: Asia/Seoul\n버전 dd77b48 · 장애 신고 창구 미등록",
+        "empty_text": "조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/dsm/events",
+          "/api/dsm/events/summary",
+          "/api/dsm/events/upper-report/flags",
+          "/api/menu/menus",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      }
+    },
+    "이벤트 상세": {
+      "route": "/dsm/events/268494",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "지금 처리할 것",
+        "무슨 일 있었나",
+        "카메라 격자",
+        "인계 메모",
+        "처음이세요",
+        "사람",
+        "카메라 등록",
+        "백업·보존",
+        "이번 달 사용량",
+        "← 목록",
+        "알림 보내기",
+        "실제로 판정",
+        "오탐으로 판정",
+        "접수하기",
+        "제출로 표시"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Collapse sidebar",
+          "지금 처리할 것",
+          "무슨 일 있었나",
+          "카메라 격자",
+          "인계 메모",
+          "처음이세요",
+          "사람",
+          "카메라 등록",
+          "백업·보존",
+          "이번 달 사용량",
+          "← 목록",
+          "알림 보내기",
+          "실제로 판정",
+          "오탐으로 판정",
+          "접수하기",
+          "제출로 표시"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Collapse sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "지금 처리할 것",
+            "clicked": true,
+            "navigated_to": "/dsm/queue?menuId=132",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "무슨 일 있었나",
+            "clicked": true,
+            "navigated_to": "/dsm/events?menuId=133",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 격자",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/grid?menuId=134",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "인계 메모",
+            "clicked": true,
+            "navigated_to": "/handover?menuId=38",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "처음이세요",
+            "clicked": true,
+            "navigated_to": "/start?menuId=136",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "사람",
+            "clicked": true,
+            "navigated_to": "/users?menuId=3",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 등록",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/import?menuId=140",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "백업·보존",
+            "clicked": true,
+            "navigated_to": "/dsm/system?menuId=142",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "이번 달 사용량",
+            "clicked": true,
+            "navigated_to": "/dsm/metering?menuId=141",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "← 목록\n이벤트 상세 #268494\n알림 보내기\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n표기 시간대: Asia/Seoul\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/events/268494"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "← 목록\n이벤트 상세 #268494\n알림 보내기\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n표기 시간대: Asia/Seoul\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/events/268494"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 볼 수 없습니다.\n/api/dsm/events/268494\n/api/dsm/events/upper-report/flags\n/api/dsm/events/268494/timeline\n닫기\n← 목록\n이벤트 상세 #268494\n알림 보내기\n이 항목에 대한 권한이 없습니다.\n이 계정에는 이 항목을 볼 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다. 그래도 안 보이면 관리자에게 역할을 요청하십시오.\n다시 시도\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n표기 시간대: Asia/Seoul\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/events/268494"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "← 목록\n이벤트 상세 #268494\n알림 보내기\n불러오지 못했습니다.\n응답이 제때 오지 않았습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n발송 이력\n불러오지 못했습니다.\n응답이 제때 오지 않았습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n표기 시간대: Asia/Seoul\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/events/268494"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "← 목록\n이벤트 상세 #268494\n알림 보내기\n불러오지 못했습니다.\n서버에 연결하지 못했습니다.\n연결을 확인한 뒤 다시 시도해 주십시오.\n다시 시도\n발송 이력\n발송 기록이 없습니다. (요청은 성공했고 0건입니다)\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n표기 시간대: Asia/Seoul\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/events/268494"
+        }
+      }
+    },
+    "관리·설정": {
+      "route": "/dsm/drill",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [],
+      "press": {
+        "buttons_seen": [
+          "Expand sidebar",
+          "지금 처리할 것",
+          "무슨 일 있었나",
+          "카메라 격자",
+          "인계 메모",
+          "처음이세요",
+          "사람",
+          "카메라 등록",
+          "백업·보존",
+          "이번 달 사용량"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Expand sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "지금 처리할 것",
+            "clicked": true,
+            "navigated_to": "/dsm/queue?menuId=132",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "무슨 일 있었나",
+            "clicked": true,
+            "navigated_to": "/dsm/events?menuId=133",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 격자",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/grid?menuId=134",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "인계 메모",
+            "clicked": true,
+            "navigated_to": "/handover?menuId=38",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "처음이세요",
+            "clicked": true,
+            "navigated_to": "/start?menuId=136",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "사람",
+            "clicked": true,
+            "navigated_to": "/users?menuId=3",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 등록",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/import?menuId=140",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "백업·보존",
+            "clicked": true,
+            "navigated_to": "/dsm/system?menuId=142",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "이번 달 사용량",
+            "clicked": true,
+            "navigated_to": "/dsm/metering?menuId=141",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "where": "카메라 등록",
+        "required": {
+          "message_shown": true,
+          "added_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n카메라 일괄 등록 — 표를 먼저 봅니다\n주소 없는 카메라\n2/ 9대\n「2대」만 보면 그것이 40 중 39인지 400 중 39인지 모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다. 지금 채워진 비율 78%.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV",
+          "raw_hits": [],
+          "blocked_writes": []
+        },
+        "format": {
+          "message_shown": true,
+          "added_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n카메라 일괄 등록 — 표를 먼저 봅니다\n주소 없는 카메라\n2/ 9대\n「2대」만 보면 그것이 40 중 39인지 400 중 39인지 모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다. 지금 채워진 비율 78%.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV",
+          "raw_hits": []
+        },
+        "double_submit": {
+          "requests": 0,
+          "where": "카메라 등록",
+          "note": "쓰기 가드가 막은 비-GET 요청 수로 센다 — 서버에는 한 건도 안 나갔다"
+        }
+      },
+      "baseline_len": 425,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/dsm/drill",
+        "/api/dsm/drill/report",
+        "/api/menu/menus",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n훈련 모드 — 켜면 알림이 사람에게 가지 않습니다\n이 스위치는 알림을 끕니다 — 배선됨(2026-09-24).\n켜져 있는 동안 이 기관의 알림은 실제로 나가지 않습니다 — 소방·팀장에게 문자가 가지 않습니다. 아래 「실채널 발송」 수가 0이 아니면 그것은 훈련 밖에서 난 발송입니다. 끄는 것을 잊으면 진짜 경보도 사람에게 가지 않습니다.\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/drill"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n훈련 모드 — 켜면 알림이 사람에게 가지 않습니다\n이 스위치는 알림을 끕니다 — 배선됨(2026-09-24).\n켜져 있는 동안 이 기관의 알림은 실제로 나가지 않습니다 — 소방·팀장에게 문자가 가지 않습니다. 아래 「실채널 발송」 수가 0이 아니면 그것은 훈련 밖에서 난 발송입니다. 끄는 것을 잊으면 진짜 경보도 사람에게 가지 않습니다.\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/drill"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 볼 수 없습니다.\n/api/dsm/drill\n/api/dsm/drill/report\n닫기\n지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n훈련 모드 — 켜면 알림이 사람에게 가지 않습니다\n이 스위치는 알림을 끕니다 — 배선됨(2026-09-24).\n켜져 있는 동안 이 기관의 알림은 실제로 나가지 않습니다 — 소방·팀장에게 문자가 가지 않습니다. 아래 「실채널 발송」 수가 0이 아니면 그것은 훈련 밖에서 난 발송입니다. 끄는 것을 잊으면 진짜 경보도 사람에게 가지 않습니다.\n이 항목에 대한 권한이 없습니다.\n이 계정에는 이 항목을 볼 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다. 그래도 안 보이면 관리자에게 역할을 요청하십시오.\n다시 시도\n이 항목에 대한 권한이 없습니다.\n이 계정에는 이 항목을 볼 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다. 그래도 안 보이면 관리자에게 역할을 요청하십시오.\n다시 시도\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/drill"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n훈련 모드 — 켜면 알림이 사람에게 가지 않습니다\n이 스위치는 알림을 끕니다 — 배선됨(2026-09-24).\n켜져 있는 동안 이 기관의 알림은 실제로 나가지 않습니다 — 소방·팀장에게 문자가 가지 않습니다. 아래 「실채널 발송」 수가 0이 아니면 그것은 훈련 밖에서 난 발송입니다. 끄는 것을 잊으면 진짜 경보도 사람에게 가지 않습니다.\n불러오지 못했습니다.\n응답이 제때 오지 않았습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n불러오지 못했습니다.\n응답이 제때 오지 않았습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/drill"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n훈련 모드 — 켜면 알림이 사람에게 가지 않습니다\n이 스위치는 알림을 끕니다 — 배선됨(2026-09-24).\n켜져 있는 동안 이 기관의 알림은 실제로 나가지 않습니다 — 소방·팀장에게 문자가 가지 않습니다. 아래 「실채널 발송」 수가 0이 아니면 그것은 훈련 밖에서 난 발송입니다. 끄는 것을 잊으면 진짜 경보도 사람에게 가지 않습니다.\n불러오지 못했습니다.\n서버에 연결하지 못했습니다.\n연결을 확인한 뒤 다시 시도해 주십시오.\n다시 시도\n불러오지 못했습니다.\n서버에 연결하지 못했습니다.\n연결을 확인한 뒤 다시 시도해 주십시오.\n다시 시도\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/drill"
+        }
+      },
+      "empty": {
+        "body_text": "훈련 모드 — 켜면 알림이 사람에게 가지 않습니다\n이 스위치는 알림을 끕니다 — 배선됨(2026-09-24).\n켜져 있는 동안 이 기관의 알림은 실제로 나가지 않습니다 — 소방·팀장에게 문자가 가지 않습니다. 아래 「실채널 발송」 수가 0이 아니면 그것은 훈련 밖에서 난 발송입니다. 끄는 것을 잊으면 진짜 경보도 사람에게 가지 않습니다.\n현재 상태\n실운영\n언제부터\n켠 적이 없습니다\n\n\n누가\n—\n\n\n왜\n—\n\n\n훈련 중 채널\nlog (사람이 아니라 로그에 도달합니다)\n사유를 적어야 스위치가 열립니다.\n훈련 종료 보고서 1장\n아직 보고서가 없습니다.\n버전 dd77b48 · 장애 신고 창구 미등록",
+        "empty_text": "",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/dsm/drill",
+          "/api/dsm/drill/report",
+          "/api/menu/menus",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      }
+    },
+    "카메라 일괄 등록": {
+      "route": "/dsm/cameras/import",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "지금 처리할 것",
+        "무슨 일 있었나",
+        "카메라 격자",
+        "인계 메모",
+        "처음이세요",
+        "사람",
+        "카메라 등록",
+        "백업·보존",
+        "이번 달 사용량",
+        "예시 채우기",
+        "② 표 먼저 보기 (dry-run)"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Collapse sidebar",
+          "지금 처리할 것",
+          "무슨 일 있었나",
+          "카메라 격자",
+          "인계 메모",
+          "처음이세요",
+          "사람",
+          "카메라 등록",
+          "백업·보존",
+          "이번 달 사용량",
+          "예시 채우기",
+          "② 표 먼저 보기 (dry-run)"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Collapse sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "지금 처리할 것",
+            "clicked": true,
+            "navigated_to": "/dsm/queue?menuId=132",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "무슨 일 있었나",
+            "clicked": true,
+            "navigated_to": "/dsm/events?menuId=133",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 격자",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/grid?menuId=134",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "인계 메모",
+            "clicked": true,
+            "navigated_to": "/handover?menuId=38",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "처음이세요",
+            "clicked": true,
+            "navigated_to": "/start?menuId=136",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "사람",
+            "clicked": true,
+            "navigated_to": "/users?menuId=3",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 등록",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/import?menuId=140",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "백업·보존",
+            "clicked": true,
+            "navigated_to": "/dsm/system?menuId=142",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "이번 달 사용량",
+            "clicked": true,
+            "navigated_to": "/dsm/metering?menuId=141",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "baseline_len": 296,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/dsm/cameras/address-gap",
+        "/api/menu/menus",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/cameras/import"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n불러오지 못했습니다.\n서버가 이 요청을 처리하지 못했습니다.\n잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n다시 시도\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/cameras/import"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 볼 수 없습니다.\n/api/dsm/cameras/address-gap\n닫기\n카메라 일괄 등록 — 표를 먼저 봅니다\n이 항목에 대한 권한이 없습니다.\n이 계정에는 이 항목을 볼 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다. 그래도 안 보이면 관리자에게 역할을 요청하십시오.\n다시 시도\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/cameras/import"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n불러오지 못했습니다.\n응답이 제때 오지 않았습니다.\n잠시 뒤 다시 시도해 주십시오.\n다시 시도\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/cameras/import"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n불러오지 못했습니다.\n서버에 연결하지 못했습니다.\n연결을 확인한 뒤 다시 시도해 주십시오.\n다시 시도\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/dsm/cameras/import"
+        }
+      },
+      "empty": {
+        "body_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n주소 없는 카메라\n2/ 0대\n「2대」만 보면 그것이 40 중 39인지 400 중 39인지 모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다. 지금 채워진 비율 78%.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n버전 dd77b48 · 장애 신고 창구 미등록",
+        "empty_text": "",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/dsm/cameras/address-gap",
+          "/api/menu/menus",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      },
+      "form": {
+        "format": {
+          "message_shown": true,
+          "added_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n주소 없는 카메라\n2/ 9대\n「2대」만 보면 그것이 40 중 39인지 400 중 39인지 모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다. 지금 채워진 비율 78%.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n표를 만들지 못했습니다.\n시험 도구가 막았습니다.\n연",
+          "raw_hits": []
+        },
+        "double_submit": {
+          "requests": 1,
+          "where": "표 먼저 보기"
+        },
+        "reject422": {
+          "message_shown": true,
+          "added_text": "카메라 일괄 등록 — 표를 먼저 봅니다\n주소 없는 카메라\n2/ 9대\n「2대」만 보면 그것이 40 중 39인지 400 중 39인지 모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다. 지금 채워진 비율 78%.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n표를 만들지 못했습니다.\n표의 3행에 필요한 값이 없",
+          "raw_hits": []
+        }
+      }
+    },
+    "모바일 M1~M3": {
+      "route": "/m/inbox",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": true,
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "새로고침",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s",
+        "▲ 경계 침수 #274948 gxprobe-D384-s"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Expand sidebar",
+          "지금 처리할 것",
+          "무슨 일 있었나",
+          "카메라 격자",
+          "인계 메모",
+          "처음이세요",
+          "사람",
+          "카메라 등록",
+          "백업·보존",
+          "이번 달 사용량",
+          "새로고침",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s",
+          "▲ 경계 침수 #274948 gxprobe-D384-s"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Expand sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "지금 처리할 것",
+            "clicked": true,
+            "navigated_to": "/dsm/queue?menuId=132",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "무슨 일 있었나",
+            "clicked": true,
+            "navigated_to": "/dsm/events?menuId=133",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 격자",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/grid?menuId=134",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "인계 메모",
+            "clicked": true,
+            "navigated_to": "/handover?menuId=38",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "처음이세요",
+            "clicked": true,
+            "navigated_to": "/start?menuId=136",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "사람",
+            "clicked": true,
+            "navigated_to": "/users?menuId=3",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 등록",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/import?menuId=140",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "백업·보존",
+            "clicked": true,
+            "navigated_to": "/dsm/system?menuId=142",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "이번 달 사용량",
+            "clicked": true,
+            "navigated_to": "/dsm/metering?menuId=141",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "undecidable": true,
+        "why": "이 화면에 글자 입력칸이 하나도 안 보인다 — 누를 폼이 없다"
+      },
+      "baseline_len": 5262,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/dsm/deliveries",
+        "/api/dsm/events",
+        "/api/dsm/me/handled-events",
+        "/api/menu/menus",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "mode": "500",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n내게 온 이벤트\n새로고침\n기준 14:02 · 0초 전 · 표기 시간대: Asia/Seoul\n내게 온 이벤트\n처리함 0\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n이벤트 속성을 불러오지 못했습니다 — 발송 기록만 보입니다.\n서버가 이 요청을 처리하지 못했습니다. 잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 12:52\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 12:52\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 ",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/m/inbox"
+        },
+        "503": {
+          "mode": "503",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n내게 온 이벤트\n새로고침\n기준 14:02 · 0초 전 · 표기 시간대: Asia/Seoul\n내게 온 이벤트\n처리함 0\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n이벤트 속성을 불러오지 못했습니다 — 발송 기록만 보입니다.\n서버가 이 요청을 처리하지 못했습니다. 잠시 뒤 다시 시도해 주십시오. 그래도 같으면 관리자에게 알려 주십시오.\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 12:52\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 12:52\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 ",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/m/inbox"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 볼 수 없습니다.\n/api/dsm/events\n닫기\n지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n내게 온 이벤트\n새로고침\n기준 14:02 · 0초 전 · 표기 시간대: Asia/Seoul\n내게 온 이벤트\n처리함 0\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n이벤트 속성에 대한 권한이 없습니다 — 발송 기록만 보입니다.\n이 계정에는 이 항목을 볼 권한이 없습니다. 다시 로그인하면 보일 수 있습니다. 그래도 안 보이면 관리자에게 역할을 요청하십시오.\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 12:52\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/m/inbox"
+        },
+        "timeout": {
+          "mode": "timeout",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n내게 온 이벤트\n새로고침\n기준 14:03 · 10초 전 · 표기 시간대: Asia/Seoul\n내게 온 이벤트\n처리함 0\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n이벤트 속성을 불러오지 못했습니다 — 발송 기록만 보입니다.\n응답이 제때 오지 않았습니다. 잠시 뒤 다시 시도해 주십시오.\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 12:52\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 12:52\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 12:",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/m/inbox"
+        },
+        "netfail": {
+          "mode": "netfail",
+          "body_text": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n사람\n카메라 등록\n백업·보존\n이번 달 사용량\n내게 온 이벤트\n새로고침\n기준 14:03 · 0초 전 · 표기 시간대: Asia/Seoul\n내게 온 이벤트\n처리함 0\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n50\n발송 기록 50건 (이 페이지 · 최대 50)\n발송 실패 0건\n이벤트 속성을 불러오지 못했습니다 — 발송 기록만 보입니다.\n서버에 연결하지 못했습니다. 연결을 확인한 뒤 다시 시도해 주십시오.\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:41\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#274948\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:39\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 13:01\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 12:52\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) 12:52\n등급 미상\n유형 미상\n#268496\n카메라 미상\n이벤트 속성 미조회\n발생 —\n· 채널 log\n· 로그에 기록됨(사람에게 안 감) ",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/m/inbox"
+        }
+      },
+      "empty": {
+        "body_text": "내게 온 이벤트\n새로고침\n기준 14:03 · 0초 전 · 표기 시간대: Asia/Seoul\n내게 온 이벤트\n처리함 0\n이 목록은 우리 기관에 나간 발송 전부입니다\n아직 「나에게 온 것」만 골라 보여 주지 못합니다. 화면이 임의로 줄이면 안 보이는 발송이 생기므로, 줄이지 않고 전부 보여 드립니다.\n0\n발송 기록 0건 (이 페이지 · 최대 50)\n발송 실패 0건\n이 테넌트에 남은 발송 기록이 0건입니다. (알림이 실패한 것이 아니라, 나간 알림이 없습니다.)\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n버전 dd77b48 · 장애 신고 창구 미등록",
+        "empty_text": "이 테넌트에 남은 발송 기록이 0건입니다. (알림이 실패한 것이 아니라, 나간 알림이 없습니다.)\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/dsm/deliveries",
+          "/api/dsm/events",
+          "/api/dsm/me/handled-events",
+          "/api/menu/menus",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      }
+    },
+    "보고서": {
+      "route": "/report-template",
+      "widths": [
+        1440,
+        390
+      ],
+      "mobile_only": false,
+      "recon": [
+        "/api/print-format/print-formats/print-formats/fields/model",
+        "/api/menu/menus",
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/user-groups/gen-schema"
+      ],
+      "api_used": "/api/print-format/print-formats/print-formats/fields/model",
+      "reached": true,
+      "reach_error": "",
+      "buttons": [
+        "지금 처리할 것",
+        "무슨 일 있었나",
+        "카메라 격자",
+        "인계 메모",
+        "처음이세요",
+        "사람",
+        "카메라 등록",
+        "백업·보존",
+        "이번 달 사용량",
+        "1"
+      ],
+      "press": {
+        "buttons_seen": [
+          "Collapse sidebar",
+          "지금 처리할 것",
+          "무슨 일 있었나",
+          "카메라 격자",
+          "인계 메모",
+          "처음이세요",
+          "사람",
+          "카메라 등록",
+          "백업·보존",
+          "이번 달 사용량",
+          "Previous page",
+          "1",
+          "Next page"
+        ],
+        "links_seen": [],
+        "skipped_global": {
+          "buttons": [],
+          "links": []
+        },
+        "pressed": [
+          {
+            "kind": "button",
+            "name": "Collapse sidebar",
+            "clicked": true,
+            "navigated_to": null,
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "지금 처리할 것",
+            "clicked": true,
+            "navigated_to": "/dsm/queue?menuId=132",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "무슨 일 있었나",
+            "clicked": true,
+            "navigated_to": "/dsm/events?menuId=133",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 격자",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/grid?menuId=134",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "인계 메모",
+            "clicked": true,
+            "navigated_to": "/handover?menuId=38",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "처음이세요",
+            "clicked": true,
+            "navigated_to": "/start?menuId=136",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "사람",
+            "clicked": true,
+            "navigated_to": "/users?menuId=3",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "카메라 등록",
+            "clicked": true,
+            "navigated_to": "/dsm/cameras/import?menuId=140",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          },
+          {
+            "kind": "button",
+            "name": "백업·보존",
+            "clicked": true,
+            "navigated_to": "/dsm/system?menuId=142",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": "ValueError: too many values to unpack (expected 2)"
+          },
+          {
+            "kind": "button",
+            "name": "이번 달 사용량",
+            "clicked": true,
+            "navigated_to": "/dsm/metering?menuId=141",
+            "blocked_writes": [],
+            "raw_error": [],
+            "error": null
+          }
+        ],
+        "linked": []
+      },
+      "form": {
+        "undecidable": true,
+        "why": "제출처럼 보이는 단추가 없다(보이는 단추: 1) — 아무 단추나 눌러 「폼을 눌렀다」고 적지 않는다"
+      },
+      "baseline_len": 83,
+      "real_api_seen": [
+        "/api/advanced-table/select-data",
+        "/api/config-management/list-optimized",
+        "/api/menu/menus",
+        "/api/print-format/print-formats/print-formats/fields/model",
+        "/api/user-groups/gen-schema"
+      ],
+      "errors": {
+        "500": {
+          "undecidable": true,
+          "why": "주입해도 본문이 기준선과 **한 글자도 다르지 않다** — 이 화면은 `/api/print-format/print-formats/print-formats/fields/model` 의 실패에 반응하지 않는다(또는 그 자리를 안 부른다). 「오류를 잘 그렸다」로 셀 수 없다"
+        },
+        "503": {
+          "undecidable": true,
+          "why": "주입해도 본문이 기준선과 **한 글자도 다르지 않다** — 이 화면은 `/api/print-format/print-formats/print-formats/fields/model` 의 실패에 반응하지 않는다(또는 그 자리를 안 부른다). 「오류를 잘 그렸다」로 셀 수 없다"
+        },
+        "403": {
+          "mode": "403",
+          "body_text": "볼 권한이 없습니다\n이 자료는 지금 계정의 권한으로 볼 수 없습니다.\n/api/print-format/print-formats/print-formats/fields/model\n닫기\n보고서 서식 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\n\t\nUsage Count\n\t\n1\n버전 dd77b48 · 장애 신고 창구 미등록",
+          "spinner_stuck": false,
+          "raw_hits": [],
+          "vanished": false,
+          "url": "http://localhost:3002/report-template"
+        },
+        "timeout": {
+          "undecidable": true,
+          "why": "주입해도 본문이 기준선과 **한 글자도 다르지 않다** — 이 화면은 `/api/print-format/print-formats/print-formats/fields/model` 의 실패에 반응하지 않는다(또는 그 자리를 안 부른다). 「오류를 잘 그렸다」로 셀 수 없다"
+        },
+        "netfail": {
+          "undecidable": true,
+          "why": "주입해도 본문이 기준선과 **한 글자도 다르지 않다** — 이 화면은 `/api/print-format/print-formats/print-formats/fields/model` 의 실패에 반응하지 않는다(또는 그 자리를 안 부른다). 「오류를 잘 그렸다」로 셀 수 없다"
+        }
+      },
+      "empty": {
+        "body_text": "보고서 서식 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\nAdd New Template\nDelete\n\t\nUsage Count\n\t\n1\n버전 dd77b48 · 장애 신고 창구 미등록",
+        "empty_text": "",
+        "raw_hits": [],
+        "same_as_error": false,
+        "targets": [
+          "/api/advanced-table/select-data",
+          "/api/config-management/list-optimized",
+          "/api/menu/menus",
+          "/api/print-format/print-formats/print-formats/fields/model",
+          "/api/user-groups/gen-schema"
+        ],
+        "method": "화면이 받은 **진짜 응답의 목록을 비워** 되돌려 주었다 (빈 테넌트가 아니다 · 모양은 계약 그대로)"
+      }
+    }
+  },
+  "blocked_writes": [
+    "POST http://localhost:8000/api/dsm/cameras/import?csv_text=%EC%9D%B4%EA%B1%B4%2Ccsv%EA%B0%80%2C%EC%95%84%EB%8B%88%EB%8B%A4%0A%40%40%40%2C%2C%2C&dry_run=true"
+  ],
+  "session_closed": true,
+  "how": "Playwright 요청 가로채기 — 주입한 요청은 네트워크로 나가지 않는다",
+  "session_released_before": true,
+  "cells": {
+    "로그인": {
+      "화면": {
+        "mark": "●",
+        "note": "/login 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "●",
+        "note": "눌렀다 1/1개: 「Log In」 · 이동 1개(/dsm/home)"
+      },
+      "메뉴·링크": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "폼(검증·오류)": {
+        "mark": "◐",
+        "note": "눌렀다 필수 빈값·형식 오류 · 이중 제출 1회 — 통과"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "지금 처리할 것": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/queue 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 10/16개: 「Collapse sidebar」, 「지금 처리할 것」, 「무슨 일 있었나」, 「카메라 격자」, 「인계 메모」, 「처음이세요」 · 이동 9개(/dsm/queue?menuId=132, /dsm/events?menuId=133, /dsm/cameras/grid?menuId=134)"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 9개: 「지금 처리할 것」→/dsm/queue?menuId=132, 「무슨 일 있었나」→/dsm/events?menuId=133, 「카메라 격자」→/dsm/cameras/grid?menuId=134, 「인계 메모」→/handover?menuId=38"
+      },
+      "폼(검증·오류)": {
+        "mark": "",
+        "note": "**못 쟀다** — 이 화면에 글자 입력칸이 하나도 안 보인다 — 누를 폼이 없다"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — 통과"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "이벤트 목록": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/events 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 10/21개: 「Expand sidebar」, 「지금 처리할 것」, 「무슨 일 있었나」, 「카메라 격자」, 「인계 메모」, 「처음이세요」 · 이동 9개(/dsm/queue?menuId=132, /dsm/events?menuId=133, /dsm/cameras/grid?menuId=134)"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 9개: 「지금 처리할 것」→/dsm/queue?menuId=132, 「무슨 일 있었나」→/dsm/events?menuId=133, 「카메라 격자」→/dsm/cameras/grid?menuId=134, 「인계 메모」→/handover?menuId=38"
+      },
+      "폼(검증·오류)": {
+        "mark": "◐",
+        "note": "눌렀다 필수 빈값·형식 오류 · 이중 제출 0회 — 통과"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — 통과"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "이벤트 상세": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/events/268494 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 10/16개: 「Collapse sidebar」, 「지금 처리할 것」, 「무슨 일 있었나」, 「카메라 격자」, 「인계 메모」, 「처음이세요」 · 이동 9개(/dsm/queue?menuId=132, /dsm/events?menuId=133, /dsm/cameras/grid?menuId=134)"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 9개: 「지금 처리할 것」→/dsm/queue?menuId=132, 「무슨 일 있었나」→/dsm/events?menuId=133, 「카메라 격자」→/dsm/cameras/grid?menuId=134, 「인계 메모」→/handover?menuId=38"
+      },
+      "폼(검증·오류)": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "관리·설정": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/drill 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "●",
+        "note": "눌렀다 10/10개: 「Expand sidebar」, 「지금 처리할 것」, 「무슨 일 있었나」, 「카메라 격자」, 「인계 메모」, 「처음이세요」 · 이동 9개(/dsm/queue?menuId=132, /dsm/events?menuId=133, /dsm/cameras/grid?menuId=134)"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 9개: 「지금 처리할 것」→/dsm/queue?menuId=132, 「무슨 일 있었나」→/dsm/events?menuId=133, 「카메라 격자」→/dsm/cameras/grid?menuId=134, 「인계 메모」→/handover?menuId=38"
+      },
+      "폼(검증·오류)": {
+        "mark": "◐",
+        "note": "눌렀다 필수 빈값·형식 오류 · 이중 제출 0회 — 통과"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — **빨강** 빈 상태를 말하는 문구가 **없다** — 화면이 0건을 침묵으로 그렸다"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "카메라 일괄 등록": {
+      "화면": {
+        "mark": "●",
+        "note": "/dsm/cameras/import 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 10/12개: 「Collapse sidebar」, 「지금 처리할 것」, 「무슨 일 있었나」, 「카메라 격자」, 「인계 메모」, 「처음이세요」 · 이동 9개(/dsm/queue?menuId=132, /dsm/events?menuId=133, /dsm/cameras/grid?menuId=134)"
+      },
+      "메뉴·링크": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "폼(검증·오류)": {
+        "mark": "◐",
+        "note": "눌렀다 형식 오류·서버 거절(422) · 이중 제출 1회 — 통과"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — **빨강** 빈 상태를 말하는 문구가 **없다** — 화면이 0건을 침묵으로 그렸다"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "모바일 M1~M3": {
+      "화면": {
+        "mark": "●",
+        "note": "/m/inbox 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 10/30개: 「Expand sidebar」, 「지금 처리할 것」, 「무슨 일 있었나」, 「카메라 격자」, 「인계 메모」, 「처음이세요」 · 이동 9개(/dsm/queue?menuId=132, /dsm/events?menuId=133, /dsm/cameras/grid?menuId=134)"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 9개: 「지금 처리할 것」→/dsm/queue?menuId=132, 「무슨 일 있었나」→/dsm/events?menuId=133, 「카메라 격자」→/dsm/cameras/grid?menuId=134, 「인계 메모」→/handover?menuId=38"
+      },
+      "폼(검증·오류)": {
+        "mark": "",
+        "note": "**못 쟀다** — 이 화면에 글자 입력칸이 하나도 안 보인다 — 누를 폼이 없다"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "●",
+        "note": "눌렀다 500·503·403·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — 통과"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    },
+    "보고서": {
+      "화면": {
+        "mark": "●",
+        "note": "/report-template 를 1440·390px 에서 열었다"
+      },
+      "주요 버튼": {
+        "mark": "◐",
+        "note": "눌렀다 10/13개: 「Collapse sidebar」, 「지금 처리할 것」, 「무슨 일 있었나」, 「카메라 격자」, 「인계 메모」, 「처음이세요」 · 이동 9개(/dsm/queue?menuId=132, /dsm/events?menuId=133, /dsm/cameras/grid?menuId=134)"
+      },
+      "메뉴·링크": {
+        "mark": "◐",
+        "note": "이 화면에 링크·메뉴·탭이 **0개**다 — 이동은 단추가 한다. 눌러서 **주소가 바뀐** 단추 9개: 「지금 처리할 것」→/dsm/queue?menuId=132, 「무슨 일 있었나」→/dsm/events?menuId=133, 「카메라 격자」→/dsm/cameras/grid?menuId=134, 「인계 메모」→/handover?menuId=38"
+      },
+      "폼(검증·오류)": {
+        "mark": "—",
+        "note": "원표가 「—」로 둔 자리"
+      },
+      "오류 흐름(500·503·403·타임아웃)": {
+        "mark": "◐",
+        "note": "눌렀다 403 / 못 눌렀다 500·503·timeout·netfail — 전부 「오류 + 다시 시도」 · 원문 0 · 스피너 0"
+      },
+      "빈 상태": {
+        "mark": "◐",
+        "note": "빈 200 응답을 주입해 쟀다(빈 테넌트로 잰 것이 아니다) — **빨강** 빈 상태를 말하는 문구가 **없다** — 화면이 0건을 침묵으로 그렸다"
+      },
+      "모바일 390": {
+        "mark": "●",
+        "note": "390×844 에서 열고 위 갈래를 눌렀다"
+      }
+    }
+  },
+  "counts": {
+    "full": 25,
+    "partial": 23,
+    "na": 6,
+    "blank": 2,
+    "counted": 48,
+    "total": 56
+  }
+}

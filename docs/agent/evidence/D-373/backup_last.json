@@ -1,5 +1,5 @@
 {
-  "measured_at": "2026-09-18T03:24:37+00:00",
+  "measured_at": "2026-09-18T20:00:00+00:00",
   "verdict": "ALARM",
   "reason": "RuntimeError: pg_dump 실패: pg_dump: error: aborting because of server version mismatch\npg_dump: detail: server version: 18.1 (Debian 18.1-1.pgdg13+2); pg_dump version: 17.7 (Debian 17.7-0+deb13u1)",
   "_written_from": {

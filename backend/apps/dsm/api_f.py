@@ -49,7 +49,7 @@ class DsmFAPI:
     #   **삼킬 수 없는 자리**에 태어난다(순서를 외우는 것보다 안전하다).
     @route.get("/onboarding/progress", auth=JwtOrInboundKey())
     @tenant_scoped(reason="UX-46 온보딩 진행률 — 남의 테넌트 카드·기록이 섞이면 격리 실패다")
-    def onboarding_progress(self, request):
+    def onboarding_progress(self, request, persona: str = ""):
         """내 역할의 「처음 시작하기」 카드와 그 진행률.
 
         ★ **사람이 체크하는 문이 아니다.** 이 응답의 `done` 은 전부 서버 기록이 닫은 것이고,
@@ -60,7 +60,20 @@ class DsmFAPI:
           않는다 — 지우면 진행률이 조용히 올라가고 그 수는 거짓이다(D-301).
 
         ★ 역할을 못 읽으면 카드가 0장이고 `percent` 는 **`null`** 이다 — 0 도 100 도 아니다.
+
+        ★ [턴 V] `persona` — **역할이 아닌 사람 둘**을 위한 인자다. U3(이동 중)은
+          U1·U2·U4 의 다른 모드이고 U6(외부 연계)은 기계라 사람 계정이 없다. 그 둘은
+          역할 코드로 고를 수 없어서 **이름으로** 고른다. 누가 어느 이름을 볼 수 있는지는
+          `onboarding.PERSONA_VIEWERS` 한 곳이 정한다(여기서 또 정하면 두 벌이 된다).
+          · 모르는 이름 → **422**(값이 틀렸다)
+          · 내 자리가 아닌 이름 → **403**. 404 가 아닌 이유: 그 유형이 있다는 사실은
+            제품 문서에 적힌 공개 사실이고, 숨겨서 지킬 것이 없다(D-269 의 반대 자리).
+          ★ 인자를 안 주면 지금까지와 **한 글자도 다르지 않다** — 화면(`Home.tsx`)은
+            그대로 제 역할 표를 받는다.
         """
         from apps.dsm import onboarding
 
-        return onboarding.progress(scope=_scope(request))
+        try:
+            return onboarding.progress(scope=_scope(request), persona=persona)
+        except onboarding.PersonaError as exc:
+            raise HttpError(422 if exc.code == "unknown" else 403, exc.message)

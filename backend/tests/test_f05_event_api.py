@@ -445,6 +445,13 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/api/dsm/cameras/{int:camera_id}/address"),                   # U56 · 한 대 고치기 ★쓰기(WS-23)
     ("POST", "/api/dsm/system/restart-request"),                            # U56 · 요청만 기록 ★쓰기(WS-22 · 실행은 창)
     ("GET", "/api/dsm/system/requests"),                                    # U56 · 요청 목록(테넌트 격리)
+    # ★ [턴 V · 차선 F] **하나가 늘었다** — 점검 창에서 한 일을 적는 문(WS-24 · 선등록 적중).
+    #   D-492 가 `DsmSystemRequest.handled_note` 를 「쓰는 문이 없다」로 등재한 자리이고,
+    #   이 문이 그 사유를 끝냈다(등재 해제와 배선은 같은 변경 · scripts/verify_dead_fields.py).
+    #   문지기: `@tenant_scoped` + `JwtOrInboundKey` + `guard_setting`(관리자만 · 감사 1행).
+    #   ⚠ 이 문도 **컨테이너를 건드리지 않는다** — 사람이 한 일을 적는 칸이지 실행하는
+    #     문이 아니다(응답 `executed_by_app: false` · tests/test_f_system_request_handled.py).
+    ("POST", "/api/dsm/system/requests/{int:request_id}/handled"),          # F · 점검 창 기록 ★쓰기(WS-24)
     ("GET", "/api/dsm/system/backup-receipts"),                             # U56 · 회수증(없으면 UNKNOWN · 0 이 아니다)
     ("GET", "/api/dsm/system/storage"),                                     # U56 · 상한·사용률(미선언이면 null + 문장)
     ("GET", "/api/dsm/settings/api-keys/{int:key_id}/scopes"),              # U56 · API-03 범위 조회

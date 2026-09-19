@@ -1,33 +1,33 @@
 {
   "note": "D-343 ①② 라우트 인벤토리 전수. inbound_key=accepts 가 「지금 키가 닿는 자리」다. classification 의 기본값은 session_only — 판단이 서지 않으면 좁은 쪽(D-343 ②).",
-  "measured_at": "2026-09-18T11:44:20+07:00",
+  "measured_at": "2026-09-19T12:11:40+07:00",
   "totals": {
-    "routes": 761,
+    "routes": 762,
     "by_inbound_key": {
       "accepts": 549,
-      "refuses": 129,
+      "refuses": 130,
       "open_anonymous": 73,
       "unknown": 9,
       "declared": 1
     },
     "by_classification": {
-      "session_only": 760,
+      "session_only": 761,
       "inbound_key_allowed": 1
     },
     "by_tenant_scope": {
       "none": 651,
-      "required": 104,
+      "required": 105,
       "exempt": 6
     },
     "by_authn": {
       "CustomJWTAuth": 549,
-      "JwtOrInboundKey": 128,
+      "JwtOrInboundKey": 129,
       "": 73,
       "JWTAuth": 9,
       "JwtOrWallToken": 2
     },
     "by_envelope": {
-      "promoted": 400,
+      "promoted": 401,
       "clean": 248,
       "authz_envelope": 113
     },
@@ -6712,6 +6712,29 @@
       "path": "/api/dsm/system/requests",
       "app": "dsm",
       "view": "apps.dsm.api_u56.DsmU56API.system_requests",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/system/requests/{int:request_id}/handled",
+      "app": "dsm",
+      "view": "apps.dsm.api_f_ops.DsmFOpsAPI.mark_handled",
       "authn": "JwtOrInboundKey",
       "authn_chain": [
         "JwtOrInboundKey",

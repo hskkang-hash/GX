@@ -9056,3 +9056,104 @@ decisions:
     · scripts/gate_spa_server.py (/api 폴백 금지 — 이 파일이 규칙을 들고 있다)
     · docs/agent/evidence/P-157/runs (V 가 3011 로 잰 판 · 씨앗 파이프)
   affects: [D-487, D-475]
+
+- id: D-494
+  author_tree_id: "턴 V 조율자 · 세종 P-182 집행"
+  title: "번들에 API 주소가 박혔는지 묻는 게이트를 세우고, deploy.sh 안에 남아 있던 거짓 초록의 씨를 뽑았다"
+  status: decided
+  raised_by: "세종 P-182 (턴 V 지시서 §1) — 「deploy.sh 와 재빌드 절차에 .env 동반 · 번들 grep 게이트 1줄」"
+  decision: |
+    ▣ **게이트를 세웠다**: `scripts/verify_bundle_api_base.py` (게이트 이름 `bundle-api-base` ·
+      `ALL_GATES` 16종 → **17종**). 묻는 것은 셋 —
+        ① 기대한 API 밑동이 **서버가 내주는 엔트리 JS** 안에 리터럴로 있나
+        ② 그 밑동이 SPA 제 원점과 같지 않나(같으면 빈 문자열과 구별되지 않는다)
+        ③ 정적 서버가 `/api/...` 에 **404** 를 내나(D-493 의 씨)
+      기대 밑동을 모르면 **회색**이다 — 모르는 채로 초록을 내지 않는다.
+    ▣ **이 게이트가 처음 돌면서 제 약점을 스스로 드러냈다.** 처음 규칙은 「밑동이 하나라도 있으면
+      통과」였는데, 살아 있는 번들을 물어 보니 `http(s)://` 리터럴이 **55개**였고 대부분
+      `react.dev` · `redux.js.org` · `bit.ly` 같은 **의존성 안의 문서 주소**였다. 그 규칙대로라면
+      **사고 당일의 번들도 초록**이 된다. 규칙을 뒤집어 「기대한 밑동이 있는가」만 묻게 했고,
+      그 실패 사례를 자기시험에 박았다(★ 표시된 줄).
+    ▣ **탐침 경로에 한글을 썼다가 멀쩡한 서버를 빨갛게 만들었다.** `urllib` 이 비-ASCII 를 못 실어
+      예외로 죽었고, 그 예외가 「SPA 가 안 선다」로 찍혔다. 못 잰 것은 회색이다 — 빨강이 아니다.
+    ▣ **deploy.sh 안에 씨가 그대로 남아 있었다** [실측 2026-09-18]. D-493 이 고친 SPA 서버 본문은
+      `scripts/gate_spa_server.py` 인데, `deploy.sh:489` 의 `ensure_spa()` 에는 **옛 본문이 heredoc
+      으로 통째로** 박혀 있었다 — 배치 한 번이면 고친 서버를 도로 덮고 씨가 다시 심긴다.
+      **본문이 두 벌이면 고침도 두 벌 해야 하고, 한 벌은 반드시 잊힌다**(D-369). heredoc 을 지우고
+      저장소본을 복사하도록 바꿨다. 이것은 D-493 이 **덜 닫혀 있었다**는 자백이다.
+    ▣ 위임을 복사하지 않았다: `verify_route_alive.delegate_to_container()` 에 `extra_args`·`extra_env`
+      를 더해 **한 벌**로 두 판정기가 같은 문으로 컨테이너에 들어간다. 호스트에서 `gx-shell` 은
+      3002·8000 을 게시하지 않으므로(`docker port gx-shell` 이 비어 있다) 위임이 없으면 이 게이트는
+      호스트에서 영원히 회색이고, 영원히 회색인 게이트는 곧 꺼진다(D-353).
+    ▣ 음성 대조 [실측]: 없는 밑동을 기대시키면 **exit 1**(빨강) · 기대를 안 주면 **exit 2**(회색) ·
+      제대로 주면 exit 0 이고 「입력 1건 — 서버가 HTTP 로 내준 엔트리 JS」를 말한다(D-301).
+  enforced_by: |
+    · scripts/verify_bundle_api_base.py (판정 · 자기시험 9종)
+    · docs/agent/verify_gates.sh (ALL_GATES=… bundle-api-base · gate_bundle_api_base)
+    · scripts/deploy.sh (배치 뒤 P-182 칸 · ensure_spa 가 저장소본을 복사한다)
+    · scripts/gate_spa_server.py (본문 한 벌)
+    · scripts/verify_route_alive.py (delegate_to_container — 위임 한 벌)
+  affects: [D-493, D-369, D-353, D-301, D-59]
+
+- id: D-495
+  author_tree_id: "턴 V 조율자 · 세종 P-174 집행"
+  title: "재부팅 0/10 의 뿌리는 앞단도 컨테이너도 아니고 com.docker.service 가 Manual 인 것이었다"
+  status: partially_executed
+  raised_by: "세종 P-174 — Docker AutoStart 를 켠다(설정 변경 · 삭제/되돌리기 아님)"
+  decision: |
+    ▣ **집행한 것 둘** [실측 2026-09-18 18:0x]:
+        · `docker update --restart=unless-stopped gx-shell` — 이제 **10/10 이 unless-stopped**다.
+          (gx-shell 만 `no` 였다. 게이트 자리가 아침에 서야 한다.)
+        · Docker Desktop 의 `AutoStart` 가 **False** 였다 → `%APPDATA%/Docker/settings-store.json`
+          에서 True 로. 백업을 남겼다.
+    ▣ **못 한 것 하나 — 그리고 이것이 뿌리다.** `com.docker.service` 의 StartType 이 **Manual** 이고
+      상태가 **Stopped** 다. HKCU Run 키에는 `Docker Desktop.exe` 가 **이미 있었는데도** 09-18 아침
+      부팅 +198분에 엔진이 없었다(0/10). 그 모양이 설명되는 자리가 여기다 — Desktop 은 떴어도
+      엔진 서비스가 수동이면 올라오지 않는다. 바꾸려면 **관리자 권한**이 필요하고 이 세션은 아니다.
+      ⇒ 대표/관리자 한 줄:  `Set-Service com.docker.service -StartupType Automatic`
+    ▣ 「지금 재기동해서 아침을 흉내 내 보자」는 시도는 **분류기가 막았다**(파괴적 행위). 세종 말대로
+      **다음 아침 실측 10/10 이 증거**다. 그 전까지 이 항목은 초록이 아니다.
+    ▣ ⚠ 남은 구멍: 컨테이너가 스스로 서도 **gx-shell 안의 게이트 서버 둘**(runserver 8000 · SPA 3002)은
+      손으로 띄운 프로세스라 돌아오지 않는다. 컨테이너 재시작 정책은 그 안의 프로세스를 모른다.
+      아침 절차 4줄이 아직 필요한 이유이고, 없애려면 그 둘을 컨테이너의 시작 명령으로 옮겨야 한다.
+    ▣ **정정 [실측 2026-09-19 15:56]** — 위에서 켰다고 적은 `AutoStart` 가 **False 로 돌아왔다.**
+      Docker Desktop 이 돌고 있는 동안 설정 파일을 고쳐 봐야 제 메모리의 값으로 덮어쓴다.
+      그러니 ② 도 **안 된 것**이다. 파일로는 못 켠다 — Desktop UI 에서 켜거나 Desktop 을
+      멈춘 뒤 고쳐야 하고, 둘 다 대표 자리다. **세 겹 중 ①만 섰다.**
+    ▣ 그래서 판정기를 세웠다: `scripts/verify_autostart.py`. 세 겹을 **따로** 센다 —
+      합치지 않는 이유는 고치는 방법이 다르기 때문이다(①은 `docker update` · ②는 설정 ·
+      ③은 관리자 권한). 자기시험의 마지막 줄이 이 결정의 핵심을 문다:
+      **「정책이 10/10 이어도 서비스가 Manual 이면 초록이 아니다」**.
+      지금 실측: ① **10/10** · ② **빨강** · ③ **빨강(Manual)** → exit 1.
+    ▣ ⚠ 이 판정기의 초록은 **약속의 모양**이지 수가 아니다. 수는 부팅 뒤의 N/10 이다.
+  enforced_by: |
+    · scripts/verify_autostart.py (세 겹을 따로 센다 · 자기시험 10종)
+    · docs/agent/evidence/P-161/reboot_20260918.md (0/10 의 실측)
+    · docs/agent/RUNBOOK_재생성창.md (아침 절차)
+  affects: [D-491]
+
+- id: D-496
+  author_tree_id: "턴 V 조율자 · 병합"
+  title: "동음이의 래칫 174 → 176 — 우리가 짓지 않은 이름 둘을 인용했다(자백)"
+  status: decided
+  raised_by: "커밋 자리의 gx-homonyms 훅 (2026-09-19)"
+  decision: |
+    ▣ **래칫을 올린 것은 자백이다.** 새로 는 두 건은 둘 다 `api_key` 인데, **우리가 지은
+      이름이 아니라 남의 이름을 인용한 자리**다 — 그래서 방향 수식어를 붙일 수 없다:
+        · `backend/common/inbound_api_key.py:154`
+          `apps.get_model("apikey_account", "APIKey")` — **dj-core 의 앱 라벨과 모델 이름**이다.
+          우리 저장소가 바꿀 수 있는 이름이 아니다(§0.4 · dj-core 는 읽기·호출만).
+        · `scripts/probe_key_scope_http.py:38`
+          `headers={"X-API-Key": ...}` — **HTTP 머리글 이름**이다. 바깥에서 들어오는 쪽이
+          정한 이름이라 우리가 고치면 그 순간 문이 안 열린다.
+    ▣ 같은 턴에 차선 F 가 제 몫 1건을 **진짜로 닫았다**(177 → 176). 그러니 이 턴의 움직임은
+      「둘 늘고 하나 줄었다」이고, 늘어난 둘은 **인용**이며 줄어든 하나는 **개명**이다.
+      둘을 한 수로 합치지 않는다 — 고치는 방법이 다르기 때문이다.
+    ▣ 다음 사람이 물어야 할 것: dj-core 의 `apikey_account.APIKey` 를 우리 층에서 감싸
+      `outbound_api_key` 라는 이름으로만 부르게 할 것인가. 지금은 감싸는 층이 없어서
+      `inbound_api_key.py` 안에서 나가는 키 모델을 **직접** 집는다 — 파일 이름은
+      「들어오는」인데 그 줄은 「나가는」을 만진다. 그 어긋남이 이 항목의 진짜 값이다.
+  enforced_by: |
+    · scripts/verify_homonyms.py (래칫 · 이 수가 다시 늘면 커밋이 막힌다)
+    · docs/agent/evidence/D-337/homonym_baseline.txt (176 · 이 결정이 올린 수)
+  affects: [D-337, D-492]

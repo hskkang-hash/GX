@@ -43,11 +43,52 @@ export const PERMISSION_DENIED_EVENT = 'gx:permission-denied';
  */
 export const COPY_PERMISSION_DENIED = '볼 권한이 없습니다';
 
+/**
+ * ★★ [턴 V · 차선 U24] **읽기 거부와 쓰기 거부는 다른 문장이다.**
+ *
+ * 무엇이 이 갈래를 만들었나 [실측 2026-09-17 턴 U · V 가 U4 로 눌렀다 · `/dsm/reports`]
+ * ------------------------------------------------------------------------------------
+ * 읽기 전용 계정으로 「만들기」를 누르면 서버는 이렇게 답한다:
+ *
+ *     HTTP 403  { "code": "read_only_role",
+ *                 "message": {"ko": "읽기 전용 계정입니다 — 이 작업은 수행할 수 없습니다."} }
+ *
+ * 서버의 그 한 줄은 **쓰기의 말**인데, 그 밑에 띠가 붙이던 결과줄은
+ * 「이 자료는 지금 계정의 권한으로 열 수 없습니다.」 — **읽기의 말**이었다.
+ * 한 상자 안에서 두 문장이 서로 다른 일을 말한다. 누른 사람은 「만들기」를 눌렀는데
+ * 화면은 「못 연다」고 답한다.
+ *
+ * 그래서 **메서드로** 가른다 — 상태 코드가 아니라 메서드가 읽기와 쓰기를 가르는 칸이다.
+ * `GET`·`HEAD`·`OPTIONS` 는 읽기, 나머지는 쓰기다. 메서드를 모르면(옛 부르는 쪽)
+ * **읽기로 떨어진다** — 종전 문장이 그대로 나오므로 아무도 새로 다치지 않는다.
+ */
+export type DenialKind = 'read' | 'write';
+
+/** 읽기로 세는 메서드. 이 밖은 전부 쓰기다. */
+const READ_METHODS = new Set(['get', 'head', 'options']);
+
+export function denialKindOf(method?: string | null): DenialKind {
+  const m = String(method ?? '').trim().toLowerCase();
+  if (!m) return 'read';
+  return READ_METHODS.has(m) ? 'read' : 'write';
+}
+
+/** 서버가 말이 없을 때 쓰는 **쓰기** 쪽 한 줄. 사전에 등재돼 있다. */
+export const COPY_PERMISSION_DENIED_WRITE = '고칠 권한이 없습니다';
+
+/** 결과줄 두 개 — **최소쌍이다.** 한 낱말만 다르고 그 낱말이 전부다. */
+export const COPY_DENIED_CONSEQUENCE: Record<DenialKind, string> = {
+  read: '이 자료는 지금 계정의 권한으로 볼 수 없습니다.',
+  write: '이 자료는 지금 계정의 권한으로 고칠 수 없습니다.',
+};
+
 export interface PermissionDeniedDetail {
   /** 사람이 읽을 한 줄. 서버의 말이 먼저다. */
   message: string;
   /** 어느 문에서 났나. 화면이 「어디가 막혔는지」를 말할 수 있게 한다. */
   path: string;
+  /** 읽기가 막혔나 쓰기가 막혔나. 결과줄이 이 칸으로 갈린다. */
+  kind: DenialKind;
 }
 
 /**
@@ -58,7 +99,7 @@ export interface PermissionDeniedDetail {
  * 한국어가 있으면 그것, 없으면 영어, 그것도 없으면 사전의 그 줄이다.
  * **여기서 새로 짓지 않는다.**
  */
-export function messageOfDenial(body: unknown): string {
+export function messageOfDenial(body: unknown, kind: DenialKind = 'read'): string {
   const raw = (body as { message?: unknown; detail?: unknown } | null) ?? null;
   const cand = raw?.message ?? raw?.detail;
   if (typeof cand === 'string' && cand.trim()) return cand;
@@ -69,7 +110,7 @@ export function messageOfDenial(body: unknown): string {
       if (typeof v === 'string' && v.trim()) return v;
     }
   }
-  return COPY_PERMISSION_DENIED;
+  return kind === 'write' ? COPY_PERMISSION_DENIED_WRITE : COPY_PERMISSION_DENIED;
 }
 
 /**
@@ -94,11 +135,30 @@ export function isPermissionDenied(status: unknown): boolean {
  */
 const announcedPaths = new Set<string>();
 
-export function announcePermissionDenied(body: unknown, path: string): void {
-  const key = path || '?';
+/**
+ * 열쇠는 **갈래 + 문**이다. 같은 문이 읽기로도 쓰기로도 막힐 수 있고
+ * (`/api/dsm/reports/runs` 는 목록을 읽고 실행을 만든다), 그 둘은 다른 문장이다.
+ * 열쇠를 문 하나로 두면 먼저 온 쪽이 나중 쪽을 삼킨다.
+ */
+function announceKey(kind: DenialKind, path: string): string {
+  return kind + ' ' + path;
+}
+
+export function announcePermissionDenied(
+  body: unknown,
+  path: string,
+  method?: string | null,
+): void {
+  const kind = denialKindOf(method);
+  const p = path || '?';
+  const key = announceKey(kind, p);
   if (announcedPaths.has(key)) return;
   announcedPaths.add(key);
-  const detail: PermissionDeniedDetail = { message: messageOfDenial(body), path: key };
+  const detail: PermissionDeniedDetail = {
+    message: messageOfDenial(body, kind),
+    path: p,
+    kind,
+  };
   try {
     window.dispatchEvent(new CustomEvent(PERMISSION_DENIED_EVENT, { detail }));
   } catch {
@@ -106,12 +166,82 @@ export function announcePermissionDenied(body: unknown, path: string): void {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// ★★ [턴 V · 차선 U24] **한 거절은 한 자리에서만 말한다** — 임자 선언
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// 무엇이 문제였나 [실측 2026-09-17 턴 U · V · U4 로 `/dsm/reports` 의 「만들기」]
+// -----------------------------------------------------------------------------
+// 화면은 이미 제 **상태 칸**에 네 문장을 적는다(무엇을 못 했나 · 왜 · 무엇을 하면
+// 되나 · **그 요청을 다시 내는 단추**). 그런데 같은 403 을 이 띠가 화면 맨 위에
+// 덮개로 한 번 더 적었다. 사람이 보는 것은 **같은 사실 두 장**이고, 위의 한 장은
+// 아래 상태 칸을 **가린다**. 두 장 중 값이 있는 쪽은 아래다 — 거기에만 단추가 있다.
+//
+// 그래서 화면이 **임자를 선언한다.** 「이 문들의 거절은 내가 내 상태 칸에 적는다」고
+// 말한 화면이 붙어 있는 동안, 띠는 그 문들을 **안 그린다.**
+//
+// ★ 기본은 **띠가 그리는 것**이다. 선언하지 않은 화면은 종전 그대로다 —
+//   말없이 삼키는 길을 기본으로 만들지 않는다(이 파일 머리말의 그 규율).
+// ★ 자물쇠가 아니다. 거절은 그대로 `deniedPaths()` 에 남고 오류도 그대로 던져진다.
+//   여기서 정하는 것은 **누가 말하는가**뿐이다.
+
+/** 이 창에서 지금 임자가 있는 문 앞머리들. 화면이 사라지면 함께 사라진다. */
+const ownedPrefixes = new Map<string, number>();
+
+/** 임자 목록이 바뀌었다 — 띠가 다시 그린다. */
+export const PERMISSION_DENIED_OWNER_EVENT = 'gx:permission-denied-owner';
+
+function fireOwnerChanged(): void {
+  try {
+    window.dispatchEvent(new Event(PERMISSION_DENIED_OWNER_EVENT));
+  } catch {
+    /* 창이 없는 자리. */
+  }
+}
+
+/**
+ * 「이 문들의 거절은 내가 적는다」. 돌려주는 함수를 부르면 선언이 풀린다
+ * (리액트 `useEffect` 의 청소 함수가 그대로 이것이다).
+ *
+ * 같은 앞머리를 두 화면이 선언할 수 있으므로 **수를 센다** — 하나가 떠나도
+ * 남은 하나의 선언이 살아 있어야 한다.
+ */
+export function ownDenialPaths(prefixes: readonly string[]): () => void {
+  const mine = prefixes.filter((p) => typeof p === 'string' && p.length > 0);
+  for (const p of mine) ownedPrefixes.set(p, (ownedPrefixes.get(p) ?? 0) + 1);
+  if (mine.length) fireOwnerChanged();
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    for (const p of mine) {
+      const n = (ownedPrefixes.get(p) ?? 1) - 1;
+      if (n <= 0) ownedPrefixes.delete(p);
+      else ownedPrefixes.set(p, n);
+    }
+    if (mine.length) fireOwnerChanged();
+  };
+}
+
+/** 이 문에 지금 임자가 있나. 있으면 띠는 입을 다문다. */
+export function hasDenialOwner(path: string): boolean {
+  const p = String(path || '');
+  for (const prefix of ownedPrefixes.keys()) {
+    if (p.startsWith(prefix)) return true;
+  }
+  return false;
+}
+
 /** 시험이 쓰는 자리. 제품 코드에서는 부르지 않는다. */
 export function resetPermissionDeniedForTest(): void {
   announcedPaths.clear();
+  ownedPrefixes.clear();
 }
 
-/** 이 창에서 이미 알린 문들. 시험과 화면이 「무엇이 막혔나」를 물을 수 있게 한다. */
+/**
+ * 이 창에서 이미 알린 것들. 시험과 화면이 「무엇이 막혔나」를 물을 수 있게 한다.
+ * ⚠ 한 줄은 **갈래와 문**이다(`read /api/...`) — 같은 문의 읽기와 쓰기가 따로 센다.
+ */
 export function deniedPaths(): string[] {
   return [...announcedPaths];
 }

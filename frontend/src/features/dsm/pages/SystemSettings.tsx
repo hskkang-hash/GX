@@ -375,7 +375,20 @@ export default function SystemSettings() {
           <Descriptions column={1} bordered size="small">
             <Descriptions.Item label="상한">
               {storage.data?.declared ? (
-                <Text strong>{storage.data.capacity_gb} GB</Text>
+                <Space direction="vertical" size={2}>
+                  <Text strong>{storage.data.capacity_gb} GB</Text>
+                  {/*
+                    ★★ [P-177 · 턴 V · 차선 U56] **분모를 화면이 선언한다.**
+                    [실측] 상한은 `GX_STORAGE_CAPACITY_GB` 에 사람이 적은 **선언값**이고,
+                    사용량은 객체저장 버킷 합계다 — 둘은 같은 그릇이 아니다. 그런데 화면은
+                    그 둘로 나눈 `0.0%` 만 굵게 보여 줬다. 0.0% 는 「거의 안 찼다」로
+                    읽히지만 실제로는 「다른 것을 나눴다」이다.
+                    문장은 서버가 보낸 것을 그대로 쓴다 — 여기서 지어내지 않는다.
+                  */}
+                  {storage.data.capacity_note ? (
+                    <Text type="secondary">{storage.data.capacity_note}</Text>
+                  ) : null}
+                </Space>
               ) : (
                 <Undeclared consequence="상한이 없으면 「몇 % 찼나」에 답하지 않습니다. 분모를 코드가 지어내면 그 추측이 초록이 됩니다." />
               )}
@@ -392,7 +405,17 @@ export default function SystemSettings() {
                   <Text type="secondary">{storage.data?.reason}</Text>
                 </Space>
               ) : (
-                <Text strong>{storage.data.used_pct}%</Text>
+                <Space direction="vertical" size={2}>
+                  <Text strong>{storage.data.used_pct}%</Text>
+                  {/*
+                    ★ 수 옆에 **무엇을 셌는지**를 같이 둔다. 종전에는 `used_note`
+                    (「객체저장 버킷 합계」)가 **판정 불가일 때만** 떴다 — 즉 수가
+                    나오는 순간 분모·분자의 정체가 화면에서 사라졌다.
+                  */}
+                  {storage.data.used_note ? (
+                    <Text type="secondary">센 것: {storage.data.used_note}</Text>
+                  ) : null}
+                </Space>
               )}
             </Descriptions.Item>
             <Descriptions.Item label="어디서 선언하나">

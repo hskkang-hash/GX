@@ -181,6 +181,33 @@ bash scripts/deploy.sh
 ⚠ 걷기는 `gx-shell` 안의 `playwright` + `chromium` 과 API 8000 을 쓴다. 없으면 **회색(2)**이고,
 회색은 「걸었는데 괜찮았다」가 아니다.
 
+### ⚠ 손으로 다시 지을 때 — **`/app/.env` 를 반드시 같이 넣는다** (P-182 · 2026-09-18 턴 V)
+
+이 명령을 쓰지 않고 `gx-fe-build` 안에서 손으로 `vite build` 를 돌리는 일이 있다(작업본만
+빨리 보고 싶을 때). 그때 소스만 복사하고 **`/app/.env` 를 빌드 자리로 안 가져가면**
+`VITE_API_URL` 이 빈 문자열로 치환된다. `vite` 는 **성공**하고(`exit 0`), 번들 해시 게이트도
+**초록**이며(그 게이트는 「이 번들이 어느 커밋인가」만 묻는다), 화면도 뜬다.
+그런데 `apiBase()` 가 `""` 가 되어 **로그인 POST 가 API 가 아니라 SPA 제 원점으로 간다**(501).
+[실측 2026-09-18 · 턴 U] 이 한 줄이 V 의 측정을 **40분 통째로** 막았고, 그동안
+**아무것도 빨갛지 않았다**.
+
+```bash
+# 작업본을 빌드 자리로 옮길 때 — .env 가 세 줄 중 하나다. 빠뜨리지 마라
+docker exec gx-fe-build sh -c 'rm -rf /tmp/gxb && mkdir -p /tmp/gxb'
+docker exec gx-fe-build sh -c 'cp -r /app/src /app/tsconfig*.json /app/.env /tmp/gxb/'
+#                                                     ^^^^^^^^^^ 이것
+
+# 지은 뒤에는 **번들에 박혔는지 눌러서 본다** — 게이트가 그 물음을 대신한다
+bash docs/agent/verify_gates.sh --gate bundle-api-base
+#   또는 직접:  python scripts/verify_bundle_api_base.py --expect http://localhost:8000
+```
+
+`bundle-api-base` 게이트는 **서버가 내주는** 엔트리 JS 를 HTTP 로 받아 기대한 밑동이 그 안에
+리터럴로 있는지 본다(파일이 아니라 응답을 읽는다). 기대 밑동을 모르면 **회색**이다 —
+모르는 채로 초록을 내지 않는다. 덤으로 SPA 정적 서버가 `/api/...` 에 **404** 를 내는지도
+함께 무는데, 그 자리는 턴 U 에 V 가 찾은 **거짓 초록의 씨**다(옛 서버는 200 + `index.html` 을
+돌려줬고, 상태코드로 문을 세는 도구가 그 200 을 살아 있는 문으로 먹었다).
+
 ## STEP 2D — 재기동 창 **한 덩이** (P-55 · OPS-07 적용 · 2026-09-05 턴 E)
 
 > **이 절은 「했다」가 아니라 「할 것」이다.** 2026-09-05 턴 E 에는 실행하지 않았다 —

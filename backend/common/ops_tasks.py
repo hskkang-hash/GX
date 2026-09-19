@@ -1092,6 +1092,22 @@ STORAGE_UNDECLARED_SENTENCE = (
     "용량 상한이 선언되지 않았습니다 (%s) — 분모 없이 「몇 %% 찼나」에 답하지 "
     "않습니다 (D-301)." % STORAGE_CAPACITY_ENV)
 
+#: ★★ [P-177 · 턴 V · 차선 U56] **분모와 분자가 같은 것을 재는가.**
+#:
+#: [실측 2026-09-18] 상한은 선언값 `GX_STORAGE_CAPACITY_GB` 이고, 사용량은
+#: `storage_used_gb()` 가 **객체저장 버킷 하나**를 합친 수다. 둘은 **같은 그릇이 아니다** —
+#: 그런데 화면은 그 둘로 나눈 `used_pct` 만 굵게 보여 주고 있었고, 그 수는 0.0% 였다.
+#: 0.0% 는 「거의 안 찼다」로 읽히지만 실제로는 **「다른 것을 나눴다」**이다.
+#:
+#: 그래서 판정 옆에 **무엇을 나눈 수인지**를 같이 낸다. 수를 바꾸지 않는다 —
+#: 수를 고치는 것은 상한의 뜻을 정하는 일이고 그것은 대표 결정이다(창 2).
+#: 여기서 하는 일은 **말하지 않던 것을 말하게** 하는 것뿐이다.
+STORAGE_CAPACITY_NOTE = (
+    "상한은 **선언값**입니다(잰 값이 아닙니다) — %s 에 사람이 적은 수입니다. "
+    "사용량은 객체저장 버킷 합계라 상한과 **같은 그릇을 재지 않습니다**. "
+    "그래서 이 %%는 「디스크가 몇 %% 찼나」가 아니라 「선언한 상한 대비 객체저장이 "
+    "얼마나 쓰는가」입니다." % STORAGE_CAPACITY_ENV)
+
 
 def storage_capacity_gb() -> float:
     """선언된 상한(GB). **선언이 없으면 0** 이고 0 은 「무제한」이 아니라 「모른다」다."""
@@ -1147,16 +1163,19 @@ def storage_declaration() -> dict:
         return {"declared": False, "capacity_gb": None, "used_gb": used,
                 "used_pct": None, "verdict": "UNKNOWN",
                 "reason": STORAGE_UNDECLARED_SENTENCE, "used_note": used_note,
-                "env_name": STORAGE_CAPACITY_ENV}
+                "env_name": STORAGE_CAPACITY_ENV,
+                "capacity_note": STORAGE_CAPACITY_NOTE}
     if used is None:
         return {"declared": True, "capacity_gb": capacity, "used_gb": None,
                 "used_pct": None, "verdict": "UNKNOWN",
                 "reason": used_note, "used_note": used_note,
-                "env_name": STORAGE_CAPACITY_ENV}
+                "env_name": STORAGE_CAPACITY_ENV,
+                "capacity_note": STORAGE_CAPACITY_NOTE}
     return {"declared": True, "capacity_gb": capacity, "used_gb": used,
             "used_pct": round(used / capacity * 100, 2), "verdict": "OK",
             "reason": "", "used_note": used_note,
-            "env_name": STORAGE_CAPACITY_ENV}
+            "env_name": STORAGE_CAPACITY_ENV,
+            "capacity_note": STORAGE_CAPACITY_NOTE}
 
 
 #: 회수증(대조표)을 찾는 뿌리. `/backup` 은 P-67 이 정한 별도 볼륨이다.

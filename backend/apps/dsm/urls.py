@@ -10,6 +10,7 @@ from ninja_extra import NinjaExtraAPI
 
 from apps.dsm.api import DsmAPI
 from apps.dsm.api_f import DsmFAPI
+from apps.dsm.api_f_ops import DsmFOpsAPI
 from apps.dsm.api_u1 import DsmU1API
 from apps.dsm.api_u3 import DsmU3API
 from apps.dsm.api_u24 import DsmU24API
@@ -25,10 +26,14 @@ dsm_api = NinjaExtraAPI(urls_namespace="dsm")
 #:   그대로 둔다(옮기면 무엇이 무엇을 삼키는지가 바뀐다). 한 파일은 한 차선.
 #: ★ [턴 R · 차선 F] `DsmFAPI`(온보딩 진행률)도 **뒤에** 붙인다 — 같은 규약이다.
 #:   새 경로(`/onboarding/...`)는 앞 컨트롤러의 변수 조각 밑에 없으므로 삼킴이 없다.
+#: ★ [턴 V · 차선 F] `DsmFOpsAPI`(점검 창 기록 문) — **맨 뒤**다. 새 경로
+#:   (`/system/requests/{id}/handled`)를 삼킬 변수 조각이 앞에 없다 [실측: `/system/`
+#:   경로 넷 전부 고정 조각]. 온보딩 라우터와 **다른 파일**인 이유는 그 파일에
+#:   쓰기 문이 있으면 `verify_onboarding_walk` 가 옳게 빨개지기 때문이다(api_f_ops 머리말).
 dsm_api.register_controllers(
     DsmAPI, DsmLawAPI,
     DsmU1API, DsmU3API, DsmU24API, DsmU56API,
-    DsmFAPI,
+    DsmFAPI, DsmFOpsAPI,
 )
 
 urlpatterns = [

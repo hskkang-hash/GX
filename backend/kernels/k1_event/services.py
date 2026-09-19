@@ -277,6 +277,42 @@ def record_detection(
     except Stream.DoesNotExist as exc:
         raise InvalidEventInput(f"stream_monitor_id={stream_monitor_id} 가 없다") from exc
 
+    # ── FX-5 대체 — **주소는 카메라가 안다** (D-330 · 2026-09-18 턴 V 차선 U3) ──
+    #
+    # D-330 이 이미 판정해 둔 것이 여기에 배선되어 있지 않았다:
+    #
+    #     "카메라는 고정 설치물이므로 설치 주소를 적어 두면 **이벤트 위치가 곧 그
+    #      카메라의 주소**다 — 외부 호출 0건" (adapters/juso 머리말)
+    #
+    # 그래서 `JUSO_REVERSE_SUPPORTED='no'` 인 지금, 배선이 넘겨 주는 주소는 **언제나
+    # 비어 있고**(어댑터가 `disabled` 를 낸다) 카메라에 적어 둔 설치 주소는 **아무도
+    # 사건에 싣지 않았다.** 화면과 술어는 사건의 `address` 를 읽으므로(모바일 M3
+    # 「어디로 가나」 · 알림 본문 F-10 · 보고서 위치란 F-11), 카메라 표에 주소가
+    # 가득 차 있어도 현장에 가는 사람의 화면은 빈칸이었다 [실측 2026-09-18 · 온보딩
+    # U3#2 가 두 턴째 빨강이던 자리].
+    #
+    # ★ **이것은 조회가 아니다.** 커널은 여전히 밖을 모른다 — 방금 제 손으로 읽은
+    #   그 스트림 행의 칸 하나를 그대로 옮겨 적을 뿐이다. 어댑터도, HTTP 도, 새 질의도
+    #   없다(계층 규약 ⑤ 그대로).
+    # ★ **부르는 쪽이 준 주소가 언제나 이긴다.** 물려받기는 **빈칸을 채우는 일**이지
+    #   덮어쓰는 일이 아니다 — 언젠가 역지오코딩이 열리면 그 값이 더 정확하다.
+    # ★ 물려받았으면 `address_status` 도 **함께** 바로잡는다. 배선은 어댑터가 낸
+    #   `disabled` 를 그대로 넘기는데, 그것을 그냥 두면 **주소는 있는데 「조회 대상이
+    #   아님」** 이라고 적힌 행이 생긴다 — 그 행을 화면은 「주소 없음」으로 그린다.
+    # ★ **출처가 선언되지 않은 주소는 물려받지 않는다.** 이 문턱은 우리가 새로 정한
+    #   것이 아니라 알림 쪽(`kernels.k2_notify.services._location_line`)이 이미 세워
+    #   둔 것을 **같은 값으로** 따르는 것이다: `address_source='unset'` 인데 주소만
+    #   적힌 행은 두 칸이 한 사실을 다르게 말하는 상태이고, 그것을 조용히 채택하면
+    #   어긋남이 영영 안 보인다(`verify_camera_address.py` 가 그 수를 센다).
+    #   둘이 갈라지면 **알림에는 안 나가는 주소가 화면에는 나가므로**, 아래 시험이
+    #   두 자리를 한 번에 잠근다(`test_d330_event_address_from_camera.py`).
+    inherited_address = False
+    if not address:
+        from_camera = (stream.install_address or "").strip()
+        declared = (getattr(stream, "address_source", "") or "unset") != "unset"
+        if from_camera and declared:
+            address, inherited_address = from_camera, True
+
     same = (
         Event._base_manager
         .filter(stream_monitor_id=stream_monitor_id, event_type=event_type,
@@ -313,7 +349,9 @@ def record_detection(
             snapshot_path=snapshot_path,
             mission_id=mission_id,
             address=address,
-            address_status=_address_status(address, address_status, lat, lng),
+            #: 물려받은 주소에는 배선이 준 상태를 싣지 않는다 — 위 ★ 셋째 참조.
+            address_status=_address_status(
+                address, None if inherited_address else address_status, lat, lng),
         )
         _inherit_owner(event, stream)
         _reference_clip(event)

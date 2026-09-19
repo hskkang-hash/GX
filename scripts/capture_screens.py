@@ -532,6 +532,40 @@ def _borrow_real_address(SM, gid):
             row.pk)
 
 
+def _seed_snapshot(monitor, group, occurred_at, *, seq: int, event_id=None):
+    """씨앗 사건의 **그림 한 장** — 제품 경로로 올리고 경로를 돌려준다. 못 올리면 `("", 사유)`.
+
+    [U1 요청 ① · 2026-09-18 턴 V · 차선 Q]
+
+    ★ **규칙을 손으로 베끼지 않는다.** 여기서 하는 일은 둘뿐이다:
+      ① 합성 표식 프레임을 만든다 — `seed_dsm_events` 의 `synthetic_frame` **그 함수**를 부른다
+         (그림이 스스로 「나는 시드다」라고 말한다 · D-284 · P-9. 두 벌로 두면 한쪽만 바뀐다)
+      ② `stream_monitors.services.detection_snapshot.upload_snapshot` 에 넘긴다 —
+         **파이프라인이 쓰는 그 함수**다. 자기 업로더를 두면 시드가 지나는 경로와 제품이
+         지나는 경로가 갈리고, 갈린 두 경로는 어긋나도 아무도 모른다(D-369).
+
+    ⚠ 실패를 삼키지 않는다 — 사유를 돌려주고, 부르는 쪽이 씨앗 명세에 그대로 적는다.
+      「못 올렸다」와 「안 올렸다」가 같은 빈 문자열로 보이면 다음 사람이 그것을 제품의 결함으로 읽는다.
+    """
+    try:
+        from stream_monitors.management.commands.seed_dsm_events import Command as _SeedCmd
+        from stream_monitors.services.detection_snapshot import upload_snapshot
+    except Exception as exc:                            # noqa: BLE001
+        return "", "그림 경로를 못 들였다 %s: %s" % (type(exc).__name__, exc)
+    try:
+        jpeg = _SeedCmd.synthetic_frame(
+            tenant=str(getattr(group, "name", None) or getattr(group, "pk", "?")),
+            event_id=event_id, when=occurred_at, seq=seq)
+    except Exception as exc:                            # noqa: BLE001
+        return "", "프레임을 못 만들었다 %s: %s" % (type(exc).__name__, exc)
+    try:
+        path, reason = upload_snapshot(
+            stream_monitor_id=monitor.pk, jpeg_bytes=jpeg, occurred_at=occurred_at)
+    except Exception as exc:                            # noqa: BLE001
+        return "", "올리다 터졌다 %s: %s" % (type(exc).__name__, exc)
+    return (path or ""), ("" if path else (reason or "사유 미기재"))
+
+
 def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
     """★ 씨앗은 **그 계정이 실제로 볼 수 있는 자리**에 심는다.
 
@@ -622,15 +656,33 @@ def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
 
     scope = TenantScope.system(reason="캡처 씨앗 — 탐지 파이프라인에는 요청자가 없다")
     first = None
+    snap_ok, snap_why = 0, []
     for i in range(n):
+        occurred = now - timedelta(minutes=2 * (i + 1))
+        #: ★★ [U1 요청 ① · 2026-09-18 턴 V] **그림을 먼저 올리고 참조를 붙인다.**
+        #:   종전에는 `snapshot_path=""` 로 심었다(「MinIO 부재」 · P-9 시절의 사실).
+        #:   그 사이에 MinIO 가 섰고, 그래서 이 씨앗으로 잰 U2#4(「심각 이벤트 상황 판단」 —
+        #:   **그림을 보는 행**)는 제품이 아니라 **씨앗의 빈 칸**을 쟀다
+        #:   [U1 실측: `gxprobe-D384-screen-CAM` 사건 10건 전부 빈 문자열 · 그 중 하나인
+        #:    268496 의 snapshot 문이 404 · 같은 순간 4802 는 200 image/jpeg 37,594B].
+        #:   ⚠ **규칙을 흉내 내지 않는다** — `seed_dsm_events._upload_frame` 이 이미 쓰는
+        #:     제품 함수(`services.detection_snapshot.upload_snapshot`)를 **그대로** 부른다.
+        #:     시드가 제 업로더를 따로 두면 시드가 지나는 경로와 제품이 지나는 경로가 갈리고,
+        #:     갈린 두 경로는 어긋나도 아무도 모른다(D-369).
+        #:   ⚠ 못 올리면 **빈 채로** 심는다(가짜 경로를 만들지 않는다 · `detection_snapshot` 머리말).
+        path, why = _seed_snapshot(monitor, group, occurred, seq=i)
+        if path:
+            snap_ok += 1
+        else:
+            snap_why.append("#%d %s" % (i, why))
         #: 시각을 벌린다 — 같은 (stream, type) 이 10초 안에 다시 오면 K1 이 접는다(F-04).
         #: 접히면 「심은 수」와 「생긴 수」가 갈라지고, 그 차이를 모르면 수가 거짓이 된다.
         result = record_detection(
             scope=scope, stream_monitor_id=monitor.pk,
             event_type=("fire" if i == 0 else "flood"),
             severity=("critical" if i == 0 else "warning"),
-            occurred_at=now - timedelta(minutes=2 * (i + 1)),
-            snapshot_path="",          # MinIO 부재 — 비어 있는 채로 둔다 (P-9)
+            occurred_at=occurred,
+            snapshot_path=path,
             #: ★ [P-156] 심는 순간부터 **어느 회의 씨앗인지** 적는다(`track_id` — 화면이 안 그리는
             #:   자유 칸 · `probe_marks` 규약). 판정 뒤 `judged=1` 을 덧붙이고, 다음 회의 표본은
             #:   이 표식(또는 씨앗 카메라 이름)으로 걸러진다. 정리(`clean_events`)가 못 돈 회의
@@ -638,13 +690,26 @@ def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
             track_id=_probe_mark_string(RUN_STAMP),
         )
         first = first or result.event_id
+        #: 번호가 생겼으니 **같은 자리에 다시 올려** 그림 안에 사건 번호를 적는다.
+        #: 같은 이름에 덮어쓰기라 객체 수는 늘지 않는다(`seed_dsm_events` 와 같은 수순).
+        if path:
+            again, _why2 = _seed_snapshot(monitor, group, occurred, seq=i,
+                                          event_id=result.event_id)
+            if again and again != path:
+                #: 자리가 달라지면 행이 가리키는 곳과 올린 곳이 갈린다 — 그러면 처음 것을 쓴다.
+                snap_why.append("#%d 두 번째 올리기가 다른 자리에 갔다(%s) — 행은 첫 자리를 가리킨다"
+                                % (i, again))
         SEEDED_EVENT_IDS.append(result.event_id)
         SEED_SPEC.setdefault("events", []).append({
             "event_id": result.event_id,
             "event_type": ("fire" if i == 0 else "flood"),
             "severity": ("critical" if i == 0 else "warning"),
-            "occurred_at": (now - timedelta(minutes=2 * (i + 1)))
-                           .replace(microsecond=0).isoformat(),
+            "occurred_at": occurred.replace(microsecond=0).isoformat(),
+            #: ★★ [U1 요청 ② · 턴 V] **재는 쪽이 그림 있는 씨앗을 고를 수 있어야 한다.**
+            #:   빈 문자열이면 「못 올렸다」이고, 하나도 없으면 재는 쪽은 U2#4 를 ◐ 가 아니라
+            #:   **회색**으로 적어야 한다(빈 그림으로 잰 빨강은 제품의 빨강이 아니다).
+            "snapshot_path": path,
+            "snapshot_why": ("" if path else why),
         })
     _ = DE  # 위 주석의 대상이었던 이름 — 지우지 않고 남긴다
     #: ★ [P-170 ②] **넘길 것을 여기서 적는다.** 아래 네 칸이 뒤 도구들이 읽는 전부다:
@@ -664,7 +729,20 @@ def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
         "address": {"install_address": addr, "install_address_detail": addr_detail,
                     "address_source": addr_src, "borrowed_from_monitor": borrowed_from,
                     "why": addr_why},
+        #: ★★ [U1 요청 ② · 턴 V] 그림이 실린 씨앗이 몇인가 — **0 이면 그것을 말한다.**
+        #:   U2#4 는 그림을 보는 행이므로, 0 이면 재는 쪽이 그 행을 ◐ 가 아니라 회색으로 적어야 한다.
+        "snapshot": {
+            "with_snapshot": snap_ok,
+            "seeded": len(SEEDED_EVENT_IDS),
+            "first_with_snapshot": next(
+                (e["event_id"] for e in SEED_SPEC.get("events", []) if e.get("snapshot_path")), None),
+            "why_missing": snap_why,
+            "how": "stream_monitors.services.detection_snapshot.upload_snapshot "
+                   "(제품 경로 — seed_dsm_events._upload_frame 과 같은 함수)",
+        },
     })
+    print(f"[SHOT] 씨앗 그림 {snap_ok}/{len(SEEDED_EVENT_IDS)}장 "
+          f"(제품 경로 upload_snapshot)" + (f" · 못 올린 사유 {snap_why}" if snap_why else ""))
     return first
 
 

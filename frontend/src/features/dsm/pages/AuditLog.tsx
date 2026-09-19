@@ -33,7 +33,9 @@ import {
   Typography,
 } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+import { ownDenialPaths } from '@/features/session/permissionDenied';
 
 import {
   downloadAuditCsv,
@@ -111,6 +113,14 @@ export default function AuditLog() {
     else if (prefix) q.action = prefix;
     return q;
   }, [range, actorId, actionKey, actionText, page]);
+
+  /**
+   * ★★ [턴 V] **이 문의 403 은 이 화면이 적는다.** 표가 막히면 `StateBoundary` 의
+   * forbidden 상자가, 표 내려받기가 막히면 아래 상태 칸이 말한다 — 둘 다 이 화면 안이다.
+   * 화면 맨 위 고정 띠가 같은 말을 한 번 더 하면 그 상자들을 덮는다.
+   * ⚠ 숨기는 것이 아니다. 거절은 그대로 뜨고, 정하는 것은 **누가 말하는가**뿐이다.
+   */
+  useEffect(() => ownDenialPaths(['/api/dsm/audit']), []);
 
   /** CSV — 진행 중 · 실패 사유 · 받은 바이트. **토스트를 쓰지 않는다**(P-173 · 상태 칸). */
   const [csvBusy, setCsvBusy] = useState(false);

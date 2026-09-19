@@ -1055,7 +1055,10 @@ const noteEvictionOn401 = {
     //   빈 표가 **빈 표 + 멈춘 스피너**가 된다 — 그건 나아진 것이 아니다.
     //   여기서는 **알리기만 하고 오류를 그대로 다시 던진다** — 401 갈래와 같은 규율이다.
     if (isPermissionDenied(status)) {
-      announcePermissionDenied(body, error?.config?.url ?? '');
+      // ★ [턴 V · 차선 U24] **메서드를 함께 넘긴다.** 403 하나로는 「볼 수 없다」와
+      //   「고칠 수 없다」를 못 가른다 — 가르는 칸은 요청 메서드다. 세 번째 인자가
+      //   없으면 읽기로 떨어지므로 다른 부르는 쪽은 한 자도 안 바뀐다.
+      announcePermissionDenied(body, error?.config?.url ?? '', error?.config?.method);
     }
     return Promise.reject(error);
   },

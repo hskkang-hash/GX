@@ -62,6 +62,11 @@ ROUTE_PATH = "/onboarding/progress"
 #: 라우트 표면에 반드시 있어야 하는 둘. 하나라도 없으면 그 라우트는 태어나면서 샌다.
 REQUIRED_ON_ROUTE = ("@tenant_scoped", "auth=")
 
+#: PRD §7.2 가 적은 **여섯 사람**. WO-01 §6 파 3 이 「진행률 6/6」이라고 적은 그 여섯이다.
+#: 표에 없는 사람은 카드가 0장이고, 0장인 사람의 진행률은 잴 수 없다 — 그것이 6/6 이
+#: 아니라 5/6 인 이유이고, 이 판정기가 그 차이를 **이름으로** 잡는 자리다.
+EXPECTED_BUCKETS = ("U1", "U2", "U3", "U4", "U5", "U6")
+
 
 # ══════════════════════════════════════════════════════════════════════════
 # 술어 — 파일 없이 시험할 수 있게 **순수 함수**로 둔다 (D-277)
@@ -105,6 +110,110 @@ def cards_per_role(src: str) -> dict[str, list[tuple[str, bool]]]:
     return out
 
 
+def role_buckets(src: str) -> list[str]:
+    """`_role_buckets()` 가 역할 코드로 고르는 버킷들 — **소스에서** 읽는다."""
+    tree = ast.parse(src)
+    out: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef) or node.name != "_role_buckets":
+            continue
+        for pair in ast.walk(node):
+            if not isinstance(pair, ast.Tuple) or len(pair.elts) != 2:
+                continue
+            first = pair.elts[0]
+            if isinstance(first, ast.Constant) and isinstance(first.value, str):
+                out.append(first.value)
+    return out
+
+
+def persona_viewers(src: str) -> dict[str, list[str]]:
+    """`PERSONA_VIEWERS` — 역할이 아닌 사람을 **누가 볼 수 있는가**."""
+    tree = ast.parse(src)
+    out: dict[str, list[str]] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if "PERSONA_VIEWERS" not in [t.id for t in node.targets
+                                     if isinstance(t, ast.Name)]:
+            continue
+        if not isinstance(node.value, ast.Dict):
+            continue
+        for key, value in zip(node.value.keys, node.value.values):
+            if not isinstance(key, ast.Constant) or not isinstance(
+                    value, (ast.Tuple, ast.List)):
+                continue
+            out[str(key.value)] = [e.value for e in value.elts
+                                   if isinstance(e, ast.Constant)]
+    return out
+
+
+def card_links(src: str) -> dict[str, str]:
+    """카드 키 → 그 카드가 여는 화면 주소(`Card` 의 셋째 자리)."""
+    out: dict[str, str] = {}
+    tree = ast.parse(src)
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or len(node.args) < 3:
+            continue
+        key, link = node.args[0], node.args[2]
+        if isinstance(key, ast.Constant) and isinstance(link, ast.Constant) and \
+                isinstance(key.value, str) and isinstance(link.value, str) and \
+                link.value.startswith("/"):
+            out[key.value] = link.value
+    return out
+
+
+def declared_screen_paths(texts: list[str]) -> set[str]:
+    """앞판 라우트 표가 선언한 주소 전수 — `path: '/...'` 를 그대로 집는다."""
+    found: set[str] = set()
+    for text in texts:
+        # ★ 정규식에 역슬래시를 쓰지 않는다 — 이 파일을 고치는 도구마다 그 한 글자가
+        #   다르게 살아남는다. 공백은 `[ ]*` 로, 따옴표는 문자군으로 적으면 충분하다.
+        found.update(re.findall("""path:[ ]*["'](/[^"']*)["']""", text))
+    return found
+
+
+def dead_card_links(src: str, screen_paths: set[str]) -> list[str]:
+    """**없는 화면을 가리키는 카드.** 있으면 그 카드는 열리지 않는 문을 가리킨다.
+
+    링크는 사람이 손으로 적는 문자열이라 오타 하나로 조용히 죽는다 — 죽은 링크는
+    「자리가 없다」와 구별되지 않고(`why` 가 그 말을 하는 자리다), 구별되지 않으면
+    다음 사람이 「자리를 만들어야 한다」고 읽는다.
+    ★ 변수 조각(`:id`)은 카드가 가리키지 않는다 — 카드는 목록·홈으로 연다.
+    """
+    if not screen_paths:      # 라우트 표를 못 읽었으면 **판정하지 않는다**(회색 · D-301)
+        return []
+    return sorted(f"{key} -> {link}" for key, link in card_links(src).items()
+                  if link.split("?")[0] not in screen_paths)
+
+
+def unreachable_buckets(src: str) -> list[str]:
+    """**아무도 못 보는 카드 표.** 있으면 그 표의 진행률은 영원히 안 읽힌다.
+
+    카드를 늘리는 것과 그 카드가 누군가에게 보이는 것은 다른 일이다. 역할 코드로도
+    (`_role_buckets`) 이름으로도(`PERSONA_VIEWERS`) 닿지 않는 버킷은 **분모 0의 자리**이고,
+    그 자리를 세어 「6/6」이라고 적으면 그 수는 거짓이다 (D-301).
+    """
+    reachable = set(role_buckets(src)) | set(persona_viewers(src))
+    return sorted(b for b in cards_per_role(src) if b not in reachable)
+
+
+def unviewable_personas(src: str) -> list[str]:
+    """`PERSONA_VIEWERS` 에 적혔는데 **카드 표가 없는** 이름 · 볼 사람이 역할이 아닌 이름."""
+    table = cards_per_role(src)
+    roles = set(role_buckets(src))
+    bad: list[str] = []
+    for persona, viewers in sorted(persona_viewers(src).items()):
+        if persona not in table:
+            bad.append(f"{persona}: 볼 수 있다고 적었는데 카드 표가 없다")
+        if not viewers:
+            bad.append(f"{persona}: 볼 사람이 0명이다 — 아무도 못 보는 표다")
+        for viewer in viewers:
+            if viewer not in roles:
+                bad.append(f"{persona}: 보는 쪽 {viewer} 가 역할 버킷이 아니다 "
+                           f"(_role_buckets 에 없다)")
+    return bad
+
+
 def has_write_door(router_src: str) -> bool:
     """사람이 눌러 카드를 닫는 문이 있는가. **있으면 그것이 체크박스다.**"""
     return "@route.post" in code_only(router_src) or \
@@ -140,7 +249,7 @@ def judge_structure() -> int:
 
     total = sum(len(v) for v in table.values())
     closable = sum(1 for v in table.values() for _, c in v if c)
-    print(f"[입력] 역할 {len(table)} · 카드 {total}장 "
+    print(f"[입력] 사람 {len(table)}/{len(EXPECTED_BUCKETS)} · 카드 {total}장 "
           f"(서버 기록이 닫는 카드 {closable} · 아직 못 재는 카드 {total - closable}) "
           f"· 표={ONBOARDING.relative_to(ROOT)}")
 
@@ -153,6 +262,19 @@ def judge_structure() -> int:
             bad.append(f"{role} 에 서버 기록이 닫는 카드가 **한 장도 없다** — "
                        f"그 역할의 진행률은 영원히 0이고, 0은 아무것도 증명하지 않는다")
 
+    missing_buckets = [b for b in EXPECTED_BUCKETS if b not in table]
+    if missing_buckets:
+        bad.append(f"카드 표가 없는 사람 {' · '.join(missing_buckets)} — PRD §7.2 는 "
+                   f"여섯 사람을 적었고 WO-01 파 3 은 「진행률 6/6」을 적었다. "
+                   f"표가 없는 사람의 진행률은 0 이 아니라 **없다**")
+    orphans = unreachable_buckets(src)
+    if orphans:
+        bad.append(f"아무도 못 보는 카드 표 {' · '.join(orphans)} — 역할 코드로도 "
+                   f"이름(PERSONA_VIEWERS)으로도 닿지 않는다. 닿지 않는 표를 세어 "
+                   f"6/6 이라고 적으면 그 수는 거짓이다(D-301)")
+    for line in unviewable_personas(src):
+        bad.append(line)
+
     if has_write_door(router_src):
         bad.append("온보딩 라우터에 쓰기 문이 있다 — 카드를 사람이 닫으면 진행률은 "
                    "「했다」가 아니라 「했다고 적었다」를 센다(WO-01 §12)")
@@ -164,6 +286,22 @@ def judge_structure() -> int:
 
     if URLS.is_file() and "DsmFAPI" not in code_only(URLS.read_text(encoding="utf-8")):
         bad.append("라우터가 `urls.py` 에 등록되지 않았다 — 파일은 있고 경로는 없다")
+
+    route_tables = []
+    for name in ("features/dsm/routes.ts", "features/mobile/routes.ts",
+                 "features/nav/roleNav.ts"):
+        path = FRONTEND / name
+        if path.is_file():
+            route_tables.append(path.read_text(encoding="utf-8"))
+    screen_paths = declared_screen_paths(route_tables)
+    if not screen_paths:
+        print("[UX-46] GRAY 앞판 라우트 표를 못 읽었다 — 카드 링크는 **판정하지 않는다**")
+    else:
+        dead_links = dead_card_links(src, screen_paths)
+        print(f"[UX-46] 카드 링크 대조 — 선언된 화면 주소 {len(screen_paths)}자리")
+        for line in dead_links:
+            bad.append(f"카드가 **없는 화면**을 가리킨다: {line} — 열리지 않는 문을 "
+                       f"가리키는 카드는 「자리가 아직 없다」와 구별되지 않는다")
 
     files = []
     if FRONTEND.is_dir():
@@ -272,6 +410,35 @@ _BIRTH_NO_CLOSER = ('CARDS = {\n'
 #: 출생 표본 ② — 사람이 눌러 카드를 닫는 문. 이것이 있으면 그것이 곧 체크박스다.
 _BIRTH_WRITE_DOOR = '@route.post("/onboarding/cards/{key}/done", auth=A())\n'
 
+#: 출생 표본 ③ — **카드 표는 있는데 그 표를 열 사람이 없다** (턴 V · 차선 F).
+#: U3(이동 중)·U6(외부 연계)은 역할 코드가 없는 사람이라 `bucket_of` 가 절대 고르지
+#: 못한다. 표만 넣고 보는 길을 안 내면 카드 수는 늘고 진행률은 영영 안 읽힌다.
+_ORPHAN_CARDS = ('CARDS = {\n'
+                 '    "U9": (\n'
+                 '        Card("u9.a", "t", "/x", _closed_by_x),\n'
+                 '    ),\n'
+                 '}\n')
+_BIRTH_ORPHAN_BUCKET = _ORPHAN_CARDS + 'def _role_buckets():\n    return (("U1", A),)\n'
+_BIRTH_REACHABLE = _ORPHAN_CARDS + 'def _role_buckets():\n    return (("U9", A),)\n'
+_BIRTH_PERSONA = (_ORPHAN_CARDS + 'PERSONA_VIEWERS = {"U9": ("U1",)}\n'
+                  'def _role_buckets():\n    return (("U1", A),)\n')
+_BIRTH_BAD_VIEWER = (_ORPHAN_CARDS + 'PERSONA_VIEWERS = {"U9": ("U7",)}\n'
+                     'def _role_buckets():\n    return (("U1", A),)\n')
+_BIRTH_NO_TABLE = (_ORPHAN_CARDS + 'PERSONA_VIEWERS = {"U8": ("U1",)}\n'
+                   'def _role_buckets():\n    return (("U9", A),)\n')
+
+
+#: 출생 표본 ④ — **카드가 가리키는 화면이 없다** (턴 V · 차선 F · 실제로 저질렀다).
+_BIRTH_DEAD_LINK = ('CARDS = {@'
+                    '    "U9": (@'
+                    '        Card("u9.a", "t", "/dsm/settings/integrations", _c),@'
+                    '    ),@'
+                    '}@').replace("@", chr(10))
+
+
+#: 앞판 라우트 표의 모양 표본 — 주소를 집는 술어가 **집는가**를 잰다.
+_BIRTH_ROUTE_TABLE = "x: { path: '/dsm/home' },  y: { path: '/m/inbox' }"
+
 
 def self_test() -> int:
     good = ('CARDS = {\n'
@@ -300,6 +467,36 @@ def self_test() -> int:
          route_is_declared("@route.get('/x')") == ["@tenant_scoped", "auth="]),
         ("둘 다 있으면 통과", route_is_declared(
             "@route.get('/x', auth=A())\n@tenant_scoped(reason='r')") == []),
+        # ★ [턴 V · 차선 F] 출생 표본 ③ — **아무도 못 보는 카드 표.** U3·U6 을 표에
+        #   넣으면서 생긴 새 거짓말 자리다: 카드를 늘리면 「6/6」이라고 적을 수 있는데,
+        #   그 표를 열 사람이 없으면 그 수는 아무도 본 적 없는 수다.
+        ("★ 출생 표본 ③ — 닿지 않는 카드 표를 잡는다",
+         unreachable_buckets(_BIRTH_ORPHAN_BUCKET) == ["U9"]),
+        ("닿는 표는 안 잡는다(역할 코드로 닿는다)",
+         unreachable_buckets(_BIRTH_REACHABLE) == []),
+        ("이름으로 닿는 표도 안 잡는다",
+         unreachable_buckets(_BIRTH_PERSONA) == []),
+        ("볼 사람이 역할이 아니면 잡는다",
+         any("U7" in line for line in unviewable_personas(_BIRTH_BAD_VIEWER))),
+        ("카드 표 없는 페르소나를 잡는다",
+         any("U8" in line for line in unviewable_personas(_BIRTH_NO_TABLE))),
+        # ★ [턴 V · 차선 F] 출생 표본 ④ — **없는 화면을 가리키는 카드.** 이 도구를
+        #   만든 자리 그대로다: U6 카드 여섯을 `/dsm/settings/integrations` 로 적었는데
+        #   실재하는 주소는 `/dsm/integrations` 였다(앞판 라우트 표 실측). 판정기가
+        #   없었으면 여섯 장이 조용히 안 열리는 문을 가리킨 채 「진행률 6/6」이 됐다.
+        ("★ 출생 표본 ④ — 없는 화면을 가리키는 카드를 잡는다",
+         dead_card_links(_BIRTH_DEAD_LINK, {"/dsm/integrations"})
+         == ["u9.a -> /dsm/settings/integrations"]),
+        ("실재하는 주소는 안 잡는다",
+         dead_card_links(_BIRTH_DEAD_LINK, {"/dsm/settings/integrations"}) == []),
+        ("라우트 표를 못 읽으면 **판정하지 않는다**(회색)",
+         dead_card_links(_BIRTH_DEAD_LINK, set()) == []),
+        ("앞판 라우트 표에서 주소를 집는다",
+         declared_screen_paths([_BIRTH_ROUTE_TABLE])
+         == {"/dsm/home", "/m/inbox"}),
+        ("역할 버킷을 읽는다", role_buckets(_BIRTH_REACHABLE) == ["U9"]),
+        ("보는 사람 표를 읽는다",
+         persona_viewers(_BIRTH_PERSONA) == {"U9": ["U1"]}),
         ("부르는 화면 0건을 잡는다", frontend_calls([("a.ts", "nothing")], ROUTE_PATH) == []),
         ("부르는 화면을 찾는다",
          frontend_calls([("a.ts", f"x = '{ROUTE_PATH}'")], ROUTE_PATH) == ["a.ts"]),
@@ -342,4 +539,13 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    #: [2026-09-19 · 턴 V 병합] **머리글이 없어 이 게이트는 회색으로 세어졌다**(P-107).
+    #:   74개 판정기 중 73개가 세 줄을 찍는데 이것만 안 찍었다. 머리글 없는 게이트는
+    #:   검증 차선의 셈에서 초록이 아니다 — 무엇을 재고 한 말인지 아무도 모르기 때문이다.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from _gate_header import gate_header
+    gate_header(__file__,
+                target="구조는 저장소 파일 · 걷기는 --api 를 준 실행에서만 살아 있는 서버",
+                as_="구조: 자격 없음 · 걷기: 시드 계정 여섯 (자격 이름 GX_SEED_ROLE_PASSWORD)",
+                source="온보딩 카드 표 · 라우트 선언 · 화면 소스 (걷기일 때는 HTTP 응답)")
     sys.exit(main())

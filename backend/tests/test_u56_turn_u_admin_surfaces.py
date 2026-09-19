@@ -407,13 +407,16 @@ class TurnUAdminSurfaceTest(DsmFixture):
 class TurnUKeyScopeDecisionTest(DsmFixture):
     """★★ **범위 판정 그 자체** — 커널 공개 면 하나(`assert_path_scope`)로 잰다.
 
-    왜 HTTP 가 아니라 여기인가 [실측 · 턴 U]
-    ----------------------------------------
-        HTTP 로는 아직 이 403 이 안 보인다 — `stats/*` 와 `cameras/pulse` 는
-        `inbound_key=True` 선언이 없어 **들어오는 키를 401 로** 먼저 끊는다
-        (`common/inbound_api_key.py` 기본값 거절 · D-335 ③⑤). 그 한 줄이 서는 날
-        이 판정이 그대로 403 을 낸다. 지금 잴 수 있는 것은 **판정식**이고,
-        그것을 회색으로 두지 않고 여기서 잰다.
+    왜 여기서도 재는가 [턴 U 원문 · 턴 V 정정]
+    ------------------------------------------
+        턴 U 는 「HTTP 로는 아직 이 403 이 안 보인다 — `stats/*` 와 `cameras/pulse`
+        가 `inbound_key=True` 를 선언하지 않아 401 이 먼저 난다」고 적었다.
+        **원인이 하나 더 있었다** [실측 · 턴 V]: `assert_path_scope` 를 부르는
+        HTTP 자리가 저장소에 **0곳**이었다. 그 자리를 세우고 나니
+        `GET /api/dsm/events` 하나로 403 이 그대로 나온다 —
+        `TurnVKeyScopeOverHttpTest` 가 그것을 HTTP 로 잰다.
+        이 클래스는 **판정식 자체**(경로 표·UNSET·빈 목록·격리)를 계속 잰다:
+        HTTP 는 문 하나만 밟고 지나가므로 나머지 갈래를 못 덮는다.
 
     ★ [턴 U 병합] 옛 `check_request_key_scope(request, *, granted)` 를 부르지 않는다.
       커널은 HTTP 를 모르고(그 함수는 `request` 를 받았다), `granted` 를 시험이 손으로
@@ -575,3 +578,136 @@ class TurnUKeyScopeDecisionTest(DsmFixture):
             self.assertEqual(inspect.Parameter.KEYWORD_ONLY,
                              params["scope"].kind,
                              "%s 의 scope 가 키워드 전용이 아닙니다 (D-281)." % name)
+
+
+@override_settings(INBOUND_API_KEY_REQUIRE_HTTPS=False)
+class TurnVKeyScopeOverHttpTest(DsmFixture):
+    """★★ **범위 밖 키는 HTTP 로 403 을 받는다** (턴 V · API-03·04 · 차선 U56).
+
+    턴 U 가 못 넘긴 자리 — 그리고 **원인이 하나 더 있었다** [실측 · 턴 V]
+    -----------------------------------------------------------------------
+        턴 U 보고는 「`stats`·`pulse` 가 `inbound_key=True` 를 선언하지 않아서
+        401 이 먼저 난다」고 적었다. 맞는 말이지만 **그것만이 아니었다**:
+        `assert_path_scope` 를 부르는 **HTTP 자리가 저장소에 0곳**이었다
+        (`grep assert_path_scope` → 커널 자신과 시험뿐). 그래서 `stats`·`pulse` 가
+        내일 문을 열어도 403 은 안 났을 것이다 — 판정식은 서 있고 **아무도 안
+        불렀다**. 부르는 자리를 `common/inbound_api_key.py` 에 세웠다
+        (`key_scopes.py` 머리말이 지정한 바로 그 자리 · D-335 · D-212).
+
+    ★ 그리고 **`stats`·`pulse` 를 기다릴 필요가 없다** — `GET /api/dsm/events` 는
+      이미 `inbound_key=True` 이고 범위 `events:read` 를 요구한다. 그 한 문으로
+      A/B 가 선다.
+    ★ **분모를 함께 둔다**: 범위를 가진 키로 같은 문을 눌러 403 이 **아님**을 본다.
+      그것 없이는 이 초록이 「막았다」가 아니라 「문이 죽었다」일 수 있다.
+    """
+
+    #: 이 문 하나로 잰다 — 이미 키에게 열려 있고(`INBOUND_KEY_ALLOWED`)
+    #: 범위 규칙(`events:read`)이 붙은 유일한 자리다.
+    SCOPED_PATH = "/api/dsm/events"
+
+    def setUp(self):
+        super().setUp()
+        self.client = Client(raise_request_exception=False, **NO_CACHE)
+        self._clear_thread_request()
+
+    def tearDown(self):
+        self._clear_thread_request()
+        super().tearDown()
+
+    @staticmethod
+    def _clear_thread_request():
+        """스레드에 남은 요청을 비운다 — 안 비우면 `objects` 가 그 요청의 group 으로
+        조용히 좁혀지고, 아래 판정이 문지기가 아니라 **오염**으로 초록이 된다."""
+        import contextlib
+
+        with contextlib.suppress(Exception):
+            from core.middleware.refresh_token import thread_local
+
+            thread_local.request = None
+
+    def _issue(self, name: str, scopes):
+        """실제 키를 발급하고 범위를 정한다. **값은 돌려받은 그 순간 한 번만 쓴다.**
+
+        `scopes=None` 이면 범위를 정하지 않는다(UNSET · 「옛 키」).
+        """
+        from kernels.k5_trust import issue_key, set_key_scopes
+
+        issued = issue_key(scope=self.scope_a, name=name)
+        if scopes is not None:
+            set_key_scopes(scope=self.scope_a, key_id=issued.view.key_id,
+                           scopes=scopes)
+        self._clear_thread_request()
+        return issued.secret
+
+    def _get(self, secret: str):
+        return self.client.get(self.SCOPED_PATH, HTTP_X_API_KEY=secret)
+
+    @staticmethod
+    def _detail(resp):
+        try:
+            return json.loads((resp.content or b"{}").decode("utf-8")).get("detail", "")
+        except ValueError:
+            return (resp.content or b"")[:200].decode("utf-8", "replace")
+
+    def test_a_key_inside_the_scope_is_not_refused(self):
+        """**분모** — `events:read` 키는 같은 문에서 403 이 아니다."""
+        resp = self._get(self._issue("u56-v-inside", "events:read"))
+        self.assertNotEqual(
+            403, resp.status_code,
+            "범위 안의 키가 403 입니다 — 문이 닫힌 것이지 범위가 막은 것이 아닙니다: %s"
+            % self._detail(resp))
+        self.assertNotEqual(
+            401, resp.status_code,
+            "범위 안의 키가 401 입니다 — 이 문이 키에게 안 열려 있으면 아래 403 은 "
+            "아무것도 재지 않습니다.")
+
+    def test_a_key_outside_the_scope_gets_403_over_http(self):
+        """★★ **이 턴의 수** — 범위 밖 키는 **403**(401 이 아니다)."""
+        resp = self._get(self._issue("u56-v-outside", "stats:read"))
+        self.assertEqual(
+            403, resp.status_code,
+            "범위 밖 키가 %s 를 받았습니다 — 인증은 성했고 권한이 없으므로 403 이어야 "
+            "합니다(연계 명세 §4): %s" % (resp.status_code, self._detail(resp)))
+        self.assertIn("events:read", self._detail(resp),
+                      "거부 문장이 **무엇이 없는지** 말하지 않습니다.")
+
+    def test_an_empty_scope_list_gets_403_over_http(self):
+        """`scopes=[]` 는 「아무 데도 못 간다」다 — 그 거절도 HTTP 로 403 이다."""
+        resp = self._get(self._issue("u56-v-empty", ""))
+        self.assertEqual(403, resp.status_code, self._detail(resp))
+
+    def test_an_unset_old_key_gets_403_over_http(self):
+        """★ 범위를 정한 적 없는 **옛 키**도 403 이다 — 미설정을 참으로 읽으면
+        D-335 가 잡은 「범위 없이 이미 열어 두었다」가 그대로 돌아온다."""
+        resp = self._get(self._issue("u56-v-unset", None))
+        self.assertEqual(403, resp.status_code, self._detail(resp))
+
+    def test_the_refusal_envelope_is_the_same_one_shape(self):
+        """★ 봉투는 `{"detail": ...}` 하나다 — 갈래마다 다르면 외부 App 이 파서를 둘 둔다."""
+        resp = self._get(self._issue("u56-v-envelope", "stats:read"))
+        body = json.loads((resp.content or b"{}").decode("utf-8"))
+        self.assertEqual(["detail"], sorted(body.keys()), body)
+
+    def test_the_refusal_never_echoes_the_key(self):
+        """★ 규약 ④ — 거부 문장에 **키 값이 없다.**"""
+        secret = self._issue("u56-v-no-echo", "stats:read")
+        resp = self._get(secret)
+        self.assertEqual(403, resp.status_code)
+        self.assertNotIn(secret, (resp.content or b"").decode("utf-8", "replace"),
+                         "거부 본문에 키 값이 실렸습니다.")
+
+    def test_a_rule_free_path_is_answered_by_the_door_not_by_the_scope(self):
+        """★ **둘을 뭉치지 않는다** [실측 · 턴 V] — 「범위가 없다」와 「그 문이 키에게
+        없다」는 다른 사실이고, HTTP 코드도 다르다.
+
+        `/api/dsm/health` 에는 범위 규칙이 없다(`PATH_SCOPES` 밖). 그런데도 키를
+        들고 부르면 **401** 이다 — 범위가 막은 것이 아니라 `AccessGateMiddleware`
+        가 「이 문은 키에게 열린 적 없다」고 먼저 답하기 때문이다
+        (`INBOUND_KEY_ALLOWED` · D-343 ③). 같은 문을 **키 없이** 부르면 200 이다.
+        그 분모를 함께 둔다 — 없으면 이 401 이 「문이 죽었다」와 구별되지 않는다.
+        """
+        resp_with_key = self.client.get(
+            "/api/dsm/health", HTTP_X_API_KEY=self._issue("u56-v-health", ""))
+        self.assertEqual(401, resp_with_key.status_code, self._detail(resp_with_key))
+        resp_anon = self.client.get("/api/dsm/health")
+        self.assertEqual(200, resp_anon.status_code, self._detail(resp_anon))

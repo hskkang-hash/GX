@@ -65,6 +65,32 @@ def _pdf(run_id: int) -> str:
     return f"{RUNS}/{run_id}.pdf"
 
 
+
+def _docx_text(data: bytes) -> str:
+    """완성된 DOCX 에서 **사람이 보는 글자 전부**(문단 + 표 칸 + 머리글·바닥글).
+
+    [2026-09-19 · 턴 V] `apps/dsm/docx_export.text_of` 에서 **여기로 옮겼다.**
+    제품은 이 함수를 한 번도 부르지 않았고, 잠자는 기능 게이트(D-377)가 그것을
+    잡았다. 시험만 쓰는 도우미는 시험 옆에 있어야 한다 — 제품 모듈에 두면
+    다음 사람이 제품 기능으로 읽는다.
+
+    XML 을 통째로 훑지 않는 이유: 관계 파일·스타일 이름에 든 영문이 본문 글자로
+    오인되면 그 시험은 자기 자신을 속인다.
+    """
+    import io as _io
+
+    from docx import Document
+
+    document = Document(_io.BytesIO(data))
+    out = [p.text for p in document.paragraphs]
+    for table in document.tables:
+        for row in table.rows:
+            out.extend(cell.text for cell in row.cells)
+    for section in document.sections:
+        out.extend(p.text for p in section.header.paragraphs)
+        out.extend(p.text for p in section.footer.paragraphs)
+    return "\n".join(x for x in out if x)
+
 class ReportFixture(DsmFixture):
     """역할 넷 — 팀장(U2) · 읽기 전용(U4) · 관제요원(U1) · B 테넌트 팀장."""
 
@@ -152,7 +178,7 @@ class ReportRunCreateTest(ReportFixture):
         from apps.dsm import docx_export
 
         run = monthly_report.run_model()._base_manager.get(pk=run_id)
-        text = docx_export.text_of(
+        text = _docx_text(
             monthly_report.render_run(scope=self.scope_a, run=run, fmt="docx"))
         self.assertIn(f"{expected['total']}건", text)
         self.assertGreaterEqual(expected["total"], 3)
@@ -194,7 +220,7 @@ class ReportFileTest(ReportFixture):
                 self.assertIn("no-store", resp["Cache-Control"])
                 self.assertIn("wordprocessingml", resp["Content-Type"])
 
-                text = docx_export.text_of(data)
+                text = _docx_text(data)
                 low = text.lower()
                 for word in FORBIDDEN_WORDS:
                     self.assertNotIn(word.lower(), low,

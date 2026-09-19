@@ -440,11 +440,17 @@ def load_local_env() -> list[str]:
 #:   ⚠ 비밀번호를 명령줄에 싣지 않는다. `docker exec -e NAME`(값 없이)은 **제 환경에서**
 #:     값을 가져가므로 프로세스 목록에 남지 않는다.
 def delegate_to_container(container: str, json_path: str | None,
-                         script: str = "verify_route_alive.py") -> int:
+                         script: str = "verify_route_alive.py",
+                         extra_args: list[str] | None = None,
+                         extra_env: list[str] | None = None) -> int:
+    """[2026-09-18 · 턴 V] `extra_args`/`extra_env` 를 더했다 — **위임을 복사하지 않기 위해서**.
+    `verify_bundle_api_base.py` 도 이 문으로 들어온다. 인자가 다르다고 위임을 한 벌 더
+    쓰면 두 벌은 반드시 어긋난다(D-369). 옛 부름자는 두 인자를 안 주면 그대로 돈다."""
     import subprocess
     #: `script` — 이 위임은 판정기 하나만의 것이 아니다. `verify_minio.py` 도 같은 문으로
     #:   들어간다. 위임을 복사하지 않고 **이름만 받는다** (두 벌은 반드시 어긋난다 · D-369).
     inner = ["python", "/repo/scripts/" + script]
+    inner += list(extra_args or [])
     if json_path:
         #: 컨테이너는 문서를 `/docs` 로 붙인다 — 호스트의 `docs/…` 를 그 자리로 옮긴다.
         norm = json_path.replace("\\", "/")
@@ -456,8 +462,10 @@ def delegate_to_container(container: str, json_path: str | None,
            #   이 이름이 부모 환경에 없으면 docker 는 그냥 안 넘긴다(무해).
            "-e", "GX_SEED_ROLE_PASSWORD",
            "-e", "MINIO_ENDPOINT", "-e", "MINIO_ROOT_USER",
-           "-e", "MINIO_ROOT_PASSWORD", "-e", "MINIO_BUCKET_NAME",
-           container] + inner
+           "-e", "MINIO_ROOT_PASSWORD", "-e", "MINIO_BUCKET_NAME"]
+    for name in (extra_env or []):
+        cmd += ["-e", name]          # 값 없이 이름만 — 위와 같은 규약
+    cmd += [container] + inner
     print(f"[ALIVE] 컨테이너 위임: {container} (호스트에서 서버가 안 보인다 · "
           f"GX_ROUTE_CONTAINER)")
     # ★ [실측 2026-09-18] **비우지 않으면 우리 줄이 맨 뒤로 간다.** 자식은 파이프에

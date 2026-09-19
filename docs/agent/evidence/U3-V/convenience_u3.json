@@ -1,0 +1,54 @@
+{
+  "schema": "gx.convenience.u3.v1",
+  "lane": "U3",
+  "turn": "V",
+  "what": "편리성 지표 #5(현장대응자 축)의 기준선·목표와, 화면이 실제로 잰 값이 쌓이는 자리. 판정은 이 파일이 하지 않는다 — 수를 적을 뿐이고 견주는 일은 표와 사람이 한다. U1 축(#1~#3)의 대장(evidence/U1-S/convenience_u1.json)과 같은 규약을 따른다.",
+  "rules": [
+    "대장은 줄지 않는다 — runs 는 덧붙이기만 한다(merge_convenience_u1.py 가 줄면 멈춘다).",
+    "재지 못한 칸은 null 이다. 0 으로 적지 않는다 — 0 은 '재 봤더니 0' 이고 null 은 '못 쟀다' 다.",
+    "첫 수는 기준선이지 합격선이 아니다. 이 파일에 합격·불합격 칸이 없는 이유다.",
+    "브라우저에서만 잰다 — 차선은 브라우저를 재지 않는다. 이 파일을 채우는 것은 단독 세션(V)이다."
+  ],
+  "measured_by": {
+    "where": "브라우저 안 — frontend/src/features/mobile/metrics.ts",
+    "storage": "localStorage 'gx.u3.convenience.v1' (한 브라우저 · 상한 60건)",
+    "handoff": "window.__gxMobileConvenience.export() (또는 window.__gxMobileMetrics()) 가 JSON 을 낸다. 걷는 도구가 그것을 꺼내 `python scripts/merge_convenience_u1.py --ledger docs/agent/evidence/U3-V/convenience_u3.json --dump -` 로 이 파일에 덧붙인다(표준입력). [2026-09-18 턴 V 조율자 정정] 종전 문장은 `merge_convenience_u3.py` 를 가리켰는데 그 도구는 U1 도구가 대장의 `schema` 칸을 읽게 되면서 지워졌다 — 축마다 도구를 두지 않는다(D-369).",
+    "not_sent_to_server": "계측을 위해 새 쓰기 면을 열지 않았다. 현장 화면에서 나가는 요청을 늘리지 않는다.",
+    "personal_data": "없다 — 지표 이름·사건 번호·탭 수·밀리초·시각만 남는다. 회신 본문은 한 자도 안 남는다."
+  },
+  "metrics": [
+    {
+      "id": "u3_receive_to_ack",
+      "row": 5,
+      "user": "U3",
+      "indicator": "문자 수신 → 접수 회신 (PRD v1.1 §6 표의 5번 행)",
+      "baseline": "전화 왕복 3~5분 [추정 · 안양 현장]",
+      "target": "≤ 30초 (1탭 · 「1」 회신)",
+      "multiple": "6~10배",
+      "unit": "elapsed_ms (탭 수도 함께 센다)",
+      "wired_at": "pages/MobileInbox.tsx — 발송 기록이 M1 목록에 처음 뜰 때 시작 · pages/MobileEventDetail.tsx — 상세를 열면 탭 한 번을 세고(markOpened), 「접수하기」가 서버에 기록된 뒤 멈춤(finishReceiveToAck)",
+      "measured": {
+        "runs": 1,
+        "clicks_median": 2,
+        "elapsed_ms_median": 17875
+      },
+      "measured_at": "2026-09-19T06:41:30.597Z",
+      "why_null": null,
+      "history": [
+        "턴 U — 배선을 세웠다. 다만 시계가 「상세를 연 때」에 멈췄다: 그것은 PRD 5번이 재기로 한 「접수 회신」이 아니고, 언제나 더 작은 수를 낸다.",
+        "턴 V — 시계가 멈추는 자리를 「접수가 서버에 기록된 때」로 옮겼다. 열기는 끝이 아니라 탭 한 번으로 센다(목표의 「1탭」이 그 자리에서 세어진다)."
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "metric": "u3_receive_to_ack",
+      "subject": "274948",
+      "clicks": 2,
+      "elapsed_ms": 17875,
+      "completed": true,
+      "at": "2026-09-19T06:41:30.597Z",
+      "opened_ms": 9825
+    }
+  ]
+}

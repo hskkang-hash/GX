@@ -1031,6 +1031,12 @@ export interface DsmStorageDeclaration {
   reason: string;
   used_note: string;
   env_name: string;
+  /**
+   * ★ [P-177 · 턴 V] 이 %가 **무엇을 나눈 수인지** 한 문장. 상한은 사람이 적은
+   * 선언값이고 사용량은 객체저장 버킷 합계라 **같은 그릇이 아니다.**
+   * 서버가 안 보내면 빈 문자열 — 화면이 문장을 지어내지 않는다.
+   */
+  capacity_note?: string;
 }
 
 /** 회수증 한 장. 못 읽은 회수증(`unreadable`)은 **없는 것보다 나쁘다** — 따로 센다. */

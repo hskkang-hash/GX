@@ -97,7 +97,7 @@ CLICK_WINDOW_MS = 4500
 # 그 행은 **관측에서 회색**으로 떨어진다 — 판정기가 이름을 보고 봐주는 것이 아니다.
 # ──────────────────────────────────────────────────────────────────────────
 def F(key, title, actor, screen, control, call, state, text, confirm=None, note="",
-      fill=None, img_check=False, revert=None):
+      fill=None, fill_text=None, img_check=False, revert=None):
     """한 흐름.
 
     `revert` — [★ 턴 U · 차선 Q · 조율자 실측 2026-09-17 21:0x] **상태를 바꾸는 클릭은
@@ -120,6 +120,10 @@ def F(key, title, actor, screen, control, call, state, text, confirm=None, note=
       채우지 않고 눌러 「안 눌린다」를 적으면 **제품의 규율을 고장으로 파는 것**이다.
       ★ 이것은 면제가 아니다 — 채운 뒤에도 ②③④ 는 그대로 다 서야 한다.
 
+    `fill_text` — [P-179 · 턴 V] 그 칸에 **무엇을 적을 것인가**. 안 주면 종전대로 기본 한 줄을
+      적는다. `{event}` 는 **이번 회 씨앗 사건 번호**로 치환된다 — 「사건 보고서」의 사건번호 칸처럼
+      숫자만 받는 칸이 있기 때문이다(기본 한 줄을 적으면 그 칸이 `118` 만 남기고 서버가 404 를 낸다).
+
     `img_check` — [P-148] 이 행의 술어 ④「화면이 말한다」를 **글자 대신 그림**으로 잰다.
       사진은 낱말로 못 잰다 — 「스냅샷」이라는 표제는 실패 화면에도 뜬다(성공·실패가 같은
       글자를 쓴다). 그래서 셋을 본다: `img[data-gx=snapshot]` 1개 · `naturalWidth>0` ·
@@ -130,7 +134,8 @@ def F(key, title, actor, screen, control, call, state, text, confirm=None, note=
     return {
         "key": key, "title": title, "actor": actor, "screen": screen,
         "control": control, "confirm": confirm, "call": call,
-        "state": state, "text": text, "note": note, "fill": fill,
+        "state": state, "text": text, "note": note,
+        "fill": fill, "fill_text": fill_text,
         "img_check": img_check, "revert": revert,
     }
 
@@ -286,9 +291,26 @@ FLOWS = (
     #:  운송장 서식 화면이고 부르는 문은 `/api/report-template/`(`services/API.ts:819`)다.
     #:  즉 「그려졌다 ≠ 동작한다」가 아니라 **아직 안 그려졌다**. 그 사실을 빨강으로
     #:  적으면 남의 화면을 우리 결함으로 파는 것이 된다.
-    F("U2#6", "상황보고서 생성", "u2", None, None, None, None, [],
-      note="정본 없음 — 서버 문(GET /api/dsm/reports/templates · api.py:750)은 서 있으나 "
-           "그것을 부르는 화면이 없다. /report-template 은 인수 자산의 운송장 서식이다"),
+    #: ★★ [P-179 · 2026-09-18 턴 V · 차선 Q] **위 문단은 턴 U 이전 사실이다 — 정정한다.**
+    #:  턴 V(파 3 턴 1)의 실측이 「정본이 낡았다」고 적은 넷 중 하나다
+    #:  (`docs/workorders/WO-GX-20260915-01_report_wave3_turn1.md` §4 · 그 표의 문안 그대로).
+    #:  턴 U 에 **그 화면이 섰다**: `/dsm/reports`(`features/dsm/pages/Reports.tsx` ·
+    #:  `dsm/routes.u24.ts:53` · `App.tsx:724`)의 카드 셋 중 **첫째가 「사건 보고서」**이고
+    #:  그 카드의 「만들기」가 `POST /api/dsm/reports/runs`(`api_u24.py:408`)를 부른다.
+    #:  ⚠ `/report-template` 이 인수 자산의 운송장 서식이라는 사실은 **안 바뀌었다** — 바뀐 것은
+    #:    「그것 말고는 아무 데도 없다」는 쪽이다.
+    #:  ⚠ 「사건 보고서」 카드는 **사건번호 칸이 비면 단추가 잠긴다**(`Reports.tsx` `disabled=
+    #:    {f.needsEvent && !eventId}` · 그 칸은 숫자만 받는다) — 그래서 `fill` 로 이번 회
+    #:    씨앗 사건 번호를 먼저 적는다(`fill_text` 의 `{event}` 치환 · 이 턴에 드라이버를 같이 늘렸다).
+    F("U2#6", "상황보고서 생성", "u2", "/dsm/reports", btn("만들기"),
+      ("POST", r"/api/dsm/reports/runs"),
+      srv_change("/api/dsm/reports/runs?kind=incident&limit=200", "total"),
+      ["만들었습니다", "사건 보고서"],
+      fill="사건번호", fill_text="{event}",
+      revert=no_revert("**새 실행 기록을 만드는 문**이다 — 같은 단추를 한 번 더 누르면 원래로 "
+                       "오는 것이 아니라 행이 하나 더 생긴다(`trigger=manual` · 실행 목록에 남는다). "
+                       "행을 지우는 문은 제품에 없다"),
+      note="[P-179 정정] 종전 정본 「그 문을 부르는 화면이 없다」는 **턴 U 이전 사실**이다"),
     F("U2#9", "요원별 처리 현황", "u2", None, None, None, None, [],
       note="정본: 집계 면 없다 — 사람별로 세는 자리가 없다"),
     F("U2#16", "알림 규칙 확인", "u2", None, None, None, None, [],
@@ -362,17 +384,53 @@ FLOWS = (
     #:  [실측 `backend/apps/dsm/api.py` 의 `@route.post` 전부 — 보고서 생성 문 0개].
     #:  U4 의 「보고서」 줄이 사이드바에 안 걸린 사유도 같다
     #:  (`features/nav/roleNav.ts:143` 「그리는 화면이 라우터에 없다」).
+    #: ★★ [P-179 · 2026-09-18 턴 V · 차선 Q] **위 문단은 턴 U 이전 사실이다 — 정정한다.**
+    #:  문도 화면도 **있다**: `POST /api/dsm/reports/runs`(`api_u24.py:408`) · 화면 `/dsm/reports`
+    #:  (`Reports.tsx` 「이번 달 우리 센터」 카드 · `App.tsx:724`). 종전 문장이 「없다」고 적은
+    #:  `POST /api/dsm/reports` 는 지금도 없지만, 그 주소가 아니었을 뿐이다.
+    #:  ⚠ **그런데도 이 행은 선언된 회색으로 남긴다 — 사람이 눌러 끝나는 자리가 아니다.**
+    #:    ① 이 행의 이름이 「**자동** 생성」이고, 자동본(`trigger=auto`)은 매월 1일 배치
+    #:      `apps.dsm.monthly_report.run_monthly_all` 이 만든다. 화면의 「만들기」는 언제나
+    #:      `trigger=manual` 이다(`api_u24.py` 머리말) — 그것을 눌러 초록을 적으면
+    #:      **사람이 누른 것을 자동이라고 적는 것**이고 PRD §7.4 의 수가 거짓이 된다.
+    #:    ② U4 는 읽기 전용 역할(`view_only_*`)이라 그 단추가 **403 이고 그것이 옳다**
+    #:      (플랫폼 문지기 `read_only_role` · 턴 U V 실측 — 화면이 사람 말로 그것을 말한다).
+    #:      여기에 단추를 선언하면 판정기는 「관문이 거절했다(403)」로 **빨강**을 적는다 —
+    #:      제품이 옳게 막은 자리를 결함으로 파는 것이다.
+    #:    ③ 사람이 눌러 끝나는 자리는 **U2#6**(만들기)과 **U4#7**(내려받기)이 잰다. 자동 행이
+    #:      실제로 있는지는 U4#7 의 상태 재읽기(`?kind=monthly`)가 같은 회차에 증명한다.
+    #:  → 정본 경로·문·화면은 적되 **●가 될 수 없는 행**으로 선언한다(U4#9 와 같은 모양).
     F("U4#5", "월간 보고서 자동 생성", "u4", None, None, None, None, [],
-      note="정본 없음 — 월간 보고서를 만드는 문도(POST /api/dsm/reports 없음) "
-           "그리는 화면도 없다 (roleNav.ts:143 P61_NO_SCREEN_YET 「보고서」)"),
+      note="[P-179 정정] 문도 화면도 **있다** — POST /api/dsm/reports/runs (api_u24.py:408) · "
+           "/dsm/reports (Reports.tsx 「이번 달 우리 센터」). 그러나 **자동본은 사람이 누르지 않는다** — "
+           "매월 1일 배치 monthly_report.run_monthly_all 이 trigger=auto 로 만들고, 화면의 「만들기」는 "
+           "언제나 trigger=manual 이다. 게다가 읽기 전용 U4 의 그 단추는 403 이 옳다. "
+           "이 행은 ●가 될 수 없다 — 사람이 눌러 끝나는 자리는 U2#6 · U4#7 이 잰다"),
     #: ★ [P-132] 서버가 내는 종이는 **하나**다 — `GET /api/dsm/events/{id}/report.pdf`
     #:  (`backend/apps/dsm/api.py:802` UX-30 사건 보고서 1쪽). 그런데 그 주소를 부르는
     #:  화면이 저장소에 **없다**(frontend 전체에 `report.pdf` 참조 0건).
     #:  종전 기대식이 가리키던 `/api/dsm/reports/{template_id}.pdf` 는 **운송장 서식**이다
     #:  (같은 파일 766행 · 그 표 19행은 전부 택배다 — 800행 주석).
-    F("U4#7", "보고서 다운로드", "u4", None, None, None, None, [],
-      note="정본 없음 — 서버 문은 GET /api/dsm/events/{id}/report.pdf 하나인데 "
-           "그것을 누르는 화면이 라우터에 없다 (api.py:802 · 프런트 참조 0건)"),
+    #: ★★ [P-179 · 2026-09-18 턴 V · 차선 Q] **위 문단은 턴 U 이전 사실이다 — 정정한다.**
+    #:  서버가 내는 종이는 이제 **하나가 아니다**: `GET /api/dsm/reports/runs/{run_id}.docx`
+    #:  (**정본** · 결정 ⑤ · HWP 가 연다 · `api_u24.py:439`)와 `.pdf`(병행 · `:445`)가 있고,
+    #:  **`Reports.tsx` 가 그 둘을 부른다**(`features/dsm/api.ts:860,862`). 「프런트 참조 0건」은 끝났다.
+    #:  ⚠ 누르는 자리가 **둘**이다: 만든 직후 상태 카드의 「DOCX 내려받기」(`Reports.tsx:207`)와
+    #:    실행 목록 표 「파일」 열의 **「DOCX」**(`:296`). 읽기 전용 U4 는 만들 수 없으므로(403)
+    #:    그 사람에게 서는 자리는 **표의 것**이다 — 그래서 `^DOCX$` 로 표의 단추를 정확히 집는다
+    #:    (`DOCX 내려받기` 까지 같이 집히면 없는 자리를 눌렀다고 적히게 된다).
+    #:  ⚠ 내려받기는 파일 응답이라 서버 상태가 안 바뀐다. 그래서 상태 칸은 **자동본이 있는가**를
+    #:    다시 읽는다(`?kind=monthly`) — 그 수(`total`)는 화면이 「전체/실행 기록」에 그대로 적는다.
+    #:    「받았다」의 증거는 술어 ④ 다: `Reports.tsx:130` 이 **받은 바이트 수**를 상태 칸에 적는다
+    #:    (사라지는 토스트가 아니다 · 0바이트는 성공이 아니다).
+    F("U4#7", "보고서 다운로드", "u4", "/dsm/reports", btn("^DOCX$"),
+      ("GET", r"/api/dsm/reports/runs/\d+\.docx"),
+      srv_reflect("/api/dsm/reports/runs?kind=monthly&limit=1", "total"),
+      ["내려받았습니다", "바이트"],
+      revert=no_revert("내려받기는 **읽기**다 — 서버에 남기는 것이 없다(파일은 누를 때마다 "
+                       "실행 기록에서 다시 그린다 · 저장된 파일이 없다)"),
+      note="[P-179 정정] 종전 정본 「서버 문은 report.pdf 하나 · 프런트 참조 0건」은 "
+           "**턴 U 이전 사실**이다"),
     #: ★ [P-132] 「조회」라는 단추는 **없다.** P-120 이 기간을 `Segmented` 로 세웠고
     #:  그 칸의 이름은 `EventList.tsx:221` 의 **「7일」**이다(`period=d7` → `since`·`until`
     #:  두 끝을 그대로 보낸다 — 같은 파일 254-260행).
@@ -395,8 +453,20 @@ FLOWS = (
       ["카메라", "주소 있음", "주소 없음"]),
     F("U4#15", "상급기관 제출 자료", "u4", None, None, None, None, [],
       note="정본: 없음 — 상급기관 서식 T4"),
-    F("U4#16", "감사 대응 이력", "u4", None, None, None, None, [],
-      note="정본: 감사는 쌓이는데 **볼 자리가 없다**"),
+    #: ★★ [P-179 · 2026-09-18 턴 V · 차선 Q] **「볼 자리가 없다」는 턴 U 이전 사실이다 — 정정한다.**
+    #:  자리가 **섰다**: `/dsm/audit`(`features/dsm/pages/AuditLog.tsx` · `dsm/routes.u24.ts:41`)이
+    #:  `GET /api/dsm/audit`(`api_u24.py:321`)를 읽는다. 읽는 사람은 U2·U4·U5 이고 U1·U3 은 403 이다
+    #:  (`config/k3_roles.py` 한 곳 · U4 는 읽기 전용이지만 **읽기는 그 사람의 자리**다).
+    #:  턴 V(파 3 턴 1)의 캡처가 이 화면을 200 으로 기록했다.
+    #:  ⚠ 상태 칸은 화면이 적는 그 수를 그대로 다시 읽는다 — `AuditLog.tsx` 가
+    #:    「전체 {total}건 · {page}/{pages}쪽」을 그리므로 `total` 이 **화면에 실재하는 수**다.
+    #:  ⚠ 기대 문구에 「N.N초 · 60초 안」을 쓰지 않는다 — 그것은 `{n.toFixed(1)}` 틀 문장이라
+    #:    글자가 매회 다르다(사전의 `${n}` 규약). 대신 그 칸의 **고정 글자**(「첫 응답」)를 쓴다.
+    F("U4#16", "감사 대응 이력", "u4", "/dsm/audit", goto(),
+      ("GET", r"/api/dsm/audit(\?|$)"),
+      srv_reflect("/api/dsm/audit?page_size=1", "total"),
+      ["감사 기록", "첫 응답", "표 내려받기"],
+      note="[P-179 정정] 종전 정본 「감사는 쌓이는데 볼 자리가 없다」는 **턴 U 이전 사실**이다"),
 
     # ── U5 · 시스템 관리자 ───────────────────────────────────────────────
     #: ★ [P-132] `/users` 에 「추가」는 없다. 단추 이름은 `App.tsx:728` 의
@@ -1412,10 +1482,15 @@ def walk(persona, account, viewport, flows, event_id):
             #   (「회신 보내기」는 글이 비면 disabled)를 채우지 않고 눌러 「안 눌린다」를
             #   적으면 제품의 규율을 고장으로 파는 것이다. 채운 뒤에도 ②③④ 는 다 서야 한다.
             if f.get("fill"):
+                # ★ [P-179 · 턴 V] 무엇을 적을지는 흐름이 정한다(`fill_text`). 숫자만 받는
+                #   칸(「사건 보고서」의 사건번호)에 기본 한 줄을 적으면 화면이 숫자만 남기고
+                #   서버가 404 를 낸다 — 제품이 아니라 계측이 빨강을 만드는 자리다.
+                what = str(f.get("fill_text") or "P-118 게이트 측정 (자동) — 현장 이상 없음")
+                what = what.replace("{event}", str(event_id))
                 try:
                     box = page.get_by_placeholder(f["fill"])
                     if box.count():
-                        box.first.fill("P-118 게이트 측정 (자동) — 현장 이상 없음")
+                        box.first.fill(what)
                         page.wait_for_timeout(400)
                 except Exception:
                     pass

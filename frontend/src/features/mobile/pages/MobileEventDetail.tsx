@@ -119,7 +119,7 @@ import {
 } from '../api';
 import { userFacingError } from '@/features/dsm/copy';
 import MobileShell, { TOUCH_MIN } from '../components/MobileShell';
-import { finishReceiveToAck } from '../metrics';
+import { finishReceiveToAck, markOpened } from '../metrics';
 import { mobileRoutes } from '../routes';
 import { mobileEventDetailPath } from '../routes';
 import type { ClipTicket, EventDetailView, EventRow } from '../types';
@@ -225,12 +225,16 @@ export default function MobileEventDetail() {
   );
 
   /**
-   * 편리성 #5 — **「봤다」의 시각.** 상세가 실제로 뜬 순간이 「확인」이다
-   * (`metrics.ts::finishReceiveToAck` 머리말). M1 을 거치지 않고 바로 이 주소로
-   * 왔거나 이미 한 번 확인한 사건이면 시작이 없어 아무것도 안 남는다 — 조용한 실패다.
+   * 편리성 #5 — **「열었다」의 시각.** 상세가 실제로 뜬 순간이다.
+   *
+   * ★★ [턴 V] **여기서 시계를 멈추지 않는다.** 열기는 끝이 아니라 **탭 한 번**이고,
+   *   시계는 아래 「접수하기」가 서버에 기록된 때 멈춘다 — PRD §6 의 5번이 재기로 한
+   *   것이 「문자 수신 → 접수 회신」이기 때문이다(`metrics.ts` 머리말 ★★).
+   *   열기에서 멈춘 시계는 언제나 더 작은 수를 내므로, 그 수로 5번 칸을 채우면
+   *   목표를 쉬운 것으로 바꿔 초록을 만드는 일이 된다.
    */
   useEffect(() => {
-    if (id && event.data) finishReceiveToAck(id);
+    if (id && event.data) markOpened(id);
   }, [id, event.data]);
 
   /**
@@ -268,6 +272,9 @@ export default function MobileEventDetail() {
             { to_state: toState, reason },
             intentKey(`m.response:${id}:${toState}`),
           );
+          // ★ 편리성 #5 — **시계는 여기서 멈춘다.** 「접수」가 서버에 기록된 뒤다.
+          //   누른 때가 아니라 **성공한 뒤**여야 거절된 접수가 수에 안 들어간다.
+          if (id && toState === 'acknowledged') finishReceiveToAck(id);
           message.success(`「${labelOf(RESPONSE_STATE_LABEL, toState)}」 단계로 옮겼습니다.`);
           event.reload();
         } catch (err) {

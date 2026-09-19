@@ -1052,6 +1052,7 @@ _dispatch_gate() {
     route-alive)        gate_route_alive ;;
     contract-route-reach) gate_contract_route_reach ;;
     click-completes)    gate_click_completes ;;
+    bundle-api-base)    gate_bundle_api_base ;;
     *) echo "알 수 없는 게이트: $1"; exit 2 ;;
   esac
 }
@@ -1133,7 +1134,56 @@ gate_gate_header() {
 }
 
 # ★ ui-secrets 가 secrets 바로 뒤다 — **V 의 첫 판정기**(09-26 §6).
-ALL_GATES=(live-freshness gate-header secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach click-completes)
+
+# -----------------------------------------------------------------------------
+# GATE: bundle-api-base — **서는 번들 안에 API 주소가 박혀 있나**  (P-182 · 턴 V)
+#
+# * 출생 표본 [실측 2026-09-18 · 턴 U]: 조율자가 `gx-fe-build` 의 `/app/.env` 없이
+#   프런트를 다시 지었다. `vite` 는 0, 번들 해시 게이트도 초록(그 게이트는 신원만
+#   묻는다), 화면도 떴다. 그런데 `VITE_API_URL` 이 빈 문자열이 되어 로그인 POST 가
+#   API 가 아니라 SPA 제 원점으로 갔고(501), V 의 측정이 40분 통째로 막혔다.
+#   **아무것도 빨갛지 않았다** — 그 자리를 묻는 게이트가 없었다.
+#
+# 이 게이트는 덤으로 정적 서버가 `/api/...` 에 404 를 내는지도 문다(턴 U 에 V 가
+# 찾은 거짓 초록의 씨 — 옛 서버는 200+index.html 을 돌려줬다).
+#
+# 기대 밑동을 모르면 **회색**이다. 모르는 채로 초록을 내지 않는다.
+gate_bundle_api_base() {
+  #: ⚠ `session` 을 딛지 **않는다** — 이 게이트는 로그인하지 않는다. 정적 파일을
+  #:   익명으로 읽을 뿐이다. 처음엔 session 을 딛게 짰다가 남이 세션을 쥐고 있다는
+  #:   이유로 회색이 났다 — **재지 못할 이유가 없는데 회색을 내는 게이트**는 곧 꺼진다.
+  env_require mount || return 2   # 컨테이너 안에서 HTTP 로 SPA 를 문다
+  head_ "GATE bundle-api-base — 서는 번들에 API 주소가 박혀 있나 (P-182)"
+  # * **출생 표본** (D-310) — `verify_bundle_api_base.py::self_test` 의 `BIRTH_SAMPLE` 에
+  #   그날의 값이 박혀 있다: 턴 U 에 `/app/.env` 없이 지은 번들에서 실제로 뽑힌 주소
+  #   리터럴 앞머리(`react.dev` · `bit.ly` … · `http://localhost:8000` 은 **없다**).
+  #   아래 자기시험이 그 표본을 빨강으로 판정하지 못하면 이 게이트는 시작하지 않는다.
+  local out rc
+  if out=$($PY scripts/verify_bundle_api_base.py --self-test 2>&1); then
+    pass "판정 자기시험 통과 (규칙 7종 + 뽑기 2종)"
+  else
+    fail "판정 자기시험 실패 - 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_bundle_api_base.py           --spa "${GX_WEB:-http://localhost:3002}"           --expect "${GX_EXPECT_API_BASE:-${GX_API_INTERNAL:-http://localhost:8000}}" 2>&1); rc=$?
+  local nentry
+  nentry=$(echo "$out" | grep -m1 -oE '엔트리 [0-9]+개 읽음' | tr -dc '0-9')
+  inputs "${nentry:-0}" "서버가 HTTP 로 내준 엔트리 JS (파일이 아니라 응답을 읽었다)"          "SPA 가 답하지 않거나 index.html 에 모듈 스크립트가 없다 - 읽을 번들이 없었다" || return 1
+  case $rc in
+    0) pass "$(echo "$out" | grep -m1 -E '^\[BUNDLE-API\] 초록' || echo '[BUNDLE-API] 초록 (판정문을 못 찾았다)')"
+       echo "$out" | grep -m1 -E '^\[BUNDLE-API\] SPA' | sed 's/^/        /'
+       return 0 ;;
+    2) skip "판정 불가 - SPA 가 안 서거나 기대 밑동을 모른다" "(통과가 아니다)"
+       echo "$out" | grep -E '^\[BUNDLE-API\] 회색' | sed 's/^/        /'
+       return 0 ;;
+    *) fail "서는 번들에 API 주소가 안 박혔다 - 화면은 뜨지만 로그인이 API 로 가지 않는다"
+       echo "$out" | sed 's/^/        /'; return 1 ;;
+  esac
+}
+
+ALL_GATES=(live-freshness gate-header secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach click-completes bundle-api-base)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {

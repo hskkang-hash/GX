@@ -11,7 +11,8 @@
   "measured_by": {
     "where": "브라우저 안 — frontend/src/features/dsm/metrics.ts",
     "storage": "localStorage 'gx.u1.convenience.v1' (한 브라우저 · 상한 60건)",
-    "handoff": "window.__gxConvenience.export() 가 JSON 을 낸다. 걷는 도구가 그것을 꺼내 scripts/merge_convenience_u1.py 로 이 파일에 덧붙인다.",
+    "handoff": "window.__gxConvenience.export()(짧은 이름 window.__gxMetrics())가 JSON 을 낸다. 걷는 도구가 그것을 꺼내 scripts/merge_convenience_u1.py 로 이 파일에 덧붙인다 — 파일로 저장해 --dump <경로> 를 주거나, 꺼낸 문자열을 그대로 --dump - 로 흘려보낸다. 붙이지 않고 지금 상태만 보려면 --status.",
+    "before_walking": "콘솔에서 `typeof window.__gxMetrics` 가 'function' 인지 먼저 본다. 아니면 그 번들에 계측이 안 실린 것이고, 그때의 빈 값은 '못 잰 것'이지 0 이 아니다.",
     "not_sent_to_server": "계측을 위해 새 쓰기 면을 열지 않았다. 관제 화면에서 나가는 요청을 늘리지 않는다.",
     "personal_data": "없다 — 지표 이름·대상 종류·클릭 수·밀리초·시각만 남는다. 회신 본문은 한 자도 안 남는다."
   },
@@ -40,9 +41,13 @@
       "multiple": "5배",
       "unit": "elapsed_ms",
       "wired_at": "features/Handover/components/ShiftHandoverPanel.tsx — 인계 자리가 뜰 때 시작 · 초안 복사 또는 쓰기에서 멈춤",
-      "measured": null,
-      "measured_at": null,
-      "why_null": "같다 — 훅만 섰다."
+      "measured": {
+        "runs": 1,
+        "clicks_median": 1,
+        "elapsed_ms_median": 8870
+      },
+      "measured_at": "2026-09-19T06:36:43.121Z",
+      "why_null": null
     },
     {
       "id": "u1_dead_camera_check",
@@ -54,10 +59,31 @@
       "multiple": "20배 이상",
       "unit": "clicks",
       "wired_at": "pages/CameraGrid.tsx — 화면이 뜰 때 시작 · 무응답 수가 화면에 적힐 때 멈춤",
-      "measured": null,
-      "measured_at": null,
-      "why_null": "같다 — 훅만 섰다."
+      "measured": {
+        "runs": 1,
+        "clicks_median": 0,
+        "elapsed_ms_median": 271
+      },
+      "measured_at": "2026-09-19T06:36:05.151Z",
+      "why_null": null
     }
   ],
-  "runs": []
+  "runs": [
+    {
+      "metric": "u1_dead_camera_check",
+      "subject": "grid",
+      "clicks": 0,
+      "elapsed_ms": 271,
+      "completed": true,
+      "at": "2026-09-19T06:36:05.151Z"
+    },
+    {
+      "metric": "u1_handover_note",
+      "subject": "shift",
+      "clicks": 1,
+      "elapsed_ms": 8870,
+      "completed": true,
+      "at": "2026-09-19T06:36:43.121Z"
+    }
+  ]
 }

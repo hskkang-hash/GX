@@ -75,11 +75,32 @@ POST /api/dsm/settings/api-keys?name=<이름>&scopes=events%3Aread%2Cstats%3Area
   간다」다 — **둘은 다른 사실이다**).
 - 범위 밖 호출은 **403** 이다(401 이 아니다 — 인증은 성했고 권한이 없다).
 
-> ⚠ **오늘의 한계 [실측 · 2026-09-18]** — `/api/dsm/stats/*` 와
-> `/api/dsm/cameras/pulse` 는 아직 `inbound_key=True` 를 선언하지 않았다. 그래서
-> **키로 부르면 403 이 아니라 401** 이 온다(문 자체가 키에게 안 열려 있다).
-> 범위 판정식은 서 있고 시험이 그것을 잰다 — 그 한 줄이 서는 날 403 이 나온다.
-> 「범위가 없다」가 아니라 **「그 문이 아직 키에게 없다」**이다. 둘을 뭉치지 않는다.
+### 3.1 범위 밖 = 403 — **HTTP 로 잰 수** [실측 2026-09-18 · 턴 V]
+
+같은 문(`GET /api/dsm/events`)을 세 가지 키로 눌렀다. **분모를 함께 둔다** — 범위를
+가진 키가 200 을 받지 못하면 아래 403 은 「막았다」가 아니라 「문이 죽었다」이다.
+
+| 키의 범위 | `GET /api/dsm/events` | 본문 |
+|---|---|---|
+| `events:read` (범위 안) | **200** | 목록 |
+| `stats:read` (범위 밖) | **403** | `{"detail": "이 키에는 범위 events:read 가 없습니다 — 지금 가진 범위: stats:read"}` |
+| 정한 적 없음(옛 키 · `state: "unset"`) | **403** | `{"detail": "이 키에는 범위 events:read 가 없습니다 — 지금 가진 범위: 없음"}` |
+
+`nginx:8500` 과 `gunicorn:8000` **두 출처에서 같은 수**가 나왔다(캐시가 덮지 않았다).
+재현: `scripts/probe_key_scope_http.py` · 시험
+`backend/tests/test_u56_turn_u_admin_surfaces.py::TurnVKeyScopeOverHttpTest`.
+
+> ⚠ **턴 U 의 기록을 정정한다.** 턴 U 는 「`stats`·`pulse` 가 `inbound_key=True` 를
+> 선언하지 않아서 403 이 안 보인다」고 적었다. 맞는 말이지만 **원인이 하나 더 있었고
+> 그쪽이 먼저였다**: `assert_path_scope` 를 부르는 **HTTP 자리가 저장소에 0곳**이었다.
+> 판정식은 서 있었고 **아무도 부르지 않았다.** 그 자리를 이번 턴에 세웠다
+> (`backend/common/inbound_api_key.py` — `key_scopes.py` 머리말이 지정한 그 자리).
+
+> ⚠ **남은 한계 [실측 2026-09-18]** — `/api/dsm/stats/*` 와 `/api/dsm/cameras/pulse` 는
+> 아직 `inbound_key=True` 를 선언하지 않았다. 그래서 **키로 부르면 403 이 아니라 401**
+> 이다(문 자체가 키에게 안 열려 있다). 「범위가 없다」가 아니라 **「그 문이 아직 키에게
+> 없다」**이다 — 둘을 뭉치지 않는다. 그 두 문은 U24·U3 소유라 이 차선이 안 고친다
+> (등록 요청 · 파 3 턴 2 보고 ③).
 
 ---
 
@@ -140,12 +161,16 @@ POST /api/dsm/settings/api-keys?name=<이름>&scopes=events%3Aread%2Cstats%3Area
 ## 7. OpenAPI
 
 - `GET /api/dsm/openapi.json`(ninja 기본 경로 규약).
-- `components.schemas` **≥ 1** [실측 · 이번 턴 이전에는 0 이었다]. 이 저장소의 dsm
+- `components.schemas` **11** [실측 2026-09-18 · 턴 V · 턴 U 에는 3, 그 전에는 0]. 이 저장소의 dsm
   라우트는 인자를 원시 타입으로 받고 응답을 `dict` 로 내므로 모양이 하나도 없었다.
   모양이 없으면 외부 App 은 「200 이 온다」밖에 못 읽고, 그 상태의 명세는 명세가
   아니다. `StorageOut`(저장 용량 응답)이 그 0 을 깼다 —
   `backend/tests/test_u56_turn_u_admin_surfaces.py::test_openapi_has_at_least_one_component_schema`
   가 그 수를 지킨다.
+- **응답까지 선언된 문 7 / 108** [실측 2026-09-18]. 턴 V 에 U5·U6 문 여섯이 더해졌다:
+  `POST /cameras/{id}/address` · `POST /system/restart-request` · `GET /system/requests` ·
+  `GET /system/backup-receipts` · `GET|POST /settings/api-keys/{id}/scopes`.
+  **101 은 아직 「200 이 온다」밖에 못 읽는다** — 그 수를 줄이지 않고 적어 둔다.
 
 ---
 

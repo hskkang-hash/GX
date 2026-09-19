@@ -239,6 +239,102 @@ def _closed_by_test_send(scope: TenantScope) -> Optional[str]:
     return None
 
 
+#: 현장 회신이 남는 감사 채널 `(logger_name, api_name)`. **값의 정본은 커널**이고
+#: (`kernels/k1_event/field_reply.py` 의 `LOGGER_NAME` · `ACTION`) 여기 적힌 것은 사본이다.
+#:
+#: ★ 왜 상수를 가져오지 않고 적어 두는가 — **App 은 커널의 공개 면만 만진다**
+#:   (DA-04 §1-4 · D-278). `kernels.k1_event.field_reply` 는 서브모듈이라 App 이 가져오면
+#:   계층 검사가 멈추고, 그 다음 걸음이 커널 로직이 App 으로 새는 길이다. 실제로 이 줄을
+#:   import 로 짰다가 시험 다섯이 한꺼번에 빨개졌고, **그 빨강이 옳다.**
+#: ★ 그래서 남는 위험은 하나다: 커널이 이름을 바꾸면 이 사본이 조용히 낡는다. 그 위험은
+#:   시험이 든다 — `tests/test_onboarding_progress.py::OnboardingU3CardsTest::
+#:   test_the_channel_name_is_the_same_string_the_kernel_writes` 가 커널 상수와 대 본다.
+#:   시험은 App 이 아니므로 커널을 그대로 읽을 수 있다. (같은 파일의 K2 시험 발송 채널
+#:   `"guardianx.dsm.notify"` 이 이미 같은 규약으로 적혀 있다.)
+FIELD_REPLY_CHANNEL = ("guardianx.dsm.field_reply", "field_reply")
+
+
+# ── U3 「이동 중」 · U6 「외부 연계」 술어 (턴 V · 차선 F) ────────────────────
+#
+# ★ 이 여섯은 **전부 이미 있는 기록**을 읽는다. 새 표도 새 질의도 만들지 않았다 —
+#   온보딩 카드를 위해 기록을 새로 만들면 그 기록은 카드 말고는 아무도 안 쓰고,
+#   아무도 안 쓰는 기록은 다음 턴에 죽은 필드가 된다(D-304).
+def _closed_by_field_report(scope: TenantScope) -> Optional[str]:
+    """**내가** 현장에서 한 줄을 보냈거나 사진을 올렸는가 (U3 ③ · PRD `field-reply 1`).
+
+    PRD §7.2 U3 ③ 은 「도착·사진·한 줄」 한 장이고, 닫는 기록으로 `field-reply 1` 을
+    적었다. 그래서 **한 줄이 먼저**이고, 사진은 같은 카드의 다른 손이다 — 둘 중
+    하나면 닫는다(`_closed_by_test_send` 가 채널 둘을 한 장으로 본 것과 같은 모양).
+    ★ 한 줄은 표가 아니라 **감사**에 산다(`kernels/k1_event/field_reply.py` 머리말) —
+      감사 표에는 테넌트 칸이 없으므로 `user_id` 로 좁힌다. 남의 테넌트 사람의 회신은
+      `user_id` 가 달라 내 카드를 못 닫는다(`_closed_by_test_send` 와 같은 사실).
+    """
+    from common import audit_writer
+
+    logger_name, action = FIELD_REPLY_CHANNEL
+    actor = scope.require_actor()
+    row = (audit_writer._model()._base_manager
+           .filter(logger_name=logger_name, api_name=action, user_id=actor.pk)
+           .order_by("-id").first())
+    if row is not None:
+        return f"audit#{row.pk}"
+    photo = (_tenant_rows(_model("DsmFieldPhoto"), actor)
+             .filter(created_by=actor).order_by("-id").first())
+    return f"field_photo#{photo.pk}" if photo else None
+
+
+def _closed_by_notify_prefs(scope: TenantScope) -> Optional[str]:
+    """**내** 알림 설정 행이 있는가 (U3 ④ · PRD `notify-prefs 저장`).
+
+    ★ 행이 **있는 것**이 곧 「저장했다」다 — 이 표는 계정당 살아 있는 행 하나이고,
+      쓰는 문(`PUT /api/dsm/me/notify-prefs`)을 지나야 태어난다. 값이 비어 있어도
+      「비우기로 정했다」는 사람이 한 판정이다(`DsmNotifyPrefs` 머리말).
+    """
+    actor = scope.require_actor()
+    row = (_tenant_rows(_model("DsmNotifyPrefs"), actor)
+           .filter(user=actor).order_by("-id").first())
+    return f"notify_prefs#{row.pk}" if row else None
+
+
+def _closed_by_inbound_key(scope: TenantScope) -> Optional[str]:
+    """연계용 키가 우리 테넌트에 하나라도 있는가 (U6 ① · PRD §7.2 U6 의 「키 1」).
+
+    ★ **들어오는 키**(`inbound_api_key` — 남이 우리를 부를 때 쓰는 키)다. 나가는 키와
+      같은 낱말로 적지 않는다(D-337 동음이의) — 방향이 다르면 다른 것이다.
+
+    ★ 키 표는 §0.4(dj-core `apikey_account`)다. 직접 뒤지지 않고 **커널의 공개 면**
+      (`k5_trust.list_keys`)을 부른다 — 그 함수가 이미 테넌트로 좁힌다(D-212).
+    ★ 값은 읽지 않는다. 근거로 나가는 것은 **id 뿐**이다(D-204).
+    """
+    from kernels.k5_trust import list_keys
+
+    try:
+        keys = list(list_keys(scope=scope))
+    except Exception:  # noqa: BLE001 — 못 읽은 것은 「닫히지 않은 것」이다
+        return None
+    return f"inbound_key#{keys[0].key_id}" if keys else None
+
+
+def _closed_by_webhook_subscription(scope: TenantScope) -> Optional[str]:
+    """나가는 웹훅 구독이 한 건이라도 있는가 (U6 ④ · PRD `subscription 1`)."""
+    actor = scope.require_actor()
+    row = _tenant_rows(_model("WebhookSubscription"), actor).order_by("-id").first()
+    return f"webhook#{row.pk}" if row else None
+
+
+def _closed_by_webhook_delivery(scope: TenantScope) -> Optional[str]:
+    """그 구독에 **도달한 적이 있는가** (U6 ⑤ · PRD `delivery 200 1`).
+
+    ★ 「구독을 만들었다」와 「받았다」는 다른 사실이다. 구독 행만 보고 이 카드를 닫으면
+      한 번도 안 닿은 연계가 초록이 된다. `last_delivered_at` 이 **비어 있으면
+      「한 번도 도달한 적 없다」**이고(모델 머리말), 그것이 이 카드의 답이다.
+    """
+    actor = scope.require_actor()
+    row = (_tenant_rows(_model("WebhookSubscription"), actor)
+           .filter(last_delivered_at__isnull=False).order_by("-id").first())
+    return f"webhook_delivered#{row.pk}" if row else None
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 카드 표 — PRD §7.2 그대로. 역할마다 일곱 장을 넘지 않는다
 # ═══════════════════════════════════════════════════════════════════════════
@@ -276,6 +372,18 @@ CARDS = {
         Card("u2.report", "사건 보고서 한 쪽 만들기", "/dsm/events", _closed_by_report_run),
         Card("u2.drill", "훈련 모드 위치 확인", "/dsm/drill", _closed_by_drill),
     ),
+    # ★ [턴 V · 차선 F] U3 은 **역할이 아니라 상태**다 — `onboarding_48.md` 가 「U1·U2·U4의
+    #   이동 상태」라고 적은 그 사람이고, 그래서 아래 `PERSONA_VIEWERS` 가 누가 이 표를
+    #   볼 수 있는지 가른다. 카드 넷은 PRD §7.2 U3 행 그대로(①~④)다.
+    "U3": (
+        Card("u3.login", "문자·푸시 링크로 열기", "/m/inbox",
+             why="문자·푸시 링크로 들어왔다는 사실이 서버에 남지 않습니다 — "
+                 "로그인 기록은 어느 링크를 눌러 왔는지를 가르지 않습니다."),
+        Card("u3.response", "이동 중에 접수하기", "/m/inbox", _closed_by_response),
+        Card("u3.field", "도착 보고 · 현장 한 줄", "/m/inbox", _closed_by_field_report),
+        Card("u3.prefs", "근무 외 시간·담당 구역 설정", "/m/settings",
+             _closed_by_notify_prefs),
+    ),
     "U4": (
         Card("u4.week", "지난 7일 요약 보기", "/dsm/home",
              why="요약을 본 사실이 서버에 남지 않습니다."),
@@ -284,6 +392,13 @@ CARDS = {
         Card("u4.search", "사건 한 건 찾아보기", "/dsm/events",
              why="검색한 사실이 서버에 남지 않습니다."),
         Card("u4.report", "이번 달 우리 센터 확인", "/dsm/home", _closed_by_report_run),
+        # ★ [턴 V · 차선 F] PRD §7.2 U4 ⑤ 가 적은 카드다. 턴 U 가 「PRD 38 · 코드 27」로
+        #   센 차이 열한 장 중 **이 한 장이 U4 의 몫**이었다 — 빠진 것은 표에 없어서
+        #   빠진 것이지 없어서 빠진 것이 아니었다. HWPX 서식은 아직 없으므로
+        #   `blocked` 로 들어온다(분모에는 안 들어간다 · 진행률은 안 움직인다).
+        Card("u4.hwpx", "상급기관 서식(HWPX) 내려받기", "/dsm/reports",
+             why="HWPX 서식이 아직 없습니다 — 지금 나오는 것은 DOCX·PDF 둘입니다. "
+                 "서식이 서는 턴에 술어를 답니다."),
         # ★ 턴 U — 화면(`AuditLog.tsx`)은 이번 턴(U24)에 서는 중이지만, 조회는
         #   읽기라 그 자체로는 서버 기록을 남기지 않습니다 — 화면이 서는 것과
         #   이 카드가 닫히는 것은 다른 일입니다. 조회 행위가 남기는 기록(예: 감사
@@ -309,6 +424,27 @@ CARDS = {
              why="백업 회수증을 내주는 자리가 이번 턴(U56) 에 서는 중입니다 — "
                  "그 화면이 남기는 기록이 정해지면 술어를 답니다."),
     ),
+    # ★ [턴 V · 차선 F] U6 은 **기계**다 — `onboarding_48.md` 가 「외부 연계 시스템(기계)」
+    #   라고 적었고 사람 계정이 없다. 그래서 이 표를 보는 사람은 연계를 **세우는 사람**
+    #   (U5)이고, 카드 여섯은 전부 그 사람이 남기는 기록으로 닫힌다. 진행률 라우트는
+    #   키를 받지 않으므로(`JwtOrInboundKey()` 기본값) 기계 스스로는 이 표를 못 읽는다 —
+    #   그것이 사고가 아니라 설계다: 기계에게 「처음 시작하기」 카드는 소용이 없다.
+    "U6": (
+        Card("u6.key", "연계용 키 발급", "/dsm/integrations",
+             _closed_by_inbound_key),
+        Card("u6.health", "health 200 확인", "/dsm/integrations",
+             why="`GET /api/dsm/health` 는 익명으로 열려 있고 감사에 남지 않습니다 — "
+                 "누가 눌렀는지 서버가 모릅니다."),
+        Card("u6.events", "키로 이벤트 목록 조회", "/dsm/integrations",
+             why="키로 읽은 사실을 남기는 자리가 아직 없습니다 — 키 표는 §0.4(dj-core)라 "
+                 "우리가 마지막 사용 시각을 더할 수 없습니다."),
+        Card("u6.subscription", "웹훅 구독 등록(필터)", "/dsm/integrations",
+             _closed_by_webhook_subscription),
+        Card("u6.delivery", "서명 검증 통과 — 한 번 도달", "/dsm/integrations",
+             _closed_by_webhook_delivery),
+        Card("u6.update", "외부에서 상태 갱신 1", "/dsm/integrations",
+             _closed_by_response),
+    ),
 }
 
 #: 역할 코드 → 사람. **`config/k3_roles.py` 의 묶음을 그대로 쓴다** — 새 표를 만들지 않는다
@@ -325,6 +461,52 @@ def _role_buckets():
         ("U4", K3_ROLE_EXECUTIVES),
         ("U1", K3_ROLE_OPERATORS),
     )
+
+
+#: 역할이 아닌 페르소나 둘 — **누가 이 표를 볼 수 있는가** (턴 V · 차선 F).
+#:
+#: `bucket_of` 는 역할 코드로 사람을 가른다. 그런데 U3·U6 은 역할이 아니다:
+#:   · **U3 은 상태다** — `onboarding_48.md` 가 「U1·U2·U4의 이동 상태」라고 적었다.
+#:     같은 사람이 자리에 앉아 있으면 U1·U2·U4 이고 움직이면 U3 이다. 그래서 U3 표는
+#:     그 셋이 본다 — 닫는 기록도 **그 사람 자신의 기록**이다.
+#:   · **U6 은 기계다** — 사람 계정이 없다. 그 연계를 세우는 사람은 U5 이고, 카드
+#:     여섯(키·구독·도달·상태 갱신)은 전부 U5 가 남기는 기록으로 닫힌다.
+#:
+#: ★ 이 표를 **비워 두고 카드만 늘리지 않는다.** 아무도 못 보는 버킷은 분모가 0인
+#:   진행률이고, 0 위의 100 은 아무것도 증명하지 않는다(D-301). `verify_onboarding_walk`
+#:   가 「닿을 수 없는 버킷」을 빨강으로 잡는다 — 이 표와 `_role_buckets()` 를 함께 읽는다.
+PERSONA_VIEWERS = {
+    "U3": ("U1", "U2", "U4"),
+    "U6": ("U5",),
+}
+
+
+class PersonaError(Exception):
+    """페르소나를 줄 수 없다. `code` 는 `unknown`(모르는 이름) 또는 `not_yours`."""
+
+    def __init__(self, code: str, message: str):
+        super().__init__(message)
+        self.code = code
+        self.message = message
+
+
+def resolve_bucket(role_bucket: Optional[str],
+                   persona: str = "") -> tuple[Optional[str], str]:
+    """어느 표를 보여 줄까. **순수 함수다** — 판정기가 Django 없이 이것을 시험한다.
+
+    돌려주는 것: `(버킷, 사유코드)`. 사유코드는 `""`(준다) · `unknown` · `not_yours`.
+    ★ 페르소나를 안 주면 제 역할 표다(지금까지의 동작 그대로 · 화면은 안 바뀐다).
+    """
+    want = (persona or "").strip().upper()
+    if not want:
+        return role_bucket, ""
+    if want not in CARDS:
+        return None, "unknown"
+    if want in PERSONA_VIEWERS:
+        return (want, "") if role_bucket in PERSONA_VIEWERS[want] else (None, "not_yours")
+    #: 역할 버킷을 이름으로 달라고 한 경우 — **제 것이면** 준다. 남의 역할 표는 안 준다:
+    #: 남의 카드 목록은 그 자체로 남의 조직이 무엇까지 세웠는지를 말한다.
+    return (want, "") if want == role_bucket else (None, "not_yours")
 
 
 def bucket_of(actor) -> Optional[str]:
@@ -372,7 +554,7 @@ def record_card(*, scope: TenantScope, card_key: str, source_ref: str,
     )
 
 
-def progress(*, scope: TenantScope) -> dict:
+def progress(*, scope: TenantScope, persona: str = "") -> dict:
     """진행률 한 장. 화면 상단의 띠가 이 값을 그린다.
 
     ★ 분모(`total`)는 **이 파일의 표를 센 수**다. 표에 적지 않는다 — 세어서 낸다.
@@ -381,7 +563,17 @@ def progress(*, scope: TenantScope) -> dict:
       둘을 한 수로 접으면 어느 쪽이 남았는지 아무도 못 본다.
     """
     actor = scope.require_actor()
-    bucket = bucket_of(actor)
+    role_bucket = bucket_of(actor)
+    bucket, why = resolve_bucket(role_bucket, persona)
+    if why == "unknown":
+        raise PersonaError("unknown", "그런 사람 유형이 없습니다 — 있는 것은 %s 입니다."
+                           % " · ".join(sorted(CARDS)))
+    if why == "not_yours":
+        raise PersonaError(
+            "not_yours",
+            "이 유형의 카드는 당신의 자리가 아닙니다 — 「이동 중」(U3)은 관제요원·"
+            "관리자·담당 공무원의 다른 모드이고, 「외부 연계」(U6)는 그 연계를 "
+            "세우는 시스템 관리자의 자리입니다.")
     now = timezone.now()
     cards = CARDS.get(bucket or "", ())
 
@@ -419,6 +611,10 @@ def progress(*, scope: TenantScope) -> dict:
     done = sum(1 for c in measurable if c["done"])
     return {
         "role": bucket,
+        #: 이 표를 **요청한 사람**의 역할. `role` 과 다르면 다른 모드를 보고 있는 것이다
+        #: (U1 이 「이동 중」을 볼 때 `role="U3"` · `viewer_role="U1"`).
+        "viewer_role": role_bucket,
+        "persona": (persona or "").strip().upper() or None,
         #: 역할을 못 읽으면 카드가 0장이다. 0/0 을 100% 로 적지 않는다.
         "role_known": bucket is not None,
         "measured_at": now,
