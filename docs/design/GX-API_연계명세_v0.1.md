@@ -102,6 +102,20 @@ POST /api/dsm/settings/api-keys?name=<이름>&scopes=events%3Aread%2Cstats%3Area
 > 없다」**이다 — 둘을 뭉치지 않는다. 그 두 문은 U24·U3 소유라 이 차선이 안 고친다
 > (등록 요청 · 파 3 턴 2 보고 ③).
 
+> ⚠ **한계가 그대로다 [재측 2026-09-19 · 턴 W]** — 넷 중 하나도 안 풀렸다.
+> · `/api/dsm/stats/*` 여덟 문은 전부 `JwtOrInboundKey()` **기본값**이다
+>   (`apps/dsm/api_u24.py:94·116·134·157·206·217·250·265` — `inbound_key=True` **0곳**).
+> · `/api/dsm/cameras/pulse` 는 `JwtOrWallToken(wall_token=True)` 인데, 그 클래스는
+>   `JwtOrInboundKey` 를 **상속**하고 `inbound_key` 는 여전히 기본값 거짓이다
+>   (`common/wall_token.py:365`). 즉 키 갈래는 부모에서 `None` 으로 끊긴다
+>   (`common/inbound_api_key.py:119-121`) → **401**.
+> 그래서 「범위 밖 403」은 이 두 계열에서 **아직 잴 수 없다**. 표에 빈칸을 두는 대신
+> 왜 못 재는지를 적는다 — **분모가 없으면 초록도 빨강도 아니다**(D-301).
+> ⚠ 이 둘은 **U24·U3 소유 파일**이다. 차선 U56 이 안 고친다(한 파일은 한 차선).
+> 두 턴째 같은 요청이므로 **조율자에게 이름으로 넘긴다**: `api_u24.py` 의 `stats/*` 여덟,
+> `api.py:1343` 의 `cameras/pulse` 하나 — 여는 결정은 그 차선의 것이고, 열 때
+> `reason` 한 줄이 필요하다(`inbound_key=True` 는 사유 없이 못 켠다).
+
 ---
 
 ## 4. 오류 규약 — 401 / 403 / 404 / 422
@@ -161,16 +175,21 @@ POST /api/dsm/settings/api-keys?name=<이름>&scopes=events%3Aread%2Cstats%3Area
 ## 7. OpenAPI
 
 - `GET /api/dsm/openapi.json`(ninja 기본 경로 규약).
-- `components.schemas` **11** [실측 2026-09-18 · 턴 V · 턴 U 에는 3, 그 전에는 0]. 이 저장소의 dsm
+- `components.schemas` **12** [재측 2026-09-19 · 턴 W · 09-18 에 11 · 턴 U 에는 3 · 그 전에는 0].
+  턴 W 가 더한 하나는 `BackupDeclarationOut` 이다. 이 저장소의 dsm
   라우트는 인자를 원시 타입으로 받고 응답을 `dict` 로 내므로 모양이 하나도 없었다.
   모양이 없으면 외부 App 은 「200 이 온다」밖에 못 읽고, 그 상태의 명세는 명세가
   아니다. `StorageOut`(저장 용량 응답)이 그 0 을 깼다 —
   `backend/tests/test_u56_turn_u_admin_surfaces.py::test_openapi_has_at_least_one_component_schema`
   가 그 수를 지킨다.
-- **응답까지 선언된 문 7 / 108** [실측 2026-09-18]. 턴 V 에 U5·U6 문 여섯이 더해졌다:
-  `POST /cameras/{id}/address` · `POST /system/restart-request` · `GET /system/requests` ·
-  `GET /system/backup-receipts` · `GET|POST /settings/api-keys/{id}/scopes`.
-  **101 은 아직 「200 이 온다」밖에 못 읽는다** — 그 수를 줄이지 않고 적어 둔다.
+- **응답까지 선언된 문 8 / 109** [재측 2026-09-19 · 턴 W · 09-18 에는 7/108].
+  턴 V 에 U5·U6 문 여섯이 더해졌고(`POST /cameras/{id}/address` ·
+  `POST /system/restart-request` · `GET /system/requests` · `GET /system/backup-receipts` ·
+  `GET|POST /settings/api-keys/{id}/scopes`), 턴 W 가 **`GET /ops/backup/declaration`**
+  하나를 더했다. **101 은 아직 「200 이 온다」밖에 못 읽는다** — 그 수를 줄이지 않고
+  적어 둔다. ⚠ 분모가 108 → 109 로 는 것은 **이 턴에 문이 하나 태어났기 때문**이다.
+  분자만 세고 분모를 그대로 두면 다음 사람이 「하나 더 선언했다」를 「하나 덜 남았다」로
+  읽는다 — 둘은 다른 사실이다.
 
 ---
 
@@ -182,7 +201,8 @@ POST /api/dsm/settings/api-keys?name=<이름>&scopes=events%3Aread%2Cstats%3Area
 | `POST /api/dsm/system/restart-request` | **요청 기록** | ⚠ **서버를 내리지 않는다.** `executed` 는 언제나 거짓 |
 | `GET /api/dsm/system/requests` | 요청 목록 | 테넌트 격리 |
 | `GET /api/dsm/system/backup-receipts` | 마지막 회수증·검증 가능 여부·다음 예정 | 못 찾으면 `verdict: "UNKNOWN"` — **0 을 초록으로 적지 않는다** |
-| `GET /api/dsm/system/storage` | 상한·사용량·% | 상한 미선언이면 `used_pct: null` 과 **그 이유 한 문장** |
+| `GET /api/dsm/system/storage` | 상한·사용량·% | 상한 미선언이면 `used_pct: null` 과 **그 이유 한 문장** · `env_name`·`capacity_source` 로 **어디에 적힌 선언인지** 함께 낸다(턴 W) |
+| `GET /api/dsm/ops/backup/declaration` | 백업 목적지·일정·보존·복구 시험 **선언** | ★ **턴 W 신설.** 그 전까지 이 경로는 404 였고 화면(`/dsm/system`)은 그것을 회색으로 그렸다. **읽기 전용** — 같은 경로의 POST 는 **405** [실측 2026-09-19 · nginx:8500]. 선언이 없으면 빈 문자열 · `verdict: "UNDECLARED"` (P-67 — 코드 기본값 없음) |
 
 ---
 
@@ -196,3 +216,6 @@ POST /api/dsm/settings/api-keys?name=<이름>&scopes=events%3Aread%2Cstats%3Area
 - `backend/tests/test_tenant_isolation.py` · `backend/tests/tenant_census.py` — 새 표
 - `backend/tests/test_f05_event_api.py::EVENT_ENTRY_SURFACE` — 새 진입면(차선 F 소유)
 - `scripts/verify_write_auth.py` — 새 쓰기 면의 자격
+- `backend/tests/test_u56_backup_declaration.py` — **§8 의 `ops/backup/declaration`**
+  (경로 글자 · 읽기 전용 · 미선언 문장 · 401/403). 이 경로를 옮기거나 같은
+  경로에 POST 를 더하면 이 시험이 **먼저** 빨개진다.

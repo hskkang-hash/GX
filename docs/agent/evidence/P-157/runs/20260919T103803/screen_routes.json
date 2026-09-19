@@ -1,0 +1,362 @@
+{
+  "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
+  "captured_at": "2026-09-19T17:39:35",
+  "screens_total": 6,
+  "routes_total": 6,
+  "screens": {
+    "/menu": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/configuration-management": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list?page_size=25&current_page=1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/?page_size=10000&current_page=1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/profile": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/departments/?page_size=10000&current_page=1&group__id=4",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/?page_size=10000&current_page=1",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/user/get-user-detail/115",
+        "status": 200
+      }
+    ],
+    "/operation-settings": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/notify": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/settings/notify-rules/list",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/integrations": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/health",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/settings/api_keys",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/webhook-subscriptions",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ]
+  },
+  "api_notes": {
+    "/menu": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/configuration-management": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/profile": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/operation-settings": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/notify": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/integrations": "화면을 열고 브라우저가 부른 것을 그대로 적었다"
+  },
+  "data_source": "시드 (K1 record_detection 실제 경로 · 실제 사고 아님)",
+  "viewers": [
+    {
+      "file": "SCREENS-1/admin/menu.png",
+      "route": "/menu",
+      "persona": "U5",
+      "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+      "user_role": "admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/admin/configuration-management.png",
+      "route": "/configuration-management",
+      "persona": "U5",
+      "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+      "user_role": "admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/config-management/list?page_size=25&current_page=1 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/?page_size=10000&current_page=1 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/admin/profile.png",
+      "route": "/profile",
+      "persona": "U5",
+      "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+      "user_role": "admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/departments/?page_size=10000&current_page=1&group__id=4 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/?page_size=10000&current_page=1 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200",
+        "GET /api/v1/user/get-user-detail/115 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/admin/operation-settings.png",
+      "route": "/operation-settings",
+      "persona": "U5",
+      "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+      "user_role": "admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/admin/dsm_notify_recipients.png",
+      "route": "/dsm/notify",
+      "persona": "U5",
+      "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+      "user_role": "admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/settings/notify-rules/list 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/admin/dsm_integrations_api_keys.png",
+      "route": "/dsm/integrations",
+      "persona": "U5",
+      "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+      "user_role": "admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/health 200",
+        "GET /api/dsm/settings/api_keys 200",
+        "GET /api/dsm/webhook-subscriptions 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    }
+  ],
+  "blank_screens": [
+    {
+      "route": "/users",
+      "why": "역할 0개: 본문 0자 · API 6건 200 · JS 오류 0건 — 안내 대신 빈 화면. **admin 으로는 29행이 그려진다**(권한 때문이다) (DA-03 §3-4 위반 · rj-core §0.4)"
+    },
+    {
+      "route": "/survey-profile",
+      "role_checked": [
+        "admin",
+        "fire_admin",
+        "fire_user"
+      ],
+      "why": "★ [P-98] **역할이 있으면 더 안 보인다.** 역할 0개에서는 `Add New Profile` 단추라도 떴는데, admin·fire_admin·fire_user 셋 다 **머리줄뿐**이다 (본문 296·172·103자 · API 전부 200 · JS 오류 0건). 권한이 올라갔는데 화면이 줄었다 — 이 뒤집힘은 권한 결함이 아니라 화면 결함이다"
+    },
+    {
+      "route": "/handover",
+      "why": "본문 0자 · API 실패 0건 · JS 오류 0건 — /users 와 같은 모양"
+    }
+  ],
+  "redirected_screens": [
+    {
+      "route": "/monitoring-dashboard",
+      "landed": "/profile",
+      "role_checked": [
+        "admin"
+      ],
+      "why": "요청한 경로가 아니라 이 계정의 홈 화면이 떴다 — 라우트에 도달하지 못한다. ★ [P-98 2026-09-07] **`admin` 으로 다시 쟀다: 똑같이 /profile 로 간다.** 위 주석이 열어 둔 물음(「역할이 있으면 다를 수 있다」)의 답이 나왔다 — **권한 문제가 아니다.** 최고 권한에서도 못 간다"
+    },
+    {
+      "route": "/intergrated-dashboard",
+      "landed": "/profile",
+      "role_checked": [
+        "admin"
+      ],
+      "why": "같음 — `admin` 에서도 /profile 로 간다 [P-98 실측]. 둘 다 App.tsx 의 별도 라우트 묶음(189~211줄)에 있다"
+    }
+  ]
+}

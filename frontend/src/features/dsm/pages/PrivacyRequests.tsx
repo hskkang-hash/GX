@@ -33,8 +33,10 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Main } from 'rj-core';
+
+import { ownDenialPaths } from '@/features/session/permissionDenied';
 
 import { dsmEndpoint, dsmGet, dsmPostQuery } from '../api';
 import { userFacingError } from '../copy';
@@ -116,6 +118,31 @@ export default function PrivacyRequestsPage() {
    * 실패한 자리에서 자기를 다시 부르는 함수를 여기 넣는다.
    */
   const retry = useRef<(() => void) | null>(null);
+
+  /**
+   * ★★ [P-185 · 턴 W · 차선 U24] **403 은 한 자리에서만 말한다 — 여기다.**
+   *
+   * 무엇이 있었나 [실측 2026-09-17 턴 U · 2026-09-19 턴 W · U4 로 이 화면]
+   * ---------------------------------------------------------------------
+   * 서버가 403 을 주면 이 화면에 **같은 사실이 두 장** 떴다:
+   *   ① 아래 상태 칸 — 목록은 `StateBoundary`(네 문장 + 「다시 시도」),
+   *      누른 일은 `FailureNotice`(네 문장 + **방금 실패한 그 일을 다시 부르는 단추**)
+   *   ② 화면 맨 위 고정 띠 — `PermissionDeniedNotice`
+   * ②는 **덮개**라 ①의 단추를 가린다. 두 장 중 값이 있는 쪽은 ①이다.
+   *
+   * **어느 쪽을 남겼나 — ①(상태 칸). 왜:**
+   *   · **남는다.** 띠는 사람이 닫을 수 있고 화면을 옮기면 사라진다 — 나중에 보면
+   *     증거가 아니다. 상태 칸은 그 자리에 계속 있고 검수 촬영에 찍힌다.
+   *   · **누를 것이 있다.** 「다시 시도」가 ①에만 있고, 그 단추는 실제로 요청을
+   *     한 번 더 낸다(`retry.current`). 덮개는 누를 것이 없다.
+   *   · **막힌 자리에 붙어 있다.** 접수가 막혔는지 회신이 막혔는지가 칸의 위치로
+   *     보인다. 맨 위 띠는 「이 화면 어딘가」까지만 말한다.
+   *
+   * ⚠ **숨기는 것이 아니다.** 403 은 상태 칸에 그대로 적히고 `deniedPaths()` 에도
+   *   그대로 남는다. 여기서 정하는 것은 **누가 말하는가**뿐이다.
+   * ⚠ 앞머리 하나로 다섯 문을 다 덮는다 — 상세·마스킹본·회신은 이 앞머리 밑에 있다.
+   */
+  useEffect(() => ownDenialPaths([dsmEndpoint.privacyRequests]), []);
 
   const list = useDsmResource<RequestList>(
     () => dsmGet(dsmEndpoint.privacyRequests),

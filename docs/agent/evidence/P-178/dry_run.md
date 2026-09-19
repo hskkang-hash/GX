@@ -98,3 +98,64 @@
 
 ⚠ **지우지 않았다.** 어느 것이 도는 차선의 것인지 이 차선은 모른다 — 남의 시험을
 지우는 것은 남의 빨강을 만드는 일이다. 목록만 낸다.
+
+
+---
+
+# 턴 W 이어서 — **P-187 로 이름이 바뀌었고, 여전히 dry-run 이다** (2026-09-19 · U56)
+
+> 세종 P-187 판정문: 「dry-run SQL · compose 배선 · OPS-23/24 **등재만**. 전환은 창 2.」
+> **이 턴에도 집행하지 않았다.** DB 에 만든 역할 **0** · 바꾼 권한 **0** ·
+> 바꾼 `.env` 값 **0** · 돌린 `GRANT`/`REVOKE` **0줄**.
+
+## 6. 다시 쟀다 — 전제가 아직 참인가 [실측 2026-09-19 · gx-shell → 개발 DB · 읽기만]
+
+| 잰 것 | 턴 V(09-18) | 턴 W(09-19) | 읽는 법 |
+|---|---|---|---|
+| `current_user` | `postgres` | **`postgres`** | 그대로다 — 앱은 아직 superuser 로 돈다 |
+| `rolsuper`/`rolcreatedb`/`rolcreaterole` | t/t/t | **t/t/t** | 그대로 |
+| `public` 스키마 표 | 231 | **231** | 그대로 |
+| 로그인 가능한 superuser | `postgres`·`pgroot` | **`postgres`·`pgroot`** | 그대로 |
+| 역할 `gx_app`·`gx_migrate` | 없음 | **없음(0)** | ★ **이 줄이 「안 돌렸다」의 증거다** — `SELECT rolname FROM pg_roles WHERE rolname IN ('gx_app','gx_migrate')` → 빈 결과 |
+| 남은 시험 DB | 12 | **12** (목록은 아래 · 한 벌 바뀌었다) | 수는 같은데 **이름이 돈다** — 회수 규약이 없다는 뜻이다(OPS-24) |
+
+턴 W 의 시험 DB 12:
+
+    test_database_guardianx · test_database_guardianx_e2e · test_gx_fix1 ·
+    test_gx_lane_f · test_gx_lane_u24 · test_gx_lane_u24b · test_gx_lane_u3 ·
+    test_gx_lane_u56 · test_gx_u24 · test_gx_u24c · test_gx_u3b · test_gx_u56
+
+⚠ 턴 V 목록과 대 보면 `test_gx_f`·`test_gx_q` 가 **사라지고** `test_gx_u24c`·`test_gx_u56`
+이 **새로 생겼다**. 총수는 12 로 같다 — 그래서 **총수만 보면 아무 일도 없어 보인다.**
+이것이 OPS-24 가 「한 번의 삭제」가 아니라 **회수 규약**이어야 하는 이유다: 지우는
+사람이 없으면 수는 우연히 제자리이고, 그 제자리는 안정이 아니라 **덮어씀**이다.
+
+⚠ **지우지 않았다.** 어느 것이 도는 차선의 것인지 이 차선은 모른다.
+
+## 7. 이 턴에 더한 준비물 (집행이 아니다)
+
+| 무엇 | 어디 | 상태 |
+|---|---|---|
+| 역할·권한 SQL | `p178_app_db_roles.sql` (턴 V) | **그대로 · 안 돌렸다** |
+| compose 배선 diff | 위 §3 (턴 V) | **그대로 · 안 붙였다** |
+| `.env` 이름 넷 | **`.env.example`** 「앱 DB 역할 분리」 절 (턴 W) | **이름만 · 전부 주석 · 값 없음** |
+| 대장 등재 | **`docs/agent/remaining_40.md` §2-2** — OPS-23 · OPS-24 (턴 W) | **등재함** |
+
+⚠ `.env.example` 에 적은 넷은 **전부 `#` 로 막아 두었다.** 주석을 벗기는 순간
+`docker-compose` 가 `${DB_APP_USER:?...}` 를 요구하게 되는 것이 아니라(그 배선은
+아직 안 붙였다), **사람이 값을 채워야 하는 줄**이 생긴다. 값은 대표 결정이다.
+
+## 8. 창 2 에 대표가 **고를 것 둘** (이 차선이 안 골랐다)
+
+1. **시험 DB 를 누가 만드는가.** pytest 는 `CREATE DATABASE test_gx_*` 를 한다.
+   `gx_app` 도 `gx_migrate` 도 `NOCREATEDB` 다 — 그대로 전환하면 **시험이 전부 죽는다.**
+   ㉠ `gx_migrate` 에 `CREATEDB` 를 준다(마이그레이션 역할이 커진다)
+   ㉡ 시험 전용 셋째 역할을 둔다(역할이 셋이 된다)
+   SQL 파일은 **어느 쪽도 안 골랐다.**
+2. **뿌리 `.env` 의 값 넷.** 이름은 `.env.example` 에 섰다. 값은 대표가 만든다.
+
+## 9. 되돌리기
+
+`DROP ROLE` 은 그 역할이 소유한 것이 없어야 한다 — SQL ⑥ 이 소유권을 안 옮겼으므로
+되돌리기는 **`.env` 두 줄을 옛 값으로 + 컨테이너 재생성**이다. 그것이 `REASSIGN OWNED`
+를 안 넣은 이유이고, 이 절은 창 2 순서표의 마지막 줄이어야 한다.

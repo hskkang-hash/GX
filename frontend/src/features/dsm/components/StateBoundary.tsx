@@ -60,6 +60,17 @@ interface Props {
    */
   notFoundTitle?: string;
   emptyText?: string;
+  /**
+   * 0건일 때의 **「그래서 지금 무엇을 하면 되나」** — 한 줄.
+   *
+   * ★ [P-185 ㉣ · 턴 W · 차선 U24] 안 주면 사전의 「새 자료가 생기면 이 자리에
+   *   나타납니다.」다. 그 말이 맞는 자리가 대부분이지만 **아닌 자리가 있다** —
+   *   보고서는 사람이 「만들기」를 눌러야 생기고, 재시작 요청은 사람이 적어야 생긴다.
+   *   그런 자리에 「기다리면 나타난다」를 적으면 **화면이 거짓말을 한다.**
+   * ⚠ 안 주면 **종전 그대로다.** 스물세 군데를 한 번에 바꾸지 않는다 —
+   *   바꾸는 자리는 0건을 실제로 만들어 눈으로 본 자리뿐이다.
+   */
+  emptyNext?: string;
   /** 이 상자가 어느 화면의 어느 칸인가 — 콘솔 줄에 붙는다. */
   where?: string;
   children: ReactNode;
@@ -108,6 +119,7 @@ export default function StateBoundary({
   onRetry,
   notFoundTitle = NOT_FOUND_TITLE,
   emptyText = '표시할 항목이 없습니다.',
+  emptyNext,
   where = 'StateBoundary',
   children,
 }: Props) {
@@ -188,7 +200,7 @@ export default function StateBoundary({
           <Space direction="vertical" size={2}>
             <Text>{said.what}</Text>
             <Text type="secondary">
-              {said.why} {said.next}
+              {said.why} {emptyNext ?? said.next}
             </Text>
           </Space>
         }

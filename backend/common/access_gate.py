@@ -61,6 +61,20 @@ logger = logging.getLogger(__name__)
 #: `inbound_key_allowed` 가 **같은지** 검사한다 — 갈리면 exit 1.
 INBOUND_KEY_ALLOWED: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/events"),
+    # ★ [턴 W · 차선 U3 · 조율자 요청] **이 한 줄이 「진입면을 넓힌다」는 선언이다.**
+    #   손으로 더했고, 그래서 보고에 크게 적는다. 라우트 쪽 선언
+    #   (`apps/dsm/api.py::camera_pulse` 의 `inbound_key=True`)과 **짝**이다 —
+    #   한쪽만 고치면 `test_allowlist_matches_the_route_ledger` 가 빨개진다.
+    #   그 두 손을 요구하는 설계가 옳다: 미들웨어만 열면 라우트가 막고,
+    #   라우트만 열면 미들웨어가 막는다. 여는 사람이 **둘 다** 만져야 한다.
+    #
+    #   사유: `pulse:read` 범위가 `kernels/k5_trust/key_scopes.py` 에 이미 있고
+    #   `PATH_SCOPES` 가 이 경로를 가리키는데, 선언이 없어 **범위 판정에 닿기도
+    #   전에 401** 이었다 — 줄 수는 있는데 쓸 데가 없는 범위였다.
+    #   ⚠ 여는 것이 넓히는 것이 아니다: `DEFAULT_SCOPES = ("events:read",)` 이므로
+    #     **이미 나간 키는 그대로 403** 이다. 늘어나는 것은 운영자가 `pulse:read` 를
+    #     일부러 준 키 하나뿐이고, `@tenant_scoped` 는 그대로다.
+    ("GET", "/api/dsm/cameras/pulse"),
 })
 
 #: ★ **익명이 닿으면 안 되는 경로.** 라우트에 인증 관문이 없어도 여기서 끊는다.

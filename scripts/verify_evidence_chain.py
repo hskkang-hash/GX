@@ -240,6 +240,9 @@ print("GX_CHAIN_JSON " + json.dumps({
     "total": r.total, "chained": r.chained, "head": r.head,
     "tail_prev": r.tail_prev, "genesis": r.starts_at_genesis,
     "breaks": [{"id": b.audit_id, "kind": b.kind, "detail": b.detail} for b in r.breaks],
+    # ★ **등재된 끊김도 실어 나른다** — 안 실으면 「어긋남 0건」이 그것들을 말없이 삼킨다.
+    #   P-191 은 옛 끊김을 「고치지 말고 기록으로 남기라」고 했고, 기록은 **보여야** 기록이다.
+    "recorded": [{"id": b.audit_id, "kind": b.kind, "detail": b.detail} for b in r.recorded],
 }, ensure_ascii=False))
 """
 
@@ -290,11 +293,24 @@ def db_judgement() -> int:
         print(out[-1500:])
         return 2
 
-    print(f"[입력] 감사 행 {data['total']}건 (그중 체인 {data['chained']}건)")
+    rec = data.get("recorded")
+    if rec is None:
+        #: ★ 옛 컨테이너 코드가 `recorded` 를 안 실어 준다. **모르는 것을 0 으로 읽지 않는다** —
+        #:   0 으로 읽으면 등재된 끊김이 「없는 것」이 되고, 그게 이 게이트가 막으려는 바로 그 일이다.
+        print("[CHAIN] ② 표 — **판정 불가**(회색). 컨테이너 안 `evidence_chain` 이 "
+              "`ChainReport.recorded` 를 안 준다 — 낡은 코드가 서 있다. "
+              "`docker restart gx-gunicorn-e` 뒤 다시 재라. 회색은 초록이 아니다")
+        return 2
+
+    print(f"[입력] 감사 행 {data['total']}건 (그중 체인 {data['chained']}건 · "
+          f"등재된 끊김 {len(rec)}건)")
     if data["breaks"]:
-        print(f"[CHAIN] ② 표 — **어긋난 자리 {len(data['breaks'])}건** — 멈춘다")
+        print(f"[CHAIN] ② 표 — **새로 난 어긋남 {len(data['breaks'])}건** — 멈춘다")
         for b in data["breaks"][:20]:
             print(f"  · #{b['id']} {b['kind']} — {b['detail']}")
+        if rec:
+            print(f"  (그 밖에 **등재된 끊김 {len(rec)}건**이 따로 있다 — 아래 참고)")
+            _print_recorded(rec)
         return 1
     if data["chained"] == 0:
         print("[CHAIN] ② 표 — 체인 행 0건. 「어긋남 0」이 아니라 **아직 아무것도 안 이었다**")
@@ -303,8 +319,26 @@ def db_judgement() -> int:
         print(f"[CHAIN] ② 표 — 어긋남 0건. ⚠ 앞머리가 잘려 있다"
               f"(첫 prev={data['tail_prev'][:12]}…) — 보존기간 집행이거나 삭제다. "
               f"그 구간의 증거는 **그날 인쇄된 앵커**에 있다")
-    print(f"[CHAIN] ② 표 — 어긋남 0건 · 머리 해시 {data['head'][:16]}…")
+    if rec:
+        #: ★ **여기가 이 게이트에서 가장 거짓말하기 쉬운 줄이었다.** 예전에는 이 자리가
+        #:   그냥 「어긋남 0건」이었고, 등재된 22건은 한 글자도 안 나왔다. 등재는 「없던 일로
+        #:   하기」가 아니라 「고치지 않고 **보이게** 두기」다 — 안 보이면 지운 것과 같다.
+        print(f"[CHAIN] ② 표 — **새로 난 어긋남 0건**. 다만 줄은 깨끗하지 않다: "
+              f"**등재된 끊김 {len(rec)}건**이 있고, 체인은 그 지점부터 이어진다 (P-191)")
+        _print_recorded(rec)
+        print(f"[CHAIN] ② 표 — 머리 해시 {data['head'][:16]}…")
+        return 0
+    print(f"[CHAIN] ② 표 — 어긋남 0건 · 등재된 끊김도 0건 · "
+          f"머리 해시 {data['head'][:16]}…")
     return 0
+
+
+def _print_recorded(rec: list) -> None:
+    """등재된 끊김을 **이름으로** 인쇄한다. 수만 내면 다음 사람이 세어 보지 않는다."""
+    for b in rec[:20]:
+        print(f"  · (등재) #{b['id']} {b['kind']} — {b['detail']}")
+    if len(rec) > 20:
+        print(f"  · … 그 밖 {len(rec) - 20}건")
 
 
 def anchor(day: date) -> int:

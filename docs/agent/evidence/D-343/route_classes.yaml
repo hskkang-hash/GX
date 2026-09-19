@@ -223,7 +223,7 @@ routes:
   "GET /api/dsm/audit/export.csv": session_only
   "GET /api/dsm/cameras/address-gap": session_only
   "POST /api/dsm/cameras/import": session_only
-  "GET /api/dsm/cameras/pulse": session_only
+  "GET /api/dsm/cameras/pulse": inbound_key_allowed
   "POST /api/dsm/cameras/{int:camera_id}/address": session_only
   "GET /api/dsm/dashboard/frame": session_only
   "GET /api/dsm/dashboard/link-state": session_only
@@ -276,6 +276,7 @@ routes:
   "GET /api/dsm/metering/csv": session_only
   "GET /api/dsm/metering/series": session_only
   "GET /api/dsm/onboarding/progress": session_only
+  "GET /api/dsm/ops/backup/declaration": session_only
   "GET /api/dsm/push-subscriptions": session_only
   "POST /api/dsm/push-subscriptions": session_only
   "POST /api/dsm/push-subscriptions/test-send": session_only

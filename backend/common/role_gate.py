@@ -58,6 +58,7 @@ False 면 이 미들웨어는 경로에 있어도 **한 요청도 안 막는다.
 from __future__ import annotations
 
 import logging
+import re
 
 from django.conf import settings
 from django.http import JsonResponse
@@ -180,6 +181,35 @@ READONLY_ROLE_PREFIX = "view_only"
 #:   자기 비밀번호 변경(POST)은 **있다.** 남의 것을 바꾸는 자리는 **없다.**
 READONLY_WRITE_ALLOWED: frozenset = ROLE_ZERO_ALLOWED
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ★★ P-185 / LAW-07′ [2026-09-19 턴 W · 차선 U24] — **열람 청구의 주인이 쓴다**
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 세종 판정: 「U4(재난안전과)가 **열람 청구의 주인**이다. … 읽기 전용 U4 는
+# **접수·회신까지**.」 그런데 U4 의 역할 코드는 글자 그대로 `view_only_-_anyang`
+# 이고, 위 P-119 규칙이 **쓰기 메서드 전부**를 막는다. 즉 청구를 접수하는 일이
+# 「읽기 전용이라 안 된다」로 끊겼다 — 화면에 「눌러도 403 나는 줄」이 둘 있었다.
+#
+# ★ 이것은 **새 문도 새 인증 경로도 아니다.** 문은 이미 있고(`law_api.py` 다섯 문),
+#   토큰도 로그인도 그대로다. 여기서 비키는 것은 **미들웨어의 넓은 그물** 하나뿐이고,
+#   「이 사람이 청구 면의 주인인가」는 여전히 라우트의 `_privacy_officer` 가 정한다.
+#   겹은 둘로 남는다 — 그물을 치웠다고 문이 열리는 것이 아니다.
+#
+# ★ 왜 이름이 아니라 **패턴 둘**인가 — 접수 번호가 경로에 있다
+#   (`/law/privacy-requests/GX-PR-20260919-AB12CD/reply`). 이름 목록으로는 못 적는다.
+#   그래서 **딱 두 모양만** 적는다. `[^/]+` 는 한 칸이고, 그 아래로 더 못 내려간다.
+#   ⚠ 여기 **없는 것**을 적어 둔다 — `POST /api/dsm/events/{id}/upper-report` 는
+#     없다(U4#15 · 세종 P-190 이 「U4 로 ●가 될 수 없다」고 정정한 그 자리다).
+#     `/law/retention/sweep` · `/law/purge` 도 없다. 넓히는 것은 **청구 면 둘**뿐이다.
+#
+# ★ 반경 [실측 2026-09-10 · Role 전수 15건 · 위 `READONLY_ROLE_PREFIX` 주석]:
+#   `view_only*` 를 가진 계정 **3개**(`anyang_sv`·`gongju_sv01`·`gxseed_u4_official`).
+#   역할 0 계정에는 **한 자도 안 열린다** — 이 목록은 `ROLE_ZERO_ALLOWED` 와 **따로다.**
+READONLY_WRITE_ALLOWED_PATTERNS: tuple = (
+    re.compile(r"^/api/dsm/law/privacy-requests$"),                  # 접수
+    re.compile(r"^/api/dsm/law/privacy-requests/[^/]+/reply$"),      # 회신 기록
+)
+
 #: 밖으로 나가는 본문. **고정이다** — 요청에서 가져온 글자를 한 자도 안 싣는다.
 READONLY_DENIAL_CODE = "read_only_role"
 READONLY_MESSAGE_KO = "읽기 전용 계정입니다 — 이 작업은 수행할 수 없습니다."
@@ -264,8 +294,15 @@ def readonly_enabled() -> bool:
 
 
 def is_readonly_allowed_path(path: str) -> bool:
-    """읽기 전용 계정이 **써도 되는** 자리인가. **순수 함수다.**"""
-    return _normalize(path) in _READONLY_ALLOWED_NORMALIZED
+    """읽기 전용 계정이 **써도 되는** 자리인가. **순수 함수다.**
+
+    이름(`READONLY_WRITE_ALLOWED`) **또는** 손으로 적은 모양 둘
+    (`READONLY_WRITE_ALLOWED_PATTERNS` · P-185 LAW-07′)에 걸리면 비킨다.
+    """
+    p = _normalize(path)
+    if p in _READONLY_ALLOWED_NORMALIZED:
+        return True
+    return any(rx.match(p) for rx in READONLY_WRITE_ALLOWED_PATTERNS)
 
 
 def is_write_method(method: str) -> bool:

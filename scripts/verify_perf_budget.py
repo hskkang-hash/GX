@@ -353,6 +353,31 @@ def judge_face(key: str, face: Face, sample: dict | None, baseline: dict | None,
                     f"**못 쟀다** — 동시성이 다르다 (기준선 동시 "
                     f"{baseline['concurrency']} · 이번 동시 {sample['concurrency']}). "
                     f"동시성이 다른 두 p95 는 같은 것이 아니다"))
+    elif (sample.get("p95_min") is not None
+          and float(sample["p95_min"]) > float(base_p95) * (1.0 + tolerance)):
+        # ★★ **회색이 빨강을 덮고 있었다** [턴 W · 차선 F 가 일곱 벌을 대 보고 잡았다].
+        #   아래 `noise` 회색의 사유는 「『+20% 나빠졌다』와 『그날 느렸다』가 구별되지
+        #   않는다」인데, **폭 전체가 문턱 위면 그 사유가 성립하지 않는다** — 어느 벌을
+        #   뽑아도 실패라서 「그날 느렸다」로는 설명이 안 된다. **가장 느린 벌이 아니라
+        #   가장 빠른 벌**을 보는 것이 요점이다.
+        #   [실측 2026-09-19] 일곱 벌(라운드 5~50 · 조용/혼잡 두 창 · `runserver` 두
+        #   프로세스)에서 F05 **7/7** · STATUS **7/7** · SCREEN **6/7** 이 문턱 위였고,
+        #   문턱 아래로 내려간 벌이 **하나도 없었다.** 그런데 판정기는 회색을 냈다.
+        #   그중 가장 폭이 좁았던 벌(잡음 **3%**)도 빨강이다 — 잡음 탓이 아니다.
+        #   ★ 이 갈래는 **예산 갈래가 이미 쓰던 규칙**(「전 벌이 예산을 넘었을 때만
+        #     빨강」)을 회귀 갈래에도 건 것이다. 두 갈래가 같은 파일에서 서로 다른
+        #     규칙을 쓰고 있었고, 느슨한 쪽이 조용히 이기고 있었다.
+        #   ★ 방향에 주의: 이것은 **빨강을 회색으로 바꾸는 것이 아니라 그 반대**다.
+        #     게이트가 세진다. 반대 방향이었다면 이 자리에서 멈추고 물었어야 한다.
+        _ceiling = float(base_p95) * (1.0 + tolerance)
+        out.append((f"{label} · 회귀 +{tolerance:.0%}", FAIL,
+                    f"**전 벌이 회귀 문턱을 넘었다** — {sample.get('repeats')}벌의 p95 가 "
+                    f"{float(sample['p95_min']):.0f}–{float(sample.get('p95_max', 0)):.0f}ms 로 "
+                    f"**가장 빠른 벌조차** 문턱 {_ceiling:.0f}ms(기준선 "
+                    f"{float(base_p95):.0f}ms × {1 + tolerance:.2f})보다 느리다. "
+                    f"측정 잡음이 {float(sample.get('noise') or 0):.0%} 라도 이 판정은 "
+                    f"잡음으로 설명되지 않는다 · 기준선 출처 "
+                    f"{baseline.get('source', '이 파일')}"))
     elif (sample.get("noise") is not None
           and float(sample["noise"]) > tolerance):
         # ★ **못 가르는 것을 갈랐다고 적지 않는다.** 같은 조건에서 다시 잰 p95 가
@@ -557,6 +582,15 @@ def baseline_from_perf01(path: Path | None = None) -> dict:
             p95 = stat.get("p95_ms")
             if p95 is not None:
                 seen[call] = max(seen.get(call, 0.0), float(p95))
+    #: ★ [턴 W · 2026-09-19 · 실측] **기준선의 표본 수를 함께 옮겨 적는다.**
+    #:   p95 는 표본이 커지면 **커지는 통계량**이다 — 꼬리를 더 많이 뽑기 때문이다.
+    #:   PERF-01 은 `rounds=5`(자리당 50건)로 쟀고 이 게이트는 `rounds=30~50`
+    #:   (자리당 900~1,500건)로 잰다. 그 둘을 견주면 회귀가 **없어도** 수가 올라간다.
+    #:   그래서 회귀 빨강을 읽는 사람이 **먼저 이 수를 보게** 사유에 박는다.
+    #:   ⚠ 색은 바꾸지 않는다(빨강을 회색으로 바꾸지 않는다) — 읽을 것을 덧붙일 뿐이다.
+    rounds = doc.get("rounds")
+    n_note = (f" · 기준선 표본 rounds={rounds}(자리당 {int(rounds) * int(concurrency or 0)}건)"
+              if rounds and concurrency else " · 기준선 표본 수 미상")
     out: dict = {}
     for key, face in FACES.items():
         hits = {c: seen[c] for c in face.calls if c in seen}
@@ -566,7 +600,8 @@ def baseline_from_perf01(path: Path | None = None) -> dict:
         out[key] = {
             "p95_ms": hits[slowest],
             "concurrency": concurrency,
-            "source": f"PERF-01 load.json · 가장 느린 자리 {slowest}",
+            "rounds": rounds,
+            "source": f"PERF-01 load.json · 가장 느린 자리 {slowest}{n_note}",
             "covered_calls": sorted(hits),
         }
     return out
@@ -713,6 +748,34 @@ def self_test() -> int:
                           noise=0.05, repeats=3), {"p95_ms": 429.8}))
     if reg_under.get("F05 계약 F-05 진입면 (NFR-05-1) · 회귀 +20%") != PASS:
         bad.append("3벌 전부가 문턱 516ms 아래(430–450ms)인데 초록이 아니다")
+
+    # ── ★★ 정정 ③ — **잡음 회색이 빨강을 덮고 있었다** ────────────────────
+    #   ★ **출생 표본** (D-310) — [실측 2026-09-19 · 턴 W 차선 F]. STATUS 기준선
+    #     417.1ms · 문턱 500ms. 조용한 창 r30×3 에서 p95 583ms **[507–656]** ·
+    #     잡음 **25%**. 가장 빠른 벌(507ms)조차 문턱 위인데, 잡음이 20% 를 넘는다는
+    #     이유로 판정기는 **회색**을 냈다. 그 회색의 사유는 「『나빠졌다』와 『그날
+    #     느렸다』가 구별되지 않는다」인데, **어느 벌을 뽑아도 실패라 「그날 느렸다」로는
+    #     설명이 안 된다.** 회색이 빨강을 덮고 있었다.
+    #     F 가 일곱 벌을 대 보고 잡았다: F05 7/7 · STATUS 7/7 · SCREEN 6/7 이
+    #     문턱 위였고 **아래로 내려간 벌이 하나도 없었다.**
+    noisy_all_over = verdicts(judge_face(
+        "STATUS", FACES["STATUS"],
+        dict(green, p95_ms=583.0, p95_min=507.0, p95_max=656.0,
+             noise=0.25, repeats=3), {"p95_ms": 417.1}))
+    if noisy_all_over.get("STATUS 상태·가용성 (캐시 금지 · P-19) · 회귀 +20%") != FAIL:
+        bad.append("★ **출생 표본**(턴 W · STATUS 3벌 507–656ms · 기준선 417ms · "
+                   "문턱 500ms · 잡음 25%)이 빨강이 아니다 — **가장 빠른 벌조차** "
+                   "문턱 위인데 잡음 회색이 그것을 덮었다. 잡음은 「어느 벌을 뽑느냐로 "
+                   "답이 갈린다」는 뜻인데, 여기서는 안 갈린다")
+    # ★ **음성 대조** — 잡음이 커도 폭이 문턱을 **걸치면** 회색이어야 한다.
+    #   이것까지 빨강으로 만들면 정정 ③ 은 잡음 규칙을 죽인 것이지 고친 것이 아니다.
+    noisy_straddle = verdicts(judge_face(
+        "STATUS", FACES["STATUS"],
+        dict(green, p95_ms=560.0, p95_min=480.0, p95_max=700.0,
+             noise=0.26, repeats=3), {"p95_ms": 417.1}))
+    if noisy_straddle.get("STATUS 상태·가용성 (캐시 금지 · P-19) · 회귀 +20%") != GRAY:
+        bad.append("음성 대조: 3벌이 480–700ms 로 문턱 500ms 를 **걸치는데** 회색이 "
+                   "아니다 — 480ms 인 벌은 통과다. 정정 ③ 이 잡음 규칙을 삼켰다")
 
     # ── ★ 정정 ② — **모드가 판정을 가른다** (세종 P-34) ───────────────────
     over_sample = dict(green, p95_ms=518.9, p95_min=511.0, p95_max=543.0, repeats=3)
@@ -906,15 +969,29 @@ def self_test() -> int:
         bad.append("동시성이 같은데(둘 다 10) 417ms → 600ms 회귀를 못 잡는다")
 
     # ── 잡음이 문턱보다 넓으면 **회귀를 판정하지 않는다** ─────────────────
-    #   흩어진 폭이 예산보다 **온전히 위**인 표본을 쓴다 — 예산 갈래는 빨강이고
+    #   흩어진 폭이 예산보다 **온전히 위**인 표본을 쓴다 — 예산 갈래는 빨강(기록)이고
     #   회귀 갈래만 회색이어야 한다. 두 갈래는 서로를 흐리지 않는다.
+    #
+    #   ⚠⚠ **이 표본의 기준선을 417.1 → 550.0 으로 고쳤다** [턴 W · 조율자].
+    #     고친 이유를 적어 둔다 — 시험을 코드에 맞춰 고치는 것은 보통 거짓 초록으로
+    #     가는 길이라, 아니라는 것을 보일 책임이 고친 쪽에 있다:
+    #       · 옛 기준선 417.1 이면 회귀 문턱이 **500ms** 인데 폭이 **560–720** 이라
+    #         **가장 빠른 벌조차 문턱 위**였다. 그런데 이 표본은 회색을 기대했다 —
+    #         즉 **이 표본 자체가 「회색이 빨강을 덮는다」를 기대값으로 박아 둔 것**이었다
+    #         (정정 ③ 이 잡은 바로 그 결함이다).
+    #       · 이 표본이 **지키려던 것**은 그것이 아니라 「잡음이 문턱보다 넓으면 회귀를
+    #         판정하지 않는다」이고, 그것은 폭이 문턱을 **걸칠 때** 뜻이 선다.
+    #       · 그래서 뜻은 그대로 두고 **기준선만** 올려 폭이 문턱(550×1.2=**660ms**)을
+    #         걸치게 했다. 예산(500ms) 위에 온전히 있다는 원래 조건도 그대로다.
+    #     ★ 방향: 이 손질로 **회색이 하나 줄고 빨강이 하나 늘었다.** 반대였다면 멈췄어야 한다.
     noisy = verdicts(judge_face(
         "F05", face, dict(green, p95_ms=600.0, noise=0.28, p95_min=560.0,
                           p95_max=720.0, repeats=3),
-        {"p95_ms": 417.1}))
+        {"p95_ms": 550.0}))
     if noisy.get("F05 계약 F-05 진입면 (NFR-05-1) · 회귀 +20%") != GRAY:
-        bad.append("같은 조건 재측정이 560–720ms(잡음 28%)로 흩어지는데 회귀를 "
-                   "**빨강으로 단정한다** — 그 빨강은 성능이 아니라 그날의 스케줄러다")
+        bad.append("같은 조건 재측정이 560–720ms(잡음 28%)로 흩어져 회귀 문턱 660ms 를 "
+                   "**걸치는데** 회귀를 **빨강으로 단정한다** — 560ms 인 벌은 통과다. "
+                   "그 빨강은 성능이 아니라 그날의 스케줄러다")
     if noisy.get("F05 계약 F-05 진입면 (NFR-05-1) · 예산 500ms") != OVER:
         bad.append("잡음 갈래가 **예산 갈래까지** 흐린다 — 전 벌이 예산 위에 있으면 "
                    "잡음과 무관하게 (기준선 모드에서는) 기록이 남아야 한다")

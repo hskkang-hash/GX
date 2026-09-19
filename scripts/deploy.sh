@@ -598,8 +598,16 @@ if [ "${GX_DEPLOY_FORCE_FAIL:-}" = "walk" ]; then
   say "      ⚠ 드릴: GX_DEPLOY_FORCE_FAIL=walk — 걷기를 일부러 빨강으로 만든다"
   rc=1
 else
+  # ⚠ **자격을 빠뜨리면 그 걸음은 회색이 된다 — 그리고 회색은 조용하다.**
+  #   [실측 2026-09-19 · 턴 W] 턴 V 가 P-181 로 W5(팀장 아침 인수)·W6(관리자 설치
+  #   다음 날)을 **등재**했는데, 이 줄이 `GX_ROUTE_*` 둘만 넘기고 있어서 그 둘은
+  #   **단 한 번도 걸린 적이 없었다.** 판정기는 정직하게 「임자 'u2' 의 자격이 없다」로
+  #   회색을 냈지만, 등재만 보고 「걷기 5개」라고 읽으면 3 개만 걸린 것을 모른다.
+  #   **시나리오를 등재한 턴과 그 시나리오가 실제로 걸리는 턴은 다를 수 있다.**
+  #   페르소나 계정 넷(u1·u2·u4·u5)은 `GX_SEED_ROLE_PASSWORD` 하나를 같이 쓴다.
   MSYS_NO_PATHCONV=1 docker exec \
     -e GX_ROUTE_USER="${GX_ROUTE_USER:-}" -e GX_ROUTE_PASSWORD="${GX_ROUTE_PASSWORD:-}" \
+    -e GX_SEED_ROLE_PASSWORD="${GX_SEED_ROLE_PASSWORD:-}" \
     "$SERVER" python /repo/scripts/walk_scenarios.py \
     --web "$WEB" --api "$API" \
     --json-out "/docs/agent/evidence/P-64/walk_${WHEN}.json"

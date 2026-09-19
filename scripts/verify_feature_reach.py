@@ -805,10 +805,16 @@ def main() -> int:
 
     try:
         OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
-        OUT_JSON.write_text(json.dumps(
-            dict(a, rows=[{"id": c, "color": k, "why": w} for c, k, w in rows]),
-            ensure_ascii=False, indent=1), encoding="utf-8")
-        print("%s   셈을 적어 두었다: %s" % (TAG, OUT_JSON.relative_to(ROOT)))
+        #: ★★ [P-189 · 턴 W · 차선 Q] utf-8 · 줄바꿈을 못 박고 **다시 읽어 댄다.**
+        #:   이 파일은 수(`구현`·`미측정`)를 적는다. 그 수가 조용히 틀리면 영역 ① 점수가
+        #:   통째로 거짓이 된다 — 「썼다」가 아니라 「다시 읽으니 같더라」가 초록이다.
+        _doc = dict(a, rows=[{"id": c, "color": k, "why": w} for c, k, w in rows])
+        OUT_JSON.write_text(json.dumps(_doc, ensure_ascii=False, indent=1),
+                            encoding="utf-8", newline="\n")
+        if json.loads(OUT_JSON.read_text(encoding="utf-8")) != _doc:
+            raise OSError("쓰고 다시 읽었더니 다른 것이 나왔다 — 이 셈은 증거가 아니다 (P-189)")
+        print("%s   셈을 적어 두었다: %s (쓰고 다시 읽어 같음 · P-189)"
+              % (TAG, OUT_JSON.relative_to(ROOT)))
     except OSError as exc:
         print("%s   셈을 못 적었다: %s" % (TAG, exc))
 

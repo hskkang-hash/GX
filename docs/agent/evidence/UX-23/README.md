@@ -15,8 +15,27 @@
 
 ## 새 문의 응답 모양 — **C1 이 읽는다**
 
-`GET /api/dsm/cameras/pulse` · 인증 필수(`JwtOrInboundKey` · 들어오는 키는 기본 거절) ·
-`@tenant_scoped` · **읽기 전용**(이벤트를 만들지 않는다 · `create_events=False`).
+`GET /api/dsm/cameras/pulse` · 인증 필수 · `@tenant_scoped` ·
+**읽기 전용**(이벤트를 만들지 않는다 · `create_events=False`).
+
+⚠ **자격 갈래가 바뀌었다 [갱신 2026-09-19 · 턴 W · 차선 U3].** 위 줄에는
+「들어오는 키는 **기본 거절**」이라고 적혀 있었다 — 그것이 이 문의 참이었고, 이제
+아니다. 낡은 문장은 지우지 않고 **날짜와 함께 갱신한다**(이 문단이 그 갱신이다):
+
+| 들고 오는 것 | 답 |
+|---|---|
+| 세션(JWT) | 200 — 종전과 같다 |
+| 월 표시 토큰 | 200 — 종전과 같다 (`wall_token=True` · UX-24a) |
+| 들어오는 키 + 범위 `pulse:read` | **200 — 이것이 새로 열린 갈래다** |
+| 들어오는 키 + 기본 범위(`events:read`) | **403** — 이미 나간 키는 여기서 막힌다 |
+| 키 없음 · 틀린 키 · 평문 | 401 |
+
+왜 열었나: 범위 `pulse:read` 가 `kernels/k5_trust/key_scopes.py` 의 `ALLOWED_SCOPES` 에
+**이미 있어** 운영자가 키에 줄 수 있었고 `PATH_SCOPES` 도 이 경로를 가리켰는데, 라우트가
+`inbound_key=True` 를 선언하지 않아 키는 **범위 판정에 닿기도 전에 401** 이었다 —
+줄 수는 있는데 쓸 데가 없는 범위였다(D-284).
+⚠ **넓힌 것은 자격의 갈래이지 진입면이 아니다** — method·path 는 그대로다.
+눌러서 잰 것: `backend/tests/test_u3_pulse_inbound_key.py`.
 
 현장 자료로 실제로 찍은 것 [실측 2026-09-05 · gx-shell · 사용자 `operator_user_4` ·
 `cameras` 는 앞 3건만 잘랐다]:

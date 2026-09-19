@@ -172,6 +172,30 @@ def declared_screen_paths(texts: list[str]) -> set[str]:
     return found
 
 
+def inherited_screen_paths(app_src: str) -> set[str]:
+    """**인수 자산(rj-core)이 들고 있는 화면 주소.** [실측 2026-09-19 · 턴 W · 차선 F]
+
+    ★ 이 함수가 없으면 이 판정기는 **거짓 빨강**을 낸다. 출생 사례 그대로다:
+      카드 `u1.profile -> /profile` 을 「없는 화면」이라고 적었는데, 그 화면은
+      **실재한다** — `App.tsx:818` 이 `{ path: CustomRouters.profile.path,
+      element: <ProfilePage /> }` 로 마운트하고, 로그인 되돌아갈 자리(`fallback`)도
+      거기다. 못 본 이유는 하나다: `CustomRouters` 는 `rj-core` 에서 오고(§0.4
+      금지구역 · `package.json` 의 git 의존), **그 표는 이 저장소에 없다.**
+      우리 라우트 표 셋만 보면 인수 자산의 화면은 전부 「없는 화면」이 된다.
+
+    ★ 그래서 **주소가 아니라 이름으로** 맞춘다 — `path: CustomRouters.profile.path`
+      에서 `profile` 을 집어 `/profile` 로 친다. 읽을 수 없는 표를 읽은 척하지
+      않으면서, 마운트된 사실은 `App.tsx` 에서 **실제로 읽은** 것이다.
+      오타는 여전히 잡힌다: `/profil` 은 `profile` 과 다르므로 빨강 그대로다.
+    """
+    #: 역슬래시를 쓰지 않는다 — 이 파일의 다른 정규식과 같은 사유(도구마다 살아남는
+    #: 방식이 다르다). 점은 문자군으로 적는다.
+    found: set[str] = set()
+    for key in re.findall("path:[ ]*CustomRouters[.]([A-Za-z0-9_]+)", app_src):
+        found.add("/" + key)
+    return found
+
+
 def dead_card_links(src: str, screen_paths: set[str]) -> list[str]:
     """**없는 화면을 가리키는 카드.** 있으면 그 카드는 열리지 않는 문을 가리킨다.
 
@@ -294,11 +318,22 @@ def judge_structure() -> int:
         if path.is_file():
             route_tables.append(path.read_text(encoding="utf-8"))
     screen_paths = declared_screen_paths(route_tables)
+    #: ★ 인수 자산(rj-core)이 들고 있는 화면도 **선언된 화면이다.** 우리 표 셋만 보면
+    #:   `/profile` 같은 자리가 「없는 화면」이 된다 — 거짓 빨강이다(턴 W 실측).
+    inherited: set[str] = set()
+    app_tsx = FRONTEND / "App.tsx"
+    if app_tsx.is_file():
+        inherited = inherited_screen_paths(app_tsx.read_text(encoding="utf-8"))
+        if inherited:
+            print(f"[UX-46] 인수 자산 화면 {len(inherited)}자리 — `App.tsx` 가 "
+                  f"`CustomRouters.*` 로 마운트한다(표 자체는 rj-core · 저장소 밖)")
+    screen_paths |= inherited
     if not screen_paths:
         print("[UX-46] GRAY 앞판 라우트 표를 못 읽었다 — 카드 링크는 **판정하지 않는다**")
     else:
         dead_links = dead_card_links(src, screen_paths)
-        print(f"[UX-46] 카드 링크 대조 — 선언된 화면 주소 {len(screen_paths)}자리")
+        print(f"[UX-46] 카드 링크 대조 — 선언된 화면 주소 {len(screen_paths)}자리"
+              f"(우리 표 {len(screen_paths) - len(inherited)} · 인수 자산 {len(inherited)})")
         for line in dead_links:
             bad.append(f"카드가 **없는 화면**을 가리킨다: {line} — 열리지 않는 문을 "
                        f"가리키는 카드는 「자리가 아직 없다」와 구별되지 않는다")
@@ -440,6 +475,26 @@ _BIRTH_DEAD_LINK = ('CARDS = {@'
 _BIRTH_ROUTE_TABLE = "x: { path: '/dsm/home' },  y: { path: '/m/inbox' }"
 
 
+#: ★ [턴 W] 인수 자산 표본 — `App.tsx` 가 `rj-core` 의 화면을 **이름으로** 마운트하는
+#:   모양 그대로다(`path: CustomRouters.profile.path` · `path: CustomRouters.login`).
+_BIRTH_INHERITED_ROUTES = (
+    "{ path: CustomRouters.profile.path, element: <ProfilePage /> },@"
+    "{ path: CustomRouters.login, element: <Login /> },"
+).replace("@", chr(10))
+
+_BIRTH_INHERITED_CARD = ('CARDS = {@'
+                         '    "U9": (@'
+                         '        Card("u9.a", "t", "/profile", _c),@'
+                         '    ),@'
+                         '}@').replace("@", chr(10))
+
+_BIRTH_INHERITED_TYPO = ('CARDS = {@'
+                         '    "U9": (@'
+                         '        Card("u9.b", "t", "/profil", _c),@'
+                         '    ),@'
+                         '}@').replace("@", chr(10))
+
+
 def self_test() -> int:
     good = ('CARDS = {\n'
             '    "U1": (\n'
@@ -494,6 +549,23 @@ def self_test() -> int:
         ("앞판 라우트 표에서 주소를 집는다",
          declared_screen_paths([_BIRTH_ROUTE_TABLE])
          == {"/dsm/home", "/m/inbox"}),
+        # ★ [턴 W · 차선 F] 출생 표본 ⑤ — **거짓 빨강.** 이 판정기가 턴 V 에
+        #   `u1.profile -> /profile` 을 「없는 화면」으로 적었다. 그 화면은 실재하고
+        #   (`App.tsx` 가 `CustomRouters.profile.path` 로 마운트한다), 못 본 이유는
+        #   그 표가 `rj-core`(저장소 밖)에 있기 때문이었다. 거짓 빨강은 진짜 빨강을
+        #   덮는다 — 다음 사람은 이 게이트의 빨강을 안 믿게 된다.
+        ("★ 출생 표본 ⑤ — 인수 자산 화면을 집는다",
+         inherited_screen_paths(_BIRTH_INHERITED_ROUTES) == {"/profile", "/login"}),
+        ("인수 자산 화면을 가리키는 카드는 **빨강이 아니다**",
+         dead_card_links(_BIRTH_INHERITED_CARD,
+                         {"/dsm/home"} | inherited_screen_paths(_BIRTH_INHERITED_ROUTES))
+         == []),
+        ("그래도 오타는 잡는다 — `/profil` 은 `/profile` 이 아니다",
+         dead_card_links(_BIRTH_INHERITED_TYPO,
+                         {"/dsm/home"} | inherited_screen_paths(_BIRTH_INHERITED_ROUTES))
+         == ["u9.b -> /profil"]),
+        ("`App.tsx` 를 못 읽으면 인수 자산 자리는 0이다(없는 것을 지어내지 않는다)",
+         inherited_screen_paths("") == set()),
         ("역할 버킷을 읽는다", role_buckets(_BIRTH_REACHABLE) == ["U9"]),
         ("보는 사람 표를 읽는다",
          persona_viewers(_BIRTH_PERSONA) == {"U9": ["U1"]}),

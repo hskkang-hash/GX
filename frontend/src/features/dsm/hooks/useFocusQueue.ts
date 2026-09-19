@@ -65,8 +65,34 @@ export interface UseFocusQueueResult {
    *  두 쓰기가 같은 카드에 동시에 날아가면 둘 중 하나가 남의 결과를 덮는다. */
   acting: boolean;
   actionError: string;
-  /** 대응 진행 한 칸(D-399) — 조치 시작·종결처럼 **판정이 필요 없는** 전이. */
-  advance: (eventId: number, toState: string) => Promise<void>;
+  /**
+   * ★★ [턴 W · 차선 U1 · P-188] **거절의 HTTP 상태.** 0 이면 거절이 없었다.
+   *
+   * 왜 필요한가 [실측 · `test_u1_queue_card_actions.py` 가 잡았다]: `allowed_next` 는
+   * 「갈 수 있는 곳」이지 「지금 그냥 눌러도 되는 곳」이 아니다. 종결된 사건의
+   * `allowed_next` 에는 **되돌림**(`closed → in_progress`)이 들어 있고, 그 칸은
+   * **사유가 있어야**(400) 열리며 **관제팀장만**(403) 할 수 있다
+   * (`kernels/k1_event/response_flow.py:100·154`).
+   *
+   * 즉 큐 카드가 `allowed_next` 만 보고 그린 단추 중 하나는 **누르면 반드시 실패**했다.
+   * 커널은 이 셋을 **다른 상태코드**로 낸다(D-290): 409 는 「그 길은 없다」, 400 은
+   * 「사유를 채워 다시」, 403 은 「팀장이 해야」. 화면은 그 셋에 **다른 행동**을 해야
+   * 하므로 번호를 그대로 들고 온다 — 화면이 전이표를 따로 드는 것이 아니라,
+   * **서버가 방금 한 말**을 읽는 것이다.
+   */
+  actionStatus: number;
+  /** 어느 카드의 어느 칸이 거절당했나. 거절을 **그 카드 옆에** 적기 위한 것. */
+  actionOn: { eventId: number; toState: string } | null;
+  /** 거절 한 줄을 지운다 — 사람이 다시 누를 때 앞의 거절이 남아 있으면 거짓말이다. */
+  clearActionError: () => void;
+  /**
+   * 대응 진행 한 칸(D-399) — 조치 시작·종결처럼 **판정이 필요 없는** 전이.
+   *
+   * ★ `reason` 은 **되돌림에만** 필요하다. 화면은 그것을 미리 알지 못하고(전이표를
+   *   들지 않으므로) 알 필요도 없다 — 빈 채로 보내 보고, 서버가 400 으로 「사유를
+   *   채워 다시」라고 하면 그때 받아서 다시 보낸다.
+   */
+  advance: (eventId: number, toState: string, reason?: string) => Promise<void>;
   /** 큐 카드 키 **1** — 판정(확인)+접수를 한 트랜잭션으로(WO-01 §5). */
   reviewAndAcknowledge: (eventId: number) => Promise<void>;
   /** 오탐 판정. `reasonLabel` 은 3택 중 하나(또는 자유 텍스트) — 기존 `/review` 재사용. */
@@ -97,32 +123,57 @@ export function useFocusQueue(options: UseFocusQueueOptions = {}): UseFocusQueue
 
   const [acting, setActing] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [actionStatus, setActionStatus] = useState(0);
+  const [actionOn, setActionOn] =
+    useState<{ eventId: number; toState: string } | null>(null);
+
+  /** 거절의 HTTP 상태를 꺼낸다. 없으면 0 — **모르는 것을 0 이 아닌 수로 적지 않는다.** */
+  const statusOf = (err: unknown): number =>
+    err && typeof err === 'object' && 'status' in err
+      ? Number((err as { status?: number }).status ?? 0) || 0
+      : 0;
+
+  const clearActionError = useCallback(() => {
+    setActionError('');
+    setActionStatus(0);
+    setActionOn(null);
+  }, []);
 
   const advance = useCallback(
-    async (eventId: number, toState: string) => {
+    async (eventId: number, toState: string, reason = '') => {
       setActing(true);
-      setActionError('');
+      clearActionError();
       try {
         await dsmPostQueryOnce(
           dsmEndpoint.response(eventId),
-          { to_state: toState },
-          intentKey(`q.response:${eventId}:${toState}`),
+          //: ★ 사유는 **있을 때만** 싣는다. 빈 문자열을 늘 보내면 서버의 「사유가
+          //:   비었다」 갈래를 화면이 지워 버리고, 지워진 갈래는 아무도 못 본다.
+          reason.trim() ? { to_state: toState, reason: reason.trim() } : { to_state: toState },
+          //: 사유가 붙으면 **다른 요청**이다 — 같은 멱등 키를 쓰면 사유 없이 거절당한
+          //: 앞 요청의 답이 되돌아온다(「사유를 채워 다시」가 영원히 반복된다).
+          intentKey(
+            reason.trim()
+              ? `q.response:${eventId}:${toState}:with-reason`
+              : `q.response:${eventId}:${toState}`,
+          ),
         );
         onActionSuccess?.(`advance:${toState}`);
         queue.reload();
       } catch (err) {
         setActionError(userFacingError('FocusQueue.advance', err, '요청이 처리되지 않았습니다.'));
+        setActionStatus(statusOf(err));
+        setActionOn({ eventId, toState });
       } finally {
         setActing(false);
       }
     },
-    [queue, onActionSuccess],
+    [queue, onActionSuccess, clearActionError],
   );
 
   const reviewAndAcknowledge = useCallback(
     async (eventId: number) => {
       setActing(true);
-      setActionError('');
+      clearActionError();
       try {
         await dsmPostQueryOnce(
           reviewAndAcknowledgePath(eventId),
@@ -136,17 +187,19 @@ export function useFocusQueue(options: UseFocusQueueOptions = {}): UseFocusQueue
           userFacingError('FocusQueue.reviewAndAcknowledge', err,
             '판정과 접수가 처리되지 않았습니다.'),
         );
+        setActionStatus(statusOf(err));
+        setActionOn({ eventId, toState: 'acknowledged' });
       } finally {
         setActing(false);
       }
     },
-    [queue, onActionSuccess],
+    [queue, onActionSuccess, clearActionError],
   );
 
   const reject = useCallback(
     async (eventId: number, reasonLabel: string) => {
       setActing(true);
-      setActionError('');
+      clearActionError();
       try {
         await dsmPostQueryOnce(
           dsmEndpoint.review(eventId),
@@ -157,12 +210,18 @@ export function useFocusQueue(options: UseFocusQueueOptions = {}): UseFocusQueue
         queue.reload();
       } catch (err) {
         setActionError(userFacingError('FocusQueue.reject', err, '오탐 판정이 처리되지 않았습니다.'));
+        setActionStatus(statusOf(err));
+        setActionOn({ eventId, toState: 'rejected' });
       } finally {
         setActing(false);
       }
     },
-    [queue, onActionSuccess],
+    [queue, onActionSuccess, clearActionError],
   );
 
-  return { queue, cards, focus, thresholds, acting, actionError, advance, reviewAndAcknowledge, reject };
+  return {
+    queue, cards, focus, thresholds, acting,
+    actionError, actionStatus, actionOn, clearActionError,
+    advance, reviewAndAcknowledge, reject,
+  };
 }

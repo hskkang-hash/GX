@@ -1,33 +1,33 @@
 {
   "note": "D-343 ①② 라우트 인벤토리 전수. inbound_key=accepts 가 「지금 키가 닿는 자리」다. classification 의 기본값은 session_only — 판단이 서지 않으면 좁은 쪽(D-343 ②).",
-  "measured_at": "2026-09-19T12:11:40+07:00",
+  "measured_at": "2026-09-19T16:18:43+07:00",
   "totals": {
-    "routes": 762,
+    "routes": 763,
     "by_inbound_key": {
       "accepts": 549,
       "refuses": 130,
       "open_anonymous": 73,
       "unknown": 9,
-      "declared": 1
+      "declared": 2
     },
     "by_classification": {
       "session_only": 761,
-      "inbound_key_allowed": 1
+      "inbound_key_allowed": 2
     },
     "by_tenant_scope": {
       "none": 651,
       "required": 105,
-      "exempt": 6
+      "exempt": 7
     },
     "by_authn": {
       "CustomJWTAuth": 549,
-      "JwtOrInboundKey": 129,
+      "JwtOrInboundKey": 130,
       "": 73,
       "JWTAuth": 9,
       "JwtOrWallToken": 2
     },
     "by_envelope": {
-      "promoted": 401,
+      "promoted": 402,
       "clean": 248,
       "authz_envelope": 113
     },
@@ -4498,13 +4498,13 @@
         "AuthBase",
         "ABC"
       ],
-      "inbound_key": "refuses",
-      "inbound_key_reason": "",
+      "inbound_key": "declared",
+      "inbound_key_reason": "UX-23 카메라 맥박 읽기 — 범위 `pulse:read` 를 **일부러 받은** 키만. 기본 범위(`events:read`)만 가진 키는 여기서 403 이다",
       "tenant_scope": "required",
       "authz_path_permission": false,
       "envelope": "promoted",
-      "classification": "session_only",
-      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+      "classification": "inbound_key_allowed",
+      "classified_by": "라우트가 inbound_key=True 로 선언했다 (사유 기재)"
     },
     {
       "method": "POST",
@@ -5690,6 +5690,29 @@
       "inbound_key": "refuses",
       "inbound_key_reason": "",
       "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/ops/backup/declaration",
+      "app": "dsm",
+      "view": "apps.dsm.api_u56.DsmU56API.backup_declaration_view",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "exempt",
       "authz_path_permission": false,
       "envelope": "promoted",
       "classification": "session_only",

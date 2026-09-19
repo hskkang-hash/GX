@@ -51,9 +51,17 @@
  *   「1·2·3」이 어떤 턴에는 처리 단계이고 어떤 턴에는 판정이 되어 뜻이 흔들린다 —
  *   관제실에서 뜻이 흔들리는 키는 오조작을 만든다. 오탐은 **이름 붙은 단추**로만 연다.
  *
- * ★ 숫자 키는 **가장 급한 하나**에만 든다. 대기 카드에는 서버가 `allowed_next` 를
- *   주지 않으므로(그 필드는 `focus` 에만 온다) 화면이 지어낼 수 없다. J·K·Enter 는
- *   대기 카드에도 든다 — 그것은 **읽는 일**이지 쓰는 일이 아니기 때문이다.
+ * ★ 숫자 키는 **가장 급한 하나**에만 든다. J·K·Enter 는 대기 카드에도 든다 —
+ *   그것은 **읽는 일**이지 쓰는 일이 아니기 때문이다.
+ *
+ *   ★★ [턴 W · P-188] 종전에 이 자리에는 「대기 카드에는 서버가 `allowed_next` 를
+ *     주지 않으므로 화면이 지어낼 수 없다」고 적혀 있었다. **그 문장은 이제 낡았다** —
+ *     `GET /api/dsm/queue/field-signals`(턴 S · U1)가 물은 사건마다 `allowed_next` 를
+ *     **함께 낸다**(`queue_signals.py:192`). 그래서 대기 카드의 **단추**는 선다.
+ *     숫자 키는 **여전히 초점 하나에만** 든다 — 키가 「지금 고른 카드」를 따라다니면
+ *     1·2·3 의 대상이 화면 위에서 움직이고, 움직이는 대상의 키는 관제실에서
+ *     오조작을 만든다. 대기 카드는 **눈으로 보고 누르는** 자리다.
+ *
  *
  * ★ **심각만 소리가 난다.** 묶인 반복(×N)은 **1회**다. 그 두 문지기는
  *   `useCriticalAlarm` 에 있다. 음소거이거나 브라우저가 소리를 잠가 두었으면
@@ -66,8 +74,53 @@
  * 쓰기 성공을 알리는 `message.success(...)` 를 이 화면에 두지 않는다. 결과는
  * 카드의 상태 칸(`response_state` 태그)이 스스로 「접수」 등으로 보인다 —
  * **상태는 칸으로**(불변). 소리(`actionEcho`)만 「눌린 것을 먹었다」는 즉각 신호를 준다.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * UX-33 **큐 카드 1클릭 판정 3 — 상세로 들어가지 않는다** (턴 W · 차선 U1 · P-188)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * 무엇이 문제였나 [갤러리 관찰 · 온보딩 U1#11]
+ * -------------------------------------------
+ * 단추 셋은 **초점 카드 한 장에만** 있었다. 대기 카드에는 「열기」밖에 없어서,
+ * 두 번째로 급한 사건을 처리하려면 **상세로 들어갔다 나와야** 했다 — UX-33 이
+ * 없애기로 한 바로 그 왕복이다. 온보딩 U1#11 이 ○ 로 찍힌 것도 같은 자리다.
+ *
+ * 어떻게 고쳤나
+ * -------------
+ * 대기 카드도 **서버가 준 `allowed_next` 로만** 단추를 그린다. 출처가 초점과
+ * 다를 뿐이다 — 초점은 큐 응답의 `focus.allowed_next`, 대기 카드는
+ * `/queue/field-signals` 의 `signals[].allowed_next`(`queue_signals.py:192` ·
+ * **기존 문이다. 새 라우트를 만들지 않았다**). 화면이 전이표를 들지 않는다는 규약은
+ * 그대로다(D-399).
+ *
+ * ★ 서버가 허락하지 않은 갈래는 **아예 안 그린다**(누를 수 있게 두고 막지 않는다).
+ *   회색으로 남겨 두면 사람이 그것을 「지금은 안 되지만 곧 될 것」으로 읽고 누른다.
+ * ★ 서버가 **아직 말하지 않은** 카드(신호를 못 읽었거나 상한 30 밖)는 단추 0 개이고
+ *   그 자리에 **「서버가 아직 말하지 않았습니다」**라고 적는다 — 「없음」이 아니다.
+ *   회색은 초록이 아니고, 모르는 것을 「안 된다」로 적지도 않는다.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════
+ * P-188 **경과 순위 — 고정 문구를 뗐다** (턴 W · 차선 U1)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * `time.ts` 의 단계 4 이름이 **「8분 경과 — 가장 오래 기다린 사건」** 이었다. 단계 4 인
+ * 카드가 열 장이면 **열 장 전부**가 자기가 가장 오래 기다렸다고 적었고, 서버 문턱이
+ * 8분이 아니어도 「8분」이라고 적었다. 둘 다 거짓이다.
+ *
+ * 이제 단계 이름은 서버 문턱이 짓고(`tierLabel`), **순위는 이 화면이 센다** —
+ * 카드를 전부 보는 자리가 여기뿐이기 때문이다. 세는 값은 서버가 준
+ * `elapsed_seconds` 다(화면 시계가 아니다 — 카드마다 다른 순간에 잰 수를 견주면
+ * 순위가 깜박인다).
+ *
+ * ★ **정렬이 아니라 세기다.** 이 파일에 `sort(` 도 `filter(` 도 없다는 성질은
+ *   그대로다 — 순위는 「나보다 오래 기다린 카드가 몇 장인가」를 **센** 수이고,
+ *   화면에 그려지는 **순서는 서버가 준 그대로**다.
+ * ★ **분모를 손으로 적지 않는다.** 「N건 중 k번째」의 N 은 시계가 도는 카드를 센
+ *   수다. 동률이면 동률이라고 적는다 — 한 장에만 붙는 사실을 두 장에 붙이지 않는다.
  */
-import { Alert, Badge, Button, Card, Col, Row, Space, Statistic, Tag, Typography } from 'antd';
+import {
+  Alert, Badge, Button, Card, Col, Input, Row, Space, Statistic, Tag, Typography,
+} from 'antd';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Main } from 'rj-core';
@@ -105,7 +158,7 @@ import {
   SEVERITY_ICON,
   SEVERITY_LABEL,
 } from '../severity';
-import { stamp, TIMEZONE_NOTE } from '../time';
+import { rankNoteOf, stamp, TIMEZONE_NOTE, waitRanks } from '../time';
 import type { QueueCard } from '../types';
 
 const { Text, Title, Paragraph } = Typography;
@@ -128,9 +181,18 @@ export const HEADLINE = '지금 처리할 것 — 가장 급한 하나';
  */
 const SIGNAL_ASK_CAP = 30;
 
+/** 서버가 아직 허용 단계를 말해 주지 않은 카드에 적는 말. **「없음」이 아니다.** */
+export const ALLOWED_UNKNOWN_NOTE =
+  '서버가 이 카드의 다음 단계를 아직 말하지 않았습니다 — 「열기」로 상세에서 처리하세요.';
+
+/** 갈 곳이 없다고 **서버가 말한** 카드. 위와 다른 사실이라 다른 글자다. */
+export const ALLOWED_NONE_NOTE = '더 갈 곳이 없습니다 — 이 사건은 마지막 단계입니다.';
+
+
 function eventPath(id: number): string {
   return `/dsm/events/${id}`;
 }
+
 
 function CardHead({ card, signal }: { card: QueueCard; signal?: QueueFieldSignal }) {
   return (
@@ -172,8 +234,42 @@ function CardHead({ card, signal }: { card: QueueCard; signal?: QueueFieldSignal
 export default function FocusQueuePage() {
   const navigate = useNavigate();
   const [showKeys, setShowKeys] = useState(false);
-  /** 오탐 사유 3택을 펼쳤는가 — 토스트 대신 **칸 하나를 펼치는** 가벼운 확인. */
-  const [pickingReject, setPickingReject] = useState(false);
+  /**
+   * 오탐 사유 3택을 **어느 카드에서** 펼쳤는가 — 토스트 대신 **칸 하나를 펼치는**
+   * 가벼운 확인. [턴 W] 종전에는 `boolean` 이라 초점 카드 하나에만 들었다. 대기
+   * 카드에도 오탐 단추가 서면서 **어느 카드인지**를 들어야 한다 — 참/거짓으로
+   * 들면 한 장을 펼쳤을 때 모든 카드의 사유 칸이 함께 열리고, 사람은 자기가 어느
+   * 사건에 사유를 붙이는지 모른 채 누른다.
+   */
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  /**
+   * 되돌림 사유 초안. **서버가 400 으로 「사유를 채워 다시」라고 한 뒤에만** 쓰인다 —
+   * 화면이 「이 칸은 사유가 필요하다」를 미리 알고 있으면 그것이 두 번째 전이표다.
+   */
+  const [reasonDraft, setReasonDraft] = useState('');
+  /**
+   * ★★ [턴 W · P-188] **서버가 「이 계정으로는 안 된다」(403)고 말한 칸.**
+   *
+   * `allowed_next` 는 「그 전이가 표에 있는가」를 말하지 **누가 할 수 있는가**를
+   * 말하지 않는다. 종결된 사건의 되돌림(`closed → in_progress`)은 표에 있지만
+   * **관제팀장만** 한다 — 관제요원 계정으로는 누를 때마다 403 이다
+   * [실측 2026-09-19 17:4x · `gxseed_u1_operator` · 사건 268497:
+   *  사유 없이 400 「되돌림에는 사유가 필수다」 → 사유를 채워 **403** 「관제팀장(K3
+   *  MANAGER 이상)만 한다」 · 재조회 `closed` 그대로].
+   *
+   * 화면은 그 표를 **미리 들지 않는다.** 대신 **서버가 방금 한 말**을 기억해서 그
+   * 칸을 더는 누를 수 없게 한다 — 같은 403 을 열 번 받게 두는 것은 사람의 시간을
+   * 쓰는 일이고, 그 열 번이 전부 감사에 남는다.
+   *
+   * 지우지 않는다(새로고침이면 다시 묻는다) — 권한은 바뀔 수 있고, 화면이 그것을
+   * 영원히 「안 된다」로 박아 두면 그것이 또 하나의 거짓 표가 된다.
+   */
+  const [denied403, setDenied403] = useState<Record<string, string>>({});
+  /**
+   * 편리성 계측 #1 의 시계를 **다시 걸기 위한 눈금.** 대기 카드를 누르면 측정 대상이
+   * 그 카드로 갈아타므로(아래 `actOn`), 끝난 뒤 초점의 측정을 다시 걸어야 한다.
+   */
+  const [metricEpoch, setMetricEpoch] = useState(0);
   /** 0 은 초점 카드, 1 부터가 대기 카드다. **선택은 읽는 일**이다. */
   const [selected, setSelected] = useState(0);
   const rowRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -182,13 +278,15 @@ export default function FocusQueuePage() {
 
   // ★ [UX-15] 키보드로 일하는 사람은 눌린 것을 눈으로 확인할 시간이 없다 — 쓰기가
   //   성공한 직후 한 음(`actionEcho`)을 울린다. 이 한 음이 없으면 같은 키를 두 번 누른다.
-  const { queue, cards, focus, thresholds, acting, actionError, advance,
-    reviewAndAcknowledge, reject } = useFocusQueue({
+  const { queue, cards, focus, thresholds, acting, actionError, actionStatus,
+    actionOn, clearActionError, advance, reviewAndAcknowledge, reject } = useFocusQueue({
     onActionSuccess: (what) => {
       sound.play('actionEcho');
       // ★ 편리성 계측 #1 의 시계는 **접수에서 멈춘다** — 재는 것이 「판정에서 접수까지」라서다.
       //   오탐이나 조치 시작에서 멈추면 그것은 다른 지표가 된다.
       if (what === 'review-ack') finishMetric('u1_handle_event');
+      // ★ [턴 W] 측정 대상이 대기 카드로 갈아탔을 수 있다 — 초점의 시계를 다시 건다.
+      setMetricEpoch((n) => n + 1);
     },
   });
 
@@ -220,7 +318,7 @@ export default function FocusQueuePage() {
 
   // 카드가 바뀌면 열어 둔 오탐 사유 칸을 닫는다 — 다른 카드에 잘못 적용되는 것을 막는다.
   useEffect(() => {
-    setPickingReject(false);
+    setRejectingId(null);
   }, [focus?.event_id]);
 
   /*
@@ -241,7 +339,87 @@ export default function FocusQueuePage() {
   useEffect(() => {
     if (focus) startMetric('u1_handle_event', String(focus.event_id));
     else cancelMetric('u1_handle_event');
-  }, [focus?.event_id]);
+  }, [focus?.event_id, metricEpoch]);
+
+  /**
+   * 경과 순위 — 서버가 준 `elapsed_seconds` 로 **센다**(정렬하지 않는다 · 머리말 참조).
+   * 초점 + 대기 카드를 **함께** 본다: 순위는 화면 전체의 사실이지 대기 목록만의
+   * 사실이 아니다.
+   */
+  // ★ 서버가 403 으로 「이 계정으로는 안 된다」고 말한 칸을 적어 둔다(위 머리말).
+  useEffect(() => {
+    if (actionStatus === 403 && actionOn) {
+      const key = `${actionOn.eventId}:${actionOn.toState}`;
+      setDenied403((m) => (m[key] ? m : { ...m, [key]: actionError }));
+    }
+  }, [actionStatus, actionOn, actionError]);
+
+  const ranks = useMemo(() => waitRanks(cards), [cards]);
+  /** 순위의 **분모** — 시계가 도는 카드 수. 센 수다(손으로 적지 않는다). */
+  const rankTotal = useMemo(() => {
+    for (const r of ranks.values()) return r.total;
+    return 0;
+  }, [ranks]);
+
+  /**
+   * ★ [턴 W · P-188] **어느 카드의 눌림인지를 계측이 알아야 한다.**
+   *
+   * 편리성 #1 은 「사건 **1건** 처리에 몇 번 눌렀나」다. 시계는 초점 카드에 걸려
+   * 있는데 사람이 대기 카드를 누르면, 그 누름을 초점의 수에 더하는 순간 **두 사건의
+   * 클릭이 한 줄에 섞인다.** 그래서 대상이 다르면 **측정을 그 카드로 갈아탄다** —
+   * `startMetric` 은 대상이 다르면 새로 걸고, 같으면 처음 것을 지킨다.
+   *
+   * 갈아타면서 버려지는 것은 **끝나지 않은 측정**이다. 하다 만 것은 수가 아니므로
+   * 버리는 것이 맞다(`cancelMetric` 과 같은 뜻).
+   */
+  const countClickOn = useCallback((eventId: number) => {
+    startMetric('u1_handle_event', String(eventId));
+    countClick('u1_handle_event');
+  }, []);
+
+  const onReject = useCallback(
+    (eventId: number, reasonLabel: string) => {
+      if (acting) return;
+      setRejectingId(null);
+      countClickOn(eventId);
+      void reject(eventId, reasonLabel);
+    },
+    [acting, reject, countClickOn],
+  );
+
+  /**
+   * 이 카드에 **서버가 허락한 다음 단계**. 출처는 둘이고 둘 다 서버다:
+   *   · 초점 카드 — 큐 응답의 `focus.allowed_next`
+   *   · 대기 카드 — `/queue/field-signals` 의 `signals[].allowed_next`
+   *
+   * `known` 이 거짓인 것은 **「없다」가 아니라 「아직 못 들었다」**이다(상한 30 밖 ·
+   * 첫 응답 전 · 남의 테넌트라 목록에서 빠진 것). 화면은 그 셋을 **같은 말**로 적는다 —
+   * 어느 쪽인지 화면이 알 수 없고, 모르는 것을 갈라 적으면 그것이 지어낸 것이다.
+   */
+  const allowedFor = useCallback(
+    (card: QueueCard): { known: boolean; allowed: string[] } => {
+      if (Array.isArray(card.allowed_next)) {
+        return { known: true, allowed: card.allowed_next };
+      }
+      const signal = signals.byEvent.get(card.event_id);
+      if (signal && Array.isArray(signal.allowed_next)) {
+        return { known: true, allowed: signal.allowed_next };
+      }
+      return { known: false, allowed: [] };
+    },
+    [signals.byEvent],
+  );
+
+  /** 카드 한 장의 한 누름 — 초점이든 대기든 **같은 길**로 간다. */
+  const actOn = useCallback(
+    (card: QueueCard, next: string) => {
+      if (acting) return;
+      countClickOn(card.event_id);
+      if (next === 'acknowledged') void reviewAndAcknowledge(card.event_id);
+      else void advance(card.event_id, next);
+    },
+    [acting, advance, reviewAndAcknowledge, countClickOn],
+  );
 
   /**
    * 숫자 키 한 번. **서버가 허락한 칸이 아니면 아무 일도 안 한다** —
@@ -256,25 +434,11 @@ export default function FocusQueuePage() {
       if (!(focus.allowed_next ?? []).includes(target)) return;
       // ★ 실제로 요청이 나가는 누름만 센다 — 서버가 허락하지 않은 칸의 키는
       //   아무 일도 안 하므로 「액션」이 아니다.
-      countClick('u1_handle_event');
-      if (target === 'acknowledged') {
-        void reviewAndAcknowledge(focus.event_id);
-      } else {
-        void advance(focus.event_id, target);
-      }
+      actOn(focus, target);
     },
-    [focus, acting, advance, reviewAndAcknowledge],
+    [focus, acting, actOn],
   );
 
-  const onReject = useCallback(
-    (reasonLabel: string) => {
-      if (!focus || acting) return;
-      setPickingReject(false);
-      countClick('u1_handle_event');
-      void reject(focus.event_id, reasonLabel);
-    },
-    [focus, acting, reject],
-  );
 
   useQueueKeys({
     onNext: () => setSelected((n) => Math.min(n + 1, Math.max(cards.length - 1, 0))),
@@ -290,6 +454,175 @@ export default function FocusQueuePage() {
 
   const selectedRing = (index: number) =>
     index === selected ? '2px solid #1677ff' : '2px solid transparent';
+
+  /**
+   * 카드 한 장의 **단추 셋** — 초점 카드와 대기 카드가 **같은 것을 그린다.**
+   *
+   * 한 자리에 모은 이유: 종전에는 초점 카드 안에만 있었고, 대기 카드에 같은 것을 손으로
+   * 다시 적으면 다음 턴에 한쪽만 고쳐진다. 두 자리가 갈리면 「큐에서 1클릭」이 카드에
+   * 따라 다른 뜻이 된다.
+   *
+   * ★ 그리는 것은 **서버가 준 `allowed_next` 에 있는 값뿐**이다. 없는 갈래는 회색으로
+   *   남기지 않고 **아예 안 그린다** — 못 누르는 단추는 「곧 될 것」으로 읽힌다.
+   * ★ 숫자 `(1)(2)(3)` 은 **초점 카드에만** 붙는다. 키가 드는 자리가 거기뿐이라,
+   *   대기 카드에 숫자를 적으면 그 숫자가 거짓말이 된다.
+   */
+  const renderActions = (card: QueueCard, isFocus: boolean) => {
+    const { known, allowed } = allowedFor(card);
+    return (
+      <Space direction="vertical" size={6} style={{ width: '100%' }}>
+        <Space wrap size={6} data-gx="card-actions" data-gx-event={card.event_id}>
+          {allowed.map((next) => {
+            const slot = (STEP_SLOTS as readonly string[]).indexOf(next);
+            const isAck = next === 'acknowledged';
+            //: ★ 서버가 **방금** 403 이라고 한 칸은 더는 안 눌린다(위 머리말).
+            //:   회색으로 남기되 **왜 회색인지를 서버의 말로** 옆에 적는다 —
+            //:   이유 없는 회색이 「곧 될 것」으로 읽히는 것이지, 이유가 붙은 회색은
+            //:   「이 계정으로는 안 되는 일」로 읽힌다.
+            const denied = denied403[`${card.event_id}:${next}`];
+            return (
+              <Button
+                key={next}
+                type="primary"
+                size={isFocus ? 'middle' : 'small'}
+                loading={acting}
+                disabled={Boolean(denied)}
+                title={denied || undefined}
+                data-gx="card-action"
+                data-gx-next={next}
+                data-gx-denied={denied ? '403' : undefined}
+                onClick={(ev) => {
+                  // 대기 카드는 줄 전체가 「고르기」를 먹는다 — 누름이 위로 퍼지면
+                  // 고른 카드가 바뀌면서 사람이 무엇을 눌렀는지 모르게 된다.
+                  ev.stopPropagation();
+                  actOn(card, next);
+                }}
+              >
+                {isAck ? REVIEW_AND_ACK_LABEL : advanceLabel(next)}
+                {isFocus && slot >= 0 ? ` (${slot + 1})` : ''}
+              </Button>
+            );
+          })}
+
+          {/* ★ 오탐은 **이름 붙은 단추**로만 연다 — 숫자 키에 얹으면 1·2·3 의 뜻이
+              처리 단계와 판정 사이에서 흔들린다(머리말). 이미 판정된 사건에는
+              다시 판정을 묻지 않는다. */}
+          {!card.verdict ? (
+            <Button
+              danger
+              size={isFocus ? 'middle' : 'small'}
+              loading={acting}
+              data-gx="card-action"
+              data-gx-next="rejected"
+              onClick={(ev) => {
+                ev.stopPropagation();
+                setRejectingId((id) => (id === card.event_id ? null : card.event_id));
+              }}
+            >
+              {REJECT_LABEL}
+            </Button>
+          ) : null}
+
+          {/* 「아직 못 들었다」와 「서버가 갈 곳이 없다고 했다」는 **다른 사실**이다. */}
+          {!known ? (
+            <Text type="secondary" data-gx="allowed-unknown">{ALLOWED_UNKNOWN_NOTE}</Text>
+          ) : allowed.length === 0 ? (
+            <Text type="secondary" data-gx="allowed-none">{ALLOWED_NONE_NOTE}</Text>
+          ) : null}
+        </Space>
+
+        {/*
+          ★★ [턴 W · P-188] **거절을 그 카드 옆에 적는다.**
+
+            큐 응답의 `allowed_next` 는 「갈 수 있는 곳」이지 「그냥 눌러도 되는 곳」이
+            아니다 — 종결된 사건에는 **되돌림**(`closed → in_progress`)이 들어 있고,
+            그 칸은 사유가 있어야(400) 열리고 관제팀장만(403) 할 수 있다. 시험
+            `test_u1_queue_card_actions.py` 가 이 자리를 잡았다.
+
+            화면은 그 표를 **들지 않는다.** 대신 서버가 낸 **상태코드에 따라 다른 일**을
+            한다(D-290 이 셋을 나눠 둔 이유가 이것이다):
+              400 → 사유 칸을 열고 **같은 칸으로 다시** 보낸다
+              403 → 「팀장이 해야 한다」를 그대로 적는다 (다시 보내 봐야 같다)
+              409 → 「그 길은 없다」 — 큐를 다시 읽는다(표가 바뀌었을 수 있다)
+        */}
+        {actionOn && actionOn.eventId === card.event_id ? (
+          <Alert
+            type={actionStatus === 400 ? 'warning' : 'error'}
+            showIcon
+            data-gx="card-refusal"
+            data-gx-status={actionStatus}
+            message={
+              actionStatus === 400
+                ? '사유가 있어야 넘어갑니다.'
+                : actionStatus === 403
+                  ? '이 계정으로는 안 됩니다.'
+                  : '거절되었습니다.'
+            }
+            description={
+              <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                <Text>{actionError}</Text>
+                {actionStatus === 400 ? (
+                  <Space.Compact style={{ width: '100%' }}>
+                    <Input
+                      size="small"
+                      placeholder="사유 (기록에 그대로 남습니다)"
+                      value={reasonDraft}
+                      onChange={(ev) => setReasonDraft(ev.target.value)}
+                      onClick={(ev) => ev.stopPropagation()}
+                    />
+                    <Button
+                      size="small"
+                      type="primary"
+                      loading={acting}
+                      disabled={!reasonDraft.trim()}
+                      data-gx="card-refusal-retry"
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        const reason = reasonDraft.trim();
+                        setReasonDraft('');
+                        countClickOn(card.event_id);
+                        void advance(card.event_id, actionOn.toState, reason);
+                      }}
+                    >
+                      사유를 적고 다시
+                    </Button>
+                  </Space.Compact>
+                ) : (
+                  <Button
+                    size="small"
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      clearActionError();
+                      queue.reload();
+                    }}
+                  >
+                    다시 읽기
+                  </Button>
+                )}
+              </Space>
+            }
+          />
+        ) : null}
+
+        {rejectingId === card.event_id ? (
+          <Card size="small" title={`오탐 사유 — 사건 ${card.event_id}`}>
+            <Space wrap onClick={(ev) => ev.stopPropagation()}>
+              {FALSE_POSITIVE_REASONS.map((r) => (
+                <Button
+                  key={r.code}
+                  size="small"
+                  loading={acting}
+                  onClick={() => onReject(card.event_id, r.label)}
+                >
+                  {r.label}
+                </Button>
+              ))}
+            </Space>
+          </Card>
+        ) : null}
+      </Space>
+    );
+  };
 
   return (
     <Main>
@@ -381,7 +714,10 @@ export default function FocusQueuePage() {
                 </Row>
               </Card>
 
-              {actionError ? (
+              {/* ★ [턴 W] 거절은 **그 카드 옆**에 적는다(`renderActions`). 이 띠는
+                  어느 카드의 것인지 서버가 말해 주지 않은 거절만 받는다 — 두 자리에
+                  같은 말을 두면 사람이 둘을 다른 사건으로 읽는다. */}
+              {actionError && !actionOn ? (
                 <Alert type="error" showIcon message="거절되었습니다." description={actionError} />
               ) : null}
 
@@ -419,6 +755,10 @@ export default function FocusQueuePage() {
                               occurredAt={focus.occurred_at}
                               closedAt={focus.closed_at}
                               thresholds={data.tier_thresholds_sec}
+                              // ★ 순위는 **화면이 센 값**이다(머리말 P-188). 초점이
+                              //   곧 「가장 오래 기다린 것」은 아니다 — 서버의 「가장
+                              //   급한」은 등급·단계를 함께 보는 다른 질문이다.
+                              rankNote={rankNoteOf(ranks.get(focus.event_id))}
                             />
                           </div>
 
@@ -426,56 +766,9 @@ export default function FocusQueuePage() {
                               화면이 전이표를 들면 서버가 거절하는 버튼을 그리게 된다.
                               숫자는 **고정 자리**다: 실제로 확인·접수 1 · 조치 시작 2 ·
                               종결 3. `acknowledged` 로 가는 단추만 판정+접수 한
-                              트랜잭션을 부른다(WO-01 §5 AC-2 · 머리말 참조). */}
-                          <Space wrap>
-                            {(focus.allowed_next ?? []).map((next) => {
-                              const slot = (STEP_SLOTS as readonly string[]).indexOf(next);
-                              const isAck = next === 'acknowledged';
-                              return (
-                                <Button
-                                  key={next}
-                                  type="primary"
-                                  loading={acting}
-                                  onClick={() => {
-                                    countClick('u1_handle_event');
-                                    return isAck
-                                      ? reviewAndAcknowledge(focus.event_id)
-                                      : advance(focus.event_id, next);
-                                  }}
-                                >
-                                  {isAck ? REVIEW_AND_ACK_LABEL : advanceLabel(next)}
-                                  {slot >= 0 ? ` (${slot + 1})` : ''}
-                                </Button>
-                              );
-                            })}
-                            {(focus.allowed_next ?? []).length === 0 ? (
-                              <Text type="secondary">
-                                더 갈 곳이 없습니다 — 이 사건은 마지막 단계입니다.
-                              </Text>
-                            ) : null}
-                            {/* ★ 오탐은 **이름 붙은 단추**로만 연다 — 숫자 키에 얹으면
-                                1·2·3 의 뜻이 처리 단계와 판정 사이에서 흔들린다(머리말).
-                                이미 판정된 사건에는 다시 판정을 묻지 않는다. */}
-                            {!focus.verdict ? (
-                              <Button danger loading={acting}
-                                onClick={() => setPickingReject((v) => !v)}>
-                                {REJECT_LABEL}
-                              </Button>
-                            ) : null}
-                          </Space>
-
-                          {pickingReject ? (
-                            <Card size="small" title="오탐 사유">
-                              <Space wrap>
-                                {FALSE_POSITIVE_REASONS.map((r) => (
-                                  <Button key={r.code} size="small" loading={acting}
-                                    onClick={() => onReject(r.label)}>
-                                    {r.label}
-                                  </Button>
-                                ))}
-                              </Space>
-                            </Card>
-                          ) : null}
+                              트랜잭션을 부른다(WO-01 §5 AC-2 · 머리말 참조).
+                              [턴 W] 대기 카드와 **같은 것**을 그린다 — `renderActions`. */}
+                          {renderActions(focus, true)}
 
                           {focus.count > 1 ? (
                             <Alert
@@ -583,6 +876,17 @@ export default function FocusQueuePage() {
               {/* 나머지 큐. 초점 하나 아래에 **작게** 둔다 — 여기가 커지면 다시 목록이 된다. */}
               <Card size="small" title={`대기 카드 ${data.queue.length}장`}>
                 <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                  {/*
+                    ★ [턴 W · P-188] **순위의 분모를 여기서 말한다.** 카드마다 「N건 중
+                      k번째」라고 적는데 그 N 이 어디서 온 수인지 화면이 안 적으면,
+                      사람은 그것을 「대기 카드 수」로 읽는다 — 다른 수다(종결된 카드는
+                      시계가 멈춰 순위에 들지 않는다). 0 이면 **0 이라고 적는다.**
+                  */}
+                  <Text type="secondary" style={{ fontSize: 12 }} data-gx="rank-denominator">
+                    {rankTotal === 0
+                      ? '시계가 도는 사건이 0건입니다 — 경과 순위를 매기지 않습니다.'
+                      : `경과 순위는 시계가 도는 ${rankTotal}건(초점 카드 포함) 중에서 셉니다.`}
+                  </Text>
                   {data.queue.length === 0 ? (
                     <Text type="secondary">대기 중인 카드가 없습니다.</Text>
                   ) : null}
@@ -609,6 +913,12 @@ export default function FocusQueuePage() {
                                 발생 {stamp(card.occurred_at)}
                               </Text>
                             </div>
+                            {/* ★★ [턴 W · UX-33 · P-188] **상세로 들어가지 않고 여기서 누른다.**
+                                초점 카드와 같은 것을 그린다 — 다만 숫자 (1)(2)(3) 은 안 붙는다
+                                (키는 초점 하나에만 든다 · 머리말). */}
+                            <div style={{ marginTop: 6 }}>
+                              {renderActions(card, false)}
+                            </div>
                           </Col>
                           <Col>
                             <ResponseClock
@@ -616,6 +926,7 @@ export default function FocusQueuePage() {
                               closedAt={card.closed_at}
                               thresholds={data.tier_thresholds_sec}
                               compact
+                              rankNote={rankNoteOf(ranks.get(card.event_id))}
                             />
                           </Col>
                           <Col>

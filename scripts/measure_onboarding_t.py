@@ -347,7 +347,9 @@ def login(page, net: Net, web: str, user: str, password: str) -> dict:
     posts = net.find("POST", "/api/v1/auth/login", since)
     # ★ [실측 2026-09-17 · 턴 T · V] 정본 표는 `GET /api/v1/auth/profile` 이라 적었으나 SPA 가 로그인 직후 부르는
     #   것은 `getProfileAPI` = `GET /api/v1/user/get-user-detail/{id}` 다(`frontend/src/features/nav/roleHome.ts:22` ·
-    #   runserver 로그에 auth/profile 0건 · get-user-detail 17건). 기대식 오류 — 둘 다 받고 어느 쪽이 섰는지 적는다.
+    #   runserver 로그에 auth/profile 0건 · get-user-detail 17건). 둘 다 받고 어느 쪽이 섰는지 적는다.
+    #   ★ [P-190 · 턴 W · 차선 Q] **정본 쪽을 고쳤다** — `onboarding_48.md` U1 1 행의 기대식이 이제
+    #     `get-user-detail` 이다. 둘 다 받는 것은 그대로 둔다(dj-core 가 언젠가 auth/profile 로 옮겨도 안 깨진다).
     profile_dj = net.ok("GET", "/api/v1/auth/profile", since)
     profile_spa = net.ok("GET", "/api/v1/user/get-user-detail", since)
     profile = profile_dj or profile_spa
@@ -529,8 +531,22 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
                  "행 목록·분모는 onboarding_48.md 에서 읽는다 — 손으로 적지 않는다"),
     }
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    with open(out_path, "w", encoding="utf-8") as f:
+    # ★★ [P-189 · 턴 W · 차선 Q] **utf-8 을 못 박고, 쓴 즉시 다시 읽어 같은 수가 나오는지 본다.**
+    #   「썼다」는 초록이 아니다 — 「다시 읽으니 같더라」가 초록이다. 깨진 증거는 JSON 으로
+    #   멀쩡히 파싱되고 **수만 틀린다**(실측 2026-09-19: FC 증거를 cp949 왕복시키면 29 → 8).
+    #   newline 을 못 박는 이유: Windows 호스트의 기본 줄바꿈 변환이 끼면 같은 회차 증거가
+    #   컨테이너판과 호스트판에서 **다른 바이트**가 되어, 해시로 대조하는 다음 사람이 헛짚는다.
+    with open(out_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(summary, f, ensure_ascii=False, indent=2)
+    with open(out_path, encoding="utf-8") as f:          # errors 없음 — 무르게 읽지 않는다
+        _back = json.load(f)
+    if _back != summary:
+        print(f"{TAG} ⚠ **쓰고 다시 읽었더니 다른 것이 나왔다** — 이 증거는 증거가 아니다 (P-189)")
+        return 2
+    if _back.get("score_over_denominator") != f"{score}/{denom}":
+        print(f"{TAG} ⚠ **다시 읽은 수가 방금 잰 수와 다르다** "
+              f"({_back.get('score_over_denominator')} ≠ {score}/{denom}) — P-189")
+        return 2
     print(f"{TAG} 두 칸 행 {len(canon['two_column'])} 중 시도 {len(results)} · 초록 {green} · 반 {half} · "
           f"빨강 {red} · 회색(못 잼) {gray} · 정본 없음 회색 {len(canon['no_canonical'])}")
     if not_measured:
@@ -547,6 +563,42 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
 
 
 # ---------------------------------------------------------------------------
+# [P-184 · 턴 W · 차선 Q] **게이트가 만든 사건은 지우지 않고 세지 않는다.**
+#
+# 세는 법은 `scripts/probe_events.py` 한 곳이 정본이다 — 여기서 새로 쓰지 않는다.
+# 두 벌을 두면 반드시 어긋나고, 어긋나면 **조용한 쪽이 이긴다**(D-212 · D-369).
+#
+# ⚠ 실물 사정 하나: `/api/dsm/events` 응답 행에는 `track_id` 칸이 **없다**
+#   (`apps/dsm/api.py:256·413` 이 내는 것은 `stream_monitor_name` 이다). 그래서
+#   정본의 첫째 셈법(`is_probe_track`)만으로는 HTTP 측정 자리에서 못 거른다.
+#   정본은 **둘째 셈법**도 들고 있다 — 게이트 전용 카메라 이름(`PROBE_CAMERA_HINT`).
+#   둘 다 그 파일 것이고, 여기서는 **빌려 쓴다**.
+# ⚠ 그리고 **뺀 수를 적는다.** 조용히 빼면 분모가 줄어든 것을 아무도 못 본다 —
+#   「지우지 않고 세지 않기」의 요점은 제외가 아니라 **분모를 밝히는 것**이다.
+#   [2026-09-19 조율자 실측: probe 사건 12건 · 미처리는 세는 칸에 따라 5 또는 8]
+# ---------------------------------------------------------------------------
+def exclude_probe_rows(rows):
+    """(사람 것만, 뺀 probe 사건 번호). 정본을 부른다 — 세는 법을 새로 쓰지 않는다."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        from probe_events import PROBE_CAMERA_HINT, is_probe_track   # noqa: E402
+    except ImportError:
+        #: 정본을 못 부르면 **거르지 않는다.** 여기서 급히 흉내 내면 그것이 두 번째 정본이 된다.
+        return list(rows or []), None
+    kept, dropped = [], []
+    for r in rows or []:
+        if not isinstance(r, dict):
+            kept.append(r)
+            continue
+        cam = str(r.get("stream_monitor_name") or "").lower()
+        if is_probe_track(r.get("track_id")) or PROBE_CAMERA_HINT in cam:
+            dropped.append(r.get("event_id"))
+        else:
+            kept.append(r)
+    return kept, dropped
+
+
+# ---------------------------------------------------------------------------
 # U1 · 관제요원 (1440)
 # ---------------------------------------------------------------------------
 def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, probe_user=""):
@@ -554,7 +606,7 @@ def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     phrase = lg["login_body_has_product_line"] and lg["login_body_has_first_time"]
     pred = (200 in lg.get("login_posts", [])) and lg.get("profile_200", False)
     out.append(result("U1#1", "/login", phrase, pred,
-                      f"login POST {lg.get('login_posts')} · 프로필 200={lg.get('profile_200')} ({lg.get('profile_endpoint') or '둘 다 없음'} — 정본은 auth/profile 이라 적었고 SPA 는 get-user-detail 을 부른다 · 기대식 오류) · 문장={lg['login_body_has_product_line']} · 처음이세요?={lg['login_body_has_first_time']}",
+                      f"login POST {lg.get('login_posts')} · 프로필 200={lg.get('profile_200')} ({lg.get('profile_endpoint') or '둘 다 없음'} — [P-190 · 턴 W] 정본을 화면이 부르는 것으로 맞췄다: get-user-detail 이 기대식이다) · 문장={lg['login_body_has_product_line']} · 처음이세요?={lg['login_body_has_first_time']}",
                       url=lg.get("url", "")))
 
     # #2 전체 상황판: 배지 셋 중 하나 + frame 200 + link-state 200 — 정본이 ◐ 유지 근거를 적었다(카메라 정상/이상 칸 없음)
@@ -566,11 +618,13 @@ def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     link_all = [r["status"] for r in net.find("GET", "/api/dsm/dashboard/link-state", m)]
     # ★ [실측 2026-09-17 · 턴 T · V · 2차 실행] 대시보드는 `link-state` 를 따로 부르지 않는다 — 배지는 `frame.data.link`
     #   (`ControlDashboard.tsx:95` · `services.py:171 dashboard_frame(... link=link_state())`) 에서 온다. 정본 표의
-    #   「`GET /api/dsm/dashboard/link-state` 200」은 기대식 오류(호출 0건인데 배지는 떴다). frame 200 + 배지가 술어다.
+    #   「`GET /api/dsm/dashboard/link-state` 200」은 기대식 오류였다(호출 0건인데 배지는 떴다). frame 200 + 배지가 술어다.
+    #   ★ [P-190 · 턴 W · 차선 Q] **정본 쪽을 고쳤다** — `onboarding_48.md` U1 2 행의 셋째 술어가 이제
+    #     `frame` 하나만 요구한다. 세 턴 동안 이 주석만 「기대식 오류」라 적고 정본은 그대로였다.
     fjson = (frame or {}).get("json") or {}
     frame_link = (fjson.get("link") or {}) if isinstance(fjson, dict) else {}
     out.append(result("U1#2", "/dsm/dashboard", bool(badge), bool(frame) and bool(frame_link),
-                      f"배지={badge} · frame 200={bool(frame)} · frame.link={frame_link.get('status') if isinstance(frame_link, dict) else frame_link} · link-state 따로 호출 {link_all} (기대식 오류 — 화면은 frame 의 link 를 그린다) · ◐ 상한(카메라 정상/이상 칸 없음 — 정본 표기)",
+                      f"배지={badge} · frame 200={bool(frame)} · frame.link={frame_link.get('status') if isinstance(frame_link, dict) else frame_link} · link-state 따로 호출 {link_all} ([P-190 · 턴 W] 정본을 화면이 부르는 것으로 맞췄다: 배지는 frame.link 에서 온다 — 따로 호출 0건이 옳다) · ◐ 상한(카메라 정상/이상 칸 없음 — 정본 표기)",
                       cap_half=True, url=url))
 
     # #3 죽은 카메라: 카메라 격자 + 자동 순회/순회 멈춤 + 응답 없음 · pulse 200 · 타일 응답 없음/마지막 응답 ≥1
@@ -689,9 +743,16 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     states = [c for c in cells if c in STATE_WORDS]
     all_unhandled = len(states) >= 1 and all(c == "미처리" for c in states)
     js = (g200[-1].get("json") if g200 else None) or {}
-    n_srv = len(js.get("events", [])) if isinstance(js, dict) else -1
+    #: [P-184] **게이트가 만든 사건은 세지 않는다** — 정본(`probe_events.py`)을 부른다.
+    srv_rows = js.get("events", []) if isinstance(js, dict) else None
+    human, probe_out = exclude_probe_rows(srv_rows)
+    n_srv = len(human) if srv_rows is not None else -1
+    probe_note = ("" if not probe_out else
+                  f" · probe 제외 {len(probe_out)}건 {probe_out[:6]} (지우지 않고 세지 않는다 · P-184)")
+    if probe_out is None:
+        probe_note = " · ⚠ probe 정본(`probe_events.py`)을 못 불러 **거르지 않았다**"
     out.append(result("U2#2", "/dsm/events?preset=unhandled", seen, bool(g200) and all_unhandled,
-                      f"GET …response_state=occurred 200={bool(g200)} (서버 {n_srv}건) · 처리 단계 칸 {len(states)} 전부 미처리={all_unhandled} {sorted(set(states))}", url=url))
+                      f"GET …response_state=occurred 200={bool(g200)} (서버 {n_srv}건{probe_note}) · 처리 단계 칸 {len(states)} 전부 미처리={all_unhandled} {sorted(set(states))}", url=url))
 
     # #4 심각 이벤트: 배지 심각 · GET snapshot 200 image/jpeg · <img> ≥1 · 주소 칸 비어 있지 않음 — 하나라도 빠지면 ◐
     #    ★★ [U1 요청 ③ · 턴 V] **그림 실린 씨앗이 없으면 이 행은 회색이다** — ◐ 도 빨강도 아니다.

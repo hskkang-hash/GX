@@ -83,6 +83,15 @@ interface BackupDeclaration {
   retention_days?: number | null;
   restore_drill?: string | null;
   source?: string;
+  /**
+   * ★ [턴 W] **고칠 자리의 이름들.** 「미선언」 배지만 보여 주면 관리자는 어디를
+   * 고쳐야 하는지 코드를 읽어야 한다 — 설정은 기본값이 아니라 선언이고,
+   * 선언에는 **이름이 있다**.
+   */
+  env_names?: string[];
+  schedule_enabled?: boolean;
+  restore_drill_enabled?: boolean;
+  reason?: string;
 }
 
 /** 선언되지 않은 칸. **빨강 하나로만 말하지 않는다** — 무엇이 안 도는지 함께 적는다. */
@@ -155,9 +164,23 @@ export default function SystemSettings() {
     () => dsmGet<DsmBackupReceipts>(dsmU56AdminEndpoint.backupReceipts),
     [],
   );
+  /**
+   * ★ [턴 W · 조율자 요청 2 · 문안은 차선 U24] **0건을 antd 기본에 맡기지 않는다.**
+   *   `isEmpty` 를 안 주면 이 자원은 `empty` 상태로 가지 않고, 표가 제 기본 문구
+   *   (「데이터 없음」)를 그린다 — 그 말은 **요청이 0건인 것**과 **표가 못 읽은 것**을
+   *   같은 그림으로 만든다.
+   * ★ 왜 「기다리면 나타납니다」가 아닌가 [실측 2026-09-19]: 이 표의 행을 만드는
+   *   자리는 저장소 전체에서 **하나**다 — `api_u56.py` 의 `restart_request` 안
+   *   `DsmSystemRequest.objects.create(...)`. 배치도 크론도 이 표에 행을 만들지
+   *   않는다(F 의 `api_f_ops.py` 는 **있는 행을 고칠** 뿐이다).
+   *   그러므로 **가만히 두면 영원히 0건**이다. 사전 기본 문구
+   *   「새 자료가 생기면 이 자리에 나타납니다」는 이 자리에서 **거짓말**이 된다
+   *   (차선 U24 가 「보고서 0건」에서 잡은 것과 같은 뿌리).
+   */
   const requests = useDsmResource<DsmSystemRequests>(
     () => dsmGet<DsmSystemRequests>(dsmU56AdminEndpoint.systemRequests),
     [],
+    { isEmpty: (v) => (v?.requests?.length ?? 0) === 0 },
   );
 
   const [restartReason, setRestartReason] = useState('');
@@ -304,7 +327,27 @@ export default function SystemSettings() {
             <Descriptions.Item label="누가 정했나">
               {backupReadable ? back?.source || UNDECLARED : NO_SIGNAL}
             </Descriptions.Item>
+            {/*
+              ★ [턴 W · WS-26 과 같은 원칙] **어디를 고치면 되는지 이름으로 적는다.**
+              「미선언」만 보여 주면 관리자는 코드를 읽어야 한다 — 설정은 기본값이
+              아니라 선언이고, 선언에는 이름이 있다. 이름은 서버가 준 것을 그대로
+              쓴다(화면이 목록을 들고 있으면 서버가 이름을 바꾼 날 둘이 갈린다).
+            */}
+            <Descriptions.Item label="어디서 선언하나">
+              {backupReadable && back?.env_names?.length
+                ? <Text code>{back.env_names.join(' · ')}</Text>
+                : NO_SIGNAL}
+            </Descriptions.Item>
           </Descriptions>
+          {backupReadable && back?.declared === false && back?.reason ? (
+            <Alert
+              style={{ marginTop: 12 }}
+              type="error"
+              showIcon
+              message="백업 선언이 완전하지 않습니다."
+              description={back.reason}
+            />
+          ) : null}
           {backupReadable ? null : (
             <Alert
               style={{ marginTop: 12 }}
@@ -419,7 +462,20 @@ export default function SystemSettings() {
               )}
             </Descriptions.Item>
             <Descriptions.Item label="어디서 선언하나">
-              {storage.data?.env_name || '—'}
+              {/*
+                ★★ [WS-26 · P-177 · 턴 W] **설정은 기본값이 아니라 선언이다.**
+                종전에는 이름(`GX_STORAGE_CAPACITY_GB`)만 한 줄로 떴다 — 이름만으로는
+                그 수가 **누가 적은 선언**인지 **코드가 지어낸 기본값**인지 갈리지
+                않는다. `capacity_source` 가 그 한 칸을 메운다(서버가 준 문장 그대로).
+                ⚠ 값은 이 턴에 **바꾸지 않았다** — 실측 50 그대로다(세종 이의 #2).
+                200 은 문서 값이고, 분모는 손으로 적지 않는다.
+              */}
+              <Space direction="vertical" size={2}>
+                <Text code>{storage.data?.env_name || '—'}</Text>
+                {storage.data?.capacity_source ? (
+                  <Text type="secondary">{storage.data.capacity_source}</Text>
+                ) : null}
+              </Space>
             </Descriptions.Item>
           </Descriptions>
         </StateBoundary>
@@ -465,6 +521,8 @@ export default function SystemSettings() {
           reason={requests.reason}
           status={requests.status}
           onRetry={requests.reload}
+          emptyText="아직 올린 재시작 요청이 없습니다."
+          emptyNext="위 칸에 사유를 적고 「재시작 요청」을 누르면 여기에 한 줄이 생깁니다. 사유 없는 요청은 다음 사람에게 「왜 내렸는지 모르는 정지」입니다."
         >
           <Table<DsmSystemRequestRow>
             style={{ marginTop: 16 }}
@@ -479,6 +537,20 @@ export default function SystemSettings() {
               { title: '상태', dataIndex: 'status_label' },
             ]}
           />
+          {/*
+            ★ [턴 W · 차선 U56] **분모를 화면이 말한다.** 이 표는 서버가 `limit`(기본 20)
+              으로 잘라 준 것을 `pagination={false}` 로 그린다 — 그래서 21건째부터는
+              **화면에서 조용히 사라진다.** 수를 안 적으면 보는 사람은 그 20줄이 전부인
+              줄 안다(「분모는 손으로 적지 않는다」의 짝: 분모를 **숨기지도** 않는다).
+            ⚠ 0건 갈래는 여기까지 오지 않는다 — 위 `isEmpty` 가 빈 상태로 보낸다.
+              그래서 이 줄은 **언제나 1 이상**을 말하고, 0 을 초록으로 적지 않는다.
+          */}
+          {requests.data && requests.data.total > (requests.data.requests?.length ?? 0) ? (
+            <Text type="secondary">
+              전체 {requests.data.total}건 중 최근 {requests.data.requests.length}건만
+              보입니다.
+            </Text>
+          ) : null}
         </StateBoundary>
       </Card>
     </Space>

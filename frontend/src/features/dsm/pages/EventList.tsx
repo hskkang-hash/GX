@@ -44,10 +44,74 @@ import {
   SEVERITY_LABEL,
   SYSTEM_EVENT_TYPES,
 } from '../severity';
-import { absolute, stamp, TIMEZONE_NOTE } from '../time';
+import { absolute, shortAbsolute, stamp, TIMEZONE_NOTE } from '../time';
 import type { EventRow, EventSummary, UpperReportFlags } from '../types';
 
 const { Text, Title } = Typography;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * 판정 실패는 **화면에 남는다** (턴 W · 차선 U1 · EventList.tsx:475 조용한 실패)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * 무엇이 문제였나
+ * ---------------
+ * 판정이 실패하면 `message.error(...)` **토스트 한 장**과 열린 채 남는 모달이
+ * 전부였다. 토스트는 몇 초 뒤 사라지고, 모달은 사람이 「취소」를 누르면 사라진다.
+ * 그러고 나면 **화면 어디에도 「이 건은 판정이 안 됐다」가 없다.** 목록의 「판정」
+ * 칸은 여전히 「미판정」이고, 그 글자는 **「아직 아무도 안 눌렀다」**로 읽힌다 —
+ * 실제로는 **눌렀는데 서버가 거절한 것**이다. 둘은 다른 사실이고, 그 차이가
+ * 교대 인계에서 통째로 사라진다.
+ *
+ * ★ **토스트는 증거가 아니다.** 증거는 사람이 **나중에 봐도 있는 것**이다.
+ *   그래서 실패는 **상태 칸**으로 남긴다 — 이 제품의 불변(「상태는 칸으로」)이다.
+ *
+ * 어디에 드나
+ * -----------
+ * 컴포넌트 **밖**(모듈 수준)에 든다. 상태에 들면 사람이 상세를 다녀오는 사이
+ * 목록이 다시 마운트되면서 **실패가 조용히 사라진다** — 그것이 고치려던 바로 그
+ * 증상이다. 새로고침(F5)에서는 지워진다: 서버가 모르는 사실을 화면이 영원히
+ * 들고 있으면 그것대로 거짓말이 되고, 저장소에 적으면 **지우는 문**이 필요해진다.
+ * 그 경계를 **글자로** 적어 둔다 — 아래 `REVIEW_FAIL_SCOPE_NOTE`.
+ *
+ * ★ **성공하면 스스로 지워진다.** 다시 눌러 성공한 건에 실패 자국이 남아 있으면
+ *   그것도 거짓말이다. 사람이 손으로 지우는 단추는 두지 않는다 — 증거를 사람이
+ *   지울 수 있으면 그것은 증거가 아니다.
+ */
+export interface ReviewFailure {
+  verdict: 'confirmed' | 'rejected';
+  /** 서버가 한 말(또는 그 자리를 대신하는 한 줄). 사람이 읽는 글자 그대로. */
+  line: string;
+  /** 실패한 시각(ISO). 「언제」가 없으면 사람은 그것을 지금 일로 읽는다. */
+  at: string;
+}
+
+const reviewFailures = new Map<number, ReviewFailure>();
+
+/** 검수 촬영과 걷기가 이 글자를 찾는다 — 손으로 다시 적지 않는다. */
+export const REVIEW_FAIL_LABEL = '판정 실패';
+export const REVIEW_FAIL_SCOPE_NOTE =
+  '이 자국은 이 브라우저의 이번 세션에만 남습니다 — 다시 눌러 성공하면 스스로 지워지고, '
+  + '새로고침하면 사라집니다. 서버 기록이 아닙니다.';
+
+function markReviewFailure(
+  eventId: number,
+  verdict: 'confirmed' | 'rejected',
+  line: string,
+): void {
+  reviewFailures.set(eventId, { verdict, line, at: new Date().toISOString() });
+}
+
+/** 지웠으면 참 — 부르는 쪽이 **다시 그릴지**를 이 값으로 정한다. */
+function clearReviewFailure(eventId: number): boolean {
+  return reviewFailures.delete(eventId);
+}
+
+/** 지금 화면에 그린 줄 중 실패 자국이 붙은 것 — **센다.** 손으로 적지 않는다. */
+function countReviewFailures(rows: EventRow[]): number {
+  let n = 0;
+  for (const row of rows) if (reviewFailures.has(row.event_id)) n += 1;
+  return n;
+}
 
 const REFRESH_MS = 15_000;
 const PAGE_SIZE = 50;
@@ -332,6 +396,13 @@ export default function EventList() {
    *  전체가 멎는 것은 「고장」으로 읽힌다. */
   const [busyId, setBusyId] = useState<number | null>(null);
 
+  /**
+   * 판정 실패 자국이 **바뀌었다**는 눈금. 자국 자체는 모듈 수준 `reviewFailures` 에
+   * 들어 있어서(위 머리말) 리액트가 스스로 다시 그리지 않는다 — 이 수가 그 일을 한다.
+   * 자국을 상태에 들면 상세를 다녀오는 사이 마운트가 다시 되면서 **증거가 사라진다.**
+   */
+  const [failureTick, setFailureTick] = useState(0);
+
   /** 주소 한 칸만 바꾼다 — 나머지 조건은 유지된다(프리셋을 바꿔도 등급 필터가 살아 있다). */
   const setParam = useCallback(
     (key: string, value?: string) => {
@@ -472,13 +543,20 @@ export default function EventList() {
               { verdict, reason },
               intentKey(`review:${eventId}:${verdict}`),
             );
+            // ★ 성공은 **칸이 말한다** — 아래 `clearReviewFailure` 가 실패 자국을
+            //   지우고, 「판정」 칸의 배지가 서버 값으로 다시 그려진다. 토스트는
+            //   「먹었다」는 즉각 신호로만 남긴다.
+            if (clearReviewFailure(eventId)) setFailureTick((n) => n + 1);
             message.success('판정을 기록했습니다.');
             events.reload();
             summary.reload();
           } catch (err) {
-            message.error(
-              userFacingError('EventList.review', err, '판정이 실패했습니다.'),
-            );
+            const line = userFacingError('EventList.review', err, '판정이 실패했습니다.');
+            // ★★ [턴 W · 차선 U1] **실패를 화면에 남긴다** — 아래 머리말 참조.
+            //   토스트보다 **먼저** 적는다: 토스트는 사라지고 칸은 남는다.
+            markReviewFailure(eventId, verdict, line);
+            setFailureTick((n) => n + 1);
+            message.error(line);
             throw err; // 모달을 닫지 않는다 — 실패했는데 닫히면 성공처럼 보인다
           } finally {
             setBusyId(null);
@@ -490,6 +568,16 @@ export default function EventList() {
   );
 
   const rows = useMemo(() => events.data?.events ?? [], [events.data]);
+
+  /**
+   * 지금 표에 그린 줄 중 **판정이 실패한 채 남아 있는 수.** 센 수다 —
+   * 「분모는 손으로 적지 않는다」와 같은 규약이다. `failureTick` 이 의존성에 있는
+   * 이유는 자국이 상태가 아니라 모듈에 들어 있기 때문이다(위 머리말).
+   */
+  const failureCount = useMemo(
+    () => countReviewFailures(rows),
+    [rows, failureTick],
+  );
 
   /**
    * ★ [턴 T · 차선 U24 · P-164 ②] **상급 보고 체크** — 목록에서 토글.
@@ -741,6 +829,23 @@ export default function EventList() {
           </Card>
         )}
 
+        {/*
+          ★★ [턴 W · 차선 U1] **실패 띠 — 표 위에 남는다.** 칸 하나에만 적으면 50줄
+            중 어디에 있는지 사람이 찾아야 한다. 수는 **센 것**이고(`failureCount`),
+            자국이 하나도 없으면 이 띠는 **아예 안 그린다** — 0을 알리는 띠는 소음이다.
+            자국이 어디까지 사는 글자인지도 여기 적는다 — 「서버가 안다」로 읽히면
+            그것대로 거짓말이다.
+        */}
+        {failureCount > 0 ? (
+          <Alert
+            type="error"
+            showIcon
+            data-gx="review-failed-banner"
+            message={`${REVIEW_FAIL_LABEL} ${failureCount}건 — 아래 표의 「판정」 칸에 남아 있습니다.`}
+            description={`다시 「실제」·「오탐」을 눌러 성공하면 그 줄의 자국은 스스로 지워집니다. ${REVIEW_FAIL_SCOPE_NOTE}`}
+          />
+        ) : null}
+
         <StateBoundary
             state={events.state}
             reason={events.reason} status={events.status}
@@ -787,10 +892,36 @@ export default function EventList() {
                 },
                 {
                   // ★ 판정은 처리 단계와 **따로** 낸다 (D-293) — 종결돼도 오탐이었음을 말한다
+                  //
+                  // ★★ [턴 W · 차선 U1] **실패가 이 칸에 남는다.** 종전에는 실패가
+                  //   토스트로만 지나가서, 토스트가 사라진 뒤 이 칸은 「미판정」이었다 —
+                  //   그 글자는 「아직 아무도 안 눌렀다」로 읽힌다. **눌렀는데 거절당한
+                  //   것**과 다른 사실이라 다른 글자를 둔다(위 머리말).
                   title: '판정',
                   dataIndex: 'verdict',
-                  width: 90,
-                  render: (v: string) => <VerdictBadge verdict={v} />,
+                  width: 150,
+                  render: (v: string, row: EventRow) => {
+                    const failed = reviewFailures.get(row.event_id);
+                    return (
+                      <Space direction="vertical" size={0}>
+                        <VerdictBadge verdict={v} />
+                        {failed ? (
+                          <Text
+                            type="danger"
+                            style={{ fontSize: 11 }}
+                            data-gx="review-failed"
+                            data-gx-event={row.event_id}
+                            title={`${absolute(failed.at)} · ${failed.line}`}
+                          >
+                            {REVIEW_FAIL_LABEL}
+                            {failed.verdict === 'rejected' ? '(오탐)' : '(실제)'}
+                            {' · '}
+                            {shortAbsolute(failed.at)}
+                          </Text>
+                        ) : null}
+                      </Space>
+                    );
+                  },
                 },
                 {
                   // ★★ [턴 S · 차선 U24] **재판정을 목록에도.** 상세에만 있던 문이다.

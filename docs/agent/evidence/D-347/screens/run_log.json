@@ -1,7 +1,7 @@
 {
   "harness": "scripts/capture_screens.py",
   "scenario": "SCREENS-1",
-  "ran_at": "2026-09-19T13:25:20",
+  "ran_at": "2026-09-19T17:39:35",
   "steps": {
     "SCREENS-1/L1": "2026-09-19T13:19:38",
     "SCREENS-1/L2": "2026-09-19T13:19:46",
@@ -24,22 +24,20 @@
     "SCREENS-1/26": "2026-09-19T13:22:21",
     "SCREENS-1/27": "2026-09-19T13:22:42",
     "SCREENS-1/28": "2026-09-19T13:22:50",
-    "SCREENS-1/9": "2026-09-19T13:23:14",
-    "SCREENS-1/11": "2026-09-19T13:23:22",
-    "SCREENS-1/12": "2026-09-19T13:23:30",
-    "SCREENS-1/15": "2026-09-19T13:23:38",
-    "SCREENS-1/16": "2026-09-19T13:23:46",
+    "SCREENS-1/9": "2026-09-19T17:36:38",
+    "SCREENS-1/11": "2026-09-19T17:36:46",
+    "SCREENS-1/12": "2026-09-19T17:36:54",
+    "SCREENS-1/15": "2026-09-19T17:37:02",
+    "SCREENS-1/16": "2026-09-19T17:37:10",
     "SCREENS-1/4": "2026-09-07T16:56:00",
     "SCREENS-1/5": "2026-09-07T16:56:08",
-    "SCREENS-1/6": "2026-09-19T13:24:31",
-    "SCREENS-1/7": "2026-09-19T13:24:39",
-    "SCREENS-1/8": "2026-09-19T13:24:48",
-    "SCREENS-1/14": "2026-09-19T13:25:04",
-    "SCREENS-1/29": "2026-09-19T13:23:54",
-    "SCREENS-1/30": "2026-09-19T13:25:12",
-    "SCREENS-1/31": "2026-09-19T13:25:20"
+    "SCREENS-1/6": "2026-09-19T17:38:45",
+    "SCREENS-1/7": "2026-09-19T17:38:54",
+    "SCREENS-1/8": "2026-09-19T17:39:02",
+    "SCREENS-1/14": "2026-09-19T17:39:18",
+    "SCREENS-1/29": "2026-09-19T17:37:18",
+    "SCREENS-1/30": "2026-09-19T17:39:26",
+    "SCREENS-1/31": "2026-09-19T17:39:35"
   },
-  "page_errors": [
-    "Minified React error #185; visit https://react.dev/errors/185 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
-  ]
+  "page_errors": []
 }

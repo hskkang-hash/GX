@@ -1,0 +1,9 @@
+{
+  "deploy_commit": "4479648c8883c2e0ca8e2d51bb1b702fb28a079a",
+  "deployed_at": "2026-09-19T17:32:18+09:00",
+  "deployed_by": "scripts/deploy.sh",
+  "server": "gx-shell:/app/_fe_dist -> http://localhost:3002",
+  "gate_evidence": "docs/agent/evidence/P-64/bundle_gate_20260919_173013.json",
+  "deploy_log": "docs/agent/evidence/P-64/deploy_20260919_173013.log",
+  "note": "P-72 — 무엇을 배치했는가의 정본. 번들 해시 게이트는 HEAD 가 아니라 이 커밋과 맞춘다."
+}

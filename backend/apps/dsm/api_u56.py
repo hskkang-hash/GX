@@ -44,9 +44,35 @@ class StorageOut(Schema):
     reason: str = ""
     used_note: str = ""
     env_name: str = ""
+    #: ★ [WS-26 · 턴 W] 이 수가 **선언인가 기본값인가**, 그리고 어디에 적혀 있는가.
+    #: 값만 보여 주면 `50 GB` 가 누가 정한 수인지 화면에서 사라진다 —
+    #: 「설정은 기본값이 아니라 선언이다」.
+    capacity_source: str = ""
     #: ★ [P-177] 이 %가 **무엇을 나눈 수인지** 한 문장. 상한은 선언값이고 사용량은
     #: 객체저장 합계라 둘이 같은 그릇이 아니다 — 그 사실을 화면이 말해야 한다.
     capacity_note: str = ""
+
+
+class BackupDeclarationOut(Schema):
+    """백업 **선언**의 응답 모양 (턴 W · `GET /api/dsm/ops/backup/declaration`).
+
+    ★ 빈 문자열이 값이다 — 미선언 목적지는 `""` 이고 `"/backup"` 같은 것을 지어내지
+      않는다(P-67: 보존 일수·백업 목적지·일정에 **코드 기본값 없음**).
+    ★ `env_names` 를 싣는 이유: 화면이 **고칠 자리의 이름**을 말해야 한다. 이름을
+      감추면 「미선언」 배지를 본 사람이 어디를 고쳐야 하는지 코드를 읽어야 한다.
+    """
+
+    declared: bool
+    destination: str = ""
+    schedule: str = ""
+    schedule_enabled: bool = False
+    retention_days: int | None = None
+    restore_drill: str = ""
+    restore_drill_enabled: bool = False
+    source: str = ""
+    env_names: list[str] = []
+    verdict: str = "UNDECLARED"
+    reason: str = ""
 
 
 class CameraAddressOut(Schema):
@@ -759,6 +785,42 @@ class DsmU56API:
         if not access.allowed:
             raise HttpError(403, access.reason)
         return storage_declaration()
+
+    # ── 백업 **선언**을 읽는 자리 — 화면이 넉 달째 부르던 404 를 닫는다 ──────
+    #
+    # ★ [실측 2026-09-19] `/dsm/system` 화면은 `GET /api/dsm/ops/backup/declaration`
+    #   을 **처음부터 부르고 있었고** 서버에 그 문이 없어 404 였다
+    #   (`docs/agent/evidence/CR-USER/U5U6/evidence_index.json` U5-BACKUP-404 ·
+    #   `P-74/README.md:199` · `UX-WALK/runs/walk_20260919T062846.json`).
+    #   화면은 그 404 를 **회색(「백엔드 신호 대기」)**으로 그려 두었다 — 빨강으로
+    #   그렸으면 「미선언」과 뭉쳐졌을 것이다. 그 회색을 없애는 것이 이 문이다.
+    # ★ **읽기 문 하나다.** 쓰기 면이 아니다 — 선언하는 자리는 여전히 환경
+    #   (`OPS_BACKUP_*`)이고, 이 문은 그 선언을 **보여 줄 뿐** 바꾸지 않는다.
+    #   (선등록 ㉡ 은 「읽기 문 **둘**」로 봤지만 실측한 404 URL 은 **하나**다.)
+    # ⚠ 경로 함정 확인 [실측]: `api/dsm/` 밑에 **첫 조각이 변수인 라우트가 0개**다 —
+    #   `/ops/...` 를 삼킬 와일드카드가 앞 컨트롤러에 없다(라우트 삼킴 없음).
+    #   경로 글자는 화면이 부르는 그대로다. 한 자라도 바꾸면 404 가 그대로 남는다.
+    @route.get("/ops/backup/declaration", auth=JwtOrInboundKey(),
+               response=BackupDeclarationOut)
+    @tenant_scoped(required=False,
+                   reason="운영 기반의 사실(백업 목적지·주기·보존)이다. "
+                          "테넌트 자료가 아니라 관리자에게만 연다 — guard_setting 이 문지기")
+    def backup_declaration_view(self, request):
+        """백업 목적지 · 일정 · 보존 기간 · 복구 시험 — **선언이 없으면 그 말을 낸다.**
+
+        ★ 판정은 `common.ops_tasks.backup_declaration()` **하나**다. 회수증 문
+          (`/system/backup-receipts`)과 갈라 둔 이유: **「정했다」와 「남았다」는
+          다른 사실**이다. 선언이 완전해도 회수증이 0장일 수 있고, 그 반대도 있다.
+        """
+        from apps.dsm.services import guard_setting
+        from common.ops_tasks import backup_declaration
+
+        scope = _scope(request)
+        access = guard_setting(
+            scope=scope, action="read:system:backup-declaration", api_method="GET")
+        if not access.allowed:
+            raise HttpError(403, access.reason)
+        return backup_declaration()
 
     # ── API-03·04 「키 범위」 ────────────────────────────────────────────────
     #

@@ -456,6 +456,26 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/system/storage"),                                     # U56 · 상한·사용률(미선언이면 null + 문장)
     ("GET", "/api/dsm/settings/api-keys/{int:key_id}/scopes"),              # U56 · API-03 범위 조회
     ("POST", "/api/dsm/settings/api-keys/{int:key_id}/scopes"),             # U56 · API-03 범위 저장 ★쓰기
+    # ── 턴 W (2026-09-19 · 차선 U56) ─────────────────────────────────────────
+    # ★ **하나가 늘었다.** 이 줄을 손으로 더하는 일이 곧 「진입면을 넓힌다」는 선언이다 —
+    #   그리고 이 시험은 **제 값을 했다**: U56 자기 시험 94/0 은 이 문을 못 봤고, 옆 차선의
+    #   넓은 회귀가 여기서 멈춰 세웠다. **자기 문만 돌리면 자기 문만 보인다.**
+    #
+    #   무엇인가: `/dsm/system` 화면이 **넉 달 동안 404 를 받아 온 바로 그 경로**다
+    #   (U5-BACKUP-404). 화면은 그 404 를 빨강이 아니라 회색(「백엔드 신호 대기」)으로
+    #   그렸고, 그래서 아무도 안 고쳤다. 이 문이 그 회색을 없앴다.
+    #   증거: docs/agent/evidence/U5-BACKUP-404/ (눌러서 잰 판 · 분모 11건 · 404 0건).
+    #
+    #   문지기: `@tenant_scoped(required=False)` + `JwtOrInboundKey()`(**기본값 = 키 거절**)
+    #           + `guard_setting`(관리자만 · 감사 1행). 익명 401 · 역할 없음 403.
+    #   ★★ **이 문은 들어오는 키를 받지 않는다.** 그래서 `test_f05_inbound_api_key.py` 의
+    #      `INBOUND_KEY_ALLOWED` 는 **한 칸도 안 건드렸다** — 그 목록이 이 턴에 바뀐 것은
+    #      차선 U3 의 `cameras/pulse` 때문이지 이 줄 때문이 아니다.
+    #   ★ **읽기 전용이다.** 같은 경로의 POST 는 405 [실측 · nginx:8500]이고, 그 사실을
+    #     지키는 시험이 따로 있다(tests/test_u56_backup_declaration.py
+    #     ::test_post_is_not_opened_on_this_path). 여기에 POST 줄이 생기면 그때는
+    #     **쓰기 면이 난 것**이고 선등록 표에 표 밖 1건으로 적어야 한다.
+    ("GET", "/api/dsm/ops/backup/declaration"),                             # U56 · 백업 선언 읽기(U5-BACKUP-404 닫음)
 })
 
 #: 인증 없이 열리는 진입면 — **이름과 사유로** 잠근다. 늘면 여기 사유가 먼저 늘어야 한다.

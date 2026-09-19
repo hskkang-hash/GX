@@ -25,7 +25,7 @@ import {
   FALLBACK_TIER_THRESHOLDS_SEC,
   TIER_COLOR,
   TIER_FONT_PX,
-  TIER_LABEL,
+  tierLabel,
   tierOf,
 } from '../time';
 
@@ -45,6 +45,18 @@ interface Props {
   autoClosed?: boolean;
   /** 작게 그린다(표 안 등). 문턱은 그대로이고 배율만 줄인다. */
   compact?: boolean;
+  /**
+   * ★★ [턴 W · 차선 U1 · P-188] **순위 한 줄 — 부르는 쪽이 준다.**
+   *
+   * 「가장 오래 기다린 사건」은 이 컴포넌트가 할 수 없는 말이다. 이 컴포넌트는 카드
+   * **한 장**만 보고, 순위는 카드를 **전부 봐야** 나오는 사실이기 때문이다. 종전에는
+   * 단계 4 이름에 그 문장이 박혀 있어서, 단계 4 인 카드가 열 장이면 **열 장 전부가**
+   * 자기가 가장 오래 기다렸다고 적었다.
+   *
+   * 그래서 순위는 큐 화면(`FocusQueue.tsx`)이 서버가 준 `elapsed_seconds` 로 **세어서**
+   * 여기에 넣어 준다. 안 넣으면 **아무 순위도 말하지 않는다** — 모르는 것을 적지 않는다.
+   */
+  rankNote?: string;
 }
 
 export default function ResponseClock({
@@ -53,6 +65,7 @@ export default function ResponseClock({
   thresholds,
   autoClosed = false,
   compact = false,
+  rankNote = '',
 }: Props) {
   const [now, setNow] = useState(() => Date.now());
 
@@ -110,14 +123,24 @@ export default function ResponseClock({
             fontVariantNumeric: 'tabular-nums',
           }}
           // 크기는 스크린리더가 못 읽는다 — 단계를 글자로도 남긴다.
-          aria-label={`경과 ${duration(elapsed)} · ${TIER_LABEL[tier]} · 단계 ${tier}/4`}
+          aria-label={
+            `경과 ${duration(elapsed)} · ${tierLabel(tier, table)} · ` +
+            `단계 ${tier}/${table.length}${rankNote ? ` · ${rankNote}` : ''}`
+          }
         >
           {duration(elapsed)}
         </Text>
+        {/* ★ 단계 이름은 **서버 문턱으로 지어 낸 것**이고, 순위는 부르는 쪽이 준 것만
+            적는다. 둘 다 없는 숫자를 지어내지 않는다 (턴 W · P-188). */}
         <Text type="secondary" style={{ fontSize: compact ? 11 : 12 }}>
-          {TIER_LABEL[tier]}
+          {tierLabel(tier, table)}
           {usingFallback ? ' · 폴백 문턱' : ''}
         </Text>
+        {rankNote ? (
+          <Text type="secondary" style={{ fontSize: compact ? 11 : 12 }} data-gx="clock-rank">
+            {rankNote}
+          </Text>
+        ) : null}
       </Space>
     </Tooltip>
   );

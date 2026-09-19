@@ -60,7 +60,7 @@ if not user.token:                       # ← JWT 는 멀쩡한데 여기서 �
 |---|---|---|---|
 | **웹 UI (SPA)** | `POST /api/v1/auth/login` → `user.token` + JWT | **200** | 빌드 번들에 `/api/v1/auth/login`·`/api/v1/auth/refresh-token` 만 있고 `/api/token/pair` **0건** (`backend/_fe_dist/assets/*.js`) |
 | **모바일 M1~M3** | 같은 문 — 화면은 이미 있고 같은 `loginAPI` 를 쓴다 | **미착수** | `frontend/src/features/LoginMobile/LoginMobile.tsx` (`loginAPI(username, password, end_previous_session)`) |
-| **외부 API U6** | `X-API-Key` — 선언한 라우트에서만 | ★ **발급 문이 도달 불가** | `common/inbound_api_key.py:66` · `apps/dsm/api.py:135` (§3) |
+| **외부 API U6** | `X-API-Key` — 선언한 라우트에서만 | ★ **발급 문은 열렸다(턴 V)** · 키가 닿는 문은 **아직 `/api/dsm/events` 하나** | `common/inbound_api_key.py:97-130` · `apps/dsm/api.py:188` (`inbound_key=True` 가 붙은 **유일한** 라우트) · §3 |
 | **게이트·판정기** | `POST /api/v1/auth/login` (`end_previous_session:true`) | **200** | `scripts/verify_route_alive.py::LOGIN_PATHS` |
 | **시드** | HTTP 를 안 쓴다 — 서비스 함수를 직접 부른다 | 해당 없음 | `stream_monitors/management/commands/seed_dsm_events.py` |
 | **화면 캡처 시험** | `/api/token/pair` → `/api/v1/auth/logout` (강제 로그아웃) | **200 · 실제로 지워진다** | `tests/test_screens_browser.py::_force_logout` (§4) |
@@ -238,8 +238,14 @@ GET 여섯 도메인은 **그대로다**: `thresholds`·`zones`·`recipients`·`
 - 화면은 이미 있다: `frontend/src/features/LoginMobile/LoginMobile.tsx` —
   **다시 만들지 않는다**(D-333 ④). 붙일 것은 M1~M3 의 나머지다.
 - 무계정 링크 금지는 그대로.
-- ⚠ 외부 API 키가 필요한 모바일 기능이 생기면 §3 이 먼저 풀려야 한다 —
-  **지금은 키를 HTTP 로 발급할 수 없다.**
+- ⚠ 외부 API 키가 필요한 모바일 기능이 생기면 §3 이 먼저 풀려야 한다.
+  **정정 [실측 2026-09-19 · 턴 W · 차선 U56]:** 「지금은 키를 HTTP 로 발급할 수 없다」는
+  **더 이상 참이 아니다** — 턴 V 가 `{domain}` 삼킴을 고쳐 `POST /api/dsm/settings/api-keys`
+  가 도달한다(익명 **401** · 자격 있으면 422/200 · nginx:8500 에서 잰 수).
+  참인 것은 **그 다음 줄**이다: 발급한 키가 **닿는 문이 하나뿐**이다.
+  `inbound_key=True` 를 선언한 라우트는 저장소 전체에서 `GET /api/dsm/events` **하나**이고,
+  `/api/dsm/stats/*`(여덟) · `/api/dsm/cameras/pulse` 는 **키에게 401** 이다.
+  「키를 못 만든다」와 「키가 갈 데가 없다」는 다른 사실이다 — 뭉치면 고친 것을 못 본다.
 
 ---
 

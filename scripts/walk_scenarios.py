@@ -46,9 +46,11 @@
 from __future__ import annotations
 
 import argparse
+import atexit
 import json
 import os
 import sys
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -374,6 +376,46 @@ def judge(result: dict) -> list:
                     "**세션이 열린 채다.** 이 환경은 동시 접속 1개다 — 물고 있으면 "
                     "다른 차선이 화면에서 튕긴다"))
 
+    #: ★★ [턴 W · 차선 Q] **열린 채 끝난 세션 0.** 위 줄과 다른 것을 잰다 —
+    #:   위는 「걸음 묶음마다 로그아웃을 불렀나」이고, 이것은 **걷기가 어떻게 끝났든
+    #:   남은 것이 있나**다. 도중에 죽은 판에서는 위 줄이 아예 안 적히고(`None`),
+    #:   그때 남은 세션을 세는 것은 이 줄뿐이다.
+    #: ⚠ **분모를 같이 적는다.** 한 번도 로그인 안 한 판도 「열린 채 0」이라, 분모 없이
+    #:   0 만 적으면 그 0 이 초록으로 읽힌다(분모 0인 초록은 초록이 아니다).
+    tally = result.get("sessions")
+    if not tally:
+        out.append(("세션이 열린 채 끝난 것 0", False,
+                    "**못 쟀다** — 세션 셈이 없다(이 판은 등록부를 안 지났다)"))
+    else:
+        opened, left = tally.get("opened", 0), tally.get("left_open", 0)
+        at_exit = tally.get("closed_at_exit", 0)
+        if not opened:
+            out.append(("세션이 열린 채 끝난 것 0", False,
+                        "**분모가 0이다** — 이 판은 한 번도 로그인하지 않았다. "
+                        "0/0 은 초록이 아니다"))
+        else:
+            out.append(("세션이 열린 채 끝난 것 0", left == 0,
+                        f"연 {opened} · 닫은 {tally.get('closed', 0)} · **열린 채 {left}**"
+                        + (f" (그중 마지막 그물이 닫은 것 {at_exit} — 정상 길이 못 닫고 "
+                           f"`atexit` 가 닫았다는 뜻이다)" if at_exit else "")
+                        + ("" if left == 0 else
+                           " — **다음 사람이 로그인을 못 한다.** 손으로 그 계정을 "
+                           "로그아웃시키고 다시 걷는다")))
+
+    #: ★★ [턴 W · 차선 Q · ㉣] **안 걸은 것은 이름과 사유로 적는다.**
+    #:   「안 걸었다」와 「걸었는데 괜찮다」는 다르다. 목록에서 지우면 그 빈자리가
+    #:   다음 사람 눈에 **초록**으로 보인다 — 아무도 그 자리를 다시 안 묻게 된다(D-264).
+    #:   그래서 이 줄은 **언제나 회색**이다: 통과로도 실패로도 세지 않고, 이름을 적는다.
+    not_walked = result.get("not_walked") or NOT_WALKED
+    if not not_walked:
+        out.append(("안 걷기로 한 것 0 — 전부 걷는다", True, "안 걷는 것이 없다"))
+    else:
+        out.append((f"안 걷기로 한 것 {len(not_walked)} — **사유가 이름으로 등재돼 있다**",
+                    all(bool(v) for v in not_walked.values()),
+                    " · ".join(f"{k}: {v}" for k, v in sorted(not_walked.items()))
+                    + " — ⚠ **이 자리는 초록이 아니다.** 「안 걸었다」이지 "
+                      "「걸었는데 괜찮다」가 아니다"))
+
     names = result.get("names_from_perf_load")
     out.append(("시나리오 이름을 빌려 왔다", bool(names),
                 f"perf_load.SCENARIOS ← {names}" if names else
@@ -392,6 +434,8 @@ def self_test() -> int:
         "walks": {k: {"completed": True, "clicks": 1, "ms": 1000} for k in WALKS},
         "console_errors": {k: [] for k in WALKS},
         "session_closed": True,
+        "sessions": {"opened": 2, "closed": 2, "left_open": 0, "closed_at_exit": 0},
+        "not_walked": NOT_WALKED,
         "names_from_perf_load": {"W1": "목록", "W2": "대시보드", "W3": "단일 초점"},
     }
     got = names(judge(green))
@@ -405,16 +449,160 @@ def self_test() -> int:
         bad.append("**아무것도 안 걸었는데** 통과로 읽는다 — 0건은 통과가 아니다 (D-301)")
 
     # ── 음성 갈래 ──────────────────────────────────────────────────────────
-    for key, value, expect_red in (
+    negatives = (
         ("walks", {**green["walks"], "W3": {"completed": False, "failed_at": 2}},
          WALKED_LABEL),
         ("console_errors", {"W1": ["TypeError: x is not a function"]},
          "분류되지 않은 콘솔 오류 0건"),
         ("session_closed", False, "세션을 닫았다"),
         ("names_from_perf_load", {}, "시나리오 이름을 빌려 왔다"),
-    ):
+        #: ★★ [턴 W · ㉢] 걷기가 **도중에 죽은** 판. 걸음 묶음의 `finally` 가 아예 안 돌아
+        #:   `session_closed` 는 `None` 이고, 남은 세션은 등록부에만 있다.
+        ("sessions", {"opened": 2, "closed": 1, "left_open": 1, "closed_at_exit": 0},
+         "세션이 열린 채 끝난 것 0"),
+        #: ★ **분모 0** — 한 번도 로그인 안 한 판을 「열린 채 0」이라고 초록으로 주지 않는다.
+        ("sessions", {"opened": 0, "closed": 0, "left_open": 0, "closed_at_exit": 0},
+         "세션이 열린 채 끝난 것 0"),
+        #: ★ 셈 자체가 없는 판(등록부를 안 지났다)은 **못 쟀다**이지 초록이 아니다.
+        ("sessions", None, "세션이 열린 채 끝난 것 0"),
+        #: ★★ [턴 W · ㉣] 사유 없는 `NOT_WALKED` 는 **면제**다. 이름만 있고 왜가 없으면
+        #:   다음 사람이 그 자리를 못 묻는다 — 빨강이어야 한다.
+        ("not_walked", {"W4": ""},
+         "안 걷기로 한 것 1 — **사유가 이름으로 등재돼 있다**"),
+    )
+    _N_NEGATIVE = len(negatives)
+    for key, value, expect_red in negatives:
         if names(judge(dict(green, **{key: value}))).get(expect_red):
             bad.append(f"{key}={str(value)[:40]!r} 인데 「{expect_red}」를 통과로 읽는다")
+
+    #: ★ [턴 W · ㉢] **마지막 그물이 닫은 것은 사유에 남는다** — 정상 길이 못 닫았다는
+    #:   뜻이고, 그 사실이 지워지면 다음 사람이 `finally` 가 잘 돈다고 믿는다.
+    net_row = [w for (n, _o, w) in judge(dict(green, sessions={
+        "opened": 1, "closed": 1, "left_open": 0, "closed_at_exit": 1}))
+        if n == "세션이 열린 채 끝난 것 0"]
+    if not net_row or "atexit" not in net_row[0]:
+        bad.append("마지막 그물(`atexit`)이 닫은 사실이 사유에 안 남는다 — "
+                   "정상 길이 못 닫은 것이 조용해진다")
+
+    #: ★★ [턴 W · ㉢] **등록부가 실제로 도는가** — 판정 규칙이 아니라 기계를 누른다.
+    #:   ① 로그인해 놓고 죽은 판을 흉내 낸다(닫는 법만 등록) ② `close_open_sessions()` 가
+    #:   그것을 닫는가 ③ 닫히지 않는 자리는 **열린 채**로 세는가.
+    _saved_open, _saved_tally = list(_OPEN_SESSIONS), dict(_SESSION_TALLY)
+    _saved_log = list(_SESSION_LOG)
+    #: ★ 세션 검사 수는 **세어서** 적는다(손으로 적으면 곧 거짓말이 된다).
+    #:   아래 블록이 실제로 누르는 자리: 마지막 그물 · 셈 · 사람 셋 동시 · 음성(둘 중 하나) ·
+    #:   예외를 던지는 자리 · 브라우저 401 → 정본 · 셋 다 401 → 정본 셋 · 둘 다 짐.
+    _N_SESSION = 8
+
+    def _reset():
+        _OPEN_SESSIONS.clear()
+        _SESSION_LOG.clear()
+        _SESSION_TALLY.update(opened=0, closed=0, left_open=0, closed_at_exit=0)
+
+    def _fake(who, ok, user=""):
+        """닫는 법이 `(되었나, 왜)` 를 돌려주는 가짜 세션. 정본 길은 타지 않게 이름을 비운다."""
+        return {"who": who, "username": user, "browser": (lambda: (ok, "시험용"))}
+
+    try:
+        _reset()
+        rang = []
+        _session_opened({"who": "route", "username": "",
+                         "browser": (lambda: (bool(rang.append("닫았다")) or True, "시험용"))})
+        if close_open_sessions() != 0 or rang != ["닫았다"]:
+            bad.append("등록부에 남은 세션을 마지막 그물이 **안 닫는다** — "
+                       "걷기가 도중에 죽으면 세션이 남는다")
+        if _SESSION_TALLY["closed_at_exit"] != 1:
+            bad.append("마지막 그물이 닫은 것을 세지 않는다")
+
+        #: ★★ [턴 W · 조율자 실측] **세션이 여럿일 때가 진짜 시험이다.**
+        #:   걷기는 사람 셋으로 로그인한다(W1~W3 `route` · W5 `u2` · W6 `u5`).
+        #:   등록부가 한 자리만 들면 뒤 사람이 앞 사람을 덮고 **덮인 것은 아무도 안 닫는다** —
+        #:   실물이 정확히 그랬다: **연 3 · 닫은 1 · 열린 채 2**.
+        #:   하나만 여는 시험으로는 이 결함이 **절대** 안 잡힌다. 그래서 셋을 연다.
+        _reset()
+        for who in ("route", "u2", "u5"):
+            _session_opened(_fake(who, True))
+        if len(_OPEN_SESSIONS) != 3:
+            bad.append(f"★ 등록부가 세션 셋을 **동시에 들지 못한다**(든 것 {len(_OPEN_SESSIONS)}) — "
+                       f"뒤 사람이 앞 사람을 덮는다. 조율자 실측: 연 3 · 닫은 1 · 열린 채 2")
+        if close_open_sessions() != 0 or _SESSION_TALLY["closed"] != 3:
+            bad.append(f"★ 셋을 열었는데 **전부 닫지 않는다**(닫은 {_SESSION_TALLY['closed']}) — "
+                       f"이것이 턴 W 에 실제로 난 결함이다")
+
+        #: ★ **음성 대조** — 둘 열고 하나만 닫히면 빨강이어야 한다.
+        #:   이것이 뒤집히면 「열린 채 0」이 아무것도 재지 않는다.
+        _reset()
+        _session_opened(_fake("u2", True))
+        _session_opened(_fake("u5", False))
+        left = close_open_sessions()
+        if left != 1 or _SESSION_TALLY["left_open"] != 1 or _SESSION_TALLY["closed"] != 1:
+            bad.append("둘 중 하나가 안 닫혔는데 **열린 채 1** 로 세지 않는다 — "
+                       "못 닫은 것이 조용히 0 이 된다")
+        if not names(judge(dict(green, sessions=dict(_SESSION_TALLY)))).get(
+                "세션이 열린 채 끝난 것 0") is False:
+            pass
+        if names(judge(dict(green, sessions=dict(_SESSION_TALLY)))).get(
+                "세션이 열린 채 끝난 것 0"):
+            bad.append("**연 2 · 닫은 1 · 열린 채 1** 을 판정이 통과로 읽는다")
+
+        #: ★ 닫기가 **예외를 던져도** 다음 것까지 닫고, 실패는 센다.
+        _reset()
+        def _boom():
+            raise RuntimeError("로그아웃이 안 된다")
+        _session_opened({"who": "u2", "username": "", "browser": _boom})
+        _session_opened(_fake("u5", True))
+        if close_open_sessions() != 1 or _SESSION_TALLY["closed"] != 1:
+            bad.append("한 세션이 예외로 죽으면 **다음 세션까지 못 닫는다**")
+
+        #: ★★★ **출생 표본 (턴 W · ㉢ 2차)** — *이것이* 실제로 난 결함이다.
+        #:   [실측 2026-09-19 · 조율자] 걷기가 사람 셋으로 처음 걸린 회차:
+        #:       연 3 · 닫은 1 · **열린 채 2** · `[DEPLOY] 실패(walk exit 1) — 되돌렸다`
+        #:   원인은 등록부가 아니었다. **브라우저 길이 진 것**이다 —
+        #:   `localStorage.userInfo` 에 토큰이 없어(이 앱은 쿠키에 든다) 로그아웃이
+        #:   **조용히 401** 로 실패했다. `walk_states.py:774` 가 턴 G 에 같은 것을 이미
+        #:   적어 두고 정본(`_release_session`)으로 옮겼는데 **이 파일만 옛 길에 남아 있었다.**
+        #:   종전 코드는 그 `False` 를 받고 **그냥 열린 채로 셌다** — 다음 길이 없었다.
+        #:   ⚠ 「셋을 동시에 드는가」만 보는 시험으로는 이 결함이 **안 잡힌다**(등록부는
+        #:     이미 셋을 들고 있었다). 그래서 여기서 **브라우저 길을 일부러 지게** 만든다.
+        _saved_rel = _release_session_for
+        try:
+            globals()["_release_session_for"] = lambda u: (bool(u), "시험용 정본")
+            _reset()
+            entry = {"who": "u2", "username": "gxseed_u2_manager",
+                     "browser": (lambda: (False, "POST /api/v1/auth/logout → 401"))}
+            ok, how = _close_session(entry)
+            if not ok or how != "release":
+                bad.append("★ 브라우저 로그아웃이 **401 로 지면 정본으로 못 넘어간다** — "
+                           "이것이 턴 W 에 「연 3 · 닫은 1 · 열린 채 2」를 만든 그 자리다")
+            if "401" not in " ".join(_SESSION_LOG):
+                bad.append("브라우저 길이 진 사유(401)가 **기록에 안 남는다** — "
+                           "조용한 실패가 이 결함을 한 턴 넘게 숨겼다")
+            #: 셋 다 브라우저 길이 져도 **셋 다 닫혀야 한다**(그날의 판을 그대로 다시 돌린다)
+            _reset()
+            for who, user in (("route", "gxseed_u4_official"),
+                              ("u2", "gxseed_u2_manager"), ("u5", "gxseed_u5_sysop")):
+                _session_opened({"who": who, "username": user,
+                                 "browser": (lambda: (False, "401"))})
+            if close_open_sessions() != 0 or _SESSION_TALLY["closed"] != 3:
+                bad.append(f"★ 브라우저 길이 셋 다 져도 정본으로 셋을 닫아야 한다 — "
+                           f"닫은 {_SESSION_TALLY['closed']} · 열린 채 {_SESSION_TALLY['left_open']}")
+            #: **음성 대조** — 정본까지 지면 그때는 진짜 「열린 채」다. 여기가 뒤집히면
+            #:   이 칸은 「언제나 초록」이 된다.
+            globals()["_release_session_for"] = lambda u: (False, "시험용 정본도 진다")
+            _reset()
+            _session_opened({"who": "u2", "username": "gxseed_u2_manager",
+                             "browser": (lambda: (False, "401"))})
+            if close_open_sessions() != 1 or _SESSION_TALLY["left_open"] != 1:
+                bad.append("둘 다 졌는데 **열린 채**로 세지 않는다 — 이 칸이 언제나 초록이 된다")
+        finally:
+            globals()["_release_session_for"] = _saved_rel
+    finally:
+        _OPEN_SESSIONS.clear()
+        _OPEN_SESSIONS.extend(_saved_open)
+        _SESSION_TALLY.clear()
+        _SESSION_TALLY.update(_saved_tally)
+        _SESSION_LOG.clear()
+        _SESSION_LOG.extend(_saved_log)
 
     # ── **못 쟀다 ≠ 거짓** ─────────────────────────────────────────────────
     # ★ **알려진 잡음만 있는 표본은 초록**이어야 한다 — 아니면 목록이 목록이 아니다.
@@ -519,7 +707,11 @@ def self_test() -> int:
         for b in bad:
             print("    " + b)
         return EXIT_FAIL
-    print(f"{TAG} 자기시험 통과 — 초록 1 · 출생 표본 1 · 음성 4 · 판정 불가 2 · 걸음표 검사 · "
+    #: ★ [턴 W] 음성 갈래 수를 **손으로 적지 않는다** — 갈래를 더하고 이 숫자를 안 고치면
+    #:   그 줄이 곧 거짓말이 된다(「분모는 손으로 적지 않는다」).
+    print(f"{TAG} 자기시험 통과 — 초록 1 · 출생 표본 1 · 음성 {_N_NEGATIVE} · "
+          f"세션 등록부 실측 {_N_SESSION} (사람 셋 · 브라우저 길이 져도 닫는다) · "
+          f"판정 불가 2 · 걸음표 검사 · "
           f"대장 합치기 4 · **이름 공간 검사**(빌린 {len(BORROWED_FROM_PERF)} + 걷기 전용 "
           f"{len(WALK_ONLY_NAMES)} · 부딪히면 멈춘다) · 걷기 {len(WALKS)}개 전부 임자·폭이 있다")
     return EXIT_OK
@@ -528,6 +720,135 @@ def self_test() -> int:
 # ═══════════════════════════════════════════════════════════════════════════
 # 실측 — 브라우저를 열고 **사람처럼** 지나간다
 # ═══════════════════════════════════════════════════════════════════════════
+#: ★★ [턴 W · 차선 Q] **열어 둔 세션의 등록부.** 이 환경은 계정당 세션 1개라,
+#: 걷기가 세션을 물고 끝나면 **다음 사람이 로그인을 못 한다**(또는 앞 사람을 튕긴다).
+#:
+#: 종전에도 걸음 묶음마다 `finally: _logout(...)` 이 있었다. 그런데 그 `finally` 는
+#: **그 `try` 에 들어간 뒤에만** 돈다 — 로그인은 성공했는데 그 다음에 프로세스가
+#: 통째로 죽으면(KeyboardInterrupt · SystemExit · 주간 한도 · 판정기 밖 예외)
+#: 그 자리는 실행되지 않고 세션이 열린 채 남는다. **그것이 진짜 시험이다.**
+#:
+#: 그래서 등록부를 둔다: 로그인이 서면 **닫는 법**을 여기 적고, 닫으면 지운다.
+#: 프로세스가 어떻게 끝나든 `atexit` 가 남은 것을 닫는다.
+#: ⚠ 등록부가 비어 있는 것이 초록이 아니다 — **한 번도 로그인 안 한 판**도 비어 있다.
+#:   그래서 「연 수 · 닫은 수 · 열린 채 끝난 수」 셋을 따로 센다(분모 없는 0 을 안 만든다).
+_OPEN_SESSIONS: list = []
+_SESSION_TALLY = {"opened": 0, "closed": 0, "left_open": 0, "closed_at_exit": 0}
+#: 닫을 때마다 **어떻게** 닫혔는지. 다음 사람이 추측하지 않게 한다.
+_SESSION_LOG: list = []
+
+
+def _session_opened(entry: dict) -> dict:
+    """세션 하나를 등록한다. `entry` 는 **닫는 데 필요한 것 전부**를 들고 있다.
+
+    ★ 등록부는 **여럿**을 든다. 걷기는 사람마다 로그인하므로(W1~W3 `route` · W5 `u2` ·
+      W6 `u5`) 한 자리만 들면 뒤 사람이 앞 사람을 덮고, **덮인 세션은 아무도 안 닫는다.**
+    """
+    _OPEN_SESSIONS.append(entry)
+    _SESSION_TALLY["opened"] += 1
+    return entry
+
+
+def _release_session_for(username: str):
+    """★★ **정본 닫기** — `capture_screens._release_session` 을 **빌린다**(D-369).
+
+    [실측 2026-09-06 · 턴 G · `walk_states.py:774` 가 이미 적어 둔 것]
+    브라우저의 `localStorage.userInfo` 에서 토큰을 꺼내 `POST /auth/logout` 을 부르는
+    길은 **이 앱에서 안 된다** — 토큰은 쿠키(`token`)에 있고 `userInfo` 에는
+    `access_token` 이 없다. 그래서 그 로그아웃은 **조용히 401 로 실패한다.**
+    `walk_states` 는 턴 G 에 이 정본으로 옮겼고, **이 파일만 옛 길에 남아 있었다** —
+    그것이 「두 벌을 두면 한쪽이 조용히 아무것도 안 닫는다」의 실물이다.
+
+    [실측 2026-09-19 · 턴 W · 조율자] 걷기가 사람 셋으로 로그인한 첫 회차에서
+    **연 3 · 닫은 1 · 열린 채 2** 가 나왔다. 하나만 닫힌 것이 아니라, 브라우저 길이
+    **셋 다 미덥지 않은데 하나만 우연히 들어맞은 것**이다.
+
+    ⚠ 이 함수는 Django 가 붙은 자리(`gx-shell`)에서만 돈다. 못 붙으면 **거짓말하지 않고**
+      실패로 돌려준다 — 「닫았다고 적혔는데 안 닫힌 것」이 가장 비싼 거짓 초록이다.
+    """
+    if not username:
+        return False, "이름이 없다 — 누구를 닫을지 모른다"
+
+    #: ★★ **반드시 딴 실에서 부른다** [실측 2026-09-19 18:4x · 턴 W · 차선 Q].
+    #:   처음에는 여기서 곧장 불렀고 이렇게 졌다:
+    #:       SynchronousOnlyOperation: You cannot call this from an async context
+    #:                                 - use a thread or sync_to_async.
+    #:   `sync_playwright()` 안은 **비동기 문맥**이라 Django ORM 의 동기 질의가 거절된다.
+    #:   즉 정본 자체는 맞았는데 **부르는 자리가 틀렸다** — 그리고 그 실패는 종전이라면
+    #:   그냥 「닫지 못했다」한 줄로 끝났을 것이다(사유를 적게 해 두어서 보였다).
+    #:   Django 가 말한 그대로 **딴 실**에서 부른다. 딴 실에는 그 문맥이 없다.
+    out: dict = {}
+
+    def _run():
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from capture_screens import _release_session      # noqa: E402
+
+            _release_session(username)
+            out["ok"] = (True, "정본(_release_session) 으로 닫았다 — 딴 실에서 불렀다")
+        except Exception as exc:                                # noqa: BLE001
+            out["ok"] = (False, f"정본 닫기 실패: {type(exc).__name__}: {exc}"[:160])
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    t.join(timeout=60)
+    if t.is_alive():
+        return False, "정본 닫기가 60초 안에 안 끝났다 — DB 가 안 붙었을 수 있다"
+    return out.get("ok", (False, "정본 닫기가 아무 답도 안 냈다"))
+
+
+def _close_session(entry: dict):
+    """세션 하나를 닫는다 — **제품 길 먼저, 그 다음 정본.**
+
+    ① 브라우저의 `POST /api/v1/auth/logout` — **제품이 실제로 하는 일**이다. 서면 그게 참이다.
+    ② 그것이 안 서면 정본(`_release_session`) 으로 닫는다. 페이지가 이미 죽었어도 선다.
+    둘 다 안 서야 **열린 채**다. 어느 쪽으로 닫혔는지 적는다.
+    """
+    who, user = entry.get("who", "?"), entry.get("username", "")
+    browser = entry.get("browser")
+    if browser is not None:
+        try:
+            ok, note = browser()
+        except Exception as exc:                                # noqa: BLE001
+            ok, note = False, f"{type(exc).__name__}: {exc}"[:120]
+        if ok:
+            _SESSION_LOG.append(f"{who}/{user}: 브라우저 로그아웃 — {note}")
+            return True, "browser"
+        entry["browser_why"] = note
+    ok, note = _release_session_for(user)
+    _SESSION_LOG.append(
+        f"{who}/{user}: {'정본' if ok else '**못 닫았다**'} — {note}"
+        + (f" (브라우저 길: {entry.get('browser_why')})" if entry.get("browser_why") else ""))
+    return ok, ("release" if ok else "")
+
+
+def close_open_sessions(reason: str = "") -> int:
+    """**남은 세션을 전부 닫는다.** 닫지 못한 수를 돌려준다.
+
+    `atexit` 에서도, 정상 종료 길에서도 같은 함수가 돈다 — 두 벌을 두면 갈린다(D-212).
+    """
+    left = 0
+    while _OPEN_SESSIONS:
+        entry = _OPEN_SESSIONS.pop()
+        try:
+            ok, _how = _close_session(entry)
+        except Exception:                                       # noqa: BLE001
+            ok = False
+        if ok:
+            _SESSION_TALLY["closed"] += 1
+            _SESSION_TALLY["closed_at_exit"] += 1
+        else:
+            left += 1
+            _SESSION_TALLY["left_open"] += 1
+    if left and reason:
+        print(f"{TAG} ⚠ **세션 {left}개를 열어 둔 채 끝난다** ({reason}) — "
+              f"이 환경은 동시 접속 1개다. 다음 사람이 튕긴다")
+    return left
+
+
+atexit.register(close_open_sessions, "프로세스가 끝난다")
+
+
 def _login(page, web: str, user: str, password: str) -> None:
     """로그인. **「다른 기기 접속」 확인 창을 사람처럼 처리한다.**
 
@@ -635,16 +956,23 @@ def _one_walk(page, web: str, key: str, steps: list) -> dict:
     return out
 
 
-def _logout(page, api: str) -> bool:
-    """**세션을 닫는다.** 브라우저가 가진 토큰으로 그대로 부른다 — 다시 로그인해서
-    닫으면 그 사이에 세션이 하나 더 생기고, 그것이 정확히 이 절이 막으려는 일이다."""
+def _logout(page, api: str):
+    """**제품 길로 세션을 닫는다.** 브라우저가 가진 토큰으로 그대로 부른다 — 다시 로그인해서
+    닫으면 그 사이에 세션이 하나 더 생기고, 그것이 정확히 이 절이 막으려는 일이다.
+
+    돌려주는 것: `(닫혔나, 왜)`. ★ [턴 W] 종전에는 `bool` 만 돌려줬고, 그래서
+    **401 로 실패한 것과 토큰이 없어 못 부른 것이 같은 `False`** 였다. 두 실패는
+    고치는 법이 다르다 — 사유를 적지 않는 실패는 다음 사람에게 하루를 준다.
+    ⚠ 이 길이 안 서는 것이 **정상일 수 있다**(토큰이 쿠키에 있다 · `_release_session_for`
+      머리말). 그래서 이것은 첫 시도일 뿐이고, 여기서 끝내지 않는다.
+    """
     try:
         token = page.evaluate(
             "() => { try { const u = JSON.parse(localStorage.getItem('userInfo')"
             " || '{}'); return u.access_token || u.token || ''; } catch (e)"
             " { return ''; } }")
         if not token:
-            return False
+            return False, "localStorage.userInfo 에 토큰이 없다 (이 앱은 쿠키에 든다)"
         got = page.evaluate(
             """async ([api, token]) => {
                 const r = await fetch(api + '/api/v1/auth/logout', {
@@ -654,9 +982,9 @@ def _logout(page, api: str) -> bool:
                     body: '{}'});
                 return r.status;
             }""", [api, token])
-        return int(got) in (200, 201, 204)
-    except Exception:                                           # noqa: BLE001
-        return False
+        return int(got) in (200, 201, 204), "POST /api/v1/auth/logout → %s" % got
+    except Exception as exc:                                    # noqa: BLE001
+        return False, "%s: %s" % (type(exc).__name__, str(exc)[:100])
 
 
 def walk(*, web: str, api: str, user: str, password: str,
@@ -758,6 +1086,15 @@ def walk(*, web: str, api: str, user: str, password: str,
                 page.on("response", note_response)
                 current["key"] = "login:%s" % who
                 errors.setdefault(current["key"], [])
+                #: ★ [턴 W · 차선 Q] 닫는 데 필요한 것을 **로그인 직전에** 등록부에 적는다.
+                #:   로그인 도중에 죽어도(확인 창을 누른 뒤 예외가 나도) 세션이 이미
+                #:   생겨 있을 수 있다 — 그때 등록이 없으면 그 세션은 아무도 안 닫는다.
+                #: ★★ **사람 이름을 같이 적는다.** 페이지가 죽으면 브라우저 길은 못 쓰고
+                #:   정본(`_release_session`)만 남는데, 그것은 **이름으로** 닫는다.
+                #:   [턴 W · 조율자 실측] 이름 없이 페이지만 들고 있었더니
+                #:   연 3 · 닫은 1 · 열린 채 2 였다.
+                entry = _session_opened({"who": who, "username": acct[0],
+                                         "browser": (lambda pg=page: _logout(pg, api))})
                 try:
                     _login(page, web, acct[0], acct[1])
                     logged_in += 1
@@ -772,10 +1109,28 @@ def walk(*, web: str, api: str, user: str, password: str,
                             k, "로그인하지 못했다(%s) — 화면의 결함이 아닐 수 있다" % who)
                 finally:
                     #: **세션은 쓴 자리마다 닫는다.** 하나라도 못 닫으면 전체가 빨강이다.
-                    closed_all.append(_logout(page, api))
+                    #: ⚠ 반드시 `context.close()` **전에** 닫는다 — 브라우저 길은
+                    #:   페이지가 살아 있을 때만 쓸 수 있다.
+                    ok_closed, _how = _close_session(entry)
+                    closed_all.append(ok_closed)
+                    if ok_closed:
+                        if entry in _OPEN_SESSIONS:
+                            _OPEN_SESSIONS.remove(entry)
+                        _SESSION_TALLY["closed"] += 1
+                    #: 못 닫았으면 **등록부에 그대로 둔다** — 마지막 그물이 이름으로
+                    #:   한 번 더 닫아 보고, 그래도 안 되면 「열린 채」로 센다.
                     context.close()
+        #: ★ [턴 W] 걷기가 **도중에 죽어도** 여기가 아니라 `atexit` 가 닫는다.
+        #:   여기서 한 번 더 부르는 것은 정상 길을 빨리 닫기 위해서다(두 번 불려도 안전).
+        left_open = close_open_sessions("걷기가 끝났다")
         browser.close()
     result["session_closed"] = (all(closed_all) if closed_all else None)
+    #: ★★ **열린 채 끝난 세션 수.** 0 이어야 한다 — 그리고 분모(연 수)를 같이 적는다.
+    result["sessions"] = dict(_SESSION_TALLY, left_open_now=left_open)
+    #: **어떻게 닫혔는지**를 증거에 남긴다 — 「닫았다」만 적으면 다음에 또 추측한다.
+    result["session_log"] = list(_SESSION_LOG)
+    for line in _SESSION_LOG:
+        print(f"{TAG} [세션] {line}")
     result["logins"] = logged_in
     result["console_errors"] = errors
     result["api_failures"] = api_failures
@@ -949,10 +1304,16 @@ def main() -> int:
         stamp = str(result.get("when") or datetime.now().isoformat()).replace(":", "").replace("-", "")
         run_copy = out.parent / "runs" / f"walk_{stamp}.json"
         run_copy.parent.mkdir(parents=True, exist_ok=True)
-        run_copy.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        #: ★★ [P-189 · 턴 W · 차선 Q] utf-8 · 줄바꿈까지 못 박고, **쓴 즉시 다시 읽어 댄다.**
+        #:   깨진 증거는 파싱 오류를 내지 않는다 — 수만 틀린다. 「썼다」는 초록이 아니다.
+        run_copy.write_text(json.dumps(result, ensure_ascii=False, indent=2),
+                            encoding="utf-8", newline="\n")
         old_doc = _read_json(out)
         merged = merge_walk_ledger(old_doc, result)
-        out.write_text(json.dumps(merged, ensure_ascii=False, indent=2), encoding="utf-8")
+        out.write_text(json.dumps(merged, ensure_ascii=False, indent=2),
+                       encoding="utf-8", newline="\n")
+        if json.loads(out.read_text(encoding="utf-8")) != merged:
+            raise RuntimeError("쓰고 다시 읽었더니 다른 것이 나왔다 — 대장을 믿을 수 없다 (P-189)")
         print(f"{TAG} [증거] 이번 실행 {run_copy}")
         print(f"{TAG} [대장] {out} — 옛 {len(ledger_runs(old_doc))}회 + 이번 1회 → {len(merged['runs'])}회 (줄지 않았다)")
     except (OSError, RuntimeError) as exc:

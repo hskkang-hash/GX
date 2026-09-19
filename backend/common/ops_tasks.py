@@ -1118,6 +1118,23 @@ def storage_capacity_gb() -> float:
         return 0.0
 
 
+def storage_capacity_source() -> str:
+    """이 수를 **누가 어디에 적었는가.** 값이 아니라 **출처**다 (턴 W · WS-26 · P-177).
+
+    ★ 왜 값만으로는 모자란가: 화면이 `50 GB` 만 보여 주면 그 수가 **누가 정한
+      선언**인지 **코드가 지어낸 기본값**인지 구별되지 않는다. 「설정은 기본값이
+      아니라 선언이다」 — 그래서 화면은 수 옆에 **어디서 온 수인지**를 함께 낸다.
+    ★ 값은 여기서 바꾸지 않는다. 이 턴에 `.env*` 세 벌은 전부 **50 그대로**다
+      (세종 이의 #2 · `docs/agent/evidence/P-177/저장상한_200_이의_20260918.md`).
+    """
+    if os.environ.get(STORAGE_CAPACITY_ENV, ""):
+        return "환경 선언 — %s (컨테이너 환경에 적혀 있습니다)" % STORAGE_CAPACITY_ENV
+    if getattr(settings, STORAGE_CAPACITY_ENV, ""):
+        return ("설정 선언 — settings.%s (환경에는 없고 설정 파일이 들고 있습니다)"
+                % STORAGE_CAPACITY_ENV)
+    return "선언 없음 — %s 에 아무도 수를 적지 않았습니다" % STORAGE_CAPACITY_ENV
+
+
 def storage_used_gb():
     """객체저장이 실제로 쓰는 용량(GB). **못 재면 `(None, 사유)`** — 0 이 아니다."""
     try:
@@ -1164,17 +1181,20 @@ def storage_declaration() -> dict:
                 "used_pct": None, "verdict": "UNKNOWN",
                 "reason": STORAGE_UNDECLARED_SENTENCE, "used_note": used_note,
                 "env_name": STORAGE_CAPACITY_ENV,
+                "capacity_source": storage_capacity_source(),
                 "capacity_note": STORAGE_CAPACITY_NOTE}
     if used is None:
         return {"declared": True, "capacity_gb": capacity, "used_gb": None,
                 "used_pct": None, "verdict": "UNKNOWN",
                 "reason": used_note, "used_note": used_note,
                 "env_name": STORAGE_CAPACITY_ENV,
+                "capacity_source": storage_capacity_source(),
                 "capacity_note": STORAGE_CAPACITY_NOTE}
     return {"declared": True, "capacity_gb": capacity, "used_gb": used,
             "used_pct": round(used / capacity * 100, 2), "verdict": "OK",
             "reason": "", "used_note": used_note,
             "env_name": STORAGE_CAPACITY_ENV,
+            "capacity_source": storage_capacity_source(),
             "capacity_note": STORAGE_CAPACITY_NOTE}
 
 
@@ -1263,6 +1283,110 @@ def backup_receipts(limit: int = 5) -> dict:
         "reason": "" if found else (
             "회수증(대조표)을 한 장도 못 찾았습니다 — 백업이 0건이라는 뜻이 아니라 "
             "이 자리에서 읽히지 않는다는 뜻입니다. 0 을 초록으로 적지 않습니다."),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 W · 차선 U56 — **백업 선언을 읽는 자리** (`GET /api/dsm/ops/backup/declaration`)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 왜 이 함수가 필요했나 [실측 2026-09-19]: `/dsm/system` 화면은 이 경로를 **처음부터
+#   부르고 있었고** 서버에는 그 문이 없었다 — 404 다(U5-BACKUP-404 · P-74 §199 ·
+#   UX-WALK `walk_20260919T062846.json`). 화면은 그 404 를 빨강이 아니라
+#   **「백엔드 신호 대기」** 회색으로 그려 두었다. 즉 **선언은 서 있는데 아무도 못 읽는
+#   상태**가 넉 달째였다. 이 함수가 그 회색을 없앤다.
+# ★ **선언을 읽을 뿐 값을 정하지 않는다.** P-67 그대로 — 코드 기본값은 없다. 못 읽으면
+#   `declared: False` 이고 빈 문자열이다(0·"매일 03:00" 같은 것을 지어내지 않는다).
+# ★ 일정은 **beat 표에서 읽는다**(`config/celery.py`). 문서에 적힌 「매일 03:00」을 손으로
+#   옮겨 적으면 beat 를 옮긴 날 화면만 옛 시각을 말한다 — 「분모는 손으로 적지 않는다」.
+
+#: 백업을 선언하는 이름들. **화면이 이 이름을 그대로 보여 준다**(설정은 기본값이 아니라
+#: 선언이다 — 이름을 감추면 다음 사람이 어디를 고칠지 못 찾는다).
+BACKUP_DECLARATION_ENVS = (
+    "OPS_BACKUP_SCHEDULE_ENABLED", "OPS_BACKUP_DIR",
+    "OPS_BACKUP_RETENTION_DAYS", "OPS_RESTORE_DRILL_ENABLED")
+
+
+def _beat_schedule_text(task_name: str) -> str:
+    """beat 표에 적힌 그 태스크의 주기를 **사람 말로**. 못 읽으면 빈 문자열이다.
+
+    ★ 지어내지 않는다 — 표에 그 태스크가 없으면 「등록 안 됨」이고, 그것은
+      「꺼짐」과도 「매일 03:00」과도 다른 사실이다.
+    """
+    try:
+        from config.celery import app as celery_app
+
+        for entry in (celery_app.conf.beat_schedule or {}).values():
+            if entry.get("task") != task_name:
+                continue
+            sched = entry.get("schedule")
+            hour = sorted(getattr(sched, "hour", []) or [])
+            minute = sorted(getattr(sched, "minute", []) or [])
+            dow = sorted(getattr(sched, "day_of_week", []) or [])
+            dom = sorted(getattr(sched, "day_of_month", []) or [])
+            if len(hour) != 1 or len(minute) != 1:
+                return str(sched)
+            clock = "%02d:%02d" % (hour[0], minute[0])
+            if len(dow) == 1:
+                names = "일월화수목금토"
+                return "주 1회 %s요일 %s" % (names[dow[0] % 7], clock)
+            if len(dom) == 1:
+                return "매월 %d일 %s" % (dom[0], clock)
+            return "매일 %s" % clock
+    except Exception as exc:                        # noqa: BLE001 — 표를 못 읽어도 화면은 산다
+        logger.warning("[OPS][BACKUP] beat 표를 못 읽었다 (%s): %s", task_name,
+                       type(exc).__name__)
+    return ""
+
+
+def backup_declaration() -> dict:
+    """백업 **목적지 · 일정 · 보존 기간 · 복구 시험**의 선언. 없으면 「미선언」이다.
+
+    나가는 것: 선언된 **값과 그 이름**, 그리고 누가 선언했는가(`source`).
+    나가지 않는 것: 호스트·자격·경로 전문 — 목적지는 컨테이너 안의 마운트 지점
+    (`/backup`)이라 그 자체는 비밀이 아니지만, 그 밖은 한 자도 싣지 않는다.
+    """
+    out_dir = str(getattr(settings, "OPS_BACKUP_DIR", "") or "")
+    enabled = backup_schedule_enabled()
+    beat = _beat_schedule_text("common.ops_backup_beat")
+    drill_on = bool(getattr(settings, "OPS_RESTORE_DRILL_ENABLED", False))
+    drill_beat = _beat_schedule_text("common.ops_restore_drill_beat")
+    try:
+        days = int(getattr(settings, "OPS_BACKUP_RETENTION_DAYS", 0) or 0)
+    except (TypeError, ValueError):
+        days = 0
+
+    #: ★ 「켜져 있다」와 「언제 도는지 안다」는 다른 사실이다 — 둘을 한 칸에 두지 않는다.
+    if enabled:
+        schedule = ("%s (beat: common.ops_backup_beat)" % beat if beat else
+                    "켬 — 그런데 beat 표에 등록이 없습니다 (common.ops_backup_beat)")
+    else:
+        schedule = ""
+    if drill_on:
+        drill = ("%s (beat: common.ops_restore_drill_beat)" % drill_beat if drill_beat
+                 else "켬 — 그런데 beat 표에 등록이 없습니다 (common.ops_restore_drill_beat)")
+    else:
+        drill = ""
+
+    declared = bool(out_dir) and enabled and days > 0
+    return {
+        "declared": declared,
+        "destination": out_dir,
+        "schedule": schedule,
+        "schedule_enabled": enabled,
+        "retention_days": days or None,
+        "restore_drill": drill,
+        "restore_drill_enabled": drill_on,
+        #: 누가 정했는가. 선언이 없는 환경에서는 그 말을 그대로 낸다(P-67).
+        "source": str(getattr(settings, "RETENTION_DECLARATION_SOURCE", "") or
+                      "선언 없음 — 고객이 U5 설정 화면에서 선언한다"),
+        #: **이름을 숨기지 않는다.** 고칠 자리를 화면이 말해 준다.
+        "env_names": list(BACKUP_DECLARATION_ENVS),
+        "verdict": "OK" if declared else "UNDECLARED",
+        "reason": "" if declared else (
+            "백업 선언이 완전하지 않습니다 — 목적지·주기·보존 일수 중 빈 칸이 "
+            "있습니다 (%s). 기본값을 지어내지 않습니다: 어디에 얼마나 오래 쌓을지는 "
+            "운영의 판단입니다 (P-67)." % ", ".join(BACKUP_DECLARATION_ENVS)),
     }
 
 

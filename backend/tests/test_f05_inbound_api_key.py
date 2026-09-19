@@ -39,8 +39,47 @@ from common.inbound_api_key import JwtOrInboundKey, carries_inbound_key
 #: ★ **들어오는 키가 닿아도 되는 자리 — 전부.** 이 집합이 곧 개방 선언이다.
 #: 늘리는 일은 손으로 이 줄을 더하는 일이고, 그 손이 「진입면을 넓힌다」는 선언이다
 #: (`test_f05_event_api.py::EVENT_ENTRY_SURFACE` 와 같은 방식).
+#:
+#: ⚠⚠ **`common.access_gate.INBOUND_KEY_ALLOWED` 에서 가져오지 않는다 — 일부러다.**
+#:   [사유를 적는다 · 2026-09-19 턴 W · U3 — 조율자가 「일부러였다면 그 이유가
+#:    어디에도 안 적혀 있다」고 지적했다. 옳은 지적이라 여기 적는다.]
+#:
+#:   이 집합은 **제품 상수의 사본이 아니라 손으로 쓴 기대값**이고, 아래
+#:   `test_the_key_reaches_only_the_declared_routes` 는 이것을 **살아 있는 레지스트리**
+#:   (`_dsm_operations()` 가 읽는 실제 `inbound_key` 선언)와 대조한다.
+#:   `access_gate` 에서 가져오면 그 순간 이 시험은
+#:       `assertEqual(access_gate.INBOUND_KEY_ALLOWED, 라우트 선언)`
+#:   이 되는데, **그것은 이미 있는 시험이다**
+#:   (`test_access_gate.py::test_allowlist_matches_the_route_ledger`).
+#:   즉 가져오면 시험 하나가 **다른 시험의 사본**이 되고, 사람이 손으로 확인하는
+#:   덫은 **사라진다** — 제품 상수를 고치는 순간 기대값도 같이 움직여 **영원히 초록**이다.
+#:
+#:   그래서 세 벌은 **우연한 중복이 아니라 삼각형**이다. 각 변이 다른 둘을 맞댄다:
+#:       ① `access_gate.INBOUND_KEY_ALLOWED`  제품 앞단이 **실제로 집행**하는 것
+#:       ② `evidence/D-343/route_classes.yaml` 대장 (`verify_route_inventory.py`)
+#:       ③ **이 집합**                          사람이 손으로 쓴 기대값
+#:   ①↔라우트 선언은 `test_access_gate` 가, ③↔라우트 선언은 이 파일이, ②↔①은
+#:   `verify_route_inventory` 가 맞댄다. 한 벌을 빠뜨리면 **반드시 어느 하나가
+#:   빨개진다** — 이번에 실제로 그랬다(③을 빠뜨려 여기서 빨강이 났다).
+#:   ⇒ 넓히는 사람은 **셋 다** 손으로 만져야 한다. 그 불편이 이 설계의 값이다.
 INBOUND_KEY_ALLOWED = frozenset({
     ("GET", "/api/dsm/events"),
+    # ★ [턴 W · 차선 U3] `GET /api/dsm/cameras/pulse` — **진입면을 넓힌다는 선언이다.**
+    #   사유: 범위 `pulse:read` 가 `kernels/k5_trust/key_scopes.py` 의 `ALLOWED_SCOPES` 에
+    #   이미 있어 운영자가 키에 **줄 수 있고**, `PATH_SCOPES` 가 이 경로를 가리키는데,
+    #   라우트가 `inbound_key=True` 를 선언하지 않아 키는 **범위 판정에 닿기도 전에
+    #   401** 이었다 — **줄 수는 있는데 쓸 데가 없는 범위**였다. 줄 수 있다고 적어 놓고
+    #   쓰면 막는 것은 없는 기능에 손잡이를 그린 것과 같다(D-284). 그래서 열었다.
+    #   ⚠ **넓히는 것이 아니다**: `DEFAULT_SCOPES = ("events:read",)` 이라 **이미 나간
+    #     키는 이 경로에서 그대로 403** 이다. 늘어나는 것은 운영자가 `pulse:read` 를
+    #     **일부러** 준 키 하나뿐이고, `@tenant_scoped` 도 그대로다.
+    #   ⚠ **진입면(method·path)은 안 늘었다** — 늘어난 것은 **자격의 갈래**다.
+    #     `test_f05_event_api::EVENT_ENTRY_SURFACE` 에 이 경로가 새로 오르지 않는 이유다.
+    #   짝: `common/access_gate.py::INBOUND_KEY_ALLOWED` ·
+    #       `docs/agent/evidence/D-343/route_classes.yaml` ·
+    #       눌러서 잰 것은 `tests/test_u3_pulse_inbound_key.py`
+    #       (`pulse:read`→200 · `events:read`→403 · 키 없음→401).
+    ("GET", "/api/dsm/cameras/pulse"),
 })
 
 #: 닿으면 **안 되는** 자리 중 무게가 다른 둘. 나머지는 아래 부작위 시험이 전수로 본다.

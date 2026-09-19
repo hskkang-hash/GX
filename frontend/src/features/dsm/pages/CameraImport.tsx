@@ -147,7 +147,32 @@ export default function CameraImportPage() {
 
         {/* 「주소 없는 카메라 N대」 배지 — **분모와 함께** 낸다 (D-301). */}
         <StateBoundary state={gap.state} reason={gap.reason} status={gap.status} onRetry={gap.reload}>
-          {gap.data ? (
+          {gap.data && !gap.data.measurable ? (
+            /*
+             * ★★ [P-185 ㉣ · 턴 W · 차선 U24] **0대를 실제로 만들어 보고 고친 자리다.**
+             *
+             * 무엇이 있었나 — 카메라가 **한 대도 없을 때** 이 카드는
+             * 「주소 없는 카메라 **0 / 0대**」를 **초록**으로 그렸다. 초록 0 은 이 제품에서
+             * 「다 채웠다」는 뜻이고, 사람이 읽는 것은 **「주소 문제 없음 · 넘어가도 된다」**다.
+             * 실제는 정반대다 — **카메라가 아예 없어서 아직 아무것도 시작되지 않았다.**
+             * 분모가 0인 비율을 초록으로 그린 것이고, 그것이 「분모 0 을 안 보고 쓴 문구」다.
+             *
+             * 그래서 **분모가 0이면 비율 카드를 그리지 않는다.** 0건에는 0건의 말이 있다:
+             * 무엇이 없나 · 왜 0 인가(고장이 아니다) · 지금 무엇을 하면 되나(바로 아래 칸).
+             * ⚠ 빨강이 아니다. 아직 안 한 일이지 고장 난 일이 아니다.
+             */
+            <Alert
+              type="info"
+              showIcon
+              message="아직 등록된 카메라가 없습니다."
+              description={
+                '요청은 성공했고 카메라가 0대입니다 — 못 불러온 것이 아닙니다. ' +
+                '카메라가 0대이므로 「주소가 채워진 비율」은 0%가 아니라 ' +
+                '아직 잴 수 없습니다. 아래 ① 칸에 CSV 를 붙여넣고 ' +
+                '「② 표 먼저 보기」를 누르면 여기에 대수와 분모가 나타납니다.'
+              }
+            />
+          ) : gap.data ? (
             <Card size="small">
               <Row gutter={24} align="middle">
                 <Col>
@@ -164,9 +189,7 @@ export default function CameraImportPage() {
                   <Paragraph type="secondary" style={{ marginBottom: 0 }}>
                     「{gap.data.without_address}대」만 보면 그것이 40 중 39인지 400 중 39인지
                     모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다.
-                    {gap.data.measurable
-                      ? ` 지금 채워진 비율 ${Math.round((gap.data.coverage ?? 0) * 100)}%.`
-                      : ' 카메라가 한 대도 없어 비율은 잴 수 없습니다 — 0%가 아닙니다.'}
+                    {` 지금 채워진 비율 ${Math.round((gap.data.coverage ?? 0) * 100)}%.`}
                     {gap.data.marked_but_blank > 0
                       ? ` ⚠ 「적었다고 표시됐는데 주소가 빈」 카메라 ${gap.data.marked_but_blank}대가 있습니다.`
                       : ''}

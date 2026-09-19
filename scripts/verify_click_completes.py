@@ -96,6 +96,11 @@ CLICK_WINDOW_MS = 4500
 # 이 표의 판단이 아니라 정본이 「없음 · 화면 없음」이라 적어 둔 자리를 그대로 옮긴 것이고,
 # 그 행은 **관측에서 회색**으로 떨어진다 — 판정기가 이름을 보고 봐주는 것이 아니다.
 # ──────────────────────────────────────────────────────────────────────────
+#: [P-190 · 턴 W] 정정 주석의 머리표. 이 글자가 든 `note` 는 **「없다」는 낱말을 나르되
+#: 주장하지 않는다** — 종전 주장이 틀렸음을 적는 자리이기 때문이다(`_NOTE_IS_CORRECTION`).
+P190 = "[P-190 정정 · 턴 W] "
+
+
 def F(key, title, actor, screen, control, call, state, text, confirm=None, note="",
       fill=None, fill_text=None, img_check=False, revert=None):
     """한 흐름.
@@ -312,9 +317,16 @@ FLOWS = (
                        "행을 지우는 문은 제품에 없다"),
       note="[P-179 정정] 종전 정본 「그 문을 부르는 화면이 없다」는 **턴 U 이전 사실**이다"),
     F("U2#9", "요원별 처리 현황", "u2", None, None, None, None, [],
-      note="정본: 집계 면 없다 — 사람별로 세는 자리가 없다"),
+      note=P190 + "온보딩 정본은 `/dsm/team-status` · `GET /api/dsm/stats/by-reviewer` 200 · "
+           "제목 `요원별 현황` 을 적어 두었다(턴 T 에 채운 9행). 종전 주석 「집계 면 "
+           "자체가 만들어지지 않았다」는 그 전 사실이다. **이 도구가 안 누를 뿐**이고, "
+           "안 누르는 사유는 한 번 누름으로 끝나는 단추가 아니라 화면 도달이라 "
+           "네 칸(①~④) 중 ②가 안 선다는 것이다 — 회색이지 「정본이 비었다」가 아니다"),
     F("U2#16", "알림 규칙 확인", "u2", None, None, None, None, [],
-      note="정본: 조회 라우트·화면 없다 · 규칙 0건"),
+      note=P190 + "온보딩 정본은 `/dsm/notify` · `GET /api/dsm/settings/notify-rules/list` 200 · "
+           "제목 `알림 받는 사람·채널` 을 적어 두었다. 종전 주석 「조회 라우트도 화면도 "
+           "만들어지지 않았다」는 턴 S 이전 사실이다. 이 도구는 **같은 화면의 쓰기 쪽만** "
+           "누른다(U5#9) — 읽기 확인은 U5#9 의 재조회가 겸하므로 이 행은 안 누른다"),
     F("U2#19", "장애 판단 — 시스템인가 현장인가", "u2",
       "/dsm/events?preset=system", goto(),
       ("GET", r"/api/dsm/events\?.*event_type"),
@@ -369,7 +381,11 @@ FLOWS = (
     F("U3#14", "해당 카메라 모바일 실시간", "u3", None, None, None, None, [],
       note="정본: 없음 — 구간 티켓은 계약 11조 잠김"),
     F("U3#16", "근무 외 알림 차단", "u3", None, None, None, None, [],
-      note="정본: 없음 — 알림 채널 결정 대기"),
+      note=P190 + "온보딩 정본은 `/m/settings` · `PUT /api/dsm/me/notify-prefs` 200 → 재조회에 "
+           "차단 시간대 반영 + 시험 발송이 실제 `deliveries` 행을 남기는 것(P-160 ③)을 "
+           "적어 두었다 [조율자 실측 2026-09-18 · M4 실자료가 섰다]. 종전 주석 "
+           "「채널 결정 대기」는 그 전 사실이다. 이 도구가 안 누르는 사유는 **시간대 "
+           "입력이 두 걸음**(저장 → 재조회)이라 한 번 누름 창(4.5초)에 안 들어온다는 것이다"),
     F("U3#19", "내가 처리한 이벤트 목록", "u3", "/m/inbox", goto(),
       ("GET", r"/api/dsm/deliveries"),
       srv_reflect("/api/dsm/deliveries?limit=20&mine=true", "deliveries"),
@@ -377,7 +393,11 @@ FLOWS = (
 
     # ── U4 · 재난안전과 담당 공무원 ──────────────────────────────────────
     F("U4#1", "주간 상황 요약", "u4", None, None, None, None, [],
-      note="정본: 라우트는 hours=168 을 받지만 **누를 자리가 없다**"),
+      note=P190 + "온보딩 정본은 단추 `7일`(`EventList.tsx:223` `PERIODS.d7`)과 "
+           "`GET /api/dsm/events?since=…` 200 을 적어 두었다(턴 U 추가). 종전 주석 "
+           "「프리셋 넷에 7일이 빠져 있다」는 턴 T 이전 사실이다. 이 도구가 안 누르는 "
+           "사유는 이 행을 U4(읽기 전용) 축으로 잡아 두었는데 목록 필터는 사람 축이 "
+           "U1·U2 라, **누구로 누를지 정본이 아직 한 사람을 고르지 않았다**는 것이다"),
     #: ★ [P-132] `/report-template` 은 **인수 자산의 운송장 서식 화면**이고 부르는 문은
     #:  `/api/report-template/`(`services/API.ts:819`) 다 — `/api/dsm/reports` 가 아니다.
     #:  그리고 `POST /api/dsm/reports` 라는 문은 **저장소에 없다**
@@ -451,8 +471,27 @@ FLOWS = (
       ("GET", r"/api/dsm/cameras/address-gap"),
       srv_reflect("/api/dsm/cameras/address-gap", "total"),
       ["카메라", "주소 있음", "주소 없음"]),
+    #: ★★ [P-190 · 턴 W] **이 행은 U4 로 ● 가 될 수 없다 — U2 축에서 잰다.**
+    #:  [실측 2026-09-19 · 차선 U24 · `tests/test_u24_law07_authz.py::U4CannotBeGreenOnUpperReportTest`]
+    #:  U4 의 역할 코드는 글자 그대로 `view_only_-_anyang` 이고, 읽기 전용 관문
+    #:  (`common/role_gate` P-119 / SEC-20)이 **쓰기 메서드 전부**를 막는다. 그래서
+    #:  `POST /api/dsm/events/{id}/upper-report` 는 U4 로 **언제나 403** 이고, 그 403 은
+    #:  **제품이 옳게 막은 자리**다 — 고칠 흠이 아니다. 같은 문을 U2(`fire_admin`)로 누르면
+    #:  관문을 지나 핸들러가 돈다.
+    #:  ⚠ **U4 계정으로 이 행을 다시 재지 않는다.** 다시 재면 또 403 이 나오고, 그 403 을
+    #:   빨강으로 세면 제품이 옳게 한 일에 벌점을 주는 것이다(P-159 가 그렇게 쟀다).
+    #:  ⚠ 읽기 전용에 열어 준 쓰기는 **열람 청구 면 둘**뿐이다(P-185 · 접수·회신).
+    #:   `upper-report` 는 거기 없다 — 이 행을 초록으로 만들려고 관문을 넓히지 않는다.
+    #:  그래서 이 도구는 이 행을 **안 누른다**: 이 파일의 U4 자리는 `gxseed_u4_official`
+    #:  한 사람이고, 그 사람으로 누르면 언제나 403 이다. U2 축 측정은 온보딩 정본
+    #:  (`onboarding_48.md` U4 15 · 턴 W 정정)이 든다.
     F("U4#15", "상급기관 제출 자료", "u4", None, None, None, None, [],
-      note="정본: 없음 — 상급기관 서식 T4"),
+      note=P190 + "온보딩 정본은 [서버 기록] `POST /api/dsm/events/{id}/upper-report` 200"
+           "(**U2** `gxseed_u2_manager`) → 재조회에서 그 행의 표시가 서버 값으로 `보고함` "
+           "+ [화면 상태] `보고 표시`/`보고함` 두 말이 같은 화면에 동시에 있지 않을 것을 "
+           "적어 두었다. 문과 문구는 **있다.** 이 도구가 안 누르는 사유는 이 파일의 U4 "
+           "자리가 읽기 전용 계정이라 **언제나 403** 이고, 그 403 은 제품이 옳게 막은 "
+           "자리이기 때문이다 — U2 축 측정은 온보딩 정본이 든다"),
     #: ★★ [P-179 · 2026-09-18 턴 V · 차선 Q] **「볼 자리가 없다」는 턴 U 이전 사실이다 — 정정한다.**
     #:  자리가 **섰다**: `/dsm/audit`(`features/dsm/pages/AuditLog.tsx` · `dsm/routes.u24.ts:41`)이
     #:  `GET /api/dsm/audit`(`api_u24.py:321`)를 읽는다. 읽는 사람은 U2·U4·U5 이고 U1·U3 은 403 이다
@@ -478,9 +517,12 @@ FLOWS = (
     #:     A절 — `OPTIONS /api/v1/user/create-user` → 401 · `front_line.py:81`].
     #:    그 자리는 **보안 차선**이 들고 있다.
     F("U5#1", "사용자 계정 생성", "u5", None, None, None, None, [],
-      note="정본 없음 — 단추는 있으나(App.tsx:728 「사용자 추가」) 그것은 서식 화면으로 "
-           "가는 링크다. 계정 생성은 다음 화면의 서식을 채워야 끝난다 · "
-           "그 문은 프리플라이트 401 로 끊겨 있다(P-125 A절 · 보안 차선)"),
+      note=P190 + "온보딩 정본은 `/dsm/people` · `POST /api/dsm/settings/people/create` 200 → "
+           "사용자 수 +1 을 적어 두었다(⚠ `/settings/people` 이 아니다 — `/settings/{domain}` 이 "
+           "삼켜 405 를 낸다). 문은 **있다.** 이 도구가 안 누르는 사유는 둘이다: "
+           "① 화면의 단추(App.tsx:728 「사용자 추가」)는 서식 화면으로 가는 링크라 "
+           "한 번 누름으로 안 끝난다 · ② 그 문이 프리플라이트 401 로 끊겨 있다"
+           "(P-125 A절 · 보안 차선). 둘 다 회색 사유이고 「정본이 비었다」가 아니다"),
     #: ★ [P-132] 이 행의 상태 규격이 **다른 화면**을 읽고 있었다
     #:  (`/api/dsm/dashboard/frame` 의 `preset` — 역할 화면과 아무 상관이 없다).
     #:  `/roles` 가 실제로 세는 문은 `App.tsx:754` 의 `countUrl="/api/roles/"` 이고,
@@ -499,16 +541,22 @@ FLOWS = (
     #:  게다가 같은 표를 두 번 적용하면 `unchanged` 라 총수가 안 변한다 — 잴 때마다
     #:  **새 시험 자료**가 있어야 하는데 그 정본이 없다(사건과 같은 문제다).
     F("U5#4", "카메라 등록", "u5", None, None, None, None, [],
-      note="정본 없음 — 자리는 /dsm/cameras/import(routes.ts:23 · roleNav.ts:132)이나 "
-           "「표 먼저, 그 다음 적용」이 세 걸음이고 매번 새 시험 자료가 필요하다. "
-           "한 번 누름으로 재는 정본이 없다"),
+      note=P190 + "온보딩 정본은 `/dsm/cameras/import` · `POST /api/dsm/cameras/import` 200"
+           "(dry-run 뒤 실행) → 카메라 수 +N 과 문구 `카메라 일괄 등록`·`표 먼저 보기` 를 "
+           "적어 두었다. 문과 문구는 **있다.** 이 도구가 안 누르는 사유는 "
+           "「표 먼저, 그 다음 적용」이 **세 걸음**이고 매번 새 시험 자료가 필요해 "
+           "한 번 누름 창에 안 들어온다는 것이다 — 그리고 누르면 제품에 카메라가 남는다"),
     #: ★ [P-132] 「저장」이라는 단추는 없다 — `CameraAddress.tsx:177·185` 의
     #:  **「표 먼저 보기」 · 「채우기」** 둘뿐이고, 둘 다 이름·주소를 채우기 전에는
     #:  `disabled` 다(`ready`, 같은 파일 88행). 「채우기」는 표를 본 뒤에만 열린다(182행).
     #:  U5#4 와 같은 사유로 **한 번 누름의 정본이 없다.**
     F("U5#5", "카메라 설치 주소 입력", "u5", None, None, None, None, [],
-      note="정본 없음 — 단추는 「표 먼저 보기」·「채우기」(CameraAddress.tsx:177·185)이고 "
-           "둘 다 입력 전에는 잠겨 있다. 「표 먼저, 그 다음 채움」이 두 걸음이다"),
+      note=P190 + "온보딩 정본은 `POST /api/dsm/cameras/{id}/address` 200(`api_u56.py:506`) → "
+           "`GET /api/dsm/cameras/address-gap` 반영과 문구 `이 한 대 채우기`"
+           "(`CameraAddress.tsx:297`)를 적어 두었다. 문과 문구는 **있다.** 이 도구가 "
+           "안 누르는 사유는 단추 둘(`표 먼저 보기`·`채우기`)이 **입력 전에는 잠겨 있고** "
+           "「표 먼저, 그 다음 채움」이 두 걸음이라는 것이다(P-132 — 제품의 규율을 "
+           "고장으로 팔지 않는다)"),
     #: ★ [턴 T · U56] 설정 화면(`/dsm/notify`)이 턴 S 에 섰고, 「끄기/켜기」 한 번 누름이
     #:  턴 T 에 생겼다(NotifySettings.tsx · `data-gx=notify-rule-saved`). 옛 note 「화면·라우트
     #:  없다」는 턴 S 이후 옛말이었다 — 정본 없음을 그대로 두면 영원히 회색이다.
@@ -522,14 +570,25 @@ FLOWS = (
       srv_reflect("/api/dsm/settings/notify-rules/list", "rules"), ["저장했습니다", "규칙 #"],
       revert=revert_toggle()),
     F("U5#10", "알림 채널 설정", "u5", None, None, None, None, [],
-      note="정본: 없음 — 알림 채널 결정 대기(대표)"),
+      note=P190 + "온보딩 정본은 규칙 저장 200 → `channel` 값 `email`/`webpush` 가 "
+           "`…/list` 에 남는 것을 적어 두었다. ⚠ 다만 채널 **이름** 자체(`이메일`·`웹푸시`)는 "
+           "아직 사전 밖이고, 문자 채널은 대표 결정 대기다 — 그래서 정본은 제목으로 "
+           "자리를 단언하고 채널 값은 서버 기록으로 잰다. 이 도구가 안 누르는 사유는 "
+           "U5#9 이 같은 화면의 같은 단추를 이미 누르고 **되돌리기까지** 하기 때문이다 "
+           "— 같은 상태를 두 번 흔들지 않는다"),
     F("U5#14", "시스템 상태 확인", "u5", "/dsm/system", goto(),
       ("GET", r"/api/dsm/(dashboard/link-state|ops/)"),
       srv_reflect("/api/dsm/dashboard/link-state", "status"), ["상태", "시스템", "연계"]),
     F("U5#15", "저장 용량 확인", "u5", "/dsm/system", goto(),
       ("GET", r"/api/dsm/ops/"),
       srv_reflect("/api/dsm/dashboard/link-state", "status"), ["용량", "저장", "GB"],
-      note="정본: 신호는 ops_monitor 안에만 있다 — 읽는 라우트가 없다"),
+      note=P190 + "**종전 주석은 이제 거짓이다.** 「신호는 ops_monitor 안에만 있다 · "
+           "읽는 문이 서 있지 않다」는 턴 V 이전 사실이었다. 차선 U56 이 이 턴에 "
+           "`GET /api/dsm/ops/backup/declaration` 을 세우고 **눌러서 200 을 봤다**"
+           "(익명 401 · 역할 0 403 · POST 405 · 화면에서 404 **0/11**). 온보딩 정본도 "
+           "`GET /api/dsm/system/storage` 200(`api_u56.py:647` · `ops_tasks.py:1126` "
+           "`storage_declaration()` 하나가 판정)을 적어 두었다. 이 행의 기대 호출은 "
+           "그래서 `/api/dsm/ops/` 로 남긴다 — 화면(`/dsm/system`)이 그 아래를 부른다"),
 
     # ── U6 · 외부 연계 시스템(기계) ──────────────────────────────────────
     # 사람이 아니다. **면이 곧 API** 이므로 「누르는 것」은 HTTP 호출 자체다.
@@ -565,7 +624,11 @@ FLOWS = (
       ["401", "unauthor", "인증"],
       note="자격 없이 부른다 — **진짜 4xx** 가 와야 한다. 200 봉투는 빨강"),
     F("U6#14", "스키마 버전 확인", "u6", None, None, None, None, [],
-      note="정본: 없음 — 스키마 버전"),
+      note=P190 + "온보딩 정본은 **아무 응답에나 헤더 `X-GX-Schema` 1개**와 "
+           "`backend/tests/test_u56_schema_header.py` 가 그것을 잠그는 것을 적어 두었다"
+           "(턴 W · U56 축). 종전 주석 「스키마 버전」 한 낱말은 정본이 비었다는 뜻으로 "
+           "읽혔다. 이 도구가 안 누르는 사유는 이 행의 술어가 **본문이 아니라 헤더**라 "
+           "지금 네 칸(②기대 호출·③상태·④문구)이 헤더를 볼 자리가 없다는 것이다"),
     F("U6#15", "연계 헬스체크", "u6", None, api(),
       ("GET", r"/api/dsm/dashboard/link-state"),
       srv_reflect("/api/dsm/dashboard/link-state", "status"), ["status", "waiting", "ok"]),
@@ -829,6 +892,104 @@ def _no_exception_slot():
     return hits, keyed
 
 
+#: ★★ [P-190 · 턴 W · 차선 Q] **두 도구가 같은 행에 다른 정본을 들면 빨강이다.**
+#:
+#: 이 저장소에는 48행을 드는 도구가 **둘**이다 — 이 파일(FC · 「누른 뒤」)과
+#: `measure_onboarding_t.py`(온보딩 · 「문구 + 셋째 술어」). 둘은 **다른 것을 재도 된다.**
+#: 재는 축이 다른 것은 흠이 아니다. 흠은 **같은 행에 대해 서로 다른 사실을 말하는 것**이다.
+#:
+#: [실물 표본 2026-09-19 · 턴 W · U56 실측] `U5#15 저장 용량 확인`
+#:   이 파일의 주석: 「신호는 ops_monitor 안에만 있다 — 읽는 라우트가 없다」
+#:   온보딩 정본:    `GET /api/dsm/system/storage` **200** (`api_u56.py:647`)
+#:   U56 이 이 턴에 그 문을 세우고 **눌러서 200 을 봤다.** 두 정본 중 하나는 거짓이고,
+#:   어느 쪽이 거짓인지는 **아무 도구도 묻지 않았다.**
+#:
+#: 그래서 술어 하나를 세운다:
+#:   **이 파일이 어떤 행을 「정본 없음」이라 적었는데, 온보딩 정본이 그 행에
+#:   잴 것(`[API 호출]`·`[서버 기록]`·`[화면 상태]`)을 적어 두었으면 빨강.**
+#: 그 반대(이 파일은 정본이 있다는데 온보딩 정본은 없다)도 같은 빨강이다.
+#:
+#: ⚠ **「이 도구가 그 자리를 안 누른다」는 빨강이 아니다.** 그것은 도구의 한계이고
+#:   회색이다. 다투는 것은 **사실**이지 능력이 아니다 — 둘을 섞으면 이 술어가 소음이 된다.
+#: ⚠ 정본 문서를 못 읽으면 **회색**이다(빨강이 아니다). 문서가 없다고 두 정본이
+#:   갈렸다고 말할 수는 없다.
+CANON_DOC = ROOT / "docs" / "agent" / "onboarding_48.md"
+CANON_MARK = "## ★ 2026-09-17 턴 T · P-159 ①"
+
+#: 온보딩 정본의 셋째 술어 칸이 **잴 것을 적었다**고 볼 표식.
+_CANON_MEASURES = re.compile(r"\[(API 호출|서버 기록|화면 상태|실측)")
+#: ★ 정본이 **제 입으로 「못 잰다」**고 적은 칸. 술어를 적어 두고도 「이 행은 회색」이라
+#:   덧붙인 자리가 있다(U1#4 의 「문구 정본이 없으므로 이 행은 회색」 · U3#14 의 「(회색 ·
+#:   잠금 — 재지 않는다)」). 그런 칸을 「잴 것이 있다」로 읽으면 **정본이 회색이라 적은 행을
+#:   이 술어가 빨강으로 몰게 된다** — 그것은 다툼이 아니라 같은 말이다.
+#: ⚠ 「U4 로 ● 가 될 수 없다」는 여기 넣지 않는다. 그것은 **축을 옮기라는 말**이지
+#:   못 잰다는 말이 아니다(U4#15 · U24 턴 W 실측 — U2 축에서 잰다).
+#: ⚠ 「재지 않는다」 한 낱말만으로는 회색이 아니다 — U24 의 U4#15 정정 문안이
+#:   「**U4 계정으로** 이 행을 다시 재지 않는다」고 적으면서 같은 칸에 U2 축 술어를
+#:   못 박았다. 낱말이 아니라 **회색 선언**을 본다.
+_CANON_SAYS_GREY = re.compile(r"이 행은 회색|\(회색")
+#: 이 파일의 `note` 가 그 행에 **정본이 없다**고 말하는 모양.
+_NOTE_SAYS_NONE = re.compile(
+    r"정본 없음|정본: 없음|라우트가 없다|화면이 없다|문도 아직 없다|"
+    r"누를 자리가 없다|집계 면 없다|세는 자리가 없다|조회 라우트·화면 없다")
+#: ★ 「종전 정본은 틀렸다」고 **정정하는 주석**은 「없다」는 낱말을 나르지만 주장이 아니다.
+#:   정정문을 빨강으로 세면 정정한 사람이 벌을 받는다 — 그러면 아무도 정정을 안 적는다.
+_NOTE_IS_CORRECTION = re.compile(r"정정\]|이전 사실|종전 정본")
+
+
+def canon_cells(path=None) -> dict:
+    """온보딩 정본에서 행 → 표 칸들. 못 읽으면 빈 칸(회색)이다 — 지어내지 않는다."""
+    p = Path(path) if path else CANON_DOC
+    try:
+        doc = p.read_text(encoding="utf-8")      # P-189 — errors 없음
+    except OSError:
+        return {}
+    if CANON_MARK not in doc:
+        return {}
+    who, cells = None, {}
+    for line in doc.split(CANON_MARK)[1].splitlines():
+        m = re.match(r"#{3,4} (U\d)", line)
+        if m:
+            who = m.group(1)
+        if not line.startswith("|"):
+            continue
+        c = [x.strip() for x in line.strip().strip("|").split("|")]
+        if len(c) >= 4 and re.fullmatch(r"(U\d )?\d+", c[0]):
+            key = c[0] if " " in c[0] else "%s %s" % (who, c[0])
+            cells[key.replace(" ", "#")] = c        # 뒤에 오는 표가 앞을 덮는다(최신 정정이 이긴다)
+    return cells
+
+
+def canon_disagreements(path=None):
+    """(행, 이 파일이 말하는 것, 온보딩 정본이 말하는 것) — 갈린 행만."""
+    cells = canon_cells(path)
+    if not cells:
+        return None
+    out = []
+    for f in FLOWS:
+        c = cells.get(f["key"])
+        if not c:
+            continue
+        last, note = c[-1], (f.get("note") or "")
+        #: **양쪽이 다 적극적으로 말할 때만** 다툼이다. 한쪽의 침묵은 주장이 아니다.
+        canon_none = "정본 없음" in last
+        canon_has = (bool(_CANON_MEASURES.search(last)) and not canon_none
+                     and not _CANON_SAYS_GREY.search(last))
+        fc_none = (bool(_NOTE_SAYS_NONE.search(note))
+                   and not _NOTE_IS_CORRECTION.search(note))
+        #: 이 파일이 「문이 있다」고 **적극적으로** 말하는 모양 = 기대 호출을 못 박은 것.
+        #: ⚠ `control` 이 선언된 것만으로는 주장이 아니다 — 못 찾으면 **이름을 적고 회색**을
+        #:   내려고 일부러 적어 둔 자리가 있다(U2#3 「되돌리기 (사유 필수)」).
+        fc_has = bool(f.get("call")) and not fc_none
+        if fc_none and canon_has:
+            out.append((f["key"], "「정본 없음」 — %s" % note[:90],
+                        "잴 것이 적혀 있다 — %s" % last[:90]))
+        elif fc_has and canon_none:
+            out.append((f["key"], "기대 호출 `%s %s` 를 못 박았다" % f["call"],
+                        "「정본 없음」 — %s" % last[:90]))
+    return out
+
+
 def self_test() -> int:
     ok = True
 
@@ -987,8 +1148,142 @@ def self_test() -> int:
         else:
             print("%s O 되돌림 관측은 판정을 바꾸지 않는다 (실패해도 그 행의 색은 그대로)" % TAG)
 
+    # ⑦-c ★★ [P-189 · 2차] **증거 되읽기 — 가리기를 손상으로 읽지 않는다.**
+    #     출생 표본이 이 술어에 박혀 있다: 내가 만든 **거짓 회색**이다.
+    rt_ok, rt_bad = _p189_roundtrip_cases()
+    if rt_bad:
+        ok = False
+        print("%s X [P-189] 되읽기 검사가 틀렸다 %d건:" % (TAG, len(rt_bad)))
+        for line in rt_bad:
+            print("      %s" % line)
+    else:
+        print("%s O [P-189] 되읽기 %d갈래 — ★ 출생 표본: **가리기가 일어난 판을 "
+              "초록으로 읽는다**(종전 판은 여기서 언제나 회색이었다) · "
+              "손상은 여전히 빨강 · 가리기가 수를 바꾸면 빨강" % (TAG, rt_ok))
+
+    # ⑧ ★★ [P-190] **두 도구 한 행 한 정본.** 같은 행에 다른 사실을 말하면 빨강이다.
+    #    출생 표본이 이 술어에 박혀 있다 — 아래 `_p190_birth_sample()` 이 그 모양이다.
+    b_bad, b_good = _p190_birth_sample()
+    if not b_bad or b_good:
+        ok = False
+        print("%s X [P-190] 출생 표본을 못 잡는다 — 갈린 표본 %r · 같은 표본 %r"
+              % (TAG, b_bad, b_good))
+    else:
+        print("%s O [P-190] 출생 표본 — U5#15「읽는 라우트가 없다」 vs 정본 "
+              "`GET /api/dsm/system/storage` 200 을 **갈림**으로 읽는다" % TAG)
+
+    dis = canon_disagreements()
+    if dis is None:
+        print("%s ? [P-190] 온보딩 정본(%s)을 못 읽었다 — **회색**이다. 문서가 없다고 "
+              "두 정본이 갈렸다고 말하지 않는다" % (TAG, CANON_DOC.name))
+    elif dis:
+        ok = False
+        print("%s X [P-190] **두 도구가 같은 행에 다른 정본을 든다 %d행** — 하나는 거짓이다:"
+              % (TAG, len(dis)))
+        for key, mine, theirs in dis:
+            print("      %-7s 이 파일: %s" % (key, mine))
+            print("      %-7s 온보딩 정본: %s" % ("", theirs))
+    else:
+        print("%s O [P-190] 두 도구가 48행에 **같은 정본**을 든다 (갈린 행 0)" % TAG)
+
     print("%s 자기시험 %s" % (TAG, "통과" if ok else "**실패**"))
     return EXIT_OK if ok else EXIT_FAIL
+
+
+def _p189_roundtrip_cases():
+    """★ **출생 표본** (P-189 2차) — `evidence_roundtrip` 의 네 갈래.
+
+    [실측 2026-09-19 · 턴 W · V] 종전 판은 「가리기 **전** 원문 == 쓴 파일」을 견줬고,
+    증거에 `appkey=` 가 **18곳** 있어 그 비교가 **언제나** 어긋났다 —
+    `--measure` 가 증거가 멀쩡한데도 매번 **회색**으로 끝났다. 아래 첫 갈래가 그 판이다.
+    ⚠ 이 갈래가 빨강이면 고친 것이 아니라 **되돌아간 것**이고,
+      셋째·넷째 갈래가 초록이면 고친 것이 아니라 **끈 것**이다.
+    """
+    def doc(phrase2="전체 상황판 · 대시보드 · 칸이 정상적으로 그려졌습니다", extra_url=True):
+        calls = [{"method": "GET",
+                  "url": "http://localhost:8000/api/dsm/dashboard/frame", "status": 200}]
+        if extra_url:
+            #: 실제 증거에 18곳 있는 그 모양 — 지도를 그리려고 부른 공개 클라이언트 키
+            calls.append({"method": "GET",
+                          "url": "http://dapi.kakao.com/v2/maps/sdk.js"
+                                 "?appkey=0123456789abcdef&libraries=services", "status": 200})
+        return {"observations": {"U1#2": {
+            "control": {"found": True, "clicked": True, "name": "화면 열기"},
+            "calls": calls,
+            "state": {"kind": "server_reflect", "field": "panel_total",
+                      "after": 2, "on_screen": True},
+            "text_after": phrase2}}}
+
+    bad, n = [], 0
+    raw = json.dumps(doc(), ensure_ascii=False, indent=2)
+    written = _redact_credentials(raw)
+
+    # ① ★ 출생 표본 — **가리기가 실제로 일어난 판.** 종전 판은 여기서 언제나 회색이었다.
+    n += 1
+    if _CRED_IN_URL.search(raw) is None:
+        bad.append("표본에 가릴 자격이 없다 — 이 갈래가 아무것도 재지 않는다")
+    okv, lines, facts = evidence_roundtrip(raw, written, written)
+    if not okv:
+        bad.append("★ **가리기가 일어난 판을 회색으로 읽는다** — 내가 만든 그 거짓 회색이 "
+                   "돌아왔다: %s" % (lines[-1] if lines else "?"))
+    elif facts.get("가린 자리", 0) < 1:
+        bad.append("가린 자리를 0곳으로 센다 — 가리기 칸이 분모 없이 초록이 된다")
+
+    # ② 가릴 것이 없는 판도 초록 (가리기는 있을 수도 없을 수도 있다)
+    n += 1
+    raw0 = json.dumps(doc(extra_url=False), ensure_ascii=False, indent=2)
+    okv, _l, f0 = evidence_roundtrip(raw0, raw0, raw0)
+    if not okv or f0.get("가린 자리") != 0:
+        bad.append("가릴 것이 없는 판을 초록으로 못 읽거나 가린 자리를 0으로 안 적는다")
+
+    # ③ **손상은 여전히 빨강** — 다시 읽은 것이 쓴 것과 다르다
+    n += 1
+    hurt = written.replace('"panel_total"', '"panel_totaI"', 1)
+    okv, lines, _f = evidence_roundtrip(raw, written, hurt)
+    if okv:
+        bad.append("★ 쓴 것과 **다시 읽은 것이 다른데** 초록으로 읽는다 — 검사를 껐다")
+
+    # ④ **가리기가 수를 바꾸면 빨강** — 자격 값이 아니라 한글을 지운 판
+    n += 1
+    eaten = json.dumps(doc(phrase2="???"), ensure_ascii=False, indent=2)
+    okv, lines, f4 = evidence_roundtrip(raw, eaten, eaten)
+    if okv:
+        bad.append("★ **가리기가 수를 바꿨는데** 초록으로 읽는다 — 가리기 칸이 꺼졌다")
+    elif f4.get("수(가리기 전)") == f4.get("수(가린 뒤)"):
+        bad.append("가리기 전후의 수가 같다고 적으면서 빨강을 냈다 — 사유가 사유가 아니다")
+
+    # ⑤ 출생 표본의 **그 병**(cp949 왕복)이 수를 바꾸는 것은 여전히 잡힌다
+    n += 1
+    broken = raw.encode("cp949", "replace").decode("utf-8", "replace")
+    okv, _l, f5 = evidence_roundtrip(raw, broken, broken)
+    if okv:
+        bad.append("★ cp949 로 깨진 판을 초록으로 읽는다 — 이 도구가 태어난 그 병이다")
+    return n, bad
+
+
+def _p190_birth_sample():
+    """★ **출생 표본** (D-310 · P-190) — 이 술어를 만들게 한 **바로 그 두 줄**.
+
+    [실측 2026-09-19 · 턴 W · 차선 U56] `U5#15 저장 용량 확인` 에 대해
+      · 이 파일의 주석:  「신호는 ops_monitor 안에만 있다 — 읽는 라우트가 없다」
+      · 온보딩 정본:     `GET /api/dsm/system/storage` **200** (`api_u56.py:647`)
+    U56 이 그 문을 세우고 **눌러서 200 을 봤다**(익명 401 · 역할 없음 403 · POST 405 ·
+    화면 404 0/11). 두 정본 중 하나는 거짓인데, 그 거짓을 묻는 자리가 **없었다.**
+
+    돌려주는 것: (갈린 표본이 갈림으로 읽히는가, 같은 표본이 갈림으로 잘못 읽히는가).
+    """
+    none_note = "정본: 신호는 ops_monitor 안에만 있다 — 읽는 라우트가 없다"
+    canon_has = ("[API 호출] `GET /api/dsm/system/storage` 200"
+                 "(`api_u56.py:647`) + [화면 상태] `저장 용량` 카드")
+    def split(note, last):
+        none_ = "정본 없음" in last
+        has = (bool(_CANON_MEASURES.search(last)) and not none_
+               and not _CANON_SAYS_GREY.search(last))
+        says_none = (bool(_NOTE_SAYS_NONE.search(note))
+                     and not _NOTE_IS_CORRECTION.search(note))
+        return says_none and has
+    return (split(none_note, canon_has),                     # 갈림 → True 여야 한다
+            split("정본: 이 자리는 아직 없다 — 읽는 라우트가 없다", "**정본 없음**"))
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -1370,7 +1665,12 @@ def walk(persona, account, viewport, flows, event_id):
             continue
 
         if not f["control"]:
-            note(key, control={"found": False, "why": "정본이 「없음」이라 적은 자리 — " + (f["note"] or "")})
+            # ★ [P-190 · 턴 W] 종전 문구는 「정본이 「없음」이라 적은 자리」였다. 그 말은
+            #   **거짓일 수 있다** — 온보딩 정본에는 술어가 적혀 있는데 이 도구만 안 누르는
+            #   자리가 있기 때문이다(U5#15 이 그 모양이었다). 회색 사유는 **이 도구가 누를
+            #   자리를 선언하지 않았다**이고, 정본이 없다는 말과 같지 않다.
+            note(key, control={"found": False,
+                               "why": "이 도구가 누를 자리를 선언하지 않았다 — " + (f["note"] or "")})
             continue
 
         # ── 화면으로 간다 ──
@@ -1769,9 +2069,40 @@ def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://loca
     #   원본 URL 로 상태코드를 맞춰야 하기 때문이다(`on_resp` 는 `c["url"] == r.url`).
     #   요청을 잡는 자리에서 가리면 응답이 짝을 못 찾아 **모든 상태코드가 None** 이 되고,
     #   판정기는 401·403 을 그것으로 가르므로 여정 전체가 무너진다.
-    OBSERVED.write_text(_redact_credentials(got.stdout.decode("utf-8", "replace")),
-                        encoding="utf-8")
-    print("%s 실측 기록 → %s" % (TAG, OBSERVED.relative_to(ROOT)))
+    # ★★ [P-189 · 턴 W · 차선 Q] **증거를 쓰는 자리에 utf-8 을 못 박는다 — errors 를 두지 않는다.**
+    #
+    #   여기가 이 저장소에서 증거 원문이 **처음 문자가 되는 자리**다. 종전에는
+    #   `decode("utf-8", "replace")` 였다. 그 한 낱말이 무엇을 하느냐 —
+    #   컨테이너가 utf-8 이 아닌 바이트를 한 개라도 흘리면 그 자리를 U+FFFD 로
+    #   **조용히 바꿔 놓고 계속 간다.** 그렇게 쓰인 파일은 여전히 **JSON 으로 파싱되고**
+    #   판정기도 **초록을 내며 수를 말한다** — 다만 그 수가 틀렸다.
+    #
+    #   [실측 2026-09-19 · 턴 W] 지금 증거(29/48)의 한글만 cp949 왕복으로 깨뜨려
+    #   같은 판정기에 먹였더니 **8/48** 이 나왔다(초록 21개가 빨강으로 내려앉는다).
+    #   깨진 것은 파싱 오류를 내지 않는다 — 네 칸 중 ④ 화면 문구가 안 맞을 뿐이다.
+    #   그러므로 **소리 없이 틀린 수**가 보고서에 실린다. 그것이 P-189 다.
+    #
+    #   그래서 여기서는 무르게 읽지 않는다. 깨진 바이트를 만나면 **쓰지 않고 회색**이다 —
+    #   「깨진 증거를 남기는 것」보다 「증거가 없는 것」이 정직하다.
+    try:
+        _text = got.stdout.decode("utf-8")           # errors 없음 — 무르게 읽지 않는다
+    except UnicodeDecodeError as exc:
+        print("%s 증거가 utf-8 이 아니다 (%s) — **쓰지 않는다.** 깨진 증거는 "
+              "파싱은 되고 수만 틀린다(P-189). 컨테이너 쪽 출력 인코딩을 먼저 본다"
+              % (TAG, exc))
+        return EXIT_UNDECIDABLE
+    _redacted = _redact_credentials(_text)
+    OBSERVED.write_text(_redacted, encoding="utf-8", newline="\n")
+    # 쓴 즉시 **다시 읽어** 같은 것이 나오는지 본다 (P-189 · 「썼다」가 아니라 「다시 읽으니 같더라」)
+    _back = OBSERVED.read_text(encoding="utf-8")
+    _ok, _lines, _facts = evidence_roundtrip(_text, _redacted, _back)
+    for _ln in _lines:
+        print("%s   %s" % (TAG, _ln))
+    if not _ok:
+        print("%s 증거를 믿을 수 없다 (P-189) — **회색이다.** 위 줄이 어느 칸인지 말한다" % TAG)
+        return EXIT_UNDECIDABLE
+    print("%s 실측 기록 → %s (쓰고 다시 읽어 같음을 확인 · P-189)"
+          % (TAG, OBSERVED.relative_to(ROOT)))
     return EXIT_OK
 
 
@@ -1804,6 +2135,58 @@ def _redact_credentials(text: str) -> str:
     무엇이 불렸는지는 증거이고, 그 값만 증거가 아니다."""
     return _CRED_IN_URL.sub(lambda m: m.group(1) + "REDACTED-자격은-증거에-적지-않는다",
                             text)
+
+
+def evidence_roundtrip(raw: str, written: str, read_back: str):
+    """P-189 — 증거를 쓰고 **다시 읽어** 같은지 본다. 칸을 **둘로 나눈다.**
+
+        ① **되읽기**   쓴 것 == 다시 읽은 것          ← 인코딩·줄바꿈 손상을 잡는다
+        ② **가리기**   가리기 전후의 **수가 같은가**  ← 가리기는 정당한 변형이다
+
+    ★★ **[턴 W · 2차 · V 실측] 이 함수가 태어난 사유 — 내가 만든 거짓 회색.**
+      처음 넣은 판은 ①을 「**가리기 전 원문** == 쓴 파일」로 견줬다. 그런데 증거에는
+      카카오 지도 `appkey=` 가 **18곳** 있어 `_redact_credentials` 가 **언제나** 작동한다.
+      그래서 그 비교는 **언제나 어긋났고**, `--measure` 는 증거가 멀쩡한데도 **매번 회색**
+      으로 끝났다. V 가 컨테이너 원본과 저장소 사본을 `appkey` 만 맞춰 대 보니
+      **135,139 → 134,977 바이트 · 차이는 가린 문자열뿐**이었다. 증거는 유효했고
+      **게이트가 아니라고 말한 것**이다.
+
+      ⚠ **거짓 초록만 위험한 것이 아니다. 거짓 회색도 위험하다.** 회색은 조용하고,
+        몇 턴 지나면 「FC 는 원래 회색이야」가 된다 — 그러면 내가 막으려던 바로 그 일이
+        **게이트 뒤에 숨어서** 벌어진다.
+
+      ⚠ 고치면서 **약하게 만들지 않는다.** 가리기를 검사에서 그냥 빼면 「가리기가 수를
+        바꿔도 아무도 안 본다」가 된다. 그래서 그 칸을 **②로 따로** 세웠다 — 가린 자리
+        수를 적고, **가리기 전후의 판정 수가 같은지**를 본다(자리 수만 세는 것보다 강하다).
+
+    돌려주는 것: `(성립했나, 적을 줄들, 셈)`.
+    """
+    facts: dict = {}
+    try:
+        w, b = json.loads(written), json.loads(read_back)
+    except ValueError as exc:
+        return False, ["① 되읽기: 쓴 것이나 다시 읽은 것이 JSON 이 아니다 — %s" % exc], facts
+    if w != b:
+        return False, ["① 되읽기: **쓴 것과 다시 읽은 것이 다르다** — "
+                       "인코딩이나 줄바꿈이 손상됐다. 이 증거로 잰 수는 수가 아니다"], facts
+    lines = ["① 되읽기: 쓴 것과 다시 읽은 것이 **같다**"]
+
+    n = len(_CRED_IN_URL.findall(raw))
+    facts["가린 자리"] = n
+    try:
+        r = json.loads(raw)
+    except ValueError as exc:
+        return False, lines + ["② 가리기: 가리기 전 원문이 JSON 이 아니다 — %s" % exc], facts
+    s_raw = score(judge(r.get("observations") or {}))
+    s_new = score(judge(w.get("observations") or {}))
+    facts["수(가리기 전)"], facts["수(가린 뒤)"] = s_raw, s_new
+    if s_raw != s_new:
+        return False, lines + [
+            "② 가리기: **가리기가 수를 바꿨다** %s → %s — 가리기는 자격 **값만** 지워야 "
+            "한다. 수가 움직였다면 지운 것이 값이 아니다" % (s_raw, s_new)], facts
+    lines.append("② 가리기: 자격 **%d곳**을 가렸고 **수는 그대로다** %s "
+                 "(가리기는 정당한 변형이지 손상이 아니다)" % (n, s_raw))
+    return True, lines, facts
 
 
 def load():

@@ -56,6 +56,46 @@ def _admin(request):
     return scope
 
 
+def _privacy_officer(request):
+    """**LAW-07′ 열람·삭제 청구 다섯 문의 문지기** (P-185 · 턴 W · 차선 U24).
+
+    ★ 이것은 **새 인증 경로가 아니다.** 토큰도 로그인도 문도 그대로다 —
+      `_scope` 가 세운 그 사용자로, `auth=JwtOrInboundKey()` 가 지키는 그 다섯 문에서,
+      **누가 지나가는가**만 갈린다. 바뀐 것은 authz 표 한 칸이다.
+
+    누가 지나가나 — **청구의 주인**
+    ------------------------------
+        전역 관리자 · 테넌트 관리자        (종전 `_admin` 과 같다 — 좁히지 않았다)
+        U4 지자체 담당관 `view_only_-_anyang`   ← **넓힌 쪽**. 열람 청구의 주인이다.
+        U5 운영자 `admin`                      (이미 테넌트 관리자로도 지나간다)
+
+    누가 **못** 지나가나 — U2 관제팀장 `fire_admin`
+    ----------------------------------------------
+    세종 P-185 가 「U2 제외」를 이름으로 적었다. 청구인의 이름과 연락처가 실린 면이고,
+    관제팀장의 업무는 사건 처리이지 개인정보 청구 대응이 아니다. 넓히면서 U2 까지
+    들이면 그것은 **요청보다 넓힌 것**이고, 넓힌 쪽만 보고 안 넓힌 쪽을 안 보면
+    증거가 아니다 — `tests/test_u24_law07_authz.py` 가 **둘 다** 누른다.
+
+    ★ 표를 두 벌 두지 않는다 (D-212). 역할 코드는 `config.k3_roles` 의 그 표를
+      **읽기만** 한다 — 여기에 `"view_only_-_anyang"` 같은 글자를 새로 적지 않는다.
+      적는 순간 표가 둘이 되고, 언젠가 한쪽만 고쳐진다.
+    ★ `_admin` 은 **손대지 않았다.** 보존기간 집행 · 파기 · 사용량은 종전 그대로
+      전역·테넌트 관리자만이다. 한 함수를 넓히면 그 함수를 쓰는 **모든** 문이 넓어진다.
+    """
+    from config.k3_roles import K3_ROLE_EXECUTIVES, K3_ROLE_SYSOPS
+
+    scope = _scope(request)
+    user = scope.require_actor()
+    if is_global_admin(user) or is_tenant_admin(user):
+        return scope
+    roles = getattr(user, "roles", None)
+    codes = set(roles.values_list("code", flat=True)) if roles is not None else set()
+    if codes & (set(K3_ROLE_EXECUTIVES) | set(K3_ROLE_SYSOPS)):
+        return scope
+    raise HttpError(
+        403, "열람·삭제 청구는 지자체 담당관 · 운영자 · 관리자만 볼 수 있습니다.")
+
+
 @api_controller("", tags=["DSM 법·인증 (LAW-02a · LAW-06 · LAW-07)"])
 class DsmLawAPI:
     """법·인증 면. **읽기가 기본이고, 지우는 문은 하나뿐이다.**"""
@@ -115,7 +155,7 @@ class DsmLawAPI:
         """내 테넌트의 청구 목록."""
         from apps.dsm.privacy_request import list_requests
 
-        return list_requests(scope=_admin(request), limit=int(limit))
+        return list_requests(scope=_privacy_officer(request), limit=int(limit))
 
     @route.post("/law/privacy-requests", auth=JwtOrInboundKey())
     @tenant_scoped(reason="LAW-07 청구 접수 — 접수는 테넌트 안에서만 생긴다")
@@ -126,7 +166,7 @@ class DsmLawAPI:
         from apps.dsm.privacy_request import accept
 
         try:
-            return accept(scope=_admin(request), subject_name=subject_name,
+            return accept(scope=_privacy_officer(request), subject_name=subject_name,
                           contact=contact, kind=kind,
                           camera_id=camera_id or None, note=note)
         except ValueError as exc:
@@ -141,7 +181,7 @@ class DsmLawAPI:
         from apps.dsm.privacy_request import detail
 
         try:
-            return detail(scope=_admin(request), receipt_no=receipt_no)
+            return detail(scope=_privacy_officer(request), receipt_no=receipt_no)
         except LookupError as exc:
             raise HttpError(404, str(exc)) from exc
 
@@ -152,7 +192,7 @@ class DsmLawAPI:
         from apps.dsm.privacy_request import masked_view
 
         try:
-            return masked_view(scope=_admin(request), receipt_no=receipt_no)
+            return masked_view(scope=_privacy_officer(request), receipt_no=receipt_no)
         except LookupError as exc:
             raise HttpError(404, str(exc)) from exc
 
@@ -164,7 +204,7 @@ class DsmLawAPI:
         from apps.dsm.privacy_request import reply
 
         try:
-            return reply(scope=_admin(request), receipt_no=receipt_no,
+            return reply(scope=_privacy_officer(request), receipt_no=receipt_no,
                          text=text, outcome=outcome)
         except LookupError as exc:
             raise HttpError(404, str(exc)) from exc

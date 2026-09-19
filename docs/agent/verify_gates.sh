@@ -1053,6 +1053,7 @@ _dispatch_gate() {
     contract-route-reach) gate_contract_route_reach ;;
     click-completes)    gate_click_completes ;;
     bundle-api-base)    gate_bundle_api_base ;;
+    evidence-roundtrip) gate_evidence_roundtrip ;;
     *) echo "알 수 없는 게이트: $1"; exit 2 ;;
   esac
 }
@@ -1183,7 +1184,52 @@ gate_bundle_api_base() {
   esac
 }
 
-ALL_GATES=(live-freshness gate-header secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach click-completes bundle-api-base)
+# -----------------------------------------------------------------------------
+# GATE: evidence-roundtrip — **증거 JSON 을 다시 읽어도 같은 수가 나오나**  (P-189 · 턴 W)
+#
+# * 출생 표본 [실측 2026-09-19 · 턴 W · 차선 Q]: 살아 있는 FC 증거의 한글만 cp949
+#   왕복으로 깨뜨려 **같은 판정기**에 먹였더니 29/48 이 **8/48** 이 됐다. 초록 21개가
+#   빨강으로 내려앉는데 **예외는 하나도 나지 않았다** — 따옴표와 중괄호는 아스키라
+#   JSON 은 그대로 파싱되고, 뭉개지는 것은 네 칸 중 ④ 화면 문구뿐이다.
+#   그래서 판정기는 죽지 않고, 초록을 내고, **틀린 수를 말한다.**
+#
+# 「썼다」로는 이것이 안 잡힌다. 쓰는 쪽은 이미 깨진 글자를 성실하게 utf-8 로 적는다.
+# 술어는 하나뿐이다 — **같은 파일을 다시 읽어 같은 수가 나오는가.**
+#
+# ⚠ 이 게이트는 신선도를 재지 않는다. 낡은 증거가 0 이 되는 것은 **「못 잼」이지
+#   「0점」이 아니다**(그 규율은 각 판정기의 MAX_AGE_HOURS 가 진다).
+gate_evidence_roundtrip() {
+  head_ "GATE evidence-roundtrip — 증거를 다시 읽어도 같은 수인가 (P-189)"
+  local out rc n
+  if out=$($PY scripts/verify_evidence_roundtrip.py --self-test 2>&1); then
+    pass "판정 자기시험 통과 (출생 표본 + 세 칸 규칙 10종)"
+  else
+    fail "판정 자기시험 실패 - 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_evidence_roundtrip.py 2>&1); rc=$?
+  n=$(echo "$out" | grep -m1 -oE '증거 파일 [0-9]+개 읽음' | tr -dc '0-9')
+  inputs "${n:-0}" "다시 읽어 다시 센 증거 JSON (파일 바이트를 읽었다)" \
+         "읽을 증거가 하나도 없다 - 아직 아무도 재지 않았다는 뜻이고, 0건은 통과가 아니다" || return 1
+
+  echo "$out" | grep -E '^  [OX?] ' | sed 's/^/        /'
+  # ★ [턴 W · ㉣] **안 걸은 것과 열린 세션은 게이트 얼굴에 이름으로 뜬다.**
+  #   행 목록에만 있으면 다음 사람이 그 빈자리를 초록으로 읽는다.
+  echo "$out" | grep -E '^\[P-189\] \[(안 걸음|세션)\]|^       [A-Z0-9]+ ' | sed 's/^/        /'
+  case $rc in
+    0) pass "$(echo "$out" | grep -m1 -E '^\[P-189\] 초록' || echo '[P-189] 초록')"
+       return 0 ;;
+    2) skip "evidence-roundtrip" "못 쟀다 (exit 2) - 회색은 통과가 아니다"
+       echo "$out" | grep -E '^\[P-189\] 회색' | sed 's/^/        /'
+       return 0 ;;
+    *) fail "증거를 다시 읽으니 같은 수가 아니다 - **그 증거로 잰 수는 수가 아니다**"
+       echo "$out" | sed 's/^/        /'; return 1 ;;
+  esac
+}
+
+ALL_GATES=(live-freshness gate-header secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach click-completes bundle-api-base evidence-roundtrip)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {
