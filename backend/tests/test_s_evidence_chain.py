@@ -255,3 +255,65 @@ class EvidenceChainOnAuditTableTest(TestCase):
         line = evidence_chain.anchor_line(date(2000, 1, 1), "")
         self.assertIn("2000-01-01", line)
         self.assertIn("없음", line)
+
+
+class OldCodeRowIsStillTheTailTest(TestCase):
+    """★ 턴 X — **자리표 없이 태어난 행도 줄의 끝이다.**
+
+    [실측 2026-09-20 · 운영 DB · 이 차선이 직접 밟았다]
+    잠금·자리표가 선 뒤에도 **재기동 안 한 컨테이너 하나**가 옛 코드로 감사를 썼다::
+
+        #275841  2026-09-20 01:00:04Z  guardianx.k2.heartbeat  자리표 없음  hash=c9d02a45…
+
+    그 행은 두 칸이 제대로 있는 **정상 행**이다. 그런데 `_hashed_head()` 가 자리표 있는
+    행만 보고 줄 끝을 골랐기 때문에, 그 뒤에 온 쓰기가 **그 행을 못 보고** 한 칸 앞
+    (#275818 · `2d4e4980…`)에 붙었다 — 줄이 갈라졌고, 게이트가 **새 끊김 1건**을 냈다.
+
+    ⚠ 같은 자리를 `_order_key` 는 **제대로** 읽는다(자리표가 없으면 번호가 자리다).
+      즉 **줄의 순서를 정하는 규칙이 두 벌**이었고, 두 벌의 어긋남이 이 갈라짐이다 —
+      이 저장소가 D-212 에서 배운 바로 그 병이다.
+    """
+
+    def test_a_row_without_a_place_marker_is_seen_as_the_tail(self):
+        first = audit_writer.write(
+            logger_name=LOGGER, tag="[S-TEST]", actor=_Actor(1, "s_actor"),
+            action="before_old_code", outcome=audit_writer.ALLOWED, reason="앞 행")
+
+        # 옛 코드가 쓴 행을 **그 모양 그대로** 만든다: 두 칸은 있고 자리표만 없다.
+        old = audit_writer.write(
+            logger_name=LOGGER, tag="[S-TEST]", actor=_Actor(1, "s_actor"),
+            action="old_code_row", outcome=audit_writer.ALLOWED, reason="옛 코드 행")
+        row = _audit_rows().get(pk=old.audit_id)
+        payload = dict(row.data_after or {})
+        payload.pop(evidence_chain.SEQ_KEY, None)
+        _audit_rows().filter(pk=old.audit_id).update(data_after=payload)
+
+        head_id, head_hash, head_seq = evidence_chain._hashed_head()
+        self.assertEqual(
+            old.audit_id, head_id,
+            f"자리표 없는 행 #{old.audit_id} 을 줄 끝으로 안 봤다 — "
+            f"#{head_id} 를 끝이라 했다(#{first.audit_id} 가 그 앞 행이다). "
+            f"다음 쓰기가 그 앞에 붙어 줄이 갈라진다")
+        self.assertEqual(old.row_hash, head_hash)
+        self.assertEqual(old.audit_id, head_seq, "자리표가 없으면 **번호가 곧 자리**다")
+
+    def test_the_next_write_lands_behind_that_row(self):
+        """그 다음 한 줄이 **정말로** 그 뒤에 붙는가 — 끊김 0 으로 확인한다."""
+        audit_writer.write(logger_name=LOGGER, tag="[S-TEST]",
+                           actor=_Actor(1, "s_actor"), action="a",
+                           outcome=audit_writer.ALLOWED, reason="가")
+        old = audit_writer.write(logger_name=LOGGER, tag="[S-TEST]",
+                                 actor=_Actor(1, "s_actor"), action="b",
+                                 outcome=audit_writer.ALLOWED, reason="나")
+        row = _audit_rows().get(pk=old.audit_id)
+        payload = dict(row.data_after or {})
+        payload.pop(evidence_chain.SEQ_KEY, None)
+        _audit_rows().filter(pk=old.audit_id).update(data_after=payload)
+
+        audit_writer.write(logger_name=LOGGER, tag="[S-TEST]",
+                           actor=_Actor(1, "s_actor"), action="c",
+                           outcome=audit_writer.ALLOWED, reason="다")
+        breaks = evidence_chain.verify_sequence(evidence_chain.chain_entries())
+        self.assertEqual((), breaks,
+                         "옛 코드 행 하나가 줄을 갈랐다: "
+                         + " · ".join(str(b) for b in breaks[:5]))

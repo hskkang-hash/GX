@@ -1,0 +1,167 @@
+{
+  "measured_at": "2026-09-20T04:58:17+00:00",
+  "api": "http://localhost:8000",
+  "concurrency": 10,
+  "rounds": 5,
+  "warmup_rounds": 1,
+  "budget_ms": null,
+  "birth_sample": {
+    "kernel_p50_ms": 12.28,
+    "measured": "2026-09-09 · PERF-03"
+  },
+  "note": "문을 두드린 수다. 커널 함수의 수(PERF-03)와 **같은 것이 아니다** — 미들웨어·직렬화·인증·커넥션 풀은 함수 안에 없다.",
+  "scenarios": [
+    {
+      "scenario": "S1",
+      "name": "목록 — 관제요원이 가장 자주 여는 자리",
+      "concurrency": 10,
+      "rounds": 5,
+      "requests": 50,
+      "coverage": {
+        "declared": 2,
+        "pressed": 2,
+        "declared_calls": [
+          "/api/dsm/events?limit=50",
+          "/api/dsm/events/summary"
+        ]
+      },
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 455.8,
+      "p95_ms": 487.0,
+      "max_ms": 490.4,
+      "mean_ms": 448.6,
+      "per_call": {
+        "/api/dsm/events/summary": {
+          "n": 25,
+          "p50_ms": 456.2,
+          "p95_ms": 488.5
+        },
+        "/api/dsm/events?limit=50": {
+          "n": 25,
+          "p50_ms": 448.9,
+          "p95_ms": 481.2
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    },
+    {
+      "scenario": "S2",
+      "name": "대시보드 — 첫 화면 한 벌",
+      "concurrency": 10,
+      "rounds": 5,
+      "requests": 50,
+      "coverage": {
+        "declared": 2,
+        "pressed": 2,
+        "declared_calls": [
+          "/api/dsm/dashboard/frame",
+          "/api/dsm/dashboard/link-state"
+        ]
+      },
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 417.9,
+      "p95_ms": 445.1,
+      "max_ms": 450.2,
+      "mean_ms": 408.7,
+      "per_call": {
+        "/api/dsm/dashboard/frame": {
+          "n": 25,
+          "p50_ms": 426.0,
+          "p95_ms": 445.1
+        },
+        "/api/dsm/dashboard/link-state": {
+          "n": 25,
+          "p50_ms": 413.5,
+          "p95_ms": 441.8
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    },
+    {
+      "scenario": "S3",
+      "name": "단일 초점 — 가장 급한 하나",
+      "concurrency": 10,
+      "rounds": 5,
+      "requests": 50,
+      "coverage": {
+        "declared": 2,
+        "pressed": 2,
+        "declared_calls": [
+          "/api/dsm/events/queue",
+          "/api/dsm/events/response-times"
+        ]
+      },
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 545.5,
+      "p95_ms": 812.0,
+      "max_ms": 815.6,
+      "mean_ms": 573.0,
+      "per_call": {
+        "/api/dsm/events/queue": {
+          "n": 25,
+          "p50_ms": 548.1,
+          "p95_ms": 815.6
+        },
+        "/api/dsm/events/response-times": {
+          "n": 25,
+          "p50_ms": 537.9,
+          "p95_ms": 807.9
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    },
+    {
+      "scenario": "S4",
+      "name": "섞기 — 실제 관제실은 한 자리만 두드리지 않는다",
+      "concurrency": 10,
+      "rounds": 5,
+      "requests": 50,
+      "coverage": {
+        "declared": 4,
+        "pressed": 4,
+        "declared_calls": [
+          "/api/dsm/events?limit=50",
+          "/api/dsm/dashboard/frame",
+          "/api/dsm/events/queue",
+          "/api/dsm/events/summary"
+        ]
+      },
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 463.2,
+      "p95_ms": 541.3,
+      "max_ms": 549.9,
+      "mean_ms": 472.1,
+      "per_call": {
+        "/api/dsm/dashboard/frame": {
+          "n": 15,
+          "p50_ms": 463.2,
+          "p95_ms": 549.9
+        },
+        "/api/dsm/events/queue": {
+          "n": 10,
+          "p50_ms": 473.2,
+          "p95_ms": 548.7
+        },
+        "/api/dsm/events/summary": {
+          "n": 10,
+          "p50_ms": 470.0,
+          "p95_ms": 521.9
+        },
+        "/api/dsm/events?limit=50": {
+          "n": 15,
+          "p50_ms": 457.0,
+          "p95_ms": 541.3
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    }
+  ]
+}

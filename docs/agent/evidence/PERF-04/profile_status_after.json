@@ -1,0 +1,69 @@
+{
+  "measured_at": "2026-09-20T03:56:24+00:00",
+  "how": "django.test.Client — 프로세스 안. HTTP 왕복·동시성 없음. perf_load 의 수와 다른 수다",
+  "reps": 12,
+  "middleware_count": 29,
+  "rows": [
+    {
+      "path": "/api/dsm/dashboard/link-state",
+      "reps": 12,
+      "status": {
+        "200": 12
+      },
+      "wall_p50_ms": 24.68,
+      "wall_mean_ms": 26.8,
+      "wall_min_ms": 19.3,
+      "queries": 14,
+      "query_ms": 3.0,
+      "distinct_shapes": 8,
+      "top_shape_per_request": 3,
+      "top_shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreuser\".\"is_staff\", \"user_coreuser\".\"is_active\", \"user_coreuser\"",
+      "name": "STATUS",
+      "verdict": "not_query_ms",
+      "why": "not_query_ms 가 88% 를 쓴다 (21.7ms / 24.7ms)"
+    }
+  ],
+  "profile": {
+    "path": "/api/dsm/dashboard/link-state",
+    "lines": [
+      "         206348 function calls (200984 primitive calls) in 0.218 seconds",
+      "   Ordered by: cumulative time",
+      "   List reduced from 1360 to 34 due to restriction <34>",
+      "   ncalls  tottime  percall  cumtime  percall filename:lineno(function)",
+      "        6    0.000    0.000    0.219    0.036 /usr/local/lib/python3.11/site-packages/django/test/client.py:1115(get)",
+      "        6    0.000    0.000    0.219    0.036 /usr/local/lib/python3.11/site-packages/django/test/client.py:471(get)",
+      "        6    0.000    0.000    0.219    0.036 /usr/local/lib/python3.11/site-packages/django/test/client.py:637(generic)",
+      "        6    0.000    0.000    0.218    0.036 /usr/local/lib/python3.11/site-packages/django/test/client.py:1068(request)",
+      "        6    0.000    0.000    0.216    0.036 /usr/local/lib/python3.11/site-packages/django/test/client.py:169(__call__)",
+      "        6    0.000    0.000    0.214    0.036 /usr/local/lib/python3.11/site-packages/django/core/handlers/base.py:136(get_response)",
+      "    180/6    0.000    0.000    0.214    0.036 /usr/local/lib/python3.11/site-packages/django/core/handlers/exception.py:52(inner)",
+      "        6    0.000    0.000    0.214    0.036 /app/common/schema_header.py:33(__call__)",
+      "        6    0.000    0.000    0.214    0.036 /app/common/config_read_cache.py:171(__call__)",
+      "     60/6    0.000    0.000    0.214    0.036 /usr/local/lib/python3.11/site-packages/django/utils/deprecation.py:122(__call__)",
+      "        6    0.000    0.000    0.214    0.036 /usr/local/lib/python3.11/site-packages/corsheaders/middleware.py:46(__call__)",
+      "        6    0.000    0.000    0.213    0.035 /usr/local/lib/python3.11/site-packages/core/middleware/superuser_must_change_pass.py:11(__call__)",
+      "        6    0.000    0.000    0.212    0.035 /app/common/error_body.py:236(__call__)",
+      "        6    0.000    0.000    0.212    0.035 /app/common/rate_limit_body.py:150(__call__)",
+      "        6    0.000    0.000    0.212    0.035 /usr/local/lib/python3.11/site-packages/core/middleware/jwt_user_restore.py:31(__call__)",
+      "        6    0.001    0.000    0.135    0.022 /usr/local/lib/python3.11/site-packages/core/middleware/refresh_token.py:136(__call__)",
+      "        6    0.000    0.000    0.111    0.018 /app/common/wall_token.py:317(__call__)",
+      "        6    0.000    0.000    0.111    0.018 /app/common/access_gate.py:372(__call__)",
+      "        6    0.000    0.000    0.110    0.018 /app/common/role_gate.py:433(__call__)",
+      "        6    0.000    0.000    0.103    0.017 /app/common/session_limit.py:333(__call__)",
+      "        6    0.000    0.000    0.103    0.017 /app/common/api_contract.py:244(__call__)",
+      "        6    0.000    0.000    0.102    0.017 /app/common/universal_optimization.py:907(__call__)",
+      "        6    0.000    0.000    0.102    0.017 /usr/local/lib/python3.11/site-packages/ninja/compatibility/files.py:50(sync_middleware)",
+      "        6    0.000    0.000    0.102    0.017 /usr/local/lib/python3.11/site-packages/core/middleware/dependency_check.py:18(__call__)",
+      "        6    0.000    0.000    0.102    0.017 /usr/local/lib/python3.11/site-packages/core/middleware/connection_management.py:19(__call__)",
+      "        6    0.000    0.000    0.102    0.017 /app/partner/middleware/partner_auth_middleware.py:27(__call__)",
+      "        6    0.000    0.000    0.101    0.017 /usr/local/lib/python3.11/site-packages/core/logger/middleware.py:690(__call__)",
+      "       90    0.001    0.000    0.096    0.001 /usr/local/lib/python3.11/site-packages/django/db/models/query.py:1931(_fetch_all)",
+      "       12    0.000    0.000    0.095    0.008 /usr/local/lib/python3.11/site-packages/core/api/v1/auth.py:175(authenticate)",
+      "       12    0.001    0.000    0.095    0.008 /usr/local/lib/python3.11/site-packages/core/auth.py:19(authenticate)",
+      "       84    0.001    0.000    0.086    0.001 /usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py:1544(execute_sql)",
+      "        6    0.000    0.000    0.067    0.011 /usr/local/lib/python3.11/site-packages/django/core/handlers/base.py:174(_get_response)",
+      "       84    0.001    0.000    0.067    0.001 /usr/local/lib/python3.11/site-packages/django/db/models/query.py:87(__iter__)",
+      "       42    0.000    0.000    0.064    0.002 /usr/local/lib/python3.11/site-packages/django/db/models/query.py:387(__iter__)"
+    ]
+  }
+}

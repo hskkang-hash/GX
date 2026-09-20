@@ -1,0 +1,103 @@
+{
+  "measured_at": "2026-09-20T03:49:19+00:00",
+  "api": "http://localhost:8000",
+  "concurrency": 1,
+  "rounds": 10,
+  "warmup_rounds": 1,
+  "budget_ms": null,
+  "birth_sample": {
+    "kernel_p50_ms": 12.28,
+    "measured": "2026-09-09 · PERF-03"
+  },
+  "note": "문을 두드린 수다. 커널 함수의 수(PERF-03)와 **같은 것이 아니다** — 미들웨어·직렬화·인증·커넥션 풀은 함수 안에 없다.",
+  "scenarios": [
+    {
+      "scenario": "S1",
+      "name": "목록 — 관제요원이 가장 자주 여는 자리",
+      "concurrency": 1,
+      "rounds": 10,
+      "requests": 10,
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 36.3,
+      "p95_ms": 52.4,
+      "max_ms": 52.4,
+      "mean_ms": 38.1,
+      "per_call": {
+        "/api/dsm/events?limit=50": {
+          "n": 10,
+          "p50_ms": 36.3,
+          "p95_ms": 52.4
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    },
+    {
+      "scenario": "S2",
+      "name": "대시보드 — 첫 화면 한 벌",
+      "concurrency": 1,
+      "rounds": 10,
+      "requests": 10,
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 44.4,
+      "p95_ms": 50.8,
+      "max_ms": 50.8,
+      "mean_ms": 42.6,
+      "per_call": {
+        "/api/dsm/dashboard/frame": {
+          "n": 10,
+          "p50_ms": 44.4,
+          "p95_ms": 50.8
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    },
+    {
+      "scenario": "S3",
+      "name": "단일 초점 — 가장 급한 하나",
+      "concurrency": 1,
+      "rounds": 10,
+      "requests": 10,
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 96.7,
+      "p95_ms": 171.9,
+      "max_ms": 171.9,
+      "mean_ms": 99.7,
+      "per_call": {
+        "/api/dsm/events/queue": {
+          "n": 10,
+          "p50_ms": 96.7,
+          "p95_ms": 171.9
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    },
+    {
+      "scenario": "S4",
+      "name": "섞기 — 실제 관제실은 한 자리만 두드리지 않는다",
+      "concurrency": 1,
+      "rounds": 10,
+      "requests": 10,
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 45.3,
+      "p95_ms": 52.5,
+      "max_ms": 52.5,
+      "mean_ms": 42.6,
+      "per_call": {
+        "/api/dsm/events?limit=50": {
+          "n": 10,
+          "p50_ms": 45.3,
+          "p95_ms": 52.5
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    }
+  ]
+}

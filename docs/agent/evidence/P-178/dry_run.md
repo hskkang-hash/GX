@@ -159,3 +159,91 @@
 `DROP ROLE` 은 그 역할이 소유한 것이 없어야 한다 — SQL ⑥ 이 소유권을 안 옮겼으므로
 되돌리기는 **`.env` 두 줄을 옛 값으로 + 컨테이너 재생성**이다. 그것이 `REASSIGN OWNED`
 를 안 넣은 이유이고, 이 절은 창 2 순서표의 마지막 줄이어야 한다.
+
+---
+
+# 턴 X — **절차서를 냈다. 여전히 dry-run 이다** (2026-09-20 · U56)
+
+> 세종 P-194 가 창을 2a/2b 로 쪼갰다. 이 차선의 몫은 **창 2a 의 절차서**이고,
+> 창은 조율자가 연다. **이 턴에도 집행하지 않았다**: DB 에 만든 역할 **0** ·
+> 바꾼 권한 **0** · 돌린 `GRANT`/`REVOKE` **0줄** · 바꾼 `.env` 값 **0** ·
+> 재생성한 컨테이너 **0**.
+
+## 10. 산출물 — `RUNBOOK_창2a.md`
+
+`docs/agent/evidence/P-178/RUNBOOK_창2a.md` · **16단계** · **★(되돌릴 수 없음) 셋** ·
+**「여기서 멈춤 — 대표 결정 필요」 한 자리(C0)에 결정 세 칸**.
+이 문서(`dry_run.md`)는 **조사**이고 그것은 **순서**다 — 둘을 한 파일에 두지 않았다.
+
+## 11. 다시 쟀다 [실측 2026-09-20 13:1x~13:2x · 읽기만]
+
+| 잰 것 | 턴 V(09-18) | 턴 W(09-19) | **턴 X(09-20)** |
+|---|---|---|---|
+| `current_user` | `postgres` | `postgres` | **`postgres`** |
+| super/createdb/createrole | t/t/t | t/t/t | **t/t/t** |
+| `public` 스키마 표 | 231 | 231 | **231** |
+| 로그인 superuser | 둘 | 둘 | **둘** (`postgres`·`pgroot`) |
+| 역할 `gx_app`·`gx_migrate` | 없음 | 없음 | ★ **빈 결과** (`gx_test` 까지 함께 물었다) |
+| 남은 시험 DB | 12 | 12 | **13 · 426MB** |
+
+새로 쟀고 전엔 없던 수:
+**PostgreSQL 18.1** · 로그인 **가능한 역할은 둘뿐** · **PUBLIC 이 `schema public` 에
+`USAGE,CREATE`** 를 갖고 있다(18 의 기본이 아니다 — 누가 되돌려 줬다) ·
+시험 DB **소유자 전부 `postgres`**.
+
+## 12. ★ 자진 오판 — **§3 의 compose diff 는 집행 수단이 아니다**
+
+§3 은 「지금 넷은 전부 `env_file: ./backend/.env` 를 읽고 그 파일의 `DB_USER` 는
+`postgres`」라고 적었다. **그 전제가 틀렸다** [실측 2026-09-20]:
+
+```
+도는 컨테이너 10개 전부 compose 라벨이 비어 있다 (손으로 docker run 한 것)
+뿌리 .env 의 키: MINIO_ROOT_USER · MINIO_ROOT_PASSWORD · MINIO_BUCKET_NAME ·
+                 GX_STORAGE_CAPACITY_GB  — DB_USER 도 DB_PASSWORD 도 **0줄**
+앱 넷의 DB 자격 출처: --env-file C:/GuardianX-vault/recreate/<이름>.new.env
+DB_USER 넷이 같다: sha256 앞 12자 a942b37ccfaf = sha256("postgres") 앞 12자
+```
+
+⇒ 「compose 를 고치는 것은 선언이지 집행이 아니다」(위임 이의 #3)가 **내 산출물에도
+걸린다.** `RUNBOOK_창2a.md` C4 는 compose 가 아니라 **env-file 교체**로 썼다.
+§3 의 diff 는 *compose 가 이 컨테이너들을 소유하는 날*을 위한 **선언으로만** 남긴다.
+
+## 13. 턴 X 에 새로 드러난 순서 제약 — OPS-24 가 OPS-23 보다 먼저다
+
+시험 DB 13개의 **소유자가 전부 `postgres`** 이고 `DROP DATABASE` 는 **소유자나
+superuser** 라야 한다. `CREATEDB` 를 줘도 남의 DB 는 못 지운다.
+⇒ 그 13개를 회수하기 전에 `gx-shell` 을 `gx_migrate` 로 옮기면 pytest 가
+`--create-db`·`--reuse-db` 어느 쪽이든 **「permission denied to drop database」로 죽는다.**
+두 절을 가른 것이 행정이 아니라 **집행 순서**였다는 것이 여기서 처음 수로 나왔다.
+
+## 14. 시험 DB — **총수는 거짓말한다**(세 턴째 같은 증거 · 이번엔 근거를 셋으로)
+
+```
+턴 V 12 → 턴 W 12 → 턴 X 13.  총수만 보면 「거의 안 변했다」이다.
+그런데 턴 W 의 test_gx_u56 은 **사라졌고**, test_gx_f · test_gx_s 가 **새로 생겼다.**
+지금 살아 있는 것 둘: test_gx_f(11연결) · test_gx_s(8연결) — **절대 안 지운다.**
+회수 후보 3 (95MB): test_database_guardianx · test_database_guardianx_e2e · test_gx_u3b
+```
+회수 규약의 세 근거와 재는 법은 `RUNBOOK_창2a.md` §C0-ⓒ 에 있다.
+⚠ **지우지 않았다.** 이 차선이 이 턴에 지운 DB **0개**.
+
+## 15. ★ **같은 턴 안에서 40분 만에 다시 쟀다 — 총수는 13 그대로인데 세 자리가 돌았다**
+
+「총수는 거짓말한다」를 세 턴에 걸쳐 적어 왔는데, 이번엔 **한 턴 안에서** 잡혔다.
+
+| 잰 시각 | 총수 | 합 | 무슨 일이 있었나 |
+|---|---|---|---|
+| 13:2x | **13** | 426MB | `test_gx_f`(11연결) · `test_gx_s`(8연결) 이 살아 있었다 |
+| 14:0x | **13** | 428MB | `test_gx_s` **사라짐** · `test_gx_u56` **새로 생김**(이 차선이 시험을 돌렸다) · `test_gx_u24` 는 **재생성됐다**(`xact_commit` 3,894 → **691** — 카운터가 리셋됐다는 것은 DB 가 지워지고 다시 만들어졌다는 뜻이다) |
+
+⇒ **40분 동안 세 자리가 바뀌었는데 총수는 13 → 13 이다.**
+  총수를 보는 사람은 **아무 일도 없었다고 읽는다.**
+  회수 규약이 총수가 아니라 **DB 마다 세 근거**(`numbackends` · `xact_commit` ·
+  디렉터리 시각)로 서야 하는 이유가 이것이다.
+
+⇒ 그리고 **회수 후보 셋은 두 판 모두 같았다**: `test_database_guardianx` ·
+  `test_database_guardianx_e2e` · `test_gx_u3b` (둘 다 `numbackends 0` · `xact_commit 0`).
+  **돌아다니는 것과 버려진 것은 이 규약으로 실제로 갈린다** — 후보가 흔들리지 않았다는
+  것이 그 증거다.
+
+⚠ 이 차선이 이 턴에 만든 시험 DB **1개**(`test_gx_u56` · 표적 pytest) · 지운 것 **0개**.

@@ -67,6 +67,7 @@ from django.apps import apps
 from django.db.models import Count, Q
 from django.utils import timezone
 
+from common.probe_marker import exclude_probe
 from common.tenant_filters import filter_by_group_field
 from common.tenant_scope import TenantScope
 from kernels.k6_feedback.exceptions import InvalidMetricInput, NotImplementedYet
@@ -171,6 +172,14 @@ def false_positive_rate(
 
     qs = Event._base_manager.filter(occurred_at__gte=since, occurred_at__lte=until)
     qs = filter_by_group_field(qs, actor, field=_owner_field(Event))
+
+    # ★ P-193 — **게이트가 심은 사건은 분모에도 분자에도 안 든다** (2026-09-20 · 차선 U1).
+    #   K6 에는 제품 면이 없다. 이 커널이 내는 수는 전부 **재는 수**이고(오탐률 ·
+    #   판정 모수 · 미판정), 재는 수에 게이트의 씨앗이 들면 그 지표는 **게이트가 몇 번
+    #   돌았는가**를 함께 재게 된다. 그래서 여기는 켜고 끌 인자가 없다 — 끌 자리가
+    #   있으면 언젠가 꺼진 채로 대외 보고에 나간다.
+    #   뜻은 `common.probe_marker` 한 곳이 정한다(K1 도 같은 곳을 부른다).
+    qs = exclude_probe(qs)
 
     def _in(field: str, value):
         nonlocal qs

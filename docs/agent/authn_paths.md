@@ -60,7 +60,7 @@ if not user.token:                       # ← JWT 는 멀쩡한데 여기서 �
 |---|---|---|---|
 | **웹 UI (SPA)** | `POST /api/v1/auth/login` → `user.token` + JWT | **200** | 빌드 번들에 `/api/v1/auth/login`·`/api/v1/auth/refresh-token` 만 있고 `/api/token/pair` **0건** (`backend/_fe_dist/assets/*.js`) |
 | **모바일 M1~M3** | 같은 문 — 화면은 이미 있고 같은 `loginAPI` 를 쓴다 | **미착수** | `frontend/src/features/LoginMobile/LoginMobile.tsx` (`loginAPI(username, password, end_previous_session)`) |
-| **외부 API U6** | `X-API-Key` — 선언한 라우트에서만 | ★ **발급 문은 열렸다(턴 V)** · 키가 닿는 문은 **아직 `/api/dsm/events` 하나** | `common/inbound_api_key.py:97-130` · `apps/dsm/api.py:188` (`inbound_key=True` 가 붙은 **유일한** 라우트) · §3 |
+| **외부 API U6** | `X-API-Key` — 선언한 라우트에서만 | ★ **발급 문은 열렸다(턴 V)** · 키가 닿는 문은 **둘** [정정 2026-09-20 턴 X] | `common/inbound_api_key.py:97-130` · `apps/dsm/api.py:189`(F-05 이벤트) · `api.py:1390`(UX-23 `cameras/pulse` · 범위 `pulse:read` · 턴 W 차선 U3) · §3 · **§3-1** |
 | **게이트·판정기** | `POST /api/v1/auth/login` (`end_previous_session:true`) | **200** | `scripts/verify_route_alive.py::LOGIN_PATHS` |
 | **시드** | HTTP 를 안 쓴다 — 서비스 함수를 직접 부른다 | 해당 없음 | `stream_monitors/management/commands/seed_dsm_events.py` |
 | **화면 캡처 시험** | `/api/token/pair` → `/api/v1/auth/logout` (강제 로그아웃) | **200 · 실제로 지워진다** | `tests/test_screens_browser.py::_force_logout` (§4) |
@@ -212,6 +212,47 @@ GET 여섯 도메인은 **그대로다**: `thresholds`·`zones`·`recipients`·`
 래칫 기준선을 **4 → 0** 으로 조였다(D-311) — 갚은 빚은 기준선에서 내려야 하고,
 안 내리면 그 자리가 다시 썩어도 초록이 난다.
 
+### 3-1. ★★ `stats/*` 에 들어오는 키를 **열지 않는다** — 사유 [턴 W·X · 차선 U24]
+
+> **왜 이 줄이 대장에 있나.** 이 답은 두 턴째 떠다니던 요청(「`stats/*` 여덟에
+> `inbound_key=True` 를 달라」)에 대한 것이고, 턴 W 에 `apps/dsm/api_u24.py` 머리에
+> **코드 주석으로만** 적혀 있었다. 주석만 있으면 **대장만 읽는 다음 사람이 또 묻는다.**
+> 그래서 같은 말을 사람이 읽는 자리에 세운다. 코드 주석은 지우지 않았다 —
+> 고치는 사람이 보는 자리와 읽는 사람이 보는 자리는 다르다.
+
+**답: 열지 않는다.** 그리고 요청의 **전제 둘이 실측에서 뒤집혔다.**
+
+| 요청이 말한 것 | 실측 | 그래서 |
+|---|---|---|
+| `stats/*` 는 **여덟** | **아홉** — GET 8 + **POST 1** (`/stats/thresholds/simulate`) | 「여덟을 연다」를 그대로 집행하면 **아홉째가 조용히 열린다** |
+| `inbound_key=True` 선언은 **하나**(`GET /api/dsm/events`) | **둘** — `GET /api/dsm/events` · `GET /api/dsm/cameras/pulse`(턴 W · 차선 U3) | 「하나뿐이라 좁다」가 사실이 아니고, **여는 방법의 정본이 이미 있다** |
+
+그 POST 는 `common/inbound_api_key` 규약 ③ 「읽기 전용부터」에 걸려 **애초에 열
+대상이 아니다.** 그리고 `cameras/pulse` 가 보여 주는 정본은 **데코레이터 한 줄이
+아니라 「이름 붙은 범위」**다 — `pulse:read` 를 **일부러 받은** 키만 들인다.
+
+**여는 일의 본체는 `stats:read` 범위를 세우는 일이고, 그 범위는 아직 없다**
+[실측 턴 V · 차선 U56 — 「`stats`·`pulse` 미선언」]. 범위 없이 `inbound_key=True`
+만 달면 **기본 범위(`events:read`)만 가진 키가 통계에 전부 닿는다.** 그 모양을
+`inbound_api_key.py` 머리말이 계약 11조 자리에서 **이름으로** 금지했다 —
+위험한 문장은 「들어오는 키를 아직 안 만들었다」가 아니라
+**「범위 없이 이미 열어 두었다」**이다.
+
+그리고 **부르는 외부 App 이 0 이다.** `stats/*` 를 키로 부른다는 실측이 없다.
+필요를 못 본 채 여는 것은 D-300 부작위 규율의 **반대**다 — 기본값이 거절이어야
+새 문이 조용히 표면을 넓히지 못한다.
+
+★ **여는 조건 셋** (다음 사람이 이 줄을 근거로 열 수 있게 적는다):
+
+    ⓐ `stats:read` 범위가 선다
+    ⓑ 그 범위를 요구하는 **외부 계약 절**이 생긴다
+    ⓒ **키로 실제로 눌러 200 을 본 뒤** — 그때 **GET 8 개만** 연다.
+       `POST /stats/thresholds/simulate` 는 규약 ③ 이 막는 자리다(열지 않는다).
+
+셋이 다 서기 전에 여는 것은 「열었다」가 아니라 **「범위 없이 열어 두었다」**이다.
+같은 말이 `backend/apps/dsm/api_u24.py` 의 `DsmU24API` 머리에도 있다 — **두 자리가
+같은 말을 한다.** 한쪽을 고치면 다른 쪽도 고쳐야 한다.
+
 ---
 
 ## 4. `/api/v1/auth/logout` — 문 하나가 느슨하다 [실측]
@@ -242,10 +283,36 @@ GET 여섯 도메인은 **그대로다**: `thresholds`·`zones`·`recipients`·`
   **정정 [실측 2026-09-19 · 턴 W · 차선 U56]:** 「지금은 키를 HTTP 로 발급할 수 없다」는
   **더 이상 참이 아니다** — 턴 V 가 `{domain}` 삼킴을 고쳐 `POST /api/dsm/settings/api-keys`
   가 도달한다(익명 **401** · 자격 있으면 422/200 · nginx:8500 에서 잰 수).
-  참인 것은 **그 다음 줄**이다: 발급한 키가 **닿는 문이 하나뿐**이다.
-  `inbound_key=True` 를 선언한 라우트는 저장소 전체에서 `GET /api/dsm/events` **하나**이고,
-  `/api/dsm/stats/*`(여덟) · `/api/dsm/cameras/pulse` 는 **키에게 401** 이다.
+  참인 것은 **그 다음 줄**이다: 발급한 키가 **닿는 문이 아주 좁다.**
+
+  **정정 [실측 2026-09-20 · 턴 X · 차선 U24 · 런타임 레지스트리 763자리 + 원본 전수]:**
+  위 줄은 종전에 「`GET /api/dsm/events` **하나** · `stats/*`(**여덟**) · `cameras/pulse`
+  는 키에게 401」이라고 적혀 있었다. **두 수가 다 지금은 틀리다:**
+  · `inbound_key=True` 선언 라우트는 **둘**이다 — `GET /api/dsm/events`(F-05) ·
+    `GET /api/dsm/cameras/pulse`(UX-23 · 범위 `pulse:read` · **턴 W 차선 U3 가 열었다**).
+  · `stats/*` 는 여덟이 아니라 **아홉**이다 — GET 8 + POST 1(`/stats/thresholds/simulate`).
+    그 아홉은 **여전히 키에게 401** 이고, **일부러 안 연 것**이다 — 사유는 **§3-1**.
   「키를 못 만든다」와 「키가 갈 데가 없다」는 다른 사실이다 — 뭉치면 고친 것을 못 본다.
+  그리고 **「안 열렸다」와 「안 열기로 했다」도 다른 사실이다** — 사유 없이 「401」만
+  적어 두면 다음 사람이 그것을 **못 고친 빚**으로 읽고 열러 온다(실제로 두 턴 그랬다).
+
+  **사유 [턴 X · 차선 U3 — 위 정정의 `pulse` 칸은 내가 만든 사실이므로 내가 적는다]:**
+  U24 가 **수**를 맞췄다(하나→둘). 그 둘째 문을 연 것이 나이고, **왜 열었는가**가
+  수보다 오래 간다. 여는 사유는 「상속했으니 열렸겠거니」가 **아니었다** —
+  `key_scopes.py` 의 `SCOPE_PULSE_READ="pulse:read"` 가 `ALLOWED_SCOPES` 에 있어
+  운영자가 키에 **줄 수 있고**, `PATH_SCOPES` 가 이 경로를 가리키는데,
+  **라우트가 선언을 안 해 키는 범위 판정에 닿기도 전에 401** 이었다 [실측 턴 W].
+  즉 **줄 수는 있는데 쓸 데가 없는 범위**였다. 줄 수 있다고 적어 두고 쓰면 막는 것은
+  없는 기능에 손잡이를 그린 것과 같다(D-284). ⇒ **여는 쪽이 이미 내려진 판정의
+  집행**이고, 안 여는 쪽이 새 판정이었다. (`stats/*` 가 정반대인 이유도 같은 잣대다 —
+  거기엔 `stats:read` 범위가 **아직 없다**. §3-1 ⓐ.)
+
+  ⚠ **「둘」이 「넓어졌다」는 뜻이 아니다.** `pulse` 는 데코레이터 한 줄이 아니라
+  **이름 붙은 범위**로 열렸다 — `pulse:read` 를 **일부러 받은** 키만 200 이고,
+  기본 범위(`DEFAULT_SCOPES=("events:read",)`)만 가진 **이미 나간 키는 그대로 403** 이다
+  [실측 턴 W · `tests/test_u3_pulse_inbound_key.py` 7 passed].
+  진입면(method·path)은 **안 늘었다** — 늘어난 것은 자격의 갈래 하나다
+  (`EntrySurfaceIsLockedTest` 가 잡은 차이에 pulse 는 안 나온다).
 
 ---
 

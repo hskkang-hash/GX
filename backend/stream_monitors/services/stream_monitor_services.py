@@ -25,6 +25,11 @@ from common.constant import MESSAGE_ENUM
 from common.tenant_filters import filter_by_group_field
 from stream_monitors.utils.constants import VALID_STREAMS_URL
 from stream_monitors.utils.minio_client import minio_client
+# ★ [P-200 · 턴 X · U3] 카메라 자격을 로그로 안 흘리기 위한 씻개.
+#   이 파일은 `StreamMonitor.ip_source`(= 운영자가 손으로 적는 칸 · 흔히
+#   `rtsp://아이디:비밀번호@호스트/…`)를 **일곱 줄에서 그대로 찍고 있었다.**
+#   게이트 `camera-secret-logs` 가 이 자리를 지킨다.
+from stream_monitors.services.url_redaction import redact_payload, redact_url
 from devices.models import Device
 from stream_monitors.schemas.schemas_djantic_in import ExternalStreamMonitorInSchema, StreamMonitorsInSchema
 from config import settings
@@ -648,7 +653,9 @@ class StreamMonitorService:
             if stream_monitor.is_external:
                 rtsp_url = stream_monitor.ip_source
 
-            logger.info(f"🔍 [START_RECORD] RTSP URL: {rtsp_url}")
+            # ⚠ 주소를 **그대로 적지 않는다** — 외부 카메라면 이 값이 `ip_source` 이고
+            #   거기엔 카메라 아이디·비밀번호가 섞여 있다 (P-200).
+            logger.info(f"🔍 [START_RECORD] RTSP URL: {redact_url(rtsp_url)}")
             # Create database record first to get record_id
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             record_code = f"{timestamp}{stream_monitor_id}"
@@ -685,7 +692,8 @@ class StreamMonitorService:
 
                 # Debug logging
                 logger.info(f"🔍 [START_RECORD] Calling AI_GRPC_URL: {record_url}")
-                logger.info(f"🔍 [START_RECORD] Request body: {json.dumps(body_data, indent=2)}")
+                # ⚠ 몸통에 `rtsp_url` 이 들어 있다 — **한 겹 건너 새던 자리**다 (P-200).
+                logger.info(f"🔍 [START_RECORD] Request body: {json.dumps(redact_payload(body_data), indent=2)}")
                 logger.info(f"🔍 [START_RECORD] Stream monitor ID: {stream_monitor_id}, Record ID: {record_instance.id}")
 
                 response = requests.post(
@@ -741,7 +749,8 @@ class StreamMonitorService:
                     'url_callback': url_callback,
                     'stream_id': stream_monitor_id
                 }
-                logger.info(f"🔍 [START_DETECT] Detection URL: {detection_url} with body: {body_data} {enable_detection} {url_callback}")
+                # ⚠ `body_data['input_rtsp']` 가 외부 카메라면 `ip_source` 다 (P-200).
+                logger.info(f"🔍 [START_DETECT] Detection URL: {detection_url} with body: {redact_payload(body_data)} {enable_detection} {url_callback}")
                 if enable_detection:
                     response = requests.post(
                         detection_url,
@@ -1244,14 +1253,16 @@ class StreamMonitorService:
                 "stream_id": stream_id,
                 "detection_type": detection_type,
             }
-            print('payload: ', payload)
+            # ⚠ `payload['input_url']` 가 외부 카메라면 `ip_source` 다 — 씻은 사본만
+            #   적는다. `requests.post` 로 나가는 것은 **원본 `payload`** 그대로다 (P-200).
+            print('payload: ', redact_payload(payload))
             # Make API call
             headers = {
                 'Content-Type': 'application/json',
                 'accept': 'application/json'
             }
 
-            logger.info(f"🚀 Calling AI stream API: {api_url} with payload: {payload}")
+            logger.info(f"🚀 Calling AI stream API: {api_url} with payload: {redact_payload(payload)}")
             logger.debug(f"🔍 Original AI_GRPC_URL setting: {settings.AI_GRPC_URL}, Final URL: {api_url}")
             response = requests.post(
                 api_url,
@@ -1272,7 +1283,8 @@ class StreamMonitorService:
                         'output_url': output_url,
                         'api_response': response_data
                     }
-                    logger.info(f"✅ AI dual stream started successfully: {result}")
+                    # ⚠ `result['input_url']` 가 외부 카메라면 `ip_source` 다 (P-200).
+                    logger.info(f"✅ AI dual stream started successfully: {redact_payload(result)}")
                     return result
                 except ValueError:
                     # Response is not JSON
@@ -1283,7 +1295,7 @@ class StreamMonitorService:
                         'output_url': output_url,
                         'api_response': response.text
                     }
-                    logger.info(f"✅ AI dual stream started successfully (non-JSON response): {result}")
+                    logger.info(f"✅ AI dual stream started successfully (non-JSON response): {redact_payload(result)}")
                     return result
             else:
                 error_msg = f"API returned status {response.status_code}: {response.text}"

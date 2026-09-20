@@ -932,8 +932,13 @@ gate_contract_route_reach() {
 gate_click_completes() {
   env_none "판정은 저장소의 실측 증거를 읽는다 (실측은 python scripts/verify_click_completes.py --measure)"
   local out rc n
+  # ★ [턴 X · 차선 Q] **분모를 손으로 적지 않는다.** 종전 문안은 「양성 38 · 식 자기수용 38」
+  #   이라 적혀 있었는데 도구가 실제로 내는 수는 **34** 였다 — 흐름 표가 줄었는데 게이트의
+  #   칭찬만 옛 수를 들고 있었다. 사람이 적은 수는 갈리고, 갈린 쪽이 조용히 이긴다.
+  #   그래서 **도구가 낸 줄을 그대로 옮긴다**(O = 선 칸 · ⚠ = 도구가 제 입으로 단 단서).
   if out=$($PY scripts/verify_click_completes.py --self-test 2>&1); then
-    pass "판정기 자기시험 통과 (양성 38 · 식 자기수용 38 · 변이 9 · **출생 표본 3 빨강** · 관측0=회색48 · 면제칸 없음)"
+    pass "판정기 자기시험 통과 — 수는 도구가 말한다(아래)"
+    echo "$out" | grep -E '^\[P-118\] (O|⚠)' | sed 's/^/        /'
   else
     fail "판정기 자기시험 실패 — 이 게이트는 눈이 멀었다"
     echo "$out" | sed 's/^/        /'
@@ -1054,6 +1059,7 @@ _dispatch_gate() {
     click-completes)    gate_click_completes ;;
     bundle-api-base)    gate_bundle_api_base ;;
     evidence-roundtrip) gate_evidence_roundtrip ;;
+    camera-secret-logs) gate_camera_secret_logs ;;
     *) echo "알 수 없는 게이트: $1"; exit 2 ;;
   esac
 }
@@ -1229,7 +1235,81 @@ gate_evidence_roundtrip() {
   esac
 }
 
-ALL_GATES=(live-freshness gate-header secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach click-completes bundle-api-base evidence-roundtrip)
+# ─────────────────────────────────────────────────────────────────────────────
+# GATE: camera-secret-logs — **카메라 자격이 로그에 적히는가** (P-200 · 턴 X · U3)
+#
+# ★ 출생 표본 — **막은 것이 한 턴 만에 돌아왔다.**
+#   턴 W(P-192)에 `capture_service.py` 의 `print("rtsp_url: ", rtsp_url)` 과
+#   `logger.info(f"… RTSP: {rtsp_url}")` 를 `_redact` 로 막았다. 그런데 **지키는
+#   판정기를 안 세웠다.** 턴 X 에 열어 보니 옆 파일에서 같은 줄 **일곱 개**가
+#   멀쩡히 살아 있었다 [실측 2026-09-20 · `stream_monitor_services.py`]:
+#
+#       :651  logger.info(f"… RTSP URL: {rtsp_url}")        ← rtsp_url = m.ip_source
+#       :688  logger.info(f"… body: {json.dumps(body_data)}") ← **한 겹 건너 샌다**
+#       :744 · :1247(print) · :1254 · :1275 · :1286
+#
+#   `StreamMonitor.ip_source` 는 운영자가 손으로 적는 칸이고 그 꼴이 흔히
+#   `rtsp://아이디:비밀번호@호스트:554/…` 다. 즉 **카메라 비밀번호가 접근 로그에 남는다.**
+#   로그 줄은 지우지 않는 것이 규약이므로(D-004 회전) 애초에 안 적는 수밖에 없다.
+#
+# ★ 술어가 **둘**인 이유 — 로그는 회전으로 사라지고, 코드는 남는다.
+#   ① `docker logs` 를 실제로 읽어 `rtsp://<무엇>:<무엇>@` 이 **몇 줄인가**를 센다.
+#      (이 판의 로그는 전부 stdout 이다 — `settings.LOGGING` 의 root 핸들러가
+#       `console` 하나뿐이고 파일 핸들러가 없다. 앞단 nginx 도 같이 본다.)
+#      자르는 기준은 줄이 아니라 **시각**(`--since`)이다.
+#   ② 파이썬 AST 로 `ip_source` 에서 흘러나온 값이 씻기지 않고 `logger.*`/`print`
+#      에 닿는 줄을 찾는다. **이름으로 안 센다** — 죄가 있는 것은 `rtsp_url` 이라는
+#      이름이 아니라 `ip_source` 라는 샘이다. 그래서 `backend/delivery/` 의
+#      `print("stream_urls: ", stream_urls)` 는 안 걸린다(금지구역 오탐 0).
+#
+# ★ **음성 대조를 했다 — 이 게이트는 빨개지는 것을 봤다** [2026-09-20 · 턴 X]:
+#   · ② 코드: `capture_service.py:230` 의 `_redact(` 를 **한 번 벗겨** 심었더니
+#     `빨강 · capture_service.py:229` · rc=1. 되돌린 뒤 원본과 **차이 0줄**.
+#   · ① 로그: **가짜 자격**을 stdout 으로 뱉는 컨테이너를 띄워 `--container` 로
+#     겨눴더니 세 줄 중 **한 줄**만 잡았다(씻긴 꼴·내부 주소는 안 잡음) · rc=1.
+#     그 뒤 컨테이너를 지웠다. ⚠ 진짜 카메라 자격은 한 번도 안 썼다.
+# ─────────────────────────────────────────────────────────────────────────────
+gate_camera_secret_logs() {
+  # ⚠ 「환경 없음」은 **자격증명·로그인이 없다**는 뜻이다. `docker` 실행 파일은 필요하고,
+  #   없으면 로그 면이 **회색**이 된다(초록이 아니다 — rc=2 로 재 봤다).
+  env_none "자격증명 0 · 서버 로그인 0 (읽기만) — 다만 **docker CLI** 가 없으면 로그 면은 회색"
+  head_ "GATE camera-secret-logs — 카메라 자격이 로그에 적히는가 (P-200)"
+  local out rc nlog npy
+
+  if out=$($PY scripts/verify_camera_secret_logs.py --self-test 2>&1); then
+    pass "판정 자기시험 통과 (출생 표본 9 + 로그 줄 표본 6)"
+  else
+    fail "판정 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_camera_secret_logs.py 2>&1); rc=$?
+  npy=$(echo "$out" | grep -m1 -oE '파이썬 파일 [0-9]+개 훑음' | tr -dc '0-9')
+  nlog=$(echo "$out" | grep -m1 -oE '로그 줄 [0-9]+개 훑음' | tr -dc '0-9')
+  # ★ 두 면을 **따로** 센다. 한 수로 합치면 「로그를 못 읽었는데 코드가 많아서 초록」이
+  #   가능해진다 — 그것이 D-301 이 금지한 바로 그 모양이다.
+  inputs "${npy:-0}" "AST 로 훑은 backend 파이썬 파일" \
+         "파이썬 파일을 한 개도 못 읽었다 — 정적 술어가 눈이 먼 것이지 0건이 아니다" || return 1
+  inputs "${nlog:-0}" "실제로 읽은 살아 있는 로그 줄 (docker logs --since · 줄 아닌 시각으로 잘랐다)" \
+         "로그를 한 줄도 못 읽었다 — 컨테이너가 안 떴거나 docker 가 없다. 「자격 0줄」이 아니다" || return 1
+
+  echo "$out" | grep -E '^  [OX?] ' | sed 's/^/        /'
+  # ★ rtsp 언급이 0줄이면 ①의 초록은 「지켜졌다」가 아니라 「지나간 것이 없다」이다.
+  #   그 문장을 게이트 얼굴에 띄운다 — 행에만 있으면 다음 사람이 넓게 읽는다.
+  echo "$out" | grep -E '⚠ rtsp 언급 자체가' | sed 's/^/        /'
+  case $rc in
+    0) pass "자격이 로그로 가는 줄 0 — 살아 있는 로그 · 코드 둘 다"
+       return 0 ;;
+    2) skip "camera-secret-logs" "한 면을 못 쟀다 — 회색은 통과가 아니다"
+       echo "$out" | grep -E '^\[P-200\] 회색' | sed 's/^/        /'
+       return 0 ;;
+    *) fail "카메라 자격이 로그로 간다 — **막은 것이 돌아왔다**"
+       echo "$out" | sed 's/^/        /'; return 1 ;;
+  esac
+}
+
+ALL_GATES=(live-freshness gate-header secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach click-completes bundle-api-base evidence-roundtrip camera-secret-logs)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {

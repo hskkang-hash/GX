@@ -117,6 +117,16 @@ MIDDLEWARE = [
     #   안쪽 어느 겹이 답하든(캐시 적중 · 관문 401 · 5xx 표지) 전부 지난다.
     #   본문·상태줄은 안 만진다. 되돌리기는 `SCHEMA_HEADER_ENABLED = False` 한 줄이다.
     "common.schema_header.SchemaHeaderMiddleware",
+    # ★ [P-198 · PERF-04 · 2026-09-20 턴 X · 차선 F] 설정 읽기를 **요청 한 벌 안에서
+    #   한 번만** 한다. **줄을 새로 넣었다**(기존 줄은 한 자도 안 고쳤다).
+    #   자리는 `SchemaHeaderMiddleware` 바로 아래 — 설정을 읽는 겹(인증·관문·로그·
+    #   파트너)보다 **전부 바깥**이어야 그 읽기들이 기억 안에 든다. 스키마 헤더는
+    #   이 겹보다 바깥에 남겨 둔다(그 겹의 「맨 위」 계약을 건드리지 않는다).
+    #   응답·상태줄은 한 자도 안 만진다. 쓰기 요청(GET·HEAD·OPTIONS 밖)은 통과만 한다.
+    #   [실측 2026-09-20] link-state 요청당 질의 **22 → 14** (그중 `adminconfig`
+    #   12 → 4) · 설정 읽기 **6회 → 2회**(물음이 2종이다) · 6요청 누적 파이썬 −20%.
+    #   되돌리기는 `CONFIG_READ_CACHE_ENABLED = False` 한 줄이다.
+    "common.config_read_cache.ConfigReadCacheMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -207,6 +217,24 @@ MIDDLEWARE = [
 #     §5    단계적 롤아웃 순서와 되돌림 기준
 API_CONTRACT_PROMOTE_ERROR_STATUS = (
     os.environ.get("API_CONTRACT_PROMOTE_ERROR_STATUS", "false").lower() == "true"
+)
+
+# ── P-198 · PERF-04 — 설정 읽기 기억 (2026-09-20 턴 X · 차선 F) ───────────────
+#
+# 요청 한 벌 안에서 같은 설정 물음을 한 번만 묻는다(`common/config_read_cache.py`).
+# 답은 바꾸지 않고 **묻는 횟수만** 줄인다. 기본값은 **켜짐**이다.
+#
+#   False  겹이 `MiddlewareNotUsed` 로 경로에서 빠진다. 제품은 고치기 전과 똑같이 돈다
+#
+# ★ 이름을 **환경에서도** 받는 이유는 되돌리기가 아니라 **재기 위해서**다:
+#   같은 코드·같은 데이터·같은 창에서 이 한 칸만 바꿔 두 벌을 재야 「좋아진 것이
+#   코드 덕인가」를 말할 수 있다. 저장소 파일을 고쳐서 A/B 를 하면 그 사이에 남이
+#   다른 파일을 고치고, 그러면 잰 차가 **무엇의 차인지 모르게 된다** [실측: 이 턴에
+#   실제로 그랬다 — 차선 U1 이 `kernels/k1_event/services.py` 를 내 두 벌 사이에 고쳤다].
+#
+#     docker exec -e CONFIG_READ_CACHE_ENABLED=false gx-shell python manage.py runserver …
+CONFIG_READ_CACHE_ENABLED = (
+    os.environ.get("CONFIG_READ_CACHE_ENABLED", "true").lower() == "true"
 )
 
 # ── SEC-18 ⑥ **예외 응답이 본문에 내부를 싣지 않는다** (P-100 · 2026-09-07 · 차선 B) ──

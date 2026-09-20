@@ -82,3 +82,39 @@ class RootConfigIsPinnedTest(TestCase):
         text = ini.read_text(encoding="utf-8")
         self.assertIn("[pytest]", text)
         self.assertIn("testpaths", text)
+
+
+class SplitWhenBusyTest(TestCase):
+    """턴 X · 차선 S — **같은 이름을 든 실행 둘**을 다투는 순간에만 가른다.
+
+    출생 표본 [실측 2026-09-20]: `DB_TEST_NAME=test_gx_s` 를 든 내 실행 둘.
+    먼저 돈 쪽은 teardown 에서 `database "test_gx_s" is being accessed by other users`,
+    나중에 온 쪽은 **22 errors** — 전부
+    `duplicate key value violates unique constraint "auth_permission_…"` 였다.
+    그 빨강에는 DB 이름이 한 글자도 안 나온다. 그래서 코드 결함으로 읽힌다.
+    """
+
+    def setUp(self) -> None:
+        self.split = _conftest().split_when_busy
+
+    def test_a_busy_name_is_split(self) -> None:
+        self.assertEqual(
+            self.split("test_gx_s", busy=True, pid=4242), "test_gx_s_p4242")
+
+    def test_a_free_name_is_not_touched(self) -> None:
+        """⚠ 늘 가르면 실행마다 새 DB 가 남고, 치우는 일이 사람의 기억으로 돌아온다."""
+        self.assertEqual(
+            self.split("test_gx_s", busy=False, pid=4242), "test_gx_s")
+
+    def test_not_knowing_is_not_splitting(self) -> None:
+        """**못 봤다(None)** 는 이름을 안 바꾼다 — 대신 부르는 쪽이 그 사실을 인쇄한다.
+
+        「못 봤다」를 「다툰다」로 읽으면 평시 실행마다 DB 가 새로 생기고,
+        「안 다툰다」로 읽으면 가드가 조용히 사라진다. 그래서 갈래가 셋이다.
+        """
+        self.assertEqual(
+            self.split("test_gx_s", busy=None, pid=4242), "test_gx_s")
+
+    def test_the_split_name_is_still_a_legal_db_name(self) -> None:
+        """postgres 의 이름 한도는 63자다 — 가른 이름이 그 선을 넘으면 조용히 잘린다."""
+        self.assertLess(len(self.split("test_gx_s", busy=True, pid=999999)), 63)

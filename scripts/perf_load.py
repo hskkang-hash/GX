@@ -24,6 +24,20 @@
 ★ **재지 못하면 재지 못했다고 말한다** (D-301 · D-400). 서버가 없거나 로그인이 안 되면
   exit 2 다 — 0건을 「부하가 없다」로 읽지 않는다.
 
+★★ **동시 N 은 시나리오의 자리 수 이상이어야 한다** (2026-09-20 · 턴 X · 차선 F).
+  한 라운드의 배치는 `calls[i % len(calls)] for i in range(concurrency)` 라서, 동시 N 이
+  자리 수보다 작으면 **앞의 N 개만** 눌린다. 그런데도 시나리오 줄은 「S2 대시보드 —
+  첫 화면 **한 벌**」이라는 이름으로 p50/p95 를 냈다. **한 번도 안 누른 자리에 수가
+  적히는 것**이고, 그것은 이 저장소가 내내 걷어낸 병(제 씨앗을 세는 게이트 · 언제나
+  회색인 검사)과 같은 종류다.
+  [실측] `--concurrency 1` 로 돌린 `PERF-04/turnx_c1_before.json` 은 **선언된 자리 10 중
+  4 개만** 눌렀는데 네 시나리오 전부 수가 적혔다. 이제 그 설정은 **재기 전에 멈추고
+  회색(exit 2)** 을 낸다 (`coverage_gap`).
+  ⚠ **기준선은 영향이 없다** — 가장 넓은 S4 가 자리 4개이고 기준선은 동시 10 이다.
+    `load.json`·`turnx_after_r5.json` 을 열어 세 보면 **빠짐 0**이다. 자기시험이
+    그 사실을 매번 다시 센다(「기준선 설정(동시 10)은 전 시나리오를 다 누른다」).
+    **과거 수는 한 자도 안 바뀐다.**
+
     python scripts/perf_load.py --self-test         # 판정 규칙만 (서버 없이)
     python scripts/perf_load.py --list              # 시나리오 표
     python scripts/perf_load.py --scenario S1 --concurrency 10 --rounds 5
@@ -100,6 +114,57 @@ BIRTH_SAMPLE = {"kernel_p50_ms": 12.28, "measured": "2026-09-09 · PERF-03"}
 #: 워밍업으로 버릴 라운드. 첫 호출은 커넥션·캐시·임포트를 함께 재므로 **다른 것**이다.
 WARMUP_ROUNDS = 1
 
+#: 종료 코드. **0 통과 · 1 빨강(오류·예산 초과) · 2 회색(못 쟀다).**
+#: 빨강이 회색을 이긴다 — 잰 실패는 **사실**이고 못 잰 것은 **모름**이다. 사실이 먼저 선다.
+#: 그래도 회색은 **언제나 이름으로 적는다**: 회색은 초록이 아니다 (D-301).
+EXIT_OK, EXIT_ALARM, EXIT_GRAY = 0, 1, 2
+
+
+class CoverageGap(RuntimeError):
+    """**선언한 자리를 다 누르지 못하는 설정**으로 재려 했다. 수를 내지 않고 멈춘다."""
+
+
+def coverage_gap(calls: "list | tuple", concurrency: int) -> str | None:
+    """이 설정이 시나리오의 **모든 자리를 누르는가.** 못 누르면 사유, 누르면 `None`.
+
+    ★ 순수 함수다 — 자기시험이 서버 없이 먹인다.
+
+    무엇을 막는가 — **한 번도 안 누른 자리에 수가 적히는 것**
+    ------------------------------------------------------
+    한 라운드의 배치는 `calls[i % len(calls)] for i in range(concurrency)` 다.
+    그래서 **동시 N 이 호출 수보다 작으면 앞의 N 개만** 눌리는데, 시나리오 줄은
+    여전히 「S2 대시보드 — 첫 화면 **한 벌**」이라는 이름으로 p50/p95 를 낸다.
+    그 수는 한 벌의 수가 아니라 **그 한 벌 중 첫 자리의 수**다.
+
+    [실측 2026-09-20 · 턴 X] `--concurrency 1` 로 돌린 `turnx_c1_before.json` 에서
+    **선언된 자리 10개 중 4개만** 눌렸다(안 눌린 7자리: `events/summary` ·
+    `dashboard/link-state` · `events/response-times` · `dashboard/frame` ·
+    `events/queue` · `events/summary`). 그런데 네 시나리오 전부 수가 적혔다.
+    **안 눌린 자리에 적힌 수는 수가 아니다** — 이제 그 자리에는 **회색**이 선다.
+
+    ★ 기준선(동시 10)은 **영향을 받지 않는다** [실측 2026-09-20 · 아래 두 파일을
+      코드가 아니라 **파일을 열어** 셌다]:
+
+          docs/agent/evidence/PERF-01/load.json      동시 10 → S1 2/2 · S2 2/2 · S3 2/2 · S4 4/4
+          docs/agent/evidence/PERF-04/turnx_after_r5.json  동시 10 → 같다 (빠짐 없음)
+
+      가장 넓은 시나리오가 S4(자리 4개)이므로 **동시 10 이면 언제나 전부 눌린다.**
+      그래서 이 규칙은 **과거 수를 한 자도 바꾸지 않는다** — 옛 수는 그대로 서고,
+      앞으로 안 눌리는 자리만 수 대신 회색을 받는다.
+
+    ⚠ **고르게 눌리는 것까지는 요구하지 않는다.** 동시 10 · 자리 4개면 앞 두 자리가
+      라운드마다 한 번 더 눌린다(기준선 S4 가 실제로 `n=15/10/10/15` 다). 그것은
+      기준선이 **이미 그렇게 잰 사실**이고, 여기서 고르게 만들면 옛 수와 못 댄다.
+      이 함수가 막는 것은 **0회**이지 불균등이 아니다.
+    """
+    if concurrency >= len(calls):
+        return None
+    missed = [p for _m, p in list(calls)[concurrency:]]
+    return ("동시 %d 로는 이 시나리오의 자리 %d 개를 다 못 누른다 — "
+            "**%d 자리가 0회**다 (%s). 안 누른 자리의 수는 수가 아니므로 재지 않는다. "
+            "동시 %d 이상으로 돌려라 (기준선은 동시 10)."
+            % (concurrency, len(calls), len(missed), ", ".join(missed), len(calls)))
+
 
 def percentile(values: list[float], pct: float) -> float:
     """p50 · p95. **정렬 뒤 위치**로 낸다 — 표본이 적을 때 보간은 없는 수를 만든다."""
@@ -132,6 +197,11 @@ def run_scenario(api: str, token: str, key: str, *, concurrency: int,
     from verify_route_alive import hit                    # noqa: PLC0415
 
     calls = SCENARIOS[key]["calls"]
+    #: ★ **재기 전에 멈춘다.** 잰 뒤에 「덜 눌렸다」를 덧붙이면 그 수가 먼저 읽히고,
+    #:   먼저 읽힌 수는 옮겨 적힌다. 수를 아예 만들지 않는 것이 유일하게 듣는 방법이다.
+    gap = coverage_gap(calls, concurrency)
+    if gap:
+        raise CoverageGap("%s: %s" % (key, gap))
     samples: list[float] = []
     per_call: dict[str, list[float]] = {}
     errors: list[str] = []
@@ -160,6 +230,12 @@ def run_scenario(api: str, token: str, key: str, *, concurrency: int,
         "concurrency": concurrency,
         "rounds": rounds,
         "requests": len(samples),
+        #: ★ **눌린 자리를 수와 같은 칸에 적는다** (턴 X · ③). 읽는 사람이 `per_call`
+        #:   의 열쇠를 세어 보지 않아도 「선언 4 · 눌린 4」가 수 옆에 서 있게 한다.
+        #:   `coverage_gap` 이 0회를 막으므로 이 둘은 늘 같아야 한다 — 다르면 버그다.
+        "coverage": {"declared": len(calls),
+                     "pressed": len(per_call),
+                     "declared_calls": [p for _m, p in calls]},
         "errors": len(errors),
         "error_detail": sorted(set(errors))[:10],
         "p50_ms": round(percentile(samples, 50), 1),
@@ -191,6 +267,26 @@ def self_test() -> int:
              for s in SCENARIOS.values() for _m, p in s["calls"])),
         ("시나리오는 읽기뿐이다",
          all(m == "GET" for s in SCENARIOS.values() for m, _p in s["calls"])),
+
+        # ── [턴 X · ③] 안 눌린 자리에 수가 적히지 않는다 ──────────────────────
+        ("동시 N 이 호출 수보다 작으면 회색 사유를 낸다",
+         coverage_gap([("GET", "/a"), ("GET", "/b")], 1) is not None),
+        ("그 사유가 **안 눌리는 자리의 이름**을 댄다",
+         "/b" in (coverage_gap([("GET", "/a"), ("GET", "/b")], 1) or "")),
+        ("동시 N 이 호출 수와 같으면 통과다",
+         coverage_gap([("GET", "/a"), ("GET", "/b")], 2) is None),
+        ("동시 N 이 더 크면 통과다 (불균등은 막지 않는다)",
+         coverage_gap([("GET", "/a"), ("GET", "/b"), ("GET", "/c"), ("GET", "/d")], 10) is None),
+        #: ★ 기준선이 쓴 그 설정이 **지금도 통과하는지**를 코드가 직접 센다.
+        #:   주석에 적어 둔 「동시 10 은 영향 없다」가 다음 사람의 믿음이 아니라
+        #:   **돌아가는 검사**가 되는 자리다. 시나리오가 늘어 자리가 11개가 되는 날
+        #:   이 줄이 먼저 빨개진다.
+        ("기준선 설정(동시 10)은 **전 시나리오**를 다 누른다",
+         all(coverage_gap(s["calls"], 10) is None for s in SCENARIOS.values())),
+        ("가장 넓은 시나리오의 자리 수가 10 을 넘지 않는다",
+         max(len(s["calls"]) for s in SCENARIOS.values()) <= 10),
+        ("회색과 빨강은 다른 종료 코드다",
+         EXIT_OK == 0 and EXIT_ALARM == 1 and EXIT_GRAY == 2),
     ]
     for label, ok in cases:
         print("  %-4s %s" % ("OK" if ok else "FAIL", label))
@@ -225,6 +321,25 @@ def main() -> int:
 
     keys = sorted(SCENARIOS) if args.all else ([args.scenario] if args.scenario else ["S4"])
 
+    #: ★ [턴 X · ③] **자리를 다 못 누르는 설정이면 로그인하기 전에 멈춘다.**
+    #:   로그인은 IP 기준 분당 5회다(D-460) — 어차피 못 잴 벌에 그 몫을 쓰지 않는다.
+    #:   그리고 「재고 나서 회색」보다 「재기 전에 회색」이 낫다: 수가 만들어지지 않으면
+    #:   옮겨 적힐 수도 없다.
+    gaps = {k: coverage_gap(SCENARIOS[k]["calls"], args.concurrency) for k in keys}
+    gaps = {k: why for k, why in gaps.items() if why}
+    for key, why in sorted(gaps.items()):
+        print("[PERF-LOAD] ? %-3s **판정 불가(회색)** — %s" % (key, why))
+    measurable = [k for k in keys if k not in gaps]
+    if not measurable:
+        print("[PERF-LOAD] **아무것도 안 쟀다** — 고른 시나리오 %d종이 전부 위 사유다. "
+              "회색은 초록이 아니다 (D-301)." % len(keys))
+        #: ⚠ 안 썼다는 것을 **말한다.** 안 쓰면 그 경로의 **옛 파일이 그대로 남고**,
+        #:   남은 파일은 방금 잰 것처럼 보인다 — 「재지 못했다」가 조용해지는 자리가 거기다.
+        if args.out:
+            print("[PERF-LOAD] ⚠ `%s` 에 **아무것도 안 썼다.** 그 경로에 옛 파일이 있으면 "
+                  "그것은 **이번 수가 아니다** — 날짜(`measured_at`)를 보고 쓰라." % args.out)
+        return EXIT_GRAY
+
     from verify_route_alive import login                  # noqa: PLC0415
 
     api = os.environ.get("GX_API", "").rstrip("/")
@@ -239,11 +354,18 @@ def main() -> int:
         print("[PERF-LOAD] **판정 불가** — 로그인 실패. %s 가 서 있는가 (동시 접속 1개다)" % api)
         return 2
 
-    print("[PERF-LOAD] [입력] 시나리오 %d종 · 동시 %d · %d라운드 (워밍업 %d라운드 버림)"
-          % (len(keys), args.concurrency, args.rounds, WARMUP_ROUNDS))
+    print("[PERF-LOAD] [입력] 시나리오 %d종%s · 동시 %d · %d라운드 (워밍업 %d라운드 버림)"
+          % (len(measurable),
+             "" if not gaps else " (회색 %d종 제외 · 위 사유)" % len(gaps),
+             args.concurrency, args.rounds, WARMUP_ROUNDS))
     results = []
-    rc = 0
-    for key in keys:
+    #: 회색이 하나라도 있으면 통과로 끝나지 않는다. 빨강이 나면 빨강이 이긴다.
+    rc = EXIT_GRAY if gaps else EXIT_OK
+    for key, why in sorted(gaps.items()):
+        results.append({"scenario": key, "name": SCENARIOS[key]["name"],
+                        "concurrency": args.concurrency, "rounds": args.rounds,
+                        "measured": False, "verdict": "GRAY", "why": why})
+    for key in measurable:
         summary = run_scenario(api, token, key, concurrency=args.concurrency,
                                rounds=args.rounds)
         ok, why = judge(summary, budget_ms=args.budget_ms)
@@ -260,7 +382,10 @@ def main() -> int:
         if summary["error_detail"]:
             for line in summary["error_detail"]:
                 print("        ✗ %s" % line)
-        rc = rc or (0 if ok else 1)
+        #: 빨강은 회색을 **덮는다** — 잰 실패는 사실이고 못 잰 것은 모름이다.
+        #: 그래도 회색 줄은 위에 이미 이름으로 찍혔다(색을 지우는 것이 아니다).
+        if not ok:
+            rc = EXIT_ALARM
 
     if args.out:
         payload = {
@@ -280,9 +405,12 @@ def main() -> int:
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         print("[PERF-LOAD] 기록 → %s" % out)
 
-    if rc == 0:
-        print("[PERF-LOAD] 통과 — 오류 0건" +
+    if rc == EXIT_OK:
+        print("[PERF-LOAD] 통과 — 오류 0건 · 선언한 자리 전부 눌렀다" +
               ("" if args.budget_ms is None else " · p95 전부 예산 안"))
+    elif rc == EXIT_GRAY:
+        print("[PERF-LOAD] **회색(exit 2)** — 시나리오 %d종을 못 쟀다(위 ? 줄). "
+              "회색은 초록이 아니다 (D-301)." % len(gaps))
     return rc
 
 

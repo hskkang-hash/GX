@@ -10,6 +10,7 @@ from stream_monitors.models import StreamMonitor, StreamMonitorAIModel
 from stream_monitors.schemas.schemas_djantic_out import CaptureResponse
 from django.conf import settings
 from stream_monitors.utils.minio_client import minio_client
+from stream_monitors.services.url_redaction import redact_url
 import logging
 
 
@@ -95,26 +96,18 @@ _KILL_GRACE_SEC = 3
 _DEFAULT_RTSP_PORT = 554
 
 
-def _redact(url: str) -> str:
-    """로그에 적기 전에 **자격을 지운다**.
-
-    ⚠ 종전 코드는 `print("rtsp_url: ", rtsp_url)` 과 `logger.info(f"… RTSP: {rtsp_url}")`
-      로 주소를 **그대로** 적었다. 외부 카메라 주소는 `rtsp://아이디:비밀번호@호스트/…`
-      꼴이 흔하고(`StreamMonitor.ip_source`), 그러면 카메라 비밀번호가 접근 로그에
-      남는다. 로그 줄은 지우지 않는 것이 규약이라(D-004 회전) 애초에 안 적는다.
-    """
-    try:
-        parts = urllib.parse.urlsplit(url)
-    except ValueError:
-        return "(주소 해석 실패)"
-    if not parts.hostname:
-        return url
-    host = parts.hostname
-    if parts.port:
-        host = f"{host}:{parts.port}"
-    if parts.username or parts.password:
-        host = f"***@{host}"
-    return urllib.parse.urlunsplit((parts.scheme, host, parts.path, "", ""))
+#: 로그에 적기 전에 **자격을 지운다**.
+#:
+#: ⚠ 종전 코드는 `print("rtsp_url: ", rtsp_url)` 과 `logger.info(f"… RTSP: {rtsp_url}")`
+#:   로 주소를 **그대로** 적었다. 외부 카메라 주소는 `rtsp://아이디:비밀번호@호스트/…`
+#:   꼴이 흔하고(`StreamMonitor.ip_source`), 그러면 카메라 비밀번호가 접근 로그에
+#:   남는다. 로그 줄은 지우지 않는 것이 규약이라(D-004 회전) 애초에 안 적는다.
+#:
+#: ★ [P-200 · 턴 X] 몸통을 `services/url_redaction.py` 로 **옮겼다.** 턴 W 에는 이
+#:   함수가 이 파일 안에만 있었고, 그동안 옆 파일(`stream_monitor_services.py`)은
+#:   이걸 못 써서 **일곱 줄이 그대로 새고 있었다.** 한 파일 안의 방어는 옆 파일을
+#:   못 지킨다. 이름 `_redact` 는 그대로 둔다 — 부르는 자리와 시험이 이 이름을 쓴다.
+_redact = redact_url
 
 
 def _probe_tcp(url: str, timeout_sec: int) -> str:

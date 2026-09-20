@@ -178,6 +178,7 @@ def recent_events(*, scope: TenantScope, since: datetime | None = None,
                   event_type=None, severity=None, response_state=None,
                   reviewed_by_id: int | None = None,
                   stream_monitor_id: int | None = None,
+                  include_probe: bool = False,
                   limit: int = 50):
     """F-09 이벤트 목록. K1 을 그대로 부른다 — 필터도 커널이 건다.
 
@@ -192,6 +193,13 @@ def recent_events(*, scope: TenantScope, since: datetime | None = None,
     ★ 2026-09-23 (차선 C · W1 프리셋 4종) — `until` 과 `reviewed_by_id` 가 더해졌다.
       **App 은 여기서 아무것도 거르지 않는다.** 인자를 커널로 넘기기만 한다 —
       App 이 한 줄이라도 거르기 시작하면 필터가 두 층에 생기고, 두 층은 어긋난다.
+
+    ★ 2026-09-20 (턴 X · 차선 U1 · P-193) — `include_probe` 가 더해졌다. **기본값은
+      「안 센다」**이고, 그래서 이 함수를 지나는 모든 셈(요약 `unhandled` · 초점 큐 ·
+      인계 초안 · 온보딩 술어 · F-14 통계 · 대응 시간)이 **아무것도 안 고치고** 게이트
+      씨앗을 뺀다. 여는 것은 **사람이 보는 목록 하나**뿐이다(`api.py` `/events`) —
+      D-497 「거르는 곳은 측정이지 제품이 아니다」. 감추는 것이 아니라 세지 않는 것이다.
+      거르는 실행은 여기가 아니라 커널에 있다(App 은 모델을 만지지 않는다 — DA-04 §1-4).
     """
     from kernels.k1_event import query_events
 
@@ -200,6 +208,7 @@ def recent_events(*, scope: TenantScope, since: datetime | None = None,
                         severity=severity, response_state=response_state,
                         reviewed_by_id=reviewed_by_id,
                         stream_monitor_id=stream_monitor_id,
+                        include_probe=include_probe,
                         limit=limit)
 
 
@@ -546,12 +555,29 @@ def delivery_history(*, scope: TenantScope, event_id: int | None = None,
       `recipient_id=<숫자>` 를 질의로 받으면 남의 사번으로 「그 사람에게 무엇이 갔나」를
       물을 수 있고, 이 라우트의 사유(「수신자 주소가 새면 안 된다」)가 그것을 이미
       금지하고 있다. `/events` 의 `mine` 과 같은 규약이다.
+
+    ★ 2026-09-20 (턴 X · 차선 U1 · P-193) — **`mine` 이 가르는 것이 하나 더 생겼다.**
+
+      · `mine=false` = **발송 대장**이다. 「무엇이 언제 누구에게 갔나」(FR-10-2)에
+        답하는 자리이고, 게이트 때문에 나간 알림도 **실제로 나갔다.** 여기서 빼면
+        그것은 「세지 않기」가 아니라 **「보낸 적 없음」**이고, `DeliveryRecord` 의
+        머리말이 정확히 그 혼동을 금지했다(「실패도 행으로 남는다 — 행 없음과 구별」).
+        그래서 **열어 둔다** — 사건 축에서 `GET /events` 목록을 열어 둔 것과 같은 판단.
+
+      · `mine=true` = M1 「나에게 온 것」이고 **다음 손이 가는 곳**이다. 사건 축의
+        초점 큐와 같은 자리이므로 **게이트 씨앗을 세지 않는다.** 2026-09-20 실측
+        (차선 U3): 그 목록 첫 카드가 게이트가 심은 알림이었다 — 관제요원의 다음 손이
+        씨앗으로 갔다.
+
+      ⚠ 가른 축이 **「보는가 / 누르는가」**이지 「내 것인가 / 남의 것인가」가 아니다.
+        같은 행이 대장에는 있고 일감에는 없다 — 그것이 P-193 의 「삭제가 아니라 셈」이다.
     """
     from kernels.k2_notify import list_deliveries
 
     recipient_id = getattr(scope.require_actor(), "pk", None) if mine else None
     return list_deliveries(scope=scope, event_id=event_id, since=since, until=until,
                            recipient_id=recipient_id, succeeded=succeeded,
+                           include_probe=not mine,
                            limit=limit, offset=offset)
 
 
@@ -1007,6 +1033,13 @@ def focus_queue(*, scope: TenantScope, since: datetime | None = None,
 
     ★ 묶어도 **수는 줄지 않는다.** `total_events` 가 원본 건수이고 카드 수와 다르다 —
       둘을 같은 수로 내면 F-14 통계와 화면이 다른 말을 하게 된다.
+
+    ★ 2026-09-20 (턴 X · P-193) — **게이트가 심은 사건은 큐에 안 선다.** 세종 판정이
+      「집계·**큐**·온보딩 술어」를 함께 묶은 이유가 이 함수의 성질에 있다: 초점 큐는
+      보는 목록이 아니라 **「다음에 무엇을 누를 것인가」라는 술어**이고, 씨앗이 최상단에
+      서면 관제요원의 다음 손이 씨앗으로 간다. 사건을 지운 것이 아니다 — 같은 행이
+      `GET /api/dsm/events` 목록에는 그대로 있다(D-497).
+      여기서 거르지 않는다: `recent_events` 의 기본값이 「안 센다」다.
     """
     from django.utils import timezone
 

@@ -116,6 +116,36 @@ POST /api/dsm/settings/api-keys?name=<이름>&scopes=events%3Aread%2Cstats%3Area
 > `api.py:1343` 의 `cameras/pulse` 하나 — 여는 결정은 그 차선의 것이고, 열 때
 > `reason` 한 줄이 필요하다(`inbound_key=True` 는 사유 없이 못 켠다).
 
+### 3.2 **한계가 반만 풀렸다 — 그리고 반은 늘었다** [재측 2026-09-20 · 턴 X · U56 · 정적]
+
+| 범위 이름 | 맺힌 경로(`PATH_SCOPES`) | 그 문이 키를 받나 | 지금 |
+|---|---|---|---|
+| `events:read` | `/api/dsm/events` | **예** (`api.py:188` · `inbound_key=True`) | **범위 밖 403 을 잴 수 있다** |
+| `pulse:read` | `/api/dsm/cameras/pulse` | **예** (`api.py:1388`) ← **턴 X 에 U3 가 열었다** | ★ **턴 W 의 한계 하나가 풀렸다** |
+| `stats:read` | `/api/dsm/stats` | **아니오** — `stats/*` **아홉**이 전부 `JwtOrInboundKey()` 기본값 | 키에게 **401** · 403 을 잴 분모가 없다 |
+| `webhooks:manage` | `/api/dsm/settings/webhook-subscriptions` · `/api/dsm/webhook-subscriptions` | **아니오** — 여섯 문 전부 기본값 | 같음 |
+
+⇒ **범위 이름은 넷인데 닿는 문은 둘이다.** `stats:read`·`webhooks:manage` 는
+  **발급되고 422 도 안 나는데 갈 수 있는 문이 0개**다 — 발급자는 「줬다」고 믿고
+  상대는 못 쓴다. 「발급된다」와 「어디론가 간다」는 **다른 사실**이라 표에 갈라 적는다.
+
+⚠ **한계가 줄지 않고 늘기도 했다**: `stats/*` 는 턴 W 에 **여덟**이었는데 지금
+  **아홉**이다(`api_u24.py` 의 `@route` 선언 수). 미선언 문이 하나 더 생긴 것이고,
+  이 방향은 가만히 두면 계속 늘어난다.
+
+⚠ **이 차선이 문을 열지 않았다.** `inbound_key=True` 는 사유 한 줄을 요구하는
+  **개방 결정**이고 `stats/*` 는 U24 파일이다(한 파일은 한 차선). 쓰기 메서드에는
+  줄 수조차 없다. **세 턴째 같은 요청**이라 조율자에게 이름으로 다시 넘긴다.
+
+⚠ **`pulse:read` 의 403 은 아직 HTTP 로 안 쟀다 — 회색이다.** 선언은 실측으로
+  확인했지만(`api.py:1388`), 이 턴은 차선 F 의 잰 창(12:45~14:30) 안이라
+  **로그인 0회**로 일했다. 「선언이 섰다」를 「눌러 봤다」로 적지 않는다.
+  다음 차선이 `scripts/probe_key_scope_http.py` 를 `pulse:read` 로 한 번 돌리면 닫힌다.
+
+이 수를 지키는 시험: `backend/tests/test_u56_key_scope_reachability.py`
+(닿는 문 **둘**을 못 박는다 · 늘거나 줄면 빨개지고, **늘었다면 이 절을 같은 변경에서
+갱신하라**는 말이 실패 메시지에 들어 있다).
+
 ---
 
 ## 4. 오류 규약 — 401 / 403 / 404 / 422

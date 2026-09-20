@@ -219,3 +219,81 @@ class RecordedBreakTest(TransactionTestCase):
                              f"#{rec.audit_id} 의 값이 64자가 아니다 — 짧은 열쇠는 위험하다")
             self.assertEqual(64, len(rec.want),
                              f"#{rec.audit_id} 의 값이 64자가 아니다")
+
+
+class WriteIsAllOrNothingTest(TransactionTestCase):
+    """★ 턴 X — **못 이었으면 그 행도 없어야 한다.**
+
+    `audit_writer` 머리말의 규약은 「쓰기 실패를 삼키지 않는다」다. 그런데 규약이
+    지켜지는지는 **예외가 오르는가**가 아니라 **표에 무엇이 남는가**로 재야 한다:
+    `create` 가 제 트랜잭션에서 먼저 커밋되고 그 뒤 잇기가 실패하면, 예외는 제대로
+    올라가는데도 **두 칸 없는 감사 행 하나가 표에 남는다.**
+
+    남은 그 행은 체인이 시작된 뒤의 행이므로 `verify_sequence` 가 `missing` 으로
+    잡는다 — 즉 **한 번의 실패가 상시 빨강을 만든다.** 그리고 상시 빨강은 아무도
+    안 본다(D-301). 고쳐도 되돌릴 수 없다: 과거 행을 손대는 것이 이 체인이 잡으려는
+    행위 그 자체다(P-191).
+
+    ⚠ `TransactionTestCase` 여야 한다. `TestCase` 는 시험 전체를 트랜잭션으로 감싸므로
+      `create` 가 제 트랜잭션을 못 갖고, 그러면 이 구멍이 **보이지 않는다.**
+    """
+
+    LOGGER_ORPHAN = "guardianx.test.law08_orphan"
+
+    def test_a_row_whose_link_failed_does_not_stay(self):
+        from unittest.mock import patch
+
+        def boom(*, audit_id):                 # 잇기만 실패시킨다 — 쓰기는 정상이다
+            raise RuntimeError("일부러 낸 실패: 이을 수 없다")
+
+        with patch.object(evidence_chain, "append_evidence_hash", boom):
+            with self.assertRaises(RuntimeError):
+                audit_writer.write(
+                    logger_name=self.LOGGER_ORPHAN, tag="[P-191]",
+                    actor=_Actor(1, "orphan_actor"), action="orphan",
+                    outcome=audit_writer.ALLOWED, reason="이을 수 없을 때")
+
+        left = _audit_rows().filter(logger_name=self.LOGGER_ORPHAN)
+        self.assertEqual(
+            0, left.count(),
+            "잇기가 실패했는데 **두 칸 없는 감사 행이 남았다** — 그 행 하나가 "
+            "`missing` 으로 잡혀 체인 판정을 상시 빨강으로 만든다")
+
+    def test_the_row_number_follows_the_line(self):
+        """★ 자리표가 **예비가 되었는가** — 붙은 순서와 번호가 같은가.
+
+        `create` 가 잠금 **안**으로 들어오면 INSERT 도 줄 순서대로 일어나므로
+        `자리표 == 행 번호` 여야 한다. 여기가 어긋나면 그것은 자리표가 일을 하고 있다는
+        뜻이고, 곧 **잠금 밖에서 감사 행을 만드는 손**이 있다는 뜻이다.
+        """
+        errors: list[str] = []
+        barrier = threading.Barrier(HANDS)
+
+        def hand(no: int) -> None:
+            try:
+                barrier.wait(timeout=30)
+                audit_writer.write(
+                    logger_name=self.LOGGER_ORPHAN, tag="[P-191]",
+                    actor=_Actor(1, "seq_actor"), action=f"seq_{no}",
+                    outcome=audit_writer.ALLOWED, reason=f"자리표 {no}")
+            except Exception as exc:                  # noqa: BLE001
+                errors.append(f"{no}: {type(exc).__name__}: {exc}")
+            finally:
+                connections.close_all()
+
+        threads = [threading.Thread(target=hand, args=(h,)) for h in range(HANDS)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=120)
+        self.assertEqual([], errors, f"감사 쓰기 자체가 실패했다: {errors}")
+
+        off = []
+        for row in _audit_rows().filter(logger_name=self.LOGGER_ORPHAN).values(
+                "id", "data_after"):
+            seq = (row["data_after"] or {}).get(evidence_chain.SEQ_KEY)
+            if seq != row["id"]:
+                off.append(f"#{row['id']} 자리표 {seq}")
+        self.assertEqual([], off,
+                         "번호와 자리표가 갈렸다 — 잠금 밖에서 INSERT 가 일어났다: "
+                         + " · ".join(off[:8]))

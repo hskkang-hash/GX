@@ -1,0 +1,208 @@
+{
+  "measured_at": "2026-09-20T04:32:36+00:00",
+  "how": "django.test.Client — 프로세스 안. HTTP 왕복·동시성 없음. perf_load 의 수와 다른 수다",
+  "reps": 12,
+  "middleware_count": 29,
+  "rows": [
+    {
+      "path": "/api/dsm/dashboard/link-state",
+      "reps": 12,
+      "status": {
+        "200": 12
+      },
+      "wall_p50_ms": 37.89,
+      "wall_mean_ms": 38.73,
+      "wall_min_ms": 25.35,
+      "queries": 14,
+      "query_ms": 7.0,
+      "distinct_shapes": 8,
+      "top_shape_per_request": 3,
+      "top_shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreuser\".\"is_staff\", \"user_coreuser\".\"is_active\", \"user_coreuser\"",
+      "name": "STATUS",
+      "verdict": "not_query_ms",
+      "why": "not_query_ms 가 82% 를 쓴다 (30.9ms / 37.9ms)"
+    },
+    {
+      "path": "/api/dsm/events/queue",
+      "reps": 12,
+      "status": {
+        "200": 12
+      },
+      "wall_p50_ms": 112.24,
+      "wall_mean_ms": 138.79,
+      "wall_min_ms": 92.34,
+      "queries": 23,
+      "query_ms": 66.92,
+      "distinct_shapes": 14,
+      "top_shape_per_request": 5,
+      "top_shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".\"coreuser_id\" = ? ORDER BY \"role_role\".\"modified_on\" DESC",
+      "name": "SCREEN",
+      "verdict": "N+1",
+      "why": "같은 SQL 모양이 5회 반복된다"
+    },
+    {
+      "path": "/api/dsm/events?limit=50",
+      "reps": 12,
+      "status": {
+        "200": 12
+      },
+      "wall_p50_ms": 34.63,
+      "wall_mean_ms": 37.6,
+      "wall_min_ms": 27.86,
+      "queries": 15,
+      "query_ms": 7.58,
+      "distinct_shapes": 9,
+      "top_shape_per_request": 3,
+      "top_shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreuser\".\"is_staff\", \"user_coreuser\".\"is_active\", \"user_coreuser\"",
+      "name": "F05",
+      "verdict": "not_query_ms",
+      "why": "not_query_ms 가 78% 를 쓴다 (27.1ms / 34.6ms)"
+    },
+    {
+      "path": "/api/dsm/dashboard/frame",
+      "reps": 12,
+      "status": {
+        "200": 12
+      },
+      "wall_p50_ms": 32.74,
+      "wall_mean_ms": 33.02,
+      "wall_min_ms": 26.45,
+      "queries": 19,
+      "query_ms": 4.08,
+      "distinct_shapes": 9,
+      "top_shape_per_request": 7,
+      "top_shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".\"coreuser_id\" = ? ORDER BY \"role_role\".\"modified_on\" DESC",
+      "name": "FRAME",
+      "verdict": "N+1",
+      "why": "같은 SQL 모양이 7회 반복된다"
+    },
+    {
+      "path": "/api/dsm/events/response-times",
+      "reps": 12,
+      "status": {
+        "200": 12
+      },
+      "wall_p50_ms": 93.33,
+      "wall_mean_ms": 91.0,
+      "wall_min_ms": 60.71,
+      "queries": 16,
+      "query_ms": 54.58,
+      "distinct_shapes": 10,
+      "top_shape_per_request": 3,
+      "top_shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreuser\".\"is_staff\", \"user_coreuser\".\"is_active\", \"user_coreuser\"",
+      "name": "RESPT",
+      "verdict": "query_ms",
+      "why": "query_ms 가 58% 를 쓴다 (54.6ms / 93.3ms)"
+    },
+    {
+      "path": "/api/dsm/events/summary",
+      "reps": 12,
+      "status": {
+        "200": 12
+      },
+      "wall_p50_ms": 30.83,
+      "wall_mean_ms": 30.8,
+      "wall_min_ms": 25.52,
+      "queries": 17,
+      "query_ms": 4.58,
+      "distinct_shapes": 10,
+      "top_shape_per_request": 4,
+      "top_shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".\"coreuser_id\" = ? ORDER BY \"role_role\".\"modified_on\" DESC",
+      "name": "SUMM",
+      "verdict": "not_query_ms",
+      "why": "not_query_ms 가 85% 를 쓴다 (26.2ms / 30.8ms)"
+    }
+  ],
+  "ab_inproc": {
+    "STATUS": {
+      "path": "/api/dsm/dashboard/link-state",
+      "켬": {
+        "queries": 14,
+        "query_ms": 3.83,
+        "wall_p50_ms": 32.43,
+        "wall_min_ms": 21.34
+      },
+      "끔": {
+        "queries": 22,
+        "query_ms": 2.08,
+        "wall_p50_ms": 31.34,
+        "wall_min_ms": 24.57
+      }
+    },
+    "SCREEN": {
+      "path": "/api/dsm/events/queue",
+      "켬": {
+        "queries": 23,
+        "query_ms": 52.08,
+        "wall_p50_ms": 86.0,
+        "wall_min_ms": 61.72
+      },
+      "끔": {
+        "queries": 31,
+        "query_ms": 42.08,
+        "wall_p50_ms": 87.43,
+        "wall_min_ms": 69.63
+      }
+    },
+    "F05": {
+      "path": "/api/dsm/events?limit=50",
+      "켬": {
+        "queries": 15,
+        "query_ms": 4.33,
+        "wall_p50_ms": 31.68,
+        "wall_min_ms": 25.12
+      },
+      "끔": {
+        "queries": 23,
+        "query_ms": 9.33,
+        "wall_p50_ms": 49.71,
+        "wall_min_ms": 27.78
+      }
+    },
+    "FRAME": {
+      "path": "/api/dsm/dashboard/frame",
+      "켬": {
+        "queries": 19,
+        "query_ms": 9.83,
+        "wall_p50_ms": 47.72,
+        "wall_min_ms": 25.32
+      },
+      "끔": {
+        "queries": 27,
+        "query_ms": 3.75,
+        "wall_p50_ms": 41.57,
+        "wall_min_ms": 31.97
+      }
+    },
+    "RESPT": {
+      "path": "/api/dsm/events/response-times",
+      "켬": {
+        "queries": 16,
+        "query_ms": 50.67,
+        "wall_p50_ms": 85.68,
+        "wall_min_ms": 62.34
+      },
+      "끔": {
+        "queries": 24,
+        "query_ms": 51.75,
+        "wall_p50_ms": 89.27,
+        "wall_min_ms": 66.76
+      }
+    },
+    "SUMM": {
+      "path": "/api/dsm/events/summary",
+      "켬": {
+        "queries": 17,
+        "query_ms": 6.75,
+        "wall_p50_ms": 41.05,
+        "wall_min_ms": 29.6
+      },
+      "끔": {
+        "queries": 25,
+        "query_ms": 6.58,
+        "wall_p50_ms": 45.84,
+        "wall_min_ms": 33.35
+      }
+    }
+  }
+}

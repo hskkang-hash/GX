@@ -1,0 +1,648 @@
+{
+  "measured_at": "2026-09-20T04:02:52+00:00",
+  "how": "django.test.Client — 프로세스 안. HTTP 왕복·동시성 없음. perf_load 의 수와 다른 수다",
+  "reps": 10,
+  "middleware_count": 29,
+  "rows": [
+    {
+      "path": "/api/dsm/dashboard/link-state",
+      "reps": 10,
+      "status": {
+        "200": 10
+      },
+      "wall_p50_ms": 20.83,
+      "wall_mean_ms": 21.13,
+      "wall_min_ms": 18.45,
+      "queries": 14,
+      "query_ms": 0.1,
+      "distinct_shapes": 8,
+      "top_shape_per_request": 3,
+      "top_shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreuser\".\"is_staff\", \"user_coreuser\".\"is_active\", \"user_coreuser\"",
+      "name": "STATUS",
+      "verdict": "not_query_ms",
+      "why": "not_query_ms 가 100% 를 쓴다 (20.7ms / 20.8ms)"
+    },
+    {
+      "path": "/api/dsm/events/queue",
+      "reps": 10,
+      "status": {
+        "200": 10
+      },
+      "wall_p50_ms": 74.11,
+      "wall_mean_ms": 92.1,
+      "wall_min_ms": 62.69,
+      "queries": 23,
+      "query_ms": 38.6,
+      "distinct_shapes": 14,
+      "top_shape_per_request": 5,
+      "top_shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".\"coreuser_id\" = ? ORDER BY \"role_role\".\"modified_on\" DESC",
+      "name": "SCREEN",
+      "verdict": "N+1",
+      "why": "같은 SQL 모양이 5회 반복된다"
+    },
+    {
+      "path": "/api/dsm/events?limit=50",
+      "reps": 10,
+      "status": {
+        "200": 10
+      },
+      "wall_p50_ms": 27.32,
+      "wall_mean_ms": 26.37,
+      "wall_min_ms": 20.71,
+      "queries": 15,
+      "query_ms": 3.2,
+      "distinct_shapes": 9,
+      "top_shape_per_request": 3,
+      "top_shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreuser\".\"is_staff\", \"user_coreuser\".\"is_active\", \"user_coreuser\"",
+      "name": "F05",
+      "verdict": "not_query_ms",
+      "why": "not_query_ms 가 88% 를 쓴다 (24.1ms / 27.3ms)"
+    },
+    {
+      "path": "/api/dsm/dashboard/frame",
+      "reps": 10,
+      "status": {
+        "200": 10
+      },
+      "wall_p50_ms": 24.86,
+      "wall_mean_ms": 25.79,
+      "wall_min_ms": 22.86,
+      "queries": 19,
+      "query_ms": 1.4,
+      "distinct_shapes": 9,
+      "top_shape_per_request": 7,
+      "top_shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".\"coreuser_id\" = ? ORDER BY \"role_role\".\"modified_on\" DESC",
+      "name": "FRAME",
+      "verdict": "N+1",
+      "why": "같은 SQL 모양이 7회 반복된다"
+    },
+    {
+      "path": "/api/dsm/events/response-times",
+      "reps": 10,
+      "status": {
+        "200": 10
+      },
+      "wall_p50_ms": 62.26,
+      "wall_mean_ms": 70.75,
+      "wall_min_ms": 48.64,
+      "queries": 16,
+      "query_ms": 40.5,
+      "distinct_shapes": 10,
+      "top_shape_per_request": 3,
+      "top_shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreuser\".\"is_staff\", \"user_coreuser\".\"is_active\", \"user_coreuser\"",
+      "name": "RESPT",
+      "verdict": "query_ms",
+      "why": "query_ms 가 65% 를 쓴다 (40.5ms / 62.3ms)"
+    },
+    {
+      "path": "/api/dsm/events/summary",
+      "reps": 10,
+      "status": {
+        "200": 10
+      },
+      "wall_p50_ms": 33.81,
+      "wall_mean_ms": 33.41,
+      "wall_min_ms": 27.55,
+      "queries": 17,
+      "query_ms": 6.0,
+      "distinct_shapes": 10,
+      "top_shape_per_request": 4,
+      "top_shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".\"coreuser_id\" = ? ORDER BY \"role_role\".\"modified_on\" DESC",
+      "name": "SUMM",
+      "verdict": "not_query_ms",
+      "why": "not_query_ms 가 82% 를 쓴다 (27.8ms / 33.8ms)"
+    }
+  ],
+  "trace": {
+    "STATUS": {
+      "path": "/api/dsm/dashboard/link-state",
+      "queries": 14,
+      "shapes": [
+        {
+          "n": 3,
+          "ms": 1.37,
+          "shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreus",
+          "callers": [
+            "rate_limit_body.py:151 __call__ ×2",
+            "inbound_api_key.py:139 __call__ ×1"
+          ]
+        },
+        {
+          "n": 3,
+          "ms": 1.24,
+          "shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".",
+          "callers": [
+            "tenant_roles.py:106 _role_codes ×2",
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 0.96,
+          "shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"c",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 0.64,
+          "shape": "SELECT (\"configuration_adminconfig\".\"settings\" #> %s) FROM \"configuration_adminconfig\" WHERE (\"configuration_adminconfig\".\"is_active\" AND \"configuration_adminco",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.31,
+          "shape": "SELECT %s AS \"a\" FROM \"user_coreuser_roles\" WHERE \"user_coreuser_roles\".\"coreuser_id\" = %s LIMIT ?",
+          "callers": [
+            "role_gate.py:247 has_no_role ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.4,
+          "shape": "SELECT \"user_profile_link\".\"id\", \"user_profile_link\".\"deleted\", \"user_profile_link\".\"deleted_by_cascade\", \"user_profile_link\".\"created_on\", \"user_profile_link\".",
+          "callers": [
+            "tenant_filters.py:41 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.34,
+          "shape": "SELECT \"user_usergroup\".\"id\", \"user_usergroup\".\"deleted\", \"user_usergroup\".\"deleted_by_cascade\", \"user_usergroup\".\"created_on\", \"user_usergroup\".\"modified_on\", ",
+          "callers": [
+            "tenant_filters.py:42 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.37,
+          "shape": "SELECT \"auth_group\".\"name\" FROM \"auth_group\" INNER JOIN \"user_coreuser_groups\" ON (\"auth_group\".\"id\" = \"user_coreuser_groups\".\"group_id\") WHERE \"user_coreuser_g",
+          "callers": [
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        }
+      ]
+    },
+    "SCREEN": {
+      "path": "/api/dsm/events/queue",
+      "queries": 23,
+      "shapes": [
+        {
+          "n": 5,
+          "ms": 2.21,
+          "shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".",
+          "callers": [
+            "tenant_roles.py:106 _role_codes ×4",
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        },
+        {
+          "n": 3,
+          "ms": 1.61,
+          "shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreus",
+          "callers": [
+            "rate_limit_body.py:151 __call__ ×2",
+            "inbound_api_key.py:139 __call__ ×1"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 0.74,
+          "shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"c",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 0.87,
+          "shape": "SELECT (\"configuration_adminconfig\".\"settings\" #> %s) FROM \"configuration_adminconfig\" WHERE (\"configuration_adminconfig\".\"is_active\" AND \"configuration_adminco",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 1.18,
+          "shape": "SELECT \"stream_monitors_detectionevent\".\"id\", \"stream_monitors_detectionevent\".\"deleted\", \"stream_monitors_detectionevent\".\"deleted_by_cascade\", \"stream_monitor",
+          "callers": [
+            "tenant_filters.py:132 get_scoped_or_404 ×1",
+            "services.py:510 get_event ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.55,
+          "shape": "SELECT %s AS \"a\" FROM \"user_coreuser_roles\" WHERE \"user_coreuser_roles\".\"coreuser_id\" = %s LIMIT ?",
+          "callers": [
+            "role_gate.py:247 has_no_role ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.51,
+          "shape": "SELECT \"user_profile_link\".\"id\", \"user_profile_link\".\"deleted\", \"user_profile_link\".\"deleted_by_cascade\", \"user_profile_link\".\"created_on\", \"user_profile_link\".",
+          "callers": [
+            "tenant_filters.py:41 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.38,
+          "shape": "SELECT \"user_usergroup\".\"id\", \"user_usergroup\".\"deleted\", \"user_usergroup\".\"deleted_by_cascade\", \"user_usergroup\".\"created_on\", \"user_usergroup\".\"modified_on\", ",
+          "callers": [
+            "tenant_filters.py:42 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 3.27,
+          "shape": "SELECT DISTINCT \"stream_monitors_detectionevent\".\"id\", \"stream_monitors_detectionevent\".\"deleted\", \"stream_monitors_detectionevent\".\"deleted_by_cascade\", \"strea",
+          "callers": [
+            "services.py:490 query_events ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 33.6,
+          "shape": "SELECT \"logger_auditlogs\".\"id\", \"logger_auditlogs\".\"create_datetime\", \"logger_auditlogs\".\"created_on\", \"logger_auditlogs\".\"username\", \"logger_auditlogs\".\"data_b",
+          "callers": [
+            "response_clock.py:224 stamps_for ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.36,
+          "shape": "SELECT %s AS \"a\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE (\"user_coreuser_roles\".\"coreuse",
+          "callers": [
+            "tenant_filters.py:124 get_scoped_or_404 ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.43,
+          "shape": "SELECT \"stream_monitors_detectionevent\".\"id\" FROM \"stream_monitors_detectionevent\" WHERE (\"stream_monitors_detectionevent\".\"group_id\" = %s AND \"stream_monitors_",
+          "callers": [
+            "tenant_filters.py:180 assert_scoped ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.36,
+          "shape": "SELECT \"stream_monitors_detectionevent\".\"response_state\" FROM \"stream_monitors_detectionevent\" WHERE \"stream_monitors_detectionevent\".\"id\" = %s LIMIT ?",
+          "callers": [
+            "response_flow.py:251 response_state ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.35,
+          "shape": "SELECT \"auth_group\".\"name\" FROM \"auth_group\" INNER JOIN \"user_coreuser_groups\" ON (\"auth_group\".\"id\" = \"user_coreuser_groups\".\"group_id\") WHERE \"user_coreuser_g",
+          "callers": [
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        }
+      ]
+    },
+    "F05": {
+      "path": "/api/dsm/events?limit=50",
+      "queries": 15,
+      "shapes": [
+        {
+          "n": 3,
+          "ms": 1.41,
+          "shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreus",
+          "callers": [
+            "rate_limit_body.py:151 __call__ ×2",
+            "inbound_api_key.py:139 __call__ ×1"
+          ]
+        },
+        {
+          "n": 3,
+          "ms": 1.37,
+          "shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".",
+          "callers": [
+            "tenant_roles.py:106 _role_codes ×2",
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 0.56,
+          "shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"c",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 0.5,
+          "shape": "SELECT (\"configuration_adminconfig\".\"settings\" #> %s) FROM \"configuration_adminconfig\" WHERE (\"configuration_adminconfig\".\"is_active\" AND \"configuration_adminco",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.25,
+          "shape": "SELECT %s AS \"a\" FROM \"user_coreuser_roles\" WHERE \"user_coreuser_roles\".\"coreuser_id\" = %s LIMIT ?",
+          "callers": [
+            "role_gate.py:247 has_no_role ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.4,
+          "shape": "SELECT \"user_profile_link\".\"id\", \"user_profile_link\".\"deleted\", \"user_profile_link\".\"deleted_by_cascade\", \"user_profile_link\".\"created_on\", \"user_profile_link\".",
+          "callers": [
+            "tenant_filters.py:41 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.42,
+          "shape": "SELECT \"user_usergroup\".\"id\", \"user_usergroup\".\"deleted\", \"user_usergroup\".\"deleted_by_cascade\", \"user_usergroup\".\"created_on\", \"user_usergroup\".\"modified_on\", ",
+          "callers": [
+            "tenant_filters.py:42 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 2.0,
+          "shape": "SELECT DISTINCT \"stream_monitors_detectionevent\".\"id\", \"stream_monitors_detectionevent\".\"deleted\", \"stream_monitors_detectionevent\".\"deleted_by_cascade\", \"strea",
+          "callers": [
+            "services.py:490 query_events ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.39,
+          "shape": "SELECT \"auth_group\".\"name\" FROM \"auth_group\" INNER JOIN \"user_coreuser_groups\" ON (\"auth_group\".\"id\" = \"user_coreuser_groups\".\"group_id\") WHERE \"user_coreuser_g",
+          "callers": [
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        }
+      ]
+    },
+    "FRAME": {
+      "path": "/api/dsm/dashboard/frame",
+      "queries": 19,
+      "shapes": [
+        {
+          "n": 7,
+          "ms": 4.08,
+          "shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".",
+          "callers": [
+            "tenant_roles.py:106 _role_codes ×5",
+            "services.py:80 _role_codes ×1",
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        },
+        {
+          "n": 3,
+          "ms": 2.22,
+          "shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreus",
+          "callers": [
+            "rate_limit_body.py:151 __call__ ×2",
+            "inbound_api_key.py:139 __call__ ×1"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 1.14,
+          "shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"c",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 0.84,
+          "shape": "SELECT (\"configuration_adminconfig\".\"settings\" #> %s) FROM \"configuration_adminconfig\" WHERE (\"configuration_adminconfig\".\"is_active\" AND \"configuration_adminco",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.24,
+          "shape": "SELECT %s AS \"a\" FROM \"user_coreuser_roles\" WHERE \"user_coreuser_roles\".\"coreuser_id\" = %s LIMIT ?",
+          "callers": [
+            "role_gate.py:247 has_no_role ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 1.81,
+          "shape": "SELECT \"user_profile_link\".\"id\", \"user_profile_link\".\"deleted\", \"user_profile_link\".\"deleted_by_cascade\", \"user_profile_link\".\"created_on\", \"user_profile_link\".",
+          "callers": [
+            "tenant_filters.py:41 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 1.01,
+          "shape": "SELECT \"user_usergroup\".\"id\", \"user_usergroup\".\"deleted\", \"user_usergroup\".\"deleted_by_cascade\", \"user_usergroup\".\"created_on\", \"user_usergroup\".\"modified_on\", ",
+          "callers": [
+            "tenant_filters.py:42 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 1.46,
+          "shape": "SELECT DISTINCT \"dashboard_dashboardpanel\".\"id\", \"dashboard_dashboardpanel\".\"deleted\", \"dashboard_dashboardpanel\".\"deleted_by_cascade\", \"dashboard_dashboardpane",
+          "callers": [
+            "services.py:223 resolve_layout ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.45,
+          "shape": "SELECT \"auth_group\".\"name\" FROM \"auth_group\" INNER JOIN \"user_coreuser_groups\" ON (\"auth_group\".\"id\" = \"user_coreuser_groups\".\"group_id\") WHERE \"user_coreuser_g",
+          "callers": [
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        }
+      ]
+    },
+    "RESPT": {
+      "path": "/api/dsm/events/response-times",
+      "queries": 16,
+      "shapes": [
+        {
+          "n": 3,
+          "ms": 1.66,
+          "shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreus",
+          "callers": [
+            "rate_limit_body.py:151 __call__ ×2",
+            "inbound_api_key.py:139 __call__ ×1"
+          ]
+        },
+        {
+          "n": 3,
+          "ms": 1.43,
+          "shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".",
+          "callers": [
+            "tenant_roles.py:106 _role_codes ×2",
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 0.72,
+          "shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"c",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 0.69,
+          "shape": "SELECT (\"configuration_adminconfig\".\"settings\" #> %s) FROM \"configuration_adminconfig\" WHERE (\"configuration_adminconfig\".\"is_active\" AND \"configuration_adminco",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.31,
+          "shape": "SELECT %s AS \"a\" FROM \"user_coreuser_roles\" WHERE \"user_coreuser_roles\".\"coreuser_id\" = %s LIMIT ?",
+          "callers": [
+            "role_gate.py:247 has_no_role ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.41,
+          "shape": "SELECT \"user_profile_link\".\"id\", \"user_profile_link\".\"deleted\", \"user_profile_link\".\"deleted_by_cascade\", \"user_profile_link\".\"created_on\", \"user_profile_link\".",
+          "callers": [
+            "tenant_filters.py:41 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.41,
+          "shape": "SELECT \"user_usergroup\".\"id\", \"user_usergroup\".\"deleted\", \"user_usergroup\".\"deleted_by_cascade\", \"user_usergroup\".\"created_on\", \"user_usergroup\".\"modified_on\", ",
+          "callers": [
+            "tenant_filters.py:42 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 2.21,
+          "shape": "SELECT DISTINCT \"stream_monitors_detectionevent\".\"id\", \"stream_monitors_detectionevent\".\"deleted\", \"stream_monitors_detectionevent\".\"deleted_by_cascade\", \"strea",
+          "callers": [
+            "services.py:490 query_events ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 43.54,
+          "shape": "SELECT \"logger_auditlogs\".\"id\", \"logger_auditlogs\".\"create_datetime\", \"logger_auditlogs\".\"created_on\", \"logger_auditlogs\".\"username\", \"logger_auditlogs\".\"data_b",
+          "callers": [
+            "response_clock.py:224 stamps_for ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.41,
+          "shape": "SELECT \"auth_group\".\"name\" FROM \"auth_group\" INNER JOIN \"user_coreuser_groups\" ON (\"auth_group\".\"id\" = \"user_coreuser_groups\".\"group_id\") WHERE \"user_coreuser_g",
+          "callers": [
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        }
+      ]
+    },
+    "SUMM": {
+      "path": "/api/dsm/events/summary",
+      "queries": 17,
+      "shapes": [
+        {
+          "n": 4,
+          "ms": 2.38,
+          "shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".",
+          "callers": [
+            "tenant_roles.py:106 _role_codes ×3",
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        },
+        {
+          "n": 3,
+          "ms": 1.44,
+          "shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreus",
+          "callers": [
+            "rate_limit_body.py:151 __call__ ×2",
+            "inbound_api_key.py:139 __call__ ×1"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 0.6,
+          "shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"c",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 2,
+          "ms": 0.73,
+          "shape": "SELECT (\"configuration_adminconfig\".\"settings\" #> %s) FROM \"configuration_adminconfig\" WHERE (\"configuration_adminconfig\".\"is_active\" AND \"configuration_adminco",
+          "callers": [
+            "config_read_cache.py:129 cached ×2"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.29,
+          "shape": "SELECT %s AS \"a\" FROM \"user_coreuser_roles\" WHERE \"user_coreuser_roles\".\"coreuser_id\" = %s LIMIT ?",
+          "callers": [
+            "role_gate.py:247 has_no_role ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.55,
+          "shape": "SELECT \"user_profile_link\".\"id\", \"user_profile_link\".\"deleted\", \"user_profile_link\".\"deleted_by_cascade\", \"user_profile_link\".\"created_on\", \"user_profile_link\".",
+          "callers": [
+            "tenant_filters.py:41 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.39,
+          "shape": "SELECT \"user_usergroup\".\"id\", \"user_usergroup\".\"deleted\", \"user_usergroup\".\"deleted_by_cascade\", \"user_usergroup\".\"created_on\", \"user_usergroup\".\"modified_on\", ",
+          "callers": [
+            "tenant_filters.py:42 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 1.1,
+          "shape": "SELECT COUNT(DISTINCT \"__col?\") FILTER (WHERE \"__col?\" = %s), COUNT(DISTINCT \"__col?\") FILTER (WHERE \"__col?\" IN (%s, %s)), COUNT(DISTINCT \"__col?\") FILTER (WHE",
+          "callers": [
+            "services.py:229 _window ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 2.25,
+          "shape": "SELECT DISTINCT \"stream_monitors_detectionevent\".\"id\", \"stream_monitors_detectionevent\".\"deleted\", \"stream_monitors_detectionevent\".\"deleted_by_cascade\", \"strea",
+          "callers": [
+            "services.py:490 query_events ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.46,
+          "shape": "SELECT \"auth_group\".\"name\" FROM \"auth_group\" INNER JOIN \"user_coreuser_groups\" ON (\"auth_group\".\"id\" = \"user_coreuser_groups\".\"group_id\") WHERE \"user_coreuser_g",
+          "callers": [
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        }
+      ]
+    }
+  }
+}

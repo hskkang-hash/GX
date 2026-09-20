@@ -1,0 +1,133 @@
+{
+  "measured_at": "2026-09-20T03:59:29+00:00",
+  "api": "http://localhost:8000",
+  "concurrency": 10,
+  "rounds": 5,
+  "warmup_rounds": 1,
+  "budget_ms": null,
+  "birth_sample": {
+    "kernel_p50_ms": 12.28,
+    "measured": "2026-09-09 · PERF-03"
+  },
+  "note": "문을 두드린 수다. 커널 함수의 수(PERF-03)와 **같은 것이 아니다** — 미들웨어·직렬화·인증·커넥션 풀은 함수 안에 없다.",
+  "scenarios": [
+    {
+      "scenario": "S1",
+      "name": "목록 — 관제요원이 가장 자주 여는 자리",
+      "concurrency": 10,
+      "rounds": 5,
+      "requests": 50,
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 516.8,
+      "p95_ms": 560.0,
+      "max_ms": 568.1,
+      "mean_ms": 517.5,
+      "per_call": {
+        "/api/dsm/events/summary": {
+          "n": 25,
+          "p50_ms": 519.1,
+          "p95_ms": 559.7
+        },
+        "/api/dsm/events?limit=50": {
+          "n": 25,
+          "p50_ms": 508.4,
+          "p95_ms": 560.0
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    },
+    {
+      "scenario": "S2",
+      "name": "대시보드 — 첫 화면 한 벌",
+      "concurrency": 10,
+      "rounds": 5,
+      "requests": 50,
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 506.8,
+      "p95_ms": 598.4,
+      "max_ms": 601.4,
+      "mean_ms": 518.9,
+      "per_call": {
+        "/api/dsm/dashboard/frame": {
+          "n": 25,
+          "p50_ms": 522.8,
+          "p95_ms": 598.4
+        },
+        "/api/dsm/dashboard/link-state": {
+          "n": 25,
+          "p50_ms": 502.0,
+          "p95_ms": 587.6
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    },
+    {
+      "scenario": "S3",
+      "name": "단일 초점 — 가장 급한 하나",
+      "concurrency": 10,
+      "rounds": 5,
+      "requests": 50,
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 723.6,
+      "p95_ms": 852.5,
+      "max_ms": 858.5,
+      "mean_ms": 722.1,
+      "per_call": {
+        "/api/dsm/events/queue": {
+          "n": 25,
+          "p50_ms": 723.6,
+          "p95_ms": 847.7
+        },
+        "/api/dsm/events/response-times": {
+          "n": 25,
+          "p50_ms": 718.5,
+          "p95_ms": 854.1
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    },
+    {
+      "scenario": "S4",
+      "name": "섞기 — 실제 관제실은 한 자리만 두드리지 않는다",
+      "concurrency": 10,
+      "rounds": 5,
+      "requests": 50,
+      "errors": 0,
+      "error_detail": [],
+      "p50_ms": 603.9,
+      "p95_ms": 674.5,
+      "max_ms": 687.7,
+      "mean_ms": 608.1,
+      "per_call": {
+        "/api/dsm/dashboard/frame": {
+          "n": 15,
+          "p50_ms": 603.9,
+          "p95_ms": 687.7
+        },
+        "/api/dsm/events/queue": {
+          "n": 10,
+          "p50_ms": 617.0,
+          "p95_ms": 670.8
+        },
+        "/api/dsm/events/summary": {
+          "n": 10,
+          "p50_ms": 603.6,
+          "p95_ms": 685.4
+        },
+        "/api/dsm/events?limit=50": {
+          "n": 15,
+          "p50_ms": 588.4,
+          "p95_ms": 674.5
+        }
+      },
+      "verdict": "OK",
+      "why": "첫 수(기준선) — 예산이 없으므로 합격·불합격을 말하지 않는다"
+    }
+  ]
+}

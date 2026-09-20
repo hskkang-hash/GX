@@ -70,6 +70,7 @@ from django.apps import apps
 from django.db import transaction
 from django.utils import timezone
 
+from common.probe_marker import exclude_probe
 from common.tenant_filters import assert_scoped, filter_by_group_field, get_scoped_or_404
 from common.tenant_scope import TenantScope
 from kernels.k1_event.exceptions import InvalidEventInput, NotImplementedYet
@@ -413,6 +414,14 @@ def query_events(
     reviewed_by_id: int | None = None,
     stream_monitor_id: int | None = None,
     mission_id: int | None = None,
+    #: ★ **게이트가 심은 사건을 셀 것인가** (P-193 · 2026-09-20 · 차선 U1).
+    #:   기본값이 `False` 인 것이 이 인자의 전부다 — **세는 자리가 기본으로 안전하다.**
+    #:   그 반대(기본 포함 · 세는 자리마다 끄기)로 두면 새 집계가 하나 생길 때마다
+    #:   끄는 것을 잊을 수 있고, 잊은 쪽은 **초록으로 나타나서 안 보인다**(턴 W 실측:
+    #:   FC 29→32 의 오른 세 행이 전부 probe 위에 서 있었다).
+    #:   **사람이 보는 목록만** 이것을 `True` 로 열어 젖힌다(`apps/dsm/api.py` `/events`) —
+    #:   D-497 「거르는 곳은 측정이지 제품이 아니다」. 운영자는 계속 본다.
+    include_probe: bool = False,
     limit: int = 100,
     offset: int = 0,
 ) -> list[EventView]:
@@ -423,6 +432,11 @@ def query_events(
 
     `select_related("stream_monitor")` 는 장식이 아니다. 없으면 `stream_monitor_name`
     한 줄이 행마다 쿼리를 낳고(N+1), 그것이 F-05 의 p95 500ms 를 깨는 가장 흔한 원인이다.
+
+    ★ P-193 (2026-09-20) — **게이트가 심은 사건은 기본으로 안 나온다**(`include_probe`).
+      이 함수가 이 저장소에서 **세는 외길**이기 때문이다: summary 의 `unhandled` ·
+      초점 큐 · 인계 초안 · 온보딩 술어 · F-14 통계 · 대응 시간이 전부 여기를 지난다.
+      한 자리에 두면 다음에 태어나는 집계도 **아무것도 안 하고** 옳다.
     """
     Event = _model("DetectionEvent")
 
@@ -436,6 +450,14 @@ def query_events(
     # 실제 좁히기. 문지기는 `common.tenant_filters` 가 한다 — 여기서 직접 group 을
     # 캐내지 않는다. 전역 여부는 `tenant_roles` 만 답한다 (D-212).
     qs = filter_by_group_field(qs, actor, field=_owner_field(Event))
+
+    # ★ P-193 — **게이트가 제 씨앗을 세지 않는다.** 표식의 뜻은 `common.probe_marker`
+    #   한 곳이 정한다(K6 도 같은 곳을 부른다). 여기서 `track_id` 를 직접 비교하면
+    #   그 순간 세는 법이 두 벌이 되고, 어긋난 쪽이 조용히 이긴다.
+    #   **지우는 것이 아니라 세지 않는 것**이다 — 행은 그대로 있고, 사람이 보는 목록은
+    #   `include_probe=True` 로 그대로 본다.
+    if not include_probe:
+        qs = exclude_probe(qs)
 
     def _in(field: str, value):
         nonlocal qs

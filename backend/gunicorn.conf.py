@@ -1,3 +1,28 @@
+# ★★ [실측 2026-09-20 · 턴 X · 차선 U56 · 창 2a 준비] **이 파일의 절반은 안 걸린다.**
+#   값은 한 자도 안 바꿨다. 바뀐 것은 **이 주석뿐**이고, 적용은 창에서 한다.
+#
+#   ① 도는 `gx-gunicorn-e` 의 명령줄에 **`-c` 가 없다**:
+#        python -m gunicorn config.wsgi:application --bind 0.0.0.0:8000
+#          --workers 4 --threads 4 --worker-class gthread --timeout 120 …
+#      그런데 `--print-config` 로 재니 `config = ./gunicorn.conf.py` 였다 —
+#      gunicorn 이 **cwd 의 `gunicorn.conf.py` 를 자동으로 집는** 덕이고,
+#      컨테이너 WORKDIR `/app` 이 곧 `backend/` 라 **우연히** 이 파일이 거기 있다.
+#      ⚠ 즉 아래 `max_requests`·`keepalive` 는 **작업 디렉터리가 우연히 맞아서** 걸려 있다.
+#        `-w` 가 바뀌거나 파일이 옮겨지면 조용히 gunicorn **기본값**으로 떨어지는데,
+#        그 기본값은 `max_requests = 0`(재활용 끔) · `keepalive = 2` 다 —
+#        `keepalive 2` 는 아래 주석이 **「그 값이 502 를 만들었다」**고 적어 둔 바로 그 수다.
+#      ★ 그래서 창 2a 에서 명령줄에 **`-c /app/gunicorn.conf.py` 를 명시**한다.
+#        값을 고치는 것이 아니라 **값이 걸려 있다는 사실을 우연에서 떼어 내는** 일이다.
+#
+#   ② **명령줄이 덮는 넷** — 아래 네 줄은 도는 판과 **다르다**(읽는 사람에게 거짓말한다):
+#        이 파일        →  실제로 도는 값
+#        workers 2      →  **4**        (min(cpu,2) 가 아니다)
+#        UvicornWorker  →  **gthread**
+#        timeout 30     →  **120**
+#        (threads 는 이 파일에 없다) →  **4**
+#      덮는 것 자체는 결함이 아니다. **적힌 것과 도는 것이 갈린 채 아무 데도 안 적힌 것**이 결함이다.
+#      ⚠ 값을 맞추는 쪽으로 고칠지(파일 4/gthread/120), 명령줄을 줄일지는 **재 보고** 정한다 —
+#        아래 ⛔ 둘이 말하듯 이 파일의 수는 **추측으로 고치지 않는다**. 창 2a 의 B3 재측 자리다.
 import multiprocessing
 import os
 

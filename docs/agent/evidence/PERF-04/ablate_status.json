@@ -1,0 +1,511 @@
+{
+  "measured_at": "2026-09-20T03:48:53+00:00",
+  "how": "django.test.Client — 프로세스 안. HTTP 왕복·동시성 없음. perf_load 의 수와 다른 수다",
+  "reps": 8,
+  "middleware_count": 28,
+  "rows": [
+    {
+      "path": "/api/dsm/dashboard/link-state",
+      "reps": 8,
+      "status": {
+        "200": 8
+      },
+      "wall_p50_ms": 23.4,
+      "wall_mean_ms": 23.82,
+      "wall_min_ms": 21.27,
+      "queries": 22,
+      "query_ms": 0.62,
+      "distinct_shapes": 8,
+      "top_shape_per_request": 6,
+      "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+      "name": "STATUS",
+      "verdict": "N+1",
+      "why": "같은 SQL 모양이 6회 반복된다"
+    }
+  ],
+  "ablation": {
+    "path": "/api/dsm/dashboard/link-state",
+    "base_p50_ms": 50.66,
+    "rows": [
+      {
+        "removed": "(없음 · 전부)",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 50.66,
+        "wall_mean_ms": 83.43,
+        "wall_min_ms": 24.03,
+        "queries": 22,
+        "query_ms": 6.67,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf"
+      },
+      {
+        "removed": "common.schema_header.SchemaHeaderMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 22.67,
+        "wall_mean_ms": 22.92,
+        "wall_min_ms": 20.33,
+        "queries": 22,
+        "query_ms": 1.0,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 27.99
+      },
+      {
+        "removed": "django.middleware.security.SecurityMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 24.77,
+        "wall_mean_ms": 24.73,
+        "wall_min_ms": 21.79,
+        "queries": 22,
+        "query_ms": 1.5,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 25.89
+      },
+      {
+        "removed": "corsheaders.middleware.CorsMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 24.87,
+        "wall_mean_ms": 25.52,
+        "wall_min_ms": 22.59,
+        "queries": 22,
+        "query_ms": 1.67,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 25.79
+      },
+      {
+        "removed": "django.contrib.sessions.middleware.SessionMiddleware",
+        "note": "뺐더니 죽는다: ImproperlyConfigured"
+      },
+      {
+        "removed": "core.middleware.superuser_must_change_pass.EnforceSuperuserPasswordChangeMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 30.41,
+        "wall_mean_ms": 29.69,
+        "wall_min_ms": 27.1,
+        "queries": 22,
+        "query_ms": 2.0,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 20.25
+      },
+      {
+        "removed": "django.middleware.common.CommonMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 24.68,
+        "wall_mean_ms": 24.72,
+        "wall_min_ms": 22.19,
+        "queries": 22,
+        "query_ms": 0.83,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 25.98
+      },
+      {
+        "removed": "django.middleware.gzip.GZipMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 25.86,
+        "wall_mean_ms": 25.18,
+        "wall_min_ms": 23.05,
+        "queries": 22,
+        "query_ms": 1.17,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 24.8
+      },
+      {
+        "removed": "common.error_body.SafeErrorBodyMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 30.4,
+        "wall_mean_ms": 29.58,
+        "wall_min_ms": 26.11,
+        "queries": 22,
+        "query_ms": 2.0,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 20.26
+      },
+      {
+        "removed": "common.rate_limit_body.RateLimitBodyMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 24.0,
+        "wall_mean_ms": 23.85,
+        "wall_min_ms": 21.11,
+        "queries": 22,
+        "query_ms": 0.5,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 26.66
+      },
+      {
+        "removed": "core.middleware.csrf_exempt_swagger.CSRFExemptSwaggerMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 49.15,
+        "wall_mean_ms": 45.01,
+        "wall_min_ms": 22.54,
+        "queries": 22,
+        "query_ms": 7.0,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 1.51
+      },
+      {
+        "removed": "django.middleware.csrf.CsrfViewMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 28.84,
+        "wall_mean_ms": 28.92,
+        "wall_min_ms": 23.66,
+        "queries": 22,
+        "query_ms": 2.0,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 21.82
+      },
+      {
+        "removed": "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 17.23,
+        "wall_mean_ms": 17.67,
+        "wall_min_ms": 16.37,
+        "queries": 14,
+        "query_ms": 1.5,
+        "distinct_shapes": 7,
+        "top_shape_per_request": 3,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 33.43
+      },
+      {
+        "removed": "core.middleware.jwt_user_restore.JWTUserRestoreMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 15.26,
+        "wall_mean_ms": 15.37,
+        "wall_min_ms": 14.33,
+        "queries": 14,
+        "query_ms": 0.17,
+        "distinct_shapes": 7,
+        "top_shape_per_request": 3,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 35.4
+      },
+      {
+        "removed": "django.contrib.messages.middleware.MessageMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 31.91,
+        "wall_mean_ms": 32.31,
+        "wall_min_ms": 29.85,
+        "queries": 22,
+        "query_ms": 3.83,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 18.75
+      },
+      {
+        "removed": "django.middleware.clickjacking.XFrameOptionsMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 32.87,
+        "wall_mean_ms": 33.03,
+        "wall_min_ms": 22.99,
+        "queries": 22,
+        "query_ms": 4.83,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 17.79
+      },
+      {
+        "removed": "proxy.middleware.RemoveXFrameOptionsMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 25.77,
+        "wall_mean_ms": 25.28,
+        "wall_min_ms": 23.02,
+        "queries": 22,
+        "query_ms": 1.0,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 24.89
+      },
+      {
+        "removed": "core.middleware.refresh_token.TokenRefreshMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 40.44,
+        "wall_mean_ms": 37.92,
+        "wall_min_ms": 25.27,
+        "queries": 21,
+        "query_ms": 6.67,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 10.22
+      },
+      {
+        "removed": "common.wall_token.WallTokenMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 28.29,
+        "wall_mean_ms": 28.77,
+        "wall_min_ms": 24.49,
+        "queries": 22,
+        "query_ms": 1.83,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 22.37
+      },
+      {
+        "removed": "common.access_gate.AccessGateMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 33.71,
+        "wall_mean_ms": 34.93,
+        "wall_min_ms": 31.9,
+        "queries": 22,
+        "query_ms": 5.17,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 16.95
+      },
+      {
+        "removed": "common.role_gate.RoleGateMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 25.08,
+        "wall_mean_ms": 25.89,
+        "wall_min_ms": 23.74,
+        "queries": 21,
+        "query_ms": 1.33,
+        "distinct_shapes": 7,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 25.58
+      },
+      {
+        "removed": "common.session_limit.SessionLimitMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 29.08,
+        "wall_mean_ms": 28.89,
+        "wall_min_ms": 25.35,
+        "queries": 22,
+        "query_ms": 2.17,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 21.58
+      },
+      {
+        "removed": "common.api_contract.ApiContractStatusMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 31.58,
+        "wall_mean_ms": 33.74,
+        "wall_min_ms": 28.21,
+        "queries": 22,
+        "query_ms": 3.5,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 19.08
+      },
+      {
+        "removed": "common.universal_optimization.UniversalCacheMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 27.3,
+        "wall_mean_ms": 28.45,
+        "wall_min_ms": 23.44,
+        "queries": 22,
+        "query_ms": 2.5,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 23.36
+      },
+      {
+        "removed": "ninja.compatibility.files.fix_request_files_middleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 30.92,
+        "wall_mean_ms": 30.47,
+        "wall_min_ms": 23.38,
+        "queries": 22,
+        "query_ms": 2.17,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 19.74
+      },
+      {
+        "removed": "core.middleware.dependency_check.DependencyCheckMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 24.37,
+        "wall_mean_ms": 24.26,
+        "wall_min_ms": 22.91,
+        "queries": 22,
+        "query_ms": 0.83,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 26.29
+      },
+      {
+        "removed": "core.middleware.connection_management.DatabaseConnectionMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 25.08,
+        "wall_mean_ms": 24.84,
+        "wall_min_ms": 21.39,
+        "queries": 22,
+        "query_ms": 1.0,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 25.58
+      },
+      {
+        "removed": "partner.middleware.PartnerAuthMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 30.16,
+        "wall_mean_ms": 30.85,
+        "wall_min_ms": 24.01,
+        "queries": 22,
+        "query_ms": 2.83,
+        "distinct_shapes": 8,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 20.5
+      },
+      {
+        "removed": "core.logger.middleware.CoreLoggingMiddleware",
+        "path": "/api/dsm/dashboard/link-state",
+        "reps": 6,
+        "status": {
+          "200": 6
+        },
+        "wall_p50_ms": 33.69,
+        "wall_mean_ms": 33.95,
+        "wall_min_ms": 27.93,
+        "queries": 20,
+        "query_ms": 2.67,
+        "distinct_shapes": 7,
+        "top_shape_per_request": 6,
+        "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+        "delta_ms": 16.97
+      }
+    ]
+  }
+}

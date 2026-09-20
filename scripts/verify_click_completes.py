@@ -666,6 +666,33 @@ def _cell_call(flow, o):
     return False, None
 
 
+def server_gave_value(after) -> bool:
+    """서버가 그 칸에 **무언가를 냈는가.** ★ **`0` 은 값이다.**
+
+    ⚠ [실측 2026-09-20 · 턴 X] 이 판정기는 `after in (None, "", [], {}, 0)` 으로 물었고,
+      그래서 **서버가 정직하게 낸 `0` 을 「아무것도 안 냈다」로 읽었다.**
+      그 한 줄이 `U1#19`·`U2#1`·`U2#2` 세 행을 빨강으로 만들었다 — 그런데 화면은
+      **「미처리 0건」이라고 옳게 그리고 있었고** 관측 본문에 그 글자가 있었다.
+      즉 **제품이 아니라 판정기가 틀렸다.**
+
+    ★ 이 저장소가 세 턴째 같은 말을 하고 있다 — 「분모 0인 초록은 초록이 아니다」 ·
+      「0은 원인이 아니라 질문이다」. 그 말의 뒷면이 이것이다: **0을 「없음」으로 접으면
+      「0건이라고 옳게 말한 화면」과 「아무 말도 안 한 화면」이 같은 칸에 들어간다.**
+
+    가르는 선: **없는 것**(`None` · 빈 문자열 · 빈 목록 · 빈 표)과 **0인 것**은 다르다.
+      `bool` 은 값으로 센다 — `False` 도 서버가 낸 답이다.
+    """
+    if after is None:
+        return False
+    if isinstance(after, (int, float, bool)):
+        return True                      # ← 0 · 0.0 · False 는 **낸 값**이다
+    if isinstance(after, str):
+        return after.strip() != ""
+    if isinstance(after, (list, dict, tuple, set)):
+        return len(after) > 0
+    return True
+
+
 def _cell_state(o):
     s = o.get("state") or {}
     kind = s.get("kind")
@@ -675,12 +702,35 @@ def _cell_state(o):
         return None, "다시 읽지 못했다: %s" % s["error"]
     if kind == "server_change":
         before, after = s.get("before"), s.get("after")
+        #: ★★ **「없음 → 값」은 「변했다」가 아니다 — 「변했는지 모른다」다.**
+        #:   [실측 2026-09-20 · 턴 X · V 가 자진 신고] `U3#1` 이 `total` **None → 12** 로
+        #:   **초록**이었다. 이 술어는 「누른 뒤 값이 **변했는가**」인데, `before` 가 `None` 이면
+        #:   **처음 읽기가 실패한 것**과 **원래 없던 것**이 같은 글자다. 둘 다 「눌러서 변했다」의
+        #:   증거가 못 된다 — 누르기 전에 무엇이었는지를 모르기 때문이다.
+        #:   ★ 이것은 같은 턴에 고친 병(「`0` 을 **없음**으로 접었다」)의 **거울상**이다:
+        #:     이번엔 **「없음을 값으로 폈다」**. 한 판정기 안에 두 방향이 같이 있었다.
+        #:   ⇒ **회색**이다(빨강이 아니다 — 「안 변했다」고 말할 근거도 없다).
+        #:     회색은 초록이 아니므로 이 자리는 더 이상 점수를 벌지 않는다.
+        #: ⚠ **첫 판은 너무 넓었다** [V 가 비용을 청구했다 · 같은 턴에 정정].
+        #:   `before is None` 을 전부 회색으로 했더니 `U1#11`(`verdict` **None → 'confirmed'**)
+        #:   이 초록에서 회색으로 떨어졌다. 그런데 `verdict` 의 `None` 은 **읽기 실패가 아니라
+        #:   「아직 판정 안 함」이라는 뜻 있는 값**이고, **읽기 실패는 이미 위의 `error` 갈래가
+        #:   잡는다.** 아마도 참인 초록 하나를 잃은 것이다.
+        #: ★ 가르는 선: **세는 수**와 **갈래값**은 다르다.
+        #:   · `total` 처럼 **수**가 없었다가 12 가 된 것 → 「눌러서 **늘었다**」의 증거가 못 된다.
+        #:     누르기 전의 수를 모르면 **얼마나 늘었는지**를 말할 수 없다. → 회색.
+        #:   · `verdict` 처럼 **갈래**가 null → 'confirmed' 인 것 → **그 자체가 전이**다. → 초록.
+        if before is None and isinstance(after, (int, float)) \
+                and not isinstance(after, bool):
+            return None, ("누르기 **전** `%s` 의 수를 모른다(`None`) — 「없음 → %r」은 "
+                          "**늘었다의 증거가 아니다**. 세는 수는 앞을 알아야 뒤를 잰다"
+                          % (s.get("field"), after))
         if before == after:
             return False, "다시 읽었는데 `%s` 가 그대로다 (%r)" % (s.get("field"), before)
         return True, "`%s` %r → %r" % (s.get("field"), before, after)
     if kind == "server_reflect":
         after = s.get("after")
-        if after in (None, "", [], {}, 0):
+        if not server_gave_value(after):
             return False, "서버가 `%s` 에 아무것도 안 냈다" % s.get("field")
         if not s.get("on_screen"):
             return False, "서버는 `%s`=%r 를 내는데 **화면에 없다**" % (s.get("field"), after)
@@ -990,8 +1040,156 @@ def canon_disagreements(path=None):
     return out
 
 
+def canon_compare_census(path=None):
+    """**무엇을 실제로 대 봤는가.** 분모를 손으로 적지 않는다 (D-327 · 턴 X 2차 회귀).
+
+    「갈린 행 0」은 두 길로 난다 — ① 정말 둘이 같다 ② **갈릴 수 있는 행이 하나도 없다.**
+    턴 W 에 술어를 좁히고(`_CANON_SAYS_GREY` · `_NOTE_IS_CORRECTION`) 정본 11행을
+    정정한 뒤, 턴 X 실측은 **②**였다: `canon_none` **0행**(정정으로 사라졌다) ·
+    `fc_none` 2행은 둘 다 정본이 제 입으로 「회색」이라 적은 행이라 다툼이 못 된다
+    → **갈릴 수 있는 행 0.** 그런데 출력은 「48행에 같은 정본」이라 적고 있었다.
+    48 은 **대 본 수가 아니라 표의 행 수**다 — 그 글자가 거짓말이었다.
+
+    그래서 센다. 갈릴 수 있는 행이 0이면 살아 있는 데이터로는 이 술어가 **빨개질 수
+    없다**; 그때 이 술어를 살려 두는 것은 `_p190_canon_cases()` 의 **출생 표본**뿐이고,
+    출력이 그렇게 말해야 한다. 말하지 않으면 술어가 죽은 날에도 초록이 나온다.
+    """
+    cells = canon_cells(path)
+    if not cells:
+        return None
+    n = dict(rows=0, canon_has=0, canon_none=0, canon_grey=0,
+             fc_has=0, fc_none=0, both_say=0, capable=0)
+    for f in FLOWS:
+        c = cells.get(f["key"])
+        if not c:
+            continue
+        last, note = c[-1], (f.get("note") or "")
+        n["rows"] += 1
+        canon_none = "정본 없음" in last
+        canon_grey = bool(_CANON_SAYS_GREY.search(last)) and not canon_none
+        canon_has = (bool(_CANON_MEASURES.search(last)) and not canon_none
+                     and not canon_grey)
+        fc_none = (bool(_NOTE_SAYS_NONE.search(note))
+                   and not _NOTE_IS_CORRECTION.search(note))
+        fc_has = bool(f.get("call")) and not fc_none
+        n["canon_has"] += canon_has
+        n["canon_none"] += canon_none
+        n["canon_grey"] += canon_grey
+        n["fc_has"] += fc_has
+        n["fc_none"] += fc_none
+        n["both_say"] += bool((canon_has or canon_none) and (fc_has or fc_none))
+        #: 갈릴 **수 있는** 행 = 다툼 두 갈래 중 하나가 성립할 수 있는 자리
+        n["capable"] += bool((fc_none and canon_has) or (fc_has and canon_none))
+    return n
+
+
 def self_test() -> int:
     ok = True
+
+    # ── ★ 출생 표본 — **`0` 은 값이다** (턴 X · D-507) ─────────────────────
+    #   [실측 2026-09-20] 차선 Q 가 찾았다: 이 판정기가 `after in (None,"",[],{},0)` 으로
+    #   물어서, 서버가 정직하게 낸 **`0` 을 「아무것도 안 냈다」로 읽었다.**
+    #   그 한 줄이 `U1#19`·`U2#1`·`U2#2` 세 행을 빨강으로 만들었는데, 화면은
+    #   **「미처리 0건」이라 옳게 그리고 있었다**(관측 본문에 그 글자가 있었다).
+    #   ⚠ **음성 대조를 같이 둔다** — 이 고침이 「전부 값이다」로 미끄러지면
+    #     정말로 아무것도 안 낸 칸까지 초록이 되고, 그게 이 판정기의 죽음이다.
+    _VALUE_SAMPLE = [
+        (0, True, "★ 서버가 낸 **0** — 「미처리 0건」은 답이지 침묵이 아니다"),
+        (0.0, True, "0.0 도 같다"),
+        (False, True, "`False` 도 서버가 낸 답이다"),
+        (4, True, "평범한 값"),
+        ("0", True, "문자열 0"),
+        ("서울시 강남구", True, "글자"),
+        ([1], True, "비지 않은 목록"),
+        (None, False, "**없다** — 칸 자체가 안 왔다"),
+        ("", False, "빈 문자열"),
+        ("   ", False, "공백뿐"),
+        ([], False, "빈 목록"),
+        ({}, False, "빈 표"),
+    ]
+    zbad = [(v, why) for v, want, why in _VALUE_SAMPLE
+            if server_gave_value(v) is not want]
+    if zbad:
+        ok = False
+        print("%s X ★ 출생 표본(0은 값이다)이 깨졌다: %s" % (TAG, zbad[:4]))
+    else:
+        print("%s O ★ **출생 표본 %d — 「0 은 값이다」**(양성 %d · 음성 %d · "
+              "`0`·`0.0`·`False` 가 값이고 `None`·빈 것은 아니다)"
+              % (TAG, len(_VALUE_SAMPLE),
+                 sum(1 for _, w, _ in _VALUE_SAMPLE if w),
+                 sum(1 for _, w, _ in _VALUE_SAMPLE if not w)))
+
+    # ── ★ 출생 표본 — **「없음 → 값」은 변했다가 아니다** (턴 X · V 가 자진 신고) ──
+    #   [실측 2026-09-20] `U3#1` 이 `total` **None → 12** 로 **초록**이었다.
+    #   같은 턴에 고친 병(「`0` 을 없음으로 접었다」)의 **거울상** — 「없음을 값으로 폈다」.
+    #   ⚠ 음성 대조를 같이 둔다: 진짜 변화는 **여전히 초록**이고, 안 변한 것은 **여전히 빨강**이다.
+    _CHANGE_SAMPLE = [
+        ({"kind": "server_change", "field": "total", "before": None, "after": 12},
+         None, "★ **세는 수가 없음 → 12** — 앞을 모르니 늘었다고 못 한다 · 회색"),
+        ({"kind": "server_change", "field": "verdict", "before": None,
+          "after": "confirmed"},
+         True, "★ **갈래값이 null → 'confirmed'** — 그 자체가 전이다 · 초록 "
+               "(V 가 비용을 청구해 같은 턴에 되찾은 자리)"),
+        ({"kind": "server_change", "field": "x", "before": None, "after": True},
+         True, "null → True — bool 은 갈래값이다 · 초록"),
+        ({"kind": "server_change", "field": "total", "before": 4, "after": 8},
+         True, "4 → 8 — 진짜 변화 · 초록"),
+        ({"kind": "server_change", "field": "total", "before": 0, "after": 1},
+         True, "**0 → 1** — 0 은 읽은 값이다 · 초록"),
+        ({"kind": "server_change", "field": "total", "before": 13, "after": 13},
+         False, "13 → 13 — 안 변했다 · 빨강"),
+        ({"kind": "server_change", "field": "total", "before": 0, "after": 0},
+         False, "0 → 0 — 안 변했다 · 빨강"),
+    ]
+    cbad = [why for st, want, why in _CHANGE_SAMPLE
+            if _cell_state({"state": st})[0] is not want]
+    if cbad:
+        ok = False
+        print("%s X ★ 출생 표본(없음 → 값)이 깨졌다: %s" % (TAG, cbad[:3]))
+    else:
+        print("%s O ★ **출생 표본 %d — 「없음 → 값」은 회색**(변했는지 모른다) · "
+              "진짜 변화는 초록 · 안 변한 것은 빨강 · **`0` 은 읽은 값이다**"
+              % (TAG, len(_CHANGE_SAMPLE)))
+
+    # ── ★ 출생 표본 — **드라이버는 딴 프로세스다** (턴 X · 조율자가 여기서 부쉈다) ──
+    #   [실측 2026-09-20] 조율자가 `server_gave_value(a)` 를 `DRIVER` 문자열 **안**에 써 넣었다.
+    #   그 문자열은 `/tmp/p118_driver.py` 로 따로 도는 프로세스라 바깥 모듈의 이름이 없고,
+    #   **`NameError` 로 48행 중 39행이 회색**이 됐다. 그런데 **이 자기시험은 초록이었다** —
+    #   자기시험은 바깥 모듈만 돌기 때문이다. **측정할 때만 죽는 결함**이었다.
+    #   ⇒ 이제 자기시험이 **심은 뒤의 드라이버 원문**을 읽어, 부르는데 정의가 없는 이름을 잡는다.
+    try:
+        import ast
+        import builtins
+        import inspect as _inspect
+        _src = DRIVER.replace(_DRIVER_SLOT,
+                              _inspect.getsource(server_gave_value))
+        _tree = ast.parse(_src)
+        _known = set(dir(builtins))
+        for _n in ast.walk(_tree):
+            if isinstance(_n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                _known.add(_n.name)
+            elif isinstance(_n, ast.Name) and isinstance(_n.ctx, ast.Store):
+                _known.add(_n.id)
+            elif isinstance(_n, (ast.Import, ast.ImportFrom)):
+                for _a in _n.names:
+                    _known.add((_a.asname or _a.name).split(".")[0])
+            elif isinstance(_n, ast.arg):
+                _known.add(_n.arg)
+        _called = {_n.func.id for _n in ast.walk(_tree)
+                   if isinstance(_n, ast.Call) and isinstance(_n.func, ast.Name)}
+        _orphan = sorted(_called - _known)
+        if _orphan:
+            ok = False
+            print("%s X ★ **드라이버가 제 안에 없는 이름을 부른다**: %s — "
+                  "`DRIVER` 는 딴 프로세스다. 바깥 모듈의 함수를 그냥 쓰면 "
+                  "자기시험은 초록인 채 **측정만 죽는다** (턴 X)" % (TAG, _orphan[:6]))
+        else:
+            print("%s O ★ **출생 표본 — 드라이버가 부르는 이름 %d개가 전부 제 안에 있다** "
+                  "(공용 술어는 원문을 심어 넣는다 · 한 벌을 더 만들지 않는다)"
+                  % (TAG, len(_called)))
+    except Exception as _e:                                  # noqa: BLE001
+        ok = False
+        print("%s X 드라이버 이름 검사를 못 돌렸다: %r" % (TAG, _e))
 
     # ① 양성 대조 — 넷이 다 선 관측은 초록이다
     rows = judge(_all_good())
@@ -1184,7 +1382,23 @@ def self_test() -> int:
             print("      %-7s 이 파일: %s" % (key, mine))
             print("      %-7s 온보딩 정본: %s" % ("", theirs))
     else:
-        print("%s O [P-190] 두 도구가 48행에 **같은 정본**을 든다 (갈린 행 0)" % TAG)
+        #: ★ [턴 X 2차 회귀] **분모를 손으로 적지 않는다.** 종전 문구의 「48행」은
+        #:   대 본 수가 아니라 표의 행 수였다 — 갈릴 수 있는 행이 0이어도 그대로 찍혔다.
+        n = canon_compare_census() or {}
+        print("%s O [P-190] 두 도구가 갈린 행 **0** — 읽은 행 %d · 양쪽이 다 말한 행 %d "
+              "(정본: 잰다 %d · 「정본 없음」 %d · 제 입으로 회색 %d / 이 파일: 문 있다 %d · "
+              "「정본 없음」 %d)"
+              % (TAG, n.get("rows", 0), n.get("both_say", 0), n.get("canon_has", 0),
+                 n.get("canon_none", 0), n.get("canon_grey", 0), n.get("fc_has", 0),
+                 n.get("fc_none", 0)))
+        if not n.get("capable", 0):
+            print("%s ⚠ [P-190] **갈릴 수 있는 행 0** — 살아 있는 정본으로는 이 술어가 "
+                  "빨개질 수 없다. 지금 이 줄을 초록으로 만드는 것은 정본이 아니라 "
+                  "위의 **출생 표본**이다. 「갈린 행 0」을 「둘이 같다」로 읽지 마라 — "
+                  "「댈 것이 없다」와 글자가 같다 (턴 W 정정 11행이 `canon_none` 을 "
+                  "0으로 만들어 두 갈래 중 하나가 구조적으로 죽었다)" % TAG)
+        else:
+            print("%s   갈릴 수 있었던 행 %d — 그중 갈린 행 0" % (TAG, n["capable"]))
 
     print("%s 자기시험 %s" % (TAG, "통과" if ok else "**실패**"))
     return EXIT_OK if ok else EXIT_FAIL
@@ -1289,9 +1503,24 @@ def _p190_birth_sample():
 # ──────────────────────────────────────────────────────────────────────────
 # 실측 — gx-shell 안에서 **실제로 누른다**
 # ──────────────────────────────────────────────────────────────────────────
+#: 드라이버에 공용 술어를 심는 자리. **이 이름을 드라이버 머리말에 글자로 적지 마라** —
+#:   치환이 머리말을 먼저 먹는다(턴 X 실측).
+_DRIVER_SLOT = "# __SHARED_" + "HELPERS__"
+
 DRIVER = r'''# -*- coding: utf-8 -*-
-"""P-118 실측 드라이버 — gx-shell 안에서 돈다. **누르고, 나간 것을 세고, 다시 읽는다.**"""
+"""P-118 실측 드라이버 — gx-shell 안에서 돈다. **누르고, 나간 것을 세고, 다시 읽는다.**
+
+⚠ **이 파일은 딴 프로세스다.** 바깥 모듈(`verify_click_completes.py`)의 이름은 여기 없다.
+  같이 써야 하는 술어는 아래 표시된 자리에 **원문 그대로 심어** 넣는다
+  (`measure()` 가 `inspect.getsource` 로 심는다). **손으로 한 벌 더 적지 마라** —
+  두 벌을 두면 어긋나고, 어긋난 쪽이 조용히 이긴다.
+
+⚠ 그 표시 이름을 이 머리말에 **글자로 적지 마라** — 치환이 머리말을 먼저 먹는다.
+  [실측 2026-09-20 · 턴 X] 조율자가 적었고, 머리말이 먹혀 파일이 구문 오류가 됐다.
+"""
 import json, os, re, sys, threading, time
+
+# __SHARED_HELPERS__
 import urllib.request as U
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -1855,7 +2084,11 @@ def walk(persona, account, viewport, flows, event_id):
                     #   여기서는 서버가 그 값 자체를 냈는지만 본다(데이터 존재).
                     st["on_screen"] = bool(a)
                 else:
-                    st["on_screen"] = bool(a) and (str(a) in hay or any(
+                    #: ★ **여기도 `0` 이 값이다** [턴 X]. `bool(a)` 로 물으면 서버가 낸 `0` 이
+                    #:   화면에 「0건」으로 **글자까지 떠 있어도** 「화면에 없다」가 된다.
+                    #:   무엇을 재는 칸인지 보면 분명하다 — 이 줄은 **「서버가 낸 값이 화면에
+                    #:   반사됐는가」**를 재지 「그 값이 0보다 큰가」를 재지 않는다.
+                    st["on_screen"] = server_gave_value(a) and (str(a) in hay or any(
                         w.lower() in hay.lower() for w in ["행", "건", "개"]) and len(hay) > 400)
 
         # ── ★ [턴 U · 절 4] **되돌리기 — 판정에 쓸 것을 다 읽은 뒤에** ──────────
@@ -2047,8 +2280,31 @@ def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://loca
     }
     env = dict(os.environ, MSYS_NO_PATHCONV="1")
     # 드라이버 소스는 **파일로** 넣고, SPEC 은 **stdin 으로** 넣는다 — 두 번에 나눈다
+    #
+    # ⚠⚠ **`DRIVER` 는 딴 프로세스다** [실측 2026-09-20 · 턴 X · 조율자가 여기서 부쉈다].
+    #   이 문자열은 `/tmp/p118_driver.py` 로 써서 **gx-shell 안에서 따로 돈다** —
+    #   바깥 모듈의 이름은 **거기에 없다.** 조율자가 `server_gave_value(a)` 를 이 안에
+    #   써 넣었고, 모듈 최상위의 정의는 그 프로세스에 안 따라가서 **`NameError` 로
+    #   48행 중 39행이 회색**이 됐다. 그리고 `--self-test` 는 **초록인 채**였다 —
+    #   자기시험은 바깥 모듈만 돌기 때문이다. **측정할 때만 죽는 결함**이다.
+    #   ★ 그래서 **한 벌을 더 만들지 않는다.** 정의는 모듈에 하나 두고, 그 **원문을
+    #     그대로 심는다**(`inspect.getsource`). 두 벌을 두면 어긋나고, 어긋난 쪽이
+    #     조용히 이긴다 — 이 저장소가 이 턴에 세 번 배운 것이다.
+    import inspect
+    #: ★ 표시는 **정확히 한 번** 나와야 한다. 두 번 나오면 첫 자리(머리말)가 먹히고
+    #:   파일이 구문 오류가 된다 — 조율자가 턴 X 에 실제로 그렇게 부쉈다.
+    if DRIVER.count(_DRIVER_SLOT) != 1:
+        print("%s 드라이버 심는 자리가 %d 곳이다 — **정확히 하나**여야 한다 (턴 X)"
+              % (TAG, DRIVER.count(_DRIVER_SLOT)))
+        return EXIT_UNDECIDABLE
+    shared_src = inspect.getsource(server_gave_value)
+    driver_src = DRIVER.replace(_DRIVER_SLOT, shared_src)
+    if "def server_gave_value" not in driver_src:
+        print("%s 드라이버에 공용 술어를 못 심었다 — `# __SHARED_HELPERS__` 자리가 "
+              "사라졌다. 심지 않고 재면 측정만 죽는다 (턴 X)" % TAG)
+        return EXIT_UNDECIDABLE
     put = subprocess.run(["docker", "exec", "-i", container, "sh", "-c",
-                          "cat > /tmp/p118_driver.py"], input=DRIVER.encode("utf-8"),
+                          "cat > /tmp/p118_driver.py"], input=driver_src.encode("utf-8"),
                          env=env, capture_output=True)
     if put.returncode != 0:
         print("%s 드라이버를 넣지 못했다: %s" % (TAG, put.stderr.decode("utf-8", "replace")[:300]))

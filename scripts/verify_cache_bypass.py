@@ -80,7 +80,22 @@ BYPASS_MARKS = (
 CLEAR_MARKS = ("cache.clear()", "caches[", "clear_cache(")
 #: 「해당 없음」은 **사유가 붙은 선언**이어야 한다. 낱말만으로는 인정하지 않는다 —
 #: 사유 없는 면제는 UNREVIEWED 와 구별되지 않는다(`tenant_scope.ScopeSpec` 와 같은 규칙).
-DECLARE = re.compile(r"캐시\s*처리\s*[:：]\s*(우회|비움|해당\s*없음)([^\n]*)")
+#: ⚠ **꾸밈글자를 넘긴다** [실측 2026-09-20 · 턴 X]. 차선 U1 이 선언을 `캐시 처리: **우회** — …`
+#:   라고 **굵게** 적었는데, 옛 정규식이 콜론 뒤 `*` 에서 끊겨 **「표기 없음」**으로 읽었다.
+#:   선언은 **사람이 읽는 한 줄**이고 `**우회**` 는 사람에게 「우회」다 — 꾸민 때문에 내는
+#:   빨강은 **거짓 빨강**이고, 거짓 빨강은 다음 사람이 게이트를 끄게 만든다.
+#:   ★ 느슨해진 것이 아니다: 낱말은 여전히 셋뿐이고, 사유 없는 「해당 없음」도 그대로 막힌다.
+#: ⚠ **한 줄 안에서만 읽는다** — `\s` 가 아니라 `[ \t]` 다. 첫 판에 `\s*` 를 썼더니 그것이
+#:   **줄바꿈까지 먹어서**, 사유가 없는 「해당 없음」의 사유 칸에 **다음 줄**이 들어왔다.
+#:   그래서 사유 없는 선언이 면제로 통과했고, **자기시험이 그 자리에서 나를 잡았다.**
+#:   선언은 「한 줄로 남긴다」가 규약이므로, 읽는 쪽도 한 줄을 넘지 않아야 한다.
+DECLARE = re.compile(
+    r"캐시[ \t]*처리[ \t]*[:：][ \t]*[*_]{0,2}[ \t]*"
+    r"(우회|비움|해당[ \t]*없음)[ \t]*[*_]{0,2}([^\n]*)")
+
+#: 「안 적었다」와 「적었는데 못 읽었다」는 **다른 사실**이다. 둘을 한 칸에 두면
+#:   적은 사람이 제 글자를 의심하지 않고 **빠뜨렸다고 읽는다** — 턴 X 에 실제로 그러했다.
+DECLARE_LOOSE = re.compile(r"캐시\s*처리\s*[:：]([^\n]*)")
 
 STATE_BYPASS = "우회"
 STATE_CLEAR = "비움"
@@ -109,6 +124,18 @@ def classify_source(text: str) -> str:
     if any(mark in text for mark in CLEAR_MARKS):
         return STATE_CLEAR
     return STATE_MISSING
+
+
+def unreadable_declaration(text: str) -> str:
+    """**적었는데 못 읽은** 줄을 돌려준다(없으면 빈 문자열).
+
+    판정을 바꾸지 않는다 — 빨강은 빨강이다. 다만 사람에게 **어디를 보라**고 말한다.
+    「표기 없음」만 내면, 적은 사람은 제 글자를 의심하지 않고 **빠뜨렸다고 읽는다.**
+    """
+    if DECLARE.search(text):
+        return ""
+    m = DECLARE_LOOSE.search(text)
+    return (m.group(0).strip() if m else "")
 
 
 def walk() -> list[Path]:
@@ -253,7 +280,22 @@ def main() -> int:
         print("[CACHE-BYPASS] FAIL 캐시 처리 표기 없는 **새** 시험 %d건 "
               "(「캐시 처리: 우회/비움/해당 없음 — 사유」 한 줄을 적어라):" % len(new_violations))
         for name in new_violations:
+            #: ★ **「안 적었다」와 「적었는데 못 읽었다」를 갈라 말한다.**
+            #:   턴 X 에 차선 하나가 이 둘을 못 갈라 제 글자를 의심하지 않았다 —
+            #:   선언은 있었고 꾸민이 문제였다. 판정은 그대로 빨강이되, **어디를 보라**고 말한다.
+            hint = ""
+            try:
+                hint = unreadable_declaration(
+                    (TESTS.parent.parent / name).read_text(
+                        encoding="utf-8", errors="replace"))
+            except OSError:
+                hint = ""
             print("    %s" % name)
+            if hint:
+                print("        ↳ 선언 비슷한 줄은 **있다** — 형식이 안 맞아 "
+                      "못 읽었다: %r" % hint)
+                print("        ↳ 낱말은 `우회` / `비움` / `해당 없음` 셋이고, "
+                      "「해당 없음」은 **사유가 붙어야** 한다")
         return 1
     print("[CACHE-BYPASS] 새 위반 0건 (기존 면제 %d건 · 래칫 D-311)" % len(baseline))
     return 0

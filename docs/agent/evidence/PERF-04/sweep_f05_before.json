@@ -1,0 +1,44 @@
+{
+  "measured_at": "2026-09-20T03:50:30+00:00",
+  "sweep": {
+    "path": "/api/dsm/events?limit=50",
+    "rows": [
+      {
+        "concurrency": 1,
+        "n": 8,
+        "errors": 0,
+        "p50_ms": 45.4,
+        "p95_ms": 70.0,
+        "min_ms": 38.1,
+        "throughput_rps": 22.0
+      },
+      {
+        "concurrency": 2,
+        "n": 16,
+        "errors": 0,
+        "p50_ms": 68.2,
+        "p95_ms": 84.9,
+        "min_ms": 60.0,
+        "throughput_rps": 29.3
+      },
+      {
+        "concurrency": 4,
+        "n": 32,
+        "errors": 0,
+        "p50_ms": 158.0,
+        "p95_ms": 192.7,
+        "min_ms": 131.1,
+        "throughput_rps": 25.3
+      },
+      {
+        "concurrency": 10,
+        "n": 80,
+        "errors": 0,
+        "p50_ms": 454.4,
+        "p95_ms": 512.9,
+        "min_ms": 395.3,
+        "throughput_rps": 22.0
+      }
+    ]
+  }
+}

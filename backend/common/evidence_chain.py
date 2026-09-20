@@ -403,6 +403,22 @@ RECORDED_BREAKS: tuple[RecordedBreak, ...] = (
         "043771854c0ee50ba116db91ae36a9b65d50854065f91807d5091ef297e25399",
         "b7cbd94747ee97cba541edef3e9b3891c4b3d8503cf85a6915aaf1223d5850d7",
         "2026-09-19", "P-191 경합 — 태어난 때 2026-09-19T07:04:55Z · 잠금 이전"),
+
+    # ── 턴 X (2026-09-20) — **경합이 아니다. 시험이 샜다** ────────────────────
+    #   위 22건과 **얼굴이 다르다.** 같은 목록에 있다고 같은 원인으로 읽지 마라 —
+    #   잠금(P-191)이 선 뒤에 난 것이고, 잠금이 막는 종류가 아니다.
+    RecordedBreak(
+        276795, PREV_MISMATCH,
+        "2d4e4980156a6ad51dfd017ea9357263a4365a49ecf87b92525e7f07a930c04c",
+        "c9d02a45a37f1c5f9bdd9557c517315a42a8695adb646a9894b32d21487ff84d",
+        "2026-09-20",
+        "★ **시험이 운영 감사표로 샜다**(경합 아님). 턴 X 차선 S 가 시험 DB 다툼 가드의 "
+        "첫 판을 **장고 연결로 물었고**, 묻는 행위 자체가 뒤의 `create_test_db` 를 바꿔 "
+        "시험 셋이 운영 DB 에 붙었다 — `guardianx.test.law08_race` **219행** "
+        "(2026-09-20T03:53~03:55 · 조율자 실측으로 건수 확인). 그 무리 안에서 이 자리가 갈렸다. "
+        "**고치지 않고 적는다**(P-191). 대표 결정: 「끊김만 등재하고 행은 둔다」 — "
+        "219행도 지우지 않는다. **감사표에서 행을 지우는 것은 「안 고쳐졌다」의 증명 자체를 "
+        "약하게 한다.** 차선 S 가 자진 신고했고 psycopg2 별도 연결로 고쳐 재발을 막았다"),
 )
 
 
@@ -519,6 +535,21 @@ def _hashed_head() -> tuple[int | None, str, int]:
 
     ★ 자리표가 가장 큰 행이 줄의 끝이다. **번호가 가장 큰 행이 아니다** — 뒤집힌 순간에
       늦게 붙은 낮은 번호가 끝일 수 있고, 그때 번호로 끝을 고르면 줄이 또 갈라진다.
+
+    ★★ **자리표가 없는 행도 센다** [실측 2026-09-20 · 턴 X · 운영 DB에서 줄이 갈라졌다]
+      이 함수는 처음에 `data_after ? '__seq__'` 인 행만 보고 끝을 골랐다. 그런데
+      잠금·자리표가 선 뒤에도 **재기동 안 한 컨테이너 하나**가 옛 코드로 감사를 썼다::
+
+          #275841  2026-09-20 01:00:04Z  guardianx.k2.heartbeat  자리표 없음  hash=c9d02a45…
+
+      두 칸이 멀쩡한 정상 행인데 **줄 끝 고르기에서만 안 보였다.** 그래서 그 뒤의 쓰기가
+      한 칸 앞(#275818)에 붙었고, 게이트가 **새 끊김 1건**을 냈다:
+      `#276795 prev_mismatch — prev=2d4e4980… 인데 앞 행의 hash 는 c9d02a45…`.
+
+      ⚠ 같은 자리를 `_order_key`(검증이 읽는 순서)는 **제대로** 읽었다 —
+        자리표가 없으면 번호가 자리다. 즉 **줄의 순서를 정하는 규칙이 두 벌**이었고,
+        두 벌의 어긋남이 그 갈라짐이다. 판정식 복사본 하나가 격리 사고였다(D-212).
+        그래서 여기서도 `_order_key` 와 **같은 식**으로 고른다: `COALESCE(자리표, 번호)`.
     """
     qs = _rows().exclude(data_after__isnull=True)
     try:
@@ -529,17 +560,18 @@ def _hashed_head() -> tuple[int | None, str, int]:
     try:
         from django.db.models import IntegerField
         from django.db.models.fields.json import KeyTextTransform
-        from django.db.models.functions import Cast
+        from django.db.models.functions import Cast, Coalesce
 
-        by_seq = (qs.filter(data_after__has_key=SEQ_KEY)
-                  .annotate(_seq=Cast(KeyTextTransform(SEQ_KEY, "data_after"),
-                                      IntegerField()))
-                  .order_by("-_seq", "-id"))
-        for values in by_seq.values("id", "data_after")[:1]:
+        by_pos = (qs.annotate(_seq=Cast(KeyTextTransform(SEQ_KEY, "data_after"),
+                                        IntegerField()))
+                  .annotate(_pos=Coalesce("_seq", "id"))
+                  .order_by("-_pos", "-id"))
+        for values in by_pos.values("id", "data_after")[:1]:
             _, h = _chain_of(values.get("data_after"))
             seq = _seq_of(values.get("data_after"))
-            if h and seq is not None:
-                return values["id"], h, seq
+            if h:
+                #: 자리표가 없으면 **번호가 곧 자리**다 — `_order_key` 와 같은 규칙.
+                return values["id"], h, (values["id"] if seq is None else seq)
     except Exception:                                   # pragma: no cover
         pass                       # 자리표로 못 고르면 아래 옛 길로 — 회색이 아니라 옛 길
 

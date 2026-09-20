@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from django.apps import apps
+from django.db import transaction
 
 from common import evidence_chain
 
@@ -84,25 +85,49 @@ def write(
             f"outcome={outcome!r} 은 감사 판정이 아니다. 허용: {ALLOWED} · {DENIED}. "
             f"제3의 값을 만들면 '성공·실패 모두' 라는 집계가 갈린다")
 
-    row = _model()._base_manager.create(
-        logger_name=logger_name,
-        level_name="INFO" if outcome == ALLOWED else "WARNING",
-        msg=f"{tag} {action} — {outcome}: {reason}",
-        note=reason,
-        api_name=api_name or action,
-        api_method=api_method,
-        status_http=status_http,
-        user_id=getattr(actor, "pk", None),
-        username=getattr(actor, "username", "") or "",
-        # ★ 분류 FK 는 비운다 — 그 열거가 무엇을 뜻하는지 우리가 모른다 (D-280).
-        data_before=before,
-        data_after=after,
-    )
-    # ★ LAW-08 — 저장된 그 행을 **곧바로 체인에 잇는다**. 실패는 삼키지 않는다:
-    #   이을 수 없으면 예외가 올라가고 이 감사 쓰기 자체가 실패한다(머리말 규약).
-    #   체인 없는 감사 행 하나는 나중에 "그때는 원래 없었다" 로 읽히고, 그 변명이 한 번
-    #   통하면 체인 전체의 값이 사라진다.
-    prev_hash, row_hash = evidence_chain.append_evidence_hash(audit_id=row.pk)
+    with transaction.atomic():
+        # ★ P-191 / 턴 X — **INSERT 를 잠금 구간 안으로 들인다.** 두 가지가 같이 고쳐진다:
+        #
+        #   ① **못 이었으면 그 행도 없다.** 전에는 `create` 가 제 트랜잭션에서 먼저
+        #      커밋되고 잇기는 그 뒤였다. 그 사이에 실패하면 예외는 제대로 올라가는데도
+        #      **두 칸 없는 감사 행 하나가 표에 남았다** — 체인이 시작된 뒤의 행이라
+        #      `missing` 으로 잡히고, 한 번의 실패가 **상시 빨강**이 된다. 그리고 그 행은
+        #      고칠 수도 없다(과거 행을 손대는 것이 이 체인이 잡으려는 행위 그 자체다).
+        #      [실측 2026-09-20 · `tests/test_law08_chain_race.py::WriteIsAllOrNothingTest`
+        #       — 고치기 전 `AssertionError: 0 != 1`]
+        #
+        #   ② **번호와 줄의 순서가 다시 같아진다.** 행 번호는 INSERT 가 시작될 때 나온다.
+        #      INSERT 가 잠금 밖이면 6번이 먼저 붙고 2번이 나중에 붙는 일이 흔했고,
+        #      그 뒤집힘을 자리표(`__seq__`)가 받아 냈다. 이제 INSERT 도 줄 순서대로
+        #      일어나므로 **자리표는 예비가 된다**(지우지 않는다 — 아래 ⚠).
+        #
+        #   ⚠ 자리표를 **안 지운다.** 자리표 없이 태어난 옛 행이 표에 그대로 있고,
+        #     검증은 그 두 세계를 한 줄로 읽어야 한다(`evidence_chain._order_key`).
+        #     예비가 된 것과 필요 없어진 것은 다르다.
+        #
+        #   ⚠ 잠금은 **밖에서 트랜잭션을 열어 준 경우 그 트랜잭션이 끝날 때** 풀린다.
+        #     그것은 이 고침이 만든 일이 아니다 — 잇기가 이미 그 자리에서 잠갔다.
+        #     여기서 달라진 것은 잠그는 시점이 INSERT **앞**으로 왔다는 것뿐이다.
+        evidence_chain.lock_chain()
+        row = _model()._base_manager.create(
+            logger_name=logger_name,
+            level_name="INFO" if outcome == ALLOWED else "WARNING",
+            msg=f"{tag} {action} — {outcome}: {reason}",
+            note=reason,
+            api_name=api_name or action,
+            api_method=api_method,
+            status_http=status_http,
+            user_id=getattr(actor, "pk", None),
+            username=getattr(actor, "username", "") or "",
+            # ★ 분류 FK 는 비운다 — 그 열거가 무엇을 뜻하는지 우리가 모른다 (D-280).
+            data_before=before,
+            data_after=after,
+        )
+        # ★ LAW-08 — 저장된 그 행을 **곧바로 체인에 잇는다**. 실패는 삼키지 않는다:
+        #   이을 수 없으면 예외가 올라가고 이 감사 쓰기 자체가 실패한다(머리말 규약).
+        #   체인 없는 감사 행 하나는 나중에 "그때는 원래 없었다" 로 읽히고, 그 변명이 한 번
+        #   통하면 체인 전체의 값이 사라진다.
+        prev_hash, row_hash = evidence_chain.append_evidence_hash(audit_id=row.pk)
 
     return AuditEntry(audit_id=row.pk, outcome=outcome, action=action,
                       actor_id=getattr(actor, "pk", None), reason=reason,

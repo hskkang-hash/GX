@@ -15,9 +15,20 @@
      (`total=0` 일 때 「0%」가 아니라 「잴 수 없다」. 화면은 이때 비율 카드를 안 그린다)
   ② `GET /api/dsm/reports/runs`         — `runs` 가 **빈 배열**로 온다
      (요청은 200 이다. 「못 가져온 것」과 「0건」이 여기서 갈린다)
+  ③ `GET /api/dsm/system/requests`      — 「관리·설정」의 **재시작 요청 0건**
+     (턴 X 에 닫은 셋째 자리 · 아래 `RestartRequestsEmptyStateTest`)
 
-★ 「관리·설정」(`/dsm/system` · `SystemSettings.tsx`)은 **이번 턴 차선 U56 이 쓰고 있다.**
-  한 파일은 한 차선이므로 U24 는 그 화면을 고치지 않았다 — 문구는 재서 넘겼다.
+★ **셋째를 닫은 자리** [턴 X · 2026-09-20]
+  턴 W 에는 「관리·설정」(`/dsm/system` · `SystemSettings.tsx`)을 **차선 U56 이 쓰고
+  있어서** 못 눌렀다. 이번 턴에 U56 의 코드가 들어온 뒤 **그 0건을 실제로 만들어
+  눌렀다**. 화면 쪽은 U56 이 이미 넣어 두어 U24 가 `.tsx` 를 **한 줄도 안 고쳤다** —
+  남은 일은 **누르는 것**이었고 그것이 이 파일의 ③ 이다.
+
+★★ **0건 시험에는 「1건」이 같이 있어야 한다**
+  0건에서 빈 상태가 뜨는 것만 재면, **언제나 빈 상태를 그리는 화면**도 초록이다
+  (「분모 0 인 초록은 초록이 아니다」의 뒤집힌 얼굴). 그래서 ③ 은 같은 문을
+  **0건에서 한 번 · 1건을 만든 뒤 한 번** 두드린다. 두 번째가 빈 상태를 벗어나야
+  첫 번째의 빈 상태가 **0건이라서** 뜬 것이 된다.
 
 캐시 처리: 우회 — `Client(**NO_CACHE)` (`X-No-Cache` · D-341 착시 ⑦).
 이 시험이 재는 것은 **분모가 0 인 순간의 응답**이다. 적중한 본문이 돌아오면
@@ -45,8 +56,14 @@ def _forget_leftover_request() -> None:
         thread_local.request = None
 
 
-class ZeroDenominatorTest(TestCase):
-    """**분모 0 인 테넌트 하나.** 카메라도 보고서도 한 건 없이 태어난 곳이다."""
+class _ZeroTenant(TestCase):
+    """**분모 0 인 테넌트 하나.** 카메라도 보고서도 한 건 없이 태어난 곳이다.
+
+    ★ 시험이 아니라 **자리**다(이름이 `_` 로 시작한다). 이 클래스에 시험을 두면
+      상속하는 쪽에서 **같은 시험이 한 번 더 돈다** — 그렇게 늘어난 수는 잰 자리가
+      늘어난 것이 아니라 **같은 자리를 두 번 센 것**이다(부착률을 완결로 읽는
+      착시 ① 의 시험 판).
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -86,6 +103,10 @@ class ZeroDenominatorTest(TestCase):
         super().tearDown()
         _forget_leftover_request()
 
+
+class ZeroDenominatorTest(_ZeroTenant):
+    """빈 상태 ①②③ 중 **①②와 청구 0건** — 카메라·보고서·청구를 0 에서 두드린다."""
+
     # ── ① 카메라 일괄 등록의 분모 ────────────────────────────────────────
     def test_address_gap_says_it_cannot_be_measured_at_zero(self):
         """★ 카메라 0대에서 비율은 **0% 가 아니라 「잴 수 없다」**다 (D-301).
@@ -123,3 +144,96 @@ class ZeroDenominatorTest(TestCase):
         self.assertEqual(body.get("total"), 0)
         self.assertEqual(body.get("unanswered"), 0,
                          "0건과 「안 셌다」를 가른다 — 화면이 이 수를 쓴다")
+
+
+class RestartRequestsEmptyStateTest(_ZeroTenant):
+    """★★ **빈 상태 셋째 — 「관리·설정」의 재시작 요청 0건** (턴 X 에 눌러서 닫았다).
+
+    화면(`SystemSettings.tsx`)이 이 응답을 보고 갈리는 자리는 **한 줄**이다:
+
+        { isEmpty: (v) => (v?.requests?.length ?? 0) === 0 }
+
+    참이면 `StateBoundary` 가 `empty` 를 그리고, 거짓이면 표를 그린다. 그 한 줄이
+    보는 값이 **여기서 재는 값**이다 — 화면을 고쳐 놓고 이 응답을 한 번도 안 만들어
+    봤다면 그 문구는 아무도 안 본 문장이다.
+
+    ★ 왜 이 자리에 「기다리면 나타납니다」를 쓰면 안 되나 [실측]
+      이 표의 행을 만드는 자리는 저장소 전체에서 **하나**다 —
+      `api_u56.py::restart_request` 의 `DsmSystemRequest.objects.create(...)`.
+      배치도 크론도 이 표에 행을 만들지 않는다. 그러므로 **가만히 두면 영원히 0건**이고,
+      사전 기본 문구는 이 자리에서 거짓말이 된다. 그래서 화면이 `emptyNext` 로
+      「위 칸에 사유를 적고 누르면 한 줄이 생긴다」를 제 말로 적는다.
+      (보고서 0건에서 잡은 것과 **같은 뿌리**다 — 사람이 눌러야 생기는 표.)
+    """
+
+    DOOR = "/api/dsm/system/requests"
+    WRITE_DOOR = "/api/dsm/system/restart-request"
+
+    def _body(self):
+        resp = self.client.get(self.DOOR, **_bearer(self.user))
+        self.assertEqual(resp.status_code, 200, resp.content[:300])
+        return json.loads(resp.content)
+
+    def _ask_for_restart(self, reason):
+        """★ 행을 `objects.create` 로 **심지 않는다** — 화면이 누르는 그 문으로 만든다.
+
+        이 표는 `TenantModel` 이고 그 `objects` 는 **스레드의 요청자 group** 으로
+        좁혀진다(dj-core `CustomManagerGroup`). 시험이 스레드를 비워 둔 채 직접
+        심으면 **소속 없는 행**이 생기고, 그 행은 화면의 질의에 안 잡힌다 —
+        그러면 「1건을 만들었는데 빈 상태」가 나오고, 그 빨강은 제품의 흠이 아니라
+        **시험이 만든 것**이다. 문으로 만들면 제품이 제 손으로 소속을 붙인다.
+        """
+        resp = self.client.post(f"{self.WRITE_DOOR}?reason={reason}", data=b"{}",
+                                content_type="application/json",
+                                **_bearer(self.user))
+        self.assertEqual(resp.status_code, 200, resp.content[:300])
+        return json.loads(resp.content)
+
+    @staticmethod
+    def _screen_says_empty(body) -> bool:
+        """화면의 그 한 줄을 **그대로** 옮긴 것. 판단을 새로 짓지 않는다."""
+        return len(body.get("requests") or []) == 0
+
+    def test_zero_requests_is_two_hundred_and_empty(self):
+        """① **0건일 때** — 요청은 성공하고, 목록은 비어 있고, 분모도 0 이다."""
+        body = self._body()
+        self.assertEqual(body.get("requests"), [],
+                         "요청을 한 번도 안 올렸으니 한 줄도 없어야 한다")
+        self.assertEqual(body.get("total"), 0,
+                         "★ **분모도 0 이다.** 목록만 비고 분모가 1 이상이면 "
+                         "「잘려서 안 보이는 것」이지 「없는 것」이 아니다")
+        self.assertTrue(self._screen_says_empty(body),
+                        "화면의 `isEmpty` 가 참이어야 빈 상태가 그려진다 — "
+                        "거짓이면 antd 기본 「데이터 없음」이 뜨고, 그 말은 "
+                        "「0건」과 「못 읽었다」를 같은 그림으로 만든다")
+
+    def test_one_request_leaves_the_empty_state(self):
+        """★★ ② **1건을 만들면 빈 상태를 벗어난다** — 이것이 ① 의 분모다.
+
+        ① 만 재면 **언제나 빈 상태인 화면**도 초록이다. 두 번째가 있어야
+        ① 의 빈 상태가 「0건이라서」 뜬 것이 된다.
+        """
+        before = self._body()
+        self.assertTrue(self._screen_says_empty(before))
+
+        self._ask_for_restart("빈 상태 분모 확인 — 이 줄이 생기면 빈 상태가 사라져야 한다")
+
+        after = self._body()
+        self.assertFalse(self._screen_says_empty(after),
+                         "행이 생겼는데도 빈 상태면 화면은 **언제나** 빈 상태다")
+        self.assertEqual(after.get("total"), 1)
+        self.assertEqual(len(after.get("requests") or []), 1)
+
+    def test_the_row_carries_the_reason_the_empty_copy_asks_for(self):
+        """빈 상태 문구가 「사유를 적으라」고 한다 — **적은 사유가 실제로 돌아온다.**
+
+        돌아오지 않으면 그 문구는 **지키지 못할 약속**이다(사유를 적으라 해 놓고
+        적은 것을 안 보여 주는 화면).
+        """
+        said = "앞단 기동 순서 확인 뒤 잔존 연결 정리"
+        self._ask_for_restart(said)
+        row = (self._body().get("requests") or [])[0]
+        self.assertEqual(row.get("reason"), said)
+        self.assertEqual(row.get("requested_by"), self.user.username)
+        self.assertTrue(row.get("status_label"),
+                        "상태 칸이 비면 표가 「무엇이 됐는지」를 말하지 않는다")

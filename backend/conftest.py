@@ -34,6 +34,32 @@
 
 ★ 사람이 `DB_TEST_NAME` 을 준 실행에서는 그 값이 이긴다 —
   차선마다 이름을 가르는 P-18 의 길을 막지 않는다.
+
+★★ 그런데 **이름을 갈라도 다툰다** — 같은 이름을 든 내 실행 둘 [실측 2026-09-20 · 턴 X · 차선 S]
+-----------------------------------------------------------------------------------------
+위 규약은 「단위 ↔ E2E」와 「차선 ↔ 차선」만 가른다. **한 사람이 같은 이름으로 둘을 겹쳐
+돌리는 경우**는 아무도 안 막았고, 턴 W 에 그 일이 실제로 났다(`DB_TEST_NAME=test_gx_s` 둘).
+지금 다시 눌러서 본 얼굴은 이렇다 — 이 줄들이 이 가드의 출생 표본이다::
+
+    A(먼저): 10 passed  ·  단 teardown 경고
+             Error when trying to teardown test databases:
+             database "test_gx_s" is being accessed by other users
+    B(나중): 22 errors
+             psycopg2.errors.UniqueViolation: duplicate key value violates unique
+             constraint "auth_permission_content_type_id_codename_…"
+             DETAIL: Key (content_type_id, codename)=(2211, add_apikey) already exists.
+
+    ★ **B 의 빨강에는 DB 이름이 한 글자도 안 나온다.** `auth_permission` 중복이라
+      마이그레이션·권한 코드의 결함처럼 읽힌다 — 턴 W 에 그렇게 읽을 뻔했다.
+      나중에 온 실행이 DB 를 **못 지우고**(A 가 쥐고 있다) 남의 표 위에 그대로 얹은 것이다.
+
+그래서 **다투는 순간에만** 이름을 한 번 더 가른다(`split_when_busy`). 평시에는 한 글자도
+안 바뀌고, 겹친 실행만 `…_p<pid>` 로 제 DB 를 갖는다. 그 DB 는 그 실행이 끝날 때 함께
+사라지므로 찌꺼기도 안 쌓인다. **사람이 기억할 것이 없다** — 기억을 요구하는 규칙은
+바쁜 날 깨진다(D-286).
+
+★ 못 물어봤으면 **「안 다툰다」로 읽지 않는다.** 붙어 있는 연결을 못 세는 실행에서는
+  가드가 조용히 통과하는 대신 한 줄을 인쇄한다 — 회색은 초록이 아니다(D-301).
 """
 from __future__ import annotations
 
@@ -58,24 +84,127 @@ def test_db_name(argv, *, base: str) -> str:
     return base
 
 
+def split_when_busy(name: str, *, busy: bool | None, pid: int) -> str:
+    """**남이 이미 쥐고 있는** 시험 DB 면 이름을 한 번 더 가른다. 순수 함수다.
+
+    `busy` 의 값이 셋인 것이 요점이다 — `True`(다툰다) · `False`(안 다툰다) ·
+    **`None`(못 봤다)**. 「못 봤다」를 「안 다툰다」로 접으면 가드는 조용히 사라지고,
+    조용히 사라진 가드는 있는 것보다 나쁘다. 그래서 갈래를 셋으로 두고, 못 본 실행은
+    이름을 안 바꾸되 **부르는 쪽이 그 사실을 인쇄한다**.
+
+    ⚠ 다투지 **않을** 때는 한 글자도 안 바꾼다. 늘 가르면 실행마다 새 DB 가 생기고,
+      그 찌꺼기를 치우는 일이 다시 사람의 기억으로 돌아온다.
+    """
+    if not busy:
+        return name
+    return f"{name}_p{pid}"
+
+
+def _say(msg: str) -> None:
+    """가드가 한 일을 **끝까지 보이게** 말한다.
+
+    ⚠ `print` 하나로는 안 보인다 [실측 2026-09-20]: 픽스처의 표준출력은 pytest 가
+      삼키고 **실패했을 때만** 보여 준다. 그래서 갈라 놓고도 아무도 모르는 실행이
+      나왔다 — 조용한 가드는 다음 사람에게 「왜 이 DB 가 생겼지」만 남긴다.
+      경고는 실행 끝의 warnings summary 에 **언제나** 찍힌다.
+    """
+    import warnings
+
+    print(msg)
+    warnings.warn(msg, stacklevel=2)
+
+
+def _db_is_busy(name: str) -> tuple[bool | None, str]:
+    """그 이름의 DB 에 **나 말고 다른 연결**이 붙어 있나. `(답, 못 본 까닭)`.
+
+    ★★ **장고의 연결로 묻지 않는다** [실측 2026-09-20 · 이 자리에서 32 passed 가 깨졌다]
+      처음에는 `django.db.connection` 으로 물었다. 그랬더니 **묻는 행위 자체가**
+      그 뒤의 `create_test_db` 를 바꿨다 — 멀쩡하던 시험 둘이 이렇게 죽었다::
+
+          psycopg2.errors.FeatureNotSupported:
+              cannot truncate a table referenced in a foreign key constraint
+
+      (`TransactionTestCase` 의 뒷정리가 지울 표 목록을 **운영 DB 기준으로** 추렸다.
+      `--nomigrations` 로 태어난 시험 DB 에만 있는 표가 목록에서 빠지고, 그 표를
+      가리키는 FK 가 남아 TRUNCATE 가 선다.) 가드를 껐다 켜 **A/B 로 갈라 확인했다**:
+      질의를 안 하면 32 passed · 장고 연결로 물으면 그 자리에서 실패.
+
+      그래서 여기서는 **장고가 안 쓰는 별도 연결**을 psycopg2 로 직접 연다. 설정은
+      장고에게서 읽되(자격을 두 벌로 두지 않는다) 연결 객체는 우리 것이고, 묻자마자
+      닫는다. 장고의 `default` 연결은 **한 번도 안 열린 채로** 남는다.
+
+    ★ **왜 「못 봤다」에 까닭을 함께 돌려주나** [실측 2026-09-20]
+      처음에는 `None` 만 돌려줬다. 그랬더니 가드가 매 실행 「못 물어봤다」를 찍는데
+      **왜** 못 물어봤는지가 아무 데도 안 나왔다 — 회색인데 그 회색의 원인이 없다.
+      0 은 원인이 아니라 질문이다. 그래서 까닭을 같이 든다.
+
+    ⚠ 붙는 방은 `postgres` 다 — 시험 DB 는 아직 태어나기 전이고, 운영 DB 에 붙으면
+      우리가 세는 그 연결 수에 **우리 자신이 끼어든다**. 세는 자리와 붙는 자리를 가른다.
+    """
+    try:
+        import psycopg2
+        from django.db import connection
+
+        if connection.vendor != "postgresql":
+            return None, f"vendor={connection.vendor} — postgres 가 아니다"
+        params = dict(connection.get_connection_params())     # 여는 것이 아니라 **읽는다**
+        params.pop("cursor_factory", None)
+        params["dbname"] = "postgres"      # 물어볼 방(方)은 시험 DB 도 운영 DB 도 아니다
+        params.setdefault("connect_timeout", 5)
+        raw = psycopg2.connect(**params)
+        try:
+            with raw.cursor() as cur:
+                cur.execute("SELECT count(*) FROM pg_stat_activity "
+                            "WHERE datname = %s AND pid <> pg_backend_pid()", [name])
+                return bool(cur.fetchone()[0]), ""
+        finally:
+            raw.close()
+    except Exception as exc:         # noqa: BLE001 — 못 물어봤다고 시험을 막지 않는다
+        return None, f"{type(exc).__name__}: {str(exc).strip()[:200]}"
+
+
 @pytest.fixture(scope="session")
 def django_db_modify_db_settings(django_db_modify_db_settings_xdist_suffix) -> None:
-    """시험 DB 이름을 **만들기 직전에** 정한다 (QA-11).
+    """시험 DB 이름을 **만들기 직전에** 정한다 (QA-11 · 다툼 가드는 턴 X).
 
     `django_db_modify_db_settings_xdist_suffix` 를 먼저 받는 이유: xdist 로 나눠 돌 때
     pytest-django 가 워커별 접미사를 붙인다. 그 일을 지우지 않고 **그 뒤에** 얹는다 —
     지우면 xdist 실행이 서로의 DB 를 다투고, 그것은 우리가 고치려던 바로 그 병이다.
+
+    ★ 다툼을 묻는 질의는 **장고를 거치지 않는다**(`_db_is_busy` 의 ★★ 참조).
+      이 시점의 장고 연결은 두 겹으로 위험하다: pytest-django 가 막아 두었고
+      (`RuntimeError: Database access not allowed …`), 열면 그 다음 걸음이 바뀐다.
+      한 번 속았던 자리다 — 막힌 줄 모르고 두면 가드가 매 실행 「못 물어봤다」를 내고
+      **아무것도 안 막는데**, 겹쳐 돌린 실행이 우연히 통과하면 「가드가 일했다」로 읽힌다.
     """
     from django.conf import settings
 
     db = settings.DATABASES["default"]
     test_conf = db.setdefault("TEST", {})
-    if os.environ.get("DB_TEST_NAME"):
-        return                       # 사람이 정한 이름이 이긴다 (P-18 차선별 이름)
     if test_conf.get("NAME") and "gw" in str(test_conf.get("NAME")):
         return                       # xdist 접미사가 붙은 이름은 건드리지 않는다
-    base = "test_" + str(db.get("NAME") or "guardianx-v2")
-    test_conf["NAME"] = test_db_name(_pytest_args, base=base)
+
+    chosen = os.environ.get("DB_TEST_NAME")
+    if chosen:
+        name = str(chosen)           # 사람이 정한 이름이 이긴다 (P-18 차선별 이름)
+    else:
+        base = "test_" + str(db.get("NAME") or "guardianx-v2")
+        name = test_db_name(_pytest_args, base=base)
+
+    # ★ 턴 X — 사람이 정한 이름이라도 **둘이 동시에 들면 갈라야 한다**(머리말 ★★).
+    #   여기서 안 가르면 나중 실행이 DB 를 못 지운 채 남의 표에 얹히고, 그 빨강은
+    #   `duplicate key … auth_permission` 이라 **코드 결함처럼** 읽힌다.
+    busy, why = _db_is_busy(name)
+    if busy is None:
+        _say(f"[QA-11] 시험 DB «{name}» 에 누가 붙어 있는지 **못 물어봤다**({why}) — "
+             f"다툼 가드가 이 실행에서는 안 돈다. 회색이지 초록이 아니다")
+    elif busy:
+        name = split_when_busy(name, busy=True, pid=os.getpid())
+        _say(f"[QA-11] 시험 DB 를 **갈랐다** → «{name}». 다른 실행이 원래 이름을 쥐고 있다 "
+             f"— 그대로 두면 DROP 이 막히고 남의 표에 얹혀 "
+             f"`duplicate key … auth_permission` 이 난다(환경 충돌이지 코드 결함이 아니다)")
+
+    test_conf["NAME"] = name
 
 
 #: 실행 인자. `pytest_cmdline_main` 이 아니라 훅에서 받아 둔다 — 픽스처는 세션 뒤에 불리고

@@ -320,10 +320,49 @@ export default function MobileInbox() {
             <Text style={{ fontSize: 13 }}>
               사건 {groups.length}건 · 발송 기록 {total}건 (이 페이지 · 최대 {DELIVERY_LIMIT})
             </Text>
-            {failed > 0 ? (
-              <Tag color="red">발송 실패 {failed}건</Tag>
+            {/*
+              ★★ [P-200 · 턴 X · U3] **이 배지가 거짓말을 하고 있었다 — 수가 아니라 단서가 없어서.**
+
+                [실측 2026-09-20 · 눌러서] 기관 전체에 발송 실패가 **하나 있는데**
+                (사건 #4819 · `email` · `-occurred_at` 정렬에서 **228위/229**)
+                화면은 **「발송 실패 0건」**이라고 적고 있었다. 화면이 묻는 것은
+                `limit=50` 한 쪽뿐이고 그 쪽 안에는 실패가 없기 때문이다.
+
+                ⚠ 그 0 은 **틀린 수가 아니다. 다른 질문의 답이다** —
+                  「이 페이지에 실패가 몇 건인가」의 답이 0 이고,
+                  사람은 그것을 「우리 기관에 실패가 몇 건인가」로 읽는다.
+                  바로 윗줄(셈 줄)은 이미 「이 페이지 · 최대 50」이라 **정직한데**
+                  배지만 그 단서를 안 달고 있었다. 그래서 **단서를 단다** —
+                  수를 바꾸는 것이 아니라 **그 수가 무엇을 센 것인지 말하게 한다.**
+
+              ★ 두 살림을 가른다 — 한 문장으로 덮으면 이번엔 **반대쪽이 거짓말**이 된다:
+                · `total < DELIVERY_LIMIT` … 이 쪽이 **전부**다. 뒤에 아무것도 없으므로
+                  「실패 0건」은 이 범위에 대한 **온전한 답**이고, 거기에 「이 페이지」를
+                  붙이면 있지도 않은 뒷장을 암시해 멀쩡한 초록을 흐린다.
+                · `total >= DELIVERY_LIMIT` … 쪽이 **꽉 찼다**. 뒤가 있는지 화면은 모른다.
+                  이때만 범위를 밝히고 **못 본 것이 있다고 말한다.**
+
+              ★ **기능은 안 넣었다** (조율자 판정 2026-09-20). 서버에는 이미
+                `succeeded=false` 인자가 있고 [실측] 그 1건을 정확히 내주지만,
+                화면이 그것을 보내게 하는 것은 **다음 턴 몫**이다 — 회귀를 재는 턴에
+                새 변수를 얹지 않는다. 지금 닫는 것은 **거짓말 하나**뿐이다.
+            */}
+            {total >= DELIVERY_LIMIT ? (
+              <Tag
+                color={failed > 0 ? 'red' : 'orange'}
+                data-gx="inbox-failed-summary"
+                data-gx-scope="page"
+              >
+                이 페이지에 발송 실패 {failed}건 · 뒤쪽은 아직 못 봤습니다
+              </Tag>
             ) : (
-              <Tag color="green">발송 실패 0건</Tag>
+              <Tag
+                color={failed > 0 ? 'red' : 'green'}
+                data-gx="inbox-failed-summary"
+                data-gx-scope="all"
+              >
+                발송 실패 {failed}건
+              </Tag>
             )}
           </Space>
           {events.state === 'error' || events.state === 'forbidden' ? (

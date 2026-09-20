@@ -1,5 +1,5 @@
 {
- "measured_at": "2026-09-19T14:44:54",
+ "measured_at": "2026-09-20T13:06:34",
  "source": "docker exec <gx-shell> · django ORM · u.roles.all()",
  "users": {
   "gxprobe_e2e": {

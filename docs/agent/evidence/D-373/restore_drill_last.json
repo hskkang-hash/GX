@@ -1,8 +1,10 @@
 {
-  "measured_at": "2026-09-12T23:00:00+00:00",
+  "measured_at": "2026-09-19T23:00:00+00:00",
   "verdict": "UNKNOWN",
-  "out_dir": "/backup",
-  "reason": "보관처 '/backup' 에 덤프가 **하나도 없다.** 「백업이 0회」와 「복구가 실패」는 다른 사실이다",
+  "client": "pg_restore (PostgreSQL) 17.7 (Debian 17.7-0+deb13u1)",
+  "server": "18.1 (Debian 18.1-1.pgdg13+2)",
+  "dump": "/backup/20260919/db_database_guardianx_20260919T200000Z.dump",
+  "reason": "클라이언트 판(17)이 서버 판(18)보다 낮다 — 낮은 판은 높은 판의 덤프를 읽지 못한다. **환경의 사실**이고, 고치는 자리는 워커 이미지의 postgresql-client 다. 못 잰 것을 「복구 성공」으로 적지 않는다",
   "_written_from": {
     "db": "database_guardianx",
     "under_pytest": false

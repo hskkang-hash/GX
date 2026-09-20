@@ -126,8 +126,13 @@ class TurnWBackupDeclarationDoorTest(DsmFixture):
     # ══════════════════════════════════════════════════════════════════════
     # ③ 선언이 없으면 **지어내지 않는다** (P-67)
     # ══════════════════════════════════════════════════════════════════════
+    #: ★ [턴 X · U56 정정] 여기가 `OPS_BACKUP_RETENTION_DAYS=0` 이었다. 그때는
+    #:   코드가 `0 or None` 으로 읽어 **0 과 미선언이 같은 칸**이었고, 이 시험은
+    #:   그 뒤섞임을 「맞다」고 못 박고 있었다 — 시험이 결함을 지키고 있었던 것이다.
+    #:   이 시험의 **이름은 「undeclared」**다. 그러니 진짜 미선언(`None`)을 준다.
+    #:   0 을 선언한 갈래는 `RetentionHasNoCodeDefaultTest` ② 가 따로 잰다.
     @override_settings(OPS_BACKUP_DIR="", OPS_BACKUP_SCHEDULE_ENABLED=False,
-                       OPS_BACKUP_RETENTION_DAYS=0)
+                       OPS_BACKUP_RETENTION_DAYS=None)
     def test_undeclared_says_so_and_invents_nothing(self):
         """★ 목적지가 비면 **빈 문자열**이다 — `/backup` 을 지어내지 않는다."""
         admin = self._admin()
@@ -140,7 +145,11 @@ class TurnWBackupDeclarationDoorTest(DsmFixture):
                          "목적지를 지어냈습니다 — P-67 뒤로 코드 기본값은 없습니다.")
         self.assertEqual("", body["schedule"])
         self.assertIsNone(body["retention_days"],
-                          "보존 일수 0 을 값으로 적었습니다 — 0 은 「모른다」입니다.")
+                          "선언이 없는데 수가 나왔습니다. ⚠ 예전 이 줄은 「0 은 "
+                          "「모른다」입니다」라고 적혀 있었는데 그것이 틀렸다 — "
+                          "0 은 **「보존하지 않는다」는 선언**이고 미선언은 `None` "
+                          "이다. 둘을 한 칸에 두면 되돌릴 수 없는 삭제가 아무도 "
+                          "정하지 않은 수로 돈다 (P-67).")
         self.assertEqual("UNDECLARED", body["verdict"])
         self.assertIn("OPS_BACKUP_DIR", body["reason"],
                       "무엇이 비었는지 이름으로 말하지 않았습니다.")
@@ -400,3 +409,133 @@ class TurnWRestartRequestEmptyStateTest(DsmFixture):
             "이 표에 행을 만드는 자리가 「재시작 요청」 문 하나가 아닙니다. "
             "화면은 「누르면 생깁니다」라고 적고 있습니다 — 만드는 자리가 늘었다면 "
             "그 문구가 거짓이 된 것이므로 문구를 먼저 고쳐야 합니다: %s" % makers)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 턴 X · U56 — **내가 턴 W 에 넣은 기본값 `0` 을 뽑고, 다시 들어오지 못하게 한다**
+# ─────────────────────────────────────────────────────────────────────────────
+class RetentionHasNoCodeDefaultTest(DsmFixture):
+    """P-67 ⑤ — **보존 일수에 코드 기본값이 없다.**
+
+    캐시 처리: `NO_CACHE` 헤더로 응답 캐시를 우회한다(D-341). 아래 ①②③ 은 HTTP 를
+      타지 않고 `backup_declaration()` 을 곧바로 부르므로 캐시가 낄 자리 자체가 없고,
+      ④ 는 파일을 AST 로 읽는 정적 검사라 역시 캐시가 없다. 그래도 같은 파일의 다른
+      시험과 **같은 규약**을 쓰라는 §규약에 따라 한 줄로 적는다.
+
+    왜 이 시험이 있는가 — **턴 W 에 이 차선이 결함을 만들었다.**
+        `ops_tasks.backup_declaration()` 이 `getattr(settings,
+        "OPS_BACKUP_RETENTION_DAYS", 0) or 0` 으로 읽었다. 그러면 **아무도 정하지
+        않았다는 사실이 화면에서 사라진다** — 「미선언」과 「0일로 선언」이 같은 칸이
+        된다. 보존 일수는 **되돌릴 수 없는 삭제**를 모는 수라 그 둘이 갈려야 한다.
+        `scripts/verify_retention_declared.py` ⑤ 가 그것을 잡았고, 그 판정이 옳다.
+
+    ★ 그런데 그 판정기는 **커밋을 막지 못했다.** `.pre-commit-config.yaml` 의
+      `gx-ga-readiness` 훅이 그것을 부르지만 `files:` 가
+      `^docs/agent/evidence/(D-346|D-309|DA-05)/.*$` 라, 코드만 고친 커밋에는
+      **한 번도 안 뜬다**[실측 2026-09-20 · 최근 다섯 커밋 391 파일 중 걸린 커밋 1].
+      그래서 **같은 규칙을 시험으로도 세운다** — 시험은 차선이 실제로 돌린다.
+    """
+
+    def test_undeclared_reads_as_none_not_zero(self):
+        """① 선언이 없으면 `None` 이다. `0` 이 아니다."""
+        from common import ops_tasks
+
+        with override_settings(OPS_BACKUP_RETENTION_DAYS=None,
+                               OPS_BACKUP_DIR="/backup"):
+            out = ops_tasks.backup_declaration()
+        self.assertIsNone(
+            out["retention_days"],
+            "선언이 없는데 수가 나왔습니다 — 「아무도 안 정했다」가 화면에서 "
+            "사라집니다 (P-67).")
+        self.assertFalse(out["declared"])
+        self.assertEqual("UNDECLARED", out["verdict"])
+        self.assertIn("선언 없음", out["reason"],
+                      "사유가 **어느 칸이 비었는지**를 말해야 합니다.")
+
+    def test_zero_is_a_declaration_and_is_not_none(self):
+        """② **`0` 과 `None` 은 다른 사실이다.**
+
+        누군가 `0` 을 적었으면 그것은 「보존하지 않는다」는 **선언**이다.
+        선언으로 치지는 않지만(`declared=False`), 화면에 `null` 로 내보내
+        「아무도 안 정했다」로 보이게 하면 **거짓말**이다.
+        """
+        from common import ops_tasks
+
+        with override_settings(OPS_BACKUP_RETENTION_DAYS=0,
+                               OPS_BACKUP_DIR="/backup"):
+            out = ops_tasks.backup_declaration()
+        self.assertEqual(
+            0, out["retention_days"],
+            "0 으로 선언한 것이 `null` 로 나갔습니다 — 미선언과 구별이 안 됩니다.")
+        self.assertFalse(out["declared"],
+                         "0 일 보존을 「선언 완료」로 읽으면 안 됩니다.")
+        self.assertIn("0 일로 선언됨", out["reason"])
+
+    def test_garbage_is_undeclared_not_zero(self):
+        """③ 수가 아닌 값도 **미선언**이지 0 이 아니다."""
+        from common import ops_tasks
+
+        with override_settings(OPS_BACKUP_RETENTION_DAYS="영원히",
+                               OPS_BACKUP_DIR="/backup"):
+            out = ops_tasks.backup_declaration()
+        self.assertIsNone(out["retention_days"])
+        self.assertFalse(out["declared"])
+
+    def test_declared_days_survive(self):
+        """③′ 양성 대조 — 제대로 선언하면 **그 수가 그대로** 나오고 초록이다.
+
+        음성만 재면 「언제나 None 을 내는 함수」도 통과한다.
+        """
+        from common import ops_tasks
+
+        with override_settings(OPS_BACKUP_RETENTION_DAYS=30,
+                               OPS_BACKUP_DIR="/backup",
+                               OPS_BACKUP_SCHEDULE_ENABLED=True):
+            out = ops_tasks.backup_declaration()
+        self.assertEqual(30, out["retention_days"])
+
+    def test_no_numeric_default_in_enforcement_files(self):
+        """④ ★★★ **정적 검사 — 판정기와 같은 규칙을 시험으로 세운다.**
+
+        `scripts/verify_retention_declared.py::scan_defaults` 를 **다시 구현하지
+        않고 그대로 부른다**(두 벌은 반드시 어긋난다 · D-369). 그 판정기가 훑는
+        「집행하는 자리」 셋에 보존·일수 이름의 수 기본값이 하나라도 생기면 여기서
+        먼저 빨개진다.
+
+        ⚠ 판정기를 못 찾으면 **초록이 아니라 회색**(skip)이다 — 「없어서 통과」는
+          이 저장소에서 가장 나쁜 초록이다.
+        """
+        import importlib.util
+        import pathlib
+
+        #: 컨테이너는 `/repo/scripts`, 호스트는 `<repo>/scripts` 다. 한 자리로 못
+        #: 박으면 한쪽에서 조용히 건너뛰고, 건너뛴 시험은 아무것도 안 지킨다
+        #: (`test_evidence_guard.py:318` 과 같은 규약).
+        here = pathlib.Path(__file__).resolve()
+        cands = [pathlib.Path("/repo/scripts")]
+        cands += [parent / "scripts" for parent in here.parents]
+        judge = None
+        for cand in cands:
+            if (cand / "verify_retention_declared.py").is_file():
+                judge = cand / "verify_retention_declared.py"
+                break
+        if judge is None:
+            self.skipTest(
+                "scripts/verify_retention_declared.py 를 못 찾았다 — 컨테이너에 "
+                "/repo/scripts 가 안 붙은 판이다. **회색이지 초록이 아니다.**")
+        root = judge.parent.parent
+        spec = importlib.util.spec_from_file_location("_vrd", judge)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        hits, read = mod.scan_defaults(root)
+        self.assertEqual(
+            3, read,
+            "판정기가 훑기로 한 파일 셋 중 %d 개만 읽혔습니다 — 못 읽은 파일은 "
+            "검사되지 않았고, 그것을 초록으로 세면 안 됩니다." % read)
+        self.assertEqual(
+            [], hits or [],
+            "보존·백업 일수에 **코드 기본값**이 생겼습니다. 아무도 정하지 않은 "
+            "수가 되돌릴 수 없는 삭제를 몹니다 (P-67 ⑤). 미선언은 `None` 으로 "
+            "내보내고, 기본값을 `settings` 로 옮겨 숨기지 마십시오 — 같은 "
+            "판정기가 그 자리에서 다시 빨개집니다: %s" % (hits,))

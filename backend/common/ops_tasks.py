@@ -1351,10 +1351,24 @@ def backup_declaration() -> dict:
     beat = _beat_schedule_text("common.ops_backup_beat")
     drill_on = bool(getattr(settings, "OPS_RESTORE_DRILL_ENABLED", False))
     drill_beat = _beat_schedule_text("common.ops_restore_drill_beat")
-    try:
-        days = int(getattr(settings, "OPS_BACKUP_RETENTION_DAYS", 0) or 0)
-    except (TypeError, ValueError):
-        days = 0
+    #: ★ [턴 X · U56 · 조율자 지적] 여기에 **기본 `0` 이 있었다**(턴 W 에 내가 넣었다).
+    #:   `verify_retention_declared.py` ⑤ 가 그것을 빨강으로 잡았고 그 판정이 옳다:
+    #:   보존 일수는 **되돌릴 수 없는 삭제**를 모는 수라, 「아무도 안 정했다」와
+    #:   「0일로 정했다」가 같은 칸에 보이면 안 된다. `0 or 0` 은 미선언을 **수로 위장**한다.
+    #:   ⚠ 고치는 자리를 `settings` 로 옮기지 않았다 — 기본값을 옮기는 것은 없애는 것이
+    #:   아니고, 같은 판정기가 다음 턴에 그 자리에서 다시 빨개진다.
+    #:   규약의 원본은 `apps/dsm/retention.retention_days()` 다 — 미선언이면 `None`.
+    raw = getattr(settings, "OPS_BACKUP_RETENTION_DAYS", None)
+    if raw is None or raw == "":
+        days = None                     # **선언 없음.** 0 이 아니다
+    else:
+        try:
+            days = int(raw)
+        except (TypeError, ValueError):
+            #: 선언은 있는데 수가 아니다 — 그것도 「선언 없음」이지 0 이 아니다.
+            logger.warning("[OPS][BACKUP] OPS_BACKUP_RETENTION_DAYS 가 수가 아니다 "
+                           "(%s) — 미선언으로 읽는다", type(raw).__name__)
+            days = None
 
     #: ★ 「켜져 있다」와 「언제 도는지 안다」는 다른 사실이다 — 둘을 한 칸에 두지 않는다.
     if enabled:
@@ -1368,13 +1382,18 @@ def backup_declaration() -> dict:
     else:
         drill = ""
 
-    declared = bool(out_dir) and enabled and days > 0
+    #: `days is not None and days > 0` — **`None` 과 `0` 을 갈라 읽는다.**
+    #: 둘 다 「선언 안 됨」으로 끝나지만 사유가 다르고, 사유는 아래 `reason` 이 말한다.
+    declared = bool(out_dir) and enabled and (days is not None and days > 0)
     return {
         "declared": declared,
         "destination": out_dir,
         "schedule": schedule,
         "schedule_enabled": enabled,
-        "retention_days": days or None,
+        #: ★ `days or None` 이었다 — 그러면 **누군가 0 을 선언한 것**과 **아무도 선언하지
+        #:   않은 것**이 화면에서 같은 칸(`null`)이 된다. 그 둘은 다른 사실이다.
+        #:   그대로 낸다: `None` = 선언 없음 · `0` = 0 일로 선언됨(그리고 `declared` 는 거짓).
+        "retention_days": days,
         "restore_drill": drill,
         "restore_drill_enabled": drill_on,
         #: 누가 정했는가. 선언이 없는 환경에서는 그 말을 그대로 낸다(P-67).
@@ -1383,10 +1402,19 @@ def backup_declaration() -> dict:
         #: **이름을 숨기지 않는다.** 고칠 자리를 화면이 말해 준다.
         "env_names": list(BACKUP_DECLARATION_ENVS),
         "verdict": "OK" if declared else "UNDECLARED",
+        #: 빈 칸을 **이름으로** 센다. 「완전하지 않다」만 말하면 어디가 빈지 코드를 읽어야 한다.
         "reason": "" if declared else (
-            "백업 선언이 완전하지 않습니다 — 목적지·주기·보존 일수 중 빈 칸이 "
-            "있습니다 (%s). 기본값을 지어내지 않습니다: 어디에 얼마나 오래 쌓을지는 "
-            "운영의 판단입니다 (P-67)." % ", ".join(BACKUP_DECLARATION_ENVS)),
+            "백업 선언이 완전하지 않습니다 — 아직 아무도 정하지 않은 칸: %s. "
+            "기본값을 지어내지 않습니다: 어디에 얼마나 오래 쌓을지는 운영의 "
+            "판단입니다 (P-67). 고칠 자리의 이름: %s."
+            % (" · ".join(
+                ([] if out_dir else ["목적지"])
+                + ([] if enabled else ["주기(꺼져 있음)"])
+                + (["보존 일수(**선언 없음**)"] if days is None else
+                   (["보존 일수(0 일로 선언됨 — 0 은 보존하지 않는다는 뜻이라 "
+                     "선언으로 치지 않습니다)"] if days <= 0 else []))
+               ) or ["(없음 — 위 칸은 다 찼는데 선언이 아닙니다)"],
+               ", ".join(BACKUP_DECLARATION_ENVS))),
     }
 
 

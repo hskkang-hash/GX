@@ -1,0 +1,104 @@
+{
+  "measured_at": "2026-09-20T03:47:46+00:00",
+  "how": "django.test.Client — 프로세스 안. HTTP 왕복·동시성 없음. perf_load 의 수와 다른 수다",
+  "reps": 3,
+  "middleware_count": 28,
+  "rows": [
+    {
+      "path": "/api/dsm/dashboard/link-state",
+      "reps": 3,
+      "status": {
+        "200": 3
+      },
+      "wall_p50_ms": 28.09,
+      "wall_mean_ms": 29.32,
+      "wall_min_ms": 26.95,
+      "queries": 22,
+      "query_ms": 1.67,
+      "distinct_shapes": 8,
+      "top_shape_per_request": 6,
+      "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+      "name": "STATUS",
+      "verdict": "N+1",
+      "why": "같은 SQL 모양이 6회 반복된다"
+    }
+  ],
+  "trace": {
+    "STATUS": {
+      "path": "/api/dsm/dashboard/link-state",
+      "queries": 22,
+      "shapes": [
+        {
+          "n": 6,
+          "ms": 3.44,
+          "shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"c",
+          "callers": [
+            "filtered_db_log_handler.py:89 emit ×2",
+            "partner_auth_middleware.py:31 __call__ ×2",
+            "rate_limit_body.py:151 __call__ ×1"
+          ]
+        },
+        {
+          "n": 6,
+          "ms": 4.73,
+          "shape": "SELECT (\"configuration_adminconfig\".\"settings\" #> %s) FROM \"configuration_adminconfig\" WHERE (\"configuration_adminconfig\".\"is_active\" AND \"configuration_adminco",
+          "callers": [
+            "filtered_db_log_handler.py:89 emit ×2",
+            "partner_auth_middleware.py:31 __call__ ×2",
+            "rate_limit_body.py:151 __call__ ×1"
+          ]
+        },
+        {
+          "n": 3,
+          "ms": 2.88,
+          "shape": "SELECT \"user_coreuser\".\"id\", \"user_coreuser\".\"password\", \"user_coreuser\".\"is_superuser\", \"user_coreuser\".\"first_name\", \"user_coreuser\".\"last_name\", \"user_coreus",
+          "callers": [
+            "rate_limit_body.py:151 __call__ ×2",
+            "inbound_api_key.py:139 __call__ ×1"
+          ]
+        },
+        {
+          "n": 3,
+          "ms": 2.44,
+          "shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".",
+          "callers": [
+            "tenant_roles.py:106 _role_codes ×2",
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.61,
+          "shape": "SELECT %s AS \"a\" FROM \"user_coreuser_roles\" WHERE \"user_coreuser_roles\".\"coreuser_id\" = %s LIMIT ?",
+          "callers": [
+            "role_gate.py:247 has_no_role ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.9,
+          "shape": "SELECT \"user_profile_link\".\"id\", \"user_profile_link\".\"deleted\", \"user_profile_link\".\"deleted_by_cascade\", \"user_profile_link\".\"created_on\", \"user_profile_link\".",
+          "callers": [
+            "tenant_filters.py:41 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 0.85,
+          "shape": "SELECT \"user_usergroup\".\"id\", \"user_usergroup\".\"deleted\", \"user_usergroup\".\"deleted_by_cascade\", \"user_usergroup\".\"created_on\", \"user_usergroup\".\"modified_on\", ",
+          "callers": [
+            "tenant_filters.py:42 get_user_group ×1"
+          ]
+        },
+        {
+          "n": 1,
+          "ms": 1.51,
+          "shape": "SELECT \"auth_group\".\"name\" FROM \"auth_group\" INNER JOIN \"user_coreuser_groups\" ON (\"auth_group\".\"id\" = \"user_coreuser_groups\".\"group_id\") WHERE \"user_coreuser_g",
+          "callers": [
+            "partner_auth_middleware.py:31 __call__ ×1"
+          ]
+        }
+      ]
+    }
+  }
+}

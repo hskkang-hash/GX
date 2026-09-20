@@ -445,11 +445,65 @@ def self_test() -> int:
     n = len(sources())
     check(f"기능 코드를 실제로 훑는다 ({n}건)", n > 0, True)
 
+    # ── 라. **회색 갈래** — 모르는 것을 0 으로 읽지 않는가 (턴 X · 차선 S) ──────
+    #
+    #   이 게이트의 초록은 「어긋남 0」 하나가 아니다. 컨테이너가 무엇을 안 줬을 때
+    #   **초록으로 접히는가**가 같은 무게다. 그 갈래는 `--db` 로 눌러도 안 보인다 —
+    #   낡은 코드가 서 있는 컨테이너를 일부러 만들어야 보이기 때문이다.
+    #   그래서 여기서 대답을 **가짜로 만들어** 갈래를 밟는다. 판정식은 안 베낀다:
+    #   진짜 `db_judgement()` 를 그대로 부르고 **대답만** 갈아 끼운다.
+    for label, reply, want in _GRAY_CASES:
+        check(label, _db_exit_with(reply) == want, True)
+
     if bad:
         print(f"[CHAIN] 자기시험 {bad}건 실패 — **이 게이트는 눈이 멀었다**")
         return 1
-    print("[CHAIN] 자기시험 17건 통과 (체인 양성 5 · 음성 3 · 정적 양성 2 · 음성 4 · 열거 1)")
+    print("[CHAIN] 자기시험 21건 통과 (체인 양성 5 · 음성 3 · 정적 양성 2 · 음성 4 · "
+          "열거 1 · 회색 갈래 4)")
     return 0
+
+
+def _reply(**payload) -> str:
+    """컨테이너가 돌려줬을 법한 한 줄. `json` 은 여기서만 쓴다."""
+    import json
+
+    return "GX_CHAIN_JSON " + json.dumps(payload, ensure_ascii=False)
+
+
+#: 회색 갈래 네 가지. **기대값이 0 인 줄이 하나뿐**인 것이 요점이다 —
+#: 나머지 셋은 「모르겠다」이고, 모르겠다는 초록이 아니다.
+_GRAY_CASES = (
+    ("★ 컨테이너가 «recorded» 를 안 주면 **회색(2)** — 0 으로 안 읽는다",
+     _reply(total=9, chained=9, head="a" * 64, tail_prev="0" * 64,
+            genesis=True, breaks=[]), 2),
+    ("   컨테이너가 아예 대답을 못 하면 **회색(2)**",
+     "Traceback (most recent call last): ModuleNotFoundError: common", 2),
+    ("   등재된 끊김이 딸려 오면 **초록(0)** — 다만 그 수를 함께 낸다",
+     _reply(total=9, chained=9, head="a" * 64, tail_prev="0" * 64, genesis=True,
+            breaks=[], recorded=[{"id": 7, "kind": "prev_mismatch", "detail": "…"}]), 0),
+    ("   새로 난 어긋남이 있으면 **빨강(1)**",
+     _reply(total=9, chained=9, head="a" * 64, tail_prev="0" * 64, genesis=True,
+            breaks=[{"id": 7, "kind": "hash_mismatch", "detail": "…"}], recorded=[]), 1),
+)
+
+
+def _db_exit_with(reply: str) -> int:
+    """컨테이너의 대답을 `reply` 로 **갈아 끼우고** 진짜 `db_judgement()` 를 부른다.
+
+    ⚠ 인쇄는 삼킨다 — 자기시험의 줄 사이에 남의 보고서가 끼면 사람이 어느 줄이
+      판정인지 못 읽는다. 삼키는 것은 **글자뿐이고 판정은 그대로** 돌아온다.
+    """
+    import contextlib
+    import io
+
+    global _in_container
+    original = _in_container
+    _in_container = lambda snippet: (0, reply)      # noqa: E731
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            return db_judgement()
+    finally:
+        _in_container = original
 
 
 def main() -> int:

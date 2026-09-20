@@ -1,0 +1,110 @@
+{
+  "measured_at": "2026-09-20T03:46:37+00:00",
+  "how": "django.test.Client — 프로세스 안. HTTP 왕복·동시성 없음. perf_load 의 수와 다른 수다",
+  "reps": 12,
+  "middleware_count": 28,
+  "rows": [
+    {
+      "path": "/api/dsm/dashboard/link-state",
+      "reps": 12,
+      "status": {
+        "200": 12
+      },
+      "wall_p50_ms": 29.25,
+      "wall_mean_ms": 53.42,
+      "wall_min_ms": 25.22,
+      "queries": 22,
+      "query_ms": 4.08,
+      "distinct_shapes": 8,
+      "top_shape_per_request": 6,
+      "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+      "name": "STATUS",
+      "verdict": "N+1",
+      "why": "같은 SQL 모양이 6회 반복된다"
+    },
+    {
+      "path": "/api/dsm/events/queue",
+      "reps": 12,
+      "status": {
+        "200": 12
+      },
+      "wall_p50_ms": 76.44,
+      "wall_mean_ms": 76.61,
+      "wall_min_ms": 56.06,
+      "queries": 31,
+      "query_ms": 37.33,
+      "distinct_shapes": 14,
+      "top_shape_per_request": 6,
+      "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+      "name": "SCREEN",
+      "verdict": "N+1",
+      "why": "같은 SQL 모양이 6회 반복된다"
+    },
+    {
+      "path": "/api/dsm/events?limit=50",
+      "reps": 12,
+      "status": {
+        "200": 12
+      },
+      "wall_p50_ms": 32.8,
+      "wall_mean_ms": 35.08,
+      "wall_min_ms": 30.26,
+      "queries": 23,
+      "query_ms": 5.5,
+      "distinct_shapes": 9,
+      "top_shape_per_request": 6,
+      "top_shape": "SELECT \"configuration_adminconfig\".\"id\", \"configuration_adminconfig\".\"deleted\", \"configuration_adminconfig\".\"deleted_by_cascade\", \"configuration_adminconfig\".\"created_on\", \"configuration_adminconfig\".\"modified_on\", \"conf",
+      "name": "F05",
+      "verdict": "N+1",
+      "why": "같은 SQL 모양이 6회 반복된다"
+    },
+    {
+      "path": "/api/dsm/dashboard/frame",
+      "reps": 12,
+      "status": {
+        "200": 12
+      },
+      "wall_p50_ms": 39.13,
+      "wall_mean_ms": 37.83,
+      "wall_min_ms": 28.6,
+      "queries": 27,
+      "query_ms": 4.33,
+      "distinct_shapes": 9,
+      "top_shape_per_request": 7,
+      "top_shape": "SELECT \"role_role\".\"code\" FROM \"role_role\" INNER JOIN \"user_coreuser_roles\" ON (\"role_role\".\"id\" = \"user_coreuser_roles\".\"role_id\") WHERE \"user_coreuser_roles\".\"coreuser_id\" = ? ORDER BY \"role_role\".\"modified_on\" DESC",
+      "name": "FRAME",
+      "verdict": "N+1",
+      "why": "같은 SQL 모양이 7회 반복된다"
+    }
+  ],
+  "cache_probe": [
+    {
+      "name": "STATUS",
+      "path": "/api/dsm/dashboard/link-state",
+      "again_ms": 31.9,
+      "again2_ms": 30.6,
+      "looks_cached": false
+    },
+    {
+      "name": "SCREEN",
+      "path": "/api/dsm/events/queue",
+      "again_ms": 104.5,
+      "again2_ms": 114.7,
+      "looks_cached": false
+    },
+    {
+      "name": "F05",
+      "path": "/api/dsm/events?limit=50",
+      "again_ms": 61.4,
+      "again2_ms": 37.0,
+      "looks_cached": false
+    },
+    {
+      "name": "FRAME",
+      "path": "/api/dsm/dashboard/frame",
+      "again_ms": 36.0,
+      "again2_ms": 37.2,
+      "looks_cached": false
+    }
+  ]
+}

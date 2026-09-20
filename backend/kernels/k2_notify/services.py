@@ -44,6 +44,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from common import audit_writer
+from common.probe_marker import exclude_probe
 from common.tenant_filters import assert_scoped, filter_by_group_field, get_user_group
 from common.ai_act_notice import notice_line
 from common.tenant_scope import TenantScope
@@ -763,6 +764,13 @@ def list_deliveries(
     event_id: int | None = None,
     recipient_id: int | None = None,
     succeeded: bool | None = None,
+    #: ★ **게이트가 심은 사건 때문에 나간 알림을 셀 것인가** (P-193 · 2026-09-20 · 차선 U1).
+    #:   기본값이 `False` 인 것이 이 인자의 전부다 — 사건 축(`k1_event.query_events`)과
+    #:   **같은 기본값**이라야 한 판정이 두 축에서 같은 뜻이 된다.
+    #:   여는 쪽은 **발송 대장**(`GET /api/dsm/deliveries`, 「무엇이 언제 누구에게 갔나」)
+    #:   하나뿐이다 — 거기서까지 빼면 그것은 세지 않기가 아니라 **보낸 적 없음**이 되고,
+    #:   이 표의 머리말이 금지한 바로 그 모양이다(「실패도 행으로 남는다」).
+    include_probe: bool = False,
     limit: int = 100,
     offset: int = 0,
 ) -> tuple[DeliveryView, ...]:
@@ -770,12 +778,19 @@ def list_deliveries(
 
     K4 보고서의 "조치 이력" 행이 이 함수의 결과다 — 보고서용 목록을 따로 만들지 않는다
     (DA-04 K2 이중 AC: 두 벌로 적재하지 않는다).
+
+    ★ P-193 (2026-09-20) — **발송 축에도 게이트 씨앗이 선다.** 사건 축만 막았더니
+      관제요원의 M1 「나에게 온 것」 첫 카드가 게이트가 심은 알림이었다[실측 · 차선 U3].
+      표식은 이 표에 없고 `event` 너머에 있다 — 따라가는 한 줄은 `common.probe_marker`
+      한 곳이 안다(여기서 `event__track_id` 를 손으로 쓰면 표식이 두 벌이 된다).
     """
     Delivery = _model("DeliveryRecord")
     actor = scope.require_actor()
 
     qs = Delivery._base_manager.select_related("event")
     qs = filter_by_group_field(qs, actor, field=_owner_field(Delivery))
+    if not include_probe:
+        qs = exclude_probe(qs, via="event")
     if since is not None:
         qs = qs.filter(occurred_at__gte=since)
     if until is not None:

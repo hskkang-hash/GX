@@ -246,11 +246,19 @@ class DsmAPI:
             reviewed_by_id = getattr(scope.require_actor(), "pk", None)
             if reviewed_by_id is None:
                 raise HttpError(403, "요청자를 특정할 수 없어 「내 담당」을 낼 수 없습니다.")
+        #: ★ P-193 (2026-09-20 · 차선 U1) — **이 목록만 probe 를 본다.**
+        #:   게이트가 심은 사건은 이제 셈에서 빠진다(요약 `unhandled` · 초점 큐 ·
+        #:   인계 초안 · 온보딩 술어 · F-14). 그러나 **운영자의 목록에서까지 빼면
+        #:   그것은 세지 않기가 아니라 사건을 숨긴 것**이고, 숨긴 사건은 아무도 못
+        #:   고친다(D-497 「거르는 곳은 측정이지 제품이 아니다」).
+        #:   그래서 제품 면인 이 한 자리에서만 `include_probe=True` 로 연다 —
+        #:   새 질의 인자도, 새 문도 만들지 않는다(호출자는 이 값을 못 고른다).
         rows = services.recent_events(scope=scope, since=since, until=until,
                                       event_type=types, severity=severity,
                                       response_state=response_state,
                                       reviewed_by_id=reviewed_by_id,
                                       stream_monitor_id=stream_monitor_id,
+                                      include_probe=True,
                                       limit=limit)
         return {"total": len(rows), "events": [
             {"event_id": e.event_id, "event_type": e.event_type,
@@ -310,6 +318,11 @@ class DsmAPI:
 
         #: 미처리 = 대응 축이 아직 「발생」인 것. `status`(탐지 판정)로 세지 않는다 —
         #: 두 축을 섞으면 U2 가 「봐야 할 것」과 「판정해야 할 것」을 구별하지 못한다.
+        #: ★ P-193 (2026-09-20 · 차선 U1) — **게이트가 심은 사건은 이 수에 안 든다.**
+        #:   턴 W 실측: 「24시간 안 미처리」가 `총 3 · probe 3 · probe 아님 0` 이었고,
+        #:   그 위에서 FC 가 29→32 로 올랐다 — 게이트가 심은 것을 게이트가 일감으로
+        #:   읽은 초록이다. 여기서 거르지 않는다(인자도 안 준다): 뺄지 말지는
+        #:   `recent_events` 의 기본값이 정하고, 그 기본값은 「안 센다」다.
         pending = services.recent_events(
             scope=scope, since=since, until=until,
             response_state="occurred", limit=_UNHANDLED_CAP + 1)
