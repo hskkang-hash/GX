@@ -302,6 +302,12 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    from _gate_header import gate_header, count_lines  # P-107 — TARGET/AS/SOURCE
+    _n_tests = sum(1 for _p in TESTS.glob("test_*.py")) if TESTS.is_dir() else 0
+    _n_base = count_lines(BASELINE)
+    gate_header(__file__, measured=("시험이 **캐시를 재지 않는가** — **분모 %s개**(`backend/tests/test_*.py` "
+              "전수 · 지금 셌다) · 잠근 기준선 %s행. 시험 파일이 0 이면 "
+              "분모가 없고, 0건 검사는 통과가 아니다 (D-301)"
+              % (_n_tests or "못 셌다",
+                 _n_base if _n_base is not None else "못 셌다")))
     raise SystemExit(main())

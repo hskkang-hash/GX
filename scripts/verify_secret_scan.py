@@ -288,5 +288,9 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    _n_py = sum(1 for _p in ROOT.rglob("*.py")
+                if ".git" not in _p.parts and "node_modules" not in _p.parts)
+    gate_header(__file__, measured=("저장소에 **비밀 값이 남았는가** — **분모 %s개**(저장소 파이썬 전수 · "
+              "지금 셌다) + 이력 면(git). 표면과 이력은 **다른 분모**다 — "
+              "한쪽만 초록이면 다른 쪽은 안 잰 것이다" % (_n_py or "못 셌다")))
     sys.exit(main())

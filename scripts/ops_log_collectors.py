@@ -947,15 +947,69 @@ def self_test() -> int:
                                       broker_error="ConnectionError"))
     ok &= (ret is None) and ("못 닿았다" in ex)
 
+    # ══ 갈래 가르기 — **수집 갈래가 보존 갈래의 빨강을 안 받는다** (턴 AB · 차선 F) ══
+    #
+    # ★ 이 저장소가 세 턴을 숨어 있던 자리가 바로 여기다: ①③⑤ 가 초록인데 ②가
+    #   빨가서 한 종료코드가 1 이었고, 그래서 `OPS-07-a` 에 `gate:` 를 못 달았다.
+    #   갈래가 갈리면 그 절이 **제 색으로** 선다.
+    split = [("① 수집기 전수", True, ""), ("② 보존 기간", False, ""),
+             ("③ 자라는 속도", True, ""), ("④ 선언", False, ""),
+             ("⑤ 멈춘 파일 잔재", True, "")]
+    ins, outs = branch_rows(split, "수집")
+    ok &= [n for n, _, _ in ins] == ["① 수집기 전수", "③ 자라는 속도", "⑤ 멈춘 파일 잔재"]
+    ok &= all(p for _, p, _ in ins)          # 수집 갈래는 **초록이다**
+    ok &= [n for n, _, _ in outs] == ["② 보존 기간", "④ 선언"]
+    ins, outs = branch_rows(split, "보존")
+    ok &= not any(p for _, p, _ in ins)      # 보존 갈래는 **빨갛다**
+    ok &= len(outs) == 3
+    # ★ 음성 대조 — 갈래를 안 주면 **전부가 갈래 안**이고 하나라도 빨가면 빨갛다.
+    ins, outs = branch_rows(split, None)
+    ok &= len(ins) == 5 and outs == [] and not all(p for _, p, _ in ins)
+    # ★ 다섯 판정의 이름이 갈래 표의 표식을 **전부** 덮는가 — 새 판정이 늘었는데
+    #   어느 갈래에도 안 들어가면 그것은 **아무도 안 세는 판정**이 된다.
+    covered = {m for marks in BRANCHES.values() for m in marks}
+    ok &= {n[0] for n, _, _ in split} == covered
+
     print("self-test: %s" % ("통과" if ok else "실패"))
     return EXIT_OK if ok else EXIT_FAIL
 
 
-def main() -> int:
+#: ★★ **갈래별 종료코드** (턴 AB · 차선 F · N 의 청 ①).
+#:
+#:   이 판정기는 판정 **다섯**을 한 종료코드로 냈다. 그래서 대장이 `OPS-07-a`
+#:   (수집 갈래)에 `gate:` 를 **못 달았다** — 이 절의 ①③⑤ 가 전부 초록이어도
+#:   보존 갈래의 ②④ 가 빨가면 exit 1 이고, 그러면 「대장 구현 · 게이트 빨강」이라는
+#:   **없는 갈림**이 매 실행마다 선다. 그런 빨강을 몇 번 본 사람은 게이트를 끈다(D-353).
+#:
+#:   ⚠ **대장의 `gate:` 는 인자를 못 싣는다**[N 실측 · 턴 AA ⑨]. 그래서 `--only` 만으로는
+#:     안 되고, 인자 없이 갈래가 갈리는 **얇은 진입점 둘**을 함께 둔다:
+#:       `scripts/ops_log_collectors_collect.py`    → 수집 갈래(①③⑤) → `OPS-07-a`
+#:       `scripts/ops_log_collectors_retention.py`  → 보존 갈래(②④)  → `OPS-07`
+#:   ★ 갈래 밖의 판정은 **지우지 않는다.** 그대로 찍되 종료코드에서만 뺀다 —
+#:     안 보이게 하는 것과 안 세는 것은 다르고, 앞엣것은 숨기는 것이다.
+BRANCHES: dict[str, tuple[str, ...]] = {
+    "수집": ("①", "③", "⑤"),
+    "보존": ("②", "④"),
+}
+
+
+def branch_rows(rows: list[tuple[str, bool, str]], only: str | None):
+    """`(갈래 안, 갈래 밖)` 으로 가른다. `only` 가 없으면 전부가 갈래 안이다."""
+    if not only:
+        return rows, []
+    marks = BRANCHES[only]
+    inside = [r for r in rows if r[0].startswith(marks)]
+    outside = [r for r in rows if not r[0].startswith(marks)]
+    return inside, outside
+
+
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--evidence", default=None)
     ap.add_argument("--self-test", action="store_true")
-    args = ap.parse_args()
+    ap.add_argument("--only", choices=tuple(BRANCHES),
+                    help="이 갈래의 판정만 종료코드에 센다 (수집=①③⑤ · 보존=②④)")
+    args = ap.parse_args(argv)
     if args.self_test:
         return self_test()
 
@@ -1057,10 +1111,19 @@ def main() -> int:
     say()
     facts = {"sinks": sinks, "declarations": declarations, "unlisted": unlisted}
     rows = judge(facts)
-    for name, passed, why in rows:
+    inside, outside = branch_rows(rows, args.only)
+    for name, passed, why in inside:
         say("  %s %-14s %s" % ("OK  " if passed else "FAIL", name, why))
-    ok = all(p for _, p, _ in rows)
+    # ★ 갈래 밖도 **찍는다.** 종료코드에서만 뺀다 — 안 보이게 하면 숨기는 것이다.
+    for name, passed, why in outside:
+        say("  %s %-14s %s" % ("··  " if passed else "··X ", name, why))
+    ok = all(p for _, p, _ in inside)
     say()
+    if args.only:
+        say("갈래 **%s**(%s)만 종료코드에 센다 — 나머지 %d 판정은 `··` 로 찍었고 "
+            "**세지 않았다**. 대장의 다른 절이 그 갈래를 센다."
+            % (args.only, "·".join(BRANCHES[args.only]), len(outside)))
+        say()
     say("판정 **%s**." % ("통과" if ok else "실패"))
     say()
     # ★ 꼬리말을 **판정 결과에서 만든다.** 고정 문장으로 두면 「④가 초록인 것을」이라고

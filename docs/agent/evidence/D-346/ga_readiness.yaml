@@ -83,6 +83,777 @@ meta:
     이 표는 네 번 쓴다 (D-346 ★): ① 상용 로드맵 ② 투자·영업 자료
     ③ GS인증 준비 체크리스트 ④ 계약 작업이 상용을 얼마나 밀어주는지의 지도.
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ★★★ 별표 ② — 기능명세 id  [P-234 · 2026-09-21 · 턴 AB · 차선 N]
+# ═══════════════════════════════════════════════════════════════════════════
+#   WO-GX-20260921-04 §5 P-234 가 새 정본 줄 하나를 냈다: **「기능명세서 포함 완료율」** —
+#   분모 = **대장 절 + 기능명세 id 수**. 그 id 가 사는 자리가 여기다.
+#
+#   ★ **왜 8영역 밖인가** — 8영역은 **가중치 합 100** 으로 상용/100 을 만든다.
+#     여기에 수백 절을 끼우면 가중치 표가 무너지고 **상용 점수가 다른 뜻**이 된다.
+#     P-234 의 분모는 **Q 의 새 수**(기능명세 포함 완료율)의 분모이지 상용/100 의 분모가
+#     아니다. ⇒ **상용/100 은 8영역 그대로**, `kind` 표만 **절 + 별표** 로 낸다.
+#
+#   ★★ **이 자리는 비어 있을 수 있다. 비어 있는 것이 거짓보다 낫다.**
+#     지시서는 「DSM 지침 32 + FWS 90 + 운영자 콘솔 12 = 134 개의 id 를 등재하라」고 적었다.
+#     **그 id 가 저장소에 없다** [조율자 실측 · 차선 N 독립 재측 · 2026-09-21]:
+#         문서 셋은 실재한다 — DSM 245줄 · FWS 438줄 · 플랫폼 310줄
+#         그런데 **안정된 id 표식이 0건**이다 (`DSM-01` 꼴 0 · `DF-1`~`DF-8` 여덟뿐)
+#         표 데이터행은 **DSM 100 · FWS 230 · 플랫폼 143 = 473** — 32·90·12 가 아니다
+#     ⇒ **32·90·12 는 [세종 판독]이지 실측이 아니다.** 그런데 P-234 스스로
+#       **「산출기가 낸다 · 손으로 적지 않는다」**고 적는다. 둘 다 지키는 길은 하나뿐이다:
+#       **차선 Q 가 세는 규칙을 소스에 적고 기계로 목록을 뽑고, N 은 그 목록만 등재한다.**
+#       목록이 없으면 **등재 0건 + 사유**다. **id 를 손으로 지어내지 않는다** —
+#       지어낸 분모는 **영영 아무도 검산 못 하는 수**가 된다(「분모는 손으로 적지 않는다」).
+#
+#   ⚠ **등재할 때의 함정 — 턴 AA 에 내가 밟았다.**
+#     `OPS-07-b` 와 `OPS-07b` 는 **붙임표 하나 차이**이고 P-81 유일성 검사는 둘을
+#     **다른 id 로 통과시킨다** — 아무 색도 안 나면서 읽는 사람만 헷갈린다.
+#     새 id 수백 개를 한꺼번에 들이는 순간이 그 함정이 **가장 크게 벌어지는 때**다.
+#     그래서 판정기가 **붙임표·밑줄·대소문자만 다른 쌍**까지 잡는다 (P-237).
+annex_2_spec:
+  #: ★ 등재가 섰다. 비면 **회색**이다 — 0 이 아니다(「잴 것이 없다」와 「안 쟀다」는 다른 말이다).
+  registered: true
+  #: ★ Q 의 세는 규칙. **규칙 없는 목록은 분모가 아니다.** 문구는 Q 가 준 그대로다.
+  rule: |
+    세 명세서의 「사용자별 세부 기능명세」 id 표식 하나 = 한 항목 ·
+    DSM `DSM-U<역할>-<번호>` 32 · FWS `FWS-[FU]<역할>-<번호>` 90(§5.7 은 표가 아니라 문단) ·
+    플랫폼 `O-<번호>` 14 · 같은 id 는 한 번만 · 세 문서 밖의 인용은 안 센다
+  #: ★ 기계 산출물. **손으로 고치지 않는다** — 판정기가 이 파일의 실재를 매 실행 확인한다.
+  source: docs/agent/evidence/P-234/spec_ids.json
+  why: |
+    [2026-09-21 · 턴 AB · 차선 N] **136개 등재.** 차선 Q 의 `scripts/verify_spec_coverage.py`
+    가 낸 기계 목록(`docs/agent/evidence/P-234/spec_ids.json`)을 **그대로** 실었다.
+    손으로 지은 id **0개**.
+
+    ★★ **이 자리에 먼저 적혀 있던 말이 틀렸다 — 내가 지우고 고쳐 적는다.**
+      나는 「지시서가 말한 134개의 id 는 **저장소에 실재하지 않는다**」고 적었다.
+      **실재한다.** 내가 못 찾았을 뿐이다.
+
+          내가 던진 그물   `DSM-[0-9]+`      →  **0건**
+          실재하는 표식     `DSM-U1-01` 꼴    →  `DSM-U\d+-\d+` 로 **32건**
+
+      ⚠⚠ **한 그물이 0건을 내면 그것은 「없다」가 아니라 「이 그물로는 안 잡힌다」이다.**
+        더 나쁜 것은 이것이다: **조율자가 먼저 0건을 보고 「없다」고 적었고, 내가
+        「독립으로 재측」한다며 같은 그물을 한 번 더 던져 같은 0 을 받고 서로를 확인했다.**
+        두 사람이 맞았다고 옳은 것이 아니었다 — **같은 그물을 두 번 던진 것**이었다.
+        내가 낸 473(표 데이터행 전수)도 **분모가 다른 수**였지 이 수의 후보가 아니었다.
+      ★ 그래서 **「0건」을 근거로 「없다」고 적지 않는다.** 0 을 받으면 그 다음 물음은
+        「정말 없나」가 아니라 **「내 그물이 그 모양을 잡나」**다. 이것을 여기 남긴다.
+
+    ★ **분모가 늘었으므로 「기능명세 포함 완료율」은 내려간다.** 내려간 수가 정본이다.
+      ⚠ **상용/100 은 안 움직인다** — 별표는 8영역 밖이고 가중치 표를 안 건드린다
+        (조율자 판정 2026-09-21). 두 수는 다른 것을 잰다.
+    ★ 전부 `미착수` · `unmeasurable` · `hand: in` 으로 태어난다. 그 0 은
+      **「기능이 없다」가 아니라 「대장에 없다」**이다 — 기능명세는 이 턴에 **코드 0줄**이다.
+
+    ★★★ **[등재 직후 실측] 이 자리를 8영역 밖에 둔 값이 한 번 청구됐다 — 적어 둔다.**
+      등재하자마자 차선 Q 의 `verify_spec_coverage.py` 를 돌렸더니 이렇게 나왔다:
+
+          등재 전:  기능명세 포함 완료율 25.6 % = 77.5 ÷ **291**(절 155 + 미등재 136)
+          등재 후:  기능명세 포함 완료율 **50.0 %** = 77.5 ÷ **155**(절 155 + 미등재 **0**)
+
+      **분모가 291 → 155 로 줄고 수가 올라갔다.** 까닭은 하나다 —
+      Q 가 절 수를 읽는 줄(`「초록」 부류 N절`)은 **8영역만** 세는데,
+      등재된 136 은 **8영역 밖**이라 그 줄에 없다. 그러면서 「미등재」에서는 빠진다.
+      ⇒ **두 칸 사이로 떨어졌다.**
+
+      ⚠⚠ **이것이 가장 나쁜 종류다 — 재는 것이 깨져서 수가 좋아졌다.**
+        「분모가 늘어 수가 내려가면 그것이 첫 줄이다」의 **거울상**이다:
+        **분모가 줄어 올라간 수는 수가 아니다.**
+      ★ 그래서 판정기가 **분모를 따로 한 줄로 낸다**:
+        `[입력] ★★ 분모 정본 — 절 N · 별표 M · 합 K`. 별표가 0건이어도 찍는다.
+        Q 에게 그 줄을 읽으라고 쪽지로 청했다(`turn-ab/Q.inbox/N.md` 덧붙임 ③).
+      ★ **별표를 8영역 안으로 옮기는 것으로는 안 고친다** — 그러면 Q 의 분모는 맞지만
+        **가중치 합 100 이 무너져 상용/100 이 다른 뜻이 된다.** 고칠 자리는 Q 의 한 줄이다.
+  clauses:
+    #: ── DSM · §4 사용자별 세부 기능명세 · 그물 `\bDSM-U\d+-\d+\b` · **32개** ──
+    #:    DSM_재난안전관리App_명세서_v1.1_지침기반_20260915.md
+    - id: DSM-U1-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U1-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U1-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U1-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U1-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U1-06
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U2-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U2-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U2-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U2-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U2-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U3-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U3-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U3-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U3-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U4-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U4-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U4-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U4-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U4-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U4-06
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U4-07
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U4-08
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U4-09
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U5-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U5-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U5-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U5-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U5-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U6-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U6-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    - id: DSM-U6-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: DSM
+    #: ── FWS · §5 사용자별 세부 기능명세 · 그물 `\bFWS-[FU]\d+-\d+\b` · **90개** ──
+    #:    FWS_산불감시App_명세서_v1.0_프로세스_사용자별_20260915.md
+    - id: FWS-F1-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-06
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-07
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-08
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-09
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-10
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-11
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-12
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-13
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-14
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F1-15
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-06
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-07
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-08
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-09
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-10
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-11
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-12
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-13
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-14
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F2-15
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-06
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-07
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-08
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-09
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-10
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-11
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-12
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-13
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-14
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-15
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-16
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-17
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-18
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-19
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F3-20
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-06
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-07
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-08
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-09
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-10
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-11
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-12
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-13
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-14
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F4-15
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F5-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F5-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F5-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F5-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F5-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F5-06
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F5-07
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F5-08
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F5-09
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F5-10
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F6-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F6-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F6-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F6-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F6-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F6-06
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F6-07
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F6-08
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F6-09
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-F6-10
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-U5-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-U5-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-U5-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-U5-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    - id: FWS-U5-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
+    #: ── OPS · §7 플랫폼 운영자(U0) 세부 기능명세 · 그물 `\bO-\d{2}\b` · **14개** ──
+    #:    GuardianX_플랫폼구조설계서_v1.0_공통개별분리_플랫폼운영자_20260915.md
+    - id: O-01
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-02
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-03
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-04
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-05
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-06
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-07
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-08
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-09
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-10
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-11
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-12
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-13
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+    - id: O-14
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: OPS
+
 areas:
 
   # ═══════════════════════════════════════════════════════════════════════
@@ -118,13 +889,25 @@ areas:
     kind_derived:
       # closed — 사슬 다섯(절↔화면↔라우트↔**역할 계정의 200**↔data_source)이 이어졌다.
       #          「누른 뒤를 본」 초록이다. 10절.
+      #   ★★ [P-231 · 2026-09-21 · 턴 AB · 차선 N] **셋을 올렸다 — 증거 경로가 있는 절만.**
+      #      `F-12-c5` · `F-12-c6` · `F-12-c7`. 경로는 아래 `kind_evidence` 에 실려 있다.
+      #      차선 A 의 쪽지(`turn-ab/N.inbox/A.md`)가 아니라 **기계가 낸 표**로 골랐다:
+      #        `python scripts/verify_click_completes.py --clause-evidence`
+      #        → 「절 **17** 중 「누른 뒤」 초록 **3** · 빨강 0 · 회색 14」
+      #      ⚠ 조율자 쪽지는 「올릴 수 있는 것은 **5**」라 했으나 그것은 A 의 재측(12:19:30Z)
+      #        **전**의 수다. A 자신도 갱신한 §0 에서 **3** 이라 적었고 기계도 3 이다.
+      #        **지시도 입력이지 측정이 아니다** — 둘이 갈리면 기계가 낸 쪽을 쓴다.
+      #        안 올린 둘: `F-12-c1`(이번 회차 **회색** — 로그인 throttle 로 화면에 못 들어갔다.
+      #        한 회차 전 초록은 **git 스테이지에만** 있고 디스크의 정본이 아니다) ·
+      #        `F-10-c1`(**도달만** 올랐다. 「누른 뒤」는 아직 반쪽 — 도달로 닫힘을 주지 않는다).
       closed: [F-01-c2, F-05-c1, F-05-c2, F-05-c3, F-09-c2, F-10-c3,
-               F-12-c2, F-12-c3, F-12-c8, F-14-c1]
+               F-12-c2, F-12-c3, F-12-c8, F-14-c1,
+               F-12-c5, F-12-c6, F-12-c7]
       # unmeasurable — 회색 22 + 잠김 7 = 29절. **못 이었거나 잠겼다.**
       #   회색은 「사슬을 못 이었다」이지 「끊겼다」가 아니다(빨강 0건).
       unmeasurable: [F-01-c1, F-02-c1, F-02-c2, F-02-c3, F-03-c1, F-03-c2, F-03-c3,
                      F-04-c1, F-04-c2, F-09-c1, F-10-c1, F-10-c2, F-11-c1, F-11-c2,
-                     F-11-c3, F-12-c1, F-12-c4, F-12-c5, F-12-c6, F-12-c7, F-13-c1,
+                     F-11-c3, F-12-c1, F-12-c4, F-13-c1,
                      F-14-c2,
                      F-06-c1, F-06-c2, F-07-c1, F-08-c1, F-08-c2, F-09-c3, F-13-c2]
       # 이 영역에는 ratchet · rule_only · gate_only 가 **0절**이다 —
@@ -132,6 +915,69 @@ areas:
       ratchet: []
       rule_only: []
       gate_only: []
+
+    # ★★ [P-231 · 2026-09-21 · 턴 AB · 차선 N] **증거 경로 — 이것이 없으면 안 올린다**
+    #   P-231 이 요구한 것은 「누른 뒤」 초록 **그리고 증거 파일 경로가 대장에 실릴 것**이다.
+    #   그래서 여기 싣는다. **경로가 없는 절은 이 칸에 없고, 이 칸에 없는 절은 안 올렸다.**
+    #   ⚠ 이 칸은 **손으로 옮겨 적은 것이 아니다** — `--clause-evidence` 가 찍어 준 것을
+    #     그대로 옮겼고, 판정기가 **그 파일이 실재하는지 매 실행 확인한다**(없으면 exit 1).
+    kind_evidence:
+      F-12-c5:
+        rows: [U5#S1, U5#S2]
+        strength: change
+        json: docs/agent/evidence/P-118/settings_clicks.json
+        measured_at: "2026-09-21T12:19:30Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/admin/dsm_settings_rules_admin.png
+        what: |
+          구역 끄기/켜기 — 행의 `is_active` 가 **뒤집힌다**(표의 길이가 아니라 그 행의 칸을 본다) ·
+          만들기 — 표의 **길이가 는다**. 두 행이 다 서야 이 절이 선다.
+      F-12-c6:
+        rows: [U5#S3]
+        strength: change
+        json: docs/agent/evidence/P-118/settings_clicks.json
+        measured_at: "2026-09-21T12:19:30Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/admin/dsm_settings_rules_admin.png
+        what: |
+          임계값 저장 — 표의 **「지금 값」(`value`)이 실제로 바뀐다**(10.0 → **11.0**) ·
+          곁칸 「바꾼 기록」도 한 줄 는다(4 → 5). **둘 다 서야 초록이다.**
+          ★ 턴 AA 에 차선 A 가 「표의 「지금 값」은 안 바뀐다」는 ⚠ 를 달고 **「바꾼 기록」으로
+            우회**했었다. 그때는 참이었다. 이 턴에 차선 F 가 `k5_trust::list_thresholds` 를
+            **좁은 층이 이기게**(기관 → 전역 → 정의) 고쳤고 A 가 눌러 확인해 **우회를 되돌렸다.**
+            ★ 그러면서 **옛 우회 술어를 안 지웠다** — 곁칸으로 같이 본다(대장은 줄지 않는다).
+      F-12-c7:
+        rows: [U5#S4]
+        strength: change
+        json: docs/agent/evidence/P-118/settings_clicks.json
+        measured_at: "2026-09-21T12:19:30Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/admin/dsm_settings_rules_admin.png
+        what: |
+          등급규칙 저장 — 그 유형의 `severity` 가 바뀐다. ★ **올리는 쪽으로만** 쓴다 —
+          낮추면 그 유형의 경보가 실제로 꺼진다(시험 장치가 제품을 조용하게 만들면 안 된다).
+
+    # ★★ 이 영역의 `closed` 13 은 **한 잣대가 아니다.** 읽는 사람이 속지 않게 적는다.
+    kind_evidence_note: |
+      ★★ **잣대가 둘이다 — 13 을 한 덩어리로 읽지 마라.**
+
+        증거 경로가 실린 절  **3**  (F-12-c5 · c6 · c7)
+          → P-231 의 잣대: **「누른 뒤」 초록 + 살아 있는 증거 파일 경로.**
+            잰 때 2026-09-21T12:19:30Z · 이 턴에 실제로 눌러 본 것이다.
+
+        경로가 안 실린 절   **10**  (F-01-c2 · F-05-c1 · F-05-c2 · F-05-c3 · F-09-c2 ·
+                                  F-10-c3 · F-12-c2 · F-12-c3 · F-12-c8 · F-14-c1)
+          → **옛 잣대**로 들어온 절이다: 영역 게이트의 **사슬 다섯(도달)** 이 이어졌다.
+            ⚠ **도달은 「누른 뒤」가 아니다.** 이 열의 「누른 뒤」 증거
+            (`docs/agent/evidence/P-118/click_completes.json`)는 이 턴에 **낡았다** —
+            `measured_at=2026-09-20T08:14:09Z` · **27.5시간** · 판정기 한도 **12시간**.
+            그래서 `--clause-evidence` 는 이 열을 **회색**으로 찍고 경로를 안 내준다.
+
+      ⚠⚠ **「잰 적이 없다」가 아니라 「잰 것이 늙었다」다.** 둘은 다르고, 그 차이가
+        이 열을 지금 내리지 않은 이유다. 27.5시간 전에는 초록이었다.
+        ★ **닫는 길은 이미 깔려 있다** — 차선 A 가 절↔행 표를 깔아 두었으므로
+          **V 가 48행 `--measure` 를 한 번 돌리면** 이 열은 **같은 경로로 그날 초록**이 된다.
+          N 이 손으로 다시 이을 일은 없다.
+      ★ **다음 턴에 V 의 회차가 없으면 이 열은 P-215 의 잣대로 다시 볼 자리다**
+        (턴 AA 에 「확인 못 함 26」을 하나씩 손으로 본 것과 **같은 모양**이다).
+        지금 내리지 않은 것은 **판단을 미룬 것이지 안 본 것이 아니다** — 그래서 여기 적는다.
     kind_derived_note: |
       ★ **F-09-c3 이 여기 잠김으로 서 있다** — 영역 ⑧ `LAW-01` 이 이번 턴에 '잠김' 으로
         내려가며 가리킨 바로 그 절이다. 두 표가 **같은 하나의 사실**을 가리키게 됐다.
@@ -1448,24 +2294,102 @@ areas:
         kind_why: |
           [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측** — `scripts/ops_log_collectors.py` 를 호스트에서 실제로 불렀다. 이 절 몫은 판정 **셋**이고 셋 다 OK 다: ① **수집기 11개를 전수로 셌다**(컨테이너 stdout + 파일 핸들러 + DB 감사) · ③ **자라는 속도 — 11개의 한 시간 치를 쟀다** · ⑤ **멈춘 채 남은 파일 0건**. **분모 11 · 면제 0.** ⚠ 같은 실행의 ②(보존 기간)는 **빨강**이고 그것은 이 절이 아니라 **`OPS-07`(쪼갠 보존 갈래)** 의 몫이다 — 그래서 `gate:` 는 그쪽에 달았다. 여기 달면 「구현 + 빨강」이 되어 **없는 갈림**이 매번 선다
         proof: scripts/ops_log_collectors.py
+        gate: scripts/ops_log_collectors_collect.py
+        evidence: docs/agent/evidence/OPS-07/collectors_turnAB.md
         note: |
-          ★ `gate:` 를 **일부러 안 달았다.** `ops_log_collectors.py` 는 다섯 판정을 **한 종료코드**
-            로 낸다 — 이 절의 셋이 전부 초록이어도 ②가 빨가면 exit 1 이다. 그 빨강을 이 절에
-            붙이면 「대장 구현 · 게이트 빨강」이라는 **없는 갈림**이 매 실행마다 서고, 그런
-            빨강을 몇 번 본 사람은 게이트를 끈다(D-353). 닫는 길은 판정기에 갈래별 종료코드
-            (또는 `--only`)를 다는 것이고, 그 파일은 차선 F 의 자리다 — 쪽지로 넘긴다.
+          ★ **[2026-09-21 · 턴 AB] `gate:` 가 드디어 달렸다 — 차선 F 가 갈래를 갈랐다.**
+            턴 AA 에 나는 여기 `gate:` 를 **일부러 안 달았다**: `ops_log_collectors.py` 는
+            다섯 판정을 **한 종료코드**로 냈고, 이 절의 셋이 전부 초록이어도 ②가 빨가면
+            exit 1 이었다. 그 빨강을 붙이면 「대장 구현 · 게이트 빨강」이라는 **없는 갈림**이
+            매 실행마다 서고, 그런 빨강을 몇 번 본 사람은 게이트를 끈다(D-353).
+          ★ 내가 쪽지로 청한 것은 「**인자 없이** 갈래가 갈리는 모양」이었다 —
+            대장의 `gate:` 는 인자를 못 싣기 때문이다. F 가 그대로 냈다:
+            `--only {수집,보존}` 에 더해 **인자 없는 얇은 진입점 둘**을 세웠고,
+            **판정식은 한 벌 그대로다**(`judge`). 진입점은 「어느 판정을 세는가」만 고른다.
+          ★ **재측 [차선 N · 호스트 · 2026-09-21] — `exit 0`.** F 의 보고를 베끼지 않고 돌렸다:
+                OK   ① 수집기 전수    수집기 11개를 전수로 셌다
+                OK   ③ 자라는 속도    11개의 한 시간 치를 쟀다
+                OK   ⑤ 멈춘 파일 잔재  멈춘 채 남은 파일이 없다
+                ··X  ② 보존 기간     (갈래 밖 — **안 셌다**)   ← 이 절의 몫이 아니다
+                ··   ④ 선언         (갈래 밖 — 안 셌다)
+            **분모 11 · 면제 0** 그대로다. 상태 `구현` 과 게이트 초록이 **같은 색**이다.
+          ★ 갈래 밖 판정도 **화면에는 찍힌다**(`··` 표식). 종료코드에서만 뺐다 —
+            **안 보이게 하는 것과 안 세는 것은 다르고, 앞엣것은 숨기는 것이다.**
+            F 가 자기시험에 「판정이 하나 늘었는데 어느 갈래에도 안 들어가면 빨강」을 박았다 —
+            **아무도 안 세는 판정이 생기는 것**을 막는 자리다.
 
       - id: OPS-07
         title: 로그 **보존 기간** — 보존 기간이 없는 수집기 **0개**
         status: 미착수
         hand: in
         hand_why: |
-          우리 손 안이다. 막는 것은 바깥이 아니라 **선언 한 칸**이다 —
-          `security.audit_log_retention_days` 를 고객 설정에 실제로 **쓰면** 닫힌다.
+          ★★ **[2026-09-21 · 턴 AB · 차선 F 실측 → 차선 N 고쳐 적음] 이 칸이 틀렸었다.**
+            여기엔 「막는 것은 **선언 한 칸**이다 — `security.audit_log_retention_days` 를
+            고객 설정에 실제로 **쓰면** 닫힌다」라고 적혀 있었다.
+            **그 칸에는 이미 값이 있다(365).** F 가 두 번 재서 확인했다:
+                seed_retention_declaration.py → [입력] 환경 'development' · 심을 값 365
+                                              · **그 자리의 지금 값 365**
+                                              X 그 자리가 비었는가 — **이미 365 이 있다**
+          ★ **막는 것은 선언이 아니라 「파기 스위치」다.** 같은 실행의 상세 칸이 말한다:
+            「보존 **365일이 선언돼 있고** 워커도 붙었으나 파기 항목이 **DB 주기 표에서
+            꺼져 있다**(`ops-audit-purge-daily`=off · `purge-audit-logs-daily`=off) —
+            **켜기 전에는 아무것도 안 지워진다**」. [차선 N 재측으로 두 항목 `켜짐=False` 확인]
+          ★ 그 스위치를 켜는 것은 **삭제를 켜는 일**이다 ⇒ 이 턴에 **안 켰다**(P-230 · P-222 ·
+            결정문에 없는 삭제는 삭제가 아니다). 켜는 것은 대표 자리다.
+          ⚠ **이 줄을 안 고쳤으면 다음 사람이 이미 있는 칸을 또 쓰러 갔을 것이다.**
+            틀린 `hand_why` 는 조용히 사람을 헛걸음시킨다 — 색이 안 나는 종류의 거짓이다.
         kind: unmeasurable
         kind_why: |
           [P-215 · 2026-09-21 · 턴 AA · 차선 N · 조율자 판정 ①] 상태가 '미착수' 이고 게이트도 이번 턴 **exit 1** — **색이 같다**(갈림이 아니다). 판정기 원문: 「② 보존 기간 **FAIL** — **보존 기간이 없다(무한 적재): DB 감사 로그 · `logger_auditlogs`**」. 분모는 **수집기 11개**이고 그중 **보존 기간이 없는 것 1개**다. 경고로 **「선언은 없고 상한은 걸려 있는 수집기 3개」**(`gx-fe-build` · `gx-nginx-e` · `gx-gunicorn-e` — 상한이 **띄우는 명령**에 산다. 다음에 띄우는 사람이 그 문장을 빠뜨리면 조용히 사라진다). **잰 초록이 없다 → `unmeasurable`**
-        gate: scripts/ops_log_collectors.py
+        gate: scripts/ops_log_collectors_retention.py
+        evidence: docs/agent/evidence/OPS-07/retention_marks.json
+        note_turn_ab: |
+          ★ **[2026-09-21 · 턴 AB] `gate:` 를 갈래별 진입점으로 바꿨다** —
+            `ops_log_collectors.py`(다섯 판정 한 종료코드) → **`ops_log_collectors_retention.py`**
+            (②④ 만 센다). 판정식은 한 벌 그대로고 진입점만 갈렸다(차선 F).
+          ★ **재측 [차선 N · 호스트 · 2026-09-21] — `exit 1`.** F 의 보고를 베끼지 않고 돌렸다:
+                FAIL ② 보존 기간   **보존 기간이 없다**(무한 적재): DB 감사 로그 · logger_auditlogs
+                OK   ④ 선언       컨테이너 수집기 전부에 상한이 **선언돼 있다**
+            상태가 `미착수` 이고 게이트가 빨강 ⇒ **색이 같다. 갈림이 아니다.**
+            ★ 고쳐지면 게이트가 초록이 되고, 그때 대장이 '미착수' 면 **exit 1** 이 난다
+              (P-85 갈림 ①). **조용할 수 없는 자리가 됐다** — 그것이 이 배선의 값이다.
+          ★ **④가 초록이 됐다.** 턴 AA 의 경고(「선언은 없고 상한은 걸려 있는 수집기 3개」)는
+            여전히 있으나 그것은 **경고이지 빨강이 아니다.** ⇒ 이 갈래의 빨강은 **② 하나뿐**이다.
+
+          ★★ **730 인가 365 인가 90 인가 — 셋이 갈려 있다. 한쪽으로 조용히 맞추지 않았다.**
+
+            | 무엇 | 수 | 임자 |
+            |---|---|---|
+            | **P-230 선언** | **730일**(감사 2년) | 세종 · WO §5 |
+            | **심긴 값**(`AdminConfig::System > security.audit_log_retention_days`) | **365일** | 세종 P-67 |
+            | **dj-core 코드 기본값** | **90일** | **아무도 정한 적이 없다** |
+
+            F 가 한 칸도 안 고쳤고 나도 안 고쳤다 — 맞추는 것은 `AdminConfig`(공용 마스터)
+            쓰기이고 차선 몫이 아니다. **갈렸다는 사실 자체가 보고감**이고, 그것을 매 실행
+            찍는 판정기가 섰다(`scripts/ops_retention_policy.py` · ② 가 그 갈림을 낸다).
+
+          ★★★ **[차선 S 조문 대조 · 2026-09-21] 「[추정]」이 떨어졌다 — 그리고 물음이 바뀐다.**
+            고시의 「접속기록」은 **접속지 정보(IP)** 와 **처리한 정보주체 정보**를 요구하는데
+            **`audit_writer` 의 INSERT 칸에 둘 다 없다.**
+            ⇒ **우리 감사 로그는 고시상 「접속기록」이 아니다.** 90 을 730 으로 올려도
+              **요건은 이행되지 않는다.**
+            ⇒ **고를 문제가 아니라 칸이 없는 문제다.** 위 표의 셋 중 하나를 고르는 일로
+              이 절이 닫히지 않는다 — 먼저 **칸 둘을 더해야** 그 수가 뜻을 갖는다.
+            ⚠ 이것을 안 적으면 다음 사람이 **수 하나를 골라 놓고 닫힌 줄 안다.**
+
+          ★ **만료 표식 — 경계와 건수뿐이다. 한 행도 안 건드렸다**(P-230 · 삭제 0).
+            [차선 N 재측 · `ops_retention_policy.py` · exit 1]
+                audit    730일 · 경계 now()-730d · **만료 0행**
+                incident 영구  · 경계 없음        · **만료 0행**
+                collector 90일 · **날짜 경계가 없다** · **못 쟀다(회색)**
+                표 전체 170,853행 · 가장 오래된 행 2026-08-27 (= **25일치**)
+            ★★ **만료 건수가 0 인 것이 이 턴의 가장 쓸모 있는 수다** — 감사 표에
+              730일보다 오래된 행이 **한 행도 없다**(표 자체가 25일치다).
+              ⇒ **선언을 730 으로 맞춰도 지워질 행은 0 이다.** 이 턴의 「삭제 0」은
+                규율일 뿐 아니라 **사실**이기도 하다.
+            ★ `collector` 를 **0 으로 안 적었다.** `json-file` 회전은 **크기 기반**(10m × 5)이라
+              날짜를 모른다 — 「90일 보존」은 이 수집기에 대해 **약속이 아니라 목표**다.
+              **못 잰 칸은 0 이 아니라 회색이다.**
         why: |
           ★★ **[조율자 판정 2026-09-21 · 턴 AA] 「미착수」다 — 「구현」이 아니다.**
             차선 N 이 P-215 로 26절을 손으로 보다가 이 자리를 찾아냈다: 대장은 `구현`·`closed`
@@ -1494,7 +2418,16 @@ areas:
           ★ **차선 F 가 같은 자리를 다른 쪽에서 재고 있다** — 감사 표가 **하루 11,930행 ·
             연 9.3 GiB** 로 자란다. 보존 기간이 없다는 것은 그 9.3 GiB 가 **영원히 남는다**는
             뜻이다. 조율자가 둘을 묶어 대표께 올린다.
-        why: |
+
+          ★★ [2026-09-21 · 턴 AB · 차선 N] **여기부터 아래는 원래 두 번째 `why:` 였다.**
+            한 절에 `why:` 가 **둘**이었고, YAML 은 뒤엣것만 남기고 **앞의 글 전부를 조용히
+            버린다** — 버려지던 쪽이 바로 위의 조율자 판정 블록(왜 '미착수'인가 · `gate:`
+            배선 · `OPS-07b` 와 어떻게 다른가 · 차선 F 의 연 9.3 GiB)이었다.
+            **아무 색도 안 났다.** 판정기보다 **파서가 먼저 삼키기** 때문이다 —
+            `gate:` 없는 `closed` 가 한 번도 대조되지 않는 것의 **한 겹 아래**다.
+            글은 **한 줄도 안 버리고** 한 칸으로 합쳤다(삭제 0).
+            재발 방지: `verify_ga_readiness.py` 에 **중복 키 검사**를 세웠다 — 이제 exit 1 이다.
+
           ★ [실측 2026-09-24 · 차선 E3] **회색이 빨강으로 갈렸다** — 재고 나서 알았다.
           수집기 6개 전수: 컨테이너 stdout 5개(gx-shell·postgres·redis·minio·gx-fe-build)가
           `json-file` 에 `max-size`·`max-file` **둘 다 없다 → 무한 적재.**
@@ -1688,7 +2621,7 @@ areas:
           실제로 그렇게 적었다가 P-85 검사에 걸렸다). 필요한 판정기는
           「마지막 자동 덤프의 나이 < 주기 + 여유」를 재는 것이고, 그것은
           `gx-celery-e` 에 마운트가 붙은 뒤에야 초록이 될 수 있다.
-        note_turn_i: |
+        note_turn_j: |
           ★ [실측 2026-09-07 · 턴 J · 차선 E] **주기는 스스로 돌았다 — 회수점을 하나도
           안 남겼다.** beat 대장을 읽으니 `ops-backup-daily` `total_run_count=2` ·
           `last_run_at=2026-09-06T20:00:00Z` · 간격 **정확히 24시간**(03:00 Asia/Ho_Chi_Minh).

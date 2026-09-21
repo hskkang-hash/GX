@@ -447,6 +447,362 @@ CARDS = {
     ),
 }
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 「처음이세요」 첫 카드 셋 × 6 역할 = 18 (WO-04 §4-4 · 턴 AB · 차선 K)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ **두 벌을 만들지 않는다.** 이 표는 새 카드 체계가 아니라 위 `CARDS` 를 읽는
+#   **한 겹 얇은 창**이다. 역할 홈에 처음 들어온 사람에게 일곱 장을 한꺼번에 들이밀면
+#   아무도 안 읽으므로, 그중 **세 기둥**(골든타임 30 · 정직 관제 · 훈련 모드)만 먼저
+#   보여 준다. 문안은 WO-04 §4-4 가 정본이고 여기 적힌 것은 그 표를 옮긴 것이다.
+#
+# ★ 같은 사실을 두 번 판정하지 않는다 — 규약 셋:
+#     ① `same_as` 가 있으면 **판정은 그 카드 하나다.** 새 술어도, 새 행도 없다.
+#        그 카드가 `CARDS` 에서 못 재는 카드면 이 카드도 **같은 사유로** 못 잰다.
+#        (턴 AA 에 U56 이 잰 병 — 「같은 파일에 옳은 판정이 이미 있었는데 배지만
+#        다른 것을 읽고 있었다」 — 가 나는 자리가 바로 여기다.)
+#     ② `closes` 를 쓸 때는 **이미 있는 술어 함수를 그대로** 쓴다. 같은 뜻의 술어를
+#        새로 짜면 두 술어가 언젠가 어긋나고, 어긋난 뒤에는 어느 쪽이 참인지 모른다.
+#     ③ 이 표는 **진행률을 내지 않는다.** `progress()` 의 `total`·`done`·`percent` 는
+#        예나 지금이나 `CARDS` 만 센다 — 진행률이 두 벌이 되면 둘 다 못 믿는다.
+#
+# ★ 못 재는 카드는 지우지 않는다(D-301). 여섯 역할 × 세 기둥 = **열여덟 장이 언제나
+#   열여덟 장**이고, 그중 서버 기록이 없는 것은 이름과 사유와 함께 나간다. 지우면
+#   「셋 중 둘」이 조용히 「둘 중 둘」이 되어 100 % 가 되고, 그 수는 거짓이다.
+
+#: 세 기둥. 순서가 곧 화면의 순서다 (WO-04 §4-4 표의 열 순서 그대로).
+KICK_PILLARS = (
+    ("golden30", "골든타임 30"),
+    ("honest", "정직 관제"),
+    ("drill", "훈련 모드"),
+)
+
+
+class KickCard(NamedTuple):
+    """첫 진입 카드 한 장. **셋 중 정확히 하나만** 채운다 — `same_as`·`closes`·`why`."""
+
+    key: str
+    #: `KICK_PILLARS` 의 코드. 어느 기둥의 카드인가.
+    pillar: str
+    #: WO-04 §4-4 의 문안 **정본**. 화면이 그리는 글자가 이것이다.
+    prompt: str
+    #: §4-4 의 「닫는 기록」 칸을 그대로 옮긴 것. **지시서가 무엇을 약속했는지**가
+    #: 남아 있어야, 실제로 닫는 기록과 어긋날 때 그 어긋남이 보인다.
+    promised_record: str = ""
+    #: 같은 역할 `CARDS` 의 카드 키. 있으면 **판정은 그 카드 하나다**.
+    same_as: str = ""
+    #: `same_as` 가 없을 때만. **이미 있는 술어를 그대로 쓴다.**
+    closes: Optional[Callable[[TenantScope], Optional[str]]] = None
+    #: 술어도 짝지을 카드도 없는 이유. 못 재는 카드에만 적는다.
+    why: str = ""
+
+
+# ── 훈련 기둥의 술어 ────────────────────────────────────────────────────────
+#
+# ★ 이 다섯은 **새 표도 새 기록도 만들지 않는다.** 훈련 한 판의 창(켠 시각~끈 시각)은
+#   이미 `stream_monitors/services/drill.py` 가 감사에서 읽어 `drill_report` 로 내주고,
+#   「그 창 안에서 무슨 일이 있었나」는 사건 목록·발송 대장·보고서 실행 기록이 이미
+#   안다. 온보딩 카드를 위해 기록을 새로 만들면 그 기록은 카드 말고는 아무도 안 쓰고,
+#   아무도 안 쓰는 기록은 다음 턴에 죽은 필드가 된다(D-304).
+# ★ 훈련 발송은 대장에서 **안 빠진다**(P-201 · `list_deliveries` 주석) — 빠지는 것은
+#   청구뿐이다. 그래서 훈련 창 안의 발송을 이 술어들이 볼 수 있다.
+def _drill_window(scope: TenantScope):
+    """마지막(또는 진행 중인) 훈련 한 판의 창 `(시작, 끝|None)`. 없으면 `None`.
+
+    ★ 창을 여기서 다시 계산하지 않는다 — `services.drill_report` 가 이미 감사에서
+      켠 기록·끈 기록을 집어 창을 낸다. 두 곳이 창을 계산하면 두 창이 어긋나고,
+      어긋난 창에서는 「훈련 중이었다」가 자리마다 다른 말이 된다(D-212).
+    """
+    from apps.dsm import services
+
+    try:
+        report = services.drill_report(scope=scope)
+    except Exception:  # noqa: BLE001 — 못 읽은 것은 「닫히지 않은 것」이다
+        return None
+    if not _field(report, "measurable", False):
+        return None
+    started = _field(report, "started_at")
+    if started is None:
+        return None
+    return started, _field(report, "ended_at")
+
+
+def _closed_by_drill_event_closed(scope: TenantScope) -> Optional[str]:
+    """훈련 사건 하나를 **종결까지** 끌고 갔는가 (U1 ③ · §4-4 「drill 사건 생성·종결 1」).
+
+    ★ 「만들었다」로 닫지 않는다. 생성만으로 닫으면 훈련은 「사건이 떴다」에서 끝나고,
+      이 카드가 가르치려는 것(미처리 → 접수 → 조치 중 → 종결)이 한 칸도 안 돈다.
+    """
+    window = _drill_window(scope)
+    if window is None:
+        return None
+    from apps.dsm import services
+
+    started, ended = window
+    rows = services.recent_events(scope=scope, since=started, until=ended,
+                                  response_state=["closed"], limit=1)
+    return "event#%s" % rows[0].event_id if rows else None
+
+
+def _drill_report_run(scope: TenantScope, kind: str) -> Optional[str]:
+    """훈련 창 안에서 난 **사건**으로 만든 보고서 실행 기록 (U2 ③ · U4 ③).
+
+    ★ 보고서 행에는 훈련 칸이 없다. 그러나 **사건에는 있다** — 훈련이란 이 저장소에서
+      「훈련 창 안에 발생한 것」이고(`drill.is_drill_event_for_stream`), 그 정의를
+      여기서 바꾸지 않는다. 그래서 「훈련 보고서」 = 창 안 사건을 대상으로 한 보고서다.
+    ★ `status='succeeded'` 로 좁힌다 — 실패한 실행은 **나온 적 없는 보고서**다.
+    """
+    window = _drill_window(scope)
+    if window is None:
+        return None
+    started, ended = window
+    actor = scope.require_actor()
+    rows = _tenant_rows(_model("DsmReportRun"), actor).filter(
+        kind=kind, status="succeeded", event__isnull=False,
+        event__occurred_at__gte=started)
+    if ended is not None:
+        rows = rows.filter(event__occurred_at__lte=ended)
+    row = rows.order_by("-id").first()
+    return "report_run#%s" % row.pk if row else None
+
+
+def _closed_by_drill_incident_report(scope: TenantScope) -> Optional[str]:
+    """훈련 사건 보고서 한 쪽이 나왔는가 (U2 ③ · §4-4 「DOCX 1」)."""
+    return _drill_report_run(scope, "incident")
+
+
+def _closed_by_drill_upper_report(scope: TenantScope) -> Optional[str]:
+    """훈련 사건 상황보고서(별지 1호 · 상급기관)가 나왔는가 (U4 ③ · §4-4 「DOCX 1」)."""
+    return _drill_report_run(scope, "upper")
+
+
+def _closed_by_drill_delivery(scope: TenantScope) -> Optional[str]:
+    """**내가** 훈련 알림을 받았는가 (U3 ③ · §4-4 「drill 수신 1」).
+
+    ★ `mine=True` 로 서버가 거른다 — 「내게 온 것」을 화면이 거르면 페이지 밖 발송이
+      **없는 것**이 된다(`delivery_history` 머리말 · P-13).
+    ★ `succeeded=True` 다. 실패한 발송은 **안 받은 것**이고, 실패를 받은 것으로 세면
+      알림이 한 번도 안 닿은 사람에게도 이 카드가 초록이 된다.
+    """
+    window = _drill_window(scope)
+    if window is None:
+        return None
+    from apps.dsm import services
+
+    started, ended = window
+    rows = services.delivery_history(scope=scope, mine=True, since=started,
+                                     until=ended, succeeded=True, limit=1)
+    return "delivery#%s" % rows[0].delivery_id if rows else None
+
+
+def _closed_by_drill_webhook_delivery(scope: TenantScope) -> Optional[str]:
+    """훈련 사건이 **웹훅으로** 나갔는가 (U6 ③ · §4-4 「drill 수신 1」).
+
+    ★ U3 ③ 과 같은 창·같은 대장을 읽되 채널이 다르다 — 사람에게 간 것과 기계에게
+      간 것은 다른 사실이고, 한 술어로 접으면 웹훅이 한 번도 안 나간 연계가 초록이 된다.
+    """
+    window = _drill_window(scope)
+    if window is None:
+        return None
+    from apps.dsm import services
+
+    started, ended = window
+    webhook = _model("DeliveryRecord").Channel.WEBHOOK
+    rows = services.delivery_history(scope=scope, since=started, until=ended,
+                                     succeeded=True, limit=100)
+    for row in rows:
+        if str(getattr(row, "channel", "")) == str(webhook):
+            return "delivery#%s" % row.delivery_id
+    return None
+
+
+#: 첫 카드 셋 × 6 역할 = **18**. 문안 정본은 WO-04 §4-4.
+KICK_CARDS = {
+    "U1": (
+        KickCard("u1.response", "golden30",
+                 "대응 시계가 도는 사건 하나를 접수해 보세요",
+                 "접수 기록 1", same_as="u1.response"),
+        KickCard("u1.kick.honest", "honest",
+                 "이 사진은 시드입니다 — 판정 근거를 열어 보세요",
+                 "판정 패널 열람 기록 1",
+                 why="판정 근거(사진·사유)를 연 사실이 서버에 남지 않습니다 — "
+                     "`GET /api/dsm/events/{id}/snapshot` 은 워터마크를 찍어 바이트만 "
+                     "내보내고 감사에 줄을 남기지 않습니다. 「판정했다」로 바꿔 닫지 "
+                     "않습니다: 이 카드가 묻는 것은 누르기 전에 **열어 봤는가**이고, "
+                     "판정으로 닫으면 그 물음이 사라집니다."),
+        KickCard("u1.kick.drill", "drill",
+                 "훈련 사건 하나를 만들어 종결까지",
+                 "drill 사건 생성·종결 1", closes=_closed_by_drill_event_closed),
+    ),
+    "U2": (
+        KickCard("u2.by_reviewer", "golden30",
+                 "팀 대응 시계 p95 를 확인하세요",
+                 "TeamStatus 열람 1", same_as="u2.by_reviewer"),
+        KickCard("u2.regrade", "honest",
+                 "등급을 다시 매겨 보세요(기록이 남습니다)",
+                 "재판정 1", same_as="u2.regrade"),
+        KickCard("u2.kick.drill", "drill",
+                 "훈련 사건 보고서를 내 보세요 — 첫 줄에 「훈련」",
+                 "DOCX 1", closes=_closed_by_drill_incident_report),
+    ),
+    "U3": (
+        KickCard("u3.response", "golden30",
+                 "내게 온 사건에 현장 도착을 눌러 보세요",
+                 "response 1", same_as="u3.response"),
+        KickCard("u3.kick.honest", "honest",
+                 "알림이 사람에게 닿았는지 확인하세요",
+                 "도달 카드 열람 1",
+                 why="발송 대장을 **연** 사실이 서버에 남지 않습니다 — 대장에는 "
+                     "「무엇이 언제 누구에게 갔나」가 있지만 「누가 그것을 봤나」는 "
+                     "없습니다. 도달 자체(`DeliveryRecord`)로 바꿔 닫지 않습니다: "
+                     "알림이 닿은 것과 사람이 닿았는지 확인한 것은 다른 사실이고, "
+                     "둘을 접으면 이 기둥(정직 관제)이 묻는 것이 사라집니다."),
+        KickCard("u3.kick.drill", "drill",
+                 "훈련 알림을 받아 보세요",
+                 "drill 수신 1", closes=_closed_by_drill_delivery),
+    ),
+    "U4": (
+        KickCard("u4.report", "golden30",
+                 "이번 주 골든타임 한 장을 열어 보세요",
+                 "월간 자동본 열람 1", same_as="u4.report"),
+        KickCard("u4.search", "honest",
+                 "사건 이력을 사건번호로 찾아 보세요",
+                 "검색 1", same_as="u4.search"),
+        KickCard("u4.kick.drill", "drill",
+                 "훈련 사건 상황보고서(별지 1호)를 내려 보세요",
+                 "DOCX 1", closes=_closed_by_drill_upper_report),
+    ),
+    "U5": (
+        #: ★ U5 의 골든타임 카드는 `CARDS["U5"]` 에 짝이 없다 — 임계값 카드는 U2 표에
+        #:   있다. 그래서 **술어를 그대로 재사용**한다: 행 키만 이 표의 것이고, 판정하는
+        #:   함수는 `u2.threshold` 와 한 몸이다. 같은 뜻의 술어를 새로 짜지 않는다.
+        KickCard("u5.kick.golden30", "golden30",
+                 "임계값을 우리 기관 값으로 바꿔 보세요",
+                 "변경 기록 1", closes=_closed_by_threshold_change),
+        KickCard("u5.recipients", "honest",
+                 "알림 채널을 사람에게 닿는 것으로 바꿔 보세요",
+                 "규칙 저장 1", same_as="u5.recipients"),
+        KickCard("u5.kick.drill", "drill",
+                 "훈련 구역 하나를 켜 보세요",
+                 "OPS-15 구역 1",
+                 why="「훈련 구역」이라는 것이 서버에 없습니다 — `Zone.Kind` 는 "
+                     "카메라 묶음·폴리곤 둘뿐이고(D-299), 켠 구역이 훈련용인지 "
+                     "서버가 모릅니다. 아무 활성 구역으로 바꿔 닫지 않습니다: "
+                     "그러면 훈련과 상관없는 구역 하나가 훈련 카드를 닫습니다. "
+                     "구역에 훈련 표식이 서는 턴에 술어를 답니다."),
+    ),
+    "U6": (
+        KickCard("u6.events", "golden30",
+                 "API 키로 사건 하나를 읽어 보세요",
+                 "200 1", same_as="u6.events"),
+        KickCard("u6.subscription", "honest",
+                 "웹훅 구독을 등록하고 서명 검증을 확인하세요",
+                 "구독 1", same_as="u6.subscription"),
+        KickCard("u6.kick.drill", "drill",
+                 "훈련 사건이 웹훅으로 오는지 보세요",
+                 "drill 수신 1", closes=_closed_by_drill_webhook_delivery),
+    ),
+}
+
+
+def kick_integrity() -> list:
+    """이 표가 **스스로 어긋났는지**를 말한다. 시험·판정기가 이것을 읽는다.
+
+    돌려주는 것은 어긋남의 목록이다 — 비어 있으면 성한 것이다. 예외를 던지지 않는
+    이유: 표 하나가 어긋났다고 진행률 화면이 통째로 빌 일은 아니고, 어긋남은
+    **보이게** 해야 고쳐진다.
+    """
+    problems = []
+    pillars = tuple(code for code, _ in KICK_PILLARS)
+    if set(KICK_CARDS) != set(CARDS):
+        problems.append("kick 표의 역할이 CARDS 의 역할과 다릅니다: %s vs %s"
+                        % (sorted(KICK_CARDS), sorted(CARDS)))
+    for role, cards in sorted(KICK_CARDS.items()):
+        if len(cards) != len(pillars):
+            problems.append("%s 의 첫 카드가 %d 장입니다 — 기둥은 %d 입니다."
+                            % (role, len(cards), len(pillars)))
+        if tuple(c.pillar for c in cards) != pillars:
+            problems.append("%s 의 기둥 순서가 §4-4 표와 다릅니다: %s"
+                            % (role, [c.pillar for c in cards]))
+        keys = {c.key for c in CARDS.get(role, ())}
+        for card in cards:
+            filled = [bool(card.same_as), card.closes is not None,
+                      bool(card.why.strip())]
+            if sum(1 for f in filled if f) != 1:
+                problems.append("%s/%s 는 same_as·closes·why 중 정확히 하나여야 "
+                                "합니다." % (role, card.key))
+            if card.same_as:
+                if card.same_as != card.key:
+                    problems.append("%s/%s 의 키가 짝지은 카드와 다릅니다 — 키가 "
+                                    "다르면 행이 둘이 되고 판정이 두 벌이 됩니다."
+                                    % (role, card.key))
+                if card.same_as not in keys:
+                    problems.append("%s/%s 가 이 역할에 없는 카드(%s)를 가리킵니다."
+                                    % (role, card.key, card.same_as))
+            if not card.prompt.strip():
+                problems.append("%s/%s 에 문안이 없습니다." % (role, card.key))
+    return problems
+
+
+def kick(*, scope: TenantScope, bucket: Optional[str], measured, blocked,
+         now: Optional[datetime] = None) -> dict:
+    """「처음이세요」 첫 카드 셋. **진행률을 내지 않는다.**
+
+    `measured`·`blocked` 는 `progress()` 가 이미 낸 `CARDS` 의 판정이다. 그것을
+    **다시 재지 않고 그대로 읽는다** — 같은 카드를 두 번 재면 두 번째가 첫 번째와
+    다를 수 있고, 그 순간 화면의 배지와 목록이 다른 말을 한다(턴 AA · U56).
+    """
+    cards = KICK_CARDS.get(bucket or "", ())
+    by_key = {c["key"]: c for c in measured}
+    holes = {c["key"]: c for c in blocked}
+    at = now or timezone.now()
+
+    shown, unmeasurable = [], []
+    for card in cards:
+        row = {"key": card.key, "pillar": card.pillar, "prompt": card.prompt,
+               "promised_record": card.promised_record}
+        if card.same_as:
+            twin = by_key.get(card.same_as)
+            if twin is None:
+                hole = holes.get(card.same_as)
+                unmeasurable.append(dict(
+                    row, link=hole["link"] if hole else "",
+                    why=(hole["why"] if hole else
+                         "짝지은 카드 %s 가 이 역할의 표에 없습니다." % card.same_as)))
+                continue
+            shown.append(dict(row, link=twin["link"], done=twin["done"],
+                              source_ref=twin["source_ref"],
+                              completed_at=twin["completed_at"],
+                              closed_by="CARDS:%s" % card.same_as))
+            continue
+        if card.closes is None:
+            unmeasurable.append(dict(row, link="", why=card.why))
+            continue
+        try:
+            ref = card.closes(scope)
+        except Exception:  # noqa: BLE001 — 근거를 못 읽은 것은 닫히지 않은 것이다
+            ref = None
+        stored = None
+        if ref:
+            stored = record_card(scope=scope, card_key=card.key, source_ref=ref,
+                                 completed_at=at)
+        shown.append(dict(row, link="", done=stored is not None,
+                          source_ref=getattr(stored, "source_ref", "") if stored else "",
+                          completed_at=(getattr(stored, "completed_at", None)
+                                        if stored else None),
+                          closed_by="predicate:%s" % card.closes.__name__))
+    return {
+        "pillars": [{"code": code, "label": label} for code, label in KICK_PILLARS],
+        "cards": shown,
+        #: 못 재는 첫 카드. **지우지 않는다** — 셋 중 둘이 조용히 둘 중 둘이 되면
+        #: 「첫 카드 다 했다」가 거짓이 된다(D-301).
+        "blocked": unmeasurable,
+        "total": len(shown) + len(unmeasurable),
+        "done": sum(1 for c in shown if c["done"]),
+        "blocked_total": len(unmeasurable),
+    }
+
+
 #: 역할 코드 → 사람. **`config/k3_roles.py` 의 묶음을 그대로 쓴다** — 새 표를 만들지 않는다
 #: (앞판 `features/nav/roleNav.ts` 가 같은 말을 하고, 두 벌이 되면 반드시 어긋난다).
 def _role_buckets():
@@ -627,4 +983,9 @@ def progress(*, scope: TenantScope, persona: str = "") -> dict:
         "cards": measurable,
         "blocked": blocked,
         "blocked_total": len(blocked),
+        #: 「처음이세요」 첫 카드 셋 (WO-04 §4-4 · 턴 AB). **위 수에 손대지 않는다** —
+        #: `total`·`done`·`percent` 는 예나 지금이나 `CARDS` 만 센 수다. 이 칸은
+        #: 같은 판정에서 **세 장만 골라 보여 주는 창**이지 두 번째 진행률이 아니다.
+        "kick": kick(scope=scope, bucket=bucket, measured=measurable,
+                     blocked=blocked, now=now),
     }

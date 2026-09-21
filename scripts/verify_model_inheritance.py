@@ -239,5 +239,9 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    _n_py = sum(1 for _p in (ROOT / "backend").rglob("*.py"))
+    gate_header(__file__, measured=("dj-core 를 **새로 상속하는 자리**가 늘었는가 — **분모 %s개**"
+              "(`backend/` 파이썬 전수 · AST 로 기저클래스를 읽는다 · 지금 "
+              "셌다). 래칫이다 — 초록은 「**새** 상속 0건」이지 "
+              "「상속 0건」이 아니다 (D-295)" % (_n_py or "못 셌다")))
     raise SystemExit(main())

@@ -209,6 +209,130 @@ def judge_measured(measured: str) -> list[str]:
     return out
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ★★ [P-217 · 2026-09-21 · 턴 AB · 차선 Q] **결정문은 배선이다 — 기한은 문서가
+#     아니라 판정기가 지킨다**
+#
+# 턴 AA 에 「MEASURED 남은 회색 28 은 턴 AC 부터 빨강」을 **보고 문서에만** 적었다.
+# 문서에 적힌 기한은 **아무도 안 지킨다** — 그 날이 와도 게이트의 색이 안 바뀌고,
+# 색이 안 바뀌면 기한이 **조용히 지나간다.** 턴 AA 의 넘김 7번이 그 자리였다.
+#
+# 그래서 기한을 `docs/agent/decisions.yaml` 의 결정문에 `deadline:` 으로 적고,
+# 판정기가 **그 파일을 읽어서** 오늘과 대 본다. 배선이 서면 셋이 따라온다:
+#   · 기한이 오면 **게이트가 스스로** 회색을 빨강으로 올린다 (사람이 안 고쳐도)
+#   · 결정문을 지우면 게이트가 **「결정문을 못 읽었다」**고 말한다 (조용히 안 꺼진다)
+#   · 기한을 옮기려면 **결정문을 고쳐야 한다** — 코드를 고쳐서 미룰 수 없다
+#
+# ⚠ 값을 여기 베끼지 않는다. 날짜를 코드에 적는 순간, 결정문이 움직여도 이 줄이
+#   거짓말한다 — 이 파일이 막으려고 있는 바로 그 병이다(P-93).
+# ═══════════════════════════════════════════════════════════════════════════
+DECISIONS = ROOT / "docs" / "agent" / "decisions.yaml"
+
+_DEC_ID = re.compile(r"^-\s*id:\s*[\"']?([A-Za-z0-9_.-]+)[\"']?\s*$", re.M)
+_DEC_FIELD = re.compile(r"^\s{2}(deadline|escalates_to|status):\s*"
+                        r"[\"']?([^\"'\n#]+?)[\"']?\s*(?:#.*)?$", re.M)
+
+
+def read_decision(decision_id: str, text: str = None) -> tuple[dict, str]:
+    """결정문 한 건의 `deadline:` · `escalates_to:` · `status:` 를 읽는다.
+
+    돌려주는 것 `(fields, why)` — 못 읽으면 `fields` 가 비고 `why` 에 사유가 든다.
+    **못 읽은 것을 「기한 없음」으로 읽지 않는다** — 부르는 쪽이 회색으로 낸다.
+    """
+    if text is None:
+        if not DECISIONS.is_file():
+            return {}, "`%s` 가 없다" % DECISIONS.name
+        text = DECISIONS.read_text(encoding="utf-8", errors="replace")
+    spans = [(m.group(1), m.start()) for m in _DEC_ID.finditer(text)]
+    for i, (did, start) in enumerate(spans):
+        if did != decision_id:
+            continue
+        end = spans[i + 1][1] if i + 1 < len(spans) else len(text)
+        got = {k: v.strip() for k, v in _DEC_FIELD.findall(text[start:end])}
+        return got, ""
+    return {}, ("결정문 `%s` 가 `%s` 에 **없다** — 기한을 지우면 게이트가 조용히 "
+                "꺼진다. 그래서 이 자리는 회색이다" % (decision_id, DECISIONS.name))
+
+
+def deadline_passed(deadline: str, today: str = None) -> bool | None:
+    """기한이 **지났나.** 날짜를 못 읽으면 `None`(회색) — 0 도 1 도 아니다."""
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", (deadline or "").strip()):
+        return None
+    if today is None:
+        today = datetime.now().strftime("%Y-%m-%d")
+    return today >= deadline.strip()
+
+
+def escalation(decision_id: str, *, text: str = None,
+               today: str = None) -> tuple[str, str]:
+    """결정문의 기한을 오늘과 대 본다 → `(수준, 한 줄)`.
+
+    수준은 셋: `"red"`(기한이 왔다) · `"grey"`(아직 안 왔다) · `"unknown"`(못 읽었다).
+    ★ `"unknown"` 은 `"grey"` 와 **다르다** — 「아직 아니다」와 「모른다」를 같은
+      낱말로 적으면 결정문을 지운 것이 「기한 전」으로 읽힌다.
+    """
+    got, why = read_decision(decision_id, text)
+    if not got:
+        return "unknown", why
+    if got.get("status") == "superseded":
+        return "unknown", ("결정문 `%s` 가 `superseded` 다 — 무엇이 대신하는지 "
+                           "확인하기 전에는 이 기한을 집행하지 않는다" % decision_id)
+    dl = got.get("deadline", "")
+    passed = deadline_passed(dl, today)
+    if passed is None:
+        return "unknown", ("결정문 `%s` 에 읽을 수 있는 `deadline: YYYY-MM-DD` 가 "
+                           "없다 (%r)" % (decision_id, dl))
+    to = got.get("escalates_to", "red")
+    if passed:
+        return (to if to in ("red", "grey") else "red",
+                "결정문 `%s` 의 기한 **%s 가 왔다** — 이 칸은 이제 **%s** 다 "
+                "(문서가 아니라 이 줄이 그것을 집행한다)" % (decision_id, dl, to))
+    return "grey", ("결정문 `%s` 의 기한은 **%s** 다 — 그날부터 이 칸은 **%s**. "
+                    "오늘은 아직 회색이다" % (decision_id, dl, to))
+
+
+# ── 분모를 **지금 센다** — 손으로 적은 수는 하나도 두지 않는다 ─────────────
+#
+# ★★ [실측 2026-09-21 · 턴 AA] 이 규칙이 한 자리에서 즉시 값을 했다:
+#   `verify_settings_fail_closed` 의 머리글에 분모로 `ALLOWED_HOSTS` 를 적었더니
+#   **`NameError` 로 죽었다** — 그 이름이 그 파일에 없었다. 손으로 수를 적었으면
+#   **안 죽고 거짓 분모로 초록이 났을 자리**다. **도구가 죽어서 알려 주는 것이 옳다.**
+#   아래 둘은 그 「지금 센다」를 한 줄로 쓰게 하는 자리다.
+
+def count_lines(path, comment: str = "#") -> int | None:
+    """파일의 **데이터 줄**을 센다(주석·빈 줄 제외). 못 읽으면 `None`.
+
+    ⚠ `0` 과 `None` 을 가른다 — 「그 파일에 0행」과 「그 파일이 없다」는 다른 사실이고,
+      `judge_measured` 는 분모 0 을 빨강으로 친다. 없는 파일을 0 으로 적으면
+      **없는 빨강**이 서고, 그런 빨강은 사람이 게이트를 끄게 만든다.
+    """
+    try:
+        text = Path(path).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    return sum(1 for ln in text.splitlines()
+               if ln.strip() and not ln.strip().startswith(comment))
+
+
+def count_json(path, key: str = None) -> int | None:
+    """JSON 증거의 **항목 수**를 센다. 못 읽으면 `None`(0 이 아니다)."""
+    import json as _json
+    try:
+        data = _json.loads(Path(path).read_text(encoding="utf-8", errors="replace"))
+    except (OSError, ValueError):
+        return None
+    if key is not None:
+        data = data.get(key) if isinstance(data, dict) else None
+        if data is None:
+            return None
+    return len(data) if hasattr(data, "__len__") else None
+
+
+def denom(n, unit: str = "건") -> str:
+    """분모 한 조각을 글자로. **못 센 것은 「못 셌다」고 적는다** — 0 이 아니다."""
+    return "**분모 %d%s**" % (n, unit) if n else "**분모를 못 셌다**(파일이 없다)"
+
+
 def judge_header(target: str, as_: str, source: str, reason: str = "") -> list[str]:
     """세 줄을 한꺼번에. **비어 있는 머리글은 통과가 아니다.**"""
     out: list[str] = []

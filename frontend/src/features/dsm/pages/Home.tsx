@@ -51,6 +51,9 @@ import {
   linkStatusLabel,
 } from '../copy';
 import { useDsmResource } from '../hooks/useDsmResource';
+// ★ [턴 AB · 조율자] 「처음이세요」 첫 카드 셋은 **차선 K 의 컴포넌트를 그대로 부른다.**
+//   여기서 다시 그리면 **판정이 두 벌**이 되고, 두 벌은 언젠가 갈라진다.
+import { FirstCards, type KickView } from './Onboarding';
 import { CustomRoutes } from '@/services/API';
 import { bucketOf, type NavBucket } from '@/features/nav/roleNav';
 import { homeRoleCodes } from '@/features/nav/roleHome';
@@ -92,6 +95,8 @@ interface OnboardingBlockedRow {
 
 interface OnboardingProgressView {
   role: string | null;
+  /** ★ [턴 AB] 첫 카드 셋. 서버가 같은 응답에 실어 보낸다 — 홈은 문을 다시 안 두드린다. */
+  kick?: KickView;
   role_known: boolean;
   measured_at: string;
   total: number;
@@ -301,6 +306,13 @@ function OnboardingBand({ onOpen }: { onOpen: (path: string) => void }) {
           </Space>
         </Card>
       ) : null}
+
+      {/* ★ 첫 카드 셋 — 이미 받은 응답의 `kick` 칸을 넘긴다.
+          넘기면 K 의 컴포넌트가 **제 요청을 아예 안 부른다**(`enabled: !kick`) —
+          홈 한 장이 같은 문을 두 번 두드리지 않는다.
+          ★ 「첫 진입 1회」로 숨기지 않는다 — 그 1회는 브라우저 기억이지 서버 기록이 아니고,
+          표시이지 판정이 아니다. 카드가 닫혔는지는 언제나 서버가 말한다(닫히면 K 가 스스로 안 그린다). */}
+      <FirstCards kick={data?.kick} />
     </StateBoundary>
   );
 }

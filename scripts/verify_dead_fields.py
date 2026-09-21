@@ -25,6 +25,9 @@
                                           `update_or_create` · `bulk_create`
            ② 속성 대입의 좌변              `obj.f = …`
            ③ `update_fields` 문자열        `save(update_fields=["f"])`
+           ④ **`defaults=` 사전의 키**      `update_or_create(defaults={"f": …})`
+                                          — `*_or_create` 는 **그 사전으로 쓴다**
+                                            (턴 AB 에 이 갈래가 없어 거짓 빨강이 났다)
          **읽기는 세지 않는다.** 이 스크립트가 찾는 것이 정확히 "읽기만 있는 필드" 이기 때문이다.
 
   ★ 첫 판은 **모든 키워드 인자**를 쓰기로 셌다. 그래서 `EventView(clip_path=row.clip_path)`
@@ -81,6 +84,14 @@ ORM_WRITE_CALLS = frozenset({
 #: M2M 쓰기 동사. `obj.<field>.set(...)` · `.add(...)` · `.remove(...)` · `.clear()`
 M2M_WRITE_CALLS = frozenset({"set", "add", "remove", "clear"})
 
+#: ★ [턴 AB] **이름 붙은 사전으로 쓰는 호출** — `*_or_create` 둘뿐이다.
+#:   이 둘만 `defaults=` 사전의 **키**를 필드로 쓴다. 다른 ORM 쓰기는 키워드 인자의
+#:   **이름**이 곧 필드라 ①이 이미 본다.
+DEFAULTS_DICT_CALLS = frozenset({"get_or_create", "update_or_create"})
+#: 그 사전의 이름. `create_defaults` 는 Django 5 의 `update_or_create` 가 받는 짝이다.
+#: ⚠ **이름이 붙은 것만** 센다 — 아무 사전이나 세면 진짜 죽은 필드가 숨는다.
+DEFAULTS_KWARGS = frozenset({"defaults", "create_defaults"})
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 화이트리스트 — **「선언된 미구현 + 사유 + 결정 번호」가 있는 것만**
 # ═══════════════════════════════════════════════════════════════════════════
@@ -114,6 +125,22 @@ DECLARED_UNWIRED: dict[str, str] = {
     #    훅이 쓴다」였고, **그 턴이 왔다** — `apps/dsm/onboarding.py` 가 둘을 쓴다.
     #    카드의 완료는 서버 기록이 닫는다(WO-01 §12) — 그 기록이 `source_ref` 였고,
     #    이제 그 이름이 실제로 채워진다.
+    # ── D-514(P-224) · 2026-09-21 턴 AB — **청구 표식 칸이 발급 배선보다 먼저 태어났다.**
+    #    대표 ⑧ 「청구 표식을 더해라」를 P-224 로 집행했고, 결정문은 **D-514** 다.
+    #    카메라 표는 **우리 것**이라 칸(`data_source`)을 더했고,
+    #    소급은 마이그레이션이 **한 번** 찍는다(pk 로 얼린 22줄).
+    #    그러나 **새로 태어나는 카메라에 그 칸을 쓰는 운영 자리가 아직 없다** —
+    #    차선 B 가 스스로 「넘김 — 발급 순간 배선 다섯 자리」로 적은 바로 그것이다.
+    #    ★ 이것이 **착시 ⑥ 그대로의 모양**임을 안다. 숨기지 않고 적는다.
+    #    ★ 기본값 `live` 는 쓰기가 아니다 — 기본값으로 태어난 칸은 「누가 정했는가」를
+    #      모른다. 그래서 이 등재는 「문제 없다」가 아니라 **만료일이 적힌 이름표**다.
+    #    배선할 자리(턴 AC · 보고 §13 ③): 게이트 탐침 카메라(`scripts/probe_*`) ·
+    #    온보딩 계측기(`measure_onboarding_t.py`) · 훈련 창(`stream_monitors/services/drill.py`).
+    #    ⚠ 배선되는 순간 이 게이트가 「등재를 지워라」로 빨개진다 — 그것이 이 목록의 뜻이다.
+    "stream_monitors.StreamMonitor.data_source": (
+        "D-514(P-224) · 턴 AB. 청구에서 씨앗을 빼는 칸 — 소급은 마이그레이션이 한 번 챠고, "
+        "새로 태어나는 카메라에 쓰는 자리는 턴 AC 에 배선한다(보고 §13 ③ · 다섯 자리). "
+        "기본값 `live` 는 쓰기가 아니다."),
     **{f"stream_monitors.DsmReportRun.{f}": (
         "D-463. 월간 자동본 실행 기록(UX-40)의 칸 — U24 차선 파 3 턴 5 `monthly_report.py` "
         "배치가 쓴다.")
@@ -312,6 +339,38 @@ def write_sites() -> tuple[dict[str, int], dict[str, int]]:
                         for el in kw.value.elts:
                             if isinstance(el, ast.Constant) and isinstance(el.value, str):
                                 bucket[el.value] += 1
+                # ④ ★★ [실측 2026-09-21 · 턴 AB · 조율자가 찾고 차선 Q 가 고쳤다]
+                #   **`update_or_create(defaults={...})` 의 사전 키도 쓰기다.**
+                #
+                #   이 게이트가 `common.BillingMark.data_source` 를 「새로 생긴
+                #   **쓰기 0곳** 필드」로 찍었다. 그런데 운영 코드가 쓴다:
+                #       backend/common/billing_marks.py:246-248
+                #         Mark._base_manager.update_or_create(
+                #             model_label=…, object_id=…,
+                #             defaults={"data_source": source, "reason": reason[:500]})
+                #   ①은 **키워드 인자의 이름**만 보므로 `defaults` 하나만 세고,
+                #   **그 사전 안의 키는 못 봤다.** `*_or_create` 는 **그 사전으로 쓴다.**
+                #
+                #   ★★ 이 거짓 빨강이 특히 무거운 이유: 이 게이트의 처방은
+                #     「배선해라 / 아니면 **죽었다고 선언해라**」인데 둘 다 틀린 답이다
+                #     (이미 배선돼 있다). **거짓 빨강이 거짓 선언을 낳는다.**
+                #
+                #   ⚠ **넓히되 좁게 넓힌다** — 아무 사전이나 세면 **진짜 죽은 필드가
+                #     숨는다.** 세 조건을 다 만족해야 한다:
+                #       ⒜ 그 호출이 **`*_or_create`** 다 (`create(**payload)` 같은 건 아니다)
+                #       ⒝ 키워드 이름이 **`defaults`**(또는 Django 5 의 `create_defaults`)다
+                #       ⒞ 값이 **사전 리터럴**이고 키가 **문자열 상수**다
+                #     `**something` 으로 넘긴 사전은 **안 센다** — 그 안에 무엇이 있는지
+                #     이 도구가 모르고, 모르는 것을 쓰기로 세면 죽은 필드가 살아 보인다.
+                if fname in DEFAULTS_DICT_CALLS:
+                    for kw in node.keywords:
+                        if kw.arg not in DEFAULTS_KWARGS:
+                            continue
+                        if not isinstance(kw.value, ast.Dict):
+                            continue
+                        for k in kw.value.keys:
+                            if isinstance(k, ast.Constant) and isinstance(k.value, str):
+                                bucket[k.value] += 1
                 # M2M — `zone.cameras.set([...])` 의 `cameras`
                 if fname in M2M_WRITE_CALLS and isinstance(node.func.value, ast.Attribute):
                     bucket[node.func.value.attr] += 1
@@ -322,6 +381,35 @@ def write_sites() -> tuple[dict[str, int], dict[str, int]]:
                     if isinstance(t, ast.Attribute):
                         bucket[t.attr] += 1
     return dict(prod), dict(test)
+
+
+def ambiguous_field_names(fields: dict) -> set:
+    """**같은 이름이 둘 이상의 모델에 있는** 필드 이름들.
+
+    ★★ [실측 2026-09-21 · 턴 AB] 이 게이트의 쓰기 셈은 **이름 단위**다 —
+      `data_source` 에 쓰면 그 이름을 가진 **모든 모델의 필드**가 살아 보인다.
+      평소에는 안전한 쪽으로 틀리는 성질(놓치는 쪽)이라 그대로 두었는데,
+      `defaults=` 갈래를 더하자 한 자리에서 **틀린 처방**이 나왔다:
+
+          common.BillingMark.data_source        ← 진짜 쓴다 (billing_marks.py:248)
+          stream_monitors.StreamMonitor.data_source ← **운영 쓰기 0곳** (D-514 로 등재)
+
+      두 필드가 **이름이 같다.** 그래서 ④를 더하자 둘 다 「살아 있다」가 되었고,
+      게이트가 등재된 쪽에 **「등재를 지워라」**를 시켰다. 지우면 진짜 미배선이
+      목록에서 사라진다 — **거짓 빨강이 거짓 삭제를 낳는 자리**다.
+
+    ★ 그래서 **이 게이트는 모델을 못 가른다는 사실을 스스로 말한다.**
+      이름이 겹치는 필드에 대해서는 **「등재를 지워라」를 말하지 않는다** —
+      말할 근거가 없기 때문이다. 면제가 아니라 **모른다는 말**이고,
+      판정문이 그 사실을 소리 내어 적는다.
+    ⚠ 「살아 있다」쪽은 그대로 둔다(놓치는 쪽으로 틀린다 · 이 게이트는 래칫이다).
+      바꾸는 것은 **처방 한 줄**뿐이다.
+    """
+    seen: dict = {}
+    for label in fields:
+        name = label.rsplit(".", 1)[-1]
+        seen[name] = seen.get(name, 0) + 1
+    return {n for n, c in seen.items() if c > 1}
 
 
 def audit() -> tuple[dict[str, str], list[str], dict[str, tuple[int, int]]]:
@@ -366,6 +454,9 @@ class Thing(models.Model):
     only_read = models.CharField(max_length=10)
     carried = models.CharField(max_length=10)
     tagged = models.ManyToManyField("Other")
+    by_defaults = models.CharField(max_length=10)
+    in_plain_dict = models.CharField(max_length=10)
+    in_kwargs_dict = models.CharField(max_length=10)
     id = models.BigAutoField(primary_key=True)
 '''
 _USER_SRC = '''
@@ -375,6 +466,21 @@ def go(t):
     Thing.objects.filter(only_read="x")
     ThingView(carried=t.carried)          # 값 객체 — 실어 나르는 것이지 쓰는 것이 아니다
     t.tagged.set([1, 2])                  # M2M 쓰기
+
+    # ★ [턴 AB] `*_or_create` 는 **defaults 사전으로 쓴다** — 그 키가 필드다
+    Thing._base_manager.update_or_create(
+        object_id="1", defaults={"by_defaults": "v"})
+
+    # ★ 음성 ⒜ — 그냥 사전이다. `*_or_create` 의 `defaults=` 가 아니다
+    payload = {"in_plain_dict": "v"}
+    ThingView(**payload)
+    some.helper(config={"in_plain_dict": "v"})
+    # ★ 음성 ⒞ — `create` 는 ORM 쓰기지만 **`*_or_create` 가 아니다.**
+    #   그 `defaults=` 는 그냥 인자이고, 사전 키를 필드로 세면 안 된다
+    Thing.objects.create(defaults={"in_plain_dict": "v"})
+
+    # ★ 음성 ⒝ — `**` 로 넘긴 사전. 안에 무엇이 있는지 이 도구는 모른다
+    Thing.objects.update_or_create(object_id="2", **{"in_kwargs_dict": "v"})
 '''
 
 
@@ -395,9 +501,10 @@ def self_test() -> int:
             BACKEND = saved
 
     checks = [
-        ("모수를 센다 (프레임워크 필드 id 는 빼고 4건)", set(
+        ("모수를 센다 (프레임워크 필드 id 는 빼고 7건)", set(
             k.rsplit(".", 1)[-1] for k in fields)
-            == {"written", "only_read", "carried", "tagged"}),
+            == {"written", "only_read", "carried", "tagged",
+                "by_defaults", "in_plain_dict", "in_kwargs_dict"}),
         ("ORM 쓰기가 있는 필드는 안 잡는다", "probe.Thing.written" not in dead),
         ("★ 읽기만 있는 필드를 잡는다", "probe.Thing.only_read" in dead),
         ("filter 는 쓰기가 아니다", counts.get("probe.Thing.only_read", (9, 9))[0] == 0),
@@ -408,6 +515,32 @@ def self_test() -> int:
         ("★ 값 객체 생성자는 쓰기가 아니다 (clip_path 를 놓쳤던 갈래)",
          "probe.Thing.carried" in dead),
         ("M2M .set() 은 쓰기다", "probe.Thing.tagged" not in dead),
+        # ★★ [턴 AB · 출생 표본] `update_or_create(defaults={...})` 의 사전 키는 쓰기다.
+        #   이 갈래가 없어 `common.BillingMark.data_source` 가 **거짓 빨강**으로 났고,
+        #   그 빨강의 처방이 「**죽었다고 선언해라**」라 **거짓 선언을 낳을 뻔했다.**
+        ("★★ 출생 표본 · `update_or_create(defaults={...})` 의 사전 키는 **쓰기다** "
+         "(BillingMark.data_source 를 죽었다고 찍던 갈래)",
+         "probe.Thing.by_defaults" not in dead),
+        # ★ 음성 셋 — 넓히되 **좁게** 넓혔는가. 아무 사전이나 세면 진짜 죽은 필드가 숨는다.
+        ("★ 음성 · 그냥 사전·`create(defaults=…)` 의 키는 **쓰기가 아니다** "
+         "(`*_or_create` 가 아니면 그 사전으로 쓰지 않는다)",
+         "probe.Thing.in_plain_dict" in dead),
+        ("★ 음성 · `**{…}` 로 넘긴 사전은 **안 센다** — 안에 무엇이 있는지 모르고, "
+         "모르는 것을 쓰기로 세면 죽은 필드가 살아 보인다",
+         "probe.Thing.in_kwargs_dict" in dead),
+        # ★★ [턴 AB] **이 게이트는 모델을 못 가른다** — 그 사실을 스스로 안다.
+        #   `defaults=` 를 더하자 `BillingMark.data_source` 의 쓰기가
+        #   `StreamMonitor.data_source` 까지 살려서, 게이트가 등재된 쪽에
+        #   **「등재를 지워라」**를 시켰다. 지우면 진짜 미배선이 사라진다.
+        ("★★ 이름이 **둘 이상의 모델**에 있으면 겹침으로 센다",
+         ambiguous_field_names({
+             "a.A.data_source": "x", "b.B.data_source": "x", "a.A.only_here": "x",
+         }) == {"data_source"}),
+        ("★ 음성 · 한 모델에만 있는 이름은 겹침이 아니다 "
+         "(겹침을 넓게 보면 「등재를 지워라」가 영영 안 나온다)",
+         ambiguous_field_names({"a.A.only_here": "x", "b.B.other": "x"}) == set()),
+        ("★ 음성 · 같은 모델의 같은 이름은 하나다(라벨이 같으므로)",
+         ambiguous_field_names({"a.A.f": "x"}) == set()),
         ("화이트리스트가 사유·번호를 요구한다", whitelist_problems() == []),
     ]
     bad = 0
@@ -418,7 +551,7 @@ def self_test() -> int:
     if bad:
         print(f"[DEADFIELD] 자기시험 {bad}건 실패 — 이 판정기는 눈이 멀었다")
         return 1
-    print(f"[DEADFIELD] 자기시험 {len(checks)}건 통과 (양성 2 · 음성 5)")
+    print(f"[DEADFIELD] 자기시험 {len(checks)}건 통과 (양성 4 · 음성 9 — ★ `defaults=` 넓힘은 **음성 둘과 함께** 섰다)")
     return 0
 
 
@@ -441,7 +574,7 @@ def main() -> int:
     # ★ D-301 — 검사 건수를 낸다. 0건은 통과가 아니라 **열거기 고장**이다.
     print(f"[DEADFIELD] 검사 {len(fields)}건 (모수=backend/**/models.py 의 모델 필드 전수, "
           f"프레임워크 필드 {len(FRAMEWORK_FIELDS)}종 제외 · "
-          f"술어=ORM 쓰기 호출의 키워드 인자·속성 대입·M2M set/add·update_fields)")
+          f"술어=ORM 쓰기 호출의 키워드 인자·속성 대입·M2M set/add·update_fields·`*_or_create` 의 `defaults=` 사전 키)")
     if not fields:
         print("[DEADFIELD] 필드를 한 건도 못 찾았다 — 열거기가 눈이 멀었다. "
               "0건을 통과로 읽지 않는다 (D-301)")
@@ -451,7 +584,13 @@ def main() -> int:
     declared = [d for d in dead if d in DECLARED_UNWIRED]
     debt = [d for d in dead if d in baseline and d not in DECLARED_UNWIRED]
     fresh = [d for d in dead if d not in baseline and d not in DECLARED_UNWIRED]
-    stale = [k for k in DECLARED_UNWIRED if k not in dead]
+    #: ★ 이름이 겹치는 필드는 **어느 모델에 쓴 것인지 이 게이트가 못 가른다.**
+    #:   그런 자리에는 「등재를 지워라」를 말하지 않는다 (위 `ambiguous_field_names`).
+    ambiguous = ambiguous_field_names(fields)
+    stale = [k for k in DECLARED_UNWIRED
+             if k not in dead and k.rsplit(".", 1)[-1] not in ambiguous]
+    stale_ambiguous = [k for k in DECLARED_UNWIRED
+                       if k not in dead and k.rsplit(".", 1)[-1] in ambiguous]
     healed = sorted(baseline - set(dead))
     forbidden = [d for d in dead if d.split(".")[0] in FORBIDDEN_APPS]
 
@@ -503,6 +642,16 @@ def main() -> int:
         problems.append(
             f"{label}: DECLARED_UNWIRED 에 있는데 이제 쓰인다 — 등재를 지운다. "
             f"낡은 선언이 남으면 다음에 죽는 필드를 그 이름이 가린다")
+    #: ★★ **못 가르는 것을 「지워라」로 말하지 않는다.** 소리 내어 적고 넘어간다 —
+    #:   안 적으면 다음 사람이 「이 게이트가 모델까지 본다」고 읽는다.
+    for label in stale_ambiguous:
+        name = label.rsplit(".", 1)[-1]
+        others = sorted(k for k in fields
+                        if k.rsplit(".", 1)[-1] == name and k != label)
+        print(f"[DEADFIELD] ? {label}: 이름 «{name}» 이 **다른 모델에도 있다** "
+              f"({' · '.join(others)}) — 이 게이트의 쓰기 셈은 **이름 단위**라 "
+              f"어느 모델에 쓴 것인지 **못 가른다.** 그래서 「등재를 지워라」를 "
+              f"말하지 않는다. 면제가 아니라 **모른다는 말**이다")
     if healed:
         # ★ D-311 — **줄어드는 것이 보여야 갚는 맛이 난다.** 실패가 아니고 로그다.
         #   빚 목록이 조용히 늘지 않는 것만으로는 부족하다 — 줄어든 줄의 이름을 남긴다.

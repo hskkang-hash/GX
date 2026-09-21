@@ -6,16 +6,26 @@
  *   **사용자가 닿을 수 있는 자리로 옮긴 것**이다. 문서가 저장소에만 있으면
  *   그것은 「있다」이지 「쓴다」가 아니다 — 첫 근무일의 사람은 저장소를 못 연다.
  *
- * ★ 관문 없이 선다. 이 화면은 **사용자 자료를 한 건도 부르지 않는다** —
+ * ★ [턴 AB · 차선 K] **「처음이세요」 첫 카드 셋**이 위에 붙었다 (WO-04 §4-4).
+ *   문안 정본은 **서버**의 `apps/dsm/onboarding.py::KICK_CARDS` 하나다 — 여기에
+ *   베끼어 적으면 문안이 두 벌이 되고, 한쪽만 고쳐지는 날 화면이 옛 글자를 그린다.
+ *   완료도 이 화면이 정하지 않는다 — **서버 기록이 닫고**, 여기는 무엇이 닫았는지
+ *   (`source_ref`)를 그대로 적는다. 체크 상자가 없는 이유다(WO-01 §12).
+ *
+ * ★ 관문 없이 선다. 이 화면의 **글자는 여전히 사용자 자료를 한 건도 부르지 않고** —
+ *   첫 카드 셋은 자격이 있을 때만 더 붙는다(익명이면 그 칸이 **없다** · 오류 상자도 안 뜬다) —
  *   서버 호출 0건 · 정적 글자뿐이다. 그래서 로그인 화면의 「처음이세요?」가
  *   여기로 올 수 있다. (무계정 링크 금지는 **자료를 보이는 링크**의 규약이다.)
  *
  * ★ 화면 이름은 사전(GX-COPY v1)을 따른다 — 「지금 처리할 것」 · 「훈련 모드」 ·
  *   「카메라 일괄 등록」 · 「미처리 → 접수 → 조치 중 → 종결」 · 「실제 / 오탐」.
  */
-import { Card, Space, Tabs, Typography } from 'antd';
-import { useMemo } from 'react';
+import { Alert, Card, Space, Tabs, Tag, Typography } from 'antd';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import { dsmGet, dsmHomeEndpoint } from '../api';
+import { useDsmResource } from '../hooks/useDsmResource';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -110,6 +120,142 @@ const CHAPTERS: Chapter[] = [
   },
 ];
 
+/** 이 블록에만 있는 글자 — 캡처가 이것을 보고 찍는다. */
+export const KICK_HEADLINE = '처음이세요 — 오늘 먼저 세 가지';
+
+/** 탭 → 서버에 물을 사람 유형. 역할은 서버가 알고 있으므로 빈 값이 기본이다. */
+const CHAPTER_TO_PERSONA: Record<string, string> = {
+  mobile: 'U3',
+  partner: 'U6',
+};
+
+export interface KickCardView {
+  key: string;
+  pillar: string;
+  prompt: string;
+  promised_record: string;
+  link: string;
+  done?: boolean;
+  source_ref?: string;
+  why?: string;
+}
+
+/** `GET /api/dsm/onboarding/progress` 응답의 `kick` 칸. 서버가 모양의 정본이다. */
+export interface KickView {
+  pillars: { code: string; label: string }[];
+  cards: KickCardView[];
+  blocked: KickCardView[];
+  total: number;
+  done: number;
+  blocked_total: number;
+}
+
+interface ProgressView {
+  role: string | null;
+  kick?: KickView;
+}
+
+/**
+ * 「처음이세요」 첫 카드 셋 (WO-04 §4-4 · 턴 AB · 차선 K).
+ *
+ * ★ **문안도 판정도 이 화면이 정하지 않는다.** 서버가 준 것을 그릴 뿐이다 —
+ *   앱 상태로 카드를 닫으면 그것이 곧 체크박스고(WO-04 §6 함정 ④),
+ *   문안을 여기 베끼면 정본이 두 벌이 된다.
+ * ★ **못 재는 칸은 0 이 아니라 회색이다.** 서버가 `blocked` 로 보낸 카드는
+ *   지우지 않고 사유와 함께 그린다 — 지우면 「셋 중 둘」이 조용히 「둘 중 둘」이
+ *   되고, 그 100 % 는 아무것도 증명하지 않는다(D-301).
+ * ★ 익명이면 **아무것도 그리지 않는다** — 오류 상자도 안 띄운다. 이 화면은
+ *   관문 밖에 서 있고, 그 사람에게 「인증 실패」는 소용이 없는 말이다.
+ *
+ * ★ [턴 AB · 조율자 요청] `kick` 을 **손에 들고 부를 수 있다.** 역할 홈
+ *   (`Home.tsx::OnboardingBand`)은 이미 같은 문을 부르고 있어서, 이 블록이 제 것도
+ *   부르면 홈 한 장이 **같은 문을 두 번 두드린다.** 두 응답은 같은 순간의 것이 아니므로
+ *   갈릴 수 있고, 갈리는 순간 띠와 카드가 다른 말을 한다 — 이 차선이 내내 피한 그 병이다.
+ *   그래서 `kick` 이 오면 **아예 안 부른다**(`enabled: false`) — 받아 놓고 버리는 것이
+ *   아니라 요청 자체가 없다. 안 오면 지금처럼 제가 부른다(`/start` 의 길).
+ */
+export function FirstCards({ chapter, kick }: { chapter?: string; kick?: KickView }) {
+  const persona = CHAPTER_TO_PERSONA[chapter ?? ''] ?? '';
+  const progress = useDsmResource<ProgressView>(
+    () => dsmGet(dsmHomeEndpoint.onboardingProgress, persona ? { persona } : undefined),
+    [persona],
+    { enabled: !kick },
+  );
+  const view = kick ?? (progress.state === 'data' ? progress.data?.kick : undefined);
+  if (!view || view.total === 0) return null;
+
+  const labelOf = (code: string) =>
+    view.pillars.find((p) => p.code === code)?.label ?? code;
+
+  const rows = [
+    ...view.cards.map((c) => ({ card: c, measurable: true })),
+    ...view.blocked.map((c) => ({ card: c, measurable: false })),
+  ].sort(
+    (a, b) =>
+      view.pillars.findIndex((p) => p.code === a.card.pillar) -
+      view.pillars.findIndex((p) => p.code === b.card.pillar),
+  );
+
+  return (
+    <Card size="small" data-testid="onboarding-kick">
+      <Space direction="vertical" size={8} style={{ width: '100%' }}>
+        <Space wrap align="center">
+          <Text strong>{KICK_HEADLINE}</Text>
+          <Text type="secondary">
+            {'닫힌 ' +
+              String(view.done) +
+              ' / 재는 칸 ' +
+              String(view.cards.length) +
+              ' · 아직 못 재는 칸 ' +
+              String(view.blocked_total) +
+              ' (카드는 언제나 ' +
+              String(view.total) +
+              '장)'}
+          </Text>
+        </Space>
+        <Text type="secondary">
+          체크 상자가 없습니다. 하신 일을 서버의 기록이 닫습니다 — 무엇이 닫았는지도
+          아래에 그대로 적어 둡니다.
+        </Text>
+        {rows.map(({ card, measurable }) => (
+          <Card key={card.key} size="small" type="inner" title={labelOf(card.pillar)}>
+            <Space direction="vertical" size={4} style={{ width: '100%' }}>
+              <Text>{'「' + card.prompt + '」'}</Text>
+              {measurable && card.done ? (
+                <Space wrap size={6}>
+                  <Tag color="green">닫혔습니다</Tag>
+                  <Text type="secondary">
+                    {'닫은 기록: ' + (card.source_ref || '')}
+                  </Text>
+                </Space>
+              ) : null}
+              {measurable && !card.done ? (
+                <Space wrap size={6}>
+                  <Tag>아직</Tag>
+                  <Text type="secondary">
+                    {'이것이 닫습니다: ' + card.promised_record}
+                  </Text>
+                  {card.link ? (
+                    <a href={card.link}>여는 자리로</a>
+                  ) : null}
+                </Space>
+              ) : null}
+              {!measurable ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message="아직 재지 못합니다 — 이 칸은 0 이 아니라 회색입니다"
+                  description={card.why}
+                />
+              ) : null}
+            </Space>
+          </Card>
+        ))}
+      </Space>
+    </Card>
+  );
+}
+
 /** 역할 첫 화면의 「?」가 붙여 오는 값 → 어느 쪽을 펼칠지. */
 const ROLE_TO_CHAPTER: Record<string, string> = {
   OPERATOR: 'operator',
@@ -123,10 +269,13 @@ export default function Onboarding() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
 
-  const active = useMemo(() => {
+  const initial = useMemo(() => {
     const asked = params.get('role') ?? '';
     return ROLE_TO_CHAPTER[asked.toUpperCase()] ?? CHAPTERS[0].key;
   }, [params]);
+  // 첫 카드 셋은 「지금 보고 있는 사람」을 따라간다 — 탭과 카드가 따로 놀면
+  // 「이동 중」을 펼쳐 두고 자리 카드를 읽게 된다.
+  const [active, setActive] = useState(initial);
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: 24 }}>
@@ -140,9 +289,12 @@ export default function Onboarding() {
           </Text>
         </div>
 
+        <FirstCards chapter={active} />
+
         <Card size="small">
           <Tabs
-            defaultActiveKey={active}
+            activeKey={active}
+            onChange={setActive}
             items={CHAPTERS.map((c) => ({
               key: c.key,
               label: c.label,

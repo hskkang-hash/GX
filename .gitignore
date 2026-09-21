@@ -112,3 +112,6 @@ docs/agent/evidence/D-373/monitor_last.json
 
 # P-170 ① — V 단독 잠금 파일(있으면 「지금 재는 중」 · 커밋하지 않는다)
 docs/agent/evidence/V_LOCK
+
+# 턴 AB — push 거절 시 보험 번들 (저장소에 올리지 않는다)
+_patches/

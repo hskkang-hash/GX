@@ -24,6 +24,13 @@
  *
  * ★★ **이것은 자물쇠가 아니다.** 줄을 안 그려도 라우트는 그대로 열려 있고 주소를
  *   치면 들어간다. 라우트 단 권한은 이미 **서버가** 닫았다(SEC-11a · P-105).
+ *
+ * ⚠⚠ **위 문장은 세 턴 동안 반만 참이었다** [실측 2026-09-21 · 턴 AB · U56].
+ *   주소를 치면 **들어가기는** 한다. 그러나 목록에서 뗀 줄의 **인수 화면은 제
+ *   표를 못 그린다** — 인수 표가 제 설정을 `useMenuData()` 의 그 줄로 찾기
+ *   때문이다. 즉 이 파일은 권한을 안 막았지만 **화면을 막고 있었다.**
+ *   U5#2 `/roles` 0행이 그 값이다. 사슬과 시각은 아래 **④** 에 실측으로 적었고,
+ *   고친 것도 거기 있다. **머리말이 코드보다 착했던 자리이므로 지우지 않고 남긴다.**
  *   여기서 하는 일은 **화면 결정**이지 권한 결정이 아니다 — 그 둘을 같은 말로
  *   적으면 다음 사람이 「앞판이 막고 있다」고 읽고, 그것은 거짓이다
  *   (`features/session/rolePending.ts` 머리말과 같은 규율).
@@ -235,6 +242,148 @@ function isOwnScreen(m: MenuNode): boolean {
   return typeof m.path === 'string' && m.path.startsWith('/');
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+ * ④ ★★ **가림이 자물쇠였다** — 지금 서 있는 화면의 줄은 못 뗀다
+ *    (턴 AB · 차선 U56 · U5#2 `/roles` 0행의 뿌리)
+ * ══════════════════════════════════════════════════════════════════════════
+ *
+ * 이 파일의 머리말은 세 턴 동안 「**가림이지 자물쇠가 아니다 — 주소를 치면
+ * 들어간다**」라고 적어 왔다. **그 문장이 틀렸다.** 이번 턴에 뿌리까지 쟀다.
+ *
+ * 무엇을 쟀나 [실측 2026-09-21 · 턴 AB · 번들 `rj-core/dist/rj-core.es.js`]
+ * -------------------------------------------------------------------------
+ * 인수 표(`CustomizableTable`)는 **제 목록을 곧바로 부르지 않는다.** 이런 사슬이다:
+ *
+ *   ㉠ `RoleManagement` 의 목록 호출은 `useEffect(() => { E && !zn(z) && y(); })`
+ *      안에 있다. `E` = 한 쪽에 몇 줄(`pageSize`) · `zn` = 「빈 객체인가」.
+ *   ㉡ `E` 는 표가 **제 설정(grid config)** 을 받은 뒤에야 채워진다:
+ *      `useEffect(() => { u0?.pagination_size && f && W(Number(u0.pagination_size)); })`
+ *   ㉢ 그 설정은 `U2({activeSubItemSession, userId, menuId, activeTabSession})` 이
+ *      가져오고, 그 호출은 이 조건 아래 있다:
+ *        `x0 && !A1 && (activeSubItemSession || activeItemSession)
+ *              && userInfo?.id && k1?.id`
+ *   ㉣ `k1 = getMenuByMainIdAndSubId(activeItem, activeSub, activeTab)` 이고,
+ *      그 함수는 **`useMenuData()` 의 목록에서 그 id 를 찾는다.** 못 찾으면 `null`.
+ *
+ * ⇒ **목록에서 뗀 줄은 `k1` 이 `null` 이 되고, 그러면 설정이 안 오고, 설정이
+ *   안 오면 `pageSize` 가 안 서고, `pageSize` 가 없으면 표가 제 목록을 한 번도
+ *   안 부른다.** 화면은 **0행**으로 뜬다 — 「없다」와 똑같은 그림이다.
+ *
+ * 시각이 그것을 그대로 말한다 [온보딩 정본 `docs/agent/onboarding_48.md`]
+ * ----------------------------------------------------------------------
+ *     2026-09-07  `admin` 으로 `/roles` → **15개 역할 · `Add New Role` 보임** (●)
+ *     2026-09-10  턴 O — 이 파일이 서고 `admin` 의 표에 `/roles` 가 **없다**
+ *     2026-09-17  `admin` 으로 `/roles` → **표 행 0 · `Add New Role` 없음** (○)
+ *
+ * ⇒ U5#2 는 인수 자산의 결함도 dj-core 의 결함도 아니다. **우리가 턴 O 에 낸
+ *   퇴행**이고, 그 사실이 넉 달 동안 「빈 표」로만 보였다.
+ *
+ * ★ 같은 뿌리에 걸린 빨강이 U5#2 하나가 아니다(다른 차선 소유 · 쪽지로 알린다):
+ *     U4#11 `/device`         — U4 표에 없다 → 0행  (턴 T 는 「권한」으로 적었다)
+ *     U2#6  `/report-template` — 인수 넷에 들어 있다 → 0행
+ * ★ 반대 증거도 같은 표가 준다: `/users`(menuId 3)는 **U5 표에 있어** 목록에
+ *   남았고, 같은 인수 표인데 **29명 + `Add New User` 가 그려진다**(09-07 · 턴 AA
+ *   재확인). 남긴 줄은 서고 뗀 줄은 안 선다 — 갈린 것은 표에 있느냐뿐이다.
+ *
+ * 그래서 무엇을 고쳤나 — **뗀 것을 되돌리지 않는다. 서 있는 자리만 남긴다**
+ * ------------------------------------------------------------------------
+ * 사이드바에서 넷을 떼는 결정은 그대로다(P-220 · 고객 화면에 인수 자산 0).
+ * 다만 **지금 그 주소에 서 있는 동안에는** 그 줄을 목록에 남긴다. 그러면
+ * `k1` 이 서고 표가 제 목록을 부른다.
+ *
+ * ⚠ **값을 치르는 것을 숨기지 않는다**: 그 화면에 서 있는 동안 사이드바에 줄이
+ *   **하나 는다**(예: `/roles` 에서 U5 는 7 → 8). 서 있는 자리를 사이드바가
+ *   보여 주는 것은 거짓이 아니고, 떠나면 다시 7 이 된다. 역할 홈에서 세는
+ *   「메뉴 ≤ 7」은 그대로다.
+ * ⚠ **권한을 열지 않는다.** 목록에 줄을 남기는 것은 화면 결정이고, 그 화면이
+ *   부르는 문은 전부 서버가 판정한다(SEC-11a · P-105). 남의 테넌트 역할이
+ *   보이는 일은 이 함수로 생기지 않는다 — 서버가 `path_permission` 으로 막는다
+ *   (`core/role/permission.py` · 권한 없는 계정은 `ListRealityNote` 가 「볼
+ *   권한이 없습니다」로 말한다).
+ */
+
+/** 주소 하나를 비교할 수 있는 모양으로. **주소가 아닌 것은 빈 문자열**이다. */
+function normalizeNavPath(p: unknown): string {
+  const s = String(p ?? '').trim();
+  if (!s.startsWith('/')) return '';
+  const cut = s.split('?')[0].split('#')[0];
+  return cut.length > 1 && cut.endsWith('/') ? cut.slice(0, -1) : cut;
+}
+
+/**
+ * 이 주소를 여는 **메뉴 줄**을 나무 전체에서 찾는다. 없으면 `null`.
+ *
+ * ★ 정확히 같은 주소를 **먼저** 본다. 없으면 `…/123` 같은 자식 주소를 위해
+ *   **가장 긴 앞자리**를 쓴다 — 짧은 쪽부터 쓰면 `/` 가 모든 주소를 삼킨다.
+ * ★ 유사도·밑줄 눕히기는 **안 한다**(`roleNames.ts` 와 같은 규율).
+ */
+export function menuForPath(
+  menus: readonly MenuNode[],
+  pathname: string,
+): MenuNode | null {
+  const want = normalizeNavPath(pathname);
+  if (!want) return null;
+
+  const flat: MenuNode[] = [];
+  const walk = (nodes: readonly MenuNode[]) => {
+    for (const m of nodes) {
+      if (!m) continue;
+      flat.push(m);
+      const kids = (m.sub_menus || (m.children as MenuNode[] | undefined)) ?? [];
+      if (Array.isArray(kids) && kids.length) walk(kids);
+    }
+  };
+  walk(menus);
+
+  let best: MenuNode | null = null;
+  let bestLen = -1;
+  for (const m of flat) {
+    const p = normalizeNavPath(m.path);
+    if (!p) continue;
+    if (p === want) return m;
+    if (want.startsWith(`${p}/`) && p.length > bestLen) {
+      best = m;
+      bestLen = p.length;
+    }
+  }
+  return best;
+}
+
+/**
+ * 잘라 낸 목록에 **지금 서 있는 주소의 줄**을 되돌려 놓는다.
+ *
+ * 순수 함수다 — 시험이 이것만으로 전부 잰다. 원본 배열을 안 건드린다.
+ * 되돌린 줄은 **뿌리로 올린다**(`upper_id: null` · `depth: 0` · 마디 비움) —
+ * `filterNav` 가 남긴 줄에 하는 것과 **같은 모양**이다. 그 모양이 실제로 서는
+ * 것은 `/users`(menuId 3)가 이미 증명했다.
+ *
+ * @returns `restored` 는 되돌린 주소(없으면 `null`) — 부르는 쪽이 적을 수 있게.
+ */
+export function withCurrentPath(
+  filtered: readonly MenuNode[],
+  original: readonly MenuNode[],
+  pathname: string,
+): { menus: MenuNode[]; restored: string | null } {
+  const out = filtered.slice();
+  const here = menuForPath(original, pathname);
+  // 서버가 이 주소의 줄을 애초에 안 줬다. **없는 줄을 지어내지 않는다** —
+  // 지어낸 id 로는 인수 표가 제 설정을 못 찾고, 0행은 그대로 남는다.
+  if (!here) return { menus: out, restored: null };
+  // 이미 남아 있다. 표에 있는 줄이거나, 두 번 부른 것이다.
+  if (menuForPath(out, pathname)) return { menus: out, restored: null };
+
+  out.push({
+    ...here,
+    sub_menus: [],
+    children: [],
+    upper_id: null,
+    depth: 0,
+    // **맨 아래**에 둔다 — 표가 정한 순서를 이 줄이 밀지 않는다.
+    ordering: 2000,
+  });
+  return { menus: out, restored: normalizeNavPath(here.path) };
+}
+
 /**
  * ② **안 건 자리** — CPO 표에 있으나 여는 화면이 없어서 못 건 줄들.
  *   선언이다. 세는 사람이 「깜빡했다」와 「안 걸기로 했다」를 갈라 읽어야 한다.
@@ -301,11 +450,24 @@ export function roleCodesOf(userInfo: unknown): string[] {
   return out;
 }
 
-/** 두 목록이 **같은 사이드바를 그리는가.** 같으면 다시 쓰지 않는다(무한 갱신 방지). */
+/**
+ * 두 목록이 **같은 사이드바를 그리는가.** 같으면 다시 쓰지 않는다(무한 갱신 방지).
+ *
+ * ★★ [턴 AB · U56] **나무 끝까지 센다.** 종전 판은 뿌리 줄만 보고 자식은
+ *   **수만** 셌다. 그러면 자식의 자식이 바뀐 것을 못 본다 — 「같다」로 읽고
+ *   안 쓰면 `hideAcquired` 가 그 깊이에서는 **한 번도 안 걸린다.**
+ *   이 함수는 이제 이 파일의 유일한 「끝났는가」 판정이므로(두 갈래가 모두
+ *   이것만 본다) 못 보는 깊이가 있으면 안 된다.
+ */
 export function navSignature(menus: readonly MenuNode[]): string {
-  return menus
-    .map((m) => `${m.id}:${m.menu_name}:${m.path}:${(m.sub_menus || []).length}`)
-    .join('|');
+  const one = (m: MenuNode): string => {
+    const kids = (m.sub_menus || (m.children as MenuNode[] | undefined)) ?? [];
+    const inner = Array.isArray(kids) && kids.length
+      ? `(${kids.map(one).join(',')})`
+      : '';
+    return `${m.id}:${m.menu_name}:${m.path}${inner}`;
+  };
+  return menus.map(one).join('|');
 }
 
 /**

@@ -258,17 +258,112 @@ def scan_line_aa(text: str) -> list:
     return [name for name, rx in HANGUL_ONLY_COMPILED if rx.search(text)]
 
 
-def scan_empty_aa(text: str) -> list:
+#: ★★ [실측 2026-09-21 · 턴 AB] **그물을 세 번째로 좁혔다 — 또 방어선을 결함으로 읽었다.**
+#:   U24 가 `EventList.tsx` 에 빈 화면을 **옳게** 적었는데 이 게이트가 다섯 건을
+#:   「다음 손 없음」으로 찍었다. 소스를 열어 보면:
+#:       emptyText: '이 기관에 기록된 사건이 0건입니다.',
+#:       emptyNext: '카메라가 무엇인가를 감지하면 이 자리에 첫 줄이 생깁니다.',
+#:   **다음 손은 있다 — 같은 문장이 아니라 이웃 칸에 있었을 뿐이다.**
+#:   턴 AA 의 술어는 「**같은 조각 안에** 있는가」였고, 그 「같은 조각」이 너무 좁았다.
+#:   ★ 고친 방향: 조각 **바로 뒤**에 「다음 손 칸」이 서 있으면 다음 손이 있는 것으로 본다.
+#:     칸 이름을 **못박아** 둔다 — 아무 이웃이나 봐주면 그물이 무뎌진다.
+#:   ⚠ 이것은 면제가 아니다. 칸이 **비어 있으면**(한글 0) 여전히 잡힌다.
+NEXT_HAND_FIELD = re.compile(
+    #: ★ 맨 뒤의 `next` 는 **넓다** [실측 2026-09-21 · 턴 AB]. `EventList.tsx:705`
+    #:   가 빈 화면 쌍을 `{ text: … , next: … }` 로 적었고, 칸 이름이 `emptyNext`
+    #:   가 아니라 **`next`** 였다. 앞에 `{`·`,`·공백을 요구해 「줄머리 칸 이름」
+    #:   일 때만 본다 — 그래도 넓다. **놓치는 쪽으로 틀린다**(이 게이트의 stance).
+    r"(?:^|[,{\s])(?:emptyNext|emptyAction|emptyHint|nextHand|nextStep"
+    r"|actionLabel|cta|next)\s*:",
+    re.I)
+
+#: ★★ [실측 2026-09-21 · 턴 AB] **같은 날 두 번째 방어선 오독.**
+#:   `roleNames.ts` 의 `ROLE_NAMES_BLANK_BY_DECISION` 을 「절 ID 가 고객 본문에
+#:   있다」로 찍었다. 그 표의 값은 이렇다:
+#:       order: '인수 자산(배송 주문) — 이 제품의 역할이 아니다 (§4-2 · P-229)'
+#:   그리고 바로 위 주석에 **「화면은 이 표를 읽지 않는다」**고 적혀 있다 —
+#:   **「깜빡했다」와 「안 붙이기로 했다」를 가르려고 U56 이 일부러 세운 선언**이다.
+#:   ★ 이 게이트는 **주석을 걷어 내고** 보기 때문에 그 선언을 볼 수 없었다.
+#:     그래서 선언을 **이름으로** 받는다 — 이름은 주석이 아니라 코드다.
+#:   ⚠ **면제가 아니다.** 건너뛴 조각 수를 판정문이 **소리 내어 센다** —
+#:     안 세면 다음 사람이 「이 게이트가 전수를 봤다」고 읽는다.
+DECLARED_NOT_ON_SCREEN = re.compile(
+    r"export\s+const\s+([A-Z][A-Z0-9_]*_BY_DECISION|NAV_NO_SCREEN_YET)\b")
+
+
+def declared_spans(body: str) -> list:
+    """「화면이 읽지 않는다」고 **이름으로 선언한** 표의 자리 `[(시작, 끝)]`.
+
+    끝은 **중괄호 짝**으로 찾는다 — 줄 수로 자르면 표가 길어지는 날 조용히 샌다.
+    """
+    out = []
+    for m in DECLARED_NOT_ON_SCREEN.finditer(body):
+        i = body.find("{", m.end())
+        if i < 0:
+            continue
+        depth, j = 0, i
+        while j < len(body):
+            if body[j] == "{":
+                depth += 1
+            elif body[j] == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        out.append((i, j))
+    return out
+
+
+def skipped_by_declaration(body: str, frag) -> bool:
+    """그 조각이 **선언된 비표시 표 안**에 있는가."""
+    return any(a <= frag.start <= b for a, b in declared_spans(body))
+
+
+#: 이웃을 얼마나 보나. 객체 리터럴 한 칸 건너까지다 — 넓히면 옆 항목의 다음 손이
+#: 이 항목을 덮는다.
+NEIGHBOUR_CHARS = 260
+
+
+#: 「다음 손 칸」이 **채워졌다**고 볼 한글 길이의 바닥. `emptyNext: ''` 는 지나가지 못한다.
+NEXT_HAND_FIELD_MIN_HANGUL = 6
+
+
+def has_next_hand_nearby(near: str) -> bool:
+    """조각 **바로 뒤**에 「다음 손 칸」이 서 있고 **그 칸이 채워졌는가**.
+
+    ⚠⚠ [실측 2026-09-21 · 턴 AB] 처음에는 이웃 칸에도 `NEXT_HAND` 어휘
+      (「하십시오」·「누르」·「등록」…)를 요구했다. 그랬더니 U24 의 **옳은** 문구가
+      여전히 걸렸다:
+          emptyNext: '카메라가 무엇인가를 감지하면 이 자리에 첫 줄이 생깁니다.'
+      명령문이 아니라 **무슨 일이 일어나면 이 자리가 찬다**는 설명이다. 그것도
+      다음 손이다 — 고객은 막다른 곳에 서지 않는다. **어휘 목록으로 「다음 손인가」를
+      가르려 한 것이 좁았다.**
+    ★ 그래서 이웃 칸에서는 **어휘를 묻지 않는다.** 칸 이름을 못박아 두었으므로
+      「다음 손을 적는 자리」라는 것은 **칸 이름이 이미 말한다** — 이 술어가 잴 것은
+      **그 칸이 비었는가**뿐이다. (같은 조각 안에서는 칸 이름이 없으므로 어휘를
+      그대로 쓴다.)
+    """
+    m = NEXT_HAND_FIELD.search(near or "")
+    if not m:
+        return False
+    tail = near[m.end():m.end() + NEIGHBOUR_CHARS]
+    return len(HANGUL.findall(tail)) >= NEXT_HAND_FIELD_MIN_HANGUL
+
+
+def scan_empty_aa(text: str, near: str = "") -> list:
     """빈 화면 조각인데 **다음 손이 없으면** 이름을 낸다.
 
     긴 조각은 보지 않는다 — 위 `EMPTY_MAX_LEN` 의 주석에 그 사유를 적었다.
+    `near` 는 그 조각 **바로 뒤의 소스**다 — 다음 손이 이웃 칸에 설 수 있다.
     """
     flat = " ".join(text.split())
     if not HANGUL.search(flat) or len(flat) > EMPTY_MAX_LEN:
         return []
     if not EMPTY_PHRASE.search(flat):
         return []
-    return [] if NEXT_HAND.search(flat) else ["빈 화면 · 다음 손 없음"]
+    if NEXT_HAND.search(flat) or has_next_hand_nearby(near):
+        return []
+    return ["빈 화면 · 다음 손 없음"]
 
 
 #: 본 비율의 바닥. **이보다 낮으면 판정하지 않는다**(회색 · exit 2) —
@@ -594,15 +689,19 @@ def hangul_coverage(src: str, frags: list[Frag]) -> tuple[int, int]:
     return covered, total
 
 
-def scan_line(line: str) -> list[str]:
+def scan_line(line: str, near: str = "") -> list[str]:
     """한 조각(문자열 몸통 · JSX 본문)에서 걸린 패턴 이름들.
+
+    `near` 는 그 조각 **바로 뒤의 소스**다 — 빈 화면의 「다음 손」이 같은 문장이
+    아니라 **이웃 칸**에 설 수 있기 때문이다(턴 AB 에 그것 때문에 다섯 건을
+    잘못 찍었다 · `scan_empty_aa` 의 주석 참조).
 
     ★ [P-221 · 턴 AA] 세 무리를 **한 술어로** 본다 — 기존 사전 + 표시명/오류 무리
       + 빈 화면. 갈래를 나누어 두 번 훑으면 한쪽이 조용히 아무것도 안 보게 된다
       (D-369 가 말하는 「두 벌」이 정확히 그 모양이다).
     """
     return ([name for name, rx in COMPILED if rx.search(line)]
-            + scan_line_aa(line) + scan_empty_aa(line))
+            + scan_line_aa(line) + scan_empty_aa(line, near))
 
 
 def norm(snippet: str) -> str:
@@ -615,11 +714,12 @@ def norm(snippet: str) -> str:
     return " ".join(snippet.split())[:100].strip()
 
 
-def scan() -> tuple[int, list[tuple[str, int, str, str]], int, int]:
+def scan() -> tuple[int, list[tuple[str, int, str, str]], int, int, int]:
     """`(본 파일 수, [(상대경로, 줄, 패턴, 발췌)], 덮은 한글, 전체 한글)`."""
     findings: list[tuple[str, int, str, str]] = []
     files = [p for p in frontend_files() if in_scope(p)]
     covered = total = 0
+    n_declared = 0
     for path in files:
         try:
             src = path.read_text(encoding="utf-8")
@@ -632,9 +732,13 @@ def scan() -> tuple[int, list[tuple[str, int, str, str]], int, int]:
         covered += c
         total += t
         for f in frags:
-            for name in scan_line(f.text):
+            if skipped_by_declaration(body, f):
+                n_declared += 1
+                continue
+            near = body[f.end:f.end + NEIGHBOUR_CHARS * 2]
+            for name in scan_line(f.text, near):
                 findings.append((rel, f.line, name, norm(f.text)))
-    return len(files), findings, covered, total
+    return len(files), findings, covered, total, n_declared
 
 
 def key(f: tuple[str, int, str, str]) -> str:
@@ -720,6 +824,42 @@ def self_test() -> int:
             print(f"[COPY] 자기시험 FAIL 빈 화면 술어가 틀렸다 "
                   f"(기대 {'잡힘' if want_hit else '안 잡힘'}): {sample}")
             fails += 1
+    # ── ★★ [턴 AB] 다음 손이 **이웃 칸**에 설 때 — 양성/음성 셋 ─────────────
+    #   U24 가 `EventList.tsx` 에 빈 화면을 옳게 적었는데 이 게이트가 다섯 건을
+    #   「다음 손 없음」으로 찍었다. 다음 손은 **이웃 칸**에 있었다.
+    _NL = chr(10)
+    _near_ok = (_NL + "      emptyNext: '카메라가 무엇인가를 감지하면 이 자리에 "
+                "첫 줄이 생깁니다.',")
+    if scan_empty_aa("이 기관에 기록된 사건이 0건입니다.", _near_ok):
+        ok = False
+        print("[COPY] 자기시험 FAIL 다음 손이 **이웃 칸**에 있는데 잡았다 — "
+              "U24 의 옳은 빈 화면 다섯을 이것으로 잘못 찍었다(턴 AB)")
+    if not scan_empty_aa("이 기관에 기록된 사건이 0건입니다.", _NL + "      query: {},"):
+        ok = False
+        print("[COPY] 자기시험 FAIL 이웃에 다음 손 칸이 **없는데** 안 잡았다 — "
+              "이웃을 보는 것이 면제가 되면 안 된다")
+    if not scan_empty_aa("이 기관에 기록된 사건이 0건입니다.",
+                         _NL + "      emptyNext: '',"):
+        ok = False
+        print("[COPY] 자기시험 FAIL 다음 손 칸이 **비었는데** 안 잡았다 — "
+              "칸이 있는 것과 채워진 것은 다르다")
+
+    # ── ★★ [턴 AB] 「화면이 안 읽는다」고 **이름으로 선언한 표**는 건너뛴다 ──
+    _decl_src = ("export const ROLE_NAMES_BLANK_BY_DECISION = {" + _NL
+                 + "  order: '인수 자산(배송 주문) — 이 제품의 역할이 아니다 (§4-2 · P-229)',"
+                 + _NL + "};" + _NL
+                 + "export const SHOWN = { a: '사건 P-229 를 보십시오' };" + _NL)
+    _spans = declared_spans(_decl_src)
+    _in = _decl_src.index("인수 자산")
+    _out = _decl_src.index("사건 P-229")
+    if not (len(_spans) == 1 and any(a <= _in <= b for a, b in _spans)):
+        ok = False
+        print("[COPY] 자기시험 FAIL 선언된 표를 못 찾았다")
+    if any(a <= _out <= b for a, b in _spans):
+        ok = False
+        print("[COPY] 자기시험 FAIL **선언 밖**의 조각까지 건너뛰었다 — "
+              "선언이 면제가 되는 자리다")
+
     # ── 음성 ④ — 빈 화면 술어가 **빈 화면이 아닌 문장**을 잡으면 안 된다 ────
     for good in ("사건 12건을 보고 있습니다", "종결하기 (3)"):
         if scan_empty_aa(good):
@@ -781,7 +921,7 @@ def main() -> int:
     if args.self_test:
         return self_test()
 
-    seen, findings, covered, total = scan()
+    seen, findings, covered, total, n_declared = scan()
     if seen == 0:
         print(f"[COPY] **판정 불가** — {' · '.join(SCOPE)} 에서 파일을 한 개도 못 읽었다 "
               "(0건 검사와 검사 못 함은 다르다 · D-301)")
@@ -795,6 +935,12 @@ def main() -> int:
     print(f"[COPY] [입력] {seen}개 화면 파일 (주석 걷어낸 뒤) · 패턴 "
           f"{len(COMPILED) + len(HANGUL_ONLY_COMPILED) + 1}종"
           f"(사전 {len(COMPILED)} + P-221 표시명·오류 {len(HANGUL_ONLY_COMPILED)} + 빈 화면 1)")
+    #: ★★ [턴 AB] **선언으로 건너뛴 조각을 소리 내어 센다.** 안 세면 다음 사람이
+    #:   「이 게이트가 전수를 봤다」고 읽는다 — 면제와 선언은 **수로** 갈린다.
+    print("[COPY] [입력] 선언으로 건너뛴 조각 **%d개** — `*_BY_DECISION` · "
+          "`NAV_NO_SCREEN_YET` 처럼 **이름으로** 「화면이 안 읽는다」고 적은 표. "
+          "면제가 아니라 선언이고, 그 표의 값이 화면에 뜨면 그것은 그 표의 결함이다"
+          % n_declared)
     #: ★ P-221 — **사전이 섰는지를 소리 내어 말한다.** 안 말하면 다음 턴에 누가
     #:   「표시명 게이트가 초록이니 사전이 있다」고 읽는다. 「없다」는 「0건」이 아니다.
     _have, _missing = aa_display_dicts()

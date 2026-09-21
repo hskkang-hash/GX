@@ -264,6 +264,42 @@ print("GX_ANCHOR_JSON " + json.dumps({"day": d.isoformat(), "anchor": a,
 """
 
 
+#: ★ LAW-08 QR — **진입점은 이 파일 하나다**(설계 v1.0 §7①).
+#:   *사람이 부른* `--anchor … --qr` 호출 **1회 = QR 1장**. 스케줄러·크론·웹 라우트에서
+#:   부르는 진입점을 **만들지 않는다** — 크론이 매일 종이를 찍으면 그것이 바로 자기증명이고,
+#:   자기증명은 아무것도 증명하지 않는다(설계 §0 · §6-4).
+#:   그려지는 자리는 **컨테이너 안**이다: `qrcode` 는 gx-shell 에만 있고,
+#:   그래서 앵커 값이 **호스트 밖으로도 남의 서버로도 나가지 않는다**(설계 §7③).
+_QR_SNIPPET = r"""
+import os, django, json
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+django.setup()
+from datetime import date, timedelta
+from common import evidence_chain, paper_anchor_qr
+d = date.fromisoformat(%(day)r)
+p = d - timedelta(days=1)
+a = evidence_chain.daily_anchor(d)
+pa = evidence_chain.daily_anchor(p)
+r = evidence_chain.verify_chain()
+out = {"day": d.isoformat(), "prev_day": p.isoformat(), "anchor": a, "prev_anchor": pa,
+       "rows": r.total, "chained": r.chained, "gaps": len(r.recorded),
+       "breaks": len(r.breaks), "head": r.head,
+       "line": evidence_chain.anchor_line(d, a)}
+try:
+    payload = paper_anchor_qr.build_payload(
+        for_day=d, anchor=a, prev_day=p, prev_anchor=pa,
+        rows=r.total, chain=r.chained, gaps=len(r.recorded),
+        head=r.head or "", exit_code=0)
+    out["payload"] = payload
+    out["block"] = paper_anchor_qr.printable_block(payload)
+    out["qr_drawn"] = paper_anchor_qr.render_qr_ascii(payload) is not None
+except Exception as exc:
+    out["payload"] = None
+    out["why"] = type(exc).__name__ + ": " + str(exc)
+print("GX_QR_JSON " + json.dumps(out, ensure_ascii=False))
+"""
+
+
 def _in_container(snippet: str) -> tuple[int, str]:
     """gx-shell 안에서 한 조각을 돌린다. **도커가 없으면 회색(exit 2)이지 초록이 아니다.**"""
     if shutil.which("docker") is None:
@@ -355,6 +391,75 @@ def anchor(day: date) -> int:
     print(f"[입력] {data['day']} 하루")
     print(data["line"])
     return 0 if data["anchor"] else 1
+
+
+def _qr_payload_is_sound(payload: str) -> tuple[bool, str]:
+    """종이로 나가기 **직전**의 마지막 문. 판정식은 `common/paper_anchor_qr` 한 벌이다.
+
+    ★ 이 파일은 판정식을 **다시 적지 않는다** — 판정식 복사본 하나가 격리 사고의
+      원인이었다(D-212). 여기서 하는 일은 그 한 벌을 **다른 손으로 한 번 더 부르는 것**이다.
+    """
+    try:
+        from common import paper_anchor_qr          # noqa: PLC0415 — 없으면 회색이다
+    except Exception as exc:                        # noqa: BLE001
+        return False, f"판정식을 못 불렀다({type(exc).__name__}) — 회색이지 초록이 아니다"
+
+    low = payload.lower()
+    for marker in paper_anchor_qr.URL_MARKERS:
+        if marker in low:
+            return False, (f"payload 에 URL 스킴 «{marker}» 가 있다 — 링크를 담은 QR 은 "
+                           f"종이로 안 나간다(설계 §1 · §7②)")
+    parsed = paper_anchor_qr.parse_payload(payload)
+    if parsed is None:
+        return False, "payload 를 못 읽었다"
+    ok, why = parsed.is_well_formed()
+    if not ok:
+        return False, why
+    return True, ""
+
+
+def anchor_with_qr(day: date) -> int:
+    """★ LAW-08 **열두 번째 칸** — 그날 줄의 QR 한 장을 사람 16자와 **함께** 낸다.
+
+    ★ **QR 생성 실패는 이 판정기를 빨갛게 만들지 않는다**(설계 §7⑥). 섞으면 다음 사람은
+      빨강을 끄려고 **QR 을 끄거나 대조를 끈다.** 앵커가 떴으면 그 줄은 유효하고,
+      QR 이 없으면 「QR 없음 + 사유」를 적고 **나머지 열한 칸을 손으로 채운다**(설계 §5).
+    """
+    code, out = _in_container(_QR_SNIPPET % {"day": day.isoformat()})
+    data = _payload(out, "GX_QR_JSON ")
+    if data is None:
+        print(f"[CHAIN] 앵커+QR — **판정 불가**(회색, exit {code}). 회색은 초록이 아니다")
+        print(out[-1500:])
+        return 2
+    print(f"[입력] {data['day']} 하루 · 감사 행 {data['rows']}건 · 체인 {data['chained']}건 · "
+          f"등재된 끊김 {data['gaps']}건 · 새로 난 어긋남 {data['breaks']}건")
+    print(data["line"])
+    if not data["anchor"]:
+        print("[LAW-08] 그날 감사 기록이 없다 — QR 도 없다(담을 값이 없다)")
+        return 1
+    if data.get("payload") is None:
+        print("[LAW-08] QR — **못 만들었다**(회색). 앵커 줄은 위에 그대로 있다. "
+              "「QR 없음 + 사유」를 적고 나머지 열한 칸을 손으로 채운다 — **그 줄은 유효하다**")
+        print(f"  · 사유: {data.get('why', '(사유 없음)')}")
+        return 0                        # ★ 설계 §7⑥ — QR 실패는 체인 판정의 색이 아니다
+
+    #: ★★ **인쇄 직전에 한 번 더 판다.** payload 를 만든 것은 컨테이너 안이고,
+    #:   종이로 내보내는 것은 여기다. 만든 자리와 내보내는 자리가 **다른 손**이면,
+    #:   한쪽이 무너져도 다른 쪽이 멈춘다 — 설계 §7② 가 「문자열로 검사한다」고 적은
+    #:   자리가 정확히 이 경계다. 여기서 안 보면, 컨테이너 안 코드가 바뀌는 날
+    #:   URL 한 줄이 종이까지 그대로 간다.
+    ok, why = _qr_payload_is_sound(data["payload"])
+    if not ok:
+        print(f"[LAW-08] QR — **인쇄 직전 검사에서 멈췄다**(회색): {why}")
+        print("  · 앵커 줄은 위에 그대로 있다. 「QR 없음 + 사유」를 적고 손으로 채운다")
+        return 0                        # ★ 여기서도 빨강을 안 낸다(설계 §7⑥)
+    print(data["block"])
+    if not data.get("qr_drawn"):
+        print("[LAW-08] ⚠ QR **그림은 못 그렸다**(리더용 도형 없음 · 평문은 위에 그대로다). "
+              "회색이지 빨강이 아니다")
+    print(f"[LAW-08] ⚠ `ref.head` 는 **대조 대상이 아니다** — 지금 값 {data['head'][:16]}… 는 "
+          f"잴 때마다 달라진다. 어제와 달라도 **아무것도 하지 않는다**")
+    return 0
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -517,13 +622,23 @@ def main() -> int:
                     help="실제 감사표를 다시 계산해 대조한다 (gx-shell 위임)")
     ap.add_argument("--anchor", metavar="YYYY-MM-DD",
                     help="그날의 종이 앵커 한 줄을 낸다")
+    ap.add_argument("--qr", action="store_true",
+                    help="`--anchor` 와 함께 — 그날 줄의 QR 한 장을 사람 16자와 **함께** 낸다 "
+                         "(LAW-08 설계 v1.0 §7① · 사람이 부른 호출 1회 = QR 1장)")
     args = ap.parse_args()
 
     print("[CHAIN] LAW-08 증거 해시 체인 — 행 하나를 고치면 exit 1 (PRD v2.5 §E3-1)")
     if args.self_test:
         return self_test()
+    if args.qr and not args.anchor:
+        #: ★ QR 은 **그날 줄**에 붙는 칸이다. 날짜 없이 QR 만 내는 갈래를 두면
+        #:   그 갈래가 곧 스케줄러의 진입점이 된다(설계 §6-4 가 금지한 자리).
+        print("[CHAIN] `--qr` 는 `--anchor YYYY-MM-DD` 와 함께만 쓴다 — "
+              "QR 은 **그날 한 줄**의 열두 번째 칸이다")
+        return EXIT_UNDECIDABLE
     if args.anchor:
-        return anchor(date.fromisoformat(args.anchor))
+        day = date.fromisoformat(args.anchor)
+        return anchor_with_qr(day) if args.qr else anchor(day)
     code = static_judgement()
     if args.db:
         return max(code, db_judgement())

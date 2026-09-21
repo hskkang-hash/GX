@@ -181,6 +181,84 @@ class ThresholdSeedTest(DsmFixture):
                              f"{row['key']}: 첫 등재에 테넌트·카메라 행이 있습니다.")
 
 
+class ThresholdTableShowsTheEffectiveValueTest(DsmFixture):
+    """표의 「지금 값」이 **정말 지금 유효한 값인가** — 턴 AB · 차선 F.
+
+    턴 AA 에 차선 A 가 쟀다: 기관 관리자가 제 기관 임계값을 바꾸면 **저장은 200 인데
+    표의 「지금 값」이 안 바뀐다.** `list_thresholds` 가 전역 층 덮어쓰기만 읽었기 때문이다.
+    **제 값을 바꾼 사람이 제 값을 못 보는 화면**은 다음 사람에게 「저장이 안 됐다」로 읽힌다.
+    """
+
+    def test_the_table_shows_my_tenant_override_not_the_global_default(self) -> None:
+        """★ 기관 층이 이긴다 — 그리고 **남의 기관에는 안 샌다.**"""
+        from kernels.k5_trust import set_threshold
+
+        before = {r["key"]: r for r in _rows(self.scope_a)}["event.dedup_window"]
+        self.assertEqual(10.0, before["value"])
+        self.assertEqual("default", before["source"])
+
+        set_threshold(scope=self.scope_a, key="event.dedup_window", value=15,
+                      reason="현장 카메라 프레임률이 높다", scope_level="tenant",
+                      scope_ref=self.group_a.pk)
+
+        mine = {r["key"]: r for r in _rows(self.scope_a)}["event.dedup_window"]
+        self.assertEqual(15.0, mine["value"],
+                         "제 기관 값을 바꾼 관리자가 표에서 제 값을 못 봅니다.")
+        self.assertEqual("override", mine["source"])
+        self.assertEqual("tenant", mine["source_level"],
+                         "어느 층이 이겼는지가 안 나오면 고칠 사람을 못 고릅니다.")
+
+        theirs = {r["key"]: r for r in _rows(self.scope_b)}["event.dedup_window"]
+        self.assertEqual(10.0, theirs["value"],
+                         "남의 테넌트가 내 덮어쓰기를 받았습니다 — 격리가 샜습니다.")
+        self.assertEqual("default", theirs["source"])
+        self.assertIsNone(theirs["source_level"])
+
+    def test_the_global_layer_still_wins_over_the_definition(self) -> None:
+        """기관 값이 없으면 전역이 이긴다 — 고친 것이 **한 층을 덮지 않았다.**"""
+        from kernels.k5_trust import set_threshold
+
+        set_threshold(scope=self.scope_a, key="event.dedup_window", value=12,
+                      reason="전역 기본을 올린다", scope_level="global")
+        row = {r["key"]: r for r in _rows(self.scope_b)}["event.dedup_window"]
+        self.assertEqual(12.0, row["value"])
+        self.assertEqual("global", row["source_level"])
+
+    def test_the_narrower_layer_beats_the_wider_one_in_the_table_too(self) -> None:
+        """전역과 기관에 **둘 다** 값이 있으면 표도 좁은 쪽을 고른다."""
+        from kernels.k5_trust import set_threshold
+
+        set_threshold(scope=self.scope_a, key="event.dedup_window", value=12,
+                      reason="전역", scope_level="global")
+        set_threshold(scope=self.scope_a, key="event.dedup_window", value=15,
+                      reason="우리 기관", scope_level="tenant",
+                      scope_ref=self.group_a.pk)
+        row = {r["key"]: r for r in _rows(self.scope_a)}["event.dedup_window"]
+        self.assertEqual(15.0, row["value"])
+        self.assertEqual("tenant", row["source_level"])
+
+    def test_the_table_and_the_runtime_answer_the_same_number(self) -> None:
+        """★★ **표와 실행이 갈리지 않는다** — 갈린 것이 바로 이 결함이었다(D-212).
+
+        표의 모든 행에 대해 `resolve_threshold` 와 값을 대 본다. 값이 아직 없는 행
+        (`waterlevel.baseline`)은 **양쪽 다 없어야** 맞다 — 0 이 아니다.
+        """
+        from kernels.k5_trust import ThresholdNotSet, resolve_threshold, set_threshold
+
+        set_threshold(scope=self.scope_a, key="event.dedup_window", value=15,
+                      reason="우리 기관", scope_level="tenant", scope_ref=self.group_a.pk)
+        for row in _rows(self.scope_a):
+            with self.subTest(key=row["key"]):
+                if row["value"] is None:
+                    self.assertEqual("unset", row["source"])
+                    with self.assertRaises(ThresholdNotSet):
+                        resolve_threshold(row["key"], scope=self.scope_a)
+                    continue
+                self.assertEqual(float(row["value"]),
+                                 resolve_threshold(row["key"], scope=self.scope_a),
+                                 "표가 그린 값과 실행이 쓰는 값이 다릅니다.")
+
+
 class ThresholdTableIsTheSingleHomeTest(TestCase):
     """표가 **코드와 갈리지 않는가** — 게이트가 그것을 판정한다 (D-325).
 

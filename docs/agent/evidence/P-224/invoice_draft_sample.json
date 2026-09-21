@@ -1,0 +1,89 @@
+GXJSON_START
+{
+ "draft": {
+  "title": "청구서 초안",
+  "month": "2026-09",
+  "tenant": "ETRI-Group",
+  "tenant_id": 4,
+  "currency": "KRW",
+  "price_table_confirmed_on": null,
+  "lines": [
+   {
+    "key": "cameras",
+    "label": "카메라 대수",
+    "unit": "대",
+    "quantity": 4,
+    "unit_price": null,
+    "price_key": "camera_month",
+    "state": "unpriced",
+    "amount": null,
+    "why": "단가 미확정 — 가격표의 camera_month 가 비어 있습니다 (대표 확인 전까지 정본이 아닙니다)"
+   },
+   {
+    "key": "users",
+    "label": "쓰는 사람 수",
+    "unit": "명",
+    "quantity": 19,
+    "unit_price": null,
+    "price_key": "seat_month",
+    "state": "unpriced",
+    "amount": null,
+    "why": "단가 미확정 — 가격표의 seat_month 가 비어 있습니다 (대표 확인 전까지 정본이 아닙니다)"
+   },
+   {
+    "key": "drill",
+    "label": "훈련",
+    "unit": "건",
+    "quantity": null,
+    "unit_price": 0,
+    "price_key": "drill_month",
+    "state": "ok",
+    "amount": 0,
+    "why": "훈련은 몇 건이든 0원입니다 — 건수는 이 셈이 세지 않습니다"
+   }
+  ],
+  "subtotal": 0,
+  "is_total": false,
+  "unpriced_lines": [
+   "cameras",
+   "users"
+  ],
+  "state": "unpriced",
+  "why": "단가 미확정인 줄이 있습니다: cameras, users — 가격표(§4-5)가 대표 확인 전입니다. 이 초안은 청구서가 아닙니다.",
+  "exclusions": {
+   "note": "우리가 심은 행(시험·검수 씨앗·훈련)은 이 수에서 뺐습니다. 훈련은 몇 건이든 0원입니다.",
+   "applies_to": [
+    "cameras",
+    "users",
+    "events",
+    "notifications"
+   ],
+   "not_applied": {
+    "storage": "미디어 장부에는 표식이 없습니다 — 씨앗 몫을 **못 쟀습니다**. 0이 아니라 모르는 것입니다."
+   },
+   "drill_is_free": true
+  },
+  "read_only": true
+ },
+ "exclusions": {
+  "note": "우리가 심은 행(시험·검수 씨앗·훈련)은 이 수에서 뺐습니다. 훈련은 몇 건이든 0원입니다.",
+  "applies_to": [
+   "cameras",
+   "users",
+   "events",
+   "notifications"
+  ],
+  "not_applied": {
+   "storage": "미디어 장부에는 표식이 없습니다 — 씨앗 몫을 **못 쟀습니다**. 0이 아니라 모르는 것입니다."
+  },
+  "drill_is_free": true
+ },
+ "cells": {
+  "cameras": 4,
+  "users": 19,
+  "events": 22,
+  "notifications": 224,
+  "storage": 1493917814
+ }
+}
+GXJSON_END

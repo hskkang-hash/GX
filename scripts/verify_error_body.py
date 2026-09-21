@@ -489,7 +489,13 @@ def copy_scan():
         #:   자리이고, 그래서 색을 내지 않고 사유를 낸다.
         return [], 0, ("`verify_ui_copy` 에 무리 %s 가 없다 — 이름이 갈렸다. "
                        "두 파일을 **같은 커밋에서** 고친다" % " · ".join(missing))
-    seen, findings, _cov, _tot = copy_gate.scan()
+    #: ⚠ [실측 2026-09-21 · 턴 AB] `verify_ui_copy.scan()` 이 다섯 번째 값
+    #:   (**선언으로 건너뛴 조각 수**)을 내게 되면서 이 줄이 `ValueError` 로 죽었다.
+    #:   ★ **죽은 것이 옳다** — 조용히 네 개만 받았으면 이 게이트가 다른 표를 읽은
+    #:     줄도 모르고 초록을 냈을 것이다(손으로 적은 분모가 거짓 초록을 내는 것과
+    #:     같은 모양 · P-204). 그래서 개수를 고정하지 않고 **앞 넷만** 집는다.
+    _got = copy_gate.scan()
+    seen, findings, _cov, _tot = _got[0], _got[1], _got[2], _got[3]
     rows = [f for f in findings if f[2] in COPY_GROUPS]
     return rows, seen, ""
 

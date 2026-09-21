@@ -77,8 +77,21 @@ const { Title, Paragraph, Text } = Typography;
 /** 이 화면에만 있는 글자 — 캡처가 이것을 보고 찍는다. */
 export const HEADLINE = '알림 받는 사람·채널';
 
-/** 심각이 막혔을 때의 말. **사전에 없는 문구를 화면에 흩지 않으려고** 여기 상수로 둔다. */
+/**
+ * 심각이 막혔을 때의 말. **사전에 없는 문구를 화면에 흩지 않으려고** 여기 상수로 둔다.
+ *
+ * ★★ [턴 AB · U56] **머리글도 두 사유를 가른다.**
+ *   턴 AA 에 사유(본문)는 갈랐는데 **머리글은 하나였다**: 「지금 심각 경보를 받는
+ *   사람이 없습니다.」 그런데 ETRI-Group 의 실제 상태는 **사람이 4명 있고 채널만
+ *   훈련용**이다 [실측 2026-09-21 턴 AA]. 그 화면의 머리글은 **거짓말**이었다 —
+ *   사람을 더 넣으러 간 운영자는 넣어도 빨강이 안 풀리는 것을 보게 된다.
+ *   본문만 고치고 머리글을 안 고치면, 사람이 먼저 읽는 줄이 여전히 틀린 것이다.
+ */
 export const CRITICAL_BLOCKED_TITLE = '지금 심각 경보를 받는 사람이 없습니다.';
+
+/** 사람은 있는데 **채널이 사람에게 안 가는** 경우의 머리글. 다음 손이 다르다(P-221). */
+export const CRITICAL_NO_HUMAN_CHANNEL_TITLE =
+  '심각 경보가 사람에게 닿지 않습니다 — 채널이 훈련·검수용뿐입니다.';
 
 interface ChannelOption {
   channel: string;
@@ -127,6 +140,30 @@ interface TestResult {
   recipients: number;
   sent: number;
   note: string;
+}
+
+/**
+ * 막힌 사유의 **갈래** — 「사람이 없다」인가 「채널이 사람에게 안 간다」인가.
+ *
+ * ★ 판정의 정본은 서버다(`critical_block_reason` · `critical_blocked`). 이 함수는
+ *   **머리글을 고르는 데에만** 쓴다 — 서버가 이미 「막혔다」고 말한 뒤에, 그 빨강에
+ *   어느 이름을 붙일지만 정한다. 막혔는지 아닌지를 여기서 다시 세지 않는다.
+ *   (다시 세면 판정식이 두 벌이 되고, 두 벌은 갈린다 — D-212. 턴 AA 의 거짓 초록이
+ *   바로 그 두 벌이었다.)
+ */
+function blockedByNoPeople(data: Overview): boolean {
+  return Number(data.critical_recipient_count ?? 0) === 0;
+}
+
+/** 서버가 사유 문장을 안 줄 때만 쓰는 말. **둘을 뭉치지 않는다.** */
+function fallbackBlockReason(data: Overview): string {
+  return blockedByNoPeople(data)
+    ? ('심각 등급 규칙이 없거나, 규칙이 가리키는 역할에 사람이 없습니다. '
+      + '이 상태에서는 재난이 나도 아무에게도 알림이 가지 않습니다. '
+      + '아래에서 심각 규칙을 하나 세우거나 그 역할에 사람을 넣어 주십시오.')
+    : (`심각 규칙이 가리키는 사람은 ${data.critical_recipient_count}명 있지만, `
+      + '그 규칙의 채널이 사람에게 닿지 않는 채널뿐입니다(훈련·검수용). '
+      + '아래에서 심각 규칙의 채널에 사람에게 닿는 것을 하나 이상 넣어 주십시오.');
 }
 
 export default function NotifySettingsPage() {
@@ -236,12 +273,39 @@ export default function NotifySettingsPage() {
                 type="error"
                 showIcon
                 data-gx="notify-critical-blocked"
-                message={CRITICAL_BLOCKED_TITLE}
+                message={
+                  blockedByNoPeople(data)
+                    ? CRITICAL_BLOCKED_TITLE
+                    : CRITICAL_NO_HUMAN_CHANNEL_TITLE
+                }
                 description={
-                  data.critical_block_reason
-                  || ('심각 등급 규칙이 없거나, 규칙이 가리키는 역할에 사람이 없습니다. '
-                    + '이 상태에서는 재난이 나도 아무에게도 알림이 가지 않습니다. '
-                    + '아래에서 심각 규칙을 하나 세우거나 그 역할에 사람을 넣어 주십시오.')
+                  <Space direction="vertical" size={4}>
+                    {/*
+                      ★★ [턴 AB · U56] **대비책도 두 사유를 가른다.**
+                      종전 대비책 한 줄은 「규칙이 없거나 · 사람이 없습니다」로 둘을
+                      뭉쳤다 — 이 화면이 P-221 로 갈라 놓은 바로 그 두 사유를
+                      **서버 문장이 안 올 때만** 다시 뭉치고 있었다. 그러면 옛 서버
+                      앞에서 운영자가 엉뚱한 쪽을 고치고, 고쳐도 안 풀린다.
+                      ⚠ 서버 문장이 정본이다 — 아래는 그것이 **없을 때만** 쓴다.
+                         화면이 사유를 짓지 않는다(D-212).
+                    */}
+                    <span>{data.critical_block_reason || fallbackBlockReason(data)}</span>
+                    {/*
+                      ★ **초록이 되는 조건을 같은 자리에 적는다.** 빨강이 무엇을
+                        해야 풀리는지 말하지 않으면, 사람은 이 화면을 여러 번 열고도
+                        같은 빨강을 본다(P-221 — 원인과 다음 손을 같은 줄에).
+                    */}
+                    {/*
+                      ⚠ 별표(마크다운)를 쓰지 않는다 — 이 상자는 마크다운을 안 그리고,
+                        그러면 고객이 별표를 글자로 읽는다(서버 `_critical_block_reason`
+                        머리말이 같은 이유로 같은 금지를 적어 두었다).
+                    */}
+                    <Text type="secondary">
+                      초록이 되는 조건: 심각 규칙이 가리키는 역할에{' '}
+                      <Text strong>사람 1명 이상</Text>, 그 규칙의 채널에{' '}
+                      <Text strong>사람에게 닿는 채널 1개 이상</Text>. 둘 다여야 합니다.
+                    </Text>
+                  </Space>
                 }
               />
             ) : (

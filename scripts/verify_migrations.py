@@ -307,8 +307,15 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
+    _n_mig = sum(1 for _p in (ROOT / "backend").rglob("migrations/*.py")
+                 if _p.name != "__init__.py")
     gate_header(
         __file__,
+        measured=("① 모델 → 마이그레이션 미반영 ② 마이그레이션 → DB 미적용 — "
+                  "**분모 %s개**(`backend/**/migrations/*.py` 전수 · 지금 셌다) + "
+                  "살아 있는 DB 의 적용 이력(ORM 으로 받는다). ★ **빈 목록을 "
+                  "「미적용 0건」으로 세지 않는다** — 못 센 것과 0 은 다르다"
+                  % (_n_mig or "못 셌다")),
         target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다",

@@ -301,7 +301,46 @@ class OurLayerHasNoGatelessRouteTest(TestCase):
 
         return route_ownership
 
+    #: ★★ **선언된 공개 면.** 관문이 없는 것이 **결정**인 자리는 여기 **이름으로** 적는다
+    #:   (D-249 · D-421 이 기존 461건을 잠근 것과 같은 방식 — 수가 아니라 이름이다).
+    #:   비어 있지 않은지, 그리고 **아직 실재하는지**를 아래 시험이 따로 누른다 —
+    #:   이름만 적고 라우트가 사라지면 그 줄은 **다음 라우트를 덮는 담요**가 된다.
+    PUBLIC_BY_DESIGN = {
+        ("GET", "/api/dsm/health"):
+            "생존 확인 — 로드밸런서·감시기가 자격 없이 부른다. 나가는 것은 검사 이름과 "
+            "상태 이름뿐이고(ok/fail) 비밀·호스트명·버전·오류 본문이 없다. "
+            "`auth=None` 이 소스에 **명시**돼 있다(apps/dsm/api_u56.py · 턴 T · 차선 U56) — "
+            "「안 적었다」와 「공개다」는 다르고, 이 자리는 적은 쪽이다",
+    }
+
     def _gateless_by_owner(self):
+        """관문 없는 라우트를 관할로 가른다.
+
+        ★★ [실측 2026-09-21 · 턴 AB · 차선 S] **이 함수가 눈이 멀어 있었다.**
+
+          `inspect.getfile(op.view_func)` 는 **감싼 쪽의 파일**을 준다. ninja-extra 는
+          컨트롤러 메서드를 `route_functions.py` 로 감싸고, dj-core 는 `django_ratelimit`
+          으로 감싼다 — 둘 다 site-packages 다. 그래서 **관문 없는 73건이 한 건도
+          빠짐없이 「저장소 밖」으로 떨어졌고**, 「우리 층 0건」은 잰 0 이 아니라
+          **구조적으로 나올 수밖에 없는 0** 이었다. 실측:
+
+              GET /api/dsm/health
+                view_func.__module__ = apps.dsm.api_u56      ← 모듈 이름은 맞다
+                inspect.getfile      = …/ninja_extra/controllers/route/route_functions.py
+                classify_path        = 저장소 밖              ← 여기서 사라졌다
+                inspect.unwrap 뒤    = /app/apps/dsm/api_u56.py
+                classify_path        = 우리 층                ← 진짜 자리
+
+          `functools.wraps` 는 `__module__` 을 옮겨 주지만 `__code__` 는 안 옮긴다.
+          `getfile` 은 `__code__` 를 따라가므로 **이름은 맞고 자리는 틀린** 상태가 된다.
+          같은 절을 인벤토리로 센 계측기(`probe_authn_gap_ownership.py`)는 기록된
+          `view`·`app` **문자열**을 읽어 처음부터 **1건을 옳게 셌다** — 두 벌이 갈린 자리다.
+          그리고 갈린 동안 **시험 쪽이 초록이었다.**
+
+        ⚠ 그래서 `inspect.unwrap` 을 **먼저** 거친다. 그리고 아래 시험이
+          「우리 층이 실제로 보이는가」를 **분모로** 따로 누른다 — 안 누르면 이 눈이
+          다시 머는 날 아무도 모른다.
+        """
         import inspect
 
         mod = self._load_predicate()
@@ -315,23 +354,82 @@ class OurLayerHasNoGatelessRouteTest(TestCase):
                 continue
             view = getattr(op, "view_func", None)
             try:
-                where = classify_path(inspect.getfile(view)) if view else UNRESOLVED
+                #: ★ 감싼 껍질을 벗기고 **진짜 함수의 파일**을 본다.
+                where = classify_path(
+                    inspect.getfile(inspect.unwrap(view))) if view else UNRESOLVED
             except (TypeError, OSError):
                 where = UNRESOLVED
             buckets.setdefault(where, []).append("%s %s" % (method, path))
         return seen, buckets
 
+    def test_the_owner_predicate_can_actually_see_our_layer(self):
+        """★★ **분모.** 우리 층이 한 건도 안 보이면 「우리 층 0건」은 잰 0 이 아니다.
+
+        이 시험이 없어서 SEC-04 가 **거짓 초록**이었다. 관문 **있는** 것까지 세어,
+        우리 층 라우트가 실제로 관할에 잡히는지를 누른다 — 아래 「0건」의 바닥이다.
+        """
+        import inspect
+
+        mod = self._load_predicate()
+        rows = _registry_rows()
+        self.assertGreater(
+            len(rows), 100,
+            "레지스트리에서 라우트를 %d건밖에 못 봤다 — 열거기 고장이다" % len(rows))
+        ours = 0
+        for op in rows.values():
+            view = getattr(op, "view_func", None)
+            if view is None:
+                continue
+            try:
+                where = mod.classify_path(inspect.getfile(inspect.unwrap(view)))
+            except (TypeError, OSError):
+                continue
+            if where == mod.OURS:
+                ours += 1
+        self.assertGreater(
+            ours, 50,
+            "관할 술어가 우리 층 라우트를 %d건밖에 못 봤다 — 술어가 눈이 멀었다. "
+            "이 수가 낮으면 아래 「우리 층 0건」은 **구조적으로 나오는 0** 이다 "
+            "(2026-09-21 실측: unwrap 을 안 거쳐 73건 **전부**가 저장소 밖으로 떨어졌다)"
+            % ours)
+
+    def test_the_public_by_design_list_has_not_rotted(self):
+        """★ 이름으로 잠근 줄이 **아직 실재하는가.**
+
+        사라진 라우트의 이름이 목록에 남아 있으면, 같은 이름의 **다음 라우트**가
+        태어날 때 그 줄이 담요가 된다. 잠근 이름은 실재해야 잠금이다.
+        """
+        rows = {(m, _normalize(p)) for (m, p) in _registry_rows()}
+        self.assertTrue(self.PUBLIC_BY_DESIGN, "선언 목록이 비었다 — 비우려면 사유를 적는다")
+        for (method, path), why in self.PUBLIC_BY_DESIGN.items():
+            self.assertIn(
+                (method, _normalize(path)), rows,
+                "선언된 공개 면 «%s %s» 가 레지스트리에 없다 — 사라진 이름은 지운다"
+                % (method, path))
+            self.assertTrue(why.strip(),
+                            "«%s %s» 을 사유 없이 열어 두었다" % (method, path))
+
     def test_our_layer_is_zero(self):
+        """④ SEC-04 — 우리 층에 **선언되지 않은** 관문 없는 라우트가 0건인가.
+
+        ⚠ [실측 2026-09-21 · 턴 AB] 이 수는 **0 이 아니었다.** 눈을 고치자 **1건**이
+          드러났고, 그 1건이 `GET /api/dsm/health` 다 — 관문이 없는 것이 **결정**인
+          자리(`auth=None` 명시)여서 위 `PUBLIC_BY_DESIGN` 에 **이름으로** 옮겨 적었다.
+          「관문을 붙였다」가 아니라 **「선언되지 않은 채 열려 있던 것을 선언했다」**이다.
+          두 문장은 다르고, 섞으면 그것이 거짓 초록이다.
+        """
         OURS = self._load_predicate().OURS
 
         seen, buckets = self._gateless_by_owner()
         # 0건 검사와 검사 못함을 가른다 (D-301).
         self.assertGreater(seen, 100,
                            "레지스트리에서 라우트를 %d건밖에 못 봤다 — 열거기 고장이다" % seen)
-        ours = sorted(buckets.get(OURS, []))
+        declared = {"%s %s" % (m, p) for (m, p) in self.PUBLIC_BY_DESIGN}
+        ours = sorted(x for x in buckets.get(OURS, []) if x not in declared)
         self.assertEqual(
             ours, [],
-            "★ 우리 층에 인증 관문 없는 라우트가 %d건 있다 — SEC-04 의 표적이다:\n  %s"
+            "★ 우리 층에 **선언되지 않은** 관문 없는 라우트가 %d건 있다 — SEC-04 의 표적이다.\n"
+            "  관문을 붙이거나, 공개가 결정이면 `PUBLIC_BY_DESIGN` 에 **사유와 함께** 적는다:\n  %s"
             % (len(ours), "\n  ".join(ours)))
 
     def test_the_unresolved_bucket_is_not_silently_counted_as_safe(self):

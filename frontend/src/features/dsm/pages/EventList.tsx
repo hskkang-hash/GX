@@ -137,6 +137,29 @@ interface PresetDef {
   headline: string;
   why: string;
   query: Record<string, string | number | boolean>;
+  /**
+   * ★★ [턴 AB · U24 · U2#2] **0건의 뜻은 프리셋마다 다르다 — 「정직한 회색」.**
+   *
+   *   [실측 2026-09-21] 이 화면의 0건 줄은 프리셋 다섯 전부에 **한 문장**이었다:
+   *       「조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)」
+   *
+   *   두 군데가 틀렸다.
+   *     ① 괄호 안은 **바로 아래 줄이 이미 적는 말**이다(`copy.ts::emptySpeech.why`).
+   *        같은 상자에 같은 문장이 두 번 있었다. 그리고 「요청은 성공했고 0건」은
+   *        사람의 말이 아니라 **응답 상태**다(GX-COPY §2) — `Reports.tsx` 에서
+   *        턴 W 에 이미 같은 이유로 지운 문장이다. 두 화면이 같은 규약을 쓴다.
+   *     ② 「조건에 맞는 이벤트가 없습니다」는 관제팀장이 **미처리 보기**에서 볼 때
+   *        가장 중요한 사실을 숨긴다. 그 자리의 0건은 「자료가 없다」가 아니라
+   *        **「지금 손댈 것이 없다」**이고, 그것은 팀장이 듣고 싶어 하는 **좋은 소식**이다.
+   *        그 말을 안 해 주면 사람은 빈 화면을 고장으로 읽고 새로고침을 누른다.
+   *
+   *   ⚠ 조건이 걸려 있으면 이 말을 **쓰지 않는다.** 걸린 조건이 있는데 「손댈 것이
+   *     없습니다」라고 적으면 그것이 거짓말이다 — 자기가 좁혀 놓은 것을 제품이
+   *     「없다」고 말하는 것이다(턴 AA ④ 에 적은 그 자리). 아래 `emptyLine` 이 가른다.
+   */
+  emptyText: string;
+  /** 0건을 본 사람이 **다음에 할 일**. 없으면 사전의 기본 문장이 뜬다. */
+  emptyNext: string;
 }
 
 /**
@@ -195,6 +218,8 @@ const PRESETS: PresetDef[] = [
       '처리 단계로 거르지 않은 목록입니다. 종결된 사건도 여기에 있습니다. ' +
       '언제 일어난 일인지 알면 아래 기간을 좁혀 보십시오.',
     query: {},
+    emptyText: '이 기관에 기록된 사건이 0건입니다.',
+    emptyNext: '카메라가 무엇인가를 감지하면 이 자리에 첫 줄이 생깁니다.',
   },
   {
     key: 'unhandled',
@@ -204,6 +229,14 @@ const PRESETS: PresetDef[] = [
       '처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. ' +
       '화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.',
     query: { response_state: 'occurred' },
+    // ★ U2#2 — 팀장이 이 화면에서 듣고 싶은 **좋은 소식**이다. 「없습니다」로만
+    //   적으면 사람은 빈 화면을 고장으로 읽는다.
+    //   ⚠ 「전부 종결됐습니다」라고 적지 않는다 — 미처리 0 은 **누군가 손을 댔다**는
+    //     뜻이지 **끝났다**는 뜻이 아니다. 없는 사실을 적으면 그것이 거짓말이다.
+    emptyText: '미처리가 0건입니다 — 지금 손댈 것이 없습니다.',
+    emptyNext:
+      '모든 사건에 누군가 손을 댔습니다. 어디까지 갔는지는 「전체 보기」의 '
+      + '「처리 단계」 칸에서 확인하십시오.',
   },
   {
     key: 'recent',
@@ -213,6 +246,8 @@ const PRESETS: PresetDef[] = [
       `지금부터 ${RECENT_HOURS}시간 전까지, 창의 두 끝을 정해 놓고 봅니다. ` +
       '화면을 새로 고쳐도 창이 미끄러지지 않아 위의 요약 한 줄과 같은 시간을 말합니다.',
     query: {},   // 아래에서 since·until 을 계산해 넣는다 (지금 시각이 필요하다)
+    emptyText: `지난 ${RECENT_HOURS}시간 안에 난 사건이 0건입니다.`,
+    emptyNext: '그 전에 난 사건은 이 창 밖입니다 — 「전체 보기」나 아래 기간에서 찾으십시오.',
   },
   {
     key: 'mine',
@@ -221,6 +256,8 @@ const PRESETS: PresetDef[] = [
     why:
       '내가 실제·오탐을 판정한 이벤트입니다. 내가 처리 단계를 옮긴 것과는 다릅니다.',
     query: { mine: true },
+    emptyText: '내가 판정한 사건이 0건입니다.',
+    emptyNext: '사건 상세에서 「실제」나 「오탐」을 누르면 그 사건이 이 자리에 옵니다.',
   },
   {
     key: 'system',
@@ -230,6 +267,8 @@ const PRESETS: PresetDef[] = [
       '현장에서 난 일이 아니라 카메라·저장 장치 같은 설비 자신의 상태입니다. ' +
       '아래 「연계 상태」는 지난 일이 아니라 지금 이 순간의 신호라 따로 놓았습니다.',
     query: { event_type: SYSTEM_EVENT_TYPES.join(',') },
+    emptyText: '설비가 낸 신호가 0건입니다 — 카메라·저장 장치가 이상을 알린 적이 없습니다.',
+    emptyNext: '설비 상태 자체는 위의 「연계 상태」 카드가 지금 이 순간으로 말해 줍니다.',
   },
 ];
 
@@ -646,6 +685,33 @@ export default function EventList() {
   const rows = useMemo(() => events.data?.events ?? [], [events.data]);
 
   /**
+   * ★★ [턴 AB · U24 · U2#2] **0건을 고객의 말로** — 「정직한 회색」.
+   *
+   *   가르는 축은 **하나**다: 지금 조건이 걸려 있는가.
+   *     조건 0개 → 그 프리셋의 0건이 말하는 **그 사실**을 적는다
+   *               (미처리 보기라면 「지금 손댈 것이 없습니다」 — 팀장에게 좋은 소식이다)
+   *     조건 1개 이상 → **그 말을 쓰지 않는다.** 조건이 겹쳐 0건이 된 것을
+   *               「손댈 것이 없다」로 적으면 그것이 거짓말이다. 대신 **몇 개를
+   *               걸어 놓았는지 세어** 주고, 지우는 자리를 가리킨다.
+   *
+   *   ⚠ 조건 수는 **센 것**이다(`activeFilters.length`) — 손으로 적지 않는다.
+   *   ⚠ 「요청은 성공했고 0건」은 여기 안 적는다. 그 줄은 `StateBoundary` 가
+   *     사전(`copy.ts::emptySpeech`)에서 이미 낸다 — 두 번 적으면 같은 상자에
+   *     같은 문장이 두 번 있게 된다(`Reports.tsx` 턴 W 와 같은 자리).
+   */
+  const emptyLine = useMemo(() => {
+    if (activeFilters.length > 0) {
+      return {
+        text: `걸어 놓은 조건 ${activeFilters.length}개에 맞는 사건이 0건입니다.`,
+        next:
+          '사건이 없는 것이 아니라 조건이 겹쳤을 수 있습니다 — 위의 '
+          + '「조건 모두 지우기」를 눌러 보십시오.',
+      };
+    }
+    return { text: active.emptyText, next: active.emptyNext };
+  }, [activeFilters.length, active]);
+
+  /**
    * 지금 표에 그린 줄 중 **판정이 실패한 채 남아 있는 수.** 센 수다 —
    * 「분모는 손으로 적지 않는다」와 같은 규약이다. `failureTick` 이 의존성에 있는
    * 이유는 자국이 상태가 아니라 모듈에 들어 있기 때문이다(위 머리말).
@@ -975,7 +1041,9 @@ export default function EventList() {
             state={events.state}
             reason={events.reason} status={events.status}
             onRetry={events.reload}
-            emptyText="조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)"
+            where="EventList/목록"
+            emptyText={emptyLine.text}
+            emptyNext={emptyLine.next}
           >
             <Table<EventRow>
               rowKey="event_id"

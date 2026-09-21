@@ -240,6 +240,61 @@ interface FieldReplyPage {
   replies: FieldReplyRow[];
 }
 
+/**
+ * ★★ [턴 AB · 차선 U3] **POST 의 답을 버리지 않는다** (U3 #7 · 「현장 도착」).
+ *
+ * `POST /api/dsm/events/{id}/response` 는 **빈 200 이 아니다.** 서버가 이렇게 답한다
+ * (`backend/kernels/k1_event/response_flow.py` 의 마지막 `return`):
+ *
+ *     { event_id, from, to, allowed_next[], audit_id }
+ *
+ * 그런데 이 화면은 그 답을 **한 글자도 안 읽고** 버린 뒤, **제가 보낸 값**으로
+ * 「〈접수〉 단계로 옮겼습니다」를 적고 있었다. 그것은 **누른 뒤를 본 것이 아니라
+ * 누른 것을 본 것**이다 — 이번 턴 불변이 갈라 놓은 바로 그 두 가지다:
+ *   · 서버가 다른 칸으로 옮겼어도 화면은 **제 말**을 한다.
+ *   · 감사 행이 **안 남았어도** 화면은 똑같이 초록이다.
+ *
+ * [실측 근거] 온보딩 48행의 U3#7 술어는 「재조회 전이 + **감사 행 1**」인데
+ * 턴 AA 실행 기록의 그 칸은 **`감사 행=-1`**(못 셌다)이었다. 셀 수 있는 수가
+ * **응답 안에 이미 있었는데** 화면도 판정기도 그것을 안 읽고 있었다.
+ *
+ * ★ 그래서 성공 문장을 **서버의 답으로** 짓는다 — 옮겨진 칸은 `to`(우리가 보낸
+ *   `toState` 가 아니다), 「서버에 남았다」의 근거는 `audit_id` 다.
+ * ★ **`audit_id` 가 없으면 그 조각을 안 적는다** — 「실제 값이 없는 문구는 비표시」
+ *   (턴 AA 불변). 없는 근거를 적는 것이 곧 조용한 거짓이다.
+ * ★ 이것은 **시험 장치가 아니다**(P-220). 제품에 이미 같은 모양이 있다 — M4 의
+ *   시험 발송이 `#{delivery_id}` 를 그대로 적는다(P-160 ③). 사람이 나중에
+ *   「그때 그 접수」를 찾을 때 쥐는 번호이고, 없으면 **우리 말밖에 안 남는다.**
+ * ⚠ 칸이 전부 **물음표(`?`)** 인 이유: 답이 모양을 안 지켜도 화면이 **안 죽는다.**
+ *   모르는 칸은 안 적을 뿐이고, 옛 서버와 새 화면이 같은 날 서 있을 수 있다.
+ */
+interface ResponseAdvanceResult {
+  event_id?: number;
+  from?: string;
+  to?: string;
+  allowed_next?: string[];
+  audit_id?: number | string | null;
+}
+
+/**
+ * 서버가 답한 그대로를 **고객의 말**로. 우리가 보낸 값은 한 글자도 안 쓴다.
+ *
+ * ★ 세 조각을 순서대로 붙인다 — 〈옮겨진 칸〉 · 〈어디서 왔나〉 · 〈서버 기록 번호〉.
+ *   뒤의 둘은 **서버가 준 때만** 붙는다.
+ */
+export function advanceServerMessage(r: ResponseAdvanceResult, asked: string): string {
+  //: ★ 서버가 `to` 를 안 줬을 때만 우리가 보낸 값으로 내려앉는다. 그때는
+  //:   「서버가 말한 칸」이 아니므로 뒤의 근거 조각도 안 붙는다.
+  const landed = String(r?.to || '').trim() || asked;
+  const head = `「${labelOf(RESPONSE_STATE_LABEL, landed)}」 단계로 옮겼습니다`;
+  const from = String(r?.from || '').trim();
+  const step = from ? ` (${labelOf(RESPONSE_STATE_LABEL, from)} → ${labelOf(RESPONSE_STATE_LABEL, landed)})` : '';
+  const audit = String(r?.audit_id ?? '').trim();
+  //: ⚠ 값이 없으면 「서버에 남았습니다」를 **안 적는다** — 남았는지 모르기 때문이다.
+  const proof = audit ? ` · 서버 기록 #${audit}` : '';
+  return `${head}${step}${proof}.`;
+}
+
 export default function MobileEventDetail() {
   const { id } = useParams<{ id: string }>();
   const [busy, setBusy] = useState('');
@@ -294,7 +349,7 @@ export default function MobileEventDetail() {
         try {
           // ★ **접수·처리 단계 — 멱등 키를 싣는 문 ②**(휴대전화 쪽).
           //   이동 중인 사람의 화면이라 두 번 눌릴 확률이 가장 높은 자리다.
-          await mobilePostWithQueryOnce(
+          const result = await mobilePostWithQueryOnce<ResponseAdvanceResult>(
             mobileEndpoint.response(id),
             { to_state: toState, reason },
             intentKey(`m.response:${id}:${toState}`),
@@ -302,7 +357,9 @@ export default function MobileEventDetail() {
           // ★ 편리성 #5 — **시계는 여기서 멈춘다.** 「접수」가 서버에 기록된 뒤다.
           //   누른 때가 아니라 **성공한 뒤**여야 거절된 접수가 수에 안 들어간다.
           if (id && toState === 'acknowledged') finishReceiveToAck(id);
-          message.success(`「${labelOf(RESPONSE_STATE_LABEL, toState)}」 단계로 옮겼습니다.`);
+          //: ★★ [턴 AB] **서버가 답한 것을 적는다** — 우리가 보낸 `toState` 가 아니다.
+          //:   사유·규약은 `advanceServerMessage` 머리말에 있다(위).
+          message.success(advanceServerMessage(result, toState));
           event.reload();
         } catch (err) {
           message.error(

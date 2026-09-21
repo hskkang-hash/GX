@@ -60,10 +60,24 @@
     `_base_manager` · `.objects.filter(` 는 **0개**이고,
     `AppStaysThinTest.METERING_ORM_DEBT` 는 **빈 집합**이다.
 
-⚠ **커널로 갔다고 씨앗이 빠진 것은 아니다.** 카메라·계정·미디어 표에는 표식 칸
-  (`track_id`)이 없어서 `exclude_unbillable` 을 걸 자리가 없다. 지금 섞여 있는
-  씨앗의 수는 `common/billing_marks` 머리말 ⚠ 에 **수로** 적혀 있다 —
-  달라진 것은 「이제 고칠 자리가 하나」라는 것이고, 0으로 덮지 않았다.
+★ **씨앗이 청구에서 빠졌다 — P-224** (2026-09-21 · 턴 AB · 차선 B)
+------------------------------------------------------------------
+턴 Z 까지 카메라·계정·미디어 표에는 표식 칸이 없어서 `exclude_unbillable` 을 걸 자리가
+없었다. 그래서 **우리가 심은 카메라·계정에 고객이 돈을 내고 있었다**
+[실측 2026-09-21 11:37 · ETRI-Group 카메라 15 중 11 · 계정 30 중 11].
+
+    이제 카메라는 제 칸(`data_source`)으로, 계정·API 키는 곁표
+    (`common.BillingMark`)로 갈린다. 이 파일은 **한 줄도 그 판단을 안 한다** —
+    갈래를 고르는 일은 전부 `common/billing_marks.exclude_unbillable` 안에서 끝난다.
+
+⚠ **저장(미디어)은 여전히 「못 쟀다」다.** 곁표는 섰지만 *무엇을 표시할지*의 근거가
+  없다 — 미디어 행은 표식도 이름도 만든이도 씨앗을 안 가른다. **0으로 안 덮는다**
+  (D-301). 그 사실은 응답의 `exclusions.not_applied` 로 화면까지 나간다.
+
+★ **운영·감사 면은 한 줄도 안 뺀다** (D-497 · P-224 ③). 이 파일이 세는 수만 줄고,
+  관제 화면·사건 목록·감사 로그는 씨앗을 **그대로 본다.** 씨앗이 화면에서 사라지면
+  운영자가 실물을 못 보고, **못 보는 것은 못 고친다.** 그 불변을 `tests/
+  test_b_billing_marks.py` 의 「계량 전/후 불변」 시험 셋이 붙들고 있다.
 
 ★ **테넌트 격리** — 둘째
 ------------------------
@@ -86,6 +100,7 @@ import csv
 import io
 import logging
 from datetime import datetime
+from pathlib import Path
 
 from django.utils import timezone
 
@@ -121,6 +136,39 @@ ORDER = ("cameras", "users", "events", "notifications", "storage")
 
 #: 한 번에 낼 수 있는 달 수의 상한. 상한이 없으면 한 화면이 표 전체를 훑는다.
 MAX_MONTHS = 24
+
+#: ★ P-224 ⑤ — **「이번 달 사용량」이 제 입으로 무엇을 뺐는지 말한다.**
+#:   수만 줄고 아무 말이 없으면 고객은 지난 달과 다른 수를 보고 우리를 의심한다.
+#:   뺀 것을 적는 것이 「정직한 청구서」의 절반이다.
+EXCLUDED_NOTE = ("우리가 심은 행(시험·검수 씨앗·훈련)은 이 수에서 뺐습니다. "
+                 "훈련은 몇 건이든 0원입니다.")
+
+#: 씨앗 거름이 **걸리는** 칸. 걸리는 것과 안 걸리는 것을 가려 적는다 —
+#: 「전부 뺐다」고 뭉뚱그리면 저장 용량의 못 잰 칸이 뺀 것처럼 읽힌다.
+EXCLUSIONS_APPLY_TO = ("cameras", "users", "events", "notifications")
+
+#: 못 건 칸과 **그 이유**. 0으로 덮지 않는다 (D-301).
+EXCLUSIONS_NOT_APPLIED = {
+    "storage": ("미디어 장부에는 표식이 없습니다 — 씨앗 몫을 **못 쟀습니다**. "
+                "0이 아니라 모르는 것입니다."),
+}
+
+#: 가격표. **값은 비어 있다** (§4-5 · P-223). 자리는 세우고 수는 안 짓는다.
+#: ⚠ `metering/` 디렉터리에 `__init__.py` 를 **두지 마라** — 그 순간 정규 패키지가
+#:   되어 이 모듈(`metering.py`)을 가린다. 자료만 사는 자리다
+#:   (`tests/test_b_billing_marks.py` 가 그 사실을 붙든다).
+PRICE_TABLE_PATH = Path(__file__).with_suffix("") / "price_table.yaml"
+
+#: 단가가 없는 줄의 상태·문구. **0원과 다른 말이다.**
+UNPRICED = "unpriced"
+UNPRICED_LABEL = "단가 미확정"
+
+#: 사용량 칸 → 가격표 키. 여기 없는 칸은 청구서 줄이 안 된다(저장 용량은 단가
+#: 체계 자체가 §4-5 에 없다 — 없는 것을 있는 척 회색으로 내지 않는다).
+PRICE_KEYS = {
+    "cameras": "camera_month",
+    "users": "seat_month",
+}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -303,14 +351,27 @@ def usage(*, scope: TenantScope, month: str = "") -> dict:
         "storage_unsized": storage["unsized"],
         "read_only": True,
         "months": recent_months(6),
+        #: ★ P-224 ⑤ — **뺀 것을 적는다.** 「전부 뺐다」고 뭉뚱그리지 않는다:
+        #:   걸린 칸과 못 건 칸을 **가려서** 싣는다. 저장 용량의 씨앗 몫은
+        #:   0이 아니라 **모르는 것**이고, 그 둘이 한 칸에 섞이면 고객이 못 가른다.
+        "exclusions": {
+            "note": EXCLUDED_NOTE,
+            "applies_to": list(EXCLUSIONS_APPLY_TO),
+            "not_applied": dict(EXCLUSIONS_NOT_APPLIED),
+            "drill_is_free": True,
+        },
         #: ★ 청구서의 수는 **정의와 함께** 나가야 한다. 정의가 없으면 고객이
         #:   같은 수를 다시 셀 수 없고, 다시 못 세는 수는 다툼이 된다.
         "definitions": {
-            "cameras": "그 달 끝 시점에 등록되어 있던 카메라 (지운 카메라는 빼고 센다)",
-            "users": "그 테넌트의 살아 있는 로그인 계정 (비활성·지운 계정은 뺀다)",
-            "events": "그 달에 발생한 탐지 이벤트 (occurred_at 기준)",
-            "notifications": "그 달에 실제로 보낸 알림 (실패는 빼고 센다)",
-            "storage": "그 달 끝 시점 보유 바이트 (미디어 장부 file_size 합계)",
+            "cameras": "그 달 끝 시점에 등록되어 있던 카메라 "
+                       "(지운 카메라·우리가 심은 카메라는 빼고 센다)",
+            "users": "그 테넌트의 살아 있는 로그인 계정 "
+                     "(비활성·지운 계정·우리가 만든 시험 계정은 뺀다)",
+            "events": "그 달에 발생한 탐지 이벤트 (occurred_at 기준 · 시험·훈련 제외)",
+            "notifications": "그 달에 실제로 보낸 알림 "
+                             "(실패·시험·훈련은 빼고 센다)",
+            "storage": "그 달 끝 시점 보유 바이트 (미디어 장부 file_size 합계 · "
+                       "씨앗 몫은 표식이 없어 못 갈랐다)",
         },
     }
 
@@ -341,3 +402,163 @@ def usage_csv(*, scope: TenantScope, months: int = 6) -> str:
             + ["" if by_key[k]["value"] is None else by_key[k]["value"]
                for k in ORDER])
     return buf.getvalue()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 4. 가격표와 청구서 초안 — **값이 없으면 회색으로 낸다** (§4-5 · P-223 · P-224 ⑤)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 왜 여기에 있나
+# --------------
+# 계량은 「얼마나 썼나」를 세고, 청구서는 「얼마인가」를 낸다. 두 질문은 다르지만
+# **같은 정의 위에 서야** 한다 — 사용량 화면의 수와 청구서 초안의 수가 다른 정의로
+# 세어지면 고객은 두 종이를 들고 우리에게 묻고, 우리는 답할 수 없다. 그래서 초안은
+# `usage()` 가 낸 그 수를 **그대로** 쓴다(다시 세지 않는다).
+#
+# ★ **지어내지 않되 개발을 막지 않는다** (P-223). 단가 넷은 09-28 대표 확인 전까지
+#   정본이 아니다. 그래서 가격표 파일은 **자리만 있고 값이 비어 있고**, 비면 그 줄이
+#   회색(`unpriced`)으로 나간다. 회색은 0원이 아니다 — 0원은 **정했다**는 뜻이다.
+def _parse_flat_yaml(text: str) -> dict:
+    """`키: 값` **한 겹만** 읽는다. YAML 전체를 읽지 않는다.
+
+    왜 라이브러리를 안 쓰나 — [실측 2026-09-21] 이 환경에 PyYAML 이 **없다.**
+    청구서 한 장 때문에 의존성을 늘리면 그 순간 이 파일은 컨테이너를 다시 짓기
+    전에는 못 읽히고, **못 읽히는 가격표는 없는 가격표**다.
+
+    ★ **빈 값과 0을 가른다.** 빈 칸·`null` 은 `None`(아직 안 정했다)이고
+      `0` 은 0(0원이라고 정했다)이다. 둘을 같게 읽으면 확정된 「훈련 0원」이
+      「미확정」으로 나가거나, 그 반대가 된다.
+    """
+    out = {}
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if ":" not in line:
+            continue
+        key, _, value = line.partition(":")
+        key = key.strip()
+        value = value.strip()
+        #: 줄 끝 주석. 값에 공백+우물정이 없는 것이 이 파일의 규약이다(머리말).
+        if " #" in value:
+            value = value.split(" #", 1)[0].strip()
+        if value in ("", "null", "~"):
+            out[key] = None
+            continue
+        try:
+            out[key] = int(value)
+            continue
+        except ValueError:
+            pass
+        try:
+            out[key] = float(value)
+            continue
+        except ValueError:
+            pass
+        out[key] = value.strip("'\"")
+    return out
+
+
+def load_price_table(path=None) -> dict:
+    """가격표 한 벌. **없거나 비어도 던지지 않는다** — 회색으로 낼 수 있어야 한다.
+
+    돌려주는 것에는 `_missing` 이 함께 온다: 값이 안 정해진 키들의 목록이다.
+    화면·보고가 「무엇이 회색인가」를 **셈 없이** 읽게 하려는 것이고, 그 목록이
+    비는 날이 가격표가 정본이 되는 날이다.
+    """
+    path = Path(path) if path else PRICE_TABLE_PATH
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:                                      # noqa: BLE001
+        log.warning("가격표를 못 읽었다(%s): %s — 청구서 초안은 전부 회색이다",
+                    path, exc)
+        return {"_missing": sorted(set(PRICE_KEYS.values()) | {"drill_month"}),
+                "_why": f"가격표 파일을 못 읽었다: {exc}"[:200]}
+    table = _parse_flat_yaml(text)
+    table["_missing"] = sorted(k for k, v in table.items()
+                               if not k.startswith("_") and v is None)
+    return table
+
+
+def invoice_draft(*, scope: TenantScope, month: str = "") -> dict:
+    """**청구서 초안.** 수는 `usage()` 에서, 단가는 가격표에서 온다.
+
+    ★ **초안이다.** 이 함수는 행을 만들지 않는다(계량과 같은 규율) — 청구서를
+      *발행*하는 자리가 생기는 날 그 자리가 이 초안을 받아 적는다. 세는 함수가
+      발행까지 하면 우리가 만든 사실에 우리가 값을 매기게 된다.
+
+    ★ **훈련 줄은 회색이 아니다** (P-224 ⑤). 훈련 건수는 이 셈이 세지 않는다 —
+      훈련은 청구에서 빠지므로 애초에 셈을 안 지난다. 그런데도 이 줄의 **금액은
+      확정**이다: 0원이 단가이니 건수가 몇이든 0원이다. *못 잰 채로도 답이 나오는
+      유일한 줄*이고, 그래서 이 줄만은 회색으로 안 낸다.
+    """
+    used = usage(scope=scope, month=month)
+    prices = load_price_table()
+    by_key = {c["key"]: c for c in used["cells"]}
+
+    lines = []
+    for key, price_key in PRICE_KEYS.items():
+        cell = by_key[key]
+        unit = prices.get(price_key)
+        qty = cell["value"]
+        line = {
+            "key": key,
+            "label": cell["label"],
+            "unit": cell["unit"],
+            "quantity": qty,
+            "unit_price": unit,
+            "price_key": price_key,
+        }
+        if unit is None:
+            line["state"] = UNPRICED
+            line["amount"] = None
+            line["why"] = (f"{UNPRICED_LABEL} — 가격표의 {price_key} 가 비어 "
+                           f"있습니다 (대표 확인 전까지 정본이 아닙니다)")
+        elif qty is None:
+            line["state"] = "unknown"
+            line["amount"] = None
+            line["why"] = "사용량을 못 쟀습니다 — 0이 아니라 모르는 것입니다"
+        else:
+            line["state"] = "ok"
+            line["amount"] = qty * unit
+            line["why"] = ""
+        lines.append(line)
+
+    #: ★ **훈련 = 0원 줄.** 건수를 못 세어도 금액이 확정인 유일한 줄(머리말 ★).
+    drill_unit = prices.get("drill_month")
+    lines.append({
+        "key": "drill",
+        "label": "훈련",
+        "unit": "건",
+        "quantity": None,
+        "unit_price": drill_unit,
+        "price_key": "drill_month",
+        "state": "ok" if drill_unit == 0 else UNPRICED,
+        "amount": 0 if drill_unit == 0 else None,
+        "why": ("훈련은 몇 건이든 0원입니다 — 건수는 이 셈이 세지 않습니다"
+                if drill_unit == 0 else
+                f"{UNPRICED_LABEL} — 가격표의 drill_month 가 비어 있습니다"),
+    })
+
+    priced = [ln for ln in lines if ln["state"] == "ok"]
+    unpriced = [ln["key"] for ln in lines if ln["state"] != "ok"]
+    return {
+        "title": "청구서 초안",
+        "month": used["month"],
+        "tenant": used["tenant"],
+        "tenant_id": used["tenant_id"],
+        "currency": prices.get("currency") or "",
+        "price_table_confirmed_on": prices.get("confirmed_on"),
+        "lines": lines,
+        #: ★ **부분합을 총액이라 부르지 않는다.** 회색 줄이 하나라도 있으면 이 수는
+        #:   총액이 아니라 **잰 줄의 합**이고, 응답이 그렇게 말한다.
+        "subtotal": sum(ln["amount"] for ln in priced),
+        "is_total": not unpriced,
+        "unpriced_lines": unpriced,
+        "state": "ok" if not unpriced else UNPRICED,
+        "why": ("" if not unpriced else
+                f"{UNPRICED_LABEL}인 줄이 있습니다: {', '.join(unpriced)} — "
+                f"가격표(§4-5)가 대표 확인 전입니다. 이 초안은 청구서가 아닙니다."),
+        "exclusions": used["exclusions"],
+        "read_only": True,
+    }

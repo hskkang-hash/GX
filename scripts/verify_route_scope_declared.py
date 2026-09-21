@@ -272,6 +272,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    from _gate_header import gate_header, count_lines  # P-107 — TARGET/AS/SOURCE
+    _n_base = count_lines(BASELINE)
+    gate_header(__file__, measured=("라우트마다 **테넌트 범위를 선언했는가** — **분모 %s행**"
+              "(`declaration_baseline.txt` 에 잠근 자리 · 지금 셌다) + "
+              "살아 있는 라우터 전수(돌 때 센다). 래칫이므로 초록은 "
+              "「늘지 않았다」이지 「닫혔다」가 아니다"
+              % (_n_base if _n_base is not None else "못 셌다")))
     raise SystemExit(main())

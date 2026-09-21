@@ -539,8 +539,17 @@ if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from _gate_header import gate_header
 
+    _n_py = sum(1 for _r in SCAN_ROOTS for _p in (ROOT / _r).rglob("*.py")
+                if not set(_p.parts) & set(SKIP_DIRS)) if SCAN_ROOTS else 0
     gate_header(
         __file__,
+        measured=("카메라 **자격이 로그로 새는가** — **분모 %d대**(`%s` 의 stdout) "
+                  "+ **%s개**(`%s` 파이썬 전수 · AST 로 새는 길을 잇는다 · 지금 "
+                  "셌다) · 헹굼 %d종 · 로그 호출 %d종. ★ `rtsp://` **언급이 0건**"
+                  "이면 그 길이 안 돈 것이지 지켜진 것이 아니다"
+                  % (len(DEFAULT_CONTAINERS), " · ".join(DEFAULT_CONTAINERS),
+                     _n_py or "못 셌다", " · ".join(SCAN_ROOTS),
+                     len(SANITIZERS), len(LOG_METHODS))),
         target="살아 있는 컨테이너의 stdout (docker logs) + backend/ 파이썬 AST",
         as_="자격 없음 — 로그를 읽고 코드를 읽는다. 제품에 요청을 보내지 않는다",
         source="docker logs --since (지금 도는 컨테이너) · 저장소 파일 바이트",

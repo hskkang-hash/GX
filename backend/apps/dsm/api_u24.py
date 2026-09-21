@@ -486,6 +486,73 @@ class DsmU24API:
         """병행 — 같은 글자를 기존 K4 렌더러로 찍는다."""
         return _report_file(request, run_id=run_id, fmt="pdf")
 
+    # ══════════════════════════════════════════════════════════════════════
+    # 턴 AB (WO-04 §4-3) — **별지 제1호 「재난 상황보고」**
+    # ══════════════════════════════════════════════════════════════════════
+    #
+    # ★ 경로가 앞의 것을 안 삼킨다 [실측 확인 · 메모리 「라우트 삼킴 함정」]:
+    #   `api.py` 가 `/events/{int:event_id}/…` 아래 선 리터럴은 `timeline` ·
+    #   `response` · `field-reply` · `field-replies` · `review` · `notify` ·
+    #   `snapshot` · `report.pdf` · `clip` · `clip/stream` 이고, `api_u24` 는
+    #   `upper-report` 다. `situation-report.docx` 는 그 어느 것과도 같지 않다.
+    #
+    # ★ **실행 기록(`DsmReportRun`)을 쓰지 않는다** — 그 표의 `kind` 는 셋으로
+    #   잠겨 있고(`monthly_report.KINDS`), 그 파일은 이 턴 U24 소유가 아니다.
+    #   넷째 서식을 거기 끼워 넣으려면 남의 파일을 고쳐야 한다. 그래서 **사건
+    #   하나를 지금 그려 내려주는 문**으로 낸다 — 앞의 셋과 같은 조립(`build_context`)
+    #   을 타므로 값이 갈리지 않는다. 실행 기록에 넷째 종류가 서는 날 이 문은
+    #   `monthly_report` 쪽으로 옮겨 붙는다(조율자에게 쪽지로 청했다).
+    #
+    # ★ 누가 보나 — 보고서를 보는 사람과 **같다**(`_report_reader_denial`).
+    #   판정식을 새로 쓰지 않는다.
+    @route.get("/events/{int:event_id}/situation-report.docx", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="별지 1호 상황보고 — 남의 테넌트 종이가 나가면 격리 실패다")
+    def situation_report_docx(self, request, event_id: int, plan: str = ""):
+        """별지 제1호 **재난 상황보고** DOCX — 세종 §4-3 의 10칸.
+
+        `plan` 은 ⑧ 향후 계획에 사람이 적는 한 줄이다. 비어도 **칸은 남는다.**
+
+        상태를 뭉치지 않는다(`_report_file` 과 같은 규약):
+            401 인증 없음 · 403 볼 수 없는 역할 · 404 없는/남의 사건 ·
+            409 사건은 있는데 지금 종이를 만들 수 없다
+        """
+        from urllib.parse import quote
+
+        from django.http import Http404, HttpResponse
+
+        from kernels.k4_report import InvalidReportInput, RenderFailed
+
+        from apps.dsm import docx_export, incident_report
+        from apps.dsm.exceptions import IncidentReportUnavailable
+
+        scope = _scope(request)
+        denial = _report_reader_denial(scope.actor)
+        if denial:
+            raise HttpError(403, denial)
+        try:
+            html = incident_report.build_situation_report(
+                scope=scope, event_id=event_id, plan=plan)
+            data = docx_export.html_to_docx_bytes(
+                html, title=incident_report.SITUATION_TITLE,
+                header=incident_report.SITUATION_TITLE)
+        except Http404:
+            raise HttpError(404, "그런 사건이 없습니다.")
+        except (IncidentReportUnavailable, docx_export.DocxRenderFailed,
+                RenderFailed, InvalidReportInput) as exc:
+            raise HttpError(409, f"지금은 상황보고서를 만들 수 없습니다 — {exc}")
+
+        name = f"재난상황보고-별지1호-{event_id}.docx"
+        response = HttpResponse(
+            data,
+            content_type=("application/vnd.openxmlformats-officedocument"
+                          ".wordprocessingml.document"))
+        response["Content-Disposition"] = (
+            f'attachment; filename="guardianx-situation-{event_id}.docx"; '
+            f"filename*=UTF-8''{quote(name)}")
+        response["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 턴 T — 라우트 뒷면. 얇게 둔다: 모델은 `stream_monitors.DsmUpperReportFlag`(실측 · 있다),

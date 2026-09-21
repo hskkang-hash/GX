@@ -45,8 +45,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _gate_header import (KEY_AS, KEY_MEASURED, KEY_SOURCE, KEY_TARGET,  # noqa: E402
                           MEASURED_NONE, OTHER_LANE,
-                          audit, gate_files, gate_header, judge_as, judge_header,
-                          judge_measured, judge_source, pipe_scan, pipe_violations)
+                          audit, escalation, gate_files, gate_header, judge_as,
+                          judge_header, judge_measured, judge_source, pipe_scan,
+                          pipe_violations)
+
+#: ★★ [P-217 · 턴 AB · 차선 Q] **기한은 코드가 아니라 결정문에 있다.**
+#:   턴 AA 가 「MEASURED 남은 회색 28 은 턴 AC 부터 빨강」을 **문서에만** 적었고,
+#:   문서에 적힌 기한은 그날이 와도 색을 안 바꾼다 — 조용히 지나간다.
+#:   ⇒ 기한은 `docs/agent/decisions.yaml` 의 `D-511::deadline` 에 있고,
+#:     이 게이트가 **그 파일을 읽어서** 오늘과 댄다. 여기 날짜를 베끼지 않는다 —
+#:     베끼면 결정문이 움직여도 이 줄이 거짓말한다(P-93).
+MEASURED_DEADLINE_DECISION = "D-511"
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 TAG = "[P-107]"
@@ -160,12 +169,23 @@ def judge(observations: dict) -> list:
             problems = judge_measured(h.get("measured", ""))
             if problems:
                 gray.append("%s(%s)" % (name, problems[0][:46]))
-        out.append(("MEASURED_LINE", True if not gray else None,
+        #: ★ 기한을 **결정문에 물어본다.** 셋 중 하나가 온다:
+        #:     grey    아직 기한 전 — 회색(None)
+        #:     red     기한이 왔다 — **빨강(False)**. 사람이 코드를 안 고쳐도 바뀐다
+        #:     unknown 결정문을 못 읽었다 — 회색이되 **그 사실을 말한다**
+        #:   ⚠ `unknown` 을 `grey` 와 같은 낱말로 적지 않는다. 결정문을 지운 것이
+        #:     「아직 기한 전」으로 읽히면 배선이 조용히 꺼진 것이다.
+        level, note = escalation(MEASURED_DEADLINE_DECISION,
+                                 today=observations.get("today"))
+        verdict = True if not gray else (False if level == "red" else None)
+        out.append(("MEASURED_LINE", verdict,
                     "게이트 %d개 중 **%d개가 「무엇을 · 분모 N」을 말한다** · "
-                    "**회색 %d**(분모를 안 말하는 게이트는 그 `exit 0` 이 "
-                    "「이 호출이 통과」일 뿐이다 · P-204)%s"
-                    % (len(opened), len(opened) - len(gray), len(gray),
-                       "" if not gray else " · " + str([g.split("(")[0] for g in gray[:8]]))))
+                    "**%s %d**(분모를 안 말하는 게이트는 그 `exit 0` 이 "
+                    "「이 호출이 통과」일 뿐이다 · P-204)%s · [기한] %s"
+                    % (len(opened), len(opened) - len(gray),
+                       "빨강" if level == "red" else "회색", len(gray),
+                       "" if not gray else " · " + str([g.split("(")[0] for g in gray[:8]]),
+                       note)))
     return out
 
 
@@ -326,6 +346,44 @@ def self_test() -> int:
         ok = False
         print("%s X 분모를 안 말하는 게이트가 섞였는데 MEASURED_LINE=%r 다 — "
               "회색이어야 한다 (P-204)" % (TAG, _verdict))
+
+    # ★★ [P-217 · 턴 AB] **기한 배선 — 문서가 아니라 이 줄이 집행한다**
+    #    기한 전 회색 · 기한 후 **빨강** · 결정문을 못 읽으면 **회색 + 사유**.
+    #    세 갈래를 다 붙인다. 붙이지 않으면 기한이 와도 아무도 모른다.
+    _d = _good_observations()
+    _d["opened"]["verify_b.py"]["measured"] = ""
+    _d["today"] = "2026-09-21"
+    if dict((n, p_) for n, p_, _w in judge(_d)).get("MEASURED_LINE") is None:
+        print("%s O ★ [기한] 그날 **전**에는 회색이다 — 「아직 아니다」" % TAG)
+    else:
+        ok = False
+        print("%s X 기한 전인데 회색이 아니다" % TAG)
+    _d["today"] = "2026-09-30"
+    if dict((n, p_) for n, p_, _w in judge(_d)).get("MEASURED_LINE") is False:
+        print("%s O ★★ [기한] 그날 **뒤**에는 **빨강**이다 — 사람이 코드를 "
+              "안 고쳐도 색이 바뀐다 (D-511 · 결정문이 집행한다)" % TAG)
+    else:
+        ok = False
+        print("%s X 기한이 지났는데 빨강이 아니다 — **기한이 조용히 지나갔다.** "
+              "이 배선이 막으려던 바로 그 모양이다 (P-217)" % TAG)
+    #: ★ 분모를 **다 말하면** 기한이 지나도 초록이다 — 기한은 회색을 빨강으로
+    #:   올릴 뿐, 없는 어긋남을 만들지 않는다.
+    _d2 = _good_observations()
+    _d2["today"] = "2026-09-30"
+    if dict((n, p_) for n, p_, _w in judge(_d2)).get("MEASURED_LINE") is True:
+        print("%s O ★ [기한] 분모를 다 말하면 기한이 지나도 **초록**이다 "
+              "(없는 빨강을 만들지 않는다)" % TAG)
+    else:
+        ok = False
+        print("%s X 기한이 회색 0건에도 색을 바꿨다 — 없는 어긋남이다" % TAG)
+    _lvl, _note = escalation("D-000-없는-결정문")
+    if _lvl == "unknown" and "없다" in _note:
+        print("%s O ★★ [기한] 결정문을 **지우면 꺼지지 않고 「못 읽었다」고 말한다** "
+              "— 조용히 꺼지는 배선은 배선이 아니다" % TAG)
+    else:
+        ok = False
+        print("%s X 결정문이 없는데 %r 로 지나갔다 — 배선이 조용히 꺼졌다"
+              % (TAG, _lvl))
 
     # 판정기의 조각들이 살아 있는가 (D-289 — 규칙을 지우면 잡히지 않는다)
     if judge_as("admin") and judge_source("파일 x/y.json") and not judge_as("gxprobe_q"):

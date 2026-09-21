@@ -344,6 +344,13 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    from _gate_header import gate_header, count_json, count_lines  # P-107 — TARGET/AS/SOURCE
+    _n_routes = count_json(INVENTORY, "routes")
+    _n_base = count_lines(BASELINE)
+    gate_header(__file__, measured=("커밋된 라우트 인벤토리 전수에서 **봉투(authz·body status)**를 본다 — "
+              "**분모 %s건**(`route_inventory.json::routes` · 지금 셌다) · "
+              "잠근 기준선 %s행. 인벤토리를 못 읽으면 분모가 없고, "
+              "분모 없는 초록은 초록이 아니다 (D-301 · P-204)"
+              % (_n_routes if _n_routes else "못 셌다",
+                 _n_base if _n_base is not None else "못 셌다")))
     raise SystemExit(main())

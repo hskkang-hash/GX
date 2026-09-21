@@ -721,6 +721,59 @@ def build_monthly_html(*, tenant: str, issued_by: str, since, until,
             f"<style>{_CSS}</style></head><body>{''.join(parts)}</body></html>")
 
 
+#: 상급 제출용 표의 「구분」 칸에 적는 말. `data_source` 를 **모를 때**의 값이 따로 있다 —
+#: 「실운영이다」와 「확인 못 했다」를 같은 빈칸으로 두면 받는 기관이 전자로 읽는다(D-290).
+UPPER_SOURCE_LABEL = {"live": "실운영", "drill": "훈련"}
+UPPER_SOURCE_UNKNOWN = "확인 못 함"
+
+#: 훈련이 섞인 제출본의 맨 윗줄.
+UPPER_DRILL_BANNER = ("[GuardianX] 이 제출본에는 **훈련 사건이 섞여 있습니다** — "
+                      "아래 표의 「구분」 칸이 줄마다 실운영/훈련을 적습니다.")
+#: 구분을 한 줄도 못 읽은 제출본의 맨 윗줄. **거짓 안심을 주지 않는다.**
+UPPER_SOURCE_UNKNOWN_BANNER = (
+    "[GuardianX] 이 제출본은 각 사건이 실운영인지 훈련인지 **확인하지 못했습니다** — "
+    "훈련 사건이 섞여 있을 수 있습니다. 사건 상세 화면에서 확인하십시오.")
+
+
+def _upper_source(row: dict) -> str:
+    """제출본 한 줄의 **구분**. 부르는 쪽이 `data_source` 를 안 실으면 「확인 못 함」이다."""
+    return UPPER_SOURCE_LABEL.get(
+        str(row.get("data_source") or "").strip(), UPPER_SOURCE_UNKNOWN)
+
+
+def _upper_drill_banner(rows) -> str:
+    """상급 제출용 맨 윗줄 — **훈련이 섞였는가.**
+
+    ★★ 왜 이 함수가 턴 AB 에 생겼나 — **분모가 생겼고, 그 분모가 전부 훈련이었다.**
+
+        [실측 2026-09-21 · 턴 AA] 상급 보고 체크 **0건** → 분모 0 → 배너를 안 지었다.
+        [실측 2026-09-21 · 턴 AB] 체크 **2건**, 그리고 `services.event_data_source` 로
+          둘 다 물어보니 **둘 다 `drill`** 이었다. 곧 지금 이 종이는 훈련 둘을
+          **실제 재난으로** 상급기관에 올린다. 그 종이는 되돌릴 수 없다.
+
+    ★ 사건 1쪽의 배너(`drill_banner`)와 **기울기가 다르다.** 1쪽은 실시간 경보라
+      「모르면 안 붙인다」(실경보에 훈련 딱지가 붙으면 관제요원이 손을 늦춘다).
+      이 종이는 **사후 제출본**이라 모르면 **모른다고 적는다** — 침묵은 「전부
+      실운영」으로 읽히고, 그 읽힘이 이 종이의 사고다.
+
+    ⚠ **강조는 인라인이다.** `_CSS` 에 `.drill` 같은 규칙을 두면 훈련이 안 섞인
+      종이의 HTML 에도 그 낱말이 새고, 그러면 그 종이를 훑어 재는 사람에게
+      거짓 양성이 된다 [실측 · 턴 AA 에 실제로 그렇게 샜다].
+    """
+    rows = list(rows or ())
+    if not rows:
+        return ""
+    seen = {str(r.get("data_source") or "").strip() for r in rows}
+    if "drill" in seen:
+        return ("<div class=\"banner\" style=\"border-width:3px;font-size:10pt\">"
+                f"{escape(UPPER_DRILL_BANNER)}</div>")
+    if seen <= {""}:
+        #: 한 줄도 구분을 못 읽었다 — 조용히 넘어가지 않는다.
+        return ("<div class=\"banner\">"
+                f"{escape(UPPER_SOURCE_UNKNOWN_BANNER)}</div>")
+    return ""
+
+
 def build_upper_html(*, tenant: str, issued_by: str, since, until,
                      rows, note: str = "", missing: int = 0) -> str:
     """상급기관 제출용 — **체크된 사건만** + 요약.
@@ -735,10 +788,12 @@ def build_upper_html(*, tenant: str, issued_by: str, since, until,
       보고 대상으로 표시된 사건이 없습니다」라고 적는다.
     """
     rows = list(rows or ())
-    parts: list[str] = [
+    parts: list[str] = []
+    #: ★★ [턴 AB · U24] **훈련이 섞였는지 맨 위에서 말한다.**
+    parts.append(_upper_drill_banner(rows))
+    parts.append(
         _head(tenant=tenant, title=UPPER_TITLE,
-              meta=(f"대상 기간 {_when(since)} ~ {_when(until)} · 발행자 {issued_by}")),
-    ]
+              meta=(f"대상 기간 {_when(since)} ~ {_when(until)} · 발행자 {issued_by}")))
     if missing:
         parts.append("<div class=\"banner\">[GuardianX] 이 보고서는 불완전합니다 — "
                      f"표시된 사건 {missing}건을 읽지 못했습니다(보존 기한 경과 또는 접근 불가)."
@@ -762,13 +817,17 @@ def build_upper_html(*, tenant: str, issued_by: str, since, until,
         parts.append("<table><tr><td class=\"wide\">이 기간에 상급기관 보고 대상으로 "
                      "표시된 사건이 없습니다.</td></tr></table>")
     else:
-        parts.append("<table class=\"rows\"><tr><th>사건번호</th><th>발생</th>"
+        #: ★ [턴 AB] **「구분」이 첫 열 다음이다.** 맨 끝에 두면 좌우로 밀린 칸을
+        #:   사람이 안 본다 — 그리고 이 칸을 안 보면 훈련이 실운영으로 읽힌다.
+        parts.append("<table class=\"rows\"><tr><th>사건번호</th><th>구분</th>"
+                     "<th>발생</th>"
                      "<th>등급</th><th>유형</th><th>카메라</th><th>판정</th>"
                      "<th>보고 시각</th></tr>")
         for r in rows[:UPPER_ROWS_ON_PAGE]:
             parts.append(
                 "<tr>"
                 f"<td>{escape(str(r.get('event_id', '')))}</td>"
+                f"<td>{escape(_upper_source(r))}</td>"
                 f"<td>{escape(_when(r.get('occurred_at')))}</td>"
                 f"<td>{escape(_label(SEVERITY_LABEL, r.get('severity')))}</td>"
                 f"<td>{escape(_label(EVENT_TYPE_LABEL, r.get('event_type')))}</td>"
@@ -828,5 +887,267 @@ def build_incident_html(*, scope, event_id: int) -> str:
         clock=services.response_clock(scope=scope, event_id=event_id),
         actions=context.actions, tenant=tenant_name(actor),
         issued_by=person_label(actor),
+        sources_failed=tuple(context.sources_failed),
+        data_source=source)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 AB (WO-04 §4-3) — **별지 제1호 「재난 상황보고」 최소 서식**
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 왜 이제야 서나 — **턴 AA 에 「없다」를 재서 적었다.**
+#   [실측 2026-09-21 · 턴 AA] grep 「별지」·「제N보」·「13항목」·form1·situation_report
+#   → backend 에 **0건**. 명세서(DSM v1.1 DSM-U4-01)가 `incident_report.py::form1`
+#   이라 적어 둔 그 함수가 없었다. 그때 **짓지 않았다** — 칸을 지어 놓고 아무도 안
+#   부르면 잠든 코드가 된다(D-377). 턴 AB 에 세종이 WO-04 §4-3 에 **필수 10칸**을
+#   적었고, 이 절은 그 10칸을 **옮겨 적은 것**이다. 칸을 더하지도 빼지도 않았다.
+#   문서 정본은 `docs/design/GX-FORM_별지1호_v1.0.md` 다.
+#
+# ⚠ **지침 별지 1호의 전문(全文)이 아니다.** 범위는 세종이 적은 「필수 칸만」이고,
+#   지침 원문을 우리가 안 읽었으므로 **「지침과 같다」고 적지 않는다.**
+#
+# ★ 이 절도 앞 서식 셋과 같다 — **DB 를 만지지 않는다.** 인자로 받은 값만 그린다.
+
+#: 문서 이름. 화면 카드(`Reports.tsx`)와 **같은 글자**여야 사람이 「그 종이」라고 부른다.
+SITUATION_TITLE = "재난 상황보고 (별지 제1호)"
+
+#: 보고 구분 셋. 이 셋 말고는 없다 — 「제N보」 채번은 **안 한다**(아래 `report_stage`).
+STAGE_FIRST = "최초 보고"
+STAGE_MIDDLE = "중간 보고"
+STAGE_FINAL = "최종 보고"
+
+#: 대응 진행 축(D-399)의 낱말 → 보고 구분. 열쇠는 `RESPONSE_STATE_LABEL` 과 **같은 값**이다.
+_STAGE_BY_STATE: dict[str, tuple[str, str]] = {
+    "closed": (STAGE_FINAL, "대응이 종결된 사건입니다."),
+    "in_progress": (STAGE_MIDDLE, "대응이 진행 중인 사건입니다."),
+    "acknowledged": (STAGE_MIDDLE, "대응이 진행 중인 사건입니다."),
+    "occurred": (STAGE_FIRST, "아직 대응 기록이 없는 사건입니다."),
+}
+
+#: 피해 현황 칸의 값. **언제나 이 글자다** — 아래 `_damage_block` 머리말을 읽을 것.
+DAMAGE_PENDING = "집계 중"
+DAMAGE_NOTE = (
+    "GuardianX 는 인명·재산 피해 집계를 보관하지 않습니다 — 이 칸의 숫자는 현장 "
+    "집계에서 받아 적으십시오. 「0」으로 적지 않습니다(0 은 「피해가 없었다」는 뜻이 "
+    "되고, 그것은 아직 세지 않은 것과 다른 사실입니다).")
+
+#: 첨부 칸. **파일을 붙이지 않는다** — 이름과 사유만 적는다(계약 11조 · 원본 무반출).
+ATTACHMENT_CLIP_NOTE = (
+    "영상 구간 참조만 적습니다 — 원본 영상은 이 종이에 붙이지 않습니다 "
+    "(계약 11조 · 원본 무반출).")
+
+#: 한 쪽에 싣는 조치 줄의 상한. 넘으면 **넘었다고 적는다**(D-301).
+SITUATION_ACTION_ROWS = 12
+
+
+def report_stage(response_state: str) -> tuple[str, str]:
+    """대응 시계 상태 → (**보고 구분**, 그 구분을 유도한 근거 한 줄).
+
+    ★ **유도하고, 유도했다고 적는다.** 사람이 고른 값이 아니므로 종이가 스스로
+      「무엇을 보고 이렇게 적었는지」를 말해야 받는 사람이 그 값을 검증할 수 있다.
+
+    ⚠ 기울기는 **이른 쪽**이다 — 모르면 「최종」이 아니라 「최초」다.
+      「최종 보고」가 잘못 나가면 받는 쪽이 그 사건을 **닫는다**.
+
+    ⚠ **제N보 채번을 하지 않는다.** 「이 사건에 대해 몇 번째 보고인가」를 담는 대장이
+      제품에 없다. 없는 수를 종이에 찍으면 다음 보고가 그 수와 어긋난다.
+    """
+    hit = _STAGE_BY_STATE.get((response_state or "").strip())
+    if hit is None:
+        return (STAGE_FIRST,
+                "대응 상태를 읽지 못했습니다 — 가장 이른 구분으로 적습니다.")
+    return hit
+
+
+def _damage_block() -> str:
+    """⑥ 피해 현황 — **언제나 「집계 중」이다. 이 함수가 그 결정의 자리다.**
+
+    [실측 2026-09-21 · 턴 AB] `DetectionEvent` · `EventView` · `response_clock` ·
+    `ActionRow` 어디에도 인명 피해·재산 피해를 담는 칸이 **0개**다.
+
+    갈래 셋 중 이것을 골랐다:
+      · 칸을 뺀다      → 별지 1호의 **필수 칸**이다. 빼면 그 종이는 별지 1호가 아니다.
+      · 0 으로 적는다  → **거짓말이다.** 「피해 0명」과 「아직 안 세었다」는 다른 사실이고,
+                        결재는 전자로 읽는다(D-290).
+      · 「집계 중」 + 사유 ← 세종 §4-3 의 「숫자 없으면 「집계 중」」 그대로.
+
+    ★ 피해 숫자를 담는 칸이 제품에 서는 날 고칠 자리는 **이 함수 하나**다 —
+      부르는 쪽은 한 줄도 안 바뀐다.
+    """
+    return ("<h2>⑥ 피해 현황</h2><table>"
+            + _pair("인명 피해", DAMAGE_PENDING, "재산 피해", DAMAGE_PENDING)
+            + "</table>"
+            f"<div class=\"note\">{escape(DAMAGE_NOTE)}</div>")
+
+
+def build_situation_html(*, event, clock: dict, actions, tenant: str, issued_by: str,
+                         plan: str = "", sources_failed=(),
+                         data_source: str = "") -> str:
+    """별지 제1호 **재난 상황보고**의 HTML — 세종 §4-3 의 **10칸**.
+
+    Args:
+        event: K1 `EventView` — 좁히기를 이미 통과한 이벤트 하나.
+        clock: `apps.dsm.services.response_clock` 이 낸 사전(보고 구분을 여기서 읽는다).
+        actions: K4 `ActionRow` 들 — ⑦ 조치 사항이 **시각 순**으로 그린다.
+        tenant: ③ 보고 기관.
+        issued_by: ③ 보고자 — `person_label` 이 이미 계정명을 가린 값이다.
+        plan: ⑧ 향후 계획 — 사람이 적는 칸. 비어도 **칸은 남는다**.
+        sources_failed: 못 가져온 출처. 있으면 종이에 배너로 남는다(D-290).
+        data_source: `live` | `drill`. 비면 행 표식 한 축으로 떨어진다
+            (`data_source_of` 머리말 ⚠ — 훈련 창은 못 본다).
+
+    ★ 칸 번호 ①~⑨ 는 **종이에 찍힌다.** 받는 사람이 「⑥이 비었다」고 전화로 말할 수
+      있어야 하고, 번호가 없으면 그 말을 할 수 없다.
+    ★ ⑩(훈련 배너)은 번호를 안 찍는다 — 그것은 칸이 아니라 **첫 줄**이다.
+    """
+    from django.utils import timezone
+
+    event_id = getattr(event, "event_id", None)
+    address = (getattr(event, "address", None) or "").strip()
+    address_status = getattr(event, "address_status", "") or ""
+    if not address:
+        address = {"pending": "확인 중", "failed": "확인 실패",
+                   "disabled": "주소 변환 사용 안 함"}.get(address_status, UNKNOWN)
+    stage, stage_why = report_stage(clock.get("response_state") or "")
+
+    parts: list[str] = []
+    #: ⑩ **첫 줄이다.** 아래에 있으면 읽는 사람이 표를 먼저 읽고, 표를 읽은 뒤에
+    #:   「훈련이었다」를 알면 이미 실제 상황으로 한 번 읽은 것이다.
+    parts.append(drill_banner(data_source_of(event, data_source)))
+    if sources_failed:
+        parts.append(
+            "<div class=\"banner\">[GuardianX] 이 보고서는 불완전합니다 — "
+            f"가져오지 못한 출처: {escape(', '.join(sources_failed))}</div>")
+
+    parts.append(
+        "<div class=\"head\">"
+        f"<div class=\"org\">{escape(tenant)}</div>"
+        f"<h1>{escape(SITUATION_TITLE)}</h1>"
+        f"<div class=\"meta\">사건번호 {escape(str(event_id))} · "
+        f"보고 일시 {escape(_when(timezone.now()))}</div>"
+        "</div>")
+
+    # ── ①②③ 보고 구분 · 보고 일시 · 보고 기관/보고자 ─────────────────────
+    #: ⚠ **넓은 줄(`_pair`)이 먼저다.** 좁은 줄(`_row`)을 앞에 두면 DOCX 변환이
+    #:   깨진다 — `docx_export` 머리말 「표의 첫 줄이 칸 수를 정한다」 참조.
+    #:   [실측 2026-09-21 · 턴 AB] 이 절을 `_row`·`_row`·`_pair` 로 썼다가
+    #:   `IndexError: list index out of range` 로 종이가 아예 안 나왔다.
+    parts.append("<h2>① 보고 구분 · ② 보고 일시 · ③ 보고 기관 · 보고자</h2><table>")
+    parts.append(_pair("보고 기관", tenant, "보고자", issued_by))
+    parts.append(_pair("보고 구분", stage, "보고 일시", _when(timezone.now())))
+    #: ★ 근거를 **다른 칸**에 둔다. 「최초 보고」와 「무엇을 보고 그렇게 적었나」를
+    #:   한 칸에 붙이면 읽는 사람이 구분 이름만 훑고 근거를 못 본다.
+    parts.append(_row("보고 구분 근거", stage_why))
+    parts.append("</table>")
+
+    # ── ④⑤ 재난 종류 · 발생 일시·장소 ────────────────────────────────────
+    parts.append("<h2>④ 재난 종류 · ⑤ 발생 일시 · 장소</h2><table>")
+    parts.append(_pair("재난 종류",
+                       _label(EVENT_TYPE_LABEL, getattr(event, "event_type", None)),
+                       "등급", _label(SEVERITY_LABEL,
+                                     getattr(event, "severity", None))))
+    parts.append(_pair("발생 일시", _when(getattr(event, "occurred_at", None)),
+                       "관측 카메라",
+                       getattr(event, "stream_monitor_name", "") or UNKNOWN))
+    #: 대표 결정 ⑩ — **동까지만.** 번지는 이 종이에 안 적는다.
+    parts.append(_row("발생 장소", mask_address(address)))
+    parts.append("</table>")
+
+    # ── ⑥ 피해 현황 ──────────────────────────────────────────────────────
+    parts.append(_damage_block())
+
+    # ── ⑦ 조치 사항 — **시각 순** ────────────────────────────────────────
+    #: ★ 사건 1쪽(`build_html` ④)은 받은 차례 그대로 그리지만, 상황보고는 **시각 순**을
+    #:   요구한다(§4-3). 정렬을 여기서 한다 — 받은 배열을 **안 건드린다**(`sorted`).
+    #: ★ 시각이 없는 줄은 **뒤로** 민다. 앞으로 오면 「가장 먼저 한 조치」로 읽힌다.
+    rows = sorted(list(actions or ()),
+                  key=lambda r: (getattr(r, "sent_at", None) is None,
+                                 getattr(r, "sent_at", None) or datetime.min))
+    parts.append("<h2>⑦ 조치 사항 (시각 순)</h2>")
+    if not rows:
+        parts.append("<table><tr><td class=\"wide\">"
+                     "이 사건으로 발송된 알림 기록이 없습니다."
+                     "</td></tr></table>")
+    else:
+        parts.append("<table class=\"rows\"><tr><th>시각</th><th>조치</th>"
+                     "<th>대상</th><th>결과</th></tr>")
+        for row in rows[:SITUATION_ACTION_ROWS]:
+            ok = "성공" if getattr(row, "succeeded", False) else (
+                f"실패 — {getattr(row, 'failure_reason', '') or '사유 미기재'}")
+            channel = str(getattr(row, "channel", "") or UNKNOWN)
+            parts.append(
+                "<tr>"
+                f"<td>{escape(_when(getattr(row, 'sent_at', None)))}</td>"
+                f"<td>{escape(f'알림 발송 ({channel})')}</td>"
+                #: 대표 결정 ⑩ — 수신자 연락처·기기 토큰을 가린다. 갈래는 남긴다.
+                f"<td>{escape(mask_recipient(getattr(row, 'recipient_address', ''), channel))}</td>"
+                f"<td>{escape(ok)}</td></tr>")
+        parts.append("</table>")
+        if len(rows) > SITUATION_ACTION_ROWS:
+            parts.append(
+                f"<div class=\"note\">{len(rows)}건 중 {SITUATION_ACTION_ROWS}건만 "
+                "실었습니다 — 전체는 알림 이력 화면에서 확인하십시오.</div>")
+
+    # ── ⑧ 향후 계획 ──────────────────────────────────────────────────────
+    #: ★ 비어 있어도 **칸은 남긴다.** 칸이 사라지면 「계획이 없었다」와 「아무도 안
+    #:   적었다」를 가를 수 없고, 결재자는 빈 자리를 전자로 읽는다(`_note_block` 과 같은 규율).
+    parts.append("<h2>⑧ 향후 계획</h2><table><tr><td class=\"wide\">"
+                 f"{escape((plan or '').strip() or '기재된 향후 계획이 없습니다.')}"
+                 "</td></tr></table>")
+
+    # ── ⑨ 첨부 — **이름만 적는다** ───────────────────────────────────────
+    parts.append("<h2>⑨ 첨부</h2><table>")
+    parts.append(_row("사건 1쪽 보고서",
+                      f"같은 사건의 1쪽 보고서를 따로 내려받을 수 있습니다 "
+                      f"(사건번호 {event_id})."))
+    parts.append(_row("해시 체인 증명",
+                      "감사 기록 화면에서 이 사건의 체인 증명을 확인할 수 있습니다."))
+    parts.append(_row("영상 구간", ATTACHMENT_CLIP_NOTE))
+    parts.append("</table>")
+
+    parts.append(
+        "<div class=\"foot\">이 문서는 GuardianX 가 사건 기록에서 자동 생성했습니다. "
+        "보고 구분은 대응 시계 상태에서 유도한 값이며(근거는 ① 칸에 적었습니다), "
+        "기록이 없는 칸은 「기록 없음」으로 적습니다(0으로 적지 않습니다).<br>"
+        f"{escape(MASK_FOOTNOTE)}<br>"
+        f"{escape(timezone_note())}</div>")
+
+    return ("<html><head><meta charset=\"utf-8\">"
+            f"<title>{escape(SITUATION_TITLE)} {escape(str(event_id))}</title>"
+            f"<style>{_CSS}</style></head><body>{''.join(parts)}</body></html>")
+
+
+def build_situation_report(*, scope, event_id: int, plan: str = "") -> str:
+    """별지 1호의 **조립** — `build_incident_html` 과 **같은 길**을 탄다.
+
+    ★ 자료를 모으는 길을 새로 짜지 않았다. 같은 `k4_report.build_context` · 같은
+      `response_clock` · 같은 `event_data_source` 다 — 두 종이가 같은 사건을 두고
+      서로 다른 수를 적으면 어느 쪽이 맞는지 아무도 모른다(AC-5 규약).
+
+    Raises:
+        Http404: 없는 사건 · 남의 사건 (문지기는 K1 이 선다)
+        IncidentReportUnavailable: 사건은 있는데 자료를 못 가져왔다 (409)
+    """
+    from kernels.k4_report import build_context
+
+    from apps.dsm import services
+    from apps.dsm.exceptions import IncidentReportUnavailable
+
+    context = build_context(scope=scope, event_id=event_id)
+    events = list(getattr(context, "events", ()) or ())
+    if not events:
+        raise IncidentReportUnavailable(
+            "사건 자료를 가져오지 못해 상황보고서를 만들 수 없습니다 — "
+            f"실패한 출처 {list(context.sources_failed) or ['(사유 미기재)']}")
+    actor = scope.require_actor()
+    try:
+        source = services.event_data_source(view=events[0])
+    except Exception:                       # noqa: BLE001 — 배지가 종이를 죽이지 않는다
+        source = ""
+    return build_situation_html(
+        event=events[0],
+        clock=services.response_clock(scope=scope, event_id=event_id),
+        actions=context.actions, tenant=tenant_name(actor),
+        issued_by=person_label(actor), plan=plan,
         sources_failed=tuple(context.sources_failed),
         data_source=source)

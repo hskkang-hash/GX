@@ -23,16 +23,33 @@
  *   아니라 고장이다 — 그리고 고장은 「메뉴가 없는 역할」과 구별되지 않는다.
  */
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useMenuData, useUserInfo } from 'rj-core';
 
 import type { MenuNode } from './roleNav';
 import {
-  bucketOf, filterNav, hideAcquired, navSignature, roleCodesOf,
+  bucketOf, filterNav, hideAcquired, navSignature, roleCodesOf, withCurrentPath,
 } from './roleNav';
 
+/**
+ * ★★ [턴 AB · 차선 U56] **가림이 자물쇠였다 — 서 있는 자리는 못 뗀다.**
+ *
+ * 목록에서 뗀 줄의 화면은 인수 표가 **제 설정을 못 찾아 0행**으로 뜬다
+ * (사슬 넷은 `roleNav.ts` ④ 머리말에 실측으로 적었다). 그래서 이 조각은
+ * 자를 때마다 **지금 서 있는 주소의 줄 하나만** 되돌려 놓는다.
+ *
+ * ⚠ 두 가지 위험을 같이 막는다:
+ *   ① **끝나지 않는 갱신** — 되돌린 줄은 다음 회차에 다시 잘리고 다시 되돌아온다.
+ *      그래서 두 갈래 **모두** `navSignature` 로 「이미 같은 모양인가」를 본다.
+ *      종전에는 모르는 역할 갈래가 `pruned.changed` 만 봤는데, 되돌린 줄이 있으면
+ *      그 값은 **영원히 참**이다 — 그대로 두면 이 훅이 끝나지 않는다.
+ *   ② **떠난 뒤에도 남는 줄** — 주소가 바뀌면 이 훅이 다시 돌아야 한다. 그래서
+ *      `pathname` 이 의존성에 든다.
+ */
 export default function RoleNavFilter(): null {
   const userInfo = useUserInfo();
   const [menus, setMenus] = useMenuData();
+  const { pathname } = useLocation();
 
   useEffect(() => {
     const list = (Array.isArray(menus) ? menus : []) as MenuNode[];
@@ -54,20 +71,23 @@ export default function RoleNavFilter(): null {
        * 막으려던 그 일이 여기서는 일어나지 않는다. 남는 줄이 열 개가 넘는다.
        */
       const pruned = hideAcquired(list);
-      if (!pruned.changed) return;
       if (pruned.menus.length === 0) return;   // 그럴 리 없지만, 비면 안 쓴다
-      setMenus(pruned.menus);
+      const kept = withCurrentPath(pruned.menus, list, pathname).menus;
+      // ★ `pruned.changed` 가 아니라 **모양**을 본다(위 ⚠ ①).
+      if (navSignature(list) === navSignature(kept)) return;
+      setMenus(kept);
       return;
     }
 
-    const next = filterNav(list, bucket);
+    const cut = filterNav(list, bucket);
     // 표대로 자른 결과가 **비면 쓰지 않는다.** 빈 사이드바는 결정이 아니라 사고다.
-    if (next.length === 0) return;
+    if (cut.length === 0) return;
+    const next = withCurrentPath(cut, list, pathname).menus;
     // 이미 같은 모양이면 다시 쓰지 않는다 — 쓰면 이 훅이 다시 돌고, 끝나지 않는다.
     if (navSignature(list) === navSignature(next)) return;
 
     setMenus(next);
-  }, [menus, setMenus, userInfo]);
+  }, [menus, setMenus, userInfo, pathname]);
 
   return null;
 }

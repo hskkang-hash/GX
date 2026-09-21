@@ -1,0 +1,397 @@
+{
+ "log": [
+  "[로그인] 입력칸 2",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] New order notification WebSocket error: Event",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] 🚨 Partner callback WebSocket error: Event",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] 🚨 Partner callback WebSocket error: Event",
+  "[로그인] 다른 기기 세션 종료 확인창을 눌렀다 (end_previous_session)",
+  "[로그인] 뒤 URL = http://localhost:3002/dsm/queue",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] New order notification WebSocket error: Event",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] 🚨 Partner callback WebSocket error: Event",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] 🚨 Partner callback WebSocket error: Event",
+  "\n=== ① 대시보드 (/dsm/dashboard) ===",
+  "[본문] 「카메라 정상 / 이상」 = True",
+  "[본문] 카메라 칸: '카메라 정상 / 이상\\n카메라 격자\\n0\\n정상\\n10\\n이상\\n전체 10대\\n?\\n그중 10대는 설치한 뒤 아직 한 번도 화면이 오지 않았습니다.\\n최근 이벤트\\n전체 목록\\n등급\\t유형\\t카메라\\t발생\\n■ 심각\\t\\n화재\\n훈련\\n\\t[훈련] 안양천 시험카메라 1\\t08:42 · 3시간 전\\n▲ 경계\\t\\n카메라 군집 두절\\n훈련\\n\\t[훈련] 안'",
+  "[본문] gxprobe 등장 = 4",
+  "[본문] 「훈련」 등장 = 8",
+  "[배지] data-gx=event-data-source = 6",
+  "[표] 최근 이벤트 행 = 10",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] 🚨 Partner callback WebSocket error: Event",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] New order notification WebSocket error: Event",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] 🚨 Partner callback WebSocket error: Event",
+  "\n=== ② 초점 큐 (/dsm/queue) · 누르기 전 ===",
+  "[단추] ['?', '단축키', '소리 켜기', '상세 열기', '실제로 확인 · 접수 (1)', '오탐으로 판정', '실제로 확인 · 접수', '오탐으로 판정', '열기', '조치 시작', '열기', '조치 시작', '열기', '조치 시작', '오탐으로 판정', '열기']",
+  "[본문] 「실제로 확인 · 접수」 = True",
+  "[본문] 「훈련」 등장 = 8",
+  "[본문] 「종결 검토」 등장 = 0",
+  "[본문] 시계 글자 = 1초",
+  "[단추] 「실제로 확인 · 접수」 수 = 2",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] 🚨 Partner callback WebSocket error: Event",
+  "[★ 눌렀다] 그 뒤 우리 API: [('POST', '/api/dsm/events/342448/review-and-acknowledge?', 200), ('GET', '/api/dsm/events/queue?limit=200', 200)]",
+  "[누른 뒤] 「실제로 확인 · 접수」 = True",
+  "[누른 뒤] 단추 = ['?', '단축키', '소리 끄기', '상세 열기', '조치 시작 (2)', '실제로 확인 · 접수', '오탐으로 판정', '열기', '조치 시작', '열기', '조치 시작', '열기', '조치 시작', '오탐으로 판정', '열기', '조치 시작']",
+  "[누른 뒤] 「실제」 = 1 · 「오탐」 = 5",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] New order notification WebSocket error: Event",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] 🚨 Partner callback WebSocket error: Event",
+  "\n=== ③ 사건 상세 /dsm/events/342448 ===",
+  "[본문] 「훈련」 등장 = 3",
+  "[배지] data-gx=event-data-source = 1",
+  "[본문] 처리 단계 = 못 찾음",
+  "[본문] 판정 = 미처리",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/orders/notifications/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] New order notification WebSocket error: Event",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/partner-callbacks/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "[console:error] 🚨 Partner callback WebSocket error: Event",
+  "[console:error] WebSocket connection to 'ws://localhost:8000/ws/surveillance/profiles/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+  "\n=== ④ 이벤트 목록 (/dsm/events) ===",
+  "[본문] 「처리 단계」 열 = True",
+  "   값 미처리 = 5",
+  "   값 접수 = 0",
+  "   값 조치 중 = 0",
+  "   값 종결 = 0",
+  "[본문] gxprobe = 0 · 「훈련」 = 2",
+  "[표] 행 = 1",
+  "\n=== 우리 API 호출 전수 ===",
+  "    ('GET', '/api/config-management/list-optimized', 200)",
+  "    ('POST', '/api/v1/auth/login', 200)",
+  "    ('POST', '/api/v1/auth/login', 200)",
+  "    ('GET', '/api/advanced-table/select-data?model_name=theme&distinct=true', 200)",
+  "    ('GET', '/api/advanced-table/select-data?model_name=theme&distinct=true', 200)",
+  "    ('GET', '/api/v1/user/get-user-detail/110', 200)",
+  "    ('GET', '/api/user-profiles/110/', 200)",
+  "    ('GET', '/api/user-groups/?page_size=10000&current_page=1', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=true', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=false', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=true', 200)",
+  "    ('GET', '/api/menu/menus?page_size=10000', 200)",
+  "    ('GET', '/api/user-groups/?page_size=10000&current_page=1', 200)",
+  "    ('GET', '/api/v1/user/get-user-detail/110', 200)",
+  "    ('GET', '/api/dsm/events/queue?limit=200', 200)",
+  "    ('GET', '/api/dsm/queue/field-signals?event_ids=342448,326411,4807,4802,305028,305027,4819,4818,4812,305030,305029,4817', 200)",
+  "    ('GET', '/api/dsm/dashboard/frame', 200)",
+  "    ('GET', '/api/dsm/events?limit=10', 200)",
+  "    ('GET', '/api/dsm/cameras/pulse', 200)",
+  "    ('GET', '/api/advanced-table/select-data?model_name=theme&distinct=true', 200)",
+  "    ('GET', '/api/config-management/list-optimized', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=true', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=true', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=false', 200)",
+  "    ('GET', '/api/menu/menus?page_size=10000', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=true', 200)",
+  "    ('GET', '/api/config-management/list-optimized', 200)",
+  "    ('GET', '/api/advanced-table/select-data?model_name=theme&distinct=true', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=false', 200)",
+  "    ('GET', '/api/dsm/events/queue?limit=200', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=true', 200)",
+  "    ('GET', '/api/menu/menus?page_size=10000', 200)",
+  "    ('GET', '/api/dsm/queue/field-signals?event_ids=342448,326411,4807,4802,305028,305027,4819,4818,4812,305030,305029,4817', 200)",
+  "    ('POST', '/api/dsm/events/342448/review-and-acknowledge?', 200)",
+  "    ('GET', '/api/dsm/events/queue?limit=200', 200)",
+  "    ('GET', '/api/dsm/deliveries?event_id=342448', 200)",
+  "    ('GET', '/api/dsm/events/342448/timeline', 200)",
+  "    ('GET', '/api/advanced-table/select-data?model_name=theme&distinct=true', 200)",
+  "    ('GET', '/api/dsm/events/upper-report/flags?event_ids=342448', 200)",
+  "    ('GET', '/api/dsm/events/342448', 200)",
+  "    ('GET', '/api/config-management/list-optimized', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=true', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=true', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=false', 200)",
+  "    ('GET', '/api/menu/menus?page_size=10000', 200)",
+  "    ('GET', '/api/dsm/events?limit=50&response_state=occurred', 200)",
+  "    ('GET', '/api/advanced-table/select-data?model_name=theme&distinct=true', 200)",
+  "    ('GET', '/api/config-management/list-optimized', 200)",
+  "    ('GET', '/api/dsm/events/summary?hours=12', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=true', 200)",
+  "    ('GET', '/api/dsm/events/upper-report/flags?event_ids=326411', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=true', 200)",
+  "    ('GET', '/api/user-groups/gen-schema?group_id=4&raw=false', 200)",
+  "    ('GET', '/api/menu/menus?page_size=10000', 200)"
+ ],
+ "calls": [
+  [
+   "GET",
+   "/api/config-management/list-optimized",
+   200
+  ],
+  [
+   "POST",
+   "/api/v1/auth/login",
+   200
+  ],
+  [
+   "POST",
+   "/api/v1/auth/login",
+   200
+  ],
+  [
+   "GET",
+   "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/v1/user/get-user-detail/110",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-profiles/110/",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/?page_size=10000&current_page=1",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=false",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/menu/menus?page_size=10000",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/?page_size=10000&current_page=1",
+   200
+  ],
+  [
+   "GET",
+   "/api/v1/user/get-user-detail/110",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/queue?limit=200",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/queue/field-signals?event_ids=342448,326411,4807,4802,305028,305027,4819,4818,4812,305030,305029,4817",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/dashboard/frame",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events?limit=10",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/cameras/pulse",
+   200
+  ],
+  [
+   "GET",
+   "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/config-management/list-optimized",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=false",
+   200
+  ],
+  [
+   "GET",
+   "/api/menu/menus?page_size=10000",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/config-management/list-optimized",
+   200
+  ],
+  [
+   "GET",
+   "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=false",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/queue?limit=200",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/menu/menus?page_size=10000",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/queue/field-signals?event_ids=342448,326411,4807,4802,305028,305027,4819,4818,4812,305030,305029,4817",
+   200
+  ],
+  [
+   "POST",
+   "/api/dsm/events/342448/review-and-acknowledge?",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/queue?limit=200",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/deliveries?event_id=342448",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/342448/timeline",
+   200
+  ],
+  [
+   "GET",
+   "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/upper-report/flags?event_ids=342448",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/342448",
+   200
+  ],
+  [
+   "GET",
+   "/api/config-management/list-optimized",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=false",
+   200
+  ],
+  [
+   "GET",
+   "/api/menu/menus?page_size=10000",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events?limit=50&response_state=occurred",
+   200
+  ],
+  [
+   "GET",
+   "/api/advanced-table/select-data?model_name=theme&distinct=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/config-management/list-optimized",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/summary?hours=12",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/dsm/events/upper-report/flags?event_ids=326411",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=true",
+   200
+  ],
+  [
+   "GET",
+   "/api/user-groups/gen-schema?group_id=4&raw=false",
+   200
+  ],
+  [
+   "GET",
+   "/api/menu/menus?page_size=10000",
+   200
+  ]
+ ]
+}

@@ -430,6 +430,18 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/events/upper-report/flags"),                          # U24 · 상급 보고 표시 조회
     ("POST", "/api/dsm/events/{int:event_id}/upper-report"),                # U24 · 상급 보고 표시 ★쓰기
     ("DELETE", "/api/dsm/events/{int:event_id}/upper-report"),              # U24 · 상급 보고 해제(소프트) ★쓰기
+    # ★ 2026-09-21 (턴 AB · WO-04 §4-3) **하나 늘었다** — 별지 제1호 「재난 상황보고」.
+    #   ★★ **이 줄을 손으로 더하는 일이 곷 「진입면을 넓힌다」는 선언이다.**
+    #   이번에도 사람이 아니라 도구가 멈춰 세웠다 — 병합 전량 시험에서
+    #   `109 != 110` 으로 나왔고, 그랬지 않았으면 문 하나가 **조용히** 늘었다.
+    #
+    #   문지기: `auth=JwtOrInboundKey()` · 보는 사람은 **보고서와 같다**
+    #   (`_report_reader_denial` — 판정식을 새로 안 썼다).
+    #   ⚠ 이 문은 임시 자리다: 넷째 서식을 `monthly_report.KINDS` 에 끼우려면
+    #     남의 파일을 고쳐야 해서, 사건 하나를 지금 그려 내려주는 문으로 냈다.
+    #     실행 기록에 넷째 종류가 서는 날 `monthly_report` 쪽으로 옮겨 붙고
+    #     **그때 이 줄도 같은 커밋에서 옮긴다.**
+    ("GET", "/api/dsm/events/{int:event_id}/situation-report.docx"),        # U24 · 별지 1호 DOCX
     ("GET", "/api/dsm/audit"),                                              # U24 · 감사 읽기(U2·U4·U5 · 필터 3)
     ("GET", "/api/dsm/health"),                                             # U56 · 생존 확인 · 인증 없음(아래 사유)
     ("GET", "/api/dsm/settings/webhook-subscriptions/{int:subscription_id}/filters"),   # U56 · WS-17

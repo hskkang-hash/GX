@@ -301,6 +301,71 @@ class ThePaperSaysItIsADrillTest(_Report):
 # ═══════════════════════════════════════════════════════════════════════════
 # 턴 AA — **가린 칸 다섯** (대표 결정 ⑩ · 2026-09-21 · 차선 U24)
 # ═══════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 AB — **상급 제출용 종이의 「구분」** (WO-04 · 차선 U24 · 2026-09-21)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★★ 왜 이제야 서나 — **턴 AA 에는 분모가 0 이었고, 턴 AB 에 2 가 됐다.**
+#
+#   [실측 2026-09-21 · 턴 AA] 상급 보고 체크 0건 → 분모 0 → 배너를 **안 지었다**
+#     (「분모 0 인 초록은 초록이 아니고, 부르는 사람 없는 가지는 잠든 코드다」).
+#   [실측 2026-09-21 · 턴 AB] 체크 **2건** — 그리고 `services.event_data_source` 로
+#     둘 다 물어보니 **둘 다 `drill`** 이었다. 곧 그 순간의 제출본은 훈련 둘을
+#     **실제 재난으로** 상급기관에 올리고 있었다.
+#
+# ★ 기울기가 사건 1쪽과 **반대다.** 1쪽은 실시간 경보라 모르면 안 붙이고,
+#   이 종이는 사후 제출본이라 **모르면 모른다고 적는다** — 침묵이 「전부 실운영」으로
+#   읽히는 자리이기 때문이다.
+class TheUpperReportSaysWhichRowsAreDrillsTest(_CleanThreadLocal, DsmFixture):
+    """상급 제출용 — 훈련이 섞이면 **맨 위에서 말하고**, 줄마다 구분을 적는다."""
+
+    @staticmethod
+    def _html(rows):
+        from django.utils import timezone
+
+        now = timezone.now()
+        return form.build_upper_html(
+            tenant="기관", issued_by="담당", since=now, until=now, rows=rows)
+
+    def test_a_drill_row_raises_the_banner(self) -> None:
+        html = self._html([{"event_id": 1, "data_source": "drill"},
+                           {"event_id": 2, "data_source": "live"}])
+        self.assertIn("훈련 사건이 섞여 있습니다", html,
+                      "훈련이 섞인 제출본이 그 사실을 맨 위에서 말하지 않습니다 — "
+                      "상급기관이 그 줄을 실제 재난으로 읽습니다.")
+        self.assertIn("훈련", html)
+        self.assertIn("실운영", html)
+
+    def test_an_all_live_submission_says_nothing_about_drills(self) -> None:
+        """★ 음성. 실운영만 실린 제출본에 「훈련 사건이 섞여」가 있으면 거짓이다."""
+        html = self._html([{"event_id": 1, "data_source": "live"}])
+        self.assertNotIn("훈련 사건이 섞여 있습니다", html)
+        self.assertNotIn("확인하지 못했습니다", html)
+        self.assertIn("실운영", html)
+
+    def test_rows_without_the_key_say_so_instead_of_staying_silent(self) -> None:
+        """**지금 HEAD 의 모양이다** — `monthly_report.upper_rows` 가 아직 이 칸을 안 싣는다.
+
+        침묵하면 받는 기관이 **전부 실운영**으로 읽는다. 그래서 종이가 「확인 못 했다」를
+        스스로 적는다 — 「없었다」와 「못 가져왔다」는 다른 사실이다(D-290).
+        """
+        html = self._html([{"event_id": 1}, {"event_id": 2}])
+        self.assertIn("확인하지 못했습니다", html)
+        self.assertIn(form.UPPER_SOURCE_UNKNOWN, html)
+
+    def test_an_empty_submission_raises_no_banner(self) -> None:
+        """0건이면 말할 구분이 없다 — 없는 것에 배너를 달지 않는다."""
+        html = self._html([])
+        self.assertNotIn("훈련", html)
+        self.assertNotIn("확인하지 못했습니다", html)
+
+    def test_the_source_column_comes_early(self) -> None:
+        """맨 끝 칸은 사람이 안 본다 — 안 보는 칸에 적은 「훈련」은 안 적은 것과 같다."""
+        html = self._html([{"event_id": 1, "data_source": "drill"}])
+        head = html.split("<table class=\"rows\">", 1)[1].split("</tr>", 1)[0]
+        self.assertLess(head.index("구분"), head.index("보고 시각"))
+
+
 class ThePaperHidesWhatTheDecisionSaidToHideTest(_Report):
     """다섯 칸이 종이에 안 남는다 — 그리고 **가렸다고 적혀 있다.**"""
 

@@ -469,6 +469,12 @@ if __name__ == "__main__":
 
     gate_header(
         __file__,
+        measured=("보고에 적힌 수를 **증거 파일에서 다시 세어** 댄다 — "
+                  "**분모 4종**(P-118 FC · P-159 온보딩 · P-106 도달 · UX-WALK "
+                  "걷기) × 칸 %d(온보딩 %d · 도달 %d · 지금 셌다). "
+                  "증거가 없으면 **0 이 아니라 못 잰 것**이다"
+                  % (len(RECORDED_ONBOARDING) + len(RECORDED_REACH),
+                     len(RECORDED_ONBOARDING), len(RECORDED_REACH))),
         target="저장소에 남은 증거 JSON 4종 (P-118 FC · P-159 온보딩 · P-106 도달 · UX-WALK 걷기)",
         as_="자격 없음 — 파일만 읽는다. 제품에 닿지 않는다",
         source="파일 바이트 그 자체 · 그리고 그것을 **다시 읽어** 다시 센 수",

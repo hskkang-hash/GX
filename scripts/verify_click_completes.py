@@ -760,7 +760,15 @@ SETTINGS_FLOWS = (
       #:   않은 값을 보여 준다.** 그것은 제품 쪽 일이고(커널) A 의 차선이 아니다.
       #:   이 술어는 **제품이 실제로 바꾼 것**을 본다: 바꾼 기록이 한 줄 는다
       #:   (`override_counts.tenant` 0 → 1 로도 확인했다).
-      srv_change("/api/dsm/settings/thresholds", "history"),
+      #: ★★ [턴 AB · 차선 F 가 커널을 고친 뒤 되돌렸다] 이제 **「지금 값」을 본다.**
+      #:   F 가 `list_thresholds` 를 **좁은 것이 이기게**(기관 → 전역 → 정의) 고쳤다
+      #:   (`A.inbox/F.md` · `backend/kernels/k5_trust/services.py`). 그래서 기관 관리자가
+      #:   제 기관 값을 바꾸면 **표의 `value` 가 그 수로 바뀐다** — 턴 AA 에 우회한 사유가 사라졌다.
+      #:   ⚠ **「바꾼 기록」을 지우지 않았다**(F 가 청했고, 대장은 줄지 않는다). 곁칸(`also`)으로
+      #:     같이 본다 — **같은 두 응답**에서 읽으므로 GET 이 늘지 않는다.
+      #:   ⇒ 「값이 바뀌었다」와 「그것이 기록에 남았다」가 **둘 다** 서야 초록이다.
+      dict(srv_change("/api/dsm/settings/thresholds", "thresholds", project="value"),
+           also={"field": "history"}),
       ["지금 값", "바꿔 둔 항목"],
       clause="F-12-c6",
       confirm=btn("^저장$"),
@@ -815,6 +823,140 @@ SETTINGS_FLOWS = (
 )
 
 SETTINGS_BY_KEY = dict((f["key"], f) for f in SETTINGS_FLOWS)
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# [P-231 · 턴 AB · 차선 A] **절 ↔ 「누른 뒤」 관측** — N 에게 보낼 증거 경로표
+#
+# 왜 여기 있나 — P-231 이 `closed` 의 조건을 둘로 적었다:
+#   ① 「누른 뒤」가 초록이고 ② **증거 파일 경로가 대장에 실린** 절만 `closed`.
+# ①은 이 파일이 이미 잰다. 빠져 있던 것은 ② — **어느 절을 어느 행이 쟀는가**가
+# 어디에도 안 적혀 있어서, 절마다 경로를 **손으로** 옮겨 적어야 했다.
+# 손으로 옮긴 표는 다음 턴에 어긋나고, 어긋난 쪽이 조용히 이긴다(D-327).
+# 그래서 표를 **여기 한 곳**에 두고 `--clause-evidence` 가 관측에서 색을 다시 읽어 찍는다.
+#
+# ★ **이 표는 초록을 만들지 못한다.** 색은 `judge_one` 이 관측에서 내고, 관측이 없으면
+#   회색이다. 여기 이름을 적는 것만으로 서는 절은 **한 개도 없다** — row_map 과 같은 규율이다.
+#
+# ★★ **`strength` 를 적는 이유** — 「누른 뒤」가 다 같은 무게가 아니다.
+#     change  = 눌러서 **서버의 값이 바뀌었고** 새 GET 으로 그 변화를 다시 읽었다 (가장 세다)
+#     status  = 그 사람의 자격으로 두드린 **상태코드 자체**가 답인 자리 (무권한 403)
+#     reflect = 눌러서(또는 열어서) 새 GET 이 나갔고 그 값이 화면에 비쳤다 —
+#               **쓰기가 아니다.** 이것을 `change` 인 척 적으면 「그려졌다 ≠ 동작한다」를
+#               도로 잃는다. N 이 승격을 판단할 때 **이 칸을 보고 가른다.**
+#
+# ⚠ 한 절이 두 표(48행 · 설정)에 걸친다 — `F-10-c1` 이 그렇다(수신그룹은 48행의 U5#9,
+#   등급규칙은 설정 표의 U5#S4). 그래서 표 이름을 적지 않고 **열쇠로 되짚는다.**
+# ══════════════════════════════════════════════════════════════════════════
+AREA1_CLAUSE_MAP: dict[str, dict] = {
+    # ── 48행(온보딩 정본)이 재는 절 ───────────────────────────────────────
+    "F-01-c2": {"flows": ("U1#8",), "strength": "reflect",
+                "why": "이벤트 목록 화면을 열면 새 GET /api/dsm/events 가 나가고 "
+                       "그 응답의 `events` 가 화면에 실린다 — **쓰기가 아니다**"},
+    "F-05-c1": {"flows": ("U6#9", "U6#15"), "strength": "change",
+                "why": "외부 App 진입면 — U6#9 가 POST 로 `response_state` 를 **바꾸고** "
+                       "다시 읽는다. U6#15 는 연계 헬스체크(reflect)"},
+    "F-05-c2": {"flows": ("U6#2", "U6#3"), "strength": "reflect",
+                "why": "이벤트 OpenAPI 진입면 — 목록·상세를 API 자격으로 읽는다. "
+                       "읽기 문이라 **바뀌는 것이 없다**(그것이 이 절의 내용이다)"},
+    "F-05-c3": {"flows": ("U6#1",), "strength": "change",
+                "why": "API 키 발급 — POST settings/api-keys 뒤 `api_keys.inbound` 가 는다"},
+    "F-09-c2": {"flows": ("U1#9",), "strength": "reflect",
+                "why": "이벤트 클릭 → 상세. 그 클릭이 부른 GET events/{id} 가 200 이고 "
+                       "`event_id` 가 화면에 온다"},
+    "F-10-c3": {"flows": ("U3#1",), "strength": "change",
+                "why": "알림 발송 — POST events/{id}/notify 뒤 "
+                       "`deliveries?event_id=…` 의 `total` 이 **는다**(발송 기록이 남았다)"},
+    "F-11-c2": {"flows": ("U2#6",), "strength": "change",
+                "why": "상황보고서 생성 — POST reports/runs 뒤 runs 의 `total` 이 는다. "
+                       "★ 이 행이 재는 것은 **보고서가 만들어졌다**이지 "
+                       "「손입력이 0이다」를 직접 센 것이 아니다 (아래 ⚠ 를 보라)"},
+    "F-11-c3": {"flows": ("U2#6",), "strength": "change",
+                "why": "같은 행 — 치환이 돌아 보고서 한 벌이 생겼다"},
+    "F-12-c2": {"flows": ("U4#16",), "strength": "reflect",
+                "why": "감사 기록 화면이 GET /api/dsm/audit 을 부르고 `total` 을 그린다"},
+    #: ⚠ [턴 AB · 자기시험이 잡았다] 이 자리를 처음에 `change` 라 적었다가 ③이 잡았다.
+    #:   U5#9 는 POST 로 **쓰기는 한다.** 그런데 그 행의 `state` 는 `server_reflect` 라
+    #:   「값이 **달라졌다**」가 아니라 「규칙 목록이 비친다」를 본다 — 같은 값을 또 써도 선다.
+    #:   쓴 것과 **바뀐 것을 본 것**은 다르다. 그래서 `reflect` 로 적는다.
+    "F-12-c3": {"flows": ("U5#9",), "strength": "reflect",
+                "why": "알림 규칙 저장 — POST notify-rules/save 가 나가고 "
+                       "notify-rules/list 를 **새로 읽어** 규칙이 비친다. "
+                       "⚠ 값이 **달라졌음**을 보는 행은 아니다(`server_reflect`)"},
+    "F-12-c8": {"flows": ("U6#1",), "strength": "change",
+                "why": "API 키 관리 — 발급 뒤 `api_keys` 목록이 는다"},
+    "F-14-c1": {"flows": ("U1#11",), "strength": "change",
+                "why": "진위 판단 — POST events/{id}/review 뒤 그 사건의 `verdict` 가 "
+                       "**바뀐 채로** 다시 읽힌다. 사람의 판정이 남는 자리다"},
+
+    # ── 설정 표(48 밖)가 재는 절 ──────────────────────────────────────────
+    "F-12-c5": {"flows": ("U5#S1", "U5#S2"), "strength": "change",
+                "why": "구역 끄기/켜기(행의 `is_active` 가 뒤집힌다) · 만들기(길이가 는다)"},
+    #: ★★ [턴 AB · 차선 F 의 커널 고침 뒤 재측] 턴 AA 의 ⚠ 를 **지웠다** —
+    #:   그때는 「표의 「지금 값」이 안 바뀐다」가 참이었고 지금은 거짓이다.
+    #:   F 가 `list_thresholds` 를 좁은 층이 이기게 고쳤고, 눌러서 확인했다:
+    #:   `value` 10.0 → 11.0 · 곁칸 `history` 4 → 5 [실측 2026-09-21T12:19:30Z].
+    "F-12-c6": {"flows": ("U5#S3",), "strength": "change",
+                "why": "임계값 저장 — **표의 「지금 값」(`value`)이 실제로 바뀐다** "
+                       "(10.0 → 11.0) · 곁칸 「바꾼 기록」도 한 줄 는다(4 → 5). "
+                       "둘 다 서야 초록이다"},
+    "F-12-c7": {"flows": ("U5#S4",), "strength": "change",
+                "why": "등급규칙 저장 — 그 유형의 `severity` 가 바뀐다(**올리는 쪽으로만**)"},
+    "F-12-c1": {"flows": ("U4#S5",), "strength": "status",
+                "why": "무권한 계정(view_only)이 관리자 설정을 열면 **403** 이다. "
+                       "200 이 오면 그것이 빨강이다"},
+
+    # ── 두 표에 걸친 절 ───────────────────────────────────────────────────
+    #   [턴 AB 재판정] 옛 회색 사유는 **낡았다**: 「등급규칙 문을 부르는 화면이 0건이라
+    #   **등급별**이 서지 않는다」(턴 U · grep 2026-09-18). 지금은 `SettingsRules.tsx`
+    #   가 POST /api/dsm/settings/grade-rules 를 부른다 [grep 2026-09-21 · 1건].
+    #   그래서 이 절이 요구한 **두 짝이 둘 다** 「누른 뒤」로 섰다.
+    #   ⚠ 가정 하나를 적어 둔다 — 이 둘은 **관리 화면**이 선 것이고,
+    #     「등급이 다르면 **받는 사람이 실제로 달라진다**」(절의 note)를 끝까지 잰 것이
+    #     아니다. 그 끝은 발송 기록 쪽이다. N 이 이 칸을 보고 가르시라.
+    "F-10-c1": {"flows": ("U5#9", "U5#S4"), "strength": "change",
+                "why": "등급별 수신그룹 — 수신그룹은 U5#9(알림 규칙 저장 · **reflect**) · "
+                       "등급규칙은 U5#S4(등급규칙 저장 · **change**). 둘 다 눌렀고 "
+                       "둘 다 새 GET 으로 다시 읽었다. ⚠ 센 쪽(change)은 **등급규칙 한쪽**이다"},
+}
+
+
+def _flow_of(key):
+    """열쇠 → 흐름. 두 표를 **한 곳에서** 되짚는다(표 이름을 손으로 안 적는다)."""
+    return FLOW_BY_KEY.get(key) or SETTINGS_BY_KEY.get(key)
+
+
+def clause_evidence() -> list:
+    """절마다 (절, 색, 행들, strength, 증거 경로들, 사유) — **색은 관측이 낸다.**
+
+    ★ 한 절의 색은 그 절이 건 행들의 **가장 나쁜 색**이다. 둘 중 하나가 회색이면
+      그 절은 회색이다 — 「하나는 섰다」로 초록을 만들지 않는다(분모를 반으로 접는 짓).
+    """
+    docs = {}
+    for path in (OBSERVED, SETTINGS_OBSERVED):
+        doc, stale = load(path)
+        docs[path] = ((doc or {}).get("observations") or {} if not stale else {},
+                      (doc or {}).get("measured_at", "없음"), stale)
+    rows = []
+    for clause in sorted(AREA1_CLAUSE_MAP):
+        spec = AREA1_CLAUSE_MAP[clause]
+        colors, paths, seen = [], [], []
+        for key in spec["flows"]:
+            flow = _flow_of(key)
+            if flow is None:                      # 열쇠가 표에서 사라졌다 — 회색이다
+                colors.append(GREY); seen.append((key, GREY, "없는 열쇠")); continue
+            path = SETTINGS_OBSERVED if key in SETTINGS_BY_KEY else OBSERVED
+            obs, measured_at, _stale = docs[path]
+            color, why, _cells = judge_one(flow, obs.get(key))
+            colors.append(color)
+            seen.append((key, color, why))
+            item = (str(path), measured_at)
+            if item not in paths:
+                paths.append(item)
+        worst = RED if RED in colors else (GREY if GREY in colors else GREEN)
+        rows.append((clause, worst, spec["flows"], spec["strength"], paths,
+                     spec["why"], seen))
+    return rows
 
 #: 설정 다섯의 증거는 **따로 적는다.** 48행 증거(`click_completes.json`)를 덮으면
 #: 그 파일을 만드는 전량 회차(V 단독)와 서로를 지운다 — 한 파일에 두 분모를 넣지 않는다.
@@ -910,6 +1052,24 @@ def _cell_state(o):
                           % (s.get("field"), after))
         if before == after:
             return False, "다시 읽었는데 `%s` 가 그대로다 (%r)" % (s.get("field"), before)
+        #: ★★ [턴 AB · 차선 F 의 커널 고침 뒤] **곁칸(`also`) 도 같이 본다.**
+        #:   임계값 저장이 그 자리다 — 「지금 값」이 바뀌는 것과 「바꾼 기록」이 한 줄 느는 것은
+        #:   **다른 두 사실**이고, 둘이 같이 서야 「제품이 값을 바꾸고 그것을 남겼다」가 된다.
+        #:   ⚠ 곁칸은 **같은 두 응답**에서 읽는다(GET 을 더 안 때린다) — 두 번 때리면
+        #:     그 사이에 남이 쓴 것이 섞여 무엇이 바뀐 것인지 흐려진다.
+        #:   ★ 곁칸을 **못 읽었으면 회색**이다(빨강이 아니다). 서버가 그 이름을 안 내는 것과
+        #:     제품이 안 바뀐 것은 다르다 — F 가 쪽지 §5-② 에 적어 보낸 그 자리다.
+        al = s.get("also")
+        if al:
+            ab, aa = s.get("also_before"), s.get("also_after")
+            if aa is None:
+                return None, ("곁칸 `%s` 를 **못 읽었다** — 서버가 그 이름을 안 냈다. "
+                              "제품이 안 바뀐 것과 다르다 (회색)" % al.get("field"))
+            if ab == aa:
+                return False, ("`%s` 는 %r → %r 로 바뀌었는데 곁칸 `%s` 가 그대로다 (%r)"
+                               % (s.get("field"), before, after, al.get("field"), ab))
+            return True, ("`%s` %r → %r · 곁칸 `%s` %r → %r"
+                          % (s.get("field"), before, after, al.get("field"), ab, aa))
         return True, "`%s` %r → %r" % (s.get("field"), before, after)
     if kind == "server_reflect":
         after = s.get("after")
@@ -1064,6 +1224,11 @@ def _good(flow):
     k = st.get("kind")
     if k == "server_change":
         st.update(before="occurred", after="acknowledged")
+        #: ★ [턴 AB] 곁칸(`also`)을 선언한 행은 **곁칸도 움직인 표본**이라야 양성 대조가 된다.
+        #:   안 채우면 곁칸이 `None`(못 읽었다)이라 **회색**이 나고, 그 회색을
+        #:   「판정기가 깨졌다」로 읽게 된다 — 표본이 모자란 것이지 규칙이 틀린 것이 아니다.
+        if st.get("also"):
+            st.update(also_before="2", also_after="3")
     elif k == "server_reflect":
         st.update(after="42", on_screen=True)
     elif k == "route_change":
@@ -1313,6 +1478,14 @@ def _settings_self_test(say) -> None:
     say(tp["바꿀 값"]["text"] == "{bump}" and tp["바꿀 값"].get("restore") is True,
         "임계 술어는 **지금 값 +1** 로 쓰고 처음 값으로 되돌린다 (같은 값을 또 쓰면 거짓 빨강)")
 
+    #: ★★ [턴 AB · 차선 F 가 커널을 고친 뒤] 임계 술어가 **「지금 값」으로 돌아왔다**
+    say(thr["state"].get("project") == "value"
+        and thr["state"]["get"].endswith("thresholds"),
+        "★★ 임계 술어는 이제 **표의 「지금 값」(`value`)**을 본다 "
+        "(F 가 `list_thresholds` 를 좁은 층이 이기게 고쳤다 — 턴 AA 의 우회를 되돌렸다)")
+    say((thr["state"].get("also") or {}).get("field") == "history",
+        "★ 그러면서 **「바꾼 기록」을 안 지웠다** — 곁칸으로 같이 본다 (대장은 줄지 않는다)")
+
     #: 구역 — 삭제 문이 없다. 만들기는 **회차 표식**이 붙은 이름이라야 한다
     mk = SETTINGS_BY_KEY["U5#S2"]
     say(mk["revert"]["kind"] == "none" and PROBE_TAG in (mk["fill_text"] or ""),
@@ -1357,6 +1530,17 @@ def _settings_self_test(say) -> None:
     m["U5#S3"] = dict(m["U5#S3"], control={"found": False,
                                            "why": "누르기 전 준비가 안 섰다 — 고를 항목이 0"})
     muts["임계: 준비가 안 섰다 → 회색(빨강이 아니다)"] = ("U5#S3", m, GREY)
+    #: ★★ [턴 AB] 곁칸 둘 — **「지금 값」만 바뀌고 기록이 안 남으면 빨강**,
+    #:   **기록 칸을 못 읽으면 회색**. 이 둘이 없으면 곁칸은 장식이다.
+    m = dict(good)
+    m["U5#S3"] = dict(m["U5#S3"],
+                      state=dict(m["U5#S3"]["state"], also_before="2", also_after="2"))
+    muts["임계: 값은 바뀌었는데 **바꾼 기록이 안 남았다**"] = ("U5#S3", m, RED)
+    m = dict(good)
+    m["U5#S3"] = dict(m["U5#S3"],
+                      state=dict(m["U5#S3"]["state"], also_before=None, also_after=None))
+    muts["임계: **기록 칸을 못 읽었다** → 회색(서버가 그 이름을 안 냈다 ≠ 제품이 안 바뀜)"] = \
+        ("U5#S3", m, GREY)
     caught = 0
     for label, (key, obs, want) in muts.items():
         got = dict((k, c) for k, c, _, _, _ in judge_settings(obs)).get(key)
@@ -1371,6 +1555,60 @@ def _settings_self_test(say) -> None:
     zero = judge_settings({})
     say(all(c == GREY for _, c, _, _, _ in zero) and score(zero)[0] == 0,
         "관측 0건 → 설정 0/5 · 회색 5 (**못 잰 것이 통과가 되지 않는다**)")
+
+    # ── [P-231 · 턴 AB] 절↔증거 표가 **거짓 경로를 못 내게** 구조로 막는다 ──
+    _area1_self_test(say)
+
+
+def _area1_self_test(say) -> None:
+    """[P-231 · 턴 AB · 차선 A] 절↔증거 표의 자기시험.
+
+    이 표의 위험은 **거짓 경로**다 — 절 옆에 경로가 적혀 있으면 N 이 그것을 보고 올린다.
+    그래서 넷을 구조로 막는다: ① 없는 열쇠를 안 적는다 ② 없는 절을 안 적는다
+    ③ **관측이 없으면 경로가 안 나간다** ④ strength 를 세게 적지 않는다.
+    """
+    #: ① 표가 부르는 열쇠가 **두 표 중 한 곳에 실재한다**
+    missing = [(c, k) for c, s in AREA1_CLAUSE_MAP.items()
+               for k in s["flows"] if _flow_of(k) is None]
+    say(not missing,
+        "★ 절↔증거 표의 열쇠가 **전부 실재한다** — 없는 행을 절의 증거로 걸지 않는다 (%s)"
+        % (missing or "0건"))
+
+    #: ② 절 이름이 **계약 절 대장의 모양**이다 (F-nn-cn). 지어낸 절을 안 올린다
+    import re as _re
+    bad_id = [c for c in AREA1_CLAUSE_MAP if not _re.fullmatch(r"F-\d\d-c\d", c)]
+    say(not bad_id, "★ 절 이름이 계약 절 대장의 모양이다 (%s)" % (bad_id or "F-nn-cn"))
+
+    #: ③ **strength 는 흐름이 실제로 선언한 `state` 와 어긋나지 않는다.**
+    #:   `server_reflect` 인 행을 `change` 라 적으면 「그려졌다 ≠ 동작한다」를 도로 잃는다.
+    KIND = {"server_change": "change", "status_is": "status", "server_reflect": "reflect"}
+    lie = []
+    for clause, spec in AREA1_CLAUSE_MAP.items():
+        kinds = {KIND.get((_flow_of(k) or {}).get("state", {}).get("kind"))
+                 for k in spec["flows"] if _flow_of(k)}
+        #: 여러 행이면 **가장 센 것**을 적어도 되지만, `change` 라 적었으면
+        #: 그중 적어도 하나는 진짜 `server_change` 여야 한다
+        if spec["strength"] == "change" and "change" not in kinds:
+            lie.append((clause, kinds))
+        if spec["strength"] == "status" and "status" not in kinds:
+            lie.append((clause, kinds))
+    say(not lie,
+        "★★ strength 가 흐름의 `state` 와 **안 어긋난다** — reflect 를 change 로 "
+        "적으면 쓰기를 안 한 절이 쓴 척한다 (%s)" % (lie or "0건"))
+
+    #: ④ ★★ **관측이 0건이면 경로가 한 줄도 안 나간다** — 이 표의 심장이다.
+    #:   경로가 적힌 절은 N 이 올린다. 그래서 「못 쟀다」가 경로를 달고 나가면
+    #:   그 승격은 **아무도 안 본 초록**이 된다.
+    import unittest.mock as _mock
+    with _mock.patch(__name__ + ".load", lambda path=None: ({}, None)):
+        empty = clause_evidence()
+    say(all(color == GREY for _c, color, _f, _s, _p, _w, _sn in empty),
+        "★★ 관측 0건 → 절이 **전부 회색** (표에 이름이 있다고 서지 않는다)")
+
+    #: ⑤ 한 절이 건 행 중 **하나라도 회색이면 그 절이 회색**이다 — 반으로 접지 않는다
+    multi = [c for c, s in AREA1_CLAUSE_MAP.items() if len(s["flows"]) > 1]
+    say(multi, "★ 두 행 이상을 거는 절이 있다 (%s) — 그 절은 **둘 다** 서야 선다"
+        % (" · ".join(multi) or "0건"))
 
 
 def self_test() -> int:
@@ -2393,9 +2631,14 @@ def walk(persona, account, viewport, flows, event_id):
 
         # ── 누르기 전 상태 (새 GET) ──
         before = None
+        also_before = None
         if gp and st.get("kind") in ("server_change", "server_reflect"):
             code, js = get(gp, tok)
             before = read_field(js, st) if js is not None else None
+            #: ★ [턴 AB] 곁칸도 **같은 응답에서** 읽는다 — GET 을 한 번 더 때리지 않는다.
+            #:   두 번 때리면 두 응답 사이에 남이 쓴 것이 섞여 「무엇이 바뀐 것인지」가 흐려진다.
+            if st.get("also"):
+                also_before = read_field(js, st["also"]) if js is not None else None
 
         # ── U6: 사람이 아니다. 「누르는 것」이 곧 HTTP 호출이다 ──
         if (f["control"] or {}).get("kind") == "api":
@@ -2648,6 +2891,9 @@ def walk(persona, account, viewport, flows, event_id):
             code, js = get(gp, tok)
             st["before"] = before
             st["after"] = read_field(js, st)
+            if st.get("also"):
+                st["also_before"] = also_before
+                st["also_after"] = read_field(js, st["also"]) if js is not None else None
             if js is None:
                 st["error"] = "다시 읽기 HTTP %s" % code
             if st["kind"] == "server_reflect":
@@ -3090,6 +3336,44 @@ def judge_settings(observations):
     return rows
 
 
+def clause_evidence_report(tag) -> int:
+    """[P-231] 절 ↔ 증거 경로 — **N 에게 그대로 옮길 표**를 찍는다.
+
+    ★ 색을 **여기서 칠하지 않는다.** 관측에서 다시 읽어 적을 뿐이고, 관측이 없으면
+      회색이다. 그리고 회색 절은 **경로를 안 적는다** — 경로 없는 절은 N 이 안 올린다(P-231).
+    """
+    rows = clause_evidence()
+    mark = {GREEN: "O", RED: "X", GREY: "?"}
+    green = [r for r in rows if r[1] == GREEN]
+    print("")
+    print("%s [절↔증거] 절 **%d** 중 「누른 뒤」 초록 **%d** · 빨강 %d · 회색 %d"
+          % (tag, len(rows), len(green),
+             sum(1 for r in rows if r[1] == RED),
+             sum(1 for r in rows if r[1] == GREY)))
+    print("%s          strength — change=눌러서 값이 바뀌었다 · status=상태코드가 답이다 · "
+          "reflect=새 GET 이 비쳤다(**쓰기 아님**)" % tag)
+    print("")
+    print("| 절 | 색 | 잰 행 | strength | 증거 json (잰 때) | 무엇을 봤나 |")
+    print("|---|---|---|---|---|---|")
+    for clause, color, flows, strength, paths, why, _seen in rows:
+        eviden = " · ".join("`%s` (%s)" % (p, m) for p, m in paths) if color == GREEN else "—"
+        print("| %s | %s | %s | %s | %s | %s |"
+              % (clause, mark[color], " · ".join(flows), strength, eviden, why))
+    #: ★ 못 선 절은 **왜 못 섰는지**를 행 단위로 편다 — 「회색」 한 글자는 사유가 아니다
+    bad = [r for r in rows if r[1] != GREEN]
+    if bad:
+        print("")
+        print("%s ★ 초록이 아닌 절 %d — 행 단위 사유" % (tag, len(bad)))
+        for clause, color, _f, _s, _p, _w, seen in bad:
+            for key, kcolor, kwhy in seen:
+                if kcolor != GREEN:
+                    print("   %s %-9s %-7s %s" % (mark[kcolor], clause, key, kwhy[:110]))
+    print("")
+    print("%s ★ 이 표는 **초록을 만들지 못한다** — 색은 관측이 냈고, 관측이 없으면 회색이다. "
+          "N 은 경로가 실린 절만 올린다(P-231)" % tag)
+    return EXIT_OK if green else EXIT_UNDECIDABLE
+
+
 def settings_report(tag) -> tuple:
     """설정 다섯을 **따로** 찍는다 → (초록, 빨강, 회색)."""
     sdoc, sstale = load(SETTINGS_OBSERVED)
@@ -3140,6 +3424,8 @@ def main() -> int:
     ap.add_argument("--measure-settings", action="store_true",
                     help="[P-219] **설정 다섯만** 누른다 (48행 증거를 안 건드린다)")
     ap.add_argument("--list", action="store_true", help="흐름별 네 칸")
+    ap.add_argument("--clause-evidence", action="store_true",
+                    help="[P-231] 절 ↔ 「누른 뒤」 관측 ↔ 증거 파일 경로 (N 에게 보낼 표)")
     ap.add_argument("--container", default="gx-shell")
     ap.add_argument("--api", default="http://gx-nginx-e:8500")
     ap.add_argument("--spa", default="http://localhost:3002")
@@ -3167,6 +3453,12 @@ def main() -> int:
         return measure(args.container, args.api, args.spa,
                        keep_event_ids=args.keep_event, seed_file=args.seed_file,
                        table="settings")
+    if args.clause_evidence:
+        rc = self_test()
+        if rc != EXIT_OK:
+            print("%s 자기시험이 깨졌다 — 경로를 안 내준다" % TAG)
+            return rc
+        return clause_evidence_report(TAG)
     if args.list:
         for f in FLOWS:
             print("%-7s %-26s | 누르는 것 %-14s | 기대 호출 %-8s %-42s | 상태 %-15s | 문구 %s"

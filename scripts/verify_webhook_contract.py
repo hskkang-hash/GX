@@ -484,6 +484,11 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    from _gate_header import gate_header, count_lines  # P-107 — TARGET/AS/SOURCE
+    _n_base = count_lines(BASELINE)
+    _n_py = sum(1 for _p in BACKEND.rglob("*.py")) if BACKEND.is_dir() else 0
+    gate_header(__file__, measured=("웹훅을 **계약을 거쳐서만** 보내는가 — **분모 %s개**(`backend/` 파이썬 "
+              "전수에서 보내는 자리를 찾는다 · 지금 셌다) · 잠근 기준선 %s행"
+              % (_n_py or "못 셌다",
+                 _n_base if _n_base is not None else "못 셌다")))
     raise SystemExit(main())

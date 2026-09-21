@@ -1,0 +1,923 @@
+{
+ "measured_at": "2026-09-21T11:37:31+00:00",
+ "group_model": "user.usergroup",
+ "tenants": [
+  {
+   "pk": 4,
+   "name": "ETRI-Group",
+   "cameras_billed": 15,
+   "users_billed": 30,
+   "media_files": 115,
+   "media_bytes": 1493917814
+  },
+  {
+   "pk": 5,
+   "name": "Group Default",
+   "cameras_billed": 0,
+   "users_billed": 4,
+   "media_files": 2,
+   "media_bytes": 793418
+  },
+  {
+   "pk": 6,
+   "name": "Anyang",
+   "cameras_billed": 9,
+   "users_billed": 25,
+   "media_files": 667,
+   "media_bytes": 379668206
+  },
+  {
+   "pk": 7,
+   "name": "Gaion",
+   "cameras_billed": 15,
+   "users_billed": 15,
+   "media_files": 194,
+   "media_bytes": 2122401540
+  },
+  {
+   "pk": 8,
+   "name": "Thailand",
+   "cameras_billed": 0,
+   "users_billed": 8,
+   "media_files": 34,
+   "media_bytes": 169389509
+  },
+  {
+   "pk": 11,
+   "name": "Fire_Drone",
+   "cameras_billed": 11,
+   "users_billed": 6,
+   "media_files": 19,
+   "media_bytes": 2627089
+  },
+  {
+   "pk": 12,
+   "name": "DRONE-ROBOT",
+   "cameras_billed": 0,
+   "users_billed": 7,
+   "media_files": 16,
+   "media_bytes": 1830151
+  },
+  {
+   "pk": 13,
+   "name": "Gaion Test",
+   "cameras_billed": 0,
+   "users_billed": 1,
+   "media_files": 0,
+   "media_bytes": 0
+  },
+  {
+   "pk": 14,
+   "name": "Gongju",
+   "cameras_billed": 1,
+   "users_billed": 4,
+   "media_files": 13,
+   "media_bytes": 9081661
+  },
+  {
+   "pk": 15,
+   "name": "GeumSan-ETRI",
+   "cameras_billed": 0,
+   "users_billed": 2,
+   "media_files": 0,
+   "media_bytes": 0
+  }
+ ],
+ "detail": {
+  "4": {
+   "name": "ETRI-Group",
+   "cameras": [
+    {
+     "pk": 14,
+     "code": "D-1758174445245",
+     "name": "GD-150Q"
+    },
+    {
+     "pk": 15,
+     "code": "a92e640d-ed1c-49a3-b994-5c916e327956",
+     "name": "H40"
+    },
+    {
+     "pk": 17,
+     "code": "cbd9d5d9-5c85-4786-919f-013e2b8aa66b",
+     "name": "NBP-DR-P2"
+    },
+    {
+     "pk": 119,
+     "code": "GX-SEED-DSM",
+     "name": "시드 카메라 (검수용)"
+    },
+    {
+     "pk": 2427,
+     "code": "GX-U5-01",
+     "name": "안양천서로카메라"
+    },
+    {
+     "pk": 3947,
+     "code": "gxprobe-D384-screen-CAM",
+     "name": "gxprobe-D384-screen 캡처용 카메라"
+    },
+    {
+     "pk": 3948,
+     "code": "GX-ONB-V-20260917T090709",
+     "name": "GX-ONB-V-20260917T090709"
+    },
+    {
+     "pk": 4474,
+     "code": "GX-ONB-V-20260918T054717",
+     "name": "GX-ONB-V-20260918T054717"
+    },
+    {
+     "pk": 4565,
+     "code": "GX-ONB-V-20260919T055539",
+     "name": "GX-ONB-V-20260919T055539"
+    },
+    {
+     "pk": 4686,
+     "code": "GX-ONB-V-20260919T101555",
+     "name": "GX-ONB-V-20260919T101555"
+    },
+    {
+     "pk": 4915,
+     "code": "GX-ONB-V-20260920T045202",
+     "name": "GX-ONB-V-20260920T045202"
+    },
+    {
+     "pk": 5055,
+     "code": "GX-ONB-V-20260920T081440",
+     "name": "GX-ONB-V-20260920T081440"
+    },
+    {
+     "pk": 5356,
+     "code": "GX-DRILL-ANYANG-01",
+     "name": "[훈련] 안양천 시험카메라 1"
+    },
+    {
+     "pk": 5357,
+     "code": "GX-DRILL-ANYANG-02",
+     "name": "[훈련] 안양천 시험카메라 2"
+    },
+    {
+     "pk": 5358,
+     "code": "GX-DRILL-ANYANG-03",
+     "name": "[훈련] 안양천 시험카메라 3"
+    }
+   ],
+   "users": [
+    {
+     "pk": 8,
+     "username": "thanh",
+     "employee_id": null
+    },
+    {
+     "pk": 10,
+     "username": "thao",
+     "employee_id": null
+    },
+    {
+     "pk": 14,
+     "username": "order_user",
+     "employee_id": null
+    },
+    {
+     "pk": 15,
+     "username": "operator_user",
+     "employee_id": null
+    },
+    {
+     "pk": 16,
+     "username": "operator_chi",
+     "employee_id": null
+    },
+    {
+     "pk": 17,
+     "username": "order_chi",
+     "employee_id": null
+    },
+    {
+     "pk": 18,
+     "username": "order_user_1",
+     "employee_id": null
+    },
+    {
+     "pk": 19,
+     "username": "order_user_2",
+     "employee_id": null
+    },
+    {
+     "pk": 20,
+     "username": "order_user_3",
+     "employee_id": null
+    },
+    {
+     "pk": 21,
+     "username": "order_user_4",
+     "employee_id": null
+    },
+    {
+     "pk": 22,
+     "username": "order_user_5",
+     "employee_id": null
+    },
+    {
+     "pk": 23,
+     "username": "operator_user_1",
+     "employee_id": null
+    },
+    {
+     "pk": 24,
+     "username": "operator_user_2",
+     "employee_id": null
+    },
+    {
+     "pk": 25,
+     "username": "operator_user_3",
+     "employee_id": null
+    },
+    {
+     "pk": 26,
+     "username": "operator_user_4",
+     "employee_id": null
+    },
+    {
+     "pk": 27,
+     "username": "operator_user_5",
+     "employee_id": null
+    },
+    {
+     "pk": 62,
+     "username": "oper_chungnam",
+     "employee_id": null
+    },
+    {
+     "pk": 63,
+     "username": "order_chungnam",
+     "employee_id": null
+    },
+    {
+     "pk": 64,
+     "username": "oper_chi",
+     "employee_id": null
+    },
+    {
+     "pk": 105,
+     "username": "gxprobe_e2e",
+     "employee_id": null
+    },
+    {
+     "pk": 108,
+     "username": "gxseed_u2_manager",
+     "employee_id": "GX-SEED-ROLE-U2"
+    },
+    {
+     "pk": 109,
+     "username": "gxseed_u4_official",
+     "employee_id": "GX-SEED-ROLE-U4"
+    },
+    {
+     "pk": 110,
+     "username": "gxseed_u1_operator",
+     "employee_id": "GX-SEED-ROLE-U1"
+    },
+    {
+     "pk": 111,
+     "username": "gxprobe_s",
+     "employee_id": null
+    },
+    {
+     "pk": 112,
+     "username": "gxprobe_q",
+     "employee_id": null
+    },
+    {
+     "pk": 113,
+     "username": "gxprobe_e",
+     "employee_id": null
+    },
+    {
+     "pk": 114,
+     "username": "gxprobe_c",
+     "employee_id": null
+    },
+    {
+     "pk": 115,
+     "username": "gxseed_u5_sysop",
+     "employee_id": "GX-SEED-ROLE-U5"
+    },
+    {
+     "pk": 116,
+     "username": "gxprobe_v",
+     "employee_id": null
+    },
+    {
+     "pk": 117,
+     "username": "gxseed_u5_newop",
+     "employee_id": null
+    }
+   ]
+  },
+  "5": {
+   "name": "Group Default",
+   "cameras": [],
+   "users": [
+    {
+     "pk": 6,
+     "username": "tuan",
+     "employee_id": null
+    },
+    {
+     "pk": 31,
+     "username": "ghbongs",
+     "employee_id": null
+    },
+    {
+     "pk": 49,
+     "username": "hans",
+     "employee_id": null
+    },
+    {
+     "pk": 50,
+     "username": "ldk",
+     "employee_id": null
+    }
+   ]
+  },
+  "6": {
+   "name": "Anyang",
+   "cameras": [
+    {
+     "pk": 11,
+     "code": "drone_31_1_conn_4ef01b03",
+     "name": "Q02-0001"
+    },
+    {
+     "pk": 12,
+     "code": "drone_33_1_conn_4ef01b03",
+     "name": "Q02-0003"
+    },
+    {
+     "pk": 19,
+     "code": "drone_40_1_conn_4ef01b03",
+     "name": "H40-0001"
+    },
+    {
+     "pk": 62,
+     "code": "external_6361b2",
+     "name": "Anyang - DJI1"
+    },
+    {
+     "pk": 63,
+     "code": "external_0bd624",
+     "name": "Anyang - DJI2"
+    },
+    {
+     "pk": 84,
+     "code": "external_ac2991",
+     "name": "AnyangDockCam"
+    },
+    {
+     "pk": 85,
+     "code": "external_f91dc9",
+     "name": "Gaion M4D"
+    },
+    {
+     "pk": 86,
+     "code": "drone_32_1_conn_4ef01b03",
+     "name": "Q02-0002"
+    },
+    {
+     "pk": 87,
+     "code": "external_d3cb45",
+     "name": "GAION-M4D"
+    }
+   ],
+   "users": [
+    {
+     "pk": 30,
+     "username": "kimchi2",
+     "employee_id": null
+    },
+    {
+     "pk": 47,
+     "username": "anyang06",
+     "employee_id": null
+    },
+    {
+     "pk": 48,
+     "username": "anyang07",
+     "employee_id": null
+    },
+    {
+     "pk": 44,
+     "username": "anyang04",
+     "employee_id": null
+    },
+    {
+     "pk": 28,
+     "username": "anyang01",
+     "employee_id": null
+    },
+    {
+     "pk": 91,
+     "username": "rin_superuser",
+     "employee_id": null
+    },
+    {
+     "pk": 4,
+     "username": "man",
+     "employee_id": null
+    },
+    {
+     "pk": 51,
+     "username": "anyang08",
+     "employee_id": null
+    },
+    {
+     "pk": 43,
+     "username": "anyang03",
+     "employee_id": null
+    },
+    {
+     "pk": 5,
+     "username": "son",
+     "employee_id": null
+    },
+    {
+     "pk": 13,
+     "username": "kimchi1",
+     "employee_id": null
+    },
+    {
+     "pk": 92,
+     "username": "tuan_superuser",
+     "employee_id": null
+    },
+    {
+     "pk": 67,
+     "username": "jcbae",
+     "employee_id": null
+    },
+    {
+     "pk": 53,
+     "username": "anyang11",
+     "employee_id": null
+    },
+    {
+     "pk": 3,
+     "username": "phatlh",
+     "employee_id": null
+    },
+    {
+     "pk": 46,
+     "username": "anyang05",
+     "employee_id": null
+    },
+    {
+     "pk": 32,
+     "username": "anyang",
+     "employee_id": null
+    },
+    {
+     "pk": 55,
+     "username": "anyang_sv",
+     "employee_id": null
+    },
+    {
+     "pk": 57,
+     "username": "ksyong1071",
+     "employee_id": null
+    },
+    {
+     "pk": 9,
+     "username": "rin",
+     "employee_id": null
+    },
+    {
+     "pk": 68,
+     "username": "muniru",
+     "employee_id": null
+    },
+    {
+     "pk": 29,
+     "username": "anyang02",
+     "employee_id": null
+    },
+    {
+     "pk": 12,
+     "username": "kimchi",
+     "employee_id": null
+    },
+    {
+     "pk": 65,
+     "username": "ms_Anyang_20250926_044234",
+     "employee_id": null
+    },
+    {
+     "pk": 52,
+     "username": "anyang09",
+     "employee_id": null
+    }
+   ]
+  },
+  "7": {
+   "name": "Gaion",
+   "cameras": [
+    {
+     "pk": 3,
+     "code": "D-12345678103",
+     "name": "Drone 01"
+    },
+    {
+     "pk": 4,
+     "code": "D-12345678103",
+     "name": "Drone 02"
+    },
+    {
+     "pk": 5,
+     "code": "D-1234567890",
+     "name": "Drone 03"
+    },
+    {
+     "pk": 6,
+     "code": "D-12345678901",
+     "name": "Drone 04"
+    },
+    {
+     "pk": 8,
+     "code": "drone_5_1_conn_4ef01b03",
+     "name": "Q02-0002"
+    },
+    {
+     "pk": 10,
+     "code": "D-12345678901",
+     "name": "Drone 06"
+    },
+    {
+     "pk": 13,
+     "code": "drone_10_1_conn_4ef01b03",
+     "name": "Drone 10"
+    },
+    {
+     "pk": 48,
+     "code": "drone_11_1_conn_4ef01b03",
+     "name": "Drone 11"
+    },
+    {
+     "pk": 52,
+     "code": "drone_12_1_conn_4ef01b03",
+     "name": "Drone 12"
+    },
+    {
+     "pk": 64,
+     "code": "external_e55a3b",
+     "name": "Gaion - DJI1"
+    },
+    {
+     "pk": 71,
+     "code": "drone_57_1_conn_4ef01b03",
+     "name": "H02-01"
+    },
+    {
+     "pk": 72,
+     "code": "drone_58_1_conn_4ef01b03",
+     "name": "H02-02"
+    },
+    {
+     "pk": 73,
+     "code": "drone_55_1_conn_4ef01b03",
+     "name": "H05"
+    },
+    {
+     "pk": 83,
+     "code": "external_f2b8be",
+     "name": "Gaion_04_ex02"
+    },
+    {
+     "pk": 89,
+     "code": "external_dc813d",
+     "name": "Test"
+    }
+   ],
+   "users": [
+    {
+     "pk": 2,
+     "username": "admin",
+     "employee_id": null
+    },
+    {
+     "pk": 33,
+     "username": "gaion01",
+     "employee_id": null
+    },
+    {
+     "pk": 34,
+     "username": "gaion02",
+     "employee_id": null
+    },
+    {
+     "pk": 35,
+     "username": "gaion03",
+     "employee_id": null
+    },
+    {
+     "pk": 36,
+     "username": "gaion04",
+     "employee_id": null
+    },
+    {
+     "pk": 37,
+     "username": "gaion05",
+     "employee_id": null
+    },
+    {
+     "pk": 38,
+     "username": "gaion06",
+     "employee_id": null
+    },
+    {
+     "pk": 39,
+     "username": "gaion07",
+     "employee_id": null
+    },
+    {
+     "pk": 40,
+     "username": "gaion08",
+     "employee_id": null
+    },
+    {
+     "pk": 41,
+     "username": "gaion09",
+     "employee_id": null
+    },
+    {
+     "pk": 42,
+     "username": "gaion10",
+     "employee_id": null
+    },
+    {
+     "pk": 78,
+     "username": "jaechol",
+     "employee_id": null
+    },
+    {
+     "pk": 79,
+     "username": "ms_Gaion_20251119_023940",
+     "employee_id": null
+    },
+    {
+     "pk": 96,
+     "username": "ms_Gaion_20260116_030956",
+     "employee_id": null
+    },
+    {
+     "pk": 104,
+     "username": "gaion11",
+     "employee_id": null
+    }
+   ]
+  },
+  "8": {
+   "name": "Thailand",
+   "cameras": [],
+   "users": [
+    {
+     "pk": 69,
+     "username": "thai01",
+     "employee_id": null
+    },
+    {
+     "pk": 70,
+     "username": "thai02",
+     "employee_id": null
+    },
+    {
+     "pk": 71,
+     "username": "thai03",
+     "employee_id": null
+    },
+    {
+     "pk": 72,
+     "username": "thai04",
+     "employee_id": null
+    },
+    {
+     "pk": 73,
+     "username": "thai05",
+     "employee_id": null
+    },
+    {
+     "pk": 74,
+     "username": "ms_Thailand_20251003_045617",
+     "employee_id": null
+    },
+    {
+     "pk": 75,
+     "username": "thai06",
+     "employee_id": null
+    },
+    {
+     "pk": 77,
+     "username": "thai07",
+     "employee_id": null
+    }
+   ]
+  },
+  "11": {
+   "name": "Fire_Drone",
+   "cameras": [
+    {
+     "pk": 67,
+     "code": "drone_14_1_conn_4ef01b03",
+     "name": "Drone_14"
+    },
+    {
+     "pk": 68,
+     "code": "drone_13_1_conn_4ef01b03",
+     "name": "Drone_13"
+    },
+    {
+     "pk": 69,
+     "code": "drone_15_1_conn_4ef01b03",
+     "name": "Drone_15"
+    },
+    {
+     "pk": 70,
+     "code": "drone_54_1_conn_4ef01b03",
+     "name": "X05F-001"
+    },
+    {
+     "pk": 74,
+     "code": "drone_56_1_conn_4ef01b03",
+     "name": "Q02"
+    },
+    {
+     "pk": 75,
+     "code": "drone_42_1_conn_4ef01b03",
+     "name": "H40F-0002"
+    },
+    {
+     "pk": 78,
+     "code": "drone_41_1_conn_4ef01b03",
+     "name": "H40F-0001"
+    },
+    {
+     "pk": 79,
+     "code": "drone_51_1_conn_4ef01b03",
+     "name": "Q02F-001"
+    },
+    {
+     "pk": 80,
+     "code": "drone_43_1_conn_4ef01b03",
+     "name": "H40FA-0001"
+    },
+    {
+     "pk": 81,
+     "code": "drone_53_1_conn_4ef01b03",
+     "name": "X05F-002"
+    },
+    {
+     "pk": 82,
+     "code": "drone_52_1_conn_4ef01b03",
+     "name": "Q02F-002"
+    }
+   ],
+   "users": [
+    {
+     "pk": 82,
+     "username": "fire_user1",
+     "employee_id": null
+    },
+    {
+     "pk": 83,
+     "username": "fire_user2",
+     "employee_id": null
+    },
+    {
+     "pk": 89,
+     "username": "ldkF",
+     "employee_id": null
+    },
+    {
+     "pk": 90,
+     "username": "hansF",
+     "employee_id": null
+    },
+    {
+     "pk": 94,
+     "username": "firedrone01",
+     "employee_id": null
+    },
+    {
+     "pk": 95,
+     "username": "firedrone02",
+     "employee_id": null
+    }
+   ]
+  },
+  "12": {
+   "name": "DRONE-ROBOT",
+   "cameras": [],
+   "users": [
+    {
+     "pk": 80,
+     "username": "dronerobot_user_1",
+     "employee_id": null
+    },
+    {
+     "pk": 81,
+     "username": "dronerobot_user_2",
+     "employee_id": null
+    },
+    {
+     "pk": 84,
+     "username": "dronerobot01",
+     "employee_id": null
+    },
+    {
+     "pk": 85,
+     "username": "dronerobot02",
+     "employee_id": null
+    },
+    {
+     "pk": 86,
+     "username": "dronerobot03",
+     "employee_id": null
+    },
+    {
+     "pk": 87,
+     "username": "dronerobot04",
+     "employee_id": null
+    },
+    {
+     "pk": 88,
+     "username": "dronerobot_user_3",
+     "employee_id": null
+    }
+   ]
+  },
+  "13": {
+   "name": "Gaion Test",
+   "cameras": [],
+   "users": [
+    {
+     "pk": 93,
+     "username": "gaion01_test",
+     "employee_id": null
+    }
+   ]
+  },
+  "14": {
+   "name": "Gongju",
+   "cameras": [
+    {
+     "pk": 88,
+     "code": "drone_20_1_conn_4ef01b03",
+     "name": "(GAION)X05-0001"
+    }
+   ],
+   "users": [
+    {
+     "pk": 97,
+     "username": "gongju_admin01",
+     "employee_id": null
+    },
+    {
+     "pk": 98,
+     "username": "gongju_operator01",
+     "employee_id": null
+    },
+    {
+     "pk": 99,
+     "username": "gongju_order01",
+     "employee_id": null
+    },
+    {
+     "pk": 100,
+     "username": "gongju_sv01",
+     "employee_id": null
+    }
+   ]
+  },
+  "15": {
+   "name": "GeumSan-ETRI",
+   "cameras": [],
+   "users": [
+    {
+     "pk": 102,
+     "username": "order_geumsan",
+     "employee_id": null
+    },
+    {
+     "pk": 103,
+     "username": "operator_geumsan",
+     "employee_id": null
+    }
+   ]
+  }
+ },
+ "has_data_source_field": {
+  "stream_monitors.streammonitor": false,
+  "user.coreuser": false,
+  "file_management.usermediafile": false
+ }
+}

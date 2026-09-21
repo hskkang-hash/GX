@@ -61,6 +61,26 @@
   턴 Z 에 그 일이 났고, 세 벌 중 둘의 원판이 남지 않았다.
 
     python scripts/ab_config_cache_wall.py --self-test    # 판정 규칙만 (서버 없이)
+
+★★ **동시 N 은 눈금을 A/A 로 먼저 잰다** (턴 AB · 차선 F)
+---------------------------------------------------------
+턴 AA 에 이 도구는 **두 팔이 똑같은 A/A 대조에서 「증명」을 냈다**(STATUS · 부호 6/8).
+비율 눈금(`SIGN_RATIO 0.70`)이 짝의 **수**를 모르기 때문이다 — 동전 여덟 번에 여섯 번
+쏠릴 확률은 14.5% 다. 이번 턴에 눈금 둘을 다 바꿨다:
+
+    부호   비율 → **양측 정확 이항검정 p ≤ 0.01**. 짝이 적으면 저절로 빡빡해진다.
+           (8쌍은 8/8 · 20쌍은 17/20 · 40쌍은 30/40 이 필요하다)
+    크기   동시 1 은 `FLOOR_PCT 5%` 그대로. **동시 N 은 눈금이 없으면 판정하지 않는다.**
+           `--calibrate` 로 **A/A 를 먼저 재서** 눈금을 뽑고, 그 수를 `--floor-pct` 로 준다.
+
+    # 순서가 곧 내용이다 — ① A/A 로 눈금을 재고 ② 그 눈금으로 정방향을 판정한다
+    … --a 8603 --b 8604 --concurrency 10 --windows 20 --only STATUS,F05,FRAME \\
+      --calibrate --out /docs/agent/evidence/PERF-04/<A/A 판>.json
+    … --a 8601 --b 8602 --concurrency 10 --windows 20 --only STATUS,F05,FRAME \\
+      --floor-pct <A/A 가 준 수> --out /docs/agent/evidence/PERF-04/<정방향 판>.json
+
+⚠ **정방향 초록만 골라 적지 않는다.** A/A 가 「증명」을 하나라도 내면 눈금 문제가
+  아니라 **벌이 짝을 못 맞추고 있는 것**이고, 그때 정방향의 수는 판정이 아니다.
 """
 from __future__ import annotations
 
@@ -90,15 +110,42 @@ PATHS: tuple[tuple[str, str], ...] = (
     ("SUMM", "/api/dsm/events/summary"),
 )
 
-#: 성한 쌍이 이 수보다 적으면 **판정하지 않는다** (턴 Y 자진 ⓐ).
-MIN_PAIRS = 5
+#: ★★ **부호 눈금을 비율에서 정확 이항검정으로 바꿨다** (턴 AB · 차선 F).
+#:
+#:   턴 AA 에 이 도구가 **거짓 초록**을 냈다: 두 팔을 똑같이 맞춘 A/A 대조에서
+#:   STATUS 가 짝차 −72.29 ms · 부호 **6/8** 로 「증명」을 냈다. 사유는 분명하다 —
+#:   `SIGN_RATIO 0.70` 은 **6/8 = 75%** 를 통과시키는데, 동전 여덟 번에 여섯 번이
+#:   한쪽으로 쏠릴 확률은 **14.5%** 다. **일곱 번에 한 번은 그냥 난다.**
+#:   비율은 짝의 **수**를 모른다. 그래서 짝이 적을수록 헐거워진다 — 정확히 거꾸로다.
+#:
+#:   ⇒ 눈금을 **짝 수의 함수**로 바꾼다: 부호 쏠림의 **양측 정확 이항검정 p 값**이
+#:     `ALPHA` 이하일 때만 「한결같다」고 부른다. 그러면 같은 규칙이
+#:       40쌍 30/40  p=0.0022  → 증명   (턴 Z 의 동시 1 초록은 **그대로 산다**)
+#:        8쌍  6/8   p=0.289   → 못 증명 (턴 AA 의 거짓 초록은 **죽는다**)
+#:       20쌍 17/20  p=0.0026  → 증명   (동시 10 에 필요한 짝 수가 수로 나온다)
+#:     처럼 **짝이 적으면 저절로 빡빡해진다.** 사람이 눈금을 고쳐 잡을 자리가 없다.
+ALPHA = 0.01
 
-#: 이 기계의 눈금. 쌍차의 가운데가 이 아래면 「구별 못 했다」다
+#: ★ 성한 쌍이 이 수보다 적으면 **판정하지 않는다.**
+#:   5 에서 8 로 올렸다 — 이유는 취향이 아니라 셈이다: `n` 쌍이 **전부** 한 방향이어도
+#:   양측 p 는 `2 / 2**n` 이고, 그것이 `ALPHA(0.01)` 이하가 되는 가장 작은 `n` 이 **8** 이다.
+#:   즉 **7쌍 이하는 완벽하게 한 방향이어도 동전과 못 가른다.** 그 자리에서 나오는
+#:   「증명」은 셈이 아니라 희망이다.
+MIN_PAIRS = 8
+
+#: 이 기계의 크기 눈금(**동시 1 전용**). 쌍차의 가운데가 이 아래면 「구별 못 했다」다
 #: (턴 X 에 차선 F 가 잰 잡음 상한 5%).
+#:
+#: ⚠ **이 수를 동시 N 에 옮겨 쓰지 않는다.** 턴 AA 의 A/A 는 동시 10 에서 −11.5% 를
+#:   냈다 — 두 팔이 **같은데** 그랬다. 5% 라는 눈금은 그 잡음보다 훨씬 작고, 작은
+#:   눈금은 잡음을 효과로 읽는다. 동시 N 의 눈금은 `--floor-pct` 로 **A/A 를 먼저 재서**
+#:   준다(`--calibrate`). 안 주면 이 도구는 **판정하지 않는다** — 그것이 이 턴의 고침이다.
 FLOOR_PCT = 5.0
 
-#: 쌍의 방향이 「한결같다」고 부를 비율. 40쌍에서 30쌍이면 동전으로는 만분의 몇이다.
-SIGN_RATIO = 0.70
+#: 동시 N 에서 눈금 없이 판정하려 할 때 내는 말. 한 곳에만 적는다.
+NO_SCALE = ("동시 %d 의 크기 눈금이 **없다.** 동시 1 의 눈금(%.1f%%)을 여기 옮겨 쓰지 "
+            "않는다 — 턴 AA 의 A/A 는 두 팔이 같은데 −11.5%% 를 냈다. "
+            "`--calibrate` 로 A/A 를 먼저 재서 `--floor-pct` 를 정한 다음 판정한다")
 
 #: 세션이 끊긴 모양. **느린 것이 아니라 틀린 것**이다.
 SESSION_LOST = (401, 403)
@@ -115,19 +162,61 @@ def drop_bad_pairs(pairs: list[dict]) -> tuple[list[dict], int]:
     return good, len(pairs) - len(good)
 
 
-def paired_verdict(pairs: list[dict]) -> dict:
+def sign_test_p(k: int, n: int) -> float:
+    """부호 쏠림의 **양측 정확 이항검정 p 값**. 동전 `n` 번에 한쪽이 `k` 번 이상 나올 확률.
+
+    비율(`k/n`)을 안 쓰는 이유는 하나다 — **비율은 짝의 수를 모른다.**
+    6/8 과 30/40 은 둘 다 75% 인데, 앞엣것은 동전으로 일곱 번에 한 번 나고
+    뒤엣것은 천 번에 두 번 난다. 그 둘을 같은 눈금으로 재는 동안 이 도구는
+    **A/A 에서 「증명」을 냈다**(턴 AA · STATUS 6/8).
+    """
+    import math
+
+    k = max(k, n - k)                      # 어느 쪽으로 쏠렸든 크기만 본다
+    tail = sum(math.comb(n, i) for i in range(k, n + 1))
+    return min(1.0, 2.0 * tail / float(2 ** n))
+
+
+def min_pairs_for(alpha: float = ALPHA) -> int:
+    """**완벽히 한 방향이어도** 동전과 갈리는 가장 작은 짝 수. 손으로 안 적는다."""
+    n = 1
+    while 2.0 / float(2 ** n) > alpha:
+        n += 1
+    return n
+
+
+def paired_verdict(pairs: list[dict], *, concurrency: int = 1,
+                   floor_pct: float | None = None) -> dict:
     """쌍들에서 판정 하나. **「증명」·「못 증명」·「판정 불가」 셋뿐이다.**
 
     `b` 가 캐시를 **켠** 팔이라고 본다 — 즉 음수가 「캐시가 빠르다」다.
+
+    Args:
+        concurrency: 이 벌의 동시 갈래 수. **1 이 아니면 크기 눈금을 요구한다.**
+        floor_pct: 크기 눈금(%). `None` 이면 동시 1 은 `FLOOR_PCT` 를 쓰고,
+            동시 N 은 **판정하지 않는다** — 동시 1 의 눈금을 옮겨 쓰는 것이
+            턴 AA 를 회색으로 끝낸 바로 그 짓이다.
     """
     good, dropped = drop_bad_pairs(pairs)
     out = {"pairs_seen": len(pairs), "pairs_used": len(good),
-           "pairs_dropped": dropped}
+           "pairs_dropped": dropped, "concurrency": concurrency,
+           "alpha": ALPHA}
     if len(good) < MIN_PAIRS:
         out.update(verdict="판정 불가", reason=(
-            "성한 쌍이 %d개 — 눈금(%d) 아래다. 쌍 하나는 언제나 한 방향이고 "
-            "그것은 판정이 아니다" % (len(good), MIN_PAIRS)))
+            "성한 쌍이 %d개 — 눈금(%d) 아래다. %d쌍 이하는 **전부 한 방향이어도** "
+            "양측 p 가 %.3f 보다 커서 동전과 못 가른다. 그 자리의 「증명」은 셈이 "
+            "아니라 희망이다" % (len(good), MIN_PAIRS, MIN_PAIRS - 1, ALPHA)))
         return out
+
+    # ★ 크기 눈금이 없으면 **여기서 멈춘다.** 수를 내고 나서 「그런데 눈금이 없다」고
+    #   적으면, 그 수만 옮겨 적히는 것이 이 저장소가 내내 걷어낸 병이다.
+    if floor_pct is None:
+        if concurrency > 1:
+            out.update(verdict="판정 불가",
+                       reason=NO_SCALE % (concurrency, FLOOR_PCT))
+            return out
+        floor_pct = FLOOR_PCT
+    out["floor_pct"] = floor_pct
 
     diffs = [p["b_ms"] - p["a_ms"] for p in good]
     pcts = [100.0 * (p["b_ms"] - p["a_ms"]) / p["a_ms"] for p in good if p["a_ms"]]
@@ -142,21 +231,55 @@ def paired_verdict(pairs: list[dict]) -> dict:
         b_faster_pairs=b_faster,
         sign_ratio=round(ratio, 3),
     )
-    consistent = ratio >= SIGN_RATIO or (1.0 - ratio) >= SIGN_RATIO
+    p_sign = sign_test_p(b_faster, len(diffs))
+    out["sign_p"] = round(p_sign, 5)
+    consistent = p_sign <= ALPHA
     if not consistent:
         out.update(verdict="못 증명", reason=(
-            "방향이 갈린다 — 켬이 빠른 쌍 %d/%d (%.0f%%). 0 을 가운데 두고 흩어지는 것은 "
-            "「효과 있다」가 아니다" % (b_faster, len(diffs), ratio * 100)))
-    elif abs(med_pct) < FLOOR_PCT:
+            "방향이 동전과 안 갈린다 — 켬이 빠른 쌍 %d/%d (%.0f%%), 양측 p=%.4f > %.3f. "
+            "**쏠렸다는 것과 동전이 아니라는 것은 다르다**"
+            % (b_faster, len(diffs), ratio * 100, p_sign, ALPHA)))
+    elif abs(med_pct) < floor_pct:
         out.update(verdict="못 증명", reason=(
-            "가운데 %.1f%% 는 이 기계의 눈금(%.1f%%) 아래다 — 구별 못 했다"
-            % (med_pct, FLOOR_PCT)))
+            "가운데 %.1f%% 는 이 벌의 눈금(%.1f%% · 동시 %d) 아래다 — 구별 못 했다"
+            % (med_pct, floor_pct, concurrency)))
     else:
         out.update(verdict="증명", reason=(
-            "쌍 %d 중 %d 이 한 방향(%.0f%%)이고 가운데 %.1f%% 가 눈금(%.1f%%)을 넘는다"
+            "쌍 %d 중 %d 이 한 방향(양측 p=%.4f ≤ %.3f)이고 가운데 %.1f%% 가 "
+            "눈금(%.1f%%)을 넘는다"
             % (len(diffs), max(b_faster, len(diffs) - b_faster),
-               max(ratio, 1 - ratio) * 100, med_pct, FLOOR_PCT)))
+               p_sign, ALPHA, med_pct, floor_pct)))
     return out
+
+
+def calibrate_floor(verdicts: dict) -> dict:
+    """**A/A 대조에서 크기 눈금을 뽑는다** — 사람이 고르지 않는다 (턴 AB · 차선 F).
+
+    두 팔이 **같은** 벌에서 나온 쌍차의 가운데값은 **전부 잡음**이다. 그러므로
+    자리마다 그 절대값을 재고, **가장 큰 것**을 눈금으로 삼는다: 「두 팔이 같을 때
+    이만큼까지 났다」보다 작은 차를 효과라고 부를 수는 없다.
+
+    ⚠ 이 함수는 **A/A 판에만** 쓴다. 정방향 판을 넣으면 효과를 눈금으로 삼게 되고,
+      그러면 무엇을 재도 「못 증명」이 나온다 — 조용히 아무것도 못 재는 도구가 된다.
+
+    Returns:
+        `{"floor_pct": …, "from": {자리: 관측한 |가운데%|}, "usable": bool}`.
+        판정 가능한 자리가 하나도 없으면 `usable=False` — **눈금을 지어내지 않는다.**
+    """
+    seen = {}
+    for name, v in (verdicts or {}).items():
+        pct = v.get("diff_median_pct")
+        if pct is None or v.get("verdict") == "판정 불가":
+            continue
+        seen[name] = abs(float(pct))
+    if not seen:
+        return {"floor_pct": None, "from": {}, "usable": False,
+                "why": "A/A 판에 판정 가능한 자리가 없다 — 눈금을 지어내지 않는다"}
+    worst = max(seen.values())
+    return {"floor_pct": round(worst, 2), "from": seen, "usable": True,
+            "why": ("두 팔이 **같은** 벌에서 가장 크게 벌어진 차가 %.2f%% 다. "
+                    "그보다 작은 차를 효과라고 부를 수 없다 (자리 %d개에서 뽑았다)"
+                    % (worst, len(seen)))}
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -348,15 +471,50 @@ def self_test() -> int:
     check("쌍 1은 판정 불가 (동어반복)",
           paired_verdict(mk(1, 100.0, 80.0))["verdict"], "판정 불가")
     check("쌍 4는 판정 불가", paired_verdict(mk(4, 100.0, 80.0))["verdict"], "판정 불가")
-    check("쌍 5 · 한 방향 · 20%p 는 증명",
-          paired_verdict(mk(5, 100.0, 80.0))["verdict"], "증명")
+    #: ★ [턴 AB] **5쌍은 이제 판정 불가다.** 5쌍이 전부 한 방향이어도 양측 p=0.0625 —
+    #:   동전과 못 가른다. 종전에는 이 자리가 「증명」이었고, 그것이 헐거운 눈금의 뿌리다.
+    check("쌍 5 · 한 방향이어도 판정 불가 (동전과 못 가른다)",
+          paired_verdict(mk(5, 100.0, 80.0))["verdict"], "판정 불가")
+    check("쌍 8 · 한 방향 · 20%p 는 증명",
+          paired_verdict(mk(8, 100.0, 80.0))["verdict"], "증명")
     check("한 방향이어도 1% 면 못 증명",
           paired_verdict(mk(10, 100.0, 99.0))["verdict"], "못 증명")
 
+    # ── ★★ 턴 AA 의 **거짓 초록**을 이 자기시험이 직접 겨눈다 ──────────────────
+    #   A/A 대조(두 팔이 같다)에서 STATUS 가 부호 6/8 로 「증명」을 냈다.
+    #   같은 모양을 넣어 **이제 죽는지** 본다. 이 검사가 이 판의 존재 이유다.
+    aa_6_of_8 = mk(6, 200.0, 130.0) + mk(2, 200.0, 260.0)
+    got = paired_verdict(aa_6_of_8)
+    check("턴 AA 거짓 초록(6/8)이 죽는다", got["verdict"], "못 증명")
+    check("그 사유가 **동전**이라고 적힌다", "동전" in got["reason"], True)
+    check("6/8 의 양측 p", round(sign_test_p(6, 8), 4), 0.2891)
+    check("30/40 은 동전이 아니다", round(sign_test_p(30, 40), 4), 0.0022)
+    check("17/20 은 동전이 아니다", round(sign_test_p(17, 20), 4), 0.0026)
+    check("16/20 은 아직 동전이다", sign_test_p(16, 20) > ALPHA, True)
+    check("최소 짝 수는 셈에서 나온다", min_pairs_for(ALPHA), MIN_PAIRS)
+
+    # ── 동시 N 은 **눈금 없이 판정하지 않는다** (턴 AA 가 선 자리) ──────────────
+    c10 = paired_verdict(mk(20, 200.0, 150.0), concurrency=10)
+    check("동시 10 · 눈금 없으면 판정 불가", c10["verdict"], "판정 불가")
+    check("그 사유가 A/A 를 가리킨다", "A/A" in c10["reason"], True)
+    c10ok = paired_verdict(mk(20, 200.0, 150.0), concurrency=10, floor_pct=12.0)
+    check("동시 10 · 눈금을 주면 판정한다", c10ok["verdict"], "증명")
+    c10tight = paired_verdict(mk(20, 200.0, 150.0), concurrency=10, floor_pct=40.0)
+    check("눈금이 차보다 크면 못 증명", c10tight["verdict"], "못 증명")
+
+    # ── 눈금을 A/A 판에서 뽑는다 ────────────────────────────────────────────
+    cal = calibrate_floor({"STATUS": {"diff_median_pct": -11.5, "verdict": "못 증명"},
+                           "F05": {"diff_median_pct": 3.2, "verdict": "못 증명"},
+                           "FRAME": {"verdict": "판정 불가"}})
+    check("A/A 에서 가장 큰 차가 눈금이 된다", cal["floor_pct"], 11.5)
+    check("판정 불가 자리는 눈금에 안 들어간다", sorted(cal["from"]), ["F05", "STATUS"])
+    empty = calibrate_floor({"STATUS": {"verdict": "판정 불가"}})
+    check("A/A 가 비면 눈금을 지어내지 않는다", empty["usable"], False)
+
     #: 오류 난 쌍이 **버려지는가** — 이것이 턴 Y 가 속은 자리다.
-    poisoned = mk(5, 100.0, 80.0) + mk(20, 100.0, 5.0, a_code=401, b_code=401)
+    poisoned = mk(8, 100.0, 80.0) + mk(20, 100.0, 5.0, a_code=401, b_code=401)
     got = paired_verdict(poisoned)
-    check("오류 쌍은 버린다", (got["pairs_used"], got["pairs_dropped"]), (5, 20))
+    check("오류 쌍은 버린다", (got["pairs_used"], got["pairs_dropped"]), (8, 20))
     check("버린 뒤에도 성한 쌍으로 판정", got["verdict"], "증명")
 
     only_bad = mk(20, 100.0, 5.0, a_code=401, b_code=401)
@@ -422,6 +580,15 @@ def main(argv=None) -> int:
     ap.add_argument("--only", default="",
                     help="★ 재는 자리를 즐인다(쉼표로). 동시 N 에서는 짝의 **수**가 힘이라, "
                          "같은 요청 예산이라면 자리를 즐이고 짝을 늘리는 편이 낫다")
+    #: ★★ [턴 AB] **동시 N 의 크기 눈금.** 안 주면 동시 N 은 판정하지 않는다 —
+    #:   동시 1 의 5% 를 옮겨 쓰는 것이 턴 AA 를 회색으로 끝낸 짓이다.
+    ap.add_argument("--floor-pct", type=float, default=None,
+                    help="크기 눈금(%%). 동시 N 은 **A/A 로 먼저 재서** 준다")
+    #: ★ 이 벌이 A/A 대조임을 **판에 박고**, 끝에 눈금 후보를 뽑아 적는다.
+    #:   사람이 「이번 건 A/A 였다」고 기억할 필요가 없게 한다.
+    ap.add_argument("--calibrate", action="store_true",
+                    help="이 벌을 **A/A 대조**로 보고 크기 눈금 후보를 뽑는다 "
+                         "(두 팔을 똑같이 맞춰 띄운 뒤에만 쓴다)")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args(argv)
 
@@ -485,7 +652,11 @@ def main(argv=None) -> int:
         else:
             rows = run_path(a_port=args.a, b_port=args.b, path=path, token=token,
                             pairs=args.pairs, warmup=args.warmup)
-        v = paired_verdict(rows)
+        # ★ A/A 대조 벌에서는 **크기 눈금을 요구하지 않는다** — 눈금을 뽑으러 온
+        #   벌이 눈금이 없어서 못 돈다면 그 도구는 제 꼬리를 문 것이다.
+        #   대신 판정은 전부 「못 증명」이어야 옳고, 그렇지 않으면 그것이 뉴스다.
+        v = paired_verdict(rows, concurrency=conc,
+                           floor_pct=(0.0 if args.calibrate else args.floor_pct))
         v["path"] = path
         payload["paths"][name] = {"verdict": v, "rows": rows}
         if detail is not None:
@@ -507,8 +678,29 @@ def main(argv=None) -> int:
 
     payload["ended_utc"] = time.strftime("%H:%M:%S", time.gmtime())
     payload["tally"] = {"증명": proven, "못 증명": unproven, "판정 불가": ungraded}
+    payload["floor_pct"] = args.floor_pct
+    payload["is_aa_control"] = bool(args.calibrate)
     print("\n%s 증명 %d · 못 증명 %d · 판정 불가 %d (자리 %d)"
           % (TAG, proven, unproven, ungraded, len(todo)))
+
+    if args.calibrate:
+        cal = calibrate_floor({n: payload["paths"][n]["verdict"]
+                               for n in payload["paths"]})
+        payload["calibration"] = cal
+        print()
+        print("%s **A/A 대조에서 뽑은 크기 눈금**" % TAG)
+        if not cal["usable"]:
+            print("  눈금을 **못 뽑았다** — %s" % cal["why"])
+        else:
+            print("  `--floor-pct %.2f`  ← %s" % (cal["floor_pct"], cal["why"]))
+            for n, pct in sorted(cal["from"].items(), key=lambda kv: -kv[1]):
+                print("      %-7s |가운데| %.2f%%" % (n, pct))
+        # ★ A/A 에서 **「증명」이 하나라도 나오면** 그것이 이 벌의 뉴스다.
+        #   두 팔이 같은데 차가 났다는 뜻이고, 그러면 눈금이 아니라 **벌이** 틀렸다.
+        if proven:
+            print("  ⚠⚠ **A/A 인데 「증명」이 %d개 났다.** 두 팔이 같은데 차가 나왔으면 "
+                  "눈금 문제가 아니라 **벌의 설계가 짝을 못 맞추고 있는 것**이다. "
+                  "이 눈금으로 정방향을 판정하지 마라" % proven)
 
     if args.out:
         # ★ **판정 불가가 전부면 파일을 안 쓴다** — 옛 파일이 방금 잰 것처럼 보이면 안 된다.

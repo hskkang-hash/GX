@@ -108,6 +108,33 @@ DECLARED_NOT_A_SETTING: dict[str, str] = {
         "㉢ **표 ① 이관 대상.** OPS-15 의 M — 동시에 잃은 대수가 이 수 이상이면 군집 두절. "
         "PRD 가 「기본 2」라고 적었다. N·M 은 함께 옮긴다 — 한쪽만 옮기면 규칙이 두 곳에 산다.",
 
+    # ── 2026-09-21 · 턴 AB · 차선 F — OPS-07 보존 선언(P-230)에서 태어난 셋 ──
+    #   ★ 이 셋은 **표 ① 이관 대상이 아니다.** 표 ①은 `set_threshold` 가 층(전역·기관·
+    #     카메라)에 값을 앉히고 `resolve_threshold` 가 그 값을 읽는 표다. 보존 일수가
+    #     실제로 집행되는 자리는 **그 표가 아니라** `AdminConfig::System >
+    #     security.audit_log_retention_days` 이고, 그것은 dj-core 가 읽는 자리라
+    #     우리가 못 고친다(§0.4). 표 ①에 올리면 **쓰기 경로가 닿지 않는 행**이 하나
+    #     늘고, 그 행을 고친 운영자는 아무것도 안 바뀌는 것을 보게 된다 — D-325 가
+    #     「아무도 안 읽는 행이 표를 못 읽게 만든다」고 막은 바로 그 자리다.
+    #   ★ 그러면 왜 매직 넘버가 아닌가 — **임자와 근거가 있기 때문이다.** 이 수들은
+    #     `backend/common/log_retention_policy.py` 에 임자(세종 P-230)·근거(`LEGAL_BASIS`
+    #     [추정])와 함께 **선언**돼 있고, `scripts/ops_retention_policy.py` 가 매 실행마다
+    #     **선언과 집행 자리의 수가 갈렸는지**를 찍는다. 등재는 면제가 아니라 선언이다.
+    "common/log_retention_policy.py::시간인자::RetentionClass(days=)::730#1":
+        "P-230 **감사 로그 보존 2년**의 선언. 임자는 세종(WO-GX-20260921-04 §5)이고 "
+        "근거 조문은 [추정](차선 S 가 대조한다). 집행 자리는 표 ①이 아니라 "
+        "`AdminConfig::System > security.audit_log_retention_days` 다 — "
+        "선언과 그 자리의 수가 갈리면 `scripts/ops_retention_policy.py` 가 빨갛다.",
+    "common/log_retention_policy.py::시간인자::RetentionClass(days=)::90#1":
+        "P-230 **수집기 로그 90일**의 선언. ⚠ 집행은 `json-file` 회전(`max-size 10m × "
+        "max-file 5`)이고 **크기 기반이라 날짜를 모른다** — 그래서 이 수는 "
+        "이 수집기에 대해 약속이 아니라 **목표**이고, 판정기가 그 칸을 **회색**으로 낸다.",
+    "common/log_retention_policy.py::이름대입::DJCORE_CODE_DEFAULT_DAYS::90#1":
+        "우리가 정한 수가 **아니다.** dj-core `purge_old_audit_logs` 에 박힌 코드 "
+        "기본값을 **비교하려고 적어 둔 인용**이다 — 아무도 정한 적이 없는 수라는 사실 "
+        "자체가 OPS-07 의 사유이고(OPS-07b 실측 2026-09-05), 그 수를 우리 표에 "
+        "올리면 우리가 정한 수가 된다.",
+
     # ── 2026-09-04 · 차선 C·D 병합에서 태어난 여덟 ─────────────────────────
     #   ★ 판정 기준은 이 파일 머리말 그대로다: **계약도 운영도 부르지 않는 값**만
     #     여기 적는다. 아래 여섯은 「부르는 쪽이 정하는 기본값」이고, 뒤의 둘은
@@ -638,5 +665,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(__file__, measured=("임계값 표가 **단위와 지금 값**을 말하는가 — **분모 %d종**"
+              "(`UNIT_KWARG` 가 못박은 단위 갈래 · 지금 셌다) × 표에 선 행"
+              "(돌 때 센다). 단위가 없는 수는 수가 아니다" % len(UNIT_KWARG)))
     sys.exit(main())

@@ -430,6 +430,10 @@ if __name__ == "__main__":
 
     gate_header(
         __file__,
+        measured=("대장이 **줄지 않았는가** — **분모 %d종**(`LEDGERS` 가 못박은 "
+                  "대장 · 지금 셌다) × (HEAD 쪽 항목 수 · 작업본 쪽 항목 수). "
+                  "래칫이다 — 초록은 「**줄지 않았다**」이지 「다 찼다」가 아니다"
+                  % len(LEDGERS)),
         target="대장 4종의 항목 수 — HEAD ↔ 작업본 (판정은 호스트에서 돈다)",
         as_="자격증명 없음 — git 과 작업본 파일을 읽는다",
         source=" + ".join(file_stamp(ROOT / rel) for _l, rel, _c, _u in LEDGERS)

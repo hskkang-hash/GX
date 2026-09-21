@@ -32,6 +32,7 @@ import { ownDenialPaths } from '@/features/session/permissionDenied';
 
 import {
   createReportRun,
+  downloadDsmFile,
   downloadReportFile,
   listReportRuns,
   type ReportKind,
@@ -71,6 +72,39 @@ const FORMS: { kind: ReportKind; label: string; what: string; needsEvent: boolea
   },
 ];
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 턴 AB (WO-04 §4-3) — **별지 제1호 「재난 상황보고」**
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ★ 왜 이 카드가 위 셋과 **다른 길**을 타나 — 재서 골랐다.
+ *
+ *   [실측 2026-09-21 · 턴 AB] 위 셋은 실행 기록(`DsmReportRun`)을 남기고 그 행에서
+ *   파일을 받는다. 그 표의 서식 이름은 **셋으로 잠겨 있고**
+ *   (`apps/dsm/monthly_report.KINDS`), 그 파일은 이 턴 U24 소유가 아니다.
+ *   넷째 이름을 거기 끼우려면 **남의 파일을 고쳐야 한다.**
+ *   그래서 이 서식은 **사건 하나를 지금 그려 내려주는 문**으로 낸다:
+ *       GET /api/dsm/events/{사건번호}/situation-report.docx
+ *   조립은 위 셋과 **같은 길**(`k4_report.build_context`)이라 값이 갈리지 않는다.
+ *
+ * ⚠ 그래서 이 카드는 **실행 기록에 줄을 안 남긴다.** 아래 표에 안 나타나는 것이
+ *   고장이 아니라는 사실을 카드가 **스스로 적는다** — 안 적으면 사람은 표를 보고
+ *   「안 만들어졌다」로 읽는다.
+ *
+ * ⚠ 읽기 전용 계정(U4 담당관)도 **이 문은 200 이다.** 만드는 것이 아니라 받는 것이고,
+ *   별지 1호를 결재에 올리는 사람이 바로 그 담당관이다.
+ */
+const SITUATION_LABEL = '상황보고서 (별지 제1호)';
+const SITUATION_WHAT =
+  '지자체·상급기관에 올리는 재난 상황보고 서식입니다 — 보고 구분 · 재난 종류 · '
+  + '발생 장소 · 피해 현황 · 조치 사항(시각 순) · 향후 계획 · 첨부.';
+const SITUATION_NOTE =
+  '이 서식은 실행 기록에 줄을 남기지 않습니다 — 누를 때마다 사건 기록에서 바로 '
+  + '만들어 내려줍니다. 아래 표에 안 보이는 것이 정상입니다.';
+/** 사건번호를 그대로 끼운다. 문 이름은 서버의 경로와 **같은 글자**다. */
+const situationDocxPath = (eventId: string | number) =>
+  `/api/dsm/events/${eventId}/situation-report.docx`;
+
 export default function Reports() {
   /** 사건 보고서가 물어보는 한 칸. 비어 있으면 그 카드의 단추는 눌리지 않는다. */
   const [eventId, setEventId] = useState<string>('');
@@ -89,6 +123,11 @@ export default function Reports() {
    * `busyFile` 은 실패한 순간 이미 비어 있다.
    */
   const [lastTry, setLastTry] = useState<{ runId: number; fmt: 'docx' | 'pdf' } | null>(null);
+
+  /** 별지 1호가 물어보는 두 칸 — 사건번호(필수)와 ⑧ 향후 계획(비어도 칸은 남는다). */
+  const [situationEventId, setSituationEventId] = useState<string>('');
+  const [plan, setPlan] = useState<string>('');
+  const [situationBusy, setSituationBusy] = useState(false);
 
   const runs = useDsmResource<ReportRunPage>(
     () => listReportRuns({ limit: 50 }),
@@ -119,6 +158,36 @@ export default function Reports() {
     },
     [eventId, note, runs],
   );
+
+  /**
+   * 별지 1호 내려받기. **받은 바이트를 같은 상태 칸에 적는다** — 위 셋과 같은 자리에
+   * 적어야 사람이 「방금 받은 것」을 한 군데서 읽는다. 0바이트는 성공이 아니다
+   * (그 판정은 `downloadDsmFile` 이 한다 — 여기서 다시 세지 않는다).
+   */
+  const downloadSituation = useCallback(async () => {
+    if (!situationEventId) return;
+    setSituationBusy(true);
+    setFileError(null);
+    setLastTry(null);
+    try {
+      const { bytes } = await downloadDsmFile(
+        situationDocxPath(situationEventId),
+        `재난상황보고-별지1호-${situationEventId}.docx`,
+        SITUATION_LABEL,
+        plan.trim() ? { plan: plan.trim() } : undefined,
+      );
+      setLastFile(
+        `${SITUATION_LABEL} · 사건 ${situationEventId} · DOCX · ${bytes.toLocaleString()}바이트`,
+      );
+    } catch (err) {
+      setFileError({
+        text: userFacingError('Reports.situation', err, '상황보고서를 받지 못했습니다.'),
+        status: (err as { status?: number })?.status ?? 0,
+      });
+    } finally {
+      setSituationBusy(false);
+    }
+  }, [situationEventId, plan]);
 
   const download = useCallback(async (runId: number, fmt: 'docx' | 'pdf') => {
     const key = `${runId}:${fmt}`;
@@ -151,6 +220,15 @@ export default function Reports() {
    * ⚠ **숨기는 것이 아니다.** 403 은 아래 상태 칸에 그대로 적히고 단추도 그대로다.
    *   여기서 정하는 것은 **누가 말하는가**뿐이다.
    */
+  /*
+   * ⚠ [턴 AB · U24] **별지 1호의 문은 여기 안 적었다.** 그 문은
+   *   `/api/dsm/events/{id}/situation-report.docx` 라 임자로 삼으려면 접두가
+   *   `/api/dsm/events/` 가 되는데(임자 판정은 `startsWith` 다), 그러면 이 화면이
+   *   떠 있는 동안 **사건 문 전부의 403 을 이 화면이 가져간다** — 다른 화면에서 난
+   *   거절이 조용해진다. 한 화면의 편의로 다른 화면을 벙어리로 만들지 않는다.
+   *   그래서 이 카드의 403 은 아래 상태 칸과 위 띠에 **둘 다** 뜬다. 같은 사실을
+   *   두 번 말하는 것은 값을 덮는 것보다 낫다(그 띠가 덮는 것은 실행 기록 쪽 단추다).
+   */
   useEffect(() => ownDenialPaths(['/api/dsm/reports/']), []);
 
   const rows = runs.data?.runs ?? [];
@@ -161,10 +239,10 @@ export default function Reports() {
         보고서
       </Title>
 
-      {/* ── 서식 3 카드 ──────────────────────────────────────────────────── */}
+      {/* ── 서식 4 카드 — 앞 셋은 실행 기록을 남기고, 별지 1호는 바로 내려준다 ── */}
       <Row gutter={[12, 12]}>
         {FORMS.map((f) => (
-          <Col key={f.kind} xs={24} md={8}>
+          <Col key={f.kind} xs={24} md={6}>
             <Card size="small" title={f.label} style={{ height: '100%' }}>
               <Paragraph type="secondary" style={{ fontSize: 12 }}>
                 {f.what}
@@ -189,6 +267,40 @@ export default function Reports() {
             </Card>
           </Col>
         ))}
+
+        {/* ★ [턴 AB · WO-04 §4-3 · U2#6] 별지 제1호 — **위 셋과 다른 길**(머리말). */}
+        <Col xs={24} md={6}>
+          <Card size="small" title={SITUATION_LABEL} style={{ height: '100%' }}>
+            <Paragraph type="secondary" style={{ fontSize: 12 }}>
+              {SITUATION_WHAT}
+            </Paragraph>
+            <Input
+              style={{ marginBottom: 8 }}
+              placeholder="사건번호"
+              value={situationEventId}
+              onChange={(e) => setSituationEventId(e.target.value.replace(/[^0-9]/g, ''))}
+              allowClear
+            />
+            <Input.TextArea
+              style={{ marginBottom: 8 }}
+              rows={2}
+              value={plan}
+              onChange={(e) => setPlan(e.target.value)}
+              placeholder="향후 계획 (비워도 종이의 칸은 남습니다)"
+            />
+            <Button
+              type="primary"
+              loading={situationBusy}
+              disabled={!situationEventId}
+              onClick={() => void downloadSituation()}
+            >
+              DOCX 내려받기
+            </Button>
+            <Paragraph type="secondary" style={{ fontSize: 11, marginTop: 8, marginBottom: 0 }}>
+              {SITUATION_NOTE}
+            </Paragraph>
+          </Card>
+        </Col>
       </Row>
 
       <Card size="small" title="특이사항 (자동본에 사람이 더하는 한 줄)">

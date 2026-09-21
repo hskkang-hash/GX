@@ -42,6 +42,25 @@ def _model(name: str):
 # 표 ① 임계값
 # ═══════════════════════════════════════════════════════════════════════════
 
+def _lookup_chain(spec, *, tenant_id: int | None,
+                  camera_id: int | None = None) -> list[dict]:
+    """**좁은 것이 이긴다** — camera → tenant → global. 그 순서를 적은 곳은 여기뿐이다.
+
+    표를 그리는 `list_thresholds` 와 값을 푸는 `resolve_threshold` 가 **같은 한 벌**을
+    쓴다(D-212). 두 벌이던 동안 표는 전역만 읽고 실행은 기관을 읽어서,
+    **저장은 됐는데 표가 안 바뀌는** 자리가 났다(턴 AA · U5#S3).
+
+    `applies_to` 보다 좁은 층은 **아예 후보에 없다** — 있지도 못할 행을 묻지 않는다.
+    """
+    lookups: list[dict] = []
+    if camera_id is not None and spec.applies_to == th.SCOPE_CAMERA:
+        lookups.append({"scope_level": th.SCOPE_CAMERA, "camera_id": camera_id})
+    if tenant_id is not None and spec.applies_to in (th.SCOPE_TENANT, th.SCOPE_CAMERA):
+        lookups.append({"scope_level": th.SCOPE_TENANT, "group_id": tenant_id})
+    lookups.append({"scope_level": th.SCOPE_GLOBAL})
+    return lookups
+
+
 def list_thresholds(*, scope: TenantScope) -> tuple[dict[str, Any], ...]:
     """표 ① 전체 — **정의 + 지금 유효한 값 + 그 값이 어디서 왔는가.**
 
@@ -51,10 +70,23 @@ def list_thresholds(*, scope: TenantScope) -> tuple[dict[str, Any], ...]:
     """
     actor = scope.require_actor()
     Setting = _model("ThresholdSetting")
+    # ★★ **기관 층이 전역 층을 이긴다** — 「지금 유효한 값」은 `resolve_threshold` 가
+    #   답하는 값과 **같아야** 한다. 여기가 전역 층만 읽던 동안, 제 기관 값을 바꾼
+    #   기관 관리자는 저장이 성공했는데도 표에서 **정의 기본값**을 봤다
+    #   (턴 AA 차선 A 실측 · U5#S3). 화면이 제 사용자에게 유효하지 않은 값을 그렸다.
+    #   ⚠ 카메라 층은 여기서 안 읽는다 — 이 표에는 카메라가 없다. 카메라 한 대의
+    #     값은 `resolve_threshold(camera_id=…)` 가 답하는 자리다(D-290).
+    my_group_id = getattr(get_user_group(actor), "pk", None)
     overrides = {
         (r.key, r.scope_level): r.value
         for r in Setting._base_manager.filter(scope_level=th.SCOPE_GLOBAL)
     }
+    if my_group_id is not None:
+        overrides.update({
+            (r.key, r.scope_level): r.value
+            for r in Setting._base_manager.filter(
+                scope_level=th.SCOPE_TENANT, group_id=my_group_id)
+        })
     # ★ 좁은 층의 건수는 **내 테넌트 것만** 센다 — 남의 테넌트가 몇 개를 덮었는지는
     #   숫자만으로도 알려 줄 이유가 없다. 전역 행은 group 이 없으므로 위에서 따로 읽는다.
     counts: dict[tuple[str, str], int] = {}
@@ -67,7 +99,14 @@ def list_thresholds(*, scope: TenantScope) -> tuple[dict[str, Any], ...]:
         counts[(key, level)] = counts.get((key, level), 0) + 1
     rows = []
     for key, spec in th.THRESHOLDS.items():
-        override = overrides.get((key, th.SCOPE_GLOBAL))
+        # ★ 순서를 여기서 새로 짜지 않는다 — `resolve_threshold` 와 **같은 한 벌**을
+        #   부른다(D-212). 판정식이 두 벌이면 표와 실행이 갈리고, 갈린 것은 안 보인다.
+        override, source_level = None, None
+        for where in _lookup_chain(spec, tenant_id=my_group_id):
+            found = overrides.get((key, where["scope_level"]))
+            if found is not None:
+                override, source_level = found, where["scope_level"]
+                break
         rows.append({
             "key": key,
             "title": spec.title,
@@ -76,6 +115,9 @@ def list_thresholds(*, scope: TenantScope) -> tuple[dict[str, Any], ...]:
             "value": float(override) if override is not None else spec.default,
             "source": "override" if override is not None else (
                 "default" if spec.default is not None else "unset"),
+            # ★ **어느 층이 이겼는가.** `source` 만으로는 「전역이 바뀐 것」과
+            #   「내 기관이 바뀐 것」이 한 칸에 뭉친다 — 그 둘은 고치는 사람이 다르다.
+            "source_level": source_level,
             "applies_to": spec.applies_to,
             "contract_fixed": spec.contract_fixed,
             "clause": spec.clause,
@@ -110,14 +152,7 @@ def resolve_threshold(key: str, *, scope: TenantScope,
     tenant_id = (getattr(camera, "group_id", None)
                  or getattr(get_user_group(scope.actor), "pk", None))
 
-    lookups: list[dict] = []
-    if camera_id is not None and spec.applies_to == th.SCOPE_CAMERA:
-        lookups.append({"scope_level": th.SCOPE_CAMERA, "camera_id": camera_id})
-    if tenant_id is not None and spec.applies_to in (th.SCOPE_TENANT, th.SCOPE_CAMERA):
-        lookups.append({"scope_level": th.SCOPE_TENANT, "group_id": tenant_id})
-    lookups.append({"scope_level": th.SCOPE_GLOBAL})
-
-    for where in lookups:
+    for where in _lookup_chain(spec, tenant_id=tenant_id, camera_id=camera_id):
         row = Setting._base_manager.filter(key=key, **where).first()
         if row is not None:
             return float(row.value)

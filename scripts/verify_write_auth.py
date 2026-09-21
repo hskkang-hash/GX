@@ -634,8 +634,19 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header, file_stamp  # P-107 — TARGET/AS/SOURCE
+    from _gate_header import count_json as _cj
+    _n_surf = _cj(SURFACE, "buckets")
+    _n_inv = _cj(INVENTORY, "routes")
     gate_header(
         __file__,
+        measured=("**역할 0개 계정이 쓰는 자리**가 있는가 — **분모 %s건**"
+                  "(커밋된 라우트 인벤토리 전수 · 지금 셌다)에서 뽑은 쓰기 표면 "
+                  "· 통 %s · 쓰기 메서드 %d종 · 잠근 자리 %d. ★ 분모는 "
+                  "**손 목록 30 이 아니다** — 손 목록이었을 때 347자리가 한 번도 "
+                  "안 불렸다(출생 표본 ②)"
+                  % (_n_inv if _n_inv else "못 셌다",
+                     _n_surf if _n_surf else "못 셌다",
+                     len(WRITE_METHODS), len(RATCHETED))),
         target="쓰기 표면 " + str(SURFACE.relative_to(ROOT)).replace("\\", "/") + " — 살아 있는 라우터 705행에서 뽑은 377행(손 목록 30 아님)",
         as_="이 게이트 자신은 자격 없이 증거를 읽는다. 표면을 **때린** 쪽은 `probe_write_surface.py` 이고 익명·비인가 두 결로 때렸다 (탐침 모드 " + REQUIRED_PROBE_MODE + ")",
         source=file_stamp(SURFACE) + " + " + file_stamp(BASELINE) + " + " + file_stamp(INVENTORY),

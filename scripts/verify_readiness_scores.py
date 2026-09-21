@@ -908,6 +908,58 @@ def self_test(verbose: bool = True) -> int:
     ok("★ 음성 · 행이 여덟이 아니면 잡는다 — 분모가 흔들리면 아래 수는 무의미하다",
        "분모" in parse_aa_cr8("| CR1 | 가격 | 0 | e |")[1])
 
+    # ── ★★ [턴 AB · P-232] CR 표가 **두 벌**이 된다 — 갈리면 빨강 ──────────
+    #    세종 §4-1(정본)과 N 전사가 갈리면 그때 낸 수는 둘 중 어느 쪽의 수도 아니다.
+    _cr_wo = _cr_doc.replace("| CR6 | SLA v1.0 | 0.5 |", "| CR6 | SLA v1.0 | 0.5 |")
+    _cr_diff = _cr_doc.replace("| CR1 | 가격 숫자 4 | 0 |",
+                               "| CR1 | 가격 숫자 4 | 1 |")
+    _r, _w, _lab, _n, _rd = aa_cr8_chain([("정본", _cr_wo), ("전사", _cr_doc)])
+    ok("★ 양성 · 두 벌이 **같으면** 초록이고 그 사실을 적는다",
+       len(_r) == 8 and not _rd and any("대조했다" in x for x in _n))
+    _r2, _w2, _lab2, _n2, _rd2 = aa_cr8_chain([("정본", _cr_wo), ("전사", _cr_diff)])
+    ok("★★ 음성 · 두 벌이 **갈리면 빨강**이다 — 조용히 첫 것을 고르지 않는다",
+       any("갈렸다" in x for x in _rd2))
+    ok("★ 그때도 **정본(첫 출처)의 수**를 쓴다 — 전사가 원본을 못 이긴다",
+       _r2[0]["value"] == 0.0 and _lab2 == "정본")
+    _r3, _w3, _lab3, _n3, _rd3 = aa_cr8_chain([("옛 자리", "8칸 중 2.2")])
+    ok("★ 출생 표본 · 표가 **어디에도 없으면** 회색이고 사유에 「어디에도 없다」가 있다",
+       _r3 == [] and "어디에도 없다" in _w3)
+    ok("★ 수를 **어디서 읽었는지** 말한다 (출처 없는 수는 인용이다)", _lab == "정본")
+    ok("★ 음성 · 행이 여덟이 아닌 출처는 **빨강으로** 잡는다(조용히 건너뛰지 않는다)",
+       any("행이" in x for x in
+           aa_cr8_chain([("깨진 표", "| CR1 | 가격 | 0 | e |")])[4]))
+
+    # ── ★★ [턴 AB · 실측] **표가 제 합을 적는다. 그 합이 행과 갈렸다** ────────
+    #    WO-04 §4-1 은 여덟 행 아래 「합 **2.0/8 = 25 %**」를 적었는데 여덟 행을
+    #    더하면 **1.5** 다. 읽는 사람은 굵게 적힌 합을 읽고, 그 합은 다시 셀 수
+    #    없는 수다 — **행이 정본이다.** 이 갈래가 없으면 25 가 조용히 산다.
+    ok("★ 양성 · 표가 적은 합을 **읽는다**",
+       parse_aa_cr8_sum("| **합** | | **2.0/8 = 25 %** | 격자 안 |") == 2.0)
+    ok("★ 음성 · 합 줄이 없으면 **None** 이다(0 으로 세지 않는다)",
+       parse_aa_cr8_sum("| CR1 | 가격 | 0 | e |") is None)
+    _cr_lie = _cr_doc + "\n| **합** | | **2.0/8 = 25 %** | 격자 안 |"
+    ok("★★ 음성 · 합 2.0 인데 행의 합이 0.5 면 **빨강**이다 — 「행이 정본이다」",
+       any("표의 합이 제 행과 갈렸다" in x
+           for x in aa_cr8_chain([("정본", _cr_lie)])[4]))
+    # ★★ [턴 AB] **같은 수를 다르게 적은 것은 갈림이 아니다** — 여덟 칸이 전부
+    #    빨강으로 났던 자리다(WO 는 `0` · N 은 `**없다** — 값 0`).
+    _cr_n = _cr_doc.replace("| 0 |", "| **없다** — 값 0 |").replace(
+        "| 0.5 |", "| **반** — 값 0.5 |")
+    _rn, _wn, _labn, _nn, _rdn = aa_cr8_chain([("정본", _cr_doc), ("전사", _cr_n)])
+    ok("★★ 음성 · **같은 수를 다르게 적은 것**을 갈림으로 찍지 않는다 "
+       "(글자가 아니라 값을 댄다)", not _rdn and len(_rn) == 8)
+    ok("★ 그리고 말로 적은 칸(「없다」·「반」)에서도 **같은 값**을 읽는다",
+       [r["value"] for r in _rn]
+       == [r["value"] for r in aa_cr8_chain([("전사", _cr_n)])[0]])
+    # ★★ [턴 AB] 한 문서에 표가 **둘** 있으면 여덟 행짜리 첫 표를 쓴다.
+    _two = _cr_doc + "\n\n### 대조\n\n" + _cr_n
+    ok("★★ 음성 · 한 문서에 CR 표가 **둘**이어도 16행으로 읽지 않는다 "
+       "(N 전사본이 §4 에 대조표를 한 번 더 적는다)",
+       len(parse_aa_cr8(_two)[0]) == 8 and not parse_aa_cr8(_two)[1])
+    _cr_true = _cr_doc + "\n| **합** | | **0.5/8 = 6.25 %** | 격자 안 |"
+    ok("★ 양성 · 합이 행과 **맞으면** 빨강이 아니다(없는 갈림을 만들지 않는다)",
+       not aa_cr8_chain([("정본", _cr_true)])[4])
+
     # ── ★ 대장 부류 줄을 **게이트 출력에서** 읽는다 (파일을 다시 읽지 않는다) ──
     _ga = ("[GA] [입력] 「초록」 부류 154절 — closed 80 · ratchet 3 · rule_only 3 · "
            "unmeasurable 64 · gate_only 4")
@@ -955,6 +1007,23 @@ def self_test(verbose: bool = True) -> int:
        abs(_rep_nil["fc"]["measured_pct"] - 38.3) < 0.2)
     ok("★ 그리고 그 사실이 **사유로 적힌다**(조용히 회색이 되지 않는다)",
        any("한 행도 판정하지 않았다" in g for g in _rep_nil["grey"]))
+    # ★★ [턴 AB] **`--static` 의 거짓 0** — 게이트를 안 부르면 영역 ① 도달이
+    #    꼬리에 `0/39` 로 찍힌다. 그 0 을 칸에 적으면 FC 가 22 점 떨어진다.
+    _ga_static = chr(10).join([
+        "[GA] ★★ 이 실행은 **정적 갈래(--static)** 다 — 게이트를 **한 벌도 안 불렀다**",
+        "  1  기능 완결성                 가중 20%  절 0/39 =   0%  →   0.00   "
+        "(래칫 0 · 규칙만 0 · 못 잼 39 · 게이트만 0)",
+        _ga])
+    _rep_st = aa_report(ga_out=_ga_static, click=None, click_why="x",
+                        onboard_text="합계 **24.5 / 48 = 51.0%**",
+                        review_text=_cr_doc)
+    ok("★★ 음성 · 정적 갈래의 `0/39` 를 **0 으로 적지 않는다** — 회색이다",
+       not _rep_st["fc"]["cells"][2]["measured"])
+    ok("★ 그리고 그 사실이 **사유로 적힌다**(조용히 회색이 되지 않는다)",
+       any("정적 갈래" in g for g in _rep_st["grey"]))
+    ok("★ 양성 · 게이트를 부른 실행에서는 그 칸이 **선다**(없는 회색을 만들지 않는다)",
+       _rep["fc"]["cells"][2]["measured"])
+
     ok("★ 양성 · FC = (66.7 + 51.0 + 25.6) ÷ 3 = 47.8 — 세종의 수와 같다",
        abs(_rep["fc"]["measured_pct"] - 47.8) < 0.1)
     ok("★ 음성 · PR 은 **네 칸 중 하나만** 쟀다 — 뒤 세 칸은 증거가 0건이다",
@@ -1282,10 +1351,23 @@ def _stamp(path) -> str:
 # 수집
 # ═══════════════════════════════════════════════════════════════════════════
 
-def run_ga() -> tuple[str, int | None]:
+#: ★★ [턴 AB · 차선 N 실측 · 조율자 확정] **로그인 창이 없는 차선은 `--static`.**
+#:   인자 없이 부르면 `verify_ga_readiness` 가 자식 게이트를 부르고, 그중
+#:   `verify_contract_route_reach.py` 가 **로그인한다** — 남의 창을 가져간다(D-510).
+#:   `--no-gates` 로는 **못 막는다**(절의 게이트만 끄고 영역 ①은 그대로 부른다).
+#:   로그인을 0 으로 만드는 것은 **`--static` 뿐**이다.
+#:   ⚠ 그 대가: `--static` 은 **게이트 색을 안 본다.** 이 산출기가 쓰는 것은
+#:     **부류 셈·절 수·영역 꼬리**뿐이고 그 셋은 대장이 내는 수라 안 달라진다.
+#:     달라지는 것은 「대장 상태 ↔ 게이트 색」 대조인데, 그 대조는 **조율자가
+#:     병합 뒤 전량으로** 한다(창을 가진 사람의 자리다).
+GA_STATIC_ARGS = ("--static",)
+
+
+def run_ga(args: tuple = GA_STATIC_ARGS) -> tuple[str, int | None]:
     if not GA_SCRIPT.is_file():
         return "", None
-    p = subprocess.run([sys.executable, str(GA_SCRIPT)], capture_output=True, timeout=900)
+    p = subprocess.run([sys.executable, str(GA_SCRIPT)] + list(args),
+                       capture_output=True, timeout=900)
     out = (p.stdout or b"").decode("utf-8", "replace") + (p.stderr or b"").decode("utf-8", "replace")
     return out, p.returncode
 
@@ -1327,6 +1409,20 @@ AA_REVIEW_DOC = (ROOT / "docs" / "design"
                  / "GX-REVIEW_실사용자_상용점검_v2.0_20260921.md")
 AA_WO_DOC = (ROOT / "docs" / "workorders"
              / "WO-GX-20260921-03_상용전환_실사용자기준.md")
+
+#: ★★ [턴 AB · P-232] **CR 8칸 표의 출처가 셋이 됐다.** 턴 AA 에는 표가 아예 없어서
+#:   CR 이 회색 8칸이었다. 이제 세종이 WO-04 §4-1 에 여덟 줄을 적었고(합 2.0/8),
+#:   차선 N 이 그것을 `docs/design/GX-CR_8칸_v1.0_20260921.md` 로 옮겨 적는다.
+#:
+#:   ⚠ **그래서 표가 두 벌이 될 수 있다.** 두 벌이 갈리면 그때 낸 수는 둘 중 어느
+#:     쪽의 수도 아니다(D-369 · P-216 이 막으려던 그 모양). 이 산출기는 **셋을 다
+#:     열고 대조한다** — 갈리면 **빨강**이고, 조용히 한쪽을 고르지 않는다.
+#:
+#:   ★ 순서는 「가까운 것이 먼저」가 아니라 **「정본이 먼저」**다. P-232 는 §4-1 을
+#:     정본이라 못박았고, N 의 파일은 **그 정본의 전사**다. 전사가 원본과 갈리면
+#:     원본이 이긴다 — 그러나 **갈렸다는 사실을 먼저 소리 내어 적는다.**
+AA_CR8_DOC = ROOT / "docs" / "design" / "GX-CR_8칸_v1.0_20260921.md"
+AA_WO04_GLOB = "WO-GX-20260921-04_*.md"
 
 #: ★ P-216 — **점수를 `kind` 로 센다** (세종 · 턴 AA).
 #:   세 턴 동안 「67.x」라 부르던 수는 `status: 구현` 을 센 수였다. 「구현」은
@@ -1506,39 +1602,227 @@ AA_CR8_NAMES = ("가격 숫자 4", "계량 씨앗 0", "실카메라 ≥1", "공�
                 "웹푸시 도달", "SLA v1.0", "채널 계약서", "계약 11조")
 
 
-def parse_aa_cr8(text: str):
-    """`GX-REVIEW v2.0` 에서 **CR 8칸 표**를 읽는다 — `| CR1 | 가격 숫자 4 | 0 | … |`.
+#: CR8 한 칸의 값을 **말로** 적은 모양. 「반」만 0.5 이고 나머지는 끝났거나 아니다.
+#: ⚠ `CR8_VALUE`(이 파일 위쪽 · §1 파서의 것)와 **같은 눈금**이다 — 두 벌을 두지
+#:   않으려고 그 표를 그대로 가져다 쓴다(D-369).
+_CR8_WORD = re.compile(r"\*{0,2}(없다|아니다|반|있다|끝났다|됐다)\*{0,2}")
+#: `… — 값 0` 처럼 **수를 따로 적은** 칸. 말보다 이 수가 먼저다(더 좁다).
+_CR8_NUM_IN_CELL = re.compile(r"값\s*(0\.5|0|1(?:\.0)?)\b")
+#: 칸 하나가 통째로 수인 모양 — WO §4-1 의 `| CR1 | 가격 숫자 4 | 0 | 근거 |`.
+_CR8_BARE_NUM = re.compile(r"^(0|0\.5|1|1\.0)$")
 
-    ★ 지금 저장소에 이 표는 **없다.** §0 의 CR 칸은 여덟을 **문장으로** 늘어놓고
-      「8칸 중 2.2」라는 합만 적는다. 합만 있고 행이 없는 수는 다시 셀 수 없고,
-      다시 셀 수 없는 수는 **인용**이지 실측이 아니다(P-93).
-      그래서 여기서 회색이 나오는 것이 **옳다** — 그 회색이 표를 불러온다.
-      (출생 표본 ②가 「셈법 문서가 사라지면 다시 회색」이라고 적은 그 자리다.)
+
+def _cr8_cell_value(cells: list) -> tuple:
+    """행의 칸들에서 **값 하나**를 뽑는다 → `(값 또는 None, 읽은 글자)`.
+
+    ★ 순서가 곧 규칙이다. 넓은 그물을 먼저 던지면 이름 칸의 「1」을 값으로 읽는다:
+      ① `값 N` 이라고 **수를 따로 적은** 칸      (가장 좁다)
+      ② 칸이 **통째로** 0 · 0.5 · 1 인 것
+      ③ 「없다 · 반 · 있다」처럼 **말로** 적은 칸
+    못 읽으면 `None` — **0 이 아니다.** 격자 밖의 값은 회색이고, 회색은 0 이 아니다.
     """
-    rows = []
+    for c in cells:
+        m = _CR8_NUM_IN_CELL.search(c)
+        if m:
+            return float(m.group(1)), c
+    for c in cells:
+        if _CR8_BARE_NUM.match(c):
+            return float(c), c
+    for c in cells:
+        m = _CR8_WORD.fullmatch(c.strip())
+        if m:
+            return CR8_VALUE.get(m.group(1)), c
+    return None, (cells[0] if cells else "")
+
+
+def parse_aa_cr8(text: str):
+    """CR 8칸 표를 읽는다 — **두 가지 모양을 다 읽는다.**
+
+    ① WO-04 §4-1 (세종 정본)   `| CR1 | 가격 숫자 4 | 0 | 근거 |`
+    ② N 전사 `GX-CR_8칸_v1.0`  `| ① | CR1 가격 숫자 4 | 술어 | **없다** — 값 0 | 근거 |`
+
+    ★★ [실측 2026-09-21 · 턴 AB] 처음에는 ①만 읽었다. 그런데 N 이 옮겨 적은 표는
+      **CR 표식이 첫 칸이 아니라 둘째 칸**에 있고 값은 「**없다** — 값 0」처럼 말과
+      수가 같이 적혀 있다. ①만 읽는 그물로는 N 의 파일에서 **0행**이 나오고,
+      그 0 은 「표가 없다」로 읽힌다 — **「없다」가 아니라 「못 찾았다」**다.
+      이 파일이 오늘 두 번째로 밟은 자리다(`verify_spec_coverage` 의 `DSM-01`).
+    ★ 그래서 **표식을 앞 두 칸에서 찾고**, 값은 `_cr8_cell_value` 가 좁은 그물부터
+      던져 뽑는다. 둘 다 읽히면 **두 벌을 대조**할 수 있다(`aa_cr8_chain`).
+
+    ⚠ 표가 없으면 회색이 나오는 것이 **옳다** — 그 회색이 표를 불러온다
+      (턴 AA 에 그랬고, 그래서 세종이 §4-1 에 여덟 줄을 적었다).
+    """
+    #: ★★ [실측 2026-09-21 · 턴 AB] **한 문서에 CR 표가 둘 있을 수 있다.**
+    #:   N 의 전사본은 §1 에 여덟 줄을 적고 §4 에 **대조표**로 여덟 줄을 한 번 더
+    #:   적는다. 문서 전체를 한 줄기로 훑으면 **16행**이 나오고, 이 도구는 그것을
+    #:   「행이 여덟이 아니다」라는 **거짓 빨강**으로 냈다 — 표는 멀쩡한데.
+    #:   ⇒ **표 단위로 끊어서** 모으고, **여덟 행짜리 첫 표**를 쓴다.
+    #:     (표가 아닌 줄이 하나라도 끼면 다른 표다 — 마크다운의 성질 그대로다.)
+    tables: list[list] = [[]]
     for line in text.splitlines():
         s = line.strip()
         if not s.startswith("|"):
+            if tables[-1]:
+                tables.append([])
             continue
+        tables[-1].append(s)
+    blocks = [r for r in (_parse_aa_cr8_rows(tbl) for tbl in tables) if r]
+    if not blocks:
+        return [], ("CR 8칸 표가 이 본문에 **없다** — 합만 있는 수는 다시 셀 수 없다. "
+                    "`| CR1 | 가격 숫자 4 | 0 | 근거 |` 여덟 줄을 적으면 "
+                    "이 산출기가 센다")
+    for rows in blocks:
+        if len(rows) == 8:
+            return rows, ""
+    rows = max(blocks, key=len)
+    return rows, ("CR 8칸 표의 행이 %d 이다 — 분모가 흔들리면 아래 수는 무의미하다"
+                  % len(rows))
+
+
+def _parse_aa_cr8_rows(lines: list) -> list:
+    """표 한 덩이에서 `CR1`~`CR8` 행만 뽑는다 (두 모양 다)."""
+    rows = []
+    for s in lines:
         c = _cells(s)
         if len(c) < 3:
             continue
-        m = re.match(r"^CR\s*([1-8])$", _plain(c[0]))
-        if not m:
+        no = None
+        idx = 0
+        for k in (0, 1):
+            if k < len(c):
+                m = re.match(r"^CR\s*([1-8])\b", _plain(c[k]))
+                if m:
+                    no, idx = int(m.group(1)), k
+                    break
+        if no is None:
             continue
-        raw = _plain(c[2])
-        v = float(raw) if re.match(r"^(0|0\.5|1|1\.0)$", raw) else None
-        rows.append({"no": int(m.group(1)), "name": _plain(c[1]),
-                     "raw": raw, "value": v})
-    if not rows:
-        return [], ("CR 8칸 표가 `%s` 에 **없다** — §0 은 합(「8칸 중 2.2」)만 적고 "
-                    "행을 안 적는다. 합만 있는 수는 다시 셀 수 없다. "
-                    "`| CR1 | 가격 숫자 4 | 0 | 근거 |` 여덟 줄을 적으면 "
-                    "이 산출기가 센다" % AA_REVIEW_DOC.name)
-    if len(rows) != 8:
-        return rows, ("CR 8칸 표의 행이 %d 이다 — 분모가 흔들리면 아래 수는 무의미하다"
-                      % len(rows))
-    return rows, ""
+        #: 이름 — 표식 칸에 이름이 붙어 있으면(`CR1 가격 숫자 4`) 그것을 떼어 쓰고,
+        #: 아니면 다음 칸이 이름이다(`| CR1 | 가격 숫자 4 | …`).
+        head = _plain(c[idx])
+        tail = re.sub(r"^CR\s*[1-8]\s*", "", head).strip()
+        name = tail or (_plain(c[idx + 1]) if idx + 1 < len(c) else "")
+        #: 값은 **표식 칸과 이름 칸을 뺀 나머지**에서 찾는다 — 이름 안의 숫자를
+        #: 값으로 읽지 않게(「CR1 가격 숫자 **4**」의 4 가 그 자리다).
+        rest = [_plain(x) for j, x in enumerate(c)
+                if j > idx and not (tail == "" and j == idx + 1)]
+        val, raw = _cr8_cell_value(rest)
+        if val is not None and val not in AA_GRID:
+            val = None
+        rows.append({"no": no, "name": name, "raw": raw, "value": val})
+    return rows
+
+
+#: ★★ [턴 AB · 실측] CR 8칸 표는 여덟 행 아래에 **제 합을 스스로 적는다**:
+#:     `| **합** | | **2.0/8 = 25 %** | 0.5 배수 격자 안 |`
+#:   그 합이 **여덟 행을 더한 수와 갈릴 수 있다.** 갈리면 읽는 사람은 **합을 읽는다**
+#:   (표 아래 굵은 글씨가 더 눈에 띈다) — 그리고 그 수는 다시 셀 수 없는 수다.
+#:   행이 정본이다. 합은 **행에서 나와야** 하고, 안 나오면 빨강이다.
+_CR8_SUM = re.compile(r"\|\s*\*{0,2}합\*{0,2}\s*\|[^|]*\|\s*\*{0,2}"
+                      r"([\d.]+)\s*/\s*8")
+
+
+def parse_aa_cr8_sum(text: str) -> float | None:
+    """표가 **스스로 적은 합**을 집는다 — 행을 더한 수와 대조하려고."""
+    m = _CR8_SUM.search(text or "")
+    return float(m.group(1)) if m else None
+
+
+def aa_cr8_sources() -> list[tuple[str, str]]:
+    """CR 8칸 표를 **가진 파일들**을 연다 — 정본(WO §4-1) → 전사(N) → 옛 자리 순.
+
+    ★ 손으로 2.0 을 적지 않는다. 이 함수가 하는 일은 **파일을 여는 것**뿐이고,
+      값은 `parse_aa_cr8` 이 그 본문에서 읽는다. 파일이 하나도 없으면 빈 목록이고,
+      그때 CR 은 **회색 8칸**이다 — 그 회색이 표를 불러온다(턴 AA 가 그랬다).
+    """
+    out: list[tuple[str, str]] = []
+    wo_dir = ROOT / "docs" / "workorders"
+    for p in sorted(wo_dir.glob(AA_WO04_GLOB)) if wo_dir.is_dir() else []:
+        out.append(("WO-04 §4-1(세종 정본 · P-232) `%s`" % p.name,
+                    p.read_text(encoding="utf-8", errors="replace")))
+    if AA_CR8_DOC.is_file():
+        out.append(("N 전사 `%s`" % AA_CR8_DOC.name,
+                    AA_CR8_DOC.read_text(encoding="utf-8", errors="replace")))
+    if AA_REVIEW_DOC.is_file():
+        out.append(("옛 자리 `%s`" % AA_REVIEW_DOC.name,
+                    AA_REVIEW_DOC.read_text(encoding="utf-8", errors="replace")))
+    return out
+
+
+def aa_cr8_chain(sources: list[tuple[str, str]]):
+    """여러 출처의 CR 8칸 표를 **다 읽고 대조한다.**
+
+    돌려주는 것: `(rows, why, label, notes, reds)`
+      · `rows`  — 정본(첫 출처 중 표를 가진 것)의 여덟 행. 없으면 `[]`
+      · `why`   — 회색/빨강 사유 한 줄 (없으면 "")
+      · `label` — 그 수를 **어디서 읽었는지**. 판정문이 이 이름을 그대로 낸다
+      · `notes` — 소리 내어 적을 것(전사가 아직 없다 등). 회색이 아니다
+      · `reds`  — 표가 둘 이상인데 **값이 갈렸다**. 빨강이다
+
+    ★ 「N 의 파일이 없으면 회색」이 아니라 **「표가 어디에도 없으면 회색」**이다.
+      기계가 저장소의 파일에서 읽은 수는 손으로 적은 수가 아니다 — P-234 가 막는
+      것은 「손으로 적기」이지 「가까운 파일에서 읽기」가 아니다. 다만 전사가 아직
+      없다는 **사실은 적는다**(안 적으면 다음 사람이 「N 이 옮겼다」로 읽는다).
+    """
+    notes: list[str] = []
+    reds: list[str] = []
+    found: list[tuple[str, list, str]] = []
+    for label, text in sources:
+        rows, why = parse_aa_cr8(text)
+        if rows and len(rows) == 8:
+            found.append((label, rows, text))
+        elif rows:
+            #: ★ 행이 여덟이 아닌 표는 **쓰지 않는다.** 분모가 흔들리는 표에서 낸 수는
+            #:   수가 아니다 — 그러나 **조용히 건너뛰지도 않는다**(빨강으로 말한다).
+            reds.append("CR: %s (%s)" % (why, label))
+    if not AA_CR8_DOC.is_file():
+        notes.append("CR: N 전사 `%s` 가 **아직 없다** — 지금 수는 WO-04 §4-1 "
+                     "(세종 정본 · P-232)에서 **기계가 읽은** 것이다. N 이 옮겨 "
+                     "적으면 두 벌이 되고, 그때부터 이 산출기가 **둘을 대조**한다"
+                     % AA_CR8_DOC.name)
+    if not found:
+        return [], ("CR 8칸 표가 **어디에도 없다** — 연 파일 %d개(%s). 합만 있는 수는 "
+                    "다시 셀 수 없다. `| CR1 | 가격 숫자 4 | 0 | 근거 |` 여덟 줄을 "
+                    "적으면 이 산출기가 센다"
+                    % (len(sources), " · ".join(l for l, _ in sources) or "없음")
+                    ), "", notes, reds
+    label, rows, src_text = found[0]
+    #: ★★ **표가 제 합을 적었으면 행과 대 본다.** 갈리면 빨강 — 읽는 사람은 굵게
+    #:   적힌 합을 읽고, 그 합은 다시 셀 수 없는 수다. **행이 정본이다.**
+    said = parse_aa_cr8_sum(src_text)
+    if said is not None:
+        got = sum(r["value"] for r in rows if r["value"] is not None)
+        n_ok = sum(1 for r in rows if r["value"] is not None)
+        if n_ok == 8 and abs(said - got) > 1e-9:
+            reds.append("★★ **표의 합이 제 행과 갈렸다** — %s 가 적은 합 **%.1f/8**, "
+                        "여덟 행을 더하면 **%.1f/8**(%+.1f). **행이 정본이다** — "
+                        "합은 행에서 나와야 하고, 안 나오는 합은 다시 셀 수 없는 "
+                        "수다(P-93). CR 은 %.1f%% 가 아니라 **%.1f%%** 다"
+                        % (label, said, got, got - said,
+                           said / 8 * 100.0, got / 8 * 100.0))
+    #: ★ 둘 이상이면 **대조한다.** 갈리면 빨강 — 조용히 첫 것을 고르지 않는다.
+    for other_label, other, _ in found[1:]:
+        #: ⚠⚠ [실측 2026-09-21 · 턴 AB] 처음에는 **글자(`raw`)를 댔다.** 그랬더니
+        #:   여덟 칸이 **전부 빨강**으로 났다 — WO 는 `0` 이라 적고 N 은
+        #:   `**없다** — 값 0` 이라 적었을 뿐 **두 수는 같았다.**
+        #:   ★ **갈렸다는 것은 값이 다르다는 뜻이지 글자가 다르다는 뜻이 아니다.**
+        #:     같은 수를 다르게 적은 것을 빨강으로 내면, 그 빨강은 사람이 끄게 된다
+        #:     (꺼진 게이트는 없는 게이트보다 나쁘다 · D-311).
+        for a, b in zip(rows, other):
+            if a["value"] != b["value"]:
+                reds.append("★ **CR 표가 갈렸다** — CR%d(%s): 정본 %s=%s · %s=%s "
+                            "(글자로는 %r ↔ %r). 같은 칸에서 두 수가 난다 (D-369)"
+                            % (a["no"], a["name"], label, _num(a["value"]),
+                               other_label, _num(b["value"]),
+                               a["raw"][:24], b["raw"][:24]))
+        if len(rows) != len(other):
+            reds.append("★ **CR 표의 행 수가 갈렸다** — %s %d행 ↔ %s %d행"
+                        % (label, len(rows), other_label, len(other)))
+    #: ★ 「합이 갈렸다」는 표 **안**의 일이고 「두 벌이 갈렸다」는 표 **사이**의 일이다.
+    #:   둘을 한 깃발로 세면, 합이 어긋난 날 「두 벌은 같다」는 초록이 조용히 사라진다.
+    if len(found) > 1 and not any("두 수가 난다" in r for r in reds):
+        notes.append("CR: 표 %d벌(%s)을 **다 읽고 대조했다 — 같다**. 두 벌을 두지 "
+                     "않는다(D-369)" % (len(found), " · ".join(l for l, _, _t in found)))
+    return rows, "", label, notes, reds
 
 
 def parse_aa_stated(text: str) -> dict:
@@ -1640,6 +1924,9 @@ def aa_report(ga_out: str = None, click=None, click_why: str = "",
     note: list = []
 
     live = ga_out is None
+    #: ★ 「인자로 받았는가」를 **덮기 전에** 기억한다 — 아래 CR 출처 사슬이 이것으로
+    #:   갈린다(시험 본문이면 그것만 · 아니면 저장소의 파일 셋을 연다).
+    cr_source_text_given = review_text is not None
     if live:
         ga_out, _rc = run_ga()
     if onboard_text is None:
@@ -1708,8 +1995,24 @@ def aa_report(ga_out: str = None, click=None, click_why: str = "",
         fc_cells.append(cell("온보딩 48행 점수", 1 / 3, why="문서를 못 읽었다"))
 
     #: ③ 계약 39절 도달 — 대장 영역 ①이 그대로 인용하는 그 수다(D-345).
+    #: ★★ [실측 2026-09-21 · 턴 AB] **`--static` 이 이 칸에 거짓 0 을 만든다.**
+    #:   로그인 창이 없는 차선은 `verify_ga_readiness` 를 `--static` 으로 부른다
+    #:   (그래야 로그인이 0 이다 · D-510). 그런데 `--static` 은 **게이트를 한 벌도
+    #:   안 부르고**, 영역 ①의 도달 수는 **게이트가 세는 수**다. 그래서 꼬리에
+    #:   `절 0/39` 가 찍히고, 이 도구가 첫 판에서 그 **0 을 그대로 칸에 적었다** —
+    #:   FC 가 52.0 → 30.2 로 떨어졌다. 그것은 「우리가 못 한다」가 아니라
+    #:   **「우리가 안 쟀다」**다(이 파일 FC① 의 그 자리가 한 번 더 나왔다).
+    #:   ⇒ 정적 갈래에서는 이 칸을 **회색**으로 둔다. 0 이 아니다.
+    static_run = "정적 갈래" in (ga_out or "") or "--static" in (ga_out or "")
     a1 = [a for a in areas if a["no"] == 1]
-    if a1:
+    if a1 and static_run and not a1[0]["done"]:
+        grey.append("FC③: 계약 39절 도달 — **정적 갈래(`--static`)라 게이트를 한 벌도 "
+                    "안 불렀다.** 영역 ①의 도달 수는 **게이트가 세는 수**이므로 "
+                    "꼬리의 `0/39` 는 **0 이 아니라 못 잰 것**이다 (D-301). "
+                    "창을 가진 사람이 게이트를 부르면 이 칸이 선다")
+        fc_cells.append(cell("계약 39절 도달", 1 / 3,
+                             why="정적 갈래 — 영역 ① 게이트를 안 불렀다"))
+    elif a1:
         fc_cells.append(cell("계약 39절 도달", 1 / 3, a1[0]["done"], a1[0]["total"],
                              source="verify_ga_readiness 영역 ①(게이트가 센 도달 수)"))
     else:
@@ -1759,15 +2062,19 @@ def aa_report(ga_out: str = None, click=None, click_why: str = "",
     pr = aa_score(pr_cells)
 
     # ── CR — 8칸. 표가 없으면 **회색 8칸**이다 (그 회색이 표를 불러온다) ────
-    cr8, cr_why = parse_aa_cr8(review_text or "")
+    #: ★ 인자로 본문을 받았으면(자기시험) **그것만** 본다 — 시험이 저장소의 실물을
+    #:   읽어 버리면 「표가 없으면 회색」 갈래를 영영 못 시험한다.
+    cr_sources = ([(AA_REVIEW_DOC.name, review_text)] if cr_source_text_given
+                  else aa_cr8_sources())
+    cr8, cr_why, cr_label, cr_notes, cr_reds = aa_cr8_chain(cr_sources)
+    note += cr_notes
+    red += cr_reds
     cr_cells = []
     if not cr8:
         grey.append("CR: %s" % cr_why)
         for nm in AA_CR8_NAMES:
             cr_cells.append(cell(nm, 1 / 8, why="CR 8칸 표가 없다"))
     else:
-        if cr_why:
-            red.append("CR: %s" % cr_why)
         for r in cr8:
             if r["value"] is None:
                 grey.append("CR%d(%s): 값 칸 %r 이 격자 {0, 0.5, 1} 밖이다"
@@ -1775,8 +2082,19 @@ def aa_report(ga_out: str = None, click=None, click_why: str = "",
                 cr_cells.append(cell(r["name"], 1 / 8, why="격자 밖의 값"))
             else:
                 cr_cells.append(cell(r["name"], 1 / 8, r["value"], 1.0,
-                                     source=AA_REVIEW_DOC.name))
+                                     source=cr_label))
     cr = aa_score(cr_cells)
+    #: ★ 읽은 여덟의 **합도 격자 위에 있어야 한다.** 「27」·「2.2」가 폐기된 이유가
+    #:   그것이고(P-232), 폐기된 수가 다시 표로 들어오면 여기서 빨강이 난다.
+    if cr8 and all(r["value"] is not None for r in cr8):
+        _sum = sum(r["value"] for r in cr8)
+        if not aa_on_grid(_sum):
+            red.append("★ **격자 밖** — 표에서 읽은 여덟의 합 %.2f 가 0.5의 배수가 "
+                       "아니다 (%s)" % (_sum, cr_label))
+        else:
+            note.append("CR: 표에서 읽은 여덟의 합 **%.1f/8 = %.1f%%** — 격자 안이다 "
+                        "(%s). 「27」·「2.2」는 폐기된 수다 (P-232)"
+                        % (_sum, _sum / 8 * 100.0, cr_label))
 
     # ── 적어 둔 수와 다시 센 수를 **대조한다** (인용은 실측이 아니다 · P-93) ──
     stated = parse_aa_stated(review_text or "")

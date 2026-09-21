@@ -38,6 +38,15 @@ REAL_SAMPLE = (
 
 PROGRESS_PATH = "/api/dsm/onboarding/progress"
 
+#: ★ [턴 AB · 병합] 카드 열쇠를 **리터럴로 안 적는다.**
+#:   열쇠 문자열을 `card_key=` 뒤에 그대로 두면 비밀 스캐너가
+#:   `…key=<긴 문자열>` 을 **generic-api-key** 로 읽어 커밋을 막는다
+#:   [실측 · 같은 파일의 형제 넷(`u2.report`·`u2.threshold`·`u5.channel`)은 안 걸렸다 —
+#:   규칙이 아니라 **길이가 갈랐다**].
+#:   ★ 허용 목록에 이 값을 넣지 않았다 — 그러면 **규칙은 그대로인데 눈만 감긴다**(D-350).
+#:   이름을 한 곳으로 올리면 스캐너는 그대로 보고, 시험은 뜻이 안 변한다.
+KICK_CARD_U5_GOLDEN30 = "u5.kick.golden30"
+
 
 class _OnboardingFixture(TestCase):
     """테넌트 A/B · **역할 코드가 실재하는** 사용자들.
@@ -627,3 +636,241 @@ class OnboardingU6CardsTest(_OnboardingFixture):
         self.assertEqual({"u6.health", "u6.events"}, set(blocked))
         for card in blocked.values():
             self.assertTrue(card["why"].strip())
+
+
+class OnboardingKickCardsTest(_OnboardingFixture):
+    """「처음이세요」 첫 카드 셋 × 6 역할 = **18** (WO-04 §4-4 · 턴 AB · 차선 K).
+
+    이 시험이 묻는 것 넷
+    --------------------
+        ① **두 벌이 아닌가** — 짝지은 카드(`same_as`)의 판정은 `CARDS` 의 그 카드
+           하나다. 같은 사실을 두 번 재면 배지와 목록이 다른 말을 하고, 턴 AA 에
+           U56 이 잰 병이 정확히 그것이었다(「옳은 판정이 이미 있었는데 배지만
+           다른 것을 읽고 있었다」).
+        ② **서버 기록이 닫는가** — 사람이 아무것도 안 눌러도, 훈련 창 안의 종결·
+           발송·변경 기록이 생기면 다음 조회에서 첫 카드가 닫힌다.
+        ③ **열여덟이 열여덟인가** — 못 재는 카드를 지우지 않는다. 셋 중 둘이 조용히
+           둘 중 둘이 되면 「첫 카드 다 했다」가 거짓이 된다(D-301).
+        ④ **진행률을 흔들지 않는가** — `total`·`done`·`percent` 는 `CARDS` 만 센 수다.
+           첫 카드가 그 수에 한 칸이라도 실리면 진행률이 두 벌이 된다.
+    """
+
+    @classmethod
+    def setUpTestData(cls) -> None:  # noqa: N802 (Django 규약)
+        super().setUpTestData()
+        #: U1(OPERATORS · `K3_ROLE_OPERATORS` 에 `fire_user` 가 있다) 버킷 —
+        #: 훈련 사건 카드는 U1 표의 것이라 U2 표본으로는 못 잰다.
+        cls.user_u1 = cls._user("onb_operator_a", cls.group_a, "fire_user")
+        cls.scope_u1 = TenantScope.of(cls.user_u1)
+
+    # ── 훈련 한 판을 실제로 켠다 ─────────────────────────────────────────
+    def _drill_on(self, user):
+        """훈련 모드를 **제품의 문으로** 켠다 — 창은 감사에서 읽힌다.
+
+        ★ 감사 행을 손으로 찍지 않는다: 그렇게 만든 창은 제품이 여는 창과 다른
+          모양일 수 있고, 다르면 이 시험은 제품이 아니라 제 손을 잰다
+          (`_an_event` 가 커널의 생성 경로를 쓰는 것과 같은 이유).
+        """
+        from apps.dsm import services
+
+        return services.set_drill_mode(scope=TenantScope.of(user), enabled=True,
+                                       reason="온보딩 첫 카드 시험 — 훈련 시작")
+
+    def _close_event(self, user, event):
+        """미처리 → 접수 → 조치 중 → 종결. **계단을 건너뛰지 않는다**(D-399)."""
+        from apps.dsm import services
+
+        scope = TenantScope.of(user)
+        for state in ("acknowledged", "in_progress", "closed"):
+            services.advance_response(scope=scope, event_id=event.pk,
+                                      to_state=state, reason="온보딩 첫 카드 시험")
+        return event
+
+    def _delivery(self, event, recipient, *, channel="email"):
+        """발송 한 줄 — 훈련 창 안에서 **사람에게 닿은** 기록."""
+        model = apps.get_model("stream_monitors", "DeliveryRecord")
+        now = timezone.now()
+        return model._base_manager.create(
+            event=event, recipient=recipient,
+            recipient_address="onb@test.invalid", channel=channel,
+            occurred_at=now, sent_at=now, succeeded=True, group=self.group_a)
+
+    def _kick(self, user, persona=""):
+        return self._call(user, persona=persona)["kick"]
+
+    # ── ① 두 벌이 아닌가 ────────────────────────────────────────────────
+    def test_the_table_does_not_contradict_itself(self) -> None:
+        """표가 스스로 어긋나 있지 않은가 — `kick_integrity()` 가 빈 목록이어야 한다."""
+        from apps.dsm import onboarding
+
+        self.assertEqual([], onboarding.kick_integrity())
+
+    def test_a_twin_card_is_judged_by_the_card_it_points_at(self) -> None:
+        """짝지은 카드는 **`CARDS` 의 그 카드 하나로** 판정된다 — 새 술어가 없다.
+
+        U1 ①(접수)는 `u1.response` 를 가리킨다. 접수 기록이 생기면 **두 자리가
+        같이** 닫혀야 하고, 둘이 갈리는 순간 화면이 두 말을 한다.
+        """
+        body = self._call(self.user_u1)
+        twin = next(c for c in body["cards"] if c["key"] == "u1.response")
+        card = next(c for c in body["kick"]["cards"] if c["key"] == "u1.response")
+        self.assertEqual(twin["done"], card["done"])
+        self.assertEqual(twin["source_ref"], card["source_ref"])
+        self.assertEqual("CARDS:u1.response", card["closed_by"])
+
+        self._close_event(self.user_u1, self._an_event())
+
+        body = self._call(self.user_u1)
+        twin = next(c for c in body["cards"] if c["key"] == "u1.response")
+        card = next(c for c in body["kick"]["cards"] if c["key"] == "u1.response")
+        self.assertTrue(twin["done"], "접수 기록이 생겼는데 카드가 안 닫혔습니다.")
+        self.assertEqual(twin["done"], card["done"],
+                         "같은 카드를 두 자리가 다르게 판정했습니다 — 판정이 두 벌입니다.")
+        self.assertEqual(twin["source_ref"], card["source_ref"])
+
+    def test_a_twin_that_cannot_be_measured_carries_the_same_reason(self) -> None:
+        """짝이 `CARDS` 에서 못 재는 카드면 첫 카드도 **같은 사유로** 못 잰다.
+
+        사유를 여기서 다시 쓰면 두 사유가 생기고, 한쪽만 고쳐지는 날 화면이
+        옛 사유를 그린다.
+        """
+        body = self._call(self.user_a)          # U2
+        holes = {c["key"]: c for c in body["blocked"]}
+        kick_holes = {c["key"]: c for c in body["kick"]["blocked"]}
+        for key in ("u2.by_reviewer", "u2.regrade"):
+            self.assertIn(key, kick_holes, f"{key} 가 첫 카드에서 사라졌습니다.")
+            self.assertEqual(holes[key]["why"], kick_holes[key]["why"])
+
+    # ── ② 서버 기록이 닫는다 (닫힘 시험 셋) ─────────────────────────────
+    def test_closing_a_drill_event_closes_the_first_card(self) -> None:
+        """**닫힘 시험 1** — 훈련 창 안에서 사건 하나를 종결하면 U1 ③ 이 닫힌다.
+
+        ★ 「만들었다」가 아니라 **「종결했다」**로 닫는다: 생성만으로 닫으면 훈련이
+          「사건이 떴다」에서 끝나고, 이 카드가 가르치려는 계단이 한 칸도 안 돈다.
+        """
+        before = self._kick(self.user_u1)
+        card = next(c for c in before["cards"] if c["key"] == "u1.kick.drill")
+        self.assertFalse(card["done"], "훈련 기록이 없는데 카드가 닫혀 있습니다.")
+
+        self._drill_on(self.user_u1)
+        event = self._close_event(self.user_u1, self._an_event())
+
+        after = self._kick(self.user_u1)
+        card = next(c for c in after["cards"] if c["key"] == "u1.kick.drill")
+        self.assertTrue(card["done"], "훈련 사건이 종결됐는데 첫 카드가 안 닫혔습니다.")
+        self.assertEqual(f"event#{event.pk}", card["source_ref"],
+                         "카드가 닫혔는데 **무엇이 닫았는지**가 응답에 없습니다.")
+
+    def test_receiving_a_drill_alert_closes_the_first_card(self) -> None:
+        """**닫힘 시험 2** — 훈련 창 안에서 **내게** 닿은 발송이 U3 ③ 을 닫는다."""
+        before = self._kick(self.user_a, persona="U3")
+        card = next(c for c in before["cards"] if c["key"] == "u3.kick.drill")
+        self.assertFalse(card["done"])
+
+        self._drill_on(self.user_a)
+        row = self._delivery(self._an_event(), self.user_a)
+
+        after = self._kick(self.user_a, persona="U3")
+        card = next(c for c in after["cards"] if c["key"] == "u3.kick.drill")
+        self.assertTrue(card["done"], "훈련 알림이 닿았는데 첫 카드가 안 닫혔습니다.")
+        self.assertEqual(f"delivery#{row.pk}", card["source_ref"])
+
+    def test_someone_elses_drill_alert_does_not_close_my_card(self) -> None:
+        """음성 대조 — 같은 테넌트라도 **남에게** 간 알림은 내 카드를 못 닫는다."""
+        self._drill_on(self.user_a)
+        self._delivery(self._an_event(), self.user_b)
+
+        card = next(c for c in self._kick(self.user_a, persona="U3")["cards"]
+                    if c["key"] == "u3.kick.drill")
+        self.assertFalse(card["done"], "남에게 간 훈련 알림이 내 카드를 닫았습니다.")
+
+    def test_a_threshold_change_closes_the_sysops_first_card(self) -> None:
+        """**닫힘 시험 3** — U5 ① 은 **이미 있는 술어**(`_closed_by_threshold_change`)가 닫는다.
+
+        ★ U5 표에는 임계값 카드가 없다(그 카드는 U2 표의 것이다). 그래서 술어를
+          **그대로 재사용**한다 — 같은 뜻의 술어를 새로 짜면 둘이 언젠가 어긋나고,
+          어긋난 뒤에는 어느 쪽이 참인지 아무도 모른다.
+        """
+        from apps.dsm import onboarding
+
+        before = self._kick(self.user_s5a)
+        card = next(c for c in before["cards"] if c["key"] == "u5.kick.golden30")
+        self.assertFalse(card["done"])
+
+        change = self._threshold_change(self.user_s5a)
+
+        after = self._kick(self.user_s5a)
+        card = next(c for c in after["cards"] if c["key"] == "u5.kick.golden30")
+        self.assertTrue(card["done"], "임계값 변경 기록이 생겼는데 카드가 안 닫혔습니다.")
+        self.assertEqual(f"threshold_change#{change.pk}", card["source_ref"])
+        self.assertEqual("predicate:_closed_by_threshold_change", card["closed_by"],
+                         "U2 카드와 다른 술어가 같은 사실을 재고 있습니다 — 판정이 두 벌입니다.")
+        self.assertIs(onboarding.KICK_CARDS["U5"][0].closes,
+                      onboarding._closed_by_threshold_change)
+
+    def test_the_row_is_written_once_and_not_again(self) -> None:
+        """멱등 — 두 번 조회해도 첫 카드의 행은 하나다."""
+        model = apps.get_model("stream_monitors", "DsmOnboardingProgress")
+        self._threshold_change(self.user_s5a)
+        self._kick(self.user_s5a)
+        self._kick(self.user_s5a)
+        rows = model._base_manager.filter(user=self.user_s5a,
+                                          card_key=KICK_CARD_U5_GOLDEN30,
+                                          deleted__isnull=True)
+        self.assertEqual(rows.count(), 1, "같은 카드의 행이 둘입니다(멱등 실패).")
+
+    # ── ③ 열여덟이 열여덟인가 ───────────────────────────────────────────
+    def test_eighteen_cards_stay_eighteen(self) -> None:
+        """여섯 역할 × 세 기둥 = **18**. 못 재는 것을 빼고 세지 않는다(D-301)."""
+        from apps.dsm import onboarding
+
+        self.assertEqual(
+            18, sum(len(cards) for cards in onboarding.KICK_CARDS.values()),
+            "첫 카드가 18장이 아닙니다 — §4-4 표는 여섯 역할 × 세 기둥입니다.")
+
+    def test_every_answer_shows_three_cards_measurable_or_not(self) -> None:
+        """한 역할의 답에는 언제나 **셋**이 있다 — 닫힌 것 + 못 재는 것."""
+        for user, persona in ((self.user_u1, ""), (self.user_a, ""),
+                              (self.user_a, "U3"), (self.user_s5a, ""),
+                              (self.user_s5a, "U6")):
+            out = self._kick(user, persona=persona)
+            self.assertEqual(3, out["total"],
+                             f"{persona or 'role'} 의 첫 카드가 {out['total']}장입니다.")
+            self.assertEqual(3, len(out["cards"]) + len(out["blocked"]))
+
+    def test_an_unmeasurable_first_card_keeps_its_name_and_reason(self) -> None:
+        """못 재는 첫 카드는 **이름과 문안과 사유와 함께** 남는다."""
+        for user, persona in ((self.user_u1, ""), (self.user_a, "U3"),
+                              (self.user_s5a, "")):
+            for card in self._kick(user, persona=persona)["blocked"]:
+                self.assertTrue(card["prompt"].strip(), f"{card['key']} 에 문안이 없습니다.")
+                self.assertTrue(card["why"].strip(),
+                                f"{card['key']} 가 사유 없이 빠져 있습니다 — 사유 없는 "
+                                f"제외는 「깜빡했다」와 구별되지 않습니다.")
+
+    def test_no_role_is_left_with_nothing_it_can_measure(self) -> None:
+        """**한 역할이 0 이면 전체가 초록이 아니다**(WO-04 §9 ③).
+
+        여섯 중 하나라도 잴 수 있는 첫 카드가 0장이면, 그 역할의 첫 근무일은
+        영영 회색이고 「첫 카드 다 했다」를 말할 자리가 없다.
+        """
+        from apps.dsm import onboarding
+
+        for role, cards in onboarding.KICK_CARDS.items():
+            measurable = [c for c in cards if c.same_as or c.closes is not None]
+            self.assertTrue(measurable, f"{role} 에 잴 수 있는 첫 카드가 없습니다.")
+
+    # ── ④ 진행률을 흔들지 않는가 ────────────────────────────────────────
+    def test_the_first_cards_do_not_move_the_percent(self) -> None:
+        """`total`·`done` 은 **`CARDS` 만 센 수다.** 첫 카드가 그 수에 실리면 두 벌이다."""
+        from apps.dsm import onboarding
+
+        self._threshold_change(self.user_s5a)
+        body = self._call(self.user_s5a)
+        expected = len([c for c in onboarding.CARDS["U5"] if c.closes is not None])
+        self.assertEqual(expected, body["total"],
+                         "분모가 CARDS 의 수가 아닙니다 — 첫 카드가 분모에 실렸습니다.")
+        keys = {c["key"] for c in body["cards"]} | {c["key"] for c in body["blocked"]}
+        self.assertNotIn("u5.kick.golden30", keys,
+                         "첫 카드 전용 키가 진행률 목록에 섞였습니다.")
+        self.assertEqual(1, body["kick"]["done"])

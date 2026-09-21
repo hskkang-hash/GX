@@ -417,8 +417,18 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header, file_stamp  # P-107 — TARGET/AS/SOURCE
+    from _gate_header import count_lines as _cl
+    _n_shot = sum(1 for _p in SCREENS.rglob("*.png")) if SCREENS.is_dir() else 0
+    _n_idx = _cl(INDEX) if INDEX.is_file() else None
     gate_header(
         __file__,
+        measured=("화면 사진마다 **다섯 칸**(route · user_role · scenario · "
+                  "captured_at · data_source)이 **실제로 적혀 있는가** — "
+                  "**분모 %s장**(`evidence/D-347/screens/**.png` 전수 · 지금 셌다) "
+                  "× 5칸 · 인덱스 %s행. 사진이 0장이면 분모가 없고, "
+                  "0건 검사는 통과가 아니다 (D-301)"
+                  % (_n_shot or "못 셌다",
+                     _n_idx if _n_idx is not None else "못 셌다")),
         target="화면 사진 " + str(SCREENS.relative_to(ROOT)).replace("\\", "/") + " (판정은 호스트에서 돈다)",
         as_="이 게이트 자신은 자격 없이 인덱스를 읽는다. **사진을 찍은 계정**은 장마다 `viewed_by` 가 적는다 — U1 gxseed_u1_operator/fire_user · U2 gxseed_u2_manager/fire_admin · U4 gxseed_u4_official/view_only_-_anyang · U5 gxseed_u5_sysop/admin · 자격 이름 GX_SEED_ROLE_PASSWORD",
         source=file_stamp(INDEX) + " + " + file_stamp(ROOT / "docs/agent/evidence/D-347/screens/run_log.json"),

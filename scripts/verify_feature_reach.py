@@ -51,11 +51,22 @@
 
 exit 0 끊긴 사슬이 없다 · 1 **빨강이 있다** · 2 못 쟀다(증거 파일이 없다)
 호스트에서 돈다 — Django 가 필요 없다. `via: gate` 인 절은 그 게이트를 **부른다**(D-210).
+
+⚠⚠ **파이프를 걸면 이 게이트의 종료 코드가 사라진다** [차선 A 실측 · 턴 AB]
+    게이트 | grep ...; echo $?      ← 이것은 **grep 의 종료 코드**다
+그래서 게이트가 빨강인데 `0` 이 찍히고, 그 `0` 을 「통과」로 읽는다. 올바른 모양:
+    게이트 > out.txt; echo $?      또는   게이트; rc=$?; grep ... out.txt
+(이 저장소는 그 모양을 `verify_gate_header.py --pipe-scan` 으로 훑는다 — 거기 안 걸리는
+ 자리는 **사람이 콘솔에 친 한 줄**이고, 그 한 줄이 오독을 만든다.)
+
+⚠ **`via: gate` 인 절은 그 게이트가 로그인한다.** 로그인 창이 없는 차선은 이 게이트를
+  통째로 부르지 않는다 — 창을 가진 사람의 자리다(D-510).
 """
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -95,6 +106,88 @@ except (AttributeError, OSError):
     pass
 
 GREEN, RED, GREY, LOCKED = "초록", "빨강", "회색", "잠김"
+
+#: ═══════════════════════════════════════════════════════════════════════
+#: ★★ [P-236 · 2026-09-21 · 턴 AB · 차선 A 가 찾고 차선 Q 가 고쳤다]
+#:     **「돌지 못했다」와 「돌아서 빨강」을 가른다**
+#:
+#: 무엇이 있었나 [차선 A 실측 · 도커 데몬이 500 이던 창]
+#: ------------------------------------------------------
+#:     위임 게이트 `verify_contract_route_reach.py` 가 exit 1
+#:     → 영역 ① 이 **초록 17 · 회색 15** 에서 **초록 15 · 빨강 3** 으로 내려앉았다
+#:       (가중 8.72 → 7.69 · 빨강 셋 = F-05-c1 · c2 · c3)
+#:     진짜 사유: 그 게이트는 gx-shell 로 위임해 HTTP 를 때리는데
+#:       **`docker exec` 가 500 이라 한 건도 못 때렸다.**
+#:     ★ 그리고 그 판이 `evidence/P-106/feature_reach.json` 에 **스스로 적혔다.**
+#:
+#: 왜 고치나 — **빨강과 회색은 다음 손이 다르다**
+#: ---------------------------------------------
+#:     빨강 = 「**제품을 고쳐라**」   회색 = 「**다시 재라**」
+#:   이 게이트는 규약(「못 잰 칸은 0 이 아니라 회색」)을 제목에 달고 있으면서
+#:   **환경이 죽으면 제품이 틀린 것으로 기록**하고 있었다. 그 기록은 파일로 남고,
+#:   다음 사람은 그 파일을 읽는다.
+#:
+#: 무엇으로 가르나 — **두 술어. 둘 다 위임 게이트가 제 입으로 한 말이다**
+#: ----------------------------------------------------------------------
+#:   ① **분모 0** — 「잰 라우트 **0**」이면 그 빨강은 **한 건도 안 재고 난 빨강**이다.
+#:      분모 0 인 초록이 초록이 아닌 것과 같은 이유로, **분모 0 인 빨강도 빨강이 아니다**(D-301).
+#:   ② **환경 표식** — 도커 데몬이 안 서거나, **모델에 칸이 생겼는데 DB 에 아직 안 앉은**
+#:      창이면 멀쩡한 화면이 통째로 500 을 받는다. 그 낱말들을 **좁게** 못박아 둔다.
+#:      [실측] `psycopg2.errors.UndefinedColumn: column …data_source does not exist`
+#:      (`migrations/0031_p224_camera_data_source.py` · 차선 B 가 적용한 뒤 재측 →
+#:       라우트 109/109 · exit 0 · **초록 18 · 빨강 0**)
+#:
+#: ⚠ **넓히지 않는다.** 「5xx 는 다 회색」으로 하면 **진짜 서버 결함이 회색으로 숨는다.**
+#:   여기 적힌 것은 **이름이 붙은 환경 고장**뿐이고, 새 표식을 더할 때는
+#:   그날의 실측 한 줄을 함께 적는다(아래 목록이 그 모양이다).
+#: ⚠ 이 갈래가 내는 회색은 **면제가 아니다.** 판정문이 **어느 표식을 봤는지** 말하고,
+#:   그 절은 여전히 「못 잰 절」로 세어져 수를 **내린다**.
+ENV_DOWN_MARKS = (
+    # 도커 데몬이 안 선다 — A 가 밟은 그 창 [실측 2026-09-21]
+    ("dockerDesktopLinuxEngine", "도커 데몬이 500 이다"),
+    ("Cannot connect to the Docker daemon", "도커 데몬에 못 붙는다"),
+    ("error during connect", "도커 소켓에 못 붙는다"),
+    ("500 Internal Server Error (\"", "도커 API 가 500 이다"),
+    # 모델에 칸이 생겼는데 DB 에 아직 안 앉았다 — B 의 P-224 창 [실측 2026-09-21]
+    ("UndefinedColumn", "모델의 칸이 DB 에 아직 안 앉았다 (마이그레이션 미적용)"),
+    ("does not exist\nLINE", "DB 에 없는 칸/표를 읽었다 (마이그레이션 미적용)"),
+    ("ProgrammingError", "DB 스키마가 코드와 어긋난다 (마이그레이션 미적용)"),
+    # 서버 자체가 안 선다
+    ("Connection refused", "그 자리에 서 있는 것이 없다"),
+    ("Max retries exceeded", "서버가 응답하지 않는다"),
+)
+
+#: 위임 게이트가 제 입으로 적는 분모 — `[REACH] 잰 라우트 12 · 도달 …`.
+#: ⚠ 이 그물이 안 걸리면 **분모를 모르는 것**이고, 모르는 것을 0 으로 세지 않는다.
+_MEASURED_N = re.compile(r"잰\s*(?:라우트|자리|행|건)\s*(\d+)")
+
+
+def _rc_of(v):
+    """`gate_rc` 의 값 — 옛 모양(정수)과 새 모양(`{rc, out}`)을 **둘 다** 받는다."""
+    return v.get("rc") if isinstance(v, dict) else v
+
+
+def _out_of(v) -> str:
+    """그 게이트가 **찍은 글자**. 옛 모양에는 없다(빈 글자)."""
+    return (v.get("out") or "") if isinstance(v, dict) else ""
+
+
+def env_down(out: str) -> str:
+    """환경이 죽어서 못 잰 것인가 → 사유 한 줄. 아니면 빈 글자.
+
+    ★ **이름이 붙은 표식만** 본다. 넓히면 진짜 서버 결함이 회색으로 숨는다.
+    """
+    for mark, why in ENV_DOWN_MARKS:
+        if mark in (out or ""):
+            return why
+    return ""
+
+
+def measured_zero(out: str):
+    """위임 게이트가 **몇 건을 쟀다고 말했나.** 못 읽으면 `None`(0 이 아니다)."""
+    m = _MEASURED_N.search(out or "")
+    return int(m.group(1)) if m else None
+
 
 #: `data_source` 앞머리. **모의는 제품의 답이 아니다.**
 SOURCE_MEASURED = ("실측", "시드")
@@ -370,14 +463,32 @@ def judge_clause(cid: str, clause: dict, *, screens: list, gate_rc: dict,
 
     # ── 다른 게이트에 맡긴 절 ──────────────────────────────────────────
     if link.get("gate"):
-        rc = gate_rc.get(link["gate"])
+        got = gate_rc.get(link["gate"])
+        rc, out = _rc_of(got), _out_of(got)
         if rc is None:
             return GREY, "게이트 «%s» 를 못 불렀다 — %s" % (link["gate"], link["why"])
         if rc == 0:
             return GREEN, "게이트 «%s» 초록 — %s" % (link["gate"], link["why"])
         if rc == 2:
             return GREY, "게이트 «%s» 가 **회색(exit 2)** 이다 — 못 잰 것은 통과가 아니다" % link["gate"]
-        return RED, "게이트 «%s» 가 **빨강(exit %s)** 이다" % (link["gate"], rc)
+        #: ★★ [P-236] **빨강을 내기 전에 「돌기는 했나」를 묻는다.**
+        #:   빨강은 「제품을 고쳐라」이고 회색은 「다시 재라」다. 환경이 죽은 창의
+        #:   exit 1 을 빨강으로 앉히면 **제품이 틀린 것으로 기록된다** (그리고 그
+        #:   기록이 파일로 남는다 · `feature_reach.json`).
+        n = measured_zero(out)
+        if n == 0:
+            return GREY, ("게이트 «%s» 가 exit %s 인데 **한 건도 안 쟀다**(잰 라우트 0) — "
+                          "분모 0 인 초록이 초록이 아닌 것과 같은 이유로 **분모 0 인 "
+                          "빨강도 빨강이 아니다**(D-301). 다시 재라"
+                          % (link["gate"], rc))
+        why_env = env_down(out)
+        if why_env:
+            return GREY, ("게이트 «%s» 가 exit %s 인데 **환경이 답하지 않았다** — %s. "
+                          "이것은 제품의 빨강이 아니다. 그 자리가 서면 다시 재라 (P-236)"
+                          % (link["gate"], rc, why_env))
+        return RED, "게이트 «%s» 가 **빨강(exit %s)** 이다%s" % (
+            link["gate"], rc,
+            "" if n is None else " — 잰 라우트 %d (분모가 실재한다)" % n)
 
     # ── 화면으로 닿는 절 — 고리 다섯을 하나씩 ──────────────────────────
     want_screen, want_api = link["screen"], link["api"]
@@ -543,6 +654,44 @@ def self_test() -> int:
     say(colors.get("F-06-c1") == LOCKED, "잠김 절은 판정 대상이 아니다")
     say(colors.get("F-03-c1") == GREY, "사슬 없는 절은 **회색** (초록이 아니다)")
 
+    # ── ★★ [P-236 · 턴 AB] **「돌지 못했다」와 「돌아서 빨강」을 가른다** ──────
+    #    차선 A 가 도커 데몬 500 인 창에서 F-05-c1·c2·c3 이 **빨강**으로 앉는 것을
+    #    보았다. 빨강은 「제품을 고쳐라」이고 회색은 「다시 재라」다 — 그 창에서
+    #    옳은 말은 뒤엣것이다. 양성 하나, 음성 넷.
+    _G = "scripts/verify_contract_route_reach.py"
+
+    def _reach(rc, out=""):
+        m = _good_observations()
+        m["gate_rc"][_G] = {"rc": rc, "out": out}
+        return dict((cid, c) for cid, c, _ in judge(m)).get("F-05-c1")
+
+    def _why(rc, out=""):
+        m = _good_observations()
+        m["gate_rc"][_G] = {"rc": rc, "out": out}
+        return dict((cid, w) for cid, _c, w in judge(m)).get("F-05-c1", "")
+
+    say(_reach(1, "[REACH] 잰 라우트 109 · 도달 100 · 못 닿음 9 · 못 잼 0") == RED,
+        "★ 양성 · **돌아서 빨강**이면 빨강이다 (분모가 실재한다 · 없는 회색을 만들지 않는다)")
+    say(_reach(1, "[REACH] 잰 라우트 0 · 도달 0 · 못 닿음 0 · 못 잼 0") == GREY,
+        "★★ 음성 · **한 건도 안 쟀으면 회색**이다 — 분모 0 인 빨강은 빨강이 아니다 (D-301)")
+    say(_reach(1, "error during connect: ... dockerDesktopLinuxEngine ... 500") == GREY,
+        "★★ 음성 · **도커 데몬이 500** 이면 회색이다 — A 가 밟은 그 창 (P-236)")
+    say(_reach(1, "psycopg2.errors.UndefinedColumn: column "
+                  "stream_monitors_streammonitor.data_source") == GREY,
+        "★★ 음성 · **모델의 칸이 DB 에 아직 안 앉았으면** 회색이다 — "
+        "멀쩡한 화면이 통째로 500 을 받는 창 (B 의 P-224)")
+    say("환경이 답하지 않았다" in _why(1, "Connection refused"),
+        "★ 그리고 **어느 표식을 봤는지 말한다** — 조용히 회색이 되지 않는다")
+    say(_reach(1, "[REACH] 잰 라우트 109 · 도달 0 · 못 닿음 109 · 못 잼 0 "
+                  "· X GET /api/dsm/events -> 500") == RED,
+        "★★ 음성 · **이름 없는 5xx 는 여전히 빨강**이다 — 「5xx 는 다 회색」으로 "
+        "넓히면 진짜 서버 결함이 회색으로 숨는다")
+    say(_reach(0) == GREEN and _reach(2) == GREY,
+        "★ 옛 갈래는 그대로 — 초록은 초록 · exit 2 는 회색")
+    say(dict((cid, c) for cid, c, _ in judge(
+        dict(_good_observations(), gate_rc={_G: 1}))).get("F-05-c1") == RED,
+        "★ 옛 모양(정수 rc)도 **그대로 받는다** — 자기시험 한 벌을 두 벌로 만들지 않는다")
+
     # 변이 — 고리 하나씩 끊어 본다. **그 절만** 빨개져야 한다
     mutants = {}
     m = _good_observations(); m["screens"][0]["calls"] = ["GET /api/dsm/events 403"]
@@ -676,20 +825,29 @@ def read_screens() -> list:
 
 
 def call_gates(gates, timeout: int = 900) -> dict:
-    """맡긴 게이트를 **실제로 부른다** (D-210). 못 부르면 `None` = 회색."""
+    """맡긴 게이트를 **실제로 부른다** (D-210). 못 부르면 `None` = 회색.
+
+    ★★ [P-236] **종료 코드만 들고 오지 않는다 — 찍은 글자도 같이 들고 온다.**
+      exit 1 하나로는 「돌아서 빨강」과 「돌지 못했다」를 가를 수 없고,
+      그 둘은 **다음 손이 다르다**(제품을 고쳐라 ↔ 다시 재라).
+      가를 근거는 그 게이트가 **제 입으로 한 말** 안에 있다(잰 건수 · 환경 표식).
+    """
     out = {}
     for g in sorted(gates):
         path = ROOT / g
         if not path.is_file():
-            out[g] = None
+            out[g] = {"rc": None, "out": ""}
             continue
         try:
             proc = subprocess.run([sys.executable or "python", str(path)],
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                   timeout=timeout, cwd=str(ROOT))
-            out[g] = proc.returncode
-        except (OSError, subprocess.SubprocessError):
-            out[g] = None
+            out[g] = {"rc": proc.returncode,
+                      "out": (proc.stdout or b"").decode("utf-8", "replace")}
+        except subprocess.TimeoutExpired:
+            out[g] = {"rc": None, "out": "%d초 안에 안 끝났다" % timeout}
+        except (OSError, subprocess.SubprocessError) as exc:   # noqa: BLE001
+            out[g] = {"rc": None, "out": "부르지 못했다: %s" % exc}
     return out
 
 

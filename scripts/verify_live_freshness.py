@@ -683,6 +683,12 @@ if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
     gate_header(
         __file__,
+        measured=("서는 것이 **지금 커밋인가** — **분모 %d개**(`PROCESSES` 가 "
+                  "못박은 프로세스: %s · 지금 셌다). 프로세스마다 기동 시각과 "
+                  "그 소스의 마지막 수정을 댄다 — 소스가 더 새로우면 "
+                  "**서는 것은 지금 코드가 아니다**"
+                  % (len(PROCESSES),
+                     " · ".join(_p["key"] for _p in PROCESSES))),
         target=os.environ.get("GX_API", "http://localhost:8000") + " (gx-shell 안 · 호스트에 포트가 없다)",
         as_="익명 — 기동 시각·커밋만 묻는다 (자격 없이 답하는 자리다)",
         source="살아 있는 서버가 스스로 낸 기동 시각·커밋 (HTTP)",

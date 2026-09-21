@@ -754,8 +754,15 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header, file_stamp  # P-107 — TARGET/AS/SOURCE
+    from _gate_header import count_json as _cj
+    _n_runs = _cj(BASELINE, "runs")
     gate_header(
         __file__,
+        measured=("이번 시험 출력의 **네 수**(passed·failed·error·skipped)를 "
+                  "기준선의 마지막 실행과 댄다 — **분모 %s번**(`delta_baseline.json"
+                  "::runs` 에 쌓인 실행 · 지금 셌다) · 문턱 %.0f%%. 기준선을 못 "
+                  "읽으면 **댈 것이 없고**, 댈 것 없는 초록은 초록이 아니다"
+                  % (_n_runs if _n_runs else "못 셌다", THRESHOLD * 100)),
         target="--command 로 준 시험 명령의 출력 (기본은 gx-shell 안 pytest)",
         as_="(계정 없음) — 시험 러너가 낸 요약 줄을 읽는다",
         source="이번에 돌린 시험 출력 + " + file_stamp(BASELINE),

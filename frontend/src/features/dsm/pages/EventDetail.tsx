@@ -45,6 +45,7 @@ import {
 import {
   CLIP_MISSING_REASON,
   CLIP_PRESENT,
+  dataSourceBadge,
   isNotFound,
   NOT_FOUND_TITLE_EVENT,
   RESPONSE_BACKWARD_NEEDS_REASON,
@@ -435,7 +436,25 @@ export default function EventDetail() {
                   </Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="유형">
-                  {labelOf(EVENT_TYPE_LABEL, e.event_type)}
+                  {/* ★★ P-227 (2026-09-21 · 턴 AB · 차선 U1) — **훈련 배지가 상세에
+                      없었다.**
+
+                      목록(`EventList`)과 큐(`FocusQueue`)는 이미 그리고 있었는데
+                      **상세와 대시보드만 안 그렸다**[실측 grep · 턴 AB]. 그래서
+                      목록에서 「훈련」을 보고 열면 그 말이 **사라지는** 자리가
+                      있었다 — 사라진 말은 「실사건이었나」로 읽힌다.
+                      ★ 서버는 이미 `data_source` 를 보내고 있었고(상세 응답),
+                        말은 `copy.ts::dataSourceBadge`(GX-COPY §2)가 들고 있었다.
+                        없던 것은 둘을 잇는 한 줄뿐이다 — 새 말도 새 문도 없다.
+                      ★ 실운영이면 `null` 이라 아무것도 안 붙는다. */}
+                  <Space size={4} wrap>
+                    <span>{labelOf(EVENT_TYPE_LABEL, e.event_type)}</span>
+                    {dataSourceBadge(e.data_source) ? (
+                      <Tag color="blue" data-gx="event-data-source">
+                        {dataSourceBadge(e.data_source)}
+                      </Tag>
+                    ) : null}
+                  </Space>
                 </Descriptions.Item>
                 {/* ★ [UX-22 · 2026-09-26] **넷이던 축을 둘로 줄였다.** 앞판은 「상태 ·
                     판정 · 대응 진행」을 나란히 세웠고, 「상태」는 판정과 같은 것을 다른

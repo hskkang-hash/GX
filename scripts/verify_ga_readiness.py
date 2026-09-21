@@ -495,6 +495,9 @@ def score(areas: list[dict], counts: dict[str, dict[str, int]],
 #: 영역 게이트가 남긴 한 줄. 표 아래에 그대로 찍는다 — **왜 그 수가 나왔는지**가
 #: 수와 같은 화면에 있어야 한다.
 AREA_GATE_NOTE: dict[str, str] = {}
+#: ★ 별표 ②(기능명세 id · P-234)를 `load()` 에서 `main()` 으로 나른다. 8영역 밖이라
+#:   `counts`·`kinds` 에 안 섞는다 — 섞으면 상용/100 이 다른 뜻이 된다.
+ANNEX: dict[str, dict] = {"data": {}}
 
 
 def reach_counts(gate_rel: str) -> tuple[dict[str, int], str, str]:
@@ -786,6 +789,145 @@ def self_test() -> int:
     total, _ = score([{"id": "a", "name": "A", "weight": 100}], {"a": {}}, {"a": {}})
     checks.append(("절이 0개인 영역은 0 이다 (1 이 아니다)", abs(total) < 1e-9))
 
+    # ── ★★ P-236 (턴 AB) — 「같은 칸이 둘」을 양성·음성으로 박는다 ─────────
+    _dup = """
+areas:
+  - id: "4"
+    clauses:
+      - id: OPS-07
+        status: 미착수
+        why: |
+          앞의 글 — 조율자 판정
+        why: |
+          뒤의 글 — 이것만 남는다
+"""
+    _dp = duplicate_key_problems(_dup)
+    checks.append((
+        "★★ 출생표본 — 한 절에 `why:` 가 둘이면 잡는다 (P-236)",
+        any("칸 `why` 가 **둘**이다" in x for x in _dp)))
+    checks.append((
+        "★ 잡을 때 **절 이름**을 말한다 (사람이 찾아갈 수 있어야 한다)",
+        any(x.startswith("OPS-07:") for x in _dp)))
+    checks.append((
+        "★ 잡을 때 **두 줄 번호**를 다 말한다 — 어느 글이 사라졌는지 봐야 한다",
+        any("(7줄 · 9줄)" in x for x in _dp)))
+    #: ★★ 음성 — **`safe_load` 로는 못 잡는다.** 이 줄이 이 검사가 있는 이유다:
+    #:   파서가 먼저 삼키므로 결과만 보면 흠이 **없는 것처럼 보인다.**
+    checks.append((
+        "★★ 음성 — `safe_load` 결과만 보면 **흠이 안 보인다**(파서가 먼저 삼킨다)",
+        yaml.safe_load(_dup)["areas"][0]["clauses"][0]["why"].strip() == "뒤의 글 — 이것만 남는다"))
+    #: 같은 글인데 **둘째 칸 이름만 다른** 대장 — 이것이 흠을 고친 모양이다(삭제 0).
+    _fixed = """
+areas:
+  - id: "4"
+    clauses:
+      - id: OPS-07
+        status: 미착수
+        why: |
+          앞의 글 — 조율자 판정
+        note_turn_ab: |
+          뒤의 글 — 이제 둘 다 산다
+"""
+    checks.append((
+        "★ 음성 — 칸 이름이 다르면 0건이다 (없는 빨강을 세우지 않는다)",
+        duplicate_key_problems(_fixed) == []))
+    #: 절 밖에서도 겹칠 수 있다 — 가중치가 둘이면 **합이 100 인지조차 거짓이 된다.**
+    _dup_area = """
+areas:
+  - id: "4"
+    weight: 15
+    weight: 20
+"""
+    checks.append((
+        "★ 절 밖(영역·meta)에서 겹쳐도 잡는다 — 나무 전체를 걷는다",
+        any("칸 `weight` 가 **둘**이다" in x
+            for x in duplicate_key_problems(_dup_area))))
+
+    # ── ★★ 별표 ②(기능명세 id · P-234 · P-237) — 턴 AB ────────────────────
+    _led = {"OPS-07", "OPS-07b", "SEC-14"}
+    _good = {"id": "SPEC-DSM-0001", "status": "미착수", "kind": "unmeasurable"}
+    checks.append((
+        "★★ 별표 ② — **비어 있는 것은 흠이 아니다**(사유가 있으면 통과)",
+        annex_problems({"registered": False, "why": "Q 의 목록이 안 왔다"}, _led) == []))
+    checks.append((
+        "★★ 별표 ② — 사유 없는 빈칸은 잡는다 (잊은 것과 구별되지 않는다)",
+        any("사유 없는 빈칸" in p for p in annex_problems({"registered": False}, _led))))
+    checks.append((
+        "★ 별표 ② — `registered: true` 인데 0개면 잡는다 (분모 0 인 초록)",
+        any("분모 0 인 초록" in p
+            for p in annex_problems({"registered": True, "why": "x"}, _led))))
+    checks.append((
+        "★★ 별표 ② — 규칙 없는 목록은 **분모가 아니다**",
+        any("규칙 없는 목록은 분모가 아니다" in p
+            for p in annex_problems({"clauses": [dict(_good)]}, _led))))
+    checks.append((
+        "★ 별표 ② — 출처(기계 산출물) 없는 목록을 잡는다 (손으로 적은 분모)",
+        any("손으로 적은 분모와 구별되지 않는다" in p
+            for p in annex_problems({"rule": "표 데이터행", "clauses": [dict(_good)]}, _led))))
+    #: ★★ **P-237 출생 표본** — 턴 AA 에 내가 `OPS-07-b` 를 쓸 뻔했고, 대장에는
+    #:   `OPS-07b` 가 이미 살아 있었다. P-81 은 둘을 **다 통과시킨다.**
+    _full = {"rule": "표 데이터행", "source": "scripts/verify_ga_readiness.py"}
+    checks.append((
+        "★★ 출생표본 — 대장 `OPS-07b` 와 별표 `OPS-07-b` 를 잡는다 (붙임표 하나 · P-237)",
+        any("붙임표·밑줄·대소문자만 다르다" in p for p in annex_problems(
+            dict(_full, clauses=[{"id": "OPS-07-b", "status": "미착수",
+                                  "kind": "unmeasurable"}]), _led))))
+    checks.append((
+        "★ 음성 — P-81(똑같은 id)은 **따로** 잡는다 (두 검사는 다른 것을 본다)",
+        any("어느 쪽이 진짜인가" in p for p in annex_problems(
+            dict(_full, clauses=[{"id": "OPS-07b", "status": "미착수",
+                                  "kind": "unmeasurable"}]), _led))))
+    checks.append((
+        "★ 별표 ② 안에서 붙임표만 다른 쌍도 잡는다",
+        any("(P-237)" in p for p in annex_problems(
+            dict(_full, clauses=[dict(_good), {"id": "SPEC_DSM_0001", "status": "미착수",
+                                               "kind": "unmeasurable"}]), _led))))
+    checks.append((
+        "★★ 별표 ② — 기능명세가 `구현` 으로 태어나면 잡는다 (코드 0줄이다)",
+        any("코드 0줄로 태어난다" in p for p in annex_problems(
+            dict(_full, clauses=[dict(_good, status="구현")]), _led))))
+    checks.append((
+        "★★ 별표 ② — kind 가 못 잼이 아니면 잡는다 (못 잰 칸은 0 이 아니라 회색)",
+        any("못 잰 칸은 0 이 아니라 회색이다" in p for p in annex_problems(
+            dict(_full, clauses=[dict(_good, kind="closed")]), _led))))
+    checks.append((
+        "★ 음성 — 바르게 등재된 별표는 통과한다 (없는 빨강을 세우지 않는다)",
+        annex_problems(dict(_full, registered=True, clauses=[dict(_good)]), _led) == []))
+    checks.append((
+        "★ 없는 `source` 를 가리키면 잡는다 (없는 산출물은 문서다)",
+        any("없는 산출물은 문서다" in p for p in annex_problems(
+            dict(_full, source="scripts/없다.py", clauses=[dict(_good)]), _led))))
+
+    # ── ★★ P-231 증거 경로 (턴 AB) ────────────────────────────────────────
+    _a1 = {"id": "1", "kind_derived": {"closed": ["F-12-c5"], "unmeasurable": ["F-12-c1"]},
+           "kind_evidence": {"F-12-c5": {
+               "json": "scripts/verify_ga_readiness.py",
+               "capture": "scripts/verify_ga_readiness.py",
+               "measured_at": "2026-09-21T12:19:30Z"}}}
+    checks.append((
+        "★ 음성 — 파일이 실재하는 증거 경로는 통과한다",
+        evidence_problems(_a1) == []))
+    checks.append((
+        "★★ P-231 — **없는 파일을 가리킨 증거를 잡는다**(없는 증거는 주장이다)",
+        any("없는 증거는 주장이다" in p for p in evidence_problems(
+            {"id": "1", "kind_derived": _a1["kind_derived"],
+             "kind_evidence": {"F-12-c5": dict(_a1["kind_evidence"]["F-12-c5"],
+                                               json="docs/없다.json")}}))))
+    checks.append((
+        "★★ P-231 — `closed` 가 아닌 절에 붙은 경로를 잡는다 (올린 줄로 속인다)",
+        any("올린 줄로 속인다" in p for p in evidence_problems(
+            {"id": "1", "kind_derived": _a1["kind_derived"],
+             "kind_evidence": {"F-12-c1": _a1["kind_evidence"]["F-12-c5"]}}))))
+    checks.append((
+        "★ P-231 — `measured_at` 없는 증거를 잡는다 (늙었는지 못 묻는다)",
+        any("늙었는지" in p for p in evidence_problems(
+            {"id": "1", "kind_derived": _a1["kind_derived"],
+             "kind_evidence": {"F-12-c5": {"json": "scripts/verify_ga_readiness.py",
+                                           "capture": "scripts/verify_ga_readiness.py"}}}))))
+    checks.append((
+        "★ 증거 칸이 아예 없는 영역은 통과한다 (옛 영역을 빨갛게 만들지 않는다)",
+        evidence_problems({"id": "2", "clauses": []}) == []))
+
     bad = 0
     for label, ok in checks:
         bad += 0 if ok else 1
@@ -823,6 +965,175 @@ def kind_tail(kinds: dict[str, int]) -> str:
     return "(" + " · ".join("%s %d" % (KIND_LABEL[k], kinds.get(k, 0))
                             for k in ("ratchet", "rule_only", "unmeasurable",
                                       "gate_only")) + ")"
+
+
+# ── ★★ P-236 · 2026-09-21 · 턴 AB · 차선 N — **한 절에 같은 칸이 둘이면 앞엣것이 사라진다**
+#   ★ **출생 표본**: 턴 AA 에 내가 `OPS-07` 에 조율자 판정 블록을 `why:` 로 써 넣었는데
+#     그 절에는 이미 `why:` 가 **있었다.** YAML 은 같은 키를 겹쳐 실으면 **뒤엣것만 남기고
+#     앞의 글 전부를 조용히 버린다** — 버려진 것은 하필 「왜 '미착수'인가 · `gate:` 를 왜
+#     달았나 · `OPS-07b` 와 어떻게 다른가 · 감사 표가 연 9.3 GiB 로 자란다」였다.
+#     같은 흠이 `OPS-19` 에도 있었다(`note_turn_i` 둘 — **새로 잰 턴 J 글이 옛 턴 I 글에 덮였다**).
+#   ⚠ **아무 색도 안 났다.** P-81(id 겹침)은 절을 세니까 잡을 수 있었지만, 이것은
+#     **판정기가 보기 전에 파서가 먼저 삼킨다** — 판정기는 사라진 글을 볼 방법이 없다.
+#     절 수도 안 움직이고 점수도 안 움직인다. **조용한 것이 가장 나쁘다**(P-81 과 같은 말).
+#   ⇒ 그래서 `safe_load` 의 **결과**가 아니라 **원문의 노드 나무**(`yaml.compose`)를 본다.
+#     닫힌 사실 하나: 대장이 스스로 안 읽히는 자리는 `gate:` 없는 `closed` 의 **한 겹 아래**다.
+#: ★ P-237 · 2026-09-21 · 턴 AB · 차선 N — **붙임표 하나 차이는 유일성이 아니다**
+#:   `OPS-07-b` 와 `OPS-07b` 는 P-81 검사를 **둘 다 통과한다.** 아무 색도 안 나고
+#:   읽는 사람만 헷갈린다(턴 AA 에 내가 실제로 밟을 뻔한 자리다). 새 id 를 **수백 개씩**
+#:   들이는 별표 ② 가 그 함정이 가장 크게 벌어지는 자리라, **꼴을 같게 만들어** 대 본다.
+def id_shape(cid: str) -> str:
+    """id 를 **대조용 꼴**로 줄인다 — 붙임표·밑줄·공백을 걷고 소문자로."""
+    return re.sub(r"[-_\s]", "", cid).lower()
+
+
+def annex_problems(annex: dict, ledger_ids: set[str]) -> list[str]:
+    """별표 ②(기능명세 id)를 판정한다. **비어 있는 것은 흠이 아니다 — 거짓이 흠이다.**
+
+    비었으면 `why` 를 요구하고(사유 없는 빈칸은 잊은 것과 구별되지 않는다),
+    찼으면 **규칙·출처·id 유일성·꼴 겹침**을 요구한다.
+    """
+    out: list[str] = []
+    if not annex:
+        return out
+    clauses = annex.get("clauses") or []
+    registered = bool(annex.get("registered"))
+    rule = (annex.get("rule") or "").strip()
+    source = (annex.get("source") or "").strip()
+
+    if not clauses:
+        if registered:
+            out.append("별표 ②: `registered: true` 인데 id 가 **0개**다 — "
+                       "**분모 0 인 초록은 초록이 아니다**")
+        if not (annex.get("why") or "").strip():
+            out.append("별표 ②: 등재가 0건인데 `why` 가 없다 — **사유 없는 빈칸은 잊은 "
+                       "것과 구별되지 않는다**")
+        return out
+
+    #: 찼다 — 여기서부터는 **분모가 된다.** 분모에는 출처가 있어야 한다.
+    if not rule:
+        out.append("별표 ②: id 가 %d개인데 `rule`(세는 규칙)이 비었다 — "
+                   "**규칙 없는 목록은 분모가 아니다**" % len(clauses))
+    if not source:
+        out.append("별표 ②: id 가 %d개인데 `source`(기계 산출물 경로)가 비었다 — "
+                   "**손으로 적은 분모와 구별되지 않는다**" % len(clauses))
+    elif not (ROOT / source).exists():
+        out.append("별표 ②: `source` 가 가리키는 %s 가 **없다** — 없는 산출물은 문서다"
+                   % source)
+
+    seen: dict[str, str] = {}
+    shapes: dict[str, str] = {}
+    for c in clauses:
+        cid = (c.get("id") or "").strip()
+        if not cid:
+            out.append("별표 ②: id 가 빈 항목이 있다")
+            continue
+        if cid in ledger_ids:
+            out.append("별표 ② %s: **대장 8영역의 절 id 와 겹친다** — 겹친 id 는 "
+                       "「어느 쪽이 진짜인가」를 아무도 못 답하게 만든다 (P-81)" % cid)
+        if cid in seen:
+            out.append("별표 ② %s: 별표 안에서 **두 번** 적혔다" % cid)
+        else:
+            seen[cid] = cid
+        sh = id_shape(cid)
+        if sh in shapes and shapes[sh] != cid:
+            out.append("별표 ② %s 와 %s: **붙임표·밑줄·대소문자만 다르다.** P-81 유일성 "
+                       "검사는 둘을 **다른 id 로 통과시킨다** — 아무 색도 안 나면서 읽는 "
+                       "사람만 헷갈린다 (P-237)" % (shapes[sh], cid))
+        else:
+            shapes[sh] = cid
+        #: ★ 별표는 **미착수·못 잼**으로 태어난다. 그렇지 않은 것이 있으면 말한다 —
+        #:   기능명세는 이 턴에 **코드 0줄**이고, 0줄인 것이 닫혀 있으면 그것이 거짓이다.
+        if (c.get("status") or "").strip() != "미착수":
+            out.append("별표 ② %s: status 가 '미착수' 가 아니다(%r) — 기능명세는 "
+                       "코드 0줄로 태어난다. 올리려면 **증거 경로**가 있어야 한다"
+                       % (cid, c.get("status")))
+        if (c.get("kind") or "").strip() != "unmeasurable":
+            out.append("별표 ② %s: kind 가 'unmeasurable' 이 아니다(%r) — "
+                       "**못 잰 칸은 0 이 아니라 회색이다**" % (cid, c.get("kind")))
+    #: ★ 대장 절과 **꼴까지** 대 본다 — 별표 ↔ 8영역 사이의 붙임표 함정.
+    led_shapes = {id_shape(i): i for i in ledger_ids}
+    for cid in seen:
+        sh = id_shape(cid)
+        if sh in led_shapes and led_shapes[sh] != cid:
+            out.append("별표 ② %s 와 대장 절 %s: **붙임표·밑줄·대소문자만 다르다** — "
+                       "유일성 검사를 둘 다 통과한다 (P-237)" % (cid, led_shapes[sh]))
+    return out
+
+
+#: ★★ P-231 · 2026-09-21 · 턴 AB · 차선 N — **증거 경로가 있는 절만 `closed` 다**
+#:   P-231 이 요구한 것은 「누른 뒤」 초록 **그리고 증거 파일 경로가 대장에 실릴 것**이다.
+#:   ⚠ 경로는 **적어 두면 끝나는 것이 아니다** — 그 파일이 **사라져도 아무 색이 안 난다.**
+#:     「없는 시험은 문서다」와 같은 자리이고, 여기서는 「**없는 증거는 주장이다**」다.
+#:     그래서 매 실행 실재를 확인한다. 그리고 `closed` 가 아닌 절에 경로가 붙어 있으면
+#:     그것도 말한다 — 안 올린 절의 경로는 **읽는 사람을 올린 줄로 속인다.**
+def evidence_problems(area: dict) -> list[str]:
+    """영역 ①의 `kind_evidence` 를 판정한다. 없는 파일을 가리킨 증거는 증거가 아니다."""
+    ev = area.get("kind_evidence") or {}
+    if not ev:
+        return []
+    out: list[str] = []
+    derived = area.get("kind_derived") or {}
+    closed = set(derived.get("closed") or [])
+    other = {c for k in ("unmeasurable", "ratchet", "rule_only", "gate_only")
+             for c in (derived.get(k) or [])}
+    for cid, e in sorted(ev.items()):
+        if cid not in closed:
+            where = "다른 부류에 있다" if cid in other else "어느 부류에도 없다"
+            out.append("영역 %s · %s: 증거 경로가 실려 있는데 `closed` 가 아니다(%s) — "
+                       "**안 올린 절의 경로는 읽는 사람을 올린 줄로 속인다** (P-231)"
+                       % (area["id"], cid, where))
+        for key in ("json", "capture"):
+            rel = (e.get(key) or "").strip()
+            if not rel:
+                out.append("영역 %s · %s: 증거 `%s` 칸이 비었다 — **경로 없는 승격은 "
+                           "P-231 이 금한 것이다**" % (area["id"], cid, key))
+            elif not (ROOT / rel).exists():
+                out.append("영역 %s · %s: 증거 `%s` 가 가리키는 %s 가 **없다** — "
+                           "**없는 증거는 주장이다** (P-231)" % (area["id"], cid, key, rel))
+        if not (e.get("measured_at") or "").strip():
+            out.append("영역 %s · %s: `measured_at` 이 없다 — **언제 잰 것인지 모르는 "
+                       "초록은 「늙었는지」를 아무도 못 묻는다**" % (area["id"], cid))
+    return out
+
+
+def duplicate_key_problems(text: str) -> list[str]:
+    """대장 원문에서 **같은 자리에 두 번 적힌 칸**을 전부 찾는다 (절·영역·meta 어디든).
+
+    `yaml.safe_load` 는 이미 하나를 버린 뒤라 늦다. 노드 나무를 걸어 **줄 번호까지** 낸다.
+    """
+    try:
+        root = yaml.compose(text)
+    except yaml.YAMLError as exc:            # 원문이 아예 안 읽히면 그것부터 말한다
+        return ["대장 YAML 을 구성하지 못했다: %s" % exc]
+    out: list[str] = []
+    stack: list[tuple] = [(root, "(뿌리)")]
+    while stack:
+        node, where = stack.pop()
+        if isinstance(node, yaml.MappingNode):
+            name = where
+            for k, v in node.value:          # 이름을 먼저 찾아 사람이 읽게 한다
+                if getattr(k, "value", None) == "id" and isinstance(v, yaml.ScalarNode):
+                    name = v.value
+            seen: dict[str, int] = {}
+            for k, v in node.value:
+                key = getattr(k, "value", None)
+                if key is None:
+                    continue
+                line = k.start_mark.line + 1
+                if key in seen:
+                    out.append(
+                        "%s: 칸 `%s` 가 **둘**이다 (%d줄 · %d줄) — YAML 은 뒤엣것만 남기고 "
+                        "**앞의 글을 조용히 버린다.** 절 수도 점수도 안 움직이므로 "
+                        "아무 색도 안 난다. 합치거나 다른 이름을 줘라 (P-236)"
+                        % (name, key, seen[key], line))
+                else:
+                    seen[key] = line
+                stack.append((v, name))
+        elif isinstance(node, yaml.SequenceNode):
+            for item in node.value:
+                stack.append((item, where))
+    return sorted(out)
 
 
 def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, int],
@@ -894,6 +1205,20 @@ def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, 
                     #: 분류를 잊은 절과 분류한 절이 같은 칸에 선다(D-301).
                     hands_todo["none"] = hands_todo.get("none", 0) + 1
         counts[area["id"]] = c
+
+    #: ★★ P-236 — **원문을 본다.** 위 `data` 는 이미 하나를 버린 뒤라 늦다.
+    problems += duplicate_key_problems(LEDGER.read_text(encoding="utf-8"))
+
+    #: ★ 별표 ②(기능명세 id · P-234). **8영역 밖이라 상용/100 을 안 건드린다** —
+    #:   여기 수백 절을 끼우면 가중치 표가 무너지고 상용 점수가 다른 뜻이 된다.
+    _led_ids = {(c.get("id") or "").strip()
+                for a in areas for c in (a.get("clauses") or [])} - {""}
+    ANNEX["data"] = data.get("annex_2_spec") or {}
+    problems += annex_problems(ANNEX["data"], _led_ids)
+
+    #: ★ P-231 — 승격한 절의 증거 파일이 **지금도 실재하는가**.
+    for area in areas:
+        problems += evidence_problems(area)
 
     # ── P-81 · 대장 id 는 **유일하다** (2026-09-06 · 턴 H) ──────────────────
     #   ★ **출생 표본**: 턴 G 에 새 절을 `SEC-14` 로 등재했는데 그 id 는 이미
@@ -1016,6 +1341,39 @@ def main() -> int:
           "게이트만 %d(제목이 게이트보다 넓다)"
           % (roll["closed"], sum(roll.values()), not_closed, roll["ratchet"],
              roll["rule_only"], roll["unmeasurable"], roll["gate_only"]))
+
+    # ── ★★ 별표 ② — 기능명세 id (P-234 · 2026-09-21 · 턴 AB) ──────────────
+    #   **상용/100 은 위에서 이미 났고 이 줄은 그 수를 안 건드린다.** 여기 있는 것은
+    #   `kind` 표의 정본(절 + 별표)이고, Q 의 「기능명세 포함 완료율」이 읽을 분모다.
+    _annex = ANNEX.get("data") or {}
+    _acl = _annex.get("clauses") or []
+    _n_sec = sum(roll.values())
+    if _acl:
+        print("[GA] [입력] ★ 별표 ② 기능명세 **%d개** 등재 — 규칙 «%s» · 출처 %s"
+              % (len(_acl), " ".join((_annex.get("rule") or "?").split()),
+                 _annex.get("source") or "?"))
+        print("[GA]   ★ **kind 표 정본 = %d + %d = %d** (절 %d + 별표 %d). 별표는 전부 "
+              "`미착수`·`unmeasurable` 로 태어나므로 **점수를 0 만큼 더한다** — "
+              "그래서 「기능명세 포함 완료율」은 **분모만 늘어 내려간다.** "
+              "**내려간 수가 정본이다**"
+              % (_n_sec, len(_acl), _n_sec + len(_acl), _n_sec, len(_acl)))
+        print("[GA]   ⚠ **별표는 위의 상용 오픈 가중 합계에 0 을 더했다** — 8영역 밖이라 "
+              "가중치 표를 건드리지 않는다. 위 수가 움직였다면 그것은 **절의 부류가 "
+              "바뀌어서**이지 별표 때문이 아니다. 두 수는 다른 것을 잰다 (D-345 와 같은 이유)")
+        #: ★★ [2026-09-21 · 턴 AB] **이 줄이 없으면 별표 136 이 분모에서 사라진다.**
+        #:   Q 의 `verify_spec_coverage.py` 는 위의 「부류 N절」 줄에서 절 수를 읽는데
+        #:   그 줄은 **8영역만** 센다. 별표를 8영역 밖에 둔 순간(가중치 표를 지키려고)
+        #:   Q 의 분모에서 136 이 **조용히 빠졌고 수가 25.6 → 50.0 으로 올라갔다.**
+        #:   **분모가 줄어 올라간 수는 수가 아니다.** 그래서 합을 **따로 한 줄로** 낸다.
+        print("[GA] [입력] ★★ **분모 정본 — 절 %d · 별표 %d · 합 %d**  "
+              "(`verify_spec_coverage.py` 가 읽을 자리. 위의 「부류 %d절」은 **8영역만** "
+              "센 수다 — 그 줄을 분모로 쓰면 별표 %d 이 조용히 빠진다)"
+              % (_n_sec, len(_acl), _n_sec + len(_acl), _n_sec, len(_acl)))
+    else:
+        print("[GA] [입력] ★ 별표 ② 기능명세 **등재 0건 — 회색이다(0 이 아니다)**. "
+              "kind 표 정본은 **%d 그대로**다" % _n_sec)
+        print("[GA]   ★ 사유: %s"
+              % " ".join((_annex.get("why") or "사유가 적혀 있지 않다").split())[:240])
     #: ★ [N → Q · 턴 AA] 셈법 규칙 2 가 「① = 영역 ⑧ 비율」이라 한다. 그 비율이
     #:   **상태로 센 것과 부류로 센 것 중 어느 쪽인가**는 이 턴에 갈릴 수 있다 —
     #:   그래서 **둘 다 찍는다.** 한쪽만 찍으면 읽는 쪽이 어느 것인지 모른 채 베낀다.

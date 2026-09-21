@@ -1,0 +1,110 @@
+{
+ "measured_at": "2026-09-21T12:05:19+00:00",
+ "marks_total": 11,
+ "marks_by_label": {
+  "user.coreuser:seed": 5,
+  "user.coreuser:probe": 6
+ },
+ "tenants": [
+  {
+   "pk": 4,
+   "name": "ETRI-Group",
+   "cameras_screen": 15,
+   "users_screen": 30,
+   "cameras_billed": 4,
+   "users_billed": 19,
+   "media_files": 115,
+   "media_bytes": 1493917814
+  },
+  {
+   "pk": 5,
+   "name": "Group Default",
+   "cameras_screen": 0,
+   "users_screen": 4,
+   "cameras_billed": 0,
+   "users_billed": 4,
+   "media_files": 2,
+   "media_bytes": 793418
+  },
+  {
+   "pk": 6,
+   "name": "Anyang",
+   "cameras_screen": 9,
+   "users_screen": 25,
+   "cameras_billed": 9,
+   "users_billed": 25,
+   "media_files": 667,
+   "media_bytes": 379668206
+  },
+  {
+   "pk": 7,
+   "name": "Gaion",
+   "cameras_screen": 15,
+   "users_screen": 15,
+   "cameras_billed": 15,
+   "users_billed": 15,
+   "media_files": 194,
+   "media_bytes": 2122401540
+  },
+  {
+   "pk": 8,
+   "name": "Thailand",
+   "cameras_screen": 0,
+   "users_screen": 8,
+   "cameras_billed": 0,
+   "users_billed": 8,
+   "media_files": 34,
+   "media_bytes": 169389509
+  },
+  {
+   "pk": 11,
+   "name": "Fire_Drone",
+   "cameras_screen": 11,
+   "users_screen": 6,
+   "cameras_billed": 11,
+   "users_billed": 6,
+   "media_files": 19,
+   "media_bytes": 2627089
+  },
+  {
+   "pk": 12,
+   "name": "DRONE-ROBOT",
+   "cameras_screen": 0,
+   "users_screen": 7,
+   "cameras_billed": 0,
+   "users_billed": 7,
+   "media_files": 16,
+   "media_bytes": 1830151
+  },
+  {
+   "pk": 13,
+   "name": "Gaion Test",
+   "cameras_screen": 0,
+   "users_screen": 1,
+   "cameras_billed": 0,
+   "users_billed": 1,
+   "media_files": 0,
+   "media_bytes": 0
+  },
+  {
+   "pk": 14,
+   "name": "Gongju",
+   "cameras_screen": 1,
+   "users_screen": 4,
+   "cameras_billed": 1,
+   "users_billed": 4,
+   "media_files": 13,
+   "media_bytes": 9081661
+  },
+  {
+   "pk": 15,
+   "name": "GeumSan-ETRI",
+   "cameras_screen": 0,
+   "users_screen": 2,
+   "cameras_billed": 0,
+   "users_billed": 2,
+   "media_files": 0,
+   "media_bytes": 0
+  }
+ ]
+}

@@ -636,6 +636,13 @@ if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
     gate_header(
         __file__,
+        measured=("메일이 **허용 목록을 거쳐서만** 나가는가 — **분모 1자리**"
+                  "(`%s::%s.%s` — 강제는 한 곳이다) + 살아 있는 수신자 전수"
+                  "(ORM 으로 받는다) · 개발 도메인 %d종 · 못 보낼 꼬리 %d종. "
+                  "부르는 쪽마다 막으면 한 곳이 빠지고, **빠진 그 한 곳이 사고가 "
+                  "된다** — 그래서 분모가 1 이다"
+                  % (TARGET[0], TARGET[1], TARGET[2],
+                     len(DEV_DOMAINS), len(FALLBACK_UNDELIVERABLE_SUFFIXES))),
         target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다",

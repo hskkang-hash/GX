@@ -10,9 +10,11 @@
 
 api_key	backend/apps/dsm/services.py	3
 api_key	backend/common/access_gate.py	2
+api_key	backend/common/billing_marks.py	1
 api_key	backend/common/cache_hint_registry.py	1
 api_key	backend/common/inbound_api_key.py	1
 api_key	backend/common/key_rotation.py	3
+api_key	backend/common/models.py	1
 api_key	backend/common/universal_optimization.py	4
 api_key	backend/config/k3_roles.py	4
 api_key	backend/kernels/k3_dashboard/presets.py	1
@@ -44,7 +46,7 @@ api_key	scripts/capture_screens.py	1
 api_key	scripts/measure_onboarding_t.py	2
 api_key	scripts/probe_key_scope_http.py	1
 api_key	scripts/verify_authn_paths.py	1
-api_key	scripts/verify_click_completes.py	3
+api_key	scripts/verify_click_completes.py	4
 api_key	scripts/verify_commented_guards.py	1
 api_key	scripts/verify_contract_route_reach.py	3
 api_key	scripts/verify_feature_reach.py	2
