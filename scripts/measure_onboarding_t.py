@@ -430,43 +430,121 @@ def table_rows(page) -> int:
 # ---------------------------------------------------------------------------
 # 행 — 하나씩. 돌려주는 것: measured · phrase_seen · predicate · verdict · evidence
 # ---------------------------------------------------------------------------
-def result(row, route, phrase_seen, predicate, evidence, cap_half=False, measured=True, url=""):
+#: ★★ [P-212 · 턴 Z · 차선 Q] **회색 열다섯의 이름이 세 판을 가로질러 전부 같았다.**
+#:   「못 쟀다」한 낱말이 서로 다른 세 가지를 삼키고 있었고, 이름이 같으니 누구도
+#:   **어느 것을 고치면 수가 움직이는지** 몰랐다. 그래서 회색을 셋으로 가른다 —
+#:   갈라 놓으면 각 부류의 **주인이 다르다**는 것이 드러난다:
+#:
+#:     env      「환경(로그인·세션)」    — 도구가 문 앞에서 막혔다. 제품을 **안 건드렸다.**
+#:                                        고치는 자리: 자격·창·때린 주소. **우리 쪽이다.**
+#:     nopred   「우리가 안 잰 것」      — 술어가 **없다.** 제품이 어떤지 모른다.
+#:                                        고치는 자리: 판정기에 술어를 넣는 것. **우리 쪽이다.**
+#:     nodata   「잴 것이 0」            — 문도 술어도 섰는데 **자료가 비었다.**
+#:                                        고치는 자리: 씨앗·시드. 제품 버그가 **아니다.**
+#:
+#:   ⚠ 셋 다 **여전히 회색**이다. 가르는 것은 색을 올리는 일이 아니라 **주인을 적는 일**이다.
+#:     사유를 안 적은 회색은 「잊은 것」과 구별되지 않는다 (D-301).
+GRAY_KINDS = {
+    "env": "환경(로그인·세션) — 도구가 문 앞에서 막혔다. 제품을 안 건드렸다",
+    "nopred": "우리가 안 잰 것(술어 없음) — 제품이 어떤지 **모른다**",
+    "nodata": "잴 것이 0(자료 상태) — 문도 술어도 섰는데 잴 자료가 비었다",
+}
+
+
+def result(row, route, phrase_seen, predicate, evidence, cap_half=False, measured=True,
+           url="", gray_kind=""):
     if not measured:
         verdict, score = "gray", None
-    elif phrase_seen and predicate:
-        verdict, score = ("half", 0.5) if cap_half else ("green", 1.0)
+        #: 회색인데 부류를 안 준 자리는 **그 사실 자체를 적는다** — 조용히 빈 칸으로
+        #: 두면 「가르지 않은 것」이 「가를 수 없는 것」처럼 보인다.
+        gray_kind = gray_kind or "unsorted"
     else:
-        verdict, score = "red", 0.0
+        verdict, score = (("half", 0.5) if cap_half else ("green", 1.0)) \
+            if (phrase_seen and predicate) else ("red", 0.0)
+        gray_kind = ""
     return {"row": row, "route": route, "url": url, "phrase_seen": phrase_seen,
             "predicate": predicate, "verdict": verdict, "score": score,
             "cap_half": cap_half, "measured": measured, "evidence": evidence,
+            "gray_kind": gray_kind,
+            "gray_why": GRAY_KINDS.get(gray_kind, "" if not gray_kind else
+                                       "**부류를 안 적었다** — 이 회색은 주인이 없다"),
             "measured_at": now_iso()}
 
 
-def api_token(ctx, web: str, user: str, password: str) -> str | None:
+#: ★ [U3 쪽지 ③ · 턴 Z] **회색의 사유도 측정이다.** 로그인이 실제로 낸 상태·본문
+#:   앞부분·때린 주소를 여기 담아 두고, 회색 줄이 **짐작 대신 그것**을 적는다.
+#:   어제 「자격이 없다」라고 적힌 다섯 행은 자격이 **있었다** — 문이 틀렸을 뿐이다.
+LOGIN_WHY: dict = {}
+
+
+from urllib.parse import quote, urlencode      # noqa: E402  (U3 쪽지 ① — 질의로 싣는다)
+
+
+def api_token(ctx, api_base: str, user: str, password: str) -> str | None:
     """기계의 로그인 — **문으로 들어온다**(사람은 화면으로 들어온다 · `login()`).
 
     토큰을 꺼내는 규칙은 두 벌로 두지 않는다 — `verify_route_alive._extract_token` 하나를
     쓴다(D-369). 그 함수에는 **「200 인데 success:false 는 토큰이 아니다」**가 박혀 있고,
     복사본은 그 교훈을 한쪽에만 남긴다.
+
+    ★★ [실측 2026-09-21 · 턴 Z · Q] **`web` 이 아니라 `api_base` 다.** 여기에 `web`
+      (= `--web`, 기본 `http://localhost:3002`)을 주고 있었다. 3002 은 API 가 아니라
+      `SimpleHTTP/0.6 Python/3.11.14` **정적 SPA 서버**다 — POST 를 모르고
+      **501 `Unsupported method ('POST')` 를 `text/html;charset=utf-8` 로** 낸다.
+      그래서 `r.json()` 이 `JSONDecodeError` 로 터지고 이 함수가 `None` 을 돌려주어
+      **U6 다섯 행(#1·#2·#3·#4·#9)이 「기계 자격이 없다」 회색**이 됐다.
+      계정도 속도 제한도 세션 제한도 아니었다 — **때린 문이 API 가 아니었다.**
+      (같은 자격으로 8000 에 때리면 200 · `application/json` · `access_token`.)
     """
     if not (user and password):
+        LOGIN_WHY[user or "(이름 없음)"] = "자격 이름이 비었다 — 부르지도 않았다"
         return None
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         from verify_route_alive import _extract_token     # noqa: PLC0415
     except Exception:                                     # noqa: BLE001
+        LOGIN_WHY[user] = "_extract_token 을 못 읽었다 — 부르지도 않았다"
         print(f"{TAG} ⚠ _extract_token 을 못 읽었다 — 기계 로그인을 건너뛴다(회색)")
         return None
-    try:
+
+    def once():
         r = ctx.request.post(
-            web + "/api/v1/auth/login",
+            api_base + "/api/v1/auth/login",
             headers={"Content-Type": "application/json"},
             data=json.dumps({"username": user, "password": password,
                              "end_previous_session": True}),
             fail_on_status_code=False, timeout=30000)
-        return _extract_token(r.json())
+        head = ""
+        try:
+            body = r.body()
+            head = bytes(body)[:120].decode("utf-8", "replace")
+        except Exception:                                 # noqa: BLE001
+            pass
+        try:
+            return r.status, _extract_token(r.json()), head
+        except Exception as exc:                          # noqa: BLE001
+            #: ★ **JSON 이 아닌 답은 「자격이 없다」가 아니다.** 3002(정적 SPA 서버)에
+            #:   POST 하면 501 `text/html` 이 오고, 그것을 자격 문제로 적으면 다음 사람이
+            #:   엉뚱한 곳을 판다 — 턴 Y 가 그렇게 다섯 행을 잃었다 (턴 Z · Q 실측).
+            return r.status, None, "%s: %s · 앞부분 %r" % (type(exc).__name__, exc, head)
+
+    try:
+        status, token, head = once()
+        #: ★★ [U3 쪽지 ② · 턴 Z] **429 는 자격 문제가 아니다.** 로그인은 5/분/IP 다
+        #:   (`NINJA_DEFAULT_THROTTLE_RATES` anon · 실측으로는 4번째부터 429 가 났다).
+        #:   한 번만 기다렸다 다시 부른다 — 두 번째도 429 면 **포기하고 그 사실을 적는다.**
+        #:   `verify_route_alive.login` 에는 이 길이 이미 있었고 여기만 없었다.
+        if status == 429 and not token:
+            print(f"{TAG} ⚠ 로그인 429 (율제한) — {GAP_SECONDS}초 기다렸다 한 번만 더 부른다")
+            time.sleep(GAP_SECONDS)
+            status, token, head = once()
+        if not token:
+            LOGIN_WHY[user] = ("POST %s/api/v1/auth/login -> %s · %s — **자격 문제라고 "
+                               "단정하지 않는다**" % (api_base, status, head or "본문 없음"))
+            print(f"{TAG} 기계 로그인 토큰 못 받음 {user}: {LOGIN_WHY[user]}")
+        return token
     except Exception as exc:                              # noqa: BLE001
+        LOGIN_WHY[user] = "%s: %s (때린 곳 %s)" % (type(exc).__name__, exc, api_base)
         print(f"{TAG} 기계 로그인 실패 {user}: {type(exc).__name__}: {exc}")
         return None
 
@@ -484,11 +562,15 @@ def guarded(out, key, route, fn):
     except Exception as exc:                            # noqa: BLE001
         out.append(result(key, route, False, False,
                           "재다 터졌다 — %s: %s (못 쟀다 · 회색. 나머지 행은 그대로 잰다)"
-                          % (type(exc).__name__, str(exc)[:200]), measured=False))
+                          % (type(exc).__name__, str(exc)[:200]),
+                          measured=False, gray_kind="env"))
 
 
 def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, out_path: str,
-            only=(), canon_path: str | None = None) -> int:
+            only=(), canon_path: str | None = None, api_base: str = "") -> int:
+    #: `web` 은 **사람이 보는 화면**(SPA · 3002), `api_base` 는 **기계가 두드리는 문**(API · 8000).
+    #: 한 글자로 둘을 가리키면 U6 처럼 정적 서버를 제품으로 착각한다 (턴 Z · Q 실측).
+    api_base = api_base or os.environ.get("GX_API") or "http://localhost:8000"
     from playwright.sync_api import sync_playwright
 
     stamp = datetime.now().strftime("%Y%m%dT%H%M%S")
@@ -533,7 +615,9 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
             if not lg["ok"]:
                 # 못 잰 행은 회색 — 이 사람의 행 전부. **목록은 정본에서 온다**(손으로 적지 않는다).
                 for row in [k for k in canon["two_column"] if k.split("#")[0] == pn]:
-                    results.append(result(row, "", False, False, "로그인 실패 — 못 쟀다: " + lg.get("why", ""), measured=False))
+                    results.append(result(row, "", False, False,
+                                          "로그인 실패 — 못 쟀다: " + lg.get("why", ""),
+                                          measured=False, gray_kind="env"))
                 ctx.close()
                 continue
             try:
@@ -563,14 +647,23 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
                     time.sleep(GAP_SECONDS)
                 actx = browser.new_context()
                 probe_pw = os.environ.get("GX_PROBE_PASSWORD") or ""
-                u6_token = api_token(actx, web, "gxprobe_q", probe_pw)
-                adm_token = api_token(actx, web, "gxseed_u5_sysop", role_pw)
-                print(f"{TAG} ═══ U6 · 기계 · 토큰={bool(u6_token)} · "
-                      f"관리자토큰={bool(adm_token)} ═══")
-                logins.append({"persona": "U6", "user": "gxprobe_q",
-                               "ok": bool(u6_token), "admin_ok": bool(adm_token)})
-                rows_u6(actx.request, web, results,
-                        token=u6_token, admin_token=adm_token, seed_b=seed_b)
+                #: ★ [U3 쪽지 ④ · 턴 Z] **계정 이름을 손으로 박지 않는다.** 다른 게이트는
+                #:   전부 `GX_PROBE_USER` 를 읽는데 여기만 `"gxprobe_q"` 가 박혀 있었다.
+                #:   오늘은 둘 다 살아 있고 같은 비밀로 열려서 아무 일도 안 났지만
+                #:   (U3 실측: gxprobe_q id 112 · gxprobe_v id 116 · 둘 다 200),
+                #:   자격이 한 번 돌면 **이 도구만 다른 계정을 재게 된다.**
+                probe_user_name = os.environ.get("GX_PROBE_USER") or "gxprobe_q"
+                u6_token = api_token(actx, api_base, probe_user_name, probe_pw)
+                adm_token = api_token(actx, api_base, "gxseed_u5_sysop", role_pw)
+                print(f"{TAG} ═══ U6 · 기계 · 계정={probe_user_name} · "
+                      f"토큰={bool(u6_token)} · 관리자토큰={bool(adm_token)} ═══")
+                logins.append({"persona": "U6", "user": probe_user_name,
+                               "ok": bool(u6_token), "admin_ok": bool(adm_token),
+                               "why": LOGIN_WHY.get(probe_user_name, ""),
+                               "admin_why": LOGIN_WHY.get("gxseed_u5_sysop", "")})
+                rows_u6(actx.request, api_base, results,
+                        token=u6_token, admin_token=adm_token, seed_b=seed_b,
+                        probe_user_name=probe_user_name)
                 actx.close()
             except Exception as exc:                    # noqa: BLE001
                 print(f"{TAG} ⚠ U6 예외: {type(exc).__name__}: {exc}")
@@ -581,7 +674,7 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
                         results.append(result(k, "", False, False,
                                               "U6 걸음이 터졌다 — %s: %s (못 쟀다)"
                                               % (type(exc).__name__, str(exc)[:160]),
-                                              measured=False))
+                                              measured=False, gray_kind="env"))
         browser.close()
 
     measured_rows = [r for r in results if r["measured"]]
@@ -636,6 +729,20 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
         return 2
     print(f"{TAG} 두 칸 행 {len(canon['two_column'])} 중 시도 {len(results)} · 초록 {green} · 반 {half} · "
           f"빨강 {red} · 회색(못 잼) {gray} · 정본 없음 회색 {len(canon['no_canonical'])}")
+    #: ★ [P-212 · 턴 Z · Q] **회색을 셋으로 갈라 소리 내어 읽는다.** 한 낱말로 뭉친 회색은
+    #:   세 턴째 같은 수에 머물렀고, 이름이 같으니 **어느 것을 고치면 수가 움직이는지**
+    #:   아무도 몰랐다. 여기서 부류를 적으면 각 부류의 **주인**이 드러난다.
+    #:   ⚠ 가른다고 색이 오르지 않는다 — 셋 다 여전히 회색이다.
+    if gray:
+        from collections import Counter as _C
+        _kinds = _C(r.get("gray_kind") or "unsorted"
+                    for r in results if r["verdict"] == "gray")
+        print(f"{TAG} ── 회색 {gray}건의 사유 (P-212) ──")
+        for _k, _n in sorted(_kinds.items(), key=lambda kv: -kv[1]):
+            print(f"{TAG}   {_n:3d}건  {_k:8s} {GRAY_KINDS.get(_k, '**부류를 안 적었다**')}")
+            for _r in results:
+                if _r["verdict"] == "gray" and (_r.get("gray_kind") or "unsorted") == _k:
+                    print(f"{TAG}          · {_r['row']:7s} {_r['evidence'][:96]}")
     if not_measured:
         print(f"{TAG} ⚠ **정본에 있는데 이 도구가 아직 안 재는 행 {len(not_measured)}**: {not_measured}")
     if not_in_canon:
@@ -655,30 +762,79 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
 # 세는 법은 `scripts/probe_events.py` 한 곳이 정본이다 — 여기서 새로 쓰지 않는다.
 # 두 벌을 두면 반드시 어긋나고, 어긋나면 **조용한 쪽이 이긴다**(D-212 · D-369).
 #
-# ⚠ 실물 사정 하나: `/api/dsm/events` 응답 행에는 `track_id` 칸이 **없다**
-#   (`apps/dsm/api.py:256·413` 이 내는 것은 `stream_monitor_name` 이다). 그래서
-#   정본의 첫째 셈법(`is_probe_track`)만으로는 HTTP 측정 자리에서 못 거른다.
-#   정본은 **둘째 셈법**도 들고 있다 — 게이트 전용 카메라 이름(`PROBE_CAMERA_HINT`).
-#   둘 다 그 파일 것이고, 여기서는 **빌려 쓴다**.
-# ⚠ 그리고 **뺀 수를 적는다.** 조용히 빼면 분모가 줄어든 것을 아무도 못 본다 —
-#   「지우지 않고 세지 않기」의 요점은 제외가 아니라 **분모를 밝히는 것**이다.
-#   [2026-09-19 조율자 실측: probe 사건 12건 · 미처리는 세는 칸에 따라 5 또는 8]
+# ★★ [2026-09-21 · 턴 Z · 차선 Q] **둘째 셈법(카메라 이름)을 같이 없앴다 — 되살리지 말 것.**
+#
+#   종전 이 자리는 정본에서 `PROBE_CAMERA_HINT`(게이트 전용 카메라 이름 `gxprobe`)를
+#   **빌려다** 둘째 갈래로 걸렀다. 사유는 「응답 행에 `track_id` 가 없어서」였다.
+#   그 갈래는 **틀렸다.** U1 이 P-201 마무리에서 이름으로 댔고, 제가 같은 것을 다시 쟀다:
+#
+#       [실측 2026-09-21 · 턴 Z · Q · gx-shell 안에서 GET /api/dsm/events?limit=5]
+#         id=305027·305028·305029  cam='gxprobe-D384-screen 캡처용 카메라'
+#                                  data_source='drill'   track_id=None
+#
+#   ⇒ 그 카메라에 매달린 것은 **탐침이 아니라 훈련(drill)** 이다. 이름으로 세면
+#     **훈련 사건이 탐침으로 오인되어 분모에서 빠진다** — 우리 수가 **높게** 나오고,
+#     높게 나오는 쪽은 아무도 못 본다. **이름은 표식이 아니다**(표식은 행 안에 있다).
+#   ⇒ 그래서 세는 법은 **표식 하나**다: `is_probe_track(track_id)`.
+#     `scripts/probe_events.py` 가 상수까지 지운 것도 같은 뜻이다 —
+#     이름을 남겨 두면 다음 사람이 그것을 빌려다 또 이름으로 센다.
+#
+# ⚠ 그러면 **HTTP 자리에서는 아무것도 못 거른다**는 사실이 남는다. 그것을 숨기지 않는다:
+#
+#     [실측 2026-09-21 · 턴 Z · Q] `/api/dsm/events` 한 행의 칸은
+#       data_source · event_id · event_type · last_seen_at · lat · lng · occurred_at ·
+#       response_state · severity · snapshot_path · status · stream_monitor_id ·
+#       stream_monitor_name · verdict          ← **`track_id` 가 없다**
+#
+#     그리고 `data_source` 로 갈음할 수도 **없다** — `apps/dsm/services.py:227
+#     event_data_source` 는 `"drill"` 아니면 `"live"` **둘만** 낸다. `"probe"` 는
+#     그 축에 **없다**(탐침은 훈련과 달리 창이 없어 창 판정으로 답할 수 없다).
+#     그러므로 U1 이 쪽지에 준 두 길 중 **②(data_source 로 거르기)는 성립하지 않는다.**
+#     남은 길은 ① — **안 거르되, 안 걸렀다고 말한다.**
+#
+# ⚠ **뺀 수를 적는다. 못 뺐으면 못 뺐다고 적는다.** 조용히 안 거르면 분모가 틀린 것을
+#   아무도 못 본다 — 회색도 빨강도 안 나고 그냥 안 걸러지는 것이 가장 나쁜 모양이다.
+#   「지우지 않고 세지 않기」의 요점은 제외가 아니라 **분모를 밝히는 것**이다(P-184).
+#   그래서 이 함수는 못 거른 자리에서 `dropped=None` 을 돌려주고, 부르는 쪽이 그것을
+#   증거줄에 **소리 내어** 적는다. [2026-09-19 조율자 실측: probe 사건 12건 ·
+#   2026-09-21 U1 실측: 표식 `data_source=probe` **0건**(대표 결정으로 씨앗 4건 지움)]
 # ---------------------------------------------------------------------------
 def exclude_probe_rows(rows):
-    """(사람 것만, 뺀 probe 사건 번호). 정본을 부른다 — 세는 법을 새로 쓰지 않는다."""
+    """(사람 것만, 뺀 probe 사건 번호). 정본을 부른다 — 세는 법을 새로 쓰지 않는다.
+
+    돌려주는 둘째 값의 뜻 **셋**을 가른다 — 「0건 뺐다」와 「못 뺐다」는 다른 사실이다:
+
+        `[]`      잴 수 있었고 **뺄 것이 0건**이었다      (분모를 밝혔다)
+        `[id…]`   잴 수 있었고 **이만큼 뺐다**            (분모를 밝혔다)
+        `None`    **못 쟀다** — 거르지 못했다             (분모가 틀릴 수 있다 · D-301)
+
+    `None` 을 조용한 성공으로 읽으면 안 된다. 부르는 쪽이 증거줄에 소리 내어 적는다.
+    """
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     try:
-        from probe_events import PROBE_CAMERA_HINT, is_probe_track   # noqa: E402
-    except ImportError:
+        from probe_events import is_probe_track          # noqa: E402
+    except ImportError as exc:                           # noqa: BLE001
         #: 정본을 못 부르면 **거르지 않는다.** 여기서 급히 흉내 내면 그것이 두 번째 정본이 된다.
+        #: ⚠ 다만 **조용히 지나가지 않는다** — 안 걸렀다는 사실을 돌려주고 찍는다.
+        print(f"{TAG} ⚠ probe 정본(`probe_events.py`)을 못 불렀다 ({exc}) — **거르지 않았다**")
         return list(rows or []), None
+
+    dicts = [r for r in (rows or []) if isinstance(r, dict)]
+    #: ★ **표식 칸이 아예 없으면 「0건 뺐다」가 아니라 「못 뺐다」다.**
+    #:   `/api/dsm/events` 응답에는 `track_id` 가 없다(머리말 ★★ 의 실측). 그 자리에서
+    #:   `is_probe_track` 은 언제나 거짓이고, 그 거짓을 「탐침이 없다」로 읽으면
+    #:   **분모 0인 초록**이 된다. 칸이 실리는 날 이 갈래는 저절로 살아난다.
+    if dicts and not any("track_id" in r for r in dicts):
+        return list(rows or []), None
+
     kept, dropped = [], []
     for r in rows or []:
         if not isinstance(r, dict):
             kept.append(r)
             continue
-        cam = str(r.get("stream_monitor_name") or "").lower()
-        if is_probe_track(r.get("track_id")) or PROBE_CAMERA_HINT in cam:
+        #: 세는 법은 **표식 하나**다. 카메라 이름 갈래는 폐지됐다(머리말 ★★) —
+        #: 그 갈래는 훈련(drill)을 탐침으로 읽었다. **되살리지 말 것.**
+        if is_probe_track(r.get("track_id")):
             dropped.append(r.get("event_id"))
         else:
             kept.append(r)
@@ -857,7 +1013,12 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     probe_note = ("" if not probe_out else
                   f" · probe 제외 {len(probe_out)}건 {probe_out[:6]} (지우지 않고 세지 않는다 · P-184)")
     if probe_out is None:
-        probe_note = " · ⚠ probe 정본(`probe_events.py`)을 못 불러 **거르지 않았다**"
+        #: ★ [턴 Z · Q] 사유를 **이름으로** 적는다. 종전 문장은 원인을 하나(「정본을 못 불렀다」)로
+        #:   단정했는데, 오늘 실제 사유는 **응답에 표식 칸이 없다**는 쪽이다.
+        probe_note = (" · ⚠ **probe 를 못 걸렀다**(이 수에는 게이트 사건이 섞일 수 있다) — "
+                      "응답 행에 `track_id` 가 없고(`data_source` 는 drill/live 둘만 낸다) "
+                      "카메라 이름으로 거르는 갈래는 **훈련을 탐침으로 읽어서 폐지**했다 "
+                      "(P-201 · P-184). 못 쟀다는 뜻이지 0건이라는 뜻이 아니다")
     out.append(result("U2#2", "/dsm/events?preset=unhandled", seen, bool(g200) and all_unhandled,
                       f"GET …response_state=occurred 200={bool(g200)} (서버 {n_srv}건{probe_note}) · 처리 단계 칸 {len(states)} 전부 미처리={all_unhandled} {sorted(set(states))}", url=url))
 
@@ -893,7 +1054,8 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         out.append(result("U2#4", "/dsm/events/:id", False, False,
                           "그림 실린 씨앗이 없어 **못 쟀다** — 씨앗 명세의 snapshot_path 가 전부 비었다. "
                           "capture_screens 를 이 턴 판으로 다시 돌리거나 --snap-event 를 손으로 준다 "
-                          "(개발 DB 에서 200 이 확인된 사건: 4802)", measured=False))
+                          "(개발 DB 에서 200 이 확인된 사건: 4802)",
+                          measured=False, gray_kind="nodata"))
     else:
         m = net.mark()
         url = goto(page, web, f"/dsm/events/{snap_event}")
@@ -1150,7 +1312,7 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         if not snap_event:
             out.append(result("U3#3", "/m/events/:id", False, False,
                               "그림 실린 씨앗이 없어 **못 쟀다**(U2#4 와 같은 사유 · --snap-event)",
-                              measured=False))
+                              measured=False, gray_kind="nodata"))
             return
         m = net.mark()
         url = goto(page, web, f"/m/events/{snap_event}")
@@ -1261,62 +1423,107 @@ def _outbox_signed() -> int:
     return -1
 
 
-def rows_u6(api, web, out, *, token, admin_token, seed_b):
-    """기계 행 여덟. `api` 는 playwright 의 `APIRequestContext` — 브라우저 없이 문만 부른다."""
+#: ★ [P-212 · 턴 Z] U6#4 가 오래 회색이던 까닭 하나는 **잴 것이 0**(`WEBHOOK_SIGNING_KEYS`
+#:   빈 표)이었다. 시험 키의 **참조 이름**을 환경에서 받는다 — 값이 아니라 이름이고,
+#:   쿼리·argv 에 실리는 것도 **이 참조 이름**뿐이다(키 자체는 시드가 들고 있다).
+U6_SIGNING_KEY_REF = os.environ.get("GX_WEBHOOK_SIGNING_KEY_REF") or "p118-gate"
+
+
+def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
+            probe_user_name="gxprobe_q"):
+    """기계 행 여덟. `api` 는 playwright 의 `APIRequestContext` — 브라우저 없이 문만 부른다.
+
+    ★★ [실측 2026-09-21 · 턴 Z · Q] 둘째 인자는 **`api_base`(8000)이지 `web`(3002)이 아니다.**
+      `web` 을 주고 있던 동안 U6#12·#14·#15 는 **정적 SPA 서버의 404** 를 받아
+      「익명 읽기 5건 전부 404」·「X-GX-Schema 없다」·「health 404」로 **빨강**이었다 —
+      제품이 낸 빨강이 아니라 **문을 잘못 두드린 빨강**이다(거짓 빨강).
+    """
     def call(method, path, *, headers=None, data=None):
         fn = getattr(api, method.lower())
         kw = {"headers": headers or {}, "fail_on_status_code": False, "timeout": 30000}
         if data is not None:
             kw["data"] = data
-        r = fn(web + path, **kw)
+        r = fn(api_base + path, **kw)
         return r, _json_of(r)
 
     bearer = {"Authorization": "Bearer %s" % token} if token else {}
     admin = {"Authorization": "Bearer %s" % admin_token} if admin_token else {}
     JSON = {"Content-Type": "application/json"}
 
-    def no_cred(key, route):
+    def no_cred(row_key, route):
         """★ 자격 없이 두드려 401 을 받고 그것을 **빨강**으로 세면 제품이 아니라
-        **우리의 빈 주머니**를 재는 것이다 — 회색이다 (D-301)."""
-        out.append(result(key, route, False, False,
-                          "기계 자격이 없다 — 환경에 GX_PROBE_PASSWORD(계정 gxprobe_q)를 "
-                          "주면 잰다. 자격 없이 받은 401 을 빨강으로 세지 않는다",
-                          measured=False))
+        **우리의 빈 주머니**를 재는 것이다 — 회색이다 (D-301).
+
+        ★★ [U3 쪽지 ③ · 턴 Z] **사유를 짐작하지 않는다.** 이 문장은 어제 거짓말을 했다 —
+          「환경에 GX_PROBE_PASSWORD 를 주면 잰다」고 적었는데 그 값은 `.env.gates` 에
+          **있었고**, 안 재진 까닭은 자격이 아니라 **때린 문이 API 가 아니었기 때문**이다.
+          그래서 이제 **로그인이 실제로 낸 것**(상태 · 본문 앞부분 · 때린 주소)만 적는다.
+          「무엇을 주면 잰다」는 그것을 **실제로 확인했을 때만** 쓴다.
+        """
+        why = LOGIN_WHY.get(probe_user_name) or LOGIN_WHY.get("gxprobe_q") or ""
+        out.append(result(row_key, route, False, False,
+                          "기계 토큰이 없어 **못 쟀다**(회색) — 로그인이 실제로 낸 것: %s"
+                          % (why or "**기록이 없다** — 로그인을 부르지도 않았다"),
+                          measured=False, gray_kind="env"))
         return True
 
     # #1 API 키로 인증 — 발급 → 키로 200 · 익명으로 401 → **되돌린다**
     def _u6_1():
         if not admin_token:
             out.append(result("U6#1", "POST /settings/api-keys", False, False,
-                              "관리자 토큰이 없다 — 키를 발급할 수 없어 **못 쟀다**(회색)",
-                              measured=False))
+                              "관리자 토큰이 없다 — 키를 발급할 수 없어 **못 쟀다**(회색). "
+                              "로그인이 실제로 낸 것: %s"
+                              % (LOGIN_WHY.get("gxseed_u5_sysop")
+                                 or "**기록이 없다** — 부르지도 않았다"),
+                              measured=False, gray_kind="env"))
             return
         name = "onb-U6-%s" % datetime.now().strftime("%H%M%S")
-        r, js = call("post", "/api/dsm/settings/api-keys",
-                     headers=dict(admin, **JSON), data=json.dumps({"name": name}))
-        key = key_id = None
+        #: ★★ [U3 쪽지 ① · 턴 Z · 격리 재현] **422 는 「본문 대신 쿼리」였다.**
+        #:   `backend/apps/dsm/api.py:1060 issue_api_key(self, request, name: str, …)` —
+        #:   django-ninja 는 **스키마가 아닌 맨 스칼라 인자를 `Query` 로 잡는다**(POST 라도).
+        #:   그래서 JSON 본문에 실은 `name` 은 아무 데도 안 닿고
+        #:   `422 {"loc": ["query","name"]}` 가 났다. 제품이 아니라 **우리가 틀린 문**이다.
+        #:   ⚠ 「비밀은 쿼리에 0」과 안 부딪힌다 — 여기 실리는 것은 **키 이름**뿐이고
+        #:     발급된 `secret` 은 **응답 본문**으로만 온다.
+        r, js = call("post", "/api/dsm/settings/api-keys?name=%s" % quote(name),
+                     headers=admin)
+        #: ★ [턴 Z · Q] 이름에 **방향**을 준다. `inbound_` 는 「이 키를 들고 **밖에서 안으로**
+        #:   들어오는 부름에 쓴다」는 뜻이다 — 맨 `key` 는 사전 열쇠인지 API 키인지, 우리가
+        #:   보내는 것인지 받는 것인지 글자만 봐서는 갈리지 않는다.
+        #:   ⚠ **우리 이름은 지역 변수뿐이다.** `sc.get("key")`·`sc.get("api_key")` 는
+        #:     서버 응답의 칸 이름이고 `"X-API-Key"` 는 계약 헤더 이름,
+        #:     `"/api/dsm/settings/api-keys"` 는 제품의 경로다 — 셋은 **우리 것이 아니라서
+        #:     못 바꾼다**(바꾸면 측정이 깨진다 · `gx-homonyms` 를 이 사유로 얼렸다).
+        inbound_key = inbound_key_id = None
         scopes = [js if isinstance(js, dict) else {}]
         if isinstance(scopes[0].get("data"), dict):
             scopes.append(scopes[0]["data"])
         for sc in scopes:
-            key = key or sc.get("key") or sc.get("api_key") or sc.get("secret")
-            key_id = key_id if key_id is not None else (sc.get("id") or sc.get("key_id"))
-        with_key = None
-        if key:
-            rk, _ = call("get", "/api/dsm/events", headers={"X-API-Key": key})
-            with_key = rk.status
+            inbound_key = inbound_key or sc.get("key") or sc.get("api_key") or sc.get("secret")
+            inbound_key_id = (inbound_key_id if inbound_key_id is not None
+                              else (sc.get("id") or sc.get("key_id")))
+        with_inbound_key = None
+        if inbound_key:
+            rk, _ = call("get", "/api/dsm/events", headers={"X-API-Key": inbound_key})
+            with_inbound_key = rk.status
         ra, _ = call("get", "/api/dsm/events")
         anon = ra.status
-        if key_id is not None:
-            rd, _ = call("delete", "/api/dsm/settings/api-keys/%s" % key_id, headers=admin)
-            reverted = " · [되돌림] DELETE api-keys/%s -> %s" % (key_id, rd.status)
+        if inbound_key_id is not None:
+            rd, _ = call("delete", "/api/dsm/settings/api-keys/%s" % inbound_key_id,
+                         headers=admin)
+            reverted = " · [되돌림] DELETE api-keys/%s -> %s" % (inbound_key_id, rd.status)
+        elif r.status == 422:
+            #: ★ [U3 쪽지 ① · 턴 Z] **422 는 지울 것을 안 만든다.** 핸들러가 돌기 전에
+            #:   떨어지므로 `transaction.atomic` 안으로도 안 들어간다 — U3 가 재현해
+            #:   **키 0개**를 확인했다. 「손으로 지운다」는 다음 사람을 헛일 시킨다.
+            reverted = " · [되돌릴 것 없음] 422 는 핸들러 앞에서 떨어졌다 — 키 0개 생성"
         else:
             reverted = " · **되돌리지 못했다** — 응답에서 키 id 를 못 찾았다(손으로 지운다)"
-        out.append(result("U6#1", "POST /settings/api-keys", bool(key),
-                          with_key == 200 and anon == 401,
+        out.append(result("U6#1", "POST /settings/api-keys", bool(inbound_key),
+                          with_inbound_key == 200 and anon == 401,
                           "발급 %s · 키 받음=%s · 키로 GET events=%s(기대 200) · "
                           "익명 GET events=%s(기대 401)%s"
-                          % (r.status, bool(key), with_key, anon, reverted)))
+                          % (r.status, bool(inbound_key), with_inbound_key, anon, reverted)))
     guarded(out, "U6#1", "POST /settings/api-keys", _u6_1)
 
     # #2 이벤트 목록 — 200 + **봉투가 아닌 진짜 JSON**(total 과 events 가 둘 다)
@@ -1359,10 +1566,16 @@ def rows_u6(api, web, out, *, token, admin_token, seed_b):
             return
         before, _ = call("get", "/api/dsm/webhook-subscriptions", headers=bearer)
         n0 = _count_rows(_json_of(before))
-        r, js = call("post", "/api/dsm/webhook-subscriptions",
-                     headers=dict(bearer, **JSON),
-                     data=json.dumps({"url": "https://example.invalid/onb-u6",
-                                      "event_types": ["event.created"]}))
+        #: ★★ [U3 쪽지 ① · 턴 Z] U6#1 과 **같은 뿌리**다 —
+        #:   `api.py:698 create_webhook_subscription(self, request, endpoint_url: str,
+        #:   signing_key_ref: str, event_types: str = "", …)` 도 전부 맨 스칼라라
+        #:   django-ninja 가 **질의**로 잡는다. 본문으로 보내면 422 다.
+        #:   `signing_key_ref` 는 **참조 이름**이지 키 자체가 아니다(값은 안 싣는다).
+        r, js = call("post", "/api/dsm/webhook-subscriptions?"
+                     + urlencode({"endpoint_url": "https://example.invalid/onb-u6",
+                                  "signing_key_ref": U6_SIGNING_KEY_REF,
+                                  "event_types": "event.created"}),
+                     headers=bearer)
         sid = None
         scopes = [js if isinstance(js, dict) else {}]
         if isinstance(scopes[0].get("data"), dict):
@@ -1375,6 +1588,8 @@ def rows_u6(api, web, out, *, token, admin_token, seed_b):
         if sid is not None:
             rd, _ = call("delete", "/api/dsm/webhook-subscriptions/%s" % sid, headers=bearer)
             reverted = " · [되돌림] DELETE %s -> %s" % (sid, rd.status)
+        elif r.status == 422:
+            reverted = " · [되돌릴 것 없음] 422 는 핸들러 앞에서 떨어졌다 — 구독 0개 생성"
         else:
             reverted = " · **되돌리지 못했다** — 구독 id 를 못 찾았다(손으로 지운다)"
         out.append(result("U6#4", "POST /webhook-subscriptions",
@@ -1390,9 +1605,13 @@ def rows_u6(api, web, out, *, token, admin_token, seed_b):
         if not token:
             no_cred("U6#9", "POST /events/{id}/response")
             return
-        r, _ = call("post", "/api/dsm/events/%d/response" % U6_ABSENT_EVENT,
-                    headers=dict(bearer, **JSON),
-                    data=json.dumps({"to_state": "acknowledged"}))
+        #: ★ [턴 Z · Q] `api.py:479 advance_response(self, request, event_id: int,
+        #:   to_state: str, reason: str = "")` — 여기도 맨 스칼라라 **질의**다.
+        #:   본문으로 보내면 핸들러에 닿기 전에 422 로 떨어져 **P-83 눈금이 안 선다**
+        #:   (404 = 관문을 지났다 · 403 = 관문에서 막혔다 — 422 는 둘 다 아니다).
+        r, _ = call("post", "/api/dsm/events/%d/response?%s"
+                    % (U6_ABSENT_EVENT, urlencode({"to_state": "acknowledged"})),
+                    headers=bearer)
         out.append(result("U6#9", "POST /events/{id}/response", True, r.status == 404,
                           "없는 사건(%d)으로 두드렸다 -> %s. **404 = 관문을 지나 핸들러까지 "
                           "갔다(상태는 안 건드렸다)** · 403 = 관문에서 막혔다(P-83 눈금). "
@@ -1883,7 +2102,11 @@ def _v_lock_blocks(tag: str = TAG) -> bool:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="온보딩 48행 첫 수 — 두 칸 채운 22행 셋째 술어 실측 (V 단독)")
-    ap.add_argument("--web", default=os.environ.get("GX_WEB", "http://localhost:3002"))
+    ap.add_argument("--web", default=os.environ.get("GX_WEB", "http://localhost:3002"),
+                    help="사람이 보는 화면 — SPA 정적 서버")
+    #: ★ [턴 Z · Q] **화면과 문은 다른 원점이다.** 3002 은 POST 를 501 text/html 로 낸다.
+    ap.add_argument("--api", default=os.environ.get("GX_API", "http://localhost:8000"),
+                    help="기계가 두드리는 문 — API 원점 (U6 여덟 행이 여기로 간다)")
     #: ★★ [P-170 ② · 턴 U] **씨앗 id 를 손으로 옮기지 않는다.** `capture_screens` 가 심고
     #:   `runs/<stamp>/seed.json` 에 적은 것을 읽는다 — 셋 다 `required` 를 뗀 이유가 그것이다.
     #:   손으로 준 값은 **언제나 이긴다**(특정 사건을 다시 재야 할 때가 있다).
@@ -1957,7 +2180,8 @@ def main() -> int:
     # gx-shell 은 docs 를 /docs 에 마운트한다(/repo/docs 는 컨테이너 안 빈 자리 — 1차 실행이 거기 썼다)
     out = args.out or f"/docs/agent/evidence/P-159/onboarding_measure_{stamp}.json"
     only = [x.strip() for x in args.only.split(",") if x.strip()]
-    return measure(args.web, snap_event, seed_a, seed_b, pw, out, only=only)
+    return measure(args.web, snap_event, seed_a, seed_b, pw, out, only=only,
+                   api_base=args.api)
 
 
 if __name__ == "__main__":

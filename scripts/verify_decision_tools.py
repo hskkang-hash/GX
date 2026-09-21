@@ -262,5 +262,16 @@ def self_test(decisions: list[dict]) -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    try:
+        _n_dec = len([d for d in load()
+                      if (_k := number(d.get("id"))) is not None and _k >= FIRST_ENFORCED])
+    except Exception:                                     # noqa: BLE001
+        _n_dec = 0
+    #: ★ [P-204 · 턴 Z · Q] **마지막 줄은 분모다.** 이 수는 **지금 센 것**이다 —
+    #:   손으로 적은 수는 분모가 아니고, 분모를 안 말한 `exit 0` 은
+    #:   「이 게이트가 통과」가 아니라 「이 호출이 끝났다」일 뿐이다.
+    gate_header(__file__, measured=(
+        "결정문마다 `enforced_by` 가 **실행 가능한 것**을 가리키고 그 파일이 실재하는지 "
+        "— **분모 %d**(D-%d 이후 결정문 전수 · 지금 읽었다). 대장을 못 읽으면 "
+        "**분모 0 — 안 쟀다**" % (_n_dec, FIRST_ENFORCED)))
     sys.exit(main())

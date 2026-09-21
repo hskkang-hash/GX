@@ -753,5 +753,15 @@ if __name__ == "__main__":
         source=("살아 있는 라우터 (gx-shell 안 django-ninja 레지스트리를 순회한다 · "
                 "ROUTE_OPS_FLOOR=%d 아래면 회색) · 하한 대조로만 쓰는 옛 사진: %s"
                 % (ROUTE_OPS_FLOOR, file_stamp(DEPRECATED_ROUTE_SNAPSHOT))),
+        #: ★ [P-204 · 턴 Z · Q] **출생 표본 ① 의 죄는 분모였다** — 8월 사진의 531 을
+        #:   분모로 삼아 초록이었고, 살아 있는 라우터는 705 였다. 그래서 여기서는
+        #:   분모를 사진에서 읽지 않고 **살아 있는 레지스트리에서 지금 뽑는다.**
+        measured=("살아 있는 라우터의 라우트를 **하나씩** 순회해 테넌트 스코프를 "
+                  "지나는지 본다 — **분모는 이 실행에서 뽑은 라우트 전수**이고 "
+                  "**하한 %d** 아래면 회색이다(사진 분모로 내려앉지 않게) · "
+                  "커널 공개 면 **분모 %d**(KERNEL_PUBLIC) · 이름 부딪힘 선언 %d건. "
+                  "gx-shell 에 못 닿으면 **분모 0 — 안 쟀다**(회색 2)"
+                  % (ROUTE_OPS_FLOOR, len(KERNEL_PUBLIC),
+                     len(NO_ROUTE_NAME_COLLISION))),
     )
     raise SystemExit(main())

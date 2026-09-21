@@ -1,0 +1,212 @@
+{
+  "clause": "OPS-18",
+  "table": "logger_auditlogs",
+  "measured_at_kst": "2026-09-21 13:39 KST",
+  "timezone": "Asia/Seoul",
+  "population": {
+    "database": "database_guardianx",
+    "server": "172.18.0.7/32",
+    "postgres": "PostgreSQL 18.1 (Debian 18.1-1.pgdg13+2)",
+    "server_now_utc": "2026-09-21 04:39:41.637507+00:00"
+  },
+  "totals": {
+    "rows": 160906,
+    "heap_bytes": 185548800,
+    "index_bytes": 122683392,
+    "toast_bytes": 58753024,
+    "total_bytes": 367058944,
+    "index_count": 35,
+    "index_bytes_sum": 122511360,
+    "n_live_tup": 160902,
+    "n_dead_tup": 1708,
+    "last_autovacuum": "2026-09-20 07:54:09.149774+00:00",
+    "last_autoanalyze": "2026-09-21 03:57:32.310580+00:00",
+    "disk_bytes_per_row": 2281.2010987781687
+  },
+  "days": [
+    {
+      "date": "2026-09-14",
+      "rows": 0,
+      "logical_bytes": 0,
+      "first_row_at": null,
+      "last_row_at": null,
+      "empty": true,
+      "disk_bytes": 0
+    },
+    {
+      "date": "2026-09-15",
+      "rows": 8363,
+      "logical_bytes": 10459960,
+      "first_row_at": "2026-09-15 04:24:45.565829+00:00",
+      "last_row_at": "2026-09-15 12:26:15.265164+00:00",
+      "empty": false,
+      "disk_bytes": 19077684
+    },
+    {
+      "date": "2026-09-16",
+      "rows": 11173,
+      "logical_bytes": 13209928,
+      "first_row_at": "2026-09-16 01:00:01.874235+00:00",
+      "last_row_at": "2026-09-16 07:33:31.214313+00:00",
+      "empty": false,
+      "disk_bytes": 25487859
+    },
+    {
+      "date": "2026-09-17",
+      "rows": 12687,
+      "logical_bytes": 19819080,
+      "first_row_at": "2026-09-17 00:52:38.263223+00:00",
+      "last_row_at": "2026-09-17 12:04:46.460683+00:00",
+      "empty": false,
+      "disk_bytes": 28941598
+    },
+    {
+      "date": "2026-09-18",
+      "rows": 9827,
+      "logical_bytes": 13068896,
+      "first_row_at": "2026-09-18 03:34:45.509473+00:00",
+      "last_row_at": "2026-09-18 09:50:18.534067+00:00",
+      "empty": false,
+      "disk_bytes": 22417363
+    },
+    {
+      "date": "2026-09-19",
+      "rows": 19864,
+      "logical_bytes": 32263592,
+      "first_row_at": "2026-09-19 01:00:02.254553+00:00",
+      "last_row_at": "2026-09-19 11:24:09.756650+00:00",
+      "empty": false,
+      "disk_bytes": 45313778
+    },
+    {
+      "date": "2026-09-20",
+      "rows": 25243,
+      "logical_bytes": 35439568,
+      "first_row_at": "2026-09-20 01:00:04.383189+00:00",
+      "last_row_at": "2026-09-20 09:21:16.468865+00:00",
+      "empty": false,
+      "disk_bytes": 57584359
+    }
+  ],
+  "partial_today": {
+    "date": "2026-09-21",
+    "rows": 7437,
+    "logical_bytes": 8242688,
+    "first_row_at": "2026-09-21 00:38:20.189444+00:00",
+    "last_row_at": "2026-09-21 04:32:10.225564+00:00",
+    "empty": false,
+    "disk_bytes": 16965292
+  },
+  "summary": {
+    "day_count": 6,
+    "rows": {
+      "median": 11930.0,
+      "mean": 14526.2,
+      "min": 8363,
+      "max": 25243,
+      "sum": 87157
+    },
+    "logical_bytes": {
+      "median": 16514504.0,
+      "mean": 20710170.7,
+      "min": 10459960,
+      "max": 35439568,
+      "sum": 124261024
+    },
+    "empty_days": 1,
+    "window_days": 7
+  },
+  "per_day": {
+    "median_disk_bytes": 27214729.108423553,
+    "mean_disk_bytes": 33137183.401071437,
+    "max_disk_bytes": 57584359.33645731
+  },
+  "rolling_24h": {
+    "rows": 26582,
+    "logical_bytes": 35183040
+  },
+  "probe_runs": 3,
+  "probes": {
+    "indexed": {
+      "execution_ms": 0.095,
+      "planning_ms": 0.112,
+      "node": "Limit",
+      "actual_rows": 68.0,
+      "rows_removed_by_filter": null,
+      "shared_hit": 77,
+      "shared_read": 0,
+      "runs": 3,
+      "execution_ms_median": 0.095,
+      "execution_ms_min": 0.072,
+      "execution_ms_max": 0.412
+    },
+    "chain_all": {
+      "execution_ms": 56.666,
+      "planning_ms": 0.156,
+      "node": "Sort",
+      "actual_rows": 3463.0,
+      "rows_removed_by_filter": null,
+      "shared_hit": 8082,
+      "shared_read": 14568,
+      "runs": 3,
+      "execution_ms_median": 56.666,
+      "execution_ms_min": 56.31,
+      "execution_ms_max": 58.728
+    },
+    "page": {
+      "execution_ms": 0.027,
+      "planning_ms": 0.063,
+      "node": "Limit",
+      "actual_rows": 50.0,
+      "rows_removed_by_filter": null,
+      "shared_hit": 16,
+      "shared_read": 0,
+      "runs": 3,
+      "execution_ms_median": 0.03,
+      "execution_ms_min": 0.027,
+      "execution_ms_max": 0.06
+    }
+  },
+  "pain": [
+    {
+      "name": "조회 지연",
+      "now": {
+        "chain_all_ms": 56.666,
+        "chain_all_rows": 3463.0,
+        "ms_per_row": 0.01636326884204447,
+        "chain_share_of_table": 0.021521882341242714,
+        "indexed_ms": 0.095,
+        "page_ms": 0.03
+      },
+      "per_day_bytes": null,
+      "days_until": 224.53018051482036,
+      "threshold": "LAW-08 전건 검증 한 벌이 1000 ms",
+      "assumption": "체인 행 비율이 지금(2.2%)과 같게 유지된다고 본다 [가정]",
+      "unmeasured": null
+    },
+    {
+      "name": "디스크",
+      "now": {
+        "total_bytes": 367058944,
+        "free_bytes": 995986391040
+      },
+      "per_day_bytes": 27214729.108423553,
+      "days_until": 36597.328860852795,
+      "threshold": "데이터 파일 시스템 여유가 0",
+      "unmeasured": null
+    },
+    {
+      "name": "인덱스",
+      "now": {
+        "index_count": 35,
+        "index_bytes": 122683392,
+        "index_bytes_per_row": 762.453805327334
+      },
+      "per_day_bytes": 9096073.897555094,
+      "days_until": null,
+      "threshold": "쓰기 지연 — 행 하나마다 인덱스 35개가 갱신된다",
+      "unmeasured": "쓰기 시간을 안 쟀다 — 이 도구는 읽기만 한다. 재려면 INSERT 를 트랜잭션 안에서 걸고 되돌려야 한다"
+    }
+  ],
+  "caveat": "이 수는 **이 개발 기계의 하루**다. 차선 여럿이 두드리는 날이고 상용 부하가 아니다. 상용 수는 상용 트래픽에서 다시 재야 한다."
+}

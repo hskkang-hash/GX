@@ -331,5 +331,13 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    _n_names = len(_ledger_names())
+    #: ★ [P-204 · 턴 Z · Q] **마지막 줄은 분모다.** 이 수는 **지금 센 것**이다 —
+    #:   손으로 적은 수는 분모가 아니고, 분모를 안 말한 `exit 0` 은
+    #:   「이 게이트가 통과」가 아니라 「이 호출이 끝났다」일 뿐이다.
+    gate_header(__file__, measured=(
+        "「같은 이름, 다른 것」 — 대장에 오른 이름마다 코드 전수를 훑어 단독 사용을 "
+        "센다 — **분모 %d**(D-337 대장의 이름 종수 · 지금 읽었다). "
+        "⚠ 그중 **기계 술어가 없는 이름은 검사 못 한 것**이지 0건이 아니다 (D-301)"
+        % _n_names))
     raise SystemExit(main())

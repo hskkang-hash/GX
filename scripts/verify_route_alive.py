@@ -461,6 +461,10 @@ def delegate_to_container(container: str, json_path: str | None,
            # ★ 값 없이 이름만 넘긴다 — 프로세스 목록에 비밀번호가 안 남는다.
            #   이 이름이 부모 환경에 없으면 docker 는 그냥 안 넘긴다(무해).
            "-e", "GX_SEED_ROLE_PASSWORD",
+           # ★ [턴 Z · Q] V 가 격리 A/B 로 바이트 대조해 증명한 한 이름(턴 Y · rc 2 -> rc 0).
+           #   이 이름이 없으면 `V_LOCK` 으로 **잠근 사람 자신**이 컨테이너 안에서 「남」으로
+           #   보여 제 도구가 제 잠금에 막힌다 — 수가 낮게 나온다. 값이 아니라 이름만 넘긴다.
+           "-e", "GX_V_SESSION_ID",
            "-e", "MINIO_ENDPOINT", "-e", "MINIO_ROOT_USER",
            "-e", "MINIO_ROOT_PASSWORD", "-e", "MINIO_BUCKET_NAME"]
     for name in (extra_env or []):

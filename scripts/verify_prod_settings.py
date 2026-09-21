@@ -623,5 +623,10 @@ if __name__ == "__main__":
         target="gx-shell 컨테이너에서 파이썬을 %d번 **실제로 띄운다** (config.settings_prod / config.settings)" % len(CASES),
         as_="(계정 없음) — 자식 프로세스의 환경에 선언 이름만 준다: DJANGO_SECRET_KEY · DJANGO_ALLOWED_HOSTS · DJANGO_CSRF_TRUSTED_ORIGINS (값은 이 판정 안에서만 산다) · 앱이 든 MINIO_ACCESS_KEY/MINIO_SECRET_KEY 는 **길이와 같음 여부만** 본다",
         source="뜬 판이 스스로 낸 django.conf.settings — 소스에 적힌 글자가 아니다",
+        #: ★ [P-204 · 턴 Z · Q] 분모는 **실제로 띄운 판의 수**다 — 소스를 읽은 수가 아니다.
+        measured=("운영 프로필로 **실제로 띄운** 판에서 설정 관측을 낸다 — "
+                  "**분모 %d**(CASES · 판을 %d번 띄운다) · 판정 갈래 7(SECRET_KEY · DEBUG · "
+                  "ALLOWED_HOSTS · COOKIES · ORIGINS_TLS · DB · 관측 부재). "
+                  "gx-shell 을 못 띄우면 **분모 0 — 안 쟀다**(회색 2)" % (len(CASES), len(CASES))),
     )
     raise SystemExit(main())

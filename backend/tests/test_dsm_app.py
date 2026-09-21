@@ -806,12 +806,16 @@ class AppStaysThinTest(TestCase):
     #:   *구멍이 살아 있던 이유는 코드가 아니라 보는 눈의 범위였다.*
     METERING = "apps.dsm.metering"
 
-    #: ⚠ **계량에 남은 직접 셈 셋.** 카메라·계정·미디어 장부를 세는 **커널 면이
-    #:   아직 없다**(W4-1 계량 모델이 선행). 없는 것을 엉뚱한 커널에 밀어 넣으면
-    #:   다음 사람이 그 자리를 정본으로 읽는다 — 그래서 남기고 **이름으로 못박는다.**
+    #: ⚠ **계량에 남아 있던 직접 셈 셋 — 갚았다** (P-178 U56 ② · 2026-09-21 · 턴 Z).
+    #:   `_alive` · `_cameras` · `_users` · `_storage` 가 여기 있었다. 사유는
+    #:   *"카메라·계정·미디어 장부를 세는 커널 면이 아직 없다"* 였고, 그것이 틀렸다 —
+    #:   `kernels.k6_feedback.usage_snapshot` 이 DA-04 §2 K6 표에 **이름으로** 서
+    #:   있었다(그 표의 `W4-1` 이 이 빚이 가리키던 「갚는 날」이다). 없던 것은 커널
+    #:   면이 아니라 그 면의 **구현**이었고, 빚 문서가 그 둘을 같은 말로 적었다.
     #:   ★ 이 목록은 **늘어날 수 없다.** 새 함수가 모델을 만지면 아래 시험이 빨강이다.
-    #:   ★ 줄어드는 방향만 허용한다 — 커널 면이 생기면 여기서 이름을 지운다.
-    METERING_ORM_DEBT = frozenset({"_alive", "_cameras", "_users", "_storage"})
+    #:   ★ 줄어드는 방향만 허용한다 — 이제 **빈 집합**이고, 다시 채우려면 그 이유를
+    #:     여기 적어야 한다. 빈 칸이 곧 「계량은 제 손으로 세지 않는다」의 집행이다.
+    METERING_ORM_DEBT: frozenset = frozenset()
 
     #: 본문에서 잡는 「모델을 직접 만졌다」의 냄새. 세 파일이 같은 목록을 쓴다.
     MODEL_SMELLS = ("apps.get_model(", "_base_manager", ".objects.filter(",
@@ -905,7 +909,13 @@ class AppStaysThinTest(TestCase):
         #:   문이 커널을 안 부르는 날에도 이 시험이 초록이다.
         want = {"_events": "count_billable_events",
                 "_notifications": "count_billable_deliveries",
-                "_notifications_failed": "count_billable_deliveries"}
+                "_notifications_failed": "count_billable_deliveries",
+                #: ★ 턴 Z — 장부 셋(카메라·계정·저장)이 여기 들어왔다. 셋은 같은
+                #:   시점의 잔량이라 **한 문**(`count_billable_ledgers`)을 지나고,
+                #:   `_cameras`·`_users`·`_storage` 는 그 한 번의 답에서 칸만 꺼낸다.
+                #:   그래서 사슬을 `_ledgers` 에서 잰다 — 셋을 각각 재면 「문을 부른다」가
+                #:   세 번 적히고, 세 번 적힌 규칙은 한 번 어긋나도 두 번 초록이다.
+                "_ledgers": "count_billable_ledgers"}
         found = {}
         for node in ast.walk(ast.parse(src)):
             if isinstance(node, ast.FunctionDef) and node.name in want:
@@ -925,7 +935,8 @@ class AppStaysThinTest(TestCase):
         from apps.dsm import services
 
         for door, kernel_fn in (("count_billable_events", "count_events"),
-                                ("count_billable_deliveries", "count_deliveries")):
+                                ("count_billable_deliveries", "count_deliveries"),
+                                ("count_billable_ledgers", "usage_snapshot")):
             body = inspect.getsource(getattr(services, door))
             self.assertIn(
                 f"{kernel_fn}(", body,

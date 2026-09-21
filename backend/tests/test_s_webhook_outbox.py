@@ -716,6 +716,10 @@ class TheNotifyDoorFansOutTest(OutboxFixture):
         """★ 억제는 **채널의 규칙이 아니라 알림의 규칙**이다 (F-04 5분).
 
         여기서 웹훅만 나가면 5분 안에 같은 경보가 상급기관에 두 번 간다.
+
+        ★ **키의 정본은 `backend/tests/test_f04_suppression_key.py`** (2026-09-21 ·
+          턴 Z · 세종: 「같은 스트림 + 같은 유형 + 직전 발송 시각」). 이 시험이
+          전제로 삼는 억제는 그 계약이다.
         """
         from apps.dsm import services
         from kernels.k2_notify import suppress

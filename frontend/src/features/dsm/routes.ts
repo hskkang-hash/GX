@@ -124,4 +124,18 @@ export const dsm2Routes = {
    *   (턴 T `cameraTuning` 과 같은 방식 — 두 곳이 어긋나면 `verify_screens` 가 잡는다).
    */
   reports: { title: '보고서', path: '/dsm/reports' },
+  /**
+   * F-12 관리자 설정 — 구역 · 임계값 · 등급규칙 (턴 Z · 차선 A · P-210). **U5 자리.**
+   *
+   * ★ 서버 문은 셋 다 이미 서 있고 부르는 화면이 0개였다. 이 화면이 그 셋을 부른다 —
+   *   새 서버 문은 0개다.
+   * ⚠ `/dsm/system` · `/dsm/metering` · `/dsm/people` 과 **형제다**(변수 조각 없음 —
+   *   서로 삼키지 않는다). 이 가지 아래에 `/dsm/settings/:id` 같은 변수 경로를 만들지
+   *   말 것: 그 순간 선언 순서가 곧 라우팅이 되고, 삼켜진 경로는 **조용한 404** 로 난다.
+   * ⚠ 이 줄만으로는 화면이 안 열린다 — `App.tsx` 등록이 짝이다. 등록 요청 한 줄:
+   *     { path: dsm2Routes.settingsRules.path, element: <DsmSettingsRules /> }
+   *   (lazy: `const DsmSettingsRules = lazy(() => import('./features/dsm/pages/SettingsRules'));`)
+   *   등록 전까지 이 경로는 **회색이고, 회색은 초록이 아니다.**
+   */
+  settingsRules: { title: '설정 — 구역 · 임계값 · 등급규칙', path: '/dsm/settings/rules' },
 } as const;

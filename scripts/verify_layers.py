@@ -432,5 +432,11 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    _n_layer = len(iter_layer_files())
+    #: ★ [P-204 · 턴 Z · Q] **마지막 줄은 분모다.** 이 수는 **지금 센 것**이다 —
+    #:   손으로 적은 수는 분모가 아니고, 분모를 안 말한 `exit 0` 은
+    #:   「이 게이트가 통과」가 아니라 「이 호출이 끝났다」일 뿐이다.
+    gate_header(__file__, measured=(
+        "App(L4) 이 커널(L3) **내부**를 import 하는지 파일마다 본다 — "
+        "**분모 %d**(apps·kernels·adapters 의 .py 전수 · 지금 셌다)" % _n_layer))
     raise SystemExit(main())

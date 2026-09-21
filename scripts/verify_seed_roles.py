@@ -431,5 +431,10 @@ if __name__ == "__main__":
         target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다",
+        #: ★ [P-204 · 턴 Z · Q] 분모는 **시드 계정 수**다 — 「역할이 0개인 계정으로 걸었다」가
+        #:   출생 표본 ③ 이었다. 몇 계정을 어떤 역할로 쟀는지 안 말하는 초록은 초록이 아니다.
+        measured=("시드 계정마다 **역할이 실제로 붙어 있는지** 살아 있는 ORM 으로 읽는다 — "
+                  "**분모 %d**(정본이 요구하는 시드 계정 전수). gx-shell 에 못 닿으면 "
+                  "**분모 0 — 안 쟀다**(회색 2)" % len(FALLBACK_EXPECT)),
     )
     raise SystemExit(main())

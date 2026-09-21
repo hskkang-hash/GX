@@ -354,6 +354,36 @@ repos:
         pass_filenames: false
         files: '^backend/.*$'
 
+  # ── P-213 · D-286: 결정문은 배선이다 — `enforced_by` 없는 결정은 커밋되지 않는다 ─
+  #
+  #   ★★ [실측 2026-09-21 · 턴 Z · 차선 Q] **두 턴 연속 같은 자리에서 틀렸다.**
+  #     D-505 와 D-510 이 `enforced_by` 에 **실행 가능한 것을 하나도** 안 적은 채
+  #     커밋됐고, `verify_ga_readiness` 가 그 때문에 빨강이 났다. 두 번 다 사람이
+  #     「다음엔 적자」로 끝냈다 — 그것이 D-286 이 이름 붙인 바로 그 실패다
+  #     (「문서는 기억을 요구하고, 도구는 기억을 요구하지 않는다」).
+  #     그래서 **사람이 아니라 기계가 막는다.** 판정기는 턴 P 부터 있었다.
+  #     없던 것은 판정기가 아니라 **배선**이다.
+  #
+  #   무엇을 보나 — `verify_decision_tools.py` 가 D-286 이후 결정문마다 셋을 본다:
+  #     ① `enforced_by` 가 있는가 ② 다짐(「조심한다」)이 아니라 **실행 가능한 것**을
+  #     가리키는가 ③ 가리킨 **파일이 실재**하는가. 하나라도 어긋나면 **exit 1**.
+  #
+  #   ★ **정적 갈래다** — 로그인 0 · 살아 있는 서버 0 · 계정 다툼 0(UX-24 · §0.4).
+  #     `docs/agent/decisions.yaml` 이 바뀔 때만 돈다. 대장을 안 건드린 커밋은
+  #     이 훅을 아예 안 만난다.
+  #
+  #   ⚠ 훅 규약(P-70 · P-204): **빨강(exit 1)만 커밋을 막는다.** 회색(exit 2 · 예:
+  #     대장을 못 읽었다)은 막지 않되 **「초록이라는 뜻이 아니다」를 소리 내어 말한다.**
+  #     `gx-ui-secrets`·`gx-ga-readiness-static` 과 같은 모양이다.
+  - repo: local
+    hooks:
+      - id: gx-decision-tools
+        name: 결정문 도구 배선 검사 — 정적 갈래 (P-213 · D-286)
+        entry: bash -c 'python scripts/verify_decision_tools.py; rc=$?; if [ "$rc" = "1" ]; then echo "[HOOK] **빨강 — 커밋을 막는다.** enforced_by 가 비었거나 가리킨 도구가 저장소에 없다. 결정문은 배선이다 (P-213 · D-286)"; exit 1; fi; if [ "$rc" != "0" ]; then echo "[HOOK] 위는 회색(exit $rc)이다 — 대장을 판정까지 못 갔다. 커밋을 막지 않는다(P-70). **초록이라는 뜻이 아니다** (P-204)"; fi; exit 0'
+        language: system
+        pass_filenames: false
+        files: '^(docs/agent/decisions\.yaml|scripts/verify_decision_tools\.py)$'
+
   # ── D-347: 피드백 콘솔 화면 ────────────────────────────────────────────
   # 고객이 보는 자리다. 실제가 아닌 화면이 한 장이라도 들어가면 거짓말이다.
   # 0장은 실패가 아니다 — **사유 없는 0장이 실패다.**

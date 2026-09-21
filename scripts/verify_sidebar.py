@@ -611,5 +611,12 @@ if __name__ == "__main__":
         as_="시드 역할 계정 " + "/".join(sorted(HTTP_ACCOUNTS.values())) + " · " + " · ".join(roles_of(u) for u in sorted(HTTP_ACCOUNTS.values())) + " · 자격 이름 GX_SEED_ROLE_PASSWORD (값 아님)",
         source="살아 있는 서버 응답 (HTTP) + gx-shell ORM 대조",
         reason="메뉴는 역할마다 다르다 — 한 계정으로 재면 다른 역할의 메뉴는 안 재진다",
+        #: ★ [P-204 · 턴 Z · Q] 분모는 **계정 수**다. 출생 표본 ③ 이 이 자리다 —
+        #:   한 계정으로 잰 초록은 「그 역할에서 통과」일 뿐 「메뉴가 맞다」가 아니다.
+        measured=("역할마다 **보이는 메뉴가 다른지** 계정을 바꿔 가며 잰다 — "
+                  "**분모 %d**(HTTP 계정 · 역할 %d종) · 라우트 출처 %d갈래 대조 · "
+                  "금지 낱말 %d종. 로그인 못 하면 **분모 0 — 안 쟀다**(회색 2)"
+                  % (len(HTTP_ACCOUNTS), len(set(HTTP_ACCOUNTS.values())),
+                     len(ROUTE_SOURCES), len(FORBIDDEN_WORDS))),
     )
     raise SystemExit(main())

@@ -1,11 +1,11 @@
 {
  "n": 39,
- "구현": 7,
+ "구현": 10,
  "빨강": 0,
- "미측정": 25,
+ "미측정": 22,
  "잠김": 7,
- "ratio": 0.1794871794871795,
- "weighted": 3.58974358974359,
+ "ratio": 0.2564102564102564,
+ "weighted": 5.128205128205128,
  "rows": [
   {
    "id": "F-01-c1",
@@ -59,18 +59,18 @@
   },
   {
    "id": "F-05-c1",
-   "color": "회색",
-   "why": "게이트 «scripts/verify_contract_route_reach.py» 가 **회색(exit 2)** 이다 — 못 잰 것은 통과가 아니다"
+   "color": "초록",
+   "why": "게이트 «scripts/verify_contract_route_reach.py» 초록 — 외부 App 의 진입면은 화면이 아니라 라우트다 — 그 게이트가 문을 두드린다"
   },
   {
    "id": "F-05-c2",
-   "color": "회색",
-   "why": "게이트 «scripts/verify_contract_route_reach.py» 가 **회색(exit 2)** 이다 — 못 잰 것은 통과가 아니다"
+   "color": "초록",
+   "why": "게이트 «scripts/verify_contract_route_reach.py» 초록 — 이벤트 OpenAPI 진입면 — 위와 같은 게이트가 잰다"
   },
   {
    "id": "F-05-c3",
-   "color": "회색",
-   "why": "게이트 «scripts/verify_contract_route_reach.py» 가 **회색(exit 2)** 이다 — 못 잰 것은 통과가 아니다"
+   "color": "초록",
+   "why": "게이트 «scripts/verify_contract_route_reach.py» 초록 — API Key 발급·폐기도 그 진입면 위에 있다"
   },
   {
    "id": "F-06-c1",

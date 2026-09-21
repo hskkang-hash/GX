@@ -225,5 +225,12 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    _n_gate = (len(declared_gates(GATES.read_text(encoding="utf-8")))
+               if GATES.exists() else 0)
+    #: ★ [P-204 · 턴 Z · Q] **마지막 줄은 분모다.** 이 수는 **지금 센 것**이다 —
+    #:   손으로 적은 수는 분모가 아니고, 분모를 안 말한 `exit 0` 은
+    #:   「이 게이트가 통과」가 아니라 「이 호출이 끝났다」일 뿐이다.
+    gate_header(__file__, measured=(
+        "게이트마다 **자기가 무엇을 몇 건 보았는지** 말하는가 — "
+        "**분모 %d종**(D-301 등재 게이트 전수 · 지금 읽었다)" % _n_gate))
     sys.exit(main())

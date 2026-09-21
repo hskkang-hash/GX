@@ -59,5 +59,12 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    _n_py = sum(1 for _ in (ROOT / "backend").rglob("*.py"))
+    #: ★ [P-204 · 턴 Z · Q] **마지막 줄은 분모다.** 이 수는 **지금 센 것**이다 —
+    #:   손으로 적은 수는 분모가 아니고, 분모를 안 말한 `exit 0` 은
+    #:   「이 게이트가 통과」가 아니라 「이 호출이 끝났다」일 뿐이다.
+    gate_header(__file__, measured=(
+        "외부 의존 호출(requests·httpx·minio·redis·celery 등)에 **타임아웃이 있는지** "
+        "훑는다 — **분모 %d**(backend/ 의 .py 전수 · 지금 셌다). 걸린 호출 자리 수는 "
+        "실행 중에 세어 아래 [TIMEOUT] 줄에 적는다" % _n_py))
     raise SystemExit(main())

@@ -24,8 +24,10 @@
 `StreamMonitor.objects.filter(group=...)` 를 세면 **지운 카메라가 청구서에 오른다** —
 고객은 지웠다고 알고 있고, 우리는 돈을 받는다. 그것이 이 절에서 가장 나쁜 결함이다.
 
-    그래서 이 파일의 모든 셈은 `_alive()` 를 지난다. `deleted` 칸이 있는 표는
-    **반드시** 그 칸이 빈 행만 센다.
+    그래서 청구의 모든 셈은 **`deleted` 칸이 빈 행만** 센다. 그 규칙은 이제 이
+    파일이 아니라 `common/billing_marks.exclude_soft_deleted` 한 곳에 산다 —
+    2026-09-21 까지 여기 `_alive()` 로도 한 벌 살아 있었고, 두 벌이던 동안
+    어느 쪽이 정본인지 아무도 안 물었다.
 
 ★ **셈이 커널로 갔다** — P-206 (2026-09-20 · 차선 U56 · D-508)
 --------------------------------------------------------------
@@ -45,12 +47,23 @@
   **아무도 안 보고 있었다**는 것이다 — `tests/test_dsm_app.py::AppStaysThinTest`
   는 `apps/dsm/{services,api}.py` 만 봤고 **이 파일은 안 봤다.** 이제 본다.
 
-⚠ **아직 앱에 남은 셈 셋**(`_cameras` · `_users` · `_storage`). 이 셋은 커널 면이
-  아직 **없다** — 카메라·계정·미디어 장부를 세는 커널 함수가 저장소에 없고,
-  없는 것을 급히 엉뚱한 커널(K1 은 이벤트, K2 는 발송)에 밀어 넣으면 다음 사람이
-  그 자리를 정본으로 읽는다. 그래서 **남겨 두고 이름을 적는다** — 그 셋은
-  `AppStaysThinTest` 의 **명시 예외 목록**에 있고, 그 목록은 **늘어날 수 없다**
-  (새 셈이 여기 생기면 그 시험이 빨강이다). 갚는 날: 계량 커널 면(W4-1).
+★ **남은 셋도 커널로 갔다 — 빚 0** (P-178 U56 ② · 2026-09-21 · 턴 Z)
+-------------------------------------------------------------------
+턴 Y 까지 이 파일에는 직접 세는 자리가 셋 남아 있었다(`_cameras` · `_users` ·
+`_storage`, 그리고 그 셋이 함께 쓰던 `_alive`). 그때 적은 사유는 *"카메라·계정·
+미디어 장부를 세는 커널 함수가 저장소에 없다"* 였고, **그것이 틀렸다** —
+`kernels.k6_feedback.usage_snapshot` 이 DA-04 §2 K6 표에 **이름으로** 서 있었고
+(`W4-1`), 그 자리가 `NotImplementedYet` 이었을 뿐이다. 빚 문서가 가리키던
+「갚는 날: 계량 커널 면(W4-1)」이 바로 그 이름이다.
+
+    이제 셋은 `count_billable_ledgers` 한 문을 지난다. 이 파일에 `apps.get_model` ·
+    `_base_manager` · `.objects.filter(` 는 **0개**이고,
+    `AppStaysThinTest.METERING_ORM_DEBT` 는 **빈 집합**이다.
+
+⚠ **커널로 갔다고 씨앗이 빠진 것은 아니다.** 카메라·계정·미디어 표에는 표식 칸
+  (`track_id`)이 없어서 `exclude_unbillable` 을 걸 자리가 없다. 지금 섞여 있는
+  씨앗의 수는 `common/billing_marks` 머리말 ⚠ 에 **수로** 적혀 있다 —
+  달라진 것은 「이제 고칠 자리가 하나」라는 것이고, 0으로 덮지 않았다.
 
 ★ **테넌트 격리** — 둘째
 ------------------------
@@ -74,7 +87,6 @@ import io
 import logging
 from datetime import datetime
 
-from django.apps import apps
 from django.utils import timezone
 
 from common.tenant_filters import get_user_group
@@ -89,7 +101,8 @@ from common.tenant_scope import TenantScope
 #:   `from kernels.k1_event import count_events` 를 썼고 **그 시험이 멈춰 세웠다**
 #:   [실측 2026-09-20 · 턴 Y]. 옳은 지적이다: 진입면이 둘이면 다음 소비자는
 #:   아무 데서나 들어온다.
-from apps.dsm.services import count_billable_deliveries, count_billable_events
+from apps.dsm.services import (count_billable_deliveries,
+                               count_billable_events, count_billable_ledgers)
 
 log = logging.getLogger("guardianx.ops16.metering")
 
@@ -160,42 +173,30 @@ def recent_months(count: int = 6) -> list:
 # ═══════════════════════════════════════════════════════════════════════════
 # 2. 세는 손 — **읽기만 한다**
 # ═══════════════════════════════════════════════════════════════════════════
-def _alive(model, **filters):
-    """행을 세는 **유일한 문.** 소프트 삭제된 행을 뺀다.
-
-    ★ 이 함수가 이 파일의 존재 이유의 절반이다 (머리말 첫째). `deleted` 칸이 없는
-      표는 그냥 세고, 있는 표는 **반드시** 그 칸이 빈 행만 센다.
-    """
-    qs = model._base_manager.filter(**filters)
-    names = {f.name for f in model._meta.get_fields()}
-    if "deleted" in names:
-        qs = qs.filter(deleted__isnull=True)
-    return qs
-
-
-def _cameras(group, start, end):
+def _cameras(scope, start, end):
     """**카메라 대수** — 그 달 끝 시점에 등록되어 있던 카메라.
 
     「그 달에 새로 등록한 수」가 아니다. 카메라는 달마다 새로 사는 물건이 아니고,
     청구는 **그 달에 우리가 지켜 준 대수**에 붙는다.
+
+    ★ 턴 Z — **이제 안 센다. 커널이 센다**(`K6.usage_snapshot`). 전에는
+      `apps.get_model` 으로 표를 직접 셌고, 그래서 소프트 삭제 규칙(`_alive`)이
+      **앱에 한 벌 · `billing_marks` 에 한 벌** 두 벌로 살아 있었다.
     """
-    Stream = apps.get_model("stream_monitors", "StreamMonitor")
-    return _alive(Stream, group=group, created_on__lt=end).count()
+    return _ledgers(scope, end)["cameras"]
 
 
-def _users(group, start, end):
+def _users(scope, start, end):
     """**쓰는 사람 수** — 그 테넌트의 **살아 있는 로그인 계정**.
 
     ★ 정의를 응답에 싣는다(`definitions`). 「그 달에 로그인한 사람」으로 세면
       `last_login` 이 **마지막 한 번만** 남는 칸이라 지난 달을 다시 세면 수가
       달라진다 — 다시 재면 달라지는 수로 청구서를 쓸 수 없다.
+
+    ★ 턴 Z — 커널이 센다(`K6.usage_snapshot`). 한 사람을 두 번 세지 않는
+      `distinct()` 도 그 안에 있다.
     """
-    CoreUser = apps.get_model("user", "CoreUser")
-    #: ★ `distinct()` — 소속은 **역참조를 타고** 붙는다. 한 사람에게 소속 행이 둘이면
-    #:   조인이 그 사람을 두 번 낸다. 청구서에서 **한 사람을 두 번 세는 것**은
-    #:   0을 1로 세는 것보다 발견이 늦다: 수가 그럴듯하기 때문이다.
-    return _alive(CoreUser, userprofilelink__group=group, is_active=True,
-                  date_joined__lt=end).distinct().count()
+    return _ledgers(scope, end)["users"]
 
 
 def _events(scope, start, end):
@@ -231,42 +232,24 @@ def _notifications_failed(scope, start, end):
                                      time_field="occurred_at", succeeded=False)
 
 
-def _storage(group, start, end) -> dict:
+def _storage(scope, start, end) -> dict:
     """**저장 용량** — 그 달 끝 시점에 이 테넌트가 저장소에 갖고 있던 바이트.
 
-    ★ 어디서 세나 — **객체저장소를 훑지 않는다.** `core.file_management.UserMediaFile`
-      에 `file_size` 와 `group` 이 있고, MinIO 에 올릴 때 그 행이 함께 쓰인다
-      [실측 stream_monitors/utils/minio_client.py:253]. 그 장부를 센다.
-
-      버킷을 직접 훑는 길도 있지만(=`ops_monitor.py` 가 그렇게 한다) 두 가지가
-      막는다: ㉠ 객체 이름 앞머리는 `group.code` 인데 **테넌트 몫만 재려면 전 객체를
-      나열**해야 하고, 화면 한 장이 저장소 전체를 훑게 된다. ㉡ 이 환경의 저장소는
-      `minio.invalid` 라 아예 못 닿는다. 청구서의 수가 저장소의 생사에 매달리면
-      **저장소가 죽은 달은 청구를 못 한다.**
-
-    ★ **크기를 모르는 파일은 「0바이트」가 아니다.** `file_size` 가 비어 있는 행을
-      `unsized` 로 따로 센다. 그 수가 0이 아니면 이 칸은 **하한**이고, 응답이
-      그렇게 말한다 — 하한을 총량처럼 청구하면 그것은 우리에게 유리한 반올림이다.
+    ★ 턴 Z — **이제 안 센다. 커널이 센다**(`K6.usage_snapshot`). 「어디서 세는가」
+      (미디어 장부 · 버킷을 안 훑는 이유)와 「못 잰 칸은 `None` 이다」는 그대로이고,
+      그 설명은 이제 커널 쪽 `_billable_storage` 머리말에 산다 — **설명은 셈 옆에
+      둔다.** 셈만 옮기고 설명을 여기 두면 다음 사람이 여기를 고친다.
     """
-    try:
-        Media = apps.get_model("file_management", "UserMediaFile")
-    except LookupError as exc:                                  # noqa: BLE001
-        #: 장부가 없으면 **못 쟀다**이지 0바이트가 아니다 (D-301).
-        return {"bytes": None, "files": None, "unsized": None,
-                "why": f"미디어 장부를 찾지 못했다: {exc}"[:200]}
+    return _ledgers(scope, end)["storage"]
 
-    from django.db.models import Count, Sum
 
-    qs = _alive(Media, group=group, created_on__lt=end)
-    agg = qs.aggregate(total=Sum("file_size"), files=Count("id"))
-    unsized = qs.filter(file_size__isnull=True).count()
-    return {
-        "bytes": int(agg["total"] or 0),
-        "files": int(agg["files"] or 0),
-        "unsized": unsized,
-        "why": ("크기가 안 적힌 파일이 %d개다 — 이 수는 **하한**이다" % unsized
-                if unsized else ""),
-    }
+def _ledgers(scope, end) -> dict:
+    """장부 셋을 **한 번에** 받아 온다 (`apps/dsm/services.count_billable_ledgers`).
+
+    ★ **한 달에 한 번만 두드린다.** 위 셋이 각자 커널을 부르면 달 하나에 세 번,
+      최근 6달 표에 18번이다. 같은 시점의 잔량 셋은 **한 질문**이다.
+    """
+    return count_billable_ledgers(scope=scope, until=end)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -288,13 +271,13 @@ def usage(*, scope: TenantScope, month: str = "") -> dict:
     group = _tenant_of(scope)
     start, end = month_bounds(month)
     now = timezone.now()
-    storage = _storage(group, start, end)
+    storage = _storage(scope, start, end)
 
     cells = [
         {"key": "cameras", "label": LABELS["cameras"], "unit": "대",
-         "value": _cameras(group, start, end)},
+         "value": _cameras(scope, start, end)},
         {"key": "users", "label": LABELS["users"], "unit": "명",
-         "value": _users(group, start, end)},
+         "value": _users(scope, start, end)},
         {"key": "events", "label": LABELS["events"], "unit": "건",
          "value": _events(scope, start, end)},
         {"key": "notifications", "label": LABELS["notifications"], "unit": "건",

@@ -365,16 +365,13 @@ class SingleWritePathTest(K6Fixture):
 
 
 class HonestAbsenceTest(K6Fixture):
-    """구현이 없는 공개 면은 **성공을 반환하지 않는다** (D-284)."""
+    """구현이 없는 공개 면은 **성공을 반환하지 않는다** (D-284).
 
-    def test_usage_snapshot_raises_instead_of_returning_zero(self) -> None:
-        """계측에서 조용한 0 은 특히 나쁘다 — 안 잰 지표가 좋은 지표로 보고된다."""
-        from kernels.k6_feedback import NotImplementedYet, usage_snapshot
-
-        with self.assertRaises(NotImplementedYet) as caught:
-            usage_snapshot(scope=self.scope_a)
-        self.assertIn("W4-1", str(caught.exception),
-                      "무엇이 선행인지 말하지 않는 예외는 다음 사람에게 도움이 안 됩니다.")
+    ★ 2026-09-21 (P-178 U56 ②) — `usage_snapshot` 은 **더 이상 여기 없다.** 구현됐다.
+      그 자리의 정직함(0을 안 돌려준다 · 남의 테넌트를 안 센다 · 지운 행을 안 센다)은
+      아래 `UsageSnapshotLedgersTest` 가 **값으로** 묻는다. 「미구현이라 안 센다」를
+      「구현했으니 됐다」로 지우면 그 자리에 남는 시험이 0개가 된다.
+    """
 
     def test_kpi_series_raises_instead_of_returning_empty(self) -> None:
         from kernels.k6_feedback import NotImplementedYet, kpi_series
@@ -388,6 +385,76 @@ class HonestAbsenceTest(K6Fixture):
 
         with self.assertRaises(TypeError):
             usage_snapshot()  # type: ignore[call-arg]
+
+
+class UsageSnapshotLedgersTest(K6Fixture):
+    """★ P-178 U56 ② — **장부 셋**(카메라·계정·저장)을 K6 이 센다.
+
+    `apps/dsm/metering.py` 가 `apps.get_model` 로 직접 세던 자리다. 커널로 옮긴 것만으로는
+    아무것도 증명되지 않는다 — **옮긴 뒤에도 같은 세 규칙이 서 있는가**를 값으로 묻는다:
+    ㉠ 제 테넌트만 · ㉡ 지운 행은 안 센다 · ㉢ 못 세면 0이 아니라 **던진다**.
+    """
+
+    def test_it_counts_only_its_own_tenant(self) -> None:
+        """남의 카메라 대수가 내 청구서에 실리면 **개인정보 유출**이다(남의 사업 규모다)."""
+        from kernels.k6_feedback import usage_snapshot
+
+        a = usage_snapshot(scope=self.scope_a)
+        b = usage_snapshot(scope=self.scope_b)
+        self.assertEqual(1, a["cameras"], "A 의 카메라는 하나다 — B 의 것이 섞였습니다")
+        self.assertEqual(1, b["cameras"], "B 의 카메라는 하나다 — A 의 것이 섞였습니다")
+        self.assertEqual(1, a["users"], "A 의 계정은 하나다 — B 의 것이 섞였습니다")
+
+    def test_it_does_not_count_a_deleted_camera(self) -> None:
+        """고객이 지운 카메라에 돈을 받지 않는다.
+
+        dj-core 의 `objects` 는 safedelete 매니저가 **아니라** 지운 행이 평범한 조회에
+        그대로 보인다 — 그래서 이 시험이 잡는 것은 「빼먹은 필터 한 줄」이고,
+        그 한 줄은 **청구서에서만** 티가 난다.
+        """
+        from django.utils import timezone as tz
+
+        from kernels.k6_feedback import usage_snapshot
+
+        StreamMonitor = apps.get_model("stream_monitors", "StreamMonitor")
+        before = usage_snapshot(scope=self.scope_a)["cameras"]
+        StreamMonitor._base_manager.filter(pk=self.stream_a.pk).update(deleted=tz.now())
+        try:
+            after = usage_snapshot(scope=self.scope_a)["cameras"]
+        finally:
+            StreamMonitor._base_manager.filter(pk=self.stream_a.pk).update(deleted=None)
+        self.assertEqual((1, 0), (before, after),
+                         "소프트 삭제된 카메라가 청구 셈에 남아 있습니다 "
+                         "(common/billing_marks.exclude_soft_deleted)")
+
+    def test_a_scope_without_a_tenant_raises_instead_of_returning_zero(self) -> None:
+        """★ **0 은 「안 썼다」로 읽힌다** (D-301). 소속 없는 요청자에게 0 을 주면
+        그 달 청구서가 조용히 0원이 되고, 아무도 그것을 결함으로 못 읽는다.
+        아무 테넌트나 고르는 것은 더 나쁘다 — 남의 수가 청구서에 오른다(W0-12).
+        """
+        from common.tenant_scope import TenantScope
+        from kernels.k6_feedback import K6Error, usage_snapshot
+
+        CoreUser = apps.get_model("user", "CoreUser")
+        orphan = CoreUser.objects.create_user(
+            username="k6_user_no_group", password="test-only-not-a-secret",
+            is_active=True, email="k6_user_no_group@test.invalid")
+        with self.assertRaises(K6Error):
+            usage_snapshot(scope=TenantScope.of(orphan))
+
+    def test_storage_says_it_is_a_lower_bound_when_sizes_are_missing(self) -> None:
+        """**크기를 모르는 파일은 「0바이트」가 아니다.** 하한을 총량처럼 청구하면
+        그것은 우리에게 유리한 반올림이다 — 응답이 스스로 그렇게 말해야 한다.
+        """
+        from kernels.k6_feedback import usage_snapshot
+
+        Media = apps.get_model("file_management", "UserMediaFile")
+        Media.objects.create(group=self.group_a, file_name="k6-unsized.bin",
+                             file_size=None)
+        storage = usage_snapshot(scope=self.scope_a)["storage"]
+        self.assertEqual(1, storage["unsized"])
+        self.assertIn("하한", storage["why"],
+                      "크기를 모르는 파일이 있는데 응답이 「하한」이라고 말하지 않습니다")
 
 
 class KernelScopeSignatureTest(TestCase):

@@ -293,5 +293,11 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    _n_blk = len(parse(LEDGER.read_text(encoding="utf-8"))) if LEDGER.exists() else 0
+    #: ★ [P-204 · 턴 Z · Q] **마지막 줄은 분모다.** 이 수는 **지금 센 것**이다 —
+    #:   손으로 적은 수는 분모가 아니고, 분모를 안 말한 `exit 0` 은
+    #:   「이 게이트가 통과」가 아니라 「이 호출이 끝났다」일 뿐이다.
+    gate_header(__file__, measured=(
+        "잠김마다 유형·주인·사유·해소 절차·코드 자리가 있는지 본다 — "
+        "**분모 %d**(DA-05 잠금 대장 전수 · 지금 읽었다)" % _n_blk))
     sys.exit(main())

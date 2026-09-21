@@ -597,10 +597,21 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header, file_stamp  # P-107 — TARGET/AS/SOURCE
+    try:
+        import json as _json
+        _n_inv = len((_json.loads(INVENTORY.read_text(encoding="utf-8")) or {})
+                     .get("routes") or [])
+    except Exception:                                     # noqa: BLE001
+        _n_inv = 0
     gate_header(
         __file__,
         target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 레지스트리를 gx-shell 에서 다시 뽑아 " + file_stamp(INVENTORY),
+        #: ★ [P-204 · 턴 Z · Q] 분모는 **대장 행 수**다 — 라우트 전수는 실행 중에 다시 뽑는다.
+        measured=("라우트 대장이 **코드와 갈리지 않았는지** — **분모 %d**(D-343 "
+                  "route_inventory.json 의 라우트 전수 · 지금 읽었다) · 분류 %d갈래. "
+                  "입력이 낡았으면 **회색(2)** 이다 — 낡은 사진으로 잰 초록은 초록이 아니다"
+                  % (_n_inv, len(CLASSES))),
     )
     raise SystemExit(main())

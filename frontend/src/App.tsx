@@ -261,6 +261,14 @@ const DsmPrivacyRequests = lazy(
 /** 턴 E · OPS-16 계량 표. */
 const DsmMetering = lazy(() => import('./features/dsm/pages/Metering'));
 /** 턴 G · P-67 보존·백업 선언 (U5 관리자). 미선언은 빨강으로 말한다. */
+/**
+ * 턴 Z · P-210 영역 ① — 설정 한 장(구역 · 임계값 · 등급규칙 · 차선 A)
+ *
+ * 경로는 `features/dsm/routes.ts` 한 곳에서 정한다(위와 같은 이유).
+ */
+const DsmSettingsRules = lazy(
+  () => import('./features/dsm/pages/SettingsRules'),
+);
 const DsmSystemSettings = lazy(
   () => import('./features/dsm/pages/SystemSettings'),
 );
@@ -742,6 +750,12 @@ function App() {
             {
               path: dsm2Routes.systemSettings.path,
               element: <DsmSystemSettings />,
+            },
+            // ── 턴 Z · P-210 영역 ① 설정 한 장 (차선 A) ──────────────────
+            //   ⚠ `/dsm/system` 과 형제다. 변수 조각이 없으므로 삼키지 않는다.
+            {
+              path: dsm2Routes.settingsRules.path,
+              element: <DsmSettingsRules />,
             },
             // ── 턴 R · UX-35 요원별 현황 골격 (차선 U24) ─────────────────
             //   ⚠ `/dsm/metering` · `/dsm/system` 과 형제다(변수 조각 없음).

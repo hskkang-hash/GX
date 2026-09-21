@@ -24,6 +24,30 @@
 #       그런 게이트를 미구현 절에 붙이면 **없는 갈림**이 매번 빨강으로 선다.
 #       예: SEC-11a 는 `verify_envelope.py`(래칫)가 초록이어도 잠김이 옳다. 그래서 안 붙인다.
 #
+# ★★★ [P-211 · 2026-09-21 · 턴 Z · 차선 N] `kind:` 칸 — **「초록」은 다섯 부류다**
+# ---------------------------------------------------------------------------------
+#   턴 Y 에 차선 N 이 후보 23 을 돌고 나서 드러난 것: **한 글자 「초록」이 다섯 가지 다른
+#   뜻을 삼키고 있었다.** 같은 낱말로 적으면 읽는 사람은 전부 「닫혔다」로 읽는다 —
+#   그리고 그 다섯 중 **하나만** 닫힘이다. 그래서 절마다 무엇인지 적는다.
+#
+#     closed        진짜 닫혔다 — **누른 뒤를 봤다.** 분모가 실재하고 면제가 없다
+#     ratchet       래칫 — 「**새로** 생긴 것 0건」이다. 「닫혔다」가 아니다.
+#                   면제를 업고 있으면 **몇 건을 업었는지 함께 적는다**
+#     rule_only     규칙은 섰는데 **현장이 비었다**(분모가 0). 칸·주기·시험은 다 있고
+#                   **잴 것이 없다.** 시드가 차면 그날 처음 색이 난다
+#     unmeasurable  못 쟀다 — 게이트가 회색이거나, 아예 잰 적이 없거나, 상태가
+#                   구현이 아니다. **회색은 초록이 아니다**(D-301)
+#     gate_only     게이트는 초록인데 **절은 안 닫혔다** — 제목이 부르는 것보다
+#                   게이트가 **적게** 잰다. P-85 가 「아무 게이트나 적으면 안 된다」고
+#                   말한 그 자리이고, 쪼개거나 판정기에 술어를 달아야 사라진다
+#
+#   ⚠ **`kind` 는 `status` 가 아니다.** 상태는 넷이고 부류는 다섯이며, 서로 곱해진다.
+#     `status: 구현` + `kind: rule_only` 는 모순이 아니라 **가장 자주 나오는 거짓 초록**이다.
+#   ⚠ 부류를 **기계로 먼저 거르고 손으로 확인**한다. 확인 못 한 절은
+#     `kind_why` 에 「[기계 통과 · 손으로 확인 못 함]」이라고 **적는다** — 확인한 척하지 않는다.
+#   ★ 점수 계산식은 `kind` 를 안 본다(이번 턴 기준). 부류는 **수를 설명하는 칸**이지
+#     수를 만드는 칸이 아니다 — 만들게 하려면 결정이 먼저 있어야 한다.
+#
 # 가중치는 [판정]이다 — 세종이 정했다. 각 절의 상태는 [실측]이다 — 여기서 갈아 끼운다.
 #
 # 강제: scripts/verify_ga_readiness.py — 위 규칙 전부 + 가중 합계 출력. 어긋나면 exit 1.
@@ -33,6 +57,8 @@ meta:
   updated_at: "2026-09-24"
   status_enum: [구현, 미착수, 잠김, 미측정]
   banned_status: [부분, 진행중, 일부, 대부분, 거의]
+  #: ★ P-211 (턴 Z) — 「초록」의 다섯 부류. 머리글의 표와 같은 것이다.
+  kind_enum: [closed, ratchet, rule_only, unmeasurable, gate_only]
   note: |
     이 표는 네 번 쓴다 (D-346 ★): ① 상용 로드맵 ② 투자·영업 자료
     ③ GS인증 준비 체크리스트 ④ 계약 작업이 상용을 얼마나 밀어주는지의 지도.
@@ -62,6 +88,35 @@ areas:
     note: |
       계약 기능 39절(F-01~F-14를 절로 쪼갠 것). 상용 전용 기능은 아래 ⑦(사용성)에 있다.
       상태는 `gate:` 가 센다 — 절이 스스로 적은 `state` 가 아니라 **도달**이 기준이다(P-106).
+    # ★★★ [차선 N · 2026-09-21 · 턴 Z · P-211] **이 영역의 39절에도 `kind` 를 적는다.**
+    #   다만 절 자체는 여기 없다(계약 절 대장이 원본이고 옮겨 적으면 두 표가 갈린다).
+    #   그래서 **이름표만** 여기 둔다 — 상태는 여전히 게이트가 센다.
+    #   ⚠ **이 이름표는 `docs/agent/evidence/D-309/contract_ac_ledger.yaml` 에는 안 적었다.**
+    #     그 파일은 차선 N 의 것이 아니다(턴 Z 규약 소유표). 한 파일은 한 차선이다.
+    #   [재측 2026-09-21 · 차선 N] `python scripts/verify_feature_reach.py --json`
+    #     → n=39 · 초록 10 · **회색 22** · 빨강 0 · 잠김 7 · ratio 25.6% · weighted 5.13
+    kind_derived:
+      # closed — 사슬 다섯(절↔화면↔라우트↔**역할 계정의 200**↔data_source)이 이어졌다.
+      #          「누른 뒤를 본」 초록이다. 10절.
+      closed: [F-01-c2, F-05-c1, F-05-c2, F-05-c3, F-09-c2, F-10-c3,
+               F-12-c2, F-12-c3, F-12-c8, F-14-c1]
+      # unmeasurable — 회색 22 + 잠김 7 = 29절. **못 이었거나 잠겼다.**
+      #   회색은 「사슬을 못 이었다」이지 「끊겼다」가 아니다(빨강 0건).
+      unmeasurable: [F-01-c1, F-02-c1, F-02-c2, F-02-c3, F-03-c1, F-03-c2, F-03-c3,
+                     F-04-c1, F-04-c2, F-09-c1, F-10-c1, F-10-c2, F-11-c1, F-11-c2,
+                     F-11-c3, F-12-c1, F-12-c4, F-12-c5, F-12-c6, F-12-c7, F-13-c1,
+                     F-14-c2,
+                     F-06-c1, F-06-c2, F-07-c1, F-08-c1, F-08-c2, F-09-c3, F-13-c2]
+      # 이 영역에는 ratchet · rule_only · gate_only 가 **0절**이다 —
+      # 영역 게이트가 래칫이 아니라 **도달 전수**를 세기 때문이다(P-106).
+      ratchet: []
+      rule_only: []
+      gate_only: []
+    kind_derived_note: |
+      ★ **F-09-c3 이 여기 잠김으로 서 있다** — 영역 ⑧ `LAW-01` 이 이번 턴에 '잠김' 으로
+        내려가며 가리킨 바로 그 절이다. 두 표가 **같은 하나의 사실**을 가리키게 됐다.
+      ★ 회색 22 는 **가장 큰 한 덩어리**다(152절 중 22). 이 영역의 25.6% 는
+        「26%만 됐다」가 아니라 **「74% 는 색을 모른다」**로 읽는 것이 옳다.
 
   # ═══════════════════════════════════════════════════════════════════════
   - id: "2"
@@ -71,6 +126,9 @@ areas:
       - id: SEC-01
         title: 들어오는 키의 수용 면을 **라우트마다 선언**하게 한다 (기본값 거절)
         status: 구현
+        kind: closed
+        kind_why: |
+          이번 턴 재측 exit 0 — [입력] 라우트 763건 · 대장 763건 · 신선 19.4시간. 면제 0
         gate: scripts/verify_route_inventory.py
         proof: backend/tests/test_f05_inbound_api_key.py
         evidence: docs/agent/evidence/SEC-01/route_inventory_gate.txt
@@ -86,6 +144,9 @@ areas:
       - id: SEC-02
         title: 그 기본값 거절을 **전역**으로 올린다 (전 라우트)
         status: 구현
+        kind: closed
+        kind_why: |
+          전 라우트 기본값 거절 · 시험이 선언/목록 갈림을 잡는다
         proof: backend/tests/test_access_gate.py
         note: |
           [승인 D-343 ③ · 2026-09-09] 인벤토리 663건 분류가 끝나 적용 승인이 났다.
@@ -96,6 +157,9 @@ areas:
       - id: SEC-03
         title: 익명 반출 0건 — **우리가 고칠 수 있는 자리**
         status: 구현
+        kind: closed
+        kind_why: |
+          닫고 **재호출로** 0건을 봤다 — 누른 뒤를 본 초록
         proof: backend/tests/test_authn_gap_closed.py
         note: |
           [실측 2026-09-08] 11자리에서 나가고 있었다. 그중 우리 소관 9자리가 속한 컨트롤러의
@@ -105,6 +169,9 @@ areas:
       - id: SEC-14
         title: 익명 반출 0건 — **§0.4 금지구역**
         status: 구현
+        kind: closed
+        kind_why: |
+          401 · 401 을 캐시 우회로 직접 봤다
         proof: backend/tests/test_access_gate.py
         note: |
           [실측 2026-09-09 · 호출·캐시우회] 401 · 401. 그날 17,416B 가 나가던 자리다.
@@ -115,6 +182,9 @@ areas:
       - id: SEC-15
         title: 거절이 **HTTP 상태로** 나간다 — 계약 상대가 읽는 면(F-05)
         status: 구현
+        kind: closed
+        kind_why: |
+          제목이 **F-05 진입면 11건**으로 좁혀져 있고 그 면은 닫혔다. 전역 승격(봉투 불일치 296건)은 이 절이 아니다 — 그 래칫은 W0-18 §2-2 에 산다
         proof: backend/tests/test_api_contract.py
         note: |
           [실측 2026-09-09] 663건 중 봉투 불일치 296건 · F-05 진입면 11건은 **승격**된다.
@@ -124,6 +194,9 @@ areas:
       - id: SEC-04
         title: 우리 층에 **인증 관문 없는 라우트** 0건
         status: 구현
+        kind: closed
+        kind_why: |
+          [턴 Y 실측 인용 · 이번 턴 미재측 — 로그인 게이트] exit 0 · 분모 다섯 전부 0 아님 · 로그인해서 실제로 눌렀다
         gate: scripts/verify_authn_paths.py
         proof: backend/tests/test_authn_gap_closed.py
         evidence: docs/agent/evidence/SEC-04/authn_paths_gate.txt
@@ -175,6 +248,9 @@ areas:
       - id: SEC-05
         title: 시크릿이 커밋되는 것을 막는다
         status: 구현
+        kind: ratchet
+        kind_why: |
+          이번 턴 재측 exit 0. **이력 면의 0 은 `.gitleaksignore` 면제 10건 위의 0**이다 — 파일 면(저장소가 나르는 것 0)만 전수다
         gate: scripts/verify_secret_scan.py
         proof: .gitleaks.toml
         evidence: docs/agent/evidence/SEC-05/secret_scan_gate.txt
@@ -193,6 +269,9 @@ areas:
       - id: SEC-06
         title: 나가는 키(자격증명)를 코드가 아니라 저장처에 둔다
         status: 구현
+        kind: closed
+        kind_why: |
+          이번 턴 재측 exit 0 — 모수 795파일 · 자기시험 10건(출생 표본 포함)
         gate: scripts/verify_credential_store.py
         proof: backend/tests/test_k5_credential_store.py
         evidence: docs/agent/evidence/SEC-06/credential_store_gate.txt
@@ -207,6 +286,9 @@ areas:
       - id: SEC-07
         title: 키 회전 절차 (발급·폐기·주기)
         status: 구현
+        kind: closed
+        kind_why: |
+          18 passed — 발급·폐기·회전·주기 넷 · 제품이 쓰는 함수로 거절을 잰다
         proof: backend/tests/test_s_key_rotation.py
         note: |
           [실측 2026-09-26 · 차선 S · 18 passed] `backend/common/key_rotation.py` —
@@ -230,6 +312,9 @@ areas:
       - id: SEC-08
         title: 침투 시험 (외부 또는 자체)
         status: 구현
+        kind: closed
+        kind_why: |
+          실행 기록 실재 — docs/agent/evidence/SEC-08/self_pentest_20260905_TC.md + result json
         proof: scripts/probe_self_pentest.py
         why: 0건. 상용 오픈 전 1회는 필요하다 — 지금 있는 것은 우리가 스스로 때린 호출뿐이다.
         note_closed: |
@@ -265,6 +350,9 @@ areas:
       - id: SEC-09
         title: 운영 포트 노출 점검
         status: 미측정
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미측정' 이다 — 이 절에는 잰 초록이 없다
         hand: out
         hand_why: |
           운영 서버 포트는 **운영 접근**이 있어야 잰다 — 대표 작업 창(D-209 운영 로그인 금지)
@@ -275,6 +363,9 @@ areas:
       - id: SEC-10
         title: 들어오는 키를 평문으로 흘리지 않는다 (HTTPS 강제)
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 파일은 실재하나 note 가 비어 있어 **무엇을 분모 몇으로 쟀는지 이 대장은 말하지 않는다**
         proof: backend/tests/test_f05_inbound_api_key.py
 
       # ── P-35 (세종 위임 판정 2026-09-27) — SEC-11 을 둘로 쪼갠다 ──────────
@@ -284,6 +375,9 @@ areas:
       - id: SEC-11a
         title: 권한 거부가 **거부의 상태 코드**로 나간다 — **부르는 라우트**(화면·계약·외부 진입면)
         status: 잠김
+        kind: unmeasurable
+        kind_why: |
+          상태가 '잠김' 이다 — 잰 초록이 없다. (래칫 게이트 `verify_envelope.py` 를 일부러 안 붙인 자리 · 표 머리글의 예)
         hand: in
         hand_why: |
           §4 판정으로 길이 생겼다 — 접두를 한 개씩 승격하고 §0.4 화면은 **프론트 인터셉터**로
@@ -369,6 +463,9 @@ areas:
       - id: SEC-11b
         title: 권한 거부의 상태 코드 — **아무도 안 부르는 인수 라우트**(dormant · §0.4)
         status: 잠김
+        kind: unmeasurable
+        kind_why: |
+          상태가 '잠김' 이다 — 잰 초록이 없다
         hand: out
         hand_why: |
           부르는 곳 0 · 승격은 **인수자 판단**이다(P-35). 우리 화면도 계약 면도 이 라우트를
@@ -384,6 +481,9 @@ areas:
       - id: SEC-12
         title: 주석 처리된 권한 뒤의 **열린 문** 0건
         status: 구현
+        kind: closed
+        kind_why: |
+          이번 턴 재측 exit 0 — 주석 **39건 전수**를 훑어 「열린 문 0건」이라는 **절대값**을 낸다. 「새로 생긴 것 0」은 덤이다
         gate: scripts/verify_commented_guards.py
         proof: backend/tests/test_commented_guards.py
         evidence: docs/agent/evidence/SEC-12/commented_guards_gate.txt
@@ -398,6 +498,9 @@ areas:
       - id: SEC-13
         title: 캐시가 관문 판정을 대신하지 않는다
         status: 구현
+        kind: closed
+        kind_why: |
+          이번 턴 재측 exit 0 — 시험 136건 · 스택 51건 · **기존 면제 0건**이라 「새 위반 0」이 곧 전수 0 이다
         gate: scripts/verify_cache_bypass.py
         proof: scripts/verify_cache_bypass.py
         evidence: docs/agent/evidence/SEC-13/cache_bypass_gate.txt
@@ -419,6 +522,9 @@ areas:
       - id: SEC-18
         title: 보안 설정의 **기본값이 닫힌 쪽**이다 — 잊은 사람을 벌하지 않는다
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이고 게이트도 이번 턴 **exit 1**(5/5 실패) — 색이 같다
         gate: scripts/verify_settings_fail_closed.py
         hand: in
         proof: scripts/verify_settings_fail_closed.py
@@ -489,6 +595,9 @@ areas:
       - id: SEC-18a
         title: 운영 프로필이 **선언 없이는 뜨지 않는다** — 열린 기본값으로 상용에 서지 못한다
         status: 구현
+        kind: closed
+        kind_why: |
+          이번 턴 재측(gx-shell) exit 0 — **판 12개를 실제로 띄워** 7/7
         gate: scripts/verify_prod_settings.py
         proof: scripts/verify_prod_settings.py
         evidence: docs/agent/evidence/SEC-18a/prod_settings_gate.txt
@@ -560,6 +669,9 @@ areas:
       - id: SEC-16
         title: 웹훅 서명·재시도 규약 (HMAC · 스키마 버전 헤더 · 지수 백오프 5회)
         status: 구현
+        kind: rule_only
+        kind_why: |
+          ★ **분모 0.** 규약(HMAC·스키마 버전·백오프 5회)은 섰는데 **나가는 웹훅이 0개**다 — 규칙만 서 있고 현장이 비었다
         gate: scripts/verify_webhook_contract.py
         origin: PRD-2.5
         proof: scripts/verify_webhook_contract.py
@@ -623,6 +735,9 @@ areas:
       - id: SEC-17
         title: 화면·응답에 **상대사명·계약번호·조항·내부 경로 0건** (판정기 상시화)
         status: 구현
+        kind: closed
+        kind_why: |
+          프런트 774파일 0건 + **API 5라우트 응답 본문 0건**(로그인 실측) · 상시화(pre-commit)까지 걸었다
         gate: scripts/verify_ui_secrets.py
         proof: scripts/verify_ui_secrets.py
         origin: PRD-2.6
@@ -671,11 +786,17 @@ areas:
       - id: ISO-01
         title: 테넌트 간 읽기·쓰기가 양방향으로 막힌다
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 backend/tests/test_tenant_isolation.py 실재 · note 가 비어 있다
         proof: backend/tests/test_tenant_isolation.py
 
       - id: ISO-02
         title: 격리가 게이트로 상시 검사된다
         status: 구현
+        kind: closed
+        kind_why: |
+          이번 턴 재측(호스트) exit 0 — 커널 함수 64/64 · no_route 등재 66종 · 라우트 763건 대조. ⚠ `unguarded 346` 은 **보고한 수**이지 판정이 아니다
         gate: scripts/verify_tenant_scope.py
         proof: scripts/verify_tenant_scope.py
         evidence: docs/agent/evidence/ISO-02/tenant_scope_gate.txt
@@ -702,6 +823,9 @@ areas:
       - id: ISO-03
         title: 새 라우트가 테넌트 범위를 **선언**하고 태어난다
         status: 구현
+        kind: ratchet
+        kind_why: |
+          ★ **래칫이다.** 이번 턴 재측 exit 0 — 라우트 576건 중 표면 선언 113 · **미선언(면제) 461건 = 80%**. 초록의 뜻은 「선언 없이 태어난 **새** 라우트 0건」이지 「전수 선언」이 아니다. 부류별 이름 표는 아래 `exemptions_by_app` 에 있다
         gate: scripts/verify_route_scope_declared.py
         proof: scripts/verify_route_scope_declared.py
         evidence: docs/agent/evidence/ISO-03/route_scope_declared_gate.txt
@@ -730,10 +854,65 @@ areas:
           소급하지 않는 이유는 SEC-02·캐시우회 래칫과 같다: 새 것은 100%, 기존분은 갚는다.
           ★ 아직 없는 것: 런타임 등록 전수를 보는 눈. 지금은 소스 선언을 본다.
           등재부: docs/agent/evidence/ISO-03/declaration_baseline.txt (461건)
+        # ★★★ [차선 N · 2026-09-21 · 턴 Z · P-209 ③] **면제 461 을 부류별 이름 표로 폈다.**
+        #   왜 지금 펴는가: 다음 턴부터 「**면제는 늘지 않는다 + 매 턴 −N**」을 세우려면
+        #   461 이 **한 덩어리가 아니라 부류**여야 한다. 덩어리로 두면 갚을 자리를 못 고른다.
+        #   ★ 점수는 이번 턴 **안 바꿨다** — 이 절은 '구현' 그대로다(제목이 「새 라우트」로
+        #     좁혀져 있고 그 답은 초록이다). 바꾼 것은 `kind: ratchet` 한 칸과 이 표뿐이다.
+        #   [열거 2026-09-21 · 차선 N] 출처 = `docs/agent/evidence/ISO-03/declaration_baseline.txt`
+        #     (461줄 · 주석 10줄 제외) · 술어 = 줄의 `METHOD module.…` 에서 첫 모듈 이름.
+        exemptions_total: 461
+        exemptions_denominator: 576
+        exemptions_ratio: "80%"
+        exemptions_by_method:
+          GET: 202
+          POST: 154
+          PUT: 62
+          DELETE: 42
+          PATCH: 1
+        exemptions_by_app:
+          # ── ⓐ §0.4 금지구역 — **우리가 못 고친다** (합 149 · 461의 32%) ──────────
+          #    `scripts/route_ownership.py: FORBIDDEN_APPS = ("delivery","orders","terminals")`
+          #    이 149 는 「매 턴 −N」의 분모에서 **빼야 한다** — 못 갚는 빚을 갚을 빚에 섞으면
+          #    아무리 일해도 수가 안 주는 것처럼 보인다(D-311 이 잠자는 빚에서 한 것과 같다).
+          delivery: 60            # §0.4
+          terminals: 58           # §0.4
+          orders: 31              # §0.4
+          # ── ⓑ 우리 손 안 — **갚을 수 있는 312건** (461 − 149) ────────────────────
+          devices: 66
+          surveillance: 60
+          stream_monitors: 27
+          handover: 25
+          operation_settings: 24
+          third_api: 23
+          operational_data: 17
+          partner: 16
+          optimization: 10
+          print_format: 9
+          checklist_setting: 8
+          dashboard: 7
+          media_data: 6
+          report_template: 5
+          flight_log: 4
+          drone_communication: 4
+          task_status: 1
+        exemptions_note: |
+          ★ **다음 턴이 세울 두 문장은 이 표 없이는 못 선다:**
+            ① 「면제는 늘지 않는다」 — 이미 게이트가 강제한다(`--write-baseline` 없이는
+               새 이름이 들어올 수 없다). 그러나 **늘지 않는다는 것과 준다는 것은 다르다.**
+            ② 「매 턴 −N」 — 그 N 의 분모는 **461 이 아니라 312 다.** §0.4 149건은
+               우리가 한 줄도 못 고친다. 461 로 목표를 세우면 그 목표는 영원히 안 닿는다.
+          ★ 가장 큰 세 덩어리는 `devices 66` · `surveillance 60` · `stream_monitors 27` 이고
+            셋 합이 **우리 몫 312 의 49%** 다. 한 앱씩 갚으면 수가 눈에 보이게 움직인다.
+          ⚠ 이 표는 **이름의 수**이지 라우트의 위험도가 아니다. GET 202건과 DELETE 42건이
+            같은 무게가 아니다 — 갚는 순서를 정할 때는 이 표가 아니라 메서드 표를 본다.
 
       - id: ISO-04
         title: 데모·시연 데이터가 실데이터와 섞이지 않는다
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 scripts/check_demo_isolation.py 실재 · note 가 비어 있다
         proof: scripts/check_demo_isolation.py
 
   # ═══════════════════════════════════════════════════════════════════════
@@ -744,11 +923,17 @@ areas:
       - id: OPS-01
         title: 설치·운영 매뉴얼이 있다
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 매뉴얼 문서가 실재한다
         proof: docs/agent/runbook/설치운영매뉴얼_v0.1.md
 
       - id: OPS-02
         title: "**빈 환경에서** 매뉴얼대로 설치가 재현된다"
         status: 미측정
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미측정' 이다 — 빈 환경을 세워 본 적이 없다
         hand: out
         hand_why: |
           사내 git(192.168.0.22) 불통 — 설치 재현이 사내 저장소 fetch 를 요구한다.
@@ -764,6 +949,9 @@ areas:
       - id: OPS-03
         title: 마이그레이션이 한 줄로 선다
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 migrate_bootstrap.py 실재 · note 가 비어 있다
         proof: backend/common/management/commands/migrate_bootstrap.py
         why: dj-core `logger/0009` 의존 미선언. §0.4 라 우리가 못 고친다 — 우회 경로를 우리 층에 둔다.
         note_closed: |
@@ -781,6 +969,9 @@ areas:
       - id: OPS-04
         title: 백업 — DB 를 뜨고 **무엇을 떴는지 대장을 남긴다**
         status: 구현
+        kind: closed
+        kind_why: |
+          덤프 4,447,529바이트를 실제로 떴고 증인 표 5개 행 수를 대조표로 남겼다
         proof: scripts/ops_backup.py
         note: |
           [실측 2026-09-09] db_database_guardianx_20260829T134442Z.dump · 4,447,529 bytes ·
@@ -791,6 +982,9 @@ areas:
       - id: OPS-05
         title: 복구 — **해 봤다.** 임시 DB 로 살려 행 수를 맞췄다
         status: 구현
+        kind: closed
+        kind_why: |
+          **해 봤다** — 임시 DB 로 살려 카메라 39→39 · 사용자 103→103
         proof: docs/agent/evidence/D-354/restore_run.md
         note: |
           [실측 2026-09-09] 카메라 39→39 · 사용자 103→103 · 이벤트 0→0. 쓴 명령을 그대로 남겼다.
@@ -800,6 +994,9 @@ areas:
       - id: OPS-09
         title: 백업·복구 — **영상 객체저장**
         status: 구현
+        kind: closed
+        kind_why: |
+          **되살려 봤다** — 대상 3 · 되살림 3 · **해시 일치 3** · 음성 대조 2(안 묶인 객체는 안 떴다)
         proof: docs/agent/evidence/D-356/restore_objects_run.md
         note: |
           ★ [실측 2026-09-10 · D-356] **되살려 봤다.** 대상 3개 · 되살림 3개 ·
@@ -823,6 +1020,9 @@ areas:
       - id: OPS-12a
         title: 백업 목적지 — **다른 볼륨** (손 안)
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 ops_backup_volume.py 실재 · note 가 비어 있다
         proof: scripts/ops_backup_volume.py
         note_closed: |
           ★ **닫혔다 [실측 2026-09-05 · 턴 C 차선 E]** — 이번엔 「할 수 있다」가 아니라
@@ -848,6 +1048,9 @@ areas:
       - id: OPS-12b
         title: 백업 목적지 — **다른 호스트** (손 밖)
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다 — 손 밖(다른 호스트)
         hand: out
         hand_why: |
           목적지 호스트가 이 기계에 없다 — 대표/에스비가 정한다.
@@ -892,6 +1095,9 @@ areas:
       - id: OPS-13
         title: 배포 앞단 이중방어 (리버스 프록시)
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 ops_front_line.py 실재 · note 가 비어 있다
         proof: scripts/ops_front_line.py
         note_closed: |
           ★ **닫혔다 [실측 2026-09-05 · 턴 C 차선 E]** — `gx-gunicorn-e`(워커4×스레드4) +
@@ -945,6 +1151,9 @@ areas:
       - id: OPS-13a
         title: 앞단이 뒷단의 **워커 재활용을 삼킨다** — 502 3건 / 3,600 (0.083%)
         status: 잠김
+        kind: unmeasurable
+        kind_why: |
+          상태가 '잠김' 이고 게이트도 이번 턴 **exit 2(회색)** — ⑤ 뒷단 부재로 355건을 창 밖으로 뺐다. 회색은 초록이 아니다
         blocker: OPS13B_502_SKIPS_RETRY
         gate: scripts/verify_front_line_502.py
         proof: scripts/verify_front_line_502.py
@@ -1080,6 +1289,9 @@ areas:
       - id: OPS-13b
         title: 앞단의 **재시도가 두 번에서 멈춘다** — 새어 나간 502 13건의 갈림길
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다 — 고쳐서 502 가 주는지 안 쟀다
         hand: in
         gate_missing_why: |
           고쳐서 502 가 주는지 **안 쟀다.** 앞단 `reload` 는 살아 있는 컨테이너를 만지는
@@ -1101,6 +1313,9 @@ areas:
       - id: OPS-06
         title: 감시 3종 — 살아 있는가 · 밀리는가 · 채워지는가
         status: 구현
+        kind: closed
+        kind_why: |
+          신호 12개 · **살아 있는 브로커에서** 양성·음성을 쟀다(0건→OK · 12,468건→ALARM · 지운 뒤 OK)
         proof: scripts/ops_monitor.py
         note: |
           [실측 2026-09-09] 신호 7개 · OK 6 · UNKNOWN 1(이벤트 0건이라 「밀림」을 잴 수 없다).
@@ -1131,6 +1346,9 @@ areas:
       - id: OPS-10
         title: 경보 발송처 (누구에게 · 어떤 경로로)
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이고 게이트도 이번 턴 **exit 1** — ② 닿는 사람 0명 · ④ 모든 규칙이 `log` 다. 색이 같다
         gate: scripts/ops_alert_routing.py
         gate_why: |
           ⚠ **처음에 `verify_alarm_budget.py` 를 적었다가 P-85 검사에 걸렸다** — 그것은
@@ -1190,6 +1408,9 @@ areas:
       - id: OPS-07
         title: 로그 수집·보존 기간
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 ops_log_collectors.py 실재 · note 가 비어 있다
         proof: scripts/ops_log_collectors.py
         why: |
           ★ [실측 2026-09-24 · 차선 E3] **회색이 빨강으로 갈렸다** — 재고 나서 알았다.
@@ -1250,6 +1471,9 @@ areas:
       - id: OPS-07b
         title: DB 감사 로그 보존 — 보존 일수를 **선언하고** 파기가 되돌릴 수 있어야 한다
         status: 구현
+        kind: closed
+        kind_why: |
+          [턴 Y 실측 인용 · 이번 턴 미재측 — Django 게이트] exit 0 · **되돌림을 했다** · 8수
         gate: scripts/verify_purge.py
         proof: backend/tests/test_be_purge.py
         evidence: docs/agent/evidence/OPS-07b/purge_gate.txt
@@ -1339,6 +1563,9 @@ areas:
       - id: OPS-17
         title: 배치는 절차가 아니라 **명령 하나**다 — 빌드→배치→번들 신원→걷기 · 실패하면 되돌린다
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 scripts/deploy.sh 실재 · note 가 비어 있다
         proof: scripts/deploy.sh
         hand: in
         note_closed: |
@@ -1368,6 +1595,9 @@ areas:
       - id: OPS-19
         title: 백업이 **주기로 돈다** — 손으로 뜬 덤프는 RPO 가 아니다
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다 — 손으로 뜬 덤프는 RPO 가 아니다
         hand: in
         gate_missing_why: |
           이 절을 판정하는 게이트는 **아직 없다.** `ops_restore_drill.py` 는 「복구가
@@ -1475,6 +1705,9 @@ areas:
       - id: OPS-08
         title: 되돌리기 절차 (배포 실패 시)
         status: 구현
+        kind: closed
+        kind_why: |
+          **해 봤다** — 표 220개 → 되돌려 214개 → 다시 밀어 220개 · 381초
         proof: scripts/ops_rollback_drill.py
         note: |
           [실측 2026-09-24 · 차선 E3 · 381초] **해 본 기록이 생겼다.** 빈 DB 를 매뉴얼 §2-3
@@ -1489,6 +1722,9 @@ areas:
       - id: OPS-11
         title: 장애 대응 1쪽 — 새벽 세 시에 읽는 순서
         status: 구현
+        kind: closed
+        kind_why: |
+          장애 대응 1쪽 실재 · 신호 6개마다 첫 손 + 하지 말 것 + 사람 부르는 선
         proof: docs/agent/runbook/장애대응_1쪽.md
         note: |
           감시 신호 6개마다 첫 손을 적었고, **하지 말 것**과 **사람을 부르는 선**을 함께 적었다.
@@ -1498,6 +1734,9 @@ areas:
       - id: OPS-14
         title: 생존 알림 — 매일 08:00 (dead man's switch)
         status: 구현
+        kind: closed
+        kind_why: |
+          등록만 보지 않고 **한 번 돌렸다** — `{"sent": 1, "no_recipients": 9}`
         proof: backend/tests/test_q_heartbeat_digest.py
         origin: PRD-2.5
         note: |
@@ -1521,6 +1760,9 @@ areas:
       - id: OPS-15
         title: 카메라 맥박 군집 두절 (구역 3중 2 · 5분) → `camera_cluster_down`
         status: 구현
+        kind: rule_only
+        kind_why: |
+          ★ **분모 0.** 판정기의 초록은 **합성 구역** 위에서 났다 — 개발 DB 에 **카메라 3대 이상인 활성 구역이 0개**다. 규칙·칸·주기·부작위 시험은 다 섰고 **현장이 비었다**
         gate: scripts/verify_camera_pulse.py
         proof: scripts/verify_camera_pulse.py
         evidence: docs/agent/evidence/OPS-15/camera_pulse_gate.txt
@@ -1574,6 +1816,9 @@ areas:
       - id: OPS-16
         title: 계량 표 — 월별 카메라 대수·활성 좌석·이벤트 수·알림 발송 수·저장 GB
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 backend/tests/test_be_metering.py 실재 · note 가 비어 있다
         proof: backend/tests/test_be_metering.py
         note_closed: |
           [실측 2026-09-05 · 턴 E · Backend/DB Agent] 계량 21 passed. 다섯 칸(카메라 대수 ·
@@ -1598,6 +1843,9 @@ areas:
       - id: OPS-18
         title: 감사 표 **하루 증분** — 행 수·MB (자람을 센다 · 아직 안 지운다)
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다
         hand: in
         hand_why: |
           세는 자리는 우리 층에 둘 수 있다. `logger_auditlogs` 는 dj-core 의 표(§0.4)지만
@@ -1647,6 +1895,9 @@ areas:
       - id: PERF-01
         title: 부하 시험 시나리오와 도구
         status: 구현
+        kind: closed
+        kind_why: |
+          동시 10 · 5라운드 · 워밍업 버림 · 오류 0건으로 실제 문을 두드렸다. ⚠ `runserver` 의 수임을 절 스스로 적었다
         proof: scripts/perf_load.py
         note: |
           [실측 2026-09-26 · 차선 Q · 동시 10 · 5라운드 · 워밍업 1라운드 버림 · 오류 0건]
@@ -1668,6 +1919,9 @@ areas:
       - id: PERF-02
         title: 동시 스트림 상한 실측
         status: 미측정
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미측정' 이다 — 동시 스트림 상한을 잰 적이 없다
         hand: out
         hand_why: |
           동시 스트림 상한은 **GPU 서버**가 있어야 잰다
@@ -1680,6 +1934,9 @@ areas:
       - id: PERF-03
         title: 이벤트 처리 지연 · 알림 발송 지연 **1차 측정**
         status: 구현
+        kind: closed
+        kind_why: |
+          n=30 · 워밍업 5회 버림 · 환경을 함께 박았다
         proof: docs/agent/evidence/D-354/perf.json
         note: |
           [실측 2026-09-09 · CPU 8 · mem 7.7GiB · GPU 없음 · n=30 · 워밍업 5회 버림]
@@ -1692,6 +1949,9 @@ areas:
       - id: PERF-05
         title: 처리량 — **어디서 먼저 무너지는가**
         status: 구현
+        kind: closed
+        kind_why: |
+          동시 1→16 계단 · 호출 310건 — **어디서 먼저 무너지는지**를 실제로 봤다
         proof: docs/agent/evidence/D-359/perf_load.json
         note: |
           ★ [실측 2026-09-10 · D-359 · 동시 1→16 계단 · 호출 310건]
@@ -1721,6 +1981,9 @@ areas:
       - id: PERF-06
         title: 이벤트 속도제한 200/분 — **근거와 운영 적정성**
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 probe_event_rate_limit.py 실재 · note 가 비어 있다
         proof: scripts/probe_event_rate_limit.py
         why: |
           ★ [D-359 · 2026-09-10 부하시험 중 발견] 부하를 올리자
@@ -1758,6 +2021,9 @@ areas:
       - id: PERF-04
         title: 응답시간 예산과 그 회귀 감시
         status: 구현
+        kind: unmeasurable
+        kind_why: |
+          ★ **못 쟀다.** [턴 Y 실측] 게이트 **exit 2** — 예산 4/4 초록이나 **회귀 4/4 판정불가**(잡음 25~30% > 문턱 20%) · 기준 파일 `PERF-04/budget.json` 이 09-15 자 그대로다. 대장은 '구현' 인데 **초록을 낸 실행이 이번에도 없다**
         gate: scripts/verify_perf_budget.py
         proof: scripts/verify_perf_budget.py
         evidence: docs/agent/evidence/PERF-04/perf_budget_gate.txt
@@ -1896,6 +2162,9 @@ areas:
       - id: PERF-07
         title: VLM 사유 시간 예산 (p95 ≤ 2s · GPU 1장)
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다 — GPU 가 없다
         origin: PRD-2.5
         hand: in
         why: |
@@ -1912,18 +2181,27 @@ areas:
       - id: QA-01
         title: 단위·통합 시험이 상시 돈다
         status: 구현
+        kind: closed
+        kind_why: |
+          433 passed (e2e 제외) — 상시로 돈다
         proof: .pre-commit-config.yaml
         note: "[실측 2026-09-08] 433 passed (e2e 제외)"
 
       - id: QA-02
         title: E2E 시나리오가 프레임 투입부터 보고서까지 돈다
         status: 구현
+        kind: closed
+        kind_why: |
+          23 passed · E2E-1 화재 · E2E-2 침수
         proof: backend/tests/e2e/test_e2e_1_fire.py
         note: "[실측 2026-09-08] 23 passed · E2E-1 화재 · E2E-2 침수"
 
       - id: QA-03
         title: 규칙이 문서가 아니라 게이트로 강제된다
         status: 구현
+        kind: ratchet
+        kind_why: |
+          ★ **래칫이다.** 이번 턴 재측 exit 0 — 대상 225건 / 전체 321건 · **소급 대상 아님(면제) 96건 = 30%**. 초록의 뜻은 「D-286 뒤의 결정문 전건」이지 「전체 321건」이 아니다
         gate: scripts/verify_decision_tools.py
         proof: scripts/verify_decision_tools.py
         evidence: docs/agent/evidence/QA-03/decision_tools_gate.txt
@@ -1943,21 +2221,33 @@ areas:
       - id: QA-04
         title: 부작위 시험 — 「안 열린 것」이 기본임을 잰다
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 test_f05_inbound_api_key.py 실재 · note 가 비어 있다
         proof: backend/tests/test_f05_inbound_api_key.py
 
       - id: QA-05
         title: 시험이 캐시가 아니라 대상을 잰다
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 backend/tests/no_cache.py 실재 · note 가 비어 있다
         proof: backend/tests/no_cache.py
 
       - id: QA-06
         title: 수를 내는 도구가 두 번 돌려 같은 수를 낸다
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 verify_measure_repro.py 실재 · note 가 비어 있다
         proof: scripts/verify_measure_repro.py
 
       - id: QA-07
         title: 시험이 코드의 어디를 지나는지 (커버리지)
         status: 구현
+        kind: closed
+        kind_why: |
+          도구를 깔고 **한 번 쟀다** — TOTAL 12,356 stmts · 52%. 이 절이 재는 것은 「어디를 지나는지 아는가」이고 그 앎이 생겼다
         hand: in
         proof: docs/agent/evidence/P-20/seed_holes_filled.md
         note: |
@@ -1982,6 +2272,9 @@ areas:
       - id: QA-08
         title: 빌드 산출물이 재현된다 (같은 입력 → 같은 번들)
         status: 구현
+        kind: closed
+        kind_why: |
+          두 번 빌드 + 깨끗한 디렉터리 빌드 = **산출물 197개 이름·해시 전부 일치** · 브랜치 참조 0건
         proof: docs/agent/evidence/D-387/lock_pin_run.md
         note: |
           [실측 2026-09-13] lock 을 저장소에 올리고 git 의존 둘을 **커밋 핀**으로 고정했다.
@@ -1991,6 +2284,9 @@ areas:
       - id: QA-09
         title: 설치가 재현된다 (`npm ci` 가 같은 것을 가져온다)
         status: 미측정
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미측정' 이다 — `npm ci` 재현을 잰 적이 없다
         hand: out
         hand_why: |
           lockfile 이 금고에 있고 **커밋 승인이 대표**의 자리다(W0-8)
@@ -2004,6 +2300,9 @@ areas:
       - id: QA-10
         title: 죽은 코드 제거 (㉯ 지워야 할 것)
         status: 구현
+        kind: closed
+        kind_why: |
+          **다시 재고 승인을 받고 999줄을 지웠다** · 지운 뒤 단위 786 + E2E 23 passed
         proof: docs/agent/evidence/D-388/dormant_classified.md
         note: |
           [실측 2026-09-26 · 차선 Q · **사람 승인 뒤 삭제**] 두 모듈 **999줄**을 지웠다:
@@ -2049,6 +2348,9 @@ areas:
       - id: QA-11
         title: 단위 시험과 E2E 가 서로의 DB 를 다투지 않는다
         status: 구현
+        kind: closed
+        kind_why: |
+          **같은 순간에** 단위 779 + E2E 23 을 돌렸고 DB 두 개가 나란히 섰다 [psql 실측]
         proof: backend/tests/test_q_test_db_split.py
         note: |
           [실측 2026-09-26 · 차선 Q] **동시에 돌렸고 둘 다 초록이다.**
@@ -2074,6 +2376,9 @@ areas:
       - id: QA-12
         title: 알림 예산 시뮬레이션 (최근 7일 · 시간당 6건 주황 경고)
         status: 구현
+        kind: rule_only
+        kind_why: |
+          ★ **분모 얇다(사실상 0).** 규칙(EEMUA 191 상한 6건/시간)과 주황 표시는 섰는데 **최근 7일 이벤트가 4건**이다 — 시간당 0.02건. 시뮬레이션이 만드는 행 0행. 규칙만 서 있고 현장이 비었다
         gate: scripts/verify_alarm_budget.py
         proof: scripts/verify_alarm_budget.py
         evidence: docs/agent/evidence/QA-12/alarm_budget_gate.txt
@@ -2111,12 +2416,18 @@ areas:
       - id: UX-01
         title: 카메라 설치 주소를 사람이 채울 수 있다
         status: 구현
+        kind: closed
+        kind_why: |
+          관리 커맨드로 채워진다 — 화면 갈래는 UX-02 로 갈라 두었다
         proof: backend/tests/test_camera_address_write.py
         note: 관리 커맨드다. UI 는 UX-02 다 — 「채울 수 있다」와 「화면에서 채운다」는 다른 절이다.
 
       - id: UX-02
         title: 관리 UI (카메라·수신자·임계값을 화면에서)
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 화면 파일 CameraAddress.tsx 실재 · note 가 비어 있다
         proof: frontend/src/features/dsm/pages/CameraAddress.tsx
         why: 미착수였다. 지금은 전부 커맨드나 API 다 — 였다.
         note_closed: |
@@ -2136,6 +2447,9 @@ areas:
       - id: UX-03
         title: 온보딩 — 처음 쓰는 사람이 혼자 시작한다
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 화면 파일 Onboarding.tsx 실재 · note 가 비어 있다
         proof: frontend/src/features/dsm/pages/Onboarding.tsx
         why: 설치 매뉴얼은 설치자용이다. 사용자용 시작 문서가 없었다.
         note_closed: |
@@ -2155,6 +2469,9 @@ areas:
       - id: UX-04
         title: 화면 캡처 증거 — DSM 화면 셋 (대시보드·이벤트 목록·이벤트 상세)
         status: 구현
+        kind: closed
+        kind_why: |
+          화면 3장을 **실제로 띄워** 그 화면에만 있는 글자를 확인한 뒤 찍었다 · verify_screens ±5분 대조
         proof: docs/agent/evidence/D-347/screens/INDEX.yaml
         note: |
           ★ [실측 2026-09-12 · D-384 ②] **3장.** 0장이던 두 턴이 끝났다.
@@ -2175,6 +2492,9 @@ areas:
       - id: UX-06
         title: 화면 캡처 증거 — **인수 화면 5장** (device·roles·menu·config·profile)
         status: 구현
+        kind: closed
+        kind_why: |
+          인수 화면 5장 — **열어 보고** 골랐다(추측 아님) · 열었더니 결함 1건이 나왔다
         proof: docs/agent/evidence/D-386/screens_run.md
         note: |
           ★ [실측 2026-09-13 · D-386] **3장 → 8장.** 이 다섯은 우리가 만든 화면이 아니라
@@ -2189,6 +2509,9 @@ areas:
       - id: UX-07
         title: 화면 캡처 증거 — 남은 화면 8개 (감시·영상·운영 계열)
         status: 구현
+        kind: closed
+        kind_why: |
+          8장 → **16/16** · 후보 16개를 실제로 열어 본문을 읽었다 · 브라우저 오류 0건
         proof: docs/agent/evidence/D-396/screens_16.md
         note: |
           ★ [실측 2026-09-14 · D-396] **8장 → 16장. 16/16 이 찼다.**
@@ -2208,6 +2531,9 @@ areas:
       - id: UX-09
         title: 열었더니 못 찍은 화면 셋 (빈 화면 1 · 도달 불가 2)
         status: 잠김
+        kind: unmeasurable
+        kind_why: |
+          상태가 '잠김' 이다 — 못 찍은 셋의 원인(역할)은 **아직 재 보지 않았다**
         hand: out
         hand_why: |
           셋 다 인수 자산(rj-core §0.4) 화면에서 갈린다 — 소유팀
@@ -2230,6 +2556,9 @@ areas:
       - id: UX-10
         title: 저장소가 죽었을 때 사용자가 그것을 안다
         status: 구현
+        kind: unmeasurable
+        kind_why: |
+          ★ **절이 안 닫혔다.** 응답이 말하던 두 거짓말은 고쳤으나 **화면은 그대로다**(「0 of 0」) — 「사용자가 그것을 안다」를 잰 초록이 없다. `route-alive` 는 이 자리에서 **빨간 채로 둔다**(D-327). ⇒ UX-16 과 같은 모양의 **쪼갬 후보**다(응답 갈래는 닫혔고 화면 갈래는 술어 0개)
         proof: frontend/src/features/MediaData/hooks/useMediaData.ts
         note_closed: |
           ★★ **닫혔다 [실측 2026-09-27 · 턴 B 차선 C]** — 그리고 **막던 것은 한 줄이었다.**
@@ -2269,6 +2598,9 @@ areas:
       - id: UX-12
         title: 검수용 이벤트가 **실제 경로로** 심긴다 (시드 · 데이터 출처 표기)
         status: 구현
+        kind: closed
+        kind_why: |
+          `record_detection` 만 불러 20건 — **실제 경로로** 심는다 · `data_source` 를 메타 5칸째로 세웠다
         proof: docs/agent/evidence/D-401/seed_is_real_path.md
         note: |
           ★ [실측 2026-09-16 · D-401] `seed_dsm_events` 가 `record_detection` 만 불러
@@ -2284,6 +2616,9 @@ areas:
       - id: UX-11
         title: 이벤트 대응 진행이 기록된다 (발생→접수 확인→조치중→종결)
         status: 구현
+        kind: closed
+        kind_why: |
+          시험 11건 · 거절이 **실제 4xx**(409·400·403·404) · `AxesStayApartTest` 가 두 축을 가른다
         proof: backend/tests/test_response_flow.py
         note: |
           ★ [실측 2026-09-14 · D-399] 지시서는 「상태를 4값으로」 를 냈고 실측하니
@@ -2299,6 +2634,9 @@ areas:
       - id: UX-08
         title: 관제 화면 실시간 탐지 알림 (WebSocket 브로드캐스트)
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 test_c2_realtime_ping.py 실재 · note 가 비어 있다
         proof: backend/tests/test_c2_realtime_ping.py
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 C2] **운영 설정의 redis 레이어**로 두드림 왕복을 쟀다.
@@ -2353,6 +2691,9 @@ areas:
       - id: UX-05
         title: 역할↔화면 매핑 확인 (안양 관제팀 검수 항목)
         status: 잠김
+        kind: unmeasurable
+        kind_why: |
+          상태가 '잠김' 이다 — 매핑의 정답은 안양 관제팀이 안다(검수 대기)
         hand: out
         hand_why: |
           매핑의 정답은 **안양 관제팀**이 안다 — 검수 항목
@@ -2387,6 +2728,9 @@ areas:
       - id: UX-13
         title: 단일 초점 큐 — W1 상단 「지금 처리할 것 하나」 + 반복 묶음(×N)
         status: 구현
+        kind: closed
+        kind_why: |
+          `total_events=7 · card_total=1` 실측 · 화면까지 찍었다
         proof: backend/tests/test_c_response_clock.py
         origin: PRD-2.5
         note: |
@@ -2407,6 +2751,9 @@ areas:
       - id: UX-14
         title: 대응 시계 표시 (카드 4단계 · 상세 4시각 · 월간 p50/p95)
         status: 구현
+        kind: gate_only
+        kind_why: |
+          ★ **제목이 부르는 셋 중 하나에 술어가 없다.** 문턱 넷·상세 타임라인·월간 분포는 실측 초록이나, 절이 부르는 **「카드 글자가 4단계로 커지는 모양」은 아직 시험이 아니라 코드**라고 절 스스로 적었다. UX-16 과 같은 모양 — **다음 턴 쪼갬 후보**
         proof: backend/tests/test_c_response_clock.py
         origin: PRD-2.5
         note: |
@@ -2434,6 +2781,9 @@ areas:
       - id: UX-15
         title: 키보드·사운드 (J/K 이동 · 1/2/3 판정 · Enter 상세 · M 음소거 · 사운드 3종)
         status: 구현
+        kind: gate_only
+        kind_why: |
+          ★ **게이트는 초록인데 절은 안 닫혔다.** `verify_wall_keys` 7종 중 이 절 몫은 ①②⑦ **3종**이고, 제목이 부르는 `J/K`·`1/2/3`·`Enter`·`M`·사운드 3종은 **술어가 없다**
         gate: scripts/verify_wall_keys.py
         proof: scripts/verify_wall_keys.py
         evidence: docs/agent/evidence/UX-15/wall_keys_gate.txt
@@ -2478,29 +2828,48 @@ areas:
           [실측 2026-09-24 등재] 판정 경로가 클릭뿐이고 소리는 0종이다.
           관제요원은 8시간 마우스를 쥐지 않는다. **심각만 소리가 난다** — 묶인 반복 이벤트는 1회.
 
-      - id: UX-16
-        title: 월(Wall) 모드 `/wall` — 지도 + 미처리 큐 + 카메라 맥박
+      # ══════════════════════════════════════════════════════════════════
+      # ★★★ [차선 N · 2026-09-21 · 턴 Z · P-209 ①] **UX-16 을 셋으로 쪼갰다.**
+      #
+      #   턴 Y 에 차선 N 이 이 절을 **일부러 안 닫았다**. 판정기는 돌았고 `exit 0` 이며
+      #   이 절 몫의 검사 넷(③④⑤⑥)도 전부 PASS 인데도 `evidence:` 를 비웠다.
+      #   이유는 하나였다 — **제목이 부르는 셋 중 둘에 술어가 0개다.**
+      #
+      #       지도       → 재는 술어 **0개** (`지도`·`map` 을 훑어도 안 나온다)
+      #       카메라 맥박 → 재는 술어 **0개** (`맥박`·`pulse` 도 안 나온다)
+      #       미처리 큐   → ⑥ 큐 화면 **배선**만 본다
+      #     그 넷이 실제로 재는 것은 **월 모드의 표시 방식**이다 —
+      #       ③ 글자 24 이상 · ④ 자동 갱신·마지막 갱신 시각 · ⑤ 실패를 말한다.
+      #
+      #   [재측 2026-09-21 · 차선 N · 호스트] `python scripts/verify_wall_keys.py`
+      #     → **exit 0** · `[WALL] [입력] 파일 5개(주석 걷어낸 뒤) · 술어 7종` ·
+      #       PASS ①②③④⑤⑥⑦ — **술어 목록에 지도도 맥박도 없다.** 턴 Y 의 관측 그대로다.
+      #
+      #   ⇒ 「**분모 0인 초록은 초록이 아니다**」를 절에 집행한다. 한 절을 셋으로 가른다:
+      #        UX-16-a 표시 방식 — 술어 있음 → 구현
+      #        UX-16-b 지도       — 술어 0개 → **미측정**
+      #        UX-16-c 카메라 맥박 — 술어 0개 → **미측정**
+      #   **분모가 +2 늘고 수가 내려간다.** 내려간 수가 정본이다 (D-301).
+      #   ★ 닫는 길은 「화면을 다시 만드는 것」이 아니라 **「판정기에 술어를 다는 것」**이다 —
+      #     지금 화면에 코드가 있어도 그것을 재는 눈이 없으면 이 대장은 아무 말도 못 한다.
+      #   ★ 판정기(`scripts/verify_wall_keys.py`)는 **안 고쳤다** — Q 소유(P-203).
+      # ══════════════════════════════════════════════════════════════════
+
+      - id: UX-16-a
+        title: 월(Wall) 모드 `/wall` — **표시 방식**(미처리 큐 배선 · 최소 글자 24 · 자동 갱신 · 실패 고지)
         status: 구현
+        kind: closed
+        kind_why: |
+          이번 턴 재측 exit 0 — 이 절 몫 넷(③ 글자 24 이상 · ④ 자동 갱신·마지막 갱신 · ⑤ 실패를 말한다 · ⑥ 큐 화면 배선)이 전부 PASS. **제목을 쟀다고 말할 수 있는 만큼으로 좁혔다**
         gate: scripts/verify_wall_keys.py
         proof: scripts/verify_wall_keys.py
-        # ★★ [차선 N · 2026-09-20 · P-207 여섯째 묶음] **이 절은 닫지 않았다 —
-        #   `evidence:` 를 일부러 안 적었다.** 판정기는 돌렸고 `exit 0` 이며 이 절 몫의
-        #   검사 넷(③④⑤⑥)도 전부 PASS 다. 그런데도 안 적는 이유는 하나다:
-        #
-        #     **제목이 부르는 셋 중 둘에 술어가 0개다.**
-        #       지도       → 재는 술어 **0개** (`지도`·`map` 을 훑어도 안 나온다)
-        #       카메라 맥박 → 재는 술어 **0개** (`맥박`·`pulse` 도 안 나온다)
-        #       미처리 큐   → ⑥ 큐 화면 **배선**만 본다
-        #     그 넷이 실제로 재는 것은 **월 모드의 표시 방식**이다 —
-        #       ③ 글자 24 이상 · ④ 자동 갱신·마지막 갱신 시각 · ⑤ 실패를 말한다.
-        #
-        #   「분모가 0이면 그 초록은 초록이 아니다」를 이 절에 그대로 적용한 것이다.
-        #   이 게이트의 초록은 **이 절의 닫힘이 아니다**(P-85 — 여기 적을 수 있는 것은
-        #   「그 게이트의 초록이 곧 이 절의 닫힘인」 판정기뿐이다).
-        #   ★ **고치지 않았다** — 판정기는 Q 소유(P-203)이고, 상태를 내리는 것도 내 일이 아니다.
-        #   ★ 같은 판정기로 **UX-15 는 닫았다**(그쪽은 제목과 술어가 맞물린다).
-        #   증거 파일은 UX-15 쪽에 한 벌 있다: docs/agent/evidence/UX-15/wall_keys_gate.txt
-        #   — 그 파일 머리에 **어느 검사가 어느 절 몫인지**를 적어 두었다.
+        evidence: docs/agent/evidence/UX-15/wall_keys_gate.txt
+        note: |
+          [재측 2026-09-21 · 턴 Z · 차선 N · 호스트] `exit 0` · 술어 7종 중 **이 절 몫은 넷**이다:
+            ③ 월 모드 글자 24 이상 · ④ 자동 갱신 · 마지막 갱신 · ⑤ 실패를 말한다 · ⑥ 큐 화면 배선.
+          증거 파일은 UX-15 쪽에 한 벌이고 그 머리에 **어느 검사가 어느 절 몫인지**가 적혀 있다.
+          ★ 이 절의 제목은 **쟀다고 말할 수 있는 만큼으로 좁혔다.** 지도·맥박은 여기 없다 —
+            UX-16-b · UX-16-c 로 나가 있고, 거기서 미측정으로 분모에 남는다.
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 C1] `/wall` 세 칸(지도 · 지금 처리할 것 · 카메라 상태) ·
             글자 선언 12건 전부 24 이상(실측 `[24,24,24,24,24,28,28,28,32,32,40,40]`) ·
@@ -2509,9 +2878,6 @@ areas:
               `Outlet` 을 직접 그리지 않아서 **아무것도 안 그리고 오류도 안 낼** 수 있었다 —
               번들을 열어 `PrivateRouter` 가 `Outlet` 을 그리는 것을 확인했다
               (`docs/agent/evidence/TD-COORD/README.md`). 가정했으면 흰 화면이 초록으로 났다.
-            ★★ **DSM 화면 전체에 지도가 한 장도 없었다.** `lat`/`lng` 는 서버가 주는데 어느 화면도
-              그린 적이 없다 — 좌표가 서버에서 화면까지 온 적이 **한 번도 없는 자료**다.
-              월 모드가 처음 그린다. 배경 지도가 아니라 **좌표 산포**다(지도 열쇠 없음).
             ⚠ **「로그인 세션 12시간」은 미측정이다** — 접근 토큰 200분 · 재발급 7일 · 회전 켜짐 ·
               앞판이 재발급을 실제로 부른다. 구조상 닿을 수 있으나 **사람 없는 화면에서 도는지는
               재 본 적이 없다.** 접근 토큰을 720분으로 올리지 않았다 — 그러면 문장은 초록이 되지만
@@ -2523,9 +2889,57 @@ areas:
           [실측 2026-09-24 등재] 관제실 대형 화면에는 마우스가 없는데 지금 화면은 데스크톱 전용이다.
           최소 글자 24px · 자동 갱신 · 로그인 세션 12시간.
 
+      - id: UX-16-b
+        title: 월(Wall) 모드 `/wall` — **지도**(좌표 산포 · 지도 열쇠 없음)
+        status: 미측정
+        kind: unmeasurable
+        kind_why: |
+          ★ **분모 0 — 쪼개서 드러난 자리.** `verify_wall_keys.py` 술어 7종에 **지도를 재는 것이 0개**다. 닫는 길은 화면이 아니라 **판정기에 술어를 다는 것**(Q 소유)
+        hand: in
+        hand_why: |
+          우리가 닫을 수 있다 — 화면도 좌표도 우리 층에 있고, 막는 것은 상대방이 아니라
+          **재는 눈이 없다**는 사실 하나다. 술어를 달면 그날 색이 난다.
+        why: |
+          ★ **분모 0.** `scripts/verify_wall_keys.py` 의 술어 7종에 **지도를 재는 것이 0개**다
+            [재측 2026-09-21 · 턴 Z · 차선 N · exit 0 · 술어 7종 전수 확인 — `지도`·`map` 없음].
+            화면에 코드가 있을 수는 있으나 **이 대장은 그것을 쟀다고 말할 수 없다.**
+          ★ 그래서 `gate:` 를 **안 붙였다.** 붙이면 그 게이트의 초록이 이 절의 초록으로 세어지고,
+            그것이 바로 P-85 가 금지한 「그 게이트의 초록이 이 절의 닫힘이 아닌」 자리다.
+          ★★ **닫는 길 = 판정기에 술어를 단다.** `verify_wall_keys.py` 에
+            「`/wall` 이 카메라 좌표를 실제로 그린다」를 재는 검사를 더하는 것
+            (소유: 차선 Q · P-203). 그 검사가 서면 이 절은 그 실행 하나로 색이 난다.
+          [배경 2026-09-05] DSM 화면 전체에 지도가 한 장도 없었다. `lat`/`lng` 는 서버가 주는데
+            어느 화면도 그린 적이 없다 — 좌표가 서버에서 화면까지 온 적이 **한 번도 없는 자료**다.
+            월 모드가 처음 그린다. 배경 지도가 아니라 **좌표 산포**다(지도 열쇠 없음).
+        origin: PRD-2.5
+
+      - id: UX-16-c
+        title: 월(Wall) 모드 `/wall` — **카메라 맥박** 표시(죽은 카메라가 화면에서 보인다)
+        status: 미측정
+        kind: unmeasurable
+        kind_why: |
+          ★ **분모 0 — 쪼개서 드러난 자리.** `verify_wall_keys.py` 술어 7종에 **맥박을 재는 것이 0개**다. OPS-15(서버가 우는가)와 다른 절이다 — 이 절은 **화면이 보이는가**다
+        hand: in
+        hand_why: |
+          우리가 닫을 수 있다 — 맥박 자체는 OPS-15 가 채우고 있고(파이프라인이 `last_frame_at`
+          을 적는다), 남은 것은 **월 화면이 그것을 그리는지 재는 눈**이다.
+        why: |
+          ★ **분모 0.** `scripts/verify_wall_keys.py` 의 술어 7종에 **맥박을 재는 것이 0개**다
+            [재측 2026-09-21 · 턴 Z · 차선 N · exit 0 · 술어 7종 전수 확인 — `맥박`·`pulse` 없음].
+          ★ OPS-15(카메라 맥박 군집 두절)와 **같은 것이 아니다.** OPS-15 는 서버가 이벤트를
+            내는지를 재고, 이 절은 **월 화면이 그것을 사람에게 보이는지**다. 서버가 옳게 울어도
+            화면이 안 그리면 관제요원은 모른다 — UX-10 이 같은 모양으로 열려 있는 자리다.
+          ★★ **닫는 길 = 판정기에 술어를 단다.** `verify_wall_keys.py` 에
+            「`/wall` 이 맥박 끊긴 카메라를 칸으로 구별해 그린다」를 재는 검사를 더하는 것
+            (소유: 차선 Q · P-203).
+        origin: PRD-2.5
+
       - id: UX-17
         title: 훈련 모드 (`drill_mode` · 실채널 발송 0 · 종료 보고서 1장)
         status: 구현
+        kind: closed
+        kind_why: |
+          16 passed + 배선 · 부작위 시험이 배선이 왔을 때 빨개졌고 그 빨강이 선언이었다
         proof: backend/tests/test_c_drill_mode.py
         origin: PRD-2.5
         note: |
@@ -2551,6 +2965,9 @@ areas:
       - id: UX-18
         title: 벌크 등록 — **CSV**(주소 열 포함)
         status: 구현
+        kind: closed
+        kind_why: |
+          제목이 **CSV** 로 좁혀져 있고 그 갈래는 닫혔다. ONVIF·역지오코딩은 **부재를 못박는 시험**으로 이름만 남겼다
         origin: PRD-2.5
         proof: backend/tests/test_c_bulk_register.py
         note_closed: |
@@ -2592,6 +3009,9 @@ areas:
       - id: UX-19
         title: 외부 웹훅 — CAP 1.2 로 낸다 (우리 스키마로 내보내지 않는다)
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 common/webhook_outbox.py 실재 · note 가 비어 있다
         origin: PRD-2.5
         proof: backend/common/webhook_outbox.py
         why: |
@@ -2619,6 +3039,9 @@ areas:
       - id: UX-20
         title: 제품 언어 — 화면이 우리 대장의 말로 말하지 않는다
         status: 구현
+        kind: closed
+        kind_why: |
+          이번 턴 재측 exit 0 — 화면 70파일 · 패턴 7종 · **기준선 0건 · 잔여 0건**. 래칫이 업어 준 빚이 없다
         gate: scripts/verify_ui_copy.py
         origin: PRD-2.6
         proof: scripts/verify_ui_copy.py
@@ -2658,6 +3081,9 @@ areas:
       - id: UX-21
         title: 역할별 메뉴·첫 화면 — 관제 역할에 드론·항공·영문 CRUD 0개
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 common/menu_exposure.py 실재 · note 가 비어 있다
         origin: PRD-2.6
         proof: backend/common/menu_exposure.py
         note_closed: |
@@ -2758,6 +3184,9 @@ areas:
       - id: UX-22
         title: 등급·처리 단계 용어 — 「심각·경계·주의」 · 처리 단계 1축
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 화면 ResponseSteps.tsx 실재 · note 가 비어 있다
         origin: PRD-2.6
         proof: frontend/src/features/dsm/components/ResponseSteps.tsx
         note_closed: |
@@ -2782,6 +3211,9 @@ areas:
       - id: UX-23
         title: CCTV 격자·자동 순회·죽은 카메라 표시
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 test_c2_camera_grid.py 실재 · note 가 비어 있다
         proof: backend/tests/test_c2_camera_grid.py
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 C2] 새 문 `GET /api/dsm/cameras/pulse` + 격자 화면 +
@@ -2806,6 +3238,9 @@ areas:
       - id: UX-24
         title: 역할별 동시 세션 상한 — 관제실은 월·데스크·휴대전화를 **함께** 켠다
         status: 잠김
+        kind: unmeasurable
+        kind_why: |
+          상태가 '잠김' 이다 — 역할별 상한은 대표 결정 대기
         blocker: DJCORE_SINGLE_SESSION_TOKEN_FIELD
         hand: out
         hand_why: |
@@ -2826,6 +3261,9 @@ areas:
       - id: UX-24a
         title: 월(wall) 표시 토큰 **문** — 대형화면은 세션 없이 읽는다 (읽기 전용 · 12h · 쓰기 0)
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 test_s_wall_token.py 실재 · note 가 비어 있다
         proof: backend/tests/test_s_wall_token.py
         hand: in
         note_closed: |
@@ -2853,6 +3291,9 @@ areas:
       - id: UX-24c
         title: "`/wall` 화면이 표시 토큰을 **싣는다** — 브라우저로 실측한다"
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증거 P-78/README.md 실재 · note 가 비어 있다
         proof: docs/agent/evidence/P-78/README.md
         hand: in
         note_closed: |
@@ -2947,6 +3388,9 @@ areas:
       - id: UX-25
         title: 제품 화면이 **사이드바에 있다** — 관제요원이 URL 을 치지 않고 갈 수 있다
         status: 구현
+        kind: closed
+        kind_why: |
+          [턴 Y 실측 인용 · 이번 턴 미재측 — 로그인 게이트] exit 0 · 역할 4 · 두 눈 대조 · 재측에서 같은 수
         gate: scripts/verify_sidebar.py
         proof: scripts/verify_sidebar.py
         evidence: docs/agent/evidence/UX-25/sidebar_gate.txt
@@ -3032,6 +3476,9 @@ areas:
       - id: UX-32
         title: 로그인 뒤 첫 화면은 역할 홈 (U1 지금 처리할 것 · U2·U4 무슨 일 있었나 · U5 관리자 홈)
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다
         hand: in
         origin: PRD-v1.1 §5.1
         why: |
@@ -3044,6 +3491,9 @@ areas:
       - id: UX-23′
         title: 카메라 격자 자동 순회(4×4 · 30초) · 맥박 없음 = 검은 칸 · 칸 클릭 → 그 카메라 라이브
         status: 미측정
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미측정' 이다
         hand: in
         hand_why: |
           격자·맥박은 우리 층 화면이다(UX-23 구현) — 순회·라이브 연결은 우리가 짓는다.
@@ -3058,6 +3508,9 @@ areas:
       - id: UX-35
         title: 요원별 처리 현황 (기간 × 요원별 접수·종결·평균 대응 시간·오탐 판정 수 · 서버 집계)
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다
         hand: in
         origin: PRD-v1.1 §5.3
         why: |
@@ -3068,6 +3521,9 @@ areas:
       - id: UX-40
         title: 보고서 3종 (사건 1쪽 · 이번 달 우리 센터 · 상급기관 제출용) · PDF 기본 · HWPX
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다
         hand: in
         origin: PRD-v1.1 §5.5
         why: |
@@ -3081,6 +3537,9 @@ areas:
       - id: UX-41
         title: 감사 기록 조회 (누가·언제·무엇을 · 필터 · 해시 체인 검증 표시 · CSV)
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다
         hand: in
         origin: PRD-v1.1 §5.5
         why: |
@@ -3091,6 +3550,9 @@ areas:
       - id: UX-42
         title: 사람·역할 화면 (우리 층) — 추가 · 역할 변경 · 비활성화 · 초대 메일
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다
         hand: in
         origin: PRD-v1.1 §5.6
         why: |
@@ -3101,6 +3563,9 @@ areas:
       - id: UX-43
         title: 알림 받는 사람·채널 — 등급별 수신 역할·사람 · 심각 수신자 0명 금지 · 규칙 시험 발송
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다
         hand: in
         origin: PRD-v1.1 §5.6
         why: |
@@ -3114,6 +3579,9 @@ areas:
       - id: UX-43-M4
         title: M4 내 설정 — 근무 외 알림 차단 · 담당 구역 · 채널 선택
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다
         hand: in
         origin: PRD-v1.1 §5.4
         why: |
@@ -3124,6 +3592,9 @@ areas:
       - id: UX-01′
         title: 카메라 주소 한 대 고치기 전용 문 — 일괄 등록 문을 타지 않는다
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다
         hand: in
         origin: PRD-v1.1 §5.6
         why: |
@@ -3136,6 +3607,9 @@ areas:
       - id: API-02
         title: 연계 헬스체크 · 스키마 버전 헤더 · 요청 한도 헤더 · 재시도 규약 문서
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다
         hand: in
         origin: PRD-v1.1 §5.7
         why: |
@@ -3150,8 +3624,39 @@ areas:
     clauses:
       - id: LAW-01
         title: 계약 11조 — 영상 반출 4규약
-        status: 구현
-        gate: scripts/verify_clip_extraction.py
+        # ★★★ [차선 N · 2026-09-21 · 턴 Z · P-209 ②] **'구현' → '잠김' 으로 내렸다.**
+        #   턴 Y 가 사유만 적고 남겨 둔 자리를 이번 턴에 집행한다.
+        #   [재측 2026-09-21 · 호스트] `python scripts/verify_clip_extraction.py` → **exit 0**,
+        #   같은 실행의 판정 직전 줄:
+        #     `[CLIP] CLIP_EXTRACTION_READY=False · F-09 추출 무결성 AC 시험 없음 · 구간 참조는 가동 중`
+        #     `[CLIP] 통과 — 잠긴 것은 사유가 있고, 열린 것은 시험이 있다`
+        #   ⇒ **초록의 뜻이 「잠겨 있다」**이다. 잠겨 있다는 초록 위에 '구현' 을 적으면
+        #     「영상 반출 4규약이 선다」가 밖으로 나간다.
+        #   ★ **상용 수가 내려간다. 내려간 수가 정본이다** (D-301).
+        status: 잠김
+        kind: gate_only
+        kind_why: |
+          ★★ **출생 표본 — 게이트는 초록인데 절은 안 닫혔다.** 이번 턴 재측 `verify_clip_extraction.py` **exit 0** 이고 같은 실행의 마지막 줄이 `CLIP_EXTRACTION_READY=False · F-09 추출 무결성 AC 시험 없음 · 구간 참조는 가동 중` 이다. 통과 문장이 「**잠긴 것은 사유가 있고, 열린 것은 시험이 있다**」 — 즉 **이 초록의 뜻은 「잠겨 있다」**다. 그 초록을 절의 닫힘으로 세면 「영상 반출 4규약이 섰다」가 나간다
+        blocker: CLIP_EXTRACTION
+        hand: in
+        hand_why: |
+          우리가 닫을 수 있다 — 막는 것은 상대방도 기관도 GPU 도 아니고 **F-09 영상 재생
+          설계(코덱·전송 방식·보존 기간) 확정**이다. `unlock_owner: Code` (DA-05).
+        why: |
+          **F-09 구간 참조만 가동 · 원본 반출 4규약은 추출 무결성(F-09-c3) 뒤.**
+          ★ **닫는 길 = `F-09-c3`.** 계약 절 대장(D-309)의 그 절은 이번 턴 영역 ① 게이트
+            `verify_feature_reach.py` 가 **잠김 7절** 중 하나로 실제로 세었다
+            [재측 2026-09-21 · 잠김 = F-06-c1 · F-06-c2 · F-07-c1 · F-08-c1 · F-08-c2 ·
+             **F-09-c3** · F-13-c2]. 그 절이 열리는 순간
+            `test_extraction_integrity_contract_ac` 가 의무가 되고(DA-05 `unlock_step`),
+            그때 이 절의 4규약을 다시 잰다.
+        # ★ `gate:` 를 **뗐다** — 이 표 머리글의 규칙 그대로다:
+        #     「여기 적을 수 있는 것은 **그 게이트의 초록이 곧 이 절의 닫힘인** 판정기뿐이다.
+        #      예: SEC-11a 는 `verify_envelope.py`(래칫)가 초록이어도 잠김이 옳다. 그래서 안 붙인다.」
+        #   `verify_clip_extraction.py` 는 **잠금 규율 게이트**다. 붙여 둔 채 '잠김' 으로 내리면
+        #   P-85 갈림 ①(게이트 초록 · 대장 미구현)이 **없는 갈림**으로 매번 빨강을 세운다.
+        #   이름은 안 지운다 — 아래 칸에 남긴다(판정에는 안 쓰인다).
+        gate_not_this_clause: scripts/verify_clip_extraction.py
         proof: backend/tests/test_clip_playback.py
         # ★★★ [차선 N · 2026-09-20 · P-207 마지막 묶음] **이 절은 닫지 않았다 —
         #   `evidence:` 를 일부러 비워 두었다.** 판정기는 돌렸고 `exit 0` 이며
@@ -3180,6 +3685,9 @@ areas:
       - id: LAW-02
         title: 영상정보처리기기 설치·운영 고지
         status: 미측정
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미측정' 이다
         hand: in
         hand_why: |
           초안도 배선도 섰다. 남은 것은 **법률 대조 한 번**이고 그것은 우리가 잡는다 —
@@ -3205,6 +3713,9 @@ areas:
       - id: LAW-02a
         title: 영상 **보존 일수**를 제품이 선언한다 (그리고 그대로 지운다)
         status: 구현
+        kind: closed
+        kind_why: |
+          이번 턴 재측(호스트) exit 0 — 정적 3/3 · 백업 파일 5개 실재 · RTO 0.14분 · **코드에 보존 일수 기본값 0개** · 양성 대조 포함
         gate: scripts/verify_retention_declared.py
         proof: backend/tests/test_l_retention.py
         evidence: docs/agent/evidence/LAW-02a/retention_declared_gate.txt
@@ -3259,6 +3770,9 @@ areas:
       - id: LAW-03
         title: 개인정보 처리방침
         status: 미측정
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미측정' 이다
         hand: in
         hand_why: |
           초안도 배선도 섰다. 남은 것은 **법률 대조 한 번** — 손 안이다
@@ -3272,6 +3786,9 @@ areas:
       - id: LAW-04
         title: GS인증 준비 (시험 항목 대조표)
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 대조표 문서가 실재한다
         proof: docs/design/GX-LAW-04_GS인증_항목_대조표_v0.1.md
         hand: in
         note_closed: |
@@ -3304,6 +3821,9 @@ areas:
       - id: LAW-05
         title: SLA (가용성·응답·복구 목표)
         status: 미측정
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미측정' 이다
         hand: in
         gate_missing_why: |
           SLA 는 **수 셋의 합**이라 게이트 하나로 판정되지 않는다. RTO 만
@@ -3373,6 +3893,9 @@ areas:
       - id: LAW-06a
         title: AI기본법 5의무 — **제품 안의 자리 5** (고지 문구·판정 근거·열람 절차·사람 확인·문서 생성) (위험관리·설명가능성·이용자보호·사람감독·문서)
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 test_l_ai_act.py 실재 · note 가 비어 있다
         proof: backend/tests/test_l_ai_act.py
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 L] 10 passed, 1 skipped. 다섯 의무의 자리표가 **다섯 칸 전부**를
@@ -3394,6 +3917,9 @@ areas:
       - id: LAW-07
         title: 개인정보 열람·삭제 청구 대응 (접수 → 마스킹본 조회 → 회신 기록)
         status: 구현
+        kind: closed
+        kind_why: |
+          [기계 통과 · 손으로 확인 못 함] 증명 test_l_privacy_request.py 실재 · note 가 비어 있다
         proof: backend/tests/test_l_privacy_request.py
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 L] 20 passed. 접수 → 마스킹본 조회 → 회신 기록이 한 줄로 이어지고
@@ -3415,6 +3941,16 @@ areas:
       - id: LAW-08
         title: 증거 해시 체인 (`prev_hash`/`hash` · 일일 종이 앵커)
         status: 구현
+        kind: gate_only
+        kind_why: |
+          ★ **게이트는 초록인데 절은 안 닫혔다.**
+          [조율자 실측 2026-09-21 · 턴 Z · 호스트 `--db`] **exit 0** ·
+            감사 3320 · 체인 3031 · **등재된 끊김 23** · 새로 난 어긋남 0건 ·
+            머리 해시 `2a10f5d596474534…`. 초록은 「**새 어긋남 0**」이지 「체인이 온전하다」가 아니다.
+          그리고 제목의 **「일일 종이 앵커」는 인쇄하는 자리가 아직 없다** — 값(`daily_anchor`)만 있다.
+          ⚠ [차선 N 실측 2026-09-21] `--db` **없이** 호스트에서 부르면 **exit 2** 다 —
+            정적 눈만 뜨고 살아 있는 감사표는 한 행도 다시 계산하지 않는다.
+            대장의 `gate:` 는 인자를 안 싣는 자리라 `verify_ga_readiness` 가 부르면 **언제나 회색**이다.
         gate: scripts/verify_evidence_chain.py
         proof: backend/tests/test_s_evidence_chain.py
         origin: PRD-2.5
@@ -3467,6 +4003,9 @@ areas:
       - id: LAW-06b
         title: AI기본법 5의무 — **자기평가서 서명 · 법률 대조** (제품 밖)
         status: 미착수
+        kind: unmeasurable
+        kind_why: |
+          상태가 '미착수' 이다 — 제품 밖(대표 서명)
         hand: out
         hand_why: |
           대표 서명과 법무 대조가 필요하다 — 조건이 성립하면 손 안으로 옮긴다.

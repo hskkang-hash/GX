@@ -59,6 +59,7 @@ from __future__ import annotations
 import argparse
 import ast
 import importlib.util
+import re
 import sys
 from pathlib import Path
 
@@ -96,6 +97,41 @@ CURSOR_EXEC = {"execute", "executemany"}
 SQL_WRITE = ("INSERT", "UPDATE", "DELETE", "TRUNCATE", "DROP", "ALTER",
              "CREATE", "GRANT", "REVOKE")
 
+#: ★★ [실측 2026-09-21 · 턴 Z · 차선 F 가 찾고 Q 가 다시 쟀다] **동사를 낱말로 본다.**
+#:
+#:   종전은 `any(v in sql.upper() …)` — **부분 문자열**이었다. 그래서 **칸 이름 안의
+#:   글자를 동사로 읽었다**:
+#:
+#:       select (create_datetime at time zone %s)::date … from logger_auditlogs t …
+#:                ^^^^^^ CREATE                          ⇒ 이 SELECT 가 「쓰기」로 세어졌다
+#:
+#:   범인은 식별자 셋 — `create_datetime` · `created_by_id` · `deleted`.
+#:   [Q 실측 2026-09-21 · 저장소 전수] 해석된 `execute` 의 쓰기 판정
+#:   **부분일치 14건 → 단어경계 5건**. 달라지는 **9건을 하나씩 눈으로 읽었고 전부 읽기**다
+#:   (SELECT 6 · EXPLAIN SELECT 3 · 그중 하나는 `WITH … AS (SELECT …) SELECT` 로
+#:   **CTE 가 SELECT 로 끝난다** — 그 자리의 `DELETE` 는 `deleted` 칸 이름이었다).
+#:   ⇒ **세어지던 SQL 쓰기의 9/14 가 거짓 양성이었다.**
+#:
+#:   ⚠ **느슨해진 것이 아니다.** 걷히는 것은 거짓 양성뿐이고, 진짜 쓰기는 한 건도 안 놓친다 —
+#:     `WITH x AS (…) DELETE` · `select 1; drop table t` · `(delete from t)` · 줄바꿈으로
+#:     시작하는 SQL 까지 **자기시험이 양성 13건으로 그것을 지킨다**(아래 `self_test`).
+#:     **래칫 상한은 한 자도 안 올린다** — 거짓 양성이 걷히면 빚은 **줄어드는 쪽**이다.
+#:
+#:   ⚠ 그리고 이것은 「모르면 세는 쪽에 둔다」가 아니다. 그 규칙은 **SQL 을 못 읽었을 때**
+#:     쓰는 것이고(그때는 `unknown` 으로 간다), 여기는 **읽었고 그래도 오독한** 자리였다.
+SQL_WRITE_RE = {_v: re.compile(r"(?<![A-Za-z0-9_])" + _v + r"(?![A-Za-z0-9_])")
+                for _v in SQL_WRITE}
+
+
+def sql_write_verbs(sql: str) -> list[str]:
+    """이 SQL 이 쓰는가 — **낱말로** 본다. 빈 목록이면 읽기다.
+
+    한 곳에서만 판정한다(D-369) — 자기시험도 판정도 이 함수를 부른다.
+    두 벌로 두면 자기시험이 통과하는데 판정은 다른 답을 내는 자리가 생긴다.
+    """
+    upper = (sql or "").upper()
+    return [v for v in SQL_WRITE if SQL_WRITE_RE[v].search(upper)]
+
 #: ★ "이건 DB 쓰기가 아니다"를 **사람이 보고** 기록한 곳. 사유 없는 등재는 거부한다.
 #:   키는 `경로:줄번호`. 줄이 밀리면 등재가 풀려 다시 쓰기로 잡힌다 — 그래야 낡은 면제가 안 남는다.
 WRITE_AUDIT: dict[str, str] = {
@@ -115,9 +151,13 @@ WRITE_AUDIT: dict[str, str] = {
 #: 처분은 P-W0-13-5 로 적재했다 (관리 명령 30개의 등록부 참조 배선 · 우선순위 판정 요청).
 KNOWN_DEBT: dict[str, int] = {
     # scripts/ — 백필 계열. dry-run·rollback 은 적용본과 같은 판정을 딛고 서야 한다
-    "scripts/backfill_owner_dryrun.py": 1,
+    #: ★ [턴 Z · Q] 아래 둘은 **코드를 고쳐 갚은 빚이 아니라, 애초에 빚이 아니었던 것**이다 —
+    #:   부분 문자열 오독(`deleted`·`created_by_id`)이 읽기를 쓰기로 세고 있었다(위 ★★).
+    #:   거짓 빚을 그대로 두면 **그만큼이 슬랙**이 되어, 진짜 쓰기가 새로 들어와도 조용하다.
+    #:   그래서 게이트가 시킨 대로 내린다. **올리는 것은 게이트를 끄는 것이고, 내리는 것은 그 반대다.**
+    #:   `backfill_owner_dryrun.py` 는 1 → **0(지움)** · `probe_tenant_isolation.py` 는 3 → **1**.
     "scripts/backfill_owner_rollback.py": 1,
-    "scripts/probe_tenant_isolation.py": 3,
+    "scripts/probe_tenant_isolation.py": 1,
     "scripts/role_split_local.py": 6,
     # ★ 공용 마스터를 통째로 지우는 것들 — 가장 먼저 갚아야 할 빚
     "backend/orders/management/commands/init_anyang_data.py": 6,
@@ -217,9 +257,12 @@ class Scan(ast.NodeVisitor):
                 sql = self._const_str(node.args[0]) if node.args else None
                 if sql is None:
                     self.unknown.append((node.lineno, f"{where}() — SQL 을 상수로 못 읽었다"))
-                elif any(v in sql.upper() for v in SQL_WRITE):
-                    verb = next(v for v in SQL_WRITE if v in sql.upper())
-                    self.writes.append((node.lineno, f"{where}() · SQL {verb}"))
+                else:
+                    #: ★ 낱말로 본다 — `create_datetime` 안의 CREATE 를 동사로 읽지 않는다.
+                    verbs = sql_write_verbs(sql)
+                    if verbs:
+                        self.writes.append(
+                            (node.lineno, f"{where}() · SQL {verbs[0]}"))
 
             elif attr in ORM_WRITE:
                 if set(chain) & QUERYSET_MARKS:
@@ -272,10 +315,75 @@ def targets() -> list[Path]:
     return [p for p in out if p.name != Path(__file__).name]
 
 
+#: ★★ [턴 Z · Q] **이 게이트에는 자기시험이 없었다.** 그래서 「칸 이름을 동사로 읽는」
+#:   오독이 오래 살았다 — 아무도 이 그물에 표본을 대 본 적이 없다(D-277 · D-289).
+#:   양성은 **진짜 쓰기가 계속 잡히는지**를 지키고(이 고침의 유일한 위험이 그것이다),
+#:   음성은 **식별자 안의 글자를 다시 동사로 읽지 않게** 막는다.
+#:   ⚠ 둘 다 있어야 한다. 음성만 두면 다음 사람이 그물을 더 좁혀도 초록이고,
+#:     양성만 두면 부분 문자열로 되돌려도 초록이다.
+BIRTH_SQL_WRITE = (
+    "DELETE FROM t WHERE id = 1",
+    "insert into t (a) values (1)",
+    "CREATE INDEX idx ON t (a)",
+    "update t set a = 1",
+    "TRUNCATE TABLE t",
+    "DROP TABLE t",
+    "ALTER TABLE t ADD COLUMN a int",
+    "GRANT SELECT ON t TO u",
+    "REVOKE SELECT ON t FROM u",
+    "WITH x AS (SELECT id FROM t) DELETE FROM t USING x WHERE t.id = x.id",
+    "select 1; drop table t",
+    "\n            delete from t\n        ",
+    "(delete from t)",
+)
+
+#: 음성 — **식별자 안의 동사**. 이 여덟이 2026-09-21 까지 쓰기로 세어지던 것들이다.
+BIRTH_SQL_READ = (
+    "select (create_datetime at time zone %s)::date from logger_auditlogs t",
+    "SELECT id, name, group_id, created_by_id FROM s WHERE deleted IS NULL",
+    "SELECT l.group_id FROM l WHERE l.deleted IS NULL",
+    "WITH orphan AS (SELECT id FROM t WHERE deleted IS NULL) SELECT o.id FROM orphan o",
+    "explain (analyze, buffers, format json) select id, create_datetime from t",
+    "SELECT updated_at, inserted_by, dropped_flag FROM t",
+    "SELECT granted_by, revoked_on, altered_at, truncated_len FROM t",
+    "SELECT count(*) FROM t WHERE create_datetime >= %s",
+)
+
+
+def self_test() -> int:
+    """양성·음성 대조 — **이 고침이 진짜 쓰기를 놓치지 않는가**가 요점이다."""
+    fails = []
+    for sql in BIRTH_SQL_WRITE:
+        if not sql_write_verbs(sql):
+            fails.append(f"양성을 **놓쳤다**(쓰기를 읽기로 셌다): {sql!r}")
+    for sql in BIRTH_SQL_READ:
+        got = sql_write_verbs(sql)
+        if got:
+            fails.append(f"음성을 잡았다(식별자를 동사로 읽었다 · {got}): {sql!r}")
+    print(f"[CLASSIFICATION] 자기시험 — 양성 {len(BIRTH_SQL_WRITE)}건 · "
+          f"음성 {len(BIRTH_SQL_READ)}건 (분모 "
+          f"{len(BIRTH_SQL_WRITE) + len(BIRTH_SQL_READ)})")
+    for f in fails:
+        print(f"  ✗ {f}")
+    if fails:
+        print("[CLASSIFICATION] 자기시험 **실패** — 판정기를 믿을 수 없다. 멈춘다")
+        return 1
+    print("[CLASSIFICATION] 자기시험 통과 — 진짜 쓰기는 잡고, 칸 이름은 안 잡는다")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--list", action="store_true", help="파일별 분류를 전부 출력한다")
+    ap.add_argument("--self-test", action="store_true",
+                    help="양성·음성 대조만 (D-277 · D-289)")
     args = ap.parse_args()
+
+    if args.self_test:
+        return self_test()
+    #: ★ 판정 전에 **그물부터 시험한다.** 눈먼 그물이 낸 초록은 초록이 아니다.
+    if self_test() != 0:
+        return 1
 
     print("[CLASSIFICATION] 데이터 쓰기 ↔ 분류 등록부 참조 대조 (D-270 ③)")
     problems = registry_self_check()
@@ -379,5 +487,14 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    _n_cls = (sum(1 for _ in (ROOT / "backend").rglob("*.py"))
+              + sum(1 for _ in (ROOT / "scripts").glob("*.py")))
+    #: ★ [P-204 · 턴 Z · Q] **마지막 줄은 분모다.** 이 수는 **지금 센 것**이다 —
+    #:   손으로 적은 수는 분모가 아니고, 분모를 안 말한 `exit 0` 은
+    #:   「이 게이트가 통과」가 아니라 「이 호출이 끝났다」일 뿐이다.
+    gate_header(__file__, measured=(
+        "데이터를 **쓰는 자리**가 분류 등록부를 지나는지(D-270 ③) AST 로 훑는다 — "
+        "**분모 %d**(backend/ 의 .py + scripts/ 의 .py · 지금 셌다). "
+        "쓰기 파일 수와 남은 빚은 실행 중에 세어 아래 [CLASSIFICATION] 줄에 적는다"
+        % _n_cls))
     raise SystemExit(main())

@@ -114,9 +114,53 @@ const TARGET_WORD: Record<
   deleted_by_decision: {
     label: '삭제된 사건',
     color: 'purple',
-    note: (t) => `${t.decision ?? '대표 결정'} ${(t.decided_on ?? '').slice(5)} · 스냅샷 있음`,
+    /**
+     * ★ [턴 Z · U24] **해를 자르지 않는다.** 종전엔 `slice(5)` 로 「09-20」만 적었다 —
+     * 감사 종이는 해를 넘겨 읽히고, 그때 「09-20」은 어느 해인지 말하지 않는다.
+     * ⚠ 스냅샷의 **이름**(증거 번호·파일 경로)은 여기 적지 않는다 — 사전 §4 가 금한다.
+     *   종이에 필요한 것은 「스냅샷이 있다」는 사실이고, 그 파일이 어디 있는지는
+     *   읽는 공무원에게 뜻이 없다(우리 서랍의 지도다).
+     */
+    note: (t) => `${t.decision ?? '대표 결정'} ${t.decided_on ?? ''} · 스냅샷 있음`,
   },
   gone: { label: '사라진 사건', color: 'orange', note: () => '기록된 결정 없음' },
+};
+
+/**
+ * ★★ [턴 Z · U24] **채널의 우리말** — 서버가 여는 채널이 2 에서 15 가 됐다(U56 · 대표 결정 ⑤).
+ *
+ * 종전 이 칸은 두 이름만 우리말로 바꾸고(`.events` · `.settings`) **나머지는 서버가 준
+ * 글자를 그대로** 적었다. 채널이 둘일 때는 그 「나머지」가 0 건이라 아무도 안 봤는데,
+ * 넓힌 지금은 U4 한 사람의 화면에서만 **368 행**이 그 길로 떨어진다
+ * [실측 2026-09-21 03:45 UTC · 테넌트 좁힌 2,076 행 중]. 그러면 재난안전과 공무원의
+ * 감사 화면이 `guardianx.dsm.response` 라고 말한다 — **우리 폴더 구조를 읽어 주는 것**이고
+ * 사전 §4 가 금한 자리다(내부 이름 · 감사 채널 이름).
+ *
+ * ★ 모르는 채널을 **그럴듯한 우리말로 지어내지 않는다.** 표에 없는 이름은
+ *   「우리말 이름 없음」이라 적고 **원래 이름은 `title` 에 그대로 둔다** — 해시 칸과 같은
+ *   규율이다(자르는 것은 화면의 몫 · 값은 서버가 준 그대로 남는다). 채널이 늘면
+ *   **여기 한 줄을 늘리는 것이 그 채널을 화면에 여는 일의 일부**다.
+ *
+ * ⚠ `guardianx.test.law08_race` 를 **꾸며 적지 않는다.** 그것은 시험이 운영 감사표에
+ *   남긴 행이고, 「시험이 남긴 행」이라고 적는 것이 이 화면이 할 수 있는 유일한 참말이다.
+ *   (U4 테넌트에서는 지금 0 행이다 — 0 이라고 해서 이름을 안 주면 뜨는 날 기계 말이 뜬다.)
+ */
+const CHANNEL_WORD: Record<string, string> = {
+  'guardianx.f12.settings': '설정 변경',
+  'guardianx.u24.events': '사건 행위',
+  'guardianx.dsm.response': '대응 처리',
+  'guardianx.dsm.notify': '알림 발송',
+  'guardianx.dsm.field_reply': '현장 회신',
+  'guardianx.dsm.push_subscription': '알림 수신 등록',
+  'guardianx.law02a.retention': '보관 기간 집행',
+  'guardianx.law07.privacy_request': '열람·삭제 청구',
+  'guardianx.u1.event_note': '사건 메모',
+  'guardianx.k2.heartbeat': '연계 상태 점검',
+  'guardianx.sec.otp_reset': '일회용 비밀번호 재설정',
+  'security.otp_reset': '일회용 비밀번호 재설정',
+  'guardianx.role_request': '권한 요청',
+  'gx.role_request': '권한 요청',
+  'guardianx.test.law08_race': '시험이 남긴 행',
 };
 
 /** 정본 문턱 — 「60초 안 도달」. 화면이 이 수를 재지 않는다 — 지시서(P-164)가 정한 수다. */
@@ -415,8 +459,17 @@ export default function AuditLog() {
                 title: '채널',
                 dataIndex: 'channel',
                 width: 190,
-                render: (v: string) =>
-                  v.endsWith('.events') ? '사건 행위' : v.endsWith('.settings') ? '설정 변경' : v,
+                render: (v: string) => {
+                  const word = CHANNEL_WORD[v];
+                  //: 표에 없는 채널 — **지어내지 않는다.** 원래 이름은 `title` 에 남는다.
+                  return word ? (
+                    <span title={v}>{word}</span>
+                  ) : (
+                    <Text type="secondary" title={v}>
+                      우리말 이름 없음
+                    </Text>
+                  );
+                },
               },
               { title: 'HTTP', dataIndex: 'status_http', width: 70 },
               {
@@ -446,6 +499,24 @@ export default function AuditLog() {
           />
         </StateBoundary>
       </Card>
+
+      {/**
+        * ★★ [턴 Z · U24] **주황을 고장으로 읽지 않게 한다.**
+        *
+        * 턴 Y 가 「사라진 사건 · 기록된 결정 없음」이라는 글자를 세웠고, 그 글자는 옳다.
+        * 그런데 그 줄만 보면 사람은 **「화면이 망가졌나」**로 읽는다 — 주황 딱지 하나가
+        * 제 뜻을 스스로 말하지 않기 때문이다. 그래서 그 딱지가 **실제로 떠 있는 쪽에서만**
+        * 한 줄로 뜻을 적는다.
+        *
+        * ★ 0 건일 때는 안 적는다 — 없는 것을 설명하는 문장은 「이 화면에는 늘 사라진
+        *   사건이 있다」로 읽힌다. 분모는 위 상태 칸이 **0 이어도** 그대로 말한다.
+        */}
+      {targets && ((targets.gone ?? 0) > 0 || (targets.deleted_by_decision ?? 0) > 0) && (
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          「사라진 사건」·「삭제된 사건」은 그 사건이 지금 조회되지 않는다는 뜻입니다.
+          감사 기록은 지우지 않으므로 그 행은 그대로 남아 있습니다 — 화면 오류가 아닙니다.
+        </Text>
+      )}
 
       <Text type="secondary" style={{ fontSize: 12 }}>
         이 표는 서버가 우리 조직의 행위자로 좁혀 준 것입니다. 성공과 막힌 시도가 함께

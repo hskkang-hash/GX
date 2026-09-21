@@ -34,8 +34,31 @@
 `tests/test_u56_metering_seeds.py` 가 그 사실을 시험으로 적어 두었다 — 0으로 덮지 않는다.
 
 ★ **거르는 곳은 측정이지 제품이 아니다** (D-497). 이 파일을 부르는 자리는
-  `kernels/k1_event.count_events` · `kernels/k2_notify.count_deliveries` **둘뿐**이고,
-  둘 다 **세기만** 한다. 목록·화면은 이 파일을 모른다.
+  `kernels/k1_event.count_events` · `kernels/k2_notify.count_deliveries` ·
+  `kernels/k6_feedback.usage_snapshot` **셋뿐**이고, 셋 다 **세기만** 한다.
+  목록·화면은 이 파일을 모른다.
+
+⚠ **표식을 실을 칸이 없는 표가 셋 있다** [실측 2026-09-21 · 차선 U56 · P-178 ②]
+--------------------------------------------------------------------------------
+턴 Z 에 계량의 마지막 직접 셈 셋(카메라·계정·미디어 장부)이 커널로 들어왔다. 그런데
+그 세 표에는 `track_id` 칸이 **없다**:
+
+    stream_monitors.StreamMonitor   track_id 없음 · deleted 있음
+    user.CoreUser                   track_id 없음 · deleted 있음
+    file_management.UserMediaFile   track_id 없음 · deleted 있음
+
+표식이 얹힌 칸이 없으면 `exclude_unbillable` 은 **걸 자리가 없다**(걸면 FieldError 다).
+그래서 이 세 장부에서는 **씨앗이 지금도 청구에 든다.** 수를 적어 둔다 —
+[실측 2026-09-21] `ETRI-Group` 의 살아 있는 카메라 12대 중 **8대**가 우리가 심은 것
+(`GX-ONB-V-*` 6 · `GX-SEED-DSM` 1 · `gxprobe-*` 1)이고, 같은 테넌트의 살아 있는 계정
+105개 중 **11개**가 `gxseed_*`·`gxprobe_*` 다. 다른 테넌트 넷은 0이다.
+
+  ★ 이것은 **이번 턴에 새로 난 구멍이 아니다** — 앱이 직접 셀 때도 똑같이 들어 있었다.
+    달라진 것은 **셈이 이제 한 곳을 지난다**는 것이고, 그래서 표식 칸이 생기는 날
+    고칠 자리가 **하나**다(`has_marker_field` 가 그날 저절로 참이 된다).
+  ★ 0으로 덮지 않는다. 이름으로 씨앗을 거르는 길(`username__startswith="gxseed"`)은
+    **만들지 않았다** — 그것은 표식이 아니라 추측이고, 추측이 청구 근거가 되는 순간
+    고객 이름 하나가 우리 접두와 겹치면 그 계정이 조용히 공짜가 된다 (D-280).
 """
 from __future__ import annotations
 
@@ -69,6 +92,25 @@ def exclude_unbillable(qs, *, via: str = ""):
     qs = exclude_probe(qs, via=via)
     field = f"{via}__{PROBE_FIELD}" if via else PROBE_FIELD
     return qs.exclude(**{f"{field}__startswith": DRILL_MARKER})
+
+
+def has_marker_field(model) -> bool:
+    """이 표가 **표식을 실을 수 있는가** — `PROBE_FIELD` 칸의 유무를 모델에 묻는다.
+
+    왜 필요한가: 청구의 셈이 표 셋(카메라·계정·미디어 장부)으로 넓어졌는데 그 셋에는
+    `track_id` 가 없다(머리말 ⚠). 없는 칸에 `exclude_unbillable` 을 걸면 FieldError 로
+    죽고, 죽지 않으려고 부르는 자리마다 `if` 를 쓰면 **그 판단이 자리마다 갈린다.**
+
+    ★ **매개변수가 아니라 사실이다.** 이것은 「이번만 포함」 칸이 아니다 — 부르는 쪽이
+      고를 수 있는 것이 없고, 답은 **모델이** 준다. `exclude_soft_deleted` 가
+      `deleted` 칸의 유무를 모델에 묻는 것과 같은 규약이다(표 이름을 여기 적지 않는
+      것도 같은 이유 — 적어 두면 새 표가 생길 때 아무도 이 목록을 안 고친다).
+
+    ★ `exclude_unbillable` 은 **한 글자도 안 바뀐다.** 그 함수가 칸을 스스로 묻게
+      만들면, 누군가 `track_id` 를 이름 바꾼 날 K1 의 거름이 **조용히 통과**가 된다.
+      큰 소리로 죽는 쪽이 낫다 — 이 질문은 묻는 자리가 따로 있다.
+    """
+    return PROBE_FIELD in {f.name for f in model._meta.get_fields()}
 
 
 def exclude_soft_deleted(qs, model):

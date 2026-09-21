@@ -277,5 +277,11 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    _n_cg = len(_census(ROOT))
+    #: ★ [P-204 · 턴 Z · Q] **마지막 줄은 분모다.** 이 수는 **지금 센 것**이다 —
+    #:   손으로 적은 수는 분모가 아니고, 분모를 안 말한 `exit 0` 은
+    #:   「이 게이트가 통과」가 아니라 「이 호출이 끝났다」일 뿐이다.
+    gate_header(__file__, measured=(
+        "주석 처리된 권한 데코레이터가 **열린 문**을 만드는지 — "
+        "**분모 %d**(저장소에서 지금 센 주석 자리 전수 · 기준선 대조는 래칫)" % _n_cg))
     raise SystemExit(main())

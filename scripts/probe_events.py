@@ -21,8 +21,37 @@
   창 판정으로 답할 수 없고, 그래서 만든 쪽이 `track_id` 에 적어 두었다.
   이 얹힘은 **빚**이다. 지우는 날(대표 승인) 같이 갚는다.
 
-제외가 아니라 **분모를 밝히는 것**이 목적이다. 그래서 이 파일은 두 가지로 따로 세고,
-둘이 어긋나면 **빨강**을 낸다 — 한 가지로만 세면 놓친 것이 조용히 살아 있는다.
+제외가 아니라 **분모를 밝히는 것**이 목적이다.
+
+★★ [2026-09-21 · 턴 Z · 차선 U1] **카메라로 세는 갈래를 폐지했다** (P-201 마무리)
+--------------------------------------------------------------------------------
+종전 이 파일은 두 가지로 따로 셌다 — ① `track_id` 표식 ② **게이트 전용 카메라 이름**
+(`gxprobe`). 둘이 어긋나면 빨강을 냈고, 실제로 빨강이었다(표식 4 · 카메라 8).
+
+그 빨강의 뜻은 「하나를 놓쳤다」가 **아니었다.** 둘째 갈래가 **다른 것을 세고 있었다:**
+
+    [실측 2026-09-21 · 운영 DB] 표식 `data_source=probe` **0건**(대표 결정으로
+    씨앗 4건을 지웠다 · `docs/agent/evidence/P-184/deleted_probe_snapshot_20260921.json`).
+    그런데 카메라 이름으로 세면 **4건** — 그 4건은 카메라 3947
+    (`gxprobe-D384-screen 캡처용 카메라`)에 매달린 **훈련(`data_source=drill`) 사건**이다.
+
+즉 카메라 이름은 **탐침이 아니라 훈련을 세고 있었다.** P-201 이 두 표식을 가른 뒤로
+그 갈래는 「probe 를 세는 법」이 아니라 **「그 카메라에 매달린 모든 것을 세는 법」**이 됐고,
+그 차이는 조용했다 — 이름이 `gxprobe` 였기 때문이다.
+
+★ **이름은 표식이 아니다.** 표식은 행 안에 있고(`track_id`), 이름은 사람이 짓는 값이다.
+  이름으로 세면 ① 이름을 바꾸는 날 수가 바뀌고 ② 같은 카메라로 심은 **다른 종류**
+  (훈련·실사건)가 전부 탐침이 된다. ②가 오늘 실제로 일어난 일이다.
+
+그래서 **세는 법은 하나다 — 표식.** 두 가지로 세고 대 보는 안전장치는 잃지만, 그 장치가
+지키던 것(놓친 것을 잡는다)은 **두 판정기의 짝맞춤**이 대신 지킨다:
+`backend/tests/test_u1_probe_not_counted.py` 가 이 파일과 `common/probe_marker.py` 를
+출생 표본 전수로 맞대 본다.
+
+⚠ 빌려 쓰던 곳 하나 — `scripts/measure_onboarding_t.py`(차선 Q)가 이 파일에서
+  `PROBE_CAMERA_HINT` 를 **빌려다** HTTP 응답 행을 걸렀다. 그 갈래도 같은 이유로
+  틀렸다(훈련을 탐침으로 읽는다). 그 파일은 Q 의 것이라 여기서 고치지 않고
+  `docs/agent/checkpoints/turn-z/Q.md` 에 쪽지를 남겼다.
 """
 from __future__ import annotations
 
@@ -32,8 +61,9 @@ import sys
 #: 행 안에 박힌 표식. 만든 쪽(`scripts/probe_*.py`)이 적는다.
 PROBE_MARKER = "data_source=probe"
 
-#: 두 번째로 세는 법 — 게이트 전용 카메라 이름. 표식과 **따로** 센다.
-PROBE_CAMERA_HINT = "gxprobe"
+#: ⛔ **`PROBE_CAMERA_HINT` 는 없앴다** (2026-09-21 · 턴 Z · 머리말 ★★).
+#:   이름 하나를 남겨 두면 다음 사람이 그것을 빌려다 다시 이름으로 센다.
+#:   세는 법은 위 표식 하나다.
 
 
 def is_probe_track(track_id) -> bool:
@@ -51,29 +81,24 @@ def exclude_probe(qs):
 
 
 def census() -> dict:
-    """지금 몇 건인가 — **두 가지로 따로 세고 대 본다**. Django 가 있어야 한다."""
+    """지금 몇 건인가 — **표식으로만 센다.** Django 가 있어야 한다.
+
+    ★ 세는 법이 하나인 것이 이 함수의 계약이다(머리말 ★★). 둘째 갈래를 다시
+      더하고 싶으면 그 갈래가 **무엇을 세는지** 먼저 적어라 — 종전 둘째 갈래는
+      「probe」라고 적고 **훈련**을 셌다.
+    """
     from stream_monitors.models import DetectionEvent as E
-    from stream_monitors.models import StreamMonitor as S
 
-    by_mark = set(E.objects.filter(track_id__startswith=PROBE_MARKER)
-                  .values_list("id", flat=True))
-    cams = S.objects.filter(name__icontains=PROBE_CAMERA_HINT)
-    by_cam = set(E.objects.filter(stream_monitor__in=cams).values_list("id", flat=True))
-
-    all_ids = sorted(by_mark | by_cam)
+    ids = sorted(E.objects.filter(track_id__startswith=PROBE_MARKER)
+                 .values_list("id", flat=True))
     #: ★ 미처리를 세는 법이 **둘**이다. 하나만 내면 다른 하나가 조용히 다른 답을 낸다.
     #:   2026-09-19 실측: `response_state='occurred'` → 5 · `status='new'` → 8.
     return {
-        "by_mark": sorted(by_mark),
-        "by_cam": sorted(by_cam),
-        "only_mark": sorted(by_mark - by_cam),
-        "only_cam": sorted(by_cam - by_mark),
-        "all": all_ids,
-        "total": len(all_ids),
+        "all": ids,
+        "total": len(ids),
         "open_by_response_state": E.objects.filter(
-            id__in=all_ids, response_state="occurred").count(),
-        "open_by_status": E.objects.filter(id__in=all_ids, status="new").count(),
-        "cameras": sorted(c.name for c in cams),
+            id__in=ids, response_state="occurred").count(),
+        "open_by_status": E.objects.filter(id__in=ids, status="new").count(),
     }
 
 
@@ -125,24 +150,24 @@ def main() -> int:
     import django
     django.setup()
     c = census()
-    print("[PROBE] [입력] probe 표식으로 %d건 · gxprobe 카메라로 %d건 — **따로 세서 댄다**"
-          % (len(c["by_mark"]), len(c["by_cam"])))
-    print("[PROBE] 카메라: %s" % ", ".join(c["cameras"]))
-    if c["only_mark"] or c["only_cam"]:
-        print("[PROBE] 표식에만: %s" % c["only_mark"])
-        print("[PROBE] 카메라에만: %s" % c["only_cam"])
-        print("[PROBE] 빨강 — 두 가지 세는 법이 어긋난다. 어느 쪽이 정본인지 정하기 전엔 "
-              "필터를 믿지 마라")
-        return 1
-    print("[PROBE] 두 가지가 같다 — probe 사건 **%d건**" % c["total"])
+    print("[PROBE] [입력] **표식 하나로 센다** — `track_id` 가 %r 로 시작하는 행"
+          % PROBE_MARKER)
+    print("[PROBE] probe 사건 **%d건**" % c["total"])
     print("[PROBE] id: %s" % c["all"])
     print("[PROBE] 미처리 — `response_state=occurred` **%d** · `status=new` **%d**"
           % (c["open_by_response_state"], c["open_by_status"]))
     if c["open_by_response_state"] != c["open_by_status"]:
         print("[PROBE] ⚠ 같은 행을 두 칸이 다르게 말한다. 「미처리 N건」을 적을 때는 "
               "**어느 칸으로 셌는지** 같이 적어라 (P-190 · 한 행 한 정본)")
-    print("[PROBE] ⚠ 이 수는 **잴 때마다 는다** — 게이트가 사건을 만들기 때문이다. "
-          "지우는 것은 대표 결정이다(P-184 ㉠지움 ㉡재심 ㉢잼)")
+    if c["total"] == 0:
+        #: ★ 0 은 **재지 못한 0 이 아니다.** ㉠지움(대표 결정)이 2026-09-21 에 끝났고
+        #:   [`docs/agent/evidence/P-184/deleted_probe_snapshot_20260921.json` · 4건],
+        #:   그 뒤로 이 수는 0 이어야 한다. 0 이 아니면 **게이트가 또 심고 있다**는 뜻이다.
+        print("[PROBE] 0건 — ㉠지움(2026-09-21 · 대표 결정 · 4건) 뒤의 옳은 0이다. "
+              "게이트가 다시 심으면 이 수가 다시 오른다")
+    else:
+        print("[PROBE] ⚠ 이 수는 **잴 때마다 는다** — 게이트가 사건을 만들기 때문이다. "
+              "㉠지움은 끝났다(2026-09-21) — 그 뒤에 난 행이다 (P-184 ㉡재심 ㉢잼)")
     return 0
 
 

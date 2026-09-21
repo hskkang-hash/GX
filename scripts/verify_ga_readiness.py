@@ -93,6 +93,27 @@ STATUSES = (DONE, "미착수", "잠김", "미측정")
 BANNED = ("부분", "진행중", "일부", "대부분", "거의")
 NEEDS_WHY = ("미착수", "미측정")
 
+#: ★★★ [P-211 · 2026-09-21 · 턴 Z · 차선 N] **「초록」은 다섯 부류다.**
+#:
+#:   턴 Y 에 후보 23 을 돌고 드러난 것: 한 글자 「초록」이 **다섯 가지 다른 뜻**을
+#:   삼키고 있었고, 그 다섯 중 **하나만** 닫힘이다. 영역 요약이 `16/20` 한 줄만 내면
+#:   읽는 사람은 그 16 을 전부 「닫혔다」로 읽는다 — 그것이 이 표의 가장 조용한 거짓말이다.
+#:
+#:     closed        누른 뒤를 봤다. 분모가 실재하고 면제가 없다
+#:     ratchet       「**새로** 생긴 것 0건」 — 면제를 업고 있다
+#:     rule_only     규칙은 섰는데 **현장이 비었다**(분모 0)
+#:     unmeasurable  못 쟀다 — 회색이거나 잰 적이 없거나 상태가 구현이 아니다
+#:     gate_only     게이트는 초록인데 **절은 안 닫혔다**(제목이 게이트보다 넓다)
+#:
+#:   ⚠ **이 칸은 점수를 안 만든다.** 수는 여전히 `구현 절 / 전체 절` 이다 —
+#:     부류로 가중을 바꾸려면 결정이 먼저 있어야 한다(턴 Z 에는 안 바꾼다).
+#:     이 칸이 하는 일은 **같은 수 옆에 그 수의 뜻을 세우는 것**이다.
+KINDS = ("closed", "ratchet", "rule_only", "unmeasurable", "gate_only")
+#: 영역 요약에서 **닫힘이 아닌** 셋(+하나)을 이름으로 부른다. 0 이어도 지우지 않는다 —
+#: 「0건 검사」와 「검사 안 함」은 다르고, 지우면 둘이 같아 보인다(D-301).
+KIND_LABEL = {"ratchet": "래칫", "rule_only": "규칙만",
+              "unmeasurable": "못 잼", "gate_only": "게이트만"}
+
 #: 「잠김」·「미측정」이 어디에 속하는가 (2026-09-21 · 세종 §3 판정).
 #:   design 은 **분모에서 뺀다** — 하지 않기로 한 것은 못 한 것이 아니다.
 #:   out 은 분모에 남기고 따로 센다 — 조건이 열어 준다.
@@ -150,6 +171,19 @@ def judge_clause(clause: dict, *, exists, blocker_ids: set[str]) -> list[str]:
     gate = (clause.get("gate") or "").strip()
     if gate and not exists(gate):
         out.append("%s: gate 가 가리킨 «%s» 가 없다 — 없는 판정기는 아무것도 안 지킨다" % (cid, gate))
+
+    #: ★ P-211 — **부류를 안 적은 절은 「초록」이 무슨 뜻인지 말하지 않는다.**
+    #:   적지 않으면 읽는 사람이 전부 closed 로 읽는다 — 그 읽기가 공짜로 일어나는 것이
+    #:   이 칸을 의무로 만든 이유다. 「몰라서 안 적었다」는 `unmeasurable` 로 적는다.
+    kind = (clause.get("kind") or "").strip()
+    if not kind:
+        out.append("%s: `kind` 가 없다 — 「초록」이 다섯 뜻 중 무엇인지 말하지 않는 절이다 "
+                   "(%s · P-211)" % (cid, " · ".join(KINDS)))
+    elif kind not in KINDS:
+        out.append("%s: kind «%s» 가 다섯 밖이다 (%s)" % (cid, kind, " · ".join(KINDS)))
+    elif len((clause.get("kind_why") or "").strip()) < 10:
+        out.append("%s: kind=%s 인데 사유가 없다 — 부류는 판정이고, 근거 없는 판정은 "
+                   "옮겨 적은 것과 구별되지 않는다 (P-211)" % (cid, kind))
 
     if status in NEEDS_WHY and not (clause.get("why") or "").strip():
         out.append("%s: '%s' 인데 사유가 없다 — 잊은 것과 구별되지 않는다" % (cid, status))
@@ -522,7 +556,45 @@ def self_test() -> int:
         any("절로 쪼개라" in p for p in problems({"id": "X", "status": "부분"}))))
     checks.append((
         "증명이 실재하는 '구현' 은 통과한다",
-        not problems({"id": "X", "status": "구현", "proof": "backend/tests/x.py"})))
+        not problems({"id": "X", "status": "구현", "proof": "backend/tests/x.py",
+                      "kind": "closed", "kind_why": "누른 뒤를 봤다 · 분모 실재"})))
+
+    # ── ★ P-211 「초록」 다섯 부류 (2026-09-21 · 턴 Z) ─────────────────────
+    #   ★★ **출생 표본**: 턴 Y 에 차선 N 이 후보 23 을 돌자 `exit 0` 스물이 나왔는데
+    #     그중 **래칫 셋 · 규칙만 둘 · 게이트만 둘**이 섞여 있었다. 대장은 그 전부를
+    #     한 글자 「구현」으로 적고 있었고, **아무 색도 안 났다** — 부류 칸이 없었으니까.
+    _ok = {"id": "X", "status": "구현", "proof": "backend/tests/x.py"}
+    checks.append((
+        "★★ 출생표본 — `kind` 가 없는 절을 잡는다 (P-211)",
+        any("다섯 뜻 중 무엇인지" in p for p in problems(dict(_ok)))))
+    checks.append((
+        "★ 다섯 밖의 kind 를 잡는다",
+        any("다섯 밖이다" in p for p in problems(
+            dict(_ok, kind="초록", kind_why="그냥 초록이다")))))
+    checks.append((
+        "★ kind 는 있는데 사유가 없으면 잡는다 — 부류는 판정이다",
+        any("옮겨 적은 것과 구별되지" in p for p in problems(
+            dict(_ok, kind="ratchet")))))
+    checks.append((
+        "★ `status: 구현` + `kind: rule_only` 는 **모순이 아니다**(가장 자주 나오는 거짓 초록)",
+        not problems(dict(_ok, kind="rule_only",
+                          kind_why="분모 0 — 활성 구역이 0개다"))))
+    checks.append((
+        "★ 영역 요약 꼬리가 넷을 **0 이어도** 부른다 (지우면 「0건」과 「안 셌다」가 같아진다)",
+        kind_tail({"closed": 9}) == "(래칫 0 · 규칙만 0 · 못 잼 0 · 게이트만 0)"))
+    checks.append((
+        "★ 파생 영역(①)은 `kind_derived` 에서 센다 — 절이 그 파일에 없다",
+        kind_counts_of({"id": "1", "derived_from": "x.yaml",
+                        "kind_derived": {"closed": ["F-01-c2"],
+                                         "unmeasurable": ["F-02-c1", "F-02-c2"]}})
+        == {"closed": 1, "ratchet": 0, "rule_only": 0,
+            "unmeasurable": 2, "gate_only": 0}))
+    checks.append((
+        "★ 절에 적은 kind 를 영역이 셈한다 (음성 대조)",
+        kind_counts_of({"id": "9", "clauses": [{"kind": "closed"}, {"kind": "ratchet"},
+                                               {"kind": "closed"}]})
+        == {"closed": 2, "ratchet": 1, "rule_only": 0,
+            "unmeasurable": 0, "gate_only": 0}))
     checks.append((
         "'잠김' 인데 blocker 가 없으면 잡는다",
         any("무엇이 막는지" in p for p in problems({"id": "X", "status": "잠김"}))))
@@ -533,7 +605,8 @@ def self_test() -> int:
     checks.append((
         "대장에 있는 blocker 는 통과한다",
         not problems({"id": "X", "status": "잠김", "blocker": "MIGRATE_ONE_LINER",
-                      "hand": "in", "hand_why": "우회 경로를 우리 층에 둔다"})))
+                      "hand": "in", "hand_why": "우회 경로를 우리 층에 둔다",
+                      "kind": "unmeasurable", "kind_why": "잠김이다 — 잰 초록이 없다"})))
     #: ★ 2026-09-21 — **분류하지 않은 것은 분모에서 뺄 수 없다** (세종 §3).
     checks.append((
         "'잠김' 인데 hand 가 없으면 잡는다",
@@ -584,7 +657,8 @@ def self_test() -> int:
     checks.append((
         "실재하는 gate 는 통과한다 (음성 대조)",
         not problems({"id": "X", "status": "구현", "proof": "backend/tests/x.py",
-                      "gate": "backend/tests/x.py"})))
+                      "gate": "backend/tests/x.py",
+                      "kind": "closed", "kind_why": "누른 뒤를 봤다 · 분모 실재"})))
     checks.append((
         "★ 한 게이트를 여러 절이 가리켜도 **한 번만** 부른다",
         len({g for _c, _s, g in [("A", "구현", "x.py"), ("B", "구현", "x.py")]}) == 1))
@@ -609,12 +683,42 @@ def self_test() -> int:
 
 # ═══════════════════════════════════════════════════════════════════════════
 
+def kind_counts_of(area: dict) -> dict[str, int]:
+    """영역의 부류 셈. **파생 영역(①)은 절이 여기 없으므로 `kind_derived` 를 읽는다.**
+
+    ⚠ 그 이름표는 계약 절 대장에 안 적는다 — 한 파일은 한 차선이고, 옮겨 적으면
+    두 표가 갈린다(D-227). 여기 있는 것은 **이름표**이지 상태가 아니다.
+    """
+    out = {k: 0 for k in KINDS}
+    derived = area.get("kind_derived")
+    if derived:
+        for k in KINDS:
+            out[k] += len(derived.get(k) or [])
+        return out
+    for clause in (area.get("clauses") or []):
+        k = (clause.get("kind") or "").strip()
+        if k in out:
+            out[k] += 1
+    return out
+
+
+def kind_tail(kinds: dict[str, int]) -> str:
+    """영역 요약 뒤에 붙는 한 조각 — `(래칫 a · 규칙만 b · 못 잼 c · 게이트만 d)`.
+
+    **0 이어도 지우지 않는다.** 지우면 「0건」과 「안 셌다」가 같아 보인다(D-301).
+    """
+    return "(" + " · ".join("%s %d" % (KIND_LABEL[k], kinds.get(k, 0))
+                            for k in ("ratchet", "rule_only", "unmeasurable",
+                                      "gate_only")) + ")"
+
+
 def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, int],
-                    dict[str, int], dict[str, int]]:
+                    dict[str, int], dict[str, int], dict[str, dict[str, int]]]:
     data = yaml.safe_load(LEDGER.read_text(encoding="utf-8"))
     areas = data["areas"]
     ids = blocker_ids()
     counts: dict[str, dict[str, int]] = {}
+    kinds: dict[str, dict[str, int]] = {a["id"]: kind_counts_of(a) for a in areas}
     hands: dict[str, int] = dict(contract_clause_hands())   # 계약 절 몫을 먼저 담는다
     #: ★ 2026-09-24 (P-26) — hand 는 이제 '미착수' 에도 붙는다(PRD v2.5 15절이 전부 `hand: in`).
     #:   그래서 「잠김·미측정 중 손 안」을 따로 센다 — 안 가르면 아래 한 줄이
@@ -700,10 +804,21 @@ def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, 
             else:
                 seen[cid] = area["id"]
 
+    #: ★ P-211 — **부류의 합은 절 수와 같아야 한다.** 어긋나면 어딘가가 조용히 안 세어졌고,
+    #:   안 세어진 절은 「닫혔다」로 읽힌다. 영역 ①은 `kind_derived` 가 게이트의 셈과
+    #:   같은 수를 들어야 한다 — 이름표가 낡으면 표가 갈린다(D-227).
+    for area in areas:
+        n_clause = sum(counts[area["id"]].values())
+        n_kind = sum(kinds[area["id"]].values())
+        if n_kind != n_clause:
+            problems.append(
+                "영역 %s(%s): 부류 합 %d 이 절 수 %d 과 다르다 — **안 세어진 절은 "
+                "「닫혔다」로 읽힌다** (P-211)" % (area["id"], area["name"], n_kind, n_clause))
+
     weights = sum(a["weight"] for a in areas)
     if weights != 100:
         problems.insert(0, "가중치 합이 %d 다 — 100 이 아니면 아래 수는 전부 무의미하다" % weights)
-    return areas, counts, problems, hands, hands_lock, hands_todo
+    return areas, counts, problems, hands, hands_lock, hands_todo, kinds
 
 
 def main() -> int:
@@ -733,7 +848,7 @@ def main() -> int:
         print("[GA] 대장이 없다: %s" % LEDGER)
         return 1
 
-    areas, counts, problems, hands, hands_lock, hands_todo = load()
+    areas, counts, problems, hands, hands_lock, hands_todo, kinds = load()
     total, rows = score(areas, counts)
     all_clauses = sum(sum(c.values()) for c in counts.values())
     done = sum(c.get(DONE, 0) for c in counts.values())
@@ -745,8 +860,11 @@ def main() -> int:
              sum(c.get("미측정", 0) for c in counts.values())))
 
     for aid, name, weight, d, n, ratio, weighted in rows:
-        print("  %-2s %-22s 가중 %2d%%  절 %2d/%-2d = %3.0f%%  →  %5.2f"
-              % (aid, name, weight, d, n, ratio * 100, weighted))
+        #: ★ P-211 — 수 옆에 **그 수의 뜻**을 세운다. `16/20` 만 내면 그 16 은 전부
+        #:   「닫혔다」로 읽힌다. 다섯 부류 중 닫힘이 아닌 넷을 이름으로 부른다.
+        print("  %-2s %-22s 가중 %2d%%  절 %2d/%-2d = %3.0f%%  →  %5.2f   %s"
+              % (aid, name, weight, d, n, ratio * 100, weighted,
+                 kind_tail(kinds.get(aid, {}))))
         if AREA_GATE_NOTE.get(aid):
             print("     ↳ %s" % AREA_GATE_NOTE[aid])
     if args.static:
@@ -755,6 +873,20 @@ def main() -> int:
               "영역 ①은 전부 「못 쟀다」로 세어져 있다. 점수는 게이트를 부르는 실행이 낸다")
     print("[GA] ★ 상용 오픈 가중 합계 **%.1f%%** [실측]" % total)
     print("[GA] (계약 축과 합치지 않는다 — D-345. 계약 절은 영역 ①이 그대로 인용한다)")
+
+    # ── 「초록」 다섯 부류 (P-211 · 2026-09-21 · 턴 Z) ──────────────────────
+    #   **수와 같은 화면에** 둔다. 다른 쪽에 두면 아무도 같이 읽지 않는다.
+    roll = {k: sum(c.get(k, 0) for c in kinds.values()) for k in KINDS}
+    print("[GA] [입력] 「초록」 부류 %d절 — closed %d · ratchet %d · rule_only %d · "
+          "unmeasurable %d · gate_only %d"
+          % (sum(roll.values()), roll["closed"], roll["ratchet"], roll["rule_only"],
+             roll["unmeasurable"], roll["gate_only"]))
+    not_closed = sum(roll.values()) - roll["closed"]
+    print("[GA]   ★ 닫힌 절은 **%d/%d** 이고 나머지 %d절의 「초록」은 **닫힘이 아니다** — "
+          "래칫 %d(늘지 않았다) · 규칙만 %d(현장이 비었다) · 못 잼 %d · "
+          "게이트만 %d(제목이 게이트보다 넓다)"
+          % (roll["closed"], sum(roll.values()), not_closed, roll["ratchet"],
+             roll["rule_only"], roll["unmeasurable"], roll["gate_only"]))
 
     # ── 손 안 도달율 (2026-09-21 · 세종 §3) ────────────────────────────────
     # **우리가 닫을 수 있는 100%** 를 따로 낸다. 두 수를 함께 적는 이유:

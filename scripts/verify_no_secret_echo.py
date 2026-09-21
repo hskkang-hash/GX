@@ -451,5 +451,13 @@ if __name__ == "__main__":
                " + --run 출력",
         as_="자격증명 없음 — 로컬 env 파일과 문서를 읽는다",
         source="로컬 파일 시스템 (지금 읽음 — 사진이 아니다)",
+        #: ★ [P-204 · 턴 Z · Q] 분모는 **훑은 문서 파일 수**다. 값의 개수가 아니라
+        #:   「값이 새었을 수 있는 자리」의 수가 이 게이트의 분모다.
+        measured=("저장소 **밖** .env·.env.gates 의 값이 저장소 **안** 문서로 새었는지 — "
+                  "**분모 %d**(docs/agent/** · docs/review/** 의 파일 전수 · 지금 셌다) · "
+                  "env 파일 %d개에서 읽은 값을 **이름으로만** 말한다(값은 안 찍는다 · P-135)"
+                  % (sum(1 for r in SCAN_ROOTS
+                         for p in (ROOT / r).rglob("*") if p.is_file()),
+                     len(ENV_FILES))),
     )
     sys.exit(main())

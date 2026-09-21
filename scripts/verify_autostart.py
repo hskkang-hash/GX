@@ -250,5 +250,13 @@ if __name__ == "__main__":
     gate_header(__file__,
                 target="이 기계의 도커 엔진·컨테이너·서비스 (살아 있는 것)",
                 as_="자격 없음 — 로컬 도커 소켓과 사용자 설정 파일을 읽는다",
-                source="살아 있는 것을 **지금** 잰다 — docker ps/inspect · Get-Service · Docker Desktop 의 사용자 설정(읽는 그 순간의 값). 사진도 손 목록도 아니다")
+                source="살아 있는 것을 **지금** 잰다 — docker ps/inspect · Get-Service · Docker Desktop 의 사용자 설정(읽는 그 순간의 값). 사진도 손 목록도 아니다",
+                #: ★ [P-204 · 턴 Z · Q] 이 게이트는 머리글 검사에서 **MEASURED 가 없어**
+                #:   걸리던 자리다. 분모를 말한다: 무엇을 · 몇 개로.
+                measured=("기계를 다시 켜면 스스로 서는가 — 셋을 잰다: "
+                          "① 컨테이너 재시작 정책 **분모 %d**(MUST_RUN) · "
+                          "② Docker Desktop AutoStart 1건 · ③ 서비스 StartType 1건. "
+                          "⚠ 손으로 띄운 것 %d건은 **정책으로는 안 온다** — 그 자리는 "
+                          "이 분모 밖이다(0건이 아니라 **다른 갈래**다)"
+                          % (len(MUST_RUN), len(HAND_STARTED_INSIDE))))
     raise SystemExit(main())

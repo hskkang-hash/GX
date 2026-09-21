@@ -67,10 +67,13 @@ from django.apps import apps
 from django.db.models import Count, Q
 from django.utils import timezone
 
+from common.billing_marks import (exclude_soft_deleted, exclude_unbillable,
+                                  has_marker_field)
 from common.probe_marker import exclude_probe
-from common.tenant_filters import filter_by_group_field
+from common.tenant_filters import filter_by_group_field, get_user_group
 from common.tenant_scope import TenantScope
-from kernels.k6_feedback.exceptions import InvalidMetricInput, NotImplementedYet
+from kernels.k6_feedback.exceptions import (InvalidMetricInput, K6Error,
+                                            NotImplementedYet)
 from kernels.k6_feedback.schemas import FalsePositiveRate, RateWindow
 
 #: 분모에 드는 판정 — **사람이 판정한 것만**. 미판정(null)은 분모가 아니다.
@@ -249,28 +252,144 @@ def _window(qs, since: datetime, until: datetime) -> RateWindow:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 3. usage_snapshot — **아직 없다** (W4-1 계측 모델이 선행)
+# 3. usage_snapshot — **장부 셋을 센다** (P-178 U56 ② · 2026-09-21 · 턴 Z)
 # ═══════════════════════════════════════════════════════════════════════════
+#
+# 무엇이 바뀌었나 — 이 자리는 턴 Y 까지 `NotImplementedYet` 이었다
+# --------------------------------------------------------------
+# 그때 적어 둔 선행 둘은 이랬다: ㉠ `W4-1 UsageSnapshot` 모델이 없다 ·
+# ㉡ 「무엇을 세는가」의 정의가 없다. **㉡ 은 이제 있다** — `apps/dsm/metering.py`
+# 가 2026-09-05 부터 그 정의를 응답의 `definitions` 로 싣고 화면·CSV 에 내보내고
+# 있었다. 없던 것은 정의가 아니라 **정의가 사는 자리**였다.
+#
+# ㉠ 은 여전히 없고, 그래서 **여기서도 만들지 않는다.** `UsageSnapshot` 은 *적재*
+# (스냅샷을 떠서 보관)의 표이고 이 함수는 *셈*이다. 셈을 하려고 표를 만들면 DA-04 K6
+# 의 *"별도 집계 테이블을 만들지 않는다 — 두 벌로 세면 숫자가 갈린다"* 를 이 커널이
+# 제 손으로 깬다. 적재가 필요해지는 날(청구서 확정·소급 불가 요건) 그 표가 선다.
+#
+# ★ **왜 K6 인가 — 엉뚱한 커널에 밀어 넣지 않았다**
+# ------------------------------------------------
+# DA-04 §2 K6 표가 이 출력을 **이름으로** 지목한다:
+#     `usage_snapshot(group, period)` → 채널수·이벤트수·저장량 등 (W4-1 UsageSnapshot)
+# 그리고 §4 티켓표의 `W4-1` 이 K6 줄에 있다. `metering.py` 가 적어 둔 빚
+# (*"갚는 날: 계량 커널 면(W4-1)"*)이 가리키던 자리가 여기다. 새 커널을 세우지도,
+# K1(이벤트)·K2(발송)에 장부 셈을 얹지도 않았다 — 둘 다 그 빚이 경고한 그 일이다.
+#
+# ★ **이벤트·발송은 여기서 안 센다.** 그 둘은 이미 K1·K2 가 센다(P-206). 같은 수를
+#   두 커널이 내면 어느 쪽이 청구서인지 아무도 모른다. 이 함수는 **K1·K2 가 안 보는
+#   장부 셋**만 답한다.
 def usage_snapshot(*, scope: TenantScope, since: datetime | None = None,
-                   until: datetime | None = None):
-    """채널수·이벤트수·저장량 등의 사용량 스냅샷 (U4 과금 근거).
+                   until: datetime | None = None) -> dict[str, Any]:
+    """**장부 셋** — 카메라 대수 · 쓰는 사람 수 · 저장 용량 (U4 과금 근거).
 
-    ★ **구현하지 않았다.** DA-04 K6 표가 이 출력을 `W4-1 UsageSnapshot` 으로 지목하는데
-      그 모델이 저장소에 **없다**(실측: `grep -rn UsageSnapshot backend/` → 0건).
-      저장량·채널수를 지금 세면 **어디서 세는지를 추측**하게 되고, 그 추측이 곧 과금 근거가
-      된다 — D-280 이 금지한 자리다. 요금이 걸린 숫자는 특히 그렇다.
+    Args:
+        since: 받지만 **안 쓴다.** 이 셋은 「그 달에 새로 생긴 수」가 아니라
+            **그 달 끝 시점의 잔량**이다. 카메라는 달마다 새로 사는 물건이 아니고,
+            청구는 「그 달에 우리가 지켜 준 대수」에 붙는다. 시그니처에 남겨 두는
+            이유는 `false_positive_rate`·`kpi_series` 와 **같은 모양**이어야 부르는
+            쪽이 기간을 어느 함수에는 주고 어느 함수에는 안 주는 일이 없기 때문이다.
+        until: 잔량을 세는 시점(반열린 — `created_on < until`). 비우면 지금.
 
-    조용히 0 이나 빈 dict 를 돌려주지 않는다. 계측에서 그것은 가장 나쁜 모양이다:
-    **아무도 재지 않은 지표가 좋은 지표로 보고된다.**
+    돌려주는 것::
 
-    선행: W4-1(계측 모델) — 무엇을 세는가(채널·이벤트·저장량)의 정의가 먼저다.
+        {"cameras": int, "users": int,
+         "storage": {"bytes": int|None, "files": int|None,
+                     "unsized": int|None, "why": str}}
+
+    ★ **못 잰 칸은 `None` 이다 — 0이 아니다** (D-301). 미디어 장부를 못 찾으면
+      「0바이트 썼다」가 아니라 **「못 쟀다」**다. 0으로 적으면 그 달 청구서의 저장
+      용량 칸이 조용히 0원이 되고, 아무도 그것을 결함으로 못 읽는다.
+
+    ★ **전역 관리자여도 제 테넌트만 센다.** `filter_by_group_field` 는 전역 관리자에게
+      표 전체를 준다 — 읽기 화면에서는 옳고 **청구서에서는 재앙**이다(`count_events`
+      머리말과 같은 자리). 그래서 여기서는 그 함수를 안 쓰고 소속을 직접 못박는다.
+      남의 테넌트 카메라 대수가 내 청구서에 실리면 그것은 틀린 청구가 아니라
+      **개인정보 유출**이다 — 남의 카메라 대수는 남의 사업 규모다.
+
+    ★ **거르는 규칙은 `common/billing_marks` 한 곳에서 온다.** 소프트 삭제도
+      표식(probe·drill)도 이 파일이 제 손으로 적지 않는다. 표식 칸이 없는 표에서는
+      `has_marker_field` 가 거짓이라 표식 거름이 **안 걸린다** — 그 사실과 그 수는
+      `billing_marks` 머리말 ⚠ 에 적혀 있다(0으로 덮지 않는다).
     """
-    scope.require_actor()  # 스코프를 받는 자리는 지금 세운다 — 나중에 붙이면 잊는다
-    raise NotImplementedYet(
-        "K6.usage_snapshot(U4 과금 근거)은 아직 구현되지 않았다. "
-        "W4-1 `UsageSnapshot` 모델이 저장소에 없고(실측 0건), 무엇을 세는지의 정의가 "
-        "선행이다. 요금 근거를 추측으로 채우지 않는다 (D-280). "
-        "지금은 이름만 서 있다 — DA-04 §2 K6 표가 정한 공개 면 4개 중 하나다")
+    actor = scope.require_actor()
+    group = get_user_group(actor)
+    if group is None:
+        raise K6Error(
+            "요청자에게 소속이 없어 사용량을 셀 수 없다. 소속 없이 센 수는 "
+            "누구의 사용량인지 답할 수 없고, 아무 테넌트나 고르면 남의 수가 "
+            "청구서에 오른다 (W0-12)")
+    if until is None:
+        until = timezone.now()
+
+    Stream = apps.get_model("stream_monitors", "StreamMonitor")
+    CoreUser = apps.get_model("user", "CoreUser")
+
+    return {
+        "cameras": _billable_count(
+            Stream, Stream._base_manager.filter(group=group,
+                                                created_on__lt=until)),
+        #: `distinct()` — 소속은 **역참조를 타고** 붙는다. 한 사람에게 소속 행이 둘이면
+        #: 조인이 그 사람을 두 번 낸다. 청구서에서 **한 사람을 두 번 세는 것**은 0을
+        #: 1로 세는 것보다 발견이 늦다: 수가 그럴듯하기 때문이다.
+        "users": _billable_count(
+            CoreUser, CoreUser._base_manager.filter(
+                userprofilelink__group=group, is_active=True,
+                date_joined__lt=until).distinct()),
+        "storage": _billable_storage(group, until),
+    }
+
+
+def _billable_count(model, qs) -> int:
+    """청구에 올릴 수 있는 행만 센다 — **규칙은 `billing_marks` 가 안다.**
+
+    이 두 줄이 이 커널 안에서 「청구의 셈」이라는 말의 전부다. 부르는 자리마다
+    `filter(deleted__isnull=True)` 를 손으로 쓰면 그 순간 규칙이 두 벌이 되고,
+    한쪽을 고칠 때 다른 쪽은 안 고쳐진다(그 두 벌이 `metering.py::_alive` 였다).
+    """
+    qs = exclude_soft_deleted(qs, model)
+    if has_marker_field(model):
+        qs = exclude_unbillable(qs)
+    return qs.distinct().count()
+
+
+def _billable_storage(group, until) -> dict[str, Any]:
+    """**저장 용량** — 그 달 끝 시점에 이 테넌트가 저장소에 갖고 있던 바이트.
+
+    ★ 어디서 세나 — **객체저장소를 훑지 않는다.** `core.file_management.UserMediaFile`
+      에 `file_size` 와 `group` 이 있고, MinIO 에 올릴 때 그 행이 함께 쓰인다
+      [실측 stream_monitors/utils/minio_client.py:253]. 그 장부를 센다.
+
+      버킷을 직접 훑는 길도 있지만 두 가지가 막는다: ㉠ 객체 이름 앞머리는
+      `group.code` 인데 **테넌트 몫만 재려면 전 객체를 나열**해야 하고, 화면 한 장이
+      저장소 전체를 훑게 된다. ㉡ 이 환경의 저장소는 `minio.invalid` 라 아예 못 닿는다.
+      청구서의 수가 저장소의 생사에 매달리면 **저장소가 죽은 달은 청구를 못 한다.**
+
+    ★ **크기를 모르는 파일은 「0바이트」가 아니다.** `file_size` 가 비어 있는 행을
+      `unsized` 로 따로 센다. 그 수가 0이 아니면 이 칸은 **하한**이고, 응답이 그렇게
+      말한다 — 하한을 총량처럼 청구하면 그것은 우리에게 유리한 반올림이다.
+    """
+    try:
+        Media = apps.get_model("file_management", "UserMediaFile")
+    except LookupError as exc:                                  # noqa: BLE001
+        #: 장부가 없으면 **못 쟀다**이지 0바이트가 아니다 (D-301).
+        return {"bytes": None, "files": None, "unsized": None,
+                "why": f"미디어 장부를 찾지 못했다: {exc}"[:200]}
+
+    from django.db.models import Sum
+
+    qs = Media._base_manager.filter(group=group, created_on__lt=until)
+    qs = exclude_soft_deleted(qs, Media)
+    if has_marker_field(Media):
+        qs = exclude_unbillable(qs)
+    agg = qs.aggregate(total=Sum("file_size"), files=Count("id"))
+    unsized = qs.filter(file_size__isnull=True).count()
+    return {
+        "bytes": int(agg["total"] or 0),
+        "files": int(agg["files"] or 0),
+        "unsized": unsized,
+        "why": ("크기가 안 적힌 파일이 %d개다 — 이 수는 **하한**이다" % unsized
+                if unsized else ""),
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════

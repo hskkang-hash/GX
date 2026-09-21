@@ -1,0 +1,89 @@
+{
+  "what": "OPS-15 훈련 구역 1 · drill 카메라 3 · 군집 두절 경보 1회 — 대표 결정 ⑥ 「훈련 구역으로 울려라」",
+  "who": "턴 Z · 차선 U1",
+  "when": "2026-09-21 (KST 12:23~12:31 · UTC 03:23~03:31)",
+  "where": "운영 표(개발 환경 운영 DB) — 시험 DB 가 아니다",
+  "decision": "GX-GUIDE_대표결정_턴Z_따라하기_20260921.md ⑥",
+
+  "zone": {
+    "id": 338,
+    "name": "[훈련] 안양천 시험구역",
+    "kind": "camera_group",
+    "is_active": true,
+    "group_id": 4,
+    "why_this_tenant": "기존 훈련 자료(drill 사건 4건)와 웹푸시 구독 기기가 같은 테넌트(4)에 있다. 구역 이름은 현장 이름이고 테넌트는 자료가 사는 곳이다."
+  },
+
+  "cameras": [
+    {"id": 5356, "name": "[훈련] 안양천 시험카메라 1", "code": "GX-DRILL-ANYANG-01"},
+    {"id": 5357, "name": "[훈련] 안양천 시험카메라 2", "code": "GX-DRILL-ANYANG-02"},
+    {"id": 5358, "name": "[훈련] 안양천 시험카메라 3", "code": "GX-DRILL-ANYANG-03"}
+  ],
+
+  "cut": {
+    "how": "stream_monitors.services.camera_pulse.record_frame(scope=system, at=지금-6분) — 세 대 **같은 순간**",
+    "last_frame_at": "2026-09-21T03:23:45.657411+00:00",
+    "verdict_before_ring": {
+      "total": 3,
+      "never_seen": 0,
+      "silent": [5356, 5357, 5358],
+      "cluster": [5356, 5357, 5358],
+      "fires": true,
+      "reason": "구역 카메라 3대 중 3대가 0:05:00 안에 함께 맥박을 잃었다 (기준 3중 2)"
+    }
+  },
+
+  "ring": {
+    "fired_by": "운영 스케줄러 — celery beat `ops15-camera-pulse-scan` (1분 주기). 손으로 부르지 않았다",
+    "celery_log": "[2026-09-21 10:30:30,559: WARNING/ForkPoolWorker-30750] [OPS][PULSE] 군집 두절 1건 — 구역 1 · 카메라 3",
+    "celery_task_result": "{'zones': 1, 'cameras': 3, 'created': 1}",
+    "before_and_after_task_results": [
+      "직전 회차들: {'zones': 0, 'cameras': 0, 'created': 0} (구역이 0개였다)",
+      "직후 회차: {'zones': 1, 'cameras': 3, 'created': 0} (5분 재발 억제 · CLUSTER_RENOTIFY_WINDOW)"
+    ],
+    "event": {
+      "id": 326411,
+      "event_type": "camera_cluster_down",
+      "severity": "warning",
+      "occurred_at": "2026-09-21T03:30:30.146949+00:00",
+      "stream_monitor_id": 5356,
+      "group_id": 4,
+      "track_id": "data_source=drill;run=20260921T102945"
+    },
+    "count": 1
+  },
+
+  "drill_marker": {
+    "value": "data_source=drill;run=20260921T102945",
+    "written_by": "심은 쪽(이 차선) — `common.probe_marker.drill_mark()`. 규칙(`scan_clusters`)은 track_id 를 안 적는다",
+    "is_drill_track": true,
+    "is_probe_track": false,
+    "product_counts_it (exclude_probe 뒤 남는 수)": 1,
+    "billed (exclude_unbillable 뒤 남는 수)": 0,
+    "screen_data_source (apps.dsm.services.event_data_source)": "drill",
+    "screen_data_sources_batch": {"326411": "drill"}
+  },
+
+  "webpush": {
+    "result": "도달 0 — **재지 못했다**(회색). 발송 행 0 · 운영 채널 발송 0",
+    "path_tried": "제품 경로 `apps.dsm.notify_prefs.send_test_push(scope=운영자, event_id=326411)` — 훈련 채널(`drill:` 표식)",
+    "raised": "PushSendNotConfigured",
+    "reason": "웹푸시 자격이 이 환경에 없습니다 — 비어 있는 환경변수: GX_VAPID_PUBLIC_KEY, GX_VAPID_PRIVATE_KEY, GX_VAPID_SUBJECT",
+    "missing_env_names": ["GX_VAPID_PUBLIC_KEY", "GX_VAPID_PRIVATE_KEY", "GX_VAPID_SUBJECT"],
+    "live_subscriptions": 1,
+    "note": "턴 T(P-160)에 VAPID 쌍을 만들어 금고에 두었고 도달 1을 쟀다. 지금 gx-shell·gunicorn·celery 어디에도 그 이름 셋이 없다 — 재생성 창에서 사라진 것으로 보인다. 자격을 다시 실으면 이 경로 그대로 1을 낸다.",
+    "delivery_rows_before": 225,
+    "delivery_rows_after": 225
+  },
+
+  "left_behind": {
+    "zone": "남겼다 (지우지 않았다)",
+    "cameras": "행 3개 남겼다 · 울린 뒤 `is_active=False`",
+    "why_deactivated": "beat 가 1분마다 돈다. 끊긴 채로 활성으로 두면 5분마다 **표식 없는** 군집 두절이 영원히 쌓인다(하루 288건 · 청구에 들고 큐를 덮는다). 다시 울리려면 세 대를 활성으로 되돌리고 맥박을 끊으면 된다.",
+    "verdict_after": {"fires": false, "reason": "구역 카메라 0대 — 군집 규칙은 3대부터 본다", "total": 0}
+  },
+
+  "known_hole": "카메라에는 표식 칸이 없다 — `apps/dsm/metering.py::_cameras` 는 살아 있는 카메라를 전부 센다. 즉 **훈련 카메라 3대는 청구의 「카메라 대수」에 든다.** 사건·발송은 표식으로 빠지지만 카메라는 안 빠진다(U56·N 에게 알린다).",
+
+  "clause_status": "OPS-15 은 `rule_only` 유지. 훈련으로 울린 것은 「경보 경로가 산다」는 증명이지 「현장이 감시된다」가 아니다 — 실카메라 0/4 는 그대로다."
+}

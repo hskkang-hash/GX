@@ -248,7 +248,12 @@ class FailureIsVisibleTest(K2Fixture):
 
 
 class SuppressionTest(K2Fixture):
-    """[F-04] 5분 억제 — **K2 는 발송 이력을 본다** (K1 은 이벤트 행을 본다)."""
+    """[F-04] 5분 억제 — **K2 는 발송 이력을 본다** (K1 은 이벤트 행을 본다).
+
+    ★ **F-04 억제 키의 정본은 이 파일이 아니다** (2026-09-21 · 턴 Z · 세종):
+      `backend/tests/test_f04_suppression_key.py` — 「같은 스트림 + 같은 유형 +
+      직전 발송 시각」. 여기서 재는 것은 그 계약이 **이 갈래에서** 어떻게 보이는가다.
+    """
 
     def test_second_alert_within_five_minutes_is_suppressed(self) -> None:
         """종전 그대로 — 같은 카메라·같은 유형의 둘째 알림은 접힌다.

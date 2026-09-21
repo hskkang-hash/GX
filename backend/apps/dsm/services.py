@@ -1406,3 +1406,22 @@ def count_billable_deliveries(*, scope: TenantScope, since, until,
 
     return count_deliveries(scope=scope, since=since, until=until,
                             time_field=time_field, succeeded=succeeded)
+
+
+def count_billable_ledgers(*, scope: TenantScope, until) -> dict:
+    """청구서에 적을 **장부 셋** — 카메라 대수 · 쓰는 사람 수 · 저장 용량.
+
+    `kernels.k6_feedback.usage_snapshot` 그대로다 (P-178 U56 ② · 2026-09-21).
+
+    ★ **한 번에 셋을 받는다.** 칸마다 문을 만들면(`count_billable_cameras` …)
+      계량이 달 하나에 커널을 세 번 두드리고, 최근 6달 표는 18번이 된다.
+      그 수가 「60초 안 도달」을 먼저 깬다 — 셋은 같은 시점의 잔량이라 **한 질문**이다.
+
+    ⚠ 이 셋에는 `exclude_unbillable` 이 **안 걸린다.** 세 표에 표식 칸(`track_id`)이
+      없기 때문이고, 그 사실과 지금 섞여 있는 씨앗의 수는 `common/billing_marks`
+      머리말 ⚠ 에 적혀 있다. 여기서 이름으로 거르지 않는다 — 추측은 청구 근거가
+      될 수 없다 (D-280).
+    """
+    from kernels.k6_feedback import usage_snapshot
+
+    return usage_snapshot(scope=scope, until=until)

@@ -327,5 +327,12 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    _feats = parse(LEDGER.read_text(encoding="utf-8")) if LEDGER.exists() else []
+    _n_clause = sum(len(f.get("clauses") or []) for f in _feats)
+    #: ★ [P-204 · 턴 Z · Q] **마지막 줄은 분모다.** 이 수는 **지금 센 것**이다 —
+    #:   손으로 적은 수는 분모가 아니고, 분모를 안 말한 `exit 0` 은
+    #:   「이 게이트가 통과」가 아니라 「이 호출이 끝났다」일 뿐이다.
+    gate_header(__file__, measured=(
+        "계약 기능을 **절로 쪼갠 것**마다 상태·인용 대조·증명 시험 실재를 본다 — "
+        "**분모 %d절**(기능 %d건을 쪼갠 것 · 지금 읽었다)" % (_n_clause, len(_feats))))
     sys.exit(main())

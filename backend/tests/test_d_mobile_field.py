@@ -94,6 +94,10 @@ class RenotifyScenarioTest(K2Fixture):
     def test_five_minute_suppression_does_not_decide_renotify(self) -> None:
         """★★ [턴 Y · F-04 · 2026-09-20] **답은 뒤집혔다. 결론은 그대로다.**
 
+        ★ **키의 정본은 `backend/tests/test_f04_suppression_key.py`** (2026-09-21 ·
+          턴 Z · 세종: 「같은 스트림 + 같은 유형 + 직전 발송 시각」). 이 시험이 재는
+          것은 **재알림이 그 판정을 안 본다**는 것 하나다.
+
         종전 이 시험은 `suppress` 가 같은 이벤트의 재발송을 **안 접는다**는 것을
         재었다 [실측 2026-09-04]. 그것은 당시 질의의 부산물이었다 — 창이
         `occurred_at__lt = event.occurred_at` 으로 잡혀 있어 **자기 발송은 원래 안 보였다.**

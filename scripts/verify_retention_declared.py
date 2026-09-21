@@ -581,5 +581,11 @@ if __name__ == "__main__":
         target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다",
+        #: ★ [P-204 · 턴 Z · Q] 분모는 **갈래 수**다 — 각 갈래가 무엇을 재는지 이름으로 적는다.
+        measured=("보존 기간이 **선언 없이는 돌지 않는지** 다섯 갈래로 본다 — "
+                  "**분모 5**(① 미선언이면 파기 안 돎 ② 선언하면 백업 파일 실재 "
+                  "③ 백업 파일 수 ④ restore 기록 + RTO 실측 ⑤ 코드에 수 기본값 0) · "
+                  "집행 자리 **분모 %d**(ENFORCEMENT_FILES). "
+                  "ORM 에 못 닿으면 **분모 0 — 안 쟀다**(회색 2)" % len(ENFORCEMENT_FILES)),
     )
     sys.exit(main())
