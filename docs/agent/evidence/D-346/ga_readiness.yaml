@@ -887,34 +887,44 @@ areas:
     #   [재측 2026-09-21 · 차선 N] `python scripts/verify_feature_reach.py --json`
     #     → n=39 · 초록 10 · **회색 22** · 빨강 0 · 잠김 7 · ratio 25.6% · weighted 5.13
     kind_derived:
-      # closed — 사슬 다섯(절↔화면↔라우트↔**역할 계정의 200**↔data_source)이 이어졌다.
-      #          「누른 뒤를 본」 초록이다. 10절.
-      #   ★★ [P-231 · 2026-09-21 · 턴 AB · 차선 N] **셋을 올렸다 — 증거 경로가 있는 절만.**
-      #      `F-12-c5` · `F-12-c6` · `F-12-c7`. 경로는 아래 `kind_evidence` 에 실려 있다.
-      #      차선 A 의 쪽지(`turn-ab/N.inbox/A.md`)가 아니라 **기계가 낸 표**로 골랐다:
-      #        `python scripts/verify_click_completes.py --clause-evidence`
-      #        → 「절 **17** 중 「누른 뒤」 초록 **3** · 빨강 0 · 회색 14」
-      #      ⚠ 조율자 쪽지는 「올릴 수 있는 것은 **5**」라 했으나 그것은 A 의 재측(12:19:30Z)
-      #        **전**의 수다. A 자신도 갱신한 §0 에서 **3** 이라 적었고 기계도 3 이다.
-      #        **지시도 입력이지 측정이 아니다** — 둘이 갈리면 기계가 낸 쪽을 쓴다.
-      #        안 올린 둘: `F-12-c1`(이번 회차 **회색** — 로그인 throttle 로 화면에 못 들어갔다.
-      #        한 회차 전 초록은 **git 스테이지에만** 있고 디스크의 정본이 아니다) ·
-      #        `F-10-c1`(**도달만** 올랐다. 「누른 뒤」는 아직 반쪽 — 도달로 닫힘을 주지 않는다).
+      # closed — **「누른 뒤」를 본 초록이고 살아 있는 증거 경로가 아래 `kind_evidence` 에 있다.**
+      #   ★★★ [P-231 · 2026-09-22 · 턴 AB · V 회차 뒤 · 차선 N] **15절.**
+      #     앞 회차에 이 자리는 **잣대가 둘**이었다 — 셋은 P-231(경로 있음), 열은 옛 도달 사슬
+      #     (「누른 뒤」 증거가 27.5시간 낡음). 나는 **안 내리고** 「V 가 48행 `--measure` 를
+      #     돌리면 그날 같은 경로로 초록이 된다」고 적었다. **그 일이 일어났다:**
+      #        V 회차 measured_at = 2026-09-21T14:46:00Z
+      #        → 절 **17** 중 「누른 뒤」 초록 **16** · 빨강 0 · 회색 1   (앞 회차엔 초록 3)
+      #     ⇒ **이제 열다섯 전부가 P-231 잣대다. 경로 없는 `closed` 는 이 영역에 0개다.**
+      #   ★ 이 회차에 **새로 올린 둘**: `F-10-c1`(앞 회차엔 도달만 올라 안 올렸다 — 이제
+      #     두 행 `U5#9`·`U5#S4` 가 **둘 다** 측정됐다) · `F-11-c3`.
+      #     ⚠ 조율자 쪽지의 목록 12 에는 **`F-10-c1` 이 빠져 있었다** — 기계가 초록으로 낸다.
+      #       **지시도 입력이지 측정이 아니다.**
+      #   ★★ **`F-11-c2` 는 안 올렸다 — `gate_only` 다**(아래 `gate_only:` 와 note 를 보라).
       closed: [F-01-c2, F-05-c1, F-05-c2, F-05-c3, F-09-c2, F-10-c3,
                F-12-c2, F-12-c3, F-12-c8, F-14-c1,
-               F-12-c5, F-12-c6, F-12-c7]
-      # unmeasurable — 회색 22 + 잠김 7 = 29절. **못 이었거나 잠겼다.**
+               F-12-c5, F-12-c6, F-12-c7,
+               F-10-c1, F-11-c3]
+      # unmeasurable — 회색 16 + 잠김 7 = 23절. **못 이었거나 잠겼다.**
       #   회색은 「사슬을 못 이었다」이지 「끊겼다」가 아니다(빨강 0건).
+      #   ★ `F-12-c1` 이 여기 남았다 — **제품 빨강이 아니라 회색**이다.
+      #     V 가 격리 A/B 로 갈랐다: **브라우저 로캘이 `ko-KR` 이면 판정기가 못 들어간다**
+      #     (확인창 단추를 `Confirm` **영어 이름으로만** 찾는다). **제품은 옳고 판정기가 틀렸다.**
       unmeasurable: [F-01-c1, F-02-c1, F-02-c2, F-02-c3, F-03-c1, F-03-c2, F-03-c3,
-                     F-04-c1, F-04-c2, F-09-c1, F-10-c1, F-10-c2, F-11-c1, F-11-c2,
-                     F-11-c3, F-12-c1, F-12-c4, F-13-c1,
+                     F-04-c1, F-04-c2, F-09-c1, F-10-c2, F-11-c1,
+                     F-12-c1, F-12-c4, F-13-c1,
                      F-14-c2,
                      F-06-c1, F-06-c2, F-07-c1, F-08-c1, F-08-c2, F-09-c3, F-13-c2]
-      # 이 영역에는 ratchet · rule_only · gate_only 가 **0절**이다 —
-      # 영역 게이트가 래칫이 아니라 **도달 전수**를 세기 때문이다(P-106).
       ratchet: []
       rule_only: []
-      gate_only: []
+      # ★★ [2026-09-22 · 턴 AB] **이 영역에 `gate_only` 가 처음 생겼다.**
+      #   여기엔 오래 「이 영역에는 ratchet · rule_only · gate_only 가 **0절**이다」라고
+      #   적혀 있었다 — 영역 게이트가 래칫이 아니라 **도달 전수**를 세기 때문이었다(P-106).
+      #   그 말은 **도달만 세던 동안** 참이었다. 이 턴에 「누른 뒤」 술어가 절마다 붙으면서
+      #   **제목이 부르는 것보다 술어가 적게 재는 자리**가 처음 드러났다.
+      #   `F-11-c2`(손입력 0)와 `F-11-c3`(치환이 돈다)이 **같은 한 행 `U2#6`** 에 기대는데
+      #   그 행이 재는 것은 「보고서가 **만들어졌다**」 하나다 — `F-11-c3` 은 그것이 곧 절이고,
+      #   `F-11-c2` 의 「**손입력 0**」은 **그 행이 안 잰다.** ⇒ 0.5 로 센다(자세한 것은 note).
+      gate_only: [F-11-c2]
 
     # ★★ [P-231 · 2026-09-21 · 턴 AB · 차선 N] **증거 경로 — 이것이 없으면 안 올린다**
     #   P-231 이 요구한 것은 「누른 뒤」 초록 **그리고 증거 파일 경로가 대장에 실릴 것**이다.
@@ -922,6 +932,125 @@ areas:
     #   ⚠ 이 칸은 **손으로 옮겨 적은 것이 아니다** — `--clause-evidence` 가 찍어 준 것을
     #     그대로 옮겼고, 판정기가 **그 파일이 실재하는지 매 실행 확인한다**(없으면 exit 1).
     kind_evidence:
+      F-01-c2:
+        rows: [U1#8]
+        strength: reflect
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/fire_user/dsm_events.png
+        what: |
+          이벤트 목록 화면을 열면 새 GET /api/dsm/events 가 나가고 그 응답의 `events` 가 화면에 실린다 — **쓰기가 아니다**
+
+      F-05-c1:
+        rows: [U6#9, U6#15]
+        strength: change
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        capture: ""
+        capture_none_why: |
+          **화면이 없다 — 이 절의 진입면은 화면이 아니라 라우트다**(외부 App / OpenAPI).
+          도달 대장이 그렇게 적는다: 「외부 App 의 진입면은 화면이 아니라 라우트다 —
+          그 게이트가 문을 두드린다」. **없는 캡처를 지어내지 않는다.**
+        what: |
+          외부 App 진입면 — U6#9 가 POST 로 `response_state` 를 **바꾸고** 다시 읽는다. U6#15 는 연계 헬스체크(reflect)
+
+      F-05-c2:
+        rows: [U6#2, U6#3]
+        strength: reflect
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        capture: ""
+        capture_none_why: |
+          **화면이 없다 — 이 절의 진입면은 화면이 아니라 라우트다**(외부 App / OpenAPI).
+          도달 대장이 그렇게 적는다: 「외부 App 의 진입면은 화면이 아니라 라우트다 —
+          그 게이트가 문을 두드린다」. **없는 캡처를 지어내지 않는다.**
+        what: |
+          이벤트 OpenAPI 진입면 — 목록·상세를 API 자격으로 읽는다. 읽기 문이라 **바뀌는 것이 없다**(그것이 이 절의 내용이다)
+
+      F-05-c3:
+        rows: [U6#1]
+        strength: change
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        capture: ""
+        capture_none_why: |
+          **화면이 없다 — 이 절의 진입면은 화면이 아니라 라우트다**(외부 App / OpenAPI).
+          도달 대장이 그렇게 적는다: 「외부 App 의 진입면은 화면이 아니라 라우트다 —
+          그 게이트가 문을 두드린다」. **없는 캡처를 지어내지 않는다.**
+        what: |
+          API 키 발급 — POST settings/api-keys 뒤 `api_keys.inbound` 가 는다
+
+      F-09-c2:
+        rows: [U1#9]
+        strength: reflect
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/fire_user/dsm_events_id_verdict_panel.png
+        what: |
+          이벤트 클릭 → 상세. 그 클릭이 부른 GET events/{id} 가 200 이고 `event_id` 가 화면에 온다
+
+      F-10-c1:
+        rows: [U5#9, U5#S4]
+        strength: change
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        json_2: docs/agent/evidence/P-118/settings_clicks.json
+        measured_at_2: "2026-09-21T12:19:30Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/admin/dsm_notify_recipients.png
+        what: |
+          등급별 수신그룹 — 수신그룹은 U5#9(알림 규칙 저장
+          **reflect**)
+          등급규칙은 U5#S4(등급규칙 저장
+          **change**). 둘 다 눌렀고 둘 다 새 GET 으로 다시 읽었다. ⚠ 센 쪽(change)은 **등급규칙 한쪽**이다
+        caveat: |
+          ⚠ **이 절이 말하지 않는 것**: 같은 표의 「사람에게 **도달**」 칸은 세 등급 다
+          「닿지 않음」이다(채널이 `log`). 그것은 **F-10 의 발송·도달 쪽 사실**이고 이 절이 아니다.
+          「수신그룹이 정의됐다」와 「그 사람에게 실제로 닿았다」는 **다른 판정**이다.
+          ⚠ 두 행 중 **센 쪽(change)은 등급규칙 한쪽**(U5#S4)이고 U5#9 는 reflect 다.
+
+      F-10-c3:
+        rows: [U3#1]
+        strength: change
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/fire_user/dsm_events_id_verdict_panel.png
+        what: |
+          알림 발송 — POST events/{id}/notify 뒤 `deliveries?event_id=…` 의 `total` 이 **는다**(발송 기록이 남았다)
+
+      F-11-c3:
+        rows: [U2#6]
+        strength: change
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/fire_admin/dsm_reports_runs.png
+        what: |
+          같은 행 — 치환이 돌아 보고서 한 벌이 생겼다
+        caveat: |
+          ★ 이 절은 **치환이 돌아 보고서 한 벌이 생겼다**이고 그것이 이 행이 재는 것과 같다.
+          ⚠ 짝인 `F-11-c2`(손입력 0)는 **같은 한 행**에 기대는데 그 행이 그것을 안 잰다 —
+          그래서 `F-11-c2` 는 `closed` 가 아니라 **`gate_only`** 로 두었다(아래 주석).
+
+      F-12-c2:
+        rows: [U4#16]
+        strength: reflect
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/view_only_-_anyang/dsm_audit_read.png
+        what: |
+          감사 기록 화면이 GET /api/dsm/audit 을 부르고 `total` 을 그린다
+
+      F-12-c3:
+        rows: [U5#9]
+        strength: reflect
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/admin/dsm_notify_recipients.png
+        what: |
+          알림 규칙 저장 — POST notify-rules/save 가 나가고 notify-rules/list 를 **새로 읽어** 규칙이 비친다. ⚠ 값이 **달라졌음**을 보는 행은 아니다(`server_reflect`)
+        caveat: |
+          ⚠ **이 행은 「값이 달라졌음」을 보는 행이 아니다**(`server_reflect`) — 저장이 나가고
+          목록을 **새로 읽어 규칙이 비치는** 것까지다. 차선 A 가 단 단서를 그대로 옮긴다.
+
       F-12-c5:
         rows: [U5#S1, U5#S2]
         strength: change
@@ -929,8 +1058,16 @@ areas:
         measured_at: "2026-09-21T12:19:30Z"
         capture: docs/agent/evidence/D-347/screens/SCREENS-1/admin/dsm_settings_rules_admin.png
         what: |
-          구역 끄기/켜기 — 행의 `is_active` 가 **뒤집힌다**(표의 길이가 아니라 그 행의 칸을 본다) ·
-          만들기 — 표의 **길이가 는다**. 두 행이 다 서야 이 절이 선다.
+          구역 끄기/켜기(행의 `is_active` 가 뒤집힌다)
+          만들기(길이가 는다)
+        caveat: |
+          ★ **두 행이 서로 다른 것을 본다 — 뭉쳐 읽으면 한쪽이 거짓 빨강을 낸다.**
+            · 끄기/켜기는 표의 **길이가 아니라 그 행의 `is_active` 칸**을 본다.
+              길이로 재던 동안 났던 빨강은 **제품이 아니라 판정기**였다(길이는 안 바뀐다).
+            · 「만들기」는 반대로 **길이가 답이다** — 거기엔 칸 보기를 달지 않는다.
+              되돌릴 문이 없어 이름에 **회차 표식**을 박는다.
+          **두 행이 다 서야 이 절이 선다.**
+
       F-12-c6:
         rows: [U5#S3]
         strength: change
@@ -938,12 +1075,16 @@ areas:
         measured_at: "2026-09-21T12:19:30Z"
         capture: docs/agent/evidence/D-347/screens/SCREENS-1/admin/dsm_settings_rules_admin.png
         what: |
-          임계값 저장 — 표의 **「지금 값」(`value`)이 실제로 바뀐다**(10.0 → **11.0**) ·
-          곁칸 「바꾼 기록」도 한 줄 는다(4 → 5). **둘 다 서야 초록이다.**
-          ★ 턴 AA 에 차선 A 가 「표의 「지금 값」은 안 바뀐다」는 ⚠ 를 달고 **「바꾼 기록」으로
-            우회**했었다. 그때는 참이었다. 이 턴에 차선 F 가 `k5_trust::list_thresholds` 를
-            **좁은 층이 이기게**(기관 → 전역 → 정의) 고쳤고 A 가 눌러 확인해 **우회를 되돌렸다.**
-            ★ 그러면서 **옛 우회 술어를 안 지웠다** — 곁칸으로 같이 본다(대장은 줄지 않는다).
+          임계값 저장 — **표의 「지금 값」(`value`)이 실제로 바뀐다** (10.0 → 11.0)
+          곁칸 「바꾼 기록」도 한 줄 는다(4 → 5). 둘 다 서야 초록이다
+        caveat: |
+          ★ **이 절의 초록에는 내력이 있다 — 기계가 다시 찍을 때 사라지지 않게 여기 둔다.**
+            턴 AA 에 차선 A 가 「표의 「지금 값」은 안 바뀐다」는 ⚠ 를 달고 **「바꾼 기록」으로
+            우회**했었다. **그때는 참이었다.** 이 턴에 차선 F 가 `k5_trust::list_thresholds` 를
+            **좁은 층이 이기게**(기관 → 전역 → 정의) 고쳤고, A 가 눌러 확인해 **우회를 되돌렸다.**
+          ★ 그러면서 **옛 우회 술어를 안 지웠다** — 곁칸으로 같이 본다(**대장은 줄지 않는다**).
+            그래서 「둘 다 서야 초록이다」가 조건으로 남아 있는 것이다.
+
       F-12-c7:
         rows: [U5#S4]
         strength: change
@@ -951,33 +1092,75 @@ areas:
         measured_at: "2026-09-21T12:19:30Z"
         capture: docs/agent/evidence/D-347/screens/SCREENS-1/admin/dsm_settings_rules_admin.png
         what: |
-          등급규칙 저장 — 그 유형의 `severity` 가 바뀐다. ★ **올리는 쪽으로만** 쓴다 —
-          낮추면 그 유형의 경보가 실제로 꺼진다(시험 장치가 제품을 조용하게 만들면 안 된다).
+          등급규칙 저장 — 그 유형의 `severity` 가 바뀐다(**올리는 쪽으로만**)
+        caveat: |
+          ★ **「올리는 쪽으로만」은 멋이 아니라 규율이다** — 등급을 **낮추면 그 유형의 경보가
+            실제로 꺼진다.** **시험 장치가 제품을 조용하게 만들면 안 된다**(P-220 과 같은 뿌리).
+            술어는 처음 등급을 적어 두고 그 값으로 한 번 더 써서 되돌리며,
+            **이미 「심각」인 유형은 고르지 않는다**(같은 값을 또 써서 나는 빨강은 제품이 아니다).
 
-    # ★★ 이 영역의 `closed` 13 은 **한 잣대가 아니다.** 읽는 사람이 속지 않게 적는다.
+      F-12-c8:
+        rows: [U6#1]
+        strength: change
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/admin/dsm_integrations_api_keys.png
+        what: |
+          API 키 관리 — 발급 뒤 `api_keys` 목록이 는다
+
+      F-14-c1:
+        rows: [U1#11]
+        strength: change
+        json: docs/agent/evidence/P-118/click_completes.json
+        measured_at: "2026-09-21T14:46:00Z"
+        capture: docs/agent/evidence/D-347/screens/SCREENS-1/fire_user/dsm_events_id_verdict_panel.png
+        what: |
+          진위 판단 — POST events/{id}/review 뒤 그 사건의 `verdict` 가 **바뀐 채로** 다시 읽힌다. 사람의 판정이 남는 자리다
+    # ★★ [P-231 · 2026-09-22 · 턴 AB · V 회차 뒤 · 차선 N] **잣대가 하나가 됐다**
     kind_evidence_note: |
-      ★★ **잣대가 둘이다 — 13 을 한 덩어리로 읽지 마라.**
+      ★★★ **두 잣대가 사라졌다.** 앞 회차에 나는 이렇게 적었다:
 
-        증거 경로가 실린 절  **3**  (F-12-c5 · c6 · c7)
-          → P-231 의 잣대: **「누른 뒤」 초록 + 살아 있는 증거 파일 경로.**
-            잰 때 2026-09-21T12:19:30Z · 이 턴에 실제로 눌러 본 것이다.
+        > `closed` 13 은 한 잣대가 아니다 — 올린 3 은 P-231 잣대, 이미 있던 10 은
+        > 옛 잣대(도달 사슬)이고 그 열의 「누른 뒤」 증거는 **27.5시간 낡았다.**
+        > **안 내렸다 — 「잰 적이 없다」와 「잰 것이 늙었다」는 다르다.**
+        > V 가 48행 `--measure` 를 한 번 돌리면 **그날 같은 경로로 초록**이 된다.
 
-        경로가 안 실린 절   **10**  (F-01-c2 · F-05-c1 · F-05-c2 · F-05-c3 · F-09-c2 ·
-                                  F-10-c3 · F-12-c2 · F-12-c3 · F-12-c8 · F-14-c1)
-          → **옛 잣대**로 들어온 절이다: 영역 게이트의 **사슬 다섯(도달)** 이 이어졌다.
-            ⚠ **도달은 「누른 뒤」가 아니다.** 이 열의 「누른 뒤」 증거
-            (`docs/agent/evidence/P-118/click_completes.json`)는 이 턴에 **낡았다** —
-            `measured_at=2026-09-20T08:14:09Z` · **27.5시간** · 판정기 한도 **12시간**.
-            그래서 `--clause-evidence` 는 이 열을 **회색**으로 찍고 경로를 안 내준다.
+      **그 일이 일어났다.** V 의 회차(`measured_at=2026-09-21T14:46:00Z`)가 서고 다시 재니
+      `절 17 중 「누른 뒤」 초록 **16** · 빨강 0 · 회색 1` 이다(앞 회차엔 초록 3).
+      ⇒ **옛 잣대로 서 있던 열도 이제 살아 있는 경로를 갖는다.** 위 `kind_evidence` 의
+        **열다섯 절 전부**가 P-231 의 잣대다 — 경로 없는 `closed` 는 이 영역에 **0개**다.
 
-      ⚠⚠ **「잰 적이 없다」가 아니라 「잰 것이 늙었다」다.** 둘은 다르고, 그 차이가
-        이 열을 지금 내리지 않은 이유다. 27.5시간 전에는 초록이었다.
-        ★ **닫는 길은 이미 깔려 있다** — 차선 A 가 절↔행 표를 깔아 두었으므로
-          **V 가 48행 `--measure` 를 한 번 돌리면** 이 열은 **같은 경로로 그날 초록**이 된다.
-          N 이 손으로 다시 이을 일은 없다.
-      ★ **다음 턴에 V 의 회차가 없으면 이 열은 P-215 의 잣대로 다시 볼 자리다**
-        (턴 AA 에 「확인 못 함 26」을 하나씩 손으로 본 것과 **같은 모양**이다).
-        지금 내리지 않은 것은 **판단을 미룬 것이지 안 본 것이 아니다** — 그래서 여기 적는다.
+      ★ **미룬 판단을 이 회차에 갚았다.** 앞 회차에 「다음 턴에 P-215 잣대로 다시 볼 자리」라
+        적어 둔 것이 바로 이것이고, **미룬 것을 잊지 않았다는 증거로 그 문장을 여기 남긴다.**
+
+      ⚠ **이 표는 손으로 옮긴 것이 아니다.** `--clause-evidence` 의 출력을 **기계로 파싱해**
+        만들었고(색·행·strength·경로·잰 때), 캡처는 도달 대장 `P-106/feature_reach.json` 에서
+        받았다. 판정기가 **그 파일들의 실재를 매 실행 확인한다**(없으면 exit 1).
+
+      ★ **캡처가 없는 절 셋**(`F-05-c1`·`c2`·`c3`)은 **없는 캡처를 지어내지 않았다** —
+        그 셋의 진입면은 **화면이 아니라 라우트**다(외부 App · OpenAPI · API 키).
+        `capture_none_why` 에 사유를 적었고 판정기가 **사유 없는 빈 캡처는 빨강**으로 낸다.
+
+      ★★ **`F-11-c2` 를 `closed` 로 안 올렸다 — `gate_only` 다.** 차선 A 가 내게 넘긴 판단이다:
+        `F-11-c2`(**손입력 0**)와 `F-11-c3`(**치환이 돈다**)는 **같은 한 행 `U2#6`** 에 기댄다.
+        그 행이 재는 것은 「POST reports/runs 뒤 `runs.total` 이 **는다**」 —
+        **보고서가 만들어졌다**는 사실이다.
+          · `F-11-c3` 은 그 사실이 **곧 절의 내용**이다 → `closed`.
+          · `F-11-c2` 의 「손입력 0」은 **그 행이 안 잰다.** 사람이 칸을 쳤는지 여부는
+            누른 뒤의 관측에 없고, 도달 대장의 **추론 문장**에만 있다.
+        ⇒ 「**게이트는 초록인데 절은 안 닫혔다 — 제목이 부르는 것보다 게이트가 적게 잰다**」
+          그대로다. **0.5 로 센다.** 닫는 길은 쪼개거나 **「사람이 친 칸 수 = 0」을 직접 재는
+          술어**를 다는 것이고, 그 파일은 차선 A 의 자리다.
+        ⚠ 같은 한 행으로 두 절을 올렸으면 **초록 하나가 두 번 세어졌을 것**이다.
+
+      ★ **`F-12-c1` 은 회색이다 — 제품 빨강이 아니다.** V 가 사유를 격리 A/B 로 갈랐다:
+        첫 캡처가 로그인 **4/4 실패**했는데 **같은 순간 같은 자격으로** 온보딩 측정기는 6/6
+        들어갔다. 갈라 보니 — **브라우저 로캘이 `ko-KR` 이면 못 들어간다.**
+        `measure_onboarding_t.login()` 이 「세션 종료」 확인창 단추를 **`Confirm` 영어 이름으로만**
+        찾는다. ⇒ **제품은 옳고 판정기가 틀렸다.**
+        ★★ 그리고 이것이 이 회차에서 가장 큰 발견이다: **우리 고객 브라우저는 대부분
+          `ko-KR` 인데 게이트는 여태 영어로만 재 왔다.** 고칠 자리는 Q 의 한 줄이다.
+        ⚠ **이 회색을 빨강으로 적지 않는다** — 못 잰 것은 0 이 아니라 회색이다.
     kind_derived_note: |
       ★ **F-09-c3 이 여기 잠김으로 서 있다** — 영역 ⑧ `LAW-01` 이 이번 턴에 '잠김' 으로
         내려가며 가리킨 바로 그 절이다. 두 표가 **같은 하나의 사실**을 가리키게 됐다.

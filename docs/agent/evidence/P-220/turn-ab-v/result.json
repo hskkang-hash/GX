@@ -1,0 +1,324 @@
+{
+  "measured_at": "2026-09-21T15:23:59",
+  "web": "http://localhost:3002",
+  "rows": [
+    {
+      "persona": "U1",
+      "capture": "01_U1_start",
+      "route": "/start",
+      "viewport": "1440x900",
+      "url": "http://localhost:3002/start",
+      "measured": true,
+      "chars": 1000,
+      "must_see": true,
+      "kick_headline": true,
+      "kick_testid": 1,
+      "apparatus": {},
+      "apparatus_n": 0,
+      "product_words": {
+        "훈련": 2
+      },
+      "page_errors": []
+    },
+    {
+      "persona": "U1",
+      "capture": "02_U1_queue",
+      "route": "/dsm/queue",
+      "viewport": "1440x900",
+      "url": "http://localhost:3002/dsm/queue",
+      "measured": true,
+      "chars": 1588,
+      "must_see": null,
+      "kick_headline": false,
+      "kick_testid": 0,
+      "apparatus": {
+        "gxprobe": 4,
+        "캡처용": 4,
+        "D384": 4,
+        "시험카메라": 2,
+        "probe": 4
+      },
+      "apparatus_n": 18,
+      "product_words": {
+        "훈련": 8,
+        "검수용": 6
+      },
+      "page_errors": []
+    },
+    {
+      "persona": "U3",
+      "capture": "03_U3_start_mobile",
+      "route": "/start?role=MOBILE",
+      "viewport": "390x844",
+      "url": "http://localhost:3002/start?role=MOBILE",
+      "measured": true,
+      "chars": 796,
+      "must_see": true,
+      "kick_headline": true,
+      "kick_testid": 1,
+      "apparatus": {},
+      "apparatus_n": 0,
+      "product_words": {
+        "훈련": 2
+      },
+      "page_errors": [
+        "Minified React error #185; visit https://react.dev/errors/185 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "persona": "U3",
+      "capture": "04_U3_inbox",
+      "route": "/m/inbox",
+      "viewport": "390x844",
+      "url": "http://localhost:3002/m/inbox",
+      "measured": true,
+      "chars": 1506,
+      "must_see": null,
+      "kick_headline": false,
+      "kick_testid": 0,
+      "apparatus": {
+        "시험카메라": 2
+      },
+      "apparatus_n": 2,
+      "product_words": {
+        "훈련": 2,
+        "검수용": 7
+      },
+      "page_errors": [
+        "Minified React error #185; visit https://react.dev/errors/185 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+      ]
+    },
+    {
+      "persona": "U2",
+      "capture": "05_U2_start",
+      "route": "/start?role=MANAGER",
+      "viewport": "1440x900",
+      "url": "http://localhost:3002/start?role=MANAGER",
+      "measured": true,
+      "chars": 808,
+      "must_see": true,
+      "kick_headline": true,
+      "kick_testid": 1,
+      "apparatus": {},
+      "apparatus_n": 0,
+      "product_words": {
+        "훈련": 5
+      },
+      "page_errors": []
+    },
+    {
+      "persona": "U2",
+      "capture": "06_U2_dashboard",
+      "route": "/dsm/dashboard",
+      "viewport": "1440x900",
+      "url": "http://localhost:3002/dsm/dashboard",
+      "measured": true,
+      "chars": 766,
+      "must_see": null,
+      "kick_headline": false,
+      "kick_testid": 0,
+      "apparatus": {
+        "gxprobe": 4,
+        "캡처용": 4,
+        "D384": 4,
+        "시험카메라": 2,
+        "probe": 4
+      },
+      "apparatus_n": 18,
+      "product_words": {
+        "훈련": 9,
+        "검수용": 4
+      },
+      "page_errors": []
+    },
+    {
+      "persona": "U4",
+      "capture": "07_U4_start",
+      "route": "/start?role=BOSS",
+      "viewport": "1440x900",
+      "url": "http://localhost:3002/start?role=BOSS",
+      "measured": true,
+      "chars": 672,
+      "must_see": true,
+      "kick_headline": true,
+      "kick_testid": 1,
+      "apparatus": {},
+      "apparatus_n": 0,
+      "product_words": {
+        "훈련": 2
+      },
+      "page_errors": []
+    },
+    {
+      "persona": "U4",
+      "capture": "08_U4_events",
+      "route": "/dsm/events",
+      "viewport": "1440x900",
+      "url": "http://localhost:3002/dsm/events",
+      "measured": true,
+      "chars": 492,
+      "must_see": null,
+      "kick_headline": false,
+      "kick_testid": 0,
+      "apparatus": {},
+      "apparatus_n": 0,
+      "product_words": {},
+      "page_errors": []
+    },
+    {
+      "persona": "U5",
+      "capture": "09_U5_start",
+      "route": "/start?role=SYSOP",
+      "viewport": "1440x900",
+      "url": "http://localhost:3002/start?role=SYSOP",
+      "measured": true,
+      "chars": 982,
+      "must_see": true,
+      "kick_headline": true,
+      "kick_testid": 1,
+      "apparatus": {},
+      "apparatus_n": 0,
+      "product_words": {
+        "훈련": 8
+      },
+      "page_errors": []
+    },
+    {
+      "persona": "U5",
+      "capture": "10_U5_metering",
+      "route": "/dsm/metering",
+      "viewport": "1440x900",
+      "url": "http://localhost:3002/dsm/metering",
+      "measured": true,
+      "chars": 687,
+      "must_see": null,
+      "kick_headline": false,
+      "kick_testid": 0,
+      "apparatus": {},
+      "apparatus_n": 0,
+      "product_words": {
+        "훈련": 2
+      },
+      "page_errors": []
+    },
+    {
+      "persona": "U6",
+      "capture": "11_U6_start_partner",
+      "route": "/start",
+      "viewport": "1440x900",
+      "tab_clicked": true,
+      "url": "http://localhost:3002/start",
+      "measured": true,
+      "chars": 631,
+      "must_see": true,
+      "kick_headline": true,
+      "kick_testid": 1,
+      "apparatus": {},
+      "apparatus_n": 0,
+      "product_words": {
+        "훈련": 2
+      },
+      "page_errors": []
+    },
+    {
+      "persona": "U6",
+      "capture": "12_U6_integrations",
+      "route": "/dsm/integrations",
+      "viewport": "1440x900",
+      "url": "http://localhost:3002/dsm/integrations",
+      "measured": true,
+      "chars": 2056,
+      "must_see": null,
+      "kick_headline": false,
+      "kick_testid": 0,
+      "apparatus": {},
+      "apparatus_n": 0,
+      "product_words": {},
+      "page_errors": []
+    }
+  ],
+  "logins": [
+    {
+      "user": "gxseed_u1_operator",
+      "ok": true,
+      "url": "http://localhost:3002/dsm/queue",
+      "end_previous_session": true,
+      "login_posts": [
+        200,
+        200
+      ],
+      "profile_200": true,
+      "profile_endpoint": "/api/v1/user/get-user-detail",
+      "login_body_has_product_line": true,
+      "login_body_has_first_time": true,
+      "why": ""
+    },
+    {
+      "user": "gxseed_u2_manager",
+      "ok": true,
+      "url": "http://localhost:3002/dsm/home",
+      "end_previous_session": true,
+      "login_posts": [
+        200,
+        200
+      ],
+      "profile_200": true,
+      "profile_endpoint": "/api/v1/user/get-user-detail",
+      "login_body_has_product_line": true,
+      "login_body_has_first_time": true,
+      "why": ""
+    },
+    {
+      "user": "gxseed_u4_official",
+      "ok": true,
+      "url": "http://localhost:3002/dsm/home",
+      "end_previous_session": true,
+      "login_posts": [
+        200,
+        200
+      ],
+      "profile_200": true,
+      "profile_endpoint": "/api/v1/user/get-user-detail",
+      "login_body_has_product_line": true,
+      "login_body_has_first_time": true,
+      "why": ""
+    },
+    {
+      "user": "gxseed_u5_sysop",
+      "ok": true,
+      "url": "http://localhost:3002/dsm/home",
+      "end_previous_session": true,
+      "login_posts": [
+        200,
+        200
+      ],
+      "profile_200": true,
+      "profile_endpoint": "/api/v1/user/get-user-detail",
+      "login_body_has_product_line": true,
+      "login_body_has_first_time": true,
+      "why": ""
+    }
+  ],
+  "apparatus_words": [
+    "gxprobe",
+    "gxseed",
+    "GXPROBE",
+    "GXSEED",
+    "캡처용",
+    "D-384",
+    "D384",
+    "data_source=probe",
+    "data_source=drill",
+    "track_id",
+    "run=2026",
+    "시험카메라",
+    "probe",
+    "테스트",
+    "test_"
+  ],
+  "product_words": [
+    "훈련",
+    "시드(검수용)",
+    "검수용"
+  ]
+}

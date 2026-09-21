@@ -927,6 +927,26 @@ areas:
     checks.append((
         "★ 증거 칸이 아예 없는 영역은 통과한다 (옛 영역을 빨갛게 만들지 않는다)",
         evidence_problems({"id": "2", "clauses": []}) == []))
+    #: ★★ 캡처가 없는 절 — **사유가 있으면 통과, 없으면 빨강.** 화면이 아니라 라우트인
+    #:   진입면(외부 App · OpenAPI)이 실제로 있다. 없는 캡처를 지어내지 않는다.
+    _nocap = {"json": "scripts/verify_ga_readiness.py", "capture": "",
+              "measured_at": "2026-09-21T14:46:00Z"}
+    checks.append((
+        "★★ 캡처가 없어도 **사유가 있으면** 통과한다 (진입면이 화면이 아니라 라우트인 절)",
+        evidence_problems({"id": "1", "kind_derived": {"closed": ["F-05-c1"]},
+                           "kind_evidence": {"F-05-c1": dict(
+                               _nocap, capture_none_why="화면이 아니라 라우트다")}}) == []))
+    checks.append((
+        "★★ 캡처도 사유도 없으면 잡는다 (사유 없는 빈칸은 잊은 것과 구별되지 않는다)",
+        any("`capture_none_why` 에 사유를 적어라" in p for p in evidence_problems(
+            {"id": "1", "kind_derived": {"closed": ["F-05-c1"]},
+             "kind_evidence": {"F-05-c1": dict(_nocap)}}))))
+    checks.append((
+        "★ 두 회차에 기댄 절의 `json_2` 도 실재를 확인한다",
+        any("없는 증거는 주장이다" in p for p in evidence_problems(
+            {"id": "1", "kind_derived": {"closed": ["F-10-c1"]},
+             "kind_evidence": {"F-10-c1": dict(
+                 _nocap, capture_none_why="x", json_2="docs/없다.json")}}))))
 
     bad = 0
     for label, ok in checks:
@@ -1083,11 +1103,24 @@ def evidence_problems(area: dict) -> list[str]:
             out.append("영역 %s · %s: 증거 경로가 실려 있는데 `closed` 가 아니다(%s) — "
                        "**안 올린 절의 경로는 읽는 사람을 올린 줄로 속인다** (P-231)"
                        % (area["id"], cid, where))
-        for key in ("json", "capture"):
+        #: ★ `json_2`·`measured_at_2` — 한 절이 **두 회차**에 기댈 수 있다(행이 둘일 때).
+        #:   있으면 그것도 실재를 확인한다. 없으면 안 따진다.
+        for key in ("json", "capture", "json_2"):
             rel = (e.get(key) or "").strip()
             if not rel:
+                #: ★★ **캡처가 없는 것이 언제나 흠은 아니다** — 어떤 절의 진입면은
+                #:   **화면이 아니라 라우트**다(외부 App · OpenAPI · API 키).
+                #:   없는 캡처를 지어내는 것보다 **왜 없는지 적는 것**이 옳다.
+                #:   ⚠ 다만 **사유 없는 빈칸은 잊은 것과 구별되지 않는다** — 그래서 사유를 요구한다.
+                if key == "capture" and (e.get("capture_none_why") or "").strip():
+                    continue
+                if key == "json_2":
+                    continue
                 out.append("영역 %s · %s: 증거 `%s` 칸이 비었다 — **경로 없는 승격은 "
-                           "P-231 이 금한 것이다**" % (area["id"], cid, key))
+                           "P-231 이 금한 것이다**%s"
+                           % (area["id"], cid, key,
+                              " (화면이 없는 절이면 `capture_none_why` 에 사유를 적어라)"
+                              if key == "capture" else ""))
             elif not (ROOT / rel).exists():
                 out.append("영역 %s · %s: 증거 `%s` 가 가리키는 %s 가 **없다** — "
                            "**없는 증거는 주장이다** (P-231)" % (area["id"], cid, key, rel))
