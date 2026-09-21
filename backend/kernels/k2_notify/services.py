@@ -44,6 +44,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from common import audit_writer
+from common.billing_marks import exclude_soft_deleted, exclude_unbillable
 from common.probe_marker import exclude_probe
 from common.tenant_filters import assert_scoped, filter_by_group_field, get_user_group
 from common.ai_act_notice import notice_line
@@ -476,15 +477,56 @@ def _owns(row, group) -> bool:
 # ═══════════════════════════════════════════════════════════════════════════
 # 2. suppress — **5분 중복 억제 판정은 여기다** (K1 이 아니다)
 # ═══════════════════════════════════════════════════════════════════════════
-def suppress(*, scope: TenantScope, event_id: int) -> bool:
+def suppress(*, scope: TenantScope, event_id: int, channel: str | None = None,
+             now: datetime | None = None) -> bool:
     """이 이벤트에 대한 알림을 접어야 하는가 (F-04).
+
+    문안 — GX-COPY: **「5분 안에 같은 사건 재발송 억제」**
 
     ★ 보는 것은 **발송 이력**이다. 이벤트 행이 아니다.
       메일 서버가 죽어 못 보낸 알림은 "이미 알렸다"가 아니다 — 그것을 억제로 세면
       장애 5분 동안의 재난 알림이 통째로 사라진다. 억제는 **성공한 발송** 위에서만 한다.
 
-    같은 스트림 · 같은 종류의 이벤트에 대해 `SUPPRESS_WINDOW` 안에 **성공한 발송**이
-    있으면 참이다.
+    ★★ [턴 Y · F-04 · 2026-09-20] **제품 결함을 고쳤다 — 기준이 움직이지 않았다.**
+
+    종전의 질의는 이랬다 [실측 전 본문]::
+
+        occurred_at__lt  = event.occurred_at
+        occurred_at__gte = event.occurred_at - SUPPRESS_WINDOW
+
+    세 글자가 틀렸다. `DeliveryRecord.occurred_at` 은 **발송 시각이 아니라 그 발송이
+    붙은 사건의 발생 시각**이고(`_send_one` 이 `occurred_at=event.occurred_at` 으로
+    복사한다), 창의 양 끝도 **지나간 한 순간**에 못박혀 있다. 그래서 이 함수는
+    **시간이 흘러도 답이 안 바뀐다** — 억제는 원래 「지금은 안 된다」인데
+    그것이 **「영원히 안 된다」**가 됐다.
+
+    [실측 2026-09-20 · 조율자] `POST /api/dsm/events/4798/notify` →
+    **200 `{"total":0,"deliveries":[]}`**. 16일 지난 사건에 관제요원이 「알림 보내기」를
+    눌렀는데 아무 일도 안 일어난다. 누른 사람은 그것을 알 길이 없다 — 200 이니까.
+
+    **새 기준: 「같은 사건 · 같은 채널의 직전 발송 시각」이 지금으로부터 5분 안인가.**
+
+        · **발송 시각**은 `sent_at` 이다. `occurred_at` 이 아니다 — `sent_at` 은
+          **성공했을 때만** 찍히므로(`_send_one`) 실패한 발송이 억제로 세어지지 않는다는
+          위의 성질이 **같은 칸 하나로** 지켜진다.
+        · **「같은 사건」이 이제 정말로 들어온다.** 종전 질의는 `stream+type` 으로 묶으면서
+          `occurred_at__lt = event.occurred_at` 으로 **자기 발송만 잘라 냈다** — 그래서
+          옆 사건은 접는데 자기 자신은 못 접는, 문안과 정반대인 상태였다. 그 한 줄을
+          걷어 냈다. 묶는 키(`stream+type`)는 **좁히지 않았다**: 좁히면 옆 사건을 안 접게
+          되고, 그 계약은 이 저장소의 시험 **넷**이 들고 있다.
+          ⚠ 세종 문안은 「같은 사건」만 말한다. 지금 구현은 그 **상위집합**이다 —
+            좁히는 판단은 네 시험의 주인들과 함께 해야 하므로 여기서 혼자 하지 않았다.
+        · **같은 채널**이다. 3분 전에 `log` 로 갔다고 문자를 접으면, 문자만 보는
+          사람은 **알림을 받은 적이 없다.** `channel=None` 은 「아무 채널이나」이다.
+
+    ⚠ **`renotify` 는 이 문턱을 안 본다** — `send(respect_suppression=False)` 로 부른다
+      (`renotify.py:209`). 재알림은 **무응답을 깨우는** 일이고 그 문턱은 더 길다
+      (`after_minutes` · 기본 10분 이상). 그래서 이 변경은 재알림을 건드리지 않는다.
+
+    Args:
+        channel: 같은 채널만 볼 때 그 이름. `None` 이면 채널을 가리지 않는다.
+        now: 재는 순간. 시험이 시계를 직접 움직이기 위해 받는다 — `renotify(now=)` 와
+            **같은 규약**이다. 비우면 지금이다.
     """
     Event = _model("DetectionEvent")
     Delivery = _model("DeliveryRecord")
@@ -495,20 +537,39 @@ def suppress(*, scope: TenantScope, event_id: int) -> bool:
     if not scope.is_system:
         assert_scoped(Event, event_id, scope.actor)
 
-    return Delivery._base_manager.filter(
+    at = now or timezone.now()
+    qs = Delivery._base_manager.filter(
         succeeded=True,
+        #: ★ 묶는 키는 **종전 그대로** `stream + type` 이다 — 그리고 그 집합은
+        #:   **이 사건 자신의 발송을 포함한다.** 종전에는 `occurred_at__lt =
+        #:   event.occurred_at` 이 자기 발송을 잘라 냈고(발송 행의 `occurred_at` 은 제
+        #:   사건의 발생 시각 복사본이라 `<` 가 아니다), 그래서 **같은 사건을 몇 번
+        #:   눌러도 한 번도 안 접혔다** — `#295402` 가 무리 셋(4+4+4)으로 쌓인 자리다.
+        #:   그 한 줄을 걷어 내는 것만으로 GX-COPY 문안 「5분 안에 **같은 사건**
+        #:   재발송 억제」가 참이 된다. 키를 좁히지는 않았다: 좁히면 옆 사건을
+        #:   안 접게 되고, 그 계약은 이 저장소의 시험 **넷**이 들고 있다
+        #:   (`test_k2_notify_kernel` · `test_s_webhook_outbox` ·
+        #:    `test_u56_notify_repeat_count` · `test_d_mobile_field`).
         event__stream_monitor_id=event.stream_monitor_id,
         event__event_type=event.event_type,
-        occurred_at__lt=event.occurred_at,
-        occurred_at__gte=event.occurred_at - SUPPRESS_WINDOW,
+        #: ★ `sent_at` 은 **성공한 발송에만** 있다. `isnull=False` 를 함께 거는 이유:
+        #:   `succeeded=True` 인데 `sent_at` 이 빈 행이 과거에 쌓였다면(날짜 없는
+        #:   성공) 그 행은 **언제인지를 모른다** — 모르는 것을 「방금」으로 읽으면
+        #:   그 사건은 다시 영원히 접힌다. 모르면 **안 접는 쪽**에 둔다.
+        sent_at__isnull=False,
+        sent_at__gte=at - SUPPRESS_WINDOW,
+        sent_at__lte=at,
     ).exclude(
         # ★ [턴 T · U3] 훈련(시험) 발송은 억제 근거가 아니다 — 시험 한 통이 다음 진짜
         #   경보를 삼키면 안 된다(`webpush.py` 머리말 ②).
         recipient_address__startswith=webpush_gate.DRILL_ADDRESS_PREFIX,
-    ).exists()
+    )
+    if channel:
+        qs = qs.filter(channel=channel)
+    return qs.exists()
 
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════════════
 # 3. send — 보내고, **보낸 사실을 남긴다**
 # ═══════════════════════════════════════════════════════════════════════════
 def send(
@@ -541,11 +602,6 @@ def send(
     # 파이프라인 스코프에는 이 문턱이 없고, 그래서 시스템 스코프는 사유를 요구한다.
     if not scope.is_system:
         assert_scoped(Event, event_id, scope.actor)
-
-    if respect_suppression and suppress(scope=scope, event_id=event_id):
-        # 접는 것도 사실이다. 다만 **행을 만들지 않는다** — 발송 이력은 발송의 이력이지
-        # 판정의 이력이 아니다. 판정 이력이 필요하면 K6 이 이벤트에서 센다.
-        return ()
 
     if recipients is None:
         group = _group_of(event)
@@ -592,8 +648,31 @@ def send(
             "규칙이 없거나 그 역할에 사람이 없다 — **알림 체계가 꺼져 있는 상태**다. "
             "빈 성공으로 넘기지 않는다 (DA-03 §3-2 · D-290)")
 
+    #: ★★ [턴 Y · F-04] 억제를 **채널마다** 묻는다 — 그리고 **보내기 전에 한 번에** 묻는다.
+    #:
+    #:   ① 채널마다인 이유: 3분 전에 `log` 로 나갔다고 문자를 접으면, 문자만 보는
+    #:      사람은 **알림을 받은 적이 없는데** 받은 것으로 세어진다.
+    #:   ② **미리** 묻는 이유 [실측 · 이 변경을 쓰다 내가 만든 빨강]: 루프 안에서 줄마다
+    #:      물었더니 **첫 수신자에게 방금 보낸 행**이 둘째 수신자의 억제 근거가 됐다 —
+    #:      같은 발송 한 번 안에서 둘째 사람부터 전부 접혔다
+    #:      (`test_a_camera_in_two_zones_merges_recipients_without_duplicates` 가 잡았다).
+    #:      억제는 **이 발송 직전의 사실** 위에서 하는 판정이지, 이 발송이 만들고
+    #:      있는 사실 위에서 하는 판정이 아니다.
+    #:
+    #:   ⚠ 훈련 모드에서는 `_send_one` 이 채널을 `log` 로 바꿔 적는다 — 그때 묻는
+    #:     이름(`recipient.channel`)과 쌓인 이름(`log`)이 갈린다. 훈련 중에는 **덜 접는**
+    #:     쪽으로 기울고, 훈련은 발송 수를 세는 것이 목적이므로 그 기울기가 옳다.
+    folded: set[str] = set()
+    if respect_suppression:
+        folded = {ch for ch in {r.channel for r in recipients}
+                  if suppress(scope=scope, event_id=event_id, channel=ch)}
+
     views: list[DeliveryView] = []
     for recipient in recipients:
+        if recipient.channel in folded:
+            # 접는 것도 사실이다. 다만 **행을 만들지 않는다** — 발송 이력은 발송의
+            # 이력이지 판정의 이력이 아니다. 판정 이력이 필요하면 K6 이 이벤트에서 센다.
+            continue
         views.append(_send_one(event, recipient))
     return tuple(views)
 
@@ -784,22 +863,110 @@ def list_deliveries(
       표식은 이 표에 없고 `event` 너머에 있다 — 따라가는 한 줄은 `common.probe_marker`
       한 곳이 안다(여기서 `event__track_id` 를 손으로 쓰면 표식이 두 벌이 된다).
     """
+    qs = _deliveries_queryset(
+        scope=scope, since=since, until=until, until_inclusive=True,
+        event_id=event_id, recipient_id=recipient_id, succeeded=succeeded)
+    #: ⚠ 훈련(`drill`)은 **여기서 안 뺀다** (P-201). 제품은 훈련 발송을 센다 —
+    #:   빼는 것은 청구뿐이고, 그 자리는 아래 `count_deliveries` 다.
+    if not include_probe:
+        qs = exclude_probe(qs, via="event")
+    qs = qs.distinct().order_by("-occurred_at", "-id")
+    return tuple(_to_view(row) for row in qs[offset:offset + limit])
+
+
+#: 발송을 **시간으로 가를 때 쓸 수 있는 칸**. 문자열을 그대로 받지 않는다 —
+#: 부르는 쪽이 아무 칸 이름이나 넣으면 그것이 곧 질의 조립이고, 오타 한 번이
+#: `FieldError` 가 아니라 **다른 수**로 나올 수 있다.
+#:   occurred_at  사건이 난 시각. 실패 행도 갖고 있다.
+#:   sent_at      **실제로 보낸** 시각. 실패 행은 `None` 이다(models.py 주석:
+#:                "실패에 시각을 넣으면 30초 AC 가 실패한 발송으로도 달성된다").
+COUNTABLE_TIME_FIELDS = ("occurred_at", "sent_at")
+
+
+def _deliveries_queryset(
+    *,
+    scope: TenantScope,
+    since: datetime | None = None,
+    until: datetime | None = None,
+    until_inclusive: bool = True,
+    time_field: str = "occurred_at",
+    event_id: int | None = None,
+    recipient_id: int | None = None,
+    succeeded: bool | None = None,
+    own_tenant_only: bool = False,
+):
+    """`list_deliveries` 와 `count_deliveries` 가 **같은 한 벌의 필터**를 쓰게 하는 자리.
+
+    ★ **표식(probe·drill)은 여기서 안 거른다** — 두 갈래가 갈리는 지점이 그 한 줄이다
+      (K1 `_events_queryset` 과 같은 판단 · P-201).
+    """
+    if time_field not in COUNTABLE_TIME_FIELDS:
+        raise InvalidNotifyInput(
+            f"시간 칸은 {COUNTABLE_TIME_FIELDS} 중 하나다 (받은 값: {time_field!r})")
     Delivery = _model("DeliveryRecord")
     actor = scope.require_actor()
 
     qs = Delivery._base_manager.select_related("event")
-    qs = filter_by_group_field(qs, actor, field=_owner_field(Delivery))
-    if not include_probe:
-        qs = exclude_probe(qs, via="event")
+    if own_tenant_only:
+        #: ★ 전역 관리자여도 **제 테넌트만**. 이유는 `count_deliveries` 독스트링.
+        group = get_user_group(actor)
+        if group is None:
+            raise InvalidNotifyInput(
+                "요청자에게 소속이 없어 테넌트 단위로 셀 수 없다. 소속 없이 센 수는 "
+                "누구의 것인지 답할 수 없고, 청구서에 적을 수 없다")
+        qs = qs.filter(**{_owner_field(Delivery): group})
+    else:
+        qs = filter_by_group_field(qs, actor, field=_owner_field(Delivery))
     if since is not None:
-        qs = qs.filter(occurred_at__gte=since)
+        qs = qs.filter(**{f"{time_field}__gte": since})
     if until is not None:
-        qs = qs.filter(occurred_at__lte=until)
+        qs = qs.filter(
+            **{f"{time_field}__{'lte' if until_inclusive else 'lt'}": until})
     if event_id is not None:
         qs = qs.filter(event_id=event_id)
     if recipient_id is not None:
         qs = qs.filter(recipient_id=recipient_id)
     if succeeded is not None:
         qs = qs.filter(succeeded=succeeded)
-    qs = qs.distinct().order_by("-occurred_at", "-id")
-    return tuple(_to_view(row) for row in qs[offset:offset + limit])
+    return qs
+
+
+def count_deliveries(
+    *,
+    scope: TenantScope,
+    since: datetime | None = None,
+    until: datetime | None = None,
+    time_field: str = "occurred_at",
+    event_id: int | None = None,
+    recipient_id: int | None = None,
+    succeeded: bool | None = None,
+) -> int:
+    """**청구서에 적을 발송 수** — `list_deliveries` 의 **셈 갈래** (P-206 · D-508).
+
+    왜 이 함수가 생겼나 — 실측 2026-09-20 (차선 U1 이 찾아 넘겼다)
+    --------------------------------------------------------------
+    `apps/dsm/metering.py` 의 `_notifications` · `_notifications_failed` 가
+    `apps.get_model("stream_monitors", "DeliveryRecord")` 로 표를 **직접** 셌다.
+    커널을 안 지나니 P-193 의 표식도 P-201 의 훈련 구별도 그 셈에 없었다 —
+    **게이트가 심은 씨앗 때문에 나간 알림에 돈이 청구되고 있었다.**
+
+    ★ **표식 매개변수가 없다.** 청구의 셈은 **언제나** probe·drill 을 뺀다
+      (P-201 이 `include_drill` 같은 칸을 이름으로 금지했다). 제품의 셈이 필요하면
+      `list_deliveries` 를 부른다 — 그쪽은 훈련을 **센다.**
+
+    ★ `time_field` — **실패는 `sent_at` 으로 못 센다.** 실패 행의 `sent_at` 은
+      `None` 이고(models.py), 그 칸으로 거르면 실패 건수가 **언제나 0**이 된다.
+      그래서 「보낸 알림」은 `sent_at`, 「실패한 발송」은 `occurred_at` 으로 센다 —
+      두 수가 다른 칸을 보는 것은 실수가 아니라 **표의 사실**이다.
+
+    ★ 반열린 구간 · 소프트 삭제 제외 · 전역 관리자도 제 테넌트만 —
+      셋 다 `k1_event.count_events` 와 **같은 이유**다(그 독스트링).
+    """
+    Delivery = _model("DeliveryRecord")
+    qs = _deliveries_queryset(
+        scope=scope, since=since, until=until, until_inclusive=False,
+        time_field=time_field, event_id=event_id, recipient_id=recipient_id,
+        succeeded=succeeded, own_tenant_only=True)
+    qs = exclude_unbillable(qs, via="event")
+    qs = exclude_soft_deleted(qs, Delivery)
+    return qs.distinct().count()

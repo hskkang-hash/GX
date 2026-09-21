@@ -799,6 +799,24 @@ class AppStaysThinTest(TestCase):
     import 를 안 해도 로직은 베낄 수 있다.
     """
 
+    #: ★ P-206 (2026-09-20 · 차선 U56 · D-508) — **계량이 범위 밖이었다.**
+    #:   이 시험은 `services` · `api` 만 봤고, 그래서 `apps/dsm/metering.py` 가
+    #:   `apps.get_model` 로 표를 직접 세는 것을 **아무도 못 봤다.** 그 수는 청구서로
+    #:   갔고, 게이트가 심은 씨앗(P-193)과 훈련(P-201)이 거기 들어 있었다.
+    #:   *구멍이 살아 있던 이유는 코드가 아니라 보는 눈의 범위였다.*
+    METERING = "apps.dsm.metering"
+
+    #: ⚠ **계량에 남은 직접 셈 셋.** 카메라·계정·미디어 장부를 세는 **커널 면이
+    #:   아직 없다**(W4-1 계량 모델이 선행). 없는 것을 엉뚱한 커널에 밀어 넣으면
+    #:   다음 사람이 그 자리를 정본으로 읽는다 — 그래서 남기고 **이름으로 못박는다.**
+    #:   ★ 이 목록은 **늘어날 수 없다.** 새 함수가 모델을 만지면 아래 시험이 빨강이다.
+    #:   ★ 줄어드는 방향만 허용한다 — 커널 면이 생기면 여기서 이름을 지운다.
+    METERING_ORM_DEBT = frozenset({"_alive", "_cameras", "_users", "_storage"})
+
+    #: 본문에서 잡는 「모델을 직접 만졌다」의 냄새. 세 파일이 같은 목록을 쓴다.
+    MODEL_SMELLS = ("apps.get_model(", "_base_manager", ".objects.filter(",
+                    "models.Model")
+
     def test_the_app_does_not_touch_django_models(self) -> None:
         import inspect
 
@@ -806,8 +824,7 @@ class AppStaysThinTest(TestCase):
 
         for module in (services, api):
             src = inspect.getsource(module)
-            for smell in ("apps.get_model(", "_base_manager", ".objects.filter(",
-                          "models.Model"):
+            for smell in self.MODEL_SMELLS:
                 self.assertNotIn(
                     smell, src,
                     f"{module.__name__} 이 모델을 직접 만집니다({smell}). App 이 만질 수 "
@@ -815,6 +832,105 @@ class AppStaysThinTest(TestCase):
                     f"    ※ 감사(apps/dsm/audit.py)는 예외다 — logger.AuditLogs 는 "
                     f"커널이 없는 dj-core 표이고, 새 감사 표를 만들지 않기 위해 "
                     f"직접 쓴다. 그 예외는 그 파일 안에 적혀 있다.")
+
+    def test_the_bill_is_not_counted_by_the_app(self) -> None:
+        """★ P-206 — **청구서의 수를 앱이 제 손으로 세지 않는가** (`metering.py`).
+
+        `apps.get_model` 한 줄로 표를 세면 그 셈은 **커널을 안 지난다** — 표식도
+        (P-193 probe · P-201 drill) 소프트 삭제도 테넌트 못박기도 그 수에 없다.
+        그렇게 센 수가 청구서로 가면 **우리가 심은 가짜 사건에 고객이 돈을 낸다.**
+
+        ★ **함수 단위로 묻는다.** 파일 전체에 문자열 검사를 걸면 「어디선가 만진다」
+          까지밖에 못 말하고, 남은 빚(`METERING_ORM_DEBT`)이 있는 동안 이 시험은
+          늘 빨강이 된다 — 늘 빨간 시험은 꺼진다. 그래서 **어느 함수가** 만지는지를
+          AST 로 묻고, 그 집합이 **빚 목록과 정확히 같은가**를 잰다.
+        """
+        import ast
+        import importlib
+        import inspect
+
+        module = importlib.import_module(self.METERING)
+        src = inspect.getsource(module)
+        tree = ast.parse(src)
+
+        offenders = set()
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            # ★ **독스트링을 뺀 본문만** 본다. 「왜 커널이 세는가」를 설명하는 주석에
+            #   그 이름이 나오는 것은 당연하고, 그것까지 잡으면 이 시험은 늘 빨강이며
+            #   **늘 빨간 시험은 꺼진다**(이 파일이 `BaseResponse` 를 AST 로 물은
+            #   것과 같은 자리). 설명은 죄가 아니다 — 호출이 죄다.
+            body = "\n".join(
+                ast.get_source_segment(src, stmt) or ""
+                for stmt in node.body
+                if not (isinstance(stmt, ast.Expr)
+                        and isinstance(stmt.value, ast.Constant)
+                        and isinstance(stmt.value.value, str)))
+            if any(smell in body for smell in self.MODEL_SMELLS):
+                offenders.add(node.name)
+
+        new = sorted(offenders - self.METERING_ORM_DEBT)
+        self.assertEqual(
+            [], new,
+            f"{self.METERING} 의 {new} 가 모델을 직접 셉니다. 청구서에 적을 수는 "
+            f"커널이 셉니다 — kernels.k1_event.count_events · "
+            f"kernels.k2_notify.count_deliveries (P-206 · D-508).\n"
+            f"    ※ 앱이 세면 표식(probe·drill)도 소프트 삭제도 그 수에 없습니다. "
+            f"그 수는 청구서로 갑니다.")
+
+        stale = sorted(self.METERING_ORM_DEBT - offenders)
+        self.assertEqual(
+            [], stale,
+            f"빚 목록에 있는 {stale} 가 이제 모델을 안 만집니다 — **목록에서 지우십시오.**\n"
+            f"    ※ 낡은 예외는 다음에 생길 구멍의 문입니다: 이름이 목록에 남아 있는 한 "
+            f"그 이름으로 새 직접 셈이 들어와도 이 시험은 초록입니다.")
+
+    def test_the_billing_counts_come_from_the_kernels(self) -> None:
+        """★ P-206 — 세는 **세 자리**가 정말 커널 함수를 부르는가.
+
+        위 시험은 「모델을 안 만진다」만 잰다. 안 만지면서 **아무것도 안 세는** 코드도
+        그것을 통과한다(전부 0을 돌려주는 코드가 가장 얇다). 그래서 **부르는가**를
+        따로 묻는다 — 두 시험이 함께여야 「얇고 또 센다」가 된다.
+        """
+        import ast
+        import importlib
+        import inspect
+
+        module = importlib.import_module(self.METERING)
+        src = inspect.getsource(module)
+        #: ⚠ 계량은 커널을 **직접 안 부른다.** 「K1 의 App 소비자는 하나뿐」이라
+        #:   `apps/dsm/services.py` 의 문을 지난다(`test_f05_event_api.py::
+        #:   EntrySurfaceIsOneTest`). 그래서 사슬을 **두 칸으로** 잰다 — 한 칸만 재면
+        #:   문이 커널을 안 부르는 날에도 이 시험이 초록이다.
+        want = {"_events": "count_billable_events",
+                "_notifications": "count_billable_deliveries",
+                "_notifications_failed": "count_billable_deliveries"}
+        found = {}
+        for node in ast.walk(ast.parse(src)):
+            if isinstance(node, ast.FunctionDef) and node.name in want:
+                found[node.name] = ast.get_source_segment(src, node) or ""
+
+        self.assertEqual(sorted(found), sorted(want),
+                         f"계량의 세는 함수가 사라졌거나 이름이 바뀌었습니다: "
+                         f"{sorted(set(want) - set(found))}")
+        for name, call in want.items():
+            self.assertIn(
+                f"{call}(", found[name],
+                f"{self.METERING}.{name} 이 청구 셈의 문 `{call}` 을 부르지 않습니다. "
+                f"세지 않는 계량은 **0원짜리 청구서**이고, 그것은 빈 칸보다 나쁩니다 — "
+                f"0은 「안 썼다」로 읽힙니다 (D-301).")
+
+        #: 둘째 칸 — **문이 정말 커널을 부르는가.**
+        from apps.dsm import services
+
+        for door, kernel_fn in (("count_billable_events", "count_events"),
+                                ("count_billable_deliveries", "count_deliveries")):
+            body = inspect.getsource(getattr(services, door))
+            self.assertIn(
+                f"{kernel_fn}(", body,
+                f"apps.dsm.services.{door} 가 커널 셈 함수 `{kernel_fn}` 을 부르지 "
+                f"않습니다 — 문만 있고 세는 사람이 없습니다.")
 
     def test_the_app_does_not_recompute_kernel_decisions(self) -> None:
         """중복 억제·오탐률·상태 판정을 App 이 다시 하지 않는가."""

@@ -1,0 +1,12 @@
+# SEC-12 증거 — scripts/verify_commented_guards.py
+# 실행: 2026-09-20 KST · 차선 N (P-207 둘째 묶음) · 브랜치 turn-q · HEAD 0acf8d1 · 호스트 파이썬
+# 명령: PYTHONIOENCODING=utf-8 python scripts/verify_commented_guards.py
+# ---
+[P-107] TARGET=저장소 C:/GuardianX/guardianx-source @ 0acf8d1 · 작업본 30파일 어긋남 (살아 있는 것을 재지 않는 게이트다)
+[P-107] AS=(자격증명 없음 — 소스·문서 파일을 읽는다)
+[P-107] SOURCE=파일 docs/agent/evidence/D-334/commented_guards_baseline.txt (기록 2026-08-29T18:46 · 4937바이트)
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_commented_guards.py
+[SELFTEST] verify_commented_guards: OK
+[GUARDS] 주석 39건 · 열린 문 0건 · 새로 생긴 것 0건 · 기준선 39건 -> OK
+# EXIT=0

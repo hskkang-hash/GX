@@ -43,9 +43,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from _gate_header import (KEY_AS, KEY_SOURCE, KEY_TARGET, OTHER_LANE,  # noqa: E402
+from _gate_header import (KEY_AS, KEY_MEASURED, KEY_SOURCE, KEY_TARGET,  # noqa: E402
+                          MEASURED_NONE, OTHER_LANE,
                           audit, gate_files, gate_header, judge_as, judge_header,
-                          judge_source, pipe_scan, pipe_violations)
+                          judge_measured, judge_source, pipe_scan, pipe_violations)
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 TAG = "[P-107]"
@@ -67,7 +68,7 @@ OPEN_TIMEOUT = 150
 # ═══════════════════════════════════════════════════════════════════════════
 def parse_header(text: str) -> dict:
     """게이트가 찍은 출력에서 세 줄을 뽑는다. 없으면 그 자리는 비어 있다."""
-    out = {"target": "", "as": "", "source": "", "found": 0}
+    out = {"target": "", "as": "", "source": "", "measured": "", "found": 0}
     for line in text.splitlines():
         s = line.strip()
         if not s.startswith(TAG):
@@ -77,6 +78,10 @@ def parse_header(text: str) -> dict:
             if body.startswith(key) and not out[slot]:
                 out[slot] = body[len(key):].strip()
                 out["found"] += 1
+        #: ★ [P-204] 네 번째 줄은 **`found` 에 안 센다.** 세면 「세 줄 중 몇 줄」이
+        #:   말이 달라지고, 머리글이 없는 게이트와 분모를 안 말한 게이트가 한 칸에 섞인다.
+        if body.startswith(KEY_MEASURED) and not out["measured"]:
+            out["measured"] = body[len(KEY_MEASURED):].strip()
     return out
 
 
@@ -137,6 +142,30 @@ def judge(observations: dict) -> list:
                     "`| tail … $?` 자리 %d건 (복사해 쓰는 자리 **%d** · 회고문 인용 %d)%s"
                     % (len(pipes), len(bad), len(pipes) - len(bad),
                        "" if not bad else " · " + str([h[0] + ":" + str(h[1]) for h in bad[:5]]))))
+
+    # ④ ★ [P-204 · 턴 Y] **분모 — 무엇을 몇 건 쟀나.**
+    #
+    #   이 수는 **빨강이 아니라 회색**을 낸다(`None`). 「분모를 말하지 않는다」는
+    #   「제품이 무너졌다」가 아니라 **「우리가 그 게이트에 대해 모른다」**이기 때문이다.
+    #   회색은 초록이 아니다 — 러너는 2 로 받는다.
+    if opened is None:
+        out.append(("MEASURED_LINE", None,
+                    "게이트를 안 열었다(`--no-run`) — 분모를 **물어보지 못했다**"))
+    elif not opened:
+        out.append(("MEASURED_LINE", None,
+                    "열어 본 게이트가 0개다 — 분모를 물어볼 자리가 없었다 (D-301)"))
+    else:
+        gray = []
+        for name, h in sorted(opened.items()):
+            problems = judge_measured(h.get("measured", ""))
+            if problems:
+                gray.append("%s(%s)" % (name, problems[0][:46]))
+        out.append(("MEASURED_LINE", True if not gray else None,
+                    "게이트 %d개 중 **%d개가 「무엇을 · 분모 N」을 말한다** · "
+                    "**회색 %d**(분모를 안 말하는 게이트는 그 `exit 0` 이 "
+                    "「이 호출이 통과」일 뿐이다 · P-204)%s"
+                    % (len(opened), len(opened) - len(gray), len(gray),
+                       "" if not gray else " · " + str([g.split("(")[0] for g in gray[:8]]))))
     return out
 
 
@@ -150,11 +179,13 @@ def _good_observations() -> dict:
             "verify_a.py": {"found": 3,
                             "target": "http://localhost:8000 (gx-shell)",
                             "as": "gxprobe_q · 역할 fire_user · 자격 이름 GX_PROBE_PASSWORD",
-                            "source": "살아 있는 라우터 (django get_resolver)", "reason": ""},
+                            "source": "살아 있는 라우터 (django get_resolver)", "reason": "",
+                            "measured": "살아 있는 라우트를 HTTP 로 두드린다 · 분모 705"},
             "verify_b.py": {"found": 3,
                             "target": "저장소 @ 6cf2c19",
                             "as": "(자격증명 없음 — 소스를 읽는다)",
-                            "source": "파일 docs/x.json (기록 2026-09-07T10:00)", "reason": ""},
+                            "source": "파일 docs/x.json (기록 2026-09-07T10:00)", "reason": "",
+                            "measured": "선언된 절의 증거 줄 · 분모 112"},
         },
         "pipes": [("docs/agent/RESUME_NEXT.md", 4, "… | tail; echo $?", "인용(산문)")],
         "other": [("verify_front_line_502.py", "DevOps 차선", False)],
@@ -255,6 +286,47 @@ def self_test() -> int:
     else:
         print("%s O 관측 0건은 세 수 다 빨강 (회색이 초록이 되지 않는다)" % TAG)
 
+    # ★★ **P-204 출생 표본** — [실측 2026-09-20 · 턴 Y] 이 규칙을 만든 두 사례.
+    #
+    #   그날 두 게이트가 **exit 0** 을 냈고 세 줄(TARGET/AS/SOURCE)도 다 성립했다.
+    #   그런데 둘 다 **살아 있는 것을 한 자리도 안 쟀다**:
+    #     · `verify_evidence_chain`  `--db` 없이 소스만 읽고 0 → 대장은 LAW-08 을 초록으로 적었다
+    #     · `verify_onboarding_walk` `--api` 없이 구조만 보고 0 → UX-46 이 **걸어 본 적 없이** 초록
+    #   머리글 셋은 「누구로 · 어디서 · 무엇을 향해」를 말하지만 **「몇 건을 쟀나」는
+    #   말하지 않는다.** 그래서 넷째 줄이 생겼다.
+    _P204_SAMPLE = [
+        ("살아 있는 감사표를 행마다 다시 계산 · 분모 240", True,
+         "무엇을 · 분모 몇으로 쟀는지 말한다"),
+        ("온보딩 카드를 실제로 걷는다 · 분모 38장", True, "같은 모양"),
+        ("", False, "★ 아무 말도 안 한다 — 그 `exit 0` 은 「이 호출이 통과」일 뿐이다"),
+        ("(선언 없음 — 이 게이트는 무엇을 쟀는지 말하지 않는다)", False,
+         "★ 「말 안 했다」고 적은 줄은 **없는 것과 같다**"),
+        ("살아 있는 감사표를 다시 계산한다", False, "★ 분모가 없다 — 0건 검사와 전수가 같은 글자"),
+        ("`--db` 없이 불렀다 · 분모 0", False, "★ **분모 0인 초록은 초록이 아니다** (D-301)"),
+        ("계약 진입면을 HTTP 로 때린다 · 분모 109", True, "분모가 있다"),
+    ]
+    _pbad = [why for text, want, why in _P204_SAMPLE
+             if (not judge_measured(text)) is not want]
+    if _pbad:
+        ok = False
+        print("%s X ★ P-204 출생 표본이 깨졌다: %s" % (TAG, _pbad[:3]))
+    else:
+        print("%s O ★ **P-204 출생 표본 %d — 「`exit 0` 은 「이 호출이 통과」다」** "
+              "(분모 없음·분모 0·선언 없음을 다 잡는다 · 턴 Y 의 evidence_chain·onboarding_walk)"
+              % (TAG, len(_P204_SAMPLE)))
+
+    # 그리고 **수 하나로도** 잡히는가 — 분모를 안 말하는 게이트가 섞이면 그 수는 회색이다
+    _m = _good_observations()
+    _m["opened"]["verify_b.py"]["measured"] = ""
+    _verdict = dict((n, p_) for n, p_, _w in judge(_m)).get("MEASURED_LINE")
+    if _verdict is None:
+        print("%s O ★ 분모를 안 말하는 게이트가 하나 섞이면 MEASURED_LINE 은 **회색**이다 "
+              "(빨강이 아니다 — 「제품이 무너졌다」가 아니라 「우리가 모른다」이므로)" % TAG)
+    else:
+        ok = False
+        print("%s X 분모를 안 말하는 게이트가 섞였는데 MEASURED_LINE=%r 다 — "
+              "회색이어야 한다 (P-204)" % (TAG, _verdict))
+
     # 판정기의 조각들이 살아 있는가 (D-289 — 규칙을 지우면 잡히지 않는다)
     if judge_as("admin") and judge_source("파일 x/y.json") and not judge_as("gxprobe_q"):
         print("%s O 술어 셋(root·날짜·정상)이 살아 있다" % TAG)
@@ -324,31 +396,49 @@ def main() -> int:
     if args.list:
         for name, h in sorted((obs["opened"] or {}).items()):
             print("  %-34s 세 줄 %d" % (name, h.get("found", 0)))
-            for key in ("target", "as", "source"):
-                print("      %-7s %s" % (key.upper(), (h.get(key) or "(없다)")[:150]))
+            for key in ("target", "as", "source", "measured"):
+                print("      %-8s %s" % (key.upper(), (h.get(key) or "(없다)")[:150]))
         for name, who, ok in obs["other"]:
             print("  (다른 차선) %-30s %s · 머리글 %s" % (name, who, "있음" if ok else "없음"))
-        return EXIT_OK
+        print("%s ? **못 쟀다** — `--list` 는 머리글을 **찍을 뿐** 판정하지 않는다 (P-204)" % TAG)
+        return EXIT_UNDECIDABLE
 
     rows = judge(obs)
-    failed = [(n, why) for n, passed, why in rows if not passed]
+    #: ★ [P-204] **빨강과 회색을 가른다.** `None` 은 「안 잼」이고 `False` 는 「재서 틀림」이다.
+    #:   `not passed` 하나로 묶으면 둘이 같은 칸에 들어가고, 그러면 회색을 고치는 일과
+    #:   빨강을 고치는 일이 같은 일로 보인다 — 다른 일이다.
+    failed = [(n, why) for n, passed, why in rows if passed is False]
+    grayed = [(n, why) for n, passed, why in rows if passed is None]
     print("%s 수 %d" % (TAG, len(rows)))
     for name, passed, why in rows:
-        print("  %s  %-16s %s" % ("O" if passed else "X", name, why))
+        print("  %s  %-16s %s"
+              % ("O" if passed is True else ("?" if passed is None else "X"), name, why))
     if args.no_run:
         print("%s ⚠ `--no-run` 이다 — ②는 **재지 않았다**. 회색을 초록으로 읽지 않는다" % TAG)
     if failed:
         print("%s 실패 %d/%d — **무엇을 쟀는지 말하지 않는 게이트가 남아 있다**"
               % (TAG, len(failed), len(rows)))
         return EXIT_FAIL
-    print("%s 통과 %d/%d — 게이트마다 TARGET/AS/SOURCE 를 먼저 말한다"
+    if grayed:
+        print("%s ? **회색 %d/%d** — %s" % (TAG, len(grayed), len(rows),
+                                            " · ".join(n for n, _ in grayed)))
+        print("%s 회색은 초록이 아니다 — 이 호출은 **통과가 아니라 「못 잰 것」**이다 (P-204)"
+              % TAG)
+        return EXIT_UNDECIDABLE
+    print("%s 통과 %d/%d — 게이트마다 TARGET/AS/SOURCE 와 **분모**를 먼저 말한다"
           % (TAG, len(rows), len(rows)))
     return EXIT_OK
 
 
 if __name__ == "__main__":
+    _n_gate = len([p for p in gate_files() if p.name not in OTHER_LANE])
     gate_header(
         __file__,
+        measured=("게이트마다 ① 머리글을 부르는가 ② 열어 보면 세 줄이 **실제로 찍히는가** "
+                  "③ `| tail … $?` 거짓 초록 자리 ④ **MEASURED 줄로 분모를 말하는가** — "
+                  "**분모 %d**(scripts/verify_*.py · 다른 차선 %d개는 제 칸) · "
+                  "`--no-run` 이면 ②④는 분모 0 이고 그 실행은 회색이다 (P-204)"
+                  % (_n_gate, len(OTHER_LANE))),
         target="이 저장소의 scripts/verify_*.py 를 **실제로 연다** (읽어서 답하지 않는다)",
         as_="(자격증명 없음 — 게이트를 자기 자리에서 돌리고 그 첫 세 줄을 읽는다)",
         source="게이트들이 지금 찍은 머리글 + 저장소 작업본 트리",

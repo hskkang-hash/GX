@@ -1,0 +1,21 @@
+# LAW-02a 증거 — scripts/verify_retention_declared.py
+# 실행: 2026-09-20 KST · 차선 N (P-207 마지막 묶음) · HEAD 0acf8d1
+# ---
+[P-107] TARGET=gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다
+[P-107] AS=(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)
+[P-107] SOURCE=살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_retention_declared.py
+[P-67] 자기시험 통과 — 정상 1 · 음성 8(**출생 표본 2** 포함) · 빈 사실 1
+[P-67] [환경] Django 를 세우지 못했다 — ①②⑥은 **회색**이다: ModuleNotFoundError: No module named 'celery'
+[P-67] [위임] Django 칸 ①②⑥ 은 컨테이너 'gx-shell' 이 쟀다 (이 기계에는 Django 가 없다)
+[P-67] [입력] 저장소 C:\GuardianX\guardianx-source · 정적 검사 파일 3/3 · 백업 자리 볼륨 gx_backup_vault_e:/backup · 복구 기록 C:\GuardianX\guardianx-source\docs\agent\evidence\OPS-19\restore_drill_last.json
+[P-67]   선언 시드 잠금            ['development', 'staging'] — 운영은 한 칸도 안 읽는다
+[P-67]   ① 미선언 → purge 호출 0       호출 0 · 판정 SKIPPED_UNDECLARED
+[P-67]   ② 미선언 → backup 호출 0      호출 0 · 판정 SKIPPED_UNDECLARED
+[P-67]   ③ 선언 → backup 파일 1+      5개 실재
+[P-67]   ④ restore 기록 1 + RTO     기록 1건 · RTO **0.14분**
+[P-67]   ⑤ 코드에 기본값 없음             집행하는 자리 셋에 수 기본값 0개
+[P-67]   ⑥ 양성 대조 — 선언 → 돈다        선언한 테넌트에서 파기 경로가 3번 불렸다(dry-run)
+[P-67] 통과 — 미선언이면 파기·백업이 돌지 않고, 선언하면 파일이 실재하고, 복구는 해 봤고 RTO 를 쟀다. 코드에 보존 일수 기본값은 없다
+# EXIT=0

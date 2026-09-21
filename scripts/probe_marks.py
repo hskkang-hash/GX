@@ -194,6 +194,9 @@ def load_seed(path=None, runs_dir: str | None = None) -> dict:
     """
     empty = {"event_ids": [], "first_event_id": None, "probe_mark": "", "run": "",
              "seeded_at": "", "severity_by_id": {}, "address": {}, "source": "", "why": "",
+             #: [P-205 · 턴 Y · Q ↔ U1] 훈련 표식(P-201). **값은 씨앗 명세가 나른다** —
+             #: 읽는 도구가 제 안에 「drill」이라 적으면 낱말이 바뀐 날 그 도구만 옛말을 쓴다.
+             "data_source_by_id": {}, "data_source_mark": {},
              #: [U1 요청 ② · 턴 V] 그림이 실린 씨앗 — 재는 쪽이 **고를 수 있게** 한다.
              "snapshot_by_id": {}, "first_snapshot_event_id": None, "snapshot": {}}
     p = path or latest_seed_file(runs_dir)
@@ -209,12 +212,17 @@ def load_seed(path=None, runs_dir: str | None = None) -> dict:
         return empty
     ids = [int(x) for x in (doc.get("event_ids") or [])]
     sev, snaps, first_snap = {}, {}, None
+    dsrc: dict = {}
     for e in (doc.get("events") or []):
         try:
             eid = int(e.get("event_id"))
         except (TypeError, ValueError):
             continue
         sev[eid] = e.get("severity") or ""
+        #: `None` 은 **「못 읽었다」**이고 `"live"` 는 **「제품이 실운영이라 했다」**다 —
+        #: 둘을 같은 칸에 접으면 훈련 씨앗이 청구서에 오른 그 사고가 다시 난다(P-201).
+        if "data_source" in e:
+            dsrc[eid] = e.get("data_source")
         #: ★ [U1 요청 ② · 2026-09-18 턴 V] **빈 문자열은 「그림 없음」이다.**
         #:   U2#4(심각 이벤트 상황 판단)는 그림을 보는 행이라, 그림 없는 씨앗으로 재면
         #:   제품이 아니라 씨앗을 잰다 [U1 실측: 268496 의 snapshot 문 404 · 같은 순간 4802 는 200].
@@ -228,6 +236,8 @@ def load_seed(path=None, runs_dir: str | None = None) -> dict:
             "run": doc.get("run") or "",
             "seeded_at": doc.get("seeded_at") or "",
             "severity_by_id": sev,
+            "data_source_by_id": dsrc,
+            "data_source_mark": doc.get("data_source_mark") or {},
             "snapshot_by_id": snaps,
             "first_snapshot_event_id": (doc.get("snapshot") or {}).get("first_with_snapshot") or first_snap,
             "snapshot": doc.get("snapshot") or {},

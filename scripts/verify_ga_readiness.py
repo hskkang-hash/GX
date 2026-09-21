@@ -443,6 +443,16 @@ def reach_counts(gate_rel: str) -> tuple[dict[str, int], str, str]:
     return counts, note, why
 
 
+#: ★ [P-204 ③ · 2026-09-20 · 턴 Y · 차선 Q] **정적 갈래 — 로그인 0.**
+#:   이 판정기는 안에서 게이트를 부르고, 그중 여섯이 **로그인한다.** 그래서
+#:   커밋 훅에 걸면 2분이 걸리고 **계정을 다툰다**(동시 접속 1개 · UX-24 · §0.4).
+#:   훅이 느리고 계정을 빼앗으면 사람은 훅을 끈다 — 꺼진 훅은 아무것도 안 지킨다(D-353).
+#:   ⇒ **부르는 갈래와 안 부르는 갈래를 가른다.** 정적 갈래는 대장의 구조만 본다:
+#:     증명 없는 '구현' · 사유 없는 '잠김' · 가리키는 게이트 파일의 실재.
+#:     그 갈래는 게이트 색을 **못 잰 것**이므로 언제나 회색(2)이고, **1 일 때만 막는다.**
+NO_LOGIN = False
+
+
 def contract_clause_counts() -> dict[str, int]:
     """영역 ①은 계약 절 대장에서 **파생한다** — 절 상태를 두 곳에 적지 않는다.
 
@@ -623,7 +633,16 @@ def load() -> tuple[list[dict], dict[str, dict[str, int]], list[str], dict[str, 
             #: ★★ [P-106 · 턴 M] 영역에 `gate:` 가 붙으면 **세는 쪽이 바뀐다.**
             #:   절이 스스로 적은 `state` 를 세는 것이 아니라, 게이트를 **불러**
             #:   도달한 절만 구현으로 센다. 이 한 자리가 가중 20%였다.
-            if area.get("gate"):
+            if area.get("gate") and NO_LOGIN:
+                #: 정적 갈래 — **부르지 않는다.** 분모는 그대로 두고 전부 미측정으로 센다.
+                #: (지난 실행의 셈을 읽어 오지 않는다 — 사진을 실측으로 적지 않는다 · D-210)
+                base = contract_clause_counts()
+                c = {"미측정": sum(base.values())}
+                AREA_GATE_NOTE[area["id"]] = (
+                    "정적 갈래(--static) — 이 영역의 게이트 «%s» 를 **부르지 않았다**(로그인 0). "
+                    "절 %d개를 전부 **못 쟀다**로 센다. 이 영역의 %% 는 점수가 아니다"
+                    % (area["gate"], sum(base.values())))
+            elif area.get("gate"):
                 derived, note, why = reach_counts(area["gate"])
                 if why:
                     problems.append("영역 %s: %s" % (area["id"], why))
@@ -695,7 +714,14 @@ def main() -> int:
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--no-gates", action="store_true",
                     help="대장↔게이트 불일치 검사를 건너뛴다 (P-85 · 건너뛰면 그렇게 적는다)")
+    ap.add_argument("--static", action="store_true",
+                    help="[P-204 ③] **로그인 없는 갈래만** — 게이트를 한 벌도 부르지 않는다 "
+                         "(커밋 훅용 · 계정 다툼 0 · 언제나 회색이고 구조가 깨졌을 때만 1)")
     args = ap.parse_args()
+    if args.static:
+        global NO_LOGIN
+        NO_LOGIN = True
+        args.no_gates = True
     if _v_locked():
         print("[GA] ⚠ %s — 로그인하는 게이트(직렬 묶음)는 이 실행에서 회색이다. 조율자는 V 가 끝난 뒤 "
               "`scripts/v_lock.py --unlock` 하고 다시 잰다" % _V_GRAY_NOTE)
@@ -723,6 +749,10 @@ def main() -> int:
               % (aid, name, weight, d, n, ratio * 100, weighted))
         if AREA_GATE_NOTE.get(aid):
             print("     ↳ %s" % AREA_GATE_NOTE[aid])
+    if args.static:
+        print("[GA] ★★ 이 실행은 **정적 갈래(--static)** 다 — 게이트를 **한 벌도 안 불렀다**"
+              "(로그인 0 · 계정 다툼 0). 아래 가중 합계는 **점수가 아니다**: "
+              "영역 ①은 전부 「못 쟀다」로 세어져 있다. 점수는 게이트를 부르는 실행이 낸다")
     print("[GA] ★ 상용 오픈 가중 합계 **%.1f%%** [실측]" % total)
     print("[GA] (계약 축과 합치지 않는다 — D-345. 계약 절은 영역 ①이 그대로 인용한다)")
 
@@ -796,6 +826,11 @@ def main() -> int:
             print("[GA] FAIL %s" % p)
         #: 실패가 있으면 회색이 함께 있어도 **1** 이다 — 실패가 「모른다」 뒤에 숨으면 안 된다.
         return 1
+    if args.static:
+        print("[GA] **회색(exit 2)** — 정적 갈래다. 대장의 구조(절마다 상태·증명·사유)는 "
+              "**실재한다**. 그러나 게이트 색은 %d절에서 **한 벌도 안 쟀다** — "
+              "`exit 0` 을 낼 자리가 아니다 (P-204 · D-301)" % unmeasured)
+        return 2
     if unmeasured:
         print("[GA] **회색(exit 2)** — 절마다 상태·증명·사유는 실재한다. 그러나 게이트 색을 "
               "%d절에서 **못 쟀다.** 못 잰 것은 초록이 아니다 (D-301 · 규칙 ①)" % unmeasured)
@@ -830,8 +865,21 @@ def _print_table(areas, counts, rows, total, *, markdown: bool) -> None:
 
 if __name__ == "__main__":
     from _gate_header import gate_header, file_stamp  # P-107 — TARGET/AS/SOURCE
+    try:
+        _led = yaml.safe_load(LEDGER.read_text(encoding="utf-8")) or {}
+        _areas = _led.get("areas") or []
+        _n_area = len(_areas)
+        _n_clause = sum(len(a.get("clauses") or []) for a in _areas)
+        _n_gate = sum(1 for a in _areas for c in (a.get("clauses") or [])
+                      if (c.get("gate") or "").strip())
+    except Exception:                                        # noqa: BLE001
+        _n_area = _n_clause = _n_gate = 0
     gate_header(
         __file__,
+        measured=("GA 대장의 절마다 상태·증명·사유가 실재하는가 — **분모 %d절**(영역 %d) · "
+                  "그중 `gate:` 를 적은 **%d절은 그 판정기를 실제로 불러** 색을 받는다. "
+                  "부른 판정기가 2 를 내면 그 절은 **회색**이고 회색은 초록이 아니다 (P-204 · D-301)"
+                  % (_n_clause, _n_area, _n_gate)),
         target="대장 " + str(LEDGER.relative_to(ROOT)).replace("\\", "/") + " · 그리고 절이 가리키는 게이트들을 **실제로 부른다**",
         as_="이 게이트 자신은 자격 없이 대장을 읽는다 — 부르는 게이트마다 **제 머리글(TARGET/AS/SOURCE)** 을 낸다",
         source=file_stamp(LEDGER) + " + " + file_stamp(CONTRACT) + " + " + file_stamp(BLOCKERS),

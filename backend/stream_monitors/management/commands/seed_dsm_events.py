@@ -236,8 +236,29 @@ class Command(BaseCommand):
             self._report(DetectionEvent)
             return
 
+        from common.probe_marker import drill_mark
         from common.tenant_scope import TenantScope
         from kernels.k1_event import advance_response, record_detection, review_event
+
+        #: ★★ P-201 (2026-09-20 · 턴 Y · 세종) — **시드는 훈련이다.**
+        #:
+        #:   지난 턴에 P-193 이 섰다: 「게이트는 제 씨앗을 세지 않는다.」 그런데
+        #:   **비용이 따라왔다** — 씨앗을 안 세게 하니 **그 씨앗으로 잴 수도 없게**
+        #:   됐고, 온보딩 `U1#11`(「미처리 사건이 화면에 뜬다」)이 그래서 내려갔다.
+        #:
+        #:   세종이 표식을 둘로 갈랐다:
+        #:       `data_source=probe`  게이트 생존 탐침 — **제품이 안 센다**(P-193 그대로)
+        #:       `data_source=drill`  훈련 — **제품이 센다.** 화면엔 「훈련」 배지
+        #:
+        #:   이 명령이 심는 것은 **검수용 이벤트**이고, 검수는 훈련이지 탐침이 아니다 —
+        #:   사람이 화면에서 누르고 넣는 것을 보려고 심는다. 그래서 **바뀌는 것은
+        #:   표식 값 하나뿐**이다: 새 문도 새 매개변수도 없다. 제품의 거르는 자리
+        #:   (`exclude_probe`)는 `data_source=probe` 만 거르므로, `drill` 은 **아무 코드도
+        #:   안 고치고** 세어진다.
+        #:
+        #:   ⚠ `--purge` 는 이 표식을 보고 지우지 않는다 — 씨앗 카메라로 지운다.
+        #:     표식은 **세는 법**이지 지우는 법이 아니다.
+        seed_mark = drill_mark(timezone.now().strftime("%Y%m%dT%H%M%S"))
 
         cam, created = self._camera(group)
         scope_user = TenantScope.of(user)
@@ -266,6 +287,7 @@ class Command(BaseCommand):
                     event_type=etype, severity=severity,
                     occurred_at=occurred_at,
                     snapshot_path=snapshot_path,
+                    track_id=seed_mark,          # P-201 — 「훈련」
                     address=SEED_ADDRESS, address_status="resolved",
                 )
                 made += 1
@@ -308,6 +330,7 @@ class Command(BaseCommand):
                     event_type=etype, severity=severity, occurred_at=occurred_at,
                     snapshot_path="",     # 시스템 이벤트에는 **프레임이 없다.**
                                           # 없는 것에 그림을 붙이면 그것이 거짓말이다
+                    track_id=seed_mark,   # P-201 — 「훈련」
                     address=SEED_ADDRESS, address_status="resolved",
                 )
             except Exception as exc:      # noqa: BLE001 — 열거 밖이면 K1 이 막는다

@@ -77,3 +77,13 @@ class EventView:
     #: `address` 가 None 인 것만으로는 "아직 안 물어봤다"와 "물어봤는데 실패했다"가
     #: 구별되지 않는다 — 둘은 다음 행동이 다르다 (D-290).
     address_status: str = "pending"
+    #: ★ P-201 (2026-09-20 · 턴 Y) — **행 안의 출처 표식**이 얹혀 있는 자유 칸.
+    #:   뜻은 커널이 정하지 않는다 — `common/probe_marker.py` 한 곳이 정하고
+    #:   (`data_source=probe` 게이트 탐침 · `data_source=drill` 훈련), 읽는 쪽은
+    #:   `apps/dsm/services.py::event_data_sources` 하나다.
+    #:
+    #:   ⚠ **내보내는 칸이 아니다.** `GET /api/dsm/events` 의 응답에는 `track_id` 가
+    #:     없고 앞으로도 없다 — 나가는 것은 그것을 읽어 지은 `data_source` 한 낱말
+    #:     (`live` / `drill`)이다. 날것을 내면 화면이 표식 문자열을 제 손으로 가르기
+    #:     시작하고, 그 순간 뜻이 두 벌이 된다.
+    track_id: str = ""

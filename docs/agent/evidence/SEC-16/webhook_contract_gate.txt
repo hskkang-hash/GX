@@ -1,0 +1,12 @@
+# SEC-16 증거 — scripts/verify_webhook_contract.py
+# 실행: 2026-09-20 KST · 차선 N (P-207 셋째 묶음) · 브랜치 turn-q · HEAD 0acf8d1 · 호스트 파이썬
+# 명령: PYTHONIOENCODING=utf-8 python scripts/verify_webhook_contract.py
+# ---
+[P-107] TARGET=저장소 C:/GuardianX/guardianx-source @ 0acf8d1 · 작업본 43파일 어긋남 (살아 있는 것을 재지 않는 게이트다)
+[P-107] AS=(자격증명 없음 — 소스·문서 파일을 읽는다)
+[P-107] SOURCE=파일 docs/agent/evidence/SEC-16/webhook_senders_baseline.txt (기록 2026-09-05T11:38 · 1003바이트) · 파일 backend/common/webhook_contract.py (기록 2026-09-05T12:42 · 19636바이트) · 파일 backend/tests/test_s_webhook_contract.py (기록 2026-09-05T11:34 · 21847바이트)
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_webhook_contract.py
+[WEBHOOK-CONTRACT] [입력] backend 파이썬 780개 읽음 · 발송자 후보 2건 (기준선 2건) · 규약 검사 9항목 · 시험 등재 5건
+[WEBHOOK-CONTRACT] PASS 규약 실재 · 닫는 조건 셋 전부 시험 있음 · 상수시간 비교 · 새 인증 경로 0 · 규약 밖 새 발송자 0
+# EXIT=0

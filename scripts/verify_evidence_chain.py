@@ -80,6 +80,10 @@ SKIP_PARTS = {"__pycache__", "migrations", "tests", "node_modules"}
 
 CONTAINER = os.environ.get("GX_SHELL", "gx-shell")
 
+#: 종료코드에 이름을 준다 — 이 파일은 셋을 다 쓰면서 숫자로만 적고 있었다.
+#: **2 는 「재서 틀렸다」가 아니라 「안 쟀다」다** (P-204 · D-301).
+EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
+
 
 # ══════════════════════════════════════════════════════════════════════════
 # ① 정적 눈 — 순수 함수. 자기시험이 겨누는 과녁이 여기다 (D-277).
@@ -522,14 +526,31 @@ def main() -> int:
         return anchor(date.fromisoformat(args.anchor))
     code = static_judgement()
     if args.db:
-        code = max(code, db_judgement())
-    return code
+        return max(code, db_judgement())
+    #: ★ [P-204 · 턴 Y · 차선 Q] **`--db` 없이 낸 0 은 「통과」가 아니라 「이 호출이 끝났다」다.**
+    #:   이 게이트의 두 눈 중 **살아 있는 감사표를 다시 계산하는 눈**은 `--db` 에만 있다.
+    #:   정적 눈만 뜬 채 0 을 내면 러너·대장은 그것을 **LAW-08 초록**으로 적는다 —
+    #:   그런데 그때 잰 것은 소스이지 **사슬이 아니다.** 안 잰 것은 회색이다 (D-301).
+    if code != EXIT_OK:
+        return code
+    print("[CHAIN] ? **못 쟀다** — `--db` 를 안 줬다. 정적 눈(소스)만 떴고 "
+          "**살아 있는 감사표는 한 행도 다시 계산하지 않았다.** "
+          "이 0 은 「이 호출이 통과」일 뿐이다 (P-204) — 재려면 `--db` 로 부른다")
+    return EXIT_UNDECIDABLE
 
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
+    try:
+        _n_src = len(sources())
+    except Exception:                                        # noqa: BLE001
+        _n_src = 0
     gate_header(
         __file__,
+        measured=("① 감사 행을 쓰는 손을 AST 로 전수 — **분모 %d**(범위 %s 의 .py) · "
+                  "② `--db` 를 준 실행에서만 살아 있는 감사표를 **행마다 다시 계산**한다 "
+                  "(안 주면 ②는 분모 0 — 그래서 `--db` 없는 실행은 회색이다 · P-204)"
+                  % (_n_src, " · ".join(SCAN_ROOTS))),
         target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다",

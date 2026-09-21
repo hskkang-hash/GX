@@ -251,6 +251,12 @@ class SuppressionTest(K2Fixture):
     """[F-04] 5분 억제 — **K2 는 발송 이력을 본다** (K1 은 이벤트 행을 본다)."""
 
     def test_second_alert_within_five_minutes_is_suppressed(self) -> None:
+        """종전 그대로 — 같은 카메라·같은 유형의 둘째 알림은 접힌다.
+
+        ★ [턴 Y · F-04] **묶는 키는 안 바뀜었다.** 바뀜 것은 창의 **기준**이다
+          (사건 발생 시각 → 직전 발송 시각). 이 시험이 그대로 서 있어야
+          「기준을 고쳐도 저장소가 들고 있던 계약은 안 깨졌다」가 증명된다.
+        """
         from kernels.k2_notify import send, suppress
 
         now = timezone.now()
@@ -263,6 +269,31 @@ class SuppressionTest(K2Fixture):
         self.assertEqual((), send(scope=self.scope_a, event_id=second),
                          "억제됐는데 발송 이력이 생겼습니다.")
 
+    def test_pressing_notify_twice_on_the_same_event_is_suppressed(self) -> None:
+        """★★ [턴 Y · F-04 · 2026-09-20] **새로 선 자리 — 문안이 말하는 바로 그것.**
+
+        GX-COPY: 「5분 안에 **같은 사건** 재발송 억제」. 그런데 종전 질의는
+        `occurred_at__lt = event.occurred_at` 로 **자기 발송만 잘라 냈다** — 발송
+        행의 `occurred_at` 은 제 사건의 발생 시각 복사본이라 `<` 가 아니다.
+        즉 **옆 사건은 접으면서 자기 자신은 못 접는**, 문안과 정반대인 상태였다.
+
+        그 자리가 수로 남았다 [실측 2026-09-20 · 개발 DB]: 씨앗 사건 `#295402`
+        하나에 발송 12건이 무리 셋(4+4+4)으로 달려 있었다 — 측정이 「알림 보내기」를
+        세 번 눌렀고, 세 번 다 수신자 수만큼 행을 낳았다.
+        """
+        from kernels.k2_notify import send, suppress
+
+        event_id = self._event(self.stream_a, when=timezone.now())
+        sent = send(scope=self.scope_a, event_id=event_id)
+        self.assertTrue(sent and sent[0].succeeded, "첫 발송이 실패했습니다(표본 고장).")
+
+        self.assertTrue(
+            suppress(scope=self.scope_a, event_id=event_id),
+            "방금 보낸 사건을 다시 눌렀는데 안 접힙니다 — 그러면 사람이 「알림 "
+            "보내기」를 두 번 누를 때마다 수신자 수만큼 행이 더 쌓입니다(F-04 문안).")
+        self.assertEqual((), send(scope=self.scope_a, event_id=event_id),
+                         "억제됐는데 발송 이력이 다시 생겼습니다.")
+
     def test_beyond_five_minutes_is_not_suppressed(self) -> None:
         """★ 양성 대조 — 억제기가 **모든 것을 접지는 않는가**."""
         from kernels.k2_notify import send, suppress
@@ -270,6 +301,13 @@ class SuppressionTest(K2Fixture):
         now = timezone.now()
         first = self._event(self.stream_a, when=now - timedelta(minutes=9))
         send(scope=self.scope_a, event_id=first)
+        #: ★★ [턴 Y · F-04] **보낸 시각을 옮겨 놓는다.**
+        #:   종전엔 `occurred_at` 을 9분 전으로 두는 것만으로 「9분 전」이 됐다 —
+        #:   질의가 발생 시각을 봤기 때문이고, 그것이 고친 결함이다. 이제 기준은
+        #:   **보낸 시각**이므로 「9분 전에 보냈다」를 시험이 직접 만들어야 한다.
+        #:   시계를 기다리지 않는다 — 기다리는 시험은 느린 것이 아니라 **재현되지 않는다.**
+        apps.get_model("stream_monitors", "DeliveryRecord")._base_manager.filter(
+            event_id=first, succeeded=True).update(sent_at=now - timedelta(minutes=9))
 
         second = self._event(self.stream_a, when=now)
         self.assertFalse(suppress(scope=self.scope_a, event_id=second),

@@ -370,12 +370,29 @@ class ProbeIsNotCountedOnTheDeliveryAxisTest(ProbeFixture):
         손으로 `DeliveryRecord` 를 만들면 그 행은 제품이 만드는 행과 **다를 수 있고**,
         다른 행 위의 초록은 제품에 대해 아무 말도 하지 않는다.
         """
+        from django.apps import apps as django_apps
+
         from apps.dsm import services
 
         _clear_thread_request()
         sent = services.notify_event(scope=self.scope_a, event_id=event_id)
         self.assertTrue(sent, f"#{event_id} 에 수신 규칙이 있는데 발송이 0건입니다(표본 고장).")
-        return [r.delivery_id for r in sent]
+        ids = [r.delivery_id for r in sent]
+        #: ★★ [턴 Y · F-04] **보낸 시각을 창 밖으로 물린다.**
+        #:
+        #:   이 시험은 같은 카메라·같은 유형으로 **연달아 다섯 번** 보낸다. F-04 는
+        #:   「5분 안에 같은 사건 재발송 억제」이고, 턴 Y 에 그 창의 기준이
+        #:   `event.occurred_at` 에서 **직전 발송 시각(`sent_at`)**으로 옮겨졌다 —
+        #:   그래서 이제 둘째 호출부터 **옳게** 접힌다.
+        #:
+        #:   ⚠ 이 줄은 억제를 **끄는 것이 아니다.** 억제는 그대로 돌고, 시험이
+        #:     「앞 발송은 이미 오래전 일이다」를 **표본에 적어 주는** 것뿐이다.
+        #:     안 적으면 이 시험은 P-193(표식이 발송 축에서 세어지는가)을 재는 대신
+        #:     **F-04 가 도는가**를 재게 되고, 그것은 다른 질문이다.
+        django_apps.get_model("stream_monitors", "DeliveryRecord")._base_manager.filter(
+            pk__in=ids, succeeded=True).update(
+                sent_at=timezone.now() - timedelta(minutes=30))
+        return ids
 
     def _delivery_ids(self, url: str) -> list[int]:
         _clear_thread_request()

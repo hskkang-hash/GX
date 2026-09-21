@@ -201,9 +201,17 @@ def judge(found: dict, expect: dict) -> list[tuple[str, bool, str]]:
     if mismatch is None:
         out.append(("두 눈 대조", False, "못 쟀다 — 로그인으로 재지 못했다"))
     elif not checked:
+        #: ★★ [P-206 · 2026-09-20 · 턴 Y] **이 칸은 「못 쟀다」이지 「틀렸다」가 아니다.**
+        #:   V_LOCK 이 컨테이너 안에서도 듣게 된 첫날, 이 게이트가 **빨강(exit 1)** 을 냈다 —
+        #:   로그인 넷을 **잠금이 막았는데** 그 사실이 「한 눈으로만 쟀다」로 적혀서
+        #:   아래 종료코드 규칙(「실패가 전부 「못 쟀다」면 회색」)에 안 걸린 것이다.
+        #:   잠금이 제품 결함처럼 보이면, 다음 사람은 **잠금을 끈다**(D-353).
+        #:   ⇒ 글자에 「못 쟀다」를 넣는다. 판정(False)은 그대로다 — 회색도 초록이 아니다.
         out.append(("두 눈 대조", False,
-                    "**한 눈으로만 쟀다** — 로그인한 역할이 0개다. 링크 표의 재현이 "
-                    "맞는지 아무도 확인하지 않았다"))
+                    "**못 쟀다** — 로그인한 역할이 0개다(%s). 한 눈(링크 표)으로만 본 수이고, "
+                    "그 재현이 맞는지 아무도 확인하지 않았다. **환경의 사실이지 제품의 빨강이 "
+                    "아니다**(P-70 · P-206)"
+                    % (found.get("eyes_why") or "사유를 안 적었다")))
     else:
         out.append(("두 눈 대조", not mismatch,
                     "어긋난 역할: %s" % "; ".join(mismatch) if mismatch
@@ -393,6 +401,17 @@ def collect(api: str | None, password: str | None) -> tuple[dict, dict, str | No
                 by_role[key]["http_codes"] = his_codes
             found["eye_mismatch"] = mismatch
             found["eyes_checked"] = checked
+            #: ★ [P-206] **왜 한 눈이 감겼는지 적는다.** 사유 없는 회색은 다음 사람에게
+            #:   「무엇을 세워야 눈이 떠지는가」를 말해 주지 않는다(`env_require` 규약과 같다).
+            if not checked:
+                try:
+                    from v_lock import GRAY_NOTE as _vnote, is_locked as _vlocked
+                except ImportError:                               # pragma: no cover
+                    _vnote, _vlocked = "", (lambda: False)
+                found["eyes_why"] = (
+                    _vnote if _vlocked()
+                    else ("자격증명 없음 — GX_SEED_ROLE_PASSWORD" if not password
+                          else "로그인이 토큰을 못 냈다"))
         else:
             found["eye_mismatch"] = None
             found["eyes_checked"] = None

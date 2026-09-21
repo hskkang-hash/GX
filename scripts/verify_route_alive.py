@@ -576,8 +576,16 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header, account_as  # P-107 — TARGET/AS/SOURCE
+    try:
+        _pairs, _skipped = load_routes(_routes_file())
+    except Exception:                                        # noqa: BLE001
+        _pairs, _skipped = [], []
     gate_header(
         __file__,
+        measured=("화면이 실제로 부른 GET 라우트를 **하나씩 HTTP 로 때린다** — "
+                  "**분모 %d**(값이 든 경로 %d건은 씨앗이 지워져 안 때린다) · "
+                  "자격증명이 없으면 **한 건도 안 때리고 회색(2)** 이다 (P-204)"
+                  % (len(_pairs), len(_skipped))),
         target=os.environ.get("GX_API", "http://localhost:8000") + " (gx-shell 안 · 호스트에 포트가 없다)",
         as_=account_as(),
         source="살아 있는 서버 응답 (HTTP) — 사진도 손 목록도 아니다",

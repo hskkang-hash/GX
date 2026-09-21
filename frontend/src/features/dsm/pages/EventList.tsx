@@ -30,7 +30,7 @@ import { Main } from 'rj-core';
 import {
   dsmDelete, dsmEndpoint, dsmGet, dsmPostQueryOnce, dsmU24StatsEndpoint, intentKey,
 } from '../api';
-import { linkStatusBadge, linkStatusLabel, userFacingError } from '../copy';
+import { dataSourceBadge, linkStatusBadge, linkStatusLabel, userFacingError } from '../copy';
 import { VerdictBadge } from '../components/ResponseSteps';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
@@ -875,7 +875,23 @@ export default function EventList() {
                   title: '유형',
                   dataIndex: 'event_type',
                   width: 90,
-                  render: (v: string) => labelOf(EVENT_TYPE_LABEL, v),
+                  /*
+                    ★★ [P-201 · 턴 Y] **「훈련」 배지를 유형 옆에 붙인다.**
+                      훈련 사건은 제품이 **센다**(P-201) — 그래서 목록에도 서고, 서면
+                      그것이 훈련임을 행이 스스로 말해야 한다. 새 열을 만들지 않은 이유:
+                      열이 하나 늘면 좌우 스크롤이 생기고, 스크롤 밖의 배지는 없는 것과 같다.
+                    ★ 말은 새로 지지 않는다 — `copy.ts::dataSourceBadge`(GX-COPY §2)를 그대로 부른다.
+                  */
+                  render: (v: string, row: EventRow) => (
+                    <Space size={4} wrap>
+                      <span>{labelOf(EVENT_TYPE_LABEL, v)}</span>
+                      {dataSourceBadge(row.data_source) ? (
+                        <Tag color="purple" style={{ marginInlineEnd: 0 }}>
+                          {dataSourceBadge(row.data_source)}
+                        </Tag>
+                      ) : null}
+                    </Space>
+                  ),
                 },
                 { title: '카메라', dataIndex: 'stream_monitor_name', ellipsis: true },
                 {

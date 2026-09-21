@@ -6,7 +6,7 @@
      `verify_purge.py`: 보존 만료 시드 1건 → 행 0 · 객체 0 · 파기 기록 1"
                                                         — 지시서 §2 P-57
 
-무엇을 재는가 — **여섯 수**
+무엇을 재는가 — **일곱 수**
 ---------------------------
     ① 만료 시드 1건을 파기하면 **행 0**   ← 「지움」 표시가 아니라 행이 없어야 한다
     ② 그 행이 가리키던 **객체 0**         ← 바이트가 저장소에서 사라져야 한다
@@ -14,8 +14,17 @@
     ④ 안 만료된 시드는 **남는다**         ← 「지킨다」와 「다 버린다」를 가른다
     ⑤ 보존 일수 **미선언 테넌트는 0건**   ← 선언이 먼저다 (지시서 §4 함정 ㉡)
     ⑥ 인자 없이 부르면 **0건**            ← 되돌릴 수 없는 일의 기본값은 dry-run (D-209)
+    ⑦ **연쇄 표 → 스냅샷 → 집행**         ← 턴 Y §1-1 (차선 U56 이 더했다)
 
 ★ ④⑤⑥ 이 초록의 절반이다. 다 지우는 함수는 ①②③ 을 언제나 통과한다.
+
+★ ⑦ 이 더해진 이유 — **「16건」이 177행이었다** [실측 2026-09-20 · 턴 X → Y]
+----------------------------------------------------------------------------
+씨앗 #295402 를 지우자는 제안이 「16건」이라 적혀 있었다. 조율자가 연쇄를 다시
+재니 **177행**(사건 16 · 발송 145 · 클립 16)이었다 — 한 표만 세고 그 수를
+「지울 것」으로 말한 것이다. **FK 가 딸린 표에서 머릿수는 언제나 실제보다 작고,
+작은 수는 승인을 쉽게 받는다.** 그날 사고가 안 난 이유는 규약이 아니라 사람이 한
+번 더 물어봤기 때문이고, **사람은 다음에는 안 묻는다.** 그래서 도구에 박았다.
 
 ★ **출생 표본** (D-310) — 이 도구를 만들게 한 사례
 --------------------------------------------------
@@ -83,7 +92,7 @@ PROBE_RETENTION_DAYS = 30
 # 판정 규칙 — **함수로 떼어 둔 이유는 시험하기 위해서다** (D-277)
 # ═══════════════════════════════════════════════════════════════════════════
 def judge(counts: dict) -> list:
-    """여섯 수를 판정한다. `(이름, 통과, 사유)` 여섯.
+    """일곱 수를 판정한다. `(이름, 통과, 사유)` 일곱.
 
     ★ `None` 은 **못 쟀다**이지 0 이 아니다 (D-301). 못 잰 칸은 통과가 아니다 —
       단 ②(객체)만은 예외로 `object_store` 가 거짓이면 **판정 불가**로 따로 샌다.
@@ -152,7 +161,64 @@ def judge(counts: dict) -> list:
                     + ("" if ok else
                        " — 되돌릴 수 없는 일의 기본값이 「한다」이면 그것은 "
                        "기본값이 아니라 함정이다 (D-209)")))
+
+    out.append(cascade_then_snapshot(counts))
     return out
+
+
+#: ⑦ 의 이름. 판정 행과 자기시험이 같은 글자를 쓴다 — 두 벌이면 한쪽만 고쳐진다.
+ORDER_CHECK = "연쇄 표 → 스냅샷 → 집행"
+
+
+def cascade_then_snapshot(counts: dict) -> tuple:
+    """⑦ **삭제는 연쇄 표와 스냅샷 뒤에** — 턴 Y §1-1 신설 규약.
+
+    ★ **출생 표본** [실측 2026-09-20 · 턴 X → Y]. 씨앗 #295402 를 지우자는 제안이
+      「**16건**」이라고 적혀 있었다. 조율자가 연쇄를 다시 재니 **177행**이었다 —
+      사건 16 · 발송 145 · 클립 16. 한 표만 세고 그 수를 「지울 것」으로 말한 것이다.
+      FK 가 딸린 표에서 **머릿수는 언제나 실제보다 작다.** 그날 사고가 안 난 이유는
+      규약이 아니라 **사람이 한 번 더 물어봤기 때문**이고, 사람은 다음에는 안 묻는다.
+
+    그래서 셋을 잰다 — **순서가 곧 판정이다:**
+
+        ㉠ 연쇄 표  집행 전의 미리보기가 **표 전부**를 낸다. 딸린 표를 빼고 낸
+                   머릿수는 「적게 말한 수」이고, 적게 말한 수는 승인을 쉽게 받는다.
+        ㉡ 머릿수 = 합  응답의 총계가 **연쇄 표의 합과 같다.** 갈리면 승인한 수와
+                   집행한 수가 다른 것이고, 그 차이는 집행 뒤에만 보인다.
+        ㉢ 스냅샷  집행 응답이 **무엇을 지웠는지**(`deleted_ids`)를 낸다. 없으면
+                   되돌릴 근거도, 「무엇이 사라졌나」에 답할 근거도 없다.
+
+    `None` 은 **못 쟀다**이지 통과가 아니다 (D-301).
+    """
+    labels = counts.get("cascade_labels")
+    expected = counts.get("cascade_expected")
+    headline = counts.get("cascade_headline")
+    total = counts.get("cascade_sum")
+    snapshot = counts.get("snapshot_ids")
+    deleted = counts.get("deleted_total")
+
+    if None in (labels, expected, headline, total, snapshot, deleted):
+        return (ORDER_CHECK, False,
+                "**못 쟀다** — 미리보기·집행 응답을 읽지 못했다. 「안 쟀다」는 "
+                "「순서를 지켰다」가 아니다 (D-301)")
+
+    missing = [x for x in expected if x not in labels]
+    if missing:
+        return (ORDER_CHECK, False,
+                f"미리보기가 딸린 표 {missing} 를 안 낸다 — **연쇄 표가 아니다.** "
+                f"한 표만 센 머릿수로 승인을 받으면 「16건」이 177행이 된다"
+                f"(출생 표본)")
+    if headline != total:
+        return (ORDER_CHECK, False,
+                f"머릿수 {headline} 와 연쇄 표의 합 {total} 이 다르다 — 승인한 수와 "
+                f"집행할 수가 **애초에 다르다**")
+    if deleted >= 1 and not snapshot:
+        return (ORDER_CHECK, False,
+                f"{deleted}행을 지웠는데 스냅샷(deleted_ids)이 비어 있다 — 무엇이 "
+                f"사라졌는지 아무도 답할 수 없고 되돌릴 근거도 없다")
+    return (ORDER_CHECK, True,
+            f"연쇄 표 {len(labels)}표 · 머릿수 {headline} = 합 {total} · "
+            f"집행 {deleted}행에 스냅샷 {snapshot}건")
 
 
 def orphan_branch_ok(counts: dict):
@@ -177,7 +243,12 @@ def self_test() -> int:
 
     green = dict(rows_after=0, objects_after=0, purge_records=1,
                  fresh_rows_after=1, undeclared_rows_after=1,
-                 dry_run_deleted=0, dry_run_default=True)
+                 dry_run_deleted=0, dry_run_default=True,
+                 #: ⑦ 연쇄 표 → 스냅샷 → 집행 (turn-y §1-1)
+                 cascade_labels=["녹화 영상", "영상 구간 참조", "이벤트 스냅샷"],
+                 cascade_expected=["녹화 영상", "영상 구간 참조", "이벤트 스냅샷"],
+                 cascade_headline=1, cascade_sum=1,
+                 deleted_total=1, snapshot_ids=1)
 
     # ── 출생 표본 — **`delete()` 를 불렀는데 행이 남아 있었다** ────────────
     #    [실측 2026-09-05 · EventClip 1행] 소프트 삭제라 행이 남고, 객체는 그
@@ -232,6 +303,36 @@ def self_test() -> int:
     if hit[1] or "못 쟀다" not in hit[2]:
         bad.append("행을 **못 쟀는데** 통과로 읽거나 사유에 그 사실이 없다 (D-301)")
 
+    # ── ⑦ 연쇄 표 → 스냅샷 → 집행 (turn-y §1-1) ─────────────────────────
+    #    **출생 표본**: 「16건」이라 적힌 제안이 실제로는 177행이었다
+    #    (사건 16 + 발송 145 + 클립 16). 한 표만 센 머릿수다.
+    one_table_only = dict(green, cascade_labels=["이벤트 스냅샷"],
+                          cascade_headline=16, cascade_sum=16)
+    if names(judge(one_table_only)).get(ORDER_CHECK):
+        bad.append("**출생 표본**(딸린 표를 빼고 센 「16건」)을 통과로 읽는다 — "
+                   "그 수는 실제로 177행이었다")
+
+    for sample, why in (
+        (dict(green, cascade_headline=16, cascade_sum=177),
+         "머릿수와 연쇄 표의 합이 다른데 통과로 읽는다 — 승인한 수와 집행할 수가 "
+         "애초에 다르다"),
+        (dict(green, deleted_total=177, snapshot_ids=0),
+         "177행을 지웠는데 스냅샷 0을 통과로 읽는다 — 무엇이 사라졌는지 아무도 "
+         "답할 수 없다"),
+        (dict(green, cascade_labels=None),
+         "연쇄 표를 **못 쟀는데** 통과로 읽는다 (D-301)"),
+        (dict(green, snapshot_ids=None),
+         "스냅샷을 **못 쟀는데** 통과로 읽는다 (D-301)"),
+    ):
+        if names(judge(sample)).get(ORDER_CHECK):
+            bad.append(why)
+
+    #: 부작위 갈래 — **아무것도 안 지웠으면** 스냅샷 0이 옳다. 이것까지 빨갛게 읽으면
+    #: 미리보기만 돌린 날 판정기가 사실을 틀렸다고 말하게 된다.
+    if not names(judge(dict(green, deleted_total=0, snapshot_ids=0))).get(ORDER_CHECK):
+        bad.append("한 행도 안 지운 실행의 스냅샷 0을 빨강으로 읽는다 — 지울 것이 "
+                   "없었던 것은 사실이다")
+
     # ── 고아 갈래 ────────────────────────────────────────────────────────
     if orphan_branch_ok({}) is not None:
         bad.append("안 재 본 고아 갈래를 판정으로 읽는다")
@@ -248,8 +349,8 @@ def self_test() -> int:
         for b in bad:
             print("    " + b)
         return EXIT_FAIL
-    print("[P-57] 자기시험 통과 — 출생 표본 1 · 초록 표본 1 · 음성 8 · "
-          "전량폐기 1 · 판정 불가 2 · 고아 갈래 4")
+    print("[P-57] 자기시험 통과 — 출생 표본 2 · 초록 표본 1 · 음성 12 · "
+          "전량폐기 1 · 판정 불가 2 · 부작위 1 · 고아 갈래 4")
     return EXIT_OK
 
 
@@ -423,6 +524,14 @@ def collect() -> dict:
             preview = retention.purge(group_id=g_declared.pk)
             out["dry_run_deleted"] = preview["deleted_total"]
 
+            #: ⑦ **연쇄 표** — 집행 전의 미리보기가 딸린 표를 **전부** 내는가
+            #:   (turn-y §1-1). 「16건」이 177행이었던 그 수를 여기서 가른다.
+            out["cascade_labels"] = [t.get("label") for t in preview["targets"]]
+            out["cascade_expected"] = [t.label for t in retention.TARGETS]
+            out["cascade_headline"] = preview["expired_total"]
+            out["cascade_sum"] = sum(int(t.get("expired") or 0)
+                                     for t in preview["targets"])
+
             before_records = AuditLogs._base_manager.filter(
                 logger_name=retention.LOGGER_NAME,
                 api_name=retention.PURGE_ACTION).count()
@@ -431,6 +540,11 @@ def collect() -> dict:
                 group_id=g_declared.pk, dry_run=False, actor=None,
                 reason="verify_purge — 만료 시드 1건을 그대로 지운다")
             out["audit_id"] = result.get("audit_id")
+
+            #: ⑦ **스냅샷** — 집행 응답이 「무엇을 지웠나」를 내는가.
+            out["deleted_total"] = result["deleted_total"]
+            out["snapshot_ids"] = sum(len(t.get("deleted_ids") or [])
+                                      for t in result["targets"])
 
             out["rows_after"] = Record._base_manager.filter(pk=expired).count()
             out["fresh_rows_after"] = Record._base_manager.filter(pk=fresh).count()

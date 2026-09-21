@@ -220,6 +220,8 @@ def pytest_configure(config) -> None:
     _install_migrate_bootstrap()
     # P-87 4 — 증거 폴더 격리 **바닥 그물** (아래 블록 참조).
     _install_evidence_net()
+    # P-202 — 시험이 **운영 감사표**를 만지면 선다 (아래 블록 참조).
+    _arm_audit_db_guard()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -256,6 +258,28 @@ def _install_evidence_net() -> None:
     except Exception:                    # noqa: BLE001 — 그물이 없다고 시험을 막지 않는다
         return
     evidence_guard.install_pytest_net()
+
+
+# ════════════════════════════════════════════════════════════════════════
+# P-202 — **시험은 운영 표에 한 행도 안 쓴다** (2026-09-20 · 턴 Y · 차선 S)
+#
+#   무엇을 막는지는 `common/evidence_chain.py` 의 P-202 머리말에 있다. 여기는
+#   **켜는 자리**다 — 이 한 줄이 없으면 가드는 서 있고도 안 도는 물건이 된다.
+#
+#   ⚠ 판정식을 여기 베끼지 않는다. 이름을 보는 술어도 가드도 저쪽 한 벌이고,
+#     여기는 그것을 부른다. 복사본 하나가 격리 사고의 원인이었다(D-212).
+#
+#   ⚠ **이 훅이 안 읽힐 수도 있다** — rootdir 이 어긋나면 `backend/conftest.py` 가
+#     아예 안 읽힌다(시험 명령 메모의 ⚠). 그래서 가드는 `evidence_guard.under_pytest()` 도
+#     신호로 받는다. 무장을 여기 하나에만 걸어 두면, 가드가 조용히 없는 실행이
+#     생기고 그 실행이 바로 턴 X 의 사고다.
+# ════════════════════════════════════════════════════════════════════════
+def _arm_audit_db_guard() -> None:
+    try:
+        from common import evidence_chain
+    except Exception:                    # noqa: BLE001 — 가드가 없다고 시험을 막지 않는다
+        return
+    evidence_chain.arm_audit_db_guard()
 
 
 # ═══════════════════════════════════════════════════════════════════════════

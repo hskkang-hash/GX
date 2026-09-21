@@ -60,6 +60,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any, Iterable, Sequence
@@ -285,7 +286,12 @@ class RecordedBreak:
 
 #: 기록된 끊김. **늘어나는 것이 정상이 아니다.** 늘릴 때는 위 ⚠ 를 읽고 늘린다.
 #:
-#: 지금 든 22건 — 전부 `prev_mismatch` 이고 전부 **같은 원인**(P-191 경합)이다.
+#: 지금 **23건**이다 — 모두 `prev_mismatch` 이지만 **원인은 둘**이다.
+#:   ① 앞의 22건 = P-191 경합(잠금 이전) · ② 마지막 1건(#276795) = **시험이 샜다**(턴 X).
+#:   ⚠ 수만 세지 말 것 — 같은 목록에 있다고 같은 원인으로 읽히면 「경합은 잠금으로 닫혔다」가
+#:     그 한 건까지 덮는다. 아래 턴 X 칸막이를 보라.
+#:
+#: 앞의 22건 — 전부 `prev_mismatch` 이고 전부 **같은 원인**(P-191 경합)이다.
 #:   · 판정문(2026-09-19 · 세종)은 「끊김 4건」이라 적었는데, 그날 도구로 재니 **22건**이었다.
 #:     늘어난 까닭은 새 사건이 아니라 **같은 경합이 계속 재현됐기 때문**이다 —
 #:     마지막 한 건이 07:04:55Z, 잠금이 선 것이 08:31Z 다. 그 뒤로 태어난 끊김은 없다.
@@ -435,6 +441,122 @@ def split_recorded(breaks: Sequence[Break]) -> tuple[tuple[Break, ...],
     return fresh, kept
 
 
+# ──────────────────────────────────────────────────────────────────────────
+# ★ P-184/P-208 「사라진 사건을 가리키는 체인 행」 — **끊김이 아니다. 그래서 더 조용하다**
+#
+# 무엇을 적는가 [등재 2026-09-20 · 턴 Y · 차선 S]
+#   턴 X 에 내가 적은 한 줄이 이 등재의 출발점이다:
+#
+#       「체인은 **『이 행이 안 고쳐졌다』**를 증명할 뿐
+#         **『가리키는 대상이 아직 있다』는 증명하지 않는다.**」
+#
+#   감사 행 안에는 `event_id` 가 들어 있다(`data_before` · `data_after`). 그 사건이
+#   지워져도 **체인은 한 글자도 안 깨진다** — 해시는 그 행의 내용만 덮고, 사건 표는
+#   그 내용이 아니기 때문이다. 그래서 이 자리는 `RECORDED_BREAKS` 와 **성질이 다르다**:
+#   저쪽은 「깨진 것을 적는 장부」이고, 이쪽은 **「안 깨지는데도 못 믿을 자리를 적는 장부」**다.
+#
+# 왜 지우지 않나 — 그리고 왜 **고치지도** 않나
+#   · 감사 행을 지우는 것은 이 체인이 잡으려는 행위 그 자체다(P-191 · 대표 결정).
+#   · `event_id` 를 비우는 것도 **과거 행 수정**이다. 「가리키는 곳이 없으니 지운다」는
+#     한 번 통하면 다음에는 「내용이 틀렸으니 고친다」가 통한다.
+#   · 그래서 남긴다. 남긴 것을 **읽는 사람이 오해하지 않게 적는 것**이 이 장부의 일이다.
+#
+# 무엇이 사건을 지웠나 — 지운 것은 사고가 아니라 **결정**이다
+#   P-184(2026-09-20 · 대표 결정 「그대로 지운다」) 로 씨앗 사건 16건과 그 연쇄 177행을
+#   지웠다. 지우기 **전에** 지워질 것 전부를 증거로 떴다:
+#       docs/agent/evidence/P-184/deleted_probe_snapshot_20260920.json  (16+145+16+3행)
+#   즉 **되돌리진 못해도 무엇이 있었는지는 남는다.** 그 앞의 씨앗 정리들(4685~4789 계열)은
+#   더 오래된 것이고 스냅샷이 없다 — 그 사실도 함께 적는다. 없는 것을 있다고 적지 않는다.
+#
+# ⚠ **수는 늘어난다. 그것이 이 장부가 수를 열쇠로 쓰지 않는 이유다.**
+#   사건을 지울 때마다 이 수는 는다. `RECORDED_BREAKS` 는 64자 두 개를 열쇠로 써서
+#   「같은 자리에 새로 생긴 끊김」을 못 숨기지만, 여기서는 그런 열쇠를 만들 수 없다 —
+#   가리키는 대상이 **없다**는 것이 사실의 전부이기 때문이다. 그래서 수는 **그날 잰 값**으로
+#   적고, 다시 잴 때는 `dangling_event_refs()` 로 **다시 재서** 대조한다. 적힌 수를 믿지 않는다.
+#
+# ⚠ 화면 쪽은 이 파일이 안 한다. 「삭제된 사건(대표 결정 09-20)」으로 보이게 하는 것은
+#   U24 의 일이다(P-208). 여기서 하면 같은 판정이 두 벌이 된다(D-212).
+# ──────────────────────────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class DanglingNote:
+    """**가리키는 대상이 사라진** 체인 행들을 잰 한 판. 잰 날과 방법이 값 안에 있다."""
+
+    when: str                 # 잰 날
+    chain_rows: int           # 체인 행(두 칸 있는 행) 중 사라진 사건을 가리키는 수
+    table_rows: int           # 감사표 전체로 셌을 때의 수 (체인 밖 행 포함)
+    method: str               # 어떻게 셌나 — 방법이 다르면 수도 다르다
+    why: str                  # 왜 고치지 않고 적었나
+    snapshot: str = ""        # 지워진 것의 증거가 있다면 그 자리
+
+
+#: 잰 판들. **덮어쓰지 않고 쌓는다** — 수가 어떻게 움직였는지가 이 장부의 내용이다.
+RECORDED_DANGLING: tuple[DanglingNote, ...] = (
+    DanglingNote(
+        when="2026-09-20 (턴 X · 차선 S)",
+        chain_rows=29, table_rows=43,
+        method="★ **방법을 안 적었다.** 그 턴의 점검표에 수만 남았고 세는 식이 안 남았다 — "
+               "그래서 이 줄의 두 수는 **재현 못 한 수**다. 아래 턴 Y 판과 직접 빼지 마라.",
+        why="그 턴은 「체인은 가리키는 대상까지 증명하지 않는다」를 발견만 하고 넘겼다"),
+    DanglingNote(
+        when="2026-09-20 (턴 Y · 차선 S)",
+        chain_rows=32, table_rows=180,
+        method="`logger_name` 이 'guardianx.' 로 시작하는 행에서 `data_after`/`data_before` 의 "
+               "`event_id` 를 꺼내 `DetectionEvent` 전건(`_base_manager` · 소프트 삭제 포함)에 "
+               "있는지 본다. **체인 행**은 그중 `__hash__` 를 든 행이다 — 체인 시작 전의 "
+               "두 칸 없는 행 144개가 전체 수(180)와 체인 수(32)의 차이 대부분이다.",
+        why="★ 사건을 지운 것은 **대표 결정**이고(P-184 · 그 앞의 씨앗 정리들), 감사 행은 "
+            "지우지도 고치지도 않는다. 체인은 이 32행에 대해 여전히 초록이다 — "
+            "「안 고쳐졌다」는 참이고 「가리키는 곳이 있다」는 애초에 이 체인의 주장이 아니다. "
+            "수가 턴 X 의 29 보다 큰 것은 새 사고가 아니라 **세는 식이 다르고 그 뒤로 "
+            "사건이 더 지워졌기 때문**이다 — 둘 중 어느 쪽이 얼마인지는 모른다. 모르는 것을 "
+            "안다고 적지 않는다.",
+        snapshot="docs/agent/evidence/P-184/deleted_probe_snapshot_20260920.json "
+                 "(P-184 의 16건만. 그 앞 씨앗 정리에는 스냅샷이 없다)"),
+)
+
+
+def event_ref_of(row: dict) -> int | None:
+    """감사 행 하나가 가리키는 **사건 번호**. 순수 함수다 — DB 없이 시험한다.
+
+    `data_after` 를 먼저 본다. 상태 전이 행은 두 칸에 같은 `event_id` 를 들고,
+    `data_before` 만 든 행은 그 뒤에 온다.
+    """
+    for key in ("data_after", "data_before"):
+        payload = row.get(key)
+        if isinstance(payload, dict) and payload.get("event_id") is not None:
+            try:
+                return int(payload["event_id"])
+            except (TypeError, ValueError):
+                return None
+    return None
+
+
+def dangling_event_refs() -> dict:
+    """**지금 다시 잰다.** 위 장부의 수를 믿지 않는다 (⚠ 참조).
+
+    `{"chain_rows": N, "table_rows": N, "audit_ids": [...], "event_ids": [...]}`.
+    ⚠ 이것은 판정이 아니다 — **빨강을 내지 않는다.** 여기서 색을 내면 대표 결정으로
+      지운 사건이 매일 빨강이 되고, 그 빨강은 아무도 안 본다(D-301 형제).
+    """
+    from django.apps import apps
+
+    events = apps.get_model("stream_monitors", "DetectionEvent")
+    alive = set(events._base_manager.values_list("id", flat=True))
+    rows = list(_rows().values("id", "logger_name", "data_before", "data_after"))
+    table, chain, ids = [], [], set()
+    for row in rows:
+        ref = event_ref_of(row)
+        if ref is None or ref in alive:
+            continue
+        table.append(row["id"])
+        ids.add(ref)
+        if _chain_of(row.get("data_after"))[1]:
+            chain.append(row["id"])
+    return {"chain_rows": len(chain), "table_rows": len(table),
+            "audit_ids": sorted(chain), "event_ids": sorted(ids)}
+
+
 @dataclass(frozen=True)
 class ChainReport:
     """검증 한 번의 결과. `ok` 가 거짓이면 게이트는 exit 1 이다."""
@@ -465,10 +587,145 @@ class ChainReport:
 
 
 # ══════════════════════════════════════════════════════════════════════════
+# ★ P-202 — **시험은 운영 감사표에 한 행도 안 쓴다** (2026-09-20 · 턴 Y · 차선 S)
+#
+# 출생 표본 — 이 가드를 만든 것은 **내 사고다** [실측 2026-09-20 · 턴 X · 차선 S]
+# -------------------------------------------------------------------------
+#   시험 DB 다툼 가드의 첫 판이 「이 DB 에 누가 붙어 있나」를 **장고 연결로 물었다.**
+#   묻는 행위 자체가 그 뒤의 `create_test_db` 를 바꿨고, 시험 셋이 **운영 DB 에 붙어**
+#   운영 감사표로 `guardianx.test.law08_race` **219행**(03:53~03:55)을 썼다.
+#   그 무리 안에서 체인이 갈려 **새 끊김 1건**(#276795)이 났다 — 지우지 못하고 등재했다.
+#
+#   ★ **원인은 「쓰기」가 아니라 「묻기」였다.** 그래서 이 가드는 쓰기만 막지 않는다.
+#     묻는 것도 막는다. 「읽기는 안 깨뜨린다」는 말은 **체인에 대해서만** 참이고,
+#     연결을 여는 행위에 대해서는 거짓이다 — 여는 순간 다음 걸음이 바뀐다.
+#
+# 무엇을 하는가 — **이름 하나를 본다**
+# ------------------------------------
+#   시험 실행에서 감사표를 만질 때, 그 alias 가 지금 가리키는 DB 이름이 시험 DB 가
+#   아니면 **거기서 선다**(fail-closed). 쓰기는 한 행도 못 나가고, 묻기도 못 나간다.
+#
+#   ⚠ **연결을 열어서 묻지 않는다.** `connections[alias].settings_dict` 는 설정 딕셔너리이고
+#     읽는다고 연결이 서지 않는다. 이 자리에서 연결을 열면 이 가드가 **자기가 막으려는
+#     사고를 자기가 낸다** — 턴 X 가 정확히 그 모양이었다.
+#
+#   ⚠ 바닥(`TEST_DB_PREFIX`)을 `DB_TEST_NAME` 과 **함께** 본다. `DB_TEST_NAME` 만 보면
+#     누가 그 환경변수에 운영 DB 이름을 넣는 순간 가드가 통째로 열린다 — 환경변수 하나로
+#     끌 수 있는 가드는 결국 꺼진다(D-353).
+#
+# 왜 「안 무장하면 통과」가 회색이 아닌가
+# --------------------------------------
+#   신호가 **둘**이다. ① `conftest.pytest_configure` 가 명시로 무장한다.
+#   ② 그 conftest 가 안 읽히는 실행(rootdir 이 어긋나면 실제로 그렇다 — 시험 명령 메모의
+#   ⚠ 참조)에서도 `evidence_guard.under_pytest()` 는 참이다(환경 깃발 둘). 그 둘 중
+#   하나면 무장이다. 운영 프로세스에는 둘 다 없다 — 그래서 운영은 한 글자도 안 바뀐다.
+# ══════════════════════════════════════════════════════════════════════════
+
+#: 시험 DB 이름의 **바닥**. 장고가 짓는 이름도(`test_<운영이름>`) conftest 가 짓는 이름도
+#: 여기서 시작한다. 이 바닥은 `DB_TEST_NAME` 으로 못 내린다 (위 ⚠).
+TEST_DB_PREFIX = "test_"
+
+
+class AuditDbNotIsolated(RuntimeError):
+    """시험 실행이 **운영 감사표**를 만지려 했다 (P-202).
+
+    이 예외는 삼키지 않는다. 삼키면 그 시험은 「초록인데 운영 표에 행이 늘어 있는」
+    실행이 되고, 그 초록은 다음 사람이 영원히 못 찾는다.
+    """
+
+
+def audit_db_isolated(name: str, *, want: str = "") -> bool:
+    """이 DB 이름이 **시험 DB 인가.** 순수 함수다 — 장고도 DB 도 없이 시험한다.
+
+    갈래는 셋이 아니라 둘이다. **모르면 막는다** — 이름이 비어 있으면 거짓이다.
+    「못 읽었다」를 「괜찮다」로 접으면 가드가 조용히 사라지고, 조용히 사라진 가드는
+    있는 것보다 나쁘다(D-301 의 얼굴).
+
+    · `want`(= `DB_TEST_NAME`)가 있으면 그 **접두**여야 한다. 접미는 붙어도 된다 —
+      xdist 의 `_gw0` 와 다툼 가드의 `_p<pid>` 가 실제로 붙는다(`conftest.split_when_busy`).
+    · `want` 가 있든 없든 `test_` 바닥은 **언제나** 본다.
+    """
+    got = str(name or "")
+    if not got:
+        return False                       # 이름을 모르면 막는다
+    if not got.startswith(TEST_DB_PREFIX):
+        return False                       # 바닥은 환경변수로 못 내린다
+    wanted = str(want or "")
+    return got.startswith(wanted) if wanted else True
+
+
+_GUARD_ARMED = False
+
+
+def arm_audit_db_guard(*, armed: bool = True) -> None:
+    """가드를 켠다. `backend/conftest.py::pytest_configure` 가 부른다."""
+    global _GUARD_ARMED
+    _GUARD_ARMED = bool(armed)
+
+
+def guard_is_armed() -> bool:
+    """이 실행에서 가드가 도는가. **신호가 둘**인 이유는 머리말에 있다.
+
+    ★ 「지금 시험이 도는가」를 **여기서 따로 묻지 않는다** — 그 술어는
+      `common/evidence_guard.py` 한 자리에 있고(D-369), 두 벌은 반드시 어긋난다.
+      [실측 2026-09-20 · 턴 Y] 처음엔 시험 깃발 **하나**를 직접 봤다 —
+      `tests/test_evidence_guard.py::GuardLivesInOnePlaceTest` 가 그 복사본을 잡았고,
+      잡히고 보니 **저쪽이 더 좋았다**: `under_pytest()` 는 깃발 둘을 보아
+      수집·픽스처·세션 마무리까지 덮는다. 턴 X 의 사고가 난 자리가 바로
+      **픽스처 안**이다 — 시험 하나가 도는 동안만 서는 깃발 하나로는 그 창이 비었다.
+
+    ⚠ 그 모듈을 못 읽어도 **명시 무장**(conftest)은 그대로 산다.
+    """
+    if _GUARD_ARMED:
+        return True
+    try:
+        from common import evidence_guard
+    except Exception:                    # noqa: BLE001
+        return False
+    return evidence_guard.under_pytest()
+
+
+def audit_db_name(alias: str = "default") -> str:
+    """그 alias 가 **지금 가리키는** DB 이름.
+
+    ⚠ 연결을 열지 않는다. `connections[alias]` 는 래퍼를 만들 뿐이고
+      `settings_dict` 는 딕셔너리다 — 여는 것이 아니라 **읽는다**.
+    """
+    from django.db import connections
+
+    return str(connections[alias].settings_dict.get("NAME") or "")
+
+
+def guard_audit_db(*, doing: str, alias: str = "default") -> None:
+    """감사표를 만지기 **직전에** 선다 (P-202). 무장 안 된 실행에서는 아무 일도 안 한다.
+
+    `doing` 은 「쓰기」 · 「묻기」 처럼 **사람이 읽는 한 낱말**이다. 예외문에 그대로 실린다 —
+    다음 사람이 빨강을 보고 「쓰기만 막으면 되는 것 아닌가」로 읽지 않게 하려는 것이다.
+    """
+    if not guard_is_armed():
+        return
+    want = os.environ.get("DB_TEST_NAME", "")
+    name = audit_db_name(alias)
+    if audit_db_isolated(name, want=want):
+        return
+    raise AuditDbNotIsolated(
+        f"[P-202] 시험 실행이 감사표를 «{doing}» 하려 했는데 alias «{alias}» 가 가리키는 DB 는 "
+        f"«{name or '(이름 없음)'}» 다 — 시험 DB 가 아니다"
+        + (f" (DB_TEST_NAME={want} 접두여야 한다)" if want else
+           f" ('{TEST_DB_PREFIX}' 로 시작해야 한다)")
+        + ". 여기서 선다: 시험이 운영 감사표에 행을 남기면 그 행은 **지울 수도 고칠 수도 없고**"
+        " 체인이 갈린다. 턴 X 에 실제로 219행이 샜고 끊김 #276795 가 났다. "
+        "쓰기만이 아니라 **묻는 것도** 막는다 — 그 사고의 원인이 묻는 행위였다")
+
+
+# ══════════════════════════════════════════════════════════════════════════
 # 2. 표에 붙는 부분 — 여기서만 `logger.AuditLogs` 를 만진다.
 # ══════════════════════════════════════════════════════════════════════════
 
 def _model():
+    # ★ P-202 — 감사표를 가리키는 순간 먼저 선다. 이 파일의 질의가 전부
+    #   여기를 지나므로(`_rows` · `_hashed_head` · `verify_chain` …) **묻는 행위도** 막힌다.
+    guard_audit_db(doing="묻기")
     from django.apps import apps
 
     return apps.get_model("logger", "AuditLogs")

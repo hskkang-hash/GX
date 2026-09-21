@@ -351,12 +351,59 @@ def ab_alternate(api_a: str, api_b: str, token: str, *, pairs: int,
                 s = perf_load.run_scenario(api, token, key,
                                            concurrency=concurrency, rounds=rounds)
                 row[key] = {"p50_ms": s["p50_ms"], "p95_ms": s["p95_ms"],
-                            "errors": s["errors"]}
+                            "errors": s["errors"],
+                            #: ★ 오류의 **모양**까지 들고 온다. 「몇 건」만으로는
+                            #:   세션이 끊긴 401 과 제품이 터진 5xx 를 못 가른다.
+                            "error_detail": s["error_detail"],
+                            "requests": s["requests"]}
             got[arm].append(row)
-            print("    %s 벌%d %-28s %s" % (arm, i + 1, api,
+            bad = sum(row[k]["errors"] for k in perf_load.SCENARIOS)
+            print("    %s 벌%d %-28s %s%s" % (arm, i + 1, api,
                   " · ".join("%s p50 %6.1f" % (k, row[k]["p50_ms"])
-                             for k in sorted(perf_load.SCENARIOS))))
+                             for k in sorted(perf_load.SCENARIOS)),
+                  "" if not bad else "   ← **오류 %d건** (이 줄의 수는 수가 아니다)" % bad))
     return got
+
+
+#: 세션이 끊겼을 때의 상태줄. 이 저장소는 **동시 접속 1개**라, 재는 동안 누가 로그인하면
+#: 내 토큰이 죽고 **그 다음 요청이 전부 401** 이 된다 (D-460 계열 · UX-24).
+SESSION_LOST_STATUSES = ("401", "403")
+
+
+def ab_error_face(got: dict) -> tuple[int, int, str, list[str]]:
+    """A/B 두 팔의 오류를 세고 **이름**을 붙인다. `(오류, 요청, 이름, 본 상태들)`.
+
+    왜 이 함수가 있어야 하나 — [실측 2026-09-20 16:28 · 이 도구가 낸 파일]
+    ------------------------------------------------------------------
+    `ab_turny_F_switch_only.json` 은 요청 3,200건 중 **1,970건이 오류**였다.
+    첫 쌍만 성공하고 그 뒤로는 **250/250 전부 실패**였다 — 재는 동안 남이 로그인해서
+    세션이 끊긴 모양이다. 그런데 이 도구는 **「A 는 B 의 −11.2%」를 깨끗하게 찍었다.**
+    실패한 응답의 왕복 시간을 p50 으로 접어서 퍼센트를 낸 것이다.
+
+    **그것은 수가 아니다.** 안 눌린 자리에 수가 적히던 `perf_load` 의 구멍과 **같은 병**이고,
+    같은 처방을 쓴다: **오류가 있으면 차를 아예 안 낸다.**
+
+    ★ 색을 가른다 — 401/403 뿐이면 **환경**(세션이 끊겼다 · 회색)이고, 그 밖이 섞이면
+      **제품**(빨강)이다. 둘을 섞으면 「환경을 세우면 사라지는 빨강」이 쌓이고,
+      그런 빨강을 몇 번 본 사람은 도구를 끈다.
+    """
+    errors = requests = 0
+    statuses: Counter = Counter()
+    for rows in got.values():
+        for row in rows:
+            for key, cell in row.items():
+                if not isinstance(cell, dict) or "errors" not in cell:
+                    continue
+                errors += cell["errors"]
+                requests += cell.get("requests", 0)
+                for line in cell.get("error_detail") or []:
+                    statuses[line.rsplit("->", 1)[-1].strip()] += 1
+    seen = sorted(statuses)
+    if not errors:
+        return 0, requests, "ok", seen
+    if seen and all(s in SESSION_LOST_STATUSES for s in seen):
+        return errors, requests, "session_lost", seen
+    return errors, requests, "product", seen
 
 
 def ab_inproc(client_factory, path: str, token: str, *, reps: int, pairs: int) -> dict:
@@ -389,6 +436,91 @@ def ab_inproc(client_factory, path: str, token: str, *, reps: int, pairs: int) -
     return out
 
 
+#: 이 기계에서 **증명할 수 있는 최소 효과**(%). 턴 X 에 차선 F 가 잰 상한이다 —
+#: 남의 pytest 한 벌과 재기동 둘이 잡음을 5%↔47% 로 갈랐다. 그 아래는 못 가른다.
+#: 「고쳐도 효과가 없다」가 아니라 **「이 자로는 못 잰다」**이고, 둘을 섞어 적지 않는다.
+AB_FLOOR_PCT = 5.0
+
+#: ★ **쌍이 이만큼은 있어야 「한 방향」이 뜻을 가진다.** 쌍 하나는 언제나 «1/1 한 방향»
+#:   이다 — 그것은 판정이 아니라 **동어반복**이다. 쌍 n 개가 우연히 한 방향일 확률은
+#:   2/2**n 이니 n=5 에서 6.25%, n=1 에서는 **100%**다. [이 줄은 워밍업 한 벌이
+#:   «증명» 이라 적는 것을 보고 그 자리에서 박았다 — 자기 자를 자기가 속인 자리다.]
+AB_MIN_PAIRS = 5
+
+
+def paired_verdict(a_vals: list, b_vals: list, floor_pct: float = AB_FLOOR_PCT,
+                   a_errs: list | None = None, b_errs: list | None = None) -> dict:
+    """쌍마다 붙여 잰 A·B 에서 **「증명했는가」를 셈이 아니라 세어서** 판정한다.
+
+    왜 가운데값의 차로는 부족한가 — A 여섯 벌의 가운데와 B 여섯 벌의 가운데를 빼면
+    **두 팔의 표류가 안 지워진다.** A·B·A·B 로 붙여 잰 뜻이 거기 있는데, 가운데를
+    먼저 접으면 그 붙임이 사라진다. 그래서 **쌍 안에서 먼저 빼고**, 그 다음에 센다.
+
+    판정은 둘을 **모두** 요구한다:
+      ① **방향이 한결같은가** — 쌍마다 같은 팔이 빨라야 한다. 한 쌍이라도 뒤집히면
+         그것은 효과가 아니라 잡음이다(쌍 n 개가 우연히 한 방향일 확률 = 2/2**n).
+      ② **크기가 이 자의 눈금을 넘는가** — 쌍별 차의 가운데값이 `floor_pct` 이상.
+
+    ①만 있고 ②가 없으면 **「방향은 보이는데 크기를 못 말한다」**이지 증명이 아니다.
+    ②만 있고 ①이 없으면 큰 수 한 벌이 가운데를 끌어당긴 것이다 — 더욱 증명이 아니다.
+    **못 증명한 것을 「효과 없음」으로도 적지 않는다** — 안 보이는 것과 없는 것은 다르다.
+    """
+    #: ★★ **오류가 난 쌍은 수가 아니다 — 먼저 버린다.** `perf_load.judge` 가 이미
+    #:   «오류 N건 — 느린 것보다 틀린 것이 먼저다» 라고 적어 두었는데, 이 함수는
+    #:   처음에 그것을 안 봤다. [실측 2026-09-20 턴 Y: 토큰이 중간에 죽어 쌍 4~8 이
+    #:   **양팔 모두 50/50 오류**였고, 오류 응답은 **짧은 길로 빨리 돌아온다.** 그 위에서
+    #:   이 함수가 «쌍 8/8 한 방향 · 증명» 을 찍었다 — **빨강을 초록으로 바꾼 것**이다.]
+    dropped = 0
+    if a_errs is not None and b_errs is not None:
+        keep = [i for i in range(min(len(a_vals), len(b_vals)))
+                if not (a_errs[i] or b_errs[i])]
+        dropped = min(len(a_vals), len(b_vals)) - len(keep)
+        a_vals = [a_vals[i] for i in keep]
+        b_vals = [b_vals[i] for i in keep]
+    n = min(len(a_vals), len(b_vals))
+    if n == 0:
+        return {"n": 0, "verdict": "못 증명", "dropped_pairs": dropped,
+                "why": "성한 쌍이 0 이다 — 버린 쌍 %d (오류)" % dropped if dropped
+                       else "쌍이 0 이다 — 아무것도 안 쟀다",
+                "a_faster": 0, "b_faster": 0, "median_delta_pct": 0.0,
+                "deltas_pct": [], "floor_pct": floor_pct}
+    deltas = []
+    for a, b in zip(a_vals[:n], b_vals[:n]):
+        deltas.append(100.0 * (a - b) / b if b else 0.0)
+    a_faster = sum(1 for d in deltas if d < 0)      # A 가 작다 = A 가 빠르다
+    b_faster = sum(1 for d in deltas if d > 0)
+    med = statistics.median(deltas)
+    consistent = ((a_faster == n) or (b_faster == n)) and n >= AB_MIN_PAIRS
+    if n < AB_MIN_PAIRS:
+        return {"n": n, "deltas_pct": [round(100.0 * (a - b) / b if b else 0.0, 1)
+                                       for a, b in zip(a_vals[:n], b_vals[:n])],
+                "a_faster": a_faster, "b_faster": b_faster,
+                "median_delta_pct": round(statistics.median(deltas), 1),
+                "floor_pct": floor_pct, "verdict": "못 증명", "dropped_pairs": dropped,
+                "why": "쌍이 %d 개다 — %d 쌍 미만에서는 «한 방향»이 동어반복이다"
+                       % (n, AB_MIN_PAIRS)}
+    big = abs(med) >= floor_pct
+    if consistent and big:
+        verdict = "증명"
+        why = "쌍 %d/%d 이 한 방향이고 가운데 %+.1f%% 가 %.1f%% 를 넘는다" % (
+            max(a_faster, b_faster), n, med, floor_pct)
+    elif consistent:
+        verdict = "못 증명"
+        why = "방향은 %d/%d 로 한결같지만 가운데 %+.1f%% 가 이 자의 눈금(%.1f%%) 아래다" % (
+            max(a_faster, b_faster), n, med, floor_pct)
+    else:
+        verdict = "못 증명"
+        why = "쌍마다 방향이 갈린다 (A 빠름 %d · B 빠름 %d / %d) — 잡음이다" % (
+            a_faster, b_faster, n)
+    if dropped:
+        why += " · **오류로 버린 쌍 %d**" % dropped
+    return {"n": n, "deltas_pct": [round(d, 1) for d in deltas],
+            "a_faster": a_faster, "b_faster": b_faster,
+            "median_delta_pct": round(med, 1), "floor_pct": floor_pct,
+            "dropped_pairs": dropped,
+            "verdict": verdict, "why": why}
+
+
 def self_test() -> int:
     fails = 0
     cases = [
@@ -411,6 +543,54 @@ def self_test() -> int:
          {"/api/dsm/dashboard/link-state", "/api/dsm/events/queue",
           "/api/dsm/events?limit=50"} <= {p for _n, p in TARGETS}),
         ("빈 조각표에서 0 으로 안 나눈다", judge({}, nplus1=0)[0] == "분산"),
+        ("★★ 오류가 난 쌍은 버린다 — 성한 쌍이 눈금 아래로 내려가면 «못 증명»",
+         paired_verdict([50.0] * 8, [100.0] * 8, a_errs=[0, 0, 0, 50, 50, 50, 50, 50],
+                        b_errs=[0] * 8)["verdict"] == "못 증명"),
+        ("★★ 버린 쌍 수를 말한다 — 조용히 안 버린다",
+         paired_verdict([50.0] * 8, [100.0] * 8, a_errs=[0, 0, 0, 50, 50, 50, 50, 50],
+                        b_errs=[0] * 8)["dropped_pairs"] == 5),
+        ("★★ 오류가 0 이면 예전과 똑같이 판정한다 (음성 대조)",
+         paired_verdict([80.0] * 6, [100.0] * 6, a_errs=[0] * 6,
+                        b_errs=[0] * 6)["verdict"] == "증명"),
+        ("★ 쌍마다 방향이 갈리면 «못 증명» 이다 (크기가 커도)",
+         paired_verdict([100.0, 50.0], [50.0, 100.0])["verdict"] == "못 증명"),
+        ("★ 방향이 한결같아도 눈금 아래면 «못 증명» 이다 — 이 자로는 못 잰다",
+         paired_verdict([99.0] * 6, [100.0] * 6)["verdict"] == "못 증명"),
+        ("★ 한결같고 눈금을 넘으면 «증명» 이다 (양성 대조)",
+         paired_verdict([80.0, 82.0, 79.0, 81.0, 83.0],
+                        [100.0] * 5)["verdict"] == "증명"),
+        ("★★ 쌍 하나로는 «못 증명» 이다 — 1/1 «한 방향» 은 동어반복이다 (워밍업이 잡았다)",
+         paired_verdict([50.0], [100.0])["verdict"] == "못 증명"),
+        ("★★ 쌍 넷도 모자란다 — 눈금은 %d 쌍이다" % AB_MIN_PAIRS,
+         paired_verdict([80.0] * 4, [100.0] * 4)["verdict"] == "못 증명"),
+        ("★★ 쌍 다섯이 한 방향이고 크면 «증명» 이다 (양성 대조 · 경계)",
+         paired_verdict([80.0] * 5, [100.0] * 5)["verdict"] == "증명"),
+        ("★ 쌍이 0 이면 «못 증명» 이다 — 안 잰 것이 통과가 되지 않는다",
+         paired_verdict([], [])["verdict"] == "못 증명"),
+        ("★ 어느 팔이 빨랐는지 센다 (A 가 작으면 A 빠름)",
+         paired_verdict([80.0] * 6, [100.0] * 6)["a_faster"] == 6),
+
+        # ── [2026-09-20 16:28 실측] 실패한 응답의 시간으로 차를 내지 않는다 ──────
+        ("오류 0 이면 통과다",
+         ab_error_face({"A": [{"pair": 1, "S1": {"errors": 0, "requests": 50,
+                                                 "error_detail": []}}]})[2] == "ok"),
+        ("★ 401 뿐이면 **환경**이다 — 세션이 끊긴 것이지 제품이 아니다",
+         ab_error_face({"A": [{"pair": 1, "S1": {"errors": 50, "requests": 50,
+                       "error_detail": ["/api/x -> 401"]}}]})[2] == "session_lost"),
+        ("★ 5xx 가 섞이면 **제품**이다 (환경으로 덮지 않는다)",
+         ab_error_face({"A": [{"pair": 1, "S1": {"errors": 50, "requests": 50,
+                       "error_detail": ["/api/x -> 401", "/api/y -> 500"]}}]})[2] == "product"),
+        ("★ 오류 건수와 분모를 함께 센다",
+         ab_error_face({"A": [{"pair": 1, "S1": {"errors": 7, "requests": 50,
+                       "error_detail": ["/api/x -> 401"]}}]})[:2] == (7, 50)),
+        ("★ 상태를 못 읽으면 **제품**으로 둔다 (모르는 것을 환경으로 봐주지 않는다)",
+         ab_error_face({"A": [{"pair": 1, "S1": {"errors": 3, "requests": 50,
+                       "error_detail": []}}]})[2] == "product"),
+        ("★ 그날 그 파일이 지금은 회색이 된다 (16:28 벌 재현)",
+         ab_error_face({"A": [{"pair": 1, "S1": {"errors": 250, "requests": 250,
+                       "error_detail": ["/api/dsm/events?limit=50 -> 401"]}}],
+                        "B": [{"pair": 1, "S1": {"errors": 250, "requests": 250,
+                       "error_detail": ["/api/dsm/events/summary -> 401"]}}]})[2] == "session_lost"),
     ]
     for label, ok in cases:
         print("  %-4s %s" % ("OK" if ok else "FAIL", label))
@@ -432,6 +612,8 @@ def main() -> int:
     ap.add_argument("--ab-pairs", type=int, default=3)
     ap.add_argument("--ab-concurrency", type=int, default=10)
     ap.add_argument("--ab-rounds", type=int, default=5)
+    ap.add_argument("--ab-floor-pct", type=float, default=AB_FLOOR_PCT,
+                    help="이 기계에서 증명할 수 있는 최소 효과(백분율). 그 아래는 «못 증명»이다")
     ap.add_argument("--sweep", default="", help="이 자리를 동시 N 을 올려 가며 HTTP 로 잰다")
     ap.add_argument("--concs", default="1,2,5,10", help="--sweep 의 동시 수들")
     ap.add_argument("--rounds", type=int, default=10, help="--sweep 의 라운드")
@@ -479,7 +661,39 @@ def main() -> int:
                            concurrency=args.ab_concurrency, rounds=args.ab_rounds)
         import perf_load as _pl                             # noqa: PLC0415
 
-        print("%s 시나리오별 가운데값 (쌍 %d)" % (TAG, args.ab_pairs))
+        #: ★★ [2026-09-20 16:28 · 실측] **오류가 있으면 차를 아예 안 낸다.**
+        #:   그 시각 이 도구가 낸 `ab_turny_F_switch_only.json` 은 요청 3,200건 중
+        #:   **1,970건이 오류**였다(첫 쌍만 성공하고 뒤로는 250/250 전부 실패 — 재는
+        #:   동안 남이 로그인해 세션이 끊긴 모양). 그런데 이 자리는 **「A 는 B 의
+        #:   −11.2%」를 깨끗하게 찍었다.** 실패한 응답의 왕복 시간을 p50 으로 접은 것이다.
+        #:   안 눌린 자리에 수가 적히던 `perf_load` 의 구멍과 **같은 병**이고 같은 처방이다.
+        bad, reqs, face, seen = ab_error_face(got)
+        if bad:
+            print("%s ✗ 오류 **%d/%d건** · 본 상태 %s" % (TAG, bad, reqs, ", ".join(seen) or "미상"))
+            for arm in ("A", "B"):
+                for row in got[arm]:
+                    for k in sorted(_pl.SCENARIOS):
+                        if row[k]["errors"]:
+                            print("      %s 벌%d %-3s 오류 %d건 %s"
+                                  % (arm, row["pair"], k, row[k]["errors"],
+                                     " · ".join(row[k].get("error_detail") or [])[:90]))
+                            break
+            #: ⚠ **안 썼다는 것을 말한다** — 안 쓰면 그 경로의 옛 파일이 그대로 남고,
+            #:   남은 파일은 방금 잰 것처럼 보인다(`perf_load` 와 같은 처방 · §9).
+            if args.out:
+                print("%s ⚠ `%s` 에 **아무것도 안 썼다.** 그 경로에 옛 파일이 있으면 "
+                      "그것은 **이번 수가 아니다** — `measured_at` 을 보고 쓰라." % (TAG, args.out))
+            if face == "session_lost":
+                print("%s **판정 불가(회색)** — 전부 %s 다. 재는 동안 **세션이 끊겼다** "
+                      "(이 저장소는 동시 접속 1개다 · 남이 로그인했다). 제품의 수가 아니다."
+                      % (TAG, "/".join(seen)))
+                print("%s ⚠ 이 벌의 p50 은 **실패 응답의 왕복 시간**이다 — 차를 내지 않는다." % TAG)
+                return EXIT_GRAY
+            print("%s **빨강** — 오류에 %s 가 섞였다. 느린 것보다 **틀린 것**이 먼저다."
+                  % (TAG, "/".join(seen)))
+            return EXIT_RED
+
+        print("%s 시나리오별 가운데값 (쌍 %d) · 오류 0/%d건" % (TAG, args.ab_pairs, reqs))
         summary = {}
         for key in sorted(_pl.SCENARIOS):
             a = statistics.median([r[key]["p50_ms"] for r in got["A"]])
@@ -487,10 +701,18 @@ def main() -> int:
             a95 = statistics.median([r[key]["p95_ms"] for r in got["A"]])
             b95 = statistics.median([r[key]["p95_ms"] for r in got["B"]])
             delta = 100.0 * (a - b) / b if b else 0.0
+            pv = paired_verdict([r[key]["p50_ms"] for r in got["A"]],
+                                [r[key]["p50_ms"] for r in got["B"]],
+                                floor_pct=args.ab_floor_pct,
+                                a_errs=[r[key]["errors"] for r in got["A"]],
+                                b_errs=[r[key]["errors"] for r in got["B"]])
             summary[key] = {"A_p50": a, "B_p50": b, "A_p95": a95, "B_p95": b95,
-                            "delta_pct_vs_B": round(delta, 1)}
+                            "delta_pct_vs_B": round(delta, 1), "paired": pv}
             print("    %-3s  A p50 %7.1f (p95 %7.1f) · B p50 %7.1f (p95 %7.1f) · A는 B의 %+.1f%%"
                   % (key, a, a95, b, b95, delta))
+            print("         쌍판정 **%s** — %s · 쌍별 %s"
+                  % (pv["verdict"], pv["why"],
+                     " ".join("%+.1f%%" % d for d in pv["deltas_pct"])))
         if args.out:
             out = Path(args.out)
             out.parent.mkdir(parents=True, exist_ok=True)

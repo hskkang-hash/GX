@@ -57,6 +57,16 @@ export interface EventRow {
    *   그전까지 W1 「미처리」 프리셋을 **서버가 걸러 줄 수 없었다**(온보딩 U2 #2).
    */
   response_state: string;
+  /**
+   * ★ P-201 (2026-09-20) — 이 사건의 **출처** (`live` · `drill`).
+   *
+   *   종전엔 상세에만 있었다. 그래서 목록과 큐는 훈련 사건을 실사건과 **같은
+   *   카드**로 그렸고, 관제요원은 한 건씩 열어봐야 가를 수 있었다.
+   *   그리는 말은 `copy.ts::dataSourceBadge` 가 정한다 — 화면이 영문 열거값을
+   *   그대로 찍지 않는다(GX-COPY §2 · 「실운영 / 시드(검수용) / 훈련」).
+   *   서버가 안 보내는 응답도 있었으므로(옵션) 화면은 없으면 **그리지 않는다.**
+   */
+  data_source?: string;
 }
 
 export interface EventDetailView extends EventRow {
@@ -173,6 +183,12 @@ export interface QueueCard {
   window_seconds: number;
   /** `focus` 에만 있다. 서버가 주는 전이표 — 화면이 자기 표를 들지 않는다(D-399). */
   allowed_next?: string[];
+  /**
+   * ★ P-201 — **훈련 사건은 큐에 선다**(제품이 센다). 그래서 그 카드가
+   *   「훈련」이라고 **말해야** 한다 — 안 말하면 관제요원은 훈련을 재난으로 읽고
+   *   사람을 보낸다. `live` 면 배지를 안 단다 — 평상에 배지를 붙이면 배지가 뜻을 잃는다.
+   */
+  data_source?: string;
 }
 
 export interface FocusQueue {

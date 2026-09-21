@@ -59,10 +59,12 @@ const { RangePicker } = DatePicker;
  * `chain`. **`types.ts` 를 넓히지 않는다** — 그 파일은 이번 턴 U24 소유가 아니다
  * (한 파일은 한 차선). 여기서 교차로 넓혀 쓴다.
  */
-type AuditRow = AuditItem & AuditChainColumns;
+type AuditRow = AuditItem & AuditChainColumns & { target?: AuditTarget | null };
 type AuditPageWithChain = AuditPage & {
   chain_states?: AuditChainCounts;
   chain_scan_capped?: boolean;
+  /** 턴 Y — 대상 갈래 넷의 **분모**. 0 건인 갈래도 그대로 적는다(D-301). */
+  target_states?: Record<string, number>;
 };
 
 /** 해시를 화면에 적는 길이 — **앞 12자**. 자르는 것은 화면의 몫이고 서버는 전체를 낸다. */
@@ -74,6 +76,47 @@ const CHAIN_WORD: Record<string, { label: string; color: string }> = {
   broken: { label: '체인 끊김', color: 'red' },
   unchained: { label: '체인 이전 행', color: 'default' },
   unknown: { label: '체인 모름', color: 'orange' },
+};
+
+/**
+ * ★★ [턴 Y · P-208 U24 ①] **「대상」 칸 — 삭제된 사건을 「없음」이라고 적지 않는다.**
+ *
+ * 대표 결정으로 09-19~20 에 씨앗 177행이 지워졌고, 그 사건들을 가리키는 감사 행은
+ * **그대로 남아 있다**(지우지 않는다 — 감사는 줄지 않는다). 차선 S 가 적었듯 해시
+ * 체인은 「이 행이 안 고쳐졌다」만 증명하고 **「가리키는 대상이 아직 있다」는 증명하지
+ * 않는다.** 그런데 화면은 그 사실을 한 자도 말하지 않고 `upper_report:set:231073` 만
+ * 적어 두었다 — 묻지 않으면 사람은 **아직 있는 것으로 읽는다.** 그것이 거짓말이다.
+ *
+ * ★ **수는 한 건도 안 바뀐다.** 전체 N건 · 쪽 수 · 이 표의 행 수 전부 그대로다.
+ *   바뀌는 것은 **그 0 이 무엇인지 말하는 것**뿐이다.
+ *
+ * ★ 갈래가 **셋**이다 — 둘로 줄이면 또 거짓말이 된다:
+ *     live                 아직 있다
+ *     deleted_by_decision  없다 **그리고** 09-20 스냅샷에 그 id 가 있다  ← 여기만 「대표 결정」
+ *     gone                 없다 **그리고** 스냅샷에 없다  ← 회색이다. 「대표가 지웠다」가 아니다
+ *   「없으면 삭제된 것」으로 적으면 기록 없이 사라진 행까지 대표 결정의 근거로 읽힌다.
+ */
+type AuditTarget = {
+  kind: string;
+  event_id: number;
+  state: 'live' | 'deleted_by_decision' | 'gone';
+  decision: string | null;
+  decided_on: string | null;
+  snapshot: string | null;
+};
+
+/** 대상 갈래 셋의 우리말. **「모른다」를 지우지 않는다**(체인 칸과 같은 규율). */
+const TARGET_WORD: Record<
+  AuditTarget['state'],
+  { label: string; color: string; note: (t: AuditTarget) => string }
+> = {
+  live: { label: '사건', color: 'default', note: () => '' },
+  deleted_by_decision: {
+    label: '삭제된 사건',
+    color: 'purple',
+    note: (t) => `${t.decision ?? '대표 결정'} ${(t.decided_on ?? '').slice(5)} · 스냅샷 있음`,
+  },
+  gone: { label: '사라진 사건', color: 'orange', note: () => '기록된 결정 없음' },
 };
 
 /** 정본 문턱 — 「60초 안 도달」. 화면이 이 수를 재지 않는다 — 지시서(P-164)가 정한 수다. */
@@ -148,6 +191,11 @@ export default function AuditLog() {
   const rows = (audit.data?.items ?? []) as AuditRow[];
   const reached = reachSeconds !== null && reachOutcome === 'ok' && reachSeconds <= REACH_LIMIT_SECONDS;
   const chain = audit.data?.chain_states ?? null;
+  /**
+   * 턴 Y — 「대상」의 **분모**. 0 건인 갈래를 지우지 않는다: 「이 쪽에는 삭제된 사건을
+   * 가리키는 행이 없었다」와 「그런 행을 세지 않았다」는 다른 사실이다 (D-301).
+   */
+  const targets = audit.data?.target_states ?? null;
 
   /**
    * 「표 내려받기」 — **서버 라우트**가 같은 필터로 낸다(`GET /api/dsm/audit/export.csv`).
@@ -280,6 +328,16 @@ export default function AuditLog() {
               )}
             </>
           )}
+          {/* ── 대상 분모 — 사건을 가리키는 행이 이 쪽에 몇이고, 그중 몇이 사라졌나 ── */}
+          {targets && (
+            <>
+              <Text type="secondary">대상</Text>
+              <Tag color={(targets.deleted_by_decision ?? 0) + (targets.gone ?? 0) > 0 ? 'orange' : 'green'}>
+                사건 가리킴 {(targets.live ?? 0) + (targets.deleted_by_decision ?? 0) + (targets.gone ?? 0)} ·
+                {' '}삭제된 사건 {targets.deleted_by_decision ?? 0} · 사라짐 {targets.gone ?? 0}
+              </Tag>
+            </>
+          )}
         </Space>
       </Card>
 
@@ -319,6 +377,33 @@ export default function AuditLog() {
                   v === 'allowed' ? <Tag color="green">성공</Tag> : <Tag color="orange">막힘</Tag>,
               },
               { title: '행위', dataIndex: 'action', ellipsis: true },
+              {
+                /**
+                 * 「대상」 — 이 행이 가리키는 사건이 **아직 있는가.**
+                 * 가리키는 것이 없는 행(설정 변경 등)은 `—` 다: 「대상이 사라졌다」와
+                 * 「대상이 애초에 없다」를 같은 글자로 적지 않는다.
+                 */
+                title: '대상',
+                width: 210,
+                render: (_: unknown, r) => {
+                  const t = r.target;
+                  if (!t) return <Text type="secondary">—</Text>;
+                  const word = TARGET_WORD[t.state] ?? TARGET_WORD.gone;
+                  const note = word.note(t);
+                  return (
+                    <Space direction="vertical" size={0}>
+                      <Tag color={word.color}>
+                        {word.label} #{t.event_id}
+                      </Tag>
+                      {note && (
+                        <Text type="secondary" style={{ fontSize: 11 }}>
+                          {note}
+                        </Text>
+                      )}
+                    </Space>
+                  );
+                },
+              },
               {
                 title: '행위자',
                 dataIndex: 'actor',

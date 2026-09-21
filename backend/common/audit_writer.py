@@ -55,6 +55,10 @@ class AuditEntry:
 
 
 def _model():
+    # ★ P-202 — 시험 실행이 **운영** 감사표를 가리키면 여기서 선다.
+    #   `write` 도 `read` 도 이 문을 지나므로 **묻는 행위까지** 같이 막힌다 —
+    #   턴 X 사고의 원인은 「쓰기」가 아니라 「묻기」였다(`evidence_chain` P-202 머리말).
+    evidence_chain.guard_audit_db(doing="묻기")
     return apps.get_model("logger", "AuditLogs")
 
 
@@ -84,6 +88,12 @@ def write(
         raise ValueError(
             f"outcome={outcome!r} 은 감사 판정이 아니다. 허용: {ALLOWED} · {DENIED}. "
             f"제3의 값을 만들면 '성공·실패 모두' 라는 집계가 갈린다")
+
+    # ★ P-202 — **트랜잭션을 열기 전에** 선다. 아래 `_model()` 에도 같은 그물이
+    #   있지만 그것은 이미 잠금 구간 안이다. 여기서 먼저 서야
+    #   「쓰기 전에 예외」(fail-closed)가 **글자 그대로** 성립한다 — 운영 DB 에
+    #   트랜잭션도 안 열고, advisory lock 도 안 걸고, INSERT 도 안 한다.
+    evidence_chain.guard_audit_db(doing="쓰기")
 
     with transaction.atomic():
         # ★ P-191 / 턴 X — **INSERT 를 잠금 구간 안으로 들인다.** 두 가지가 같이 고쳐진다:

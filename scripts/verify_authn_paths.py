@@ -344,6 +344,11 @@ if __name__ == "__main__":
     from _gate_header import gate_header, account_as  # P-107 — TARGET/AS/SOURCE
     gate_header(
         __file__,
+        measured=("인증 경로 대장의 **면 넷**을 잰다 — ① 화면 번들이 부르는 로그인 주소 "
+                  "② 제품 로그인 토큰이 문을 여는가 ③ `/api/token/pair` 기생 갈래 "
+                  "④ 월 표시 토큰은 읽기만 여는가 · **분모 %d**(선언된 쓰기 라우트 · 면 ④) "
+                  "— **자격증명이 없으면 ②③④는 분모 0이고 이 게이트는 회색(2)을 낸다**"
+                  % len(SHADOWED_WRITE_ROUTES)),
         target=os.environ.get("GX_API", "http://localhost:8000") + " (gx-shell 안 · 호스트에 포트가 없다)",
         as_=account_as(),
         source="살아 있는 서버 응답 (HTTP) — 사진도 손 목록도 아니다",

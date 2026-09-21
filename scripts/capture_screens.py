@@ -702,6 +702,13 @@ def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
         SEEDED_EVENT_IDS.append(result.event_id)
         SEED_SPEC.setdefault("events", []).append({
             "event_id": result.event_id,
+            #: ★★ [P-205 · 2026-09-20 · 턴 Y · 차선 Q ↔ U1] **제품이 이 행을 뭐라 부르나.**
+            #:   U1 이 이 턴에 훈련 표식(`data_source=drill` · P-201)을 세웠다. 씨앗 명세가
+            #:   그 값을 안 나르면, 뒤 도구는 「이 씨앗이 훈련인가 실운영인가」를 **짐작**해야
+            #:   한다 — 그리고 짐작한 쪽은 계량기(`metering`)가 청구에서 무엇을 빼는지와
+            #:   갈린다. 그래서 **제품 함수가 낸 답을 그대로** 적는다(우리가 정하지 않는다).
+            #:   못 읽으면 `null` 과 사유를 적는다 — 「live」로 지어내지 않는다(D-301).
+            "data_source": _event_data_source_of(result.event_id),
             "event_type": ("fire" if i == 0 else "flood"),
             "severity": ("critical" if i == 0 else "warning"),
             "occurred_at": occurred.replace(microsecond=0).isoformat(),
@@ -722,6 +729,9 @@ def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
         "seeded_at": datetime.now().replace(microsecond=0).isoformat(),
         "probe_mark": _probe_mark_string(RUN_STAMP),
         "probe_tag": PROBE_TAG,
+        #: ★ [P-205 · 턴 Y] **표식 값의 자리** — 뒤 도구가 낱말을 제 안에 적지 않게 한다.
+        #:   `probe_marks.load_seed` 가 `data_source_mark` 로 꺼낸다.
+        "data_source_mark": _data_source_mark(),
         "monitor_code": monitor.code,
         "group_id": gid,
         "event_ids": list(SEEDED_EVENT_IDS),
@@ -744,6 +754,51 @@ def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
     print(f"[SHOT] 씨앗 그림 {snap_ok}/{len(SEEDED_EVENT_IDS)}장 "
           f"(제품 경로 upload_snapshot)" + (f" · 못 올린 사유 {snap_why}" if snap_why else ""))
     return first
+
+
+def _event_data_source_of(event_id: int):
+    """제품이 이 행을 뭐라 부르는가 — **`live` / `drill`**. 못 읽으면 `None` 이다.
+
+    ★ 우리가 판정하지 않는다. `dsm.services.event_data_source` 하나가 판정하고(두 축 ·
+      P-201), 우리는 그 답을 **옮겨 적기만** 한다 — 두 벌을 두면 어긋나고, 어긋난 쪽이
+      조용히 이긴다(D-369).
+    """
+    try:
+        from apps.dsm import services as _dsm_services
+        from kernels.k1_event.models import DetectionEvent
+        view = DetectionEvent.objects.filter(pk=event_id).first()
+        if view is None:
+            return None
+        return _dsm_services.event_data_source(view=view)
+    except Exception:                                   # noqa: BLE001
+        return None
+
+
+def _data_source_mark() -> dict:
+    """표식의 **값**을 제품 모듈에서 읽어 명세에 싣는다 (P-201 ↔ P-170 ②).
+
+    ⚠ 낱말을 이 파일에 적지 않는다. 적는 순간 U1 이 낱말을 바꾼 날
+      **씨앗 명세만 옛말을 나르고**, 그 옛말을 읽은 게이트가 훈련 씨앗을 실운영으로 센다.
+    """
+    out = {"drill": None, "track_prefix": None, "example_track_id": None,
+           "how": "제품 모듈에서 읽었다 — 이 파일에 낱말을 적지 않는다",
+           "read_from": "stream_monitors.services.drill.DATA_SOURCE · "
+                        "common.probe_marker.DRILL_MARKER/drill_mark",
+           "why": ""}
+    try:
+        from stream_monitors.services.drill import DATA_SOURCE
+        out["drill"] = DATA_SOURCE
+    except Exception as exc:                            # noqa: BLE001
+        out["why"] += "DATA_SOURCE 를 못 읽었다(%s) " % type(exc).__name__
+    try:
+        from common.probe_marker import DRILL_MARKER, drill_mark
+        out["track_prefix"] = DRILL_MARKER
+        out["example_track_id"] = drill_mark(RUN_STAMP)
+    except Exception as exc:                            # noqa: BLE001
+        out["why"] += "DRILL_MARKER 를 못 읽었다(%s) " % type(exc).__name__
+    if not out["why"]:
+        out["why"] = ""
+    return out
 
 
 def _write_seed_file() -> Path | None:

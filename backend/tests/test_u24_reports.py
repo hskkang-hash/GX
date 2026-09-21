@@ -314,8 +314,13 @@ class AuditChainTest(ReportFixture):
         text = resp.getvalue().decode("utf-8")
         self.assertTrue(text.startswith("﻿"), "엑셀이 한글을 깨뜨린다 — BOM 이 없다")
         lines = [ln for ln in text.splitlines() if ln.strip()]
-        self.assertTrue(lines[0].endswith("chain"), lines[0])
-        self.assertIn("prev_hash", lines[0])
+        #: ★ [턴 Y] 마지막 열이 `chain` → `target_state` 로 **옮겨 앉았다.**
+        #:   화면에 「대상」 칸이 생겼고, 파일은 화면과 같은 사실을 말해야 한다
+        #:   (`_audit_csv` 머리말 — 파일이 표와 다르면 어느 쪽이 맞는지 아무도 모른다).
+        #:   열을 **이름으로** 박는다: 수로 박으면 하나가 빠지고 하나가 들어와도 초록이다.
+        self.assertTrue(lines[0].endswith("target_state"), lines[0])
+        for column in ("prev_hash", "hash", "chain", "target_event_id"):
+            self.assertIn(column, lines[0], lines[0])
         self.assertGreaterEqual(len(lines), 3)      # 머리 + 행 ≥ 1 + 합계
         self.assertIn("no-store", resp["Cache-Control"])
 

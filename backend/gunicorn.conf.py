@@ -11,8 +11,39 @@
 #        `-w` 가 바뀌거나 파일이 옮겨지면 조용히 gunicorn **기본값**으로 떨어지는데,
 #        그 기본값은 `max_requests = 0`(재활용 끔) · `keepalive = 2` 다 —
 #        `keepalive 2` 는 아래 주석이 **「그 값이 502 를 만들었다」**고 적어 둔 바로 그 수다.
-#      ★ 그래서 창 2a 에서 명령줄에 **`-c /app/gunicorn.conf.py` 를 명시**한다.
+#      ★ 그래서 창 2a 에서 명령줄에 **`--config /app/gunicorn.conf.py` 를 명시**한다.
 #        값을 고치는 것이 아니라 **값이 걸려 있다는 사실을 우연에서 떼어 내는** 일이다.
+#
+#   ①-b ⚠⚠ **[실측 2026-09-20 · 턴 Y · 차선 U56] `config =` 줄은 거짓말한다.**
+#      턴 X 는 `--print-config` 의 `config = ./gunicorn.conf.py` 를 「걸렸다」의 근거로
+#      적었다. **그 줄은 근거가 아니다** — gunicorn 은 파일을 **못 찾아도 그 문자열을
+#      그대로 찍는다**(기본값 라벨이다). 같은 순간 세 갈래를 재서 갈랐다
+#      (gx-shell · `python -m gunicorn … --print-config` · 재기동 0):
+#
+#        갈래                              config 줄            keepalive  max_requests  workers  worker_class
+#        A  cwd=/app · 플래그 없음          ./gunicorn.conf.py      75          200          2     UvicornWorker
+#        B  cwd=/    · 플래그 없음          ./gunicorn.conf.py   **2**       **0**       **1**  **sync**
+#        C  cwd=/    · --config /app/…      /app/gunicorn.conf.py   75          200          2     UvicornWorker
+#
+#      **A 와 B 의 `config` 줄이 같다.** 갈리는 것은 **값**뿐이다 — 그러니 「걸렸는가」는
+#      경로 줄이 아니라 `keepalive`(75 인가 2 인가)로 묻는다. 그리고 B 가 곧 **떨어졌을
+#      때의 모습**이다: `keepalive 2` · `max_requests 0` · 워커 하나 · sync.
+#      C 가 창 2a 에서 박을 모양이고, 그때 `config` 줄은 **절대 경로로 바뀐다** —
+#      그 변화가 「박혔다」의 눈으로 보이는 증거다.
+#
+#      ★ 창 2a 에 박을 명령줄 한 조각 (값 준비만 · **이 턴에 재기동 0**):
+#
+#          python -m gunicorn config.wsgi:application \
+#            --config /app/gunicorn.conf.py \
+#            --bind 0.0.0.0:8000 --workers 4 --threads 4 --worker-class gthread \
+#            --timeout 120 --access-logfile - --error-logfile -
+#
+#        (`--config` 는 **먼저** 읽히고 뒤의 플래그가 덮는다 — 그래서 ② 의 「덮는 넷」은
+#         그대로 4/gthread/120 으로 돈다. 바뀌는 것은 **안 덮는 값들이 우연에 안 매달리는
+#         것** 하나다: `max_requests` · `keepalive`.)
+#        적용 뒤 확인 한 줄: `docker exec gx-gunicorn-e python -m gunicorn --config \
+#        /app/gunicorn.conf.py config.wsgi:application --print-config | grep keepalive`
+#        → **75** 여야 한다. 2 면 안 걸린 것이다.
 #
 #   ② **명령줄이 덮는 넷** — 아래 네 줄은 도는 판과 **다르다**(읽는 사람에게 거짓말한다):
 #        이 파일        →  실제로 도는 값

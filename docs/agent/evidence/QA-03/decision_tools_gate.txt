@@ -1,0 +1,14 @@
+# QA-03 증거 — scripts/verify_decision_tools.py
+# 실행: 2026-09-20 KST · 차선 N (P-207 다섯째 묶음) · HEAD 0acf8d1
+# 명령: PYTHONIOENCODING=utf-8 python scripts/verify_decision_tools.py
+# ⚠ 턴 X 에 조율자가 빨강을 봤고(enforced_by 가 경로 없이 적혀 판정기가 못 찾음) 고쳤다고 한다.
+#   **조율자의 손이 낸 초록은 내 증거가 아니다** — 차선 N 이 다시 잰 것이 이 파일이다.
+# ---
+[P-107] TARGET=저장소 C:/GuardianX/guardianx-source @ 0acf8d1 · 작업본 76파일 어긋남 (살아 있는 것을 재지 않는 게이트다)
+[P-107] AS=(자격증명 없음 — 소스·문서 파일을 읽는다)
+[P-107] SOURCE=파일 docs/agent/decisions.yaml (기록 2026-09-20T14:48 · 자기기록 updated_at=2026-09-16T20:00 · 772644바이트)
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_decision_tools.py
+[DECISION-TOOL] 대상 223건 (D-286 이후) · 전체 319건 · 소급 대상 아님 96건 (그중 도구 기재 0건)
+[DECISION-TOOL] 전건 통과 — 모든 결정문이 깨지면 멈추는 도구를 갖는다
+# EXIT=0

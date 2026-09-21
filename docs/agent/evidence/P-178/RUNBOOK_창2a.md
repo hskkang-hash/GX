@@ -222,11 +222,47 @@ Entrypoint=["python"] Cmd=["-m","gunicorn","config.wsgi:application","--bind","0
 옮겨지면 조용히 gunicorn 기본값으로 떨어지고, 그 기본값은 **`max_requests=0` · `keepalive=2`** —
 `keepalive 2` 는 이 파일 주석이 **「그 값이 502 를 만들었다」**고 적어 둔 바로 그 수다.
 
-**창에서 할 일 — 값이 아니라 명시** (1줄):
+### B2-b — ⚠⚠ **위 문단의 근거가 틀렸다. `config =` 줄은 거짓말한다** [실측 2026-09-20 15:5x · 턴 Y · U56]
+
+위에서 「`--print-config` 로 재니 그래도 `config = ./gunicorn.conf.py` 였다」를 **걸렸다는
+근거**로 썼다. **그 줄은 근거가 아니다** — gunicorn 은 파일을 **못 찾아도 그 문자열을 그대로
+찍는다**(기본값 라벨이다). 같은 순간 세 갈래를 `gx-shell` 에서 재서 갈랐다(**재기동 0**):
+
+| 갈래 | `config` 줄 | `keepalive` | `max_requests` | `workers` | `worker_class` |
+|---|---|---|---|---|---|
+| **A** `cwd=/app` · 플래그 없음 | `./gunicorn.conf.py` | **75** | **200** | 2 | UvicornWorker |
+| **B** `cwd=/` · 플래그 없음 | `./gunicorn.conf.py` | **2** | **0** | 1 | sync |
+| **C** `cwd=/` · `--config /app/…` | **`/app/gunicorn.conf.py`** | **75** | **200** | 2 | UvicornWorker |
+
+```bash
+# 재는 법 (읽기만 한다 — 바인드하지 않고 찍고 끝난다)
+docker exec -e DJANGO_SETTINGS_MODULE=config.settings gx-shell sh -c \
+  "cd / && python -m gunicorn --config /app/gunicorn.conf.py config.wsgi:application \
+   --print-config" | grep -E '^(config|keepalive|max_requests) '
+```
+
+★ **A 와 B 의 `config` 줄이 같다.** 갈리는 것은 **값**뿐이다. 그러니 「걸렸는가」는
+**경로 줄이 아니라 `keepalive` 로 묻는다** — **75 면 걸렸고 2 면 안 걸렸다.**
+그리고 **B 가 곧 떨어졌을 때의 모습**이다: `keepalive 2` · `max_requests 0` · 워커 하나 · sync.
+`keepalive 2` 는 `gunicorn.conf.py` 주석이 **「그 값이 502 를 만들었다」**고 적어 둔 그 수다.
+
+**창에서 할 일 — 값이 아니라 명시** (1줄 · **C 갈래를 그대로 박는다**):
 ```bash
 # 앱 셋을 다시 띄울 때(C4 에서 어차피 다시 띄운다) 명령줄에 이 한 토막을 더한다
-… python -m gunicorn -c /app/gunicorn.conf.py config.wsgi:application --bind 0.0.0.0:8000 \
-      --workers 4 --threads 4 --worker-class gthread --timeout 120 …
+… python -m gunicorn config.wsgi:application --config /app/gunicorn.conf.py \
+      --bind 0.0.0.0:8000 --workers 4 --threads 4 --worker-class gthread --timeout 120 \
+      --access-logfile - --error-logfile -
+```
+⚠ `-c` 가 아니라 **`--config` 절대 경로**다. 상대 경로(`-c gunicorn.conf.py`)는 **cwd 의존을
+그대로 남긴다** — 못 박는 것이 이 한 줄의 전부인데 그러면 아무것도 안 박은 것이다.
+⚠ `--config` 는 **먼저** 읽히고 뒤의 플래그가 덮는다. 그래서 아래 「덮는 넷」은 그대로
+4/gthread/120/threads4 로 돈다 — 바뀌는 것은 **안 덮는 값이 우연에 안 매달리는 것** 하나다.
+
+**적용 뒤 확인 한 줄**(창 안 · C5 와 함께):
+```bash
+docker exec gx-gunicorn-e python -m gunicorn --config /app/gunicorn.conf.py \
+  config.wsgi:application --print-config | grep -E '^(config|keepalive) '
+# → config = /app/gunicorn.conf.py · keepalive = 75   (2 면 안 걸린 것이다)
 ```
 ⚠ 명령줄 넷(`workers 4` · `gthread` · `timeout 120` · `threads 4`)은 **파일 값을 덮는다**
 (파일에는 `workers 2` · `uvicorn.workers.UvicornWorker` · `timeout 30` 이라 적혀 있다).
@@ -240,7 +276,9 @@ python scripts/verify_perf_budget.py            # 같은 부하 · 502 수와 �
 docker logs gx-gunicorn-e --since 10m 2>&1 | grep -c "Autorestarting worker after current request"
 ```
 **읽는 법**: 502 **0건**이 나오면 **먼저 재활용 수를 보라.** 재활용이 0 이면 그 0 은
-「고친 0」이 아니라 `-c` 가 또 안 걸린 것이다(턴 D 의 그 0).
+「고친 0」이 아니라 `--config` 가 또 안 걸린 것이다(턴 D 의 그 0).
+⚠ 그리고 **`config =` 줄로 확인하지 말 것** — B2-b 가 잰 대로 그 줄은 안 걸려도 같다.
+**`keepalive` 가 75 인가 2 인가**로 묻는다.
 
 ---
 
@@ -249,6 +287,27 @@ docker logs gx-gunicorn-e --since 10m 2>&1 | grep -c "Autorestarting worker afte
 > **이 부의 본체는 순서다.** 규칙 한 줄: **만드는 것이 전부 먼저, 회수는 전부 나중.**
 > 그 사이에 **「새 자격으로 실제로 붙어 본다」**가 들어간다. 이 셋의 순서를 바꾸면
 > 중간에 앱이 DB 에 못 붙고, 못 붙는 동안은 되돌릴 자격도 확인할 수 없다.
+
+### ★ 집행 순서 — **OPS-24(회수)가 C4(앱 전환)보다 먼저다** (턴 Y 반영 · U56)
+
+단계 수는 그대로 **16**이다(C0 이 한 단계이고 ⓐⓑⓒ 는 그 안의 칸이다). 바뀐 것은
+**ⓒ 의 집행이 어느 칸에 놓이는가**이고, 그것이 이 창의 유일한 순서 제약이다:
+
+| 차례 | 무엇 | 되돌아가나 | 왜 이 자리인가 |
+|---|---|---|---|
+| ① | **C0-ⓐⓑ** 대표 결정 두 칸 | — | 비면 여기서 멈춘다 |
+| ② | **C0-ⓒ 집행 = OPS-24 회수** (세 근거 재측 → 연쇄 표 → 스냅샷 → `DROP DATABASE`) | ❌ 아니오 | **앱이 아직 `postgres` 로 돈다** — 지울 권한이 지금은 있고 C4 뒤에는 **없다**(소유자 전부 postgres · `CREATEDB` 로는 못 지운다) |
+| ③ | **C1 · C2** 역할 만들기·권한 주기 | 예 | 만드는 것이 전부 먼저 |
+| ④ | **C3** 새 자격으로 실제로 붙어 본다 | 예(읽기·ROLLBACK) | 옮기기 전에 확인 — 이 단계가 순서의 심장 |
+| ⑤ | **C4** 앱을 옮긴다 | 예 | ②가 안 끝났으면 **여기서 pytest 가 전부 죽는다** |
+| ⑥ | **C5 · C6** 기동 확인 · superuser 회수 | 예 | 회수는 전부 나중 |
+| ⑦ | **⛔★C7** `NOSUPERUSER` | ❌ | **이번 창에서 하지 않는다**(§4) |
+
+⚠ **②를 ⑤ 뒤로 미루면 되돌릴 수 없는 막다른 길이 된다** — `gx_migrate` 는 남의 DB 를
+못 지우고, 되돌리려면 앱을 도로 `postgres` 로 옮겨야 한다(C4 를 두 번 친다).
+⚠ **②는 삭제다. 그러므로 §1-1 규약을 탄다: 연쇄 표 → 스냅샷 → 집행.** 회수 후보마다
+세 근거(㉠㉡㉢)를 **창에서 다시 재고**, 지우기 전에 목록과 크기를 적어 둔다 —
+「13개 중 셋 · 95MB」는 **지난 사진**이고, 사진으로 지우면 남의 것을 지운다.
 
 ## ★★ C0 — **여기서 멈춤 — 대표 결정 필요**
 
@@ -398,7 +457,7 @@ superuser 를 들지 않는 것이 회수이고, `postgres` 역할에서 속성�
 | C2 | `REVOKE` (SQL ②~⑤의 역) | **예** |
 | C1 | `DROP ROLE gx_app, gx_migrate;` (소유물 0) | **예** |
 | C0-ⓒ | 지운 시험 DB | ❌ **아니오 — 지운 것은 안 돌아온다.** 그러나 시험 DB 는 **다시 만들면 되는 것**이다(pytest 가 만든다). 회수증이 필요한 자료가 아니다 |
-| B | 값 안 바꿨다 · `-c` 는 명령줄이라 다음 재생성에서 빠진다 | **예** |
+| B | 값 안 바꿨다 · `--config` 는 명령줄이라 다음 재생성에서 빠진다 | **예** |
 | ★A2 | A1 의 `gx-shell.2a.env`/`.json` 으로 다시 `docker run --entrypoint sleep … infinity` + A0 보존본 되넣기 | **부분** — 컨테이너 레이어의 유령 `/repo/docs` 8파일은 **안 돌아온다** |
 
 **되돌렸으면 사유를 이 절 아래에 적는다** — 적지 않으면 다음 사람이 같은 것을 또 시도한다.

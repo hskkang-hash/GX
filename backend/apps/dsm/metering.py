@@ -27,6 +27,31 @@
     그래서 이 파일의 모든 셈은 `_alive()` 를 지난다. `deleted` 칸이 있는 표는
     **반드시** 그 칸이 빈 행만 센다.
 
+★ **셈이 커널로 갔다** — P-206 (2026-09-20 · 차선 U56 · D-508)
+--------------------------------------------------------------
+[실측 2026-09-20 · 차선 U1 이 찾아 넘겼다] 이 파일의 `_events` ·
+`_notifications` · `_notifications_failed` 가 `apps.get_model` 로 표를 **직접**
+셌다. 커널을 안 지나니 **게이트가 심은 씨앗(P-193 `data_source=probe`)도
+훈련(P-201 `data_source=drill`)도 그 셈에 들어 있었다** — 우리가 심은 가짜 사건에
+고객이 돈을 내고 있었다.
+
+    이제 그 셋은 `kernels.k1_event.count_events` ·
+    `kernels.k2_notify.count_deliveries` 가 센다 — 다만 **이 파일이 커널을 직접
+    부르지는 않는다**: 「K1 의 App 소비자는 하나뿐」이라 `apps/dsm/services.py` 의
+    `count_billable_events` · `count_billable_deliveries` 를 지난다(아래 import 주석).
+    청구에서 빼는 표식은 `common/billing_marks.py` 한 곳이 안다.
+
+★ **왜 시험 범위가 절반인가.** 구멍이 살아 있던 진짜 이유는 코드가 아니라
+  **아무도 안 보고 있었다**는 것이다 — `tests/test_dsm_app.py::AppStaysThinTest`
+  는 `apps/dsm/{services,api}.py` 만 봤고 **이 파일은 안 봤다.** 이제 본다.
+
+⚠ **아직 앱에 남은 셈 셋**(`_cameras` · `_users` · `_storage`). 이 셋은 커널 면이
+  아직 **없다** — 카메라·계정·미디어 장부를 세는 커널 함수가 저장소에 없고,
+  없는 것을 급히 엉뚱한 커널(K1 은 이벤트, K2 는 발송)에 밀어 넣으면 다음 사람이
+  그 자리를 정본으로 읽는다. 그래서 **남겨 두고 이름을 적는다** — 그 셋은
+  `AppStaysThinTest` 의 **명시 예외 목록**에 있고, 그 목록은 **늘어날 수 없다**
+  (새 셈이 여기 생기면 그 시험이 빨강이다). 갚는 날: 계량 커널 면(W4-1).
+
 ★ **테넌트 격리** — 둘째
 ------------------------
 모든 셈은 `group` 으로 좁힌다. 좁힐 수 없는 표는 **세지 않는다**(`None` 이고
@@ -54,6 +79,17 @@ from django.utils import timezone
 
 from common.tenant_filters import get_user_group
 from common.tenant_scope import TenantScope
+#: ★ P-206 — **청구서의 수는 커널이 센다.** 앱은 부르고 표에 옮겨 적을 뿐이다.
+#:   `tests/test_dsm_app.py::AppStaysThinTest` 가 이 파일을 본다(그 시험 범위에
+#:   이 파일이 든 것이 P-206 의 절반이다 — 안 보고 있어서 구멍이 살아 있었다).
+#:
+#: ⚠ **커널을 직접 부르지 않는다 — `services.py` 를 지난다.** 「K1 의 App 소비자는
+#:   하나뿐」이 F-05 「진입면 하나」의 집행이고(`test_f05_event_api.py::
+#:   EntrySurfaceIsOneTest`), 그 하나가 `apps/dsm/services.py` 다. 1차판은 여기서
+#:   `from kernels.k1_event import count_events` 를 썼고 **그 시험이 멈춰 세웠다**
+#:   [실측 2026-09-20 · 턴 Y]. 옳은 지적이다: 진입면이 둘이면 다음 소비자는
+#:   아무 데서나 들어온다.
+from apps.dsm.services import count_billable_deliveries, count_billable_events
 
 log = logging.getLogger("guardianx.ops16.metering")
 
@@ -162,33 +198,37 @@ def _users(group, start, end):
                   date_joined__lt=end).distinct().count()
 
 
-def _events(group, start, end):
+def _events(scope, start, end):
     """**이벤트 수** — 그 달에 **일어난** 이벤트(`occurred_at` 기준).
 
     적재 시각이 아니라 발생 시각으로 센다. 늦게 들어온 이벤트가 다음 달 청구서로
     넘어가면 그 달의 수가 두 번 달라진다.
+
+    ★ P-206 (2026-09-20) — **이 함수는 이제 안 센다. 커널이 센다.**
+      전에는 `apps.get_model(…)` 으로 표를 직접 셌고, 그래서 게이트가 심은 씨앗
+      (`data_source=probe`)이 **청구서에 올랐다**. 표식을 아는 자리는 커널이고,
+      앱이 제 손으로 세는 한 그 구멍은 다시 난다 (D-508).
     """
-    Event = apps.get_model("stream_monitors", "DetectionEvent")
-    return _alive(Event, group=group, occurred_at__gte=start,
-                  occurred_at__lt=end).count()
+    return count_billable_events(scope=scope, since=start, until=end)
 
 
-def _notifications(group, start, end):
+def _notifications(scope, start, end):
     """**보낸 알림 수** — 실제로 **보낸 것만**(`succeeded=True` · `sent_at` 기준).
 
     ★ 실패한 발송은 여기 안 들어간다. 실패까지 세면 **못 보낸 알림에 돈을 받는다.**
       실패 건수는 따로 `notifications_failed` 로 낸다 — 「0」과 「안 셌다」를
       가르는 것과 같은 이유로, 실패를 안 보이게 두지도 않는다.
     """
-    Delivery = apps.get_model("stream_monitors", "DeliveryRecord")
-    return _alive(Delivery, group=group, succeeded=True, sent_at__gte=start,
-                  sent_at__lt=end).count()
+    return count_billable_deliveries(scope=scope, since=start, until=end,
+                                     time_field="sent_at", succeeded=True)
 
 
-def _notifications_failed(group, start, end):
-    Delivery = apps.get_model("stream_monitors", "DeliveryRecord")
-    return _alive(Delivery, group=group, succeeded=False,
-                  occurred_at__gte=start, occurred_at__lt=end).count()
+def _notifications_failed(scope, start, end):
+    """실패한 발송 수. **칸이 다르다** — 실패 행의 `sent_at` 은 `None` 이라
+    그 칸으로 거르면 이 수가 **언제나 0**이 된다 (models.py `DeliveryRecord`).
+    """
+    return count_billable_deliveries(scope=scope, since=start, until=end,
+                                     time_field="occurred_at", succeeded=False)
 
 
 def _storage(group, start, end) -> dict:
@@ -256,9 +296,9 @@ def usage(*, scope: TenantScope, month: str = "") -> dict:
         {"key": "users", "label": LABELS["users"], "unit": "명",
          "value": _users(group, start, end)},
         {"key": "events", "label": LABELS["events"], "unit": "건",
-         "value": _events(group, start, end)},
+         "value": _events(scope, start, end)},
         {"key": "notifications", "label": LABELS["notifications"], "unit": "건",
-         "value": _notifications(group, start, end)},
+         "value": _notifications(scope, start, end)},
         {"key": "storage", "label": LABELS["storage"], "unit": "바이트",
          "value": storage["bytes"], "why": storage["why"]},
     ]
@@ -275,7 +315,7 @@ def usage(*, scope: TenantScope, month: str = "") -> dict:
         "tenant": getattr(group, "name", "") or getattr(group, "code", ""),
         "tenant_id": group.pk,
         "cells": cells,
-        "notifications_failed": _notifications_failed(group, start, end),
+        "notifications_failed": _notifications_failed(scope, start, end),
         "storage_files": storage["files"],
         "storage_unsized": storage["unsized"],
         "read_only": True,

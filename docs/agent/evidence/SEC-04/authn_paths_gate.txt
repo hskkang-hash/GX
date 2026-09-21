@@ -1,0 +1,46 @@
+# SEC-04 증거 — scripts/verify_authn_paths.py
+# 실행: 2026-09-20 KST · 차선 N (P-207) · 브랜치 turn-q · HEAD 0acf8d1
+# 명령: set -a; . ./.env.gates; set +a; PYTHONIOENCODING=utf-8 python scripts/verify_authn_paths.py
+# 표적: 살아 있는 서버 (gx-shell 안 http://localhost:8000) · 실제 로그인
+# 자격: GX_ROUTE_USER sha256앞12=097e9213b20a · GX_ROUTE_PASSWORD sha256앞12=de08e1f17eb3 (값 아님)
+# 로그인 창: 조율자 대장 「차선 간 요청」 15:52~16:20 에 선등록
+# ---
+[P-107] TARGET=http://localhost:8000 (gx-shell 안 · 호스트에 포트가 없다)
+[P-107] AS=<USER-값숨김> · 역할 view_only_-_anyang (캐시 2026-09-20T15:24 · docs/agent/evidence/P-107/probe_roles.json) · 자격 이름 GX_ROUTE_PASSWORD (값 아님)
+[P-107] SOURCE=살아 있는 서버 응답 (HTTP) — 사진도 손 목록도 아니다
+[AUTHN] 자기시험 통과 — 출생 표본(24/26 401) · 로그인 첫 경로 · 대장 실재 · 쓰기 라우트 감시 4건(전부 쓰기) · 도달불가 기준선 0 · 월 토큰 행 실재
+[AUTHN] [입력] 58건 — 훑은 화면 번들 파일
+[AUTHN]   웹 UI 가 부르는 로그인·토큰 주소: ['/api/partner/api/partners/refresh-token/', '/api/v1/auth/login', '/api/v1/auth/refresh-token']
+[ALIVE] 컨테이너 위임: gx-shell (호스트에서 서버가 안 보인다 · GX_ROUTE_CONTAINER)
+[P-107] TARGET=http://localhost:8000 (gx-shell 안 · 호스트에 포트가 없다)
+[P-107] AS=<USER-값숨김> · 역할 **못 읽었다**(docker 실패) — 0개일 수도 있다 · 자격 이름 GX_ROUTE_PASSWORD (값 아님)
+[P-107] SOURCE=살아 있는 서버 응답 (HTTP) — 사진도 손 목록도 아니다
+[AUTHN] 자기시험 통과 — 출생 표본(24/26 401) · 로그인 첫 경로 · 대장 실재 · 쓰기 라우트 감시 4건(전부 쓰기) · 도달불가 기준선 0 · 월 토큰 행 실재
+[AUTHN] [입력] 58건 — 훑은 화면 번들 파일
+[AUTHN]   웹 UI 가 부르는 로그인·토큰 주소: ['/api/partner/api/partners/refresh-token/', '/api/v1/auth/login', '/api/v1/auth/refresh-token']
+[ALIVE] 로그인 성공: /api/v1/auth/login
+[AUTHN] [입력] 1건 — /api/v1/auth/login 토큰으로 /api/dsm/events?limit=1 → 200
+[AUTHN] [입력] 1건 — /api/token/pair 익명 POST → 404 (기대 404 · D-411)
+[AUTHN] [입력] 4건 — 선언된 쓰기 라우트 도달성 (405 = 도달 불가)
+[AUTHN] [입력] 1건 — 위조 월 토큰으로 /api/dsm/events/queue → 401 (기대 401)
+[AUTHN] [입력] 1건 — 월 토큰 자리로 POST /api/dsm/events/1/review → 401 (**쓰기 0** · 2xx 면 실패)
+[AUTHN] 통과 — 제품의 문 하나(/api/v1/auth/login)가 세션을 세우고, /api/token/pair 는 **없으며**(404 · D-411), 선언된 쓰기 라우트 4건은 전부 도달하고, 월 표시 토큰(UX-24a)은 **읽기만** 연다
+# EXIT=0
+
+# ══ 재측 [실측 2026-09-20 16:12 · 차선 N · **F 의 자진을 받아**] ════════════
+# 왜 다시 쟀나 — 차선 F 가 자진했다: F 가 **15:53~15:56** 에 `verify_ga_readiness.py` 를
+# **인자 없이** 돌렸고, 그 안의 `SERIAL_GATES` 여덟이 **같은 계정(GX_ROUTE_USER)으로
+# 로그인한다.** 위 첫 측정이 **정확히 그 창 안**이었다(계정당 동시 접속 1개).
+# 세션이 겹쳤다면 이 초록이 무엇을 잰 초록인지 흔들린다 → 창을 새로 열고(16:12~16:20) 다시 쟀다.
+#
+# 결과: **같은 수 · 같은 초록 · EXIT=0.**
+#   [입력] 58건 번들 · login 토큰 → /api/dsm/events?limit=1 **200**
+#   /api/token/pair 익명 POST **404** · 선언 쓰기 라우트 **4건** 전부 도달
+#   위조 월 토큰 **401** · 월 토큰 POST **401**(쓰기 0)
+# → 겹침이 이 판정을 오염시키지 않았다. (세션을 뺏겼다면 401 이 났을 것이고,
+#   401 은 초록이 아니라 빨강으로 나온다 — 겹침의 실패 모양은 「거짓 초록」이 아니다.)
+#
+# ★ 그리고 이 재측에서 **판정기가 달라진 것**이 보인다 — Q 가 P-204 에 응답했다:
+#   [P-107] MEASURED=인증 경로 대장의 **면 넷**을 잰다 ... **분모 4**(선언된 쓰기 라우트)
+#           — **자격증명이 없으면 ②③④는 분모 0이고 이 게이트는 회색(2)을 낸다**
+#   첫 측정 때는 `MEASURED=(선언 없음)` + ✗ 였다. 이제 **스스로 분모를 말한다.**

@@ -480,8 +480,17 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header, account_as  # P-107 — TARGET/AS/SOURCE
+    try:
+        _surface = load_surface(SURFACE_FILE)
+    except Exception:                                        # noqa: BLE001
+        _surface = []
     gate_header(
         __file__,
+        measured=("계약 진입면의 (method, path) 마다 **실제 HTTP 로 도달**을 잰다 — "
+                  "**분모 %d**(%s · 매개변수 있는 경로 %d건) · "
+                  "자격증명이 없으면 한 건도 안 때리고 회색(2)이다 (P-204)"
+                  % (len(_surface), SURFACE_NAME,
+                     sum(1 for _m2, _p2 in _surface if has_param(_p2)))),
         target=os.environ.get("GX_API", "http://localhost:8000") + " (gx-shell 안 · 호스트에 포트가 없다)",
         as_=account_as(),
         source="살아 있는 서버 응답 (HTTP) — 사진도 손 목록도 아니다",

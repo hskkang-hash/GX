@@ -1,0 +1,17 @@
+# LAW-01 증거 — scripts/verify_clip_extraction.py
+# 실행: 2026-09-20 KST · 차선 N (P-207 마지막 묶음) · HEAD 0acf8d1
+# ---
+[P-107] TARGET=저장소 C:/GuardianX/guardianx-source @ 0acf8d1 · 작업본 83파일 어긋남 (살아 있는 것을 재지 않는 게이트다)
+[P-107] AS=(자격증명 없음 — 소스·문서 파일을 읽는다)
+[P-107] SOURCE=파일 backend/stream_monitors/services/clips.py (기록 2026-08-29T12:21 · 13975바이트) · 파일 backend/stream_monitors/models.py (기록 2026-09-18T12:33 · 75920바이트) · 파일 backend/tests/test_clip_playback.py (기록 2026-08-29T12:27 · 20542바이트)
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_clip_extraction.py
+  OK   잠근 채 사유가 있으면 안 잡는다
+  OK   사유 없이 잠근 것을 잡는다
+  OK   구현·시험을 갖추고 올린 것은 안 잡는다
+  OK   시험 없이 올린 것을 잡는다
+  OK   구현 없이 상수만 올린 것을 잡는다
+[CLIP] 자기시험 5건 통과 (양성 3 · 음성 2)
+[CLIP] CLIP_EXTRACTION_READY=False · F-09 추출 무결성 AC 시험 없음 · 구간 참조는 가동 중
+[CLIP] 통과 — 잠긴 것은 사유가 있고, 열린 것은 시험이 있다
+# EXIT=0

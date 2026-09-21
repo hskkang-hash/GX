@@ -991,6 +991,18 @@ gate_ui_secrets() {
     pass "렌더 문자열에 상대사명·계약번호·조항·내부 경로 0건"
     return 0
   fi
+  # ★★ [P-206 · 2026-09-20 · 턴 Y · 차선 Q] **2 를 빨강으로 읽지 않는다.**
+  #   그 판정기는 면이 둘이다(프런트 정적 · 살아 있는 API). 여기서는 `--list` 로 부르므로
+  #   **API 면을 안 잰다** — 판정기가 이제 그것을 회색(2)으로 말한다. 종전 이 갈래는
+  #   비영을 전부 `fail` 로 읽어서 **「안 잰 면」이 「화면이 서랍을 열었다」로 적혔다.**
+  #   그 빨강을 몇 번 본 사람은 게이트를 끈다(D-353). 색을 가른다 — 회색은 초록도 아니다.
+  if [ $rc -eq 2 ]; then
+    # ⚠ 겹따옴표 안의 역따옴표는 **명령으로 실행된다** — 처음 이 줄이 「--api: command not
+    #   found」를 냈다(실측). 회색 사유를 적으려다 셸을 돌린 것이다. 역따옴표를 쓰지 않는다.
+    skip "ui-secrets" "못 쟀다 (exit 2) — API 면을 안 때렸다. --api 를 주는 실행이 그 면을 잰다"
+    echo "$out" | grep -E "판정 불가|못 잰 면" | sed 's/^/        /'
+    return 2
+  fi
   fail "화면이 우리 서랍을 열었다 — 사용자 본문은 사용자 언어로만"
   echo "$out" | sed 's/^/        /'
   return 1
@@ -1060,6 +1072,8 @@ _dispatch_gate() {
     bundle-api-base)    gate_bundle_api_base ;;
     evidence-roundtrip) gate_evidence_roundtrip ;;
     camera-secret-logs) gate_camera_secret_logs ;;
+    admin-doors)        gate_admin_doors ;;
+    test-writes-prod-zero) gate_test_writes_prod_zero ;;
     *) echo "알 수 없는 게이트: $1"; exit 2 ;;
   esac
 }
@@ -1126,7 +1140,10 @@ gate_gate_header() {
   n=$(echo "$out" | grep -o '실제로 연 것 [0-9]*개' | grep -o '[0-9]*' | head -1)
   inputs "${n:-0}" "머리글을 받으려고 **실제로 연** 게이트 수"          "게이트를 하나도 못 열었다 — 판정이 아니라 열거기·파이썬 고장이다" || return 1
 
-  echo "$out" | grep -E "^\[P-107\] 수|^  [OX]  " | sed 's/^/        /'
+  # ★ [P-204 · 턴 Y · 차선 Q] `?` 를 빼지 않는다 — **회색 줄을 안 찍으면 회색이 안 보인다.**
+  #   넷째 수(MEASURED_LINE)는 빨강이 아니라 회색을 내는데, 종전 그물은 `[OX]` 만 떠서
+  #   그 줄이 출력에서 통째로 사라졌다. 안 보이는 회색은 초록처럼 읽힌다.
+  echo "$out" | grep -E "^\[P-107\] 수|^  [OX?]  " | sed 's/^/        /'
   if [ $rc -eq 0 ]; then
     pass "$(echo "$out" | tail -1)"
     return 0
@@ -1309,7 +1326,122 @@ gate_camera_secret_logs() {
   esac
 }
 
-ALL_GATES=(live-freshness gate-header secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach click-completes bundle-api-base evidence-roundtrip camera-secret-logs)
+# ─────────────────────────────────────────────────────────────────────────────
+# GATE: test-writes-prod-zero — **시험이 운영 감사표에 행을 남기는가** (P-202 · 턴 Y · S)
+#
+# ★ 출생 표본 — 이 게이트를 만든 것은 **차선 S 의 사고다** [실측 2026-09-20 · 턴 X]
+#   시험 DB 다툼 가드의 첫 판이 「이 DB 에 누가 붙어 있나」를 **장고 연결로 물었다.**
+#   묻는 행위 자체가 뒤의 `create_test_db` 를 바꿨고, 시험 셋이 운영 DB 에 붙어
+#   운영 감사표에 `guardianx.test.law08_race` **219행**을 남겼다. 그 무리 안에서
+#   증거 체인이 갈려 끊김 **#276795** 가 났다.
+#
+#   · 그 219행은 **지울 수 없다**(대표 결정 「끊김만 등재하고 행은 둔다」). 감사표에서
+#     행을 지우는 것은 「안 고쳐졌다」의 증명 자체를 약하게 한다.
+#   · 즉 비용이 **영구적**이다. 갚는 길은 「다시 안 나게 하는 것」뿐이고, 가드만 달고
+#     지키는 판정기를 안 세우면 그 가드는 한 턴 만에 돌아온다 — 턴 W→X 의
+#     `camera-secret-logs` 가 그 얼굴을 그대로 보여 줬다.
+#
+# ★ 분모는 **전량 시험 수**다. 시험 셋만 돌리고 낸 「새 행 0」은 0 이 아니다 —
+#   그 0 은 「안 샜다」가 아니라 **「샐 자리를 안 지나갔다」**이다 (D-301).
+#
+# ⚠ 이 게이트는 **오래 걸린다**(전량 단위 시험을 실제로 돌린다 · 약 6분). 짧게 만들려면
+#   분모를 줄이는 수밖에 없고, 분모를 줄이면 재는 것이 사라진다. 시간을 줄이는 대신
+#   **재지 않는 쪽**을 고르면 그것이 바로 이 게이트가 태어난 이유가 된다.
+#
+# ⚠ 시험의 **빨강은 이 게이트의 색이 아니다.** 여기서 보는 수는 「운영 표에 행이
+#   늘었나」 하나다 — 오히려 깨진 실행이 더 잘 샌다.
+# ─────────────────────────────────────────────────────────────────────────────
+gate_test_writes_prod_zero() {
+  # ⚠ 「환경 없음」이 아니다 — **docker 와 gx-shell 이 필요하다.** 없으면 회색이다.
+  env_none "자격증명 0 (읽기만) — 다만 **docker · gx-shell** 이 없으면 표 면은 회색"
+  head_ "GATE test-writes-prod-zero — 시험이 운영 감사표에 쓰는가 (P-202)"
+  local out rc ntests nwire
+
+  if out=$($PY scripts/verify_test_writes_prod_zero.py --self-test 2>&1); then
+    pass "판정 자기시험 통과 (출생 표본 219행 + 회색·분모 갈래)"
+  else
+    fail "판정 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_test_writes_prod_zero.py --db 2>&1); rc=$?
+  nwire=$(echo "$out" | grep -m1 -oE '가드 배선 자리 [0-9]+곳' | tr -dc '0-9')
+  ntests=$(echo "$out" | grep -m1 -oE '전량 단위 시험 [0-9]+건' | tr -dc '0-9')
+  # ★ 두 수를 **따로** 센다. 합치면 「시험을 한 건도 안 돌렸는데 배선이 4곳이라 초록」이
+  #   가능해진다 — D-301 이 금지한 바로 그 모양이다.
+  inputs "${nwire:-0}" "가드 배선 자리 (정적으로 확인한 곳)" \
+         "배선 자리를 하나도 못 읽었다 — 파일을 못 본 것이지 0곳이 아니다" || return 1
+  inputs "${ntests:-0}" "**분모** — 실제로 돌린 전량 단위 시험 (샐 자리를 지나간 수)" \
+         "시험을 한 건도 안 돌렸다 — 그 「새 행 0」은 「샐 자리를 안 지나갔다」이다" || return 1
+
+  echo "$out" | grep -E '^\[P-202\] (①|②)' | sed 's/^/        /'
+  # ★ 새다면 **어느 시험이 썼는지**(id·logger_name)까지 · 그 실행의 시험 빨강 이름도
+  #   함께 띄운다. 후자는 이 게이트의 색이 아니지만, 안 적으면 다음 사람이
+  #   이 초록을 「전량 초록」으로 읽는다.
+  echo "$out" | grep -E '^    · ' | sed 's/^/        /'
+  case $rc in
+    0) pass "시험이 운영 감사표에 남긴 **새 행 0** (기준선 219행은 그대로 둔다)"
+       return 0 ;;
+    2) skip "test-writes-prod-zero" "못 쟀다 (exit 2) — 회색은 통과가 아니다"
+       echo "$out" | grep -E '판정 불가|안 쟀다' | sed 's/^/        /'
+       return 0 ;;
+    *) fail "**시험이 운영 감사표에 썼다** — 그 행은 지울 수도 고칠 수도 없다 (P-191)"
+       echo "$out" | sed 's/^/        /'; return 1 ;;
+  esac
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GATE: admin-doors — **파기·집행 문이 U4 에게 닫혀 있는가 · 겹이 둘인가** (P-208 U24 ②)
+#
+# ★ 이 게이트가 태어난 자리 — **실제로 있었던 사고**
+#   턴 W 에 LAW-07′ 다섯 문을 U4 에게 열면서 문지기 `_admin` 을 **일괄 치환**했다.
+#   그 한 번이 청구 면 다섯이 아니라 **파기·집행 문까지** U4 에게 열었다.
+#
+# ★★ 그리고 턴 X 에 그 사고를 재현하니 **더 나쁜 것**이 나왔다: 치환했는데
+#   **POST 둘은 그대로 403** 이었다 — P-119 읽기 전용 관문이 앞에서 끊어 `_admin`
+#   까지 가지도 않기 때문이다. 즉 **쓰기 문만 재는 시험은 이 사고를 못 잡고,
+#   관문이 사고를 덮는다.** 그래서 겹을 갈라서 잰다:
+#       ① GET 두 문으로 `_admin` 을 **직접** 잰다 (읽기는 관문이 안 본다)
+#       ② 쓰기 둘은 관문을 **끄고**(`READONLY_ROLE_GATE_ENABLED=False`) 한 번 더 누른다
+#
+#   시험 파일은 지워질 수 있다. **게이트는 대장에 이름으로 남는다** — 그래서 이 게이트는
+#   제품(문지기 배치)과 **시험의 겹**을 둘 다 보고, **따로 센다.**
+# ─────────────────────────────────────────────────────────────────────────────
+gate_admin_doors() {
+  # 자격증명도 서버도 안 쓴다 — 저장소 파일 바이트만 읽는다. 그래서 회색이 날 자리가 없다.
+  env_none "자격증명 0 · 서버 0 — law_api.py 와 두 겹 시험 파일을 AST 로 읽는다 (파일만 본다)"
+  head_ "GATE admin-doors — 파기·집행 문지기 + 두 겹 시험 (P-208 U24 ②)"
+  local out rc ndoor nbranch
+
+  if out=$($PY scripts/verify_admin_doors.py --self-test 2>&1); then
+    pass "판정 자기시험 통과 (출생 표본 5 · 양성 2)"
+  else
+    fail "판정 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_admin_doors.py 2>&1); rc=$?
+  ndoor=$(echo "$out"   | grep -m1 -oE '훑은 문 [0-9]+개'   | tr -dc '0-9')
+  nbranch=$(echo "$out" | grep -m1 -oE '훑은 갈래 [0-9]+개' | tr -dc '0-9')
+  # ★ 두 면을 **따로** 센다. 한 수로 합치면 「시험이 통째로 사라졌는데 제품이 멀쩡해서
+  #   초록」이 가능해진다 — D-301 이 금지한 바로 그 모양이다.
+  inputs "${ndoor:-0}" "AST 로 읽은 라우트 문 (_admin 4 + _privacy_officer 5)" \
+         "제품 파일을 못 읽었다 — 정적 술어가 눈이 먼 것이지 0문이 아니다" || return 1
+  inputs "${nbranch:-0}" "두 겹 시험에서 서 있어야 하는 갈래 (겹① 겹② 분모 넓힌쪽)" \
+         "시험 파일을 못 읽었다 — 겹을 재는 것이 사라진 것이지 0갈래가 아니다" || return 1
+
+  echo "$out" | grep -E '^    [OX] ' | sed 's/^/        /'
+  case $rc in
+    0) pass "파기·집행 문 넷은 _admin · 청구 면 다섯은 _privacy_officer · 두 겹 갈래 넷 서 있다"
+       return 0 ;;
+    *) fail "문지기가 옮겨 갔거나 겹 하나가 사라졌다 — **어느 문인지 이름으로** 아래에 있다"
+       echo "$out" | grep -E '✗' | sed 's/^/        /'; return 1 ;;
+  esac
+}
+
+ALL_GATES=(live-freshness gate-header secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach click-completes bundle-api-base evidence-roundtrip camera-secret-logs test-writes-prod-zero admin-doors)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {

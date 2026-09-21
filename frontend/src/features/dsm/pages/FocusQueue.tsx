@@ -128,6 +128,7 @@ import { Main } from 'rj-core';
 import {
   CLOSE_CONFIRM_EMPTY,
   CLOSE_CONFIRM_TITLE,
+  dataSourceBadge,
   FALSE_POSITIVE_REASONS,
   REJECT_LABEL,
   REVIEW_AND_ACK_LABEL,
@@ -210,6 +211,21 @@ function CardHead({ card, signal }: { card: QueueCard; signal?: QueueFieldSignal
       {signal?.support_requested ? (
         <Tag color="error" title={signal.support_text}>
           {SUPPORT_BADGE_LABEL}
+        </Tag>
+      ) : null}
+      {/*
+        ★★ [P-201 · 턴 Y] **「훈련」 배지.** 훈련 사건은 이제 큐에 **선다** —
+          제품이 세는 것이 P-201 의 요점이고(`data_source=probe` 와 갈리는 자리),
+          서면 그 카드가 무엇인지를 **카드가 스스로 말해야** 한다. 안 말하면
+          관제요원은 훈련을 재난으로 읽고 사람을 보낸다.
+        ★ 말은 새로 지지 않는다 — `copy.ts::dataSourceBadge` 가 이미 들고 있는
+          「훈련」(GX-COPY §2 「실운영 / 시드(검수용) / 훈련」)을 그대로 부른다.
+        ★ **등급 바로 옆**이다. 뒤쪽에 달면 카메라 이름에 묻히고, 묻힌 배지는
+          「없는 것」과 같다. `live` 면 `dataSourceBadge` 가 `null` 을 낸다 — 평상엔 안 그린다.
+      */}
+      {dataSourceBadge(card.data_source) ? (
+        <Tag color="purple" title="훈련으로 심긴 사건입니다 — 실제 사고가 아닙니다.">
+          {dataSourceBadge(card.data_source)}
         </Tag>
       ) : null}
       <Text strong>{labelOf(EVENT_TYPE_LABEL, card.event_type)}</Text>

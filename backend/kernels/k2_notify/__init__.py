@@ -56,6 +56,7 @@ from kernels.k2_notify.heartbeat import (
     send_heartbeat_digest,
 )
 from kernels.k2_notify.services import (
+    count_deliveries,
     list_deliveries,
     notice_false_positive,
     resolve_recipients,
@@ -92,6 +93,9 @@ __all__ = [
     "send",
     "suppress",
     "list_deliveries",
+    # ★ P-206 (2026-09-20) — `list_deliveries` 의 **셀 갈래**(청구서).
+    #   읽기만 하는 면이라 WRITE_PROBES 의 대상이 아니다.
+    "count_deliveries",
     # ★ P-16 오탐 ③ — 알림이 나간 이벤트가 오탐이 되면 원 수신자에게 **1회** (2026-09-20).
     #   발송이 아니라 **뒷정리**라 `DeliveryRecord` 행을 만들지 않는다 — 그 표는
     #   F-10 의 30초와 5분 억제를 재는 자리다(함수 머리말 ★★).

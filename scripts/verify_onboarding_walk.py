@@ -598,7 +598,9 @@ def main() -> int:
             print(f"{role} — 카드 {len(rows)}장")
             for key, closes in rows:
                 print(f"    {'닫힘 판정 있음' if closes else '아직 못 잼   '}  {key}")
-        return EXIT_OK
+        #: ★ [P-204] 표를 찍은 것은 잰 것이 아니다 — 회색(2)이다.
+        print("[UX-46] ? **못 쟀다** — `--list` 는 카드 표를 찍을 뿐 한 장도 걷지 않는다 (P-204)")
+        return EXIT_UNDECIDABLE
 
     code = judge_structure()
     if args.api:
@@ -607,7 +609,15 @@ def main() -> int:
         if walked == EXIT_FAIL or code == EXIT_FAIL:
             return EXIT_FAIL
         return EXIT_OK if (code == EXIT_OK and walked == EXIT_OK) else EXIT_UNDECIDABLE
-    return code
+    #: ★★ [P-204 · 턴 Y · 차선 Q] **`--api` 없이 낸 0 은 「온보딩이 선다」가 아니다.**
+    #:   이 게이트의 두 눈 중 **사람이 실제로 걷는 눈**은 `--api` 에만 있다. 구조만 보고
+    #:   0 을 내면 UX-46 절이 **걸어 본 적 없이** 초록으로 적힌다 — 그 초록이 세 턴을 갔다.
+    #:   구조가 빨강이면 그건 재서 틀린 것이므로 **1 그대로** 돌려준다(회색으로 덮지 않는다).
+    if code != EXIT_OK:
+        return code
+    print("[UX-46] ? **못 쟀다** — `--api` 를 안 줬다. 구조만 봤고 **한 사람도 걷지 않았다.** "
+          "이 0 은 「이 호출이 통과」일 뿐이다 (P-204) — 재려면 `--api …` 로 부른다")
+    return EXIT_UNDECIDABLE
 
 
 if __name__ == "__main__":
@@ -616,7 +626,17 @@ if __name__ == "__main__":
     #:   검증 차선의 셈에서 초록이 아니다 — 무엇을 재고 한 말인지 아무도 모르기 때문이다.
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from _gate_header import gate_header
+    try:
+        _cards = cards_per_role(ONBOARDING.read_text(encoding="utf-8"))
+        _n_card = sum(len(v) for v in _cards.values())
+        _n_role = len(_cards)
+    except Exception:                                        # noqa: BLE001
+        _n_card = _n_role = 0
     gate_header(__file__,
+                measured=("① 구조 — 온보딩 카드마다 닫는 판정이 선언됐는가 · "
+                          "**분모 %d장**(역할 %d) · ② 걷기 — `--api` 를 준 실행에서만 "
+                          "그 카드를 **실제로 걷는다**(안 주면 ②는 분모 0 · 그 실행은 회색이다 · P-204)"
+                          % (_n_card, _n_role)),
                 target="구조는 저장소 파일 · 걷기는 --api 를 준 실행에서만 살아 있는 서버",
                 as_="구조: 자격 없음 · 걷기: 시드 계정 여섯 (자격 이름 GX_SEED_ROLE_PASSWORD)",
                 source="온보딩 카드 표 · 라우트 선언 · 화면 소스 (걷기일 때는 HTTP 응답)")

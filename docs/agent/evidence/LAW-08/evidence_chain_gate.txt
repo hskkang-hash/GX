@@ -1,0 +1,80 @@
+# LAW-08 증거 — scripts/verify_evidence_chain.py
+# 실행: 2026-09-20 KST · 차선 N (P-207 마지막 묶음) · HEAD 0acf8d1
+# ★★ 이 판정기에는 **--db 가 있다.** 지시서가 경고한 V 의 자진이 바로 이 부류다:
+#    「--db 없이 돌린 체인 검사가 **정적만 하고 exit 0**」.
+#    그래서 **두 번 부른다** — 인자 없이(①) · --db 로(②) — 그리고 분모를 대 본다.
+# ═══ ① 인자 없음 ═══
+[P-107] TARGET=gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다
+[P-107] AS=(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)
+[P-107] SOURCE=살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다
+[P-107] MEASURED=① 감사 행을 쓰는 손을 AST 로 전수 — **분모 240**(범위 backend/common · backend/kernels · backend/apps · backend/stream_monitors · backend/dashboard · backend/surveillance 의 .py) · ② `--db` 를 준 실행에서만 살아 있는 감사표를 **행마다 다시 계산**한다 (안 주면 ②는 분모 0 — 그래서 `--db` 없는 실행은 회색이다 · P-204)
+[CHAIN] LAW-08 증거 해시 체인 — 행 하나를 고치면 exit 1 (PRD v2.5 §E3-1)
+[입력] 감사 쓰기 후보 파일 240건 (범위=backend/common · backend/kernels · backend/apps · backend/stream_monitors · backend/dashboard · backend/surveillance · 시험·스크립트 제외)
+[CHAIN] ① 정적 — 체인 밖에서 태어나는 감사 행 0건 (쓰는 손 1곳 = backend/common/audit_writer.py)
+[CHAIN] ? **못 쟀다** — `--db` 를 안 줬다. 정적 눈(소스)만 떴고 **살아 있는 감사표는 한 행도 다시 계산하지 않았다.** 이 0 은 「이 호출이 통과」일 뿐이다 (P-204) — 재려면 `--db` 로 부른다
+# EXIT(①)=2
+
+# ═══ ② --db 로 (살아 있는 감사표를 행마다 다시 계산) ═══
+# ★ ①은 EXIT=2 회색이었다. **V 의 자진이 고쳐져 있다** — 예전엔 이 자리가 exit 0 이었다.
+#   지금은 판정기가 스스로 「이 0 은 『이 호출이 통과』일 뿐이다(P-204)」라 적고 회색을 낸다.
+# 명령: MSYS_NO_PATHCONV=1 docker exec -e DJANGO_SETTINGS_MODULE=config.settings \
+#         gx-shell python /repo/scripts/verify_evidence_chain.py --db
+# ---
+[P-107] TARGET=gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다
+[P-107] AS=(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)
+[P-107] SOURCE=살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다
+[P-107] MEASURED=① 감사 행을 쓰는 손을 AST 로 전수 — **분모 240**(범위 backend/common · backend/kernels · backend/apps · backend/stream_monitors · backend/dashboard · backend/surveillance 의 .py) · ② `--db` 를 준 실행에서만 살아 있는 감사표를 **행마다 다시 계산**한다 (안 주면 ②는 분모 0 — 그래서 `--db` 없는 실행은 회색이다 · P-204)
+[CHAIN] LAW-08 증거 해시 체인 — 행 하나를 고치면 exit 1 (PRD v2.5 §E3-1)
+[입력] 감사 쓰기 후보 파일 240건 (범위=backend/common · backend/kernels · backend/apps · backend/stream_monitors · backend/dashboard · backend/surveillance · 시험·스크립트 제외)
+[CHAIN] ① 정적 — 체인 밖에서 태어나는 감사 행 0건 (쓰는 손 1곳 = backend/common/audit_writer.py)
+[CHAIN] ② 표 — **판정 불가**(회색). 컨테이너 «gx-shell» 에서 검증을 못 돌렸다 (exit 2). 회색은 초록이 아니다 (D-301)
+docker 를 못 찾았다
+# EXIT(②)=2
+
+# ═══ ③ 호스트에서 --db (판정기가 스스로 gx-shell 로 위임한다) ═══
+# ⚠ ②(컨테이너 안에서 --db)는 EXIT=2 였다: 「docker 를 못 찾았다」 — 컨테이너 안에서 또
+#   컨테이너로 위임하려 한다(중첩). **호스트에서 --db 를 주는 것이 옳은 부름**이다.
+# ---
+[P-107] TARGET=gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다
+[P-107] AS=(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)
+[P-107] SOURCE=살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다
+[P-107] MEASURED=① 감사 행을 쓰는 손을 AST 로 전수 — **분모 240**(범위 backend/common · backend/kernels · backend/apps · backend/stream_monitors · backend/dashboard · backend/surveillance 의 .py) · ② `--db` 를 준 실행에서만 살아 있는 감사표를 **행마다 다시 계산**한다 (안 주면 ②는 분모 0 — 그래서 `--db` 없는 실행은 회색이다 · P-204)
+[CHAIN] LAW-08 증거 해시 체인 — 행 하나를 고치면 exit 1 (PRD v2.5 §E3-1)
+[입력] 감사 쓰기 후보 파일 240건 (범위=backend/common · backend/kernels · backend/apps · backend/stream_monitors · backend/dashboard · backend/surveillance · 시험·스크립트 제외)
+[CHAIN] ① 정적 — 체인 밖에서 태어나는 감사 행 0건 (쓰는 손 1곳 = backend/common/audit_writer.py)
+[입력] 감사 행 2996건 (그중 체인 2707건 · 등재된 끊김 23건)
+[CHAIN] ② 표 — **새로 난 어긋남 0건**. 다만 줄은 깨끗하지 않다: **등재된 끊김 23건**이 있고, 체인은 그 지점부터 이어진다 (P-191)
+  · (등재) #250280 prev_mismatch — prev_hash=6560f0dac580… 인데 앞 행의 hash 는 0a39b712b9b7… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #250290 prev_mismatch — prev_hash=1467890b168d… 인데 앞 행의 hash 는 a5c096484b21… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #250291 prev_mismatch — prev_hash=1467890b168d… 인데 앞 행의 hash 는 a152b55832f9… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #257053 prev_mismatch — prev_hash=2f97fbb8d633… 인데 앞 행의 hash 는 3e0cfc24e09f… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #258633 prev_mismatch — prev_hash=48b9ba624880… 인데 앞 행의 hash 는 7936e26f2c92… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #258653 prev_mismatch — prev_hash=2caa72f799ba… 인데 앞 행의 hash 는 68e2d8f64260… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #259425 prev_mismatch — prev_hash=804cf5502a17… 인데 앞 행의 hash 는 c2a150394fb2… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #259426 prev_mismatch — prev_hash=804cf5502a17… 인데 앞 행의 hash 는 867e41db2644… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #259833 prev_mismatch — prev_hash=691beb9e32a4… 인데 앞 행의 hash 는 8f9f6b8aeb75… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #259834 prev_mismatch — prev_hash=691beb9e32a4… 인데 앞 행의 hash 는 066b0c6ca491… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #260075 prev_mismatch — prev_hash=e696eb08508b… 인데 앞 행의 hash 는 9824707265b2… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #260077 prev_mismatch — prev_hash=e696eb08508b… 인데 앞 행의 hash 는 8c5a09cf8300… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #260372 prev_mismatch — prev_hash=5ebfe71b297a… 인데 앞 행의 hash 는 72f66fe7bed0… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #260373 prev_mismatch — prev_hash=5ebfe71b297a… 인데 앞 행의 hash 는 374a6e01e676… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #260733 prev_mismatch — prev_hash=64987bcb5791… 인데 앞 행의 hash 는 9023320bbfb1… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #260734 prev_mismatch — prev_hash=64987bcb5791… 인데 앞 행의 hash 는 f38e84f1dd94… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #260978 prev_mismatch — prev_hash=2be3b83e5efd… 인데 앞 행의 hash 는 92bb183271de… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #260979 prev_mismatch — prev_hash=2be3b83e5efd… 인데 앞 행의 hash 는 5bac3e95d978… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #261199 prev_mismatch — prev_hash=50a0b2d099f9… 인데 앞 행의 hash 는 28de4f1638ae… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · (등재) #261200 prev_mismatch — prev_hash=50a0b2d099f9… 인데 앞 행의 hash 는 9d10cd7b1be1… — 앞 행이 지워졌거나 순서가 바뀌었다
+  · … 그 밖 3건
+[CHAIN] ② 표 — 머리 해시 5f0bf7806bb175fa…
+# EXIT(③)=0
+
+# ═══ ④ 종이 앵커 한 줄 (어제) — **사람이 종이와 대 보는 몫** ═══
+# 판정기 머리말이 스스로 적는다: 「이 도구의 초록은 「아무도 안 고쳤다」가 아니라
+#   **「고친 흔적이 없다 + 어제 앵커와 맞다」** 여야 완전하다. 앵커 대조는 사람이 종이를
+#   들고 하는 일이라 여기서 자동화하지 않는다 — **자동화한 척하면 그것이 가장 나쁜 초록이다.**」
+# ★ 그러므로 아래 줄은 **판정이 아니라 사람에게 건네는 물건**이다.
+[P-107] SOURCE=살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다
+[P-107] MEASURED=① 감사 행을 쓰는 손을 AST 로 전수 — **분모 240**(범위 backend/common · backend/kernels · backend/apps · backend/stream_monitors · backend/dashboard · backend/surveillance 의 .py) · ② `--db` 를 준 실행에서만 살아 있는 감사표를 **행마다 다시 계산**한다 (안 주면 ②는 분모 0 — 그래서 `--db` 없는 실행은 회색이다 · P-204)
+[CHAIN] LAW-08 증거 해시 체인 — 행 하나를 고치면 exit 1 (PRD v2.5 §E3-1)
+[입력] 2026-09-19 하루
+[LAW-08] 2026-09-19 증거 해시 앵커 SHA-256: 2d4e4980156a6ad51dfd017ea9357263a4365a49ecf87b92525e7f07a930c04c

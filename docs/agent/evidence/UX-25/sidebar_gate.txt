@@ -1,0 +1,563 @@
+# UX-25 증거 — scripts/verify_sidebar.py
+# 실행: 2026-09-20 16:26 KST · 차선 N (P-207 마지막 묶음) · HEAD 0acf8d1
+#
+# ★★★ 이 파일에는 **사고가 하나 적혀 있다 — 내 사고다.**
+#
+# 나는 자격을 **일부러 안 주고** 불렀다. 이유: 차선 F 의 벽시계 A/B 창이
+# **16:25~16:55 로 열려 있었고**, 그 창 규약은 「다른 차선은 빌드·로그인 금지」다.
+# 그리고 이 판정기가 쓰는 GX_SEED_ROLE_PASSWORD 는 내 GX_ROUTE_PASSWORD 와
+# **같은 자격이다**(sha256 앞12 de08e1f17eb3). 그래서 .env.gates 를 소싱하지 않았다.
+#
+# **그런데 로그인이 됐다.** 판정기가 **스스로 .env.gates 를 읽는다.**
+# 아래 출력의 이 줄이 증거다:
+#     OK   두 눈 대조   역할 4개에서 링크 표와 **실제 로그인**이 같다
+#     [실측] ... fire_user 로 **로그인하면** 5줄 ...
+# 시드 계정 넷(U1 operator · U2 manager · U4 official · U5 sysop)으로 실제로 들어갔고,
+# **U4 gxseed_u4_official 은 F·Q·U3 와 같은 계정**이다(계정당 동시 접속 1개).
+#
+# → 조율자 대장 「차선 간 요청」 16:26 에 **F 에게 자진**으로 적었다.
+# → 이 턴에 **같은 사고가 셋째**다: F 15:53 · Q 15:56/16:01 · **N 16:26**.
+#   「인자 없이 부르면 로그인 안 한다」는 가정이 **세 번 틀렸다.**
+#   자격을 안 주는 것으로는 로그인을 막지 못한다 — **판정기가 제 손으로 파일을 읽는다.**
+#
+# ★ 그러므로 아래 수는 **F 의 창 안에서 잰 수**다. 수 자체는 초록(EXIT=0)이고
+#   분모도 실하지만(역할 4 · 링크 표 ↔ 실제 로그인 두 눈 대조), **잰 때가 깨끗하지 않다.**
+#   대장의 UX-25 에 이 사실을 함께 적었다.
+# ---
+[P-107] TARGET=http://localhost:8000 (gx-shell 안 · 호스트에 포트가 없다)
+[P-107] AS=시드 역할 계정 gxseed_u1_operator/gxseed_u2_manager/gxseed_u4_official/gxseed_u5_sysop · 역할 fire_user (캐시 2026-09-20T15:24 · docs/agent/evidence/P-107/probe_roles.json) · 역할 fire_admin (캐시 2026-09-20T15:24 · docs/agent/evidence/P-107/probe_roles.json) · 역할 view_only_-_anyang (캐시 2026-09-20T15:24 · docs/agent/evidence/P-107/probe_roles.json) · 역할 admin (캐시 2026-09-20T15:24 · docs/agent/evidence/P-107/probe_roles.json) · 자격 이름 GX_SEED_ROLE_PASSWORD (값 아님) · 사유: 메뉴는 역할마다 다르다 — 한 계정으로 재면 다른 역할의 메뉴는 안 재진다
+[P-107] SOURCE=살아 있는 서버 응답 (HTTP) + gx-shell ORM 대조
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_sidebar.py
+self-test: 통과
+[ALIVE] 컨테이너 위임: gx-shell (호스트에서 서버가 안 보인다 · GX_ROUTE_CONTAINER)
+[P-107] TARGET=http://localhost:8000 (gx-shell 안 · 호스트에 포트가 없다)
+[P-107] AS=시드 역할 계정 gxseed_u1_operator/gxseed_u2_manager/gxseed_u4_official/gxseed_u5_sysop · 역할 **못 읽었다**(docker 실패) — 0개일 수도 있다 · 역할 **못 읽었다**(docker 실패) — 0개일 수도 있다 · 역할 **못 읽었다**(docker 실패) — 0개일 수도 있다 · 역할 **못 읽었다**(docker 실패) — 0개일 수도 있다 · 자격 이름 GX_SEED_ROLE_PASSWORD (값 아님) · 사유: 메뉴는 역할마다 다르다 — 한 계정으로 재면 다른 역할의 메뉴는 안 재진다
+[P-107] SOURCE=살아 있는 서버 응답 (HTTP) + gx-shell ORM 대조
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_sidebar.py
+self-test: 통과
+BASE_DIR /repo/backend
+INFO Database connection health check started
+WARNING Retrying (Retry(total=4, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3f8363a90>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")': /
+WARNING Retrying (Retry(total=3, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3f83518d0>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")': /
+WARNING Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3f8353090>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")': /
+WARNING Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3f8353ad0>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")': /
+WARNING Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3f8334550>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")': /
+WARNING Failed to initialize MinIO storage: HTTPConnectionPool(host='minio.internal.example', port=80): Max retries exceeded with url: / (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3f8334f90>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")). Will fallback to FileSystemStorage.
+WARNING Redefining 'percent' (<class 'pint.delegates.txt_defparser.plain.UnitDefinition'>)
+WARNING Redefining '%' (<class 'pint.delegates.txt_defparser.plain.UnitDefinition'>)
+WARNING Retrying (Retry(total=4, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3dacfb690>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")': /guardianx-dev?location=
+WARNING Retrying (Retry(total=3, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3dab08210>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")': /guardianx-dev?location=
+WARNING Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3dab08dd0>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")': /guardianx-dev?location=
+WARNING Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3dab09990>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")': /guardianx-dev?location=
+WARNING Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3dab0a590>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")': /guardianx-dev?location=
+[MinIO Init] Warning: HTTPConnectionPool(host='minio.internal.example', port=80): Max retries exceeded with url: /guardianx-dev?location= (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3dab0b150>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)"))
+INFO ✅ Dynamic query cache invalidation hooks registered
+INFO ✅ UniversalOptimizer cache invalidation is active
+🚀 [DJANGO_READY] Applying backend optimizations...
+🌍 [DJANGO_READY] Universal optimization system initialized for ALL models & views
+🔗 [DJANGO_READY] Cache invalidation signals registered manually
+🧵 [DJANGO_READY] Thread request context propagation installed
+WARNING Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3d35466d0>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)")': /guardianx-dev?location=
+ERROR Failed to initialize Minio client: HTTPConnectionPool(host='minio.internal.example', port=80): Max retries exceeded with url: /guardianx-dev?location= (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x76d3d3547a50>: Failed to resolve 'minio.internal.example' ([Errno -2] Name or service not known)"))
+WARNING Storage functionality will be disabled. Images and videos will not be saved.
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.023s]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: <urllib3.connection.HTTPSConnection object at 0x76d3d0f8d790>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: / (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0f8d790>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: / (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0f8d790>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.004s]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: <urllib3.connection.HTTPSConnection object at 0x76d3d1056750>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: / (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d1056750>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: / (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d1056750>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.003s]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: <urllib3.connection.HTTPSConnection object at 0x76d3d1055910>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: / (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d1055910>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: / (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d1055910>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.003s]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: <urllib3.connection.HTTPSConnection object at 0x76d3d0f7f950>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: / (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0f7f950>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: / (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0f7f950>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+INFO Successfully connected to OpenSearch with crash-proof configuration
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.003s]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: <urllib3.connection.HTTPSConnection object at 0x76d3d1054c90>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d1054c90>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d1054c90>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.003s]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: <urllib3.connection.HTTPSConnection object at 0x76d3d0fb1690>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0fb1690>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0fb1690>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.003s]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: <urllib3.connection.HTTPSConnection object at 0x76d3d0fb2710>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0fb2710>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0fb2710>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.003s]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 199, in _new_conn
+    sock = connection.create_connection(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/connection.py", line 60, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/socket.py", line 974, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 789, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 490, in _make_request
+    raise new_e
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 466, in _make_request
+    self._validate_conn(conn)
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 1095, in _validate_conn
+    conn.connect()
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 693, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connection.py", line 206, in _new_conn
+    raise NameResolutionError(self.host, self, e) from e
+urllib3.exceptions.NameResolutionError: <urllib3.connection.HTTPSConnection object at 0x76d3d0fb35d0>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 667, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/connectionpool.py", line 843, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/urllib3/util/retry.py", line 519, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0fb35d0>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/opensearchpy/connection/http_requests.py", line 196, in perform_request
+    response = self.session.send(prepared_request, **send_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/requests/adapters.py", line 700, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0fb35d0>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))
+ERROR Error ensuring index exists: ConnectionError(HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0fb35d0>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)"))) caused by: ConnectionError(HTTPSConnectionPool(host='opensearch.invalid', port=9200): Max retries exceeded with url: /gcs_phat (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x76d3d0fb35d0>: Failed to resolve 'opensearch.invalid' ([Errno -2] Name or service not known)")))
+[ALIVE] 로그인 성공: /api/v1/auth/login
+[ALIVE] 로그인 성공: /api/v1/auth/login
+[ALIVE] 로그인 성공: /api/v1/auth/login
+[ALIVE] 로그인 성공: /api/v1/auth/login
+[verify_sidebar] 심긴 제품 메뉴 행 11개 · 앞판 라우트 124개를 읽었다
+  OK   제품 메뉴 행      U1 5줄 · U2 7줄 · U4 2줄 · U5 4줄
+  OK   라우트 실재       우리가 심은 줄 전부가 실재 라우트에 닿는다
+  OK   우리 대장의 말     금지 낱말 0건 · 영문 메뉴명 0건
+  OK   U1 상한        관제요원 사이드바 5줄 (상한 9)
+  OK   두 눈 대조       역할 4개에서 링크 표와 실제 로그인이 같다
+  [실측] U1 사이드바 최대 5줄 (제품 최소 5줄) · fire_user 로 로그인하면 5줄(제품 5)
+         · fire_user                 5줄 (제품 5)
+         · operator                  5줄 (제품 5)
+         · surveillance_operation    5줄 (제품 5)
+  [실측] U2 사이드바 최대 21줄 (제품 최소 7줄) · fire_admin 로 로그인하면 21줄(제품 7)
+         · fire_admin               21줄 (제품 7)
+         · surveillance_order        7줄 (제품 7)
+  [실측] U4 사이드바 최대 26줄 (제품 최소 2줄) · view_only_-_anyang 로 로그인하면 26줄(제품 2)
+         · view_only_-_anyang       26줄 (제품 2)
+  [실측] U5 사이드바 최대 71줄 (제품 최소 4줄) · admin 로 로그인하면 71줄(제품 4)
+         · admin                    71줄 (제품 4)
+# EXIT=0
+
+# ══════════════════════════════════════════════════════════════════════════
+# 재측 [실측 2026-09-20 16:45 · 차선 N · **이번엔 잠금을 세우고**]
+# ══════════════════════════════════════════════════════════════════════════
+# F 의 창이 닫힌 뒤, V_LOCK 을 세우고(주인 GX_V_SESSION_ID=turn-y-n) 다시 쟀다.
+#   python scripts/v_lock.py --lock --session-id turn-y-n   → 잠김 확인(--status)
+# 결과: **같은 수 · 같은 초록 · EXIT=0.** 16:26 벌과 다르지 않다.
+#   제품 메뉴 행 U1 5줄 · U2 7줄 · U4 2줄 · U5 4줄
+#   라우트 실재 · 우리 대장의 말(금지 낱말 0 · 영문 메뉴명 0) · U1 상한 5줄(상한 9)
+#   두 눈 대조 — 역할 4개에서 링크 표와 실제 로그인이 같다
+# → **16:26 의 오염은 수를 바꾸지 않았다.** 그래도 이 재측본이 깨끗한 쪽이다.

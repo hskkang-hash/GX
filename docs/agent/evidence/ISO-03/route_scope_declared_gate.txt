@@ -1,0 +1,14 @@
+# ISO-03 증거 — scripts/verify_route_scope_declared.py
+# 실행: 2026-09-20 KST · 차선 N (P-207 넷째 묶음) · HEAD 0acf8d1
+# 명령: PYTHONIOENCODING=utf-8 python scripts/verify_route_scope_declared.py
+# ---
+[P-107] TARGET=저장소 C:/GuardianX/guardianx-source @ 0acf8d1 · 작업본 65파일 어긋남 (살아 있는 것을 재지 않는 게이트다)
+[P-107] AS=(자격증명 없음 — 소스·문서 파일을 읽는다)
+[P-107] SOURCE=파일 docs/agent/evidence/ISO-03/declaration_baseline.txt (기록 2026-09-04T15:26 · 37001바이트)
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_route_scope_declared.py
+[ISO-03] 새 라우트는 테넌트 범위를 **선언**하고 태어난다 (D-346 ISO-03 · 표면의 선언 ≠ 호출 그래프의 문지기)
+[입력] 라우트 576건 (술어=@route.* 정적 전수 · 열거기=common.tenant_tripwire.scan_static)
+[ISO-03] 표면 선언 113건 · 미선언 461건 (등재부 461건 · 술어=@tenant_scoped)
+[ISO-03] 통과 — 선언 없이 태어난 새 라우트 0건
+# EXIT=0

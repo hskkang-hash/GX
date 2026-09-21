@@ -1161,6 +1161,22 @@ def self_test() -> int:
         import ast
         import builtins
         import inspect as _inspect
+        #: ★★ [P-203 · 턴 Y · 차선 Q 가 인수] **심는 자리가 정확히 하나인가 — 여기서도 센다.**
+        #:   이 검사는 턴 X 에 `measure()` 안에만 있었다. 그런데 `measure()` 는
+        #:   **브라우저가 있어야 도는 자리**다 — 자리가 둘이 되거나 사라진 사실을
+        #:   자기시험(브라우저 없이 도는 유일한 자리)이 **모른 채 초록**이었다.
+        #:   턴 X 의 병이 정확히 그 모양이었다: 측정할 때만 죽고 자기시험은 초록.
+        #:   ⇒ 측정 자리의 검사는 그대로 두고(두 벌이 아니라 **같은 사실을 두 곳에서**
+        #:     묻는다 · 하나는 재기 전, 하나는 브라우저 없이), 여기서도 센다.
+        _slots = DRIVER.count(_DRIVER_SLOT)
+        if _slots != 1:
+            ok = False
+            print("%s X ★ **드라이버에 공용 술어를 심는 자리가 %d 곳이다** — 정확히 하나여야 "
+                  "한다. 0 이면 안 심긴 채로 재고(NameError · 측정만 죽는다), 2 이상이면 "
+                  "머리말 자리가 먼저 먹혀 파일이 구문 오류가 된다 (턴 X)" % (TAG, _slots))
+        else:
+            print("%s O ★ 드라이버에 술어를 심는 표식이 **정확히 한 곳**이다 "
+                  "(브라우저 없이 확인 — 턴 X 는 이 사실을 measure() 안에서만 물었다)" % TAG)
         _src = DRIVER.replace(_DRIVER_SLOT,
                               _inspect.getsource(server_gave_value))
         _tree = ast.parse(_src)
@@ -2491,7 +2507,11 @@ def main() -> int:
                      (f["control"] or {}).get("name", (f["control"] or {}).get("kind", "—")),
                      (f["call"] or ("—", "—"))[0], (f["call"] or ("—", "—"))[1],
                      (f["state"] or {}).get("kind", "—"), " · ".join(f["text"]) or "—"))
-        return EXIT_OK
+        #: ★ [P-204] **찍기만 한 갈래는 0 이 아니다.** 이 갈래는 흐름 표를 보여 줄 뿐
+        #:   아무것도 누르지 않았다 — 「안 잰 호출」이므로 회색(2)이다.
+        print("%s ? **못 쟀다** — `--list` 는 흐름 표를 찍을 뿐 아무것도 누르지 않는다 (P-204)"
+              % TAG)
+        return EXIT_UNDECIDABLE
 
     rc = self_test()
     if rc != EXIT_OK:
@@ -2582,6 +2602,13 @@ if __name__ == "__main__":
     _m = "--measure" in sys.argv
     gate_header(
         __file__,
+        measured=("온보딩 48행(여섯 사람 × 여덟 흐름)마다 **누른 뒤 넷**(누를 것 · 나간 요청 · "
+                  "다시 읽은 값 · 화면의 말)을 잰다 — **분모 %d**%s"
+                  % (len(FLOWS),
+                     " · `--measure` 다: 브라우저로 **지금 누른다**" if _m else
+                     " · `--measure` 가 없다: **지금 누르지 않는다.** 지난 실측 증거 "
+                     "docs/agent/evidence/P-118/click_completes.json 을 읽어 판정한다 — "
+                     "그 파일이 없거나 낡았으면 48행이 전부 회색이다 (P-204)")),
         target=("gx-shell 안 SPA http://localhost:3002 (/app/_fe_dist) 를 **실제 브라우저로 누른다** · "
                 "API 는 gx-nginx-e:8500 (실 MinIO 자격) — 번들이 부르는 localhost:8000 을 그리로 잇는다"
                 if _m else

@@ -91,22 +91,47 @@ class RenotifyScenarioTest(K2Fixture):
                            "「보냈다」고 했는데 발송 이력이 늘지 않았습니다 — 보고는 증거가 아닙니다.")
         self.assertEqual(len(result.deliveries), _delivery_count(event_id) - before)
 
-    def test_five_minute_suppression_would_not_have_stopped_it(self) -> None:
-        """★ [실측 2026-09-04] **5분 억제는 같은 이벤트의 재발송을 접지 않는다.**
+    def test_five_minute_suppression_does_not_decide_renotify(self) -> None:
+        """★★ [턴 Y · F-04 · 2026-09-20] **답은 뒤집혔다. 결론은 그대로다.**
 
-        이 시험이 없으면 「억제가 접어 준다」는 잘못된 믿음 위에 재알림 문이 선다.
-        `suppress` 가 여기서 **거짓**이라는 것이 `renotify` 가 자기 문턱을 따로
-        재야 하는 이유의 전부다.
+        종전 이 시험은 `suppress` 가 같은 이벤트의 재발송을 **안 접는다**는 것을
+        재었다 [실측 2026-09-04]. 그것은 당시 질의의 부산물이었다 — 창이
+        `occurred_at__lt = event.occurred_at` 으로 잡혀 있어 **자기 발송은 원래 안 보였다.**
+
+        턴 Y 에 그 창을 고쳤다(세종 · F-04): 기준이 「같은 사건·같은 채널의 직전
+        발송 시각」이 됐고, 그래서 방금 보낸 사건은 5분간 접힌다. **그래도 `renotify`
+        가 제 문턱을 따로 재야 하는 이유는 그대로다** — 이유가 둘이고, 둘 다
+        이 시험이 지킨다:
+
+          ① `renotify` 는 `send(respect_suppression=False)` 로 부른다(`renotify.py:209`) —
+             억제기는 그 결정에 **참여하지 않는다.**
+          ② 문턱이 **다르다.** 억제는 5분, 재알림은 `after_minutes`(기본 10분 이상)다.
+             5분짜리 답으로 10분짜리 질문에 답할 수 없다.
         """
         from kernels.k2_notify import send, suppress
 
         event_id = self._event(self.stream_a)
         send(scope=self.scope_a, event_id=event_id)
 
-        self.assertFalse(
+        #: ① 억제기는 이제 같은 사건을 접는다 — 그것이 F-04 의 문안이다
+        #:    (「5분 안에 같은 사건 재발송 억제」).
+        self.assertTrue(
             suppress(scope=self.scope_a, event_id=event_id),
-            "5분 억제가 같은 이벤트의 재발송을 접었습니다 — 그렇다면 renotify 의 "
-            "문턱 설명이 틀린 것이므로 코드가 아니라 이 시험이 먼저 답을 냅니다.")
+            "방금 보낸 사건이 안 접힙니다 — 그렇다면 사람이 「알림 보내기」를 두 번 "
+            "누를 때마다 두 통이 나갑니다(F-04).")
+
+        #: ② 그러나 재알림은 그 판정을 **안 본다.** 억제가 참인 바로 지금도
+        #:    `renotify` 는 제 문턱(`after_minutes`)으로 답한다 — 억제 때문에 건너뛰는
+        #:    것이 아니라 **아직 무응답 시간이 안 찼기 때문**이고, 사유가 그렇게 나온다.
+        from kernels.k2_notify import renotify
+
+        result = renotify(scope=self.scope_a, event_id=event_id, after_minutes=10)
+        self.assertFalse(result.sent)
+        self.assertNotIn(
+            "억제", result.skipped_reason,
+            f"재알림이 「억제」를 사유로 냈습니다({result.skipped_reason!r}) — "
+            f"`renotify` 는 `respect_suppression=False` 로 부르므로 억제기는 그 결정에 "
+            f"참여하지 않습니다. 두 문턱이 섞였습니다.")
 
     def test_already_acknowledged_is_not_renotified(self) -> None:
         """이미 사람이 접수했으면 다시 울리지 않는다 — 재알림은 **무응답**을 깨운다."""

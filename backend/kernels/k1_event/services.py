@@ -70,8 +70,10 @@ from django.apps import apps
 from django.db import transaction
 from django.utils import timezone
 
+from common.billing_marks import exclude_soft_deleted, exclude_unbillable
 from common.probe_marker import exclude_probe
-from common.tenant_filters import assert_scoped, filter_by_group_field, get_scoped_or_404
+from common.tenant_filters import (assert_scoped, filter_by_group_field,
+                                   get_scoped_or_404, get_user_group)
 from common.tenant_scope import TenantScope
 from kernels.k1_event.exceptions import InvalidEventInput, NotImplementedYet
 from kernels.k1_event.schemas import EventView, RecordResult
@@ -177,6 +179,9 @@ def _to_view(row) -> EventView:
         reviewed_at=row.reviewed_at,
         reject_reason=row.reject_reason,
         response_state=row.response_state,
+        # ★ P-201 — 표식은 행 안에 있다. 뜻은 `common.probe_marker` 가
+        #   정하고 여기서는 **나르기만 한다** — 커널이 가르면 두 벌이 된다.
+        track_id=row.track_id or "",
     )
 
 
@@ -391,8 +396,86 @@ def record_detection(
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 2. query_events — 모은다 · 찾는다
+# 2. query_events — 모은다 · 찾는다   /   count_events — **센다** (P-206)
 # ═══════════════════════════════════════════════════════════════════════════
+def _events_queryset(
+    *,
+    scope: TenantScope,
+    since: datetime | None = None,
+    until: datetime | None = None,
+    #: ★ 구간의 오른끝을 **닫을 것인가**. 보는 갈래는 닫고(`__lte`), **세는 갈래는
+    #:   연다**(`__lt`). 달 경계를 닫으면 다음 달 1일 0시 정각의 사건이 **두 달에
+    #:   다 들어가고**, 그 한 건은 두 장의 청구서에 오른다
+    #:   (`apps/dsm/metering.month_bounds` 머리말이 반열린으로 둔 이유와 같은 자리).
+    until_inclusive: bool = True,
+    event_type: str | Iterable[str] | None = None,
+    severity: str | Iterable[str] | None = None,
+    status: str | Iterable[str] | None = None,
+    response_state: str | Iterable[str] | None = None,
+    reviewed_by_id: int | None = None,
+    stream_monitor_id: int | None = None,
+    mission_id: int | None = None,
+    #: ★ **요청자의 테넌트로 못박는다** — 전역 관리자여도. 아래 `count_events` 만
+    #:   이것을 켠다. 이유는 그 함수의 독스트링에 있다.
+    own_tenant_only: bool = False,
+):
+    """`query_events` 와 `count_events` 가 **같은 한 벌의 필터**를 쓰게 하는 자리.
+
+    ★ **표식(probe·drill)은 여기서 안 거른다.** 두 갈래가 갈리는 지점이 정확히 그
+      한 줄이기 때문이다 — 보는 갈래는 `exclude_probe`(제품), 세는 갈래는
+      `exclude_unbillable`(청구: probe + drill). 그 한 줄을 여기로 끌어와 매개변수로
+      만들면 P-201 이 이름으로 금지한 모양(`include_drill` 같은 칸)이 된다.
+      나머지 **전부**는 여기 한 벌이다 — 시간·유형·소유·테넌트가 두 갈래에서 갈리면
+      「목록에는 있는데 청구서엔 없다」가 되고, 그 차이는 아무도 못 본다.
+    """
+    Event = _model("DetectionEvent")
+
+    # ★ `_base_manager` 로 시작한다 — `objects` 는 §0.4 의 `created_by__isnull` OR 절을
+    #   타서 주인 없는 행을 통과시킨다. 소유 판정은 필터를 거치지 않은 사실 위에서 한다.
+    # 시스템 스코프로는 **읽지 못한다** (D-281). 파이프라인에 요청자가 없다는 사실이
+    # 읽기까지 열어 주면 그 경로는 영구히 전역 조회가 된다.
+    actor = scope.require_actor()
+
+    qs = Event._base_manager.select_related("stream_monitor")
+    if own_tenant_only:
+        group = get_user_group(actor)
+        if group is None:
+            raise InvalidEventInput(
+                "요청자에게 소속이 없어 테넌트 단위로 셀 수 없다. 소속 없이 센 수는 "
+                "누구의 것인지 답할 수 없고, 청구서에 적을 수 없다")
+        qs = qs.filter(**{_owner_field(Event): group})
+    else:
+        # 실제 좁히기. 문지기는 `common.tenant_filters` 가 한다 — 여기서 직접 group 을
+        # 캐내지 않는다. 전역 여부는 `tenant_roles` 만 답한다 (D-212).
+        qs = filter_by_group_field(qs, actor, field=_owner_field(Event))
+
+    def _in(field: str, value):
+        nonlocal qs
+        if value is None:
+            return
+        if isinstance(value, str):
+            qs = qs.filter(**{field: value})
+        else:
+            qs = qs.filter(**{f"{field}__in": list(value)})
+
+    _in("event_type", event_type)
+    _in("severity", severity)
+    _in("status", status)
+    _in("response_state", response_state)
+    if reviewed_by_id is not None:
+        qs = qs.filter(reviewed_by_id=reviewed_by_id)
+    if since is not None:
+        qs = qs.filter(occurred_at__gte=since)
+    if until is not None:
+        qs = qs.filter(
+            **{("occurred_at__lte" if until_inclusive else "occurred_at__lt"): until})
+    if stream_monitor_id is not None:
+        qs = qs.filter(stream_monitor_id=stream_monitor_id)
+    if mission_id is not None:
+        qs = qs.filter(mission_id=mission_id)
+    return qs
+
+
 def query_events(
     *,
     scope: TenantScope,
@@ -438,56 +521,79 @@ def query_events(
       초점 큐 · 인계 초안 · 온보딩 술어 · F-14 통계 · 대응 시간이 전부 여기를 지난다.
       한 자리에 두면 다음에 태어나는 집계도 **아무것도 안 하고** 옳다.
     """
-    Event = _model("DetectionEvent")
-
-    # ★ `_base_manager` 로 시작한다 — `objects` 는 §0.4 의 `created_by__isnull` OR 절을
-    #   타서 주인 없는 행을 통과시킨다. 소유 판정은 필터를 거치지 않은 사실 위에서 한다.
-    # 시스템 스코프로는 **읽지 못한다** (D-281). 파이프라인에 요청자가 없다는 사실이
-    # 읽기까지 열어 주면 그 경로는 영구히 전역 조회가 된다.
-    actor = scope.require_actor()
-
-    qs = Event._base_manager.select_related("stream_monitor")
-    # 실제 좁히기. 문지기는 `common.tenant_filters` 가 한다 — 여기서 직접 group 을
-    # 캐내지 않는다. 전역 여부는 `tenant_roles` 만 답한다 (D-212).
-    qs = filter_by_group_field(qs, actor, field=_owner_field(Event))
+    qs = _events_queryset(
+        scope=scope, since=since, until=until, until_inclusive=True,
+        event_type=event_type, severity=severity, status=status,
+        response_state=response_state, reviewed_by_id=reviewed_by_id,
+        stream_monitor_id=stream_monitor_id, mission_id=mission_id)
 
     # ★ P-193 — **게이트가 제 씨앗을 세지 않는다.** 표식의 뜻은 `common.probe_marker`
     #   한 곳이 정한다(K6 도 같은 곳을 부른다). 여기서 `track_id` 를 직접 비교하면
     #   그 순간 세는 법이 두 벌이 되고, 어긋난 쪽이 조용히 이긴다.
     #   **지우는 것이 아니라 세지 않는 것**이다 — 행은 그대로 있고, 사람이 보는 목록은
     #   `include_probe=True` 로 그대로 본다.
+    #   ⚠ 훈련(`drill`)은 **여기서 안 뺀다** (P-201). 제품은 훈련을 센다 — 빼는 것은
+    #     청구뿐이고, 그 자리는 아래 `count_events` 다.
     if not include_probe:
         qs = exclude_probe(qs)
-
-    def _in(field: str, value):
-        nonlocal qs
-        if value is None:
-            return
-        if isinstance(value, str):
-            qs = qs.filter(**{field: value})
-        else:
-            qs = qs.filter(**{f"{field}__in": list(value)})
-
-    _in("event_type", event_type)
-    _in("severity", severity)
-    _in("status", status)
-    _in("response_state", response_state)
-    if reviewed_by_id is not None:
-        qs = qs.filter(reviewed_by_id=reviewed_by_id)
-    if since is not None:
-        qs = qs.filter(occurred_at__gte=since)
-    if until is not None:
-        qs = qs.filter(occurred_at__lte=until)
-    if stream_monitor_id is not None:
-        qs = qs.filter(stream_monitor_id=stream_monitor_id)
-    if mission_id is not None:
-        qs = qs.filter(mission_id=mission_id)
 
     # 소유가 M2M(`groups`)일 때 조인이 같은 행을 여러 번 낸다. distinct 없이 페이징하면
     # 페이지가 겹치고, 겹친 페이지는 화면에서 "같은 이벤트가 두 번" 으로 보인다.
     # FK 일 때는 불필요하지만 해롭지 않다 — 어느 쪽이 정본인지 미결이므로(P-LOCAL-4) 둔다.
     qs = qs.distinct().order_by("-occurred_at")
     return [_to_view(row) for row in qs[offset:offset + limit]]
+
+
+def count_events(
+    *,
+    scope: TenantScope,
+    since: datetime | None = None,
+    until: datetime | None = None,
+    event_type: str | Iterable[str] | None = None,
+    severity: str | Iterable[str] | None = None,
+    status: str | Iterable[str] | None = None,
+    stream_monitor_id: int | None = None,
+    mission_id: int | None = None,
+) -> int:
+    """**청구서에 적을 이벤트 수** — `query_events` 의 **셈 갈래** (P-206 · D-508).
+
+    왜 이 함수가 생겼나 — 실측 2026-09-20 (차선 U1 이 찾아 넘겼다)
+    --------------------------------------------------------------
+    `apps/dsm/metering.py::_events` 가 `apps.get_model("stream_monitors",
+    "DetectionEvent")` 로 표를 **직접** 셌다. 커널을 안 지나니 P-193 의 표식도,
+    P-201 의 훈련 구별도 그 셈에 없었다 — **게이트가 심은 씨앗에 돈이 청구되고
+    있었다.** 앱이 제 손으로 세는 한 그 구멍은 다시 난다. 그래서 셈을 여기로 옮기고
+    `tests/test_dsm_app.py::AppStaysThinTest` 가 `metering.py` 를 보게 했다.
+
+    ★ **매개변수가 없는 것이 이 함수의 절반이다.** `include_probe` 도 `include_drill`
+      도 받지 않는다 (P-201 이 이름으로 금지한 칸). 청구의 셈은 **언제나** 둘 다 뺀다 —
+      「이번만 포함」이 생기면 그 자리가 다음 달 청구서의 구멍이 된다.
+      제품의 셈이 필요하면 `query_events` 를 부른다(훈련을 센다).
+
+    ★ **전역 관리자여도 제 테넌트만 센다**(`own_tenant_only=True`).
+      `filter_by_group_field` 는 전역 관리자에게 표 전체를 준다 — 읽기 화면에서는 옳고
+      **청구서에서는 재앙**이다: 남의 테넌트 사건 수가 내 청구서에 실리면 그것은 틀린
+      청구가 아니라 **개인정보 유출**이다(남의 사건 수는 남의 사업 규모다 ·
+      `metering.py` 머리말 「테넌트 격리」).
+
+    ★ **구간은 반열린이다** — `since <= occurred_at < until`. 달 경계를 닫으면
+      1일 0시 정각의 한 건이 **두 장의 청구서**에 오른다.
+
+    ★ **지운 행은 안 센다** — `exclude_soft_deleted`. dj-core 의 `objects` 가
+      safedelete 매니저가 아니라 소프트 삭제 행이 평범한 조회에 그대로 보인다
+      (그래서 「지웠다」고 알고 있는 고객에게 돈을 받게 된다).
+    """
+    Event = _model("DetectionEvent")
+    qs = _events_queryset(
+        scope=scope, since=since, until=until, until_inclusive=False,
+        event_type=event_type, severity=severity, status=status,
+        stream_monitor_id=stream_monitor_id, mission_id=mission_id,
+        own_tenant_only=True)
+    qs = exclude_unbillable(qs)
+    qs = exclude_soft_deleted(qs, Event)
+    #: `distinct()` — 소유가 M2M 이면 조인이 같은 행을 여러 번 낸다. 목록에서는
+    #: 「두 번 보인다」지만 셈에서는 **한 건을 두 번 청구하는 것**이다.
+    return qs.distinct().count()
 
 
 # ═══════════════════════════════════════════════════════════════════════════

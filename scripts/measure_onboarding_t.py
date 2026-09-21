@@ -156,7 +156,18 @@ def canon_rows(path: str | None = None) -> dict:
             continue
         if CANON_MARK not in doc:
             continue
-        seg = doc.split(CANON_MARK)[1]
+        #: ★★ [P-205 · 2026-09-20 · 턴 Y · 차선 Q] **`maxsplit=1` 이 빠져 있었다.**
+        #:   이 표식은 문서에 **두 번** 나온다 — 절 머리에 한 번, 아래 「세는 법」의
+        #:   **명령문 안에** 한 번(그 명령이 제 표식을 글자로 품는다). `maxsplit` 없이
+        #:   자르면 `[1]` 은 **첫 표식과 둘째 표식 사이**가 되고, 그래서
+        #:   **둘째 표식 뒤에 붙인 표는 아무도 못 읽는다** — 오늘 여기에 13행을 적고
+        #:   「행 48 · 두 칸 35」가 나왔다. 문서를 고쳤는데 수가 안 움직이는 그 모양이다.
+        #:   ⚠ 얼린 바이트로 A/B 했다: **HEAD 의 정본에서는 두 규칙이 같은 수**(48·35·13 ·
+        #:     갈린 행 0)를 낸다 — 이 고침은 **없던 행을 만들어 내지 않는다.** 오늘 바이트에서만
+        #:     13행이 갈리고, 그 13행이 바로 오늘 적은 행이다.
+        #:   정본의 말은 처음부터 「턴 T · P-159 ① 절**부터 끝까지**」였다 — 규칙이 아니라
+        #:   구현이 그 말과 달랐다.
+        seg = doc.split(CANON_MARK, 1)[1]
         state, who = {}, None
         for line in seg.splitlines():
             m = re.match(r"#{3,4} (U\d)", line)
@@ -432,6 +443,50 @@ def result(row, route, phrase_seen, predicate, evidence, cap_half=False, measure
             "measured_at": now_iso()}
 
 
+def api_token(ctx, web: str, user: str, password: str) -> str | None:
+    """기계의 로그인 — **문으로 들어온다**(사람은 화면으로 들어온다 · `login()`).
+
+    토큰을 꺼내는 규칙은 두 벌로 두지 않는다 — `verify_route_alive._extract_token` 하나를
+    쓴다(D-369). 그 함수에는 **「200 인데 success:false 는 토큰이 아니다」**가 박혀 있고,
+    복사본은 그 교훈을 한쪽에만 남긴다.
+    """
+    if not (user and password):
+        return None
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from verify_route_alive import _extract_token     # noqa: PLC0415
+    except Exception:                                     # noqa: BLE001
+        print(f"{TAG} ⚠ _extract_token 을 못 읽었다 — 기계 로그인을 건너뛴다(회색)")
+        return None
+    try:
+        r = ctx.request.post(
+            web + "/api/v1/auth/login",
+            headers={"Content-Type": "application/json"},
+            data=json.dumps({"username": user, "password": password,
+                             "end_previous_session": True}),
+            fail_on_status_code=False, timeout=30000)
+        return _extract_token(r.json())
+    except Exception as exc:                              # noqa: BLE001
+        print(f"{TAG} 기계 로그인 실패 {user}: {type(exc).__name__}: {exc}")
+        return None
+
+
+def guarded(out, key, route, fn):
+    """한 행을 재다 터지면 **그 행만 회색**이다 (P-205 · 턴 Y).
+
+    ★ 왜 필요해졌나 — 이 턴에 13행이 새로 들어왔고, 그 13행은 **아직 한 번도 안 돌았다.**
+      한 행의 예외가 `rows_u3` 전체를 끊으면 **이미 서 있던 행까지 같이 회색**이 된다 —
+      새 행을 더한 대가로 옛 행을 잃는 것이다. 울타리는 그 자리에 친다.
+    ⚠ 울타리는 **회색을 만든다. 초록이 아니다.** 예외 글자를 그대로 증거에 적는다.
+    """
+    try:
+        fn()
+    except Exception as exc:                            # noqa: BLE001
+        out.append(result(key, route, False, False,
+                          "재다 터졌다 — %s: %s (못 쟀다 · 회색. 나머지 행은 그대로 잰다)"
+                          % (type(exc).__name__, str(exc)[:200]), measured=False))
+
+
 def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, out_path: str,
             only=(), canon_path: str | None = None) -> int:
     from playwright.sync_api import sync_playwright
@@ -495,6 +550,38 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
                 except Exception:                       # noqa: BLE001
                     pass
                 ctx.close()
+
+        # ── U6 · 기계 여덟 행 [P-205 · 턴 Y] — **브라우저 없이 문만 두드린다** ──
+        #    ★ 안 이으면 「이 도구가 재는 행 48」이 거짓말이 된다: `implemented_rows()` 는
+        #      소스의 `result("U6#…")` 를 세는데, 이 블록이 안 불리면 결과에는 한 행도 없다.
+        #      「적어 둔 것」과 「부른 것」은 다른 사실이고, 이 저장소는 뒤엣것만 센다.
+        if (not only) or ("U6" in only):
+            want_u6 = [k for k in canon["two_column"] if k.startswith("U6#")]
+            try:
+                if personas:
+                    print(f"{TAG} 계정을 바꾼다(U6 기계) — {GAP_SECONDS}초 기다림")
+                    time.sleep(GAP_SECONDS)
+                actx = browser.new_context()
+                probe_pw = os.environ.get("GX_PROBE_PASSWORD") or ""
+                u6_token = api_token(actx, web, "gxprobe_q", probe_pw)
+                adm_token = api_token(actx, web, "gxseed_u5_sysop", role_pw)
+                print(f"{TAG} ═══ U6 · 기계 · 토큰={bool(u6_token)} · "
+                      f"관리자토큰={bool(adm_token)} ═══")
+                logins.append({"persona": "U6", "user": "gxprobe_q",
+                               "ok": bool(u6_token), "admin_ok": bool(adm_token)})
+                rows_u6(actx.request, web, results,
+                        token=u6_token, admin_token=adm_token, seed_b=seed_b)
+                actx.close()
+            except Exception as exc:                    # noqa: BLE001
+                print(f"{TAG} ⚠ U6 예외: {type(exc).__name__}: {exc}")
+                traceback.print_exc()
+                got_u6 = {r["row"] for r in results}
+                for k in want_u6:
+                    if k not in got_u6:
+                        results.append(result(k, "", False, False,
+                                              "U6 걸음이 터졌다 — %s: %s (못 쟀다)"
+                                              % (type(exc).__name__, str(exc)[:160]),
+                                              measured=False))
         browser.close()
 
     measured_rows = [r for r in results if r["measured"]]
@@ -637,6 +724,26 @@ def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     out.append(result("U1#3", "/dsm/cameras/grid", phrase, bool(pulse) and tiles >= 1,
                       f"pulse 200={bool(pulse)} · 「응답 없음」/「마지막 응답」 {tiles}회 · 격자={('카메라 격자' in b)} 순회={('자동 순회' in b) or ('순회 멈춤' in b)}", url=url))
 
+    # #4 실시간 스트림 열기 [P-205 · 턴 Y] — **누를 자리 = /multi-stream-monitor · 기대 = 도달 + 스트림 자리 ≥1**
+    #    문구 정본이 없어 세 턴 회색이던 행이다. 기계에게 필요한 것은 글자가 아니라 **자리**였다.
+    def _u1_4():
+        url = goto(page, web, "/multi-stream-monitor", settle_ms=10_000)
+        b = body(page)
+        reached = "/multi-stream-monitor" in (url or "")
+        try:
+            slots = page.evaluate(
+                "() => document.querySelectorAll('video, canvas, [class*=stream i], [id*=stream i]').length")
+        except Exception:                               # noqa: BLE001
+            slots = 0
+        # 인수 화면의 단언 글자(영문) — 사전 밖이라 문구 칸에는 못 적지만 **자리의 증거**는 된다
+        says = ("Participants" in b) or ("Stream" in b) or ("스트림" in b)
+        out.append(result("U1#4", "/multi-stream-monitor", reached,
+                          (slots >= 1) or says,
+                          f"도달={reached} (url={url}) · 스트림 자리(video/canvas/stream) {slots}개 · "
+                          f"단언 글자={says} · 본문 {len(b)}자 "
+                          f"— 도달만 하고 자리가 0이면 빨강(P-205)", url=url))
+    guarded(out, "U1#4", "/multi-stream-monitor", _u1_4)
+
     # #8 이벤트 목록: 단추 넷 + GET /api/dsm/events 200 + 처리 단계 값
     m = net.mark()
     url = goto(page, web, "/dsm/events")
@@ -753,6 +860,30 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         probe_note = " · ⚠ probe 정본(`probe_events.py`)을 못 불러 **거르지 않았다**"
     out.append(result("U2#2", "/dsm/events?preset=unhandled", seen, bool(g200) and all_unhandled,
                       f"GET …response_state=occurred 200={bool(g200)} (서버 {n_srv}건{probe_note}) · 처리 단계 칸 {len(states)} 전부 미처리={all_unhandled} {sorted(set(states))}", url=url))
+
+    # #3 이벤트 등급 재판정 [P-205 · 턴 Y] — **누를 자리를 찾는다 · 기대 = 0개(그래서 ○)**
+    #    ★ 이 행은 채워도 ● 가 아니다. 「없는 것을 없다고 재는」 행이다 —
+    #      회색(못 쟀다)과 빨강(재서 없다)은 다르고, 이 저장소는 그 둘을 가른다.
+    def _u2_3():
+        url = goto(page, web, f"/dsm/events/{snap_event or seed_a}")
+        try:
+            controls = page.evaluate(
+                "() => {const w = ['심각','경계','주의','등급'];"
+                " const el = Array.from(document.querySelectorAll("
+                "   'select, [role=combobox], button, input'));"
+                " return el.filter(e => {const t = ((e.innerText||'') + ' ' + (e.value||'') + ' '"
+                "   + (e.getAttribute('aria-label')||'') + ' ' + (e.name||'')).trim();"
+                "   return w.some(x => t.includes(x)) && /등급|severity/i.test("
+                "     t + ' ' + (e.className||'') + ' ' + (e.id||''));}).length;}")
+        except Exception:                               # noqa: BLE001
+            controls = -1
+        found = controls > 0
+        out.append(result("U2#3", "/dsm/events/:id", True, found,
+                          f"등급을 **다시 매기는** 자리 {controls}개 (0 이면 ○ — 재판정 칸이 없다는 "
+                          f"것이 지금의 사실이다 · 1 이상이면 그것이 새 사실이고 그때 술어는 "
+                          f"[서버 기록] severity 변경 + 감사 행 1 이 된다) · "
+                          f"-1 은 화면을 못 물어본 것이다", url=url))
+    guarded(out, "U2#3", "/dsm/events/:id", _u2_3)
 
     # #4 심각 이벤트: 배지 심각 · GET snapshot 200 image/jpeg · <img> ≥1 · 주소 칸 비어 있지 않음 — 하나라도 빠지면 ◐
     #    ★★ [U1 요청 ③ · 턴 V] **그림 실린 씨앗이 없으면 이 행은 회색이다** — ◐ 도 빨강도 아니다.
@@ -1012,6 +1143,302 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         evidence = f"「{MOBILE_SETTINGS_HEADLINE}」 이 화면에 없다 · url={page.url}"
     out.append(result("U3#16", "/m/settings", seen, pred, evidence, url=url))
 
+    # #3 상황 사진 1장 보기 [P-205 · 턴 Y] — **모바일 상세의 사진 자리**
+    #    ★ U2#4(데스크톱)와 **다른 화면**이다. 거기서는 `<img>` 가 0이었고(◐), 여기는 그린다고
+    #      정본이 적었다 — 그 말이 맞는지는 이 행이 잰다. 문 200 인데 그림 0이면 **빨강**이다.
+    def _u3_3():
+        if not snap_event:
+            out.append(result("U3#3", "/m/events/:id", False, False,
+                              "그림 실린 씨앗이 없어 **못 쟀다**(U2#4 와 같은 사유 · --snap-event)",
+                              measured=False))
+            return
+        m = net.mark()
+        url = goto(page, web, f"/m/events/{snap_event}")
+        snap = net.find("GET", f"/api/dsm/events/{snap_event}/snapshot", m)
+        snap_ok = any(r["status"] == 200 and "image/jpeg" in r["ctype"] for r in snap)
+        try:
+            imgs = page.evaluate(
+                "() => Array.from(document.querySelectorAll('img'))"
+                ".filter(i => i.naturalWidth > 0).length")
+        except Exception:                               # noqa: BLE001
+            imgs = 0
+        out.append(result("U3#3", "/m/events/:id", snap_ok, snap_ok and imgs >= 1,
+                          f"snapshot {[r['status'] for r in snap]} jpeg={snap_ok} · "
+                          f"그려진 <img>(naturalWidth>0) {imgs}개 — 문이 200 인데 0이면 빨강 "
+                          f"(U2#4 데스크톱이 정확히 그 모양이었다)", url=url))
+    guarded(out, "U3#3", "/m/events/:id", _u3_3)
+
+    # #14 해당 카메라 모바일 실시간 [P-205 · 턴 Y] — **계약 11조 설계 잠금이 지켜지는가**
+    #    ★★ 이 행은 **●가 될 수 없다.** 잠금이 지켜지면 그것은 「제품이 옳다」이지
+    #      「이 사람이 그 일을 끝낼 수 있다」가 아니다. 온보딩은 뒤엣것을 센다 → ○(0점).
+    #      자리가 **생기면** 그때는 잠금이 깨진 것이고, 그건 온보딩이 아니라 계약이 볼 일이다.
+    def _u3_14():
+        url = goto(page, web, f"/m/events/{snap_event or seed_b}")
+        b = body(page)
+        try:
+            live = page.evaluate(
+                "() => document.querySelectorAll("
+                "  'video, [class*=live i], [class*=stream i], [id*=stream i]').length")
+        except Exception:                               # noqa: BLE001
+            live = -1
+        words = [w for w in ("실시간", "라이브", "스트림") if w in b]
+        out.append(result("U3#14", "/m/events/:id", True, live > 0,
+                          f"모바일 실시간 자리 {live}개 · 말 {words} — **0 이 지금의 사실이고 "
+                          f"이 행은 ○ 다**(계약 11조 설계 잠금). 모바일 라우터에는 세 자리뿐이다 "
+                          f"(inbox · eventDetail · settings). 자리가 생겼다면 잠금이 깨진 것이다",
+                          url=url))
+    guarded(out, "U3#14", "/m/events/:id", _u3_14)
+
+
+# ---------------------------------------------------------------------------
+# U6 · 외부 연계 시스템 — **기계다. 브라우저가 아니라 문을 두드린다** [P-205 · 턴 Y]
+#
+#   여덟 행이 세 턴째 회색이었던 이유는 문이 없어서가 아니라 **문구 칸이 비어서**였다.
+#   기계는 글자를 읽지 않는다 — 기계에게 「누를 자리」는 **문**이고 「기대」는 **응답**이다.
+#
+# ⚠ 쓰기 갈래 셋의 규약
+#   · `U6#1`(키 발급) · `U6#4`(웹훅 구독) 는 **되돌린다** — 지우는 문이 실재한다
+#     (`api.py:1104` · `api.py:742`). 게이트가 남긴 자격·구독은 다음 게이트의 거짓 색이다
+#     (턴 T 의 U5#9 가 그 모양이었다).
+#   · `U6#9`(상태 갱신) 는 **없는 사건 id 로** 두드린다. 이 저장소가 쓰기 면을 재는 방식
+#     그대로다(`verify_contract_route_reach`: 「쓰기 경로는 없는 id 로 두드린다」) —
+#     **404 는 「관문을 지나 핸들러까지 갔고 상태는 안 건드렸다」**이고, 403 이면 관문에서
+#     막힌 것이다(P-83 눈금). 전이 자체는 `U3#7` 이 사람 자격으로 이미 잰다.
+# ---------------------------------------------------------------------------
+U6_ANON_READS = ("/api/dsm/events", "/api/dsm/cameras/pulse", "/api/dsm/dashboard/frame",
+                 "/api/dsm/deliveries", "/api/dsm/settings/notify-rules/list")
+U6_ABSENT_EVENT = 987654321          # 없는 사건 — 쓰기 문을 상태 안 바꾸고 두드린다
+
+
+def _json_of(resp):
+    try:
+        return resp.json()
+    except Exception:                                   # noqa: BLE001
+        return None
+
+
+def _count_rows(js) -> int:
+    """목록 응답의 행 수 — 봉투든 아니든 **배열을 찾아** 센다. 못 세면 -1 (0 이 아니다)."""
+    if isinstance(js, list):
+        return len(js)
+    if not isinstance(js, dict):
+        return -1
+    scopes = [js]
+    if isinstance(js.get("data"), dict):
+        scopes.append(js["data"])
+    for scope in scopes:
+        if isinstance(scope.get("total"), int):
+            return scope["total"]
+        for v in scope.values():
+            if isinstance(v, list):
+                return len(v)
+    return -1
+
+
+def _outbox_signed() -> int:
+    """[서버 기록] 서명이 붙은 웹훅 발송 행 수. **못 읽으면 -1** — 0 과 다르다."""
+    try:
+        get = orm()
+    except Exception:                                   # noqa: BLE001
+        return -1
+    for label in ("stream_monitors.WebhookOutbox", "stream_monitors.DsmWebhookOutbox",
+                  "stream_monitors.WebhookDelivery"):
+        try:
+            model = get(label)
+        except Exception:                               # noqa: BLE001
+            continue
+        try:
+            n = 0
+            for r in model.objects.all().order_by("-id")[:200]:
+                blob = (str(getattr(r, "headers", "") or "")
+                        + str(getattr(r, "signature", "") or "")
+                        + str(getattr(r, "signature_header", "") or ""))
+                if blob.strip():
+                    n += 1
+            return n
+        except Exception:                               # noqa: BLE001
+            continue
+    return -1
+
+
+def rows_u6(api, web, out, *, token, admin_token, seed_b):
+    """기계 행 여덟. `api` 는 playwright 의 `APIRequestContext` — 브라우저 없이 문만 부른다."""
+    def call(method, path, *, headers=None, data=None):
+        fn = getattr(api, method.lower())
+        kw = {"headers": headers or {}, "fail_on_status_code": False, "timeout": 30000}
+        if data is not None:
+            kw["data"] = data
+        r = fn(web + path, **kw)
+        return r, _json_of(r)
+
+    bearer = {"Authorization": "Bearer %s" % token} if token else {}
+    admin = {"Authorization": "Bearer %s" % admin_token} if admin_token else {}
+    JSON = {"Content-Type": "application/json"}
+
+    def no_cred(key, route):
+        """★ 자격 없이 두드려 401 을 받고 그것을 **빨강**으로 세면 제품이 아니라
+        **우리의 빈 주머니**를 재는 것이다 — 회색이다 (D-301)."""
+        out.append(result(key, route, False, False,
+                          "기계 자격이 없다 — 환경에 GX_PROBE_PASSWORD(계정 gxprobe_q)를 "
+                          "주면 잰다. 자격 없이 받은 401 을 빨강으로 세지 않는다",
+                          measured=False))
+        return True
+
+    # #1 API 키로 인증 — 발급 → 키로 200 · 익명으로 401 → **되돌린다**
+    def _u6_1():
+        if not admin_token:
+            out.append(result("U6#1", "POST /settings/api-keys", False, False,
+                              "관리자 토큰이 없다 — 키를 발급할 수 없어 **못 쟀다**(회색)",
+                              measured=False))
+            return
+        name = "onb-U6-%s" % datetime.now().strftime("%H%M%S")
+        r, js = call("post", "/api/dsm/settings/api-keys",
+                     headers=dict(admin, **JSON), data=json.dumps({"name": name}))
+        key = key_id = None
+        scopes = [js if isinstance(js, dict) else {}]
+        if isinstance(scopes[0].get("data"), dict):
+            scopes.append(scopes[0]["data"])
+        for sc in scopes:
+            key = key or sc.get("key") or sc.get("api_key") or sc.get("secret")
+            key_id = key_id if key_id is not None else (sc.get("id") or sc.get("key_id"))
+        with_key = None
+        if key:
+            rk, _ = call("get", "/api/dsm/events", headers={"X-API-Key": key})
+            with_key = rk.status
+        ra, _ = call("get", "/api/dsm/events")
+        anon = ra.status
+        if key_id is not None:
+            rd, _ = call("delete", "/api/dsm/settings/api-keys/%s" % key_id, headers=admin)
+            reverted = " · [되돌림] DELETE api-keys/%s -> %s" % (key_id, rd.status)
+        else:
+            reverted = " · **되돌리지 못했다** — 응답에서 키 id 를 못 찾았다(손으로 지운다)"
+        out.append(result("U6#1", "POST /settings/api-keys", bool(key),
+                          with_key == 200 and anon == 401,
+                          "발급 %s · 키 받음=%s · 키로 GET events=%s(기대 200) · "
+                          "익명 GET events=%s(기대 401)%s"
+                          % (r.status, bool(key), with_key, anon, reverted)))
+    guarded(out, "U6#1", "POST /settings/api-keys", _u6_1)
+
+    # #2 이벤트 목록 — 200 + **봉투가 아닌 진짜 JSON**(total 과 events 가 둘 다)
+    def _u6_2():
+        if not token:
+            no_cred("U6#2", "GET /api/dsm/events")
+            return
+        r, js = call("get", "/api/dsm/events", headers=bearer)
+        d = js if isinstance(js, dict) else {}
+        inner = d.get("data") if isinstance(d.get("data"), dict) else {}
+        has_total = ("total" in d) or ("total" in inner)
+        has_rows = isinstance(d.get("events"), list) or isinstance(inner.get("events"), list)
+        out.append(result("U6#2", "GET /api/dsm/events", r.status == 200,
+                          r.status == 200 and has_total and has_rows,
+                          "status=%s · total 칸=%s · events 배열=%s · 최상위 칸 %s "
+                          "— 봉투만 오면 빨강이다"
+                          % (r.status, has_total, has_rows, sorted(d)[:8])))
+    guarded(out, "U6#2", "GET /api/dsm/events", _u6_2)
+
+    # #3 이벤트 상세 — JWT 200 · **키는 거절**(D-371 의 의도된 절반) → ◐ 상한
+    def _u6_3():
+        if not token:
+            no_cred("U6#3", "GET /api/dsm/events/{id}")
+            return
+        ev = seed_b or U6_ABSENT_EVENT
+        rj, _ = call("get", "/api/dsm/events/%s" % ev, headers=bearer)
+        rk, _ = call("get", "/api/dsm/events/%s" % ev,
+                     headers={"X-API-Key": "onb-not-a-real-key"})
+        ok = (rj.status == 200) and (rk.status in (401, 403))
+        out.append(result("U6#3", "GET /api/dsm/events/{id}", rj.status == 200, ok,
+                          "JWT=%s(기대 200) · 키=%s(기대 401/403 — D-371 의 의도된 절반) "
+                          "→ 둘 다 그대로면 **◐ 상한**. 키가 200 이면 D-371 이 깨진 것이다"
+                          % (rj.status, rk.status), cap_half=ok))
+    guarded(out, "U6#3", "GET /api/dsm/events/{id}", _u6_3)
+
+    # #4 웹훅 수신 — 구독 200 → 목록 +1 → [서버 기록] 서명 붙은 발송 행 · **되돌린다**
+    def _u6_4():
+        if not token:
+            no_cred("U6#4", "POST /webhook-subscriptions")
+            return
+        before, _ = call("get", "/api/dsm/webhook-subscriptions", headers=bearer)
+        n0 = _count_rows(_json_of(before))
+        r, js = call("post", "/api/dsm/webhook-subscriptions",
+                     headers=dict(bearer, **JSON),
+                     data=json.dumps({"url": "https://example.invalid/onb-u6",
+                                      "event_types": ["event.created"]}))
+        sid = None
+        scopes = [js if isinstance(js, dict) else {}]
+        if isinstance(scopes[0].get("data"), dict):
+            scopes.append(scopes[0]["data"])
+        for sc in scopes:
+            sid = sid if sid is not None else (sc.get("id") or sc.get("subscription_id"))
+        after, _ = call("get", "/api/dsm/webhook-subscriptions", headers=bearer)
+        n1 = _count_rows(_json_of(after))
+        signed = _outbox_signed()
+        if sid is not None:
+            rd, _ = call("delete", "/api/dsm/webhook-subscriptions/%s" % sid, headers=bearer)
+            reverted = " · [되돌림] DELETE %s -> %s" % (sid, rd.status)
+        else:
+            reverted = " · **되돌리지 못했다** — 구독 id 를 못 찾았다(손으로 지운다)"
+        out.append(result("U6#4", "POST /webhook-subscriptions",
+                          r.status in (200, 201), (n1 > n0) and signed >= 1,
+                          "구독 %s · 목록 %d -> %d · [서버 기록] 서명이 붙은 발송 행 %d건"
+                          "(-1 은 표를 못 읽은 것이다)%s — 이 걸음은 **새 사건을 만들지 않는다**"
+                          "(제품에 그 문이 없다). 발송 갈래는 이미 남은 행으로 잰다"
+                          % (r.status, n0, n1, signed, reverted)))
+    guarded(out, "U6#4", "POST /webhook-subscriptions", _u6_4)
+
+    # #9 상태 갱신 — **없는 id 로** 두드린다: 404 면 닿은 것 · 403 이면 못 닿은 것 (P-83)
+    def _u6_9():
+        if not token:
+            no_cred("U6#9", "POST /events/{id}/response")
+            return
+        r, _ = call("post", "/api/dsm/events/%d/response" % U6_ABSENT_EVENT,
+                    headers=dict(bearer, **JSON),
+                    data=json.dumps({"to_state": "acknowledged"}))
+        out.append(result("U6#9", "POST /events/{id}/response", True, r.status == 404,
+                          "없는 사건(%d)으로 두드렸다 -> %s. **404 = 관문을 지나 핸들러까지 "
+                          "갔다(상태는 안 건드렸다)** · 403 = 관문에서 막혔다(P-83 눈금). "
+                          "전이 자체는 U3#7 이 사람 자격으로 잰다 — 같은 사실을 두 번 바꾸지 "
+                          "않는다 · 외부 App 의 인증 경로가 authn_paths 대장에 아직 없다"
+                          % (U6_ABSENT_EVENT, r.status)))
+    guarded(out, "U6#9", "POST /events/{id}/response", _u6_9)
+
+    # #12 인증 실패 — 익명 읽기 다섯이 **전부 401** (200 봉투 하나면 빨강 · P-133)
+    def _u6_12():
+        codes = {}
+        for path in U6_ANON_READS:
+            r, _ = call("get", path)
+            codes[path] = r.status
+        all401 = all(c == 401 for c in codes.values())
+        two_hundreds = [p for p, c in codes.items() if c == 200]
+        out.append(result("U6#12", "/api/dsm/** 익명", True, all401,
+                          "익명 읽기 %d건 %s — 전부 401=%s%s"
+                          % (len(codes), codes, all401,
+                             "" if not two_hundreds else
+                             " · **200 봉투 %d건: %s** (P-133 이 쫓던 자리)"
+                             % (len(two_hundreds), two_hundreds))))
+    guarded(out, "U6#12", "/api/dsm/** 익명", _u6_12)
+
+    # #14 스키마 버전 — 응답 헤더 `X-GX-Schema` (backend/common/schema_header.py:19)
+    def _u6_14():
+        r, _ = call("get", "/api/dsm/health")
+        h = dict((k.lower(), v) for k, v in (r.headers or {}).items())
+        val = h.get("x-gx-schema")
+        out.append(result("U6#14", "헤더 X-GX-Schema", True, bool(val),
+                          "GET /api/dsm/health -> %s · X-GX-Schema=%s · 헤더 %d개"
+                          % (r.status, val or "**없다**", len(h))))
+    guarded(out, "U6#14", "헤더 X-GX-Schema", _u6_14)
+
+    # #15 연계 헬스체크 — 200 또는 503(둘 다 답한 것) + 검사 셋의 이름
+    def _u6_15():
+        r, js = call("get", "/api/dsm/health")
+        text = json.dumps(js, ensure_ascii=False) if js is not None else ""
+        checks = [w for w in ("db", "cache", "queue") if w in text]
+        out.append(result("U6#15", "GET /api/dsm/health", r.status in (200, 503),
+                          r.status in (200, 503) and len(checks) >= 1,
+                          "status=%s (200·503 둘 다 답한 것 — 503 은 「지금 아프다」이지 문 "
+                          "없음이 아니다) · 검사 이름 %s · 익명 허용 목록의 문이다"
+                          % (r.status, checks or "없음")))
+    guarded(out, "U6#15", "GET /api/dsm/health", _u6_15)
+
 
 # ---------------------------------------------------------------------------
 # U4 · 재난안전과 (1440)
@@ -1038,6 +1465,7 @@ def rows_u4(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     b = body(page)
     seen = ("드론·로봇 장비 등록" in b) and (ADMIN_HEADER in b)
     rows = table_rows(page)
+    # (U4#9 는 아래에 있다 — 표 순서가 아니라 화면 순서로 잰다)
     out.append(result("U4#11", "/device", seen, rows >= 1,
                       f"url={page.url} · 「드론·로봇 장비 등록」={('드론·로봇 장비 등록' in b)} · 머리줄={(ADMIN_HEADER in b)} · 표 행 {rows} · 본문 앞 {b[:80]!r}", url=url))
 
@@ -1157,6 +1585,34 @@ def rows_u4(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     js = (g or {}).get("json") or {}
     n_srv = js.get("total", -1) if isinstance(js, dict) else -1
     rows = table_rows(page)
+    # #9 증빙 영상 확인 [P-205 · 턴 Y] — **표 칸 「영상 구간」 · 문은 200 또는 404**
+    #    ★ 404 는 **문 없음이 아니다** — 「이 사건에 영상이 없다」이다. 둘을 한 칸에 넣으면
+    #      「없는 문」과 「빈 자료」가 같은 색이 된다. 누를 단추가 없으므로 **◐ 상한**이다
+    #      (추출은 계약 11조 잠금 · `pages/EventDetail.tsx:457` 은 이름칸이다).
+    def _u4_9():
+        m = net.mark()
+        ev = snap_event or seed_a
+        url = goto(page, web, f"/dsm/events/{ev}")
+        b = body(page)
+        cell = "영상 구간" in b
+        calls = net.find("GET", f"/api/dsm/events/{ev}/clip", m)
+        codes = [r["status"] for r in calls]
+        door = any(c in (200, 404) for c in codes)
+        if not calls:
+            # 화면이 그 문을 스스로 안 부르면 **우리가 부른다** — 문이 사는지가 이 행의 절반이다
+            try:
+                r = page.request.get(f"{web}/api/dsm/events/{ev}/clip")
+                codes = [r.status]
+                door = r.status in (200, 404)
+            except Exception as exc:                    # noqa: BLE001
+                codes = ["부르지 못함: %s" % type(exc).__name__]
+        out.append(result("U4#9", "/dsm/events/:id", cell, door and cell,
+                          f"표 칸 「영상 구간」={cell} · clip 문 {codes} "
+                          f"(200·404 둘 다 문이 산 것 · 404 는 빈 자료다) · "
+                          f"누를 단추 없음 → **◐ 상한**(추출은 계약 11조 잠금)",
+                          cap_half=True, url=url))
+    guarded(out, "U4#9", "/dsm/events/:id", _u4_9)
+
     out.append(result("U4#16", "/dsm/audit", seen, bool(g) and rows >= 1,
                       f"GET /api/dsm/audit 200={bool(g)} (서버 전체 {n_srv}건) · 표 행 {rows} · "
                       f"상태 칸 「초 · 60초 안」={seen} · 「첫 응답」 칸={('첫 응답' in b)} · 제목 「감사 기록」={('감사 기록' in b)}",

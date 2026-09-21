@@ -260,6 +260,12 @@ class DsmAPI:
                                       stream_monitor_id=stream_monitor_id,
                                       include_probe=True,
                                       limit=limit)
+        #: ★ P-201 (2026-09-20 · 턴 Y) — **훈련 배지를 그리려면 목록에도 출처가 있어야 한다.**
+        #:   종전엔 `data_source` 가 **상세에만** 있었고, 그래서 목록과 큐는 훈련 사건을
+        #:   실사건과 같은 카드로 그렸다 — 관제요원이 그것을 가르려면 한 건씩 열어봐야 했다.
+        #:   **한 번에 지어서 준다**(`event_data_sources`) — 줄마다 부르면 N+1 이다.
+        #:   나가는 것은 날것 `track_id` 가 아니라 한 낱말(`live` / `drill`)이다.
+        sources = services.event_data_sources(scope=scope, views=rows)
         return {"total": len(rows), "events": [
             {"event_id": e.event_id, "event_type": e.event_type,
              "severity": e.severity, "status": e.status, "verdict": e.verdict,
@@ -267,7 +273,8 @@ class DsmAPI:
              "stream_monitor_id": e.stream_monitor_id,
              "stream_monitor_name": e.stream_monitor_name,
              "lat": e.lat, "lng": e.lng, "snapshot_path": e.snapshot_path,
-             "response_state": e.response_state}
+             "response_state": e.response_state,
+             "data_source": sources.get(e.event_id, "live")}
             for e in rows]}
 
     # ── W1 요약 한 줄 (차선 C · 2026-09-23) ─────────────────────────────

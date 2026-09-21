@@ -235,7 +235,23 @@ def event_data_source(*, view) -> str:
       판정기는 있는데 그 답을 아무도 안 쓰는 상태이고, `verify_dormant` 가
       「켜진 상태로 태어나야 한다」로 그것을 잡았다(D-377).
     """
+    from common.probe_marker import is_drill_track
     from stream_monitors.services.drill import DATA_SOURCE, is_drill_event_for_stream
+
+    #: ★★ P-201 (2026-09-20 · 턴 Y) — **축이 둘이다. 답은 하나다.**
+    #:
+    #:   ① **행 표식** `track_id` 가 `data_source=drill` 로 시작한다 — 심은 쪽이
+    #:      적어 둔 것. 훈련 모드 스위치가 꺼져 있어도 참이다.
+    #:   ② **훈련 창**(UX-17) — 그 시각에 그 테넌트가 훈련 중이었다.
+    #:
+    #:   둘 중 하나만 참이면 훈련이다. 두 축을 **한 낱말**(`drill`)로 모으는
+    #:   것이 요점이다 — 화면은 배지를 한 종류만 그리고(「훈련」 · GX-COPY §2),
+    #:   청구는 한 낱말만 빼면 된다. 두 낱말이면 한쪽을 빼는 날 다른 쪽이 남는다.
+    #:
+    #:   ★ 행 표식을 **먼저** 본다. 공짜이고(행 안에 있다) 창 판정은 감사를
+    #:     훑는다 — 그 순서가 `event_data_sources` 의 N+1 을 가른다.
+    if is_drill_track(getattr(view, "track_id", "")):
+        return DATA_SOURCE
 
     #: ★ 소속을 되짚는 한 줄은 **여기 두지 않는다** — App 이 ORM 을 만지면
     #:   `test_dsm_app` 이 잡는다(DA-04 §1-1). 그 한 줄은 `drill` 쪽에 있다.
@@ -243,6 +259,62 @@ def event_data_source(*, view) -> str:
             if is_drill_event_for_stream(occurred_at=view.occurred_at,
                                          stream_monitor_id=view.stream_monitor_id)
             else "live")
+
+
+def event_data_sources(*, scope: TenantScope, views) -> dict[int, str]:
+    """목록 한 장의 출처를 **한 번에** 낸다 (P-201 · UX-17).
+
+    왜 줄마다 `event_data_source` 를 부르지 않나 — **N+1 이다.**
+    창 판정(`is_drill_event_for_stream`)은 줄마다 카메라 한 번 · 감사 전건 한 번을
+    읽는다. 초점 큐는 한 번에 **200줄**을 그린다(`focus_queue(limit=200)`) —
+    그대로 두면 한 화면에 조회 400번이고, 그것은 이 턴의 성능 창을 다 먹는다.
+
+    그래서 순서를 바꾼다:
+
+        ① **행 표식**은 행에 있다 — 조회 0번. 먼저 가른다.
+        ② **창**은 테넌트 단위다. 이 응답의 모든 줄은 **같은 테넌트**의 것이므로
+           (라우트가 `tenant_scoped`), 「이 테넌트가 훈련 모드를 한 번이라도 켜 봤나」를
+           **한 번** 묻는다. 안 켜 봤으면(`last_action` 이 빈 문자열) 창은 없고,
+           줄마다 묻는 것은 전부 답이 같은 질문이다.
+
+    ⚠ ② 가 거짓을 내는 경우는 하나다: 테넌트가 훈련을 한 번이라도 켜 봤고
+      그때 그 창에 든 사건이 이 목록에 섞여 있을 때 — 그때만 줄마다 묻는다.
+      즉 **비용을 내는 쪽은 실제로 훈련을 쓴 테넌트뿐**이고, 그런 테넌트는
+      그 값이 필요해서 켜둔 것이다.
+    """
+    from common.probe_marker import is_drill_track
+    from stream_monitors.services import drill
+
+    rows = list(views)
+    out: dict[int, str] = {}
+    unmarked = []
+    for view in rows:
+        if is_drill_track(getattr(view, "track_id", "")):
+            out[view.event_id] = drill.DATA_SOURCE
+        else:
+            out[view.event_id] = "live"
+            unmarked.append(view)
+
+    if not unmarked:
+        return out
+
+    #: 테넌트가 훈련 모드를 **한 번이라도 켜 봤는가.** 안 켜 봤으면 창이 없고,
+    #: 창이 없으면 줄마다 묻는 것은 **전부 같은 「아니오」**다.
+    #: 실패하면 창을 **없는 것으로** 본다 — 배지 하나 때문에 목록이 500 이 되면
+    #: 그것은 배지가 목록을 끌고 내려간 것이다(보조 정보가 본문을 죽이지 않는다).
+    try:
+        ever = bool(drill.drill_state(scope=scope).last_action)
+    except Exception:                       # noqa: BLE001 — 배지는 보조 정보다
+        return out
+    if not ever:
+        return out
+
+    for view in unmarked:
+        if drill.is_drill_event_for_stream(
+                occurred_at=view.occurred_at,
+                stream_monitor_id=view.stream_monitor_id):
+            out[view.event_id] = drill.DATA_SOURCE
+    return out
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1047,6 +1119,10 @@ def focus_queue(*, scope: TenantScope, since: datetime | None = None,
 
     rows = list(recent_events(scope=scope, since=since, until=until, limit=limit))
     stamps = clock.stamps_for(rows)
+    #: ★ P-201 — 훈련 사건은 **큐에 선다**(제품이 센다). 그래서 그 카드가
+    #:   「훈련」이라고 **말해야** 한다 — 안 말하면 관제요원은 훈련을 재난으로 읽고
+    #:   사람을 보낸다. `stamps_for` 와 같은 자리에서 **한 번에** 짓는다(N+1 금지).
+    data_sources = event_data_sources(scope=scope, views=rows)
     now = timezone.now()
 
     #: 등급의 무게. K1 의 `Severity` 열거를 **순서로만** 쓴다 — 등급 규칙(무엇이
@@ -1083,6 +1159,9 @@ def focus_queue(*, scope: TenantScope, since: datetime | None = None,
             "lat": row.lat, "lng": row.lng,
             "snapshot_path": row.snapshot_path,
             "elapsed_seconds": elapsed,
+            #: 「훈련」 배지의 근거 (P-201). `live` 면 화면은 아무것도 안 그린다 —
+            #: 평상에 배지를 붙이면 배지가 뜻을 잃는다(`copy.ts::dataSourceBadge`).
+            "data_source": data_sources.get(row.event_id, "live"),
             "urgency_tier": clock.urgency_tier(elapsed),
             "acknowledged_at": stamp.acknowledged_at if stamp else None,
             "arrived_at": stamp.arrived_at if stamp else None,
@@ -1115,7 +1194,7 @@ def focus_queue(*, scope: TenantScope, since: datetime | None = None,
                     for name in ("event_id", "severity", "status", "verdict",
                                  "response_state", "occurred_at", "elapsed_seconds",
                                  "urgency_tier", "acknowledged_at", "arrived_at",
-                                 "closed_at", "snapshot_path"):
+                                 "closed_at", "snapshot_path", "data_source"):
                         card[name] = entry[name]
                 if row.last_seen_at and (card["last_seen_at"] is None
                                          or row.last_seen_at > card["last_seen_at"]):
@@ -1294,3 +1373,36 @@ def camera_pulse(*, scope: TenantScope, now: datetime | None = None) -> dict:
             "zones": zones,
         },
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 청구서의 수 — **세는 것은 커널이고, 이 파일은 문이다** (P-206 · D-508)
+# ═══════════════════════════════════════════════════════════════════════════
+#: ★ 왜 계량이 커널을 직접 안 부르고 여기를 지나는가 —
+#:   **「K1 의 App 소비자는 하나뿐」**이 F-05 「진입면 하나」의 실제 집행이고
+#:   (`tests/test_f05_event_api.py::EntrySurfaceIsOneTest`), 그 하나가 이 파일이다.
+#:   `apps/dsm/metering.py` 가 `kernels.k1_event` 를 직접 import 하면 진입면이 둘이
+#:   된다 — 실제로 그렇게 짰다가 그 시험이 멈춰 세웠다 [실측 2026-09-20 · 턴 Y].
+#:   그러니 이 두 함수는 **얇은 문**이다: 규칙도 셈도 여기 없다.
+#:
+#: ★ 표식(probe·drill)을 빼는 것은 **커널 안**이다. 여기서 한 줄이라도 거르면
+#:   세는 법이 두 벌이 되고, 갈라진 쪽이 조용히 이긴다 (P-193 · P-201).
+def count_billable_events(*, scope: TenantScope, since, until) -> int:
+    """청구서에 적을 **이벤트 수**. `kernels.k1_event.count_events` 그대로."""
+    from kernels.k1_event import count_events
+
+    return count_events(scope=scope, since=since, until=until)
+
+
+def count_billable_deliveries(*, scope: TenantScope, since, until,
+                              time_field: str, succeeded: bool) -> int:
+    """청구서에 적을 **발송 수**. `kernels.k2_notify.count_deliveries` 그대로.
+
+    ⚠ `time_field` 를 **부르는 쪽이 정한다**: 「보낸 알림」은 `sent_at`,
+      「실패한 발송」은 `occurred_at`. 실패 행의 `sent_at` 은 `None` 이라 그 칸으로
+      거르면 실패 건수가 **언제나 0**이 된다.
+    """
+    from kernels.k2_notify import count_deliveries
+
+    return count_deliveries(scope=scope, since=since, until=until,
+                            time_field=time_field, succeeded=succeeded)

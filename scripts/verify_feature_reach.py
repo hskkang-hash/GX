@@ -821,14 +821,32 @@ def main() -> int:
     if t.get(RED):
         print("%s 빨강 %d절 — **사슬이 있는데 끊겼다**" % (TAG, t[RED]))
         return EXIT_FAIL
+    #: ★ [P-204 · 턴 Y] `--no-gates` 로 낸 0 은 「통과」가 아니다 — **맡긴 판정기를
+    #:   한 벌도 안 불렀다.** 부르지 않고 얻은 색은 색이 아니다.
+    if args.no_gates:
+        print("%s ? **못 쟀다** — `--no-gates` 다. 맡긴 판정기를 하나도 부르지 않았다 "
+              "(그 절들은 회색) · 이 0 은 「이 호출이 통과」일 뿐이다 (P-204)" % TAG)
+        return EXIT_UNDECIDABLE
     print("%s 끊긴 사슬은 없다 (회색은 끊긴 것이 아니라 **못 이은 것**이다)" % TAG)
     return EXIT_OK
 
 
 if __name__ == "__main__":
     from _gate_header import file_stamp, gate_header  # P-107 — TARGET/AS/SOURCE
+    try:
+        import yaml as _yaml
+        _doc2 = _yaml.safe_load(CONTRACT.read_text(encoding="utf-8")) or {}
+        _n_cl = sum(len(f.get("clauses") or [])
+                    for f in (_doc2.get("features") or []))
+    except Exception:                                        # noqa: BLE001
+        _n_cl = 0
     gate_header(
         __file__,
+        measured=("계약 절마다 사슬(절 → 화면 → 그 화면이 부른 라우트 → 시험 → 역할 계정)이 "
+                  "이어지는가 — **분모 %d절** · 사슬을 **선언한** 절은 %d개이고 "
+                  "나머지는 **회색**(못 이은 것이지 끊긴 것이 아니다) · "
+                  "`--no-gates` 를 주면 맡긴 판정기를 안 불러 그 절들이 회색이다 (P-204)"
+                  % (_n_cl, len(REACH_MAP))),
         target="계약 절 39개 ↔ 화면 32장 ↔ 그 화면이 부른 라우트 (영역 ① · 가중 20%)",
         as_="이 게이트 자신은 자격 없이 증거를 읽는다. 화면을 **본** 쪽은 역할 계정이다 "
             "— U1 gxseed_u1_operator/fire_user · U2 gxseed_u2_manager/fire_admin · "

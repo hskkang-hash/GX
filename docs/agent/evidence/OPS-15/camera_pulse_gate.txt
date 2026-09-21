@@ -1,0 +1,143 @@
+# OPS-15 증거 — scripts/verify_camera_pulse.py
+# 실행: 2026-09-20 KST · 차선 N (P-207 다섯째 묶음) · HEAD 0acf8d1
+# 명령: PYTHONIOENCODING=utf-8 python scripts/verify_camera_pulse.py
+# ---
+[P-107] TARGET=gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다
+[P-107] AS=(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)
+[P-107] SOURCE=살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_camera_pulse.py
+[OPS15] 자기시험 통과 — 출생 표본 1 · 초록 표본 1 · 음성 5 · 판정 불가 1
+[OPS15] **판정 불가** — 환경을 세우지 못했다: ModuleNotFoundError: No module named 'config'
+[OPS15] 컨테이너 안에서 DJANGO_SETTINGS_MODULE 를 주고 돌린다
+# EXIT=2
+
+# ═══ 두 번째 부름 — gx-shell 안에서 (판정기가 스스로 시킨 대로) ═══
+# ①은 호스트에서 EXIT=2 회색: ModuleNotFoundError: No module named 'config'.
+# 머리글은 「호스트에서 부르면 docker exec 로 위임한다」고 적었으나 **위임하지 않았다.**
+# ★ 이 모양은 이 턴에 **셋째**다 (SEC-17 · OPS-07b · OPS-15).
+# ---
+[P-107] TARGET=gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다
+[P-107] AS=(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)
+[P-107] SOURCE=살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_camera_pulse.py
+[OPS15] 자기시험 통과 — 출생 표본 1 · 초록 표본 1 · 음성 5 · 판정 불가 1
+BASE_DIR /app
+INFO Database connection health check started
+WARNING Redefining 'percent' (<class 'pint.delegates.txt_defparser.plain.UnitDefinition'>)
+WARNING Redefining '%' (<class 'pint.delegates.txt_defparser.plain.UnitDefinition'>)
+INFO ✅ Dynamic query cache invalidation hooks registered
+INFO ✅ UniversalOptimizer cache invalidation is active
+🚀 [DJANGO_READY] Applying backend optimizations...
+🌍 [DJANGO_READY] Universal optimization system initialized for ALL models & views
+🔗 [DJANGO_READY] Cache invalidation signals registered manually
+🧵 [DJANGO_READY] Thread request context propagation installed
+INFO Bucket 'guardianx-dev' already exists
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.064s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.008s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.011s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.003s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+INFO Successfully connected to OpenSearch with crash-proof configuration
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.008s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.011s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.006s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.007s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+[OPS15] 카메라 3대 이상인 활성 구역이 현장에 없다 — **합성 구역을 세워** 잰다(같은 트랜잭션에서 지운다)
+INFO ✅ Redis connection pool initialized (max=100)
+[OPS15]   2대 동시 두절: 이벤트 1건 (되돌렸다)
+[OPS15]   1대만 두절(부작위): 이벤트 0건 (되돌렸다)
+[OPS15]   따로 죽은 2대: 이벤트 0건 (되돌렸다)
+[OPS15] [입력] 활성 카메라묶음 구역 0개 · 쓴 구역 317:gx-ops15-probe-1789888403 · 그 구역 카메라 3대 · 구역 출처 합성(되돌림) · 규칙 3중 2 · 두절 문턱 5분 · 동시 창 5분
+[OPS15] 캐시 처리: 비움 — 판정은 HTTP 를 지나지 않고 ORM 으로 직접 센다 (P-19)
+[OPS15]   3중 2 두절 → 1건               1건
+[OPS15]   1대 두절 → 0건 (부작위)           0건
+[OPS15]   따로 죽은 2대 → 0건              0건
+[OPS15]   캐시를 지나지 않는다 (P-19)         `dsm/` 가 BYPASS_PATTERNS 에 있고, 판정 경로는 ORM 직결이다
+[OPS15] 통과 — 3중 2는 1건이고 1대는 0건이다
+INFO 🔄 [M2M_INVALIDATION] post_add on stream_monitors.zone#317
+INFO    🔗 Detected related model: streammonitor with 3 changed records
+INFO    ✅ Cleared cache for zone#317
+INFO    🔗 [BIDIRECTIONAL_CLEAR] Clearing cache for related streammonitor: 3 items
+INFO       ✅ Cleared cache for 3 streammonitor instances
+# EXIT(컨테이너)=0

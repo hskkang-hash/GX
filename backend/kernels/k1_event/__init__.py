@@ -31,6 +31,7 @@ from kernels.k1_event.services import (
     DEDUP_WINDOW,
     NOTIFY_WINDOW,
     close_event,
+    count_events,
     get_event,
     query_events,
     record_detection,
@@ -42,6 +43,11 @@ __all__ = [
     # DA-04 §2 K1 공개 면 6개
     "record_detection",
     "query_events",
+    # ★ P-206 (2026-09-20) — `query_events` 의 **셀 갈래**. 청구서의 수가
+    #   앞에서 나오고(`apps/dsm/metering.py`), 그 수는 probe·drill 을 민다.
+    #   **읽기만 하는 면**이라 WRITE_PROBES 의 대상이 아니다 — 행을 하나도
+    #   만들지 않는다(계량이 행을 만들면 그것은 계량이 아니라 발행이다).
+    "count_events",
     "get_event",
     "review_event",
     "close_event",

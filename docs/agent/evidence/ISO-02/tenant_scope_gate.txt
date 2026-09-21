@@ -1,0 +1,21 @@
+# ISO-02 증거 — scripts/verify_tenant_scope.py
+# 실행: 2026-09-20 KST · 차선 N (P-207 넷째 묶음) · HEAD 0acf8d1
+# 명령: PYTHONIOENCODING=utf-8 python scripts/verify_tenant_scope.py
+# ⚠ 턴 W 에 차선 U56 이 「gx-shell 에 /repo/docs 가 안 붙어 등재부를 못 읽는다」로 회색을 봤다
+# ---
+[P-107] TARGET=gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다
+[P-107] AS=(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)
+[P-107] SOURCE=살아 있는 라우터 (gx-shell 안 django-ninja 레지스트리를 순회한다 · ROUTE_OPS_FLOOR=705 아래면 회색) · 하한 대조로만 쓰는 옛 사진: 파일 docs/agent/evidence/W0-14/openapi_routes.json (기록 2026-09-15T13:53 · 40849바이트)
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_tenant_scope.py
+[SCOPE] 커널 테넌트 스코프 대조 (C-3.1 · D-105 · K5)
+[SCOPE] 커널 공개 함수 64개 — 1차 scope 시그니처 64/64 (술어=키워드 전용·기본값 없음, D-281) · 2차 @tenant_scoped 0 · 문지기 호출 54 · PUBLIC 10
+[SCOPE] PUBLIC 라우트 면제 4건 (래칫 상한 4)
+[SCOPE] 이름 부딪힘 선언 1건 — 조각 이름만 같고 자원이 다른 자리(NO_ROUTE_NAME_COLLISION · 사유 등재)
+[SCOPE] no_route 등재 66종 — 라우트 763건(고유 628경로)과 대조 (D-272) · 출처 D-343/route_inventory.json (살아 있는 실측본 — 라우터가 쓴 것) · 잰 때 2026-09-19T16:18:43+07:00
+[TRIPWIRE:static] 라우트 576건 — clean 82 · guarded 143 · public 5 · unguarded 346
+
+[SCOPE] 통과
+[SCOPE] ※ 라우트 단위 스코프는 이 게이트가 아니라 backend/tests/test_route_tenant_scope.py 가 본다 (Django 필요). 중복해서 세지 않는다
+[SCOPE] ※ 트립와이어의 **런타임 전수 열거**는 backend/tests/test_route_tripwire.py 가 한다 (D-275 §5-1). 판정기는 한 벌이고 눈만 둘이다
+# EXIT=0

@@ -104,3 +104,62 @@ def exclude_probe(qs, *, via: str = ""):
     """
     field = f"{via}__{PROBE_FIELD}" if via else PROBE_FIELD
     return qs.exclude(**{f"{field}__startswith": PROBE_MARKER})
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# P-201 — 표식을 **둘로 가른다** (2026-09-20 · 턴 Y · 세종)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# P-193 이 서고 **비용이 따라왔다.** 씨앗을 안 세게 하니 **그 씨앗으로 잴 수도 없게**
+# 됐다 — 온보딩 `U1#11`(「미처리 사건이 화면에 뜬다」)이 그래서 내려갔다. 잴 것을 심으면
+# 그 순간 안 세어지고, 안 세어지는 것으로는 「센다」를 증명할 수 없다.
+#
+# 세종 판정 — **두 표식은 다른 질문에 답한다:**
+#
+#     data_source=probe   **게이트 생존 탐침.** 제품이 **안 센다**(P-193 그대로 —
+#                         화면·큐·발송·청구 전부). 「게이트가 돌긴 하는가」만 묻는다.
+#     data_source=drill   **훈련.** 제품이 **센다.** 사람 화면에 「훈련」 배지가 뜨고,
+#                         청구에서는 빠지고, 보고서 K4 는 「훈련 N건 별도」 한 줄.
+#
+# ★ **새 문 0 · 새 매개변수 0.** 바뀌는 것은 **심는 쪽이 적는 표식 값 하나**뿐이다.
+#   제품의 거르는 자리는 `exclude_probe` **정의 하나 그대로**이고, 그 정의는
+#   `startswith("data_source=probe")` 라 `data_source=drill;…` 을 **안 거른다** —
+#   그래서 drill 은 **아무 코드도 안 고치고** 세어진다. 세종이 이름으로 금지한 것이
+#   그 반대다: `include_drill` 같은 매개변수를 새로 만들면, 세는 법이 **부르는 자리마다**
+#   갈라지고 갈라진 쪽이 조용히 이긴다(이 파일이 존재하는 이유).
+#
+# ⚠ 그래서 `exclude_probe` 는 **위에서 한 글자도 바뀌지 않았다.** 이 절이 더하는 것은
+#   「이 행이 훈련인가」를 **읽는 쪽**이 물을 수 있는 한 줄뿐이다.
+
+#: 훈련 표식의 머리. 값은 `stream_monitors.services.drill.DATA_SOURCE`(="drill")와
+#: **같은 낱말**이다 — 창 판정(UX-17)과 행 표식(P-201)은 **같은 것을 가리킨다**:
+#: 「이것은 훈련이다」. 두 축이 한 낱말로 모여야 화면이 한 배지를 그린다.
+DRILL_MARKER = "data_source=drill"
+
+#: `DetectionEvent.track_id` 상한 [실측 models.py `max_length=64`]. 넘기면 DB 가 자르고,
+#: **자른 표식은 표식이 아니다** — `scripts/probe_marks.py::TRACK_ID_MAX` 와 같은 수다.
+TRACK_ID_MAX = 64
+
+
+def is_drill_track(track_id) -> bool:
+    """이 행이 **훈련으로 심긴 것인가** — 한 줄짜리 정본.
+
+    `is_probe_track` 과 **같은 규약**이다: 앞에서만 센다 · `None`·빈 문자열은 훈련이
+    아니다. 다만 기울기가 반대다 — probe 는 「모르면 세는 쪽」(빠뜨리면 일감이 사라진다)
+    이고, drill 은 **「모르면 실운영 쪽」**이다: 실운영 사건을 훈련으로 잘못 읽으면
+    **진짜 경보에 「훈련」 배지가 붙고**, 그 배지를 본 관제요원은 손을 늦춘다.
+    """
+    return bool(track_id) and str(track_id).startswith(DRILL_MARKER)
+
+
+def drill_mark(run_id: str = "") -> str:
+    """심는 쪽이 `track_id` 에 적을 규약 문자열.
+
+    **길이를 여기서 검사한다** — 넣는 쪽마다 검사하면 한 곳이 빠지고, 빠진 곳에서
+    64자가 잘려 나간다(`probe_marks.mark_string` 과 같은 판단).
+    """
+    s = f"{DRILL_MARKER};run={run_id}" if run_id else DRILL_MARKER
+    if len(s) > TRACK_ID_MAX:
+        raise ValueError(
+            f"훈련 표식이 {len(s)}자 — track_id 상한 {TRACK_ID_MAX}자를 넘는다: {s!r}")
+    return s

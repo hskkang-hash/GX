@@ -81,7 +81,21 @@ TAG = "[P-107]"
 
 #: 세 이름. **바꾸면 검사기(`verify_gate_header.py`)도 같은 커밋에서 바뀐다.**
 KEY_TARGET, KEY_AS, KEY_SOURCE = "TARGET=", "AS=", "SOURCE="
-KEYS = (KEY_TARGET, KEY_AS, KEY_SOURCE)
+#: ★ [P-204 · 2026-09-20 · 턴 Y · 차선 Q] **네 번째 줄 — 무엇을 · 분모 몇으로 쟀나.**
+#:   세 줄은 「누구로 · 어디서 · 무엇을 향해」를 말하지만 **「몇 건을 쟀나」는 말하지 않는다.**
+#:   그래서 `exit 0` 이 「제품이 성립한다」로 읽혔다. 그것은 틀린 독해다 —
+#:   **`exit 0` 은 「이 호출이 통과」다.** 인자를 안 주면 정적만 보는 게이트,
+#:   `--db` 없이 소스만 읽는 게이트가 **같은 0** 을 냈고, 셋째 줄까지 다 성립했다.
+#:   ⇒ 머리글의 **마지막 줄**로 분모를 말하게 한다. 분모를 말 못 하면 그 통과는 회색이다.
+KEY_MEASURED = "MEASURED="
+KEYS = (KEY_TARGET, KEY_AS, KEY_SOURCE, KEY_MEASURED)
+
+#: MEASURED 줄이 「분모」를 말했는지 본다. **수가 없으면 분모가 아니다.**
+_DENOM = re.compile(r"분모\s*([0-9][0-9,]*)")
+
+#: 게이트가 「나는 안 쟀다」고 스스로 적는 자리. 이 글자가 있으면 **없는 것과 같다**
+#: (있는 척하는 줄보다 없다고 말하는 줄이 낫다 — 세는 쪽은 둘을 같게 센다).
+MEASURED_NONE = "(선언 없음"
 
 #: 사유 없이 서면 빨강인 이름들. **앱이 아닌 자격**이다.
 PRIVILEGED = ("root", "admin", "superuser", "슈퍼", "관리자")
@@ -164,6 +178,34 @@ def judge_source(source_line: str) -> list[str]:
         if not re.search(r"(기록|written|\*\*없다\*\*|\d{4}-\d{2}-\d{2})", text):
             out.append("SOURCE= 가 파일을 가리키는데 **쓰인 날짜가 없다** — "
                        "사진에는 날짜가 붙어야 한다 (출생 표본 ①: 8월 라우트 사진)")
+    return out
+
+
+def judge_measured(measured: str) -> list[str]:
+    """`MEASURED=` 한 줄을 판정한다 — **P-204 「`exit 0` 은 「이 호출이 통과」다」.**
+
+    빨강이 되는 자리 셋:
+      ① 없다        — 무엇을 몇 건 쟀는지 말하지 않은 `exit 0` 은 「통과」가 아니라 「이 호출이 끝났다」다
+      ② 분모가 없다 — 「무엇을」만 적고 「몇 건」을 안 적으면 0건 검사와 전수 검사가 같은 글자가 된다
+      ③ 분모가 0    — **분모 0인 초록은 초록이 아니다** (D-301)
+
+    ⚠ 이 판정은 `judge_header` 에 **넣지 않았다.** 넣으면 P-204 이 생긴 순간
+      머리글을 옳게 단 게이트 일흔일곱이 전부 「머리글 어긋남」으로 붉어져서
+      **「머리글이 없다」와 「분모를 안 말한다」가 한 칸에 섞인다.** 칸을 가른다.
+    """
+    out: list[str] = []
+    text = (measured or "").strip()
+    if not text or text.startswith(MEASURED_NONE):
+        out.append("MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** "
+                   "무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)")
+        return out
+    m = _DENOM.search(text)
+    if not m:
+        out.append("MEASURED= 에 **분모가 없다** — 「무엇을 · 분모 N」으로 적는다. "
+                   "분모를 안 적으면 0건 검사와 전수 검사가 같은 글자다 (P-204)")
+        return out
+    if int(m.group(1).replace(",", "")) == 0:
+        out.append("MEASURED= 의 **분모가 0**이다 — 0건 검사는 통과가 아니다 (D-301)")
     return out
 
 
@@ -401,7 +443,8 @@ def _caller_module_paths(script: str) -> list[Path]:
 # 찍기
 # ═══════════════════════════════════════════════════════════════════════════
 def gate_header(script, *, target: str = "", as_: str = "", source: str = "",
-                reason: str = "", files=None, tag: str = TAG, stream=None) -> int:
+                reason: str = "", measured: str = "", files=None,
+                tag: str = TAG, stream=None) -> int:
     """**세 줄을 먼저 찍는다.** 어긋난 자리가 있으면 그 수를 돌려준다(0 이면 성립).
 
     이 함수는 **게이트를 죽이지 않는다.** 죽이면 「머리글이 없어서 빨강」과
@@ -436,11 +479,19 @@ def gate_header(script, *, target: str = "", as_: str = "", source: str = "",
 
     target, as_, source = (_scrub(target), _scrub(as_), _scrub(source))
 
+    #: ★ [P-204] **마지막 줄은 분모다.** 안 주면 그 게이트가 스스로 「안 말했다」고 적는다 —
+    #:   조용히 빠지면 세는 쪽이 「없는 것」과 「말 안 한 것」을 못 가른다.
+    if not measured:
+        measured = ("%s — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. "
+                    "그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)" % MEASURED_NONE)
+    measured = _scrub(measured)
+
     print("%s %s%s" % (tag, KEY_TARGET, target), file=out)
     print("%s %s%s" % (tag, KEY_AS, as_ + (" · 사유: " + reason if reason else "")), file=out)
     print("%s %s%s" % (tag, KEY_SOURCE, source), file=out)
+    print("%s %s%s" % (tag, KEY_MEASURED, measured), file=out)
 
-    problems = judge_header(target, as_, source, reason)
+    problems = judge_header(target, as_, source, reason) + judge_measured(measured)
     for why in problems:
         print("%s   ✗ 머리글: %s  ← %s" % (tag, why, name), file=out)
     _STATE["emitted"] = True

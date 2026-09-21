@@ -1,0 +1,147 @@
+# OPS-07b 증거 — scripts/verify_purge.py
+# 실행: 2026-09-20 16:06 KST · 차선 N (P-207 넷째 묶음) · HEAD 0acf8d1
+# 명령: PYTHONIOENCODING=utf-8 python scripts/verify_purge.py
+# ⚠⚠ 이 판정기는 **차선 U56 이 이 턴에 고치는 중**이다 (16:03 수정 · HEAD 대비 +119/-5).
+#    조율자 지시대로 **지금 상태 그대로** 쟀다. 컴파일은 온전함을 먼저 확인했다(py_compile OK).
+#    U56 이 「삭제 결정 규약(연쇄 표 + 스냅샷 뒤에만)」을 다 넣고 나면 **이 수는 바뀔 수 있다.**
+# ---
+[P-107] TARGET=gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다
+[P-107] AS=(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)
+[P-107] SOURCE=살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_purge.py
+[P-57] 자기시험 통과 — 출생 표본 2 · 초록 표본 1 · 음성 12 · 전량폐기 1 · 판정 불가 2 · 부작위 1 · 고아 갈래 4
+[P-57] **판정 불가** — 환경을 세우지 못했다: ModuleNotFoundError: No module named 'config'
+[P-57] 컨테이너 안에서 DJANGO_SETTINGS_MODULE 를 주고 돌린다
+# EXIT=2
+
+# ═══ 두 번째 부름 — gx-shell 안에서 (판정기가 스스로 시킨 대로) ═══
+# 위 ①은 호스트에서 EXIT=2 회색이었다: ModuleNotFoundError: No module named 'config'.
+# 머리글은 「호스트에서 부르면 docker exec 로 위임한다」고 적었으나 **위임하지 않았다** —
+# SEC-17 과 같은 부류다. 판정기가 낸 마지막 줄이 시킨 대로 컨테이너에서 다시 불렀다:
+#   MSYS_NO_PATHCONV=1 docker exec -e DJANGO_SETTINGS_MODULE=config.settings \
+#     gx-shell python /repo/scripts/verify_purge.py
+# ⚠ opensearch.invalid 이름 풀이 실패는 **잡음**이다(일부러 못 닿게 둔 이름) — 판정과 무관.
+# ---
+[P-107] TARGET=gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다
+[P-107] AS=(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)
+[P-107] SOURCE=살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_purge.py
+[P-57] 자기시험 통과 — 출생 표본 2 · 초록 표본 1 · 음성 12 · 전량폐기 1 · 판정 불가 2 · 부작위 1 · 고아 갈래 4
+BASE_DIR /app
+INFO Database connection health check started
+WARNING Redefining 'percent' (<class 'pint.delegates.txt_defparser.plain.UnitDefinition'>)
+WARNING Redefining '%' (<class 'pint.delegates.txt_defparser.plain.UnitDefinition'>)
+INFO ✅ Dynamic query cache invalidation hooks registered
+INFO ✅ UniversalOptimizer cache invalidation is active
+🚀 [DJANGO_READY] Applying backend optimizations...
+🌍 [DJANGO_READY] Universal optimization system initialized for ALL models & views
+🔗 [DJANGO_READY] Cache invalidation signals registered manually
+🧵 [DJANGO_READY] Thread request context propagation installed
+INFO Bucket 'guardianx-dev' already exists
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.026s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.003s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.002s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/ [status:N/A request:0.002s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+INFO Successfully connected to OpenSearch with crash-proof configuration
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.002s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.003s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.002s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+WARNING HEAD https://opensearch.invalid:9200/gcs_phat [status:N/A request:0.112s]
+socket.gaierror: [Errno -2] Name or service not known
+
+The above exception was the direct cause of the following exception:
+
+
+The above exception was the direct cause of the following exception:
+
+
+During handling of the above exception, another exception occurred:
+
+INFO ✅ Redis connection pool initialized (max=100)
+INFO [LAW-02a] 테넌트 717 · 30일 기준 미리보기 — 만료 1건 · 파기 0건 · 객체 0건 (감사 292170)
+INFO [LAW-02a] 테넌트 717 · 30일 기준 집행 — 만료 1건 · 파기 1건 · 객체 1건 (감사 292171)
+INFO [LAW-02a] 테넌트 718 건너뜀 — 보존 일수 미선언 (감사 292172)
+INFO [LAW-02a] 테넌트 717 · 30일 기준 집행 — 만료 1건 · 파기 0건 · 객체 0건 (감사 292173)
+[P-57] [입력] 시드 테넌트 717 · 보존 선언 30일 · 시드 나이 999일 · 객체저장소 닿았다 · 되돌림 했다
+[P-57]   만료 시드 → 행 0              0행
+[P-57]   그 행의 객체 → 0              0개
+[P-57]   파기 기록 → 1                1건
+[P-57]   안 만료 시드는 남는다             1행
+[P-57]   미선언 테넌트 → 0건 파기          남은 행 1
+[P-57]   기본값은 dry-run → 0건        기본값 dry_run=True · 지운 건수 0
+[P-57]   연쇄 표 → 스냅샷 → 집행          연쇄 표 3표 · 머릿수 1 = 합 1 · 집행 1행에 스냅샷 1건
+[P-57]   고아 갈래 — 바이트를 못 지우면 행을 남긴다 행을 남겼고 사유가 응답에 있다
+[P-57] 통과 — 만료 시드 1건이 행 0 · 객체 0 · 파기 기록 1 로 사라졌고, 안 만료·미선언은 그대로 남았다
+# EXIT(컨테이너)=0

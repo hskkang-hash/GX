@@ -1,5 +1,5 @@
 {
-  "measured_at": "2026-09-19T20:50:00+00:00",
+  "measured_at": "2026-09-20T20:50:00+00:00",
   "due": 38,
   "policy_days": 90,
   "overlap_days": 7,
@@ -8,305 +8,305 @@
       "key_id": 4,
       "prefix": "QBAC43If",
       "owner": "anyang",
-      "age_days": 422,
-      "days_left": -413,
-      "why": "발급한 지 422일 — 정책 90일을 넘었다"
+      "age_days": 423,
+      "days_left": -414,
+      "why": "발급한 지 423일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 1,
       "prefix": "NBt6LiSx",
       "owner": "phatlh",
-      "age_days": 423,
-      "days_left": -394,
-      "why": "발급한 지 423일 — 정책 90일을 넘었다"
+      "age_days": 424,
+      "days_left": -395,
+      "why": "발급한 지 424일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 2,
       "prefix": "V4yWZE0h",
       "owner": "kimchi1",
-      "age_days": 423,
-      "days_left": -394,
-      "why": "발급한 지 423일 — 정책 90일을 넘었다"
+      "age_days": 424,
+      "days_left": -395,
+      "why": "발급한 지 424일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 5,
       "prefix": "Vto65RFC",
       "owner": "kimchi1",
-      "age_days": 422,
-      "days_left": -393,
-      "why": "발급한 지 422일 — 정책 90일을 넘었다"
+      "age_days": 423,
+      "days_left": -394,
+      "why": "발급한 지 423일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 6,
       "prefix": "gx3e1FUR",
       "owner": "anyang03",
-      "age_days": 400,
-      "days_left": -371,
-      "why": "발급한 지 400일 — 정책 90일을 넘었다"
+      "age_days": 401,
+      "days_left": -372,
+      "why": "발급한 지 401일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 9,
       "prefix": "yKzS1tjn",
       "owner": "anyang04",
-      "age_days": 393,
-      "days_left": -364,
-      "why": "발급한 지 393일 — 정책 90일을 넘었다"
+      "age_days": 394,
+      "days_left": -365,
+      "why": "발급한 지 394일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 10,
       "prefix": "ZSvbxpea",
+      "owner": "anyang06",
+      "age_days": 388,
+      "days_left": -359,
+      "why": "발급한 지 388일 — 정책 90일을 넘었다"
+    },
+    {
+      "key_id": 11,
+      "prefix": "K5P18Pnp",
       "owner": "anyang06",
       "age_days": 387,
       "days_left": -358,
       "why": "발급한 지 387일 — 정책 90일을 넘었다"
     },
     {
-      "key_id": 11,
-      "prefix": "K5P18Pnp",
-      "owner": "anyang06",
-      "age_days": 386,
-      "days_left": -357,
-      "why": "발급한 지 386일 — 정책 90일을 넘었다"
-    },
-    {
       "key_id": 12,
       "prefix": "HRIIT__c",
       "owner": "anyang08",
-      "age_days": 386,
-      "days_left": -357,
-      "why": "발급한 지 386일 — 정책 90일을 넘었다"
+      "age_days": 387,
+      "days_left": -358,
+      "why": "발급한 지 387일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 13,
       "prefix": "R9wlbBP0",
       "owner": "anyang11",
-      "age_days": 379,
-      "days_left": -350,
-      "why": "발급한 지 379일 — 정책 90일을 넘었다"
+      "age_days": 380,
+      "days_left": -351,
+      "why": "발급한 지 380일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 14,
       "prefix": "CJtmNBb9",
       "owner": "anyang08",
-      "age_days": 373,
-      "days_left": -344,
-      "why": "발급한 지 373일 — 정책 90일을 넘었다"
+      "age_days": 374,
+      "days_left": -345,
+      "why": "발급한 지 374일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 15,
       "prefix": "fIOMLxS5",
       "owner": "anyang11",
-      "age_days": 368,
-      "days_left": -339,
-      "why": "발급한 지 368일 — 정책 90일을 넘었다"
+      "age_days": 369,
+      "days_left": -340,
+      "why": "발급한 지 369일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 16,
       "prefix": "T8vFSumA",
       "owner": "anyang08",
-      "age_days": 365,
-      "days_left": -336,
-      "why": "발급한 지 365일 — 정책 90일을 넘었다"
+      "age_days": 366,
+      "days_left": -337,
+      "why": "발급한 지 366일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 17,
       "prefix": "j4rYk1rg",
       "owner": "anyang11",
-      "age_days": 351,
-      "days_left": -322,
-      "why": "발급한 지 351일 — 정책 90일을 넘었다"
+      "age_days": 352,
+      "days_left": -323,
+      "why": "발급한 지 352일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 18,
       "prefix": "QZH369QU",
       "owner": "anyang09",
-      "age_days": 344,
-      "days_left": -315,
-      "why": "발급한 지 344일 — 정책 90일을 넘었다"
+      "age_days": 345,
+      "days_left": -316,
+      "why": "발급한 지 345일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 19,
       "prefix": "BR8pUE0j",
       "owner": "anyang11",
-      "age_days": 339,
-      "days_left": -310,
-      "why": "발급한 지 339일 — 정책 90일을 넘었다"
+      "age_days": 340,
+      "days_left": -311,
+      "why": "발급한 지 340일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 20,
       "prefix": "q4QJiTUT",
       "owner": "anyang11",
-      "age_days": 339,
-      "days_left": -310,
-      "why": "발급한 지 339일 — 정책 90일을 넘었다"
+      "age_days": 340,
+      "days_left": -311,
+      "why": "발급한 지 340일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 21,
       "prefix": "s74685Op",
       "owner": "anyang09",
-      "age_days": 338,
-      "days_left": -309,
-      "why": "발급한 지 338일 — 정책 90일을 넘었다"
+      "age_days": 339,
+      "days_left": -310,
+      "why": "발급한 지 339일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 22,
       "prefix": "U869D3Gy",
       "owner": "anyang09",
-      "age_days": 338,
-      "days_left": -309,
-      "why": "발급한 지 338일 — 정책 90일을 넘었다"
+      "age_days": 339,
+      "days_left": -310,
+      "why": "발급한 지 339일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 23,
       "prefix": "tKcCyq6l",
       "owner": "thai03",
-      "age_days": 330,
-      "days_left": -301,
-      "why": "발급한 지 330일 — 정책 90일을 넘었다"
+      "age_days": 331,
+      "days_left": -302,
+      "why": "발급한 지 331일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 7,
       "prefix": "ADWE8yDH",
       "owner": "phatlh",
-      "age_days": 399,
-      "days_left": -300,
-      "why": "발급한 지 399일 — 정책 90일을 넘었다"
+      "age_days": 400,
+      "days_left": -301,
+      "why": "발급한 지 400일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 8,
       "prefix": "WWHK5EhS",
       "owner": "anyang01",
-      "age_days": 393,
-      "days_left": -294,
-      "why": "발급한 지 393일 — 정책 90일을 넘었다"
+      "age_days": 394,
+      "days_left": -295,
+      "why": "발급한 지 394일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 27,
       "prefix": "wPHw4dkv",
       "owner": "anyang06",
-      "age_days": 323,
-      "days_left": -294,
-      "why": "발급한 지 323일 — 정책 90일을 넘었다"
+      "age_days": 324,
+      "days_left": -295,
+      "why": "발급한 지 324일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 30,
       "prefix": "Z2Ha8xGd",
       "owner": "anyang05",
-      "age_days": 316,
-      "days_left": -287,
-      "why": "발급한 지 316일 — 정책 90일을 넘었다"
+      "age_days": 317,
+      "days_left": -288,
+      "why": "발급한 지 317일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 31,
       "prefix": "WIb-G9eR",
       "owner": "gaion02",
-      "age_days": 305,
-      "days_left": -276,
-      "why": "발급한 지 305일 — 정책 90일을 넘었다"
+      "age_days": 306,
+      "days_left": -277,
+      "why": "발급한 지 306일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 33,
       "prefix": "QX15C6Rr",
       "owner": "gaion02",
-      "age_days": 288,
-      "days_left": -259,
-      "why": "발급한 지 288일 — 정책 90일을 넘었다"
+      "age_days": 289,
+      "days_left": -260,
+      "why": "발급한 지 289일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 34,
       "prefix": "3pZO699K",
       "owner": "gaion02",
-      "age_days": 281,
-      "days_left": -252,
-      "why": "발급한 지 281일 — 정책 90일을 넘었다"
+      "age_days": 282,
+      "days_left": -253,
+      "why": "발급한 지 282일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 35,
       "prefix": "NnHXcN7a",
       "owner": "gaion04",
-      "age_days": 267,
-      "days_left": -237,
-      "why": "발급한 지 267일 — 정책 90일을 넘었다"
+      "age_days": 268,
+      "days_left": -238,
+      "why": "발급한 지 268일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 36,
       "prefix": "HIxZnBvy",
       "owner": "gaion01",
-      "age_days": 267,
-      "days_left": -237,
-      "why": "발급한 지 267일 — 정책 90일을 넘었다"
+      "age_days": 268,
+      "days_left": -238,
+      "why": "발급한 지 268일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 24,
       "prefix": "J59CIlW6",
       "owner": "phatlh",
-      "age_days": 327,
-      "days_left": -228,
-      "why": "발급한 지 327일 — 정책 90일을 넘었다"
+      "age_days": 328,
+      "days_left": -229,
+      "why": "발급한 지 328일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 25,
       "prefix": "O218gFRc",
       "owner": "operator_user_1",
-      "age_days": 327,
-      "days_left": -228,
-      "why": "발급한 지 327일 — 정책 90일을 넘었다"
+      "age_days": 328,
+      "days_left": -229,
+      "why": "발급한 지 328일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 28,
       "prefix": "6MNesQpA",
       "owner": "phatlh",
-      "age_days": 320,
-      "days_left": -221,
-      "why": "발급한 지 320일 — 정책 90일을 넘었다"
+      "age_days": 321,
+      "days_left": -222,
+      "why": "발급한 지 321일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 29,
       "prefix": "YRkdyQla",
       "owner": "phatlh",
-      "age_days": 320,
-      "days_left": -221,
-      "why": "발급한 지 320일 — 정책 90일을 넘었다"
+      "age_days": 321,
+      "days_left": -222,
+      "why": "발급한 지 321일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 37,
       "prefix": "Cw3Qghej",
       "owner": "gaion04",
-      "age_days": 246,
-      "days_left": -217,
-      "why": "발급한 지 246일 — 정책 90일을 넘었다"
+      "age_days": 247,
+      "days_left": -218,
+      "why": "발급한 지 247일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 32,
       "prefix": "ZAis33cK",
       "owner": "operator_user_2",
-      "age_days": 305,
-      "days_left": -206,
-      "why": "발급한 지 305일 — 정책 90일을 넘었다"
+      "age_days": 306,
+      "days_left": -207,
+      "why": "발급한 지 306일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 38,
       "prefix": "Mtj3WhAY",
       "owner": "gaion04",
-      "age_days": 232,
-      "days_left": -203,
-      "why": "발급한 지 232일 — 정책 90일을 넘었다"
+      "age_days": 233,
+      "days_left": -204,
+      "why": "발급한 지 233일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 26,
       "prefix": "nOXghfBD",
       "owner": "operator_user_1",
-      "age_days": 327,
-      "days_left": 37,
-      "why": "발급한 지 327일 — 정책 90일을 넘었다"
+      "age_days": 328,
+      "days_left": 36,
+      "why": "발급한 지 328일 — 정책 90일을 넘었다"
     },
     {
       "key_id": 3,
       "prefix": "-HqvOaYi",
       "owner": "anyang01",
-      "age_days": 422,
-      "days_left": 1503,
-      "why": "발급한 지 422일 — 정책 90일을 넘었다"
+      "age_days": 423,
+      "days_left": 1502,
+      "why": "발급한 지 423일 — 정책 90일을 넘었다"
     }
   ],
   "_written_from": {

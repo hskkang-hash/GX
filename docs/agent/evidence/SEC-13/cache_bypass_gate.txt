@@ -1,0 +1,14 @@
+# SEC-13 증거 — scripts/verify_cache_bypass.py
+# 실행: 2026-09-20 KST · 차선 N (P-207 둘째 묶음) · 브랜치 turn-q · HEAD 0acf8d1 · 호스트 파이썬
+# ★ 조율자가 오늘 한 번 돌려 exit 0 을 봤다(우회 44 · 새 위반 0). 이것은 **차선 N 이 다시 돌린** 것이다
+# 명령: PYTHONIOENCODING=utf-8 python scripts/verify_cache_bypass.py
+# ---
+[P-107] TARGET=저장소 C:/GuardianX/guardianx-source @ 0acf8d1 · 작업본 32파일 어긋남 (살아 있는 것을 재지 않는 게이트다)
+[P-107] AS=(자격증명 없음 — 소스·문서 파일을 읽는다)
+[P-107] SOURCE=파일 docs/agent/evidence/D-341/cache_bypass_baseline.txt (기록 2026-08-29T21:27 · 441바이트)
+[P-107] MEASURED=(선언 없음 — 이 게이트는 **무엇을 · 분모 몇으로** 쟀는지 말하지 않는다. 그 `exit 0` 은 「이 호출이 통과」일 뿐이다 · P-204)
+[P-107]   ✗ 머리글: MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** 무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)  ← verify_cache_bypass.py
+[CACHE-BYPASS] [입력] 시험 파일 132건 · 그중 스택을 때리는 것 49건
+[CACHE-BYPASS] 캐시 처리: 대상 아님 83 · 우회 44 · 비움 4 · 해당 없음 1
+[CACHE-BYPASS] 새 위반 0건 (기존 면제 0건 · 래칫 D-311)
+# EXIT=0

@@ -26,7 +26,7 @@ from __future__ import annotations
 from datetime import date
 
 from django.apps import apps
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
 from common import audit_writer, evidence_chain
 
@@ -317,3 +317,46 @@ class OldCodeRowIsStillTheTailTest(TestCase):
         self.assertEqual((), breaks,
                          "옛 코드 행 하나가 줄을 갈랐다: "
                          + " · ".join(str(b) for b in breaks[:5]))
+
+
+class DanglingEventRefTest(SimpleTestCase):
+    """P-184/P-208 — **사라진 사건을 가리키는 체인 행**의 등재를 지킨다 (턴 Y · 차선 S).
+
+    ★ 여기서 재는 것은 **등재의 모양**이지 그 수가 아니다. 수는 사건을 지울 때마다 늘고,
+      그 늘어남은 결함이 아니라 대표 결정의 그림자다 — 수를 시험에 박으면 그 시험이
+      「지우지 마라」는 규칙이 되어 버리고, 그것은 이 장부가 하려는 말이 아니다.
+    """
+
+    def test_it_reads_the_event_id_from_either_side(self) -> None:
+        self.assertEqual(
+            evidence_chain.event_ref_of({"data_after": {"event_id": 7}}), 7)
+        self.assertEqual(
+            evidence_chain.event_ref_of({"data_before": {"event_id": 9}}), 9)
+
+    def test_after_wins_when_both_sides_carry_one(self) -> None:
+        """상태 전이 행은 두 칸을 다 든다. **뒤의 값**이 그 행이 남긴 사실이다."""
+        self.assertEqual(evidence_chain.event_ref_of(
+            {"data_before": {"event_id": 1}, "data_after": {"event_id": 2}}), 2)
+
+    def test_a_row_without_one_is_none_not_zero(self) -> None:
+        """★ 0 은 사건 번호다. 「없다」를 0 으로 접으면 0번 사건을 가리킨 것이 된다."""
+        self.assertIsNone(evidence_chain.event_ref_of({"data_after": {}}))
+        self.assertIsNone(evidence_chain.event_ref_of({}))
+        self.assertIsNone(evidence_chain.event_ref_of({"data_after": None}))
+        self.assertIsNone(
+            evidence_chain.event_ref_of({"data_after": {"event_id": "없음"}}))
+
+    def test_every_recorded_note_carries_its_method_and_reason(self) -> None:
+        """★ **수만 적힌 등재는 등재가 아니다.**
+
+        턴 X 의 줄이 그 얼굴이다 — 29·43 이라는 수는 남았는데 **세는 식이 안 남아**
+        다음 사람이 재현할 수 없다. 그 줄은 그 사실을 스스로 적고 있고, 이 시험은
+        앞으로 들어올 줄이 같은 구멍을 갖지 않게 한다.
+        """
+        self.assertTrue(evidence_chain.RECORDED_DANGLING)
+        for note in evidence_chain.RECORDED_DANGLING:
+            with self.subTest(when=note.when):
+                self.assertTrue(note.when.strip())
+                self.assertTrue(note.method.strip())
+                self.assertTrue(note.why.strip())
+                self.assertGreaterEqual(note.table_rows, note.chain_rows)

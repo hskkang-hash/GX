@@ -36,6 +36,7 @@
 등록 요청: 조율자가 부속서A #10 의 실제 지향 경로(`/cameras/false-positive`)와 다르다고
 판단하면 이 세 경로의 이름을 바꿔 등록해도 이 파일의 로직(핸들러 본문)은 그대로 재사용된다.
 """
+import re
 from datetime import datetime
 
 from ninja import Schema
@@ -380,7 +381,8 @@ class DsmU24API:
         except ValueError as exc:
             raise HttpError(400, str(exc))
         #: 턴 U — 해시 체인 두 칸을 붙인다(아래 `_with_chain_columns` 머리말).
-        return _with_chain_columns(payload)
+        #: 턴 Y — 「대상」 칸을 붙인다. **수는 안 바뀐다**(아래 `_with_target_column` 머리말).
+        return _with_target_column(_with_chain_columns(payload), scope=scope)
 
     @route.get("/audit/export.csv", auth=JwtOrInboundKey())
     @tenant_scoped(reason="감사 CSV — 남의 테넌트 감사 행이 파일로 나가면 격리 실패다")
@@ -747,12 +749,146 @@ def _with_chain_columns(payload: dict) -> dict:
     return payload
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 Y — 뒷면 ③: 「대상」 칸 — **삭제된 사건을 「없음」이라고 적지 않는다** (P-208 U24 ①)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 무엇이 이 칸을 만들게 했나
+# --------------------------
+# 대표 결정으로 2026-09-19~20 에 씨앗 177행이 **지워졌다**(사건 16 + 발송 145 + 클립 16).
+# 차선 S 가 그 뒤 체인을 재고 이렇게 적었다:
+#
+#     체인은 「이 행이 **안 고쳐졌다**」를 증명할 뿐
+#     **「가리키는 대상이 아직 있다」는 증명하지 않는다.**
+#
+# 그 말이 옳다. 그리고 화면은 그 사실을 **한 자도 말하지 않고 있었다** — 감사 행의
+# `action` 이 `upper_report:set:231073` 이라고 적혀 있어도, 그 231073 이 아직 있는지
+# 지워졌는지 화면은 묻지 않았다. 묻지 않으면 사람은 **있는 것으로 읽는다.**
+#
+# ★★ **수는 한 건도 안 바뀐다.** `total`·`pages`·이 쪽의 행 수는 그대로다. 바뀌는 것은
+#    **그 행이 가리키는 0 이 무엇인지 말하는 것**뿐이다. 이 저장소가 세 턴째 하는 일이다.
+#
+# ★ 갈래가 **셋**이다 — 둘로 적으면 또 거짓말이 된다
+# ---------------------------------------------------
+#     live                — 가리키는 사건이 아직 있다
+#     deleted_by_decision — 없다 **그리고** 09-20 스냅샷에 그 id 가 있다
+#                           → 「삭제된 사건 · 대표 결정 09-20 · 스냅샷 있음」
+#     gone                — 없다 **그리고** 스냅샷에 없다
+#                           → 「사라진 사건 · 기록된 결정 없음」  ← 회색이다. 초록이 아니다
+#
+#   둘로 줄여 「없으면 삭제된 것」이라고 적으면, **기록 없이 사라진 행**까지
+#   「대표가 지웠다」는 근거로 읽힌다(D-280 — 모르는 칸을 그럴듯하게 채우면 그 값이
+#   나중에 근거처럼 읽힌다). 우리가 증명할 수 있는 것은 **스냅샷에 적힌 id 뿐**이다.
+#
+# ★ 존재 여부는 **커널 문**으로 묻는다 — `services.event_detail`(남의 것이면 404).
+#   여기서 표를 직접 묻지 않는다: 그러면 테넌트 좁히기가 두 벌이 되고, 남의 테넌트
+#   사건의 **존재 여부가 샌다**(`get_event` 머리말 — 403 을 안 쓰는 그 이유 그대로).
+#   그래서 남의 사건은 「없다」로 읽히고, 스냅샷에 없으므로 `gone` 이다 — 닫는 쪽이 기본값.
+
+#: 대상 갈래 셋. 「모른다」를 지우지 않는다(체인 칸 `CHAIN_UNKNOWN` 과 같은 규율).
+TARGET_LIVE = "live"
+TARGET_DELETED_BY_DECISION = "deleted_by_decision"
+TARGET_GONE = "gone"
+
+#: ★ 삭제를 집행한 **결정**과 그 **스냅샷**. 화면이 지어내는 말이 아니라 여기 적힌 사실이다.
+DELETED_EVENT_DECISION = "대표 결정"
+DELETED_EVENT_DECIDED_ON = "2026-09-20"
+DELETED_EVENT_SNAPSHOT = "docs/agent/evidence/P-184/deleted_probe_snapshot_20260920.json"
+
+#: ★★ 그날 지워진 **사건 id 열여섯** — 스냅샷 `events` 절의 pk 를 그대로 적는다.
+#:   **수가 아니라 id 로** 적는 이유(D-285 ②): 「열여섯 건」이라고 적으면 한 건이 빠지고
+#:   다른 한 건이 들어와도 수는 그대로라 아무도 모른다. 그리고 이 상수와 스냅샷 파일이
+#:   갈리지 못하게 `tests/test_u24_audit_target.py` 가 **둘을 대 본다** — 파일을 요청마다
+#:   읽지 않는 이유는 제품이 `docs/` 를 읽으면 안 되기 때문이다(컨테이너에 없을 수 있다).
+DELETED_EVENT_IDS = frozenset({
+    231073, 231074, 231075, 231076, 231077, 231078,
+    268494, 268495, 268496, 268497,
+    274947, 274948,
+    285639, 285640, 285641, 285642,
+})
+
+#: 감사 행이 사건을 가리키는 **유일한 모양** — `api_u24._upper_report_set/_clear` 가 적는다.
+#: 다른 모양이 생기면 여기 늘린다. 억지로 숫자를 긁지 않는다: 아무 숫자나 사건 id 로
+#: 읽으면 「설정 변경 write:inbound_api_key:rotate:7」의 7 이 사건 7 이 된다.
+_TARGET_EVENT_ACTION = re.compile("^upper_report:(?:set|clear):([0-9]+)$")
+
+
+def target_event_id(action: str) -> int | None:
+    """감사 행의 `action` 이 가리키는 **사건 id**. 안 가리키면 `None`."""
+    m = _TARGET_EVENT_ACTION.match((action or "").strip())
+    return int(m.group(1)) if m else None
+
+
+def _resolve_event_target(event_id: int, *, scope: TenantScope) -> str:
+    from django.http import Http404
+
+    from apps.dsm import services
+
+    try:
+        services.event_detail(scope=scope, event_id=event_id)
+    except Http404:
+        return (TARGET_DELETED_BY_DECISION if event_id in DELETED_EVENT_IDS
+                else TARGET_GONE)
+    return TARGET_LIVE
+
+
+def _with_target_column(payload: dict, *, scope: TenantScope) -> dict:
+    """쪽 하나에 `target` 칸과 **분모(`target_states`)** 를 더한다.
+
+    ★ **분모를 같이 낸다.** `deleted_by_decision` 이 0 건인 쪽에서 「삭제된 사건을
+      제대로 적는다」고 말하면 그것은 **분모 0 인 초록**이다. 네 갈래의 수를 같이 내서
+      보는 사람이 「이 쪽에는 그런 행이 없었다」를 읽을 수 있게 한다(D-301).
+    ★ 같은 사건 id 는 **한 번만 묻는다** — 쪽 하나에 같은 사건 행이 여럿 있을 수 있고,
+      그때마다 커널 문을 두드리면 쪽 하나가 쪽 수만큼 질의를 낸다.
+    """
+    items = list(payload.get("items") or ())
+    counts = {"none": 0, TARGET_LIVE: 0,
+              TARGET_DELETED_BY_DECISION: 0, TARGET_GONE: 0}
+    seen: dict[int, str] = {}
+    for item in items:
+        event_id = target_event_id(item.get("action") or "")
+        if event_id is None:
+            item["target"] = None
+            counts["none"] += 1
+            continue
+        state = seen.get(event_id)
+        if state is None:
+            state = _resolve_event_target(event_id, scope=scope)
+            seen[event_id] = state
+        deleted = state == TARGET_DELETED_BY_DECISION
+        item["target"] = {
+            "kind": "event",
+            "event_id": event_id,
+            "state": state,
+            #: 결정·스냅샷은 **삭제로 판정한 행에만** 적는다. 아무 행에나 붙이면
+            #: 「대표가 지웠다」가 모든 행의 배경 소음이 된다.
+            "decision": DELETED_EVENT_DECISION if deleted else None,
+            "decided_on": DELETED_EVENT_DECIDED_ON if deleted else None,
+            "snapshot": DELETED_EVENT_SNAPSHOT if deleted else None,
+        }
+        counts[state] += 1
+    payload["target_states"] = counts
+    return payload
+
+
 #: CSV 의 칸 이름. 화면 표의 열과 **같은 순서**다 — 다르면 사람이 두 장을 대조할 수 없다.
 _AUDIT_CSV_HEADER = ("audit_id", "at", "outcome", "action", "method", "actor_id",
                      "actor", "reason", "status_http", "channel", "prev_hash",
-                     "hash", "chain")
+                     "hash", "chain", "target_event_id", "target_state")
 #: CSV 한 장의 상한. 넘으면 **마지막 줄에 적는다**(잘린 표본은 잘렸다고 말한다 · D-301).
 _AUDIT_CSV_CAP = 5000
+
+
+def _csv_cell(row: dict, key: str):
+    """CSV 한 칸. `target_*` 두 칸은 `target` dict 안에서 꺼낸다 — 파일과 화면이
+    **같은 사실**을 말해야 하므로 화면에 생긴 열은 파일에도 선다."""
+    if key in ("target_event_id", "target_state"):
+        target = row.get("target")
+        if not isinstance(target, dict):
+            return ""
+        return target.get("event_id" if key == "target_event_id" else "state") or ""
+    value = row.get(key, "")
+    return "" if value is None else value
 
 
 def _audit_csv(*, scope, since, until, actor_id, action, limit: int, reader) -> str:
@@ -775,7 +911,8 @@ def _audit_csv(*, scope, since, until, actor_id, action, limit: int, reader) -> 
         payload = reader(scope=scope, since=since, until=until, actor_id=actor_id,
                          action=action, page=page, page_size=page_size)
         total = payload.get("total", 0)
-        chunk = _with_chain_columns(payload).get("items") or []
+        chunk = _with_target_column(_with_chain_columns(payload),
+                                    scope=scope).get("items") or []
         if not chunk:
             break
         rows.extend(chunk)
@@ -789,9 +926,12 @@ def _audit_csv(*, scope, since, until, actor_id, action, limit: int, reader) -> 
     writer = csv.writer(buf, lineterminator="\n")
     writer.writerow(_AUDIT_CSV_HEADER)
     for r in rows:
-        writer.writerow([r.get(k, "") if r.get(k) is not None else "" for k in _AUDIT_CSV_HEADER])
-    writer.writerow(["# 전체", total, "이 파일", len(rows), "",
-                     "잘림" if capped else "전부", "", "", "", "", "", "", ""])
+        writer.writerow([_csv_cell(r, k) for k in _AUDIT_CSV_HEADER])
+    #: ★ 꼬리 줄의 길이를 **머리글에서 센다.** 턴 U 에는 빈 칸 열셋이 손으로 박혀 있었고,
+    #:   그래서 열이 하나 늘 때마다 꼬리 줄만 조용히 짧아졌다 — 표 계산기에서 마지막
+    #:   칸이 밀려 「잘림」이 엉뚱한 열에 선다.
+    tail = ["# 전체", total, "이 파일", len(rows), "", "잘림" if capped else "전부"]
+    writer.writerow(tail + [""] * (len(_AUDIT_CSV_HEADER) - len(tail)))
     return stats.CSV_BOM + buf.getvalue()
 
 

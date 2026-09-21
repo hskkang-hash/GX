@@ -346,6 +346,16 @@ def main() -> int:
             print("[SECRETS] 렌더 문자열 0건")
 
     # ── ② API 응답 본문 ─────────────────────────────────────────────────
+    #: ★★ [P-206 · 2026-09-20 · 턴 Y · 조율자가 짚었다] **`--api` 없이 낸 0 은 거짓이었다.**
+    #:   이 게이트의 머리글은 `TARGET=… http://localhost:8000` 과
+    #:   `SOURCE=… 살아 있는 서버 응답 (HTTP)` 이라 **적는다.** 그런데 `--api` 가 없으면
+    #:   **API 를 한 번도 안 때리고 exit 0** 이었다 — 머리글이 약속한 것을 안 하고
+    #:   「통과」라고 말한 것이다. 「위임한다고 적었으면 위임하거나, 못 하면 회색을 내라.」
+    #:   ⇒ 안 잰 면은 **`ungauged` 에 이름으로 들어간다**(아래에서 exit 2 가 된다).
+    if not args.api:
+        print("[SECRETS] API 면 **판정 불가** — `--api` 를 안 줬다. 머리글은 "
+              "「살아 있는 서버 응답」이라 적었는데 **한 번도 안 때렸다** (P-206)")
+        ungauged.append("API(--api 를 안 줬다)")
     if args.api:
         routes, api_findings, why = scan_api()
         if why:
@@ -373,10 +383,19 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header, account_as  # P-107 — TARGET/AS/SOURCE
+    _api_face = "--api" in sys.argv
     gate_header(
         __file__,
-        target="frontend/src (정적) + " + os.environ.get("GX_API", "http://localhost:8000"),
+        measured=("면 둘 — ① 프런트 렌더 문자열(주석 걷어낸 뒤) · ② 살아 있는 API 응답 본문. "
+                  "**패턴 분모 %d종** · ②는 `--api` 를 준 실행에서만 잰다 "
+                  "(지금 이 호출은 ②를 %s — 안 재면 회색이다 · P-204/P-206)"
+                  % (len(COMPILED), "잰다" if _api_face else "**안 잰다**")),
+        target=("frontend/src (정적)"
+                + (" + " + os.environ.get("GX_API", "http://localhost:8000")
+                   if _api_face else " · **API 는 이 호출에서 안 때린다**(`--api` 없음)")),
         as_=account_as(),
-        source="프런트 소스 트리 + 살아 있는 서버 응답 (HTTP)",
+        source=("프런트 소스 트리"
+                + (" + 살아 있는 서버 응답 (HTTP)" if _api_face
+                   else " (살아 있는 서버는 **안 읽는다** — `--api` 가 없다)")),
     )
     raise SystemExit(main())
