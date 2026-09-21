@@ -178,6 +178,7 @@ def recent_events(*, scope: TenantScope, since: datetime | None = None,
                   event_type=None, severity=None, response_state=None,
                   reviewed_by_id: int | None = None,
                   stream_monitor_id: int | None = None,
+                  address: str | None = None,
                   include_probe: bool = False,
                   limit: int = 50):
     """F-09 이벤트 목록. K1 을 그대로 부른다 — 필터도 커널이 건다.
@@ -208,6 +209,10 @@ def recent_events(*, scope: TenantScope, since: datetime | None = None,
                         severity=severity, response_state=response_state,
                         reviewed_by_id=reviewed_by_id,
                         stream_monitor_id=stream_monitor_id,
+                        #: ★ 2026-09-21 (턴 AA · U24 청함 · U4#8) — **App 은 넘기기만 한다.**
+                        #:   여기서 한 줄이라도 거르기 시작하면 필터가 두 층에 생기고,
+                        #:   두 층은 어긋난다(이 함수 머리말의 그 규약 그대로).
+                        address=address,
                         include_probe=include_probe,
                         limit=limit)
 
@@ -839,7 +844,8 @@ def save_zone_setting(*, scope: TenantScope, name: str, kind: str,
 
 
 def issue_inbound_key(*, scope: TenantScope, name: str,
-                      expires_days: int | None = None) -> dict[str, Any]:
+                      expires_days: int | None = None,
+                      data_source: str = "live") -> dict[str, Any]:
     """F-05 「API Key 발급」 · F-12 「API키」 — **키가 실제로 발급되는 자리** (D-367).
 
     ★ 응답에 `secret` 이 실리는 **유일한 자리**다. 저장소는 원문을 갖지 않으므로
@@ -856,9 +862,12 @@ def issue_inbound_key(*, scope: TenantScope, name: str,
     if not access.allowed:
         raise PermissionDeniedForSetting(access.reason, audit_id=access.audit_id)
 
+    # ★ [턴 AA · P-220] `data_source` 를 **그대로 내린다.** App 이 값을 손보면
+    #   어휘 검사가 두 벌이 되고(D-212), 커널만 아는 어휘가 App 에서 조용히 눕는다.
     issued = issue_key(scope=scope, name=name,
                        expires_days=DEFAULT_EXPIRES_DAYS if expires_days is None
-                       else expires_days)
+                       else expires_days,
+                       data_source=data_source)
     return {**_key_payload(issued.view), "secret": issued.secret,
             "audit_id": access.audit_id}
 
@@ -896,7 +905,13 @@ def _key_payload(view) -> dict[str, Any]:
     """키 하나의 응답 모양. **값 칸이 없다** — 여기에 칸을 만들면 언젠가 채워진다."""
     return {"key_id": view.key_id, "name": view.name, "prefix": view.prefix,
             "api_type": view.api_type, "capability": view.capability,
-            "status": view.status, "is_active": view.is_active,
+            "status": view.status,
+            #: ④ [턴 AA] 「사용 중 / 만료 / 폐기 / 교체됨」 — `typed` 는 개발 어휘다.
+            #:   기계 어휘도 **함께** 낸다: 버리면 판정기·로그가 읽을 것이 없어진다.
+            "status_label": view.status_label,
+            #: ③ [턴 AA] 출처 표식. 표식이 없으면 `live` 다(고객의 키).
+            "data_source": view.data_source,
+            "is_active": view.is_active,
             "expires_at": view.expires_at}
 
 
@@ -965,14 +980,22 @@ def setting_overview(*, scope: TenantScope, domain: str) -> dict[str, Any]:
             #: 나가는 키 — 표 ②(환경변수 선언). 우리가 남의 API 를 부를 때 쓴다
             "outbound": list(list_credentials(scope=scope)),
             #: 들어오는 키 — 남의 App 이 우리 이벤트 OpenAPI 를 부를 때 쓴다
+            #: ★ [턴 AA · P-220] `_facts["keys"]` 는 **고객 표의 면**이다 —
+            #:   우리가 발급 때 남긴 출처 표식이 붙은 키(게이트·씨앗·훈련)는
+            #:   커널이 이미 뺐고, 뺀 수는 `hidden_by_marker` 로 함께 온다.
+            #:   여기서 다시 거르지 않는다 — 거르는 자리는 하나다(D-212).
             "inbound": [
                 {"key_id": k.key_id, "name": k.name, "prefix": k.prefix,
-                 "status": k.status, "is_active": k.is_active,
+                 "status": k.status, "status_label": k.status_label,
+                 "data_source": k.data_source, "is_active": k.is_active,
                  "created_at": k.created_at, "last_used": k.last_used,
                  "expires_at": k.expires_at}
                 for k in _facts["keys"]],
             "inbound_api_type": _facts["api_type"],
             "inbound_capability": _facts["capability"],
+            #: 고객 표에서 뺀 시험 키의 수와 그 사유. **0이면 0이라고 말한다.**
+            "inbound_hidden_by_marker": _facts["hidden_by_marker"],
+            "inbound_hidden_reason": _facts["hidden_reason"],
             #: ★ 옛 키(단일 목록)를 쓰던 화면을 위해 남긴다. **표 ②만 들어 있다** —
             #:   두 방향을 여기에 합치면 옛 화면이 들어오는 키를 나가는 키로 읽는다.
             "api_keys": list(list_credentials(scope=scope)),

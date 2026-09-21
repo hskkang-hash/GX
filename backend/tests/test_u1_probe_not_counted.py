@@ -183,23 +183,66 @@ class ProbeIsNotCountedTest(ProbeFixture):
 
     # ── ③ 제품을 감추지 않았는가 ─────────────────────────────────────────
     def test_the_operator_list_still_shows_the_probe_event(self):
-        """운영자의 목록에는 **그대로 있다** (D-497).
+        """**운영자 전용 목록 한 곳**에는 그대로 있다 (D-497 · P-220).
 
         세는 것과 보는 것은 다른 일이다. 목록에서까지 빼면 그것은 「지우지 않고 세지
         않기」가 아니라 **사건을 숨긴 것**이고, 숨긴 사건은 아무도 못 고친다.
+
+        ★ 2026-09-21 (턴 AA · P-220) — 그 「한 곳」의 **주소가 생겼다.**
+          종전에는 `GET /api/dsm/events` 가 **부르는 누구에게나** probe 를 줬고,
+          그래서 고객 첫 화면(대시보드 「최근 이벤트」)이 그 예외를 물려받았다.
+          이제 **명시로 청한 호출만** 받는다 — 아래 `?include_probe=true` 가 그
+          운영자 전용 목록이고, 짝이 되는 `test_the_customer_list_does_not_show…` 가
+          「안 청하면 안 나온다」를 같은 씨앗으로 잰다.
         """
         marker = self._gate_marker()
         planted = self._plant(track_id=f"{marker};run=20260920T124501", minutes_ago=9)
 
         _clear_thread_request()
-        resp = self.client.get("/api/dsm/events?limit=200",
+        resp = self.client.get("/api/dsm/events?limit=200&include_probe=true",
                                **_bearer(self.user_a), **NO_CACHE)
         self.assertEqual(200, resp.status_code, resp.content[:400])
         ids = [row["event_id"] for row in resp.json()["events"]]
         self.assertIn(
             planted, ids,
-            "probe 사건이 운영자 목록에서 사라졌습니다 — 이것은 셈을 고친 것이 아니라 "
-            "제품을 감춘 것입니다 (D-497 · P-193 은 「삭제가 아니라 셈」입니다).")
+            "probe 사건이 운영자 전용 목록에서까지 사라졌습니다 — 이것은 셈을 고친 것이 "
+            "아니라 제품을 감춘 것입니다 (D-497 · P-193 은 「삭제가 아니라 셈」입니다).")
+
+    def test_the_customer_list_does_not_show_the_probe_event(self):
+        """**고객이 보는 목록에는 없다** (P-220 · 턴 AA · 세종 실사용 점검).
+
+        세종이 고객 자리에 앉아 적었다: *「관제 대시보드 최근 이벤트 10줄이 전부
+        `gxprobe-…` 캡처용 카메라. 첫 화면의 첫 줄이 우리 탐침이다.」*
+
+        ★ **같은 씨앗으로 두 갈래를 잰다.** 위 시험과 이 시험은 심는 것이 같고 묻는
+          문만 다르다 — 「안 나온다」가 *필터가 걸려서*인지 *심은 것이 없어서*인지를
+          가르는 유일한 방법이 그것이다(분모 0인 초록은 초록이 아니다).
+        """
+        marker = self._gate_marker()
+        planted = self._plant(track_id=f"{marker};run=20260921T090101", minutes_ago=9)
+
+        _clear_thread_request()
+        #: 대시보드 「최근 이벤트」가 부르는 **그 모양 그대로**(`limit` 만 준다).
+        resp = self.client.get("/api/dsm/events?limit=200",
+                               **_bearer(self.user_a), **NO_CACHE)
+        self.assertEqual(200, resp.status_code, resp.content[:400])
+        ids = [row["event_id"] for row in resp.json()["events"]]
+        self.assertNotIn(
+            planted, ids,
+            f"게이트가 심은 사건 #{planted} 이 고객이 보는 목록에 그대로 있습니다 — "
+            f"대시보드 첫 화면의 첫 줄이 우리 탐침입니다 (P-220).")
+
+        #: ★ **분모를 함께 잰다.** 같은 요청이 probe 아닌 사건은 계속 내야 한다 —
+        #:   전부를 지우는 필터는 필터가 아니다.
+        real = self._plant(track_id=None, minutes_ago=8)
+        _clear_thread_request()
+        resp2 = self.client.get("/api/dsm/events?limit=200",
+                                **_bearer(self.user_a), **NO_CACHE)
+        ids2 = [row["event_id"] for row in resp2.json()["events"]]
+        self.assertIn(
+            real, ids2,
+            f"probe 아닌 사건 #{real} 까지 목록에서 사라졌습니다 — 거르는 자리가 "
+            f"분모를 0으로 만들고 있습니다.")
 
     # ── ③′ 인계 초안의 「미처리 N」 ──────────────────────────────────────
     def test_the_handover_draft_does_not_count_probe(self):

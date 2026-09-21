@@ -194,6 +194,28 @@ class DsmAPI:
                event_type: str | None = None, severity: str | None = None,
                response_state: str | None = None, mine: bool = False,
                stream_monitor_id: int | None = None,
+               #: ★★ U4#8 (2026-09-21 · 턴 AA · 차선 U24 · 커널은 U1 이 세웠다) —
+               #:   **주소로 좁힌다.** 지자체 담당관의 목록 검색 셋(사건번호·주소·유형)
+               #:   중 주소만 못 하던 자리다. 화면이 목록을 받아 주소를 대조하는 길은
+               #:   **안 만든다** — 상한(50건) 밖 사건이 「그 주소에 사건 없음」이 되고,
+               #:   그것은 검색이 아니라 **거짓말하는 검색**이다(DA-04 「필터는 전부 서버에서」).
+               #:   ⚠ 빈 문자열은 필터가 아니다 — 커널이 그것을 못 박았다
+               #:     (`address__icontains=""` 는 아무도 안 청한 필터가 된다).
+               #:   ⚠ 주소가 **빈 사건**(주소 변환 전·실패)은 이 필터에 안 걸린다. 옳다 —
+               #:     「주소를 모르는 사건」과 「그 주소에 사건이 없다」는 다른 사실이고,
+               #:     그 말은 화면이 적는다.
+               address: str | None = None,
+               #: ★ P-220 (2026-09-21 · 턴 AA · 차선 U1) — **기본값이 뒤집혔다.**
+               #:   이 칸이 생기기 전까지 이 라우트는 **모든 호출자에게** probe 를 열어
+               #:   줬고(`include_probe=True` 박힘), 그래서 대시보드 「최근 이벤트」 ·
+               #:   통계 · 모바일 M1 이 **아무도 안 고른 예외를 물려받았다**. 세종
+               #:   실사용 점검 2026-09-21: *「첫 화면의 첫 줄이 우리 탐침이다.」*
+               #:   이제 **묻지 않으면 안 나온다** — 새 화면이 하나 생겨도 그 화면은
+               #:   아무것도 안 하고 옳다(`query_events` 가 기본값을 고른 그 이유).
+               #:   ⚠ 이것은 **새 문이 아니다.** 라우트도 쓰기 면도 늘지 않았고,
+               #:     거르는 실행은 여전히 `common.probe_marker.exclude_probe` **정의
+               #:     하나**다(커널 안). 여기서 track_id 를 비교하는 줄은 없다.
+               include_probe: bool = False,
                limit: int = 50):
         """F-09 이벤트 목록.
 
@@ -246,19 +268,30 @@ class DsmAPI:
             reviewed_by_id = getattr(scope.require_actor(), "pk", None)
             if reviewed_by_id is None:
                 raise HttpError(403, "요청자를 특정할 수 없어 「내 담당」을 낼 수 없습니다.")
-        #: ★ P-193 (2026-09-20 · 차선 U1) — **이 목록만 probe 를 본다.**
-        #:   게이트가 심은 사건은 이제 셈에서 빠진다(요약 `unhandled` · 초점 큐 ·
-        #:   인계 초안 · 온보딩 술어 · F-14). 그러나 **운영자의 목록에서까지 빼면
-        #:   그것은 세지 않기가 아니라 사건을 숨긴 것**이고, 숨긴 사건은 아무도 못
-        #:   고친다(D-497 「거르는 곳은 측정이지 제품이 아니다」).
-        #:   그래서 제품 면인 이 한 자리에서만 `include_probe=True` 로 연다 —
-        #:   새 질의 인자도, 새 문도 만들지 않는다(호출자는 이 값을 못 고른다).
+        #: ★ P-193 (2026-09-20 · 차선 U1) — 게이트가 심은 사건은 셈에서 빠진다
+        #:   (요약 `unhandled` · 초점 큐 · 인계 초안 · 온보딩 술어 · F-14).
+        #:   그러나 **어딘가 한 곳에서는 보여야 한다** — 목록에서까지 빼면 그것은
+        #:   세지 않기가 아니라 **사건을 숨긴 것**이고, 숨긴 사건은 아무도 못 고친다
+        #:   (D-497 「거르는 곳은 측정이지 제품이 아니다」).
+        #:
+        #: ★★ P-220 (2026-09-21 · 턴 AA) — **그 「한 곳」을 좁혔다.**
+        #:   종전엔 이 줄이 `include_probe=True` 로 **박혀** 있었고, 그래서 D-497 의
+        #:   예외가 이 라우트를 부르는 **네 화면 전부**(대시보드 「최근 이벤트」 ·
+        #:   전체 목록 · 통계 · 모바일 M1)에 번졌다. 예외는 하나인데 문은 넷이었다.
+        #:   이제 예외는 **「운영자 전용 목록」 한 곳**이다 — 호출자가 `include_probe`
+        #:   를 **명시로 청할 때뿐**이고, 고객 화면 중 그렇게 부르는 곳은 **없다.**
+        #:   U0 가 탐침을 볼 자리는 그대로 남는다:
+        #:       GET /api/dsm/events?include_probe=true   ← 운영자 전용 목록
+        #:   ⚠ **기본값이 예외를 만들지 않게** 하는 것이 이 줄의 전부다. 반대로 두면
+        #:     (기본 포함 · 화면마다 끄기) 새 화면이 하나 생길 때마다 끄는 것을 잊을
+        #:     수 있고, **잊은 쪽은 초록으로 나타나서 안 보인다**(턴 W 실측).
         rows = services.recent_events(scope=scope, since=since, until=until,
                                       event_type=types, severity=severity,
                                       response_state=response_state,
                                       reviewed_by_id=reviewed_by_id,
                                       stream_monitor_id=stream_monitor_id,
-                                      include_probe=True,
+                                      address=address,
+                                      include_probe=include_probe,
                                       limit=limit)
         #: ★ P-201 (2026-09-20 · 턴 Y) — **훈련 배지를 그리려면 목록에도 출처가 있어야 한다.**
         #:   종전엔 `data_source` 가 **상세에만** 있었고, 그래서 목록과 큐는 훈련 사건을
@@ -1058,7 +1091,7 @@ class DsmAPI:
     @route.post("/settings/api-keys", auth=JwtOrInboundKey())
     @tenant_scoped(reason="F-05 키 발급 — 남의 테넌트 이름으로 키를 만들 수 없다")
     def issue_api_key(self, request, name: str, expires_days: int | None = None,
-                      scopes: str = ""):
+                      scopes: str = "", data_source: str = "live"):
         """F-05 「API Key 발급」. **`secret` 이 사람에게 보이는 유일한 응답이다.**
 
         저장소는 원문을 갖지 않는다(sha256 해시만). 이 응답을 놓치면 되찾을 수 없고
@@ -1069,6 +1102,18 @@ class DsmAPI:
           **하나**다. 기본을 전부로 두면 D-335 가 잡은 「범위 없이 이미 열어 두었다」가
           그대로 돌아온다. 모르는 이름은 **422** 다 — 조용히 버리면 발급자는 준 줄
           알고 상대는 못 쓴다. 이름의 정본은 `kernels/k5_trust/key_scopes.py` 하나다.
+
+        ★★ [턴 AA · 차선 U56 · P-220] `data_source` — **이 키를 누가 왜 만드는가.**
+          기본은 `live`(고객의 키)다. 게이트·판정기·씨앗이 두드릴 때는
+          `&data_source=probe` 를 **붙여야** 그 키가 고객의 「외부 연계」 표에서
+          빠진다. 모르는 값은 **400** 이다 — 조용히 `live` 로 눌히면 오타 하나가
+          시험 키를 고객 표에 되돌려 놓는다.
+
+          ⚠ 표식은 **여기서 달고**, 뒤에서 이름을 보고 거르지 않는다. 「이름에
+            gate 가 들어가니 우리 것」은 추측이고, 손님이 제 연계를 그렇게 부르는
+            날 그 손님 키가 조용히 사라진다(`kernels/k5_trust/inbound_keys.py`
+            P-220 머리말 · `common/billing_marks.py` 가 계정 접두로 같은 길을
+            이미 금지했다).
         """
         from django.db import transaction
 
@@ -1087,7 +1132,8 @@ class DsmAPI:
         with transaction.atomic():
             try:
                 issued = services.issue_inbound_key(
-                    scope=scope, name=name, expires_days=expires_days)
+                    scope=scope, name=name, expires_days=expires_days,
+                    data_source=data_source)
             except PermissionDeniedForSetting as exc:
                 raise HttpError(403, f"{exc.reason} (감사 #{exc.audit_id})")
             except PermissionDenied as exc:

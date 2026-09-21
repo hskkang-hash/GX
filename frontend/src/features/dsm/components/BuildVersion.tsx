@@ -52,7 +52,7 @@ export default function BuildVersion() {
         fontVariantNumeric: 'tabular-nums',
       }}
     >
-      {VERSION_LABEL} · {SUPPORT_LABEL}
+      {SUPPORT_LABEL ? `${VERSION_LABEL} · ${SUPPORT_LABEL}` : VERSION_LABEL}
     </div>
   );
 }

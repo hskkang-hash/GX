@@ -1,0 +1,141 @@
+[
+  {
+    "route": "/surveillance-dashboard",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/9",
+    "captured_at": "2026-09-21T16:08:53",
+    "file": "SCREENS-1/view_only_-_anyang/surveillance-dashboard.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-20T17:00:00%2B00:00&end_date=2026-09-21T16:59:59%2B00:00&limit=100&page=1&page_size=5 403",
+      "GET /api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-19T17:00:00%2B00:00&end_date=2026-09-26T16:59:59%2B00:00 403",
+      "GET /api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-21 403",
+      "GET /api/surveillance/surveillance-dashboard/drone-status-overview 403",
+      "GET /api/surveillance/surveillance-dashboard/today-profiles-polygon 403",
+      "GET /api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4 403",
+      "GET /api/surveillance/surveillance-dashboard/weather-setting 403",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/media-data",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/11",
+    "captured_at": "2026-09-21T16:09:01",
+    "file": "SCREENS-1/view_only_-_anyang/media-data.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/media-data/?page_size=25&current_page=1 200",
+      "GET /api/media-data?page_size=25&current_page=1 301",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/stream-monitors/stream-monitors/ai-models 200",
+      "GET /api/user-groups/?page_size=10000&current_page=1 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/flight-log-analysis",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/12",
+    "captured_at": "2026-09-21T16:09:11",
+    "file": "SCREENS-1/view_only_-_anyang/flight-log-analysis.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/flight-log/flight-log/?page_size=25&current_page=1 403",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/?page_size=10000&current_page=1 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/report-template",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/15",
+    "captured_at": "2026-09-21T16:09:19",
+    "file": "SCREENS-1/view_only_-_anyang/report-template.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/print-format/print-formats/print-formats/fields/model?model_name=DeliveryOperation 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/notam",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/16",
+    "captured_at": "2026-09-21T16:09:28",
+    "file": "SCREENS-1/view_only_-_anyang/notam.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/?page_size=10000&current_page=1 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200",
+      "POST /api/proxy/notam 403"
+    ]
+  },
+  {
+    "route": "/dsm/audit",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/29",
+    "captured_at": "2026-09-21T16:09:36",
+    "file": "SCREENS-1/view_only_-_anyang/dsm_audit_read.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/audit?page=1&page_size=50 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/settings/rules",
+    "user_role": "view_only_-_anyang",
+    "scenario": "SCREENS-1/33",
+    "captured_at": "2026-09-21T16:09:44",
+    "file": "SCREENS-1/view_only_-_anyang/dsm_settings_rules_denied.png",
+    "data_source": "시드",
+    "persona": "U4",
+    "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/settings/grade_rules 403",
+      "GET /api/dsm/settings/thresholds 403",
+      "GET /api/dsm/settings/zones 403",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  }
+]

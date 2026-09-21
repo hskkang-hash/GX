@@ -368,5 +368,11 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("바깥 출처를 쓴다고 **선언한 어댑터**가 D-333 두 칸을 적었는가 — 어댑터 "
+               "**분모 %d파일**(지금 셌다 · `backend/adapters` 전수) · 허용 출처 %d종"
+               % (len(list(ADAPTERS.rglob("*.py"))) if ADAPTERS.is_dir() else 0,
+                  len(VALID_SOURCES))),
+    )
     sys.exit(main())

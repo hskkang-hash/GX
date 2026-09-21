@@ -141,7 +141,7 @@ export default function PeoplePage() {
             style={{ marginTop: 12 }}
             type="success"
             showIcon
-            message={`만들었습니다 — user_id ${created.user_id} · ${created.username}`}
+            message={`만들었습니다 — 사용자 번호 ${created.user_id} · ${created.username}`}
             description={`감사 #${created.audit_id}`}
           />
         ) : null}
@@ -154,7 +154,7 @@ export default function PeoplePage() {
         </Paragraph>
         <Space>
           <InputNumber
-            placeholder="user_id"
+            placeholder="사용자 번호"
             value={deactivateId ?? undefined}
             onChange={(v) => setDeactivateId(typeof v === 'number' ? v : null)}
           />
@@ -170,7 +170,7 @@ export default function PeoplePage() {
             style={{ marginTop: 12 }}
             type="success"
             showIcon
-            message={`user_id ${deactivated.user_id} 를 비활성화했습니다.`}
+            message={`사용자 번호 ${deactivated.user_id} 를 비활성화했습니다.`}
             description={`감사 #${deactivated.audit_id}`}
           />
         ) : null}

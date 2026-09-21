@@ -118,5 +118,9 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("DA-04 §4 표와 `tickets.yaml` 의 커널 이름이 갈리는가 — **분모 %d커널**(%s). "
+               "모르는 커널을 만나면 통과시키지 않고 실패한다" % (len(KERNELS), "·".join(KERNELS))),
+    )
     sys.exit(main())

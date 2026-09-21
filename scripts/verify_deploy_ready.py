@@ -293,5 +293,9 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("배포 전에 **값이 있어야 하는 이름** — **분모 %d건**(값이 아니라 이름과 「없으면 "
+               "무엇이 깨지나」를 잰다)" % len(REQUIRED_BEFORE_DEPLOY)),
+    )
     sys.exit(main())

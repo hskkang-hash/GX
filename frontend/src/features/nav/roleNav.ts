@@ -127,13 +127,113 @@ export const NAV_ALLOW: Record<NavBucket, readonly NavRow[]> = {
    *   그래서 CPO 의 열 자리 중 아홉만 선다. 안 건 자리는 위 U4 와 같은 규율로 적는다.
    */
   U5: [
-    ...U1_ROWS,
-    { path: '/users', label: '사람', menuId: 3, iconName: 'BsPeople' },
+    // ★★ [턴 AA · U56] **아홉에서 일곱으로.** 뺀 둘은 관제요원의 일이다 —
+    //   「지금 처리할 것」(단일 초점 큐)과 「인계 메모」는 교대 근무하는 사람의
+    //   자리이지 기관 관리자의 자리가 아니다. 둘 다 **라우트는 그대로**이고
+    //   주소를 치면 열린다 — 메뉴에서 떼는 것은 화면 결정이지 권한 결정이 아니다.
+    //   목표는 **역할별 메뉴 ≤ 7 · 영어 칸 0** 이다(턴 AA 귀약).
+    { path: '/dsm/events', label: '무슨 일 있었나', menuId: 133, iconName: 'BsColumnsGap' },
+    { path: '/dsm/cameras/grid', label: '카메라 격자', menuId: 134, iconName: 'BsCameraVideo' },
     { path: '/dsm/cameras/import', label: '카메라 등록', menuId: 140, iconName: 'BsBoxes' },
+    { path: '/users', label: '사람', menuId: 3, iconName: 'BsPeople' },
     { path: '/dsm/system', label: '백업·보존', menuId: 142, iconName: 'BsGear' },
     { path: '/dsm/metering', label: '이번 달 사용량', menuId: 141, iconName: 'BsDatabase' },
+    { path: '/start', label: '처음이세요', menuId: 136, iconName: 'BsCompass' },
   ],
 };
+
+/**
+ * ★★ ⑤ **인수 자산 화면 넷 — 메뉴에서 뗀다. 라우트는 남긴다**
+ * (턴 AA · 차선 U56 · P-220).
+ *
+ * 왜 위 표(허용 목록)만으로는 모자라는가 — **안 걸리는 역할이 있다**
+ * -------------------------------------------------------------------
+ * `filterNav` 는 `bucketOf` 가 사람을 정했을 때만 돌고, 모르는 역할에서는
+ * **아무 일도 안 한다**(빈 사이드바는 결정이 아니라 사고다 — `RoleNavFilter`
+ * 머리말). 그리고 이 저장소의 역할은 넷이 아니다:
+ *
+ *     [실측 2026-09-21 17:5x · ORM · role.Role 전수 16종]
+ *       표에 있는 것   fire_user · fire_admin · operator · surveillance_operation ·
+ *                     surveillance_order · view_only_-_anyang · admin
+ *       표에 없는 것   superuser · user · order · tenant_admin_4 ·
+ *                     delivery_operation · delivery_order · delivery_admin ·
+ *                     drone_robot_user · drone_robot_admin
+ *
+ * 그리고 **인수 메뉴 넷은 역할 전수의 `RoleMenu` 에 들어 있다**:
+ *
+ *     [실측 2026-09-21 17:5x · menu.RoleMenu · 역할 14종]
+ *       /operation-settings        14/14 역할
+ *       /report-template           14/14 역할
+ *       /roles                      6/14 역할
+ *       /configuration-management  (menu #6 · `Admin `(#2) 의 자식)
+ *
+ * 즉 표에 안 있는 역할로 들어오는 순간 인수 사이드바가 통째로 뜨고, 거기 넷이
+ * 들어 있다. 그것이 세종이 고객 자리에서 본 그림이다 — 「운영 설정」의
+ * **영어 칸 빈 표**(Menu Type · Step · Group · API URL · Updater).
+ *
+ * ★ 그래서 이 넷은 **사람을 정했든 아니든 가린다.** 모르는 역할에서도
+ *   사이드바는 비지 않는다 — 줄 넷을 뗄 뿐이다. 사고가 아니라 결정이 된다.
+ * ★ **지우는 것이 아니다.** dj-core `Menu`·`RoleMenu` 행도, 라우터의 라우트도
+ *   그대로다. U0 은 주소로 그대로 들어간다. 권한은 서버가 판정한다(SEC-11a · P-105).
+ * ⚠ `/device`(드론 장비 등록)는 **안 뗀다** — 그것은 FWS 쪽 자산이고
+ *   이 제품의 시험 장치가 아니다(턴 AA 귀약).
+ */
+export const NAV_ACQUIRED_HIDDEN: Readonly<Record<string, string>> = {
+  '/operation-settings': '운영 설정 — 인수 자산(menu #82 · `Admin ` 의 자식). 영어 칸 빈 표다',
+  '/configuration-management': '구성 관리 — 인수 자산(menu #6)',
+  '/roles': '역할 관리 — 인수 자산(menu #5). 우리층의 역할은 「사람」에서 정한다',
+  '/report-template': '보고서 서식 — 인수 자산(menu #95·#106 · 택배 운송장 서식). 우리 보고서는 `/dsm/reports` 다',
+};
+
+/**
+ * ⑤ 인수 넷을 **나무에서 뗀다.** 순수 함수다 — 시험이 이것만으로 전부 잰다.
+ *
+ * ★ **원본 배열을 안 건드린다.** 새 배열을 돌려주고, 바뀐 것이 없으면
+ *   `changed=false` 로 말한다 — 부르는 쪽이 **다시 쓸지 말지**를 정할 수 있어야
+ *   훅이 끝나지 않는 갱신으로 돌지 않는다(`filterNav` 쪽 `navSignature` 와 같은 이유).
+ * ★ **자식을 다 뗀 마디도 뗀다** — 자식이 없고 제 화면도 없는 마디는 눌러도
+ *   아무 데도 안 가는 줄이다. 그 줄은 「메뉴가 있다」와 구별되지 않는다.
+ *   단, 제 경로가 있는 마디는 남긴다 — 그것은 화면이 있는 줄이다.
+ */
+export function hideAcquired(menus: readonly MenuNode[]): {
+  menus: MenuNode[];
+  changed: boolean;
+  removed: number;
+} {
+  let removed = 0;
+
+  const walk = (nodes: readonly MenuNode[]): MenuNode[] => {
+    const out: MenuNode[] = [];
+    for (const m of nodes) {
+      if (!m) continue;
+      if (typeof m.path === 'string' && m.path in NAV_ACQUIRED_HIDDEN) {
+        removed += 1;
+        continue;
+      }
+      const rawKids = (m.sub_menus || (m.children as MenuNode[] | undefined)) ?? [];
+      const hadKids = Array.isArray(rawKids) && rawKids.length > 0;
+      const kids = hadKids ? walk(rawKids) : [];
+      if (hadKids && kids.length === 0 && !isOwnScreen(m)) {
+        removed += 1;
+        continue;
+      }
+      out.push(hadKids ? { ...m, sub_menus: kids, children: kids } : m);
+    }
+    return out;
+  };
+
+  const next = walk(menus);
+  return { menus: next, changed: removed > 0, removed };
+}
+
+/**
+ * 이 마디가 **제 화면을 가졌는가.** 인수 사이드바의 마디는 경로가 비거나
+ * (`''`) 주소가 아닌 낱말(`'Asset'` · `'GCS'`)이다 — 둘 다 못 간다.
+ * 슬래시로 시작하는 것만 주소로 본다. 추측이 아니라 **라우터의 규칙**이다.
+ */
+function isOwnScreen(m: MenuNode): boolean {
+  return typeof m.path === 'string' && m.path.startsWith('/');
+}
 
 /**
  * ② **안 건 자리** — CPO 표에 있으나 여는 화면이 없어서 못 건 줄들.
@@ -142,7 +242,17 @@ export const NAV_ALLOW: Record<NavBucket, readonly NavRow[]> = {
 export const NAV_NO_SCREEN_YET: Record<string, string> = {
   '보고서 (U4)': '월간 1쪽은 서버가 낸다. 그리는 화면이 라우터에 없다 (P61_NO_SCREEN_YET)',
   '처리 기록 (U4)': '감사·처리 이력을 읽는 화면이 없다 (P61_NO_SCREEN_YET 「감사 기록」)',
-  '알림 받는 사람 (U5)': '수신자·채널을 여는 화면이 없다 (P61_NO_SCREEN_YET 「알림 규칙·채널」)',
+  // ★ [턴 AA · U56] **이 줄은 이제 사유가 다르다.** 화면은 섰다 —
+  //   `/dsm/notify`(턴 S) · `/dsm/integrations`(턴 T) 둘 다 `App.tsx` 에 등록돼 있고
+  //   주소로 열린다. 못 거는 이유는 **dj-core `Menu` 에 그 경로의 행이 없어서**다:
+  //   `filterNav` 는 서버가 안 준 줄을 `menuId`(DB 에 실재하는 행의 id)로만 세우고,
+  //   없는 수를 지어 넣으면 인수 사이드바가 `?menuId=` 로 옮겨 갈 때 그 주소가
+  //   거짓이 된다. [실측 2026-09-21] 우리 층 행은 #132~#142 뿐이고 `/dsm/notify` ·
+  //   `/dsm/integrations` 의 행은 **없다.**
+  //   ⚠ 면제가 아니라 **선언**이다. 행이 서는 턴에 위 U5 표에 두 줄이 는다
+  //     (그날에도 U5 는 ≤ 7 이어야 하므로 두 줄을 넣으며 두 줄을 더 뗀다).
+  '알림 받는 사람 (U5)': '화면은 있다(`/dsm/notify` · 턴 S). dj-core Menu 에 그 경로의 행이 없어 못 건다',
+  '외부 연계 (U5)': '화면은 있다(`/dsm/integrations` · 턴 T). dj-core Menu 에 그 경로의 행이 없어 못 건다',
 };
 
 /** 사이드바에서 **뺐지만 주소로는 그대로 열리는** 자리. 가림은 자물쇠가 아니다. */

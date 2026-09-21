@@ -199,5 +199,9 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("커밋 본문의 D-번호가 결정 레지스트리에 실재하는가 — 레지스트리 **분모 %d파일** · "
+               "대상 커밋은 그 자리에서 훑는다(유령 번호·누락 둘 다 본다)" % len(DECISION_FILES)),
+    )
     sys.exit(main())

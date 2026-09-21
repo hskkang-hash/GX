@@ -220,5 +220,10 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("E2E 규약 판정기가 **시험 밖에서도** 서는가 — 요구 메서드 **분모 %d건** · "
+               "기대 코드 %d종. 시험 파일이 지워지면 남는 것은 「전건 통과」뿐이다"
+               % (len(REQUIRED_METHODS), len(EXPECTED_CODES))),
+    )
     sys.exit(main())

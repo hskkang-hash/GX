@@ -1,15 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""설정 캐시 **벽시계** A/B — 동시 1 · **요청 단위로 짝을 맞춰** 번갈아 잰다 (PERF-04).
+"""설정 캐시 **벽시계** A/B — **짝을 맞춰** 번갈아 잰다 (PERF-04).
 
-`perf_breakdown.py --ab` 와 무엇이 다른가 — **두 벌이 아니라 두 종류다**
-------------------------------------------------------------------------
-    `perf_breakdown --ab`  시나리오 넷 · **동시 10** · 팔 하나를 **한 라운드씩** 재고 번갈아
-    이 파일                 자리 여섯 · **동시 1**  · **요청 하나씩** 번갈아 (쌍이 같은 순간)
+재는 자리가 **둘**이다 — `--concurrency` 가 가른다
+----------------------------------------------------
+    `--concurrency 1`  (기본)  자리 여섯 · **요청 하나씩** 번갈아 — 쌍이 같은 순간
+                               ⇒ **한 벌 값**(p50)을 잰다
+    `--concurrency N>1`        자리 여섯 · **창(window) 하나씩** 번갈아 — 창마다 N 갈래가
+                               한 팔을 때린다 ⇒ **포화한 서버의 p95** 를 잰다
 
-둘은 다른 것을 잰다. 동시 10 은 **포화한 서버의 p95** 를 재고, 동시 1 은 **한 벌 값**을
-잰다. 설정 캐시가 줄이는 것은 **요청 한 벌의 질의 수**이므로, 그 효과가 가장 또렷한
-자리는 **포화 밖**이다. 포화 안의 수는 저쪽 도구가 낸다 — 이 파일은 저쪽을 대신하지 않는다.
+둘은 **다른 것**을 잰다. 동시 1 은 요청 한 벌의 질의 수가 줄어드는 것을 보고,
+동시 10 은 그 줄어든 질의가 **줄 서 있는 서버**에서 무엇을 하는지 본다.
+★ **한쪽 수를 다른 쪽에 옮겨 적지 않는다.** 턴 Z 는 동시 1 만 쟀고, 그 수(7~11 ms)는
+  동시 10 의 수가 **아니다**. 판에 `concurrency` 를 박는 이유가 이것이다.
+
+★★ 동시 N 에서도 **짝 맞춤·순서 뒤집기는 그대로다.** 바뀌는 것은 짝의 단위뿐이다:
+    동시 1  — 짝 = 요청 하나       · a_ms = 그 요청의 벽시계
+    동시 N  — 짝 = 창 하나(N갈래) · a_ms = 그 창의 **p95**(`--metric p50` 이면 p50)
+  창 하나에 200 아닌 응답이 **하나라도** 있으면 그 짝은 **버린다** — 실패는 빠르고,
+  빠른 것을 효과로 읽는 것이 이 저장소가 이미 속은 자리다(턴 Y 자진 ⓑ).
 
 ★ 왜 **요청 단위**로 짝을 맞추나
 --------------------------------
@@ -189,8 +198,106 @@ def run_path(*, a_port: int, b_port: int, path: str, token: str,
     return rows
 
 
-def do_login(token_file: str) -> int:
-    """토큰 **한 번**. 재는 동안 다시 부르지 않는다 — 부르면 제 세션을 제가 끊는다."""
+def window_stats(lat: list[float], codes: list[int]) -> dict:
+    """창 하나의 셈. **서버 없이 도는 순수 함수** — 자기시험이 겨눌 수 있게 떼어 놨다.
+
+    ★ `code` 는 창의 **합격 여부**다. 200 아닌 것이 **하나라도** 있으면 200 이 아니고,
+      그러면 `drop_bad_pairs` 가 그 짝을 통째로 버린다. 실패는 빠른 길로 돌아오므로
+      섞어 두면 **실패를 효과로** 읽게 된다.
+    """
+    ordered = sorted(lat)
+    bad = sum(1 for c in codes if c != 200)
+
+    def pct(q: float) -> float:
+        if not ordered:
+            return 0.0
+        return ordered[min(len(ordered) - 1, int(len(ordered) * q))]
+
+    return {"n": len(lat), "bad": bad,
+            "p50": round(pct(0.50), 2), "p95": round(pct(0.95), 2),
+            "p99": round(pct(0.99), 2),
+            "mean": round(sum(lat) / len(lat), 2) if lat else 0.0,
+            #: ★ **빈 창은 성한 창이 아니다.** `bad == 0` 만 보면 아무것도 못 보낸 창이
+            #:   합격으로 들어와 「0 ms」가 효과인 척한다.
+            "code": (200 if (bad == 0 and codes)
+                     else next((c for c in codes if c != 200), -1))}
+
+
+def _window(port: int, path: str, token: str, *, concurrency: int,
+            reqs: int, tag: int) -> dict:
+    """한 창 — **N 갈래가 같은 팔을 동시에** 때린다. 창 하나가 짝의 한 쪽이 된다."""
+    import threading                                       # noqa: PLC0415
+
+    lat: list[float] = []
+    codes: list[int] = []
+    lock = threading.Lock()
+
+    def worker(wid: int) -> None:
+        mine_l: list[float] = []
+        mine_c: list[int] = []
+        for j in range(reqs):
+            ms, code = _one(port, path, token, tag * 100000 + wid * 1000 + j)
+            mine_l.append(ms)
+            mine_c.append(code)
+        with lock:
+            lat.extend(mine_l)
+            codes.extend(mine_c)
+
+    threads = [threading.Thread(target=worker, args=(w,)) for w in range(concurrency)]
+    t0 = time.perf_counter()
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    wall = (time.perf_counter() - t0) * 1000.0
+
+    out = window_stats(lat, codes)
+    out["wall_ms"] = round(wall, 1)
+    return out
+
+
+def run_path_concurrent(*, a_port: int, b_port: int, path: str, token: str,
+                        windows: int, concurrency: int, reqs: int,
+                        warmup: int, metric: str) -> tuple[list[dict], list[dict]]:
+    """창 단위 짝 맞춤. **창마다 순서를 뒤집는다** — 먼저 재는 벌의 이득을 한 팔에 싣지 않는다."""
+    for i in range(max(1, warmup // 4)):
+        _window(a_port, path, token, concurrency=concurrency, reqs=2, tag=-i - 1)
+        _window(b_port, path, token, concurrency=concurrency, reqs=2, tag=-i - 1)
+
+    pairs: list[dict] = []
+    detail: list[dict] = []
+    for i in range(windows):
+        if i % 2 == 0:
+            wa = _window(a_port, path, token, concurrency=concurrency, reqs=reqs, tag=i * 2)
+            wb = _window(b_port, path, token, concurrency=concurrency, reqs=reqs, tag=i * 2 + 1)
+        else:
+            wb = _window(b_port, path, token, concurrency=concurrency, reqs=reqs, tag=i * 2 + 1)
+            wa = _window(a_port, path, token, concurrency=concurrency, reqs=reqs, tag=i * 2)
+        pairs.append({"pair": i + 1,
+                      "a_ms": wa[metric], "a_code": wa["code"],
+                      "b_ms": wb[metric], "b_code": wb["code"]})
+        detail.append({"pair": i + 1, "a": wa, "b": wb})
+    return pairs, detail
+
+
+def cred_fingerprint(user: str) -> str:
+    """**어느 자격으로 쟀는지**를 판에 남기는 자국 — 값이 아니라 sha256 앞 12자다.
+
+    이 저장소는 **한 계정 한 세션**이다. 그래서 재는 사람은 종종 「비어 있는 계정」으로
+    옮겨 타야 하고, 그러면 **판에 적힌 수가 어느 자격의 수인지**가 흐려진다.
+    자국을 박아 두면 두 벌이 같은 자격이었는지 **대조할 수 있다** — 값은 안 남는다.
+    """
+    import hashlib                                         # noqa: PLC0415
+
+    return hashlib.sha256(user.encode("utf-8")).hexdigest()[:12]
+
+
+def do_login(token_file: str, user_env: str = "GX_ROUTE_USER",
+             password_env: str = "GX_ROUTE_PASSWORD") -> int:
+    """토큰 **한 번**. 재는 동안 다시 부르지 않는다 — 부르면 제 세션을 제가 끊는다.
+
+    ★ 자격은 **환경 이름으로** 고른다(`--user-env`). 값은 argv 에 0 이다.
+    """
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     sys.path.insert(0, "/app")
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
@@ -200,10 +307,10 @@ def do_login(token_file: str) -> int:
     from verify_route_alive import login                   # noqa: PLC0415
 
     api = os.environ.get("GX_API", "").rstrip("/")
-    user = os.environ.get("GX_ROUTE_USER", "")
-    password = os.environ.get("GX_ROUTE_PASSWORD", "")
+    user = os.environ.get(user_env, "")
+    password = os.environ.get(password_env, "")
     if not (api and user and password):
-        print("%s 자격이 없다 — GX_API · GX_ROUTE_USER · GX_ROUTE_PASSWORD (이름만)" % TAG)
+        print("%s 자격이 없다 — GX_API · %s · %s (이름만)" % (TAG, user_env, password_env))
         return 2
     token = login(api, user, password)
     if not token:
@@ -211,8 +318,11 @@ def do_login(token_file: str) -> int:
         return 2
     with open(token_file, "w", encoding="utf-8") as fh:
         fh.write(token)
-    print("%s 로그인 1회 — %s UTC · 토큰 -> %s"
-          % (TAG, time.strftime("%H:%M:%S", time.gmtime()), token_file))
+    with open(token_file + ".who", "w", encoding="utf-8") as fh:
+        fh.write("%s %s" % (user_env, cred_fingerprint(user)))
+    print("%s 로그인 1회 — %s UTC · 자격 %s(sha256 %s) · 토큰 -> %s"
+          % (TAG, time.strftime("%H:%M:%S", time.gmtime()),
+             user_env, cred_fingerprint(user), token_file))
     return 0
 
 
@@ -262,6 +372,25 @@ def self_test() -> int:
     check("반대 방향도 한결같으면 증명",
           paired_verdict(mk(10, 80.0, 100.0))["verdict"], "증명")
 
+    # ── 동시 N(창 단위 짝)의 셈 — 서버 없이 겨눌 수 있는 자리 전부 ──────────────
+    lat100 = [float(i) for i in range(1, 101)]             # 1..100 ms
+    ok = window_stats(lat100, [200] * 100)
+    check("창 p50", ok["p50"], 51.0)
+    check("창 p95", ok["p95"], 96.0)
+    check("창이 성하면 code=200", ok["code"], 200)
+    check("창 p95 는 p50 보다 크다", ok["p95"] > ok["p50"], True)
+
+    #: **하나라도** 200 이 아니면 창 전체가 불합격이다 — 이것이 없으면 401 이 섞인
+    #: 창의 낮은 p95 를 「캐시가 빠르다」로 읽는다.
+    one_bad = window_stats(lat100, [200] * 99 + [401])
+    check("창에 401 이 하나면 창이 불합격", one_bad["code"], 401)
+    check("창의 불합격 수를 센다", one_bad["bad"], 1)
+    check("불합격 창이 낀 짝은 버려진다",
+          paired_verdict([{"pair": 1, "a_ms": 50.0, "a_code": 200,
+                           "b_ms": 5.0, "b_code": one_bad["code"]}])["pairs_dropped"], 1)
+    check("빈 창은 셈이 0 이고 code 가 -1",
+          (window_stats([], [])["p95"], window_stats([], [])["code"]), (0.0, -1))
+
     print("  => %s" % ("통과" if not bad else "실패 %d건" % bad))
     return 1 if bad else 0
 
@@ -273,41 +402,94 @@ def main(argv=None) -> int:
                     help="팔 B 의 포트 — **여기가 캐시를 켠 팔**이라고 적는다")
     ap.add_argument("--pairs", type=int, default=40)
     ap.add_argument("--warmup", type=int, default=8)
+    ap.add_argument("--concurrency", type=int, default=1,
+                    help="1 이면 요청 단위 짝 · 2 이상이면 **창 단위 짝**(포화)")
+    ap.add_argument("--windows", type=int, default=8,
+                    help="동시 N 일 때 창 짝의 수 — MIN_PAIRS 아래면 판정하지 않는다")
+    ap.add_argument("--reqs", type=int, default=15,
+                    help="동시 N 일 때 창 하나에서 **갈래마다** 보내는 요청 수")
+    ap.add_argument("--metric", default="p95", choices=("p95", "p50"),
+                    help="동시 N 일 때 짝을 무엇으로 비교하나 — 포화의 질문은 p95 다")
     ap.add_argument("--token-file", default="/tmp/gx_ab_token")
     ap.add_argument("--login", action="store_true", help="토큰만 받고 끝낸다")
+    ap.add_argument("--user-env", default="GX_ROUTE_USER",
+                    help="자격의 **환경 이름**(값이 아니다) — 한 계정 한 세션이라 옮겨 탈 일이 있다")
+    ap.add_argument("--password-env", default="GX_ROUTE_PASSWORD",
+                    help="암호의 **환경 이름**(값이 아니다)")
     ap.add_argument("--arm-note", default="A=CONFIG_READ_CACHE_ENABLED=false · B=true",
                     help="두 팔이 무엇이 다른가 — 판에 박힌다")
     ap.add_argument("--out", default="", help="JSON — **벌마다 다른 이름**")
+    ap.add_argument("--only", default="",
+                    help="★ 재는 자리를 즐인다(쉼표로). 동시 N 에서는 짝의 **수**가 힘이라, "
+                         "같은 요청 예산이라면 자리를 즐이고 짝을 늘리는 편이 낫다")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args(argv)
 
     if args.self_test:
         return self_test()
     if args.login:
-        return do_login(args.token_file)
+        return do_login(args.token_file, args.user_env, args.password_env)
 
     if not os.path.exists(args.token_file):
         print("%s 토큰이 없다 — 먼저 `--login`. 익명으로 재면 401 의 왕복을 재게 된다" % TAG)
         return 2
     with open(args.token_file, encoding="utf-8") as fh:
         token = fh.read().strip()
+    #: 재는 자격의 **자국**을 판에 옮긴다 — `--login` 이 옆에 써 둔 것을 읽을 뿐이다.
+    who = ""
+    if os.path.exists(args.token_file + ".who"):
+        with open(args.token_file + ".who", encoding="utf-8") as fh:
+            who = fh.read().strip()
 
     started = time.strftime("%H:%M:%S", time.gmtime())
-    print("%s 동시 1 · 쌍 %d · 워밍업 %d(버림) · A=%d B=%d · %s"
-          % (TAG, args.pairs, args.warmup, args.a, args.b, args.arm_note))
+    conc = max(1, args.concurrency)
+    metric = args.metric if conc > 1 else "req"
+    if conc > 1:
+        print("%s **동시 %d(포화)** · 창 짝 %d · 창마다 %d갈래×%d요청 · 짝은 창의 %s"
+              " · A=%d B=%d · %s"
+              % (TAG, conc, args.windows, conc, args.reqs, args.metric,
+                 args.a, args.b, args.arm_note))
+        head = ("A " + args.metric, "B " + args.metric, "짝차 가운데", "부호 B<A", "버린 창")
+    else:
+        print("%s 동시 1 · 쌍 %d · 워밍업 %d(버림) · A=%d B=%d · %s"
+              % (TAG, args.pairs, args.warmup, args.a, args.b, args.arm_note))
+        head = ("A p50", "B p50", "쌍차 가운데", "부호 B<A", "버린 쌍")
     print("  %-7s %9s %9s %11s %10s %8s  %s"
-          % ("자리", "A p50", "B p50", "쌍차 가운데", "부호 B<A", "버린 쌍", "판정"))
+          % ("자리", head[0], head[1], head[2], head[3], head[4], "판정"))
 
     payload = {"started_utc": started, "a_port": args.a, "b_port": args.b,
                "arm_note": args.arm_note, "pairs": args.pairs,
-               "warmup": args.warmup, "paths": {}}
+               "warmup": args.warmup, "paths": {},
+               #: ★ 이 셋이 판에 박혀야 **동시 1 의 수를 동시 10 인 척** 읽지 못한다.
+               "concurrency": conc, "pair_unit": "window" if conc > 1 else "request",
+               "pair_metric": metric, "windows": args.windows if conc > 1 else None,
+               "reqs_per_worker": args.reqs if conc > 1 else None,
+               #: ★ 자격은 **`--login` 이 남긴 자국**에서만 읽는다. 재는 벌의
+               #:   `--user-env` 기본값을 적으면 **판이 거짓말한다** — 로그인은 다른
+               #:   이름으로 했는데 판에는 기본값이 박힌다(턴 AA 에 한 번 났다).
+               "cred_fingerprint": who or "(자국 없음 — 어느 자격인지 모른다)"}
+    want = {x.strip().upper() for x in args.only.split(",") if x.strip()}
+    todo = [(n, p) for n, p in PATHS if not want or n in want]
+    if not todo:
+        print("%s --only 가 아무 자리도 고르지 못했다 — 회색" % TAG)
+        return 2
+    payload["paths_measured"] = [n for n, _ in todo]
     proven = unproven = ungraded = 0
-    for name, path in PATHS:
-        rows = run_path(a_port=args.a, b_port=args.b, path=path, token=token,
-                        pairs=args.pairs, warmup=args.warmup)
+    for name, path in todo:
+        detail = None
+        if conc > 1:
+            rows, detail = run_path_concurrent(
+                a_port=args.a, b_port=args.b, path=path, token=token,
+                windows=args.windows, concurrency=conc, reqs=args.reqs,
+                warmup=args.warmup, metric=args.metric)
+        else:
+            rows = run_path(a_port=args.a, b_port=args.b, path=path, token=token,
+                            pairs=args.pairs, warmup=args.warmup)
         v = paired_verdict(rows)
         v["path"] = path
         payload["paths"][name] = {"verdict": v, "rows": rows}
+        if detail is not None:
+            payload["paths"][name]["windows"] = detail
         if v["verdict"] == "증명":
             proven += 1
         elif v["verdict"] == "못 증명":
@@ -326,11 +508,11 @@ def main(argv=None) -> int:
     payload["ended_utc"] = time.strftime("%H:%M:%S", time.gmtime())
     payload["tally"] = {"증명": proven, "못 증명": unproven, "판정 불가": ungraded}
     print("\n%s 증명 %d · 못 증명 %d · 판정 불가 %d (자리 %d)"
-          % (TAG, proven, unproven, ungraded, len(PATHS)))
+          % (TAG, proven, unproven, ungraded, len(todo)))
 
     if args.out:
         # ★ **판정 불가가 전부면 파일을 안 쓴다** — 옛 파일이 방금 잰 것처럼 보이면 안 된다.
-        if ungraded == len(PATHS):
+        if ungraded == len(todo):
             print("%s 전부 판정 불가 — **파일을 안 썼다.** 없는 것이 맞다" % TAG)
         else:
             os.makedirs(os.path.dirname(args.out), exist_ok=True)

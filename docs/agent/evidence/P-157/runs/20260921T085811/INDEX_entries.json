@@ -1,0 +1,133 @@
+[
+  {
+    "route": "/menu",
+    "user_role": "admin",
+    "scenario": "SCREENS-1/6",
+    "captured_at": "2026-09-21T15:59:06",
+    "file": "SCREENS-1/admin/menu.png",
+    "data_source": "시드",
+    "persona": "U5",
+    "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/configuration-management",
+    "user_role": "admin",
+    "scenario": "SCREENS-1/7",
+    "captured_at": "2026-09-21T15:59:24",
+    "file": "SCREENS-1/admin/configuration-management.png",
+    "data_source": "시드",
+    "persona": "U5",
+    "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/config-management/list?page_size=25&current_page=1 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/?page_size=10000&current_page=1 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/profile",
+    "user_role": "admin",
+    "scenario": "SCREENS-1/8",
+    "captured_at": "2026-09-21T15:59:37",
+    "file": "SCREENS-1/admin/profile.png",
+    "data_source": "시드",
+    "persona": "U5",
+    "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/departments/?page_size=10000&current_page=1&group__id=4 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/?page_size=10000&current_page=1 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200",
+      "GET /api/v1/user/get-user-detail/115 200"
+    ]
+  },
+  {
+    "route": "/operation-settings",
+    "user_role": "admin",
+    "scenario": "SCREENS-1/14",
+    "captured_at": "2026-09-21T16:00:06",
+    "file": "SCREENS-1/admin/operation-settings.png",
+    "data_source": "시드",
+    "persona": "U5",
+    "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/notify",
+    "user_role": "admin",
+    "scenario": "SCREENS-1/30",
+    "captured_at": "2026-09-21T16:00:18",
+    "file": "SCREENS-1/admin/dsm_notify_recipients.png",
+    "data_source": "시드",
+    "persona": "U5",
+    "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/settings/notify-rules/list 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/integrations",
+    "user_role": "admin",
+    "scenario": "SCREENS-1/31",
+    "captured_at": "2026-09-21T16:00:32",
+    "file": "SCREENS-1/admin/dsm_integrations_api_keys.png",
+    "data_source": "시드",
+    "persona": "U5",
+    "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/health 200",
+      "GET /api/dsm/settings/api_keys 200",
+      "GET /api/dsm/webhook-subscriptions 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  },
+  {
+    "route": "/dsm/settings/rules",
+    "user_role": "admin",
+    "scenario": "SCREENS-1/32",
+    "captured_at": "2026-09-21T16:00:42",
+    "file": "SCREENS-1/admin/dsm_settings_rules_admin.png",
+    "data_source": "시드",
+    "persona": "U5",
+    "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+    "calls": [
+      "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+      "GET /api/config-management/list-optimized 200",
+      "GET /api/dsm/settings/grade_rules 200",
+      "GET /api/dsm/settings/thresholds 200",
+      "GET /api/dsm/settings/zones 200",
+      "GET /api/menu/menus?page_size=10000 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+      "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+    ]
+  }
+]

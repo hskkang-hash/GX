@@ -163,6 +163,33 @@ const FIELD_PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
 export const MAP_LINK_LABEL = '지도에서 보기';
 
 /**
+ * ③ [턴 AA · U3 · 세종 §3 6번] **「서버가 404」는 고객 말이 아니다.**
+ *
+ * 종전 글자: 「이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 —
+ * 고장이 아닙니다).」 — **정직하지만 우리 말이다.** `404` 는 우리 서랍의 번호이고
+ * (GX-COPY 규칙 3), 「고장이 아닙니다」는 **고장을 먼저 떠올리게 하는 부정문**이다.
+ * 현장에서 폰을 든 사람이 그 줄에서 알아야 할 것은 둘뿐이다 —
+ * **왜 없는가**와 **그러면 지금 무엇을 하는가.** 이번 턴 불변이 그 둘을
+ * **같은 줄에** 두라고 못 박았다.
+ *
+ * ★ 갈래가 둘인 이유 — **「실제 값이 없는 문구는 비표시」**(턴 AA 불변).
+ *   스냅샷이 없는 사건에서 「위의 스냅샷으로 확인하십시오」는 **없는 것을 가리키는
+ *   손가락**이다. 그것은 P-121 이 지운 「관제 화면에서 확인하십시오」와 같은 병이다 —
+ *   고친 자리에 같은 병을 다시 심지 않는다. 그래서 다음 손은 **이 화면에 실제로
+ *   서 있는 손잡이**만 가리킨다: 스냅샷이 있으면 스냅샷, 없으면 「현장 회신」.
+ * ★ **접는 규율은 안 바꿨다.** 404 만 빈 것으로 접고 403·500 은 그대로 오류다
+ *   (아래 `clip` 머리말). 바뀐 것은 **빈 자리에 적는 글자**뿐이다.
+ * ★ GX-COPY 에 아직 없는 말이라 **조율자에게 등재를 청했다**
+ *   (`docs/agent/checkpoints/turn-aa/조율자.inbox/U3.md`). 「저장된 구간이 없습니다」는
+ *   세종 §3 6번이 지정한 낱말 그대로다.
+ */
+export const CLIP_EMPTY_HEAD = '저장된 구간이 없습니다';
+export const CLIP_EMPTY_WITH_SNAPSHOT =
+  `${CLIP_EMPTY_HEAD} — 이 사건은 영상이 저장되지 않았습니다. 위의 「스냅샷」으로 확인하십시오.`;
+export const CLIP_EMPTY_NO_SNAPSHOT =
+  `${CLIP_EMPTY_HEAD} — 이 사건은 영상이 저장되지 않았습니다. 현장에서 본 것을 아래 「현장 회신」에 적어 주십시오.`;
+
+/**
  * 사건 위치를 여는 카카오맵 링크를 만든다. **있는 칸만** 쓴다 — 지어내지 않는다.
  * 좌표가 있으면 점(`map/link/map`), 좌표는 없고 주소만 있으면 검색(`map/link/search`),
  * 둘 다 없으면 `null`(화면은 아무것도 그리지 않는다).
@@ -698,7 +725,9 @@ export default function MobileEventDetail() {
                     state={clip.state}
                     reason={clip.reason} status={clip.status}
                     onRetry={clip.reload}
-                    emptyText="이 사건에는 영상 구간 참조가 없습니다 (서버가 404 로 답했습니다 — 고장이 아닙니다)."
+                    /* ③ [턴 AA] 원인과 다음 손이 **한 줄**에 있다. 다음 손은
+                       이 화면에 **실제로 서 있는 손잡이**만 가리킨다(위 머리말). */
+                    emptyText={e.snapshot_path ? CLIP_EMPTY_WITH_SNAPSHOT : CLIP_EMPTY_NO_SNAPSHOT}
                   >
                     {clip.data ? (
                       <Descriptions

@@ -1,8 +1,8 @@
 {
   "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
-  "captured_at": "2026-09-19T17:39:35",
-  "screens_total": 40,
-  "routes_total": 39,
+  "captured_at": "2026-09-21T16:09:44",
+  "screens_total": 44,
+  "routes_total": 42,
   "screens": {
     "/login": [
       {
@@ -604,17 +604,17 @@
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-18T17:00:00%2B00:00&end_date=2026-09-19T16:59:59%2B00:00&limit=100&page=1&page_size=5",
+        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-20T17:00:00%2B00:00&end_date=2026-09-21T16:59:59%2B00:00&limit=100&page=1&page_size=5",
         "status": 403
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-12T17:00:00%2B00:00&end_date=2026-09-19T16:59:59%2B00:00",
+        "path": "/api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-19T17:00:00%2B00:00&end_date=2026-09-26T16:59:59%2B00:00",
         "status": 403
       },
       {
         "method": "GET",
-        "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-19",
+        "path": "/api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-21",
         "status": 403
       },
       {
@@ -1521,6 +1521,117 @@
         "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
         "status": 200
       }
+    ],
+    "/dsm/settings/rules": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/settings/grade_rules",
+        "status": 403
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/settings/thresholds",
+        "status": 403
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/settings/zones",
+        "status": 403
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/cameras/tuning": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/stats/camera-thresholds",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/stats/false-positive/by-camera?days=7&top_n=3",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/reports": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/reports/runs?limit=50",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
     ]
   },
   "api_notes": {
@@ -1544,25 +1655,28 @@
     "/dsm/events?preset=mine": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/dsm/events?preset=system": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/dsm/queue": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/m/inbox": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/m/events/274947": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/menu": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/configuration-management": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/profile": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/operation-settings": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/notify": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/integrations": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/multi-stream-monitor": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/dsm/drill": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/dsm/cameras/import": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/dsm/cameras/address": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/start?role=OPERATOR": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/m/inbox": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/m/events/274947": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/cameras/tuning": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/reports": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/surveillance-dashboard": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/media-data": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/flight-log-analysis": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/report-template": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/notam": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
     "/dsm/audit": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/menu": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/configuration-management": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/profile": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/operation-settings": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/dsm/notify": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
-    "/dsm/integrations": "화면을 열고 브라우저가 부른 것을 그대로 적었다"
+    "/dsm/settings/rules": "화면을 열고 브라우저가 부른 것을 그대로 적었다"
   },
   "data_source": "시드 (K1 record_detection 실제 경로 · 실제 사고 아님)",
   "viewers": [
@@ -1913,9 +2027,9 @@
         "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
         "GET /api/config-management/list-optimized 200",
         "GET /api/menu/menus?page_size=10000 200",
-        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-18T17:00:00%2B00:00&end_date=2026-09-19T16:59:59%2B00:00&limit=100&page=1&page_size=5 403",
-        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-12T17:00:00%2B00:00&end_date=2026-09-19T16:59:59%2B00:00 403",
-        "GET /api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-19 403",
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-messages?start_date=2026-09-20T17:00:00%2B00:00&end_date=2026-09-21T16:59:59%2B00:00&limit=100&page=1&page_size=5 403",
+        "GET /api/surveillance/surveillance-dashboard/abnormal-signs-overview?start_date=2026-09-19T17:00:00%2B00:00&end_date=2026-09-26T16:59:59%2B00:00 403",
+        "GET /api/surveillance/surveillance-dashboard/daily-profile-overview?date=2026-09-21 403",
         "GET /api/surveillance/surveillance-dashboard/drone-status-overview 403",
         "GET /api/surveillance/surveillance-dashboard/today-profiles-polygon 403",
         "GET /api/surveillance/surveillance-dashboard/today-region-drones?page=1&page_size=4 403",
@@ -2233,6 +2347,75 @@
         "GET /api/dsm/events/274947/snapshot 200",
         "GET /api/dsm/events/274947/timeline 200",
         "GET /api/dsm/events/upper-report/flags?event_ids=274947 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/admin/dsm_settings_rules_admin.png",
+      "route": "/dsm/settings/rules",
+      "persona": "U5",
+      "viewed_by": "U5 · gxseed_u5_sysop · admin · 1440px",
+      "user_role": "admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/settings/grade_rules 200",
+        "GET /api/dsm/settings/thresholds 200",
+        "GET /api/dsm/settings/zones 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/fire_admin/dsm_cameras_tuning_scope.png",
+      "route": "/dsm/cameras/tuning",
+      "persona": "U2",
+      "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+      "user_role": "fire_admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/stats/camera-thresholds 200",
+        "GET /api/dsm/stats/false-positive/by-camera?days=7&top_n=3 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/fire_admin/dsm_reports_runs.png",
+      "route": "/dsm/reports",
+      "persona": "U2",
+      "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+      "user_role": "fire_admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/reports/runs?limit=50 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/view_only_-_anyang/dsm_settings_rules_denied.png",
+      "route": "/dsm/settings/rules",
+      "persona": "U4",
+      "viewed_by": "U4 · gxseed_u4_official · view_only_-_anyang · 1440px",
+      "user_role": "view_only_-_anyang",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/settings/grade_rules 403",
+        "GET /api/dsm/settings/thresholds 403",
+        "GET /api/dsm/settings/zones 403",
         "GET /api/menu/menus?page_size=10000 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
         "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"

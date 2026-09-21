@@ -78,7 +78,20 @@ import logoExpandedLightModeDefault from './assets/images/logo-full-black.png';
 import logoExpandedDarkModeDefault from './assets/images/logo-full-white.png';
 import logoLightModeDefault from './assets/images/logo-short-black.png';
 import logoDarkModeDefault from './assets/images/logo-short-white.png';
-import backgroundImageDefault from './assets/images/backgroundLogin.png';
+/**
+ * 로그인 배경 — **단색 (임시)** [턴 AA · 2026-09-21 · 대표 결정]
+ *
+ * 종전은 `backgroundLogin.png`(드론·지도 핀)였다. 인수 자산의 잔상이고,
+ * 세종이 고객 자리에서 본 첫 줄이 「**재난안전과 담당자에게 드론 그림은
+ * 남의 제품이다**」였다. 그 파일은 지우지 않고 **안 쓴다**(되돌릴 수 있게).
+ *
+ * ⚠ 대표는 「안양천 CCTV 정지화면」을 고르셨는데 **실물이 없다** —
+ *   실카메라 0/4 갈래[실측 `evidence/U3-V/real_camera_snapshot.md`]이고,
+ *   손에 있는 것은 **합성 표식이 박힌 시드 프레임**뿐이다. 이번 턴이 하는 일이
+ *   **고객 화면에서 시험 장치를 걷어내는 것**이라 그것을 정문에 깔 수 없다.
+ *   실카메라 1대가 오는 날(파 4 · 10-05) 바꾼다. 자세한 사유는 svg 머리말에.
+ */
+import backgroundImageDefault from './assets/images/backgroundLoginPlain.svg';
 import InheritedScreen from './components/InheritedScreen';
 /**
  * ★ [P-123 · UX-31 ④ · 턴 O · 차선 C2] **빈 표가 「없다」로 읽히던 자리.**

@@ -243,3 +243,114 @@ class TheBytesAreAPdfTest(_CleanThreadLocal, DsmFixture):
 
         with self.assertRaises(InvalidReportInput):
             render_html(scope=self.scope_a, html="   ")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 AA — **「훈련」 배너** (대표 결정 ⑨ · 2026-09-21 · 차선 U24)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 왜 이 절이 생겼나 — **재서 적었다.** [실측 2026-09-21 · 턴 Z] 훈련 사건 305027 로
+#   1쪽을 실물로 뽑았더니 완성된 HTML 에 「훈련」 0건 · `drill` 0건이었다.
+#   청구는 훈련을 빼는데(`common/billing_marks`) **종이는 훈련이라고 말하지 않았다.**
+#   그 종이가 결재에 올라가면 읽는 사람은 그것을 실제 재난으로 읽는다.
+#
+# ★ **음성을 같은 힘으로 잰다.** 양성만 재면 「배너를 늘 붙인다」도 통과한다 —
+#   그리고 그것은 실제 경보에 「훈련」을 붙이는 것이라 원래 결함보다 나쁘다.
+class ThePaperSaysItIsADrillTest(_Report):
+    """훈련 사건의 종이는 **훈련이라고 말한다.** 실사건의 종이는 **한 글자도 안 말한다.**"""
+
+    def _drill_event(self) -> int:
+        """훈련 표식을 **행에 얹어** 실제로 기록한다 — 합성 더미를 만들지 않는다(D-289)."""
+        from common.probe_marker import drill_mark
+        from kernels.k1_event import record_detection
+
+        return record_detection(
+            scope=self.scope_pipe, stream_monitor_id=self.stream_a.pk,
+            event_type="fire", severity="critical",
+            snapshot_path="minio://dsm/drill.jpg",
+            track_id=drill_mark("20260921T000000")).event_id
+
+    def test_a_drill_event_carries_the_banner(self) -> None:
+        html = self._html(self._drill_event())
+        self.assertIn("훈련", html,
+                      "훈련 사건의 1쪽에 「훈련」이 없습니다 — 청구는 훈련을 빼는데 "
+                      "종이는 훈련이라고 말하지 않습니다. 결재가 그것을 실제 재난으로 읽습니다.")
+        self.assertIn("실제 재난 상황이 아닙니다", html)
+
+    def test_a_real_event_carries_no_banner(self) -> None:
+        """★ 음성. 실제 경보에 훈련 배지가 붙으면 **관제요원이 손을 늦춘다.**"""
+        html = self._html(self._event(self.stream_a))
+        self.assertNotIn("훈련", html,
+                         "실사건의 1쪽에 「훈련」이 들어갔습니다. 배너가 붙는 조건이 "
+                         "너무 넓거나, 서식(CSS·주석)에 그 낱말이 새고 있습니다.")
+
+    def test_the_banner_is_the_first_thing_on_the_page(self) -> None:
+        """표를 먼저 읽은 뒤에 「훈련이었다」를 알면 **이미 한 번 실제로 읽은 것**이다."""
+        html = self._html(self._drill_event())
+        body = html.split("<body>", 1)[1]
+        self.assertLess(body.index("훈련"), body.index("사건 개요"))
+
+    def test_the_word_is_one_word_not_two(self) -> None:
+        """훈련을 가리키는 낱말은 **한 곳**(`drill.DATA_SOURCE`)에서 온다."""
+        from stream_monitors.services.drill import DATA_SOURCE
+
+        self.assertEqual("", form.drill_banner("live"))
+        self.assertIn("훈련", form.drill_banner(DATA_SOURCE))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 AA — **가린 칸 다섯** (대표 결정 ⑩ · 2026-09-21 · 차선 U24)
+# ═══════════════════════════════════════════════════════════════════════════
+class ThePaperHidesWhatTheDecisionSaidToHideTest(_Report):
+    """다섯 칸이 종이에 안 남는다 — 그리고 **가렸다고 적혀 있다.**"""
+
+    def test_a_recipient_mail_address_never_reaches_the_paper(self) -> None:
+        got = form.mask_recipient("geumsan@org.kr", "log")
+        self.assertNotIn("geumsan", got)
+        self.assertIn("@org.kr", got,
+                      "도메인까지 지우면 「어느 기관에 알렸나」가 종이에서 사라집니다.")
+
+    def test_a_device_token_is_not_partially_kept(self) -> None:
+        """기기 토큰은 **한 글자도 안 남긴다** — 앞머리 자체가 우리 표식이다."""
+        got = form.mask_recipient("drill:webpush:dc716379fa14", "webpush")
+        self.assertNotIn("dc716379", got)
+        self.assertNotIn("webpush", got)
+        self.assertNotIn("drill", got)
+
+    def test_an_unknown_shape_is_closed_not_opened(self) -> None:
+        """모르는 모양은 **그대로 내보내지 않는다** — 닫는 쪽이 기본값이다."""
+        self.assertNotIn("낯선값", form.mask_recipient("낯선값 ABC", "unknown"))
+
+    def test_an_empty_recipient_still_says_something(self) -> None:
+        """빈 칸을 만들지 않는다 — 빈 칸은 「안 보냈다」로 읽힌다."""
+        self.assertEqual(form.UNKNOWN, form.mask_recipient("", "log"))
+
+    def test_the_address_stops_at_the_administrative_unit(self) -> None:
+        got = form.mask_address("경기도 안양시 만안구 안양천서로 100 (시드 카메라)")
+        self.assertIn("만안구", got)
+        self.assertNotIn("안양천서로", got)
+        self.assertNotIn("100", got)
+
+    def test_an_unparsable_address_is_masked_whole(self) -> None:
+        """규칙이 빗나가면 **번지가 그대로 나간다** — 빗나가는 쪽이 여는 쪽이면 안 된다."""
+        self.assertNotIn("7", form.mask_address("Room 7, Building B"))
+
+    def test_a_status_word_is_not_masked(self) -> None:
+        """가릴 것이 없는 칸을 가리면 「주소가 있는데 감췄다」로 읽힌다."""
+        self.assertEqual("확인 중", form.mask_address("확인 중"))
+
+    def test_an_account_name_is_not_printed_beside_the_name(self) -> None:
+        label = form.person_label(self.user_a)
+        self.assertNotIn(self.user_a.username, label,
+                         "계정명은 로그인에 쓰는 내부 식별자입니다 — 감사 종이에 "
+                         "다섯 줄 박히면 받는 사람은 그것을 조직의 사람 목록으로 읽습니다.")
+
+    def test_the_paper_says_that_it_hid_things(self) -> None:
+        """★ **가린 사실을 숨기면 그것도 거짓말이다.**"""
+        html = self._html(self._event(self.stream_a))
+        self.assertIn(form.MASK_FOOTNOTE, html,
+                      "가린 사실이 종이에 안 적혀 있습니다. 빈 자리는 「없었다」로 "
+                      "읽히고, 그러면 「아무에게도 안 알렸다」가 됩니다.")
+        #: 실제로 가린 값이 있는 칸은 **그 사유를 제 자리에 적는다.**
+        self.assertIn("비표시", form.mask_recipient("a@b.kr", "log")
+                      + form.mask_address("경기도 안양시 만안구 안양천서로 100"))

@@ -278,5 +278,9 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("운영 설정이 **닫힌 채로** 뜨는가 — 자리표 이름 **분모 %d종**을 "
+               "설정 파일의 선언 전수에서 그 자리에 훑는다" % len(KNOWN_PLACEHOLDERS)),
+    )
     raise SystemExit(main())

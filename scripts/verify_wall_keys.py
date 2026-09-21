@@ -462,6 +462,104 @@ def check_ime_replay(src: str) -> list[str]:
     return bad
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ⑧⑨ **UX-16 이 부르는 셋 중 둘** — 지도 · 카메라 맥박 (턴 AA · 차선 A · P-219)
+#
+# 왜 이 둘인가 [턴 Y · 차선 N 이 `ga_readiness.yaml` UX-16 주석에 적은 사실]
+#   그 절의 제목이 부르는 것은 **셋**(미처리 큐 · 지도 · 카메라 맥박)인데 술어는
+#   ⑥(큐 배선) 하나뿐이었다. 지도 **0개** · 카메라 맥박 **0개**. 그래서 그 절은
+#   「재는 잣대가 없는 채로」 색을 받고 있었다 — 안 잰 것과 된 것이 같은 칸에 있었다.
+#
+# ★★ **이 판정기는 브라우저를 열지 않는다.** 소스 배선을 읽는다. 그러므로 아래는
+#   **(가) 소스로 지금 잴 수 있는 것**만 잰다. (나) 브라우저에서만 나는 답은 아래
+#   `BROWSER_ONLY` 에 이름으로 적어 두고 **재지 않았다고 말한다** — (나)를 (가)인 척
+#   적으면 이 절이 또 「분모 0인 초록」이 된다.
+#
+# ★ 이 화면은 **바깥 지도를 부르지 않는다**(열쇠 없음 · 좌표 산포다). 술어가 배경
+#   지도 타일을 찾으면 영영 빨강이다 — **찾지 않는다.** 재는 것은 「좌표가 화면까지
+#   왔는가」다.
+# ═══════════════════════════════════════════════════════════════════════════
+#: 재지 **못한** 것. 이름을 적어야 다음 사람이 무엇을 브라우저로 재야 하는지 안다.
+BROWSER_ONLY = (
+    "⑧ `svg[role=img][aria-label=위치]` 안의 `circle` 수가 화면이 적은 「위치를 아는 "
+    "카드 N장」의 N 과 같은가 — 소스는 같아야 한다고 말할 뿐이고, 같은지는 못 잰다",
+    "⑧ 좌표가 한 점뿐일 때 `spanLat`·`spanLng` 의 바닥값(0.01)이 점을 칸 밖으로 밀지 "
+    "않는가 — 한 점짜리 밤이 실재하고, 그때 빈 칸은 「사건이 없다」와 구별되지 않는다",
+    "⑨ 「카메라 상태」 칸의 줄 수가 `GET /api/dsm/cameras/pulse` 의 `rows` 수(상한 "
+    "10줄)와 맞는가",
+    "⑨ 응답에서 `alive === false` 인 행 수와 화면의 「응답 없음」 개수가 같은가 — "
+    "상한을 넘으면 화면은 「그 밖 N대」로 말해야 한다(말없이 잘리면 죽은 카메라가 사라진다)",
+)
+
+#: 점을 찍기 전에 **좌표가 수이고 유한한지** 거르는 자리. 안 거르면 「위치를 아는
+#: 카드」가 전체와 늘 같아지고, 그 순간 분모를 적는 문장이 참인 척하는 장식이 된다.
+FINITE_GUARD = re.compile(r"Number\.isFinite\s*\(")
+
+#: 분모를 화면이 **스스로 말하는** 자리. 사전 상수로 말해도, 글자로 말해도 인정한다 —
+#: 재는 것은 「말하는 자리가 실재하는가」이지 어느 문법으로 말하는가가 아니다.
+LOCATED_LINE = re.compile(r"WALL_COPY\.located|위치를\s*아는\s*카드")
+
+
+def check_wall_map(src: str, copy_src=None) -> list[str]:
+    """⑧ 월 모드의 **지도** — 칸이 실재하고 · 없음/못 가져옴을 가르고 · 분모를 말하고
+    · 좌표를 거른다. **넷이 다 서야 ⑧ 이 선다.**
+    """
+    src = inline_copy_refs(src, copy_src)
+    bad: list[str] = []
+    if '"지도"' not in src and "'지도'" not in src:
+        bad.append("「지도」 칸이 없다 — 제목이 부르는 셋 중 하나가 화면에 없다")
+    if PLACEHOLDER in src:
+        bad.append("자리표 글자가 그대로 남아 있다 — 이 절은 닫히지 않았다")
+    empty = "지도에 표시할 위치가 없습니다."
+    broken = "지도에 표시할 위치를 불러오지 못했습니다."
+    if empty not in src:
+        bad.append("위치가 **없다**고 말하는 자리가 없다")
+    if broken not in src:
+        bad.append("위치를 **못 가져왔다**고 말하는 자리가 없다")
+    if empty in src and broken in src and empty == broken:
+        bad.append("「없다」와 「못 가져왔다」가 같은 문장이다 — 못 가져온 밤에 "
+                   "「위치가 없습니다」는 **「평온하다」로 읽힌다**")
+    if not LOCATED_LINE.search(src):
+        bad.append("분모를 화면이 스스로 말하지 않는다 — 「전체」만 적는 화면은 지도에 "
+                   "안 뜬 카드를 **고장**으로 읽히게 한다")
+    if not FINITE_GUARD.search(src):
+        bad.append("점을 찍기 전에 좌표가 **수이고 유한한지** 거르는 자리가 없다 — "
+                   "안 거르면 「위치를 아는 카드」가 전체와 늘 같아지고, 그 순간 분모를 "
+                   "적는 문장이 참인 척하는 장식이 된다")
+    return bad
+
+
+def check_camera_pulse(src: str, copy_src=None) -> list[str]:
+    """⑨ 월 모드의 **카메라 맥박** — 칸이 제 문을 부르고 · 혼자 실패를 말하고 ·
+    세 상태를 세 문장으로 가르고 · 「못 알아들었다」를 「비었다」로 안 읽는다.
+    """
+    raw = src
+    src = inline_copy_refs(src, copy_src)
+    bad: list[str] = []
+    if '"카메라 상태"' not in src and "'카메라 상태'" not in src:
+        bad.append("「카메라 상태」 칸이 없다")
+    for name in ("useCameraPulse", "CAMERA_PULSE_PATH"):
+        if name not in raw:
+            bad.append(f"그 칸이 제 문을 안 부른다 — {name} 이 없다 "
+                       f"(훅만 있고 안 부르면 없는 것이다)")
+    if "카메라 상태를 불러오지 못했습니다." not in src:
+        bad.append("그 칸만 따로 실패를 말하는 자리가 없다")
+    # ★ 세 상태를 **세 문장**으로. 둘이 같으면 밤새 죽어 있던 카메라가 새 카메라와
+    #   같은 그림이 된다 — 「없다」와 「언제부터 없다」와 「한 번도 없었다」는 다른 사실이다.
+    three = {"응답 없음": "죽은 카메라", "마지막 응답": "산 카메라",
+             "아직 없음": "한 번도 안 온 카메라"}
+    for word, who in three.items():
+        if word not in src:
+            bad.append(f"「{word}」({who})를 말하는 자리가 없다 — 세 상태가 세 문장으로 "
+                       f"갈리지 않으면 죽은 카메라가 새 카메라와 같은 그림이 된다")
+    # ★★ ⑨ 의 심장 — 응답은 왔는데 우리가 **못 읽는** 상태가 실재한다. 그때
+    #   「표시할 항목이 없습니다」를 적으면 그것은 거짓이다.
+    if not re.search(r"understood\s*===\s*false", src):
+        bad.append("`understood === false` 를 **실패 갈래**로 보내는 자리가 없다 — "
+                   "「못 알아들었다」를 「비었다」로 읽으면 화면이 거짓말을 한다")
+    return bad
+
+
 CHECKS = (
     ("① 키보드 · 입력창 갈래", "keys", check_keys),
     ("② 소리 — 심각만 · 묶음 1회", "alarm", check_sound),
@@ -470,6 +568,8 @@ CHECKS = (
     ("⑤ 월 모드 실패를 말한다", "wall", check_wall_voice),
     ("⑥ 큐 화면 배선", "queue", check_wiring),
     ("⑦ 한글 IME 상태 재현 (P-58)", "keys", check_ime_replay),
+    ("⑧ 월 모드 지도 (UX-16)", "wall", check_wall_map),
+    ("⑨ 월 모드 카메라 맥박 (UX-16)", "wall", check_camera_pulse),
 )
 
 
@@ -670,6 +770,53 @@ BAD_QUEUE_UNWIRED = """
 """
 
 
+# ── ⑧⑨ 의 표본 (턴 AA · 차선 A) — **양성 하나에 음성 여럿.** 한쪽만 재면 초록으로 죽는다
+GOOD_MAP = """
+<Panel title="지도">
+  const points = cards.filter((p) =>
+    typeof p.lat === 'number' && Number.isFinite(p.lat) && Number.isFinite(p.lng));
+  if (points.length === 0) {
+    return <div>{broken ? '지도에 표시할 위치를 불러오지 못했습니다.'
+                        : '지도에 표시할 위치가 없습니다.'}</div>;
+  }
+  <svg role="img" aria-label="위치">{points.map((p) => <circle />)}</svg>
+  <div>위치를 아는 카드 {points.length}장 · 전체 {cards.length}장</div>
+</Panel>
+"""
+
+#: 못 가져온 밤에 「위치가 없습니다」라고 적는 화면 — **「평온하다」로 읽힌다.**
+BAD_MAP_ONE_SENTENCE = GOOD_MAP.replace(
+    "{broken ? '지도에 표시할 위치를 불러오지 못했습니다.'\n                        : '지도에 표시할 위치가 없습니다.'}",
+    "'지도에 표시할 위치가 없습니다.'")
+BAD_MAP_NO_DENOMINATOR = GOOD_MAP.replace(
+    "<div>위치를 아는 카드 {points.length}장 · 전체 {cards.length}장</div>",
+    "<div>전체 {cards.length}장</div>")
+BAD_MAP_NO_FINITE = GOOD_MAP.replace("Number.isFinite(p.lat) && Number.isFinite(p.lng)",
+                                     "true")
+
+GOOD_PULSE = """
+import { CAMERA_PULSE_PATH, useCameraPulse } from '../hooks/useCameraPulse';
+const pulse = useCameraPulse(REFRESH_MS, () => dsmGet(CAMERA_PULSE_PATH));
+const pulseBroken = pulse.state === 'error' || (pulse.state === 'data' && pulse.data?.understood === false);
+<Panel title="카메라 상태">
+  {pulseBroken ? <div>{CAMERA_COPY.broken}</div> : null}
+  {row.alive === false ? '응답 없음' : null}
+  {row.alive !== false && row.lastSeenAt ? `마지막 응답 ${line}` : null}
+  {row.alive !== false && !row.lastSeenAt ? '아직 없음' : null}
+  {!pulseBroken && pulseRows.length === 0 ? <div>표시할 항목이 없습니다.</div> : null}
+</Panel>
+"""
+
+#: ★★ ⑨ 의 심장 — 응답은 왔는데 **우리가 못 읽는** 상태를 빈 갈래로 보낸다.
+#:   그러면 화면이 「표시할 항목이 없습니다」라고 **거짓말**을 한다.
+BAD_PULSE_UNDERSTOOD_AS_EMPTY = GOOD_PULSE.replace(
+    "|| (pulse.state === 'data' && pulse.data?.understood === false)", "")
+BAD_PULSE_TWO_SENTENCES = GOOD_PULSE.replace(
+    "{row.alive !== false && !row.lastSeenAt ? '아직 없음' : null}",
+    "{row.alive !== false && !row.lastSeenAt ? '응답 없음' : null}")
+BAD_PULSE_NO_DOOR = GOOD_PULSE.replace("CAMERA_PULSE_PATH", "SOME_OTHER_PATH")
+
+
 def self_test() -> int:
     fails = 0
     positives = (
@@ -682,6 +829,8 @@ def self_test() -> int:
          lambda s: check_wall_voice(s, copy_src=GOOD_COPY_TS), GOOD_WALL_COPYREF),
         ("⑥ 좋은 큐 배선", check_wiring, GOOD_QUEUE),
         ("⑦ 자리로 고르는 배선 — IME 재현", check_ime_replay, GOOD_IME_KEYS),
+        ("⑧ 좋은 지도 칸 (UX-16)", check_wall_map, GOOD_MAP),
+        ("⑨ 좋은 카메라 맥박 칸 (UX-16)", check_camera_pulse, GOOD_PULSE),
     )
     for name, fn, src in positives:
         bad = fn(src)
@@ -704,6 +853,17 @@ def self_test() -> int:
         ("★ 출생 표본 — IME 재현으로 다시 잰다", check_ime_replay, BAD_KEYS_IME_ONLY_KEY),
         ("★★ 자리를 읽지만 **글자로 고른다** — ①이 못 보는 자리",
          check_ime_replay, BAD_KEYS_READS_CODE_BUT_SWITCHES_ON_KEY),
+        ("★ ⑧ 「없다」와 「못 가져왔다」가 한 문장 — 못 가져온 밤이 평온해 보인다",
+         check_wall_map, BAD_MAP_ONE_SENTENCE),
+        ("★ ⑧ 분모를 안 말한다 — 안 뜬 카드가 고장으로 읽힌다",
+         check_wall_map, BAD_MAP_NO_DENOMINATOR),
+        ("★ ⑧ 좌표를 안 거른다 — 「위치를 아는 카드」가 전체와 늘 같아진다",
+         check_wall_map, BAD_MAP_NO_FINITE),
+        ("★★ ⑨ `understood === false` 를 **빈 갈래**로 보낸다 — 못 알아들은 것을 "
+         "「비었다」로 적는다", check_camera_pulse, BAD_PULSE_UNDERSTOOD_AS_EMPTY),
+        ("★ ⑨ 세 상태가 두 문장으로 뭉쳤다 — 죽은 카메라가 새 카메라와 같은 그림",
+         check_camera_pulse, BAD_PULSE_TWO_SENTENCES),
+        ("★ ⑨ 훅 이름만 있고 문을 안 부른다", check_camera_pulse, BAD_PULSE_NO_DOOR),
     )
     for name, fn, src in negatives:
         if not fn(src):
@@ -771,5 +931,9 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("벽 화면의 열쇠 다루기 — 술어 **분모 %d종**을 대상 파일 전수에 건다(주석은 걷어낸다)"
+               % len(CHECKS)),
+    )
     raise SystemExit(main())

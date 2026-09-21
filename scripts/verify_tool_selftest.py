@@ -248,5 +248,10 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("게이트마다 **자기시험이 있는가** — 표시 **분모 %d종**(%s)을 저장소의 도구 전수에 "
+               "건다. 자기시험 없는 게이트는 「잡는다」는 안심만 준다"
+               % (len(SELFTEST_MARKERS), " · ".join(SELFTEST_MARKERS[:2]))),
+    )
     sys.exit(main())

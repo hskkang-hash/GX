@@ -372,6 +372,29 @@ const CAMERA_SEARCH_GRAY =
   '카메라 이름으로 찾는 기능은 아직 없습니다. ' +
   '지금은 기간을 좁힌 뒤 「카메라」 칸을 눈으로 훑는 것이 유일한 길입니다.';
 
+/**
+ * ★★ [턴 AA · U24 · U4#8] **주소로 찾기 — 섰다. 그리고 거르는 쪽은 서버다.**
+ *
+ *   [실측 2026-09-21 · 아침] 세 가지가 다 없었다: 목록 응답에 주소 칸이 없고, 목록
+ *   커널에 주소 인자가 없고, 주소로 카메라를 찾아 주는 문도 없었다. 그래서 그날
+ *   아침에는 **안 지었다** — 목록을 받아 화면에서 주소를 대조하면 한 번에 받는 50건
+ *   밖의 사건이 「그 주소에 사건 없음」이 되고, 그것은 검색이 아니라 **거짓말하는
+ *   검색**이다(이 화면의 첫 규약 · 「필터는 전부 서버에서」).
+ *
+ *   같은 턴에 차선 U1 이 목록 커널에 주소 인자를 세웠고(부분 일치 · 질의에서 거른다),
+ *   앱 층과 라우트가 이어졌다. 그래서 이 칸은 **화면이 거르지 않는다** — 글자를
+ *   질의로 보내고 서버가 좁힌 목록을 그대로 그린다. 이 파일에 `rows.filter(...)` 는
+ *   여전히 **한 줄도 없다.**
+ *
+ * ⚠ **주소가 빈 사건은 이 검색에 안 걸린다.** 사건의 주소는 카메라에서 물려받는데,
+ *   주소 변환 전이거나 실패한 카메라가 있다. 「주소를 모르는 사건」과 「그 주소에
+ *   사건이 없다」는 **다른 사실**이고, 그 차이를 화면이 말하지 않으면 사람은 0건을
+ *   후자로 읽는다. 그래서 주소로 좁혔을 때 한 줄을 덧붙인다.
+ */
+const ADDRESS_SEARCH_NOTE =
+  '주소는 사건에 적힌 주소로 부분 일치 검색합니다. 카메라 주소가 아직 확인되지 않은 ' +
+  '사건은 이 검색에 걸리지 않습니다 — 0건이 「그 주소에 사건이 없다」는 뜻은 아닙니다.';
+
 function parsePreset(value: string | null): PresetKey {
   const hit = PRESETS.find((p) => p.key === value);
   return hit ? hit.key : 'unhandled';
@@ -384,6 +407,8 @@ export default function EventList() {
   const preset = parsePreset(params.get('preset'));
   const severity = params.get('severity') ?? undefined;
   const eventType = params.get('event_type') ?? undefined;
+  /** 주소 조건. **주소에 산다** — 눌러서 좁힌 화면을 링크로 건네줄 수 있어야 한다. */
+  const address = params.get('address') ?? undefined;
   const period = parsePeriod(params.get('period'));
   const customSince = params.get('since');
   const customUntil = params.get('until');
@@ -437,13 +462,64 @@ export default function EventList() {
       limit: PAGE_SIZE,
       ...(severity ? { severity } : {}),
       ...(eventType ? { event_type: eventType } : {}),
+      //: 빈 칸은 아예 안 보낸다 — 커널이 빈 문자열을 막아 두었지만, 안 보내는 것이
+      //: 「이 조건을 안 걸었다」를 질의에서도 참말로 만든다.
+      ...(address ? { address } : {}),
       ...active.query,
       ...(win.since ? { since: win.since } : {}),
       ...(win.until ? { until: win.until } : {}),
     };
     return base;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preset, severity, eventType, win]);
+  }, [preset, severity, eventType, address, win]);
+
+  /**
+   * ★ [턴 AA · U24 · U4#8] **지금 걸린 조건** — 서버로 실제로 나간 것만 낱말로.
+   *   화면이 거르는 조건은 하나도 없으므로 이 목록이 곧 질의다. 조건이 흩어져 있으면
+   *   사람은 「0건」을 **사건이 없다**로 읽는다 — 실은 자기가 건 조건이 겹친 것이다.
+   */
+  const activeFilters = useMemo(() => {
+    //: `keys` 가 복수인 까닭 — 기간 하나를 지우려면 주소의 **세 칸**(`period`·`since`·
+    //: `until`)이 같이 빠져야 한다. 하나만 지우면 화면은 「기간 조건 없음」이라고
+    //: 말하면서 **서버로는 여전히 그 창을 보낸다.**
+    const out: { key: string; keys: string[]; label: string }[] = [];
+    if (severity) {
+      out.push({ key: 'severity', keys: ['severity'],
+                 label: `등급 ${SEVERITY_LABEL[severity] ?? severity}` });
+    }
+    if (eventType) {
+      //: 유형은 쉼표로 여럿이 올 수 있다(시스템 프리셋). **하나로 뭉치지 않는다.**
+      const words = eventType
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .map((t) => EVENT_TYPE_LABEL[t] ?? t);
+      out.push({ key: 'event_type', keys: ['event_type'], label: `유형 ${words.join(' · ')}` });
+    }
+    if (address) {
+      out.push({ key: 'address', keys: ['address'], label: `주소 ${address}` });
+    }
+    if (period !== 'none') {
+      out.push({ key: 'period', keys: ['period', 'since', 'until'],
+                 label: `기간 ${win.label}` });
+    }
+    return out;
+  }, [severity, eventType, address, period, win]);
+
+  /** 조건 몇 칸을 한 번에 뺀다. **프리셋은 남긴다** — 그것은 조건이 아니라 이 화면의 축이다. */
+  const dropParams = useCallback(
+    (keys: string[]) => {
+      const next = new URLSearchParams(params);
+      keys.forEach((k) => next.delete(k));
+      setParams(next, { replace: false });
+    },
+    [params, setParams],
+  );
+
+  const clearFilters = useCallback(
+    () => dropParams(['severity', 'event_type', 'address', 'period', 'since', 'until']),
+    [dropParams],
+  );
 
   /**
    * 「사건번호로 열기」 — **거르지 않는다. 연다.**
@@ -740,6 +816,18 @@ export default function EventList() {
                 onChange={(e) => setEventNo(e.target.value)}
                 onSearch={openByNo}
               />
+              {/* ★ [턴 AA · U4#8] **주소로 찾기.** 글자는 질의로 나가고 서버가 좁힌다 —
+                  화면은 받은 줄을 거르지 않는다. 주소를 아직 모르는 사건은 안 걸린다는
+                  사실은 아래 한 줄이 말한다(원인과 다음 손을 같은 줄에). */}
+              <Input.Search
+                allowClear
+                placeholder="주소 (예: 만안구)"
+                enterButton="찾기"
+                style={{ width: 240 }}
+                aria-label="주소로 찾기"
+                defaultValue={address ?? ''}
+                onSearch={(v) => setParam('address', v.trim() || undefined)}
+              />
               <Popover content={<div style={{ maxWidth: 300 }}>{CAMERA_SEARCH_GRAY}</div>}>
                 <Input
                   disabled
@@ -748,6 +836,43 @@ export default function EventList() {
                 />
               </Popover>
             </Space>
+
+            {/* ── [턴 AA · U24 · U4#8] **지금 걸린 조건** ────────────────────
+                ★ 조합 검색의 절반은 **지금 무엇으로 좁혀져 있는지 한 줄로 읽히는 것**이다.
+                  조건이 네 자리(프리셋 · 기간 · 등급 · 유형)에 흩어져 있으면 사람은
+                  「0건」을 보고 **사건이 없다**로 읽는다 — 실제로는 자기가 건 조건이
+                  겹친 것이다. 그래서 조건을 낱말로 모아 적고 한 번에 지울 길을 준다.
+                ★ 여기 적는 것은 **서버로 실제로 나간 조건뿐**이다. 화면이 거르는 조건은
+                  하나도 없다(이 파일에 `rows.filter(...)` 가 없다 — 머리말 규약). */}
+            <Space wrap size={4} align="center">
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                지금 걸린 조건
+              </Text>
+              {activeFilters.length === 0 ? (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  없음 — 기간만 봅니다
+                </Text>
+              ) : (
+                activeFilters.map((f) => (
+                  <Tag key={f.key} closable onClose={() => dropParams(f.keys)}>
+                    {f.label}
+                  </Tag>
+                ))
+              )}
+              {activeFilters.length > 0 && (
+                <Button size="small" type="link" onClick={clearFilters}>
+                  조건 모두 지우기
+                </Button>
+              )}
+            </Space>
+
+            {/* ★ 주소로 좁혔을 때만 뜬다. 0 건일 때 늘 적으면 「이 검색은 원래 안 맞는다」로
+                읽히고, 안 적으면 0 건이 「그 주소에 사건이 없다」로 읽힌다 — 둘 다 거짓이다. */}
+            {address && (
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {ADDRESS_SEARCH_NOTE}
+              </Text>
+            )}
 
             <Space wrap>
               <Select

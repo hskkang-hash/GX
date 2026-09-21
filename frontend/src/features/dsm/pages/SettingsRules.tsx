@@ -55,6 +55,8 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useSearchParams } from 'react-router-dom';
+
 import {
   Button,
   Card,
@@ -100,6 +102,38 @@ const SETTINGS_PATH = {
   /** 등급규칙 **쓰기** — 쓰기 경로라 하이픈이다. */
   gradeRulesWrite: '/api/dsm/settings/grade-rules',
 } as const;
+
+/**
+ * 「내 정보」 — **새 문이 아니다.** 이미 서 있고 「내 정보」 화면이 같은 칸을 쓴다
+ * (`api.ts` 의 `dsmU56NotifyEndpoint.me`). 여기서 필요한 것은 `group_id` 하나다.
+ */
+const ME_PATH = '/api/dsm/me';
+
+/**
+ * 탭 열쇠 셋 — **주소에 실리는 값이다.** 낱말을 바꾸면 남이 주고받던 링크가 죽으므로
+ * 여기 한 곳에서만 정한다. 첫째가 기본이다.
+ */
+const TAB_KEYS: string[] = ['zones', 'thresholds', 'grade-rules'];
+
+/**
+ * ★★ **본문을 비워 보내는 값** [실측 2026-09-21 · 턴 AA · P-118 이 잡았다]
+ *
+ *   `dsmPost(url, body)` 는 **`body ?? {}`** 로 보낸다(`api.ts:194`). 그래서 `null` 을
+ *   주면 실제로 나가는 것은 **`{}`** 이고, `POST /settings/zones` 는 그 `{}` 를
+ *   `camera_ids` 로 읽어 **422 `Input should be a valid list`** 를 낸다.
+ *   ⇒ **이 화면의 구역 저장(끄기/켜기 · 만들기)이 전부 그렇게 죽어 있었다.**
+ *      화면은 멀쩡히 떠 있었고 조회는 200 이라 **캡처로는 안 보였다** — 「누른 뒤」를
+ *      보는 술어(`verify_click_completes` U5#S1·U5#S2)가 처음 잡았다.
+ *
+ *   [A/B 실측 · 돌고 있는 서버]  빈 본문 → **200**(카메라 3대 그대로) ·
+ *                                `{}` → **422** · `null` 본문 → **200**
+ *
+ *   ⚠ **`[]` 를 보내면 안 된다.** 서버는 `camera_ids is not None` 일 때
+ *     `zone.cameras.set(...)` 을 부른다(`stream_monitors/services/zones.py:542`) —
+ *     빈 배열은 그 구역의 **카메라를 전부 떼어낸다.** 「안 건드린다」는 **없음**이지
+ *     **빈 것**이 아니다.
+ */
+const NO_BODY = '' as unknown;
 
 /** 서버가 쓰는 구역 종류 값. 화면이 새 낱말을 만들지 않는다. */
 const ZONE_KIND_CAMERA_GROUP = 'camera_group';
@@ -182,11 +216,24 @@ interface GradeRulesView {
 }
 
 /**
- * 저장할 층 — **짐작하지 않는다.** 서버가 이 항목을 전체 층 것이라 적어 두었으면
- * 전체로, 아니면 기관 층으로 쓴다. 전체 층 항목에 기관 층을 쓰면 서버가 거절한다.
+ * 저장할 **층과 대상** — 짐작하지 않는다.
+ *
+ * 서버가 이 항목을 전체 층 것이라 적어 두었으면 전체로, 아니면 기관 층으로 쓴다.
+ * 전체 층 항목에 기관 층을 쓰면 서버가 거절한다(`ScopeNotAvailable`).
+ *
+ * ★★ **기관 층에는 「어느 기관인가」가 함께 가야 한다** [실측 2026-09-21 · 턴 AA].
+ *   커널은 `scope_ref != 내 기관 번호` 를 **남의 기관을 만지려는 시도**로 읽는다
+ *   (`kernels/k5_trust/services.py:172`). 안 보내면 `None != mine` 이라
+ *   **제 기관 값을 바꾸는 사람이 「남의 테넌트는 못 바꾼다」는 400 을 받는다.**
+ *   ⚠ 내 기관 번호를 **아직 못 읽었으면**(`null`) 층을 보내되 대상을 지어내지 않는다 —
+ *     지어낸 번호로 200 이 나면 그것이 진짜 사고다. 그때는 서버가 옳게 거절한다.
  */
-function levelOf(row: ThresholdRow): string {
-  return row.applies_to === 'global' ? 'global' : 'tenant';
+function scopeOf(row: ThresholdRow, myGroupId: number | null):
+  Record<string, string | number> {
+  if (row.applies_to === 'global') return { scope_level: 'global' };
+  return myGroupId === null
+    ? { scope_level: 'tenant' }
+    : { scope_level: 'tenant', scope_ref: myGroupId };
 }
 
 /**
@@ -265,7 +312,7 @@ function ZonesTab() {
           kind: ZONE_KIND_CAMERA_GROUP,
           is_active: 'true',
         }).toString();
-        await dsmPost(`${SETTINGS_PATH.zones}?${qs}`, ids.length ? ids : null);
+        await dsmPost(`${SETTINGS_PATH.zones}?${qs}`, ids.length ? ids : NO_BODY);
         setName('');
         setCameraIds('');
         message.success('저장했습니다. 아래 표를 다시 읽습니다.');
@@ -294,7 +341,7 @@ function ZonesTab() {
           kind: row.kind,
           is_active: row.is_active ? 'false' : 'true',
         }).toString();
-        await dsmPost(`${SETTINGS_PATH.zones}?${qs}`, null);
+        await dsmPost(`${SETTINGS_PATH.zones}?${qs}`, NO_BODY);
         message.success('저장했습니다. 아래 표를 다시 읽습니다.');
         zones.reload();
       } catch (err) {
@@ -421,6 +468,23 @@ function ThresholdsTab() {
     { isEmpty: (v) => (v?.thresholds?.length ?? 0) === 0 },
   );
 
+  /**
+   * ★★ **내 기관 번호를 읽는다 — 저장이 이것 없이는 400 이다.**
+   *   [실측 2026-09-21 · 턴 AA · P-118 U5#S3 이 잡았다]
+   *   `POST /settings/thresholds` 는 `scope_level='tenant'` 일 때 커널이
+   *   **`scope_ref` 가 내 기관 번호와 같은지**를 본다
+   *   (`kernels/k5_trust/services.py:172` — `if not is_global_admin(actor) and
+   *   scope_ref != mine`). 이 화면은 그 칸을 **안 보내고 있었고**, 그래서 저장이
+   *   전부 400 「남의 테넌트 임계값은 바꿀 수 없다」로 죽었다 — 기관 관리자가
+   *   **제 기관 값을 바꾸는데** 「남의 것」이라는 말을 듣고 있었다.
+   *   ⚠ 새 서버 문을 만들지 않았다. `GET /api/dsm/me` 는 이미 서 있고
+   *     「내 정보」 화면이 같은 칸(`group_id`)을 쓴다.
+   */
+  const me = useDsmResource<{ group_id: number | null }>(
+    () => dsmGet<{ group_id: number | null }>(ME_PATH),
+    [],
+  );
+
   const rows = useMemo(() => view.data?.thresholds ?? [], [view.data]);
   const history = view.data?.history ?? [];
   const overridden = rows.filter((r) => r.source === 'override').length;
@@ -446,7 +510,7 @@ function ThresholdsTab() {
             key: current.key,
             value: numeric,
             reason,
-            scope_level: levelOf(current),
+            ...scopeOf(current, me.data?.group_id ?? null),
           },
           intentKey(`baseline:${current.key}`),
         );
@@ -463,7 +527,7 @@ function ThresholdsTab() {
         setSaving(false);
       }
     });
-  }, [current, value, view]);
+  }, [current, value, view, me.data]);
 
   return (
     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
@@ -650,9 +714,16 @@ function GradeRulesTab() {
               setPicked(v);
               setSeverity(rows.find((r) => r.event_type === v)?.severity ?? '');
             }}
+            /*
+             * ★ **고르기 전에 지금 등급을 같은 줄에 적는다.** 무엇에서 무엇으로
+             *   바꾸는지를 모르고 고르면, 사람은 자기가 등급을 **낮추고 있다는 것**을
+             *   저장한 뒤에야 안다 — 낮춘 유형은 경보가 조용해진다(아래 「낮춘 규칙」).
+             */
             options={rows.map((r) => ({
               value: r.event_type,
-              label: labelOf(EVENT_TYPE_LABEL, r.event_type),
+              label: `${labelOf(EVENT_TYPE_LABEL, r.event_type)} (지금: ${
+                SEVERITY_LABEL[r.severity] ?? r.severity
+              })`,
             }))}
           />
           <Select
@@ -783,6 +854,20 @@ export default function SettingsRules() {
    */
   useEffect(() => ownDenialPaths(['/api/dsm/settings/']), []);
 
+  /**
+   * ★ **탭이 주소에 실린다** (턴 AA · P-219). 세 탭은 서로 다른 설정 영역이고, 사람은
+   *   「임계값 자리」를 링크로 주고받는다 — 주소에 안 실리면 받은 사람은 늘 구역 탭에서
+   *   시작한다. 모르는 열쇠가 오면 첫 탭으로 되돌린다(주소가 화면을 빈 자리로 못 민다).
+   *
+   * ★ **세 탭을 열 때 함께 읽는다**(`forceRender`). 탭을 누를 때마다 「불러오는 중」으로
+   *   시작하면, 사람은 방금 바꾼 값이 남았는지 아닌지를 매번 다시 기다려서 확인한다.
+   *   그리고 이 화면이 실제로 세 문을 다 부른다는 사실이 **한 번의 열기에서** 드러난다 —
+   *   게이트(`verify_feature_reach`)가 사슬을 그 호출 기록으로 잇는다.
+   */
+  const [params, setParams] = useSearchParams();
+  const asked = params.get('tab') || '';
+  const tab = TAB_KEYS.includes(asked) ? asked : TAB_KEYS[0];
+
   return (
     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
       <Title level={4} style={{ margin: 0 }}>
@@ -793,11 +878,12 @@ export default function SettingsRules() {
       </Text>
 
       <Tabs
-        defaultActiveKey="zones"
+        activeKey={tab}
+        onChange={(key) => setParams({ tab: key }, { replace: true })}
         items={[
-          { key: 'zones', label: '구역', children: <ZonesTab /> },
-          { key: 'thresholds', label: '임계값', children: <ThresholdsTab /> },
-          { key: 'grade-rules', label: '등급규칙', children: <GradeRulesTab /> },
+          { key: 'zones', label: '구역', children: <ZonesTab />, forceRender: true },
+          { key: 'thresholds', label: '임계값', children: <ThresholdsTab />, forceRender: true },
+          { key: 'grade-rules', label: '등급규칙', children: <GradeRulesTab />, forceRender: true },
         ]}
       />
     </Space>

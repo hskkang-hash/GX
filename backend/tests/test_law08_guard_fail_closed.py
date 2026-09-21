@@ -16,6 +16,11 @@
   바꿔도 이 파일이 초록이다. 그래서 ① 가드가 무장돼 있는가 ② 시험 DB 는 **안** 막는가
   ③ 문 다섯이 실제로 가드를 지나는가 를 **먼저** 누른다.
 
+★ **턴 AA 에 넓혔다**(차선 S · P-219): U24 가 `apps/dsm/audit.py` 를 쥐는 턴이라
+  **그 위쪽 모듈이 `audit_writer` 를 비켜 표에 직접 닿는 길**을 따로 잰다(②′ 두 벌).
+  가드는 `audit_writer` 아래 **한 자리**에만 있으므로, 앱 모듈이 우회로를 한 줄 내면
+  기존 열아홉 건은 **전부 초록인 채로** 그 길에서 가드가 사라진다.
+
 ⚠ **운영 표에 한 행도 안 쓴다.** 이 파일은 연결을 한 번도 안 연다 — 가리키는 DB 를
   바꾸는 대신 `evidence_chain.audit_db_name` **하나만** 갈아 끼운다. 가드의 입력은
   「이 alias 가 가리키는 이름」이고, 그 이름을 받고 내리는 **판단**이 이 시험의 과녁이다.
@@ -148,6 +153,25 @@ class _Sentinel(Exception):
     """가드 자리에 세워 두는 표식. 이것이 안 올라오면 그 문은 가드를 안 지난 것이다."""
 
 
+def door_goes_through_the_guard(case, call, expected_deed: str) -> None:
+    """이 호출이 **가드를 지나는가** — 예외 종류가 아니라 「가드가 불렸다」를 센다.
+
+    표식이 가드 자리에서 올라오므로 그 뒤의 DB 작업은 한 줄도 안 돈다.
+    `SimpleTestCase` 는 DB 를 건드리는 순간 죽으므로, 초록 자체가
+    **「가드 앞에서는 아직 아무것도 안 했다」**는 증거다.
+    """
+    seen: list[str] = []
+
+    def record(*, doing: str, alias: str = "default") -> None:
+        seen.append(doing)
+        raise _Sentinel(doing)
+
+    with _Sabotage(guard_audit_db=record):
+        with case.assertRaises(_Sentinel):
+            call()
+    case.assertEqual(seen[0], expected_deed)
+
+
 class EveryDoorGoesThroughTheGuardTest(SimpleTestCase):
     """★ 「예외가 난다」가 아니라 **「가드가 불렸다」**를 센다.
 
@@ -159,16 +183,7 @@ class EveryDoorGoesThroughTheGuardTest(SimpleTestCase):
     """
 
     def _door(self, call, expected_deed: str) -> None:
-        seen: list[str] = []
-
-        def record(*, doing: str, alias: str = "default") -> None:
-            seen.append(doing)
-            raise _Sentinel(doing)
-
-        with _Sabotage(guard_audit_db=record):
-            with self.assertRaises(_Sentinel):
-                call()
-        self.assertEqual(seen[0], expected_deed)
+        door_goes_through_the_guard(self, call, expected_deed)
 
     def test_the_chain_query_door(self) -> None:
         self._door(evidence_chain._model, "묻기")
@@ -194,6 +209,149 @@ class EveryDoorGoesThroughTheGuardTest(SimpleTestCase):
                 action="selftest", outcome=audit_writer.ALLOWED,
                 reason="여기까지 오면 안 된다"),
             "쓰기")
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# ②′ 감사 쓰기 경로가 **움직일 때** — `apps/dsm/audit.py` 의 문 넷 (턴 AA · P-219)
+# ══════════════════════════════════════════════════════════════════════════
+#
+# ★ 턴 AA 에 U24 가 `apps/dsm/audit.py` 와 `incident_report.py` 를 쥔다(P-219).
+#   위 ②는 `common/audit_writer` 의 문만 잰다 — 그 아래를 지나는 한 가드는 선다.
+#   그런데 **위쪽 모듈이 `audit_writer` 를 비켜 표에 직접 닿으면** ② 는 초록인 채로
+#   가드가 사라진다. 한 줄(`apps.get_model("logger", "AuditLogs")`)이면 그렇게 된다.
+#   그래서 여기서 **앱 쪽 문 넷**과 **「비켜 가는 길이 없다」**를 따로 누른다.
+
+def _writing_scope():
+    """행위자 없는 스코프. **DB 를 안 탄다** — 쓰기 문은 `scope.actor` 만 읽는다."""
+    from common.tenant_scope import TenantScope
+
+    return TenantScope.system(reason="P-202 회귀탐침 — 여기서 서야 한다")
+
+
+def _reading_scope():
+    """`require_actor()` 만 통과시키는 가짜 행위자. 표식이 그 직후에 올라온다."""
+    from common.tenant_scope import TenantScope
+
+    return TenantScope.of(object())
+
+
+class DsmAuditDoorsGoThroughTheGuardTest(SimpleTestCase):
+    """`apps/dsm/audit.py` 의 문 넷이 **전부** 가드를 지나는가."""
+
+    def _door(self, call, expected_deed: str) -> None:
+        door_goes_through_the_guard(self, call, expected_deed)
+
+    def test_the_f12_settings_write_door(self) -> None:
+        from apps.dsm import audit as dsm_audit
+
+        self._door(
+            lambda: dsm_audit.record(
+                scope=_writing_scope(), action="selftest",
+                outcome=dsm_audit.ALLOWED, reason="여기까지 오면 안 된다"),
+            "쓰기")
+
+    def test_the_event_action_write_door(self) -> None:
+        from apps.dsm import audit as dsm_audit
+
+        self._door(
+            lambda: dsm_audit.record_event_action(
+                scope=_writing_scope(), action="selftest",
+                outcome=dsm_audit.ALLOWED, reason="여기까지 오면 안 된다"),
+            "쓰기")
+
+    def test_the_f12_entries_read_door(self) -> None:
+        from apps.dsm import audit as dsm_audit
+
+        self._door(lambda: dsm_audit.entries(limit=1), "묻기")
+
+    def test_the_tenant_scoped_page_read_door(self) -> None:
+        """★ 화면(`AuditLog.tsx`)이 실제로 타는 문이다 — 이 턴에 U24 가 여는 자리."""
+        from apps.dsm import audit as dsm_audit
+
+        self._door(
+            lambda: dsm_audit.read_page(scope=_reading_scope(), page=1, page_size=1),
+            "묻기")
+
+
+#: 감사 표가 사는 앱 라벨. 이 이름으로 모델을 직접 집으면 `audit_writer` 를 비켜 간다.
+AUDIT_APP_LABEL = "logger"
+
+
+def reaches_the_audit_table_directly(source: str) -> list[str]:
+    """이 소스가 **`audit_writer` 를 비켜** 감사 표에 닿는 자리들. AST 로 본다.
+
+    ⚠ 본문 문자열이 아니라 **구문**을 본다 — 이 파일들의 머리말에는 `logger.AuditLogs`
+      가 설명으로 여러 번 나온다. 낱말을 세면 주석 한 줄에 빨개지고, 그런 시험은
+      다음 사람이 주석을 고쳐서 초록으로 만든다.
+    """
+    import ast
+
+    found: list[str] = []
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            fn = node.func
+            name = fn.attr if isinstance(fn, ast.Attribute) else getattr(fn, "id", "")
+            if name == "get_model":
+                for arg in node.args:
+                    if isinstance(arg, ast.Constant) and \
+                            str(arg.value).lower() == AUDIT_APP_LABEL:
+                        found.append(f"get_model({arg.value!r}, …) @{node.lineno}")
+        elif isinstance(node, ast.ImportFrom):
+            head = str(node.module or "").split(".")[0]
+            if head == AUDIT_APP_LABEL:
+                found.append(f"from {node.module} import … @{node.lineno}")
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if str(alias.name).split(".")[0] == AUDIT_APP_LABEL:
+                    found.append(f"import {alias.name} @{node.lineno}")
+    return found
+
+
+class NoDoorBypassesTheWriterTest(SimpleTestCase):
+    """★ 가드는 `audit_writer` 아래에 **한 자리**만 있다. 그래서 위쪽 모듈이
+    표에 직접 닿는 길을 내면 가드는 그 길에서만 조용히 없다 — 초록인 채로.
+    """
+
+    def test_the_scanner_catches_a_bypass(self) -> None:
+        """★ 분모. 스캐너가 실제로 무언가를 잡는다는 것을 먼저 고정한다."""
+        bypass = (
+            "from django.apps import apps\n"
+            "def leak():\n"
+            f"    return apps.get_model({AUDIT_APP_LABEL!r}, 'AuditLogs')\n")
+        self.assertEqual(len(reaches_the_audit_table_directly(bypass)), 1)
+
+    def test_an_innocent_module_is_not_flagged(self) -> None:
+        """★ 분모의 반대쪽. 「다 잡는 스캐너」는 스캐너가 아니다."""
+        clean = (
+            "from django.apps import apps\n"
+            "'logger.AuditLogs 는 설명으로만 나온다'\n"
+            "def fine():\n"
+            "    return apps.get_model('user', 'CoreUser')\n")
+        self.assertEqual(reaches_the_audit_table_directly(clean), [])
+
+    def _scan(self, module) -> list[str]:
+        import inspect
+
+        path = inspect.getsourcefile(module)
+        self.assertTrue(path, f"{module.__name__} 의 소스를 못 찾았다")
+        with open(path, encoding="utf-8") as fh:
+            return reaches_the_audit_table_directly(fh.read())
+
+    def test_the_dsm_audit_module_does_not_bypass_the_writer(self) -> None:
+        from apps.dsm import audit as dsm_audit
+
+        self.assertEqual(
+            self._scan(dsm_audit), [],
+            "apps/dsm/audit.py 가 감사 표를 직접 집는다 — 그 길에는 P-202 가드가 없다. "
+            "감사 표에 닿는 길은 common/audit_writer 하나여야 한다(D-325 표 ②)")
+
+    def test_the_incident_report_module_does_not_bypass_the_writer(self) -> None:
+        from apps.dsm import incident_report
+
+        self.assertEqual(
+            self._scan(incident_report), [],
+            "apps/dsm/incident_report.py 가 감사 표를 직접 집는다 — 같은 이유로 막힌다")
 
 
 # ══════════════════════════════════════════════════════════════════════════

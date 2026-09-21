@@ -287,5 +287,10 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("자격을 **선언한 자리**가 실제로 그 이름을 읽는가 — 선언 파일 **분모 %d건** · "
+               "탐침 머리 %d종. 값은 한 번도 읽지 않는다(이름만)"
+               % (len(DECLARING_FILES), len(PROBE_PREFIXES))),
+    )
     sys.exit(main())

@@ -415,6 +415,17 @@ def _events_queryset(
     reviewed_by_id: int | None = None,
     stream_monitor_id: int | None = None,
     mission_id: int | None = None,
+    #: ★ **주소 부분 일치** (2026-09-21 · 턴 AA · 차선 U24 가 쪽지로 청했다 · U4#8).
+    #:   지자체 담당관의 목록 검색 셋(사건번호 · 주소 · 유형) 중 주소만 서버가 못 걸렀다.
+    #:   **새 문이 아니라 있던 목록에 필터 하나**다 — `stream_monitor_id` 가 들어온 것과
+    #:   같은 모양(턴 T · U3).
+    #:   ⚠ **거르기는 queryset 에서** 한다. 화면이 50건을 받아 자기가 대조하면 **상한 밖의
+    #:     사건이 「그 주소에 사건 없음」이 되고**, 그것은 검색이 아니라 거짓말하는
+    #:     검색이다(DA-04 「필터는 전부 서버에서」).
+    #:   ⚠ `address` 가 **빈 사건**(주소 변환 전·실패)은 이 필터에 안 걸린다 — 옳다.
+    #:     다만 「주소를 모르는 사건」과 「그 주소에 사건이 없다」는 **다른 사실**이고,
+    #:     그 둘을 가르는 말은 화면이 적는다(U24 가 맡았다).
+    address: str | None = None,
     #: ★ **요청자의 테넌트로 못박는다** — 전역 관리자여도. 아래 `count_events` 만
     #:   이것을 켠다. 이유는 그 함수의 독스트링에 있다.
     own_tenant_only: bool = False,
@@ -473,6 +484,11 @@ def _events_queryset(
         qs = qs.filter(stream_monitor_id=stream_monitor_id)
     if mission_id is not None:
         qs = qs.filter(mission_id=mission_id)
+    #: ★ 주소 부분 일치 (U4#8). **빈 문자열은 필터가 아니다** — `if address is not None`
+    #:   으로 두면 화면이 빈 칸을 보내는 순간 `address__icontains=""` 가 되고, 그것은
+    #:   「주소가 빈 사건을 뺀다」는 **아무도 청하지 않은 필터**가 된다.
+    if address and address.strip():
+        qs = qs.filter(address__icontains=address.strip())
     return qs
 
 
@@ -497,6 +513,11 @@ def query_events(
     reviewed_by_id: int | None = None,
     stream_monitor_id: int | None = None,
     mission_id: int | None = None,
+    #: ★ **주소 부분 일치** (2026-09-21 · 턴 AA · U24 가 쪽지로 청했다 · U4#8).
+    #:   서버가 거른다 — 뜻과 함정은 `_events_queryset` 의 같은 칸에 적어 두었다.
+    #:   **세는 갈래(`count_events`)에는 안 넣는다**: 청구서의 셈에 「주소가 이런 것만」
+    #:   이라는 칸이 생기면 그 자리가 다음 달 청구서의 구멍이 된다.
+    address: str | None = None,
     #: ★ **게이트가 심은 사건을 셀 것인가** (P-193 · 2026-09-20 · 차선 U1).
     #:   기본값이 `False` 인 것이 이 인자의 전부다 — **세는 자리가 기본으로 안전하다.**
     #:   그 반대(기본 포함 · 세는 자리마다 끄기)로 두면 새 집계가 하나 생길 때마다
@@ -525,7 +546,8 @@ def query_events(
         scope=scope, since=since, until=until, until_inclusive=True,
         event_type=event_type, severity=severity, status=status,
         response_state=response_state, reviewed_by_id=reviewed_by_id,
-        stream_monitor_id=stream_monitor_id, mission_id=mission_id)
+        stream_monitor_id=stream_monitor_id, mission_id=mission_id,
+        address=address)
 
     # ★ P-193 — **게이트가 제 씨앗을 세지 않는다.** 표식의 뜻은 `common.probe_marker`
     #   한 곳이 정한다(K6 도 같은 곳을 부른다). 여기서 `track_id` 를 직접 비교하면

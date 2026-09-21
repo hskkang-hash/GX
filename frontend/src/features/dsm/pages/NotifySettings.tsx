@@ -24,6 +24,23 @@
  * 응답의 `reaches_people` 은 언제나 거짓이다. 「보냈습니다」만 그리면 사람은 자기
  * 수신함을 확인하러 가고, 안 온 것을 **고장으로** 읽는다.
  *
+ * ★★ 턴 AA — **「사람 수」로 내던 초록을 걷었다** (P-220 · 차선 U56)
+ * -----------------------------------------------------------------
+ * [세종 실측 2026-09-21 · 고객 자리] 이 화면 맨 위에 **「심각 경보를 받는 사람
+ * 4명」 초록**이 떠 있고, 바로 아래 등급 표의 세 줄이 전부 **「닿지 않음」 빨강**
+ * 이었다. 규칙의 채널이 `log`(훈련)뿐이라 **아무에게도 안 갔다** — 같은 화면이
+ * 두 말을 했고, 위의 초록이 거짓이었다.
+ *
+ * 배지를 그리던 서버 칸(`critical_blocked`)이 **사람 수만** 셌기 때문이다. 같은
+ * 응답의 등급 표는 `reaches_people`(사람 수 > 0 **그리고** 사람에게 닿는 채널)로
+ * 그렸다 — **판정식이 두 벌**이었고 두 벌은 갈렸다(D-212). 이제 배지도 그
+ * `reaches_people` 하나를 읽는다(`kernels/k2_notify/rule_admin.py`).
+ *
+ * ★ 초록에 **닿는 채널 이름을 적는다.** 「4명」만으로는 그 4명이 무엇으로 받는지
+ *   알 수 없고, 알 수 없는 초록은 다시 거짓이 될 자리다.
+ * ★ 빨강의 사유도 **서버가 쓴 한국어**다(`critical_block_reason`). 「사람이 없다」와
+ *   「채널이 사람에게 안 간다」는 다음 손이 다르므로 갈라 말한다(P-221).
+ *
  * ★ 채널 목록을 화면이 **짓지 않는다.** 서버가 레지스트리를 읽어 내려 준다
  * (`channels[]` — `available` · `reaches_people` · 사유). 화면이 목록을 들면 U3 이
  * 웹푸시 발송기를 끼우는 날 이 화면만 옛말이 되고, **옛말이 된 것은 안 보인다**(D-286).
@@ -48,6 +65,11 @@ import { dsmGet, dsmPostQuery, dsmU56NotifyEndpoint } from '../api';
 import StateBoundary from '../components/StateBoundary';
 import { userFacingError } from '../copy';
 import { useDsmResource } from '../hooks/useDsmResource';
+import {
+  hasRoleDisplayName,
+  roleCodeTitle,
+  roleDisplayName,
+} from '../roleNames';
 import { SEVERITY_COLOR, severityLabel } from '../severity';
 
 const { Title, Paragraph, Text } = Typography;
@@ -90,7 +112,11 @@ interface Overview {
   rules: RuleRow[];
   channels: ChannelOption[];
   critical_recipient_count: number;
+  /** ★ [턴 AA] 심각이 **사람에게 닿는** 채널들. 비면 「N명」은 거짓이다. */
+  critical_human_channels?: string[];
   critical_blocked: boolean;
+  /** ★ [턴 AA] 왜 막혔나 — **서버가 쓴 한국어.** 안 막혔으면 빈 문자열. */
+  critical_block_reason?: string;
   test_channel: string;
 }
 
@@ -209,19 +235,25 @@ export default function NotifySettingsPage() {
               <Alert
                 type="error"
                 showIcon
+                data-gx="notify-critical-blocked"
                 message={CRITICAL_BLOCKED_TITLE}
                 description={
-                  '심각 등급 규칙이 없거나, 규칙이 가리키는 역할에 사람이 없습니다. '
-                  + '이 상태에서는 재난이 나도 아무에게도 알림이 가지 않습니다. '
-                  + '아래에서 심각 규칙을 하나 세우거나 그 역할에 사람을 넣어 주십시오.'
+                  data.critical_block_reason
+                  || ('심각 등급 규칙이 없거나, 규칙이 가리키는 역할에 사람이 없습니다. '
+                    + '이 상태에서는 재난이 나도 아무에게도 알림이 가지 않습니다. '
+                    + '아래에서 심각 규칙을 하나 세우거나 그 역할에 사람을 넣어 주십시오.')
                 }
               />
             ) : (
               <Alert
                 type="success"
                 showIcon
-                message={`심각 경보를 받는 사람 ${data.critical_recipient_count}명`}
-                description="심각 등급은 최소 한 사람에게 닿습니다."
+                data-gx="notify-critical-ok"
+                message={
+                  `심각 경보를 받는 사람 ${data.critical_recipient_count}명 · `
+                  + `${(data.critical_human_channels ?? []).join(' · ')}로 닿습니다`
+                }
+                description="심각 등급은 최소 한 사람에게, 사람에게 닿는 채널로 갑니다."
               />
             )}
 
@@ -302,7 +334,24 @@ export default function NotifySettingsPage() {
                       <Tag color={SEVERITY_COLOR[s]}>{severityLabel(s)}</Tag>
                     ),
                   },
-                  { title: '역할', dataIndex: 'role_code' },
+                  {
+                    // ★ [턴 AA · U56] 고객 화면에 영문 내부 코드를 두지 않는다.
+                    //   사전에 없는 코드는 **지어내지 않고** 「표시명 없음」이고,
+                    //   원래 코드는 `title` 에만 있다(`roleNames.ts` 머리말).
+                    title: '역할',
+                    dataIndex: 'role_code',
+                    render: (code: string) => {
+                      const known = hasRoleDisplayName(code);
+                      return (
+                        <Text
+                          type={known ? undefined : 'secondary'}
+                          title={roleCodeTitle(code) || undefined}
+                        >
+                          {roleDisplayName(code)}
+                        </Text>
+                      );
+                    },
+                  },
                   {
                     title: '구역',
                     dataIndex: 'zone',
@@ -381,11 +430,31 @@ export default function NotifySettingsPage() {
                     }))}
                   />
                 </Form.Item>
+                {/*
+                  * ★ [턴 AA · U56 · Q 의 표시명 사전 게이트] 여기 본문에 내부 역할 코드
+                  *   둘(`fire_user` · `operator`)이 **예시로** 적혀 있었다. 고객 화면의
+                  *   본문에 우리 개발 어휘를 두는 것은 표 칸에 두는 것과 같은 일이다.
+                  *
+                  * ★ 그렇다고 **예시를 표시명으로 바꾸지 않았다.** 이 칸이 서버에 보내는
+                  *   값은 표시명이 아니라 **코드**이고, 표시명을 예시로 적으면 사람이
+                  *   그것을 그대로 쳐서 없는 역할을 만든다. 그리고 예시로 쓸 만한 코드
+                  *   둘 중 하나(`operator`)는 이 사전에 **표시명이 없는 자리**다 —
+                  *   거기에 그럴듯한 한국어를 붙이는 것이 `roleNames.ts` 가 막으려는 일이다.
+                  *
+                  * ★ 그래서 **예시를 빼고 찾는 길을 적는다.** 위 규칙 표의 역할 이름에
+                  *   마우스를 올리면 그 역할의 코드가 `title` 로 나온다(같은 턴에 단 것이다).
+                  *   「아래에서 고치기」를 누르면 이 칸이 그 코드로 **채워진다** — 사람이
+                  *   코드를 외울 일이 없다. 원인과 다음 손을 같은 줄에 둔다(P-221).
+                  */}
                 <Form.Item
                   name="role_code"
                   label="역할 코드"
                   rules={[{ required: true }]}
-                  extra="규칙은 사람이 아니라 역할을 가리킵니다 (예: fire_user · operator)."
+                  extra={
+                    '규칙은 사람이 아니라 역할을 가리킵니다 — 인사이동이 있어도 규칙을 '
+                    + '고치지 않아도 됩니다. 코드를 모르시면 위 규칙 표에서 「아래에서 '
+                    + '고치기」를 누르십시오. 이 칸이 그 역할의 코드로 채워집니다.'
+                  }
                 >
                   <Input autoComplete="off" />
                 </Form.Item>

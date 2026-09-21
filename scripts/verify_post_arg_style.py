@@ -481,5 +481,10 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("POST 인자 관용(본문이냐 질의냐) — 서버 면 **분모 %d모듈**(모수의 선언 · 늘면 "
+               "여기를 고친다) + 화면 면 POST 호출 자리 전수를 그 자리에서 훑는다"
+               % len(API_MODULES)),
+    )
     raise SystemExit(main())

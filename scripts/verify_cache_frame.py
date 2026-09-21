@@ -314,5 +314,9 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("캐시 등록부 전수 중 몇이 캐시 안/밖인가 — 상태 면 **분모 %d건**(모수를 낸다 · "
+               "0건이 아니다 · D-301)" % len(STATE_SURFACES)),
+    )
     sys.exit(main())

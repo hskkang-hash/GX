@@ -182,5 +182,10 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("주소 역변환을 **할 수 있다고 적은 것**과 구현이 갈리는가 — 선언값 **분모 %d종**"
+               "(%s) · HTTP 구현 표지 %d종을 소스 전수에 건다"
+               % (len(VALID), " | ".join(sorted(VALID)), len(HTTP_TOKENS))),
+    )
     sys.exit(main())

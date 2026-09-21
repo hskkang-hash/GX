@@ -270,5 +270,9 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("스냅샷 경로의 규약 — 요구 규칙 **분모 %d건** · 누출 토큰 후보 %d종을 라우트 전수에 "
+               "건다" % (len(REQUIRED_RULES), len(LEAK_TOKENS))),
+    )
     raise SystemExit(main())

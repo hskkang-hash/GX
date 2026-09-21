@@ -1,0 +1,14 @@
+{
+  "harness": "scripts/capture_screens.py",
+  "scenario": "SCREENS-1",
+  "ran_at": "2026-09-21T16:03:49",
+  "steps": {
+    "SCREENS-1/9": "2026-09-21T16:03:25",
+    "SCREENS-1/11": "2026-09-21T16:03:33",
+    "SCREENS-1/12": "2026-09-21T16:03:41"
+  },
+  "page_errors": [
+    "Cannot read properties of undefined (reading 'fields')",
+    "Request failed with status code 400"
+  ]
+}

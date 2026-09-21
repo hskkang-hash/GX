@@ -346,6 +346,43 @@ TARGETS = [
      "slug": "dsm_integrations_api_keys",
      "why": "F-12-c8 API 키 관리 — Integrations.tsx:159 가 "
             "GET /api/dsm/settings/api_keys 를 부른다 (하이픈 아니다 · D-470)"},
+
+    # ══ [턴 AA · 차선 A · P-219] **회색 사유가 또 낡아서 더한 넉 장** ════════════
+    #
+    #   턴 U 가 석 장(29·30·31)을 더한 것과 **같은 모양**이다: 화면은 섰고 문도 부르는데
+    #   **찍은 적이 없어서** 사슬의 둘째 고리(캡처)가 비어 회색이었다.
+    #   [재실측 2026-09-21 · 턴 AA]
+    #     · `/dsm/settings/rules`(턴 Z 신설 · `App.tsx:757`)가 설정 **세 문**을 다 부른다.
+    #     · `/dsm/cameras/tuning` 은 `POST /api/dsm/settings/thresholds` 를
+    #       **`scope_level='camera'`** 로 부른다(`CameraTuning.tsx:223`) — 계약이
+    #       「지점별」이라 못박고 대장 주석이 「적용 범위를 camera 로 두었다」고 적은
+    #       바로 그 축이다(F-02-c3). 「다른 축이다」라는 옛 사유가 거꾸로였다.
+    #     · `/dsm/reports`(턴 U 신설 · `App.tsx:724`)가 `GET /api/dsm/reports/runs` 를 부른다.
+    #
+    #   ⚠ `must_see` 를 달지 않는다 — 넉 장 다 **이번이 첫 촬영**이다. 안 본 글자를
+    #     정답으로 적으면 제품이 아니라 **우리 기대**를 재게 된다(P-132).
+    #   ⚠ 33번은 **권한 없는 계정**(U4 view_only)이 같은 주소를 여는 장이다. 403 인 채로
+    #     찍힌다 — 가리지 않는다. 「무권한은 차단하며」(F-12-c1)는 **막힌 화면**이 증거이지
+    #     다른 자리의 403 이 증거가 아니다.
+    {"step": 32, "persona": "U5", "route": "/dsm/settings/rules",
+     "slug": "dsm_settings_rules_admin",
+     "why": "F-12-c5 구역 · F-12-c6 임계값 · F-12-c7 등급규칙 — SettingsRules.tsx 가 "
+            "GET /api/dsm/settings/{zones,thresholds,grade_rules} 셋을 **한 번 여는 데서** "
+            "다 부른다(세 탭이 `forceRender`). 기관 관리자의 자리다"},
+    {"step": 33, "persona": "U4", "route": "/dsm/settings/rules",
+     "slug": "dsm_settings_rules_denied",
+     "why": "F-12-c1 무권한 차단 — 같은 주소를 view_only 계정이 연다. 세 문이 403 이고 "
+            "화면이 제 자리에서 「이 항목에 대한 권한이 없습니다.」를 적는다 "
+            "(`ownDenialPaths(['/api/dsm/settings/'])`)"},
+    {"step": 34, "persona": "U2", "route": "/dsm/cameras/tuning",
+     "slug": "dsm_cameras_tuning_scope",
+     "why": "F-02-c3 지점별 기준선 — CameraTuning.tsx 가 GET "
+            "/api/dsm/stats/camera-thresholds 를 부르고 저장은 scope_level='camera' 다"},
+    {"step": 35, "persona": "U2", "route": "/dsm/reports",
+     "slug": "dsm_reports_runs",
+     "why": "F-11-c2 손입력 0 · F-11-c3 치환 — Reports.tsx:93 이 "
+            "GET /api/dsm/reports/runs 를 부른다. 서식 셋을 화면이 그리고 사람이 적는 칸은 "
+            "「특이사항」 한 줄뿐이다"},
 ]
 
 # ═══════════════════════════════════════════════════════════════════════════

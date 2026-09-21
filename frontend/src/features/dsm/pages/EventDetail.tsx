@@ -42,7 +42,14 @@ import {
   dsmU1Endpoint,
   intentKey,
 } from '../api';
-import { userFacingError, isNotFound, NOT_FOUND_TITLE_EVENT } from '../copy';
+import {
+  CLIP_MISSING_REASON,
+  CLIP_PRESENT,
+  isNotFound,
+  NOT_FOUND_TITLE_EVENT,
+  RESPONSE_BACKWARD_NEEDS_REASON,
+  userFacingError,
+} from '../copy';
 import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
 import { deliveryOutcomeColumns } from '../deliveryOutcome';
@@ -351,11 +358,21 @@ export default function EventDetail() {
         title: '되돌립니다 — 사유가 필요합니다',
         content: (
           <Space direction="vertical" style={{ width: '100%' }}>
-            <Text type="secondary">
-              되돌림은 「종결 → 조치 중」 하나뿐이고 관제팀장만 할 수 있습니다. 사유가 비면
-              서버가 400 으로 거절합니다 — 무엇에서 무엇으로는 표가 알고 「왜」는 여기서만
-              들어옵니다.
-            </Text>
+            {/*
+              ★★ P-224 (2026-09-21 · 턴 AA · 조율자 쪽지 · `verify_error_body`) —
+                **「서버가 400」은 고객 말이 아니다.**
+
+                종전 문안: *「사유가 비면 **서버가 400 으로 거절합니다**」*. 정직하지만
+                관제요원의 말이 아니다 — 400 은 우리 저장소의 낱말이고, 읽은 사람이
+                할 수 있는 일을 **하나도** 말하지 않는다. U3 가 모바일에서 같은 자리를
+                고쳤다(「서버가 404」 → 「저장된 구간이 없습니다」). 같은 규율이다.
+
+              ★ **원인과 다음 손을 같은 줄에.** 원인은 「사유가 비어 있다」이고 다음 손은
+                「한 줄 적는다」다. 상태 숫자는 없어져도 사실은 하나도 안 없어진다 —
+                거절은 그대로 일어나고, 거절당한 사람이 **무엇을 하면 되는지**만 더해졌다.
+              ★ 문구 정본은 `copy.ts::RESPONSE_BACKWARD_NEEDS_REASON`.
+            */}
+            <Text type="secondary">{RESPONSE_BACKWARD_NEEDS_REASON}</Text>
             <Input.TextArea
               rows={2}
               placeholder="되돌리는 사유 (필수)"
@@ -454,8 +471,27 @@ export default function EventDetail() {
                     ({labelOf(ADDRESS_STATUS_LABEL, e.address_status)})
                   </Text>
                 </Descriptions.Item>
-                <Descriptions.Item label="영상 구간">
-                  {e.clip_path ? '있음' : '없음'}
+                {/*
+                  ★★ P-221 (2026-09-21 · 턴 AA · 세종 실사용 점검) —
+                    **「없음」은 참말이고 고객 말이 아니다.**
+
+                    세종: *「고객에게 「영상 구간 없음」은 「CCTV 인데 영상이 없다」이다.」*
+                    없는 것은 영상이 아니라 **설정**이다 — 그 카메라에 사건 구간 저장이
+                    아직 안 켜졌다. 「없음」 두 글자는 **원인도 다음 손도** 말하지 않아서,
+                    읽은 사람이 할 수 있는 일이 「고장 신고」밖에 없다.
+
+                  ★ **원인과 다음 손을 같은 줄에** (이 턴의 불변 「정직한 회색을 고객
+                    말로」). 문구 정본은 `copy.ts::CLIP_MISSING_REASON` 이고, 괄호 안은
+                    **실재하는 자리**다(관리자 → 카메라 등록).
+                  ★ 있을 때는 **아무 설명도 안 붙인다** — 있는 것에 설명을 붙이면
+                    없는 것과 같은 무게가 된다.
+                */}
+                <Descriptions.Item label="영상 구간" span={2}>
+                  {e.clip_path ? (
+                    CLIP_PRESENT
+                  ) : (
+                    <Text type="secondary" data-gx="clip-missing">{CLIP_MISSING_REASON}</Text>
+                  )}
                 </Descriptions.Item>
                 <Descriptions.Item label="판정자">
                   {e.reviewed_by_id ? `#${e.reviewed_by_id}` : '아직 아무도 판정하지 않음'}

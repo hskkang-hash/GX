@@ -1,0 +1,56 @@
+{
+  "events": [
+    {
+      "event_id": 343521,
+      "data_source": null,
+      "event_type": "fire",
+      "severity": "critical",
+      "occurred_at": "2026-09-21T08:59:11+00:00",
+      "snapshot_path": "guardianx-dev/detections/3947/20260921/085911_616691.jpg",
+      "snapshot_why": ""
+    },
+    {
+      "event_id": 343522,
+      "data_source": null,
+      "event_type": "flood",
+      "severity": "warning",
+      "occurred_at": "2026-09-21T08:57:11+00:00",
+      "snapshot_path": "guardianx-dev/detections/3947/20260921/085711_616691.jpg",
+      "snapshot_why": ""
+    }
+  ],
+  "note": "P-170 ② 씨앗 id 파이프 — capture_screens 가 심은 것. 읽는 쪽: verify_click_completes · verify_feature_reach · measure_onboarding_t (`--seed-file`). 이 파일은 손으로 고치지 않는다(runs/ 는 실행분이다).",
+  "run": "20260921T090054",
+  "seeded_at": "2026-09-21T16:01:14",
+  "probe_mark": "data_source=probe;run=20260921T090054",
+  "probe_tag": "gxprobe-D384-screen",
+  "data_source_mark": {
+    "drill": "drill",
+    "track_prefix": "data_source=drill",
+    "example_track_id": "data_source=drill;run=20260921T090054",
+    "how": "제품 모듈에서 읽었다 — 이 파일에 낱말을 적지 않는다",
+    "read_from": "stream_monitors.services.drill.DATA_SOURCE · common.probe_marker.DRILL_MARKER/drill_mark",
+    "why": ""
+  },
+  "monitor_code": "gxprobe-D384-screen-CAM",
+  "group_id": 4,
+  "event_ids": [
+    343521,
+    343522
+  ],
+  "first_event_id": 343521,
+  "address": {
+    "install_address": "경기도 안양시 만안구 안양천서로 100",
+    "install_address_detail": "정문",
+    "address_source": "manual",
+    "borrowed_from_monitor": 14,
+    "why": "실재 카메라 pk=14 의 주소를 재사용"
+  },
+  "snapshot": {
+    "with_snapshot": 2,
+    "seeded": 2,
+    "first_with_snapshot": 343521,
+    "why_missing": [],
+    "how": "stream_monitors.services.detection_snapshot.upload_snapshot (제품 경로 — seed_dsm_events._upload_frame 과 같은 함수)"
+  }
+}

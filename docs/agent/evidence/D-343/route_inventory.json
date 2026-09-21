@@ -1,6 +1,6 @@
 {
   "note": "D-343 ①② 라우트 인벤토리 전수. inbound_key=accepts 가 「지금 키가 닿는 자리」다. classification 의 기본값은 session_only — 판단이 서지 않으면 좁은 쪽(D-343 ②).",
-  "measured_at": "2026-09-20T14:58:23+07:00",
+  "measured_at": "2026-09-21T17:34:13+07:00",
   "totals": {
     "routes": 763,
     "by_inbound_key": {

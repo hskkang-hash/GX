@@ -51,6 +51,22 @@
 그래서 자기시험의 첫 갈래가 **「증명 없는 '구현'」과 「없는 파일을 가리키는 증명」**이다.
 거기서 초록이 나오면 이 표는 스스로를 부풀린다 — 착시 ①(부착률을 완성으로)의 상용판이다.
 
+★★★ P-216 [세종 판정 2026-09-21 · 턴 AA] — **점수를 `kind` 로 센다**
+--------------------------------------------------------------------
+턴 Z 까지 영역 점수는 `구현 절 / 전체 절` 이었다. 그 식은 P-211 의 다섯 부류를
+**전부 1점**으로 세었다 — 그래서 세 턴 동안 「67.x」라 부르던 수가 실은
+**닫힌 절 80/154** 였고, 그 둘의 거리를 아무도 못 봤다.
+
+    closed 1.0 · ratchet 1.0(늘지 않음이 조건) · rule_only 0.5 · gate_only 0.5
+    unmeasurable 0.0 · **잠김은 분모에서 빼지 않는다**
+
+같은 턴에 P-215 가 「`closed` 이려면 **무엇을 분모 몇으로 쟀는가**가 대장에 있어야 한다.
+없으면 닫힌 것이 아니다」를 세웠다. 두 판정이 함께 수를 내린다. **내려간 수가 정본이다.**
+
+⚠ **출력 줄의 계약** — 영역 줄 앞 조각(`절 d/n = p%`)은 `verify_readiness_scores.py`
+  (차선 Q)가 읽는다. 그 조각의 뜻은 **상태로 센 수** 그대로 두고, 점수를 만드는 수는
+  뒤에 `kind pts/n = p%` 로 **덧붙였다.** 모양을 바꾸려면 **같은 커밋에서** 저쪽도 고친다.
+
     python scripts/verify_ga_readiness.py            # 판정 + 가중 합계
     python scripts/verify_ga_readiness.py --list     # 영역별 절 표
     python scripts/verify_ga_readiness.py --table    # 대표 보고용 표 (마크다운)
@@ -390,6 +406,21 @@ SERIAL_GATES = (
 )
 
 
+#: ★★ [가설 하나 · 2026-09-21 턴 AA · 차선 N — **A/B 로 기각했다. 적어 둔다**]
+#:   조율자 판정으로 `ops_log_collectors.py` 를 OPS-07 의 `gate:` 에 처음 달자
+#:   같은 실행에서 **못 쟀다 6 → 13** 이 됐다(일곱이 「120초 안에 안 끝났다」).
+#:   가설: 「그 판정기가 `docker exec` 를 46번 불러 병렬 묶음의 다른 Django 게이트와
+#:   **같은 `gx-shell` 한 대의 문**을 다툰다 — 세션이 아니라 컨테이너의 문을 다투는
+#:   D-459 의 이웃이다.」 그래서 **줄 세워 보았다(A/B).**
+#:     A 병렬  09:13–09:17  못 쟀다 13
+#:     B 직렬  09:17–09:23  못 쟀다 13   ← **안 달라졌다**
+#:   그리고 09:23 에 **`docker ps` 자체가 500** 을 냈다
+#:   (`...dockerDesktopLinuxEngine/v1.54/containers/json`). ⇒ **가설 기각.**
+#:   범인은 이 판정기가 아니라 **도커 데몬이 아픈 것**이었고, 그 위에서 잰 회색 13은
+#:   제품의 색이 아니다. **그래서 줄 세우지 않는다** — 안 밝혀진 가설로 공유 게이트의
+#:   거동을 바꾸면, 다음 사람은 「왜 느린가」를 제 손으로 다시 물어야 한다.
+
+
 def measure_gates(pairs: list[tuple[str, str, str]]) -> dict[str, tuple]:
     """게이트를 **한 벌씩만** 부른다 (한 게이트를 여러 절이 가리킬 수 있다)."""
     names = sorted({g for _cid, _st, g in pairs if g != GATE_SELF})
@@ -406,18 +437,54 @@ def measure_gates(pairs: list[tuple[str, str, str]]) -> dict[str, tuple]:
     return out
 
 
-def score(areas: list[dict], counts: dict[str, dict[str, int]]) -> tuple[float, list[tuple]]:
-    """가중 합계. 영역 점수 = 구현 절 / 전체 절."""
+#: ★★★ [P-216 · 2026-09-21 · 턴 AA · 세종 판정] **점수를 `kind` 로 센다.**
+#:
+#:   턴 Z 까지 영역 점수는 `구현 절 / 전체 절` 이었다. 그 식은 다섯 부류를 **전부 1점**으로
+#:   세었다 — `rule_only`(현장이 비었다)도 `gate_only`(제목이 게이트보다 넓다)도
+#:   `closed` 와 같은 무게였다. 그래서 세 턴 동안 「67.x」라 부르던 수가 실은
+#:   **닫힌 절 80/154** 였고, 그 둘의 거리를 아무도 못 봤다.
+#:
+#:     closed        1.0   누른 뒤를 봤다
+#:     ratchet       1.0   **늘지 않음이 조건**이다 — 면제를 업고 있어도 「새로 0」은 지켜진다
+#:     rule_only     0.5   규칙은 섰고 현장이 비었다 — 절반만 서 있다
+#:     gate_only     0.5   게이트는 초록이고 절은 안 닫혔다 — 절반만 잰다
+#:     unmeasurable  0.0   못 쟀다. **회색은 초록이 아니다**(D-301)
+#:
+#:   ⚠ **잠김은 분모에서 빼지 않는다.** 잠긴 절도 「아직 안 된 것」이고, 분모에서 빼면
+#:     잠글수록 수가 오른다. (설계 잠금·손 밖은 아래 「손 안 도달율」이 따로 가른다)
+KIND_POINTS = {"closed": 1.0, "ratchet": 1.0, "rule_only": 0.5,
+               "gate_only": 0.5, "unmeasurable": 0.0}
+#: ★ [N ↔ Q 쪽지 · 턴 AA] 차선 Q 의 `verify_readiness_scores.py` 가 **이 이름으로 import**
+#:   한다(「두 벌을 두지 않는다」 · D-369). 눈금을 여기서 바꾸면 저쪽도 따라 바뀐다 —
+#:   **베끼지 말고 가져다 쓰라**는 뜻이므로 이 별명을 지우지 말 것.
+KIND_SCORE = KIND_POINTS
+
+
+def kind_points(kinds: dict[str, int]) -> float:
+    """부류 셈 → 점수(절 단위). **판정식은 여기 한 곳에만 둔다** (D-212)."""
+    return sum(KIND_POINTS[k] * kinds.get(k, 0) for k in KINDS)
+
+
+def score(areas: list[dict], counts: dict[str, dict[str, int]],
+          kinds: dict[str, dict[str, int]] | None = None) -> tuple[float, list[tuple]]:
+    """가중 합계. **영역 점수 = Σ(kind 가중) / 전체 절** (P-216).
+
+    `구현 절 / 전체 절` 도 함께 돌려준다 — **없애지 않는다.** 두 수를 나란히 두어야
+    「상태로 센 수」와 「부류로 센 수」의 거리가 보인다. 그 거리가 이 턴에 드러난 것이다.
+    """
     rows = []
     total = 0.0
     for area in areas:
         c = counts[area["id"]]
         n = sum(c.values())
-        ratio = (c.get(DONE, 0) / n) if n else 0.0
-        weighted = area["weight"] * ratio
+        ratio = (c.get(DONE, 0) / n) if n else 0.0          # 상태로 센 수 (참고)
+        k = (kinds or {}).get(area["id"], {})
+        pts = kind_points(k)
+        kratio = (pts / n) if n else 0.0                    # ★ 점수를 만드는 수
+        weighted = area["weight"] * kratio
         total += weighted
         rows.append((area["id"], area["name"], area["weight"], c.get(DONE, 0), n,
-                     ratio, weighted))
+                     ratio, weighted, pts, kratio))
     return total, rows
 
 
@@ -663,14 +730,60 @@ def self_test() -> int:
         "★ 한 게이트를 여러 절이 가리켜도 **한 번만** 부른다",
         len({g for _c, _s, g in [("A", "구현", "x.py"), ("B", "구현", "x.py")]}) == 1))
 
+    # ── ★★★ P-216 — **점수를 `kind` 로 센다** (2026-09-21 · 턴 AA · 세종) ───────
+    #   ★★ **출생 표본**: 세 턴 동안 「67.x」라 부르던 수가 실은 **닫힌 절 80/154** 였다.
+    #     옛 식(`구현 절 / 전체 절`)이 다섯 부류를 **전부 1점**으로 세었기 때문이다.
+    #     그래서 아래 다섯 갈래를 **각 kind 하나씩 표본 5**로 박는다 — 어느 한 칸의
+    #     무게가 조용히 바뀌면 여기가 빨개진다.
+    _S = [{"id": "a", "name": "A", "weight": 100}]
+    _one = lambda k: score(_S, {"a": {DONE: 1}}, {"a": {k: 1}})[0]   # noqa: E731
+    checks.append(("★ 표본① closed 는 **1.0** 이다 (누른 뒤를 봤다)",
+                   abs(_one("closed") - 100.0) < 1e-9))
+    checks.append(("★ 표본② ratchet 도 **1.0** 이다 — 「늘지 않음」이 조건인 절이다",
+                   abs(_one("ratchet") - 100.0) < 1e-9))
+    checks.append(("★ 표본③ rule_only 는 **0.5** 다 (규칙은 섰고 현장이 비었다)",
+                   abs(_one("rule_only") - 50.0) < 1e-9))
+    checks.append(("★ 표본④ gate_only 는 **0.5** 다 (게이트는 초록 · 절은 안 닫혔다)",
+                   abs(_one("gate_only") - 50.0) < 1e-9))
+    checks.append(("★★ 표본⑤ unmeasurable 은 **0.0** 이다 — 회색은 초록이 아니다 (D-301)",
+                   abs(_one("unmeasurable")) < 1e-9))
+    #: ★ **음성 대조 — 옛 식이면 다섯이 전부 100 이다.** 다섯 절 전부 `status: 구현` 이고
+    #:   부류만 다른 영역을 세워, **새 식은 셋으로 갈리고**(1.0·0.5·0.0) 옛 식은
+    #:   **하나로 뭉친다**(전부 구현이니 100)는 것을 같은 자리에서 본다.
+    _five = {k: _one(k) for k in KINDS}
+    checks.append((
+        "★ 음성 대조 — 다섯을 **상태로** 세면 전부 100 으로 뭉친다 (옛 식이 삼키던 것)",
+        all(abs(score(_S, {"a": {DONE: 1}}, {"a": {k: 1}})[1][0][5] * 100 - 100.0) < 1e-9
+            for k in KINDS)))
+    checks.append((
+        "★ 그런데 **부류로 세면 셋으로 갈린다** — 1.0 · 0.5 · 0.0",
+        sorted({round(v, 6) for v in _five.values()}) == [0.0, 50.0, 100.0]))
+    #: ★ **잠김은 분모에서 빼지 않는다** — 빼면 잠글수록 수가 오른다.
+    checks.append((
+        "★ 잠김 절은 분모에 남는다 (closed 1 + 잠김 1 → 50%, 100% 가 아니다)",
+        abs(score(_S, {"a": {DONE: 1, "잠김": 1}},
+                  {"a": {"closed": 1, "unmeasurable": 1}})[0] - 50.0) < 1e-9))
+    checks.append((
+        "★ 섞인 영역을 손으로 검산한다 (closed 2 + ratchet 1 + rule_only 1 + gate_only 1 "
+        "+ unmeasurable 1 = 4.0/6)",
+        abs(kind_points({"closed": 2, "ratchet": 1, "rule_only": 1,
+                         "gate_only": 1, "unmeasurable": 1}) - 4.0) < 1e-9))
+
     # 가중 합계 계산 — 손으로 검산할 수 있는 표본
     total, _ = score(
         [{"id": "a", "name": "A", "weight": 20}, {"id": "b", "name": "B", "weight": 80}],
-        {"a": {DONE: 1, "미착수": 1}, "b": {DONE: 0, "미착수": 4}})
-    checks.append(("가중 합계가 절 비율로 계산된다 (20×½ + 80×0 = 10)", abs(total - 10.0) < 1e-9))
-    total, _ = score([{"id": "a", "name": "A", "weight": 100}], {"a": {DONE: 3}})
-    checks.append(("전부 구현이면 100 이다", abs(total - 100.0) < 1e-9))
-    total, _ = score([{"id": "a", "name": "A", "weight": 100}], {"a": {}})
+        {"a": {DONE: 1, "미착수": 1}, "b": {DONE: 0, "미착수": 4}},
+        {"a": {"closed": 1, "unmeasurable": 1}, "b": {"unmeasurable": 4}})
+    checks.append(("가중 합계가 부류 비율로 계산된다 (20×½ + 80×0 = 10)", abs(total - 10.0) < 1e-9))
+    total, _ = score([{"id": "a", "name": "A", "weight": 100}], {"a": {DONE: 3}},
+                     {"a": {"closed": 3}})
+    checks.append(("전부 closed 면 100 이다", abs(total - 100.0) < 1e-9))
+    #: ★ **상태가 전부 '구현' 이어도 부류가 전부 `unmeasurable` 이면 0 이다** — P-216 의 본문.
+    total, _ = score([{"id": "a", "name": "A", "weight": 100}], {"a": {DONE: 3}},
+                     {"a": {"unmeasurable": 3}})
+    checks.append(("★★ 상태가 전부 '구현' 이어도 부류가 못 잼이면 **0** 이다 (P-216)",
+                   abs(total) < 1e-9))
+    total, _ = score([{"id": "a", "name": "A", "weight": 100}], {"a": {}}, {"a": {}})
     checks.append(("절이 0개인 영역은 0 이다 (1 이 아니다)", abs(total) < 1e-9))
 
     bad = 0
@@ -849,7 +962,7 @@ def main() -> int:
         return 1
 
     areas, counts, problems, hands, hands_lock, hands_todo, kinds = load()
-    total, rows = score(areas, counts)
+    total, rows = score(areas, counts, kinds)
     all_clauses = sum(sum(c.values()) for c in counts.values())
     done = sum(c.get(DONE, 0) for c in counts.values())
 
@@ -859,19 +972,35 @@ def main() -> int:
              sum(c.get("잠김", 0) for c in counts.values()),
              sum(c.get("미측정", 0) for c in counts.values())))
 
-    for aid, name, weight, d, n, ratio, weighted in rows:
+    for aid, name, weight, d, n, ratio, weighted, pts, kratio in rows:
         #: ★ P-211 — 수 옆에 **그 수의 뜻**을 세운다. `16/20` 만 내면 그 16 은 전부
         #:   「닫혔다」로 읽힌다. 다섯 부류 중 닫힘이 아닌 넷을 이름으로 부른다.
-        print("  %-2s %-22s 가중 %2d%%  절 %2d/%-2d = %3.0f%%  →  %5.2f   %s"
-              % (aid, name, weight, d, n, ratio * 100, weighted,
+        #: ★★ P-216 — **두 수를 나란히 둔다.** 앞의 `절 d/n` 은 **상태로 센 수**(참고),
+        #:   뒤의 `kind` 가 **점수를 만드는 수**다. 둘의 거리가 이 턴에 드러난 것이다.
+        #:   ⚠ 앞 조각의 모양은 `verify_readiness_scores.py`(차선 Q)가 읽는다 — 바꾸려면
+        #:     같은 커밋에서 저쪽도 함께 고친다. 갈리면 한쪽이 다른 쪽을 빨갛게 한다.
+        print("  %-2s %-22s 가중 %2d%%  절 %2d/%-2d = %3.0f%%  kind %5.2f/%-2d = %3.0f%%"
+              "  →  %5.2f   %s"
+              % (aid, name, weight, d, n, ratio * 100, pts, n, kratio * 100, weighted,
                  kind_tail(kinds.get(aid, {}))))
         if AREA_GATE_NOTE.get(aid):
             print("     ↳ %s" % AREA_GATE_NOTE[aid])
     if args.static:
         print("[GA] ★★ 이 실행은 **정적 갈래(--static)** 다 — 게이트를 **한 벌도 안 불렀다**"
               "(로그인 0 · 계정 다툼 0). 아래 가중 합계는 **점수가 아니다**: "
-              "영역 ①은 전부 「못 쟀다」로 세어져 있다. 점수는 게이트를 부르는 실행이 낸다")
+              "영역 ①의 **상태**는 전부 「못 쟀다」로 세어져 있고, 부류(`kind_derived`)는 "
+              "**지난 실행이 남긴 이름표**라 이 실행이 다시 잰 것이 아니다. "
+              "점수는 게이트를 부르는 실행이 낸다 (D-210)")
     print("[GA] ★ 상용 오픈 가중 합계 **%.1f%%** [실측]" % total)
+    #: ★★★ P-216 — **이 수가 무엇으로 세어졌는지 같은 화면에 적는다.** 안 적으면
+    #:   다음 턴에 누군가 옛 식으로 다시 세고 「수가 올랐다」고 말한다.
+    print("[GA]   이 수는 **부류(`kind`)로 센 수**다 — closed 1.0 · ratchet 1.0 · "
+          "rule_only 0.5 · gate_only 0.5 · unmeasurable 0.0 · **잠김은 분모에서 빼지 않는다** "
+          "(P-216 · 2026-09-21 턴 AA). 상태(`구현`)로 세던 옛 식과 다르다")
+    old_total = sum(w * r for _a, _n, w, _d, _c, r, _wt, _p, _kr in rows)
+    print("[GA]   (참고 · 옛 식 `구현 절 / 전체 절` 로 세면 **%.1f%%** — 그 수는 다섯 부류를 "
+          "**전부 1점**으로 세었다. 거리 %.1f 가 P-216 이 드러낸 것이다)"
+          % (old_total, old_total - total))
     print("[GA] (계약 축과 합치지 않는다 — D-345. 계약 절은 영역 ①이 그대로 인용한다)")
 
     # ── 「초록」 다섯 부류 (P-211 · 2026-09-21 · 턴 Z) ──────────────────────
@@ -887,6 +1016,14 @@ def main() -> int:
           "게이트만 %d(제목이 게이트보다 넓다)"
           % (roll["closed"], sum(roll.values()), not_closed, roll["ratchet"],
              roll["rule_only"], roll["unmeasurable"], roll["gate_only"]))
+    #: ★ [N → Q · 턴 AA] 셈법 규칙 2 가 「① = 영역 ⑧ 비율」이라 한다. 그 비율이
+    #:   **상태로 센 것과 부류로 센 것 중 어느 쪽인가**는 이 턴에 갈릴 수 있다 —
+    #:   그래서 **둘 다 찍는다.** 한쪽만 찍으면 읽는 쪽이 어느 것인지 모른 채 베낀다.
+    for aid, _name, _w, d, n, ratio, _wt, pts, kratio in rows:
+        if aid == "8":
+            print("[GA] [입력] 영역 ⑧ 비율 — 상태(구현 %d/%d) **%.3f** · 부류(kind %.2f/%d) "
+                  "**%.3f** (`verify_readiness_scores.py` 셈법 ①이 읽는 자리)"
+                  % (d, n, ratio, pts, n, kratio))
 
     # ── 손 안 도달율 (2026-09-21 · 세종 §3) ────────────────────────────────
     # **우리가 닫을 수 있는 100%** 를 따로 낸다. 두 수를 함께 적는 이유:
@@ -974,11 +1111,13 @@ def main() -> int:
 def _print_table(areas, counts, rows, total, *, markdown: bool) -> None:
     if markdown:
         print()
-        print("| 영역 | 가중 | 절 구현/전체 | 영역 달성 | 가중 기여 |")
-        print("|---|---:|---:|---:|---:|")
-        for aid, name, weight, d, n, ratio, weighted in rows:
-            print("| %s %s | %d%% | %d/%d | %.0f%% | %.2f |"
-                  % (aid, name, weight, d, n, ratio * 100, weighted))
+        #: ★ P-216 — 대표 보고용 표에도 **두 수를 나란히** 둔다. 「구현/전체」만 실으면
+        #:   읽는 사람은 그 수로 가중 기여를 검산하려다 안 맞아서 표를 의심한다.
+        print("| 영역 | 가중 | 절 구현/전체 | (참고) 상태 달성 | **부류 점수** | 영역 달성 | 가중 기여 |")
+        print("|---|---:|---:|---:|---:|---:|---:|")
+        for aid, name, weight, d, n, ratio, weighted, pts, kratio in rows:
+            print("| %s %s | %d%% | %d/%d | %.0f%% | **%.2f/%d** | %.0f%% | %.2f |"
+                  % (aid, name, weight, d, n, ratio * 100, pts, n, kratio * 100, weighted))
         print("| **합계** | **100%%** | | | **%.1f%%** |" % total)
         print()
     for area in areas:

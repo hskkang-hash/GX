@@ -82,5 +82,11 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("DA-01 이 「이미 있다」고 적은 **경로 주장**이 실재하는가 — 최상위 갈래 "
+               "**분모 %d**(%s)로 시작하는 주장 전수를 문서에서 뽑아 하나씩 연다. "
+               "없는 것을 있다고 적으면 일정 산정이 통째로 어긋난다"
+               % (len(ROOTS), " · ".join(ROOTS))),
+    )
     sys.exit(main())

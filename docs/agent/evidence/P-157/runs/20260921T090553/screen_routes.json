@@ -1,0 +1,399 @@
+{
+  "source": "scripts/capture_screens.py — 브라우저가 실제로 부른 것",
+  "captured_at": "2026-09-21T16:07:06",
+  "screens_total": 7,
+  "routes_total": 7,
+  "screens": {
+    "/multi-stream-monitor": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/stream-monitors/stream-monitors",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/stream-monitors/stream-monitors/ai-models",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/drill": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/drill",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/drill/report",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/cameras/import": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/cameras/address-gap",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/cameras/address": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/cameras/address-gap",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/cameras/pulse",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/start?role=OPERATOR": [
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/cameras/tuning": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/stats/camera-thresholds",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/stats/false-positive/by-camera?days=7&top_n=3",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ],
+    "/dsm/reports": [
+      {
+        "method": "GET",
+        "path": "/api/advanced-table/select-data?model_name=theme&distinct=true",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/config-management/list-optimized",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/dsm/reports/runs?limit=50",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/menu/menus?page_size=10000",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=false",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/api/user-groups/gen-schema?group_id=4&raw=true",
+        "status": 200
+      }
+    ]
+  },
+  "api_notes": {
+    "/multi-stream-monitor": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/drill": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/cameras/import": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/cameras/address": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/start?role=OPERATOR": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/cameras/tuning": "화면을 열고 브라우저가 부른 것을 그대로 적었다",
+    "/dsm/reports": "화면을 열고 브라우저가 부른 것을 그대로 적었다"
+  },
+  "data_source": "시드 (K1 record_detection 실제 경로 · 실제 사고 아님)",
+  "viewers": [
+    {
+      "file": "SCREENS-1/fire_admin/multi-stream-monitor.png",
+      "route": "/multi-stream-monitor",
+      "persona": "U2",
+      "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+      "user_role": "fire_admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/stream-monitors/stream-monitors 200",
+        "GET /api/stream-monitors/stream-monitors/ai-models 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/fire_admin/dsm_drill_mode.png",
+      "route": "/dsm/drill",
+      "persona": "U2",
+      "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+      "user_role": "fire_admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/drill 200",
+        "GET /api/dsm/drill/report 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/fire_admin/dsm_cameras_import_dryrun.png",
+      "route": "/dsm/cameras/import",
+      "persona": "U2",
+      "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+      "user_role": "fire_admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/cameras/address-gap 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/fire_admin/dsm_cameras_address_fill.png",
+      "route": "/dsm/cameras/address",
+      "persona": "U2",
+      "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+      "user_role": "fire_admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/cameras/address-gap 200",
+        "GET /api/dsm/cameras/pulse 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/fire_admin/start_onboarding.png",
+      "route": "/start?role=OPERATOR",
+      "persona": "U2",
+      "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+      "user_role": "fire_admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/fire_admin/dsm_cameras_tuning_scope.png",
+      "route": "/dsm/cameras/tuning",
+      "persona": "U2",
+      "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+      "user_role": "fire_admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/stats/camera-thresholds 200",
+        "GET /api/dsm/stats/false-positive/by-camera?days=7&top_n=3 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    },
+    {
+      "file": "SCREENS-1/fire_admin/dsm_reports_runs.png",
+      "route": "/dsm/reports",
+      "persona": "U2",
+      "viewed_by": "U2 · gxseed_u2_manager · fire_admin · 1440px",
+      "user_role": "fire_admin",
+      "data_source": "시드",
+      "calls": [
+        "GET /api/advanced-table/select-data?model_name=theme&distinct=true 200",
+        "GET /api/config-management/list-optimized 200",
+        "GET /api/dsm/reports/runs?limit=50 200",
+        "GET /api/menu/menus?page_size=10000 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=false 200",
+        "GET /api/user-groups/gen-schema?group_id=4&raw=true 200"
+      ]
+    }
+  ],
+  "blank_screens": [
+    {
+      "route": "/users",
+      "why": "역할 0개: 본문 0자 · API 6건 200 · JS 오류 0건 — 안내 대신 빈 화면. **admin 으로는 29행이 그려진다**(권한 때문이다) (DA-03 §3-4 위반 · rj-core §0.4)"
+    },
+    {
+      "route": "/survey-profile",
+      "role_checked": [
+        "admin",
+        "fire_admin",
+        "fire_user"
+      ],
+      "why": "★ [P-98] **역할이 있으면 더 안 보인다.** 역할 0개에서는 `Add New Profile` 단추라도 떴는데, admin·fire_admin·fire_user 셋 다 **머리줄뿐**이다 (본문 296·172·103자 · API 전부 200 · JS 오류 0건). 권한이 올라갔는데 화면이 줄었다 — 이 뒤집힘은 권한 결함이 아니라 화면 결함이다"
+    },
+    {
+      "route": "/handover",
+      "why": "본문 0자 · API 실패 0건 · JS 오류 0건 — /users 와 같은 모양"
+    }
+  ],
+  "redirected_screens": [
+    {
+      "route": "/monitoring-dashboard",
+      "landed": "/profile",
+      "role_checked": [
+        "admin"
+      ],
+      "why": "요청한 경로가 아니라 이 계정의 홈 화면이 떴다 — 라우트에 도달하지 못한다. ★ [P-98 2026-09-07] **`admin` 으로 다시 쟀다: 똑같이 /profile 로 간다.** 위 주석이 열어 둔 물음(「역할이 있으면 다를 수 있다」)의 답이 나왔다 — **권한 문제가 아니다.** 최고 권한에서도 못 간다"
+    },
+    {
+      "route": "/intergrated-dashboard",
+      "landed": "/profile",
+      "role_checked": [
+        "admin"
+      ],
+      "why": "같음 — `admin` 에서도 /profile 로 간다 [P-98 실측]. 둘 다 App.tsx 의 별도 라우트 묶음(189~211줄)에 있다"
+    }
+  ]
+}

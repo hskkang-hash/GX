@@ -127,6 +127,7 @@ import { Main } from 'rj-core';
 
 import {
   CLOSE_CONFIRM_EMPTY,
+  CLOSE_CONFIRM_EMPTY_ONE_LINE,
   CLOSE_CONFIRM_TITLE,
   dataSourceBadge,
   FALSE_POSITIVE_REASONS,
@@ -822,6 +823,26 @@ export default function FocusQueuePage() {
                   않는다). 접수 전(`occurred`)이면 서버가 409 로 거절하고 그 말을 그대로
                   적는다 — 그 사건은 먼저 접수(키 1)해야 한다.
               */}
+              {/*
+                ★★ P-222 (2026-09-21 · 턴 AA · 세종 실사용 점검) — **0건이면 한 줄이다.**
+
+                  세종이 고객 자리에서 적었다: *「「조치를 마쳤다고 알려 온 사건이
+                  없습니다」가 화면 절반을 차지한다.」* 제목 · 테두리 · 빈 본문으로
+                  한 화면을 먹는 0건 칸은, **있는 일감보다 없는 일감을 먼저 보게 한다.**
+
+                ★ **지우지 않는다. 접는다.** 칸을 없애면 「조치 완료 회신이 오는 자리가
+                  있다」는 사실이 화면에서 사라지고, 회신이 처음 왔을 때 아무도 그
+                  자리를 모른다. 그래서 한 줄은 남고 **0 이라고 적는다.**
+                ★ **진짜 0 일 때만 접는다.** 「배선 대기」(회신은 오는데 종류 표시가
+                  0건)와 거절 경고는 **다른 사실**이라 접지 않는다 — 접는 순간
+                  「없음」과 「못 읽음」이 한 줄이 된다(`WIRING_WAITING_NOTE` 의 그 자리).
+              */}
+              {signals.doneSignals.length === 0 && !signals.confirmError
+                && !(!signals.wired && signals.replyTotal > 0) ? (
+                <Text type="secondary" data-gx="close-confirm-empty">
+                  {CLOSE_CONFIRM_EMPTY_ONE_LINE}
+                </Text>
+              ) : (
               <Card size="small" title={CLOSE_CONFIRM_TITLE} data-gx="close-confirm-card">
                 {signals.confirmError ? (
                   <Alert
@@ -888,6 +909,7 @@ export default function FocusQueuePage() {
                   </Space>
                 )}
               </Card>
+              )}
 
               {/* 나머지 큐. 초점 하나 아래에 **작게** 둔다 — 여기가 커지면 다시 목록이 된다. */}
               <Card size="small" title={`대기 카드 ${data.queue.length}장`}>

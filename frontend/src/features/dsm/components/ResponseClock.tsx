@@ -22,7 +22,9 @@ import { useEffect, useState } from 'react';
 
 import {
   duration,
+  elapsedHeadline,
   FALLBACK_TIER_THRESHOLDS_SEC,
+  isLongElapsed,
   TIER_COLOR,
   TIER_FONT_PX,
   tierLabel,
@@ -100,11 +102,25 @@ export default function ResponseClock({
 
   const elapsed = Math.max(0, (now - started) / 1000);
   const tier = tierOf(elapsed, table);
-  const scale = compact ? 0.55 : 1;
+  /**
+   * ★★ P-221 (2026-09-21 · 턴 AA) — **하루가 넘으면 말이 바뀐다.**
+   *
+   * 「377시간 27분」은 참말이고 고객 말이 아니다(세종 실사용 점검). 넘으면 큰 글자가
+   * 「15일 경과 · 종결 검토」가 된다 — **원인과 다음 손을 같은 줄에.**
+   *
+   * ★ **단계(크기·색)는 안 건드린다.** 오래 열린 것이 급하다는 제품의 판단은 옳고,
+   *   바뀌는 것은 그 판단을 **사람에게 말하는 방법**뿐이다.
+   * ★ 정확한 초는 **툴팁과 스크린리더 라벨에 그대로 있다** — 감춘 것이 아니다.
+   */
+  const longRun = isLongElapsed(elapsed);
+  const headline = elapsedHeadline(elapsed);
+  /** 긴 문장은 44px 로 그리면 줄이 깨진다 — **글자가 커서 못 읽는 것**은 안 읽히는 것이다. */
+  const scale = (compact ? 0.55 : 1) * (longRun ? 0.5 : 1);
 
   return (
     <Tooltip
       title={
+        (longRun ? `정확한 경과 ${duration(elapsed)}. ` : '') +
         `문턱 ${table.join('초 · ')}초 마다 한 단계씩 커집니다. ` +
         (usingFallback
           ? '⚠ 서버가 문턱 표를 주지 않아 화면 폴백 값을 쓰는 중입니다 — ' +
@@ -128,7 +144,7 @@ export default function ResponseClock({
             `단계 ${tier}/${table.length}${rankNote ? ` · ${rankNote}` : ''}`
           }
         >
-          {duration(elapsed)}
+          {headline}
         </Text>
         {/* ★ 단계 이름은 **서버 문턱으로 지어 낸 것**이고, 순위는 부르는 쪽이 준 것만
             적는다. 둘 다 없는 숫자를 지어내지 않는다 (턴 W · P-188). */}

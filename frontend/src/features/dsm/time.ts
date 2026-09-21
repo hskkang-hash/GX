@@ -8,6 +8,11 @@
  */
 import dayjs from 'dayjs';
 
+/* ★ 문구는 **사전에서 온다**(P-27). 이 파일이 정하는 것은 **언제 그 말을 쓰는가**
+   (문턱·날 수)이고, **무슨 말인가**는 `copy.ts` 한 곳이다 — 두 벌이 되면 한쪽이 늙는다.
+   `copy.ts` 는 아무것도 import 하지 않으므로 순환이 없다 [실측 2026-09-21]. */
+import { elapsedDaysPhrase } from './copy';
+
 const KST = 'Asia/Seoul';
 
 export function absolute(value: string | Date | null | undefined): string {
@@ -145,6 +150,44 @@ export function duration(seconds: number | null | undefined): string {
   if (m < 60) return s % 60 ? `${m}분 ${s % 60}초` : `${m}분`;
   const h = Math.floor(m / 60);
   return m % 60 ? `${h}시간 ${m % 60}분` : `${h}시간`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * P-221 — 대응 시계가 **하루를 넘기면 말이 바뀐다** (2026-09-21 · 턴 AA · 차선 U1)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * 세종이 고객 자리에 앉아 잰 것: 큐의 「가장 급한 하나」가 15일 전 사건이고 시계가
+ * **「377시간 27분」 빨강**이었다. *「제품은 옳다(오래 열린 것이 급하다). 그러나 고객
+ * 첫날 화면에 377시간은 「이 시스템은 방치돼 있다」로 읽힌다.」*
+ *
+ * ★ **수를 고치지 않는다. 말을 고친다.** `duration` 은 그대로다 — 그 함수는 5분 문턱과
+ *   초 단위를 재는 자리에 계속 쓰이고, 거기서 「0일」로 반올림되면 문턱이 안 보인다.
+ *   여기 더하는 것은 **읽는 쪽이 부르는 한 줄**이다.
+ * ★ **다음 손을 같은 줄에.** 하루가 넘은 사건에 남은 손은 대응이 아니라 종결 검토다
+ *   (「정직한 회색을 고객 말로」 · 문구 정본은 `copy.ts::elapsedDaysPhrase`).
+ * ★ 정확한 초는 **없어지지 않는다** — 부르는 쪽이 툴팁·스크린리더 라벨에 `duration`
+ *   을 그대로 싣는다. 감추는 것이 아니라 **큰 글자의 자리를 바꾸는 것**이다.
+ */
+/** 말이 바뀌는 문턱. 24시간 — 「하루가 넘었다」가 사람이 아는 단위다. */
+export const LONG_ELAPSED_SEC = 24 * 60 * 60;
+
+/** 이 경과가 **하루를 넘겼는가.** `null`(시계 없음)은 넘지 않은 것으로 본다. */
+export function isLongElapsed(seconds: number | null | undefined): boolean {
+  return (
+    seconds !== null && seconds !== undefined && Number.isFinite(seconds) &&
+    seconds >= LONG_ELAPSED_SEC
+  );
+}
+
+/**
+ * 시계의 **큰 글자**. 하루 아래면 종전 그대로(`duration`), 넘으면 날 + 다음 손.
+ *
+ * ★ 날 수는 **버림**이다. 15.7일을 「16일」로 적으면 아직 오지 않은 하루를 적은 것이
+ *   되고, 종결 검토 기한을 세는 사람이 그 하루를 잃는다.
+ */
+export function elapsedHeadline(seconds: number | null | undefined): string {
+  if (!isLongElapsed(seconds)) return duration(seconds);
+  return elapsedDaysPhrase(Math.floor((seconds as number) / LONG_ELAPSED_SEC));
 }
 
 /**

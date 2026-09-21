@@ -1,3 +1,102 @@
 # UX-20 제품 언어 — **오늘의 빚**. 줄이는 것만 허용한다 (래칫 · D-311).
 # 열쇠: 파일<TAB>패턴<TAB>발췌(공백 정규화). 줄 번호는 쓰지 않는다.
 # 잠근 날: 2026-09-06(턴 I) · 0건 · 본 비율 100%
+#
+# ★ 2026-09-21(턴 AA · 차선 Q) — P-221 로 술어 여덟을 더했다.
+#   더한 것: 역할·채널·상태 **표시명 사전** · 오류 본문(상태 숫자 · 우리 사정 ·
+#            빈 값 표시 · 영문 원문) · **빈 화면 「한 줄 + 다음 손」**.
+#
+# ★★ **여기 잠근 것은 「빈 화면 · 다음 손 없음」 84건뿐이다.**
+#   왜 그것만 잠그나: 그 술어 하나가 86건 중 84건을 낸다. 그 수를 그대로 빨강으로
+#   내면 사람이 게이트를 끈다 — **꺼진 게이트는 없는 게이트보다 나쁘다**(이 파일 §래칫).
+#   ⚠ 잠근 것은 **빚이지 면제가 아니다.** 한 자리를 고칠 때마다 이 파일에서 그 줄을
+#     지운다(래칫은 줄어드는 쪽으로만 움직인다). 새로 생기는 빈 화면은 **빨강**이다.
+#
+# ★ **표시명·오류 본문 2건은 잠그지 않았다 — 지금 빨강이다.**
+#   세종이 이 턴에 이름으로 지목한 바로 그 자리들이고, 넷은 두 차선이 이번 턴에
+#   고칠 수 있는 크기다. 회색을 잠그는 것과 **고칠 수 있는 빨강을 잠그는 것**은 다르다.
+#   (자리는 판정문이 전수로 낸다: python scripts/verify_ui_copy.py --list)
+frontend/src/features/dsm/components/EventSnapshot.tsx	빈 화면 · 다음 손 없음	저장소에 연결할 수 없습니다
+frontend/src/features/dsm/components/ResponseSteps.tsx	빈 화면 · 다음 손 없음	처리 단계를 아직 알 수 없습니다.
+frontend/src/features/dsm/components/StateBoundary.tsx	빈 화면 · 다음 손 없음	표시할 항목이 없습니다.
+frontend/src/features/dsm/copy.ts	빈 화면 · 다음 손 없음	아직 인계 메모가 없습니다.
+frontend/src/features/dsm/copy.ts	빈 화면 · 다음 손 없음	요청은 성공했고 보여 줄 것이 0건입니다.
+frontend/src/features/dsm/copy.ts	빈 화면 · 다음 손 없음	이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.
+frontend/src/features/dsm/copy.ts	빈 화면 · 다음 손 없음	이 계정에는 이 항목을 볼 권한이 없습니다.
+frontend/src/features/dsm/copy.ts	빈 화면 · 다음 손 없음	이 항목에 대한 권한이 없습니다.
+frontend/src/features/dsm/copy.ts	빈 화면 · 다음 손 없음	조치를 마쳤다고 알려 온 사건이 없습니다.
+frontend/src/features/dsm/copy.ts	빈 화면 · 다음 손 없음	지금 열려 있는 이벤트가 없습니다 — 평온합니다.
+frontend/src/features/dsm/copy.ts	빈 화면 · 다음 손 없음	지도에 표시할 위치가 없습니다.
+frontend/src/features/dsm/copy.ts	빈 화면 · 다음 손 없음	지운 뒤에는 되돌릴 수 없습니다
+frontend/src/features/dsm/pages/AuditLog.tsx	빈 화면 · 다음 손 없음	조건에 맞는 감사 기록이 없습니다. (요청은 성공했고 0건입니다)
+frontend/src/features/dsm/pages/CameraGrid.tsx	빈 화면 · 다음 손 없음	대는 응답을 받은 적이 없습니다.
+frontend/src/features/dsm/pages/CameraGrid.tsx	빈 화면 · 다음 손 없음	응답을 받은 적이 없습니다.
+frontend/src/features/dsm/pages/CameraGrid.tsx	빈 화면 · 다음 손 없음	카메라가 모두 한 화면에 들어와 넘길 쪽이 없습니다.
+frontend/src/features/dsm/pages/CameraImport.tsx	빈 화면 · 다음 손 없음	아직 잴 수 없습니다. 아래 ① 칸에 CSV 를 붙여넣고
+frontend/src/features/dsm/pages/CameraTuning.tsx	빈 화면 · 다음 손 없음	남는지 말할 수 없습니다. 0건이라는 뜻이 아닙니다.
+frontend/src/features/dsm/pages/CameraTuning.tsx	빈 화면 · 다음 손 없음	사유가 비어 있습니다. 사유 없이는 저장할 수 없습니다.
+frontend/src/features/dsm/pages/CameraTuning.tsx	빈 화면 · 다음 손 없음	아직 잴 수 없음 (판정 0건)
+frontend/src/features/dsm/pages/CameraTuning.tsx	빈 화면 · 다음 손 없음	아직 정해진 값이 없습니다
+frontend/src/features/dsm/pages/CameraTuning.tsx	빈 화면 · 다음 손 없음	여기서 끄는 동안 바뀌는 것은 없습니다.
+frontend/src/features/dsm/pages/CameraTuning.tsx	빈 화면 · 다음 손 없음	이 기간에 사건을 낸 카메라가 없습니다. (요청은 성공했고 0대입니다)
+frontend/src/features/dsm/pages/CameraTuning.tsx	빈 화면 · 다음 손 없음	이 문턱으로는 잴 수 없습니다.
+frontend/src/features/dsm/pages/CameraTuning.tsx	빈 화면 · 다음 손 없음	카메라마다 따로 정할 수 있는 임계값 항목이 아직 없습니다.
+frontend/src/features/dsm/pages/ControlDashboard.tsx	빈 화면 · 다음 손 없음	최근 이벤트가 없습니다. (요청은 성공했고 0건입니다)
+frontend/src/features/dsm/pages/DrillMode.tsx	빈 화면 · 다음 손 없음	아직 보고서가 없습니다.
+frontend/src/features/dsm/pages/DrillMode.tsx	빈 화면 · 다음 손 없음	켠 적이 없습니다
+frontend/src/features/dsm/pages/EventDetail.tsx	빈 화면 · 다음 손 없음	발송 기록이 없습니다. (요청은 성공했고 0건입니다)
+frontend/src/features/dsm/pages/EventDetail.tsx	빈 화면 · 다음 손 없음	여기서 옮길 수 있는 다음 단계가 없습니다.
+frontend/src/features/dsm/pages/EventDetail.tsx	빈 화면 · 다음 손 없음	종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다.
+frontend/src/features/dsm/pages/EventList.tsx	빈 화면 · 다음 손 없음	아직 판정한 이벤트가 없습니다
+frontend/src/features/dsm/pages/EventList.tsx	빈 화면 · 다음 손 없음	조건에 맞는 이벤트가 없습니다. (요청은 성공했고 0건입니다)
+frontend/src/features/dsm/pages/EventList.tsx	빈 화면 · 다음 손 없음	카메라 이름으로 찾는 기능은 아직 없습니다.
+frontend/src/features/dsm/pages/FocusQueue.tsx	빈 화면 · 다음 손 없음	건이 왔지만 「지원 요청」·「조치 완료」 표시가 붙은 것은 0건입니다.
+frontend/src/features/dsm/pages/FocusQueue.tsx	빈 화면 · 다음 손 없음	대기 중인 카드가 없습니다.
+frontend/src/features/dsm/pages/FocusQueue.tsx	빈 화면 · 다음 손 없음	더 갈 곳이 없습니다 — 이 사건은 마지막 단계입니다.
+frontend/src/features/dsm/pages/FocusQueue.tsx	빈 화면 · 다음 손 없음	시계가 도는 사건이 0건입니다 — 경과 순위를 매기지 않습니다.
+frontend/src/features/dsm/pages/FocusQueue.tsx	빈 화면 · 다음 손 없음	열려 있는 이벤트가 0건입니다 — 못 가져온 것이 아니라 없습니다.
+frontend/src/features/dsm/pages/FocusQueue.tsx	빈 화면 · 다음 손 없음	지금 가장 급한 사건이 없습니다.
+frontend/src/features/dsm/pages/FocusQueue.tsx	빈 화면 · 다음 손 없음	지금 열려 있는 이벤트가 없습니다 — 평온합니다.
+frontend/src/features/dsm/pages/Home.tsx	빈 화면 · 다음 손 없음	아직 잴 수 없습니다
+frontend/src/features/dsm/pages/Home.tsx	빈 화면 · 다음 손 없음	아직 판정한 사건이 없습니다
+frontend/src/features/dsm/pages/Home.tsx	빈 화면 · 다음 손 없음	이 기간에 판정한 사람이 없습니다.
+frontend/src/features/dsm/pages/Integrations.tsx	빈 화면 · 다음 손 없음	구독이 없습니다.
+frontend/src/features/dsm/pages/Integrations.tsx	빈 화면 · 다음 손 없음	발급된 키가 없습니다.
+frontend/src/features/dsm/pages/Integrations.tsx	빈 화면 · 다음 손 없음	범위 선언이 비어 있습니다
+frontend/src/features/dsm/pages/Me.tsx	빈 화면 · 다음 손 없음	내 역할을 가리키는 알림 규칙이 없습니다. 규칙은 사람이 아니라
+frontend/src/features/dsm/pages/Me.tsx	빈 화면 · 다음 손 없음	지금 나에게 오는 알림이 없습니다.
+frontend/src/features/dsm/pages/NotifySettings.tsx	빈 화면 · 다음 손 없음	심각 등급 규칙이 없거나, 규칙이 가리키는 역할에 사람이 없습니다.
+frontend/src/features/dsm/pages/NotifySettings.tsx	빈 화면 · 다음 손 없음	아직 규칙이 없습니다.
+frontend/src/features/dsm/pages/NotifySettings.tsx	빈 화면 · 다음 손 없음	지금 심각 경보를 받는 사람이 없습니다.
+frontend/src/features/dsm/pages/PrivacyRequests.tsx	빈 화면 · 다음 손 없음	이 기간에 남아 있는 영상이 없습니다.
+frontend/src/features/dsm/pages/PrivacyRequests.tsx	빈 화면 · 다음 손 없음	접수된 청구가 없습니다.
+frontend/src/features/dsm/pages/Reports.tsx	빈 화면 · 다음 손 없음	아직 만든 보고서가 없습니다.
+frontend/src/features/dsm/pages/SettingsRules.tsx	빈 화면 · 다음 손 없음	계약이 정한 값이라 이 화면에서 바꿀 수 없습니다.
+frontend/src/features/dsm/pages/SettingsRules.tsx	빈 화면 · 다음 손 없음	사유가 비어 있습니다. 사유 없이는 저장할 수 없습니다.
+frontend/src/features/dsm/pages/SettingsRules.tsx	빈 화면 · 다음 손 없음	아직 만든 구역이 없습니다. (요청은 성공했고 0건입니다)
+frontend/src/features/dsm/pages/SettingsRules.tsx	빈 화면 · 다음 손 없음	아직 바꾼 기록이 없습니다. (요청은 성공했고 0건입니다)
+frontend/src/features/dsm/pages/SettingsRules.tsx	빈 화면 · 다음 손 없음	읽을 규칙이 없습니다. (요청은 성공했고 0건입니다)
+frontend/src/features/dsm/pages/SettingsRules.tsx	빈 화면 · 다음 손 없음	읽을 항목이 없습니다. (요청은 성공했고 0건입니다)
+frontend/src/features/dsm/pages/SettingsRules.tsx	빈 화면 · 다음 손 없음	판정할 수 없습니다
+frontend/src/features/dsm/pages/Stats.tsx	빈 화면 · 다음 손 없음	이 기간에 사건이 없습니다. (요청은 성공했고 0건입니다)
+frontend/src/features/dsm/pages/SystemSettings.tsx	빈 화면 · 다음 손 없음	백업 선언을 읽는 자리가 아직 없습니다.
+frontend/src/features/dsm/pages/SystemSettings.tsx	빈 화면 · 다음 손 없음	복구되는지 확인한 적이 없습니다. 뜬 백업은 복구해 봐야 백업입니다.
+frontend/src/features/dsm/pages/SystemSettings.tsx	빈 화면 · 다음 손 없음	아직 올린 재시작 요청이 없습니다.
+frontend/src/features/dsm/pages/SystemSettings.tsx	빈 화면 · 다음 손 없음	이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.
+frontend/src/features/dsm/pages/SystemSettings.tsx	빈 화면 · 다음 손 없음	행 수가 없어 복구 성공을 판정할 수 없습니다
+frontend/src/features/dsm/pages/TeamStatus.tsx	빈 화면 · 다음 손 없음	이 기간에 판정한 요원이 없습니다. (요청은 성공했고 0명입니다)
+frontend/src/features/dsm/pages/Wall.tsx	빈 화면 · 다음 손 없음	이 항목에 대한 권한이 없습니다. 다시 로그인해 주십시오.
+frontend/src/features/dsm/pages/Wall.tsx	빈 화면 · 다음 손 없음	지도에 표시할 위치가 없습니다.
+frontend/src/features/dsm/pages/Wall.tsx	빈 화면 · 다음 손 없음	표시할 항목이 없습니다.
+frontend/src/features/dsm/roleNames.ts	빈 화면 · 다음 손 없음	— 이 코드의 표시명이 사전에 없습니다
+frontend/src/features/dsm/time.ts	빈 화면 · 다음 손 없음	시계가 도는 사건이 이 하나뿐입니다 — 견줄 상대가 없습니다.
+frontend/src/features/dsm/wallToken.ts	빈 화면 · 다음 손 없음	월 표시 토큰이 없습니다.
+frontend/src/features/mobile/pages/MobileEventDetail.tsx	빈 화면 · 다음 손 없음	아직 회신이 없습니다.
+frontend/src/features/mobile/pages/MobileEventDetail.tsx	빈 화면 · 다음 손 없음	이 이벤트에는 스냅샷 참조가 없습니다.
+frontend/src/features/mobile/pages/MobileEventDetail.tsx	빈 화면 · 다음 손 없음	일 동안 다른 사건이 0건입니다.
+frontend/src/features/mobile/pages/MobileEventDetail.tsx	빈 화면 · 다음 손 없음	저장된 구간이 없습니다
+frontend/src/features/mobile/pages/MobileEventDetail.tsx	빈 화면 · 다음 손 없음	지금 이 계정이 옮길 수 있는 다음 단계가 없습니다.
+frontend/src/features/mobile/pages/MobileInbox.tsx	빈 화면 · 다음 손 없음	내게 온 발송 0건
+frontend/src/features/mobile/pages/MobileInbox.tsx	빈 화면 · 다음 손 없음	발송 기록 0건
+frontend/src/features/mobile/pages/MobileInbox.tsx	빈 화면 · 다음 손 없음	이벤트 속성에 대한 권한이 없습니다 — 발송 기록만 보입니다.
+frontend/src/features/mobile/push.ts	빈 화면 · 다음 손 없음	이 환경에서는 알림을 켤 수 없습니다.

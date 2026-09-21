@@ -1,11 +1,11 @@
 {
  "n": 39,
- "구현": 10,
+ "구현": 17,
  "빨강": 0,
- "미측정": 22,
+ "미측정": 15,
  "잠김": 7,
- "ratio": 0.2564102564102564,
- "weighted": 5.128205128205128,
+ "ratio": 0.4358974358974359,
+ "weighted": 8.717948717948719,
  "rows": [
   {
    "id": "F-01-c1",
@@ -29,8 +29,8 @@
   },
   {
    "id": "F-02-c3",
-   "color": "회색",
-   "why": "row_map: 화면 없음 — 서버 문 POST·GET /api/dsm/settings/thresholds 실재(backend/apps/dsm/api.py:903 · :1091) · 부르는 화면 0(frontend grep 0) · 역할 계정 캡처 /operation-settings(admin)는 설정 API 를 한 건도 안 불렀다(INDEX.yaml:578-591) — 그 화면은 인수 화면이다"
+   "color": "초록",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「그 축은 **카메라별**이고 계약이 말하는 것은 **지점(구역)별**이라 다른 축이다」는 **거꾸로였다.** 계약 절 대장 자신이 F-02-c3 의 주석에 이렇게 적어 두었다: 「계약이 「지점별」이라고 못박았으므로 **적용 범위를 camera 로 두고**, 좁은 것이 이기게 했다(camera → tenant → global). 관리자가 F-12 쓰기 문으로 지점마다 넣는다」. 그리고 `CameraTuning.tsx:223` 이 정확히 그렇게 부른다 — POST /api/dsm/settings/thresholds `scope_level='camera'` · `scope_ref=cameraId`. U2 fire_admin 이 GET /api/dsm/stats/camera-thresholds 200 으로 봤다(캡처 34번). ⚠ **A 는 이 절의 「누른 뒤」를 못 쟀다** — CameraTuning 은 카메라를 먼저 고르는 자리라 이번 턴 준비 단계가 안 섰다. 여기 선 것은 **도달**이고 저장 왕복이 아니다 ← 화면 /dsm/cameras/tuning · /api/dsm/stats/camera-thresholds 200 · 역할 fire_admin · 시드 | SCREENS-1/fire_admin/dsm_cameras_tuning_scope.png"
   },
   {
    "id": "F-03-c1",
@@ -45,7 +45,7 @@
   {
    "id": "F-03-c3",
    "color": "회색",
-   "why": "row_map: 화면 없음 — 구역 저장 문 실재(backend/apps/dsm/services.py:738-741 save_zone) · 편집 화면 0(frontend grep 0)"
+   "why": "row_map: 화면 없음 — [턴 AA 재확인 · 2026-09-21 · 사유 그대로 참, 근거를 바꾼다] 옛 근거 「편집 화면 0」은 낡았다 — `/dsm/settings/rules` 가 섰다. 그러나 **폴리곤은 그 화면으로 저장되지 않는다**: [실측 · 돌고 있는 서버의 서명으로 A/B] `POST /settings/zones` 의 `geometry` 는 **질의에 실리는 객체 칸**이고 브라우저가 질의에 실을 수 있는 것은 글자뿐이라 JSON 을 글자로 보내면 422(`geometry: Input should be a valid dictionary (input_type=str)`)에서 멈춘다. 같은 호출의 `kind=camera_group`(도형 없음)은 통과한다. 서버가 `geometry` 를 "
   },
   {
    "id": "F-04-c1",
@@ -100,7 +100,7 @@
   {
    "id": "F-09-c1",
    "color": "회색",
-   "why": "row_map: 역할 캡처 없음 — 화면은 있다 — /dsm/dashboard 기본 상태 1장(fire_user · 시드 · INDEX.yaml:153-168). 네 상태의 역할 계정 캡처 0. 로그인 다섯 장은 다른 화면이고 넷은 모의다(INDEX.yaml:113-152)"
+   "why": "row_map: 역할 캡처 없음 — [턴 AA 보강 · 2026-09-21 · **blocker 는 그대로**] 화면은 있다 — /dsm/dashboard 기본 상태 1장(fire_user · 시드). 없는 것은 **네 상태(로딩·빈·오류·권한없음)의 역할 계정 캡처 0장**이다. ★ 다음 사람이 「무엇을 찍어야 하나」를 정할 수 있게 **칸을 이름으로** 적는다: 그 다섯을 화면이 서버 값 그대로 적는 자리는 `ControlDashboard.tsx:193` 이 `GET /api/dsm/dashboard/frame` 의 **`five_states`** 를 펴는 곳이고, 서버 쪽 정본은 `apps/dsm/api.py:165` · `apps/dsm/services.py:170` 의 `FIVE_STATES` (「"
   },
   {
    "id": "F-09-c2",
@@ -130,22 +130,22 @@
   {
    "id": "F-11-c1",
    "color": "회색",
-   "why": "row_map: 화면 없음 — /report-template(view_only)이 부른 것은 인수 서식 print-formats · DeliveryOperation(INDEX.yaml:460-474). report.pdf 문(api.py:802)을 누르는 화면 없음(judgement_20260915_0654Z.txt:83)"
+   "why": "row_map: 셋째 변수가 종이에 안 실린다 — [턴 AA 재판정 · 2026-09-21] ★ **화면 탓이 아니다 — 사유를 갈아 끼운다.** `/dsm/reports` 는 섰다(F-11-c2·c3 이 그 화면으로 이어졌다). 그러나 이 절이 묻는 것은 **변수 3종**이고 셋 중 둘만 종이에 닿는다: `kernels/k4_report/schemas.py:26` 이 REQUIRED_VARIABLES=('events','actions','captures') 로 셋을 잠갔고 `services.py:185` 가 `captures` 를 **만든다**. 그런데 `apps/dsm/incident_report.py::build_incident_html` 은 `build_html(event=…, clock=…, act"
   },
   {
    "id": "F-11-c2",
-   "color": "회색",
-   "why": "row_map: 화면 없음 — F-11-c1 과 같은 사유"
+   "color": "초록",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「/report-template(view_only)이 부른 것은 인수 서식 print-formats」는 **여전히 참이되 자리가 낡았다** — 우리 층의 보고서 화면이 턴 U 에 섰다: `/dsm/reports`(Reports.tsx · App.tsx:724)가 GET/POST /api/dsm/reports/runs 와 `…/{id}.docx`·`.pdf` 를 부른다. 인수 화면의 `/api/report-template/` 과 **다른 문**이다. U2 fire_admin 200 실측(캡처 35번). 손입력 0 — 종이의 칸은 서버가 집계에서 채운다. 사람이 적는 칸은 「특이사항」 한 줄뿐이고 그것은 손입력이 아니라 **덧붙임**이다(자동본이 이미 완성돼 있고 비워도 종이의 칸이 남는다) ← 화면 /dsm/reports · /api/dsm/reports/runs 200 · 역할 fire_admin · 시드 | SCREENS-1/fire_admin/dsm_reports_runs.png"
   },
   {
    "id": "F-11-c3",
-   "color": "회색",
-   "why": "row_map: 화면 없음 — F-11-c1 과 같은 사유"
+   "color": "초록",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「/report-template(view_only)이 부른 것은 인수 서식 print-formats」는 **여전히 참이되 자리가 낡았다** — 우리 층의 보고서 화면이 턴 U 에 섰다: `/dsm/reports`(Reports.tsx · App.tsx:724)가 GET/POST /api/dsm/reports/runs 와 `…/{id}.docx`·`.pdf` 를 부른다. 인수 화면의 `/api/report-template/` 과 **다른 문**이다. U2 fire_admin 200 실측(캡처 35번). 치환은 `apps/dsm/incident_report.py` 의 `build_html`·`build_monthly_html`·`build_upper_html` 이 한다. 화면은 실행 기록을 만들고 파일을 받는다 — 화면이 제 표를 파일로 적지 않는다 ← 화면 /dsm/reports · /api/dsm/reports/runs 200 · 역할 fire_admin · 시드 | SCREENS-1/fire_admin/dsm_reports_runs.png"
   },
   {
    "id": "F-12-c1",
-   "color": "회색",
-   "why": "row_map: 화면 없음 — 관리자 설정 화면이 없다. 곁 증거 [실측 · 화면 아님]: click_completes.json:3016-3037 — POST /api/dsm/settings/api-keys → 403 「설정 변경 권한이 없는 계정 (감사 #211637)」. HTTP 관측이지 역할 계정이 누른 화면이 아니다 — 회색을 초록으로 바꾸는 근거가 못 된다. 게이트 경로(`gate:`) 후보로만 적는다"
+   "color": "초록",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「관리자 설정 화면이 없다 · 곁 증거는 HTTP 관측이지 역할 계정이 누른 화면이 아니다」에서 **뒤 절반은 여전히 옳고 앞 절반이 낡았다.** 이제 그 화면이 있고 **권한 없는 역할 계정이 그 주소를 실제로 열었다**: U4 view_only 로 세 문이 전부 403 이고(캡처 33번) 화면이 제 자리에서 「이 항목에 대한 권한이 없습니다.」를 적는다(`ownDenialPaths(['/api/dsm/settings/'])`). 다른 자리(`/surveillance-dashboard`)의 403 을 이 절의 증거로 쓰지 않는다 — 계약이 말하는 것은 **관리자 설정**이다 ← 화면 /dsm/settings/rules · /api/dsm/settings/zones 403 · 역할 view_only_-_anyang · 시드 | SCREENS-1/view_only_-_anyang/dsm_settings_rules_denied.png"
   },
   {
    "id": "F-12-c2",
@@ -164,18 +164,18 @@
   },
   {
    "id": "F-12-c5",
-   "color": "회색",
-   "why": "row_map: 화면 없음 — 구역 저장 문 실재(services.py:738-741) · 화면 0"
+   "color": "초록",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「구역 저장 문 실재 · 화면 0」이 낡았다 — `/dsm/settings/rules`(턴 Z · SettingsRules.tsx · App.tsx:757)의 「구역」 탭이 GET/POST /api/dsm/settings/zones 를 부른다. U5 admin 이 200 으로 봤다(캡처 32번). 누른 뒤는 `verify_click_completes` 설정 표 U5#S1(끄기/켜기)·U5#S2(만들기)가 잰다 ← 화면 /dsm/settings/rules · /api/dsm/settings/zones 200 · 역할 admin · 시드 | SCREENS-1/admin/dsm_settings_rules_admin.png"
   },
   {
    "id": "F-12-c6",
-   "color": "회색",
-   "why": "row_map: 화면 없음 — POST /api/dsm/settings/thresholds(api.py:903) · 화면 0"
+   "color": "초록",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「그 문을 부르는 화면은 아직 0건」이 **두 겹으로** 낡았다: (1) `CameraTuning.tsx:223` 이 이미 POST /api/dsm/settings/thresholds 를 `scope_level='camera'` 로 부르고 있었고 (2) 이번 턴 `/dsm/settings/rules` 의 「임계값」 탭이 GET/POST 를 둘 다 부른다. U5 admin 200 실측(캡처 32번). 누른 뒤는 설정 표 U5#S3 가 잰다 — 계약이 잠근 값은 고르지 않는다(그 잠김은 규율이다) ← 화면 /dsm/settings/rules · /api/dsm/settings/thresholds 200 · 역할 admin · 시드 | SCREENS-1/admin/dsm_settings_rules_admin.png"
   },
   {
    "id": "F-12-c7",
-   "color": "회색",
-   "why": "row_map: 화면 없음 — 등급규칙 쓰기 문 실재(services.py:825-828 set_grade_rule) · 화면 0"
+   "color": "초록",
+   "why": "[턴 AA 재판정 · 2026-09-21] 「등급규칙 관리 화면이 없다」가 낡았다 — `/dsm/settings/rules` 의 「등급규칙」 탭이 GET /api/dsm/settings/grade_rules(**밑줄**)를 읽고 POST /api/dsm/settings/grade-rules(**하이픈**)로 쓴다. U5 admin 200 실측(캡처 32번). 누른 뒤는 설정 표 U5#S4 가 잰다 — **올리는 쪽으로만** 재고 되돌린다(낮추면 경보가 꺼진다) ← 화면 /dsm/settings/rules · /api/dsm/settings/grade_rules 200 · 역할 admin · 시드 | SCREENS-1/admin/dsm_settings_rules_admin.png"
   },
   {
    "id": "F-12-c8",
@@ -200,7 +200,7 @@
   {
    "id": "F-14-c2",
    "color": "회색",
-   "why": "row_map: 화면 없음 — /dsm/events 요약 한 줄은 12시간 창의 오탐 수다(INDEX.yaml:180 summary?hours=12) — 월간 산출이 아니다. 잇지 않았다"
+   "why": "row_map: 화면 없음 — [턴 AA 재판정 · 2026-09-21 · **잇지 않는다**] 종전 사유(「12시간 창의 오탐 수다 — 월간 산출이 아니다」)는 여전히 참이되 **자리가 낡았다**: 그 문장은 `/dsm/events` 요약 줄을 보고 쓴 것이고, 이제 봐야 할 자리는 **월간 자동본**이다. 실측 셋: (1) 자동본을 그리는 함수는 `apps/dsm/incident_report.py::build_monthly_html` 하나다(`monthly_report.py::html_for_run` 이 kind==monthly 일 때 부른다) (2) 그 함수가 그리는 절은 **여섯**이고 오탐이 없다(이번 달 한 장 요약 · 등급별 · 유형별 · 카메라별 · 시간대별 · 대응 진행) (3) ⚠ 가장 헷"
   }
  ]
 }

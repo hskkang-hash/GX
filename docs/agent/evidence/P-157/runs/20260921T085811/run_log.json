@@ -1,0 +1,15 @@
+{
+  "harness": "scripts/capture_screens.py",
+  "scenario": "SCREENS-1",
+  "ran_at": "2026-09-21T16:00:43",
+  "steps": {
+    "SCREENS-1/6": "2026-09-21T15:59:06",
+    "SCREENS-1/7": "2026-09-21T15:59:24",
+    "SCREENS-1/8": "2026-09-21T15:59:37",
+    "SCREENS-1/14": "2026-09-21T16:00:06",
+    "SCREENS-1/30": "2026-09-21T16:00:18",
+    "SCREENS-1/31": "2026-09-21T16:00:32",
+    "SCREENS-1/32": "2026-09-21T16:00:42"
+  },
+  "page_errors": []
+}

@@ -785,10 +785,29 @@ def _with_chain_columns(payload: dict) -> dict:
 #   사건의 **존재 여부가 샌다**(`get_event` 머리말 — 403 을 안 쓰는 그 이유 그대로).
 #   그래서 남의 사건은 「없다」로 읽히고, 스냅샷에 없으므로 `gone` 이다 — 닫는 쪽이 기본값.
 
-#: 대상 갈래 셋. 「모른다」를 지우지 않는다(체인 칸 `CHAIN_UNKNOWN` 과 같은 규율).
+#: 대상 갈래 **넷**. 「모른다」를 지우지 않는다(체인 칸 `CHAIN_UNKNOWN` 과 같은 규율).
 TARGET_LIVE = "live"
 TARGET_DELETED_BY_DECISION = "deleted_by_decision"
+#: ★★ [턴 AA · U24] 넷째가 늘었다 — **없는 번호를 가리킨 막힌 시도.**
+#:   [실측 2026-09-21] `upper_report:set:999999999` 두 행. 결과 막힘 · HTTP 404 ·
+#:   사유 「사건이 없거나 남의 테넌트다」. 999999999 는 **어느 스냅샷에도 없다.**
+#:   이 두 행을 `gone`(사라진 사건 · 기록된 결정 없음)에 섞어 두면 화면이 「있던 사건이
+#:   없어졌다」고 말하는 것이 되는데, 그 사건은 **처음부터 없었고 서버가 그때 막았다.**
+#:   ⚠ 턴 Z 에 조율자가 이 두 행에 「삭제된 사건 · 대표 결정」을 적으라고 했고 거절했다.
+#:     거절은 옳았지만 거절만으로는 행이 제 이름을 얻지 못한다 — 이 갈래가 그 이름이다.
+TARGET_DENIED_ATTEMPT = "denied_attempt"
 TARGET_GONE = "gone"
+#: 다섯째는 **갈래가 아니라 「못 쟀다」**다 — 상한에 닿아 이 쪽에서 안 물어본 행.
+#: 「모른다」를 지우지 않는다: 안 물어본 것을 `gone` 으로 적으면 **없어지지 않은 사건이
+#: 사라진 것**이 되고, `live` 로 적으면 **없어진 사건이 살아 있는 것**이 된다.
+TARGET_UNKNOWN = "unknown"
+
+#: 쪽 하나에서 **커널 문을 두드리는 사건 수의 상한.**
+#: [실측 2026-09-21 · 50행 한 쪽 · 서로 다른 사건 9] 질의 45 · 0.06초 — 사건 하나에
+#: 약 다섯 질의다. 쪽 크기 상한은 200 이므로 상한이 없으면 한 쪽이 **질의 1,000**까지
+#: 간다. 그래서 상한을 두고, **닿았다고 말한다**(`target_scan_capped` · 체인 칸의
+#: `chain_scan_capped` 와 같은 규약 — 잘린 표본은 잘렸다고 말한다 · D-301).
+TARGET_SCAN_MAX_EVENTS = 60
 
 #: ★ 삭제를 집행한 **결정**과 그 **스냅샷**. 화면이 지어내는 말이 아니라 여기 적힌 사실이다.
 DELETED_EVENT_DECISION = "대표 결정"
@@ -807,6 +826,32 @@ DELETED_EVENT_IDS = frozenset({
     285639, 285640, 285641, 285642,
 })
 
+#: ★★ [턴 AA · U24] **삭제는 두 번 있었다.** 대표 결정 2026-09-21 ②(「씨앗 삭제 그대로」)가
+#:   사건 넷을 더 지웠고, 그 스냅샷이 따로 있다. 턴 Z 에 이 넷을 안 넣은 이유는
+#:   **분모가 0** 이었기 때문이다 — 그때 화면은 `action` 한 모양만 읽었고 그 모양으로
+#:   이 넷을 가리키는 행은 0 이었다. 이 턴에 `event_ref` 를 읽기 시작하면서 분모가
+#:   **16 행**이 됐다 [실측 2026-09-21 · U4 테넌트]. 분모가 생겼으므로 이름을 준다.
+#:   ⚠ 두 스냅샷을 **한 상수로 합치지 않는다.** 결정 날짜가 다르고, 합치면 09-21 에
+#:     지워진 사건에 「대표 결정 2026-09-20」이 찍힌다 — 없던 날짜를 종이에 만드는 것이다.
+DELETED_EVENT_DECIDED_ON_20260921 = "2026-09-21"
+DELETED_EVENT_SNAPSHOT_20260921 = (
+    "docs/agent/evidence/P-184/deleted_probe_snapshot_20260921.json")
+DELETED_EVENT_IDS_20260921 = frozenset({295402, 295403, 295404, 295405})
+
+
+def deleted_event_decision(event_id: int) -> tuple[str, str] | None:
+    """이 사건 id 가 **어느 결정으로 지워졌나** — (결정 날짜, 스냅샷). 모르면 `None`.
+
+    ★ 스냅샷에 적힌 id 만 답한다. 「없으면 지워진 것」으로 읽지 않는다 — 우리가 증명할
+      수 있는 것은 스냅샷에 적힌 id 뿐이다(D-280).
+    """
+    if event_id in DELETED_EVENT_IDS:
+        return DELETED_EVENT_DECIDED_ON, DELETED_EVENT_SNAPSHOT
+    if event_id in DELETED_EVENT_IDS_20260921:
+        return (DELETED_EVENT_DECIDED_ON_20260921,
+                DELETED_EVENT_SNAPSHOT_20260921)
+    return None
+
 #: 감사 행이 사건을 가리키는 **유일한 모양** — `api_u24._upper_report_set/_clear` 가 적는다.
 #: 다른 모양이 생기면 여기 늘린다. 억지로 숫자를 긁지 않는다: 아무 숫자나 사건 id 로
 #: 읽으면 「설정 변경 write:inbound_api_key:rotate:7」의 7 이 사건 7 이 된다.
@@ -819,6 +864,36 @@ def target_event_id(action: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
+def row_event_id(item: dict) -> int | None:
+    """감사 행 하나가 가리키는 사건 id — **축 둘을 한 답으로.**
+
+    ★★ [턴 AA · U24] 왜 이 함수가 생겼나 — **화면이 180 행 앞에서 침묵했다.**
+      [실측 2026-09-21 · U4 테넌트 2,194 행] 사건을 가리키는 행 **273** 중
+      `action` 이 답하는 것은 **2** 뿐이고, 나머지 **271** 은 번호를 `action` 이 아니라
+      `data_before`/`data_after` 페이로드에 든다. 그 271 을 화면이 한 자도 못 읽었다.
+
+      · 축 ① `action` — `upper_report:set|clear:<id>` 한 모양. `api_u24` 가 적는다.
+      · 축 ② `event_ref` — 페이로드의 사건 번호. `audit.read_page` 가 실어 준다
+        (턴 Z · U56). 판정식은 `common/evidence_chain.event_ref_of` 하나이고
+        `dangling_event_refs` 도 같은 함수를 부른다 — **화면이 세는 수와 체인이 세는
+        수가 같은 자에서 나온다.**
+
+    ★ 축 ①을 **먼저** 본다. 공짜이고(문자열 한 번) 이미 시험이 그 모양을 못 박아 뒀다
+      (`TheActionShapeIsPinnedTest`). 축 ②는 **대체가 아니라 보완**이다 — ①이 답하면
+      ①이 답이다.
+    ⚠ 여기서 판정식을 새로 쓰지 않는다. 억지로 숫자를 긁으면 「설정 변경
+      write:inbound_api_key:rotate:7」의 7 이 사건 7 이 된다.
+    """
+    by_action = target_event_id(item.get("action") or "")
+    if by_action is not None:
+        return by_action
+    ref = item.get("event_ref")
+    try:
+        return int(ref) if ref is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
 def _resolve_event_target(event_id: int, *, scope: TenantScope) -> str:
     from django.http import Http404
 
@@ -827,9 +902,24 @@ def _resolve_event_target(event_id: int, *, scope: TenantScope) -> str:
     try:
         services.event_detail(scope=scope, event_id=event_id)
     except Http404:
-        return (TARGET_DELETED_BY_DECISION if event_id in DELETED_EVENT_IDS
-                else TARGET_GONE)
+        return (TARGET_DELETED_BY_DECISION
+                if deleted_event_decision(event_id) is not None else TARGET_GONE)
     return TARGET_LIVE
+
+
+def _is_denied_attempt(item: dict) -> bool:
+    """이 **행 자신**이 막혔는가 — 없는 번호를 가리킨 시도인가.
+
+    ★ 추측이 아니라 **행에 적힌 사실**이다: 결과가 「막힘」이고 서버가 그때 404 를 냈다.
+      즉 그 사건은 **그 시각에 이미 없었다** — 나중에 사라진 것이 아니다.
+      [실측 2026-09-21] 이 모양의 행은 둘이고 둘 다 `upper_report:set:999999999` 다.
+    ⚠ 결과만으로는 안 된다(막힘에는 권한 거절도 있다) · 404 만으로도 안 된다.
+      **둘이 같이** 참일 때만 이 이름을 준다.
+    """
+    from apps.dsm import audit
+
+    return (item.get("outcome") == audit.DENIED
+            and item.get("status_http") == 404)
 
 
 def _with_target_column(payload: dict, *, scope: TenantScope) -> dict:
@@ -842,32 +932,52 @@ def _with_target_column(payload: dict, *, scope: TenantScope) -> dict:
       그때마다 커널 문을 두드리면 쪽 하나가 쪽 수만큼 질의를 낸다.
     """
     items = list(payload.get("items") or ())
-    counts = {"none": 0, TARGET_LIVE: 0,
-              TARGET_DELETED_BY_DECISION: 0, TARGET_GONE: 0}
+    counts = {"none": 0, TARGET_LIVE: 0, TARGET_DELETED_BY_DECISION: 0,
+              TARGET_DENIED_ATTEMPT: 0, TARGET_GONE: 0, TARGET_UNKNOWN: 0}
     seen: dict[int, str] = {}
+    capped = False
     for item in items:
-        event_id = target_event_id(item.get("action") or "")
+        #: ★ [턴 AA] `action` 한 모양이 아니라 **축 둘**을 본다 — 271 행이 여기서 말을 얻는다.
+        event_id = row_event_id(item)
         if event_id is None:
             item["target"] = None
             counts["none"] += 1
             continue
         state = seen.get(event_id)
         if state is None:
-            state = _resolve_event_target(event_id, scope=scope)
+            if len(seen) >= TARGET_SCAN_MAX_EVENTS:
+                #: 상한에 닿았다 — **안 물어본다. 그리고 안 물어봤다고 적는다.**
+                capped = True
+                state = TARGET_UNKNOWN
+            else:
+                state = _resolve_event_target(event_id, scope=scope)
             seen[event_id] = state
-        deleted = state == TARGET_DELETED_BY_DECISION
+        #: ★ 「없다」의 갈래를 하나 더 가른다. **행 자신이 그때 막혔으면** 그 사건은
+        #:   나중에 사라진 것이 아니라 **처음부터 없었다.** 사건 단위 판정(`seen`)에
+        #:   섞지 않는 이유가 이것이다 — 이것은 **행의 사실**이다.
+        if state == TARGET_GONE and _is_denied_attempt(item):
+            state = TARGET_DENIED_ATTEMPT
+        decision = (deleted_event_decision(event_id)
+                    if state == TARGET_DELETED_BY_DECISION else None)
         item["target"] = {
             "kind": "event",
             "event_id": event_id,
             "state": state,
+            #: 이 행이 사건 번호를 **어디서** 얻었나. 화면은 안 그리지만 CSV 와 시험이
+            #: 이 칸으로 「축 ②가 실제로 일하고 있는가」를 분모와 함께 읽는다.
+            "via": "action" if target_event_id(item.get("action") or "") is not None
+                   else "payload",
             #: 결정·스냅샷은 **삭제로 판정한 행에만** 적는다. 아무 행에나 붙이면
             #: 「대표가 지웠다」가 모든 행의 배경 소음이 된다.
-            "decision": DELETED_EVENT_DECISION if deleted else None,
-            "decided_on": DELETED_EVENT_DECIDED_ON if deleted else None,
-            "snapshot": DELETED_EVENT_SNAPSHOT if deleted else None,
+            "decision": DELETED_EVENT_DECISION if decision else None,
+            "decided_on": decision[0] if decision else None,
+            "snapshot": decision[1] if decision else None,
         }
         counts[state] += 1
     payload["target_states"] = counts
+    #: 닿았는가를 **언제나** 낸다(거짓일 때도). 칸이 있을 때만 나오면 화면은
+    #: 「이 서버는 그 사실을 모른다」와 「안 닿았다」를 못 가른다.
+    payload["target_scan_capped"] = capped
     return payload
 
 

@@ -200,7 +200,7 @@ export default function IntegrationsPage() {
           dsmU56IntegrationEndpoint.apiKeyRevoke(row.key_id),
         );
         setKeyStatus(
-          `폐기됨 — 키 #${done.key_id} · ${done.name} · 상태 ${done.status} · 행은 남고 꺼졌습니다`,
+          `폐기됨 — 키 #${done.key_id} · ${done.name} · 상태 ${done.status_label || done.status} · 행은 남고 꺼졌습니다`,
         );
         keys.reload();
       } catch (err) {
@@ -398,6 +398,21 @@ export default function IntegrationsPage() {
                   </Text>
                 }
               />
+              {/*
+                * ③ [턴 AA · U56 · P-220] 시험 키를 번 수를 **보이게** 둔다.
+                * 조용히 빼면 「키 3건」과 「3건인데 18건을 숨겼다」가 같은
+                * 그림이 되고, 그러면 우리가 남의 테넌트에 시험 장치를 몇 개
+                * 심어 두었는지 아무도 못 읽는다.
+                */}
+              {keys.data.inbound_hidden_by_marker ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  data-gx="apikey-hidden-by-marker"
+                  message={`이 표에서 시험·점검용 키 ${keys.data.inbound_hidden_by_marker}건을 뺌습니다`}
+                  description={keys.data.inbound_hidden_reason}
+                />
+              ) : null}
               <Table<InboundApiKeyRow>
                 size="small"
                 rowKey="key_id"
@@ -409,10 +424,21 @@ export default function IntegrationsPage() {
                   { title: '이름', dataIndex: 'name' },
                   { title: '접두', dataIndex: 'prefix', render: (p: string) => <Text code>{p}</Text> },
                   {
+                    // ④ [턴 AA · U56] `typed` 는 **개발 어휘**다(표 ② 5값 · D-328).
+                    //   고객은 「사용 중 / 만료 / 폐기 / 교체됨」을 읽는다.
+                    //   옳기는 판정은 **서버 한 곳**이다(`status_label`) — 화면이
+                    //   제 손으로 옳기면 두 벌이 되고, 갈리는 날 「폐기」가
+                    //   「사용 중」으로 보인다(D-212). 기계 어휘는 `title` 에 남긴다.
                     title: '상태',
-                    dataIndex: 'status',
-                    render: (s: string, row) =>
-                      row.is_active ? <Tag color="green">{s}</Tag> : <Tag>{s}</Tag>,
+                    dataIndex: 'status_label',
+                    render: (label: string | undefined, row) => {
+                      const text = label || row.status;
+                      return row.is_active ? (
+                        <Tag color="green" title={row.status}>{text}</Tag>
+                      ) : (
+                        <Tag title={row.status}>{text}</Tag>
+                      );
+                    },
                   },
                   { title: '만료', dataIndex: 'expires_at', render: (v: string | null) => v ?? '—' },
                   {

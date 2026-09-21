@@ -192,6 +192,31 @@ def _reach(scope: TenantScope, group, severity: str) -> NotifyReach:
                        recipient_count=len(people), human_channels=tuple(human))
 
 
+def _critical_block_reason(reach: NotifyReach) -> str:
+    """심각이 막힌 **사유 한 줄.** 안 막혔으면 빈 문자열이다.
+
+    ★ 두 사유를 **가른다** — 다음 손이 다르기 때문이다(P-221). 「사람이 없다」는
+      역할에 사람을 넣어야 풀리고, 「채널이 사람에게 안 간다」는 규칙의 채널을
+      바꿔야 풀린다. 한 문장으로 뭉뚱그리면 운영자가 엉뚱한 쪽을 고치고,
+      고친 뒤에도 안 풀리는 화면은 **고장으로 읽힌다**.
+
+    ★ 사유는 **서버가 쓴 한국어**다 — 화면이 짓지 않는다(D-212 · 저장 409 와 같은
+      규율). 화면이 사유를 지으면 서버가 판정을 바꾸는 날 화면만 옛말이 된다.
+    """
+    if reach.reaches_people:
+        return ""
+    if reach.recipient_count == 0:
+        return ("심각 등급 규칙이 없거나, 규칙이 가리키는 역할에 사람이 없습니다. "
+                "아래에서 심각 규칙을 하나 세우거나 그 역할에 사람을 넣어 주십시오.")
+    # ★ 별표(강조 표시)를 안 쓴다 — 이 문장은 화면의 경고 상자에 **그대로** 들어가고,
+    #   그 상자는 마크다운을 안 그린다. 그러면 고객이 별표를 글자로 읽는다.
+    return (
+        "심각 규칙이 가리키는 사람은 %d명 있지만, 그 규칙의 채널이 사람에게 닿지 "
+        "않는 채널뿐입니다(훈련·검수용). 이 상태에서는 재난이 나도 당직자의 "
+        "수신함·휴대전화로는 한 건도 가지 않습니다. 아래에서 심각 규칙의 채널에 "
+        "사람에게 닿는 것을 하나 이상 넣어 주십시오." % reach.recipient_count)
+
+
 def _critical_recipients(scope: TenantScope, group) -> int:
     """지금 **심각 경보를 받는 사람 수.** 규칙 수가 아니다."""
     from kernels.k2_notify.services import resolve_recipients
@@ -242,10 +267,26 @@ def notify_rule_overview(*, scope: TenantScope) -> dict:
             for v in (_rule_view(r) for r in rows)
         ],
         "channels": list(_selectable_channels()),
-        #: ★ **심각 수신자 0명이면 참이다.** 화면은 이 칸으로 빨강을 그린다 —
-        #:   「규칙이 없다」가 아니라 「지금 심각 경보가 아무에게도 안 간다」이다.
+        #: ★★ **막혔는가는 「사람 수」가 아니라 「도달」이다** [턴 AA · U56 · P-220].
+        #:
+        #:   턴 S~Z 동안 이 칸은 `critical.recipient_count == 0` 이었다. 그래서
+        #:   고객 화면에 **「심각 경보를 받는 사람 4명」 초록**이 뜨면서 바로 아래
+        #:   표의 세 등급이 전부 **「닿지 않음」 빨강**이었다 [세종 실측 2026-09-21].
+        #:   사람은 있는데 규칙의 채널이 `log`(훈련)뿐이라 **아무에게도 안 갔다.**
+        #:   같은 화면이 두 말을 한 것이고, 그 초록은 **거짓 초록**이다.
+        #:
+        #:   이 파일이 이미 그 판정을 갖고 있었다 — `NotifyReach.reaches_people`
+        #:   (`recipient_count > 0 and human_channels`). 등급 표는 그것으로 그리고
+        #:   배지만 다른 식으로 쟀다. **판정식을 두 벌로 둔 자리**였고(D-212),
+        #:   두 벌은 갈렸다. 이제 한 벌이다.
         "critical_recipient_count": critical.recipient_count,
-        "critical_blocked": critical.recipient_count == 0,
+        #: 사람에게 닿는 채널이 하나라도 있는가. 없으면 「수신자 N명」은 거짓이다.
+        "critical_human_channels": list(critical.human_channels),
+        "critical_blocked": not critical.reaches_people,
+        #: ★ **왜 막혔는가를 서버가 적는다** — 화면이 두 사실을 갈라 말할 수 있어야
+        #:   사람이 다음 손을 안다(P-221 「원인과 다음 손을 같은 줄에」). 빈
+        #:   문자열은 「안 막혔다」다 — 화면이 `critical_blocked` 와 함께만 읽는다.
+        "critical_block_reason": _critical_block_reason(critical),
         #: 시험 발송이 나갈 곳. 화면이 「어디로 가는지」를 누르기 **전에** 말한다.
         "test_channel": _test_channel(),
     }

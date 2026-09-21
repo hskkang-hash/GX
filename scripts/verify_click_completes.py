@@ -102,7 +102,8 @@ P190 = "[P-190 정정 · 턴 W] "
 
 
 def F(key, title, actor, screen, control, call, state, text, confirm=None, note="",
-      fill=None, fill_text=None, img_check=False, revert=None):
+      fill=None, fill_text=None, img_check=False, revert=None, prepare=None,
+      clause=""):
     """한 흐름.
 
     `revert` — [★ 턴 U · 차선 Q · 조율자 실측 2026-09-17 21:0x] **상태를 바꾸는 클릭은
@@ -142,7 +143,51 @@ def F(key, title, actor, screen, control, call, state, text, confirm=None, note=
         "state": state, "text": text, "note": note,
         "fill": fill, "fill_text": fill_text,
         "img_check": img_check, "revert": revert,
+        "prepare": prepare, "clause": clause,
     }
+
+
+# ──────────────────────────────────────────────────────────────────────────
+#: ★ [P-219 · 턴 AA · 차선 A] **누르기 전 준비** — `fill` 한 칸으로는 못 여는 자리들.
+#:
+#:   `fill` 은 **글상자 하나**를 채운다. 그런데 설정 화면의 저장 단추는 `Select` 를
+#:   **둘까지** 골라야 깨어난다(`disabled={!picked || !severity}`). 고르지 않고 눌러
+#:   「안 눌린다」를 적으면 **제품의 규율을 고장으로 파는 것**이다(P-132 가 글상자에서
+#:   고친 그 모양이 드롭다운에서 되풀이된다).
+#:
+#:   ★ **준비가 실패하면 회색이다.** 고를 것이 없어서 단추가 잠긴 채면 그것은
+#:     「안 된다」가 아니라 「못 쟀다」다 — 관측에 `prepared` 로 남는다.
+# ──────────────────────────────────────────────────────────────────────────
+def pick(placeholder, *, prefer=None, avoid=None, restore=False, nth=None):
+    """드롭다운 하나를 고른다.
+
+    `prefer` 가 있으면 그 글자에 맞는 첫 항목, 없으면 `avoid` 에 **안** 맞는 첫 항목.
+    `restore=True` 면 **고르기 전에 떠 있던 값**을 적어 둔다 — 되돌릴 때 쓴다.
+    """
+    return {"kind": "select", "placeholder": placeholder,
+            "prefer": prefer, "avoid": avoid, "restore": restore, "nth": nth}
+
+
+def put(placeholder, text, *, restore=False):
+    """글상자 하나를 채운다. `text` 가 `{bump}` 면 **지금 들어 있는 수 + 1** 이다.
+
+    ★ 왜 `+1` 인가 — 임계값은 **올리는 쪽이 안전하다.** 낮추면 그 항목이 실제로
+      더 쉽게 울리거나(또는 덜 울리거나) 하고, 게이트가 제품의 감도를 바꿔 놓는다.
+      그리고 `{bump}` 는 **지금 값을 읽어서** 더하므로 「같은 값을 또 썼다」(before ==
+      after · 거짓 빨강)가 구조적으로 안 난다.
+    """
+    return {"kind": "fill", "placeholder": placeholder, "text": text,
+            "restore": restore}
+
+
+def revert_redo(why: str, *, restores: bool = True):
+    """**원래 값으로 한 번 더 저장한다** — 같은 단추로 안 돌아오는 쓰기 문의 되돌림.
+
+    `revert_toggle()`(같은 단추 한 번 더)은 껐다 켜는 자리에만 맞는다. 임계값·등급규칙은
+    같은 단추를 한 번 더 누르면 **같은 값을 또 쓴다** — 되돌림이 아니라 반복이다.
+    그래서 `restore=True` 로 적어 둔 **처음 값**을 다시 채우고 같은 문으로 한 번 더 쓴다.
+    """
+    return {"kind": "redo", "why": why, "restores": restores}
 
 
 def btn(name):
@@ -190,9 +235,22 @@ def api():
     return {"kind": "api"}
 
 
-def srv_change(get, field):
-    """쓰기 흐름 — **새 GET 으로 다시 읽어** 값이 before 와 달라야 한다."""
-    return {"kind": "server_change", "get": get, "field": field}
+def srv_change(get, field, project=None):
+    """쓰기 흐름 — **새 GET 으로 다시 읽어** 값이 before 와 달라야 한다.
+
+    `project` — ★ [P-219 · 턴 AA] **표의 길이가 아니라 표 안의 칸**을 본다.
+
+      `dig()` 는 목록·사전을 만나면 **길이로 접는다.** 그래서 「끄기/켜기」처럼 행 수는
+      그대로 두고 **행 안의 값만 뒤집는** 문은 `before == after` 가 되어 **제품이 옳게
+      동작했는데 빨강**이 난다 [실측 2026-09-21 18:51 · `zones` 1 → 1].
+      `project="is_active"` 를 주면 그 목록에서 그 칸만 뽑아 `True,False,…` 로 이어
+      견준다 — 「그 행의 `is_active` 가 뒤집혔다」가 그대로 수가 된다.
+      ⚠ **길이를 재고 싶은 문(만들기·발급)에는 주지 않는다** — 그쪽은 길이가 답이다.
+    """
+    out = {"kind": "server_change", "get": get, "field": field}
+    if project:
+        out["project"] = project
+    return out
 
 
 def srv_reflect(get, field):
@@ -638,6 +696,131 @@ FLOW_BY_KEY = dict((f["key"], f) for f in FLOWS)
 PERSONAS = ("U1", "U2", "U3", "U4", "U5", "U6")
 
 
+# ══════════════════════════════════════════════════════════════════════════
+# [P-219 · 턴 AA · 차선 A] **설정 화면 술어 다섯 — 48 밖의 표다**
+#
+# 왜 48 안에 안 넣나 — **대장은 줄지 않는다.**
+#   `FLOWS` 는 온보딩 정본 48행(여섯 사람 × 여덟)이고 자기시험이 그 수를 지킨다.
+#   그 안에 끼워 넣으려면 **누군가를 빼야 한다.** 지금 `control=None` 인 U5 네 행
+#   (`U5#1`·`#4`·`#5`·`#10` — 계정 생성·카메라 등록·주소 입력·알림 채널)은 **다른 일**이고,
+#   자리를 바꿔 끼우면 그 넷의 회색이 조용히 사라진다. 그래서 **따로 센다.**
+#   출력도 따로 적는다 — 「48/48」과 「설정 5」를 한 분모로 뭉치지 않는다.
+#
+# ★★ 이 다섯은 전부 **「누른 뒤」**를 본다. 누른 것만으로는 한 칸도 안 선다:
+#     ② 그 POST 가 실제로 나갔는가 · ③ **새 GET 으로 다시 읽어** 값이 바뀌었는가 ·
+#     ④ 그 변화가 화면의 「지금」 칸(`[data-gx="…-now"]`)에 다시 나타나는가.
+#
+# ★★ **등급을 낮추는 쪽으로 재지 않는다.** 낮춘 규칙은 그 유형의 경보를 실제로 끈다
+#     (화면이 「낮춘 규칙이 있습니다」를 띄우는 그 자리). 게이트가 경보를 끈 채로 남기면
+#     다음 게이트(알림 도달 · K2 수신자)가 **제품 대신 우리를 잰다** — 턴 U 의 U5#9 가
+#     정확히 그 사고였다. 그래서 등급은 **올리는 쪽**(→ 심각)으로만 고르고 되돌린다.
+#
+# ★ **구역에는 삭제 문이 없다.** 그래서 주 술어는 「끄기/켜기」(같은 단추로 되돌아온다)이고,
+#   「만들기」는 분모가 0일 때를 위한 보조다 — 이름에 **회차 표식**을 반드시 넣는다.
+# ══════════════════════════════════════════════════════════════════════════
+#: 설정 화면의 세 탭. **주소에 실린다**(`SettingsRules.tsx` · `TAB_KEYS`) —
+#: 탭을 누르지 않고 그 자리를 바로 열 수 있어야 술어가 그 칸을 잰다.
+SETTINGS_SCREEN = "/dsm/settings/rules?tab=%s"
+
+SETTINGS_FLOWS = (
+    #: ── F-12-c5 「구역」 · 주 술어 ────────────────────────────────────────
+    F("U5#S1", "구역 끄기/켜기", "u5", SETTINGS_SCREEN % "zones",
+      btn("^(끄기|켜기)$"),
+      ("POST", r"/api/dsm/settings/zones(\?|$)"),
+      #: ★ 행 **수**가 아니라 행 **안의 칸**을 본다 — 끄기/켜기는 수를 안 바꾼다
+      srv_change("/api/dsm/settings/zones", "zones", project="is_active"),
+      ["가동 중인 구역", "전체"],
+      clause="F-12-c5",
+      revert=revert_toggle(),
+      note="확인창이 없다 — 구역 토글은 사유를 안 묻는다(서버가 사유를 요구하는 문이 "
+           "아니다). 등록된 구역이 0개면 누를 자리가 없고 그때는 **회색이 옳다** — "
+           "U5#S2 가 한 행을 만든 뒤에 다시 잰다"),
+    #: ── F-12-c5 「구역」 · 보조 술어(분모가 0일 때) ──────────────────────
+    F("U5#S2", "구역 만들기", "u5", SETTINGS_SCREEN % "zones",
+      btn("^만들기$"),
+      ("POST", r"/api/dsm/settings/zones(\?|$)"),
+      srv_change("/api/dsm/settings/zones", "zones"),
+      ["가동 중인 구역", "전체"],
+      clause="F-12-c5",
+      fill="구역 이름", fill_text="%s-구역" % PROBE_TAG,
+      revert=no_revert("**만드는 문은 같은 단추로 안 돌아온다** — 한 번 더 누르면 같은 "
+                       "이름의 구역이 하나 더 생긴다. 구역을 지우는 문은 제품에 **없다**. "
+                       "그래서 이름에 회차 표식을 박는다 — 표식이 없으면 다음 사람이 "
+                       "「제품이 만든 것」과 「게이트가 만든 것」을 못 가른다"),
+      note="둘째 칸(카메라 번호)은 비워도 된다 — 카메라 묶음은 0대로도 선다"),
+    #: ── F-12-c6 「임계값」 ────────────────────────────────────────────────
+    F("U5#S3", "임계값 저장", "u5", SETTINGS_SCREEN % "thresholds",
+      btn("^저장$"),
+      ("POST", r"/api/dsm/settings/thresholds(\?|$)"),
+      #: ★★ **「지금 값」이 아니라 「바꾼 기록」을 본다** [실측 2026-09-21 19:09].
+      #:   저장은 **기관(tenant) 층**에 앉는데, 표의 `value`·`source` 는
+      #:   `list_thresholds` 가 **전역 층 덮어쓰기만** 읽어 채운다
+      #:   (`kernels/k5_trust/services.py:56`). 그래서 기관 관리자가 제 기관 값을
+      #:   바꿔도 표는 「정의 기본값 10」이라 적는다 — **화면이 제 사용자에게 유효하지
+      #:   않은 값을 보여 준다.** 그것은 제품 쪽 일이고(커널) A 의 차선이 아니다.
+      #:   이 술어는 **제품이 실제로 바꾼 것**을 본다: 바꾼 기록이 한 줄 는다
+      #:   (`override_counts.tenant` 0 → 1 로도 확인했다).
+      srv_change("/api/dsm/settings/thresholds", "history"),
+      ["지금 값", "바꿔 둔 항목"],
+      clause="F-12-c6",
+      confirm=btn("^저장$"),
+      prepare=(pick("바꿀 항목", avoid="계약이 정한 값"),
+               put("바꿀 값", "{bump}", restore=True)),
+      revert=revert_redo("임계값은 같은 단추를 한 번 더 눌러도 **같은 값을 또 쓴다** — "
+                         "되돌림이 아니라 반복이다. 처음 값으로 한 번 더 저장한다. "
+                         "★ 그래도 **이 칸(바꾼 기록)은 안 돌아온다** — 되돌림도 기록이고 "
+                         "**대장은 줄지 않는다.** 되돌아온 것은 값이고, 그 사실은 기록의 "
+                         "마지막 줄이 `11 → 10` 이라고 적는다",
+                         restores=False),
+      note="⚠ `계약이 정한 값` 꼬리가 붙은 항목은 화면이 단추를 잠근다(F-04 5분 · "
+           "F-10 30초). 그 잠김은 **제품의 규율**이지 고장이 아니므로 고르지 않는다 — "
+           "서버도 그 값에는 409 를 낸다. ⚠ 사유를 비우고 확인을 누르면 창이 **안 닫힌다** "
+           "— 그것도 규율이다(닫히면 저장된 것처럼 보인다)"),
+    #: ── F-12-c7 「등급규칙」 ──────────────────────────────────────────────
+    F("U5#S4", "등급규칙 저장", "u5", SETTINGS_SCREEN % "grade-rules",
+      btn("^저장$"),
+      ("POST", r"/api/dsm/settings/grade-rules(\?|$)"),          # ← 쓰기는 **하이픈**
+      #: ★ 행 **수**(9)는 안 바뀐다 — 그 유형의 `severity` 가 바뀐다
+      srv_change("/api/dsm/settings/grade_rules", "grade_rules",
+                 project="severity"),                              # ← 조회는 **밑줄**
+      ["지금 규칙", "바꿔 둔 규칙"],
+      clause="F-12-c7",
+      confirm=btn("^저장$"),
+      #: ★ 「지금: 심각」이 **아닌** 유형을 골라 **심각으로 올린다.** 내리지 않는다.
+      #: ★ 「등급」에 자리 번호(1)를 준다 — 유형을 고르는 순간 화면이 등급 칸을 그 유형의
+      #:   **지금 등급으로 채워** 자리표가 사라지기 때문이다. 자리표가 없어진 것을
+      #:   「칸이 없다」로 읽으면 멀쩡한 화면을 고치러 간다.
+      prepare=(pick("유형", avoid="지금: 심각"),
+               pick("등급", prefer="심각", restore=True, nth=1)),
+      revert=revert_redo("등급규칙도 같은 단추로 안 돌아온다 — 처음 등급으로 한 번 더 "
+                         "저장한다. **되돌리지 못하면 경보가 바뀐 채로 남는다**"),
+      note="⚠⚠ 조회는 `grade_rules`(밑줄) · 쓰기는 `grade-rules`(하이픈)다. 조회에 "
+           "하이픈을 적으면 **405** 가 오고, 그 405 는 「값이 안 바뀌었다」가 아니라 "
+           "「이 문은 그 메서드를 모른다」다 — 빨강의 사유가 통째로 틀어진다"),
+    #: ── F-12-c1 「무권한은 차단하며」 ────────────────────────────────────
+    #:  ★ **권한 없는 계정이 실제로 그 화면을 연다.** 다른 자리(`/surveillance-dashboard`)
+    #:    의 403 을 이 절의 증거로 쓰지 않는다 — 계약이 말하는 것은 **관리자 설정**이다.
+    #:  ★ 이 행만 **U4**(view_only)다. 「누르는 것」은 화면을 여는 것이고, 기대는 **403** —
+    #:    200 이 오면 그것이 빨강이다(막아야 할 것을 안 막았다).
+    F("U4#S5", "무권한 계정이 설정을 연다", "u4", SETTINGS_SCREEN % "zones",
+      goto(),
+      ("GET", r"/api/dsm/settings/zones(\?|$)"),
+      {"kind": "status_is", "get": "/api/dsm/settings/zones", "field": "403"},
+      ["권한이 없습니다"],
+      clause="F-12-c1",
+      revert=no_revert("**아무것도 안 바꾼다** — 읽기가 거절된 것을 잰다. 되돌릴 상태가 없다"),
+      note="화면이 **자기 자리에서** 403 을 말한다(`ownDenialPaths(['/api/dsm/settings/'])`) "
+           "— 위에서 내려오는 띠가 상태 칸을 덮지 않는다. 그 글자는 `copy.ts` 의 "
+           "`FORBIDDEN_TITLE` 「이 항목에 대한 권한이 없습니다.」다"),
+)
+
+SETTINGS_BY_KEY = dict((f["key"], f) for f in SETTINGS_FLOWS)
+
+#: 설정 다섯의 증거는 **따로 적는다.** 48행 증거(`click_completes.json`)를 덮으면
+#: 그 파일을 만드는 전량 회차(V 단독)와 서로를 지운다 — 한 파일에 두 분모를 넣지 않는다.
+SETTINGS_OBSERVED = EVIDENCE / "settings_clicks.json"
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # 판정기 — **관측만 받는다.** 흐름 이름을 보고 봐주는 길이 없다 (D-327).
 # ──────────────────────────────────────────────────────────────────────────
@@ -889,9 +1072,17 @@ def _good(flow):
         st.update(after=st.get("field"))
     method, pat = flow["call"]
     sample = "http://localhost:8000" + sample_url(pat)
+    #: ★ [P-219] 상태코드 자체가 답인 행(무권한 403 · 인증 실패 401)은 **그 코드로** 짓는다.
+    #:   200 으로 지으면 양성 대조가 「제품이 안 막았다」를 초록으로 연습하게 된다.
+    status = 200
+    if k == "status_is":
+        try:
+            status = int(st.get("field"))
+        except (TypeError, ValueError):
+            status = 200
     out = {
         "control": {"found": True, "clicked": True, "name": "x"},
-        "calls": [{"method": method, "url": sample, "status": 200}],
+        "calls": [{"method": method, "url": sample, "status": status}],
         "state": st,
         "text_after": " ".join(flow["text"]) if flow["text"] else "",
     }
@@ -1081,6 +1272,105 @@ def canon_compare_census(path=None):
         #: 갈릴 **수 있는** 행 = 다툼 두 갈래 중 하나가 성립할 수 있는 자리
         n["capable"] += bool((fc_none and canon_has) or (fc_has and canon_none))
     return n
+
+
+def _settings_self_test(say) -> None:
+    """[P-219 · 턴 AA · 차선 A] 설정 다섯의 자기시험 — **양성과 음성을 둘 다.**
+
+    ★ 「통과한다」만 증명하고 「무너지면 잡는다」를 증명하지 않는 술어는 술어가 아니다.
+      그래서 아래는 다섯을 **일부러 깨뜨려** 초록이 안 나오는 것까지 본다.
+    """
+    keys = [f["key"] for f in SETTINGS_FLOWS]
+    say(len(SETTINGS_FLOWS) == 5 and len(set(keys)) == 5,
+        "설정 표는 **다섯 행**이고 열쇠가 겹치지 않는다")
+    say(not (set(keys) & set(FLOW_BY_KEY)),
+        "★ 설정 표의 열쇠가 **48행과 안 겹친다** — 한 열쇠가 두 분모에 들면 수가 두 번 센다")
+    say(len(FLOWS) == 48,
+        "★ 설정 다섯을 더해도 **48 은 그대로다** (대장은 줄지 않는다 · 자리를 바꿔 끼우지 않았다)")
+    say(all(f["clause"] for f in SETTINGS_FLOWS),
+        "다섯 행이 **어느 절을 재는지** 저마다 적는다 (이름 없는 초록을 안 만든다)")
+    say(all(f.get("revert") for f in SETTINGS_FLOWS),
+        "★ 다섯 행이 **되돌림을 선언한다** — 선언 없음은 「잊은 것」과 구별되지 않는다 (턴 U · U5#9)")
+    say(all(f["state"].get("kind") in ("server_change", "status_is")
+            for f in SETTINGS_FLOWS),
+        "★ 다섯 행이 **누른 뒤 새 GET** 으로 잰다 — 클릭만 보고 통과시키는 행이 없다")
+
+    #: ★★ **등급을 낮추는 쪽으로 재지 않는다** — 구조로 못박는다 (턴 U · U5#9 재현 금지)
+    grade = SETTINGS_BY_KEY["U5#S4"]
+    picks = {s["placeholder"]: s for s in grade["prepare"]}
+    say(picks["등급"].get("prefer") == "심각" and picks["등급"].get("avoid") is None,
+        "★★ 등급 술어는 **심각으로 올린다** — 낮추면 그 유형의 경보가 실제로 꺼진다")
+    say("지금: 심각" in (picks["유형"].get("avoid") or ""),
+        "★★ 이미 **심각인 유형은 고르지 않는다** — 같은 값을 또 써서 나는 빨강은 제품이 아니다")
+    say(picks["등급"].get("restore") is True and grade["revert"]["kind"] == "redo",
+        "등급 술어는 **처음 등급을 적어 두고** 그 값으로 한 번 더 써서 되돌린다")
+
+    #: 임계값 — 계약이 잠근 값은 안 고른다 · 올리는 쪽으로 쓴다
+    thr = SETTINGS_BY_KEY["U5#S3"]
+    tp = {s["placeholder"]: s for s in thr["prepare"]}
+    say("계약이 정한 값" in (tp["바꿀 항목"].get("avoid") or ""),
+        "★ 임계 술어는 **계약이 정한 값을 고르지 않는다** — 그 잠김은 제품의 규율이다(409)")
+    say(tp["바꿀 값"]["text"] == "{bump}" and tp["바꿀 값"].get("restore") is True,
+        "임계 술어는 **지금 값 +1** 로 쓰고 처음 값으로 되돌린다 (같은 값을 또 쓰면 거짓 빨강)")
+
+    #: 구역 — 삭제 문이 없다. 만들기는 **회차 표식**이 붙은 이름이라야 한다
+    mk = SETTINGS_BY_KEY["U5#S2"]
+    say(mk["revert"]["kind"] == "none" and PROBE_TAG in (mk["fill_text"] or ""),
+        "★ 구역 「만들기」는 되돌릴 문이 없다 — 이름에 **회차 표식**을 박는다")
+    say(SETTINGS_BY_KEY["U5#S1"]["revert"]["kind"] == "same_control",
+        "구역 주 술어는 「끄기/켜기」 — **같은 단추로 되돌아온다**")
+    #: ★ [실측 2026-09-21 18:51] `dig()` 가 목록을 **길이로 접어** 끄기/켜기가 1 → 1 로
+    #:   읽혔다(제품은 옳게 뒤집었는데 빨강). 표 안의 칸을 보게 한 것을 구조로 지킨다.
+    say(SETTINGS_BY_KEY["U5#S1"]["state"].get("project") == "is_active",
+        "★ 끄기/켜기는 표의 **길이**가 아니라 행의 `is_active` 를 본다 "
+        "(길이는 안 바뀐다 — 그 빨강은 제품이 아니라 판정기였다)")
+    say(SETTINGS_BY_KEY["U5#S2"]["state"].get("project") is None,
+        "★ 「만들기」는 반대로 **길이**가 답이다 — 거기엔 칸 보기를 달지 않는다")
+
+    #: 등급규칙은 **읽기와 쓰기의 글자가 다르다** — 여기서 한 번 더 못박는다
+    say("grade-rules" in grade["call"][1] and grade["state"]["get"].endswith("grade_rules"),
+        "★★ 등급규칙 — 쓰기는 **하이픈** · 조회는 **밑줄**. 섞으면 405 가 오고 사유가 통째로 틀어진다")
+
+    # ── 양성 대조 — 다섯이 다 초록이 된다 (길이 막히지 않았다) ──────────────
+    good = dict((f["key"], _good(f)) for f in SETTINGS_FLOWS)
+    colors = dict((k, c) for k, c, _, _, _ in judge_settings(good))
+    say(all(v == GREEN for v in colors.values()),
+        "양성 대조 — 넷이 다 선 관측이면 설정 다섯이 **초록** (%s)"
+        % " ".join("%s=%s" % (k, v) for k, v in colors.items()))
+
+    # ── 음성 대조 — **일부러 깨뜨린다.** 하나도 안 잡히면 이 표는 장식이다 ──
+    muts = {}
+    m = dict(good); m["U5#S1"] = dict(m["U5#S1"], calls=[])
+    muts["구역: 눌렀는데 아무것도 안 나갔다"] = ("U5#S1", m, RED)
+    m = dict(good)
+    m["U5#S3"] = dict(m["U5#S3"], state=dict(m["U5#S3"]["state"], before="7", after="7"))
+    muts["임계: 요청은 나갔는데 값이 그대로다"] = ("U5#S3", m, RED)
+    m = dict(good); m["U5#S4"] = dict(m["U5#S4"], text_after="아무 말도 없다")
+    muts["등급: 값은 바뀌었는데 화면이 침묵한다"] = ("U5#S4", m, RED)
+    m = dict(good)
+    m["U4#S5"] = dict(m["U4#S5"], state=dict(m["U4#S5"]["state"], after="200"))
+    muts["무권한: 막아야 할 것을 **200 으로 내줬다**"] = ("U4#S5", m, RED)
+    m = dict(good)
+    m["U5#S2"] = dict(m["U5#S2"], control={"found": False, "why": "만들기 단추가 없다"})
+    muts["구역 만들기: 누를 자리가 없다 → 회색"] = ("U5#S2", m, GREY)
+    m = dict(good)
+    m["U5#S3"] = dict(m["U5#S3"], control={"found": False,
+                                           "why": "누르기 전 준비가 안 섰다 — 고를 항목이 0"})
+    muts["임계: 준비가 안 섰다 → 회색(빨강이 아니다)"] = ("U5#S3", m, GREY)
+    caught = 0
+    for label, (key, obs, want) in muts.items():
+        got = dict((k, c) for k, c, _, _, _ in judge_settings(obs)).get(key)
+        if got == want:
+            caught += 1
+        else:
+            say(False, "변이 「%s」를 못 잡는다 — %s 를 기대했는데 %s" % (label, want, got))
+    say(caught == len(muts),
+        "★ 음성 대조 %d/%d — **일부러 깨뜨리면 초록이 안 난다**" % (caught, len(muts)))
+
+    # ── 관측 0건은 초록이 아니다 (분모 0인 초록을 안 만든다) ────────────────
+    zero = judge_settings({})
+    say(all(c == GREY for _, c, _, _, _ in zero) and score(zero)[0] == 0,
+        "관측 0건 → 설정 0/5 · 회색 5 (**못 잰 것이 통과가 되지 않는다**)")
 
 
 def self_test() -> int:
@@ -1416,6 +1706,20 @@ def self_test() -> int:
         else:
             print("%s   갈릴 수 있었던 행 %d — 그중 갈린 행 0" % (TAG, n["capable"]))
 
+    # ── [P-219 · 턴 AA · 차선 A] 설정 다섯 — 양성·음성을 둘 다 ──────────────
+    _fail = []
+
+    def say(cond, line):
+        if cond:
+            print("%s O %s" % (TAG, line))
+        else:
+            _fail.append(line)
+            print("%s X %s" % (TAG, line))
+
+    _settings_self_test(say)
+    if _fail:
+        ok = False
+
     print("%s 자기시험 %s" % (TAG, "통과" if ok else "**실패**"))
     return EXIT_OK if ok else EXIT_FAIL
 
@@ -1699,6 +2003,13 @@ def dig(obj, field):
     return None
 
 
+def read_field(js, st):
+    """★ [P-219] 이 흐름이 보는 칸 하나. `project` 가 있으면 표 안의 칸을 본다."""
+    if st.get("project"):
+        return dig_project(js, st.get("field"), st["project"])
+    return dig(js, st.get("field"))
+
+
 results = {}
 NOW = lambda: time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -1752,6 +2063,226 @@ def find_control(page, ctrl):
             except Exception:
                 continue
     return None
+
+
+def dig_project(js, field, project):
+    """★ [P-219] 표의 **길이**가 아니라 표 안의 **칸**을 본다.
+
+    `dig()` 는 목록을 만나면 길이로 접는다. 그래서 행 수는 그대로 두고 행 안의 값만
+    뒤집는 문(「끄기/켜기」)이 `before == after` 로 읽혀 **제품이 옳게 동작했는데
+    빨강**이 난다. 여기서는 그 칸만 뽑아 이어 붙인 짧은 글자를 돌려준다.
+    **없으면 `None`** — 「못 읽었다」와 「그대로다」를 섞지 않는다.
+    """
+    if not isinstance(js, dict):
+        return None
+    rows = js.get(field)
+    if not isinstance(rows, list):
+        return None
+    out = []
+    for r in rows:
+        if isinstance(r, dict) and project in r:
+            out.append(str(r.get(project)))
+    return ",".join(out) if out else None
+
+
+def select_root(page, placeholder, nth=None):
+    """이 드롭다운의 **뿌리 요소**를 찾는다. → (요소, 어떻게 찾았나)
+
+    ★★ **자리표는 고르는 순간 사라진다** [실측 2026-09-21 18:58].
+      「등급규칙」 칸의 `유형` 을 고르면 화면이 `등급` 을 **그 유형의 지금 등급으로 채운다.**
+      그러면 `등급` 드롭다운의 자리표 글자는 **없어지고** 그 자리에 「경계」가 앉는다 —
+      자리표로만 찾는 술어는 거기서 「칸이 없다」로 멈춘다. 그것은 **화면의 결함이 아니라
+      우리가 찾는 방법의 결함**이고, 둘을 섞으면 제품을 고치러 간다.
+      그래서 `nth` 를 주면 **보이는 드롭다운 중 n번째**로 되짚는다.
+    """
+    rx = re.compile(re.escape(placeholder))
+    try:
+        loc = page.locator(".ant-select", has_text=rx)
+        for i in range(min(loc.count(), 8)):
+            if loc.nth(i).is_visible():
+                return loc.nth(i), "자리표 「%s」" % placeholder
+    except Exception:
+        pass
+    if nth is None:
+        return None, "자리표 「%s」 를 못 찾았고 자리 번호도 안 줬다" % placeholder
+    vis = []
+    try:
+        every = page.locator(".ant-select")
+        for i in range(min(every.count(), 24)):
+            if every.nth(i).is_visible():
+                vis.append(every.nth(i))
+    except Exception:
+        pass
+    if nth < len(vis):
+        return vis[nth], ("보이는 것 중 %d번째 — 자리표는 이미 **값에 덮였다**" % nth)
+    return None, "보이는 드롭다운이 %d개뿐이라 %d번째가 없다" % (len(vis), nth)
+
+
+def open_select(page, placeholder, nth=None):
+    """AntD `Select` 하나를 연다. 자리표 글자로 찾는다. → (열렸나, 본 것)
+
+    `Select` 는 `input[placeholder]` 가 아니라 **자리표 span**(`.ant-select-selection-
+    placeholder`)으로 그린다. 그래서 `get_by_placeholder` 로는 한 개도 안 잡힌다 —
+    그 사실을 모르고 채우면 「고를 것이 없다」가 아니라 **조용히 아무것도 안 고른다.**
+    이미 고른 뒤에는 자리표가 사라지므로 `.ant-select-selection-item` 도 함께 본다.
+
+    ★ **못 열었을 때 「몇 개를 봤는지」를 돌려준다.** 0개인 것(자리가 없다)과 있는데
+      안 보이는 것(다른 탭에 있다)은 **다른 사실**이고, 사유를 안 적으면 다음 사람이
+      둘을 구별하지 못한다.
+    """
+    root, how = select_root(page, placeholder, nth)
+    if root is None:
+        return False, how
+    try:
+        root.click(timeout=4000)
+        page.wait_for_timeout(500)
+        #: 정말 열렸는가 — **열린 드롭다운이 실재해야** 연 것이다
+        if page.locator(".ant-select-dropdown:not(.ant-select-dropdown-hidden)").count():
+            return True, how
+    except Exception as exc:                                # noqa: BLE001
+        return False, "%s 를 눌렀는데 %s" % (how, type(exc).__name__)
+    return False, "%s 를 눌렀는데 목록이 안 열렸다" % how
+
+
+def prepare_steps(page, steps):
+    """누르기 **전에** 골라 두고 채워 둔다. → (됐나, 적은 것, 되돌릴 것)
+
+    ★ 준비가 안 서면 **회색**이다 — 단추가 잠긴 채라 「안 눌린다」가 되는데, 그것은
+      제품의 규율이지 고장이 아니다(P-132 가 글상자에서 고친 그 모양).
+    """
+    done, restore = [], []
+    for s in steps or []:
+        kind = s.get("kind")
+        ph = s.get("placeholder") or ""
+        if kind == "select":
+            #: 고르기 **전에 그 칸에 떠 있던 값**을 먼저 적는다 — 되돌릴 때 쓴다.
+            #: ★ 「아무 `.ant-select-selection-item`」이 아니라 **이 드롭다운의 것**을 읽는다.
+            was = None
+            if s.get("restore"):
+                try:
+                    root0, _how0 = select_root(page, ph, s.get("nth"))
+                    if root0 is not None:
+                        item = root0.locator(".ant-select-selection-item")
+                        if item.count():
+                            was = (item.first.inner_text() or "").strip() or None
+                except Exception:
+                    was = None
+            ok_open, saw = open_select(page, ph, s.get("nth"))
+            if not ok_open:
+                return (False, done, restore,
+                        "드롭다운 「%s」 를 못 열었다 — %s" % (ph, saw))
+            opts = page.locator(
+                ".ant-select-dropdown:not(.ant-select-dropdown-hidden) "
+                ".ant-select-item-option")
+            chosen = None
+            try:
+                n = opts.count()
+            except Exception:
+                n = 0
+            for i in range(n):
+                t = (opts.nth(i).inner_text() or "").strip()
+                if s.get("prefer") and not re.search(s["prefer"], t):
+                    continue
+                if s.get("avoid") and re.search(s["avoid"], t):
+                    continue
+                opts.nth(i).click()
+                chosen = t
+                break
+            page.wait_for_timeout(600)
+            if chosen is None:
+                return (False, done, restore,
+                        "「%s」 에 고를 수 있는 항목이 없다 (항목 %d개 · prefer=%r avoid=%r) "
+                        "— **잴 것이 0이다**" % (ph, n, s.get("prefer"), s.get("avoid")))
+            done.append({"kind": "select", "placeholder": ph, "chose": chosen,
+                         "found_by": saw, "was": was})
+            if s.get("restore"):
+                restore.append({"kind": "select", "placeholder": ph,
+                                "nth": s.get("nth"), "back_to": was})
+        elif kind == "fill":
+            try:
+                box = page.get_by_placeholder(ph)
+                if not box.count():
+                    return False, done, restore, "글상자 「%s」 가 없다" % ph
+                was = (box.first.input_value() or "").strip()
+            except Exception:
+                return False, done, restore, "글상자 「%s」 를 못 읽었다" % ph
+            what = str(s.get("text") or "")
+            if what == "{bump}":
+                #: ★ **지금 값에 1을 더한다 — 올리는 쪽이다.** 같은 값을 또 쓰면
+                #:   before == after 가 되어 **제품이 옳게 동작했는데 빨강**이 난다.
+                try:
+                    what = str(float(was) + 1)
+                    if what.endswith(".0"):
+                        what = what[:-2]
+                except (TypeError, ValueError):
+                    return (False, done, restore,
+                            "「%s」 에 든 것이 수가 아니다 (%r) — 더할 수 없다" % (ph, was))
+            try:
+                box.first.fill(what)
+                page.wait_for_timeout(400)
+            except Exception:
+                return False, done, restore, "글상자 「%s」 를 못 채웠다" % ph
+            done.append({"kind": "fill", "placeholder": ph, "wrote": what, "was": was})
+            if s.get("restore"):
+                restore.append({"kind": "fill", "placeholder": ph, "back_to": was})
+        else:
+            return False, done, restore, "모르는 준비 단계 %r" % kind
+    return True, done, restore, ""
+
+
+def restore_steps(page, steps):
+    """되돌릴 것을 **처음 값으로** 되돌린다 (`revert_redo` 가 쓴다)."""
+    for s in steps or []:
+        back = s.get("back_to")
+        if back in (None, ""):
+            return False, "「%s」 의 처음 값을 못 적어 뒀다" % s.get("placeholder")
+        if s["kind"] == "fill":
+            try:
+                page.get_by_placeholder(s["placeholder"]).first.fill(str(back))
+                page.wait_for_timeout(300)
+            except Exception:
+                return False, "「%s」 를 처음 값으로 못 채웠다" % s["placeholder"]
+        else:
+            if not open_select(page, s["placeholder"], s.get("nth"))[0]:
+                #: 이미 고른 뒤라 자리표가 없다 — 지금 든 값으로 다시 연다
+                if not open_select(page, back, s.get("nth"))[0]:
+                    return False, "「%s」 드롭다운을 다시 못 열었다" % s["placeholder"]
+            opts = page.locator(
+                ".ant-select-dropdown:not(.ant-select-dropdown-hidden) "
+                ".ant-select-item-option")
+            hit = False
+            for i in range(opts.count()):
+                if (opts.nth(i).inner_text() or "").strip() == str(back):
+                    opts.nth(i).click(); hit = True; break
+            page.wait_for_timeout(500)
+            if not hit:
+                return False, "「%s」 에서 처음 값 %r 을 다시 못 찾았다" % (s["placeholder"], back)
+    return True, ""
+
+
+def pass_confirm(page, want_name):
+    """확인창을 지난다. **창의 단추 이름은 화면마다 다르다.**
+
+    종전 목록(`확인|OK|…`)에 **흐름이 선언한 이름을 더해서** 본다 — 더하기만 하므로
+    이미 서 있던 행의 판정은 한 칸도 안 바뀐다. 설정 화면의 확인 단추는 「저장」이다.
+    """
+    try:
+        ta = page.locator("textarea")
+        if ta.count():
+            ta.first.fill("P-118 게이트 측정 (자동)")
+    except Exception:
+        pass
+    base = "확인|OK|Confirm|판정|예|되돌리기|보내기|적용"
+    try:
+        ok = page.locator(".ant-modal-confirm-btns button, [role=dialog] button")
+        for i in range(ok.count()):
+            t = (ok.nth(i).inner_text() or "").strip()
+            if re.search(base, t) or (want_name and re.search(want_name, t)):
+                ok.nth(i).click()
+                return True
+    except Exception:
+        pass
+    return False
 
 
 def walk(persona, account, viewport, flows, event_id):
@@ -1864,7 +2395,7 @@ def walk(persona, account, viewport, flows, event_id):
         before = None
         if gp and st.get("kind") in ("server_change", "server_reflect"):
             code, js = get(gp, tok)
-            before = dig(js, st.get("field")) if js is not None else None
+            before = read_field(js, st) if js is not None else None
 
         # ── U6: 사람이 아니다. 「누르는 것」이 곧 HTTP 호출이다 ──
         if (f["control"] or {}).get("kind") == "api":
@@ -1986,6 +2517,7 @@ def walk(persona, account, viewport, flows, event_id):
             pass
 
         img_obs = None
+        prep_done, prep_restore = [], []       # [P-219] 화면 여는 행에는 준비가 없다
         if f["control"]["kind"] == "goto":
             # 「누르는 것」 = 그 화면을 여는 것. **비어 있으면 누를 자리가 없다**
             if len(body_before.strip()) < 40:
@@ -2026,6 +2558,19 @@ def walk(persona, account, viewport, flows, event_id):
             # ★ [P-132] 잠긴 단추를 **깨우는 글상자.** 제품이 일부러 잠근 자리
             #   (「회신 보내기」는 글이 비면 disabled)를 채우지 않고 눌러 「안 눌린다」를
             #   적으면 제품의 규율을 고장으로 파는 것이다. 채운 뒤에도 ②③④ 는 다 서야 한다.
+            # ★ [P-219 · 턴 AA] **고를 것을 먼저 고른다.** 설정 화면의 저장 단추는
+            #   드롭다운 둘을 고르기 전까지 잠겨 있다 — 고르지 않고 눌러 「안 눌린다」를
+            #   적으면 제품의 규율을 고장으로 파는 것이다.
+            prep_ok, prep_why = True, ""
+            if f.get("prepare"):
+                prep_ok, prep_done, prep_restore, prep_why = prepare_steps(
+                    page, f["prepare"])
+                if not prep_ok:
+                    note(key, control={"found": False,
+                                       "why": "누르기 전 준비가 안 섰다 — %s" % prep_why,
+                                       "prepared": prep_done},
+                         calls=list(calls))
+                    continue
             if f.get("fill"):
                 # ★ [P-179 · 턴 V] 무엇을 적을지는 흐름이 정한다(`fill_text`). 숫자만 받는
                 #   칸(「사건 보고서」의 사건번호)에 기본 한 줄을 적으면 화면이 숫자만 남기고
@@ -2058,25 +2603,13 @@ def walk(persona, account, viewport, flows, event_id):
             page.wait_for_timeout(1200)
             # 확인창을 지나는 길 — **여기가 2026-09-08 에 죽어 있던 층이다**
             if f.get("confirm"):
-                try:
-                    ta = page.locator("textarea")
-                    if ta.count():
-                        ta.first.fill("P-118 게이트 측정 (자동)")
-                except Exception:
-                    pass
-                try:
-                    ok = page.locator(".ant-modal-confirm-btns button, [role=dialog] button")
-                    if ok.count():
-                        for i in range(ok.count()):
-                            t = (ok.nth(i).inner_text() or "").strip()
-                            # ★ [P-132] 확인창의 단추 이름은 **화면마다 다르다.**
-                            #   되돌림 확인창의 이름은 「되돌리기」다(EventDetail.tsx:256).
-                            #   「확인」만 찾으면 그 확인창을 못 지나고, 못 지난 것이
-                            #   「요청이 안 나갔다」로 적힌다.
-                            if re.search("확인|OK|Confirm|판정|예|되돌리기|보내기|적용", t):
-                                ok.nth(i).click(); break
-                except Exception:
-                    pass
+                # ★ [P-132] 확인창의 단추 이름은 **화면마다 다르다.**
+                #   되돌림 확인창의 이름은 「되돌리기」다(EventDetail.tsx:256).
+                #   「확인」만 찾으면 그 확인창을 못 지나고, 못 지난 것이
+                #   「요청이 안 나갔다」로 적힌다.
+                # ★ [P-219] 그래서 **흐름이 선언한 이름도 함께** 본다(설정 화면은 「저장」).
+                #   더하기만 하므로 이미 서 있던 행의 판정은 한 칸도 안 바뀐다.
+                pass_confirm(page, (f.get("confirm") or {}).get("name"))
             page.wait_for_timeout(SPEC["window_ms"])
             got = list(calls)
             try:
@@ -2084,11 +2617,37 @@ def walk(persona, account, viewport, flows, event_id):
             except Exception:
                 text_after = ""
 
+        # ── [P-219] 「그 부름이 몇 번으로 끝났나」를 재는 행 ──────────────────
+        #   무권한 차단처럼 **화면이 자기 자격으로 부른 그 요청의 상태코드**가 곧 답인
+        #   자리가 있다. 기계 흐름(U6)에는 이 칸이 이미 있었고, 사람 흐름에는 없었다 —
+        #   없으면 403 을 기대한 행이 「상태를 못 읽었다」 회색으로 떨어진다.
+        if st.get("kind") == "status_is" and f.get("call"):
+            _m, _pat = f["call"]
+            _rx = re.compile(_pat)
+            for c in got:
+                if (c.get("method") or "").upper() != _m.upper():
+                    continue
+                u = c.get("url") or ""
+                if _rx.search(u.split("?")[0]) or _rx.search(u):
+                    st["after"] = str(c.get("status"))
+                    break
+            #: ⚠ [실측 2026-09-21 18:51] 번들이 부르는 `localhost:8000` 은 **우리 프록시로
+            #:   돌려세운 주소**라, 응답이 요청과 **다른 URL 로** 돌아오는 판이 있다
+            #:   (`on_resp` 는 `c["url"] == r.url` 로 짝을 짓는다). 그때 상태코드가
+            #:   `None` 이 되고, `None` 을 「403 이 아니다」로 읽으면 **제품이 옳게 막았는데
+            #:   빨강**이 난다. 그래서 **그 사람의 자격으로 같은 문을 다시 두드려** 잰다 —
+            #:   「누른 뒤 새 GET 으로 다시 읽는다」의 그 자리이고, 화면이 그 문을 실제로
+            #:   불렀다는 것은 이미 술어 ②가 증명했다.
+            if st.get("after") in (None, "None", "") and gp:
+                _code, _ = get(gp, tok)
+                st["after"] = str(_code)
+                st["reread"] = "응답 짝을 못 지어 같은 자격으로 다시 두드렸다"
+
         # ── 누른 뒤 상태 (**새 GET 으로 다시 읽는다**) ──
         if st.get("kind") in ("server_change", "server_reflect") and gp:
             code, js = get(gp, tok)
             st["before"] = before
-            st["after"] = dig(js, st.get("field"))
+            st["after"] = read_field(js, st)
             if js is None:
                 st["error"] = "다시 읽기 HTTP %s" % code
             if st["kind"] == "server_reflect":
@@ -2124,7 +2683,7 @@ def walk(persona, account, viewport, flows, event_id):
                     rev["clicked"] = True
                     if gp:
                         _c, _j = get(gp, tok)
-                        rev["after"] = dig(_j, st.get("field"))
+                        rev["after"] = read_field(_j, st)
                         #: 「원래대로」 = 누르기 **전에** 읽은 값과 같다.
                         rev["restored"] = (rev["after"] == before)
                         if not rev["restored"]:
@@ -2133,8 +2692,39 @@ def walk(persona, account, viewport, flows, event_id):
             except Exception as exc:                    # noqa: BLE001
                 rev["why"] = "되돌리기가 터졌다: %s" % type(exc).__name__
 
+        # ── ★ [P-219] **처음 값으로 한 번 더 쓴다** — 같은 단추로 안 돌아오는 문 ──
+        #   임계값·등급규칙은 같은 단추를 한 번 더 누르면 **같은 값을 또 쓴다**.
+        #   되돌림은 「처음 값을 다시 채우고 같은 문으로 한 번 더 쓰는 것」이다.
+        if (f.get("revert") or {}).get("kind") == "redo":
+            rev = {"kind": "redo", "clicked": False, "restored": None}
+            try:
+                ok_r, why_r = restore_steps(page, prep_restore)
+                if not ok_r:
+                    rev["why"] = why_r
+                else:
+                    el3 = find_control(page, f["control"])
+                    if el3 is None:
+                        rev["why"] = "되돌릴 단추를 다시 못 찾았다 — 상태가 남는다"
+                    else:
+                        el3.click(timeout=8000)
+                        page.wait_for_timeout(1200)
+                        if f.get("confirm"):
+                            pass_confirm(page, (f.get("confirm") or {}).get("name"))
+                        page.wait_for_timeout(SPEC["window_ms"])
+                        rev["clicked"] = True
+                        if gp:
+                            _c, _j = get(gp, tok)
+                            rev["after"] = read_field(_j, st)
+                            rev["restored"] = (rev["after"] == before)
+                            if not rev["restored"]:
+                                rev["why"] = ("되돌렸는데 값이 처음과 다르다 — "
+                                              "**지금 남은 상태를 손으로 되돌린다**")
+            except Exception as exc:                    # noqa: BLE001
+                rev["why"] = "되돌리기가 터졌다: %s" % type(exc).__name__
+
         note(key, control={"found": True, "clicked": True,
-                           "name": f["control"].get("name", "화면 열기")},
+                           "name": f["control"].get("name", "화면 열기"),
+                           "prepared": prep_done},
              calls=got, state=st, text_after=(text_after or "")[:6000],
              **({"img": img_obs} if img_obs is not None else {}),
              **({"revert": rev} if rev is not None else {}))
@@ -2250,7 +2840,11 @@ def _v_lock_blocks(tag: str = TAG) -> bool:
 
 
 def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://localhost:3002",
-            keep_event_ids=(), seed_file=None):
+            keep_event_ids=(), seed_file=None, table="48"):
+    """`table="48"` 은 온보딩 48행 · `table="settings"` 는 설정 다섯 (P-219).
+
+    ★ **두 표는 증거 파일도 다르다.** 한 파일에 쓰면 전량 회차(V 단독)와 서로를 지운다.
+    """
     if _v_lock_blocks():
         return EXIT_UNDECIDABLE
     #: ★★ [P-170 ② · 턴 U · 차선 Q] **씨앗 id 는 손으로 옮기지 않는다.**
@@ -2281,10 +2875,14 @@ def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://loca
         "U5": {"account": ["gxseed_u5_sysop", pw_role], "viewport": {"width": 1440, "height": 900}},
         "U6": {"account": ["gxprobe_q", pw_probe], "viewport": {"width": 1440, "height": 900}},
     }
+    want = SETTINGS_FLOWS if table == "settings" else FLOWS
+    out_file = SETTINGS_OBSERVED if table == "settings" else OBSERVED
     spec = {
-        "api": api, "spa": spa, "out": "/tmp/p118_click_completes.json",
+        "api": api, "spa": spa,
+        "out": ("/tmp/p118_settings_clicks.json" if table == "settings"
+                else "/tmp/p118_click_completes.json"),
         "window_ms": CLICK_WINDOW_MS, "order": list(PERSONAS), "personas": personas,
-        "flows": [dict(f) for f in FLOWS],
+        "flows": [dict(f) for f in want],
         "api_paths": API_PATHS, "api_bodies": API_BODIES,
         "api_actor": API_ACTOR,
         # ★ [P-132] 설정 문 한 행이 쓰는 관리자 자격. U5 의 걷기가 끝난 **뒤에만**
@@ -2331,7 +2929,7 @@ def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://loca
     print(p.stdout.decode("utf-8", "replace")[-2000:])
     if p.returncode != 0:
         print("%s 드라이버가 끊겼다 (rc=%d) — **못 잰 것은 회색이다**" % (TAG, p.returncode))
-    got = subprocess.run(["docker", "exec", container, "cat", "/tmp/p118_click_completes.json"],
+    got = subprocess.run(["docker", "exec", container, "cat", spec["out"]],
                          capture_output=True, env=env)
     if got.returncode != 0:
         print("%s 증거를 꺼내지 못했다" % TAG)
@@ -2364,9 +2962,10 @@ def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://loca
               % (TAG, exc))
         return EXIT_UNDECIDABLE
     _redacted = _redact_credentials(_text)
-    OBSERVED.write_text(_redacted, encoding="utf-8", newline="\n")
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    out_file.write_text(_redacted, encoding="utf-8", newline="\n")
     # 쓴 즉시 **다시 읽어** 같은 것이 나오는지 본다 (P-189 · 「썼다」가 아니라 「다시 읽으니 같더라」)
-    _back = OBSERVED.read_text(encoding="utf-8")
+    _back = out_file.read_text(encoding="utf-8")
     _ok, _lines, _facts = evidence_roundtrip(_text, _redacted, _back)
     for _ln in _lines:
         print("%s   %s" % (TAG, _ln))
@@ -2374,7 +2973,7 @@ def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://loca
         print("%s 증거를 믿을 수 없다 (P-189) — **회색이다.** 위 줄이 어느 칸인지 말한다" % TAG)
         return EXIT_UNDECIDABLE
     print("%s 실측 기록 → %s (쓰고 다시 읽어 같음을 확인 · P-189)"
-          % (TAG, OBSERVED.relative_to(ROOT)))
+          % (TAG, out_file.relative_to(ROOT)))
     return EXIT_OK
 
 
@@ -2461,10 +3060,11 @@ def evidence_roundtrip(raw: str, written: str, read_back: str):
     return True, lines, facts
 
 
-def load():
-    if not OBSERVED.exists():
-        return None, "증거가 없다 (%s)" % OBSERVED.relative_to(ROOT)
-    doc = json.loads(OBSERVED.read_text(encoding="utf-8"))
+def load(path=None):
+    path = path or OBSERVED
+    if not path.exists():
+        return None, "증거가 없다 (%s)" % path.relative_to(ROOT)
+    doc = json.loads(path.read_text(encoding="utf-8"))
     when = doc.get("measured_at") or ""
     try:
         t = datetime.strptime(when, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
@@ -2476,10 +3076,69 @@ def load():
     return doc, ""
 
 
+def judge_settings(observations):
+    """설정 다섯 → [(key, 색, 한 줄, 칸, 흐름)]. **같은 `judge_one` 을 쓴다.**
+
+    판정기를 한 벌 더 만들지 않는다 — 두 벌을 두면 어긋나고, 어긋난 쪽이 조용히 이긴다.
+    면제 칸도 없다: 이 표의 이름을 보고 봐주는 길이 `judge_one` 안에 없다(D-327).
+    """
+    rows = []
+    for flow in SETTINGS_FLOWS:
+        o = (observations or {}).get(flow["key"])
+        color, why, cells = judge_one(flow, o)
+        rows.append((flow["key"], color, why, cells, flow))
+    return rows
+
+
+def settings_report(tag) -> tuple:
+    """설정 다섯을 **따로** 찍는다 → (초록, 빨강, 회색)."""
+    sdoc, sstale = load(SETTINGS_OBSERVED)
+    if sstale:
+        print("")
+        print("%s ⚠ [설정 5] %s" % (tag, sstale))
+    srows = judge_settings((sdoc or {}).get("observations") or {} if not sstale else {})
+    sg, sr, sy = score(srows)
+    print("")
+    print("%s [설정 5] **%d/%d** — 초록 %d · 빨강 %d · 회색 %d   [실측 %s]"
+          % (tag, sg, len(SETTINGS_FLOWS), sg, sr, sy,
+             (sdoc or {}).get("measured_at", "없음")))
+    print("%s          이 다섯은 **48 밖의 표다** — 온보딩 48행의 분모에 섞지 않는다. "
+          "절: %s" % (tag, " · ".join(sorted({f["clause"] for f in SETTINGS_FLOWS}))))
+    mark = {GREEN: "O", RED: "X", GREY: "?"}
+    for key, color, why, cells, flow in srows:
+        c4 = "".join("O" if cells[n] else ("?" if cells[n] is None else "X")
+                     for n in ("control", "call", "state", "text"))
+        print("  %s %-7s %-4s %-9s %-18s %s"
+              % (mark[color], key, c4, flow["clause"], flow["title"][:18], why[:120]))
+    #: 되돌림 셈 — 게이트가 남긴 상태는 다음 게이트의 거짓 빨강이다
+    sobs = (sdoc or {}).get("observations") or {}
+    left = []
+    for f in SETTINGS_FLOWS:
+        if (f.get("revert") or {}).get("kind") not in ("same_control", "redo"):
+            continue
+        rv = (sobs.get(f["key"]) or {}).get("revert") or {}
+        if (f["revert"] or {}).get("restores") is False:
+            #: ★ 이 자리는 **칸이 안 돌아오는 것이 옳다**(대장은 줄지 않는다).
+            #:   되돌린 증거는 「눌렀는가」이고, 안 눌렀으면 상태가 남은 것이다.
+            if not rv.get("clicked"):
+                left.append((f["key"], rv.get("why") or "되돌림을 못 눌렀다 — 값이 남는다"))
+            continue
+        if rv.get("restored") is not True:
+            left.append((f["key"], rv.get("why") or "이번 판에 그 행을 못 눌렀다"))
+    if left:
+        print("%s   ★ 되돌리지 못한 자리 %d — **지금 남은 상태를 손으로 되돌린다**"
+              % (tag, len(left)))
+        for k, w in left:
+            print("%s       %-7s %s" % (tag, k, str(w)[:110]))
+    return sg, sr, sy
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--self-test", action="store_true", help="판정 규칙만 (브라우저 없이)")
     ap.add_argument("--measure", action="store_true", help="gx-shell 안에서 실제로 누른다")
+    ap.add_argument("--measure-settings", action="store_true",
+                    help="[P-219] **설정 다섯만** 누른다 (48행 증거를 안 건드린다)")
     ap.add_argument("--list", action="store_true", help="흐름별 네 칸")
     ap.add_argument("--container", default="gx-shell")
     ap.add_argument("--api", default="http://gx-nginx-e:8500")
@@ -2500,6 +3159,14 @@ def main() -> int:
             return rc
         return measure(args.container, args.api, args.spa,
                        keep_event_ids=args.keep_event, seed_file=args.seed_file)
+    if args.measure_settings:
+        rc = self_test()
+        if rc != EXIT_OK:
+            print("%s 자기시험이 깨졌다 — 재지 않는다" % TAG)
+            return rc
+        return measure(args.container, args.api, args.spa,
+                       keep_event_ids=args.keep_event, seed_file=args.seed_file,
+                       table="settings")
     if args.list:
         for f in FLOWS:
             print("%-7s %-26s | 누르는 것 %-14s | 기대 호출 %-8s %-42s | 상태 %-15s | 문구 %s"
@@ -2584,14 +3251,24 @@ def main() -> int:
         for k, w in greys:
             print("      %-7s %s" % (k, w))
 
+    # ══ [P-219 · 턴 AA · 차선 A] **설정 다섯 — 분모를 48 과 뭉치지 않는다** ══════
+    sg, sr, sy = settings_report(TAG)
+
     print("")
     if r:
         print("%s 빨강 %d — **누른 뒤가 안 끝난다.** 그려진 것으로 점수를 주지 않는다" % (TAG, r))
         return EXIT_FAIL
+    if sr:
+        print("%s 설정 빨강 %d — **누른 뒤가 안 끝난다** (48행은 빨강 0)" % (TAG, sr))
+        return EXIT_FAIL
     if y:
         print("%s 회색 %d — **못 쟀다.** 못 잰 것은 통과가 아니다" % (TAG, y))
         return EXIT_UNDECIDABLE
-    print("%s 48/48 — 누른 것이 전부 끝까지 갔다" % TAG)
+    if sy:
+        print("%s 설정 회색 %d — **못 쟀다.** 못 잰 것은 통과가 아니다" % (TAG, sy))
+        return EXIT_UNDECIDABLE
+    print("%s 48/48 + 설정 %d/%d — 누른 것이 전부 끝까지 갔다"
+          % (TAG, sg, len(SETTINGS_FLOWS)))
     return EXIT_OK
 
 

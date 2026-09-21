@@ -176,5 +176,10 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("차선을 가르는 **이름**이 실행마다 갈리는가 — **분모 %d건**(시험 DB·컨테이너·"
+               "포트·증거 자리). 이름은 코드가 아니라 실행 명령이 정하므로 여기서는 "
+               "**이름의 선언**을 잰다" % len(LANE_NAMES)),
+    )
     sys.exit(main())

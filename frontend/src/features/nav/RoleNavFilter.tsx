@@ -26,7 +26,9 @@ import { useEffect } from 'react';
 import { useMenuData, useUserInfo } from 'rj-core';
 
 import type { MenuNode } from './roleNav';
-import { bucketOf, filterNav, navSignature, roleCodesOf } from './roleNav';
+import {
+  bucketOf, filterNav, hideAcquired, navSignature, roleCodesOf,
+} from './roleNav';
 
 export default function RoleNavFilter(): null {
   const userInfo = useUserInfo();
@@ -38,7 +40,25 @@ export default function RoleNavFilter(): null {
     if (list.length === 0) return;
 
     const bucket = bucketOf(roleCodesOf(userInfo));
-    if (!bucket) return;
+    if (!bucket) {
+      /*
+       * ★★ [턴 AA · 차선 U56 · P-220] **모르는 역할에서도 인수 넷은 뗀다.**
+       *
+       * 위 ⚠ 는 그대로다 — 모르는 계정에서 표대로 **자르지는** 않는다. 그러나
+       * 「운영 설정 · 구성 관리 · 역할 · 보고서 서식」 넷은 표와 무관하게 우리
+       * 제품의 화면이 아니고, [실측 2026-09-21] 그 넷은 **역할 전수의 RoleMenu 에
+       * 들어 있다.** 그래서 표에 없는 역할(`superuser` · `user` · `order` ·
+       * `tenant_admin_4` …)로 들어오면 고객이 그 넷을 그대로 본다.
+       *
+       * 줄 넷을 떼는 것으로는 사이드바가 비지 않는다 — 「빈 사이드바는 사고다」가
+       * 막으려던 그 일이 여기서는 일어나지 않는다. 남는 줄이 열 개가 넘는다.
+       */
+      const pruned = hideAcquired(list);
+      if (!pruned.changed) return;
+      if (pruned.menus.length === 0) return;   // 그럴 리 없지만, 비면 안 쓴다
+      setMenus(pruned.menus);
+      return;
+    }
 
     const next = filterNav(list, bucket);
     // 표대로 자른 결과가 **비면 쓰지 않는다.** 빈 사이드바는 결정이 아니라 사고다.

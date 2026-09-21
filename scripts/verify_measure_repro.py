@@ -257,5 +257,10 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("등재된 측정 도구를 **두 번씩** 돌려 같은 수가 나오는가 — **분모 %d건**. "
+               "등재하지 않은 도구는 재현성이 **검사되지 않는다** — 그 0 은 초록이 아니다"
+               % len(MEASURES)),
+    )
     raise SystemExit(main())

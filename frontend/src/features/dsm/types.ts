@@ -502,7 +502,15 @@ export interface InboundApiKeyRow {
   key_id: number;
   name: string;
   prefix: string;
+  /** 기계 어휘(표 ② 5값) — `typed` · `verified` · `absent` · `rotated`. */
   status: string;
+  /**
+   * ④ [턴 AA · U56] 고객의 말 — 「사용 중 / 만료 / 폐기 / 교체됨」.
+   * 서버가 옳긴다. 화면이 제 손으로 옳기면 판정식이 두 벌이 된다(D-212).
+   */
+  status_label?: string;
+  /** ③ [턴 AA · U56] 출처 표식. 표식이 없으면 `live` 다. */
+  data_source?: string;
   is_active: boolean;
   created_at?: string | null;
   last_used?: string | null;
@@ -514,6 +522,13 @@ export interface ApiKeysOverview {
   inbound: InboundApiKeyRow[];
   inbound_api_type: string;
   inbound_capability: string;
+  /**
+   * ③ [턴 AA · U56 · P-220] 고객 표에서 **미리 뺀** 시험 키의 수.
+   * 0이면 0이라고 말한다 — 조용히 빼면 「3건」과 「3건인데 18건을
+   * 숨겼다」가 같은 그림이 된다.
+   */
+  inbound_hidden_by_marker?: number;
+  inbound_hidden_reason?: string;
   outbound?: unknown[];
 }
 

@@ -99,6 +99,178 @@ BIRTH_JSX: tuple[tuple[str, str], ...] = (
      카드 한 장에 묶입니다. F-14 통계는 왼쪽 수를 봅니다.</Paragraph>""", "절 ID"),
 )
 
+# ═══════════════════════════════════════════════════════════════════════════
+# P-221 · 턴 AA — **표시명 사전 · 빈 화면 · 오류 본문** (2026-09-21 · 차선 Q)
+#
+# 이 턴의 불변: **정직한 회색을 고객 말로.**
+#   「서버가 404」는 정직하지만 고객 말이 아니다. 「못 골라 줍니다」는 우리 사정이다.
+#   그리고 **실제 값이 없는 문구는 비표시**여야 한다 — 「장애 신고 창구 미등록」은
+#   **우리 회색을 고객 발치에 적어 둔 것**이다(세종 관찰). 창구 번호가 오면 그때 뜬다.
+#
+# ★ 왜 「한글이 섞인 조각에서만」 보는가 — **이 그물의 눈금**
+#   `fire_user` · `log` · `typed` 는 코드에서는 정당한 낱말이다. 문자열 리터럴에
+#   그대로 있는 것을 전부 잡으면 첫 수가 수백이 되고, 수백은 아무도 안 고친다.
+#   **고객이 읽는 자리**는 한국어 문장이다. 그래서 이 세 무리는 **조각에 한글이
+#   있을 때만** 본다 — 「규칙은 … 역할을 가리킵니다 (예: fire_user · operator)」
+#   같은 자리가 정확히 그 모양이고, 그것이 이 절의 출생 표본이다.
+#   ⚠ 놓치는 쪽으로 틀린다: 순영문 라벨은 이 그물을 지나간다. 그 자리는 UX-21 이다.
+#
+# ★ 사전은 **남이 만든다** — U56 이 역할 표시명을, U24 가 채널 이름을 만들고 있다.
+#   여기 있는 것은 **금지 목록**(내부 코드의 이름)이지 표시명 사전이 아니다.
+#   표시명이 서면 `aa_display_dicts()` 가 그것을 찾아 **덮는다** — 두 벌을 두지 않는다
+#   (D-369). 아직 없으면 **있는 것만** 쓰고 없는 것은 소리 내어 적는다.
+# ═══════════════════════════════════════════════════════════════════════════
+
+#: 표시명 사전이 설 자리. **U56·U24 의 것**이고 이 파일의 것이 아니다.
+#: ★ [실측 2026-09-21 · 턴 AA] U56 의 역할 사전은 **이미 섰다** —
+#:   `roleNames.ts::ROLE_DISPLAY_NAMES`. 새로 만들지 않고 **그것을 가리킨다.**
+#:   U24 의 채널 이름은 **아직 없다**(`frontend/src` 전수에 `CHANNEL_LABEL` 0건).
+#:   ⚠ 없는 것을 「0건」으로 읽지 않는다 — 판정문이 그 이름을 소리 내어 적는다.
+DISPLAY_DICTS = (
+    ("역할 표시명 (U56)", "frontend/src/features/dsm/roleNames.ts",
+     r"ROLE_DISPLAY_NAMES"),
+    ("채널 이름 (U24)", "frontend/src/features/dsm/copy.ts", r"CHANNEL_LABEL"),
+    ("상태 표시명", "frontend/src/features/dsm/copy.ts", r"LINK_STATUS_LABEL"),
+)
+
+
+def aa_display_dicts():
+    """표시명 사전이 **섰는가**. 선 것만 쓰고, 안 선 것은 이름으로 적는다.
+
+    ★ 「없다」를 「0건」으로 읽지 않는다(D-301). 사전이 없으면 이 게이트는 금지
+      목록만으로 도는 것이고, 그 사실이 판정문에 실려야 한다 — 안 실리면
+      다음 턴에 누가 「표시명 게이트가 초록이니 사전이 있다」고 읽는다.
+    """
+    have, missing = [], []
+    for name, rel, sym in DISPLAY_DICTS:
+        p = ROOT / rel
+        if p.is_file() and re.search(sym, p.read_text(encoding="utf-8", errors="replace")):
+            have.append("%s(`%s`)" % (name, sym))
+        else:
+            missing.append("%s ← `%s` 에 `%s` 가 아직 없다" % (name, rel, sym))
+    return have, missing
+
+
+#: ── ① 역할 코드. `backend` 의 실제 값과 `roleNav.ts` 가 쓰는 이름들 ──────────
+#:    ★ `admin` · `operator` 는 영어 낱말이기도 하다. 그래서 **한글 조각 안에서만**
+#:      본다 — 아래 `HANGUL_ONLY` 무리에 들어간다.
+AA_ROLE_CODES = ("fire_user", "fire_admin", "surveillance_operation",
+                 "surveillance_manage", "view_only", "superuser", "dsm_admin")
+
+#: ── ② 채널 코드. `ALLOWED_PREF_CHANNELS` 와 발사 어댑터 이름 ────────────────
+AA_CHANNEL_CODES = ("webpush", "email", "sms", "log", "typed", "webhook", "stdout")
+
+#: ── ③ 상태 코드. 기존 「영문 열거값」은 뒤에 `=`·`:` 가 붙은 자리만 봤다 —
+#:    맨몸으로 선 자리(「지금 occurred 입니다」)는 한 번도 안 잡혔다.
+AA_STATUS_CODES = ("occurred", "acknowledged", "in_progress", "confirmed",
+                   "rejected", "resolved", "pending", "live", "drill", "seed")
+
+#: **한글이 섞인 조각에서만** 보는 무리. 위의 눈금 설명을 참조.
+HANGUL_ONLY_PATTERNS = (
+    ("역할 코드", r"\b(?:%s)\b" % "|".join(AA_ROLE_CODES + ("admin", "operator"))),
+    ("채널 코드", r"\b(?:%s)\b" % "|".join(AA_CHANNEL_CODES)),
+    ("상태 코드", r"\b(?:%s)\b" % "|".join(AA_STATUS_CODES)),
+    #: ── ④ 오류 본문 — 우리 사정을 고객 발치에 적어 둔 자리 ───────────────
+    #:   ★ HTTP 상태 숫자. 「서버가 404」는 정직하지만 고객 말이 아니다.
+    ("상태 코드 숫자", r"(?:\b(?:40[0-9]|41[0-9]|42[0-9]|50[0-4])\b\s*(?:오류|에러|입니다|"
+                      r"응답|코드)|(?:서버가|응답이|상태)\s*\**(?:40[0-9]|50[0-4]))"),
+    #: ★ 우리 사정을 고객에게 사과로 내미는 말. 원인도 다음 손도 없다.
+    ("우리 사정", r"(?:못 골라 줍니다|골라 주지 못합니다|판별하지 못합니다|"
+                 r"지원하지 않는 경로|알 수 없는 오류|처리 중 오류가 발생)"),
+    #: ★★ **실제 값이 없는 문구는 비표시다.** 「미등록」·「미지정」·「준비 중」을
+    #:   고객 화면에 적는 것은 **우리 회색을 고객 발치에 적어 둔 것**이다(세종 관찰).
+    #:   값(창구 번호·주소)이 오면 그때 뜬다. 오기 전에는 그 줄이 **없어야** 한다.
+    ("빈 값 표시", r"(?:미등록|미지정|미설정|등록되지 않았습니다|준비 중입니다|"
+                  r"확인되지 않았습니다)"),
+    #: ★ 영문 오류 원문이 그대로 나가는 자리 (그날 화면의 `Network Error`).
+    #:   ⚠ [실측 2026-09-21 · 턴 AA] 처음에 `undefined` · `NaN` 을 넣었더니 **179건**이
+    #:     나왔고 그중 대부분이 `push.ts` 의 코드였다 — 이 무리는 한글 없이도 보는
+    #:     예외라서 **코드를 화면으로 읽었다.** 수백 건은 아무도 안 고친다. 그래서
+    #:     **화면에 그 글자 그대로 뜬 것만** 남긴다. 놓치는 쪽으로 틀린다.
+    ("영문 오류 원문", r"(?:Network Error|Request failed|Internal Server Error|"
+                     r"Unexpected token in JSON)"),
+)
+HANGUL_ONLY_COMPILED = tuple((n, re.compile(rx)) for n, rx in HANGUL_ONLY_PATTERNS)
+
+# ── ⑤ 빈 화면 — **0건이면 한 줄 + 다음 손** ───────────────────────────────
+#   「조치를 마쳤다고 알려 온 사건이 없습니다」가 화면 절반을 차지하면 안 된다.
+#   길이는 이 게이트가 못 잰다(그것은 화면의 일이다). 이 게이트가 잴 수 있는 것은
+#   **다음 손이 같은 문장에 있는가** 하나다 — 없으면 고객은 막다른 곳에 선다.
+#
+# ⚠ **이 그물은 두 번 좁혔다** [실측 2026-09-21 · 턴 AA]. 첫 판은 179건을 냈고
+#   그중 대부분이 빈 화면이 아니었다:
+#     · 「승인 필요 **없음**」 「알 수 **없음**」 — 그냥 **라벨**이다. 그래서 `없음` 을 뺐다.
+#     · 「둘 다 비우면 차단 없음입니다. 한쪽만 채울 수는 **없습니다** — 언제부터
+#       언제까지 안 받는지 정해지지 않기 때문입니다.」 — **설명 문단**이다.
+#   빈 화면 문구는 **짧다**. 그것이 이 둘을 가르는 유일한 기계적 술어다.
+#   그래서 조각이 `EMPTY_MAX_LEN` 자를 넘으면 빈 화면으로 보지 않는다.
+#   ★ 놓치는 쪽으로 틀린다 — 긴 빈 화면 문구는 이 그물을 지나간다. 그러나 수백 건을
+#     내는 그물은 아무도 안 고치고, 안 고치는 게이트는 꺼진 게이트와 같다.
+EMPTY_PHRASE = re.compile(r"(?:없습니다|비어 있습니다|0건|한 건도 없)")
+
+#: 빈 화면 한 줄의 길이 바닥. 이보다 길면 **설명 문단**이지 빈 화면이 아니다.
+EMPTY_MAX_LEN = 40
+
+#: 「다음 손」의 표지 — 무엇을 하면 되는지가 **같은 조각 안에** 있는가.
+#:   ⚠ 넓게 잡는다. 좁게 잡으면 멀쩡한 빈 화면이 전부 빨개지고, 그러면 사람이
+#:     게이트를 끈다. 꺼진 게이트는 없는 게이트보다 나쁘다.
+NEXT_HAND = re.compile(
+    r"(?:하십시오|하세요|해 보십시오|누르|눌러|등록|추가|만들|설정|선택|바꾸|"
+    r"넓|다시 시도|기다리|문의|새로 고침|초기화|지우|풀어|보십시오|보세요)")
+
+#: ★ **출생 표본** (D-310) — 그날 화면에 실제로 떠 있던 말들이다.
+#:   자기시험이 이 넷을 **직접** 시험한다. 여기서 초록이 나오면 이 절은 도구가 아니다.
+AA_BIRTH = (
+    ("규칙은 사람이 아니라 역할을 가리킵니다 (예: fire_user · operator).", "역할 코드"),
+    ("보내는 채널이 log 로 잡혀 있습니다", "채널 코드"),
+    ("지금 상태는 occurred 입니다", "상태 코드"),
+    ("서버가 404 를 냈습니다", "상태 코드 숫자"),
+    ("나에게 온 것만 못 골라 줍니다", "우리 사정"),
+    ("장애 신고 창구 미등록", "빈 값 표시"),
+    #: ★ 한글 문장 **안에** 섞여 나온 영문 원문만 본다 — 막으려고 적어 둔 목록은
+    #:   그 자리에서 한글이 없고, 그래서 이 그물을 지나간다(위 `scan_line_aa` 참조).
+    ("알림을 보내지 못했습니다 (Network Error)", "영문 오류 원문"),
+)
+
+#: ★ 빈 화면의 출생 표본 — 「한 줄 + 다음 손」이 아닌 것과 맞는 것.
+AA_EMPTY_BIRTH = (
+    ("조치를 마쳤다고 알려 온 사건이 없습니다", True),   # 다음 손이 없다 → 잡힌다
+    ("아직 없습니다. 카메라를 먼저 등록하십시오", False),  # 다음 손이 있다 → 안 잡힌다
+    ("0건입니다 — 기간을 넓혀 보십시오", False),
+)
+
+
+def scan_line_aa(text: str) -> list:
+    """한 조각에서 걸린 **P-221 패턴 이름들**. 한글이 없으면 보지 않는다.
+
+    ★ 왜 한글이 없으면 안 보는가는 이 절 머리의 「눈금」에 적었다. 요약하면:
+      고객이 읽는 자리를 재는 것이고, 코드를 재는 것이 아니다.
+    """
+    #: ⚠⚠ [실측 2026-09-21 · 턴 AA] 처음에는 **영문 오류 원문만 한글 없이도** 보게
+    #:   예외를 뒀다. 그랬더니 잡힌 것이 `copy.ts` 의 `RAW_MARKERS` 였다 —
+    #:   `'Network Error'` · `'Internal Server Error'` 가 거기 있는 이유는 화면에
+    #:   내보내려는 것이 아니라 **그 문장을 버리려고** 적어 둔 것이다.
+    #:   ★ **이 게이트가 방어선을 결함으로 읽었다.** 예외를 지운다 — 이 무리도
+    #:     한글 조각 안에서만 본다. 「알림을 못 보냈습니다 (Network Error)」는 잡고,
+    #:     막으려고 적어 둔 목록은 안 잡는다. 놓치는 쪽으로 틀린다.
+    if not HANGUL.search(text):
+        return []
+    return [name for name, rx in HANGUL_ONLY_COMPILED if rx.search(text)]
+
+
+def scan_empty_aa(text: str) -> list:
+    """빈 화면 조각인데 **다음 손이 없으면** 이름을 낸다.
+
+    긴 조각은 보지 않는다 — 위 `EMPTY_MAX_LEN` 의 주석에 그 사유를 적었다.
+    """
+    flat = " ".join(text.split())
+    if not HANGUL.search(flat) or len(flat) > EMPTY_MAX_LEN:
+        return []
+    if not EMPTY_PHRASE.search(flat):
+        return []
+    return [] if NEXT_HAND.search(flat) else ["빈 화면 · 다음 손 없음"]
+
+
 #: 본 비율의 바닥. **이보다 낮으면 판정하지 않는다**(회색 · exit 2) —
 #: 커버리지를 모르는 게이트는 판정한 것이 아니다.
 COVERAGE_FLOOR = 0.90
@@ -423,8 +595,14 @@ def hangul_coverage(src: str, frags: list[Frag]) -> tuple[int, int]:
 
 
 def scan_line(line: str) -> list[str]:
-    """한 조각(문자열 몸통 · JSX 본문)에서 걸린 패턴 이름들."""
-    return [name for name, rx in COMPILED if rx.search(line)]
+    """한 조각(문자열 몸통 · JSX 본문)에서 걸린 패턴 이름들.
+
+    ★ [P-221 · 턴 AA] 세 무리를 **한 술어로** 본다 — 기존 사전 + 표시명/오류 무리
+      + 빈 화면. 갈래를 나누어 두 번 훑으면 한쪽이 조용히 아무것도 안 보게 된다
+      (D-369 가 말하는 「두 벌」이 정확히 그 모양이다).
+    """
+    return ([name for name, rx in COMPILED if rx.search(line)]
+            + scan_line_aa(line) + scan_empty_aa(line))
 
 
 def norm(snippet: str) -> str:
@@ -491,6 +669,72 @@ def self_test() -> int:
             print(f"[COPY] 자기시험 FAIL 출생 표본 ②의 한글 {total}자 중 "
                   f"{covered}자만 조각에 담겼다 — 파서가 샌다")
             fails += 1
+    # ═══════════════════════════════════════════════════════════════════════
+    # ★ P-221 · 턴 AA — 표시명 · 빈 화면 · 오류 본문. **양성과 음성 둘 다.**
+    #   턴 Z 에 `verify_classification` 이 **자기시험이 아예 없어서** 칸 이름을
+    #   동사로 읽는 오독이 오래 살았다. 새 술어에는 출생 표본을 반드시 붙인다.
+    # ═══════════════════════════════════════════════════════════════════════
+    # ── 양성 ① — 출생 표본 일곱을 **하나씩** 잡는가 ────────────────────────
+    for sample, want in AA_BIRTH:
+        hits = scan_line(sample)
+        if want not in hits:
+            print(f"[COPY] 자기시험 FAIL P-221 출생 표본을 못 잡았다 "
+                  f"({want}): {sample}")
+            fails += 1
+    # ── 양성 ② — JSX 본문으로 들어가도 잡는가 (파서까지 끝까지 돌린다) ──────
+    jsx = ("<Paragraph>규칙은 사람이 아니라 역할을 가리킵니다 "
+           "(예: fire_user · operator).</Paragraph>")
+    if "역할 코드" not in {n for _l, t in user_texts(jsx) for n in scan_line(t)}:
+        print("[COPY] 자기시험 FAIL 역할 코드가 JSX 본문 안에서 안 잡힌다 — "
+              "`scan_line` 만 시험하면 파서가 눈이 멀어도 초록이다")
+        fails += 1
+    # ── 음성 ① — **코드는 화면이 아니다.** 한글이 없으면 보지 않는다 ────────
+    #    이 음성 대조가 없으면 첫 수가 수백이 되고, 수백은 아무도 안 고친다.
+    for code in ("role === 'fire_user'", "channels: ['webpush', 'email']",
+                 "if (state === 'occurred') return null;", "const admin = true;",
+                 #: ★★ **방어선을 결함으로 읽지 않는다** — `copy.ts::RAW_MARKERS` 는
+                 #:   그 문장을 화면에 내려는 것이 아니라 **버리려고** 적어 둔 목록이다.
+                 #:   턴 AA 에 이 게이트가 그 목록을 세 건 잡았다. 그것이 이 줄의 사유다.
+                 "'Network Error',", "'Internal Server Error',",
+                 "'Request failed with status code',"):
+        if scan_line_aa(code):
+            print(f"[COPY] 자기시험 FAIL 코드를 화면으로 읽었다: {code}")
+            fails += 1
+    # ── 음성 ② — 표시명으로 **고친** 문장은 잡히면 안 된다 ─────────────────
+    for good in ("규칙은 사람이 아니라 역할을 가리킵니다 (예: 소방 담당 · 관제 요원).",
+                 "보내는 채널이 웹푸시로 잡혀 있습니다",
+                 "지금 상태는 접수됨 입니다",
+                 "사진을 불러오지 못했습니다. 잠시 뒤 다시 시도해 보십시오."):
+        if scan_line_aa(good):
+            print(f"[COPY] 자기시험 FAIL 고쳐 쓴 문장을 잡았다: {good}")
+            fails += 1
+    # ── 음성 ③ — 숫자가 다 상태 코드는 아니다 (장비 수 · 분 · 건수) ─────────
+    for good in ("카메라 404 대가 붙어 있습니다", "500 건을 내려받았습니다"):
+        if "상태 코드 숫자" in scan_line_aa(good):
+            print(f"[COPY] 자기시험 FAIL 장비 수·건수를 상태 코드로 읽었다: {good}")
+            fails += 1
+    # ── 빈 화면 — **0건이면 한 줄 + 다음 손** ──────────────────────────────
+    for sample, want_hit in AA_EMPTY_BIRTH:
+        hit = bool(scan_empty_aa(sample))
+        if hit != want_hit:
+            print(f"[COPY] 자기시험 FAIL 빈 화면 술어가 틀렸다 "
+                  f"(기대 {'잡힘' if want_hit else '안 잡힘'}): {sample}")
+            fails += 1
+    # ── 음성 ④ — 빈 화면 술어가 **빈 화면이 아닌 문장**을 잡으면 안 된다 ────
+    for good in ("사건 12건을 보고 있습니다", "종결하기 (3)"):
+        if scan_empty_aa(good):
+            print(f"[COPY] 자기시험 FAIL 빈 화면이 아닌 문장을 잡았다: {good}")
+            fails += 1
+    # ── ★ 사전이 **섰는지**를 소리 내어 확인한다 (없다 ≠ 0건 · D-301) ──────
+    _have, _missing = aa_display_dicts()
+    if not isinstance(_have, list) or not isinstance(_missing, list):
+        print("[COPY] 자기시험 FAIL 표시명 사전 확인기가 목록을 안 낸다")
+        fails += 1
+    if len(_have) + len(_missing) != len(DISPLAY_DICTS):
+        print("[COPY] 자기시험 FAIL 사전 셈이 어긋난다 — 있는 것과 없는 것의 합이 "
+              "전체와 다르다. 안 세어진 사전은 「있다」로 읽힌다")
+        fails += 1
+
     # 음성 ① — 주석은 소스의 자리다
     if scan_line(strip_comments("// UX-17 · D-421 · `kernels.k1_event`" + chr(10)).strip()):
         print("[COPY] 자기시험 FAIL 주석을 잡았다 — 소스가 아니라 화면을 본다")
@@ -548,7 +792,17 @@ def main() -> int:
     ratio = (covered / total) if total else 0.0
     print(f"[COPY] **본 비율 {ratio:.0%}** — 화면 소스의 한글 {total:,}자 중 "
           f"{covered:,}자가 조각에 담겼다 (기준 {COVERAGE_FLOOR:.0%})")
-    print(f"[COPY] [입력] {seen}개 화면 파일 (주석 걷어낸 뒤) · 패턴 {len(COMPILED)}종")
+    print(f"[COPY] [입력] {seen}개 화면 파일 (주석 걷어낸 뒤) · 패턴 "
+          f"{len(COMPILED) + len(HANGUL_ONLY_COMPILED) + 1}종"
+          f"(사전 {len(COMPILED)} + P-221 표시명·오류 {len(HANGUL_ONLY_COMPILED)} + 빈 화면 1)")
+    #: ★ P-221 — **사전이 섰는지를 소리 내어 말한다.** 안 말하면 다음 턴에 누가
+    #:   「표시명 게이트가 초록이니 사전이 있다」고 읽는다. 「없다」는 「0건」이 아니다.
+    _have, _missing = aa_display_dicts()
+    print("[COPY] [입력] 표시명 사전 %d/%d — 선 것: %s"
+          % (len(_have), len(DISPLAY_DICTS), " · ".join(_have) or "(없다)"))
+    for _m in _missing:
+        print("[COPY]   ? 사전이 아직 없다: %s — 이 게이트는 그 칸을 **금지 목록만으로** "
+              "본다. 표시명이 서면 그쪽이 정본이다 (새로 만들지 않는다 · D-369)" % _m)
 
     if total and ratio < COVERAGE_FLOOR:
         print(f"[COPY] **판정 불가** — 본 비율 {ratio:.0%} 가 기준 {COVERAGE_FLOOR:.0%} "
@@ -606,5 +860,13 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    gate_header(
+        __file__,
+        measured=("화면이 **대장의 말**로 말하는가 — 화면 파일 **분모 %d개**(지금 셌다 · 주석은 "
+               "걷어낸다) × 패턴 %d종(사전 %d + P-221 표시명·오류 %d + 빈 화면 1). "
+               "래칫이라 **새 위반만** 빨강이고, 잔여는 수로 말한다"
+               % (len([p for p in frontend_files() if in_scope(p)]),
+                  len(COMPILED) + len(HANGUL_ONLY_COMPILED) + 1,
+                  len(COMPILED), len(HANGUL_ONLY_COMPILED))),
+    )
     raise SystemExit(main())

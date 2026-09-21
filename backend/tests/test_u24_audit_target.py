@@ -295,3 +295,140 @@ class TheOtherTenantsEventIsNotProbedTest(TurnTFixture):
         state = api_u24._resolve_event_target(eb, scope=TenantScope.of(self.manager_a))
         self.assertNotEqual(api_u24.TARGET_LIVE, state,
                             "남의 테넌트 사건이 `live` 로 새어 나왔다")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 AA — **두 번째 스냅샷** · **축 둘** · **넷째 갈래** (차선 U24)
+# ═══════════════════════════════════════════════════════════════════════════
+_SNAPSHOT21_REL = "docs/agent/evidence/P-184/deleted_probe_snapshot_20260921.json"
+_SNAPSHOT21_CANDIDATES = (
+    pathlib.Path(__file__).resolve().parents[2] / _SNAPSHOT21_REL,
+    pathlib.Path("/" + _SNAPSHOT21_REL),
+)
+
+
+def _snapshot21_event_ids() -> set[int]:
+    for path in _SNAPSHOT21_CANDIDATES:
+        if path.is_file():
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return {int(x) for x in data["event_ids"]}
+    raise AssertionError(
+        "09-21 스냅샷을 못 찾았다 — 본 자리: "
+        + " · ".join(str(p) for p in _SNAPSHOT21_CANDIDATES)
+        + "\n  못 읽은 것은 초록이 아니다.")
+
+
+class TheSecondSnapshotIsAlsoPinnedTest(TurnTFixture):
+    """★★ **삭제는 두 번 있었다.** 두 결정의 날짜가 갈려 있어야 종이가 안 거짓말한다."""
+
+    def test_the_second_constant_is_exactly_that_snapshot(self) -> None:
+        got = set(api_u24.DELETED_EVENT_IDS_20260921)
+        want = _snapshot21_event_ids()
+        self.assertEqual(
+            got, want,
+            f"상수에만={sorted(got - want)} · 스냅샷에만={sorted(want - got)}\n"
+            "  ⚠ 갈린 채로 두면 화면이 스냅샷에 없는 id 에 「스냅샷 있음」을 붙인다.")
+
+    def test_the_two_decisions_do_not_share_a_date(self) -> None:
+        """★ 합치면 09-21 에 지워진 사건에 **09-20** 이 찍힌다 — 없던 날짜를 만드는 것이다."""
+        self.assertNotEqual(api_u24.DELETED_EVENT_DECIDED_ON,
+                            api_u24.DELETED_EVENT_DECIDED_ON_20260921)
+        self.assertEqual(set(), set(api_u24.DELETED_EVENT_IDS)
+                         & set(api_u24.DELETED_EVENT_IDS_20260921))
+
+    def test_each_id_answers_with_its_own_decision(self) -> None:
+        a = api_u24.deleted_event_decision(sorted(api_u24.DELETED_EVENT_IDS)[0])
+        b = api_u24.deleted_event_decision(sorted(api_u24.DELETED_EVENT_IDS_20260921)[0])
+        self.assertEqual("2026-09-20", a[0])
+        self.assertEqual("2026-09-21", b[0])
+        self.assertIn("20260921", b[1])
+        self.assertIsNone(api_u24.deleted_event_decision(999_999_999),
+                          "스냅샷에 없는 id 에 결정을 주면 없던 삭제를 종이에 만드는 것이다")
+
+
+class TheRowFindsItsEventOnTwoAxesTest(TurnTFixture):
+    """★★ **180 행이 침묵하던 자리.** 사건 번호는 「행위」에만 있는 것이 아니다.
+
+    [실측 2026-09-21 · 재난안전과 계정 2,194행] 사건을 가리키는 행 273 중
+    `action` 이 답하는 것은 **2**, 나머지 **271** 은 기록 본문(`event_ref`)에 든다.
+    """
+
+    def test_the_action_axis_still_wins_when_it_answers(self) -> None:
+        item = {"action": "upper_report:set:31", "event_ref": 99}
+        self.assertEqual(31, api_u24.row_event_id(item),
+                         "축 ②가 축 ①을 **대체**하면 이미 못 박아 둔 모양이 흔들린다")
+
+    def test_the_payload_axis_answers_when_the_action_does_not(self) -> None:
+        self.assertEqual(
+            77, api_u24.row_event_id({"action": "dsm.events.response", "event_ref": 77}))
+
+    def test_a_row_with_neither_axis_still_points_at_nothing(self) -> None:
+        """★ 억지로 숫자를 긁지 않는다 — 긁으면 설정 변경의 7 이 사건 7 이 된다."""
+        self.assertIsNone(
+            api_u24.row_event_id({"action": "write:inbound_api_key:rotate:7",
+                                  "event_ref": None}))
+        self.assertIsNone(api_u24.row_event_id({"action": "", "event_ref": "사건없음"}))
+
+
+class TheBlockedAttemptIsNotAVanishedEventTest(TurnTFixture):
+    """★★ **없는 번호를 가리킨 시도**를 「사라진 사건」이라 적지 않는다.
+
+    [실측 2026-09-21] `upper_report:set:999999999` 두 행 — 결과 막힘 · 서버 404.
+    그 번호는 어느 스냅샷에도 없고, 그 사건은 **그 시각에도 없었다.**
+    「사라졌다」로 적으면 **있지도 않았던 사건이 있었던 것**이 된다.
+    """
+
+    def test_a_denied_404_row_gets_its_own_name(self) -> None:
+        payload = {"items": [{"action": "upper_report:set:999999999",
+                              "outcome": "denied", "status_http": 404,
+                              "event_ref": None}]}
+        from common.tenant_scope import TenantScope
+
+        out = api_u24._with_target_column(payload,
+                                          scope=TenantScope.of(self.manager_a))
+        target = out["items"][0]["target"]
+        self.assertEqual(api_u24.TARGET_DENIED_ATTEMPT, target["state"])
+        self.assertIsNone(target["decision"],
+                          "막힌 시도에 「대표 결정」이 붙으면 그것이 새 거짓말이다")
+        self.assertEqual(1, out["target_states"][api_u24.TARGET_DENIED_ATTEMPT])
+
+    def test_an_allowed_row_pointing_at_a_missing_event_stays_gone(self) -> None:
+        """★ **결과만으로 갈리지 않는다.** 그때 통과한 행은 사건이 그때 있었다는 뜻이다."""
+        from common.tenant_scope import TenantScope
+
+        out = api_u24._with_target_column(
+            {"items": [{"action": "upper_report:set:999999998",
+                        "outcome": "allowed", "status_http": 200, "event_ref": None}]},
+            scope=TenantScope.of(self.manager_a))
+        self.assertEqual(api_u24.TARGET_GONE, out["items"][0]["target"]["state"])
+
+    def test_the_denominator_names_every_kind(self) -> None:
+        """분모에서 갈래를 지우지 않는다 — 0 인 갈래도 그대로 적는다(D-301).
+
+        `unknown` 은 갈래가 아니라 **「못 쟀다」**이고, 그래서 더더욱 분모에 선다:
+        안 물어본 행이 몇인지 안 적으면 「전부 물어봤다」로 읽힌다.
+        """
+        from common.tenant_scope import TenantScope
+
+        out = api_u24._with_target_column({"items": []},
+                                          scope=TenantScope.of(self.manager_a))
+        self.assertEqual(
+            {"none", api_u24.TARGET_LIVE, api_u24.TARGET_DELETED_BY_DECISION,
+             api_u24.TARGET_DENIED_ATTEMPT, api_u24.TARGET_GONE,
+             api_u24.TARGET_UNKNOWN},
+            set(out["target_states"]))
+        self.assertFalse(out["target_scan_capped"],
+                         "빈 쪽에서 상한에 닿았다고 적으면 그것이 거짓이다")
+
+    def test_the_page_says_when_it_could_not_ask_them_all(self) -> None:
+        """★ **잘린 표본은 잘렸다고 말한다**(D-301). 상한을 이 시험 동안만 좁힌다."""
+        from common.tenant_scope import TenantScope
+
+        items = [{"action": f"upper_report:set:{9_000_000 + i}", "outcome": "allowed",
+                  "status_http": 200, "event_ref": None} for i in range(4)]
+        with _swap(api_u24, "TARGET_SCAN_MAX_EVENTS", 2):
+            out = api_u24._with_target_column({"items": items},
+                                              scope=TenantScope.of(self.manager_a))
+        self.assertTrue(out["target_scan_capped"])
+        self.assertEqual(2, out["target_states"][api_u24.TARGET_UNKNOWN])
+        self.assertEqual(2, out["target_states"][api_u24.TARGET_GONE])

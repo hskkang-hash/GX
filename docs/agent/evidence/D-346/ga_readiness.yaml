@@ -45,8 +45,28 @@
 #     `status: 구현` + `kind: rule_only` 는 모순이 아니라 **가장 자주 나오는 거짓 초록**이다.
 #   ⚠ 부류를 **기계로 먼저 거르고 손으로 확인**한다. 확인 못 한 절은
 #     `kind_why` 에 「[기계 통과 · 손으로 확인 못 함]」이라고 **적는다** — 확인한 척하지 않는다.
-#   ★ 점수 계산식은 `kind` 를 안 본다(이번 턴 기준). 부류는 **수를 설명하는 칸**이지
-#     수를 만드는 칸이 아니다 — 만들게 하려면 결정이 먼저 있어야 한다.
+#
+# ★★★ [P-215 · P-216 · 2026-09-21 · 턴 AA · 세종 판정] **부류가 이제 수를 만든다**
+# ---------------------------------------------------------------------------------
+#   턴 Z 에 이 자리에는 「점수 계산식은 `kind` 를 안 본다」고 적혀 있었다. **바뀌었다.**
+#
+#   **P-216 — 점수를 `kind` 로 센다.**
+#
+#       closed 1.0 · ratchet 1.0(**늘지 않음이 조건**) · rule_only 0.5 · gate_only 0.5
+#       unmeasurable 0.0 · **잠김은 분모에서 빼지 않는다**
+#
+#     영역 점수 = Σ(kind 가중) / 절 수. 옛 식(`구현 절 / 전체 절`)은 다섯 부류를
+#     **전부 1점**으로 세었다 — 그래서 세 턴 동안 「67.x」라 부르던 수가 실은
+#     **닫힌 절 80/154** 였다. 판정기가 두 수를 **나란히** 찍는다.
+#
+#   **P-215 — `closed` 이려면 「무엇을 분모 몇으로 쟀는가」가 대장에 있어야 한다.**
+#
+#     **없으면 닫힌 것이 아니다.** 턴 Z 에 「[기계 통과 · 손으로 확인 못 함]」으로
+#     표시된 26절(closed 80 의 33%)을 이 턴에 **하나씩 손으로 봤다** — 분모를 적을 수
+#     있는 **13절은 적어서 지켰고**, 정말 못 적는 **13절은 `unmeasurable` 로 내렸다.**
+#     ⚠ **상태(`구현`)는 안 건드렸다** — 바꾼 것은 `kind` 와 `kind_why` 뿐이다.
+#     ⚠ 그래서 앞으로 새 절을 `closed` 로 적으려면 `kind_why` 에 **수**가 있어야 한다:
+#       「무엇을(대상) · 분모 몇으로(n) · 면제 몇 건」. 「파일이 실재한다」는 분모가 아니다.
 #
 # 가중치는 [판정]이다 — 세종이 정했다. 각 절의 상태는 [실측]이다 — 여기서 갈아 끼운다.
 #
@@ -365,7 +385,7 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 파일은 실재하나 note 가 비어 있어 **무엇을 분모 몇으로 쟀는지 이 대장은 말하지 않는다**
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측 exit 0.** `test_f05_inbound_api_key.py` 17건 전수 통과(gx-shell · 2026-09-21 08:50 UTC) — 이 절 몫은 `HttpsRequiredTest` **3건** + `KeyIsNeverStoredInPlaintextTest` **3건** = **6/6**. 평문(secure=False) 요청을 **실제로 날려** 거절을 받았고, 저장된 키 값이 원문이 아님을 바이트로 봤다. 면제 0
         proof: backend/tests/test_f05_inbound_api_key.py
 
       # ── P-35 (세종 위임 판정 2026-09-27) — SEC-11 을 둘로 쪼갠다 ──────────
@@ -788,7 +808,7 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 backend/tests/test_tenant_isolation.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측 exit 0.** `test_tenant_isolation.py` **28/28 passed**(gx-shell · 2026-09-21). 이 파일은 머지 게이트다 — `test_registry_covers_all_isolatable_models` 가 **격리 대상 모델 전수**를 분모로 들고, 등재 안 된 모델이 생기면 빨개진다. 면제 0(skip·xfail 금지가 파일 규약)
         proof: backend/tests/test_tenant_isolation.py
 
       - id: ISO-02
@@ -910,9 +930,9 @@ areas:
       - id: ISO-04
         title: 데모·시연 데이터가 실데이터와 섞이지 않는다
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 scripts/check_demo_isolation.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215).** `check_demo_isolation.py` 는 호스트에서 **exit 0** 이고 `frontend/src` 소스를 전수로 훑지만, 그것이 재는 것은 데모·목업 **UI 모듈이 프로덕션 빌드 경로에서 격리되는가**(정적 import · 라우트 등록 · vite define · 데모 HTML · 동적 import)이다. 이 절의 제목은 **「데모·시연 *데이터* 가 실데이터와 섞이지 않는다」** 이고, 그 분모(데모 데이터 행 수·표식)를 **이 대장도 저 도구도 말하지 않는다**
         proof: scripts/check_demo_isolation.py
 
   # ═══════════════════════════════════════════════════════════════════════
@@ -923,9 +943,9 @@ areas:
       - id: OPS-01
         title: 설치·운영 매뉴얼이 있다
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 매뉴얼 문서가 실재한다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215).** 매뉴얼 `설치운영매뉴얼_v0.1.md`(290줄)는 실재하나, **그 문장을 쳐 본 기록**이 절 하나뿐이다(§5 되돌리기 · OPS-08 · 381초). LAW-04 대조표 2-2 가 바로 그 자리를 **미충족**으로 적는다 — 「매뉴얼 모든 절의 문장을 실제로 쳐 본 기록」. 분모(매뉴얼 절 N 중 쳐 본 M)를 대장이 말하지 않는다
         proof: docs/agent/runbook/설치운영매뉴얼_v0.1.md
 
       - id: OPS-02
@@ -951,7 +971,7 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 migrate_bootstrap.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측.** `manage.py migrate_bootstrap --plan` rc=0 — 한 명령이 **걸음 4개**(migrate user → multilanguage → migrate → migrate --check)를 집행한다고 스스로 출력했고 **DB 를 안 만졌다**. 걸음이 실제로 서는 것은 OPS-08 의 빈 DB 훈련이 봤다(표 220개 · 381초). 분모는 **걸음 4** 이고 면제 0
         proof: backend/common/management/commands/migrate_bootstrap.py
         why: dj-core `logger/0009` 의존 미선언. §0.4 라 우리가 못 고친다 — 우회 경로를 우리 층에 둔다.
         note_closed: |
@@ -1020,9 +1040,9 @@ areas:
       - id: OPS-12a
         title: 백업 목적지 — **다른 볼륨** (손 안)
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 ops_backup_volume.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215).** `scripts/ops_backup_volume.py` 는 **백업을 실제로 뜨는** 도구다(컨테이너를 부르고 볼륨에 쓴다) — 이 턴에 **안 돌렸다**(쓰기 도구를 수를 내려고 돌리지 않는다). 대장에 「별도 볼륨에 몇 바이트짜리 몇 개가 떴고 거기서 읽혔는가」가 **없다**. LAW-04 3-5 가 같은 자리를 「**beat 가 스스로 돌린 백업 0회**」로 적는다
         proof: scripts/ops_backup_volume.py
         note_closed: |
           ★ **닫혔다 [실측 2026-09-05 · 턴 C 차선 E]** — 이번엔 「할 수 있다」가 아니라
@@ -1095,9 +1115,9 @@ areas:
       - id: OPS-13
         title: 배포 앞단 이중방어 (리버스 프록시)
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 ops_front_line.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215) — 부르는 자리마다 회색이다.** `scripts/ops_front_line.py --check` 를 **양쪽에서** 불렀다: 호스트 → **exit 2**(`ModuleNotFoundError: celery` · Django 를 못 세운다), gx-shell 안 → **exit 2**(`/repo/nginx/generated/gx-gate.conf` 가 없다 — 컨테이너에 `nginx/` 가 **안 마운트**된다. 호스트에는 18,184바이트로 실재한다). 도구의 자기시험은 통과했고 **익명거절 44자리 · 키허용 2자리**라는 분모를 스스로 내지만, **디스크 설정과의 대조도 앞단 두드리기도 이 턴에 못 했다**
         proof: scripts/ops_front_line.py
         note_closed: |
           ★ **닫혔다 [실측 2026-09-05 · 턴 C 차선 E]** — `gx-gunicorn-e`(워커4×스레드4) +
@@ -1405,13 +1425,75 @@ areas:
           실값 SMTP 는 초록 · `log` 채널은 행은 남되 메일 0 · 채널 한 칸 바꾸면 실제로
           메일 물건이 만들어진다).
 
-      - id: OPS-07
-        title: 로그 수집·보존 기간
+      # ── ★★ [P-215 · 2026-09-21 · 턴 AA · 조율자 판정 ①] OPS-07 을 **쪼갰다** ─────────
+      #   옛 `OPS-07` 의 제목은 「로그 수집·**보존 기간**」 — **둘**이었다. 그리고 그 둘의
+      #   색이 갈렸다: `ops_log_collectors.py` 가 ① 수집기 11개 전수 OK 를 내면서
+      #   ② 보존 기간 **FAIL** 을 냈다(exit 1). 그 절이 `status: 구현` 인 동안
+      #   **대장은 제 규칙을 어기고 있었다** — 머리말의 「대장 구현 · 게이트 빨강 →
+      #   적어 놓고 무너졌다(이쪽이 더 나쁘다)」가 바로 그 모양이다.
+      #   그렇다고 「미착수」도 거짓이다 — **수집기 11개는 실제로 돈다.**
+      #   ⇒ 대장이 이미 답을 갖고 있다: **「부분」은 상태가 아니라 아직 안 쪼갠 것의
+      #      이름이다. 쪼개면 잔여가 숫자가 된다**(D-314). 그래서 쪼갰다.
+      #
+      #   ⚠ **이름을 왜 `OPS-07-b` 로 안 지었나** — 이 대장에는 이미 **`OPS-07b`**
+      #     (DB 감사 로그 보존 · 파기 되돌림)가 **산다.** `OPS-07-b` 와 `OPS-07b` 는
+      #     **붙임표 하나 차이**이고, P-81 의 id 유일성 검사는 둘을 **다른 id 로 통과시킨다** —
+      #     즉 **아무 색도 안 나면서** 읽는 사람만 헷갈리는 자리가 생긴다(P-81 출생 표본과
+      #     같은 모양). 그래서 **수집 갈래에만 새 id(`OPS-07-a`)를 주고, 보존 갈래는
+      #     `OPS-07` 이라는 이름을 그대로 쓴다** — `gate:` 와 역사(`why`)가 사는 쪽이다.
+      - id: OPS-07-a
+        title: 로그 **수집** — 수집기를 전수로 세고, 어디에 쌓이고 얼마나 자라는지 안다
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 ops_log_collectors.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측** — `scripts/ops_log_collectors.py` 를 호스트에서 실제로 불렀다. 이 절 몫은 판정 **셋**이고 셋 다 OK 다: ① **수집기 11개를 전수로 셌다**(컨테이너 stdout + 파일 핸들러 + DB 감사) · ③ **자라는 속도 — 11개의 한 시간 치를 쟀다** · ⑤ **멈춘 채 남은 파일 0건**. **분모 11 · 면제 0.** ⚠ 같은 실행의 ②(보존 기간)는 **빨강**이고 그것은 이 절이 아니라 **`OPS-07`(쪼갠 보존 갈래)** 의 몫이다 — 그래서 `gate:` 는 그쪽에 달았다. 여기 달면 「구현 + 빨강」이 되어 **없는 갈림**이 매번 선다
         proof: scripts/ops_log_collectors.py
+        note: |
+          ★ `gate:` 를 **일부러 안 달았다.** `ops_log_collectors.py` 는 다섯 판정을 **한 종료코드**
+            로 낸다 — 이 절의 셋이 전부 초록이어도 ②가 빨가면 exit 1 이다. 그 빨강을 이 절에
+            붙이면 「대장 구현 · 게이트 빨강」이라는 **없는 갈림**이 매 실행마다 서고, 그런
+            빨강을 몇 번 본 사람은 게이트를 끈다(D-353). 닫는 길은 판정기에 갈래별 종료코드
+            (또는 `--only`)를 다는 것이고, 그 파일은 차선 F 의 자리다 — 쪽지로 넘긴다.
+
+      - id: OPS-07
+        title: 로그 **보존 기간** — 보존 기간이 없는 수집기 **0개**
+        status: 미착수
+        hand: in
+        hand_why: |
+          우리 손 안이다. 막는 것은 바깥이 아니라 **선언 한 칸**이다 —
+          `security.audit_log_retention_days` 를 고객 설정에 실제로 **쓰면** 닫힌다.
+        kind: unmeasurable
+        kind_why: |
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 조율자 판정 ①] 상태가 '미착수' 이고 게이트도 이번 턴 **exit 1** — **색이 같다**(갈림이 아니다). 판정기 원문: 「② 보존 기간 **FAIL** — **보존 기간이 없다(무한 적재): DB 감사 로그 · `logger_auditlogs`**」. 분모는 **수집기 11개**이고 그중 **보존 기간이 없는 것 1개**다. 경고로 **「선언은 없고 상한은 걸려 있는 수집기 3개」**(`gx-fe-build` · `gx-nginx-e` · `gx-gunicorn-e` — 상한이 **띄우는 명령**에 산다. 다음에 띄우는 사람이 그 문장을 빠뜨리면 조용히 사라진다). **잰 초록이 없다 → `unmeasurable`**
+        gate: scripts/ops_log_collectors.py
+        why: |
+          ★★ **[조율자 판정 2026-09-21 · 턴 AA] 「미착수」다 — 「구현」이 아니다.**
+            차선 N 이 P-215 로 26절을 손으로 보다가 이 자리를 찾아냈다: 대장은 `구현`·`closed`
+            인데 **증명이 가리키는 도구 자신이 exit 1** 이었고, 이 절에 `gate:` 가 없어서
+            **한 번도 대조되지 않았다.** 그것이 이 빨강이 여태 숨어 있던 이유다.
+            이 턴에 **쪼개고 · `gate:` 를 달아 배선했다.** 앞으로 이 자리가 고쳐지면
+            게이트가 초록이 되고, 그때 대장이 '미착수' 로 남아 있으면 **exit 1 이 난다**
+            (P-85 갈림 ① 「다 해 놓고 안 적었다」). 이제 조용할 수 없는 자리다.
+
+          ★ **무엇을 고쳐야 닫히나 — 한 칸이다.**
+            `ops_log_collectors.py` 는 **선언과 코드 기본값을 가른다**: 아무도 안 쓸
+            표시값(`__GX_UNDECLARED__`)을 기본값으로 넣고 그대로 돌아오는지 본다.
+            지금 그대로 돌아온다 ⇒ `System / security.audit_log_retention_days` 에
+            **값이 없다.** 코드가 돌려주는 90 은 **우리 기본값이지 고객이 정한 수가 아니다.**
+            파기는 되돌릴 수 없는 일이고, 되돌릴 수 없는 일을 **아무도 정하지 않은 수**로
+            하는 것이 P-57 함정 ㉡ 그대로다.
+
+          ★ **이웃 절과 어떻게 다른가 — `OPS-07b` 와 겹치지 않는다.**
+            `OPS-07b`(DB 감사 로그 보존 · 파기 되돌림)의 게이트 `verify_purge.py` 는
+            이 턴에 gx-shell 에서 **exit 0** 이다. 그러나 그것이 재는 것은
+            **시드 테넌트 793 에 보존 30일을 심어 놓고** 만료·파기·되돌림·미선언 건너뜀이
+            도는가이다 — 같은 실행의 로그가 스스로 적는다: 「**테넌트 794 건너뜀 —
+            보존 일수 미선언**」. 즉 `OPS-07b` 는 **장치가 도는가**를 재고, 이 절은
+            **그 장치에 줄 수가 실제로 선언돼 있는가**를 잰다. 둘은 다른 사실이다.
+
+          ★ **차선 F 가 같은 자리를 다른 쪽에서 재고 있다** — 감사 표가 **하루 11,930행 ·
+            연 9.3 GiB** 로 자란다. 보존 기간이 없다는 것은 그 9.3 GiB 가 **영원히 남는다**는
+            뜻이다. 조율자가 둘을 묶어 대표께 올린다.
         why: |
           ★ [실측 2026-09-24 · 차선 E3] **회색이 빨강으로 갈렸다** — 재고 나서 알았다.
           수집기 6개 전수: 컨테이너 stdout 5개(gx-shell·postgres·redis·minio·gx-fe-build)가
@@ -1563,9 +1645,9 @@ areas:
       - id: OPS-17
         title: 배치는 절차가 아니라 **명령 하나**다 — 빌드→배치→번들 신원→걷기 · 실패하면 되돌린다
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 scripts/deploy.sh 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215).** `scripts/deploy.sh` 는 **배포한다** — 수를 내려고 돌릴 수 있는 것이 아니다(§0.4 · 조율자 허락 없이 서버를 안 건드린다). 제목이 부르는 넷(빌드 → 배치 → 번들 신원 → 걷기, 실패하면 되돌린다)의 **분모와 그 위의 색이 대장에 없다**. 마지막 실행 기록도 인용할 자리가 없다
         proof: scripts/deploy.sh
         hand: in
         note_closed: |
@@ -1818,7 +1900,7 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 backend/tests/test_be_metering.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측 exit 0.** `test_be_metering.py` **21/21 passed**(gx-shell · 2026-09-21). 분모는 제목이 부르는 **다섯 칸**(카메라 대수 · 쓰는 사람 · 이벤트 · 알림 발송 · 저장 GB)이고, 시험이 ① 다섯 칸 실재 ② 테넌트 격리 ③ 지운 카메라 제외까지 센다. 면제 0
         proof: backend/tests/test_be_metering.py
         note_closed: |
           [실측 2026-09-05 · 턴 E · Backend/DB Agent] 계량 21 passed. 다섯 칸(카메라 대수 ·
@@ -1981,9 +2063,9 @@ areas:
       - id: PERF-06
         title: 이벤트 속도제한 200/분 — **근거와 운영 적정성**
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 probe_event_rate_limit.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215).** `scripts/probe_event_rate_limit.py` 는 **상한(200/분)의 1.5배를 1분 안에 DB 에 실제로 넣고** 행을 센다 — 쓰기 탐침이라 이 턴에 **안 돌렸다**. 그래서 이 절이 주장하는 넷(투입 n = DB 행 n · dropped 0 · deferred > 0 · 근거의 출처)의 **수가 대장에 하나도 없다**. 「코드에 200 이 적혀 있다」는 분모가 아니다
         proof: scripts/probe_event_rate_limit.py
         why: |
           ★ [D-359 · 2026-09-10 부하시험 중 발견] 부하를 올리자
@@ -2223,7 +2305,7 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 test_f05_inbound_api_key.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측 exit 0.** `test_f05_inbound_api_key.py` 17건 전수 통과. 이 절 몫은 **부작위** 갈래 — `NoReachToVideoOrOtherTenantsTest` **5건** + `ReadOnlyTest` **2건** = **7/7**. 「열리면 안 되는 자리」를 **전수로** 두드려 401·403 을 받는다. 면제 0
         proof: backend/tests/test_f05_inbound_api_key.py
 
       - id: QA-05
@@ -2231,15 +2313,15 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 backend/tests/no_cache.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측 exit 0** — `scripts/verify_cache_bypass.py`(호스트). [입력] **시험 파일 139건 · 그중 스택을 때리는 것 51건** · 캐시 처리 표기: 우회 46 · 비움 4 · 해당 없음 1 · 대상 아님 88 · **위반 0건**. **기존 면제 0건**이라 「새 위반 0」이 곧 전수 0 이다. `tests/no_cache.py` 는 그 우회 헤더 이름이 사는 한 자리다
         proof: backend/tests/no_cache.py
 
       - id: QA-06
         title: 수를 내는 도구가 두 번 돌려 같은 수를 낸다
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 verify_measure_repro.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215).** `scripts/verify_measure_repro.py` 는 **다른 게이트들을 두 벌씩 부르고 그중 여럿이 로그인한다**(동시 접속 1개 · UX-24 · §0.4 · 턴 I 에 이것 하나가 4분을 먹었다). 창 규약상 이 턴에 **안 돌렸다** — 그래서 「도구 몇 벌을 두 번 돌려 몇 벌이 같은 수를 냈는가」가 대장에 **없다**. 이 절은 제 이름대로 **재현을 재는 절**인데 재현이 인용뿐이다
         proof: scripts/verify_measure_repro.py
 
       - id: QA-07
@@ -2425,9 +2507,9 @@ areas:
       - id: UX-02
         title: 관리 UI (카메라·수신자·임계값을 화면에서)
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 화면 파일 CameraAddress.tsx 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215).** 증명이 화면 파일 `CameraAddress.tsx` **하나의 실재**뿐이다. 제목은 **셋**을 부른다 — 카메라 · 수신자 · 임계값을 **화면에서**. 파일이 있다는 것은 분모가 아니다(P-204: 「무엇을 · 분모 몇으로」). 닫는 길은 **누른 뒤를 보는 것**이고 그 자리는 이 턴 A·U56 의 화면 차선에 있다
         proof: frontend/src/features/dsm/pages/CameraAddress.tsx
         why: 미착수였다. 지금은 전부 커맨드나 API 다 — 였다.
         note_closed: |
@@ -2447,9 +2529,9 @@ areas:
       - id: UX-03
         title: 온보딩 — 처음 쓰는 사람이 혼자 시작한다
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 화면 파일 Onboarding.tsx 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215).** 증명이 화면 파일 `Onboarding.tsx` **하나의 실재**뿐이다. 제목은 「처음 쓰는 사람이 **혼자 시작한다**」를 부르고, 그것은 걸음 수로만 재진다. LAW-04 3-4 가 같은 자리를 **온보딩 58%**(점검표 17/56)로 적어 두었다 — **그 수가 이 대장에는 없다**
         proof: frontend/src/features/dsm/pages/Onboarding.tsx
         why: 설치 매뉴얼은 설치자용이다. 사용자용 시작 문서가 없었다.
         note_closed: |
@@ -2634,9 +2716,9 @@ areas:
       - id: UX-08
         title: 관제 화면 실시간 탐지 알림 (WebSocket 브로드캐스트)
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 test_c2_realtime_ping.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215) — 분모는 적었는데 면제가 있다.** `test_c2_realtime_ping.py` 재측: **10건 중 9 passed · 1 skipped**(`tests/test_c2_realtime_ping.py:127` — 「**화면 훅이 이 트리에 없다** — 못 잰 것은 판정 불가다」). 뒷단 브로드캐스트 9건은 섰다. 그러나 절 제목이 부르는 것은 **관제 「화면」의 실시간 알림**이고 그 한 건이 **면제**다 — `closed` 는 「분모가 실재하고 **면제가 없다**」이므로 이 자리는 closed 가 아니다
         proof: backend/tests/test_c2_realtime_ping.py
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 C2] **운영 설정의 redis 레이어**로 두드림 왕복을 쟀다.
@@ -3011,9 +3093,9 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 common/webhook_outbox.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측 exit 0.** `test_s_webhook_outbox.py` **43/43 passed**(gx-shell · 2026-09-21). 구독 → 발송 → **CAP 1.2 본문** → 서명 검증 → 재시도 완주를 잰다. 분모 43 · 면제 0. (proof 를 모듈 `common/webhook_outbox.py` 에서 **그 모듈을 재는 시험**으로 옮겼다 — 모듈의 실재는 분모가 아니다)
         origin: PRD-2.5
-        proof: backend/common/webhook_outbox.py
+        proof: backend/tests/test_s_webhook_outbox.py
         why: |
           [실측 2026-09-24 등재] 나가는 이벤트 스키마가 **우리 것**이다. 상급기관·SDN·에스비 App 이
           각자 파싱하면 우리가 바뀔 때마다 셋이 깨진다. 표준(OASIS CAP 1.2)으로 낸다.
@@ -3083,9 +3165,9 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 common/menu_exposure.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측 exit 0.** `test_c_menu_exposure.py` **26/26 passed**(gx-shell · 2026-09-21). ① 아무것도 안 지웠는가 ② 관제 역할에서 실제로 사라지는가(`permit_read`) ③ 장부대로 되돌려지는가 ④ U5 는 남는가 ⑤ 두 번 돌려도 같은가 — 다섯을 분모 26건으로 센다. 면제 0. (proof 를 모듈에서 그 모듈을 재는 시험으로 옮겼다)
         origin: PRD-2.6
-        proof: backend/common/menu_exposure.py
+        proof: backend/tests/test_c_menu_exposure.py
         note_closed: |
           ★ **닫혔다 [실측 2026-09-05 · 턴 C 차선 C] — 세종 판정 P-40 이 열었다**
           (「삭제도 되돌리기도 아니다 — 위임 안」).
@@ -3184,9 +3266,9 @@ areas:
       - id: UX-22
         title: 등급·처리 단계 용어 — 「심각·경계·주의」 · 처리 단계 1축
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 화면 ResponseSteps.tsx 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215).** 증명이 화면 파일 `ResponseSteps.tsx` **하나의 실재**뿐이다. 제목이 부르는 것은 **낱말이 제품 전체에서 하나로 쓰이는가**(심각·경계·주의 · 처리 단계 1축)이고, 그 분모는 **낱말이 나오는 자리 전수**다 — 한 파일이 아니다. 재는 술어가 아직 없다
         origin: PRD-2.6
         proof: frontend/src/features/dsm/components/ResponseSteps.tsx
         note_closed: |
@@ -3213,7 +3295,7 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 test_c2_camera_grid.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측 exit 0.** `test_c2_camera_grid.py` **15/15 passed**(gx-shell · 2026-09-21). 다섯을 센다 — ① 익명 거절 ② 테넌트 격리 ③ **살아 있음·응답 없음·한 번도 안 옴을 접지 않는다** ④ 부작위(한 대만 끊기면 군집 두절 0건 · 양성 1건과 함께) ⑤ 격자. 캐시는 `X-No-Cache` 로 우회했다. 면제 0
         proof: backend/tests/test_c2_camera_grid.py
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 C2] 새 문 `GET /api/dsm/cameras/pulse` + 격자 화면 +
@@ -3263,7 +3345,7 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 test_s_wall_token.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측 exit 0.** `test_s_wall_token.py` **30/30 passed**(gx-shell · 2026-09-21). 「쓰기 0」이 주장이 아니라 **수**다 — 쓰기 문을 여럿 이 토큰으로 두드려 **몇 개 두드려 몇 개 거부**를 센다. 경로 하나 · 12h · 데스크 세션 불변(`user.token` 한 자도 안 바뀜)까지 분모 30 안에 있다. 면제 0
         proof: backend/tests/test_s_wall_token.py
         hand: in
         note_closed: |
@@ -3293,7 +3375,7 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증거 P-78/README.md 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **브라우저 실측 인용**(2026-09-06 · 턴 H · `docs/agent/evidence/P-78/ux24c_remeasure.json`). 분모는 **주소 두 벌의 대조**다 — 옛 `/wall?token=…` 는 접근로그에 **토큰이 그대로 남고** 화면이 **열리지 않으며** 월 헤더를 실은 문 **0건**; 새 `/wall#token=…` 는 접근로그가 `GET /wall`(토큰 없음)이고 **문 2건**(`cameras/pulse` · `events/queue`)에 `X-GX-Wall-Token` 이 실렸다. **캡처와 접근로그 원문이 증거로 남아 있다.** ⚠ 이 턴에 재측하지 않았다 — 인용이다
         proof: docs/agent/evidence/P-78/README.md
         hand: in
         note_closed: |
@@ -3786,9 +3868,9 @@ areas:
       - id: LAW-04
         title: GS인증 준비 (시험 항목 대조표)
         status: 구현
-        kind: closed
+        kind: unmeasurable
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 대조표 문서가 실재한다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] ★ **내린다(P-215) — 표를 실제로 읽었고, 표가 스스로 아니라고 말한다.** `GX-LAW-04_GS인증_항목_대조표_v0.1.md` 를 세어 보면 **제출물 6칸 + 품질특성 8칸 = 14칸 중 충족 2 · 미충족 10 · 기준 미확인 2**. 그 표의 마지막 줄이 이렇게 적혀 있다 — 「**이 표는 「준비됐다」고 말하지 않는다. 무엇이 없는지를 말한다.**」 미충족 셋(2-3 · 3-3 · 3-8)은 **스테이징 서버 1대**(대표 승인)에 걸려 있다. 분모 14 위의 색은 초록이 아니다
         proof: docs/design/GX-LAW-04_GS인증_항목_대조표_v0.1.md
         hand: in
         note_closed: |
@@ -3895,7 +3977,7 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 test_l_ai_act.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측 exit 0.** `test_l_ai_act.py` **11/11 passed**(gx-shell · 2026-09-21). 분모는 제목이 부르는 **자리 5**(고지 문구 · 판정 근거 · 열람 절차 · 사람 확인 · 문서 생성)이고, 시험이 ① 칸이 정확히 다섯인가 ② **각 칸이 가리키는 자리가 실재하는가** ③ 빈칸과 「없음」이 다른가를 센다. 면제 0
         proof: backend/tests/test_l_ai_act.py
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 L] 10 passed, 1 skipped. 다섯 의무의 자리표가 **다섯 칸 전부**를
@@ -3919,7 +4001,7 @@ areas:
         status: 구현
         kind: closed
         kind_why: |
-          [기계 통과 · 손으로 확인 못 함] 증명 test_l_privacy_request.py 실재 · note 가 비어 있다
+          [P-215 · 2026-09-21 · 턴 AA · 차선 N · 손으로 확인] **재측 exit 0.** `test_l_privacy_request.py` **20/20 passed**(gx-shell · 2026-09-21). 접수 → 마스킹본 조회 → 회신이 **한 줄로 이어지는지**를 재고, ② **원본 객체 경로가 응답에 0건**(부작위) ③ 남의 테넌트 청구 비노출 ④ 마스킹이 **바이트로** 정보를 버리는가까지 분모 20 안에 있다. 면제 0
         proof: backend/tests/test_l_privacy_request.py
         note_closed: |
           [실측 2026-09-05 · 턴 D 차선 L] 20 passed. 접수 → 마스킹본 조회 → 회신 기록이 한 줄로 이어지고
@@ -3951,6 +4033,19 @@ areas:
           ⚠ [차선 N 실측 2026-09-21] `--db` **없이** 호스트에서 부르면 **exit 2** 다 —
             정적 눈만 뜨고 살아 있는 감사표는 한 행도 다시 계산하지 않는다.
             대장의 `gate:` 는 인자를 안 싣는 자리라 `verify_ga_readiness` 가 부르면 **언제나 회색**이다.
+          ★★ [차선 S → N 쪽지 · 2026-09-21 · 턴 AA] **색을 바꾸지 않는다 — `gate_only` 그대로다.**
+            `verify_evidence_chain.py --db` 는 rc 0, **새로 난 어긋남 0건**
+            (실측 2026-09-21 · 감사 행 **3540** · 체인 행 **3251** · 등재된 끊김 **23**).
+            그러나 이 절의 초록은 **판정기까지만**이다. 나머지 절반인 **일일 종이 앵커 대조**는
+            절차서(`docs/design/GX-LAW-08_일일종이앵커_사람절차_v1.0.md`)와
+            QR 설계(`docs/design/GX-LAW-08_일일종이앵커_QR_설계_v1.0.md`)가 섰으나
+            **서명된 대장이 0줄**이고, **서명은 저장소가 관측하지 못한다.**
+            ⇒ 종이가 100장 쌓여도 저장소는 그것을 못 센다. **이 절은 코드만으로는 영원히
+              `closed` 가 되지 않는다** — 그 사실 자체를 여기 적어 두는 것이 가장 정직한 일이다.
+            ⚠ S 의 당부: **「머리 해시」를 대장의 대조 칸으로 두지 말 것.** 시간마다 「다름」이
+              나고, 매일 나는 빨강은 아무도 안 본다 — 그 칸이 생기면 **진짜 빨강도 같이 안 보인다.**
+              (같은 날 세 번 잰 표: 2026-09-20 앵커 앞 16자는 `014cf31d3e94d46b` 로 **셋 다 같고**,
+               머리 해시는 `2a10f5d5…` → `d90b5f40…` → `12aa35fc…` 로 **매번 움직였다**)
         gate: scripts/verify_evidence_chain.py
         proof: backend/tests/test_s_evidence_chain.py
         origin: PRD-2.5

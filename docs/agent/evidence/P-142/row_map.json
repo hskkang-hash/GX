@@ -1,96 +1,472 @@
 {
-  "note": "P-142 · 영역 ① 회색 25 ↔ 역할 계정 화면 32장 — 절별 대조. P-106/row_map.json 과 같은 모양. 이 파일은 초록을 만들지 않는다 — 이을 수 있는 절이 있으면 `linked: true` 와 세 짝(절 ↔ 역할 계정이 누른 화면 ↔ 호출)을 적고, 없으면 무엇이 없어서 못 잇는지를 적는다.",
-  "measured_at": "2026-09-15",
-  "lane": "Q",
-  "judgment": "P-142",
-  "head": "dd3dd7b",
-  "branch": "turn-q",
-  "contract": "docs/agent/evidence/D-309/contract_ac_ledger.yaml",
-  "screens_index": "docs/agent/evidence/D-347/screens/INDEX.yaml",
-  "screen_routes": "docs/agent/evidence/D-386/screen_routes.json",
-  "screens_total": 32,
-  "screens_captured_at": "2026-09-07T16:51~16:56 (INDEX.yaml:102-591 · 역할 계정 넷 · 그 뒤 INDEX 에 더해진 장 0)",
-  "gate": "scripts/verify_feature_reach.py",
-  "gate_fact": "판정기는 row_map 을 읽지 않는다. 사슬 선언(REACH_MAP)은 판정기 코드 안에 있다(scripts/verify_feature_reach.py:103-132 · 화면 절 4 + 게이트 절 3 = 초록 7) · 회색 사유도 코드 안에 있다(GREY_WHY :136-162 · 25절). 판정기가 읽는 입력 파일은 CONTRACT·INDEX 둘(:71-73)이고 INDEX 는 capture_screens.py 가 쓰며 손으로 고치지 않는다(INDEX.yaml:81-83). 곧 이 파일로 수가 움직이는 길은 없다 — 이을 절이 생기면 REACH_MAP 에 한 줄을 넣는 코드 변경이 필요하다.",
-  "dominant_fact": "32장 중 회색 25절의 화면을 보여 주는 장은 0장이다. 회색 25 가운데 24는 **그 절을 사람에게 보여 주는 화면이 제품에 없다** — 설정 쓰기 문(thresholds · zones · api-keys · settings/{domain})은 서버에 서 있으나 frontend/src/features 에서 `/api/dsm/settings` 를 부르는 코드가 0건이다 [grep 2026-09-15]. 남은 1(F-09-c1)은 화면은 있고 역할 계정 캡처가 기본 상태 1장뿐이다.",
-  "result": {
-    "newly_linked": [],
-    "newly_linked_count": 0,
-    "target": "7 → 15 (RESUME_NEXT.md:80)",
-    "why_short": "이미 있는 역할 계정 캡처 32장으로는 회색 25 중 한 절도 세 짝이 서지 않는다. 억지로 잇지 않았다."
-  },
-  "this_turn_planned_screens": {
-    "source": "docs/agent/RESUME_NEXT.md:80 — 역할 홈 4장(F) · 큐 1클릭(U1) · 격자(U1) · M2(U3)",
-    "covers": [
-      {"screen": "역할 홈 U1 /dsm/queue · U2·U4 /dsm/events 요약", "clauses": ["F-01-c2", "F-09-c2"], "already": "초록 (REACH_MAP :105-112)"},
-      {"screen": "큐 1클릭 판정+접수", "clauses": ["F-14-c1"], "already": "초록 (REACH_MAP :117-121)"},
-      {"screen": "카메라 격자 /dsm/cameras/grid", "clauses": [], "already": "계약 절 없음 — 카메라 맥박은 계약 F-01~F-14 어디에도 없다"},
-      {"screen": "M2 /m/events/{id} 사진", "clauses": [], "already": "계약 절 없음 — F-11 「캡처」 변수는 보고서 치환이지 모바일 사진이 아니다"}
-    ],
-    "verdict": "계획된 네 화면이 서도 회색 25 는 0절 움직인다 — 덮는 절이 이미 초록이거나 계약 절이 아니다. 7 → 15 는 이 화면들로 오지 않는다."
-  },
-  "what_would_move_grey": [
-    {"need": "설정 화면 벌 (부속서A S-10 · S-16 · S-17 · S-21) — 역할 계정(U5 admin 또는 tenant_admin)으로 GET 한 장씩", "clauses": ["F-02-c3", "F-03-c3", "F-10-c1", "F-12-c3", "F-12-c4", "F-12-c5", "F-12-c6", "F-12-c7", "F-12-c8"], "count": 9},
-    {"need": "/dsm/dashboard 네 상태(로딩·빈·오류·권한없음)의 역할 계정 캡처 + 판정 술어 변경 (지금 술어는 호출 하나의 200 만 본다 — 오류 상태는 200 이 아니다)", "clauses": ["F-09-c1"], "count": 1},
-    {"need": "보고서 화면(UX-40 · S-11) — report.pdf 를 누르는 화면", "clauses": ["F-11-c1", "F-11-c2", "F-11-c3", "F-14-c2"], "count": 4},
-    {"need": "감사 조회 화면(UX-41 · S-12)", "clauses": ["F-12-c2"], "count": 1},
-    {"need": "관리자 설정 화면의 무권한 403 — 또는 화면이 아니라 게이트로 (D-210 `gate:` · F-05 선례)", "clauses": ["F-12-c1"], "count": 1},
-    {"need": "화면이 답할 수 없는 절 — 시간·부작위·내부 판정은 게이트로만 (D-210)", "clauses": ["F-01-c1", "F-02-c1", "F-02-c2", "F-03-c1", "F-03-c2", "F-04-c1", "F-04-c2", "F-10-c2", "F-13-c1"], "count": 9}
+ "note": "P-142 · 영역 ① 회색 25 ↔ 역할 계정 화면 32장 — 절별 대조. P-106/row_map.json 과 같은 모양. 이 파일은 초록을 만들지 않는다 — 이을 수 있는 절이 있으면 `linked: true` 와 세 짝(절 ↔ 역할 계정이 누른 화면 ↔ 호출)을 적고, 없으면 무엇이 없어서 못 잇는지를 적는다.",
+ "measured_at": "2026-09-21",
+ "lane": "A (턴 AA · P-219 — 한 차선이 화면과 술어를 둘 다 쥔다)",
+ "judgment": "P-142",
+ "head": "1b4c9d2",
+ "branch": "turn-q",
+ "contract": "docs/agent/evidence/D-309/contract_ac_ledger.yaml",
+ "screens_index": "docs/agent/evidence/D-347/screens/INDEX.yaml",
+ "screen_routes": "docs/agent/evidence/D-386/screen_routes.json",
+ "screens_total": 32,
+ "screens_captured_at": "2026-09-21T16:00~16:09Z (턴 AA · 차선 A 가 직접 찍었다 · U5 10장 · U2 7장 · U4 7장 · INDEX 39 → 42장)",
+ "gate": "scripts/verify_feature_reach.py",
+ "gate_fact": "[턴 AA 정정] 옛 문장 「판정기는 row_map 을 읽지 않는다 … 이 파일로 수가 움직이는 길은 없다」는 **P-149 로 해소됐다** — `verify_feature_reach.observe()` 가 이 파일을 입력으로 읽고(`ROW_MAP_CLAUSE`), `linked:true` + 화면 + 라우트가 다 있는 행만 **선언**이 된다. ★ 선언은 여전히 **초록을 만들지 못한다**: 캡처(INDEX)·상태코드·역할·data_source·시험 다리를 판정기가 다시 확인하고, 하나라도 없으면 회색이며 캡처가 있는데 그 화면이 그 문을 안 불렀으면 **빨강**이다",
+ "dominant_fact": "[재실측 2026-09-21 · 턴 AA] 2026-09-15 의 지배 사실(「설정 문을 부르는 코드가 frontend 에 0건」)은 **끝났다.** 이번 턴에 넉 장을 새로 찍었고(capture_screens step 32·33·34·35) 그 넷이 든 호출이 사슬의 셋째 고리다: /dsm/settings/rules(U5 admin · 설정 세 문 200) · 같은 주소(U4 view_only · 세 문 403) · /dsm/cameras/tuning(U2 · camera-thresholds 200) · /dsm/reports(U2 · reports/runs 200). 남은 회색의 사유는 이제 「화면이 없다」가 아니라 **시간 · 부작위 · 캡처 상태 · 종이에 안 실린 변수**다",
+ "result": {
+  "newly_linked": [
+   "F-02-c3",
+   "F-11-c2",
+   "F-11-c3",
+   "F-12-c1",
+   "F-12-c5",
+   "F-12-c6",
+   "F-12-c7"
   ],
-  "blocker_tally": {"화면 없음": 24, "역할 캡처 없음": 1, "호출 기록 없음": 0},
-  "rows": [
-    {"id": "F-01-c1", "quote": "화재·연기 탐지 결과", "linked": false, "blocker": "화면 없음", "sub": "내부 변환 — 화면이 답할 수 없음",
-     "checked": "AI 라벨 → 이벤트 변환은 어느 화면에도 드러나지 않는다 (verify_feature_reach.py:137)"},
-    {"id": "F-02-c1", "quote": "수위선 초과 신호", "linked": false, "blocker": "화면 없음",
-     "checked": "침수 이벤트 행은 대시보드에 뜨나 전부 시드 사건이다(「시드 카메라 (검수용)」 · click_completes.json U1#2 text_after) — 수위 신호 → 이벤트를 보여 주는 장이 아니다. 억지 연결 금지"},
-    {"id": "F-02-c2", "quote": "30초 내에 이벤트를 생성한다", "linked": false, "blocker": "화면 없음", "sub": "시간 — 화면 한 장이 답할 수 없음",
-     "checked": "verify_feature_reach.py:139"},
-    {"id": "F-02-c3", "quote": "지점별 기준선 설정", "linked": false, "blocker": "화면 없음",
-     "checked": "서버 문 POST·GET /api/dsm/settings/thresholds 실재(backend/apps/dsm/api.py:903 · :1091) · 부르는 화면 0(frontend grep 0) · 역할 계정 캡처 /operation-settings(admin)는 설정 API 를 한 건도 안 불렀다(INDEX.yaml:578-591) — 그 화면은 인수 화면이다"},
-    {"id": "F-03-c1", "quote": "사람·차량 진입을 결합", "linked": false, "blocker": "화면 없음", "sub": "내부 판정",
-     "checked": "verify_feature_reach.py:141"},
-    {"id": "F-03-c2", "quote": "등급을 상향한다", "linked": false, "blocker": "화면 없음",
-     "checked": "목록의 등급 배지는 저장된 등급이다 — 상향은 **값**이고 저장 등급을 덮지 않는다(contract_ac_ledger.yaml:115). 상향 결과를 보여 주는 장 없음"},
-    {"id": "F-03-c3", "quote": "지정 위험구역(폴리곤)", "linked": false, "blocker": "화면 없음",
-     "checked": "구역 저장 문 실재(backend/apps/dsm/services.py:738-741 save_zone) · 편집 화면 0(frontend grep 0)"},
-    {"id": "F-04-c1", "quote": "동일 이벤트", "linked": false, "blocker": "화면 없음", "sub": "내부 판정",
-     "checked": "큐의 「같은 카메라 ×N」 묶음(UX-13 · dsm_queue_focus.png)은 **사건 묶음**이고 이 절은 기록 10초 창의 접힘이다(contract_ac_ledger.yaml:147-149) — 다른 판정이라 잇지 않았다"},
-    {"id": "F-04-c2", "quote": "5분 내 중복 알림 0건", "linked": false, "blocker": "화면 없음", "sub": "시간",
-     "checked": "verify_feature_reach.py:145"},
-    {"id": "F-09-c1", "quote": "5상태(기본/로딩/빈/오류/권한없음)를 100% 정의", "linked": false, "blocker": "역할 캡처 없음",
-     "checked": "화면은 있다 — /dsm/dashboard 기본 상태 1장(fire_user · 시드 · INDEX.yaml:153-168). 네 상태의 역할 계정 캡처 0. 로그인 다섯 장은 다른 화면이고 넷은 모의다(INDEX.yaml:113-152)",
-     "screens_seen": ["SCREENS-1/fire_user/dsm_dashboard.png"], "viewed_by": ["U1 · gxseed_u1_operator · fire_user · 1440px"]},
-    {"id": "F-10-c1", "quote": "등급별 수신그룹", "linked": false, "blocker": "화면 없음",
-     "checked": "수신그룹(알림 규칙) 조회·설정 라우트·화면 0 — UX-43 미착수(P-140). 발송 행은 「(수신자 없음)」이다(click_completes.json:1834)"},
-    {"id": "F-10-c2", "quote": "30초 내에", "linked": false, "blocker": "화면 없음", "sub": "시간",
-     "checked": "verify_feature_reach.py:148"},
-    {"id": "F-11-c1", "quote": "템플릿 변수 3종(이벤트·조치·캡처)", "linked": false, "blocker": "화면 없음",
-     "checked": "/report-template(view_only)이 부른 것은 인수 서식 print-formats · DeliveryOperation(INDEX.yaml:460-474). report.pdf 문(api.py:802)을 누르는 화면 없음(judgement_20260915_0654Z.txt:83)"},
-    {"id": "F-11-c2", "quote": "손입력을 0으로", "linked": false, "blocker": "화면 없음",
-     "checked": "F-11-c1 과 같은 사유"},
-    {"id": "F-11-c3", "quote": "치환하고", "linked": false, "blocker": "화면 없음",
-     "checked": "F-11-c1 과 같은 사유"},
-    {"id": "F-12-c1", "quote": "무권한은 차단하며", "linked": false, "blocker": "화면 없음",
-     "checked": "관리자 설정 화면이 없다. 곁 증거 [실측 · 화면 아님]: click_completes.json:3016-3037 — POST /api/dsm/settings/api-keys → 403 「설정 변경 권한이 없는 계정 (감사 #211637)」. HTTP 관측이지 역할 계정이 누른 화면이 아니다 — 회색을 초록으로 바꾸는 근거가 못 된다. 게이트 경로(`gate:`) 후보로만 적는다",
-     "candidate_non_screen": "click_completes.json U6#1 (403 + audit_id)"},
-    {"id": "F-12-c2", "quote": "성공·실패를 모두 감사로그로 남긴다", "linked": false, "blocker": "화면 없음",
-     "checked": "감사 조회 화면·라우트 0 — UX-41 미착수(P-140). 곁 증거: 위 403 이 감사 #211637 을 남겼다(실패 쪽 한 건 · 화면 아님)",
-     "candidate_non_screen": "click_completes.json U6#1 (audit_id 211637)"},
-    {"id": "F-12-c3", "quote": "수신자", "linked": false, "blocker": "화면 없음",
-     "checked": "GET /api/dsm/settings/{domain} 실재(api.py:1143) · 부르는 화면 0"},
-    {"id": "F-12-c4", "quote": "위젯", "linked": false, "blocker": "화면 없음",
-     "checked": "F-12-c3 과 같은 사유"},
-    {"id": "F-12-c5", "quote": "구역", "linked": false, "blocker": "화면 없음",
-     "checked": "구역 저장 문 실재(services.py:738-741) · 화면 0"},
-    {"id": "F-12-c6", "quote": "임계값", "linked": false, "blocker": "화면 없음",
-     "checked": "POST /api/dsm/settings/thresholds(api.py:903) · 화면 0"},
-    {"id": "F-12-c7", "quote": "등급규칙", "linked": false, "blocker": "화면 없음",
-     "checked": "등급규칙 쓰기 문 실재(services.py:825-828 set_grade_rule) · 화면 0"},
-    {"id": "F-12-c8", "quote": "API키", "linked": false, "blocker": "화면 없음",
-     "checked": "발급 문 POST /api/dsm/settings/api-keys(api.py:977) · 화면 0(부속서A S-21 은 계획)"},
-    {"id": "F-13-c1", "quote": "비행 명령은 전송하지 않는다", "linked": false, "blocker": "화면 없음", "sub": "부작위",
-     "checked": "verify_feature_reach.py:160"},
-    {"id": "F-14-c2", "quote": "월간 오탐률을 산출", "linked": false, "blocker": "화면 없음",
-     "checked": "/dsm/events 요약 한 줄은 12시간 창의 오탐 수다(INDEX.yaml:180 summary?hours=12) — 월간 산출이 아니다. 잇지 않았다"}
-  ]
+  "newly_linked_count": 7,
+  "target": "10 → ≥15 (턴 AA 규약)",
+  "why_short": "화면 넉 장을 새로 찍어 사슬의 둘째·셋째 고리를 채웠다. 억지로 이은 행은 없다 — 못 잇는 넷(F-11-c1 · F-03-c3 · F-09-c1 · F-14-c2)은 사유를 **갈아 끼우되 내리지 않았다**"
+ },
+ "this_turn_planned_screens": {
+  "source": "docs/agent/RESUME_NEXT.md:80 — 역할 홈 4장(F) · 큐 1클릭(U1) · 격자(U1) · M2(U3)",
+  "covers": [
+   {
+    "screen": "역할 홈 U1 /dsm/queue · U2·U4 /dsm/events 요약",
+    "clauses": [
+     "F-01-c2",
+     "F-09-c2"
+    ],
+    "already": "초록 (REACH_MAP :105-112)"
+   },
+   {
+    "screen": "큐 1클릭 판정+접수",
+    "clauses": [
+     "F-14-c1"
+    ],
+    "already": "초록 (REACH_MAP :117-121)"
+   },
+   {
+    "screen": "카메라 격자 /dsm/cameras/grid",
+    "clauses": [],
+    "already": "계약 절 없음 — 카메라 맥박은 계약 F-01~F-14 어디에도 없다"
+   },
+   {
+    "screen": "M2 /m/events/{id} 사진",
+    "clauses": [],
+    "already": "계약 절 없음 — F-11 「캡처」 변수는 보고서 치환이지 모바일 사진이 아니다"
+   }
+  ],
+  "verdict": "계획된 네 화면이 서도 회색 25 는 0절 움직인다 — 덮는 절이 이미 초록이거나 계약 절이 아니다. 7 → 15 는 이 화면들로 오지 않는다."
+ },
+ "what_would_move_grey": [
+  {
+   "need": "설정 화면 벌 (부속서A S-10 · S-16 · S-17 · S-21) — 역할 계정(U5 admin 또는 tenant_admin)으로 GET 한 장씩",
+   "clauses": [
+    "F-02-c3",
+    "F-03-c3",
+    "F-10-c1",
+    "F-12-c3",
+    "F-12-c4",
+    "F-12-c5",
+    "F-12-c6",
+    "F-12-c7",
+    "F-12-c8"
+   ],
+   "count": 9
+  },
+  {
+   "need": "/dsm/dashboard 네 상태(로딩·빈·오류·권한없음)의 역할 계정 캡처 + 판정 술어 변경 (지금 술어는 호출 하나의 200 만 본다 — 오류 상태는 200 이 아니다)",
+   "clauses": [
+    "F-09-c1"
+   ],
+   "count": 1
+  },
+  {
+   "need": "보고서 화면(UX-40 · S-11) — report.pdf 를 누르는 화면",
+   "clauses": [
+    "F-11-c1",
+    "F-11-c2",
+    "F-11-c3",
+    "F-14-c2"
+   ],
+   "count": 4
+  },
+  {
+   "need": "감사 조회 화면(UX-41 · S-12)",
+   "clauses": [
+    "F-12-c2"
+   ],
+   "count": 1
+  },
+  {
+   "need": "관리자 설정 화면의 무권한 403 — 또는 화면이 아니라 게이트로 (D-210 `gate:` · F-05 선례)",
+   "clauses": [
+    "F-12-c1"
+   ],
+   "count": 1
+  },
+  {
+   "need": "화면이 답할 수 없는 절 — 시간·부작위·내부 판정은 게이트로만 (D-210)",
+   "clauses": [
+    "F-01-c1",
+    "F-02-c1",
+    "F-02-c2",
+    "F-03-c1",
+    "F-03-c2",
+    "F-04-c1",
+    "F-04-c2",
+    "F-10-c2",
+    "F-13-c1"
+   ],
+   "count": 9
+  }
+ ],
+ "blocker_tally": {
+  "이었다(linked)": 7,
+  "화면 없음": 16,
+  "역할 캡처 없음": 1,
+  "셋째 변수가 종이에 안 실린다": 1
+ },
+ "rows": [
+  {
+   "id": "F-01-c1",
+   "quote": "화재·연기 탐지 결과",
+   "linked": false,
+   "blocker": "화면 없음",
+   "sub": "내부 변환 — 화면이 답할 수 없음",
+   "checked": "AI 라벨 → 이벤트 변환은 어느 화면에도 드러나지 않는다 (verify_feature_reach.py:137)"
+  },
+  {
+   "id": "F-02-c1",
+   "quote": "수위선 초과 신호",
+   "linked": false,
+   "blocker": "화면 없음",
+   "checked": "침수 이벤트 행은 대시보드에 뜨나 전부 시드 사건이다(「시드 카메라 (검수용)」 · click_completes.json U1#2 text_after) — 수위 신호 → 이벤트를 보여 주는 장이 아니다. 억지 연결 금지"
+  },
+  {
+   "id": "F-02-c2",
+   "quote": "30초 내에 이벤트를 생성한다",
+   "linked": false,
+   "blocker": "화면 없음",
+   "sub": "시간 — 화면 한 장이 답할 수 없음",
+   "checked": "verify_feature_reach.py:139"
+  },
+  {
+   "id": "F-02-c3",
+   "quote": "지점별 기준선 설정",
+   "linked": true,
+   "blocker": "",
+   "checked": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「그 축은 **카메라별**이고 계약이 말하는 것은 **지점(구역)별**이라 다른 축이다」는 **거꾸로였다.** 계약 절 대장 자신이 F-02-c3 의 주석에 이렇게 적어 두었다: 「계약이 「지점별」이라고 못박았으므로 **적용 범위를 camera 로 두고**, 좁은 것이 이기게 했다(camera → tenant → global). 관리자가 F-12 쓰기 문으로 지점마다 넣는다」. 그리고 `CameraTuning.tsx:223` 이 정확히 그렇게 부른다 — POST /api/dsm/settings/thresholds `scope_level='camera'` · `scope_ref=cameraId`. U2 fire_admin 이 GET /api/dsm/stats/camera-thresholds 200 으로 봤다(캡처 34번). ⚠ **A 는 이 절의 「누른 뒤」를 못 쟀다** — CameraTuning 은 카메라를 먼저 고르는 자리라 이번 턴 준비 단계가 안 섰다. 여기 선 것은 **도달**이고 저장 왕복이 아니다",
+   "screen": "/dsm/cameras/tuning",
+   "api": "/api/dsm/stats/camera-thresholds",
+   "expect": 200,
+   "file_hint": "dsm_cameras_tuning_scope",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「그 축은 **카메라별**이고 계약이 말하는 것은 **지점(구역)별**이라 다른 축이다」는 **거꾸로였다.** 계약 절 대장 자신이 F-02-c3 의 주석에 이렇게 적어 두었다: 「계약이 「지점별」이라고 못박았으므로 **적용 범위를 camera 로 두고**, 좁은 것이 이기게 했다(camera → tenant → global). 관리자가 F-12 쓰기 문으로 지점마다 넣는다」. 그리고 `CameraTuning.tsx:223` 이 정확히 그렇게 부른다 — POST /api/dsm/settings/thresholds `scope_level='camera'` · `scope_ref=cameraId`. U2 fire_admin 이 GET /api/dsm/stats/camera-thresholds 200 으로 봤다(캡처 34번). ⚠ **A 는 이 절의 「누른 뒤」를 못 쟀다** — CameraTuning 은 카메라를 먼저 고르는 자리라 이번 턴 준비 단계가 안 섰다. 여기 선 것은 **도달**이고 저장 왕복이 아니다",
+   "screens_seen": [
+    "SCREENS-1/fire_admin/dsm_cameras_tuning_scope.png"
+   ],
+   "viewed_by": [
+    "U2 · gxseed_u2_manager · fire_admin · 1440px"
+   ],
+   "data_source": [
+    "시드"
+   ],
+   "calls": [
+    "GET /api/dsm/stats/camera-thresholds 200",
+    "GET /api/dsm/stats/false-positive/by-camera?days=7&top_n=3 200"
+   ],
+   "remeasured_at": "2026-09-21",
+   "remeasured_by": "A (턴 AA · P-219)"
+  },
+  {
+   "id": "F-03-c1",
+   "quote": "사람·차량 진입을 결합",
+   "linked": false,
+   "blocker": "화면 없음",
+   "sub": "내부 판정",
+   "checked": "verify_feature_reach.py:141"
+  },
+  {
+   "id": "F-03-c2",
+   "quote": "등급을 상향한다",
+   "linked": false,
+   "blocker": "화면 없음",
+   "checked": "목록의 등급 배지는 저장된 등급이다 — 상향은 **값**이고 저장 등급을 덮지 않는다(contract_ac_ledger.yaml:115). 상향 결과를 보여 주는 장 없음"
+  },
+  {
+   "id": "F-03-c3",
+   "quote": "지정 위험구역(폴리곤)",
+   "linked": false,
+   "blocker": "화면 없음",
+   "checked": "[턴 AA 재확인 · 2026-09-21 · 사유 그대로 참, 근거를 바꾼다] 옛 근거 「편집 화면 0」은 낡았다 — `/dsm/settings/rules` 가 섰다. 그러나 **폴리곤은 그 화면으로 저장되지 않는다**: [실측 · 돌고 있는 서버의 서명으로 A/B] `POST /settings/zones` 의 `geometry` 는 **질의에 실리는 객체 칸**이고 브라우저가 질의에 실을 수 있는 것은 글자뿐이라 JSON 을 글자로 보내면 422(`geometry: Input should be a valid dictionary (input_type=str)`)에서 멈춘다. 같은 호출의 `kind=camera_group`(도형 없음)은 통과한다. 서버가 `geometry` 를 **본문**으로 받기 전까지 이 절은 화면으로 안 닫힌다 — 그래서 화면에 폴리곤 칸을 **그리지 않았다**(그려 놓고 누를 때마다 422 를 주는 것이 사람에게 더 나쁘다). F-12-c5 「구역」은 카메라 묶음으로 닫힌다 — 다른 절이다",
+   "remeasured_at": "2026-09-21",
+   "remeasured_by": "A (턴 AA · P-219)"
+  },
+  {
+   "id": "F-04-c1",
+   "quote": "동일 이벤트",
+   "linked": false,
+   "blocker": "화면 없음",
+   "sub": "내부 판정",
+   "checked": "큐의 「같은 카메라 ×N」 묶음(UX-13 · dsm_queue_focus.png)은 **사건 묶음**이고 이 절은 기록 10초 창의 접힘이다(contract_ac_ledger.yaml:147-149) — 다른 판정이라 잇지 않았다"
+  },
+  {
+   "id": "F-04-c2",
+   "quote": "5분 내 중복 알림 0건",
+   "linked": false,
+   "blocker": "화면 없음",
+   "sub": "시간",
+   "checked": "verify_feature_reach.py:145"
+  },
+  {
+   "id": "F-09-c1",
+   "quote": "5상태(기본/로딩/빈/오류/권한없음)를 100% 정의",
+   "linked": false,
+   "blocker": "역할 캡처 없음",
+   "checked": "[턴 AA 보강 · 2026-09-21 · **blocker 는 그대로**] 화면은 있다 — /dsm/dashboard 기본 상태 1장(fire_user · 시드). 없는 것은 **네 상태(로딩·빈·오류·권한없음)의 역할 계정 캡처 0장**이다. ★ 다음 사람이 「무엇을 찍어야 하나」를 정할 수 있게 **칸을 이름으로** 적는다: 그 다섯을 화면이 서버 값 그대로 적는 자리는 `ControlDashboard.tsx:193` 이 `GET /api/dsm/dashboard/frame` 의 **`five_states`** 를 펴는 곳이고, 서버 쪽 정본은 `apps/dsm/api.py:165` · `apps/dsm/services.py:170` 의 `FIVE_STATES` (「검수에서 5상태 100%를 물으면 **세지 않고 보여 준다**」). ⚠ A 는 이 절을 재지 못했다 — 네 상태의 캡처는 V 의 일이고 A 는 그 화면을 브라우저로 안 걸었다. 한 것은 **어느 칸을 찍어야 하는가**를 못박은 것뿐이다",
+   "screens_seen": [
+    "SCREENS-1/fire_user/dsm_dashboard.png"
+   ],
+   "viewed_by": [
+    "U1 · gxseed_u1_operator · fire_user · 1440px"
+   ],
+   "remeasured_at": "2026-09-21",
+   "remeasured_by": "A (턴 AA · P-219)"
+  },
+  {
+   "id": "F-10-c1",
+   "quote": "등급별 수신그룹",
+   "linked": false,
+   "blocker": "화면 없음",
+   "checked": "수신그룹(알림 규칙) 조회·설정 라우트·화면 0 — UX-43 미착수(P-140). 발송 행은 「(수신자 없음)」이다(click_completes.json:1834)"
+  },
+  {
+   "id": "F-10-c2",
+   "quote": "30초 내에",
+   "linked": false,
+   "blocker": "화면 없음",
+   "sub": "시간",
+   "checked": "verify_feature_reach.py:148"
+  },
+  {
+   "id": "F-11-c1",
+   "quote": "템플릿 변수 3종(이벤트·조치·캡처)",
+   "linked": false,
+   "blocker": "셋째 변수가 종이에 안 실린다",
+   "checked": "[턴 AA 재판정 · 2026-09-21] ★ **화면 탓이 아니다 — 사유를 갈아 끼운다.** `/dsm/reports` 는 섰다(F-11-c2·c3 이 그 화면으로 이어졌다). 그러나 이 절이 묻는 것은 **변수 3종**이고 셋 중 둘만 종이에 닿는다: `kernels/k4_report/schemas.py:26` 이 REQUIRED_VARIABLES=('events','actions','captures') 로 셋을 잠갔고 `services.py:185` 가 `captures` 를 **만든다**. 그런데 `apps/dsm/incident_report.py::build_incident_html` 은 `build_html(event=…, clock=…, actions=…)` 만 넘긴다 — `build_html` 의 서명에 `captures` 칸이 **없고** 그 파일 전체에 「캡처」·`snapshot` 이 **한 번도 안 나온다**(grep 0). 즉 **캡처는 만들어지고 종이에 안 실린다.** 종전 사유(「화면 없음」)로 두면 다음 사람이 화면을 계속 뒤진다 — 두 턴 동안 이 절이 안 움직인 이유가 그 한 줄일 수 있다",
+   "remeasured_at": "2026-09-21",
+   "remeasured_by": "A (턴 AA · P-219)"
+  },
+  {
+   "id": "F-11-c2",
+   "quote": "손입력을 0으로",
+   "linked": true,
+   "blocker": "",
+   "checked": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「/report-template(view_only)이 부른 것은 인수 서식 print-formats」는 **여전히 참이되 자리가 낡았다** — 우리 층의 보고서 화면이 턴 U 에 섰다: `/dsm/reports`(Reports.tsx · App.tsx:724)가 GET/POST /api/dsm/reports/runs 와 `…/{id}.docx`·`.pdf` 를 부른다. 인수 화면의 `/api/report-template/` 과 **다른 문**이다. U2 fire_admin 200 실측(캡처 35번). 손입력 0 — 종이의 칸은 서버가 집계에서 채운다. 사람이 적는 칸은 「특이사항」 한 줄뿐이고 그것은 손입력이 아니라 **덧붙임**이다(자동본이 이미 완성돼 있고 비워도 종이의 칸이 남는다)",
+   "screen": "/dsm/reports",
+   "api": "/api/dsm/reports/runs",
+   "expect": 200,
+   "file_hint": "dsm_reports_runs",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「/report-template(view_only)이 부른 것은 인수 서식 print-formats」는 **여전히 참이되 자리가 낡았다** — 우리 층의 보고서 화면이 턴 U 에 섰다: `/dsm/reports`(Reports.tsx · App.tsx:724)가 GET/POST /api/dsm/reports/runs 와 `…/{id}.docx`·`.pdf` 를 부른다. 인수 화면의 `/api/report-template/` 과 **다른 문**이다. U2 fire_admin 200 실측(캡처 35번). 손입력 0 — 종이의 칸은 서버가 집계에서 채운다. 사람이 적는 칸은 「특이사항」 한 줄뿐이고 그것은 손입력이 아니라 **덧붙임**이다(자동본이 이미 완성돼 있고 비워도 종이의 칸이 남는다)",
+   "screens_seen": [
+    "SCREENS-1/fire_admin/dsm_reports_runs.png"
+   ],
+   "viewed_by": [
+    "U2 · gxseed_u2_manager · fire_admin · 1440px"
+   ],
+   "data_source": [
+    "시드"
+   ],
+   "calls": [
+    "GET /api/dsm/reports/runs?limit=50 200"
+   ],
+   "remeasured_at": "2026-09-21",
+   "remeasured_by": "A (턴 AA · P-219)"
+  },
+  {
+   "id": "F-11-c3",
+   "quote": "치환하고",
+   "linked": true,
+   "blocker": "",
+   "checked": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「/report-template(view_only)이 부른 것은 인수 서식 print-formats」는 **여전히 참이되 자리가 낡았다** — 우리 층의 보고서 화면이 턴 U 에 섰다: `/dsm/reports`(Reports.tsx · App.tsx:724)가 GET/POST /api/dsm/reports/runs 와 `…/{id}.docx`·`.pdf` 를 부른다. 인수 화면의 `/api/report-template/` 과 **다른 문**이다. U2 fire_admin 200 실측(캡처 35번). 치환은 `apps/dsm/incident_report.py` 의 `build_html`·`build_monthly_html`·`build_upper_html` 이 한다. 화면은 실행 기록을 만들고 파일을 받는다 — 화면이 제 표를 파일로 적지 않는다",
+   "screen": "/dsm/reports",
+   "api": "/api/dsm/reports/runs",
+   "expect": 200,
+   "file_hint": "dsm_reports_runs",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「/report-template(view_only)이 부른 것은 인수 서식 print-formats」는 **여전히 참이되 자리가 낡았다** — 우리 층의 보고서 화면이 턴 U 에 섰다: `/dsm/reports`(Reports.tsx · App.tsx:724)가 GET/POST /api/dsm/reports/runs 와 `…/{id}.docx`·`.pdf` 를 부른다. 인수 화면의 `/api/report-template/` 과 **다른 문**이다. U2 fire_admin 200 실측(캡처 35번). 치환은 `apps/dsm/incident_report.py` 의 `build_html`·`build_monthly_html`·`build_upper_html` 이 한다. 화면은 실행 기록을 만들고 파일을 받는다 — 화면이 제 표를 파일로 적지 않는다",
+   "screens_seen": [
+    "SCREENS-1/fire_admin/dsm_reports_runs.png"
+   ],
+   "viewed_by": [
+    "U2 · gxseed_u2_manager · fire_admin · 1440px"
+   ],
+   "data_source": [
+    "시드"
+   ],
+   "calls": [
+    "GET /api/dsm/reports/runs?limit=50 200"
+   ],
+   "remeasured_at": "2026-09-21",
+   "remeasured_by": "A (턴 AA · P-219)"
+  },
+  {
+   "id": "F-12-c1",
+   "quote": "무권한은 차단하며",
+   "linked": true,
+   "blocker": "",
+   "checked": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「관리자 설정 화면이 없다 · 곁 증거는 HTTP 관측이지 역할 계정이 누른 화면이 아니다」에서 **뒤 절반은 여전히 옳고 앞 절반이 낡았다.** 이제 그 화면이 있고 **권한 없는 역할 계정이 그 주소를 실제로 열었다**: U4 view_only 로 세 문이 전부 403 이고(캡처 33번) 화면이 제 자리에서 「이 항목에 대한 권한이 없습니다.」를 적는다(`ownDenialPaths(['/api/dsm/settings/'])`). 다른 자리(`/surveillance-dashboard`)의 403 을 이 절의 증거로 쓰지 않는다 — 계약이 말하는 것은 **관리자 설정**이다",
+   "candidate_non_screen": "click_completes.json U6#1 (403 + audit_id)",
+   "screen": "/dsm/settings/rules",
+   "api": "/api/dsm/settings/zones",
+   "expect": 403,
+   "file_hint": "dsm_settings_rules_denied",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「관리자 설정 화면이 없다 · 곁 증거는 HTTP 관측이지 역할 계정이 누른 화면이 아니다」에서 **뒤 절반은 여전히 옳고 앞 절반이 낡았다.** 이제 그 화면이 있고 **권한 없는 역할 계정이 그 주소를 실제로 열었다**: U4 view_only 로 세 문이 전부 403 이고(캡처 33번) 화면이 제 자리에서 「이 항목에 대한 권한이 없습니다.」를 적는다(`ownDenialPaths(['/api/dsm/settings/'])`). 다른 자리(`/surveillance-dashboard`)의 403 을 이 절의 증거로 쓰지 않는다 — 계약이 말하는 것은 **관리자 설정**이다",
+   "screens_seen": [
+    "SCREENS-1/view_only_-_anyang/dsm_settings_rules_denied.png"
+   ],
+   "viewed_by": [
+    "U4 · gxseed_u4_official · view_only_-_anyang · 1440px"
+   ],
+   "data_source": [
+    "시드"
+   ],
+   "calls": [
+    "GET /api/dsm/settings/zones 403",
+    "GET /api/dsm/settings/thresholds 403",
+    "GET /api/dsm/settings/grade_rules 403"
+   ],
+   "remeasured_at": "2026-09-21",
+   "remeasured_by": "A (턴 AA · P-219)"
+  },
+  {
+   "id": "F-12-c2",
+   "quote": "성공·실패를 모두 감사로그로 남긴다",
+   "linked": false,
+   "blocker": "화면 없음",
+   "checked": "감사 조회 화면·라우트 0 — UX-41 미착수(P-140). 곁 증거: 위 403 이 감사 #211637 을 남겼다(실패 쪽 한 건 · 화면 아님)",
+   "candidate_non_screen": "click_completes.json U6#1 (audit_id 211637)"
+  },
+  {
+   "id": "F-12-c3",
+   "quote": "수신자",
+   "linked": false,
+   "blocker": "화면 없음",
+   "checked": "GET /api/dsm/settings/{domain} 실재(api.py:1143) · 부르는 화면 0"
+  },
+  {
+   "id": "F-12-c4",
+   "quote": "위젯",
+   "linked": false,
+   "blocker": "화면 없음",
+   "checked": "F-12-c3 과 같은 사유"
+  },
+  {
+   "id": "F-12-c5",
+   "quote": "구역",
+   "linked": true,
+   "blocker": "",
+   "checked": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「구역 저장 문 실재 · 화면 0」이 낡았다 — `/dsm/settings/rules`(턴 Z · SettingsRules.tsx · App.tsx:757)의 「구역」 탭이 GET/POST /api/dsm/settings/zones 를 부른다. U5 admin 이 200 으로 봤다(캡처 32번). 누른 뒤는 `verify_click_completes` 설정 표 U5#S1(끄기/켜기)·U5#S2(만들기)가 잰다",
+   "screen": "/dsm/settings/rules",
+   "api": "/api/dsm/settings/zones",
+   "expect": 200,
+   "file_hint": "dsm_settings_rules_admin",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「구역 저장 문 실재 · 화면 0」이 낡았다 — `/dsm/settings/rules`(턴 Z · SettingsRules.tsx · App.tsx:757)의 「구역」 탭이 GET/POST /api/dsm/settings/zones 를 부른다. U5 admin 이 200 으로 봤다(캡처 32번). 누른 뒤는 `verify_click_completes` 설정 표 U5#S1(끄기/켜기)·U5#S2(만들기)가 잰다",
+   "screens_seen": [
+    "SCREENS-1/admin/dsm_settings_rules_admin.png"
+   ],
+   "viewed_by": [
+    "U5 · gxseed_u5_sysop · admin · 1440px"
+   ],
+   "data_source": [
+    "시드"
+   ],
+   "calls": [
+    "GET /api/dsm/settings/zones 200",
+    "GET /api/dsm/settings/thresholds 200",
+    "GET /api/dsm/settings/grade_rules 200"
+   ],
+   "remeasured_at": "2026-09-21",
+   "remeasured_by": "A (턴 AA · P-219)"
+  },
+  {
+   "id": "F-12-c6",
+   "quote": "임계값",
+   "linked": true,
+   "blocker": "",
+   "checked": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「그 문을 부르는 화면은 아직 0건」이 **두 겹으로** 낡았다: (1) `CameraTuning.tsx:223` 이 이미 POST /api/dsm/settings/thresholds 를 `scope_level='camera'` 로 부르고 있었고 (2) 이번 턴 `/dsm/settings/rules` 의 「임계값」 탭이 GET/POST 를 둘 다 부른다. U5 admin 200 실측(캡처 32번). 누른 뒤는 설정 표 U5#S3 가 잰다 — 계약이 잠근 값은 고르지 않는다(그 잠김은 규율이다)",
+   "screen": "/dsm/settings/rules",
+   "api": "/api/dsm/settings/thresholds",
+   "expect": 200,
+   "file_hint": "dsm_settings_rules_admin",
+   "why": "[턴 AA 재판정 · 2026-09-21] 옛 사유 「그 문을 부르는 화면은 아직 0건」이 **두 겹으로** 낡았다: (1) `CameraTuning.tsx:223` 이 이미 POST /api/dsm/settings/thresholds 를 `scope_level='camera'` 로 부르고 있었고 (2) 이번 턴 `/dsm/settings/rules` 의 「임계값」 탭이 GET/POST 를 둘 다 부른다. U5 admin 200 실측(캡처 32번). 누른 뒤는 설정 표 U5#S3 가 잰다 — 계약이 잠근 값은 고르지 않는다(그 잠김은 규율이다)",
+   "screens_seen": [
+    "SCREENS-1/admin/dsm_settings_rules_admin.png"
+   ],
+   "viewed_by": [
+    "U5 · gxseed_u5_sysop · admin · 1440px"
+   ],
+   "data_source": [
+    "시드"
+   ],
+   "calls": [
+    "GET /api/dsm/settings/zones 200",
+    "GET /api/dsm/settings/thresholds 200",
+    "GET /api/dsm/settings/grade_rules 200"
+   ],
+   "remeasured_at": "2026-09-21",
+   "remeasured_by": "A (턴 AA · P-219)"
+  },
+  {
+   "id": "F-12-c7",
+   "quote": "등급규칙",
+   "linked": true,
+   "blocker": "",
+   "checked": "[턴 AA 재판정 · 2026-09-21] 「등급규칙 관리 화면이 없다」가 낡았다 — `/dsm/settings/rules` 의 「등급규칙」 탭이 GET /api/dsm/settings/grade_rules(**밑줄**)를 읽고 POST /api/dsm/settings/grade-rules(**하이픈**)로 쓴다. U5 admin 200 실측(캡처 32번). 누른 뒤는 설정 표 U5#S4 가 잰다 — **올리는 쪽으로만** 재고 되돌린다(낮추면 경보가 꺼진다)",
+   "screen": "/dsm/settings/rules",
+   "api": "/api/dsm/settings/grade_rules",
+   "expect": 200,
+   "file_hint": "dsm_settings_rules_admin",
+   "why": "[턴 AA 재판정 · 2026-09-21] 「등급규칙 관리 화면이 없다」가 낡았다 — `/dsm/settings/rules` 의 「등급규칙」 탭이 GET /api/dsm/settings/grade_rules(**밑줄**)를 읽고 POST /api/dsm/settings/grade-rules(**하이픈**)로 쓴다. U5 admin 200 실측(캡처 32번). 누른 뒤는 설정 표 U5#S4 가 잰다 — **올리는 쪽으로만** 재고 되돌린다(낮추면 경보가 꺼진다)",
+   "screens_seen": [
+    "SCREENS-1/admin/dsm_settings_rules_admin.png"
+   ],
+   "viewed_by": [
+    "U5 · gxseed_u5_sysop · admin · 1440px"
+   ],
+   "data_source": [
+    "시드"
+   ],
+   "calls": [
+    "GET /api/dsm/settings/zones 200",
+    "GET /api/dsm/settings/thresholds 200",
+    "GET /api/dsm/settings/grade_rules 200"
+   ],
+   "remeasured_at": "2026-09-21",
+   "remeasured_by": "A (턴 AA · P-219)"
+  },
+  {
+   "id": "F-12-c8",
+   "quote": "API키",
+   "linked": false,
+   "blocker": "화면 없음",
+   "checked": "발급 문 POST /api/dsm/settings/api-keys(api.py:977) · 화면 0(부속서A S-21 은 계획)"
+  },
+  {
+   "id": "F-13-c1",
+   "quote": "비행 명령은 전송하지 않는다",
+   "linked": false,
+   "blocker": "화면 없음",
+   "sub": "부작위",
+   "checked": "verify_feature_reach.py:160"
+  },
+  {
+   "id": "F-14-c2",
+   "quote": "월간 오탐률을 산출",
+   "linked": false,
+   "blocker": "화면 없음",
+   "checked": "[턴 AA 재판정 · 2026-09-21 · **잇지 않는다**] 종전 사유(「12시간 창의 오탐 수다 — 월간 산출이 아니다」)는 여전히 참이되 **자리가 낡았다**: 그 문장은 `/dsm/events` 요약 줄을 보고 쓴 것이고, 이제 봐야 할 자리는 **월간 자동본**이다. 실측 셋: (1) 자동본을 그리는 함수는 `apps/dsm/incident_report.py::build_monthly_html` 하나다(`monthly_report.py::html_for_run` 이 kind==monthly 일 때 부른다) (2) 그 함수가 그리는 절은 **여섯**이고 오탐이 없다(이번 달 한 장 요약 · 등급별 · 유형별 · 카메라별 · 시간대별 · 대응 진행) (3) ⚠ 가장 헷갈리는 자리 — 넘어가는 `axes` 에는 **`verdict` 축이 들어 있다**(`stats.py::stats_axes` 가 미판정/실제/오탐 으로 센다). 즉 **자료는 종이 앞까지 와 있고 종이에 안 그려진다.** 자료가 있다고 「오탐 줄이 있다」로 읽으면 그것이 이 절의 거짓이다. 그리고 오탐**률**(비율)을 내는 자리는 그 함수 어디에도 없다 — 세는 것과 나누는 것은 다르다(`MONTHLY_VARIABLES` 가 `fpr_m2`·`fpr_m1`·`fpr_m0` 를 **이름으로 등재**해 두었으나 채우는 코드가 자동본에 없다 — 등재는 서식의 약속이고 이 절이 묻는 것은 **산출**이다). **없는 것을 있다고 적지 않았다**",
+   "remeasured_at": "2026-09-21",
+   "remeasured_by": "A (턴 AA · P-219)"
+  }
+ ]
 }

@@ -46,7 +46,7 @@ import {
 } from '../api';
 import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
-import { userFacingError } from '../copy';
+import { CHANNEL_NAME_UNKNOWN, channelLabel, hasChannelLabel, userFacingError } from '../copy';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { absolute, stamp } from '../time';
 import type { AuditItem, AuditPage } from '../types';
@@ -63,8 +63,10 @@ type AuditRow = AuditItem & AuditChainColumns & { target?: AuditTarget | null };
 type AuditPageWithChain = AuditPage & {
   chain_states?: AuditChainCounts;
   chain_scan_capped?: boolean;
-  /** 턴 Y — 대상 갈래 넷의 **분모**. 0 건인 갈래도 그대로 적는다(D-301). */
+  /** 턴 Y — 대상 갈래의 **분모**. 0 건인 갈래도 그대로 적는다(D-301). */
   target_states?: Record<string, number>;
+  /** 턴 AA — 이 쪽에서 대상을 **다 못 물어봤는가**(상한에 닿음). 잘린 표본은 잘렸다고 말한다. */
+  target_scan_capped?: boolean;
 };
 
 /** 해시를 화면에 적는 길이 — **앞 12자**. 자르는 것은 화면의 몫이고 서버는 전체를 낸다. */
@@ -95,17 +97,29 @@ const CHAIN_WORD: Record<string, { label: string; color: string }> = {
  *     deleted_by_decision  없다 **그리고** 09-20 스냅샷에 그 id 가 있다  ← 여기만 「대표 결정」
  *     gone                 없다 **그리고** 스냅샷에 없다  ← 회색이다. 「대표가 지웠다」가 아니다
  *   「없으면 삭제된 것」으로 적으면 기록 없이 사라진 행까지 대표 결정의 근거로 읽힌다.
+ *
+ * ★★ [턴 AA · U24] **갈래가 넷이 됐고, 그리는 행이 2 에서 273 이 됐다.**
+ *   [실측 2026-09-21 · 재난안전과 계정 · 2,194행] 사건을 가리키는 행 **273** 중 화면이
+ *   이름을 붙이던 것은 **2** 뿐이었다 — 나머지 271 은 사건 번호를 「행위」 글자가 아니라
+ *   기록 본문에 들고 있었고, 화면은 그 칸을 안 읽었다. 그 칸이 이제 함께 온다.
+ *   ★ 넷째 갈래 `denied_attempt` 는 **없어진 사건이 아니다**: 그 행 자신이 그때 막혔고
+ *     (결과 「막힘」 · 서버 404) 그 번호로는 사건이 열리지 않았다. 「사라졌다」로 적으면
+ *     있지도 않았던 사건이 있었던 것이 된다.
+ *   ★ 다섯째 `unknown` 은 갈래가 아니라 **「못 쟀다」**다 — 이 쪽의 대상 확인이 상한에
+ *     닿아 안 물어본 행이다. 안 물어본 것을 「사라짐」으로 적지 않는다.
  */
 type AuditTarget = {
   kind: string;
   event_id: number;
-  state: 'live' | 'deleted_by_decision' | 'gone';
+  state: 'live' | 'deleted_by_decision' | 'denied_attempt' | 'gone' | 'unknown';
+  /** 이 행이 사건 번호를 어디서 얻었나 — `action` | `payload`. 화면은 안 그린다. */
+  via?: string;
   decision: string | null;
   decided_on: string | null;
   snapshot: string | null;
 };
 
-/** 대상 갈래 셋의 우리말. **「모른다」를 지우지 않는다**(체인 칸과 같은 규율). */
+/** 대상 갈래 넷의 우리말. **「모른다」를 지우지 않는다**(체인 칸과 같은 규율). */
 const TARGET_WORD: Record<
   AuditTarget['state'],
   { label: string; color: string; note: (t: AuditTarget) => string }
@@ -123,45 +137,40 @@ const TARGET_WORD: Record<
      */
     note: (t) => `${t.decision ?? '대표 결정'} ${t.decided_on ?? ''} · 스냅샷 있음`,
   },
+  /**
+   * ★ [턴 AA] **없는 번호를 가리킨 시도.** 그 행이 그때 막혔고(결과 「막힘」 · 404)
+   *   가리킨 번호는 그 시각에도 없었다. 이것을 「사라진 사건」으로 적으면 **있지도
+   *   않았던 사건이 있었던 것**이 되고, 그 줄은 나중에 「무언가 지워졌다」의 근거로 읽힌다.
+   */
+  denied_attempt: {
+    label: '열리지 않은 사건 번호',
+    color: 'default',
+    /**
+     * ⚠ 「그때도 없는 번호였다」고까지 적지 않는다. 서버가 그때 낸 404 는 「없다」와
+     *   「남의 조직 것이다」를 **같은 답으로** 낸다(존재 여부가 새지 않게 하려고
+     *   일부러 그렇게 돼 있다). 우리가 아는 사실은 **그 번호로 열리지 않았다**까지다.
+     */
+    note: () => '막힌 시도 — 그 번호로 열리지 않았습니다',
+  },
   gone: { label: '사라진 사건', color: 'orange', note: () => '기록된 결정 없음' },
+  /**
+   * ★ 갈래가 아니라 **「못 쟀다」**다. 이 쪽에 사건이 너무 많아 상한에 닿은 행 —
+   *   안 물어본 것을 「사라짐」으로 적으면 **없어지지 않은 사건이 사라진 것**이 된다.
+   */
+  unknown: { label: '확인 못 함', color: 'orange', note: () => '이 쪽에서 확인하지 못했습니다' },
 };
 
 /**
  * ★★ [턴 Z · U24] **채널의 우리말** — 서버가 여는 채널이 2 에서 15 가 됐다(U56 · 대표 결정 ⑤).
  *
- * 종전 이 칸은 두 이름만 우리말로 바꾸고(`.events` · `.settings`) **나머지는 서버가 준
- * 글자를 그대로** 적었다. 채널이 둘일 때는 그 「나머지」가 0 건이라 아무도 안 봤는데,
- * 넓힌 지금은 U4 한 사람의 화면에서만 **368 행**이 그 길로 떨어진다
- * [실측 2026-09-21 03:45 UTC · 테넌트 좁힌 2,076 행 중]. 그러면 재난안전과 공무원의
- * 감사 화면이 `guardianx.dsm.response` 라고 말한다 — **우리 폴더 구조를 읽어 주는 것**이고
- * 사전 §4 가 금한 자리다(내부 이름 · 감사 채널 이름).
+ * 넓힌 뒤 재난안전과 담당관 한 사람의 화면에서만 **368 행**이 기계 이름으로 떨어졌다
+ * [실측 2026-09-21 · 테넌트 좁힌 2,076 행 중]. 감사 화면이 우리 폴더 구조를 읽어 주는
+ * 자리였고, 사전 §4 가 금한 자리다.
  *
- * ★ 모르는 채널을 **그럴듯한 우리말로 지어내지 않는다.** 표에 없는 이름은
- *   「우리말 이름 없음」이라 적고 **원래 이름은 `title` 에 그대로 둔다** — 해시 칸과 같은
- *   규율이다(자르는 것은 화면의 몫 · 값은 서버가 준 그대로 남는다). 채널이 늘면
- *   **여기 한 줄을 늘리는 것이 그 채널을 화면에 여는 일의 일부**다.
- *
- * ⚠ `guardianx.test.law08_race` 를 **꾸며 적지 않는다.** 그것은 시험이 운영 감사표에
- *   남긴 행이고, 「시험이 남긴 행」이라고 적는 것이 이 화면이 할 수 있는 유일한 참말이다.
- *   (U4 테넌트에서는 지금 0 행이다 — 0 이라고 해서 이름을 안 주면 뜨는 날 기계 말이 뜬다.)
+ * ★ [턴 AA · U24] 표를 **`copy.ts` 로 옮겼다**(`CHANNEL_LABEL`). 낱말은 한 글자도 안
+ *   바뀌었다 — 옮긴 까닭은 판정기가 표시명 사전을 찾는 자리가 그 파일이기 때문이다.
+ *   화면 파일 안에 있으면 **사전이 있는데도 「없다」로 읽힌다.** 두 벌을 만들지 않는다.
  */
-const CHANNEL_WORD: Record<string, string> = {
-  'guardianx.f12.settings': '설정 변경',
-  'guardianx.u24.events': '사건 행위',
-  'guardianx.dsm.response': '대응 처리',
-  'guardianx.dsm.notify': '알림 발송',
-  'guardianx.dsm.field_reply': '현장 회신',
-  'guardianx.dsm.push_subscription': '알림 수신 등록',
-  'guardianx.law02a.retention': '보관 기간 집행',
-  'guardianx.law07.privacy_request': '열람·삭제 청구',
-  'guardianx.u1.event_note': '사건 메모',
-  'guardianx.k2.heartbeat': '연계 상태 점검',
-  'guardianx.sec.otp_reset': '일회용 비밀번호 재설정',
-  'security.otp_reset': '일회용 비밀번호 재설정',
-  'guardianx.role_request': '권한 요청',
-  'gx.role_request': '권한 요청',
-  'guardianx.test.law08_race': '시험이 남긴 행',
-};
 
 /** 정본 문턱 — 「60초 안 도달」. 화면이 이 수를 재지 않는다 — 지시서(P-164)가 정한 수다. */
 const REACH_LIMIT_SECONDS = 60;
@@ -240,6 +249,8 @@ export default function AuditLog() {
    * 가리키는 행이 없었다」와 「그런 행을 세지 않았다」는 다른 사실이다 (D-301).
    */
   const targets = audit.data?.target_states ?? null;
+  /** 턴 AA — 대상 확인이 이 쪽에서 상한에 닿았나. 닿았으면 **닿았다고 적는다**. */
+  const targetsCapped = audit.data?.target_scan_capped === true;
 
   /**
    * 「표 내려받기」 — **서버 라우트**가 같은 필터로 낸다(`GET /api/dsm/audit/export.csv`).
@@ -376,10 +387,25 @@ export default function AuditLog() {
           {targets && (
             <>
               <Text type="secondary">대상</Text>
-              <Tag color={(targets.deleted_by_decision ?? 0) + (targets.gone ?? 0) > 0 ? 'orange' : 'green'}>
-                사건 가리킴 {(targets.live ?? 0) + (targets.deleted_by_decision ?? 0) + (targets.gone ?? 0)} ·
-                {' '}삭제된 사건 {targets.deleted_by_decision ?? 0} · 사라짐 {targets.gone ?? 0}
+              {/*
+                ★ [턴 AA] 갈래를 **다섯 다** 적는다. 「사건 가리킴 273 · 사라짐 153」처럼
+                  둘로 줄이면 「열리지 않은 번호를 가리킨 시도」와 「대표 결정으로 지운 사건」이
+                  한 수에 섞이고, 섞인 수는 감사 앞에서 못 쓴다. 0 인 갈래도 지우지 않는다.
+              */}
+              <Tag color={(targets.gone ?? 0) > 0 ? 'orange' : 'green'}>
+                사건 가리킴{' '}
+                {(targets.live ?? 0) +
+                  (targets.deleted_by_decision ?? 0) +
+                  (targets.denied_attempt ?? 0) +
+                  (targets.gone ?? 0) +
+                  (targets.unknown ?? 0)}{' '}
+                · 살아 있음 {targets.live ?? 0} · 삭제된 사건 {targets.deleted_by_decision ?? 0} ·
+                {' '}열리지 않은 번호 {targets.denied_attempt ?? 0} · 사라짐 {targets.gone ?? 0} ·
+                {' '}확인 못 함 {targets.unknown ?? 0}
               </Tag>
+              {targetsCapped && (
+                <Tag color="orange">이 쪽의 대상 확인이 상한에 닿았습니다</Tag>
+              )}
             </>
           )}
         </Space>
@@ -460,13 +486,12 @@ export default function AuditLog() {
                 dataIndex: 'channel',
                 width: 190,
                 render: (v: string) => {
-                  const word = CHANNEL_WORD[v];
                   //: 표에 없는 채널 — **지어내지 않는다.** 원래 이름은 `title` 에 남는다.
-                  return word ? (
-                    <span title={v}>{word}</span>
+                  return hasChannelLabel(v) ? (
+                    <span title={v}>{channelLabel(v)}</span>
                   ) : (
                     <Text type="secondary" title={v}>
-                      우리말 이름 없음
+                      {CHANNEL_NAME_UNKNOWN}
                     </Text>
                   );
                 },
@@ -515,6 +540,23 @@ export default function AuditLog() {
         <Text type="secondary" style={{ fontSize: 12 }}>
           「사라진 사건」·「삭제된 사건」은 그 사건이 지금 조회되지 않는다는 뜻입니다.
           감사 기록은 지우지 않으므로 그 행은 그대로 남아 있습니다 — 화면 오류가 아닙니다.
+        </Text>
+      )}
+      {/*
+        ★ [턴 AA] 「없는 사건 번호」도 **그 딱지가 실제로 뜬 쪽에서만** 뜻을 적는다.
+          위 문장과 합치지 않는다 — 사라진 것과 처음부터 없던 것은 다른 사실이고,
+          한 문장에 담으면 읽는 사람이 둘을 같은 일로 읽는다.
+      */}
+      {targets && (targets.denied_attempt ?? 0) > 0 && (
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          「열리지 않은 사건 번호」는 그 번호로 사건을 열지 못해 서버가 요청을 막은
+          기록입니다. 있던 사건이 없어진 것과는 다른 일입니다.
+        </Text>
+      )}
+      {targetsCapped && (
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          이 쪽에는 사건을 가리키는 행이 많아 일부 행의 대상을 확인하지 못했습니다.
+          「확인 못 함」은 그 사건이 없다는 뜻이 아닙니다 — 기간을 좁혀 다시 보십시오.
         </Text>
       )}
 

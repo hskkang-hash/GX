@@ -47,7 +47,9 @@ import { failureHint } from '../../dsm/copy';
  */
 import {
   LOG_CHANNEL_NOTE,
-  OUTCOME_LOG_ONLY,
+  //: ⑤ [턴 AA] `OUTCOME_LOG_ONLY`(「로그에 기록됨(사람에게 안 감)」)를 **안 쓴다.**
+  //:   데스크 표는 아직 그 말을 쓰므로 `deliveryOutcome.tsx` 에서 지우지 않았다 —
+  //:   지우면 남의 화면이 말을 잃는다. 이 화면만 「기록만」을 쓴다(아래 머리말).
   reachesAPerson,
 } from '../../dsm/deliveryOutcome';
 import { useDsmResource } from '../../dsm/hooks/useDsmResource';
@@ -111,16 +113,110 @@ type InboxTab = 'inbox' | 'handled';
 /**
  * ㉡ 사건 하나 = 카드 한 장. `deliveries` 는 **그 사건에 나간 발송 전부**다
  * (채널마다 한 줄) — 줄여서 담지 않는다. `failedCount` 는 그중 실패한 수다.
+ *
+ * ⑤ [턴 AA] `logOnlyCount` — 그중 **보내는 데는 성공했는데 사람에게는 안 간** 수다
+ * (`log` 채널). **실패와 다른 수**라 따로 센다 — 실패는 보내려다 못 보낸 것이고,
+ * 이쪽은 보냈는데 **갈 곳이 사람이 아니었던** 것이다. 한 수로 합치면 둘 중 하나가
+ * 거짓말이 된다.
  */
 interface EventGroup {
   eventId: number;
   event: EventRow | null;
   deliveries: MobileDeliveryRow[];
   failedCount: number;
+  logOnlyCount: number;
 }
 
 /**
- * 채널 한 줄의 **결과 색**. 셋을 다른 색으로 둔다 — 「성공」과 「로그에만 남음」을
+ * ⑤ [턴 AA · U3 · 세종 §3 5번 · **조율자 판정 2026-09-21**]
+ * **`log` 는 고객 화면에서 「기록만」이다 — 「훈련」이 아니다.**
+ *
+ * 종전에 이 카드의 한 줄은 이렇게 읽혔다:
+ *
+ *     ▲ log    로그에 기록됨(사람에게 안 감) 08:20
+ *
+ * 낱말 셋 다 **우리 서랍의 말**이다. `log` 는 커널의 채널 이름이고(GX-COPY 규칙 3),
+ * 「로그에 기록됨」은 우리 저장소 이야기다.
+ *
+ * ★★ **첫 판은 「훈련」이었다. 한 턴 안에 조율자가 물렀고, 그 판단이 옳다.**
+ *
+ *   제품 자신이 이 채널을 「훈련 채널」이라 부르는 것은 맞다
+ *   (`backend/kernels/k2_notify/rule_admin.py:91` — 「훈련 채널 — 사람이 아니라
+ *   로그에 도달한다. 운영 규칙에 넣으면 당직자가 못 받는다」). 그래서 「훈련」은
+ *   **거짓말은 아니었다.** 그런데 **붙는 자리가 틀렸다**:
+ *
+ *       `log` 는 **사건의 성질이 아니라 그 발송이 간 곳**이다.
+ *
+ *   화재 사건 카드의 줄에 「훈련」이 붙으면 사람은 그것을 **사건에 붙은 말**로
+ *   읽고 — **「이건 진짜가 아니었구나」** 로 읽는다. 채널 하나를 고객 말로
+ *   바꾸려다 **사건 전체를 가짜로 만드는** 훨씬 큰 거짓말을 새로 만든 것이다.
+ *
+ * ★★ **그리고 세종의 읽기가 옳았다 — 실제로 안 간다.**
+ *   [U3 실측 2026-09-21 17:44 KST · ORM 직독] 발송 **225건 중 `log` 가 222건**이다
+ *   (email 2 · webpush 1). 위 커널 주석의 문장 그대로라면 **진짜 사건의 알림이
+ *   거의 전부 당직자에게 안 가고 있다.** 세종은 「고객이 **알림이 안 간다**로
+ *   읽는다」를 문제로 적었는데, **그 읽기가 사실이다.**
+ *
+ *   ⇒ 그러므로 고칠 것은 **그 사실을 가리는 것이 아니라 그 사실을 고객 말로
+ *     정확히 말하는 것**이다. 이번 턴 불변은 「정직한 회색을 **고객 말로**」이지
+ *     「정직한 회색을 **지우기**」가 아니다.
+ *
+ * ★ **「훈련」이라는 낱말을 이 자리에서 뺐다.** 다만 **진짜 훈련 사건**
+ *   (`data_source=drill`)의 「훈련」 배지는 그것대로 옳다 — 그건 **사건의 성질**이
+ *   맞기 때문이다(GX-COPY §2 「실운영 / 시드(검수용) / 훈련」). 이 화면에는 아직
+ *   그 배지가 없고(모바일에서 「훈련」을 쓰는 자리는 `MobileSettings.tsx` 의
+ *   **시험 발송**뿐이다), 언젠가 서면 **두 배지는 다른 것을 말한다**:
+ *
+ *       사건 배지 「훈련」 … 이 **사건**이 훈련이다        (사건의 성질)
+ *       채널 배지 「기록만」 … 이 **발송**이 사람에게 안 갔다 (발송이 간 곳)
+ *
+ *   한 카드에 둘이 같이 서는 날 **절대 같은 낱말로 그리지 않는다.**
+ *
+ * ★ **색과 표식은 두 판 모두 안 바꿨다.** 주황 · `▲` 그대로다 — 초록으로 그리면
+ *   그 순간 F-10 이 거짓으로 달성된다(`deliveryOutcome.tsx` 머리말).
+ * ★ **채널 값은 안 바꿨다.** `d.channel` 은 계약 값이라 그대로 두고 **라벨에서 매핑**한다
+ *   (GX-COPY 규칙 2). 판정기가 읽는 `data-gx-channel` 도 **원래 값 그대로** 둔다 —
+ *   화면의 말이 바뀌었다고 술어가 읽는 값까지 바꾸면 게이트가 제 것을 못 찾는다.
+ *
+ * ⚠ **데스크 화면(`pages/EventDetail.tsx`)은 아직 옛말을 쓴다.** 그 파일과
+ *   `deliveryOutcome.tsx` 는 이번 턴 U3 의 것이 아니라 **한 줄도 안 건드렸다.**
+ *   두 화면의 말이 이 턴 동안 갈린다 — 조율자에게 쪽지로 올렸고 받아들여졌다
+ *   (`조율자.inbox/U3.md` ④ · 갈린 줄을 이름으로 적어 뒀다).
+ */
+export const LOG_ONLY_CHANNEL_LABEL = '기록만';
+
+/** 결과 한 마디 — 「기록만」 줄에 적는 말. 시각이 뒤에 붙는다. */
+export const OUTCOME_NOT_DELIVERED = '사람에게 안 갔습니다 — 기록에만 남았습니다';
+
+/**
+ * **원인과 다음 손이 한 줄**(턴 AA 불변). 카드에 사람에게 안 간 발송이 하나라도
+ * 있을 때 **카드마다 한 번** 선다.
+ *
+ * ★ 왜 채널 줄마다가 아니라 **카드마다 한 번**인가 — 조율자 판정은 「그 줄의 설명 +
+ *   다음 손」이었고, 나는 **다음 손만** 줄에서 떼어 카드 머리로 올렸다. 사유 둘:
+ *     ① **다음 손은 발송의 성질이 아니라 기관의 성질**이다. 「알림 채널을 등록하라」는
+ *        이 발송 한 건에 대한 손이 아니라 **이 기관 전체에 대한 손**이라, 발송마다
+ *        되풀이하면 **같은 부탁을 열여섯 번** 하게 된다.
+ *     ② [실측] 한 사건 카드 안에 `log` 줄이 **16줄**인 자료가 실재한다
+ *        (`evidence/U3-Y/05_tenant_built.png` · 사건 #295402). 거기에 한 문장을
+ *        열여섯 벌 깔면 **카드가 사과문으로 덮인다** — 이번 턴이 첫 화면에서
+ *        걷어내기로 한 바로 그 모양이다.
+ *   ⇒ 원인(「사람에게 안 갔습니다」)은 **줄마다** 남고, 원인+다음 손 한 줄은
+ *     **카드마다 한 번** 선다. 어느 쪽에서도 사실이 빠지지 않는다.
+ *   ⚠ 이것은 **판정을 좁혀 실행한 것**이라 보고와 쪽지에 그대로 적었다 —
+ *     조율자가 「줄마다」를 고집하면 한 줄짜리 고침이다.
+ */
+export function logOnlyNextHand(count: number): string {
+  return `이 사건의 알림 ${count}건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.`;
+}
+
+/** 고객이 읽을 채널 이름. 사람에게 가는 채널은 **제 이름 그대로**다. */
+export function channelDisplayLabel(channel: string): string {
+  return reachesAPerson(channel) ? channel : LOG_ONLY_CHANNEL_LABEL;
+}
+
+/**
+ * 채널 한 줄의 **결과 색**. 셋을 다른 색으로 둔다 — 「성공」과 「기록만」을
  * 같은 색으로 그리면 F-10 이 거짓으로 달성된다(`deliveryOutcome.tsx` 머리말).
  */
 function channelTone(d: MobileDeliveryRow): { color: string; mark: string } {
@@ -206,11 +302,15 @@ export default function MobileInbox() {
           event: eventById.get(d.event_id) ?? null,
           deliveries: [],
           failedCount: 0,
+          logOnlyCount: 0,
         };
         byEvent.set(d.event_id, group);
       }
       group.deliveries.push(d);
       if (!d.succeeded) group.failedCount += 1;
+      //: ⑤ 보내는 데는 성공했는데 **사람에게는 안 간** 줄. 실패와 겹치지 않는다
+      //:   — `succeeded` 가 참인 줄만 센다.
+      else if (!reachesAPerson(d.channel)) group.logOnlyCount += 1;
     });
     //: ② 실패가 먼저다. `succeeded` 는 boolean 이라 `Number()` 로 0/1 을 만든다
     //:   — 실패(false→0)가 성공(true→1)보다 앞선다.
@@ -541,6 +641,23 @@ export default function MobileInbox() {
                   <Text type="secondary" style={{ fontSize: 11 }}>
                     이 사건에 나간 발송 {group.deliveries.length}건
                   </Text>
+                  {/*
+                    ⑤ [턴 AA · 조율자 판정] **원인과 다음 손이 한 줄**(이번 턴 불변).
+                      카드마다 **한 번**만 선다 — 사유는 `logOnlyNextHand` 머리말에 있다.
+                    ★ 「알림이 안 간다」를 **가리지 않고 고객 말로 적는다.** 실제로
+                      안 갔고(발송 225 중 `log` 222 [실측]), 그 사실을 아는 사람이
+                      다음에 할 수 있는 일이 이 줄에 있다.
+                  */}
+                  {group.logOnlyCount > 0 ? (
+                    <Text
+                      type="warning"
+                      style={{ fontSize: 11 }}
+                      data-gx="inbox-log-only-hint"
+                      data-gx-count={group.logOnlyCount}
+                    >
+                      {logOnlyNextHand(group.logOnlyCount)}
+                    </Text>
+                  ) : null}
                   <Space direction="vertical" size={2} style={{ width: '100%' }}>
                     {group.deliveries.map((d) => {
                       const tone = channelTone(d);
@@ -553,8 +670,10 @@ export default function MobileInbox() {
                           data-gx-channel={d.channel}
                           data-gx-succeeded={d.succeeded ? '1' : '0'}
                         >
+                          {/* ⑤ 고객이 읽는 것은 **라벨**이고, 판정기가 읽는 것은
+                              위의 `data-gx-channel`(계약 값)이다 — 둘을 안 섞는다. */}
                           <Tag color={tone.color} style={{ marginInlineEnd: 0 }}>
-                            {tone.mark} {d.channel}
+                            {tone.mark} {channelDisplayLabel(d.channel)}
                           </Tag>
                           {!d.succeeded ? (
                             /*
@@ -574,9 +693,10 @@ export default function MobileInbox() {
                             <Text
                               type="warning"
                               style={{ fontSize: 12 }}
+                              /* ⑤ 「사람에게 안 감」은 여기 — 「?」 뒤다. 본문이 아니다. */
                               title={LOG_CHANNEL_NOTE}
                             >
-                              {OUTCOME_LOG_ONLY} {shortAbsolute(d.sent_at)}
+                              {OUTCOME_NOT_DELIVERED} {shortAbsolute(d.sent_at)}
                             </Text>
                           ) : (
                             <Text type="secondary" style={{ fontSize: 12 }}>

@@ -72,6 +72,22 @@ export default function ControlDashboard() {
     { refreshMs: REFRESH_MS },
   );
 
+  /**
+   * ★★ P-220 (2026-09-21 · 턴 AA) — **이 표는 탐침을 안 본다.**
+   *
+   * 세종이 고객 자리에 앉아 적었다: *「최근 이벤트 10줄이 전부 `gxprobe-…` 캡처용
+   * 카메라. 첫 화면의 첫 줄이 우리 탐침이다.」* P-193 이 요약·큐·발송을 걸렀는데
+   * 이 표만 남아 있었다 — D-497(운영자 목록은 열어 둔다)의 **그늘**이다.
+   *
+   * ★ **거르는 일은 서버가 한다.** 이 화면이 10줄을 받아 자기가 걸러 내면 상한 밖의
+   *   사건이 **없는 것**이 되고, 「최근 10건」이 「탐침을 뺀 나머지 중 10건」이 아니라
+   *   「10건 중 탐침을 뺀 몇 건」이 된다(DA-04 「필터는 전부 서버에서」).
+   *   그래서 여기 있는 것은 **한 줄의 부재**다: `include_probe` 를 **안 청한다.**
+   *   서버(`apps/dsm/api.py::events`)의 기본값이 「안 준다」이고, 거르는 실행은
+   *   커널의 `common.probe_marker.exclude_probe` **정의 하나**다.
+   * ★ 탐침을 봐야 하는 자리는 **남아 있다** — `GET /api/dsm/events?include_probe=true`
+   *   (운영자 전용 목록). 감춘 것이 아니라 **고객 화면에서 세지 않는 것**이다.
+   */
   const events = useDsmResource<{ total: number; events: EventRow[] }>(
     () => dsmGet(dsmEndpoint.events, { limit: 10 }),
     [],
