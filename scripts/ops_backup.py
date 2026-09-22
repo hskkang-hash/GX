@@ -142,10 +142,92 @@ def row_counts(tables=WITNESS_TABLES, via: str = "local") -> dict[str, int | Non
     return out
 
 
-def dump_db(out_dir: Path, via: str = "local") -> dict:
-    """DB 를 뜬다. `--via docker:<컨테이너>` 면 그 안에서 뜨고 파일을 꺼내 온다."""
+def _major(text: str):
+    """판 문자열에서 주 판 번호만 뽑는다. 못 읽으면 None — **0 이 아니라 모른다**이다."""
+    for chunk in (text or "").replace("(", " ").replace(")", " ").split():
+        head = chunk.split(".")[0]
+        if head.isdigit():
+            return int(head)
+    return None
+
+
+def server_major(prefix, cfg) -> int | None:
+    """서버의 주 판. `psql` 로 센다 — 파이썬이 없는 DB 컨테이너에서도 돌아야 한다."""
+    host = "localhost" if prefix else cfg["host"]
+    env = dict(os.environ)
+    env.setdefault("PGPASSWORD", os.environ.get("DB_PASSWORD", ""))
+    proc = _run(prefix, ["psql", "-tAq", "-h", host, "-p", cfg["port"], "-U", cfg["user"],
+                         "-d", cfg["name"], "-c", "show server_version"], env)
+    return _major(proc.stdout) if proc.returncode == 0 else None
+
+
+def preflight(via: str) -> dict:
+    """★ **뜨기 전에 판을 잰다** [턴 AC · 차선 E].
+
+    ═══════════════════════════════════════════════════════════════════════
+    왜 이 함수가 생겼나 — **0바이트 유령 30개** [실측 2026-09-22]
+    ═══════════════════════════════════════════════════════════════════════
+        `pg_dump -f <경로>` 는 **파일을 먼저 만들고** 서버 판 검사에서 죽는다.
+        그래서 실패한 백업이 **0바이트 덤프 파일을 남긴다.**
+
+            /backup/20260917 ~ 20260921 : 덤프 30개 · **전부 0 바이트**
+
+        `ls` 는 「매일 백업이 있다」고 말했고 크기는 「아무것도 없다」고 말했다.
+        닷새 동안 아무도 크기를 안 봤다. **「파일이 생겼다」는 성공이 아니다** 는
+        문장이 이 파일 머리말에 있었지만, 그 문장에는 **술어가 없었다.**
+
+    그래서 이제 **뜨기 전에** 판을 재고, 안 맞으면 **파일을 만들지 않고** 죽는다.
+    있는 것처럼 보이는 것을 남기지 않는 것이 실패의 예의다.
+    """
     cfg = db_settings()
     prefix, container = _transport(via)
+    client = _major(client_version(prefix))
+    server = server_major(prefix, cfg)
+    out = {"via": via, "client_major": client, "server_major": server}
+    if client is None or server is None:
+        out["ok"] = None            # 못 쟀다 — 회색. 뜨기는 해 본다.
+        out["why"] = "판을 못 쟀다 (client=%r server=%r)" % (client, server)
+        return out
+    out["ok"] = client >= server
+    out["why"] = ("클라이언트 %d ≥ 서버 %d" % (client, server) if out["ok"] else
+                  "클라이언트 판(%d)이 서버 판(%d)보다 낮다 — 낮은 판은 높은 판을 못 뜬다. "
+                  "고치는 자리는 **어디서 뜨는가**(--via docker:postgres)이거나 "
+                  "**워커 이미지의 postgresql-client 판**이다" % (client, server))
+    return out
+
+
+def _mark_failed(prefix, container, remote) -> str | None:
+    """실패가 남긴 0바이트 파일에 `.failed` 를 붙인다. **지우지 않는다.**
+
+    ⚠ 바이트가 있으면 **손대지 않는다** — 반쯤 떠진 덤프도 증거이고, 그것을
+      우리가 이름 바꿔 숨길 일이 아니다. 0바이트일 때만 이름을 고친다.
+    """
+    target = "%s.failed" % remote
+    try:
+        if container:
+            probe = _run(["docker", "exec", container],
+                         ["sh", "-c", "test -f %s && test ! -s %s && mv %s %s && echo moved"
+                          % (remote, remote, remote, target)])
+            return target if "moved" in (probe.stdout or "") else None
+        path = Path(remote)
+        if path.is_file() and path.stat().st_size == 0:
+            path.rename(target)
+            return target
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return None
+
+
+def dump_db(out_dir: Path, via: str = "local") -> dict:
+    """DB 를 뜬다. `--via docker:<컨테이너>` 면 그 안에서 뜨고 파일을 꺼내 온다.
+
+    ★ 뜨기 전에 `preflight()` 로 판을 재고, 안 맞으면 **파일을 만들지 않고** 죽는다.
+    """
+    cfg = db_settings()
+    prefix, container = _transport(via)
+    pre = preflight(via)
+    if pre["ok"] is False:
+        raise RuntimeError("뜨기 전 판 검사에서 멈췄다 — %s" % pre["why"])
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     name = "db_%s_%s.dump" % (cfg["name"], stamp)
@@ -158,6 +240,10 @@ def dump_db(out_dir: Path, via: str = "local") -> dict:
     env.setdefault("PGPASSWORD", os.environ.get("DB_PASSWORD", ""))
     proc = _run(prefix, argv, env)
     if proc.returncode != 0:
+        #: ★ 실패가 남긴 **0바이트 유령**에 이름을 붙인다 [턴 AC · 차선 E].
+        #:   지우지 않는다(이 턴 삭제 0) — `.failed` 로 바꾸면 **다시는 덤프로 안 보인다.**
+        #:   닷새 동안 30개가 `.dump` 라는 이름만으로 「백업이 있다」고 말했다.
+        _mark_failed(prefix, container, remote)
         raise RuntimeError("pg_dump 실패: %s" % (proc.stderr or "").strip()[:400])
 
     commands = [" ".join(shlex.quote(x) for x in [*prefix, *argv])]

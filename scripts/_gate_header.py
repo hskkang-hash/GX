@@ -97,6 +97,17 @@ _DENOM = re.compile(r"분모\s*([0-9][0-9,]*)")
 #: (있는 척하는 줄보다 없다고 말하는 줄이 낫다 — 세는 쪽은 둘을 같게 센다).
 MEASURED_NONE = "(선언 없음"
 
+#: ★★ [P-243 · 턴 AC · 차선 Q] **「돌고 나서 말한다」 갈래 — 면제가 아니라 정직한 회색.**
+#:   회색 게이트 열둘 중 일부는 지금 못 재는 게 아니라 **분모가 미래 사건에 달렸다**
+#:   (F 의 A/A 표본이 MIN_PAIRS 에 찰 때 · 다음 릴리스 후보 컷 · 다음 파기 주기).
+#:   이 낱말은 **그 사실을 정직하게 적는 자리**지 「그래서 안 잰다」가 아니다 —
+#:   `judge_measured` 는 이 줄도 여전히 **회색**(문제 있음)으로 센다. 09-23 (D-511) 이 오면
+#:   이 줄도 다른 회색과 **똑같이 빨강**이 된다 — 뒤로 미루는 낱말이 아니라 「지금은 모른다」는
+#:   자백일 뿐이다. **면제 목록이 아니다**(D-350) — 게이트 이름을 어디에도 빼지 않는다.
+#:   `deferred:` 뒤에 **「언제」가 없으면** 그냥 「없다」와 같은 것으로 센다(얼버무림 방지).
+KEY_DEFERRED = "deferred:"
+_DEFERRED_WHEN = re.compile(r"deferred:\s*([^\s·][^·]*)")
+
 #: 사유 없이 서면 빨강인 이름들. **앱이 아닌 자격**이다.
 PRIVILEGED = ("root", "admin", "superuser", "슈퍼", "관리자")
 
@@ -189,6 +200,11 @@ def judge_measured(measured: str) -> list[str]:
       ② 분모가 없다 — 「무엇을」만 적고 「몇 건」을 안 적으면 0건 검사와 전수 검사가 같은 글자가 된다
       ③ 분모가 0    — **분모 0인 초록은 초록이 아니다** (D-301)
 
+    ★ [P-243] 넷째 자리 — `deferred:<언제>`. **면제가 아니다** — 여전히 이 함수는
+      문제 목록에 넣는다(회색인 채로 남는다 · D-511 기한이 오면 다른 회색과 똑같이 빨강이
+      된다). 다만 이유를 「없다」보다 **정직하게** 적을 자리를 준다 — 「언제 알 수 있는지」가
+      없으면 그냥 「없다」와 같은 것으로 센다(얼버무림 방지 · D-350: 모양만 바꾸는 면제 금지).
+
     ⚠ 이 판정은 `judge_header` 에 **넣지 않았다.** 넣으면 P-204 이 생긴 순간
       머리글을 옳게 단 게이트 일흔일곱이 전부 「머리글 어긋남」으로 붉어져서
       **「머리글이 없다」와 「분모를 안 말한다」가 한 칸에 섞인다.** 칸을 가른다.
@@ -198,6 +214,17 @@ def judge_measured(measured: str) -> list[str]:
     if not text or text.startswith(MEASURED_NONE):
         out.append("MEASURED= 가 없다 — **`exit 0` 은 「이 호출이 통과」다.** "
                    "무엇을 · 분모 몇으로 쟀는지 말하지 않은 0 은 초록이 아니다 (P-204)")
+        return out
+    if KEY_DEFERRED in text and not _DENOM.search(text):
+        wm = _DEFERRED_WHEN.search(text)
+        when = wm.group(1).strip() if wm else ""
+        if not when:
+            out.append("MEASURED= 가 `deferred:` 인데 **「언제」가 없다** — "
+                       "얼버무림과 같다. 「없다」와 같은 것으로 센다 (P-243 · D-350)")
+            return out
+        out.append("MEASURED= 가 **정직한 지연 신고**다(deferred) — 분모를 지금은 모른다 · "
+                   "언제 아나: %s · **면제가 아니다**, 여전히 회색이고 D-511 기한(09-23)이 "
+                   "오면 다른 회색과 똑같이 빨강이 된다 (P-243)" % when)
         return out
     m = _DENOM.search(text)
     if not m:
@@ -818,6 +845,16 @@ def self_test() -> int:
 
     # 아무것도 안 준 머리글이 **조용히 통과하지 않는다**
     check("관측 0건(빈 머리글 셋)은 세 줄 다 빨강", len(judge_header("", "", "")) >= 3)
+
+    # ★ [P-243 · 턴 AC · 차선 Q] `deferred:` 갈래 — **면제가 아니다**, 여전히 회색(문제 목록에 남는다).
+    check("deferred:<언제> 는 여전히 회색이다(면제 아님)",
+          len(judge_measured("deferred:2026-09-25(예) · 무엇을: 표본")) == 1)
+    check("deferred: 뒤에 「언제」가 없으면 「없다」와 같은 것으로 센다(얼버무림 금지 · D-350)",
+          len(judge_measured("deferred: · 아직 모른다")) == 1)
+    check("★ 음성 대조 — deferred 라고만 적으면 초록이 되지 않는다(면제 목록이 아니다)",
+          len(judge_measured("deferred:")) >= 1)
+    check("정상 분모는 그대로 통과한다(deferred 도입이 회귀를 안 낸다)",
+          judge_measured("무엇을 · 분모 120") == [])
     return 0 if ok else 1
 
 

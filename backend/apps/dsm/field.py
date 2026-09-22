@@ -374,6 +374,12 @@ def handled_events(*, scope, limit: int = 50) -> list[dict]:
             "stream_monitor_name": e.stream_monitor_name,
             "lat": e.lat, "lng": e.lng, "snapshot_path": e.snapshot_path,
             "response_state": e.response_state,
+            #: ★ [턴 AC · 차선 U1 · P-220/221] 이 칸이 **빠져 있었다** [실측] —
+            #:   「처리함」(내가 현장 회신을 낸 사건)에 훈련·씨앗 사건이 섞여도
+            #:   배지 없이 실사건과 같은 카드로 떴다. `events()` 라우트
+            #:   (`apps/dsm/api.py:301`)와 같은 함수를 부른다 — 낱말이 두 벌로
+            #:   갈리지 않는다.
+            "data_source": _services.event_data_source(view=e),
             **meta,
         })
     return out

@@ -230,7 +230,7 @@ def event_detail(*, scope: TenantScope, event_id: int):
 
 
 def event_data_source(*, view) -> str:
-    """이 이벤트가 **훈련 중에 난 것인가** (UX-17 · D-347 화면 메타).
+    """이 이벤트가 **훈련 중에 난 것인가 · 씨앗인가** (UX-17 · P-201 · D-347 화면 메타).
 
     ★ 칸이 아니라 **창 판정**이다. `data_source` 를 이벤트 열로 만들면 새 칸이 태어나는
       순간 과거가 비고, **빈 과거는 「훈련이 아니었다」로 읽힌다.** 훈련 창은 감사에
@@ -239,9 +239,28 @@ def event_data_source(*, view) -> str:
     ★ 이 함수가 없던 동안 `drill.is_drill_event` 는 **시험에서만 불렸다** —
       판정기는 있는데 그 답을 아무도 안 쓰는 상태이고, `verify_dormant` 가
       「켜진 상태로 태어나야 한다」로 그것을 잡았다(D-377).
+
+    ★★ [턴 AC · 차선 U1 · 2026-09-22] **셋째 낱말 `seed`.** 종전엔 이 함수가
+      `live`/`drill` 둘만 답했다 — 씨앗 카메라(`seed_dsm_events.py`) 위의 사건도
+      `live`로 나갔고, 그래서 U1 큐·U2 관제 현황「최근 10건」·U3 인박스가 씨앗을
+      실사건과 같은 카드로 그렸다(P-220/221「고객 첫 10분」실측). 판정은
+      `stream_monitors/services/seed.py` 한 곳 — 신호는 카메라 **코드**다(행 표식이
+      아니다, 그 파일 머리말 참고).
+
+    ⚠ [실측 2026-09-22 · 개발 DB] 씨앗 카메라(pk 119) 위에도 **게이트 탐침이
+      올라온다** — 표본 15줄 중 1줄이 `track_id="data_source=probe;…"`였다(탐침
+      스크립트가 카메라를 가려 쓰지 않는다는 뜻). **카메라 식별이 행 표식을
+      이긴 적은 없다** — 그 탐침 자체를 이 함수가 「씨앗」이라 부르면 새 오분류를
+      만드는 것이다(고치는 게 아니라 이름만 바뀐 오답). 그래서 씨앗 판정 **앞**에
+      `is_probe_track` 을 한 번 더 본다 — probe 행은 이 함수의 답을 **바꾸지
+      않는다**(여전히 아래 두 갈래 그대로 떨어진다 — 이 함수는 probe 자체를
+      가르는 자리가 아니다, 그 자리는 `common.probe_marker.exclude_probe`).
     """
-    from common.probe_marker import is_drill_track
+    from common.probe_marker import is_drill_track, is_probe_track
+    from stream_monitors.services import seed as seed_service
     from stream_monitors.services.drill import DATA_SOURCE, is_drill_event_for_stream
+
+    track_id = getattr(view, "track_id", "")
 
     #: ★★ P-201 (2026-09-20 · 턴 Y) — **축이 둘이다. 답은 하나다.**
     #:
@@ -255,8 +274,21 @@ def event_data_source(*, view) -> str:
     #:
     #:   ★ 행 표식을 **먼저** 본다. 공짜이고(행 안에 있다) 창 판정은 감사를
     #:     훑는다 — 그 순서가 `event_data_sources` 의 N+1 을 가른다.
-    if is_drill_track(getattr(view, "track_id", "")):
+    if is_drill_track(track_id):
         return DATA_SOURCE
+
+    #: ★ 씨앗은 훈련 창보다 먼저 묻는다 — 카메라 식별은 조회 한 번(pk 하나)뿐이라
+    #:   창 판정(감사 훑기)보다 싸다. 씨앗 카메라가 동시에 훈련 창에 들어도
+    #:   화면은 **하나만** 그려야 하므로(GX-COPY §2 「셋 중 하나」), 더 저렴하고
+    #:   더 확실한 신호(카메라 자체가 우리 것)를 앞세운다.
+    #:   ⚠ **probe 행은 건너뛴다** — 위 실측 참고. probe 는 이 함수가 답할 질문
+    #:   (「고객 화면에 뭐라고 말할까」) 밖이다 — 그 질문은 애초에 이 행까지
+    #:   안 온다(`include_probe` 기본값이 거짓). 여기서까지 「씨앗」으로 답하면
+    #:   행 표식보다 카메라 신호를 앞세운 것이 되어 P-201 의 순서(①행표식 먼저)를
+    #:   깬다.
+    if not is_probe_track(track_id) and seed_service.is_seed_stream_monitor(
+            view.stream_monitor_id):
+        return seed_service.DATA_SOURCE
 
     #: ★ 소속을 되짚는 한 줄은 **여기 두지 않는다** — App 이 ORM 을 만지면
     #:   `test_dsm_app` 이 잡는다(DA-04 §1-1). 그 한 줄은 `drill` 쪽에 있다.
@@ -286,9 +318,18 @@ def event_data_sources(*, scope: TenantScope, views) -> dict[int, str]:
       그때 그 창에 든 사건이 이 목록에 섞여 있을 때 — 그때만 줄마다 묻는다.
       즉 **비용을 내는 쪽은 실제로 훈련을 쓴 테넌트뿐**이고, 그런 테넌트는
       그 값이 필요해서 켜둔 것이다.
+
+    ★★ [턴 AC · 차선 U1] **③ 씨앗** — `stream_monitors/services/seed.py` 한 번의
+      쿼리(pk 후보 집합)로 가른다. 훈련 창(②)보다 싸고(감사 훑기가 없다) 순서상
+      먼저 둔다 — `event_data_source`(단건)와 같은 우선순위.
+
+    ⚠ [실측 2026-09-22 · 개발 DB] 씨앗 카메라 위에도 게이트 탐침이 올라온다
+      (표본 15줄 중 1줄). **행 표식이 카메라 신호를 이긴다** — probe 행은 씨앗
+      후보에서 뺀다(`event_data_source` 단건과 같은 순서 · 같은 실측).
     """
-    from common.probe_marker import is_drill_track
+    from common.probe_marker import is_drill_track, is_probe_track
     from stream_monitors.services import drill
+    from stream_monitors.services import seed as seed_service
 
     rows = list(views)
     out: dict[int, str] = {}
@@ -302,6 +343,27 @@ def event_data_sources(*, scope: TenantScope, views) -> dict[int, str]:
 
     if not unmarked:
         return out
+
+    #: ③ 씨앗 — 후보(`stream_monitor_id`) 집합 하나로 한 번만 묻는다. 대부분의
+    #:   요청은 씨앗 카메라가 아예 후보에 없으므로(테넌트에 한 대뿐) 이 집합은
+    #:   보통 비고, 비면 쿼리를 아예 안 던진다(`seed_stream_monitor_ids` 안).
+    #:   probe 행(위 실측)은 `event_id` 집합으로 미리 가려 후보에서 뺀다.
+    probe_event_ids = {v.event_id for v in unmarked
+                       if is_probe_track(getattr(v, "track_id", ""))}
+    seed_ids = seed_service.seed_stream_monitor_ids(
+        v.stream_monitor_id for v in unmarked
+        if v.event_id not in probe_event_ids)
+    if seed_ids:
+        still_unmarked = []
+        for view in unmarked:
+            if (view.event_id not in probe_event_ids
+                    and view.stream_monitor_id in seed_ids):
+                out[view.event_id] = seed_service.DATA_SOURCE
+            else:
+                still_unmarked.append(view)
+        unmarked = still_unmarked
+        if not unmarked:
+            return out
 
     #: 테넌트가 훈련 모드를 **한 번이라도 켜 봤는가.** 안 켜 봤으면 창이 없고,
     #: 창이 없으면 줄마다 묻는 것은 **전부 같은 「아니오」**다.

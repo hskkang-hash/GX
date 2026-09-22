@@ -108,16 +108,23 @@ export const NAV_ALLOW: Record<NavBucket, readonly NavRow[]> = {
   /**
    * 재난안전과 4 — 무슨 일 있었나 · 보고서 · 처리 기록 · 열람·삭제 청구.
    *
-   * ★★ **넷 중 둘은 화면이 없다** [실측 2026-09-10 · 턴 O].
-   *   「보고서」와 「처리 기록」을 여는 우리 층 화면이 라우터에 **없다**
-   *   (`backend/common/product_menus.py` 의 `P61_NO_SCREEN_YET` 이 두 자리를
-   *   이미 그렇게 적어 두었다 — 「보고서(월간 1쪽·HWPX)」·「감사 기록」).
-   *   없는 화면에 줄을 걸면 **눌러도 아무 데도 안 가는 줄**이 생기고, 그 줄은
-   *   「메뉴가 있다」와 구별되지 않는다. 그래서 **안 건다.**
-   *   ⚠ 이것은 면제가 아니라 **선언**이다 — 화면이 생기는 턴에 여기 두 줄을 더한다.
+   * ★★ **「넷 중 둘은 화면이 없다」는 이제 틀린 말이다** [실측 2026-09-10 · 턴 O 의
+   *   주장을 실측 2026-09-22 · 턴 AC 가 뒤집는다].
+   *   「보고서」(`/dsm/reports`)와 「처리 기록」(`/dsm/audit`)은 턴 T·U 에 라우터에
+   *   섰고(`frontend/src/App.tsx` 의 `dsmU24Routes.reports`·`dsmU24Routes.auditLog`),
+   *   서버 권한도 U4 에 이미 열려 있었다(`backend/apps/dsm/api_u24.py:358`·`:428`).
+   *   막혔던 것은 `menuId` 였다 — `menu.Menu` 에 그 두 경로의 행이 없어서
+   *   `filterNav` 가 (아래 `menuId` 규약대로) 그 줄을 세울 수 없었다.
+   *   [실측 2026-09-22 · 턴 AC · ORM] 시더로 실재 행을 세웠다:
+   *   `backend/common/product_menus.py::PRODUCT_MENUS` 에 두 자리를 더하고
+   *   `ensure_product_menus()` 를 돌렸다 — `/dsm/reports` → id **143**,
+   *   `/dsm/audit` → id **144**(둘 다 `group=None` · U4 역할에 `permit_read` 켬).
+   *   `P61_NO_SCREEN_YET` 의 그 두 자리는 `P61_SCREEN_ARRIVED` 로 옮겼다.
    */
   U4: [
     { path: '/dsm/events', label: '무슨 일 있었나', menuId: 133, iconName: 'BsColumnsGap' },
+    { path: '/dsm/reports', label: '보고서', menuId: 143, iconName: 'BsFileEarmarkText' },
+    { path: '/dsm/audit', label: '처리 기록', menuId: 144, iconName: 'BsClockHistory' },
     { path: '/dsm/privacy-requests', label: '열람·삭제 청구', menuId: 139, iconName: 'BsSearch' },
   ],
 
@@ -389,8 +396,10 @@ export function withCurrentPath(
  *   선언이다. 세는 사람이 「깜빡했다」와 「안 걸기로 했다」를 갈라 읽어야 한다.
  */
 export const NAV_NO_SCREEN_YET: Record<string, string> = {
-  '보고서 (U4)': '월간 1쪽은 서버가 낸다. 그리는 화면이 라우터에 없다 (P61_NO_SCREEN_YET)',
-  '처리 기록 (U4)': '감사·처리 이력을 읽는 화면이 없다 (P61_NO_SCREEN_YET 「감사 기록」)',
+  // ★ [턴 AC] 「보고서 (U4)」·「처리 기록 (U4)」는 **이 표에서 나갔다** — 화면도
+  //   섰고(`/dsm/reports`·`/dsm/audit`) `menu.Menu` 행도 섰다(id 143·144).
+  //   위 `NAV_ALLOW.U4` 에 두 줄로 옮겼다. `product_menus.py::P61_SCREEN_ARRIVED`
+  //   와 같은 규율 — 지운 것이 아니라 옮긴 것이다.
   // ★ [턴 AA · U56] **이 줄은 이제 사유가 다르다.** 화면은 섰다 —
   //   `/dsm/notify`(턴 S) · `/dsm/integrations`(턴 T) 둘 다 `App.tsx` 에 등록돼 있고
   //   주소로 열린다. 못 거는 이유는 **dj-core `Menu` 에 그 경로의 행이 없어서**다:

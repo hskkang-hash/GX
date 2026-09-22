@@ -39,7 +39,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import StateBoundary from '../../dsm/components/StateBoundary';
-import { failureHint } from '../../dsm/copy';
+import { dataSourceBadge, failureHint } from '../../dsm/copy';
 /**
  * ★ [P-123 · UX-31 ① · 턴 O · 차선 C2] **「성공」이 사람에게 갔다는 뜻이 아니다.**
  *   말은 `features/dsm/deliveryOutcome.tsx` 한 곳에서 온다 — 데스크 표와 이 카드가
@@ -463,6 +463,21 @@ export default function MobileInbox() {
                     <Tag color={SEVERITY_COLOR[e.severity]}>
                       {SEVERITY_ICON[e.severity]} {labelOf(SEVERITY_LABEL, e.severity)}
                     </Tag>
+                    {/*
+                      ★★ [P-220/221 · 턴 AC · 차선 U1] **「훈련」·「시드」 배지 — 이
+                        자리가 아예 없었다** [실측]. 「처리함」은 내가 현장 회신을 낸
+                        사건인데, 훈련·씨앗 위에서 회신 연습을 했어도 카드는 실사건과
+                        똑같이 그려졌다. 말은 새로 짓지 않는다 —
+                        `copy.ts::dataSourceBadge`(FocusQueue·EventList·EventDetail과
+                        같은 함수)를 그대로 부른다. `live`(또는 값 없음)면 `null` —
+                        평상엔 안 그린다. **등급 바로 옆**(FocusQueue 와 같은 자리 —
+                        뒤로 밀면 카메라 이름에 묻힌다).
+                    */}
+                    {dataSourceBadge(e.data_source) ? (
+                      <Tag color="purple" data-gx="handled-data-source-badge">
+                        {dataSourceBadge(e.data_source)}
+                      </Tag>
+                    ) : null}
                     <Text strong>{labelOf(EVENT_TYPE_LABEL, e.event_type)}</Text>
                     <Text type="secondary" style={{ fontSize: 12 }}>#{e.event_id}</Text>
                     <Tag>{labelOf(RESPONSE_STATE_LABEL, e.response_state)}</Tag>
@@ -542,6 +557,33 @@ export default function MobileInbox() {
                     ) : (
                       <Tag>등급 미상</Tag>
                     )}
+                    {/*
+                      ★★ [P-220/221 · 턴 AC · 차선 U1] **「훈련」·「시드」 배지.**
+                        턴 AB 실측: 고객 첫 10분 화면 12 중 셋(U1 큐·U2 관제 현황·
+                        U3 이 화면)에 시험 장치가 「고객 것처럼」 섞여 있었다 — 이
+                        화면에는 그 말을 하는 자리가 **아예 없었다.** 갈래는 **숨기기가
+                        아니라 말하게 하기**다: 씨앗(seed)·훈련(drill) 사건은 지우지
+                        않고 제품이 그대로 세되(D-497 「거르는 곳은 측정이지 제품이
+                        아니다」· P-201), 카드가 스스로 「이것은 무엇인가」를 말한다.
+                        (probe 는 다른 자리 — `GET /api/dsm/events` 기본값이 애초에
+                        안 준다[실측 api.py:284 `include_probe` 기본 거짓] · P-220
+                        턴 AA 가 이미 닫았다. 이 배지가 답하는 것은 나머지 둘이다.)
+                      ★ 말은 새로 짓지 않는다 — `copy.ts::dataSourceBadge` 를 그대로
+                        부른다(FocusQueue·EventList·EventDetail·ControlDashboard와
+                        **같은 함수, 같은 말**). `live`(또는 서버가 값을 안 준 옛
+                        응답)면 `null` — 평상엔 안 그린다.
+                      ★ **등급 바로 옆**이다(FocusQueue 와 같은 자리) — 뒤로 밀면
+                        카메라 이름·시각에 묻히고, 묻힌 배지는 「없는 것」과 같다.
+                    */}
+                    {dataSourceBadge(event?.data_source) ? (
+                      <Tag
+                        color="purple"
+                        title="검수·훈련용으로 심긴 사건입니다 — 실제 사고가 아닙니다."
+                        data-gx="inbox-data-source-badge"
+                      >
+                        {dataSourceBadge(event?.data_source)}
+                      </Tag>
+                    ) : null}
                     <Text strong>
                       {event ? labelOf(EVENT_TYPE_LABEL, event.event_type) : '유형 미상'}
                     </Text>

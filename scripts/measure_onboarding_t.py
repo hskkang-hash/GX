@@ -69,6 +69,17 @@ ADMIN_HEADER = "관리자 전용 화면입니다. 아래 표기는 아직 영문
 STATE_WORDS = ["미처리", "접수", "조치 중", "종결"]
 ADVANCE_LABELS = ["접수하기", "조치 시작", "종결하기"]
 
+# ★ [턴 AC · 차선 Q] 판정기가 고객의 로캘(ko-KR)로 재지 않아서 「Confirm」 단추를 영어 이름으로만
+#   찾았다 — 화면이 한국어면 못 찾고 회차 통째가 회색이 됐다. 지어내지 않고 **화면 문구 사전 그대로** 옮김:
+#   `frontend/src/i18n/locales/ko.json:1297` → "Confirm": "확인" (LoginDesktop.tsx:343 `t('Confirm')`)
+#   `frontend/src/i18n/locales/en.json:1105` → "Confirm": "Confirm"
+#   둘 다 받는다 — 로캘을 바꿔도, i18n 폴백(en)이 걸려도 안 깨진다.
+CONFIRM_LABELS = ["확인", "Confirm"]
+
+# 판정기 기본 로캘 — 고객이 실제로 보는 화면. `browser.new_context(locale=...)` 로 넘겨
+# `navigator.language` 를 정한다(`frontend/src/i18n/index.ts::getStoredLanguage`).
+DEFAULT_LOCALE = "ko-KR"
+
 # [P-180 · 턴 V] 정본이 「표가 0행이면 「없다」가 떠야 한다 · 빈 표는 빨강」이라 적은 자리에서
 # 「없다」를 읽는 말. 제품의 `StateBoundary` 가 쓰는 빈 상태 문장들이다 — 침묵은 빨강이다.
 EMPTY_WORDS = ["없습니다", "0건입니다", "아직 없습니다", "해당 없음"]
@@ -326,7 +337,7 @@ class Net:
 
 
 def login(page, net: Net, web: str, user: str, password: str) -> dict:
-    """사람이 하는 그대로 — /login 화면 · 두 칸 · Log In · 「다른 기기」 창이 뜨면 Confirm."""
+    """사람이 하는 그대로 — /login 화면 · 두 칸 · Log In · 「다른 기기」 창이 뜨면 확인(Confirm)."""
     since = net.mark()
     page.goto(f"{web}/login", wait_until="networkidle", timeout=60_000)
     try:
@@ -348,11 +359,15 @@ def login(page, net: Net, web: str, user: str, password: str) -> dict:
     page.wait_for_timeout(9_000)
     confirmed = False
     try:
-        btn = page.get_by_role("button", name="Confirm")
-        if btn.count() and btn.first.is_visible():
-            btn.first.click()
-            page.wait_for_timeout(9_000)
-            confirmed = True
+        # ★ [턴 AC · Q] 영어 이름(「Confirm」) 하나만 찾으면 한국어 화면(「확인」)에서 못 찾고
+        #   이 회차 전체가 회색이 된다 — CONFIRM_LABELS 사전을 전부 훑는다.
+        for label in CONFIRM_LABELS:
+            btn = page.get_by_role("button", name=label)
+            if btn.count() and btn.first.is_visible():
+                btn.first.click()
+                page.wait_for_timeout(9_000)
+                confirmed = True
+                break
     except Exception:                                   # noqa: BLE001
         pass
     posts = net.find("POST", "/api/v1/auth/login", since)
@@ -567,7 +582,7 @@ def guarded(out, key, route, fn):
 
 
 def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, out_path: str,
-            only=(), canon_path: str | None = None, api_base: str = "") -> int:
+            only=(), canon_path: str | None = None, api_base: str = "", locale: str = DEFAULT_LOCALE) -> int:
     #: `web` 은 **사람이 보는 화면**(SPA · 3002), `api_base` 는 **기계가 두드리는 문**(API · 8000).
     #: 한 글자로 둘을 가리키면 U6 처럼 정적 서버를 제품으로 착각한다 (턴 Z · Q 실측).
     api_base = api_base or os.environ.get("GX_API") or "http://localhost:8000"
@@ -587,6 +602,7 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
         return 2
     print(f"{TAG} [정본] {canon['source']} — 행 {canon['denominator']} · "
           f"두 칸 {len(canon['two_column'])} · 정본 없음 {len(canon['no_canonical'])}")
+    print(f"{TAG} [로캘] {locale} — navigator.language 를 이걸로 연다(고객 기본값)")
 
     personas = [
         ("U1", "gxseed_u1_operator", DESKTOP),
@@ -604,7 +620,7 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
             if idx:
                 print(f"{TAG} 계정을 바꾼다 — {GAP_SECONDS}초 기다림 (율제한 · 세션 1개)")
                 time.sleep(GAP_SECONDS)
-            ctx = browser.new_context(viewport=vp)
+            ctx = browser.new_context(viewport=vp, locale=locale)
             page = ctx.new_page()
             net = Net()
             net.attach(page)
@@ -2123,6 +2139,11 @@ def main() -> int:
                     help="[P-180] 정본 문서 자리 (기본: /docs/agent/onboarding_48.md → 저장소 docs/)")
     ap.add_argument("--check", action="store_true",
                     help="[P-180] 브라우저 없이 **문서와 도구를 대 본다** — 갈리면 2")
+    #: ★ [턴 AC · Q] 판정기가 고객의 로캘로 한 번도 안 쟀다 — `navigator.language` 를 안 정해서
+    #:   컨테이너 기본값(en-US)으로 뜨고 「Confirm」만 찾다가 한국어 화면에서 회색이 났다.
+    #:   기본을 **고객이 실제로 쓰는 ko-KR** 로 둔다. 음성 대조는 `--locale en-US` 로 켠다.
+    ap.add_argument("--locale", default=os.environ.get("GX_LOCALE", DEFAULT_LOCALE),
+                    help="브라우저 로캘 — navigator.language (기본: ko-KR · 고객 기본값)")
     args = ap.parse_args()
 
     if args.check:
@@ -2181,7 +2202,7 @@ def main() -> int:
     out = args.out or f"/docs/agent/evidence/P-159/onboarding_measure_{stamp}.json"
     only = [x.strip() for x in args.only.split(",") if x.strip()]
     return measure(args.web, snap_event, seed_a, seed_b, pw, out, only=only,
-                   api_base=args.api)
+                   api_base=args.api, locale=args.locale)
 
 
 if __name__ == "__main__":

@@ -101,12 +101,53 @@ def load_table():
 # ═══════════════════════════════════════════════════════════════════════════
 #: 라우트 문자열이 사는 파일들. 여기 밖에서 라우트를 정하지 않는 것이 이 저장소의 규약이다
 #: (`features/dsm/routes.ts` 머리말 · `features/mobile/routes.ts` 도 같은 판단).
-ROUTE_SOURCES = (
+#: ★★ [턴 AC · 2026-09-22 · 조율자] **손으로 적은 파일 목록은 낡는다.**
+#:
+#:   이 목록에 `frontend/src/features/dsm/routes.u24.ts` 가 없었다. 그 파일에만
+#:   `/dsm/audit` 리터럴이 있어서, 그 화면이 **실재하고 실제로 열리는데도**
+#:   이 판정기는 「닿지 않는 줄」이라고 빨강을 냈다 — U24 가 별도 포트 3003 에서
+#:   `gxseed_u4_official` 로 로그인해 눌러 열었고 3,012행이 렌더됐다.
+#:   `/dsm/reports` 는 `routes.ts:126` 에 **낡은 리터럴이 우연히 남아** 걸렸을 뿐,
+#:   같은 구멍이었다.
+#:
+#:   ⚠ **한 그물이 0건을 내면 「없다」가 아니라 「이 그물로는 안 잡힌다」이다.**
+#:     그래서 이름 하나를 더하지 않고 **목록이 스스로 자라게** 고친다 — 다음에
+#:     `routes.*.ts` 가 하나 더 생겨도 사람이 이 줄을 기억할 필요가 없다.
+#:     넓힌 자리는 **라우트를 선언하는 파일뿐**이고, 음성 대조가 `self_test` 에 있다
+#:     (없는 경로는 여전히 「없다」로 잡혀야 한다).
+#:
+#:   ⚠⚠ **조율자가 판정기를 고쳤다**(P-203 의 예외). 사유: 제품은 눌러서 초록이고
+#:     판정기만 못 보는 자리였으며, 이대로 두면 ① 대장에 **거짓 빨강**이 박히거나
+#:     ② 눌러서 확인된 제품 변경을 **되돌려야** 했다. 둘 다 더 나쁘다.
+#:     Q 에게 쪽지를 남겼다(`turn-ac/Q.inbox/U24.md`) — 다음 턴에 다시 봐 주십시오.
+ROUTE_SOURCE_FILES = (
     "frontend/src/App.tsx",
     "frontend/src/services/API.ts",
-    "frontend/src/features/dsm/routes.ts",
-    "frontend/src/features/mobile/routes.ts",
 )
+#: 라우트를 선언하는 파일들. `routes.ts` · `routes.u24.ts` · 앞으로 생길 `routes.*.ts`.
+ROUTE_SOURCE_GLOBS = (
+    "frontend/src/features/*/routes*.ts",
+    "frontend/src/features/*/routes*.tsx",
+)
+
+
+def route_source_paths(root: Path) -> list[Path]:
+    """훑을 파일들. **몇 개를 훑었는지 부르는 쪽이 셀 수 있게** 경로로 돌려준다."""
+    out: list[Path] = []
+    for rel in ROUTE_SOURCE_FILES:
+        f = root / rel
+        if f.is_file():
+            out.append(f)
+    for pattern in ROUTE_SOURCE_GLOBS:
+        out.extend(sorted(p for p in root.glob(pattern) if p.is_file()))
+    #: 같은 파일이 두 갈래로 잡히면 한 번만 센다 — 분모가 부풀면 안 된다.
+    seen, uniq = set(), []
+    for p in out:
+        key = str(p.resolve())
+        if key not in seen:
+            seen.add(key)
+            uniq.append(p)
+    return uniq
 
 #: `path: '/dsm/queue'` 꼴. 변수 조각(`:id`)이 든 것은 그대로 둔다 — 맞댈 때 접두로 본다.
 _PATH_LITERAL = re.compile(r"path:\s*'([^']+)'")
@@ -115,10 +156,7 @@ _PATH_LITERAL = re.compile(r"path:\s*'([^']+)'")
 def known_routes(root: Path = ROOT) -> set[str]:
     """앞판이 실제로 등록하는 경로들. **못 읽으면 빈 집합**이고, 빈 집합은 판정 불가다."""
     found: set[str] = set()
-    for rel in ROUTE_SOURCES:
-        f = root / rel
-        if not f.is_file():
-            continue
+    for f in route_source_paths(root):
         text = f.read_text(encoding="utf-8", errors="replace")
         for m in _PATH_LITERAL.finditer(text):
             p = m.group(1).strip()
@@ -434,6 +472,27 @@ def self_test() -> int:
         화면은 있었고 라우트도 살아 있었다. 없는 것은 **거기로 가는 줄**이었다.
     """
     ok = True
+
+    # ★★ [턴 AC] 그물 구멍의 **음성 대조** — 넓힌 그물이 고무도장이 되지 않았는가.
+    #   `routes.u24.ts` 를 못 봐서 실재하는 `/dsm/audit` 을 「없다」로 냈던 자리다.
+    #   ① 실재하는 경로가 잡히는가  ② **없는 경로는 여전히 안 잡히는가**
+    _root = Path(__file__).resolve().parents[1]
+    _files = route_source_paths(_root)
+    _routes = known_routes(_root)
+    for _label, _cond in (
+        ("그물: 라우트 선언 파일을 둘보다 많이 훑는다", len(_files) >= 3),
+        ("그물: routes.u24.ts 가 목록에 든다",
+         any(f.name == "routes.u24.ts" for f in _files)),
+        ("양성: 실재하는 /dsm/audit 이 잡힌다", route_exists("/dsm/audit", _routes)),
+        ("양성: 실재하는 /dsm/reports 가 잡힌다", route_exists("/dsm/reports", _routes)),
+        ("★ 음성: 없는 /dsm/그런거없다 는 **여전히 안 잡힌다**",
+         not route_exists("/dsm/그런거없다", _routes)),
+        ("★ 음성: 접두만 같은 /dsm/audits 도 안 잡힌다",
+         not route_exists("/dsm/audits", _routes)),
+    ):
+        print("  [%s] %s" % ("통과" if _cond else "**실패**", _label))
+        ok = ok and _cond
+
     expect = {"U1": 5, "U2": 7, "U4": 2, "U5": 3}
 
     # ── 출생 표본 — 제품 0장 · 인수 자산 12줄. **초록이면 안 된다** ────────
@@ -617,6 +676,6 @@ if __name__ == "__main__":
                   "**분모 %d**(HTTP 계정 · 역할 %d종) · 라우트 출처 %d갈래 대조 · "
                   "금지 낱말 %d종. 로그인 못 하면 **분모 0 — 안 쟀다**(회색 2)"
                   % (len(HTTP_ACCOUNTS), len(set(HTTP_ACCOUNTS.values())),
-                     len(ROUTE_SOURCES), len(FORBIDDEN_WORDS))),
+                     len(route_source_paths(ROOT)), len(FORBIDDEN_WORDS))),
     )
     raise SystemExit(main())

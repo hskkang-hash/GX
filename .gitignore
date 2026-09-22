@@ -115,3 +115,10 @@ docs/agent/evidence/V_LOCK
 
 # 턴 AB — push 거절 시 보험 번들 (저장소에 올리지 않는다)
 _patches/
+
+# ★ 턴 AC · 차선 E — **덤프는 저장소가 나르지 않는다.**
+#   회수증(대조표 manifest.json · restore_run*.md)은 나르고, 덤프 자체는 안 나른다.
+#   이번 턴 회수증을 뜨면서 137MB 가 커밋 대상으로 올라왔다. 증거는 「무엇을 떴고
+#   살렸는가」이지 **덤프 바이트가 아니다** — 바이트는 금고(/backup)에 산다.
+docs/agent/evidence/D-354/backup*/**/*.dump
+docs/agent/evidence/D-354/backup*/*.dump

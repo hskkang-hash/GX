@@ -57,8 +57,14 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
+from stream_monitors.services.seed import SEED_CAMERA_CODE as SEED_CODE
+
 #: 씨앗 카메라의 코드. 이 표 하나가 「시드인가」의 유일한 근거다.
-SEED_CODE = "GX-SEED-DSM"
+#: ★ [턴 AC · 차선 U1] 정본이 `stream_monitors/services/seed.py` 로 옮겨졌다 —
+#:   관제 화면이 「씨앗」을 말하려면(data_source 낱말 밭 셋째 낱말) 그 파일이 이
+#:   문자열을 알아야 하는데, 심는 쪽(이 커맨드)이 정본이면 식별하는 쪽이 이
+#:   management command 를 import 해야 한다(부서지기 쉽다). 여기서는 그 값을
+#:   **가져다 쓴다** — 값은 그대로, 정본만 옮겼다.
 SEED_ADDRESS = "경기도 안양시 만안구 안양천서로 100 (시드 카메라)"
 
 #: 시나리오 셋 — 계약이 말하는 재난 계열에서 고른다. 배송 계열은 §0.4 라 쓰지 않는다.

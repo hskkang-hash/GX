@@ -1051,9 +1051,62 @@ gate_ui_copy() {
   esac
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# GATE: backup-recovery — **복구할 것이 남아 있는가** (OPS-04 · 턴 AC · 차선 E · P-236)
+#
+#   ★ 이 게이트가 태어난 자리 [실측 2026-09-22]:
+#     대장의 OPS-04 는 `proof:` 만 있고 `gate:` 가 **없었다.** 기계는 매일
+#     `backup_last.json` 에 **ALARM** 을 적었고 **아무 색도 안 났다.** 그 사이
+#     금고에는 **0바이트 덤프 30개**가 쌓였다 — `pg_dump -f` 는 파일을 먼저 만들고
+#     판 검사에서 죽기 때문이다. `ls` 는 「매일 백업이 있다」고 말했다.
+#
+#   ★ 그래서 이 게이트는 **판정문만 읽지 않는다 — 금고의 바이트를 직접 센다.**
+#     「파일이 생겼다」는 성공이 아니고, 복구를 해 보지 않은 백업은 백업이 아니다.
+#
+#   ★ 부르는 방향: 판정기 안에 `docker exec` 가 있다 → **호스트에서** 돈다.
+#   ★★ **출생 표본** (D-310) — 이 게이트를 만들게 한 **바로 그 사례**가 판정기의
+#     자기시험에 `BIRTH_SAMPLE_VAULT` · `BIRTH_SAMPLE_VERDICT` 로 박혀 있다:
+#     2026-09-22 의 실제 금고(0바이트 다섯 + 15일 된 40MB 하나)와 그날의 ALARM 판정문.
+#     그 표본을 빼면 이 게이트는 **0바이트만 있는 금고를 다시 초록으로 낼 수 있다** —
+#     그것이 정확히 이 게이트가 태어난 이유다.
+gate_backup_recovery() {
+  head_ "GATE backup-recovery — 복구할 것이 남아 있는가 (OPS-04)"
+  local out rc
+
+  # ★ 판정 전에 판정기부터 (D-277 · D-350). 음성 대조가 10갈래다 —
+  #   0바이트만 있을 때 · 늙었을 때 · 금고에 못 닿을 때 · 회수증에 「복구 성공」이
+  #   없을 때 · 주기 시험이 UNKNOWN 일 때 **전부 초록이 아니어야** 한다.
+  if out=$($PY scripts/verify_backup_recovery.py --self-test 2>&1); then
+    pass "판정기 자기시험 통과 (18갈래 · 출생 표본 4 · 음성 대조 10)"
+  else
+    fail "판정기 자기시험 실패 — 이 게이트는 눈이 멀었다"
+    echo "$out" | sed 's/^/        /'
+    return 1
+  fi
+
+  out=$($PY scripts/verify_backup_recovery.py 2>&1); rc=$?
+  echo "$out" | sed 's/^/        /'
+
+  # D-301 — 무엇을 몇 건 보았는지. **금고에 못 닿으면 「못 셈」이 찍히고 모수가 0 이 된다**
+  # — 그때 이 게이트는 초록이 될 수 없다(아래 rc 2 갈래).
+  local nscanned
+  nscanned=$(echo "$out" | sed -n 's/.*\[입력\] 모수 \([0-9]*\).*/\1/p' | head -1)
+  inputs "${nscanned:-0}" "금고의 덤프 파일 + 회수증 후보 문서 + 판정문" \
+    "판정기가 모수를 말하지 않았다 — 출력 형식이 바뀌었거나 아무것도 못 봤다" || return 1
+
+  case $rc in
+    0) pass "뜬 것이 있고, 그것을 살려 봤다"; return 0 ;;
+    2) skip "못 쟀다 — 금고에 못 닿았거나 판정문이 없다" "(회색은 초록이 아니다 · D-301)"
+       return 2 ;;
+    *) fail "복구할 것이 남아 있지 않다 — **회수증 없는 백업은 백업이 아니다**"
+       return 1 ;;
+  esac
+}
+
 _dispatch_gate() {
   case "$1" in
     secrets)            gate_secrets ;;
+    backup-recovery)    gate_backup_recovery ;;
     ui-secrets)         gate_ui_secrets ;;
     ui-copy)            gate_ui_copy ;;
     bypass)             gate_bypass ;;

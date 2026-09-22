@@ -85,8 +85,27 @@ HASH_KEY = "__hash__"
 #: 옛 행(자리표 없는 행: 자리 = 번호)과 한 줄로 이어진다. 뒤집힌 순간에만 갈린다.
 SEQ_KEY = "__seq__"
 
+#: ★★ [턴 AC · 2026-09-22 · LAW-08] **dict 가 아닌 `data_after` 를 감싸 두는 자리.**
+#:
+#:   `data_after` 가 늘 dict 인 것은 아니다 — 임계값 하나, 목록 하나, 참/거짓 하나가
+#:   그대로 오는 자리가 있다. 그런데 `_with_chain` 은 dict 가 아니면 `{}` 에서
+#:   시작했고, `strip_chain` 은 dict 가 아니면 **그대로 돌려줬다.** 둘이 갈렸다:
+#:
+#:       쓸 때   해시는 `[1, 2, 3]` 위에서 계산되고  →  저장은 `{체인 칸 셋}` 만
+#:       읽을 때 `strip_chain({체인 칸 셋})` = `None`  →  해시가 **영원히** 안 맞는다
+#:
+#:   그래서 **어긋남은 쓸 때마다 늘었다**(턴 AB 중 0 → 6). 그리고 더 나쁜 것:
+#:   **그 행의 증거 자체가 사라졌다.** 어긋남은 증상이고 소실이 병이다.
+#:
+#:   ⚠ 「해시를 **버린 뒤 값**으로 계산한다」는 갈래는 **경보만 끄고 소실은 그대로 둔다.**
+#:     검증은 초록이 되고 증거는 여전히 없다 — 그것이 이 파일이 막으려던 바로 그 모양이다.
+#:     그래서 **버리지 않고 감싼다.**
+VALUE_KEY = "__nondict_value__"
+
 #: 해시가 **덮지 않는** 예약 키들. 늘릴 때는 반드시 `strip_chain` 을 거치게 둔다 —
 #: 하나라도 빠지면 그 행은 저장하는 순간 자기 해시와 어긋난다.
+#: ⚠ `VALUE_KEY` 는 **여기 넣지 않는다.** 넣으면 payload 에 그 이름을 쓴 dict 에서
+#:   그 칸이 조용히 사라진다 — 감싸는 일이 지우는 일이 되면 안 된다.
 RESERVED_KEYS = (PREV_KEY, HASH_KEY, SEQ_KEY)
 
 #: 체인에 드는 행. **우리가 쓴 행만** 이다 — dj-core 미들웨어가 남기는 행은 우리가
@@ -124,14 +143,34 @@ HASHED_FIELDS: tuple[str, ...] = (
 # 1. 순수 계산 — Django 가 없어도 돈다. 게이트의 자기시험이 겨누는 과녁이 여기다.
 # ══════════════════════════════════════════════════════════════════════════
 
+def _is_wrapper(payload: dict) -> bool:
+    """이 dict 가 **우리가 감싼 것**인가. `__nondict_value__` 하나 + 체인 칸들뿐이면 그렇다.
+
+    ⚠ **한 갈래는 못 가른다** — 원래 payload 가 `{"__nondict_value__": x}` **하나뿐인
+      dict** 였다면 감싼 것과 모양이 같다. 그 자리는 감싼 것으로 읽히고, 풀면 `x` 가
+      나온다. 만들어 낸 한계이므로 **적어 둔다**(자기시험 `표본 ⑧` 이 이 자리를 누른다).
+      숨기지 않는 이유: 다음 사람이 이 키를 payload 에 쓰려 할 때 여기서 알아야 한다.
+    """
+    if VALUE_KEY not in payload:
+        return False
+    return all(k in RESERVED_KEYS or k == VALUE_KEY for k in payload)
+
+
 def strip_chain(payload: Any) -> Any:
     """`data_after` 에서 **두 칸을 뺀** 값. 해시는 자기 자신을 덮지 않는다.
 
     빼지 않으면 해시를 저장하는 순간 그 행의 내용이 바뀌고, 다시 계산하면 다른 값이
     나온다 — 검증이 언제나 빨강이 된다.
+
+    ★★ 이 함수와 `_with_chain` 은 **서로의 역함수여야 한다** — `strip_chain(_with_chain(v)) == v`.
+      둘이 갈리면 저장하는 순간 값이 바뀌고, 다시 계산한 해시가 영원히 안 맞는다(LAW-08).
     """
     if not isinstance(payload, dict):
         return payload
+    if _is_wrapper(payload):
+        #: 감싸 둔 dict 아닌 값을 **그대로** 돌려준다. 이것이 없으면 `_with_chain` 이
+        #: 버린 값을 되찾을 길이 없다 — 되찾지 못하면 그 증거는 사라진 것이다.
+        return payload[VALUE_KEY]
     rest = {k: v for k, v in payload.items() if k not in RESERVED_KEYS}
     #: ★ 두 칸만 있던 행은 **원래 비어 있던 행**이다. `{}` 로 두면 `None` 이었던
     #:   행과 값이 갈리고, 그러면 두 칸을 붙이는 행위 자체가 해시를 바꾼다.
@@ -770,8 +809,17 @@ def _order_key(values: dict) -> tuple[int, int]:
 
 
 def _with_chain(payload: Any, *, prev_hash: str, row_hash: str, seq: int) -> dict:
-    """두 칸(+자리표)을 붙인 `data_after`. ★ 옮기는 날 고치는 자리 ②."""
-    base = dict(payload) if isinstance(payload, dict) else {}
+    """두 칸(+자리표)을 붙인 `data_after`. ★ 옮기는 날 고치는 자리 ②.
+
+    ★★ [턴 AC · LAW-08] dict 가 아닌 값은 **버리지 않고 감싼다.** 예전에는
+      `base = {}` 로 시작해 원래 값이 사라졌고, 그 때문에 ① 그 행의 증거가 없어지고
+      ② `strip_chain` 과 갈려 해시가 영원히 안 맞았다. `VALUE_KEY` 머리말 참조.
+      **이 함수와 `strip_chain` 은 서로의 역함수다** — 고칠 때 둘을 같이 고친다.
+    """
+    if payload is not None and not isinstance(payload, dict):
+        base: dict = {VALUE_KEY: payload}
+    else:
+        base = dict(payload) if isinstance(payload, dict) else {}
     base[PREV_KEY] = prev_hash
     base[HASH_KEY] = row_hash
     base[SEQ_KEY] = int(seq)

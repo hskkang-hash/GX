@@ -360,3 +360,133 @@ class DanglingEventRefTest(SimpleTestCase):
                 self.assertTrue(note.method.strip())
                 self.assertTrue(note.why.strip())
                 self.assertGreaterEqual(note.table_rows, note.chain_rows)
+
+
+class NonDictPayloadSurvivesTest(SimpleTestCase):
+    """★★ [턴 AC · 2026-09-22 · LAW-08] **dict 가 아닌 `data_after` 가 살아남는가.**
+
+    이 시험이 태어난 자리 — 합성이 아니다:
+        턴 AB 중 새 어긋남이 **0 → 6** 으로 늘었다. 원인은 `evidence_chain` 안의
+        **비대칭** 한 줄이었다::
+
+            strip_chain(v)   dict 가 아니면 **그대로 돌려준다**
+            _with_chain(v)   dict 가 아니면 **버리고 `{}` 에서 시작한다**
+
+        그래서 쓸 때의 해시는 `[1, 2, 3]` 위에서 계산되고 저장은 체인 칸 셋만 남았다.
+        읽을 때 `strip_chain` 은 `None` 을 내놓고 **해시가 영원히 안 맞았다.**
+        그리고 더 나쁜 것: **그 행의 증거 자체가 사라졌다.**
+        어긋남은 증상이고 **소실이 병**이다.
+
+    ⚠ 「해시를 버린 뒤 값으로 계산한다」로 고치면 **검증만 초록이 되고 증거는 그대로
+      없다.** 그래서 고침은 **버리지 않고 감싸는** 쪽이고, 이 시험은 **값이 돌아오는지**를
+      묻는다 — 「빨강이 사라졌는지」가 아니다.
+    """
+
+    #: 왕복해야 하는 모양들. dict 아닌 넷이 이 시험의 중심이다.
+    SAMPLES = (
+        ("dict 아님 · 목록", [1, 2, 3]),
+        ("dict 아님 · 임계값 실수", 0.87),
+        ("dict 아님 · 글", "threshold breached"),
+        ("dict 아님 · 참/거짓", True),
+        ("중첩 dict", {"a": {"b": [1, {"c": 2}]}}),
+        ("빈 값 None", None),
+        ("빈 dict", {}),
+        ("그 이름을 쓰되 칸이 더 있는 dict", {"__nondict_value__": 5, "x": 1}),
+    )
+
+    def _round_trip(self, value):
+        """저장이 하는 일 그대로: `strip_chain` → `_with_chain` → 다시 `strip_chain`."""
+        stripped = evidence_chain.strip_chain(value)
+        stored = evidence_chain._with_chain(
+            stripped, prev_hash="p", row_hash="h", seq=1)
+        return evidence_chain.strip_chain(stored)
+
+    def test_왕복하면_값이_그대로다(self):
+        for label, value in self.SAMPLES:
+            with self.subTest(label):
+                want = evidence_chain.strip_chain(value)
+                self.assertEqual(
+                    self._round_trip(value), want,
+                    "%s: 저장했다 읽으면 값이 달라진다 — 해시가 영원히 안 맞고 "
+                    "그 행의 증거가 사라진다" % label)
+
+    def test_해시가_왕복_뒤에도_같다(self):
+        """★ 값이 같아도 **해시가 같아야** 검증이 초록이다. 그것까지 눌러 본다."""
+        for label, value in self.SAMPLES:
+            with self.subTest(label):
+                before = {"data_after": evidence_chain.strip_chain(value)}
+                after = {"data_after": self._round_trip(value)}
+                self.assertEqual(
+                    evidence_chain.digest(prev_hash="p", record=before),
+                    evidence_chain.digest(prev_hash="p", record=after),
+                    "%s: 왕복하면 해시가 달라진다" % label)
+
+    def test_음성대조_옛_모양은_값을_버린다(self):
+        """★ **음성 대조** — 고치기 전 모양이 정말로 값을 버렸는지 눌러 본다.
+
+        이것이 없으면 위의 두 시험은 「원래 잘 되던 것」을 재는 것일 수도 있다.
+        고장을 재현하지 못하는 회귀 시험은 회귀를 못 막는다.
+        """
+        def old_with_chain(payload):
+            base = dict(payload) if isinstance(payload, dict) else {}
+            base[evidence_chain.PREV_KEY] = "p"
+            base[evidence_chain.HASH_KEY] = "h"
+            base[evidence_chain.SEQ_KEY] = 1
+            return base
+
+        for label, value in self.SAMPLES:
+            if isinstance(value, dict) or value is None:
+                continue                       # 옛 모양도 dict·None 은 지켰다
+            with self.subTest(label):
+                lost = evidence_chain.strip_chain(old_with_chain(value))
+                self.assertIsNone(
+                    lost, "%s: 옛 모양이 값을 안 버렸다 — 이 시험의 전제가 틀렸다" % label)
+
+    def test_감싼_칸은_예약어에_안_들어간다(self):
+        """★ `VALUE_KEY` 를 `RESERVED_KEYS` 에 넣으면 **감싸는 일이 지우는 일이 된다.**
+
+        payload 에 그 이름을 쓴 dict 에서 그 칸이 조용히 사라지기 때문이다.
+        위 표본 「그 이름을 쓰되 칸이 더 있는 dict」 가 그 자리를 지킨다.
+        """
+        self.assertNotIn(evidence_chain.VALUE_KEY, evidence_chain.RESERVED_KEYS)
+
+
+class NonDictPayloadOnAuditTableTest(TestCase):
+    """★★ [턴 AC] **표 위에서** — dict 가 아닌 `after` 로 쓴 행이 검증을 통과하는가.
+
+    위의 `NonDictPayloadSurvivesTest` 는 함수 둘의 대칭만 잰다. 그것만으로는
+    「쓰고 → 읽고 → 다시 계산하는」 실제 길이 초록인지 모른다. **누른 뒤를 본 것만 초록**이다.
+
+    ⚠ 이 자리는 합성이 아니다 [실측 2026-09-22 운영 DB]:
+        #316701 #316721 #317229 #317251 #321744 #321761 — 여섯 행 전부
+        `guardianx.k5.thresholds` 이고 `data_after` 에 **체인 칸 셋만** 남아 있었다.
+        임계값 본문이 통째로 사라진 것이다. 그 여섯은 **되살릴 수 없다**(P-191 · 등재만).
+        이 시험이 막는 것은 **일곱 번째**다.
+    """
+
+    NON_DICT_AFTERS = ([1, 2, 3], 0.87, "threshold breached", True)
+
+    def test_dict_아닌_본문이_살아남고_체인도_안_깨진다(self):
+        for value in self.NON_DICT_AFTERS:
+            with self.subTest(repr(value)):
+                entry = audit_writer.write(
+                    logger_name=LOGGER, tag="[S-TEST]", actor=_Actor(1, "s_actor"),
+                    action="s_nondict", outcome=audit_writer.ALLOWED,
+                    reason="dict 아닌 본문", after=value)
+                payload = _audit_rows().filter(pk=entry.audit_id).values_list(
+                    "data_after", flat=True)[0]
+                self.assertEqual(
+                    value, evidence_chain.strip_chain(payload),
+                    "dict 아닌 본문이 사라졌다 — 이 행은 증거가 아니라 빈 봉투다")
+
+    def test_dict_아닌_본문을_쓴_뒤에도_검증이_초록이다(self):
+        for value in self.NON_DICT_AFTERS:
+            audit_writer.write(
+                logger_name=LOGGER, tag="[S-TEST]", actor=_Actor(1, "s_actor"),
+                action="s_nondict_chain", outcome=audit_writer.ALLOWED,
+                reason="dict 아닌 본문", after=value)
+        report = evidence_chain.verify_chain()
+        self.assertTrue(
+            report.ok,
+            "dict 아닌 본문을 쓰자 체인이 깨졌다 — **쓸 때마다 느는 어긋남**이 바로 이것이다: "
+            "%s" % [str(b) for b in report.breaks])
