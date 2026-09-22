@@ -2,79 +2,87 @@
   "what": "OPS-20 재부팅 아침 — 대표 PC 재부팅 뒤 스스로 다 섰는가",
   "denominator": 10,
   "denominator_note": "분모는 손으로 적지 않는다 — `scripts/ops_reboot_morning.py::MORNINGS_TARGET`",
-  "measured": false,
+  "measured": true,
   "grey_note": "아침 0건은 **0점이 아니라 회색**이다. 재부팅은 대표 손이고(WO §7), 차선은 그 손을 대신할 수 없다",
-  "mornings": [],
+  "mornings": [
+    {
+      "recorded_at": "2026-09-22T20:58:43",
+      "containers": 10,
+      "all_running": true,
+      "oldest_start": "2026-09-22T11:41:39.0885123Z",
+      "by": "scripts/ops_reboot_morning.py --record-morning"
+    }
+  ],
   "readiness": {
-    "measured_at": "2026-09-22T16:38:02",
+    "measured_at": "2026-09-22T20:58:43",
     "containers": [
       {
         "name": "gx-shell",
         "status": "running",
-        "started_at": "2026-09-22T05:24:20.1671844Z",
+        "started_at": "2026-09-22T11:41:39.243677Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "gx-beat-e",
         "status": "running",
-        "started_at": "2026-09-22T05:24:20.3102423Z",
+        "started_at": "2026-09-22T11:41:39.1798703Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "gx-celery-e",
         "status": "running",
-        "started_at": "2026-09-22T05:24:20.1073015Z",
+        "started_at": "2026-09-22T11:41:39.2072781Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "gx-gunicorn-e",
         "status": "running",
-        "started_at": "2026-09-22T05:24:20.3451589Z",
+        "started_at": "2026-09-22T11:41:39.1698124Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "guardianx-source-minio-1",
         "status": "running",
-        "started_at": "2026-09-22T05:24:20.328632Z",
+        "started_at": "2026-09-22T11:41:39.1105634Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "guardianx-source-mailpit-1",
         "status": "running",
-        "started_at": "2026-09-22T05:24:20.0474114Z",
+        "started_at": "2026-09-22T11:41:39.1955855Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "gx-fe-build",
         "status": "running",
-        "started_at": "2026-09-22T05:24:20.0614325Z",
+        "started_at": "2026-09-22T11:41:39.1584571Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "postgres",
         "status": "running",
-        "started_at": "2026-09-22T05:24:20.3915162Z",
+        "started_at": "2026-09-22T11:41:39.237842Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "redis",
         "status": "running",
-        "started_at": "2026-09-22T05:24:20.3646554Z",
+        "started_at": "2026-09-22T11:41:39.0885123Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "gx-nginx-e",
         "status": "running",
-        "started_at": "2026-09-22T05:24:20.3965106Z",
+        "started_at": "2026-09-22T11:41:39.2005688Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       }
