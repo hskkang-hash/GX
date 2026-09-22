@@ -1,0 +1,52 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# guardianx-backend:pg18 — **지금 이미지 위에 pg_dump 18 하나만 얹는다**
+#   [턴 AD · 2026-09-22 저녁 · 조율자 · 창 2a(09-23 12:00) 준비]
+# ═══════════════════════════════════════════════════════════════════════════
+#
+#   왜 `backend/Dockerfile` 로 안 짓고 이 파일이 따로 있나 — **실측으로 막혔다**
+#   ---------------------------------------------------------------------
+#   `backend/Dockerfile` 에 PGDG + `postgresql-client-18` 을 적어 두었고 그것이
+#   **정본 조리법**이다. 그러나 이 PC 에서는 그 파일로 **지을 수 없다**
+#   [실측 2026-09-22 17:45]:
+#
+#       #11 22.47  fatal: Could not read from remote repository.
+#       ERROR: ... "pip install --no-cache-dir -r requirements.txt" exit code: 1
+#
+#   `requirements.txt` 가 **비공개 저장소**(rj-core · dj-core)를 `--mount=type=ssh` 로
+#   받는데 이 PC 에는 **ssh-agent 가 없다**(`ssh-add -l` → 연결 불가).
+#   ★ 그러니 밑바닥부터 짓는 길은 **내일 40분짜리 창 안에서 반드시 죽는다.**
+#     그것을 **창 전날 밤에 실제로 지어 보고** 알았다 — 창 안에서 알았으면 창을 잃었다.
+#
+#   ★ 그래서 **다시 짓지 않고 얹는다.** 지금 도는 이미지를 밑바탕으로 쓰면
+#     pip 도 SSH 도 타지 않는다. 바뀌는 것은 **apt 한 겹**뿐이다.
+#
+#   ⚠ 이것은 정본 조리법의 **대체가 아니라 우회**다. 열쇠가 생기는 날
+#     `backend/Dockerfile` 로 밑바닥부터 지으면 같은 것이 나와야 한다 —
+#     두 파일이 **같은 패키지**를 말하고 있는지 고칠 때마다 대 본다.
+#
+#   쓰는 법 (호스트에서):
+#       docker build -t guardianx-backend:pg18 -f backend/Dockerfile.pg18 backend
+#       docker run --rm guardianx-backend:pg18 pg_dump --version      # → 18.x 여야 한다
+#
+#   ⚠ **`:latest` 를 덮지 않는다.** 새 태그라 실패해도 도는 것에 아무 일도 안 생긴다.
+FROM guardianx-backend:latest
+
+# ★ 왜 18 이 필요한가: DB 서버가 **18.1** 이고 이 이미지의 클라이언트는 **17.7** 이다.
+#   낮은 판은 높은 판을 못 뜬다 —
+#       pg_dump: error: aborting because of server version mismatch
+#   그 결과 `ops_backup_beat` 이 매일 돌며 매일 실패했고, `pg_dump -f` 가 파일을
+#   **먼저 만들고** 죽는 바람에 금고에 **0바이트 덤프 30개**가 쌓여
+#   `ls` 로는 「매일 백업이 있다」처럼 보였다 [실측 2026-09-22 · 턴 AC].
+#
+# ⚠ 17 을 **지우지 않는다.** 18 을 더하고 `pg_wrapper` 가 높은 판을 고르게 둔다.
+#   **그 선택이 실제로 18 인지는 지은 뒤 눌러서 확인한다 — 가정하지 않는다.**
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+         -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt trixie-pgdg main" \
+         > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-18 \
+    && rm -rf /var/lib/apt/lists/*

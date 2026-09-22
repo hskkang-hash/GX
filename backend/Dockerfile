@@ -53,6 +53,22 @@ RUN apt-get update && apt-get install -y \
     && dpkg -i ./libssl-dev_1.1.0l-1~deb9u6_amd64.deb \
     && rm -rf /var/lib/apt/lists/*
 
+ENV LD_LIBRARY_PATH /lib/x86_64-linux-gnu
+
+# Copy requirements.txt
+COPY requirements.txt .
+
+# Install packages from requirements.txt (bao gồm cả các repo Git)
+RUN --mount=type=ssh \
+    GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy project
+COPY . .
+
+# Collect static files
+RUN python manage.py collectstatic --noinput
+
 # ═══════════════════════════════════════════════════════════════════════════
 # ★★ [턴 AD · 2026-09-23 창 2a · P-247] **pg_dump 는 서버 판보다 낮으면 안 된다**
 # ═══════════════════════════════════════════════════════════════════════════
@@ -73,6 +89,15 @@ RUN apt-get update && apt-get install -y \
 #     이 컨테이너에는 **docker 소켓도 CLI 도 없다**(실측). 컨테이너 안에서는
 #     그 갈래를 부를 수 없다. 그래서 **클라이언트를 올린다** — 세종 P-247.
 #
+#   ⚠⚠ **왜 이 블록이 맨 뒤에 있나** [실측 2026-09-22 저녁 · 조율자]:
+#     처음에 위쪽 apt 블록 옆에 뒀더니 **그 아래 모든 층이 무효화**된다 —
+#     특히 `pip install -r requirements.txt` 가 다시 돈다. 그 단계는
+#     `--mount=type=ssh` 로 **비공개 저장소**(rj-core·dj-core)를 받는데,
+#     이 PC 에는 **ssh-agent 가 안 떠 있다**(`ssh-add -l` → 연결 불가).
+#     즉 위에 두면 **40분짜리 창 안에서 빌드가 죽는다.**
+#     맨 뒤에 두면 앞의 비싼 층이 전부 캐시로 재사용되고, 이 블록만 새로 돈다.
+#     **붙이는 자리가 곧 창의 길이다.**
+#
 #   ⚠ 17 을 지우지 않는다. 18 을 **더한다** — `pg_wrapper` 가 높은 판을 고른다.
 #     그 선택이 실제로 18 인지는 **지은 뒤 이미지 안에서 눌러 확인한다**
 #     (`docker run --rm <태그> pg_dump --version` → 18 이어야 한다). 가정하지 않는다.
@@ -86,23 +111,6 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install -y --no-install-recommends postgresql-client-18 \
     && rm -rf /var/lib/apt/lists/*
-
-
-ENV LD_LIBRARY_PATH /lib/x86_64-linux-gnu
-
-# Copy requirements.txt
-COPY requirements.txt .
-
-# Install packages from requirements.txt (bao gồm cả các repo Git)
-RUN --mount=type=ssh \
-    GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" \
-    pip install --no-cache-dir -r requirements.txt
-
-# Copy project
-COPY . .
-
-# Collect static files
-RUN python manage.py collectstatic --noinput
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
