@@ -1494,7 +1494,7 @@ gate_admin_doors() {
   esac
 }
 
-ALL_GATES=(live-freshness gate-header secrets ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach click-completes bundle-api-base evidence-roundtrip camera-secret-logs test-writes-prod-zero admin-doors)
+ALL_GATES=(live-freshness gate-header secrets backup-recovery ui-secrets ui-copy post-arg-style bypass isolation model-inheritance deprecated-base ui-library forbidden-zone dormant route-alive contract-route-reach click-completes bundle-api-base evidence-roundtrip camera-secret-logs test-writes-prod-zero admin-doors)
 
 # ─────────────────────────────────────────────────────────────────────────────
 usage() {

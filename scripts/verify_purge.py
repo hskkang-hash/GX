@@ -87,6 +87,15 @@ SEED_AGE_DAYS = 999
 #: **이 도구가 명시적으로 선언한다** — 선언 없는 파기를 재는 도구가 아니다.
 PROBE_RETENTION_DAYS = 30
 
+#: ★ [턴 AD · 차선 Q · 스케줄 의존이 아니다 — 실측으로 가름] 턴 AC 는 "퇴거·파기
+#: 주기 스케줄 여부를 모른다"며 불확실로 남겼었다. 오늘 `collect()` 를 다시 읽으니
+#: `retention.purge()` 를 **직접·동기로** 부른다(위 머리말 "한 트랜잭션 안에서 재고
+#: 반드시 되돌린다") — cron·주기 작업을 기다리지 않는다. 그래서 **미배선**이지 지연
+#: 신고 대상이 아니다. 분모는 위 docstring "무엇을 재는가 — 일곱 수"의 이름 그대로다.
+JUDGED_ASPECTS = ("만료 시드 → 행 0", "그 행의 객체 → 0", "파기 기록 → 1",
+                  "안 만료된 시드는 남는다", "미선언 테넌트는 0건",
+                  "인자 없이 부르면 0건", "연쇄 표 → 스냅샷 → 집행")
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 판정 규칙 — **함수로 떼어 둔 이유는 시험하기 위해서다** (D-277)
@@ -684,6 +693,10 @@ if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
     gate_header(
         __file__,
+        measured=("파기 = 하드 삭제 + 객체 삭제 + 파기 기록 — **분모 %d개**(`judge()` "
+                  "가 매 실행마다 재는 일곱 수 · 지금 셌다). 시드는 이 판정기가 직접 "
+                  "심고 `retention.purge()` 를 동기로 불러 재고 되돌린다 — 주기 "
+                  "작업(cron)을 기다리지 않는다" % len(JUDGED_ASPECTS)),
         target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다",

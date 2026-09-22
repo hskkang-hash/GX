@@ -124,11 +124,24 @@ NEEDS_WHY = ("미착수", "미측정")
 #:   ⚠ **이 칸은 점수를 안 만든다.** 수는 여전히 `구현 절 / 전체 절` 이다 —
 #:     부류로 가중을 바꾸려면 결정이 먼저 있어야 한다(턴 Z 에는 안 바꾼다).
 #:     이 칸이 하는 일은 **같은 수 옆에 그 수의 뜻을 세우는 것**이다.
-KINDS = ("closed", "ratchet", "rule_only", "unmeasurable", "gate_only")
-#: 영역 요약에서 **닫힘이 아닌** 셋(+하나)을 이름으로 부른다. 0 이어도 지우지 않는다 —
+#:
+#: ★★★ [P-246 · 2026-09-22 · 턴 AD · 차선 N] **여섯째 부류 — `measured_red`.**
+#:   **출생 표본**은 `OPS-04` 다(합성이 아니다). 턴 AC 에 백업 절 `OPS-04` 는
+#:   `verify_backup_recovery.py` 가 **rc 1(빨강)** 을 내는데도 다섯 부류에 그 자리가
+#:   없어 0점인 `unmeasurable`(못 잼)에 넣었다 — **우리는 쟀고, 실패했다.** 그런데
+#:   「못 잼 72」 안에 「재서 빨강」이 몇인지는 아무도 모른다. 재서 빨강은 **고칠 자리가
+#:   보이고**, 못 잼은 **잴 자리부터 세워야 한다** — 둘을 한 칸에 두면 둘 다 안 보인다.
+#:     measured_red  게이트가 **실제로 돌아 rc 1** 을 냈다. 점수는 unmeasurable 과
+#:                   **같은 0.0** 이다(이 턴은 부류 때문에 수를 움직이지 않는다) —
+#:                   그러나 **보고 표에서는 따로 센다**.
+#:   ⚠ rc 가 2(회색)이거나 None 이면 그것은 **여전히 `unmeasurable`** 이다 — 회색을
+#:     빨강으로 세면 못 잰 것이 빨강으로 둔갑한다(D-301 의 반대 방향 실수).
+KINDS = ("closed", "ratchet", "rule_only", "unmeasurable", "measured_red", "gate_only")
+#: 영역 요약에서 **닫힘이 아닌** 다섯을 이름으로 부른다. 0 이어도 지우지 않는다 —
 #: 「0건 검사」와 「검사 안 함」은 다르고, 지우면 둘이 같아 보인다(D-301).
 KIND_LABEL = {"ratchet": "래칫", "rule_only": "규칙만",
-              "unmeasurable": "못 잼", "gate_only": "게이트만"}
+              "unmeasurable": "못 잼", "measured_red": "재서 빨강",
+              "gate_only": "게이트만"}
 
 #: 「잠김」·「미측정」이 어디에 속하는가 (2026-09-21 · 세종 §3 판정).
 #:   design 은 **분모에서 뺀다** — 하지 않기로 한 것은 못 한 것이 아니다.
@@ -244,6 +257,22 @@ def judge_gate_alignment(cid: str, status: str, rc, gate: str) -> str | None:
                 "대장이 「닫혔다」고 말하는 동안 그 자리는 열려 있다 (P-85)"
                 % (cid, gate))
     return None
+
+
+#: ★★★ P-246 · 2026-09-22 · 턴 AD · 차선 N — **「못 잼」 중 「재서 빨강」을 기계로 가른다.**
+#:   **출생 표본**은 `OPS-04` 다(합성이 아니다) — 대장에 `kind: unmeasurable` 로 적혀
+#:   있었지만 `gate: scripts/verify_backup_recovery.py` 가 **rc 1** 을 냈다. 손으로
+#:   72절을 나눠 적지 않는다 — `gate:` 가 적힌 절은 이 판정기가 **이미** 부르므로
+#:   (`run_gate`) 그 rc 를 그대로 읽어 가른다. **판정식은 여기 한 곳에만 둔다**(D-212).
+def is_measured_red(kind: str, gate: str, rc) -> bool:
+    """이 절이 「못 잼」이 아니라 「재서 빨강」인가.
+
+    기준은 **셋 다**: `kind` 가 아직 `unmeasurable` 이고, `gate:` 가 실제로 있고,
+    그 게이트가 부른 결과가 **정확히 rc 1(빨강)** 일 때만 참이다.
+    rc 가 2(회색)이거나 `None`(못 부름·gate 없음)이면 **여전히 unmeasurable** 이다 —
+    회색을 빨강으로 세면 못 잰 것이 빨강으로 둔갑한다.
+    """
+    return kind == "unmeasurable" and bool(gate) and rc == GATE_RED
 
 
 #: ★ [실측 2026-09-06 · 턴 I · 조율자] **호스트에서 부르면 넷이 회색이었다.**
@@ -452,12 +481,22 @@ def measure_gates(pairs: list[tuple[str, str, str]]) -> dict[str, tuple]:
 #:
 #:   ⚠ **잠김은 분모에서 빼지 않는다.** 잠긴 절도 「아직 안 된 것」이고, 분모에서 빼면
 #:     잠글수록 수가 오른다. (설계 잠금·손 밖은 아래 「손 안 도달율」이 따로 가른다)
+#:
+#:   ★★ P-246 · 턴 AD — `measured_red` 도 **0.0** 이다(unmeasurable 과 같다). 이 턴은
+#:     부류 신설로 점수 식을 바꾸지 않는다 — 수가 움직인다면 그것은 **재분류 때문**이다.
 KIND_POINTS = {"closed": 1.0, "ratchet": 1.0, "rule_only": 0.5,
-               "gate_only": 0.5, "unmeasurable": 0.0}
+               "gate_only": 0.5, "unmeasurable": 0.0, "measured_red": 0.0}
 #: ★ [N ↔ Q 쪽지 · 턴 AA] 차선 Q 의 `verify_readiness_scores.py` 가 **이 이름으로 import**
 #:   한다(「두 벌을 두지 않는다」 · D-369). 눈금을 여기서 바꾸면 저쪽도 따라 바뀐다 —
 #:   **베끼지 말고 가져다 쓰라**는 뜻이므로 이 별명을 지우지 말 것.
-KIND_SCORE = KIND_POINTS
+#: ★★ P-246 · 턴 AD — Q 의 표(`KIND_ORDER`)는 **아직 다섯만** 안다. `KIND_POINTS` 를
+#:   곧이곧대로 앨리어스하면 `measured_red` 가 그 표로 새서, 조율 없이 Q 의 자기시험
+#:   (`len(_tbl)==5`)과 갈림 경보가 **오늘 밤 안에** 빨개진다 — 그 판정기는 내가 만지지
+#:   않는다(소유표). 그래서 **다섯으로 거른 사본**을 준다 — 값은 여전히 `KIND_POINTS`
+#:   한 곳에서만 나므로 두 표가 갈릴 수 없다(D-369 은 지킨다). Q 가 여섯째를 받아들이면
+#:   (제 커밋에서 `KIND_ORDER`에 `measured_red` 를 더하면) 이 필터는 지운다.
+#:   ⇒ Q.inbox/N.md 에 이 사실을 적어 둔다.
+KIND_SCORE = {k: v for k, v in KIND_POINTS.items() if k != "measured_red"}
 
 
 def kind_points(kinds: dict[str, int]) -> float:
@@ -650,21 +689,44 @@ def self_test() -> int:
         not problems(dict(_ok, kind="rule_only",
                           kind_why="분모 0 — 활성 구역이 0개다"))))
     checks.append((
-        "★ 영역 요약 꼬리가 넷을 **0 이어도** 부른다 (지우면 「0건」과 「안 셌다」가 같아진다)",
-        kind_tail({"closed": 9}) == "(래칫 0 · 규칙만 0 · 못 잼 0 · 게이트만 0)"))
+        "★ 영역 요약 꼬리가 다섯을 **0 이어도** 부른다 (지우면 「0건」과 「안 셌다」가 같아진다)",
+        kind_tail({"closed": 9})
+        == "(래칫 0 · 규칙만 0 · 못 잼 0 · 재서 빨강 0 · 게이트만 0)"))
     checks.append((
         "★ 파생 영역(①)은 `kind_derived` 에서 센다 — 절이 그 파일에 없다",
         kind_counts_of({"id": "1", "derived_from": "x.yaml",
                         "kind_derived": {"closed": ["F-01-c2"],
                                          "unmeasurable": ["F-02-c1", "F-02-c2"]}})
         == {"closed": 1, "ratchet": 0, "rule_only": 0,
-            "unmeasurable": 2, "gate_only": 0}))
+            "unmeasurable": 2, "measured_red": 0, "gate_only": 0}))
     checks.append((
         "★ 절에 적은 kind 를 영역이 셈한다 (음성 대조)",
         kind_counts_of({"id": "9", "clauses": [{"kind": "closed"}, {"kind": "ratchet"},
                                                {"kind": "closed"}]})
         == {"closed": 2, "ratchet": 1, "rule_only": 0,
-            "unmeasurable": 0, "gate_only": 0}))
+            "unmeasurable": 0, "measured_red": 0, "gate_only": 0}))
+    #: ★★ P-246 · 턴 AD — **출생 표본**(OPS-04, 합성이 아니다): kind 가 `unmeasurable`
+    #:   이고 `gate:` 가 있는 절에서, 그 게이트가 실제로 **rc 1** 을 내면 「재서 빨강」이다.
+    checks.append((
+        "★★ 출생 표본(OPS-04) — 게이트가 **rc 1** 인 못 잼 절은 「재서 빨강」이다 (P-246)",
+        is_measured_red("unmeasurable", "scripts/verify_backup_recovery.py", GATE_RED)))
+    checks.append((
+        "★ 음성 대조 — 게이트가 **rc 2(회색)** 면 재서 빨강이 **아니다** (회색≠빨강)",
+        not is_measured_red("unmeasurable", "g.py", GATE_GREY)))
+    checks.append((
+        "★ 음성 대조 — 게이트를 **못 불렀다(rc None)** 도 재서 빨강이 아니다",
+        not is_measured_red("unmeasurable", "g.py", None)))
+    checks.append((
+        "★ 음성 대조 — 게이트가 **rc 0(초록)** 인데 상태가 '미착수' 면 기존 판정 그대로다"
+        "(측정 자체가 다른 문제 · P-85 가 따로 잡는다) — measured_red 가 아니다",
+        not is_measured_red("unmeasurable", "g.py", GATE_GREEN)))
+    checks.append((
+        "★ 음성 대조 — kind 가 이미 `closed` 면 rc 1 이어도 재서 빨강으로 **덧씌우지 않는다**"
+        "(그건 P-85 불일치이지 P-246 이 아니다)",
+        not is_measured_red("closed", "g.py", GATE_RED)))
+    checks.append((
+        "★ 음성 대조 — `gate:` 가 **없으면** rc 를 가질 수 없다 — 재서 빨강이 아니다",
+        not is_measured_red("unmeasurable", "", GATE_RED)))
     checks.append((
         "'잠김' 인데 blocker 가 없으면 잡는다",
         any("무엇이 막는지" in p for p in problems({"id": "X", "status": "잠김"}))))
@@ -750,16 +812,21 @@ def self_test() -> int:
                    abs(_one("gate_only") - 50.0) < 1e-9))
     checks.append(("★★ 표본⑤ unmeasurable 은 **0.0** 이다 — 회색은 초록이 아니다 (D-301)",
                    abs(_one("unmeasurable")) < 1e-9))
-    #: ★ **음성 대조 — 옛 식이면 다섯이 전부 100 이다.** 다섯 절 전부 `status: 구현` 이고
+    checks.append((
+        "★★ 표본⑥ measured_red 도 **0.0** 이다 — unmeasurable 과 같다(P-246, 점수는 "
+        "안 움직인다). 출생 표본은 OPS-04",
+        abs(_one("measured_red")) < 1e-9))
+    #: ★ **음성 대조 — 옛 식이면 여섯이 전부 100 이다.** 여섯 절 전부 `status: 구현` 이고
     #:   부류만 다른 영역을 세워, **새 식은 셋으로 갈리고**(1.0·0.5·0.0) 옛 식은
     #:   **하나로 뭉친다**(전부 구현이니 100)는 것을 같은 자리에서 본다.
     _five = {k: _one(k) for k in KINDS}
     checks.append((
-        "★ 음성 대조 — 다섯을 **상태로** 세면 전부 100 으로 뭉친다 (옛 식이 삼키던 것)",
+        "★ 음성 대조 — 여섯을 **상태로** 세면 전부 100 으로 뭉친다 (옛 식이 삼키던 것)",
         all(abs(score(_S, {"a": {DONE: 1}}, {"a": {k: 1}})[1][0][5] * 100 - 100.0) < 1e-9
             for k in KINDS)))
     checks.append((
-        "★ 그런데 **부류로 세면 셋으로 갈린다** — 1.0 · 0.5 · 0.0",
+        "★ 그런데 **부류로 세면 셋으로 갈린다** — 1.0 · 0.5 · 0.0 (measured_red 는 "
+        "unmeasurable 과 같은 칸에 겹친다 — 점수 칸은 셋, 이름은 여섯이다)",
         sorted({round(v, 6) for v in _five.values()}) == [0.0, 50.0, 100.0]))
     #: ★ **잠김은 분모에서 빼지 않는다** — 빼면 잠글수록 수가 오른다.
     checks.append((
@@ -978,13 +1045,17 @@ def kind_counts_of(area: dict) -> dict[str, int]:
 
 
 def kind_tail(kinds: dict[str, int]) -> str:
-    """영역 요약 뒤에 붙는 한 조각 — `(래칫 a · 규칙만 b · 못 잼 c · 게이트만 d)`.
+    """영역 요약 뒤에 붙는 한 조각 —
+    `(래칫 a · 규칙만 b · 못 잼 c · 재서 빨강 e · 게이트만 d)`.
 
     **0 이어도 지우지 않는다.** 지우면 「0건」과 「안 셌다」가 같아 보인다(D-301).
+    ★ P-246 · 턴 AD — `measured_red` 를 `unmeasurable` 바로 옆에 둔다. 둘은 **같은
+      점수(0.0)**지만 뜻이 다르다 — 재서 빨강은 고칠 자리가 보이고, 못 잼은 잴 자리부터
+      세워야 한다.
     """
     return "(" + " · ".join("%s %d" % (KIND_LABEL[k], kinds.get(k, 0))
                             for k in ("ratchet", "rule_only", "unmeasurable",
-                                      "gate_only")) + ")"
+                                      "measured_red", "gate_only")) + ")"
 
 
 # ── ★★ P-236 · 2026-09-21 · 턴 AB · 차선 N — **한 절에 같은 칸이 둘이면 앞엣것이 사라진다**
@@ -1361,19 +1432,35 @@ def main() -> int:
           % (old_total, old_total - total))
     print("[GA] (계약 축과 합치지 않는다 — D-345. 계약 절은 영역 ①이 그대로 인용한다)")
 
-    # ── 「초록」 다섯 부류 (P-211 · 2026-09-21 · 턴 Z) ──────────────────────
+    # ── 「초록」 여섯 부류 (P-211 · 2026-09-21 턴 Z · +measured_red P-246 · 턴 AD) ──
     #   **수와 같은 화면에** 둔다. 다른 쪽에 두면 아무도 같이 읽지 않는다.
     roll = {k: sum(c.get(k, 0) for c in kinds.values()) for k in KINDS}
+    #: ★★ P-246 · 턴 AD — 차선 Q 의 `verify_readiness_scores.py` 가 **바로 다음 줄**을
+    #:   파싱한다(`_KIND_LINE` + `parse_ga_kinds`, P-211 검산: 부류 합 = 절 수). 그
+    #:   판정기는 소유가 Q 다(만지지 않는다) 이고 아직 **다섯 부류만** 안다. 그래서
+    #:   **이 한 줄에서만** `measured_red` 를 `unmeasurable` 에 접어 옛 다섯 모양 그대로
+    #:   낸다 — 점수는 이미 같으므로(둘 다 0.0) 뜻이 안 바뀌고, 총합도 그대로다. 진짜
+    #:   여섯째 수는 바로 아래 새 줄과 영역 꼬리(`kind_tail`)가 낸다. (Q.inbox/N.md 에
+    #:   여섯째 부류를 알렸다 — Q 가 받아들이면 이 접기는 지운다)
+    roll_q = dict(roll)
+    roll_q["unmeasurable"] = roll_q.get("unmeasurable", 0) + roll_q.pop("measured_red", 0)
     print("[GA] [입력] 「초록」 부류 %d절 — closed %d · ratchet %d · rule_only %d · "
           "unmeasurable %d · gate_only %d"
-          % (sum(roll.values()), roll["closed"], roll["ratchet"], roll["rule_only"],
-             roll["unmeasurable"], roll["gate_only"]))
-    not_closed = sum(roll.values()) - roll["closed"]
+          % (sum(roll_q.values()), roll_q["closed"], roll_q["ratchet"], roll_q["rule_only"],
+             roll_q["unmeasurable"], roll_q["gate_only"]))
+    not_closed = sum(roll_q.values()) - roll_q["closed"]
     print("[GA]   ★ 닫힌 절은 **%d/%d** 이고 나머지 %d절의 「초록」은 **닫힘이 아니다** — "
           "래칫 %d(늘지 않았다) · 규칙만 %d(현장이 비었다) · 못 잼 %d · "
           "게이트만 %d(제목이 게이트보다 넓다)"
-          % (roll["closed"], sum(roll.values()), not_closed, roll["ratchet"],
-             roll["rule_only"], roll["unmeasurable"], roll["gate_only"]))
+          % (roll_q["closed"], sum(roll_q.values()), not_closed, roll_q["ratchet"],
+             roll_q["rule_only"], roll_q["unmeasurable"], roll_q["gate_only"]))
+    #: ★★★ P-246 · 턴 AD — **여섯째 칸을 따로 낸다.** 총합은 위 줄과 같다(재분류일
+    #:   뿐 수는 안 움직인다) — 다만 못 잼 안에서 「재서 빨강」이 몇인지 여기서 보인다.
+    print("[GA] [입력] ★ P-246 여섯째 부류 — closed %d · ratchet %d · rule_only %d · "
+          "unmeasurable %d · measured_red %d · gate_only %d  (점수는 안 움직인다 — "
+          "measured_red 도 unmeasurable 도 0.0)"
+          % (roll["closed"], roll["ratchet"], roll["rule_only"], roll["unmeasurable"],
+             roll["measured_red"], roll["gate_only"]))
 
     # ── ★★ 별표 ② — 기능명세 id (P-234 · 2026-09-21 · 턴 AB) ──────────────
     #   **상용/100 은 위에서 이미 났고 이 줄은 그 수를 안 건드린다.** 여기 있는 것은
@@ -1477,6 +1564,33 @@ def main() -> int:
               % (len(pairs), len(results), aligned, len(grey)))
         for g in grey:
             print("[GA]   ? 못 쟀다: %s" % g)
+
+        # ── ★★★ P-246 · 턴 AD — 「못 잼」 안의 「재서 빨강」을 **기계로** 가른다 ──────
+        #   손으로 72절을 나눠 적지 않는다. 위에서 **이미 부른** 게이트의 rc(`results`)를
+        #   그대로 읽는다 — 같은 게이트를 두 번 부르지 않는다(오래 걸린다는 규약 §2 그대로).
+        #   기준은 `is_measured_red`(kind == unmeasurable · gate 있음 · rc == 1) 한 곳뿐이다.
+        #   ⚠ 여기서 찾은 것은 **보고용 발견**이다 — 대장의 `kind:` 를 손으로 고치지
+        #     않는다(이 턴은 OPS-04 하나만 옮긴다). 나머지는 다음 턴이 옮길 목록이다.
+        kind_by_id = {(c.get("id") or "").strip(): (c.get("kind") or "").strip()
+                      for a in areas for c in (a.get("clauses") or [])}
+        hidden_red = []
+        for cid, _status, gate in pairs:
+            if gate == GATE_SELF:
+                continue
+            rc, tail = results.get(gate, (None, ""))
+            if is_measured_red(kind_by_id.get(cid, ""), gate, rc):
+                hidden_red.append((cid, gate, tail))
+        print("[GA] [입력] ★ P-246 — 「못 잼」 %d절 중 게이트 rc 로 가른 결과: "
+              "재서 빨강(rc 1, 아직 unmeasurable 로 적혀 있다) %d절 · "
+              "진짜 못 잼(회색/게이트 없음) %d절"
+              % (roll["unmeasurable"], len(hidden_red),
+                 roll["unmeasurable"] - len(hidden_red)))
+        for cid, gate, tail in sorted(hidden_red):
+            print("[GA]   ! 재서 빨강(대장엔 아직 unmeasurable) — %s ← %s (%s)"
+                  % (cid, gate, tail))
+        if not hidden_red:
+            print("[GA]   (OPS-04 는 이미 이 턴에 `measured_red` 로 옮겼다 — "
+                  "그래서 여기 안 나온다)")
 
     if args.list or args.table:
         _print_table(areas, counts, rows, total, markdown=args.table)

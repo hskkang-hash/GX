@@ -107,6 +107,35 @@ def judge(counts: dict) -> list[tuple[str, bool, str]]:
                     f"{n}건 (기대 {EXPECT_SYSTEM_EVENTS})" +
                     ("" if n == EXPECT_SYSTEM_EVENTS
                      else " — W1 「시스템」 프리셋이 빈 목록을 그린다")))
+
+    #: ★★ [턴 AD · 차선 Q · P-251 · 세종 결정 공백을 메움] 「씨앗은 청구·KPI 분모에서
+    #:   뺀다」(P-237 낱말 밭) 게이트 술어 — `data_source=seed` 사건이 청구
+    #:   (`kernels.k1_event.count_events` 가 쓰는 `exclude_unbillable`) 뒤에도
+    #:   **남는가**. 분모는 씨앗 사건 수(런타임) — **손으로 안 넣는다**.
+    #:   ⚠ 씨앗 사건이 0건이면 잴 표본이 없다 — 그 상태를 초록으로 적지 않는다
+    #:   (분모 0 인 초록은 초록이 아니다 · D-301). 이 판정은 다른 4수와 같은 칸
+    #:   (`seed_events`)을 분모로 쓴다 — 두 번째 분모를 새로 만들지 않는다(D-212).
+    n_seed = counts.get("seed_events")
+    leak = counts.get("seed_billable_leak")
+    if n_seed is None or leak is None:
+        out.append(("P-251 씨앗은 청구·KPI 0건", False,
+                    "**못 쟀다** — DB 에 닿지 못했다(청구 셈 exclude_unbillable 을 "
+                    "못 불렀다)"))
+    elif n_seed == 0:
+        out.append(("P-251 씨앗은 청구·KPI 0건", False,
+                    "씨앗 사건이 **0건**이다 — 분모 0, 잴 표본이 없다(회색에 가깝다 · "
+                    "D-301). 초록으로 적지 않는다 — 시드를 심은 뒤 다시 잰다"))
+    else:
+        ok = leak == 0
+        out.append(("P-251 씨앗은 청구·KPI 0건", ok,
+                    f"씨앗 {n_seed}건 중 청구 셈(`count_events` 의 "
+                    f"`exclude_unbillable`)에 **남은 것 {leak}건**" +
+                    ("" if ok else
+                     " — data_source=seed 사건이 청구·월간 KPI 로 샌다(P-251). "
+                     "씨앗 카메라(`GX-SEED-DSM`)는 `track_id` 표식도 없고 "
+                     "`StreamMonitor.data_source` 도 기본값 `live` 그대로다(D-514) "
+                     "— exclude_unbillable 의 세 갈래(㉠㉡㉢) 중 어느 것도 걸지 "
+                     "않는다")))
     return out
 
 
@@ -125,7 +154,8 @@ def self_test() -> int:
     #   실측값(120·20·20·2)이고, 그 바로 뒤 음성 갈래들이 **착수 전의 0** 을 그대로 판정한다.
     #   즉 이 자기시험의 양·음 두 갈래가 **그날의 전후**다.
     green = dict(deliveries=120, snapshot_refs=20, objects=20,
-                 missing_objects=[], orphan_objects=[], system_events=2)
+                 missing_objects=[], orphan_objects=[], system_events=2,
+                 seed_events=20, seed_billable_leak=0)
     got = names(judge(green))
     if not all(got.values()):
         bad.append(f"다 채워진 표본을 통과로 읽지 못한다: {got}")
@@ -140,6 +170,31 @@ def self_test() -> int:
         sample = dict(green, **{key: value})
         if names(judge(sample)).get(expect_red):
             bad.append(f"{key}={value} 인데 「{expect_red}」를 통과로 읽는다")
+
+    # ── ★ P-251 출생 표본 — **씨앗이 청구로 새고 있었다** ─────────────────
+    #    [실측 2026-09-22 · 코드] 씨앗 카메라(`GX-SEED-DSM`)는 `track_id` 표식도
+    #    없고 `StreamMonitor.data_source` 도 기본값 `live` 그대로다(D-514) —
+    #    `exclude_unbillable` 의 세 갈래 중 어느 것도 이 카메라의 사건을 걸지
+    #    않는다. 그 상태(새는 채로 심어졌다)가 빨강이어야 한다.
+    leaking = dict(green, seed_billable_leak=20)
+    if names(judge(leaking)).get("P-251 씨앗은 청구·KPI 0건"):
+        bad.append("**P-251 출생 표본** — 씨앗 20건이 전부 청구 셈에 남았는데(0건 "
+                   "빠짐) 통과로 읽는다 — 씨앗이 청구로 새는 상태를 놓친다")
+    partial_leak = dict(green, seed_billable_leak=1)
+    if names(judge(partial_leak)).get("P-251 씨앗은 청구·KPI 0건"):
+        bad.append("씨앗 1건만 새도(일부 유출) 통과로 읽는다 — 0이어야 통과다")
+    # ── ★ 분모 0 — 씨앗이 아직 없다. 초록으로 적지 않는다 ────────────────
+    no_seed = dict(green, seed_events=0, seed_billable_leak=0)
+    if names(judge(no_seed)).get("P-251 씨앗은 청구·KPI 0건"):
+        bad.append("씨앗 사건 0건(분모 0)인데 통과(초록)로 읽는다 — 분모 0인 초록은 "
+                   "초록이 아니다 (D-301 · P-251 지시)")
+    # ── 못 쟀다 ≠ 0 ────────────────────────────────────────────────────
+    unmeasured_leak = dict(green, seed_billable_leak=None)
+    hit = [(n, ok, why) for (n, ok, why) in judge(unmeasured_leak)
+           if n == "P-251 씨앗은 청구·KPI 0건"][0]
+    if hit[1] or "못 쟀다" not in hit[2]:
+        bad.append("청구 셈을 **못 쟀는데** 통과로 읽거나 사유에 그 사실이 없다 "
+                   "(D-301)")
 
     # ── ★ 이 판정기가 있는 이유 — **수는 같은데 이름이 다른 경우** ───────
     #   객체 20 · 참조 20 이지만 서로 다른 20 이다. 수만 견주는 판정은 초록이다.
@@ -161,7 +216,8 @@ def self_test() -> int:
         for b in bad:
             print("    " + b)
         return EXIT_FAIL
-    print("[P20] 자기시험 통과 — 초록 표본 1 · 음성 4 + 이름 어긋남 1 + 판정 불가 1")
+    print("[P20] 자기시험 통과 — 초록 표본 1 · 음성 4 + 이름 어긋남 1 + 판정 불가 1 "
+          "+ P-251 출생 표본 1 · 일부 유출 1 · 분모 0 1 · 판정 불가 1")
     return EXIT_OK
 
 
@@ -201,7 +257,27 @@ def collect() -> dict:
         "snapshot_refs": len(refs),
         "system_events": rows.filter(event_type__in=system_types).count(),
         "objects": None, "missing_objects": None, "orphan_objects": None,
+        "seed_billable_leak": None,
     }
+
+    #: ★★ [P-251] 씨앗 사건이 **청구 셈(`exclude_unbillable`) 뒤에도 남는가**.
+    #:   읽기만 한다 — `common/billing_marks.py` 는 B 소유, 여기서는 부르기만
+    #:   한다(§0.4 와 같은 결의: 읽기·호출만). `kernels.k1_event.count_events` 와
+    #:   같은 두 겹(청구 표식 + 소프트 삭제)을 씨앗 행에만 좁혀 그대로 적용한다 —
+    #:   판정식을 다시 쓰지 않는다(D-212). 청구·월간 KPI(K6 `usage_snapshot`)는
+    #:   둘 다 이 한 함수(`exclude_unbillable`)를 거친다 — 갈라져 있지 않다.
+    if out["seed_events"] > 0:
+        try:
+            from common.billing_marks import exclude_soft_deleted, exclude_unbillable
+
+            seed_ids = list(rows.values_list("pk", flat=True))
+            billable = exclude_unbillable(Event._base_manager.all())
+            billable = exclude_soft_deleted(billable, Event)
+            out["seed_billable_leak"] = billable.filter(
+                pk__in=seed_ids).distinct().count()
+        except Exception as exc:                             # noqa: BLE001
+            print(f"[P20] ⚠ 청구 셈(exclude_unbillable)을 못 불렀다: "
+                  f"{type(exc).__name__}: {exc}")
 
     # ── 저장소 — **목록으로 대조한다** ───────────────────────────────────
     cam = apps.get_model("stream_monitors", "StreamMonitor")._base_manager.filter(
@@ -268,8 +344,16 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
+    #: [턴 AD · 차선 Q · P-251] 다섯째 수를 더했다 — 씨앗은 청구·KPI 분모에서 빼야
+    #: 한다(P-237). 분모는 `judge()` 가 매번 재는 다섯 수 이름 그대로다. 씨앗 사건
+    #: **전수**(런타임)는 `[P20]` 줄에 그대로 찍힌다 — 0건이면 그 갈래는 회색에
+    #: 가깝게 적는다(초록으로 안 적는다 · 위 judge() 참고).
     gate_header(
         __file__,
+        measured=("시드 뒤 다섯 수(발송·스냅샷·MinIO 목록↔DB·시스템 이벤트·P-251 "
+                  "청구·KPI 0건) — **분모 5개**(`judge()` 가 매 실행마다 재는 수 · "
+                  "지금 셌다). 씨앗 사건 전수는 gx-shell 안에서 재고 `[P20]` 줄에 "
+                  "그대로 찍힌다 — 0건이면 초록으로 적지 않는다"),
         target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다",

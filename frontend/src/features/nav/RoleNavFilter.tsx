@@ -26,10 +26,20 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useMenuData, useUserInfo } from 'rj-core';
 
+import { isAcquiredOnlyRoles } from './acquiredOnlyRoles';
 import type { MenuNode } from './roleNav';
 import {
   bucketOf, filterNav, hideAcquired, navSignature, roleCodesOf, withCurrentPath,
 } from './roleNav';
+
+/**
+ * ★★ [턴 AD · 차선 U56 · P-238] **인수(외부) 6종 — 표 밖 역할 중 「진짜 다른 회사
+ *   사람」의 자리.** GX 테넌트 표 밖 여덟(§ 쪽지 P-238)은 `fire_user` 로 재배정해
+ *   이 표를 더는 타지 않는다. 재배정하지 **않은** 쪽 — Anyang·Gaion·Thailand·
+ *   Gongju·DRONE-ROBOT 같은 인수(택배·드론로봇) 테넌트의 실사용자 — 는 여기서
+ *   걸러 **최소 메뉴**로 줄인다. 판정 함수의 정본은 `./acquiredOnlyRoles`(순수
+ * `.ts` — node 시험이 `.tsx` 없이 이 규칙을 직접 읽는다) 하나뿐이다.
+ */
 
 /**
  * ★★ [턴 AB · 차선 U56] **가림이 자물쇠였다 — 서 있는 자리는 못 뗀다.**
@@ -58,14 +68,40 @@ export default function RoleNavFilter(): null {
 
     const bucket = bucketOf(roleCodesOf(userInfo));
     if (!bucket) {
+      const codes = roleCodesOf(userInfo);
+
+      /*
+       * ★★ [턴 AD · 차선 U56 · P-238] **인수(외부) 테넌트 — 최소 메뉴.**
+       *
+       * 역할이 「인수 6종뿐」이면(위 `isAcquiredOnlyRoles`) 그 계정은 남의
+       * 테넌트 실사용자다(Anyang·Gaion·Thailand·Gongju·DRONE-ROBOT — 재서 갈랐다,
+       * §쪽지). GX 테넌트(ETRI-Group) 쪽 여덟은 이 갈래에 **더는 오지 않는다** —
+       * 이번 턴에 `fire_user` 로 재배정했다(위 표에서 GX 코드가 잡힌다).
+       *
+       * ★★ 아래 `hideAcquired` 갈래와 다르게 **빈 목록을 그대로 쓴다.** 거기서는
+       *   「빈 사이드바는 사고다」였지만, 여기서는 **빈 사이드바가 결정이다** — 인수
+       *   테넌트 사람에게 우리 제품도 인수 제품 메뉴도 보이면 안 된다(§3 P-238).
+       *   서 있는 자리 하나만 `withCurrentPath` 가 되돌린다(가림이 자물쇠였다,
+       *   `roleNav.ts` ④ 와 같은 이유) — 그래서 직접 주소로 들어온 화면 자체는
+       *   깨지지 않는다. 「로그인·내 정보」는 이 나무 밖(상단 계정 메뉴)의 자리라
+       *   이 목록에 줄로 넣지 않는다 — 없는 DB 행 id 를 지어내면 그 주소가
+       *   거짓이 된다(위 `withCurrentPath` 머리말과 같은 규율).
+       */
+      if (isAcquiredOnlyRoles(codes)) {
+        const minimal = withCurrentPath([], list, pathname).menus;
+        if (navSignature(list) === navSignature(minimal)) return;
+        setMenus(minimal);
+        return;
+      }
+
       /*
        * ★★ [턴 AA · 차선 U56 · P-220] **모르는 역할에서도 인수 넷은 뗀다.**
        *
        * 위 ⚠ 는 그대로다 — 모르는 계정에서 표대로 **자르지는** 않는다. 그러나
        * 「운영 설정 · 구성 관리 · 역할 · 보고서 서식」 넷은 표와 무관하게 우리
        * 제품의 화면이 아니고, [실측 2026-09-21] 그 넷은 **역할 전수의 RoleMenu 에
-       * 들어 있다.** 그래서 표에 없는 역할(`superuser` · `user` · `order` ·
-       * `tenant_admin_4` …)로 들어오면 고객이 그 넷을 그대로 본다.
+       * 들어 있다.** 그래서 표에 없는 역할(`superuser` · `user` · `tenant_admin_4` …
+       * — 위 인수 6종은 이제 이 자리로 안 온다)로 들어오면 고객이 그 넷을 그대로 본다.
        *
        * 줄 넷을 떼는 것으로는 사이드바가 비지 않는다 — 「빈 사이드바는 사고다」가
        * 막으려던 그 일이 여기서는 일어나지 않는다. 남는 줄이 열 개가 넘는다.

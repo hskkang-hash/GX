@@ -56,6 +56,13 @@ CITATION_TOKEN = "EEMUA 191"
 #: 그래서 소수점을 가진 실측 수를 요구한다(`40.3건` · `0.1건`).
 _NUMBER_IN_SENTENCE = re.compile(r"\d+\.\d+\s*건")
 
+#: ★ [턴 AD · 차선 Q · P-107 MEASURED 배선] 머리글의 **분모**. `judge()` 가 매 실행마다
+#: 읽는 다섯 갈래의 이름 그대로다 — 이벤트 수(라이브 DB)는 `--self-test` 호출(호스트 ·
+#: Django 없음)에서는 잴 수 없어서, 분모를 **손으로 6 이나 40 같은 수로 넣지 않고**
+#: 이 판정기가 **항상** 재는 갈래 수를 센다(D-301 · 분모는 세어서 말한다).
+JUDGED_ASPECTS = ("판정 문장에 건수", "상한은 인용이다", "초과는 주황이다",
+                  "상한 아래는 조용하다 (부작위)", "아무것도 안 남긴다")
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 판정 규칙 — **함수로 떼어 둔 이유는 시험하기 위해서다** (D-277)
@@ -413,6 +420,10 @@ if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
     gate_header(
         __file__,
+        measured=("[시험] 판정 문장이 건수·인용·색·부작위·잔여를 다 말하는가 — "
+                  "**분모 %d개**(`judge()` 가 매 실행마다 재는 갈래 · 지금 셌다). "
+                  "라이브 이벤트 수(7일 창)는 gx-shell 안에서만 세어진다 — "
+                  "그 수는 `[입력]` 줄에 그대로 찍힌다" % len(JUDGED_ASPECTS)),
         target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다",

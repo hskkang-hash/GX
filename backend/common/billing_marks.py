@@ -112,6 +112,18 @@ SEED_SOURCE = "seed"
 NONBILLABLE_SOURCES = tuple(
     marker.split("=", 1)[1] for marker in UNBILLABLE_MARKERS) + (SEED_SOURCE,)
 
+#: ★ [턴 AD · 차선 B · P-251 · D-514] **제 칸은 없지만 카메라를 통해 출처를
+#: 상속받는** 표의 관계 이름. `DetectionEvent` 가 그렇다 — `apps/dsm/services.py::
+#: event_data_source` 머리말이 스스로 적어 둔 이유(칸을 만들면 「빈 과거」가
+#: 「훈련·씨앗 아님」으로 읽힌다) 때문에 **씨앗 신호는 행이 아니라 카메라 코드에
+#: 산다**(`stream_monitors/services/seed.py`). probe·drill 은 ㉠(`track_id`)이
+#: 이미 갈랐지만, **씨앗은 사건에 아무 행 표식도 안 얹는다**(`seed_dsm_events.py`
+#: 가 K1 정식 경로로 심어서 — 화면에 고정값을 넣지 않는 것이 그 커맨드의 요점).
+#: 그래서 씨앗 카메라(`GX-SEED-DSM`) 위의 사건은 ㉠·㉡·㉢ 중 **아무것도 안 걸렸다**
+#: [실측 2026-09-22 · `scripts/verify_seed_p20.py` rc 1 · 씨앗 23건 중 22건이
+#: 청구 셈에 남았다]. 이 상수가 그 넷째 갈래(㉣)의 관계 이름이다.
+CAMERA_RELATION_FIELD = "stream_monitor"
+
 
 #: ⚠ **행 하나를 두고 묻는 함수(`is_unbillable_track`)는 만들지 않았다.** 쓸 자리가
 #:   없기 때문이다 — 청구의 셈은 **queryset 에서** 빼고(`exclude_unbillable`),
@@ -184,17 +196,22 @@ def exclude_unbillable(qs, *, via: str = ""):
     ★ 인자가 `via` 하나뿐인 것이 규약이다(P-201). 「이번만 훈련을 세 달라」는 칸을
       만들지 않는다 — 그 칸이 생기는 순간 청구의 셈이 부르는 자리마다 갈라진다.
 
-    ★ **갈래가 셋으로 늘었다 — 부르는 쪽은 그대로다** (P-224 · 턴 AB).
+    ★ **갈래가 넷으로 늘었다 — 부르는 쪽은 그대로다** (P-224 · 턴 AB · P-251 · 턴 AD).
       ㉠ `track_id` 에 얹힌 표식 (사건·발송)  ㉡ `data_source` 칸 (카메라)
       ㉢ 곁표 `common.BillingMark` (dj-core 셋 — 칸을 못 더하는 표)
-      셋 중 **이 표에 걸 수 있는 것만** 건다. 이 판단이 여기 있는 이유는 부르는
+      ㉣ 카메라 관계로 **상속**한 `data_source` (제 칸도 `track_id` 표식도 없는 사건 —
+      씨앗)
+      넷 중 **이 표에 걸 수 있는 것만** 건다. 이 판단이 여기 있는 이유는 부르는
       자리마다 `if` 를 쓰면 그 판단이 갈리기 때문이다 — 이 파일이 존재하는 이유.
 
     ⚠ **관계 너머(`via`)는 ㉠ 만 본다.** ㉡·㉢ 은 「이 행이 무엇인가」를 묻는데,
       관계 너머의 행은 **다른 표의 행**이라 그 표의 pk 로 물어야 한다. 지금 `via` 를
-      쓰는 자리는 발송 하나(`event` 너머)이고 사건은 ㉠ 로 이미 갈린다 — **쓰는 데가
-      없는 갈래를 미리 세우면 그것은 잠든 코드이고, 잠든 코드는 틀려도 아무도 모른다**
-      (D-377). 사건 표에 칸이나 곁표 표식이 생기는 날 여기를 넓힌다.
+      쓰는 자리는 발송 하나(`event` 너머)이다.
+      ★ [턴 AD] **사건 표에 칸이 생기는 날 여기를 넓힌다는 예고가 실현됐다** — 다만
+      새 **칸**이 아니라 카메라로부터의 **상속**(㉣)으로. 씨앗은 probe·drill 과
+      달리 사건 자체에 아무 표식도 안 남긴다(카메라 코드가 유일한 신호 —
+      `CAMERA_RELATION_FIELD` 머리말). ㉣ 은 제 칸(㉡)이 없는 표에서만 본다 — 제
+      칸이 있으면 그 칸이 정본이고 상속은 안 본다(같은 표에 두 벌 판단을 안 둔다).
 
     ★ **`track_id` 가 사라진 날 조용히 통과되지 않는가** — 그 질문은 이제 시험이
       든다(`test_b_billing_marks.py::TheEventMarkerStillHasItsField`). 예전에는 이
@@ -211,6 +228,12 @@ def exclude_unbillable(qs, *, via: str = ""):
         qs = qs.exclude(**{f"{PROBE_FIELD}__startswith": DRILL_MARKER})
     if DATA_SOURCE_FIELD in names:
         qs = qs.exclude(**{f"{DATA_SOURCE_FIELD}__in": NONBILLABLE_SOURCES})
+    elif CAMERA_RELATION_FIELD in names:
+        #: ㉣ — 제 칸(㉡)이 없는 표가 카메라로 이어지면 **그 카메라의 출처를
+        #: 상속**해서 뺀다(`DetectionEvent` 가 지금 유일한 예 — P-251). `elif`:
+        #: 제 칸이 있으면 그 칸이 정본이다.
+        qs = qs.exclude(**{
+            f"{CAMERA_RELATION_FIELD}__{DATA_SOURCE_FIELD}__in": NONBILLABLE_SOURCES})
     marked = marked_unbillable_ids(qs.model)
     if marked:
         qs = qs.exclude(pk__in=marked)

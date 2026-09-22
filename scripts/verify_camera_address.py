@@ -37,6 +37,12 @@ BACKEND = ROOT / "backend"
 
 EXIT_OK, EXIT_CANNOT_JUDGE = 0, 2
 
+#: ★ [턴 AD · 차선 Q · P-107 MEASURED 배선] 머리글의 **분모**. `classify()` 가 카메라
+#: 한 대마다 가르는 갈래 이름 그대로다 — 카메라 **전수**(라이브 DB)는 `--self-test`
+#: 호출(호스트 · Django 없음)에서는 잴 수 없어서, 분모를 손으로 안 넣고 이 판정기가
+#: 항상 가르는 갈래 수를 센다(D-301). 라이브 카메라 전수는 `[CAM-ADDR]` 줄에 찍힌다.
+CLASSIFY_BUCKETS = ("filled", "unset", "inconsistent")
+
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (AttributeError, OSError):
@@ -155,6 +161,10 @@ if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
     gate_header(
         __file__,
+        measured=("카메라 설치 주소 미입력 건수 — 카메라마다 `filled`/`unset`/"
+                  "`inconsistent` 셋 중 하나로 **분모 %d갈래**(`classify()` 의 갈래 · "
+                  "지금 셌다). 라이브 카메라 전수는 gx-shell 안에서 재고 "
+                  "`[CAM-ADDR]` 줄에 그대로 찍힌다" % len(CLASSIFY_BUCKETS)),
         target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다",

@@ -67,6 +67,13 @@ BIRTH_SAMPLE_SILENT_SUCCESS = (500, True)   # (status, success) — 이 조합�
 
 MEDIA_PATH = "/api/media-data/?page_size=25&current_page=1"
 
+#: ★ [턴 AD · 차선 Q · P-107 MEASURED 배선] 머리글의 **분모**. `main()` 이 끝에서 끝까지
+#: 항상 재는 네 자리 이름 그대로다(①~④ 주석 그대로) — 저장소 객체 수·라우트 응답은
+#: `--self-test`(호스트 · MinIO/DB 없음)에서는 잴 수 없어서, 분모를 손으로 안 넣고
+#: 이 판정기가 매번 훑는 자리 수를 센다(D-301). 라이브 수는 `[MINIO]` 줄에 찍힌다.
+MEASURED_STAGES = ("저장소 health", "버킷 객체 존재", "화면 라우트 응답(success 포함)",
+                   "캐시 안팎 일치")
+
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (AttributeError, OSError):
@@ -290,6 +297,10 @@ if __name__ == "__main__":
     from _gate_header import gate_header, account_as  # P-107 — TARGET/AS/SOURCE
     gate_header(
         __file__,
+        measured=("저장소가 섰는가 · 화면이 받는가 — 끝에서 끝까지 **분모 %d자리**"
+                  "(`main()` 이 매번 훑는 자리 ①~④ · 지금 셌다). 버킷 객체 수 · 라우트 "
+                  "응답은 gx-shell 안에서 재고 `[MINIO]` 줄에 그대로 찍힌다"
+                  % len(MEASURED_STAGES)),
         target="저장소 " + (os.environ.get("MINIO_ENDPOINT") or "minio:9000") + " + " + os.environ.get("GX_API", "http://localhost:8000"),
         as_="저장소 쪽: MINIO_ROOT_USER/MINIO_ROOT_PASSWORD (호스트 .env · **앱의 자격이 아니다**) · 라우트 쪽: " + account_as(),
         source="살아 있는 저장소 + 살아 있는 서버 응답 (HTTP)",

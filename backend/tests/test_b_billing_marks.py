@@ -391,6 +391,147 @@ class TheMarkIsWrittenWhereTheRowIsBornTest(BillingMarkFixture):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# ★ 회귀 — 발급 순간 배선 (턴 AD · 차선 B · P-224 확장)
+#
+# 출생 표본(D-310): 이 회귀를 만들게 한 실례는 턴 AB V 회차가 만든 **계정 1**
+# (`gxprobe_onb_20260921T145138` · id=226 · `docs/agent/checkpoints/turn-ab/V.md:190`)
+# · **카메라 1**(카메라 수 15 → 16 · 같은 문서 191행)이 표식 없이 태어나 그대로
+# 청구에 든 것이다(같은 문서 198행: "이 회차가 만든 계정 1 · 카메라 1 이 지금 청구
+# 면에 들어 있다"). 그 소급은 이미 됐지만(P-224 ② 계정 11줄), **다시 태어나는
+# 것은 다시 청구에 든다** — 그래서 이 시험은 소급이 아니라 **발급 순간**을 잰다:
+# `seed_role_users.py` · `probe_video_backup.py` · `capture_screens.py` 가 지금
+# 하는 일(태어나는 자리에서 `mark_unbillable` 을 부르는 것)을 그대로 흉내 낸다.
+# ═══════════════════════════════════════════════════════════════════════════
+class TheNewSeedIsBornAlreadyMarkedTest(BillingMarkFixture):
+    """「새 씨앗 계정 1 을 만들면 청구 수가 0 증가」— 카메라도 같이 (WO §3 B 행)."""
+
+    def test_a_freshly_born_seed_account_adds_zero_to_the_bill(self):
+        """`seed_role_users.py` 되읽기 자리가 하는 일 그대로: 계정을 만들고
+        **그 자리에서** `mark_unbillable(user, SEED_SOURCE, …)` 를 부른다."""
+        from common.billing_marks import SEED_SOURCE, mark_unbillable
+
+        before = self._bill()["users"]
+        user = self._account("gxseed_role_u2_replay")
+        mark_unbillable(user, SEED_SOURCE,
+                        reason="출생 표본 — seed_role_users.py 발급 순간 배선 회귀")
+        self.assertEqual(
+            before, self._bill()["users"],
+            "새로 태어난 씨앗 계정이 청구 수를 늘렸습니다 — 턴 AB V 회차(계정 "
+            "id=226)가 그대로 재현됩니다.")
+
+    def test_a_freshly_born_probe_camera_adds_zero_to_the_bill(self):
+        """`probe_video_backup.py` · `capture_screens.py` 가 하는 일 그대로."""
+        from common.billing_marks import PROBE_MARKER, mark_unbillable
+
+        before = self._bill()["cameras"]
+        cam = self._camera("gxprobe-D384-CAM-replay")
+        mark_unbillable(cam, PROBE_MARKER.split("=", 1)[1],
+                        reason="출생 표본 — 게이트 탐침 카메라 발급 순간 배선 회귀")
+        self.assertEqual(
+            before, self._bill()["cameras"],
+            "새로 태어난 탐침 카메라가 청구 수를 늘렸습니다 — 턴 AB V 회차(카메라 "
+            "15→16)가 그대로 재현됩니다.")
+
+    def test_born_together_still_adds_zero(self):
+        """계정과 카메라가 **같은 회에 함께** 태어나도(V 회차 U5#1·U5#4 처럼) 청구는
+        그대로다."""
+        from common.billing_marks import PROBE_MARKER, SEED_SOURCE, mark_unbillable
+
+        before = self._bill()
+        user = self._account("gxseed_role_together")
+        mark_unbillable(user, SEED_SOURCE, reason="출생 표본 — 계정")
+        cam = self._camera("gxprobe-together-CAM")
+        mark_unbillable(cam, PROBE_MARKER.split("=", 1)[1], reason="출생 표본 — 카메라")
+        after = self._bill()
+        self.assertEqual(before["users"], after["users"],
+                         "함께 태어난 계정이 청구 수를 늘렸습니다.")
+        self.assertEqual(before["cameras"], after["cameras"],
+                         "함께 태어난 카메라가 청구 수를 늘렸습니다.")
+
+
+class TheRealCustomerBillNeverShrinksTest(BillingMarkFixture):
+    """「진짜 고객 것의 청구는 한 톨도 안 준다」(WO §3 B 행). 배선을 넣어도 **고객
+    수가 줄면 그것은 청구 근거를 바꾼 것**이다 — 그 사실을 고객 행과 씨앗·탐침
+    행이 **같은 화면에 섞인 채**로 잰다.
+    """
+
+    def test_customer_rows_created_alongside_seeds_are_not_touched(self):
+        """진짜 고객 카메라·계정 N개를 만들고 **같은 회에** 씨앗·탐침도 발급 순간
+        배선대로 만든다 — 고객 몫의 청구 수는 정확히 N 그대로여야 한다."""
+        from common.billing_marks import PROBE_MARKER, SEED_SOURCE, mark_unbillable
+
+        N = 5
+        for i in range(N):
+            self._camera(f"B-CUSTOMER-CAM-{i}")
+            self._account(f"dsm_real_customer_{i}")
+        before_cam, before_user = self._bill()["cameras"], self._bill()["users"]
+
+        seed = self._account("gxseed_role_customer_check")
+        mark_unbillable(seed, SEED_SOURCE, reason="출생 표본 — 고객 옆에서 태어난 씨앗")
+        probe = self._camera("gxprobe-customer-check-CAM")
+        mark_unbillable(probe, PROBE_MARKER.split("=", 1)[1],
+                        reason="출생 표본 — 고객 옆에서 태어난 탐침")
+
+        self.assertEqual(
+            before_cam, self._bill()["cameras"],
+            "고객 카메라 청구 수가 줄었습니다 — 배선이 청구 근거를 바꿨습니다.")
+        self.assertEqual(
+            before_user, self._bill()["users"],
+            "고객 계정 청구 수가 줄었습니다 — 배선이 청구 근거를 바꿨습니다.")
+
+    def test_the_seed_username_convention_does_not_catch_a_real_customer(self):
+        """이름이 우리 접두와 우연히 겹쳐도(D-280), **표식을 안 달면** 청구는 그대로다
+        — 세는 코드가 이름을 보지 않는다는 사실을 이름이 겹치는 상황에서 잰다."""
+        before = self._bill()["users"]
+        self._account("gxseed_but_actually_a_real_customer")
+        self.assertEqual(
+            before + 1, self._bill()["users"],
+            "이름이 우리 접두와 겹친다는 이유만으로 계정이 청구에서 빠졌습니다 — "
+            "이름으로 거르면 고객 계정이 조용히 공짜가 됩니다 (D-280).")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ★★ P-251 — 씨앗 **사건**은 청구·KPI 0건 (턴 AD · 조율자 실측 전달)
+#
+# 조율자가 `scripts/verify_seed_p20.py` 실측을 직접 넘겼다: 씨앗 카메라
+# (`GX-SEED-DSM`) 위의 사건은 probe·drill 과 달리 **행에 아무 표식도 없다**
+# (`seed_dsm_events.py` 가 K1 정식 경로로 심어서 `track_id` 를 비워 둔다 — 화면에
+# 고정값을 넣지 않으려는 의도적 설계, `stream_monitors/services/seed.py` 머리말).
+# `exclude_unbillable` 의 옛 세 갈래(㉠ track_id · ㉡ data_source 칸 · ㉢ 곁표) 중
+# **아무것도 안 걸렸다** — [실측 2026-09-22 · 조율자] 씨앗 23건 중 22건이 청구 셈에
+# 그대로 남아 있었다(`verify_seed_p20.py` rc 1). 카메라의 `data_source` 를 사건이
+# **상속**하는 넷째 갈래(㉣ · `CAMERA_RELATION_FIELD`)를 열어 고쳤다. 이 클래스가
+# 그 A/B 다 — 배선 전 빨강(위 실측) · 배선 후 초록(아래).
+# ═══════════════════════════════════════════════════════════════════════════
+class TheSeedEventInheritsTheCamerasSourceTest(BillingMarkFixture):
+    """씨앗 카메라 위의 사건은 **행 표식이 없어도** 카메라로부터 출처를 상속해
+    청구에서 빠진다 — 그러나 진짜 고객 카메라 위의 사건은 한 톨도 안 준다."""
+
+    def test_events_on_a_seed_camera_add_zero_to_the_bill(self):
+        from common.billing_marks import SEED_SOURCE
+
+        cam = self._camera("B-SEED-CAM-EVENTS", source=SEED_SOURCE)
+        before = self._bill()["events"]
+        for _ in range(3):
+            self._event(cam)
+        self.assertEqual(
+            before, self._bill()["events"],
+            "씨앗 카메라 위의 사건이 청구 수를 늘렸습니다 — 사건이 카메라의 출처를 "
+            "상속받지 못했습니다 (P-251).")
+
+    def test_events_on_a_real_customer_camera_are_still_billed(self):
+        """★ 배선을 넣어도 **고객 사건이 줄면 안 된다** — 같은 시험 안에서 잰다."""
+        cam = self._camera("B-LIVE-CAM-EVENTS")   # 기본 출처 = live
+        before = self._bill()["events"]
+        for _ in range(3):
+            self._event(cam)
+        self.assertEqual(
+            before + 3, self._bill()["events"],
+            "진짜 고객 카메라의 사건이 청구에서 빠졌습니다 — 상속 배선이 청구 "
+            "근거를 바꿨습니다.")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # ⑦ 가격표 — **비면 회색** (§4-5 · P-223)
 # ═══════════════════════════════════════════════════════════════════════════
 class ThePriceTableIsEmptyOnPurposeTest(BillingMarkFixture):

@@ -221,6 +221,14 @@ class Command(BaseCommand):
         """씨앗 카메라. **주소를 넣는다**(FX-5) — 알림·보고서의 위치란이 이 값을 쓴다."""
         from stream_monitors.models import StreamMonitor
 
+        #: ★ [턴 AD · 차선 B · D-514 등재문이 남긴 자리] `data_source`(P-224 청구 칸)는
+        #:   `stream_monitors/services/seed.py` 가 말하는 「관제 화면 낱말」과 이름은
+        #:   같지만 다른 신호다 — 그 파일은 일부러 이 칸을 안 건드린다("청구 칸 배선은
+        #:   … 다음에 간다"). **여기가 그 다음이다.** 발급 순간에 안 달면 이 카메라가
+        #:   재생성될 때마다(예: DB 초기화 뒤 다시 심을 때) `live` 로 태어나고, 그 위의
+        #:   사건은 이 커널의 표식 갈래 중 어느 것에도 안 걸려 다시 청구로 샌다.
+        from common.billing_marks import SEED_SOURCE
+
         cam, created = StreamMonitor._base_manager.get_or_create(
             code=SEED_CODE,
             defaults=dict(name="시드 카메라 (검수용)", ip_source="127.0.0.1",
@@ -234,8 +242,16 @@ class Command(BaseCommand):
                           install_address=SEED_ADDRESS,
                           install_address_detail="하천 둔치 감시탑",
                           address_source="manual",
+                          data_source=SEED_SOURCE,
                           group_id=group.pk),
         )
+        if cam.data_source != SEED_SOURCE:
+            # ★ 이미 있던 행(과거에 이 칸 없이 태어난 것 포함)도 **덮어써서** 맞춘다 —
+            #   `get_or_create` 의 `defaults` 는 새로 만들 때만 쓰이고, 기존 행엔 안
+            #   먹는다. pk=119 는 이미 마이그레이션 0031 이 맞춰 뒀지만, 그 마이그레이션
+            #   없이 이 카메라가 다시 태어난 환경(새 DB)에서는 이 줄이 유일한 안전망이다.
+            cam.data_source = SEED_SOURCE
+            cam.save(update_fields=["data_source"])
         if cam.group_id != group.pk:
             cam.group_id = group.pk
             cam.save(update_fields=["group"])

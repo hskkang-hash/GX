@@ -1,5 +1,8 @@
 /**
  * 재현 시험 — **U5#2 `/roles` 표 0행**의 뿌리 (턴 AB · 차선 U56).
+ * ★ [턴 AD · 차선 U56] **회귀 시험으로 승격** — §7·§8 에 P-238 인수 최소 메뉴를
+ *   더했다. 이 파일이 rc 0 이면 ① U5#2 가 다시 안 깨졌고 ② 인수 6종 최소 메뉴가
+ *   맞다는 것을 **한 번에** 잰다(다음 턴이 roleNav.ts 를 고치면 이 파일이 먼저 운다).
  *
  * 왜 이 파일이 있나
  * -----------------
@@ -40,6 +43,7 @@ import {
   navSignature,
   withCurrentPath,
 } from '../frontend/src/features/nav/roleNav.ts';
+import { ACQUIRED_ONLY_ROLE_CODES, isAcquiredOnlyRoles } from '../frontend/src/features/nav/acquiredOnlyRoles.ts';
 
 /* ── 표본 — dj-core `menu.Menu` 의 모양을 그대로 흉내 낸다 ──────────────────
  *
@@ -155,6 +159,56 @@ console.log('== 6. 없는 주소를 지어내지 않는다 ==');
 const nowhere = withCurrentPath(cutOnly, SERVER_MENUS, '/dsm/notify');
 ok('서버가 안 준 주소는 되돌릴 것이 없다 — 가짜 id 를 만들지 않는다',
   nowhere.restored === null && nowhere.menus.length === 7);
+
+console.log('');
+console.log('== 7. [턴 AD · P-238] 인수 6종 판정 — 순수 함수 ==');
+ok('order 하나뿐 → 인수뿐', isAcquiredOnlyRoles(['order']) === true);
+ok('delivery_admin+delivery_order → 인수뿐', isAcquiredOnlyRoles(['delivery_admin', 'delivery_order']) === true);
+ok('drone_robot_user 하나 → 인수뿐', isAcquiredOnlyRoles(['drone_robot_user']) === true);
+ok('빈 배열 → false(모른다 ≠ 인수뿐)', isAcquiredOnlyRoles([]) === false);
+ok('order + fire_user 섞임 → false(이미 GX 역할)', isAcquiredOnlyRoles(['order', 'fire_user']) === false);
+ok(
+  '★★ surveillance_order 는 인수 6종에 없다 (P-239 — 관제팀장 정본 코드)',
+  !ACQUIRED_ONLY_ROLE_CODES.has('surveillance_order') && isAcquiredOnlyRoles(['surveillance_order']) === false,
+);
+ok(
+  '★★ surveillance_operation 도 없다 (P-239 — 관제요원 정본 코드)',
+  !ACQUIRED_ONLY_ROLE_CODES.has('surveillance_operation') && isAcquiredOnlyRoles(['surveillance_operation']) === false,
+);
+ok(
+  '이번 턴 범위 밖 — superuser · user · tenant_admin_4 는 인수뿐이 아니다(손 안 댐)',
+  isAcquiredOnlyRoles(['superuser']) === false
+  && isAcquiredOnlyRoles(['user']) === false
+  && isAcquiredOnlyRoles(['tenant_admin_4']) === false,
+);
+ok('인수 6종 = 정확히 6개', ACQUIRED_ONLY_ROLE_CODES.size === 6, `size=${ACQUIRED_ONLY_ROLE_CODES.size}`);
+
+console.log('');
+console.log('== 8. [턴 AD · P-238] 인수 테넌트 — 최소 메뉴(서 있는 자리 하나 · 그 외 0) ==');
+const ANYANG_HOME = '/delivery-dashboard';    // 인수 자산 화면(표본) — 우리 표에 없다
+const anyangAtHome = withCurrentPath([], SERVER_MENUS, ANYANG_HOME);
+ok(
+  '우리 표에 없는 인수 화면에 서 있으면 되돌릴 것이 없다 — 사이드바 0줄',
+  anyangAtHome.restored === null && anyangAtHome.menus.length === 0,
+  `restored=${anyangAtHome.restored} 줄=${anyangAtHome.menus.length}`,
+);
+const anyangAtRoles = withCurrentPath([], SERVER_MENUS, ROLES);
+ok(
+  '우리 DB 에 실재하는 자리(`/roles`)에 서 있으면 그 한 줄만 남는다(가림은 자물쇠가 아니다)',
+  anyangAtRoles.restored === ROLES && anyangAtRoles.menus.length === 1
+  && menuForPath(anyangAtRoles.menus, ROLES)?.id === 5,
+  `줄=${anyangAtRoles.menus.length}`,
+);
+ok(
+  '떠나면 다시 0줄 — 고정점(표본에 없는 다른 인수 화면으로)',
+  withCurrentPath([], SERVER_MENUS, '/some-other-acquired-screen').menus.length === 0,
+);
+ok(
+  '영어 사이드바 — 인수 화면(Admin 마디·Operation Settings 등)이 **전부** 빠진다',
+  menuForPath(anyangAtHome.menus, '/operation-settings') === null
+  && menuForPath(anyangAtHome.menus, '/report-template') === null
+  && menuForPath(anyangAtHome.menus, '/users') === null,
+);
 
 console.log('');
 console.log(failed === 0 ? 'rc 0 — 전부 맞다' : `rc 1 — 어긋남 ${failed}건`);

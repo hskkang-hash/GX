@@ -676,6 +676,12 @@ def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
         monitor.address_source = addr_src
         monitor.save(update_fields=["install_address", "install_address_detail",
                                     "address_source"])
+    #: ★ [턴 AD · 차선 B · P-224 발급 순간] 이 카메라(`{PROBE_TAG}-CAM`)는 `get_or_create`
+    #:   라 회마다 살아남는다 — 그래서 태어나는 그 순간에 표식을 단다. 소급이 아니다:
+    #:   다음 청구 회차가 이 행을 다시 셀 자리는 여기 하나뿐이다(P-224 billing_marks.py).
+    from common.billing_marks import PROBE_MARKER, mark_unbillable
+    mark_unbillable(monitor, PROBE_MARKER.split("=", 1)[1],
+                     reason="capture_screens.py — 캡처용 탐침 카메라(%s)" % PROBE_TAG)
     now = datetime.now(timezone.utc)
     # ★★ [실측 2026-09-16 · P-9] 1차판은 여기서 `DE._base_manager.create(...)` 로
     #   행을 **직접 만들었다.** 지시서가 정한 「실제 이벤트」의 정의로는 그것이 **모형**이다:

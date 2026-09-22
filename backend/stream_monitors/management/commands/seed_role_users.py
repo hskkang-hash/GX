@@ -526,6 +526,15 @@ class Command(BaseCommand):
         broken = []
         for spec in SEED_PEOPLE:
             user, bad = self._readback(spec, group)
+            if user is not None:
+                # ★ [턴 AD · 차선 B · P-224 발급 순간] 이 명령이 심는 사람은 전부
+                #   `data_source=seed` 다 — 표식을 청구 소급이 아니라 **여기, 태어난
+                #   그 자리**에서 단다. 이미 있던 사람도 다시 부르면 결과가 같다
+                #   (`mark_unbillable` 은 `update_or_create` — 덮어써도 안전하다).
+                from common.billing_marks import SEED_SOURCE, mark_unbillable
+                mark_unbillable(user, SEED_SOURCE,
+                                reason="seed_role_users --peer %s — 역할 씨앗 계정 %s"
+                                       % (opts["peer"], spec["key"]))
             preset, note = (None, "행이 없다") if user is None else self._preset_of(user)
             if preset != spec["expect_preset"]:
                 bad = list(bad) + ["프리셋이 %s (기대 %s · %s)"

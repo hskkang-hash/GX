@@ -1502,8 +1502,20 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header, account_as  # P-107 — TARGET/AS/SOURCE
+    #: ★ [턴 AD · 차선 Q · P-243/§5 세종 결정] **면제가 아니라 정직한 지연 신고**다.
+    #: 네 갈래(①구조·②예산·③회귀·④가용성)는 지금도 매번 gx-shell 안에서 재어진다
+    #: (`[입력]` 줄에 호출 수가 그대로 찍힌다) — 회색인 이유는 「합격선」이다. 이 파일
+    #: 머리말이 이미 스스로 적어 둔 대로, 지금 잰 것은 `runserver` **기준선**이고
+    #: **합격선은 gunicorn+nginx 에서 OPS-13 뒤 다시 잰다**(BASELINE_CAVEAT). 세종이
+    #: 그 「언제」를 정했다: **RC-1 컷 2026-09-25**. 그날 합격선을 다시 배선한다 —
+    #: 그때까지는 회색이고, D-511 기한(09-23)이 와도 다른 회색과 함께 빨강이 된다.
     gate_header(
         __file__,
+        measured=("deferred:RC-1 2026-09-25 · 무엇을: 응답시간 예산의 **합격선**. "
+                  "네 갈래(구조·예산·회귀·가용성)는 지금도 gx-shell 안에서 매번 "
+                  "재어지고 `[입력]` 줄에 호출 수가 찍힌다 — 지금 나는 수는 "
+                  "runserver **기준선**이다(BASELINE_CAVEAT). **합격선**은 "
+                  "gunicorn+nginx 로 OPS-13 뒤에 다시 잰다(이 파일 머리말)"),
         target=os.environ.get("GX_API", "http://localhost:8000") + " (gx-shell 안 · 호스트에 포트가 없다)",
         as_=account_as(),
         source="살아 있는 서버 응답 (HTTP) — 사진도 손 목록도 아니다",

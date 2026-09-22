@@ -6,75 +6,75 @@
   "grey_note": "아침 0건은 **0점이 아니라 회색**이다. 재부팅은 대표 손이고(WO §7), 차선은 그 손을 대신할 수 없다",
   "mornings": [],
   "readiness": {
-    "measured_at": "2026-09-21T21:09:15",
+    "measured_at": "2026-09-22T16:38:02",
     "containers": [
       {
         "name": "gx-shell",
         "status": "running",
-        "started_at": "2026-09-21T12:00:43.646435105Z",
+        "started_at": "2026-09-22T05:24:20.1671844Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "gx-beat-e",
         "status": "running",
-        "started_at": "2026-09-21T12:00:43.660635105Z",
+        "started_at": "2026-09-22T05:24:20.3102423Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "gx-celery-e",
         "status": "running",
-        "started_at": "2026-09-21T12:00:43.652595605Z",
+        "started_at": "2026-09-22T05:24:20.1073015Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "gx-gunicorn-e",
         "status": "running",
-        "started_at": "2026-09-21T12:00:43.665824905Z",
+        "started_at": "2026-09-22T05:24:20.3451589Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "guardianx-source-minio-1",
         "status": "running",
-        "started_at": "2026-09-21T12:00:43.673864405Z",
+        "started_at": "2026-09-22T05:24:20.328632Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "guardianx-source-mailpit-1",
         "status": "running",
-        "started_at": "2026-09-21T12:00:43.691330605Z",
+        "started_at": "2026-09-22T05:24:20.0474114Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "gx-fe-build",
         "status": "running",
-        "started_at": "2026-09-21T12:00:43.698194505Z",
+        "started_at": "2026-09-22T05:24:20.0614325Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "postgres",
         "status": "running",
-        "started_at": "2026-09-21T12:00:43.681359305Z",
+        "started_at": "2026-09-22T05:24:20.3915162Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "redis",
         "status": "running",
-        "started_at": "2026-09-21T12:00:43.641866505Z",
+        "started_at": "2026-09-22T05:24:20.3646554Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "gx-nginx-e",
         "status": "running",
-        "started_at": "2026-09-21T12:00:43.644906205Z",
+        "started_at": "2026-09-22T05:24:20.3965106Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       }

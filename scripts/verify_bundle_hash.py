@@ -94,6 +94,13 @@ SCRIPT_RE = re.compile(r"""<script[^>]+src=["']([^"']+)["']""", re.I)
 PRELOAD_RE = re.compile(r"""<link[^>]+href=["']([^"']+\.js)["']""", re.I)
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 
+#: ★ [턴 AD · 차선 Q · P-107 MEASURED 배선] 머리글의 **분모**. 이 판정기가 번들에서
+#: 신원을 찾는 정규식 종류(엔트리 스크립트 · 프리로드 · 토큰) 그대로다 — 라이브
+#: 엔트리 자산 수는 `--self-test`(호스트 · 서버 없음)에서는 잴 수 없어서, 분모를
+#: 손으로 안 넣고 이 판정기가 항상 쓰는 패턴 수를 센다(D-301). 라이브 자산 수는
+#: `[BUNDLE]` 줄에 그대로 찍힌다.
+SCAN_PATTERNS = (SCRIPT_RE, PRELOAD_RE, TOKEN_RE)
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 판정 규칙 — **순수 함수다** (D-277). 자기시험이 합성 입력을 먹인다
@@ -716,6 +723,10 @@ if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
     gate_header(
         __file__,
+        measured=("서버가 내는 번들 = 배치(또는 현재) 커밋 — **분모 %d종**(엔트리 "
+                  "스크립트·프리로드·`GX_COMMIT:` 토큰을 찾는 정규식 · 지금 셌다). "
+                  "라이브 엔트리 자산 수는 `--web`/`--dist` 로 읽고 `[BUNDLE]` 줄에 "
+                  "그대로 찍힌다" % len(SCAN_PATTERNS)),
         target=(os.environ.get("GX_WEB", "") or "(--web 없음 · --dist 로 읽는다)") + " · 번들은 컨테이너 안 3002 에 있다",
         as_="익명 — 브라우저와 같은 자리에서 자격 없이 번들을 받는다",
         source="살아 있는 웹서버가 준 번들 바이트 (또는 --dist 의 빌드 산출물)",

@@ -1,0 +1,18 @@
+{
+  "turn": "AD",
+  "lane": "U56",
+  "measured_at_kst": "2026-09-22",
+  "method": "ORM · menu.RoleMenu(permit_read=True) 전수 · 인수 6종 역할 코드별. '영어 줄' = menu_name 에 한글 완성형이 0글자. '전' = RoleNavFilter 의 종전 hideAcquired(list) 갈래(NAV_ACQUIRED_HIDDEN 4경로만 뗀다) 적용 뒤 남는 영어 줄 수. '후' = 이번 턴 minimal-menu 갈래(인수 6종뿐이면 서 있는 자리 1개 외 전부 뗀다) 적용 뒤 남는 영어 줄 수 — 정지 상태(어떤 화면에도 안 서 있을 때) 기준.",
+  "caveat": "브라우저로 직접 못 쟀다(로그인 IP 5회/분·계정전환 61초 제약 · 여러 인수 계정 로그인은 다른 차선과 충돌 위험) — 서버가 그 역할에 실제로 주는 RoleMenu 전수로 쟀다. RoleNavFilter 는 서버가 준 목록만 자르므로 이 전수가 '서버가 줄 수 있는 것'의 상한이고, 실측 화면 값과 같거나 더 크다(작을 수는 없다).",
+  "rows": [
+    {"code": "order",              "granted_total_menurows": 4,  "english_lines_before": 4,  "english_lines_after": 0},
+    {"code": "delivery_operation", "granted_total_menurows": 33, "english_lines_before": 30, "english_lines_after": 0},
+    {"code": "delivery_order",     "granted_total_menurows": 5,  "english_lines_before": 5,  "english_lines_after": 0},
+    {"code": "delivery_admin",     "granted_total_menurows": 38, "english_lines_before": 32, "english_lines_after": 0},
+    {"code": "drone_robot_user",   "granted_total_menurows": 30, "english_lines_before": 25, "english_lines_after": 0},
+    {"code": "drone_robot_admin",  "granted_total_menurows": 30, "english_lines_before": 25, "english_lines_after": 0}
+  ],
+  "total_english_lines_before_across_6_role_types": 121,
+  "total_english_lines_after_across_6_role_types": 0,
+  "note_current_screen_exception": "실사용자가 어떤 화면에 '서 있는' 순간에는 withCurrentPath 가 그 화면 한 줄만 되돌린다(roleNav.ts ④ '가림이 자물쇠였다' 와 같은 규율) — 그 한 줄은 대개 영어 이름(예: 'Delivery Dashboard')이다. 정지 상태(사이드바를 펼쳤을 때) 값은 위 표대로 0줄이다."
+}

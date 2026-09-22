@@ -1,0 +1,26 @@
+{
+  "turn": "AD",
+  "lane": "U56",
+  "measured_at_kst": "2026-09-22",
+  "rule": "P-238 — GX 테넌트(ETRI-Group) 안, 표 밖 역할(order)만 가진 살아 있는 계정을 fire_user 로 재배정한다. 삭제 0 · 되돌릴 수 있게.",
+  "how_to_undo": "각 user_id 에 대해: Role.objects.get(code='fire_user') 를 u.roles.remove() 하고 Role.objects.get(code='order') 를 u.roles.add() 하면 정확히 이 표의 BEFORE 로 되돌아간다. 삭제·비활성화는 하지 않았으므로 행 자체는 손대지 않는다.",
+  "users": [
+    {"id": 14, "username": "order_user",       "tenant": "ETRI-Group", "before_roles": ["order"], "after_roles": ["fire_user"]},
+    {"id": 17, "username": "order_chi",        "tenant": "ETRI-Group", "before_roles": ["order"], "after_roles": ["fire_user"]},
+    {"id": 18, "username": "order_user_1",     "tenant": "ETRI-Group", "before_roles": ["order"], "after_roles": ["fire_user"]},
+    {"id": 19, "username": "order_user_2",     "tenant": "ETRI-Group", "before_roles": ["order"], "after_roles": ["fire_user"]},
+    {"id": 20, "username": "order_user_3",     "tenant": "ETRI-Group", "before_roles": ["order"], "after_roles": ["fire_user"]},
+    {"id": 21, "username": "order_user_4",     "tenant": "ETRI-Group", "before_roles": ["order"], "after_roles": ["fire_user"]},
+    {"id": 22, "username": "order_user_5",     "tenant": "ETRI-Group", "before_roles": ["order"], "after_roles": ["fire_user"]},
+    {"id": 63, "username": "order_chungnam",   "tenant": "ETRI-Group", "before_roles": ["order"], "after_roles": ["fire_user"]}
+  ],
+  "not_touched_flagged_for_review": [
+    {"id": 58, "username": "order_chungnam_001", "tenant": "ETRI-Group", "roles": ["order"], "reason": "deleted != null(soft-delete 2025-09-18 06:02) — 살아있는 계정이 아니다. is_active=True 만 본 첫 필터가 이 계정을 잘못 8명에 넣을 뻔했다 — deleted 도 걸러야 정확하다."},
+    {"id": 102, "username": "order_geumsan", "tenant": "GeumSan-ETRI", "roles": ["order"], "reason": "GX 계열 테넌트로 보이나(같은 계정에 GX 표 코드 'operator' 를 가진 다른 계정이 같은 테넌트에 있음 · 이름이 ETRI 계열) 세 턴(AB·AC·AD 지시서) 동안 '8명'은 항상 ETRI-Group 만 가리켰고 GeumSan-ETRI 는 '참고'로만 따로 세어졌다(턴 AB: order 9 = ETRI-Group 8 + GeumSan-ETRI 1). 세종이 명시적으로 판정한 적이 없어 이번 턴은 건드리지 않았다 — 재배정하면 남의 판정을 우리가 대신 내리는 것이 된다. 다음 턴 청함."},
+    {"id": 112, "username": "gxprobe_q", "tenant": "ETRI-Group", "roles": ["tenant_admin_4", "user"], "reason": "Q 차선 게이트 탐침 계정(생성 2026-09-05) — 실사용자가 아니다. tenant_admin_4 도 이번 턴 '인수 6종'에 없다(재서 갈랐다)."}
+  ],
+  "verification": {
+    "before_query": "docker exec gx-shell python -c \"User.objects.filter(id__in=[14,17,18,19,20,21,22,63])\" -> 8/8 roles=['order']",
+    "after_query_independent_reread": "docker exec gx-shell python -c \"...\" -> 8/8 roles=['fire_user'] · role('order').users == ['order_chungnam_001','order_geumsan'] (오직 미처리·제외분만 남음) · role('fire_user').users 에 8명 신규 등재"
+  }
+}

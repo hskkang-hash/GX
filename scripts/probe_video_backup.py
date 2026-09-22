@@ -132,6 +132,13 @@ def seed() -> int:
                       is_active=False, is_visualize=False, order=9999,
                       is_external=False, address_source="", group_id=gid),
     )
+    #: ★ [턴 AD · 차선 B · P-224 발급 순간] `--clean` 이 실패하거나 안 불리면 이 행은
+    #:   `get_or_create` 라 다음 회에도 그대로 남는다 — 남으면 `data_source` 기본값
+    #:   `live` 위에 청구된다(billing_marks.py 발급 순간 규약). 소급이 아니라 **여기서**
+    #:   판다 — 태어나는 순간에 표식이 없으면 다음 청구 회차가 그대로 센다.
+    from common.billing_marks import PROBE_MARKER, mark_unbillable
+    mark_unbillable(monitor, PROBE_MARKER.split("=", 1)[1],
+                     reason="probe_video_backup.py seed() — OPS-04 백업 실측 발판 카메라")
     now = datetime.now(timezone.utc)
     event = DE._base_manager.create(
         stream_monitor=monitor, event_type=f"{PROBE_TAG}", severity="info",

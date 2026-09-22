@@ -339,7 +339,15 @@ def main() -> int:
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from _gate_header import gate_header
+    #: [턴 AD · 차선 Q · P-107 MEASURED 배선] 머리글은 `--self-test`(호스트 · SPA 안
+    #: 봄)에서도 찍혀야 한다 — 그래서 분모는 라이브 번들의 밑동 리터럴 수(그때만 안다)가
+    #: 아니라 이 판정기가 **밑동으로 안 셀** 것으로 선언해 둔 허용 목록(`_NOT_API` ·
+    #: 이 파일의 핵심 약점을 메운 자리 · 위 docstring ③)의 갯수를 쓴다(D-301 ·
+    #: 지금 셌다). 라이브 밑동 개수는 `[BUNDLE-API]` 줄에 그대로 찍힌다.
     gate_header(__file__,
+                measured=("기대한 API 밑동이 번들에 있는가 · SPA `/api/*` 404 — "
+                         "**분모 %d개**(밑동으로 안 세는 허용 목록 `_NOT_API` · "
+                         "지도·CDN·문서 주소 · 지금 셌다)" % len(_NOT_API)),
                 target="%s (서는 SPA 가 내는 번들)" % DEFAULT_SPA,
                 as_="자격 없음 — 익명으로 정적 파일을 읽는다",
                 source="살아 있는 SPA 의 index.html 과 엔트리 JS (HTTP)")

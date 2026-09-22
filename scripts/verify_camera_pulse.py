@@ -461,8 +461,17 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
+    #: [턴 AD · 차선 Q · P-107 MEASURED 배선] 머리글은 `--self-test`(호스트 · Django
+    #: 없음)에서도 찍혀야 한다 — 그래서 분모는 **라이브 구역·카메라 수(그때만 안다)**가
+    #: 아니라 이 판정기의 규칙 상수 `FALLBACK` 의 갯수(늘 있다·지금 셌다)를 쓴다.
+    _n_rules = len(FALLBACK)
     gate_header(
         __file__,
+        measured=("3중 2 두절 → 1건 · 1대만 → 0건 · 따로 죽은 2대 → 0건 · 캐시 우회 — "
+                  "**분모 %d개**(맥박 규칙 상수 `min_cameras`·`min_down`·"
+                  "`timeout_minutes`·`window_minutes`·`event_type` · 지금 셌다). "
+                  "라이브 구역·카메라 수는 gx-shell 안에서 재고 `[입력]` 줄에 찍힌다"
+                  % _n_rules),
         target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다",

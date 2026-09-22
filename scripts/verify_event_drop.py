@@ -422,5 +422,17 @@ def main() -> int:
 
 if __name__ == "__main__":
     from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE
-    gate_header(__file__)
+    #: ★ [턴 AD · 차선 Q · 라이브 트래픽 의존이 아니다 — 실측으로 가름]
+    #: 턴 AC 는 이 게이트를 "불확실(라이브 트래픽 의존일 수 있다)"로 남겼었다.
+    #: 오늘 다시 읽으니 `surge_case()` 가 **합성 300건을 직접 만들어** `guard` 모듈을
+    #: 돌린다(위 docstring "호스트에서 돈다 — Django 설정이 필요 없다") — 큐잉·트래픽을
+    #: 기다리지 않는다. 그래서 이것은 **미배선**이지 지연 신고 대상이 아니다.
+    gate_header(
+        __file__,
+        measured=("이벤트가 상한 초과 시 버려지는가 — **분모 %d건**(`SURGE_INPUT` · "
+                  "출생 표본 D-310의 그 폭주 조건 · 합성으로 만들어 매 실행마다 "
+                  "돌린다 · 라이브 트래픽을 기다리지 않는다). ③④ 는 큐 상한 "
+                  "`DEFER_QUEUE_MAX`(가드 모듈에서 읽는다)로 같은 방식으로 잰다"
+                  % SURGE_INPUT),
+    )
     sys.exit(main())
