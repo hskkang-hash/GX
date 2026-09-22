@@ -1,7 +1,42 @@
 {
-  "measured_at": "2026-09-21T20:00:00+00:00",
-  "verdict": "ALARM",
-  "reason": "RuntimeError: pg_dump 실패: pg_dump: error: aborting because of server version mismatch\npg_dump: detail: server version: 18.1 (Debian 18.1-1.pgdg13+2); pg_dump version: 17.7 (Debian 17.7-0+deb13u1)",
+  "measured_at": "2026-09-22T12:06:38+00:00",
+  "verdict": "OK",
+  "reason": "",
+  "manifest": {
+    "measured_at": "2026-09-22T12:06:38+00:00",
+    "db": {
+      "file": "db_database_guardianx_20260922T120638Z.dump",
+      "bytes": 146626517,
+      "sha256": "9a35676c2f65acd2d2f207fc2c45f4a56b0455a761b8db418e613431fb976cad",
+      "via": "local",
+      "client_version": "pg_dump (PostgreSQL) 18.6 (Debian 18.6-1.pgdg13+2)",
+      "command": [
+        "pg_dump -Fc -h postgres -p 5432 -U postgres -d database_guardianx -f /backup/20260922/db_database_guardianx_20260922T120638Z.dump"
+      ],
+      "rows": {
+        "stream_monitors_streammonitor": 52,
+        "stream_monitors_detectionevent": 41,
+        "stream_monitors_eventclip": 41,
+        "user_coreuser": 119,
+        "auth_group": 0
+      }
+    },
+    "objects": {
+      "bucket": "guardianx-dev",
+      "objects": 0,
+      "bytes": 0,
+      "endpoint": "minio:9000",
+      "scope": "event_bound",
+      "retention_days": 90,
+      "skipped_not_event_bound": 45,
+      "event_bound_expected": 0,
+      "missing_in_bucket": [],
+      "missing_count": 0,
+      "fell_back_to_all": false,
+      "keys": []
+    }
+  },
+  "out_dir": "/backup/20260922",
   "_written_from": {
     "db": "database_guardianx",
     "under_pytest": false

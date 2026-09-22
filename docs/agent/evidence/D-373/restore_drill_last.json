@@ -1,10 +1,21 @@
 {
-  "measured_at": "2026-09-19T23:00:00+00:00",
-  "verdict": "UNKNOWN",
-  "client": "pg_restore (PostgreSQL) 17.7 (Debian 17.7-0+deb13u1)",
-  "server": "18.1 (Debian 18.1-1.pgdg13+2)",
-  "dump": "/backup/20260919/db_database_guardianx_20260919T200000Z.dump",
-  "reason": "클라이언트 판(17)이 서버 판(18)보다 낮다 — 낮은 판은 높은 판의 덤프를 읽지 못한다. **환경의 사실**이고, 고치는 자리는 워커 이미지의 postgresql-client 다. 못 잰 것을 「복구 성공」으로 적지 않는다",
+  "measured_at": "2026-09-22T12:07:12+00:00",
+  "verdict": "OK",
+  "dump": "/backup/20260922/db_database_guardianx_20260922T120638Z.dump",
+  "dump_bytes": 146626517,
+  "source_db": "database_guardianx",
+  "target_db": "restore_check_20260922120712",
+  "tables_source": 232,
+  "tables_restored": 232,
+  "rto_seconds": 13.7,
+  "rto_minutes": 0.23,
+  "commands": [
+    "psql -d postgres -c CREATE DATABASE \"restore_check_20260922120712\" (rc=0)",
+    "pg_restore --no-owner --no-privileges -d restore_check_20260922120712 db_database_guardianx_20260922T120638Z.dump (rc=0)",
+    "psql -d postgres -c DROP DATABASE \"restore_check_20260922120712\" (rc=0)"
+  ],
+  "notes": [],
+  "scope": "DB 만이다. 객체저장(영상·캡처)은 이 시험에 **안 들어 있다** — DB 만 살아나면 「영상이 있었다고 말하는 DB」가 된다",
   "_written_from": {
     "db": "database_guardianx",
     "under_pytest": false
