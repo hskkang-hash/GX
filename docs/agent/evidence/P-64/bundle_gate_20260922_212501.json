@@ -1,0 +1,50 @@
+{
+  "commit": "2ce05578788ec305bb80877b0ef44be36412b44d",
+  "commit_source": "GX_COMMIT 환경변수",
+  "bundle": {
+    "source": "서버 http://localhost:3002",
+    "assets": [
+      "/assets/index-0--LKFMF.js",
+      "/assets/router-DVUMBcBr.js"
+    ],
+    "commits": [
+      "2ce05578788ec305bb80877b0ef44be36412b44d"
+    ],
+    "html_only": []
+  },
+  "deploy": {
+    "commit": "2ce05578788ec305bb80877b0ef44be36412b44d",
+    "source": "/docs/agent/evidence/deploy/20260922_212501.json",
+    "deployed_at": "2026-09-22T21:26:21+09:00"
+  },
+  "deploy_source": "배치 증거 20260922_212501.json",
+  "drift": {
+    "paths": [],
+    "ancestor": true,
+    "error": null,
+    "source": "GX_DRIFT_JSON (호스트가 재서 넘겼다)"
+  },
+  "doc_only_prefixes": [
+    "docs/"
+  ],
+  "sidecar": null,
+  "token_prefix": "GX_COMMIT:",
+  "rows": [
+    {
+      "name": "번들이 자기 커밋을 말한다",
+      "verdict": "pass",
+      "why": "`GX_COMMIT:2ce0557…` ← /assets/index-0--LKFMF.js, /assets/router-DVUMBcBr.js · 서버 http://localhost:3002"
+    },
+    {
+      "name": "번들 해시 = **배치 커밋**",
+      "verdict": "pass",
+      "why": "2ce0557 = 2ce0557 — 서버가 내는 번들이 **배치 커밋**이다 ← /docs/agent/evidence/deploy/20260922_212501.json"
+    },
+    {
+      "name": "HEAD − 배치 커밋 차이가 `docs/**` 뿐",
+      "verdict": "pass",
+      "why": "HEAD = 배치 커밋 2ce0557 — 배치 뒤 커밋이 없다"
+    }
+  ],
+  "exit": 0
+}

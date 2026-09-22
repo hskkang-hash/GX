@@ -1435,27 +1435,28 @@ def main() -> int:
     # ── 「초록」 여섯 부류 (P-211 · 2026-09-21 턴 Z · +measured_red P-246 · 턴 AD) ──
     #   **수와 같은 화면에** 둔다. 다른 쪽에 두면 아무도 같이 읽지 않는다.
     roll = {k: sum(c.get(k, 0) for c in kinds.values()) for k in KINDS}
-    #: ★★ P-246 · 턴 AD — 차선 Q 의 `verify_readiness_scores.py` 가 **바로 다음 줄**을
-    #:   파싱한다(`_KIND_LINE` + `parse_ga_kinds`, P-211 검산: 부류 합 = 절 수). 그
-    #:   판정기는 소유가 Q 다(만지지 않는다) 이고 아직 **다섯 부류만** 안다. 그래서
-    #:   **이 한 줄에서만** `measured_red` 를 `unmeasurable` 에 접어 옛 다섯 모양 그대로
-    #:   낸다 — 점수는 이미 같으므로(둘 다 0.0) 뜻이 안 바뀌고, 총합도 그대로다. 진짜
-    #:   여섯째 수는 바로 아래 새 줄과 영역 꼬리(`kind_tail`)가 낸다. (Q.inbox/N.md 에
-    #:   여섯째 부류를 알렸다 — Q 가 받아들이면 이 접기는 지운다)
-    roll_q = dict(roll)
-    roll_q["unmeasurable"] = roll_q.get("unmeasurable", 0) + roll_q.pop("measured_red", 0)
-    print("[GA] [입력] 「초록」 부류 %d절 — closed %d · ratchet %d · rule_only %d · "
-          "unmeasurable %d · gate_only %d"
-          % (sum(roll_q.values()), roll_q["closed"], roll_q["ratchet"], roll_q["rule_only"],
-             roll_q["unmeasurable"], roll_q["gate_only"]))
-    not_closed = sum(roll_q.values()) - roll_q["closed"]
+    #: ★★★ P-253 · 2026-09-23 · 턴 AD 파 2 · 차선 Q — **옛 5키 줄(호환 접기)을 걷었다.**
+    #:   P-246 이후 이 자리는 「초록」 부류를 다섯으로 접어 `measured_red` 를
+    #:   `unmeasurable` 속에 숨겼었다 — 그 결과 **실측**(차선 Q, 2026-09-22 저녁
+    #:   `--static`)에서 「못 잼 71」 안에 「재서 빨강」 3 이 묻힌 채로 읽혔다
+    #:   (`verify_readiness_scores.py::parse_ga_kinds` 가 이 접힌 줄만 읽었다 —
+    #:   `_KIND_LINE` 정규식이 「부류 N절」 모양만 걸렸기 때문). 조율자가 게이트를
+    #:   부르는 갈래로 다른 시각에 잰 대장(WO-GX-20260923-07 §1)에서는 같은 은닉이
+    #:   「못 잼 72」 안에 「재서 빨강」 4 로 나타났다. 세종이 P-253 으로 「오늘
+    #:   걷는다」고 판정했다 — `verify_readiness_scores.py`(Q)를 **같은 커밋**에서
+    #:   바로 아래 6키 줄을 읽게 고쳤으므로(D-369 · 두 벌을 두지 않는다), 이 접기와
+    #:   옛 줄을 지운다. Q.inbox/N.md 의 초대("받아들이면 이 접기는 지운다")에 대한 답.
+    not_closed = sum(roll.values()) - roll["closed"]
     print("[GA]   ★ 닫힌 절은 **%d/%d** 이고 나머지 %d절의 「초록」은 **닫힘이 아니다** — "
-          "래칫 %d(늘지 않았다) · 규칙만 %d(현장이 비었다) · 못 잼 %d · "
+          "래칫 %d(늘지 않았다) · 규칙만 %d(현장이 비었다) · 못 잼 %d · 재서 빨강 %d · "
           "게이트만 %d(제목이 게이트보다 넓다)"
-          % (roll_q["closed"], sum(roll_q.values()), not_closed, roll_q["ratchet"],
-             roll_q["rule_only"], roll_q["unmeasurable"], roll_q["gate_only"]))
+          % (roll["closed"], sum(roll.values()), not_closed, roll["ratchet"],
+             roll["rule_only"], roll["unmeasurable"], roll["measured_red"], roll["gate_only"]))
     #: ★★★ P-246 · 턴 AD — **여섯째 칸을 따로 낸다.** 총합은 위 줄과 같다(재분류일
     #:   뿐 수는 안 움직인다) — 다만 못 잼 안에서 「재서 빨강」이 몇인지 여기서 보인다.
+    #:   ★ P-253 이후 **이 줄이 유일한 정본**이다(옛 5키 줄은 없다). Q 의
+    #:   `verify_readiness_scores.py::_KIND_LINE` 은 이제 이 줄(「P-246 여섯째 부류」)
+    #:   을 읽는다.
     print("[GA] [입력] ★ P-246 여섯째 부류 — closed %d · ratchet %d · rule_only %d · "
           "unmeasurable %d · measured_red %d · gate_only %d  (점수는 안 움직인다 — "
           "measured_red 도 unmeasurable 도 0.0)"

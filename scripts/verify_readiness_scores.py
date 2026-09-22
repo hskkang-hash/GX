@@ -960,13 +960,38 @@ def self_test(verbose: bool = True) -> int:
     ok("★ 양성 · 합이 행과 **맞으면** 빨강이 아니다(없는 갈림을 만들지 않는다)",
        not aa_cr8_chain([("정본", _cr_true)])[4])
 
-    # ── ★ 대장 부류 줄을 **게이트 출력에서** 읽는다 (파일을 다시 읽지 않는다) ──
-    _ga = ("[GA] [입력] 「초록」 부류 154절 — closed 80 · ratchet 3 · rule_only 3 · "
-           "unmeasurable 64 · gate_only 4")
-    ok("★ 양성 · 부류 줄을 읽는다", (parse_ga_kinds(_ga) or {}).get("total") == 154)
+    # ── ★★★ P-253 · 턴 AD 파 2 — 대장 부류 줄을 **6키(여섯째 부류) 줄**에서
+    #    읽는다(파일을 다시 읽지 않는다). 옛 5키 줄은 걷었다 ───────────────
+    #: unmeasurable 60 + measured_red 4 = 64 — 옛 접힌 모양의 「못 잼 64」와
+    #: 같은 총량이 되도록 골랐다(아래 `_roll` 표본과 나란히 대조되도록).
+    _ga = ("[GA] [입력] ★ P-246 여섯째 부류 — closed 80 · ratchet 3 · rule_only 3 · "
+           "unmeasurable 60 · measured_red 4 · gate_only 4  (점수는 안 움직인다 — "
+           "measured_red 도 unmeasurable 도 0.0)")
+    ok("★ 양성 · 6키 줄을 읽는다", (parse_ga_kinds(_ga) or {}).get("total") == 154)
     ok("★ 양성 · 부류 합이 절 수와 같다", (parse_ga_kinds(_ga) or {})["sum"] == 154)
+    ok("★ 양성 · **여섯째 부류(measured_red)를 따로 읽는다**(더는 못 잼에 안 접힌다)",
+       (parse_ga_kinds(_ga) or {})["counts"].get("measured_red") == 4)
     ok("★ 음성 · 부류 줄이 없으면 **None** 이다(0 이 아니다)",
        parse_ga_kinds("[GA] 아무 말 없음") is None)
+
+    #: ★★★ 출생 표본(D-310) — 옛 5키 줄이 **다시 나타나면 빨강**이다(P-253).
+    #:   09-22 저녁 실측이 이 표본을 낳았다: 이 산출기가 옛 정규식으로 옛
+    #:   5키 줄만 읽어 「못 잼 71」 안에 「재서 빨강」 3 이 묻혔다(위 `_KIND_LINE`
+    #:   주석의 재서 확인 그대로 — 합성이 아니다). 이제 그 줄은 **더는 부류로도
+    #:   안 읽히고**, 더 나아가 **그 모양이 나타났다는 사실 자체가 빨강**이다 —
+    #:   그래야 다음 사람이 「호환」이라는 이름으로 되살리지 못한다.
+    _ga_old_5key = ("[GA] [입력] 「초록」 부류 154절 — closed 80 · ratchet 3 · "
+                    "rule_only 3 · unmeasurable 64 · gate_only 4")
+    ok("★ 음성 · 옛 5키 줄은 **더는 부류 줄로 안 읽힌다**(P-253 으로 걷었다)",
+       parse_ga_kinds(_ga_old_5key) is None)
+    ok("★★ 양성 · 옛 5키 줄이 나타나면 **잡는다**(재발 감지, D-310 출생 표본)",
+       old_5key_line_present(_ga_old_5key))
+    ok("★ 음성 · 6키 줄만 있으면 재발이 아니다(안전하다)",
+       not old_5key_line_present(_ga))
+    ok("★★ 양성 · `aa_report()`가 옛 5키 줄의 재발을 **빨강**으로 낸다(회색이 아니다)",
+       any("P-253 재발" in r for r in
+           aa_report(ga_out=_ga_old_5key, click=None, click_why="x",
+                     onboard_text="", review_text="")["red"]))
 
     # ── ★ 영역 꼬리에서 closed 를 **뺄셈으로** 되찾는다 ────────────────────
     _area = ("  2  보안                     가중 20%  절 16/20 =  80%  →  16.00   "
@@ -1502,25 +1527,79 @@ def aa_kind_score_table() -> tuple[dict, str]:
                     % (GA_SCRIPT.name, how))
 
 
-#: `verify_ga_readiness` 가 찍는 부류 줄 — `… 부류 154절 — closed 80 · ratchet 3 · …`
-_KIND_LINE = re.compile(r"부류\s+(\d+)절\s*[—-]\s*(.+)")
+#: ★★★ P-253 · 2026-09-23 · 턴 AD 파 2 · 차선 Q — **6키 줄을 읽는다(옛 5키 줄은 걷었다)**.
+#:   `verify_ga_readiness` 가 찍던 두 줄 중 **먼저 나오는** 줄은
+#:   `「초록」 부류 N절 — closed … unmeasurable … gate_only`(다섯 이름, `measured_red`
+#:   없음)이었다 — `measured_red` 를 `unmeasurable` 속에 접어 옛 모양 그대로 낸
+#:   **호환용 줄**이었다(N, Q.inbox/N.md). 이 정규식(`부류\s+(\d+)절`)은 그 줄만
+#:   걸렸다 — **「★ P-246 여섯째 부류 — …」줄은 「부류 N절」 모양이 아니라서
+#:   원래도 안 걸렸다**(N 의 예상이 맞았다). 그래서 이 산출기는 **먼저 나오는
+#:   접힌 줄만 읽어 왔다** — 아래 「재서 확인」이 그 사실을 눌러 봤다.
+#:
+#:   ★★ 재서 확인 [실측 2026-09-22 저녁 · 차선 Q · `--static`]:
+#:     `verify_ga_readiness.py --static` 을 실행하고 `parse_ga_kinds()` 에
+#:     그 원문을 그대로 먹였더니 `{'total': 155, 'counts': {'closed': 73,
+#:     'ratchet': 3, 'rule_only': 3, 'unmeasurable': 71, 'gate_only': 5},
+#:     'sum': 155}` 이 났다 — **`measured_red` 가 없다.** 「못 잼 71」 안에
+#:     그 순간의 「재서 빨강」 3 이 묻혀 있었다(같은 실행의 6키 줄:
+#:     unmeasurable 68 · measured_red 3). 조율자가 게이트를 부르는 갈래로
+#:     잰 다른 시각(WO-GX-20260923-07 §1)에는 같은 은닉이 「못 잼 72」 안에
+#:     「재서 빨강」 4 로 나타났다 — **합성이 아니라 실측 둘이 같은 병을 보였다.**
+#:
+#:   P-253(세종)이 「오늘 걷는다」고 판정했다 — `verify_ga_readiness.py`(N 소유,
+#:   같은 커밋으로 Q 가 고쳤다) 쪽에서 옛 줄의 print 문을 지웠으므로, 이 정규식도
+#:   **유일하게 남은 6키 줄**을 읽도록 바꾼다. **부류 셈·점수 식(`KIND_SCORE`·
+#:   `KIND_ORDER`·`kind_points()`)은 이 커밋에서 손대지 않는다** — `measured_red`
+#:   는 `unmeasurable` 과 점수가 같으므로(둘 다 0.0), 점수 계산 직전에만 접어
+#:   `kind_points()` 에 먹인다(아래 `aa_report()`). 눈금표 자체는 그대로 다섯이다.
+_KIND_LINE = re.compile(r"P-246\s*여섯째\s*부류\s*[—-]\s*(.+)")
+
+#: ★ P-253 — **걷어낸 옛 5키 줄이 「호환」이라는 이름으로 되살아나면 잡는다.**
+#:   `_KIND_LINE` 을 6키 줄로 바꾸기만 하면, 누군가 다음 턴에 「예전 도구가
+#:   이 모양을 읽었으니 호환용으로 남겨 둔다」며 옛 줄을 되살려도 이 산출기는
+#:   **조용히 무시**한다(부류 줄을 못 읽었다 · 회색) — 그러나 그 줄이 **다시
+#:   나타났다는 사실 자체**는 회색이 아니라 빨강이어야 한다. 되살아난 옛 줄은
+#:   `measured_red` 라는 낱말이 그 줄에 없다는 것으로 가른다(6키 줄은 반드시
+#:   그 낱말을 담는다).
+_OLD_5KEY_LINE = re.compile(r"부류\s+\d+절\s*[—-]")
+
+
+def old_5key_line_present(out: str) -> bool:
+    """★★ 자기시험 표본(D-310 · **출생 표본**) — 이 술어는 실측에서 태어났다.
+
+    2026-09-22 저녁 `--static` 실행에서 이 산출기(옛 정규식)가 옛 5키 줄
+    (`「초록」 부류 155절 — … unmeasurable 71 … gate_only 5`, `measured_red` 없음)
+    을 읽어 **「못 잼 71」 안에 「재서 빨강」 3 이 묻힌 채로** 점수를 냈다(합성이
+    아니다 — 위 `_KIND_LINE` 주석의 재서 확인 그대로). 조율자가 게이트-부르는
+    갈래로 잰 다른 시각(WO-GX-20260923-07 §1)의 대장에서는 같은 은닉이 **「못 잼
+    72」 안에 「재서 빨강」 4** 로 나타났다. P-253 으로 그 줄을 걷었지만, 코드
+    모양만 남으면 「호환」이라는 이름으로 다음 사람이 되살릴 수 있다 — 그래서
+    그 모양 자체를 시험한다: 빨강이면 재발, 아니면 안전하다.
+    """
+    for line in out.splitlines():
+        if _OLD_5KEY_LINE.search(line) and "measured_red" not in line:
+            return True
+    return False
 
 
 def parse_ga_kinds(out: str):
     """대장의 **부류 셈**을 게이트 출력에서 읽는다 — 파일을 다시 읽지 않는다(D-210).
 
-    파일을 직접 읽으면 게이트가 하는 P-211 검산(부류 합 = 절 수)을 지나친다.
-    그 검산을 지나친 수는 「안 세어진 절」을 조용히 품는다.
+    P-253 이후 **6키 줄**(`★ P-246 여섯째 부류 — …`)만 읽는다 — 옛 5키 줄은
+    걷었고, 이 정규식은 그 줄에도 원래 안 걸렸다(「부류 N절」 모양이 아니라서).
+    그 줄은 스스로 총합을 안 적으므로(옛 줄과 달리) **총합은 여섯 칸의 합으로
+    센다** — 파일을 다시 읽지 않고(D-210), 이 줄 하나만으로 총합·부류 합이
+    항상 같다(구성상 자명하다 — 정규식이 토큰을 빠뜨리면 `got` 자체가 준다).
     """
     for line in out.splitlines():
         m = _KIND_LINE.search(line)
         if not m:
             continue
-        total = int(m.group(1))
-        got = {k: int(v) for k, v in re.findall(r"([a-z_]+)\s+(\d+)", m.group(2))}
+        got = {k: int(v) for k, v in re.findall(r"([a-z_]+)\s+(\d+)", m.group(1))}
         if not got:
             continue
-        return {"total": total, "counts": got, "sum": sum(got.values())}
+        total = sum(got.values())
+        return {"total": total, "counts": got, "sum": total}
     return None
 
 
@@ -1945,6 +2024,13 @@ def aa_report(ga_out: str = None, click=None, click_why: str = "",
     areas, ga_total, _inhand = parse_ga_areas(ga_out or "")
     kind_rows = parse_ga_area_kinds(ga_out or "")
     roll = parse_ga_kinds(ga_out or "")
+    #: ★ P-253 — 걷어낸 옛 5키 줄이 되살아났는지는 **회색이 아니라 빨강**이다.
+    #:   `roll` 이 서든 안 서든(6키 줄이 있든 없든) 이 검사는 독립으로 돈다 —
+    #:   옛 줄이 6키 줄과 **나란히** 되살아나도 잡아야 하기 때문이다.
+    if old_5key_line_present(ga_out or ""):
+        red.append("★ P-253 재발 — 걷어낸 옛 5키 줄(「초록」 부류 N절 — … "
+                   "unmeasurable … gate_only, measured_red 없음)이 다시 나타났다. "
+                   "「호환」이라는 이름으로 되살리지 않는다 — 6키 줄만 정본이다")
 
     # ── FC — 세 칸의 **단순 평균**이다. 세종이 셋에 같은 무게를 줬다 ────────
     fc_cells = []
@@ -2025,7 +2111,17 @@ def aa_report(ga_out: str = None, click=None, click_why: str = "",
     pr_cells = []
     pr_closed_line = ""
     if roll:
-        pts, bad = kind_points(roll["counts"], table)
+        #: ★ P-253 — **눈금표(`table`)는 아직 다섯 칸이다** — 손대지 않는다
+        #:   (부류 셈·점수 식은 이 커밋에서 안 건드린다). 6키 줄은 `measured_red`
+        #:   를 따로 실어 오므로, 점수 계산 **직전에만** `unmeasurable` 에 접는다 —
+        #:   둘의 점수가 이미 같기 때문에(0.0 · KIND_POINTS) 접어도 총점은 그대로다.
+        #:   `roll["counts"]` 자신은 접지 않는다 — 아래 `pr_closed_line` 이
+        #:   「재서 빨강」을 **따로** 보이는 것이 이번에 걷은 은닉을 되풀이하지
+        #:   않는 자리다.
+        score_counts = dict(roll["counts"])
+        score_counts["unmeasurable"] = (score_counts.get("unmeasurable", 0)
+                                        + score_counts.pop("measured_red", 0))
+        pts, bad = kind_points(score_counts, table)
         red += bad
         if roll["sum"] != roll["total"]:
             red.append("PR①: 부류 합 %d 이 절 수 %d 과 다르다 — 안 세어진 절은 "
@@ -2036,13 +2132,14 @@ def aa_report(ga_out: str = None, click=None, click_why: str = "",
                              source="verify_ga_readiness 의 부류 줄(P-211 검산을 통과한 셈)"))
         closed = roll["counts"].get("closed", 0)
         pr_closed_line = ("닫힌 절 **%d/%d** = %.1f · kind 점수 **%.1f/%d** = %.1f "
-                          "(래칫 %d · 규칙만 %d · 게이트만 %d · 못 잼 %d)"
+                          "(래칫 %d · 규칙만 %d · 게이트만 %d · 못 잼 %d · 재서 빨강 %d)"
                           % (closed, roll["total"], closed / roll["total"] * 100.0,
                              pts, roll["total"], pts / roll["total"] * 100.0,
                              roll["counts"].get("ratchet", 0),
                              roll["counts"].get("rule_only", 0),
                              roll["counts"].get("gate_only", 0),
-                             roll["counts"].get("unmeasurable", 0)))
+                             roll["counts"].get("unmeasurable", 0),
+                             roll["counts"].get("measured_red", 0)))
     else:
         grey.append("PR①: 대장의 부류 줄을 못 읽었다 — `verify_ga_readiness` 를 못 불렀다")
         pr_cells.append(cell("대장 kind 점수", 0.70, why="부류 줄을 못 읽었다"))
