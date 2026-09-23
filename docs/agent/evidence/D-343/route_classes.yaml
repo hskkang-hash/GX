@@ -249,6 +249,8 @@ routes:
   "POST /api/dsm/events/{int:event_id}/response": session_only
   "POST /api/dsm/events/{int:event_id}/review": session_only
   "POST /api/dsm/events/{int:event_id}/review-and-acknowledge": session_only
+  "POST /api/dsm/events/{int:event_id}/severity": session_only
+  "GET /api/dsm/events/{int:event_id}/situation-report.docx": session_only
   "GET /api/dsm/events/{int:event_id}/snapshot": session_only
   "GET /api/dsm/events/{int:event_id}/timeline": session_only
   "DELETE /api/dsm/events/{int:event_id}/upper-report": session_only

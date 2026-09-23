@@ -1,33 +1,33 @@
 {
   "note": "D-343 ①② 라우트 인벤토리 전수. inbound_key=accepts 가 「지금 키가 닿는 자리」다. classification 의 기본값은 session_only — 판단이 서지 않으면 좁은 쪽(D-343 ②).",
-  "measured_at": "2026-09-21T17:34:13+07:00",
+  "measured_at": "2026-09-23T10:08:29+07:00",
   "totals": {
-    "routes": 763,
+    "routes": 765,
     "by_inbound_key": {
       "accepts": 549,
-      "refuses": 130,
+      "refuses": 132,
       "open_anonymous": 73,
       "unknown": 9,
       "declared": 2
     },
     "by_classification": {
-      "session_only": 761,
+      "session_only": 763,
       "inbound_key_allowed": 2
     },
     "by_tenant_scope": {
       "none": 651,
-      "required": 105,
+      "required": 107,
       "exempt": 7
     },
     "by_authn": {
       "CustomJWTAuth": 549,
-      "JwtOrInboundKey": 130,
+      "JwtOrInboundKey": 132,
       "": 73,
       "JWTAuth": 9,
       "JwtOrWallToken": 2
     },
     "by_envelope": {
-      "promoted": 402,
+      "promoted": 404,
       "clean": 248,
       "authz_envelope": 113
     },
@@ -5064,6 +5064,52 @@
       "path": "/api/dsm/events/{int:event_id}/review-and-acknowledge",
       "app": "dsm",
       "view": "apps.dsm.api_u1.DsmU1API.review_and_acknowledge",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/dsm/events/{int:event_id}/severity",
+      "app": "dsm",
+      "view": "apps.dsm.api_u24.DsmU24API.event_severity_set",
+      "authn": "JwtOrInboundKey",
+      "authn_chain": [
+        "JwtOrInboundKey",
+        "CustomJWTAuth",
+        "BaseJWTAuth",
+        "HttpBearer",
+        "HttpAuthBase",
+        "AuthBase",
+        "ABC"
+      ],
+      "inbound_key": "refuses",
+      "inbound_key_reason": "",
+      "tenant_scope": "required",
+      "authz_path_permission": false,
+      "envelope": "promoted",
+      "classification": "session_only",
+      "classified_by": "기본값 — 판단이 서지 않으면 좁은 쪽 (D-343 ②)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dsm/events/{int:event_id}/situation-report.docx",
+      "app": "dsm",
+      "view": "apps.dsm.api_u24.DsmU24API.situation_report_docx",
       "authn": "JwtOrInboundKey",
       "authn_chain": [
         "JwtOrInboundKey",

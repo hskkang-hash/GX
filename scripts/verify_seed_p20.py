@@ -36,6 +36,7 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
@@ -211,13 +212,25 @@ def self_test() -> int:
     if hit[1] or "못 쟀다" not in hit[2]:
         bad.append("저장소를 **못 쟀는데** 통과로 읽거나 사유에 그 사실이 없다 (D-301)")
 
+    # ── ★★ [K+Q · 턴 AE] 위임 여부를 가르는 순수 함수 — 양성/음성 한 쌍 ──────
+    if not _should_delegate("gx-shell", False):
+        bad.append("컨테이너 이름이 있고 안에 있지 않은데(정상적인 호스트 호출) "
+                   "위임을 안 하기로 읽는다 — 머리글이 다시 거짓말하게 된다")
+    if _should_delegate("gx-shell", True):
+        bad.append("이미 컨테이너 **안**인데(`GX_ROUTE_IN_CONTAINER=1`) 또 위임하려 "
+                   "한다 — 무한 재귀로 죽는다")
+    if _should_delegate("", False):
+        bad.append("컨테이너 이름이 **없는데**(`GX_ROUTE_CONTAINER` 미설정) 위임하려 "
+                   "한다 — 그런 이름의 컨테이너는 없다")
+
     if bad:
         print("[P20] 자기시험 실패 — 판정기를 먼저 의심한다 (D-350):")
         for b in bad:
             print("    " + b)
         return EXIT_FAIL
     print("[P20] 자기시험 통과 — 초록 표본 1 · 음성 4 + 이름 어긋남 1 + 판정 불가 1 "
-          "+ P-251 출생 표본 1 · 일부 유출 1 · 분모 0 1 · 판정 불가 1")
+          "+ P-251 출생 표본 1 · 일부 유출 1 · 분모 0 1 · 판정 불가 1 "
+          "+ 위임 판단 양성 1 · 음성 2(재귀 · 이름 없음)")
     return EXIT_OK
 
 
@@ -310,7 +323,60 @@ def collect() -> dict:
     return out
 
 
+#: ★★★ [K+Q 실측 · 턴 AE] 머리글이 **거짓말을 하고 있었다** — 「호스트에서 부르면
+#:   `docker exec` 로 위임한다」고 적혀 있었는데 위임 코드가 **없었다**(`subprocess`
+#:   0건). 호스트에서 부르면 `ModuleNotFoundError: No module named 'config'` 로
+#:   섰다(실측 · 아래 자기시험 밖에서 재현했다). 그래서 위임을 **실제로** 넣는다 —
+#:   머리글만 고치는 쪽(정직하게 적기만)도 골랐을 수 있었지만, 이 저장소에는 같은
+#:   문제를 이미 푼 문(`verify_route_alive.delegate_to_container`)이 있어 재는
+#:   비용이 낮다고 판단했다.
+#:
+#:   ⚠ 그 문을 **그대로 가져다 쓰지는 않는다.** A/B 로 재 봤다 — 호스트 프로세스에
+#:   이름이 없는 채로 `docker exec -e MINIO_ACCESS_KEY gx-shell …` 을 부르면
+#:   컨테이너 안 값의 길이가 **20 → 0** 으로 실측됐다(실물 컨테이너로 확인 ·
+#:   비밀값은 안 적는다). 「호스트에 없으면 무해하다」는 그 문의 주석은
+#:   **이 실측과 어긋난다.** `delegate_to_container` 는 MinIO 자격 이름 넷을
+#:   늘 `-e` 로 얹는데, 이 판정기는 **MinIO 자격을 os.environ 으로 안 읽는다**
+#:   (`collect()` 의 `minio_client` 는 Django 설정이 컨테이너 안에서 이미 들고
+#:   있는 값을 쓴다) — 그래서 넘길 이름이 아예 없다. 대신 **값 자체가 비밀이
+#:   아닌 둘**(`DJANGO_SETTINGS_MODULE` · `PYTHONIOENCODING`)만, 리터럴 값으로
+#:   준다 — 이름만 넘기고 호스트 쪽 유무에 기대는 자리가 없으니 그 landmine을
+#:   안 밟는다. 정본 호출(조율자 규약)과 같은 모양이다.
+def _should_delegate(container: str, in_container: bool) -> bool:
+    """위임 여부를 가르는 **순수 함수** — 자기시험이 Django 없이 이 갈래를 잰다."""
+    return bool(container.strip()) and not in_container
+
+
+def _delegate(container: str, json_mode: bool) -> int:
+    import subprocess
+    inner = ["python", "/repo/scripts/verify_seed_p20.py"]
+    if json_mode:
+        inner.append("--json")
+    cmd = ["docker", "exec",
+           "-e", "DJANGO_SETTINGS_MODULE=config.settings",
+           "-e", "PYTHONIOENCODING=utf-8",
+           "-e", "GX_ROUTE_IN_CONTAINER=1",
+           "-w", "/app", container] + inner
+    print(f"[P20] 컨테이너 위임: {container} (호스트에는 `config` 패키지가 없다 · "
+          f"GX_ROUTE_CONTAINER · MinIO 자격은 안 넘긴다 — 컨테이너가 이미 들고 있다)")
+    sys.stdout.flush()
+    env = dict(os.environ, MSYS_NO_PATHCONV="1")
+    try:
+        return subprocess.call(cmd, env=env)
+    except FileNotFoundError:
+        print("[P20] docker 명령을 찾지 못했다 — **판정 불가**")
+        return EXIT_UNDECIDABLE
+
+
 def main() -> int:
+    #: `load_local_env` 는 **호출만 한다**(그 파일은 소유표 밖 · D-369 — 두 벌 안 둔다).
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from verify_route_alive import load_local_env
+        load_local_env()
+    except Exception:                                    # noqa: BLE001
+        pass
+
     ap = argparse.ArgumentParser(description="P-20 시드 네 수 (2026-09-22)")
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--json", action="store_true", help="수를 JSON 으로도 낸다")
@@ -321,11 +387,17 @@ def main() -> int:
     if self_test() != EXIT_OK:
         return EXIT_FAIL
 
+    container = os.environ.get("GX_ROUTE_CONTAINER", "").strip()
+    if _should_delegate(container, bool(os.environ.get("GX_ROUTE_IN_CONTAINER"))):
+        return _delegate(container, args.json)
+
     try:
         counts = collect()
     except Exception as exc:                             # noqa: BLE001
         print(f"[P20] **판정 불가** — 환경을 세우지 못했다: {type(exc).__name__}: {exc}")
-        print("[P20] 컨테이너 안에서 DJANGO_SETTINGS_MODULE 를 주고 돌린다")
+        print("[P20] `GX_ROUTE_CONTAINER=gx-shell` 을 주면 이 판정기가 스스로 "
+              "docker exec 로 위임한다 — 그래도 안 되면 컨테이너 안에서 "
+              "DJANGO_SETTINGS_MODULE 을 주고 직접 돌린다")
         return EXIT_UNDECIDABLE
 
     print(f"[P20] [입력] 시드 이벤트 {counts['seed_events']}건 · "
@@ -354,7 +426,10 @@ if __name__ == "__main__":
                   "청구·KPI 0건) — **분모 5개**(`judge()` 가 매 실행마다 재는 수 · "
                   "지금 셌다). 씨앗 사건 전수는 gx-shell 안에서 재고 `[P20]` 줄에 "
                   "그대로 찍힌다 — 0건이면 초록으로 적지 않는다"),
-        target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · 호스트에서 부르면 docker exec 로 위임한다",
+        target="gx-shell 컨테이너 · DJANGO_SETTINGS_MODULE=config.settings (앱과 같은 설정) · "
+               "호스트에서 부르면 `GX_ROUTE_CONTAINER` 가 서 있을 때만 docker exec 로 "
+               "**실제로** 위임한다(코드로 있다 · K+Q 턴 AE) — 그 이름이 없으면 위임 없이 "
+               "그대로 돌다 `No module named 'config'` 로 판정 불가(exit 2)",
         as_="(HTTP 계정 없음) — gx-shell 안 Django ORM 으로 읽는다 · DB 자격은 앱이 들고 있는 것 그대로(이름: DATABASE_URL / POSTGRES_*)",
         source="살아 있는 DB·앱 레지스트리 (django.setup 뒤 ORM) — 파일 사진이 아니다",
     )

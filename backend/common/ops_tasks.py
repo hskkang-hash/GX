@@ -358,7 +358,7 @@ def _iter_verdicts(report) -> list[str]:
 
 
 @shared_task(name="common.ops_backup_beat")
-def ops_backup_beat() -> dict:
+def ops_backup_beat(invoked_by: str = "manual") -> dict:
     """백업을 뜬다 — **켜져 있을 때만.**
 
     ★ 꺼져 있으면 「건너뛰었다」고 **적고** 돌아간다. 조용히 아무것도 안 하면
@@ -366,10 +366,29 @@ def ops_backup_beat() -> dict:
     ★ 이 태스크는 `ops_restore` 를 부르지 않는다. **복구는 사람이 확인하는 일**이고
       (D-354 ① — 복구를 해 보지 않은 백업은 백업이 아니다), 자동 복구는
       운영 DB 를 건드리는 일이라 여기서 하지 않는다.
+
+    ★★ 호출자 칸 — `invoked_by` (P-264 · OPS-19 · 턴 AE 차선 E)
+    ------------------------------------------------------------
+    지금까지 이 태스크가 남기는 판정문(`D-373/backup_last.json`)에는 **누가 불렀는지가
+    없었다.** beat 이 매일 03:00(Ho_Chi_Minh)에 부른 것과 사람이 `gx-shell` 에서
+    `ops_backup_beat()` 를 바로 부른 것이 **똑같은 판정문**을 남겼다 — 그래서 사람이
+    beat 로그·celery 로그·금고 파일 셋을 대 봐야 「이것이 저절로 돈 것」을 알 수 있었고,
+    로그가 회전하면 그 이음이 사라졌다(OPS-19 실측 2026-09-23).
+
+    이 태스크는 **제 손으로 제가 불린 자리를 모른다** — celery 태스크의 실행 컨텍스트에는
+    "beat 스케줄러가 발화시켰다" 를 말해 주는 표준 필드가 없다(django_celery_beat 가 넘기는
+    `periodic_task_name` 옵션은 태스크 메시지에 실리지 않는다 — 확인함). 그래서 **명시로
+    배선한다**: `config/celery.py` 의 `ops-backup-daily` 항목이 `kwargs={"invoked_by": "beat"}`
+    를 **직접 건넨다.** 그 kwarg 없이 부르면(사람이 `ops_backup_beat()` 나 `.delay()` 를
+    셸에서 바로 부르면) 기본값 `"manual"` 이 판정문에 그대로 남는다.
+
+    ⚠ 이 칸은 **믿음이 아니라 배선**이다 — beat 항목이 이 kwarg 를 빼먹으면 다시
+      구별이 안 된다. 그래서 `verify_backup_recovery.py` 의 ㉡ 는 이 칸을 **직접 읽고**,
+      금고의 실제 파일과 이름이 맞는지도 대조한다(판정문만 믿지 않는다) — 아래 참조.
     """
     stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
     if not backup_schedule_enabled():
-        payload = {"measured_at": stamp, "verdict": "SKIPPED",
+        payload = {"measured_at": stamp, "verdict": "SKIPPED", "invoked_by": invoked_by,
                    "reason": ("백업 주기가 꺼져 있다 (OPS_BACKUP_SCHEDULE_ENABLED). "
                               "보관처와 보존 기간을 정하는 것은 운영의 판단이고, "
                               "기본값으로 켜면 우리가 남의 디스크에 대해 그것을 정하는 "
@@ -379,7 +398,7 @@ def ops_backup_beat() -> dict:
 
     out_dir = getattr(settings, "OPS_BACKUP_DIR", "") or ""
     if not out_dir:
-        payload = {"measured_at": stamp, "verdict": "SKIPPED_UNDECLARED",
+        payload = {"measured_at": stamp, "verdict": "SKIPPED_UNDECLARED", "invoked_by": invoked_by,
                    "reason": ("백업 목적지가 **선언되지 않았다**(`OPS_BACKUP_DIR`) — "
                               "**어디에 뜰지 모르는 백업은 백업이 아니다.** "
                               "기본 경로를 지어내지 않는다 (D-280 · P-67). "
@@ -392,7 +411,7 @@ def ops_backup_beat() -> dict:
     #: ★ 「같은 디스크는 백업이 아니다」 — 선언이 `/backup` 이어도 **붙어 있어야** 한다.
     separate = backup_dir_is_separate_volume(out_dir)
     if separate is not True:
-        payload = {"measured_at": stamp, "verdict": "UNKNOWN",
+        payload = {"measured_at": stamp, "verdict": "UNKNOWN", "invoked_by": invoked_by,
                    "out_dir": out_dir, "separate_volume": separate,
                    "reason": (f"보관처 {out_dir!r} 가 **별도 볼륨으로 안 붙어 있다**"
                               if separate is False else
@@ -407,7 +426,7 @@ def ops_backup_beat() -> dict:
 
     module = _load("ops_backup")
     if module is None:
-        payload = {"measured_at": stamp, "verdict": "UNKNOWN",
+        payload = {"measured_at": stamp, "verdict": "UNKNOWN", "invoked_by": invoked_by,
                    "reason": "ops_backup.py 를 찾지 못했다 — 판정 불가"}
         logger.error("[OPS][BACKUP] %s", payload["reason"])
         _write_evidence("backup_last", payload)
@@ -420,13 +439,13 @@ def ops_backup_beat() -> dict:
         objects = module.mirror_objects(target, scope="event_bound")
         manifest = {"measured_at": stamp, "db": db, "objects": objects}
         ok = module.manifest_is_verifiable(manifest)
-        payload = {"measured_at": stamp,
+        payload = {"measured_at": stamp, "invoked_by": invoked_by,
                    "verdict": "OK" if ok else "UNKNOWN",
                    "reason": "" if ok else ("대조표가 검증 가능하지 않다 — "
                                             "「파일이 생겼다」는 성공이 아니다"),
                    "manifest": manifest, "out_dir": str(target)}
     except Exception as exc:                       # noqa: BLE001
-        payload = {"measured_at": stamp, "verdict": "ALARM",
+        payload = {"measured_at": stamp, "verdict": "ALARM", "invoked_by": invoked_by,
                    "reason": f"{type(exc).__name__}: {exc}"[:300]}
         logger.exception("[OPS][BACKUP] 백업이 실패했다")
 

@@ -1,4 +1,6 @@
 import os
+from zoneinfo import ZoneInfo
+
 from celery import Celery
 from celery.schedules import crontab
 from celery.signals import task_prerun, task_postrun, worker_process_init
@@ -18,6 +20,37 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
+
+def _seoul_crontab(**kw):
+    """이 항목 **하나만** `Asia/Seoul` 로 잰다 — 앱 전역 시간대는 그대로 둔다 (P-260).
+
+    ★ 왜 앱 전역(`app.conf.timezone` · `TIME_ZONE=Asia/Ho_Chi_Minh`, `config/settings.py`)을
+      안 바꾸는가 — 이 파일의 `beat_schedule` 에는 13개 항목이 있고, celery 는 앱 전체에
+      **시간대 하나**만 갖는다. 전역을 Seoul 로 바꾸면 이 크론 문자열(hour=)들은 그대로인 채
+      해석만 바뀌어 **다른 열두 항목이 전부 두 시간 밀린다** — 아무도 부탁하지 않은 변경이다.
+      이 턴이 맡은 것은 **백업 하나**고(WO-08 §5 E), 그래서 이 항목만 갈라 바꾼다.
+
+    ★ 어떻게 한 항목만 다른 시간대를 갖는가 — `django_celery_beat` 가 이 crontab 객체를
+      DB 의 `CrontabSchedule` 행으로 옮겨 심을 때(`schedulers.py::ModelEntry.to_model_schedule`
+      → `CrontabSchedule.from_schedule`) **`schedule.tz` 를 그대로 그 행의 `timezone` 칸에
+      적는다.** `crontab.tz` 는 `functools.cached_property`(기본값 `self.app.timezone`)라
+      **인스턴스 값으로 덮어쓸 수 있다** — data descriptor 가 아니므로 `c.tz = ...` 가
+      인스턴스 사전에 바로 앉고, 그 뒤로는 그 값만 읽힌다. 그래서 이 함수가 만든 crontab
+      만 `tz=Asia/Seoul` 을 지니고, 나머지 항목은 여전히 `app.timezone`(Ho_Chi_Minh)을 읽는다.
+      (검증: `docker exec gx-shell python -c "from django_celery_beat.models import
+      CrontabSchedule; import inspect; print(inspect.getsource(CrontabSchedule.from_schedule))"`
+      — `spec['timezone'] = schedule.tz`.)
+
+    ⚠ **살아 있는 `gx-beat-e` 도 재시작 없이 이 값을 읽는다** — `DatabaseScheduler` 는
+      매 tick 마다 `Changes` 표의 갱신 시각을 보고, DB 행이 바뀌면 다시 읽는다
+      (`schedulers.py::DatabaseScheduler.schedule_changed`). 그래서 이 파일을 고치는 것과
+      별개로, **실제 적용은 DB 의 `CrontabSchedule` 행이 바뀌어야** 한다 — 이 턴에서는
+      코드만 정본으로 세우고, DB 행 적용 여부는 쪽지(조율자.inbox/E.md)에 실측으로 적는다.
+    """
+    c = crontab(**kw)
+    c.tz = ZoneInfo("Asia/Seoul")
+    return c
+
 
 # Configure Celery Beat schedule
 app.conf.beat_schedule = {
@@ -121,7 +154,15 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=3, minute=50),
     },
     "ops-backup-daily": {
-        # ★ **매일 03:00** — 세종 판정 P-67 이 정한 시각이다(2026-09-06).
+        # ★ **매일 05:00 (Asia/Seoul 정본 · P-260 · 턴 AE 차선 E)** — 세종 판정 P-67 이
+        #   정한 순간은 그대로다. 옛 표기는 **03:00 (Asia/Ho_Chi_Minh)** — 두 표기는
+        #   **같은 순간**이다(HCM +07:00 03:00 = UTC 20:00(전날) = Seoul +09:00 05:00).
+        #   이 항목만 `_seoul_crontab()` 로 짓는다 — 그 이유·검증은 그 함수의 docstring.
+        #   ⚠ 소리 없이 바꾸지 않는다: 옛 03:00 도 새 05:00 도 **가리키는 순간은 하나**이고,
+        #     이전 실측 기록(예: OPS-19 자동덤프 · `2026-09-23 03:00:00 Ho_Chi_Minh`)을
+        #     KST 로 다시 읽으면 **05:00 KST** 다. 기록을 고치는 것이 아니라 읽는 잣대를
+        #     하나로 세우는 것이다.
+        #
         #   그 전까지 이 줄은 03:30 에 있었고 **태스크가 스스로 꺼져 있었다**
         #   (`OPS_BACKUP_SCHEDULE_ENABLED` 기본 False · `OPS_BACKUP_DIR` 빈 문자열).
         #   그래서 「등록돼 있는데 백업이 한 번도 저장된 적 없다」였다 — OPS-19 가
@@ -131,8 +172,13 @@ app.conf.beat_schedule = {
         #   `backend/config/retention_seed.py` (켬 · 목적지 `/backup` · 보존 14일).
         #   운영에서는 그 시드가 한 칸도 안 읽히므로 **여전히 꺼져 있고**, 그것이 옳다 —
         #   「어디에 얼마나 오래 쌓을 것인가」는 고객이 U5 에서 정한다.
+        #
+        # ★ 호출자 칸(P-264) — beat 이 이 항목으로 부를 때만 `invoked_by="beat"` 가 실린다.
+        #   사람이 셸에서 `ops_backup_beat()` 를 바로 부르면 이 kwargs 가 없으니 함수
+        #   기본값 `"manual"` 이 판정문에 남는다 — 판정문 한 장으로 beat 과 사람이 갈린다.
         "task": "common.ops_backup_beat",
-        "schedule": crontab(hour=3, minute=0),
+        "kwargs": {"invoked_by": "beat"},
+        "schedule": _seoul_crontab(hour=5, minute=0),
     },
     "ops-restore-drill-weekly": {
         # ★ **복구 시험 주 1회 자동** — 세종 판정 P-67 (2026-09-06).

@@ -287,6 +287,43 @@ def user_count() -> int:
         return -1
 
 
+#: ═══════════════════════════════════════════════════════════════════════
+#: ★★★ [K+Q · 턴 AE · 조율자 넘김] **청구 배선** — 이 계측기가 돌 때마다 만드는
+#:   계정 1(`gxprobe_onb_<stamp>`)과 카메라 1 을 청구에서 뺀다.
+#:
+#:   ⚠ **이름으로 훑지 않는다**(D-280 · `common/billing_marks.py` 머리말). 이 함수는
+#:   방금 **이 프로세스가 만든 것을 안다고 확신하는 pk 하나만** 받아서 표식한다 —
+#:   나중에 `username__startswith="gxprobe_"` 같은 그물로 훑는 배치가 아니다.
+#:   실제 물건은 여전히 제품 문(HTTP)을 두드려 만든다(브라우저가 진짜 고객처럼
+#:   클릭한다) — 그래서 「만드는 순간」은 서버 안에 있고 이 스크립트는 그 순간을
+#:   못 잡는다. 대신 **응답이 성공을 확인해 준 바로 다음 줄**에서 부른다 — 이
+#:   프로세스가 잡을 수 있는 가장 이른 자리다. 더 이른 자리(뷰 코드 안에서 직접)는
+#:   `username`/`code` 접두로 「이게 프로브다」를 추측해야 하고, 그것이 바로
+#:   D-280 이 막는 일이다 — 그래서 그 길은 고르지 않는다(실측해서 골랐다).
+#:
+#:   실패해도 **측정 자체는 막지 않는다**(청구 배선이 죽었다고 온보딩 수가 안
+#:   나오면 더 큰 회색이 된다) — 다만 실패를 **조용히 삼키지 않는다**: 돌려주는
+#:   문자열이 `evidence` 에 그대로 실려 판정문에 남는다.
+def _mark_probe_unbillable(app_label: str, model_name: str, pk, reason: str) -> str:
+    """방금 만든 행(`app_label.model_name` 의 `pk`)을 곧바로 청구에서 뺀다.
+
+    돌려주는 문자열은 **사람이 읽는 판정 근거**다 — 성공/실패 어느 쪽이든
+    evidence 에 그대로 적는다(조용히 성공하거나 조용히 실패하지 않는다).
+    """
+    if not pk:
+        return "표식 안 함(pk 를 못 읽었다)"
+    try:
+        apps = orm()
+        sys.path.insert(0, "/app")
+        from common.billing_marks import mark_unbillable
+        Model = apps.get_model(app_label, model_name)
+        obj = Model._base_manager.get(pk=pk)
+        mark_unbillable(obj, "probe", reason=reason)
+        return f"표식 됨({app_label}.{model_name} pk={pk} · source=probe)"
+    except Exception as exc:                            # noqa: BLE001
+        return f"표식 실패({app_label}.{model_name} pk={pk}) — {type(exc).__name__}: {exc}"
+
+
 def audit_count_for(event_id: int) -> int:
     """감사 행 — 상태 전이가 남긴 행 수. 표에 이벤트 칸이 없으면 -1 (못 셈)."""
     try:
@@ -1887,7 +1924,20 @@ def rows_u5(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         posts = net.find("POST", "/api/dsm/cameras/import", m)
         c1 = camera_counts()
         pred = bool(posts) and any(p["status"] == 200 for p in posts) and c1["total"] == c0["total"] + 1
-        evidence += f"표 먼저 보기={clicked1} · 적용={clicked2} · POST import {[p['status'] for p in posts]} · 카메라 수 {c0['total']} → {c1['total']} (서버 기록)"
+        # ── [K+Q · 턴 AE · P-237 「청구서 정직」] 만든 카메라를 **곧바로** 청구에서 뺀다 ──
+        #    (`_mark_probe_unbillable` 머리말 — 이름으로 훑지 않는다 · D-280).
+        mark_note = "표식 안 함(POST 가 실패했거나 카메라 수가 안 늘었다)"
+        if pred:
+            try:
+                SM = orm().get_model("stream_monitors", "StreamMonitor")
+                cam_pk = SM._base_manager.filter(code=probe_cam).values_list("pk", flat=True).first()
+            except Exception:                            # noqa: BLE001
+                cam_pk = None
+            mark_note = _mark_probe_unbillable(
+                "stream_monitors", "StreamMonitor", cam_pk,
+                "V 온보딩 계측기(measure_onboarding_t.py U5#4) 가 만든 씨앗 카메라 — 청구 제외")
+        evidence += (f"표 먼저 보기={clicked1} · 적용={clicked2} · POST import {[p['status'] for p in posts]} · "
+                    f"카메라 수 {c0['total']} → {c1['total']} (서버 기록) · [청구] {mark_note}")
     else:
         evidence = f"카메라 일괄 등록={('카메라 일괄 등록' in b)} · 표 먼저 보기={('표 먼저 보기' in b)}"
     out.append(result("U5#4", "/dsm/cameras/import", seen, pred, evidence, url=url))
@@ -1966,6 +2016,12 @@ def rows_u5(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
             js = p.get("json") or {}
             if isinstance(js, dict):
                 new_id = js.get("user_id") or js.get("id") or new_id
+        # ── [K+Q · 턴 AE · P-237 「청구서 정직」] **표식을 먼저** — 되돌리기(비활성화)
+        #    보다도 앞이다. 이 프로세스가 new_id 를 손에 쥔 바로 다음 줄이 가장 이른
+        #    자리다(`_mark_probe_unbillable` 머리말 — 이름으로 훑지 않는다 · D-280).
+        mark_note = _mark_probe_unbillable(
+            "user", "CoreUser", new_id or None,
+            "V 온보딩 계측기(measure_onboarding_t.py U5#1) 가 만든 씨앗 계정 — 청구 제외")
         off = []
         if new_id:
             # 「계정 비활성화」 카드의 칸 — `placeholder="user_id"` (`People.tsx`).
@@ -1982,7 +2038,7 @@ def rows_u5(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
             off = net.find("POST", "/deactivate", m)
         evidence += (f"POST people/create {codes} · [서버 기록] 사용자 수 {u0} → {u1} · "
                      f"[되돌림] 만든 계정 id={new_id or '못 읽었다'} 비활성화 {[o['status'] for o in off] or '못 되돌림'} · "
-                     f"씨앗 이름 {probe_user}")
+                     f"씨앗 이름 {probe_user} · [청구] {mark_note}")
     else:
         evidence = f"「{PEOPLE_HEADLINE}」 이 화면에 없다 · url={page.url}"
     out.append(result("U5#1", "/dsm/people", seen, pred, evidence, url=url))

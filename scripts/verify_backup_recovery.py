@@ -235,6 +235,20 @@ def latest_receipt(receipt_dir=RECEIPT_DIR, drill_file=DRILL_FILE, now=None):
 # ───────────────────────────────────────────────────────────────────────────
 # ㉠ 판정문
 # ───────────────────────────────────────────────────────────────────────────
+def _read_verdict_raw(path=VERDICT_FILE) -> dict:
+    """`backup_last.json` 을 **있는 그대로** 읽는다. 없거나 못 읽으면 `{}` — 지어내지 않는다.
+
+    ★ ㉡(`judge_beat_dump`)이 이 원본을 쓴다 — `invoked_by` 와 `manifest.db.file` 은
+      `judge_verdict()` 의 축약된 판정(OK/FAIL/UNDECIDABLE)에는 안 담기던 칸이다.
+    """
+    try:
+        if not path.is_file():
+            return {}
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
 def judge_verdict(path=VERDICT_FILE, now=None):
     now = now or utcnow()
     if not path.is_file():
@@ -247,7 +261,10 @@ def judge_verdict(path=VERDICT_FILE, now=None):
     verdict = str(data.get("verdict", "")).upper()
     stamp = parse_ts(data.get("measured_at"))
     out = {"verdict": verdict, "at": stamp.isoformat() if stamp else None,
-           "reason": str(data.get("reason", ""))[:200]}
+           "reason": str(data.get("reason", ""))[:200],
+           #: ★ 호출자 칸(P-264) — 없으면 `None` 이다. 「모른다」와 「manual」은 다른
+           #:   말이 아니다: 둘 다 「beat 가 불렀다고 말하지 않았다」이고, ㉡ 은 둘 다 반려한다.
+           "invoked_by": data.get("invoked_by")}
     if verdict == "ALARM":
         out["state"] = "FAIL"
         out["why"] = "기계가 ALARM 을 적었다: %s" % out["reason"]
@@ -258,6 +275,66 @@ def judge_verdict(path=VERDICT_FILE, now=None):
         out["state"] = "UNDECIDABLE"
         out["why"] = "판정이 %r 이다 — 초록이 아니다" % verdict
     return out
+
+
+# ───────────────────────────────────────────────────────────────────────────
+# ㉡ — **마지막 beat 덤프의 나이** (P-264 · P-260 · 턴 AE 차선 E)
+# ───────────────────────────────────────────────────────────────────────────
+#: 왜 26h 인가 — 백업 주기는 매일 05:00 KST(P-260) 다. 하루를 놓치는 것은 사고이므로
+#: 문턱은 하루(24h) + 여유 2h. 옛 ㉡(`judge_vault` 의 state, 48h)은 「덤프가 있냐」만
+#: 잴 때의 문턱이었다 — 이제 「beat 가 오늘 불렀냐」를 재므로 이틀치 여유를 둘 이유가 없다.
+FRESH_BEAT_DUMP_HOURS = 26
+
+
+def judge_beat_dump(vault: dict, raw_verdict: dict, now=None) -> dict:
+    """㉡ — 마지막 **beat** 덤프의 나이 ≤ 26h.
+
+    ★ 왜 다시 지었나 [실측 2026-09-23 · OPS-19] — 옛 ㉡(`judge_vault` 의 state)은
+      「금고에 바이트 있는 덤프가 최근에 있다」만 물었다. 그 술어는 **누가 그 덤프를
+      냈는지**를 안 묻는다 — 그래서 사람이 손으로 뜬 덤프도 초록으로 세었다:
+      「오늘 이 자동 덤프에도, 어제 손 덤프에도 똑같이 초록을 냈다」
+      (`docs/agent/evidence/OPS-19/자동덤프_첫건_20260923.md` §④).
+
+    이 술어는 **셋을 함께** 본다:
+      ① 판정문의 `invoked_by` 가 정확히 `"beat"` 인가 — 없거나 `"manual"` 이면 반려.
+      ② 그 판정문이 가리키는 덤프 파일 이름이 **금고의 가장 최근(바이트 있는) 덤프와
+         같은가** — 판정문만 믿지 않는다. 판정문 이후에 다른 손 덤프가 떴으면 금고의
+         "가장 최근"은 그 손 덤프이고, 이름이 달라지므로 여기서 잡힌다.
+      ③ 그 순간이 `FRESH_BEAT_DUMP_HOURS` 이내인가.
+
+    ★★ 이 함수의 자기시험은 **음성 대조를 반드시 포함한다**(`self_test()` 참조) —
+      「금고에 바이트 있는 최근 덤프가 있어도 판정문이 manual 이면 빨강」이 없으면
+      이 함수는 옛 ㉡ 과 똑같이 「손으로 뜬 덤프만 있는 금고」에도 초록을 낼 수 있다.
+    """
+    now = now or utcnow()
+    invoked_by = raw_verdict.get("invoked_by")
+    if invoked_by != "beat":
+        return {"state": "FAIL", "invoked_by": invoked_by,
+                "why": ("판정문의 호출자가 'beat' 가 아니다(%r) — 손으로 뜬 덤프는 "
+                        "이 술어를 채우지 못한다(P-264)" % (invoked_by,))}
+
+    newest_at_s = vault.get("newest_at")
+    newest = vault.get("newest")
+    if not newest_at_s:
+        return {"state": "FAIL", "invoked_by": invoked_by,
+                "why": "금고에 바이트가 있는 덤프가 없다"}
+
+    dump_file = ((raw_verdict.get("manifest") or {}).get("db") or {}).get("file")
+    if dump_file and newest and Path(dump_file).name != Path(newest).name:
+        return {"state": "FAIL", "invoked_by": invoked_by,
+                "newest_in_vault": Path(newest).name, "dump_file": dump_file,
+                "why": ("판정문의 파일(%s)과 금고의 최신 덤프(%s)가 다르다 — "
+                        "판정문 이후에 다른 덤프가 떴을 수 있다"
+                        % (dump_file, Path(newest).name))}
+
+    newest_at = parse_ts(newest_at_s)
+    age_hours = round((now - newest_at).total_seconds() / 3600, 1)
+    if age_hours > FRESH_BEAT_DUMP_HOURS:
+        return {"state": "FAIL", "invoked_by": invoked_by, "age_hours": age_hours,
+                "why": ("beat 가 부른 마지막 덤프가 %.1f시간 전이다 (한도 %dh) — "
+                        "정기 백업이 돌지 않고 있다" % (age_hours, FRESH_BEAT_DUMP_HOURS))}
+    return {"state": "OK", "invoked_by": invoked_by, "age_hours": age_hours,
+            "why": "beat 가 부른 덤프가 %.1f시간 전에 있다" % age_hours}
 
 
 def count_inputs(rows):
@@ -278,6 +355,13 @@ def run(now=None, rows=...):
     now = now or utcnow()
     if rows is ...:
         rows = list_vault()
+    #: ★ [조율자 교정 · 2026-09-23] 여기(OPS-04 — 「백업이 있고 그것으로 살아나는가」)의
+    #:   ㉡ 은 **금고 신선도만** 잰다(원래대로). 「beat 가 불렀는가」는 **다른 질문**
+    #:   (OPS-19 — 저절로 도는가·RPO)이고 그 답은 `scripts/verify_backup_autonomy.py`
+    #:   가 ㉤ 로 낸다(`judge_beat_dump()` 를 그대로 가져다 쓴다 · D-369). 한 게이트에
+    #:   두 물음을 넣었더니 OPS-04 의 참인 답(오늘 복구가 됐다)이 OPS-19 의 빨강에
+    #:   덮여 마지막 줄이 세상과 어긋났다(「복구할 것이 없다」— 사실은 있었다) — 그래서
+    #:   가른다.
     return {"verdict": judge_verdict(now=now),
             "vault": judge_vault(rows, now=now),
             "receipt": latest_receipt(now=now)}
@@ -384,6 +468,14 @@ def self_test() -> int:
     cases.append(("stat 줄 둘을 읽는다",
                   parse_stat_lines("0 /backup/a.dump\n5000000 /backup/b.dump") ==
                   [("/backup/a.dump", 0), ("/backup/b.dump", 5000000)]))
+
+    #: ★ [조율자 교정 · 2026-09-23] `judge_beat_dump()` 의 자기시험(음성 대조·출생 표본
+    #:   포함)은 여기 있지 않다 — **`scripts/verify_backup_autonomy.py`(OPS-19 전용
+    #:   게이트)로 옮겼다.** OPS-04(이 파일)와 OPS-19(그 파일)는 다른 물음이고, 한
+    #:   게이트가 둘을 같이 답하면 한쪽의 참이 다른 쪽의 빨강에 덮인다(조율자 실측
+    #:   2026-09-23 — "복구할 것이 남아있지 않다"고 말했는데 사실은 있었다). `judge_beat_dump()`
+    #:   자체는 **여기서 지우지 않았다** — 그 파일이 `import verify_backup_recovery` 로
+    #:   가져다 쓴다(D-369 — 같은 물음의 두 벌은 반드시 어긋난다).
 
     with tempfile.TemporaryDirectory() as tmp:
         p = Path(tmp) / "backup_last.json"

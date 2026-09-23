@@ -27,6 +27,26 @@
 가른다(주소도 `10.255.255.77` 로 따로 둔다). 로그인 계정은 **없는 이름**이다 — 실계정의
 실패 횟수(5회 잠금)를 올리지 않는다.
 
+★ 「혼자 재면 통과」함정 (턴 AE · 차선 S · 실측 2026-09-23)
+------------------------------------------------------------
+`LocMemCache` 는 `LOCATION` 문자열을 키로 한 **프로세스 전역** 딕셔너리를 쓴다
+(`django.core.cache.backends.locmem._caches`). `override_settings(CACHES=LOCMEM)` 이
+클래스마다 새 백엔드 객체를 만들어도 `LOCATION="sec21-lane-f"` 가 같으면 **같은
+전역 딕셔너리**를 돌려받는다 — 그래서 이 시험을 어제 전량 안에서 돌리면(다른 시험이
+같은 창 안에서 방금 로그인을 몇 번 했으면) 계수가 이미 차 있어 **여섯 번째보다
+먼저** 429 가 나거나, 반대로 여섯 번째에도 아직 안 차 있어 400 이 나올 수 있다 —
+**벽시계 위 어디에 서느냐로 색이 바뀐다.** `django_ratelimit.core.get_usage` 는
+`caches[getattr(settings, "RATELIMIT_USE_CACHE", "default")]` 를 읽는다(실측:
+`RATELIMIT_USE_CACHE` 는 이 저장소 어디에도 없다 → 별칭은 `"default"`) — 이 클래스가
+덮은 `CACHES["default"]` 와 **같은 별칭**이다. 그래서 `setUp` 은 정확히
+`caches["default"].clear()` 를 부른다(전역 `django.core.cache.cache` 가 아니라 —
+그건 이 클래스 밖에서 import 되면 override 이전 별칭을 붙들 수 있다).
+
+음성 대조(이 파일의 진짜 닫는 조건)는 `test_prefilled_counter_makes_first_call_429`
+다: 계수를 일부러 채운 뒤 **다른 클라이언트**(같은 IP)로 「첫」 부름을 해도 429 가
+와야 한다 — 그래야 이 시험이 실제로 그 캐시를 재고 있다는 뜻이다. 이 시험이
+빨강이면(즉 채워도 400) 위 여섯째-시험은 통과해도 아무것도 안 잰 것이다.
+
 절대 금지 (AGENT_LOOP 절대금지 #4·#5 · D-105 · D-224)
     skip·xfail·비활성화하지 말 것.
 """
@@ -61,6 +81,16 @@ LIMIT_PER_MINUTE = 5
 
 @override_settings(CACHES=LOCMEM)
 class LoginRateLimitBodyTest(TestCase):
+    def setUp(self):
+        # ★ 시험 사이에 계수를 비운다 — `LOCATION="sec21-lane-f"` 는 프로세스 전역
+        # 딕셔너리를 가리키므로, 안 비우면 「벽시계 위 어디에 서느냐」로 색이 바뀐다
+        # (턴 AE 실측: 어제 전량 실패 · 오늘 전량 통과 · 코드는 그대로였다).
+        # `django_ratelimit` 이 읽는 별칭과 **같은 별칭**("default")을 비운다 — 실측:
+        # `RATELIMIT_USE_CACHE` 설정이 이 저장소 어디에도 없어 기본값 "default" 다.
+        from django.core.cache import caches
+
+        caches["default"].clear()
+
     def _post(self, client: Client):
         return client.post(LOGIN, data=NOBODY, content_type="application/json")
 
@@ -119,3 +149,45 @@ class LoginRateLimitBodyTest(TestCase):
         mw = RateLimitBodyMiddleware(lambda req: None)
         req = RequestFactory().post(LOGIN)
         self.assertIsNone(mw.process_exception(req, PermissionDenied()))
+
+    # ── 음성 대조 표본 1 (턴 AE · P-255) ─────────────────────────────────────
+    #
+    # 아래 두 시험은 **함께** 서야 「고쳤다」다. 하나만 서면 이 파일은 여전히
+    # 「혼자 재면 통과」다.
+
+    def test_cleared_counter_needs_five_before_sixth_is_429(self):
+        """양성 대조 — `setUp` 이 비운 직후에는 다섯째까지 400 이고 여섯째만 429 다.
+
+        (위 `test_sixth_login_is_429_...` 와 같은 방향이지만, 그 시험의 온갖 부가
+        단언과 분리해 이 방향 하나만 짧게 못박아 둔다 — 아래 음성 대조와 나란히
+        읽히도록.)
+        """
+        client = Client(**NO_CACHE, REMOTE_ADDR=ADDR)
+        for i in range(LIMIT_PER_MINUTE):
+            r = self._post(client)
+            self.assertEqual(r.status_code, 400, f"{i+1}번째: {r.content[:200]!r}")
+        r = self._post(client)
+        self.assertEqual(r.status_code, 429, r.content[:200])
+
+    def test_prefilled_counter_makes_first_call_429(self):
+        """음성 대조 — 계수를 일부러 채운 뒤에는 **새 클라이언트의 첫 부름**도 429 다.
+
+        `setUp` 이 막 비웠어도, 이 시험 안에서 다시 `LIMIT_PER_MINUTE` 번을 태워
+        채우면(= 「앞 시험이 방금 로그인을 몇 번 했다」를 흉내) 그 다음은 같은 IP
+        위에서는 클라이언트 객체가 달라져도(= 다른 시험이라고 흉내) 429 다 — 율제한은
+        세션이 아니라 **IP·창**으로 센다. 이 시험이 초록이어야 이 파일이 실제로
+        `caches["default"]`(`LOCATION="sec21-lane-f"`)를 재고 있다는 뜻이다. 이 시험이
+        빨강이면(즉 채워도 여전히 400 이 나오면) 위 시험들은 캐시를 안 재는 —
+        아무것도 검증 못 하는 — 시험이다.
+        """
+        priming_client = Client(**NO_CACHE, REMOTE_ADDR=ADDR)
+        for i in range(LIMIT_PER_MINUTE):
+            r = self._post(priming_client)
+            self.assertEqual(r.status_code, 400, f"채우는 중 {i+1}번째: {r.content[:200]!r}")
+
+        # 새 클라이언트(같은 IP) — 이 클라이언트 기준으로는 "첫" 부름이다.
+        fresh_client = Client(**NO_CACHE, REMOTE_ADDR=ADDR)
+        r = self._post(fresh_client)
+        self.assertEqual(r.status_code, 429, r.content[:200])
+        body = json.loads(r.content.decode("utf-8"))
+        self.assertEqual(body["code"], RATE_LIMITED_CODE)

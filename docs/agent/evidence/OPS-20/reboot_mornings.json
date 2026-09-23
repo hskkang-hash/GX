@@ -14,8 +14,15 @@
     }
   ],
   "readiness": {
-    "measured_at": "2026-09-22T20:58:43",
+    "measured_at": "2026-09-23T09:50:25",
     "containers": [
+      {
+        "name": "gx-celery-e",
+        "status": "running",
+        "started_at": "2026-09-22T12:05:23.30381963Z",
+        "restart_policy": "unless-stopped",
+        "restart_count": "0"
+      },
       {
         "name": "gx-shell",
         "status": "running",
@@ -31,8 +38,8 @@
         "restart_count": "0"
       },
       {
-        "name": "gx-celery-e",
-        "status": "running",
+        "name": "gx-celery-e-old",
+        "status": "exited",
         "started_at": "2026-09-22T11:41:39.2072781Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
@@ -88,9 +95,10 @@
       }
     ],
     "self_starting": [
+      "gx-celery-e",
       "gx-shell",
       "gx-beat-e",
-      "gx-celery-e",
+      "gx-celery-e-old",
       "gx-gunicorn-e",
       "guardianx-source-minio-1",
       "guardianx-source-mailpit-1",

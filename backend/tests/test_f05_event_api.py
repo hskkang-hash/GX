@@ -488,6 +488,35 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     #     ::test_post_is_not_opened_on_this_path). 여기에 POST 줄이 생기면 그때는
     #     **쓰기 면이 난 것**이고 선등록 표에 표 밖 1건으로 적어야 한다.
     ("GET", "/api/dsm/ops/backup/declaration"),                             # U56 · 백업 선언 읽기(U5-BACKUP-404 닫음)
+    # ★ 2026-09-23 (턴 AE · 차선 U온) **하나 늘었다** — 온보딩 48행 U2#3
+    #   「이벤트 등급 재판정」. 이 시험이 그것을 잡았다: 병합 전량에서 `110 != 111` 로
+    #   났고, 그러지 않았으면 문 하나가 **조용히** 늘었다. 아래는 손으로 적은 판단이
+    #   아니라 이 문을 **실제로 두드려** 잰 것이다(추측으로 등재하지 않는다).
+    #
+    #   왜 이 문이 있어도 되는가 — 이미 잰 넷
+    #   --------------------------------------
+    #   ① 누가 부를 수 있나 — 새 인증 경로는 없다(`api_u24.py::_scope` 는
+    #      `api.py::_scope` 와 같은 세 줄) + `@tenant_scoped`. **읽기 전용(U4
+    #      `view_only_-_anyang`)은 403 이다** — 다만 이 문 자신의 로직이 막는 것이
+    #      아니라 **저장소 전역의 `RoleGateMiddleware`(P-119 · `common/role_gate.py`)**
+    #      가 「쓰기 메서드 + 읽기 전용 역할」을 이 문에 이르기도 전에 끊는다(허용
+    #      목록 `READONLY_WRITE_ALLOWED_PATTERNS` 에 이 경로를 안 넣었다 — 그래서 막힌다).
+    #      [실측 2026-09-23 · `gxseed_u4_official` 로 `POST …/4802/severity` 를
+    #      직접 두드림] → `403 {"code": "read_only_role", ...}`, 그 뒤 DB 재조회로
+    #      `severity` 가 안 바뀐 것도 확인했다(막힌 요청이 조용히 반쪽만 쓰지 않는다).
+    #   ② 남의 테넌트 사건 — **404**. `services.event_detail`(기존 함수 그대로
+    #      재사용 — 새 문지기를 안 짰다)이 커널의 `assert_scoped` 를 태우고, 없는
+    #      사건·남의 사건은 여기서 끊긴다. [실측] `event_id=999999999` → `HttpError(404,
+    #      "그런 사건이 없습니다.")`.
+    #   ③ 나쁜 값 — **400**. `DetectionEvent.Severity.values`(계약 그대로 ·
+    #      `info`/`warning`/`critical`) 밖의 값은 여기서 거절한다. [실측]
+    #      `severity="bogus"` → `HttpError(400, "severity='bogus' 은 계약에 없다. ...")`.
+    #   ④ 감사 · 되돌림 — 성공은 `audit.record_event_action` 으로 한 행 남는다
+    #      (실패도 남긴다 — ①②의 403·404 도 각자 감사 행이 있다). [실측] 사건
+    #      4802(그룹 ETRI-Group)를 `critical → warning`(감사 #340014) →
+    #      `warning → critical`(감사 #340015)로 되돌렸고, DB 재조회로 원복을
+    #      확인했다 — 시험용 상태 변경은 남기지 않았다.
+    ("POST", "/api/dsm/events/{int:event_id}/severity"),                    # U2#3 · 이벤트 등급 재판정 ★쓰기
 })
 
 #: 인증 없이 열리는 진입면 — **이름과 사유로** 잠근다. 늘면 여기 사유가 먼저 늘어야 한다.

@@ -354,6 +354,28 @@ class DsmU24API:
         """해제(소프트 삭제). 체크가 없으면 404 — 「풀 것이 없다」를 200 으로 덮지 않는다."""
         return _upper_report_clear(scope=_scope(request), event_id=event_id, reason=reason)
 
+    # ── 이벤트 등급 재판정 (온보딩 U2#3 · 턴 AE) ─────────────────────────────
+    #
+    # ★ [실측 2026-09-22 · P-159] 온보딩 48행 U2#3 「이벤트 등급 재판정」 —
+    #   재판정 자리가 **0개**였다. `GradeRule`/`GradeRuleChange`(K5)는 **이벤트
+    #   타입 → 앞으로 생길 사건의 기본 등급**만 바꾼다(`set_grade_rule`) — **이미 난
+    #   사건 한 건의 등급**을 지금 다시 매기는 자리는 어디에도 없었다. 그래서 새 문을
+    #   연다: 한 사건의 `severity` 를 사람이 다시 매기고, 그 사실을 감사로 남긴다.
+    # ★ 값은 계약 그대로다(`info`·`warning`·`critical`) — 새 값을 짓지 않는다.
+    #   `DetectionEvent.Severity` 한 곳만 본다(두 벌을 두지 않는다).
+    # ★ 누가 하나 — 진위 판정(`review`)·대응 진행(`response`)과 같은 문지기 형태다:
+    #   역할별 403 을 새로 세우지 않는다. 그 둘도 테넌트 안이면 누구나 부른다
+    #   (`services.review_event` 참조) — 좁히는 것은 여전히 테넌트뿐이다.
+    # ★ 같은 값으로 다시 눌러도 **어긋나지 않는다**(멱등) — 감사에 같은 사실이
+    #   한 번 더 남을 뿐이다. 없는 사건 · 남의 사건은 404 다(존재를 새지 않는다 —
+    #   `_upper_report_set` 과 같은 규약).
+    @route.post("/events/{int:event_id}/severity", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="U2#3 등급 재판정 — 남의 테넌트 사건의 등급을 바꾸면 격리 실패다")
+    def event_severity_set(self, request, event_id: int, severity: str, reason: str = ""):
+        """등급을 다시 매긴다. 응답은 `severity`·`previous_severity`·`audit_id`."""
+        return _event_severity_set(scope=_scope(request), event_id=event_id,
+                                   severity=severity, reason=reason)
+
     # ── 감사 읽기 (P-164 U24 ③) — U2 · U4 · U5 만 ─────────────────────────────
     @route.get("/audit", auth=JwtOrInboundKey())
     @tenant_scoped(reason="감사 읽기 — 남의 테넌트 행위자의 감사 행이 보이면 격리 실패다")
@@ -699,6 +721,57 @@ def _upper_report_clear(*, scope: TenantScope, event_id: int, reason: str) -> di
         after={"event_id": event_id, "flagged": False},
         api_name=action, api_method="DELETE", status_http=200)
     return {"event_id": event_id, "flagged": False, "audit_id": entry.audit_id}
+
+
+def _event_severity_set(*, scope: TenantScope, event_id: int, severity: str,
+                        reason: str) -> dict:
+    """온보딩 U2#3 — 이미 난 사건 한 건의 등급을 사람이 다시 매긴다.
+
+    ★ **존재·소유는 `services.event_detail` 이 먼저 확인한다** — 커널의
+      `get_event` 가 `assert_scoped` 를 태우고, 남의 것·없는 것은 여기 오기 전에
+      404 로 끊긴다. 그 확인 **뒤에** `_base_manager` 로 다시 묻는 이유는 쓰기
+      대상을 §0.4 의 `created_by__isnull` OR 절 없이 **정확히 그 행**으로 잡기
+      위해서다(`get_event` 가 읽기에서 세우는 문지기와 같은 이유 · D-274).
+    ★ **값은 계약 열거로 검사한다** — 오타가 새 등급이 되지 않는다
+      (`kernels/k1_event/services.py::_validate` 와 같은 규약, 다만 새 이벤트
+      생성이 아니라 기존 행 수정이라 그 함수를 그대로 재사용하지 않는다: 그 함수는
+      `event_type` 도 함께 검사해서 부르면 여기서 안 쓰는 인자가 필요해진다).
+    """
+    from django.apps import apps
+    from django.http import Http404
+
+    from apps.dsm import audit, services
+
+    scope.require_actor()
+    action = f"severity:set:{event_id}"
+    try:
+        services.event_detail(scope=scope, event_id=event_id)
+    except Http404:
+        #: 남의 사건 · 없는 사건 — **실패도 감사에 남는다**(AC-12 규약). 존재 여부는
+        #: 응답에 새지 않는다(404 하나).
+        audit.record_event_action(scope=scope, action=action, outcome=audit.DENIED,
+                                  reason="사건이 없거나 남의 테넌트다", api_name=action,
+                                  api_method="POST", status_http=404)
+        raise HttpError(404, "그런 사건이 없습니다.")
+
+    Event = apps.get_model("stream_monitors", "DetectionEvent")
+    allowed = set(Event.Severity.values)
+    if severity not in allowed:
+        raise HttpError(
+            400, f"severity={severity!r} 은 계약에 없다. 허용: {', '.join(sorted(allowed))}.")
+
+    row = Event._base_manager.get(pk=event_id)
+    old_severity = row.severity
+    row.severity = severity
+    row.save(update_fields=["severity"])
+
+    entry = audit.record_event_action(
+        scope=scope, action=action, outcome=audit.ALLOWED,
+        reason=reason or "등급 재판정",
+        before={"severity": old_severity}, after={"severity": severity},
+        api_name=action, api_method="POST", status_http=200)
+    return {"event_id": event_id, "severity": severity,
+            "previous_severity": old_severity, "audit_id": entry.audit_id}
 
 
 # ═══════════════════════════════════════════════════════════════════════════

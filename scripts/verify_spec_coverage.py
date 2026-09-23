@@ -256,12 +256,39 @@ def run_ga() -> tuple[str, int | None]:
 
 def kind_table() -> tuple[dict, str]:
     """눈금 표는 **한 벌**이다 — 차선 Q 의 `verify_readiness_scores` 가 이미
-    N 쪽에서 가져오는 일을 한다. 여기서 또 한 벌을 두지 않는다(D-369)."""
+    N 쪽에서 가져오는 일을 한다. 여기서 또 한 벌을 두지 않는다(D-369).
+
+    ★★ [K+Q 실측 · 턴 AE] `aa_kind_score_table()` 이 가져오는
+    `verify_ga_readiness.py::KIND_SCORE` 는 **여섯째 부류(`measured_red`)를
+    일부러 거른다** — 그 파일의 주석(P-246)이 이유를 적었다: 「Q 의
+    `KIND_ORDER` 가 아직 다섯만 안다 · 조율 없이 새면 Q 의 자기시험이 깨진다」.
+    같은 모듈의 **`KIND_POINTS`(거르기 전 원본)에는 이미 `measured_red: 0.0`
+    이 있다** — `unmeasurable` 과 같은 값이다(P-246). ⇒ **고칠 자리는 부모가
+    아니라 여기다**: `verify_ga_readiness.py`·`verify_readiness_scores.py`
+    둘 다 이번 턴 소유표 밖이라(§2 · 아무 차선도 안 쓴다) 그 필터를 걷어내는
+    커밋은 여기서 못 한다. 대신 **베끼지 않고 같은 모듈을 한 번 더 `import`
+    해서** 여섯째 칸만 마저 채운다 — 값의 출처는 여전히 `KIND_POINTS` 하나이고,
+    두 벌째 눈금을 만드는 것이 아니다(D-369).
+    """
     try:
         from verify_readiness_scores import aa_kind_score_table
     except Exception as exc:                                   # noqa: BLE001
         return {}, "눈금 표를 못 가져왔다: %s" % exc
-    return aa_kind_score_table()
+    table, why = aa_kind_score_table()
+    if table and "measured_red" not in table:
+        try:
+            import verify_ga_readiness as _ga
+            mr = getattr(_ga, "KIND_POINTS", {}).get("measured_red")
+        except Exception:                                       # noqa: BLE001
+            mr = None
+        if mr is not None:
+            table = dict(table)
+            table["measured_red"] = mr
+            why = ("%s · **measured_red %.1f 을 `KIND_POINTS`(같은 모듈의 "
+                   "거르기 전 원본)에서 마저 읽었다** — `KIND_SCORE` 의 다섯 "
+                   "칸 필터 자체는 그대로 둔다(그 파일은 이번 턴 소유표 밖 · "
+                   "걷어내는 것은 그 필터를 세운 차선의 몫)" % (why, mr))
+    return table, why
 
 
 def ga_roll(out: str):

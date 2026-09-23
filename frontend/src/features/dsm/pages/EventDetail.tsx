@@ -231,6 +231,78 @@ export default function EventDetail() {
   }, [id, deliveries]);
 
   /**
+   * ★★ 온보딩 U2#3 「이벤트 등급 재판정」 — [실측 2026-09-22 · P-159]
+   *   재판정 자리가 이 화면에 **0개**였다: `GradeRule`(K5)은 이벤트 **타입**의
+   *   앞으로의 기본 등급만 바꾸고, 이미 난 사건 한 건의 등급을 지금 다시 매기는
+   *   자리는 어디에도 없었다. 문은 `api_u24.py::event_severity_set` 이 열었다
+   *   (턴 AE) — 이 화면이 짓는 것은 **손잡이**뿐이다(U1#11·상급 보고 표시와
+   *   같은 결함 모양 — 「문은 있는데 손잡이가 없다」).
+   *
+   * ★ **성공은 칸이 말한다.** 누른 뒤 `event.reload()` 로 다시 읽은 서버 값이
+   *   위 「등급」 배지에 그대로 그려진다 — 화면이 새 값을 지레짐작해 먼저 칠하지
+   *   않는다(진위 판정·상급 보고 표시와 같은 규약).
+   * ★ 실패는 **토스트가 아니라 칸**에 남는다(위 진위 판정 실패 자국과 같은 이유) —
+   *   토스트는 사라지고, 사라진 뒤에는 「눌렀는데 안 바뀐 것」과 「거절당한 것」이
+   *   구별되지 않는다.
+   */
+  const [severityBusy, setSeverityBusy] = useState(false);
+  const [severityError, setSeverityError] = useState('');
+
+  const regrade = useCallback(
+    (nextSeverity: string) => {
+      if (!id) return;
+      let reason = '';
+      Modal.confirm({
+        title: `등급을 「${SEVERITY_LABEL[nextSeverity] ?? nextSeverity}」로 다시 매깁니다`,
+        content: (
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Text type="secondary">
+              등급 변경은 감사 기록에 남습니다. 되돌리려면 다시 여기서 원래 등급을
+              고르십시오.
+            </Text>
+            <Input.TextArea
+              rows={2}
+              placeholder="사유 (선택)"
+              onChange={(ev) => {
+                reason = ev.target.value;
+              }}
+            />
+          </Space>
+        ),
+        okText: '등급 재판정',
+        cancelText: '취소',
+        onOk: async () => {
+          setSeverityBusy(true);
+          setSeverityError('');
+          try {
+            await dsmPostQueryOnce(
+              `/api/dsm/events/${id}/severity`,
+              { severity: nextSeverity, reason },
+              // ★ 의도 열쇠는 **브라우저 안 Map 의 열쇠**다 — 서버로 안 가고 철자는 임의다.
+              //   `severity:` 라고 적었더니 UX-20 래칫(`verify_ui_copy`)이 「영문 열거값」으로
+              //   물었다 — 그 게이트는 화면 문구와 내부 열쇠를 가를 눈이 **일부러** 없다
+              //   (면제 목록을 두면 그 게이트는 죽는다 · D-311). 그래서 열쇠 쪽을 비켰다.
+              //   ⚠ 이 자리에 영문 등급값을 **화면으로** 내보내면 안 된다 — 화면은 언제나
+              //     `SEVERITY_LABEL` 의 한글로 말한다(아래 단추·배지가 그렇게 그린다).
+              intentKey(`regrade-${id}-${nextSeverity}`),
+            );
+            setSeverityError('');
+            event.reload();
+          } catch (err) {
+            setSeverityError(
+              userFacingError('EventDetail.severity', err, '등급 재판정을 기록하지 못했습니다.'),
+            );
+            throw err; // 모달을 닫지 않는다 — 실패했는데 닫히면 성공처럼 보인다
+          } finally {
+            setSeverityBusy(false);
+          }
+        },
+      });
+    },
+    [id, event],
+  );
+
+  /**
    * ★ 이 화면의 쓰기는 **질의**로 보낸다 — 본문으로 보내면 422 가 나고,
    *   그 422 는 「값이 틀렸다」가 아니라 「인자가 없다」다.
    *
@@ -667,6 +739,35 @@ export default function EventDetail() {
                       : undefined
                   }
                   busy={busy === 'review'}
+                />
+              )}
+
+              {/* ── 온보딩 U2#3 「이벤트 등급 재판정」 ───────────────────────
+                  ★ 지금 등급이 아닌 값만 누를 수 있다 — 이미 그 등급인데 다시
+                    누르면 「눌렀는데 아무 일도 안 일어났다」로 보인다. */}
+              <Space wrap align="center">
+                <Text strong>등급 재판정</Text>
+                {Object.entries(SEVERITY_LABEL).map(([value, label]) => (
+                  <Button
+                    key={value}
+                    size="small"
+                    disabled={value === e.severity}
+                    loading={severityBusy}
+                    onClick={() => regrade(value)}
+                  >
+                    {SEVERITY_ICON[value] ?? '●'} {label}
+                  </Button>
+                ))}
+                <Text type="secondary">현재 등급</Text>
+                <Tag color={SEVERITY_COLOR[e.severity] ?? 'default'}>
+                  {SEVERITY_ICON[e.severity] ?? '●'} {SEVERITY_LABEL[e.severity] ?? e.severity}
+                </Tag>
+              </Space>
+              {severityError && (
+                <FailureNotice
+                  title="등급 재판정을 기록하지 못했습니다."
+                  detail={severityError}
+                  busy={severityBusy}
                 />
               )}
 

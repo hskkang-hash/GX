@@ -2859,9 +2859,121 @@ areas:
       - id: OPS-19
         title: 백업이 **주기로 돈다** — 손으로 뜬 덤프는 RPO 가 아니다
         status: 미착수
-        kind: unmeasurable
+        kind: measured_red
         kind_why: |
-          상태가 '미착수' 이다 — 손으로 뜬 덤프는 RPO 가 아니다
+          상태가 '미착수' 이고 게이트도 이번 턴 **빨강**(exit 1) — 색이 같다. [턴 AE · 차선 E ·
+          조율자 교정 2026-09-23] **이 절 전용 게이트를 새로 갈랐다** — `scripts/
+          verify_backup_autonomy.py`(㉤: 호출자·파일이 일치하는 beat 덤프의 나이 ≤ 26h).
+          처음엔 이 술어를 OPS-04 의 게이트(`verify_backup_recovery.py`)에 얹었는데, 그러면
+          OPS-04 의 참인 답(오늘은 복구가 된다)이 OPS-19 의 빨강에 덮여 그 게이트의 마지막
+          줄이 「복구할 것이 남아있지 않다」는 **거짓**을 말했다(조율자가 실측으로 잡음).
+          **오늘 이 새 게이트를 처음 돌려 실측**했다:
+              [OPS-19] ㉤ beat 덤프 빨강 — 판정문의 호출자가 'beat' 가 아니다(None) —
+                       손으로 뜬 덤프는 이 술어를 채우지 못한다(P-264)
+          지금 `D-373/backup_last.json` 은 **이 배선(호출자 칸) 이전에 쓰인 실물**이라
+          `invoked_by` 가 없다 — 그래서 빨강이 옳다. **초록으로 만들려고 다시 부르지
+          않았다**(WO-08 §5 E 「beat 스케줄 임시 앞당김 → 실행 → 원복 하지 마라」).
+          다음 예정 실행(매일 05:00 KST · 아래 참조)이 `invoked_by="beat"` 를 실은
+          판정문을 쓰면, **같은 게이트가 같은 파일로 초록을 낸다** — 코드를 더 고칠 일이
+          없다. 그 다음 실측이 이 절을 `구현 · closed` 로 올린다.
+          ⚠ OPS-04(백업이 있고 그것으로 살아나는가)는 **오늘 그대로 초록**이다 — 그 절의
+          게이트(`verify_backup_recovery.py`)는 원래 술어(바이트 신선도 ≤ 48h)로 되돌렸다.
+          두 절은 다른 물음이라 다른 게이트를 쓴다(아래 note_turn_ae2).
+        gate: scripts/verify_backup_autonomy.py
+        note_turn_ae: |
+          ★★ [턴 AE · 2026-09-23 · 차선 E · WO-GX-20260924-08 §5 E · P-264 · P-260 · P-263]
+          **「기계가 판정문 한 장으로 말하게」 셋을 배선했다.**
+
+          ① **호출자 칸** — `common.ops_backup_beat(invoked_by="manual")` 로 시그니처를
+            바꾸고, `payload["invoked_by"]` 를 모든 분기(SKIPPED·SKIPPED_UNDECLARED·
+            UNKNOWN·OK·ALARM)에 실었다(`backend/common/ops_tasks.py`). `config/celery.py`
+            의 `ops-backup-daily` 항목이 `kwargs={"invoked_by": "beat"}` 를 **명시로**
+            건넨다 — 그 kwarg 없이 부르면(사람이 셸에서 바로 부르면) 기본값 `"manual"`
+            이 그대로 남는다. (확인: django_celery_beat 가 넘기는 `periodic_task_name`
+            은 태스크 메시지에 실리지 않는다 — celery/kombu 소스에 그 필드가 없다.
+            그래서 표준 메커니즘에 기대지 않고 **kwargs 로 직접 배선**했다.)
+
+          ② **게이트 술어(음성 대조 포함)** — `verify_backup_recovery.py` 에
+            `judge_beat_dump()` 를 새로 지어 옛 ㉡(`judge_vault` 의 state — 「바이트 있는
+            덤프가 48h 안」만 잼)을 **대체**했다. 새 ㉡ 은 셋을 함께 본다: (a) 판정문의
+            `invoked_by=="beat"` (b) 판정문이 가리키는 파일명이 **금고의 최신 덤프와
+            같음**(판정문만 믿지 않는다) (c) 그 순간이 26h 이내. 자기시험
+            (`--self-test`, 26/26 통과)에 **음성 대조를 필수로 넣었다**:
+            「금고에 바이트 있는 최신 덤프가 있어도 판정문이 manual 이면 빨강」 —
+            이 표본이 없으면 이 함수는 옛 ㉡ 과 똑같이 「손으로 뜬 덤프만 있는 금고」에도
+            초록을 낼 수 있었다. **출생 표본**도 실물로 넣었다 — 배선 전 실제
+            `backup_last.json`(2026-09-22T20:00:00Z · 149,701,407 바이트, invoked_by 없음)
+            은 ㉡ 을 못 채우고, 같은 실물에 `invoked_by="beat"` 만 더하면 초록이 됨을
+            함께 확인했다(배선 전/후가 같은 사실에 다른 색을 낸다는 것을 보였다).
+
+          ③ **시간대(P-260)** — beat 을 `Asia/Seoul` 05:00 정본으로 세웠다. 옛 표기
+            **03:00 (Asia/Ho_Chi_Minh)**, 새 표기 **05:00 (Asia/Seoul)** — **같은 순간**
+            (HCM +07:00 03:00 = UTC 20:00(전날) = Seoul +09:00 05:00). 앱 전역 시간대는
+            그대로 두고(다른 12개 beat 항목이 두 시간 밀리는 것을 막으려고) 이 항목
+            **하나만** `crontab.tz` 를 인스턴스 값으로 덮는 `_seoul_crontab()` 로 지었다
+            (`django_celery_beat` 가 `schedule.tz` 를 그대로 `CrontabSchedule.timezone`
+            에 옮겨 심는다 — 코드로 확인). **살아 있는 DB 행도 맞췄다**(코드만 정본으로
+            세우고 다음 재기동을 기다리지 않았다 — 이 변경은 `gx-beat-e`·`gx-shell` 을
+            재생성하지 않는다, `CrontabSchedule` 는 `PeriodicTask.crontab_id` 로 붙는
+            행일 뿐이고 `DatabaseScheduler` 가 tick 마다 `Changes` 표를 보고 재시작 없이
+            다시 읽는다): 기존 행(id=11 · hour=3 · Ho_Chi_Minh)은 **disabled** 인
+            `purge-audit-logs-daily` 와 공유돼 있어 손대지 않고, `ops-backup-daily` 만
+            **새 행**(id=22 · minute=0 · hour=5 · Asia/Seoul)으로 옮겼다 + `kwargs`
+            를 `{"invoked_by":"beat"}` 로 갱신 — `last_run_at`(2026-09-22 20:00 UTC ·
+            total_run_count=16)은 그대로라 다음 발화는 여전히 내일(같은 24h 뒤)이다.
+            소리 없이 바꾸지 않는다: 이전 실측 기록(OPS-19 자동덤프_첫건_20260923.md 의
+            「2026-09-23 03:00:00 Ho_Chi_Minh」)은 KST 로 다시 읽으면 **05:00 KST** 다.
+
+          ★ **아직 절을 안 올린다(status 는 여전히 '미착수') — P-264 대로.** 위 ①②가
+            서서 게이트를 **달 수는** 있게 됐지만(그래서 `gate:` 를 이번에 처음 단다),
+            지금 이 게이트를 실제로 돌리면 **빨강**이다(기존 판정문이 배선 이전 것이라서
+            — 위 `kind_why` 참조). 다음 beat 실행(내일 05:00 KST)이 실물로 초록을 내면
+            그때 `status: 구현 · kind: closed` 로 올린다 — 이번 턴에는 **손으로 올리지
+            않았다**(반만 하고 받는 초록은 초록이 아니다).
+          ④ **게이트 서버 둘(P-263)** — SPA 정적 서버(`/tmp/gx_spa_server.py`, 컨테이너가
+            다시 서면 사라졌다)를 `scripts/gx_shell_bootstrap.py` 로 저장소 안에 옮기고,
+            `runserver 8000` 기동을 같은 파일에 합쳤다. `docker-compose.yml` 의 `shell`
+            서비스 `entrypoint` 를 `sleep infinity` 에서 이 스크립트로 바꿨다 — **다음에
+            gx-shell 이 다시 설 때부터** 사람 손 없이 둘 다 뜬다(이 턴에는 gx-shell 을
+            재생성하지 않았다 · WO-08 지시대로). 대체 포트(18000·13002)로 격리 기동해
+            API 200/404·SPA 200·SPA `/api/*` 404(폴백 안 함)를 확인하고 프로세스를 내렸다
+            — 지금 도는 gx-shell(runserver PID 35 · SPA PID 86)은 그대로 둔다.
+          증거: 이 턴의 실측 명령·출력 그대로는 `docs/agent/checkpoints/turn-ae/조율자.inbox/E.md`.
+        note_turn_ae2: |
+          ★★ [턴 AE · 조율자 교정 · 2026-09-23 · 같은 회차] **위 note_turn_ae ②가 한 게이트에
+          물음을 둘 넣었다 — 조율자가 잡아 고쳤다.**
+
+          `verify_backup_recovery.py` 의 ㉡ 을 「beat 가 부른 덤프인가」로 바꾼 채로 두면
+          그 게이트(OPS-04 의 게이트이기도 하다)가 이렇게 말한다:
+              [OPS-04] ㉡ beat 덤프 빨강 — 판정문의 호출자가 'beat' 가 아니다(None)
+              [OPS-04] 빨강 — 복구할 것이 남아 있지 않다.
+          **마지막 줄이 거짓이었다** — 금고에 149,701,407 바이트 덤프가 있고 0.6일 전에
+          그것으로 232표를 살려 냈다(RTO 13.7초). 복구할 것은 **남아 있었다.** OPS-19 의
+          참인 「아직 자동은 증명 못했다」가 OPS-04 의 참인 「오늘은 복구된다」를 덮었다 —
+          그러면 이 절이 벌어서 닫은 OPS-04 가 **자를 바꾼 것만으로** 다시 빨강이 되고,
+          상용 점수가 **제품이 나빠지지 않았는데도** 내려간다.
+
+          **처방 — 자를 쪼갠다:**
+            · `scripts/verify_backup_recovery.py` — ㉡ 을 **원래대로** 되돌렸다(「바이트
+              있는 덤프 ≤ 48h」). 이 파일은 다시 **OPS-04 전용**이다. `judge_beat_dump()`
+              함수 자체는 **지우지 않고** 그대로 뒀다(D-369 — 재사용하려고).
+            · `scripts/verify_backup_autonomy.py` (신규) — **OPS-19 전용** 게이트. ㉤(마지막
+              beat 덤프 나이 ≤ 26h)을 `verify_backup_recovery.judge_beat_dump()` 를 **그대로
+              import 해서** 쓴다(로직을 베끼지 않았다). 이 절의 `gate:` 를 이 파일로 옮겼다.
+            · 자기시험(`verify_backup_autonomy.py --self-test`, 12/12 통과)에 조율자가 요구한
+              네 표본을 그대로 넣었다: ① 오늘의 실물로 OPS-04 는 초록·OPS-19 는 빨강(한
+              사실에 두 다른 색이 나는 것이 **옳다**는 것을 보인다) ② 둘 다 초록(내일 이후)
+              ③ 둘 다 빨강(금고가 통째로 늙으면) ④ ㉤ 음성 대조(손 덤프만 있는 금고에 ㉤
+              초록이 나면 실패) — 여기에 `judge_beat_dump()` 단위 표본(음성 대조·출생 표본)
+              도 함께 옮겨 왔다.
+            · **OPS-04 행은 건드리지 않았다** — 그 절은 오늘 벌어서 닫은 절이고(창 2a),
+              게이트를 원래대로 되돌렸으니 색이 내려갈 이유가 없다(실측: `verify_backup_
+              recovery.py` 단독 재실행 → ㉠㉡㉢ 전부 초록, 「복구할 것이 남아 있다」로 복귀).
+
+          실측(교정 후):
+              [OPS-04] ㉠ 초록 · ㉡ 초록(5.5시간 전) · ㉢ 초록 · 「초록 — 뜬 것이 있고, 그것을 살려 봤다.」
+              [OPS-19] ㉠ 초록 · ㉤ 빨강(invoked_by 없음) · ㉢ 초록 · 「빨강 — 저절로 돌았다는 것을 이 판정문으로는 아직 못 말한다.」
+          출력 그대로는 `조율자.inbox/E.md` 에 덧붙였다.
         note_turn_ad2: |
           ★★ [창 2a · 2026-09-22 21:06 · 조율자] **막고 있던 것이 치워졌다. 절은 아직 안 올린다.**
             워커 이미지의 `pg_dump` 를 **18.6** 으로 올려(`guardianx-backend:pg18` 재생성)
