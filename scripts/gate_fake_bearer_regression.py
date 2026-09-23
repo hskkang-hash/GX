@@ -132,6 +132,23 @@ def judge_rows(rows, public=None):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+def judge_dead(rows):
+    """facts → **죽은 자리 목록**. P-274 · 턴 AG 에 더한 두 번째 술어.
+
+    ★★ 왜 술어가 둘이어야 하나 — **유출 0 과 거절 0 은 다른 수다**
+    -------------------------------------------------------------
+    [실측 2026-09-23 · 턴 AF] 이 게이트가 처음 섰을 때 유출은 **0/364** 로 초록이었다.
+    같은 순간 세상은 **364/364 가 HTTP 500** 이었다 — 틀린 토큰 한 줄에 읽기 면 전부가
+    죽었다. 자료는 안 샜지만 그것은 「거절해서」가 아니라 **「죽어서」**였다.
+    유출만 세는 게이트는 그 사실을 **한 글자도 말하지 않았다.**
+
+    ⇒ **게이트가 세상을 다 말하지 않는다**(턴 AF 신설 불변). 그래서 이 술어를 더했다.
+    ⇒ 이 함수는 「샜는가」가 아니라 **「거절했는가, 죽었는가」**를 가른다.
+      500 은 거절이 아니다 — 지켜보는 사람이 「막혔다」와 「죽었다」를 구별할 수 없다.
+    """
+    return [r for r in rows if int(r.get("status") or 0) == 500]
+
+
 # 자기시험 — 가짜 라우트 facts 를 먹여 **빨강이 실제로 나는지** 증명한다
 # ═══════════════════════════════════════════════════════════════════════════
 def self_test() -> int:
@@ -170,6 +187,25 @@ def self_test() -> int:
                     "data": False}], set()):
         bad.append("401 · data=False 인 행이 빨강으로 잡혔다(정상 갈래가 안 초록이다)")
 
+    #: ★★ [P-274 · 턴 AG] 둘째 술어의 음성 대조 — **죽은 자리를 잡는가.**
+    #:   이 세 줄이 없으면 「500 = 0」은 **한 번도 안 시험된 규칙**이고,
+    #:   시험 안 된 규칙은 다음에 조용히 0 을 낸다.
+    dead_rows = [
+        {"method": "GET", "path": "/api/fake/protected", "status": 401, "data": False},
+        #: ★ 자료는 **안 샜는데**(data=False) 500 인 자리 — 턴 AF 의 세상이 이 모양이었다.
+        #:   `judge_rows` 로는 **절대 안 잡힌다**. 그것이 술어가 둘이어야 하는 까닭이다.
+        {"method": "GET", "path": "/api/fake/dead-on-bad-token", "status": 500, "data": False},
+    ]
+    if judge_rows(dead_rows, set()):
+        bad.append("★★ 유출 술어가 500·data=False 를 빨강으로 잡았다 — 두 술어가 "
+                   "같은 것을 세면 하나는 있으나 마나다")
+    dead_paths = sorted(r["path"] for r in judge_dead(dead_rows))
+    if dead_paths != ["/api/fake/dead-on-bad-token"]:
+        bad.append("★★ 죽음 술어의 음성 대조가 빨강을 못 냈다 — 잡힌 자리: %r "
+                   "(기대: ['/api/fake/dead-on-bad-token'])" % dead_paths)
+    if judge_dead([]) != []:
+        bad.append("빈 facts 에서 죽음 빨강이 났다")
+
     print("%s [입력] 자기시험 facts %d개(흉내 · 실제 라우트 0개) — 도커·DB 없이 "
           "판정 규칙(judge_rows)만 잰다" % (TAG, len(fake_rows)))
     print("%s AS=**없는 토큰**(%s) · SOURCE=자기시험 흉내 facts(레지스트리 아님) · "
@@ -179,8 +215,9 @@ def self_test() -> int:
         for b in bad:
             print("    " + b)
         return EXIT_FAIL
-    print("%s 자기시험 통과 — 정상 갈래 2(401 · 공개선언) · 음성 대조 1"
-          "(★ auth= 없는 자리를 빨강으로 잡았다: %r)" % (TAG, leaked_paths))
+    print("%s 자기시험 통과 — 정상 갈래 2(401 · 공개선언) · 음성 대조 **2**"
+          "(★ auth= 없는 자리를 빨강으로 잡았다: %r · ★★ 틀린 토큰에 500 을 내는 "
+          "자리를 빨강으로 잡았다: ['/api/fake/dead-on-bad-token'])" % (TAG, leaked_paths))
     return EXIT_OK
 
 
@@ -267,11 +304,14 @@ def main() -> int:
     rows = collect_rows(client, P, _iter_ninja_apis, _join)
     public = set(getattr(P, "PUBLIC_READ_BY_DESIGN", ()) or ())
     leaked = judge_rows(rows, public)
+    #: ★★ [P-274 · 턴 AG] 둘째 술어. **유출 0 과 거절 0 은 다른 수다.**
+    dead = judge_dead(rows)
 
     payload = {
         "measured_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "total": len(rows), "elapsed_s": round(time.time() - t0, 1),
         "leaked": len(leaked), "rows_leaked": leaked[:40],
+        "dead_500": len(dead), "rows_dead": [r["path"] for r in dead[:40]],
     }
     if args.out:
         out_dir = os.path.dirname(args.out)
@@ -289,17 +329,31 @@ def main() -> int:
           "관문 뒤의 다른 보호)가 빠진 것이다" % (TAG, len(rows)))
     print("%s [입력] 읽기 자리 %d · %.1f초 · 자기시험 통과 뒤 실측"
           % (TAG, len(rows), payload["elapsed_s"]))
-    print("%s 가짜 헤더로 **자료가 나온 자리 %d**" % (TAG, len(leaked)))
+    print("%s 가짜 헤더로 **자료가 나온 자리 %d / %d**" % (TAG, len(leaked), len(rows)))
+    print("%s 가짜 헤더에 **500 을 내는 자리 %d / %d** — 500 은 거절이 아니다"
+          % (TAG, len(dead), len(rows)))
+    for r in dead[:12]:
+        print("%s   † %-4s %-52s **500**" % (TAG, r["method"], r["path"][:52]))
     for r in leaked[:12]:
         print("%s   · %-4s %-52s %s · %s"
               % (TAG, r["method"], r["path"][:52], r["status"], r["why"][:50]))
     if args.out:
         print("%s 기록 → %s" % (TAG, args.out))
+    if dead:
+        print("%s **빨강** — 틀린 토큰에 **500** 을 내는 자리가 %d 이다. 자료가 안 "
+              "새도 이것은 초록이 아니다: 거절이 아니라 고장이고, 지켜보는 사람이 "
+              "「막혔다」와 「죽었다」를 구별할 수 없다. 우리 겹 "
+              "`common/jwt_guard.py`(P-274)가 서 있는지 먼저 본다" % (TAG, len(dead)))
     if leaked:
         print("%s **빨강** — 이 라우트들의 `auth=`(또는 관문 뒤의 다른 보호)가 "
               "빠졌다. 고칠 자리는 이 게이트가 아니라 그 라우트들이다" % TAG)
+    #: ★★ 둘 중 **하나라도** 있으면 빨강이다. 둘을 `or` 로 묶는 이 한 줄이 없으면
+    #:   게이트가 「500 이 364」라고 찍어 놓고 종료 코드 0 으로 나간다 — 그것이
+    #:   턴 AF 에 실제로 일어난 일이고, 초록이라 읽힌 그 0 이 보고서까지 갔다.
+    if leaked or dead:
         return EXIT_FAIL
-    print("%s 초록 — 가짜 자격증명으로 자료가 나오는 자리가 **0** 이다" % TAG)
+    print("%s 초록 — 가짜 자격증명으로 자료가 나오는 자리 **0/%d** · 500 을 내는 "
+          "자리 **0/%d**. 두 수가 다 0 이라야 초록이다" % (TAG, len(rows), len(rows)))
     return EXIT_OK
 
 

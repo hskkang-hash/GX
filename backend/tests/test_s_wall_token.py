@@ -378,36 +378,53 @@ class WallTokenOverHttpTest(_ThreadCleanMixin, TestCase):
         )
 
     def test_wall_token_in_authorization_header_does_not_work(self):
-        """④ 영역 분리 — 월 토큰을 `Authorization` 에 실으면 **아무 문도 안 열린다.**
+        """④ 영역 분리 — 월 토큰을 `Authorization` 에 실으면 **401 이다.**
 
-        ⚠ 여기서 재는 것은 「열리지 않는다」이지 「401 이다」가 아니다. 실측해 보니
-          이 자리는 **500** 을 낸다 — 그리고 그것은 우리 것이 아니다(아래 대조군).
+        ★★ [P-274 · 2026-09-25 턴 AG] **조였다.** 어제까지 이 시험은 「열리지 않는다」
+          까지만 쟀다(`>= 400` · 200/204 아님) — 실측상 이 자리가 **500** 을 냈고,
+          500 을 401 이라고 적을 수는 없었기 때문이다. 아래 대조군이 그 사정을
+          같은 파일 안에 적어 두고 「고쳐지는 날 이 시험을 401 로 조인다」고 예고했다.
+
+          `>= 400` 은 **500 도 받아 준다.** 곧 그 판은 「거절했다」와 「죽었다」를
+          한 칸에 넣고 있었고, 그 칸으로는 이 문이 서 있는지 알 수 없었다.
+          이제 401 하나로 못 박는다 — **거절만 초록이다.**
         """
         res = self.client.get(WALL_TOKEN_PATHS[0],
                               HTTP_AUTHORIZATION=f"Bearer {self.token}", **NO_CACHE)
-        self.assertGreaterEqual(res.status_code, 400, "월 토큰이 JWT 자리에서 통했다")
-        self.assertNotIn(res.status_code, (200, 204))
+        self.assertEqual(
+            res.status_code, 401,
+            "월 토큰이 JWT 자리에서 401 이 아니다(%s). 200·204 면 문이 열린 것이고, "
+            "500 이면 거절이 아니라 고장이다 — 둘 다 이 시험의 초록이 아니다."
+            % res.status_code)
 
-    def test_djcore_500s_on_any_malformed_bearer(self):
-        """모양이 안 맞는 `Bearer` 는 무엇이든 **500** 이다 — 그래서 위 시험이 401 을 못 쓴다.
+    def test_malformed_bearer_is_401_now(self):
+        """모양이 안 맞는 `Bearer` 는 무엇이든 **401** 이다 (P-274 · 2026-09-25 턴 AG).
+
+        ★★ **이 시험은 원래 500 을 기대했고, 제 손으로 조일 날을 예고해 두었다:**
+
+            「저 시험이 빨개지는 날 이 시험도 함께 빨개지고,
+              그날 위 `test_wall_token_in_authorization_header_does_not_work` 를
+              401 로 조인다.」
+
+          그날이 왔다. 옛 판은 `test_djcore_500s_on_any_malformed_bearer` 였고,
+          까닭은 이랬다:
 
             core/middleware/refresh_token.py:204   jwt.decode(...)  ← 감싸지 않았다
             → jwt.exceptions.DecodeError 가 그대로 올라가 500
 
-        ★ **이것은 새 발견이 아니다.** 저장소가 이미 알고 있고 고정해 두었다:
-          `tests/test_auth_surface.py::MalformedBearerTest::test_undecodable_token_yields_500_everywhere`
-          (§0.4 dj-core · 우리가 못 고친다 · D-207). 여기 같은 갈래를 한 번 더 두는 이유는
-          하나다 — **이 절의 영역 분리 시험이 왜 401 을 기대하지 않는지**를 이 파일 안에서
-          읽을 수 있게 하기 위해서다. 저 시험이 빨개지는 날 이 시험도 함께 빨개지고,
-          그날 위 `test_wall_token_in_authorization_header_does_not_work` 를 401 로 조인다.
+          그 줄은 **지금도 그대로 있다**(§0.4 dj-core · 못 고친다 · D-207).
+          바뀐 것은 그 앞에 `common/jwt_guard.py` 한 겹이 섰다는 것뿐이다.
+          ⇒ 그러니 이 시험이 다시 500 을 보면 **dj-core 가 나빠진 게 아니라
+            우리 겹이 사라진 것**이다. 메시지가 그 자리를 가리킨다.
         """
         for junk in ("abc", "aaa.bbb.ccc"):
             res = self.client.get(WALL_TOKEN_PATHS[0],
                                   HTTP_AUTHORIZATION=f"Bearer {junk}", **NO_CACHE)
             self.assertEqual(
-                res.status_code, 500,
-                f"dj-core 의 깨진 Bearer 갈래가 달라졌다({junk!r} → {res.status_code}) — "
-                "고쳐졌다면 이 절의 영역 분리 시험도 401 로 조여라",
+                res.status_code, 401,
+                f"깨진 Bearer 가 401 이 아니다({junk!r} → {res.status_code}) — "
+                "`common/jwt_guard.py`(P-274)가 꺼졌거나 MIDDLEWARE 에서 dj-core "
+                "`TokenRefreshMiddleware` **위** 자리를 잃었다",
             )
 
     def test_jwt_in_wall_header_does_not_work(self):

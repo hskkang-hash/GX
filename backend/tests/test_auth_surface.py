@@ -7,13 +7,18 @@
      그 24건은 인증 관문을 거치지 않은 채 권한 판정까지 도달한다.
   2) **그 도달을 HTTP 로 재현한다.** Authorization 헤더가 아예 없어도 401 이 아니라
      권한 판정 결과가 나온다 — `auth=` 가 붙은 대조군은 같은 요청에 401 이다.
-  3) **해독할 수 없는 Bearer 토큰은 모든 라우트에서 500 이다.** dj-core 의
-     `TokenRefreshMiddleware` 가 복구 경로에서 다시 `jwt.decode` 를 부르고 그것을
-     감싸지 않았다(§0.4 · 고칠 수 없다). 401 이어야 할 자리다.
+  3) **해독할 수 없는 Bearer 토큰은 모든 라우트에서 401 이다.**
+     ★ [2026-09-25 턴 AG · P-274] **이 줄이 뒤집혔다.** 어제까지는 「모든 라우트에서
+       500」이었다 — dj-core 의 `TokenRefreshMiddleware` 가 복구 경로에서 다시
+       `jwt.decode` 를 부르고 그것을 감싸지 않았다(§0.4 · **지금도** 고칠 수 없다).
+       그 자리보다 **바깥**에 `common/jwt_guard.py` 한 겹을 세워 401 로 답하게 했다.
+       뿌리는 그대로 있고, 우리 겹이 그 앞에 선 것이다.
 
-★ 이 시험들은 **결함이 있다는 사실을 고정한다**(characterization). 결함이 고쳐지면
-  여기가 빨개진다 — 그때가 이 파일을 고칠 때다. 같은 방식을 이미
+★ 1)·2) 는 여전히 **결함이 있다는 사실을 고정한다**(characterization) — 고쳐지면
+  여기가 빨개지고, 그때가 이 파일을 고칠 때다. 같은 방식을 이미
   `test_api_contract.py::test_token_pair_issues_tokens_that_do_not_work` 이 쓴다.
+  3) 은 **고쳐진 뒤의 사실을 고정한다** — 되돌아가면 빨개진다. 두 방향을 한 파일에
+  두는 것이 헷갈린다면, 그 헷갈림이 곧 「무엇이 아직 빚이고 무엇이 갚은 것인가」다.
 
 절대 금지 (AGENT_LOOP 절대금지 #4·#5 · D-105 · D-224)
     skip·xfail·비활성화하지 말 것. 못 고친 것은 `KNOWN_GAPS` 에 사유와 함께 세어 둔다.
@@ -26,7 +31,7 @@ from __future__ import annotations
 
 import jwt as pyjwt
 from django.conf import settings
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 
 from tests.no_cache import NO_CACHE
 
@@ -159,15 +164,28 @@ class UnauthenticatedReachTest(TestCase):
 
 
 class MalformedBearerTest(TestCase):
-    """해독 불가 토큰 = 500. 라우트가 아니라 **미들웨어**의 문제다.
+    """해독 불가 토큰 = **401**. 2026-09-25 턴 AG 에 뒤집혔다 (P-274).
 
-    dj-core `core/middleware/refresh_token.py:204` — `except` 블록이 복구를 시도하며
-    `jwt.decode` 를 **다시** 부르는데 그것을 감싸지 않았다. 첫 실패가 "해독 불가"면
-    복구도 같은 자리에서 터지고 예외가 미들웨어 밖으로 나간다.
-    §0.4 금지구역(dj-core)이라 그 파일은 고칠 수 없다 (D-207).
+    ★★ **이 시험은 원래 500 을 기대했다.** 그 판을 지우지 않고 여기 적어 둔다 —
+    무엇이 왜 바뀌었는지가 안 남으면 다음 사람은 이 401 을 「원래 그랬던 것」으로
+    읽고, 그러면 되돌아갔을 때 아무도 못 알아본다.
 
-    ★ 왜 지금 중요한가: 서명키 교체(D-251 자격증명 회전) 뒤에는 **구 토큰을 든 모든
-      클라이언트가 401 이 아니라 500 을 받는다.** 프론트의 재인증 경로는 401 을 본다.
+    옛 판 [턴 W0-18 ~ 턴 AF]:
+        `test_undecodable_token_yields_500_everywhere`
+        「해독 자체가 안 되는 토큰 — 관문 유무와 **무관하게** 500」
+        뿌리: dj-core `core/middleware/refresh_token.py:204` — `except` 블록이
+        복구를 시도하며 `jwt.decode` 를 **다시** 부르는데 그것을 감싸지 않았다.
+        첫 실패가 「해독 불가」면 복구도 같은 자리에서 터지고 예외가 밖으로 나간다.
+        §0.4 금지구역이라 그 파일은 **지금도** 고칠 수 없다 (D-207).
+        그 시험의 실패 메시지는 이렇게 적혀 있었다 —
+        「500 이 아니게 됐다 — dj-core 가 고쳐졌거나 **저장소 쪽에서 감쌌다**」.
+
+    ⇒ **저장소 쪽에서 감쌌다.** `common/jwt_guard.py`(P-274)를 dj-core 보다 바깥에
+      세워, 그 자리가 이 글자를 아예 못 보게 했다. dj-core 는 한 줄도 안 고쳤다.
+    ⇒ 이 시험이 다시 500 을 보면 그것은 **그 겹이 꺼졌거나 자리를 잃었다**는 뜻이다.
+
+    ★ 왜 이것이 중요했나: 서명키 교체(D-251 자격증명 회전) 뒤에는 **구 토큰을 든 모든
+      클라이언트가** 500 을 받았다 — 프론트의 재인증 경로는 401 을 본다. 이제 401 이다.
     """
 
     def setUp(self):
@@ -177,8 +195,14 @@ class MalformedBearerTest(TestCase):
     def _get(self, path: str, token: str):
         return self.client.get(path, HTTP_AUTHORIZATION=f"Bearer {token}")
 
-    def test_undecodable_token_yields_500_everywhere(self):
-        """해독 자체가 안 되는 토큰 — 관문 유무와 **무관하게** 500."""
+    def test_undecodable_token_yields_401_everywhere(self):
+        """해독 자체가 안 되는 토큰 — 관문 유무와 **무관하게** 401 (P-274 · 턴 AG).
+
+        ★ 세 표본이 **다른 까닭으로** 못 풀린다. 셋을 다 두는 것이 요점이다:
+          「점이 없다」·「점만 있다」는 **구조**가 깨졌고, 「다른 키로 서명」은
+          구조는 멀쩡한데 **서명**이 틀렸다. 턴 AG 의 첫 판은 앞의 둘만 잡고
+          셋째를 놓쳐 **절반만 고친 겹**이었다 — 이 줄이 그것을 다시 잡는다.
+        """
         for path in (ROUTE_NO_AUTH_CALLBACK, ROUTE_WITH_AUTH_CALLBACK):
             for label, token in (
                 ("점이 없다", "not-a-token"),
@@ -187,10 +211,27 @@ class MalformedBearerTest(TestCase):
             ):
                 with self.subTest(path=path, token=label):
                     self.assertEqual(
-                        self._get(path, token).status_code, 500,
-                        "500 이 아니게 됐다 — dj-core 가 고쳐졌거나 저장소 쪽에서 감쌌다. "
-                        "그렇다면 이 시험과 evidence/W0-18/auth_surface.md 를 고쳐라",
+                        self._get(path, token).status_code, 401,
+                        "401 이 아니다 — `common/jwt_guard.py`(P-274)가 꺼졌거나 "
+                        "`config/settings.py` 의 MIDDLEWARE 에서 dj-core "
+                        "`TokenRefreshMiddleware` **위** 자리를 잃었다. 500 이면 "
+                        "거절이 아니라 고장이고, 고객은 「막혔다」와 「죽었다」를 "
+                        "구별할 수 없다",
                     )
+
+    def test_the_guard_is_what_makes_it_401(self):
+        """★★ **음성 대조** — 겹을 끄면 500 이 돌아오는가.
+
+        위 시험만 있으면 「401 이 난다」는 사실만 남고 **누가 그렇게 만들었는지**는
+        안 남는다. 언젠가 다른 이유로 401 이 나기 시작하면 이 겹을 지워도 아무도
+        모른다. 그래서 여기서 **끄고 한 번 더 잰다.**
+        """
+        with override_settings(JWT_GUARD_ENABLED=False):
+            self.assertEqual(
+                self._get(ROUTE_WITH_AUTH_CALLBACK, "not-a-token").status_code, 500,
+                "겹을 껐는데도 500 이 아니다 — dj-core 가 고쳐졌거나(좋은 소식) "
+                "`JWT_GUARD_ENABLED` 가 실제로는 겹을 안 끈다(나쁜 소식). "
+                "둘은 다른 사실이고 여기서 갈라야 한다")
 
     def test_correctly_signed_expired_token_is_handled(self):
         """대조 — **실키로 서명된** 만료 토큰은 500 이 아니다.

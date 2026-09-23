@@ -154,6 +154,18 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "proxy.middleware.RemoveXFrameOptionsMiddleware",  # Remove X-Frame-Options for proxy endpoints
+    # ★ [P-274 · 2026-09-25 턴 AG] 못 푸는 `Bearer` 한 줄을 **500 이 아니라 401** 로 낸다.
+    #   **줄을 새로 넣었다**(기존 줄은 한 자도 안 고쳤다). 자리는 바로 아래 dj-core
+    #   `TokenRefreshMiddleware` **바로 위**다 — 그 파일의 `except Exception` 안에서
+    #   `jwt.decode` 를 try 없이 다시 불러 **잡는 자리에서 새로 터지고**, 미들웨어라
+    #   모든 요청에 걸려 읽기 면 **364자리 전부가 500** 이 된다 [실측 2026-09-23 턴 AF].
+    #   dj-core 는 §0.4 라 한 줄도 못 고친다 — 그래서 **앞에서 답한다.**
+    #   ★ 자리를 여기로 잡은 근거: 해독하는 dj-core 겹은 `refresh_token.py` **하나뿐**이다
+    #     [실측: `core/middleware/*.py` 중 `jwt.decode|AccessToken` 을 쓰는 파일 1개].
+    #     더 바깥에 두면 세션·CSRF·인증 겹이 이 401 뒤로 밀린다.
+    #   ★ 만료 토큰은 **안 건드린다** — 구조적으로 풀리는 토큰은 그냥 지나간다.
+    #   되돌리기는 `JWT_GUARD_ENABLED = False` 한 줄이다.
+    "common.jwt_guard.JwtGuardMiddleware",
     "core.middleware.refresh_token.TokenRefreshMiddleware",
     # ★ [UX-24a · 2026-09-05 턴 F · 차선 S] 월(wall) 표시 토큰 한 겹. **줄을 새로 넣었다**
     #   (기존 줄은 한 자도 안 고쳤다). 자리는 `AccessGateMiddleware` **바로 위** —
