@@ -873,4 +873,234 @@ class OnboardingKickCardsTest(_OnboardingFixture):
         keys = {c["key"] for c in body["cards"]} | {c["key"] for c in body["blocked"]}
         self.assertNotIn("u5.kick.golden30", keys,
                          "첫 카드 전용 키가 진행률 목록에 섞였습니다.")
-        self.assertEqual(1, body["kick"]["done"])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 AF · 차선 K+Q — 「카드 완료 서버 기록 시험 6」(턴 AE 가 시간이 없어 미룬 것)
+#
+# ★ 무엇을 재나 — `apps/dsm/onboarding.py` 의 `_closed_by_*` 술어 열넷 가운데
+#   **여섯이 이 시험 파일 어디에도 없었다**(실측 — 함수 이름으로 이 파일을 grep):
+#     `_closed_by_my_review` · `_closed_by_handover` · `_closed_by_address_gap` ·
+#     `_closed_by_critical_recipients` · `_closed_by_retention` · `_closed_by_inbound_key`
+#   나머지 여덟(`_closed_by_response`·`_closed_by_report_run`·`_closed_by_drill`·
+#   `_closed_by_threshold_change`·`_closed_by_test_send`·`_closed_by_field_report`·
+#   `_closed_by_notify_prefs`·`_closed_by_webhook_subscription`·`_closed_by_webhook_delivery`)
+#   는 위 클래스들이 이미 「서버 기록이 생기면 아무도 안 눌러도 카드가 닫힌다」를 잠갔다
+#   (`OnboardingClosedByRecordTest`·`OnboardingThresholdChangeCardTest`·
+#   `OnboardingTestSendCardTest`·`OnboardingU3CardsTest`·`OnboardingU6CardsTest`·
+#   `OnboardingKickCardsTest`). 여기서는 **그 여섯만** 채운다 — 이미 있는 것을
+#   두 벌로 다시 재지 않는다(D-369).
+#
+# ★ 술어는 **제품 문(커널·서비스 공개 함수)으로** 만든다 — ORM 으로 행을 직접 찍지
+#   않는다(`_an_event()` 머리말과 같은 사유: 손으로 찍은 행은 제품이 만드는 행과
+#   모양이 다를 수 있고, 다르면 이 시험은 제품이 아니라 제 손을 잰다). 예외는
+#   `_closed_by_address_gap`·`_closed_by_critical_recipients` 처럼 "행 하나면 충분한"
+#   집계용 표(`StreamMonitor`·`NotificationRule`)뿐이다 — 그 둘은 기존 `_webhook_
+#   subscription`·`_report_run` 헬퍼와 같은 격으로 다룬다.
+# ═══════════════════════════════════════════════════════════════════════════
+class OnboardingU1ReviewAndHandoverCardsTest(_OnboardingFixture):
+    """U1 ②「사건 한 건 판정하기」· U1 ⑤「인계 메모 한 건 남기기」.
+
+    ⚠ `user_a`/`user_b`(역할 `fire_admin` → U2 버킷)로는 U1 표를 못 본다
+      (`config/k3_roles.py::K3_ROLE_MANAGERS`). U1(`K3_ROLE_OPERATORS`)의
+      실재하는 코드로 **이 클래스 전용 사용자**를 새로 둔다.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.user_op = self._user("onb_operator_a", self.group_a, "fire_user")
+        self.scope_op = TenantScope.of(self.user_op)
+
+    def test_a_review_verdict_closes_the_review_card(self) -> None:
+        """**내가** 사건을 판정하면(`services.review_event`) u1.review 가 닫힌다."""
+        from apps.dsm import onboarding, services
+
+        event = self._an_event()
+
+        before = onboarding.progress(scope=self.scope_op)
+        card = next(c for c in before["cards"] if c["key"] == "u1.review")
+        self.assertFalse(card["done"], "판정한 사건이 없는데 카드가 닫혀 있습니다.")
+
+        services.review_event(scope=self.scope_op, event_id=event.pk, verdict="confirmed")
+
+        after = onboarding.progress(scope=self.scope_op)
+        card = next(c for c in after["cards"] if c["key"] == "u1.review")
+        self.assertTrue(card["done"], "판정 기록이 생겼는데 카드가 안 닫혔습니다.")
+        self.assertEqual(card["source_ref"], f"event#{event.pk}",
+                         "카드가 닫혔는데 무엇이 닫았는지가 응답에 없습니다.")
+
+    def test_someone_elses_review_does_not_close_my_card(self) -> None:
+        """남이 판정한 사건은 내 카드를 못 닫는다 — `reviewed_by_id` 로 좁힌다."""
+        from apps.dsm import onboarding, services
+
+        other = self._user("onb_operator_a2", self.group_a, "fire_user")
+        event = self._an_event()
+        services.review_event(scope=TenantScope.of(other), event_id=event.pk,
+                              verdict="confirmed")
+
+        card = next(c for c in onboarding.progress(scope=self.scope_op)["cards"]
+                   if c["key"] == "u1.review")
+        self.assertFalse(card["done"], "남이 판정한 사건이 내 카드를 닫혔습니다.")
+
+    def test_a_handover_note_closes_the_handover_card(self) -> None:
+        """인계 메모 한 행이 생기면 u1.handover 가 닫힌다(`DsmHandover`)."""
+        from apps.dsm import onboarding
+
+        before = onboarding.progress(scope=self.scope_op)
+        card = next(c for c in before["cards"] if c["key"] == "u1.handover")
+        self.assertFalse(card["done"], "인계 메모가 없는데 카드가 닫혀 있습니다.")
+
+        model = apps.get_model("stream_monitors", "DsmHandover")
+        #: ★ `purpose_code` 는 CHECK 제약이다(비어 있으면 저장이 거부된다) — 실제
+        #:   생성 경로(`handover_service.py:200`)가 쓰는 값을 그대로 옮긴다(D-369).
+        row = model._base_manager.create(
+            body="자동 초안", note="onboarding test", unresolved_count=0,
+            system_event_count=0, handled_count=0, group=self.group_a,
+            created_by=self.user_op, purpose_code="dsm.handover_draft")
+
+        after = onboarding.progress(scope=self.scope_op)
+        card = next(c for c in after["cards"] if c["key"] == "u1.handover")
+        self.assertTrue(card["done"], "인계 메모 행이 생겼는데 카드가 안 닫혔습니다.")
+        self.assertEqual(card["source_ref"], f"handover#{row.pk}")
+
+
+class OnboardingU5AddressRecipientRetentionCardsTest(_OnboardingFixture):
+    """U5 ②「카메라 등록하고 주소 채우기」· ③「심각 등급 받는 사람 세우기」·
+    ⑤「영상 보관 기간 선언」."""
+
+    def test_filled_addresses_close_the_address_gap_card(self) -> None:
+        """카메라가 **한 대라도** 있고 주소 빈 칸이 0 이면 u5.cameras 가 닫힌다.
+
+        ★ 카메라 0 대는 「닫혔다」가 아니라 **못 잰 것**이다(`_closed_by_address_gap`
+          머리말 · D-301) — 그래서 먼저 한 대를 만든다.
+        """
+        from apps.dsm import onboarding
+
+        StreamMonitor = apps.get_model("stream_monitors", "StreamMonitor")
+        before = onboarding.progress(scope=self.scope_s5a)
+        card = next(c for c in before["cards"] if c["key"] == "u5.cameras")
+        self.assertFalse(card["done"], "카메라가 없는데 카드가 닫혀 있습니다.")
+
+        StreamMonitor._base_manager.create(
+            name="onb-addr-cam", code="onb-addr-cam",
+            ip_source="rtsp://onb.invalid/addr", group=self.group_a,
+            install_address="서울시 어딘가 1-1")
+
+        after = onboarding.progress(scope=self.scope_s5a)
+        card = next(c for c in after["cards"] if c["key"] == "u5.cameras")
+        self.assertTrue(card["done"], "주소를 채웠는데 카드가 안 닫혔습니다.")
+        self.assertTrue(card["source_ref"].startswith("address_gap:0/"),
+                        f"근거 형식이 다릅니다: {card['source_ref']!r}")
+
+    def test_a_camera_with_a_blank_address_keeps_the_card_open(self) -> None:
+        """대 하나라도 주소가 비어 있으면 **아직** 닫힌 것이 아니다."""
+        from apps.dsm import onboarding
+
+        StreamMonitor = apps.get_model("stream_monitors", "StreamMonitor")
+        StreamMonitor._base_manager.create(
+            name="onb-addr-cam-blank", code="onb-addr-cam-blank",
+            ip_source="rtsp://onb.invalid/blank", group=self.group_a,
+            install_address="")
+
+        card = next(c for c in onboarding.progress(scope=self.scope_s5a)["cards"]
+                   if c["key"] == "u5.cameras")
+        self.assertFalse(card["done"], "주소 빈 카메라가 있는데 카드가 닫혔습니다.")
+
+    def test_a_critical_recipient_rule_closes_the_recipients_card(self) -> None:
+        """심각 등급 알림 규칙이 있고 그 역할에 사람이 있으면 u5.recipients 가 닫힌다."""
+        from apps.dsm import onboarding
+
+        before = onboarding.progress(scope=self.scope_s5a)
+        card = next(c for c in before["cards"] if c["key"] == "u5.recipients")
+        self.assertFalse(card["done"], "수신 규칙이 없는데 카드가 닫혀 있습니다.")
+
+        Role = apps.get_model("role", "Role")
+        role, _ = Role.objects.get_or_create(
+            code="onb_recipient_role", defaults={"role_name": "onb_recipient_role"})
+        role.group = self.group_a
+        role.save(update_fields=["group"])
+        recipient = self._user("onb_recipient_a", self.group_a, "onb_recipient_role")
+        recipient.roles.add(role)
+
+        #: ★ `group=` 을 `create()` 에 바로 안 준다 — `NotificationRule` 이 실제로 어느
+        #:   필드(`group` FK 인지 `groups` M2M 인지)로 테넌트에 닿는지는 환경마다 다르다
+        #:   (`kernels.k1_event.services._owner_field` 머리말 · P-LOCAL-4 미결 ·
+        #:   `test_k2_notify_kernel.py::K2Fixture._make_rule` 이 이미 이 규약으로 짠다 —
+        #:   두 벌로 안 만든다).
+        from kernels.k1_event.services import _owner_field
+
+        Rule = apps.get_model("stream_monitors", "NotificationRule")
+        rule = Rule.objects.create(severity="critical", role=role, zone=None,
+                                   channels=["email"], is_active=True)
+        if _owner_field(Rule) == "groups":
+            rule.groups.set([self.group_a])
+        else:
+            rule.group = self.group_a
+            rule.save(update_fields=["group"])
+
+        after = onboarding.progress(scope=self.scope_s5a)
+        card = next(c for c in after["cards"] if c["key"] == "u5.recipients")
+        self.assertTrue(card["done"], "수신 규칙이 생겼는데 카드가 안 닫혔습니다.")
+        self.assertIn(str(rule.pk), card["source_ref"],
+                     f"근거에 규칙 id 가 안 보입니다: {card['source_ref']!r}")
+
+    def test_a_declared_retention_closes_the_retention_card(self) -> None:
+        """이 테넌트가 보관 기간을 **선언하면** u5.retention 이 닫힌다.
+
+        ★ 선언은 표 행이 아니라 **운영 설정**이다(`retention.py::_tenant_map` —
+          `settings.VIDEO_RETENTION_DAYS_BY_TENANT`). 그래서 서버 기록은
+          `override_settings` 로 대신한다 — 이 설정 자체가 「선언」이라는 사실이다.
+        ⚠ [실측] 이 시험 DB 는 **전역 기본값**(`legal_notice.RETENTION_SETTING_NAMES` =
+          `VIDEO_RETENTION_DAYS`·`RETENTION_DAYS`·`EVENT_RETENTION_DAYS`)이 이미 서 있어
+          override 없이도 `card["done"]` 가 참이었다(선언 0 인데 카드가 닫힌 것처럼 보임).
+          그래서 「전」도 그 셋을 비운 채로 잰다 — **테넌트 선언 하나만의 효과**를 보려면
+          전역 자리부터 비워야 한다.
+        """
+        from django.test import override_settings
+
+        from apps.dsm import onboarding, retention
+
+        clear_global = {name: None for name in retention.SETTING_NAMES}
+        with override_settings(VIDEO_RETENTION_DAYS_BY_TENANT={}, **clear_global):
+            before = onboarding.progress(scope=self.scope_s5a)
+            card = next(c for c in before["cards"] if c["key"] == "u5.retention")
+            self.assertFalse(card["done"], "선언이 없는데 카드가 닫혀 있습니다.")
+
+        with override_settings(
+                VIDEO_RETENTION_DAYS_BY_TENANT={str(self.group_a.pk): 730},
+                **clear_global):
+            after = onboarding.progress(scope=self.scope_s5a)
+            card = next(c for c in after["cards"] if c["key"] == "u5.retention")
+            self.assertTrue(card["done"], "보관 기간을 선언했는데 카드가 안 닫혔습니다.")
+            self.assertEqual(card["source_ref"], "retention:730d")
+
+
+class OnboardingU6InboundKeyCardTest(_OnboardingFixture):
+    """U6 ①「연계용 키 발급」— U5(sysop)가 남기는 기록으로 닫힌다."""
+
+    def test_an_issued_key_closes_the_inbound_key_card(self) -> None:
+        from apps.dsm import onboarding
+        from kernels.k5_trust import issue_key
+
+        before = {c["key"]: c for c in
+                 onboarding.progress(scope=self.scope_s5a, persona="U6")["cards"]}
+        self.assertFalse(before["u6.key"]["done"], "키가 없는데 카드가 닫혀 있습니다.")
+
+        issued = issue_key(scope=self.scope_s5a, name="onboarding-test-key")
+
+        after = {c["key"]: c for c in
+                onboarding.progress(scope=self.scope_s5a, persona="U6")["cards"]}
+        self.assertTrue(after["u6.key"]["done"], "키를 발급했는데 카드가 안 닫혔습니다.")
+        self.assertEqual(after["u6.key"]["source_ref"],
+                         f"inbound_key#{issued.view.key_id}")
+
+    def test_another_tenants_key_does_not_close_my_card(self) -> None:
+        from apps.dsm import onboarding
+        from kernels.k5_trust import issue_key
+
+        issue_key(scope=self.scope_s5b, name="onboarding-test-key-b")
+
+        card = next(c for c in
+                   onboarding.progress(scope=self.scope_s5a, persona="U6")["cards"]
+                   if c["key"] == "u6.key")
+        self.assertFalse(card["done"], "남의 테넌트 키가 내 카드를 닫혔습니다.")

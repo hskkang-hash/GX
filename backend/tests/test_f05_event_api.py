@@ -548,6 +548,20 @@ K1_CONSUMERS: dict[str, str] = {
         "★ 검수용 시드 (P-9). **이 소비자가 K1 을 부르는 것이 요점이다** — 지시서가 정한 "
         "「실제 이벤트」는 K1 생성 경로를 통과한 행이고, DB 직접 INSERT 는 모형이다. "
         "HTTP 진입면이 아니라 운영자가 손으로 부르는 커맨드다",
+    "backend/stream_monitors/management/commands/seed_training_incident.py":
+        "★ **열린 훈련 사건 하나** (P-266 · 턴 AF · 차선 U온). 등재는 면제가 아니라 "
+        "선언이므로 왜 이 모듈이 K1 을 부르는지 적는다 — **부르는 것이 요점이다.** "
+        "온보딩 빨강 넷(U2#2·#6·#16·U4#15)은 전부 「미처리 사건 한 건」을 눌러야 "
+        "닫히는데 개발 DB 에 비-probe `response_state=occurred` 가 **0건**이었다"
+        "(시드 20건은 `seed_dsm_events` 가 종결까지 걸어서 심는다 — 첫날 큐가 "
+        "「377시간 방치」로 읽히는 것을 막는 P-223 규약이고, 그 규약이 동시에 "
+        "이 자리를 비운다). 그 한 건을 **DB 직접 INSERT 로 심으면 모형**이고, "
+        "모형을 누른 초록은 제품이 선다는 뜻이 아니다 — 그래서 `record_detection` "
+        "으로 **K1 생성 경로를 통과시킨다**(`seed_dsm_events` 와 같은 사유). "
+        "★ 청구는 만든 **바로 다음 줄**에서 `mark_unbillable(obj, \"drill\")` 로 "
+        "뺀다 — 그 사이에 청구를 세는 자리가 없다. 훈련은 제품이 **세고**(훈련 배지) "
+        "돈으로는 **안 간다**(P-201). HTTP 진입면이 아니다 — 밖에서 부를 주소가 없고 "
+        "운영자가 손으로 부르는 커맨드다",
     "backend/kernels/k2_notify/services.py":
         "커널 간 재사용 — 알림이 이벤트를 읽는다. HTTP 진입면이 아니다",
     "backend/kernels/k2_notify/renotify.py":

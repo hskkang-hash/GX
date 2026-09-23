@@ -1,32 +1,171 @@
 {
-  "measured_at": "2026-09-21T12:19:30Z",
-  "event_id": 326411,
+  "measured_at": "2026-09-23T07:50:18Z",
+  "event_id": 446155,
   "event_by_flow": {
-    "U3#3": 4798
+    "U3#3": 4798,
+    "U1#11": 446155
   },
   "api": "http://gx-nginx-e:8500",
   "spa": "http://localhost:3002",
   "observations": {
     "U4#S5": {
       "control": {
-        "found": false,
-        "why": "그 사람으로 **화면에 들어가지 못했다** (gxseed_u4_official · /login 에 머문다)",
-        "login_said": "아이디​\n비밀번호\n지금 다시 시도할 수 있습니다.\n비밀번호를 잊어버렸습니까?\n로그인\n\nGuardianX는 대응 시간을 잽니다.\n\n처음이세요?\n버전 알 수 없음\n\n이곳의 모든 저작권은 Gaion Co., Ltd.에 있습니다.",
-        "login_calls": [
-          [
-            "POST",
-            "http://localhost:8000/api/v1/auth/login",
-            null
-          ],
-          [
-            "POST",
-            "http://localhost:8000/api/v1/auth/login",
-            null
-          ]
-        ],
-        "url": "http://localhost:3002/login"
+        "found": true,
+        "clicked": true,
+        "name": "화면 열기",
+        "prepared": []
       },
-      "measured_at": "2026-09-21T12:18:19Z"
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/dsm/settings/rules?tab=zones",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=REDACTED-자격은-증거에-적지-않는다&libraries=services,clusterer,drawing,geometry",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-BDUNGY43.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/router-DVUMBcBr.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/index-DCBePWO_.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/main/4.5.26/kakao.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/services/1.1.1/services.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/clusterer/1.1.1/clusterer.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/js/libs/drawing/1.3.4/drawing.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://t1.daumcdn.net/mapjsapi/images/transparent.gif",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/ConfigDataWrap-Ik2gwwmS.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/SettingsRules-yNNViygS.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/FailureNotice-BoegrQu1.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/StateBoundary-_joyUCxV.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/severity-B3kRS_Cy.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/assets/logo-full-black-BH8-vGjx.png",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/settings/zones",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/settings/thresholds",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/me",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/dsm/settings/grade_rules",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/menu/menus?page_size=10000",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/advanced-table/select-data?model_name=theme&distinct=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/config-management/list-optimized",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=false",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8000/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:3002/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 404
+        }
+      ],
+      "state": {
+        "kind": "status_is",
+        "get": "/api/dsm/settings/zones",
+        "field": "403",
+        "after": "403",
+        "reread": "응답 짝을 못 지어 같은 자격으로 다시 두드렸다"
+      },
+      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n설정 — 구역 · 임계값 · 등급규칙\n기관 관리자의 자리입니다. 세 가지를 바꾸면 그 자리에서 다시 읽어 지금 값을 보여 줍니다.\n구역\n임계값\n등급규칙\n새 구역 만들기\n카메라 묶음 구역을 만듭니다. 폴리곤 구역은 이 화면에서 만들지 않습니다.\n만들기\n등록된 구역\n가동 중인 구역 0개 · 전체 0개\n이 항목에 대한 권한이 없습니다.\n이 계정에는 이 항목을 볼 권한이 없습니다.\n다시 로그인하면 보일 수 있습니다. 그래도 안 보이면 관리자에게 역할을 요청하십시오.\n다시 시도\n버전 720498c",
+      "measured_at": "2026-09-23T07:49:03Z"
     },
     "U5#S1": {
       "control": {
@@ -52,17 +191,17 @@
         "get": "/api/dsm/settings/zones",
         "field": "zones",
         "project": "is_active",
-        "before": "True,True,True",
-        "after": "False,True,True"
+        "before": "True,True,True,True",
+        "after": "False,True,True,True"
       },
-      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n설정 — 구역 · 임계값 · 등급규칙\n기관 관리자의 자리입니다. 세 가지를 바꾸면 그 자리에서 다시 읽어 지금 값을 보여 줍니다.\n구역\n임계값\n등급규칙\n새 구역 만들기\n카메라 묶음 구역을 만듭니다. 폴리곤 구역은 이 화면에서 만들지 않습니다.\n만들기\n등록된 구역\n가동 중인 구역 2개 · 전체 3개\n이름\t종류\t카메라 대수\t가동\t판정\t\n[훈련] 안양천 시험구역\t카메라 묶음\t3\t멈춤\t판정할 수 있습니다\t\n켜기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n버전 알 수 없음",
+      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n설정 — 구역 · 임계값 · 등급규칙\n기관 관리자의 자리입니다. 세 가지를 바꾸면 그 자리에서 다시 읽어 지금 값을 보여 줍니다.\n구역\n임계값\n등급규칙\n새 구역 만들기\n카메라 묶음 구역을 만듭니다. 폴리곤 구역은 이 화면에서 만들지 않습니다.\n만들기\n등록된 구역\n가동 중인 구역 3개 · 전체 4개\n이름\t종류\t카메라 대수\t가동\t판정\t\n[훈련] 안양천 시험구역\t카메라 묶음\t3\t멈춤\t판정할 수 있습니다\t\n켜기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n버전 720498c",
       "revert": {
         "kind": "same_control",
         "clicked": true,
         "restored": true,
-        "after": "True,True,True"
+        "after": "True,True,True,True"
       },
-      "measured_at": "2026-09-21T12:18:42Z"
+      "measured_at": "2026-09-23T07:49:28Z"
     },
     "U5#S2": {
       "control": {
@@ -87,11 +226,11 @@
         "kind": "server_change",
         "get": "/api/dsm/settings/zones",
         "field": "zones",
-        "before": 3,
-        "after": 4
+        "before": 4,
+        "after": 5
       },
-      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n설정 — 구역 · 임계값 · 등급규칙\n기관 관리자의 자리입니다. 세 가지를 바꾸면 그 자리에서 다시 읽어 지금 값을 보여 줍니다.\n구역\n임계값\n등급규칙\n새 구역 만들기\n카메라 묶음 구역을 만듭니다. 폴리곤 구역은 이 화면에서 만들지 않습니다.\n만들기\n등록된 구역\n가동 중인 구역 4개 · 전체 4개\n이름\t종류\t카메라 대수\t가동\t판정\t\n[훈련] 안양천 시험구역\t카메라 묶음\t3\t가동\t판정할 수 있습니다\t\n끄기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n버전 알 수 없음",
-      "measured_at": "2026-09-21T12:18:52Z"
+      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n설정 — 구역 · 임계값 · 등급규칙\n기관 관리자의 자리입니다. 세 가지를 바꾸면 그 자리에서 다시 읽어 지금 값을 보여 줍니다.\n구역\n임계값\n등급규칙\n새 구역 만들기\n카메라 묶음 구역을 만듭니다. 폴리곤 구역은 이 화면에서 만들지 않습니다.\n만들기\n등록된 구역\n가동 중인 구역 5개 · 전체 5개\n이름\t종류\t카메라 대수\t가동\t판정\t\n[훈련] 안양천 시험구역\t카메라 묶음\t3\t가동\t판정할 수 있습니다\t\n끄기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n\ngxprobe-D384-screen-구역\t카메라 묶음\t0\t가동\t판정할 수 있습니다\t\n끄기\n버전 720498c",
+      "measured_at": "2026-09-23T07:49:38Z"
     },
     "U5#S3": {
       "control": {
@@ -136,17 +275,17 @@
         },
         "before": "10.0,200,5,30,10,None",
         "after": "11.0,200,5,30,10,None",
-        "also_before": 4,
-        "also_after": 5
+        "also_before": 6,
+        "also_after": 7
       },
-      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n설정 — 구역 · 임계값 · 등급규칙\n기관 관리자의 자리입니다. 세 가지를 바꾸면 그 자리에서 다시 읽어 지금 값을 보여 줍니다.\n구역\n임계값\n등급규칙\n저장 축 — 항목 단위 (서버가 정한 단위 · 사유를 적어야 저장됨)\n기록 단계 중복 억제창\nseconds\n저장\n지금 값\n바꿔 둔 항목 1개 · 전체 6개\n항목\t지금 값\t기본값\t누가 정했나\n기록 단계 중복 억제창\t11 seconds\t10\t사람이 바꾼 값\n캐시 무효화 신호 분당 상한\t200 per_minute\t200\t정의 기본값\n알림 중복 억제창\t5 minutes\t5\t정의 기본값\n알림 발송 상한\t30 seconds\t30\t정의 기본값\n메일 채널 타임아웃\t10 seconds\t10\t정의 기본값\n지점별 수위 기준선\t아직 없음\t아직 없음\t정해지지 않음\n바꾼 기록\n항목\t무엇에서 무엇으로\t사유\nevent.dedup_window\t10.0 → 11.0\tP-118 게이트 측정 (자동)\nevent.dedup_window\t11.0 → 10.0\tP-118 게이트 측정 (자동)\nevent.dedup_window\t10.0 → 11.0\tP-118 게이트 측정 (자동)\nevent.dedup_window\t11.0 → 10.0\tP-118 게이트 측정 (자동)\nevent.dedup_window\t아직 없음 → 11.0\tP-118 게이트 측정 (자동)\n버전 알 수 없음",
+      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n설정 — 구역 · 임계값 · 등급규칙\n기관 관리자의 자리입니다. 세 가지를 바꾸면 그 자리에서 다시 읽어 지금 값을 보여 줍니다.\n구역\n임계값\n등급규칙\n저장 축 — 항목 단위 (서버가 정한 단위 · 사유를 적어야 저장됨)\n기록 단계 중복 억제창\nseconds\n저장\n지금 값\n바꿔 둔 항목 1개 · 전체 6개\n항목\t지금 값\t기본값\t누가 정했나\n기록 단계 중복 억제창\t11 seconds\t10\t사람이 바꾼 값\n캐시 무효화 신호 분당 상한\t200 per_minute\t200\t정의 기본값\n알림 중복 억제창\t5 minutes\t5\t정의 기본값\n알림 발송 상한\t30 seconds\t30\t정의 기본값\n메일 채널 타임아웃\t10 seconds\t10\t정의 기본값\n지점별 수위 기준선\t아직 없음\t아직 없음\t정해지지 않음\n바꾼 기록\n항목\t무엇에서 무엇으로\t사유\nevent.dedup_window\t10.0 → 11.0\tP-118 게이트 측정 (자동)\nevent.dedup_window\t11.0 → 10.0\tP-118 게이트 측정 (자동)\nevent.dedup_window\t10.0 → 11.0\tP-118 게이트 측정 (자동)\nevent.dedup_window\t11.0 → 10.0\tP-118 게이트 측정 (자동)\nevent.dedup_window\t10.0 → 11.0\tP-118 게이트 측정 (자동)\nevent.dedup_window\t11.0 → 10.0\tP-118 게이트 측정 (자동)\nevent.dedup_window\t아직 없음 → 11.0\tP-118 게이트 측정 (자동)\n버전 720498c",
       "revert": {
         "kind": "redo",
         "clicked": true,
         "restored": true,
         "after": "10.0,200,5,30,10,None"
       },
-      "measured_at": "2026-09-21T12:19:10Z"
+      "measured_at": "2026-09-23T07:49:56Z"
     },
     "U5#S4": {
       "control": {
@@ -190,14 +329,14 @@
         "before": "warning,critical,critical,warning,info,critical,critical,warning,info",
         "after": "critical,critical,critical,warning,info,critical,critical,warning,info"
       },
-      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n설정 — 구역 · 임계값 · 등급규칙\n기관 관리자의 자리입니다. 세 가지를 바꾸면 그 자리에서 다시 읽어 지금 값을 보여 줍니다.\n구역\n임계값\n등급규칙\n등급 바꾸기 (사유를 적어야 저장됨)\n카메라 무응답 (지금: 심각)\n심각\n저장\n지금 규칙\n바꿔 둔 규칙 1개 · 전체 9개 · 낮춘 규칙 0개\n유형\t지금 등급\t정의 등급\t누가 정했나\t낮춤\t사유\n카메라 무응답\t심각\t경계\t사람이 바꾼 값\t\tP-118 게이트 측정 (자동)\n화재\t심각\t심각\t정의 기본값\t\t\n침수\t심각\t심각\t정의 기본값\t\t\n침입\t경계\t경계\t정의 기본값\t\t\n사람\t주의\t주의\t정의 기본값\t\t\n연기\t심각\t심각\t정의 기본값\t\t\n구조요청\t심각\t심각\t정의 기본값\t\t\n저장 용량 임계\t경계\t경계\t정의 기본값\t\t\n차량\t주의\t주의\t정의 기본값\t\t\n바꾼 기록\n유형\t무엇에서 무엇으로\t사유\n카메라 무응답\t경계 → 심각\tP-118 게이트 측정 (자동)\n카메라 무응답\t심각 → 경계\tP-118 게이트 측정 (자동)\n카메라 무응답\t경계 → 심각\tP-118 게이트 측정 (자동)\n카메라 무응답\t심각 → 경계\tP-118 게이트 측정 (자동)\n카메라 무응답\tnull → 심각\tP-118 게이트 측정 (자동)\n버전 알 수 없음",
+      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n설정 — 구역 · 임계값 · 등급규칙\n기관 관리자의 자리입니다. 세 가지를 바꾸면 그 자리에서 다시 읽어 지금 값을 보여 줍니다.\n구역\n임계값\n등급규칙\n등급 바꾸기 (사유를 적어야 저장됨)\n카메라 무응답 (지금: 심각)\n심각\n저장\n지금 규칙\n바꿔 둔 규칙 1개 · 전체 9개 · 낮춘 규칙 0개\n유형\t지금 등급\t정의 등급\t누가 정했나\t낮춤\t사유\n카메라 무응답\t심각\t경계\t사람이 바꾼 값\t\tP-118 게이트 측정 (자동)\n화재\t심각\t심각\t정의 기본값\t\t\n침수\t심각\t심각\t정의 기본값\t\t\n침입\t경계\t경계\t정의 기본값\t\t\n사람\t주의\t주의\t정의 기본값\t\t\n연기\t심각\t심각\t정의 기본값\t\t\n구조요청\t심각\t심각\t정의 기본값\t\t\n저장 용량 임계\t경계\t경계\t정의 기본값\t\t\n차량\t주의\t주의\t정의 기본값\t\t\n바꾼 기록\n유형\t무엇에서 무엇으로\t사유\n카메라 무응답\t경계 → 심각\tP-118 게이트 측정 (자동)\n카메라 무응답\t심각 → 경계\tP-118 게이트 측정 (자동)\n카메라 무응답\t경계 → 심각\tP-118 게이트 측정 (자동)\n카메라 무응답\t심각 → 경계\tP-118 게이트 측정 (자동)\n카메라 무응답\t경계 → 심각\tP-118 게이트 측정 (자동)\n카메라 무응답\t심각 → 경계\tP-118 게이트 측정 (자동)\n카메라 무응답\tnull → 심각\tP-118 게이트 측정 (자동)\n버전 720498c",
       "revert": {
         "kind": "redo",
         "clicked": true,
         "restored": true,
         "after": "warning,critical,critical,warning,info,critical,critical,warning,info"
       },
-      "measured_at": "2026-09-21T12:19:29Z"
+      "measured_at": "2026-09-23T07:50:16Z"
     }
   }
 }

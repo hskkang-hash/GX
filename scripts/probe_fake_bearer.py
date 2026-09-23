@@ -61,6 +61,16 @@ def main() -> int:
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    #: ★★ [턴 AF · 차선 S 실측] `config.settings` 는 `/app`(gx-shell 의 장고
+    #:   프로젝트 루트)에 있다. 이 줄이 없으면 `django.setup()` 이
+    #:   `ModuleNotFoundError: No module named 'config'` 로 **매번** 죽는다 —
+    #:   `-w /app` 은 **현재 디렉터리**만 옮길 뿐 `sys.path` 에 자동으로 얹지
+    #:   않는다(파이썬은 스크립트 자신의 디렉터리만 얹는다). 자매 탐침
+    #:   `probe_read_surface.py:849` 는 이미 이렇게 하고 있었다 — 여기 빠져
+    #:   있었다. [실측 2026-09-23: 이 줄 없이 문서에 적힌 그대로 부르면 EXIT 2
+    #:   "**못 쟀다**" 뿐이고, 「364자리 · 0건」은 **이 스크립트로는 나올 수
+    #:   없는 출력**이었다 — 아래 §S.md 참조]
+    sys.path.insert(0, "/app")
     try:
         import django
         django.setup()
@@ -73,6 +83,20 @@ def main() -> int:
         return EXIT_UNDECIDABLE
 
     caller = P.Caller(args.base)
+    #: ★★ [턴 AF · 차선 S 실측] **둘째 결함** — `P.measure(caller, method, url,
+    #:   principal, query)` 의 다섯째 자리는 **질의값**이지 헤더가 아니다.
+    #:   `{"Authorization": FAKE}` 를 거기 넣으면 그 글자는 URL 뒤에
+    #:   `?Authorization=Bearer+...` 로 **질의 문자열**이 되어 붙을 뿐, 실제
+    #:   `Authorization:` HTTP 헤더는 **한 번도 실리지 않는다**(`Caller.call()` 은
+    #:   `token` 인자로만 그 헤더를 만든다). 그러니 이전 실행은 `anon` 과
+    #:   `fake` 가 **같은 요청**이었던 셈이다 — 「가짜 헤더도 뚫리지 않았다」가
+    #:   아니라 **「가짜 헤더를 보낸 적이 없다」.**
+    #:   ★ 로그인 없이 진짜 헤더를 싣는 유일한 길: `Caller.tokens` 에 가짜
+    #:   주체를 **직접** 심는다. `caller.creds` 에는 없으므로 `authed()` 의
+    #:   401 재로그인 갈래(계정이 필요하다)도 타지 않는다 — 로그인은 **0회**다.
+    FAKE_PRINCIPAL = "__gx_fake_bearer__"
+    FAKE_TOKEN = FAKE.split(" ", 1)[1] if FAKE.startswith("Bearer ") else FAKE
+    caller.tokens[FAKE_PRINCIPAL] = FAKE_TOKEN
     rows, t0 = [], time.time()
     for mount, api in _iter_ninja_apis():
         for prefix, router in getattr(api, "_routers", []) or []:
@@ -87,9 +111,10 @@ def main() -> int:
                     for method in read_methods:
                         #: 같은 자리를 **두 번** 때린다 — 익명 한 번, 가짜 헤더 한 번.
                         #: 두 수를 나란히 둬야 「관문이 섰다」와 「값을 안 본다」가 갈린다.
+                        #: ★ `fake` 는 `FAKE_PRINCIPAL` 로 부른다 — `Caller.call()` 이
+                        #:   `Authorization: Bearer <FAKE_TOKEN>` 을 **실제로** 싣는다.
                         anon = P.measure(caller, method, url, None, {})
-                        fake = P.measure(caller, method, url, None,
-                                         {"Authorization": FAKE})
+                        fake = P.measure(caller, method, url, FAKE_PRINCIPAL, {})
                         a_data, a_why, _, _ = P.has_data(anon["status"], anon["body"])
                         f_data, f_why, f_units, f_keys = P.has_data(fake["status"], fake["body"])
                         rows.append({

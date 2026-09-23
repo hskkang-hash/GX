@@ -325,14 +325,26 @@ def _mark_probe_unbillable(app_label: str, model_name: str, pk, reason: str) -> 
 
 
 def audit_count_for(event_id: int) -> int:
-    """감사 행 — 상태 전이가 남긴 행 수. 표에 이벤트 칸이 없으면 -1 (못 셈)."""
+    """감사 행 — 이 사건에 걸린 `[U24-EVENT]` 행위 수.
+
+    ★★ [실측 2026-09-23 · 턴 AF · K+Q] 옛 구현은 `logger.AuditLogs` 에
+      `event_id`/`object_id`/`target_id` **열이 있다고 가정했는데, 실측 필드
+      목록(38개)에 셋 다 없다.** 그래서 옛 구현은 **모든 사건에 대해 언제나 -1**
+      (판단 불가)을 냈다 — 지금까지 아무도 못 알아챈 것은 이 값을 부르는 자리가
+      전부 evidence 문구일 뿐 판정을 가르지 않았기 때문이다. 사건 id 는 이 표의
+      열이 아니라 **`api_name` 문자열 안에** 실린다
+      (`api_u24.py::_event_severity_set` 등이 `action = f"{동사}:set:{event_id}"` 를
+      그대로 `api_name` 으로 쓴다 — 실측: 사건 4802 의 등급 재판정 두 행이
+      `api_name='severity:set:4802'` 로 저장됨). 그래서 그 접미사로 센다.
+    ⚠ 이 사건 id 로 끝나는 **다른 동사**(예 `upper_report:set:4802`)도 같이
+      세인다 — 「이 사건에 걸린 감사 행 전체」이지 「severity 행위만」이 아니다.
+      severity 전용으로 좁히려면 `api_name__endswith=f":set:{event_id}"` 로는
+      부족하다(`upper_report:set:` 도 그 접미사를 쓴다) — 호출부에서 전/후
+      **증가분**만 보는 이유가 그것이다(절대값이 아니라 델타로 판정한다).
+    """
     try:
         AL = orm().get_model("logger", "AuditLogs")
-        names = {f.name for f in AL._meta.get_fields()}
-        for cand in ("event_id", "object_id", "target_id"):
-            if cand in names:
-                return AL._base_manager.filter(**{cand: event_id}).count()
-        return -1
+        return AL._base_manager.filter(api_name__endswith=f":{event_id}").count()
     except Exception:                                   # noqa: BLE001
         return -1
 
@@ -1075,28 +1087,73 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     out.append(result("U2#2", "/dsm/events?preset=unhandled", seen, bool(g200) and all_unhandled,
                       f"GET …response_state=occurred 200={bool(g200)} (서버 {n_srv}건{probe_note}) · 처리 단계 칸 {len(states)} 전부 미처리={all_unhandled} {sorted(set(states))}", url=url))
 
-    # #3 이벤트 등급 재판정 [P-205 · 턴 Y] — **누를 자리를 찾는다 · 기대 = 0개(그래서 ○)**
-    #    ★ 이 행은 채워도 ● 가 아니다. 「없는 것을 없다고 재는」 행이다 —
-    #      회색(못 쟀다)과 빨강(재서 없다)은 다르고, 이 저장소는 그 둘을 가른다.
+    # #3 이벤트 등급 재판정 [P-205 · 턴 Y → **턴 AF · K+Q 강화**]
+    #    ★★ [실측 2026-09-23 · 조율자 브라우저] 옛 술어(「단추 자신의 글자에 '등급'/
+    #      `severity` 가 함께 걸릴 것」)는 **재판정 문이 실제로 서 있는데도 빨강**을 냈다 —
+    #      우리 단추 글자는 「▲ 경계」이고 「등급 재판정」은 **옆 제목**이라 둘째 조건이
+    #      안 걸렸다. 이 파일이 스스로 적어 둔 답(바로 위 옛 evidence 문구)대로 바꾼다:
+    #      **「자리가 있다」가 아니라 「눌렀더니 [서버 기록] severity 가 바뀌고 감사 행이
+    #      늘었다」를 잰다.** 이것은 약화가 아니라 강화다 — 화면 문구가 아니라 서버 기록을
+    #      본다. 확인창 단추는 `Modal.confirm` 의 `okText` 다 — 「확인」이 아니라
+    #      **「등급 재판정」**이다 (EventDetail.tsx:272).
+    #    ⚠ **되돌린다.** 이 사건(snap_event/seed_a)은 다른 행들의 표본이다 — 눌러서
+    #      바꿨으면 이 함수 안에서 원래 등급으로 반드시 되돌리고, 되돌아간 것까지 잰다.
     def _u2_3():
-        url = goto(page, web, f"/dsm/events/{snap_event or seed_a}")
-        try:
-            controls = page.evaluate(
-                "() => {const w = ['심각','경계','주의','등급'];"
-                " const el = Array.from(document.querySelectorAll("
-                "   'select, [role=combobox], button, input'));"
-                " return el.filter(e => {const t = ((e.innerText||'') + ' ' + (e.value||'') + ' '"
-                "   + (e.getAttribute('aria-label')||'') + ' ' + (e.name||'')).trim();"
-                "   return w.some(x => t.includes(x)) && /등급|severity/i.test("
-                "     t + ' ' + (e.className||'') + ' ' + (e.id||''));}).length;}")
-        except Exception:                               # noqa: BLE001
-            controls = -1
-        found = controls > 0
-        out.append(result("U2#3", "/dsm/events/:id", True, found,
-                          f"등급을 **다시 매기는** 자리 {controls}개 (0 이면 ○ — 재판정 칸이 없다는 "
-                          f"것이 지금의 사실이다 · 1 이상이면 그것이 새 사실이고 그때 술어는 "
-                          f"[서버 기록] severity 변경 + 감사 행 1 이 된다) · "
-                          f"-1 은 화면을 못 물어본 것이다", url=url))
+        eid = snap_event or seed_a
+        url = goto(page, web, f"/dsm/events/{eid}")
+        ICON = {"critical": "■", "warning": "▲", "info": "●"}
+        LABEL = {"critical": "심각", "warning": "경계", "info": "주의"}
+        ORDER = ["critical", "warning", "info"]
+
+        def press(sev_key: str):
+            """단추 「{아이콘} {라벨}」을 누르고 확인창 okText 「등급 재판정」을 누른다."""
+            label = f"{ICON.get(sev_key, '')} {LABEL.get(sev_key, sev_key)}".strip()
+            mm = net.mark()
+            clicked = click_button(page, label)
+            page.wait_for_timeout(1_500)
+            confirmed = click_button(page, "등급 재판정", exact=True) if clicked else False
+            page.wait_for_timeout(4_000)
+            post = net.find("POST", f"/api/dsm/events/{eid}/severity", mm)
+            post_ok = any(p["status"] == 200 for p in post)
+            return clicked, confirmed, post_ok
+
+        before = event_row(eid)
+        before_sev = before.get("severity")
+        before_audit = audit_count_for(eid)
+        target = next((s for s in ORDER if s != before_sev), None)
+
+        if not before or before_sev is None or target is None:
+            out.append(result("U2#3", "/dsm/events/:id", True, False,
+                              f"[서버 기록] 을 못 읽었다(eid={eid}) — before={before} · "
+                              f"등급을 다시 매길 표적을 못 골랐다", url=url))
+            return
+
+        clicked, confirmed, post_ok = press(target)
+        after = event_row(eid)
+        after_audit = audit_count_for(eid)
+        changed = (after.get("severity") == target) and (after.get("severity") != before_sev)
+        audit_added = (before_audit >= 0 and after_audit >= 0 and after_audit > before_audit)
+        pred = changed and audit_added
+        evidence = (f"누름 「{LABEL.get(target)}」 단추={clicked} · 확인창 「등급 재판정」={confirmed} · "
+                    f"POST /events/{eid}/severity 200={post_ok} · "
+                    f"[서버 기록] severity {before_sev} → {after.get('severity')} · "
+                    f"감사 행 {before_audit} → {after_audit}")
+
+        #: ★ 되돌림 — changed 이든 아니든(부분 실패를 남겨 둔 채 다음 표본을 오염시키지
+        #:   않으려면) 서버 값이 원래와 다르면 되돌리려고 시도한다.
+        after2 = event_row(eid)
+        if after2.get("severity") != before_sev and before_sev in ORDER:
+            clicked2, confirmed2, post_ok2 = press(before_sev)
+            back = event_row(eid)
+            back_audit = audit_count_for(eid)
+            reverted = back.get("severity") == before_sev
+            evidence += (f" · 되돌림 「{LABEL.get(before_sev)}」 단추={clicked2} · 확인창={confirmed2} · "
+                        f"POST 200={post_ok2} · [서버 기록] 복귀={reverted}({back.get('severity')}) · "
+                        f"감사 행 {after_audit} → {back_audit}")
+            if not reverted:
+                evidence += " · ⚠⚠ 되돌리기 실패 — 사건이 바뀐 등급인 채로 남았다(손으로 확인 필요)"
+
+        out.append(result("U2#3", "/dsm/events/:id", True, pred, evidence, url=url))
     guarded(out, "U2#3", "/dsm/events/:id", _u2_3)
 
     # #4 심각 이벤트: 배지 심각 · GET snapshot 200 image/jpeg · <img> ≥1 · 주소 칸 비어 있지 않음 — 하나라도 빠지면 ◐

@@ -1,0 +1,91 @@
+{
+  "measured_at": "2026-09-23T16:23:54",
+  "declared_by": "세종(CPO) · P-230 · WO-GX-20260921-04 §5",
+  "legal_basis": "「개인정보의 안전성 확보조치 기준」(개인정보보호위원회고시) 제8조(접속기록의 보관 및 점검) ① — 접속기록 보관 1년 이상(5만 명 이상의 정보주체 처리 또는 고유식별정보·민감정보 처리 시스템은 2년 이상). 대조 완료 [GX-LAW-09 §2 · 2026-09-23 · 차선 S · 국가법령정보센터 원문 대조] — 이 저장소는 원칙 조건(1년)을 웃도는 730일(2년)을 선언해 두었다. 「5만 명 이상/민감정보」 조건 해당 여부는 [확인 안 됨](테넌트별 정보주체 수 미집계) · 조 번호의 항·호 세부 표기는 [확인](법률대리인 최종 대조 전)",
+  "enforcement_site": "AdminConfig::System > security.audit_log_retention_days",
+  "divergence": [
+    {
+      "name": "P-230 선언",
+      "days": 730
+    },
+    {
+      "name": "심긴 값(AdminConfig::System > security.audit_log_retention_days)",
+      "days": 365
+    },
+    {
+      "name": "dj-core 코드 기본값",
+      "days": 90
+    }
+  ],
+  "marks": {
+    "audit": {
+      "days": 730,
+      "forever": false,
+      "expired": 0,
+      "min_id": null,
+      "max_id": null,
+      "table": "logger_auditlogs",
+      "time_col": "create_datetime",
+      "cutoff": "now() - 730 days",
+      "rows_total": 195769,
+      "oldest": "2026-08-27 13:28:44.947815+00:00"
+    },
+    "incident": {
+      "days": null,
+      "forever": true,
+      "expired": 0,
+      "cutoff": "없다(영구)",
+      "note": "**없다** — 파기하는 손 자체를 두지 않는다. 그것이 집행이다"
+    },
+    "collector": {
+      "days": 90,
+      "forever": false,
+      "expired": null,
+      "size_based": true,
+      "cutoff": "날짜 경계가 없다",
+      "note": "`json-file` 은 날짜를 모른다 — 선언은 기간이고 집행은 크기다. **회색이 옳다**"
+    }
+  },
+  "table_rows": 195769,
+  "oldest": "2026-08-27 13:28:44.947815+00:00",
+  "newest": "2026-09-23 07:23:53.816715+00:00",
+  "purge_enabled": true,
+  "purge_rows": [
+    {
+      "name": "purge-audit-logs-daily",
+      "task": "core.logger.tasks.purge_old_audit_logs",
+      "enabled": false,
+      "last_run_at": "None"
+    },
+    {
+      "name": "ops-audit-purge-daily",
+      "task": "common.ops_audit_purge_beat",
+      "enabled": false,
+      "last_run_at": "None"
+    }
+  ],
+  "deleted": 0,
+  "deleted_note": "이 판정기는 한 행도 지우지 않는다 (P-230 · P-222)",
+  "verdict": [
+    {
+      "name": "① 선언",
+      "passed": true,
+      "why": "부류 3개가 임자·근거와 함께 선언돼 있다"
+    },
+    {
+      "name": "② 선언↔집행",
+      "passed": false,
+      "why": "**갈렸다** — 선언 730일인데 dj-core 가 읽는 자리는 365일다. 화면이 말하는 수와 지우는 수가 다르다(D-369). 맞추는 것은 `AdminConfig` 공용 마스터 쓰기이고, 이 턴의 차선 몫이 아니다 — **갈렸다는 사실을 적는다**"
+    },
+    {
+      "name": "③ 만료 건수",
+      "passed": false,
+      "why": "건수를 **못 잰** 부류: collector"
+    },
+    {
+      "name": "④ 영구=파기 없음",
+      "passed": true,
+      "why": "영구 부류 1개에 만료 표식 0행"
+    }
+  ]
+}

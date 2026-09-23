@@ -40,6 +40,7 @@ import {
   dsmPostQuery,
   dsmPostQueryOnce,
   dsmU1Endpoint,
+  dsmU2SeverityEndpoint,
   intentKey,
 } from '../api';
 import {
@@ -276,7 +277,7 @@ export default function EventDetail() {
           setSeverityError('');
           try {
             await dsmPostQueryOnce(
-              `/api/dsm/events/${id}/severity`,
+              dsmU2SeverityEndpoint.eventSeverity(id),
               { severity: nextSeverity, reason },
               // ★ 의도 열쇠는 **브라우저 안 Map 의 열쇠**다 — 서버로 안 가고 철자는 임의다.
               //   `severity:` 라고 적었더니 UX-20 래칫(`verify_ui_copy`)이 「영문 열거값」으로

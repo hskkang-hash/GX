@@ -455,6 +455,16 @@ services:
       - ./sourcedemo:/sourcedemo
       - ./scripts:/repo/scripts:ro
       - ./backend:/repo/backend:ro
+      # ★ VAPID 구멍 막음 [P-263 후속 · 턴 AF 차선 E]. 조율자가 어제 runserver 를 손으로
+      #   `--env-file` 실어 다시 띄운 이유가 이 값들이었다 — `gx_shell_bootstrap.py` 가
+      #   대신 기동을 맡으면 그 손길이 사라지므로, 저장소 뿌리의 금고 파일(gitignored ·
+      #   `.env.vapid`)을 **읽기 전용**으로 들여 스크립트가 스스로 싣게 한다
+      #   (`scripts/gx_shell_bootstrap.py::_load_vapid_env`, 기본 자리 `/repo/.env.vapid`).
+      #   ⚠ 호스트에 `.env.vapid` 가 없어도 **컴포즈가 죽지 않는다** — 단일 파일
+      #   바인드마운트의 소스가 없으면 Docker 는 컨테이너 안에 **빈 디렉터리**를 만든다
+      #   [실측 2026-09-23 · `docker run --rm -v .../.env.vapid.NOPE:/repo/.env.vapid.NOPE`
+      #   → 에러 없이 빈 디렉터리]. 스크립트는 `os.path.isfile()` 로 그 더미를 걸러낸다.
+      - ./.env.vapid:/repo/.env.vapid:ro
     env_file:
       - ./backend/.env
     environment:

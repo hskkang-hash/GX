@@ -49,14 +49,97 @@ gx-shell 이 `entrypoint: ["sleep"]` 로 이미지의 진짜 `/entrypoint.sh`(�
         curl -sf http://127.0.0.1:3002/ -o /dev/null && echo SPA_OK
 
 되돌림: 이 파일은 **읽기만** 하고 새 프로세스 둘만 띄운다. DB·저장소·볼륨을 건드리지 않는다.
+
+★ VAPID 구멍 (P-263 후속 · 턴 AF 차선 E)
+------------------------------------------
+조율자가 어제 이 컨테이너의 `runserver` 를 **손으로** `--env-file` 을 실어 다시 띄웠다 —
+그래야 웹푸시 발송기(`GX_VAPID_*` 세 이름)가 산다. 이 스크립트가 대신 기동을 맡으면
+그 손길이 없어지므로, **이 파일이 직접** 금고 파일을 찾아 실어야 「내 기기로 한 통」이
+503(P-160·`notify_prefs.py`)으로 죽지 않는다.
+
+금고는 저장소 **뿌리**의 `.env.vapid` 다(gitignored · `.gitignore:69` `**/.env.*`).
+⚠ **gx-shell 은 `/repo` 를 통째 마운트하지 않는다** — `docker-compose.yml` 의 `shell`
+서비스는 `./scripts:/repo/scripts:ro` 와 `./backend:/repo/backend:ro` **subdir 만** 문다
+[실측 2026-09-23 · `docker exec gx-shell find / -iname '*.env*'` → `/repo/.env.vapid` 없음].
+그래서 `docker-compose.yml` 에 **한 줄**을 보탰다 — `./.env.vapid:/repo/.env.vapid:ro`.
+그 자리가 이 스크립트가 읽는 기본값(`GX_VAPID_ENV_FILE_PATH`)이다.
+
+⚠ 금고 파일이 없어도(호스트에 `.env.vapid` 가 없는 환경) **죽지 않는다** — 없다고
+한 줄 찍고 그냥 기동한다. [실측: Docker Desktop 은 존재하지 않는 호스트 파일을 단일
+파일 바인드마운트하면 컨테이너 안에 **빈 디렉터리**를 만든다(에러 아님) — 그래서
+`os.path.isfile()` 로 가른다. 디렉터리면 「없다」와 같은 값이다.]
+
+⚠ **값은 로그·argv 에 0.** 이름 · 길이 · sha256 앞 12자까지만 찍는다(D-204 ·
+`scripts/mint_vapid_pair.py` 의 `_fp()` 와 같은 관례).
 """
 from __future__ import annotations
 
+import hashlib
 import os
 import subprocess
 import sys
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+#: 금고 파일이 실릴 이름 셋 — `backend/apps/dsm/notify_prefs.py` 의 이름과 같다.
+#: **값은 여기 없다. 이름만 있다.**
+VAPID_ENV_NAMES = ("GX_VAPID_PUBLIC_KEY", "GX_VAPID_PRIVATE_KEY", "GX_VAPID_SUBJECT")
+
+#: gx-shell 안에서 금고 파일이 보이는 자리 — `docker-compose.yml` 의 `shell` 서비스
+#: 새 마운트(`./.env.vapid:/repo/.env.vapid:ro`)와 짝이다. 다른 자리에서 부르는
+#: 시험(예: 버리는 통)은 `GX_VAPID_ENV_FILE_PATH` 로 덮을 수 있다.
+VAPID_ENV_FILE_PATH = os.environ.get("GX_VAPID_ENV_FILE_PATH", "/repo/.env.vapid")
+
+
+def _fp(value: str) -> str:
+    """지문 — sha256 앞 12자. **값 자체는 절대 돌려주지 않는다**(mint_vapid_pair.py 와 같음)."""
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
+
+
+def _load_vapid_env(path: str = VAPID_ENV_FILE_PATH) -> None:
+    """금고 파일을 읽어 `os.environ` 에 싣는다 — **값은 찍지 않는다.**
+
+    ① 없으면(또는 디렉터리면 — 바인드마운트 더미) 「없다」고만 말하고 돌아간다. 죽지 않는다.
+    ② 있으면 `KEY=VALUE` 줄만 읽어 알려진 이름 셋에 한해 싣는다. **이미 환경에 값이 있으면
+       덮지 않는다** — 컨테이너 `environment:`/`env_file` 이 명시로 준 값이 이 파일보다
+       우선한다(명시가 항상 암묵을 이긴다).
+    ③ `subprocess.Popen` 에 `env=` 를 안 주면 **부모(`os.environ`)를 그대로 물려받는다** —
+       그래서 여기서 `os.environ` 을 채우기만 하면 되고, runserver 를 더 손댈 필요가 없다.
+    """
+    if not os.path.isfile(path):
+        print("[VAPID] 금고 파일 없음: %s — 값 없이 기동한다(죽지 않는다)" % path)
+        return
+
+    loaded = []
+    skipped_existing = []
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            lines = fh.readlines()
+    except OSError as exc:
+        print("[VAPID] 금고 파일을 못 읽었다: %s (%s) — 값 없이 기동한다" % (path, exc.__class__.__name__))
+        return
+
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        name, _, value = line.partition("=")
+        name = name.strip()
+        value = value.strip()
+        if name not in VAPID_ENV_NAMES:
+            continue
+        if os.environ.get(name):
+            skipped_existing.append(name)
+            continue
+        os.environ[name] = value
+        loaded.append((name, value))
+
+    for name, value in loaded:
+        print("[VAPID]   %s len=%d sha256[:12]=%s (금고에서 실음)" % (name, len(value), _fp(value)))
+    for name in skipped_existing:
+        print("[VAPID]   %s 는 이미 환경에 있다 — 금고 값으로 덮지 않았다" % name)
+    if not loaded and not skipped_existing:
+        print("[VAPID] 금고 파일은 있으나 알려진 이름 셋이 한 줄도 없다: %s" % path)
 
 #: SPA 정적 서버가 섬기는 자리. `/tmp/gx_spa_server.py` 와 같은 기본값 — 옮기면서
 #: 바꾸면 그것도 조용한 변경이다.
@@ -112,6 +195,10 @@ def _run_spa_server() -> None:
 
 
 def main() -> int:
+    #: ⓪ VAPID — runserver 를 띄우기 **전에** 환경을 채운다(Popen 이 그 시점의
+    #:   os.environ 을 물려받으므로 순서가 중요하다).
+    _load_vapid_env()
+
     #: ① runserver — **migrate 는 안 부른다.** `--noreload` 는 기존 손 기동과 같다
     #:   (자동 리로드가 파일 변경 감시로 컨테이너 CPU 를 계속 문다 — 게이트용 서버에는
     #:   필요 없다).

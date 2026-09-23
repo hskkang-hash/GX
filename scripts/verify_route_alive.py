@@ -269,6 +269,61 @@ def token_changed_anything(api: str, pairs: list[tuple[str, str]],
     return changed > 0, changed
 
 
+#: ★★ [P-267 · 턴 AF · K+Q] **주석이 늙지 않게, 코드가 다시 잰다.** `delegate_to_container`
+#:   위의 옛 주석은 「`-e NAME`(값 없이) 은 부모 환경에 없으면 무해하다」였는데, 실측(바로
+#:   위 주석의 A/B)은 반대였다 — **빈 값으로 컨테이너의 실제 값을 덮는다.** 주석만 고치면
+#:   다음 사람이 또 「무해하다」로 되돌릴 수 있다(주석은 실행되지 않는다 · 코드는 실행된다).
+#:   그래서 이 사실 자체를 자기시험이 **직접 다시 잰다** — docker 로 두 번 때려 대조한다.
+def _selftest_dash_e_blanks_missing_name() -> str | None:
+    """A/B: `docker exec -e NAME`(값 없이) 은 이름이 부모 환경에 없으면 **덮어 지우는가**.
+
+    이름은 `MINIO_ACCESS_KEY` — LOCAL_ENV_KEYS 밖이라 `load_local_env()` 가 이 프로세스의
+    환경에 채우지 않는다(그래서 「부모 환경에 없다」는 전제가 이 프로세스 자신에도 선다 ·
+    D-310 식 자기표본). 컨테이너 기본값은 20자(2026-09-22 실측)다.
+
+    반환: `None` — **못 쟀다**(docker 없음 · 컨테이너 없음 · 이름이 이미 오염됨) → 회색,
+    자기시험을 실패시키지 않는다(D-301 — 못 잰 것을 실패로도 통과로도 적지 않는다).
+    `""` — 쟀고, 주석의 주장(빈 값으로 덮는다)과 **일치**한다.
+    그 밖의 문자열 — 쟀는데 주석의 주장과 **어긋난다**(자기시험 실패 사유가 된다).
+    """
+    import shutil
+    import subprocess
+
+    probe = "MINIO_ACCESS_KEY"
+    if probe in os.environ:
+        #: 표본이 오염됐다 — 이 프로세스 환경에 그 이름이 이미 있으면 A/B 의 전제가
+        #: 깨진다. 조용히 통과시키지 않고 못 쟀다로 건너뛴다.
+        return None
+    if not shutil.which("docker"):
+        return None
+    container = os.environ.get("GX_ROUTE_CONTAINER", "").strip() or "gx-shell"
+    sh = f'printf %s "${{{probe}}}" | wc -c'
+    try:
+        without = subprocess.run(["docker", "exec", container, "sh", "-c", sh],
+                                 capture_output=True, text=True, timeout=15)
+        with_e = subprocess.run(["docker", "exec", "-e", probe, container, "sh", "-c", sh],
+                                capture_output=True, text=True, timeout=15)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if without.returncode != 0 or with_e.returncode != 0:
+        #: 컨테이너가 없거나 못 뜬다 — 이것도 판정 불가지 「고쳐졌다」가 아니다.
+        return None
+    try:
+        n_without = int((without.stdout or "0").strip())
+        n_with_e = int((with_e.stdout or "0").strip())
+    except ValueError:
+        return None
+    if n_without <= 0:
+        #: 컨테이너 기본값 자체가 비었다 — 이 A/B 가 재려는 전제(「기본값이 있다」)가
+        #: 이번엔 안 선다. 못 쟀다로 건너뛴다(다른 이유로 회색일 뿐 실패가 아니다).
+        return None
+    if n_with_e == 0:
+        return ""   # 실측이 (고친) 주석과 일치한다 — 빈 값으로 덮였다
+    return (f"docker exec -e {probe}(값 없이) 가 컨테이너 값을 안 지웠다 "
+           f"(-e 없이 {n_without}자 · -e 뒤 {n_with_e}자) — 「덮어 지운다」던 주석이 "
+           f"이제 거짓이다. 위 delegate_to_container 의 `-e` 목록 주석을 다시 확인하라")
+
+
 def self_test() -> int:
     """판정 규칙과 자기표본을 함께 본다 (D-277 · D-310)."""
     bad = []
@@ -332,6 +387,17 @@ def self_test() -> int:
         #: 질의문자열은 그대로 두고 때리므로(위 사유) 자기표본은 **경로로** 맞춘다
         if not any(p.split("?", 1)[0] == SELF_SAMPLE for _, p in pairs):
             bad.append(f"자기표본 {SELF_SAMPLE} 이 목록에 없다 — 500 을 내던 그 자리다 (D-310)")
+
+    # ── P-267 — `-e NAME`(값 없이) 이 정말 덮어 지우는지 다시 잰다 ────────────
+    _dash_e = _selftest_dash_e_blanks_missing_name()
+    _dash_e_note = ""
+    if _dash_e is None:
+        _dash_e_note = " + `-e NAME` A/B **회색**(docker·컨테이너 없음 또는 표본 오염 — 못 쟀다)"
+    elif _dash_e == "":
+        _dash_e_note = " + `-e NAME` A/B 재확인(빈 값으로 덮음 — 주석과 일치)"
+    else:
+        bad.append(_dash_e)
+
     if bad:
         print("[ALIVE] 자기시험 실패 — 판정기를 먼저 의심한다 (D-350):")
         for b in bad:
@@ -339,7 +405,7 @@ def self_test() -> int:
         return EXIT_FAIL
     print(f"[ALIVE] 자기시험 통과 — 판정 규칙 8종 + 출생 표본 {BIRTH_SAMPLE[1]} 500 "
           f"+ 출생 표본 ② 토큰 먹통 {BIRTH_SAMPLE_TOKEN_DEAF[1]}/{BIRTH_SAMPLE_TOKEN_DEAF[0]} 401 "
-          f"+ 로그인 판독 양성1·음성2 + 자기표본 {SELF_SAMPLE}")
+          f"+ 로그인 판독 양성1·음성2 + 자기표본 {SELF_SAMPLE}{_dash_e_note}")
     return EXIT_OK
 
 
@@ -459,7 +525,17 @@ def delegate_to_container(container: str, json_path: str | None,
            "-e", "GX_ROUTE_IN_CONTAINER=1",
            "-e", "GX_API", "-e", "GX_ROUTE_USER", "-e", "GX_ROUTE_PASSWORD",
            # ★ 값 없이 이름만 넘긴다 — 프로세스 목록에 비밀번호가 안 남는다.
-           #   이 이름이 부모 환경에 없으면 docker 는 그냥 안 넘긴다(무해).
+           #   ⚠★★ [실측 2026-09-22 · 턴 AE · K+Q A/B — P-267] **「이 이름이 부모
+           #     환경에 없으면 docker 는 그냥 안 넘긴다(무해)」는 옛 주석이고, 실측과
+           #     반대다.** `docker exec -e NAME`(값 없이) 은 그 이름이 부모(우리) 환경에
+           #     없어도 **넘긴다** — 다만 **빈 문자열로** 넘겨서 컨테이너가 이미 쥔 실제
+           #     값을 덮어 지운다. A/B(같은 호스트·같은 시각):
+           #       `docker exec gx-shell sh -c 'echo -n "$MINIO_ACCESS_KEY"|wc -c'` → 20
+           #       `docker exec -e MINIO_ACCESS_KEY gx-shell sh -c '…'`(부모에 그 이름 없음) → 0
+           #     그래서 이 목록에는 **우리가 실제로 채울 뜻이 있는 이름만** 올린다 — 「혹시
+           #     몰라서」 얹은 이름은 조용히 컨테이너의 값을 지운다. 이 사실은 아래
+           #     `self_test()` 가 `_selftest_dash_e_blanks_missing_name()` 으로 **직접
+           #     다시 잰다** — 주석은 늙지만(D-267) 자기시험은 그때마다 다시 잰다.
            "-e", "GX_SEED_ROLE_PASSWORD",
            # ★ [턴 Z · Q] V 가 격리 A/B 로 바이트 대조해 증명한 한 이름(턴 Y · rc 2 -> rc 0).
            #   이 이름이 없으면 `V_LOCK` 으로 **잠근 사람 자신**이 컨테이너 안에서 「남」으로

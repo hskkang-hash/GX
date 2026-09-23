@@ -2621,6 +2621,13 @@ def walk(persona, account, viewport, flows, event_id):
         img_resp.clear()             # [P-148] 사진 술어도 흐름마다 새로 센다
         tok = seen_auth[0] or tok    # 앱이 쓰는 자격을 그대로 쓴다
         key = f["key"]
+        # ★★ [P-118 A · 턴 AF] **미리 채워진 관측을 덮지 않는다.** 사람이 걷기 전에
+        #   이미 이번 회 전제가 없다고 적힌 자리(예: U1#11 — 미판정 사건 없음)가 있으면
+        #   여기서 또 누르지 않는다. 안 그러면 이미 판정된 사건을 다시 눌러 「요청은
+        #   나갔는데 안 바뀌었다」는 **거짓 빨강**을 덮어쓴다 — 재는 것이 제품이 아니라
+        #   표본 부재가 된다. (`for persona in SPEC["order"]:` 아래의 예외 처리와 같은 패턴.)
+        if key in results:
+            continue
         # ★ [P-162 · 턴 T · U3#3] 흐름마다 **다른 표본**을 쓸 수 있다 — 사진 술어는 `snapshot_path`
         #   가 비어 있지 않은 사건이어야 한다(참조 없는 씨앗은 GET 이 안 나가는 것이 옳다 —
         #   턴 S 빨강은 표본 선택이었다). `SPEC["event_by_flow"]` 에 있으면 그 사건, 없으면 공용.
@@ -3004,6 +3011,32 @@ if _snap and "U3#3" not in SPEC["event_by_flow"]:
 print("[P-118] U3#3 표본: %s (snapshot_path 있는 사건 %d건)"
       % (SPEC["event_by_flow"].get("U3#3", "공용 — 참조 있는 사건 없음"), len(_snap)), file=sys.stderr)
 
+# ★★ [P-118 A · 턴 AF] **U1#11 은 제 표본을 따로 못박는다 — `EVENT` 폴백을 믿지 않는다.**
+#   [실측 2026-09-23 06:31 · 회차 32/48] `EVENT`(공용)가 폴백(`unv` 비었을 때 `_rows[0]`)으로
+#   떨어지면 **이미 판정된 사건**을 집을 수 있다 — 그날의 관측이 정확히 그 모양이었다
+#   (event_id 342448 · 판정 사유 「P-118 게이트 측정 (자동)」· 17시간 전, 즉 **어제의 이
+#   게이트 자신**이 이미 confirmed 로 만들어 둔 사건을 오늘 다시 집어 「다시 읽었는데
+#   verdict 가 그대로다」는 **빨강**을 냈다). 그 빨강은 제품이 판정을 못 바꾼 것이 아니라
+#   **이번 회에 미판정 표본이 하나도 없었다**는 사실이다 — 「안 된다」가 아니라 「못 쟀다」다.
+#   ⇒ `unv` 가 있으면 U1#11 전용으로 **그 중 하나**를 못박는다(공용 `EVENT` 와 갈려도 된다 —
+#     U1#11 은 반드시 미판정 표본이어야 하고, 다른 흐름은 아무 사건이나 봐도 된다).
+#   ⇒ `unv` 가 **없으면** 여기서 곧장 회색을 적어 둔다(`walk()` 의 새 빗장이 이 자리를
+#     다시 안 덮는다) — 빨강을 회색으로 낮추는 것이 아니라, **누를 것이 없는 회를 빨강으로
+#     세지 않는 것**이다(§ 색의 규칙 · D-301 「분모 0 인 초록은 초록이 아니다」의 거울상).
+if unv:
+    SPEC["event_by_flow"]["U1#11"] = unv[0]
+    print("[P-118] U1#11 표본: %s (미판정 사건 %d건 중 첫째)" % (unv[0], len(unv)), file=sys.stderr)
+else:
+    print("[P-118] U1#11 표본: 없음 — 이번 회 미판정 사건 0건(전량 판정됨) · 회색으로 적는다",
+          file=sys.stderr)
+    note("U1#11", control={
+        "found": False,
+        "why": ("이번 회에 미판정(verdict 없음) 사건이 없다(표본 %d건 전부 판정됨) — "
+                "새 씨앗이 이번 회에 심기지 않았거나 전부 이미 판정된 상태다. 이미 판정된 "
+                "사건을 다시 눌러 값이 안 바뀐 것을 제품의 빨강으로 적으면 표본 부재를 "
+                "제품 결함으로 파는 것이다 (P-118 A · 턴 AF 실측 2026-09-23 · event_id 342448 "
+                "사례)") % len(_rows)})
+
 for persona in SPEC["order"]:
     p = SPEC["personas"][persona]
     flows = [f for f in SPEC["flows"] if f["key"].startswith(persona + "#")]
@@ -3050,8 +3083,23 @@ API_PATHS = {
     #:  옳고 요청이 틀렸다(서명키 검사는 그 뒤라 닿지도 못했다). `.invalid` 는 RFC 6761 이
     #:  **절대 풀리지 않는다**고 정한 이름이다 — 등록 검사(이름 · IP 리터럴)는 통과하고,
     #:  나중에 발송이 떠도 밖의 실제 호스트를 두드리지 않는다.
+    #: ★★ [P-118 A · 턴 AF · 실측 2026-09-23 06:31] **이 행이 빨강인 진짜 사유는 VAPID/웹푸시가
+    #:  아니다** — 응답 본문을 읽으면 422 · 「서명키 'p118-gate' 의 값을 이 환경에서 찾을 수
+    #:  없습니다」(`common/webhook_outbox.py::signing_secret` · `register()` 의 `UnknownSigningKey`).
+    #:  `Subscription.objects.create(...)` 는 **매번 새 행을 만든다**(get_or_create 가 아니다 —
+    #:  `webhook_outbox.py:232`) — 그래서 등록이 성공하면 `total` 은 반드시 는다. 지금 안 느는
+    #:  것은 **등록 자체가 422 로 막혀서**다. 이 문의 서명키 이름은 환경변수
+    #:  `WEBHOOK_SIGNING_KEYS`(형식 `이름=값,이름2=값2` · `config/settings.py:1310`)에 심는다 —
+    #:  이번 회 그 표에 `p118-gate` 라는 이름이 없다. **09-17 죽은 웹푸시 기기 행·VAPID 쌍**
+    #:  이야기(P-272)는 `apps/dsm/api_u3.py` 의 `PushSubscription`(U3 모바일 축)이고, 이 행이
+    #:  두드리는 `WebhookSubscription`(`stream_monitors/models.py:954`)과는 **다른 표**다 —
+    #:  「구독」이라는 한 낱말이 둘을 가리켜 **거짓 빨강 진단**이 생길 뻔했다(§1 추측한 낱말 함정).
+    #:  ⇒ 이름을 하드코딩 둘로 안 둔다 — `scripts/measure_onboarding_t.py` 의
+    #:  `GX_WEBHOOK_SIGNING_KEY_REF` 관례를 그대로 따른다. 값을 넣는 것은 **환경**(비밀)의 일이라
+    #:  이 파일이 할 수 있는 것은 여기까지다 — 나머지는 쪽지로 넘긴다.
     "U6#4": ("/api/dsm/webhook-subscriptions?endpoint_url=https://p118-gate.invalid/p118"
-             "&signing_key_ref=p118-gate&event_types=fire"),
+             "&signing_key_ref=%s&event_types=fire"
+             % (os.environ.get("GX_WEBHOOK_SIGNING_KEY_REF") or "p118-gate")),
     #: 다음 단계는 **제품이 말해 주는 것**을 쓴다(`allowed_next`). 아무 값이나 밀어
     #:  넣으면 409「앞으로만 간다」가 오고 그것은 제품이 옳은 자리다.
     "U6#9": "/api/dsm/events/{event}/response?to_state={next}&reason=P-118",

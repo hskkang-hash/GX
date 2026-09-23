@@ -1098,3 +1098,20 @@ export interface DsmCameraAddressResult {
   previous_address: string;
   audit_id?: number;
 }
+
+/**
+ * 온보딩 U2#3 「이벤트 등급 재판정」 — **차선 U온 · 턴 AE/AF** (`api_u24.py::event_severity_set`).
+ *
+ * ★ 끝에 붙인다 — 위 묶음들과 같은 규약이다(같은 턴에 여러 차선이 이 파일을 읽고,
+ *   충돌한 상수 파일은 화면 전체를 못 세운다).
+ *
+ * ★ [턴 AF] 턴 AE 에는 이 문이 `api.ts` 소유표 밖이라 `EventDetail.tsx` 가 URL
+ *   문자열을 직접 적었다(`/api/dsm/events/${id}/severity`) — 옳은 자제였지만
+ *   같은 주소가 두 곳(화면 파일 · 여기)에 살 수 있는 모양을 남겼다. 이번 턴에
+ *   `api.ts` 가 U온 소유가 되어 여기로 합친다 — 새 문은 아니다(F-05
+ *   `EVENT_ENTRY_SURFACE` 에 이미 등재된 그 문 그대로).
+ */
+export const dsmU2SeverityEndpoint = {
+  /** 이미 난 사건 한 건의 등급을 지금 다시 매긴다. 성공은 재조회한 값이 말한다. */
+  eventSeverity: (eventId: number | string) => `/api/dsm/events/${eventId}/severity`,
+} as const;
