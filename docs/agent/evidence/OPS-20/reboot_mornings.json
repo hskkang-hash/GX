@@ -21,7 +21,7 @@
     }
   ],
   "readiness": {
-    "measured_at": "2026-09-24T14:57:19",
+    "measured_at": "2026-09-24T16:05:05",
     "containers": [
       {
         "name": "gx-portfwd",

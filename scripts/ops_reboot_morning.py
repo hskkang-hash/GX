@@ -92,22 +92,61 @@ def judge(facts: dict) -> list[tuple[str, bool, str]]:
     return out
 
 
+def running(cons: list) -> list:
+    """**지금 도는 것만.** 아침의 분모는 여기서 나온다 (P-297 · 2026-09-24 턴 AH).
+
+    ★★ 왜 이 함수가 생겼나 — **멈춘 컨테이너가 아침을 영구히 막고 있었다**
+    ---------------------------------------------------------------------
+    [실측 2026-09-23~24 · 조율자] 대표가 09-23 17:45 에 실제로 재부팅했는데 이 도구가
+    기록을 **거부**했다. 까닭은 `min(started_at)` 을 **모든** 컨테이너에서 잡았기
+    때문이고, 그 「가장 오래된 것」은 되돌리기용으로 **일부러 세워 둔** `-old` 셋
+    (`exited` · 마지막 시작 09-22)이었다. `unless-stopped` 는 **사람이 세운 것을 다시
+    띄우지 않는다** — 그것이 옳은 동작이다. 그러니 그 셋이 있는 한 이 술어는
+    **앞으로 어떤 아침도 참으로 만들 수 없었다.**
+
+    ⇒ 그 거부는 **정직했지만 쓸모가 없었다.** 「재부팅이 없었다」가 아니라
+      「재부팅이 있었는데 멈춘 것이 그 사실을 가리고 있었다」가 참이었다.
+    ⇒ 사람이 볼 때는 보이는 함정이다 — 그런데 **아무 게이트도 못 잡는다.**
+      거부는 빨강이 아니라 「회색 유지」라서 수가 **그냥 안 움직인다.**
+
+    ★ 「멈춘 것은 분모에서 뺀다」가 느슨해지지 않는 까닭: 이 도구의 ㉠(준비)는
+      **여전히 전수**를 본다(멈춘 것도 정책을 보인다). 좁힌 것은 ㉡(아침) 하나뿐이고,
+      그 물음은 「**이번 부팅에서 선 것들이 다 새로 섰는가**」이지 「세상에 있는 모든
+      컨테이너가 새로 섰는가」가 아니다.
+    """
+    return [c for c in cons if c.get("status") == "running"]
+
+
 def can_record(cons: list, last_recorded_at: str | None) -> tuple[bool, str]:
-    """아침 한 줄을 늘려도 되는가. **사람의 말이 아니라 `StartedAt` 이 답한다.**"""
+    """아침 한 줄을 늘려도 되는가. **사람의 말이 아니라 `StartedAt` 이 답한다.**
+
+    ★ [P-297 · 턴 AH] 분모는 **도는 것만**이다(`running()` 머리말). 멈춘 컨테이너는
+      다시 서지 않으므로 그 시각은 영원히 지난 기록보다 앞이고, 섞으면 이 술어가
+      **영영 거짓**이 된다.
+    """
     if not cons:
         return False, "컨테이너를 못 읽었다 — 아침을 셀 근거가 없다"
-    missing = [c["name"] for c in cons if not c.get("started_at")]
+    live = running(cons)
+    stopped = [c["name"] for c in cons if c.get("status") != "running"]
+    if not live:
+        return False, ("도는 컨테이너가 **0개**다(멈춘 것 %d) — 아침은 「서 있는가」를 "
+                       "묻는데 서 있는 것이 없다" % len(stopped))
+    missing = [c["name"] for c in live if not c.get("started_at")]
     if missing:
         return False, "시작 시각을 못 읽은 컨테이너: %s" % ", ".join(missing)
+    note = ("" if not stopped else
+            " (멈춘 %d개는 분모에서 뺐다: %s — 멈춘 것은 다시 서지 않으므로 섞으면 "
+            "이 술어가 영영 거짓이 된다 · P-297)" % (len(stopped), ", ".join(stopped)))
     if last_recorded_at is None:
-        return True, "첫 기록 — 이번 부팅에서 선 컨테이너 %d개" % len(cons)
-    newest_floor = min(c["started_at"] for c in cons)
+        return True, "첫 기록 — 이번 부팅에서 선 컨테이너 %d개%s" % (len(live), note)
+    newest_floor = min(c["started_at"] for c in live)
     if newest_floor <= last_recorded_at:
-        return False, ("**거부한다** — 컨테이너 중에 지난 기록(%s)보다 **먼저 선 것**이 "
-                       "있다(가장 오래된 시작 %s). 재부팅이 없었는데 아침을 세는 것은 "
-                       "수를 지어내는 것이다" % (last_recorded_at, newest_floor))
-    return True, "컨테이너 %d개가 전부 지난 기록(%s) 뒤에 다시 섰다" % (
-        len(cons), last_recorded_at)
+        return False, ("**거부한다** — **도는** 컨테이너 중에 지난 기록(%s)보다 "
+                       "**먼저 선 것**이 있다(가장 오래된 시작 %s). 재부팅이 없었는데 "
+                       "아침을 세는 것은 수를 지어내는 것이다%s"
+                       % (last_recorded_at, newest_floor, note))
+    return True, "도는 컨테이너 %d개가 전부 지난 기록(%s) 뒤에 다시 섰다%s" % (
+        len(live), last_recorded_at, note)
 
 
 def self_test() -> int:
@@ -133,8 +172,11 @@ def self_test() -> int:
     if not judge(full)[1][1]:
         bad.append("아침 %d건인데 ㉡이 빨갛다" % MORNINGS_TARGET)
 
-    cons = [{"name": "a", "started_at": "2026-09-21T10:00:00Z"},
-            {"name": "b", "started_at": "2026-09-21T10:00:05Z"}]
+    #: ★ [P-297 · 턴 AH] 표본에 `status` 를 채웠다 — 실제 수집기(`collect()`)가 그 칸을
+    #:   **늘 채운다**(이 파일 아래 `"status": parts[1]`). 표본이 불완전했던 것이고,
+    #:   불완전한 표본은 **새 술어를 시험하지 못한 채 초록을 냈다.**
+    cons = [{"name": "a", "status": "running", "started_at": "2026-09-21T10:00:00Z"},
+            {"name": "b", "status": "running", "started_at": "2026-09-21T10:00:05Z"}]
     if not can_record(cons, None)[0]:
         bad.append("첫 기록을 거부한다")
     if can_record(cons, "2026-09-21T10:00:03Z")[0]:
@@ -143,6 +185,40 @@ def self_test() -> int:
         bad.append("전부 다시 섰는데 기록을 거부한다")
     if can_record([], None)[0]:
         bad.append("컨테이너 0개인데 아침을 센다")
+
+    # ── ★★ **출생 표본** (D-310 · P-297) — 이 술어를 고치게 한 바로 그 사례 ──────
+    #   [실측 2026-09-23 17:45 · 대표가 **실제로 재부팅했다**] 그런데 이 도구가 기록을
+    #   거부했다. 까닭은 `min(started_at)` 을 **모든** 컨테이너에서 잡았기 때문이고,
+    #   그 「가장 오래된 것」은 되돌리기용으로 일부러 세워 둔 `-old` 셋(`exited` ·
+    #   마지막 시작 09-22)이었다. `unless-stopped` 는 사람이 세운 것을 안 띄운다 —
+    #   옳은 동작이다. 그러니 **그 셋이 있는 한 이 술어는 영영 참이 될 수 없었다.**
+    #   ★ 그 거부는 정직했지만 **쓸모가 없었다.** 그리고 **아무 게이트도 못 잡았다** —
+    #     거부는 빨강이 아니라 「회색 유지」라서 수가 그냥 안 움직였을 뿐이다.
+    born = [{"name": "live-1", "status": "running", "started_at": "2026-09-24T08:46:00Z"},
+            {"name": "live-2", "status": "running", "started_at": "2026-09-24T08:46:01Z"},
+            #: 이 한 줄이 09-23 의 그 밤이다 — 일부러 세워 둔 되돌리기 컨테이너.
+            {"name": "gx-celery-e-old", "status": "exited",
+             "started_at": "2026-09-22T11:41:39Z"}]
+    ok, why = can_record(born, "2026-09-22T20:58:43Z")
+    if not ok:
+        bad.append("**출생 표본** — 도는 둘이 이번 부팅에서 다시 섰는데 거부했다. "
+                   "멈춘 `-old` 하나가 분모에 섞여 아침을 영구히 막던 자리가 여기다: %s" % why)
+    if "분모에서 뺐다" not in why or "gx-celery-e-old" not in why:
+        bad.append("**출생 표본** — 무엇을 왜 뺐는지 판정문이 말하지 않는다. "
+                   "조용히 빼면 다음 사람은 분모가 줄어든 것을 모른다: %s" % why)
+
+    #: ★ 음성 대조 — **좁혔다고 느슨해지지 않았는가.** 도는 것 중 하나라도 옛것이면
+    #:   여전히 거부해야 한다. 이게 없으면 위 고침이 「전부 통과시키는 술어」가 된다.
+    stale = born + [{"name": "live-3", "status": "running",
+                     "started_at": "2026-09-20T01:00:00Z"}]
+    if can_record(stale, "2026-09-22T20:58:43Z")[0]:
+        bad.append("★★ **도는** 컨테이너 중에 지난 기록보다 먼저 선 것이 있는데 아침이 "
+                   "는다 — 좁히면서 술어가 느슨해졌다")
+
+    #: ★ 음성 대조 — 전부 멈춰 있으면 초록이 아니다(「서 있는가」를 묻는 절이다).
+    if can_record([{"name": "x", "status": "exited",
+                    "started_at": "2026-09-24T08:46:00Z"}], None)[0]:
+        bad.append("도는 것이 0개인데 아침을 센다")
 
     if bad:
         print("%s 자기시험 실패 — 판정기를 먼저 의심한다 (D-350):" % TAG)
