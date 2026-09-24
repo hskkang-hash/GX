@@ -84,6 +84,72 @@ def test_db_name(argv, *, base: str) -> str:
     return base
 
 
+def split_cleanup_target(original: str, final: str) -> str | None:
+    """[P-329 · 차선 Q] 세션 끝에 **지울 이름**을 고른다. 순수 함수다.
+
+    가드가 이름을 **갈랐을 때만** 지운다 — 갈리지 않았으면(`final == original`)
+    `None` 이고, 그것은 「다툼이 없었다」는 뜻이라 지울 것이 없다. 갈렸으면 그
+    **갈린 이름**(`final`) 딱 하나만 돌려준다 — 원래 이름도 아니고, 남이 가른
+    다른 `_p<pid>` 이름도 아니다(이 함수는 애초에 그런 이름을 본 적이 없다).
+
+    ⚠ 이 함수는 **지울지 말지만 정한다** — 실제로 지우는 것(연결·DROP)은
+      `_drop_leftover_split_db` 의 일이고, 그 함수는 DB 가 필요해 순수하지 않다.
+      판정과 부작용을 가르는 것이 이 시험(`test_p329_split_db_cleanup.py`)의 요점이다.
+    """
+    return final if final != original else None
+
+
+def _drop_leftover_split_db(name: str) -> None:
+    """[P-329 · 차선 Q] 세션이 끝나면 **내가 가른 그 이름만** 지운다.
+
+    ★ 언제 이 함수가 할 일이 없나 — **그게 정상이다**. pytest-django 자신의
+      teardown(`django_db_setup` 픽스처의 finalizer)이 정상 종료라면 **먼저**
+      이 이름의 DB 를 지운다. 픽스처 의존이 `django_db_setup → 이 설정 픽스처`
+      순이라 teardown 은 역순(LIFO)으로 돈다 — 이 finalizer 는 `request` 에
+      **나중에** 등록되므로 pytest-django 의 DROP **뒤에** 돈다. 그래서 여기
+      들어오는 순간 이미 지워져 있는 것이 보통이고, 그때는 조용히 아무 것도
+      안 한다(중복 DROP 을 내지 않는다).
+
+    남는 것은 **끝까지 못 간 실행**이 낸 자리뿐이다 — teardown 도중 다른 예외로
+    이 DROP 까지 못 왔거나, 세션이 비정상으로 끝났지만 그래도 finalizer 는 돈
+    경우. 그 자리만, **그 이름만** 지운다. 이 함수가 아는 이름은 호출하는 쪽이
+    넘긴 것 하나뿐이다 — 남의 DB·이미 있던 찌꺼기는 이름조차 모른다.
+
+    ⚠★★ **kill 된 실행은 이 finalizer 도 못 돈다.** 프로세스가 SIGKILL 로
+      끊기면 pytest 가 finalizer 를 부를 기회 자체가 없다 — 지금 남은 찌꺼기
+      5개가 그 증거다. 이 함수는 「정상 종료했지만 teardown 이 못 지운」 자리만
+      잡는다. 그 한계를 여기 적어 둔다 — 못 지우는 자리가 있다고 이 finalizer가
+      거짓말을 하는 것은 아니다(그 자리는 대표 결정으로 손으로 지운다).
+    """
+    try:
+        import psycopg2
+        from django.db import connection
+
+        if connection.vendor != "postgresql":
+            return
+        params = dict(connection.get_connection_params())     # 여는 것이 아니라 읽는다
+        params.pop("cursor_factory", None)
+        params["dbname"] = "postgres"
+        params.setdefault("connect_timeout", 5)
+        raw = psycopg2.connect(**params)
+        raw.autocommit = True                # DROP DATABASE 는 트랜잭션 밖에서만 돈다
+        try:
+            with raw.cursor() as cur:
+                cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", [name])
+                if cur.fetchone() is None:
+                    return    # pytest-django 가 이미 지웠다 — 정상. 중복 DROP 없음
+                cur.execute('DROP DATABASE IF EXISTS "%s"' % name.replace('"', '""'))
+                _say(f"[QA-11/P-329] 끝까지 못 간 앞선 실행이 남긴 갈린 시험 DB "
+                     f"«{name}» 를 세션 끝에서 지웠다(제 이름만 — 남의 DB · 기존 "
+                     f"찌꺼기는 건드리지 않는다)")
+        finally:
+            raw.close()
+    except Exception as exc:      # noqa: BLE001 — 정리 실패로 시험을 빨강으로 만들지 않는다
+        _say(f"[QA-11/P-329] 갈린 시험 DB «{name}» 정리를 **못 했다** "
+             f"({type(exc).__name__}: {str(exc).strip()[:200]}) — 시험 결과는 그대로 둔다"
+             f"(경고로만 말한다 · 이 파일의 `_say` 관용구)")
+
+
 def split_when_busy(name: str, *, busy: bool | None, pid: int) -> str:
     """**남이 이미 쥐고 있는** 시험 DB 면 이름을 한 번 더 가른다. 순수 함수다.
 
@@ -164,8 +230,8 @@ def _db_is_busy(name: str) -> tuple[bool | None, str]:
 
 
 @pytest.fixture(scope="session")
-def django_db_modify_db_settings(django_db_modify_db_settings_xdist_suffix) -> None:
-    """시험 DB 이름을 **만들기 직전에** 정한다 (QA-11 · 다툼 가드는 턴 X).
+def django_db_modify_db_settings(request, django_db_modify_db_settings_xdist_suffix) -> None:
+    """시험 DB 이름을 **만들기 직전에** 정한다 (QA-11 · 다툼 가드는 턴 X · 제 이름 청소는 P-329).
 
     `django_db_modify_db_settings_xdist_suffix` 를 먼저 받는 이유: xdist 로 나눠 돌 때
     pytest-django 가 워커별 접미사를 붙인다. 그 일을 지우지 않고 **그 뒤에** 얹는다 —
@@ -176,6 +242,14 @@ def django_db_modify_db_settings(django_db_modify_db_settings_xdist_suffix) -> N
       (`RuntimeError: Database access not allowed …`), 열면 그 다음 걸음이 바뀐다.
       한 번 속았던 자리다 — 막힌 줄 모르고 두면 가드가 매 실행 「못 물어봤다」를 내고
       **아무것도 안 막는데**, 겹쳐 돌린 실행이 우연히 통과하면 「가드가 일했다」로 읽힌다.
+
+    ★ [P-329 · 차선 Q] **이름을 갈랐을 때만** 세션 끝에 제 이름을 지우는 finalizer 를
+      단다 — `request` 를 새로 받는 이유가 이것 하나다. `split_cleanup_target` 이
+      갈랐는지를 순수하게 판정하고, 갈랐을 때만 `request.addfinalizer` 에 그 이름
+      하나를 건다. 갈리지 않은 평시 실행에는 finalizer 가 **아예 안 걸린다** —
+      늘 걸면 정상 종료한 모든 실행이 pytest-django 뒤에 한 번 더 DB 존재를 묻는
+      질의를 하게 되고, 그것은 이 가드가 막으려던 「기억을 요구하는 규칙」과
+      같은 결의 낭비다.
     """
     from django.conf import settings
 
@@ -191,6 +265,8 @@ def django_db_modify_db_settings(django_db_modify_db_settings_xdist_suffix) -> N
         base = "test_" + str(db.get("NAME") or "guardianx-v2")
         name = test_db_name(_pytest_args, base=base)
 
+    original = name
+
     # ★ 턴 X — 사람이 정한 이름이라도 **둘이 동시에 들면 갈라야 한다**(머리말 ★★).
     #   여기서 안 가르면 나중 실행이 DB 를 못 지운 채 남의 표에 얹히고, 그 빨강은
     #   `duplicate key … auth_permission` 이라 **코드 결함처럼** 읽힌다.
@@ -205,6 +281,11 @@ def django_db_modify_db_settings(django_db_modify_db_settings_xdist_suffix) -> N
              f"`duplicate key … auth_permission` 이 난다(환경 충돌이지 코드 결함이 아니다)")
 
     test_conf["NAME"] = name
+
+    # [P-329] 갈랐을 때만, 갈린 그 이름만 — 세션 끝에 지우게 건다.
+    target = split_cleanup_target(original, name)
+    if target:
+        request.addfinalizer(lambda _name=target: _drop_leftover_split_db(_name))
 
 
 #: 실행 인자. `pytest_cmdline_main` 이 아니라 훅에서 받아 둔다 — 픽스처는 세션 뒤에 불리고

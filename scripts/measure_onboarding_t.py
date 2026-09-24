@@ -515,8 +515,62 @@ GRAY_KINDS = {
 }
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# P-318 · 차선 Q — ● 조건 셋째: **그 사용자의 언어** (WO-GX-20260926-12 §12)
+#
+# 정본 술어(PRD v2.6): 그 행의 화면 글자에 GX-COPY 사전 밖 낱말·영문 메뉴·코드
+# 식별자·마크다운 기호가 있으면 ● 를 못 준다 — ◐ 가 상한이다.
+#
+# ★ 사전도 함수도 **`verify_ui_copy.scan_line` 을 그대로 쓴다**(두 벌 금지 · D-479).
+#   그 함수가 이미 GX-COPY_v1.md 금지 목록(`COMPILED`) + 역할·채널·상태 코드·HTTP
+#   상태·오류 원문·빈 값 표시(`HANGUL_ONLY_COMPILED`)를 **한 술어**로 본다. 이 파일은
+#   그 목록을 베끼지 않고 **import** 한다.
+#
+# ★★ 「영문 메뉴」 한 갈래만 `scan_line` 이 **일부러** 안 본다 — 그 판정기 자신의
+#   주석이 그렇게 말한다: 「순영문 라벨은 이 그물을 지나간다 … 그 자리는 UX-21」
+#   (`verify_ui_copy.py` 의 in_scope 머리말·§402). UX-21 게이트는 아직 이 저장소에
+#   없다. **새 사전을 만드는 대신**, 이 파일이 이미 들고 있던 자기 표지
+#   `ADMIN_HEADER`(관리자 화면이 스스로 「아래 표기는 아직 영문입니다」라 밝히는 그
+#   문장 — U4#11 · U5#2 실측 2026-09-24 에 실제로 이 문장과 함께 `Status` · `In Use`
+#   가 떴다)를 **재사용**해 「영문 메뉴가 있다」는 신호로 쓴다. 제품이 스스로 선언한
+#   사실이라 지어낸 사전이 아니다. 이 신호는 **좁다** — 선언 없이 섞인 영문 라벨은
+#   못 잡는다(놓치는 쪽으로 틀린다). UX-21 이 서면 이 자리를 그 판정기로 바꾼다.
+def third_condition_violations(screen_text: str) -> list[str]:
+    """그 행의 화면 글자에서 **셋째 조건**이 잡는 이름들.
+
+    빈 문자열이면 아직 아무도 화면 글자를 안 넘긴 것이다(기존 ~40개 호출부가
+    `screen_text` 없이 부르면 이 함수는 **아무 말도 안 한다** — 배선이지 소급 재측이
+    아니다. 실제 화면 글자로 다시 재는 것은 V 의 다음 회차 몫이다).
+
+    `verify_ui_copy` 를 못 불러오면(호스트 밖 자리 등) **빈 목록**을 돌려주되 그
+    사실을 인쇄한다 — 0건으로 지어내지 않는다(D-301과 같은 결).
+    """
+    hits: list[str] = []
+    if not screen_text:
+        return hits
+    if ADMIN_HEADER in screen_text:
+        hits.append("영문 메뉴(자기표지 ADMIN_HEADER)")
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from verify_ui_copy import scan_line          # noqa: PLC0415
+    except Exception as exc:                          # noqa: BLE001
+        print(f"{TAG} ⚠ verify_ui_copy.scan_line 을 못 불렀다 ({exc}) — 셋째 조건의 "
+              f"「사전 밖 낱말·코드 식별자·마크다운 기호」 갈래는 이번 행에서 "
+              f"**못 쟀다**(0건으로 지어내지 않는다 · 자기표지 갈래만 그대로 쓴다)")
+    else:
+        hits.extend(scan_line(screen_text))
+    return hits
+
+
 def result(row, route, phrase_seen, predicate, evidence, cap_half=False, measured=True,
-           url="", gray_kind=""):
+           url="", gray_kind="", screen_text=""):
+    #: [P-318] 셋째 조건이 걸리면 **정본이 ◐ 상한이라 적은 행과 같은 자리**로 합류한다
+    #: — cap_half 를 올릴 뿐 내리지 않는다(다른 이유로 이미 ◐ 상한이면 그대로 둔다).
+    third_hits = third_condition_violations(screen_text) if measured else []
+    if third_hits and not cap_half:
+        cap_half = True
+        evidence = (evidence + " · ◐ 상한(셋째 조건 — 그 사용자의 언어가 아니다: "
+                    + ", ".join(third_hits) + ")")
     if not measured:
         verdict, score = "gray", None
         #: 회색인데 부류를 안 준 자리는 **그 사실 자체를 적는다** — 조용히 빈 칸으로

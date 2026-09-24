@@ -1207,19 +1207,54 @@ PATCH_DIR = ROOT.parent / "_patches"
 ONBOARD_ROWS = 48
 
 
+#: [P-332 · 차선 Q · WO-GX-20260924-13 §5 · WO-GX-20260926-12 §12] **참고 회차는
+#: 정본이 아니다.** `onboarding_48.md` 절 머리에 이 표식이 있으면(3002 개발 서버
+#: 회차 등) 그 절 안의 `N / 48 = P%` 는 **아무리 나중에 있어도** 정본으로 안 집는다
+#: — S1 출처는 8500(고객 주소) 회차만이어야 한다(P-317). 표식이 없는 절(지금까지의
+#: 관행 · 이 파일 자기시험의 텍스트)은 그대로 「가장 나중 것」을 쓴다 — 규칙이
+#: 새로 생긴 것이지 옛 문서·옛 시험이 거짓말하게 된 것이 아니다.
+ONBOARD_REF_MARK = "참고 · 개발 서버"
+#: 표식은 **그 절 머리 가까이**에 있어야 그 절 전체를 가리킨 것으로 본다. 창을
+#: 안 두고 「그 앞 어디에나」로 보면, 정본 절의 본문이 다른 절 이름을 그저
+#: **언급만** 해도(예: 「위 §…절에 참고 표기를 더했다」) 정본 절 자신이 참고로
+#: 오인될 수 있다 — 실제로 이 문서 2026-09-24 절 초안에서 그렇게 어긋날 뻔했다.
+ONBOARD_REF_WINDOW = 400
+
+
+def _last_non_reference_onboard_match(text: str, matches: list):
+    """뒤에서부터 훑어 **참고로 표기되지 않은** 첫 매치를 고른다.
+
+    절 경계는 `\\n## ` (그 문서의 절 머리 표식)로 잡는다. 표식이 그 절 머리
+    `ONBOARD_REF_WINDOW`자 안에 있으면 그 절은 참고고, 그 절 안의 매치는 전부
+    건너뛴다. 전부 참고면(오늘은 없는 일이다) 그래도 마지막 것을 낸다 — 회색보다
+    「어긋날 수 있는 수」가 낫다(문서가 모순되면 `consistent` 검산이 잡는다).
+    """
+    for m in reversed(matches):
+        start = text.rfind("\n## ", 0, m.start())
+        start = 0 if start == -1 else start
+        header_zone = text[start:start + ONBOARD_REF_WINDOW]
+        if ONBOARD_REF_MARK in header_zone:
+            continue                       # 이 절은 참고다 — 정본 후보에서 뺀다
+        return m
+    return matches[-1]
+
+
 def parse_onboarding(text: str) -> dict | None:
-    """`onboarding_48.md` 가 **마지막으로 적은** `N / 48 = P%` 를 집고 검산한다.
+    """`onboarding_48.md` 가 **마지막으로 적은, 참고 아닌** `N / 48 = P%` 를 집고 검산한다.
 
     이 문서에는 재측 절이 여럿이라 같은 꼴이 열 번 넘게 나온다. **가장 나중 것**이
-    지금 값이다(CR 표에서 마지막 표를 쓰는 것과 같은 규칙). 그리고 집은 뒤
-    **N ÷ 48 이 정말 P 인지** 다시 곱해 본다 — 문서 안에서 분자와 백분율이
-    갈리면 그것은 이 도구가 잡아야 할 어긋남이다.
+    지금 값이다(CR 표에서 마지막 표를 쓰는 것과 같은 규칙) — 다만 [P-332] **「참고 ·
+    개발 서버」로 적은 절은 아무리 나중이어도 건너뛴다**(`_last_non_reference_
+    onboard_match` 참조). 그리고 집은 뒤 **N ÷ 48 이 정말 P 인지** 다시 곱해 본다 —
+    문서 안에서 분자와 백분율이 갈리면 그것은 이 도구가 잡아야 할 어긋남이다.
     """
-    found = re.findall(r"(\d+(?:\.\d+)?)\s*/\s*%d\s*=\s*\*{0,2}(\d+(?:\.\d+)?)\s*%%"
-                       % ONBOARD_ROWS, text)
-    if not found:
+    matches = list(re.finditer(
+        r"(\d+(?:\.\d+)?)\s*/\s*%d\s*=\s*\*{0,2}(\d+(?:\.\d+)?)\s*%%"
+        % ONBOARD_ROWS, text))
+    if not matches:
         return None
-    num, pct = float(found[-1][0]), float(found[-1][1])
+    chosen = _last_non_reference_onboard_match(text, matches)
+    num, pct = float(chosen.group(1)), float(chosen.group(2))
     calc = num / ONBOARD_ROWS * 100.0
     return {"sum": num, "n": ONBOARD_ROWS, "pct": pct, "calc": calc,
             #: 문서는 60.4 를 60 으로 줄여 적는다 — 반올림 한 칸까지는 어긋남이 아니다.
