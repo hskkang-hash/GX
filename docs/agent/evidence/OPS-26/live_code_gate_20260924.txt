@@ -1,0 +1,15 @@
+[P-107] TARGET=살아 있는 서버 gx-gunicorn-e (호스트 docker 로 부른다) · 비교 대상 저장소 backend/
+[P-107] AS=(자격증명 없음 — 컨테이너 /proc 과 호스트 파일 시각을 읽는다)
+[P-107] SOURCE=호스트 backend/**/*.py 의 mtime · 컨테이너 /proc/<pid>/stat · /app/gunicorn.conf.py
+[P-107] MEASURED=요청을 받는 코드가 **저장소의 코드와 같은 시점인가** — 기준은 preload 이면 마스터, 확인된 비-preload 이면 가장 오래된 워커 · 분모 1(서버)
+[LIVE] [입력] 가장 늦게 고친 backend 파일: backend/stream_monitors/services/camera_pulse.py (09-24 17:19:41) · 시험·캐시는 안 센다
+[LIVE] ── ① 제품 서버 gx-gunicorn-e ──
+[LIVE] [입력] 마스터 시작 09-24 19:03:30 · 워커 4개 (가장 오래된 것 09-24 19:03:40)
+[LIVE] [입력] preload_app = True → 기준: 마스터(preload_app=True — 워커는 마스터의 복제)
+[LIVE] OK   신선하다 — 가장 늦게 고친 파일이 기준보다 6229초 앞
+[LIVE] ── ② 재는 서버 gx-shell (runserver) ──
+[LIVE] [입력] runserver pid 58358 시작 09-24 20:19:36 · --noreload
+[LIVE] OK   재는 서버 신선 — 가장 늦게 고친 파일이 runserver 보다 10794초 앞
+EXIT=0
+[LIVE] 자기시험 통과 — 출생 표본 2(반쪽 gunicorn · 잊힌 runserver) · 판정 5 · 재는 서버 3 · 설정 읽기 3 · 가르기 1
+SELF_TEST_EXIT=0

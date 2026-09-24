@@ -3178,6 +3178,49 @@ areas:
                 docs/agent/evidence/OPS-19/restore_drill_20260906.md ·
                 docs/agent/evidence/OPS-19/재기동창_준비물.md
 
+      - id: OPS-26
+        title: 요청을 받는 코드가 **저장소의 코드와 같은 시점**이다 — 반쪽 서버를 빨강으로
+        status: 구현
+        kind: closed
+        kind_why: |
+          ★ [2026-09-24 · 턴 AH · P-314 ② · 조율자 실측] **이 절은 조율자의 사고에서 태어났다.**
+          `backend/` 를 고치고 gunicorn 을 안 세웠다 → `/api/dsm/cameras/pulse` **500**
+          (`ImportError: cannot import name 'exclude_not_counted' from 'common.billing_marks'`).
+          파일엔 그 이름이 있었다 — 마스터가 부팅 때 올린 **옛** 모듈은 메모리에 남고, 늦게
+          import 된 모듈만 새 파일에서 읽힌 **반쪽** 상태다. 그 사이 **전량 2,182건은 전부
+          초록**이었다. 시험은 매번 새로 import 하므로 **이 고장을 구조적으로 못 잡는다.**
+
+          ★★ 기준은 **마스터**다 — 워커가 아니다. [실측] `/app/gunicorn.conf.py:101`
+            `preload_app = True` · gunicorn 23.0.0. 앱은 마스터에 올라가고 워커는 복제다.
+            `kill -HUP 1` 은 워커만 새로 띄운다 — **코드는 다시 안 읽는다.** 워커와 견주면
+            HUP 뒤 이 게이트가 **초록을 거짓말한다.** 게이트는 기준을 컨테이너의 설정에서
+            **읽는다**(preload → 마스터 · 비-preload 확인 → 워커 · 모름 → 마스터).
+
+          지금 실물(다시 세운 뒤): 가장 늦게 고친 `camera_pulse.py` 17:19:41 · 마스터 19:03:30
+          → **신선 · exit 0**. 사고 때라면 마스터 15시대 → 2시간 뒤 → **빨강**이었다.
+          분모 1(서버). 자기시험 출생 표본 = 그날의 반쪽 서버 모양.
+          ★ **먼저 실패해 봤다**(P-319): 판정을 「워커와 견준다」로 망가뜨리면 출생 표본이
+            빨개진다(EXIT 1) — 시험(`TheSelfTestCanFail`)이 그것을 못박는다.
+
+          ★★ [같은 날 · 같은 사고가 **두 번째 서버**에서] 처음엔 gunicorn 만 봤다. 절을 올리며
+            GA 판정기를 돌리자 **FAIL 1**(영역 1 · F-05-c1~c3 · pulse 500)이 났다 — 두드린 곳은
+            gunicorn 이 아니라 조율자가 P-288 때 gx-shell 안에 띄우고 **잊은**
+            `runserver 0.0.0.0:8000 --noreload`(3시간 57분 · P-289 전 코드)였다. 게이트 여럿이
+            기본으로 두드리는 곳(`GX_API`)이라 **재는 서버가 옛 코드면 잰 수가 거짓이다.**
+            다시 띄우자 도달 111/111 · FAIL 0. 그래서 이 게이트는 이제 **둘 다** 본다
+            (① 제품 서버 gunicorn — preload 인지 읽어 마스터 기준 ② 재는 서버 runserver —
+            가장 늦게 뜬 프로세스 기준 · 없으면 초록). 출생 표본 ② = 그날의 잊힌 서버.
+        gate: scripts/verify_live_code.py
+        proof: backend/tests/test_ops26_live_code_is_fresh.py
+        origin: P-314
+        hand: in
+        evidence: docs/agent/evidence/OPS-26/live_code_gate_20260924.txt
+        note: |
+          [P-314 ① 에 대한 보고] 세종이 헤드리스에 허용한 `kill -HUP 1` 은 이 서버(preload)에서
+          **코드를 다시 읽지 않는다.** 그리고 실제로 고치는 `docker restart` 는 거부돼 있다 —
+          오늘의 사고가 절차로 굳는다. 이 게이트가 그 자리에서 빨강을 내 `waiting_ceo` 로
+          넘기게 한다. 고를 길 셋(㉠ restart 한 줄 · ㉡ USR2 · ㉢ preload 끄기)은
+          `docs/agent/evidence/OPS-26/HUP은_preload에서_코드를_안읽는다_20260924.md` — 세종·대표 몫.
       - id: OPS-08
         title: 되돌리기 절차 (배포 실패 시)
         status: 구현
