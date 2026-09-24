@@ -127,6 +127,18 @@ MIDDLEWARE = [
     #   12 → 4) · 설정 읽기 **6회 → 2회**(물음이 2종이다) · 6요청 누적 파이썬 −20%.
     #   되돌리기는 `CONFIG_READ_CACHE_ENABLED = False` 한 줄이다.
     "common.config_read_cache.ConfigReadCacheMiddleware",
+    # ★ [P-325 · 2026-09-24 턴 S] 비밀번호 찾기의 「보냈습니다」 길목. **줄을 새로
+    #   넣었다**(기존 줄은 한 자도 안 고쳤다). 자리는 맨 위 두 줄(스키마 헤더·설정
+    #   읽기 기억) 바로 아래 — 이 겹은 `POST /api/v1/auth/forgot-password` **하나만**
+    #   보고, 요청 본문(이메일 주소)은 절대 파싱하지 않는다. 그래서 CSRF·율제한·
+    #   접근 관문 등 안쪽 겹보다 **바깥**이어도 안전하다(그 겹들이 보는 것을 이 겹은
+    #   아예 안 본다). SMTP(`SMTP_SERVER`·`SMTP_PORT`)가 안 닿으면 주소 존재를 조회
+    #   하기 전에 **모두에게 같은 실패 안내**를 낸다 — dj-core `forgot_password`(§0.4)
+    #   는 발송 실패를 삼키고 항상 성공을 답해, 지금은 전원이 「보냈습니다」라는
+    #   거짓말을 받는다 [실측: `backend/tests/test_s_password_reset_walk.py` 머릿글].
+    #   SMTP 가 살아 있으면 이 겹은 아무 일도 안 하고 dj-core 로 넘긴다.
+    #   되돌리기는 `RESET_MAIL_GATE_ENABLED = False` 한 줄이다.
+    "common.reset_mail_gate.ResetMailGateMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
