@@ -115,6 +115,15 @@ class PasswordResetWalkTest(TestCase):
         patcher = mock.patch("core.api.v1.auth.SMTPEmailBackend", RecordingBackend)
         patcher.start()
         self.addCleanup(patcher.stop)
+        #: ★ [턴 AI · P-325] 이 걷기는 「**메일이 되는 날**」의 dj-core 한 바퀴를 잰다.
+        #:   P-325 길목(`common.reset_mail_gate`)은 dj-core **앞에서** 실제 SMTP 에 TCP 로
+        #:   묻고, 시험 환경엔 SMTP 가 없어 503 으로 막는다 — 그러면 이 걷기는 dj-core 에
+        #:   닿지도 못한다(전량에서 넷이 그렇게 빨강이었다). 발송 부품을 가짜로 바꾼 것과
+        #:   같은 뜻으로 길목의 도달 판정도 「살아 있다」로 둔다. 죽은 SMTP 의 갈래는
+        #:   `test_p325_reset_mail_gate.py` 가 잰다 — 두 시험이 두 갈래를 나눠 쥔다.
+        gate = mock.patch("common.reset_mail_gate.smtp_reachable", return_value=True)
+        gate.start()
+        self.addCleanup(gate.stop)
 
     def tearDown(self) -> None:
         """HTTP 를 때린 시험은 **스레드에 요청을 남긴다** — 치우고 나간다.

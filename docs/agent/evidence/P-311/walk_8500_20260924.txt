@@ -1,0 +1,21 @@
+[P-107] TARGET=구조는 저장소 파일 · 걷기는 --api 를 준 실행에서만 살아 있는 서버
+[P-107] AS=구조: 자격 없음 · 걷기: 시드 계정 여섯 (자격 이름 GX_SEED_ROLE_PASSWORD)
+[P-107] SOURCE=온보딩 카드 표 · 라우트 선언 · 화면 소스 (걷기일 때는 HTTP 응답)
+[P-107] MEASURED=① 구조 — 온보딩 카드마다 닫는 판정이 선언됐는가 · **분모 38장**(역할 6) · ② 걷기 — `--api` 를 준 실행에서만 그 카드를 **실제로 걷는다**(안 주면 ②는 분모 0 · 그 실행은 회색이다 · P-204)
+[입력] 사람 6/6 · 카드 38장 (서버 기록이 닫는 카드 20 · 아직 못 재는 카드 18) · 표=backend\apps\dsm\onboarding.py
+[UX-46] 인수 자산 화면 11자리 — `App.tsx` 가 `CustomRouters.*` 로 마운트한다(표 자체는 rj-core · 저장소 밖)
+[UX-46] 카드 링크 대조 — 선언된 화면 주소 38자리(우리 표 27 · 인수 자산 11)
+[UX-46] 부르는 화면 2건: frontend\src\features\dsm\api.ts · frontend\src\features\dsm\pages\Onboarding.tsx
+[UX-46] 구조 통과 — 카드 표 · 자동 완료 술어 · 선언된 라우트 · 부르는 화면 · 시험
+[ALIVE] 로그인 성공: /api/v1/auth/login
+[ALIVE] 로그인 성공: /api/v1/auth/login
+[ALIVE] 로그인 성공: /api/v1/auth/login
+[ALIVE] 로그인 /api/v1/auth/login → HTTP 400
+[ALIVE] 로그인 성공: /api/v1/auth/login
+[UX-46]   OK   U1 (gxseed_u1_operator) — 3/3
+[UX-46]   OK   U2 (gxseed_u2_manager) — 1/3
+[UX-46]   OK   U3 (gxseed_u1_operator) — 3/3
+[UX-46]   OK   U4 (gxseed_u4_official) — 1/1
+[UX-46]   OK   U5 (gxseed_u5_sysop) — 3/6
+[UX-46]   GRAY U6 (gxseed_u5_newop) — 로그인 실패 — 토큰을 못 받았다(V_LOCK·자격없음·율제한·다른 세션 중 하나 · login() 이 가른다)
+[UX-46] 걷기(㉢) 접은 수: 회색 1/6: ['U6'] — 여섯을 다 재야 첫 수다(P-311)
