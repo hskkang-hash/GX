@@ -44,6 +44,7 @@
 """
 from __future__ import annotations
 
+import contextlib
 from unittest import mock
 
 from django.apps import apps
@@ -114,6 +115,27 @@ class PasswordResetWalkTest(TestCase):
         patcher = mock.patch("core.api.v1.auth.SMTPEmailBackend", RecordingBackend)
         patcher.start()
         self.addCleanup(patcher.stop)
+
+    def tearDown(self) -> None:
+        """HTTP 를 때린 시험은 **스레드에 요청을 남긴다** — 치우고 나간다.
+
+        ★ [실측 2026-09-24 · 턴 AH] **이 파일이 그 오염을 실제로 냈다.** 치우지 않았을 때
+          전량에서 바로 뒤에 도는 `test_s_session_limit.py::DjCoreSingleSessionTest` 가
+          **5건 빨강**이었다:
+
+              ForeignKeyViolation: insert on "user_usergroup" ...
+              Key (created_by_id)=(832) is not present in table "user_coreuser"
+
+          여기서 로그인한 사용자(832)가 `thread_local.request.user` 로 남았고, 그 행은 이
+          시험이 끝나며 되돌려졌다. 다음 시험이 `UserGroup` 을 만들 때 저장 훅이 그
+          **죽은 사용자**를 `created_by` 로 적었다. A/B: 세션 시험 혼자 26 초록 ·
+          이 파일 뒤에 붙이면 5 빨강. **피해자가 아니라 이 파일을 고친다.**
+        """
+        with contextlib.suppress(Exception):
+            from core.middleware.refresh_token import thread_local
+
+            thread_local.request = None
+        super().tearDown()
 
     # ── 도우미 ───────────────────────────────────────────────────────────
     def _user(self, name: str, email: str):
