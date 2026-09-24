@@ -240,47 +240,100 @@ def s4_fake_bearer(container: str, timeout: int = 240) -> dict:
 # ═══════════════════════════════════════════════════════════════════════════
 # S5 · S6 · S7  —  이 저장소에 **그 수를 내는 게이트가 아직 없다.** 지어내지 않는다.
 # ═══════════════════════════════════════════════════════════════════════════
-def s5_reach() -> dict:
-    """S5 「밖에서 닿는다」 — 공개 주소 · TLS · 잠금화면 알림 · 실카메라.
+#: ★★ [P-275 · 2026-09-24 턴 AG] **세종 표를 읽는다 — 수를 손으로 안 적는다.**
+#:
+#:   턴 AF 까지 이 셋은 「그 수를 내는 게이트가 저장소에 없다」는 사유로 **회색**이었다.
+#:   그 회색은 옳았다 — 공개 주소·TLS·가격 숫자·계약서 서명은 **인프라와 사람의 사실**
+#:   이지 python 이 잴 수 있는 것이 아니고, 코드로 0 을 지어내면 그 0 은 측정이 아니라
+#:   창작이다. 세종이 그 사실들을 **표 하나**로 적었고(WO-GX-20260925-10 §4-1),
+#:   이 판정기는 그 표를 **읽기만** 한다.
+#:
+#:   ⇒ **여전히 이 판정기는 S5~S7 을 재지 않는다.** 읽는 것과 재는 것은 다르고,
+#:     그 차이를 판정문이 매번 말한다(아래 `_sejong_line()` 의 「[세종 표]」 머리).
+#:   ⇒ 표가 없거나 · 행이 없거나 · 값이 {0, 0.5, 1} 밖이거나 · 근거 칸이 비면
+#:     **그 행은 회색**이다. 표가 생겼다고 자동으로 초록이 되지 않는다.
+#:   ⇒ 눈금이 둘이다: 표는 **{0, 0.5, 1}**, 이 판정기의 칸은 **{빨강, 회색, 초록}**.
+#:     0 → 빨강 · 1 → 초록 · **0.5 → 회색이 아니라 「반」**인데 이 판정기에 반 칸이
+#:     없다. 0.5 를 초록으로 올리면 절반을 다 한 것으로 읽히고, 회색으로 내리면
+#:     「못 쟀다」와 섞인다 — **둘 다 거짓이다.** 그래서 0.5 는 **빨강**으로 적고
+#:     판정문에 「0.5 — 절반은 섰다」를 그대로 싣는다. 태그는 S1~S7 과 무관하므로
+#:     (P-269) 이 보수적 선택이 태그를 막지 않는다.
+SEJONG_TABLE = ROOT / "docs" / "design" / "GX-S1S7_상용조건_v1.0_20260925.md"
 
-    공개 주소·TLS·스테이징은 **인프라 사실**(대표 손·WO §5)이지 이 저장소의 python
-    게이트가 재는 대상이 아니다 — 코드로 「0」을 낼 자리가 없다(지어내면 그 0 은
-    측정이 아니라 창작이다). 그래서 회색이다.
+#: 표가 낼 수 있는 값 전수. 새 값이 필요하면 **표와 여기를 같이** 고친다 —
+#: 한쪽만 고치면 판정기가 모르는 낱말을 만나 조용히 회색이 된다.
+SEJONG_VALUES = {"0": RED, "0.5": RED, "1": GREEN}
+
+
+def read_sejong_table(path=None) -> tuple[dict, str]:
+    """세종 표를 읽어 `{행 id: (값문자열, 근거)}` 로 돌려준다. (표, 못 읽은 사유).
+
+    ★ 파서를 느슨하게 두지 않는다 — 「읽었는데 틀리게 읽었다」가 「못 읽었다」보다 나쁘다.
+      한 행은 `| S5 | 조건 | **0** | 근거 |` 모양이고, 값 칸에서 굵게 표시(`**`)를
+      걷어낸 뒤 그대로 쓴다. 값이 `SEJONG_VALUES` 밖이면 **그 행을 안 담는다** —
+      담아 두면 부르는 쪽이 모르는 낱말로 판정하게 된다.
     """
-    return cell("S5", "밖에서 닿는다", GRAY,
-               "공개 주소·TLS·스테이징(대표 손 · WO-09 §5)·실카메라 등록은 코드 게이트가 "
-               "없다 — 이 판정기가 잴 수 있는 수가 아니다. 09-21 리뷰 문서는 이 행을 "
-               "○(주소 0 · 스테이징 0 · 웹푸시 자격 소실 · 실카메라 0/4)로 **적어 뒀다**(인용) "
-               "— 이 판정기가 다시 잰 것이 아니다")
+    path = path or SEJONG_TABLE
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        return {}, "표를 못 읽었다(%s: %s)" % (type(exc).__name__, exc)
+    rows = {}
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 4:
+            continue
+        rid = cells[0].strip("* ")
+        if rid not in ("S5", "S6", "S7"):
+            continue
+        value = cells[2].replace("*", "").strip()
+        why = cells[3].strip()
+        if value not in SEJONG_VALUES or not why:
+            continue
+        rows[rid] = (value, why)
+    if not rows:
+        return {}, "표는 있는데 S5~S7 행을 한 줄도 못 읽었다(모양이 바뀌었나)"
+    return rows, ""
 
 
-def s6_billing() -> dict:
-    """S6 「청구서가 정직하다」 — 가격표 숫자 · 계량이 고객 것만 센다 · 훈련은 무료.
+def _sejong_cell(rid: str, label: str, rows: dict, why_not: str) -> dict:
+    """표 한 행 → 칸 하나. **읽은 것과 잰 것을 판정문이 구별해서 말한다.**"""
+    if rid not in rows:
+        return cell(rid, label, GRAY,
+                    "[세종 표] 이 행을 못 읽었다 — %s · 자리: %s. "
+                    "**표가 없으면 회색이다**(지어내지 않는다 · P-275)"
+                    % (why_not or "표에 그 행이 없다", SEJONG_TABLE.name))
+    value, why = rows[rid]
+    verdict = SEJONG_VALUES[value]
+    half = " — **0.5 다. 절반은 섰다**(이 판정기에 반 칸이 없어 빨강으로 적는다 — "            "초록으로 올리면 다 한 것으로 읽히고 회색으로 내리면 「못 쟀다」와 섞인다)"            if value == "0.5" else ""
+    return cell(rid, label, verdict,
+                "[세종 표 %s] 값 **%s**%s · 근거: %s "
+                "(★ 이 판정기가 **잰 것이 아니라 읽은 것**이다 — 공개 주소·TLS·"
+                "가격 숫자·계약서 서명은 python 이 잴 수 있는 사실이 아니다)"
+                % (SEJONG_TABLE.name, value, half, why))
 
-    가격 숫자 4개는 **대표의 결정**(WO §5 "09-28 가격")이지 게이트가 낼 수 없다.
-    「계량이 고객 것만 센다」(씨앗 청구 0)는 `backend/tests/test_p237_onboarding_probe_billing.py`
-    가 단위시험으로 이미 잰다 — 하지만 그 시험을 이 판정기가 **매번 다시 돌리면**
-    `--full-tests` 와 중복이고, 여기서만 부르면 가격 없이 부분 수만 초록으로 보일 위험이
-    있다. 그래서 이 판정기는 이 행 전체를 **회색**으로 두고 출처를 가리킨다.
+
+def s5_reach(rows=None, why_not="") -> dict:
+    """S5 「밖에서 닿는다」 — 공개 주소 · TLS · 스테이징 · 실카메라 · 웹푸시 도달."""
+    return _sejong_cell("S5", "밖에서 닿는다", rows or {}, why_not)
+
+
+def s6_billing(rows=None, why_not="") -> dict:
+    """S6 「청구서가 정직하다」 — 씨앗 0 · 계측기 제외 · 훈련 0원 · 가격 숫자 · 청구서 초안.
+
+    ⚠ 「씨앗 청구 0」은 `backend/tests/test_p237_onboarding_probe_billing.py`(10건)가
+      **이미 재고**, `--full-tests` 회차가 그 시험을 포함해 돈다. 여기서 다시 돌리지
+      않는다(중복). 이 칸이 말하는 것은 **그 부분 수가 아니라 행 전체**다.
     """
-    return cell("S6", "청구서가 정직하다", GRAY,
-               "가격표 숫자 4(09-28 대표 손 · WO-09 §5)는 코드 게이트가 못 낸다. "
-               "「씨앗 청구 0」은 `backend/tests/test_p237_onboarding_probe_billing.py`"
-               "(10건)가 이미 재지만 여기서 다시 돌리지 않는다(중복 · `--full-tests` 가 "
-               "그 시험을 포함해 돈다) — 그래서 이 행 전체를 회색으로 둔다")
+    return _sejong_cell("S6", "청구서가 정직하다", rows or {}, why_not)
 
 
-def s7_paperwork() -> dict:
-    """S7 「종이가 나간다」 — 상황보고서 · 사건 1쪽 · 월간 · 계약서 · SLA.
-
-    U2#6(상황보고서 표) 은 aa_report() 의 8영역 수에 이미 섞여 들어가 있지만, 그
-    **행 전체**(계약서·SLA 포함)를 재는 게이트는 없다 — 09-21 리뷰 문서 인용만 남긴다.
-    """
-    return cell("S7", "종이가 나간다", GRAY,
-               "DOCX 정본·자동본·「훈련」 표시·계약서·SLA 를 한 행으로 재는 게이트가 "
-               "없다. 09-21 리뷰 문서는 이 행을 ◐(DOCX 정본 ● · 자동본 1 ● · 「훈련」 "
-               "표시 0 ○ · 계약서 0 · SLA v0.3)로 **적어 뒀다**(인용) — 이 판정기가 "
-               "다시 잰 것이 아니다")
+def s7_paperwork(rows=None, why_not="") -> dict:
+    """S7 「종이가 나간다」 — 사건 1쪽 · 월간 자동본 · 훈련 배너 · 별지 1호 · 계약서 · SLA."""
+    return _sejong_cell("S7", "종이가 나간다", rows or {}, why_not)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -439,6 +492,52 @@ def self_test() -> int:
     if not ok:
         bad.append("**출생 표본 뒷면** — 2152/0 인데 태그가 안 섬다: %s" % why)
 
+    # ── ★★ P-275 세종 표 — **읽기가 재기를 흉내 내지 않는가** ──────────
+    import tempfile as _tf
+    from pathlib import Path as _P
+
+    def _tbl(text):
+        d = _P(_tf.mkdtemp())
+        f = d / "t.md"
+        f.write_text(text, encoding="utf-8")
+        return f
+
+    good = _tbl("| # | 조건 | 값 | 근거 |" + chr(10) + "|---|---|---|---|" + chr(10)
+                + "| S5 | 밖에서 닿는다 | **0** | 주소 0 |" + chr(10)
+                + "| S6 | 청구서 | **0.5** | 가격 0/4 |" + chr(10)
+                + "| S7 | 종이 | **1** | 다 섰다 |" + chr(10))
+    rows, why = read_sejong_table(good)
+    if sorted(rows) != ["S5", "S6", "S7"]:
+        bad.append("세종 표: 세 행을 다 못 읽었다 — %r (%s)" % (sorted(rows), why))
+    if _sejong_cell("S5", "x", rows, "")["verdict"] != RED:
+        bad.append("세종 표: 값 0 이 빨강이 아니다")
+    if _sejong_cell("S7", "x", rows, "")["verdict"] != GREEN:
+        bad.append("세종 표: 값 1 이 초록이 아니다")
+    s6 = _sejong_cell("S6", "x", rows, "")
+    if s6["verdict"] != RED or "0.5" not in s6["line"]:
+        bad.append("★★ 세종 표: 0.5 가 빨강이 아니거나 판정문이 「0.5」를 안 말한다 — "
+                   "0.5 를 초록으로 올리면 다 한 것으로 읽히고, 그 사실이 판정문에 "
+                   "안 남으면 사람은 그냥 빨강으로 읽는다")
+
+    #: ★ 음성 대조 ① — **표가 없으면 회색이다.** 없는데 초록·빨강을 내면 그 수는 창작이다.
+    missing_rows, missing_why = read_sejong_table(_P("/does/not/exist/xyz.md"))
+    if missing_rows or not missing_why:
+        bad.append("세종 표: 없는 파일에서 행을 읽었다고 한다")
+    if _sejong_cell("S5", "x", missing_rows, missing_why)["verdict"] != GRAY:
+        bad.append("★★ 세종 표가 없는데 회색이 아니다 — 지어냈다")
+
+    #: ★ 음성 대조 ② — **모르는 값은 안 담는다.** 담으면 부르는 쪽이 모르는 낱말로 판정한다.
+    weird, _ = read_sejong_table(_tbl(
+        "| # | 조건 | 값 | 근거 |" + chr(10) + "|---|---|---|---|" + chr(10)
+        + "| S5 | x | **0.7** | 근거 |" + chr(10)
+        + "| S6 | x | **1** |  |" + chr(10)))
+    if "S5" in weird:
+        bad.append("세종 표: 규칙 밖 값 0.7 을 담았다 — {0, 0.5, 1} 뿐이다")
+    if "S6" in weird:
+        bad.append("★★ 세종 표: **근거가 빈 행**을 담았다 — 빈 사유는 면제와 구별되지 않는다")
+    if _sejong_cell("S5", "x", weird, "")["verdict"] != GRAY:
+        bad.append("규칙 밖 값인데 회색이 아니다")
+
     if bad:
         print(f"{TAG} 자기시험 실패:")
         for b in bad:
@@ -446,7 +545,7 @@ def self_test() -> int:
         return EXIT_FAIL
     print(f"{TAG} 자기시험 통과 — cell() 판정값 검사 · S1 문턱(회색·빨강·초록·모순) 4종 · "
          f"S2 「안 쟀다」 구분 3종 · S3/S4 결합 규칙 2종 · 태그 음성 대조 4종(회색·실패·"
-         f"0실패·무관 원칙) · **출생 표본 1**(2026-09-23 진입면 철조망 한 건이 "
+         f"0실패·무관 원칙) · **세종 표 P-275 6종**(0·0.5·1 · 표 없음 · 규칙 밖 값 · 빈 근거) · **출생 표본 1**(2026-09-23 진입면 철조망 한 건이 "
          f"태그를 막았다 · 2151/1 → 안 섬 · 2152/0 → 섬)")
     return EXIT_OK
 
@@ -507,9 +606,12 @@ def main() -> int:
 
     cells.append(s3_backup_and_reboot())
     cells.append(s4_fake_bearer(args.container, timeout=min(args.timeout, 300)))
-    cells.append(s5_reach())
-    cells.append(s6_billing())
-    cells.append(s7_paperwork())
+    #: ★ [P-275] 표를 **한 번만** 읽어 셋에 나눠 준다 — 세 번 읽으면 그 사이에 파일이
+    #:   바뀌었을 때 같은 회차 안에서 세 칸이 서로 다른 판을 보고 판정한다.
+    sejong_rows, sejong_why = read_sejong_table()
+    cells.append(s5_reach(sejong_rows, sejong_why))
+    cells.append(s6_billing(sejong_rows, sejong_why))
+    cells.append(s7_paperwork(sejong_rows, sejong_why))
 
     full = measure_full_suite(args.full_tests, args.container, args.timeout)
     if full["verdict"] == "skipped":

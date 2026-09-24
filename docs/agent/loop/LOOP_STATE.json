@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "turn": "AH",
+  "phase": "code_running",
+  "wo": "docs/workorders/WO-GX-20260925-11_턴AH_신규User가URL로들어온다_온보딩상한표_대표따라하기_5차선_20260925.md",
+  "report": null,
+  "next_turn": "AI",
+  "next_wo": "docs/workorders/WO-GX-20260926-12_턴AI_8차선_창2b_스테이징배치_온보딩문턱43_상용오픈정의_20260926.md",
+  "updated_at": "2026-09-24T15:50:00+09:00",
+  "updated_by": "sejong",
+  "ceo_question": null,
+  "retry_after": null,
+  "turns_today": 1,
+  "pause": false,
+  "notes": "루프 v1.0 첫 상태 · 턴 AH 는 대화형 세션에서 진행 중 — 영실이 AH 보고서를 저장하면 phase 를 report_ready 로 바꾼다"
+}
