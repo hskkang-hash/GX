@@ -26,7 +26,7 @@ import { useDetectionPing } from '../hooks/useDetectionPing';
 import type { CameraPulse } from '../hooks/useCameraGrid';
 import { dsm2Routes } from '../routes';
 import { EVENT_TYPE_LABEL, labelOf, SEVERITY_COLOR, SEVERITY_ICON, SEVERITY_LABEL } from '../severity';
-import { dataSourceBadge, linkStatusBadge, linkStatusLabel } from '../copy';
+import { CAMERA_COPY, dataSourceBadge, linkStatusBadge, linkStatusLabel } from '../copy';
 import { stamp, TIMEZONE_NOTE } from '../time';
 import type { DashboardFrame, EventRow } from '../types';
 
@@ -296,6 +296,37 @@ export default function ControlDashboard() {
                   /* ★ 분모 0을 「정상 0 · 이상 0」으로 그리지 않는다 — 그 그림은
                      「전부 멀쩡하다」로 읽힌다. 0대일 때는 **0대라고 적는다.** */
                   <Text type="secondary">등록된 카메라가 없습니다.</Text>
+                ) : cameraAlive === 0 ? (
+                  /**
+                   * ★★ P-316(2026-09-24 · 턴 U온) — **카메라는 있는데 응답이 0대.**
+                   *
+                   * 탐침을 걸러내니 남은 진짜 카메라는 전부 `never_seen` 이었다
+                   * (실카메라 연결은 현장 뒤). 「0 정상 · N 이상」 계수기만 보이면
+                   * 당직자는 **문 하나가 죽은 것**으로 읽지, **아직 아무 카메라도
+                   * 안 붙었다**로 읽지 않는다 — 다른 사실이다. 그래서 이 갈래는
+                   * 계수기 대신 **정직한 빈 화면 + 다음 손**을 그린다(P-312 부품).
+                   * 다음 손은 「카메라 주소 채우기」(`dsm2Routes.cameraAddress`) —
+                   * 응답 없음의 가장 흔한 원인이 주소 미설정이기 때문이다.
+                   * ⚠ 수(N)는 이 응답의 `cameraTotal` 에서 읽는다 — 화면에 5를
+                   *   박아 적지 않는다.
+                   */
+                  <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                    <Text>
+                      카메라 {cameraTotal}대 중 응답 0 — 카메라 연결 확인으로
+                    </Text>
+                    <Text type="secondary">
+                      {cameraNeverSeen === cameraTotal
+                        ? '설치한 뒤 아직 한 번도 화면이 오지 않았습니다.'
+                        : '카메라가 아직 화면을 보내지 않았습니다.'}{' '}
+                      아래에서 카메라 주소를 확인하십시오.
+                    </Text>
+                    <Button
+                      size="small"
+                      onClick={() => navigate(dsm2Routes.cameraAddress.path)}
+                    >
+                      {CAMERA_COPY.fillAddress}
+                    </Button>
+                  </Space>
                 ) : (
                   <Space direction="vertical" size={4} style={{ width: '100%' }}>
                     <Space size="middle" align="baseline" wrap>
