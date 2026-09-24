@@ -288,6 +288,12 @@ def is_measured_red(kind: str, gate: str, rc) -> bool:
 NEEDS_DJANGO = (
     "verify_purge.py", "verify_alarm_budget.py", "verify_camera_pulse.py",
     "verify_migrations.py", "verify_minio.py", "ops_alert_routing.py",
+    #: ★ [P-274 · 2026-09-25 턴 AG] SEC-22 의 게이트. Django `Client` 로 읽기 면
+    #:   전수를 때리므로 **컨테이너 안**에서만 선다. 이 목록에 안 넣으면 호스트에서
+    #:   `sys.executable` 로 불려 `ModuleNotFoundError: config` 로 죽고, 그 절은
+    #:   **회색**이 된다 — 그리고 회색은 초록이 아니다. 절을 적기만 하고 이 줄을
+    #:   빠뜨리면 「적었으니 닫혔다」가 되는데, 그것이 이 저장소가 내내 걷어낸 병이다.
+    "gate_fake_bearer_regression.py",
 )
 PASS_BY_NAME = ("MINIO_ENDPOINT", "MINIO_ACCESS_KEY", "MINIO_SECRET_KEY",
                 "MINIO_ROOT_USER", "MINIO_ROOT_PASSWORD", "MINIO_BUCKET_NAME")

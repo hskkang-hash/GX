@@ -11,29 +11,36 @@
       "all_running": true,
       "oldest_start": "2026-09-22T11:41:39.0885123Z",
       "by": "scripts/ops_reboot_morning.py --record-morning"
+    },
+    {
+      "recorded_at": "2026-09-24T14:57:19",
+      "containers": 11,
+      "all_running": true,
+      "oldest_start": "2026-09-23T08:46:04.4278506Z",
+      "by": "scripts/ops_reboot_morning.py --record-morning"
     }
   ],
   "readiness": {
-    "measured_at": "2026-09-23T18:38:16",
+    "measured_at": "2026-09-24T14:57:19",
     "containers": [
       {
-        "name": "gx-celery-e",
+        "name": "gx-portfwd",
         "status": "running",
-        "started_at": "2026-09-23T08:46:04.7509455Z",
+        "started_at": "2026-09-24T05:40:50.337922026Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
         "name": "gx-gunicorn-e",
         "status": "running",
-        "started_at": "2026-09-23T08:46:04.7094655Z",
+        "started_at": "2026-09-24T05:39:50.709788362Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
       {
-        "name": "gx-celery-e-old-2b",
-        "status": "exited",
-        "started_at": "2026-09-22T12:05:23.30381963Z",
+        "name": "gx-celery-e",
+        "status": "running",
+        "started_at": "2026-09-24T05:37:12.368767682Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
@@ -48,20 +55,6 @@
         "name": "gx-beat-e",
         "status": "running",
         "started_at": "2026-09-23T08:46:04.6445953Z",
-        "restart_policy": "unless-stopped",
-        "restart_count": "0"
-      },
-      {
-        "name": "gx-celery-e-old",
-        "status": "exited",
-        "started_at": "2026-09-22T11:41:39.2072781Z",
-        "restart_policy": "unless-stopped",
-        "restart_count": "0"
-      },
-      {
-        "name": "gx-gunicorn-e-old-2b",
-        "status": "exited",
-        "started_at": "2026-09-22T11:41:39.1698124Z",
         "restart_policy": "unless-stopped",
         "restart_count": "0"
       },
@@ -109,13 +102,11 @@
       }
     ],
     "self_starting": [
-      "gx-celery-e",
+      "gx-portfwd",
       "gx-gunicorn-e",
-      "gx-celery-e-old-2b",
+      "gx-celery-e",
       "gx-shell",
       "gx-beat-e",
-      "gx-celery-e-old",
-      "gx-gunicorn-e-old-2b",
       "guardianx-source-minio-1",
       "guardianx-source-mailpit-1",
       "gx-fe-build",
