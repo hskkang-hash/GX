@@ -96,8 +96,9 @@ echo "REAL_EXIT=$?"
 [RC1] ── 빨강 목록(3건) — 등재 ──
 [RC1] ── 회색 목록(10건) — 등재 ──
 [RC1] `rc-1-internal` 태그: 안 선다 — 전량 시험을 못/안 쟀다 — 태그 조건 ①이 안 선다
-REAL_EXIT=2   ← (host 셸에서 $? 를 직접 읽었다 — | tail 함정 피함)
+REAL_EXIT=2
 ```
+(host 셸에서 `$?` 를 직접 읽었다 — 파이프 tail 함정을 피했다)
 자기시험 + 음성 대조(태그를 항상 `True` 로 바꾸면 잡히는가):
 ```
 python scripts/verify_release_candidate.py --self-test

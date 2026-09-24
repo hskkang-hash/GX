@@ -1,29 +1,26 @@
 {
   "latest": {
-    "measured_at": "2026-09-15T05:06:32+00:00",
-    "api": "http://gx-nginx-e:8500",
+    "measured_at": "2026-09-24T23:50:27+00:00",
+    "api": "http://localhost:8000",
     "environment": {
-      "measured_at": "2026-09-15T05:06:32+00:00",
-      "python": "3.11.14",
-      "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+      "measured_at": "2026-09-24T23:50:27+00:00",
+      "python": "3.14.3",
+      "platform": "Windows-10-10.0.19045-SP0",
       "cpu_count": 8,
       "gpu": "없음 (이 환경에 GPU 가 붙어 있지 않다 — AI 추론은 외부 서버가 한다)",
-      "cgroup_memory_max": "max",
-      "cgroup_cpu_max": "max 100000",
-      "mem_total": "8062592 kB"
+      "cgroup_memory_max": "읽지 못함",
+      "cgroup_cpu_max": "읽지 못함",
+      "mem_total": "읽지 못함"
     },
     "co_resident": {
-      "runserver_processes": [
-        "python manage.py runserver 0.0.0.0:8000 --noreload",
-        "sh -c cd /app && python manage.py runserver 0.0.0.0:8000 --noreload > /tmp/gx_runserver8000.log 2>&1"
-      ],
-      "loadavg": "3.67 2.96 2.05 1/532 4811"
+      "runserver_processes": null,
+      "loadavg": null
     },
-    "server_header": "nginx",
+    "server_header": "WSGIServer/0.2 CPython/3.11.14",
     "mode": "acceptance",
     "server": "runserver 가 아니다 — **합격선 모드**로 판정한다",
     "concurrency": 10,
-    "rounds": 26,
+    "rounds": 10,
     "repeat": 3,
     "faces": {
       "F05": {
@@ -31,33 +28,29 @@
         "budget_ms": 500.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 780,
-        "errors": 1,
-        "errors_5xx": 1,
+        "n": 300,
+        "errors": 0,
+        "errors_5xx": 0,
         "errors_4xx": 0,
         "errors_5xx_injected": 0,
-        "errors_5xx_by_status": {
-          "502": 1
-        },
-        "error_detail": [
-          "/api/dsm/events?limit=50 -> 502"
-        ],
+        "errors_5xx_by_status": {},
+        "error_detail": [],
         "cache_bust": true,
-        "p50_ms": 113.5,
-        "p95_ms": 213.4,
+        "p50_ms": 2454.8,
+        "p95_ms": 2721.0,
         "p95_each": [
-          165.6,
-          225.1,
-          213.4
+          5135.9,
+          2552.5,
+          2721.0
         ],
-        "p95_min": 165.6,
-        "p95_max": 225.1,
-        "noise": 0.279,
+        "p95_min": 2552.5,
+        "p95_max": 5135.9,
+        "noise": 0.949,
         "per_call": {
           "/api/dsm/events?limit=50": {
-            "n": 260,
-            "p50_ms": 114.6,
-            "p95_ms": 213.4
+            "n": 100,
+            "p50_ms": 2447.7,
+            "p95_ms": 2721.0
           }
         }
       },
@@ -66,48 +59,44 @@
         "budget_ms": 800.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 780,
-        "errors": 1,
-        "errors_5xx": 1,
+        "n": 300,
+        "errors": 0,
+        "errors_5xx": 0,
         "errors_4xx": 0,
         "errors_5xx_injected": 0,
-        "errors_5xx_by_status": {
-          "502": 1
-        },
-        "error_detail": [
-          "/api/dsm/events/response-times -> 502"
-        ],
+        "errors_5xx_by_status": {},
+        "error_detail": [],
         "cache_bust": true,
-        "p50_ms": 134.0,
-        "p95_ms": 237.9,
+        "p50_ms": 2502.4,
+        "p95_ms": 2696.1,
         "p95_each": [
-          290.0,
-          229.9,
-          237.9
+          2612.4,
+          2696.1,
+          3300.4
         ],
-        "p95_min": 229.9,
-        "p95_max": 290.0,
-        "noise": 0.253,
+        "p95_min": 2612.4,
+        "p95_max": 3300.4,
+        "noise": 0.255,
         "per_call": {
           "/api/dsm/dashboard/frame": {
-            "n": 78,
-            "p50_ms": 130.8,
-            "p95_ms": 303.9
+            "n": 30,
+            "p50_ms": 2510.4,
+            "p95_ms": 3300.4
           },
           "/api/dsm/events/queue": {
-            "n": 52,
-            "p50_ms": 150.9,
-            "p95_ms": 242.4
+            "n": 20,
+            "p50_ms": 2496.5,
+            "p95_ms": 3365.8
           },
           "/api/dsm/events/response-times": {
-            "n": 52,
-            "p50_ms": 133.5,
-            "p95_ms": 247.2
+            "n": 20,
+            "p50_ms": 2492.3,
+            "p95_ms": 3365.0
           },
           "/api/dsm/events/summary": {
-            "n": 78,
-            "p50_ms": 133.5,
-            "p95_ms": 205.7
+            "n": 30,
+            "p50_ms": 2500.0,
+            "p95_ms": 3293.0
           }
         }
       },
@@ -116,7 +105,7 @@
         "budget_ms": 1000.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 780,
+        "n": 300,
         "errors": 0,
         "errors_5xx": 0,
         "errors_4xx": 0,
@@ -124,21 +113,21 @@
         "errors_5xx_by_status": {},
         "error_detail": [],
         "cache_bust": true,
-        "p50_ms": 103.8,
-        "p95_ms": 186.6,
+        "p50_ms": 2463.9,
+        "p95_ms": 2861.2,
         "p95_each": [
-          186.6,
-          177.6,
-          228.4
+          2861.2,
+          2433.5,
+          2926.0
         ],
-        "p95_min": 177.6,
-        "p95_max": 228.4,
-        "noise": 0.272,
+        "p95_min": 2433.5,
+        "p95_max": 2926.0,
+        "noise": 0.172,
         "per_call": {
           "/api/media-data/": {
-            "n": 260,
-            "p50_ms": 106.1,
-            "p95_ms": 228.4
+            "n": 100,
+            "p50_ms": 2548.9,
+            "p95_ms": 2926.0
           }
         }
       },
@@ -147,7 +136,7 @@
         "budget_ms": 300.0,
         "concurrency": 10,
         "repeats": 3,
-        "n": 780,
+        "n": 300,
         "errors": 0,
         "errors_5xx": 0,
         "errors_4xx": 0,
@@ -155,21 +144,21 @@
         "errors_5xx_by_status": {},
         "error_detail": [],
         "cache_bust": true,
-        "p50_ms": 106.3,
-        "p95_ms": 181.2,
+        "p50_ms": 2428.1,
+        "p95_ms": 2496.8,
         "p95_each": [
-          181.2,
-          217.6,
-          164.1
+          2496.8,
+          2480.1,
+          2688.8
         ],
-        "p95_min": 164.1,
-        "p95_max": 217.6,
-        "noise": 0.295,
+        "p95_min": 2480.1,
+        "p95_max": 2688.8,
+        "noise": 0.084,
         "per_call": {
           "/api/dsm/dashboard/link-state": {
-            "n": 260,
-            "p50_ms": 105.5,
-            "p95_ms": 164.1
+            "n": 100,
+            "p50_ms": 2466.5,
+            "p95_ms": 2688.8
           }
         }
       }
@@ -301,6 +290,17 @@
       "loadavg": "3.67 2.96 2.05 1/532 4811",
       "mode": "acceptance",
       "rounds": 26,
+      "repeat": 3,
+      "concurrency": 10
+    },
+    {
+      "measured_at": "2026-09-24T23:50:27+00:00",
+      "n": 1200,
+      "errors_5xx": 0,
+      "rate": 0.0,
+      "loadavg": null,
+      "mode": "acceptance",
+      "rounds": 10,
       "repeat": 3,
       "concurrency": 10
     }

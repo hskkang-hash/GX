@@ -304,12 +304,10 @@ python scripts/verify_feature_reach.py --self-test   rc=0  · 28건
 
 ★ **결정문으로 세웠다** — `decisions.yaml::D-512`(P-236 · `enforced_by` 붙음 · `verify_decision_tools` 227건 전건 통과).
 
-★ **A 가 헛읽은 것 하나를 사용법에 박았다**:
+★ **A 가 헛읽은 것 하나를 사용법에 박았다**(인용 · 돌지 않는다):
 
-```
-게이트 | grep ...; echo $?     ← 이것은 **grep 의 종료 코드**다. 게이트의 exit 가 사라진다
-게이트 > out.txt; echo $?      ← 올바른 모양
-```
+> 게이트 | grep ...; echo $?     ← 이것은 **grep 의 종료 코드**다. 게이트의 exit 가 사라진다
+> 게이트 > out.txt; echo $?      ← 올바른 모양
 
 ⚠ **이 게이트를 실제로 돌리지는 않았다** — `via: gate` 인 절은 그 게이트가 **로그인한다.**
 내 창에는 로그인이 없다. **창을 가진 사람이 돌려서 받아야 한다.**

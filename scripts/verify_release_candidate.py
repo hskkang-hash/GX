@@ -569,8 +569,6 @@ def main() -> int:
         print(f"{TAG} 자기시험이 먼저 실패했다 — 판정기 자체를 못 믿는다", file=sys.stderr)
         return EXIT_FAIL
 
-    from _gate_header import gate_header
-
     red_lines: list[str] = []
     gray_lines: list[str] = []
     cells: list[dict] = []
@@ -635,18 +633,13 @@ def main() -> int:
                  + sum(1 for c in cells if c["verdict"] != GRAY)
                  + (1 if full["verdict"] == "measured" else 0))
 
-    gate_header(
-        __file__,
-        target="09-25 「내부 RC」 선언문(WO-GX-20260924-09 §4-1)이 읽을 세 수 + S1~S7",
-        as_="(자격증명 없음 — 이미 있는 산출기를 import 로 부르고, gx-shell 안에서 "
-           "가짜 헤더 탐침만 자격 없는 가짜 토큰으로 부른다)",
-        source="verify_readiness_scores.aa_report() · verify_spec_coverage.measure() · "
-              "verify_backup_autonomy/recovery.run() · probe_fake_bearer.py(gx-shell) — "
-              "전부 **부른다**(D-369, 두 벌을 두지 않는다)",
-        measured=f"RC-1 칸 **분모 {n_cells}** · 잰 칸 {n_measured} — 회색은 0 으로도 1 로도 "
-                f"안 세인다",
-    )
-
+    #: ★ [P-346 · 09-25 · 차선 F] 머리글은 **여기서 다시 안 찍는다.** 예전엔 여기서
+    #:   `gate_header(...)` 를 불렀는데, `--self-test` 로 열면 위 566행에서 이미
+    #:   돌아가 버려 이 줄에 **닿지 못했다** — `verify_gate_header.py` 가 이 파일을
+    #:   열어 봐도 세 줄 중 0줄이었다(HEADER_LIVE 빨강). 머리글은 이제
+    #:   `if __name__ == "__main__":` 맨 위에서 **한 번, 무조건** 찍는다(다른
+    #:   게이트들의 관례 그대로 · `verify_perf_budget.py`/`verify_password_reset.py`
+    #:   참고) — 그 자리는 이 함수보다 **먼저** 돌아서 `--self-test` 에도 살아남는다.
     print(f"{TAG} [입력] RC-1 칸 분모 {n_cells}(세 수 3 · 기능명세 1 · 상용 1 · S1~S7 7 · "
          f"전량 1) · 잰 칸 {n_measured}")
     print(f"{TAG} FC {fmt_score(fc)} · PR {fmt_score(pr)} · CR {fmt_score(cr)}")
@@ -694,4 +687,26 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _gate_header import gate_header  # P-107 — TARGET/AS/SOURCE/MEASURED
+    #: ★ [P-346 · 09-25 · 차선 F] 머리글은 **여기서, 무조건** 찍는다 — `main()` 안의
+    #:   `--self-test` 분기(566행)보다 **먼저** 돈다. 예전엔 이 호출이 `main()` 안,
+    #:   전량 계산이 끝난 뒤에 있어서 `verify_gate_header.py --self-test` 로 열어
+    #:   보면 **세 줄 중 0줄**이 찍혔다(HEADER_LIVE 빨강 · MEASURED_LINE 도 함께
+    #:   비었다). MEASURED 의 분모 13(세 수 3 · 기능명세 1 · 상용 1 · S1~S7 7 ·
+    #:   전량 1)은 이 파일의 **구조**이지 이번 실행의 결과가 아니라 여기서도 안다 —
+    #:   이번 실행에 실제로 몇 칸이 잡혔는지는 `main()` 의 `[입력]` 줄이 매번
+    #:   따로 말한다(위 참고).
+    gate_header(
+        __file__,
+        target="09-25 「내부 RC」 선언문(WO-GX-20260924-09 §4-1)이 읽을 세 수 + S1~S7",
+        as_="(자격증명 없음 — 이미 있는 산출기를 import 로 부르고, gx-shell 안에서 "
+           "가짜 헤더 탐침만 자격 없는 가짜 토큰으로 부른다)",
+        source="verify_readiness_scores.aa_report() · verify_spec_coverage.measure() · "
+              "verify_backup_autonomy/recovery.run() · probe_fake_bearer.py(gx-shell) — "
+              "전부 **부른다**(D-369, 두 벌을 두지 않는다)",
+        measured="RC-1 칸 **분모 13**(세 수 3 · 기능명세 1 · 상용 1 · S1~S7 7 · 전량 1) — "
+                 "이 파일이 구조로 재는 칸 수다. 이번 호출에서 실제로 몇 칸이 잡혔는지는 "
+                 "`main()` 의 [입력] 줄이 매 실행마다 다시 말한다(회색은 0 으로도 1 로도 "
+                 "안 세인다)",
+    )
     raise SystemExit(main())
