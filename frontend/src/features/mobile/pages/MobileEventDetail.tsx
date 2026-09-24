@@ -183,7 +183,8 @@ export const MAP_LINK_LABEL = '지도에서 보기';
  *   (`docs/agent/checkpoints/turn-aa/조율자.inbox/U3.md`). 「저장된 구간이 없습니다」는
  *   세종 §3 6번이 지정한 낱말 그대로다.
  */
-export const CLIP_EMPTY_HEAD = '저장된 구간이 없습니다';
+export const CLIP_EMPTY_HEAD =
+  '저장된 구간이 없습니다. 보관 기간 안이면 잠시 뒤 다시 보십시오.';
 export const CLIP_EMPTY_WITH_SNAPSHOT =
   `${CLIP_EMPTY_HEAD} — 이 사건은 영상이 저장되지 않았습니다. 위의 「스냅샷」으로 확인하십시오.`;
 export const CLIP_EMPTY_NO_SNAPSHOT =
@@ -771,7 +772,7 @@ export default function MobileEventDetail() {
                     </>
                   ) : (
                     <Paragraph type="secondary" style={{ fontSize: 12 }}>
-                      이 이벤트에는 스냅샷 참조가 없습니다.
+                      이 이벤트에는 스냅샷 참조가 없습니다. 잠시 뒤 다시 보십시오.
                     </Paragraph>
                   )}
                 </div>
@@ -828,7 +829,7 @@ export default function MobileEventDetail() {
                   reason={sameCamera.reason}
                   status={sameCamera.status}
                   onRetry={sameCamera.reload}
-                  emptyText={`이 카메라에서 지난 ${SAME_CAMERA_DAYS}일 동안 다른 사건이 0건입니다.`}
+                  emptyText={`이 카메라에서 지난 ${SAME_CAMERA_DAYS}일 동안 다른 사건이 0건입니다. 기간을 넓혀 보십시오.`}
                 >
                   <Space direction="vertical" size={2} style={{ width: '100%' }}>
                     {(sameCamera.data?.events ?? []).map((row) => (
@@ -934,7 +935,7 @@ export default function MobileEventDetail() {
 
                 {(e.allowed_next ?? []).length === 0 ? (
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    지금 이 계정이 옮길 수 있는 다음 단계가 없습니다.
+                    지금 이 계정이 옮길 수 있는 다음 단계가 없습니다. 권한이 바뀌면 단추가 나타납니다.
                   </Text>
                 ) : (
                   <Space
@@ -1052,7 +1053,7 @@ export default function MobileEventDetail() {
                       state={replies.state}
                       reason={replies.reason} status={replies.status}
                       onRetry={replies.reload}
-                      emptyText="아직 회신이 없습니다."
+                      emptyText="아직 회신이 없습니다. 현장의 회신을 기다리십시오."
                     >
                       <Space direction="vertical" size={4} style={{ width: '100%' }}>
                         {(replies.data?.replies ?? []).map((r) => (

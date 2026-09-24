@@ -87,7 +87,8 @@ export const HEADLINE = '알림 받는 사람·채널';
  *   사람을 더 넣으러 간 운영자는 넣어도 빨강이 안 풀리는 것을 보게 된다.
  *   본문만 고치고 머리글을 안 고치면, 사람이 먼저 읽는 줄이 여전히 틀린 것이다.
  */
-export const CRITICAL_BLOCKED_TITLE = '지금 심각 경보를 받는 사람이 없습니다.';
+export const CRITICAL_BLOCKED_TITLE =
+  '지금 심각 경보를 받는 사람이 없습니다. 아래에서 규칙을 만들거나 역할에 사람을 넣으십시오.';
 
 /** 사람은 있는데 **채널이 사람에게 안 가는** 경우의 머리글. 다음 손이 다르다(P-221). */
 export const CRITICAL_NO_HUMAN_CHANNEL_TITLE =
@@ -158,7 +159,7 @@ function blockedByNoPeople(data: Overview): boolean {
 /** 서버가 사유 문장을 안 줄 때만 쓰는 말. **둘을 뭉치지 않는다.** */
 function fallbackBlockReason(data: Overview): string {
   return blockedByNoPeople(data)
-    ? ('심각 등급 규칙이 없거나, 규칙이 가리키는 역할에 사람이 없습니다. '
+    ? ('심각 등급 규칙이 없거나, 규칙이 가리키는 역할에 사람이 없습니다. 아래에서 규칙을 만들어 주십시오. '
       + '이 상태에서는 재난이 나도 아무에게도 알림이 가지 않습니다. '
       + '아래에서 심각 규칙을 하나 세우거나 그 역할에 사람을 넣어 주십시오.')
     : (`심각 규칙이 가리키는 사람은 ${data.critical_recipient_count}명 있지만, `
@@ -389,7 +390,7 @@ export default function NotifySettingsPage() {
                 size="small"
                 pagination={false}
                 dataSource={data.rules}
-                locale={{ emptyText: '아직 규칙이 없습니다.' }}
+                locale={{ emptyText: '아직 규칙이 없습니다. 위에서 규칙을 만들면 이 자리에 나타납니다.' }}
                 columns={[
                   {
                     title: '등급',

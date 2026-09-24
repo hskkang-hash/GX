@@ -116,7 +116,7 @@ function NoSignal() {
     >
       <Tag>{NO_SIGNAL}</Tag>
       <Text type="secondary">
-        이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.
+        이 값을 읽는 자리가 아직 없습니다. 서버가 값을 보내면 채워지니 기다리시면 됩니다.
       </Text>
     </Space>
   );
@@ -318,7 +318,7 @@ export default function SystemSettings() {
             <Descriptions.Item label="복구 시험">
               {backupReadable ? (
                 back?.restore_drill || (
-                  <Undeclared consequence="복구되는지 확인한 적이 없습니다. 뜬 백업은 복구해 봐야 백업입니다." />
+                  <Undeclared consequence="복구되는지 확인한 적이 없습니다. 복구를 한 번 돌려 보십시오." />
                 )
               ) : (
                 <NoSignal />
@@ -353,7 +353,7 @@ export default function SystemSettings() {
               style={{ marginTop: 12 }}
               type="warning"
               showIcon
-              message="백업 선언을 읽는 자리가 아직 없습니다."
+              message="백업 선언을 읽는 자리가 아직 없습니다. 서버가 값을 보내면 여기에 채워집니다."
               description="이 칸이 회색인 동안에는 백업이 선언되었는지 이 화면이 답하지 못합니다. 빨강이 아닌 이유가 그것입니다."
             />
           )}
@@ -382,7 +382,7 @@ export default function SystemSettings() {
                 receipts.data.last.verifiable ? (
                   <Tag color="green">증인 표 행 수가 있습니다</Tag>
                 ) : (
-                  <Tag color="red">행 수가 없어 복구 성공을 판정할 수 없습니다</Tag>
+                  <Tag color="red">행 수가 없어 복구 성공을 판정할 수 없습니다 — 복구를 한 번 돌리십시오</Tag>
                 )
               ) : (
                 <Tag>{NO_RECEIPT}</Tag>

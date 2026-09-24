@@ -418,7 +418,7 @@ export default function AuditLog() {
           status={audit.status}
           onRetry={audit.reload}
           where="AuditLog/표"
-          emptyText="조건에 맞는 감사 기록이 없습니다. (요청은 성공했고 0건입니다)"
+          emptyText="조건에 맞는 감사 기록이 없습니다. 기간이나 조건을 넓혀 보십시오."
         >
           <Table<AuditRow>
             size="small"

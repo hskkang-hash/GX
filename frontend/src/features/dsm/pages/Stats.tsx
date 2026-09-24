@@ -175,7 +175,7 @@ export default function Stats() {
           status={axes.status}
           onRetry={axes.reload}
           where="Stats/축"
-          emptyText="이 기간에 사건이 없습니다. (요청은 성공했고 0건입니다)"
+          emptyText="이 기간에 사건이 없습니다. 기간을 넓혀 보십시오."
         >
           {axes.data && (
             <Space direction="vertical" size="small" style={{ width: '100%' }}>

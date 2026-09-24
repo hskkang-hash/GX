@@ -188,7 +188,8 @@ export const ALLOWED_UNKNOWN_NOTE =
   '서버가 이 카드의 다음 단계를 아직 말하지 않았습니다 — 「열기」로 상세에서 처리하세요.';
 
 /** 갈 곳이 없다고 **서버가 말한** 카드. 위와 다른 사실이라 다른 글자다. */
-export const ALLOWED_NONE_NOTE = '더 갈 곳이 없습니다 — 이 사건은 마지막 단계입니다.';
+export const ALLOWED_NONE_NOTE =
+  '더 갈 곳이 없습니다 — 이 사건은 마지막 단계입니다. 더 필요하면 관리자에게 문의하십시오.';
 
 
 function eventPath(id: number): string {
@@ -704,7 +705,7 @@ export default function FocusQueuePage() {
           state={queue.state}
           reason={queue.reason} status={queue.status}
           onRetry={queue.reload}
-          emptyText="지금 열려 있는 이벤트가 없습니다 — 평온합니다."
+          emptyText="지금 열려 있는 이벤트가 없습니다 — 평온합니다. 새 사건이 오면 이 자리에 바로 뜹니다."
         >
           {data ? (
             <Space direction="vertical" size="middle" style={{ width: '100%' }}>
@@ -804,8 +805,8 @@ export default function FocusQueuePage() {
                 <Alert
                   type="success"
                   showIcon
-                  message="지금 가장 급한 사건이 없습니다."
-                  description="열려 있는 이벤트가 0건입니다 — 못 가져온 것이 아니라 없습니다."
+                  message="지금 가장 급한 사건이 없습니다. 새 사건이 오면 이 자리에 바로 섭니다."
+                  description="열려 있는 이벤트가 0건입니다 — 못 가져온 것이 아니라 없습니다. 새 사건이 오면 바로 뜹니다."
                 />
               )}
 
@@ -861,7 +862,7 @@ export default function FocusQueuePage() {
                         <Tag color="processing">{WIRING_WAITING_LABEL}</Tag>
                         <Text type="secondary">
                           회신 {signals.replyTotal}건이 왔지만 「지원 요청」·「조치 완료」 표시가
-                          붙은 것은 0건입니다. {SUPPORT_WAITING_NOTE}
+                          붙은 것은 0건입니다 — 현장의 표시를 기다리십시오. {SUPPORT_WAITING_NOTE}
                         </Text>
                       </Space>
                     ) : null}
@@ -922,11 +923,11 @@ export default function FocusQueuePage() {
                   */}
                   <Text type="secondary" style={{ fontSize: 12 }} data-gx="rank-denominator">
                     {rankTotal === 0
-                      ? '시계가 도는 사건이 0건입니다 — 경과 순위를 매기지 않습니다.'
+                      ? '시계가 도는 사건이 0건입니다 — 사건이 오면 순위가 생기니 기다리시면 됩니다.'
                       : `경과 순위는 시계가 도는 ${rankTotal}건(초점 카드 포함) 중에서 셉니다.`}
                   </Text>
                   {data.queue.length === 0 ? (
-                    <Text type="secondary">대기 중인 카드가 없습니다.</Text>
+                    <Text type="secondary">대기 중인 카드가 없습니다. 새 사건이 오면 쌓이니 기다리시면 됩니다.</Text>
                   ) : null}
                   {data.queue.map((card, i) => {
                     const index = focus ? i + 1 : i;

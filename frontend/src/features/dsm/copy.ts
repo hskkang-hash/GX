@@ -121,7 +121,8 @@ export function failureKind(status: number | undefined): FailureKind {
 export const FAILURE_TITLE = '불러오지 못했습니다.';
 
 /** 권한없음 상자의 제목. 오류와 **다른 상자**다 (DA-03 §2-5). */
-export const FORBIDDEN_TITLE = '이 항목에 대한 권한이 없습니다.';
+export const FORBIDDEN_TITLE =
+  '이 항목에 대한 권한이 없습니다. 필요하면 관리자에게 요청하십시오.';
 
 /**
  * 없는 것의 제목 — **오류가 아니다.**
@@ -326,7 +327,7 @@ const FAILURE_WHY: Record<FailureKind, string> = {
   network: '서버에 연결하지 못했습니다.',
   timeout: '응답이 제때 오지 않았습니다.',
   server: '서버가 이 요청을 처리하지 못했습니다.',
-  forbidden: '이 계정에는 이 항목을 볼 권한이 없습니다.',
+  forbidden: '이 계정에는 이 항목을 볼 권한이 없습니다. 관리자에게 권한을 요청하십시오.',
   notfound: '지워졌거나 처음부터 없던 번호입니다.',
   unknown: '요청이 받아들여지지 않았습니다.',
 };
@@ -402,7 +403,7 @@ export const HANDOVER_COPY = {
   title: '인계 메모',
   read: '인계 읽기',
   compose: '인계 메모 쓰기',
-  empty: '아직 인계 메모가 없습니다.',
+  empty: '아직 인계 메모가 없습니다. 「인계 메모 쓰기」를 누르면 첫 줄이 생깁니다.',
   draftTitle: '교대 마무리 초안',
   lead: '이전 근무자가 남긴 한 줄입니다.',
 } as const;
@@ -413,7 +414,7 @@ export const WALL_COPY = {
   autoRefresh: '자동 갱신 중',
   lastRefresh: (line: string) => `마지막 갱신 ${line}`,
   map: '지도',
-  mapEmpty: '지도에 표시할 위치가 없습니다.',
+  mapEmpty: '지도에 표시할 위치가 없습니다. 카드에 좌표가 들어오면 이 자리에 표시됩니다.',
   mapBroken: '지도에 표시할 위치를 불러오지 못했습니다.',
   located: (known: number, total: number) =>
     `위치를 아는 카드 ${known}장 · 전체 ${total}장`,
@@ -421,7 +422,7 @@ export const WALL_COPY = {
   loading: '불러오는 중입니다.',
   stale: '불러오지 못했습니다. 아래는 마지막으로 받은 내용입니다.',
   queueBroken: '지금 처리할 것을 불러오지 못했습니다.',
-  calm: '지금 열려 있는 이벤트가 없습니다 — 평온합니다.',
+  calm: '지금 열려 있는 이벤트가 없습니다 — 평온합니다. 새 사건이 오면 이 자리에 바로 뜹니다.',
   openedByToken: '월 표시 토큰으로 열림',
   openedBySession: '로그인 세션으로 열림',
   tokenGone: '월 표시 토큰이 만료되었거나 회수되었습니다. 관리자에게 새 토큰을 받으십시오.',
@@ -477,7 +478,7 @@ export const METERING_COPY = {
 export const PURGE_COPY = {
   title: '보관 기간이 지난 영상 지우기',
   dryRun: '먼저 표로 보기',
-  irreversible: '지운 뒤에는 되돌릴 수 없습니다',
+  irreversible: '지운 뒤에는 되돌릴 수 없습니다 — 먼저 표로 보십시오.',
   history: '지운 기록',
 } as const;
 
@@ -487,7 +488,7 @@ export const BACKUP_COPY = {
   headline: '보존·백업 설정 — 선언하지 않으면 돌지 않습니다',
   undeclared: '미선언',
   waitingSignal: '서버 신호 대기',
-  waitingNote: '이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다.',
+  waitingNote: '이 값을 읽는 자리가 아직 없습니다. 선언되지 않았다는 뜻이 아닙니다. 서버가 값을 보내면 여기에 채워집니다.',
   notRunning: '돌지 않습니다',
   runsDaily: '매일 자동으로 지웁니다',
   whoDeclared: '누가 정했나',
@@ -557,7 +558,7 @@ export const SUPPORT_WAITING_NOTE =
 
 /** 종결 확인 카드가 비었을 때 — 이쪽은 **진짜 없음**이다. */
 export const CLOSE_CONFIRM_EMPTY =
-  '조치를 마쳤다고 알려 온 사건이 없습니다.';
+  '조치를 마쳤다고 알려 온 사건이 없습니다. 현장에서 「조치 완료」를 보내면 이 자리에 섭니다.';
 
 /**
  * 초점 카드가 아닌 사건은 **여기서 종결하지 않는다.**

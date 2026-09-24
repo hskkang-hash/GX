@@ -191,7 +191,8 @@ export async function wallGet<T>(
 ): Promise<T> {
   const token = wallToken();
   if (!token) {
-    throw new WallTokenError('월 표시 토큰이 없습니다.', 401);
+    throw new WallTokenError(
+      '월 표시 토큰이 없습니다. 관리자에게 새 토큰을 요청하십시오.', 401);
   }
   if (!isWallTokenPath(path)) {
     // 서버가 거절할 것을 **부르기 전에** 안다. 부르면 403 이 오고, 그 403 은

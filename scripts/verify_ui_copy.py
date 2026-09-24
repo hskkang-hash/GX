@@ -273,8 +273,13 @@ NEXT_HAND_FIELD = re.compile(
     #:   가 빈 화면 쌍을 `{ text: … , next: … }` 로 적었고, 칸 이름이 `emptyNext`
     #:   가 아니라 **`next`** 였다. 앞에 `{`·`,`·공백을 요구해 「줄머리 칸 이름」
     #:   일 때만 본다 — 그래도 넓다. **놓치는 쪽으로 틀린다**(이 게이트의 stance).
+    #: ★★ [턴 AH · P-292 · 대표 결정] **콜론만 보다가 등호를 놓쳤다.**
+    #:   객체 리터럴은 `emptyNext: '…'` 이지만 **JSX 는 `emptyNext="…"`** 다.
+    #:   그래서 다음 손을 **이미 옳게 적어 둔 세 자리**(Reports · SettingsRules ·
+    #:   SystemSettings)가 「다음 손 없음」으로 찍혔다 [실측 2026-09-24 · 3건].
+    #:   판정식은 한 글자도 안 바뀐다 — **보지 못하던 모양 하나를 더 볼 뿐**이다.
     r"(?:^|[,{\s])(?:emptyNext|emptyAction|emptyHint|nextHand|nextStep"
-    r"|actionLabel|cta|next)\s*:",
+    r"|actionLabel|cta|next)\s*[:=]",
     re.I)
 
 #: ★★ [실측 2026-09-21 · 턴 AB] **같은 날 두 번째 방어선 오독.**
@@ -754,6 +759,13 @@ def load_baseline() -> set[str]:
 
 
 def self_test() -> int:
+    #: ★★ [턴 AH · P-292 · 실측 2026-09-24] **일곱 건이 장식이었다.**
+    #:   이 함수 안에 `ok = False` 가 일곱 번 있었는데 `ok` 는 **초기화도 안 됐고
+    #:   읽는 데도 없었다** — 마지막 판정은 `fails` 만 본다. 그래서 그 일곱은
+    #:   FAIL 을 찍고도 「자기시험 통과」로 끝났다(턴 AB 의 이웃 칸 셋 · 선언 표 둘
+    #:   · 턴 AH 의 JSX 등호형 둘). **실패할 수 없는 시험은 시험이 아니다.**
+    #:   찾은 경위: 정규식을 일부러 되돌려 새 출생 표본이 빨개지는지 보다가,
+    #:   FAIL 이 찍혔는데 마지막 줄이 「통과」라고 말하는 것을 봤다.
     fails = 0
     for sample in BIRTH_SAMPLES:
         if not scan_line(sample):
@@ -831,18 +843,58 @@ def self_test() -> int:
     _near_ok = (_NL + "      emptyNext: '카메라가 무엇인가를 감지하면 이 자리에 "
                 "첫 줄이 생깁니다.',")
     if scan_empty_aa("이 기관에 기록된 사건이 0건입니다.", _near_ok):
-        ok = False
+        fails += 1
         print("[COPY] 자기시험 FAIL 다음 손이 **이웃 칸**에 있는데 잡았다 — "
               "U24 의 옳은 빈 화면 다섯을 이것으로 잘못 찍었다(턴 AB)")
     if not scan_empty_aa("이 기관에 기록된 사건이 0건입니다.", _NL + "      query: {},"):
-        ok = False
+        fails += 1
         print("[COPY] 자기시험 FAIL 이웃에 다음 손 칸이 **없는데** 안 잡았다 — "
               "이웃을 보는 것이 면제가 되면 안 된다")
     if not scan_empty_aa("이 기관에 기록된 사건이 0건입니다.",
                          _NL + "      emptyNext: '',"):
-        ok = False
+        fails += 1
         print("[COPY] 자기시험 FAIL 다음 손 칸이 **비었는데** 안 잡았다 — "
               "칸이 있는 것과 채워진 것은 다르다")
+
+    # ── ★★ [턴 AH · P-292] 같은 칸이 **JSX 등호형**으로 설 때 ────────────────
+    #   객체 리터럴만 보던 눈이 `emptyNext="…"` 를 못 봤다. 양성·음성을 함께 못박는다 —
+    #   넓히기만 하고 음성을 안 두면 「칸이 있으면 무조건 면제」가 되어 빈 칸도 지나간다.
+    _near_jsx = (_NL + '          emptyNext="위 서식에서 「만들기」를 누르면 '
+                 '여기에 한 줄이 생깁니다."')
+    if scan_empty_aa("아직 만든 보고서가 없습니다.", _near_jsx):
+        fails += 1
+        print("[COPY] 자기시험 FAIL 다음 손이 **JSX 등호형 이웃 칸**에 있는데 잡았다 — "
+              "Reports·SettingsRules·SystemSettings 세 자리가 이것으로 찍혔다(턴 AH)")
+    if not scan_empty_aa("아직 만든 보고서가 없습니다.", _NL + '          emptyNext=""'):
+        fails += 1
+        print("[COPY] 자기시험 FAIL JSX 등호형 칸이 **비었는데** 안 잡았다 — "
+              "넓힌 것이 면제가 되면 안 된다")
+
+    # ── ★★ [턴 AH · P-320] 재는 자리 — **gx-shell 의 모양을 그대로 재현한다** ──
+    #   임시 나무 둘로 잰다(어디서 돌아도 같은 답 — 자기시험이 자리를 타면 안 된다).
+    #   ㉠ 제자리: 표지 셋 다 있음 → 문제 0
+    #   ㉡ 그날의 gx-shell: `docs/agent/evidence` 는 **있는데** 사전은 없음 → 잡아야 한다
+    #      (디렉터리 존재만 보는 판정이면 ㉡ 을 통과시킨다 — 그것이 이 표본의 이유다)
+    import tempfile
+    with tempfile.TemporaryDirectory() as _tmp:
+        _good = Path(_tmp) / "good"
+        _shell = Path(_tmp) / "gxshell"
+        for _m in WHERE_MARKERS:
+            _p = _good / _m
+            _p.parent.mkdir(parents=True, exist_ok=True)
+            (_p.mkdir() if "." not in _p.name else _p.write_text("x", encoding="utf-8"))
+        (_shell / "docs" / "agent" / "evidence").mkdir(parents=True)
+        (_shell / "frontend" / "src" / "features").mkdir(parents=True)
+        (_shell / "backend" / "config").mkdir(parents=True)
+        (_shell / "backend" / "config" / "settings.py").write_text("x", encoding="utf-8")
+        if where_problem(_good):
+            fails += 1
+            print("[COPY] 자기시험 FAIL 제자리를 틀린 자리로 읽었다: %s"
+                  % where_problem(_good))
+        if "docs/design/GX-COPY_v1.md" not in where_problem(_shell):
+            fails += 1
+            print("[COPY] 자기시험 FAIL **그날의 gx-shell 모양**(docs/agent 는 있고 사전은 "
+                  "없음)을 제자리로 읽었다 — 재는 자리 확인이 디렉터리 존재만 본다")
 
     # ── ★★ [턴 AB] 「화면이 안 읽는다」고 **이름으로 선언한 표**는 건너뛴다 ──
     _decl_src = ("export const ROLE_NAMES_BLANK_BY_DECISION = {" + _NL
@@ -853,10 +905,10 @@ def self_test() -> int:
     _in = _decl_src.index("인수 자산")
     _out = _decl_src.index("사건 P-229")
     if not (len(_spans) == 1 and any(a <= _in <= b for a, b in _spans)):
-        ok = False
+        fails += 1
         print("[COPY] 자기시험 FAIL 선언된 표를 못 찾았다")
     if any(a <= _out <= b for a, b in _spans):
-        ok = False
+        fails += 1
         print("[COPY] 자기시험 FAIL **선언 밖**의 조각까지 건너뛰었다 — "
               "선언이 면제가 되는 자리다")
 
@@ -910,6 +962,28 @@ def self_test() -> int:
     return 0
 
 
+#: ★★ [턴 AH · P-320] **재는 자리는 코드가 확인한다 — 머리글이 아니라.**
+#:   이 파일 머리글은 「호스트에서 돈다」고 적었는데 조율자가 gx-shell 안에서 돌렸다.
+#:   거기엔 `docs/` 가 없어 기준선을 못 봤고, 「83 새 위반」은 실은 **84 전체 위반**
+#:   이었다(재는 자리 두 번째 · 2026-09-24). 머리글은 늙고, 사람은 머리글을 안 읽는다.
+#:
+#:   ⚠⚠ **「디렉터리가 있나」로는 못 잡는다** [실측 2026-09-24]. gx-shell 안의
+#:   `/repo/docs` 는 **존재한다** — 다른 게이트가 증거를 쓰다 `docs/agent/evidence`
+#:   부분 나무를 만들어 뒀다. `docs/agent` 를 표지로 삼았으면 그 함정을 그대로
+#:   통과했다(표지 후보를 양쪽에서 재 보다가 잡혔다). 그래서 표지는 **이 게이트가
+#:   실제로 기대는 입력**이다: 사전이 안 보이면 사전과 대 보는 판정이 성립하지 않는다.
+WHERE_MARKERS = (
+    "docs/design/GX-COPY_v1.md",    # 이 게이트의 사전 — docs 가 진짜로 물렸는가
+    "frontend/src/features",        # 재는 대상
+    "backend/config/settings.py",   # 저장소 뿌리가 맞는가
+)
+
+
+def where_problem(root: Path = ROOT) -> list[str]:
+    """재는 자리에 **없는 표지**들. 비면 제자리다."""
+    return [m for m in WHERE_MARKERS if not (root / m).exists()]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="UX-20 제품 언어 판정기")
     ap.add_argument("--list", action="store_true")
@@ -920,6 +994,15 @@ def main() -> int:
 
     if args.self_test:
         return self_test()
+
+    #: 자기시험은 파일을 안 읽으니 어디서 돌아도 된다. **판정만** 자리를 묻는다.
+    _missing_here = where_problem()
+    if _missing_here:
+        print("[COPY] **판정 불가 · 회색** — 재는 자리가 틀렸다. 없는 표지: "
+              + " · ".join(_missing_here))
+        print("[COPY]   이 게이트는 **호스트에서** 돈다. 컨테이너 안에서는 docs 가 "
+              "물려 있지 않아 기준선·사전을 못 본다 — 수를 내지 않는다 (P-320)")
+        return 2
 
     seen, findings, covered, total, n_declared = scan()
     if seen == 0:

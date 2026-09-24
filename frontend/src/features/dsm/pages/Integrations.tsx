@@ -392,7 +392,7 @@ export default function IntegrationsPage() {
                 message="범위(이 키로 할 수 있는 일)"
                 description={
                   <Text>
-                    {keys.data.inbound_api_type || '인바운드'} — {keys.data.inbound_capability || '범위 선언이 비어 있습니다'}
+                    {keys.data.inbound_api_type || '인바운드'} — {keys.data.inbound_capability || '범위 선언이 비어 있습니다 — 관리자에게 문의하십시오'}
                     <br />
                     <Text type="secondary">범위는 키마다 다르지 않고 한 벌입니다(발급 문에 범위 인자가 없습니다).</Text>
                   </Text>
@@ -418,7 +418,7 @@ export default function IntegrationsPage() {
                 rowKey="key_id"
                 pagination={false}
                 dataSource={keys.data.inbound}
-                locale={{ emptyText: '발급된 키가 없습니다.' }}
+                locale={{ emptyText: '발급된 키가 없습니다. 위에서 키를 만들면 이 자리에 나타납니다.' }}
                 columns={[
                   { title: '#', dataIndex: 'key_id', width: 60 },
                   { title: '이름', dataIndex: 'name' },
@@ -501,7 +501,7 @@ export default function IntegrationsPage() {
                 rowKey="subscription_id"
                 pagination={false}
                 dataSource={subs.data.subscriptions}
-                locale={{ emptyText: '구독이 없습니다.' }}
+                locale={{ emptyText: '구독이 없습니다. 위에서 구독을 등록하면 이 자리에 나타납니다.' }}
                 columns={[
                   { title: '#', dataIndex: 'subscription_id', width: 60 },
                   { title: '주소', dataIndex: 'endpoint_url' },

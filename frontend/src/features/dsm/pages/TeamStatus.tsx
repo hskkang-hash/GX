@@ -108,7 +108,7 @@ export default function TeamStatus() {
           status={stats.status}
           onRetry={stats.reload}
           where="TeamStatus/요원별"
-          emptyText="이 기간에 판정한 요원이 없습니다. (요청은 성공했고 0명입니다)"
+          emptyText="이 기간에 판정한 요원이 없습니다. 기간을 넓혀 보십시오."
         >
           {stats.data && (
             <Space direction="vertical" size="small" style={{ width: '100%' }}>

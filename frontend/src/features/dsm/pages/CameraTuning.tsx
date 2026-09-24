@@ -88,7 +88,7 @@ const DAY_OPTIONS = [7, 30] as const;
 /** 비율 한 줄. **비율만 적지 않는다** — 분자와 분모를 같은 줄에 적는다. */
 function rateLine(row: CameraFalsePositiveRow): string {
   if (!row.measurable || row.false_positive_rate === null) {
-    return '아직 잴 수 없음 (판정 0건)';
+    return '아직 잴 수 없습니다 — 사건을 몇 건 판정한 뒤 다시 보십시오';
   }
   return `${Math.round(row.false_positive_rate * 100)}% (${row.false_positive}/${row.reviewed})`;
 }
@@ -214,7 +214,7 @@ export default function CameraTuning({ mode = 'tuning' }: { mode?: CameraTuningM
       cancelText: '취소',
       onOk: async () => {
         if (!reason.trim()) {
-          message.error('사유가 비어 있습니다. 사유 없이는 저장할 수 없습니다.');
+          message.error('사유가 비어 있습니다. 왜 바꾸는지 한 줄 적으십시오.');
           throw new Error('reason required');
         }
         setSaving(true);
@@ -286,7 +286,7 @@ export default function CameraTuning({ mode = 'tuning' }: { mode?: CameraTuningM
           status={cameras.status}
           onRetry={cameras.reload}
           where="CameraTuning/카메라"
-          emptyText="이 기간에 사건을 낸 카메라가 없습니다. (요청은 성공했고 0대입니다)"
+          emptyText="이 기간에 사건을 낸 카메라가 없습니다. 기간을 넓혀 보십시오."
         >
           {cameras.data && (
             <Space direction="vertical" size="small" style={{ width: '100%' }}>
@@ -358,7 +358,7 @@ export default function CameraTuning({ mode = 'tuning' }: { mode?: CameraTuningM
             <Alert
               type="info"
               showIcon
-              message="여기서 끄는 동안 바뀌는 것은 없습니다."
+              message="여기서 끄는 동안 바뀌는 것은 없습니다. 실제로 바꾸려면 아래에서 사유를 적고 저장하십시오."
               description="아래 슬라이더는 계산만 합니다. 실제로 바꾸려면 맨 아래에서 사유를 적고 저장해야 합니다."
             />
             <Row gutter={16} align="middle">
@@ -406,11 +406,11 @@ export default function CameraTuning({ mode = 'tuning' }: { mode?: CameraTuningM
                   <Alert
                     type="info"
                     showIcon
-                    message="이 문턱으로는 잴 수 없습니다."
+                    message="이 문턱으로는 잴 수 없습니다. 문턱을 낮추어 다시 보십시오."
                     description={
                       '이 카메라의 사건에 확신도가 적혀 있지 않습니다. '
                       + '확신도가 없는 사건은 문턱으로 가를 수 없어, 시간당 몇 건이 '
-                      + '남는지 말할 수 없습니다. 0건이라는 뜻이 아닙니다.'
+                      + '남는지 말할 수 없습니다. 확신도가 채워진 뒤 다시 보십시오.'
                     }
                   />
                 )}
@@ -450,7 +450,7 @@ export default function CameraTuning({ mode = 'tuning' }: { mode?: CameraTuningM
           status={keys.status}
           onRetry={keys.reload}
           where="CameraTuning/항목"
-          emptyText="카메라마다 따로 정할 수 있는 임계값 항목이 아직 없습니다."
+          emptyText="카메라마다 따로 정할 수 있는 임계값 항목이 아직 없습니다. 항목이 생기면 이 자리에 나타납니다."
         >
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
             <Text type="secondary">{AXIS_COPY.save}</Text>
@@ -509,7 +509,7 @@ export default function CameraTuning({ mode = 'tuning' }: { mode?: CameraTuningM
                       <Text strong>
                         {current.data.set
                           ? `${current.data.value}`
-                          : '아직 정해진 값이 없습니다'}
+                          : '아직 정해진 값이 없습니다 — 아래에서 값을 설정하십시오'}
                       </Text>
                       {selectedKey && current.data.set && (
                         <Text type="secondary">{selectedKey.unit}</Text>

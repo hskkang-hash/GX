@@ -140,7 +140,7 @@ function Scatter({ cards, broken }: { cards: QueueCard[]; broken: boolean }) {
       <div style={DIM_LINE}>
         {broken
           ? '지도에 표시할 위치를 불러오지 못했습니다.'
-          : '지도에 표시할 위치가 없습니다.'}
+          : '지도에 표시할 위치가 없습니다. 카드에 좌표가 들어오면 이 자리에 표시됩니다.'}
       </div>
     );
   }
@@ -326,7 +326,7 @@ export default function Wall() {
         >
           {wallMode
             ? '월 표시 토큰이 만료되었거나 회수되었습니다. 관리자에게 새 토큰을 받으십시오.'
-            : '이 항목에 대한 권한이 없습니다. 다시 로그인해 주십시오.'}
+            : '이 항목에 대한 권한이 없습니다. 다시 로그인하십시오.'}
         </div>
       ) : null}
 
@@ -471,7 +471,7 @@ export default function Wall() {
               </div>
             ))}
           {!pulseBroken && pulse.state !== 'loading' && pulseRows.length === 0 ? (
-            <div style={DIM_LINE}>표시할 항목이 없습니다.</div>
+            <div style={DIM_LINE}>표시할 항목이 없습니다. 카메라가 응답하면 나타나니 기다리시면 됩니다.</div>
           ) : null}
           {!pulseBroken && pulseRows.length > pulseShown.length ? (
             <div style={{ ...DIM_LINE, paddingTop: 12 }}>

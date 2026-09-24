@@ -259,7 +259,8 @@ export function waitRanks(
 /** 순위 한 줄. 모르면 **빈 문자열** — 모르는 것을 적지 않는다. */
 export function rankNoteOf(rank: WaitRank | undefined): string {
   if (!rank) return '';
-  if (rank.total <= 1) return '시계가 도는 사건이 이 하나뿐입니다 — 견줄 상대가 없습니다.';
+  if (rank.total <= 1)
+    return '시계가 도는 사건이 이 하나뿐입니다 — 다른 사건이 오면 순위가 생깁니다.';
   if (rank.rank === 1) {
     return rank.tied > 1
       ? `${OLDEST_WAIT_LABEL} — 동률 ${rank.tied}건 (시계가 도는 ${rank.total}건 중 1번째)`

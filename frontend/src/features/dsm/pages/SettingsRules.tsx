@@ -263,7 +263,7 @@ function askReason(title: string, onOk: (reason: string) => Promise<void>): void
     cancelText: '취소',
     onOk: async () => {
       if (!typed.trim()) {
-        message.error('사유가 비어 있습니다. 사유 없이는 저장할 수 없습니다.');
+        message.error('사유가 비어 있습니다. 왜 바꾸는지 한 줄 적으십시오.');
         throw new Error('reason required');
       }
       await onOk(typed.trim());
@@ -432,7 +432,7 @@ function ZonesTab() {
                 width: 150,
                 render: (v: boolean, row: ZoneRow) =>
                   v ? <Tag color="green">판정할 수 있습니다</Tag> : (
-                    <Tag color="red">{row.reason || '판정할 수 없습니다'}</Tag>
+                    <Tag color="red">{row.reason || '판정할 수 없습니다 — 값을 설정하십시오'}</Tag>
                   ),
               },
               {
@@ -565,7 +565,7 @@ function ThresholdsTab() {
         </Space>
         {current?.contract_fixed ? (
           <Paragraph type="secondary" style={{ fontSize: 12, marginTop: 8, marginBottom: 0 }}>
-            계약이 정한 값이라 이 화면에서 바꿀 수 없습니다.
+            계약이 정한 값이라 이 화면에서 바꿀 수 없습니다. 바꾸려면 계약 담당자에게 문의하십시오.
           </Paragraph>
         ) : null}
       </Card>
@@ -589,7 +589,7 @@ function ThresholdsTab() {
           reason={view.reason}
           status={view.status}
           onRetry={view.reload}
-          emptyText="읽을 항목이 없습니다. (요청은 성공했고 0건입니다)"
+          emptyText="읽을 항목이 없습니다. 항목이 선언되면 나타나니 기다리시면 됩니다."
           where="SettingsRules.thresholds"
         >
           <Table<ThresholdRow>
@@ -629,7 +629,7 @@ function ThresholdsTab() {
 
       <Card size="small" title="바꾼 기록">
         {history.length === 0 ? (
-          <Text type="secondary">아직 바꾼 기록이 없습니다. (요청은 성공했고 0건입니다)</Text>
+          <Text type="secondary">아직 바꾼 기록이 없습니다. 값을 바꾸면 이 자리에 남습니다.</Text>
         ) : (
           <Table<ThresholdHistoryRow>
             size="small"
@@ -767,7 +767,7 @@ function GradeRulesTab() {
           reason={view.reason}
           status={view.status}
           onRetry={view.reload}
-          emptyText="읽을 규칙이 없습니다. (요청은 성공했고 0건입니다)"
+          emptyText="읽을 규칙이 없습니다. 규칙을 만들면 이 자리에 나타납니다."
           where="SettingsRules.gradeRules"
         >
           <Table<GradeRuleRow>
@@ -814,7 +814,7 @@ function GradeRulesTab() {
 
       <Card size="small" title="바꾼 기록">
         {history.length === 0 ? (
-          <Text type="secondary">아직 바꾼 기록이 없습니다. (요청은 성공했고 0건입니다)</Text>
+          <Text type="secondary">아직 바꾼 기록이 없습니다. 값을 바꾸면 이 자리에 남습니다.</Text>
         ) : (
           <Table<GradeRuleHistoryRow>
             size="small"

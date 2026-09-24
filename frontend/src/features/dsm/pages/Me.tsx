@@ -46,7 +46,8 @@ const { Title, Paragraph, Text } = Typography;
 export const HEADLINE = '내 정보';
 
 /** 내 역할을 가리키는 규칙이 하나도 없을 때의 말. */
-export const RECEIVES_NOTHING_TITLE = '지금 나에게 오는 알림이 없습니다.';
+export const RECEIVES_NOTHING_TITLE =
+  '지금 나에게 오는 알림이 없습니다. 관리자에게 알림 규칙 등록을 요청하십시오.';
 
 interface ReceiveRow {
   severity: string;
@@ -128,7 +129,7 @@ export default function MePage() {
                   showIcon
                   message={RECEIVES_NOTHING_TITLE}
                   description={
-                    '내 역할을 가리키는 알림 규칙이 없습니다. 규칙은 사람이 아니라 '
+                    '내 역할을 가리키는 알림 규칙이 없습니다. 관리자에게 문의하십시오. 규칙은 사람이 아니라 '
                     + '역할을 가리킵니다 — 관리자에게 역할이나 규칙을 요청하십시오.'
                   }
                 />

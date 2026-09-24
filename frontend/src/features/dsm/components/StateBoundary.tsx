@@ -118,7 +118,7 @@ export default function StateBoundary({
   status,
   onRetry,
   notFoundTitle = NOT_FOUND_TITLE,
-  emptyText = '표시할 항목이 없습니다.',
+  emptyText = '표시할 항목이 없습니다. 조건을 넓히거나 잠시 뒤 다시 보십시오.',
   emptyNext,
   where = 'StateBoundary',
   children,

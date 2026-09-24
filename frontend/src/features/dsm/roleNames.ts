@@ -154,5 +154,7 @@ export function roleCodeTitle(code: string | null | undefined): string {
   if (!raw) return '';
   return hasRoleDisplayName(raw)
     ? `역할 코드 ${raw}`
-    : `역할 코드 ${raw} — 이 코드의 표시명이 사전에 없습니다`;
+    //: 표시명이 없으면 **아무 말도 안 한다.** 「등록되지 않았습니다」는 우리 회색을
+    //: 고객 발치에 적어 두는 말이라 이 저장소가 금지한다 — 값이 오면 그때 뜬다.
+    : raw;
 }

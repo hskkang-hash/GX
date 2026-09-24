@@ -301,7 +301,7 @@ export default function PrivacyRequestsPage() {
                 state={list.state}
                 reason={list.reason} status={list.status}
                 onRetry={list.reload}
-                emptyText="접수된 청구가 없습니다."
+                emptyText="접수된 청구가 없습니다. 청구가 들어오면 쌓이니 기다리시면 됩니다."
               >
                 <Table<RequestRow>
                   size="small"
@@ -345,7 +345,7 @@ export default function PrivacyRequestsPage() {
               {masked ? (
                 <Card size="small" type="inner" title={`찾은 영상 ${masked.matched}건 중 ${masked.shown}건`}>
                   {masked.items.length === 0 ? (
-                    <Empty description="이 기간에 남아 있는 영상이 없습니다." />
+                    <Empty description="이 기간에 남아 있는 영상이 없습니다. 기간을 넓혀 보십시오." />
                   ) : (
                     <Row gutter={[12, 12]}>
                       {masked.items.map((item) => (

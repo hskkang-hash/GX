@@ -46,7 +46,7 @@ export default function ResponseSteps({ state, size = 'small' }: Props) {
   if (current < 0) {
     return (
       <Text type="secondary">
-        처리 단계를 아직 알 수 없습니다.
+        처리 단계를 아직 알 수 없습니다. 잠시 뒤 다시 보십시오.
       </Text>
     );
   }

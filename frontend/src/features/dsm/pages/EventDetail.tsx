@@ -647,7 +647,7 @@ export default function EventDetail() {
                           type="info"
                           showIcon
                           message={`한 번 닫혔다가 다시 열렸습니다 (${timeline.data.reopened}회).`}
-                          description="종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다."
+                          description="종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다. 사건을 종결하면 채워집니다."
                         />
                       ) : null}
                       <Descriptions size="small" column={{ xs: 1, sm: 2 }} bordered>
@@ -776,7 +776,7 @@ export default function EventDetail() {
                 <Text strong>다음 단계</Text>
                 {(e.allowed_next ?? []).length === 0 ? (
                   <Text type="secondary">
-                    여기서 옮길 수 있는 다음 단계가 없습니다.
+                    여기서 옮길 수 있는 다음 단계가 없습니다. 상태나 권한이 바뀌면 단추가 나타납니다.
                   </Text>
                 ) : (
                   (e.allowed_next ?? []).map((next) => {
@@ -842,7 +842,7 @@ export default function EventDetail() {
             state={deliveries.state}
             reason={deliveries.reason} status={deliveries.status}
             onRetry={deliveries.reload}
-            emptyText="발송 기록이 없습니다. (요청은 성공했고 0건입니다)"
+            emptyText="발송 기록이 없습니다. 알림 보내기를 누르면 여기에 남습니다."
           >
             <Table<DeliveryRow>
               size="small"

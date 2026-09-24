@@ -131,7 +131,7 @@ export default function EventSnapshot({
     const storageDown = error.status === 503;
     const serverRefused = error.status >= 400 && !storageDown;
     const message = storageDown
-      ? '저장소에 연결할 수 없습니다'
+      ? '저장소에 연결할 수 없습니다. 잠시 뒤 다시 시도하십시오'
       : serverRefused
         ? '사진을 불러오지 못했습니다'
         : '사진을 받는 중에 연결이 끊겼습니다';

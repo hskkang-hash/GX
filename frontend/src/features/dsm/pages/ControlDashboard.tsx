@@ -367,7 +367,7 @@ export default function ControlDashboard() {
             state={events.state}
             reason={events.reason} status={events.status}
             onRetry={events.reload}
-            emptyText="최근 이벤트가 없습니다. (요청은 성공했고 0건입니다)"
+            emptyText="최근 이벤트가 없습니다. 새 사건이 오면 바로 뜨니 기다리시면 됩니다."
           >
             <Table<EventRow>
               size="small"

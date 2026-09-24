@@ -149,7 +149,7 @@ interface AddressGapView {
 function falsePositiveLine(s: EventSummary | null): string {
   if (!s) return '—';
   if (!s.measurable || s.false_positive_rate === null) {
-    return '아직 판정한 사건이 없습니다';
+    return '아직 판정한 사건이 없습니다 — 사건을 판정한 뒤 다시 보십시오';
   }
   return `${Math.round(s.false_positive_rate * 100)}% (${s.false_positive}/${s.reviewed})`;
 }
@@ -598,7 +598,7 @@ export default function RoleHome() {
                 }
                 note={
                   byReviewer.data && byReviewer.data.reviewers.length === 0
-                    ? '이 기간에 판정한 사람이 없습니다.'
+                    ? '이 기간에 판정한 사람이 없습니다. 기간을 넓혀 보십시오.'
                     : '판정한 사람과 건수입니다.'
                 }
                 actionLabel="현황 보기"
@@ -743,7 +743,7 @@ export default function RoleHome() {
                     value={
                       gap.data && gap.data.measurable
                         ? `${gap.data.without_address}대`
-                        : '아직 잴 수 없습니다'
+                        : '아직 잴 수 없습니다 — 카메라를 등록하십시오'
                     }
                   />
                   <div>

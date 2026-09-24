@@ -408,7 +408,7 @@ function windowOf(
  *   그래서 이 칸은 「거르기」가 아니라 **「열기」**다. 이름도 그렇게 붙였다.
  */
 const CAMERA_SEARCH_GRAY =
-  '카메라 이름으로 찾는 기능은 아직 없습니다. ' +
+  '카메라 이름으로 찾는 기능은 아직 없습니다. 기간을 좁혀 보십시오. ' +
   '지금은 기간을 좁힌 뒤 「카메라」 칸을 눈으로 훑는 것이 유일한 길입니다.';
 
 /**
@@ -797,7 +797,7 @@ export default function EventList() {
                 {summary.data.reviewed}건 ·{' '}
                 {summary.data.measurable && summary.data.false_positive_rate !== null
                   ? `오탐률 ${(summary.data.false_positive_rate * 100).toFixed(1)}%`
-                  : '아직 판정한 이벤트가 없습니다'}{' '}
+                  : '아직 판정한 이벤트가 없습니다 — 사건을 판정한 뒤 다시 보십시오'}{' '}
                 · 미판정 {summary.data.unreviewed}건
                 {summary.data.closed_without_verdict > 0
                   ? ` (판정 없이 종료 ${summary.data.closed_without_verdict}건)`

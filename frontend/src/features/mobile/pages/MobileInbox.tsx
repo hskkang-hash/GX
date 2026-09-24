@@ -424,7 +424,7 @@ export default function MobileInbox() {
               showIcon
               message={
                 events.state === 'forbidden'
-                  ? '이벤트 속성에 대한 권한이 없습니다 — 발송 기록만 보입니다.'
+                  ? '이벤트 속성에 대한 권한이 없습니다 — 발송 기록만 보입니다. 더 보려면 관리자에게 권한을 요청하십시오.'
                   : '이벤트 속성을 불러오지 못했습니다 — 발송 기록만 보입니다.'
               }
               description={failureHint(events.status)}
@@ -514,7 +514,9 @@ export default function MobileInbox() {
         >
           {groups.length === 0 ? (
             <Empty
-              description={mine ? '내게 온 발송 0건' : '발송 기록 0건'}
+              description={mine
+                ? '내게 온 발송 0건 — 새 알림이 오면 쌓이니 기다리시면 됩니다.'
+                : '발송 기록 0건 — 알림이 나가면 남으니 기다리시면 됩니다.'}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           ) : null}

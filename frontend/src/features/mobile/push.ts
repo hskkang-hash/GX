@@ -108,7 +108,10 @@ export async function ensureFieldPushServiceWorker(): Promise<PushSkeletonState>
  */
 export function pushSupport(): { ok: boolean; reason: string } {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') {
-    return { ok: false, reason: '이 환경에서는 알림을 켤 수 없습니다.' };
+    return {
+      ok: false,
+      reason: '이 환경에서는 알림을 켤 수 없습니다. 지원되는 브라우저에서 다시 열어 보십시오.',
+    };
   }
   if (!('serviceWorker' in navigator)) {
     return { ok: false, reason: '이 브라우저는 서비스워커를 지원하지 않습니다.' };

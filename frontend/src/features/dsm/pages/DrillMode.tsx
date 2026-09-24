@@ -143,7 +143,9 @@ export default function DrillModePage() {
             >
               <Descriptions column={1} size="small">
                 <Descriptions.Item label="언제부터">
-                  {current.since ? `${absolute(current.since)} · ${stamp(current.since)}` : '켠 적이 없습니다'}
+                  {current.since
+            ? `${absolute(current.since)} · ${stamp(current.since)}`
+            : '켠 적이 없습니다 — 위에서 훈련 모드를 켜는 단추를 누르십시오'}
                 </Descriptions.Item>
                 <Descriptions.Item label="누가">{current.by || '—'}</Descriptions.Item>
                 <Descriptions.Item label="왜">{current.reason || '—'}</Descriptions.Item>
@@ -181,7 +183,7 @@ export default function DrillModePage() {
           {r ? (
             <Card title="훈련 종료 보고서 1장">
               {!r.measurable ? (
-                <Alert type="info" showIcon message="아직 보고서가 없습니다." description={r.reason} />
+                <Alert type="info" showIcon message="아직 보고서가 없습니다. 훈련을 끝내면 이 자리에 만들어집니다." description={r.reason} />
               ) : (
                 <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                   <Row gutter={24}>

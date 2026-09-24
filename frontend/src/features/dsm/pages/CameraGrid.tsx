@@ -74,7 +74,7 @@ function CameraTile({ row, now }: { row: CameraPulseRow; now: Date }) {
           </Text>
         ) : (
           <Text type="secondary" style={{ fontSize: 12 }}>
-            응답을 받은 적이 없습니다.
+            응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.
           </Text>
         )}
       </Space>
@@ -143,7 +143,7 @@ export default function CameraGridPage() {
                 disabled={grid.pageCount <= 1}
                 title={
                   grid.pageCount <= 1
-                    ? '카메라가 모두 한 화면에 들어와 넘길 쪽이 없습니다.'
+                    ? '카메라가 모두 한 화면에 들어와 넘길 쪽이 없습니다. 그대로 보십시오.'
                     : undefined
                 }
               >
@@ -166,7 +166,7 @@ export default function CameraGridPage() {
             }
             description={
               counts.never_seen > 0
-                ? `그중 ${counts.never_seen}대는 응답을 받은 적이 없습니다.`
+                ? `그중 ${counts.never_seen}대는 응답을 받은 적이 없습니다. 연결을 확인하십시오.`
                 : undefined
             }
           />
