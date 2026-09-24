@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "turn": "AI",
-  "phase": "report_ready",
-  "wo": "docs/workorders/WO-GX-20260924-13_턴AI_AH보고판정_열린질문7_헤드리스착수_창2b밖_20260924.md",
-  "report": "docs/workorders/WO-GX-20260924-13_report.md",
-  "next_turn": "AJ",
+  "turn": "AJ",
+  "phase": "code_running",
+  "wo": "docs/workorders/WO-GX-20260925-14_턴AJ_8500배포_V첫실측_셋째조건배선_기능명세로드맵_20260925.md",
+  "report": null,
+  "next_turn": "AK",
   "next_wo": null,
-  "updated_at": "2026-09-24T23:56:30+09:00",
+  "updated_at": "2026-09-25T08:20:00+09:00",
   "updated_by": "yeongsil",
   "ceo_question": null,
   "retry_after": null,
   "turns_today": 1,
   "pause": false,
-  "notes": "턴 AI 보고(대화형 영실 22:06~23:56). 차선 4 · 커밋 9 · 전량 2,248/0 · 상용 58.1 · 온보딩 30.5 장부 기재(S1 빨강) · 카드 걷기 첫 수 후보 5/6. ★ 8500 화면 배포가 권한 분류기에 막혀 V 화면 측정 미룸 — 대표 결정 청구. push 대기 8."
+  "notes": "턴 AJ 대화형 착수(대표 08:15 「푸시 · 스모크 계정 · 지시서 읽고 다음 진행」) · 감시기 미등록(loop/logs 없음) · 차선 5(조율자 D·E 직접 · Q·F·U 차선) · push 8 올림(f76b2e3)."
 }

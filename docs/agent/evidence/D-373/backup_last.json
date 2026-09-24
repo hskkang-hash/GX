@@ -1,24 +1,24 @@
 {
-  "measured_at": "2026-09-23T20:00:00+00:00",
+  "measured_at": "2026-09-24T20:00:00+00:00",
   "invoked_by": "beat",
   "verdict": "OK",
   "reason": "",
   "manifest": {
-    "measured_at": "2026-09-23T20:00:00+00:00",
+    "measured_at": "2026-09-24T20:00:00+00:00",
     "db": {
-      "file": "db_database_guardianx_20260923T200000Z.dump",
-      "bytes": 165224602,
-      "sha256": "b87c08a2784134ae59ab70f08145c048b51e9dbecdc0f3f080f24d399ed14e9c",
+      "file": "db_database_guardianx_20260924T200000Z.dump",
+      "bytes": 178271570,
+      "sha256": "fe47306d55c7412144abe5552e6f7f7ff31eb6b6d7886181aeb404b55161740b",
       "via": "local",
       "client_version": "pg_dump (PostgreSQL) 18.6 (Debian 18.6-1.pgdg13+2)",
       "command": [
-        "pg_dump -Fc -h postgres -p 5432 -U postgres -d database_guardianx -f /backup/20260923/db_database_guardianx_20260923T200000Z.dump"
+        "pg_dump -Fc -h postgres -p 5432 -U postgres -d database_guardianx -f /backup/20260924/db_database_guardianx_20260924T200000Z.dump"
       ],
       "rows": {
-        "stream_monitors_streammonitor": 55,
+        "stream_monitors_streammonitor": 59,
         "stream_monitors_detectionevent": 42,
         "stream_monitors_eventclip": 42,
-        "user_coreuser": 123,
+        "user_coreuser": 128,
         "auth_group": 0
       }
     },
@@ -37,7 +37,7 @@
       "keys": []
     }
   },
-  "out_dir": "/backup/20260923",
+  "out_dir": "/backup/20260924",
   "_written_from": {
     "db": "database_guardianx",
     "under_pytest": false

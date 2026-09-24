@@ -1,0 +1,337 @@
+<style>
+.page .dec{padding:12px 15px;margin-bottom:11px;border-radius:0 10px 10px 0;}
+.page .dec h4{font-size:12.2px;} .page .dec .did{font-size:11.2px;}
+.page .dec .tool{font-size:9.3px;padding:6px 10px;margin-top:7px;line-height:1.5;}
+.dec ul{margin:5px 0 0 0;padding-left:0;list-style:none;}
+.dec ul li{font-size:9.9px;line-height:1.58;padding-left:14px;margin-top:2px;position:relative;color:var(--ink);}
+.dec ul li:before{content:'▣';position:absolute;left:0;color:var(--steel);font-size:7.5px;top:2px;}
+.dec.key ul li:before{color:var(--purp);} .dec.warn2 ul li:before{color:var(--red);}
+.two{display:flex;gap:10px;} .two>div{flex:1;}
+.lanes{display:flex;gap:7px;margin-top:9px;align-items:stretch;}
+.lane{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:9px 9px;background:#fff;display:flex;flex-direction:column;}
+.lane .lid{font-family:'Roboto Mono',monospace;font-size:13px;font-weight:900;}
+.lane .ln{font-size:9.6px;font-weight:800;color:var(--navy);margin-top:1px;}
+.lane .lb{font-size:8.2px;line-height:1.45;color:var(--ink);margin-top:5px;flex:1;}
+.lane .ld{font-size:7.8px;color:var(--mute);margin-top:5px;border-top:1px dashed var(--line);padding-top:4px;}
+.lane.a{border-color:var(--navy);background:var(--blue-s);} .lane.a .lid{color:var(--navy);}
+.lane.b{border-color:var(--purp);background:var(--purp-s);} .lane.b .lid{color:var(--purp);}
+.lane.c{border-color:var(--teal);background:var(--teal-s);} .lane.c .lid{color:var(--teal);}
+.lane.d{border-color:var(--amber);background:var(--amber-s);} .lane.d .lid{color:var(--amber);}
+.lane.e{border-color:var(--green);background:var(--green-s);} .lane.e .lid{color:var(--green);}
+.lane.v{border-color:var(--red);background:var(--red-s);border-style:dashed;} .lane.v .lid{color:var(--red);}
+.orch{border:2px solid var(--navy);border-radius:10px;padding:8px 12px;margin-top:8px;background:#fff;display:flex;gap:14px;align-items:center;}
+.orch .t{font-size:10.5px;font-weight:900;color:var(--navy);white-space:nowrap;}
+.orch .d{font-size:8.8px;color:var(--ink);line-height:1.45;}
+.flowline{display:flex;align-items:center;gap:5px;margin-top:8px;}
+.flowline .s{flex:1;border:1.5px solid var(--navy);border-radius:7px;padding:6px 5px;text-align:center;font-size:8.6px;font-weight:700;color:var(--navy);background:#fff;line-height:1.35;}
+.flowline .s.r{border-color:var(--red);color:var(--red);background:var(--red-s);} .flowline .s.g{border-color:var(--green);color:var(--green);background:var(--green-s);}
+.flowline .a{font-size:12px;color:var(--amber);font-weight:900;}
+.tag{display:inline-block;font-family:'Roboto Mono',monospace;font-size:7.6px;padding:1px 5px;border-radius:3px;font-weight:700;}
+.tag.q{background:var(--blue-s);color:var(--steel);} .tag.j{background:var(--purp-s);color:var(--purp);} .tag.out{background:#f1f2f4;color:#6b7480;border:1px dashed #b7bec8;}
+.rt{display:flex;gap:6px;margin-top:8px;}
+.rt .tn{flex:1;border-radius:8px;padding:8px 8px;border:1.5px solid var(--line);}
+.rt .tn .k{font-family:'Roboto Mono',monospace;font-size:10px;font-weight:900;color:var(--navy);}
+.rt .tn .v{font-size:8.5px;line-height:1.45;margin-top:3px;color:var(--ink);}
+.rt .tn.now{border-color:var(--amber);background:var(--amber-s);}
+.page:not(.cover) p{font-size:11px;line-height:1.6;}
+.page .tbl td{font-size:9.9px;padding:7px 8px;line-height:1.5;} .page .tbl th{font-size:9.3px;padding:6.5px 8px;}
+.page .note p{font-size:10.4px;line-height:1.58;}
+.page .dec ul li{font-size:10.6px;line-height:1.66;margin-top:4px;}
+.page .dec{padding:13px 16px;margin-bottom:13px;} .page .dec .tool{font-size:9.8px;padding:7px 11px;}
+.lane{padding:12px 11px;} .lane .lb{font-size:9.2px;line-height:1.5;} .lane .ld{font-size:8.4px;} .lane .ln{font-size:10.4px;}
+.orch .d{font-size:9.8px;line-height:1.5;} .orch{padding:11px 14px;}
+.flowline .s{font-size:9.4px;padding:8px 6px;}
+.rt .tn .v{font-size:9.3px;} .rt .tn{padding:10px 10px;}
+
+.bar{height:9px;background:#e6ebf1;border-radius:5px;overflow:hidden;} .bar i{display:block;height:100%;border-radius:5px;background:var(--navy);}
+.bar.low i{background:var(--red);} .bar.mid i{background:var(--amber);} .bar.top i{background:var(--green);}
+.pct{font-family:'Roboto Mono',monospace;font-weight:700;font-size:10.5px;color:var(--navy);}
+.den{display:flex;gap:7px;margin-top:9px;}
+.den .d{flex:1;border-radius:9px;padding:10px 10px;border:1.5px solid var(--line);text-align:center;}
+.den .d .n{font-family:'Roboto Mono',monospace;font-size:20px;font-weight:900;}
+.den .d .t{font-size:9px;font-weight:800;margin-top:2px;} .den .d .s{font-size:8.4px;color:var(--mute);margin-top:4px;line-height:1.4;}
+.den .d.ok{background:var(--green-s);border-color:var(--green);} .den .d.ok .n{color:var(--green);}
+.den .d.todo{background:var(--purp-s);border-color:var(--purp);} .den .d.todo .n{color:var(--purp);}
+.den .d.lock{background:var(--amber-s);border-color:var(--amber);} .den .d.lock .n{color:var(--amber);}
+.den .d.gray{background:#eef0f3;border-color:#aab3bf;} .den .d.gray .n{color:#5c6673;}
+
+.gt{display:flex;gap:7px;margin-top:9px;}
+.gt .g5{flex:1;border-radius:9px;padding:9px 9px;border:1.5px solid var(--line);}
+.gt .g5 .k{font-family:'Roboto Mono',monospace;font-size:10px;font-weight:900;color:var(--navy);}
+.gt .g5 .n{font-size:9.6px;font-weight:800;color:var(--navy);margin-top:1px;}
+.gt .g5 .st{font-size:13px;font-weight:900;margin:5px 0 3px;letter-spacing:.02em;}
+.gt .g5 .d{font-size:8.3px;color:var(--mute);line-height:1.45;}
+.gt .g5.full{background:var(--green-s);border-color:var(--green);} .gt .g5.full .st{color:var(--green);}
+.gt .g5.half{background:var(--amber-s);border-color:var(--amber);} .gt .g5.half .st{color:var(--amber);}
+</style>
+<style>
+.obj{border:2px solid var(--line);border-radius:12px;padding:13px 16px;margin-top:10px;background:#fff;}
+.obj .oh{display:flex;align-items:center;gap:10px;}
+.obj .oh .oid{font-family:'Roboto Mono',monospace;font-size:11px;font-weight:900;padding:3px 9px;border-radius:6px;color:#fff;background:var(--navy);}
+.obj .oh h4{margin:0;font-size:12.6px;color:var(--navy);flex:1;}
+.obj .oh .vd{font-size:10.5px;font-weight:900;padding:3px 10px;border-radius:6px;white-space:nowrap;}
+.obj.a{border-color:var(--purp);} .obj.a .oh .oid{background:var(--purp);} .obj.a .oh .vd{background:var(--purp-s);color:var(--purp);}
+.obj.b{border-color:var(--red);} .obj.b .oh .oid{background:var(--red);} .obj.b .oh .vd{background:var(--red-s);color:var(--red);}
+.obj .q{font-size:10.6px;line-height:1.6;color:var(--ink);margin-top:8px;padding:8px 12px;border-left:3px solid var(--line);background:#f7f8fa;border-radius:0 8px 8px 0;}
+.obj .q b{color:var(--navy);}
+.obj ul{margin:8px 0 0 0;padding-left:0;list-style:none;}
+.obj ul li{font-size:10.6px;line-height:1.66;padding-left:14px;margin-top:4px;position:relative;color:var(--ink);}
+.obj ul li:before{content:'▣';position:absolute;left:0;font-size:7.5px;top:2px;color:var(--steel);}
+.obj.a ul li:before{color:var(--purp);} .obj.b ul li:before{color:var(--red);}
+.prin{margin-top:9px;border-radius:9px;padding:9px 13px;font-size:10.8px;font-weight:800;line-height:1.55;}
+.obj.a .prin{background:var(--purp-s);color:var(--purp);} .obj.b .prin{background:var(--red-s);color:var(--red);}
+.cmd{font-family:'Roboto Mono',monospace;font-size:9.4px;line-height:1.7;background:#0f1b2d;color:#e6edf7;border-radius:9px;padding:10px 13px;margin-top:8px;white-space:pre;}
+.cmd .c{color:#8fb4ff;} .cmd .k{color:#ffcf5c;}
+.go{display:flex;align-items:center;gap:14px;border:2.5px solid var(--green);background:var(--green-s);border-radius:12px;padding:12px 16px;margin-top:10px;}
+.go .w{font-size:26px;font-weight:900;color:var(--green);letter-spacing:.04em;white-space:nowrap;}
+.go .t{font-size:10.6px;line-height:1.6;color:var(--ink);}
+.dec .dh .did{white-space:nowrap;flex-shrink:0;}
+.pairs{display:flex;gap:8px;margin-top:9px;}
+.pairs .pv{flex:1;border-radius:10px;border:1.5px solid var(--line);padding:9px 11px;background:#fff;}
+.pairs .pv .pk{font-size:9.2px;font-weight:800;color:var(--mute);letter-spacing:.04em;}
+.pairs .pv .pn{font-family:'Roboto Mono',monospace;font-size:21px;font-weight:900;color:var(--navy);margin-top:2px;}
+.pairs .pv .pn small{font-size:10px;color:var(--mute);font-weight:700;}
+.pairs .pv .pd{font-size:8.6px;color:var(--ink);line-height:1.45;margin-top:4px;}
+.pairs .pv.old{background:#f1f2f4;border-style:dashed;} .pairs .pv.old .pn{color:#8a93a0;text-decoration:line-through;}
+.pairs .pv.new{border-color:var(--purp);background:var(--purp-s);} .pairs .pv.new .pn{color:var(--purp);}
+.pairs .pv.gate{border-color:var(--amber);background:var(--amber-s);} .pairs .pv.gate .pn{color:var(--amber);}
+.grid15{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px;}
+.grid15 .cell{border:1.5px solid var(--line);border-radius:8px;padding:6px 7px;background:#fff;}
+.grid15 .cell .g{font-family:'Roboto Mono',monospace;font-size:8.6px;font-weight:900;color:var(--navy);}
+.grid15 .cell .i{font-size:8.6px;line-height:1.4;color:var(--ink);margin-top:2px;min-height:24px;}
+.grid15 .cell .v{font-family:'Roboto Mono',monospace;font-size:13px;font-weight:900;margin-top:3px;}
+.grid15 .cell.v1 .v{color:var(--green);} .grid15 .cell.v1{background:var(--green-s);border-color:var(--green);}
+.grid15 .cell.vh .v{color:var(--amber);} .grid15 .cell.vh{background:var(--amber-s);border-color:var(--amber);}
+.grid15 .cell.v0 .v{color:var(--red);} .grid15 .cell.v0{background:var(--red-s);border-color:var(--red);}
+</style>
+<style>
+.ab{display:flex;gap:8px;margin-top:8px;}
+.ab .br{flex:1;border-radius:10px;padding:9px 11px;border:1.5px solid var(--line);background:#fff;}
+.ab .br .bk{font-family:'Roboto Mono',monospace;font-size:11px;font-weight:900;}
+.ab .br .bt{font-size:9.4px;line-height:1.5;color:var(--ink);margin-top:3px;}
+.ab .br.a{border-color:var(--green);background:var(--green-s);} .ab .br.a .bk{color:var(--green);}
+.ab .br.b{border-color:var(--amber);background:var(--amber-s);} .ab .br.b .bk{color:var(--amber);}
+.ab .br.x{border-color:var(--red);background:var(--red-s);} .ab .br.x .bk{color:var(--red);}
+.hdr{font-family:'Roboto Mono',monospace;font-size:9.6px;line-height:1.75;background:#0f1b2d;color:#e6edf7;border-radius:9px;padding:9px 13px;margin-top:8px;white-space:pre;}
+.hdr .k{color:#ffcf5c;} .hdr .c{color:#8fb4ff;}
+</style>
+<style>
+.drop{display:flex;align-items:center;gap:12px;margin-top:9px;}
+.drop .from,.drop .to{font-family:'Roboto Mono',monospace;font-weight:900;font-size:30px;line-height:1;}
+.drop .from{color:#8a93a0;text-decoration:line-through;} .drop .to{color:var(--navy);}
+.drop .arr{font-size:22px;color:var(--amber);font-weight:900;}
+.drop .why{font-size:10px;line-height:1.55;color:var(--ink);flex:1;border-left:3px solid var(--amber);padding-left:10px;}
+</style>
+<style>
+.tl{display:flex;flex-direction:column;gap:5px;margin-top:9px;}
+.tr{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff;}
+.tr .tt{font-family:'Roboto Mono',monospace;font-weight:900;font-size:10.5px;color:var(--navy);width:92px;flex:0 0 auto;padding-top:1px;}
+.tr .tw{font-size:9.6px;font-weight:800;color:var(--steel);width:90px;flex:0 0 auto;padding-top:1px;}
+.tr .td{font-size:10px;line-height:1.5;color:var(--ink);flex:1;}
+.tr.win{border-color:var(--amber);background:var(--amber-s);} .tr.win .tt{color:var(--amber);}
+.tr.v{border-color:var(--red);background:var(--red-s);border-style:dashed;} .tr.v .tt{color:var(--red);}
+.tr.q{border-color:var(--purp);background:var(--purp-s);} .tr.q .tt{color:var(--purp);}
+</style>
+<style>
+.steps{counter-reset:s;margin-top:8px}
+.step{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:8px 10px;border:1px solid #dfe4ee;border-radius:8px;margin-bottom:6px;background:#fff;page-break-inside:avoid}
+.step .no{width:28px;height:28px;border-radius:50%;background:#0f2a4a;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:13px}
+.step.dec .no{background:#c0392b}
+.step h5{margin:0 0 3px;font-size:12.5px;color:#0f2a4a}
+.step h5 .tag{font-size:10px;font-weight:700;color:#fff;background:#c0392b;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.step h5 .tag.hand{background:#3d6fb4}
+.step p{margin:2px 0;font-size:10.5px;line-height:1.45;color:#233}
+.step>div{min-width:0}
+.step .cmd{margin:4px 0;font-size:9.6px;padding:5px 7px;white-space:pre-wrap;word-break:break-all;overflow-wrap:anywhere}
+.step .cmd .k{color:#9ad}
+</style>
+<!-- 1 -->
+<div class="page cover">
+  <div class="grid"></div>
+  <span class="cbadge">작업지시서 · 턴 AJ · WO-GX-20260925-14 · 2026-09-25(기계) 06:4x 발행 · 5차선 · 세종(CPO) → 영실(CPM)</span>
+  <h1>GuardianX 턴 AJ<br><span>길목은 섰다</span> — 이제 화면을 올리고, 잰다, 그리고 전체 기능을 턴에 배정한다</h1>
+  <p class="lead">턴 AI 는 「보냈습니다」 거짓말을 <b>길목</b>에서 잡았고(주소를 보기 전에 SMTP · 먼저 실패해 봤다), 재시작 도구가 그날 「재는 서버가 옛 코드」를 그 자리에서 잡았으며, 온보딩 정본 30.5 가 장부에 올라 판정기 S1 이 내려간 것이 옳았다. 그러나 새 화면을 <b>8500 에 올리지 못해</b>(권한 분류기) V 의 온보딩 재측과 「누른 뒤」 첫 실측은 <b>0 회</b>였고, 셋째 조건(그 사용자의 언어) 배선은 <b>반쪽</b>이다. 이 턴은 세종 판정으로 새 화면을 올리고(되돌리기 시험 먼저), 배선을 끝까지 하고, V 가 다섯째 회차와 첫 실측을 낸다. 그리고 대표 지시대로 <b>기능명세 293 절을 턴에 배정한 전체 기능 로드맵</b>(§10)을 세워, 매 턴의 보고서가 닫은 절을 적게 한다 — <b>보고 없는 턴은 없는 턴</b>이다.</p>
+  <div class="hi">
+    <div class="h1x">§0 원칙 — 턴 AJ</div>
+    <div class="h2x">「배포하지 않은 화면은 잰 화면이 아니다 — 옛 화면의 수는 수가 아니다.」</div>
+    <div class="h3x">「턴에 배정되지 않은 기능은 개발되지 않는다 — 보고 없는 턴은 없는 턴.」 「셋째 조건은 59곳이 다 넘겨야 잰 것이다 — 반쪽은 회색.」 「상용 = 신규 User 가 공개 URL 로 로그인해 실제로 쓰고 PRD·기능명세 기능을 포함한다.」</div>
+  </div>
+  <div class="stat">
+    <div class="st"><div class="n">58.1</div><div class="t">상용 /100 · 닫힌 절 76/157<br>회색 3 · OPS-13a 빨강 미기재</div></div>
+    <div class="st"><div class="n">30.5</div><div class="t">온보딩 /48 · 63.5 % · 장부 정본<br>재측 0 — 이 턴 회차 5</div></div>
+    <div class="st"><div class="n">회색 48</div><div class="t">「누른 뒤」 못 잼(32 참고)<br>이 턴 V 첫 실측</div></div>
+    <div class="st"><div class="n">28.3 %</div><div class="t">기능명세 포함(293 절)<br>열 턴째 정지 → §10 로드맵</div></div>
+    <div class="st"><div class="n">8</div><div class="t">push 대기 커밋<br>대표 손 · 지금</div></div>
+  </div>
+  <div class="cmeta">
+    <div><div class="k">문서</div><div class="v">WO-GX-20260925-14 · RESUME_NEXT_턴AJ · CEO_INBOX 결정 6</div></div>
+    <div><div class="k">근거</div><div class="v">턴 AI 보고 09-24 23:56(f76b2e3) · RC1 turn_ai.json · 창 2b 준비 표 · PRD v1.1(변경 0)</div></div>
+    <div><div class="k">날</div><div class="v">창 2b 09-26 14:00(대표 창) · RC-1 재판정 10-02 · 안양 1호 D0 10-05</div></div>
+    <div><div class="k">결정</div><div class="v">6건(①~⑤ 창 2b 전 · ⑥ 탐침 계정) · 손 8건 · 세종 오류 ⑰ 누계 49</div></div>
+  </div>
+</div>
+
+<!-- 2 완료율 -->
+<div class="page">
+  <div class="kicker">§1 상용 기준 완료율 · 영실 보고 09-24 23:56(턴 AI · f76b2e3) · 판정기 turn_ai.json 23:37 · 문턱은 PRD v1.1 §0</div>
+  <h1 class="title">58.1 — 길목은 섰고 화면은 아직 옛것이다</h1>
+  <div class="rule"></div>
+  <table class="tbl" style="margin-top:10px">
+    <tr><th style="width:112px">수</th><th style="width:186px">지금 [실측 · 턴 AI]</th><th style="width:60px">직전</th><th>뜻</th><th style="width:62px">RC-1</th></tr>
+    <tr><td><b>상용 /100</b></td><td><span class="pct">58.1</span><div class="bar low"><i style="width:58.1%"></i></div></td><td>58.1</td><td>닫힌 절 <b>76/157</b> · 회색 <b>3</b>(SEC-17 · PERF-04 · LAW-08 — 인자 실행 두 턴째 못 함) · ★ OPS-13a 는 <b>재서 빨강</b>인데 대장엔 unmeasurable(P-345) · 기준선 빚 제품 언어 0 · 게이트 짝 82</td><td>≥ 95</td></tr>
+    <tr><td><b>바깥 사용자</b></td><td><span class="pct">0</span></td><td>0</td><td>공개 주소 · TLS · 스테이징 0 — <b>열세 턴째</b> · 오면 E 가 P-302·P-310 배치</td><td>URL</td></tr>
+    <tr><td><b>온보딩 48행</b></td><td><span class="pct">63.5</span><div class="bar low"><i style="width:63.5%"></i></div></td><td>63.5</td><td><b>30.5/48</b> 정본 8500 · <b>장부 기재 1</b>(P-332 닫힘) · <b>재측 0</b>(배포 막힘 · 옳게 미룸) · 셋째 조건 미측 · 이 턴 <b>다섯째 회차</b></td><td>≥ 90</td></tr>
+    <tr><td>「누른 뒤」</td><td class="mono">못 잼 · 회색 48/48</td><td>32 참고</td><td>증거 <span class="mono">click_completes.json</span> 낡음 · 이 턴 V 첫 실측(회색 → 색이 목표 · 수가 아니다)</td><td>≥ 44</td></tr>
+    <tr><td>카드 걷기</td><td class="mono">도구 1 · 5/6 후보</td><td>회색</td><td>U1 3/3 · U2 1/3 · U3 3/3 · U4 1/1 · U5 3/6 · <b>U6 회색(로그인 400)</b> → P-350 원인 1줄 → 6/6</td><td>6역할 100</td></tr>
+    <tr><td>FC · PR · CR</td><td class="mono">63.5 · 52.9 · 31.25</td><td>72.9·52.6·31.25</td><td>FC 내려감 = S1 30.5 반영(옳다) · 회색 FC 2 · PR 3 은 V(FC①)·스테이징·창 뒤</td><td>85·85·87.5</td></tr>
+    <tr><td><b>S1~S7</b></td><td class="mono">● 0 · ◐ 3 · ○ 4</td><td>〃</td><td>S2·S3·S4 회색 · S1 63.5 · S5 0 · S6 0.5 · S7 0.5 — S2 는 V 첫 실측이 색을 준다</td><td>7 ●</td></tr>
+    <tr><td>비번 찾기</td><td class="mono">길목 3/3 · 8500</td><td>6/6 · 거짓</td><td>거짓 「보냈습니다」 → <b>무반응</b>(실패를 console.log 만) → P-342 말하는 화면 · 한 바퀴는 창 2b Mailpit 뒤</td><td>1 바퀴</td></tr>
+    <tr><td>살아 있는 서버 · 전량</td><td class="mono">restart 도구 · 2,248/0</td><td>없음 · 2,199/0</td><td><span class="mono">restarts.jsonl</span> 2줄(빨강 1 = 재는 서버 옛 코드 · 그 자리에서 잡음) · 1회차 4 실패 = 새 길목이 앞 턴 시험을 막음(고침) · 검사기 빨강 셋(P-346)</td><td>—</td></tr>
+    <tr><td><b>기능명세 포함</b></td><td><span class="pct">28.3</span><div class="bar low"><i style="width:28.3%"></i></div></td><td>28.1</td><td>분모 293 · 판정기 — <b>열 턴째 안 오른 수</b> · 이 턴부터 매 턴 오른다(§10 · P-347)</td><td>≥ 85</td></tr>
+    <tr><td><b>push · 커밋</b></td><td class="mono">대기 8 · 미커밋 4</td><td>대기 1 · 9</td><td>≥ 3 알림 조건 · <b>대표 손 지금</b> · 미커밋 4 는 05:00 beat 자동 증거(세종 읽음 06:30 · 영실 확인) → 착수 첫 커밋</td><td>—</td></tr>
+  </table>
+  <div class="gt" style="margin-top:9px">
+    <div class="g5 half"><div class="k">G1</div><div class="n">URL 도달</div><div class="st">○</div><div class="d">스테이징 열세 턴째 · 대표 손 ㉥</div></div>
+    <div class="g5 half"><div class="k">G2</div><div class="n">로그인·계정</div><div class="st">●/○</div><div class="d">호스트 8500 ● · 비번 찾기 한 바퀴 ○</div></div>
+    <div class="g5 half"><div class="k">G3</div><div class="n">실제 사용</div><div class="st">◐</div><div class="d">30.5/48 · 「누른 뒤」 회색 · 카드 5/6 후보</div></div>
+    <div class="g5 half"><div class="k">G4</div><div class="n">PRD·기능명세</div><div class="st">◐ 58.1</div><div class="d">회색 3 · OPS-13a · 기능명세 28.3 %</div></div>
+    <div class="g5 half"><div class="k">G5</div><div class="n">운영 지속</div><div class="st">◐</div><div class="d">회수증 · beat 05:00 · 11/11 · 아침 2/10 · restart 도구</div></div>
+  </div>
+  <div class="note ok" style="margin-top:8px"><p><b>인정(영실 · 턴 AI).</b> 길목을 주소보다 먼저 세우고 순서를 뒤집어 2/3 빨강을 먼저 봤다 · 8500 배포를 <b>우회하지 않았고</b> 옛 화면을 재지 않았다(재측 0 이 옳은 수) · 30.5 를 장부에 회차로 적고 판정기가 읽는 자리 한 곳만 고쳤다 · 재시작 도구가 ㉛ 을 그 자리에서 잡았다 · 전량 4 실패를 한 줄로 갈랐다 · 창 2b 준비 표에서 두 번 틀린 추정을 스스로 적고 잰 것만 남겼다 — 그 실측이 <b>세종 오류 ⑰</b>을 드러냈다 · P-318 을 「반쪽」으로 정직하게 적었다. <b>영실 오판 2(㊱㊲ 자진) · 세종 오류 ⑰ 자진 · 누계 49 · 위임 이의 0 · 검토대 접수 0.</b></p></div>
+  <div class="foot"><span>GuardianX 턴 AJ · 5차선 · 8500 배포 · V 첫 실측 · 셋째 조건 배선 · 기능명세 로드맵</span><span>2 / 7</span></div>
+</div>
+
+<!-- 3 판정 1 -->
+<div class="page">
+  <div class="kicker">§5 판정 — 세종이 정해 집행 (삭제·되돌리기·운영계·.env 실제 값·push 는 대표) · P-341 ~ P-347</div>
+  <h1 class="title">화면을 올리고 · 실패를 말하게 하고 · 배선을 끝까지 · 기능을 턴에 배정한다</h1>
+  <div class="rule"></div>
+  <div class="dec key" style="margin-top:9px"><div class="dh"><span class="did">P-341</span><h4>8500 에 새 화면을 올린다 — 세종 판정 · 대표 확인 불필요 [D]</h4></div><ul>
+    <li>8500 은 <b>대표 PC 의 운영 모양 서버</b>이지 운영계(115.21.49.115)가 아니다 · 삭제·되돌리기·값·push 어느 것도 아니다 · 되돌리기 = 백업 복사 한 줄 → 세종 위임 범위. 근거 넷: 옛 화면을 재면 잰 수가 거짓 · <span class="mono">dist_ai</span> 는 커밋된 소스와 같은 출처(영실 확인) · 반경 = <span class="mono">gx-spa</span> 한 폴더 · 실측 가능(스모크 셋 · 새 문구 1).</li>
+    <li><b>절차를 도구로</b>: <span class="mono">scripts/deploy_spa_8500.py</span> — 백업(파일 수 · sha) → 교체 → 검증(<span class="mono">index-*.js</span> 새 이름 · 새 문구 1 · 스모크 셋 200) → 실패 시 자동 복원 · <span class="mono">evidence/OPS-27/deploys.jsonl</span> 한 줄 · <b>되돌리기 시험을 먼저</b> · <span class="mono">verify_live_code</span> 에 「배포본 == 커밋 빌드 sha」 1행(OPS-27 · 대장 +1). 분류기가 또 막으면 <b>우회 0</b> — 보고 §대표 손에 「P-341 · 대표 한 마디 『올려라』」 · <span class="mono">waiting_ceo</span>.</li></ul></div>
+  <div class="two" style="margin-top:0">
+    <div class="dec" style="margin-bottom:0"><div class="dh"><span class="did">P-342</span><h4>비번 찾기 화면은 실패를 말한다 [D]</h4></div><ul>
+      <li>dj-core 는 안 고친다(§0.4) · 우리 코드 <span class="mono">App.tsx</span> 의 <span class="mono">ForgotPassword</span> 감싸개가 503/네트워크 실패를 GX-COPY 문구(「지금은 메일을 보낼 수 없습니다 — 관리자에게 문의하십시오」 + 「다시 시도」)로 · 모바일 같은 뿌리 · 회귀 시험 1(닫힘 → 문구 · 열림 → 「보냈습니다」). 거짓말 → 무반응 → <b>말하는 화면</b>.</li></ul></div>
+    <div class="dec key" style="margin-bottom:0"><div class="dh"><span class="did">P-343</span><h4>셋째 조건은 배선이 끝나야 조건이다 [Q]</h4></div><ul>
+      <li>판정 함수 + 시험 13 은 절반 — 계측기 <span class="mono">result()</span> 59곳이 화면 글자를 넘기지 않으면 수는 안 움직인다. 한 함수(<span class="mono">collect_screen_text</span>)로 59곳 한 번에 · P-292 와 같은 사전·같은 함수(D-479) · 「안 넘기면 회색」 짝 시험. 다섯째 회차(V)가 처음 잰다 — <b>내려가면 내려간 수가 정본</b>.</li></ul></div>
+  </div>
+  <div class="two" style="margin-top:10px">
+    <div class="dec" style="margin-bottom:0"><div class="dh"><span class="did">P-344 · P-345</span><h4>도구 빨강은 두 문구 · OPS-13a 는 빨강으로 적는다</h4></div><ul>
+      <li>「재는 서버가 옛 코드」(gx-shell runserver) 와 「재시작 뒤에도 옛 코드」(gunicorn 마스터) 는 다른 사고 · 다른 손 → 문구 둘 · 시험 2(각 모양으로 강제 실패 · P-323).</li>
+      <li>재서 빨강인 절을 대장에 unmeasurable 로 두면 회색이 빨강을 가린다 — 창 ③ 이 <span class="mono">red</span> + 사유 1줄 · 상용 /100 이 내려가면 그 수가 정본. 회색 3 은 P-304 그대로 <b>이 턴 인자 실행 1회</b>(두 턴 미룬 자리 · 창 ③ 첫 일).</li></ul></div>
+    <div class="dec warn2" style="margin-bottom:0"><div class="dh"><span class="did">P-346</span><h4>검사기 빨강 셋은 표 먼저 · 초록으로 고치지 않는다 [F]</h4></div><ul>
+      <li>HEADER_LIVE(<span class="mono">verify_release_candidate</span> 머리) · PIPE_EXIT(옛 파일 4) · MEASURED_LINE(D-511 기한 = 날짜 폭탄). 기한은 <b>근거와 함께</b>(「무엇이 끝나면 기한이 서는가」 1줄) · 옛 파일 4 는 표에 · 머리는 템플릿(P-319·P-323)으로. 「HEAD 에선 판정도 못 했다」를 다음 턴에 남기지 않는다.</li></ul></div>
+  </div>
+  <div class="dec key" style="margin-top:10px;margin-bottom:0"><div class="dh"><span class="did">P-347</span><h4>전체 기능은 턴에 배정된 것만 개발된다 [F · §10 로드맵 · 대표 지시 09-25]</h4></div><ul>
+    <li>기능명세 포함 28.3 %(293 절)는 열 턴째 안 오른 수 — 「이 턴 오르는 수 아님」을 매 턴 적은 것은 세종의 몫. 이 턴 F 가 <b>미포함 절 표</b>(절 · 화면 · 역할 U1~U6 · 게이트 · 크기 S/M/L · 의존)와 <b>턴별 배정 표</b>(AK~AN · 매 턴 ≥ 25 절 · 역할 차선에 얹는다)를 내고 <b>S 절 ≥ 5</b> 를 닫아 표가 살아 있음을 보인다. 이후 매 지시서 §10 이 표를 잇고, <b>매 보고서에 「닫은 절 목록 · 판정기 포함율」 칸</b>이 선다. 사용 축(온보딩 · 「누른 뒤」 · S1~S7)과 기능 축은 <b>다른 수</b> — 둘 다 보고한다.</li></ul></div>
+  <div class="foot"><span>GuardianX 턴 AJ · 5차선 · 8500 배포 · V 첫 실측 · 셋째 조건 배선 · 기능명세 로드맵</span><span>3 / 7</span></div>
+</div>
+
+<!-- 4 판정 2 -->
+<div class="page">
+  <div class="kicker">§5 판정(계속) · P-348 ~ P-355 · 세종 오류 ⑰ · 기본값 규칙</div>
+  <h1 class="title">틀린 자리는 정정하고 · 보고서를 턴의 닫는 조건으로 못박는다</h1>
+  <div class="rule"></div>
+  <div class="note warn" style="margin-top:9px"><p><b>세종 오류 ⑰(자진 · 누계 49).</b> WO-13 P-327·P-328 과 CEO_INBOX 대표 문장 ④·⑤ 에 K2 세 줄의 자리를 <span class="mono">backend/.env</span> 로, SMTP 를 「다섯」으로 적었다. 실측(창 2b 준비 표 §0)은 <b>두 통이 금고 env-file 로 섰고 이름은 여섯</b>(<span class="mono">SMTP_TLS</span>)이다 — 영실의 CEO_INBOX 줄을 재측 없이 판정에 옮겼다(⑮ 와 같은 부류 · 「중간 보고의 문장은 판정의 근거가 아니다」를 세종이 또 어겼다). 정정은 P-351 · 대표 문장 ④·⑤ 는 정정판으로 바꿔 적었다.</p></div>
+  <div class="two" style="margin-top:10px">
+    <div class="dec" style="margin-bottom:0"><div class="dh"><span class="did">P-348 · P-349</span><h4>탐침 계정은 표식 + 비활성(권고) · gx-smoke 값은 대표</h4></div><ul>
+      <li><span class="mono">gxprobe_p326_link_host@test.invalid</span>: 곁표 <span class="mono">is_probe</span> 한 줄(이름으로 거르지 않는다 · D-280) · 비활성은 되돌리기 한 칸 · 지우면 감사 줄의 주인이 사라진다 → 대표 결정 ⑥. E 는 표식만.</li>
+      <li><span class="mono">gx-smoke</span> 시드 스크립트 + 이름 둘(<span class="mono">.env.gates.example</span>) 이 턴 · 값은 대표 손 ㉢ · 값 전엔 U4 물러섬 유지하되 <span class="mono">V_LOCK</span> 이 있으면 로그인 건너뛰고 회색(V 세션을 끊지 않는다) · 익명 401 대조 1.</li></ul></div>
+    <div class="dec" style="margin-bottom:0"><div class="dh"><span class="did">P-350 · P-352 · P-353</span><h4>U6 400 은 원인 1줄 먼저 · push 8 은 대표 · 감시기 여부는 보고 첫 줄</h4></div><ul>
+      <li>카드 걷기 U6 로그인 400 → 계정·역할·라우트·본문 중 어디인지 1줄 → 6/6 · 못 고치면 회색 사유. U2 1/3 · U5 3/6 은 「서버 기록이 닫는 카드」 회색 사유 표.</li>
+      <li>push 대기 8(≥ 3 알림 조건) — 조율자는 시도하지 않는다 · 따라하기 ②. <span class="mono">loop/logs/</span> 가 없다(세종 읽음 06:30) = 감시기 미등록 · 대표 손 ㉡ · 등록 전엔 대화형 「RESUME_NEXT 읽고 시작」도 옳은 착수(둘 중 하나).</li></ul></div>
+  </div>
+  <div class="dec warn2" style="margin-top:10px"><div class="dh"><span class="did">P-351</span><h4>창 2b 문장 정정 — 결정 ④·⑤ (세종 오류 ⑰)</h4></div><ul>
+    <li>④ 「창 2b 는 <b>SMTP 여섯</b>(금고 없으면 Mailpit · <span class="mono">SMTP_TLS=0</span> · 빈 자격) · <span class="mono">WEBHOOK_SIGNING_KEYS</span> · K2 세 줄은 <b>재생성 env-file 에</b> · 시험 DB — VAPID 는 빼라」 · ⑤ 「<span class="mono">EMAIL_HOST/PORT/USE_TLS</span> 세 줄은 재생성 env-file 에 — <span class="mono">backend/.env</span> 만으로는 두 통에 안 닿는다」 · Mailpit 빈 자격 235 는 P-328 「빈 값」 그대로.</li></ul></div>
+  <div class="dec key" style="margin-top:0"><div class="dh"><span class="did">P-354</span><h4>보고서는 루프의 유일한 입력이다 — 보고 없는 턴은 없는 턴 [대표 지시 09-25]</h4></div><ul>
+    <li>매 턴 끝에 <span class="mono">WO-…_report.md</span>(§8 형식 · 첫 표 12줄 · 완료율 전부 · <b>닫은 기능명세 절 목록</b> · 차선별 닫힘·넘김 · 대표 손 · 오판 · 기계 시각)를 저장하고 <span class="mono">LOOP_STATE.phase=report_ready</span> 로 넘기는 것이 <b>턴의 닫는 조건</b>. 22:00·한도에 걸리면 <b>그때까지 잰 수로 보고를 먼저 쓴다</b>. 보고가 없으면 세종은 지시서를 내지 않는다(SEJONG_METHOD §5).</li></ul></div>
+  <div class="two" style="margin-top:0">
+    <div class="dec" style="margin-bottom:0"><div class="dh"><span class="did">P-355</span><h4>온보딩 로드맵 한 턴 밈(P-317 갱신)</h4></div><ul>
+      <li>30.5(AH) → <b>AJ 다섯째 회차 실측</b>(새 화면 + 셋째 조건 · 수는 실측) → AK ≥ 38 → AL ≥ 43.2(문턱) → AM 46.0(상한). 미룬 이유는 배포 0 이지 제품이 아니다.</li></ul></div>
+    <div class="note" style="margin-bottom:0"><p><b>기본값 규칙(갱신).</b> 닫힌 쪽 · 실측 가능한 쪽 · 되돌릴 수 있는 쪽 · 반경 좁은 쪽 · 운영 모양 서버에서 · 누른 뒤를 본 것만 초록 · 값은 출력하지 않는다 · 대장은 줄지 않는다 · 회색은 초록도 0도 아니다 · 장부에 없는 수는 수가 아니다 · 재는 서버가 옛 코드면 잰 수가 거짓이다 · <b>배포하지 않은 화면은 잰 화면이 아니다</b> · <b>턴에 배정되지 않은 기능은 개발되지 않는다</b>. 위임 이의 0 · 세종 미판정 0.</p></div>
+  </div>
+  <div class="foot"><span>GuardianX 턴 AJ · 5차선 · 8500 배포 · V 첫 실측 · 셋째 조건 배선 · 기능명세 로드맵</span><span>4 / 7</span></div>
+</div>
+
+<!-- 5 차선 -->
+<div class="page">
+  <div class="kicker">§4 차선 5 + 조율자 창 2 + V 단독 · 동시 ≤ 5(한도 리셋 09-26 10:00 전) · 한 파일은 한 차선 · 한 가지 끝까지</div>
+  <h1 class="title">다섯이 각자 한 가지 — D 가 먼저 화면을 올린다</h1>
+  <div class="rule"></div>
+  <table class="tbl small" style="margin-top:10px">
+    <tr><th style="width:62px">차선</th><th>한 가지 · 끝까지</th><th style="width:168px">닫는 조건</th></tr>
+    <tr><td><b>D</b><br>배포·화면</td><td><b>P-341</b> <span class="mono">deploy_spa_8500.py</span>(백업 sha → <span class="mono">dist_ai</span> 교체 → 검증 → 실패 시 복원 · <b>되돌리기 시험 먼저</b> · <span class="mono">OPS-27/deploys.jsonl</span>) · <span class="mono">verify_live_code</span> 프런트 행 · <span class="mono">localhost:8000</span> 하드코딩 표 1 · <b>P-342</b> <span class="mono">ForgotPassword</span> 감싸개 문구 + 모바일 + 회귀 1 · 8500 두 경로 이음 확인</td><td>배포 1 · 되돌리기 시험 1 · 문구 1 · 시험 1</td></tr>
+    <tr><td><b>Q</b><br>계측·장부</td><td><b>P-343</b> <span class="mono">result()</span> 59곳 화면 글자 넘김(한 함수 · 한 사전) · 시험 13 + 짝 · 상한 표 갱신 · 역할별 6줄 자리 · <b>U5#2</b> <span class="mono">/api/dsm/roles</span> 행 수 실측(시드·권한·프록시 한 갈래) · 3002 회차 「참고」 유지</td><td>59/59 · 시험 짝 · /roles 원인 1</td></tr>
+    <tr><td><b>F</b><br>게이트·기능명세</td><td><b>P-346</b> 검사기 빨강 셋 표 → 색(초록으로 안 고침) · 기준선 빚 82 갚는 순서 표(이번 ≥ 10) · <b>P-347 기능명세 293 미포함 표 → 턴별 배정 표(AK~AN) → S 절 ≥ 5 닫기</b> · Inter 404 0 확인</td><td>빨강 3 → 색 · 표 2 · 절 ≥ 5</td></tr>
+    <tr><td><b>U</b><br>역할·카드</td><td><b>P-350</b> U6 로그인 400 원인 1줄 → 카드 걷기 6/6 · U2·U5 회색 사유 표 · U1#4 스트림 자리 정직한 빈 화면 + 다음 손(P-316 뿌리) · <span class="mono">gen-schema</span> 422×37 누가 부르나 표(P-334) · P-288·289 회귀 유지</td><td>6/6 · 표 2 · U1#4 ◐</td></tr>
+    <tr><td><b>E</b><br>집행·스모크</td><td><b>P-339/349</b> <span class="mono">gx-smoke</span> 시드 + 이름 둘 + <span class="mono">V_LOCK</span> 회색 + 익명 401 · <b>P-344</b> 도구 문구 둘 + 시험 2 · <b>P-348</b> 탐침 <span class="mono">is_probe</span> 표식 · <b>창 2b 준비 표 최종</b>(정정판 · <span class="mono">SMTP_TLS=0</span> · env-file 세 줄) · 아침 한 줄 · <b>P-353</b> 감시기 여부 · 스테이징 오면 P-302·P-310</td><td>시드 1 · 문구 2 · 표식 1 · 준비 표 1</td></tr>
+    <tr><td><b>창 ①</b><br>T+1:00</td><td>D 배포 완료 확인(스모크 셋 200 · 새 문구 1) → 브라우저 <span class="mono">--measure-settings</span> · 카드 첫 화면 캡처 2</td><td>배포 확인 · 캡처 2</td></tr>
+    <tr><td><b>창 ③</b><br>T+3:00</td><td>병합 → 커밋 → <span class="mono">restart</span> 둘 → <span class="mono">verify_live_code</span>(프런트 행) → 스모크 → <b>회색 3 인자(P-304) · OPS-13a 빨강 기재(P-345)</b> → 전량 1회(파일로) → RC-1 판정기 → 상용 /100 → 커밋 셋 · push 대기 표</td><td>색 3 · 출력 1 · 미커밋 0</td></tr>
+    <tr><td><b>V 단독</b><br>T+3:30</td><td><span class="mono">V_LOCK</span> → 로그인 6/6 → S1~S6 → <b><span class="mono">click_completes</span> 48 첫 실측</b> → <b>온보딩 48 다섯째 회차</b>(8500 · 새 화면 · 셋째 조건 · 상한 표) → 카드 6 → <span class="mono">feature_reach</span> → 3종</td><td>3종 · 회차 5 · json 1</td></tr>
+  </table>
+  <div class="hdr"><span class="c"># P-341 — 배포 도구 (값 0 · 8500 = 대표 PC 운영 모양 서버 · 운영계 아님 · 되돌리기 시험 먼저)</span>
+<span class="k">python</span> scripts/deploy_spa_8500.py --rehearse        <span class="c"># 백업 → 복원 → sha 238 일치 → EXIT 0 이어야 다음 줄</span>
+<span class="k">python</span> scripts/deploy_spa_8500.py --src gx-fe-build:/app/_bld_u1ab/dist_ai --dst C:\GuardianX\gx-spa
+<span class="c"># 백업(파일 수·sha) → 교체 → index-*.js 새 이름 · 새 문구 1 · smoke_live 셋 200 → 실패면 자동 복원 · deploys.jsonl 1줄</span>
+<span class="k">python</span> scripts/verify_live_code.py --container gx-gunicorn-e --spa C:\GuardianX\gx-spa   <span class="c"># 배포본 == 커밋 빌드 sha (OPS-27)</span></div>
+  <div class="note warn" style="margin-top:8px"><p><b>함정 다섯.</b> ① 배포 없이 V 를 돌리지 않는다 — 옛 화면의 수는 수가 아니다 ② 배포 도구는 되돌리기 시험을 <b>먼저</b> — 복원이 안 되면 올리지 않는다 ③ 셋째 조건은 59곳이 다 넘겨야 잰 것 — 반쪽은 회색 ④ 검사기 날짜 폭탄은 기한을 밀어 초록을 만드는 자리가 아니다 ⑤ 22:00·한도에 걸리면 <b>보고를 먼저 쓴다</b>. 창 2b(09-26 14:00)는 이 턴에 없다.</p></div>
+  <div class="foot"><span>GuardianX 턴 AJ · 5차선 · 8500 배포 · V 첫 실측 · 셋째 조건 배선 · 기능명세 로드맵</span><span>5 / 7</span></div>
+</div>
+
+<!-- 6 시간표 + 대표 -->
+<div class="page">
+  <div class="kicker">§7 시간표(T = 감시기 wo_ready 또는 대표 「시작」 · 08~22 KST) · 4시간 + V 40분 · §6 대표 결정 6 · 손 8</div>
+  <h1 class="title">T+0 첫 커밋 · T+0:20 배포 · T+3:00 창 ③ · T+3:30 V · T+4:10 보고</h1>
+  <div class="rule"></div>
+  <div class="tl">
+    <div class="tr"><div class="tt">T+0:00~0:20</div><div class="tw">조율자</div><div class="td">첫 줄: <b>착수 방식(헤드리스/대화형) · 감시기 등록 여부 · 차선 5</b> · <span class="mono">pre-turn-aj</span> · <b>착수 첫 커밋(자동 증거 4)</b> · push 대기 표 · 역할 계정 6/6 · 소유표 · 모델 표</div></div>
+    <div class="tr q"><div class="tt">T+0:20~1:00</div><div class="tw">D 먼저</div><div class="td">되돌리기 시험 → <b>배포 1</b> → 스모크 셋 200 → 조율자에 「올라갔다 · index 새 이름」 — 막히면 <span class="mono">waiting_ceo</span> · 우회 0</div></div>
+    <div class="tr q"><div class="tt">T+0:20~3:00</div><div class="tw">동시 5</div><div class="td">D · Q · F · U · E(§4)</div></div>
+    <div class="tr"><div class="tt">T+1:00~1:30</div><div class="tw">창 ①</div><div class="td">배포 확인 · 브라우저 <span class="mono">--measure-settings</span> · 캡처 2</div></div>
+    <div class="tr"><div class="tt">T+3:00~3:30</div><div class="tw">창 ③</div><div class="td">병합 → 커밋 → <span class="mono">restart</span> 둘 → <span class="mono">verify_live_code</span> → 스모크 → <b>회색 3 인자 · OPS-13a 기재</b> → 전량(파일로) → RC-1 → 커밋 셋</div></div>
+    <div class="tr v"><div class="tt">T+3:30~4:10</div><div class="tw">V 단독</div><div class="td"><span class="mono">V_LOCK</span> · 6/6 · S1~S6 · <b>click_completes 48</b> · <b>온보딩 회차 5(셋째 조건)</b> · 카드 6 · 3종</div></div>
+    <div class="tr win"><div class="tt">T+4:10</div><div class="tw">조율자</div><div class="td"><b>보고(§8) · LOOP_STATE report_ready</b>(P-354 · 턴의 닫는 조건) · RESUME_NEXT 는 세종 몫</div></div>
+  </div>
+  <table class="tbl" style="margin-top:9px">
+    <tr><th style="width:30px">#</th><th style="width:96px">언제</th><th style="width:150px">결정(대표)</th><th>문장 그대로 (CEO_INBOX 에 미리 적어 둠 · [x] 또는 다른 말)</th></tr>
+    <tr><td>①</td><td>09-26 13:50 전</td><td>시험 DB(삭제)</td><td>「열여섯 전부 · 사전점검 §3 이 새 표 · 창 안에서 연결 0 재확인 뒤 지워라」</td></tr>
+    <tr><td>②</td><td>09-26 13:50 전</td><td><span class="mono">gx-portfwd</span>(삭제)</td><td>「gx-portfwd 지워라 · 되돌리기는 docker run 한 줄 · 대장에 적어라」</td></tr>
+    <tr><td>③</td><td>아무 때</td><td><span class="mono">pk=6610</span>(청구 근거)</td><td>「probe 표식 적어라 · 청구서엔 0원 줄로 남겨라」</td></tr>
+    <tr><td>④</td><td>09-26 13:50 전</td><td>창 2b 내용 <b>정정판</b></td><td>「창 2b 는 SMTP 여섯(금고 없으면 Mailpit · SMTP_TLS=0) · WEBHOOK_SIGNING_KEYS · K2 세 줄은 env-file 에 · 시험 DB — VAPID 는 빼라」</td></tr>
+    <tr><td>⑤</td><td>09-26 창 안</td><td>K2 세 줄 자리</td><td>「EMAIL_HOST·PORT·USE_TLS 세 줄은 재생성 env-file 에」</td></tr>
+    <tr><td>⑥</td><td>아무 때</td><td>탐침 계정 <span class="mono">gxprobe</span></td><td>「is_probe 표식 적고 비활성으로 두어라 — 지우지 마라」 (지우시려면 「지워라」)</td></tr>
+  </table>
+  <table class="tbl" style="margin-top:8px">
+    <tr><th style="width:30px">#</th><th style="width:96px">언제</th><th style="width:150px">손</th><th>한 줄</th></tr>
+    <tr><td>㉠</td><td>착수 커밋 뒤</td><td><b>push 8 + 착수 커밋</b></td><td><span class="mono">cd C:\GuardianX\guardianx-source</span> → <span class="mono">git log --oneline origin/turn-q..turn-q</span> → <span class="mono">git push origin turn-q</span></td></tr>
+    <tr><td>㉡</td><td><b>지금</b></td><td><b>감시기 등록</b>(P-340·P-353)</td><td>관리자 PowerShell <span class="mono">schtasks /Create … yeongsil_watch.ps1</span> → <span class="mono">schtasks /Run</span> · <span class="mono">loop\logs\watch.log</span> 생기면 [x] — 또는 대화형 「RESUME_NEXT 읽고 시작」(둘 중 하나)</td></tr>
+    <tr><td>㉢㉣</td><td>아무 때 · 09-26 13:50</td><td><span class="mono">gx-smoke</span> 값 · SMTP 금고</td><td><span class="mono">.env.gates</span> 두 이름 · <span class="mono">C:\GuardianX-vault\smtp.env</span>(있으면) — 값은 어디에도 0</td></tr>
+    <tr><td>㉤</td><td><b>09-26 14:00</b></td><td>창 2b 대화형 한 창</td><td>「창 2b 열어라 · 준비 표대로」 + 실기기 웹푸시 도달 1</td></tr>
+    <tr><td>㉥㉦㉧</td><td>오면 · 아무 때 · 09-28</td><td>스테이징 · 운영 주소 · 가격 4</td><td>세종 줄에 세 항목(값 아님) → E 배치 → 대표 첫 로그인 · <span class="mono">https://…</span> 한 줄 · 세종 초안 뒤 「그대로」</td></tr>
+  </table>
+  <div class="foot"><span>GuardianX 턴 AJ · 5차선 · 8500 배포 · V 첫 실측 · 셋째 조건 배선 · 기능명세 로드맵</span><span>6 / 7</span></div>
+</div>
+
+<!-- 7 로드맵 + 보고 + 대표께 -->
+<div class="page">
+  <div class="kicker">§10 전체 기능 완성 로드맵(P-347 · P-354 · 대표 지시 09-25) · §8 보고 · 불변 · 대표께 한 장</div>
+  <h1 class="title">사용 축과 기능 축을 한 루프에 묶는다 — 매 턴 지시서가 잇고 매 보고서가 적는다</h1>
+  <div class="rule"></div>
+  <table class="tbl small" style="margin-top:9px">
+    <tr><th style="width:52px">턴</th><th style="width:74px">착수(예정)</th><th style="width:36px">차선</th><th>사용 축 목표(온보딩 · 「누른 뒤」 · S1~S7 · 카드)</th><th>기능 축 목표(기능명세 293 · 판정기가 센다)</th><th style="width:118px">문턱 · 창</th></tr>
+    <tr><td><b>AJ</b></td><td>09-25</td><td>5</td><td>8500 배포 · 온보딩 회차 5 실측 · 「누른 뒤」 첫 실측 · 카드 6/6 · 비번 찾기 화면</td><td><b>미포함 표 1 · 배정 표 1 · S 절 ≥ 5</b></td><td>창 2b 09-26 14:00(대표)</td></tr>
+    <tr><td><b>AK</b></td><td>09-26 창 뒤</td><td>8</td><td>온보딩 ≥ 38 · 「누른 뒤」 ≥ 40 · Mailpit 한 바퀴 1 · K2 실채널 1통 · 회색 0</td><td><b>≥ 25 절</b>(U1·U2 화면 · 사건 처리 · 알림) → ≥ 37 %</td><td>창 2b 결과 · 시험 DB 처분</td></tr>
+    <tr><td><b>AL</b></td><td>09-27~28</td><td>8</td><td>온보딩 ≥ 43.2(문턱) · 「누른 뒤」 ≥ 44 · 카드 6역할 100 · 아침 술어</td><td><b>≥ 25 절</b>(U4 보고서 3종 · U5 관리 · 청구 화면) → ≥ 45 %</td><td>가격 4(09-28) · SLA v1.0</td></tr>
+    <tr><td><b>AM</b></td><td>09-29~30</td><td>8</td><td>온보딩 46.0(상한) · S1 ● · S6·S7 ● 후보</td><td><b>≥ 25 절</b>(U3 이동 · U6 외부 연계 · API-03/04 · 서명키) → ≥ 54 %</td><td>스테이징(오면 · S5)</td></tr>
+    <tr><td><b>AN</b></td><td>10-01</td><td>8</td><td>스테이징 걷기 6/6 · 공개 URL 대표 첫 로그인 · FC/PR ≥ 85 · CR ≥ 87.5</td><td><b>≥ 25 절</b> + 잔여 표 → ≥ 62 % · 출시 뒤 절은 대표 결정으로 가른다</td><td><b>RC-1 재판정 10-02</b></td></tr>
+    <tr><td>이후</td><td>10-02~</td><td>8</td><td>S1~S7 ● ≥ 5 · 상용 ≥ 95</td><td>출시 전 절 100 % · 출시 뒤 절은 별표</td><td>안양 1호 D0 10-05</td></tr>
+  </table>
+  <div class="note purp" style="margin-top:8px"><p><b>규칙 다섯.</b> ① 표의 수는 세종 판정 · 실측이 덮는다 — 못 미치면 못 미친 수에서 다음 표가 시작한다 ② 절은 F 의 미포함 표가 정한 크기(S/M/L)로 역할 차선에 얹는다 — 새 차선을 만들지 않는다 ③ 「포함」은 판정기(<span class="mono">spec_coverage</span>)가 세는 것이지 보고서 문장이 세는 것이 아니다(D-380) ④ 사업 문서(가격·계약·SLA)는 개발을 막지 않는다 ⑤ 스테이징이 오는 날이 S5·CR 의 날 — 안 오면 첫 줄에 적고 하루씩 민다.</p></div>
+  <div class="two" style="margin-top:8px">
+    <div class="note"><p><b>보고(§8 · P-354 · 턴의 닫는 조건).</b> 첫 줄(착수 방식 · 감시기 여부 · 차선 5 · 착수 시각) → 첫 표 12줄(기준선 빚 · <b>기능명세 포함율</b>) → push 대기 표 → <b>8500 배포(백업 sha · 새 index · 스모크 · 되돌리기 시험) 또는 「막힘 · waiting_ceo」</b> → 비번 찾기 문구 → 배선 59/59 → <b>온보딩 회차 5 N/48 · 「누른 뒤」 첫 실측 N/48</b> → 카드 6/6 → 회색 3 · OPS-13a → 검사기 셋 → <b>미포함 표 · 배정 표 · 닫은 절 목록</b> → 스모크 계정 · 문구 · 탐침 → 창 2b 준비 표 → 스테이징 → RC-1 · 상용 → 차선별 닫힘·넘김 → 막힌 시간 → 오판 · 세종 오류(49+N) → 기계 시각 → <b>report_ready</b>.</p></div>
+    <div class="note warn"><p><b>새 불변 둘.</b> <b>배포하지 않은 화면은 잰 화면이 아니다</b>(옛 화면의 수는 수가 아니다 · 배포 도구는 되돌리기를 먼저 시험한다) · <b>턴에 배정되지 않은 기능은 개발되지 않는다 — 보고 없는 턴은 없는 턴</b>(절은 표에 적힌 턴에서만 닫히고 그 턴의 보고서가 닫은 절을 적는다). (+ 턴 AI 「앞 턴 시험이 새 전제에 걸리는 것은 전량만 잡는다」 · 턴 AH 신설 7 · 장부에 없는 수는 수가 아니다 · 재는 서버가 옛 코드면 잰 수가 거짓이다 · 이전 전부.)</p></div>
+  </div>
+  <div class="note ok" style="margin-top:8px"><p><b>대표께 — 넷.</b> ① <b>완료율</b>(턴 AI 실측): 상용 <b>58.1</b> · 바깥 사용자 <b>0 %</b>(열세 턴째) · 온보딩 <b>30.5/48</b>(장부 정본 · 재측 0) · 「누른 뒤」 못 잼(32 참고) · S1~S7 ● 0 ◐ 3 ○ 4 · 카드 걷기 5/6 후보 · 전량 2,248/0 · 기능명세 28.3 % · <b>push 대기 8</b>. ② <b>영실이 옳게 한 것</b> — 거짓 「보냈습니다」를 길목에서 잡았고, 배포가 막히자 우회하지 않고 옛 화면을 재지 않았으며, 30.5 를 장부에 적어 판정기가 내려가게 두었고, 스스로 틀린 추정 둘을 적었습니다 — 그 실측이 세종의 창 2b 문장 오류(⑰)를 드러내 정정했습니다. ③ <b>턴 AJ(09-25 · 5차선 · 4시간 + V 40분)</b> — 세종 판정으로 새 화면을 8500 에 올리고(되돌리기 시험 먼저), 셋째 조건 배선을 끝내고, V 가 온보딩 다섯째 회차와 「누른 뒤」 첫 실측을 냅니다. 대표 지시대로 <b>기능명세 293 절을 턴 AK~AN 에 배정한 전체 기능 로드맵</b>을 세웠고, 매 턴 보고서가 닫은 절을 적어야 다음 지시서가 나갑니다. ④ <b>결정 6</b>(①~⑤ 창 2b 전 · ④⑤ 는 정정판 · ⑥ 탐침 계정) · <b>손 8</b>(지금 push 8 · <b>감시기 등록 또는 「RESUME_NEXT 읽고 시작」</b> · gx-smoke 값 · SMTP 금고 · 09-26 14:00 창 · 스테이징 · 운영 주소 · 09-28 가격).</p></div>
+  <div class="foot"><span>GuardianX 턴 AJ · 5차선 · 8500 배포 · V 첫 실측 · 셋째 조건 배선 · 기능명세 로드맵</span><span>7 / 7</span></div>
+</div>
+</body></html>

@@ -1,11 +1,11 @@
 {
-  "measured_at": "2026-09-23T17:05:00+00:00",
+  "measured_at": "2026-09-24T17:05:00+00:00",
   "verdict": "ALARM",
-  "day": "2026-09-23",
-  "anchor": "f0411b4b81e1e30f4e349d842d23b0c2b5318002f63c7df9dfc41d6ec1360797",
-  "anchor_line": "[LAW-08] 2026-09-23 증거 해시 앵커 SHA-256: f0411b4b81e1e30f4e349d842d23b0c2b5318002f63c7df9dfc41d6ec1360797",
-  "total": 5422,
-  "chained": 5133,
+  "day": "2026-09-24",
+  "anchor": "24c8c719c457532f5a1bbddbd6e430c64499e370b3a8b9f9b06933a63e80267e",
+  "anchor_line": "[LAW-08] 2026-09-24 증거 해시 앵커 SHA-256: 24c8c719c457532f5a1bbddbd6e430c64499e370b3a8b9f9b06933a63e80267e",
+  "total": 5857,
+  "chained": 5568,
   "breaks": 6,
   "hashed_fields": [
     "id",
