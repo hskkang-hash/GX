@@ -112,6 +112,21 @@ SEED_SOURCE = "seed"
 NONBILLABLE_SOURCES = tuple(
     marker.split("=", 1)[1] for marker in UNBILLABLE_MARKERS) + (SEED_SOURCE,)
 
+#: ★ [턴 AH · P-289] 출처 칸의 값 중 **제품이 아예 세지 않는 것.** 위 묶음과
+#: **부분집합 관계이지 같은 것이 아니다** — 두 묶음은 다른 질문에 답한다:
+#:
+#:     NONBILLABLE_SOURCES   「이 행을 청구서에 올릴 수 있나」  probe · drill · seed
+#:     NOT_COUNTED_SOURCES   「이 행을 고객이 세야 하나」       probe
+#:
+#: 가른 근거는 이 파일이 새로 정하는 것이 아니라 **P-201 이 이미 정한 것**이다:
+#:   `drill` 은 제품이 **센다**(훈련 배지가 뜨고 청구에서만 빠진다 — `probe_marker`
+#:   P-201 절), `seed` 도 제품이 **센다**(위 `SEED_SOURCE` 머리말 —
+#:   「가르는 것은 청구뿐」). 둘을 여기 넣으면 **훈련을 켠 날 화면이 비고**, 검수
+#:   씨앗으로 「센다」를 증명하던 온보딩이 다시 못 재게 된다(P-201 이 P-193 의
+#:   비용이라고 적어 둔 바로 그 자리).
+#: 여기서 `probe` 를 다시 타자하지 않는다 — `probe_marker` 가 정본이다.
+NOT_COUNTED_SOURCES = (PROBE_MARKER.split("=", 1)[1],)
+
 #: ★ [턴 AD · 차선 B · P-251 · D-514] **제 칸은 없지만 카메라를 통해 출처를
 #: 상속받는** 표의 관계 이름. `DetectionEvent` 가 그렇다 — `apps/dsm/services.py::
 #: event_data_source` 머리말이 스스로 적어 둔 이유(칸을 만들면 「빈 과거」가
@@ -154,8 +169,13 @@ def _mark_model():
         return None
 
 
-def marked_unbillable_ids(model) -> list:
-    """곁표에 **우리가 심었다고 적혀 있는** 행들의 pk.
+def _marked_ids(model, sources) -> list:
+    """곁표에서 **주어진 낱말로 적힌** 행들의 pk. 공개면은 아래 두 함수다.
+
+    ★ **매개변수를 공개면에 두지 않는다.** 부르는 쪽이 낱말 묶음을 골라 넘기면
+      「무엇을 빼는가」가 부르는 자리마다 갈리고, 갈린 쪽이 조용히 이긴다
+      (`probe_marker` P-201 이 `include_drill` 을 이름으로 금지한 그 이유).
+      그래서 묶음은 이 파일의 상수 둘뿐이고, 부르는 쪽은 **질문의 이름**을 부른다.
 
     ★ **이름을 묻지 않는다.** 이 함수가 아는 것은 표 이름(`model_label`)과 출처 낱말
       뿐이다. 어느 행이 씨앗인지는 **만든 쪽이 적어 둔 것**이고, 여기서 다시 추측하지
@@ -173,7 +193,7 @@ def marked_unbillable_ids(model) -> list:
     out = []
     for raw in (Mark._base_manager
                 .filter(model_label=model._meta.label_lower,
-                        data_source__in=NONBILLABLE_SOURCES)
+                        data_source__in=sources)
                 .values_list("object_id", flat=True)):
         try:
             out.append(to_python(raw))
@@ -184,6 +204,16 @@ def marked_unbillable_ids(model) -> list:
                 "청구 표식의 object_id 를 %s 의 pk 로 읽지 못했다: %r — 그 행은 이번 "
                 "셈에서 청구에 든다", model._meta.label_lower, raw)
     return out
+
+
+def marked_unbillable_ids(model) -> list:
+    """곁표에 **우리가 심었다고 적혀 있는** 행들의 pk — **청구**가 묻는 갈래."""
+    return _marked_ids(model, NONBILLABLE_SOURCES)
+
+
+def marked_not_counted_ids(model) -> list:
+    """곁표에 **탐침이라고 적혀 있는** 행들의 pk — **제품**이 묻는 갈래."""
+    return _marked_ids(model, NOT_COUNTED_SOURCES)
 
 
 def exclude_unbillable(qs, *, via: str = ""):
@@ -235,6 +265,50 @@ def exclude_unbillable(qs, *, via: str = ""):
         qs = qs.exclude(**{
             f"{CAMERA_RELATION_FIELD}__{DATA_SOURCE_FIELD}__in": NONBILLABLE_SOURCES})
     marked = marked_unbillable_ids(qs.model)
+    if marked:
+        qs = qs.exclude(pk__in=marked)
+    return qs
+
+
+def exclude_not_counted(qs, *, via: str = ""):
+    """queryset 에서 **제품이 세지 않는 행을 뺀다** — 화면 · 큐 · 격자 분모.
+
+    ★ **`exclude_unbillable` 과 묻는 것이 다르다.** 이름을 길게 지은 까닭이 그것이다:
+
+            exclude_unbillable    「청구서에 올릴 수 있나」   probe · drill · seed
+            exclude_not_counted   「고객이 세야 하나」        probe
+
+      청구용을 화면에 그대로 쓰면 **훈련을 켠 날 관제 화면이 빈다.** 훈련은 사람이
+      봐야 하는 것이고(P-201 「제품이 센다 · 훈련 배지」), 안 보이면 훈련의 뜻이
+      없어진다. 검수 씨앗도 같다 — 안 세어지면 그 씨앗으로 「센다」를 증명하던
+      온보딩이 다시 못 재게 된다.
+
+    ★ **갈래는 `exclude_unbillable` 과 같은 넷이다 — 낱말만 좁다.**
+      ㉠ `track_id` 표식  ㉡ `data_source` 칸  ㉢ 곁표  ㉣ 카메라로부터의 상속.
+      표식이 **한 자리에만 산다고 가정하면 절반만 사라진다** — 실측(턴 AH):
+      온보딩 카메라 9대 중 **7대는 제 칸**, **2대는 곁표에만** 적혀 있었고,
+      제 칸만 본 거르개는 14대 격자를 14 → 7 로밖에 못 줄였다. 14 → 5 는 둘을
+      함께 봤을 때의 수다.
+
+    ⚠ **표식이 아예 없는 행은 여기서 안 사라진다.** 그것은 이 함수의 한계가 아니라
+      **자료의 구멍**이고, 코드로 이름을 추측해 메우면(예: 이름이 `GX-ONB-V` 로
+      시작하면 탐침으로 친다) 고객이 같은 이름을 쓰는 날 고객 카메라가 사라진다
+      (`marked_unbillable_ids` 머리말의 D-280 과 같은 자리).
+    """
+    names = _field_names(qs.model)
+    if via:
+        #: ㉠ 만 본다 — `exclude_unbillable` 의 `via` 와 같은 이유(관계 너머의 행은
+        #: 다른 표의 행이라 그 표의 pk 로 물어야 한다).
+        return exclude_probe(qs, via=via)
+
+    if PROBE_FIELD in names:
+        qs = exclude_probe(qs)
+    if DATA_SOURCE_FIELD in names:
+        qs = qs.exclude(**{f"{DATA_SOURCE_FIELD}__in": NOT_COUNTED_SOURCES})
+    elif CAMERA_RELATION_FIELD in names:
+        qs = qs.exclude(**{
+            f"{CAMERA_RELATION_FIELD}__{DATA_SOURCE_FIELD}__in": NOT_COUNTED_SOURCES})
+    marked = marked_not_counted_ids(qs.model)
     if marked:
         qs = qs.exclude(pk__in=marked)
     return qs

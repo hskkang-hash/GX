@@ -56,6 +56,7 @@ from django.apps import apps
 from django.db import transaction
 from django.utils import timezone
 
+from common.billing_marks import exclude_not_counted
 from common.tenant_scope import TenantScope
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -86,6 +87,27 @@ CLUSTER_SEVERITY: str = "warning"
 #: K1 의 10초 중복 창은 이 주기(맥박 검사)에 비해 너무 짧다 — 1분마다 도는 검사가
 #: 5분 동안 5건을 만들면 그것은 하나의 사건이 다섯 줄이 된 것이다.
 CLUSTER_RENOTIFY_WINDOW: timedelta = timedelta(minutes=5)
+
+
+def _product_cameras(**lookups):
+    """**제품이 세는** 활성 카메라. 이 파일의 세 문이 전부 이 한 줄을 지난다.
+
+    ★ **왜 `_scoped` 안에 안 넣었나.** `scan_clusters` 는 구역만 `_scoped` 로 좁히고
+      카메라는 `zones=zone` 으로 따로 고른다 — `_scoped` 에 넣으면 **화면은 고쳐지고
+      사건 내는 자리는 그대로** 탐침을 센다. 그러면 격자에는 안 보이는 카메라가
+      군집 두절 사건을 만들어 큐에 쌓이고, 사람은 **없는 카메라의 고장**을 본다.
+
+    ★ **`exclude_unbillable` 이 아니다.** 그것은 「청구서에 올릴 수 있나」를 묻고
+      훈련(`drill`)·검수 씨앗(`seed`)까지 뺀다. 훈련은 사람이 **봐야** 하는 것이라
+      (P-201) 여기서 빼면 훈련을 켠 날 격자가 빈다. 이 문이 묻는 것은
+      「고객이 세야 하나」이고 그 답은 `exclude_not_counted` 다.
+
+    ⚠ **표식이 없는 행은 여기서 안 사라진다** — 이름으로 추측하지 않는다(D-280).
+      남는 것은 자료의 구멍이고, 구멍은 코드가 아니라 표식으로 메운다.
+    """
+    Stream = _model("StreamMonitor")
+    return exclude_not_counted(
+        Stream._base_manager.filter(is_active=True, **lookups))
 
 
 def _model(name: str):
@@ -237,10 +259,9 @@ class PulseCounts:
 
 def pulse_counts(*, scope: TenantScope, now: datetime | None = None,
                  group=None) -> PulseCounts:
-    """살아 있는 카메라 / 전체. **활성 카메라만** 센다."""
-    Stream = _model("StreamMonitor")
+    """살아 있는 카메라 / 전체. **활성 카메라만** 센다 — 탐침은 분모에 없다."""
     now = now or timezone.now()
-    qs = _scoped(Stream._base_manager.filter(is_active=True), scope, group)
+    qs = _scoped(_product_cameras(), scope, group)
     total = qs.count()
     alive = qs.filter(last_frame_at__gt=now - PULSE_TIMEOUT).count()
     never = qs.filter(last_frame_at__isnull=True).count()
@@ -290,9 +311,8 @@ def pulse_rows(*, scope: TenantScope, now: datetime | None = None,
     ★ 이름을 함께 낸다. id 만 내면 부르는 쪽이 이름을 얻으려고 카메라 표를 다시
       질의하게 되고, 그 질의에는 이 파일의 스코프 규약이 안 붙는다.
     """
-    Stream = _model("StreamMonitor")
     now = now or timezone.now()
-    qs = _scoped(Stream._base_manager.filter(is_active=True), scope, group)
+    qs = _scoped(_product_cameras(), scope, group)
     rows = qs.distinct().order_by("name", "pk").values_list(
         "pk", "name", "last_frame_at")
     return [
@@ -359,7 +379,6 @@ def scan_clusters(*, scope: TenantScope, now: datetime | None = None,
     from kernels.k1_event import record_detection
 
     Zone = _model("Zone")
-    Stream = _model("StreamMonitor")
     Event = _model("DetectionEvent")
     now = now or timezone.now()
     out = ScanResult()
@@ -369,7 +388,7 @@ def scan_clusters(*, scope: TenantScope, now: datetime | None = None,
         scope, group)
     for zone in zones.distinct():
         rows = list(
-            Stream._base_manager.filter(zones=zone, is_active=True)
+            _product_cameras(zones=zone)
             .values_list("pk", "last_frame_at"))
         out.zones_seen += 1
         out.cameras_seen += len(rows)

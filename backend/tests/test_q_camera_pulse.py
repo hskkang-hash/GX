@@ -407,3 +407,146 @@ class PulseIsFedByThePipelineTest(PulseFixture):
                 side_effect=RuntimeError("맥박 표가 죽었다")):
             # 예외가 밖으로 나오면 이 호출이 터진다 — 터지지 않는 것이 이 시험이다.
             _publish_detection_events(self.cams_a[0].pk, {"detections": []})
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# P-289 — **탐침 카메라는 고객 격자에 없다** (턴 AH · 대표가 걸어서 찾은 것)
+# ═══════════════════════════════════════════════════════════════════════════
+class ProbeIsNotOnTheCustomersGridTest(PulseFixture):
+    """대표가 제품을 걸으며 「응답 없음 14대」를 봤다. 그중 **9대가 계측기**였다.
+
+    실측 2026-09-24 (`group=4`) — 표식이 **두 자리에 나뉘어** 있었다:
+
+        제 칸 `data_source=probe`   7대
+        곁표 `common.BillingMark`   2대 (제 칸은 `live` 인 채로)
+        아무 표식도 없음            1대  ← 자료의 구멍. 코드가 못 메운다
+
+    제 칸만 보는 거르개는 14 → **7** 로 **절반만** 지웠다. 14 → 5 는 둘을 함께
+    봤을 때의 수다. 아래 ②가 그 절반을 고정한다 — 그 시험이 없으면 다음 사람이
+    한 자리만 보는 거르개로 되돌려도 ①은 그대로 초록이다.
+
+    ★ **③④가 이 반의 절반이다.** 뺄 낱말은 `probe` **하나**다. P-201 이 갈라 둔
+      대로 `drill` 은 제품이 **세고**(훈련 배지), `seed` 도 제품이 **센다**
+      (가르는 것은 청구뿐). 청구용 거르개(`exclude_unbillable`)를 화면에 그대로
+      쓰면 **훈련을 켠 날 관제 화면이 빈다** — 그 오답이 ③④에 걸린다.
+    """
+
+    @classmethod
+    def _probe_column_camera(cls, name: str, group, source: str):
+        """제 칸에 출처를 적은 카메라."""
+        StreamMonitor = apps.get_model("stream_monitors", "StreamMonitor")
+        cam = StreamMonitor.objects.create(name=name, code=name,
+                                           ip_source="rtsp://test.invalid/x",
+                                           data_source=source)
+        return cls._own(cam, group)
+
+    @classmethod
+    def _ledger_probe_camera(cls, name: str, group):
+        """제 칸은 `live` 인데 **곁표에만** 탐침이라고 적힌 카메라 — 실물 2대의 모양."""
+        from common.billing_marks import mark_unbillable
+
+        cam = cls._camera(name, group)
+        mark_unbillable(cam, "probe", reason="P-289 시험 — 곁표에만 적힌 계측기")
+        return cam
+
+    def _total(self, group=None):
+        from stream_monitors.services.camera_pulse import pulse_counts
+
+        return pulse_counts(scope=self.scope_pipe, now=timezone.now(),
+                            group=group or self.group_a).total
+
+    # ── ① 제 칸 ──────────────────────────────────────────────────────────
+    def test_probe_in_its_own_column_is_not_in_the_denominator(self) -> None:
+        before = self._total()
+        self._probe_column_camera("q-probe-col", self.group_a, "probe")
+        self.assertEqual(before, self._total(),
+                         "제 칸에 probe 라고 적힌 카메라가 격자 분모를 늘렸다")
+
+    # ── ② 곁표 — **절반만 고치는 오답이 여기 걸린다** ────────────────────
+    def test_probe_in_the_side_ledger_is_not_in_the_denominator(self) -> None:
+        before = self._total()
+        self._ledger_probe_camera("q-probe-ledger", self.group_a)
+        self.assertEqual(
+            before, self._total(),
+            "제 칸이 live 인 채로 곁표에만 탐침이라 적힌 카메라가 분모에 남았다 — "
+            "표식이 한 자리에만 산다고 가정한 거르개다")
+
+    # ── ③ 음성 대조 — 훈련은 **센다** ────────────────────────────────────
+    def test_drill_is_still_counted_because_people_must_see_it(self) -> None:
+        before = self._total()
+        self._probe_column_camera("q-drill-col", self.group_a, "drill")
+        self.assertEqual(
+            before + 1, self._total(),
+            "훈련 카메라가 격자에서 사라졌다 — 훈련은 사람이 봐야 하는 것이고"
+            "(P-201) 안 보이면 훈련의 뜻이 없다. 청구용 거르개를 화면에 쓴 것이다")
+
+    # ── ④ 음성 대조 — 검수 씨앗도 **센다** ───────────────────────────────
+    def test_seed_is_still_counted_because_billing_is_the_only_split(self) -> None:
+        before = self._total()
+        self._probe_column_camera("q-seed-col", self.group_a, "seed")
+        self.assertEqual(
+            before + 1, self._total(),
+            "씨앗 카메라가 격자에서 사라졌다 — 안 세어지면 그 씨앗으로 「센다」를 "
+            "증명하던 온보딩이 다시 못 재게 된다(P-201 이 적어 둔 P-193 의 비용)")
+
+    # ── ⑤ 두 문이 갈리지 않았나 ──────────────────────────────────────────
+    def test_the_rows_and_the_counts_still_tell_the_same_number(self) -> None:
+        from stream_monitors.services.camera_pulse import pulse_counts, pulse_rows
+
+        self._probe_column_camera("q-probe-agree", self.group_a, "probe")
+        self._ledger_probe_camera("q-probe-agree-2", self.group_a)
+        now = timezone.now()
+        rows = pulse_rows(scope=self.scope_pipe, now=now, group=self.group_a)
+        counts = pulse_counts(scope=self.scope_pipe, now=now, group=self.group_a)
+        self.assertEqual(
+            counts.total, len(rows),
+            "화면의 「응답 없음 N대」와 생존 알림의 「맥박 N/N」이 다른 말을 한다 — "
+            "거르개를 한 문에만 달면 이 자리가 갈린다")
+
+    # ── ⑥ 사건이 나는 자리 — 없는 카메라의 고장을 만들지 않는다 ──────────
+    def test_probe_cameras_do_not_raise_cluster_events(self) -> None:
+        """★ 화면만 고치고 여기를 안 고치면 **격자에 없는 카메라가 큐에 사건을 쌓는다.**
+
+        `scan_clusters` 는 구역만 `_scoped` 로 좁히고 카메라는 `zones=zone` 으로
+        따로 고른다 — 그래서 화면 쪽 한 자리만 고치면 이 문은 그대로 탐침을 센다.
+        """
+        from stream_monitors.services.camera_pulse import (CLUSTER_MIN_CAMERAS,
+                                                           PULSE_TIMEOUT,
+                                                           scan_clusters)
+
+        probes = [self._probe_column_camera(f"q-probe-z-{i}", self.group_a, "probe")
+                  for i in range(CLUSTER_MIN_CAMERAS)]
+        zone = self._zone("q-zone-probe", self.group_a, probes)
+        now = timezone.now()
+        self._beat(probes, ago=PULSE_TIMEOUT + timedelta(minutes=1), now=now)
+
+        before = len(self._cluster_events())
+        result = scan_clusters(scope=self.scope_pipe, now=now, group=self.group_a)
+        after = len(self._cluster_events())
+
+        self.assertEqual(before, after,
+                         "탐침 카메라만 있는 구역이 군집 두절 사건을 만들었다 — "
+                         "격자에 없는 카메라의 고장이 큐에 쌓인다")
+        seen = dict((zid, v) for zid, _name, v in
+                    [(z, n, v) for z, n, v in result.verdicts])
+        self.assertIn(zone.pk, seen, "구역 자체는 훑었다 — 카메라만 0대여야 한다")
+        self.assertEqual(0, len(seen[zone.pk].cluster),
+                         "탐침이 군집 판정의 입력으로 들어갔다")
+
+    # ── ⑥ 음성 대조 — 같은 모양의 진짜 카메라는 **사건을 낸다** ──────────
+    def test_the_same_shape_with_real_cameras_does_raise(self) -> None:
+        from stream_monitors.services.camera_pulse import (CLUSTER_MIN_CAMERAS,
+                                                           PULSE_TIMEOUT,
+                                                           scan_clusters)
+
+        reals = [self._camera(f"q-real-z-{i}", self.group_a)
+                 for i in range(CLUSTER_MIN_CAMERAS)]
+        self._zone("q-zone-real", self.group_a, reals)
+        now = timezone.now()
+        self._beat(reals, ago=PULSE_TIMEOUT + timedelta(minutes=1), now=now)
+
+        before = len(self._cluster_events())
+        scan_clusters(scope=self.scope_pipe, now=now, group=self.group_a)
+        self.assertEqual(
+            before + 1, len(self._cluster_events()),
+            "같은 모양인데 진짜 카메라로도 사건이 안 났다 — 거르개가 너무 넓다")
