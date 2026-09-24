@@ -47,7 +47,7 @@ from _gate_header import (KEY_AS, KEY_MEASURED, KEY_SOURCE, KEY_TARGET,  # noqa:
                           MEASURED_NONE, OTHER_LANE,
                           audit, escalation, gate_files, gate_header, judge_as,
                           judge_header, judge_measured, judge_source, pipe_scan,
-                          pipe_violations)
+                          pipe_violations, self_test_can_fail_audit)
 
 #: ★★ [P-217 · 턴 AB · 차선 Q] **기한은 코드가 아니라 결정문에 있다.**
 #:   턴 AA 가 「MEASURED 남은 회색 28 은 턴 AC 부터 빨강」을 **문서에만** 적었고,
@@ -186,6 +186,29 @@ def judge(observations: dict) -> list:
                        "빨강" if level == "red" else "회색", len(gray),
                        "" if not gray else " · " + str([g.split("(")[0] for g in gray[:8]]),
                        note)))
+
+    # ⑤ ★★ [P-319 · P-323 · 턴 AI 차선 F] **TheSelfTestCanFail 짝 — 새 게이트부터.**
+    #
+    #   기존 게이트 수십 개를 한꺼번에 빨강으로 만들지 않는다 — `BASELINE_GATES_SELF_TEST_DEBT`
+    #   에 얼려 둔 것은 **빚으로 항상 보이게** 출력한다(숨긴 빚은 거짓 초록이다 · P-322 ⓐ).
+    #   이 목록에 없는 새 게이트만 판정한다: `SELF_TEST_LINKS` 에 적힌 짝이 **실재하는지**
+    #   (파일이 있고 · `TheSelfTestCanFail` 이 구조로 있고 · 그 안에 「자기시험을 망가뜨려
+    #   실패를 본다」는 시험이 있는지) `self_test_can_fail_audit` 가 매번 다시 연다 — 적어
+    #   둔 것을 믿지 않는다(D-479 교훈).
+    stl = observations.get("self_test_link")
+    if stl is None:
+        out.append(("SELF_TEST_CAN_FAIL", None, "TheSelfTestCanFail 짝을 안 물었다"))
+    else:
+        new_rows = [r for r in stl.get("rows", []) if r[1] == "new"]
+        missing = stl.get("new_missing") or []
+        debt = stl.get("baseline_debt", 0)
+        out.append(("SELF_TEST_CAN_FAIL", not missing,
+                    "새 게이트 %d개 중 짝 실재 %d개%s · **기준선 빚 %d**"
+                    "(이 요구 전부터 있던 게이트 — 숨기지 않는다 · P-322 ⓐ)"
+                    % (len(new_rows), len(new_rows) - len(missing),
+                       "" if not missing
+                       else " · **짝 없음(거짓 짝 포함) %d: %s**" % (len(missing), missing),
+                       debt)))
     return out
 
 
@@ -209,6 +232,10 @@ def _good_observations() -> dict:
         },
         "pipes": [("docs/agent/RESUME_NEXT.md", 4, "… | tail; echo $?", "인용(산문)")],
         "other": [("verify_front_line_502.py", "DevOps 차선", False)],
+        #: [P-319 · P-323] 새 게이트 0 · 기준선 빚만 있는 성립한 상태.
+        "self_test_link": {
+            "rows": [("verify_a.py", "baseline", True, "기준선 빚")],
+            "baseline_debt": 1, "new_total": 0, "new_missing": []},
     }
 
 
@@ -257,13 +284,19 @@ def self_test() -> int:
         ok = False
         print("%s X 성립한 관측을 빨강으로 읽는다: %s" % (TAG, [n for n, p, _ in rows if not p]))
     else:
-        print("%s O 성립한 관측 3/3 초록 (양성 대조)" % TAG)
+        print("%s O 성립한 관측 %d/%d 초록 (양성 대조)" % (TAG, len(rows), len(rows)))
 
     mutants = {}
     m = _good_observations(); m["declared"][1] = ("verify_b.py", False)
     mutants["HEADER_DECLARED"] = ("머리글을 안 부르는 게이트가 섞였다", m)
     m = _good_observations(); m["opened"]["verify_a.py"]["as"] = "root"
     mutants["HEADER_LIVE"] = ("사유 없는 AS=root 로 쟀다", m)
+    #: ★★ [P-319 · P-323 · 턴 AI 차선 F] 새 게이트가 짝 없이 태어난 그 모양 그대로.
+    m = _good_observations()
+    m["self_test_link"] = {
+        "rows": [("verify_new_thing.py", "new", False, "SELF_TEST_LINKS 에 짝이 없다")],
+        "baseline_debt": 0, "new_total": 1, "new_missing": ["verify_new_thing.py"]}
+    mutants["SELF_TEST_CAN_FAIL"] = ("새 게이트가 TheSelfTestCanFail 짝 없이 태어났다", m)
     m = _good_observations(); m["pipes"] = [("scripts/x.sh", 3, "x | tail; echo $?", "코드")]
     mutants["PIPE_EXIT"] = ("복사해 쓰는 자리에 `| tail … $?` 가 남았다", m)
 
@@ -336,8 +369,14 @@ def self_test() -> int:
               % (TAG, len(_P204_SAMPLE)))
 
     # 그리고 **수 하나로도** 잡히는가 — 분모를 안 말하는 게이트가 섞이면 그 수는 회색이다
+    #: ★ [실측 2026-09-24 · 차선 F] `today` 를 **못 박는다.** D-511 기한(09-23)이 지나면
+    #:   `escalation()` 이 스스로 red 를 낸다(그것이 P-217 배선의 목적이다) — 그런데 이
+    #:   시험은 「기한과 무관한 steady-state 회색」만 보려는 자리다. 벽시계 날짜에 걸리면
+    #:   기한이 지난 **모든 날**에 이 시험이 자기 뜻과 다르게 빨개진다. 기한 앞뒤 판정은
+    #:   아래 [기한] 전용 시험이 이미 따로 잰다 — 여기서는 **기한 전**으로 고정한다.
     _m = _good_observations()
     _m["opened"]["verify_b.py"]["measured"] = ""
+    _m["today"] = "2026-09-21"
     _verdict = dict((n, p_) for n, p_, _w in judge(_m)).get("MEASURED_LINE")
     if _verdict is None:
         print("%s O ★ 분모를 안 말하는 게이트가 하나 섞이면 MEASURED_LINE 은 **회색**이다 "
@@ -414,8 +453,11 @@ def open_gate(path: Path, timeout: int = OPEN_TIMEOUT) -> dict:
 
 def observe(run: bool = True) -> dict:
     a = audit()
+    #: [P-319 · P-323] 구조 확인이라 `--no-run` 에도 잰다 — 게이트를 **열지 않고** 그
+    #: 짝(파일 + 클래스)만 읽는다. `HEADER_LIVE`(②)와 다른 층이다.
     obs = {"declared": a["rows"], "other": a["other"],
-           "pipes": pipe_scan(), "opened": {}}
+           "pipes": pipe_scan(), "opened": {},
+           "self_test_link": self_test_can_fail_audit()}
     if not run:
         obs["opened"] = None
         return obs

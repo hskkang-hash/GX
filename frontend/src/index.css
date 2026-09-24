@@ -59,6 +59,20 @@
   --ga-gray-2: #f2f2f2;
 }
 
+/*
+ * P-334 [실측 2026-09-24 · 차선 F] — 이 규칙은 **항상 이긴다.** 콘솔의 Inter 404
+ * (`GET /Inter/Inter-VariableFont_opsz,wght.ttf`)는 이 파일이 아니라
+ * `main.tsx` 가 먼저 붙이는 `node_modules/rj-core/dist/style.css` 의 자기 @font-face에서
+ * 난다 — rj-core 는 폰트를 `dist/fonts/Inter/Inter-Variable.ttf` 로 담아 놓고 그 CSS는
+ * `../Inter/Inter-VariableFont_opsz,wght.ttf`(다른 폴더 · 다른 파일명)를 가리킨다 —
+ * rj-core 자신의 실수다(§0.4 금지구역 — 그 파일은 못 고친다).
+ * 같은 family·전체 unicode-range 인 @font-face 가 겹치면 **먼저 선언된 쪽이** 문자
+ * 매칭을 다 가져간다 — 그래서 이 규칙(뒤에 선언된다)은 매칭에서 **한 번도 안 쓰인다.**
+ * 고친 자리는 `frontend/public/Inter/Inter-VariableFont_opsz,wght.ttf`(새 파일 — rj-core
+ * 가 실제로 기대하는 그 경로·그 파일명에 같은 폰트를 둔다 · sha256 앞 12자
+ * 0be2399ea925 로 `frontend/public/fonts/Inter-Variable.ttf` 와 대조됨). 이 규칙은
+ * rj-core 의 번들 순서가 바뀌는 날을 위한 **대비**로 남긴다 — 지우지 않는다.
+ */
 @font-face {
   font-family: 'Inter';
   src:

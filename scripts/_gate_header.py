@@ -48,6 +48,36 @@
   「자격증명 없음 — 파일을 읽는다」가 된다. 유도된 값도 **실측**이다(mtime 은 지금 잰다).
   다만 살아 있는 것을 재는 게이트는 유도로 덮이지 않는다 — 그런 게이트는 손으로 적는다.
 
+자기시험 필수 절차 — **`TheSelfTestCanFail`** (P-319 · P-323 · 2026-09-24 · 턴 AI 차선 F)
+-------------------------------------------------------------------------------------------
+머리글 셋(TARGET/AS/SOURCE)은 「무엇을 쟀나」를 말하지만 **「그 판정식이 정말 잡는가」는
+말하지 않는다.** 턴 AH 가 실측으로 그 구멍을 찾았다: `verify_ui_copy` 의 자기시험이
+`ok = False` 를 일곱 번 적으면서도 그 `ok` 를 **초기화도 읽지도 않아** 마지막 줄은
+언제나 「자기시험 통과」였다 — **실패할 수 없는 자기시험은 자기시험이 아니다.**
+
+그래서 (세종 P-319 · 영실 P-323 재확인) — **새로 태어나는 게이트**는 판정식을 **그날
+실제로 일어난 모양**의 회귀 표본으로 망가뜨려 자기시험이 정말 `EXIT 1` 을 내는지 보는
+시험을 가진다. 본보기 둘:
+
+    backend/tests/test_ops26_live_code_is_fresh.py :: TheSelfTestCanFail
+        (망가뜨림 = 「preload 를 안 묻고 워커와 견준다」 — HUP 을 믿었던 그날의 눈)
+    backend/tests/test_p321_restart_live.py :: TheSelfTestCanFail
+        (망가뜨림 = 「건강 200 이면 섰다」 · 「200 이면 로그인 성공」 — 그날 실제로 속은 자리)
+
+절차 (D-277 패턴 그대로 — 순수 함수를 판정, `judge` 를 몸통에서 교체):
+    ① 게이트의 판정 함수(`judge`)를 `self_test()` 안에서 참조로 들고 있는다
+    ② **아무렇게나** 망가뜨리지 않는다 — 그날 실제로 속았던 눈으로 망가뜨린다
+       (P-320 표본을 만들다 첫 망가뜨림이 통과해서 배웠다: 표본이 약한 건지 망가뜨림이
+       엉뚱한 건지 못 가르면 이 절차는 스스로를 속인다)
+    ③ 망가뜨린 채로 `self_test()` 를 돌려 **`1`** 이 나오는지 본다(0 이 아니다)
+    ④ `finally` 로 원래 판정식을 되돌린다
+
+**검사기는 새로 태어나는 게이트부터** 요구한다(`verify_gate_header.py` 의
+`self_test_can_fail_audit()`) — 이미 있던 게이트 수십 개를 한꺼번에 빨강으로 만들지
+않는다. 대신 그 수는 **「기준선 빚 N」으로 항상 보이게 출력한다**(숨긴 빚은 거짓
+초록이다 · P-322 ⓐ). 아래 `SELF_TEST_LINKS`(짝 등록)와 `BASELINE_GATES_SELF_TEST_DEBT`
+(얼린 기존 목록)가 그 경계선이다.
+
 도구로도 쓴다
 -------------
     python scripts/_gate_header.py --audit      # 게이트 머리글 보유율 N/N
@@ -777,6 +807,146 @@ def pipe_violations(hits) -> list:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# ★★ [P-319 · P-323 · 2026-09-24 · 턴 AI 차선 F] **`TheSelfTestCanFail` 짝**
+#
+#   머리글 위의 문단이 절차를 적었다면, 여기는 그 절차가 **실재하는지 물어보는 자리**다.
+#   D-479 의 `used_by` 가 준 교훈 그대로다 — 「짝이 있다」고 적어 둔 칸은 실재를 안
+#   확인하면 **거짓말하는 칸**이 된다(빈칸보다 나쁘다). 그래서 `self_test_can_fail_audit`
+#   은 `SELF_TEST_LINKS` 를 **믿지 않는다** — 매번 그 값이 가리키는 파일을 열어
+#   `class TheSelfTestCanFail` 이 정말 있는지, 그 안에 「자기시험을 망가뜨려 실패(1)를
+#   본다」는 시험이 정말 있는지를 다시 잰다.
+# ═══════════════════════════════════════════════════════════════════════════
+
+#: 게이트 이름 → 그 게이트를 커버하는 `TheSelfTestCanFail` 시험 파일(저장소 기준 상대경로).
+#: **여기 적는 것은 선언일 뿐이다** — 실재 여부는 `self_test_can_fail_audit()` 이 파일을
+#: 열어서 확인한다. 지금 실재가 확인된 짝 하나(P-314②·OPS-26)를 본보기로 둔다.
+SELF_TEST_LINKS: dict[str, str] = {
+    "verify_live_code.py": "backend/tests/test_ops26_live_code_is_fresh.py",
+    #: [P-311 · 09-24 · 턴 AI 차선 F] 기준선 빚을 하나 갚았다 — 걷기를 새로 지으면서
+    #: TheSelfTestCanFail 짝도 함께 지었다(밑에서 BASELINE 목록에서도 뺀다).
+    "verify_onboarding_walk.py": "backend/tests/test_p311_onboarding_walk.py",
+    #: [P-325 · 09-24 · 턴 AI 조율자 병합] 차선 S 의 새 게이트 — 검사기가 첫 「짝 없음」으로
+    #: 잡았다. 짝은 그날의 두 모양(칸 없음 + 3001 링크 · 1건 실패 섞인 요약)으로 망가뜨린다.
+    "verify_password_reset.py": "backend/tests/test_p325_verify_gate_can_fail.py",
+}
+
+#: ★ [P-322 ⓐ · P-323] **기준선을 얼린다.** 이 요구가 생기기 **전부터 있던** 게이트
+#: (2026-09-24 이 커밋 시점의 `scripts/verify_*.py` 전수)는 한꺼번에 빨강으로 만들지
+#: 않는다 — 그 대신 「기준선 빚 N」으로 **항상 보이게** 출력한다(숨긴 빚은 거짓 초록이다).
+#: 이 목록에 **없는** verify_*.py 는 전부 새 게이트이고, 새 게이트는 `SELF_TEST_LINKS`
+#: 에 **실재하는** 짝이 있어야 한다. ⚠ 이 목록에 이름을 더하지 않는다 — 더하면 새
+#: 게이트가 조용히 빚으로 편입된다(그것이 이 요구를 무력화하는 길이다).
+BASELINE_GATES_SELF_TEST_DEBT: frozenset = frozenset({
+    "verify_admin_doors.py", "verify_alarm_budget.py", "verify_authn_paths.py",
+    "verify_autostart.py", "verify_backup_autonomy.py", "verify_backup_recovery.py",
+    "verify_blockers.py", "verify_bundle_api_base.py", "verify_bundle_hash.py",
+    "verify_cache_bypass.py", "verify_cache_frame.py", "verify_camera_address.py",
+    "verify_camera_pulse.py", "verify_camera_secret_logs.py", "verify_classification.py",
+    "verify_click_completes.py", "verify_clip_extraction.py", "verify_commented_guards.py",
+    "verify_commit_trace.py", "verify_contract_ac.py", "verify_contract_route_reach.py",
+    "verify_credential_store.py", "verify_da01_reuse_paths.py", "verify_dead_fields.py",
+    "verify_decision_tools.py", "verify_delta.py", "verify_deploy_ready.py",
+    "verify_dormant.py", "verify_e2e_contract.py", "verify_envelope.py",
+    "verify_error_body.py", "verify_event_drop.py", "verify_evidence_chain.py",
+    "verify_evidence_roundtrip.py", "verify_external_sources.py", "verify_feature_reach.py",
+    "verify_front_line_502.py", "verify_ga_readiness.py", "verify_gate_counts.py",
+    "verify_gate_header.py", "verify_homonyms.py", "verify_juso_direction.py",
+    "verify_kernel_map.py", "verify_lane_isolation.py", "verify_layers.py",
+    "verify_ledger_monotonic.py", "verify_live_code.py", "verify_live_freshness.py",
+    "verify_measure_repro.py", "verify_migrations.py", "verify_minio.py",
+    "verify_model_inheritance.py", "verify_no_secret_echo.py",
+    "verify_perf_budget.py", "verify_post_arg_style.py", "verify_prod_settings.py",
+    "verify_purge.py", "verify_read_auth.py", "verify_readiness_scores.py",
+    "verify_release_candidate.py", "verify_retention_declared.py", "verify_route_alive.py",
+    "verify_route_inventory.py", "verify_route_scope_declared.py", "verify_screens.py",
+    "verify_secret_scan.py", "verify_seed_p20.py", "verify_seed_roles.py",
+    "verify_send_allowlist.py", "verify_settings_fail_closed.py", "verify_sidebar.py",
+    "verify_snapshot_route.py", "verify_spec_coverage.py", "verify_tenant_scope.py",
+    "verify_test_writes_prod_zero.py", "verify_threshold_table.py", "verify_timeout.py",
+    "verify_tool_selftest.py", "verify_ui_copy.py", "verify_ui_secrets.py",
+    "verify_wall_keys.py", "verify_webhook_contract.py", "verify_write_auth.py",
+    "verify_zone_polygon.py",
+})
+
+#: `class TheSelfTestCanFail` 을 **문자열로 흉내 낸 것이 아니라** 정의로서 갖는가.
+#: `has_header` 와 같은 층위(D-289) — 구조만 본다. 실제로 **도는지**(자기시험이 정말
+#: 실패하는지)는 이 파일이 못 잰다(django 가 없다) — 그것은 그 pytest 파일 자신의 일이다.
+_HAS_SELF_TEST_CAN_FAIL = re.compile(r"^class\s+TheSelfTestCanFail\b", re.M)
+
+#: 그 클래스 **안에** 「자기시험을 부르고 실패(1)를 기대한다」는 시험이 있는가 —
+#: 이름에 `self_test` 와 `fail`(또는 `fails`)이 같이 들어간 `def test_` 하나로 가른다.
+#: 이름만 보는 것도 완벽하지 않지만(D-289), 클래스가 있는 척만 하는 자리는 **적어도**
+#: 이걸로 걸린다 — 이름 없는 빈 클래스는 통과하지 못한다.
+_HAS_FAIL_METHOD = re.compile(r"def\s+test_\w*self_test\w*fail\w*", re.I)
+
+
+def _class_body(text: str, class_name: str) -> str:
+    """`class <이름>` 부터 **다음 최상위 class 앞까지**. 못 찾으면 빈 문자열."""
+    m = re.search(r"^class\s+%s\b.*?:\s*$" % re.escape(class_name), text, re.M)
+    if not m:
+        return ""
+    rest = text[m.end():]
+    nxt = re.search(r"^class\s+\w", rest, re.M)
+    return rest[:nxt.start()] if nxt else rest
+
+
+def has_self_test_can_fail(text: str) -> bool:
+    """이 시험 파일이 **구조적으로** `TheSelfTestCanFail` 을 가졌는가.
+
+    ① 클래스가 있다 ② 그 몸에 「자기시험을 망가뜨려 실패를 본다」는 시험이 최소 하나
+    있다. 둘 다 있어야 참이다 — 이름만 있는 빈 클래스는 짝이 아니다.
+    """
+    if not _HAS_SELF_TEST_CAN_FAIL.search(text):
+        return False
+    return bool(_HAS_FAIL_METHOD.search(_class_body(text, "TheSelfTestCanFail")))
+
+
+def self_test_can_fail_audit(root: Path = None) -> dict:
+    """새 게이트마다 `TheSelfTestCanFail` 짝이 **실재하는지** 확인한다 (P-319 · P-323).
+
+    실재 = ① `SELF_TEST_LINKS` 에 이름이 있다 ② 그 값이 가리키는 파일이 **존재한다**
+    ③ 그 파일에 `TheSelfTestCanFail` 이 **구조로** 있다(`has_self_test_can_fail`).
+    셋 중 하나라도 없으면 **거짓 짝**이다 — 없는 것과 같다.
+
+    기준선(`BASELINE_GATES_SELF_TEST_DEBT`)에 있는 게이트는 이 요구 **전부터** 있던
+    것이라 통과/실패를 매기지 않는다 — 대신 **빚으로 센다**(숨기지 않는다).
+    """
+    base = root or ROOT
+    rows: list[tuple[str, str, bool, str]] = []
+    for p in gate_files(base):
+        name = p.name
+        if name in OTHER_LANE:
+            continue
+        if name in BASELINE_GATES_SELF_TEST_DEBT:
+            rows.append((name, "baseline", True,
+                        "기준선 빚 — 이 요구가 생기기 전부터 있던 게이트 (P-322 ⓐ)"))
+            continue
+        link = SELF_TEST_LINKS.get(name)
+        if not link:
+            rows.append((name, "new", False,
+                        "새 게이트인데 SELF_TEST_LINKS 에 짝이 없다"))
+            continue
+        test_path = base / link
+        if not test_path.is_file():
+            rows.append((name, "new", False,
+                        "짝이 가리키는 파일이 없다: %s (거짓 짝 · D-479 교훈)" % link))
+            continue
+        text = test_path.read_text(encoding="utf-8", errors="replace")
+        if not has_self_test_can_fail(text):
+            rows.append((name, "new", False,
+                        "%s 에 TheSelfTestCanFail(자기시험을 망가뜨려 실패를 보는 시험)이 "
+                        "없다" % link))
+            continue
+        rows.append((name, "new", True, "짝 실재: %s" % link))
+    return {
+        "rows": rows,
+        "baseline_debt": sum(1 for _, kind, _, _ in rows if kind == "baseline"),
+        "new_total": sum(1 for _, kind, _, _ in rows if kind == "new"),
+        "new_missing": [n for n, kind, ok, _ in rows if kind == "new" and not ok],
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # 자기시험 (D-277 · D-310)
 # ═══════════════════════════════════════════════════════════════════════════
 def self_test() -> int:
@@ -855,6 +1025,75 @@ def self_test() -> int:
           len(judge_measured("deferred:")) >= 1)
     check("정상 분모는 그대로 통과한다(deferred 도입이 회귀를 안 낸다)",
           judge_measured("무엇을 · 분모 120") == [])
+
+    # ★★ [P-319 · P-323 · 턴 AI 차선 F] TheSelfTestCanFail 짝 — 구조 탐지.
+    #   출생 표본은 턴 AH 의 `verify_ui_copy` 그 자체다: `ok = False` 일곱 번이 있는데
+    #   `ok` 는 초기화도 읽는 데도 없어 자기시험이 **실패할 수 없었다.** 빈 클래스·
+    #   클래스 없음이 바로 그 모양이다.
+    _GOOD_SELFTEST_FILE = (
+        "class TheSelfTestCanFail(SimpleTestCase):\n"
+        "    def test_self_test_passes_as_built(self):\n"
+        "        self.assertEqual(0, g.self_test())\n"
+        "    def test_self_test_fails_when_judge_is_broken(self):\n"
+        "        g.judge = broken\n"
+        "        got = g.self_test()\n"
+        "        self.assertEqual(1, got)\n")
+    _EMPTY_CLASS_FILE = "class TheSelfTestCanFail(SimpleTestCase):\n    pass\n"
+    _NO_CLASS_FILE = "class SomethingElse(SimpleTestCase):\n    pass\n"
+
+    check("실재하는 짝을 구조로 잡는다(양성 대조)",
+          has_self_test_can_fail(_GOOD_SELFTEST_FILE))
+    check("★ 출생 표본 — 빈 클래스는 짝이 아니다(턴 AH verify_ui_copy: ok 를 초기화도 "
+          "읽지도 않아 자기시험이 실패할 수 없었다)",
+          not has_self_test_can_fail(_EMPTY_CLASS_FILE))
+    check("클래스 자체가 없으면 당연히 짝이 아니다", not has_self_test_can_fail(_NO_CLASS_FILE))
+
+    # self_test_can_fail_audit — 새 게이트/기준선/거짓 짝을 가른다. 가짜 저장소로 잰다.
+    global SELF_TEST_LINKS, BASELINE_GATES_SELF_TEST_DEBT
+    _saved_links, _saved_baseline = SELF_TEST_LINKS, BASELINE_GATES_SELF_TEST_DEBT
+    try:
+        with tempfile.TemporaryDirectory() as td2:
+            d2 = Path(td2)
+            (d2 / "scripts").mkdir()
+            (d2 / "backend" / "tests").mkdir(parents=True)
+            (d2 / "scripts" / "verify_new_thing.py").write_text("x = 1\n", encoding="utf-8")
+            (d2 / "scripts" / "verify_old_thing.py").write_text("x = 1\n", encoding="utf-8")
+            (d2 / "backend" / "tests" / "test_new_thing.py").write_text(
+                _GOOD_SELFTEST_FILE, encoding="utf-8")
+            SELF_TEST_LINKS = {"verify_new_thing.py": "backend/tests/test_new_thing.py"}
+            BASELINE_GATES_SELF_TEST_DEBT = frozenset({"verify_old_thing.py"})
+            audit = self_test_can_fail_audit(d2)
+        check("실재 짝이 있는 새 게이트는 어긋남 0", audit["new_missing"] == [])
+        check("기준선 빚이 **숨지 않고** 보인다(P-322 ⓐ — 숨긴 빚은 거짓 초록이다)",
+              audit["baseline_debt"] == 1)
+        check("새 게이트를 그렇게 센다(기준선과 섞지 않는다)", audit["new_total"] == 1)
+
+        with tempfile.TemporaryDirectory() as td3:
+            d3 = Path(td3)
+            (d3 / "scripts").mkdir()
+            (d3 / "scripts" / "verify_unlinked.py").write_text("x = 1\n", encoding="utf-8")
+            SELF_TEST_LINKS, BASELINE_GATES_SELF_TEST_DEBT = {}, frozenset()
+            audit2 = self_test_can_fail_audit(d3)
+        check("★ 출생 표본 — 짝이 아예 없는 새 게이트를 빨강으로 잡는다 "
+              "(P-323 「강제 실패 절차」가 없으면 이 게이트가 그 자리를 빨강으로 만든다)",
+              audit2["new_missing"] == ["verify_unlinked.py"])
+
+        with tempfile.TemporaryDirectory() as td4:
+            d4 = Path(td4)
+            (d4 / "scripts").mkdir()
+            (d4 / "backend" / "tests").mkdir(parents=True)
+            (d4 / "scripts" / "verify_fake_link.py").write_text("x = 1\n", encoding="utf-8")
+            (d4 / "backend" / "tests" / "test_fake_link.py").write_text(
+                _EMPTY_CLASS_FILE, encoding="utf-8")
+            SELF_TEST_LINKS = {"verify_fake_link.py": "backend/tests/test_fake_link.py"}
+            BASELINE_GATES_SELF_TEST_DEBT = frozenset()
+            audit3 = self_test_can_fail_audit(d4)
+        check("★ D-479 교훈 — SELF_TEST_LINKS 에 적힌 것과 실재가 갈리면(빈 클래스) "
+              "거짓 짝으로 잡는다(믿지 않고 열어서 본다)",
+              audit3["new_missing"] == ["verify_fake_link.py"])
+    finally:
+        SELF_TEST_LINKS, BASELINE_GATES_SELF_TEST_DEBT = _saved_links, _saved_baseline
+
     return 0 if ok else 1
 
 

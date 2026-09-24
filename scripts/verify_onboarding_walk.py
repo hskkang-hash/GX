@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""UX-46 — **온보딩 카드를 닫는 것이 사람인가 기록인가** (턴 R · 차선 F · 골격).
+"""UX-46 — **온보딩 카드를 닫는 것이 사람인가 기록인가** (턴 R 골격 → 턴 AI 차선 F 짓기 · P-311).
 
 정본이 요구한 것 (PRD v1.1 §5.1 UX-46 · §7.1 · WO-01 §12)
 ----------------------------------------------------------
@@ -8,33 +8,40 @@
      진행률 % 역할 홈 상단 · 100%면 카드 숨김"
     AC: "각 역할 시드 계정으로 카드 전부 수행 → 진행률 100 · `verify_onboarding_walk` 신설"
 
-그래서 이 판정기는 **두 층**이다 — 그리고 둘을 한 수로 합치지 않는다
---------------------------------------------------------------------
+그래서 이 판정기는 **세 층**이다 — 그리고 나쁜 쪽이 이긴다(한 수로 뭉개지 않는다)
+--------------------------------------------------------------------------------
     ㉠ **구조**(서버 없이 지금 잰다) — 카드 표가 실재하고 · 역할마다 일곱 장 이하이고 ·
        **사람이 누르는 완료 문이 없고** · 라우트가 선언(테넌트 범위)과 인증을 달고 있고 ·
        화면이 그 라우트를 **부른다**(잠든 라우트가 아니다)
-    ㉡ **걷기**(역할 계정으로 실제 HTTP) — 시드 계정 여섯으로 진행률을 받아 100 을 본다
+    ㉡ **로그인 계획**(서버 없이 지금 잰다 · `--dry-run`) — 6 버킷을 실재가 확인된 계정
+       (U1·U2·U4·U5·U5 예비)으로 **어떻게** 덮을지 소스에서 읽어 짠다. 네트워크 0.
+    ㉢ **걷기**(역할 계정으로 실제 HTTP · `--api`) — ㉡ 의 계획대로 로그인하고
+       `GET /api/dsm/onboarding/progress`(카드 7 각각의 서버 기록을 이미 센 응답)를
+       읽어 역할별 N/분모를 낸다.
 
-㉡ 은 **서버와 자격증명이 있을 때만** 잰다. 없으면 **회색(exit 2)** 이다 —
+㉢ 은 **서버와 자격증명이 있을 때만** 잰다. 없으면 **회색(exit 2)** 이다 —
 「못 쟀다」는 「통과」가 아니다(D-301 · D-400). 게이트가 환경을 요구해 초록으로 죽는
-길을 만들지 않으려고, 기본 판정은 ㉠만 하고 ㉡은 `--api` 를 준 실행에서만 돈다.
+길을 만들지 않으려고, 기본 판정은 ㉠만 하고 ㉢은 `--api` 를 준 실행에서만 돈다.
 
     python scripts/verify_onboarding_walk.py                 # ㉠ 구조 판정
     python scripts/verify_onboarding_walk.py --list          # 카드 표 전수
-    python scripts/verify_onboarding_walk.py --api URL --user U --password P   # ㉠+㉡
+    python scripts/verify_onboarding_walk.py --dry-run        # ㉡ 로그인 계획만(네트워크 0)
+    python scripts/verify_onboarding_walk.py --api URL        # ㉠+㉡+㉢ (V_LOCK 이면 ㉢ 회색)
     python scripts/verify_onboarding_walk.py --self-test     # 양성·음성 대조 (D-277)
 
 종료 코드 (저장소 규약 · D-400): 0 = 쟀고 통과 · 1 = 쟀고 실패 · 2 = **못 쟀다(회색)**
 
-★ 이 파일은 **골격이다.** ㉡ 의 걷기는 자리와 판정식만 서 있고, 역할 계정 여섯의
-  자격은 이 저장소에 없다(`.env.gates` 규약). 조율자가 계정을 주는 턴에 `walk()` 의
-  `TODO` 두 줄(로그인 · 카드별 행위 재현)이 채워진다 — 그때까지 ㉡ 은 **회색**이고,
-  회색을 초록으로 적지 않는 것이 이 파일의 절반이다.
+★ [P-311 · 09-24 · 턴 AI] **이 턴은 걷지 않는다.** 걷기(㉢)는 짓지만 **부르지 않는다**
+  — 역할 계정 로그인은 살아 있는 세션을 끊는다(`end_previous_session`), 그리고 V 의
+  재측 앞에서 끼어들면 그 수가 망가진다(P-170 ①). 첫 실측은 V 가 한다. 이 턴이 낸 것은
+  `--dry-run`(무엇을 할지 · 네트워크 0)까지다 — **지은 뒤의 첫 수가 첫 수**이고, 그 전엔
+  회색을 유지한다(0 이라 적지 않는다).
 """
 from __future__ import annotations
 
 import argparse
 import ast
+import os
 import re
 import sys
 from pathlib import Path
@@ -51,6 +58,12 @@ try:
 except (AttributeError, OSError):
     pass
 
+#: `verify_route_alive` 의 `login()`·`load_local_env()`·`expand_env_refs()` 를 **그대로**
+#: 쓴다 — 로그인 문(`/api/v1/auth/login` · `end_previous_session` · 율제한 재시도 ·
+#: V_LOCK 존중)을 이 파일이 두 번째로 적으면 두 벌은 반드시 어긋난다(D-369).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from verify_route_alive import expand_env_refs, load_local_env, login  # noqa: E402
+
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
 #: 정본이 적은 상한. 넘기면 첫날에 아무도 안 읽는다 (PRD §7.2).
@@ -66,6 +79,34 @@ REQUIRED_ON_ROUTE = ("@tenant_scoped", "auth=")
 #: 표에 없는 사람은 카드가 0장이고, 0장인 사람의 진행률은 잴 수 없다 — 그것이 6/6 이
 #: 아니라 5/6 인 이유이고, 이 판정기가 그 차이를 **이름으로** 잡는 자리다.
 EXPECTED_BUCKETS = ("U1", "U2", "U3", "U4", "U5", "U6")
+
+#: 진행률 문의 실재 자리 [실측 2026-09-24 · `backend/apps/dsm/api_f.py:50`] —
+#: `DsmFAPI.onboarding_progress` · `GET /api/dsm/onboarding/progress` · `persona=` 인자.
+#: 「없으면 없다를 실측으로」(P-311) — **있다.** 사라지면(리팩터) `judge_progress_response`
+#: 의 404 갈래가 회색으로 잡는다(거짓 초록을 안 낸다).
+PROGRESS_ENDPOINT = "/api/dsm" + ROUTE_PATH
+
+#: ★ [P-311 · 09-24 · 턴 AI 차선 F] **실재가 확인된** 시드 역할 계정 넷 —
+#: `backend/stream_monitors/management/commands/seed_role_users.py:134,147,156,165` 가
+#: 만드는 그대로다(`SEED_PREFIX = "gxseed_"`). `verify_sidebar.HTTP_ACCOUNTS` 와 **같은
+#: 이름**이다 — 자기시험이 그 사실을 대조한다(아래 · D-369, 드리프트를 구조로 막는다).
+CONFIRMED_ROLE_ACCOUNTS: dict[str, str] = {
+    "U1": "gxseed_u1_operator",
+    "U2": "gxseed_u2_manager",
+    "U4": "gxseed_u4_official",
+    "U5": "gxseed_u5_sysop",
+}
+
+#: U5 의 **예비 계정** — `backend/common/migrations/0003_p224_seed_account_marks.py:64`
+#: 가 적은 그대로: 「온보딩 첫 근무일 계측용 예비 계정」. U6(외부 연계 · 기계)은 사람
+#: 계정이 없어 페르소나 질의로만 열리는데, U5 본계정으로 열면 U5 자신의 온보딩 실측과
+#: 섞인다 — 그래서 이 예비 계정으로 연다(그 계정이 태어난 이유 그대로 쓰는 것이다).
+#: ⚠ `gxseed_u3_field` 는 **여기 안 쓴다** — `rotate_shared_passwords.py` 의
+#: `NEVER_TOUCH` 목록에만 있고 **만드는 코드가 없다**(seed_role_users.py 에 없다 ·
+#: 0003 마이그레이션 장부에 없다). 실재를 확인 못 한 이름으로 로그인을 시도하지
+#: 않는다 — 시도해서 얻는 것은 헷갈리는 회색뿐이다(존재하지 않는 계정과 자격증명
+#: 오류를 가르지 못한다). U3 는 아래처럼 **뷰어 계정 + persona 질의**로 연다.
+U5_RESERVE_ACCOUNT = "gxseed_u5_newop"
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -256,6 +297,84 @@ def frontend_calls(files: list[tuple[str, str]], route_path: str) -> list[str]:
 
 
 # ══════════════════════════════════════════════════════════════════════════
+# ㉡ 로그인 계획 — **순수 함수**(D-277). 소스만 읽는다 · 네트워크 0
+# ══════════════════════════════════════════════════════════════════════════
+def role_walk_plan(src: str, confirmed: dict[str, str],
+                    reserve: tuple[str, str] | None = None
+                    ) -> dict[str, tuple[str, str]]:
+    """버킷(최대 6개) → `(로그인 계정, persona 질의)`. **실재가 확인된 계정만** 담는다.
+
+    ① 역할 버킷(U1·U2·U4·U5)은 `confirmed` 의 그 계정을 persona 없이 그대로 연다.
+    ② 페르소나(U3·U6)는 `onboarding.PERSONA_VIEWERS`(이 파일의 `persona_viewers()`가
+       **소스에서** 읽는다 — 두 번째 표를 안 둔다 · D-369)가 정한 「볼 수 있는 역할」
+       중 `confirmed` 에 있는 **첫 이름**으로 연다. `reserve=(역할, 계정)` 이 주어지고
+       그 페르소나의 뷰어 목록에 그 역할이 있으면 **예비 계정을 먼저** 쓴다(본계정의
+       실측과 섞이지 않도록).
+    ③ 뷰어 전원이 `confirmed`(와 `reserve`)에 없는 페르소나는 **표에서 뺀다** — 계정이
+       없는 것을 0 으로 지어내지 않는다(D-301). 빠진 버킷은 회색으로 보고된다.
+    """
+    plan: dict[str, tuple[str, str]] = {}
+    for bucket, user in sorted(confirmed.items()):
+        plan[bucket] = (user, "")
+    reserve_role, reserve_user = reserve or (None, None)
+    for persona, viewers in sorted(persona_viewers(src).items()):
+        if reserve_role and reserve_user and reserve_role in viewers:
+            plan[persona] = (reserve_user, persona)
+            continue
+        opener = next((v for v in viewers if v in confirmed), None)
+        if opener:
+            plan[persona] = (confirmed[opener], persona)
+        # else: 계정이 없다 — 표에서 뺀다(그 버킷은 회색으로 보고된다)
+    return plan
+
+
+def judge_progress_response(status: int, body: dict) -> tuple[int, str]:
+    """진행률 응답 **하나**를 판정한다. 순수 함수 — HTTP 없이 시험한다 (D-277).
+
+    ★ **0/N 과 회색을 가른다.** 「분모를 못 셌다」(회색)와 「분모 N 중 0 을 했다」(초록 ·
+      쟀다)는 다른 사실이다. 못 잰 것을 0 으로 적으면 그 0 은 거짓이다(D-301) — 이
+      가름이 이 함수가 존재하는 이유다.
+    """
+    if status == 404:
+        return EXIT_UNDECIDABLE, "진행률 문이 없다(404) — 아직 없는 것이지 실패가 아니다"
+    if status in (401, 403):
+        return EXIT_UNDECIDABLE, ("진행률 문 HTTP %d — 토큰이 안 먹혔거나 이 자리가 "
+                                  "아니다(재려던 것을 못 쟀다)" % status)
+    if status is not None and status >= 500:
+        return EXIT_FAIL, "진행률 문이 서버 오류를 낸다(HTTP %d)" % status
+    if status != 200:
+        return EXIT_UNDECIDABLE, "진행률 문 HTTP %s — 못 쟀다" % status
+    total = body.get("total") if isinstance(body, dict) else None
+    if not isinstance(total, int) or total <= 0:
+        return EXIT_UNDECIDABLE, ("분모를 못 셌다(total=%r) — 0/0 을 지어내지 않는다 "
+                                  "(D-301)" % (total,))
+    done = body.get("done")
+    if not isinstance(done, int):
+        return EXIT_UNDECIDABLE, "done 이 없다(응답 모양이 바뀌었을 수 있다)"
+    return EXIT_OK, "%d/%d" % (done, total)
+
+
+def combine_role_codes(results: dict[str, dict]) -> tuple[int, str]:
+    """버킷별 판정을 **하나**로 접는다. 나쁜 쪽이 이긴다(기존 `walk()` 규약과 같다).
+
+    ① 계획이 비면 회색(D-301) ② 하나라도 **빨강**(서버 5xx)이면 회색보다 빨강이 이긴다
+    — 진짜 결함이다 ③ 그 밖에 하나라도 **회색**이면 전체가 회색이다 — **여섯을 다 재야
+    첫 수다**(P-311 · 「그 전엔 회색 유지 · 0 이라 적지 않는다」) ④ 여섯 다 쟀을 때만 초록.
+    """
+    if not results:
+        return EXIT_UNDECIDABLE, "계획이 비었다 — 잴 역할이 없다"
+    codes = {b: r.get("code") for b, r in results.items()}
+    reds = sorted(b for b, c in codes.items() if c == EXIT_FAIL)
+    if reds:
+        return EXIT_FAIL, "빨강 %d: %s" % (len(reds), reds)
+    grays = sorted(b for b, c in codes.items() if c != EXIT_OK)
+    if grays:
+        return EXIT_UNDECIDABLE, ("회색 %d/%d: %s — 여섯을 다 재야 첫 수다(P-311)"
+                                  % (len(grays), len(codes), grays))
+    return EXIT_OK, "%d개 버킷 다 쟀다" % len(codes)
+
+
+# ══════════════════════════════════════════════════════════════════════════
 # ㉠ 구조 판정
 # ══════════════════════════════════════════════════════════════════════════
 def judge_structure() -> int:
@@ -367,56 +486,77 @@ def judge_structure() -> int:
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# ㉡ 걷기 — **서버와 역할 계정이 있을 때만.** 없으면 회색이다
+# ㉢ 걷기 — **서버와 역할 계정이 있을 때만.** 없으면 회색이다 (P-311 · 짓기)
 # ══════════════════════════════════════════════════════════════════════════
-def walk(api: str, user: str, password: str) -> int:
-    """역할 계정으로 진행률을 받아 100 을 본다. **골격이다.**
+def accounts_needed(plan: dict[str, tuple[str, str]]) -> dict[str, list[tuple[str, str]]]:
+    """계정 이름 → `[(버킷, persona 질의)]`. **로그인은 계정당 한 번**뿐이다.
 
-    지금 서 있는 것: 자리와 판정식(진행률 100 · 분모 0이면 회색 · 못 재는 카드 목록).
-    아직 없는 것: 역할 계정 여섯의 자격(`.env.gates` 규약 — 저장소에 값이 없다)과
-    카드별 행위 재현(판정 1 · 인계 1 · 보고서 1 …)을 이 판정기가 대신 누르는 부분.
+    ★ 로그인에는 속도 제한이 있다(IP 기준 분당 5회 · `verify_route_alive.py` 머리말).
+      U3 은 U1 계정으로, U6 는 예비 계정으로 열리므로 계정 하나가 버킷 둘을 덮을 수
+      있다 — 그때마다 새로 로그인하면 6버킷에 로그인을 6번 쓰고, 이 게이트 하나가
+      다른 게이트의 몫까지 태운다(D-460 의 그 사고). 계정별로 묶어 **한 번만** 로그인한다.
+    """
+    by_user: dict[str, list[tuple[str, str]]] = {}
+    for bucket, (user, persona) in sorted(plan.items()):
+        by_user.setdefault(user, []).append((bucket, persona))
+    return by_user
 
-    ★ 그 둘이 없으면 **회색을 낸다.** 「로그인은 됐고 진행률은 0이었다」를 초록으로
-      적으면, 그 초록은 제품이 아니라 이 판정기의 게으름을 증명한다.
+
+def walk_all_roles(api: str, plan: dict[str, tuple[str, str]]) -> dict[str, dict]:
+    """계획의 버킷마다 **실제로** 로그인하고 진행률을 읽는다.
+
+    ★ 로그인 못 받음(V_LOCK · 자격없음 · 율제한 소진)은 **회색**이지 0 이 아니다 —
+      `login()` 이 `None` 을 돌려주면 그 계정이 덮는 버킷 전부를 회색으로 적는다.
+      「로그인 200 인데 토큰이 없다」(제품이 200 + success:false 로 「다른 세션 있음」을
+      내는 그 자리 · `verify_route_alive._extract_token`)도 여기서는 **똑같이 회색**이다
+      — `login()` 이 이미 그 갈래를 가려 `None` 하나로 묶어 주기 때문이다(두 벌 판독을
+      안 둔다 · D-369).
+
+    돌려주는 것: `{버킷: {"code", "why", "user", "total", "done"}}`.
     """
     import json
     import urllib.error
     import urllib.request
 
-    if not (api and user and password):
-        print("[UX-46] GRAY 걷기에 필요한 셋(--api · --user · --password)이 없다 — 판정 불가")
-        return EXIT_UNDECIDABLE
+    password = os.environ.get("GX_SEED_ROLE_PASSWORD", "")
+    out: dict[str, dict] = {}
+    if not password:
+        for bucket in plan:
+            out[bucket] = {"code": EXIT_UNDECIDABLE, "user": plan[bucket][0],
+                           "total": None, "done": None,
+                           "why": "GX_SEED_ROLE_PASSWORD 가 없다 — 로그인을 시도하지 않는다"}
+        return out
 
-    # TODO(조율자 계정 배포 뒤): ① `/api/v1/auth/login`(end_previous_session=true)로 토큰
-    #   ② 카드별 행위를 실제로 눌러 서버 기록을 만든다. 지금은 **읽기 한 번**만 한다.
-    try:
-        req = urllib.request.Request(
-            f"{api.rstrip('/')}/api/dsm{ROUTE_PATH}",
-            headers={"Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
-            body = json.loads(resp.read().decode("utf-8") or "{}")
-            code = resp.status
-    except urllib.error.HTTPError as exc:
-        code, body = exc.code, {}
-    except Exception as exc:  # noqa: BLE001
-        print(f"[UX-46] GRAY 서버에 닿지 못했다({type(exc).__name__}) — 판정 불가")
-        return EXIT_UNDECIDABLE
-
-    if code == 401:
-        print("[UX-46] GRAY 익명으로는 진행률을 못 읽는다(401 · 정상) — "
-              "역할 계정 로그인이 아직 이 판정기에 없다. 걷기는 **회색**이다")
-        return EXIT_UNDECIDABLE
-
-    percent = body.get("percent")
-    if percent is None:
-        print(f"[UX-46] GRAY 진행률이 없다(카드 0장 · 역할 모름) — 응답 {code}")
-        return EXIT_UNDECIDABLE
-    if percent < 100:
-        print(f"[UX-46] 진행률 {percent} — 100 이 아니다 "
-              f"({body.get('done')}/{body.get('total')})")
-        return EXIT_FAIL
-    print(f"[UX-46] 진행률 100 ({body.get('done')}/{body.get('total')})")
-    return EXIT_OK
+    for user, entries in sorted(accounts_needed(plan).items()):
+        token = login(api, user, password)
+        if not token:
+            for bucket, _persona in entries:
+                out[bucket] = {"code": EXIT_UNDECIDABLE, "user": user, "total": None,
+                               "done": None,
+                               "why": "로그인 실패 — 토큰을 못 받았다(V_LOCK·자격없음·"
+                                      "율제한·다른 세션 중 하나 · login() 이 가른다)"}
+            continue
+        for bucket, persona in entries:
+            qs = ("?persona=" + persona) if persona else ""
+            req = urllib.request.Request(
+                api.rstrip("/") + PROGRESS_ENDPOINT + qs,
+                headers={"Authorization": "Bearer " + token, "Accept": "application/json"})
+            try:
+                with urllib.request.urlopen(req, timeout=15) as r:  # noqa: S310
+                    status = r.status
+                    body = json.loads(r.read().decode("utf-8", "replace") or "{}")
+            except urllib.error.HTTPError as exc:
+                status, body = exc.code, {}
+            except Exception as exc:                       # noqa: BLE001
+                out[bucket] = {"code": EXIT_UNDECIDABLE, "user": user, "total": None,
+                               "done": None, "why": "%s: %s" % (type(exc).__name__, exc)}
+                continue
+            code, why = judge_progress_response(status, body)
+            out[bucket] = {"code": code, "user": user,
+                           "total": body.get("total") if isinstance(body, dict) else None,
+                           "done": body.get("done") if isinstance(body, dict) else None,
+                           "why": why}
+    return out
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -573,6 +713,74 @@ def self_test() -> int:
         ("부르는 화면을 찾는다",
          frontend_calls([("a.ts", f"x = '{ROUTE_PATH}'")], ROUTE_PATH) == ["a.ts"]),
     ]
+
+    # ══════════════════════════════════════════════════════════════════════
+    # ★★ [P-311 · 09-24 · 턴 AI 차선 F] 로그인 계획 · 진행률 판정 · 접기 — 짓기
+    # ══════════════════════════════════════════════════════════════════════
+    _SRC_BOTH_PERSONAS = 'PERSONA_VIEWERS = {"U3": ("U1", "U2", "U4"), "U6": ("U5",)}\n'
+    _SRC_ORPHAN_PERSONA = 'PERSONA_VIEWERS = {"U9": ("U7",)}\n'
+    _CONF = {"U1": "acct1", "U2": "acct2", "U4": "acct4", "U5": "acct5"}
+    _plan_no_reserve = role_walk_plan(_SRC_BOTH_PERSONAS, _CONF)
+    _plan_reserve = role_walk_plan(_SRC_BOTH_PERSONAS, _CONF, reserve=("U5", "acct5-reserve"))
+    checks += [
+        ("역할 버킷은 persona 없이 제 계정 그대로", _plan_no_reserve["U1"] == ("acct1", "")),
+        ("페르소나는 뷰어 계정 + persona 질의로 연다(U3 → U1)",
+         _plan_no_reserve["U3"] == ("acct1", "U3")),
+        ("예비 계정이 있으면 U6 은 본계정이 아니라 예비 계정으로 연다(안 섞는다)",
+         _plan_reserve["U6"] == ("acct5-reserve", "U6")),
+        ("예비 계정이 없으면 U6 은 뷰어 목록의 첫 confirmed 계정으로 연다",
+         _plan_no_reserve["U6"] == ("acct5", "U6")),
+        ("★ 뷰어 전원이 계정이 없는 페르소나는 표에서 **빠진다**(0 으로 지어내지 않는다)",
+         "U9" not in role_walk_plan(_SRC_ORPHAN_PERSONA, _CONF)),
+        ("accounts_needed 는 계정별로 묶는다(로그인 한 번)",
+         sorted(accounts_needed(_plan_no_reserve)["acct1"]) == [("U1", ""), ("U3", "U3")]),
+    ]
+
+    checks += [
+        ("0/7 은 쟀다(초록) — 분모를 못 센 회색과 다르다",
+         judge_progress_response(200, {"total": 7, "done": 0}) == (EXIT_OK, "0/7")),
+        ("★ 분모를 못 세면 회색이다(0/0 을 지어내지 않는다 · D-301)",
+         judge_progress_response(200, {})[0] == EXIT_UNDECIDABLE),
+        ("0/7 과 회색은 **다른 판정**이다(둘 다 셈 안 하면 못 가른다)",
+         judge_progress_response(200, {"total": 7, "done": 0})[0]
+         != judge_progress_response(200, {})[0]),
+        ("진행률 문이 없으면(404) 회색이다 — 아직 없는 것이지 실패가 아니다",
+         judge_progress_response(404, {})[0] == EXIT_UNDECIDABLE),
+        ("401 은 회색이다(토큰이 안 먹혔다 — 재려던 것을 못 쟀다)",
+         judge_progress_response(401, {})[0] == EXIT_UNDECIDABLE),
+        ("403 도 같은 자리(이 페르소나가 내 자리가 아니다)",
+         judge_progress_response(403, {})[0] == EXIT_UNDECIDABLE),
+        ("서버 오류(5xx)는 회색이 아니라 **빨강**이다 — 진짜 결함이다",
+         judge_progress_response(500, {})[0] == EXIT_FAIL),
+        ("total 이 문자열이면(모양이 바뀌었다) 회색이다(정수만 분모다)",
+         judge_progress_response(200, {"total": "칠", "done": 0})[0] == EXIT_UNDECIDABLE),
+    ]
+
+    checks += [
+        ("계획이 비면 회색이다", combine_role_codes({})[0] == EXIT_UNDECIDABLE),
+        ("여섯 다 쟀으면(초록) 그때만 초록",
+         combine_role_codes({b: {"code": EXIT_OK} for b in EXPECTED_BUCKETS})[0] == EXIT_OK),
+        ("★ 다섯만 쟀고 하나가 회색이면 **전체가 회색**이다(여섯 다 재야 첫 수다 · P-311)",
+         combine_role_codes({**{b: {"code": EXIT_OK} for b in EXPECTED_BUCKETS[:5]},
+                             "U6": {"code": EXIT_UNDECIDABLE}})[0] == EXIT_UNDECIDABLE),
+        ("빨강이 하나라도 있으면 회색보다 빨강이 이긴다(진짜 결함)",
+         combine_role_codes({"U1": {"code": EXIT_FAIL}, "U2": {"code": EXIT_UNDECIDABLE}})[0]
+         == EXIT_FAIL),
+    ]
+
+    # ★ D-369 교훈 그대로 — 이 파일의 CONFIRMED_ROLE_ACCOUNTS 가 `verify_sidebar.
+    #   HTTP_ACCOUNTS` 와 **갈리면** 둘 중 하나가 거짓말하는 것이다. 매번 다시 대조한다
+    #   (믿지 않고 연다 — D-479 교훈과 같은 자리).
+    try:
+        from verify_sidebar import HTTP_ACCOUNTS as _SIDEBAR_ACCOUNTS  # noqa: PLC0415
+        _drift = [b for b in ("U1", "U2", "U4", "U5")
+                 if CONFIRMED_ROLE_ACCOUNTS.get(b) != _SIDEBAR_ACCOUNTS.get(b)]
+        checks.append(("★ verify_sidebar.HTTP_ACCOUNTS 와 계정 이름이 갈리지 않는다 "
+                       "(D-369 — 두 벌은 반드시 어긋난다)", not _drift))
+    except ImportError:
+        checks.append(("verify_sidebar 를 못 읽어 교차 대조를 건너뛴다(회색 취급 · 실패 아님)",
+                       True))
+
     bad = [name for name, ok in checks if not ok]
     for name, ok in checks:
         print(f"  {'OK ' if ok else 'FAIL'} {name}")
@@ -580,12 +788,54 @@ def self_test() -> int:
     return EXIT_OK if not bad else EXIT_FAIL
 
 
+def _print_dry_run() -> int:
+    """★ [P-311] **로그인 없이** 무엇을 할지만 찍는다. 네트워크 0 — 자격증명을 안 보낸다.
+
+    이 턴은 걷지 않는다(역할 계정 로그인이 살아 있는 세션을 끊는다 · V 의 재측 앞에서
+    끼어들면 그 수가 망가진다 · P-170 ①). 첫 실측은 V 가 한다 — 이 함수는 그 전에
+    「무엇을 할 계획인지」를 보고에 붙이기 위한 것이다.
+    """
+    try:
+        from v_lock import describe as _v_describe, is_locked as _v_locked  # noqa: PLC0415
+    except ImportError:
+        _v_locked, _v_describe = (lambda: False), (lambda: "v_lock 모듈을 못 읽었다")
+    print("[UX-46] --dry-run — 로그인을 시도하지 않는다. 아래는 계획뿐이다(값 출력 0).")
+    print(f"[UX-46] V_LOCK: {'잠김 — ' + _v_describe() if _v_locked() else '없음'}")
+    read = load_local_env()
+    print(f"[UX-46] 로컬 자격증명 파일 읽음: {', '.join(read) if read else '없음(환경변수만 본다)'}")
+    print(f"[UX-46] GX_API 선언: {'있음' if os.environ.get('GX_API') else '없음'}")
+    print(f"[UX-46] GX_SEED_ROLE_PASSWORD 선언: "
+          f"{'있음' if os.environ.get('GX_SEED_ROLE_PASSWORD') else '없음'} (이름만 · 값은 안 찍는다)")
+    if not ONBOARDING.is_file():
+        print("[UX-46] ? 온보딩 소스를 못 읽어 계획을 못 짰다")
+        return EXIT_UNDECIDABLE
+    src = ONBOARDING.read_text(encoding="utf-8")
+    plan = role_walk_plan(src, CONFIRMED_ROLE_ACCOUNTS, reserve=("U5", U5_RESERVE_ACCOUNT))
+    for bucket in EXPECTED_BUCKETS:
+        if bucket not in plan:
+            print(f"[UX-46]   {bucket}: 계정 없음 — 표에서 빠진다(그 버킷은 회색으로 보고된다)")
+            continue
+        user, persona = plan[bucket]
+        qs = f"?persona={persona}" if persona else ""
+        print(f"[UX-46]   {bucket}: 로그인 시도 {user} (자격 이름 GX_SEED_ROLE_PASSWORD) "
+              f"→ GET {PROGRESS_ENDPOINT}{qs}")
+    by_user = accounts_needed(plan)
+    print(f"[UX-46] 로그인 횟수 계획: 계정 {len(by_user)}개로 버킷 {len(plan)}/"
+          f"{len(EXPECTED_BUCKETS)}개를 덮는다(계정당 한 번만 로그인한다 — 율제한을 안 늘린다)")
+    if len(plan) < len(EXPECTED_BUCKETS):
+        missing = [b for b in EXPECTED_BUCKETS if b not in plan]
+        print(f"[UX-46] ⚠ 계정이 없어 계획에서 빠진 버킷: {missing}")
+    print("[UX-46] ? **못 쟀다** — `--dry-run` 은 계획을 찍을 뿐 한 사람도 걷지 않는다 (P-204)")
+    return EXIT_UNDECIDABLE
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="UX-46 온보딩 진행률 판정기 (골격)")
+    parser = argparse.ArgumentParser(description="UX-46 온보딩 진행률 판정기")
     parser.add_argument("--list", action="store_true", help="카드 표 전수")
-    parser.add_argument("--api", default="", help="걷기 대상 서버 (없으면 구조만)")
-    parser.add_argument("--user", default="")
-    parser.add_argument("--password", default="")
+    parser.add_argument("--api", default=os.environ.get("GX_API", ""),
+                        help="걷기 대상 서버 (없으면 구조만)")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="로그인 없이 계획만 찍는다(네트워크 0 · P-311)")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
 
@@ -602,9 +852,25 @@ def main() -> int:
         print("[UX-46] ? **못 쟀다** — `--list` 는 카드 표를 찍을 뿐 한 장도 걷지 않는다 (P-204)")
         return EXIT_UNDECIDABLE
 
+    if args.dry_run:
+        return _print_dry_run()
+
     code = judge_structure()
     if args.api:
-        walked = walk(args.api, args.user, args.password)
+        load_local_env()
+        src = ONBOARDING.read_text(encoding="utf-8")
+        plan = role_walk_plan(src, CONFIRMED_ROLE_ACCOUNTS, reserve=("U5", U5_RESERVE_ACCOUNT))
+        if not plan:
+            print("[UX-46] ? **못 쟀다** — 로그인 계획이 비었다(실재가 확인된 계정이 없다)")
+            return EXIT_FAIL if code == EXIT_FAIL else EXIT_UNDECIDABLE
+        results = walk_all_roles(args.api, plan)
+        _marks = {EXIT_OK: "OK  ", EXIT_FAIL: "FAIL", EXIT_UNDECIDABLE: "GRAY"}
+        for bucket in sorted(results):
+            r = results[bucket]
+            print(f"[UX-46]   {_marks.get(r['code'], '?   ')} {bucket} ({r['user']}) — "
+                  f"{r['why']}")
+        walked, walked_why = combine_role_codes(results)
+        print(f"[UX-46] 걷기(㉢) 접은 수: {walked_why}")
         # 둘을 한 수로 합치지 않는다 — 나쁜 쪽이 이긴다(회색은 초록을 덮는다).
         if walked == EXIT_FAIL or code == EXIT_FAIL:
             return EXIT_FAIL
@@ -616,7 +882,7 @@ def main() -> int:
     if code != EXIT_OK:
         return code
     print("[UX-46] ? **못 쟀다** — `--api` 를 안 줬다. 구조만 봤고 **한 사람도 걷지 않았다.** "
-          "이 0 은 「이 호출이 통과」일 뿐이다 (P-204) — 재려면 `--api …` 로 부른다")
+          "이 0 은 「이 호출이 통과」일 뿐이다 (P-204) — 재려면 `--api …` 또는 `--dry-run` 으로 부른다")
     return EXIT_UNDECIDABLE
 
 
@@ -624,7 +890,7 @@ if __name__ == "__main__":
     #: [2026-09-19 · 턴 V 병합] **머리글이 없어 이 게이트는 회색으로 세어졌다**(P-107).
     #:   74개 판정기 중 73개가 세 줄을 찍는데 이것만 안 찍었다. 머리글 없는 게이트는
     #:   검증 차선의 셈에서 초록이 아니다 — 무엇을 재고 한 말인지 아무도 모르기 때문이다.
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    #:   (경로는 이미 위(`login` import 자리)에서 꽂았다 — 두 번 꽂지 않는다.)
     from _gate_header import gate_header
     try:
         _cards = cards_per_role(ONBOARDING.read_text(encoding="utf-8"))
