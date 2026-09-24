@@ -434,6 +434,11 @@ def login(page, net: Net, web: str, user: str, password: str) -> dict:
             "profile_endpoint": ("/api/v1/auth/profile" if profile_dj else ("/api/v1/user/get-user-detail" if profile_spa else "")),
             "login_body_has_product_line": PRODUCT_LINE in body_before,
             "login_body_has_first_time": FIRST_TIME in body_before,
+            #: [P-343] U1#1 은 **로그인 화면**의 셋째 조건을 잰다 — 이 함수가 끝나면
+            #: 페이지는 이미 로그인 뒤 화면으로 옮겨 가 있어서 U1#1 자리에서 다시
+            #: `body(page)` 를 읽으면 **엉뚱한 화면**(로그인 다음 화면)을 잰다. 그래서
+            #: 이 순간 잡아 둔 글자를 그대로(자르지 않고) 들려 보낸다.
+            "login_body": body_before,
             "why": ("로그인 뒤에도 /login" if still_login else "")}
 
 
@@ -562,16 +567,53 @@ def third_condition_violations(screen_text: str) -> list[str]:
     return hits
 
 
+#: ═══════════════════════════════════════════════════════════════════════════
+#: P-343 · 차선 Q — 「셋째 조건」을 실제로 배선한다(P-318 이 낸 함수는 있었는데
+#: 부르는 자리 0/약59 이 그것을 안 썼다). 이 함수는 **행마다 이미 읽어 둔 화면 글자**
+#: 하나를 `result()` 로 좁혀 준다 — 두 벌을 만들지 않는다(재읽기 대신 재사용).
+#:
+#: ★★ `""`(빈 문자열)과 `None` 은 **다른 뜻**이다:
+#:   `""`  = 아직 배선 안 됨 / 화면이 비었다 (P-318 의 기존 규약 — 그대로 둔다)
+#:   `None` = **화면 자체가 없다**(기계 호출 — U6. 브라우저가 없다) — 이 값을 받으면
+#:            `result()` 는 셋째 조건을 **회색**으로 매긴다. 지어낸 초록이 아니다
+#:            (「회색은 초록이 아니다」 · D-301).
+def collect_screen_text(page=None, text=None):
+    """이 행이 실제로 본 화면 글자 하나로 좁힌다.
+
+    `text` 를 주면 그것을 그대로 쓴다 — 이미 어딘가에서 캡처해 둔 값이다(예:
+    로그인 화면 글자는 로그인 뒤 페이지가 옮겨 가므로 `login()` 이 그 순간에
+    잡아 둔 것을 다시 쓴다 · U1#1). `text` 없이 `page` 만 있으면 **지금** 화면을
+    다시 읽는다(`body()` 와 같은 실패 관용 — 못 읽으면 빈 문자열). 둘 다 없으면
+    (U6 처럼 기계가 문만 두드리는 행 — 화면이랄 것이 없다) **`None`** 을 돌려준다.
+    """
+    if text is not None:
+        return text
+    if page is not None:
+        return body(page)
+    return None
+
+
 def result(row, route, phrase_seen, predicate, evidence, cap_half=False, measured=True,
            url="", gray_kind="", screen_text=""):
     #: [P-318] 셋째 조건이 걸리면 **정본이 ◐ 상한이라 적은 행과 같은 자리**로 합류한다
     #: — cap_half 를 올릴 뿐 내리지 않는다(다른 이유로 이미 ◐ 상한이면 그대로 둔다).
-    third_hits = third_condition_violations(screen_text) if measured else []
+    #: [P-343] `screen_text is None` 은 「이 행엔 화면이 없다」는 뜻이다(위 머리말) —
+    #: 그때는 셋째 조건을 **아예 못 잰다**(빈 문자열로 지어내 「위반 0건」을 내지 않는다).
+    no_screen = bool(measured) and screen_text is None
+    third_hits = third_condition_violations(screen_text) if (measured and not no_screen) else []
     if third_hits and not cap_half:
         cap_half = True
         evidence = (evidence + " · ◐ 상한(셋째 조건 — 그 사용자의 언어가 아니다: "
                     + ", ".join(third_hits) + ")")
-    if not measured:
+    if no_screen:
+        #: ★ [P-343] **화면이 없으면 셋째 조건은 회색이다 — 초록도 빨강도 아니다.**
+        #:   U6(기계) 여덟 행이 여기 해당한다 — 문은 있고 응답도 오지만 「그 사용자가
+        #:   보는 화면」자체가 없다. `nopred`(「우리가 안 잰 것」)를 그대로 쓴다 —
+        #:   새 부류를 만들지 않는다(GRAY_KINDS 의 정의 그대로 들어맞는다).
+        gray_kind = gray_kind or "nopred"
+        evidence = (evidence + " · 셋째 조건 회색(화면이 없다 — 기계 호출이라 "
+                    "화면 글자를 잴 수 없다. 회색은 초록이 아니다 · P-343)")
+    if (not measured) or no_screen:
         verdict, score = "gray", None
         #: 회색인데 부류를 안 준 자리는 **그 사실 자체를 적는다** — 조용히 빈 칸으로
         #: 두면 「가르지 않은 것」이 「가를 수 없는 것」처럼 보인다.
@@ -681,7 +723,7 @@ def guarded(out, key, route, fn):
         out.append(result(key, route, False, False,
                           "재다 터졌다 — %s: %s (못 쟀다 · 회색. 나머지 행은 그대로 잰다)"
                           % (type(exc).__name__, str(exc)[:200]),
-                          measured=False, gray_kind="env"))
+                          measured=False, gray_kind="env", screen_text=collect_screen_text()))
 
 
 def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, out_path: str,
@@ -736,7 +778,7 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
                 for row in [k for k in canon["two_column"] if k.split("#")[0] == pn]:
                     results.append(result(row, "", False, False,
                                           "로그인 실패 — 못 쟀다: " + lg.get("why", ""),
-                                          measured=False, gray_kind="env"))
+                                          measured=False, gray_kind="env", screen_text=collect_screen_text(page=page)))
                 ctx.close()
                 continue
             try:
@@ -793,7 +835,7 @@ def measure(web: str, snap_event: int, seed_a: int, seed_b: int, role_pw: str, o
                         results.append(result(k, "", False, False,
                                               "U6 걸음이 터졌다 — %s: %s (못 쟀다)"
                                               % (type(exc).__name__, str(exc)[:160]),
-                                              measured=False, gray_kind="env"))
+                                              measured=False, gray_kind="env", screen_text=collect_screen_text()))
         browser.close()
 
     measured_rows = [r for r in results if r["measured"]]
@@ -969,7 +1011,7 @@ def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     pred = (200 in lg.get("login_posts", [])) and lg.get("profile_200", False)
     out.append(result("U1#1", "/login", phrase, pred,
                       f"login POST {lg.get('login_posts')} · 프로필 200={lg.get('profile_200')} ({lg.get('profile_endpoint') or '둘 다 없음'} — [P-190 · 턴 W] 정본을 화면이 부르는 것으로 맞췄다: get-user-detail 이 기대식이다) · 문장={lg['login_body_has_product_line']} · 처음이세요?={lg['login_body_has_first_time']}",
-                      url=lg.get("url", "")))
+                      url=lg.get("url", ""), screen_text=collect_screen_text(text=lg.get("login_body", ""))))
 
     # #2 전체 상황판: 배지 셋 중 하나 + frame 200 + link-state 200 — 정본이 ◐ 유지 근거를 적었다(카메라 정상/이상 칸 없음)
     m = net.mark()
@@ -987,7 +1029,7 @@ def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     frame_link = (fjson.get("link") or {}) if isinstance(fjson, dict) else {}
     out.append(result("U1#2", "/dsm/dashboard", bool(badge), bool(frame) and bool(frame_link),
                       f"배지={badge} · frame 200={bool(frame)} · frame.link={frame_link.get('status') if isinstance(frame_link, dict) else frame_link} · link-state 따로 호출 {link_all} ([P-190 · 턴 W] 정본을 화면이 부르는 것으로 맞췄다: 배지는 frame.link 에서 온다 — 따로 호출 0건이 옳다) · ◐ 상한(카메라 정상/이상 칸 없음 — 정본 표기)",
-                      cap_half=True, url=url))
+                      cap_half=True, url=url, screen_text=collect_screen_text(page=page)))
 
     # #3 죽은 카메라: 카메라 격자 + 자동 순회/순회 멈춤 + 응답 없음 · pulse 200 · 타일 응답 없음/마지막 응답 ≥1
     m = net.mark()
@@ -997,7 +1039,7 @@ def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     pulse = net.ok("GET", "/api/dsm/cameras/pulse", m)
     tiles = b.count("응답 없음") + b.count("마지막 응답")
     out.append(result("U1#3", "/dsm/cameras/grid", phrase, bool(pulse) and tiles >= 1,
-                      f"pulse 200={bool(pulse)} · 「응답 없음」/「마지막 응답」 {tiles}회 · 격자={('카메라 격자' in b)} 순회={('자동 순회' in b) or ('순회 멈춤' in b)}", url=url))
+                      f"pulse 200={bool(pulse)} · 「응답 없음」/「마지막 응답」 {tiles}회 · 격자={('카메라 격자' in b)} 순회={('자동 순회' in b) or ('순회 멈춤' in b)}", url=url, screen_text=collect_screen_text(page=page)))
 
     # #4 실시간 스트림 열기 [P-205 · 턴 Y] — **누를 자리 = /multi-stream-monitor · 기대 = 도달 + 스트림 자리 ≥1**
     #    문구 정본이 없어 세 턴 회색이던 행이다. 기계에게 필요한 것은 글자가 아니라 **자리**였다.
@@ -1016,7 +1058,7 @@ def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                           (slots >= 1) or says,
                           f"도달={reached} (url={url}) · 스트림 자리(video/canvas/stream) {slots}개 · "
                           f"단언 글자={says} · 본문 {len(b)}자 "
-                          f"— 도달만 하고 자리가 0이면 빨강(P-205)", url=url))
+                          f"— 도달만 하고 자리가 0이면 빨강(P-205)", url=url, screen_text=collect_screen_text(page=page)))
     guarded(out, "U1#4", "/multi-stream-monitor", _u1_4)
 
     # #8 이벤트 목록: 단추 넷 + GET /api/dsm/events 200 + 처리 단계 값
@@ -1028,7 +1070,7 @@ def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     cells = table_cells(page)
     states = [c for c in cells if c in STATE_WORDS]
     out.append(result("U1#8", "/dsm/events", len(btns) == 4, bool(ev) and len(states) >= 1,
-                      f"단추={btns} · GET events 200={bool(ev)} · 처리 단계 값 {len(states)}칸 {sorted(set(states))}", url=url))
+                      f"단추={btns} · GET events 200={bool(ev)} · 처리 단계 값 {len(states)}칸 {sorted(set(states))}", url=url, screen_text=collect_screen_text(page=page)))
 
     # #9 이벤트 상세: 등급 배지 + GET /api/dsm/events/{id} 200 (서버 재조회)
     m = net.mark()
@@ -1037,7 +1079,7 @@ def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     badge = [x for x in ["심각", "경계", "주의"] if x in b]
     det = net.ok("GET", f"/api/dsm/events/{snap_event}", m)
     out.append(result("U1#9", "/dsm/events/:id", bool(badge), bool(det),
-                      f"배지={badge} · GET events/{snap_event} 200={bool(det)}", url=url))
+                      f"배지={badge} · GET events/{snap_event} 200={bool(det)}", url=url, screen_text=collect_screen_text(page=page)))
 
     # #11 진위 판단: /dsm/queue 「실제로 확인 · 접수」 → POST review-and-acknowledge 200 → 서버 재조회 verdict
     m = net.mark()
@@ -1065,7 +1107,7 @@ def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     else:
         others = [x for x in (ADVANCE_LABELS + ["오탐으로 판정"]) if visible_text(page, x)]
         evidence = f"큐 화면에 「{label}」 이 보이지 않는다 — 보이는 단추 {others} · 초점 사건이 미처리가 아니면 이 단추는 없다(데이터 상태) · 본문 {b[:100]!r}"
-    out.append(result("U1#11", "/dsm/queue", seen, pred, evidence, url=url))
+    out.append(result("U1#11", "/dsm/queue", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # #19 교대 인계 메모: 홈 카드 「인계 메모」 → 「인계 읽기」 → /handover 도달 + 본문 (68자 그대로면 빨강 · P-98)
     m = net.mark()
@@ -1084,7 +1126,7 @@ def rows_u1(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         url = page.url
     else:
         evidence = f"홈에 「인계 메모」/「인계 읽기」 카드가 안 보인다 — 본문 앞부분 {b[:120]!r}"
-    out.append(result("U1#19", "/dsm/home → /handover", seen, pred, evidence, url=url))
+    out.append(result("U1#19", "/dsm/home → /handover", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
 
 # ---------------------------------------------------------------------------
@@ -1113,7 +1155,7 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         url = page.url
     else:
         evidence = "「지난 12시간 보기」 단추가 안 보인다"
-    out.append(result("U2#1", "/dsm/events", seen, pred, evidence, url=url))
+    out.append(result("U2#1", "/dsm/events", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # #2 미처리: ?preset=unhandled · 「미처리 보기」 · GET events?limit=50&response_state=occurred · 처리 단계 열 전부 미처리
     m = net.mark()
@@ -1139,7 +1181,7 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                       "카메라 이름으로 거르는 갈래는 **훈련을 탐침으로 읽어서 폐지**했다 "
                       "(P-201 · P-184). 못 쟀다는 뜻이지 0건이라는 뜻이 아니다")
     out.append(result("U2#2", "/dsm/events?preset=unhandled", seen, bool(g200) and all_unhandled,
-                      f"GET …response_state=occurred 200={bool(g200)} (서버 {n_srv}건{probe_note}) · 처리 단계 칸 {len(states)} 전부 미처리={all_unhandled} {sorted(set(states))}", url=url))
+                      f"GET …response_state=occurred 200={bool(g200)} (서버 {n_srv}건{probe_note}) · 처리 단계 칸 {len(states)} 전부 미처리={all_unhandled} {sorted(set(states))}", url=url, screen_text=collect_screen_text(page=page)))
 
     # #3 이벤트 등급 재판정 [P-205 · 턴 Y → **턴 AF · K+Q 강화**]
     #    ★★ [실측 2026-09-23 · 조율자 브라우저] 옛 술어(「단추 자신의 글자에 '등급'/
@@ -1179,7 +1221,7 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         if not before or before_sev is None or target is None:
             out.append(result("U2#3", "/dsm/events/:id", True, False,
                               f"[서버 기록] 을 못 읽었다(eid={eid}) — before={before} · "
-                              f"등급을 다시 매길 표적을 못 골랐다", url=url))
+                              f"등급을 다시 매길 표적을 못 골랐다", url=url, screen_text=collect_screen_text(page=page)))
             return
 
         clicked, confirmed, post_ok = press(target)
@@ -1207,7 +1249,7 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
             if not reverted:
                 evidence += " · ⚠⚠ 되돌리기 실패 — 사건이 바뀐 등급인 채로 남았다(손으로 확인 필요)"
 
-        out.append(result("U2#3", "/dsm/events/:id", True, pred, evidence, url=url))
+        out.append(result("U2#3", "/dsm/events/:id", True, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
     guarded(out, "U2#3", "/dsm/events/:id", _u2_3)
 
     # #4 심각 이벤트: 배지 심각 · GET snapshot 200 image/jpeg · <img> ≥1 · 주소 칸 비어 있지 않음 — 하나라도 빠지면 ◐
@@ -1219,7 +1261,7 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                           "그림 실린 씨앗이 없어 **못 쟀다** — 씨앗 명세의 snapshot_path 가 전부 비었다. "
                           "capture_screens 를 이 턴 판으로 다시 돌리거나 --snap-event 를 손으로 준다 "
                           "(개발 DB 에서 200 이 확인된 사건: 4802)",
-                          measured=False, gray_kind="nodata"))
+                          measured=False, gray_kind="nodata", screen_text=collect_screen_text(page=page)))
     else:
         m = net.mark()
         url = goto(page, web, f"/dsm/events/{snap_event}")
@@ -1240,7 +1282,7 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                           f"snapshot {[r['status'] for r in snap]} jpeg={snap_ok} · img(snapshot, naturalWidth>0)={imgs} · "
                           f"주소 화면={addr_on} · 셋 다={full} · "
                           f"[서버 기록] 이 사건의 snapshot_path={'있다' if (row.get('snapshot_path') or '').strip() else '**비었다**'}",
-                          cap_half=partial, url=url))
+                          cap_half=partial, url=url, screen_text=collect_screen_text(page=page)))
 
     # #6 상황보고서: /report-template · 「보고서 서식」 + 머리줄 · GET reports/templates 200 · 표 행 ≥1 (0 이면 ◐)
     m = net.mark()
@@ -1251,7 +1293,7 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     rows = table_rows(page)
     out.append(result("U2#6", "/report-template", seen, bool(t),
                       f"templates 200={bool(t)} · 표 행 {rows} (0 이면 ◐) · 보고서 서식={('보고서 서식' in b)} 머리줄={(ADMIN_HEADER in b)} · url={page.url}",
-                      cap_half=(rows < 1), url=url))
+                      cap_half=(rows < 1), url=url, screen_text=collect_screen_text(page=page)))
 
     # #19 장애 판단: ?preset=system · 「시스템 보기」 · GET events?event_type=camera_down,storage_high 200 · 유형 열이 그 둘뿐
     m = net.mark()
@@ -1263,7 +1305,7 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     types = sorted({str(e.get("event_type")) for e in evs})
     only_two = all(t in ("camera_down", "storage_high") for t in types)
     out.append(result("U2#19", "/dsm/events?preset=system", seen, bool(g) and only_two,
-                      f"GET event_type=… 200={bool(g)} · 서버 {len(evs)}건 유형={types} · 둘뿐={only_two} (0건이면 빈 상태가 그려져야 한다)", url=url))
+                      f"GET event_type=… 200={bool(g)} · 서버 {len(evs)}건 유형={types} · 둘뿐={only_two} (0건이면 빈 상태가 그려져야 한다)", url=url, screen_text=collect_screen_text(page=page)))
 
     # ══ [P-180 · 턴 V] 정본이 두 칸을 채운 뒤 늘어난 행 ═══════════════════════
     # #9 요원별 처리 현황: /dsm/team-status · 「요원별 현황」 · GET stats/by-reviewer 200 + 표 행 ≥1
@@ -1277,7 +1319,7 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     said_empty = any(w in b for w in EMPTY_WORDS)
     out.append(result("U2#9", "/dsm/team-status", seen, bool(g) and (rows >= 1 or said_empty),
                       f"by-reviewer 200={bool(g)} · 표 행 {rows} · 0행일 때 「없다」={said_empty} "
-                      f"(빈 표를 침묵으로 그리면 빨강) · 「요원」 열={('요원' in b)}", url=url))
+                      f"(빈 표를 침묵으로 그리면 빨강) · 「요원」 열={('요원' in b)}", url=url, screen_text=collect_screen_text(page=page)))
 
     # #16 알림 규칙 확인: /dsm/notify · 「알림 받는 사람·채널」 · GET notify-rules/list 200 + 규칙 표 행 ≥1
     m = net.mark()
@@ -1291,7 +1333,7 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     n_srv = len(js.get("rules", [])) if isinstance(js, dict) else -1
     out.append(result("U2#16", "/dsm/notify", seen, bool(g) and (rows >= 1 or said_empty),
                       f"notify-rules/list 200={bool(g)} (서버 규칙 {n_srv}건) · 표 행 {rows} · "
-                      f"0건일 때 「없다」={said_empty} (빈 표는 빨강)", url=url))
+                      f"0건일 때 「없다」={said_empty} (빈 표는 빨강)", url=url, screen_text=collect_screen_text(page=page)))
 
 
 # ---------------------------------------------------------------------------
@@ -1319,7 +1361,7 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         url = url2
     else:
         evidence = "「알림 보내기」 단추가 안 보인다"
-    out.append(result("U3#1", "/dsm/events/:id → /m/inbox", seen, pred, evidence, url=url))
+    out.append(result("U3#1", "/dsm/events/:id → /m/inbox", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # #2 위치 확인: /m/events/:id 「어디로 가나」 카드 + 주소 문자열 + 「지도에서 보기」
     url = goto(page, web, f"/m/events/{snap_event}")
@@ -1328,7 +1370,7 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     seen = visible_text(page, "지도에서 보기")
     pred = ("어디로 가나" in b) and bool(addr) and (addr.split(" (")[0] in b)
     out.append(result("U3#2", "/m/events/:id", seen, pred,
-                      f"어디로 가나={('어디로 가나' in b)} · 주소 화면={(addr.split(' (')[0] in b) if addr else False} · 지도에서 보기={seen}", url=url))
+                      f"어디로 가나={('어디로 가나' in b)} · 주소 화면={(addr.split(' (')[0] in b) if addr else False} · 지도에서 보기={seen}", url=url, screen_text=collect_screen_text(page=page)))
 
     # #7 현장 도착 보고: /m/events/:id 「현장 조치」 → 전이 단추 → POST response 200 → 서버 재조회 전이 + 감사 행
     m = net.mark()
@@ -1358,7 +1400,7 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         evidence = (f"단추 {labels[0]} · POST response {[p['status'] for p in post]} · 서버 재조회 {before.get('response_state')} → {after.get('response_state')} · 감사 행={audit_count_for(seed_b)}")
     else:
         evidence = f"현장 조치={('현장 조치' in b)} · 전이 단추={labels}"
-    out.append(result("U3#7", "/m/events/:id", seen, pred, evidence, url=url))
+    out.append(result("U3#7", "/m/events/:id", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # #9 현장 상황 한 줄: 「현장 회신 — 본 것을 한 줄로」 · 「회신 보내기」 → POST field-reply 200 → field-replies total +1 (재읽기)
     m = net.mark()
@@ -1388,7 +1430,7 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         evidence = f"POST field-reply {[p['status'] for p in post]} · field-replies total {n0} → {n1} (다시 읽음)"
     else:
         evidence = f"머리글={('현장 회신 — 본 것을 한 줄로' in b)} · 회신 보내기 보임={visible_text(page, '회신 보내기')}"
-    out.append(result("U3#9", "/m/events/:id", seen, pred, evidence, url=url))
+    out.append(result("U3#9", "/m/events/:id", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # ══ [P-180 · 턴 V] 정본이 두 칸을 채운 뒤 늘어난 행 ═══════════════════════
     # #19 내가 처리한 이벤트 목록: /m/inbox · 「내게 온 이벤트」 ·
@@ -1412,7 +1454,7 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                       f"deliveries 200={bool(d200)} · **mine 인자 호출 {len(mine)}건** "
                       f"(0 이면 ◐ 상한 — 제목만으로 초록이 되지 않는다) · "
                       f"[정본 밖 사실] me/handled-events 200={bool(handled)} 처리함 {n_handled}건 · 탭 「처리함」={('처리함' in b)}",
-                      cap_half=(not mine), url=url))
+                      cap_half=(not mine), url=url, screen_text=collect_screen_text(page=page)))
 
     # #16 근무 외 알림 차단: /m/settings · 「내 알림 설정」 ·
     #     [서버 기록] PUT /api/dsm/me/notify-prefs 200 → **다시 읽은 값에 차단 시간대 반영**.
@@ -1467,7 +1509,7 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                     f" {r2.get('why', '')}{r1.get('why', '')}")
     else:
         evidence = f"「{MOBILE_SETTINGS_HEADLINE}」 이 화면에 없다 · url={page.url}"
-    out.append(result("U3#16", "/m/settings", seen, pred, evidence, url=url))
+    out.append(result("U3#16", "/m/settings", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # #3 상황 사진 1장 보기 [P-205 · 턴 Y] — **모바일 상세의 사진 자리**
     #    ★ U2#4(데스크톱)와 **다른 화면**이다. 거기서는 `<img>` 가 0이었고(◐), 여기는 그린다고
@@ -1476,7 +1518,7 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         if not snap_event:
             out.append(result("U3#3", "/m/events/:id", False, False,
                               "그림 실린 씨앗이 없어 **못 쟀다**(U2#4 와 같은 사유 · --snap-event)",
-                              measured=False, gray_kind="nodata"))
+                              measured=False, gray_kind="nodata", screen_text=collect_screen_text(page=page)))
             return
         m = net.mark()
         url = goto(page, web, f"/m/events/{snap_event}")
@@ -1491,7 +1533,7 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         out.append(result("U3#3", "/m/events/:id", snap_ok, snap_ok and imgs >= 1,
                           f"snapshot {[r['status'] for r in snap]} jpeg={snap_ok} · "
                           f"그려진 <img>(naturalWidth>0) {imgs}개 — 문이 200 인데 0이면 빨강 "
-                          f"(U2#4 데스크톱이 정확히 그 모양이었다)", url=url))
+                          f"(U2#4 데스크톱이 정확히 그 모양이었다)", url=url, screen_text=collect_screen_text(page=page)))
     guarded(out, "U3#3", "/m/events/:id", _u3_3)
 
     # #14 해당 카메라 모바일 실시간 [P-205 · 턴 Y] — **계약 11조 설계 잠금이 지켜지는가**
@@ -1512,7 +1554,7 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                           f"모바일 실시간 자리 {live}개 · 말 {words} — **0 이 지금의 사실이고 "
                           f"이 행은 ○ 다**(계약 11조 설계 잠금). 모바일 라우터에는 세 자리뿐이다 "
                           f"(inbox · eventDetail · settings). 자리가 생겼다면 잠금이 깨진 것이다",
-                          url=url))
+                          url=url, screen_text=collect_screen_text(page=page)))
     guarded(out, "U3#14", "/m/events/:id", _u3_14)
 
 
@@ -1628,7 +1670,7 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
         out.append(result(row_key, route, False, False,
                           "기계 토큰이 없어 **못 쟀다**(회색) — 로그인이 실제로 낸 것: %s"
                           % (why or "**기록이 없다** — 로그인을 부르지도 않았다"),
-                          measured=False, gray_kind="env"))
+                          measured=False, gray_kind="env", screen_text=collect_screen_text()))
         return True
 
     # #1 API 키로 인증 — 발급 → 키로 200 · 익명으로 401 → **되돌린다**
@@ -1639,7 +1681,7 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
                               "로그인이 실제로 낸 것: %s"
                               % (LOGIN_WHY.get("gxseed_u5_sysop")
                                  or "**기록이 없다** — 부르지도 않았다"),
-                              measured=False, gray_kind="env"))
+                              measured=False, gray_kind="env", screen_text=collect_screen_text()))
             return
         name = "onb-U6-%s" % datetime.now().strftime("%H%M%S")
         #: ★★ [U3 쪽지 ① · 턴 Z · 격리 재현] **422 는 「본문 대신 쿼리」였다.**
@@ -1687,7 +1729,7 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
                           with_inbound_key == 200 and anon == 401,
                           "발급 %s · 키 받음=%s · 키로 GET events=%s(기대 200) · "
                           "익명 GET events=%s(기대 401)%s"
-                          % (r.status, bool(inbound_key), with_inbound_key, anon, reverted)))
+                          % (r.status, bool(inbound_key), with_inbound_key, anon, reverted), screen_text=collect_screen_text()))
     guarded(out, "U6#1", "POST /settings/api-keys", _u6_1)
 
     # #2 이벤트 목록 — 200 + **봉투가 아닌 진짜 JSON**(total 과 events 가 둘 다)
@@ -1704,7 +1746,7 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
                           r.status == 200 and has_total and has_rows,
                           "status=%s · total 칸=%s · events 배열=%s · 최상위 칸 %s "
                           "— 봉투만 오면 빨강이다"
-                          % (r.status, has_total, has_rows, sorted(d)[:8])))
+                          % (r.status, has_total, has_rows, sorted(d)[:8]), screen_text=collect_screen_text()))
     guarded(out, "U6#2", "GET /api/dsm/events", _u6_2)
 
     # #3 이벤트 상세 — JWT 200 · **키는 거절**(D-371 의 의도된 절반) → ◐ 상한
@@ -1720,7 +1762,7 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
         out.append(result("U6#3", "GET /api/dsm/events/{id}", rj.status == 200, ok,
                           "JWT=%s(기대 200) · 키=%s(기대 401/403 — D-371 의 의도된 절반) "
                           "→ 둘 다 그대로면 **◐ 상한**. 키가 200 이면 D-371 이 깨진 것이다"
-                          % (rj.status, rk.status), cap_half=ok))
+                          % (rj.status, rk.status), cap_half=ok, screen_text=collect_screen_text()))
     guarded(out, "U6#3", "GET /api/dsm/events/{id}", _u6_3)
 
     # #4 웹훅 수신 — 구독 200 → 목록 +1 → [서버 기록] 서명 붙은 발송 행 · **되돌린다**
@@ -1761,7 +1803,7 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
                           "구독 %s · 목록 %d -> %d · [서버 기록] 서명이 붙은 발송 행 %d건"
                           "(-1 은 표를 못 읽은 것이다)%s — 이 걸음은 **새 사건을 만들지 않는다**"
                           "(제품에 그 문이 없다). 발송 갈래는 이미 남은 행으로 잰다"
-                          % (r.status, n0, n1, signed, reverted)))
+                          % (r.status, n0, n1, signed, reverted), screen_text=collect_screen_text()))
     guarded(out, "U6#4", "POST /webhook-subscriptions", _u6_4)
 
     # #9 상태 갱신 — **없는 id 로** 두드린다: 404 면 닿은 것 · 403 이면 못 닿은 것 (P-83)
@@ -1781,7 +1823,7 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
                           "갔다(상태는 안 건드렸다)** · 403 = 관문에서 막혔다(P-83 눈금). "
                           "전이 자체는 U3#7 이 사람 자격으로 잰다 — 같은 사실을 두 번 바꾸지 "
                           "않는다 · 외부 App 의 인증 경로가 authn_paths 대장에 아직 없다"
-                          % (U6_ABSENT_EVENT, r.status)))
+                          % (U6_ABSENT_EVENT, r.status), screen_text=collect_screen_text()))
     guarded(out, "U6#9", "POST /events/{id}/response", _u6_9)
 
     # #12 인증 실패 — 익명 읽기 다섯이 **전부 401** (200 봉투 하나면 빨강 · P-133)
@@ -1797,7 +1839,7 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
                           % (len(codes), codes, all401,
                              "" if not two_hundreds else
                              " · **200 봉투 %d건: %s** (P-133 이 쫓던 자리)"
-                             % (len(two_hundreds), two_hundreds))))
+                             % (len(two_hundreds), two_hundreds)), screen_text=collect_screen_text()))
     guarded(out, "U6#12", "/api/dsm/** 익명", _u6_12)
 
     # #14 스키마 버전 — 응답 헤더 `X-GX-Schema` (backend/common/schema_header.py:19)
@@ -1807,7 +1849,7 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
         val = h.get("x-gx-schema")
         out.append(result("U6#14", "헤더 X-GX-Schema", True, bool(val),
                           "GET /api/dsm/health -> %s · X-GX-Schema=%s · 헤더 %d개"
-                          % (r.status, val or "**없다**", len(h))))
+                          % (r.status, val or "**없다**", len(h)), screen_text=collect_screen_text()))
     guarded(out, "U6#14", "헤더 X-GX-Schema", _u6_14)
 
     # #15 연계 헬스체크 — 200 또는 503(둘 다 답한 것) + 검사 셋의 이름
@@ -1819,7 +1861,7 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
                           r.status in (200, 503) and len(checks) >= 1,
                           "status=%s (200·503 둘 다 답한 것 — 503 은 「지금 아프다」이지 문 "
                           "없음이 아니다) · 검사 이름 %s · 익명 허용 목록의 문이다"
-                          % (r.status, checks or "없음")))
+                          % (r.status, checks or "없음"), screen_text=collect_screen_text()))
     guarded(out, "U6#15", "GET /api/dsm/health", _u6_15)
 
 
@@ -1841,7 +1883,7 @@ def rows_u4(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         url = page.url
     else:
         evidence = "「지난 12시간 보기」 단추가 안 보인다"
-    out.append(result("U4#8", "/dsm/events", seen, pred, evidence, cap_half=True, url=url))
+    out.append(result("U4#8", "/dsm/events", seen, pred, evidence, cap_half=True, url=url, screen_text=collect_screen_text(page=page)))
 
     # #11 카메라 설치 현황: /device · 「드론·로봇 장비 등록」 + 머리줄 · 표 행 ≥1 (view_only 로 0행이면 빨강)
     url = goto(page, web, "/device", settle_ms=12_000)
@@ -1850,7 +1892,7 @@ def rows_u4(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     rows = table_rows(page)
     # (U4#9 는 아래에 있다 — 표 순서가 아니라 화면 순서로 잰다)
     out.append(result("U4#11", "/device", seen, rows >= 1,
-                      f"url={page.url} · 「드론·로봇 장비 등록」={('드론·로봇 장비 등록' in b)} · 머리줄={(ADMIN_HEADER in b)} · 표 행 {rows} · 본문 앞 {b[:80]!r}", url=url))
+                      f"url={page.url} · 「드론·로봇 장비 등록」={('드론·로봇 장비 등록' in b)} · 머리줄={(ADMIN_HEADER in b)} · 표 행 {rows} · 본문 앞 {b[:80]!r}", url=url, screen_text=collect_screen_text(page=page)))
 
     # ══ [P-180 · 턴 V] 정본이 두 칸을 채운 뒤 늘어난 행 ═══════════════════════
     # #1 주간 상황 요약: /dsm/events · 단추 「7일」 · [API 호출] GET /api/dsm/events?since=… 200
@@ -1872,7 +1914,7 @@ def rows_u4(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         url = page.url
     else:
         evidence = "「7일」 칸이 안 보인다 (EventList.tsx PERIODS.d7)"
-    out.append(result("U4#1", "/dsm/events", seen, pred, evidence, url=url))
+    out.append(result("U4#1", "/dsm/events", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # #5 월간 보고서 자동 생성: /dsm/reports · 카드 「이번 달 우리 센터」 + 단추 「만들기」 ·
     #    ★★ 정본의 술어는 **「자동 행 ≥ 1」**이다 — U4 본인이 누르는 것이 아니다.
@@ -1890,7 +1932,7 @@ def rows_u4(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                       f"[서버 기록] trigger=auto · kind=monthly 실행 기록 {n_auto}행 (≥1 이어야 한다) · "
                       f"화면 GET reports/runs 200={bool(runs200)} · 「이번 달 우리 센터」={('이번 달 우리 센터' in b)} "
                       f"「만들기」={('만들기' in b)} · **누르지 않았다 — 읽기 전용 U4 의 만들기는 403 이 옳다**",
-                      url=url))
+                      url=url, screen_text=collect_screen_text(page=page)))
 
     # #7 보고서 다운로드: 같은 화면 · 「DOCX 내려받기」(정본 · 결정 ⑤) ·
     #    [API 호출] GET /api/dsm/reports/runs/{id}.docx 200 · wordprocessingml
@@ -1919,7 +1961,7 @@ def rows_u4(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                 f"GET reports/runs/{{id}}.docx {[r['status'] for r in docx]} · wordprocessingml={wordml} · "
                 f"상태 칸 바이트 {got_bytes:,} (>1,024 이어야 한다) · 「내려받았습니다」={('내려받았습니다' in b2)} · "
                 f"[서버 기록] 내려받을 수 있는 최신 monthly 실행 id={latest_succeeded_run('monthly')}")
-    out.append(result("U4#7", "/dsm/reports", phrase, pred, evidence, url=page.url))
+    out.append(result("U4#7", "/dsm/reports", phrase, pred, evidence, url=page.url, screen_text=collect_screen_text(page=page)))
 
     # #15 상급기관 제출 자료: /dsm/events · 「보고 표시」/「보고함」 (누르기 전/후가 **다른 말**이다) ·
     #    [서버 기록] POST /api/dsm/events/{id}/upper-report 200 → 재조회에서 그 사건의 표시가 서버 값으로 「보고함」
@@ -1955,7 +1997,7 @@ def rows_u4(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                     + (" · ⚠ 관문이 거절했다(읽기 전용 U4) — 제품이 옳게 막은 자리다" if 403 in codes else ""))
     else:
         evidence = "「보고 표시」·「보고함」 둘 다 화면에 없다 (EventList.tsx 행마다 그리는 토글)"
-    out.append(result("U4#15", "/dsm/events", seen, pred, evidence, url=url))
+    out.append(result("U4#15", "/dsm/events", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # #16 감사 대응 이력: /dsm/audit · 「N.N초 · 60초 안」 (**틀 문장** — 수는 매회 다르다) ·
     #    [API 호출] GET /api/dsm/audit 200 + [화면 상태] 상태 칸의 계측 값 1 · 표 행 ≥ 1
@@ -1993,13 +2035,13 @@ def rows_u4(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                           f"표 칸 「영상 구간」={cell} · clip 문 {codes} "
                           f"(200·404 둘 다 문이 산 것 · 404 는 빈 자료다) · "
                           f"누를 단추 없음 → **◐ 상한**(추출은 계약 11조 잠금)",
-                          cap_half=True, url=url))
+                          cap_half=True, url=url, screen_text=collect_screen_text(page=page)))
     guarded(out, "U4#9", "/dsm/events/:id", _u4_9)
 
     out.append(result("U4#16", "/dsm/audit", seen, bool(g) and rows >= 1,
                       f"GET /api/dsm/audit 200={bool(g)} (서버 전체 {n_srv}건) · 표 행 {rows} · "
                       f"상태 칸 「초 · 60초 안」={seen} · 「첫 응답」 칸={('첫 응답' in b)} · 제목 「감사 기록」={('감사 기록' in b)}",
-                      url=url))
+                      url=url, screen_text=collect_screen_text(page=page)))
 
 
 # ---------------------------------------------------------------------------
@@ -2013,7 +2055,7 @@ def rows_u5(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     rows = table_rows(page)
     add = "Add New Role" in b
     out.append(result("U5#2", "/roles", seen, rows >= 1 and add,
-                      f"url={page.url} · 역할 관리={('역할 관리' in b)} · 머리줄={(ADMIN_HEADER in b)} · 표 행 {rows} · Add New Role={add} · 본문 앞 {b[:80]!r}", url=url))
+                      f"url={page.url} · 역할 관리={('역할 관리' in b)} · 머리줄={(ADMIN_HEADER in b)} · 표 행 {rows} · Add New Role={add} · 본문 앞 {b[:80]!r}", url=url, screen_text=collect_screen_text(page=page)))
 
     # #4 카메라 등록: /dsm/cameras/import · 「카메라 일괄 등록」 · 「표 먼저 보기」 → dry-run → 적용 → POST import 200 → 카메라 수 +1
     m = net.mark()
@@ -2051,7 +2093,7 @@ def rows_u5(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                     f"카메라 수 {c0['total']} → {c1['total']} (서버 기록) · [청구] {mark_note}")
     else:
         evidence = f"카메라 일괄 등록={('카메라 일괄 등록' in b)} · 표 먼저 보기={('표 먼저 보기' in b)}"
-    out.append(result("U5#4", "/dsm/cameras/import", seen, pred, evidence, url=url))
+    out.append(result("U5#4", "/dsm/cameras/import", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # #5 주소 채우기: /dsm/cameras/address · 문구 셋 · 이름+주소 → 표 먼저 보기 → 채우기 → 미입력 수 -1 (서버 기록)
     m = net.mark()
@@ -2079,7 +2121,7 @@ def rows_u5(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         evidence += f"표 먼저 보기={clicked1} · 채우기={clicked2} · POST import {[p['status'] for p in posts]} · address-gap GET {gap_calls} · 미입력 {g0['without_address']} → {g1['without_address']} (서버 기록)"
     else:
         evidence = f"주소 채우기={('카메라 주소 채우기' in b)} · 표 먼저 보기={('표 먼저 보기' in b)} · 채우기={('채우기' in b)}"
-    out.append(result("U5#5", "/dsm/cameras/address", seen, pred, evidence, url=url))
+    out.append(result("U5#5", "/dsm/cameras/address", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # #15 저장 용량: /dsm/metering · 「이번 달 사용량」 + 「저장 용량」 · GET metering 200 · % 없으면 ◐
     m = net.mark()
@@ -2090,7 +2132,7 @@ def rows_u5(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     pct = "%" in b
     out.append(result("U5#15", "/dsm/metering", seen, bool(g),
                       f"metering 200={bool(g)} · 화면에 %={pct} (없으면 ◐ — 상한 미선언) · 이번 달 사용량={('이번 달 사용량' in b)} 저장 용량={('저장 용량' in b)}",
-                      cap_half=(not pct), url=url))
+                      cap_half=(not pct), url=url, screen_text=collect_screen_text(page=page)))
 
     # ══ [P-180 · 턴 V] 정본이 두 칸을 채운 뒤 늘어난 행 ═══════════════════════
     # #1 사용자 계정 생성: /dsm/people · 「사람·역할 — 계정 만들기 · 비활성화」 ·
@@ -2152,7 +2194,7 @@ def rows_u5(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                      f"씨앗 이름 {probe_user} · [청구] {mark_note}")
     else:
         evidence = f"「{PEOPLE_HEADLINE}」 이 화면에 없다 · url={page.url}"
-    out.append(result("U5#1", "/dsm/people", seen, pred, evidence, url=url))
+    out.append(result("U5#1", "/dsm/people", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # #9 알림 규칙 설정: /dsm/notify · 「알림 받는 사람·채널」 ·
     #    [서버 기록] POST /api/dsm/settings/notify-rules/save 200 → `…/list` 반영
@@ -2204,12 +2246,12 @@ def rows_u5(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                           f"저장 200={bool(saves) and 200 in codes} · `…/list` 의 채널 값 {chans} · "
                           f"email/webpush 남음={known} · 제목 1={seen} "
                           f"(⚠ 채널 이름 자체는 아직 사전 밖이다 — 제목으로 자리를 단언하고 값은 서버 기록으로 잰다)",
-                          url=url))
+                          url=url, screen_text=collect_screen_text(page=page)))
     else:
         evidence = f"제목={seen} · 서버 규칙 {len(rules0)}건 (0건이면 누를 토글이 없다)"
         out.append(result("U5#10", "/dsm/notify (채널 열)", seen, False,
-                          f"규칙 저장을 못 했다 — 위 U5#9 참조 (서버 규칙 {len(rules0)}건)", url=url))
-    out.append(result("U5#9", "/dsm/notify", seen, pred, evidence, url=url))
+                          f"규칙 저장을 못 했다 — 위 U5#9 참조 (서버 규칙 {len(rules0)}건)", url=url, screen_text=collect_screen_text(page=page)))
+    out.append(result("U5#9", "/dsm/notify", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
     # #14 시스템 상태 확인: /dsm/system · 「재시작을 요청합니다」 ·
     #    [서버 기록] POST /api/dsm/system/restart-request 200 → 응답 `executed: false`
@@ -2256,7 +2298,7 @@ def rows_u5(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
                     f"[되돌림] **없다 — 기록을 지우는 문이 제품에 없고 그것이 옳다**")
     else:
         evidence = f"「재시작을 요청합니다」 단추가 안 보인다 · url={page.url}"
-    out.append(result("U5#14", "/dsm/system", seen, pred, evidence, url=url))
+    out.append(result("U5#14", "/dsm/system", seen, pred, evidence, url=url, screen_text=collect_screen_text(page=page)))
 
 
 
