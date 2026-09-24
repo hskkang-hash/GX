@@ -127,6 +127,7 @@ import EditLibraryForm from './features/LibraryDrone/edit/EditLibraryForm';
 import LoginDesktop from './features/login/LoginDesktop';
 import LoginMobile from './features/LoginMobile';
 import ForgotPasswordMobile from './features/LoginMobile/ForgotPasswordMobile';
+import { ResetMailNotice } from './features/passwordReset/ResetMailNotice';
 import NewPasswordMobile from './features/LoginMobile/NewPasswordMobile';
 import MediaDataPage from './features/MediaData';
 import { MediaDataVideoAnalysisPage } from './features/MediaData/pages/MediaDataVideoAnalysisPage';
@@ -477,11 +478,16 @@ const ForgotPassword = () => {
   const navigate = useNavigate();
   const { isMobile } = useMobileContext();
 
-  if (isMobile) {
-    return <ForgotPasswordMobile />;
-  }
-
-  return <ForgotPasswordPage navigate={navigate} />;
+  // P-342 — 두 화면 다 실패를 삼킨다(rj-core 는 §0.4). 띠가 감싸서 말한다.
+  return (
+    <ResetMailNotice>
+      {isMobile ? (
+        <ForgotPasswordMobile />
+      ) : (
+        <ForgotPasswordPage navigate={navigate} />
+      )}
+    </ResetMailNotice>
+  );
 };
 
 const NewPassword = () => {

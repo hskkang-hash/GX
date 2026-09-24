@@ -34,8 +34,10 @@ P-315 는 「커밋 훅에 스모크 1」이었다. 그러나 P-321 이 순서�
 `GX_ROUTE_USER` 는 게이트 전용이 아니라 **역할 계정**(U4)이다 — 대장 게이트들이 이미 그 계정으로
 로그인하므로 이 스모크가 새 종류의 해를 더하지는 않지만, 스모크 전용 계정이 옳다.
 그 계정을 만들어 `.env.gates` 에 넣는 것은 `.env` 실제 값이라 **대표 결정**이다 — 그때까지 물러선다.
-⚠ `GX_SMOKE_*` 는 지금 **환경에서만** 읽는다. `.env.gates` 로더(`verify_route_alive.LOCAL_ENV_KEYS`)는
-  판정기라 조율자가 고치지 않았다(P-203) — 계정이 생기는 날 그 목록에 두 이름을 더한다.
+★ [턴 AJ · 2026-09-25] 계정이 섰다(`seed_smoke_user` · P-339). `GX_SMOKE_*` 두 이름은 판정기
+  로더(`verify_route_alive.LOCAL_ENV_KEYS`)가 아니라 **이 도구의** `load_smoke_names()` 가
+  `.env.gates` 에서 읽는다 — 판정기는 조율자가 고치지 않는다(P-203). 펼치는 눈은 한 벌
+  (`ra.expand_env_refs`)을 빌린다. 이미 환경에 있으면 덮지 않는다.
 `V_LOCK` 이 있으면 로그인하지 않고 **회색**(V 단독 중 · 재지 않음 · P-170 ①).
 
     python scripts/smoke_live.py               # 호스트에서 · 기본 http://localhost:8500
@@ -63,13 +65,17 @@ DEADLINE_S = 30.0
 
 HEALTH_PATH = "/api/dsm/health"
 READ_PATH = "/api/dsm/events?limit=1"
+#: 익명이 읽기 문에서 받아야 할 답. 200 이면 빨강(열린 문) — 로그인 걸음이 뜻을 잃는다.
+ANON_EXPECT = (401, 403)
 
 #: 판정에 쓰는 한 걸음. `status` 는 HTTP 상태(0 = 응답 없음) · `None` = **안 쟀다**.
 #: `ok_extra` 는 상태 밖의 조건 — 로그인은 200 이어도 **토큰이 있어야** 한다.
 
 
-def step(name: str, status: int | None, ok_extra: bool = True, why: str = "") -> dict:
-    return {"name": name, "status": status, "ok_extra": ok_extra, "why": why}
+def step(name: str, status: int | None, ok_extra: bool = True, why: str = "",
+         expect: tuple[int, ...] = (200,)) -> dict:
+    """`expect` — 이 걸음이 기대하는 상태. 익명 대조(P-339 ④)만 401·403 을 기대한다."""
+    return {"name": name, "status": status, "ok_extra": ok_extra, "why": why, "expect": expect}
 
 
 def judge(steps: list[dict], elapsed: float, deadline: float = DEADLINE_S) -> tuple[int, str]:
@@ -82,7 +88,8 @@ def judge(steps: list[dict], elapsed: float, deadline: float = DEADLINE_S) -> tu
     ③ 셋 다 섰어도 기한을 넘기면 **빨강**(P-315 「30초 안」).
     """
     for s in steps:
-        if s["status"] is not None and (s["status"] != 200 or not s["ok_extra"]):
+        if s["status"] is not None and (s["status"] not in s.get("expect", (200,))
+                                        or not s["ok_extra"]):
             got = "응답 없음" if s["status"] == 0 else f"HTTP {s['status']}"
             extra = "" if s["ok_extra"] else " · " + (s["why"] or "덧조건 거짓")
             return EXIT_FAIL, f"빨강 — {s['name']} {got}{extra}"
@@ -94,7 +101,33 @@ def judge(steps: list[dict], elapsed: float, deadline: float = DEADLINE_S) -> tu
         return EXIT_UNDECIDABLE, f"회색 — 걸음이 {len(steps)}개뿐이다(셋이어야 한다)"
     if elapsed > deadline:
         return EXIT_FAIL, f"빨강 — 셋 다 200 이지만 {elapsed:.1f}초(기한 {deadline:.0f}초)"
-    return EXIT_OK, f"초록 — 건강 · 로그인 · 읽기 셋 다 200 · {elapsed:.1f}초"
+    anon = any(s.get("expect") != (200,) for s in steps)
+    tail = " · 익명은 막힘" if anon else ""
+    return EXIT_OK, f"초록 — 건강 · 로그인 · 읽기 셋 다 200{tail} · {elapsed:.1f}초"
+
+
+SMOKE_NAMES = ("GX_SMOKE_USER", "GX_SMOKE_PASSWORD")
+
+
+def load_smoke_names(env=os.environ, path: Path | None = None) -> list[str]:
+    """`.env.gates` 에서 스모크 두 이름만 채운다. 채운 **이름**을 돌려준다(값은 안 낸다)."""
+    import verify_route_alive as ra  # noqa: PLC0415
+    f = path or (ra.ROOT / ".env.gates")
+    if not f.is_file():
+        return []
+    local: dict[str, str] = {}
+    for raw in f.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        local[k.strip()] = ra.expand_env_refs(v.strip(), local)
+    took = []
+    for name in SMOKE_NAMES:
+        if not env.get(name) and local.get(name):
+            env[name] = local[name]
+            took.append(name)
+    return took
 
 
 def pick_account(env) -> tuple[str | None, str | None, str]:
@@ -115,8 +148,12 @@ def run(base: str) -> tuple[list[dict], float]:
     t0 = time.monotonic()
     steps: list[dict] = []
     steps.append(step("건강 " + HEALTH_PATH, ra.hit(base, "GET", HEALTH_PATH, None)))
+    #: P-339 ④ — 익명 대조. 읽기 문이 토큰 없이 열리면 「읽기 200」은 로그인을 잰 것이 아니다.
+    steps.append(step("익명 " + READ_PATH, ra.hit(base, "GET", READ_PATH, None),
+                      expect=ANON_EXPECT))
 
     ra.load_local_env()
+    load_smoke_names()
     user, pw, who = pick_account(os.environ)
     if is_locked():
         steps.append(step("로그인", None, why=GRAY_NOTE or "V 단독 중"))
@@ -156,9 +193,14 @@ def self_test() -> int:
         bad.append("기한을 넘긴 셋 200 을 빨강으로 안 잡는다")
     if judge([step("건강", 200)], 1.0)[0] == EXIT_OK:
         bad.append("걸음 하나만으로 초록이 난다")
+    #: P-339 ④ — 읽기 문이 익명에 열리면 빨강 · 막히면(401) 초록을 해치지 않는다.
+    if judge(ok3 + [step("익명", 200, expect=ANON_EXPECT)], 1.0)[0] != EXIT_FAIL:
+        bad.append("익명에게 열린 읽기 문(200)을 빨강으로 안 잡는다")
+    if judge(ok3 + [step("익명", 401, expect=ANON_EXPECT)], 1.0)[0] != EXIT_OK:
+        bad.append("익명 401 이 초록을 깬다")
     for b in bad:
         print(f"{TAG} 자기시험 실패: {b}")
-    print(f"{TAG} 자기시험 {'통과' if not bad else '실패'} ({7 - len(bad)}/7)")
+    print(f"{TAG} 자기시험 {'통과' if not bad else '실패'} ({9 - len(bad)}/9)")
     return EXIT_OK if not bad else EXIT_FAIL
 
 
@@ -171,7 +213,8 @@ def main(argv: list[str] | None = None) -> int:
         return self_test()
     steps, elapsed = run(args.base.rstrip("/"))
     for s in steps:
-        mark = "·" if s["status"] is None else ("OK" if s["status"] == 200 and s["ok_extra"] else "✗")
+        mark = "·" if s["status"] is None else (
+            "OK" if s["status"] in s["expect"] and s["ok_extra"] else "✗")
         shown = "안 잼" if s["status"] is None else str(s["status"])
         print(f"{TAG} {mark} {s['name']} → {shown}{(' · ' + s['why']) if s['why'] else ''}")
     code, line = judge(steps, elapsed)

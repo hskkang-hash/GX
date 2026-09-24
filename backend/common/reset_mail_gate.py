@@ -83,6 +83,12 @@ CACHE_TTL_SECONDS = 60
 #: 「짧은 timeout」— 죽은 SMTP 로 요청 전체가 그만큼 묶이지 않게 한다.
 CONNECT_TIMEOUT_SECONDS = 2.0
 
+#: P-342 (턴 AJ) — 화면이 **묻는** 문. rj-core 데스크톱 화면은 실패를 `console.log` 로만
+#: 삼킨다(§0.4 · 못 고친다). 그래서 우리 감싸개(`App.tsx::ForgotPassword`)가 이 문으로
+#: 「지금 메일을 보낼 수 있는가」만 묻고 제 띠를 그린다. 답은 참/거짓 하나 — 주소를 받지
+#: 않으므로 계정 존재와 무관하고, POST 가 503 으로 이미 알려 주는 것 이상을 내지 않는다.
+AVAILABILITY_PATH = TARGET_PATH + "/availability"
+
 #: 답 본문의 기계 낱말.
 UNREACHABLE_CODE = "reset_mail_unavailable"
 
@@ -152,6 +158,17 @@ def unreachable_response() -> JsonResponse:
     return resp
 
 
+def availability_response() -> JsonResponse:
+    """P-342 — `{"available": bool}` 하나. 막혔을 때만 고객 말(MESSAGE)을 싣는다."""
+    ok = smtp_reachable()
+    body: dict[str, Any] = {"available": ok}
+    if not ok:
+        body.update(code=UNREACHABLE_CODE, message=MESSAGE)
+    resp = JsonResponse(body, json_dumps_params={"ensure_ascii": False})
+    resp["Cache-Control"] = "no-store"
+    return resp
+
+
 class ResetMailGateMiddleware:
     """비밀번호 찾기 문을 **주소를 보기 전에** SMTP 로 가른다.
 
@@ -166,6 +183,9 @@ class ResetMailGateMiddleware:
     def __call__(self, request: Any):
         if not enabled():
             return self.get_response(request)
+        if (getattr(request, "method", None) == "GET"
+                and getattr(request, "path", None) == AVAILABILITY_PATH):
+            return availability_response()
         if (getattr(request, "method", None) == TARGET_METHOD
                 and getattr(request, "path", None) == TARGET_PATH):
             if not smtp_reachable():

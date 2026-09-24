@@ -59,8 +59,35 @@ LOG = ROOT / "docs" / "agent" / "evidence" / "OPS-26" / "restarts.jsonl"
 KST = dt.timezone(dt.timedelta(hours=9))
 
 
+#: P-344 — `verify_live_code` 의 두 칸 머리. 이 글자로 어느 서버가 옛 코드인지 가른다.
+LIVE_SECTIONS = (("── ① 제품 서버", "product"), ("── ② 재는 서버", "shell"))
+
+
+def stale_parts(live_stdout: str) -> set[str]:
+    """`verify_live_code` 출력에서 **FAIL 이 찍힌 칸**을 고른다 — `product` · `shell`.
+
+    판정기는 고치지 않는다(P-203) — 그 출력의 두 칸 머리와 `FAIL` 표지를 읽을 뿐이다.
+    """
+    parts: set[str] = set()
+    current = None
+    for line in live_stdout.splitlines():
+        for head, key in LIVE_SECTIONS:
+            if head in line:
+                current = key
+        if current and " FAIL " in line + " ":
+            parts.add(current)
+    return parts
+
+
+#: P-344 — 두 사고 · 두 손. 한 문구로 뭉치면 「재시작이 안 먹었다」로 읽혀 엉뚱한 손이 간다.
+RED_PRODUCT = ("빨강 — 재시작 뒤에도 옛 코드(gunicorn 마스터) — 재시작이 안 먹었다 · "
+               "이미지·마운트·preload 를 본다")
+RED_SHELL = ("빨강 — 재는 서버(gx-shell runserver)가 옛 코드 — 재시작 대상이 아니다 · "
+             "runserver 를 다시 띄운다")
+
+
 def judge(*, restarted: dict, health_ok: bool, celery_ready: bool,
-          live_code: int, smoke: int) -> tuple[int, str]:
+          live_code: int, smoke: int, stale: set[str] | None = None) -> tuple[int, str]:
     """재시작 한 번의 결과 → (종료 코드, 한 줄). 순수 함수다.
 
     ★ 건강 200 · 스모크 초록이어도 `live_code == 1` 이면 **빨강**이다. 그날의 반쪽
@@ -74,7 +101,12 @@ def judge(*, restarted: dict, health_ok: bool, celery_ready: bool,
     if not celery_ready:
         return EXIT_FAIL, f"빨강 — {WAIT_S}초 안에 celery 「ready.」가 안 찍혔다"
     if live_code == EXIT_FAIL:
-        return EXIT_FAIL, "빨강 — 재시작했는데도 옛 코드가 돌고 있다(verify_live_code)"
+        #: P-344 — 제품이 옛 코드면 그것이 먼저다(재시작이 겨냥한 통이다).
+        if stale == {"shell"}:
+            return EXIT_FAIL, RED_SHELL
+        if stale and "product" in stale:
+            return EXIT_FAIL, RED_PRODUCT + (" (재는 서버도 옛 코드)" if "shell" in stale else "")
+        return EXIT_FAIL, "빨강 — 옛 코드가 돌고 있다(verify_live_code · 어느 칸인지 못 읽었다)"
     if smoke == EXIT_FAIL:
         return EXIT_FAIL, "빨강 — 스모크(건강 · 로그인 · 읽기) 빨강"
     if EXIT_UNDECIDABLE in (live_code, smoke):
@@ -194,7 +226,8 @@ def main(argv: list[str] | None = None) -> int:
     print(smoke.stdout.rstrip())
 
     code, verdict = judge(restarted=restarted, health_ok=health, celery_ready=celery,
-                          live_code=live.returncode, smoke=smoke.returncode)
+                          live_code=live.returncode, smoke=smoke.returncode,
+                          stale=stale_parts(live.stdout))
     line = make_line(at=now.isoformat(timespec="seconds"), reason=args.reason.strip(),
                      commit=commit, dirty_backend=len(dirty), restarted=restarted,
                      health_ok=health, celery_ready=celery, live_code=live.returncode,
