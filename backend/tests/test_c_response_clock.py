@@ -296,6 +296,95 @@ class FocusQueueTest(DsmFixture):
                          [c["event_id"] for c in result["queue"]],
                          "초점이 대기 큐에 또 나옵니다 — 같은 사건이 두 자리를 먹습니다.")
 
+    def test_closed_cards_do_not_sit_in_the_queue(self) -> None:
+        """★★ **끝난 일은 「지금 처리할 것」이 아니다** (P-288 · 2026-09-24 턴 AH).
+
+        ★ 출생 표본 — **대표가 화면을 보고 찾았다.** 「대기 카드 12장」이라 적혀 있는데
+          그 **열둘이 전부 종결**이었다. 관제요원의 첫 화면이 「할 일 12개」라고 말하면서
+          실제 할 일은 **0개**였고, 게이트는 그동안 초록이었다.
+
+        왜 아무도 못 봤나: 종전 정렬은 닫힌 것을 **뒤로 미루기만** 했다. 열린 것이
+        하나라도 있으면 그것이 최상단에 오니 `focus` 는 늘 옳았다 — **틀린 것은 그
+        아래 꼬리였고, 시험은 최상단만 보고 있었다.**
+        """
+        from apps.dsm import services
+
+        #: ★ 카드가 갈리도록 유형을 달리한다 — 같은 `stream+type` 은 5분 창이 한 장으로
+        #:   묶어, 닫아도 카드가 안 닫힌다(위 시험의 조율자 실측 참조).
+        eids = [self._event(self.stream_a, event_type=t)
+                for t in ("fire", "intrusion", "flood")]
+        for eid in eids[1:]:
+            for state in ("acknowledged", "in_progress", "closed"):
+                services.advance_response(scope=self.scope_a, event_id=eid,
+                                          to_state=state)
+
+        result = services.focus_queue(scope=self.scope_a)
+        still = [c for c in result["queue"] if c["closed_at"] is not None]
+        self.assertEqual(
+            [], still,
+            "종결된 카드가 대기 큐에 %d장 앉아 있습니다. 화면은 「할 일」이라 말하는데 "
+            "누를 것이 없습니다 — 「종결 확인」 절이 그 카드를 보여 주는 자리입니다."
+            % len(still))
+
+    def test_the_hidden_count_is_told_not_swallowed(self) -> None:
+        """★ **조용히 빼지 않는다.** 뺀 수를 함께 낸다.
+
+        이 칸이 없으면 화면은 「대기 0장」이라 말하는데 사람은 **왜 0 인지** 모른다 —
+        「일이 없다」와 「다 끝났다」는 다른 사실이고, 첫 근무일에 그 둘을 못 가르면
+        관제요원은 화면이 고장 난 줄 안다.
+        """
+        from apps.dsm import services
+
+        #: ★★ [조율자 실측 — 첫 판이 여기서 빨갰다] 같은 스트림·같은 유형으로 셋을
+        #:   만들면 **5분 창이 한 장으로 묶는다.** 그러면 둘을 닫아도 **카드는 안
+        #:   닫히고** 뺀 수가 0 이다 — 시험이 틀린 게 아니라 **표본이 틀렸다.**
+        #:   카드가 갈리려면 `stream+type` 이 달라야 한다(`GROUP_WINDOW_SECONDS` 규약).
+        eids = [self._event(self.stream_a, event_type=t)
+                for t in ("fire", "intrusion", "flood")]
+        for eid in eids[1:]:
+            for state in ("acknowledged", "in_progress", "closed"):
+                services.advance_response(scope=self.scope_a, event_id=eid,
+                                          to_state=state)
+
+        result = services.focus_queue(scope=self.scope_a)
+        self.assertGreater(
+            result["closed_cards_hidden"], 0,
+            "종결 카드를 뺐는데 뺀 수가 0 입니다 — 조용히 사라졌습니다.")
+        #: ★★ **수는 줄지 않는다.** `total_events`·`card_total` 은 「무슨 일이 있었나」를
+        #:   세는 수이고 종결도 거기 든다. 큐에서만 뺀 것이지 기록에서 뺀 것이 아니다.
+        self.assertEqual(
+            len(eids), result["total_events"],
+            "큐에서 뺐더니 **원본 건수까지** 줄었습니다 — 접히는 것은 화면이지 기록이 "
+            "아닙니다(F-14 통계가 이 수를 셉니다).")
+        self.assertEqual(
+            result["card_total"],
+            (1 if result["focus"] else 0) + len(result["queue"])
+            + result["closed_cards_hidden"],
+            "카드 수가 안 맞습니다 — `card_total` 과 화면이 **다른 함수로** 세고 "
+            "있으면 두 수가 갈리고, 갈린 쪽이 조용히 이깁니다.")
+
+    def test_all_closed_means_no_focus_not_a_closed_focus(self) -> None:
+        """★ 음성 대조 — **전부 닫힌 날**에 「가장 급한 하나」가 있으면 안 된다.
+
+        종전에는 `ordered[0]` 이라 **이미 끝난 사건이 최상단에** 섰다. 그 화면은
+        「할 일이 없다」가 아니라 **「이걸 하라」**고 말한다 — 정반대다.
+        """
+        from apps.dsm import services
+
+        eid = self._event(self.stream_a)
+        for state in ("acknowledged", "in_progress", "closed"):
+            services.advance_response(scope=self.scope_a, event_id=eid,
+                                      to_state=state)
+
+        result = services.focus_queue(scope=self.scope_a)
+        self.assertIsNone(
+            result["focus"],
+            "전부 닫혔는데 「가장 급한 하나」가 있습니다 — 끝난 사건을 하라고 "
+            "가리키는 화면입니다.")
+        self.assertEqual([], result["queue"])
+        self.assertGreater(result["closed_cards_hidden"], 0,
+                           "전부 닫혔는데 뺀 수가 0 입니다.")
+
     def test_the_focus_is_the_oldest_open_one_not_the_newest(self) -> None:
         """★ **최신순이 아니다.** 최신순이면 새 이벤트가 계속 최상단을 밀어내고,
         가장 오래 방치된 사건이 영원히 안 보인다 — 지금 화면이 그 모양이다."""

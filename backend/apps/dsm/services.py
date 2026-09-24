@@ -1305,7 +1305,30 @@ def focus_queue(*, scope: TenantScope, since: datetime | None = None,
         )
 
     ordered = sorted(cards, key=rank)
-    focus = ordered[0] if ordered else None
+
+    #: ★★ [P-288 · 2026-09-24 턴 AH] **끝난 일은 「지금 처리할 것」이 아니다.**
+    #:
+    #:   [실측 · 대표가 화면을 보고 찾았다] 이 화면이 「대기 카드 12장」이라 말하는데
+    #:   그 **열둘이 전부 종결**이었다. 관제요원의 첫 화면이 「할 일 12개」라고 말하면서
+    #:   실제로 할 일은 **0개**였던 것이다 — 그리고 게이트는 초록이었다.
+    #:
+    #:   왜 이렇게 돼 있었나: 종전 `rank()` 는 닫힌 것을 **뒤로 미루기만** 했다
+    #:   (`0 if closed_at is None else 1`). 열린 것이 하나라도 있으면 그것이 최상단에
+    #:   오니 `focus` 는 늘 옳았고, **그래서 아무도 못 봤다** — 틀린 것은 그 아래
+    #:   꼬리였다.
+    #:
+    #:   ★ 그런데 **수를 줄이지 않는다.** `total_events`·`card_total` 은 「무슨 일이
+    #:     있었나」를 세는 수이고 종결도 거기 든다. 큐에서만 뺀다 — 그리고
+    #:     **뺀 수를 함께 낸다**(`closed_cards_hidden`). 조용히 빼면 화면은
+    #:     「할 일 0」이라 말하는데 사람은 **왜 0 인지** 모른다.
+    #:     (「종결 확인」 절이 그 열둘을 따로 보여 주는 자리다 — 사라진 게 아니다.)
+    open_cards = [c for c in ordered if c["closed_at"] is None]
+    closed_hidden = len(ordered) - len(open_cards)
+
+    #: ★ `focus` 도 **열린 것에서만** 고른다. 종전에는 `ordered[0]` 이라, 전부 닫힌
+    #:   날에는 **이미 끝난 사건이 「가장 급한 하나」로** 최상단에 섰다. 그 화면은
+    #:   「할 일이 없다」가 아니라 **「이걸 하라」**고 말한다 — 정반대다.
+    focus = open_cards[0] if open_cards else None
     if focus is not None:
         focus = {**focus,
                  **response_state(scope=scope, event_id=focus["event_id"])}
@@ -1314,11 +1337,14 @@ def focus_queue(*, scope: TenantScope, since: datetime | None = None,
         #: ★ 원본 건수. 카드 수(`card_total`)와 **다른 수**이고, 다른 것이 요점이다.
         "total_events": len(rows),
         "card_total": len(ordered),
+        #: ★ 큐에서 뺀 종결 카드 수 — **0 이면 0 이라고 말한다.** 이 칸이 없으면
+        #:   「대기 0장」이 「일이 없다」인지 「다 끝났다」인지 화면이 못 가른다.
+        "closed_cards_hidden": closed_hidden,
         "sample_capped": len(rows) >= limit,
         "window_seconds": GROUP_WINDOW_SECONDS,
         "tier_thresholds_sec": list(clock.URGENCY_THRESHOLDS_SEC),
         "focus": focus,
-        "queue": ordered[1:],
+        "queue": open_cards[1:],
     }
 
 
