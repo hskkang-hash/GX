@@ -94,3 +94,18 @@ ImportError: cannot import name 'exclude_not_counted' from 'common.billing_marks
 
 > **「우아한 재적재」가 무엇을 다시 읽는지는 설정이 정한다 — 이름이 아니라.**
 > 도구를 허용하기 전에 그 도구가 **이 서버에서** 무엇을 하는지 한 번 잰다.
+
+## ⑧ 결정과 도구 [09-24 21:3x]
+
+- **대표 결정 「HUP 는 restart」**(09-24 대화) == 세종 P-321 == 조율자 권고 ㉠.
+  세종이 `headless.settings.json` 에 `docker restart gx-gunicorn-e` · `gx-celery-e` 두 줄을 넣고
+  `docker restart*` 일반 거부를 걷었다.
+- **도구 `scripts/restart_live.py`** — 사람이 순서를 기억하지 않게 한 줄로:
+  `python scripts/restart_live.py --reason "<커밋 제목 · P-번호>"`
+  → restart 둘 → 건강 200 · celery `ready.` 대기(90초) → `verify_live_code` → `smoke_live`(P-315)
+  → `restarts.jsonl` 에 한 줄(시각 · 사유 · 커밋 · 미커밋 backend 수 · 색). 통 이름은 박혀 있고 인자로 안 받는다.
+- **스모크 `scripts/smoke_live.py`(P-315)** — 8500 에서 건강 · 로그인(토큰 있음) · `events?limit=1` 30초 안.
+  커밋 훅에 붙이지 않았다: pre-commit 은 재시작 **전**이라 옛 코드를 잰다. P-321 의 순서가 이를 덮는다.
+- **첫 실행** 21:36:55 · 커밋 `32e6ca5` · 마스터 새로 섬 · live_code 신선 · 스모크 셋 200(1.3초) · **초록**.
+- 시험 `backend/tests/test_p321_restart_live.py` 13건 — 출생 표본(건강·스모크 초록이어도 옛 코드면 빨강 ·
+  200 인데 토큰 없는 로그인은 빨강) · 허용 목록 짝 · 자기시험을 그날의 눈으로 망가뜨리면 1.
