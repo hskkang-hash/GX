@@ -2315,8 +2315,12 @@ areas:
       - id: OPS-13a
         title: 앞단이 뒷단의 **워커 재활용을 삼킨다** — 502 3건 / 3,600 (0.083%)
         status: 잠김
-        kind: unmeasurable
+        kind: measured_red
         kind_why: |
+          ★ [P-345 · 2026-09-25 · 턴 AJ · 조율자 창 ③] **재서 빨강이다 — 회색이 빨강을 가리지 않는다.**
+          `python scripts/verify_front_line_502.py` → **exit 1(판정 실패)** · ⑥ 계획 창 「창 안 0 · 창 밖 1」.
+          대장이 unmeasurable 로 두면 잰 빨강이 「못 잼」으로 읽힌다(대장은 줄지 않는다 · P-203 — 수가 내려가면 내려간 수가 정본).
+          ↓ 아래는 그 전의 사유(지우지 않는다)
           상태가 '잠김' 이고 게이트도 이번 턴 **exit 2(회색)** — ⑤ 뒷단 부재로 355건을 창 밖으로 뺐다. 회색은 초록이 아니다
         blocker: OPS13B_502_SKIPS_RETRY
         gate: scripts/verify_front_line_502.py
@@ -5460,8 +5464,16 @@ areas:
       - id: LAW-08
         title: 증거 해시 체인 (`prev_hash`/`hash` · 일일 종이 앵커)
         status: 구현
-        kind: gate_only
+        kind: measured_red
         kind_why: |
+          ★ [P-304 · 2026-09-25 · 턴 AJ · 조율자 창 ③ · `--db` 인자 실행] **exit 1 — 새로 난 어긋남 6건.**
+          감사 5,857 · 체인 5,568 · 등재된 끊김 23 · **새 hash_mismatch 6**(#316701 · #316721 · #317229 ·
+          #317251 · #321744 · #321761). 여섯 다 09-21 `gxseed_u5_sysop` 의 `[K5-THRESH] set:event.dedup_window`
+          (「P-118 게이트 측정 (자동)」) 행이고 `modified_on` 은 만든 순간 그대로다. 저장된 `data_after` 에
+          **체인 칸 셋만 있고 원래 값이 없다**(`data_before` 는 None 또는 문자열 '11.0') — 변조가 아니라 **감싸는
+          쪽의 가장자리(비-dict/None 값)** 로 보인다(추정 · 미확인). 확인과 등재·수정은 다음 턴 몫.
+          gate_only(판정기 초록 · 종이 앵커 미관측)였던 절이 **판정기에서 빨강**이 됐으므로 measured_red.
+          ↓ 아래는 그 전의 사유(지우지 않는다)
           ★ **게이트는 초록인데 절은 안 닫혔다.**
           [조율자 실측 2026-09-21 · 턴 Z · 호스트 `--db`] **exit 0** ·
             감사 3320 · 체인 3031 · **등재된 끊김 23** · 새로 난 어긋남 0건 ·
