@@ -8,18 +8,20 @@ FWS 의 "확인 요청"은 그 이벤트를 현장 사람 눈으로 보는 것�
 그 이벤트에 대한 사람의 판단이다 — 이것은 **K1 이 이미 갖고 있는 두 문**과 정확히
 같은 모양이다:
 
-    조회        `kernels.k1_event.services.get_event`     (남의 것이면 404)
-    한 줄 회신   `kernels.k1_event.field_reply.reply_from_field`  (누가·언제·무엇을)
-    판정 확정    `kernels.k1_event.services.review_event`  (confirmed/rejected)
+    조회        `apps.dsm.services.event_detail` → K1 `get_event`     (남의 것이면 404)
+    한 줄 회신   `apps.dsm.services.field_reply` → K1 `reply_from_field`  (누가·언제·무엇을)
+    판정 확정    `apps.dsm.services.review_event` → K1 `review_event`  (confirmed/rejected)
 
 이 파일이 새로 정하는 것은 **회신의 계약**(결과 3택 + 오인 사유 5택)뿐이다 — 판정과
 저장은 전부 K1 에 위임한다(P-357 「DSM 커널을 공유한다」의 실측).
 """
 from __future__ import annotations
 
-from kernels.k1_event import reply_from_field  # 커널 공개 면(__init__) — 비공개 모듈 직접 import 금지(D-278)
-from kernels.k1_event.exceptions import InvalidEventInput
-from kernels.k1_event.services import get_event, review_event
+#: ★ [턴 AK · 조율자 병합] K1 을 직접 부르지 않는다 — F-05 「진입면 하나」는 **K1 의 App 소비자가
+#:   `apps/dsm/services.py` 하나뿐**이라는 뜻이고(`test_f05_event_api`), 새 App 이 이벤트를 쓰려면
+#:   그 판정을 먼저 받아야 한다. 판정 없이 둘째 소비자가 되지 않고 **그 하나를 거친다**(같은 함수 · 같은 문지기).
+from apps.dsm import services as dsm_services
+from apps.dsm.services import InvalidEventInput
 
 #: 회신 결과 3택 — 명세서 §5.1 FWS-F1-06.
 RESULT_FIRE_CONFIRMED = "fire_confirmed"
@@ -45,7 +47,7 @@ def get_verification(*, scope, verification_id: int) -> dict:
     """FWS-F1-05 — 확인 요청 한 건. **화면 자리에 지도를 두지 않는다**(§0.4 금지구역
     `MapForRoute`/`FormRoute` 밖 — 여기서 나가는 것은 좌표 값뿐이고, 그리는 것은
     화면의 몫이다)."""
-    event = get_event(verification_id, scope=scope)
+    event = dsm_services.event_detail(scope=scope, event_id=verification_id)
     return {
         "verification_id": event.event_id,
         "requested_action": "이 연기, 확인해 주세요",
@@ -77,18 +79,18 @@ def reply_verification(*, scope, verification_id: int, result: str,
 
     text = f"{result} {reason_label}{note}".strip()
     try:
-        reply = reply_from_field(
+        reply = dsm_services.field_reply(
             scope=scope, event_id=verification_id, text=text)
     except InvalidEventInput as exc:
         raise VerificationReplyRejected(str(exc)) from exc
 
     verdict = None
     if result == RESULT_FIRE_CONFIRMED:
-        verdict = review_event(
-            verification_id, verdict="confirmed", reason=text, scope=scope).verdict
+        verdict = dsm_services.review_event(
+            scope=scope, event_id=verification_id, verdict="confirmed", reason=text).verdict
     elif result == RESULT_FALSE_ALARM:
-        verdict = review_event(
-            verification_id, verdict="rejected", reason=text, scope=scope).verdict
+        verdict = dsm_services.review_event(
+            scope=scope, event_id=verification_id, verdict="rejected", reason=text).verdict
     # cannot_access — 판정을 바꾸지 않는다(접근 불가는 「진위」에 대한 답이 아니다).
 
     return {

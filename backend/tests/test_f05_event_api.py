@@ -517,6 +517,13 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     #      `warning → critical`(감사 #340015)로 되돌렸고, DB 재조회로 원복을
     #      확인했다 — 시험용 상태 변경은 남기지 않았다.
     ("POST", "/api/dsm/events/{int:event_id}/severity"),                    # U2#3 · 이벤트 등급 재판정 ★쓰기
+    # ★ [P-356 · 2026-09-27 · 턴 AK · 차선 N1] 기능명세 별표 승격 — U2 셋(`api_u24.py`). 셋 다 JWT ·
+    #   `@tenant_scoped` · 새 표 0(감사 한 줄이 정본 · 인수인계는 기존 표). 증거 `evidence/SPEC/DSM-U2-0*.json`.
+    ("GET", "/api/dsm/situation-meetings"),                                   # DSM-U2-03 상황판단회의 기록 목록
+    ("POST", "/api/dsm/situation-meetings"),                                  # DSM-U2-03 기록 ★쓰기(감사 한 줄)
+    ("POST", "/api/dsm/thresholds/observe"),                                  # DSM-U2-04 관측값 → 기준 도달 카드 ★쓰기
+    ("POST", "/api/dsm/thresholds/observe/{int:observation_id}/decide"),      # DSM-U2-04 판단 기록 ★쓰기
+    ("POST", "/api/dsm/handover/{int:handover_id}/ack"),                      # DSM-U2-05 인수인계 합동 확인 ★쓰기
 })
 
 #: 인증 없이 열리는 진입면 — **이름과 사유로** 잠근다. 늘면 여기 사유가 먼저 늘어야 한다.
