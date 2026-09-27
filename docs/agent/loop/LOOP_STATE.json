@@ -1,16 +1,16 @@
 {
   "version": 1,
   "turn": "AK",
-  "phase": "wo_ready",
+  "phase": "report_ready",
   "wo": "docs/workorders/WO-GX-20260925-15_턴AK_대표한마디_V첫실측_별표승격규칙_25절_20260925.md",
-  "report": null,
+  "report": "docs/workorders/WO-GX-20260925-15_report.md",
   "next_turn": "AL",
   "next_wo": null,
-  "updated_at": "2026-09-27T09:15:00+09:00",
-  "updated_by": "sejong",
-  "ceo_question": "이의만: ⑧ P-372 예비 계정 새로 세움 · ⑨ P-373 gx-smoke 경보 계정 쪽 제외 · 스테이징 1대(열다섯 턴째)",
+  "updated_at": "2026-09-27T12:00:00+09:00",
+  "updated_by": "yeongsil",
+  "ceo_question": "「dist_ak 올려라」(산불 화면 · 소켓 주소 — OPS-26 ③ 옳은 빨강) · LAW-08 여섯 등재 · 결정 ⑧⑨ · 세종 판정 청구 넷(U6 셋째 조건 · PERF-04 중앙값 · 영역 ⑦ · 계측기 출력 자리)",
   "retry_after": null,
   "turns_today": 1,
   "pause": false,
-  "notes": "턴 AK 발동 09-27(RESUME_NEXT §-1 · P-371~P-378) · ⑦ 종결 65e2aad · A 안 활성 · V 는 T+0 · 닫은 절 ≥ 25 · 턴 ≥ 2h(4h+V 40) · 한도면 체크포인트→AL 이어 붙임 · 상용 57.8(V 실측 전) · 온보딩 30.5/48 · push 0."
+  "notes": "턴 AK 보고(12:00) · 대화형 · 배포 1(A 안) · 온보딩 다섯째 21.0/48 · 「누른 뒤」 첫 32/48 · 별표 승격 13 → 기능명세 32.6 % · 상용 59.2 · 전량 2,306/0 · 닫은 절 목표 25 에 못 미침(13)."
 }
