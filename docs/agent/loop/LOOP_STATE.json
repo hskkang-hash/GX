@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "turn": "AJ",
-  "phase": "report_ready",
-  "wo": "docs/workorders/WO-GX-20260925-14_턴AJ_8500배포_V첫실측_셋째조건배선_기능명세로드맵_20260925.md",
-  "report": "docs/workorders/WO-GX-20260925-14_report.md",
-  "next_turn": "AK",
+  "turn": "AK",
+  "phase": "wo_ready",
+  "wo": "docs/workorders/WO-GX-20260925-15_턴AK_대표한마디_V첫실측_별표승격규칙_25절_20260925.md",
+  "report": null,
+  "next_turn": "AL",
   "next_wo": null,
-  "updated_at": "2026-09-25T09:35:00+09:00",
-  "updated_by": "yeongsil",
-  "ceo_question": "8500 배포가 분류기에 두 번째로 막혔다 — 대표 「올려라」(대화형) 또는 권한 규칙 한 줄 · 예비 계정 U6 · gx-smoke 경보(CEO_INBOX 새 줄 셋)",
+  "updated_at": "2026-09-27T09:15:00+09:00",
+  "updated_by": "sejong",
+  "ceo_question": "이의만: ⑧ P-372 예비 계정 새로 세움 · ⑨ P-373 gx-smoke 경보 계정 쪽 제외 · 스테이징 1대(열다섯 턴째)",
   "retry_after": null,
   "turns_today": 1,
   "pause": false,
-  "notes": "턴 AJ 보고(09:35) · 대화형 착수 · 감시기 미등록 · 차선 5 · 커밋 5 · 전량 2,267/0 · 상용 58.1→57.8(OPS-13a·LAW-08 measured_red) · 8500 배포 막힘(waiting_ceo 성격 — 도구·빌드 섰음) · V 0회(옳다) · 셋째 조건 57/57 · gx-smoke · 비번 찾기 띠(배포 대기) · 기능명세 미포함 136 표 + AK~AN 배정 · 닫은 절 0(판정기 규칙 — 세종 판정 청구)."
+  "notes": "턴 AK 발동 09-27(RESUME_NEXT §-1 · P-371~P-378) · ⑦ 종결 65e2aad · A 안 활성 · V 는 T+0 · 닫은 절 ≥ 25 · 턴 ≥ 2h(4h+V 40) · 한도면 체크포인트→AL 이어 붙임 · 상용 57.8(V 실측 전) · 온보딩 30.5/48 · push 0."
 }
