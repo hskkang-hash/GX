@@ -76,6 +76,21 @@ class FrontRowRed(SimpleTestCase):
                              health_ok=True, celery_ready=True, smoke=0, live_code=1, stale=stale)
         self.assertEqual((code, line), (r.EXIT_FAIL, r.RED_FRONT))
 
+    def test_shell_and_front_together_name_both(self) -> None:
+        """[턴 AK 실측] 재시작 뒤 둘이 함께 빨강 — 「어느 칸인지 못 읽었다」가 아니라 둘 다 말한다."""
+        _scripts()
+        import restart_live as r  # noqa: PLC0415
+        out = "\n".join([_live_out("OK  ", "FAIL"),
+                         "[LIVE] ── ③ 프런트 배포본 C:/GuardianX/gx-spa ──",
+                         "[LIVE] FAIL 옛 빌드"])
+        stale = r.stale_parts(out)
+        self.assertEqual(stale, {"shell", "front"})
+        code, line = r.judge(restarted={"gx-gunicorn-e": True, "gx-celery-e": True},
+                             health_ok=True, celery_ready=True, smoke=0, live_code=1, stale=stale)
+        self.assertEqual(code, r.EXIT_FAIL)
+        self.assertIn("runserver", line)
+        self.assertIn("deploy_spa_8500", line)
+
     def test_live_code_self_test_has_front_samples(self) -> None:
         _scripts()
         import verify_live_code as v  # noqa: PLC0415

@@ -110,6 +110,9 @@ def judge(*, restarted: dict, health_ok: bool, celery_ready: bool,
             return EXIT_FAIL, RED_SHELL
         if stale == {"front"}:
             return EXIT_FAIL, RED_FRONT
+        if stale == {"shell", "front"}:
+            #: [턴 AK 실측] 재시작 뒤 둘이 함께 빨강인 날이 있다 — 둘 다 재시작 대상이 아니다.
+            return EXIT_FAIL, RED_SHELL + " · 그리고 " + RED_FRONT.split(" — ", 1)[1]
         if stale and "product" in stale:
             return EXIT_FAIL, RED_PRODUCT + (" (재는 서버도 옛 코드)" if "shell" in stale else "")
         return EXIT_FAIL, "빨강 — 옛 코드가 돌고 있다(verify_live_code · 어느 칸인지 못 읽었다)"
