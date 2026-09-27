@@ -1,0 +1,21 @@
+{
+  "id": "FWS-F1-12",
+  "title": "근무 외 알림 차단·담당 초소 설정",
+  "measured_at": "2026-09-27T01:48:13.176623+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_app.F1_12_NotifyPrefsTest.test_save_then_read_back",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/notify-prefs",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "quiet_hours_start": "22:00",
+      "quiet_hours_end": "06:00",
+      "assigned_post_code": "P-12"
+    }
+  },
+  "what": "POST 로 저장한 방해 금지 시간대·담당 초소가 이후 GET 재조회에 그대로 보인다 — 저장 실측(같은 시험 안 다른 요청으로 재조회)"
+}

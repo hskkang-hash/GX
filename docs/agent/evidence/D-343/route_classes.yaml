@@ -258,6 +258,7 @@ routes:
   "GET /api/dsm/handover/draft": session_only
   "POST /api/dsm/handover/draft": session_only
   "GET /api/dsm/handover/latest": session_only
+  "POST /api/dsm/handover/{int:handover_id}/ack": session_only
   "GET /api/dsm/health": session_only
   "GET /api/dsm/law/ai-act/duties": session_only
   "GET /api/dsm/law/privacy-requests": session_only
@@ -313,6 +314,8 @@ routes:
   "GET /api/dsm/settings/zones": session_only
   "POST /api/dsm/settings/zones": session_only
   "GET /api/dsm/settings/{domain}": session_only
+  "GET /api/dsm/situation-meetings": session_only
+  "POST /api/dsm/situation-meetings": session_only
   "GET /api/dsm/stats/axes": session_only
   "GET /api/dsm/stats/by-reviewer": session_only
   "GET /api/dsm/stats/camera-threshold": session_only
@@ -327,6 +330,8 @@ routes:
   "POST /api/dsm/system/requests/{int:request_id}/handled": session_only
   "POST /api/dsm/system/restart-request": session_only
   "GET /api/dsm/system/storage": session_only
+  "POST /api/dsm/thresholds/observe": session_only
+  "POST /api/dsm/thresholds/observe/{int:observation_id}/decide": session_only
   "GET /api/dsm/webhook-subscriptions": session_only
   "POST /api/dsm/webhook-subscriptions": session_only
   "DELETE /api/dsm/webhook-subscriptions/{int:subscription_id}": session_only
@@ -337,6 +342,17 @@ routes:
   "DELETE /api/flight-log/flight-log/delete/{ids}": session_only
   "GET /api/flight-log/flight-log/detail/{id}": session_only
   "GET /api/flight-log/flight-log/download-log/{id}": session_only
+  "GET /api/fws/alerts": session_only
+  "POST /api/fws/alerts/{int:delivery_id}/ack": session_only
+  "GET /api/fws/emergency-contacts": session_only
+  "GET /api/fws/notify-prefs": session_only
+  "POST /api/fws/notify-prefs": session_only
+  "POST /api/fws/patrol/checkin": session_only
+  "GET /api/fws/patrol/mine": session_only
+  "POST /api/fws/patrol/track": session_only
+  "GET /api/fws/risk/today": session_only
+  "GET /api/fws/verifications/{int:verification_id}": session_only
+  "POST /api/fws/verifications/{int:verification_id}/reply": session_only
   "GET /api/genders": session_only
   "DELETE /api/handover/handover/content": session_only
   "POST /api/handover/handover/content": session_only

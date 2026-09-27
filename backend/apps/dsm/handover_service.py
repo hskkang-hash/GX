@@ -56,6 +56,26 @@ class HandoverRejected(Exception):
     """저장할 수 없다 — 소속 조직이 없거나 그 밖의 저장 불가 사유. 사람의 말로 담는다."""
 
 
+#: DSM-U2-05 「교대 인수인계 합동 확인」 — 확인 여부는 **표를 늘리지 않고** 감사에 남긴다
+#: (이 파일 머리말 「셈은 여기서 하지 않는다」와 같은 결의 판단 — 확인도 새 칸이 아니라
+#: 새 감사 줄이다). `DsmHandover` 에 칸을 더하면 이관(migration)이 필요하고, 확인은
+#: 「그 인계를 팀장이 봤다」는 사실 하나이지 상태가 아니다 — 감사 표가 정확히 그 모양이다.
+_ACK_LOGGER_NAME = "guardianx.u2.handover_ack"
+_ACK_TAG = "[U2-HANDOVER-ACK]"
+
+
+def _ack_action(handover_id: int) -> str:
+    return f"handover_ack:{handover_id}"
+
+
+def _is_acknowledged(handover_id: int) -> bool:
+    from common import audit_writer
+
+    action = _ack_action(handover_id)
+    return bool(audit_writer.read(
+        logger_name=_ACK_LOGGER_NAME, action=action, limit=1))
+
+
 @dataclass(frozen=True)
 class HandoverDraft:
     body: str
@@ -241,4 +261,43 @@ def latest(*, scope: TenantScope) -> dict:
         "handled_count": row.handled_count,
         "unresolved_event_ids": row.unresolved_event_ids,
         "created_at": row.created_on,
+        #: DSM-U2-05 — 홈 카드 「인계 확인 ✓」가 읽는 칸.
+        "acknowledged": _is_acknowledged(row.pk),
     }
+
+
+def acknowledge(*, scope: TenantScope, handover_id: int) -> dict:
+    """DSM-U2-05 — **교대 인수인계 합동 확인**(`POST /api/dsm/handover/{id}/ack`).
+
+    08~09시 인계 메모를 팀장이 「확인」 버튼으로 체크하는 자리. 같은 표
+    (`DsmHandover`)를 다시 읽어 **그 인계가 내 테넌트 것인지 먼저 확인**한다
+    (`event_note_service` 의 「먼저 확인」과 같은 순서 — 문지기를 두 번 세우지 않되,
+    남의 인계 id 를 넣으면 이 함수 앞에서 막힌다).
+
+    Raises:
+        django.http.Http404: 그런 인계 메모가 없다 · 남의 테넌트 것이다 ·
+            요청자에게 소속 조직이 없다.
+        common.tenant_scope.SystemScopeCannotRead: 요청자가 없다(시스템 스코프).
+    """
+    from django.apps import apps
+    from django.http import Http404
+
+    from common import audit_writer
+    from common.tenant_filters import get_user_group
+
+    actor = scope.require_actor()  # 시스템 스코프면 SystemScopeCannotRead
+    group = get_user_group(actor)
+    if group is None:
+        raise Http404("소속 조직이 없어 이 인계 메모를 확인할 수 없습니다.")
+
+    DsmHandover = apps.get_model("stream_monitors", "DsmHandover")
+    row = DsmHandover.objects.filter(pk=handover_id, group=group).first()
+    if row is None:
+        raise Http404("그런 인계 메모가 없습니다.")
+
+    entry = audit_writer.write(
+        logger_name=_ACK_LOGGER_NAME, tag=_ACK_TAG, actor=actor,
+        action=_ack_action(handover_id), outcome=audit_writer.ALLOWED,
+        reason="교대 인수인계 합동 확인", api_method="POST",
+    )
+    return {"id": handover_id, "ack_id": entry.audit_id, "acknowledged": True}

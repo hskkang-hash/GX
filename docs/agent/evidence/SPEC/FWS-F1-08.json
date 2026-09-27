@@ -1,0 +1,20 @@
+{
+  "id": "FWS-F1-08",
+  "title": "119·산림청 신고 번호 버튼",
+  "measured_at": "2026-09-27T01:50:26.876085+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_app.F1_08_EmergencyContactsTest.test_numbers_come_from_the_server_not_the_screen",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/emergency-contacts",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "fire_report": "119",
+      "forest_report": "042-481-4119"
+    }
+  },
+  "what": "GET /api/fws/emergency-contacts(로그인 뒤 · 익명은 닫힘)가 119·042-481-4119 를 낸다 — 화면은 이 값으로 tel: 링크를 만든다(1탭)"
+}

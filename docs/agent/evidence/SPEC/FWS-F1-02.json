@@ -1,0 +1,25 @@
+{
+  "id": "FWS-F1-02",
+  "title": "순찰 경로 기록(GPS 트랙 · 전자순찰함 NFC)",
+  "measured_at": "2026-09-27T01:50:21.855151+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_app.F1_02_TrackTest.test_gps_point_and_checkpoint_pass_are_counted_separately",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/patrol/track?post_code=P-12&checkpoint_code=CHK-3",
+    "params": {
+      "post_code": "P-12",
+      "checkpoint_code": "CHK-3"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "post_code": "P-12",
+      "recorded_at": "2026-09-27T01:50:21.830448+00:00",
+      "track_count": 1,
+      "checkpoint_count": 1
+    }
+  },
+  "what": "GPS 점 1건 뒤 순찰함 통과 1건을 보내면 track_count=1 · checkpoint_count=1 로 갈려 나온다 — 트랙 1 · 순찰함 통과 N 실측"
+}

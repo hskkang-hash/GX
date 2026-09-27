@@ -490,3 +490,68 @@ class NonDictPayloadOnAuditTableTest(TestCase):
             report.ok,
             "dict 아닌 본문을 쓰자 체인이 깨졌다 — **쓸 때마다 느는 어긋남**이 바로 이것이다: "
             "%s" % [str(b) for b in report.breaks])
+
+
+class EmptyDictPayloadSurvivesTest(SimpleTestCase):
+    """★★ [턴 AK · P-367 · 2026-09-27] **빈 dict `{}` 가 살아남는가.**
+
+    이 시험이 태어난 자리 — P-367 이 잰 여섯 행(#316701 #316721 #317229 #317251
+    #321744 #321761, 위 `NonDictPayloadOnAuditTableTest` 머리말 참조)을 확인하던 중
+    **또 다른 한 자리**를 밟았다. 턴 AC 의 고침(`NonDictPayloadSurvivesTest`)은
+    "dict 가 아닌 값" 을 감쌌지만, **"dict 이되 비어 있는 값"(`{}`)은 그대로 두었다** —
+    `_with_chain` 이 dict 는 펼치기만 하고(`base = dict(payload)`), `{}` 를 펼치면
+    `{}` 그대로이며, 그 뒤에 체인 칸만 더하면 **`payload=None` 이었을 때와 모양이
+    똑같아진다.** `strip_chain` 은 "체인 칸만 있으면 원래 빈 행(=None)이었다"고 읽으므로
+    (`RESERVED_KEYS` 뿐이면 `rest or None`), `{}` 로 쓴 행은 왕복 뒤 **`None` 으로
+    바뀐다** — 서로 다른 두 값이 저장하는 순간 하나로 접힌다.
+
+    ⚠ 기존 `NonDictPayloadSurvivesTest.SAMPLES` 에도 `("빈 dict", {})` 표본이 있었지만,
+      그 시험은 `want = strip_chain(value)` 로 기대값을 **원본이 아니라 이미 한 번 깎은
+      값**에서 구했다 — `{}` 도 `strip_chain({})` 이 이미 `None` 이라 "왕복해도 그대로"가
+      **자기 자신과 비교하는 동어반복**이 됐고, 그래서 이 구멍을 못 잡았다. 이 시험은
+      `{}` 를 **원본과** 비교한다.
+    """
+
+    def test_빈_dict_는_왕복_뒤에도_빈_dict_다(self):
+        stripped = evidence_chain.strip_chain({})
+        stored = evidence_chain._with_chain(
+            stripped, prev_hash="p", row_hash="h", seq=1)
+        back = evidence_chain.strip_chain(stored)
+        self.assertEqual(
+            {}, back,
+            "빈 dict 로 쓴 행이 왕복 뒤 %r 이 됐다 — None(칸 없음)과 빈 dict(값이 있지만 "
+            "비었음)가 저장하는 순간 하나로 접힌다. 이것도 **증거가 사라지는** 자리다"
+            % (back,))
+
+    def test_빈_dict_와_None_은_저장된_모양이_달라야_한다(self):
+        """★ 저장된 dict 를 **직접** 본다 — 값이 다르면 저장 모양도 달라야 뒤섞이지 않는다."""
+        none_stored = evidence_chain._with_chain(
+            None, prev_hash="p", row_hash="h", seq=1)
+        empty_stored = evidence_chain._with_chain(
+            {}, prev_hash="p", row_hash="h", seq=1)
+        self.assertNotEqual(
+            none_stored, empty_stored,
+            "None 과 빈 dict 가 저장된 모양이 같다 — 읽을 때 둘을 가를 방법이 없어진다")
+
+
+class EmptyDictPayloadOnAuditTableTest(TestCase):
+    """★★ [턴 AK · P-367] **표 위에서도** — `{}` 를 `after` 로 쓴 행이 살아남는가.
+
+    `EmptyDictPayloadSurvivesTest` 는 함수 둘의 대칭만 잰다 (Django 없이). 이 시험은
+    `NonDictPayloadOnAuditTableTest` 와 같은 모양으로 **실제 쓰기 → 조회 → 검증**까지 누른다.
+    """
+
+    def test_표에_쓴_빈_dict_도_체인이_안_깨진다(self):
+        entry = audit_writer.write(
+            logger_name=LOGGER, tag="[S-TEST]", actor=_Actor(1, "s_actor"),
+            action="s_empty_dict", outcome=audit_writer.ALLOWED,
+            reason="빈 dict 본문", after={})
+        payload = _audit_rows().filter(pk=entry.audit_id).values_list(
+            "data_after", flat=True)[0]
+        self.assertEqual(
+            {}, evidence_chain.strip_chain(payload),
+            "빈 dict 본문이 사라졌다 — None 이었던 것과 구별이 안 된다")
+        report = evidence_chain.verify_chain()
+        self.assertTrue(
+            report.ok,
+            "빈 dict 본문을 쓰자 체인이 깨졌다: %s" % [str(b) for b in report.breaks])

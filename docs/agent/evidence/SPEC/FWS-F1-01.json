@@ -1,0 +1,31 @@
+{
+  "id": "FWS-F1-01",
+  "title": "근무 시작·초소 체크인(NFC/GPS)",
+  "measured_at": "2026-09-27T01:50:20.147305+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_app.F1_01_CheckinTest.test_checkin_sets_on_duty_status_with_location",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/patrol/checkin?post_code=P-12&method=gps&lat=36.35&lng=127.38",
+    "params": {
+      "post_code": "P-12",
+      "method": "gps",
+      "lat": 36.35,
+      "lng": 127.38
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "post_code": "P-12",
+      "status": "on_duty",
+      "method": "gps",
+      "checked_in_at": "2026-09-27T01:50:20.119137+00:00",
+      "location": {
+        "lat": 36.35,
+        "lng": 127.38
+      }
+    }
+  },
+  "what": "POST /api/fws/patrol/checkin 뒤 응답의 status 가 on_duty, location 이 요청 좌표 그대로 실려 온다 — 초소 상태·위치 둘 다 실측"
+}

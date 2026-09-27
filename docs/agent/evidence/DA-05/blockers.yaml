@@ -1715,3 +1715,31 @@ blockers:
       ④ 고치기 **전/후**를 같은 부하로 재고 `verify_front_line_502.py` 에 시각 창으로 댄다.
          전/후가 없으면 달지 않는다(OPS-13b `gate_missing_why` 가 적어 둔 그대로).
     state_in_code: nginx/gx-front.conf
+
+  # ★ [턴 AK · 2026-09-27 · P-367] LAW-08 을 '잠김' 으로 둔 까닭 — 막는 것의 이름.
+  - id: LAW08_SIX_UNRECOVERABLE
+    title: 감사 체인의 되살릴 수 없는 여섯 행 — 등재(`RECORDED_BREAKS`)는 대표 결정이다
+    unlock_type: ADMIN
+    unlock_owner: 대표 (CEO_INBOX 09-27 영실 줄 「여섯 등재해라」 한 마디)
+    blocks: [LAW-08]
+    since: "2026-09-27"
+    blocked_now: true
+    verified_at: "2026-09-27"
+    verified_by: |
+      [턴 AK · 차선 Q 실측] `python scripts/verify_evidence_chain.py --db` → exit 1 · 새 hash_mismatch 6
+      (#316701 · #316721 · #317229 · #317251 · #321744 · #321761 · 전부 09-21 K5 문턱값 감사 행).
+      턴 AC 수정 **전** `_with_chain` 이 비-dict 값을 {} 로 버리고 해시만 남겼다 — 원래 값이 없다(되살릴 수 없음 ·
+      변조 아님). 앞으로의 행은 고쳤다(`backend/tests/test_s_evidence_chain.py` 빈 dict 재현 3).
+      `RECORDED_BREAKS` 머리말이 「여기에 줄을 더하는 것은 대표 결정」이라 적어 두었다 — 제안 `evidence/LAW-08/aj_six_20260927.md`.
+    state_in_code: scripts/verify_evidence_chain.py
+    why: |
+      감사 체인은 증거다 — 체인 판정기가 알고도 넘기는 끊김은 **등재된 끊김**뿐이고, 그 목록을 늘리는 것은
+      「이 끊김은 변조가 아니다」라는 선언이라 판정기 스스로 대표 결정으로 잠가 두었다.
+    unlock_step: |
+      대표 「여섯 등재해라」 → `RECORDED_BREAKS` 에 여섯 줄(got/want 는 verify_chain() 에서 다시 뽑는다) →
+      `verify_evidence_chain.py --db` 재측(새 어긋남 0 이어야) → LAW-08 대장 잠김 → 종전 부류로.
+    internal_alternative_considered: |
+      ① 여섯 행의 원래 값을 되살려 해시를 맞추기 — 값이 저장된 적이 없다(되살릴 것이 없다).
+      ② 감사 행을 고쳐 해시를 다시 계산하기 — 감사 행은 고치지 않는다(증거를 고치는 것이 곧 변조다).
+    why_not: |
+      ①은 불가능 · ②는 금지. 남는 길은 「알고 넘긴다」는 선언뿐이고, 그 선언의 자리가 대표 결정으로 잠겨 있다.

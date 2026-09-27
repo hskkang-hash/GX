@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNewOrderNotification } from '@/hooks/useNewOrderNotification';
 
 import './GlobalNotifications.scss';
+import { wsBase } from '@/services/wsBase';
 
 const GlobalNotifications = () => {
   const { t } = useTranslation();
@@ -115,7 +116,7 @@ const GlobalNotifications = () => {
 
   // Initialize global new order notifications
   useNewOrderNotification({
-    socketUrl: `${import.meta.env.VITE_STREAMING_WS}/ws/orders/notifications/`,
+    socketUrl: `${wsBase()}/ws/orders/notifications/`,
     onNotification: ({ title, message: orderMessage, orderData }) => {
       console.log('🎯 orderData', orderData);
       openNewOrderNotification({

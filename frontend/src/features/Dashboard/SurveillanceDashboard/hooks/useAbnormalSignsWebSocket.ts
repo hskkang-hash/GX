@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { calculateRelativeTime } from '../utils/mockRealtimeNotifications';
 import { AbnormalSignMessage } from './useSurveillanceDashboard';
+import { wsBase } from '@/services/wsBase';
 
 /**
  * WebSocket message structure from backend
@@ -157,7 +158,7 @@ export const useAbnormalSignsWebSocket = ({
       return () => {};
     }
 
-    const wsUrl = `${import.meta.env.VITE_STREAMING_WS}/ws/media/detect/`;
+    const wsUrl = `${wsBase()}/ws/media/detect/`;
 
     console.log('[ABNORMAL_SIGNS][WS] Connecting to:', wsUrl);
 

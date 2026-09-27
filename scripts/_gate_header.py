@@ -828,6 +828,11 @@ SELF_TEST_LINKS: dict[str, str] = {
     #: [P-325 · 09-24 · 턴 AI 조율자 병합] 차선 S 의 새 게이트 — 검사기가 첫 「짝 없음」으로
     #: 잡았다. 짝은 그날의 두 모양(칸 없음 + 3001 링크 · 1건 실패 섞인 요약)으로 망가뜨린다.
     "verify_password_reset.py": "backend/tests/test_p325_verify_gate_can_fail.py",
+    #: [P-356 · 2026-09-27 · 턴 AK 차선 N2] FWS 별표 절 승격 게이트. 망가뜨림 = 「증거
+    #: 파일이 없거나 응답이 500 인데 통과시킨다」 — 이 게이트가 실제로 막으려는 자리다.
+    "verify_spec_fws.py": "backend/tests/test_verify_spec_fws_gate_can_fail.py",
+    #: [P-356 · 2026-09-27 · 턴 AK 차선 N1] DSM 별표 절 승격 게이트 — 같은 망가뜨림(증거 없음·500 통과).
+    "verify_spec_dsm.py": "backend/tests/test_verify_spec_dsm_gate_can_fail.py",
 }
 
 #: ★ [P-322 ⓐ · P-323] **기준선을 얼린다.** 이 요구가 생기기 **전부터 있던** 게이트

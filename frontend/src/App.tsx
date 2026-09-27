@@ -199,6 +199,7 @@ import BuildVersion from './features/dsm/components/BuildVersion';
 import { KICK_SENTENCE } from './features/dsm/constants/kick';
 import { dsm2Routes } from './features/dsm/routes';
 import { dsmU24Redirects, dsmU24Routes } from './features/dsm/routes.u24';
+import { fwsRoutes } from './features/fws/routes'; // P-357 — 산불감시 현장(WO-15 §5)
 import { resolveHome } from './features/nav/roleHome'; // P-141 · 첫 화면은 이 한 곳이 정한다
 import {
   adoptWallToken,
@@ -269,6 +270,8 @@ const DsmStats = lazy(() => import('./features/dsm/pages/Stats'));
 const DsmAuditLog = lazy(() => import('./features/dsm/pages/AuditLog'));
 const DsmReports = lazy(() => import('./features/dsm/pages/Reports'));
 const DsmIntegrations = lazy(() => import('./features/dsm/pages/Integrations'));
+// ── 턴 AK · P-357 산불감시(FWS) 현장 홈 — 같은 SPA 안 `/fws/*` 가지 하나 ──────
+const FwsPatrolHome = lazy(() => import('./features/fws/pages/PatrolHome'));
 const DsmPrivacyRequests = lazy(
   () => import('./features/dsm/pages/PrivacyRequests'),
 );
@@ -799,6 +802,10 @@ function App() {
               path: CustomRoutes.dsm.eventDetail.path,
               element: <DsmEventDetail />,
             },
+            // ── 턴 AK · P-356·357 산불감시(FWS) 현장 홈 ──────────────────
+            //   ⚠ `/fws/home` 은 최상위 리터럴이라(변수 조각 없음) 이 목록의 어느
+            //     경로와도 서로 삼키지 않는다 — 위치는 순서 무관하게 안전하다.
+            { path: fwsRoutes.home.path, element: <FwsPatrolHome /> },
             // ── 모바일 · 이동 중 수신 모드 (U3 · 차선 D) ──────────────────
             //   M1 은 발송 기록이 정본이다(이벤트 목록이 아니다). 상세는 목록의
             //   값을 물려받지 않고 서버에 다시 묻는다 — 문지기가 목록에만 서고

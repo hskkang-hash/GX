@@ -1,0 +1,41 @@
+{
+  "id": "DSM-U2-04",
+  "measured_at": "2026-09-27T01:48:03.220303+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_dump_dsm_u2_04_evidence",
+  "request": {
+    "method": "POST",
+    "path": "/api/dsm/thresholds/observe/13/decide",
+    "body": {
+      "observe": {
+        "camera_id": 7,
+        "key": "waterlevel.baseline",
+        "value": 182
+      },
+      "decide": {
+        "decision": "통제 실시"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "observe": {
+        "reached": true,
+        "key": "waterlevel.baseline",
+        "camera_id": 7,
+        "value": 182.0,
+        "threshold": 180.0,
+        "observation_id": 13
+      },
+      "decide": {
+        "observation_id": 13,
+        "decision_id": 14,
+        "decision": "통제 실시",
+        "key": "waterlevel.baseline",
+        "camera_id": 7
+      }
+    }
+  },
+  "what": "관측값이 기준(180cm)에 닿아(182cm) 도달 카드가 섰고(observe), 그 뒤 결정을 남겨(decide) 도달 시각·결정 시각 둘 다 감사에 남았다."
+}

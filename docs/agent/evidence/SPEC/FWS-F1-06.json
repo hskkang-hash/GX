@@ -1,0 +1,26 @@
+{
+  "id": "FWS-F1-06",
+  "title": "현장 확인 회신(산불 맞음/소각·오인/접근 불가)",
+  "measured_at": "2026-09-27T01:50:25.121071+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_app.F1_05_06_VerificationTest.test_verification_detail_and_fire_confirmed_reply",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/verifications/3/reply?result=fire_confirmed&note=%EC%97%B0%EA%B8%B0+%ED%99%95%EC%9D%B8%2C+%ED%99%94%EC%84%B8+%EB%B3%B4%ED%86%B5",
+    "params": {
+      "result": "fire_confirmed",
+      "note": "연기 확인, 화세 보통"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "verification_id": 3,
+      "reply_id": 6,
+      "result": "fire_confirmed",
+      "reason_code": null,
+      "verdict": "confirmed"
+    }
+  },
+  "what": "현장 회신 result=fire_confirmed 뒤 K1 사건의 verdict 가 confirmed 로 바뀐다 — 회신 → 사건 확정 실측"
+}

@@ -60,7 +60,8 @@ KST = dt.timezone(dt.timedelta(hours=9))
 
 
 #: P-344 — `verify_live_code` 의 두 칸 머리. 이 글자로 어느 서버가 옛 코드인지 가른다.
-LIVE_SECTIONS = (("── ① 제품 서버", "product"), ("── ② 재는 서버", "shell"))
+LIVE_SECTIONS = (("── ① 제품 서버", "product"), ("── ② 재는 서버", "shell"),
+                 ("── ③ 프런트 배포본", "front"))
 
 
 def stale_parts(live_stdout: str) -> set[str]:
@@ -82,6 +83,9 @@ def stale_parts(live_stdout: str) -> set[str]:
 #: P-344 — 두 사고 · 두 손. 한 문구로 뭉치면 「재시작이 안 먹었다」로 읽혀 엉뚱한 손이 간다.
 RED_PRODUCT = ("빨강 — 재시작 뒤에도 옛 코드(gunicorn 마스터) — 재시작이 안 먹었다 · "
                "이미지·마운트·preload 를 본다")
+#: P-359 — ③ 프런트. 재시작으로는 안 고쳐진다 — 다시 빌드해 deploy_spa_8500 으로 올리는 손이다.
+RED_FRONT = ("빨강 — 8500 프런트 배포본이 커밋 빌드가 아니다 — 재시작 대상이 아니다 · "
+             "빌드해 deploy_spa_8500 으로 올린다")
 RED_SHELL = ("빨강 — 재는 서버(gx-shell runserver)가 옛 코드 — 재시작 대상이 아니다 · "
              "runserver 를 다시 띄운다")
 
@@ -104,6 +108,8 @@ def judge(*, restarted: dict, health_ok: bool, celery_ready: bool,
         #: P-344 — 제품이 옛 코드면 그것이 먼저다(재시작이 겨냥한 통이다).
         if stale == {"shell"}:
             return EXIT_FAIL, RED_SHELL
+        if stale == {"front"}:
+            return EXIT_FAIL, RED_FRONT
         if stale and "product" in stale:
             return EXIT_FAIL, RED_PRODUCT + (" (재는 서버도 옛 코드)" if "shell" in stale else "")
         return EXIT_FAIL, "빨강 — 옛 코드가 돌고 있다(verify_live_code · 어느 칸인지 못 읽었다)"

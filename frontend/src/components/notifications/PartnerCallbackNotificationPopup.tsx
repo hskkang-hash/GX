@@ -5,6 +5,7 @@ import { FaTruck, FaBuilding, FaBell } from 'react-icons/fa';
 import { IoWarning, IoInformationCircle } from 'react-icons/io5';
 
 import { usePartnerCallbackWebSocket } from '@/hooks/usePartnerCallbackWebSocket';
+import { wsBase } from '@/services/wsBase';
 
 // Helper function để format notification content
 const getNotificationContent = (message: any, t: any) => {
@@ -215,7 +216,7 @@ const PartnerCallbackNotificationPopup: React.FC = () => {
   const clearMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { isConnected, message, clearMessage } = usePartnerCallbackWebSocket({
-    socketUrl: `${import.meta.env.VITE_STREAMING_WS}/ws/partner-callbacks/`,
+    socketUrl: `${wsBase()}/ws/partner-callbacks/`,
   });
 
   useEffect(() => {

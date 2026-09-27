@@ -61,6 +61,28 @@ class RestartRedTwo(SimpleTestCase):
         self.assertNotEqual(self.r.RED_PRODUCT, self.r.RED_SHELL)
 
 
+class FrontRowRed(SimpleTestCase):
+    """P-359 — ③ 프런트 배포본 빨강은 제 문구(재시작 대상이 아니다)."""
+
+    def test_front_only_stale_says_redeploy(self) -> None:
+        _scripts()
+        import restart_live as r  # noqa: PLC0415
+        out = "\n".join([_live_out("OK  ", "OK  "),
+                         "[LIVE] ── ③ 프런트 배포본 C:/GuardianX/gx-spa ──",
+                         "[LIVE] FAIL 옛 빌드"])
+        stale = r.stale_parts(out)
+        self.assertEqual(stale, {"front"})
+        code, line = r.judge(restarted={"gx-gunicorn-e": True, "gx-celery-e": True},
+                             health_ok=True, celery_ready=True, smoke=0, live_code=1, stale=stale)
+        self.assertEqual((code, line), (r.EXIT_FAIL, r.RED_FRONT))
+
+    def test_live_code_self_test_has_front_samples(self) -> None:
+        _scripts()
+        import verify_live_code as v  # noqa: PLC0415
+        self.assertEqual(v.self_test(), v.EXIT_OK)
+        self.assertEqual(v.judge_front(None, "x", 0)[0], v.EXIT_FAIL)
+
+
 class DeploySelfTest(SimpleTestCase):
     """P-341 — 배포 도구의 판정 규칙과 복원 경로(임시 폴더 · 8500 은 안 건드린다)."""
 

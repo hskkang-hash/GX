@@ -212,6 +212,18 @@ def collect() -> tuple[dict, list[str], list[str]]:
 # ② 대장 — 등재됐나 · 절 수와 kind 점수는 얼마인가
 # ═══════════════════════════════════════════════════════════════════════════
 
+def promoted_ids(ids) -> list[str]:
+    """P-356 — 명세 id 중 **8영역 절로 승격돼** 대장 `areas[].clauses[].id` 에 선 것."""
+    try:
+        import yaml  # noqa: PLC0415
+        data = yaml.safe_load(LEDGER.read_text(encoding="utf-8")) or {}
+    except Exception:                                    # noqa: BLE001
+        return []
+    area_ids = {(c.get("id") or "").strip()
+                for a in (data.get("areas") or []) for c in (a.get("clauses") or [])}
+    return [i for i in ids if i in area_ids]
+
+
 def ledger_text() -> str:
     return (LEDGER.read_text(encoding="utf-8", errors="replace")
             if LEDGER.is_file() else "")
@@ -600,10 +612,15 @@ def measure() -> dict:
         if roll and n_sec != roll["total"]:
             red.append("★ **절 수가 갈렸다** — 분모 정본 줄은 %d, 부류 줄은 %d. "
                        "같은 대장에서 두 분모가 난다 (D-369)" % (n_sec, roll["total"]))
-        if n_annex != len(uniq):
-            red.append("★ **별표 수가 갈렸다** — 대장은 %d, 이 규칙이 뽑은 id 는 %d. "
+        #: ★ [P-356 ⑤ · 2026-09-27 · 턴 AK · 세종 허용] **승격된 별표 절은 영역 절로 옮겨 있다.**
+        #:   옮긴 id 는 대장의 별표 칸에서 빠지고 8영역 절로 세어진다(분모 합은 그대로). 그래서
+        #:   대조는 「별표 + 영역으로 옮긴 명세 id == 규칙이 뽑은 id」다. 옮긴 것을 못 찾으면
+        #:   (영역에도 별표에도 없는 id) 종전처럼 빨강이다 — 한 id 를 두 번 세거나 빠뜨리는 길은 안 연다.
+        promoted = promoted_ids(uniq)
+        if n_annex + len(promoted) != len(uniq):
+            red.append("★ **별표 수가 갈렸다** — 대장은 별표 %d + 승격 %d, 이 규칙이 뽑은 id 는 %d. "
                        "N 과 내가 다른 분모를 쓰면 **두 수가 다 못 쓰게 된다**"
-                       % (n_annex, len(uniq)))
+                       % (n_annex, len(promoted), len(uniq)))
     sc = (score(n_sec, pts, n_annex)
           if (n_sec is not None and pts is not None)
           else {"den": None, "num": None, "pct": None, "upper": None})

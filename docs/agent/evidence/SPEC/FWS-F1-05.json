@@ -1,0 +1,28 @@
+{
+  "id": "FWS-F1-05",
+  "title": "확인 요청 수신(카메라 사진·위치·거리·지도)",
+  "measured_at": "2026-09-27T01:50:25.017871+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_app.F1_05_06_VerificationTest.test_verification_detail_and_fire_confirmed_reply",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/verifications/3",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "verification_id": 3,
+      "requested_action": "이 연기, 확인해 주세요",
+      "occurred_at": "2026-09-27T01:49:24.934323+00:00",
+      "snapshot_path": "minio://dsm/1.jpg",
+      "lat": null,
+      "lng": null,
+      "address": null,
+      "severity": "critical",
+      "status": "new",
+      "verdict": null
+    }
+  },
+  "what": "K1 이벤트를 '확인 요청'으로 GET — 화면이 그릴 좌표·스냅샷 경로가 응답에 실린다(지도 렌더는 금지구역 밖이라 좌표 값만)"
+}

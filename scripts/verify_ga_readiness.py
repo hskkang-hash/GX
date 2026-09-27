@@ -369,8 +369,28 @@ def _container() -> str:
     return os.environ.get("GX_ROUTE_CONTAINER", "").strip()
 
 
-def run_gate(rel: str) -> tuple[int | None, str]:
-    """게이트를 **부른다** — 읽어서 답하지 않는다 (D-210). (종료코드, 마지막 줄)."""
+#: ★ [P-361 · 2026-09-27 · 턴 AK · 세종 허용] 대장 절의 `gate_args:` — 인자 없이 부르면 **언제나
+#:   회색**인 게이트(SEC-17 `--api` · LAW-08 `--db`)가 있었다. 경로 칸(`gate:`)은 다른 검사기들이
+#:   파일 존재로 읽으므로 **건드리지 않고** 곁칸 하나만 둔다. 받는 것은 **플래그만**(`--api`) —
+#:   값을 받지 않으니 비밀도 명령 주입도 실릴 자리가 없다. 모양이 어긋난 인자는 **통째로 버리고**
+#:   인자 없이 부른다(그러면 종전처럼 회색이 난다 — 틀린 인자로 초록이 나는 길을 안 만든다).
+GATE_ARG_RE = re.compile(r"^--[a-z][a-z0-9-]*$")
+
+
+def gate_key(gate: str, args) -> str:
+    """부를 단위 — 경로 + (허용된) 플래그. 같은 게이트라도 인자가 다르면 다른 한 벌이다."""
+    flags = [a for a in (args.split() if isinstance(args, str) else (args or []))]
+    if flags and all(GATE_ARG_RE.match(str(a)) for a in flags):
+        return " ".join([gate] + [str(a) for a in flags])
+    return gate
+
+
+def run_gate(key: str) -> tuple[int | None, str]:
+    """게이트를 **부른다** — 읽어서 답하지 않는다 (D-210). (종료코드, 마지막 줄).
+
+    `key` 는 `gate_key()` 의 값 — 첫 토막이 경로이고 나머지는 허용된 플래그다.
+    """
+    rel, *flags = key.split()
     path = ROOT / rel
     if not path.exists():
         return None, "그 파일이 없다"
@@ -390,9 +410,9 @@ def run_gate(rel: str) -> tuple[int | None, str]:
                "-e", "PYTHONIOENCODING=utf-8"]
         for k in PASS_BY_NAME:
             cmd += ["-e", k]
-        cmd += [cont, "python", "/repo/" + rel]
+        cmd += [cont, "python", "/repo/" + rel] + flags
     else:
-        cmd = [sys.executable, str(path)]
+        cmd = [sys.executable, str(path)] + flags
     try:
         done = subprocess.run(
             cmd, cwd=str(ROOT), env=env,
@@ -413,7 +433,8 @@ def collect_gates(areas: list[dict]) -> list[tuple[str, str, str]]:
             gate = (clause.get("gate") or "").strip()
             if gate:
                 out.append(((clause.get("id") or "?").strip(),
-                            (clause.get("status") or "").strip(), gate))
+                            (clause.get("status") or "").strip(),
+                            gate_key(gate, clause.get("gate_args"))))
     return out
 
 
@@ -437,6 +458,8 @@ SERIAL_GATES = (
     "verify_sidebar.py", "verify_route_alive.py", "verify_contract_route_reach.py",
     "verify_screens.py", "verify_write_auth.py", "verify_seed_roles.py",
     "verify_authn_paths.py",
+    #: [P-361 · 턴 AK] `--api` 로 부르면 제품에 로그인한다 — 인자를 싣게 된 날부터 줄에 선다.
+    "verify_ui_secrets.py",
     "verify_feature_reach.py",
 )
 
@@ -461,7 +484,7 @@ def measure_gates(pairs: list[tuple[str, str, str]]) -> dict[str, tuple]:
     names = sorted({g for _cid, _st, g in pairs if g != GATE_SELF})
     if not names:
         return {}
-    serial = [n for n in names if n.rsplit("/", 1)[-1] in SERIAL_GATES]
+    serial = [n for n in names if n.split()[0].rsplit("/", 1)[-1] in SERIAL_GATES]
     parallel = [n for n in names if n not in serial]
     out: dict[str, tuple] = {}
     if parallel:
@@ -666,6 +689,14 @@ def self_test() -> int:
         "★ 출생표본 — 없는 파일을 가리킨 증명을 잡는다",
         any("없는 증명은 문서다" in p
             for p in problems({"id": "X", "status": "구현", "proof": "backend/없다.py"}))))
+    # ── P-361 `gate_args` — 플래그만 싣는다 · 어긋나면 통째로 버린다 ─────────────
+    checks.append(("gate_args 플래그 하나를 싣는다",
+                   gate_key("scripts/a.py", "--api") == "scripts/a.py --api"))
+    checks.append(("gate_args 에 값·셸 글자가 섞이면 통째로 버린다(틀린 인자로 초록 금지)",
+                   gate_key("scripts/a.py", "--api x;rm") == "scripts/a.py"
+                   and gate_key("scripts/a.py", ["--db", "--x=1"]) == "scripts/a.py"))
+    checks.append(("gate_args 가 없으면 종전 그대로",
+                   gate_key("scripts/a.py", None) == "scripts/a.py"))
     checks.append((
         "★ 「부분」은 상태가 아니다 (D-314)",
         any("절로 쪼개라" in p for p in problems({"id": "X", "status": "부분"}))))

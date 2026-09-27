@@ -164,6 +164,16 @@ def strip_chain(payload: Any) -> Any:
 
     ★★ 이 함수와 `_with_chain` 은 **서로의 역함수여야 한다** — `strip_chain(_with_chain(v)) == v`.
       둘이 갈리면 저장하는 순간 값이 바뀌고, 다시 계산한 해시가 영원히 안 맞는다(LAW-08).
+
+    ★★ [턴 AK · P-367 · 2026-09-27] **원래 빈 `{}` 과 "칸만 남아 비었다"를 가른다.**
+      `append_evidence_hash` 는 갓 만든 행에도(체인이 아직 안 붙은 값) 이 함수를
+      부른다(재감기 경로와 코드를 나누지 않으려고 — 아래 두 번째 ⚠). 그런데 원래
+      `{}` 였던 값도 `rest = {}` 로 나오고, 예약 키 셋만 남은 뒤 지운 값도 똑같이
+      `rest = {}` 로 나온다 — **입력의 모양이 다른데 결과가 같아진다.** 가르는 것은
+      "예약 키를 걸러 낸 것이 있었는가" 다: `payload` 자신이 이미 텅 비어 있었으면
+      (`{}`) 거를 예약 키가 없었으므로 **그대로 `{}`** 다. `payload` 에 키가
+      있었는데 전부 예약 키였다면(`RESERVED_KEYS` 만 있던 행) 그것이 **원래 `None`
+      이었던 행**이다.
     """
     if not isinstance(payload, dict):
         return payload
@@ -172,9 +182,17 @@ def strip_chain(payload: Any) -> Any:
         #: 버린 값을 되찾을 길이 없다 — 되찾지 못하면 그 증거는 사라진 것이다.
         return payload[VALUE_KEY]
     rest = {k: v for k, v in payload.items() if k not in RESERVED_KEYS}
-    #: ★ 두 칸만 있던 행은 **원래 비어 있던 행**이다. `{}` 로 두면 `None` 이었던
-    #:   행과 값이 갈리고, 그러면 두 칸을 붙이는 행위 자체가 해시를 바꾼다.
-    return rest or None
+    if rest:
+        return rest
+    #: ★ `rest` 가 비었다 — **왜 비었나**가 갈린다 (위 P-367 항 참조).
+    if payload:
+        #: 있던 키가 전부 예약 키였다 — 두 칸만 있던 행은 **원래 비어 있던 행**이다.
+        #: `{}` 로 두면 `None` 이었던 행과 값이 갈리고, 그러면 두 칸을 붙이는
+        #: 행위 자체가 해시를 바꾼다.
+        return None
+    #: `payload` 자신이 처음부터 `{}` 였다 — 거를 예약 키가 아예 없었다. `None` 으로
+    #: 접으면 "빈 dict 였다"와 "칸이 없었다"가 하나로 뭉개진다.
+    return payload
 
 
 def canonical(record: dict) -> str:
@@ -815,8 +833,18 @@ def _with_chain(payload: Any, *, prev_hash: str, row_hash: str, seq: int) -> dic
       `base = {}` 로 시작해 원래 값이 사라졌고, 그 때문에 ① 그 행의 증거가 없어지고
       ② `strip_chain` 과 갈려 해시가 영원히 안 맞았다. `VALUE_KEY` 머리말 참조.
       **이 함수와 `strip_chain` 은 서로의 역함수다** — 고칠 때 둘을 같이 고친다.
+
+    ★★ [턴 AK · P-367 · 2026-09-27] **빈 dict `{}` 도 감싼다.**
+      dict 인 값은 이 함수가 펼치기만 한다(`base = dict(payload)`) — 그런데 `{}` 를
+      펼치면 `{}` 그대로이고, 그 뒤에 체인 칸만 더하면 **`payload=None` 이었을 때와
+      저장된 모양이 같아진다.** 저장된 모양이 같으면 `strip_chain` 은 "체인 칸만
+      남았으니 원래 빈 행(=None)이었다"고 읽는다(예약 키만 있는 dict → `None`),
+      그래서 감싸지 않은 `{}` 로 쓴 행은 왕복 뒤 **`None` 으로 바뀐다** — 서로 다른
+      두 값이 저장하는 순간 하나로 접힌다.
+      그래서 **빈 dict 도 스칼라처럼 감싼다**(`VALUE_KEY`). `None` 은 그대로 둔다 —
+      "칸이 없었다"(None)와 "빈 dict 였다"({})를 가르는 것이 이 한 줄의 전부다.
     """
-    if payload is not None and not isinstance(payload, dict):
+    if payload is not None and (not isinstance(payload, dict) or not payload):
         base: dict = {VALUE_KEY: payload}
     else:
         base = dict(payload) if isinstance(payload, dict) else {}

@@ -104,6 +104,10 @@ urlpatterns = [
     #   신규 라우트는 트립와이어(D-275 §5-1)를 통과해야 한다: 문지기 없는 새 경로가
     #   하나 생기면 그 순간 다시 샌다.
     path("api/dsm/", include("apps.dsm.urls")),  # 재난안전 모니터링 App (F-09~F-12)
+    # ★ L4 FWS App — 산불감시 현장(FM1·FM2). P-357: 새 앱이 아니다 — 같은 SPA
+    #   `/fws/*` 라우트 · DSM 커널(K1 이벤트·K2 알림) 공유. Django 앱이 아니다
+    #   (모델이 없다 — 위 DSM 줄과 같은 이유로 INSTALLED_APPS 를 건드리지 않는다).
+    path("api/fws/", include("apps.fws.urls")),  # 산불감시 현장 App (WO-15 §5 P-356~358)
 ]
 
 # Serve static and media files in development

@@ -101,6 +101,35 @@ print(json.dumps({'procs': out, 'conf': conf, 'cmd': cmd}))
 """
 
 
+#: P-359 (턴 AK · 세종 허용) — ③ 프런트 배포본. 8500 nginx 가 주는 폴더와 배포 기록.
+SPA_DIR = Path("C:/GuardianX/gx-spa")
+DEPLOYS = ROOT / "docs" / "agent" / "evidence" / "OPS-27" / "deploys.jsonl"
+#: 빌드에 들어가는 자리 — 여기가 배포 뒤에 커밋으로 바뀌었으면 배포본은 옛 빌드다.
+FRONT_PATHS = ("frontend/src", "frontend/public", "frontend/index.html",
+               "frontend/package.json", "frontend/vite.config.ts")
+
+
+def judge_front(last: dict | None, live_tree12: str | None,
+                changed_since: int | None) -> tuple[int, str]:
+    """③ 배포본 == 커밋 빌드. 순수 함수.
+
+    `last` = `deploys.jsonl` 의 마지막 **초록 배포** 줄 · `live_tree12` = 지금 `gx-spa` 나무 sha 앞 12 ·
+    `changed_since` = 그 배포의 커밋 뒤 HEAD 까지 프런트 빌드 자리에서 바뀐 파일 수(못 셌으면 None).
+    ★ 배포 기록이 없으면 **빨강**이다 — 무엇이 올라가 있는지 아무도 모른다(회색으로 두면 영영 모른다).
+    """
+    if last is None:
+        return EXIT_FAIL, "배포 기록이 없다 — 8500 에 무엇이 올라가 있는지 모른다(deploy_spa_8500 로 올려라)"
+    want = (last.get("new") or {}).get("tree")
+    if live_tree12 is None or changed_since is None:
+        return EXIT_UNDECIDABLE, "gx-spa 나 git 을 못 읽었다 — 못 쟀다"
+    if live_tree12 != want:
+        return EXIT_FAIL, (f"8500 배포본(나무 {live_tree12})이 마지막 배포 기록({want})과 다르다 — "
+                           "도구 밖에서 손댔다")
+    if changed_since:
+        return EXIT_FAIL, (f"배포 뒤 프런트 커밋 {changed_since}파일 — 8500 은 옛 빌드다 · 다시 빌드해 올려라")
+    return EXIT_OK, f"8500 배포본 == 마지막 배포(나무 {want} · {last.get('commit')}) · 그 뒤 프런트 커밋 0"
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 판정 — **순수 함수** (자기시험이 docker 없이 이것을 잰다)
 # ═══════════════════════════════════════════════════════════════════════════
@@ -315,11 +344,26 @@ def self_test() -> int:
         fails += 1
         print(f"{TAG} 자기시험 FAIL 자동 재적재의 새 자식을 안 보고 옛 부모로 판정했다")
 
+    # ⑫ P-359 — 프런트 배포본. 출생 표본: 턴 AJ 에 새 빌드가 섰는데 8500 은 옛것(기록 없음)이었다.
+    _dep = {"new": {"tree": "aaaaaaaaaaaa"}, "commit": "c7a736f"}
+    if judge_front(None, "bbbbbbbbbbbb", 0)[0] != EXIT_FAIL:
+        fails += 1
+        print(f"{TAG} 자기시험 FAIL 배포 기록 없음을 빨강으로 안 읽었다")
+    if judge_front(_dep, "aaaaaaaaaaaa", 3)[0] != EXIT_FAIL:
+        fails += 1
+        print(f"{TAG} 자기시험 FAIL 배포 뒤 프런트 커밋을 빨강으로 안 읽었다 — 옛 빌드가 초록")
+    if judge_front(_dep, "cccccccccccc", 0)[0] != EXIT_FAIL:
+        fails += 1
+        print(f"{TAG} 자기시험 FAIL 도구 밖에서 바뀐 배포본을 빨강으로 안 읽었다")
+    if judge_front(_dep, "aaaaaaaaaaaa", 0)[0] != EXIT_OK:
+        fails += 1
+        print(f"{TAG} 자기시험 FAIL 기록과 같고 뒤 커밋 0 인 배포본을 초록으로 안 읽었다")
+
     if fails:
         print(f"{TAG} 자기시험 {fails}건 실패")
         return EXIT_FAIL
     print(f"{TAG} 자기시험 통과 — 출생 표본 2(반쪽 gunicorn · 잊힌 runserver) · 판정 5 · "
-          "재는 서버 3 · 설정 읽기 3 · 가르기 1")
+          "재는 서버 3 · 설정 읽기 3 · 가르기 1 · 프런트 배포본 4")
     return EXIT_OK
 
 
@@ -380,12 +424,46 @@ def main() -> int:
         code2, verdict2 = judge_runserver(newest[0], rprocs)
     print(f"{TAG} {_mark(code2)} {verdict2}")
 
-    #: 둘을 한 색으로 — 빨강이 하나라도 있으면 빨강 · 아니면 회색이 하나라도 있으면 회색.
-    if EXIT_FAIL in (code, code2):
+    #: ③ 프런트 배포본(P-359) — 8500 이 주는 화면이 커밋된 빌드인가.
+    print(f"{TAG} ── ③ 프런트 배포본 {SPA_DIR.as_posix()} ──")
+    code3, verdict3 = _front_check()
+    print(f"{TAG} {_mark(code3)} {verdict3}")
+
+    #: 셋을 한 색으로 — 빨강이 하나라도 있으면 빨강 · 아니면 회색이 하나라도 있으면 회색.
+    if EXIT_FAIL in (code, code2, code3):
         return EXIT_FAIL
-    if EXIT_UNDECIDABLE in (code, code2):
+    if EXIT_UNDECIDABLE in (code, code2, code3):
         return EXIT_UNDECIDABLE
     return EXIT_OK
+
+
+def _front_check() -> tuple[int, str]:
+    """③ 의 바깥 — 배포 기록 · gx-spa 나무 · git 을 읽어 `judge_front` 에 넘긴다."""
+    last = None
+    try:
+        for line in DEPLOYS.read_text(encoding="utf-8").splitlines():
+            row = json.loads(line) if line.strip() else {}
+            if row.get("exit") == 0 and row.get("new"):
+                last = row
+    except (OSError, ValueError):
+        last = None
+    live = None
+    if SPA_DIR.is_dir():
+        from deploy_spa_8500 import tree  # 나무 sha 는 한 벌 (D-369)
+        live = tree(SPA_DIR)[1][:12]
+    changed = None
+    if last is not None:
+        try:
+            out = subprocess.run(["git", "diff", "--name-only", str(last.get("commit")), "HEAD",
+                                  "--", *FRONT_PATHS], cwd=ROOT, capture_output=True,
+                                 text=True, timeout=30)
+            if out.returncode == 0:
+                changed = len([x for x in out.stdout.splitlines() if x.strip()])
+        except (OSError, subprocess.SubprocessError):
+            changed = None
+    print(f"{TAG} [입력] 마지막 초록 배포: {(last or {}).get('at', '없음')} · 커밋 "
+          f"{(last or {}).get('commit', '-')} · 지금 나무 {live}")
+    return judge_front(last, live, changed)
 
 
 if __name__ == "__main__":

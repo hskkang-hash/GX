@@ -43,10 +43,12 @@ from ninja import Schema
 from ninja.errors import HttpError
 from ninja_extra import api_controller, route
 
+from common.idempotency import idempotent
 from common.inbound_api_key import JwtOrInboundKey
 from common.tenant_scope import TenantScope, tenant_scoped
 
-from apps.dsm import stats
+from apps.dsm import (handover_service, situation_meeting_service, stats,
+                     threshold_alert_service)
 from kernels.k6_feedback.exceptions import InvalidMetricInput
 
 
@@ -85,6 +87,34 @@ class ReportRunIn(Schema):
     since: datetime | None = None
     until: datetime | None = None
     note: str = ""
+
+
+class SituationMeetingIn(Schema):
+    """DSM-U2-03 「상황판단회의 기록」이 보내는 본문 — `ReportRunIn` 과 같은 이유로
+    질의 문자열이 아니라 JSON 본문(참석자·결정문은 사람이 쓴 글이다)."""
+
+    occurred_at: str | None = None
+    attendees: str = ""
+    #: 기본값을 둔다 — 빈 결정을 스키마가 422 로 끊으면 서비스의 400(ValueError)이
+    #: 안 보인다. 「결정이 비었다」는 스키마의 판단이 아니라 서비스의 판단이다.
+    decision: str = ""
+    basis: str = ""
+
+
+class ThresholdObserveIn(Schema):
+    """DSM-U2-04 「임계값 도달 알림」 — 관측값 한 건(하천 수위·강우량 등)."""
+
+    camera_id: int
+    key: str = "waterlevel.baseline"
+    value: float
+
+
+class ThresholdDecideIn(Schema):
+    """DSM-U2-04 — 도달 카드의 「결정」 버튼이 보내는 본문."""
+
+    #: 기본값을 둔다 — 빈 결정은 스키마가 아니라 서비스가 400 으로 가른다(같은 이유,
+    #: `SituationMeetingIn.decision` 주석 참조).
+    decision: str = ""
 
 
 @api_controller("", tags=["DSM — U2·U4 팀장·공무원 (WO-01 차선 U24)"])
@@ -574,6 +604,108 @@ class DsmU24API:
         response["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
         response["X-Content-Type-Options"] = "nosniff"
         return response
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 턴 AK (WO-15 §5 P-356·P-358) — 별표 승격 DSM-U2-03·U2-04·U2-05 (S 먼저)
+    # ══════════════════════════════════════════════════════════════════════
+    #
+    # ★ 경로가 앞의 것을 안 삼킨다 [실측 확인]: `/situation-meetings` ·
+    #   `/thresholds/observe*` · `/handover/{int:id}/ack` 는 이 파일과 `api.py` ·
+    #   `api_u1.py` · `api_u3.py` · `api_u56.py` 의 어느 리터럴·변수 조각과도
+    #   안 겹친다(`/handover/draft` · `/handover/latest` 는 두 조각짜리 리터럴이고
+    #   이것은 세 조각째에 int 변수가 있다 — 자리 자체가 다르다).
+
+    # ── DSM-U2-03 상황판단회의 기록 ──────────────────────────────────────────
+    @route.post("/situation-meetings", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="상황판단회의 기록 — 남의 테넌트 감사에 남으면 격리 실패다")
+    @idempotent("dsm.u2.situation_meetings.create")
+    def create_situation_meeting(self, request, payload: SituationMeetingIn):
+        """`POST /situation-meetings` — 회의 시각·참석·결정·근거 값을 한 줄로 남긴다."""
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return situation_meeting_service.record_meeting(
+                scope=_scope(request), occurred_at=payload.occurred_at,
+                attendees=payload.attendees, decision=payload.decision,
+                basis=payload.basis)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except situation_meeting_service.SituationMeetingRejected as exc:
+            raise HttpError(422, str(exc))
+
+    @route.get("/situation-meetings", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="상황판단회의 기록 열람 — 남의 테넌트 감사가 보이면 격리 실패다")
+    def list_situation_meetings(self, request, limit: int = 100):
+        """`GET /situation-meetings` — 최근 회의 기록(최신 먼저)."""
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return situation_meeting_service.list_meetings(
+                scope=_scope(request), limit=limit)
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
+    # ── DSM-U2-04 임계값 도달 알림 ────────────────────────────────────────────
+    @route.post("/thresholds/observe", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="임계값 관측 — 남의 테넌트 카메라 기준선을 잴 수 없다")
+    @idempotent("dsm.u2.thresholds.observe")
+    def observe_threshold(self, request, payload: ThresholdObserveIn):
+        """`POST /thresholds/observe` — 관측값이 기준에 닿으면 카드(감사 줄) 하나가 선다.
+
+        상태를 뭉치지 않는다:
+            400  임계값 정의 오타 · 이 카메라에 아직 기준선이 없다
+            404  없는 카메라 · 남의 테넌트 카메라
+        """
+        from django.http import Http404
+
+        from kernels.k5_trust.exceptions import ThresholdNotDefined, ThresholdNotSet
+
+        try:
+            return threshold_alert_service.observe(
+                scope=_scope(request), camera_id=payload.camera_id,
+                key=payload.key, value=payload.value)
+        except Http404:
+            raise HttpError(404, "그런 카메라가 없습니다.")
+        except (ThresholdNotDefined, ThresholdNotSet) as exc:
+            raise HttpError(400, str(exc))
+
+    @route.post("/thresholds/observe/{int:observation_id}/decide",
+               auth=JwtOrInboundKey())
+    @tenant_scoped(reason="임계값 도달 결정 — 남의 테넌트 도달 기록을 결정할 수 없다")
+    @idempotent("dsm.u2.thresholds.decide")
+    def decide_threshold(self, request, observation_id: int,
+                        payload: ThresholdDecideIn):
+        """`POST /thresholds/observe/{id}/decide` — 도달 카드의 「결정」 버튼."""
+        from django.http import Http404
+
+        try:
+            return threshold_alert_service.decide(
+                scope=_scope(request), observation_id=observation_id,
+                decision=payload.decision)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        except Http404:
+            raise HttpError(404, "그런 임계값 도달 기록이 없습니다.")
+
+    # ── DSM-U2-05 교대 인수인계 합동 확인 ─────────────────────────────────────
+    @route.post("/handover/{int:handover_id}/ack", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="인계 합동 확인 — 남의 테넌트 인계 메모를 확인할 수 없다")
+    @idempotent("dsm.u2.handover.ack")
+    def acknowledge_handover(self, request, handover_id: int):
+        """`POST /handover/{id}/ack` — 08~09시 인계 메모를 팀장이 확인 체크."""
+        from django.http import Http404
+
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return handover_service.acknowledge(
+                scope=_scope(request), handover_id=handover_id)
+        except Http404:
+            raise HttpError(404, "그런 인계 메모가 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
 
 
 # ═══════════════════════════════════════════════════════════════════════════
