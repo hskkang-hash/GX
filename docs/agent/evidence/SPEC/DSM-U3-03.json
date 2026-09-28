@@ -1,0 +1,20 @@
+{
+  "id": "DSM-U3-03",
+  "measured_at": "2026-09-28T09:03:48.172362+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_p356_u3u6_spec_promotions.EvidenceExportTest.test_dump_dsm_u3_03_evidence",
+  "request": {
+    "method": "GET",
+    "path": "/api/dsm/events/5/situation-report.docx",
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "byte_length": 38844,
+      "docx_attachment_line_contains_photo_count": true
+    }
+  },
+  "what": "현장 사진 한 장을 실제로 올린 뒤(`POST …/field-photo`) 완성된 상황보고 DOCX(`GET …/situation-report.docx`)의 ⑨ 첨부 칸에 그 수가 자동으로 찍히는 것을 실측했다(zip 안 word/document.xml 을 직접 읽었다 — 손으로 옮긴 값이 아니다). 원본 바이트는 응답에 실린 그대로다 (evidence 파일에는 요약만 담는다 — DOCX 바이너리는 JSON 이 아니다)."
+}

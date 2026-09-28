@@ -766,3 +766,14 @@ export const NOTIFY_CHANNEL_UNKNOWN = '우리말 이름 없음';
 export function notifyChannelLabel(name: string | null | undefined): string {
   return NOTIFY_CHANNEL_LABEL[String(name ?? '').trim()] ?? NOTIFY_CHANNEL_UNKNOWN;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+ * DSM-U3-04 · 턴 AM · 차선 N1 — **상황실·PS-LTE 그룹통화 번호 버튼** (`/m/events/:id`
+ * M2). `GET /api/dsm/hotline` 이 준 번호를 `tel:` 링크로 그릴 때 쓰는 두 이름이다.
+ * `MobileEventDetail.tsx` 머리말의 "전화 버튼을 그리지 않았다"(2026-09-05 · 차선 C)가
+ * 「번호가 없어 못 그린다」로 남겨 둔 자리 — 이제 번호가 생겼다(§ 위 문단 참고).
+ */
+export const HOTLINE_ROOM_LABEL = '상황실 전화';
+export const HOTLINE_PSLTE_LABEL = 'PS-LTE 그룹통화';
+/** 번호가 아직 설정 안 된 테넌트에 뜨는 문장. **죽은 버튼을 그리지 않는다**(D-284). */
+export const HOTLINE_NOT_CONFIGURED = '아직 등록된 연락 번호가 없습니다.';

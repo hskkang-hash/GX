@@ -110,6 +110,12 @@ export const mobileEndpoint = {
    * 기존 목록의 필터 인자로는 못 열어 라우트 하나가 섰다(`api_u3.py::my_handled_events`).
    */
   handledEvents: '/api/dsm/me/handled-events',
+  /**
+   * DSM-U3-04 M2 「PS-LTE 그룹통화 · 상황실 번호」(턴 AM · P-356 §AM). 문은
+   * `api_u3.py::get_hotline`/`set_hotline` — 모바일만 쓰는 문이라 여기 둔다
+   * (공용부 `features/dsm/api.ts` 에 두면 관제 화면이 안 쓰는 이름이 쌓인다).
+   */
+  hotline: '/api/dsm/hotline',
 } as const;
 
 /**

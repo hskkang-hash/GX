@@ -1,0 +1,41 @@
+{
+  "id": "P376_DSM-U2-04-rainfall",
+  "measured_at": "2026-09-28T09:27:52.471537+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_p376_half_clauses.RainfallThresholdKeyTest.test_observe_decide_takes_rainfall_key_with_zero_code_changes",
+  "request": {
+    "method": "POST",
+    "path": "/api/dsm/thresholds/observe/2/decide",
+    "body": {
+      "observe": {
+        "camera_id": 1,
+        "key": "rainfall.baseline",
+        "value": 62
+      },
+      "decide": {
+        "decision": "통제 실시"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "observe": {
+        "reached": true,
+        "key": "rainfall.baseline",
+        "camera_id": 1,
+        "value": 62.0,
+        "threshold": 50.0,
+        "observation_id": 2
+      },
+      "decide": {
+        "observation_id": 2,
+        "decision_id": 3,
+        "decision": "통제 실시",
+        "key": "rainfall.baseline",
+        "camera_id": 1
+      }
+    }
+  },
+  "what": "강우량 관측값(62mm)이 기준(50mm)에 닿아 도달 카드가 섰고(observe), 그 뒤 결정을 남겨(decide) 도달 시각·결정 시각 둘 다 감사에 남았다 — `waterlevel.baseline` 때와 똑같은 엔드포인트·똑같은 코드, 표에 키 하나만 늘었다."
+}

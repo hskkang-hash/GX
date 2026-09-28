@@ -274,6 +274,8 @@ const DsmIntegrations = lazy(() => import('./features/dsm/pages/Integrations'));
 const FwsPatrolHome = lazy(() => import('./features/fws/pages/PatrolHome'));
 // ── 턴 AL · F2 산림재난대응단·진화대(FM3) 현장 홈 — `/fws/home` 과 형제 가지 ──
 const FwsFieldHome = lazy(() => import('./features/fws/pages/FieldHome'));
+// ── 턴 AM · F5 드론 운용자 현장(세종 판정 P-387) — `/fws/home`·`/fws/field` 와 형제 가지 ──
+const FwsDroneHome = lazy(() => import('./features/fws/pages/DroneHome'));
 const DsmPrivacyRequests = lazy(
   () => import('./features/dsm/pages/PrivacyRequests'),
 );
@@ -810,6 +812,8 @@ function App() {
             { path: fwsRoutes.home.path, element: <FwsPatrolHome /> },
             // ── 턴 AL · P-356·357 F2 진화대 현장 홈 — 최상위 리터럴, 형제 가지 ──
             { path: fwsRoutes.field.path, element: <FwsFieldHome /> },
+            // ── 턴 AM · P-356·357·387 F5 드론 운용자 현장 — 최상위 리터럴, 형제 가지 ──
+            { path: fwsRoutes.drone.path, element: <FwsDroneHome /> },
             // ── 모바일 · 이동 중 수신 모드 (U3 · 차선 D) ──────────────────
             //   M1 은 발송 기록이 정본이다(이벤트 목록이 아니다). 상세는 목록의
             //   값을 물려받지 않고 서버에 다시 묻는다 — 문지기가 목록에만 서고

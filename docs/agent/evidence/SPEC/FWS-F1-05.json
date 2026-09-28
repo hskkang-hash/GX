@@ -1,20 +1,20 @@
 {
   "id": "FWS-F1-05",
   "title": "확인 요청 수신(카메라 사진·위치·거리·지도)",
-  "measured_at": "2026-09-28T02:30:58.128937+00:00",
+  "measured_at": "2026-09-28T09:24:48.090522+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_05_06_VerificationTest.test_verification_detail_and_fire_confirmed_reply",
   "request": {
     "method": "GET",
-    "path": "/api/fws/verifications/494",
+    "path": "/api/fws/verifications/6",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "verification_id": 494,
+      "verification_id": 6,
       "requested_action": "이 연기, 확인해 주세요",
-      "occurred_at": "2026-09-28T02:29:58.051208+00:00",
+      "occurred_at": "2026-09-28T09:23:48.043843+00:00",
       "snapshot_path": "minio://dsm/1.jpg",
       "lat": null,
       "lng": null,

@@ -63,6 +63,29 @@ IN_PROGRESS = "in_progress"
 CLOSED = "closed"
 STATES = (OCCURRED, ACKNOWLEDGED, IN_PROGRESS, CLOSED)
 
+#: ★★ [P-371 · 턴 AM · 차선 L] 감사 「사유」 칸에 쓰는 **표시 이름**.
+#:   `advance_response` 가 사유를 안 받으면(정상 진행의 보통 경로) 아래 기본
+#:   문장이 그대로 감사 행의 `reason` 이 되고, 그 칸은 `/dsm/audit` 화면에
+#:   렌더 함수 없이 원문을 찍는다 — 실측(U4#16) 전에는 이 자리가
+#:   `f"대응 진행 {frm} → {to_state}"` 였고, `frm`/`to_state` 가 계약 값
+#:   그대로(`occurred`·`acknowledged`·`in_progress`) 감사 사유에 영문으로 남았다.
+#:   ⚠ 값 자체(계약 스키마)는 안 바꾼다 — 이 표는 **감사 문장에 쓸 이름**일
+#:   뿐이다. `apps/dsm/incident_report.py::RESPONSE_STATE_LABEL` 이 같은 뜻의
+#:   사전을 이미 들고 있지만, 커널은 App 을 import 할 수 없다(F-05 계층
+#:   역전 금지) — 그래서 한 벌을 더 둔다(D-337: 여러 벌을 두되 어긋나는 것은
+#:   시험이 본다 · `tests/test_p371_screen_language.py::ResponseFlowAuditReasonTests`
+#:   가 `STATES` 넷 모두 이 표에서 원문이 아닌 한글 이름을 얻는지 대조한다).
+_STATE_KOREAN: dict[str, str] = {
+    OCCURRED: "미처리", ACKNOWLEDGED: "접수", IN_PROGRESS: "조치 중", CLOSED: "종결",
+}
+
+
+def _state_ko(state: str) -> str:
+    """이 상태의 감사 문장용 한국어 이름. 모르는 값이면 **원문을 그리지 않고**
+    표시 이름이 없다는 사실 자체를 적는다 — 빈 자리에 raw 값을 채우면 다음
+    번역 안 된 값이 조용히 새는 문이 된다."""
+    return _STATE_KOREAN.get(state, f"(표시 이름 없음: {state!r})")
+
 #: 감사 행의 `logger_name`. **이 문자열로 대응 전이 전건을 뽑는다** —
 #: 이름이 하나여야 「전건」이라는 말이 성립한다 (D-285 ②).
 LOGGER_NAME = "guardianx.dsm.response"
@@ -169,7 +192,7 @@ def advance_response(event_id: int, *, to_state: str, reason: str = "",
         logger_name=LOGGER_NAME, tag=TAG, actor=scope.actor,
         action=f"response.{frm}->{to_state}",
         outcome=audit_writer.ALLOWED,
-        reason=reason.strip() or f"대응 진행 {frm} → {to_state}",
+        reason=reason.strip() or f"대응 진행 {_state_ko(frm)} → {_state_ko(to_state)}",
         before={"event_id": event.id, "response_state": frm},
         after={"event_id": event.id, "response_state": to_state},
         api_name="dsm.events.response", api_method="POST", status_http=200,
@@ -225,7 +248,7 @@ def close_as_false_positive(event_id: int, *, reason: str = "",
         action=f"response.{frm}->{CLOSED}",
         outcome=audit_writer.ALLOWED,
         reason=(reason.strip()
-                or f"오탐 판정에 따른 자동 종결 (판정자 {by or '알 수 없음'} · P-16)"),
+                or f"오탐 판정에 따른 자동 종결 (판정자 {by or '알 수 없음'})"),
         before={"event_id": event.id, "response_state": frm},
         after={"event_id": event.id, "response_state": CLOSED,
                "rule": "false_positive", "reviewed_by": by},

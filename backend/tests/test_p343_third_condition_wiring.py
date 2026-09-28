@@ -107,18 +107,25 @@ class NoScreenIsGrayNotGreenTest(SimpleTestCase):
     def setUp(self) -> None:
         self.onb = _measure_onboarding_t()
 
-    def test_machine_row_with_no_screen_is_gray_not_green(self) -> None:
-        """문구도 술어도 다 서는(200 · total/events 칸 다 있는) U6 행이라도,
-        `screen_text=None`(=화면 자체가 없다)이면 **회색**이어야 한다 — 초록이면
-        「화면 없이도 그 사용자의 언어를 쟀다」는 거짓말이 된다."""
+    def test_machine_row_third_condition_is_not_applicable(self) -> None:
+        """[P-377 · 턴 AM · 세종 판정 — 턴 AJ 의 「회색」 규칙을 갈음한다]
+        기계 사용자(U6)에게 셋째 조건은 **해당 없음** — 문구·술어 두 조건으로만 매긴다.
+        회색으로 두면 점수 0 이 되어 규칙 탓에 수가 내려간다(턴 AK 다섯째 회차 U6 여덟)."""
         r = self.onb.result(
             "U6#2", "GET /api/dsm/events", phrase_seen=True, predicate=True,
             evidence="status=200 · total 칸=True · events 배열=True",
             cap_half=False, measured=True, screen_text=None)
-        self.assertEqual(r["verdict"], "gray")
-        self.assertIsNone(r["score"])
-        self.assertEqual(r["gray_kind"], "nopred")
-        self.assertIn("화면이 없다", r["evidence"])
+        self.assertEqual(r["verdict"], "green")
+        self.assertEqual(r["score"], 1.0)
+        self.assertIn("해당 없음", r["evidence"])
+
+    def test_machine_row_still_fails_on_its_own_two_conditions(self) -> None:
+        """짝 — 「해당 없음」은 면제가 아니다: 술어가 서지 않으면 빨강이다(P-323)."""
+        r = self.onb.result(
+            "U6#4", "POST /webhook-subscriptions", phrase_seen=False, predicate=False,
+            evidence="구독 422", cap_half=False, measured=True, screen_text=None)
+        self.assertEqual(r["verdict"], "red")
+        self.assertEqual(r["score"], 0.0)
 
     def test_collect_screen_text_returns_none_with_no_page_and_no_text(self) -> None:
         """기계 호출 자리(U6)가 실제로 부르는 모양 그대로: `page` 도 `text` 도

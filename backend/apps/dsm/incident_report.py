@@ -982,7 +982,7 @@ def _damage_block() -> str:
 
 def build_situation_html(*, event, clock: dict, actions, tenant: str, issued_by: str,
                          plan: str = "", sources_failed=(),
-                         data_source: str = "") -> str:
+                         data_source: str = "", field_photo_count: int = 0) -> str:
     """별지 제1호 **재난 상황보고**의 HTML — 세종 §4-3 의 **10칸**.
 
     Args:
@@ -995,6 +995,9 @@ def build_situation_html(*, event, clock: dict, actions, tenant: str, issued_by:
         sources_failed: 못 가져온 출처. 있으면 종이에 배너로 남는다(D-290).
         data_source: `live` | `drill`. 비면 행 표식 한 축으로 떨어진다
             (`data_source_of` 머리말 ⚠ — 훈련 창은 못 본다).
+        field_photo_count: DSM-U3-03 — 이 사건에 달린 현장 사진 수(`DsmFieldPhoto`).
+            **바이트는 안 싣는다** — 영상 구간과 같은 규약(⑨ 첨부는 이름·수만 적는다,
+            계약 11조). 0 이면 「없다」고 적는다 — 칸을 빼지 않는다(D-301).
 
     ★ 칸 번호 ①~⑨ 는 **종이에 찍힌다.** 받는 사람이 「⑥이 비었다」고 전화로 말할 수
       있어야 하고, 번호가 없으면 그 말을 할 수 없다.
@@ -1103,6 +1106,16 @@ def build_situation_html(*, event, clock: dict, actions, tenant: str, issued_by:
     parts.append(_row("해시 체인 증명",
                       "감사 기록 화면에서 이 사건의 체인 증명을 확인할 수 있습니다."))
     parts.append(_row("영상 구간", ATTACHMENT_CLIP_NOTE))
+    #: ★ [DSM-U3-03 · 턴 AM · 차선 N1] 현장 사진 → **자동** 첨부. 사람이 파일을
+    #:   고르지 않는다 — M3 에서 이미 올린 사진(`DsmFieldPhoto`)의 **수**를 이
+    #:   서식이 스스로 센다. 바이트는 안 싣는다(위 영상 구간과 같은 규약 — 원본은
+    #:   이 종이에 붙이지 않는다). 0 장이어도 칸은 남는다 — 「없다」와 「집계 안
+    #:   함」을 가른다(`_damage_block` 과 같은 규율).
+    parts.append(_row(
+        "현장 사진",
+        (f"{field_photo_count}장이 이 사건에 자동 첨부되었습니다 — 원본은 이 종이에 "
+         "붙이지 않습니다(계약 11조), 현장 회신 화면에서 확인하십시오.")
+        if field_photo_count > 0 else "이 사건에 올라온 현장 사진이 없습니다."))
     parts.append("</table>")
 
     parts.append(
@@ -1115,6 +1128,22 @@ def build_situation_html(*, event, clock: dict, actions, tenant: str, issued_by:
     return ("<html><head><meta charset=\"utf-8\">"
             f"<title>{escape(SITUATION_TITLE)} {escape(str(event_id))}</title>"
             f"<style>{_CSS}</style></head><body>{''.join(parts)}</body></html>")
+
+
+def _field_photo_count(event_id: int) -> int:
+    """DSM-U3-03 — 이 사건에 달린 현장 사진 수(`DsmFieldPhoto`).
+
+    ★ **테넌트를 다시 안 좁힌다** — `event_id` 는 이미 `build_context`(K1)가 좁힌
+      값이다(호출자가 남의 사건 id 를 여기까지 들고 올 수 없다). `apps/dsm/field.py`
+      가 사진을 올릴 때 쓰는 **같은 모델**을 직접 읽는다 — 새 저장소 클라이언트도
+      새 표도 0 (`AppStaysThinTest` 는 `services`·`api` 두 모듈만 재므로 이 파일이
+      `apps.get_model` 을 쓰는 것은 그 시험의 범위 밖이다 — `field.py::save_field_photo`
+      가 이미 같은 자리에서 같은 패턴을 쓴다).
+    """
+    from django.apps import apps
+
+    DsmFieldPhoto = apps.get_model("stream_monitors", "DsmFieldPhoto")
+    return DsmFieldPhoto.objects.filter(event_id=event_id).count()
 
 
 def build_situation_report(*, scope, event_id: int, plan: str = "") -> str:
@@ -1144,10 +1173,14 @@ def build_situation_report(*, scope, event_id: int, plan: str = "") -> str:
         source = services.event_data_source(view=events[0])
     except Exception:                       # noqa: BLE001 — 배지가 종이를 죽이지 않는다
         source = ""
+    try:
+        photo_count = _field_photo_count(events[0].event_id)
+    except Exception:                       # noqa: BLE001 — 사진 집계가 종이를 죽이지 않는다
+        photo_count = 0
     return build_situation_html(
         event=events[0],
         clock=services.response_clock(scope=scope, event_id=event_id),
         actions=context.actions, tenant=tenant_name(actor),
         issued_by=person_label(actor), plan=plan,
         sources_failed=tuple(context.sources_failed),
-        data_source=source)
+        data_source=source, field_photo_count=photo_count)

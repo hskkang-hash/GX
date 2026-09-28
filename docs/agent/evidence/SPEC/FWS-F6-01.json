@@ -1,0 +1,67 @@
+{
+  "id": "FWS-F6-01",
+  "title": "산림청 시스템 입력 항목 내보내기(JSON/CSV · 항목 1:1)",
+  "measured_at": "2026-09-28T09:28:49.927538+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f6.F6_01_KfsExportTest.test_json_export_carries_labeled_fields_one_to_one",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/liaison/fire-events/2/kfs-export",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "format": "json",
+      "event_id": 2,
+      "fields": [
+        {
+          "key": "occurred_at",
+          "label": "신고일시",
+          "value": "2026-09-28T09:28:49.879928+00:00"
+        },
+        {
+          "key": "lat",
+          "label": "발생위치_위도",
+          "value": null
+        },
+        {
+          "key": "lng",
+          "label": "발생위치_경도",
+          "value": null
+        },
+        {
+          "key": "address",
+          "label": "주소",
+          "value": null
+        },
+        {
+          "key": "severity",
+          "label": "화세등급",
+          "value": "critical"
+        },
+        {
+          "key": "status",
+          "label": "처리상태",
+          "value": "new"
+        },
+        {
+          "key": "response_state",
+          "label": "대응진행상태",
+          "value": "occurred"
+        },
+        {
+          "key": "fire_stage",
+          "label": "산불대응단계",
+          "value": null
+        },
+        {
+          "key": "snapshot_path",
+          "label": "현장사진경로",
+          "value": "minio://dsm/1.jpg"
+        }
+      ]
+    }
+  },
+  "what": "GET .../kfs-export 가 K1 이벤트 항목을 산림청 한글 항목명과 1:1로 묶어 낸다(신고일시·위도·경도·산불대응단계 등) — 내보내기 1 실측"
+}

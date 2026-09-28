@@ -1,0 +1,30 @@
+{
+  "id": "FWS-F5-01",
+  "title": "정찰 임무 수신(발화 추정 좌표·반경) → 열화상 정찰",
+  "measured_at": "2026-09-28T09:13:55.330500+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f5.F5_01_ReconTest.test_request_accept_airborne_return_and_mine_reflects_state",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/drone/missions/mine",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "requests": [
+        {
+          "event_id": 21,
+          "state": "return",
+          "radius_m": 300.0,
+          "requested_at": "2026-09-28T09:13:55.116983+00:00",
+          "accepted_at": "2026-09-28T09:13:55.179223+00:00",
+          "airborne_at": "2026-09-28T09:13:55.221136+00:00",
+          "returned_at": "2026-09-28T09:13:55.271861+00:00"
+        }
+      ],
+      "count": 1
+    }
+  },
+  "what": "정찰 요청(반경 값)→수락→이륙→귀환 상태 전이가 내 대기열(mine)에 그대로 남는다 — 요청·상태 두 축 실측(K1 이벤트를 드론 쪽에서 본 것 · 새 표 없음)"
+}

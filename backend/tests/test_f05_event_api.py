@@ -531,6 +531,39 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/alert-level"),                                         # DSM-U4-06 접수 이력(지금 단계)
     ("GET", "/api/dsm/access-log"),                                          # DSM-U5-02 접속기록 조회(좁은 문)
     ("GET", "/api/dsm/access-log/export.csv"),                               # DSM-U5-02 접속기록 CSV
+    # ★ [P-376 · 2026-09-28 · 턴 AM · 차선 O] 「반쪽은 닫힘이 아니다」 — DSM-U5-02 의
+    #   안 닫힌 앞 갈래(사람별 카메라·기능 권한)를 새 컨트롤러(`api_u5_perm.py`)로 연다.
+    #   `api_u24.py` 는 차선 N1 소유라 고치지 않는다 — 문지기는 같다(`access_log_denial`
+    #   재사용 — 시스템관리자·테넌트관리자·전역관리자만). JWT · `@tenant_scoped` · 새 표
+    #   0(감사 한 줄이 정본). 증거 `evidence/SPEC/P376_DSM-U5-02.json`.
+    ("GET", "/api/dsm/access-log/permissions"),                              # DSM-U5-02 앞 갈래 · 사람별 카메라·기능 권한
+    # ★ [P-356 · 2026-09-28 · 턴 AM · 차선 N1] 기능명세 별표 승격 — DSM-U3-04
+    #   (`api_u3.py`). 둘 다 JWT · `@tenant_scoped` · 새 표 0(감사 한 줄이 정본).
+    #   증거 `evidence/SPEC/DSM-U3-04.json`.
+    ("POST", "/api/dsm/hotline"),                                            # DSM-U3-04 상황실·PS-LTE 번호 접수 ★쓰기
+    ("GET", "/api/dsm/hotline"),                                             # DSM-U3-04 지금 번호(M2 버튼이 읽는 자리)
+    # ★ [P-356/P-376 · 2026-09-28 · 턴 AM · 차선 N4] 기능명세 별표 승격 —
+    #   DSM-U4-01(부분)·U4-03·U4-04(부분)·U4-07(부분)·U5-05(부분)(`api_u4.py` 신설).
+    #   전부 JWT · `@tenant_scoped` · 새 표 0(감사 한 줄~여러 줄이 정본). 어느
+    #   갈래가 부분인지는 각 서비스 파일 머리말 · `evidence/SPEC/N4_promotions.md`.
+    #   증거 `evidence/SPEC/DSM-U4-01.json` · `DSM-U4-03.json` · `DSM-U4-04.json` ·
+    #   `DSM-U4-07.json` · `DSM-U5-05.json`.
+    ("POST", "/api/dsm/situation-reports"),                                  # DSM-U4-01 제N보 채번 ★쓰기
+    ("POST", "/api/dsm/situation-reports/{int:report_id}/sent"),             # DSM-U4-01 발송 기록 ★쓰기
+    ("GET", "/api/dsm/situation-reports"),                                   # DSM-U4-01 채번 이력
+    ("POST", "/api/dsm/cbs-drafts"),                                         # DSM-U4-03 재난문자 초안 ★쓰기
+    ("POST", "/api/dsm/cbs-drafts/{int:draft_id}/approve"),                  # DSM-U4-03 승인 ★쓰기
+    ("POST", "/api/dsm/cbs-drafts/{int:draft_id}/sent"),                     # DSM-U4-03 발송 기록 ★쓰기
+    ("GET", "/api/dsm/cbs-drafts"),                                          # DSM-U4-03 초안 목록
+    ("POST", "/api/dsm/control-points"),                                     # DSM-U4-04 통제 지점 등록(도달) ★쓰기
+    ("POST", "/api/dsm/control-points/{int:point_id}/advance"),              # DSM-U4-04 결정·실행·해제 전진 ★쓰기
+    ("GET", "/api/dsm/control-points"),                                      # DSM-U4-04 통제·대피 현황판
+    ("POST", "/api/dsm/video-access-requests"),                              # DSM-U4-07 영상 제공 요청 접수 ★쓰기
+    ("POST", "/api/dsm/video-access-requests/{int:request_id}/approve"),     # DSM-U4-07 승인 ★쓰기
+    ("POST", "/api/dsm/video-access-requests/{int:request_id}/provide"),     # DSM-U4-07 제공 기록(원본 미반출) ★쓰기
+    ("GET", "/api/dsm/video-access-requests"),                               # DSM-U4-07 영상 제공 대장
+    ("POST", "/api/dsm/shifts/import"),                                      # DSM-U5-05 근무표 CSV 업로드 ★쓰기
+    ("GET", "/api/dsm/shifts"),                                              # DSM-U5-05 근무표 조회
 })
 
 #: 인증 없이 열리는 진입면 — **이름과 사유로** 잠근다. 늘면 여기 사유가 먼저 늘어야 한다.

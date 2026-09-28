@@ -154,6 +154,30 @@ THRESHOLDS: dict[str, ThresholdDef] = {
             "그러면 모든 신호가 초과가 된다.",
         used_by=(),
     ),
+    "rainfall.baseline": ThresholdDef(
+        key="rainfall.baseline",
+        title="지점별 강우량 통제 기준",
+        unit="mm",
+        #: ★ **없다.** `waterlevel.baseline` 과 같은 이유 — 지어내면 그 숫자가 곧
+        #:   DSM-U2-04/U5-04 의 AC 판정 근거가 된다 (D-280 · P-376).
+        default=None,
+        applies_to=SCOPE_CAMERA,
+        contract_fixed=False,
+        clause="DSM-U2-04 「하천 수위·**강우량**이 통제 기준에 닿으면 … 도달 알림」 · "
+              "DSM-U5-04 「임계값 소스 등록 — 하천 수위계·**강우량계**(API/수동) · "
+              "통제 기준값(**지점별**)」(docs/design/DSM_재난안전관리App_명세서_v1.1_"
+              "지침기반_20260915.md 표 §4.2 · §5)",
+        why="P-376 반쪽 메움(차선 O) — DSM-U2-04 는 `waterlevel.baseline` 하나로만 "
+            "실측돼 승격됐고(`N1_promotions.md` §AK), annex 원문이 함께 부르는 "
+            "「강우량」 키는 표 ①에 없었다(선례 그대로: 「강우량 임계값 키는 없이 "
+            "수위만 실측」). 지침 조사 문서(`재난안전관리_지침조사_20260915.md`)에도 "
+            "전국 공통 강우량 통제 mm 수치는 없다 — 있는 것은 **지점별로 기준을 "
+            "정한다는 계약 문구**뿐이다(DSM-U5-04 「지점별」). `waterlevel.baseline` "
+            "과 정확히 같은 모양: 전역 기본값을 지어내지 않고(D-280), 카메라별로 "
+            "운영이 직접 `ThresholdSetting` 에 심어야 값이 생긴다 — 심기 전에는 "
+            "`ThresholdNotSet` 으로 멈춘다.",
+        used_by=(),
+    ),
 }
 
 

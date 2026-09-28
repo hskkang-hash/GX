@@ -833,6 +833,17 @@ SELF_TEST_LINKS: dict[str, str] = {
     "verify_spec_fws.py": "backend/tests/test_verify_spec_fws_gate_can_fail.py",
     #: [P-356 · 2026-09-27 · 턴 AK 차선 N1] DSM 별표 절 승격 게이트 — 같은 망가뜨림(증거 없음·500 통과).
     "verify_spec_dsm.py": "backend/tests/test_verify_spec_dsm_gate_can_fail.py",
+    #: [P-356 · 2026-09-28 · 턴 AM 차선 N3] FWS-F6(산림청·지자체 산림과 연계) 별표 절
+    #: 승격 게이트 — `verify_spec_fws.py` 의 판정식을 그대로 베낀 짝(F6 전용 분모).
+    "verify_spec_fws_f6.py": "backend/tests/test_verify_spec_fws_f6_gate_can_fail.py",
+    #: [P-356 · 2026-09-28 · 턴 AM 차선 N4] DSM-U4(재난안전과 담당 — 상황보고서 제N보·
+    #: CBS 초안·통제현황판·영상제공대장·근무표 CSV) 별표 절 승격 게이트 —
+    #: `verify_spec_dsm.py` 의 판정식을 그대로 베낀 짝(N4 전용 분모 9).
+    "verify_spec_dsm_u4.py": "backend/tests/test_verify_spec_dsm_u4_gate_can_fail.py",
+    #: [P-356/P-376 · 2026-09-28 · 턴 AM 차선 O] OPS O-10(키·자격 회전)·O-04(모델
+    #: 레지스트리) 별표 절 승격 게이트 — `verify_spec_fws.py` 의 판정식을 그대로
+    #: 베낀 짝(분모 2 · 이번 턴은 닫은 열 0, P-376 이 요구하는 정직한 결론).
+    "verify_spec_ops.py": "backend/tests/test_verify_spec_ops_gate_can_fail.py",
 }
 
 #: ★ [P-322 ⓐ · P-323] **기준선을 얼린다.** 이 요구가 생기기 **전부터 있던** 게이트

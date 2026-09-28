@@ -1,0 +1,21 @@
+{
+  "id": "FWS-F5-10",
+  "title": "계량(비행 분)",
+  "measured_at": "2026-09-28T09:14:02.938963+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f5.F5_10_FlightMinutesTest.test_flight_minutes_are_summed",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/drone/flights/minutes",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "month": null,
+      "flight_minutes_total": 42.5,
+      "flight_count": 2
+    }
+  },
+  "what": "비행 기록 두 건(15분·27.5분) 뒤 GET /drone/flights/minutes 의 flight_minutes_total 이 42.5 — F5-08 값을 세기만 한다(새 표 없음, 계량 실측)"
+}

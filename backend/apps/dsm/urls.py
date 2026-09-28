@@ -13,8 +13,10 @@ from apps.dsm.api_f import DsmFAPI
 from apps.dsm.api_f_ops import DsmFOpsAPI
 from apps.dsm.api_u1 import DsmU1API
 from apps.dsm.api_u3 import DsmU3API
+from apps.dsm.api_u4 import DsmU4API
 from apps.dsm.api_u24 import DsmU24API
 from apps.dsm.api_u56 import DsmU56API
+from apps.dsm.api_u5_perm import DsmU5PermAPI
 from apps.dsm.law_api import DsmLawAPI
 
 dsm_api = NinjaExtraAPI(urls_namespace="dsm")
@@ -30,10 +32,21 @@ dsm_api = NinjaExtraAPI(urls_namespace="dsm")
 #:   (`/system/requests/{id}/handled`)를 삼킬 변수 조각이 앞에 없다 [실측: `/system/`
 #:   경로 넷 전부 고정 조각]. 온보딩 라우터와 **다른 파일**인 이유는 그 파일에
 #:   쓰기 문이 있으면 `verify_onboarding_walk` 가 옳게 빨개지기 때문이다(api_f_ops 머리말).
+#: ★ [턴 AM · 차선 O · P-376] `DsmU5PermAPI`(사람별 카메라·기능 권한) — **맨 뒤**다.
+#:   새 경로(`/access-log/permissions`)는 `api_u24.py` 의 `/access-log`·
+#:   `/access-log/export.csv`(둘 다 완전한 리터럴, 변수 조각 없음) 뒤에 안전하게
+#:   붙는다[실측 확인]. `api_u24.py` 는 차선 N1 소유라 이번 턴은 그 파일을 고치지
+#:   않고 새 컨트롤러로 연다.
+#: ★ [턴 AM · 차선 N4 · WO-15 §5] `DsmU4API`(U4 재난안전과 담당 — 상황보고서
+#:   제N보·CBS 초안·통제현황판·영상제공대장·근무표 CSV) — **맨 뒤**다. 새 경로
+#:   (`situation-reports`·`cbs-drafts`·`control-points`·`video-access-requests`·
+#:   `shifts`·`shifts/import`)는 앞의 어느 리터럴·변수 조각과도 안 겹친다
+#:   (`api_u4.py` 머리말의 grep 전수 실측).
 dsm_api.register_controllers(
     DsmAPI, DsmLawAPI,
     DsmU1API, DsmU3API, DsmU24API, DsmU56API,
     DsmFAPI, DsmFOpsAPI,
+    DsmU5PermAPI, DsmU4API,
 )
 
 urlpatterns = [

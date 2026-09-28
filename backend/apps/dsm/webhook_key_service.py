@@ -238,7 +238,7 @@ def set_subscription_filters(*, scope: TenantScope, subscription_id: int,
     row.save(update_fields=["filters"])
     audit.record(
         scope=scope, action="write:webhook_filters:%s" % subscription_id,
-        outcome=audit.ALLOWED, reason="구독 필터 저장 (WS-17)",
+        outcome=audit.ALLOWED, reason="구독 필터 저장",
         before={"filters": before}, after={"filters": spec},
         api_name="set_subscription_filters", api_method="POST", status_http=200)
     return {"subscription_id": row.pk, "filters": spec, "is_active": row.is_active,

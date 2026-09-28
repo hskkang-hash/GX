@@ -73,6 +73,16 @@
  *     ⓑ 가 한 칸으로 서고 ⓐ 는 카메라 수만큼 채워 넣어야 한다 — 비어 있는
  *     ⓐ 는 다시 「없는 것에 그린 손잡이」가 된다. 판단을 청한다.
  *
+ * ★★★ **번호가 생겼다 — ⓑ 로 선다** [DSM-U3-04 · 2026-09-28 턴 AM · 차선 N1].
+ *
+ *   청했던 판단이 내려졌다: DSM-U3-04(annex §4.2)의 두 번호(PS-LTE 그룹통화 ·
+ *   상황실)는 **둘 다 조직이 쥔 번호**다 — ⓐ(카메라별 담당자 번호)를 요구하지
+ *   않는다. 그래서 `apps/dsm/hotline_service.py` 가 **ⓑ 한 칸**(테넌트당 하나)을
+ *   `GET|POST /api/dsm/hotline` 로 열었고, 이 화면은 `hotline.data.configured` 가
+ *   참일 때만, **있는 번호만** 버튼으로 그린다(아래 렌더 — 위 규약을 그대로 지킨다:
+ *   번호가 없는 테넌트에는 여전히 죽은 손잡이를 안 그린다). ⓐ 는 여전히 없다 —
+ *   이 절이 요구하지 않으므로 지어내지 않는다.
+ *
  * ★★ **지도 앱 링크를 그렸다** [P-141 · 2026-09-15 턴 Q · 차선 U3].
  *
  *   UX-45 원문: 「주소 · 지도 앱 링크(`geo:`/카카오맵 URL)」. 전화 버튼과 달리
@@ -117,7 +127,12 @@ import {
   mobileEndpoint,
   mobilePostWithQueryOnce,
 } from '../api';
-import { userFacingError } from '@/features/dsm/copy';
+import {
+  HOTLINE_NOT_CONFIGURED,
+  HOTLINE_PSLTE_LABEL,
+  HOTLINE_ROOM_LABEL,
+  userFacingError,
+} from '@/features/dsm/copy';
 import MobileShell, { TOUCH_MIN } from '../components/MobileShell';
 import { finishReceiveToAck, markOpened } from '../metrics';
 import { mobileRoutes } from '../routes';
@@ -208,6 +223,18 @@ export function mapLinkUrl(
     return `https://map.kakao.com/link/search/${encodeURIComponent(trimmed)}`;
   }
   return null;
+}
+
+/**
+ * DSM-U3-04 — `GET /api/dsm/hotline` 이 내는 모양. `configured:false` 면 나머지
+ * 칸은 안 봐도 된다(`apps/dsm/hotline_service.py::latest_hotline` 이 그 계약이다).
+ */
+interface HotlineView {
+  configured: boolean;
+  situation_room_phone?: string;
+  situation_room_tel?: string;
+  pslte_group_call?: string;
+  pslte_group_call_tel?: string;
 }
 
 /**
@@ -305,6 +332,16 @@ export default function MobileEventDetail() {
     () => dsmGet<EventDetailView>(mobileEndpoint.eventDetail(id!)),
     [id],
     { enabled: Boolean(id) },
+  );
+
+  /**
+   * DSM-U3-04 — 상황실·PS-LTE 그룹통화 번호. **테넌트 하나에 한 번**만 있으면
+   * 되므로(선례 없이 안 걸었던 이유가 「번호 자체가 없었다」였지 「사건마다 다르다」
+   * 가 아니었다) `id` 에 안 걸고 화면이 뜨는 동안 한 번만 부른다.
+   */
+  const hotline = useDsmResource<HotlineView>(
+    () => dsmGet<HotlineView>(mobileEndpoint.hotline),
+    [],
   );
 
   /**
@@ -718,6 +755,31 @@ export default function MobileEventDetail() {
                   </a>
                 ) : null;
               })()}
+              {/* ★★ [DSM-U3-04 · 턴 AM] 전화 버튼 — 번호가 **있는 칸만** 그린다
+                  (위 머리말 "전화 버튼을 그리지 않았다"와 같은 규율). 로딩 중·아직
+                  없음·둘 다 "죽은 버튼"으로 새지 않게 셋을 가른다. */}
+              {hotline.data?.configured ? (
+                <Space direction="vertical" size={8} style={{ width: '100%', marginTop: 8 }}>
+                  {hotline.data.situation_room_tel ? (
+                    <a href={`tel:${hotline.data.situation_room_tel}`}>
+                      <Button block style={{ minHeight: TOUCH_MIN }}>
+                        {HOTLINE_ROOM_LABEL}
+                      </Button>
+                    </a>
+                  ) : null}
+                  {hotline.data.pslte_group_call_tel ? (
+                    <a href={`tel:${hotline.data.pslte_group_call_tel}`}>
+                      <Button block style={{ minHeight: TOUCH_MIN }}>
+                        {HOTLINE_PSLTE_LABEL}
+                      </Button>
+                    </a>
+                  ) : null}
+                </Space>
+              ) : hotline.state === 'success' ? (
+                <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
+                  {HOTLINE_NOT_CONFIGURED}
+                </Text>
+              ) : null}
             </Card>
 
             {/* ③ 무엇을 보나 — 스냅샷 참조 · 구간 티켓 */}

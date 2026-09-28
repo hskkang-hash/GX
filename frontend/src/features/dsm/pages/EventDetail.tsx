@@ -671,13 +671,23 @@ export default function EventDetail() {
                         </Descriptions.Item>
                       </Descriptions>
                       <Text type="secondary" style={{ fontSize: 12 }}>
+                        {/* ★★ [P-371 · 턴 AM · 차선 L] **상태 코드가 여기 있었다.**
+                            셋째 조건 실측(U1#9 · U2#3)이 걸어 둔 「상태 코드」 네
+                            갈래 중 남은 하나 — `t.from`·`t.to` 가 `response_state`
+                            원문(`occurred`·`acknowledged`·`in_progress`)을 화살표
+                            문장에 그대로 찍고 있었다. 이 칸 바로 위(710행 처리
+                            단계 한 줄)는 이미 `labelOf(RESPONSE_STATE_LABEL, …)`
+                            를 쓰는데, 같은 값을 문장으로 푸는 이 줄만 사전을
+                            건너뛰고 있었다 — 정본은 이미 있었고, 없던 것은
+                            **잇는 한 줄**뿐이다. */}
                         전이 {timeline.data.transitions.length}건 —{' '}
                         {timeline.data.transitions.length === 0
                           ? '아직 한 칸도 움직이지 않았습니다.'
                           : timeline.data.transitions
                               .map(
                                 (t) =>
-                                  `${absolute(t.at)} ${t.from}→${t.to}` +
+                                  `${absolute(t.at)} ${labelOf(RESPONSE_STATE_LABEL, t.from)}` +
+                                  `→${labelOf(RESPONSE_STATE_LABEL, t.to)}` +
                                   (t.automatic ? ' (규칙)' : ` (${t.by || '알 수 없음'})`),
                               )
                               .join(' · ')}

@@ -1,0 +1,26 @@
+{
+  "id": "FWS-F6-03",
+  "title": "산불위험예보·위기경보 수신(산림과학원·산림청 API 또는 수동)",
+  "measured_at": "2026-09-28T09:28:53.110699+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f6.F6_03_RiskForecastTest.test_record_then_read_back_band_from_p386_thresholds",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/liaison/risk-forecast/mine",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "band": "경계",
+      "note": "산림과학원 고시 대체 입력",
+      "source": "manual",
+      "__seq__": 2,
+      "__hash__": "a5e61a43319ffbb4199708374a2dd89f5bff9a0f544317d9ff288c6fe83a6d20",
+      "risk_index": 70.0,
+      "recorded_at": "2026-09-28T09:28:53.046172+00:00",
+      "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "what": "POST 로 수동 입력한 위험지수(70)가 P-386 문턱으로 '경계' 띠를 받고 GET 재조회에 그대로 남는다 — 수동 입력 경로 실측(외부 API 는 미검증이라 열지 않는다)"
+}

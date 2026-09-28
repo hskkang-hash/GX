@@ -1,6 +1,6 @@
 {
   "id": "DSM-U2-03",
-  "measured_at": "2026-09-28T02:34:18.956324+00:00",
+  "measured_at": "2026-09-28T09:04:27.689480+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_dump_dsm_u2_03_evidence",
   "request": {
@@ -16,12 +16,12 @@
   "response": {
     "status": 200,
     "body": {
-      "meeting_id": 301,
+      "meeting_id": 36,
       "occurred_at": "2026-09-27T03:40:00+09:00",
       "attendees": "상황실장·팀장·U4",
       "decision": "통제 실시 · 비상 2단계 발령",
       "basis": "수위 182cm · 강우 41mm",
-      "actor_id": 503
+      "actor_id": 64
     }
   },
   "what": "상황판단회의 기록 1건을 실제로 남기고 응답을 그대로 옮겼다 — 손으로 지어낸 값 0."

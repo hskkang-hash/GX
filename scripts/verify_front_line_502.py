@@ -176,6 +176,45 @@ def read_planned_windows(path: str = RUNBOOK_PATH, tz_hours: int = 9) -> tuple:
     return (tuple(windows), tuple(skipped))
 
 
+#: ★ [P-378 · 2026-09-28 · 턴 AM · 세종 판정] **계획 재시작은 계획 창이다.** 둘째 출처 —
+#:   `scripts/restart_live.py` 가 재시작마다 적는 `evidence/OPS-26/restarts.jsonl` 한 줄.
+#:   턴 AL 실측: ⑤ 뒷단 부재 29건이 전부 이 도구의 재시작 동안 앞단 `connect() refused` 였다.
+#:   창은 **손으로 적지 않는다** — 그 줄의 `at`(재시작 직전 시각)부터 `ended_at`(도구가 적은 끝)까지,
+#:   `ended_at` 이 없는 옛 줄은 도구의 대기 상한(건강 90초 + celery 90초 = 180초)까지다.
+#:   `planned: true` 인 줄만 · 30분 상한은 runbook 창과 같다.
+RESTARTS_PATH = "docs/agent/evidence/OPS-26/restarts.jsonl"
+RESTART_WINDOW_FALLBACK_S = 180
+
+
+def read_restart_windows(path: str = RESTARTS_PATH) -> tuple:
+    """`restarts.jsonl` → `(windows, skipped)` — `read_planned_windows` 와 같은 모양."""
+    import json as _json  # noqa: PLC0415
+    try:
+        lines = Path(path).read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ((), ())
+    windows, skipped = [], []
+    for line in lines:
+        try:
+            row = _json.loads(line) if line.strip() else None
+        except ValueError:
+            continue
+        if not row or not row.get("planned") or not row.get("at"):
+            continue
+        try:
+            lo = datetime.fromisoformat(row["at"])
+            hi = (datetime.fromisoformat(row["ended_at"]) if row.get("ended_at")
+                  else lo + timedelta(seconds=RESTART_WINDOW_FALLBACK_S))
+        except ValueError:
+            continue
+        minutes = (hi - lo).total_seconds() / 60
+        if hi <= lo or minutes > PLANNED_WINDOW_MAX_MIN:
+            skipped.append((row["at"], int(minutes)))
+            continue
+        windows.append((lo, hi))
+    return (tuple(windows), tuple(skipped))
+
+
 def partition_by_planned(events: list, windows) -> tuple:
     """요청을 `(창 밖, 창 안)` 으로 가른다 — 자는 `partition_by_backend` 와 **같다**
     (`[끝 - request_time, 끝 + 1초)` 가 창과 겹치면 창 안)."""
@@ -1158,6 +1197,19 @@ def self_test() -> int:
         bad.append("30분을 넘는 「창」이 적혀 있는데 빨강이 아니다 — 자를 넓히는 가장 쉬운 길이다")
 
     #: ⑪‴ 읽는 자리 — runbook 이 없으면 창 0(못 읽은 것을 창으로 쓰지 않는다)
+    # P-378 — 계획 재시작 줄이 창이 된다 · 끝이 없으면 180초 · planned 아닌 줄은 창이 아니다
+    import tempfile as _tf  # noqa: PLC0415
+    with _tf.TemporaryDirectory() as _d:
+        _p = Path(_d) / "r.jsonl"
+        _p.write_text("\n".join([
+            '{"at": "2026-09-28T10:00:00+09:00", "planned": true}',
+            '{"at": "2026-09-28T11:00:00+09:00", "ended_at": "2026-09-28T11:02:00+09:00", "planned": true}',
+            '{"at": "2026-09-28T12:00:00+09:00", "planned": false}']) + "\n", encoding="utf-8")
+        _w, _sk = read_restart_windows(str(_p))
+        if len(_w) != 2 or (_w[0][1] - _w[0][0]).total_seconds() != RESTART_WINDOW_FALLBACK_S:
+            bad.append("계획 재시작 창 읽기가 틀렸다(끝 없는 줄 180초 · planned 아닌 줄 제외): %s" % (_w,))
+    if read_restart_windows("docs/agent/없는파일.jsonl") != ((), ()):
+        bad.append("없는 재시작 기록을 창으로 지어냈다")
     if read_planned_windows("docs/agent/없는파일.md") != ((), ()):
         bad.append("runbook 을 못 읽었는데 창을 만들었다")
 
@@ -1260,6 +1312,8 @@ def main() -> int:
     #: ★ [P-171] **계획 점검 창을 가른다** — 창은 runbook 의 「집행 기록」에서 읽는다
     #:   (손으로 적지 않는다). 창 안의 502 는 SLA 분모에서 빠지고 ⑥ 이 그 수를 적는다.
     planned, planned_over = read_planned_windows(str(ROOT / RUNBOOK_PATH))
+    r_planned, r_over = read_restart_windows(str(ROOT / RESTARTS_PATH))
+    planned, planned_over = tuple(planned) + tuple(r_planned), tuple(planned_over) + tuple(r_over)
     err_out_free, err_out_plan = partition_by_planned(err_out, planned)
     err_blind_free, err_blind_plan = partition_by_planned(err_blind, planned)
     control = thin(ok, CONTROL_SAMPLE)

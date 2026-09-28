@@ -241,6 +241,8 @@ def main(argv: list[str] | None = None) -> int:
                      commit=commit, dirty_backend=len(dirty), restarted=restarted,
                      health_ok=health, celery_ready=celery, live_code=live.returncode,
                      smoke=smoke.returncode, code=code, verdict=verdict)
+    #: [P-378 · 턴 AM] 끝 시각 — 502 판정기가 이 줄을 계획 창 `[at, ended_at]` 으로 읽는다.
+    line["ended_at"] = dt.datetime.now(KST).isoformat(timespec="seconds")
     LOG.parent.mkdir(parents=True, exist_ok=True)
     with LOG.open("a", encoding="utf-8", newline="\n") as f:
         f.write(json.dumps(line, ensure_ascii=False) + "\n")

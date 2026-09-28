@@ -1,25 +1,25 @@
 {
   "id": "FWS-F2-02",
   "title": "임무 수신(출동 지시)",
-  "measured_at": "2026-09-28T02:31:08.811572+00:00",
+  "measured_at": "2026-09-28T09:24:57.440542+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_mission_detail_dispatch_arrive_release_chain",
   "request": {
     "method": "GET",
-    "path": "/api/fws/missions/497",
+    "path": "/api/fws/missions/9",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "mission_id": 497,
+      "mission_id": 9,
       "fire_origin": {
         "lat": null,
         "lng": null
       },
       "address": null,
       "severity": "critical",
-      "occurred_at": "2026-09-28T02:26:08.715402+00:00",
+      "occurred_at": "2026-09-28T09:19:57.376317+00:00",
       "snapshot_path": "minio://dsm/1.jpg",
       "response_state": "occurred",
       "status": "new",

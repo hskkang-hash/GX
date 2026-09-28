@@ -33,6 +33,17 @@ export const fwsEndpoint = {
   mission: (id: number | string) => `/api/fws/missions/${id}`,
   missionResponse: (id: number | string) => `/api/fws/missions/${id}/response`,
   missionFieldReply: (id: number | string) => `/api/fws/missions/${id}/field-reply`,
+  // ── 턴 AM · F5 드론 운용자(세종 판정 P-387 — 요청·상태·결과 세 축) ──────
+  droneReconMine: '/api/fws/drone/missions/mine',
+  droneRecon: (eventId: number | string) => `/api/fws/drone/missions/${eventId}/recon`,
+  droneHotspots: (eventId: number | string) => `/api/fws/drone/missions/${eventId}/hotspots`,
+  droneHotspotsMine: (eventId: number | string) =>
+    `/api/fws/drone/missions/${eventId}/hotspots/mine`,
+  droneVerificationReply: (eventId: number | string) =>
+    `/api/fws/drone/verifications/${eventId}/reply`,
+  droneFlights: '/api/fws/drone/flights',
+  droneFlightsMine: '/api/fws/drone/flights/mine',
+  droneFlightMinutes: '/api/fws/drone/flights/minutes',
 };
 
 export async function fwsGet<T>(url: string): Promise<T> {

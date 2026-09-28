@@ -15,7 +15,7 @@ from common.idempotency import idempotent
 from common.inbound_api_key import JwtOrInboundKey
 from common.tenant_scope import SystemScopeCannotRead, TenantScope, tenant_scoped
 
-from apps.dsm import field, notify_prefs as prefs
+from apps.dsm import field, hotline_service, notify_prefs as prefs
 
 
 def _scope(request) -> TenantScope:
@@ -71,6 +71,15 @@ def _reject_secret_query(request) -> None:
             400,
             "구독 비밀은 쿼리 문자열로 보낼 수 없습니다 — 본문(JSON)으로 보내 주십시오. "
             f"쿼리에 있던 이름: {', '.join(present)} (값은 적지 않습니다).")
+
+
+class HotlineIn(Schema):
+    """DSM-U3-04 「PS-LTE 그룹통화 번호 · 상황실 번호」가 보내는 본문. 두 칸 다
+    스키마 기본값은 빈 문자열이다 — 「둘 다 비면 안 된다」는 스키마가 아니라
+    서비스가 400 으로 가른다(`AlertLevelIn` 의 판단과 같다)."""
+
+    situation_room_phone: str = ""
+    pslte_group_call: str = ""
 
 
 @api_controller("", tags=["DSM — U3 현장 (WO-01 차선 U3)"])
@@ -292,3 +301,42 @@ class DsmU3API:
             raise HttpError(403, str(exc))
         except prefs.NotifyPrefsRejected as exc:
             raise HttpError(422, str(exc))
+
+    # ── DSM-U3-04 PS-LTE 그룹통화 번호 · 상황실 번호 (P-356 §AM · 턴 AM) ────
+    #
+    # ⚠ **경로가 앞의 것을 안 삼킨다** [실측] — `/hotline` 은 이 파일·`api.py`·
+    #   `api_u1.py`·`api_u24.py`·`api_u56.py`의 어느 리터럴·변수 조각과도 안 겹친다.
+    @route.post("/hotline", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="상황실 연락 번호 — 남의 테넌트 감사에 남으면 격리 실패다")
+    @idempotent("dsm.u3.hotline.set")
+    def set_hotline(self, request, payload: HotlineIn):
+        """`POST /hotline` — 상황실 번호·PS-LTE 그룹통화 번호를 한 줄로 남긴다.
+
+        완결 조건은 「1탭」이다 — M2 화면은 이 값을 `tel:` 링크로 그린다(재난안전
+        통신망 자체와는 연동하지 않는다 · annex 「구현」 칸이 `tel:` 하나뿐인 그대로).
+        """
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return hotline_service.set_hotline(
+                scope=_scope(request),
+                situation_room_phone=payload.situation_room_phone,
+                pslte_group_call=payload.pslte_group_call)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except hotline_service.HotlineRejected as exc:
+            raise HttpError(422, str(exc))
+
+    @route.get("/hotline", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="상황실 연락 번호 열람 — 남의 테넌트 번호가 보이면 격리 실패다")
+    def get_hotline(self, request):
+        """`GET /hotline` — 지금 번호. 설정이 없으면 `configured:false`(죽은 버튼을
+        그리지 않는다 — 이 화면의 머리말 "전화 버튼을 그리지 않았다"와 같은 규율)."""
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return hotline_service.latest_hotline(scope=_scope(request))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))

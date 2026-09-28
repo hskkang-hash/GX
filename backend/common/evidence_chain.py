@@ -343,7 +343,7 @@ class RecordedBreak:
 
 #: 기록된 끊김. **늘어나는 것이 정상이 아니다.** 늘릴 때는 위 ⚠ 를 읽고 늘린다.
 #:
-#: 지금 **23건**이다 — 모두 `prev_mismatch` 이지만 **원인은 둘**이다.
+#: 지금 **29건**이다 — 23건은 `prev_mismatch`(원인 둘) · 6건은 `hash_mismatch`(셋째 원인 · 아래 P-379 칸막이).
 #:   ① 앞의 22건 = P-191 경합(잠금 이전) · ② 마지막 1건(#276795) = **시험이 샜다**(턴 X).
 #:   ⚠ 수만 세지 말 것 — 같은 목록에 있다고 같은 원인으로 읽히면 「경합은 잠금으로 닫혔다」가
 #:     그 한 건까지 덮는다. 아래 턴 X 칸막이를 보라.
@@ -482,6 +482,42 @@ RECORDED_BREAKS: tuple[RecordedBreak, ...] = (
         "**고치지 않고 적는다**(P-191). 대표 결정: 「끊김만 등재하고 행은 둔다」 — "
         "219행도 지우지 않는다. **감사표에서 행을 지우는 것은 「안 고쳐졌다」의 증명 자체를 "
         "약하게 한다.** 차선 S 가 자진 신고했고 psycopg2 별도 연결로 고쳐 재발을 막았다"),
+    # ── ★ [P-379 · 2026-09-28 · 턴 AM · 세종 판정 · 대표 위임 갱신] **여섯 행 — 셋째 원인.** ──────────
+    #   경합도 시험 누수도 아니다. 턴 AC 수정(2026-09-22) **전의** `_with_chain` 이 비-dict 값(문턱값 문자열·None)을
+    #   `{}` 로 버리고 해시는 원래 값으로 계산했다 — 저장된 `data_after` 에 원래 값이 없어 **되살릴 수 없다**.
+    #   변조가 아니다(modified_on == created_on · 턴 AC 시험 머리말이 같은 여섯을 이미 적었다). 감사 행은 고치지
+    #   않는다. got/want 는 `verify_chain()` 이 낸 값을 그대로 옮겼다(손으로 적지 않았다). 빈 dict 가장자리는
+    #   턴 AK 에서 고쳤다(`test_s_evidence_chain` 재현 3) — 이 여섯 뒤로 같은 원인의 새 줄은 0 이어야 한다.
+    RecordedBreak(
+        316701, HASH_MISMATCH,
+        "e21fef8984928b30ed6fc71171a6adc77ae3ec336d4e289eea2b16e9d974726e",
+        "11e3e306c0e124a1d69cff5361cfded4c1ecb1dff4dc8d9c3c4eab0a3e7c1aec",
+        "2026-09-28", "P-379 — 턴 AC 전 _with_chain 이 비-dict 값을 버렸다(09-21 K5 문턱값 감사) · 변조 아님 · 되살릴 수 없음"),
+    RecordedBreak(
+        316721, HASH_MISMATCH,
+        "d29cc20a0e2ef1158708dbd5d9280da2eeb779e0bf6d2bdedd0fa5837fefd7d6",
+        "f6f41c267d14338f52b026399da8443f6e28015e9dc469690b40efca54c19859",
+        "2026-09-28", "P-379 — 턴 AC 전 _with_chain 이 비-dict 값을 버렸다(09-21 K5 문턱값 감사) · 변조 아님 · 되살릴 수 없음"),
+    RecordedBreak(
+        317229, HASH_MISMATCH,
+        "cc495e3d436f09a2a87192209e9b2ee8c74078006114d89b7e2a66a7610dbd18",
+        "b330f0758c096a8e27a195e71896fdd7074323c605e70ad3885f0eafe123ec12",
+        "2026-09-28", "P-379 — 턴 AC 전 _with_chain 이 비-dict 값을 버렸다(09-21 K5 문턱값 감사) · 변조 아님 · 되살릴 수 없음"),
+    RecordedBreak(
+        317251, HASH_MISMATCH,
+        "262feb3537d180407abcb56a01c23ed17dc58c2df3203148e71dc0c6cac54577",
+        "22de14068985a4b2b7fee6ae5d3e1bbf84e444b5de309a2c6792b100eca8d37e",
+        "2026-09-28", "P-379 — 턴 AC 전 _with_chain 이 비-dict 값을 버렸다(09-21 K5 문턱값 감사) · 변조 아님 · 되살릴 수 없음"),
+    RecordedBreak(
+        321744, HASH_MISMATCH,
+        "fd8d3a9312b81dfa5050b005db182ed4283910440bb68a8f28d2e63a23f56dd4",
+        "7497efe585e3cfaec50d90ca97da072d7da561c20131721c895798104244a817",
+        "2026-09-28", "P-379 — 턴 AC 전 _with_chain 이 비-dict 값을 버렸다(09-21 K5 문턱값 감사) · 변조 아님 · 되살릴 수 없음"),
+    RecordedBreak(
+        321761, HASH_MISMATCH,
+        "1dcb1bcdc9d7a32df5afacb3faa4c8a9ffe289cd314fc17f29811ea665d98a20",
+        "58e7ef85537cdbe9455377c6af115646d00246c8f462596138cee4e77c2c54e8",
+        "2026-09-28", "P-379 — 턴 AC 전 _with_chain 이 비-dict 값을 버렸다(09-21 K5 문턱값 감사) · 변조 아님 · 되살릴 수 없음"),
 )
 
 

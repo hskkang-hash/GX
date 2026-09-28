@@ -298,3 +298,166 @@ MSYS_NO_PATHCONV=1 docker exec -e DJANGO_SETTINGS_MODULE=config.settings \
 python scripts/verify_spec_dsm.py --self-test     # 판정 규칙만(호스트 · docker 없음)
 python scripts/verify_spec_dsm.py                 # 전체(호스트 — 두 시험 파일을 함께 돌린다)
 ```
+
+---
+
+# §AM 승격 제안 — DSM-U3-04 · DSM-U3-03 (P-356/P-358/P-376 · WO-GX-20260925-15 §5 · 턴 AM)
+
+**대장은 이번에도 손대지 않았다** — 아래는 조율자가 그대로 옮겨 붙일 수 있는 YAML
+조각의 제안이다(P-356 ④). 이 턴 배정은 DSM-U3-01~04(4) + DSM-U6-01~03(3) = **7**
+이고, 그중 **둘을 닫는다** — 지시(WO-15 §5)대로 S(U3-04)를 먼저, 그다음 M 중
+「가장 싼 것」(U3-03 — 사진 업로드도 상황보고 조립도 이미 서 있어 **잇기만** 했다)을
+골랐다. 나머지 다섯(U3-01·U3-02·U6-01·U6-02·U6-03)은 이 저장소에 아직 없는
+저장처·능력에 걸려 이번 차선 시간 안에 정직하게 못 붙였다(§ 아래 표).
+
+★ **P-376 「반은 닫힌 것이 아니다」를 이 절에서 처음 적용한다.** 아래 두 절 각각에
+「제목이 부르는 것 ↔ 있는 것」 표를 붙인다 — 제목이 부르는 낱말 중 하나라도 빈
+줄이면 그 절은 승격 제안에서 뺀다(이번 둘은 뺄 것이 없었다 — 표가 그 증거다).
+
+## 무엇을 닫았나 (2/7)
+
+| id | 제목 | 엔드포인트·자리 | 증거 | 게이트 |
+|---|---|---|---|---|
+| DSM-U3-04 | PS-LTE 그룹통화 번호 · 상황실 번호 버튼 | `POST/GET /api/dsm/hotline` + `MobileEventDetail.tsx` M2 버튼 | `docs/agent/evidence/SPEC/DSM-U3-04.json` | `scripts/verify_spec_dsm.py` |
+| DSM-U3-03 | 현장 사진 → 보고서 증빙 자동 첨부 | 기존 `POST /events/{id}/field-photo` + `GET /events/{id}/situation-report.docx` ⑨ 첨부 칸 | `docs/agent/evidence/SPEC/DSM-U3-03.json` | `scripts/verify_spec_dsm.py` |
+
+넷 다 갖췄다(P-356): ① 실제 구현(`backend/apps/dsm/hotline_service.py`(신설) ·
+`backend/apps/dsm/api_u3.py::set_hotline/get_hotline`(신설 라우트 둘) ·
+`backend/apps/dsm/incident_report.py::_field_photo_count/build_situation_html/
+build_situation_report`(기존 함수 확장) · `frontend/.../MobileEventDetail.tsx`
+M2 전화 버튼(신설). **새 표 0개 · 새 마이그레이션 0개** — 번호는 감사 한 줄(U3-04),
+사진 수는 이미 있는 `DsmFieldPhoto` 를 세기만 한다(U3-03)) ② 증거
+(`docs/agent/evidence/SPEC/<id>.json`, `backend/tests/test_p356_u3u6_spec_promotions.py::
+EvidenceExportTest` 가 Django TestCase + test client(test DB)로 실제로 때려서 냄)
+③ 게이트(`scripts/verify_spec_dsm.py` 가 이제 세 시험 파일을 함께 돌린다 —
+`--self-test` 통과, pytest 10건 전부 통과 — 아래 재현 참조) ④ 아래 이동 제안.
+
+## 「제목이 부르는 것 ↔ 있는 것」(P-376)
+
+### DSM-U3-04 「PS-LTE 그룹통화 번호 · 상황실 번호 버튼」
+
+| 제목이 부르는 것 | 있는 것 |
+|---|---|
+| PS-LTE 그룹통화 번호 | `hotline_service.py` 의 `pslte_group_call`/`pslte_group_call_tel` 칸 — 테넌트당 하나, `POST /api/dsm/hotline` 로 접수, 감사 한 줄이 정본 |
+| 상황실 번호 | 같은 문의 `situation_room_phone`/`situation_room_tel` 칸 — 같은 접수·같은 감사 |
+| 버튼(M2) | `MobileEventDetail.tsx` M2 「② 어디로 가나」 카드에 `tel:` 링크 버튼 — **번호가 있는 칸만** 그린다(없으면 "아직 등록된 연락 번호가 없습니다"로 죽은 손잡이를 피한다, 이 파일 머리말의 기존 규율 그대로) |
+| 완결 조건 「1탭」 | 버튼이 `<a href="tel:...">` 하나뿐이라 구조상 1탭이다. **실기기에서 다이얼러가 실제로 열리는지는 이 저장소가 못 잰다**(브라우저/OS 연동 · e2e 범위 밖) — 코드 모양(단일 `tel:` 링크)만 실측했다. |
+| annex 「구현」 칸 `tel:` | 재난안전통신망 자체와는 연동하지 않는다 — annex 원문이 이미 그렇게 좁혀 뒀다(§ 위 로드맵 문서 §3 인용). |
+
+빠진 낱말 없음 — 승격 제안.
+
+### DSM-U3-03 「현장 사진 → 보고서 증빙 자동 첨부」
+
+| 제목이 부르는 것 | 있는 것 |
+|---|---|
+| 현장 사진 | 기존 `POST /events/{id}/field-photo`(턴 Q·R, 이번 턴 신설 아님) — `DsmFieldPhoto` 행 |
+| 보고서 | 별지 1호 상황보고 `GET /events/{id}/situation-report.docx`(턴 AB 기존) |
+| 증빙 | ⑨ 첨부 칸에 "N장이 이 사건에 자동 첨부되었습니다" 문장 — 원본 바이트는 계약 11조에 따라 안 붙인다(영상 구간과 같은 규약), 이름·수만 증빙으로 남는다 |
+| 자동 | 사람이 첨부를 고르지 않는다 — `_field_photo_count` 가 `DsmFieldPhoto.objects.filter(event_id=…).count()` 로 스스로 세어 서식에 끼운다 |
+| 첨부 | ⑨ 첨부 표에 실제 행 하나가 생긴다(0장이어도 칸은 남는다 — "없다"와 "집계 안 함"을 가른다) |
+| 완결 조건 「첨부 1」 | 사진 1장 올린 뒤 리포트에 "1장이…" 문장이 **실측**됨(`FieldPhotoAttachmentTest::test_uploaded_photo_is_automatically_counted_on_the_report`) |
+
+빠진 낱말 없음 — 승격 제안.
+
+## 이동 제안 — `annex_2_spec.clauses` → 8영역 「7 사용성(관리 UI·온보딩)」
+
+★ 영역 선택 사유는 턴 AK·AL 과 같다(§ 위 문단 — F 의 Table A 재실행을 이번 턴도 못
+받았고, 이미 관리자·현장용 신규 엔드포인트를 담아 온 영역 "7" 에 잠정 배치한다.
+조율자·F 가 다른 영역이 맞다고 판단하면 `area id` 한 줄만 바꾸면 된다).
+
+### ① `annex_2_spec.clauses` 에서 지운다 (현재 227~231행)
+
+```yaml
+    # 지운다 — DSM-U3-04 는 아래 area "7" 로 이동했다(P-356 ④ · 턴 AM)
+    # - id: DSM-U3-04
+    #   status: 미착수
+    #   kind: unmeasurable
+    #   hand: in
+    #   src: DSM
+
+    # 지운다 — DSM-U3-03 도 아래 area "7" 로 이동했다(P-356 ④ · 턴 AM)
+    # - id: DSM-U3-03
+    #   status: 미착수
+    #   kind: unmeasurable
+    #   hand: in
+    #   src: DSM
+```
+
+### ② `areas:` → `id: "7"` (사용성) `.clauses` 끝에 더한다
+
+```yaml
+      - id: DSM-U3-04
+        title: PS-LTE 그룹통화 번호 · 상황실 번호 버튼 — M2 화면의 `tel:` 1탭 연락
+        status: 구현
+        kind: closed
+        kind_why: |
+          [실측 2026-09-28 · 턴 AM 차선 N1] `POST/GET /api/dsm/hotline` 신설.
+          `apps/dsm/hotline_service.py` — 새 표 없이 `common/audit_writer.py`
+          한 줄(action=hotline:{group_id})로 테넌트별 접수 이력을 남기고 가장
+          최근 줄이 지금 번호다(`alert_level_service.py` 와 같은 판단). 두 칸
+          다 비면 400 · 다이얼 문자(숫자·+·*·#·-·공백) 밖은 400 · 남의 테넌트
+          번호 비가시성을 Django TestCase + test client 로 실측
+          (`test_p356_u3u6_spec_promotions.py::HotlineTest`). `MobileEventDetail.tsx`
+          M2 화면에 `tel:` 버튼 둘을 그렸다 — 번호가 있는 칸만(죽은 손잡이 0,
+          이 화면 머리말이 2026-09-05 부터 지켜 온 규율 그대로).
+        gate: scripts/verify_spec_dsm.py
+        proof: backend/apps/dsm/hotline_service.py · backend/apps/dsm/api_u3.py · frontend/src/features/mobile/pages/MobileEventDetail.tsx
+        evidence: docs/agent/evidence/SPEC/DSM-U3-04.json
+        note: |
+          재난안전통신망(PS-LTE) 자체와는 연동하지 않는다 — annex 「구현」 칸이
+          `tel:` 하나뿐인 그대로다(이 저장소가 잴 수 없는 외부 통신망 영역,
+          `기능명세_미포함표_20260925.md` §3 가 이미 그렇게 적어 뒀다). ⓐ(카메라
+          별 담당자 번호)는 이 절이 요구하지 않으므로 안 만들었다 — `MobileEventDetail.tsx`
+          머리말이 청했던 「⑤판단」이 ⓑ(테넌트당 하나)로 내려진 것이 이 닫음의
+          전제다.
+
+      - id: DSM-U3-03
+        title: 현장 사진 → 보고서 증빙 자동 첨부 — 별지 1호 ⑨ 첨부 칸에 사진 수가 자동으로 찍힌다
+        status: 구현
+        kind: closed
+        kind_why: |
+          [실측 2026-09-28 · 턴 AM 차선 N1] 새 저장처·새 엔드포인트 0개 — 이미
+          서 있던 둘을 이었다: 사진 업로드(`POST /events/{id}/field-photo`,
+          턴 Q·R)와 별지 1호 상황보고 조립(`build_situation_report`, 턴 AB).
+          `incident_report.py::_field_photo_count` 가 `DsmFieldPhoto` 를
+          `event_id` 로 세어 ⑨ 첨부 칸에 "N장이 자동 첨부되었습니다"(0장이면
+          "없습니다")를 적는다 — 원본 바이트는 안 싣는다(영상 구간과 같은 계약
+          11조 규약, 그림 0장 `docx_export` 약속도 유지). 사진 업로드 → DOCX
+          생성까지 실제 HTTP 왕복으로 실측(`test_p356_u3u6_spec_promotions.py::
+          FieldPhotoAttachmentTest`) — 완성된 DOCX(zip) 의 `word/document.xml`
+          을 직접 읽어 문장이 찍힌 것을 확인했다(HTML 만 보고 판단하지 않았다 —
+          이 서식 파일의 기존 함정 「DOCX 변환이 첫 줄로 칸 수를 정한다」와 같은
+          교훈으로, 완성 바이트까지 갔다).
+        gate: scripts/verify_spec_dsm.py
+        proof: backend/apps/dsm/incident_report.py
+        evidence: docs/agent/evidence/SPEC/DSM-U3-03.json
+        note: |
+          격리도 실측했다 — 같은 테넌트 안에서도 **사건별로** 사진 수가 안 섞인다
+          (`FieldPhotoAttachmentTest::test_someone_elses_photo_does_not_inflate_my_report`).
+          테넌트 경계 자체는 K1 `get_event` 문지기가 이미 지킨다(재확인 아님).
+```
+
+## 무엇이 없는가 — 못 닫은 다섯(이번 배정 7 중, M·L 규모 · 다음 턴 자리)
+
+| id | 제목 | 무엇이 없는가 |
+|---|---|---|
+| DSM-U3-01 | 역할별 M2 문안 | 「상주 경찰관·119·시설·당직」을 가르는 역할 분류가 제품에 없다 — `role.Role` 은 임의 코드일 뿐 이 네 갈래를 못박은 표가 아니다(grep 재확인 0건). 새 분류 칸이 필요해 U3-04(전화번호 둘)보다 비싸다. |
+| DSM-U3-02 | 통제 실행 회신 | `POST /controls/{id}/executed` 가 받을 「통제 지점」 저장처가 없다. 완결 조건(「도달→결정→실행 3시각」)의 앞 두 시각을 쥔 DSM-U4-04(통제·대피 현황판, N4 소유)가 아직 미착수라 선행 절 의존. |
+| DSM-U6-01 | 스마트시티 통합플랫폼 이벤트 연계 | 외부에서 사건을 **만드는** 문 자체가 없다(`POST /events` 수동 생성, DSM-U1-05 와 같은 벽 — 그 절도 턴 AK 부터 미착수). CAP 1.2 해석은 그 문이 선 다음의 일. |
+| DSM-U6-02 | NDMS 입력용 내보내기 API | 별지 1호 13항목 1:1 매핑 JSON/CSV. **L 규모**(Table A 실측)로 이번 배정 중 가장 비싸다 — 지시(WO-15 §5) 「S 먼저, 그다음 가장 싼 M」이 이 절을 순서 맨 뒤로 둔다. |
+| DSM-U6-03 | 사회적약자(실종) 요청 수신 → 객체 검색 사건 생성 | 「객체 검색」(용모 기반 재식별) 능력이 제품 어디에도 없다(grep 「객체 검색」·`object_search`·재식별 0건). AI 모델 연동이 먼저 서야 하는 M 규모 절. |
+
+이 다섯은 `annex_2_spec.clauses` 에 **그대로 둔다**(status: 미착수 · kind: unmeasurable ·
+변경 없음).
+
+## 시험 · 게이트 재현 (턴 AM)
+
+```
+MSYS_NO_PATHCONV=1 docker exec -e DJANGO_SETTINGS_MODULE=config.settings \
+  -e DB_TEST_NAME=test_gx_lane_n1 -w /app gx-shell \
+  python -m pytest tests/test_p356_u2_spec_promotions.py tests/test_p356_u4_spec_promotions.py \
+  tests/test_p356_u3u6_spec_promotions.py -q --create-db -p no:randomly
+
+python scripts/verify_spec_dsm.py --self-test     # 판정 규칙만(호스트 · docker 없음)
+python scripts/verify_spec_dsm.py                 # 전체(호스트 — 세 시험 파일을 함께 돌린다)
+```

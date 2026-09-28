@@ -221,6 +221,7 @@ routes:
   "GET /api/dronehw/group-management/groups-with-drones": session_only
   "GET /api/dsm/access-log": session_only
   "GET /api/dsm/access-log/export.csv": session_only
+  "GET /api/dsm/access-log/permissions": session_only
   "GET /api/dsm/alert-level": session_only
   "POST /api/dsm/alert-level": session_only
   "GET /api/dsm/audit": session_only
@@ -229,6 +230,13 @@ routes:
   "POST /api/dsm/cameras/import": session_only
   "GET /api/dsm/cameras/pulse": inbound_key_allowed
   "POST /api/dsm/cameras/{int:camera_id}/address": session_only
+  "GET /api/dsm/cbs-drafts": session_only
+  "POST /api/dsm/cbs-drafts": session_only
+  "POST /api/dsm/cbs-drafts/{int:draft_id}/approve": session_only
+  "POST /api/dsm/cbs-drafts/{int:draft_id}/sent": session_only
+  "GET /api/dsm/control-points": session_only
+  "POST /api/dsm/control-points": session_only
+  "POST /api/dsm/control-points/{int:point_id}/advance": session_only
   "GET /api/dsm/dashboard/frame": session_only
   "GET /api/dsm/dashboard/link-state": session_only
   "GET /api/dsm/deliveries": session_only
@@ -264,6 +272,8 @@ routes:
   "GET /api/dsm/handover/latest": session_only
   "POST /api/dsm/handover/{int:handover_id}/ack": session_only
   "GET /api/dsm/health": session_only
+  "GET /api/dsm/hotline": session_only
+  "POST /api/dsm/hotline": session_only
   "GET /api/dsm/law/ai-act/duties": session_only
   "GET /api/dsm/law/privacy-requests": session_only
   "POST /api/dsm/law/privacy-requests": session_only
@@ -318,8 +328,13 @@ routes:
   "GET /api/dsm/settings/zones": session_only
   "POST /api/dsm/settings/zones": session_only
   "GET /api/dsm/settings/{domain}": session_only
+  "GET /api/dsm/shifts": session_only
+  "POST /api/dsm/shifts/import": session_only
   "GET /api/dsm/situation-meetings": session_only
   "POST /api/dsm/situation-meetings": session_only
+  "GET /api/dsm/situation-reports": session_only
+  "POST /api/dsm/situation-reports": session_only
+  "POST /api/dsm/situation-reports/{int:report_id}/sent": session_only
   "GET /api/dsm/stats/axes": session_only
   "GET /api/dsm/stats/by-reviewer": session_only
   "GET /api/dsm/stats/camera-threshold": session_only
@@ -336,6 +351,10 @@ routes:
   "GET /api/dsm/system/storage": session_only
   "POST /api/dsm/thresholds/observe": session_only
   "POST /api/dsm/thresholds/observe/{int:observation_id}/decide": session_only
+  "GET /api/dsm/video-access-requests": session_only
+  "POST /api/dsm/video-access-requests": session_only
+  "POST /api/dsm/video-access-requests/{int:request_id}/approve": session_only
+  "POST /api/dsm/video-access-requests/{int:request_id}/provide": session_only
   "GET /api/dsm/webhook-subscriptions": session_only
   "POST /api/dsm/webhook-subscriptions": session_only
   "DELETE /api/dsm/webhook-subscriptions/{int:subscription_id}": session_only
@@ -348,9 +367,31 @@ routes:
   "GET /api/flight-log/flight-log/download-log/{id}": session_only
   "GET /api/fws/alerts": session_only
   "POST /api/fws/alerts/{int:delivery_id}/ack": session_only
+  "POST /api/fws/drone/flights": session_only
+  "GET /api/fws/drone/flights/mine": session_only
+  "GET /api/fws/drone/flights/minutes": session_only
+  "GET /api/fws/drone/missions/mine": session_only
+  "POST /api/fws/drone/missions/{int:event_id}/hotspots": session_only
+  "GET /api/fws/drone/missions/{int:event_id}/hotspots/mine": session_only
+  "POST /api/fws/drone/missions/{int:event_id}/recon": session_only
+  "POST /api/fws/drone/verifications/{int:event_id}/reply": session_only
   "GET /api/fws/emergency-contacts": session_only
   "POST /api/fws/equipment/checks": session_only
   "GET /api/fws/equipment/checks/mine": session_only
+  "GET /api/fws/health": session_only
+  "POST /api/fws/liaison/fire-events/{int:event_id}/evacuation-cbs-draft": session_only
+  "POST /api/fws/liaison/fire-events/{int:event_id}/fire-department-link": session_only
+  "GET /api/fws/liaison/fire-events/{int:event_id}/helicopter-requests": session_only
+  "POST /api/fws/liaison/fire-events/{int:event_id}/helicopter-requests": session_only
+  "GET /api/fws/liaison/fire-events/{int:event_id}/jurisdiction-transfer": session_only
+  "POST /api/fws/liaison/fire-events/{int:event_id}/jurisdiction-transfer": session_only
+  "GET /api/fws/liaison/fire-events/{int:event_id}/kfs-export": session_only
+  "GET /api/fws/liaison/fire-events/{int:event_id}/police-coordination": session_only
+  "POST /api/fws/liaison/fire-events/{int:event_id}/police-coordination": session_only
+  "POST /api/fws/liaison/fire-events/{int:event_id}/webhook-notify": session_only
+  "POST /api/fws/liaison/risk-forecast": session_only
+  "GET /api/fws/liaison/risk-forecast/mine": session_only
+  "GET /api/fws/liaison/webhook-events/catalog": session_only
   "GET /api/fws/missions/mine": session_only
   "GET /api/fws/missions/{int:event_id}": session_only
   "POST /api/fws/missions/{int:event_id}/field-reply": session_only

@@ -1,0 +1,115 @@
+{
+  "id": "P376_DSM-U5-02-permissions",
+  "measured_at": "2026-09-28T09:27:55.199348+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_p376_half_clauses.AccessPermissionMatrixTest.test_sysop_sees_person_camera_and_feature_permissions",
+  "request": {
+    "method": "GET",
+    "path": "/api/dsm/access-log/permissions",
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "person_id": 7,
+          "username": "dsm_user_a",
+          "group_id": 3,
+          "group_name": "dsm-tenant-A",
+          "role_codes": [
+            "dsm_watch_a"
+          ],
+          "role_bucket": "unmapped",
+          "preset": "OPERATOR",
+          "cameras": [
+            {
+              "camera_id": 3,
+              "name": "dsm-stream-A"
+            }
+          ],
+          "camera_count": 1,
+          "features": {
+            "danger_zone": "visible",
+            "threshold": "visible",
+            "severity_rule": "visible",
+            "recipient_group": "visible",
+            "sdn_link": "visible",
+            "role_management": "visible",
+            "api_key": "visible",
+            "audit_log": "visible"
+          }
+        },
+        {
+          "person_id": 9,
+          "username": "p376_manager_a",
+          "group_id": 3,
+          "group_name": "dsm-tenant-A",
+          "role_codes": [
+            "dsm_p376_mgr_a"
+          ],
+          "role_bucket": "unmapped",
+          "preset": "OPERATOR",
+          "cameras": [
+            {
+              "camera_id": 3,
+              "name": "dsm-stream-A"
+            }
+          ],
+          "camera_count": 1,
+          "features": {
+            "danger_zone": "visible",
+            "threshold": "visible",
+            "severity_rule": "visible",
+            "recipient_group": "visible",
+            "sdn_link": "visible",
+            "role_management": "visible",
+            "api_key": "visible",
+            "audit_log": "visible"
+          }
+        },
+        {
+          "person_id": 10,
+          "username": "p376_sysop_a",
+          "group_id": 3,
+          "group_name": "dsm-tenant-A",
+          "role_codes": [
+            "admin"
+          ],
+          "role_bucket": "sysop",
+          "preset": "MANAGER",
+          "cameras": [
+            {
+              "camera_id": 3,
+              "name": "dsm-stream-A"
+            }
+          ],
+          "camera_count": 1,
+          "features": {
+            "danger_zone": "visible",
+            "threshold": "visible",
+            "severity_rule": "hidden",
+            "recipient_group": "hidden",
+            "sdn_link": "editable",
+            "role_management": "editable",
+            "api_key": "editable",
+            "audit_log": "visible"
+          }
+        }
+      ],
+      "total": 3,
+      "capped": false,
+      "widgets": [
+        "danger_zone",
+        "threshold",
+        "severity_rule",
+        "recipient_group",
+        "sdn_link",
+        "role_management",
+        "api_key",
+        "audit_log"
+      ]
+    }
+  },
+  "what": "시스템관리자로 사람별 권한 매트릭스 문을 실제로 두드려, 팀장 A 의 행에 A 그룹 카메라 목록과 8개 기능 위젯의 권한 값이 실려 나오는 것을 확인했다 — annex 「사람별 카메라·기능 권한」의 앞 갈래가 실제로 선다."
+}

@@ -235,6 +235,15 @@ def resolve_recipients(
         members = CoreUser.objects.filter(
             roles=rule.role_id, userprofilelink__group=group, is_active=True
         ).distinct()
+        #: ★ [P-373 · 2026-09-28 · 턴 AM · 세종 판정] **탐침 계정은 재난 경보를 받지 않는다.**
+        #:   `gx-smoke`(스모크 전용 · 대표 실주소) 같은 계정이 규칙이 가리키는 역할을 들고 있으면
+        #:   실 SMTP 가 붙는 날 경보가 그 주소로 간다 — 그리고 수신자 수를 거짓으로 늘린다.
+        #:   규칙 표는 **안 고친다**(진짜 수신자가 빠질 위험) — 계정 쪽 곁표(`BillingMark` probe ·
+        #:   `billing_marks.marked_not_counted_ids`)로 거른다. 되돌리기 = 그 곁표 한 줄.
+        from common.billing_marks import marked_not_counted_ids
+        _probe_ids = marked_not_counted_ids(CoreUser)
+        if _probe_ids:
+            members = members.exclude(pk__in=_probe_ids)
         for user in members:
             for channel in (rule.channels or []):
                 key = (user.pk, channel)

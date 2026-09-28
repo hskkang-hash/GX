@@ -332,8 +332,11 @@ def save_rule(*, scope: TenantScope, severity: str, role_code: str,
         action="notify.save_rule_guarded",
         api_name="dsm.notify.save_rule_guarded:%s" % view.rule_id,
         api_method="POST", outcome=audit_writer.ALLOWED,
-        reason=("S-16 규칙 저장 — %s/%s 채널 %s · 저장 뒤 심각 수신자 %d명"
-                % (view.severity, view.role_code, ",".join(view.channels), remaining)),
+        #: ★ [P-371 · 턴 AM] 종전엔 이 문장에 `",".join(view.channels)` 원문
+        #:   (`email`·`log`·`webpush`)이 그대로 섞여 있었다 — 채널 목록은 아래
+        #:   `after.channels` 가 이미 구조화된 값으로 들고 있으므로 자유문에서는 뺀다.
+        reason=("알림 규칙 저장 — %s/%s · 저장 뒤 심각 수신자 %d명"
+                % (view.severity, view.role_code, remaining)),
         before=None, after={"rule_id": view.rule_id, "severity": view.severity,
                             "role_code": view.role_code,
                             "channels": list(view.channels),
@@ -380,9 +383,12 @@ def send_test_notification(*, scope: TenantScope, severity: str = CRITICAL) -> d
         logger_name="guardianx.dsm.notify", tag="[RULE]", actor=scope.actor,
         action="notify.test_send", api_name="dsm.notify.test_send:%s" % severity,
         api_method="POST", outcome=audit_writer.ALLOWED,
-        reason=("S-16 시험 발송 — %s 등급 · 수신자 %d명 · 훈련 채널(%s)로 %d건. "
+        #: ★ [P-371 · 턴 AM] 종전엔 "S-16" 절 ID 와 `%s`(훈련 채널의 원문 코드
+        #:   `log`)가 이 자유문에 그대로 있었다 — 채널 값은 아래 `after.channel`
+        #:   이 구조화된 값으로 들고 있으므로 자유문에서는 「훈련 채널」이라고만 적는다.
+        reason=("시험 발송 — %s 등급 · 수신자 %d명 · 훈련 채널로 %d건. "
                 "실채널로는 한 건도 나가지 않았다"
-                % (severity, len(people), channel, sent)),
+                % (severity, len(people), sent)),
         before=None,
         after={"severity": severity, "recipients": len(people),
                "channel": channel, "sent": sent},

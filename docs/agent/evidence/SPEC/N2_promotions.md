@@ -1,8 +1,8 @@
-# N2 승격 제안 — FWS-F1-01~15 · FWS-F2-01~15 (턴 AK·AL · P-356·357·358 · 차선 N2)
+# N2 승격 제안 — FWS-F1-01~15 · FWS-F2-01~15 · FWS-F5-01~10 (턴 AK·AL·AM · P-356·357·358·387 · 차선 N2)
 
-**턴 AL 추가분은 §5 이하** — §0~§4(F1 10건 · 분모 293 확인)는 턴 AK 그대로
-남긴다(이미 조율자가 검토했을 수 있는 문서를 손대지 않는다). F2 는 별도 절
-(§5~§8)로 붙인다.
+**턴 AL 추가분은 §5~§9, 턴 AM(F5 드론 운용자) 추가분은 §10 이하** — §0~§4(F1 10건 ·
+분모 293 확인)는 턴 AK 그대로 남긴다(이미 조율자가 검토했을 수 있는 문서를 손대지
+않는다). F2·F5 는 각각 별도 절로 붙인다.
 
 **조율자가 대장(`docs/agent/evidence/D-346/ga_readiness.yaml`)에 적용한다 — 이 문서는
 제안만 한다.** 이 차선은 `ga_readiness.yaml` 을 손대지 않았다(작업지시 §하드룰).
@@ -488,3 +488,253 @@ kind_evidence:
 10건이 별표 목록에서 **빠지고** area 1 로 **옮겨지므로**, 조율자가 §7 을 적용한
 뒤 `python scripts/verify_spec_coverage.py --no-emit` 를 다시 돌려 분모가 293
 그대로인지(F1·F2 승격 20건을 함께 옮긴 뒤 기준) 반드시 확인할 것.
+
+---
+
+## 10. F5 드론 운용자 — 세종 판정 P-387(요청·상태·결과 세 축뿐, 드론 0대) (턴 AM)
+
+작업지시가 준 판정(P-387) 그대로다: 이 저장소에는 실제 드론이 **0대** 있다. 그래서
+F5 열 다섯을 닫을 때 만든 것은 드론이 하는 일의 흉내가 아니라 **사람이 드론을
+부리는 서류** 셋뿐이다 — 요청(F5-01) · 상태 전이(F5-01) · 결과 첨부(F5-03). 나머지
+둘(F5-02 열점·화선 · F5-08 비행 기록·F5-10 계량)은 전부 **값**이고 지도·폴리라인·
+실제 센서 데이터는 만들지 않았다(`backend/apps/fws/drone.py` 머리말 전문 참조).
+
+★ **다중 행위자 규칙**(작업지시 「per-drone actions must not close the shared
+incident」) — `recon()`·`confirm_result()` 는 `apps.dsm.services.advance_response`
+를 **한 번도 부르지 않는다.** 이 규칙이 실제로 지켜지는지는
+`test_recon_state_never_advances_shared_response_state` 가 사건의
+`response_state` 가 정찰 상태 전이 뒤에도 `occurred` 그대로인지 재서 잡는다.
+
+10건이 넷을 다 갖췄다고 이 차선이 주장하는 것은 **다섯 건뿐이다**(S 규모 셋
+F5-02·03·08 우선 + 그 위에 자연히 붙는 F5-01·F5-10). 나머지 다섯(F5-04·05·06·
+07·09)은 §13 에 「무엇이 없는가」로 남긴다.
+
+1. **실제 구현** — `backend/apps/fws/drone.py`(신규) · `backend/apps/fws/api.py`
+   에 `/api/fws/drone/*` 라우트 8개 추가(`missions/mine`·`missions/{id}/recon`·
+   `missions/{id}/hotspots`·`missions/{id}/hotspots/mine`·
+   `verifications/{id}/reply`·`flights`·`flights/mine`·`flights/minutes`).
+2. **실측 증거** — `docs/agent/evidence/SPEC/<id>.json` 5건, 전부
+   `backend/tests/test_fws_f5.py` 의 pytest 실행이 **기계로** 찍었다
+   (`measured_by: "django_test_client"`, `test_fws_app._write_evidence` 재사용).
+3. **게이트** — `scripts/verify_spec_fws.py` 를 F5 열 다섯 건으로 확장했다(길목
+   시험이 이제 `test_fws_app.py` + `test_fws_f2.py` + `test_fws_f5.py` 셋을 같이
+   돈다). `test_fws_f5.py` 단독 재실행 → **13 passed**(길목 확인). 전체 재실행은
+   §12 참조.
+4. **대장 이동** — 아래 §11 의 YAML 을 `ga_readiness.yaml` 의 `kind_derived.
+   annex_promoted.closed`(턴 AK 가 이미 연 그 자리)에 F5 5건을 이어 붙이는 것을
+   제안한다. §0 의 (a) 판단을 그대로 따른다 — D-309 원장은 건드리지 않는다.
+
+## 11. 표 — 닫은 F5 다섯 건 + 「제목이 부르는 것 ↔ 있는 것」 (P-376)
+
+| id | 제목 | 엔드포인트 | 증거 |
+|---|---|---|---|
+| FWS-F5-01 | 정찰 임무 수신(발화 추정 좌표·반경) → 열화상 정찰 | `POST /api/fws/drone/missions/{id}/recon`(action) · `GET .../drone/missions/mine` | `evidence/SPEC/FWS-F5-01.json` |
+| FWS-F5-02 | 열점·화선 표시(열화상 프레임 → 지도 폴리라인) | `POST /api/fws/drone/missions/{id}/hotspots` · `GET …/hotspots/mine` | `evidence/SPEC/FWS-F5-02.json` |
+| FWS-F5-03 | 확인 회신(산불 맞음/오인 · 사진·열화상) | `POST /api/fws/drone/verifications/{id}/reply` | `evidence/SPEC/FWS-F5-03.json` |
+| FWS-F5-08 | 비행 기록·배터리·기체 상태 | `POST /api/fws/drone/flights` · `GET …/flights/mine` | `evidence/SPEC/FWS-F5-08.json` |
+| FWS-F5-10 | 계량(비행 분) | `GET /api/fws/drone/flights/minutes` | `evidence/SPEC/FWS-F5-10.json` |
+
+P-376 「반쪽은 닫힌 것이 아니다」 — 절마다 제목이 부르는 낱말과 실제로 있는 것을
+가른다. 있는 열은 이 차선이 실측했고, 없는 열은 세종 판정 P-387 이 애초에 범위
+밖으로 그은 것이지 빠뜨린 것이 아니다(드론 0대 — 실기체·실센서는 이 시스템의
+소관이 아니다).
+
+**FWS-F5-01** 정찰 임무 수신(발화 추정 좌표·반경) → 열화상 정찰
+
+| 제목이 부르는 것 | 있는 것 |
+|---|---|
+| 발화 추정 좌표 | 있음 — K1 이벤트 `lat`·`lng`(F1/F2 가 이미 쓰던 값, 새로 만들지 않음) |
+| 반경 | 있음 — `radius_m` 값(요청 감사 한 줄에 저장 · K1 이벤트 스키마엔 없는 칸이라 이 파일에만 남음) |
+| 수신(요청) | 있음 — `action=request` |
+| 상태(수락→이륙→귀환) | 있음 — `action=accept/airborne/return`, 이 조종사 자신의 기록으로 순서 검사(앞 단계 없으면 409) |
+| 열화상 정찰(실비행·센서 데이터) | **없음** — P-387: 드론 0대. 이 시스템이 내는 것은 「정찰 임무를 받았다·상태가 어디까지 갔다」는 서류뿐이고, 실제 비행·촬영(열화상 프레임 자체)은 시스템 밖(기체·사람)의 일이다 |
+
+**FWS-F5-02** 열점·화선 표시(열화상 프레임 → 지도 폴리라인)
+
+| 제목이 부르는 것 | 있는 것 |
+|---|---|
+| 열점 위치(들) | 있음 — `points`(좌표 목록 값, JSON) |
+| 화선(들) | 있음 — `fireline`(좌표 목록 값, 최소 2점) |
+| 지휘 화면 도달 | 있음 — K1 `field_reply` 로 남아 사건 상세의 현장 회신 목록에 도달(지휘 화면은 DSM lane N1 소유라 새 위젯은 안 만듦) |
+| 열화상 "프레임"(원본 이미지·센서 데이터) | **없음** — 좌표 값만 받는다. 프레임 자체(이미지 바이너리)는 저장하지 않는다(드론 0대, P-387) |
+| 지도 폴리라인(렌더) | **없음(의도)** — §0.4 인접 금지구역(`MapForRoute*`) 밖. 좌표 목록 값만 값으로 내고, 그리는 것은 화면(다른 컴포넌트)의 몫으로 남긴다 |
+
+**FWS-F5-03** 확인 회신(산불 맞음/오인 · 사진·열화상)
+
+| 제목이 부르는 것 | 있는 것 |
+|---|---|
+| 산불 맞음/오인(결과 판정) | 있음 — F1-06 `verification.reply_verification` 문을 그대로 재사용(RESULT 3택) |
+| 사진·열화상(첨부) | 있음(값으로) — `attachment_ref`(경로/URL 문자열). 「산불 맞음」인데 첨부가 없으면 422(명세 원문 강제) |
+| 사건 판정(verdict) 반영 | 있음 — K1 `review_event` 가 `confirmed`/`rejected` 로 바꾼다(F1-06 과 같은 문 · 대응 진행 `response_state` 는 안 건드림, 다중 행위자 규칙) |
+| 실제 사진·열화상 파일(바이너리 업로드·저장) | **없음** — `attachment_ref` 는 **값**(문자열)만 받는다. 실제 업로드 저장 경로는 이번 차선 범위 밖(F1-07·F2-04 와 같은 한계) |
+
+**FWS-F5-08** 비행 기록·배터리·기체 상태
+
+| 제목이 부르는 것 | 있는 것 |
+|---|---|
+| 비행 기록 | 있음 — `flight_minutes`·`source`·`note`, 저장 → 재조회(`flights/mine`) |
+| 배터리 상태 | 있음 — `battery_pct`(0~100 범위 검증) |
+| 기체 상태 | 있음 — `airframe_code`(값), `source`(DJI 등 연동 어댑터의 **이름 값 자리**뿐 — 실제 DJI API 호출 0건, P-387) |
+| (없는 것) | 없음 — 제목이 부르는 세 값(기록·배터리·기체) 전부 값으로 있다. 제목이 실연동을 요구하지 않으므로 `source` 가 어댑터 자리인 것은 갭이 아니라 판정이 그은 선이다 |
+
+**FWS-F5-10** 계량(비행 분)
+
+| 제목이 부르는 것 | 있는 것 |
+|---|---|
+| 비행 분 계량 | 있음 — `flight_minutes_total`(F5-08 값을 세기만 한다, 새 표 없음), 월 필터 가능 |
+| (없는 것) | 없음 |
+
+## 12. 게이트·전체 시험 재실행 결과
+
+`python scripts/verify_spec_fws.py --run`(F5 5건 추가 · `--self-test` 그대로
+통과 · `test_verify_spec_fws_gate_can_fail.py` 짝은 손대지 않음) 재실행 결과
+[실측 2026-09-28T09:14 · gx-shell]:
+
+    길목 시험 = test_fws_app.py · test_fws_f2.py · test_fws_f5.py
+    pytest 요약 — 통과 43 · 실패 0 · 에러 0
+    ── 요약 — 닫은 열 25/25 · 최종 PASS ──
+
+이 차선이 개별로 확인한 pytest 실측(gx-shell, `--create-db`):
+
+    tests/test_fws_f5.py                                                13 passed (단독)
+    tests/test_fws_app.py + test_fws_f2.py + test_fws_f5.py
+      + test_f05_event_api.py + test_dsm_app.py (합본)     2 failed, 89 passed
+      ↳ 실패 2건은 **F5 밖** — `EntrySurfaceIsLockedTest::test_the_count_is_not_zero`·
+        `test_the_entry_surface_is_pinned_by_name`, 전부 `/api/dsm/cbs-drafts`·
+        `/api/dsm/control-points`·`/api/dsm/video-access-requests`·
+        `/api/dsm/shifts`·`/api/dsm/situation-reports` 새 라우트가
+        `EVENT_ENTRY_SURFACE`/`K1_CONSUMERS`(같은 시험 파일 · 다른 lane 소유)에
+        등재되지 않아 생긴 실패다. `apps/fws/drone.py`·`/api/fws/drone/*` 는 이
+        실패 목록에 **없다** — 이 차선이 만들지 않았고 고치지도 않았다(공유
+        파일 · 다른 lane 담당).
+
+정적 게이트(호스트에서 docker 없이 돈다):
+
+    scripts/verify_ui_copy.py            → 통과 — 새로 생긴 대장 언어 0건
+    scripts/verify_route_scope_declared.py → 통과 — 선언 없이 태어난 새 라우트 0건
+    scripts/verify_layers.py             → 위반 1건, **`backend/apps/fws/
+                                            integration.py:416`**(lane N3 · F6
+                                            소유 파일) — `apps/fws/drone.py` 는
+                                            위반 0건(grep 로 확인). 이 차선의
+                                            책임 밖이라 고치지 않았다.
+
+## 13. 못 닫은 F5 다섯 — 「무엇이 없는가」
+
+- **FWS-F5-04** 잔불 순회 예약(구역·간격·야간) — '구역'·'간격'(반복 일정)은 K1 에
+  없는 축이다(F2-09 와 같은 한계). 예약 자체도 미래 반복 일정을 담을 표가 새로
+  필요하다. M 규모라 범위 밖.
+- **FWS-F5-05** 대피 안내 방송(스피커) 임무 — 방송 대상 '구역' 축이 F5-04 와 같은
+  이유로 없고, 방송 음성·문구 콘텐츠를 담을 저장 경로도 없다(F1-07 과 같은 한계).
+  M 규모라 범위 밖.
+- **FWS-F5-06** 비행 제한(헬기 투입 중 드론 금지 구역 · 고도) 표시·차단 — '헬기
+  투입 중' 상태를 아는 축이 없다(F2-05 지원 요청은 텍스트 로그일 뿐 실제 배치
+  플래그가 아니다). 고도·금지구역 판정도 새 축이 필요하다. L 규모라 범위 밖.
+- **FWS-F5-07** 피해면적 산출(정사영상 → 폴리곤 ha) — F-03 폴리곤 문
+  (`stream_monitors.services.zones.save_zone`)은 F-12 관리자 위험구역 지정
+  전용이고 면적 계산이 없다. 정찰용 피해면적 폴리곤을 받는 새 입력 문이 없다 —
+  F-03 폴리곤 잠금이 이 용도를 허락하지 않는다(D-299·D-365, 작업지시가 미리 건
+  조건 그대로). M 규모라 범위 밖.
+- **FWS-F5-09** 영상 스트림 관제 화면 공유 — 실시간 스트림 공유 인프라가 이 App
+  층에 없다. DSM 의 클립 스트림은 다른 App(lane N1) 소유라 재사용하지 않았다.
+  M 규모라 범위 밖.
+
+## 14. 제안 YAML — `kind_derived.annex_promoted.closed` 에 F5 5건 이어 붙이기
+
+```yaml
+# docs/agent/evidence/D-346/ga_readiness.yaml :: areas[id=="1"].kind_derived.annex_promoted 안에 추가 제안
+kind_derived:
+  annex_promoted:
+    closed:
+      # (턴 AK 의 F1 10건 · 턴 AL 의 F2 10건은 그대로 두고, 아래 F5 5건을 이어 붙인다)
+      - FWS-F5-01
+      - FWS-F5-02
+      - FWS-F5-03
+      - FWS-F5-08
+      - FWS-F5-10
+
+kind_evidence:
+  FWS-F5-01:
+    title: 정찰 임무 수신(발화 추정 좌표·반경) → 열화상 정찰
+    status: closed
+    kind: measured
+    gate: scripts/verify_spec_fws.py
+    proof: docs/agent/evidence/SPEC/FWS-F5-01.json
+    rows: [tests.test_fws_f5.F5_01_ReconTest.test_request_accept_airborne_return_and_mine_reflects_state]
+    strength: change
+    measured_at: "2026-09-28T09:13:55Z"
+    capture_none_why: |
+      실제 열화상 정찰(비행·센서 데이터)은 없다 — 세종 판정 P-387(드론 0대,
+      요청·상태 두 축만). radius_m 은 K1 이벤트 스키마에 없어 이 파일의 감사
+      한 줄에만 남는다.
+    what: |
+      정찰 요청(반경 값)→수락→이륙→귀환 상태 전이가 내 대기열(mine)에 그대로
+      남는다 — 요청·상태 두 축 실측. 다중 행위자 규칙(상태 전이가 사건의
+      response_state 를 안 옮김)도 별도 시험으로 확인.
+
+  FWS-F5-02:
+    title: 열점·화선 표시(열화상 프레임 → 지도 폴리라인)
+    status: closed
+    kind: measured
+    gate: scripts/verify_spec_fws.py
+    proof: docs/agent/evidence/SPEC/FWS-F5-02.json
+    rows: [tests.test_fws_f5.F5_02_HotspotsTest.test_submit_points_and_fireline_then_read_back]
+    strength: change
+    measured_at: "2026-09-28T09:13:57Z"
+    capture_none_why: |
+      열화상 "프레임"(이미지 바이너리)은 저장하지 않는다 — 좌표 값만. 지도
+      렌더는 §0.4 인접 금지구역 밖이라 만들지 않았다(값만 낸다).
+    what: |
+      열점 2점·화선 2점(좌표 목록 값)을 제출한 뒤 재조회에 그대로 보인다 —
+      K1 field_reply 로 지휘 화면이 읽는 자리에도 도달.
+
+  FWS-F5-03:
+    title: 확인 회신(산불 맞음/오인 · 사진·열화상)
+    status: closed
+    kind: measured
+    gate: scripts/verify_spec_fws.py
+    proof: docs/agent/evidence/SPEC/FWS-F5-03.json
+    rows: [tests.test_fws_f5.F5_03_ConfirmResultTest.test_fire_confirmed_requires_attachment_ref]
+    strength: change
+    measured_at: "2026-09-28T09:13:58Z"
+    capture_none_why: |
+      사진·열화상 실제 파일(바이너리) 업로드 저장소는 없다 — attachment_ref 는
+      경로/URL 값만 받는다(F1-07·F2-04 와 같은 한계).
+    what: |
+      드론 확인 회신(산불 맞음 + 참조)이 K1 사건의 verdict 를 confirmed 로
+      바꾼다 — F1-06 문 재사용(P-357) + 참조 값 필수화(참조 없이 fire_confirmed
+      는 422).
+
+  FWS-F5-08:
+    title: 비행 기록·배터리·기체 상태
+    status: closed
+    kind: measured
+    gate: scripts/verify_spec_fws.py
+    proof: docs/agent/evidence/SPEC/FWS-F5-08.json
+    rows: [tests.test_fws_f5.F5_08_FlightLogTest.test_log_is_recorded_and_read_back]
+    strength: change
+    measured_at: "2026-09-28T09:14:00Z"
+    what: |
+      POST /drone/flights(dji · M30T-7 · 배터리 68.5 · 22분) 뒤 GET
+      /drone/flights/mine 에 그 값이 그대로 보인다. source 는 DJI 등 연동
+      어댑터의 값 자리뿐(실제 API 호출 0건, P-387).
+
+  FWS-F5-10:
+    title: 계량(비행 분)
+    status: closed
+    kind: measured
+    gate: scripts/verify_spec_fws.py
+    proof: docs/agent/evidence/SPEC/FWS-F5-10.json
+    rows: [tests.test_fws_f5.F5_10_FlightMinutesTest.test_flight_minutes_are_summed]
+    strength: reflect
+    measured_at: "2026-09-28T09:14:02Z"
+    what: |
+      비행 기록 두 건(15분·27.5분) 뒤 GET /drone/flights/minutes 의
+      flight_minutes_total 이 42.5 — F5-08 값을 세기만 한다(새 표 없음).
+```
+
+## 15. 분모 재확인 요청 (P-356 ③, F5 몫)
+
+§9 와 같은 이유로 F5 몫도 `verify_spec_coverage.py` 를 재실행하지 않았다. F5 5건이
+별표 목록에서 **빠지고** area 1 로 **옮겨지므로**, 조율자가 §14 를 적용한 뒤
+`python scripts/verify_spec_coverage.py --no-emit` 를 다시 돌려 분모가 293
+그대로인지(F1·F2·F5 승격 25건을 함께 옮긴 뒤 기준) 반드시 확인할 것.

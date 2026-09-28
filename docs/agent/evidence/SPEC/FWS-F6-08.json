@@ -1,0 +1,32 @@
+{
+  "id": "FWS-F6-08",
+  "title": "경찰 교통통제·입산통제 협조 기록",
+  "measured_at": "2026-09-28T09:28:57.882925+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f6.F6_08_PoliceCoordinationTest.test_record_then_list_by_event",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/liaison/fire-events/13/police-coordination",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "event_id": 13,
+      "count": 1,
+      "records": [
+        {
+          "kind": "traffic_control",
+          "note": "OO로 3km 구간 전면 통제",
+          "__seq__": 7,
+          "__hash__": "75d5b815918ab0668b1aece644503057127c45d6014a9be2ee231ad276749fd0",
+          "event_id": 13,
+          "recorded_at": "2026-09-28T09:28:57.845521+00:00",
+          "recorded_by": "dsm_user_a",
+          "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    }
+  },
+  "what": "POST 로 남긴 경찰 협조 기록(교통통제)이 GET 재조회에 1건으로 남는다 — 협조 기록 실측"
+}

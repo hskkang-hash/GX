@@ -1,0 +1,34 @@
+{
+  "id": "FWS-F5-08",
+  "title": "비행 기록·배터리·기체 상태",
+  "measured_at": "2026-09-28T09:14:00.685847+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f5.F5_08_FlightLogTest.test_log_is_recorded_and_read_back",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/drone/flights/mine",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "flights": [
+        {
+          "flight_id": 73,
+          "note": "",
+          "source": "dji",
+          "__seq__": 73,
+          "__hash__": "e9a0d2c12953047b633f10834d66926dca6c394398cc47337b679ca6e3612be7",
+          "event_id": null,
+          "logged_at": "2026-09-28T09:14:00.617751+00:00",
+          "battery_pct": 68.5,
+          "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
+          "airframe_code": "M30T-7",
+          "flight_minutes": 22.0
+        }
+      ],
+      "count": 1
+    }
+  },
+  "what": "POST /drone/flights(dji · M30T-7 · 배터리 68.5 · 22분) 뒤 GET /drone/flights/mine 에 그 값이 그대로 보인다 — 비행 기록 실측 (source 는 DJI 등 연동 어댑터의 값 자리뿐, 실제 API 호출 0건)"
+}

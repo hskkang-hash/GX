@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""P-356·357·358 — FWS-F1-01~15 별표 절 승격 게이트 (WO-GX-20260925-15 §5 · 턴 AK 차선 N2).
+"""P-356·357·358·387 — FWS-F1~F5 별표 절 승격 게이트 (WO-GX-20260925-15 §5 · 턴 AK/AL/AM 차선 N2).
 
 무엇을 재는가 — 셋
 --------------------
-    ① **길목** — `backend/tests/test_fws_app.py` 를 gx-shell 안에서 **그대로** 돌린다.
-       판정 규칙(응답 모양·상태 코드·격리)은 그 시험이 이미 정했다 — 이 게이트가
-       다시 만들지 않는다(D-212). 그 시험은 도는 김에 `docs/agent/evidence/SPEC/
-       <id>.json` 을 **기계로** 새로 찍는다.
-    ② **증거 성립** — 방금 찍힌 증거 파일 10건이 「HTTP 로 실제로 두드렸다」는
-       모양(요청·2xx 응답·무엇을 쟀는지)을 갖췄는가. **손으로 옮겨 적은 값이
-       아닌지**는 여기서 못 잰다 — 그것은 ①(pytest 가 방금 이 파일을 새로 쓴 것)
-       이 보장한다.
-    ③ **절 목록 전수** — FWS-F1-01~15 열다섯 칸을 전부 찍는다. 닫은 열(S 10건)은
-       ①②로, 못 닫은 다섯(F1-04·07·09·14·15)은 **「무엇이 없는가」 한 줄**로.
-       못 닫은 칸을 빈 칸으로 두지 않는다 — 빈 칸은 「모른다」와 「없다」가
-       구별되지 않는다(D-274).
+    ① **길목** — `backend/tests/test_fws_app.py`·`test_fws_f2.py`·`test_fws_f5.py`
+       를 gx-shell 안에서 **그대로** 돌린다. 판정 규칙(응답 모양·상태 코드·격리)은
+       그 시험들이 이미 정했다 — 이 게이트가 다시 만들지 않는다(D-212). 그 시험은
+       도는 김에 `docs/agent/evidence/SPEC/<id>.json` 을 **기계로** 새로 찍는다.
+    ② **증거 성립** — 방금 찍힌 증거 파일이 「HTTP 로 실제로 두드렸다」는 모양
+       (요청·2xx 응답·무엇을 쟀는지)을 갖췄는가. **손으로 옮겨 적은 값이 아닌지**는
+       여기서 못 잰다 — 그것은 ①(pytest 가 방금 이 파일을 새로 쓴 것)이 보장한다.
+    ③ **절 목록 전수** — FWS-F1-01~15·F2-01~15·F5-01~10 을 전부 찍는다. 닫은 열은
+       ①②로, 못 닫은 열은 **「무엇이 없는가」 한 줄**로. 못 닫은 칸을 빈 칸으로
+       두지 않는다 — 빈 칸은 「모른다」와 「없다」가 구별되지 않는다(D-274).
+
+    ★ [턴 AM · 차선 N2] F5(드론 운용자) 열 추가 — 세종 판정 P-387(요청·상태·결과
+      세 축뿐, 드론 0대)에 따라 F5-01·02·03·08·10 다섯 건을 닫는다. `apps/fws/
+      drone.py` 머리말 참조.
 
 무엇을 하지 않는가
 ------------------
@@ -45,14 +47,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 BACKEND = ROOT / "backend"
-#: [턴 AL · 차선 N2] F2 절 시험 파일이 더해졌다 — **두 파일을 한 pytest 호출로
-#:   같이 돈다**(TESTS_REL 은 여전히 "길목"의 이름이지만 값은 이제 둘이다). 두 게이트로
-#:   가르지 않는 이유: F1·F2 는 같은 App(`apps.fws`)·같은 `AppStaysThinTest` 를
-#:   공유하고, 게이트를 둘로 가르면 그 공유가 두 벌로 다시 재진다(D-212).
+#: [턴 AL·AM · 차선 N2] F2·F5 절 시험 파일이 더해졌다 — **세 파일을 한 pytest 호출로
+#:   같이 돈다**(TESTS_REL 은 여전히 "길목"의 이름이지만 값은 이제 셋이다). 세 게이트로
+#:   가르지 않는 이유: F1·F2·F5 는 같은 App(`apps.fws`)·같은 `AppStaysThinTest` 를
+#:   공유하고, 게이트를 여러 개로 가르면 그 공유가 여러 벌로 다시 재진다(D-212).
 TESTS_REL = "tests/test_fws_app.py"
 TESTS_REL_F2 = "tests/test_fws_f2.py"
+TESTS_REL_F5 = "tests/test_fws_f5.py"
 TESTS = BACKEND / TESTS_REL
 TESTS_F2 = BACKEND / TESTS_REL_F2
+TESTS_F5 = BACKEND / TESTS_REL_F5
 EVIDENCE_DIR = ROOT / "docs" / "agent" / "evidence" / "SPEC"
 SHELL_CONTAINER = "gx-shell"
 TAG = "[SPEC-FWS]"
@@ -68,6 +72,12 @@ CLOSED_CLAUSES: tuple[str, ...] = (
     #:   닫은 M 규모 8건. 새 상태기계·새 표는 세우지 않았다(missions.py 머리말).
     "FWS-F2-01", "FWS-F2-02", "FWS-F2-03", "FWS-F2-05", "FWS-F2-07",
     "FWS-F2-11", "FWS-F2-12", "FWS-F2-13", "FWS-F2-14", "FWS-F2-15",
+    #: [턴 AM · 차선 N2] F5 드론 운용자 — 세종 판정 P-387(요청·상태·결과 세 축)로
+    #:   닫은 다섯. S 규모 셋(F5-02·03·08) 우선 + 그 위에 자연히 붙는 둘
+    #:   (F5-01 요청·상태 축 · F5-10 F5-08 값을 세는 계량). `apps/fws/drone.py`
+    #:   머리말 참조 — 새 K1 축을 만들지 않았다(요청은 K1 이벤트를 드론 쪽에서
+    #:   본 것, 결과는 F1-06 문 재사용).
+    "FWS-F5-01", "FWS-F5-02", "FWS-F5-03", "FWS-F5-08", "FWS-F5-10",
 )
 
 #: annex 원문(§5.1) 제목 — `docs/design/FWS_산불감시App_명세서_v1.0_…20260915.md`
@@ -104,6 +114,16 @@ TITLES: dict[str, str] = {
     "FWS-F2-13": "훈련 임무 수신(훈련 배지)",
     "FWS-F2-14": "장비 점검 체크(등짐펌프·진화차)",
     "FWS-F2-15": "근무 외 차단·담당 구역",
+    "FWS-F5-01": "정찰 임무 수신(발화 추정 좌표·반경) → 열화상 정찰",
+    "FWS-F5-02": "열점·화선 표시(열화상 프레임 → 지도 폴리라인)",
+    "FWS-F5-03": "확인 회신(산불 맞음/오인 · 사진·열화상)",
+    "FWS-F5-04": "잔불 순회 예약(구역·간격·야간)",
+    "FWS-F5-05": "대피 안내 방송(스피커) 임무",
+    "FWS-F5-06": "비행 제한(헬기 투입 중 드론 금지 구역 · 고도) 표시·차단",
+    "FWS-F5-07": "피해면적 산출(정사영상 → 폴리곤 ha)",
+    "FWS-F5-08": "비행 기록·배터리·기체 상태",
+    "FWS-F5-09": "영상 스트림 관제 화면 공유",
+    "FWS-F5-10": "계량(비행 분)",
 }
 
 #: 못 닫은 다섯 — **「무엇이 없는가」 한 줄** (P-358 형식). 이 턴(N2)의 범위 밖인
@@ -136,6 +156,29 @@ NOT_STARTED: dict[str, str] = {
     "FWS-F2-10": "뒷불 감시 교대·발견 보고(열점 위치) — 발견 보고가 '재발화 사건 "
                 "연결'을 요구해 새 이벤트 생성 경로가 필요하고, 위치·지도 인접 "
                 "주의(F1-04와 같은 한계)도 겹친다. M 규모라 범위 밖.",
+    #: [턴 AM · 차선 N2] 못 닫은 F5 다섯 — 전부 App 층 권한 밖의 **새 축**이거나
+    #:   (구역·간격 예약·헬기 충돌 규칙·폴리곤 면적·실시간 스트림), 다른 App(DSM ·
+    #:   lane N1) 소유 화면을 침범해야 하는 것들이다.
+    "FWS-F5-04": "잔불 순회 예약(구역·간격·야간) — '구역'·'간격'(반복 일정)은 K1 "
+                "에 없는 축이다(F2-09 와 같은 한계 — 구역 배정). 예약 자체도 미래 "
+                "반복 일정을 담을 표가 새로 필요하다. M 규모라 범위 밖.",
+    "FWS-F5-05": "대피 안내 방송(스피커) 임무 — 방송 대상 '구역'을 지정하는 축이 "
+                "F5-04 와 같은 이유로 없고, 방송 음성·문구 콘텐츠를 담을 저장 "
+                "경로도 없다(F1-07 사진 업로드와 같은 한계). M 규모라 범위 밖.",
+    "FWS-F5-06": "비행 제한(헬기 투입 중 드론 금지 구역 · 고도) 표시·차단 — "
+                "'헬기 투입 중' 상태를 아는 축이 없다(F2-05 지원 요청은 텍스트 "
+                "로그일 뿐 실제 헬기 배치 플래그가 아니다). 고도·금지구역 판정도 "
+                "새 축이 필요하다. L 규모라 범위 밖.",
+    "FWS-F5-07": "피해면적 산출(정사영상 → 폴리곤 ha) — F-03 폴리곤 문(`stream_"
+                "monitors.services.zones.save_zone`)은 F-12 관리자 위험구역 지정 "
+                "전용이고 면적 계산이 없다(그 모듈 머리말 '없다' 표 — GIS 의존 "
+                "없음). 정찰용 피해면적 폴리곤을 받는 새 입력 문이 없다 — F-03 "
+                "폴리곤 잠금이 이 용도를 허락하지 않는다(D-299·D-365). M 규모라 "
+                "범위 밖.",
+    "FWS-F5-09": "영상 스트림 관제 화면 공유 — 실시간 스트림 공유 인프라가 이 "
+                "App 층에 없다. DSM 의 클립 스트림(`GET /api/dsm/events/{id}/clip/"
+                "stream`)은 다른 App(lane N1) 소유라 이 차선이 새 공유 화면으로 "
+                "재사용하지 않았다. M 규모라 범위 밖.",
 }
 
 REQUIRED_EVIDENCE_KEYS = ("id", "measured_at", "measured_by", "test", "request",
@@ -225,7 +268,7 @@ def run_gate_tests(shell: str) -> str | None:
              "-e", "DJANGO_SETTINGS_MODULE=config.settings",
              "-e", "DB_TEST_NAME=test_gx_verify_spec_fws",
              "-w", "/app", shell,
-             "python", "-m", "pytest", TESTS_REL, TESTS_REL_F2,
+             "python", "-m", "pytest", TESTS_REL, TESTS_REL_F2, TESTS_REL_F5,
              "-q", "--create-db", "-p", "no:randomly"],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             #: ★ `guardianx-lane-count-ceilings` — 공유 gx-shell 은 다른 차선과
@@ -335,16 +378,16 @@ def main() -> int:
         print("%s [입력] --no-run — pytest 를 다시 안 돌린다(지금 있는 evidence 파일만)"
              % TAG)
     else:
-        if not TESTS.exists() or not TESTS_F2.exists():
-            print("%s **판정 불가 · 회색** — 길목 시험 파일이 없다: %s · %s"
-                 % (TAG, TESTS_REL, TESTS_REL_F2))
+        if not TESTS.exists() or not TESTS_F2.exists() or not TESTS_F5.exists():
+            print("%s **판정 불가 · 회색** — 길목 시험 파일이 없다: %s · %s · %s"
+                 % (TAG, TESTS_REL, TESTS_REL_F2, TESTS_REL_F5))
             return EXIT_UNDECIDABLE
         raw = run_gate_tests(args.shell)
         summary = parse_pytest_summary(raw) if raw is not None else None
         code1, verdict1 = judge_gate_tests(summary)
         codes.append(code1)
-        print("%s [입력] 길목 시험 = %s · %s (gx-shell=%s)"
-             % (TAG, TESTS_REL, TESTS_REL_F2, args.shell))
+        print("%s [입력] 길목 시험 = %s · %s · %s (gx-shell=%s)"
+             % (TAG, TESTS_REL, TESTS_REL_F2, TESTS_REL_F5, args.shell))
         if summary is not None:
             print("%s [입력] pytest 요약 — 통과 %d · 실패 %d · 에러 %d"
                  % (TAG, summary[0], summary[1], summary[2]))
@@ -382,15 +425,16 @@ if __name__ == "__main__":
 
     gate_header(
         __file__,
-        target="gx-shell(%s) 안 backend/ · apps.fws(신규) · K1·K2 커널 · "
+        target="gx-shell(%s) 안 backend/ · apps.fws(신규, `drone` 포함) · K1·K2 커널 · "
                "docs/agent/evidence/SPEC/*.json" % SHELL_CONTAINER,
         as_="pytest 는 자격증명 없이 --create-db 로 돈다 · HTTP 실측은 "
-            "tests/test_fws_app.py · tests/test_fws_f2.py 안에서 실제 "
-            "JWT(RefreshToken.for_user)로",
+            "tests/test_fws_app.py · tests/test_fws_f2.py · tests/test_fws_f5.py "
+            "안에서 실제 JWT(RefreshToken.for_user)로",
         source="살아 있는 gx-shell 컨테이너(docker exec) · 그 실행이 방금 새로 쓴 "
               "evidence 파일 — 사진·손으로 옮긴 값이 아니라 이번 실행",
-        measured="닫은 열 20건(F1 10건 FWS-F1-01·02·03·05·06·08·10·11·12·13 + "
-                "F2 10건 FWS-F2-01·02·03·05·07·11·12·13·14·15) · 못 닫은 열 10건은 "
-                "이유 1줄(F1-04·07·09·14·15 + F2-04·06·08·09·10) · 분모 30",
+        measured="닫은 열 25건(F1 10건 FWS-F1-01·02·03·05·06·08·10·11·12·13 + "
+                "F2 10건 FWS-F2-01·02·03·05·07·11·12·13·14·15 + F5 5건 "
+                "FWS-F5-01·02·03·08·10) · 못 닫은 열 15건은 이유 1줄(F1-04·07·09·"
+                "14·15 + F2-04·06·08·09·10 + F5-04·05·06·07·09) · 분모 40",
     )
     raise SystemExit(main())

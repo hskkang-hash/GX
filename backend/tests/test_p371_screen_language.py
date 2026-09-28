@@ -181,3 +181,141 @@ class WebhookAuditReasonTests(TestCase):
         self.assertIsNotNone(m, "감사 사유 문자열을 못 찾았다")
         self.assertNotRegex(m.group(1), SECTION_ID,
                             f"감사 사유에 절 ID 가 남아 있다: {m.group(1)!r}")
+
+    def test_filter_save_reason_has_no_section_id(self) -> None:
+        """★★ [P-371 · 턴 AM] `set_subscription_filters` 의 사유가 「(WS-17)」을
+        달고 있었다 — 절 ID(WS-17)는 `SECTION_ID` 정규식의 접두(UX·SEC·OPS·…)
+        밖이라 이 파일의 기존 시험이 못 잡았다. 그래도 감사 화면(U4#16)의
+        「사유」 칸에는 원문 그대로 뜬다 — 접두가 대장에 없다고 사용자 언어가
+        되는 것은 아니다."""
+        path = (Path(__file__).resolve().parents[1] / "apps" / "dsm"
+                / "webhook_key_service.py")
+        body = path.read_text(encoding="utf-8")
+        m = re.search(r'reason="(구독 필터 저장[^"]*)"', body)
+        self.assertIsNotNone(m, "구독 필터 저장 사유 문자열을 못 찾았다")
+        self.assertNotIn("WS-17", m.group(1),
+                         f"감사 사유에 절 ID(WS-17)가 남아 있다: {m.group(1)!r}")
+
+
+class ResponseFlowAuditReasonTests(TestCase):
+    """U1#9 · U2#3 · U4#16 — 대응 전이 감사의 기본 사유가 상태 코드·절 ID 를 흘리는가.
+
+    ★★ [P-371 · 턴 AM] `advance_response` 가 사유 없이 불리면(정상 진행의
+    보통 경로) 기본 문장이 감사 행의 `reason` 이 된다. 종전엔
+    `f"대응 진행 {frm} → {to_state}"` 여서 `frm`/`to_state`(계약 값
+    `occurred`·`acknowledged`·`in_progress`·`closed`)가 원문 그대로 나갔다 —
+    이 넷 중 셋(`occurred`·`acknowledged`·`in_progress`)이 `verify_ui_copy.py`
+    의 `AA_STATUS_CODES`(「상태 코드」 눈금)에 그대로 있다. `close_as_false_positive`
+    의 기본 사유도 「(P-16)」을 달고 있었다.
+    """
+
+    def test_states_have_korean_display_names(self) -> None:
+        from kernels.k1_event.response_flow import (
+            ACKNOWLEDGED,
+            CLOSED,
+            IN_PROGRESS,
+            OCCURRED,
+            STATES,
+            _state_ko,
+        )
+
+        for state in STATES:
+            ko = _state_ko(state)
+            self.assertNotEqual(ko, state,
+                                f"{state!r} 의 표시 이름이 원문 그대로다")
+            self.assertNotRegex(ko, r"[A-Za-z_]",
+                                f"{state!r} 의 표시 이름에 영문/밑줄이 남아 있다: {ko!r}")
+        # ★ 이름 자체도 대조한다 — 화면(`severity.ts::RESPONSE_STATE_LABEL`)과
+        #   같은 네 낱말이어야 감사 사유와 처리 단계 줄이 서로 다른 말을 안 한다.
+        self.assertEqual(_state_ko(OCCURRED), "미처리")
+        self.assertEqual(_state_ko(ACKNOWLEDGED), "접수")
+        self.assertEqual(_state_ko(IN_PROGRESS), "조치 중")
+        self.assertEqual(_state_ko(CLOSED), "종결")
+
+    def test_advance_response_default_reason_has_no_raw_state_or_markdown(self) -> None:
+        path = (Path(__file__).resolve().parents[1] / "kernels" / "k1_event"
+                / "response_flow.py")
+        body = path.read_text(encoding="utf-8")
+        self.assertNotRegex(
+            body, r'reason=reason\.strip\(\)\s*or\s*f"대응 진행 \{frm\}',
+            "advance_response 의 기본 사유가 다시 원문 상태값을 그대로 찍고 있다",
+        )
+        self.assertIn("_state_ko(frm)", body)
+        self.assertIn("_state_ko(to_state)", body)
+
+    def test_close_as_false_positive_default_reason_has_no_section_id(self) -> None:
+        path = (Path(__file__).resolve().parents[1] / "kernels" / "k1_event"
+                / "response_flow.py")
+        body = path.read_text(encoding="utf-8")
+        m = re.search(r'or f"오탐 판정에 따른 자동 종결 \(([^)]*)\)"', body)
+        self.assertIsNotNone(m, "오탐 자동 종결 기본 사유를 못 찾았다")
+        self.assertNotRegex(m.group(1), SECTION_ID,
+                            f"자동 종결 기본 사유에 절 ID 가 남아 있다: {m.group(1)!r}")
+
+
+class NotifyRuleAdminAuditReasonTests(TestCase):
+    """U4#16 — 알림 규칙 저장·시험 발송 감사 사유가 절 ID·채널 코드를 흘리는가.
+
+    ★★ [P-371 · 턴 AM] `save_rule`(가드 있는 저장)과 `send_test_notification`
+    의 감사 사유가 각각 "S-16 규칙 저장 …"·"S-16 시험 발송 … 훈련 채널(log)로 …"
+    였다 — "S-16"은 스펙 절 번호 표기이고, `채널(%s)` 자리는 발송 채널 원문
+    코드(`log`)를 그대로 문장에 심었다. 채널 목록은 이미 구조화된 `after` 필드에
+    있으므로 자유문에서는 뺀다.
+    """
+
+    def _rule_admin_source(self) -> str:
+        path = (Path(__file__).resolve().parents[1] / "kernels" / "k2_notify"
+                / "rule_admin.py")
+        return path.read_text(encoding="utf-8")
+
+    def test_save_rule_reason_has_no_section_id_or_raw_channel_join(self) -> None:
+        body = self._rule_admin_source()
+        m = re.search(r'reason=\("([^"]*규칙 저장[^"]*)"', body)
+        self.assertIsNotNone(m, "규칙 저장 감사 사유 형식 문자열을 못 찾았다")
+        self.assertNotIn("S-16", m.group(1))
+        self.assertNotIn('",".join(view.channels)', body[m.start():m.start() + 400],
+                         "규칙 저장 사유가 다시 채널 코드를 원문으로 이어붙이고 있다")
+
+    def test_send_test_notification_reason_has_no_section_id_or_raw_channel(self) -> None:
+        body = self._rule_admin_source()
+        m = re.search(r'reason=\("([^"]*시험 발송[^"]*)"', body)
+        self.assertIsNotNone(m, "시험 발송 감사 사유 형식 문자열을 못 찾았다")
+        self.assertNotIn("S-16", m.group(1))
+        for code in ("log", "email", "webpush"):
+            self.assertNotIn("(%s)" % code, m.group(1))
+
+
+class RetentionSweepAuditReasonTests(TestCase):
+    """U4#16 — 보존기간 주기 집행의 감사 사유가 절 ID 를 흘리는가."""
+
+    def test_ops_tasks_purge_reason_has_no_section_id(self) -> None:
+        path = Path(__file__).resolve().parents[1] / "common" / "ops_tasks.py"
+        body = path.read_text(encoding="utf-8")
+        m = re.search(r'reason="(주기 집행 — 선언한 보존 일수대로 지운다[^"]*)"', body)
+        self.assertIsNotNone(m, "보존기간 주기 집행 사유 문자열을 못 찾았다")
+        self.assertNotRegex(m.group(1), SECTION_ID,
+                            f"주기 집행 사유에 절 ID 가 남아 있다: {m.group(1)!r}")
+
+
+class EventDetailTransitionRawStateTests(TestCase):
+    """U1#9 · U2#3 — 「대응 시계」 전이 한 줄이 `response_state` 원문을 흘리는가.
+
+    ★★ [P-371 · 턴 AM] `timeline.data.transitions` 의 `t.from`/`t.to` 가
+    `RESPONSE_STATE_LABEL` 을 거치지 않고 화살표 문장에 그대로 찍히고 있었다
+    (예: 「10:00 occurred→acknowledged (규칙)」). 바로 위 줄(처리 단계 한 줄)은
+    이미 `labelOf(RESPONSE_STATE_LABEL, …)` 를 쓰는데, 같은 값을 문장으로 푸는
+    이 줄만 사전을 건너뛰고 있었다.
+    """
+
+    def setUp(self) -> None:
+        self.src = _frontend_src()
+        self.assertIsNotNone(self.src, "frontend/src 를 못 찾았다 — 판정 불가를 초록으로 두지 않는다")
+
+    def test_transitions_line_uses_response_state_label(self) -> None:
+        body = (self.src / "features/dsm/pages/EventDetail.tsx").read_text(encoding="utf-8")
+        self.assertIn("labelOf(RESPONSE_STATE_LABEL, t.from)", body)
+        self.assertIn("labelOf(RESPONSE_STATE_LABEL, t.to)", body)
+        self.assertNotRegex(
+            body, r"\$\{absolute\(t\.at\)\}\s*\$\{t\.from\}",
+            "전이 한 줄이 다시 t.from/t.to 원문을 그대로 찍고 있다",
+        )

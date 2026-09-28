@@ -1078,7 +1078,7 @@ def video_retention_sweep_beat() -> dict:
 
         result = purge_all_declared(
             dry_run=False, actor=None,
-            reason="주기 집행 — 선언한 보존 일수대로 지운다 (P-57 파기)")
+            reason="주기 집행 — 선언한 보존 일수대로 지운다")
         payload = {"measured_at": stamp, "verdict": "OK", **result}
         logger.info("[OPS][VIDEO] 테넌트 %s중 선언 %s — 만료 %s건 · 파기 %s건 · "
                     "객체 %s건",

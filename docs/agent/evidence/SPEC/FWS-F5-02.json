@@ -1,0 +1,46 @@
+{
+  "id": "FWS-F5-02",
+  "title": "열점·화선 표시(열화상 프레임 → 지도 폴리라인)",
+  "measured_at": "2026-09-28T09:13:57.070998+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f5.F5_02_HotspotsTest.test_submit_points_and_fireline_then_read_back",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/drone/missions/25/hotspots/mine",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "event_id": 25,
+      "batches": [
+        {
+          "batch_id": 69,
+          "points": [
+            {
+              "lat": 36.11,
+              "lng": 127.21
+            },
+            {
+              "lat": 36.12,
+              "lng": 127.22
+            }
+          ],
+          "fireline": [
+            {
+              "lat": 36.1,
+              "lng": 127.2
+            },
+            {
+              "lat": 36.13,
+              "lng": 127.23
+            }
+          ],
+          "submitted_at": "2026-09-28T09:13:57.005077+00:00"
+        }
+      ],
+      "count": 1
+    }
+  },
+  "what": "열점 2점·화선 2점(좌표 목록 값)을 제출한 뒤 재조회에 그대로 보인다 — 값 실측(지도·폴리라인 렌더는 §0.4 인접 금지구역 밖이라 만들지 않았다)"
+}

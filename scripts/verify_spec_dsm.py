@@ -1,24 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """P-356·358 — DSM 별표 절 승격 게이트 (WO-GX-20260925-15 §5 · 차선 N1 · 턴 AK 에 서고
-턴 AL 이 넓힌다).
+턴 AL·AM 이 넓힌다).
 
 무엇을 재는가 — 셋(`scripts/verify_spec_fws.py` 와 같은 그림 · 차선 N2 가 같은
 승격 규칙으로 먼저 세운 짝이다 — 두 게이트가 다른 모양이면 다음 사람이 파일마다
 다른 눈으로 읽어야 한다)
 --------------------------------------------------------------------------------
-    ① **길목** — `TESTS_RELS` 의 두 시험 파일(턴 AK 의 U2 셋 · 턴 AL 의 U4-06·U5-02
-       둘)을 gx-shell 안에서 **한 번에** 돌린다. 판정 규칙(응답 모양·상태 코드·격리)은
-       그 시험들이 이미 정했다 — 이 게이트가 다시 만들지 않는다(D-212). 그 시험들은
-       도는 김에 `docs/agent/evidence/SPEC/<id>.json` 을 **기계로** 새로 찍는다
-       (각 파일의 `EvidenceExportTest`).
+    ① **길목** — `TESTS_RELS` 의 세 시험 파일(턴 AK 의 U2 셋 · 턴 AL 의 U4-06·U5-02
+       둘 · 턴 AM 의 U3-04·U3-03 둘)을 gx-shell 안에서 **한 번에** 돌린다. 판정 규칙
+       (응답 모양·상태 코드·격리)은 그 시험들이 이미 정했다 — 이 게이트가 다시 만들지
+       않는다(D-212). 그 시험들은 도는 김에 `docs/agent/evidence/SPEC/<id>.json` 을
+       **기계로** 새로 찍는다(각 파일의 `EvidenceExportTest`).
     ② **증거 성립** — 방금 찍힌 증거 파일들이 「HTTP 로 실제로 두드렸다」는 모양
        (요청·2xx 응답·무엇을 쟀는지)을 갖췄는가. **손으로 옮겨 적은 값이 아닌지**는
        여기서 못 잰다 — 그것은 ①(pytest 가 방금 그 파일을 새로 쓴 것)이 보장한다.
-    ③ **절 목록 전수** — 이 차선에 배정된 DSM 절을 전부 찍는다(턴 AK 11 + 턴 AL 11 =
-       22). 닫은 다섯(U2-03·U2-04·U2-05·U4-06·U5-02)은 ①②로, 못 닫은 열일곱은
-       **「무엇이 없는가」 한 줄**로. 못 닫은 칸을 빈 칸으로 두지 않는다 — 빈 칸은
-       「모른다」와 「없다」가 구별되지 않는다(D-274).
+    ③ **절 목록 전수** — 이 차선에 배정된 DSM 절을 전부 찍는다(턴 AK 11 + 턴 AL 11 +
+       턴 AM 7 = 29). 닫은 일곱(U2-03·U2-04·U2-05·U4-06·U5-02·U3-04·U3-03)은 ①②로,
+       못 닫은 스물둘은 **「무엇이 없는가」 한 줄**로. 못 닫은 칸을 빈 칸으로 두지
+       않는다 — 빈 칸은 「모른다」와 「없다」가 구별되지 않는다(D-274).
 
 무엇을 하지 않는가
 ------------------
@@ -27,7 +27,7 @@
   옮기는 것은 조율자다(대장은 손으로 고치지 않는다 — 세종 판정 그대로).
 
 종료 코드 (저장소 규약 · D-400)
-    0 = 쟀고 통과(닫은 열 5/5)   1 = 쟀고 실패   2 = 못 쟀다 (회색)
+    0 = 쟀고 통과(닫은 열 7/7)   1 = 쟀고 실패   2 = 못 쟀다 (회색)
 
     python scripts/verify_spec_dsm.py                  # 판정 (호스트 — docker 를 부른다)
     python scripts/verify_spec_dsm.py --self-test        # 판정 규칙만
@@ -51,8 +51,9 @@ BACKEND = ROOT / "backend"
 #: ★ 턴 AL — **둘로 늘었다.** 한 파일이 아니라 파일마다 다른 턴·다른 절이 붙으므로
 #:   튜플로 둔다 — `run_gate_tests` 가 한 pytest 호출에 둘 다 넘긴다(요약 줄은 합산).
 TESTS_RELS: tuple[str, ...] = (
-    "tests/test_p356_u2_spec_promotions.py",   # 턴 AK — DSM-U2-03·04·05
-    "tests/test_p356_u4_spec_promotions.py",   # 턴 AL — DSM-U4-06 · DSM-U5-02
+    "tests/test_p356_u2_spec_promotions.py",     # 턴 AK — DSM-U2-03·04·05
+    "tests/test_p356_u4_spec_promotions.py",     # 턴 AL — DSM-U4-06 · DSM-U5-02
+    "tests/test_p356_u3u6_spec_promotions.py",   # 턴 AM — DSM-U3-04 · DSM-U3-03
 )
 TESTS: tuple[Path, ...] = tuple(BACKEND / rel for rel in TESTS_RELS)
 EVIDENCE_DIR = ROOT / "docs" / "agent" / "evidence" / "SPEC"
@@ -63,9 +64,12 @@ EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
 #: 닫은 열(P-356 넷을 갖췄다고 이 차선이 주장하는 것) — 턴 AK 의 S 셋 + 턴 AL 의
 #: S 하나(U5-02, 부분 — 아래 TITLES 옆 주석) · M 하나(U4-06, 완결 조건이 "변경 감사"
-#: 뿐이라 이번 배정 중 가장 싸다).
+#: 뿐이라 이번 배정 중 가장 싸다) + 턴 AM 의 S 하나(U3-04) · M 하나(U3-03, 이미 서
+#: 있던 사진 업로드·상황보고 조립을 잇기만 해서 가장 싸다 — 지시(WO-15 §5) 「S 먼저,
+#: 그다음 가장 싼 M」 순서 그대로).
 CLOSED_CLAUSES: tuple[str, ...] = (
     "DSM-U2-03", "DSM-U2-04", "DSM-U2-05", "DSM-U4-06", "DSM-U5-02",
+    "DSM-U3-04", "DSM-U3-03",
 )
 
 #: annex 원문(§4.2) 제목 — `docs/design/DSM_재난안전관리App_명세서_v1.1_지침기반_20260915.md`
@@ -95,6 +99,14 @@ TITLES: dict[str, str] = {
     "DSM-U4-09": "통계 축 추가 — 지역안전지수 6분야 유형 분류",
     "DSM-U5-02": "접근권한·접속기록",
     "DSM-U5-05": "교대 편성 — 4조 3교대 근무표 업로드(CSV)",
+    # ── 턴 AM 배정(U3 넷 · U6 셋 = 7) ─────────────────────────────────────
+    "DSM-U3-01": "역할별 M2 문안",
+    "DSM-U3-02": "통제 실행 회신",
+    "DSM-U3-03": "현장 사진 → 보고서 증빙 자동 첨부",
+    "DSM-U3-04": "PS-LTE 그룹통화 번호 · 상황실 번호 버튼",
+    "DSM-U6-01": "스마트시티 통합플랫폼 이벤트 연계",
+    "DSM-U6-02": "NDMS 입력용 내보내기 API",
+    "DSM-U6-03": "사회적약자(실종) 요청 수신 → 객체 검색 사건 생성",
 }
 
 #: 이 차선(N1)에 턴 AK 에 배정된 열한 절 중 그 턴에 못 닫은 여덟 — **「무엇이 없는가」
@@ -154,6 +166,32 @@ NOT_STARTED_AL: dict[str, str] = {
                 "이고 6분야 매핑표가 새로 필요하다.",
     "DSM-U5-05": "교대 편성 CSV — 근무표 업로드 파서·`shifts` 저장처가 없다. M 규모"
                 "(CSV 파싱 + 인계 메모·일지 근무자 자동 채움 배선)라 범위 밖.",
+}
+
+#: ★ 턴 AM — 이번 턴 배정 7(U3-01·02·03·04 · U6-01·02·03) 중 못 닫은 다섯. U3-04 ·
+#: U3-03 은 `CLOSED_CLAUSES` 로 옮겼다. 「S 먼저, 그다음 가장 싼 M」(WO-15 §5) 순서를
+#: 그대로 따랐다 — 나머지 다섯은 이 저장소에 **아직 없는 저장처·아예 없는 능력**에
+#: 걸려 있어 이번 차선(정직하게 · 지어내지 않고) 시간 안에 못 붙였다.
+NOT_STARTED_AM: dict[str, str] = {
+    "DSM-U3-01": "역할별 M2 문안 — 「상주 경찰관·119·시설·당직」을 가르는 역할 분류가 "
+                "제품에 없다. `role.Role` 은 임의 문자열 코드일 뿐 이 네 갈래를 못박은 "
+                "표가 아니다(grep 재확인 · 0건) — 새 분류 칸이 필요해 호스트라인(전화 "
+                "번호 둘짜리 U3-04)보다 비싸다. M 규모라 범위 밖.",
+    "DSM-U3-02": "통제 실행 회신 — `POST /controls/{id}/executed` 가 받을 「통제 지점」 "
+                "자체가 없다. 완결 조건(「도달→결정→실행 3시각」)의 앞 두 시각을 쥔 "
+                "DSM-U4-04(통제·대피 현황판)가 이번 배정(N4 소유)에도 아직 미착수라 "
+                "— 실행 시각만 먼저 받을 저장처가 없다(선행 절 의존). M 규모.",
+    "DSM-U6-01": "스마트시티 통합플랫폼 이벤트 연계 — 외부에서 사건을 **만드는** 문 "
+                "자체가 이 저장소에 없다(`POST /events` 수동 생성, DSM-U1-05 와 같은 "
+                "벽 — 그 절도 턴 AK 부터 미착수로 남아 있다). CAP 1.2 프로파일 해석은 "
+                "그 문이 선 다음의 일이다. M 규모(카메라 연동)지만 선행 절 의존.",
+    "DSM-U6-02": "NDMS 입력용 내보내기 API — 별지 1호 13항목 1:1 매핑 JSON/CSV. "
+                "L 규모(Table A 실측)로 이번 배정 중 가장 비싸다 — 지시(WO-15 §5) "
+                "「S 먼저, 그다음 가장 싼 M」이 이 절을 이번 차선 순서 맨 뒤로 둔다.",
+    "DSM-U6-03": "사회적약자(실종) 요청 수신 → 객체 검색 사건 생성 — 「객체 검색」"
+                "(용모 기반 재식별 · appearance re-id) 능력이 제품 어디에도 없다"
+                "(grep 「객체 검색」·`object_search`·재식별 0건). AI 모델 연동이 선행돼야 "
+                "하는 M 규모 절이라 이번 차선 시간 안에 못 붙였다.",
 }
 
 REQUIRED_EVIDENCE_KEYS = ("id", "measured_at", "measured_by", "test", "request",
@@ -374,7 +412,7 @@ def main() -> int:
             print("%s ── 길목 시험 원문 꼬리 ──\n%s" % (TAG, raw[-3000:]))
 
     # ② 절마다 증거 성립
-    all_not_started = {**NOT_STARTED, **NOT_STARTED_AL}
+    all_not_started = {**NOT_STARTED, **NOT_STARTED_AL, **NOT_STARTED_AM}
     print("%s ── 절별 판정 (닫은 열 %d · 못 닫은 열 %d) ──"
          % (TAG, len(CLOSED_CLAUSES), len(all_not_started)))
     for clause_id in CLOSED_CLAUSES:
@@ -389,9 +427,9 @@ def main() -> int:
              % (TAG, clause_id, TITLES[clause_id], all_not_started[clause_id]))
 
     final = combine(codes)
-    denom = len(CLOSED_CLAUSES) + len(all_not_started)  # 22 = 턴 AK 11 + 턴 AL 11
-    print("%s ── 요약 — 닫은 열 %d/%d(분모는 이 차선 배정 %d = 턴 AK 11 + 턴 AL 11) "
-         "· 최종 %s ──"
+    denom = len(CLOSED_CLAUSES) + len(all_not_started)  # 29 = 턴 AK 11 + 턴 AL 11 + 턴 AM 7
+    print("%s ── 요약 — 닫은 열 %d/%d(분모는 이 차선 배정 %d = 턴 AK 11 + 턴 AL 11 + "
+         "턴 AM 7) · 최종 %s ──"
          % (TAG, sum(1 for c in codes[1:] if c == EXIT_OK) if not args.no_run
             else sum(1 for c in codes if c == EXIT_OK),
             len(CLOSED_CLAUSES), denom,
@@ -408,16 +446,19 @@ if __name__ == "__main__":
         target="gx-shell(%s) 안 backend/ · apps.dsm.situation_meeting_service · "
               "apps.dsm.threshold_alert_service · apps.dsm.handover_service · "
               "apps.dsm.alert_level_service · apps.dsm.access_log_service · "
-              "apps.dsm.audit(access_log_*) · kernels.k5_trust · "
-              "docs/agent/evidence/SPEC/*.json" % SHELL_CONTAINER,
+              "apps.dsm.audit(access_log_*) · apps.dsm.hotline_service · "
+              "apps.dsm.incident_report(_field_photo_count · build_situation_report) · "
+              "kernels.k5_trust · docs/agent/evidence/SPEC/*.json" % SHELL_CONTAINER,
         as_="pytest 는 자격증명 없이 --create-db 로 돈다 · HTTP 실측은 "
             "tests/test_p356_u2_spec_promotions.py · "
-            "tests/test_p356_u4_spec_promotions.py 안에서 실제 JWT"
+            "tests/test_p356_u4_spec_promotions.py · "
+            "tests/test_p356_u3u6_spec_promotions.py 안에서 실제 JWT"
             "(RefreshToken.for_user)로",
         source="살아 있는 gx-shell 컨테이너(docker exec) · 그 실행이 방금 새로 쓴 "
               "evidence 파일 — 사진·손으로 옮긴 값이 아니라 이번 실행",
-        measured="닫은 열 5건(DSM-U2-03·04·05 턴 AK · DSM-U4-06·U5-02 턴 AL) · "
-                "못 닫은 열 17건은 이유 1줄(턴 AK 8 · 턴 AL 9) · 분모 22"
-                "(이 차선 N1 배정 턴 AK 11 + 턴 AL 11)",
+        measured="닫은 열 7건(DSM-U2-03·04·05 턴 AK · DSM-U4-06·U5-02 턴 AL · "
+                "DSM-U3-04·U3-03 턴 AM) · 못 닫은 열 22건은 이유 1줄(턴 AK 8 · "
+                "턴 AL 9 · 턴 AM 5) · 분모 29(이 차선 N1 배정 턴 AK 11 + 턴 AL 11 + "
+                "턴 AM 7)",
     )
     raise SystemExit(main())

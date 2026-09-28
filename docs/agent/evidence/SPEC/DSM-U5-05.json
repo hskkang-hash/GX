@@ -1,0 +1,24 @@
+{
+  "id": "DSM-U5-05",
+  "measured_at": "2026-09-28T09:23:09.857856+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u5_05_evidence",
+  "request": {
+    "method": "POST",
+    "path": "/api/dsm/shifts/import",
+    "body": {
+      "csv_text": "date,team,shift,members\n2026-09-28,1조,주간,홍길동;김철수\n2026-09-28,2조,야간,이영희\n"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "imported": 2,
+      "row_ids": [
+        61,
+        62
+      ]
+    }
+  },
+  "what": "4조 3교대 근무표 CSV 2줄을 실제로 업로드해 저장했다 — imported=2 가 응답에 실렸다."
+}

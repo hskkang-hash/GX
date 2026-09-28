@@ -1723,7 +1723,7 @@ blockers:
     unlock_owner: 대표 (CEO_INBOX 09-27 영실 줄 「여섯 등재해라」 한 마디)
     blocks: [LAW-08]
     since: "2026-09-27"
-    blocked_now: true
+    blocked_now: false   # [2026-09-28 · 턴 AM · P-379] 여섯 등재(세종 판정) → --db 새 어긋남 0 · 없앤 것이 아니라 풀린 것(지우지 않는다)
     verified_at: "2026-09-27"
     verified_by: |
       [턴 AK · 차선 Q 실측] `python scripts/verify_evidence_chain.py --db` → exit 1 · 새 hash_mismatch 6

@@ -90,6 +90,38 @@ export const FWS_COPY = {
     helicopter: '헬기',
     heavy_equipment: '중장비',
   },
+  // ── 턴 AM · F5 드론 운용자(세종 판정 P-387 — 요청·상태·결과 세 축, 드론 0대) ──
+  drone: {
+    title: '드론 운용',
+    missionIdPlaceholder: '사건 번호',
+    lookupButton: '조회',
+    radiusPlaceholder: '반경(m)',
+    requestButton: '정찰 요청',
+    acceptButton: '수락',
+    airborneButton: '이륙',
+    returnButton: '귀환',
+    stateActionDoneSuffix: '처리됨',
+    myRequestsTitle: '내 정찰 요청',
+    stateLabel: {
+      request: '요청됨',
+      accept: '수락됨',
+      airborne: '이륙',
+      return: '귀환',
+    },
+    hotspotsTitle: '열점·화선 제출',
+    hotspotsSentSuffix: '건 제출됨',
+    verifyTitle: '확인 회신(첨부)',
+    attachmentRefPlaceholder: '사진·열화상 참조(경로/URL)',
+    fireConfirmed: '산불 맞음',
+    falseAlarm: '소각·오인',
+    flightLogTitle: '비행 기록',
+    flightSourcePlaceholder: '연동(dji·manual…)',
+    flightAirframePlaceholder: '기체 코드',
+    flightBatteryPlaceholder: '배터리(%)',
+    flightMinutesPlaceholder: '비행 분',
+    flightSaveButton: '기록 저장',
+    flightMinutesTotalPrefix: '이번 달 비행 분 합계',
+  },
 } as const;
 
 /** 모르는 값이 왔을 때 그릴 말 — 원문(서버 코드)을 화면에 흘리지 않는다. */

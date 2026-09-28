@@ -1,31 +1,31 @@
 {
   "id": "DSM-U2-05",
-  "measured_at": "2026-09-28T02:34:19.263567+00:00",
+  "measured_at": "2026-09-28T09:04:28.069111+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_dump_dsm_u2_05_evidence",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/handover/4/ack",
+    "path": "/api/dsm/handover/3/ack",
     "body": {}
   },
   "response": {
     "status": 200,
     "body": {
       "ack": {
-        "id": 4,
-        "ack_id": 305,
+        "id": 3,
+        "ack_id": 40,
         "acknowledged": true
       },
       "latest_after_ack": {
         "exists": true,
-        "id": 4,
-        "body": "[교대 인계 자동 초안] 2026-09-28 09:34 (최근 24시간)\n미처리 0건\n시스템 사건 0건\n내가 처리한 사건 0건",
+        "id": 3,
+        "body": "[교대 인계 자동 초안] 2026-09-28 16:04 (최근 24시간)\n미처리 0건\n시스템 사건 0건\n내가 처리한 사건 0건",
         "note": "",
         "unresolved_count": 0,
         "system_event_count": 0,
         "handled_count": 0,
         "unresolved_event_ids": [],
-        "created_at": "2026-09-28T02:34:19.163Z",
+        "created_at": "2026-09-28T09:04:27.913Z",
         "acknowledged": true
       }
     }
