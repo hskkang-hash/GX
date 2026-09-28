@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "turn": "AK",
-  "phase": "report_ready",
-  "wo": "docs/workorders/WO-GX-20260925-15_턴AK_대표한마디_V첫실측_별표승격규칙_25절_20260925.md",
-  "report": "docs/workorders/WO-GX-20260925-15_report.md",
-  "next_turn": "AL",
+  "turn": "AL",
+  "phase": "code_running",
+  "wo": null,
+  "report": null,
+  "next_turn": "AM",
   "next_wo": null,
-  "updated_at": "2026-09-27T12:00:00+09:00",
+  "updated_at": "2026-09-28T10:15:00+09:00",
   "updated_by": "yeongsil",
   "ceo_question": "「dist_ak 올려라」(산불 화면 · 소켓 주소 — OPS-26 ③ 옳은 빨강) · LAW-08 여섯 등재 · 결정 ⑧⑨ · 세종 판정 청구 넷(U6 셋째 조건 · PERF-04 중앙값 · 영역 ⑦ · 계측기 출력 자리)",
   "retry_after": null,
   "turns_today": 1,
   "pause": false,
-  "notes": "턴 AK 보고(12:00) · 대화형 · 배포 1(A 안) · 온보딩 다섯째 21.0/48 · 「누른 뒤」 첫 32/48 · 별표 승격 13 → 기능명세 32.6 % · 상용 59.2 · 전량 2,306/0 · 닫은 절 목표 25 에 못 미침(13)."
+  "notes": "턴 AL 대화형 착수(대표 09-28 「다음 개발 진행」) · 세종 WO 없음 — WO-15 §10 AL 줄 + 턴 AK 넘김으로 조율자 자체 범위(보고에 첫 줄로 적는다) · 배포·.env·push 는 대표."
 }
