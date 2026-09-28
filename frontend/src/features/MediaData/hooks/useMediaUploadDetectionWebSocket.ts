@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { wsBase } from '@/services/wsBase';
 
 /**
  * WebSocket message structure from backend for upload detection
@@ -164,7 +165,7 @@ export const useMediaUploadDetectionWebSocket = ({
       return () => {};
     }
 
-    const wsUrl = `${import.meta.env.VITE_STREAMING_WS}/ws/media/upload-detection/`;
+    const wsUrl = `${wsBase()}/ws/media/upload-detection/`;
 
     console.log('[UPLOAD_DETECTION][WS] Connecting to:', wsUrl);
 

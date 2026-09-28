@@ -47,8 +47,8 @@ from common.idempotency import idempotent
 from common.inbound_api_key import JwtOrInboundKey
 from common.tenant_scope import TenantScope, tenant_scoped
 
-from apps.dsm import (handover_service, situation_meeting_service, stats,
-                     threshold_alert_service)
+from apps.dsm import (access_log_service, alert_level_service, handover_service,
+                     situation_meeting_service, stats, threshold_alert_service)
 from kernels.k6_feedback.exceptions import InvalidMetricInput
 
 
@@ -115,6 +115,20 @@ class ThresholdDecideIn(Schema):
     #: 기본값을 둔다 — 빈 결정은 스키마가 아니라 서비스가 400 으로 가른다(같은 이유,
     #: `SituationMeetingIn.decision` 주석 참조).
     decision: str = ""
+
+
+class AlertLevelIn(Schema):
+    """DSM-U4-06 「위기경보·비상 단계 접수 입력」이 보내는 본문.
+
+    ★ `level` 은 기본값을 두지 않는다 — 4단계 밖 오타를 스키마가 아니라 서비스가
+      400 으로 가른다(같은 이유, `SituationMeetingIn.decision` 주석 참조. 다만 여기는
+      필수 문자열이라 422 로도 걸리지만, 계약값 자체는 `alert_level_service.LEVELS`
+      가 정본이다 — 여기 다시 적지 않는다)."""
+
+    level: str
+    occurred_at: str | None = None
+    doc_no: str = ""
+    staffing: int | None = None
 
 
 @api_controller("", tags=["DSM — U2·U4 팀장·공무원 (WO-01 차선 U24)"])
@@ -706,6 +720,92 @@ class DsmU24API:
             raise HttpError(404, "그런 인계 메모가 없습니다.")
         except SystemScopeCannotRead as exc:
             raise HttpError(403, str(exc))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 턴 AL (P-356 ⑤) — 별표 승격 DSM-U4-06 · DSM-U5-02
+    # ══════════════════════════════════════════════════════════════════════
+    #
+    # ★ 경로가 앞의 것을 안 삼킨다 [실측 확인]: `/alert-level` · `/access-log` ·
+    #   `/access-log/export.csv` 는 이 파일과 `api.py` · `api_u1.py` · `api_u3.py` ·
+    #   `api_u56.py` · `law_api.py` 의 어느 리터럴·변수 조각과도 안 겹친다(위 목록
+    #   전체를 실측해 겹침 0을 확인했다).
+
+    # ── DSM-U4-06 위기경보·비상 단계 접수 입력 ───────────────────────────────
+    @route.post("/alert-level", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="위기경보 접수 — 남의 테넌트 감사에 남으면 격리 실패다")
+    @idempotent("dsm.u4.alert_level.record")
+    def record_alert_level(self, request, payload: AlertLevelIn):
+        """`POST /alert-level` — 상급 발령 접수(단계·시각·문서번호·비상 근무 편성)를
+        한 줄로 남긴다. 완결 조건은 「변경 감사」다 — 화면(상단바 띠)은 범위 밖."""
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return alert_level_service.record_alert(
+                scope=_scope(request), level=payload.level,
+                occurred_at=payload.occurred_at, doc_no=payload.doc_no,
+                staffing=payload.staffing)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except alert_level_service.AlertLevelRejected as exc:
+            raise HttpError(422, str(exc))
+
+    @route.get("/alert-level", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="위기경보 접수 이력 열람 — 남의 테넌트 감사가 보이면 격리 실패다")
+    def list_alert_level(self, request, limit: int = 100):
+        """`GET /alert-level` — 접수 이력(최신 먼저). 첫 행이 지금 단계다."""
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return alert_level_service.list_alerts(scope=_scope(request), limit=limit)
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
+    # ── DSM-U5-02 접속기록 전용 조회·CSV (GX-LAW-09 §5-2) ────────────────────
+    #
+    # ★ 대표 결정 ⑤(접속 로그는 일반 감사 화면에서 뺀다)는 안 건드린다 — 이 문은
+    #   **다른 문**이다: 좁은 권한(`access_log_denial` — 시스템관리자·테넌트관리자·
+    #   전역관리자만) · 원문 노출(계정+IP 마스킹 없음) · 그 접근 자체가 감사에 남는다
+    #   (`access_log_service` — 조회·CSV 마다 `guardianx.u5.access_log_read` 한 줄).
+    @route.get("/access-log", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="접속기록 조회 — 남의 테넌트 접속 기록이 보이면 격리 실패다")
+    def access_log_read(self, request, since: datetime | None = None,
+                        until: datetime | None = None, actor_id: int | None = None,
+                        page: int = 1, page_size: int = 50):
+        """`GET /access-log` — DSM-U5-02. `db`·`jwt`·`application`·`security`·
+        `user_update` 다섯 채널(GX-LAW-09 §1)을 시스템관리자·테넌트관리자·전역관리자만."""
+        try:
+            return access_log_service.read(
+                scope=_scope(request), since=since, until=until, actor_id=actor_id,
+                page=page, page_size=page_size)
+        except access_log_service.AccessLogDenied as exc:
+            raise HttpError(403, str(exc))
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+
+    @route.get("/access-log/export.csv", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="접속기록 CSV — 남의 테넌트 접속 기록이 파일로 나가면 격리 실패다")
+    def access_log_export_csv(self, request, since: datetime | None = None,
+                              until: datetime | None = None,
+                              actor_id: int | None = None, limit: int = 1000):
+        """`GET /access-log/export.csv` — 같은 문지기 · 같은 질의(화면과 파일이
+        다른 사실을 말하지 않는다). `Cache-Control: no-store` — `/audit/export.csv`
+        와 같은 규약(파일은 사람이 보관하는 것이라 60초 전 값이 「지금 값」이면 안 된다)."""
+        from django.http import HttpResponse
+
+        try:
+            text = access_log_service.read_csv(
+                scope=_scope(request), since=since, until=until,
+                actor_id=actor_id, limit=limit)
+        except access_log_service.AccessLogDenied as exc:
+            raise HttpError(403, str(exc))
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        resp = HttpResponse(text.encode("utf-8"), content_type="text/csv; charset=utf-8")
+        resp["Content-Disposition"] = 'attachment; filename="gx-access-log.csv"'
+        resp["Cache-Control"] = "no-store"
+        return resp
 
 
 # ═══════════════════════════════════════════════════════════════════════════

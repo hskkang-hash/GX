@@ -732,3 +732,37 @@ export function channelLabel(name: string | null | undefined): string {
 export function hasChannelLabel(name: string | null | undefined): boolean {
   return channelLabel(name) !== CHANNEL_NAME_UNKNOWN;
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+ * P-371 · 턴 AL · 차선 L — **발송 채널 이름** (`/dsm/notify` · `/dsm/events/:id` ·
+ * `/m/inbox`). 위 `CHANNEL_LABEL` 과 **다른 사전이다** — 위 것은 감사표의 「행위
+ * 종류」(`guardianx.dsm.notify` 같은 이름공간 코드)이고, 이것은 알림이 실제로
+ * **나가는 통로**(`kernels/k2_notify/channels.py` 의 레지스트리 이름: email ·
+ * webpush · sms · push · webhook · log)다. 같은 낱말 「채널」을 쓰지만 값의
+ * 우주가 다르므로 표를 나눈다 — 한 표에 섞으면 한쪽 열쇠가 다른 쪽을 덮어쓴다.
+ *
+ * ★ [P-318/P-343 셋째 조건 실측 · 온보딩 5회차] 이 여섯 낱말이 `/dsm/notify` 의
+ *   채널 표·채널 카드·시험 발송 문장, `/dsm/events/:id` 의 발송 이력 표,
+ *   `/m/inbox` 의 배지에 **영문 그대로** 떠 있었다(U1#9 · U2#3 · U3#19 · U5#9 ·
+ *   U5#10). `deliveryOutcome.tsx::channelDisplayLabel` 은 「사람에게 닿는 채널은
+ *   제 이름 그대로 둔다」고 턴 AB 에 적었으나, 그 판단은 **이 사전이 서기 전**의
+ *   것이다 — 이제 사전이 있으므로 그 화면들도 이 표를 쓴다(규칙 1: 없으면 먼저
+ *   사전에 넣고 쓴다).
+ * ★ **모르는 채널을 지어내지 않는다** — 위 `CHANNEL_LABEL` 과 같은 규율.
+ */
+export const NOTIFY_CHANNEL_LABEL: Readonly<Record<string, string>> = {
+  email: '이메일',
+  webpush: '웹푸시',
+  sms: '문자',
+  push: '앱 푸시',
+  webhook: '웹훅',
+  log: '기록(훈련)',
+};
+
+/** 표시명이 없을 때 화면에 뜨는 말. 위 `CHANNEL_NAME_UNKNOWN` 과 같은 말이다. */
+export const NOTIFY_CHANNEL_UNKNOWN = '우리말 이름 없음';
+
+/** 발송 채널 이름 하나. **모르면 「우리말 이름 없음」** — 서버 값을 그대로 내보내지 않는다. */
+export function notifyChannelLabel(name: string | null | undefined): string {
+  return NOTIFY_CHANNEL_LABEL[String(name ?? '').trim()] ?? NOTIFY_CHANNEL_UNKNOWN;
+}

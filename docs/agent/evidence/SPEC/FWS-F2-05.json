@@ -1,0 +1,26 @@
+{
+  "id": "FWS-F2-05",
+  "title": "지원 요청(인력·물·헬기·중장비)",
+  "measured_at": "2026-09-28T01:44:42.993252+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f2.F2_05_SupportRequestTest.test_support_request_reaches_field_reply",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/missions/6/field-reply?kind=helicopter&amount=1&note=%EC%82%B0%EB%B6%88+%EC%A7%84%ED%99%94+%ED%97%AC%EA%B8%B0+%EC%9A%94%EC%B2%AD",
+    "params": {
+      "kind": "helicopter",
+      "amount": "1",
+      "note": "산불 진화 헬기 요청"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "mission_id": 6,
+      "reply_id": 21,
+      "kind": "helicopter",
+      "amount": "1"
+    }
+  },
+  "what": "kind=helicopter 지원 요청이 K1 현장 회신으로 남고, 지휘 화면이 읽는 field_replies 목록에 그대로 도달한다(새 배지 위젯은 DSM 화면 소유라 범위 밖) — 지원 요청 도달 실측"
+}

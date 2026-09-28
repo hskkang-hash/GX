@@ -24,6 +24,15 @@ export const fwsEndpoint = {
   alerts: '/api/fws/alerts',
   alertAck: (deliveryId: number | string) => `/api/fws/alerts/${deliveryId}/ack`,
   notifyPrefs: '/api/fws/notify-prefs',
+  // ── 턴 AL · F2 산림재난대응단·진화대 ──────────────────────────────────
+  standbyStatus: '/api/fws/resources/me/status',
+  trainingMission: '/api/fws/training/mission',
+  equipmentChecks: '/api/fws/equipment/checks',
+  equipmentChecksMine: '/api/fws/equipment/checks/mine',
+  missionsMine: '/api/fws/missions/mine',
+  mission: (id: number | string) => `/api/fws/missions/${id}`,
+  missionResponse: (id: number | string) => `/api/fws/missions/${id}/response`,
+  missionFieldReply: (id: number | string) => `/api/fws/missions/${id}/field-reply`,
 };
 
 export async function fwsGet<T>(url: string): Promise<T> {

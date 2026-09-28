@@ -1,0 +1,24 @@
+{
+  "id": "FWS-F2-13",
+  "title": "훈련 임무 수신(훈련 배지)",
+  "measured_at": "2026-09-28T01:44:47.807588+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f2.F2_13_TrainingBadgeTest.test_badge_and_zero_real_channel_when_drill_mode_is_on",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/training/mission",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "badge": "훈련",
+      "drill_mode": true,
+      "channel_while_drilling": "log",
+      "since": "2026-09-28T01:44:47.763268+00:00",
+      "real_channel_sends": 0,
+      "measurable": true
+    }
+  },
+  "what": "훈련 모드가 켜진 테넌트에서 GET /training/mission 이 badge='훈련' · real_channel_sends=0 을 낸다(DSM drill_state·drill_report 재사용) — 훈련 배지·실채널 0 실측"
+}

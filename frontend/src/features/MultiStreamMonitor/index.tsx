@@ -20,6 +20,7 @@ import { AddExternalStreamModal } from './components/AddExternalStreamModal';
 import DroneCameraView from './components/DroneCameraView';
 import { AIModal } from './components/DroneCameraView/components/AIModal';
 import { getThemeStyles } from './styles';
+import { wsBase } from '@/services/wsBase';
 
 // Layout configurations
 export type LayoutType = '1x1' | '1x2' | '2x2' | '3x3' | '4x4' | 'custom';
@@ -851,7 +852,7 @@ const MultiStreamMonitor = () => {
                       droneColor={item.drone_color}
                       gridColumn={filteredLayout.columns}
                       streamId={item.id}
-                      socketUrl={`${import.meta.env.VITE_STREAMING_WS}/ws/drawing/session/1/`}
+                      socketUrl={`${wsBase()}/ws/drawing/session/1/`}
                       sessionId="1"
                       userId={
                         (

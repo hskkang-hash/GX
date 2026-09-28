@@ -188,20 +188,26 @@ class EmailChannel:
         ★ **정확히 같은 도메인**만 통과한다. 꼬리 일치를 쓰면 `notyopmail.com` 이
           `yopmail.com` 을 타고 나간다.
         """
+        # ★ [P-371 · 턴 AL · 차선 L] 이 함수의 실패 사유 둘이 발송 이력의
+        #   `failure_reason` 을 거쳐 `/dsm/events/:id` 「실패 사유」 칸에 원문
+        #   그대로 나갔다(U1#9 · U2#3 실측) — 절 ID(P-41)와 마크다운 별표가 그
+        #   화면에 그대로 보였다. 뜻은 안 바꾼다: 절 ID 는 이 주석(위)으로,
+        #   강조 표시는 뗀다. 개발 계정 이름(`K2_SEND_ALLOWED_DOMAINS`)의
+        #   백틱도 함께 뗀다 — 화면은 백틱을 렌더하지 않는다(GX-COPY §4).
         allowed = _allowed_domains()
         domain = _domain_of(address)
         if not allowed:
             return SendOutcome(
                 False,
-                "실발송 허용 도메인 목록이 **비어 있다** — 아무 도메인도 실발송하지 "
-                "않는다(P-41). 이것은 「제한 없음」이 아니라 「아무 데도 안 보냄」이다. "
-                "보낼 도메인은 `K2_SEND_ALLOWED_DOMAINS` 에 하나씩 적는다")
+                "실발송 허용 도메인 목록이 비어 있다 — 아무 도메인도 실발송하지 "
+                "않는다. 이것은 「제한 없음」이 아니라 「아무 데도 안 보냄」이다. "
+                "보낼 도메인은 K2_SEND_ALLOWED_DOMAINS 에 하나씩 적는다")
         if not domain:
             return SendOutcome(False, f"주소에서 도메인을 읽지 못했다: {address!r}")
         if domain not in allowed:
             return SendOutcome(
                 False,
-                "%s 는 **실발송 허용 도메인 목록 밖**이다(P-41). 허용된 것: %s"
+                "%s 는 실발송 허용 도메인 목록 밖이다. 허용된 것: %s"
                 % (domain, ", ".join(sorted(allowed))))
         return SendOutcome(True)
 

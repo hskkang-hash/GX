@@ -28,6 +28,7 @@ import {
   DrawingPath,
   DroneCameraViewProps,
 } from './types';
+import { wsBase } from '@/services/wsBase';
 
 const DroneCameraView: React.FC<DroneCameraViewProps> = ({
   index,
@@ -42,7 +43,7 @@ const DroneCameraView: React.FC<DroneCameraViewProps> = ({
   isHls = false,
   isRtsp = false,
   streamId = 'default',
-  socketUrl = 'ws://localhost:8000/ws/drawing/session/1/',
+  socketUrl = `${wsBase()}/ws/drawing/session/1/`,
   userId,
   sessionId = '1',
   ratio = '16:9',

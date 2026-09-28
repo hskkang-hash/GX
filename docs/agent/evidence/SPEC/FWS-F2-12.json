@@ -1,0 +1,29 @@
+{
+  "id": "FWS-F2-12",
+  "title": "내 임무 이력·투입 시간(수당 근거)",
+  "measured_at": "2026-09-28T01:44:46.496492+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f2.F2_12_MissionsMineTest.test_dispatch_arrive_release_are_counted_in_mine",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/missions/mine",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "missions": [
+        {
+          "mission_id": 9,
+          "dispatched_at": "2026-09-28T01:44:46.258346+00:00",
+          "arrived_at": "2026-09-28T01:44:46.320017+00:00",
+          "released_at": "2026-09-28T01:44:46.419703+00:00",
+          "duration_minutes": 0.0
+        }
+      ],
+      "count": 1,
+      "total_minutes": 0.0
+    }
+  },
+  "what": "출동→도착→철수 한 임무 뒤 GET /missions/mine 에 그 임무가 1건, duration_minutes(투입 시간)와 함께 잡힌다 — 이력·수당 근거 실측"
+}

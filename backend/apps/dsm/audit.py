@@ -331,3 +331,154 @@ def read_page(
         "pages": (total + page_size - 1) // page_size if total else 0,
         "channels": list(READABLE_LOGGER_NAMES),
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 턴 AL (P-356 ⑤) — DSM-U5-02 **접속기록 전용 조회** (GX-LAW-09 §5-2 설계 그대로)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# ★ 대표 결정 ⑤(턴 Z)는 접속 로그를 **일반 감사 화면**(`READABLE_LOGGER_NAMES` ·
+#   위 `read_page`)에서 뺐다 — 그 결정은 안 건드린다. 여기서 여는 것은 **다른 문**이다:
+#   시스템관리자·테넌트관리자·전역관리자만 들어오고(`access_log_denial` 이
+#   `_audit_reader_denial` 보다 좁다 — 팀장·읽기전용은 못 들어온다), 그 문을 지나는
+#   것 자체가 감사에 남는다(`apps/dsm/access_log_service.py`).
+def access_log_denial(user) -> str | None:
+    """접속기록 전용 화면 — 허용이면 `None`, 아니면 사유 한 줄.
+
+    ★ `_audit_reader_denial` 과 **다른 판정**이다(더 좁다) — 이 표의 `note` 칸에
+      계정명+IP 가 원문 그대로 실리기 때문에(GX-LAW-09 §4 실측) 팀장(U2)·읽기전용은
+      여기 못 들어온다. 판정식을 새로 쓰지 않는다: 전역·테넌트 관리자는
+      `common.tenant_roles`, 시스템관리자 역할 코드는 `config.k3_roles` 표를 그대로
+      읽는다(`_audit_reader_denial` 과 같은 두 자리를 부른다 — 표가 두 벌이 되지
+      않는다).
+    """
+    from common.tenant_roles import is_global_admin, is_tenant_admin
+    from config.k3_roles import K3_ROLE_SYSOPS
+
+    if is_global_admin(user) or is_tenant_admin(user):
+        return None
+    roles = getattr(user, "roles", None)
+    codes = set(roles.values_list("code", flat=True)) if roles is not None else set()
+    if codes & set(K3_ROLE_SYSOPS):
+        return None
+    return "접속기록은 시스템관리자 · 테넌트관리자 · 전역관리자만 볼 수 있습니다."
+
+
+def read_access_log_page(
+    *,
+    scope: TenantScope,
+    since=None,
+    until=None,
+    actor_id: int | None = None,
+    page: int = 1,
+    page_size: int = 50,
+) -> dict:
+    """접속기록(`ACCESS_LOG_LOGGER_NAMES` 다섯 채널)을 테넌트로 좁혀 한 쪽 낸다.
+
+    `read_page` 와 **같은 표·같은 좁히기**(`_tenant_actor_ids`)를 잇되 채널만
+    다르다(D-212 — 좁히는 판정식을 두 벌로 재지 않는다). 다른 점은 응답 칸이다 —
+    이 쪽은 `client_ip`·`note` 를 **원문 그대로** 낸다(GX-LAW-09 §5-2 「원문 노출
+    허용」). 부르는 쪽(`access_log_service.read`)이 문지기(`access_log_denial`)를
+    먼저 확인했다고 전제한다 — 여기서 다시 확인하지 않는다(두 벌 문지기는 반드시
+    어긋난다).
+
+    Raises:
+        ValueError: `page`·`page_size` 계약 밖.
+        common.tenant_scope.SystemScopeCannotRead: 요청자가 없다(시스템 스코프).
+    """
+    from common.tenant_filters import get_user_group
+
+    actor = scope.require_actor()
+    if page < 1:
+        raise ValueError(f"page 는 1 이상이다 — page={page}")
+    if not (1 <= page_size <= PAGE_SIZE_MAX):
+        raise ValueError(f"page_size 는 1~{PAGE_SIZE_MAX} 다 — page_size={page_size}")
+
+    Model = audit_writer._model()
+    qs = Model._base_manager.filter(logger_name__in=ACCESS_LOG_LOGGER_NAMES)
+
+    allowed_ids = _tenant_actor_ids(actor)
+    if allowed_ids is not None:
+        if get_user_group(actor) is None:
+            qs = qs.none()  # 소속 없는 계정 — 닫는 쪽이 기본값
+        else:
+            qs = qs.filter(user_id__in=allowed_ids)
+    if since is not None:
+        qs = qs.filter(create_datetime__gte=since)
+    if until is not None:
+        qs = qs.filter(create_datetime__lte=until)
+    if actor_id is not None:
+        qs = qs.filter(user_id=actor_id)
+
+    total = qs.count()
+    start = (page - 1) * page_size
+    rows = list(qs.order_by("-id")[start:start + page_size])
+    items = [
+        {
+            "log_id": r.pk,
+            "at": r.create_datetime.isoformat() if r.create_datetime else None,
+            "channel": r.logger_name,
+            "actor_id": r.user_id,
+            "actor": r.username or "",
+            "client_ip": r.client_ip or "",
+            "action": r.api_name or "",
+            "method": r.api_method or "",
+            "status_http": r.status_http,
+            "note": r.note or "",
+        }
+        for r in rows
+    ]
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "pages": (total + page_size - 1) // page_size if total else 0,
+        "channels": list(ACCESS_LOG_LOGGER_NAMES),
+    }
+
+
+#: 접속기록 CSV 한 장의 칸 — 화면(`read_access_log_page`)의 `items` 키와 같은 이름.
+_ACCESS_LOG_CSV_HEADER = ("log_id", "at", "channel", "actor_id", "actor",
+                         "client_ip", "action", "method", "status_http", "note")
+#: 한 파일의 상한 — `_AUDIT_CSV_CAP`(api_u24.py)과 같은 자리 다른 표.
+_ACCESS_LOG_CSV_CAP = 5000
+
+
+def access_log_csv(*, scope: TenantScope, since=None, until=None,
+                   actor_id: int | None = None, limit: int = 1000) -> str:
+    """접속기록 CSV 한 장 — **화면과 같은 함수**(`read_access_log_page`)가 낸 쪽들을
+    잇는다(`api_u24.py::_audit_csv` 와 같은 규약 — 파일이 다른 질의를 타지 않는다).
+    """
+    import csv
+    import io
+
+    from apps.dsm import stats
+
+    limit = max(1, min(int(limit or 1000), _ACCESS_LOG_CSV_CAP))
+    page_size = 200
+    rows: list[dict] = []
+    page = 1
+    total = 0
+    while len(rows) < limit:
+        payload = read_access_log_page(scope=scope, since=since, until=until,
+                                       actor_id=actor_id, page=page, page_size=page_size)
+        total = payload.get("total", 0)
+        chunk = payload.get("items") or []
+        if not chunk:
+            break
+        rows.extend(chunk)
+        if page >= (payload.get("pages") or 1):
+            break
+        page += 1
+    capped = len(rows) > limit or total > limit
+    rows = rows[:limit]
+
+    buf = io.StringIO()
+    writer = csv.writer(buf, lineterminator="\n")
+    writer.writerow(_ACCESS_LOG_CSV_HEADER)
+    for r in rows:
+        writer.writerow([r.get(k, "") for k in _ACCESS_LOG_CSV_HEADER])
+    tail = ["# 전체", total, "이 파일", len(rows), "", "잘림" if capped else "전부"]
+    writer.writerow(tail + [""] * (len(_ACCESS_LOG_CSV_HEADER) - len(tail)))
+    return stats.CSV_BOM + buf.getvalue()

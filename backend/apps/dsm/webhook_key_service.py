@@ -84,10 +84,13 @@ def issue_webhook_subscription(*, scope: TenantScope, endpoint_url: str,
         Subscription._base_manager.filter(pk=sub.subscription_id).update(filters=spec)
 
     # ★ 감사에는 **지문(sha256 앞 12자)만** — 값은 여기에도, 그 어디에도 두 번 적지 않는다.
+    # ★ [P-371 · 턴 AL · 차선 L] 이 사유 문장은 `AuditLog.tsx` 의 「사유」 칸에 원문
+    #   그대로 나간다(화면이 감사 note 를 다시 쓰지 않는다) — 절 ID(P-145·SEC-16)는
+    #   화면 밖(이 주석)으로 옮긴다. 뜻은 안 바꾼다.
     audit.record(
         scope=scope, action="write:webhook_signing_key:issued:%s" % issued.name,
         outcome=audit.ALLOWED,
-        reason="구독 등록과 함께 서명키 생성 (P-145 · SEC-16)",
+        reason="구독 등록과 함께 서명키 생성",
         after={"signing_key_name": issued.name, "sha256_12": issued.sha256_12},
         api_name="issue_webhook_subscription", api_method="POST", status_http=200)
 

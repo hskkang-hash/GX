@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""P-356·358 — DSM-U2-03·U2-04·U2-05 별표 절 승격 게이트 (WO-GX-20260925-15 §5 · 턴 AK 차선 N1).
+"""P-356·358 — DSM 별표 절 승격 게이트 (WO-GX-20260925-15 §5 · 차선 N1 · 턴 AK 에 서고
+턴 AL 이 넓힌다).
 
-무엇을 재는가 — 셋(`scripts/verify_spec_fws.py` 와 같은 그림 · 차선 N2 가 이번 턴
-같은 승격 규칙으로 먼저 세운 짝이다 — 두 게이트가 다른 모양이면 다음 사람이 파일마다
+무엇을 재는가 — 셋(`scripts/verify_spec_fws.py` 와 같은 그림 · 차선 N2 가 같은
+승격 규칙으로 먼저 세운 짝이다 — 두 게이트가 다른 모양이면 다음 사람이 파일마다
 다른 눈으로 읽어야 한다)
 --------------------------------------------------------------------------------
-    ① **길목** — `backend/tests/test_p356_u2_spec_promotions.py` 를 gx-shell 안에서
-       **그대로** 돌린다. 판정 규칙(응답 모양·상태 코드·격리)은 그 시험이 이미 정했다 —
-       이 게이트가 다시 만들지 않는다(D-212). 그 시험은 도는 김에
-       `docs/agent/evidence/SPEC/<id>.json` 을 **기계로** 새로 찍는다
-       (`EvidenceExportTest`).
-    ② **증거 성립** — 방금 찍힌 증거 파일 3건이 「HTTP 로 실제로 두드렸다」는 모양
+    ① **길목** — `TESTS_RELS` 의 두 시험 파일(턴 AK 의 U2 셋 · 턴 AL 의 U4-06·U5-02
+       둘)을 gx-shell 안에서 **한 번에** 돌린다. 판정 규칙(응답 모양·상태 코드·격리)은
+       그 시험들이 이미 정했다 — 이 게이트가 다시 만들지 않는다(D-212). 그 시험들은
+       도는 김에 `docs/agent/evidence/SPEC/<id>.json` 을 **기계로** 새로 찍는다
+       (각 파일의 `EvidenceExportTest`).
+    ② **증거 성립** — 방금 찍힌 증거 파일들이 「HTTP 로 실제로 두드렸다」는 모양
        (요청·2xx 응답·무엇을 쟀는지)을 갖췄는가. **손으로 옮겨 적은 값이 아닌지**는
-       여기서 못 잰다 — 그것은 ①(pytest 가 방금 이 파일을 새로 쓴 것)이 보장한다.
-    ③ **절 목록 전수** — 이 차선에 배정된 DSM U1·U2 11 절을 전부 찍는다. 닫은 셋
-       (U2-03·U2-04·U2-05)은 ①②로, 못 닫은 여덟(U1-01~06 · U2-01·02)은
+       여기서 못 잰다 — 그것은 ①(pytest 가 방금 그 파일을 새로 쓴 것)이 보장한다.
+    ③ **절 목록 전수** — 이 차선에 배정된 DSM 절을 전부 찍는다(턴 AK 11 + 턴 AL 11 =
+       22). 닫은 다섯(U2-03·U2-04·U2-05·U4-06·U5-02)은 ①②로, 못 닫은 열일곱은
        **「무엇이 없는가」 한 줄**로. 못 닫은 칸을 빈 칸으로 두지 않는다 — 빈 칸은
        「모른다」와 「없다」가 구별되지 않는다(D-274).
 
@@ -26,7 +27,7 @@
   옮기는 것은 조율자다(대장은 손으로 고치지 않는다 — 세종 판정 그대로).
 
 종료 코드 (저장소 규약 · D-400)
-    0 = 쟀고 통과(닫은 열 3/3)   1 = 쟀고 실패   2 = 못 쟀다 (회색)
+    0 = 쟀고 통과(닫은 열 5/5)   1 = 쟀고 실패   2 = 못 쟀다 (회색)
 
     python scripts/verify_spec_dsm.py                  # 판정 (호스트 — docker 를 부른다)
     python scripts/verify_spec_dsm.py --self-test        # 판정 규칙만
@@ -47,16 +48,25 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 BACKEND = ROOT / "backend"
-TESTS_REL = "tests/test_p356_u2_spec_promotions.py"
-TESTS = BACKEND / TESTS_REL
+#: ★ 턴 AL — **둘로 늘었다.** 한 파일이 아니라 파일마다 다른 턴·다른 절이 붙으므로
+#:   튜플로 둔다 — `run_gate_tests` 가 한 pytest 호출에 둘 다 넘긴다(요약 줄은 합산).
+TESTS_RELS: tuple[str, ...] = (
+    "tests/test_p356_u2_spec_promotions.py",   # 턴 AK — DSM-U2-03·04·05
+    "tests/test_p356_u4_spec_promotions.py",   # 턴 AL — DSM-U4-06 · DSM-U5-02
+)
+TESTS: tuple[Path, ...] = tuple(BACKEND / rel for rel in TESTS_RELS)
 EVIDENCE_DIR = ROOT / "docs" / "agent" / "evidence" / "SPEC"
 SHELL_CONTAINER = "gx-shell"
 TAG = "[SPEC-DSM]"
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
-#: 닫은 열(P-356 넷을 갖췄다고 이 차선이 주장하는 것) — S 규모 3건, S 먼저(WO-15 §5 P-358).
-CLOSED_CLAUSES: tuple[str, ...] = ("DSM-U2-03", "DSM-U2-04", "DSM-U2-05")
+#: 닫은 열(P-356 넷을 갖췄다고 이 차선이 주장하는 것) — 턴 AK 의 S 셋 + 턴 AL 의
+#: S 하나(U5-02, 부분 — 아래 TITLES 옆 주석) · M 하나(U4-06, 완결 조건이 "변경 감사"
+#: 뿐이라 이번 배정 중 가장 싸다).
+CLOSED_CLAUSES: tuple[str, ...] = (
+    "DSM-U2-03", "DSM-U2-04", "DSM-U2-05", "DSM-U4-06", "DSM-U5-02",
+)
 
 #: annex 원문(§4.2) 제목 — `docs/design/DSM_재난안전관리App_명세서_v1.1_지침기반_20260915.md`
 #: 표 그대로. 손으로 옮겨 적은 것이지만 **제목 문자열**일 뿐이고 판정에 안 쓴다
@@ -73,11 +83,23 @@ TITLES: dict[str, str] = {
     "DSM-U2-03": "상황판단회의 기록",
     "DSM-U2-04": "임계값 도달 알림",
     "DSM-U2-05": "교대 인수인계 합동 확인",
+    # ── 턴 AL 배정(U4 아홉 · U5 둘 = 11) ─────────────────────────────────
+    "DSM-U4-01": "재난상황보고서(별지 제1호서식) 작성",
+    "DSM-U4-02": "중간 보고 사이클",
+    "DSM-U4-03": "재난문자(CBS) 초안",
+    "DSM-U4-04": "통제·대피 현황판",
+    "DSM-U4-05": "일일상황보고 자동",
+    "DSM-U4-06": "위기경보·비상 단계 접수 입력",
+    "DSM-U4-07": "영상 열람·제공(반출) 대장",
+    "DSM-U4-08": "재난관리평가·감사 자료 묶음",
+    "DSM-U4-09": "통계 축 추가 — 지역안전지수 6분야 유형 분류",
+    "DSM-U5-02": "접근권한·접속기록",
+    "DSM-U5-05": "교대 편성 — 4조 3교대 근무표 업로드(CSV)",
 }
 
-#: 이 차선(N1)에 배정된 열한 절 중 이번 턴에 못 닫은 여덟 — **「무엇이 없는가」 한 줄**
-#: (P-358 형식). 빈 칸으로 두지 않는다(D-274). S 셋을 먼저 닫으라는 지시(WO-15 §5)를
-#: 그대로 따랐고, 시간표 안에서 M 여덟은 다음 턴 자리다.
+#: 이 차선(N1)에 턴 AK 에 배정된 열한 절 중 그 턴에 못 닫은 여덟 — **「무엇이 없는가」
+#: 한 줄**(P-358 형식). 빈 칸으로 두지 않는다(D-274). 턴 AL 은 이 여덟을 다시 안
+#: 건드렸다(이번 배정 밖) — 그대로 옮겨 둔다.
 NOT_STARTED: dict[str, str] = {
     "DSM-U1-01": "유형별 행동 카드 — `playbooks.yaml` 유형별 3단계 정의가 없다. "
                 "M 규모(사건 유형별 체크리스트 + 감사 배선)라 이번 차선(S 3건 우선)의 "
@@ -100,6 +122,38 @@ NOT_STARTED: dict[str, str] = {
     "DSM-U2-02": "상황보고 초안 승인 — `POST /reports/{id}/approve` 엔드포인트가 "
                 "없다(기존 `/reports/runs` 는 생성·다운로드뿐, 승인/반려 상태 전이가 "
                 "없다). M 규모(보고서 상태기계 확장)라 범위 밖.",
+}
+
+#: ★ 턴 AL — 이번 턴 배정 11(U4-01~09 · U5-02 · U5-05) 중 못 닫은 아홉. U4-06 ·
+#: U5-02(부분)는 `CLOSED_CLAUSES` 로 옮겼다. 「가장 싼 것부터」(WO-15 §5) 순서를
+#: 그대로 따랐다 — 나머지 아홉은 전부 다단계 워크플로우이거나 새 저장처가 필요한 M
+#: 규모다.
+NOT_STARTED_AL: dict[str, str] = {
+    "DSM-U4-01": "재난상황보고서(별지 1호) — 제N보 채번 · 최초/중간/최종 구분 · "
+                "최초 「지체 없이」 타이머가 없다. 기존 `situation_report_docx`(턴 AB) "
+                "는 사건 한 건을 지금 그려 내는 **단건 스냅숏**일 뿐 차수·타이머·발송 "
+                "이력이 없다 — 다른 절이다.",
+    "DSM-U4-02": "중간 보고 사이클 — 08·17시 기준 자동 초안 배치 · NDMS 표 내보내기가 "
+                "없다. M 규모(배치 스케줄 + 표 매핑)라 범위 밖.",
+    "DSM-U4-03": "재난문자(CBS) 초안 — `POST /cbs-drafts` 자체가 없다(글자수 검사 "
+                "90/157 · 승인권자 결재 요청 · 발송 기록 3단계 흐름). M 규모(다단계 "
+                "워크플로우)라 이번 차선(가장 싼 것 우선)의 시간 안에 못 붙였다.",
+    "DSM-U4-04": "통제·대피 현황판 — 통제 지점 4시각(도달·결정·실행·해제) 저장처가 "
+                "없다. M 규모(새 모델 + 일일상황보고 반영 배선)라 범위 밖.",
+    "DSM-U4-05": "일일상황보고 자동 — 06:00 자동 배치가 없다. 기존 `monthly_report.py` "
+                "의 `KINDS` 는 세 종류로 잠겨 있어(그 파일 머리말) 넷째(daily)를 더하려면 "
+                "그 표 자체를 확장해야 한다 — 남의 파일(다른 턴 소유)을 건드리는 변경.",
+    "DSM-U4-07": "영상 열람·제공(반출) 대장 — `privacy_request.py` 안에 「제공」· "
+                "「반출」·「수사기관」·「공문」 관련 코드가 0건이다(GX-LAW-09 §4 실측 "
+                "그대로, 이 문서가 이미 「코드 0줄」로 갈라 뒀다).",
+    "DSM-U4-08": "재난관리평가·감사 자료 묶음 — 기간별 ZIP(PDF+CSV) 조립 배치가 없다. "
+                "U4-01·02·03·04·07 각 자료가 먼저 갖춰져야 조립할 수 있다(선행 절 의존 "
+                "— 그 절들이 이번 배정에도 못 닫혔다).",
+    "DSM-U4-09": "통계 축 추가 — `stats?by=safety_index`(지역안전지수 6분야 매핑)가 "
+                "없다. 기존 `stats_axes`(턴 T)는 5축(카메라·유형·심각도·판정·시간대)뿐 "
+                "이고 6분야 매핑표가 새로 필요하다.",
+    "DSM-U5-05": "교대 편성 CSV — 근무표 업로드 파서·`shifts` 저장처가 없다. M 규모"
+                "(CSV 파싱 + 인계 메모·일지 근무자 자동 채움 배선)라 범위 밖.",
 }
 
 REQUIRED_EVIDENCE_KEYS = ("id", "measured_at", "measured_by", "test", "request",
@@ -189,7 +243,7 @@ def run_gate_tests(shell: str) -> str | None:
              "-e", "DJANGO_SETTINGS_MODULE=config.settings",
              "-e", "DB_TEST_NAME=test_gx_verify_spec_dsm",
              "-w", "/app", shell,
-             "python", "-m", "pytest", TESTS_REL,
+             "python", "-m", "pytest", *TESTS_RELS,
              "-q", "--create-db", "-p", "no:randomly"],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             #: ★ `guardianx-lane-count-ceilings` — 공유 gx-shell 은 다른 차선과
@@ -279,7 +333,7 @@ def self_test() -> int:
 
 # ═══════════════════════════════════════════════════════════════════════════
 def main() -> int:
-    ap = argparse.ArgumentParser(description="DSM-U2-03·U2-04·U2-05 별표 절 승격 게이트")
+    ap = argparse.ArgumentParser(description="DSM 별표 절 승격 게이트(턴 AK · AL)")
     ap.add_argument("--self-test", action="store_true")
     #: [턴 AK · 조율자 병합] **기본은 다시 안 돌린다.** 시험이 증거 파일을 새 시각으로 덮어써서, GA 판정기가
     #:   이 게이트를 부를 때마다 추적 파일이 바뀌고 측정 재현성(D-344)이 깨졌다 — 게이트는 추적 파일을 쓰지 않는다.
@@ -301,15 +355,16 @@ def main() -> int:
         print("%s [입력] --no-run — pytest 를 다시 안 돌린다(지금 있는 evidence 파일만)"
              % TAG)
     else:
-        if not TESTS.exists():
+        missing = [rel for rel, path in zip(TESTS_RELS, TESTS) if not path.exists()]
+        if missing:
             print("%s **판정 불가 · 회색** — 길목 시험 파일이 없다: %s"
-                 % (TAG, TESTS_REL))
+                 % (TAG, missing))
             return EXIT_UNDECIDABLE
         raw = run_gate_tests(args.shell)
         summary = parse_pytest_summary(raw) if raw is not None else None
         code1, verdict1 = judge_gate_tests(summary)
         codes.append(code1)
-        print("%s [입력] 길목 시험 = %s (gx-shell=%s)" % (TAG, TESTS_REL, args.shell))
+        print("%s [입력] 길목 시험 = %s (gx-shell=%s)" % (TAG, list(TESTS_RELS), args.shell))
         if summary is not None:
             print("%s [입력] pytest 요약 — 통과 %d · 실패 %d · 에러 %d"
                  % (TAG, summary[0], summary[1], summary[2]))
@@ -319,8 +374,9 @@ def main() -> int:
             print("%s ── 길목 시험 원문 꼬리 ──\n%s" % (TAG, raw[-3000:]))
 
     # ② 절마다 증거 성립
+    all_not_started = {**NOT_STARTED, **NOT_STARTED_AL}
     print("%s ── 절별 판정 (닫은 열 %d · 못 닫은 열 %d) ──"
-         % (TAG, len(CLOSED_CLAUSES), len(NOT_STARTED)))
+         % (TAG, len(CLOSED_CLAUSES), len(all_not_started)))
     for clause_id in CLOSED_CLAUSES:
         payload = _load_evidence(clause_id)
         code, verdict = judge_evidence(clause_id, payload)
@@ -328,15 +384,17 @@ def main() -> int:
         mark = "OK  " if code == EXIT_OK else ("FAIL" if code == EXIT_FAIL else "GRAY")
         print("%s %s [%s] %s — %s" % (TAG, mark, clause_id, TITLES[clause_id], verdict))
 
-    for clause_id in sorted(NOT_STARTED):
+    for clause_id in sorted(all_not_started):
         print("%s MISS [%s] %s — 무엇이 없는가: %s"
-             % (TAG, clause_id, TITLES[clause_id], NOT_STARTED[clause_id]))
+             % (TAG, clause_id, TITLES[clause_id], all_not_started[clause_id]))
 
     final = combine(codes)
-    print("%s ── 요약 — 닫은 열 %d/%d(분모는 이 차선 배정 11) · 최종 %s ──"
+    denom = len(CLOSED_CLAUSES) + len(all_not_started)  # 22 = 턴 AK 11 + 턴 AL 11
+    print("%s ── 요약 — 닫은 열 %d/%d(분모는 이 차선 배정 %d = 턴 AK 11 + 턴 AL 11) "
+         "· 최종 %s ──"
          % (TAG, sum(1 for c in codes[1:] if c == EXIT_OK) if not args.no_run
             else sum(1 for c in codes if c == EXIT_OK),
-            len(CLOSED_CLAUSES),
+            len(CLOSED_CLAUSES), denom,
             {EXIT_OK: "PASS", EXIT_FAIL: "FAIL", EXIT_UNDECIDABLE: "GRAY"}[final]))
     return final
 
@@ -349,12 +407,17 @@ if __name__ == "__main__":
         __file__,
         target="gx-shell(%s) 안 backend/ · apps.dsm.situation_meeting_service · "
               "apps.dsm.threshold_alert_service · apps.dsm.handover_service · "
-              "kernels.k5_trust · docs/agent/evidence/SPEC/*.json" % SHELL_CONTAINER,
+              "apps.dsm.alert_level_service · apps.dsm.access_log_service · "
+              "apps.dsm.audit(access_log_*) · kernels.k5_trust · "
+              "docs/agent/evidence/SPEC/*.json" % SHELL_CONTAINER,
         as_="pytest 는 자격증명 없이 --create-db 로 돈다 · HTTP 실측은 "
-            "tests/test_p356_u2_spec_promotions.py 안에서 실제 JWT(RefreshToken.for_user)로",
+            "tests/test_p356_u2_spec_promotions.py · "
+            "tests/test_p356_u4_spec_promotions.py 안에서 실제 JWT"
+            "(RefreshToken.for_user)로",
         source="살아 있는 gx-shell 컨테이너(docker exec) · 그 실행이 방금 새로 쓴 "
               "evidence 파일 — 사진·손으로 옮긴 값이 아니라 이번 실행",
-        measured="닫은 열 3건(DSM-U2-03·04·05 · S 규모) · 못 닫은 열 8건은 이유 1줄 "
-                "(U1-01~06 · U2-01·02 · M 규모) · 분모 11(이 차선 N1 배정)",
+        measured="닫은 열 5건(DSM-U2-03·04·05 턴 AK · DSM-U4-06·U5-02 턴 AL) · "
+                "못 닫은 열 17건은 이유 1줄(턴 AK 8 · 턴 AL 9) · 분모 22"
+                "(이 차선 N1 배정 턴 AK 11 + 턴 AL 11)",
     )
     raise SystemExit(main())

@@ -1,0 +1,20 @@
+{
+  "id": "FWS-F2-07",
+  "title": "안전 경보 수신(풍향 급변·헬기 투하 구역 이탈)",
+  "measured_at": "2026-09-28T01:44:44.954599+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f2.F2_07_SafetyAlertTest.test_wind_shift_alert_arrives_and_acks_via_shared_alerts_endpoint",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/alerts/1/ack",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "delivery_id": 1,
+      "acknowledged": true
+    }
+  },
+  "what": "F2 안전 경보(풍향 급변 등)도 F1-10 이 연 GET /alerts·POST /alerts/{id}/ack 로 도달·확인된다 — 새 문을 열지 않고 재사용 실측(K2 발송은 채널·내용을 안 가린다)"
+}

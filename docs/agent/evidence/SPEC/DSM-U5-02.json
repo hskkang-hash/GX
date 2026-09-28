@@ -1,0 +1,42 @@
+{
+  "id": "DSM-U5-02",
+  "measured_at": "2026-09-28T01:44:47.891675+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_p356_u4_spec_promotions.EvidenceExportTest.test_dump_dsm_u5_02_evidence",
+  "request": {
+    "method": "GET",
+    "path": "/api/dsm/access-log",
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "items": [
+        {
+          "log_id": 52,
+          "at": "2026-09-28T01:44:47.845286+00:00",
+          "channel": "security",
+          "actor_id": 48,
+          "actor": "",
+          "client_ip": "10.0.0.9",
+          "action": "/probe",
+          "method": "GET",
+          "status_http": null,
+          "note": "u4al-evidence-probe"
+        }
+      ],
+      "total": 1,
+      "page": 1,
+      "page_size": 50,
+      "pages": 1,
+      "channels": [
+        "db",
+        "jwt",
+        "application",
+        "security",
+        "user_update"
+      ]
+    }
+  },
+  "what": "시스템관리자로 접속기록 전용 문을 실제로 두드려 심어 둔 접속 로그 행(security 채널)이 실제로 보이는 것을 확인했다 — 일반 감사 화면에는 안 뜨는 채널이 이 좁은 문에서만 열린다(GX-LAW-09 §5-2)."
+}

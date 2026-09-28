@@ -219,6 +219,10 @@ routes:
   "GET /api/dronehw/drone-communication-management/online-drones": session_only
   "GET /api/dronehw/group-management/group/{group_id}/drones": session_only
   "GET /api/dronehw/group-management/groups-with-drones": session_only
+  "GET /api/dsm/access-log": session_only
+  "GET /api/dsm/access-log/export.csv": session_only
+  "GET /api/dsm/alert-level": session_only
+  "POST /api/dsm/alert-level": session_only
   "GET /api/dsm/audit": session_only
   "GET /api/dsm/audit/export.csv": session_only
   "GET /api/dsm/cameras/address-gap": session_only
@@ -345,12 +349,21 @@ routes:
   "GET /api/fws/alerts": session_only
   "POST /api/fws/alerts/{int:delivery_id}/ack": session_only
   "GET /api/fws/emergency-contacts": session_only
+  "POST /api/fws/equipment/checks": session_only
+  "GET /api/fws/equipment/checks/mine": session_only
+  "GET /api/fws/missions/mine": session_only
+  "GET /api/fws/missions/{int:event_id}": session_only
+  "POST /api/fws/missions/{int:event_id}/field-reply": session_only
+  "POST /api/fws/missions/{int:event_id}/response": session_only
   "GET /api/fws/notify-prefs": session_only
   "POST /api/fws/notify-prefs": session_only
   "POST /api/fws/patrol/checkin": session_only
   "GET /api/fws/patrol/mine": session_only
   "POST /api/fws/patrol/track": session_only
+  "GET /api/fws/resources/me/status": session_only
+  "POST /api/fws/resources/me/status": session_only
   "GET /api/fws/risk/today": session_only
+  "GET /api/fws/training/mission": session_only
   "GET /api/fws/verifications/{int:verification_id}": session_only
   "POST /api/fws/verifications/{int:verification_id}/reply": session_only
   "GET /api/genders": session_only

@@ -63,7 +63,7 @@ import {
 
 import { dsmGet, dsmPostQuery, dsmU56NotifyEndpoint } from '../api';
 import StateBoundary from '../components/StateBoundary';
-import { userFacingError } from '../copy';
+import { notifyChannelLabel, userFacingError } from '../copy';
 import { useDsmResource } from '../hooks/useDsmResource';
 import {
   hasRoleDisplayName,
@@ -184,11 +184,19 @@ export default function NotifySettingsPage() {
 
   const data = overview.data;
 
-  /** 고를 수 있는 채널 — **서버가 준 목록 그대로.** 화면이 짓지 않는다. */
+  /**
+   * 고를 수 있는 채널 — **서버가 준 목록 그대로.** 화면이 짓지 않는다(값은).
+   *
+   * ★ [P-371 · 턴 AL] **표시**는 사전의 말로 바꾼다 — `email` · `webpush` 같은
+   *   코드가 셋째 조건 실측에서 그대로 잡혔다(U5#9 · U5#10). 저장하는 값(`value`)은
+   *   그대로 서버 코드다 — 표시만 바뀐다(GX-COPY 규칙 2).
+   */
   const channelOptions = useMemo(
     () =>
       (data?.channels ?? []).map((c) => ({
-        label: c.reaches_people ? c.channel : `${c.channel} (사람에게 안 감)`,
+        label: c.reaches_people
+          ? notifyChannelLabel(c.channel)
+          : `${notifyChannelLabel(c.channel)} (사람에게 안 감)`,
         value: c.channel,
       })),
     [data?.channels],
@@ -316,7 +324,7 @@ export default function NotifySettingsPage() {
                 data-gx="notify-critical-ok"
                 message={
                   `심각 경보를 받는 사람 ${data.critical_recipient_count}명 · `
-                  + `${(data.critical_human_channels ?? []).join(' · ')}로 닿습니다`
+                  + `${(data.critical_human_channels ?? []).map((c) => notifyChannelLabel(c)).join(' · ')}로 닿습니다`
                 }
                 description="심각 등급은 최소 한 사람에게, 사람에게 닿는 채널로 갑니다."
               />
@@ -347,7 +355,9 @@ export default function NotifySettingsPage() {
                     key: 'reach',
                     render: (_: unknown, row: SeverityRow) =>
                       row.reaches_people ? (
-                        <Tag color="green">{row.human_channels.join(' · ')}</Tag>
+                        <Tag color="green">
+                          {row.human_channels.map((c) => notifyChannelLabel(c)).join(' · ')}
+                        </Tag>
                       ) : (
                         <Tag color="red">닿지 않음</Tag>
                       ),
@@ -368,7 +378,7 @@ export default function NotifySettingsPage() {
                 ]}
               />
               <Paragraph type="secondary" style={{ marginTop: 8 }}>
-                시험 발송은 <b>훈련 채널({data.test_channel})로만</b> 나갑니다 — 실제
+                시험 발송은 <b>훈련 채널({notifyChannelLabel(data.test_channel)})로만</b> 나갑니다 — 실제
                 수신함·휴대전화로는 한 건도 가지 않습니다.
               </Paragraph>
               {testError ? (
@@ -378,7 +388,7 @@ export default function NotifySettingsPage() {
                 <Alert
                   type="info"
                   showIcon
-                  message={`시험 발송 — 받을 사람 ${tested.recipients}명 중 ${tested.sent}건이 훈련 채널(${tested.channel})로 나갔습니다.`}
+                  message={`시험 발송 — 받을 사람 ${tested.recipients}명 중 ${tested.sent}건이 훈련 채널(${notifyChannelLabel(tested.channel)})로 나갔습니다.`}
                   description={tested.note}
                 />
               ) : null}
@@ -423,9 +433,11 @@ export default function NotifySettingsPage() {
                     render: (z: string | null) => z || '모든 구역',
                   },
                   {
+                    // ★ [P-371 · 턴 AL] 셋째 조건 실측이 이 칸에서 채널 코드를
+                    //   그대로 잡았다(U5#9) — 사전의 말로 바꾼다.
                     title: '채널',
                     dataIndex: 'channels',
-                    render: (cs: string[]) => cs.join(' · '),
+                    render: (cs: string[]) => cs.map((c) => notifyChannelLabel(c)).join(' · '),
                   },
                   {
                     title: '켜짐',
@@ -566,7 +578,7 @@ export default function NotifySettingsPage() {
                   type="success"
                   showIcon
                   message={`저장했습니다 — 규칙 #${saved.rule_id} · ${severityLabel(saved.severity)} · ${saved.role_code}`}
-                  description={`채널 ${saved.channels.join(' · ')}`}
+                  description={`채널 ${saved.channels.map((c) => notifyChannelLabel(c)).join(' · ')}`}
                 />
               ) : null}
             </Card>
@@ -576,7 +588,9 @@ export default function NotifySettingsPage() {
                 {data.channels.map((c) => (
                   <div key={c.channel}>
                     <Space>
-                      <Text strong>{c.channel}</Text>
+                      {/* ★ [P-371 · 턴 AL] 원래 코드는 title 로만 남긴다 — 지어내지
+                          않는다(사전에 없으면 「우리말 이름 없음」이 뜬다). */}
+                      <Text strong title={c.channel}>{notifyChannelLabel(c.channel)}</Text>
                       {c.available ? (
                         <Tag color="green">쓸 수 있음</Tag>
                       ) : (

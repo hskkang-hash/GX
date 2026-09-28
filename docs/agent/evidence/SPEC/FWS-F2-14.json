@@ -1,0 +1,32 @@
+{
+  "id": "FWS-F2-14",
+  "title": "장비 점검 체크(등짐펌프·진화차)",
+  "measured_at": "2026-09-28T01:44:49.343376+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f2.F2_14_EquipmentCheckTest.test_check_is_recorded_and_read_back",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/equipment/checks/mine",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "checks": [
+        {
+          "check_id": 32,
+          "note": "이상 없음",
+          "result": "pass",
+          "__seq__": 32,
+          "__hash__": "9a4cf757a62c6278d830da8cc91c96080be395e945e1e8e8f1252bf03aeb1077",
+          "checked_at": "2026-09-28T01:44:49.273275+00:00",
+          "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
+          "equipment_code": "BP-7",
+          "equipment_type": "backpack_pump"
+        }
+      ],
+      "count": 1
+    }
+  },
+  "what": "POST /equipment/checks(등짐펌프 BP-7 · pass) 뒤 GET /equipment/checks/mine 의 count 가 1, 방금 남긴 장비 코드가 그대로 보인다 — 점검 1 실측"
+}

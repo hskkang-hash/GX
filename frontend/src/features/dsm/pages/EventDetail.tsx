@@ -54,7 +54,7 @@ import {
 } from '../copy';
 import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
-import { deliveryOutcomeColumns } from '../deliveryOutcome';
+import { channelDisplayLabel, deliveryOutcomeColumns } from '../deliveryOutcome';
 import { useDsmResource } from '../hooks/useDsmResource';
 import {
   EVENT_TYPE_LABEL,
@@ -850,7 +850,16 @@ export default function EventDetail() {
               pagination={false}
               dataSource={deliveries.data?.deliveries ?? []}
               columns={[
-                { title: '채널', dataIndex: 'channel', width: 110 },
+                {
+                  // ★★ [P-371 · 턴 AL · 차선 L] 셋째 조건 실측이 이 칸에서 `email` ·
+                  //   `log` 같은 영문 채널 코드를 그대로 잡았다(U1#9 · U2#3) — 렌더
+                  //   함수가 없어 `dataIndex` 원문이 그대로 나갔다. `deliveryOutcome`
+                  //   의 정본 표시 함수로 옮긴다(두 벌을 만들지 않는다).
+                  title: '채널',
+                  dataIndex: 'channel',
+                  width: 110,
+                  render: (v: string) => channelDisplayLabel(v),
+                },
                 // ★ [P-123 · 턴 O 병합] 「성공」이 **거짓말이었다.**
                 //   실측 2026-09-10: `GET /api/dsm/deliveries?limit=200` → 165행 ·
                 //   채널 `log` 163 · `succeeded=true` **164** · **수신자 칸 165/165 공백** ·

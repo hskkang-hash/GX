@@ -10,4 +10,7 @@
 export const fwsRoutes = {
   /** FM1·FM2 현장 홈 — 체크인·오늘 위험도·확인 요청·알림·설정을 한 화면에 모은다. */
   home: { title: '산불감시 현장', path: '/fws/home' },
+  /** FM3 진화대 홈(턴 AL · F2) — 대기 상태·임무·지원 요청·훈련 배지·장비 점검을
+   * 한 화면에 모은다. `/fws/home` 과 형제 가지 — 최상위 리터럴이라 서로 안 삼킨다. */
+  field: { title: '진화대 현장', path: '/fws/field' },
 };

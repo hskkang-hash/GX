@@ -1,0 +1,21 @@
+{
+  "id": "FWS-F2-15",
+  "title": "근무 외 차단·담당 구역",
+  "measured_at": "2026-09-28T01:44:51.249907+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f2.F2_15_OffDutyBlockTest.test_off_duty_block_and_assigned_zone_save_then_read_back",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/notify-prefs",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "quiet_hours_start": "23:00",
+      "quiet_hours_end": "05:00",
+      "assigned_post_code": "ZONE-3"
+    }
+  },
+  "what": "F1-12 가 연 GET/POST /notify-prefs 를 F2 진화대도 그대로 써서 근무 외 차단 시간대·담당 구역이 저장 → 재조회에 남는다 — 새 문을 열지 않고 재사용 실측"
+}

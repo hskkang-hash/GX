@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-13",
   "title": "오프라인 큐 — 산지 통신 불가 시 기록 저장 후 전송",
-  "measured_at": "2026-09-27T02:45:32.636827+00:00",
+  "measured_at": "2026-09-28T01:33:51.939266+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_13_OfflineReplayTest.test_replayed_checkin_with_same_key_is_not_double_counted",
   "request": {
@@ -20,7 +20,7 @@
       "post_code": "P-7",
       "status": "on_duty",
       "method": "gps",
-      "checked_in_at": "2026-09-27T02:45:32.508182+00:00",
+      "checked_in_at": "2026-09-28T01:33:51.874017+00:00",
       "location": {
         "lat": 1.0,
         "lng": 2.0

@@ -37,6 +37,7 @@
  */
 import { Tooltip, Typography } from 'antd';
 
+import { notifyChannelLabel } from './copy';
 import type { DeliveryRow } from './types';
 
 const { Text } = Typography;
@@ -119,6 +120,13 @@ export const LOG_CHANNEL_NOTE =
  *       사건 배지 「훈련」  … 이 **사건**이 훈련이다        (사건의 성질)
  *       채널 배지 「기록만」 … 이 **발송**이 사람에게 안 갔다 (발송이 간 곳)
  *   한 카드에 둘이 같이 서는 날 **절대 같은 낱말로 그리지 않는다.**
+ *
+ * ★★ [P-371 · 턴 AL · 차선 L] **「제 이름 그대로」가 셋째 조건에 걸렸다.**
+ *   위 판단은 「채널 이름 사전이 아직 없던 시절」의 것이었다 — 그때는 `email` ·
+ *   `webpush` 를 옮길 우리말이 없어 원래 이름을 그대로 썼다. 이제
+ *   `copy.ts::NOTIFY_CHANNEL_LABEL` 이 섰으므로(규칙 1: 없으면 먼저 사전에
+ *   넣고 쓴다) **제 이름 그대로**를 그 사전의 말로 바꾼다. 계약 값(`d.channel`)은
+ *   여전히 안 바꾼다 — `data-gx-channel` 은 그대로 원래 값을 든다.
  */
 export const LOG_ONLY_CHANNEL_LABEL = '기록만';
 
@@ -139,9 +147,12 @@ export const RECIPIENT_NONE_SUFFIX = '받는 사람 없음';
  *
  * ★ 계약 값(`d.channel`)은 **안 바꾼다** — 화면의 말이 바뀌었다고 술어가 읽는
  *   `data-gx-channel` 까지 바꾸면 게이트가 제 것을 못 찾는다(GX-COPY 규칙 2).
+ * ★ [P-371 · 턴 AL] 사람에게 가는 채널도 이제 **사전의 말**로 그린다(위 머리말).
+ *   모르는 채널은 `notifyChannelLabel` 이 스스로 「우리말 이름 없음」이라 적는다 —
+ *   지어내지 않는다.
  */
 export function channelDisplayLabel(channel: string): string {
-  return reachesAPerson(channel) ? channel : LOG_ONLY_CHANNEL_LABEL;
+  return reachesAPerson(channel) ? notifyChannelLabel(channel) : LOG_ONLY_CHANNEL_LABEL;
 }
 
 /**

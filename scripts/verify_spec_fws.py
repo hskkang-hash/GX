@@ -45,18 +45,29 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 BACKEND = ROOT / "backend"
+#: [턴 AL · 차선 N2] F2 절 시험 파일이 더해졌다 — **두 파일을 한 pytest 호출로
+#:   같이 돈다**(TESTS_REL 은 여전히 "길목"의 이름이지만 값은 이제 둘이다). 두 게이트로
+#:   가르지 않는 이유: F1·F2 는 같은 App(`apps.fws`)·같은 `AppStaysThinTest` 를
+#:   공유하고, 게이트를 둘로 가르면 그 공유가 두 벌로 다시 재진다(D-212).
 TESTS_REL = "tests/test_fws_app.py"
+TESTS_REL_F2 = "tests/test_fws_f2.py"
 TESTS = BACKEND / TESTS_REL
+TESTS_F2 = BACKEND / TESTS_REL_F2
 EVIDENCE_DIR = ROOT / "docs" / "agent" / "evidence" / "SPEC"
 SHELL_CONTAINER = "gx-shell"
 TAG = "[SPEC-FWS]"
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
-#: 닫은 열(P-356 넷을 갖췄다고 이 차선이 주장하는 것) — S 규모 10건.
+#: 닫은 열(P-356 넷을 갖췄다고 이 차선이 주장하는 것) — F1 S 규모 10건 + F2 10건.
 CLOSED_CLAUSES: tuple[str, ...] = (
     "FWS-F1-01", "FWS-F1-02", "FWS-F1-03", "FWS-F1-05", "FWS-F1-06",
     "FWS-F1-08", "FWS-F1-10", "FWS-F1-11", "FWS-F1-12", "FWS-F1-13",
+    #: [턴 AL · 차선 N2] F2 산림재난대응단·진화대 — S 규모 2건(F2-13·14) +
+    #:   K1 표(대응 진행·현장 회신)·K2(F1-10 재사용)·notify-prefs(F1-12 재사용)로
+    #:   닫은 M 규모 8건. 새 상태기계·새 표는 세우지 않았다(missions.py 머리말).
+    "FWS-F2-01", "FWS-F2-02", "FWS-F2-03", "FWS-F2-05", "FWS-F2-07",
+    "FWS-F2-11", "FWS-F2-12", "FWS-F2-13", "FWS-F2-14", "FWS-F2-15",
 )
 
 #: annex 원문(§5.1) 제목 — `docs/design/FWS_산불감시App_명세서_v1.0_…20260915.md`
@@ -78,6 +89,21 @@ TITLES: dict[str, str] = {
     "FWS-F1-13": "오프라인 큐(산지 통신 불가 시 기록 저장 후 전송)",
     "FWS-F1-14": "카메라 사각 신고",
     "FWS-F1-15": "근무 종료·인계(특이사항 한 줄)",
+    "FWS-F2-01": "대기 상태 등록(주간·야간 5분대기조·위치)",
+    "FWS-F2-02": "임무 수신(출동 지시)",
+    "FWS-F2-03": "이동·도착 회신(GPS)",
+    "FWS-F2-04": "현장 상황 보고(화선 길이·방향·진화 가능 여부·사진)",
+    "FWS-F2-05": "지원 요청(인력·물·헬기·중장비)",
+    "FWS-F2-06": "진화선 구축·진화 진행 보고(구간 완료)",
+    "FWS-F2-07": "안전 경보 수신(풍향 급변·헬기 투하 구역 이탈)",
+    "FWS-F2-08": "주불 진화 보고",
+    "FWS-F2-09": "잔불 정리 구역 배정·완료",
+    "FWS-F2-10": "뒷불 감시 교대·발견 보고(열점 위치)",
+    "FWS-F2-11": "철수·복귀 회신",
+    "FWS-F2-12": "내 임무 이력·투입 시간(수당 근거)",
+    "FWS-F2-13": "훈련 임무 수신(훈련 배지)",
+    "FWS-F2-14": "장비 점검 체크(등짐펌프·진화차)",
+    "FWS-F2-15": "근무 외 차단·담당 구역",
 }
 
 #: 못 닫은 다섯 — **「무엇이 없는가」 한 줄** (P-358 형식). 이 턴(N2)의 범위 밖인
@@ -94,6 +120,22 @@ NOT_STARTED: dict[str, str] = {
                 "M 규모라 이번 차선 범위 밖.",
     "FWS-F1-15": "근무 종료·인계(특이사항 한 줄) — DSM `handover_service` 재사용 "
                 "여지는 확인했으나 실제 엔드포인트를 아직 안 열었다. M 규모라 범위 밖.",
+    #: [턴 AL · 차선 N2] 못 닫은 F2 다섯 — 전부 M 규모, 전부 「구간·구역·승인」처럼
+    #:   K1 의 4값 대응 진행 표(occurred→acknowledged→in_progress→closed)로는
+    #:   담을 수 없는 **새 축**(구간별 진행률·구역 배정·타 역할 승인)이 필요하다.
+    #:   그 축은 커널 변경(L3)이라 이 차선(App 층) 권한 밖이다(DA-04 §1-1).
+    "FWS-F2-04": "현장 상황 보고(화선 길이·방향·사진) — 사진 업로드 저장 경로가 "
+                "없다(F1-07 과 같은 한계). M 규모라 범위 밖.",
+    "FWS-F2-06": "진화선 구축·구간 완료 보고 — '구간'은 K1 에 없는 축(진화선을 "
+                "여러 구간으로 나눠 각각의 진행을 추적)이라 새 표가 필요하다. "
+                "M 규모라 범위 밖.",
+    "FWS-F2-08": "주불 진화 보고 — 완결조건이 'F4 승인'(다른 역할의 승인 절차)이고, "
+                "그 승인 축은 K1 4값 대응 진행표에 없다. M 규모라 범위 밖.",
+    "FWS-F2-09": "잔불 정리 구역 배정·완료 — '구역'별 배정·완료(N/N)를 담을 표가 "
+                "없다(F2-06 과 같은 한계 — 구간·구역 축). M 규모라 범위 밖.",
+    "FWS-F2-10": "뒷불 감시 교대·발견 보고(열점 위치) — 발견 보고가 '재발화 사건 "
+                "연결'을 요구해 새 이벤트 생성 경로가 필요하고, 위치·지도 인접 "
+                "주의(F1-04와 같은 한계)도 겹친다. M 규모라 범위 밖.",
 }
 
 REQUIRED_EVIDENCE_KEYS = ("id", "measured_at", "measured_by", "test", "request",
@@ -183,7 +225,7 @@ def run_gate_tests(shell: str) -> str | None:
              "-e", "DJANGO_SETTINGS_MODULE=config.settings",
              "-e", "DB_TEST_NAME=test_gx_verify_spec_fws",
              "-w", "/app", shell,
-             "python", "-m", "pytest", TESTS_REL,
+             "python", "-m", "pytest", TESTS_REL, TESTS_REL_F2,
              "-q", "--create-db", "-p", "no:randomly"],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             #: ★ `guardianx-lane-count-ceilings` — 공유 gx-shell 은 다른 차선과
@@ -293,15 +335,16 @@ def main() -> int:
         print("%s [입력] --no-run — pytest 를 다시 안 돌린다(지금 있는 evidence 파일만)"
              % TAG)
     else:
-        if not TESTS.exists():
-            print("%s **판정 불가 · 회색** — 길목 시험 파일이 없다: %s"
-                 % (TAG, TESTS_REL))
+        if not TESTS.exists() or not TESTS_F2.exists():
+            print("%s **판정 불가 · 회색** — 길목 시험 파일이 없다: %s · %s"
+                 % (TAG, TESTS_REL, TESTS_REL_F2))
             return EXIT_UNDECIDABLE
         raw = run_gate_tests(args.shell)
         summary = parse_pytest_summary(raw) if raw is not None else None
         code1, verdict1 = judge_gate_tests(summary)
         codes.append(code1)
-        print("%s [입력] 길목 시험 = %s (gx-shell=%s)" % (TAG, TESTS_REL, args.shell))
+        print("%s [입력] 길목 시험 = %s · %s (gx-shell=%s)"
+             % (TAG, TESTS_REL, TESTS_REL_F2, args.shell))
         if summary is not None:
             print("%s [입력] pytest 요약 — 통과 %d · 실패 %d · 에러 %d"
                  % (TAG, summary[0], summary[1], summary[2]))
@@ -342,10 +385,12 @@ if __name__ == "__main__":
         target="gx-shell(%s) 안 backend/ · apps.fws(신규) · K1·K2 커널 · "
                "docs/agent/evidence/SPEC/*.json" % SHELL_CONTAINER,
         as_="pytest 는 자격증명 없이 --create-db 로 돈다 · HTTP 실측은 "
-            "tests/test_fws_app.py 안에서 실제 JWT(RefreshToken.for_user)로",
+            "tests/test_fws_app.py · tests/test_fws_f2.py 안에서 실제 "
+            "JWT(RefreshToken.for_user)로",
         source="살아 있는 gx-shell 컨테이너(docker exec) · 그 실행이 방금 새로 쓴 "
               "evidence 파일 — 사진·손으로 옮긴 값이 아니라 이번 실행",
-        measured="닫은 열 10건(FWS-F1-01·02·03·05·06·08·10·11·12·13) · "
-                "못 닫은 열 5건은 이유 1줄(F1-04·07·09·14·15) · 분모 15",
+        measured="닫은 열 20건(F1 10건 FWS-F1-01·02·03·05·06·08·10·11·12·13 + "
+                "F2 10건 FWS-F2-01·02·03·05·07·11·12·13·14·15) · 못 닫은 열 10건은 "
+                "이유 1줄(F1-04·07·09·14·15 + F2-04·06·08·09·10) · 분모 30",
     )
     raise SystemExit(main())
