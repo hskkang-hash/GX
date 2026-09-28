@@ -254,11 +254,6 @@ annex_2_spec:
       kind: unmeasurable
       hand: in
       src: DSM
-    - id: DSM-U4-06
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: DSM
     - id: DSM-U4-07
       status: 미착수
       kind: unmeasurable
@@ -341,37 +336,12 @@ annex_2_spec:
       kind: unmeasurable
       hand: in
       src: FWS
-    - id: FWS-F2-01
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F2-02
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F2-03
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
     - id: FWS-F2-04
       status: 미착수
       kind: unmeasurable
       hand: in
       src: FWS
-    - id: FWS-F2-05
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
     - id: FWS-F2-06
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F2-07
       status: 미착수
       kind: unmeasurable
       hand: in
@@ -387,31 +357,6 @@ annex_2_spec:
       hand: in
       src: FWS
     - id: FWS-F2-10
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F2-11
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F2-12
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F2-13
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F2-14
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F2-15
       status: 미착수
       kind: unmeasurable
       hand: in
@@ -2256,6 +2201,11 @@ areas:
         status: 잠김
         kind: measured_red
         kind_why: |
+          ★ [P-362 · 2026-09-28 · 턴 AL · 원인 1줄] `verify_front_line_502` → **exit 2(못 쟀다)** · ①~④·⑥ OK ·
+            **회색의 유일한 사유 = ⑤ 뒷단 부재 29건** — 전부 **우리 계획 재시작**(`restart_live` · 재기동 6회) 동안
+            앞단이 `connect() 111 refused` 를 적은 것이다(재활용이 아니다). 재활용 502 는 재시도가 5/5 살렸고 샌 것 1건.
+            다음 손: `restarts.jsonl` 의 계획 재시작을 ⑥ 계획 창으로 읽히게 하거나(판정기 · 세종 판정), 재시작 동안
+            앞단이 503+Retry-After 로 답하게 한다(nginx). 색은 그 뒤에 — 그때까지 measured_red 그대로 둔다.
           ★ [P-345 · 2026-09-25 · 턴 AJ · 조율자 창 ③] **재서 빨강이다 — 회색이 빨강을 가리지 않는다.**
           `python scripts/verify_front_line_502.py` → **exit 1(판정 실패)** · ⑥ 계획 창 「창 안 0 · 창 밖 1」.
           대장이 unmeasurable 로 두면 잰 빨강이 「못 잼」으로 읽힌다(대장은 줄지 않는다 · P-203 — 수가 내려가면 내려간 수가 정본).
@@ -3881,6 +3831,140 @@ areas:
       #   verify_spec_fws · 자기시험 짝) ④ 이 이동. 영역 ①은 계약 절 대장에서 **파생**되는 영역이라 옮겨 적을 수
       #   없다(그 머리말) — 「상용 전용 기능은 ⑦」 이라는 그 머리말대로 여기 둔다. ⚠ 증거는 시험 클라이언트이지
       #   8500 을 누른 뒤가 아니다 — 화면(`/fws/home`)은 다음 배포 뒤 V 가 잰다.
+      # ★★ [P-356 · 2026-09-28 · 턴 AL · 조율자 창 ③] **둘째 승격 11절**(DSM 1 · FWS F2 10). DSM-U5-02 는 **안 올렸다** —
+      #   절의 절반(사람별 카메라·기능 권한)이 없다(차선 N1 이 스스로 반쪽이라 적었다 · 반쪽은 닫힘이 아니다).
+      - id: DSM-U4-06
+        title: 위기경보·비상 단계 접수 입력
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AL · 차선 N1] 별표 승격 — `POST/GET /api/dsm/alert-level` 구현 · 증거 `docs/agent/evidence/SPEC/DSM-U4-06.json`(시험 클라이언트 실측) ·
+          게이트 `scripts/verify_spec_dsm.py` 행 PASS · 분모 293 불변. 넷 중 하나라도 빠지면 별표로 되돌린다.
+        gate: scripts/verify_spec_dsm.py
+        gate_args: --no-run
+        proof: backend/tests/test_p356_u4_spec_promotions.py
+        evidence: docs/agent/evidence/SPEC/DSM-U4-06.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
+      - id: FWS-F2-01
+        title: 대기 상태 등록(주간·야간 5분대기조·위치)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AL · 차선 N2] 별표 승격 — `POST/GET /api/fws/resources/me/status` 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F2-01.json`(시험 클라이언트 실측) ·
+          게이트 `scripts/verify_spec_fws.py` 행 PASS · 분모 293 불변. 넷 중 하나라도 빠지면 별표로 되돌린다.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f2.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-01.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
+      - id: FWS-F2-02
+        title: 임무 수신(출동 지시)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AL · 차선 N2] 별표 승격 — `GET /api/fws/missions/{id} · POST …/response?action=dispatch` 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F2-02.json`(시험 클라이언트 실측) ·
+          게이트 `scripts/verify_spec_fws.py` 행 PASS · 분모 293 불변. 넷 중 하나라도 빠지면 별표로 되돌린다.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f2.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-02.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
+      - id: FWS-F2-03
+        title: 이동·도착 회신(GPS)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AL · 차선 N2] 별표 승격 — `POST /api/fws/missions/{id}/response?action=arrived` 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F2-03.json`(시험 클라이언트 실측) ·
+          게이트 `scripts/verify_spec_fws.py` 행 PASS · 분모 293 불변. 넷 중 하나라도 빠지면 별표로 되돌린다.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f2.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-03.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
+      - id: FWS-F2-05
+        title: 지원 요청(인력·물·헬기·중장비)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AL · 차선 N2] 별표 승격 — `POST /api/fws/missions/{id}/field-reply` 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F2-05.json`(시험 클라이언트 실측) ·
+          게이트 `scripts/verify_spec_fws.py` 행 PASS · 분모 293 불변. 넷 중 하나라도 빠지면 별표로 되돌린다.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f2.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-05.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
+      - id: FWS-F2-07
+        title: 안전 경보 수신(풍향 급변·헬기 투하 구역 이탈)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AL · 차선 N2] 별표 승격 — `GET /api/fws/alerts · POST …/{id}/ack (F1-10 재사용)` 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F2-07.json`(시험 클라이언트 실측) ·
+          게이트 `scripts/verify_spec_fws.py` 행 PASS · 분모 293 불변. 넷 중 하나라도 빠지면 별표로 되돌린다.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f2.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-07.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
+      - id: FWS-F2-11
+        title: 철수·복귀 회신(사건은 안 닫는다)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AL · 차선 N2] 별표 승격 — `POST /api/fws/missions/{id}/response?action=released` 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F2-11.json`(시험 클라이언트 실측) ·
+          게이트 `scripts/verify_spec_fws.py` 행 PASS · 분모 293 불변. 넷 중 하나라도 빠지면 별표로 되돌린다.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f2.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-11.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
+      - id: FWS-F2-12
+        title: 내 임무 이력·투입 시간(수당 근거)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AL · 차선 N2] 별표 승격 — `GET /api/fws/missions/mine` 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F2-12.json`(시험 클라이언트 실측) ·
+          게이트 `scripts/verify_spec_fws.py` 행 PASS · 분모 293 불변. 넷 중 하나라도 빠지면 별표로 되돌린다.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f2.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-12.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
+      - id: FWS-F2-13
+        title: 훈련 임무 수신(훈련 배지)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AL · 차선 N2] 별표 승격 — `GET /api/fws/training/mission` 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F2-13.json`(시험 클라이언트 실측) ·
+          게이트 `scripts/verify_spec_fws.py` 행 PASS · 분모 293 불변. 넷 중 하나라도 빠지면 별표로 되돌린다.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f2.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-13.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
+      - id: FWS-F2-14
+        title: 장비 점검 체크(등짐펌프·진화차)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AL · 차선 N2] 별표 승격 — `POST /api/fws/equipment/checks · GET …/mine` 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F2-14.json`(시험 클라이언트 실측) ·
+          게이트 `scripts/verify_spec_fws.py` 행 PASS · 분모 293 불변. 넷 중 하나라도 빠지면 별표로 되돌린다.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f2.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-14.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
+      - id: FWS-F2-15
+        title: 근무 외 차단·담당 구역
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AL · 차선 N2] 별표 승격 — `GET/POST /api/fws/notify-prefs (F1-12 재사용)` 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F2-15.json`(시험 클라이언트 실측) ·
+          게이트 `scripts/verify_spec_fws.py` 행 PASS · 분모 293 불변. 넷 중 하나라도 빠지면 별표로 되돌린다.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f2.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-15.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
       - id: DSM-U2-03
         title: 상황판단회의 기록
         status: 구현
