@@ -1,16 +1,17 @@
 {
   "version": 1,
-  "turn": "AL",
-  "phase": "report_ready",
-  "wo": null,
-  "report": "docs/workorders/WO-GX-20260928-AL_report.md",
-  "next_turn": "AM",
+  "turn": "AM",
+  "phase": "retired",
+  "wo": "docs/workorders/WO-GX-20260928-16_턴AM_위임확대_6시간턴_기능100로드맵_20260928.md",
+  "report": null,
+  "next_turn": "AN",
   "next_wo": null,
-  "updated_at": "2026-09-28T11:45:00+09:00",
-  "updated_by": "yeongsil",
-  "ceo_question": "「dist_al 올려라」(OPS-26 ③ · 대장 커밋 · V 여섯째) · LAW-08 여섯 · U6 · gx-smoke 경보 · 세종 ①~⑥",
+  "updated_at": "2026-09-28T13:40:00+09:00",
+  "updated_by": "sejong",
+  "ceo_question": "삭제 2(시험 DB 넷 · gx-portfwd) · 손 ㉠ 권한 규칙 두 줄",
   "retry_after": null,
   "turns_today": 1,
-  "pause": false,
-  "notes": "턴 AL 보고(11:45) · 세종 WO 없이 대표 한 마디로 착수 · 닫은 절 11(누계 24) · 기능명세 36.3 % · 상용 59.9 · 전량 2,344/0 · 화면 말 6행 · 진화대 여럿 병합 수정 · 대장은 배포 뒤 커밋."
+  "pause": true,
+  "notes": "대표 09-28 「루프는 삭제할 것」 — 예약 세종·감시기 폐기 · 이 파일은 기록용 · 착수는 대화형(RESUME_NEXT 읽고 시작). WO-16 발행(대화형 세종 · 예약 세종 끊김 대체) · 위임 갱신: 대표=삭제·되돌리기만 · 6시간 턴 · P-374 dist_al 올려라 · P-375 push 영실 · 기능 ≥30 절 · 온보딩 여섯째.",
+  "sejong_last_run": "2026-09-28T13:40:00+09:00"
 }
