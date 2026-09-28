@@ -1,17 +1,17 @@
 {
   "version": 1,
   "turn": "AM",
-  "phase": "retired",
+  "phase": "report_ready",
   "wo": "docs/workorders/WO-GX-20260928-16_턴AM_위임확대_6시간턴_기능100로드맵_20260928.md",
-  "report": null,
+  "report": "docs/workorders/WO-GX-20260928-16_report.md",
   "next_turn": "AN",
   "next_wo": null,
-  "updated_at": "2026-09-28T13:40:00+09:00",
-  "updated_by": "sejong",
+  "updated_at": "2026-09-28T20:00:00+09:00",
+  "updated_by": "yeongsil",
   "ceo_question": "삭제 2(시험 DB 넷 · gx-portfwd) · 손 ㉠ 권한 규칙 두 줄",
   "retry_after": null,
   "turns_today": 1,
   "pause": true,
-  "notes": "대표 09-28 「루프는 삭제할 것」 — 예약 세종·감시기 폐기 · 이 파일은 기록용 · 착수는 대화형(RESUME_NEXT 읽고 시작). WO-16 발행(대화형 세종 · 예약 세종 끊김 대체) · 위임 갱신: 대표=삭제·되돌리기만 · 6시간 턴 · P-374 dist_al 올려라 · P-375 push 영실 · 기능 ≥30 절 · 온보딩 여섯째.",
+  "notes": "턴 AM 보고(20:00 · 기록용 — 루프 폐기) · 배포 2 · push 영실 · 닫은 절 15(누계 39) · 기능명세 41.6 % · 상용 60.8 · 온보딩 29.0 · 「누른 뒤」 31/48 · 전량 2,448/0 · 감시기 삭제는 관리자 권한(대표 손).",
   "sejong_last_run": "2026-09-28T13:40:00+09:00"
 }

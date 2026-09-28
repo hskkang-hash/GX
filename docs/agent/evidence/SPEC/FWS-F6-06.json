@@ -1,12 +1,12 @@
 {
   "id": "FWS-F6-06",
   "title": "소방 119 출동 사건 연동(재난안전 App DSM 통해)",
-  "measured_at": "2026-09-28T09:28:55.524128+00:00",
+  "measured_at": "2026-09-28T10:43:10.407088+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_06_FireDepartmentLinkTest.test_link_reaches_dsm_field_replies",
   "request": {
     "method": "POST",
-    "path": "/api/fws/liaison/fire-events/11/fire-department-link?dispatch_no=119-2026-0091&note=%EA%B4%80%ED%95%A0+%EC%86%8C%EB%B0%A9%EC%84%9C+%EC%B6%9C%EB%8F%99",
+    "path": "/api/fws/liaison/fire-events/525/fire-department-link?dispatch_no=119-2026-0091&note=%EA%B4%80%ED%95%A0+%EC%86%8C%EB%B0%A9%EC%84%9C+%EC%B6%9C%EB%8F%99",
     "params": {
       "dispatch_no": "119-2026-0091",
       "note": "관할 소방서 출동"
@@ -15,11 +15,11 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 11,
+      "event_id": 525,
       "dispatch_no": "119-2026-0091",
       "note": "관할 소방서 출동",
-      "reply_id": 4,
-      "linked_at": "2026-09-28T09:28:55.505636+00:00"
+      "reply_id": 229,
+      "linked_at": "2026-09-28T10:43:10.386646+00:00"
     }
   },
   "what": "출동번호 기록이 K1 현장 회신(DSM 카드가 읽는 자리)에 그대로 도달한다 — 새 표 없이 DSM 재사용 실측"

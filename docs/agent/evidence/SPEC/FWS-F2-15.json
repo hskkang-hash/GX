@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-15",
   "title": "근무 외 차단·담당 구역",
-  "measured_at": "2026-09-28T09:25:06.254700+00:00",
+  "measured_at": "2026-09-28T10:42:54.306437+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_15_OffDutyBlockTest.test_off_duty_block_and_assigned_zone_save_then_read_back",
   "request": {

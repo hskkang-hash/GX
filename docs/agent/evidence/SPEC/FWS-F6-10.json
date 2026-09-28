@@ -1,29 +1,29 @@
 {
   "id": "FWS-F6-10",
   "title": "국립공원·국유림관리소 관할 사건 이첩",
-  "measured_at": "2026-09-28T09:28:59.163399+00:00",
+  "measured_at": "2026-09-28T10:43:15.005161+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_10_JurisdictionTransferTest.test_transfer_then_list_by_event",
   "request": {
     "method": "GET",
-    "path": "/api/fws/liaison/fire-events/15/jurisdiction-transfer",
+    "path": "/api/fws/liaison/fire-events/529/jurisdiction-transfer",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 15,
+      "event_id": 529,
       "count": 1,
       "transfers": [
         {
           "note": "발화지점 국립공원 경계 내",
-          "__seq__": 8,
-          "__hash__": "ff22c200463b3476d130b02e6b62bdde235aa663247313e9de66e87c53baec76",
-          "event_id": 15,
+          "__seq__": 233,
+          "__hash__": "6efb345d0aa43909976ed1c7d7f528cc4da6c95bbca7283a498860f004a0a8fc",
+          "event_id": 529,
           "org_type": "national_park",
           "target_org": "OO국립공원사무소",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
-          "transferred_at": "2026-09-28T09:28:59.115097+00:00"
+          "transferred_at": "2026-09-28T10:43:14.960119+00:00"
         }
       ]
     }

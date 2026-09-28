@@ -198,8 +198,11 @@ class RecordedBreakTest(TransactionTestCase):
                                               got=rec.got, want="c" * 64)
             self.assertNotIn(same_id_other_value.key, known,
                              f"#{rec.audit_id} 에 새로 생긴 끊김이 옛 기록 뒤에 숨는다")
-            other_kind = self._break(audit_id=rec.audit_id,
-                                     kind=evidence_chain.HASH_MISMATCH,
+            #: [턴 AM · P-379] 등재에 `hash_mismatch` 여섯이 들어왔다 — 「다른 종류」는 그 행과
+            #:   **다른** 종류여야 뜻이 산다(옛 판은 모두 prev_mismatch 라 늘 hash_mismatch 를 골랐다).
+            other = (evidence_chain.PREV_MISMATCH if rec.kind == evidence_chain.HASH_MISMATCH
+                     else evidence_chain.HASH_MISMATCH)
+            other_kind = self._break(audit_id=rec.audit_id, kind=other,
                                      got=rec.got, want=rec.want)
             self.assertNotIn(other_kind.key, known,
                              f"#{rec.audit_id} 의 **다른 종류**의 끊김이 기록 뒤에 숨는다")

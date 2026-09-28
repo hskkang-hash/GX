@@ -1,12 +1,12 @@
 {
   "id": "FWS-F2-03",
   "title": "이동·도착 회신(GPS)",
-  "measured_at": "2026-09-28T09:24:57.655312+00:00",
+  "measured_at": "2026-09-28T10:42:44.528698+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_mission_detail_dispatch_arrive_release_chain",
   "request": {
     "method": "POST",
-    "path": "/api/fws/missions/9/response?action=arrived&lat=36.1&lng=127.2",
+    "path": "/api/fws/missions/497/response?action=arrived&lat=36.1&lng=127.2",
     "params": {
       "action": "arrived",
       "lat": 36.1,
@@ -16,18 +16,18 @@
   "response": {
     "status": 200,
     "body": {
-      "mission_id": 9,
+      "mission_id": 497,
       "action": "arrived",
-      "arrived_at": "2026-09-28T09:24:57.520181+00:00",
+      "arrived_at": "2026-09-28T10:42:44.449842+00:00",
       "elapsed_minutes": 5.0,
       "within_30_min": true,
-      "event_id": 9,
+      "event_id": 497,
       "from": "acknowledged",
       "to": "in_progress",
       "allowed_next": [
         "closed"
       ],
-      "audit_id": 36,
+      "audit_id": 176,
       "event_advanced": true
     }
   },

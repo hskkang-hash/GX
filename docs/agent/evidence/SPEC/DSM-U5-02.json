@@ -1,6 +1,6 @@
 {
   "id": "DSM-U5-02",
-  "measured_at": "2026-09-28T09:04:38.399096+00:00",
+  "measured_at": "2026-09-28T10:46:47.354763+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_spec_promotions.EvidenceExportTest.test_dump_dsm_u5_02_evidence",
   "request": {
@@ -13,10 +13,10 @@
     "body": {
       "items": [
         {
-          "log_id": 56,
-          "at": "2026-09-28T09:04:38.295222+00:00",
+          "log_id": 384,
+          "at": "2026-09-28T10:46:47.305839+00:00",
           "channel": "security",
-          "actor_id": 80,
+          "actor_id": 573,
           "actor": "",
           "client_ip": "10.0.0.9",
           "action": "/probe",
