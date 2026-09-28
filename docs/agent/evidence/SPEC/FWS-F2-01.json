@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-01",
   "title": "대기 상태 등록(주간·야간 5분대기조·위치)",
-  "measured_at": "2026-09-28T01:44:38.783393+00:00",
+  "measured_at": "2026-09-28T02:31:07.279941+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_01_StandbyStatusTest.test_set_then_read_back_standby_status",
   "request": {
@@ -17,7 +17,7 @@
         "lat": 36.4,
         "lng": 127.4
       },
-      "set_at": "2026-09-28T01:44:38.744055+00:00"
+      "set_at": "2026-09-28T02:31:07.244932+00:00"
     }
   },
   "what": "POST 로 등록한 대기 상태(야간)·위치가 이후 GET 재조회에 그대로 보인다 — 등록·위치 실측(자원 배치판 표시는 F3 화면 소유라 범위 밖)"
