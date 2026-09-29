@@ -13,11 +13,14 @@ from apps.fws.api_admin import FwsAdminAPI
 from apps.fws.api_office import FwsOfficeAPI
 from apps.fws.api_office2 import FwsOffice2API
 from apps.fws.api_n1 import FwsN1API
+from apps.fws.api_command import FwsCommandAPI
 
 fws_api = NinjaExtraAPI(urls_namespace="fws")
 fws_api.register_controllers(FwsAPI)
 # 턴 AN · 차선마다 제 파일 하나(조율자 등록 · 한 파일은 한 차선)
 fws_api.register_controllers(FwsOfficeAPI, FwsOffice2API, FwsAdminAPI, FwsN1API)
+# 턴 AO · 차선 N2
+fws_api.register_controllers(FwsCommandAPI)
 
 urlpatterns = [
     path("", fws_api.urls),

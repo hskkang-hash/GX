@@ -23,4 +23,6 @@ export const fwsRoutes = {
   officeReport: { title: '산림과 보고', path: '/fws/office/report' },
   /** 산불 앱 기관 관리자 U5(턴 AN · 차선 N4) — 카메라·초소·마을·알림 규칙. */
   admin: { title: '산불 설정', path: '/fws/admin' },
+  /** F4 통합지휘본부장(턴 AO · 차선 N2) — 명세 FWS-F4 가 정본. */
+  command: { title: '산불 지휘', path: '/fws/command' },
 };

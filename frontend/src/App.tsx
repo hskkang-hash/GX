@@ -198,6 +198,7 @@ import { CustomRoutes } from './services/API';
 import BuildVersion from './features/dsm/components/BuildVersion';
 import { KICK_SENTENCE } from './features/dsm/constants/kick';
 import { dsm2Routes } from './features/dsm/routes';
+import { opsRoutes } from './features/ops/routes';
 import { dsmU24Redirects, dsmU24Routes } from './features/dsm/routes.u24';
 import { fwsRoutes } from './features/fws/routes'; // P-357 — 산불감시 현장(WO-15 §5)
 import { resolveHome } from './features/nav/roleHome'; // P-141 · 첫 화면은 이 한 곳이 정한다
@@ -279,6 +280,8 @@ const FwsDroneHome = lazy(() => import('./features/fws/pages/DroneHome'));
 const FwsOfficeHome = lazy(() => import('./features/fws/pages/OfficeHome'));
 const FwsOfficeReport = lazy(() => import('./features/fws/pages/OfficeReport'));
 const FwsAdminHome = lazy(() => import('./features/fws/pages/AdminHome'));
+const FwsCommandHome = lazy(() => import('./features/fws/pages/CommandHome'));
+const OpsHome = lazy(() => import('./features/ops/pages/OpsHome'));
 const DsmPrivacyRequests = lazy(
   () => import('./features/dsm/pages/PrivacyRequests'),
 );
@@ -820,6 +823,9 @@ function App() {
             { path: fwsRoutes.office.path, element: <FwsOfficeHome /> },
             { path: fwsRoutes.officeReport.path, element: <FwsOfficeReport /> },
             { path: fwsRoutes.admin.path, element: <FwsAdminHome /> },
+            { path: fwsRoutes.command.path, element: <FwsCommandHome /> },
+            // ── 턴 AO · 플랫폼 운영자(U0) — 최상위 리터럴 `/ops` ──
+            { path: opsRoutes.home.path, element: <OpsHome /> },
             // ── 모바일 · 이동 중 수신 모드 (U3 · 차선 D) ──────────────────
             //   M1 은 발송 기록이 정본이다(이벤트 목록이 아니다). 상세는 목록의
             //   값을 물려받지 않고 서버에 다시 묻는다 — 문지기가 목록에만 서고
