@@ -38,3 +38,8 @@
 - 되돌리기(스크립트는 스크래치 바인드 — 지우는 날 금고 `C:\GuardianX-vault\recreate\gx_portfwd.py` 로 옮긴다):
   `MSYS_NO_PATHCONV=1 docker run -d --name gx-portfwd --network gx-main-network -p 127.0.0.1:3002:3002 -p 127.0.0.1:8000:8000 -v C:/GuardianX-vault/recreate/gx_portfwd.py:/gx_portfwd.py:ro --entrypoint python guardianx-backend:latest /gx_portfwd.py`
 - inspect 원본: `C:\GuardianX-vault\recreate\gx-portfwd.inspect.json`.
+
+## 삭제 집행 — 2026-09-29 17:5x (대표 「gx-portfwd 지워라」 · 대화창)
+- `docker rm -f gx-portfwd` → 남은 컨테이너 0 · 호스트 `localhost:8000` 닫힘(000) · 8500 건강 200.
+- GA 재대조: 상용 **61.1 %**(전과 같음) · 닫힌 절 127/208(같음) · FAIL 0 · 「못 쟀다」 줄 6 → 6(차이 0).
+- 되돌리기 한 줄은 위 §지우기 그대로(스크립트 · inspect 는 금고).
