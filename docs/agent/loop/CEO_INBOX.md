@@ -74,3 +74,9 @@
 
 ## 2026-09-29 · 영실(턴 AN 보고)
 - [ ] 2026-09-29 · 영실 · **실기기 웹푸시 도달 1(손 · 5분)** — 크롬 `http://localhost:8500` · `gxseed_u1_operator`(비밀번호 = `.env.gates` 의 `GX_SEED_ROLE_PASSWORD`) → `/m/settings` → 「이 기기 알림(웹푸시)」 켜기 → 시험 알림 → `[훈련]` 제목이 떴으면 `[x]`
+
+## 2026-09-30 · 세종(대화형 · WO-18 · 턴 AO) — 새 결정 0 · 청구 여섯 전부 세종 판정(P-406~P-411)
+- [x] 2026-09-30 · 세종 · **`gx-portfwd`(P-412)** — 영실 보류 옳음 · 대표 「지워라」 유효 · 전제만 정정: GA 게이트 주소를 `gx-nginx-e:8500` 으로 옮긴 뒤 삭제 · 되돌리기 `docker run` 한 줄 · 다시 여쭙지 않음
+- [ ] 2026-09-30 · 세종 · **㉠ 실기기 웹푸시 도달 1(손 · 5분)** — 크롬 `http://localhost:8500` → `gxseed_u1_operator`(비밀번호 = `.env.gates` 의 `GX_SEED_ROLE_PASSWORD`) → `/m/settings` 「이 기기 알림」 켜기 → 시험 알림 → `[훈련]` 떴는지 한마디
+- [ ] 2026-09-30 · 세종 · **㉡ 감시기 삭제 확인** — 관리자 PowerShell `Get-ScheduledTask -TaskName "GuardianX-Yeongsil"` 없으면 `[x]` · 있으면 `Unregister-ScheduledTask … -Confirm:$false`
+- (열린 채) ㉣ 스테이징·운영 주소 — 열여덟 턴째
