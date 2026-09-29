@@ -1,0 +1,67 @@
+{
+  "id": "FWS-U5-03",
+  "title": "마을·대피소·요양시설 등록(대피 대상 자동 산출)",
+  "measured_at": "2026-09-29T03:45:46.120839+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_u5.U5_03_EvacTargetsTest.test_registering_villages_and_shelters_auto_computes_targets",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/admin/evac-targets",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "entities": [
+        {
+          "kind": "shelter",
+          "name": "만안초 체육관",
+          "note": "",
+          "saved_at": "2026-09-29T03:45:46.089094+00:00",
+          "headcount": 400
+        },
+        {
+          "kind": "care_facility",
+          "name": "○○요양원",
+          "note": "",
+          "saved_at": "2026-09-29T03:45:46.062117+00:00",
+          "headcount": 41
+        },
+        {
+          "kind": "village",
+          "name": "안양천마을",
+          "note": "",
+          "saved_at": "2026-09-29T03:45:46.031031+00:00",
+          "headcount": 312
+        }
+      ],
+      "count": 3,
+      "evacuee_target_total": 353,
+      "shelter_capacity_total": 400,
+      "shelter_covers_target": true
+    }
+  },
+  "what": "마을·요양시설·대피소 셋을 등록한 뒤 GET .../admin/evac-targets 가 손으로 적는 합계 칸 없이 headcount 를 더해 대피 대상 총원을 자동 산출한다(312+41=353) — 완결조건(대피 대상 자동 산출) 실측",
+  "title_parts": [
+    {
+      "part": "마을",
+      "where": "kind=village",
+      "status": "measured"
+    },
+    {
+      "part": "대피소",
+      "where": "kind=shelter",
+      "status": "measured"
+    },
+    {
+      "part": "요양시설",
+      "where": "kind=care_facility",
+      "status": "measured"
+    },
+    {
+      "part": "대피 대상 자동 산출",
+      "where": "evacuee_target_total",
+      "status": "measured"
+    }
+  ]
+}

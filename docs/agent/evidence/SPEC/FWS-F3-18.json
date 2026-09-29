@@ -1,0 +1,41 @@
+{
+  "id": "FWS-F3-18",
+  "title": "계도·단속 통계 · 입산통제구역 관리",
+  "title_parts": [
+    {
+      "part": "계도·단속 통계",
+      "where": "응답 by_kind·total(patrol_enforcement_stats)",
+      "status": "구현 — guidance 1건 실측(본인 실적 — 감사 표에 테넌트 칸이 없어 조직 전체 집계는 범위 밖, patrol.py 와 같은 한계)"
+    },
+    {
+      "part": "입산통제구역 관리",
+      "where": "응답 zones[](set_entry_control_zone·entry_control_zones)",
+      "status": "구현 — 설정→조회 실측"
+    }
+  ],
+  "measured_at": "2026-09-29T03:10:47.628792+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f3b.F3_18_PatrolEnforcementTest.test_record_stats_and_zone_management",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/office2/entry-control-zones",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "zones": [
+        {
+          "set_at": "2026-09-29T03:10:47.588549+00:00",
+          "status": "active",
+          "__seq__": 16,
+          "__hash__": "275c6a6550d1cf9215d25d4f6d4307ea158827ea3fd97034d59c84c9fda24242",
+          "zone_name": "OO봉 일대",
+          "__prev_hash__": "afcdf0785b63293d77fa9a4988bebed6344c5438a4cea671ee2eb836aaaa15e2"
+        }
+      ],
+      "scope": "mine"
+    }
+  },
+  "what": "계도 기록 1건 → 통계 집계, 입산통제구역 설정 1건 → 재조회 실측"
+}

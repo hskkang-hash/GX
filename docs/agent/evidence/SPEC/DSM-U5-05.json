@@ -1,6 +1,6 @@
 {
   "id": "DSM-U5-05",
-  "measured_at": "2026-09-28T10:46:37.493821+00:00",
+  "measured_at": "2026-09-29T03:30:09.636109+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u5_05_evidence",
   "request": {
@@ -15,10 +15,47 @@
     "body": {
       "imported": 2,
       "row_ids": [
-        367,
-        368
+        43,
+        44
       ]
     }
   },
-  "what": "4조 3교대 근무표 CSV 2줄을 실제로 업로드해 저장했다 — imported=2 가 응답에 실렸다."
+  "what": "4조 3교대 근무표 CSV 2줄을 실제로 업로드해 저장했다 — imported=2 가 응답에 실렸다.",
+  "title_parts": [
+    {
+      "part": "CSV 업로드",
+      "where": "POST /shifts/import",
+      "status": "있음"
+    },
+    {
+      "part": "shifts 저장",
+      "where": "감사 이력 대장(재업로드=최근 줄 승)",
+      "status": "있음"
+    },
+    {
+      "part": "표(출력)",
+      "where": "GET /shifts",
+      "status": "있음"
+    },
+    {
+      "part": "근무자 자동 조회(핵심 사실)",
+      "where": "[턴 AN] GET /shifts/on-duty · shift_roster_service.current_workers(ShiftOnDutyTest)",
+      "status": "있음(신규)"
+    },
+    {
+      "part": "인계 메모 근무자 자동",
+      "where": "자동 조회 함수는 섰으나 handover_service.py(다른 차선 소유)에 잇는 한 줄이 아직 없다 — 조율자 전달",
+      "status": "부분(연결 대기)"
+    },
+    {
+      "part": "일지 근무자 자동",
+      "where": "관제일지(DSM-U1-04) 자체가 이 저장소에 없다",
+      "status": "없음(범위 밖 — 별도 절)"
+    },
+    {
+      "part": "완결조건 「일지 근무자 = 편성표」",
+      "where": "근무자는 자동으로 나오나(위) 받을 일지가 없다",
+      "status": "부분(안쪽 사실만 충족)"
+    }
+  ]
 }

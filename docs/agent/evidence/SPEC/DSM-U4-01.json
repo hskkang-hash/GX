@@ -1,27 +1,28 @@
 {
   "id": "DSM-U4-01",
-  "measured_at": "2026-09-28T10:46:37.218548+00:00",
+  "measured_at": "2026-09-29T03:30:09.404407+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u4_01_evidence",
   "request": {
     "method": "POST",
     "path": "/api/dsm/situation-reports",
     "body": {
-      "event_id": 678,
+      "event_id": 5,
       "kind": "최초"
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "report_id": 363,
-      "event_id": 678,
+      "report_id": 39,
+      "event_id": 5,
       "report_no": 1,
       "kind": "최초",
-      "issued_at": "2026-09-28T10:46:37.197Z",
+      "issued_at": "2026-09-29T03:30:09.391Z",
       "elapsed_minutes": 1.0,
-      "actor_id": 557
+      "actor_id": 22
     }
   },
-  "what": "사건 하나에 제1보(최초)를 실제로 채번했다 — report_no=1 · elapsed_minutes 계산까지 응답에 실렸다. 손으로 지어낸 값 0."
+  "what": "사건 하나에 제1보(최초)를 실제로 채번했다 — report_no=1 · elapsed_minutes 계산까지 응답에 실렸다. 손으로 지어낸 값 0.",
+  "decision_note": "[턴 AN · P-392 · 결정 ⑤ 「안 산다」] HWPX 는 채우지 않는다 — DOCX 가 정본(`api_u24.py::situation_report_docx`)이고, HWPX 는 v1.2 옵션으로 미룬다. 출시 뒤 수요가 있으면 그때 표 후보로 다시 올린다."
 }

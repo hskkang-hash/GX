@@ -419,11 +419,152 @@ class RegulationConstantsTest(U4Fixture):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# [턴 AN · P-392 · 차선 N1] 반쪽 채움 ① — CBS 표준 문안 자동 생성
+# ═══════════════════════════════════════════════════════════════════════════
+class CbsDraftStandardTemplateTest(U4Fixture):
+    def test_blank_message_autofills_the_standard_template(self) -> None:
+        resp = self.client.post(
+            CBS_DRAFTS, {"kind": "안전안내", "region": "정왕동", "message": ""},
+            content_type="application/json", **_bearer(self.user_a))
+        self.assertEqual(200, resp.status_code, resp.content[:300])
+        body = resp.json()
+        self.assertTrue(body["auto_generated"], "표준 문안 자동 생성 표식이 없습니다.")
+        self.assertIn("정왕동", body["message"])
+        self.assertLessEqual(len(body["message"]), 90)
+
+    def test_hand_written_message_is_not_overwritten(self) -> None:
+        resp = self.client.post(
+            CBS_DRAFTS,
+            {"kind": "안전안내", "region": "정왕동", "message": "직접 쓴 문안"},
+            content_type="application/json", **_bearer(self.user_a))
+        self.assertEqual(200, resp.status_code, resp.content[:300])
+        body = resp.json()
+        self.assertFalse(body["auto_generated"])
+        self.assertEqual("직접 쓴 문안", body["message"])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# [턴 AN · P-392 · 차선 N1] 반쪽 채움 ② — 통제현황 일일보고 자동 반영
+# ═══════════════════════════════════════════════════════════════════════════
+class ControlBoardDailyReportTest(U4Fixture):
+    def test_daily_report_reflects_current_stage_counts(self) -> None:
+        created = self.client.post(
+            CONTROL_POINTS, {"name": "일일보고시험지점"},
+            content_type="application/json", **_bearer(self.user_a))
+        self.assertEqual(200, created.status_code, created.content[:300])
+        point_id = created.json()["point_id"]
+
+        cache.clear()
+        resp = self.client.get(f"{CONTROL_POINTS}/daily-report", **_bearer(self.user_a))
+        self.assertEqual(200, resp.status_code, resp.content[:300])
+        body = resp.json()
+        self.assertIn("as_of", body)
+        self.assertGreaterEqual(body["point_count"], 1)
+        self.assertIn("도달", body["by_stage"])
+        self.assertTrue(any(p["point_id"] == point_id for p in body["points"]))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# [턴 AN · P-392 · 차선 N1] 반쪽 채움 ③ — 영상 제공 실제 마스킹 파이프라인 실행
+# ═══════════════════════════════════════════════════════════════════════════
+class VideoAccessMaskingTest(U4Fixture):
+    @staticmethod
+    def _sample_jpeg_b64() -> str:
+        import base64
+        import io
+
+        from PIL import Image
+
+        image = Image.new("RGB", (64, 64), color=(200, 30, 30))
+        buf = io.BytesIO()
+        image.save(buf, format="JPEG")
+        return base64.b64encode(buf.getvalue()).decode("ascii")
+
+    def test_provide_with_image_actually_masks_it(self) -> None:
+        created = self.client.post(
+            VIDEO_ACCESS,
+            {"requester_org": "시흥경찰서", "doc_no": "형사과-2026-777",
+             "purpose": "수사"},
+            content_type="application/json", **_bearer(self.user_a))
+        request_id = created.json()["request_id"]
+
+        cache.clear()
+        approved = self.client.post(
+            f"{VIDEO_ACCESS}/{request_id}/approve", {},
+            content_type="application/json", **_bearer(self.user_a))
+        self.assertEqual(200, approved.status_code, approved.content[:300])
+
+        cache.clear()
+        resp = self.client.post(
+            f"{VIDEO_ACCESS}/{request_id}/provide",
+            {"method": "MinIO 링크", "image_b64": self._sample_jpeg_b64()},
+            content_type="application/json", **_bearer(self.user_a))
+        self.assertEqual(200, resp.status_code, resp.content[:300])
+        masking = resp.json()["masking"]
+        self.assertTrue(masking["applied"], "마스킹이 실행되지 않았습니다.")
+        self.assertGreater(masking["masked_bytes"], 0)
+        self.assertTrue(masking["masked_sha12"])
+
+    def test_provide_without_image_still_works_as_before(self) -> None:
+        created = self.client.post(
+            VIDEO_ACCESS,
+            {"requester_org": "시흥경찰서", "doc_no": "형사과-2026-778",
+             "purpose": "수사"},
+            content_type="application/json", **_bearer(self.user_a))
+        request_id = created.json()["request_id"]
+
+        cache.clear()
+        self.client.post(
+            f"{VIDEO_ACCESS}/{request_id}/approve", {},
+            content_type="application/json", **_bearer(self.user_a))
+
+        cache.clear()
+        resp = self.client.post(
+            f"{VIDEO_ACCESS}/{request_id}/provide", {"method": "MinIO 링크"},
+            content_type="application/json", **_bearer(self.user_a))
+        self.assertEqual(200, resp.status_code, resp.content[:300])
+        self.assertFalse(resp.json()["masking"]["applied"])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# [턴 AN · P-392 · 차선 N1] 반쪽 채움 ④ — 근무자 자동 조회
+# ═══════════════════════════════════════════════════════════════════════════
+class ShiftOnDutyTest(U4Fixture):
+    def test_on_duty_parses_members_from_the_uploaded_roster(self) -> None:
+        resp = self.client.post(
+            SHIFTS_IMPORT, {"csv_text": ShiftRosterTest.GOOD_CSV},
+            content_type="application/json", **_bearer(self.user_a))
+        self.assertEqual(200, resp.status_code, resp.content[:300])
+
+        cache.clear()
+        on_duty = self.client.get(
+            f"{SHIFTS}/on-duty", {"date": "2026-09-28"}, **_bearer(self.user_a))
+        self.assertEqual(200, on_duty.status_code, on_duty.content[:300])
+        body = on_duty.json()
+        self.assertEqual("2026-09-28", body["date"])
+        team1 = next(t for t in body["teams"] if t["team"] == "1조")
+        self.assertEqual(["홍길동", "김철수"], team1["members"])
+        self.assertEqual("주간", team1["shift"])
+
+    def test_on_duty_defaults_to_today_and_stays_tenant_scoped(self) -> None:
+        self.client.post(
+            SHIFTS_IMPORT, {"csv_text": ShiftRosterTest.GOOD_CSV},
+            content_type="application/json", **_bearer(self.user_b))
+
+        cache.clear()
+        mine = self.client.get(f"{SHIFTS}/on-duty", **_bearer(self.user_a))
+        self.assertEqual(200, mine.status_code)
+        self.assertEqual([], mine.json()["teams"])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # P-356 ② — 증거 파일 기계 출력
 # ═══════════════════════════════════════════════════════════════════════════
 class EvidenceExportTest(U4Fixture):
     def _dump(self, spec_id: str, *, test: str, method: str, path: str,
-             req_body, status: int, resp_body, what: str) -> None:
+             req_body, status: int, resp_body, what: str,
+             title_parts: list[dict] | None = None,
+             decision_note: str = "") -> None:
         payload = {
             "id": spec_id,
             "measured_at": timezone.now().isoformat(),
@@ -433,6 +574,13 @@ class EvidenceExportTest(U4Fixture):
             "response": {"status": status, "body": resp_body},
             "what": what,
         }
+        #: [턴 AN · P-392] 「제목이 부르는 것 ↔ 있는 것」 표 — 빈 칸 0(협약 §끝낼 때).
+        if title_parts is not None:
+            payload["title_parts"] = title_parts
+        #: [턴 AN · P-392 결정 ⑤] DSM-U4-01(HWPX) 처럼 **채우지 않기로 정한** 절은
+        #: 전체 표 대신 사유 한 줄만 남긴다.
+        if decision_note:
+            payload["decision_note"] = decision_note
         with allow_evidence_writes(
                 "P-356 ② DSM-U4 절 실측 증거(차선 N4·턴 AM) — pytest 가 방금 두드린 "
                 "HTTP 왕복을 그대로 적는다(손으로 옮기지 않는다)"):
@@ -455,7 +603,11 @@ class EvidenceExportTest(U4Fixture):
             req_body={"event_id": event_id, "kind": "최초"},
             status=resp.status_code, resp_body=resp.json(),
             what="사건 하나에 제1보(최초)를 실제로 채번했다 — report_no=1 · "
-                "elapsed_minutes 계산까지 응답에 실렸다. 손으로 지어낸 값 0.")
+                "elapsed_minutes 계산까지 응답에 실렸다. 손으로 지어낸 값 0.",
+            decision_note="[턴 AN · P-392 · 결정 ⑤ 「안 산다」] HWPX 는 채우지 "
+                         "않는다 — DOCX 가 정본(`api_u24.py::situation_"
+                         "report_docx`)이고, HWPX 는 v1.2 옵션으로 미룬다. "
+                         "출시 뒤 수요가 있으면 그때 표 후보로 다시 올린다.")
 
     def test_dump_dsm_u4_03_evidence(self) -> None:
         resp = self.client.post(
@@ -470,7 +622,26 @@ class EvidenceExportTest(U4Fixture):
             req_body={"kind": "긴급", "region": "정왕동", "message": "즉시 대피"},
             status=resp.status_code, resp_body=resp.json(),
             what="재난문자 초안 한 건을 실제로 만들었다 — 글자수(4/157) 검사를 "
-                "통과한 실측값이 그대로 응답에 있다.")
+                "통과한 실측값이 그대로 응답에 있다.",
+            title_parts=[
+                {"part": "유형·구역 선택", "where": "create_draft(kind, region)",
+                 "status": "있음"},
+                {"part": "표준 문안(자동 생성)",
+                 "where": "[턴 AN] u4_regulations.CBS_STANDARD_TEMPLATE · "
+                         "message 를 비우면 create_draft 가 자동으로 채운다"
+                         "(CbsDraftStandardTemplateTest)",
+                 "status": "있음(신규)"},
+                {"part": "글자 수 검사(90/157)",
+                 "where": "u4_regulations.CBS_LEN_LIMIT", "status": "있음"},
+                {"part": "승인권자 결재 요청",
+                 "where": "POST /cbs-drafts/{id}/approve", "status": "있음"},
+                {"part": "발송은 행안부 시스템(이 제품은 안 함)",
+                 "where": "발송 버튼 없음 — 명세 그대로", "status": "있음(설계로 보장)"},
+                {"part": "발송 기록", "where": "POST /cbs-drafts/{id}/sent",
+                 "status": "있음"},
+                {"part": "야간(21~06시) 안전안내 경고",
+                 "where": "night_warning 플래그", "status": "있음"},
+            ])
 
     def test_dump_dsm_u4_04_evidence(self) -> None:
         resp = self.client.post(
@@ -485,7 +656,26 @@ class EvidenceExportTest(U4Fixture):
             req_body={"name": "하천산책로", "evacuee_count": 5},
             status=resp.status_code, resp_body=resp.json(),
             what="통제 개소 등록(=도달 시각) 한 건을 실제로 남겼다 — 대피 인원 "
-                "칸까지 같은 줄에 실렸다.")
+                "칸까지 같은 줄에 실렸다.",
+            title_parts=[
+                {"part": "통제 개소 등록", "where": "POST /control-points",
+                 "status": "있음"},
+                {"part": "도달·결정·실행·해제 4시각",
+                 "where": "u4_regulations.CONTROL_STAGE_ORDER · advance()",
+                 "status": "있음"},
+                {"part": "대피 인원·장소",
+                 "where": "evacuee_count · evacuation_site", "status": "있음"},
+                {"part": "현황판(출력)", "where": "GET /control-points",
+                 "status": "있음"},
+                {"part": "일일보고 자동 반영",
+                 "where": "[턴 AN] GET /control-points/daily-report · "
+                         "control_board_service.daily_reflection"
+                         "(ControlBoardDailyReportTest)",
+                 "status": "있음(신규)"},
+                {"part": "controls 모델(처리)",
+                 "where": "감사 이력 대장(새 표 0 — AppStaysThinTest 와 같은 원칙)",
+                 "status": "있음(다른 모양 — 완결조건과 무관)"},
+            ])
 
     def test_dump_dsm_u4_07_evidence(self) -> None:
         resp = self.client.post(
@@ -502,7 +692,26 @@ class EvidenceExportTest(U4Fixture):
             req_body={"requester_org": "시흥경찰서", "doc_no": "형사과-2026-200",
                      "purpose": "수사"},
             status=resp.status_code, resp_body=resp.json(),
-            what="영상 제공 요청(공문번호·목적) 접수 한 건을 실제로 대장에 남겼다.")
+            what="영상 제공 요청(공문번호·목적) 접수 한 건을 실제로 대장에 남겼다.",
+            title_parts=[
+                {"part": "수사기관 요청 접수(공문번호·목적·범위)",
+                 "where": "POST /video-access-requests", "status": "있음"},
+                {"part": "승인", "where": "POST .../approve", "status": "있음"},
+                {"part": "마스킹본 제공(가림 처리)",
+                 "where": "[턴 AN] provide(image_b64=...) → "
+                         "apps.dsm.privacy_request.mask_jpeg 실제 실행 · "
+                         "원본≠결과 해시로 확인(VideoAccessMaskingTest)",
+                 "status": "있음(신규)"},
+                {"part": "개인영상정보 관리대장 자동 기재",
+                 "where": "GET /video-access-requests(요청→승인→제공 세 단계)",
+                 "status": "있음"},
+                {"part": "원본 반출 0",
+                 "where": "함수 어디에도 원본 파일 경로 매개변수가 없다(구조로 보장)",
+                 "status": "있음"},
+                {"part": "연간 통계(출력)",
+                 "where": "목록 조회만 있고 연간 집계 배치는 없다",
+                 "status": "없음(범위 밖 — 별도 배치 필요)"},
+            ])
 
     def test_dump_dsm_u5_05_evidence(self) -> None:
         resp = self.client.post(
@@ -517,4 +726,25 @@ class EvidenceExportTest(U4Fixture):
             req_body={"csv_text": ShiftRosterTest.GOOD_CSV},
             status=resp.status_code, resp_body=resp.json(),
             what="4조 3교대 근무표 CSV 2줄을 실제로 업로드해 저장했다 — "
-                "imported=2 가 응답에 실렸다.")
+                "imported=2 가 응답에 실렸다.",
+            title_parts=[
+                {"part": "CSV 업로드", "where": "POST /shifts/import",
+                 "status": "있음"},
+                {"part": "shifts 저장", "where": "감사 이력 대장(재업로드=최근 줄 승)",
+                 "status": "있음"},
+                {"part": "표(출력)", "where": "GET /shifts", "status": "있음"},
+                {"part": "근무자 자동 조회(핵심 사실)",
+                 "where": "[턴 AN] GET /shifts/on-duty · "
+                         "shift_roster_service.current_workers(ShiftOnDutyTest)",
+                 "status": "있음(신규)"},
+                {"part": "인계 메모 근무자 자동",
+                 "where": "자동 조회 함수는 섰으나 handover_service.py(다른 차선 "
+                         "소유)에 잇는 한 줄이 아직 없다 — 조율자 전달",
+                 "status": "부분(연결 대기)"},
+                {"part": "일지 근무자 자동",
+                 "where": "관제일지(DSM-U1-04) 자체가 이 저장소에 없다",
+                 "status": "없음(범위 밖 — 별도 절)"},
+                {"part": "완결조건 「일지 근무자 = 편성표」",
+                 "where": "근무자는 자동으로 나오나(위) 받을 일지가 없다",
+                 "status": "부분(안쪽 사실만 충족)"},
+            ])

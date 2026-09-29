@@ -1,5 +1,5 @@
 /**
- * S-17 「외부 연계」 — API 키 발급·범위·폐기 · 웹훅 구독(+서명키) · **filters** · health
+ * S-17 「외부 연계」 — 인바운드 API 키 발급·범위·폐기 · 웹훅 구독(+서명키) · **filters** · health
  * (턴 T · 차선 U56 · P-164 U56 ①).
  *
  * ★★ 비밀 값은 **화면에 그리지 않는다** — 발급 응답에 한 번 오고, 이 화면은 그 값을
@@ -154,7 +154,7 @@ export default function IntegrationsPage() {
     [],
   );
 
-  // ── API 키 ───────────────────────────────────────────────────────────
+  // ── 인바운드 API 키 ───────────────────────────────────────────────────
   const keys = useDsmResource<ApiKeysOverview>(
     () => dsmGet(dsmU56IntegrationEndpoint.apiKeysOverview),
     [],

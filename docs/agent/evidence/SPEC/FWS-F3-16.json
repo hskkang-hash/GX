@@ -1,0 +1,82 @@
+{
+  "id": "FWS-F3-16",
+  "title": "통계 — 발생·면적·원인·시간대·구역·오인율·확인 시간·골든타임 준수율",
+  "title_parts": [
+    {
+      "part": "발생",
+      "where": "응답 occurrence_count",
+      "status": "구현 — 2건 이상 실측"
+    },
+    {
+      "part": "면적",
+      "where": "응답 area_ha_total(F3-14 최종보고 되짚기)",
+      "status": "구현 — 5.5ha 실측"
+    },
+    {
+      "part": "원인",
+      "where": "응답 cause_breakdown",
+      "status": "구현 — 입산자실화 1건 실측"
+    },
+    {
+      "part": "시간대",
+      "where": "응답 by_hour",
+      "status": "구현 — 시각별 집계 실측"
+    },
+    {
+      "part": "구역",
+      "where": "응답 by_zone",
+      "status": "구현 — 카메라 이름별 집계 실측"
+    },
+    {
+      "part": "오인율",
+      "where": "응답 false_alarm_rate_pct",
+      "status": "구현 — 판정된 2건 중 오인 1건 실측"
+    },
+    {
+      "part": "확인 시간",
+      "where": "응답 verification_seconds_avg",
+      "status": "구현 — occurred_at→reviewed_at 평균 실측"
+    },
+    {
+      "part": "골든타임 준수율",
+      "where": "응답 golden_time_compliance_pct·golden_time_note",
+      "status": "근사 실측 — 확인 회신 30분 이내 비율로 근사(실제 헬기 투하·지상 도달 시각은 이 앱에 없다 · golden_time_note 에 명시, D-284)"
+    }
+  ],
+  "measured_at": "2026-09-29T03:10:44.466650+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f3b.F3_16_FireStatsTest.test_stats_covers_all_eight_parts",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/office2/stats/fires",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "since": null,
+      "until": null,
+      "occurrence_count": 2,
+      "by_hour": {
+        "2": 1,
+        "3": 1
+      },
+      "by_zone": {
+        "dsm-stream-A": 2
+      },
+      "area_ha_total": 5.5,
+      "area_measured_events": 1,
+      "cause_breakdown": {
+        "입산자실화": 1
+      },
+      "false_alarm_rate_pct": 50.0,
+      "false_alarm_reviewed_n": 2,
+      "verification_seconds_avg": 1500.1,
+      "verification_n": 2,
+      "golden_time_threshold_sec": 1800,
+      "golden_time_compliance_pct": 50.0,
+      "golden_time_note": "근사치 — 확인 회신(occurred_at→reviewed_at) 기준. 헬기 투하·지상 도달의 실제 시각은 이 앱이 갖고 있지 않다(그 시각을 쥔 커널의 공개 문은 분포(p50/p95)만 내고 사건별 원값을 안 낸다) — 숨기지 않고 이 칸에 적는다."
+    }
+  },
+  "what": "사건 2건(확정 1 · 오인 1) 뒤 GET stats/fires 가 발생·면적·원인·시간대·구역·오인율·확인 시간·골든타임 근사 여덟 칸을 전부 낸다 — 실측"
+}

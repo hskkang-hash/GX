@@ -1,0 +1,90 @@
+{
+  "id": "DSM-U5-01",
+  "title": "운영·관리 방침 항목 관리",
+  "measured_at": "2026-09-29T03:49:51.329220+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_dsm_u5_an.U5_01_PrivacyPolicyTest.test_save_reread_and_retention_matches_destruction_policy",
+  "request": {
+    "method": "POST",
+    "path": "/api/dsm/u5an/privacy-policy?purpose=%EC%82%B0%EB%B6%88+%EA%B0%90%EC%8B%9C+%EB%B0%8F+%EB%B0%A9%EB%B2%94&install_locations=%EC%A0%95%EB%AC%B8%C2%B7%EC%A3%BC%EC%B0%A8%EC%9E%A5&filming_scope=%EC%B6%9C%EC%9E%85%EB%A1%9C+%EC%A0%84%EB%B0%A9+30m&responsible_person=%EC%A0%95%EB%B3%B4%ED%86%B5%EC%8B%A0%EA%B3%BC%EC%9E%A5&access_grantees=%EC%A0%95%EB%B3%B4%ED%86%B5%EC%8B%A0%EA%B3%BC+%EB%8B%B4%EB%8B%B9%EC%9E%90+2%EB%AA%85&filming_hours=24%EC%8B%9C%EA%B0%84&viewing_procedure=%EC%97%B4%EB%9E%8C%EC%B2%AD%EA%B5%AC%EC%84%9C+%EC%A0%91%EC%88%98+%ED%9B%84+3%EC%9D%BC+%EC%9D%B4%EB%82%B4+%EC%B2%98%EB%A6%AC",
+    "params": {
+      "purpose": "산불 감시 및 방범",
+      "install_locations": "정문·주차장",
+      "filming_scope": "출입로 전방 30m",
+      "responsible_person": "정보통신과장",
+      "access_grantees": "정보통신과 담당자 2명",
+      "filming_hours": "24시간",
+      "viewing_procedure": "열람청구서 접수 후 3일 이내 처리"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "purpose": "산불 감시 및 방범",
+      "install_locations": "정문·주차장",
+      "filming_scope": "출입로 전방 30m",
+      "responsible_person": "정보통신과장",
+      "access_grantees": "정보통신과 담당자 2명",
+      "filming_hours": "24시간",
+      "viewing_procedure": "열람청구서 접수 후 3일 이내 처리",
+      "installed_camera_count": 1,
+      "retention_days": 30,
+      "retention_source": "운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 P-67 · config/retention_seed.py)",
+      "saved_at": "2026-09-29T03:49:51.277672+00:00",
+      "document_text": "GuardianX 재난안전관리 App — 영상정보 운영·관리 방침\n\n· 설치 목적: 산불 감시 및 방범\n· 설치 위치: 정문·주차장\n· 촬영 범위: 출입로 전방 30m\n· 관리책임자: 정보통신과장\n· 접근권한자: 정보통신과 담당자 2명\n· 촬영 시간: 24시간\n· 열람 절차: 열람청구서 접수 후 3일 이내 처리\n· 설치 대수: 1대(실측)\n· 보관 기간: 30일(파기 정책과 같은 값)"
+    }
+  },
+  "what": "POST .../u5an/privacy-policy 로 저장한 항목이 재조회에 그대로 보이고, retention_days 는 손으로 적는 칸이 아니라 apps.dsm.retention.retention_days()(파기가 실제로 보는 값)를 그대로 읽는다 — 완결조건 실측(VIDEO_RETENTION_DAYS=30 선언 시 방침의 보관 기간도 30)",
+  "title_parts": [
+    {
+      "part": "설치 목적",
+      "where": "purpose",
+      "status": "measured"
+    },
+    {
+      "part": "대수",
+      "where": "installed_camera_count",
+      "status": "measured"
+    },
+    {
+      "part": "위치",
+      "where": "install_locations",
+      "status": "measured"
+    },
+    {
+      "part": "촬영 범위",
+      "where": "filming_scope",
+      "status": "measured"
+    },
+    {
+      "part": "관리책임자",
+      "where": "responsible_person",
+      "status": "measured"
+    },
+    {
+      "part": "접근권한자",
+      "where": "access_grantees",
+      "status": "measured"
+    },
+    {
+      "part": "촬영 시간",
+      "where": "filming_hours",
+      "status": "measured"
+    },
+    {
+      "part": "보관 기간",
+      "where": "retention_days",
+      "status": "measured"
+    },
+    {
+      "part": "열람 절차",
+      "where": "viewing_procedure",
+      "status": "measured"
+    },
+    {
+      "part": "방침 문서 자동 생성",
+      "where": "document_text",
+      "status": "measured"
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "id": "FWS-F3-01",
+  "title": "산불 상황판 — 위험지수·위기경보·초소 근무·카메라 정상·진행 사건·자원 대기",
+  "measured_at": "2026-09-29T03:18:10.463648+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f3a.F3_01_DashboardTest.test_six_bands_present",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/office/dashboard",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "as_of": "2026-09-29T03:18:10.401455+00:00",
+      "risk_index": {
+        "level": "관심",
+        "season": "평시"
+      },
+      "fire_alert": {
+        "active": false,
+        "mountain_entry_banned": false
+      },
+      "post_duty": {
+        "on_duty": 1,
+        "total_officers": 1
+      },
+      "camera_status": {
+        "alive": 0,
+        "total": 1,
+        "never_seen": 1
+      },
+      "ongoing_incidents": {
+        "count": 1,
+        "items": [
+          {
+            "event_id": 1,
+            "severity": "critical",
+            "response_state": "occurred",
+            "occurred_at": "2026-09-29T03:17:10.323124+00:00"
+          }
+        ]
+      },
+      "resource_standby": {
+        "standby_day": 1,
+        "standby_night": 0,
+        "off_duty": 0
+      }
+    }
+  },
+  "what": "GET .../office/dashboard 가 여섯 띠(위험지수·위기경보·초소 근무·카메라 정상·진행 사건·자원 대기)를 한 번에 낸다 — 체크인·대기상태·사건 생성 뒤 각 띠가 분모와 함께 움직임을 실측",
+  "title_parts": [
+    {
+      "part": "위험지수",
+      "where": "response.risk_index(F1-03 재사용)",
+      "status": "present"
+    },
+    {
+      "part": "위기경보",
+      "where": "response.fire_alert(F1-03 재사용)",
+      "status": "present"
+    },
+    {
+      "part": "초소 근무",
+      "where": "response.post_duty(오늘 체크인 집계)",
+      "status": "present"
+    },
+    {
+      "part": "카메라 정상",
+      "where": "response.camera_status(UX-23 camera_pulse 재사용)",
+      "status": "present"
+    },
+    {
+      "part": "진행 사건",
+      "where": "response.ongoing_incidents(F-09 recent_events 재사용)",
+      "status": "present"
+    },
+    {
+      "part": "자원 대기",
+      "where": "response.resource_standby(F2-01 standby 집계)",
+      "status": "present"
+    }
+  ]
+}

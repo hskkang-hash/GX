@@ -105,6 +105,17 @@ def _write_evidence(clause_id: str, *, title: str, test_ref: str, method: str,
             "what": what,
         }
         out = EVIDENCE_DIR / f"{clause_id}.json"
+        #: [턴 AN · P-392] 다른 시험이 이 증거 위에 더한 「제목이 부르는 것 ↔ 있는 것」 표
+        #:   (`title_parts`)는 **보존한다** — 이 시험은 HTTP 왕복만 다시 적는다. 안 그러면
+        #:   전량 시험 순서에 따라 표가 지워져 O 게이트가 옛 승격으로 오판한다(FWS-F6-07).
+        if out.is_file():
+            try:
+                prev = json.loads(out.read_text(encoding="utf-8"))
+            except (ValueError, OSError):
+                prev = {}
+            for keep in ("title_parts", "title_parts_note"):
+                if keep in prev:
+                    payload[keep] = prev[keep]
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
                        encoding="utf-8")
 

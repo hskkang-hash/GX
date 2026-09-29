@@ -17,6 +17,7 @@ from apps.dsm.api_u4 import DsmU4API
 from apps.dsm.api_u24 import DsmU24API
 from apps.dsm.api_u56 import DsmU56API
 from apps.dsm.api_u5_perm import DsmU5PermAPI
+from apps.dsm.api_u5_an import DsmU5AnAPI
 from apps.dsm.law_api import DsmLawAPI
 
 dsm_api = NinjaExtraAPI(urls_namespace="dsm")
@@ -47,6 +48,7 @@ dsm_api.register_controllers(
     DsmU1API, DsmU3API, DsmU24API, DsmU56API,
     DsmFAPI, DsmFOpsAPI,
     DsmU5PermAPI, DsmU4API,
+    DsmU5AnAPI,  # 턴 AN · 차선 N4 — 맨 뒤(새 리터럴은 차선이 겹침 grep)
 )
 
 urlpatterns = [

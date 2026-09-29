@@ -1468,3 +1468,61 @@ S1 은 이제 **30.5/48(63.5%)** 로 내려가는 것이 옳다.
 - **오른 8.0 = 둘**: ① **규칙(P-377 · 세종 판정)** — 기계 사용자(U6)에게 셋째 조건은 해당 없음 → U6 여덟 회색이 초록 6 · 반 1 · 빨강 1(+6.5 · 넷째 회차와 같은 판정으로 돌아왔다) ② **화면 말 고침(턴 AL 차선 L)** — U3#19 · U5#9 · U5#10 반 → 초록(+1.5).
 - 남은 셋째 조건 ◐: U1#3 · U5#5 「결정 번호」는 **검출기의 거짓 양성**이었다(카메라 모델명 `GD-150Q` 안의 「D-150」 · 턴 AM 에 `verify_ui_copy` 결정 번호 정규식에 왼쪽 경계 + 짝 자기시험) — 다음 회차가 덮는다. U1#9 · U2#3 · U4#16 은 턴 AM 차선 L 이 상태 코드·감사 사유를 더 고쳤다(배포 뒤 재측).
 - 빨강 U6#4 = 웹훅 서명키(`WEBHOOK_SIGNING_KEYS`)가 컨테이너 환경에 없다 — 창 2b 항목.
+
+---
+
+## ★ 턴 AN 갈래 표(P-396) — 여섯째 회차(`turn_am_6.json`) 빨강·반 25행 전부
+
+턴 AN 차선 L. 여섯째 회차(29.0/48 · 빨강 13 · 반 12) 25행 전부에 갈래 하나씩을 단다.
+갈래는 셋: **(a) 말·술어**(L 이 화면 문구·계측 술어를 고치면 오르는 행) ·
+**(b) 기능 없음**(`docs/agent/roadmap/기능명세_미포함표_20260925.md` 의 절 번호가 닫히면 오르는 행) ·
+**(c) dj-core/§0.4 밖**(금지구역·인수 자산·계약 잠금·표본 상태 등 이 차선이 못 고치는 행 — 상한 표).
+
+⚠ **(c) 는 문자 그대로 dj-core 만이 아니다.** 조사해 보니 §0.4 금지구역(rj-core 임포트가 있는
+`frontend/src/features/MultiStreamMonitor` 등 인수 화면) · 계약 11조 설계 잠금 · **이 화면(dsm/mobile)
+파일 밖의 인수 자산**(`/roles`·`/device`·`/report-template` — `verify_ui_copy.py:389 SCOPE` 가 이미
+dsm/mobile/login 만 본다고 선을 그어 두었다) · **표본/데이터 상태**(그 회차의 씨앗이 해당 조건을
+안 채운 것 — 코드를 읽어 확인했고 결함을 못 찾았다) 넷을 한 상한 표로 묶었다. 그 이유·근거는 각 행에 적는다.
+
+### 빨강 13행
+
+| 행 | 증거(요약) | 갈래 | 비고 |
+|---|---|---|---|
+| U1#4 `/multi-stream-monitor` | 스트림 자리(video/canvas/stream) 0개 — 도달만(P-205) | **(c)** | `frontend/src/features/MultiStreamMonitor/index.tsx` 는 `'rj-core'` 를 임포트하는 인수 화면(§0.4 인접) — dsm/mobile 밖, `verify_ui_copy.py` SCOPE 밖. 미포함표에 해당 절 없음(드론·카메라 화면은 별개 자산) |
+| U1#8 `/dsm/events` | 처리 단계 값 0칸 [] | **(c)** | `EventList.tsx` 의 처리 단계 열은 `labelOf(RESPONSE_STATE_LABEL, v)` 로 정상 렌더됨(코드 확인) — 그 회차 질의(미처리 보기)에 서버가 0행을 낸 표본 상태로 보인다. 문구·기능 결함 아님 |
+| U1#11 `/dsm/queue` | 「실제로 확인·접수」 안 보임 — 보이는 단추 `['종결하기']` · **증거 자신이 「데이터 상태」라고 적음** | **(c)** | `FocusQueue.tsx::renderActions` 는 서버 `allowed_next` 만 그린다(D-399) — 초점 사건이 이미 미처리를 지난 상태였을 뿐, 화면 로직은 설계대로 동작 |
+| U2#2 `/dsm/events?preset=unhandled` | `response_state=occurred` 200 · 서버 0건 · 처리 단계 칸 0 | **(c)** | `EventList.tsx` 의 「정직한 회색」(0건 문구 분기)은 코드 확인상 정상 — 그 순간 미처리 사건이 0건이었던 표본 상태 |
+| U2#6 `/report-template` | templates 200=False · 표 행 0(◐ 상한) | **(c)** | `frontend/src/features/reportTemplate` 는 **택배 운송장 서식의 인수 화면**(`routes.u24.ts` 주석 — "인수 화면 `/report-template`" 명시) — dsm/mobile 밖, SCOPE 밖 |
+| U2#16 `/dsm/notify` | `notify-rules/list` 200=False(서버 규칙 0건) · 0건일 때 「없다」=True | **(c)** | `NotifySettings.tsx` 는 `isEmpty` 를 안 주므로 요청 실패 시 `StateBoundary` 오류 상자가 뜬다(코드 확인) — 화면이 "없다"를 그렸다면 요청 자체는 성공(200)했고 실제로 0건이었다는 뜻이라 "200=False" 표기와 화면 결과가 어떻게 같이 났는지는 이 턴만으로 확정 못 함(표본/판정기 쪽 의문 — 코드 결함은 못 찾음). click_completes.py 쪽 형제 행(U2#16)에는 이번 턴에 술어를 새로 달았다(과제③) |
+| U3#1 `/dsm/events/:id → /m/inbox` | POST notify [200] · deliveries 74→88 · **결과 문장=False** · `/m/inbox` 카드=False | **(a)** | 고칠 파일: `frontend/src/features/dsm/pages/EventDetail.tsx` — **이번 턴에 고쳤다.** `notify()` 가 `message.*` 토스트뿐이었다(사라지면 증거가 없다) → `notifyOutcome` 상태 칸(`data-gx="notify-outcome"`)을 더해 결과 문장이 남게 했다. `/m/inbox` 카드 미반영은 모바일 폴링 타이밍으로 보이며 이번 턴엔 안 건드렸다 |
+| U3#7 `/m/events/:id` | 단추 조치 시작 · POST response [] · 재조회 closed→closed · 감사 행=0 | **(c)** | `MobileEventDetail.tsx::advance` 의 되돌림(종결→조치중)은 **사유 입력 모달이 필수**(설계) — 자동 표본이 사유를 못 채워 요청 자체가 안 나갔을 가능성이 높다(코드는 의도된 동작) |
+| U3#14 `/m/events/:id`(모바일 실시간) | 모바일 실시간 자리 0개 — **증거 자신이 "계약 11조 설계 잠금 · 이 행은 ○ 다"라고 적음** | **(c)** | 명시적 영구 설계 잠금(모바일 라우터엔 자리 셋뿐) — 고칠 대상이 아니다 |
+| U4#11 `/device` | 「드론·로봇 장비 등록」 · 표 행 0 · 영문 메뉴(`ADMIN_HEADER`) | **(c)** | `frontend/src/features/device/*` 는 `App.tsx` 가 부르는 **인수 화면**(`ListRealityNote` 로 감싼 자리) — dsm/mobile 밖, SCOPE 밖 |
+| U4#15 `/dsm/events` | 「보고 표시」·「보고함」 둘 다 화면에 없다 | **(c)** | `EventList.tsx` 상급보고 열의 두 라벨은 코드에 실재한다(`'보고 표시'`/`'보고함'`) — 그 프리셋에 렌더된 행이 0건이었을 가능성(표본 상태). click_completes.py 쪽 형제 행(U4#15 「상급기관 제출 자료」)은 이번 턴에 **다른 사실**(읽기 전용 U4 는 이 문 자체가 403 — `test_u24_turn_t.py::test_read_only_role_cannot_check` 로 이미 잠긴 사실)로 술어를 달았다(과제③) — 「화면에 안 보인다」와 「그 계정은 애초에 못 만든다」는 다른 이야기라 같은 행 안에서도 두 원인이 섞여 있을 수 있다 |
+| U4#9 `/dsm/events/:id`(증빙 영상) | clip 문 [401] · 누를 단추 없음 — **증거 자신이 "추출은 계약 11조 설계 잠금" 이라고 적음** | **(c)** | 명시적 영구 설계 잠금 — `EventDetail.tsx:345` 는 표의 이름칸일 뿐 단추 자체가 없다 |
+| U6#4 `POST /webhook-subscriptions` | 구독 422 · 서명 붙은 발송 행 -1건(못 셈) | **(c)** | 이 문서 바로 위 절(★ 여섯째 회차)이 원인을 이미 적어 두었다: **웹훅 서명키(`WEBHOOK_SIGNING_KEYS`)가 컨테이너 환경에 없다 — 「창 2b」항목**(환경 변수 배선, 화면 문구도 기능명세 미포함도 아니다) |
+
+### 반 12행
+
+| 행 | 증거(요약) | 갈래 | 비고 |
+|---|---|---|---|
+| U1#2 `/dsm/dashboard` | 카메라 정상/이상 칸 없음 — 정본 표기 | **(c)** | 이 문서 위쪽 「★ 2026-09-05 턴 D 뒤 재측」 절이 이미 **의도적으로 ◐ 유지**를 기록했다(월 모드는 이 사람의 자리 화면이 아니다) — 정본이 이미 내린 결정, L 이 다시 판단할 자리 아님 |
+| U1#3 `/dsm/cameras/grid` | ◐ 상한(셋째 조건 — 결정 번호) | **(a)** | 고친 파일: `scripts/verify_ui_copy.py`(결정 번호 정규식 왼쪽 경계 — **이미 고쳐짐**, 턴 AM 차선 L). `python scripts/verify_ui_copy.py` 재실행 결과 dsm/mobile/login 스코프 **잔여 0건** 확인(오늘 재확인) — 재측 시 오를 것으로 예상, 이번 턴에 추가로 손대지 않았다 |
+| U1#9 `/dsm/events/:id` | ◐ 상한(셋째 조건 — 절 ID·마크다운 강조·상태 코드) | **(a)** | 고친 파일: `frontend/src/features/dsm/pages/EventDetail.tsx`(전이 화살표 문장에 `labelOf` 연결 — **이미 고쳐짐**, 턴 AM 차선 L 주석 `EventDetail.tsx:674` 확인). `verify_ui_copy.py` 잔여 0건으로 재확인 |
+| U2#3 `/dsm/events/:id`(U2) | 위와 같은 셋째 조건 | **(a)** | 위와 같은 파일·같은 수정으로 이미 해소됨(잔여 0건 재확인) |
+| U2#4 `/dsm/events/:id` | snapshot 200 · jpeg=True · `img naturalWidth>0`=0 | **(c)** | `frontend/src/features/dsm/components/EventSnapshot.tsx` 코드를 정독했다 — blob URL 로딩·상태 분기(없다/못 받았다/받았다) 모두 정상으로 보이고 뚜렷한 결함을 못 찾았다. 같은 부품을 쓰는 U3#3(모바일)은 이번 회차 초록이라 **타이밍/경합 가능성**이 있다 — 라이브 서버를 두드리지 않고는 이 턴에서 확정 못 한다 |
+| U3#16 `/m/settings` | PUT notify-prefs [200] · 반영=True · **화면 「저장됨」=False** | **(a)** | 고친 파일: `frontend/src/features/mobile/pages/MobileSettings.tsx` — **이번 턴에 고쳤다.** 저장 직후의 상태 칸은 "저장됨"을 말했지만, 새로고침 뒤에도 남는 줄(`data-gx="prefs-saved-state"`)은 "저장된 설정이 있습니다"로 **다른 낱말**을 썼다 — 하나로 모았다 |
+| U4#8 `/dsm/events` | 조합 검색(사건번호·주소·유형) 없음 → ◐ 상한(정본 표기) | **(c)** | `EventList.tsx` 에 사건번호·주소 검색은 **각각 따로** 이미 있다(코드 확인) — "한 칸에서 셋을 동시에" 조합하는 검색만 없고, 그 상한은 이미 "정본 표기"로 승인된 자리다(턴 AA 실측 주석) |
+| U4#16 `/dsm/audit` | ◐ 상한(셋째 조건 — 절 ID·마크다운·상태 코드) | **(a)** | `verify_ui_copy.py` 잔여 0건 재확인 — dsm 스코프 안에서 이미 해소됨(턴 AM 차선 L). `AuditLog.tsx` 를 직접 읽어도 절 ID·`**` 노출 자리를 못 찾음 |
+| U5#2 `/roles` | ◐ 상한(셋째 조건 — 영문 메뉴 `ADMIN_HEADER`·역할 코드) | **(c)** | `/roles` 는 `App.tsx:878` 이 부르는 **인수 화면**(`ListRealityNote` 로 감싼 관리자 전용 화면) — dsm 밖, `verify_ui_copy.py` SCOPE 밖(dsm/mobile/login 만 본다) |
+| U5#5 `/dsm/cameras/address` | ◐ 상한(셋째 조건 — 결정 번호) | **(a)** | U1#3 과 같은 원인·같은 수정(정규식 경계) — **이미 고쳐짐**, 잔여 0건 재확인 |
+| U5#15 `/dsm/metering` | metering 200=True · 화면에 %=False(상한 미선언) | **(b)** | 절 번호 **O-03 「라이선스·계량·청구」**(`기능명세_미포함표_20260925.md` 표1). `Metering.tsx` 코드 확인 — 이 화면은 %를 낼 **분모(한도/quota)** 개념 자체가 없다(있는 칸: 카메라 대수·사용자 수·이벤트 수·알림 수·저장 용량뿐, 상한 선언 없음). `SystemSettings.tsx` 의 저장 용량 %(있음)는 `GX_STORAGE_CAPACITY_GB` 라는 **선언된 한도**가 있어 가능한 것과 대조된다 — O-03 이 닫히면(이용 한도 선언 기능) 이 행이 오른다 |
+| U5#14 `/dsm/system` | ◐ 상한(셋째 조건 — 절 ID) | **(a)** | `verify_ui_copy.py` 잔여 0건 재확인. `SystemSettings.tsx` 를 직접 읽어도 절 ID 노출 자리를 못 찾음 — dsm 스코프 안에서 이미 해소됨(턴 AM 차선 L) |
+
+### 갈래 합계
+
+**(a) 말·술어 = 8** (U3#1 · U3#16 은 이번 턴에 직접 고침 · U1#3 · U1#9 · U2#3 · U4#16 · U5#5 · U5#14 여섯은 턴 AM 차선 L 이 이미 고쳐 두어 `verify_ui_copy.py` 잔여 0건으로 재확인만 함 — 「목표 6행」을 채우고도 남았다)
+**(b) 기능 없음 = 1** (U5#15 → O-03)
+**(c) dj-core/§0.4 밖(상한 표) = 16** (인수 자산 5 · 계약 11조 설계 잠금 3 · 정본이 이미 ◐ 로 확정한 행 2 · 표본/데이터 상태로 보이는 행 5 · 환경변수 배선(창 2b) 1)
+
+⚠ (c) 중 **표본/데이터 상태** 로 적은 다섯 행(U1#8 · U1#11 · U2#2 · U3#7 · U4#15)은 코드를 직접 읽어 결함을 찾지 못했다는 뜻이지, "절대 결함이 없다"는 보장은 아니다 — 라이브 서버를 두드리지 않고는(V 의 몫) 표본 문제인지 진짜 결함인지 이 턴에서 가를 수 없었다. 다음 회차 재측에서 같은 행이 또 빨간다면 표본 가설이 기각된 것이다.

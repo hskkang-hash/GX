@@ -1,0 +1,53 @@
+{
+  "id": "FWS-F3-06",
+  "title": "신고 접수 기록 — 119/산림청/시민 신고 접수 항목(시간·장소·시설·차량 진입·화세) · 신고 시각 = 30분 시계 시작",
+  "measured_at": "2026-09-29T03:18:19.505883+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f3a.F3_06_IntakeTest.test_intake_recorded_then_listed_starts_the_clock",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/office/fire-events/6/intake",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "event_id": 6,
+      "count": 1,
+      "intakes": [
+        {
+          "note": "시민 최초 신고",
+          "source": "citizen",
+          "__seq__": 13,
+          "__hash__": "2679d481af6ee9e40700abaf858a77a60b151edc7598890a15a866bdeef8c33a",
+          "event_id": 6,
+          "reported_at": "2026-09-29T03:18:19.464072+00:00",
+          "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
+          "clock_minutes": 30,
+          "facility_note": "인근 축사 있음",
+          "fire_intensity": "중",
+          "vehicle_access": true,
+          "clock_started_at": "2026-09-29T03:18:19.464072+00:00"
+        }
+      ]
+    }
+  },
+  "what": "POST 로 남긴 신고 접수 기록(출처 citizen·시설·차량진입·화세)이 GET 재조회에 그대로 남고, 신고 시각이 30분 시계의 시작값으로 함께 저장됨을 실측",
+  "title_parts": [
+    {
+      "part": "신고 출처(119/산림청/시민)",
+      "where": "request.source(REPORT_SOURCES 3택)",
+      "status": "present"
+    },
+    {
+      "part": "접수 항목(시간·장소·시설·차량진입·화세)",
+      "where": "response.{reported_at,facility_note,vehicle_access,fire_intensity}(장소는 사건의 좌표·주소를 그대로 쓴다 — event_detail 재사용)",
+      "status": "present"
+    },
+    {
+      "part": "신고 시각 = 30분 시계 시작",
+      "where": "response.clock_started_at = reported_at · clock_minutes=30",
+      "status": "present"
+    }
+  ]
+}

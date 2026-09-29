@@ -816,10 +816,10 @@ export async function downloadStatsCsv(
 }
 
 /**
- * S-17 「외부 연계」 — API 키 발급·폐기 · 웹훅 구독(+서명키) · **filters** · health (턴 T · 차선 U56).
+ * S-17 「외부 연계」 — 인바운드 API 키 발급·폐기 · 웹훅 구독(+서명키) · **filters** · health (턴 T · 차선 U56).
  *
  * ★ 끝에 붙인다 — 위 묶음들과 같은 규약(한 턴에 여러 차선이 이 파일을 읽는다).
- * ★ 비밀은 **응답에 한 번만** 온다(API 키 `secret` · 웹훅 `signing_key_secret`). 이 묶음은
+ * ★ 비밀은 **응답에 한 번만** 온다(인바운드 API 키 `secret` · 웹훅 `signing_key_secret`). 이 묶음은
  *   그 값을 저장하는 자리를 두지 않는다 — 화면이 sha256 앞 12자와 길이만 남긴다.
  * ⚠ `filters` 는 JSON 문자열을 **질의**로 보낸다(`dsmPostQuery` 관용 · 본문이 아니다).
  * ⚠ 구독 목록(`GET /webhook-subscriptions`)에는 filters 칸이 없다 — 구독마다

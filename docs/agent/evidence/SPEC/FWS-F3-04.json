@@ -1,0 +1,57 @@
+{
+  "id": "FWS-F3-04",
+  "title": "탐지 확인 요청 1클릭 — 카드에서 가장 가까운 감시원/드론에 확인 요청 · 10분 시계",
+  "measured_at": "2026-09-29T03:18:16.346082+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f3a.F3_04_VerificationRequestTest.test_request_starts_a_ten_minute_clock_and_suggests_nearest_officer",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/office/fire-events/3/verification-request?note=%EC%B9%B4%EB%93%9C+%ED%99%95%EC%9D%B8",
+    "params": {
+      "note": "카드 확인"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "request_id": 9,
+      "event_id": 3,
+      "requested_at": "2026-09-29T03:18:16.227167+00:00",
+      "deadline_at": "2026-09-29T03:28:16.227167+00:00",
+      "timeout_minutes": 10,
+      "notified_count": 1,
+      "note": "카드 확인",
+      "suggested_officers": [
+        {
+          "user_id": 8,
+          "post_code": "P-7",
+          "distance_km": 0.14
+        }
+      ],
+      "suggested_drones": []
+    }
+  },
+  "what": "POST .../verification-request 가 1클릭으로 발송하고(notify_event 재사용) 10분 시계(deadline_at)를 세우며, 오늘 체크인한 감시원 중 사건 좌표에 가장 가까운 순으로 제안한다(하버사인). 재조회(GET)에도 그대로 남는다",
+  "title_parts": [
+    {
+      "part": "1클릭 확인요청 발송",
+      "where": "POST .../verification-request(notify_event 재사용)",
+      "status": "present"
+    },
+    {
+      "part": "10분 시계",
+      "where": "response.deadline_at·timeout_minutes=10",
+      "status": "present"
+    },
+    {
+      "part": "가장 가까운 감시원 제안",
+      "where": "response.suggested_officers(체크인 위치 하버사인 거리순)",
+      "status": "present"
+    },
+    {
+      "part": "가장 가까운 드론 제안",
+      "where": "response.suggested_drones",
+      "status": "missing — 이 저장소에 드론이 0대라(P-387) 위치 텔레메트리가 없다. 완결조건(발송·10분 시계, §5.3 표)은 위 두 항목으로 충족한다"
+    }
+  ]
+}

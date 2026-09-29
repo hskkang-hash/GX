@@ -1,0 +1,63 @@
+{
+  "id": "FWS-F3-09",
+  "title": "대응단계 입력 3칸(면적·풍속·시설 우려) → 단계 제안 → F4 확정 요청",
+  "measured_at": "2026-09-29T03:18:25.525661+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f3a.F3_09_StageProposalTest.test_three_inputs_propose_stage_using_p386_constants",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/office/fire-events/13/stage-proposal",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "event_id": 13,
+      "count": 1,
+      "proposals": [
+        {
+          "note": "",
+          "status": "pending_f4_confirmation",
+          "__seq__": 21,
+          "area_ha": 150.0,
+          "__hash__": "2d3f4b024e060346d4a99600b0bf61d961f1b07b5cc22d9592fd34115d25f188",
+          "event_id": 13,
+          "wind_mps": 1.0,
+          "proposed_at": "2026-09-29T03:18:25.446208+00:00",
+          "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
+          "proposed_stage": "3단계",
+          "buildings_at_risk": 0,
+          "f4_notified_count": 1
+        }
+      ]
+    }
+  },
+  "what": "면적·풍속·시설우려(건물수) 3칸을 넣으면 constants.compute_fire_stage(P-386, F6 재사용)로 단계를 제안하고, F4 확정 요청 상태(pending_f4_confirmation)로 알림(notify_event 재사용)까지 한 번에 남는다",
+  "title_parts": [
+    {
+      "part": "면적 입력",
+      "where": "request.area_ha",
+      "status": "present"
+    },
+    {
+      "part": "풍속 입력",
+      "where": "request.wind_mps",
+      "status": "present"
+    },
+    {
+      "part": "시설 우려 입력",
+      "where": "request.buildings_at_risk",
+      "status": "present"
+    },
+    {
+      "part": "단계 제안",
+      "where": "response.proposed_stage(constants.compute_fire_stage 재사용)",
+      "status": "present"
+    },
+    {
+      "part": "F4 확정 요청",
+      "where": "response.status=pending_f4_confirmation · f4_notified_count(notify_event 재사용)",
+      "status": "present"
+    }
+  ]
+}

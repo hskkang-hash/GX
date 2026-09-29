@@ -564,6 +564,14 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/video-access-requests"),                               # DSM-U4-07 영상 제공 대장
     ("POST", "/api/dsm/shifts/import"),                                      # DSM-U5-05 근무표 CSV 업로드 ★쓰기
     ("GET", "/api/dsm/shifts"),                                              # DSM-U5-05 근무표 조회
+    # ── 턴 AN · 차선 N1(반쪽 채움) · N4(DSM U5 방침·연계) ─────────────────────
+    ("GET", "/api/dsm/control-points/daily-report"),                         # DSM-U4-04 일일보고 반영
+    ("GET", "/api/dsm/shifts/on-duty"),                                      # DSM-U5-05 근무자 조회
+    ("GET", "/api/dsm/u5an/privacy-policy"),                                 # DSM-U5-01 방침 조회
+    ("POST", "/api/dsm/u5an/privacy-policy"),                                # DSM-U5-01 방침 저장 ★쓰기
+    ("GET", "/api/dsm/u5an/integrations"),                                   # DSM-U5-03 연계 설정 조회
+    ("POST", "/api/dsm/u5an/integrations"),                                  # DSM-U5-03 연계 설정 저장 ★쓰기
+    ("POST", "/api/dsm/u5an/integrations/test"),                             # DSM-U5-03 연계 점검(외부 호출 0)
 })
 
 #: 인증 없이 열리는 진입면 — **이름과 사유로** 잠근다. 늘면 여기 사유가 먼저 늘어야 한다.

@@ -1,0 +1,70 @@
+{
+  "id": "FWS-F3-20",
+  "title": "온보딩 카드 7(조심기간 전)",
+  "title_parts": [
+    {
+      "part": "카드 7",
+      "where": "응답 cards(길이 7 · F3_CARD_KEYS)",
+      "status": "구현 — 7장 실측(대피 초안·이행 확인·상황보고·최종보고·카메라 임계값·계도단속·훈련)"
+    },
+    {
+      "part": "진행률 100(완결조건)",
+      "where": "응답 percent",
+      "status": "구현 — 7장 전부 두드린 뒤 100.0 실측"
+    }
+  ],
+  "measured_at": "2026-09-29T03:10:51.697014+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f3b.F3_20_OnboardingCardsTest.test_seven_cards_close_to_100_percent",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/office2/onboarding/progress",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "cards": [
+        {
+          "key": "f3.evacuation_plan",
+          "prompt": "대피 계획 초안 작성",
+          "closed": true
+        },
+        {
+          "key": "f3.evacuation_progress",
+          "prompt": "대피 이행 확인 기록",
+          "closed": true
+        },
+        {
+          "key": "f3.hourly_report",
+          "prompt": "매시간 상황보고 초안",
+          "closed": true
+        },
+        {
+          "key": "f3.final_report",
+          "prompt": "진화완료 보고 작성",
+          "closed": true
+        },
+        {
+          "key": "f3.camera_threshold",
+          "prompt": "카메라 오탐률 임계값 시험",
+          "closed": true
+        },
+        {
+          "key": "f3.patrol_enforcement",
+          "prompt": "계도·단속 기록",
+          "closed": true
+        },
+        {
+          "key": "f3.drill",
+          "prompt": "훈련 시나리오 실행",
+          "closed": true
+        }
+      ],
+      "total": 7,
+      "done": 7,
+      "percent": 100.0
+    }
+  },
+  "what": "F3 카드 7개에 해당하는 문을 전부 두드린 뒤 GET onboarding/progress 가 done=7·percent=100.0 을 낸다 — 실측"
+}

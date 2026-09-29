@@ -1,0 +1,52 @@
+{
+  "id": "FWS-U5-02",
+  "title": "초소·순찰함(NFC)·순찰 구역",
+  "measured_at": "2026-09-29T03:45:44.520750+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_u5.U5_02_PostRegistryTest.test_register_then_list_shows_the_same_post",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/admin/posts?post_code=P-77&name=%EC%88%98%EB%A6%AC%EC%82%B0+7%EB%B2%88+%EC%B4%88%EC%86%8C&patrol_zone=%EC%88%98%EB%A6%AC%EC%82%B0+%EB%B6%81%EC%B8%A1&lat=36.35&lng=127.38&nfc_boxes=NFC-1%2CNFC-2",
+    "params": {
+      "post_code": "P-77",
+      "name": "수리산 7번 초소",
+      "patrol_zone": "수리산 북측",
+      "lat": 36.35,
+      "lng": 127.38,
+      "nfc_boxes": "NFC-1,NFC-2"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "post_code": "P-77",
+      "name": "수리산 7번 초소",
+      "patrol_zone": "수리산 북측",
+      "lat": 36.35,
+      "lng": 127.38,
+      "nfc_boxes": [
+        "NFC-1",
+        "NFC-2"
+      ],
+      "saved_at": "2026-09-29T03:45:44.486851+00:00"
+    }
+  },
+  "what": "POST .../admin/posts 로 등록한 초소 이름·순찰 구역·순찰함(NFC) 코드가 GET .../admin/posts 목록에 그대로 보인다",
+  "title_parts": [
+    {
+      "part": "초소",
+      "where": "post_code/name",
+      "status": "measured"
+    },
+    {
+      "part": "순찰함(NFC)",
+      "where": "nfc_boxes",
+      "status": "measured"
+    },
+    {
+      "part": "순찰 구역",
+      "where": "patrol_zone",
+      "status": "measured"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""P-356·358 — DSM U4 별표 절 승격 게이트 (WO-GX-20260925-15 §5 · 차선 N4 · 턴 AM).
+"""P-356·358·392 — DSM U4 별표 절 승격 게이트 (WO-GX-20260925-15 §5 · 차선 N4 ·
+턴 AM(구현) · 차선 N1 · 턴 AN(P-392 「반쪽 여섯 채우기」).
 
 `scripts/verify_spec_dsm.py`(차선 N1 소유 · 이 턴은 그 파일을 고치지 않는다)와
 **같은 구조**로 복사해 세운 짝이다 — 두 게이트가 다른 모양이면 다음 사람이 파일
@@ -9,16 +10,27 @@
 AM 의 29절)은 `verify_spec_dsm.py` 가 계속 잰다. 대장에 옮길 때는 두 게이트의
 「닫은 열」을 합쳐서 본다(조율자 몫).
 
-무엇을 재는가 — 셋(`verify_spec_dsm.py` 와 같은 그림)
---------------------------------------------------------
+무엇을 재는가 — 넷(P-392 · `verify_spec_fws_f3b.py` 와 같은 그림)
+--------------------------------------------------------------------
     ① **길목** — `tests/test_p356_u4_rest_spec_promotions.py` 를 gx-shell 안에서
        돈다. 판정 규칙은 그 시험이 이미 정했다(D-212) — 도는 김에
        `docs/agent/evidence/SPEC/<id>.json` 을 기계로 새로 찍는다.
     ② **증거 성립** — 방금 찍힌 증거가 「HTTP 로 실제로 두드렸다」는 모양을
        갖췄는가.
-    ③ **절 목록 전수** — N4 배정 아홉을 전부 찍는다. 닫은 다섯(U4-01·03·04·07 ·
-       U5-05 — 전부 **부분 승격**, U4-03 만 전체)은 ①②로, 못 닫은 넷(U4-02·05·
-       08·09)은 **「무엇이 없는가」 한 줄**로.
+    ③ **title_parts 빈 칸 0**(P-392) — 「제목이 부르는 것 ↔ 있는 것」 표에 빈
+       칸이 있으면 반쪽이다 — 반쪽 승격은 이 게이트가 빨강으로 막는다. 닫은 열
+       넷(U4-03·04·07·U5-05) 전부 이 턴(AN)이 title_parts 를 새로 채웠으므로
+       **여기서는 필수**(F6 게이트와 달리 완화하지 않는다 — 이 게이트의 닫은
+       열은 전부 이 파일이 소유한다).
+    ④ **절 목록 전수** — N4 배정 아홉을 전부 찍는다. 닫은 넷(U4-03·04·07·
+       U5-05 — 전부 **부분 승격**)은 ①②③으로, 못 닫은 다섯(U4-01·02·05·08·09)은
+       **「무엇이 없는가」 한 줄**로.
+
+    ★ [턴 AN · P-392 · 결정 ⑤] **DSM-U4-01(HWPX)은 이 턴부터 닫은 열에서 뺀다** —
+      채번 대장(제N보·최초/중간/최종·발송기록)은 여전히 서 있고 증거 파일도
+      그대로 남지만, 명세 제목이 부르는 HWPX 산출은 「안 산다」로 정했다(DOCX 가
+      정본 · HWPX 는 v1.2 옵션 · 출시 뒤 표 후보). title_parts 없이 「부분
+      승격」을 자칭하던 예전 판단을 거두고, 정직하게 NOT_STARTED 로 옮긴다.
 
 종료 코드 (D-400)
     0 = 쟀고 통과   1 = 쟀고 실패   2 = 못 쟀다(회색)
@@ -53,11 +65,12 @@ TAG = "[SPEC-DSM-U4]"
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
-#: 닫은 열 — 전부 **N4(WO-15 §5) 배정**. U4-03 만 전체 승격, 나머지 넷은 부분
-#: 승격이다(어느 항목이 빠졌는지는 `docs/agent/evidence/SPEC/N4_promotions.md`
-#: 의 「제목이 부르는 것 ↔ 있는 것」 표 · 각 서비스 파일 머리말).
+#: 닫은 열 — 전부 **N4(WO-15 §5) 배정**, 이 턴(AN·N1)이 반쪽을 채웠다. 전부 부분
+#: 승격이다(어느 항목이 빠졌는지는 `docs/agent/evidence/SPEC/N4_promotions.md`·
+#: `N1_promotions_an.md` 의 「제목이 부르는 것 ↔ 있는 것」 표 · 각 서비스 파일
+#: 머리말 · evidence JSON 의 `title_parts`).
 CLOSED_CLAUSES: tuple[str, ...] = (
-    "DSM-U4-01", "DSM-U4-03", "DSM-U4-04", "DSM-U4-07", "DSM-U5-05",
+    "DSM-U4-03", "DSM-U4-04", "DSM-U4-07", "DSM-U5-05",
 )
 
 #: annex 원문(§4.4·§4.5) 제목 — 명세서 표 그대로. 판정에 안 쓴다(사람이 읽을
@@ -74,9 +87,18 @@ TITLES: dict[str, str] = {
     "DSM-U5-05": "교대 편성 — 4조 3교대 근무표 업로드(CSV)",
 }
 
-#: N4 배정 아홉 중 못 닫은 넷 — **「무엇이 없는가」 한 줄**(P-358 형식). 빈 칸으로
-#: 두지 않는다(D-274).
+#: N4 배정 아홉 중 못 닫은 다섯 — **「무엇이 없는가」 한 줄**(P-358 형식). 빈
+#: 칸으로 두지 않는다(D-274).
 NOT_STARTED: dict[str, str] = {
+    "DSM-U4-01": "재난상황보고서 HWPX 산출물 — [턴 AN · P-392 · 결정 ⑤ 「안 "
+                "산다」] 이 저장소의 정본 산출물은 DOCX(`api_u24.py::"
+                "situation_report_docx`)뿐이다. HWPX(한글과컴퓨터 OWPML) 렌더러는 "
+                "새 의존성이고, 이번 턴이 사지 않기로 했다 — v1.2 옵션으로 미루고 "
+                "출시 뒤 수요가 있으면 그때 표 후보로 다시 올린다. 채번 대장 자체"
+                "(제N보 채번·최초/중간/최종 구분·발송 기록·경과분 계산)는 이미 "
+                "서 있다(`situation_report_ledger_service.py` · "
+                "`docs/agent/evidence/SPEC/DSM-U4-01.json` 의 `decision_note` "
+                "참조) — 이 절이 못 닫힌 이유는 HWPX 하나뿐이다.",
     "DSM-U4-02": "중간 보고 사이클 — 08·17시 기준 자동 초안 배치·NDMS 표 내보내기가 "
                 "없다. M 규모(배치 스케줄 + 표 1:1 매핑)라 이번 차선(가장 싼 것 "
                 "우선)의 시간 안에 못 붙였다 — DSM-U4-01 채번 대장은 이번 턴에 섰지만 "
@@ -99,7 +121,8 @@ NOT_STARTED: dict[str, str] = {
 }
 
 REQUIRED_EVIDENCE_KEYS = ("id", "measured_at", "measured_by", "test", "request",
-                         "response", "what")
+                         "response", "what", "title_parts")
+REQUIRED_TITLE_PART_KEYS = ("part", "where", "status")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -130,6 +153,26 @@ def judge_gate_tests(summary: tuple[int, int, int] | None) -> tuple[int, str]:
     if passed == 0:
         return EXIT_UNDECIDABLE, "길목 시험이 0건 통과·0건 실패 — 수집조차 안 됐다(못 쟀다)"
     return EXIT_OK, "길목 시험 %d건 전부 통과" % passed
+
+
+def judge_title_parts(clause_id: str, payload: dict) -> tuple[int, str]:
+    """P-392 — 「제목이 부르는 것 ↔ 있는 것」 표에 빈 칸이 있으면 빨강
+    (`verify_spec_fws_f3b.py::judge_title_parts` 와 같은 판정식 — D-212).
+
+    ⚠ **자기시험이 이 함수를 몸소 망가뜨려 본다** — 「없으면 넘긴다」로 흐리면
+      반쪽 승격을 이 게이트가 못 잡는다."""
+    parts = payload.get("title_parts")
+    if not isinstance(parts, list) or not parts:
+        return EXIT_FAIL, "%s — title_parts 가 없거나 비었다(반쪽 승격 의심)" % clause_id
+    for i, part in enumerate(parts):
+        if not isinstance(part, dict):
+            return EXIT_FAIL, "%s — title_parts[%d] 가 표 모양이 아니다" % (clause_id, i)
+        missing = [k for k in REQUIRED_TITLE_PART_KEYS
+                  if not (part.get(k) or "").strip()]
+        if missing:
+            return (EXIT_FAIL,
+                    "%s — title_parts[%d] 에 빈 칸: %s" % (clause_id, i, missing))
+    return EXIT_OK, "%s — title_parts %d행 전부 채워짐" % (clause_id, len(parts))
 
 
 def judge_evidence(clause_id: str, payload: dict | None) -> tuple[int, str]:
@@ -163,8 +206,11 @@ def judge_evidence(clause_id: str, payload: dict | None) -> tuple[int, str]:
         return (EXIT_FAIL,
                 "%s — 요청 경로(%r)가 /api/dsm/ 가 아니다 — 다른 문을 잰 증거일 수 있다"
                 % (clause_id, request.get("path")))
-    return EXIT_OK, "%s — 증거 성립(2xx · %s %s)" % (
-        clause_id, request.get("method"), request.get("path"))
+    code, verdict = judge_title_parts(clause_id, payload)
+    if code != EXIT_OK:
+        return code, verdict
+    return EXIT_OK, "%s — 증거 성립(2xx · %s %s · %s)" % (
+        clause_id, request.get("method"), request.get("path"), verdict)
 
 
 def combine(codes: list[int]) -> int:
@@ -232,15 +278,28 @@ def self_test() -> int:
     code, _ = judge_gate_tests(None)
     check("① 요약을 못 읽으면 → 회색", code == EXIT_UNDECIDABLE)
 
+    good_parts = [{"part": "유형·구역 선택", "where": "create_draft(kind, region)",
+                  "status": "있음"}]
     good = {
         "id": "DSM-U4-03", "measured_at": "2026-09-28T00:00:00+00:00",
         "measured_by": "django_test_client",
         "test": "tests.test_p356_u4_rest_spec_promotions.X.y",
         "request": {"method": "POST", "path": "/api/dsm/cbs-drafts", "body": {}},
         "response": {"status": 200, "body": {}}, "what": "실측",
+        "title_parts": good_parts,
     }
     code, _ = judge_evidence("DSM-U4-03", good)
     check("증거 성립 표본 → 초록", code == EXIT_OK)
+
+    no_parts = dict(good, title_parts=[])
+    code, _ = judge_evidence("DSM-U4-03", no_parts)
+    check("★★ title_parts 비어 있으면 → 빨강(P-392 반쪽 승격을 막는다)",
+         code == EXIT_FAIL)
+
+    blank_cell = dict(good, title_parts=[{"part": "유형·구역 선택", "where": "",
+                                         "status": "있음"}])
+    code, _ = judge_evidence("DSM-U4-03", blank_cell)
+    check("★★ title_parts 안 빈 칸 하나 → 빨강", code == EXIT_FAIL)
 
     code, _ = judge_evidence("DSM-U4-03", None)
     check("증거 파일 없음 → 회색(못 쟀다)", code == EXIT_UNDECIDABLE)
@@ -349,8 +408,9 @@ if __name__ == "__main__":
             "(RefreshToken.for_user)로",
         source="살아 있는 gx-shell 컨테이너(docker exec) · 그 실행이 방금 새로 쓴 "
               "evidence 파일 — 사진·손으로 옮긴 값이 아니라 이번 실행",
-        measured="닫은 열 5건(DSM-U4-01·03·04·07 · U5-05 — U4-03 만 전체, 나머지 넷은 "
-                "부분 승격 · 턴 AM 차선 N4) · 못 닫은 열 4건은 이유 1줄(U4-02·05·08·09) "
-                "· 분모 9(이 차선 N4 배정 U4-01~09 · U5-05)",
+        measured="닫은 열 4건(DSM-U4-03·04·07 · U5-05 — 전부 부분 승격 · 턴 AM 구현 "
+                "차선 N4 · 턴 AN title_parts 반쪽 채움 차선 N1) · 못 닫은 열 5건은 "
+                "이유 1줄(U4-01 결정 ⑤ · U4-02·05·08·09) · 분모 9(이 차선 N4 배정 "
+                "U4-01~09 · U5-05)",
     )
     raise SystemExit(main())

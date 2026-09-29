@@ -363,6 +363,65 @@ def draft_evacuation_notice(*, scope, event_id: int, area_name: str,
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# [턴 AN · P-392 · 차선 N1] FWS-F6-07 반쪽 채움 — 웹푸시 **훈련** 채널 연계
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 세종 판정(WO-GX-20260929-17 §하드룰 5): 산림청 스마트산림재난 앱 실제 푸시
+# 연동은 여전히 [미확인]이라 열지 않는다(annex 원문 그대로 — 그런 공개 API 가
+# 있는지조차 확인하지 못했다). 그래서 제목이 부르는 「앱 푸시 연계」의 자리를
+# **웹푸시 훈련 채널**로 잇는다 — `kernels.k2_notify.send_webpush`(D-278 공개
+# 면)는 **언제나** 훈련 표식(`recipient_address` 머리 `drill:`)을 달아 5분
+# 억제·통계에 안 잡힌다(그 커널 자신의 규약 — 이 파일이 새로 정하지 않는다).
+# 그래서 실발송이 아니다 — 제목은 언제나 `[훈련]`로 시작한다(★ 아래).
+# 문자 초안(`draft_evacuation_notice`)은 **그대로 둔다** — 이 함수는 그 옆에
+# 새로 여는 자리이지 대체가 아니다.
+ACTION_EVACUATION_WEBPUSH_DRILL = "liaison.evacuation_webpush_drill"
+#: **불변 문구** — 이 접두어 없이 나가는 웹푸시 훈련 제목은 없다(실발송으로
+#: 오해할 여지를 문구 자체가 막는다).
+WEBPUSH_DRILL_TITLE_PREFIX = "[훈련]"
+
+
+def evacuation_webpush_drill(*, scope, event_id: int, area_name: str,
+                             subscription: dict,
+                             kind: str = fws_constants.EVACUATION_KIND_ORDER
+                             ) -> dict:
+    """대피 문자 초안과 같은 값(구역·소요시간에서 나온 본문)으로 **웹푸시 훈련
+    알림 한 통**을 보낸다.
+
+    Raises:
+        LiaisonInputRejected: `area_name` 이 비었다 · `kind` 가 계약 밖이다.
+        django.http.Http404: 그런 사건이 없다.
+        kernels.k2_notify.InvalidNotifyInput: `subscription` 모양이 틀렸다.
+        kernels.k2_notify.WebPushNotConfigured: VAPID 자격이 이 환경에 없다.
+        kernels.k2_notify.EventNotFound: (정상적으로는 안 남 — 위에서 먼저 404).
+        common.tenant_scope.SystemScopeCannotRead: 요청자가 없다(시스템 스코프).
+    """
+    from kernels.k2_notify import send_webpush
+
+    area_name = (area_name or "").strip()
+    if not area_name:
+        raise LiaisonInputRejected("area_name 은 비울 수 없다")
+    if kind not in fws_constants.EVACUATION_KINDS:
+        raise LiaisonInputRejected(
+            f"kind={kind!r} 는 대피 종류가 아니다. 허용: {fws_constants.EVACUATION_KINDS}")
+    dsm_services.event_detail(scope=scope, event_id=event_id)  # 404 게이트
+    draft = fws_constants.draft_evacuation_text(area_name=area_name, kind=kind)
+    title = f"{WEBPUSH_DRILL_TITLE_PREFIX} 대피 안내 - {area_name}"
+
+    delivery = send_webpush(scope=scope, subscription=subscription, title=title,
+                            body=draft["short"], event_id=event_id)
+
+    actor = scope.require_actor()
+    payload = {"event_id": event_id, "area_name": area_name, "kind": kind,
+              "title": title, "delivery_id": delivery.delivery_id,
+              "channel": delivery.channel, "succeeded": delivery.succeeded,
+              "failure_reason": delivery.failure_reason,
+              "drilled_at": _now_iso()}
+    _write(actor, ACTION_EVACUATION_WEBPUSH_DRILL, payload, "대피 웹푸시 훈련 발송")
+    return payload
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # FWS-F6-08 경찰 교통통제·입산통제 협조 기록 [S]
 # ═══════════════════════════════════════════════════════════════════════════
 POLICE_COORDINATION_KIND_TRAFFIC = "traffic_control"

@@ -71,7 +71,7 @@ CHANNEL_NOT_CHOSEN_REASON = "channel_not_chosen"
 class WebPushNotConfigured(K2Error):
     """VAPID 자격·발송기가 이 환경에 없다. **이름만** 들고 있다 — 값은 없다."""
 
-    def _init__(self, missing_env: list[str], reason: str = "") -> None:
+    def __init__(self, missing_env: list[str], reason: str = "") -> None:
         self.missing_env = list(missing_env)
         super().__init__(reason or (
             "웹푸시 자격이 이 환경에 없습니다 — 비어 있는 환경변수: "

@@ -111,7 +111,7 @@ export const dsm2Routes = {
    */
   me: { title: '내 정보', path: '/dsm/me' },
   /**
-   * 외부 연계 — API 키 발급·범위·폐기 · 웹훅 구독 + filters (턴 T · 차선 U56 · WS-17).
+   * 외부 연계 — 인바운드 API 키 발급·범위·폐기 · 웹훅 구독 + filters (턴 T · 차선 U56 · WS-17).
    * ⚠ `/dsm/me` · `/dsm/notify` 와 형제다(변수 조각 없음 — 서로 삼키지 않는다).
    */
   integrations: { title: '외부 연계', path: '/dsm/integrations' },

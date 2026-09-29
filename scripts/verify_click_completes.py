@@ -374,17 +374,37 @@ FLOWS = (
                        "오는 것이 아니라 행이 하나 더 생긴다(`trigger=manual` · 실행 목록에 남는다). "
                        "행을 지우는 문은 제품에 없다"),
       note="[P-179 정정] 종전 정본 「그 문을 부르는 화면이 없다」는 **턴 U 이전 사실**이다"),
-    F("U2#9", "요원별 처리 현황", "u2", None, None, None, None, [],
+    #: ★★ [P-396 · 턴 AN · 차선 L] **술어를 채웠다 — 「누른 뒤」가 아니라 「화면이 뜬 뒤」다.**
+    #:   `goto()` 는 U1#2·U1#3 이 이미 쓰는 모양이다: 클릭이 아니라 화면 자체가
+    #:   `useDsmResource(() => dsmGet(dsmEndpoint.statsByReviewer))` 로 스스로 부른다
+    #:   (`TeamStatus.tsx:66-67`) — 그래서 ②가 goto 만으로 선다. 화면은
+    #:   `판정 {serverTotal}건 · 요원 {rows.length}명`(`TeamStatus.tsx:116-117`)을
+    #:   그대로 그린다 — 지어낸 문구가 아니라 소스에 있는 그 줄이다.
+    F("U2#9", "요원별 처리 현황", "u2", "/dsm/team-status", goto(),
+      ("GET", r"/api/dsm/stats/by-reviewer"),
+      srv_reflect("/api/dsm/stats/by-reviewer", "total_reviewed"),
+      ["요원별 현황", "판정", "요원"],
       note=P190 + "온보딩 정본은 `/dsm/team-status` · `GET /api/dsm/stats/by-reviewer` 200 · "
            "제목 `요원별 현황` 을 적어 두었다(턴 T 에 채운 9행). 종전 주석 「집계 면 "
-           "자체가 만들어지지 않았다」는 그 전 사실이다. **이 도구가 안 누를 뿐**이고, "
-           "안 누르는 사유는 한 번 누름으로 끝나는 단추가 아니라 화면 도달이라 "
-           "네 칸(①~④) 중 ②가 안 선다는 것이다 — 회색이지 「정본이 비었다」가 아니다"),
-    F("U2#16", "알림 규칙 확인", "u2", None, None, None, None, [],
+           "자체가 만들어지지 않았다」는 그 전 사실이다."),
+    #: ★★ [P-396 · 턴 AN · 차선 L] **술어를 채웠다 — U5#9(쓰기)와 다른 페르소나의 읽기다.**
+    #:   `goto()` + 같은 GET(`dsmU56NotifyEndpoint.list` · `NotifySettings.tsx:180-183`) —
+    #:   U5#9 는 **U5** 가 토글을 눌러 이 목록을 재읽는 것이고, 이 행은 **U2**(관제팀장)가
+    #:   아무것도 안 건드리고 이 화면을 **볼 수 있는가**를 잰다 — 같은 상태를 두 번 흔들지
+    #:   않는다(U5#10 이 피한 것과 같은 함정)는 규율을 어기지 않는다. 필드 이름 `rules` 는
+    #:   U5#9 가 이미 쓰는 것과 **같다**(`srv_reflect("...notify-rules/list", "rules")`,
+    #:   위 U5#9 정의) — 두 벌을 짓지 않는다.
+    F("U2#16", "알림 규칙 확인", "u2", "/dsm/notify", goto(),
+      ("GET", r"/api/dsm/settings/notify-rules/list"),
+      srv_reflect("/api/dsm/settings/notify-rules/list", "rules"),
+      ["알림 받는 사람", "채널"],
       note=P190 + "온보딩 정본은 `/dsm/notify` · `GET /api/dsm/settings/notify-rules/list` 200 · "
            "제목 `알림 받는 사람·채널` 을 적어 두었다. 종전 주석 「조회 라우트도 화면도 "
-           "만들어지지 않았다」는 턴 S 이전 사실이다. 이 도구는 **같은 화면의 쓰기 쪽만** "
-           "누른다(U5#9) — 읽기 확인은 U5#9 의 재조회가 겸하므로 이 행은 안 누른다"),
+           "만들어지지 않았다」는 턴 S 이전 사실이다. [턴 AN 정정] 종전 주석은 여기 이어 "
+           "「이 도구는 U5#9 의 쓰기 쪽만 누르고 이 행은 안 누른다」고 적었었다 — 그런데 "
+           "U2 는 U5 와 **다른 페르소나**이고, 클릭 없이 화면만 여는 것은 U5#9 의 재조회와 "
+           "충돌하지 않는다(상태를 두 번 흔드는 것이 아니라 **한 번도 안 흔든다**). "
+           "그래서 이번 턴에 채웠다 — 위 술어 참고"),
     F("U2#19", "장애 판단 — 시스템인가 현장인가", "u2",
       "/dsm/events?preset=system", goto(),
       ("GET", r"/api/dsm/events\?.*event_type"),
@@ -450,12 +470,20 @@ FLOWS = (
       ["내가", "발송", "이력", "처리"]),
 
     # ── U4 · 재난안전과 담당 공무원 ──────────────────────────────────────
-    F("U4#1", "주간 상황 요약", "u4", None, None, None, None, [],
-      note=P190 + "온보딩 정본은 단추 `7일`(`EventList.tsx:223` `PERIODS.d7`)과 "
+    #: ★★ [P-396 · 턴 AN · 차선 L] **술어를 채웠다 — 「누구로 누를지」는 이미 실측으로
+    #:   정해져 있었다.** 온보딩 48행 실측(`docs/agent/evidence/ONB-T/turn_am_6.json` ·
+    #:   U4#1 · 2026-09-28)이 **U4 계정으로 이미 이 단추를 눌러 초록**을 냈다
+    #:   (`「7일」 누른 뒤 GET events?since=… 200=True`). 종전 주석의 「정본이 아직 한
+    #:   사람을 고르지 않았다」는 그 실측 **이전** 주석이다 — 정본은 이미 U4 를 쓰고
+    #:   있었고, 이 도구가 그 사실을 못 따라간 것뿐이다. 단추 이름은
+    #:   `EventList.tsx:326` `PERIODS` 의 `{ key: 'd7', label: '7일' }` 그대로다.
+    F("U4#1", "주간 상황 요약", "u4", "/dsm/events", btn("7일"),
+      ("GET", r"/api/dsm/events(\?|$)"),
+      srv_reflect("/api/dsm/events?limit=20", "events"),
+      ["이벤트 목록", "보고 있는 기간"],
+      note=P190 + "온보딩 정본은 단추 `7일`(`EventList.tsx:326` `PERIODS.d7`)과 "
            "`GET /api/dsm/events?since=…` 200 을 적어 두었다(턴 U 추가). 종전 주석 "
-           "「프리셋 넷에 7일이 빠져 있다」는 턴 T 이전 사실이다. 이 도구가 안 누르는 "
-           "사유는 이 행을 U4(읽기 전용) 축으로 잡아 두었는데 목록 필터는 사람 축이 "
-           "U1·U2 라, **누구로 누를지 정본이 아직 한 사람을 고르지 않았다**는 것이다"),
+           "「프리셋 넷에 7일이 빠져 있다」는 턴 T 이전 사실이다."),
     #: ★ [P-132] `/report-template` 은 **인수 자산의 운송장 서식 화면**이고 부르는 문은
     #:  `/api/report-template/`(`services/API.ts:819`) 다 — `/api/dsm/reports` 가 아니다.
     #:  그리고 `POST /api/dsm/reports` 라는 문은 **저장소에 없다**
@@ -478,12 +506,32 @@ FLOWS = (
     #:    ③ 사람이 눌러 끝나는 자리는 **U2#6**(만들기)과 **U4#7**(내려받기)이 잰다. 자동 행이
     #:      실제로 있는지는 U4#7 의 상태 재읽기(`?kind=monthly`)가 같은 회차에 증명한다.
     #:  → 정본 경로·문·화면은 적되 **●가 될 수 없는 행**으로 선언한다(U4#9 와 같은 모양).
-    F("U4#5", "월간 보고서 자동 생성", "u4", None, None, None, None, [],
+    #: ★★ [P-396 · 턴 AN · 차선 L] **술어를 채웠다 — 403 은 짐작이 아니라 잠긴 사실이다.**
+    #:   `backend/tests/test_u24_reports.py::ReportAccessTest::
+    #:   test_read_only_official_downloads_but_cannot_create` 가 **이미 이 정확한 자리**를
+    #:   기존 시험으로 고정하고 있다: 읽기 전용(U4) 계정의 `POST /api/dsm/reports/runs`
+    #:   → 403. 관문은 우리 라우트가 아니라 **플랫폼 문지기**다(`Reports.tsx:24` 주석
+    #:   "읽기 전용 계정(U4 담당관)의 「만들기」는 403 이다(플랫폼 문지기 `read_only_role`)" ·
+    #:   `common/role_gate.py::READONLY_DENIAL_CODE`). 서버가 주는 문장은
+    #:   `{"code": "read_only_role", "message": {"ko": "읽기 전용 계정입니다 — 이 작업은 "
+    #:   "수행할 수 없습니다."}}`(위 시험의 실측)이고, `userFacingError` 가 `fromServer`
+    #:   일 때 그 말을 **그대로** 돌려준다(`copy.ts:221`) — 화면은 그 문장을 그대로 그린다.
+    #:   ⚠ 어느 서식 카드를 누르든(사건·월간·상급) 관문은 **메서드 하나로** 막는다
+    #:   (`permissionDenied.ts:61` "메서드가 읽기와 쓰기를 가르는 칸이다") — 그래서 U2#6 이
+    #:   이미 쓰는 첫 카드(사건 보고서 · `fill="사건번호"`)를 그대로 눌러도 같은 403 이
+    #:   증명된다. 그 사실 자체가 이 행의 술어다(월간 카드만 골라 누를 이름 구분 수단이
+    #:   지금 이 도구에 없다 — `find_control` 은 문구 하나로 찾는다).
+    F("U4#5", "월간 보고서 자동 생성", "u4", "/dsm/reports", btn("만들기"),
+      ("POST", r"/api/dsm/reports/runs"),
+      {"kind": "status_is", "get": "/api/dsm/reports/runs", "field": "403"},
+      ["읽기 전용"],
+      fill="사건번호", fill_text="{event}",
+      revert=no_revert("403 으로 거절되면 실행 기록이 안 생긴다 — 되돌릴 상태가 없다"),
       note="[P-179 정정] 문도 화면도 **있다** — POST /api/dsm/reports/runs (api_u24.py:408) · "
            "/dsm/reports (Reports.tsx 「이번 달 우리 센터」). 그러나 **자동본은 사람이 누르지 않는다** — "
            "매월 1일 배치 monthly_report.run_monthly_all 이 trigger=auto 로 만들고, 화면의 「만들기」는 "
-           "언제나 trigger=manual 이다. 게다가 읽기 전용 U4 의 그 단추는 403 이 옳다. "
-           "이 행은 ●가 될 수 없다 — 사람이 눌러 끝나는 자리는 U2#6 · U4#7 이 잰다"),
+           "언제나 trigger=manual 이다. 읽기 전용 U4 의 그 단추는 403 이 옳다(위 술어로 이번 턴에 "
+           "잰다) — 사람이 눌러 끝나는 **성공** 자리는 U2#6 · U4#7 이 잰다"),
     #: ★ [P-132] 서버가 내는 종이는 **하나**다 — `GET /api/dsm/events/{id}/report.pdf`
     #:  (`backend/apps/dsm/api.py:802` UX-30 사건 보고서 1쪽). 그런데 그 주소를 부르는
     #:  화면이 저장소에 **없다**(frontend 전체에 `report.pdf` 참조 0건).
@@ -543,13 +591,27 @@ FLOWS = (
     #:  그래서 이 도구는 이 행을 **안 누른다**: 이 파일의 U4 자리는 `gxseed_u4_official`
     #:  한 사람이고, 그 사람으로 누르면 언제나 403 이다. U2 축 측정은 온보딩 정본
     #:  (`onboarding_48.md` U4 15 · 턴 W 정정)이 든다.
-    F("U4#15", "상급기관 제출 자료", "u4", None, None, None, None, [],
+    #: ★★ [P-396 · 턴 AN · 차선 L] **술어를 채웠다 — 같은 관문, 같은 시험으로 잠긴 사실.**
+    #:   `backend/tests/test_u24_turn_t.py::UpperReportTest::test_read_only_role_cannot_check`
+    #:   가 **정확히 이 문**을 이미 고정한다: 읽기 전용(U4) 계정의
+    #:   `POST /api/dsm/events/{id}/upper-report` → 403 (`self.client.post(_upper(eid), "
+    #:   "**self._bearer(self.viewer_a))` · `assertEqual(403, ...)`). `EventDetail.tsx` 는
+    #:   이 경로를 `ownDenialPaths` 로 가리지 않으므로(그런 호출이 그 파일에 없다) 실패는
+    #:   `toggleUpperReport` 의 `catch` 가 `setUpperReportError(userFacingError(...))` 로
+    #:   적고, 서버가 준 문장("읽기 전용 계정입니다 — 이 작업은 수행할 수 없습니다.")을
+    #:   `userFacingError` 가 그대로 돌려준다(`fromServer` 갈래 · `copy.ts:221`) —
+    #:   U4#5 와 **같은 서버 문장**이다(같은 관문 · 같은 코드 `read_only_role`).
+    F("U4#15", "상급기관 제출 자료", "u4", "/dsm/events/{event}", btn("제출로 표시"),
+      ("POST", r"/api/dsm/events/\d+/upper-report"),
+      {"kind": "status_is", "get": "/api/dsm/events/{event}/upper-report", "field": "403"},
+      ["읽기 전용"],
+      revert=no_revert("403 으로 거절되면 체크가 안 생긴다 — 되돌릴 상태가 없다"),
       note=P190 + "온보딩 정본은 [서버 기록] `POST /api/dsm/events/{id}/upper-report` 200"
            "(**U2** `gxseed_u2_manager`) → 재조회에서 그 행의 표시가 서버 값으로 `보고함` "
            "+ [화면 상태] `보고 표시`/`보고함` 두 말이 같은 화면에 동시에 있지 않을 것을 "
-           "적어 두었다. 문과 문구는 **있다.** 이 도구가 안 누르는 사유는 이 파일의 U4 "
-           "자리가 읽기 전용 계정이라 **언제나 403** 이고, 그 403 은 제품이 옳게 막은 "
-           "자리이기 때문이다 — U2 축 측정은 온보딩 정본이 든다"),
+           "적어 두었다. 문과 문구는 **있다.** 이 파일의 U4 자리는 읽기 전용 계정이라 "
+           "**언제나 403** 이고, 그 403 은 제품이 옳게 막은 자리다(위 술어로 이번 턴에 "
+           "잰다) — U2 축의 **성공** 측정은 온보딩 정본이 든다"),
     #: ★★ [P-179 · 2026-09-18 턴 V · 차선 Q] **「볼 자리가 없다」는 턴 U 이전 사실이다 — 정정한다.**
     #:  자리가 **섰다**: `/dsm/audit`(`features/dsm/pages/AuditLog.tsx` · `dsm/routes.u24.ts:41`)이
     #:  `GET /api/dsm/audit`(`api_u24.py:321`)를 읽는다. 읽는 사람은 U2·U4·U5 이고 U1·U3 은 403 이다
@@ -681,12 +743,23 @@ FLOWS = (
       {"kind": "status_is", "get": "/api/dsm/events?limit=1", "field": "401"},
       ["401", "unauthor", "인증"],
       note="자격 없이 부른다 — **진짜 4xx** 가 와야 한다. 200 봉투는 빨강"),
-    F("U6#14", "스키마 버전 확인", "u6", None, None, None, None, [],
+    #: ★★ [P-396 · 턴 AN · 차선 L] **술어를 채웠다 — 헤더가 아니라 몸통에도 같은 값이 있다.**
+    #:   `backend/apps/dsm/api_u56.py:450-452` `GET /health`(`auth=None`) 이 내는 몸통은
+    #:   `{"status": ..., "schema": SCHEMA_VERSION, "checks": {...}}`(`api_u56.py:240,252`) —
+    #:   헤더 `X-GX-Schema` 와 **같은 값이 JSON 몸통에도 있다.** 이 도구(U6 = `api()`,
+    #:   기계 사용자 — 화면이 없다·본문이 곧 「화면」)는 이미 본문을 읽으므로 새 칸을
+    #:   만들 필요가 없다 — U6#2·U6#3·U6#15 와 같은 모양(`srv_reflect` + 본문 문구)을
+    #:   그대로 쓴다. 헤더 자체를 재는 것은 여전히 못 한다(네 칸이 헤더를 안 본다) —
+    #:   그 갈래는 그대로 못 잰 채 둔다(지어내지 않는다).
+    F("U6#14", "스키마 버전 확인", "u6", None, api(),
+      ("GET", r"/api/dsm/health"),
+      srv_reflect("/api/dsm/health", "schema"),
+      ["schema"],
       note=P190 + "온보딩 정본은 **아무 응답에나 헤더 `X-GX-Schema` 1개**와 "
            "`backend/tests/test_u56_schema_header.py` 가 그것을 잠그는 것을 적어 두었다"
            "(턴 W · U56 축). 종전 주석 「스키마 버전」 한 낱말은 정본이 비었다는 뜻으로 "
-           "읽혔다. 이 도구가 안 누르는 사유는 이 행의 술어가 **본문이 아니라 헤더**라 "
-           "지금 네 칸(②기대 호출·③상태·④문구)이 헤더를 볼 자리가 없다는 것이다"),
+           "읽혔다. [턴 AN 정정] 몸통의 `schema` 칸으로 좁혀 잰다 — 헤더 자체는 "
+           "여전히 이 도구의 네 칸 밖이다(위 머리말)."),
     F("U6#15", "연계 헬스체크", "u6", None, api(),
       ("GET", r"/api/dsm/dashboard/link-state"),
       srv_reflect("/api/dsm/dashboard/link-state", "status"), ["status", "waiting", "ok"]),

@@ -60,7 +60,9 @@ class SituationReportSentIn(Schema):
 class CbsDraftIn(Schema):
     kind: str
     region: str
-    message: str
+    #: [턴 AN · P-392] 비우면(기본값) 표준 문안이 자동으로 채워진다
+    #: (`u4_regulations.CBS_STANDARD_TEMPLATE` · `cbs_draft_service.create_draft`).
+    message: str = ""
     occurred_at: str | None = None
 
 
@@ -101,6 +103,9 @@ class VideoAccessApproveIn(Schema):
 
 class VideoAccessProvideIn(Schema):
     method: str = ""
+    #: [턴 AN · P-392] 비우면 이전과 같다(마스킹 없음). 채우면 실제로 마스킹
+    #: 파이프라인을 돌린다(`video_access_ledger_service.provide`).
+    image_b64: str = ""
 
 
 class ShiftImportIn(Schema):
@@ -282,6 +287,21 @@ class DsmU4API:
         except SystemScopeCannotRead as exc:
             raise HttpError(403, str(exc))
 
+    # ── [턴 AN · P-392] DSM-U4-04 「일일보고 자동 반영」 반쪽 채움 ──────────
+    @route.get("/control-points/daily-report", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="일일보고 반영 자료 — 남의 테넌트 통제 현황이 보이면 "
+                          "격리 실패다")
+    def control_points_daily_report(self, request, as_of: str | None = None):
+        """`GET /control-points/daily-report` — 통제 현황을 일일상황보고가 그대로
+        삼킬 수 있는 모양(기준 시각·단계별 집계·지점 목록)으로 자동 반영한다."""
+        try:
+            return control_board_service.daily_reflection(
+                scope=_scope(request), as_of=as_of)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
     # ══════════════════════════════════════════════════════════════════════
     # DSM-U4-07 영상 열람·제공(반출) 대장
     # ══════════════════════════════════════════════════════════════════════
@@ -333,11 +353,14 @@ class DsmU4API:
 
         try:
             return video_access_ledger_service.provide(
-                scope=_scope(request), request_id=request_id, method=payload.method)
+                scope=_scope(request), request_id=request_id, method=payload.method,
+                image_b64=payload.image_b64)
         except Http404:
             raise HttpError(404, "그런 영상 제공 요청이 없습니다.")
         except video_access_ledger_service.VideoAccessConflict as exc:
             raise HttpError(409, str(exc))
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
         except SystemScopeCannotRead as exc:
             raise HttpError(403, str(exc))
 
@@ -376,6 +399,21 @@ class DsmU4API:
         try:
             return shift_roster_service.list_roster(
                 scope=_scope(request), date=date, limit=limit)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
+    # ── [턴 AN · P-392] DSM-U5-05 「인계 메모·일지의 근무자 자동」 반쪽 채움 ──
+    @route.get("/shifts/on-duty", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="근무자 자동 조회 — 남의 테넌트 근무표가 보이면 격리 "
+                          "실패다")
+    def shifts_on_duty(self, request, date: str | None = None):
+        """`GET /shifts/on-duty` — 이 날짜(생략하면 오늘)의 조별 근무자를
+        편성표에서 그대로 구조화해 낸다(인계 메모·관제일지가 삼킬 자료)."""
+        try:
+            return shift_roster_service.current_workers(
+                scope=_scope(request), date=date)
         except ValueError as exc:
             raise HttpError(400, str(exc))
         except SystemScopeCannotRead as exc:

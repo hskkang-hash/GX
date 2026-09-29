@@ -1,6 +1,6 @@
 {
   "id": "DSM-U4-03",
-  "measured_at": "2026-09-28T10:46:37.275299+00:00",
+  "measured_at": "2026-09-29T03:30:09.460299+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u4_03_evidence",
   "request": {
@@ -15,17 +15,55 @@
   "response": {
     "status": 200,
     "body": {
-      "draft_id": 364,
+      "draft_id": 40,
       "kind": "긴급",
       "region": "정왕동",
       "message": "즉시 대피",
       "length": 5,
       "limit": 157,
+      "auto_generated": false,
       "night_warning": false,
       "status": "초안",
-      "occurred_at": "2026-09-28T10:46:37.256Z",
-      "actor_id": 557
+      "occurred_at": "2026-09-29T03:30:09.447Z",
+      "actor_id": 22
     }
   },
-  "what": "재난문자 초안 한 건을 실제로 만들었다 — 글자수(4/157) 검사를 통과한 실측값이 그대로 응답에 있다."
+  "what": "재난문자 초안 한 건을 실제로 만들었다 — 글자수(4/157) 검사를 통과한 실측값이 그대로 응답에 있다.",
+  "title_parts": [
+    {
+      "part": "유형·구역 선택",
+      "where": "create_draft(kind, region)",
+      "status": "있음"
+    },
+    {
+      "part": "표준 문안(자동 생성)",
+      "where": "[턴 AN] u4_regulations.CBS_STANDARD_TEMPLATE · message 를 비우면 create_draft 가 자동으로 채운다(CbsDraftStandardTemplateTest)",
+      "status": "있음(신규)"
+    },
+    {
+      "part": "글자 수 검사(90/157)",
+      "where": "u4_regulations.CBS_LEN_LIMIT",
+      "status": "있음"
+    },
+    {
+      "part": "승인권자 결재 요청",
+      "where": "POST /cbs-drafts/{id}/approve",
+      "status": "있음"
+    },
+    {
+      "part": "발송은 행안부 시스템(이 제품은 안 함)",
+      "where": "발송 버튼 없음 — 명세 그대로",
+      "status": "있음(설계로 보장)"
+    },
+    {
+      "part": "발송 기록",
+      "where": "POST /cbs-drafts/{id}/sent",
+      "status": "있음"
+    },
+    {
+      "part": "야간(21~06시) 안전안내 경고",
+      "where": "night_warning 플래그",
+      "status": "있음"
+    }
+  ]
 }

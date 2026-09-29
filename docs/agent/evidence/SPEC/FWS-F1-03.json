@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-03",
   "title": "오늘 위험지수·위기경보·입산통제 확인",
-  "measured_at": "2026-09-28T10:42:32.762176+00:00",
+  "measured_at": "2026-09-29T03:30:29.812829+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_03_RiskTodayTest.test_risk_band_has_the_contract_shape",
   "request": {
@@ -16,7 +16,7 @@
       "fire_alert": false,
       "mountain_entry_banned": false,
       "season": "평시",
-      "as_of": "2026-09-28"
+      "as_of": "2026-09-29"
     }
   },
   "what": "GET /api/fws/risk/today 가 오늘 날짜 기준 띠(level)·위기경보·입산통제 값을 낸다 — 띠 표시 실측(외부 기상 연동은 범위 밖, risk.py 머리말에 정직하게 남김)"

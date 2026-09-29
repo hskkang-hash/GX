@@ -1,12 +1,12 @@
 {
   "id": "FWS-F5-03",
   "title": "확인 회신(산불 맞음/오인 · 사진·열화상)",
-  "measured_at": "2026-09-28T10:42:59.532403+00:00",
+  "measured_at": "2026-09-29T02:44:07.588626+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f5.F5_03_ConfirmResultTest.test_fire_confirmed_requires_attachment_ref",
   "request": {
     "method": "POST",
-    "path": "/api/fws/drone/verifications/514/reply?result=fire_confirmed&attachment_ref=minio%3A%2F%2Fdrone%2F1.jpg",
+    "path": "/api/fws/drone/verifications/10/reply?result=fire_confirmed&attachment_ref=minio%3A%2F%2Fdrone%2F1.jpg",
     "params": {
       "result": "fire_confirmed",
       "attachment_ref": "minio://drone/1.jpg"
@@ -15,8 +15,8 @@
   "response": {
     "status": 200,
     "body": {
-      "verification_id": 514,
-      "reply_id": 222,
+      "verification_id": 10,
+      "reply_id": 17,
       "result": "fire_confirmed",
       "reason_code": null,
       "verdict": "confirmed",

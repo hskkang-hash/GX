@@ -13,9 +13,16 @@
 **단계를 건너뛸 수 없다**(순서 검사는 이 파일이 한다 — 지어낸 문지기가 아니라
 `CONTROL_STAGE_ORDER` 표 하나로 판정한다).
 
-★ 「일일보고 자동 반영」(명세서 §4.4 출력 칸)은 **이번 턴 범위 밖**이다 —
-DSM-U4-05(일일상황보고 자동)가 이번 배정에서도 미착수라 반영할 문서가 없다
-(promotions.md 의 「무엇이 없는가」 참조).
+★ [턴 AN · P-392 · 차선 N1] 「일일보고 자동 반영」 채움 — 턴 AM 은 이 칸을
+  DSM-U4-05(일일상황보고 자동 · 06:00 배치)가 없다는 이유로 비워 뒀다. 그런데
+  이 절(U4-04) 자신이 명세에서 부르는 것은 **06:00 자동 배치**가 아니라
+  「일일보고 자동 반영」 — 즉 통제 현황이 사람이 다시 세지 않아도 일일상황보고에
+  꽂을 수 있는 모양으로 **자동 산출**되는가다. `daily_reflection()` 이 그것을
+  한다: 지금까지 쌓인 감사에서 지점마다 지금 단계를 다시 뽑아(=`list_board` 와
+  같은 자료) 「기준 시각 · 단계별 집계 · 지점 목록」으로 접어 낸다. **U4-05 의
+  06:00 자동 배치·HWPX 출력 자체는 여전히 이 파일의 범위 밖이다** — 이 함수가
+  내는 것은 그 배치가 삼킬 수 있는 **자료**이지, 그 배치 자체가 아니다(경계는
+  그대로 정직하게 남긴다).
 """
 from __future__ import annotations
 
@@ -179,3 +186,30 @@ def list_board(*, scope: TenantScope, limit: int = 200) -> list[dict[str, Any]]:
                 row["stage"] = stage
     rows = sorted(points.values(), key=lambda r: r["point_id"], reverse=True)
     return rows[:limit]
+
+
+def daily_reflection(*, scope: TenantScope, as_of: str | None = None) -> dict[str, Any]:
+    """`GET /control-points/daily-report` — DSM-U4-04 「일일보고 자동 반영」.
+
+    통제 현황판을 사람이 다시 세지 않고 **일일상황보고의 통제현황 칸**이 그대로
+    삼킬 수 있는 모양으로 접어 낸다 — 기준 시각 · 단계별 집계 · 지점 목록.
+    이 함수가 감사에서 다시 세는 것은 `list_board` 와 **같은 자료**다(두 번째
+    집계를 새로 만들지 않는다 — 두 집계는 반드시 어긋난다, `handover_service.py`
+    머리말 「셈은 여기서 하지 않는다」와 같은 판단).
+
+    Raises:
+        ValueError: `as_of` 를 못 읽는다.
+        common.tenant_scope.SystemScopeCannotRead: 요청자가 없다(시스템 스코프).
+    """
+    when = _parse_when(as_of)
+    board = list_board(scope=scope, limit=SCAN_CAP)
+    by_stage: dict[str, int] = {}
+    for row in board:
+        by_stage[row["stage"]] = by_stage.get(row["stage"], 0) + 1
+    return {
+        "as_of": when,
+        "reference": "통제현황",
+        "point_count": len(board),
+        "by_stage": by_stage,
+        "points": board,
+    }

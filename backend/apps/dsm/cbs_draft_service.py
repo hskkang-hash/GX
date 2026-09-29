@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
 """DSM-U4-03 — **재난문자(CBS) 초안** (`POST /api/dsm/cbs-drafts` ·
 `.../cbs-drafts/{id}/approve` · `.../cbs-drafts/{id}/sent` · `GET .../cbs-drafts`) ·
-차선 N4 · 턴 AM.
+차선 N4 · 턴 AM(구현) · 차선 N1 · 턴 AN(표준 문안 자동 생성 · P-392 반쪽 채움).
 
 명세(§4.4)의 완결 조건은 「승인 시각·발송 기록 감사 · 야간 안전안내 경고」다 —
 **발송 자체는 이 제품이 하지 않는다**(명세서 그대로 「발송은 행안부 시스템에서
 (복사·붙여넣기)」). 그래서 이 파일이 여는 세 걸음은 초안 → 승인 요청 → **발송
 기록**(행안부 시스템에서 실제로 보낸 뒤 사람이 남기는 확인)이고, 「발송」 버튼은
 없다 — 있으면 그 자체가 명세를 벗어난 기능이 된다.
+
+★ [턴 AN · P-392] **표준 문안(자동 생성)** — 턴 AM 은 사람이 `message` 를 직접
+  쓰는 것만 갖췄고(N4_promotions.md 「유형별 표준 문구 사전은 이번 턴 범위 밖」),
+  그래서 반쪽이었다. 이제 `message` 를 **비워 보내면**
+  `u4_regulations.CBS_STANDARD_TEMPLATE[kind]` 가 구역 이름 하나만 채운 표준
+  문안을 자동으로 짓는다(`create_draft` 의 `auto_generated` 참고) — 사람이 쓴
+  글은 여전히 그대로 존중한다(있으면 그 글이 이긴다). 새 틀을 지어내지 않고
+  이미 있는 규정값 파일 하나(D-280)에 그대로 더했다.
 
 ★ **새 표를 만들지 않는다** — `alert_level_service.py`·`situation_meeting_service.py`
 와 같은 판단. 초안 한 건 = 감사 세 줄(초안·승인·발송)까지 쌓일 수 있는 이력이고,
@@ -29,7 +37,8 @@ from common.tenant_filters import get_user_group
 from common.tenant_scope import TenantScope
 
 from apps.dsm.u4_regulations import (CBS_KIND_SAFETY, CBS_KINDS, CBS_LEN_LIMIT,
-                                     CBS_NIGHT_END_HOUR, CBS_NIGHT_START_HOUR)
+                                     CBS_NIGHT_END_HOUR, CBS_NIGHT_START_HOUR,
+                                     CBS_STANDARD_TEMPLATE)
 
 LOGGER_NAME = "guardianx.u4.cbs_draft"
 TAG = "[U4-CBS]"
@@ -83,12 +92,18 @@ def _require_group(scope: TenantScope):
     return actor, group
 
 
-def create_draft(*, scope: TenantScope, kind: str, region: str, message: str,
+def create_draft(*, scope: TenantScope, kind: str, region: str, message: str = "",
                  occurred_at: str | None = None) -> dict[str, Any]:
     """`POST /cbs-drafts` — 유형·구역·문안을 받아 글자수를 검사하고 초안 한 줄을 남긴다.
 
+    ★ [턴 AN · P-392] `message` 를 **비워 보내면**(공백만 있어도) 「표준 문안
+      자동 생성」이 켜진다 — `u4_regulations.CBS_STANDARD_TEMPLATE[kind]` 에
+      `region` 하나만 채운 문장이 그 자리를 대신한다(`auto_generated=True` 로
+      응답에 표시). 사람이 실제로 글을 보내면 그 글이 그대로 이긴다(자동은
+      **비었을 때만**의 대비값이지 사람 글을 덮지 않는다).
+
     Raises:
-        ValueError: `kind` 가 셋 밖 · `region`·`message` 가 비었다 · 글자수 초과 ·
+        ValueError: `kind` 가 셋 밖 · `region` 이 비었다 · 글자수 초과 ·
             `occurred_at` 을 못 읽는다.
         CbsDraftRejected: 소속 조직이 없다.
         common.tenant_scope.SystemScopeCannotRead: 요청자가 없다(시스템 스코프).
@@ -100,8 +115,10 @@ def create_draft(*, scope: TenantScope, kind: str, region: str, message: str,
     if not region:
         raise ValueError("구역(읍면동)이 비어 있습니다.")
     message = (message or "").strip()
+    auto_generated = False
     if not message:
-        raise ValueError("문안이 비어 있습니다.")
+        message = CBS_STANDARD_TEMPLATE[kind].format(region=region)
+        auto_generated = True
     limit = CBS_LEN_LIMIT[kind]
     if len(message) > limit:
         raise ValueError(f"{kind} 문안은 {limit}자를 넘을 수 없습니다 — "
@@ -113,7 +130,8 @@ def create_draft(*, scope: TenantScope, kind: str, region: str, message: str,
     actor, group = _require_group(scope)
     stamp = timezone.localtime(when).strftime("%Y-%m-%d %H:%M")
     reason = (f"유형={kind} · 구역={region} · 글자수={len(message)}/{limit} · "
-             f"시각={stamp}" + (" · 야간 안전안내 경고" if night_warning else ""))
+             f"시각={stamp}" + (" · 표준 문안 자동" if auto_generated else "") +
+             (" · 야간 안전안내 경고" if night_warning else ""))
     entry = audit_writer.write(
         logger_name=LOGGER_NAME, tag=TAG, actor=actor,
         action=_draft_action(group.pk), outcome=audit_writer.ALLOWED,
@@ -122,6 +140,7 @@ def create_draft(*, scope: TenantScope, kind: str, region: str, message: str,
     return {
         "draft_id": entry.audit_id, "kind": kind, "region": region,
         "message": message, "length": len(message), "limit": limit,
+        "auto_generated": auto_generated,
         "night_warning": night_warning, "status": "초안",
         "occurred_at": when, "actor_id": entry.actor_id,
     }

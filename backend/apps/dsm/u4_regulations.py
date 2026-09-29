@@ -37,6 +37,18 @@ CBS_LEN_LIMIT: dict[str, int] = {
 CBS_NIGHT_START_HOUR = 21
 CBS_NIGHT_END_HOUR = 6
 
+#: 유형별 **표준 문안(자동 생성)** 틀 — 명세서 §4.4 DSM-U4-03 「유형·읍면동 선택 →
+#: 표준 문안(자동 생성) → 글자 수 검사」. 턴 AM(N4)이 채우지 못한 반쪽(N4_promotions.md
+#: 「표준 문안 자동 생성이 빠졌다」)을 이 턴(AN·N1)이 채운다.
+#: `{region}` 자리표시자 하나만 받는다(D-280 — 지어낸 문장을 늘리지 않는다,
+#: 정해진 틀에 실측 입력값 하나만 채운다). 사람이 `message` 를 직접 써서 보내면
+#: 이 틀 대신 그 글이 그대로 쓰인다 — 이 틀은 **비었을 때의 자동값**이다.
+CBS_STANDARD_TEMPLATE: dict[str, str] = {
+    CBS_KIND_SAFETY: "[안전안내] {region} 지역 주민께서는 안전에 유의하시기 바랍니다.",
+    CBS_KIND_URGENT: "[긴급재난문자] {region} 위험 상황이 발생했습니다. 안내에 따라 행동하시기 바랍니다.",
+    CBS_KIND_CRITICAL: "[위급재난문자] {region} 지역은 즉시 대피하시기 바랍니다.",
+}
+
 #: 상황보고서(별지 제1호서식) 보고 구분 셋 — 명세서 §「상황보고」행(27행)
 #: 「최초 보고 지체 없이 · 중간 보고 … · 최종 보고」.
 REPORT_KIND_FIRST = "최초"

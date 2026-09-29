@@ -836,6 +836,10 @@ SELF_TEST_LINKS: dict[str, str] = {
     #: [P-356 · 2026-09-28 · 턴 AM 차선 N3] FWS-F6(산림청·지자체 산림과 연계) 별표 절
     #: 승격 게이트 — `verify_spec_fws.py` 의 판정식을 그대로 베낀 짝(F6 전용 분모).
     "verify_spec_fws_f6.py": "backend/tests/test_verify_spec_fws_f6_gate_can_fail.py",
+    "verify_spec_title_parts.py": "backend/tests/test_an_o_title_parts.py",
+    "verify_spec_fws_f3.py": "backend/tests/test_an_spec_gates_can_fail.py",
+    "verify_spec_fws_f3b.py": "backend/tests/test_an_spec_gates_can_fail.py",
+    "verify_spec_u5_an.py": "backend/tests/test_an_spec_gates_can_fail.py",
     #: [P-356 · 2026-09-28 · 턴 AM 차선 N4] DSM-U4(재난안전과 담당 — 상황보고서 제N보·
     #: CBS 초안·통제현황판·영상제공대장·근무표 CSV) 별표 절 승격 게이트 —
     #: `verify_spec_dsm.py` 의 판정식을 그대로 베낀 짝(N4 전용 분모 9).

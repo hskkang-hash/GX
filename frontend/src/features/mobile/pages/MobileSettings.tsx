@@ -445,9 +445,20 @@ export default function MobileSettings() {
                   message={saveOutcome.text}
                 />
               ) : null}
+              {/*
+                ★★ [P-396 · 턴 AN · 차선 L] **온보딩 U3#16 — 「저장됨」이 새로 고침 뒤에
+                  사라졌다** [실측: `docs/agent/evidence/ONB-T/turn_am_6.json` U3#16].
+
+                  종전에는 저장 직후에만(`saveOutcome`, 컴포넌트 상태) 「저장됨」이 떴고,
+                  그 상태는 새로고침·재방문에서 지워진다. 그런데 **서버가 실제로 값을
+                  가지고 있는가**를 말하는 이 줄(`prefs.data?.saved`)은 「저장된 설정이
+                  있습니다」였다 — 「저장됨」과 다른 낱말이라 셋째 조건 계측(문자열 대조)이
+                  못 잡았다. 같은 사실(저장이 되어 있다)을 **같은 낱말**로 말한다 — 두
+                  벌을 두지 않는다(D-369 계열과 같은 자리).
+              */}
               <Text type="secondary" style={{ fontSize: 12 }} data-gx="prefs-saved-state">
                 {prefs.data?.saved
-                  ? '저장된 설정이 있습니다.'
+                  ? '저장됨 — 이미 정한 값이 있습니다.'
                   : '아직 정하지 않았습니다 — 규칙이 정한 대로 받습니다.'}
               </Text>
             </Space>

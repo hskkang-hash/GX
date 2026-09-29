@@ -1,0 +1,51 @@
+{
+  "id": "FWS-F3-19",
+  "title": "훈련 시나리오 실행(가상 사건 · 실채널 0)",
+  "title_parts": [
+    {
+      "part": "가상 사건",
+      "where": "요청·응답 drill_mode(DSM 훈련 스위치 재사용 · training.py 와 같은 판단)",
+      "status": "구현 — 시작·상태 실측"
+    },
+    {
+      "part": "실채널 0(완결조건 · 첫 증거)",
+      "where": "응답 real_channel_sends",
+      "status": "구현 — 0 실측(drill_report 가 잰다)"
+    },
+    {
+      "part": "보고서",
+      "where": "응답 전체(drill_report)",
+      "status": "구현 — 종료 보고서 실측"
+    }
+  ],
+  "measured_at": "2026-09-29T03:10:49.173219+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f3b.F3_19_DrillScenarioTest.test_start_status_end_real_channel_zero",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/office2/drill/end?reason=%ED%9B%88%EB%A0%A8+%EC%A2%85%EB%A3%8C",
+    "params": {
+      "reason": "훈련 종료"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "group_id": 15,
+      "measurable": true,
+      "started_at": "2026-09-29T03:10:49.097Z",
+      "ended_at": "2026-09-29T03:10:49.156Z",
+      "in_progress": false,
+      "data_source": "drill",
+      "real_channel_sends": 0,
+      "real_channel_breakdown": {},
+      "sends_total": 0,
+      "sends_by_channel": {},
+      "events_total": 0,
+      "events_by_type": {},
+      "switch_by": "dsm_user_a",
+      "switch_reason": "훈련 종료"
+    }
+  },
+  "what": "훈련 시작→상태 확인→종료 보고서에서 real_channel_sends=0 이 실측된다(훈련이 진짜 발송을 내지 않았다는 증거)"
+}

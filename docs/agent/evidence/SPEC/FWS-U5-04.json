@@ -1,0 +1,161 @@
+{
+  "id": "FWS-U5-04",
+  "title": "산불 알림 규칙(등급별 수신: 진화대·산림과·지휘·산림청) · 야간 5분대기조 채널",
+  "measured_at": "2026-09-29T03:45:47.571411+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_u5.U5_04_NotifyRulesTest.test_overview_lists_role_suggestions_and_night_standby_zone",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/admin/notify-rules",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "severities": [
+        {
+          "severity": "info",
+          "label": "정보",
+          "rule_count": 0,
+          "recipient_count": 0,
+          "human_channels": [],
+          "reaches_people": false
+        },
+        {
+          "severity": "warning",
+          "label": "경고",
+          "rule_count": 0,
+          "recipient_count": 0,
+          "human_channels": [],
+          "reaches_people": false
+        },
+        {
+          "severity": "critical",
+          "label": "위험",
+          "rule_count": 1,
+          "recipient_count": 1,
+          "human_channels": [
+            "email"
+          ],
+          "reaches_people": true
+        }
+      ],
+      "rules": [
+        {
+          "rule_id": 4,
+          "severity": "critical",
+          "role_code": "dsm_watch_a",
+          "role_id": 13,
+          "zone": null,
+          "channels": [
+            "email"
+          ],
+          "is_active": true
+        }
+      ],
+      "channels": [
+        {
+          "channel": "email",
+          "available": true,
+          "reaches_people": true,
+          "note": "이메일 — 지금 붙어 있는 유일한 실채널",
+          "unavailable_reason": ""
+        },
+        {
+          "channel": "log",
+          "available": true,
+          "reaches_people": false,
+          "note": "훈련 채널 — 사람이 아니라 로그에 도달한다. 운영 규칙에 넣으면 당직자가 못 받는다",
+          "unavailable_reason": ""
+        },
+        {
+          "channel": "push",
+          "available": false,
+          "reaches_people": true,
+          "note": "앱 푸시 — 모바일 클라이언트 배포와 함께 온다",
+          "unavailable_reason": "채널 미구현 — 발송 업체 미선정 (DA-04 D4-1). 앱 푸시는 모바일 클라이언트 배포와 함께 온다."
+        },
+        {
+          "channel": "sms",
+          "available": false,
+          "reaches_people": true,
+          "note": "문자 — 발송 업체 미선정(대표 결정 대기)",
+          "unavailable_reason": "채널 미구현 — 발송 업체 미선정 (DA-04 D4-1 · 계약·비용 사안). WP-DA2b ENTRY 까지 판단 대기."
+        },
+        {
+          "channel": "webhook",
+          "available": false,
+          "reaches_people": true,
+          "note": "웹훅 — 상대 시스템으로. 구독·서명키가 선행",
+          "unavailable_reason": "채널 미구현 — 수신 URL 의 테넌트 소유 판정과 서명키 보관이 선행 — K1.subscribe 와 같은 선행이다."
+        },
+        {
+          "channel": "webpush",
+          "available": true,
+          "reaches_people": true,
+          "note": "웹푸시 — 브라우저 잠금화면. 발송기는 U3 차선이 짓는다",
+          "unavailable_reason": ""
+        }
+      ],
+      "critical_recipient_count": 1,
+      "critical_human_channels": [
+        "email"
+      ],
+      "critical_blocked": false,
+      "critical_block_reason": "",
+      "test_channel": "log",
+      "role_suggestions": [
+        {
+          "role_code": "fws_response_team",
+          "label": "진화대"
+        },
+        {
+          "role_code": "fws_forestry_dept",
+          "label": "산림과"
+        },
+        {
+          "role_code": "fws_command",
+          "label": "지휘"
+        },
+        {
+          "role_code": "fws_kfs_liaison",
+          "label": "산림청"
+        }
+      ],
+      "night_standby_zone": "fws_night_standby"
+    }
+  },
+  "what": "GET .../admin/notify-rules 가 K2 rule_admin.notify_rule_overview 를 그대로 재사용하며 진화대·산림과·지휘·산림청 네 역할 제안과 야간 5분대기조 구역 이름을 함께 낸다",
+  "title_parts": [
+    {
+      "part": "등급별 수신",
+      "where": "severities/rules",
+      "status": "measured"
+    },
+    {
+      "part": "진화대",
+      "where": "role_suggestions[fws_response_team]",
+      "status": "measured"
+    },
+    {
+      "part": "산림과",
+      "where": "role_suggestions[fws_forestry_dept]",
+      "status": "measured"
+    },
+    {
+      "part": "지휘",
+      "where": "role_suggestions[fws_command]",
+      "status": "measured"
+    },
+    {
+      "part": "산림청",
+      "where": "role_suggestions[fws_kfs_liaison]",
+      "status": "measured"
+    },
+    {
+      "part": "야간 5분대기조 채널",
+      "where": "night_standby_zone",
+      "status": "measured"
+    }
+  ]
+}

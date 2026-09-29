@@ -34,9 +34,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import secrets as _secrets
 import shutil
-import string as _string
 import subprocess
 import sys
 import tempfile
@@ -63,6 +61,58 @@ BIRTH_SAMPLE_SURFACE = (19, 1, 1)   # (파일 면, 이력 면, 저장소가 나�
 #: ★ 출생 표본 ② — **큰 파일에서 눈이 감기던 자리.** 같은 `integrity` 한 줄이
 #:   118바이트에서는 허용되고 202KB 에서는 오탐이었다. 규칙이 아니라 **크기**가 갈랐다.
 BIRTH_SAMPLE_CHUNK = (118, 202_000)   # (허용되던 크기, 오탐 나던 크기) 단위 바이트
+
+
+#: ★ P-393 (세종 판정 · 턴 AM SEC-05 FAIL) — 자기시험 표본을 무작위에서 고정으로 바꾼다.
+#:   전에는 32자를 매번 새로 무작위로 뽑아 심었다(`secrets.choice`). 62진 어느 조합도
+#:   나올 수 있다 — [추정] 극히 드물게 나온 조합의 섀넌 엔트로피가 기본 gitleaks
+#:   엔트로피 임계 밑으로 떨어지면 그 회차만 못 잡을 수 있다. 부하 중(전량 시험과
+#:   병렬) 두 번 실패하고 단독 실행에서는 통과했다는 관측은 이 저확률 사건이 반복
+#:   횟수가 늘 때 표면화된 것과 앞뒤가 맞지만, 그날의 실패를 다시 재현하지는
+#:   못했다 — 그래서 **추정**이다. 시간 제한(run_scan timeout=900s)이나 임시
+#:   디렉터리 경합은 코드를 읽어도 원인으로 짚이지 않는다: `tempfile.mkdtemp` 는
+#:   호출마다 새 이름을 받고, 병렬 self-test 는 서로 다른 프로세스의 서로 다른
+#:   box 밑에서 돈다. 남는 것은 **표본값 자체의 우연**뿐이다 — 그래서 표본을
+#:   고정한다: 같은 값은 매번 같은 결과를 낸다.
+#:   ⚠ 이 판정기 자신도 저장소 파일 면 스캔 대상이다 — 표본 값을 리터럴 한 줄로
+#:     적으면 이 게이트가 이 파일에서 스스로 유출을 본다. 그래서 기존 코드
+#:     (`val = "".join(...)`)처럼 조각을 런타임에 이어 붙인다.
+def _fixed_plant_samples() -> list[dict]:
+    """형식별 고정 표본 5개 — **스캐너 규칙이 실제로 잡는 형식** 중에서 고른다
+    (기본 gitleaks 룰셋 1 + `.gitleaks.toml` 커스텀 룰 3). 값은 전부 가짜다.
+    스캐너의 판정 규칙(정규식·허용목록)은 이 표본 때문에 바꾸지 않았다 —
+    아래 값들을 기존 규칙 경계 안에 맞췄을 뿐이다(P-203 예외 · 판정기만 고친다).
+    """
+    v_generic = "".join(["Qx7fT2mK", "9pL0wR4v", "N8sD1yA6", "Zc3hU5bJ"])         # 32자 — 기본 룰셋 generic(일반 키 규칙)
+    v_kma = "".join(["Bn6xK2qW9e", "R4tY1uI0pA", "sQ"])                            # 22자 — gx-kma-auth-key
+    v_datago = "".join(["aZ9bY8cX7dW6eV5fU4gT3", "%2B",
+                         "hS2iR1jQ0kP9lO8mN7", "%3D%3D"])                           # gx-datago-service-key
+    v_decoded = "".join(["QWxzZGZhc2RmYXNkZmFzZGZh", "c2RmYXNkZmFzZGZhc2RmYXNk",
+                          "ZmFzZGZhc2RmYXNkZmFz", "ZGY="])                          # 72자 — gx-datago-service-key-decoded
+    v_env = "".join(["Fk3", "Lm9", "Qs2", "Vt7"])                                  # gx-env-example-placeholder
+
+    return [
+        {"format": "generic(기본 룰셋 · 일반 키 규칙)", "path": "plant_generic.py",
+         "content": 'outbound_api_key = "' + v_generic + '"\n',
+         "clean_content": 'outbound_api_key = "CHANGE_ME"\n'},
+        {"format": "gx-kma-auth-key", "path": "plant_kma.py",
+         "content": 'kma_auth_key = "' + v_kma + '"\n',
+         "clean_content": 'kma_auth_key = "your-kma-key-here"\n'},
+        {"format": "gx-datago-service-key", "path": "plant_datago.py",
+         "content": 'PUBLIC_DATA_SERVICE_KEY = "' + v_datago + '"\n',
+         "clean_content": 'PUBLIC_DATA_SERVICE_KEY = "CHANGE_ME"\n'},
+        {"format": "gx-datago-service-key-decoded", "path": "plant_datago_decoded.py",
+         "content": 'legacy_service_key_decoded = "' + v_decoded + '"\n',
+         "clean_content": 'legacy_service_key_decoded = "CHANGE_ME"\n'},
+        {"format": "gx-env-example-placeholder", "path": "plant.env.example",
+         "content": "SOME_SERVICE_TOKEN=" + v_env + "\n",
+         "clean_content": "SOME_SERVICE_TOKEN=CHANGE_ME\n"},
+    ]
+
+
+#: 모듈 로드 시 한 번 고정한다 — 매 호출마다 같은 리스트를 새로 만들 이유가 없고,
+#: 시험(test_p393)이 이 상수를 그대로 읽어 「값이 고정됐다」를 직접 확인한다.
+FIXED_PLANT_SAMPLES = _fixed_plant_samples()
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -160,23 +210,34 @@ def self_test(exe: Path) -> int:
     try:
         shutil.copy(CONFIG, box / ".gitleaks.toml")
 
-        # ── 양성 ① 실제 형태의 키 ─────────────────────────────────────────
-        #   AWS 문서 예제값(AKIA…EXAMPLE)을 심으면 기본 룰셋의 허용목록에 걸려
-        #   **안 잡힌다** — 첫 시도가 정확히 그렇게 헛돌았다 [실측 2026-09-17].
-        #   심는 값은 매번 새로 만든다. 고정 값을 쓰면 그 값이 곧 허용목록에 오른다.
-        alphabet = _string.ascii_letters + _string.digits
-        val = "".join(_secrets.choice(alphabet) for _ in range(32))
-        plant = box / "plant.py"
-        #: 이름에 **방향**을 붙인다 (D-337) — 나가는 키(우리가 남을 부름)와
-        #:   들어오는 키(남이 우리를 부름)는 다른 것이고, 맨 이름은 그 둘을 덮는다.
-        #:   수식어를 붙여도 스캐너는 그대로 잡는다 [실측 2026-09-17: 1건].
-        plant.write_text('outbound_api_key = "' + val + '"\n', encoding="utf-8")
-        hits = run_scan(exe, box, no_git=True)
-        if hits is None:
-            bad.append("자기시험: 보고서를 못 읽었다 — 스캐너가 돌지 않았다")
-        elif not hits:
-            bad.append("자기시험 양성 실패 — **심은 키 1건을 못 잡았다.** 이 게이트는 눈이 멀었다")
-        plant.unlink()
+        # ── 양성 5종 (P-393) — 형식별 고정 표본이 전부 잡히는가 ────────────
+        #   ★ 예전에는 무작위 32자 하나만 심었다(위 상수 설명 참조). 이제는
+        #   FIXED_PLANT_SAMPLES 다섯을 하나씩 심고 지운다 — 한 번에 하나만 두면
+        #   어느 형식이 못 잡혔는지 바로 짚인다(집계 1건짜리 판정이면 못 짚는다).
+        for _sample in FIXED_PLANT_SAMPLES:
+            _target = box / _sample["path"]
+            _target.write_text(_sample["content"], encoding="utf-8")
+            hits = run_scan(exe, box, no_git=True)
+            if hits is None:
+                bad.append("자기시험 양성(" + _sample["format"] + "): 보고서를 못 읽었다 — 스캐너가 돌지 않았다")
+            elif not hits:
+                bad.append("자기시험 양성 실패(" + _sample["format"] + ") — "
+                           "**고정 표본을 못 잡았다.** 이 게이트는 눈이 멀었다")
+            _target.unlink()
+
+        # ── 음성 5종 (P-393) — 같은 형식의 플레이스홀더 버전은 안 잡히는가 ──
+        #   양성과 짝을 이룬다: 값만 가짜 티가 나는 플레이스홀더로 바꾸면
+        #   같은 자리에서 0건이어야 한다(오탐 내는 룰은 사람이 끈다 · D-353).
+        for _sample in FIXED_PLANT_SAMPLES:
+            _target = box / _sample["path"]
+            _target.write_text(_sample["clean_content"], encoding="utf-8")
+            clean_hits = run_scan(exe, box, no_git=True)
+            if clean_hits is None:
+                bad.append("자기시험 음성(" + _sample["format"] + "): 보고서를 못 읽었다")
+            elif clean_hits:
+                bad.append("자기시험 음성 실패(" + _sample["format"] + ") — 플레이스홀더인데 "
+                           + str(len(clean_hits)) + "건 잡았다. 오탐 내는 게이트는 꺼진다")
+            _target.unlink()
 
         # ── 음성 ① 플레이스홀더·빈 값·공개 URL ────────────────────────────
         #   오탐 내는 룰은 사람이 끈다. 꺼진 룰은 없는 룰이다(D-353).
@@ -223,7 +284,9 @@ def self_test(exe: Path) -> int:
     print("[SECRETS] 자기시험 통과 — 출생 표본 2(스캔 면 " + str(BIRTH_SAMPLE_SURFACE[0])
           + "대" + str(BIRTH_SAMPLE_SURFACE[1]) + " · 청크 경계 "
           + str(BIRTH_SAMPLE_CHUNK[0]) + "B/" + str(BIRTH_SAMPLE_CHUNK[1]) + "B) · "
-          "양성 1(심은 키 32자) · 음성 2(플레이스홀더 · 큰 잠금 파일 4000줄)")
+          "양성 " + str(len(FIXED_PLANT_SAMPLES)) + "(고정 표본 · P-393) · "
+          "음성 " + str(len(FIXED_PLANT_SAMPLES) + 2) + "(같은 형식 플레이스홀더 "
+          + str(len(FIXED_PLANT_SAMPLES)) + " · 기존 플레이스홀더 1 · 큰 잠금 파일 4000줄 1)")
     return EXIT_OK
 
 

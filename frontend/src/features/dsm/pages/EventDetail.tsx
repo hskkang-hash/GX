@@ -119,6 +119,19 @@ export default function EventDetail() {
     reason: string;
   } | null>(null);
 
+  /**
+   * ★★ [P-396 · 턴 AN · 차선 L] **온보딩 U3#1 — 「알림 보내기」의 결과 문장이 없었다**
+   *   [실측: `docs/agent/evidence/ONB-T/turn_am_6.json` U3#1 · "결과 문장=False"].
+   *
+   *   종전에는 `notify()` 의 결과가 `message.info/warning/error` **토스트뿐**이었다 —
+   *   이 파일의 다른 쓰기(진위 판정 · 등급 재판정 · 상급기관 제출)는 전부 토스트가
+   *   사라진 뒤에도 남는 **상태 칸**을 이미 쓰고 있는데, 발송만 그 규약을 안 따르고
+   *   있었다(머리말 「토스트는 증거가 아니다」와 같은 병 · `FocusQueue.tsx`·
+   *   `EventList.tsx` 가 이미 지킨 규약). 토스트는 그대로 두고(즉각 신호),
+   *   **같은 문장을 상태 칸에도** 남긴다 — 나중에 봐도 있는 것이 증거다.
+   */
+  const [notifyOutcome, setNotifyOutcome] = useState<{ ok: boolean; text: string } | null>(null);
+
   const event = useDsmResource<EventDetailView>(
     () => dsmGet<EventDetailView>(dsmEndpoint.eventDetail(id!)),
     [id],
@@ -212,20 +225,26 @@ export default function EventDetail() {
       //   원인 없이 보였다. 이제 0 이면 0 이라고 말한다(수신자 0명은 409 로 아래 catch 가 말한다).
       const total = typeof res?.total === 'number' ? res.total : null;
       const failed = (res?.deliveries ?? []).filter((d) => d?.succeeded === false).length;
+      let line: string;
       if (total === 0) {
-        message.warning('새로 보낸 알림이 없습니다. 같은 사건의 알림은 5분 안에 다시 보내지 않습니다. 아래 발송 이력을 확인하십시오.');
+        line = '새로 보낸 알림이 없습니다. 같은 사건의 알림은 5분 안에 다시 보내지 않습니다. 아래 발송 이력을 확인하십시오.';
+        message.warning(line);
       } else if (total !== null && failed > 0) {
-        message.warning(`알림 ${total}건 중 ${failed}건이 실패했습니다. 아래 발송 이력에서 사유를 확인하십시오.`);
+        line = `알림 ${total}건 중 ${failed}건이 실패했습니다. 아래 발송 이력에서 사유를 확인하십시오.`;
+        message.warning(line);
       } else {
-        message.info(
-          total !== null
-            ? `알림 ${total}건 발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.`
-            : '발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.',
-        );
+        line = total !== null
+          ? `알림 ${total}건 발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.`
+          : '발송을 요청했습니다. 결과는 아래 발송 이력에서 확인하십시오.';
+        message.info(line);
       }
+      // ★ 토스트가 사라진 뒤에도 이 줄이 남는다 — 위 머리말 참조.
+      setNotifyOutcome({ ok: !(total !== null && failed > 0), text: line });
       deliveries.reload();
     } catch (err) {
-      message.error(userFacingError('EventDetail.notify', err, '발송 요청이 실패했습니다.'));
+      const line = userFacingError('EventDetail.notify', err, '발송 요청이 실패했습니다.');
+      message.error(line);
+      setNotifyOutcome({ ok: false, text: line });
     } finally {
       setSending(false);
     }
@@ -492,6 +511,17 @@ export default function EventDetail() {
             )}
           </Col>
         </Row>
+
+        {/* ★★ [P-396 · 턴 AN · 차선 L · 온보딩 U3#1] 토스트가 사라진 뒤에도 남는
+            발송 결과 — 위 `notify()` 머리말 참조. */}
+        {notifyOutcome && (
+          <Alert
+            type={notifyOutcome.ok ? 'info' : 'warning'}
+            showIcon
+            data-gx="notify-outcome"
+            message={notifyOutcome.text}
+          />
+        )}
 
         {/* ★ notFoundTitle — 이 화면은 **무엇이** 없는지 안다. 경계의 기본 문구는
             「없는 항목입니다」이고(같은 경계를 카메라·계량·열람청구도 쓴다),
