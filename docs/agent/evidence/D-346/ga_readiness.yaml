@@ -229,16 +229,6 @@ annex_2_spec:
       kind: unmeasurable
       hand: in
       src: DSM
-    - id: DSM-U4-03
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: DSM
-    - id: DSM-U4-04
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: DSM
     - id: DSM-U4-05
       status: 미착수
       kind: unmeasurable
@@ -255,16 +245,6 @@ annex_2_spec:
       hand: in
       src: DSM
     - id: DSM-U4-09
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: DSM
-    - id: DSM-U5-01
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: DSM
-    - id: DSM-U5-03
       status: 미착수
       kind: unmeasurable
       hand: in
@@ -346,47 +326,7 @@ annex_2_spec:
       kind: unmeasurable
       hand: in
       src: FWS
-    - id: FWS-F3-01
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F3-02
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F3-03
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
     - id: FWS-F3-04
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F3-05
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F3-06
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F3-07
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F3-08
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F3-09
       status: 미착수
       kind: unmeasurable
       hand: in
@@ -401,17 +341,7 @@ annex_2_spec:
       kind: unmeasurable
       hand: in
       src: FWS
-    - id: FWS-F3-12
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
     - id: FWS-F3-13
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F3-14
       status: 미착수
       kind: unmeasurable
       hand: in
@@ -426,22 +356,7 @@ annex_2_spec:
       kind: unmeasurable
       hand: in
       src: FWS
-    - id: FWS-F3-17
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
     - id: FWS-F3-18
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F3-19
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F3-20
       status: 미착수
       kind: unmeasurable
       hand: in
@@ -551,27 +466,7 @@ annex_2_spec:
       kind: unmeasurable
       hand: in
       src: FWS
-    - id: FWS-F6-07
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
     - id: FWS-F6-09
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-U5-01
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-U5-02
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-U5-03
       status: 미착수
       kind: unmeasurable
       hand: in
@@ -3933,6 +3828,261 @@ areas:
         proof: backend/tests/test_fws_f6.py
         evidence: docs/agent/evidence/SPEC/FWS-F6-10.json
         origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
+      # ★★ [P-356 · P-392 · 2026-09-29 · 턴 AN · 조율자 창 ②] 별표 승격 21절 — 분모 293 불변(절 +21 · 별표 −21).
+      #   반쪽(제목의 한 부분이 missing·대리 지표·본인 범위)은 올리지 않았다: FWS-F3-04 · F3-16 · F3-18 · FWS-U5-04 ·
+      #   DSM-U4-07 · U5-05 · FWS-F3-11(앱 푸시 미확인) · F3-13(면적 빈 칸) (보고서 §닫은 절). 이 턴 증거는 `title_parts` 표를 싣는다(verify_spec_title_parts).
+      - id: DSM-U4-03
+        title: 재난문자(CBS) 초안
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N1] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/DSM-U4-03.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_dsm_u4.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_dsm_u4.py
+        gate_args: --no-run
+        proof: backend/tests/test_p356_u4_rest_spec_promotions.py
+        evidence: docs/agent/evidence/SPEC/DSM-U4-03.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: DSM-U4-04
+        title: 통제·대피 현황판
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N1] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/DSM-U4-04.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_dsm_u4.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_dsm_u4.py
+        gate_args: --no-run
+        proof: backend/tests/test_p356_u4_rest_spec_promotions.py
+        evidence: docs/agent/evidence/SPEC/DSM-U4-04.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F6-07
+        title: 스마트산림재난 앱 대피 푸시 연계(산림청) [미확인] · 대안 CBS 초안
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N1] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F6-07.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f6.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f6.py
+        gate_args: --no-run
+        proof: backend/tests/test_an_n1_f6_07_webpush.py
+        evidence: docs/agent/evidence/SPEC/FWS-F6-07.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-01
+        title: 산불 상황판 — 위험지수·위기경보·초소 근무·카메라 정상·진행 사건·자원 대기
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N2] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-01.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3a.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-01.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-02
+        title: 조심기간·특별대책기간 설정 · 초소·순찰 구역 등록
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N2] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-02.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3a.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-02.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-03
+        title: 인력 배치 — 감시원·대응단 근무표(CSV) · 야간 5분대기조
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N2] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-03.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3a.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-03.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-05
+        title: 오인 종결(사유) · 산불 확정
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N2] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-05.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3a.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-05.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-06
+        title: 신고 접수 기록
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N2] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-06.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3a.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-06.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-07
+        title: 산림청 상황실 통보 기록(042-481-4119) · 헬기 요청 기록(요청 시각·기지·도착 예정)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N2] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-07.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3a.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-07.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-08
+        title: 자원 배정
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N2] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-08.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3a.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-08.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-09
+        title: 대응단계 입력 3칸(면적·풍속·시설 우려) → 단계 제안 → F4 확정 요청
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N2] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-09.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3a.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-09.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-12
+        title: 대피 이행 확인(마을별 완료·잔류자·요양시설)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N3] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-12.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3b.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3b.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3b.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-12.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-14
+        title: 진화완료 보고·산불 통계 항목(산불정보ID·원인·면적·문자전송 여부·일출몰)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N3] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-14.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3b.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3b.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3b.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-14.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-17
+        title: 카메라별 오탐률(안개·소각 …)·임계값 시험(K6·QA-12)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N3] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-17.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3b.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3b.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3b.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-17.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-19
+        title: 훈련 시나리오 실행(가상 사건 · 실채널 0)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N3] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-19.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3b.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3b.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3b.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-19.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-F3-20
+        title: 온보딩 카드 7(조심기간 전)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N3] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F3-20.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_fws_f3b.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f3b.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_f3b.py
+        evidence: docs/agent/evidence/SPEC/FWS-F3-20.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-U5-01
+        title: 산불 감시 카메라 등록(고지대
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N4] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-U5-01.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_u5_an.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_u5_an.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_u5.py
+        evidence: docs/agent/evidence/SPEC/FWS-U5-01.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-U5-02
+        title: 초소·순찰함(NFC)·순찰 구역
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N4] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-U5-02.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_u5_an.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_u5_an.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_u5.py
+        evidence: docs/agent/evidence/SPEC/FWS-U5-02.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: FWS-U5-03
+        title: 마을·대피소·요양시설 등록(대피 대상 자동 산출)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N4] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-U5-03.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_u5_an.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_u5_an.py
+        gate_args: --no-run
+        proof: backend/tests/test_fws_u5.py
+        evidence: docs/agent/evidence/SPEC/FWS-U5-03.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: DSM-U5-01
+        title: 운영·관리 방침 항목 관리
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N4] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/DSM-U5-01.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_u5_an.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_u5_an.py
+        gate_args: --no-run
+        proof: backend/tests/test_dsm_u5_an.py
+        evidence: docs/agent/evidence/SPEC/DSM-U5-01.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
+      - id: DSM-U5-03
+        title: 연계 설정 — 스마트시티 통합플랫폼·112·119·NDMS
+        status: 구현
+        kind: closed
+        kind_why: |
+          [P-356 · 턴 AN · 차선 N4] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/DSM-U5-03.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
+          게이트 `scripts/verify_spec_u5_an.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
+        gate: scripts/verify_spec_u5_an.py
+        gate_args: --no-run
+        proof: backend/tests/test_dsm_u5_an.py
+        evidence: docs/agent/evidence/SPEC/DSM-U5-03.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
       # ★★ [P-356 · 2026-09-27 · 턴 AK · 조율자 창 ③] **별표 승격 13절** — 기능명세 별표(annex_2_spec)에서
       #   이 영역으로 **옮겼다**(분모 293 불변: 절 +13 · 별표 −13). 넷이 다 있는 것만: ① 구현(엔드포인트)
       #   ② `evidence/SPEC/<id>.json`(Django 시험 클라이언트 실측 · 기계가 씀) ③ 게이트 행(verify_spec_dsm /
