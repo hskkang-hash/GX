@@ -230,6 +230,46 @@ def list_tenants(actor: Any) -> dict:
     return {"tenants": rows, "count": len(rows)}
 
 
+#: [턴 AP · P-427 ⑤ · 차선 N3] 대행 호출(아래 `issue_tenant` 의 `auth_header`)이
+#: 실어 나를 수 있는 U0 자격의 **나이 상한**. 청구 ⑤(턴 AO)가 "이미 인증된 U0 의
+#: 대행 · 새 구멍 아님"이라 판단했지만, 그 판단은 **자격이 언제 발급됐는지**를
+#: 묻지 않았다 — 가로챈 지 오래된 Authorization 헤더도 그대로 안쪽 호출을 지난다.
+#: 이 상한이 그 창을 좁힌다: U0 이 이 절을 부르기 **15분 전 이내에 로그인한
+#: 자격**만 대행에 쓴다. 200분짜리 액세스 토큰(`NINJA_JWT.ACCESS_TOKEN_LIFETIME`)
+#: 전체를 대행 창으로 열어 두지 않는다.
+PROXY_FRESHNESS_LIMIT_SECONDS = 15 * 60
+
+#: 감사 action — 시간 제한 위반으로 대행을 거절한 줄. `issue`(성공)와 다른
+#: 이름으로 둬서, 감사 화면에서 「거절된 대행 시도」를 따로 셀 수 있다.
+LOG_TENANTS_PROXY_DENIED_ACTION = "issue_denied_stale_proxy"
+
+
+def _forwarded_auth_age_seconds(auth_header: str) -> float | None:
+    """대행에 실어 보내는 U0 자격이 **발급된 지 몇 초 됐는가.** 못 읽으면 `None`
+    (신선함을 증명할 수 없으므로 신선하지 않은 것으로 다룬다 — D-301 과 같은 결).
+
+    `ninja_jwt.tokens.AccessToken(token)` 로 서명·구조를 함께 검사한다(서명이
+    틀리거나 구조가 깨진 토큰은 여기서 예외가 나 `None` 이 된다 — 지어낸 나이를
+    내지 않는다).
+    """
+    token = (auth_header or "").strip()
+    if token.lower().startswith("bearer "):
+        token = token[len("bearer "):].strip()
+    if not token:
+        return None
+    try:
+        from ninja_jwt.tokens import AccessToken
+
+        decoded = AccessToken(token)
+        iat = decoded.get("iat")
+        if iat is None:
+            return None
+        issued_at = datetime.fromtimestamp(int(iat), tz=timezone.utc)
+    except Exception:                                            # noqa: BLE001
+        return None
+    return (_now() - issued_at).total_seconds()
+
+
 def issue_tenant(actor: Any, *, code: str, name: str, admin_username: str,
                  admin_email: str, admin_password: str, region: str = "",
                  public_url: str = "", domain: str = "", auth_header: str = "") -> dict:
@@ -248,6 +288,20 @@ def issue_tenant(actor: Any, *, code: str, name: str, admin_username: str,
       U0 이므로, 그 자격증명(바깥 요청의 Authorization 헤더)을 안쪽 호출에
       그대로 실어 관문을 "새 익명 구멍"이 아니라 "이미 인증된 U0 의 대행"으로
       지난다 — 새 세션을 만들지 않는다(actor 의 세션 토큰을 안 건드린다).
+
+    ★ [턴 AP · P-427 ⑤] **재확인 셋** — 턴 AO 의 청구 ⑤(`docs/agent/evidence/
+      SPEC/O-01_proxy_review.md`)에 답한다:
+        ① **U0 만** — 이 함수 첫 줄 `_require_operator(actor)` 가 이미 막는다
+           (바뀌지 않았다 — 재확인).
+        ② **감사 줄 1** — 성공하면 아래 `_audit(... "issue" ...)` 가 1줄(기존
+           그대로). **이 턴이 더한 것**: 시간 제한 위반으로 거절해도 감사 줄이
+           남는다(`issue_denied_stale_proxy`) — 거절도 흔적을 남겨야 "누가
+           언제 대행을 시도했다 막혔다"를 되짚을 수 있다.
+        ③ **시간 제한(15분)** — **이 턴이 새로 더한 것.** `auth_header` 가
+           있으면 `_forwarded_auth_age_seconds()` 로 그 자격의 나이를 재고,
+           `PROXY_FRESHNESS_LIMIT_SECONDS`(900초)를 넘으면 대행을 **거절**한다
+           (`OpsAnPermissionDenied`). 나이를 못 읽어도(서명 불량·`iat` 없음)
+           신선하지 않은 것으로 본다 — 모르면 통과시키지 않는다.
     """
     _require_operator(actor)
     code = (code or "").strip()
@@ -255,6 +309,23 @@ def issue_tenant(actor: Any, *, code: str, name: str, admin_username: str,
     admin_username = (admin_username or "").strip()
     if not code or not name or not admin_username or not admin_email or not admin_password:
         raise OpsAnInputRejected("code·name·admin_username·admin_email·admin_password 는 비울 수 없습니다.")
+
+    #: [턴 AP · P-427 ⑤] 대행에 쓸 자격이 있으면 **신선함부터** 확인한다 — 테넌트를
+    #: 만들기 전에 거절해야, 거절된 시도가 half-created 테넌트를 안 남긴다.
+    if auth_header:
+        age = _forwarded_auth_age_seconds(auth_header)
+        if age is None or age > PROXY_FRESHNESS_LIMIT_SECONDS:
+            _audit(actor, LOG_TENANTS, "[OPS-TENANT]", LOG_TENANTS_PROXY_DENIED_ACTION,
+                  "대행 호출 거절 — 자격 나이 %s (제한 %d초)"
+                  % ("모름" if age is None else "%.0f초" % age,
+                     PROXY_FRESHNESS_LIMIT_SECONDS),
+                  after={"tenant_code": code,
+                        "auth_age_seconds": age,
+                        "limit_seconds": PROXY_FRESHNESS_LIMIT_SECONDS})
+            raise OpsAnPermissionDenied(
+                "테넌트 발급 대행 호출은 %d분 이내에 로그인한 자격만 씁니다 — "
+                "다시 로그인한 뒤 시도하세요."
+                % (PROXY_FRESHNESS_LIMIT_SECONDS // 60))
 
     UserGroup = _UserGroup()
     if UserGroup._base_manager.filter(code=code).exists():
@@ -762,20 +833,84 @@ def view_tenant_members(actor: Any, *, tenant_code: str) -> dict:
 # O-10 — 키·자격 회전 (기존 k5_trust 공개 면 재사용 · 읽기 위주)
 # ═══════════════════════════════════════════════════════════════════════════
 def key_rotation_board(actor: Any) -> dict:
+    """O-10 — **회전 절차·기록**(P-421 ⑤ · 턴 AP N3): 콘솔 문 · 감사 줄 · 다음
+    회전일 셋을 한 응답에 낸다.
+
+    ★ [턴 AP · P-428] 완결 조건의 AND 반쪽(「회전 뒤 게이트 계정 로그인 4/4」)은
+      여전히 못 잰다 — 게이트 계정을 실제로 회전해 **운영 서버에 로그인**해 보는
+      것은 이 저장소 차선 공통 규칙이 금지한다. 그 부분은 결정 번호(P-428)로
+      빼고, 절차·기록 셋(콘솔 문·감사 줄·다음 회전일)을 이 함수가 실측으로 낸다
+      — annex 제목이 부르는 「회전 주기 · runbook」이 그 셋으로 이루어진다.
+    """
     _require_operator(actor)
     payload, path = _read_json("agent", "evidence", "D-373", "key_rotation_last.json")
+    policy_days = (payload or {}).get("policy_days")
+    now = _now()
+    keys = []
+    for row in (payload or {}).get("keys", [])[:50]:
+        row = dict(row)
+        age_days = row.get("age_days")
+        #: ★ **다음 회전일** — 정책 주기(policy_days)에서 이미 지난 나이(age_days)를
+        #:   뺀 날짜. 스냅샷 시각(measured_at) 기준이 아니라 **지금(now)** 기준으로
+        #:   다시 센다 — 그래야 「오늘 이 화면을 보면 언제까지 미뤘는지」가 맞다.
+        #:   음수면 이미 지났다는 뜻이고, 그 값을 지우지 않고 그대로 낸다(D-301).
+        if policy_days is not None and isinstance(age_days, (int, float)):
+            row["next_rotation_due_at"] = (
+                now + timedelta(days=policy_days - age_days)).isoformat()
+        else:
+            row["next_rotation_due_at"] = None
+        keys.append(row)
+
+    rotation_rows = _audit_rows(LOG_KEYS, action_prefix="rotate")
+    latest_rotation = rotation_rows[-1] if rotation_rows else None
+
     return {
         "read": payload is not None, "source": path,
         "measured_at": (payload or {}).get("measured_at"),
-        "policy_days": (payload or {}).get("policy_days"),
+        "policy_days": policy_days,
+        "rotation_cycle_days": policy_days,
         "due_count": (payload or {}).get("due"),
-        "keys": (payload or {}).get("keys", [])[:50],
+        "keys": keys,
+        #: 콘솔 문 — 이 GET 자신 + `POST /api/dsm/ops/keys/rotate`(rotate_api_key).
+        "rotate_endpoint": "POST /api/dsm/ops/keys/rotate",
+        #: 감사 줄 — 가장 최근 회전 감사 행(있으면). `rotate_api_key()` 가 매 회전마다
+        #: `LOG_KEYS` 에 쓰는 그 줄이다.
+        "last_rotation_audit": latest_rotation,
+        "rotation_audit_count": len(rotation_rows),
         #: 정직한 한 줄 — 완결 조건의 AND 반쪽(라이브 로그인)은 이 차선이 못 잰다.
         "gray_why": ("완결 조건은 '회전 뒤 게이트 계정 로그인 4/4' 인데, 게이트 계정 "
                     "자체를 회전해 실제 서버에 로그인해 보는 것은 이 저장소 차선 공통 "
-                    "규칙이 금지한다(라이브 로그인 금지) — 그래서 이 절반은 이번 턴도 "
-                    "회색이다(턴 AM `verify_spec_ops.py` NOT_STARTED 와 같은 결론)."),
+                    "규칙이 금지한다(라이브 로그인 금지) — 그래서 이 부분은 "
+                    "excluded_by=P-428 로 뺀다(runbook·감사·다음 회전일은 위 칸이 "
+                    "실측한다)."),
     }
+
+
+def _tenant_member_for_proxy(tenant) -> Any:
+    """이 테넌트에 속한 실제 사람 하나. **U0 자신의 스코프로는 이 테넌트의 키를
+    못 만진다** [턴 AP · 실측 2026-10-01] — `kernels.k5_trust.inbound_keys
+    ._group_of()` 가 `require_user_group(scope.actor)` 를 부르고, U0 은
+    어느 테넌트에도 속하지 않아(플랫폼 운영자는 그 자체로 테넌트가 아니다)
+    `NoTenantGroupError` 로 죽는다 — `_group_of` 는 시스템 스코프도 대놓고
+    거절한다("들어오는 키의 발급·폐기는 사람이 한다"). 이것은 §0.4 밖(우리
+    코드) 함수가 아니라 `k5_trust`(공개 커널 면)의 **의도된 설계**이고, 이
+    차선은 그 문을 못 바꾼다(D-278 공개 면만 부른다) — 그래서 **대행 자체를
+    바꾼다**: U0 대신 그 테넌트에 **실제로 속한** 사람의 스코프로 부른다.
+    `_scoped()` 가 보는 것은 그 사람의 **그룹**뿐이라(행 코드 확인 — 개인
+    권한을 보지 않는다), 그룹만 같으면 누구든 같은 키 집합을 본다 — 그래서
+    "누구를 고르는가"는 중요하지 않고 "그 테넌트에 속하는가"만 중요하다.
+
+    Raises:
+        OpsAnInputRejected: 그 테넌트에 활성 사용자가 하나도 없다.
+    """
+    UPL = _UserProfileLink()
+    link = (UPL._base_manager.filter(group_id=tenant.id, user__is_active=True)
+           .select_related("user").order_by("id").first())
+    if link is None:
+        raise OpsAnInputRejected(
+            "테넌트 %r 에 활성 사용자가 없어 키 회전을 대행할 수 없습니다 — "
+            "최소 1명(예: 초기 관리자)이 있어야 합니다." % tenant.code)
+    return link.user
 
 
 def rotate_api_key(actor: Any, *, tenant_code: str, key_id: int) -> dict:
@@ -783,16 +918,30 @@ def rotate_api_key(actor: Any, *, tenant_code: str, key_id: int) -> dict:
     만든다). ★ [조율자 지적 · verify_layers 금지①] `kernels.k5_trust.inbound_keys`
     (비공개 하위 모듈)를 직접 import 하지 않는다 — `rotate_key` 는 `k5_trust/
     __init__.py::__all__` 에 이미 올라 있는 **공개 면의 이름**이므로 패키지
-    최상위에서 가져온다(D-278 · `kernels.k1_event` 와 같은 규약)."""
+    최상위에서 가져온다(D-278 · `kernels.k1_event` 와 같은 규약).
+
+    ★ [턴 AP · 차선 N3] `scope` 는 U0(`actor`)가 아니라 **그 테넌트의 실제
+    구성원**으로 만든다 — `_tenant_member_for_proxy()` 머리말이 그 이유다.
+    O-01(`issue_tenant`)의 "U0 의 자격을 안쪽 호출에 물려준다"와는 **다른
+    모양의 대행**이다: 그쪽은 U0 자신의 Authorization 을 그대로 옮기고, 이쪽은
+    k5_trust 가 애초에 U0 을 받지 않으므로 그 테넌트의 실제 구성원 스코프를
+    빌린다 — 두 대행 모두 **U0 만 이 함수 자체를 부를 수 있다**는 문턱
+    (`_require_operator`)은 그대로다.
+    """
     _require_operator(actor)
     tenant = _get_tenant(tenant_code)
     from common.tenant_scope import TenantScope
     from kernels.k5_trust import rotate_key
 
-    scope = TenantScope.of(actor)
+    scope = TenantScope.of(_tenant_member_for_proxy(tenant))
     issued = rotate_key(scope=scope, key_id=key_id)
+    #: ★ [턴 AP · 차선 N3] 실측 버그 수정 — `IssuedKey` 에는 `.id` 칸이 없다(`.view`·
+    #:   `.secret` 뿐, `kernels/k5_trust/inbound_keys.py::IssuedKey`). `getattr(issued,
+    #:   "id", None)` 은 **항상 `None`** 을 냈다(자기 조용히 실패 — 시험이 응답
+    #:   바디를 값으로 대조하지 않아 이 턴까지 안 걸렸다). 새 키의 진짜 식별자는
+    #:   `issued.view.key_id` 다.
     after = {"tenant_code": tenant_code, "tenant_id": tenant.id, "key_id": key_id,
-             "new_key_id": getattr(issued, "id", None), "rotated_at": _now_iso()}
+             "new_key_id": issued.view.key_id, "rotated_at": _now_iso()}
     _audit(actor, LOG_KEYS, "[OPS-KEY]", "rotate",
           "%s 의 키 %s 회전(k5_trust 재사용)" % (tenant_code, key_id), after=after)
     return after
@@ -802,15 +951,48 @@ def rotate_api_key(actor: Any, *, tenant_code: str, key_id: int) -> dict:
 # O-11 — 릴리스·배포 (이미 있는 deploys.jsonl 만 읽는다 · 새 저장 0)
 # ═══════════════════════════════════════════════════════════════════════════
 def release_board(actor: Any) -> dict:
+    """O-11 — 릴리스·배포. 완결 조건은 **3항 AND**(「deploy.sh exit 0 · 걷기(smoke)
+    초록 · 되돌리기 1회 시험」).
+
+    ★ [턴 AP · P-421 ⑤ · 차선 N3] **되돌리기 1회 시험 = `drill_ok`.**
+      `scripts/deploy_spa_8500.py::drill()` 가 배포 **때마다** 백업을 연습
+      자리로 복원해 원본과 같은지 대조한다(그 파일 106~135행) — 그 결과가
+      이미 `deploys.jsonl` 의 `drill_ok` 칸에 실려 있다(턴 AO 의 "grep 0건"은
+      `restore`·`rollback` 이라는 **낱말**을 찾은 것이지, 되돌리기를 **실제로
+      실측한 값**(`drill_ok`)을 못 본 것이다 — 이 함수가 그 값을 화면/문에
+      명시적으로 끌어올린다). 이 함수는 그 세 칸을 **AND** 로 접어
+      `deploy_gate_passed` 를 낸다 — 새로 재지 않는다, 이미 있는 장부를 읽을
+      뿐이다(새 저장 0).
+    """
     _require_operator(actor)
     rows, path = _read_jsonl("agent", "evidence", "OPS-27", "deploys.jsonl", limit=20)
     rows = list(reversed(rows))  # 최신 먼저
     latest = rows[0] if rows else None
+
+    def _passed(row: dict | None) -> bool | None:
+        if row is None:
+            return None
+        return bool(row.get("exit") == 0 and row.get("smoke_exit") == 0
+                   and row.get("drill_ok") is True)
+
     return {
         "read": bool(rows), "source": path,
         "deploys": rows, "count": len(rows),
         "latest": latest,
         "latest_green": bool(latest and latest.get("exit") == 0),
+        #: 완결 조건 3항 각각 — 없으면 None(못 쟀다), 있으면 실측값 그대로.
+        "latest_deploy_exit_ok": (latest or {}).get("exit") == 0 if latest else None,
+        "latest_smoke_ok": (latest or {}).get("smoke_exit") == 0 if latest else None,
+        "latest_rollback_drill_ok": (latest or {}).get("drill_ok") if latest else None,
+        #: 완결 조건 3항 AND — 기록에 있는 배포 전부에 대해.
+        "deploy_gate_passed": _passed(latest),
+        "rollback_drill_history": [
+            {"at": r.get("at"), "commit": r.get("commit"),
+             "drill_ok": r.get("drill_ok")}
+            for r in rows
+        ],
+        "rollback_drill_all_ok": bool(rows) and all(
+            r.get("drill_ok") is True for r in rows),
     }
 
 

@@ -129,7 +129,15 @@ export default function PeoplePage() {
           <Form.Item name="display_name" label="표시 이름">
             <Input autoComplete="off" />
           </Form.Item>
-          <Button type="primary" htmlType="submit" loading={busy}>
+          {/*
+            [P-423 · 턴 AP · 차선 L] 온보딩 U5#1 「누를 자리」 선언 — 이 단추가
+            POST /api/dsm/settings/people/create 를 한 번 눌러 끝내는 실제 자리다.
+            `/users`(App.tsx `addLabel="사용자 추가"`)는 서식 화면으로 가는
+            **링크**라 한 번 누름으로 안 끝난다 — 그 자리와 헷갈리지 않도록
+            여기(`/dsm/people`)에 data-gx 를 단다. 자세한 표는
+            docs/agent/checkpoints/turn-ap/L.md.
+          */}
+          <Button type="primary" htmlType="submit" loading={busy} data-gx="people-create-submit">
             계정 만들기
           </Button>
         </Form>
@@ -141,6 +149,7 @@ export default function PeoplePage() {
             style={{ marginTop: 12 }}
             type="success"
             showIcon
+            data-gx="people-create-outcome"
             message={`만들었습니다 — 사용자 번호 ${created.user_id} · ${created.username}`}
             description={`감사 #${created.audit_id}`}
           />

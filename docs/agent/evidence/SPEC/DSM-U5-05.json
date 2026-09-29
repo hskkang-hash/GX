@@ -1,6 +1,6 @@
 {
   "id": "DSM-U5-05",
-  "measured_at": "2026-09-29T07:45:58.637247+00:00",
+  "measured_at": "2026-09-29T09:32:52.224914+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u5_05_evidence",
   "request": {
@@ -15,8 +15,8 @@
     "body": {
       "imported": 2,
       "row_ids": [
-        555,
-        556
+        57,
+        58
       ]
     }
   },
@@ -49,13 +49,13 @@
     },
     {
       "part": "일지 근무자 자동",
-      "where": "관제일지(DSM-U1-04) 자체가 이 저장소에 없다 — 이 턴도 만들지 않았다(새 표 0 지시 · 별도 절)",
-      "status": "없음(범위 밖 — 별도 절)"
+      "where": "backend/apps/dsm/handover_service.py::control_log · backend/apps/dsm/api_u5_an.py::u5an_control_log",
+      "status": "measured — 관제일지 = 인계 메모 + 사건 타임라인 합본(새 표 0 · P-421 ② · 턴 AP N3): handover_service.control_log() 가 build_draft()(인계 메모)와 services.recent_events/response_clock(사건 타임라인, UX-14 공개 면 재사용)을 한 응답에 묶는다. 문: GET /api/dsm/u5an/control-log. 시험: tests.test_ap_n3_u5_05_control_log.ControlLogTest.test_control_log_combines_handover_and_incident_timeline"
     },
     {
       "part": "완결조건 「일지 근무자 = 편성표」",
-      "where": "근무자는 자동으로 나와 인계 메모에 실리나(위) 명세가 부르는 「일지」자체가 이 제품에 없다",
-      "status": "부분(인계 메모로 대신 — 일지 자체는 미착수)"
+      "where": "backend/apps/dsm/handover_service.py::control_log",
+      "status": "measured — 일지 근무자(control_log().on_duty) == 편성표(shift_roster_service.current_workers()) 를 HTTP 응답에서 실측 대조(항등 — 같은 호출 하나를 옮겨 쓸 뿐 다른 값을 낼 길이 없다). 인계 메모의 on_duty 와도 일치(두 벌로 안 센다). 시험: tests.test_ap_n3_u5_05_control_log.ControlLogTest.test_control_log_combines_handover_and_incident_timeline"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "id": "DSM-U4-03",
-  "measured_at": "2026-09-29T07:45:58.432049+00:00",
+  "measured_at": "2026-09-29T09:32:52.007929+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u4_03_evidence",
   "request": {
@@ -15,7 +15,7 @@
   "response": {
     "status": 200,
     "body": {
-      "draft_id": 552,
+      "draft_id": 54,
       "kind": "긴급",
       "region": "정왕동",
       "message": "즉시 대피",
@@ -24,8 +24,8 @@
       "auto_generated": false,
       "night_warning": false,
       "status": "초안",
-      "occurred_at": "2026-09-29T07:45:58.414Z",
-      "actor_id": 712
+      "occurred_at": "2026-09-29T09:32:51.975Z",
+      "actor_id": 42
     }
   },
   "what": "재난문자 초안 한 건을 실제로 만들었다 — 글자수(4/157) 검사를 통과한 실측값이 그대로 응답에 있다.",

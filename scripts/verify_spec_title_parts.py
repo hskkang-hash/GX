@@ -77,6 +77,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 LEDGER = ROOT / "docs" / "agent" / "evidence" / "D-346" / "ga_readiness.yaml"
 EVIDENCE_DIR = ROOT / "docs" / "agent" / "evidence" / "SPEC"
+#: [턴 AP · P-419 · 차선 N1] 눈금 문서 — 「제목이 부르는 것」 종류 목록 + 닫힘
+#: status 앞머리 목록을 사람이 읽는 글로 고정한 곳. 이 게이트는 그 존재와
+#: 앞머리 목록을 아래에서 읽어 코드 상수 CLOSED_PREFIXES 와 대조한다(사람마다
+#: 다른 눈금 0). 문서가 없으면 회색 · 문서의 목록과 코드 상수가 갈리면 빨강.
+RULE_DOC = EVIDENCE_DIR / "TITLE_PARTS_RULE.md"
 TAG = "[SPEC-TITLE]"
 
 for _stream in (sys.stdout, sys.stderr):
@@ -131,6 +136,61 @@ def _is_proxy(status) -> bool:
         return False
     st = status.strip().lower()
     return st.startswith(tuple(p.lower() for p in PROXY_PREFIXES))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# [턴 AP · P-419 · 차선 N1] 눈금 문서(TITLE_PARTS_RULE.md) 존재 + 목록 대조
+# ═══════════════════════════════════════════════════════════════════════════
+def _parse_rule_doc_prefixes(text: str) -> list[str] | None:
+    """순수 함수(D-277) — 문서 본문에서 `CLOSED_PREFIXES = ...` 줄을 뽑는다.
+
+    문서 §2 의 코드 펜스 안 한 줄 `CLOSED_PREFIXES = measured, present,있음,
+    구현` 모양을 그대로 읽는다. 그 줄이 없거나 모양이 안 맞으면 None(=문서를
+    못 읽은 것과 같은 대접 — 회색).
+    """
+    m = re.search(r"CLOSED_PREFIXES\s*=\s*(.+)", text)
+    if not m:
+        return None
+    raw = m.group(1).strip()
+    items = [x.strip().strip("`") for x in raw.split(",")]
+    items = [x for x in items if x]
+    return items or None
+
+
+def load_rule_doc() -> tuple[list[str] | None, str]:
+    """문서 파일을 읽는다(불순 — main()·measure() 안에서만 부른다)."""
+    if not RULE_DOC.is_file():
+        return None, "눈금 문서가 없다: %s" % RULE_DOC
+    try:
+        text = RULE_DOC.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:                                         # noqa: BLE001
+        return None, "눈금 문서를 못 읽었다: %s" % exc
+    items = _parse_rule_doc_prefixes(text)
+    if items is None:
+        return None, ("눈금 문서는 있으나 `CLOSED_PREFIXES = ...` 줄을 "
+                      "못 찾았다(문서 모양이 바뀌었을 수 있다): %s" % RULE_DOC)
+    return items, ""
+
+
+def check_rule_doc_sync(items: list[str] | None) -> dict:
+    """순수 함수 — 문서에서 뽑은 목록과 코드 상수 CLOSED_PREFIXES 를 대조한다.
+
+    반환 `{"verdict": "ok"|"red"|"grey", "detail": str}`.
+    ok   — 문서 목록 == 코드 상수(순서·철자까지)
+    red  — 문서는 있으나 목록이 코드 상수와 갈린다(사람마다 다른 눈금)
+    grey — 문서를 못 읽었다(items is None) — 존재하지 않거나 모양이 안 맞다
+    """
+    if items is None:
+        return {"verdict": "grey",
+                "detail": "눈금 문서(TITLE_PARTS_RULE.md)가 없거나 목록을 못 읽었다"}
+    code_list = list(CLOSED_PREFIXES)
+    if items != code_list:
+        return {"verdict": "red",
+                "detail": "눈금 문서의 닫힘 status 앞머리 목록 %s 이 코드 상수 "
+                         "CLOSED_PREFIXES %s 와 갈린다 — 눈금이 둘이면 사람마다 "
+                         "다른 눈금을 쓴다(P-419 위반)" % (items, code_list)}
+    return {"verdict": "ok",
+            "detail": "눈금 문서와 코드 상수 CLOSED_PREFIXES 가 같다: %s" % code_list}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -298,11 +358,23 @@ def measure() -> dict:
 # ═══════════════════════════════════════════════════════════════════════════
 # 출력
 # ═══════════════════════════════════════════════════════════════════════════
-def report(rep: dict, *, list_all: bool = False) -> int:
+def report(rep: dict, *, list_all: bool = False, rule_check: dict | None = None) -> int:
+    #: [턴 AP · P-419] 눈금 문서 대조를 먼저 알린다 — 이 게이트 자신의 눈금이
+    #: 문서와 갈리면(빨강) 또는 문서가 없으면(회색) 절 판정보다 먼저 적는다.
+    rule_exit = None
+    if rule_check is not None:
+        rv = rule_check["verdict"]
+        mark = {"ok": "O   ", "red": "X   ", "grey": "?   "}[rv]
+        print("%s %s [눈금 문서] %s" % (TAG, mark, rule_check["detail"]))
+        if rv == "red":
+            rule_exit = EXIT_RED
+        elif rv == "grey":
+            rule_exit = EXIT_GREY
+
     if not rep.get("ok"):
         print("%s [입력] 승격 절 0건(못 읽었다)" % TAG)
         print("%s ? **회색(exit 2)** — %s" % (TAG, rep.get("why", "?")))
-        return EXIT_GREY
+        return EXIT_RED if rule_exit == EXIT_RED else EXIT_GREY
 
     n = rep["promoted_n"]
     b = rep["buckets"]
@@ -344,6 +416,10 @@ def report(rep: dict, *, list_all: bool = False) -> int:
          "열린 행 0 이다. 표가 아직 없는 %d건(옛 승격)은 실패로 세지 않았다 — "
          "그 사실이 이 초록의 한계다(청구는 보고 문서에 남긴다)"
          % (TAG, n, len(b["legacy_no_table"])))
+    #: [턴 AP · P-419] 절 판정은 초록이어도 눈금 문서 자체가 갈리거나(빨강)
+    #: 없으면(회색) 최종 exit 은 그것을 따른다 — 눈금이 둘이면 이 초록은 거짓말이다.
+    if rule_exit is not None:
+        return rule_exit
     return EXIT_OK
 
 
@@ -455,6 +531,25 @@ def self_test() -> int:
     ok("★ 영문 'proxy' 앞머리도 대소문자 무시하고 열린 행",
        _is_proxy(_row_proxy_en["status"]))
 
+    # ── [턴 AP · P-419] 눈금 문서(TITLE_PARTS_RULE.md) 대조 — 자기시험 짝 ────
+    ok("★ 눈금 문서 목록 == 코드 상수 CLOSED_PREFIXES → ok",
+       check_rule_doc_sync(list(CLOSED_PREFIXES))["verdict"] == "ok")
+    ok("★★ 눈금 문서 목록이 코드 상수와 하나라도 갈리면(철자 하나) → red",
+       check_rule_doc_sync(list(CLOSED_PREFIXES[:-1]))["verdict"] == "red")
+    ok("★★ 목록 순서가 갈려도(같은 원소 다른 순서) → red(순서까지 같아야 한다)",
+       check_rule_doc_sync(list(reversed(CLOSED_PREFIXES)))["verdict"] == "red")
+    ok("★ 눈금 문서를 못 읽음(items=None — 파일 없음·모양 안 맞음) → grey",
+       check_rule_doc_sync(None)["verdict"] == "grey")
+    ok("★ _parse_rule_doc_prefixes — 문서 본문에서 CLOSED_PREFIXES 줄을 뽑는다",
+       _parse_rule_doc_prefixes("머리말\nCLOSED_PREFIXES = measured, present,있음, 구현\n꼬리")
+       == ["measured", "present", "있음", "구현"])
+    ok("★ _parse_rule_doc_prefixes — 그 줄이 없으면 None",
+       _parse_rule_doc_prefixes("아무 줄도 없다") is None)
+    #: [D-277] 실물 파일을 여기서 읽지 않는다 — self_test() 는 순수 함수만
+    #: 두드린다(gx-shell 은 `/repo/docs` 가 살아 있는 마운트가 아니라 파일이
+    #: 안 보인다). 실물 문서 대조는 `backend/tests/test_an_o_title_parts.py::
+    #: RuleDocTest`(환경에 따라 skip)가 한다.
+
     # ── classify_payload ─────────────────────────────────────────────────
     ok("증거 없음(None) → grey · no_evidence",
        classify_payload("X-01", None) == {"id": "X-01", "verdict": "grey",
@@ -511,7 +606,11 @@ def main() -> int:
     if args.self_test:
         return self_test()
     rep = measure()
-    return report(rep, list_all=args.list)
+    rule_items, rule_why = load_rule_doc()
+    rule_check = check_rule_doc_sync(rule_items)
+    if rule_check["verdict"] == "grey" and rule_why:
+        rule_check = dict(rule_check, detail=rule_why)
+    return report(rep, list_all=args.list, rule_check=rule_check)
 
 
 if __name__ == "__main__":

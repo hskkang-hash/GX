@@ -1341,7 +1341,19 @@ def rows_u2(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
 # U3 · 이동 중 (390 · 같은 계정)
 # ---------------------------------------------------------------------------
 def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, probe_user=""):
-    # #1 알림 수신: /dsm/events/:id 「알림 보내기」 → POST notify 200 → deliveries +N (서버 기록) → /m/inbox 에 그 사건 카드
+    # #1 알림 수신: /dsm/events/:id 「알림 보내기」 → POST notify 200 → deliveries +N (서버 기록)
+    #    → /m/inbox 가 제품 기본(`mine=true`)으로 다시 읽는다.
+    #    ★★ [P-425 · 턴 AP · 차선 Q 고침] 종전 술어는 /m/inbox **화면 본문에 이번 사건 번호**
+    #    (`#{seed_a}`)가 보이는지를 봤다 — 그것은 **「보낸 사람이 곧 받는 사람」**이라는 가정이다.
+    #    u3 가 「알림 보내기」를 누른다고 u3 **자신**이 그 사건의 수신자로 등록돼 있다는 보장은
+    #    없다(수신자는 심각도·유형별 `NotificationRule` 이 따로 정한다 — U2#16 근처 참고). 그
+    #    가정이 맞을 때만(우연히 u3 도 수신자일 때만) 종전 술어가 서고, 아닐 때는 서버가
+    #    옳게 동작해도(배달이 실제로 늘어도) 화면에 **엉뚱한 이유로** 카드가 없어 거짓 빨강이
+    #    난다. 이 화면의 정본은 U3#19(같은 파일 1438~1440행)가 이미 실측해 적어 둔 그대로
+    #    `GET /api/dsm/deliveries?...&mine=true` 다 — 「누가 보냈나」가 아니라 「나에게 온
+    #    것만」이 제품 기본이다. 그래서 카드 문자열 대조를 걷어내고, 화면이 **그 API 를 실제로
+    #    불렀는지**(`mine=true`)로 술어를 바꾼다. 발송이 서버에 실제로 기록을 남겼는지는
+    #    여전히 `before`/`after`(DB 직접 조회 — 수신자가 누구든 안 갈린다)로 잰다.
     m = net.mark()
     before = delivery_count(seed_a)
     url = goto(page, web, f"/dsm/events/{seed_a}")
@@ -1355,10 +1367,11 @@ def rows_u3(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
         b = body(page)
         msg = "발송을 요청했습니다" in b
         url2 = goto(page, web, "/m/inbox")
-        ib = body(page)
-        card = (f"#{seed_a}" in ib) or (str(seed_a) in ib)
-        pred = bool(post and post[-1]["status"] == 200 and after > before and card)
-        evidence = f"POST notify {[p['status'] for p in post]} · deliveries {before} → {after} · 결과 문장={msg} · /m/inbox 카드={card}"
+        mine = [r for r in net.find("GET", "/api/dsm/deliveries", m) if "mine=" in r["url"]]
+        pred = bool(post and post[-1]["status"] == 200 and after > before and mine)
+        evidence = (f"POST notify {[p['status'] for p in post]} · deliveries {before} → {after} · "
+                    f"결과 문장={msg} · /m/inbox mine=true 호출 {len(mine)}건 "
+                    f"(카드 유무는 안 본다 — 발신자=수신자 가정 제거 · P-425)")
         url = url2
     else:
         evidence = "「알림 보내기」 단추가 안 보인다"

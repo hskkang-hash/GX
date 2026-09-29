@@ -59,9 +59,13 @@ SCOPE_EVENTS_READ = "events:read"
 SCOPE_PULSE_READ = "pulse:read"
 SCOPE_STATS_READ = "stats:read"
 SCOPE_WEBHOOKS_MANAGE = "webhooks:manage"
+#: [P-427 · 턴 AP] 외부 기관 시스템이 **이벤트를 들여보내는** 쓰기 범위(DSM-U6-01).
+#:   기본 범위가 아니다 — 운영자가 그 기관의 키에 명시해 줄 때만 열린다.
+SCOPE_EVENTS_INGEST = "events:ingest"
 
 ALLOWED_SCOPES: frozenset[str] = frozenset({
     SCOPE_EVENTS_READ, SCOPE_PULSE_READ, SCOPE_STATS_READ, SCOPE_WEBHOOKS_MANAGE,
+    SCOPE_EVENTS_INGEST,
 })
 
 #: 발급 문이 `scopes` 를 안 줄 때 붙는 것. **가장 좁은 하나.**
@@ -94,6 +98,8 @@ class KeyScopeDenied(PermissionError):
 # ⚠ 접두 대조는 **긴 것부터** 본다 — `/api/dsm/events` 가 `/api/dsm/events/…` 를
 #   먼저 먹으면 더 좁은 규칙이 영영 안 걸린다.
 PATH_SCOPES: tuple[tuple[str, str], ...] = (
+    #: [P-427] 쓰기 문 — 이 규칙이 없으면 읽기 기본 키(`events:read`)로도 들여보낼 수 있었다.
+    ("/api/dsm/external-events", SCOPE_EVENTS_INGEST),
     ("/api/dsm/settings/webhook-subscriptions", SCOPE_WEBHOOKS_MANAGE),
     ("/api/dsm/webhook-subscriptions", SCOPE_WEBHOOKS_MANAGE),
     ("/api/dsm/cameras/pulse", SCOPE_PULSE_READ),

@@ -200,13 +200,18 @@ EXTERNAL_EVENT_SOURCES: tuple[str, ...] = (
 )
 
 
+#: [P-427] 서명키는 **웹훅 서명키 표를 재사용**한다 — 새 자격 체계 0. 외부 기관 몫의 이름은
+#: `agency`(창 2b · 2026-09-29 에 두 통 env-file 로 실렸다 · 값은 금고).
+EXTERNAL_EVENT_SIGNING_KEY_REF = "agency"
+
+
 def _signing_secret(source: str) -> str:
-    """`settings.EXTERNAL_EVENT_SIGNING_KEYS`(이름→값 표, `config/settings.py`
-    가 `WEBHOOK_SIGNING_KEYS` 와 **같은 모양**으로 환경에서 채운다) 하나만 본다.
-    키가 없으면 빈 문자열 — `webhook_contract.verify` 가 그것을 `REJECT_NO_SECRET`
-    으로 거절한다(「키가 아직 없어서 통과시켰다」를 만들지 않는다)."""
-    table = getattr(settings, "EXTERNAL_EVENT_SIGNING_KEYS", None) or {}
-    return table.get(source, "")
+    """`settings.WEBHOOK_SIGNING_KEYS[EXTERNAL_EVENT_SIGNING_KEY_REF]` 하나만 본다(P-427).
+    `source` 는 본문 검증(셋 중 하나)에만 쓰고 키 선택에는 안 쓴다 — 기관마다 키를 따로
+    두는 것은 새 자격 체계라 이 턴에 만들지 않는다. 키가 없으면 빈 문자열 —
+    `webhook_contract.verify` 가 `REJECT_NO_SECRET` 으로 거절한다."""
+    table = getattr(settings, "WEBHOOK_SIGNING_KEYS", None) or {}
+    return table.get(EXTERNAL_EVENT_SIGNING_KEY_REF, "")
 
 
 def intake_external_event(

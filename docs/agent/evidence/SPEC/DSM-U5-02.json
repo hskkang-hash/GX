@@ -57,13 +57,13 @@
     },
     {
       "part": "접속기록 1년 이상 보관",
-      "where": "backend/common/log_retention_policy.py POLICY['audit'] (declared 730일) vs config/retention_seed.py 심긴 값(365일) — 파일 자체 117~127행 '★★ 셋이 지금 다르다'",
-      "status": "부분 — 선언값(730일)과 실제 심긴 값(365일)이 갈려 있고 파일이 스스로 그 불일치를 적어 뒀다. 365일도 '1년 이상' 하한은 만족하고 파기 배치(purge)도 현재 비활성(enabled=False)이라 조기 삭제는 없지만, 선언-집행 일치가 검증된 상태가 아니라서 이 항목은 열어 둔다"
+      "where": "backend/common/log_retention_policy.py::enforced_declared_days · backend/common/ops_tasks.py::audit_retention_declared_days · scripts/verify_spec_dsm.py::judge_retention_alignment(④)",
+      "status": "measured — 선언이 설정을 그대로 읽는다(항등, 값은 선언이 아니라 설정에서 읽는다 · P-421 ④): log_retention_policy.enforced_declared_days('audit') == ops_tasks.audit_retention_declared_days() (테스트 재대조 365일). 미선언이면 0/None 이 아니라 법정 목표(730일)로 안전하게 대체된다 — '1년 이상' 하한은 두 경우 모두 만족한다. 게이트 scripts/verify_spec_dsm.py 의 ④ 행이 gx-shell 안에서 이 항등을 매 실행 실측 대조한다. 시험: tests.test_ap_n3_u5_02_retention.RetentionDeclarationReadsSettingTest.test_gate_row_and_evidence"
     },
     {
       "part": "완결 조건 「접속기록 조회 ≤ 60초」",
       "where": "backend/tests/test_p356_u4_spec_promotions.py (access-log 관련 테스트 전수 확인 — 응답시간 assert 0건)",
-      "status": "없음 — 조회 성능(≤60초)을 재는 시험·게이트가 하나도 없다(2026-09-25 미포함표 §3 의 지적이 09-29 시점에도 그대로 유효)"
+      "status": "measured — GET /api/dsm/access-log 응답시간 15.313초 실측(< 60초, time.perf_counter() 직접 계측 · 대리 지표 0). 시험: tests.test_ap_n3_u5_02_retention.AccessLogQueryPerformanceTest.test_access_log_query_is_under_60_seconds"
     }
   ]
 }

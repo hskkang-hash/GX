@@ -572,6 +572,14 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("GET", "/api/dsm/u5an/integrations"),                                   # DSM-U5-03 연계 설정 조회
     ("POST", "/api/dsm/u5an/integrations"),                                  # DSM-U5-03 연계 설정 저장 ★쓰기
     ("POST", "/api/dsm/u5an/integrations/test"),                             # DSM-U5-03 연계 점검(외부 호출 0)
+    # ── 턴 AP · 차선 N3(U5-05) · N4(U4 잔여 · U4#8 조합 검색) ───────────────────────────
+    ("GET", "/api/dsm/daily-report"),                                           # DSM-U4-05 일일상황보고(N4)
+    ("GET", "/api/dsm/evaluation-bundle.zip"),                                  # DSM-U4-08 평가 자료 묶음(N4)
+    ("GET", "/api/dsm/events/combined-search"),                                 # U4#8 조합 검색(N4 · P-424)
+    ("GET", "/api/dsm/situation-reports/ndms-export.csv"),                      # DSM-U4-02 NDMS CSV(N4)
+    ("GET", "/api/dsm/stats/safety-index"),                                     # DSM-U4-09 지역안전지수(N4)
+    ("GET", "/api/dsm/u5an/control-log"),                                       # DSM-U5-05 관제일지(N3)
+    ("POST", "/api/dsm/situation-reports/interim-batch"),                       # DSM-U4-02 중간 배치(N4)
     # ── 턴 AO · 차선 N1(U4-07) · N3(플랫폼 운영자 /ops · U0 만) · N4(U3·U6) ─────────────
     ("GET", "/api/dsm/events/{int:event_id}/m2-brief"),                         # DSM U3·U6(N4)
     ("GET", "/api/dsm/ops/apps"),                                               # O 플랫폼 운영자(N3)

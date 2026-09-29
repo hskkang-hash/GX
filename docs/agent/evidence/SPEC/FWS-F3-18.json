@@ -5,7 +5,7 @@
     {
       "part": "계도·단속 통계",
       "where": "응답 by_kind·total(patrol_enforcement_stats)",
-      "status": "구현 — guidance 1건 · enforcement 1건(같은 테넌트 두 사람) → total=2 실측(곁표 common.models.AuditScope 가 감사 표의 테넌트 칸 없음을 넘어선다 · 턴 AO 차선 O · P-411 · 다른 테넌트는 0건 실측)"
+      "status": "부분(guidance 1건·enforcement 1건 → total=2 서버 실측은 진짜지만 화면 표시가 없다 — frontend/src/features/fws/pages/OfficeReport.tsx 의 patrolEnforcementMine 상수는 정의만 되고 호출 0건이다)"
     },
     {
       "part": "입산통제구역 관리",
@@ -13,7 +13,7 @@
       "status": "구현 — 같은 테넌트 두 사람이 설정한 구역 2건 모두 조회 실측(다른 테넌트는 0건 실측)"
     }
   ],
-  "measured_at": "2026-09-29T07:40:21.054448+00:00",
+  "measured_at": "2026-09-29T09:26:24.112398+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_18_PatrolEnforcementTest.test_record_stats_and_zone_management",
   "request": {
@@ -26,24 +26,25 @@
     "body": {
       "zones": [
         {
-          "set_at": "2026-09-29T07:40:20.940645+00:00",
+          "set_at": "2026-09-29T09:26:23.977766+00:00",
           "status": "active",
-          "__seq__": 290,
-          "__hash__": "4d23e07548feb08664625b83b71394c45de3c2519ee8dd9bab73ff04b3135aae",
+          "__seq__": 74,
+          "__hash__": "7d52b7d7a21a3a721b9143502cc982a75d53a49617b8bd9909aa010f27cfca39",
           "zone_name": "XX능선",
-          "__prev_hash__": "85c3cee9cefa822493e63813969500e7224b1a3327a99da44eeb300feba7474d"
+          "__prev_hash__": "3113b10421df6fa9f397230540044b7e628b308cbad256bf8ade7e850915448b"
         },
         {
-          "set_at": "2026-09-29T07:40:20.898533+00:00",
+          "set_at": "2026-09-29T09:26:23.915260+00:00",
           "status": "active",
-          "__seq__": 289,
-          "__hash__": "85c3cee9cefa822493e63813969500e7224b1a3327a99da44eeb300feba7474d",
+          "__seq__": 73,
+          "__hash__": "3113b10421df6fa9f397230540044b7e628b308cbad256bf8ade7e850915448b",
           "zone_name": "OO봉 일대",
-          "__prev_hash__": "2fd6f434d12636836ffd56f275bc210b1a5e9b2b266d27ce66e30a98d08bba03"
+          "__prev_hash__": "49469858911a24b753ae7bd9abdf3e053dc781865ab1b14227cf9e90fe0dfd73"
         }
       ],
       "scope": "tenant"
     }
   },
-  "what": "같은 테넌트 두 사람이 계도 1건·단속 1건 · 입산통제구역 2곳을 나눠 남긴 뒤 GET 이 둘을 합쳐 낸다(total=2 · zones 2건) — 다른 테넌트는 같은 GET 에서 0건을 받는다(격리) — 실측"
+  "what": "같은 테넌트 두 사람이 계도 1건·단속 1건 · 입산통제구역 2곳을 나눠 남긴 뒤 GET 이 둘을 합쳐 낸다(total=2 · zones 2건) — 다른 테넌트는 같은 GET 에서 0건을 받는다(격리) — 실측",
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 입산통제구역 관리(zones)는 OfficeReport.tsx 가 실제로 생성 폼을 그려(guidance/enforcement 라디오 버튼) 실측 닫힘을 재확인했다. 계도·단속 통계는 서버 집계는 진짜지만 그 수를 보여주는 화면이 없다(patrolEnforcementMine 죽은 코드) — 반쪽으로 내린다."
 }

@@ -1,23 +1,28 @@
 {
   "id": "FWS-F5-10",
   "title": "계량(비행 분)",
-  "measured_at": "2026-09-29T07:41:02.386592+00:00",
+  "measured_at": "2026-09-29T09:32:25.332558+00:00",
   "measured_by": "django_test_client",
-  "test": "tests.test_fws_f5.F5_10_FlightMinutesTest.test_flight_minutes_are_summed",
+  "test": "tests.test_ap_n4_f5_10_monthly.F5_10_MonthlyTableTest.test_monthly_table_groups_flights_by_month",
   "request": {
     "method": "GET",
-    "path": "/api/fws/drone/flights/minutes",
+    "path": "/api/fws/ap/drone/flights/minutes/monthly-table",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "month": null,
-      "flight_minutes_total": 42.5,
-      "flight_count": 2
+      "rows": [
+        {
+          "month": "2026-09",
+          "flight_minutes_total": 42.5,
+          "flight_count": 2
+        }
+      ],
+      "count": 1
     }
   },
-  "what": "비행 기록 두 건(15분·27.5분) 뒤 GET /drone/flights/minutes 의 flight_minutes_total 이 42.5 — F5-08 값을 세기만 한다(새 표 없음, 계량 실측)",
+  "what": "[턴 AP · 차선 N4] 명세 완결 조건 「월 표」— 비행 분·건수를 월별로 접은 표(새 door `ap_f5.flight_minutes_monthly_table`, drone.py 는 고치지 않았다)",
   "title_parts": [
     {
       "part": "비행 분 합계 계산(계량)",
@@ -32,7 +37,7 @@
     {
       "part": "월별 필터(month 파라미터)",
       "where": "backend/apps/fws/drone.py::flight_minutes_total(month=...) · GET /api/fws/drone/flights/minutes?month=",
-      "status": "부분 — month 파라미터와 logged_at.startswith(month) 필터 코드는 존재하나, F5-10 실측 시험은 month 를 넘기지 않아(응답 month=null) 실제 월별 필터링 동작 자체는 검증되지 않았다"
+      "status": "measured: tests.test_ap_n4_f5_10_monthly.F5_10_MonthFilterTest.test_month_param_actually_filters_by_real_month — 이번 달로 좁히면 flight_count>=1, 1999-01 로 좁히면 flight_count=0 실측(drone.py 는 고치지 않았다 · 검증만 새로 했다)"
     },
     {
       "part": "명세가 가리키는 커널/S-20 계량 체계(kernel metering, 예: apps.dsm.metering / common.billing_marks)와의 연계",
@@ -41,8 +46,8 @@
     },
     {
       "part": "월 표(완료조건 — 월별 표 형태로 화면/보고서에 반영)",
-      "where": "frontend 화면 또는 관리자 보고서 — 코드베이스 내 해당 UI/리포트 탐색 결과 없음(GET 엔드포인트만 존재, 표 렌더링 소비처 미확인)",
-      "status": "없음 — API 는 합계 값을 반환하나, 명세가 요구하는 \"월 표\"(월별 표 형태의 표시/보고)를 만드는 화면이나 배치가 코드에 없다"
+      "where": "GET /api/fws/ap/drone/flights/minutes/monthly-table · backend/apps/fws/ap_f5.py::flight_minutes_monthly_table() [턴 AP · 차선 N4 신설 — drone.py::flights_mine() 값을 월별로 접는다, drone.py 는 고치지 않았다]",
+      "status": "measured: tests.test_ap_n4_f5_10_monthly.F5_10_MonthlyTableTest.test_monthly_table_groups_flights_by_month — 같은 달 기록 둘이 한 행(합계 42.5분·2건)으로 접힘을 실측"
     }
   ]
 }

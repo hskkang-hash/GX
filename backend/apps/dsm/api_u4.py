@@ -31,8 +31,16 @@ from common.idempotency import idempotent
 from common.inbound_api_key import JwtOrInboundKey
 from common.tenant_scope import SystemScopeCannotRead, TenantScope, tenant_scoped
 
+from datetime import datetime
+
 from apps.dsm import (cbs_draft_service, control_board_service, shift_roster_service,
                      situation_report_ledger_service, video_access_ledger_service)
+from apps.dsm import services as dsm_services
+from apps.dsm import stats as dsm_stats
+from apps.dsm import u4_daily_report_service
+from apps.dsm import u4_evaluation_bundle_service
+from apps.dsm import u4_interim_report_service
+from apps.dsm import u4_safety_index_stats
 
 
 def _scope(request) -> TenantScope:
@@ -430,6 +438,165 @@ class DsmU4API:
             return shift_roster_service.current_workers(
                 scope=_scope(request), date=date)
         except ValueError as exc:
+            raise HttpError(400, str(exc))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # [턴 AP · P-424 · 온보딩 U4#8] 조합 검색(사건번호·주소·유형) — ◐ 상한 올림
+    # ══════════════════════════════════════════════════════════════════════
+    # 온보딩 48행 U4#8(`docs/agent/onboarding_48.md`) 은 「지난 12시간 보기」만
+    # 재고 조합 검색(사건번호·주소·유형)은 원래부터 ◐ 상한(정본 표기)이라 이
+    # 라우트가 서도 그 행 자체의 점수는 못 오른다 — `scripts/measure_onboarding_t.py`
+    # 는 건드리지 않는다(판정기 불가침, P-203·P-399). 이 라우트가 올리는 것은
+    # 그 행이 가리키는 **실제 기능**(annex 아님 · 세종 P-424)이다: 지금까지
+    # `/dsm/events` 목록에는 주소·유형만 서버 필터가 있었고(P-220 `address` ·
+    # 기존 `event_type`), 사건번호는 **단건 열기**(`GET /events/{id}`)뿐이라
+    # 셋을 한 화면에서 동시에 좁힐 길이 없었다(`EventList.tsx` 머리말 「사건번호로
+    # 여는 칸」 참고 — 목록 필터가 아니라 열기였다).
+    #
+    # ★ `case_no` 는 목록 스캔이 아니라 **PK 정확 일치**다(`services.event_detail`
+    #   이 그대로 문지기 — 남의 테넌트면 404, D-274). 주소·유형이 함께 오면
+    #   그 사건이 두 조건에도 맞을 때만 남는다 — 화면이 대조하지 않고 **서버가**
+    #   대조한다(DA-04 「필터는 전부 서버에서」, 이 화면 첫 규약 그대로 지킨다).
+    # ★ `case_no` 없이 주소·유형만 오면 기존 `services.recent_events` 를 **그대로**
+    #   부른다(새 질의를 짜지 않는다 — `api.py::events` 와 같은 함수, 같은 필터).
+    @route.get("/events/combined-search", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="이벤트 조합 검색 — 남의 테넌트 사건이 보이면 격리 실패다")
+    def events_combined_search(self, request, case_no: int | None = None,
+                               address: str | None = None,
+                               event_type: str | None = None,
+                               limit: int = 50):
+        """`GET /events/combined-search` — 사건번호·주소·유형 **조합** 검색.
+
+        셋 다 줄 수도, 하나만 줄 수도 있다. `case_no` 가 있으면 그 사건 하나를
+        정확히 찾아(존재·소유 확인) 나머지 조건과 대조한다. 없으면 주소·유형으로
+        목록을 좁힌다(기존 `/events` 와 같은 커널 경로).
+        """
+        from django.http import Http404
+
+        scope = _scope(request)
+        types = ([t.strip() for t in event_type.split(",") if t.strip()]
+                 if event_type and "," in event_type else event_type)
+        if case_no is not None:
+            try:
+                e = dsm_services.event_detail(scope=scope, event_id=case_no)
+            except Http404:
+                return {"total": 0, "case_no": case_no, "events": []}
+            rows = [e]
+            if address and address.strip():
+                if address.strip().lower() not in (getattr(e, "address", None) or "").lower():
+                    rows = []
+            if types:
+                want = set(types) if isinstance(types, list) else {types}
+                if e.event_type not in want:
+                    rows = []
+        else:
+            rows = dsm_services.recent_events(
+                scope=scope, event_type=types, address=address, limit=limit)
+        sources = dsm_services.event_data_sources(scope=scope, views=rows)
+        return {"total": len(rows), "case_no": case_no, "events": [
+            {"event_id": r.event_id, "event_type": r.event_type,
+             "severity": r.severity, "status": r.status, "verdict": r.verdict,
+             "occurred_at": r.occurred_at, "last_seen_at": r.last_seen_at,
+             "stream_monitor_id": r.stream_monitor_id,
+             "stream_monitor_name": r.stream_monitor_name,
+             "lat": r.lat, "lng": r.lng, "snapshot_path": r.snapshot_path,
+             "response_state": r.response_state,
+             "address": getattr(r, "address", None),
+             "data_source": sources.get(r.event_id, "live")}
+            for r in rows]}
+
+    # ══════════════════════════════════════════════════════════════════════
+    # DSM-U4-02 중간 보고 사이클 — 08시·17시 배치 + NDMS 내보내기
+    # ══════════════════════════════════════════════════════════════════════
+    @route.post("/situation-reports/interim-batch", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="중간 보고 배치 — 남의 테넌트 사건에 채번하면 격리 실패다")
+    @idempotent("dsm.u4.situation_reports.interim_batch")
+    def interim_report_batch(self, request, as_of: str | None = None):
+        """`POST /situation-reports/interim-batch` — 08시/17시 슬롯에 맞춰
+        미종결 사건 전부에 중간 보고를 한 번에 채번한다(같은 슬롯·같은 날
+        재호출은 건너뛴다)."""
+        try:
+            return u4_interim_report_service.issue_interim_batch(
+                scope=_scope(request), as_of=as_of)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
+    @route.get("/situation-reports/ndms-export.csv", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="NDMS 내보내기 — 남의 테넌트 상황보고가 파일로 나가면 "
+                          "격리 실패다")
+    def situation_reports_ndms_export(self, request):
+        """`GET /situation-reports/ndms-export.csv` — 채번된 상황보고 전건을
+        NDMS 입력용 표(항목 1:1)로 CSV 내보내기."""
+        from django.http import HttpResponse
+
+        try:
+            text = u4_interim_report_service.export_ndms_csv(scope=_scope(request))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        resp = HttpResponse(text.encode("utf-8"), content_type="text/csv; charset=utf-8")
+        resp["Content-Disposition"] = 'attachment; filename="gx-u4-ndms.csv"'
+        resp["Cache-Control"] = "no-store"
+        return resp
+
+    # ══════════════════════════════════════════════════════════════════════
+    # DSM-U4-05 일일상황보고 자동
+    # ══════════════════════════════════════════════════════════════════════
+    @route.get("/daily-report", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="일일상황보고 — 남의 테넌트 집계가 섞이면 격리 실패다")
+    def daily_report(self, request, as_of: str | None = None):
+        """`GET /daily-report` — 그 날의 일일상황보고 구조화본(재난상황·통제
+        현황·대피 — 기상특보·피해 누계·동원·향후 계획은 열린 채 정직하게
+        남긴다)."""
+        try:
+            return u4_daily_report_service.daily_report(
+                scope=_scope(request), as_of=as_of)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # DSM-U4-08 재난관리평가·감사 자료 묶음
+    # ══════════════════════════════════════════════════════════════════════
+    @route.get("/evaluation-bundle.zip", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="평가·감사 자료 묶음 — 남의 테넌트 자료가 섞이면 격리 실패다")
+    def evaluation_bundle(self, request, since: str | None = None,
+                          until: str | None = None):
+        """`GET /evaluation-bundle.zip` — 일곱 원천(상황보고·CBS·통제·회의·열람
+        대장·훈련·접속기록)을 CSV 로 묶은 ZIP(PDF 는 미채움 · P-392 재사용)."""
+        from django.http import HttpResponse
+
+        try:
+            data = u4_evaluation_bundle_service.build_bundle_zip(
+                scope=_scope(request), since=since, until=until)
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        resp = HttpResponse(data, content_type="application/zip")
+        resp["Content-Disposition"] = 'attachment; filename="gx-u4-evaluation-bundle.zip"'
+        resp["Cache-Control"] = "no-store"
+        return resp
+
+    # ══════════════════════════════════════════════════════════════════════
+    # DSM-U4-09 통계 축 추가 — 지역안전지수 6분야
+    # ══════════════════════════════════════════════════════════════════════
+    @route.get("/stats/safety-index", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="지역안전지수 통계 — 남의 테넌트 집계가 섞이면 격리 실패다")
+    def stats_safety_index(self, request, since: datetime | None = None,
+                           until: datetime | None = None,
+                           event_type: str | None = None,
+                           severity: str | None = None):
+        """`GET /stats/safety-index` — 기존 통계 축(`event_type`)을 지역안전지수
+        6분야로 다시 접은 표(+ 매핑 표). 새 질의를 짜지 않는다
+        (`apps.dsm.stats.stats_axes` 재사용)."""
+        try:
+            return u4_safety_index_stats.safety_index_axis(
+                scope=_scope(request), since=since, until=until,
+                event_type=event_type, severity=severity)
+        except dsm_stats.StatsInputError as exc:
             raise HttpError(400, str(exc))
         except SystemScopeCannotRead as exc:
             raise HttpError(403, str(exc))

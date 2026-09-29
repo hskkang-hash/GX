@@ -339,13 +339,21 @@ export default function SystemSettings() {
                 : NO_SIGNAL}
             </Descriptions.Item>
           </Descriptions>
+          {/*
+            [P-423 계열 · 턴 AP · 차선 L] 온보딩 U5#14 「셋째 조건」 재조사 —
+            P-408(턴 AO)이 이 화면의 재시작 「사유」 칸 하나만 `safeFreeText` 로
+            대장 표기(절 ID 등)를 지웠는데, 같은 화면에 서버 자유 문장이 더
+            있다(백업·회수증·저장 용량 reason/capacity_source/note 넷). 하나만
+            고치고 나머지를 안 고치면 남은 자리가 셋째 조건을 계속 잡는다 —
+            같은 규약을 이 화면 전체에 고르게 편다. 표: turn-ap/L.md.
+          */}
           {backupReadable && back?.declared === false && back?.reason ? (
             <Alert
               style={{ marginTop: 12 }}
               type="error"
               showIcon
               message="백업 선언이 완전하지 않습니다."
-              description={back.reason}
+              description={safeFreeText(back.reason)}
             />
           ) : null}
           {backupReadable ? null : (
@@ -401,7 +409,7 @@ export default function SystemSettings() {
               type="warning"
               showIcon
               message="회수증을 한 장도 못 찾았습니다."
-              description={receipts.data.reason}
+              description={safeFreeText(receipts.data.reason)}
             />
           )}
         </StateBoundary>
@@ -429,7 +437,7 @@ export default function SystemSettings() {
                     문장은 서버가 보낸 것을 그대로 쓴다 — 여기서 지어내지 않는다.
                   */}
                   {storage.data.capacity_note ? (
-                    <Text type="secondary">{storage.data.capacity_note}</Text>
+                    <Text type="secondary">{safeFreeText(storage.data.capacity_note)}</Text>
                   ) : null}
                 </Space>
               ) : (
@@ -445,7 +453,7 @@ export default function SystemSettings() {
               {storage.data?.used_pct === null || storage.data?.used_pct === undefined ? (
                 <Space direction="vertical" size={2}>
                   <Tag>판정 불가</Tag>
-                  <Text type="secondary">{storage.data?.reason}</Text>
+                  <Text type="secondary">{safeFreeText(storage.data?.reason)}</Text>
                 </Space>
               ) : (
                 <Space direction="vertical" size={2}>
@@ -456,7 +464,7 @@ export default function SystemSettings() {
                     나오는 순간 분모·분자의 정체가 화면에서 사라졌다.
                   */}
                   {storage.data.used_note ? (
-                    <Text type="secondary">센 것: {storage.data.used_note}</Text>
+                    <Text type="secondary">센 것: {safeFreeText(storage.data.used_note)}</Text>
                   ) : null}
                 </Space>
               )}
@@ -473,7 +481,7 @@ export default function SystemSettings() {
               <Space direction="vertical" size={2}>
                 <Text code>{storage.data?.env_name || '—'}</Text>
                 {storage.data?.capacity_source ? (
-                  <Text type="secondary">{storage.data.capacity_source}</Text>
+                  <Text type="secondary">{safeFreeText(storage.data.capacity_source)}</Text>
                 ) : null}
               </Space>
             </Descriptions.Item>

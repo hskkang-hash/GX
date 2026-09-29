@@ -31,26 +31,31 @@
       "part": "골든타임(30분) 초과 사유",
       "where": "응답 golden_time_seconds=1800 · golden_time_exceeded",
       "status": "구현 — office2.GOLDEN_TIME_THRESHOLD_SEC 재사용, 헬기 투하로 false 실측"
+    },
+    {
+      "part": "화면(골든타임 초과 사유 입력·대응시계 타임라인)",
+      "where": "POST .../golden-time-reason · GET .../response-timeline — 프런트 호출 0건(기본 시계 카드는 F4-01 CommandHome.tsx 재사용으로 표시된다 — 그 부분만 화면이 있다)",
+      "status": "없음(부분 — 사유 입력·전용 타임라인 화면은 미배선, 기본 시계 카드는 표시됨)"
     }
   ],
-  "measured_at": "2026-09-29T07:40:41.151177+00:00",
+  "measured_at": "2026-09-29T09:25:51.287571+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_10_ResponseTimelineTest.test_timeline_layers_fws_milestones_on_dsm_clock",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/547/response-timeline",
+    "path": "/api/fws/command/incidents/12/response-timeline",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 547,
+      "event_id": 12,
       "response_state": "in_progress",
       "timeline": {
-        "reported_at": "2026-09-29T07:40:40.913161+00:00",
-        "acknowledged_at": "2026-09-29T07:40:41.009618+00:00",
-        "helicopter_dropped_at": "2026-09-29T07:40:40.979282+00:00",
-        "main_fire_out_at": "2026-09-29T07:40:41.075676+00:00",
+        "reported_at": "2026-09-29T09:25:51.075913+00:00",
+        "acknowledged_at": "2026-09-29T09:25:51.166617+00:00",
+        "helicopter_dropped_at": "2026-09-29T09:25:51.139984+00:00",
+        "main_fire_out_at": "2026-09-29T09:25:51.221465+00:00",
         "extinguished_at": null
       },
       "golden_time_seconds": 1800,
@@ -58,5 +63,6 @@
       "golden_time_exceeded_reason": null
     }
   },
-  "what": "DSM 대응 시계(재사용) 위에 신고·헬기 투하·주불 세 칸을 얹은 대응 시계를 GET 으로 실측한다"
+  "what": "DSM 대응 시계(재사용) 위에 신고·헬기 투하·주불 세 칸을 얹은 대응 시계를 GET 으로 실측한다",
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 6개 시계 칸·골든타임 문턱(선언 30분==설정 1800초)은 서버에서 실측 닫힘을 재확인했다. 다만 골든타임 초과 사유 입력·전용 타임라인 화면은 미배선이다 — 반쪽으로 내린다."
 }

@@ -43,6 +43,12 @@ V 가 gx-shell 안에서 부르는 **한 줄**
       -w /app gx-shell python /repo/scripts/drill_seed_click.py \\
       --user gxseed_u1_operator --n 4
 
+    ★ [P-426 · 턴 AP · 차선 Q] `--unjudged` 를 더하면 심은 뒤 DB 를 다시 읽어
+      verdict 가 실제로 비었는지 확인하고, U1#11(`verify_click_completes.py`)이 그
+      표본으로 설지를 **코드로**(HTTP 를 때리지 않고) 확인한다. **기본값은 그대로다**
+      — 옵션이 없으면 심는 동작(`seed_events`)은 전과 똑같고 확인 단계만 빠진다:
+          ... drill_seed_click.py --user gxseed_u1_operator --n 4 --unjudged
+
 그 뒤에 이어지는 게이트(`verify_click_completes.py` · `verify_feature_reach` ·
 `measure_onboarding_t.py`)는 **그대로** 부르면 된다 — `--seed-file` 을 안 줘도
 `probe_marks.load_seed()` 가 `docs/agent/evidence/P-157/runs/` 아래 **가장 최신**
@@ -87,6 +93,35 @@ def plant(username: str, n: int, address: str | None):
     return cs, first, seed_path
 
 
+#: [P-426 · 턴 AP · 차선 Q] `--unjudged` 확인이 쓰는 잣대 — **`verify_click_completes.py`
+#: 의 그 줄과 같은 잣대**(`unv = [... if not e.get("verdict")]`, 이 파일 근처 3076행)를
+#: ORM 으로 재현한다. 두 벌을 따로 두면 갈릴 수 있어 여기 주석에 그 출처를 못박는다 —
+#: `verify_click_completes.py` 가 바뀌면 이 함수도 같이 봐야 한다.
+def verify_unjudged(event_ids) -> dict:
+    """심은 사건을 DB 에서 다시 읽어 **정말 미판정(verdict 없음)인지** 확인한다.
+
+    U1#11 이 서려면(`verify_click_completes.py`) `GET /api/dsm/events?limit=50` 로 다시
+    읽었을 때 이 표본 중 최소 하나가 `verdict` 가 비어 있어야 한다. 여기서는 HTTP 를
+    때리지 않고 **같은 잣대**(`verdict` 가 falsy)를 ORM 으로 그대로 적용해, 이번에 심은
+    것이 그 표본이 될지를 **코드로** 확인한다 — 실제로 누르지는 않는다(V 몫).
+
+    `record_detection`(K1)은 `verdict` 를 받지 않으므로 심은 직후에는 항상 비어
+    있어야 정상이다. 이 함수는 그 전제가 **실제로** 지켜졌는지 심은 뒤 되읽어 검사한다
+    (다른 프로세스가 그사이 먼저 판정했거나, K1 이 바뀌어 기본값이 달라지는 경우를 잡는다).
+    """
+    from django.apps import apps as django_apps
+
+    DE = django_apps.get_model("stream_monitors", "DetectionEvent")
+    ids = list(event_ids)
+    rows = list(DE._base_manager.filter(pk__in=ids).values("pk", "verdict"))
+    found_ids = {r["pk"] for r in rows}
+    judged = sorted(r["pk"] for r in rows if r["verdict"])
+    unjudged = sorted(r["pk"] for r in rows if not r["verdict"])
+    missing = sorted(set(ids) - found_ids)
+    return {"planted": len(ids), "found": len(rows), "judged": judged,
+           "unjudged": unjudged, "missing": missing}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         description="U1#11 류(자료 상태) 회색을 없애는 드릴 씨앗 — 한 줄로 심고 끝에 종결. "
@@ -99,6 +134,12 @@ def main(argv=None) -> int:
     ap.add_argument("--address", default=None,
                     help="씨앗 카메라 주소. 기본은 실재 카메라 주소 재사용"
                          "(capture_screens._borrow_real_address 와 같다)")
+    ap.add_argument("--unjudged", action="store_true",
+                    help="[P-426] 심은 뒤 DB 를 다시 읽어 verdict 가 실제로 비어 있는지 "
+                         "확인한다 — U1#11(verify_click_completes.py)이 그 씨앗으로 서는지를 "
+                         "코드로 확인한다. **기본값 불변**: 이 옵션이 없으면 심는 동작은 "
+                         "전과 같고(seed_events 는 애초에 verdict 를 안 준다), 확인 단계만 "
+                         "빠진다")
     args = ap.parse_args(argv)
 
     if args.n <= 0:
@@ -129,6 +170,18 @@ def main(argv=None) -> int:
 
     print("%s 심음 %d건 · 첫 사건 %s · run=%s" % (TAG, len(cs.SEEDED_EVENT_IDS), first, cs.RUN_STAMP))
     print("%s 명세 → %s" % (TAG, seed_path))
+
+    if args.unjudged:
+        check = verify_unjudged(cs.SEEDED_EVENT_IDS)
+        if check["judged"] or check["missing"]:
+            print("%s --unjudged 확인 실패 — 판정된 채로 들어간 사건 %s · 못 찾은 사건 %s"
+                  % (TAG, check["judged"], check["missing"]))
+            return EXIT_FAIL
+        print("%s --unjudged 확인 — 심은 %d건 중 %d건이 미판정(verdict 없음)이다. "
+              "verify_click_completes.py 의 `unv = [... if not e.get('verdict')]` 와 "
+              "같은 잣대로 쟀다 — U1#11 이 이 씨앗으로 설 표본이 있다"
+              % (TAG, check["found"], len(check["unjudged"])))
+
     print("%s 종결 — 추가 손걸음 없음. 뒤 게이트는 `--seed-file` 없이도 이 파일을 "
           "가장 최신으로 찾는다(probe_marks.latest_seed_file)" % TAG)
     return EXIT_OK

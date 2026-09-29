@@ -104,8 +104,16 @@ class DsmU36AnAPI:
     # ═══════════════════════════════════════════════════════════════════
     # DSM-U6-01 — 스마트시티 통합플랫폼 이벤트 연계 (F-05 읽기 문의 짝 · 쓰기 1)
     # ═══════════════════════════════════════════════════════════════════
-    @route.post("/external-events", auth=JwtOrInboundKey())
-    @tenant_scoped(reason="U6-01 외부 이벤트 연계 — JWT 가 정한 테넌트로만 적립한다. "
+    #: ★ [P-427 · 턴 AO→AP · 세종 판정 · 조율자 E] 인증 = **들어오는 키 + HMAC**.
+    #:   외부 기관 시스템에는 사람 로그인이 없다 — JWT 로 받으면 사람 세션을 흉내 내야 한다.
+    #:   쓰기 문에 들어오는 키를 여는 것은 D-335 ③ 래칫의 **결정 번호 붙은 예외 하나**다
+    #:   (`tests/test_f05_inbound_api_key.py::DECIDED_INBOUND_WRITES`) — 계약 절(DSM-U6-01)이
+    #:   외부의 쓰기를 부르기 때문이다. 키가 테넌트를 정하고, 서명(웹훅 서명키 `agency`
+    #:   재사용 · 새 자격 0)이 위조를, 시각 창 5분(`webhook_contract.TIMESTAMP_TOLERANCE_SECONDS`)이
+    #:   재생을 막는다. JWT 로 온 요청은 받지 않는다(아래 첫 줄).
+    @route.post("/external-events", auth=JwtOrInboundKey(
+        inbound_key=True, reason="P-427 DSM-U6-01 외부 이벤트 연계 — 계약이 부르는 쓰기 1"))
+    @tenant_scoped(reason="U6-01 외부 이벤트 연계 — 들어오는 키의 테넌트로만 적립한다. "
                           "서명 검증(HMAC)이 위조를, 테넌트 스코프가 남의 카메라로의 "
                           "쓰기 IDOR 을 막는다")
     @idempotent("dsm.u36.external_events")
@@ -115,6 +123,10 @@ class DsmU36AnAPI:
         먼저 파싱하지 않는다(`request.body` 그대로 `u36_an_service` 에 넘긴다)."""
         from django.http import Http404
 
+        from common.inbound_api_key import carries_inbound_key
+
+        if not carries_inbound_key(request):
+            raise HttpError(401, "외부 이벤트 연계는 들어오는 키로만 받습니다(P-427).")
         try:
             return u36_an_service.intake_external_event(
                 scope=_scope(request), headers=request.headers,

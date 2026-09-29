@@ -1,14 +1,14 @@
 {
   "id": "O-02",
   "title": "앱 설치·버전",
-  "measured_at": "2026-09-29T07:44:28.368834+00:00",
+  "measured_at": "2026-09-29T09:06:28.405318+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O02_AppInstallTest.test_install_list_and_conflict_free",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/ops/apps/install?tenant_code=t-05d49445&app_code=dsm&version=1.1",
+    "path": "/api/dsm/ops/apps/install?tenant_code=t-f8c281c1&app_code=dsm&version=1.1",
     "params": {
-      "tenant_code": "t-05d49445",
+      "tenant_code": "t-f8c281c1",
       "app_code": "dsm",
       "version": "1.1"
     }
@@ -16,12 +16,12 @@
   "response": {
     "status": 200,
     "body": {
-      "tenant_code": "t-05d49445",
-      "tenant_group_id": 548,
+      "tenant_code": "t-f8c281c1",
+      "tenant_group_id": 10,
       "app_code": "dsm",
       "version": "1.1",
       "status": "active",
-      "installed_at": "2026-09-29T07:44:28+00:00",
+      "installed_at": "2026-09-29T09:06:28+00:00",
       "upgraded_from": null
     }
   },
@@ -55,7 +55,13 @@
     {
       "part": "유령 시드 정리",
       "where": "POST .../apps/status(status=inactive)",
-      "status": "measured — 수동 정리 경로만(자동 탐지·주기 실행은 범위 밖)"
+      "status": "부분(수동 정리 경로만 — 자동 탐지·주기 실행 없음, excluded_by 번호 없음. 내부 배치 자동화 결손이라 P-428 비대상 — 그냥 열린 행)"
+    },
+    {
+      "part": "화면(앱 설치·버전 관리 UI)",
+      "where": "frontend/src/features/ops/api.ts — install/list app 함수 자체가 없다",
+      "status": "없음(화면 자체가 없다)"
     }
-  ]
+  ],
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 앱 설치·업그레이드·비활성화·k_app_installation 대체·시드 대장 0충돌은 실측 닫힘을 재확인했다. 유령 시드 정리는 자동화가 없고 (P-428 비대상), 화면 자체도 없다 — 반쪽으로 내린다."
 }

@@ -95,6 +95,66 @@ class TheSelfTestCanFail(SimpleTestCase):
         self.assertEqual(1, got,
                          "열린 status 를 전부 닫힘으로 읽는 판정식을 자기시험이 못 잡는다")
 
+    def test_self_test_fails_when_rule_doc_sync_check_is_waved_through(self) -> None:
+        """★★★ [턴 AP · P-419] 눈금 문서 대조가 이 게이트에 있는 이유 그 자체 —
+        문서 목록과 코드 상수가 갈려도(또는 문서가 없어도) 「같다」로 읽으면,
+        사람마다 다른 눈금을 쓰는 것을 이 게이트가 못 잡는다."""
+        g = _gate()
+        real = g.check_rule_doc_sync
+
+        g.check_rule_doc_sync = lambda items: {"verdict": "ok", "detail": "항상 같다고 우긴다(망가진 판정)"}
+        try:
+            got = g.self_test()
+        finally:
+            g.check_rule_doc_sync = real
+        self.assertEqual(1, got,
+                         "눈금 문서 목록이 코드 상수와 갈려도 통과시키는 판정식을 "
+                         "자기시험이 못 잡는다")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# [턴 AP · P-419 · 차선 N1] 눈금 문서(TITLE_PARTS_RULE.md) — 존재 + 목록 대조
+# ═══════════════════════════════════════════════════════════════════════════
+class RuleDocTest(SimpleTestCase):
+    """`docs/agent/evidence/SPEC/TITLE_PARTS_RULE.md` — 이 게이트가 실제로
+    읽는 문서. 문서가 없으면 회색 · 문서의 닫힘 status 앞머리 목록이 코드
+    상수 `CLOSED_PREFIXES` 와 갈리면 빨강(사람마다 다른 눈금 0)."""
+
+    def test_rule_doc_exists_and_matches_code_constant_today(self) -> None:
+        g = _gate()
+        items, why = g.load_rule_doc()
+        if items is None:
+            #: ★ [gx-shell] `/repo/docs` 는 `backend`·`scripts` 와 달리 살아
+            #:   있는 마운트가 아니다(이 파일의 `RealRepoSnapshotTest` 와 같은
+            #:   판단) — 「못 찾았다」를 실패로 읽지 않는다, skip 한다.
+            self.skipTest("이 환경의 /repo/docs 가 눈금 문서를 안 들고 있다 — "
+                         "%s (호스트에서 직접 돌리면 읽힌다)" % why)
+        verdict = g.check_rule_doc_sync(items)
+        self.assertEqual("ok", verdict["verdict"], verdict["detail"])
+
+    def test_check_rule_doc_sync_is_grey_when_doc_missing(self) -> None:
+        """순수 함수 표본 — items=None(문서 없음·모양 안 맞음)은 회색이다."""
+        g = _gate()
+        verdict = g.check_rule_doc_sync(None)
+        self.assertEqual("grey", verdict["verdict"])
+
+    def test_check_rule_doc_sync_is_red_when_list_diverges(self) -> None:
+        """순수 함수 표본 — 목록이 코드 상수와 원소 하나라도 다르면 빨강."""
+        g = _gate()
+        verdict = g.check_rule_doc_sync(["measured", "present", "있음"])  # "구현" 빠짐
+        self.assertEqual("red", verdict["verdict"])
+
+    def test_parse_rule_doc_prefixes_reads_the_real_file_line(self) -> None:
+        """실물 파일을 직접 열어 `CLOSED_PREFIXES = ...` 줄을 읽는다(문서가
+        게이트가 읽는 모양 그대로인지 — 파싱이 아니라 문서 내용을 건다)."""
+        g = _gate()
+        if not g.RULE_DOC.is_file():
+            self.skipTest("이 환경의 /repo/docs 가 눈금 문서를 안 들고 있다 "
+                         "(호스트에서 직접 돌리면 읽힌다)")
+        text = g.RULE_DOC.read_text(encoding="utf-8")
+        items = g._parse_rule_doc_prefixes(text)
+        self.assertEqual(list(g.CLOSED_PREFIXES), items)
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 지금 이 저장소의 실물 — **대장·SPEC 폴더를 실제로 읽는다**(못 박은 표본이 아니다)

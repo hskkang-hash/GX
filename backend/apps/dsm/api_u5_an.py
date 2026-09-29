@@ -102,3 +102,17 @@ class DsmU5AnAPI:
             raise HttpError(403, str(exc))
         except u5_an_service.U5AnInputRejected as exc:
             raise HttpError(422, str(exc))
+
+    # ═══════════════════════════════════════════════════════════════════
+    # DSM-U1-04/U5-05 — 관제일지(인계 메모 + 사건 타임라인 합본, 새 표 0)
+    # [턴 AP · P-421 ② · 차선 N3]
+    # ═══════════════════════════════════════════════════════════════════
+    @route.get("/u5an/control-log", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="관제일지 조회 — 남의 테넌트 사건·근무자 명단은 남의 정보다")
+    def u5an_control_log(self, request, hours: int = 24):
+        from apps.dsm import handover_service
+
+        try:
+            return handover_service.control_log(scope=_scope(request), hours=hours)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))

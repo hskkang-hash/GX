@@ -272,12 +272,20 @@ export default function CameraAddress() {
                   render: (id: number, row: CameraRow) =>
                     rowId === id ? (
                       <Space>
+                        {/*
+                          [P-423 · 턴 AP · 차선 L] 온보딩 U5#5 「누를 자리」 선언 —
+                          POST /api/dsm/cameras/{id}/address 를 실제로 쏘는 자리
+                          (`api_u56.py:506`). 아래 "아직 없는 카메라" 카드의 같은
+                          문구 단추와 글자가 겹쳐 text 대조가 갈랐던 자리라
+                          data-gx 로 가른다. 표: docs/agent/checkpoints/turn-ap/L.md.
+                        */}
                         <Button
                           type="primary"
                           size="small"
                           loading={rowBusy === id}
                           disabled={rowAddress.trim().length === 0}
                           onClick={() => fillOne(row, rowAddress.trim())}
+                          data-gx="camera-address-row-submit"
                         >
                           채우기
                         </Button>
@@ -293,6 +301,7 @@ export default function CameraAddress() {
                           setRowAddress('');
                           setRowError('');
                         }}
+                        data-gx="camera-address-row-start"
                       >
                         이 한 대 채우기
                       </Button>
@@ -336,6 +345,7 @@ export default function CameraAddress() {
                 loading={busy}
                 disabled={!ready}
                 onClick={() => run(true)}
+                data-gx="camera-address-new-dryrun"
               >
                 표 먼저 보기
               </Button>
@@ -344,6 +354,7 @@ export default function CameraAddress() {
                 loading={busy}
                 disabled={!plan || plan.will_write === 0 || Boolean(plan.fatal)}
                 onClick={() => run(false)}
+                data-gx="camera-address-new-apply"
               >
                 채우기
               </Button>

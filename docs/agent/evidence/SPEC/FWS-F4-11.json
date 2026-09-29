@@ -16,21 +16,26 @@
       "part": "야간 진화 자원 표시(완결조건 '배지')",
       "where": "응답 night_resources[].available_at_night(F3-08 자원배정 재사용)",
       "status": "구현 — 진화대 가능·드론 불가 실측"
+    },
+    {
+      "part": "화면(버튼·조회)",
+      "where": "POST .../night-status — 프런트 호출 0건(CommandHome.tsx 에 포함 안 됨)",
+      "status": "없음(완전 미배선)"
     }
   ],
-  "measured_at": "2026-09-29T07:40:43.121279+00:00",
+  "measured_at": "2026-09-29T09:25:53.928605+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_11_NightTransitionTest.test_sunset_in_the_past_marks_night_and_helicopter_unavailable",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/548/night-status",
+    "path": "/api/fws/command/incidents/13/night-status",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 548,
-      "sunset_at": "2026-09-29T06:40:43.025900+00:00",
+      "event_id": 13,
+      "sunset_at": "2026-09-29T08:25:53.670732+00:00",
       "is_night": true,
       "helicopter_badge": "헬기 불가",
       "night_resources": [
@@ -47,5 +52,6 @@
       ]
     }
   },
-  "what": "일몰 시각을 과거로 기록하면 야간 전환·헬기 불가 배지·자원별 야간 가동 가능 여부가 실측된다"
+  "what": "일몰 시각을 과거로 기록하면 야간 전환·헬기 불가 배지·자원별 야간 가동 가능 여부가 실측된다",
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 야간 전환·헬기 불가·야간 자원 표시는 서버에서 실측 닫힘을 재확인했으나 /night-status 를 부르는 화면이 전혀 없다 — 반쪽으로 내린다."
 }

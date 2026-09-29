@@ -33,12 +33,12 @@
       "status": "구현 — KFS_EXPORT_FIELDS 와 같은 형으로 6항목 1:1 실측"
     }
   ],
-  "measured_at": "2026-09-29T07:40:14.921917+00:00",
+  "measured_at": "2026-09-29T09:26:16.791345+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_14_FinalReportTest.test_record_final_report_maps_items_one_to_one",
   "request": {
     "method": "POST",
-    "path": "/api/fws/office2/reports/531/final?cause=%EC%86%8C%EA%B0%81&area_ha=12.3&sms_sent=True&sunrise=06%3A32&sunset=18%3A07",
+    "path": "/api/fws/office2/reports/26/final?cause=%EC%86%8C%EA%B0%81&area_ha=12.3&sms_sent=True&sunrise=06%3A32&sunset=18%3A07",
     "params": {
       "cause": "소각",
       "area_ha": 12.3,
@@ -50,12 +50,12 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 531,
+      "event_id": 26,
       "items": [
         {
           "key": "fire_info_id",
           "label": "산불정보ID",
-          "value": "FWS-531"
+          "value": "FWS-26"
         },
         {
           "key": "cause",
@@ -83,13 +83,13 @@
           "value": "18:07"
         }
       ],
-      "fire_info_id": "FWS-531",
+      "fire_info_id": "FWS-26",
       "cause": "소각",
       "area_ha": 12.3,
       "sms_sent": true,
       "sunrise": "06:32",
       "sunset": "18:07",
-      "recorded_at": "2026-09-29T07:40:14.869849+00:00"
+      "recorded_at": "2026-09-29T09:26:16.678995+00:00"
     }
   },
   "what": "POST .../final 뒤 6항목(산불정보ID·원인·면적·문자전송 여부·일출·일몰)이 1:1로 실리고, GET 재조회에서도 그대로 남는다 — 실측"

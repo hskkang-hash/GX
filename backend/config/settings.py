@@ -1347,23 +1347,6 @@ def _parse_webhook_signing_keys(raw: str) -> dict:
 WEBHOOK_SIGNING_KEYS = _parse_webhook_signing_keys(
     os.environ.get("WEBHOOK_SIGNING_KEYS", ""))
 
-# ─────────────────────────────────────────────────────────────────────────────
-# DSM-U6-01 들어오는 이벤트 연계 — CAP 1.2 (턴 AO · 차선 N4)
-# ─────────────────────────────────────────────────────────────────────────────
-# **이 표의 방향은 위와 반대다** — 위(`WEBHOOK_SIGNING_KEYS`)는 우리가 **내는**
-# 웹훅의 서명키(우리가 만든다, P-145). 이 표는 스마트시티 통합플랫폼·112·119가
-# **우리에게 보내는** 이벤트의 서명키다 — 상대가 이미 쥔 값이므로 우리가 만들지
-# 않는다(사전 공유·저장소 밖 `.env`). 모양(이름=값, 쉼표로 여럿)과 파서
-# (`_parse_webhook_signing_keys`)는 위와 **같다** — 판정식을 두 벌 짓지 않는다
-# (D-212). 키는 `apps.dsm.u36_an_service.EXTERNAL_EVENT_SOURCES`(smart_city ·
-# police_112 · fire_119) 이름으로 찾는다.
-#
-#   넣는 모양: EXTERNAL_EVENT_SIGNING_KEYS="smart_city=<값>,police_112=<값>"
-#
-#   ⚠ 이 값을 `.env.example` 이나 저장소 어디에도 적지 말 것 — 새면 누구나 우리
-#     이벤트 대장에 위조 사건을 심을 수 있다.
-EXTERNAL_EVENT_SIGNING_KEYS = _parse_webhook_signing_keys(
-    os.environ.get("EXTERNAL_EVENT_SIGNING_KEYS", ""))
 
 # 등록을 받아 주는 수신 URL 의 방식. **평문 http 는 기본으로 열지 않는다** —
 # 서명은 위조를 막지만 평문은 내용을 읽히는 것을 막지 못하고, CAP 본문에는

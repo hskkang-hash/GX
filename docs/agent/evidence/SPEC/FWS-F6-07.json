@@ -56,5 +56,6 @@
       "where": "[턴 AN] POST .../evacuation-webpush-drill · kernels.k2_notify.send_webpush · 제목 [훈련] 고정 · drill: 표식(F6_07_WebpushDrillTest)",
       "status": "있음(대체 — 웹푸시 훈련 채널 · 실발송 아님)"
     }
-  ]
+  ],
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 턴 AO §3-1 그대로 확인 — 산림청 앱 실제 푸시는 excluded_by P-392(외부 기관 실연동 · P-428 범위에도 해당)로 닫힘, 웹푸시 훈련 채널이 이 절의 실제 앱 푸시 연계를 대체한다(정직하게 '대체'라 적음, 근사/대리 앞머리 아님). 빈 칸·열린 행 없음 — 깨끗함 유지(이상 없음)."
 }

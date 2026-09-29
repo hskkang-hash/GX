@@ -1,7 +1,7 @@
 {
   "id": "DSM-U6-01",
   "title": "스마트시티 통합플랫폼 이벤트 연계",
-  "measured_at": "2026-09-29T07:38:33.300751+00:00",
+  "measured_at": "2026-09-29T09:32:57.593274+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u36_an.U6_01_ExternalEventsTest.test_police_112_emergency_video_event_is_recorded_as_external",
   "request": {
@@ -11,14 +11,14 @@
       "source": "police_112",
       "event_type": "intrusion",
       "severity": "critical",
-      "stream_monitor_id": 220,
+      "stream_monitor_id": 47,
       "external_ref": "POL-2026-0001"
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 157,
+      "event_id": 30,
       "created": true,
       "should_notify": true,
       "folded_into_existing": false,
@@ -27,7 +27,7 @@
       "external_ref": "POL-2026-0001"
     }
   },
-  "what": "112 긴급영상(사건+카메라 스트림) — 서명된 외부 이벤트가 F-05 읽기 문의 짝인 쓰기 문 하나로 들어와 data_source=external 로 적립된다",
+  "what": "112 긴급영상(사건+카메라 스트림) — 들어오는 키(events:ingest) + HMAC(agency) 로 서명된 외부 이벤트가 쓰기 문 하나로 들어와 data_source=external 로 적립된다",
   "title_parts": [
     {
       "part": "112 긴급영상(사건+카메라 스트림 URL)",
@@ -50,8 +50,13 @@
       "status": "measured"
     },
     {
-      "part": "서명 검증",
-      "where": "X-GX-Signature 불일치 → 401",
+      "part": "서명 검증(웹훅 서명키 agency 재사용 · P-427)",
+      "where": "X-GX-Signature 불일치 → 401 · 시각 창 밖 → 401",
+      "status": "measured"
+    },
+    {
+      "part": "기관 인증(들어오는 키 · events:ingest)",
+      "where": "키 없음/JWT → 401 · 읽기 키 → 403 · 남의 테넌트 카메라 → 404",
       "status": "measured"
     },
     {
@@ -59,5 +64,6 @@
       "where": "응답 data_source 칸",
       "status": "measured"
     }
-  ]
+  ],
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 6행(112·119·재난상황·CAP1.2·서명검증·data_source=external) 전부 재대조 — 서명 검증은 common/webhook_contract.verify 의 진짜 HMAC 판정식(REJECT_NO_SECRET 등 거절 경로 있음)이었다. 이 절은 인바운드(외부가 우리를 부른다) 전용으로 설계됐고 기능명세 미포함표도 '새 외부 의존 없음'이라 적는다 — 실제 112/119 상대 시스템과의 라이브 연동은 이 절의 완결조건이 아니다. 화면 요구도 없다(순수 API·감사 절). 빈 칸·열린 행 없음 — 깨끗함 유지(이상 없음)."
 }

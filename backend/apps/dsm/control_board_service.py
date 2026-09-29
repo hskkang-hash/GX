@@ -28,6 +28,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.apps import apps as django_apps
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -40,6 +41,10 @@ from apps.dsm.u4_regulations import CONTROL_STAGE_ORDER
 LOGGER_NAME = "guardianx.u4.control_board"
 TAG = "[U4-CONTROL]"
 SCAN_CAP = 1000
+
+
+def _audit_model():
+    return django_apps.get_model("logger", "AuditLogs")
 
 
 class ControlPointRejected(Exception):
@@ -102,6 +107,12 @@ def create_point(*, scope: TenantScope, name: str, reached_at: str | None = None
         logger_name=LOGGER_NAME, tag=TAG, actor=actor,
         action=_create_action(group.pk), outcome=audit_writer.ALLOWED,
         reason=reason, api_method="POST",
+        #: [턴 AP · 차선 N4 · U4-05 일일상황보고 「대피」 칸] 구조화 칸 — `reason`
+        #: 문장을 다시 파싱하지 않고 `list_board`/`u4_daily_report_service` 가
+        #: 그대로 읽는다. `list_board` 의 기존 소비자는 `text`·`stage` 만 쓰므로
+        #: 이 칸을 더해도 안 깨진다(D-212).
+        after={"name": name, "evacuee_count": evacuee_count,
+              "evacuation_site": evacuation_site},
     )
     return {"point_id": entry.audit_id, "name": name, "reached_at": when,
             "evacuee_count": evacuee_count, "evacuation_site": evacuation_site,
@@ -179,7 +190,22 @@ def list_board(*, scope: TenantScope, limit: int = 200) -> list[dict[str, Any]]:
         if e.action == _create_action(group.pk):
             points.setdefault(e.audit_id, {
                 "point_id": e.audit_id, "text": e.reason,
-                "stage": CONTROL_STAGE_ORDER[0]})
+                "stage": CONTROL_STAGE_ORDER[0],
+                #: [턴 AP · 차선 N4] 아래에서 구조화 칸으로 채운다 — 못 찾으면
+                #: `None`(옛 행 · `after=` 없이 쓰인 행일 수 있다).
+                "evacuee_count": None, "evacuation_site": None})
+    if points:
+        rows = (
+            _audit_model()._base_manager
+            .filter(logger_name=LOGGER_NAME, api_name=_create_action(group.pk),
+                    pk__in=points.keys())
+        )
+        for r in rows:
+            payload = r.data_after if isinstance(r.data_after, dict) else {}
+            row = points.get(r.pk)
+            if row is not None:
+                row["evacuee_count"] = payload.get("evacuee_count")
+                row["evacuation_site"] = payload.get("evacuation_site")
     for point_id, row in points.items():
         for stage in CONTROL_STAGE_ORDER[1:]:
             if _reached_stage(group.pk, point_id, stage):

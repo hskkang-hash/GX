@@ -34,11 +34,17 @@ from tests.test_fws_app import EVIDENCE_DIR, FwsHttpTest, _qs
 
 def _write_evidence2(clause_id: str, *, title: str, title_parts: list, test_ref: str,
                      method: str, path: str, request_params: dict, response,
-                     what: str) -> None:
+                     what: str, retro: str | None = None) -> None:
     """`tests.test_fws_app._write_evidence` 와 같은 모양 + `title_parts`
     (P-392 — 「제목이 부르는 것 ↔ 있는 것」 표 · 빈 칸 0 · O 게이트가 센다).
     공용 파일(`test_fws_app.py`)을 고치지 않고 이 차선 파일 안에 둔다
-    (`test_fws_f3b.py::_write_evidence2` 와 같은 판단)."""
+    (`test_fws_f3b.py::_write_evidence2` 와 같은 판단).
+
+    ★ [턴 AP · N2b · P-421 ⑤] 기존 파일에 `retro`(사람이 대조한 1줄 — 재판정·소급)
+      가 있으면 그 `title_parts`·`retro` 를 **그대로 둔다** — 이 시험은 요청/응답만
+      갱신한다(재판정이 연 행을 시험이 옛 표로 조용히 덮지 않게). 이 시험이 그
+      절의 표를 **새로 채울 때만** `retro=` 를 넘기고, 그때는 새 표 + 그 한 줄로
+      다시 붙인다."""
     for part in title_parts:
         missing = [k for k in ("part", "where", "status") if not (part.get(k) or "").strip()]
         if missing:
@@ -62,6 +68,20 @@ def _write_evidence2(clause_id: str, *, title: str, title_parts: list, test_ref:
             "what": what,
         }
         out = EVIDENCE_DIR / f"{clause_id}.json"
+        prev: dict = {}
+        if out.is_file():
+            try:
+                prev = json.loads(out.read_text(encoding="utf-8"))
+            except (ValueError, OSError):
+                prev = {}
+        if retro:
+            payload["retro"] = retro
+        elif "retro" in prev:
+            payload["title_parts"] = prev.get("title_parts", title_parts)
+            payload["retro"] = prev["retro"]
+            for keep in ("title_parts_note", "retro_ap"):
+                if keep in prev:
+                    payload[keep] = prev[keep]
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
                        encoding="utf-8")
 
@@ -512,12 +532,38 @@ class F4_09_ContactDirectoryTest(F4HttpTest):
                                                         "provincial_situation_room.phone",
                 "status": "구현 — 033-999-0000 등록 뒤 실측(미등록 시 null — 지어내지 "
                           "않는다, D-284)"},
+                #: ★ [턴 AP · N2 · P-421 ⑤] 「화상」은 화상회의 인프라(WebRTC/SIP 등)
+                #:   가 이 저장소 전체에 없다(`command.py` 머리말이 이미 자백한
+                #:   한계) — 운영 집행·외부 실연동은 이 턴이 채우지 않는다(P-428).
+                #:   결정 번호 있는 제외라 O 게이트(verify_spec_title_parts.py)가
+                #:   이 행을 닫힘으로 센다(전화 두 행은 이미 실측 닫힘).
+                {"part": "화상(화상회의) 연락", "where": "해당 없음 — 이 저장소에 화상회의 "
+                                                    "인프라(WebRTC/SIP 등) 자체가 없다",
+                "excluded_by": "P-428",
+                "excluded_why": "운영 집행·외부 실연동(화상회의 인프라 구축·상대 "
+                                "기관 연계)은 이 턴(WO-19 P-421)이 채우지 않는다 — "
+                                "전화 1클릭 두 행은 실측으로 닫혔다",
+                "status": "excluded_by: P-428 — 화상(외부 기관과의 화상회의 연결)은 "
+                         "외부 실연동 범위 밖으로 결정 제외, 전화 부분은 서버 실측"},
+                #: 제목이 「버튼」을 부른다 — 화면(TITLE_PARTS §1-3). 재판정(N1)이
+                #: F4 전반에 잡은 「화면 버튼 미배선」과 같은 결손이다.
+                {"part": "화면 — 지휘 화면(FW-04)의 연락 버튼(tel: 1클릭)",
+                "where": "frontend/src/features/fws/pages/CommandHome.tsx — "
+                         "/command/incidents/{id}/contacts 를 부르지 않고 tel: 링크도 "
+                         "없다(grep · tel: 은 F1 PatrolHome 에만 있다)",
+                "status": "없음 — 서버는 두 번호를 내지만 지휘 화면에 누를 버튼이 "
+                          "없다(이 턴 범위 밖 · 화면 미배선)"},
             ],
             test_ref="tests.test_fws_f4.F4_09_ContactDirectoryTest."
                     "test_forest_number_always_present_provincial_from_command_post",
             method="GET", path=_contacts_path(event_id), request_params={}, response=resp,
             what="산림청 번호는 항상 있고, 시도 상황실 번호는 F4-03 지휘소 선언에 "
-                "실제로 등록된 값만 낸다(완결조건 '1클릭') — 실측")
+                "실제로 등록된 값만 낸다(완결조건 '1클릭') — 실측. 「화상」은 외부 "
+                "실연동으로 P-428 결정 제외 · 지휘 화면 버튼은 없다(열린 행)",
+            retro="P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 「화상」 행에 "
+                  "excluded_by P-428 + 사유를 붙이고, 제목의 「버튼」을 화면 행으로 "
+                  "세워 CommandHome.tsx 를 grep 했다(연락 버튼·tel: 0건 — 열린 행). "
+                  "전화 두 번호는 서버 HTTP 로 실측.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -692,37 +738,94 @@ class F4_12_SituationMeetingTest(F4HttpTest):
 # ═══════════════════════════════════════════════════════════════════════════
 # FWS-F4-13 동시 다발 사건 우선순위(위험도 정렬)
 # ═══════════════════════════════════════════════════════════════════════════
+def _risk_index_path(eid) -> str:
+    return f"/api/fws/command/incidents/{eid}/risk-index"
+
+
 class F4_13_PriorityQueueTest(F4HttpTest):
-    def test_critical_ranks_above_warning(self) -> None:
+    """위험도 = 사건마다 기록된 **산불위험지수** — K1 등급(severity)이 아니다.
+    등급을 일부러 거꾸로 심어(지수 높은 사건 = info) 등급 근사가 아님을 잰다."""
+
+    def test_recorded_risk_index_orders_queue_not_severity(self) -> None:
         head = self._bearer(self.user_a)
-        low = self._event(self.stream_a, severity="info", event_type="fire")
-        high = self._event(self.stream_a, severity="critical", event_type="fire")
+        #: 등급과 지수를 **반대로** 심는다 — 등급으로 정렬하면 이 시험이 빨강이다.
+        severe = self._event(self.stream_a, severity="info", event_type="fire")
+        alert = self._event(self.stream_a, severity="warning", event_type="fire")
+        watch = self._event(self.stream_a, severity="critical", event_type="fire")
+        unscored = self._event(self.stream_a, severity="critical", event_type="fire")
+
+        recorded = {}
+        #: 문턱 경계 — 86 은 「심각」(>=), 85.9 는 「경계」, 51 은 「주의」.
+        for eid, value in ((severe, 86.0), (alert, 85.9), (watch, 51.0)):
+            r = self.client.post(_qs(_risk_index_path(eid), risk_index=value), **head)
+            self.assertEqual(200, r.status_code, r.content)
+            recorded[eid] = self._body(r)
+        self.assertEqual("심각", recorded[severe]["risk_band"])
+        self.assertEqual("경계", recorded[alert]["risk_band"])
+        self.assertEqual("주의", recorded[watch]["risk_band"])
+
+        bad = self.client.post(_qs(_risk_index_path(alert), risk_index=100.5), **head)
+        self.assertEqual(422, bad.status_code, bad.content)
 
         resp = self.client.get(_qs(PRIORITY_PATH, sort="risk"), **head)
         self.assertEqual(200, resp.status_code, resp.content)
         body = self._body(resp)
         ids = [item["event_id"] for item in body["items"]]
-        self.assertIn(high, ids)
-        self.assertIn(low, ids)
-        self.assertLess(ids.index(high), ids.index(low))
+        for eid in (severe, alert, watch, unscored):
+            self.assertIn(eid, ids)
+        self.assertLess(ids.index(severe), ids.index(alert))
+        self.assertLess(ids.index(alert), ids.index(watch))
+        self.assertLess(ids.index(watch), ids.index(unscored),
+                        "지수 없는 사건은 등급이 critical 이어도 뒤다(지어내지 않는다)")
+
+        by_id = {item["event_id"]: item for item in body["items"]}
+        self.assertEqual((86.0, "심각"), (by_id[severe]["risk_index"], by_id[severe]["risk_band"]))
+        self.assertEqual((85.9, "경계"), (by_id[alert]["risk_index"], by_id[alert]["risk_band"]))
+        self.assertEqual((51.0, "주의"), (by_id[watch]["risk_index"], by_id[watch]["risk_band"]))
+        self.assertIsNone(by_id[unscored]["risk_index"])
+        self.assertIsNone(by_id[unscored]["risk_band"])
+        scale = body["risk_scale"]
+        self.assertEqual((51, 66, 86), (scale["watch"], scale["alert"], scale["severe"]))
+        self.assertNotIn("risk_index_floor", by_id[severe], "등급→문턱 근사 칸이 남았다")
 
         _write_evidence2(
             "FWS-F4-13",
             title="동시 다발 사건 우선순위(위험도 정렬)",
             title_parts=[
-                {"part": "동시 다발 사건 목록", "where": "GET /command/incidents?sort=risk "
+                {"part": "동시 다발 사건 목록", "where": "GET /api/fws/command/incidents?sort=risk "
                                                     "→ 응답 items(dsm_services.recent_events "
-                                                    "재사용)",
-                "status": "구현 — 실측"},
-                {"part": "위험도 정렬(완결조건)", "where": "응답 items 순서 "
-                                                    "(severity=critical 이 info 보다 앞)",
-                "status": "구현 — critical 사건이 info 사건보다 앞섬을 실측"},
+                                                    "재사용 · 진행 중 사건만)",
+                "status": "measured: 네 사건이 한 목록에 선다"},
+                {"part": "위험도 — 사건별 산불위험지수(0~100) 기록",
+                "where": "POST /api/fws/command/incidents/{id}/risk-index → "
+                         "command.py::record_incident_risk_index(구간은 "
+                         "fws_constants.risk_index_band — F6-03 과 같은 함수)",
+                "status": "measured: 86→심각 · 85.9→경계 · 51→주의(문턱 경계) · 100.5 는 422"},
+                {"part": "정렬(완결조건) — 산불위험지수 51/66/86 눈금, 등급 근사 아님",
+                "where": "command.py::priority_queue 가 사건별 최신 기록 지수를 읽어 "
+                         "내림차순(_latest_risk_index_by_event · 한 질의) · 응답 "
+                         "items[].risk_index·risk_band · risk_scale",
+                "status": "measured: 등급을 거꾸로 심은 네 사건(info=86 · warning=85.9 · "
+                         "critical=51 · critical=기록 없음)이 지수 순 86 > 85.9 > 51 > 없음 "
+                         "으로 선다 — 등급 정렬이면 빨강. 기록 없는 사건은 risk_index=null "
+                         "로 뒤(지어내지 않는다)"},
+                {"part": "화면 — 지휘 화면(FW-01)의 우선순위 목록",
+                "where": "frontend/src/features/fws/pages/CommandHome.tsx — "
+                         "/command/incidents?sort=risk 와 /risk-index 를 부르지 않는다(grep)",
+                "status": "없음 — 서버 정렬은 실측이지만 지휘 화면에 그 목록·지수 입력 "
+                          "칸이 없다(이 턴 범위 밖 · 화면 미배선)"},
             ],
-            test_ref="tests.test_fws_f4.F4_13_PriorityQueueTest.test_critical_ranks_above_warning",
+            test_ref="tests.test_fws_f4.F4_13_PriorityQueueTest."
+                     "test_recorded_risk_index_orders_queue_not_severity",
             method="GET", path=_qs(PRIORITY_PATH, sort="risk"), request_params={"sort": "risk"},
             response=resp,
-            what="critical·info 두 사건을 만들고 GET .../incidents?sort=risk 가 critical "
-                "을 앞에 두는 것을 실측")
+            what="사건 넷에 등급과 반대로 산불위험지수(86·85.9·51·없음)를 기록하고 GET "
+                "…/incidents?sort=risk 가 지수 순(심각>경계>주의>없음)으로 세움을 실측 — "
+                "K1 등급 근사가 아니라 constants.py 의 같은 눈금(51/66/86)",
+            retro="P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 정렬 키를 K1 "
+                  "등급(→문턱 근사)에서 사건별 기록 지수로 바꾸고, 등급을 거꾸로 심은 "
+                  "네 사건으로 등급 정렬이면 빨강이 되게 쟀다. 86/85.9 경계 확인. "
+                  "지휘 화면 목록은 없다(열린 행).")
 
 
 # ═══════════════════════════════════════════════════════════════════════════

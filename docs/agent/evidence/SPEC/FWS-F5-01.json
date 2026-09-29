@@ -1,32 +1,26 @@
 {
   "id": "FWS-F5-01",
   "title": "정찰 임무 수신(발화 추정 좌표·반경) → 열화상 정찰",
-  "measured_at": "2026-09-29T07:40:55.305965+00:00",
+  "measured_at": "2026-09-29T09:32:18.826675+00:00",
   "measured_by": "django_test_client",
-  "test": "tests.test_fws_f5.F5_01_ReconTest.test_request_accept_airborne_return_and_mine_reflects_state",
+  "test": "tests.test_ap_n4_f5_recon_coords_thermal.F5_01_ReconCoordsTest.test_recon_coords_carries_the_events_lat_lng_and_radius",
   "request": {
     "method": "GET",
-    "path": "/api/fws/drone/missions/mine",
+    "path": "/api/fws/ap/drone/missions/6/recon-coords",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "requests": [
-        {
-          "event_id": 558,
-          "state": "return",
-          "radius_m": 300.0,
-          "requested_at": "2026-09-29T07:40:55.113899+00:00",
-          "accepted_at": "2026-09-29T07:40:55.171169+00:00",
-          "airborne_at": "2026-09-29T07:40:55.219358+00:00",
-          "returned_at": "2026-09-29T07:40:55.268496+00:00"
-        }
-      ],
-      "count": 1
+      "event_id": 6,
+      "lat": 36.11,
+      "lng": 127.21,
+      "radius_m": 300.0,
+      "state": "request",
+      "requested_at": "2026-09-29T09:32:18.770914+00:00"
     }
   },
-  "what": "정찰 요청(반경 값)→수락→이륙→귀환 상태 전이가 내 대기열(mine)에 그대로 남는다 — 요청·상태 두 축 실측(K1 이벤트를 드론 쪽에서 본 것 · 새 표 없음)",
+  "what": "[턴 AP · 차선 N4] 반쪽 채움 — 정찰 임무의 발화 추정 좌표(K1 이벤트 lat/lng)가 반경과 한 응답에 실린다(drone.py 는 고치지 않고 그 위에 새 door 하나를 더했다)",
   "title_parts": [
     {
       "part": "정찰 임무 수신(요청) — 요청 접수",
@@ -40,8 +34,8 @@
     },
     {
       "part": "발화 추정 좌표(사건의 위치 값)",
-      "where": "apps/dsm/services.py (event._entry: row.lat, row.lng) — recon()·recon_mine() 은 event_id 로 K1 사건을 참조할 뿐, 좌표 자체를 정찰 임무 응답에 실어 나르지 않는다",
-      "status": "부분(간접) — K1 이벤트에 lat/lng 칸은 존재하고 recon()이 event_detail()로 그 사건을 가리키지만, F5-01 자체의 요청/응답 어디에도 좌표 값이 실측되지 않는다(테스트가 좌표를 assert하지 않음). 좌표가 실제로 정찰 임무에 실려 나온다는 것은 확인되지 않았다"
+      "where": "GET /api/fws/ap/drone/missions/{event_id}/recon-coords · backend/apps/fws/ap_f5.py::recon_coords() [턴 AP · 차선 N4 신설 — K1 이벤트의 lat/lng(apps.dsm.services.event_detail) 과 드론 반경을 합친다 · drone.py 는 고치지 않았다]",
+      "status": "measured: tests.test_ap_n4_f5_recon_coords_thermal.F5_01_ReconCoordsTest.test_recon_coords_carries_the_events_lat_lng_and_radius — lat=36.11·lng=127.21·radius_m=300 이 한 응답에 실측"
     },
     {
       "part": "→ 열화상 정찰 실행(상태 전이: 수락→이륙→귀환)",
@@ -51,7 +45,9 @@
     {
       "part": "열화상(thermal) 센서 데이터·프레임 자체",
       "where": "backend/apps/fws/drone.py 머리말(P-387) — \"드론 0대\", 실제 열화상 프레임 수신/저장 코드 없음",
-      "status": "없음 — 이 절은 서류상 상태 전이(요청·상태)만 만든다고 머리말에 명시. 실제 열화상 센서 프레임을 수신·저장·판독하는 경로는 존재하지 않는다(연동 하드웨어 0대)"
+      "status": "없음 — 이 절은 서류상 상태 전이(요청·상태)만 만든다고 머리말에 명시. 실제 열화상 센서 프레임을 수신·저장·판독하는 경로는 존재하지 않는다(연동 하드웨어 0대)",
+      "excluded_by": "P-428",
+      "excluded_why": "열화상 센서 프레임의 실시간 수신은 드론 하드웨어 실연동이다 — WO-19 §「외부 실연동·드론 커넥터…는 하지 않는다」가 이 턴 범위 밖으로 명시했다. 「정찰 임무 수신(좌표·반경) → 열화상 정찰」 제목의 앞부분(임무 수신·좌표·반경·상태 전이)은 전부 닫혔다 — 뒷부분(실제 센서 프레임)만 하드웨어 부재로 제외한다."
     }
   ]
 }

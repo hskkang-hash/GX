@@ -112,6 +112,12 @@ def issue_report(*, scope: TenantScope, event_id: int, kind: str) -> dict[str, A
         logger_name=LOGGER_NAME, tag=TAG, actor=actor,
         action=_issue_action(group.pk, event_id), outcome=audit_writer.ALLOWED,
         reason=reason, api_method="POST",
+        #: [턴 AP · 차선 N4 · U4-02 NDMS 내보내기] 구조화 칸 — `reason` 문장을
+        #: 다시 파싱하지 않고 `u4_interim_report_service.export_ndms_csv` 가
+        #: 그대로 읽는다(D-212, 값을 두 번 만들지 않는다). 기존 소비자
+        #: (`list_reports`)는 `reason` 만 쓰므로 이 칸을 더해도 안 깨진다.
+        after={"event_id": event_id, "report_no": report_no, "kind": kind,
+              "issued_at": now.isoformat(), "elapsed_minutes": elapsed_minutes},
     )
     return {"report_id": entry.audit_id, "event_id": event_id, "report_no": report_no,
             "kind": kind, "issued_at": now, "elapsed_minutes": elapsed_minutes,

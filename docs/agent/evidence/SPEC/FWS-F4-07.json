@@ -16,14 +16,19 @@
       "part": "종결 축(완결조건)",
       "where": "dsm_services.advance_response(K1 closed) 재사용 — 응답 response_state=closed",
       "status": "구현 — K1 종결 축을 실제로 옮긴 것을 실측"
+    },
+    {
+      "part": "화면 버튼(FW-04 완결조건)",
+      "where": "frontend/src/features/fws/pages/CommandHome.tsx — 조회 카드만 그린다, 이 절에 해당하는 버튼 문구는 copy_command.ts 에 준비돼 있으나 렌더 0건(공통 결손 — F4-01 감사에서 확인)",
+      "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T07:40:35.504416+00:00",
+  "measured_at": "2026-09-29T09:25:43.403106+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_07_FireDeclarationTest.test_main_out_then_extinguished_closes_response_axis",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/543/extinguished?reason=%EC%A7%84%ED%99%94%EC%84%A0+%ED%99%95%EC%9D%B8%C2%B7%EA%B8%B0%EC%83%81+%EC%95%88%EC%A0%95",
+    "path": "/api/fws/command/incidents/8/extinguished?reason=%EC%A7%84%ED%99%94%EC%84%A0+%ED%99%95%EC%9D%B8%C2%B7%EA%B8%B0%EC%83%81+%EC%95%88%EC%A0%95",
     "params": {
       "reason": "진화선 확인·기상 안정"
     }
@@ -31,13 +36,14 @@
   "response": {
     "status": 200,
     "body": {
-      "declaration_id": 320,
-      "event_id": 543,
+      "declaration_id": 18,
+      "event_id": 8,
       "reason": "진화선 확인·기상 안정",
-      "declared_at": "2026-09-29T07:40:35.443492+00:00",
+      "declared_at": "2026-09-29T09:25:43.315492+00:00",
       "declared_by": "dsm_user_a",
       "response_state": "closed"
     }
   },
-  "what": "주불 진화 선언(감사) 뒤 진화완료 선언이 K1 종결 축(closed)을 실제로 옮긴다 — 실측"
+  "what": "주불 진화 선언(감사) 뒤 진화완료 선언이 K1 종결 축(closed)을 실제로 옮긴다 — 실측",
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 서버 로직은 실측 닫힘을 재확인했으나 화면 버튼이 미배선이다 — 반쪽으로 내린다."
 }

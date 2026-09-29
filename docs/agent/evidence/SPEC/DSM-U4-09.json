@@ -1,0 +1,91 @@
+{
+  "id": "DSM-U4-09",
+  "measured_at": "2026-09-29T09:32:32.467429+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_ap_n4_u4_09_safety_index.SafetyIndexAxisTest.test_fire_events_land_in_the_fire_field_and_mapping_table_is_returned",
+  "request": {
+    "method": "GET",
+    "path": "/api/dsm/stats/safety-index",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "since": "2026-08-30T09:32:00+00:00",
+      "until": "2026-09-29T09:32:00+00:00",
+      "total": 2,
+      "by": "safety_index",
+      "safety_index": [
+        {
+          "key": "화재",
+          "label": "화재",
+          "count": 1
+        },
+        {
+          "key": "교통사고",
+          "label": "교통사고",
+          "count": 1
+        },
+        {
+          "key": "범죄",
+          "label": "범죄",
+          "count": 0
+        },
+        {
+          "key": "생활안전",
+          "label": "생활안전",
+          "count": 0
+        },
+        {
+          "key": "자살",
+          "label": "자살",
+          "count": 0
+        },
+        {
+          "key": "감염병",
+          "label": "감염병",
+          "count": 0
+        },
+        {
+          "key": "미분류",
+          "label": "미분류",
+          "count": 0
+        }
+      ],
+      "mapping": {
+        "fire": "화재",
+        "smoke": "화재",
+        "camera_cluster_down": "화재",
+        "vehicle": "교통사고",
+        "intrusion": "범죄",
+        "sos": "범죄",
+        "person": "생활안전",
+        "flood": "생활안전",
+        "camera_down": "생활안전",
+        "storage_high": "생활안전"
+      },
+      "fields": [
+        "화재",
+        "교통사고",
+        "범죄",
+        "생활안전",
+        "자살",
+        "감염병"
+      ],
+      "capped": false
+    }
+  },
+  "what": "[턴 AP · 차선 N4] fire→화재 · vehicle→교통사고 로 실제로 갈리고, event_type→분야 매핑 표(완결 조건)가 응답에 그대로 실린다 — 실측(새 질의 없음, stats.stats_axes() 재사용)",
+  "title_parts": [
+    {
+      "part": "지역안전지수 6분야에 맞춘 유형 분류 열",
+      "where": "GET /api/dsm/stats/safety-index · apps/dsm/u4_safety_index_stats.py::safety_index_axis()(stats.stats_axes() 의 event_type 축을 재접음, 새 질의 없음)",
+      "status": "measured: 이 시험 — fire 2건→화재, vehicle 1건→교통사고로 실제로 갈림"
+    },
+    {
+      "part": "분류 매핑 표",
+      "where": "apps/dsm/u4_regulations.py::EVENT_TYPE_SAFETY_INDEX · 응답 mapping 칸",
+      "status": "measured: 이 시험 — mapping[\"fire\"]==\"화재\" 실측, fields 6개(지역안전지수 6분야) 실측"
+    }
+  ]
+}

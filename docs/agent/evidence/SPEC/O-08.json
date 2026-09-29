@@ -1,7 +1,7 @@
 {
   "id": "O-08",
   "title": "온보딩 관제",
-  "measured_at": "2026-09-29T07:44:35.442607+00:00",
+  "measured_at": "2026-09-29T09:06:37.961085+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O08_OnboardingBoardTest.test_reads_the_48_row_ledger",
   "request": {
@@ -13,26 +13,97 @@
     "status": 200,
     "body": {
       "read": true,
-      "source": "/docs/agent/evidence/ONB-T/turn_an_w1_u6.json",
+      "source": "/docs/agent/evidence/ONB-T/turn_ao_8.json",
       "denominator": 48,
-      "score_over_denominator": "6.5/48",
-      "green": 6,
-      "half": 1,
-      "red": 1,
+      "score_over_denominator": "34.5/48",
+      "green": 31,
+      "half": 7,
+      "red": 10,
       "role_progress_6": {
-        "U6": {
-          "green": 6,
+        "U1": {
+          "green": 4,
           "half": 1,
-          "red": 1,
+          "red": 3,
+          "total": 8,
+          "ratio": 0.562
+        },
+        "U2": {
+          "green": 5,
+          "half": 1,
+          "red": 2,
+          "total": 8,
+          "ratio": 0.688
+        },
+        "U3": {
+          "green": 6,
+          "half": 0,
+          "red": 2,
+          "total": 8,
+          "ratio": 0.75
+        },
+        "U4": {
+          "green": 4,
+          "half": 1,
+          "red": 3,
+          "total": 8,
+          "ratio": 0.562
+        },
+        "U5": {
+          "green": 5,
+          "half": 3,
+          "red": 0,
           "total": 8,
           "ratio": 0.812
+        },
+        "U6": {
+          "green": 7,
+          "half": 1,
+          "red": 0,
+          "total": 8,
+          "ratio": 0.938
         }
       },
-      "role_count": 1,
+      "role_count": 6,
       "blocked_cards": [
         {
-          "row": "U6#4",
-          "why": "구독 200 · 목록 1 -> 2 · [서버 기록] 서명이 붙은 발송 행 -1건(-1 은 표를 못 읽은 것이다) · [되돌림] DELETE 5 -> 200 — 이 걸음은 **새 사건을 만들지 않는다**(제품에 그 문이 없다). 발송 갈래는 이미 남은 행으로 잰다 · 셋째 조건 해당 없음(기계 사용자 — 화면이 없다 · 문구·술어 두 조건으로 매긴다 · P-377)"
+          "row": "U1#4",
+          "why": "도달=True (url=http://gx-nginx-e:8500/multi-stream-monitor) · 스트림 자리(video/canvas/stream) 0개 · 단언 글자=False · 본문 857자 — 도달만 하고 자리가 0이면 빨강(P-205)"
+        },
+        {
+          "row": "U1#8",
+          "why": "단추=['미처리 보기', '지난 12시간 보기', '내 담당 보기', '시스템 보기'] · GET events 200=True · 처리 단계 값 0칸 []"
+        },
+        {
+          "row": "U1#11",
+          "why": "큐 화면에 「실제로 확인 · 접수」 이 보이지 않는다 — 보이는 단추 ['종결하기'] · 초점 사건이 미처리가 아니면 이 단추는 없다(데이터 상태) · 본문 '지금 처리할 것\\n무슨 일 있었나\\n카메라 격자\\n인계 메모\\n처음이세요\\nGuardianX는 대응 시간을 잽니다.\\n지금 처리할 것 — 가장 급한 하나\\n?\\n단축키\\n소리 켜기\\n갱신 08:01'"
+        },
+        {
+          "row": "U2#2",
+          "why": "GET …response_state=occurred 200=True (서버 0건) · 처리 단계 칸 0 전부 미처리=False []"
+        },
+        {
+          "row": "U2#6",
+          "why": "templates 200=False · 표 행 0 (0 이면 ◐) · 보고서 서식=True 머리줄=True · url=http://gx-nginx-e:8500/report-template"
+        },
+        {
+          "row": "U3#1",
+          "why": "POST notify [] · deliveries 0 → 13 · 결과 문장=False · /m/inbox 카드=False"
+        },
+        {
+          "row": "U3#14",
+          "why": "모바일 실시간 자리 0개 · 말 [] — **0 이 지금의 사실이고 이 행은 ○ 다**(계약 11조 설계 잠금). 모바일 라우터에는 세 자리뿐이다 (inbox · eventDetail · settings). 자리가 생겼다면 잠금이 깨진 것이다"
+        },
+        {
+          "row": "U4#11",
+          "why": "url=http://gx-nginx-e:8500/device · 「드론·로봇 장비 등록」=True · 머리줄=True · 표 행 0 · 본문 앞 '무슨 일 있었나\\n보고서\\n처리 기록\\n열람·삭제 청구\\n드론·로봇 장비 등록 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\\n\\t\\nStatu' · ◐ 상한(셋째 조건 — 그 사용자의 언어가 아니다: 영문 메뉴(자기표지 ADMIN_HEADER))"
+        },
+        {
+          "row": "U4#15",
+          "why": "「보고 표시」·「보고함」 둘 다 화면에 없다 (EventList.tsx 행마다 그리는 토글)"
+        },
+        {
+          "row": "U4#9",
+          "why": "표 칸 「영상 구간」=True · clip 문 [401] (200·404 둘 다 문이 산 것 · 404 는 빈 자료다) · 누를 단추 없음 → **◐ 상한**(추출은 계약 11조 잠금)"
         }
       ],
       "tenants": [
@@ -72,6 +143,12 @@
       "part": "막힌 카드",
       "where": "blocked_cards",
       "status": "measured"
+    },
+    {
+      "part": "화면(D-7~D+30 표·역할별 진행률·막힌 카드)",
+      "where": "OpsHome.tsx:166-172 — score_over_denominator 문자열 1개만 렌더",
+      "status": "없음(설계가 요구한 표·진행률·막힌카드가 화면에 없다)"
     }
-  ]
+  ],
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 테넌트별 진행·역할별 6종·48행 재측·막힌 카드 API 는 실측 닫힘을 재확인했다. 화면은 숫자 하나만 보여준다 — 반쪽으로 내린다."
 }

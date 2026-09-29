@@ -1,26 +1,26 @@
 {
   "id": "O-09",
   "title": "감사(플랫폼)",
-  "measured_at": "2026-09-29T07:44:38.509704+00:00",
+  "measured_at": "2026-09-29T09:06:41.354324+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O09_PlatformAuditTest.test_operator_actions_are_logged_and_tenant_view_needs_approval",
   "request": {
     "method": "GET",
-    "path": "/api/dsm/ops/tenants/t-8edbf243/members",
+    "path": "/api/dsm/ops/tenants/t-74b92b98/members",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "tenant_code": "t-8edbf243",
+      "tenant_code": "t-74b92b98",
       "members": [
         {
-          "name": "opsadmin_87b834ab",
-          "employee_id": "GX-OPS-TENANT-t-8edbf243"
+          "name": "opsadmin_21790246",
+          "employee_id": "GX-OPS-TENANT-t-74b92b98"
         }
       ],
-      "granted_by": "opsan_u0_d66893eb",
-      "expires_at": "2026-09-29T08:14:38.453798+00:00"
+      "granted_by": "opsan_u0_ac5fac9a",
+      "expires_at": "2026-09-29T09:36:41.259169+00:00"
     }
   },
   "what": "테넌트 구성원 열람은 승인 전 403, 요청(POST .../access-requests) 뒤에도 403, 승인(POST .../approve) 뒤에만 200 — '테넌트 데이터 열람 0(승인 없이)'을 이 콘솔이 여는 유일한 원 데이터 문에서 실측한다. 발급·요청·승인 세 행위 모두 GET /ops/audit 의 total 을 늘린다 — '운영자 행위 전건' 실측.",
@@ -44,6 +44,12 @@
       "part": "완결조건 — 승인 없는 테넌트 데이터 열람 0",
       "where": "members 403 (요청 전·요청 후 승인 전)",
       "status": "measured"
+    },
+    {
+      "part": "화면(감사 열람 UI)",
+      "where": "frontend/src/features/ops/api.ts — audit 관련 함수 자체가 없다 · OpsHome.tsx 미호출 · /ops/audit 프런트 참조 0건",
+      "status": "없음(화면 자체가 없다 — 8건 중 가장 심한 누락)"
     }
-  ]
+  ],
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 운영자 행위 전건·테넌트 계열·승인 뒤 열람·승인없는 열람0 완결조건은 실측 닫힘을 재확인했다. 화면이 전혀 없다 — 반쪽으로 내린다."
 }

@@ -51,7 +51,10 @@ def _add_title_parts(clause_id: str, parts: list[dict]) -> None:
             "P-356 ② title_parts — 제목이 부르는 부분과 실측 상태를 표로 남긴다"):
         path = EVIDENCE_DIR / f"{clause_id}.json"
         body = json.loads(path.read_text(encoding="utf-8"))
-        body["title_parts"] = parts
+        #: [P-419 · 턴 AP · 조율자] 재판정 표(`retro` 칸이 있는 표)는 사람이 확인한 표다 —
+        #:   시험 리터럴로 덮지 않는다(턴 AP 에 O 여덟 절의 재판정 표가 이 줄로 한 번 지워졌다).
+        if "retro" not in body:
+            body["title_parts"] = parts
         path.write_text(json.dumps(body, ensure_ascii=False, indent=2) + "\n",
                         encoding="utf-8")
 

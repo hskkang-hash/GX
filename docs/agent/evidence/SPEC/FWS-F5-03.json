@@ -1,29 +1,28 @@
 {
   "id": "FWS-F5-03",
   "title": "확인 회신(산불 맞음/오인 · 사진·열화상)",
-  "measured_at": "2026-09-29T07:40:59.125969+00:00",
+  "measured_at": "2026-09-29T09:32:20.861686+00:00",
   "measured_by": "django_test_client",
-  "test": "tests.test_fws_f5.F5_03_ConfirmResultTest.test_fire_confirmed_requires_attachment_ref",
+  "test": "tests.test_ap_n4_f5_recon_coords_thermal.F5_03_ThermalAttachmentTest.test_thermal_ref_is_a_separate_slot_from_photo_attachment_ref",
   "request": {
-    "method": "POST",
-    "path": "/api/fws/drone/verifications/564/reply?result=fire_confirmed&attachment_ref=minio%3A%2F%2Fdrone%2F1.jpg",
-    "params": {
-      "result": "fire_confirmed",
-      "attachment_ref": "minio://drone/1.jpg"
-    }
+    "method": "GET",
+    "path": "/api/fws/ap/drone/verifications/9/thermal-attachment",
+    "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "verification_id": 564,
-      "reply_id": 365,
-      "result": "fire_confirmed",
-      "reason_code": null,
-      "verdict": "confirmed",
-      "attachment_ref": "minio://drone/1.jpg"
+      "event_id": 9,
+      "attachments": [
+        {
+          "thermal_id": 4,
+          "thermal_ref": "minio://drone/thermal.tiff"
+        }
+      ],
+      "count": 1
     }
   },
-  "what": "드론 확인 회신(산불 맞음 + 사진·열화상 참조)이 K1 사건의 verdict 를 confirmed 로 바꾼다 — F1-06 문 재사용(P-357) + 참조 값 필수화 실측(참조 없이 fire_confirmed 는 422)",
+  "what": "[턴 AP · 차선 N4] 반쪽 채움 — 사진 참조(attachment_ref, F1-06 재사용)와 열화상 참조(thermal_ref, 새 door)가 서로 다른 칸에 남는다. 판정은 여전히 F1-06/confirm_result 문 하나가 한다 (P-357, 두 번째 판정 문을 만들지 않았다)",
   "title_parts": [
     {
       "part": "확인 회신 행위(POST reply)",
@@ -47,8 +46,8 @@
     },
     {
       "part": "열화상 참조(사진과 구분되는 별도 증빙 유형)",
-      "where": "backend/apps/fws/drone.py::confirm_result() — attachment_ref 는 단일 문자열 필드 하나뿐, 사진/열화상을 구분하는 타입·필드 없음",
-      "status": "부분 — attachment_ref 라는 단일 값이 사진·열화상 두 증빙을 구분 없이 대신한다. 열화상 전용 필드·형식 검증(예: 파일 타입, 두 번째 참조 슬롯)은 코드에 없다"
+      "where": "POST·GET /api/fws/ap/drone/verifications/{event_id}/thermal-attachment · backend/apps/fws/ap_f5.py::attach_thermal()/thermal_attachments() [턴 AP · 차선 N4 신설 — drone.py 는 고치지 않았다]",
+      "status": "measured: tests.test_ap_n4_f5_recon_coords_thermal.F5_03_ThermalAttachmentTest.test_thermal_ref_is_a_separate_slot_from_photo_attachment_ref — 사진(attachment_ref)과 열화상(thermal_ref)을 같은 사건에 각각 등록 → 서로 다른 칸으로 재조회됨을 실측(200, thermal_ref=minio://drone/thermal.tiff)"
     }
   ]
 }

@@ -21,14 +21,24 @@
       "part": "해제",
       "where": "POST .../release → 응답 status=released",
       "status": "구현 — 실측"
+    },
+    {
+      "part": "화면 버튼(FW-04 완결조건)",
+      "where": "frontend/src/features/fws/pages/CommandHome.tsx — 조회 카드만 그린다, 이 절에 해당하는 버튼 문구는 copy_command.ts 에 준비돼 있으나 렌더 0건(공통 결손 — F4-01 감사에서 확인)",
+      "status": "없음(버튼 미배선)"
+    },
+    {
+      "part": "CBS 실제 발송(행안부 외부 시스템)",
+      "where": "command.py notify_event — 내부 앱 푸시(웹푸시)만 실행한다. 명세 원문 §5.4 는 '대피 명령은 제품이 내리지 않는다 — 초안·승인·기록까지이며 발송은 행안부 CBS 시스템'이라 적는다",
+      "status": "없음(외부 기관 실연동 — excluded_by 번호 없음. 조율자 판단 후보: P-428, 이 행은 진짜 외부 실연동 범주라 자격은 있으나 N1 은 결정 번호를 스스로 안 붙인다)"
     }
   ],
-  "measured_at": "2026-09-29T07:40:31.916908+00:00",
+  "measured_at": "2026-09-29T09:25:36.645380+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_05_EvacuationApprovalTest.test_approve_immediate_then_release",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/evacuations/540/approve?urgency=immediate",
+    "path": "/api/fws/command/evacuations/5/approve?urgency=immediate",
     "params": {
       "urgency": "immediate"
     }
@@ -36,18 +46,19 @@
   "response": {
     "status": 200,
     "body": {
-      "approval_id": 311,
-      "event_id": 540,
+      "approval_id": 9,
+      "event_id": 5,
       "urgency": "immediate",
       "deadline_hours": 8.0,
       "villages": [
         "OO리"
       ],
       "note": "",
-      "approved_at": "2026-09-29T07:40:31.807178+00:00",
+      "approved_at": "2026-09-29T09:25:36.464587+00:00",
       "notified_count": 1,
       "status": "approved"
     }
   },
-  "what": "F3-11 초안 뒤 POST .../approve(즉시) 가 8시간 지시 대피로 확정하고 발송하며, POST .../release 가 해제한다 — 실측"
+  "what": "F3-11 초안 뒤 POST .../approve(즉시) 가 8시간 지시 대피로 확정하고 발송하며, POST .../release 가 해제한다 — 실측",
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · '푸시(완결조건)' 행이 사실은 내부 앱 푸시(notify_event)였고, 명세가 부르는 CBS 실제 발송(행안부)은 이 표에 아예 없었다 — 화면 버튼도 미배선 — 반쪽으로 내린다."
 }

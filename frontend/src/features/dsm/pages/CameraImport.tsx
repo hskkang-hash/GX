@@ -225,13 +225,24 @@ export default function CameraImportPage() {
             placeholder={SAMPLE}
             style={{ fontFamily: 'monospace' }}
           />
+          {/*
+            [P-423 · 턴 AP · 차선 L] 온보딩 U5#4 「누를 자리」 선언 — 이 화면은
+            dry-run → 적용 두 걸음이라 각 걸음을 따로 단다. 자세한 표는
+            docs/agent/checkpoints/turn-ap/L.md.
+          */}
           <Space style={{ marginTop: 12 }}>
-            <Button type="primary" loading={busy} disabled={!csvText.trim()} onClick={() => run(true)}>
+            <Button
+              type="primary"
+              loading={busy}
+              disabled={!csvText.trim()}
+              onClick={() => run(true)}
+              data-gx="camera-import-dryrun"
+            >
               ② 표 먼저 보기 (dry-run)
             </Button>
             {/* ★ 표가 없으면 적용 버튼이 **없다.** 순서가 규약이다. */}
             {plan && !plan.fatal && plan.will_write > 0 && !applied ? (
-              <Button danger loading={busy} onClick={() => run(false)}>
+              <Button danger loading={busy} onClick={() => run(false)} data-gx="camera-import-apply">
                 ③ 이 표대로 적용 ({plan.will_write}행)
               </Button>
             ) : null}

@@ -239,13 +239,16 @@ routes:
   "GET /api/dsm/control-points/daily-report": session_only
   "POST /api/dsm/control-points/{int:point_id}/advance": session_only
   "POST /api/dsm/controls/{int:point_id}/executed": session_only
+  "GET /api/dsm/daily-report": session_only
   "GET /api/dsm/dashboard/frame": session_only
   "GET /api/dsm/dashboard/link-state": session_only
   "GET /api/dsm/deliveries": session_only
   "GET /api/dsm/drill": session_only
   "POST /api/dsm/drill": session_only
   "GET /api/dsm/drill/report": session_only
+  "GET /api/dsm/evaluation-bundle.zip": session_only
   "GET /api/dsm/events": inbound_key_allowed
+  "GET /api/dsm/events/combined-search": session_only
   "GET /api/dsm/events/queue": session_only
   "GET /api/dsm/events/response-times": session_only
   "GET /api/dsm/events/summary": session_only
@@ -270,7 +273,7 @@ routes:
   "GET /api/dsm/events/{int:event_id}/timeline": session_only
   "DELETE /api/dsm/events/{int:event_id}/upper-report": session_only
   "POST /api/dsm/events/{int:event_id}/upper-report": session_only
-  "POST /api/dsm/external-events": session_only
+  "POST /api/dsm/external-events": inbound_key_allowed
   "GET /api/dsm/handover/draft": session_only
   "POST /api/dsm/handover/draft": session_only
   "GET /api/dsm/handover/latest": session_only
@@ -362,6 +365,8 @@ routes:
   "POST /api/dsm/situation-meetings": session_only
   "GET /api/dsm/situation-reports": session_only
   "POST /api/dsm/situation-reports": session_only
+  "POST /api/dsm/situation-reports/interim-batch": session_only
+  "GET /api/dsm/situation-reports/ndms-export.csv": session_only
   "POST /api/dsm/situation-reports/{int:report_id}/sent": session_only
   "GET /api/dsm/stats/axes": session_only
   "GET /api/dsm/stats/by-reviewer": session_only
@@ -370,6 +375,7 @@ routes:
   "GET /api/dsm/stats/export.csv": session_only
   "GET /api/dsm/stats/false-positive": session_only
   "GET /api/dsm/stats/false-positive/by-camera": session_only
+  "GET /api/dsm/stats/safety-index": session_only
   "GET /api/dsm/stats/summary": session_only
   "POST /api/dsm/stats/thresholds/simulate": session_only
   "GET /api/dsm/system/backup-receipts": session_only
@@ -379,6 +385,7 @@ routes:
   "GET /api/dsm/system/storage": session_only
   "POST /api/dsm/thresholds/observe": session_only
   "POST /api/dsm/thresholds/observe/{int:observation_id}/decide": session_only
+  "GET /api/dsm/u5an/control-log": session_only
   "GET /api/dsm/u5an/integrations": session_only
   "POST /api/dsm/u5an/integrations": session_only
   "POST /api/dsm/u5an/integrations/test": session_only
@@ -411,6 +418,12 @@ routes:
   "POST /api/fws/admin/posts": session_only
   "GET /api/fws/alerts": session_only
   "POST /api/fws/alerts/{int:delivery_id}/ack": session_only
+  "GET /api/fws/ap/drone/flights/minutes/monthly-table": session_only
+  "GET /api/fws/ap/drone/missions/{int:event_id}/recon-coords": session_only
+  "GET /api/fws/ap/drone/verifications/{int:event_id}/thermal-attachment": session_only
+  "POST /api/fws/ap/drone/verifications/{int:event_id}/thermal-attachment": session_only
+  "GET /api/fws/ap/incidents/{int:event_id}/spread-results": session_only
+  "POST /api/fws/ap/incidents/{int:event_id}/spread-results": session_only
   "POST /api/fws/command/evacuations/{int:event_id}/approve": session_only
   "GET /api/fws/command/evacuations/{int:event_id}/command-status": session_only
   "POST /api/fws/command/evacuations/{int:event_id}/release": session_only
@@ -423,6 +436,7 @@ routes:
   "GET /api/fws/command/incidents/{int:event_id}/command-post": session_only
   "POST /api/fws/command/incidents/{int:event_id}/command-post": session_only
   "GET /api/fws/command/incidents/{int:event_id}/contacts": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/drop-zone-position": session_only
   "POST /api/fws/command/incidents/{int:event_id}/extinguished": session_only
   "GET /api/fws/command/incidents/{int:event_id}/fire-declarations": session_only
   "POST /api/fws/command/incidents/{int:event_id}/golden-time-reason": session_only
@@ -435,9 +449,11 @@ routes:
   "GET /api/fws/command/incidents/{int:event_id}/post-report.pdf": session_only
   "GET /api/fws/command/incidents/{int:event_id}/post-report/summary": session_only
   "GET /api/fws/command/incidents/{int:event_id}/response-timeline": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/risk-index": session_only
   "GET /api/fws/command/incidents/{int:event_id}/stage": session_only
   "POST /api/fws/command/incidents/{int:event_id}/stage": session_only
   "POST /api/fws/command/incidents/{int:event_id}/sunset": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/wind-reading": session_only
   "POST /api/fws/drone/flights": session_only
   "GET /api/fws/drone/flights/mine": session_only
   "GET /api/fws/drone/flights/minutes": session_only

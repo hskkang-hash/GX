@@ -103,7 +103,7 @@ P190 = "[P-190 정정 · 턴 W] "
 
 def F(key, title, actor, screen, control, call, state, text, confirm=None, note="",
       fill=None, fill_text=None, img_check=False, revert=None, prepare=None,
-      clause=""):
+      clause="", attr_check=None):
     """한 흐름.
 
     `revert` — [★ 턴 U · 차선 Q · 조율자 실측 2026-09-17 21:0x] **상태를 바꾸는 클릭은
@@ -136,6 +136,11 @@ def F(key, title, actor, screen, control, call, state, text, confirm=None, note=
       응답 200 image/jpeg. 셋이 다 서야 초록이고, 「불러오지 못했습니다」는 실제
       4xx/5xx 일 때만 나와야 한다 — 이 셋이 서 있는데 그 문구가 함께 뜨면 그 자체가
       모순이라 빨강이다 (`_cell_img` 마지막 검사).
+
+    `attr_check` — [P-423 · 턴 AP · 차선 Q] `img_check` 와 나란한 셋째 갈래: 값이
+      **글자로는 안 뜨고 data-* 속성에만 실리는** 자리(U5#10 · `data-gx-channel`).
+      CSS 선택자 문자열을 주면, ③ 상태(`server_reflect`)의 「화면에 있는가」를
+      본문 텍스트 대조 대신 그 속성이 실제로 값을 담고 있는지로 잰다.
     """
     return {
         "key": key, "title": title, "actor": actor, "screen": screen,
@@ -143,7 +148,7 @@ def F(key, title, actor, screen, control, call, state, text, confirm=None, note=
         "state": state, "text": text, "note": note,
         "fill": fill, "fill_text": fill_text,
         "img_check": img_check, "revert": revert,
-        "prepare": prepare, "clause": clause,
+        "prepare": prepare, "clause": clause, "attr_check": attr_check,
     }
 
 
@@ -180,6 +185,17 @@ def put(placeholder, text, *, restore=False):
             "restore": restore}
 
 
+def fill_label(label, text, *, restore=False):
+    """[P-423 · 턴 AP · 차선 Q] AntD `Form.Item label=` 칸을 **라벨로** 채운다.
+
+    `put()` 은 `placeholder` 로 찾는다 — 그런데 `People.tsx` 「계정 만들기」 폼(U5#1)
+    처럼 `placeholder` 를 안 주고 `label` 만 있는 폼이 있다(이 저장소가 흔히 쓰는
+    두 모양 중 하나). 찾는 규칙을 늘리는 대신, `put()` 과 나란한 **둘째 찾는 법**을
+    준다 — `.ant-form-item` 안에서 그 라벨 글자를 가진 것의 `input` 을 채운다.
+    """
+    return {"kind": "fill_label", "label": label, "text": text, "restore": restore}
+
+
 def revert_redo(why: str, *, restores: bool = True):
     """**원래 값으로 한 번 더 저장한다** — 같은 단추로 안 돌아오는 쓰기 문의 되돌림.
 
@@ -190,8 +206,26 @@ def revert_redo(why: str, *, restores: bool = True):
     return {"kind": "redo", "why": why, "restores": restores}
 
 
-def btn(name):
-    return {"kind": "button", "name": name}
+def btn(name, *, gx=None):
+    """`gx` — [P-423 · 턴 AP · 차선 Q] 차선 L 이 화면에 단 `data-gx` 선택자(있으면).
+
+    같은 글자 단추가 화면에 둘 있으면(예: `CameraAddress.tsx` 의 행별 「채우기」와
+    「아직 없는 카메라」 카드의 같은 글자 단추) 텍스트만으로는 엉뚱한 것을 누를 수
+    있다 — `gx` 를 주면 `find_control()` 이 그 선택자를 **먼저** 본다. 안 주면(기존
+    40여 행) 종전과 똑같이 텍스트로만 찾는다 — 이 매개변수는 그 행들을 안 건드린다.
+    """
+    return {"kind": "button", "name": name, "gx": gx}
+
+
+def press(name=None, *, gx=None, wait_ms=1500):
+    """[P-423 · 턴 AP · 차선 Q] **준비 단계의 단추 누르기** — `prepare=[...]` 안에서만 쓴다.
+
+    `pick()`/`put()`(드롭다운·글상자)와 달리 이것은 **버튼을 누르는** 준비 걸음이다.
+    L 이 새로 선언한 화면 중 일부(예: `CameraImport.tsx` 의 「예시 채우기 → dry-run →
+    적용」 세 걸음)는 메인 클릭 **전에** 버튼을 한두 번 더 눌러야 메인 단추가 나타나거나
+    풀린다. `name`·`gx` 는 `btn()` 과 같은 뜻(적어도 하나는 있어야 찾는다).
+    """
+    return {"kind": "button_prepare", "name": name, "gx": gx, "wait_ms": wait_ms}
 
 
 def revert_toggle():
@@ -261,6 +295,12 @@ def srv_reflect(get, field):
     """
     return {"kind": "server_reflect", "get": get, "field": field}
 
+
+#: [P-423 · 턴 AP · 차선 Q] U5#1(계정 생성) 씨앗 접미사 — **이 모듈이 임포트될 때마다**
+#: 새로 계산된다(이 파일은 `--measure` 한 회에 한 번만 임포트된다). 같은 아이디로
+#: 두 번 만들면 서버가 중복으로 막는다 — U5#4·U5#5 note 가 이미 적어 둔 "매번 새
+#: 시험 자료가 필요하다"는 문제의 거울상이다.
+_U5_1_SUFFIX = datetime.now().strftime("%Y%m%d%H%M%S")
 
 FLOWS = (
     # ── U1 · 관제요원 ────────────────────────────────────────────────────
@@ -458,12 +498,35 @@ FLOWS = (
       revert=no_revert("회신은 **덧붙이는 것**이고 지우는 문이 없다(있어도 쓰지 않는다 — 대장은 줄지 않는다). 대상은 이번 회 씨앗 사건이다")),
     F("U3#14", "해당 카메라 모바일 실시간", "u3", None, None, None, None, [],
       note="정본: 없음 — 구간 티켓은 계약 11조 잠김"),
-    F("U3#16", "근무 외 알림 차단", "u3", None, None, None, None, [],
+    #: ★★ [P-423 · 턴 AP · 차선 L→Q] L 이 `data-gx="prefs-save-submit"` 을 달았다
+    #:  (`MobileSettings.tsx:442`) — 「설정 저장」 **한 단추**가 PUT + 재조회
+    #:  (`prefs.reload()`)를 함께 부르므로 "두 걸음이라 창에 안 들어온다"던 종전
+    #:  사유(저장→재조회)는 옛말이다(그 재조회는 이 harness 가 **모든 행**에서
+    #:  이미 자동으로 하는 일이지, 화면이 따로 눌러야 하는 둘째 걸음이 아니었다).
+    #:  실제 "두 걸음"은 **시간대 입력** 쪽이다 — 시작·종료 둘 다 채워야
+    #:  저장이 뜻있다("한쪽만 채울 수는 없습니다", 같은 파일 388행) — 그래서
+    #:  `prepare=[put(...), put(...)]` 로 둘 다 채운 뒤에 누른다. `srv_change` 는
+    #:  `quiet_start` 값이 바뀌는지를 본다(플레이스홀더와 다른 값을 써 이번 값이
+    #:  이전 값과 우연히 같을 위험을 줄인다).
+    F("U3#16", "근무 외 알림 차단", "u3", "/m/settings",
+      btn("설정 저장", gx="prefs-save-submit"),
+      ("PUT", r"/api/dsm/me/notify-prefs"),
+      srv_change("/api/dsm/me/notify-prefs", "quiet_start"),
+      ["언제는 안 받나", "부터", "까지", "설정 저장"],
+      prepare=[
+          put("22:00", "21:47", restore=True),
+          put("07:00", "06:13", restore=True),
+      ],
+      revert=revert_redo("시간대 저장은 같은 단추를 한 번 더 눌러도 **같은 값을 또 쓴다** — "
+                         "되돌림이 아니라 반복이다. 처음 값(원래 있던 시간대)으로 한 번 더 "
+                         "저장한다. ⚠ 처음 값이 **빈 칸**(둘 다 미설정)이면 `restore_steps` "
+                         "가 빈 문자열을 「못 적어 뒀다」로 보고 되돌리기를 스스로 포기한다 "
+                         "(그 경우 판정은 그대로고 「되돌리지 못한 자리」로 남는다)",
+                         restores=True),
       note=P190 + "온보딩 정본은 `/m/settings` · `PUT /api/dsm/me/notify-prefs` 200 → 재조회에 "
            "차단 시간대 반영 + 시험 발송이 실제 `deliveries` 행을 남기는 것(P-160 ③)을 "
-           "적어 두었다 [조율자 실측 2026-09-18 · M4 실자료가 섰다]. 종전 주석 "
-           "「채널 결정 대기」는 그 전 사실이다. 이 도구가 안 누르는 사유는 **시간대 "
-           "입력이 두 걸음**(저장 → 재조회)이라 한 번 누름 창(4.5초)에 안 들어온다는 것이다"),
+           "적어 두었다 [조율자 실측 2026-09-18 · M4 실자료가 섰다]. 이 행은 이제 "
+           "시간대 둘을 준비 단계로 채운 뒤 「설정 저장」을 누른다(P-423)"),
     F("U3#19", "내가 처리한 이벤트 목록", "u3", "/m/inbox", goto(),
       ("GET", r"/api/dsm/deliveries"),
       srv_reflect("/api/dsm/deliveries?limit=20&mine=true", "deliveries"),
@@ -636,13 +699,39 @@ FLOWS = (
     #:    [실측 턴 O · `docs/agent/evidence/P-125/users_roles_0행과_프리플라이트401.md`
     #:     A절 — `OPTIONS /api/v1/user/create-user` → 401 · `front_line.py:81`].
     #:    그 자리는 **보안 차선**이 들고 있다.
-    F("U5#1", "사용자 계정 생성", "u5", None, None, None, None, [],
+    #: ★★ [P-423 · 턴 AP · 차선 L→Q] **차선 L 이 이 화면에 자리를 달았다** — 종전
+    #:  회색 사유 둘은 다른 화면·다른 문의 얘기였다: 사유 ①(서식 화면 링크)은
+    #:  `/users` 의 「사용자 추가」 얘기이고, `/dsm/people` 「계정 만들기」 단추는
+    #:  **그 서식 자체**라 제출이 곧 POST 다. 사유 ②(프리플라이트 401)는 dj-core
+    #:  `/api/v1/user/create-user` 의 얘기이고 이 라우트(`api_u56.py::create_person`)
+    #:  는 그 문이 아니다. L 이 `data-gx="people-create-submit"` 을 달았다(L.md §1-A).
+    #:  폼에 `placeholder` 가 없어(라벨만 있다) `fill_label()` 로 채운다.
+    #:  ⚠ **group_id=4 는 가정이다** — 이 화면이 로그인한 사람의 소속을 안 채워
+    #:  주므로(`People.tsx` 에 기본값 없음), 이 저장소의 다른 도구가 이미 쓰는 관례값
+    #:  (`measure_onboarding_t.py::camera_counts(group_id: int = 4)`)을 그대로 쓴다.
+    #:  틀린 소속이면 서버가 거절하고 이 행은 빨강이 된다 — 그것은 이 가정이
+    #:  틀렸다는 신호이지 「정본이 없다」는 아니다. V 실측 뒤 바로잡는다.
+    #:  ③ 상태 확인은 `people` 전용 목록 GET 이 **없어서**(코드에 없음 실측)
+    #:  U4#16 이 이미 쓰는 일반 감사 로그(`GET /api/dsm/audit?page_size=1` · `total`)로
+    #:  잰다 — 계정 생성은 `audit_id` 를 낸다(응답 스키마 `CreatedPerson.audit_id`),
+    #:  즉 감사 총수가 실제로 늘어야 맞다(발명한 자리가 아니라 이미 있는 신호를 돌려 쓴다).
+    F("U5#1", "사용자 계정 생성", "u5", "/dsm/people",
+      btn("계정 만들기", gx="people-create-submit"),
+      ("POST", r"/api/dsm/settings/people/create"),
+      srv_change("/api/dsm/audit?page_size=1", "total"),
+      ["계정 만들기", "만들었습니다"],
+      prepare=[
+          fill_label("아이디", "gxprobe-u51-%s" % _U5_1_SUFFIX),
+          fill_label("이메일", "gxprobe-u51-%s@example.invalid" % _U5_1_SUFFIX),
+          fill_label("비밀번호", "Gx-Probe-Pw-1!"),
+          fill_label("소속(테넌트) ID", "4"),
+      ],
+      revert=no_revert("계정 생성은 **새로 만드는 문**이다 — 지우는 라우트가 없다"
+                       "(비활성화는 감사 흔적을 남기는 별도 절차라 되돌림이 아니다). "
+                       "대상 아이디는 회마다 새로 짓는다(_U5_1_SUFFIX) — 다음 회와 안 겹친다"),
       note=P190 + "온보딩 정본은 `/dsm/people` · `POST /api/dsm/settings/people/create` 200 → "
-           "사용자 수 +1 을 적어 두었다(⚠ `/settings/people` 이 아니다 — `/settings/{domain}` 이 "
-           "삼켜 405 를 낸다). 문은 **있다.** 이 도구가 안 누르는 사유는 둘이다: "
-           "① 화면의 단추(App.tsx:728 「사용자 추가」)는 서식 화면으로 가는 링크라 "
-           "한 번 누름으로 안 끝난다 · ② 그 문이 프리플라이트 401 로 끊겨 있다"
-           "(P-125 A절 · 보안 차선). 둘 다 회색 사유이고 「정본이 비었다」가 아니다"),
+           "사용자 수 +1 을 적어 두었다. 이 행은 이제 위 자리를 누른다(P-423) — 옛 회색"
+           "(서식 화면 링크·프리플라이트 401)은 다른 화면·다른 문 얘기였다"),
     #: ★ [P-132] 이 행의 상태 규격이 **다른 화면**을 읽고 있었다
     #:  (`/api/dsm/dashboard/frame` 의 `preset` — 역할 화면과 아무 상관이 없다).
     #:  `/roles` 가 실제로 세는 문은 `App.tsx:754` 의 `countUrl="/api/roles/"` 이고,
@@ -652,31 +741,62 @@ FLOWS = (
       ("GET", r"/api/roles"),
       srv_reflect("/api/roles/?page_size=1&current_page=1", "count"),
       ["역할", "서버에는"]),
-    #: ★ [P-132] 카메라를 등록하는 자리는 `/device`(드론·로봇)가 아니라
-    #:  **`/dsm/cameras/import`** 다 — `routes.ts:23` 이 그 경로를 정하고
-    #:  `roleNav.ts:132` 가 그 줄을 U5 사이드바에 「카메라 등록」이라 세운다.
-    #:  그런데 그 화면은 **일부러 세 걸음**이다(`CameraImport.tsx:186·199·204`
-    #:  예시 채우기 → ② 표 먼저 보기(dry-run) → ③ 이 표대로 적용). 「표를 본 뒤에만
-    #:  쓴다」가 그 화면의 규약이고, **한 번 누름**으로는 그 규약을 지나갈 수 없다.
-    #:  게다가 같은 표를 두 번 적용하면 `unchanged` 라 총수가 안 변한다 — 잴 때마다
-    #:  **새 시험 자료**가 있어야 하는데 그 정본이 없다(사건과 같은 문제다).
-    F("U5#4", "카메라 등록", "u5", None, None, None, None, [],
+    #: ★★ [P-423 · 턴 AP · 차선 L→Q] 카메라를 등록하는 자리는 `/device`(드론·로봇)가
+    #:  아니라 **`/dsm/cameras/import`** 다 — `routes.ts:23` 이 그 경로를 정하고
+    #:  `roleNav.ts:132` 가 그 줄을 U5 사이드바에 「카메라 등록」이라 세운다. 화면은
+    #:  세 걸음(`CameraImport.tsx:216·239·245` 예시 채우기 → 표 먼저 보기(dry-run) →
+    #:  이 표대로 적용)이지만, `prepare=[press(...), press(...)]` 로 앞 두 걸음을
+    #:  누르기 **전**에 지나고 마지막 「적용」만 메인 클릭으로 잰다(P-423 이 새로 준
+    #:  `press()`/`button_prepare` — 이 harness 가 처음으로 준비 단계에서 버튼을
+    #:  누른다). L 이 두 번째·세 번째 단추에 `data-gx`(`camera-import-dryrun` ·
+    #:  `camera-import-apply`)를 달았다(L.md §1-A) — 「적용」은 dry-run 결과가
+    #:  `will_write > 0` 일 때만 DOM 에 나타나므로(`CameraImport.tsx:244`) 앞 두
+    #:  걸음이 실제로 통과해야 메인 클릭 자리가 존재한다.
+    #:  ⚠ **잔여 위험**은 그대로다 — 같은 표를 두 번 적용하면 `unchanged` 라 총수가
+    #:  안 변한다(옛 note 그대로). 매 회 새 시험 자료가 없으면 이 행은 여전히
+    #:  빨강일 수 있다 — 그것은 이 행이 못 쟀다는 뜻이 아니라 **제품이 실제로
+    #:  아무것도 새로 쓰지 않았다는 뜻**이다.
+    F("U5#4", "카메라 등록", "u5", "/dsm/cameras/import",
+      btn("이 표대로 적용", gx="camera-import-apply"),
+      ("POST", r"/api/dsm/cameras/import"),
+      srv_change("/api/dsm/cameras/pulse", "total"),
+      ["카메라", "적용", "등록"],
+      prepare=[
+          press("예시 채우기"),
+          press("표 먼저 보기", gx="camera-import-dryrun", wait_ms=2500),
+      ],
+      revert=no_revert("카메라 등록은 **새로 만드는 문**이다 — CSV 적용은 지우는 짝이 "
+                       "없다(등록된 카메라를 지우는 화면이 없다). 누르면 제품에 카메라가 "
+                       "남는다 — 옛 note 가 이미 적어 둔 사실 그대로다"),
       note=P190 + "온보딩 정본은 `/dsm/cameras/import` · `POST /api/dsm/cameras/import` 200"
            "(dry-run 뒤 실행) → 카메라 수 +N 과 문구 `카메라 일괄 등록`·`표 먼저 보기` 를 "
-           "적어 두었다. 문과 문구는 **있다.** 이 도구가 안 누르는 사유는 "
-           "「표 먼저, 그 다음 적용」이 **세 걸음**이고 매번 새 시험 자료가 필요해 "
-           "한 번 누름 창에 안 들어온다는 것이다 — 그리고 누르면 제품에 카메라가 남는다"),
-    #: ★ [P-132] 「저장」이라는 단추는 없다 — `CameraAddress.tsx:177·185` 의
-    #:  **「표 먼저 보기」 · 「채우기」** 둘뿐이고, 둘 다 이름·주소를 채우기 전에는
-    #:  `disabled` 다(`ready`, 같은 파일 88행). 「채우기」는 표를 본 뒤에만 열린다(182행).
-    #:  U5#4 와 같은 사유로 **한 번 누름의 정본이 없다.**
-    F("U5#5", "카메라 설치 주소 입력", "u5", None, None, None, None, [],
+           "적어 두었다. 이 행은 이제 세 걸음을 준비 단계로 지나 마지막만 잰다(P-423)"),
+    #: ★★ [P-423 · 턴 AP · 차선 L→Q] L 이 지목한 것은 **행별** 「이 한 대 채우기」
+    #:  → 「채우기」 다(`CameraAddress.tsx:288·304` · `data-gx="camera-address-row-start"`
+    #:  `data-gx="camera-address-row-submit"`) — 「아직 없는 카메라」 카드의 같은 글자
+    #:  단추(`camera-address-new-dryrun/apply`)와는 다른 자리다(L.md §1-A). 행을 먼저
+    #:  열고(`press(gx="camera-address-row-start")`) 그 안에 열리는 글상자를 채운다
+    #:  (`put()` — 행 입력창은 「아직 없는 카메라」 카드보다 DOM 순서가 앞이라 `.first` 가
+    #:  옳은 자리를 잡는다). 이 표는 주소가 **없는** 카메라만 보여 준다(화면 제목
+    #:  「주소 없는 카메라」) — 그래서 채우면 `address-gap` 의 `without_address` 가
+    #:  줄어야 한다.
+    F("U5#5", "카메라 설치 주소 입력", "u5", "/dsm/cameras/address",
+      btn("채우기", gx="camera-address-row-submit"),
+      ("POST", r"/api/dsm/cameras/\d+/address"),
+      srv_change("/api/dsm/cameras/address-gap", "without_address"),
+      ["채우기", "주소"],
+      prepare=[
+          press("이 한 대 채우기", gx="camera-address-row-start"),
+          put("경기도 안양시 만안구 안양로 123", "서울시 강남구 테스트로 1(P-118 자동측정)"),
+      ],
+      revert=no_revert("주소 채우기는 빈 칸을 **채우는** 문이다 — 화면에 지우는 단추가 "
+                       "없다(옛 note 의 「채우기」만 있다). 채운 뒤에는 그 카메라가 "
+                       "이 표(주소 없는 카메라)에서 빠지므로 다음 회에 같은 행을 또 "
+                       "채우지 않는다"),
       note=P190 + "온보딩 정본은 `POST /api/dsm/cameras/{id}/address` 200(`api_u56.py:506`) → "
            "`GET /api/dsm/cameras/address-gap` 반영과 문구 `이 한 대 채우기`"
-           "(`CameraAddress.tsx:297`)를 적어 두었다. 문과 문구는 **있다.** 이 도구가 "
-           "안 누르는 사유는 단추 둘(`표 먼저 보기`·`채우기`)이 **입력 전에는 잠겨 있고** "
-           "「표 먼저, 그 다음 채움」이 두 걸음이라는 것이다(P-132 — 제품의 규율을 "
-           "고장으로 팔지 않는다)"),
+           "(`CameraAddress.tsx:297`)를 적어 두었다. 이 행은 이제 그 두 걸음을 "
+           "준비(행 열기 → 채우기)로 지나 「채우기」 제출만 메인 클릭으로 잰다(P-423)"),
     #: ★ [턴 T · U56] 설정 화면(`/dsm/notify`)이 턴 S 에 섰고, 「끄기/켜기」 한 번 누름이
     #:  턴 T 에 생겼다(NotifySettings.tsx · `data-gx=notify-rule-saved`). 옛 note 「화면·라우트
     #:  없다」는 턴 S 이후 옛말이었다 — 정본 없음을 그대로 두면 영원히 회색이다.
@@ -689,13 +809,27 @@ FLOWS = (
       ("POST", r"/api/dsm/settings/notify-rules/save"),
       srv_reflect("/api/dsm/settings/notify-rules/list", "rules"), ["저장했습니다", "규칙 #"],
       revert=revert_toggle()),
-    F("U5#10", "알림 채널 설정", "u5", None, None, None, None, [],
+    #: ★★ [P-423 · 턴 AP · 차선 L→Q] L 의 표(§1-A)가 명시한 것: 이 행은 **새 클릭
+    #:  자리가 아니다** — U5#9 와 같은 단추(끄기/켜기)를 다시 안 누른다(같은 상태를
+    #:  두 번 안 흔든다). 필요했던 것은 저장 뒤 `…/list` 에 남는 `channel` 값을
+    #:  **안 눌러도 읽을 수 있는 자리**였다: `NotifySettings.tsx:448`
+    #:  `data-gx="notify-rule-channel" data-gx-channel={cs.join(',')}` — 화면 글자는
+    #:  사전 표시명(`notifyChannelLabel`)이고 원래 채널 코드는 그 속성에만 있다
+    #:  (`deliveryOutcome.tsx` 머리말과 같은 규약). 그래서 control 은 U5#9 와 **같은
+    #:  단추**를 재사용하고(누르면 채널 목록 화면이 다시 그려진다), ③ 상태는 텍스트
+    #:  대조가 아니라 **그 속성의 존재**를 DOM 에서 직접 잰다(`attr_check` — P-423 이
+    #:  새로 준 갈래, 위 `img_check` 와 나란하다).
+    F("U5#10", "알림 채널 설정", "u5", "/dsm/notify", btn("^(끄기|켜기)$"),
+      ("POST", r"/api/dsm/settings/notify-rules/save"),
+      srv_reflect("/api/dsm/settings/notify-rules/list", "rules"),
+      ["저장했습니다", "채널"],
+      attr_check='[data-gx="notify-rule-channel"]',
+      revert=revert_toggle(),
       note=P190 + "온보딩 정본은 규칙 저장 200 → `channel` 값 `email`/`webpush` 가 "
-           "`…/list` 에 남는 것을 적어 두었다. ⚠ 다만 채널 **이름** 자체(`이메일`·`웹푸시`)는 "
-           "아직 사전 밖이고, 문자 채널은 대표 결정 대기다 — 그래서 정본은 제목으로 "
-           "자리를 단언하고 채널 값은 서버 기록으로 잰다. 이 도구가 안 누르는 사유는 "
-           "U5#9 이 같은 화면의 같은 단추를 이미 누르고 **되돌리기까지** 하기 때문이다 "
-           "— 같은 상태를 두 번 흔들지 않는다"),
+           "`…/list` 에 남는 것을 적어 두었다. ⚠ 채널 **이름** 자체(`이메일`·`웹푸시`)는 "
+           "아직 사전 밖이고, 문자 채널은 대표 결정 대기다. 이 행은 이제 U5#9 의 같은 "
+           "단추를 재사용해 `data-gx-channel` 속성으로 잰다(P-423) — 어느 행의 것인지까지"
+           "는 안 가른다(존재 확인)"),
     F("U5#14", "시스템 상태 확인", "u5", "/dsm/system", goto(),
       ("GET", r"/api/dsm/(dashboard/link-state|ops/)"),
       srv_reflect("/api/dsm/dashboard/link-state", "status"), ["상태", "시스템", "연계"]),
@@ -2358,8 +2492,31 @@ def settle_login(page, ms=25000):
 
 
 def find_control(page, ctrl):
-    """이름으로 누를 것을 찾는다. **못 찾으면 회색이다 — 지어내지 않는다.**"""
-    name = ctrl["name"]
+    """이름으로 누를 것을 찾는다. **못 찾으면 회색이다 — 지어내지 않는다.**
+
+    ★ [P-423 · 턴 AP · 차선 Q] `ctrl.get("gx")` 가 있으면 **그 `data-gx` 선택자를
+      먼저** 쓴다(차선 L 이 P-423 로 단 표식). 텍스트만으로는 같은 글자 단추가
+      화면에 둘 있어 엉뚱한 것을 누를 수 있다 — `gx` 선택자를 먼저 보고, 못 찾으면
+      (표식 없는 구버전 화면 등) 텍스트로 물러난다. `gx` 가 없는 기존 40여 행은
+      이 변경으로 한 글자도 안 갈린다(바로 텍스트 갈래로 간다).
+    """
+    gx = ctrl.get("gx")
+    if gx:
+        try:
+            loc = page.locator('[data-gx="%s"]' % gx)
+            n = loc.count()
+        except Exception:
+            n = 0
+        for i in range(min(n, 6)):
+            el = loc.nth(i)
+            try:
+                if el.is_visible():
+                    return el
+            except Exception:
+                continue
+    name = ctrl.get("name")
+    if not name:
+        return None
     for loc in (page.get_by_role("button", name=re.compile(name)),
                 page.get_by_text(re.compile(name), exact=False)):
         try:
@@ -2536,6 +2693,45 @@ def prepare_steps(page, steps):
             done.append({"kind": "fill", "placeholder": ph, "wrote": what, "was": was})
             if s.get("restore"):
                 restore.append({"kind": "fill", "placeholder": ph, "back_to": was})
+        elif kind == "fill_label":
+            #: [P-423 · 턴 AP · 차선 Q] `put()` 의 라벨 판 — `.ant-form-item` 을 라벨
+            #: 글자로 찾아 그 안의 `input` 을 채운다(placeholder 가 없는 폼용).
+            label = s.get("label") or ""
+            try:
+                item = page.locator(".ant-form-item", has=page.get_by_text(label, exact=False))
+                if not item.count():
+                    return False, done, restore, "라벨 「%s」 인 폼 칸이 없다" % label
+                box = item.first.locator("input")
+                if not box.count():
+                    return False, done, restore, "라벨 「%s」 옆에 글상자가 없다" % label
+                was = (box.first.input_value() or "").strip()
+            except Exception:
+                return False, done, restore, "라벨 「%s」 를 못 읽었다" % label
+            what = str(s.get("text") or "")
+            try:
+                box.first.fill(what)
+                page.wait_for_timeout(400)
+            except Exception:
+                return False, done, restore, "라벨 「%s」 글상자를 못 채웠다" % label
+            done.append({"kind": "fill_label", "label": label, "wrote": what, "was": was})
+            if s.get("restore"):
+                restore.append({"kind": "fill_label", "label": label, "back_to": was})
+        elif kind == "button_prepare":
+            #: [P-423 · 턴 AP · 차선 Q] **버튼을 눌러야만 열리는 다음 걸음** — 예:
+            #: `CameraImport.tsx` 의 「예시 채우기」(글상자를 대신 채워 준다) →
+            #: 「표 먼저 보기 (dry-run)」 뒤에야 「이 표대로 적용」 단추가 DOM 에 나타난다.
+            #: `find_control()` 을 그대로 재사용한다 — 찾는 규칙을 두 벌로 안 둔다(D-369).
+            label = s.get("gx") or s.get("name") or "(이름 없음)"
+            el = find_control(page, {"name": s.get("name"), "gx": s.get("gx")})
+            if el is None:
+                return False, done, restore, "준비 단추 「%s」 를 못 찾았다" % label
+            try:
+                el.click(timeout=8000)
+            except Exception as exc:                       # noqa: BLE001
+                return (False, done, restore,
+                        "준비 단추 「%s」가 안 눌린다: %s" % (label, type(exc).__name__))
+            page.wait_for_timeout(s.get("wait_ms") or 1500)
+            done.append({"kind": "button_prepare", "name": s.get("name"), "gx": s.get("gx")})
         else:
             return False, done, restore, "모르는 준비 단계 %r" % kind
     return True, done, restore, ""
@@ -2984,6 +3180,20 @@ def walk(persona, account, viewport, flows, event_id):
                     #   안에만 있다) — 실제로 그려졌는지는 술어 ④(img 판정)가 잰다.
                     #   여기서는 서버가 그 값 자체를 냈는지만 본다(데이터 존재).
                     st["on_screen"] = bool(a)
+                elif f.get("attr_check"):
+                    #: [P-423 · 턴 AP · 차선 Q] **값이 글자로는 안 뜨고 data-* 속성에만
+                    #:   실리는 자리**(예: `NotifySettings.tsx` 의 `data-gx-channel` —
+                    #:   화면 글자는 사전 표시명이고 원래 코드는 속성에만 있다, U5#10).
+                    #:   텍스트 대조 대신 그 속성이 실제로 값을 **담고 있는지**를 DOM 에서
+                    #:   직접 읽는다(어느 행의 것인지까지는 안 가른다 — 「안 눌러도 읽을
+                    #:   수 있는 자리가 실재하는가」가 L 이 이 표식을 단 이유였다).
+                    try:
+                        vals = page.eval_on_selector_all(
+                            f["attr_check"],
+                            "els => els.map(e => e.getAttribute('data-gx-channel') || '')")
+                    except Exception:                      # noqa: BLE001
+                        vals = []
+                    st["on_screen"] = server_gave_value(a) and any(v for v in vals)
                 else:
                     #: ★ **여기도 `0` 이 값이다** [턴 X]. `bool(a)` 로 물으면 서버가 낸 `0` 이
                     #:   화면에 「0건」으로 **글자까지 떠 있어도** 「화면에 없다」가 된다.

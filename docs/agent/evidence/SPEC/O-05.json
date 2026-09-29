@@ -1,7 +1,7 @@
 {
   "id": "O-05",
   "title": "건강 보드(전 테넌트)",
-  "measured_at": "2026-09-29T07:44:46.769988+00:00",
+  "measured_at": "2026-09-29T09:06:53.336521+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O05_HealthBoardTest.test_tenant_count_equals_rows_and_red_opens_one_incident",
   "request": {
@@ -44,8 +44,8 @@
           "auto_incident_id": null
         },
         {
-          "tenant_code": "t-db376d27",
-          "name": "온보딩 시험 테넌트 t-db376d27",
+          "tenant_code": "t-703432c3",
+          "name": "온보딩 시험 테넌트 t-703432c3",
           "cameras": {
             "active": 0,
             "total": 1
@@ -56,7 +56,7 @@
           "backup_verdict": "OK",
           "survival_alert_late": 0,
           "color": "red",
-          "auto_incident_id": "9d515de464bc"
+          "auto_incident_id": "ed62571a0341"
         }
       ],
       "tenant_count": 3,
@@ -86,6 +86,37 @@
       "part": "완결조건 — 중복 생성 방지",
       "where": "재호출 시 같은 auto_incident_id",
       "status": "measured"
+    },
+    {
+      "part": "카메라 맥박(명사 부분)",
+      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
+      "status": "구현 — OpsHome.tsx:113-139 화면 렌더 확인(카메라 상태 색 열)"
+    },
+    {
+      "part": "큐 지연(명사 부분)",
+      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
+      "status": "없음(응답 바디엔 있으나 OpsHome.tsx 화면에 렌더되지 않는다)"
+    },
+    {
+      "part": "저장 %(명사 부분)",
+      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
+      "status": "없음(응답 바디엔 있으나 화면에 렌더되지 않는다)"
+    },
+    {
+      "part": "백업 회수증(명사 부분)",
+      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
+      "status": "없음(응답 바디엔 있으나 화면에 렌더되지 않는다)"
+    },
+    {
+      "part": "생존 알림(명사 부분)",
+      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
+      "status": "없음(응답 바디엔 있으나 화면에 렌더되지 않는다)"
+    },
+    {
+      "part": "5xx·게이트 16색(명사 부분)",
+      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
+      "status": "없음(서버 응답이 스스로 not_measured 라 자백한다 — 측정 안 됨)"
     }
-  ]
+  ],
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 완결조건 3행(테넌트수=보드행수·빨강→인시던트·중복방지)은 실측 닫힘을 재확인했다. 그러나 표에 제목이 부르는 명사 부분(카메라 맥박·큐 지연·저장%·백업 회수증·생존 알림·5xx/16색) 자체가 행으로 없었다 — 화면은 카메라·상태색 2열만 그린다. 나머지는 빠진 행 이었다(P-419 §1 종류 목록) — 반쪽으로 내린다."
 }

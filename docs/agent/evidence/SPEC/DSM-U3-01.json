@@ -1,12 +1,12 @@
 {
   "id": "DSM-U3-01",
   "title": "역할별 M2 문안",
-  "measured_at": "2026-09-29T07:38:29.426907+00:00",
+  "measured_at": "2026-09-29T09:32:54.025919+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u36_an.U3_01_M2BriefTest.test_role_and_event_type_pick_the_exact_dictionary_line",
   "request": {
     "method": "GET",
-    "path": "/api/dsm/events/154/m2-brief?role=facility",
+    "path": "/api/dsm/events/27/m2-brief?role=facility",
     "params": {
       "role": "facility"
     }
@@ -14,7 +14,7 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 154,
+      "event_id": 27,
       "role": "facility",
       "role_label": "시설",
       "event_type": "flood",
@@ -31,12 +31,13 @@
     {
       "part": "M2 상단 한 줄",
       "where": "응답 text 칸",
-      "status": "measured"
+      "status": "부분(서버 응답 GET .../m2-brief 는 실측됐으나 frontend/src 전수 grep 에 m2-brief·m2Brief 호출이 0건이다 — 이 문안을 실제로 띄우는 화면이 없다)"
     },
     {
       "part": "문안 사전 일치",
       "where": "시설+flood → '도로 통제 후 회신' (명세 원문 예시와 문자열 일치)",
       "status": "measured"
     }
-  ]
+  ],
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 역할×유형 문안 표·문안 사전 일치는 실측 닫힘을 재확인했다. M2 상단 한 줄은 서버 응답만 있고 화면 호출이 0건이다 — 반쪽으로 내린다."
 }

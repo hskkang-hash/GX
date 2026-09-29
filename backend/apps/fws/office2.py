@@ -15,14 +15,16 @@ notice`(F6-07)를 그대로 부른다 — 글자수 상한·CBS 문안을 다시
 
 정직하게 남긴다 — 무엇을 다시 재지 않는가
 --------------------------------------------
-· **골든타임 준수율**(annex §4.3 「헬기 투하·지상 도달 30분」)은 그 **도달
-  시각을 이 앱이 갖고 있지 않다** — 그 시각은 `stream_monitors.services.
-  response_clock` 안에 있고, 이 앱이 거치는 공개 문(`apps.dsm.services.
-  response_latency`)은 p50/p95 **분포**만 내지 사건별 원값을 안 낸다(D-301 —
-  분모를 감추지 않는 설계이지, 준수율 계산기가 아니다). 그래서 이 파일은
-  **확인 회신 30분 이내 비율**(K1 이 이미 내주는 `occurred_at`→`reviewed_at`)로
-  근사하고, 그 근사임을 응답의 `golden_time_note` 에 그대로 적는다(D-284 —
-  지어내지 않고 무엇을 쟀는지 밝힌다).
+· **골든타임 준수율**(annex §4.3 「헬기 투하·지상 도달 30분」) — [턴 AP · N2b ·
+  P-421 ④] 이제 **대응 시계 실측**이다: `stream_monitors.services.response_clock.
+  stamps_for` 로 사건별 네 시각을 세우고(`apps.dsm.services` 가 같은 모듈을 부르는
+  것과 같은 자리 · 두 번째 시계를 짓지 않는다), 기준 시각은 F3-06 신고 접수
+  기록(`clock_started_at`)이 있으면 그것, 없으면 발생 시각 — 끝 시각은 현장
+  도착(`arrived_at` = 조치중 전이)이다. 오탐 자동 종결은 분모에서 뺀다(시계 모듈
+  규약). ★ 명세가 부르는 다른 한 시각 — **헬기 물 투하 시각** — 은 이 저장소에
+  없다(F4-04 는 승인 시각만 적는다). 그 부분은 응답 `golden_time_note` 와 증거
+  표에 열린 행으로 남긴다(지어내지 않는다 · D-284). 옛 「확인 회신 30분」 근사는
+  버렸다(확인 시간은 제 칸 `verification_seconds_avg` 에 따로 있다).
 · **계도·단속 통계**·**입산통제구역**은 감사 표(`logger.AuditLogs`)에 테넌트
   칸이 없다는 한계(§0.4 dj-core 소유)를 **곁표로 넘어선다** — 턴 AO 차선 O ·
   P-411. `apps/fws/audit_scope.py`(감사 한 줄을 쓸 때 곁표 행도 같이 쓴다)가
@@ -403,6 +405,38 @@ def final_report(*, scope, event_id: int) -> dict:
 GOLDEN_TIME_THRESHOLD_SEC = 1800
 
 
+def _golden_time_from_response_clock(*, scope, rows) -> dict:
+    """F3-16 골든타임 준수율 — 대응 시계(`response_clock.stamps_for`) 실측.
+
+    `rows` 는 이미 `dsm_services.recent_events` 로 스코프를 통과한 사건이다(시계
+    모듈은 테넌트를 모른다 — 순서가 곧 격리 · `apps.dsm.services` 와 같은 규약)."""
+    from stream_monitors.services import response_clock as clock
+
+    from apps.fws import office as fws_office
+
+    stamps = clock.stamps_for(rows)
+    n = compliant = auto_closed = 0
+    for eid, st in stamps.items():
+        if st.auto_closed:
+            auto_closed += 1
+            continue
+        if st.arrived_at is None:
+            continue
+        intakes = fws_office.intake_records(scope=scope, event_id=eid)["intakes"]
+        start = st.occurred_at
+        if intakes and intakes[0].get("clock_started_at"):
+            parsed = _parse_dt(intakes[0]["clock_started_at"])
+            if parsed is not None:
+                if timezone.is_naive(parsed):
+                    parsed = timezone.make_aware(parsed)
+                start = parsed
+        n += 1
+        if (st.arrived_at - start).total_seconds() <= GOLDEN_TIME_THRESHOLD_SEC:
+            compliant += 1
+    pct = round(compliant / n * 100, 1) if n else None
+    return {"pct": pct, "n": n, "compliant": compliant, "auto_closed": auto_closed}
+
+
 def fire_stats(*, scope, since: str = "", until: str = "") -> dict:
     """FWS-F3-16 — 통계 표. `dsm_services.recent_events`(K1 · F-05 문 하나)로
     테넌트 안 사건을 모으고, 면적·원인은 F3-14 최종보고 기록에서 되짚는다."""
@@ -431,9 +465,7 @@ def fire_stats(*, scope, since: str = "", until: str = "") -> dict:
                         if reviewed else None)
     verify_avg = (round(sum(verify_seconds) / len(verify_seconds), 1)
                  if verify_seconds else None)
-    golden_compliant = sum(1 for s in verify_seconds if s <= GOLDEN_TIME_THRESHOLD_SEC)
-    golden_rate = (round(golden_compliant / len(verify_seconds) * 100, 1)
-                  if verify_seconds else None)
+    golden = _golden_time_from_response_clock(scope=scope, rows=rows)
 
     event_ids = {r.event_id for r in rows}
     latest_final: dict = {}
@@ -459,12 +491,16 @@ def fire_stats(*, scope, since: str = "", until: str = "") -> dict:
         "verification_seconds_avg": verify_avg,
         "verification_n": len(verify_seconds),
         "golden_time_threshold_sec": GOLDEN_TIME_THRESHOLD_SEC,
-        "golden_time_compliance_pct": golden_rate,
+        "golden_time_compliance_pct": golden["pct"],
+        "golden_time_measured_n": golden["n"],
+        "golden_time_compliant_n": golden["compliant"],
+        "golden_time_excluded_auto_closed": golden["auto_closed"],
+        "golden_time_basis": "response_clock:reported_or_occurred->arrived_at",
         "golden_time_note": (
-            "근사치 — 확인 회신(occurred_at→reviewed_at) 기준. 헬기 투하·지상 "
-            "도달의 실제 시각은 이 앱이 갖고 있지 않다(그 시각을 쥔 커널의 공개 "
-            "문은 분포(p50/p95)만 내고 사건별 원값을 안 낸다) — 숨기지 않고 "
-            "이 칸에 적는다."),
+            "대응 시계 실측 — 신고 접수(F3-06 기록, 없으면 발생) → 현장 도착"
+            "(arrived_at) 30분 이내 비율. 오탐 자동 종결은 분모에서 뺐다. 명세의 "
+            "다른 기준인 헬기 물 투하 시각은 이 저장소에 없어(승인 시각만 있다) "
+            "이 수에 들지 않는다."),
     }
 
 

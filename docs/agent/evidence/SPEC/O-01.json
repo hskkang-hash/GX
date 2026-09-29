@@ -1,30 +1,30 @@
 {
   "id": "O-01",
   "title": "테넌트 발급",
-  "measured_at": "2026-09-29T07:44:24.550258+00:00",
+  "measured_at": "2026-09-29T09:06:21.777096+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O01_TenantIssuanceTest.test_issue_then_admin_logs_in_and_reaches_role_home",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/ops/tenants?code=t-2fd5ff03&name=%EC%98%A8%EB%B3%B4%EB%94%A9+%EC%8B%9C%ED%97%98+%ED%85%8C%EB%84%8C%ED%8A%B8+t-2fd5ff03&admin_username=opsadmin_c444feee&admin_email=opsadmin_c444feee%40test.invalid&admin_password=Tenant-Admin-Pw-1%21",
+    "path": "/api/dsm/ops/tenants?code=t-4a525fad&name=%EC%98%A8%EB%B3%B4%EB%94%A9+%EC%8B%9C%ED%97%98+%ED%85%8C%EB%84%8C%ED%8A%B8+t-4a525fad&admin_username=opsadmin_2948fc36&admin_email=opsadmin_2948fc36%40test.invalid&admin_password=Tenant-Admin-Pw-1%21",
     "params": {
-      "code": "t-2fd5ff03",
-      "name": "온보딩 시험 테넌트 t-2fd5ff03",
-      "admin_username": "opsadmin_c444feee",
-      "admin_email": "opsadmin_c444feee@test.invalid",
+      "code": "t-4a525fad",
+      "name": "온보딩 시험 테넌트 t-4a525fad",
+      "admin_username": "opsadmin_2948fc36",
+      "admin_email": "opsadmin_2948fc36@test.invalid",
       "admin_password": "Tenant-Admin-Pw-1!"
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "tenant_code": "t-2fd5ff03",
-      "tenant_id": 544,
-      "name": "온보딩 시험 테넌트 t-2fd5ff03",
-      "admin_username": "opsadmin_c444feee",
+      "tenant_code": "t-4a525fad",
+      "tenant_id": 6,
+      "name": "온보딩 시험 테넌트 t-4a525fad",
+      "admin_username": "opsadmin_2948fc36",
       "admin_role": "admin",
       "region": "",
-      "issued_at": "2026-09-29T07:44:24+00:00"
+      "issued_at": "2026-09-29T09:06:20+00:00"
     }
   },
   "what": "POST /api/dsm/ops/tenants 로 테넌트+초기 관리자 1을 발급한 뒤, 그 관리자 계정으로 실제 POST /api/v1/auth/login 을 두드려 200·access_token 을 받는다 — 완결 조건('테넌트 관리자가 로그인 → 역할 홈')의 앞 절반(로그인)을 발급과 분리된 실제 HTTP 로 증명한다. 뒤 절반(역할 홈)은 role='admin'이 K3 MANAGER 프리셋으로 이미 배선돼 있음을 config/k3_roles.py 가 보장한다(이 시험은 재확인하지 않는다 — 표를 두 벌 두지 않는다, D-212).",
@@ -52,7 +52,13 @@
     {
       "part": "계층(시도→시군구→부서) · 도메인·인증서",
       "where": "UserGroup.settings.domain/region",
-      "status": "measured — 값 칸만(인증서 자동 발급은 없음)"
+      "status": "부분(값 칸만 — 인증서 자동 발급은 없음. 외부 인증기관(CA) 실연동이라 excluded_by 자격은 있으나 번호가 없다 — 조율자 판단 후보: P-428)"
+    },
+    {
+      "part": "화면(테넌트 발급 버튼)",
+      "where": "frontend/src/features/ops/api.ts:102 issueTenant() 정의됨 · 호출처 0건(OpsHome.tsx 는 목록만 읽는다)",
+      "status": "없음(버튼 미배선 — 죽은 코드)"
     }
-  ]
+  ],
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 테넌트·관리자·로그인·역할홈 완결조건은 실측 닫힘을 재확인했다. 인증서 자동 발급 행은 measured 접두로 닫힌 척했으나 프로즈가 스스로 없다고 자백한다(번호 없는 제외) — 화면도 죽은 코드다 — 반쪽으로 내린다."
 }

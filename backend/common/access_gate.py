@@ -75,6 +75,11 @@ INBOUND_KEY_ALLOWED: frozenset[tuple[str, str]] = frozenset({
     #     **이미 나간 키는 그대로 403** 이다. 늘어나는 것은 운영자가 `pulse:read` 를
     #     일부러 준 키 하나뿐이고, `@tenant_scoped` 는 그대로다.
     ("GET", "/api/dsm/cameras/pulse"),
+    # ★ [P-427 · 턴 AP · 세종 판정 · 조율자 E] **진입면을 넓힌다는 선언 — 쓰기 하나.**
+    #   DSM-U6-01 계약이 외부 기관 시스템의 이벤트 **쓰기**를 부른다(사람 로그인이 없다).
+    #   짝 셋: 라우트 `inbound_key=True`(api_u36_an.py) · 이 줄 · 시험의 `DECIDED_INBOUND_WRITES`.
+    #   넓힌 만큼 좁힌다: 범위 `events:ingest`(기본 아님) + HMAC(agency) + 시각 창 5분 + 테넌트 스코프.
+    ("POST", "/api/dsm/external-events"),
 })
 
 #: ★ **익명이 닿으면 안 되는 경로.** 라우트에 인증 관문이 없어도 여기서 끊는다.

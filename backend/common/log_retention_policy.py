@@ -177,3 +177,48 @@ def divergence(seeded_days: int | None) -> list[tuple[str, object]]:
 def aligned(seeded_days: int | None) -> bool:
     """선언과 **집행 자리의 값**이 같은가. 다르면 화면이 말하는 수와 지우는 수가 갈린다."""
     return seeded_days is not None and seeded_days == POLICY["audit"].days
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# P-421 ④ (2026-10-01 · 턴 AP · 차선 N3 · DSM-U5-02) — **값은 선언이 아니라
+# 설정에서 읽는다**
+# ═══════════════════════════════════════════════════════════════════════════
+# 위 `POLICY["audit"].days`(730) · `aligned()` · `divergence()` 는 **건드리지
+# 않는다** — 그 셋은 P-230(감사 2년 목표 선언)을 위 `declared_days()` 그대로
+# 지키고, `scripts/ops_retention_policy.py` 의 자기시험(「선언 730 · 집행 365
+# 인데 ②가 초록이면 안 된다」는 표본)이 그 값을 정확히 문다. 여기서 고치면
+# 그 표본이 깨진다 — 이 파일 밖 게이트다(§0.4 밖은 아니지만 이 차선 소유 밖).
+#
+# DSM-U5-02 는 **다른 질문**이다: 「접속기록 1년 이상 보관」이라는 완결조건이
+# 고객 화면에서 참인가. 참이려면 화면이 보여 주는 「선언」이 dj-core 가 실제로
+# 지우는 수와 **항상** 같아야 한다 — 사람이 두 파일을 맞춰 두는 것이 아니라,
+# 코드가 한쪽을 다른 쪽에서 **읽어서** 항등이 되게 한다.
+def enforced_declared_days(key: str = "audit") -> int:
+    """이 부류가 **지금 실제로 무엇으로 선언돼 있는가** — 설정을 그대로 되읽는다.
+
+    ★ `key="audit"` 만 설정을 읽는다. dj-core 가 읽는 자리(`AdminConfig::System
+      > security.audit_log_retention_days`)를 `common.ops_tasks
+      .audit_retention_declared_days()` 로 그대로 불러온다 — **두 벌로 적지
+      않는다**(D-369). 그 자리가 미선언이면 이 파일의 법정 목표 선언
+      (`POLICY[key].days`, 730)으로 **안전하게** 대체한다 — `0`이나 `None`이
+      아니다. 0/None 을 대체값으로 쓰면 「선언 없음」이 「즉시 파기」나
+      「영구 보관」으로 잘못 읽힌다.
+
+      `key != "audit"` 는 아직 이 자리에서 설정을 읽을 길이 없다(`incident`는
+      애초에 파기 경로가 없고, `collector`는 크기 기반이라 「일수」 설정 자체가
+      없다) — 그 둘은 그대로 `POLICY[key].days` 를 낸다.
+
+    Returns:
+        선언 일수. **DSM-U5-02 게이트(`scripts/verify_spec_dsm.py`)와 시험
+        (`tests/test_ap_n3_u5_02_retention.py`)이 이 값을 `ops_tasks
+        .audit_retention_declared_days()` 와 나란히 대조한다** — 같은 함수가
+        같은 자리를 읽으므로 미선언이 아닌 한 그 대조는 **정의상** 참이다.
+    """
+    if key != "audit":
+        return POLICY[key].days
+    try:
+        from common.ops_tasks import audit_retention_declared_days
+        seeded = audit_retention_declared_days()
+    except Exception:                                            # noqa: BLE001
+        seeded = None
+    return seeded if seeded is not None else POLICY[key].days

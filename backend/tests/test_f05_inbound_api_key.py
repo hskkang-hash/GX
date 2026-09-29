@@ -80,7 +80,19 @@ INBOUND_KEY_ALLOWED = frozenset({
     #       눌러서 잰 것은 `tests/test_u3_pulse_inbound_key.py`
     #       (`pulse:read`→200 · `events:read`→403 · 키 없음→401).
     ("GET", "/api/dsm/cameras/pulse"),
+    # ★ [P-427 · 턴 AP · 세종 판정] `POST /api/dsm/external-events` — **진입면을 넓힌다는 선언이다.**
+    #   사유: 계약 절 DSM-U6-01(스마트시티 통합플랫폼·112·119 이벤트 연계)이 **외부의 쓰기**를
+    #   부른다. 기관 시스템에는 사람 로그인이 없다. 넓힌 만큼 좁힌다: 범위 `events:ingest`
+    #   (기본 범위 아님 · `key_scopes.PATH_SCOPES`) + HMAC(웹훅 서명키 `agency`) + 시각 창 5분 +
+    #   테넌트 스코프 · JWT 로 온 요청은 핸들러 첫 줄이 401. 아래 ReadOnlyTest 의
+    #   `DECIDED_INBOUND_WRITES` 가 같은 한 줄이다.
+    ("POST", "/api/dsm/external-events"),
 })
+
+#: D-335 ③ 「쓰기엔 들어오는 키 0」의 **결정 번호 붙은 예외** — 계약 절이 외부 쓰기를 부를 때만.
+DECIDED_INBOUND_WRITES = {
+    "POST /api/dsm/external-events": "P-427 · DSM-U6-01 계약이 부르는 쓰기 1",
+}
 
 #: 닿으면 **안 되는** 자리 중 무게가 다른 둘. 나머지는 아래 부작위 시험이 전수로 본다.
 #: ★ 이 설정 도메인은 **나가는(outbound) 키**의 표다(표 ② · D-337). 들어오는 키가 닿으면
@@ -224,6 +236,7 @@ class ReadOnlyTest(_KeyFixture):
             f"{m} {p}" for m, p, cbs in _dsm_operations()
             if m in WRITE_METHODS
             and any(isinstance(cb, JwtOrInboundKey) and cb.inbound_key for cb in cbs)
+            and f"{m} {p}" not in DECIDED_INBOUND_WRITES
         ]
         self.assertEqual(
             opened_writes, [],

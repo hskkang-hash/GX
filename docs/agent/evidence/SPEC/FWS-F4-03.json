@@ -16,14 +16,19 @@
       "part": "상황보고 반영(완결조건)",
       "where": "F4-08 approve_hourly_report 응답 command_post_reflected",
       "status": "구현 — 지휘소 선언 뒤 매시간 상황보고 승인에 그대로 반영됨을 실측"
+    },
+    {
+      "part": "화면 버튼(FW-04 완결조건)",
+      "where": "frontend/src/features/fws/pages/CommandHome.tsx — 조회 카드만 그린다, 이 절에 해당하는 버튼 문구는 copy_command.ts 에 준비돼 있으나 렌더 0건(공통 결손 — F4-01 감사에서 확인)",
+      "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T07:40:28.527770+00:00",
+  "measured_at": "2026-09-29T09:25:29.041230+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_03_CommandPostTest.test_declare_then_hourly_approval_reflects_it",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/538/command-post?address=OO%EA%B5%B0+OO%EB%A9%B4+%EC%82%B0%EB%B6%88%EB%8C%80%EC%9D%91%EC%84%BC%ED%84%B0&org_composition=%EC%82%B0%EB%A6%BC%EA%B3%BC%C2%B7%EC%86%8C%EB%B0%A9%EC%84%9C%C2%B7%EA%B2%BD%EC%B0%B0%EC%84%9C&situation_room_phone=033-123-4567",
+    "path": "/api/fws/command/incidents/3/command-post?address=OO%EA%B5%B0+OO%EB%A9%B4+%EC%82%B0%EB%B6%88%EB%8C%80%EC%9D%91%EC%84%BC%ED%84%B0&org_composition=%EC%82%B0%EB%A6%BC%EA%B3%BC%C2%B7%EC%86%8C%EB%B0%A9%EC%84%9C%C2%B7%EA%B2%BD%EC%B0%B0%EC%84%9C&situation_room_phone=033-123-4567",
     "params": {
       "address": "OO군 OO면 산불대응센터",
       "org_composition": "산림과·소방서·경찰서",
@@ -33,15 +38,16 @@
   "response": {
     "status": 200,
     "body": {
-      "post_id": 304,
-      "event_id": 538,
+      "post_id": 2,
+      "event_id": 3,
       "address": "OO군 OO면 산불대응센터",
       "org_composition": "산림과·소방서·경찰서",
       "situation_room_phone": "033-123-4567",
       "note": "",
-      "declared_at": "2026-09-29T07:40:28.270465+00:00",
+      "declared_at": "2026-09-29T09:25:28.468598+00:00",
       "declared_by": "dsm_user_a"
     }
   },
-  "what": "POST .../command-post 로 위치·구성을 선언한 뒤, F4-08 상황보고 승인 응답의 command_post_reflected 에 그 값이 그대로 실린다 — 실측"
+  "what": "POST .../command-post 로 위치·구성을 선언한 뒤, F4-08 상황보고 승인 응답의 command_post_reflected 에 그 값이 그대로 실린다 — 실측",
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 서버 로직은 실측 닫힘을 재확인했으나 화면 버튼이 미배선이다 — 반쪽으로 내린다."
 }

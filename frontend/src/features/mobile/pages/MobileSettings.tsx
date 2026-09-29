@@ -428,12 +428,18 @@ export default function MobileSettings() {
             </Card>
 
             <Space direction="vertical" size={6} style={{ width: '100%' }}>
+              {/*
+                [P-423 · 턴 AP · 차선 L] 온보딩 U3#16 「누를 자리」 선언 — 이 단추가
+                PUT /api/dsm/me/notify-prefs 를 부르고 곧장 재조회(`prefs.reload()`,
+                위 `save()`)까지 하는 자리다. 표: docs/agent/checkpoints/turn-ap/L.md.
+              */}
               <Button
                 block
                 type="primary"
                 style={{ minHeight: TOUCH_MIN }}
                 loading={saving}
                 onClick={save}
+                data-gx="prefs-save-submit"
               >
                 설정 저장
               </Button>

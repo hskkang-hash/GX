@@ -11,28 +11,34 @@
       "part": "발송(완결조건)",
       "where": "응답 notified_count(notify_event 재사용)",
       "status": "구현 — 실측"
+    },
+    {
+      "part": "화면 버튼(FW-04 완결조건)",
+      "where": "frontend/src/features/fws/pages/CommandHome.tsx — 조회 카드만 그린다, 이 절에 해당하는 버튼 문구는 copy_command.ts 에 준비돼 있으나 렌더 0건(공통 결손 — F4-01 감사에서 확인)",
+      "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T07:40:37.466324+00:00",
+  "measured_at": "2026-09-29T09:25:45.335570+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_08_HourlyReportApprovalTest.test_approve_latest_draft_and_sends",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/544/hourly-report/approve",
+    "path": "/api/fws/command/incidents/9/hourly-report/approve",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "approval_id": 322,
-      "event_id": 544,
-      "hour": "2026-09-29T07:00",
-      "approved_at": "2026-09-29T07:40:37.425513+00:00",
+      "approval_id": 20,
+      "event_id": 9,
+      "hour": "2026-09-29T09:00",
+      "approved_at": "2026-09-29T09:25:45.231632+00:00",
       "approved_by": "dsm_user_a",
       "note": "",
       "notified_count": 1,
       "command_post_reflected": null
     }
   },
-  "what": "F3-13 매시간 초안 뒤 POST .../hourly-report/approve 가 그 초안을 승인·발송한다 — 실측"
+  "what": "F3-13 매시간 초안 뒤 POST .../hourly-report/approve 가 그 초안을 승인·발송한다 — 실측",
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 서버 로직은 실측 닫힘을 재확인했으나 화면 버튼이 미배선이다 — 반쪽으로 내린다."
 }

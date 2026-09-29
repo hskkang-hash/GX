@@ -239,20 +239,103 @@ def _in_window(now_t, start, end) -> bool:
     return now_t >= start or now_t < end      # 자정을 넘는 구간(예 22:00 → 07:00)
 
 
-def _blocked_reason(user_id: int, channel: str, *, now=None) -> str | None:
+#: ★ [턴 AP · 차선 N2 · P-421 ①] **FWS 근무 외 알림 차단**(F1-12·F2-15)이 저장하는
+#:   감사 행의 이름 — `apps/fws/notify_prefs.py` 와 **글자가 같아야 한다**(그 파일
+#:   머리말과 같은 이유: 커널은 App 을 import 할 수 없다 · D-278). FWS 는 DSM 의
+#:   `DsmNotifyPrefs` 표를 의도적으로 안 쓰고(그 파일 머리말 — 표의 소유가 흐려짐)
+#:   **자기 감사 로그**에 저장하므로, 이 커널이 그 값을 실제로 읽어 차단하려면
+#:   같은 이름으로 그 로그를 직접 되읽어야 한다(구독을 재읽는 `_live_subscriptions`
+#:   와 같은 자리). `tests/test_ap_n2_fws_quiet_hours.py::ConstantsMatchTest` 가
+#:   두 벌이 갈리는 것을 본다.
+FWS_PREFS_LOGGER = "guardianx.fws.notify_prefs"
+FWS_PREFS_ACTION_SAVE = "notify_prefs.save"
+
+#: 이 등급은 근무 외 차단을 **넘는다**(훈련이 `_send_one` 에서 채널을 통째로
+#: 바꿔 차단을 안 보는 것과 같은 자리 — 생명 안전이 걸린 심각 등급까지 방해
+#: 금지 시간대가 조용히 삼키면 차단 기능 자체가 사고가 된다). K1
+#: `DetectionEvent.Severity.CRITICAL` 과 같은 문자열이다 — `services.py::_send_one`
+#: 이 이벤트 등급을 그대로 건넨다(두 벌로 적지 않는다).
+CRITICAL_BYPASS_SEVERITY = "critical"
+
+
+def _fws_prefs_of(user_id: int) -> dict | None:
+    """FWS-F1-12·F2-15 가 저장한 최신 근무 외 설정 — 표가 아니라 **App 의 감사
+    로그**를 같은 이름으로 되읽는다(`apps/fws/notify_prefs.py::_latest_row` 와
+    같은 질의 모양 · 값은 여기서 새로 해석하지 않고 그 파일이 쓴 payload 그대로)."""
+    if not user_id:
+        return None
+    Audit = apps.get_model("logger", "AuditLogs")
+    row = (Audit._base_manager
+           .filter(logger_name=FWS_PREFS_LOGGER, user_id=user_id,
+                  api_name=FWS_PREFS_ACTION_SAVE)
+           .order_by("-id").first())
+    if row is None:
+        return None
+    payload = row.data_after if isinstance(row.data_after, dict) else {}
+    return payload or None
+
+
+def _hhmm_to_time(value):
+    """`"HH:MM"` 문자열 → `datetime.time`. 빈 값·못 읽는 값은 `None`(막지 않는다
+    — 잘못 저장된 값이 「막는다」로 읽히면 안 온 알림을 화면이 「막혔다」로
+    잘못 설명한다)."""
+    from datetime import time as _time
+
+    value = (value or "").strip()
+    if not value:
+        return None
+    parts = value.split(":")
+    if len(parts) != 2:
+        return None
+    try:
+        hour, minute = int(parts[0]), int(parts[1])
+    except ValueError:
+        return None
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        return None
+    return _time(hour, minute)
+
+
+def _fws_quiet_hours_block(user_id: int, *, now=None) -> str | None:
+    """FWS-F1-12·F2-15 — 저장된 근무 외 시간대가 **지금**을 덮는가."""
+    prefs = _fws_prefs_of(user_id)
+    if not prefs:
+        return None
+    start = _hhmm_to_time(prefs.get("quiet_hours_start"))
+    end = _hhmm_to_time(prefs.get("quiet_hours_end"))
+    if start is None or end is None:
+        return None
+    now_t = timezone.localtime(now or timezone.now()).time()
+    if _in_window(now_t, start, end):
+        return QUIET_HOURS_REASON
+    return None
+
+
+def _blocked_reason(user_id: int, channel: str, *, now=None,
+                    severity: str | None = None) -> str | None:
     """이 사람의 M4 설정이 **지금 이 채널**을 막는가. 막으면 사유 **이름**, 아니면 `None`.
 
     설정이 없으면 `None` — 빈 설정은 「규칙 그대로 받는다」다(넓히지도 좁히지도 않는다).
+
+    ★ [턴 AP · N2 · P-421 ①] **두 App 의 근무 외 설정을 함께 본다.** DSM(U3)
+      `DsmNotifyPrefs` 표와 FWS(F1-12·F2-15) 감사 로그는 **서로 다른 저장소**다
+      (FWS 가 DSM 표를 의도적으로 안 쓴다 — `apps/fws/notify_prefs.py` 머리말).
+      한쪽만 보면 다른 쪽 화면에서 저장한 차단이 조용히 무시된다 — 그래서
+      DSM 표가 막지 않아도(또는 행이 없어도) FWS 로그를 **추가로** 본다.
+    ★ `severity=` 가 `CRITICAL_BYPASS_SEVERITY` 면 **어느 쪽도 보지 않는다** —
+      심각 등급은 근무 외 차단을 넘는다(명세 §5.1 F1-12·F2-15 완결조건은
+      「저장」이지만, 차단이 생명 안전 경보까지 삼키면 그 자체가 사고다).
     """
-    row = _prefs_of(user_id)
-    if row is None:
+    if severity == CRITICAL_BYPASS_SEVERITY:
         return None
-    chosen = list(getattr(row, "channels", None) or [])
-    if chosen and channel not in chosen:
-        return CHANNEL_NOT_CHOSEN_REASON
-    start, end = getattr(row, "quiet_start", None), getattr(row, "quiet_end", None)
-    if start is not None and end is not None:
-        now_t = timezone.localtime(now or timezone.now()).time()
-        if _in_window(now_t, start, end):
-            return QUIET_HOURS_REASON
-    return None
+    row = _prefs_of(user_id)
+    if row is not None:
+        chosen = list(getattr(row, "channels", None) or [])
+        if chosen and channel not in chosen:
+            return CHANNEL_NOT_CHOSEN_REASON
+        start, end = getattr(row, "quiet_start", None), getattr(row, "quiet_end", None)
+        if start is not None and end is not None:
+            now_t = timezone.localtime(now or timezone.now()).time()
+            if _in_window(now_t, start, end):
+                return QUIET_HOURS_REASON
+    return _fws_quiet_hours_block(user_id, now=now)

@@ -666,27 +666,97 @@ def situation_meetings(*, scope, event_id: int) -> dict:
 # ═══════════════════════════════════════════════════════════════════════════
 # FWS-F4-13 동시 다발 사건 우선순위(위험도 정렬)
 # ═══════════════════════════════════════════════════════════════════════════
-#: 위험도 정렬 — 이 App 은 사건별 위험도 점수 표를 따로 갖지 않는다(F3-01
-#: 대시보드와 같은 한계) — 이미 있는 `severity`(경보 등급)로 정렬한다.
-SEVERITY_RANK = {"critical": 3, "warning": 2, "info": 1}
+#: ★ [턴 AP · N2b · P-421 ④] **위험도 = 사건마다 기록된 산불위험지수(0~100) 그
+#:   자체**, 구간은 `fws_constants.risk_index_band`(51/66/86 · 산림청 산불위험
+#:   예보 고시 · F6-03 과 같은 함수)로 가른다. K1 등급(`severity`)을 쓰지 않는다
+#:   — 앞 판(턴 AO)은 `SEVERITY_RANK = {critical:3, warning:2, info:1}` 라는 이
+#:   함수만의 새 숫자를 만들었고(P-419 위반), 턴 AP 중간판은 그 3등급을 구간
+#:   문턱에 대응시켰는데 그것도 **심각도 근사**였다(K1 3등급 → 4구간, 「경계」가
+#:   빈다). 이 판은 지휘부가 사건마다 산불위험지수를 기록(`POST .../risk-index`)
+#:   하고, 정렬은 그 값을 읽는다(저장한 값을 실제로 읽는다 — TITLE_PARTS §1-6).
+#:   ★ 지수를 기록하지 않은 사건은 **지어내지 않는다** — `risk_index=None`·
+#:     `risk_band=None` 으로 목록 **뒤**에 선다(D-284). 등급으로 채워 넣지 않는다.
+ACTION_RISK_INDEX = "command.incident.risk_index"
+
+
+def record_incident_risk_index(*, scope, event_id: int, risk_index: float,
+                               source: str = "manual") -> dict:
+    """F4-13 — 이 사건의 산불위험지수(0~100)를 기록한다. 구간은 상수 모듈의
+    같은 함수가 가른다(두 벌로 적지 않는다 · D-212)."""
+    try:
+        value = float(risk_index)
+    except (TypeError, ValueError):
+        raise CommandInputRejected(f"risk_index={risk_index!r} 는 수가 아니다")
+    if not (0.0 <= value <= 100.0):
+        raise CommandInputRejected(f"risk_index={value!r} 는 0~100 범위 밖이다")
+    source = (source or "manual").strip()[:40] or "manual"
+    dsm_services.event_detail(scope=scope, event_id=event_id)  # 404 게이트
+    actor = scope.require_actor()
+    band = fws_constants.risk_index_band(value)
+    payload = {"event_id": event_id, "risk_index": value, "risk_band": band,
+               "source": source, "recorded_at": _now_iso()}
+    entry = _write(actor, ACTION_RISK_INDEX, payload,
+                   f"사건 산불위험지수 {value:g} · {band}")
+    return {"record_id": entry.audit_id, **payload}
+
+
+def _latest_risk_index_by_event(event_ids) -> dict:
+    """사건별 **최신** 위험지수 기록 — 한 번의 질의로(N+1 금지)."""
+    wanted = set(event_ids)
+    latest: dict = {}
+    if not wanted:
+        return latest
+    qs = _model()._base_manager.filter(
+        logger_name=LOGGER_NAME, api_name=ACTION_RISK_INDEX).order_by("id")
+    for row in qs:
+        payload = row.data_after if isinstance(row.data_after, dict) else {}
+        eid = payload.get("event_id")
+        if eid in wanted and payload.get("risk_index") is not None:
+            latest[eid] = payload  # 뒤 행(시간순)이 앞 행을 덮는다
+    return latest
 
 
 def priority_queue(*, scope, limit: int = 50) -> dict:
     """F4-13 — annex 서버경로는 `GET /fws/incidents?sort=risk`. 진행 중(종결
-    아님) 사건만 위험도(등급) 내림차순, 같은 등급이면 오래된 순으로 정렬한다."""
+    아님) 사건만 **기록된 산불위험지수** 내림차순, 같은 지수면 오래된 순.
+    지수가 없는 사건은 뒤(지어내지 않는다)."""
     events = dsm_services.recent_events(scope=scope, limit=max(limit, 200))
     ongoing = [e for e in events
               if (e.response_state or "occurred") in _ONGOING_RESPONSE_STATES]
-    ranked = sorted(
-        ongoing,
-        key=lambda e: (-SEVERITY_RANK.get(e.severity, 0), e.occurred_at or _now()))
-    items = [{
-        "event_id": e.event_id, "severity": e.severity,
-        "response_state": e.response_state,
-        "occurred_at": e.occurred_at.isoformat() if e.occurred_at else None,
-        "address": e.address,
-    } for e in ranked[:limit]]
-    return {"count": len(items), "items": items}
+    risk = _latest_risk_index_by_event(e.event_id for e in ongoing)
+
+    def _key(e):
+        rec = risk.get(e.event_id)
+        occurred = e.occurred_at or _now()
+        if rec is None:
+            return (1, 0.0, occurred)
+        return (0, -float(rec["risk_index"]), occurred)
+
+    ranked = sorted(ongoing, key=_key)
+    items = []
+    for e in ranked[:limit]:
+        rec = risk.get(e.event_id)
+        items.append({
+            "event_id": e.event_id, "severity": e.severity,
+            "risk_index": rec["risk_index"] if rec else None,
+            "risk_band": (fws_constants.risk_index_band(float(rec["risk_index"]))
+                          if rec else None),
+            "risk_recorded_at": rec.get("recorded_at") if rec else None,
+            "response_state": e.response_state,
+            "occurred_at": e.occurred_at.isoformat() if e.occurred_at else None,
+            "address": e.address,
+        })
+    return {
+        "count": len(items), "items": items,
+        "unscored_count": sum(1 for i in items if i["risk_index"] is None),
+        #: 정렬 눈금 그 자체 — 화면·시험이 이 문턱을 따로 하드코딩하지 않는다.
+        "risk_scale": {
+            "watch": fws_constants.RISK_INDEX_BAND_WATCH,
+            "alert": fws_constants.RISK_INDEX_BAND_ALERT,
+            "severe": fws_constants.RISK_INDEX_BAND_SEVERE,
+            "bands": list(fws_constants.RISK_INDEX_BANDS),
+        },
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -770,7 +840,7 @@ __all__ = [
     "response_timeline", "record_golden_time_exceeded_reason",
     "set_sunset", "night_status",
     "record_situation_meeting", "situation_meetings",
-    "priority_queue",
+    "priority_queue", "record_incident_risk_index", "ACTION_RISK_INDEX",
     "post_incident_report_pdf", "post_incident_summary",
     "command_screen",
 ]

@@ -1,12 +1,12 @@
 {
   "id": "DSM-U3-02",
   "title": "통제 실행 회신",
-  "measured_at": "2026-09-29T07:38:31.408374+00:00",
+  "measured_at": "2026-09-29T09:32:55.852507+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u36_an.U3_02_ControlExecutedTest.test_reached_decided_executed_three_timestamps",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/controls/153/executed",
+    "path": "/api/dsm/controls/62/executed",
     "params": {
       "note": "바리케이드 설치 완료"
     }
@@ -14,10 +14,10 @@
   "response": {
     "status": 200,
     "body": {
-      "point_id": 153,
+      "point_id": 62,
       "stage": "실행",
-      "stage_id": 155,
-      "occurred_at": "2026-09-29T07:38:31.280Z"
+      "stage_id": 64,
+      "occurred_at": "2026-09-29T09:32:55.800Z"
     }
   },
   "what": "도달(등록)→결정(advance)→실행(POST /controls/{id}/executed) 셋을 순서대로 남기면 현황판(GET /control-points)의 지점 행이 '실행' 단계를 보여준다 — 완결조건(3시각) 그대로",
@@ -35,12 +35,13 @@
     {
       "part": "통제 현황판 반영",
       "where": "GET /control-points 지점 행 stage",
-      "status": "measured"
+      "status": "부분(GET /control-points 서버 응답은 실측됐으나 frontend/src 전수 grep 에 control-points·controlPoints 호출이 0건이다. frontend/src/features/dsm/pages/ControlDashboard.tsx 는 이름이 비슷할 뿐 F-09 관제 대시보드(카메라·5상태)로 다른 절이다 — 이 절의 통제 현황판 화면은 없다)"
     },
     {
       "part": "도달→결정→실행 3시각",
       "where": "create_point→advance(결정)→POST /controls/{id}/executed 순서 검사",
       "status": "measured"
     }
-  ]
+  ],
+  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 통제 완료 버튼·시각 기록·도달→결정→실행 3시각은 실측 닫힘을 재확인했다. 통제 현황판 반영은 서버 응답만 있고 그 화면이 없다(ControlDashboard.tsx 는 동명이지만 다른 절) — 반쪽으로 내린다."
 }

@@ -114,6 +114,41 @@ class FwsCommandAPI:
         except SystemScopeCannotRead as exc:
             raise HttpError(403, str(exc))
 
+    # ── FWS-F2-07 · F1-10 안전 경보 판정 — 풍향 급변 · 헬기 투하구역 이탈 ─────
+    # (턴 AP · WO-19 · 차선 N2 · P-421 ② — `apps.fws.alerts` 의 판정 규칙에
+    #  HTTP 면만 준다. `api.py`·`urls.py` 는 공용 파일이라 새 라우트를 그쪽에
+    #  못 열고, 이 파일은 턴 AO 부터 이 차선이 단독 소유·이미 등록돼 있어
+    #  여기 둔다.)
+    @route.post("/incidents/{int:event_id}/wind-reading", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="남의 테넌트 사건에 풍향 판독을 남길 수 없다")
+    @idempotent("fws.command.wind_reading")
+    def report_wind_reading(self, request, event_id: int, direction_deg: float):
+        from apps.fws import alerts as fws_alerts
+        try:
+            return fws_alerts.report_wind_direction(
+                scope=_scope(request), event_id=event_id, direction_deg=direction_deg)
+        except Http404:
+            raise HttpError(404, "그런 사건이 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except fws_alerts.AlertInputRejected as exc:
+            raise HttpError(422, str(exc))
+
+    @route.post("/incidents/{int:event_id}/drop-zone-position", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="남의 테넌트 사건에 투하구역 위치를 남길 수 없다")
+    @idempotent("fws.command.drop_zone_position")
+    def report_drop_zone_position(self, request, event_id: int, lat: float, lng: float):
+        from apps.fws import alerts as fws_alerts
+        try:
+            return fws_alerts.report_drop_zone_position(
+                scope=_scope(request), event_id=event_id, lat=lat, lng=lng)
+        except Http404:
+            raise HttpError(404, "그런 사건이 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except fws_alerts.AlertInputRejected as exc:
+            raise HttpError(422, str(exc))
+
     # ── FWS-F4-05 대피 명령 승인(즉시/준비)·해제 ─────────────────────────
     @route.post("/evacuations/{int:event_id}/approve", auth=JwtOrInboundKey())
     @tenant_scoped(reason="남의 테넌트 사건의 대피 명령을 승인할 수 없다")
@@ -338,6 +373,22 @@ class FwsCommandAPI:
     @tenant_scoped(reason="우선순위 큐는 내 테넌트 사건만 모은다 — K1 이 이미 좁힌다")
     def priority_queue(self, request, sort: str = "risk", limit: int = 50):
         return command.priority_queue(scope=_scope(request), limit=limit)
+
+    @route.post("/incidents/{int:event_id}/risk-index", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="남의 테넌트 사건에 위험지수를 기록할 수 없다")
+    @idempotent("fws.command.risk_index")
+    def record_incident_risk_index(self, request, event_id: int, risk_index: float,
+                                   source: str = "manual"):
+        try:
+            return command.record_incident_risk_index(
+                scope=_scope(request), event_id=event_id, risk_index=risk_index,
+                source=source)
+        except Http404:
+            raise HttpError(404, "그런 사건이 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except command.CommandInputRejected as exc:
+            raise HttpError(422, str(exc))
 
     # ── FWS-F4-15 사후 보고서 1쪽 ─────────────────────────────────────────
     @route.get("/incidents/{int:event_id}/post-report.pdf", auth=JwtOrInboundKey())

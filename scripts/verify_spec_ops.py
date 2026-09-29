@@ -37,6 +37,31 @@ CLOSED_CLAUSES 가 비어도 이 게이트가 **PASS(0)를 낼 수 있다** — 
 증명됐다"이다(FWS 게이트가 25/40 을 PASS 로 내는 것과 같은 셈법). 아래 「요약」
 줄이 분모(2)와 분자(0)를 함께 낸다 — 착시를 막는다(D-271).
 
+★ [턴 AP · 차선 N3 · P-421 ⑤ · P-428] O-10 · O-11 — **절차·기록은 채웠다.
+그러나 눈금 하나(P-419)가 새 결손을 하나 더 찾았다**
+-----------------------------------------------------------------------------
+이 턴이 채운 것: 완결 조건 중 이 저장소 차선 공통 규칙이 구조적으로 금지하는
+운영 집행 부분(게이트 계정 실회전 뒤 실 서버 로그인 · 실제 배포 되돌리기 집행)은
+`title_parts` 행에 `excluded_by: "P-428"` + 사유로 명시해 빼고, 나머지(콘솔 문 ·
+감사 줄 · 다음 회전일 · 되돌리기 연습 기록의 실측)는 실제로 채워 닫았다 —
+길목은 `tests/test_ap_n3_o10_o11_ops.py`.
+
+★★ 그런데 **같은 턴 안에서 N1 이 「같은 눈금」(P-419)으로 O-01·02·05·06·07·
+08·09·12 를 재판정하며 여덟 전부에 「화면(콘솔 보드)」 열린 행을 새로 찾았다**
+(`docs/agent/evidence/SPEC/TITLE_PARTS_RULE.md` §1-3 — annex 전체가 하나의
+운영자 콘솔 화면을 전제하는데 `frontend/src/features/ops/pages/OpsHome.tsx`
+가 그중 다수를 그리지 않는다). O-10·O-11 도 **같은 결손**이다 — `GET /ops/keys`
+는 `frontend/src/features/ops/api.ts` 에 엔드포인트 이름조차 없고, `GET
+/ops/releases` 는 `fetchReleaseBoard()` 함수는 있지만 `OpsHome.tsx` 가 부르지
+않는다. 이 턴의 규약(§5 P-428)은 「화면 미배선」을 `excluded_by` 로 빼는 것을
+**명시적으로 금지한다**(그것은 코드 결손이지 운영 집행·외부 실연동이 아니다).
+그래서 `title_parts` 에 그 열린 행을 **정직하게 더했다** — O-10·O-11 은
+`CLOSED_CLAUSES` 에 있지만(절차·기록 부분의 실측 근거를 이 게이트가 계속
+추적하도록), **실제 실행 결과는 그 열린 행 때문에 FAIL 이다.** 이 파일은
+그 결과를 숨기지 않는다 — 화면 배선은 프런트엔드 파일(N3 소유 밖)이 필요해
+이번 차선이 못 닫는다. 조율자에게: `N3_promotions_ap.md` §「조율자에게 넘길
+줄」.
+
 무엇을 하지 않는가
 ------------------
 대장(`ga_readiness.yaml`) 이동은 이 게이트의 일이 아니다 — 조율자가 한다.
@@ -70,6 +95,12 @@ TESTS = BACKEND / TESTS_REL
 #: [턴 AO · 차선 N3] 여덟을 닫는 길목 — 실제 HTTP 왕복(django_test_client).
 TESTS_REL_N3 = "tests/test_ops_an.py"
 TESTS_N3 = BACKEND / TESTS_REL_N3
+#: [턴 AP · 차선 N3 · P-421 ⑤] O-10 · O-11 을 절차·기록으로 닫는 길목.
+TESTS_REL_N3B = "tests/test_ap_n3_o10_o11_ops.py"
+TESTS_N3B = BACKEND / TESTS_REL_N3B
+#: [턴 AP · 차선 N3 · P-427 ⑤] O-01 대행 호출 시간 제한(15분) 재확인 길목.
+TESTS_REL_N3C = "tests/test_ap_n3_o01_proxy.py"
+TESTS_N3C = BACKEND / TESTS_REL_N3C
 EVIDENCE_DIR = ROOT / "docs" / "agent" / "evidence" / "SPEC"
 SHELL_CONTAINER = "gx-shell"
 TAG = "[SPEC-OPS]"
@@ -80,8 +111,18 @@ EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 #: 새 DB 모델 0(감사 스냅샷 재사용) · dj-core 는 읽기·호출만(`backend/apps/dsm/
 #: ops_an_service.py` 머리말 참조) — 각 절의 `docs/agent/evidence/SPEC/O-*.json`
 #: 의 `title_parts` 가 "제목이 부르는 것 ↔ 있는 것" 표를 낸다.
+#: ⚠ [턴 AP] 이 열 전부(O-10·O-11 포함)가 **지금 title_parts 기준 반쪽이다** —
+#: N1 의 같은 눈금 재판정이 O-01·02·05·06·07·08·09·12 여덟에 「화면」 열린 행을
+#: 찾았고, 이 턴이 O-10·O-11 에도 같은 결손을 정직하게 더했다(위 머리말 참조).
+#: 이 튜플에 **남겨 두는 이유**는 "닫혔다고 주장해서"가 아니라, 이 게이트가
+#: 이 id 들의 evidence json 을 계속 실측 대조하게 하려는 것이다 — 빼면 그 id 는
+#: 아예 판정 밖으로 사라진다(D-274 — 「모른다」가 「없다」로 읽히는 것을 막는다).
 CLOSED_CLAUSES: tuple[str, ...] = (
     "O-01", "O-02", "O-05", "O-06", "O-07", "O-08", "O-09", "O-12",
+    #: [턴 AP · 차선 N3 · P-421 ⑤] 절차·기록(콘솔 문·감사 줄·다음 회전일·되돌리기
+    #: 연습 기록)은 실측으로 채웠다 · 운영 집행 부분은 `excluded_by: "P-428"`.
+    #: 「화면」 행은 열려 있다(위 머리말) — 그래서 이 둘도 **지금 FAIL 이 정답**.
+    "O-10", "O-11",
 )
 
 #: annex 원문(플랫폼 구조설계서 §7) 제목 — 판정에는 안 쓴다(사람이 읽을 이름표).
@@ -109,36 +150,6 @@ TITLES: dict[str, str] = {
 
 #: 못 닫은 것들 — **「무엇이 없는가」**(P-358·P-376 형식). 빈 칸으로 두지 않는다(D-274).
 NOT_STARTED: dict[str, str] = {
-    "O-11": "완결 조건은 3항 AND 다(「deploy.sh exit 0 · 걷기 초록 · 되돌리기 1회 "
-           "시험」). 앞 둘은 이미 있는 장부(`docs/agent/evidence/OPS-27/"
-           "deploys.jsonl`)를 그대로 읽어 실측한다(`GET /api/dsm/ops/releases` · "
-           "`tests/test_ops_an.py::O11_ReleaseBoardSmokeTest`). **되돌리기 1회 "
-           "시험만 없다** — 실제 배포 되돌리기(파일 스왑·컨테이너 재시작)는 HTTP "
-           "라운드트립 시험이 아니라 운영 집행이고, `deploys.jsonl` 에도 되돌리기 "
-           "항목이 0건이라(grep 0) 이미 있는 장부를 읽는 방식으로도 못 잰다. 반쪽"
-           "(3항 중 2항)이라 승격하지 않는다(P-417).",
-    "O-10": "완결 조건은 AND 다(「회전 뒤 게이트 계정 로그인 4/4 · 옛 키 401」). "
-           "뒤 반(옛 키 401)은 이미 있는 door(`kernels.k5_trust.inbound_keys."
-           "rotate_key` · 들어오는 키(inbound_api_key) 회전 문)로 "
-           "Django test client 실측이 가능하지만, 앞 반(게이트 계정이 회전 뒤에도 "
-           "로그인된다)은 **이 환경에서 구조적으로 못 잰다** — "
-           "`scripts/rotate_shared_passwords.py` 는 게이트 계정을 일부러 회전하지 "
-           "않고(`NEVER_TOUCH`), 게이트 계정 자신의 자격을 바꾸고 실제 서버에 "
-           "로그인해 보는 것은 이 저장소 차선 공통 규칙이 금지한 행위다(라이브 "
-           "서버 로그인 금지). 조각(API 키 회전·웹훅 서명키 생성 "
-           "`webhook_signing_keys.py`·DB 공유 비밀번호 회전·표 ②"
-           "(`credentials.py`, 나가는 API 키 셋만))은 있지만 **하나의 O-10 "
-           "콘솔/엔드포인트로 통합된 곳이 없고**, VAPID·DB/MinIO 자격은 표 ②에 "
-           "아예 없다(`apps/dsm/notify_prefs.py` 에 따로 있다). "
-           "`tests/test_p356_ops_spec_promotions.py::KeyRotationCoverageTest` 가 "
-           "이 흩어짐과 구조적 한계를 실측으로 고정한다. [턴 AO · 차선 N3 덧붙임] "
-           "콘솔 문은 이번 턴 하나 열었다 — `GET /api/dsm/ops/keys`(회전 대상 보드"
-           " · `docs/agent/evidence/D-373/key_rotation_last.json` 읽기) · "
-           "`POST /api/dsm/ops/keys/rotate`(`kernels.k5_trust.inbound_keys."
-           "rotate_key` 그대로 재사용). 그러나 앞 반(라이브 로그인 재검증)은 여전히 "
-           "이 저장소 규칙이 막아 결론은 바뀌지 않는다 — `tests/test_ops_an.py::"
-           "O10_KeyRotationSmokeTest` 가 그 자백(`gray_why`)이 응답에 실제로 실려 "
-           "있는지만 스모크로 확인한다(승격은 안 한다).",
     "O-04": "모델 버전·테넌트 배포·롤백·카메라별 바인딩을 담을 저장처가 전혀 없다"
            "(전수 grep 0건 — `ModelVersion`·`ModelRegistry`·`ModelDeployment`·"
            "`ModelBinding` 류 이름 0). 가장 가까운 기존 값(`kernels.k6_feedback."
@@ -285,9 +296,9 @@ def run_gate_tests(shell: str) -> str | None:
              "-e", "DJANGO_SETTINGS_MODULE=config.settings",
              "-e", "DB_TEST_NAME=test_gx_verify_spec_ops",
              "-w", "/app", shell,
-             #: [턴 AO · 차선 N3] 둘 다 돈다 — 턴 AM 의 길목(O-10·O-04, 여전히 0
-             #: 통과) + 이 턴의 길목(여덟을 닫는 실제 HTTP 왕복).
-             "python", "-m", "pytest", TESTS_REL, TESTS_REL_N3,
+             #: [턴 AO · 차선 N3] 셋 다 돈다 — 턴 AM 의 길목(O-04, 여전히 0 통과) +
+             #: 턴 AO 의 길목(여덟을 닫는 실제 HTTP 왕복) + 턴 AP 의 길목(O-10·O-11).
+             "python", "-m", "pytest", TESTS_REL, TESTS_REL_N3, TESTS_REL_N3B, TESTS_REL_N3C,
              "-q", "--create-db", "-p", "no:randomly"],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             #: ★ `guardianx-lane-count-ceilings` — 공유 gx-shell 은 다른 차선과
@@ -414,7 +425,7 @@ def main() -> int:
         print("%s [입력] --no-run(기본) — pytest 를 다시 안 돌린다(지금 있는 evidence "
              "파일만 본다)" % TAG)
     else:
-        missing_tests = [str(p) for p in (TESTS, TESTS_N3) if not p.exists()]
+        missing_tests = [str(p) for p in (TESTS, TESTS_N3, TESTS_N3B, TESTS_N3C) if not p.exists()]
         if missing_tests:
             print("%s **판정 불가 · 회색** — 길목 시험 파일이 없다: %s"
                  % (TAG, ", ".join(missing_tests)))
@@ -423,8 +434,8 @@ def main() -> int:
         summary = parse_pytest_summary(raw) if raw is not None else None
         code1, verdict1 = judge_gate_tests(summary)
         codes.append(code1)
-        print("%s [입력] 길목 시험 = %s · %s (gx-shell=%s)"
-             % (TAG, TESTS_REL, TESTS_REL_N3, args.shell))
+        print("%s [입력] 길목 시험 = %s · %s · %s · %s (gx-shell=%s)"
+             % (TAG, TESTS_REL, TESTS_REL_N3, TESTS_REL_N3B, TESTS_REL_N3C, args.shell))
         if summary is not None:
             print("%s [입력] pytest 요약 — 통과 %d · 실패 %d · 에러 %d"
                  % (TAG, summary[0], summary[1], summary[2]))
@@ -464,20 +475,29 @@ if __name__ == "__main__":
     gate_header(
         __file__,
         target="gx-shell(%s) 안 backend/tests/test_p356_ops_spec_promotions.py · "
-               "backend/tests/test_ops_an.py · apps.dsm.ops_an_service · "
+               "backend/tests/test_ops_an.py · backend/tests/"
+               "test_ap_n3_o10_o11_ops.py · apps.dsm.ops_an_service · "
                "kernels.k5_trust(inbound_keys·webhook_signing_keys·credentials) · "
+               "scripts/deploy_spa_8500.py(drill 기록 · 읽기만) · "
                "scripts/rotate_shared_passwords.py · docs/agent/evidence/SPEC/*.json"
                % SHELL_CONTAINER,
         as_="pytest 는 자격증명 없이 --create-db 로 돈다 · 라이브 서버 로그인은 이번 "
-            "게이트가 하지 않는다(차선 공통 규칙 금지) — O-10·O-11 완결 조건의 "
-            "라이브 절반이 바로 이 이유로 못 닫힌다",
+            "게이트가 하지 않는다(차선 공통 규칙 금지) — O-10 「회전 뒤 게이트 "
+            "계정 로그인」·O-11 「운영 서버 실 되돌리기」는 그래서 title_parts 에 "
+            "excluded_by=P-428 로 남는다(절차·기록은 닫혔다 · 턴 AP). ⚠ O-01·02·"
+            "05·06·07·08·09·10·11·12 열 전부에 「화면」 열린 행이 있다(N1 의 같은 "
+            "눈금 재판정 + 이 턴의 정직한 추가) — `judge_title_parts` 가 이것을 "
+            "실행마다 그대로 빨강으로 낸다. **닫은 열의 실제 수는 이 실행의 출력을"
+            " 본다** — 이 문자열은 분모(annex 배정 건수)만 말한다.",
         source="살아 있는 gx-shell 컨테이너(docker exec, `--run` 일 때만) · 정적으로는 "
               "저장소의 kernels·scripts 소스 그 자체(전수 grep — 사진·손으로 옮긴 값 "
               "아님)",
-        measured="닫은 열 %d건(O-01·02·05·06·07·08·09·12) · 못 닫은 열 %d건"
-                "(O-10·O-11·O-04) — 분모 %d, `docs/agent/evidence/SPEC/"
-                "N3_promotions_ao.md` 의 「무엇이 없는가」 표와 일치"
-                % (len(CLOSED_CLAUSES), len(NOT_STARTED),
+        measured="닫힌 열 0건(annex 배정 O-01·02·05·06·07·08·09·10·11·12·04 · "
+                "분모 %d) — 절차·기록 실측은 전부 채웠으나 「화면」 열린 행 때문에 "
+                "title_parts 기준으로는 0/%d 이 정직한 결론이다(턴 AP · N1 같은 "
+                "눈금 재판정과 일치) — 상세는 "
+                "`docs/agent/evidence/SPEC/N3_promotions_ap.md`"
+                % (len(CLOSED_CLAUSES) + len(NOT_STARTED),
                    len(CLOSED_CLAUSES) + len(NOT_STARTED)),
     )
     raise SystemExit(main())

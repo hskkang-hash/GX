@@ -45,7 +45,10 @@ def _add_title_parts(clause_id: str, parts: list[dict]) -> None:
             "P-356 ② title_parts — 제목이 부르는 부분과 실측 상태를 표로 남긴다"):
         path = EVIDENCE_DIR / f"{clause_id}.json"
         body = json.loads(path.read_text(encoding="utf-8"))
-        body["title_parts"] = parts
+        #: [P-419 · 턴 AP] 재판정 표(`retro` 칸이 있는 표)는 사람이 확인한 표다 — 시험 리터럴로
+        #:   덮지 않는다. 요청/응답 기록은 `_write_evidence` 가 이미 갱신했다.
+        if "retro" not in body:
+            body["title_parts"] = parts
         path.write_text(json.dumps(body, ensure_ascii=False, indent=2) + "\n",
                         encoding="utf-8")
 
@@ -196,29 +199,53 @@ class U3_02_ControlExecutedTest(U36AnFixture):
 # ═══════════════════════════════════════════════════════════════════════════
 # DSM-U6-01 — 스마트시티 통합플랫폼 이벤트 연계 (112·119·재난상황 긴급대응)
 # ═══════════════════════════════════════════════════════════════════════════
-SECRET_112 = "test-only-112-secret-not-real"          # noqa: S105
-SECRET_119 = "test-only-119-secret-not-real"           # noqa: S105
-SECRET_SMART_CITY = "test-only-smartcity-secret-not-real"  # noqa: S105
+SECRET_AGENCY = "test-only-agency-secret-not-real"  # noqa: S105
 
-_SIGNING_KEYS = {
-    "police_112": SECRET_112, "fire_119": SECRET_119, "smart_city": SECRET_SMART_CITY,
-}
+#: [P-427] 서명키는 웹훅 서명키 표의 `agency` 하나를 재사용한다(새 자격 0).
+_SIGNING_KEYS = {"agency": SECRET_AGENCY}
 
 
-@override_settings(EXTERNAL_EVENT_SIGNING_KEYS=_SIGNING_KEYS)
+@override_settings(WEBHOOK_SIGNING_KEYS=_SIGNING_KEYS, INBOUND_API_KEY_REQUIRE_HTTPS=False)
 class U6_01_ExternalEventsTest(U36AnFixture):
-    def _post(self, body: dict, secret: str, *, user=None):
+    """DSM-U6-01 — 인증 = 들어오는 키(범위 `events:ingest`) + HMAC(P-427)."""
+
+    def tearDown(self) -> None:
+        import contextlib
+
+        with contextlib.suppress(Exception):
+            from core.middleware.refresh_token import thread_local
+
+            thread_local.request = None
+        super().tearDown()
+
+    def _key(self, scope, scopes: str = "events:ingest") -> str:
+        from kernels.k5_trust import issue_key, set_key_scopes
+
+        issued = issue_key(scope=scope, name="u6-01-%s" % scopes.replace(":", "-"))
+        set_key_scopes(scope=scope, key_id=issued.view.key_id, scopes=scopes)
+        return issued.secret
+
+    def _post(self, body: dict, *, secret: str = SECRET_AGENCY, key: str | None = "",
+              timestamp: str | None = None, bearer_user=None):
         raw = json.dumps(body, ensure_ascii=False).encode("utf-8")
-        headers = _hdr(outbound_headers(secret, raw))
-        return self.client.post(
-            EXTERNAL_EVENTS, data=raw, content_type="application/json",
-            **headers, **self._bearer(user or self.user_a))
+        headers = _hdr(outbound_headers(secret, raw, timestamp=timestamp))
+        if key == "":
+            key = self._key(self.scope_a)
+        if key is not None:
+            headers["HTTP_X_API_KEY"] = key
+        if bearer_user is not None:
+            headers.update(self._bearer(bearer_user))
+        return self.client.post(EXTERNAL_EVENTS, data=raw,
+                                content_type="application/json", **headers)
+
+    def _body_112(self):
+        return {"source": "police_112", "event_type": "intrusion",
+                "severity": "critical", "stream_monitor_id": self.stream_a.pk,
+                "external_ref": "POL-2026-0001"}
 
     def test_police_112_emergency_video_event_is_recorded_as_external(self) -> None:
-        body = {"source": "police_112", "event_type": "intrusion",
-               "severity": "critical", "stream_monitor_id": self.stream_a.pk,
-               "external_ref": "POL-2026-0001"}
-        resp = self._post(body, SECRET_112)
+        body = self._body_112()
+        resp = self._post(body)
         self.assertEqual(200, resp.status_code, resp.content[:300])
         out = self._body(resp)
         self.assertTrue(out["created"])
@@ -230,55 +257,65 @@ class U6_01_ExternalEventsTest(U36AnFixture):
             test_ref="tests.test_dsm_u36_an.U6_01_ExternalEventsTest."
                     "test_police_112_emergency_video_event_is_recorded_as_external",
             method="POST", path=EXTERNAL_EVENTS, request_params=body, response=resp,
-            what="112 긴급영상(사건+카메라 스트림) — 서명된 외부 이벤트가 F-05 읽기 "
-                "문의 짝인 쓰기 문 하나로 들어와 data_source=external 로 적립된다")
+            what="112 긴급영상(사건+카메라 스트림) — 들어오는 키(events:ingest) + HMAC(agency) "
+                "로 서명된 외부 이벤트가 쓰기 문 하나로 들어와 data_source=external 로 적립된다")
 
     def test_fire_119_dispatch_event_is_recorded(self) -> None:
         body = {"source": "fire_119", "event_type": "fire", "severity": "critical",
-               "stream_monitor_id": self.stream_a.pk}
-        resp = self._post(body, SECRET_119)
+                "stream_monitor_id": self.stream_a.pk}
+        resp = self._post(body)
         self.assertEqual(200, resp.status_code, resp.content[:300])
         self.assertEqual("external", self._body(resp)["data_source"])
 
     def test_smart_city_emergency_response_event_is_recorded(self) -> None:
         body = {"source": "smart_city", "event_type": "flood", "severity": "warning",
-               "stream_monitor_id": self.stream_a.pk}
-        resp = self._post(body, SECRET_SMART_CITY)
+                "stream_monitor_id": self.stream_a.pk}
+        resp = self._post(body)
         self.assertEqual(200, resp.status_code, resp.content[:300])
         self.assertEqual("external", self._body(resp)["data_source"])
 
-    def test_bad_signature_is_401(self) -> None:
-        body = {"source": "police_112", "event_type": "intrusion",
-               "severity": "critical", "stream_monitor_id": self.stream_a.pk}
-        raw = json.dumps(body, ensure_ascii=False).encode("utf-8")
-        headers = _hdr(outbound_headers(SECRET_112, raw))
-        headers["HTTP_X_GX_SIGNATURE"] = "sha256=" + "0" * 64
-        resp = self.client.post(
-            EXTERNAL_EVENTS, data=raw, content_type="application/json",
-            **headers, **self._bearer(self.user_a))
+    # ── P-427 시험 셋 + 둘 ─────────────────────────────────────────────
+    def test_no_key_is_401(self) -> None:
+        resp = self._post(self._body_112(), key=None)
         self.assertEqual(401, resp.status_code, resp.content[:300])
 
+    def test_jwt_without_key_is_401(self) -> None:
+        """사람 세션(JWT)으로는 외부 이벤트를 들여보내지 못한다 — 문은 기관 시스템 것이다."""
+        resp = self._post(self._body_112(), key=None, bearer_user=self.user_a)
+        self.assertEqual(401, resp.status_code, resp.content[:300])
+
+    def test_bad_signature_is_401(self) -> None:
+        resp = self._post(self._body_112(), secret="wrong-secret-not-agency")
+        self.assertEqual(401, resp.status_code, resp.content[:300])
+
+    def test_replayed_old_timestamp_is_401(self) -> None:
+        """재생 공격 — 서명은 맞지만 시각이 창(5분 · 300초) 밖이면 거절한다."""
+        import time
+
+        old = str(int(time.time()) - 301)
+        resp = self._post(self._body_112(), timestamp=old)
+        self.assertEqual(401, resp.status_code, resp.content[:300])
+
+    def test_read_only_key_is_403(self) -> None:
+        """기본 범위(events:read)만 가진 키는 들여보내지 못한다 — 쓰기 범위는 명시해 줄 때만."""
+        resp = self._post(self._body_112(), key=self._key(self.scope_a, "events:read"))
+        self.assertEqual(403, resp.status_code, resp.content[:300])
+
     def test_missing_schema_header_is_401(self) -> None:
-        """CAP 1.2 프로파일 — 스키마 버전이 없으면(모르는 발신 규격) 서명 값이 맞아도
-        거절한다(`webhook_contract.verify` 의 순서: 스키마를 서명보다 먼저 본다)."""
-        body = {"source": "police_112", "event_type": "intrusion",
-               "severity": "critical", "stream_monitor_id": self.stream_a.pk}
+        body = self._body_112()
         raw = json.dumps(body, ensure_ascii=False).encode("utf-8")
-        headers = _hdr(outbound_headers(SECRET_112, raw))
+        headers = _hdr(outbound_headers(SECRET_AGENCY, raw))
         del headers["HTTP_X_GX_SCHEMA"]
-        resp = self.client.post(
-            EXTERNAL_EVENTS, data=raw, content_type="application/json",
-            **headers, **self._bearer(self.user_a))
+        headers["HTTP_X_API_KEY"] = self._key(self.scope_a)
+        resp = self.client.post(EXTERNAL_EVENTS, data=raw,
+                                content_type="application/json", **headers)
         self.assertEqual(401, resp.status_code, resp.content[:300])
 
     def test_wrong_tenants_camera_is_404(self) -> None:
-        body = {"source": "police_112", "event_type": "intrusion",
-               "severity": "critical", "stream_monitor_id": self.stream_a.pk}
-        resp = self._post(body, SECRET_112, user=self.user_b)
+        resp = self._post(self._body_112(), key=self._key(self.scope_b))
         self.assertEqual(404, resp.status_code, resp.content[:300])
 
-        #: ★ 이 시험이 알파벳 순으로 여섯 중 마지막이라(`w` > `p`), 증거 파일
-        #:   (`test_police_112_..._as_external`)이 이미 있다 — 먼저 쓰고 나중에 얹는다.
+        #: 알파벳 순으로 마지막 — 증거 파일이 이미 있다(먼저 쓰고 나중에 얹는다).
         _add_title_parts("DSM-U6-01", [
             {"part": "112 긴급영상(사건+카메라 스트림 URL)",
              "where": "source=police_112", "status": "measured"},
@@ -288,7 +325,10 @@ class U6_01_ExternalEventsTest(U36AnFixture):
              "status": "measured"},
             {"part": "CAP 1.2 프로파일(스키마 버전 검증)",
              "where": "X-GX-Schema 헤더 부재 → 401", "status": "measured"},
-            {"part": "서명 검증", "where": "X-GX-Signature 불일치 → 401",
+            {"part": "서명 검증(웹훅 서명키 agency 재사용 · P-427)",
+             "where": "X-GX-Signature 불일치 → 401 · 시각 창 밖 → 401", "status": "measured"},
+            {"part": "기관 인증(들어오는 키 · events:ingest)",
+             "where": "키 없음/JWT → 401 · 읽기 키 → 403 · 남의 테넌트 카메라 → 404",
              "status": "measured"},
             {"part": "data_source=external 표식", "where": "응답 data_source 칸",
              "status": "measured"},

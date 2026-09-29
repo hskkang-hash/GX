@@ -151,6 +151,14 @@ def draft_evacuation_text(*, area_name: str, kind: str = EVACUATION_KIND_ORDER) 
     }
 
 
+#: [P-421 · 턴 AP · 차선 N2b] 안전경보 두 규칙(FWS-F2-07 · F1-10)의 문턱 — **명세에 숫자가 없다.**
+#:   값을 짓지 않는다(D-284): None 인 동안 `alerts.py` 는 판정하지 않고 `threshold_unset=true` 를 낸다.
+#:   값은 운영(산림청 지침 · 기관 규정)이 정한다 — 정해지면 여기 한 줄씩.
+WIND_SHIFT_ANGLE_DEG: float | None = None
+WIND_SHIFT_WINDOW_MINUTES: float | None = None
+DROP_ZONE_EXIT_RADIUS_M: float | None = None
+
+
 __all__ = [
     "FIRE_STAGE_1", "FIRE_STAGE_2", "FIRE_STAGE_3", "FIRE_STAGES",
     "FIRE_STAGE_AREA_HA", "FIRE_STAGE_WIND_MPS", "FIRE_STAGE_DURATION_HOURS",
@@ -162,4 +170,5 @@ __all__ = [
     "evacuation_deadline_hours",
     "DISASTER_SMS_STANDARD_CHARS", "DISASTER_SMS_EXTENDED_CHARS",
     "draft_evacuation_text",
+    "WIND_SHIFT_ANGLE_DEG", "WIND_SHIFT_WINDOW_MINUTES", "DROP_ZONE_EXIT_RADIUS_M",
 ]

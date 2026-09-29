@@ -46,10 +46,16 @@ from tests.test_fws_app import EVIDENCE_DIR, FwsHttpTest, _qs
 
 def _write_evidence2(clause_id: str, *, title: str, title_parts: list, test_ref: str,
                      method: str, path: str, request_params: dict, response,
-                     what: str) -> None:
+                     what: str, retro: str | None = None) -> None:
     """`tests.test_fws_app._write_evidence` 와 같은 모양 + `title_parts`
     (P-392 — 「제목이 부르는 것 ↔ 있는 것」 표 · 빈 칸 0 · O 게이트가 센다).
-    공용 파일(`test_fws_app.py`)을 고치지 않고 이 차선 파일 안에 둔다."""
+    공용 파일(`test_fws_app.py`)을 고치지 않고 이 차선 파일 안에 둔다.
+
+    ★ [턴 AP · N2b · P-421 ⑤] 기존 파일에 `retro`(사람이 대조한 1줄 — 재판정·소급)
+      가 있으면 그 `title_parts`·`retro` 를 **그대로 둔다** — 이 시험은 요청/응답만
+      갱신한다(재판정이 연 행을 시험이 옛 표로 조용히 덮지 않게). 이 시험이 그
+      절의 표를 **새로 채울 때만** `retro=` 를 넘기고, 그때는 새 표 + 그 한 줄로
+      다시 붙인다."""
     for part in title_parts:
         missing = [k for k in ("part", "where", "status") if not (part.get(k) or "").strip()]
         if missing:
@@ -73,6 +79,20 @@ def _write_evidence2(clause_id: str, *, title: str, title_parts: list, test_ref:
             "what": what,
         }
         out = EVIDENCE_DIR / f"{clause_id}.json"
+        prev: dict = {}
+        if out.is_file():
+            try:
+                prev = json.loads(out.read_text(encoding="utf-8"))
+            except (ValueError, OSError):
+                prev = {}
+        if retro:
+            payload["retro"] = retro
+        elif "retro" in prev:
+            payload["title_parts"] = prev.get("title_parts", title_parts)
+            payload["retro"] = prev["retro"]
+            for keep in ("title_parts_note", "retro_ap"):
+                if keep in prev:
+                    payload[keep] = prev[keep]
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
                        encoding="utf-8")
 
@@ -367,9 +387,37 @@ class F3_16_FireStatsTest(F3BHttpTest):
         dsm_services.review_event(scope=self.scope_a, event_id=rejected_id,
                                   verdict="rejected", reason="false_alarm [fog_or_cloud] 안개")
 
+        #: ── 골든타임(대응 시계 실측) — 발생·신고·도착 셋을 엇갈리게 심는다 ──────
+        #:   late : 발생 45분 전 → 지금 도착(45분 · 초과)
+        #:   ok   : 발생 5분 전 → 지금 도착(5분 · 준수)
+        #:   intake: 발생 50분 전이지만 **신고 접수** 10분 전 → 지금 도착 —
+        #:           신고 기준이면 10분(준수), 발생 기준이면 50분(초과).
+        from apps.fws import office as fws_office
+
+        g_late = self._event(self.stream_a, severity="critical", event_type="fire",
+                             when=now - _dt.timedelta(minutes=45))
+        g_ok = self._event(self.stream_a, severity="critical", event_type="fire",
+                           when=now - _dt.timedelta(minutes=5))
+        g_intake = self._event(self.stream_a, severity="critical", event_type="fire",
+                               when=now - _dt.timedelta(minutes=50))
+        intake = self.client.post(_qs(
+            f"/api/fws/office/fire-events/{g_intake}/intake",
+            source=fws_office.REPORT_SOURCE_119,
+            reported_at=(now - _dt.timedelta(minutes=10)).isoformat()), **head)
+        self.assertEqual(200, intake.status_code, intake.content)
+        for eid in (g_late, g_ok, g_intake):
+            dsm_services.advance_response(scope=self.scope_a, event_id=eid,
+                                          to_state="acknowledged")
+            dsm_services.advance_response(scope=self.scope_a, event_id=eid,
+                                          to_state="in_progress")
+
         resp = self.client.get(STATS_FIRES, **head)
         self.assertEqual(200, resp.status_code, resp.content)
         body = self._body(resp)
+        self.assertEqual(3, body["golden_time_measured_n"], body)
+        self.assertEqual(2, body["golden_time_compliant_n"], body)
+        self.assertEqual(66.7, body["golden_time_compliance_pct"])
+        self.assertIn("arrived_at", body["golden_time_basis"])
         self.assertGreaterEqual(body["occurrence_count"], 2)
         self.assertIn(self.stream_a.name, body["by_zone"])
         self.assertEqual(5.5, body["area_ha_total"])
@@ -397,16 +445,32 @@ class F3_16_FireStatsTest(F3BHttpTest):
                 "status": "구현 — 판정된 2건 중 오인 1건 실측"},
                 {"part": "확인 시간", "where": "응답 verification_seconds_avg",
                 "status": "구현 — occurred_at→reviewed_at 평균 실측"},
-                {"part": "골든타임 준수율", "where": "응답 golden_time_compliance_pct·"
-                                               "golden_time_note",
-                "status": "근사 실측 — 확인 회신 30분 이내 비율로 근사(실제 헬기 "
-                         "투하·지상 도달 시각은 이 앱에 없다 · golden_time_note 에 "
-                         "명시, D-284)"},
+                {"part": "골든타임 준수율 — 대응 시계 실측(신고 접수 → 현장 도착 30분)",
+                "where": "office2.py::_golden_time_from_response_clock → "
+                         "stream_monitors/services/response_clock.py::stamps_for "
+                         "(arrived_at) + F3-06 신고 접수 clock_started_at · 응답 "
+                         "golden_time_compliance_pct·golden_time_measured_n·"
+                         "golden_time_compliant_n",
+                "status": "measured: 세 사건(45분 초과 · 5분 준수 · 발생 50분 전이나 "
+                         "신고 10분 전 → 준수)에서 3건 중 2건 = 66.7% — 신고 기준이 "
+                         "실제로 읽힘(발생 기준이면 33.3%)"},
+                {"part": "골든타임 준수율 — 헬기 물 투하 시각(신고 → 투하 30분)",
+                "where": "저장소에 투하 시각 자체가 없다 — F4-04 는 승인 시각"
+                         "(approved_at)만 적고, 대응 시계 네 시각에도 투하는 없다",
+                "status": "없음 — 명세 §4.3 이 부르는 「헬기 투하」 시각이 저장소에 "
+                         "없어 그 기준의 준수율은 재지 못한다(응답 golden_time_note 에 "
+                         "명시 · 지어내지 않는다)"},
             ],
             test_ref="tests.test_fws_f3b.F3_16_FireStatsTest.test_stats_covers_all_eight_parts",
             method="GET", path=STATS_FIRES, request_params={}, response=resp,
-            what="사건 2건(확정 1 · 오인 1) 뒤 GET stats/fires 가 발생·면적·원인·"
-                "시간대·구역·오인율·확인 시간·골든타임 근사 여덟 칸을 전부 낸다 — 실측")
+            what="사건 2건(확정 1 · 오인 1)과 골든타임 사건 3건 뒤 GET stats/fires 가 "
+                "발생·면적·원인·시간대·구역·오인율·확인 시간을 내고, 골든타임 준수율을 "
+                "대응 시계(신고→도착) 실측으로 낸다 — 헬기 투하 기준은 시각이 없어 열린 행",
+            retro="P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 골든타임을 "
+                  "「확인 회신 30분」 근사에서 대응 시계 arrived_at 실측으로 바꾸고, 신고 "
+                  "접수 기준이 실제로 읽히는지(66.7% vs 발생 기준 33.3%) 대조했다. 헬기 "
+                  "투하 시각은 저장소에 없어 열린 행으로 남긴다 — 앞 판의 excluded_by "
+                  "P-428 은 뺐다(코드 결손이지 외부 실연동이 아니다 · TITLE_PARTS §3).")
 
 
 # ═══════════════════════════════════════════════════════════════════════════

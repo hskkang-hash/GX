@@ -35,10 +35,24 @@
   (`DsmHandover` 에 칸을 더하지 않는다 · 위 「표 저장」 머리말과 같은 판단).
   근무표가 그 날짜에 없으면(팀이 0) 「근무 편성 없음」을 그대로 적는다 —
   지어내지 않는다(D-280).
-  ★ **여전히 닫지 않는 것**을 정직하게 남긴다 — 관제일지(DSM-U1-04) 자체가
-  이 저장소 어디에도 없다. 이 함수가 잇는 것은 「인계 메모가 근무자를 자동으로
-  담는다」는 사실 하나이지, 명세의 완결조건 「일지 근무자 = 편성표」 그 자체가
-  아니다(일지가 없으므로).
+
+★ [턴 AP · P-421 ② · 차선 N3] **관제일지 = 인계 메모 + 사건 타임라인 합본** —
+  아래 `control_log()`. 예전엔 여기서 이렇게 적었다: *「관제일지(DSM-U1-04)
+  자체가 이 저장소 어디에도 없다」.* 이 턴이 하는 것은 **새 표를 만드는 것이
+  아니라**(지시서 그대로 「새 표 0」), 이미 있는 두 공개 면 — 이 파일의
+  `build_draft()`(인계 메모)와 `apps.dsm.services.recent_events` ·
+  `services.response_clock`(사건 타임라인, UX-14 가 이미 연 면) — 을
+  **한 응답으로 묶는 것**이다. 관제일지라는 이름의 새 저장처는 없다. 그 날
+  일어난 사건들과 그 인계 메모를 한 문서로 읽을 수 있으면, 그것이 이 팀이
+  매일 아침 「일지」라고 부르며 인쇄해 온 것과 같은 내용이다(§2-2 가 세 번째
+  청구한 재해석 — 이 턴은 「인계 메모가 사실상 일지 역할」쪽으로 정한다,
+  N4 가 턴 AM 부터 반복해 물은 그 질문).
+
+  **완결조건 「일지 근무자 = 편성표」** — `control_log()` 의 `on_duty` 칸은
+  `build_draft()` 를 그대로 불러써서 나온 값이고, `build_draft()` 의
+  `on_duty` 는 `shift_roster_service.current_workers()` 를 **그대로** 옮긴
+  것이다(위 문단). 같은 함수를 같은 자리에서 부르므로 「일지가 보여주는
+  근무자」와 「편성표가 말하는 근무자」는 대조가 아니라 **항등**이다.
 """
 from __future__ import annotations
 
@@ -307,6 +321,70 @@ def latest(*, scope: TenantScope) -> dict:
         "created_at": row.created_on,
         #: DSM-U2-05 — 홈 카드 「인계 확인 ✓」가 읽는 칸.
         "acknowledged": _is_acknowledged(row.pk),
+    }
+
+
+#: 관제일지 한 장에 시각까지 실어 보여줄 사건 상한. 인계 메모의 `_COUNT_CAP`
+#: 보다 작다 — 일지는 각 사건마다 `response_clock()` 을 한 번씩 더 부르므로
+#: (읽기 전용이지만 왕복이 N번이다), 상한이 없으면 하루에 사건이 몰린 테넌트의
+#: 일지 조회가 느려진다. 넘긴 건수는 `incident_count_capped` 로 정직하게 적는다.
+_TIMELINE_CAP = 60
+
+
+def control_log(*, scope: TenantScope, hours: int = 24) -> dict:
+    """DSM-U1-04 관제일지 = **인계 메모 + 사건 타임라인 합본** (새 표 0).
+
+    [턴 AP · P-421 ② · 차선 N3] 관제일지라는 이름의 저장처를 새로 만들지
+    않는다. 이미 공개된 두 면을 한 응답으로 묶을 뿐이다:
+        ① **인계 메모** — `build_draft()`(이 파일). 근무자(`on_duty`)가 여기서
+           온다 — `shift_roster_service.current_workers()` 그대로.
+        ② **사건 타임라인** — `apps.dsm.services.recent_events()`(목록) +
+           `services.response_clock()`(사건마다 네 시각, UX-14 가 이미 연
+           공개 면 재사용 · 이 파일에서 새로 세지 않는다).
+
+    완결조건 「일지 근무자 = 편성표」: 이 응답의 `on_duty` 는 인계 메모의
+    `on_duty` 를 **그대로** 옮긴 것이고, 인계 메모의 `on_duty` 는
+    `shift_roster_service.current_workers()` 를 그대로 옮긴 것이다 — 세 자리
+    모두 같은 호출 하나의 결과이므로 「일지가 보여주는 근무자」와 「편성표가
+    말하는 근무자」는 대조가 아니라 **항등**이다(다른 값을 낼 길 자체가 없다).
+
+    Raises:
+        ValueError: `hours` 계약 밖 — `build_draft()` 와 같은 창.
+    """
+    draft = build_draft(scope=scope, hours=hours)
+
+    incidents = services.recent_events(
+        scope=scope, since=draft.since, until=draft.until, limit=_TIMELINE_CAP + 1)
+    capped = len(incidents) > _TIMELINE_CAP
+    incidents = incidents[:_TIMELINE_CAP]
+
+    timeline = []
+    for e in incidents:
+        try:
+            clock = services.response_clock(scope=scope, event_id=e.event_id)
+        except Exception:                                          # noqa: BLE001
+            #: 시계를 못 세워도(발생 시각 없는 이상 상태 등) 사건 자체는 일지에서
+            #: 빠지지 않는다 — 「못 쟀다」와 「없었다」를 같은 줄로 만들지 않는다.
+            clock = None
+        timeline.append({
+            "event_id": e.event_id,
+            "event_type": e.event_type,
+            "stream_monitor_name": e.stream_monitor_name,
+            "occurred_at": e.occurred_at,
+            "clock": clock,
+        })
+
+    return {
+        "date": draft.on_duty.get("date"),
+        "since": draft.since, "until": draft.until, "hours": hours,
+        #: ★ 완결조건이 잡는 칸 — `build_draft().on_duty` 를 그대로. 두 번 세지
+        #:   않는다(D-212) — 여기서 다시 `shift_roster_service` 를 부르면 그 순간
+        #:   두 벌이 되고, 두 벌은 언젠가 갈린다.
+        "on_duty": draft.on_duty,
+        "handover": _as_dict(draft),
+        "incident_timeline": timeline,
+        "incident_count": len(timeline),
+        "incident_count_capped": capped,
     }
 
 

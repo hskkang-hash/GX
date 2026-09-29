@@ -21,6 +21,13 @@ export const dsmEndpoint = {
   events: '/api/dsm/events',
   /** W1 요약 한 줄 — 오탐 N 의 원천(K6 `false_positive_rate`)을 **부르는 첫 화면**. */
   eventsSummary: '/api/dsm/events/summary',
+  /**
+   * [턴 AP · P-424 · 온보딩 U4#8] 사건번호·주소·유형 **조합 검색**. `case_no` 를
+   * 주면 PK 정확 일치로 그 사건 하나를 찾아 나머지 조건과 대조한다(서버가 대조
+   * — 화면은 받은 것을 그대로 그린다). `case_no` 가 없으면 기존 `/events` 와
+   * 같은 커널 경로(주소·유형)로 좁힌다.
+   */
+  eventsCombinedSearch: '/api/dsm/events/combined-search',
   eventDetail: (id: number | string) => `/api/dsm/events/${id}`,
   notify: (id: number | string) => `/api/dsm/events/${id}/notify`,
   /** 진위 판정(오탐/실제) — U1 #11 이 누를 자리가 없던 그 문 (D-414). */

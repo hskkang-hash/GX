@@ -448,6 +448,14 @@ export default function EventList() {
   const eventType = params.get('event_type') ?? undefined;
   /** 주소 조건. **주소에 산다** — 눌러서 좁힌 화면을 링크로 건네줄 수 있어야 한다. */
   const address = params.get('address') ?? undefined;
+  /**
+   * ★★ [턴 AP · P-424 · 온보딩 U4#8] **사건번호 — 조합 검색의 세 번째 칸.**
+   *   주소·유형은 이미 서버가 걸렀다(위 두 줄) — 사건번호만 「열기」뿐이고 목록을
+   *   좁히는 조건이 아니었다. 이 칸은 **연다**(`openByNo`)와 다르다 — 목록에
+   *   남아 나머지 조건(주소·유형)과 함께 좁힌다. 비어 있으면 기존 목록 문(`/events`)을
+   *   그대로 쓴다 — 있는 화면의 동작을 안 바꾼다.
+   */
+  const caseNo = params.get('case_no') ?? undefined;
   const period = parsePeriod(params.get('period'));
   const customSince = params.get('since');
   const customUntil = params.get('until');
@@ -538,12 +546,15 @@ export default function EventList() {
     if (address) {
       out.push({ key: 'address', keys: ['address'], label: `주소 ${address}` });
     }
+    if (caseNo) {
+      out.push({ key: 'case_no', keys: ['case_no'], label: `사건번호 ${caseNo}` });
+    }
     if (period !== 'none') {
       out.push({ key: 'period', keys: ['period', 'since', 'until'],
                  label: `기간 ${win.label}` });
     }
     return out;
-  }, [severity, eventType, address, period, win]);
+  }, [severity, eventType, address, caseNo, period, win]);
 
   /** 조건 몇 칸을 한 번에 뺀다. **프리셋은 남긴다** — 그것은 조건이 아니라 이 화면의 축이다. */
   const dropParams = useCallback(
@@ -556,7 +567,7 @@ export default function EventList() {
   );
 
   const clearFilters = useCallback(
-    () => dropParams(['severity', 'event_type', 'address', 'period', 'since', 'until']),
+    () => dropParams(['severity', 'event_type', 'address', 'case_no', 'period', 'since', 'until']),
     [dropParams],
   );
 
@@ -574,9 +585,21 @@ export default function EventList() {
     [navigate],
   );
 
+  /**
+   * ★ [턴 AP · U4#8] `case_no` 가 있으면 **조합 검색 문**으로 나간다 — 사건번호를
+   *   PK 로 정확히 찾고 주소·유형과 서버가 대조한다. 없으면 기존 목록 문을 그대로
+   *   쓴다(있던 프리셋·기간 동작을 안 바꾼다).
+   */
   const events = useDsmResource<{ total: number; events: EventRow[] }>(
-    () => dsmGet(dsmEndpoint.events, serverQuery),
-    [serverQuery],
+    () => (caseNo
+      ? dsmGet(dsmEndpoint.eventsCombinedSearch, {
+          case_no: caseNo,
+          ...(address ? { address } : {}),
+          ...(eventType ? { event_type: eventType } : {}),
+          limit: PAGE_SIZE,
+        })
+      : dsmGet(dsmEndpoint.events, serverQuery)),
+    [serverQuery, caseNo, address, eventType],
     {
       refreshMs: REFRESH_MS,
       isEmpty: (v) => (v?.events?.length ?? 0) === 0,
@@ -893,6 +916,19 @@ export default function EventList() {
                 aria-label="주소로 찾기"
                 defaultValue={address ?? ''}
                 onSearch={(v) => setParam('address', v.trim() || undefined)}
+              />
+              {/* ★ [턴 AP · P-424 · U4#8] **사건번호 — 목록을 좁히는 세 번째 칸.**
+                  위의 「사건번호로 열기」와 다르다 — 그것은 목록을 떠나 상세로 간다.
+                  이 칸은 목록에 남아 주소·유형과 함께 **조합**으로 좁힌다(서버가
+                  셋을 대조한다 — 화면은 받은 목록을 그대로 그린다). */}
+              <Input.Search
+                allowClear
+                placeholder="사건번호 (조합 검색)"
+                enterButton="찾기"
+                style={{ width: 200 }}
+                aria-label="사건번호로 조합 검색"
+                defaultValue={caseNo ?? ''}
+                onSearch={(v) => setParam('case_no', v.trim() || undefined)}
               />
               <Popover content={<div style={{ maxWidth: 300 }}>{CAMERA_SEARCH_GRAY}</div>}>
                 <Input

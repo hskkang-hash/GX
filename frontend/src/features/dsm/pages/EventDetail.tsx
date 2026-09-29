@@ -655,10 +655,20 @@ export default function EventDetail() {
                 <Row gutter={16}>
                   <Col xs={24} md={8}>
                     {/* P-25 — 인증 헤더가 실리는 경로로 받는다. `<img src>` 직결이 아니다. */}
+                    {/*
+                      [P-423 계열 · 턴 AP · 차선 L] 온보딩 U2#4 「누른 뒤」 — snapshot
+                      200 · jpeg=True 인데 img(snapshot, naturalWidth>0)=0 으로 찍힌
+                      원인을 찾았다: `EventSnapshot` 의 `dataGx` prop 은 **안 주면
+                      속성을 안 단다**(컴포넌트 머리말) — 이 화면(EventDetail.tsx)만
+                      그동안 안 주고 있었다. 같은 부품을 쓰는 MobileEventDetail.tsx
+                      는 `dataGx="snapshot"` 을 이미 준다(U3#3 초록의 이유) — 관제
+                      쪽에도 같은 자리를 단다. 표: docs/agent/checkpoints/turn-ap/L.md.
+                    */}
                     <EventSnapshot
                       eventId={e.event_id}
                       snapshotPath={e.snapshot_path}
                       height={180}
+                      dataGx="snapshot"
                     />
                   </Col>
                   <Col xs={24} md={16}>

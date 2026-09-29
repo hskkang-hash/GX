@@ -435,9 +435,20 @@ export default function NotifySettingsPage() {
                   {
                     // ★ [P-371 · 턴 AL] 셋째 조건 실측이 이 칸에서 채널 코드를
                     //   그대로 잡았다(U5#9) — 사전의 말로 바꾼다.
+                    // ★ [P-423 · 턴 AP · 차선 L] 온보딩 U5#10 「누를 자리」 선언 —
+                    //   U5#10 은 U5#9 와 **같은 단추**(끄기/켜기)를 쓴다(같은 상태를
+                    //   두 번 흔들지 않는다). 그래서 여기 필요한 것은 새 클릭 자리가
+                    //   아니라, 저장 뒤 …/list 에 남는 channel 값을 다시 안 눌러도
+                    //   읽을 수 있는 자리다 — data-gx-channel 에 원래 채널 코드값을
+                    //   그대로 싣는다(표시명으로 바꾸지 않는다 · deliveryOutcome.tsx
+                    //   머리말과 같은 규약). 표: docs/agent/checkpoints/turn-ap/L.md.
                     title: '채널',
                     dataIndex: 'channels',
-                    render: (cs: string[]) => cs.map((c) => notifyChannelLabel(c)).join(' · '),
+                    render: (cs: string[]) => (
+                      <span data-gx="notify-rule-channel" data-gx-channel={cs.join(',')}>
+                        {cs.map((c) => notifyChannelLabel(c)).join(' · ')}
+                      </span>
+                    ),
                   },
                   {
                     title: '켜짐',

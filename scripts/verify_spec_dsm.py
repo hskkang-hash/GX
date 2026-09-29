@@ -16,9 +16,10 @@
        (요청·2xx 응답·무엇을 쟀는지)을 갖췄는가. **손으로 옮겨 적은 값이 아닌지**는
        여기서 못 잰다 — 그것은 ①(pytest 가 방금 그 파일을 새로 쓴 것)이 보장한다.
     ③ **절 목록 전수** — 이 차선에 배정된 DSM 절을 전부 찍는다(턴 AK 11 + 턴 AL 11 +
-       턴 AM 7 = 29). 닫은 일곱(U2-03·U2-04·U2-05·U4-06·U5-02·U3-04·U3-03)은 ①②로,
-       못 닫은 스물둘은 **「무엇이 없는가」 한 줄**로. 못 닫은 칸을 빈 칸으로 두지
-       않는다 — 빈 칸은 「모른다」와 「없다」가 구별되지 않는다(D-274).
+       턴 AM 7 = 29). 닫은 여덟(U2-03·U2-04·U2-05·U4-06·U5-02·U3-04·U3-03·
+       U5-05[턴 AP])은 ①②로, 못 닫은 스물하나는 **「무엇이 없는가」 한 줄**로.
+       못 닫은 칸을 빈 칸으로 두지 않는다 — 빈 칸은 「모른다」와 「없다」가
+       구별되지 않는다(D-274).
 
 무엇을 하지 않는가
 ------------------
@@ -27,7 +28,7 @@
   옮기는 것은 조율자다(대장은 손으로 고치지 않는다 — 세종 판정 그대로).
 
 종료 코드 (저장소 규약 · D-400)
-    0 = 쟀고 통과(닫은 열 7/7)   1 = 쟀고 실패   2 = 못 쟀다 (회색)
+    0 = 쟀고 통과(닫은 열 8/8)   1 = 쟀고 실패   2 = 못 쟀다 (회색)
 
     python scripts/verify_spec_dsm.py                  # 판정 (호스트 — docker 를 부른다)
     python scripts/verify_spec_dsm.py --self-test        # 판정 규칙만
@@ -54,6 +55,8 @@ TESTS_RELS: tuple[str, ...] = (
     "tests/test_p356_u2_spec_promotions.py",     # 턴 AK — DSM-U2-03·04·05
     "tests/test_p356_u4_spec_promotions.py",     # 턴 AL — DSM-U4-06 · DSM-U5-02
     "tests/test_p356_u3u6_spec_promotions.py",   # 턴 AM — DSM-U3-04 · DSM-U3-03
+    "tests/test_ap_n3_u5_02_retention.py",       # 턴 AP · N3 — DSM-U5-02 반쪽 채움(P-421 ④)
+    "tests/test_ap_n3_u5_05_control_log.py",     # 턴 AP · N3 — DSM-U5-05 반쪽 채움(P-421 ②)
 )
 TESTS: tuple[Path, ...] = tuple(BACKEND / rel for rel in TESTS_RELS)
 EVIDENCE_DIR = ROOT / "docs" / "agent" / "evidence" / "SPEC"
@@ -70,6 +73,10 @@ EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 CLOSED_CLAUSES: tuple[str, ...] = (
     "DSM-U2-03", "DSM-U2-04", "DSM-U2-05", "DSM-U4-06", "DSM-U5-02",
     "DSM-U3-04", "DSM-U3-03",
+    #: [턴 AP · 차선 N3 · P-421 ②] DSM-U5-05 — 관제일지 = 인계 메모 + 사건
+    #: 타임라인 합본(새 표 0). 남은 두 행("일지 근무자 자동"·"완결조건 일지
+    #: 근무자=편성표")을 `handover_service.control_log()` 로 닫았다 — 7/7.
+    "DSM-U5-05",
 )
 
 #: annex 원문(§4.2) 제목 — `docs/design/DSM_재난안전관리App_명세서_v1.1_지침기반_20260915.md`
@@ -164,8 +171,10 @@ NOT_STARTED_AL: dict[str, str] = {
     "DSM-U4-09": "통계 축 추가 — `stats?by=safety_index`(지역안전지수 6분야 매핑)가 "
                 "없다. 기존 `stats_axes`(턴 T)는 5축(카메라·유형·심각도·판정·시간대)뿐 "
                 "이고 6분야 매핑표가 새로 필요하다.",
-    "DSM-U5-05": "교대 편성 CSV — 근무표 업로드 파서·`shifts` 저장처가 없다. M 규모"
-                "(CSV 파싱 + 인계 메모·일지 근무자 자동 채움 배선)라 범위 밖.",
+    #: [턴 AP · 차선 N3] DSM-U5-05 는 이제 CLOSED_CLAUSES 에 있다 — 이 자리에서
+    #: 뺐다(스테일 텍스트를 안 남긴다). 근무표 업로드·shifts 저장처는 턴 AO 부터
+    #: 이미 있었다(이 문구가 그 뒤로도 낡은 채 남아 있었다 — 실측 없이 옮겨 적힌
+    #: 흔적).
 }
 
 #: ★ 턴 AM — 이번 턴 배정 7(U3-01·02·03·04 · U6-01·02·03) 중 못 닫은 다섯. U3-04 ·
@@ -261,6 +270,64 @@ def judge_evidence(clause_id: str, payload: dict | None) -> tuple[int, str]:
                 % (clause_id, request.get("path")))
     return EXIT_OK, "%s — 증거 성립(2xx · %s %s)" % (
         clause_id, request.get("method"), request.get("path"))
+
+
+#: DSM-U5-02 ④ (P-421 · 턴 AP 차선 N3) — 「값은 선언이 아니라 설정에서 읽는다」.
+#: gx-shell 안에서 실제로 두 함수를 불러 대조한다(pytest 를 또 안 돌린다 — settings
+#: 만 읽으면 되는 가벼운 확인이라 `docker exec python -c` 하나로 충분하다).
+RETENTION_PROBE = (
+    "import django, os, json\n"
+    "os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')\n"
+    "django.setup()\n"
+    "from common import log_retention_policy as pol\n"
+    "from common import ops_tasks as ot\n"
+    "declared = pol.enforced_declared_days('audit')\n"
+    "seeded = ot.audit_retention_declared_days()\n"
+    "print('GX_U5_02_RETENTION ' + json.dumps({'declared': declared, 'seeded': seeded}))\n"
+)
+RETENTION_MARK = "GX_U5_02_RETENTION "
+
+
+def run_retention_probe(shell: str) -> dict | None:
+    try:
+        r = subprocess.run(
+            ["docker", "exec", "-e", "DJANGO_SETTINGS_MODULE=config.settings",
+             shell, "python", "-c", RETENTION_PROBE],
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=120)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print("%s [입력] 보관기간 탐침을 못 불렀다 — %s" % (TAG, exc))
+        return None
+    text = (r.stdout or "") + (r.stderr or "")
+    for line in text.splitlines():
+        if line.startswith(RETENTION_MARK):
+            try:
+                return json.loads(line[len(RETENTION_MARK):])
+            except ValueError:
+                return None
+    return None
+
+
+def judge_retention_alignment(facts: dict | None) -> tuple[int, str]:
+    """DSM-U5-02 ④ 「선언 == 설정」 1행.
+
+    ⚠ **자기시험이 이 함수를 몸소 망가뜨려 본다**(아래 `self_test`) — 「없으면
+      넘긴다」로 흐리면 P-421 ④가 요구하는 게이트 행이 성립하지 않는다.
+    """
+    if facts is None:
+        return EXIT_UNDECIDABLE, "DSM-U5-02 ④ 선언==설정 — 못 쟀다(탐침이 값을 안 냈다)"
+    declared, seeded = facts.get("declared"), facts.get("seeded")
+    if seeded is None:
+        return (EXIT_UNDECIDABLE,
+                "DSM-U5-02 ④ 선언==설정 — 이 DB 는 미선언(AdminConfig 빈 칸) — "
+                "못 쟀다(선언은 법정 목표 %s일로 안전하게 대체됐다)" % declared)
+    if declared == seeded:
+        return (EXIT_OK,
+                "DSM-U5-02 ④ 선언==설정 — %s일 == %s일(같은 함수가 같은 자리를 "
+                "읽는다 — 값은 선언이 아니라 설정에서 읽는다)" % (declared, seeded))
+    return (EXIT_FAIL,
+            "DSM-U5-02 ④ 선언==설정 — **갈렸다**: 선언 %s일 ≠ 설정 %s일"
+            % (declared, seeded))
 
 
 def combine(codes: list[int]) -> int:
@@ -360,6 +427,17 @@ def self_test() -> int:
     code, _ = judge_evidence("DSM-U2-03", broken_id)
     check("파일 이름과 id 가 다르면 → 빨강", code == EXIT_FAIL)
 
+    code, _ = judge_retention_alignment({"declared": 365, "seeded": 365})
+    check("DSM-U5-02 ④ 선언==설정 — 같으면 초록", code == EXIT_OK)
+    code, _ = judge_retention_alignment({"declared": 730, "seeded": 365})
+    check("★ DSM-U5-02 ④ 갈리면 빨강(같은 함수를 읽게 고쳐도 이 표본은 갈린 값을 "
+         "그대로 줄 수 있어야 한다 — 항등을 시험이 아니라 판정식이 보장하면 "
+         "안 된다)", code == EXIT_FAIL)
+    code, _ = judge_retention_alignment({"declared": 730, "seeded": None})
+    check("DSM-U5-02 ④ 미선언 → 회색", code == EXIT_UNDECIDABLE)
+    code, _ = judge_retention_alignment(None)
+    check("DSM-U5-02 ④ 탐침 실패 → 회색", code == EXIT_UNDECIDABLE)
+
     check("combine — 하나라도 빨강이면 빨강", combine([EXIT_OK, EXIT_FAIL]) == EXIT_FAIL)
     check("combine — 빨강 없고 회색 있으면 회색",
          combine([EXIT_OK, EXIT_UNDECIDABLE]) == EXIT_UNDECIDABLE)
@@ -411,6 +489,13 @@ def main() -> int:
         if code1 != EXIT_OK and raw:
             print("%s ── 길목 시험 원문 꼬리 ──\n%s" % (TAG, raw[-3000:]))
 
+        # ④ DSM-U5-02 「선언 == 설정」 1행 (P-421 ④ · 턴 AP N3)
+        facts = run_retention_probe(args.shell)
+        code4, verdict4 = judge_retention_alignment(facts)
+        codes.append(code4)
+        print("%s %s %s" % (TAG, "OK  " if code4 == EXIT_OK else
+                            ("FAIL" if code4 == EXIT_FAIL else "GRAY"), verdict4))
+
     # ② 절마다 증거 성립
     all_not_started = {**NOT_STARTED, **NOT_STARTED_AL, **NOT_STARTED_AM}
     print("%s ── 절별 판정 (닫은 열 %d · 못 닫은 열 %d) ──"
@@ -452,13 +537,15 @@ if __name__ == "__main__":
         as_="pytest 는 자격증명 없이 --create-db 로 돈다 · HTTP 실측은 "
             "tests/test_p356_u2_spec_promotions.py · "
             "tests/test_p356_u4_spec_promotions.py · "
-            "tests/test_p356_u3u6_spec_promotions.py 안에서 실제 JWT"
+            "tests/test_p356_u3u6_spec_promotions.py · "
+            "tests/test_ap_n3_u5_02_retention.py · "
+            "tests/test_ap_n3_u5_05_control_log.py 안에서 실제 JWT"
             "(RefreshToken.for_user)로",
         source="살아 있는 gx-shell 컨테이너(docker exec) · 그 실행이 방금 새로 쓴 "
               "evidence 파일 — 사진·손으로 옮긴 값이 아니라 이번 실행",
-        measured="닫은 열 7건(DSM-U2-03·04·05 턴 AK · DSM-U4-06·U5-02 턴 AL · "
-                "DSM-U3-04·U3-03 턴 AM) · 못 닫은 열 22건은 이유 1줄(턴 AK 8 · "
-                "턴 AL 9 · 턴 AM 5) · 분모 29(이 차선 N1 배정 턴 AK 11 + 턴 AL 11 + "
-                "턴 AM 7)",
+        measured="닫은 열 8건(DSM-U2-03·04·05 턴 AK · DSM-U4-06·U5-02 턴 AL · "
+                "DSM-U3-04·U3-03 턴 AM · U5-05 턴 AP) · 못 닫은 열 21건은 이유 1줄 "
+                "(턴 AK 8 · 턴 AL 8 · 턴 AM 5) · 분모 29(이 차선 N1 배정 턴 AK 11 + "
+                "턴 AL 11 + 턴 AM 7)",
     )
     raise SystemExit(main())
