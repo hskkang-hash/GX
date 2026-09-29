@@ -17,4 +17,10 @@ export const fwsRoutes = {
    * 회신·비행 기록을 한 화면에 모은다. `/fws/home`·`/fws/field` 와 형제 가지 —
    * 최상위 리터럴이라 서로 안 삼킨다. */
   drone: { title: '드론 운용', path: '/fws/drone' },
+  /** F3 산림과 담당(턴 AN · 차선 N2) — 상황판·기간·인력 배치·확인 요청·접수·통보·자원·단계. */
+  office: { title: '산림과 상황', path: '/fws/office' },
+  /** F3 산림과 담당 잔여(턴 AN · 차선 N3) — 대피·상황보고·통계·훈련. `/fws/office` 의 자식 리터럴. */
+  officeReport: { title: '산림과 보고', path: '/fws/office/report' },
+  /** 산불 앱 기관 관리자 U5(턴 AN · 차선 N4) — 카메라·초소·마을·알림 규칙. */
+  admin: { title: '산불 설정', path: '/fws/admin' },
 };

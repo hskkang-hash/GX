@@ -276,6 +276,9 @@ const FwsPatrolHome = lazy(() => import('./features/fws/pages/PatrolHome'));
 const FwsFieldHome = lazy(() => import('./features/fws/pages/FieldHome'));
 // ── 턴 AM · F5 드론 운용자 현장(세종 판정 P-387) — `/fws/home`·`/fws/field` 와 형제 가지 ──
 const FwsDroneHome = lazy(() => import('./features/fws/pages/DroneHome'));
+const FwsOfficeHome = lazy(() => import('./features/fws/pages/OfficeHome'));
+const FwsOfficeReport = lazy(() => import('./features/fws/pages/OfficeReport'));
+const FwsAdminHome = lazy(() => import('./features/fws/pages/AdminHome'));
 const DsmPrivacyRequests = lazy(
   () => import('./features/dsm/pages/PrivacyRequests'),
 );
@@ -814,6 +817,9 @@ function App() {
             { path: fwsRoutes.field.path, element: <FwsFieldHome /> },
             // ── 턴 AM · P-356·357·387 F5 드론 운용자 현장 — 최상위 리터럴, 형제 가지 ──
             { path: fwsRoutes.drone.path, element: <FwsDroneHome /> },
+            { path: fwsRoutes.office.path, element: <FwsOfficeHome /> },
+            { path: fwsRoutes.officeReport.path, element: <FwsOfficeReport /> },
+            { path: fwsRoutes.admin.path, element: <FwsAdminHome /> },
             // ── 모바일 · 이동 중 수신 모드 (U3 · 차선 D) ──────────────────
             //   M1 은 발송 기록이 정본이다(이벤트 목록이 아니다). 상세는 목록의
             //   값을 물려받지 않고 서버에 다시 묻는다 — 문지기가 목록에만 서고
