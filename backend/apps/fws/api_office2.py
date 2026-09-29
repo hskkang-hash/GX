@@ -187,7 +187,7 @@ class FwsOffice2API:
 
     # ── FWS-F3-18 계도·단속 통계 · 입산통제구역 관리 ────────────────────
     @route.post("/patrol/enforcement", auth=JwtOrInboundKey())
-    @tenant_scoped(reason="계도·단속 기록은 이 사람이 남긴 것이다")
+    @tenant_scoped(reason="계도·단속 기록은 이 테넌트에 남긴다(곁표 audit_scope · P-411)")
     @idempotent("fws.office2.patrol_enforcement")
     def record_patrol_enforcement(self, request, kind: str, location: str = "",
                                  note: str = ""):
@@ -198,12 +198,12 @@ class FwsOffice2API:
             raise HttpError(422, str(exc))
 
     @route.get("/patrol/enforcement/mine", auth=JwtOrInboundKey())
-    @tenant_scoped(reason="내 계도·단속 실적만 읽는다")
+    @tenant_scoped(reason="이 테넌트의 계도·단속 실적을 읽는다(곁표 audit_scope · 다른 테넌트 0 · 경로 이름 /mine 은 라우트 대장 때문에 그대로)")
     def patrol_enforcement_stats(self, request):
         return office2.patrol_enforcement_stats(scope=_scope(request))
 
     @route.post("/entry-control-zones", auth=JwtOrInboundKey())
-    @tenant_scoped(reason="입산통제구역 설정은 이 사람이 남긴 것이다")
+    @tenant_scoped(reason="입산통제구역 설정은 이 테넌트에 남긴다(곁표 audit_scope · P-411)")
     @idempotent("fws.office2.entry_control_zone")
     def set_entry_control_zone(self, request, zone_name: str, status: str):
         try:
@@ -213,7 +213,7 @@ class FwsOffice2API:
             raise HttpError(422, str(exc))
 
     @route.get("/entry-control-zones", auth=JwtOrInboundKey())
-    @tenant_scoped(reason="내가 설정한 구역만 읽는다")
+    @tenant_scoped(reason="이 테넌트가 설정한 구역을 읽는다(곁표 audit_scope · 다른 테넌트 0)")
     def entry_control_zones(self, request):
         return office2.entry_control_zones(scope=_scope(request))
 

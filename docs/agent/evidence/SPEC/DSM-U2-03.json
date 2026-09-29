@@ -24,5 +24,38 @@
       "actor_id": 583
     }
   },
-  "what": "상황판단회의 기록 1건을 실제로 남기고 응답을 그대로 옮겼다 — 손으로 지어낸 값 0."
+  "what": "상황판단회의 기록 1건을 실제로 남기고 응답을 그대로 옮겼다 — 손으로 지어낸 값 0.",
+  "title_parts": [
+    {
+      "part": "회의 시각(occurred_at) 기록",
+      "where": "backend/apps/dsm/situation_meeting_service.py::record_meeting",
+      "status": "measured: POST /api/dsm/situation-meetings body.occurred_at → response.occurred_at (evidence)"
+    },
+    {
+      "part": "참석(attendees) 기록",
+      "where": "backend/apps/dsm/situation_meeting_service.py::record_meeting",
+      "status": "measured: body.attendees='상황실장·팀장·U4' 그대로 응답에 옮겨짐"
+    },
+    {
+      "part": "결정(통제·대피·비상 단계) 기록",
+      "where": "backend/apps/dsm/situation_meeting_service.py::record_meeting (decision 필수, 빈 값 400)",
+      "status": "measured — 단, decision 은 자유 텍스트다(통제/대피/비상 단계 enum 검증 없음, 코드 전문 확인)"
+    },
+    {
+      "part": "근거 값(수위·강우, basis) 기록",
+      "where": "backend/apps/dsm/situation_meeting_service.py::record_meeting",
+      "status": "measured: body.basis='수위 182cm · 강우 41mm' 그대로 옮겨짐"
+    },
+    {
+      "part": "「한 화면」— 위 4칸을 한 폼에서 입력하는 프런트 화면",
+      "where": "frontend/src (situation-meetings 문자열 grep 전수 0건 — 화면 코드 없음)",
+      "status": "없음 — 프런트에 이 엔드포인트를 부르는 화면이 전혀 없다(grep 0건, 2026-09-29 재확인)"
+    },
+    {
+      "part": "완결 조건 「결정 → 테넌트 상태 축 변경」",
+      "where": "backend/apps/dsm/situation_meeting_service.py (파일 전문 — record_meeting/list_meetings 뿐, latest()/상태 갱신 함수 없음)",
+      "status": "없음 — 회의 기록은 감사 로그 한 줄로만 남고, 결정값이 테넌트의 어떤 상태 축(모드·경보 단계 등)도 바꾸지 않는다. 동일 차선의 alert_level_service.py 는 'latest_alert()'로 이 개념을 대신하지만 situation_meeting_service.py 에는 그런 read-back 함수 자체가 없다"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 §4.2 DSM-U2-03 행(입력 4칸 + 완결조건 '테넌트 상태 축 변경')을 backend/apps/dsm/situation_meeting_service.py 전문 및 tests/test_p356_u2_spec_promotions.py 와 대조 — 입력 4칸은 실측 닫힘, 화면과 상태축 변경 완결조건은 코드 부재로 미착수"
 }

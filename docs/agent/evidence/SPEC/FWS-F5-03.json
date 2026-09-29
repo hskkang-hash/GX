@@ -23,5 +23,33 @@
       "attachment_ref": "minio://drone/1.jpg"
     }
   },
-  "what": "드론 확인 회신(산불 맞음 + 사진·열화상 참조)이 K1 사건의 verdict 를 confirmed 로 바꾼다 — F1-06 문 재사용(P-357) + 참조 값 필수화 실측(참조 없이 fire_confirmed 는 422)"
+  "what": "드론 확인 회신(산불 맞음 + 사진·열화상 참조)이 K1 사건의 verdict 를 confirmed 로 바꾼다 — F1-06 문 재사용(P-357) + 참조 값 필수화 실측(참조 없이 fire_confirmed 는 422)",
+  "title_parts": [
+    {
+      "part": "확인 회신 행위(POST reply)",
+      "where": "POST /api/fws/drone/verifications/{event_id}/reply · backend/apps/fws/drone.py::confirm_result() → apps/fws/verification.py::reply_verification()",
+      "status": "measured: tests.test_fws_f5.F5_03_ConfirmResultTest.test_fire_confirmed_requires_attachment_ref — 200, reply_id·verdict 실측"
+    },
+    {
+      "part": "산불 맞음(fire_confirmed) 결과 처리 → 사건 verdict=confirmed",
+      "where": "backend/apps/fws/drone.py::confirm_result() result=fire_confirmed 경로 · docs/agent/evidence/SPEC/FWS-F5-03.json response.body.verdict",
+      "status": "measured: 동일 시험에서 result=fire_confirmed → verdict=\"confirmed\" 그대로 응답(F1-06 verification.reply_verification 재사용)"
+    },
+    {
+      "part": "오인(false_alarm) 결과 처리(사유 코드)",
+      "where": "backend/apps/fws/drone.py::confirm_result() result=false_alarm 경로 · backend/tests/test_fws_f5.py F5_03_ConfirmResultTest.test_false_alarm_does_not_require_attachment_ref",
+      "status": "measured: test_false_alarm_does_not_require_attachment_ref 실행 결과 200, attachment_ref=None 확인(이 케이스는 별도 evidence json을 쓰지 않으나 같은 파일의 실제 pytest로 검증됨)"
+    },
+    {
+      "part": "사진 참조 첨부(산불 맞음 시 필수)",
+      "where": "backend/apps/fws/drone.py::confirm_result() attachment_ref 필수화 로직(참조 없이 fire_confirmed 는 422)",
+      "status": "measured: docs/agent/evidence/SPEC/FWS-F5-03.json — attachment_ref 없이 요청 시 422, 값(minio://drone/1.jpg) 제출 시 200 및 응답에 그대로 echo"
+    },
+    {
+      "part": "열화상 참조(사진과 구분되는 별도 증빙 유형)",
+      "where": "backend/apps/fws/drone.py::confirm_result() — attachment_ref 는 단일 문자열 필드 하나뿐, 사진/열화상을 구분하는 타입·필드 없음",
+      "status": "부분 — attachment_ref 라는 단일 값이 사진·열화상 두 증빙을 구분 없이 대신한다. 열화상 전용 필드·형식 검증(예: 파일 타입, 두 번째 참조 슬롯)은 코드에 없다"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:182 및 명세서 5.5절(223행, 완료조건 \"확정\")을 backend/tests/test_fws_f5.py::F5_03_ConfirmResultTest 두 시험과 backend/apps/fws/drone.py::confirm_result()·apps/fws/verification.py::reply_verification 대조 — 확인/오인 회신과 사진 참조 필수화는 실측 CLOSED, 사진·열화상 구분은 단일 필드라 OPEN"
 }

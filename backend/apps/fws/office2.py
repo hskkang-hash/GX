@@ -23,10 +23,13 @@ notice`(F6-07)를 그대로 부른다 — 글자수 상한·CBS 문안을 다시
   **확인 회신 30분 이내 비율**(K1 이 이미 내주는 `occurred_at`→`reviewed_at`)로
   근사하고, 그 근사임을 응답의 `golden_time_note` 에 그대로 적는다(D-284 —
   지어내지 않고 무엇을 쟀는지 밝힌다).
-· **계도·단속 통계**·**입산통제구역**은 `patrol.py`·`standby.py`·`equipment.py`
-  와 같은 한계다 — 감사 표(`logger.AuditLogs`)에 테넌트 칸이 없어(§0.4 dj-core
-  소유) **이 사람이 남긴 기록만** 센다. 조직 전체 집계는 이번 차선 범위 밖 —
-  다른 F1/F2 모듈이 이미 같은 경계에 멈춰 선 자리와 같다.
+· **계도·단속 통계**·**입산통제구역**은 감사 표(`logger.AuditLogs`)에 테넌트
+  칸이 없다는 한계(§0.4 dj-core 소유)를 **곁표로 넘어선다** — 턴 AO 차선 O ·
+  P-411. `apps/fws/audit_scope.py`(감사 한 줄을 쓸 때 곁표 행도 같이 쓴다)가
+  「그 감사 행이 어느 테넌트 것인가」를 따로 적어 두므로, 이제 이 절의 조회는
+  **같은 테넌트 전체**를 센다(`patrol.py`·`standby.py` 는 아직 이 곁표를 쓰지
+  않으므로 그 파일들의 "본인만" 한계는 그대로다 — 이 차선의 파일 소유는
+  `office2.py`·`admin_settings.py` 뿐).
 · **원인 분류**(입산자실화·소각·담뱃불·건축물화재·기타)는 annex FF-7 원문
   그대로다(§6 FF-7) — 지어내지 않는다.
 """
@@ -42,6 +45,7 @@ from django.utils import timezone
 from common import audit_writer
 
 from apps.dsm import services as dsm_services
+from apps.fws import audit_scope as fws_audit_scope
 from apps.fws import constants as fws_constants
 from apps.fws import integration as fws_integration
 from apps.fws import verification as fws_verification
@@ -545,8 +549,9 @@ def run_camera_threshold_test(*, scope, stream_monitor_id: int,
 # ═══════════════════════════════════════════════════════════════════════════
 # FWS-F3-18 계도·단속 통계 · 입산통제구역 관리
 # ═══════════════════════════════════════════════════════════════════════════
-#: `patrol.py`·`standby.py` 와 같은 한계 — 감사 표에 테넌트 칸이 없어 **본인
-#: 기록만**(조직 전체 집계는 범위 밖).
+#: 감사 표에 테넌트 칸이 없는 한계를 곁표(`audit_scope.py`)로 넘어선다 — 아래
+#: `patrol_enforcement_stats`·`entry_control_zones` 는 **같은 테넌트 전체**를
+#: 센다(턴 AO 차선 O · P-411).
 KIND_GUIDANCE = "guidance"        # 계도
 KIND_ENFORCEMENT = "enforcement"  # 단속
 PATROL_ENFORCEMENT_KINDS: tuple = (KIND_GUIDANCE, KIND_ENFORCEMENT)
@@ -572,25 +577,38 @@ def record_patrol_enforcement(*, scope, kind: str, location: str = "",
     if len(location) > MAX_LOCATION_CHARS:
         raise Office2InputRejected(
             f"location 이 {len(location)}자다. 상한은 {MAX_LOCATION_CHARS}자")
-    actor = scope.require_actor()
     payload = {"kind": kind, "location": location, "note": note,
               "recorded_at": _now_iso()}
-    entry = _write(actor, ACTION_PATROL_ENFORCEMENT, payload,
-                  f"{kind} 기록 · {location or '(장소 미기재)'}")
+    entry = fws_audit_scope.record(
+        scope=scope, logger_name=LOGGER_NAME, tag=TAG,
+        action=ACTION_PATROL_ENFORCEMENT, payload=payload,
+        reason=f"{kind} 기록 · {location or '(장소 미기재)'}",
+        kind=ACTION_PATROL_ENFORCEMENT)
     return {"record_id": entry.audit_id, **payload}
 
 
+def _rows_for_tenant(scope, action: str):
+    """이 **테넌트**의 감사 전건, 최신순 — 곁표(`audit_scope.py`)로 좁힌
+    `AuditLogs` 행(`_rows_of` 의 테넌트 판)."""
+    ids = fws_audit_scope.tenant_audit_ids(scope=scope, kind=action)
+    if not ids:
+        return []
+    return list(
+        _model()._base_manager
+        .filter(logger_name=LOGGER_NAME, api_name=action, id__in=ids)
+        .order_by("-id")[:2000])
+
+
 def patrol_enforcement_stats(*, scope) -> dict:
-    """FWS-F3-18 — 계도·단속 통계. **본인이 남긴 기록만**(`equipment.py::mine`
-    과 같은 한계)."""
-    actor = scope.require_actor()
-    rows = _rows_of(actor.pk, ACTION_PATROL_ENFORCEMENT)
+    """FWS-F3-18 — 계도·단속 통계. **같은 테넌트 전체**(곁표로 좁힌 감사 전건 ·
+    턴 AO 차선 O · P-411 — 예전엔 "본인이 남긴 기록만" 이었다)."""
+    rows = _rows_for_tenant(scope, ACTION_PATROL_ENFORCEMENT)
     counts: Counter = Counter()
     for row in rows:
         payload = row.data_after if isinstance(row.data_after, dict) else {}
         if payload.get("kind"):
             counts[payload["kind"]] += 1
-    return {"by_kind": dict(counts), "total": sum(counts.values()), "scope": "mine"}
+    return {"by_kind": dict(counts), "total": sum(counts.values()), "scope": "tenant"}
 
 
 def set_entry_control_zone(*, scope, zone_name: str, status: str) -> dict:
@@ -604,24 +622,25 @@ def set_entry_control_zone(*, scope, zone_name: str, status: str) -> dict:
     if status not in ZONE_STATUSES:
         raise Office2InputRejected(
             f"status={status!r} 는 구역 상태가 아니다. 허용: {ZONE_STATUSES}")
-    actor = scope.require_actor()
     payload = {"zone_name": zone_name, "status": status, "set_at": _now_iso()}
-    _write(actor, ACTION_ENTRY_CONTROL_ZONE, payload,
-          f"입산통제구역 {zone_name} → {status}")
+    fws_audit_scope.record(
+        scope=scope, logger_name=LOGGER_NAME, tag=TAG,
+        action=ACTION_ENTRY_CONTROL_ZONE, payload=payload,
+        reason=f"입산통제구역 {zone_name} → {status}", kind=ACTION_ENTRY_CONTROL_ZONE)
     return payload
 
 
 def entry_control_zones(*, scope) -> dict:
-    """지금 이 사람이 설정한 구역들의 **최신 상태**(본인 것만 · 위와 같은 한계)."""
-    actor = scope.require_actor()
-    rows = _rows_of(actor.pk, ACTION_ENTRY_CONTROL_ZONE)  # 최신(-id)순
+    """이 **테넌트**가 설정한 구역들의 최신 상태(곁표로 좁힌 전건 — 턴 AO 차선 O ·
+    P-411, 예전엔 "지금 이 사람이 설정한 것만" 이었다)."""
+    rows = _rows_for_tenant(scope, ACTION_ENTRY_CONTROL_ZONE)  # 최신(-id)순
     latest: dict = {}
     for row in rows:
         payload = row.data_after if isinstance(row.data_after, dict) else {}
         name = payload.get("zone_name")
         if name and name not in latest:  # 처음 만난 것(=최신)만 남긴다
             latest[name] = payload
-    return {"zones": list(latest.values()), "scope": "mine"}
+    return {"zones": list(latest.values()), "scope": "tenant"}
 
 
 # ═══════════════════════════════════════════════════════════════════════════

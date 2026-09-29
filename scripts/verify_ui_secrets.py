@@ -229,6 +229,19 @@ def scan_api() -> tuple[int, list[tuple[str, str, str, str]], str | None]:
         return 0, [], f"verify_route_alive 를 못 읽었다: {type(exc).__name__} {exc}"
 
     api = os.environ.get("GX_API", "").rstrip("/")
+    #: ★ [P-412 · 2026-09-30 · 턴 AO · 조율자 E] `.env.gates` 의 `GX_API` 는 **컨테이너 안에서
+    #:   본 주소**(`localhost:8000` = gx-shell runserver)다. 이 게이트는 호스트에서 직접 두드리므로
+    #:   그 주소는 호스트의 임시 다리 `gx-portfwd`(127.0.0.1:8000 → gx-shell)를 탔다 — 다리를
+    #:   지우면 이 면이 조용히 회색이 된다. 호스트에서는 **호스트가 실제로 닿는 앞문**을 쓴다:
+    #:   `GX_API_PUBLIC` 이 있으면 그것, 없으면 8500(같은 뒷단 · nginx 앞문). 판정 규칙은 무변경.
+    if not Path("/.dockerenv").exists():
+        public = os.environ.get("GX_API_PUBLIC", "").rstrip("/")
+        if public:
+            api = public
+        elif re.match(r"^https?://(localhost|127\.0\.0\.1):8000$", api):
+            api = "http://localhost:8500"
+    print(f"[SECRETS] [입력] API 면 주소 {api or '(없음)'} "
+          f"({'컨테이너 안' if Path('/.dockerenv').exists() else '호스트 — 앞문'})")
     user = os.environ.get("GX_ROUTE_USER", "")
     password = os.environ.get("GX_ROUTE_PASSWORD", "")
     if not api or not user or not password:

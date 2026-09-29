@@ -1,0 +1,61 @@
+{
+  "id": "O-02",
+  "title": "앱 설치·버전",
+  "measured_at": "2026-09-29T06:59:56.346566+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_ops_an.O02_AppInstallTest.test_install_list_and_conflict_free",
+  "request": {
+    "method": "POST",
+    "path": "/api/dsm/ops/apps/install?tenant_code=t-ea595529&app_code=dsm&version=1.1",
+    "params": {
+      "tenant_code": "t-ea595529",
+      "app_code": "dsm",
+      "version": "1.1"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "tenant_code": "t-ea595529",
+      "tenant_group_id": 10,
+      "app_code": "dsm",
+      "version": "1.1",
+      "status": "active",
+      "installed_at": "2026-09-29T06:59:56+00:00",
+      "upgraded_from": null
+    }
+  },
+  "what": "POST .../ops/apps/install 로 테넌트에 앱을 설치하면 목록에 행 1(k_app_installation 대체 — 감사 스냅샷)이 생기고, 같은 버전 재설치는 422(시드 대장 충돌 0)이며 다른 버전은 업그레이드로 받아 행 수가 그대로 1이다 — 완결조건('행 · 시드 대장 0 충돌') 실측.",
+  "title_parts": [
+    {
+      "part": "앱 설치",
+      "where": "POST .../apps/install → status=active",
+      "status": "measured"
+    },
+    {
+      "part": "업그레이드",
+      "where": "version 1.1→1.2, 행 수 그대로 1",
+      "status": "measured"
+    },
+    {
+      "part": "비활성화",
+      "where": "POST .../apps/status",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — k_app_installation 행",
+      "where": "installs[0]",
+      "status": "measured — 전용 모델이 없어 감사 스냅샷 행으로 대신함(새 모델 0)"
+    },
+    {
+      "part": "완결조건 — 시드 대장 0 충돌",
+      "where": "같은 버전 재설치 422",
+      "status": "measured"
+    },
+    {
+      "part": "유령 시드 정리",
+      "where": "POST .../apps/status(status=inactive)",
+      "status": "measured — 수동 정리 경로만(자동 탐지·주기 실행은 범위 밖)"
+    }
+  ]
+}

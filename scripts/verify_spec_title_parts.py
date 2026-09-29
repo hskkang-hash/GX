@@ -103,6 +103,35 @@ CLOSED_STATUS = frozenset({"있음", "완료", "닫힘", "ok", "present", "done"
 #: `정직하게 비움` — 이것들은 앞머리가 위와 안 겹친다(그래서 열린 행으로 남는다).
 CLOSED_PREFIXES = ("measured", "present", "있음", "구현")
 
+#: [턴 AO · P-406 · 차선 N1] **결정으로 뺀 행** — `title_parts[].excluded_by` 가
+#: 결정 번호 모양(`P-###` 또는 `D-###`)이고 `excluded_why`(사유 1줄)가 있으면
+#: 그 행은 status 앞머리와 무관하게 닫힘이다(§5 P-406). **번호 없는 「없음」은
+#: 여전히 빈 칸/열린 행이다** — `excluded_by` 가 없거나 이 모양이 아니면 이 규칙은
+#: 적용되지 않는다(예: `excluded_by: "없음"` · `excluded_by` 키 자체가 없음).
+EXCLUDED_BY_RE = re.compile(r"^(?:P|D)-\d{3}$")
+
+#: [턴 AO · P-406 · 차선 N1] **대리 지표는 반쪽이다** — 제목이 부르는 수를 다른
+#: 수로 근사했으면(status 가 이 앞머리로 시작) 열린 행이다. `CLOSED_PREFIXES`
+#: 와 겹치지 않는지 `self_test` 가 확인한다(아래 「겹침 없음」 표본).
+PROXY_PREFIXES = ("근사", "대리", "proxy")
+
+
+def _is_excluded_closed(row: dict) -> bool:
+    """P-406 — 결정으로 뺀 행인가(번호 + 사유 둘 다 있어야 닫힘)."""
+    by = row.get("excluded_by")
+    why = row.get("excluded_why")
+    if not isinstance(by, str) or not EXCLUDED_BY_RE.match(by.strip()):
+        return False
+    return isinstance(why, str) and bool(why.strip())
+
+
+def _is_proxy(status) -> bool:
+    """대리 지표 — status 앞머리가 근사/대리/proxy 면 반쪽(열린 행)이다."""
+    if not isinstance(status, str):
+        return False
+    st = status.strip().lower()
+    return st.startswith(tuple(p.lower() for p in PROXY_PREFIXES))
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # ① 대장을 읽는다 — promoted_ids() 의 읽는 방식을 베낀다(출처는 머리글)
@@ -200,7 +229,12 @@ def judge_title_parts(title_parts) -> dict:
         blanks_here = [f for f in ("part", "where", "status")
                        if not isinstance(row.get(f), str) or not row.get(f).strip()]
         n_blank += len(blanks_here)
-        closed = _is_closed(row.get("status"))
+        status = row.get("status")
+        #: P-406 결정 제외가 최우선(번호+사유가 있으면 status 앞머리와 무관하게
+        #: 닫힘) — 그다음 실측 닫힘 앞머리, 단 대리 지표(근사/대리/proxy)는
+        #: 결정 제외가 아닌 한 언제나 열린 행이다(「대리 지표는 반쪽」).
+        excluded = _is_excluded_closed(row)
+        closed = excluded or (_is_closed(status) and not _is_proxy(status))
         if not closed:
             n_open += 1
         detail.append({"row": i, "blanks": blanks_here, "closed": closed,
@@ -373,6 +407,53 @@ def self_test() -> int:
        _is_closed("  OK  ") and _is_closed("Present") and _is_closed("있음"))
     ok("닫힘 값이 아닌 것은 안 닫힘",
        not _is_closed("검토중") and not _is_closed("") and not _is_closed(None))
+
+    # ── P-406 결정 제외 · 대리 지표(턴 AO · 차선 N1) ────────────────────────
+    ok("CLOSED_PREFIXES 와 PROXY_PREFIXES 는 앞머리가 안 겹친다(자기시험이 확인)",
+       not any(c.lower().startswith(p.lower()) or p.lower().startswith(c.lower())
+              for c in CLOSED_PREFIXES for p in PROXY_PREFIXES))
+
+    _row_excluded_numbered = {"part": "산림청 앱 실제 푸시", "where": "(없음)",
+                              "status": "없음(세종 판정)",
+                              "excluded_by": "P-392", "excluded_why": "산림청 "
+                              "스마트산림재난 앱 연동은 F6-07 이 범위 밖으로 "
+                              "남겼다"}
+    ok("★ P-406 짝 ① — excluded_by 번호(P-###) + excluded_why 있음 → 닫힘",
+       _is_excluded_closed(_row_excluded_numbered))
+    j = judge_title_parts([_row_excluded_numbered])
+    ok("★ 표 안에서도 닫힘으로 잡힌다(열린 행 0)", j["n_open_rows"] == 0)
+
+    _row_excluded_no_number = {"part": "산림청 앱 실제 푸시", "where": "(없음)",
+                               "status": "없음(세종 판정)"}
+    ok("★ P-406 짝 ② — excluded_by 번호 없음(키 자체가 없음) → 여전히 열린 행",
+       not _is_excluded_closed(_row_excluded_no_number))
+    j = judge_title_parts([_row_excluded_no_number])
+    ok("★ 표에서도 열린 행 1(번호 없는 「없음」은 빈 칸과 같은 대접)",
+       j["n_open_rows"] == 1)
+
+    _row_excluded_bad_number = {"part": "x", "where": "y", "status": "없음",
+                                "excluded_by": "없음", "excluded_why": "사유"}
+    ok("★ excluded_by 값 자체가 결정 번호 모양이 아니면(예: '없음') → 안 닫힘",
+       not _is_excluded_closed(_row_excluded_bad_number))
+
+    _row_excluded_no_why = {"part": "x", "where": "y", "status": "없음",
+                            "excluded_by": "P-392", "excluded_why": ""}
+    ok("★ excluded_why 가 비면(사유 없음) → 번호가 있어도 안 닫힘",
+       not _is_excluded_closed(_row_excluded_no_why))
+
+    _row_proxy = {"part": "골든타임 준수율", "where": "확인 회신 30분 비율",
+                 "status": "대리 지표 — 확인 회신 30분 비율로 근사"}
+    ok("★ P-406 짝 ③ — 대리(대리/근사/proxy 앞머리) → 열린 행",
+       _is_proxy(_row_proxy["status"]) and not _is_closed(_row_proxy["status"]))
+    j = judge_title_parts([_row_proxy])
+    ok("★ 표에서도 열린 행 1(대리 지표는 반쪽)", j["n_open_rows"] == 1)
+
+    _row_proxy_approx = {"part": "x", "where": "y", "status": "근사 실측 — x"}
+    ok("★ '근사' 앞머리도 대리와 같이 열린 행", _is_proxy(_row_proxy_approx["status"]))
+
+    _row_proxy_en = {"part": "x", "where": "y", "status": "Proxy metric for X"}
+    ok("★ 영문 'proxy' 앞머리도 대소문자 무시하고 열린 행",
+       _is_proxy(_row_proxy_en["status"]))
 
     # ── classify_payload ─────────────────────────────────────────────────
     ok("증거 없음(None) → grey · no_evidence",

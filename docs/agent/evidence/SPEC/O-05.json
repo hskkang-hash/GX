@@ -1,0 +1,91 @@
+{
+  "id": "O-05",
+  "title": "건강 보드(전 테넌트)",
+  "measured_at": "2026-09-29T07:00:14.002126+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_ops_an.O05_HealthBoardTest.test_tenant_count_equals_rows_and_red_opens_one_incident",
+  "request": {
+    "method": "GET",
+    "path": "/api/dsm/ops/health",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "tenants": [
+        {
+          "tenant_code": "",
+          "name": "dsm-tenant-A",
+          "cameras": {
+            "active": 1,
+            "total": 1
+          },
+          "queue_lag_sec": 0.0,
+          "storage_used_pct": 0.0,
+          "backup_receipt_at": "2026-09-28T20:00:00+00:00",
+          "backup_verdict": "OK",
+          "survival_alert_late": 0,
+          "color": "green",
+          "auto_incident_id": null
+        },
+        {
+          "tenant_code": "",
+          "name": "dsm-tenant-B",
+          "cameras": {
+            "active": 1,
+            "total": 1
+          },
+          "queue_lag_sec": 0.0,
+          "storage_used_pct": 0.0,
+          "backup_receipt_at": "2026-09-28T20:00:00+00:00",
+          "backup_verdict": "OK",
+          "survival_alert_late": 0,
+          "color": "green",
+          "auto_incident_id": null
+        },
+        {
+          "tenant_code": "t-88e112ca",
+          "name": "온보딩 시험 테넌트 t-88e112ca",
+          "cameras": {
+            "active": 0,
+            "total": 1
+          },
+          "queue_lag_sec": 0.0,
+          "storage_used_pct": 0.0,
+          "backup_receipt_at": "2026-09-28T20:00:00+00:00",
+          "backup_verdict": "OK",
+          "survival_alert_late": 0,
+          "color": "red",
+          "auto_incident_id": "65c61d046674"
+        }
+      ],
+      "tenant_count": 3,
+      "monitor_source": "/docs/agent/evidence/D-373/monitor_last.json",
+      "monitor_read": true,
+      "backup_source": "/docs/agent/evidence/D-373/backup_last.json",
+      "backup_read": true,
+      "not_measured": {
+        "5xx": "가용성(5xx)는 scripts/verify_front_line_502.py 한 자리에서만 잰다(P-84) — 라이브 로그인이 필요해 이 차선(라이브 로그인 금지)은 못 읽는다.",
+        "gate_16_colors": "ga_readiness.yaml 의 절별 색은 있으나 '게이트 16색'(테넌트별 게이트 격자)은 이번 턴에 안 붙였다 — 무엇이 없는가로 남긴다."
+      }
+    }
+  },
+  "what": "GET /api/dsm/ops/health 의 tenant_count 가 tenants 행 수와 같고, 카메라 활성 0(총 1)인 테넌트 행이 색=red 이며 open_incident() 를 재사용해 실제 인시던트 하나를 연다(auto_incident_id) — 재호출해도 같은 id(중복 생성 0). §7 완결조건('테넌트 수 = 보드 행 수 · 빨강 → 인시던트 자동 생성')을 그대로 실측한다(설명 칸의 5xx·게이트16색은 완결조건이 아니라 응답의 not_measured 로 정직하게 비운다).",
+  "title_parts": [
+    {
+      "part": "완결조건 — 테넌트 수 = 보드 행 수",
+      "where": "tenant_count/tenants",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — 빨강 → 인시던트 자동 생성",
+      "where": "auto_incident_id",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — 중복 생성 방지",
+      "where": "재호출 시 같은 auto_incident_id",
+      "status": "measured"
+    }
+  ]
+}

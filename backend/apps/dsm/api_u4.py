@@ -374,6 +374,21 @@ class DsmU4API:
         except SystemScopeCannotRead as exc:
             raise HttpError(403, str(exc))
 
+    # ── [턴 AO · P-407] DSM-U4-07 「연간 통계(출력)」 반쪽 채움 ──────────────
+    @route.get("/video-access-requests/annual-stats", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="영상 제공 연간 통계 — 남의 테넌트 대장이 집계에 "
+                          "섞이면 격리 실패다")
+    def video_access_annual_stats(self, request, year: int | None = None):
+        """`GET /video-access-requests/annual-stats` — 한 해의 요청·승인·제공
+        건수와 월별 요청 건수(생략하면 올해)."""
+        try:
+            return video_access_ledger_service.annual_stats(
+                scope=_scope(request), year=year)
+        except ValueError as exc:
+            raise HttpError(400, str(exc))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
     # ══════════════════════════════════════════════════════════════════════
     # DSM-U5-05 교대 편성(4조 3교대) CSV
     # ══════════════════════════════════════════════════════════════════════

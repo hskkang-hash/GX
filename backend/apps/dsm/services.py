@@ -827,16 +827,46 @@ class SettingAccess:
     audit_id: int
 
 
-def _decide(actor) -> tuple[bool, str]:
+#: ★ [P-410 · 턴 AO · Q] U2 관제팀장(`K3_ROLE_MANAGERS` — `fire_admin` ·
+#:   `surveillance_order`)에게 **딱 이 한 행위**만 더 연다. 온보딩 U2#16
+#:   「알림 규칙 확인」(`/dsm/notify` → `GET /api/dsm/settings/notify-rules/list`)이
+#:   403 이던 자리다(`docs/agent/evidence/P-118/click_completes.json`) — 관제팀장은
+#:   "누가 재난을 아는가"를 **보기는** 해야 하는 업무이지만(`api_u56.py::notify_rules_list`
+#:   독스트링), `_decide()` 는 종전에 전역/테넌트 관리자만 통과시켰다.
+#:   ⚠ **행위 문자열을 정확히 맞춘다** — 접두어 `"read:"` 전부를 열지 않는다.
+#:   그 접두어에는 `read:system:backup-receipts` · `read:system:storage` ·
+#:   `read:inbound-api-key:scopes:...`(api_u56.py) 와 `f"read:{domain}"`
+#:   (`services.py::setting_overview`, api_keys 포함)까지 걸린다 — 그것들은 이번 절의
+#:   요청 밖이다. 쓰기(`write:notify-rules:...`)는 이 표에 없다 — 손대지 않았다.
+_NOTIFY_RULES_READ_ACTION = "read:notify-rules"
+
+
+def _has_notify_rules_read_role(actor) -> bool:
+    """U2 관제팀장인가. 표는 여기서 다시 적지 않는다(D-212) — `config.k3_roles`
+    의 `K3_ROLE_MANAGERS` 를 그대로 읽는다."""
+    from config.k3_roles import K3_ROLE_MANAGERS
+
+    roles = getattr(actor, "roles", None)
+    if roles is None:
+        return False
+    codes = set(roles.values_list("code", flat=True))
+    return bool(codes & set(K3_ROLE_MANAGERS))
+
+
+def _decide(actor, *, action: str = "") -> tuple[bool, str]:
     """설정을 만질 수 있는가. **판정식을 복사하지 않는다** (FR-12-3 · D-212).
 
     `common/tenant_roles.py` 한 곳만 부른다. 판정식 복사본 하나가 우회 지점 하나이고,
     실제로 그 복사본이 이 저장소 격리 사고의 원인이었다.
+
+    ★ [P-410 · 턴 AO · Q] 예외 한 줄 — 위 `_NOTIFY_RULES_READ_ACTION` 참고.
     """
     if is_global_admin(actor):
         return True, "전역 관리 역할"
     if is_tenant_admin(actor):
         return True, "테넌트 운영 역할"
+    if action == _NOTIFY_RULES_READ_ACTION and _has_notify_rules_read_role(actor):
+        return True, "관제 관리자 역할(알림 규칙 읽기 전용 — P-410)"
     return False, "설정 변경 권한이 없는 계정"
 
 
@@ -851,7 +881,7 @@ def guard_setting(*, scope: TenantScope, action: str,
     감사에 남길 수 없으면 그 설정 변경은 일어나지 않는 것이 옳다.
     """
     actor = scope.require_actor()
-    allowed, why = _decide(actor)
+    allowed, why = _decide(actor, action=action)
     entry = audit.record(
         scope=scope, action=action,
         outcome=audit.ALLOWED if allowed else audit.DENIED,
@@ -1536,3 +1566,52 @@ def count_billable_ledgers(*, scope: TenantScope, until) -> dict:
     from kernels.k6_feedback import usage_snapshot
 
     return usage_snapshot(scope=scope, until=until)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DSM-U6-01·U6-03 (턴 AO · 차선 N4) — 외부에서 들어온 사건을 K1 경로로 남긴다
+# ═══════════════════════════════════════════════════════════════════════════
+def record_external_event(*, scope: TenantScope, stream_monitor_id: int,
+                          event_type: str, severity: str,
+                          occurred_at=None, lat: float | None = None,
+                          lng: float | None = None, track_id: str = "") -> dict:
+    """외부 연계(U6-01: 스마트시티 통합플랫폼·112·119)·사회적약자 수색 요청(U6-03)이
+    K1 을 지나는 **유일한 자리**.
+
+    ★ **App 은 규칙을 들지 않는다** — 이 파일의 다른 래퍼들과 같은 모양. 중복
+      억제·소유 상속·열거값 검증은 전부 `record_detection`(K1)이 한다. 여기서
+      다시 하면 두 벌이 되고, 두 벌은 반드시 갈린다.
+
+    ★ `apps.dsm.u36_an_service` 가 이 함수를 거친다 — 그 파일은 `kernels.k1_event`
+      를 직접 import 하지 않는다(F-05 잠금: K1 을 소비하는 App 은 이 파일 하나뿐
+      이어야 한다, `tests/test_f05_event_api.py::EntrySurfaceIsOneTest`).
+
+    ★ `track_id` 가 「외부」 표식이 실리는 자리다(`u36_an_service.EXTERNAL_MARKER`
+      — probe·drill 과 같은 자리, 다른 낱말). 이 함수는 표식의 **모양을 모른다** —
+      부르는 쪽이 이미 완성한 문자열을 그대로 K1 에 넘길 뿐이다(D-212, 표식
+      규약은 부르는 쪽 한 곳에만 있다).
+    """
+    from kernels.k1_event import record_detection
+
+    result = record_detection(
+        scope=scope, stream_monitor_id=stream_monitor_id, event_type=event_type,
+        severity=severity, occurred_at=occurred_at, lat=lat, lng=lng,
+        track_id=track_id)
+    return {
+        "event_id": result.event_id,
+        "created": result.created,
+        "should_notify": result.should_notify,
+        "folded_into_existing": result.folded_into_existing,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 턴 AO · P-414 — FWS F4-12 가 DSM-U2-03(상황판단회의)을 부르는 **공개 문** (D-278 ④)
+# ─────────────────────────────────────────────────────────────────────────────
+# 다른 App 은 DSM 내부 모듈(`situation_meeting_service`)을 직접 import 하지 않는다 —
+# 이 경유 셋이 그 자리다(로직 0줄 · 그대로 넘긴다).
+from apps.dsm.situation_meeting_service import (  # noqa: E402
+    SituationMeetingRejected,
+    list_meetings as list_situation_meetings,
+    record_meeting as record_situation_meeting,
+)

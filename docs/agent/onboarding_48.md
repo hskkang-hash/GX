@@ -1549,3 +1549,108 @@ dsm/mobile/login 만 본다고 선을 그어 두었다) · **표본/데이터 �
 - **안 오른 것**: 턴 AN 차선 L 이 고친 U3#1(알림 결과 상태 칸) · U3#16(저장됨 낱말)은 이번 회차에서 색이 안 바뀌었다 — 갈래 표(P-396)의 (a) 가설 둘이 이번 측정에서는 서지 않았다. 다음 턴 L 이 증거 줄로 다시 가른다.
 - U6#4 는 창 2b 로 구독이 422 → **200** 이 되었다(되돌림 200). 남은 빨강은 술어 「서명 붙은 발송 행」 — 계측기가 찾는 모델 이름 셋(`WebhookOutbox` 등)이 저장소에 없다(실제 발송 행은 `stream_monitors.DeliveryRecord` · 서명은 행에 안 남는다). 판정기 설계라 세종 청구.
 - 갈래(P-396 · 여섯째 기준): (a) 말·술어 8 · (b) 기능 없음 1(U5#15 → O-03) · (c) dj-core·인수 자산·설계 잠금 16 — **(c) 16 이 코드로 못 올리는 몫**이라 문턱 43.2 는 (c) 갈래의 상한 판정 없이는 닿지 않는다.
+
+---
+
+## ★ 턴 AO 재갈래 표(P-408)
+
+턴 AO 차선 L. 세종 P-408 이 요구한 것 — 턴 AN 이 「(c) 16」으로 한데 묶어 둔 상한 표를
+**c1(dj-core 화면 · §0.4 · 못 올림) / c2(인수 자산 · 우리 메뉴에서 뗄 수 있음) /
+c3(설계 잠금 · 결정 번호가 있는 것)** 셋으로 다시 가른다. 결정 번호가 없으면 c3 이
+아니다 — 「정본이 이미 내린 결정」이라는 산문만으로는 상한 분모에서 못 뺀다. 입력은
+일곱째 회차(`docs/agent/evidence/ONB-T/turn_an_7.json` · 30.0/48 · 초록 25 · 반 10 ·
+빨강 13)와 턴 AN 갈래 표(P-396 · 위 절)다. 라이브 서버는 이 턴에서 두드리지 않았다
+(V 몫) — 아래 코드 정정이 다음 회차에서 실제로 올린다는 보장은 없고, 「그렇게 설계했다」
+까지만 이 턴이 책임진다.
+
+### ① (c) 16 재갈래 — c1 / c2 / c3 / 재검토(어디에도 안 맞음)
+
+| 행 | 색(6회차) | 새 갈래 | 근거 |
+|---|---|---|---|
+| U1#4 `/multi-stream-monitor` | 빨강 | **c1** | `frontend/src/features/MultiStreamMonitor/index.tsx:14` `import { … } from 'rj-core'` — dj-core 화면. `roleNav.ts::NAV_ALLOW` 전 역할(U1·U2·U4·U5) 표에 이 경로가 **없다** — 우리 메뉴에 안 걸려 있어 뗄 메뉴 항목 자체가 없다(c2 아님). `roleNav.ts::NAV_ACQUIRED_HIDDEN`(인수 메뉴 넷: `/operation-settings`·`/report-template`·`/roles`·`/configuration-management`)에도 없다 — dj-core `Menu`/`RoleMenu` 행 자체가 없는 **순수 직행 라우트**다(§0.4 인접) |
+| U1#8 `/dsm/events` | 빨강 | **재검토** | 결정 번호 없음. `frontend/src/features/dsm/pages/EventList.tsx:195-211`(코드 주석)이 이 화면의 기본 프리셋이 「미처리」이고 한 시점에 **2건**뿐이었다고 적어 둔다. `turn_am_6.json`·`turn_an_7.json` 의 `sample.snap_event`/`seed_a`/`seed_b` 값이 **완전히 같다**(344598/344598/344599) — 두 회차가 DB 를 리셋하지 않고 **같은 상태를 두 번** 쟀다는 뜻이라, 턴 AN 이 걸어 둔 「다음 회차에도 빨가면 표본 가설 기각」 시험은 **성립하지 않았다**(조건이 재현되지 않았다). D-503(FC 관측 · `unhandled` 칸이 probe 잔여물에 따라 오르내림)이 같은 「미처리 칸이 흔들린다」 주제를 다루지만 **이 화면·이 상한을 직접 판정하지 않는다** — 인용은 하되 c3 자격은 안 준다. 세종 청구 후보 |
+| U1#11 `/dsm/queue` | 빨강 | **c3** | 결정 **D-399**(`docs/agent/decisions.yaml:5447` "이벤트 상태 4값 … 되돌림은 「종결→조치중」 하나뿐 · 관제팀장(K3 MANAGER 이상) · 사유 필수"). `frontend/src/features/dsm/pages/FocusQueue.tsx:24-25` 코드 자신이 "버튼 셋은 서버가 준 `allowed_next` 로 그린다 … (D-399)"라고 인용한다 |
+| U2#2 `/dsm/events?preset=unhandled` | 빨강 | **재검토** | U1#8 과 같은 뿌리(같은 DB 상태 · `EventList.tsx:216-239` 「미처리」 프리셋 주석) — 결정 번호 없음. 세종 청구 후보 |
+| U2#6 `/report-template` | 빨강 | **c2 · 이미 뗌** | `frontend/src/features/nav/roleNav.ts:199` `NAV_ACQUIRED_HIDDEN['/report-template']` — 턴 AA(P-220)에 이미 우리 메뉴에서 뗐다. 아래 ② |
+| U2#16 `/dsm/notify` | 빨강 | **재검토** | `frontend/src/features/dsm/pages/NotifySettings.tsx` 코드를 다시 읽어도 결함을 못 찾았다(턴 AN 이 이미 "표본/판정기 쪽 의문"이라 적음). 결정 번호 없음. 세종 청구 후보 |
+| U3#7 `/m/events/:id` | 빨강 | **c3** | 결정 **D-399**(위와 같음 — "되돌림은 사유 필수 · 관제팀장 이상"). `frontend/src/features/mobile/pages/MobileEventDetail.tsx:14,498` 가 같은 D-399 를 인용한다 — 자동 표본 계정(U3 는 field 역할)이 사유 모달을 못 채워 요청이 안 나간 것도 이 설계의 결이다 |
+| U3#14 `/m/events/:id`(모바일 실시간) | 빨강 | **c3** | 결정 **D-306**(`docs/agent/decisions.yaml:2366` "「구간 참조」를 지금 만들고 「구간 추출」은 선언된 미완성으로 잠근다" — 계약 11조). `frontend/src/features/mobile/pages/MobileEventDetail.tsx:7,864` 가 "계약 11조 잠금"을 인용한다. 실측 자체가 "이 행은 ○ 다"라고 적어 둔 영구 잠금 |
+| U4#11 `/device` | 빨강 | **c2 · 유지(안 뗌)** | `frontend/src/features/nav/roleNav.ts:192-193` "`/device`(드론 장비 등록)는 안 뗀다 — FWS 쪽 자산이고 이 제품의 시험 장치가 아니다(턴 AA 귀약)". 아래 ② |
+| U4#9 `/dsm/events/:id`(증빙 영상) | 빨강 | **c3** | 결정 **D-306**(위와 같음). `frontend/src/features/dsm/pages/EventDetail.tsx:611-615` `CLIP_MISSING_REASON` — 구간 추출 단추 자체가 없다(표의 이름칸만) |
+| U4#15 `/dsm/events` | 빨강 | **재검토** | `EventList.tsx` 에 「보고 표시」·「보고함」 라벨은 코드에 실재한다 — 그 프리셋에 렌더된 행이 0건이었을 가능성(표본 상태). 결정 번호 없음. 세종 청구 후보 |
+| U6#4 `POST /webhook-subscriptions` | 빨강 | **재검토** | [실측 2026-09-29 · 위 일곱째 회차 절] 창 2b 로 구독 자체는 200 이 됐다 — 남은 빨강은 계측기가 존재하지 않는 모델 이름(`WebhookOutbox`)을 찾는 것이다(실제 표는 `stream_monitors.DeliveryRecord`). **제품 결함이 아니라 판정기 결함**이고 결정 번호도 없다 — 세종 청구(이미 청구됨, 위 절 참조). `verify_click_completes.py`/`measure_onboarding_t.py` 는 이 턴 Q 차선 소유라 고치지 않는다 |
+| U1#2 `/dsm/dashboard` | 반 | **c3** | 결정 **D-444**(`docs/agent/decisions.yaml:7785` 부근 — "온보딩 재측에서 올리지 않은 행 둘 … 카메라 상태 칸은 월 모드가 냈으나 그것은 자리 화면이 아니다"). 턴 AN 은 이 행을 "정본이 이미 내린 결정"이라고만 적어 번호가 없었다 — 찾아서 붙였다. 번호 없이는 c3 자격이 없다는 이번 재갈래 규칙이 실제로 걸러낸 자리다 |
+| U2#4 `/dsm/events/:id` | 반 | **재검토** | `frontend/src/features/dsm/components/EventSnapshot.tsx` 코드 정독 — 결함을 못 찾았다. 같은 부품을 쓰는 U3#3(모바일)은 초록이라 타이밍/경합 가능성(V 재측 필요). 결정 번호 없음. 세종 청구 후보 |
+| U4#8 `/dsm/events` | 반 | **재검토** | 턴 AN 이 "턴 AA 실측 주석"을 근거로 들었으나 `docs/agent/decisions.yaml`·`docs/agent/checkpoints/turn-aa/` 를 grep 해도 「조합 검색」·「사건번호·주소·유형」을 다루는 결정을 못 찾았다 — 번호 없음. 세종 청구 후보(번호를 달거나, 실제로 조합 검색을 짓거나 결정하라는 청구) |
+| U5#2 `/roles` | 반 | **c2 · 이미 뗌** | `frontend/src/features/nav/roleNav.ts:198` `NAV_ACQUIRED_HIDDEN['/roles']` — 턴 AA(P-220)에 이미 뗐다. 아래 ② |
+
+**재갈래 합계**: c1 **1**(U1#4) · c2 **3**(U2#6·U5#2 이미 뗌 · U4#11 유지) · c3 **5**
+(U1#2→D-444 · U1#11→D-399 · U3#7→D-399 · U3#14→D-306 · U4#9→D-306) · 재검토(c1/c2/c3
+어디에도 안 맞음 · 결정 번호 없음 · 세종 청구 후보) **7**(U1#8·U2#2·U2#16·U4#15·U6#4·
+U2#4·U4#8). 1+3+5+7=16.
+
+⚠ 「재검토」 일곱 중 다섯(U1#8·U2#2·U4#15·U2#16·U6#4)은 턴 AN 이 이미 "표본/데이터
+상태로 보인다"고 적어 둔 것과 같은 자리다 — 이번 턴은 그 진단을 뒤집지 않았고(코드를
+다시 읽어도 결함을 못 찾음), 다만 **번호가 없으면 상한 분모에서 뺄 수 없다**는 이번
+규칙(P-408)을 적용해 **c 밖으로 도로 뺐다.** 상한표에 남는 것과 「고칠 수 없다」는
+다른 말이다 — 다음 손은 ⓐ 결정을 받아 번호를 달거나 ⓑ 실제로 고치는 것이다.
+
+### ② (c2) 인수 자산 메뉴 — 우리 역할 메뉴에서 뗄 수 있는가
+
+c2 셋(U2#6 `/report-template` · U4#11 `/device` · U5#2 `/roles`)을 `frontend/src/features/nav/roleNav.ts`
+로 대조했다:
+
+- **`/report-template` · `/roles` — 이미 뗌.** `NAV_ACQUIRED_HIDDEN`(roleNav.ts:195-200)에
+  **턴 AA(P-220)에서 이미** 들어가 있다 — 인수 메뉴 넷(`/operation-settings`·
+  `/report-template`·`/roles`·`/configuration-management`) 전부 우리 고객 역할
+  메뉴에서 이미 떨어져 있다(`hideAcquired()` 가 나무에서 줄을 뺀다 · DB 행·라우트는
+  그대로 둔다). **새 코드 변경이 필요 없었다** — 이번 턴에 확인만 했다.
+  ⚠ 다만 `measure_onboarding_t.py`/`verify_click_completes.py` 는 메뉴를 거치지 않고
+  **주소를 직접** 두드린다(U2#6·U5#2 의 `url` 칸이 `/report-template`·`/roles` 그대로다) —
+  그래서 메뉴에서 떼도 이 두 행의 측정 결과 자체는 안 바뀐다. **이 행들은 실제 고객
+  여정에서는 「해당 없음」이 맞다** — 온보딩 48행 정본(이 파일)과 게이트 분모에서
+  빼 달라고 세종 판정을 청구한다(계측기는 고치지 않는다 — Q 차선 소관).
+- **`/device` — 유지(안 뗌).** `roleNav.ts:192-193` 가 이미 이유를 적어 두었다:
+  "그것은 FWS 쪽 자산이고 이 제품의 시험 장치가 아니다(턴 AA 귀약)" — 즉 이 화면은
+  **다른 차선(FWS/N)이 실제 업무에 쓴다**는 판단으로 턴 AA 가 일부러 인수 메뉴 넷에서
+  뺐다. 이 화면을 지금 떼면 FWS 쪽 실사용 메뉴가 깨진다 — 떼지 않는다. U4#11 은
+  「해당 없음」 후보가 아니라 c2(유지)로 남아 상한 분모 판단이 필요한 채로 둔다
+  (c1+c3 만 자동으로 빠지므로, 이 행은 여전히 정상 카운트되는 빨강이다).
+
+**해당 없음 후보(세종 판정 청구)**: U2#6 `/report-template` · U5#2 `/roles`.
+
+### ③ (a) 8행 — 일곱째 회차 재점검 및 정정
+
+턴 AN 의 (a) 8행 각각을 `turn_an_7.json` 의 `evidence` 줄로 다시 쟀다(문서 밖 라이브
+측정은 안 함 · JSON 은 이미 있는 것을 읽었을 뿐이다).
+
+| 행 | 7회차 색 | 원인(증거 줄) | 이번 턴 조치 |
+|---|---|---|---|
+| U1#3 `/dsm/cameras/grid` | **초록** | — | 손대지 않음(이미 초록) |
+| U5#5 `/dsm/cameras/address` | **초록** | — | 손대지 않음(이미 초록) |
+| U3#16 `/m/settings` | **초록** | `turn_an_7.json` 행 489 `"verdict": "green", "score": 1.0` — **위 「2026-09-29 턴 AN 일곱째 회차」 절의 산문("U3#16 …색이 안 바뀌었다")이 JSON 원본과 어긋난다.** JSON 이 정본이다(이 절 머리말 "손으로 적지 않는다"와 같은 규율) — 산문 쪽이 오기였다 | **정정**: 위 절의 그 문장은 **틀렸다** — U3#16 은 이미 초록이다. 지우지 않고 이 줄로 정정한다(D-310 계열 규율과 같은 이유: 그날 기록은 남기고 날짜 있는 정정을 옆에 붙인다) |
+| U1#9 `/dsm/events/:id` | 반 | "◐ 상한(셋째 조건 — 절 ID, 마크다운 강조, 상태 코드)" — `verify_ui_copy.py --list` 는 dsm 스코프 잔여 **0건**인데 실측은 여전히 걸린다. 원인: **정적 검사는 소스 문자열만 본다** — 이 화면의 「판정 사유」(`e.reject_reason`)·발송 이력의 「실패 사유」(`failure_reason`)는 **서버가 채운 자유 문장**을 `dataIndex` 원문으로 그대로 찍고 있었다(바로 옆 「채널」 칸은 P-371 에서 이미 `channelDisplayLabel()` 로 고쳤는데 「실패 사유」 칸만 못 받았다) | **고침**: `frontend/src/features/dsm/copy.ts::safeFreeText()` 신설(결정 번호·절 ID·백틱·마크다운 강조·상태 열거값만 지우고 문장은 안 버림) → `EventDetail.tsx` 「판정 사유」·「실패 사유」 두 자리에 적용 |
+| U2#3 `/dsm/events/:id`(U2) | 반 | U1#9 와 같은 화면·같은 원인 | U1#9 와 같은 고침(같은 파일) |
+| U4#16 `/dsm/audit` | 반 | 같은 모양 — `AuditLog.tsx` 「사유」 열이 `dataIndex: 'reason'` 원문을 그대로 찍었다 | **고침**: `AuditLog.tsx` 「사유」 열에 `safeFreeText()` 적용 |
+| U5#14 `/dsm/system` | 반 | 같은 모양(다만 이 행은 「절 ID」 한 갈래만 걸렸다 — 재시작 사유가 각기 다른 내용이라는 방증) — `SystemSettings.tsx` 재시작 요청 이력의 「사유」 열이 `dataIndex: 'reason'` 원문을 그대로 찍었다 | **고침**: `SystemSettings.tsx` 「사유」 열에 `safeFreeText()` 적용 |
+| U3#1 `/dsm/events/:id → /m/inbox` | 빨강 | "POST notify [200] · deliveries 88 → 101 · 결과 문장=False · /m/inbox 카드=False" — **원인이 둘로 갈린다.** ⓐ `notify()` 의 "일부 실패" 갈래 문구가 "발송을 요청했습니다"를 안 담고 있었다(`measure_onboarding_t.py::rows_u3` 의 `msg` 술어가 그 부분 문자열만 본다) — deliveries 가 88→101 로 늘었어도 그중 일부가 실패하면 문구가 바뀌어 False 였다. ⓑ `/m/inbox` 카드 — `MobileInbox.tsx` 는 기본값 `mine=true`(내게 온 것만)로 서버에 묻는다(`useState(true)`) — 이것은 **턴 W·P-188·DA-04 의 의도된 설계**다(머리말: "화면은 자기가 거르지 않는다 · 필터는 전부 서버에서"). 알림을 **보낸** 사람(U3/`gxseed_u1_operator`)이 그 알림의 **수신자**라는 보장이 없다 — 자기가 보낸 알림이 자기 "내게 온 것" 함에 안 뜨는 것은 **설계대로**일 수 있다 | **부분 고침**: ⓐ 는 고쳤다(세 갈래 모두 "발송을 요청했습니다"를 담게 — 다만 `pred` 계산에는 `msg` 가 안 들어가므로 **이 고침만으로 verdict 는 안 바뀐다**, 문구 정확성만 고침). ⓑ 는 **손대지 않았다** — `mine` 기본값을 바꾸면 턴 W 가 막았던 문제(다른 사람의 발송이 보이는 것)가 되살아날 위험이 있어, 이 턴의 재량 밖으로 남긴다. **이 행은 다음 회차에도 빨강으로 남을 가능성이 높다** — 세종 판정 청구(수신자 설계와 "알림 수신" 행의 술어가 애초에 안 맞을 수 있다) |
+
+**요약**: 8행 중 일곱째 회차 시점에 이미 초록이던 것이 **3행**(U1#3·U3#16·U5#5 — 위 절의
+산문이 U3#16 을 오기했을 뿐 실제로는 셋이었다). 이번 턴이 코드를 고친 것은 **U1#9·
+U2#3·U4#16·U5#14 넷**(공통 원인 — 서버 자유 문장 미가공 렌더)과 U3#1 의 문구 절반이다.
+**목표(5 이상 초록)는 고침 전에도 셋뿐이라 이 턴의 코드 고침이 다음 회차에서 실제로
+반영돼야 달성된다** — 넷 중 **둘만** 검열 통과로 이어져도 5 를 채운다. 라이브 재측은
+V 의 몫이라 이 턴은 결과를 보장하지 않는다.
+
+### 새 시험
+
+`backend/tests/test_ao_l_screen_language.py` — `safeFreeText` 존재·네 그물(결정
+번호·절 ID·백틱·마크다운)·네 렌더 자리(EventDetail 판정 사유·실패 사유 ·
+AuditLog 사유 · SystemSettings 사유)가 그 함수를 거치는가 · `notify()` 세 갈래 전부
+"발송을 요청했습니다"를 담는가를 소스 문자열로 대조한다(HTTP 없음 · P-371/턴 AN
+자매 파일과 같은 성질). `MSYS_NO_PATHCONV=1 docker exec … gx-shell python -m pytest
+tests/test_ao_l_screen_language.py -q -p no:randomly --create-db` → **13 passed, 0 failed**.
+
+### c 확정 행 목록 — c1 + c3 만(상한 분모 제외 대상)
+
+c_rows: U1#2, U1#4, U1#11, U3#7, U3#14, U4#9

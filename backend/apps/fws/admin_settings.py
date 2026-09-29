@@ -15,15 +15,17 @@
                         테넌트를 정하므로(`_camera()` 가 그 카메라가 **내 테넌트**
                         것인지 먼저 확인), 그 뒤에 `camera_id` 로 감사 행을 읽어도
                         새지 않는다(`integration.py::_rows_for_event` 와 같은 근거).
-    초소·순찰함(U5-02)   `post_code` 는 자유 문자열이라 테넌트를 정하지 못한다
-                        (두 지자체가 같은 코드 "P-12" 를 쓸 수 있다). 그래서 **등록한
-                        사람 자신의 최신 값만** 낸다(`standby.py`·`liaison.
-                        my_latest_risk_forecast` 와 같은 한계 — 감사 표에 테넌트
-                        칼럼이 없다, `patrol.py` 머리말). U5 는 본디 한 지자체에
-                        한두 명의 운영 담당이라(DSM annex §3 "U5 시스템 관리자" 행
-                        참고) 이 한계가 실사용을 크게 좁히지 않는다 — 그러나 **정직하게
-                        남긴다**: 여러 관리자가 동시에 쓰면 서로의 등록을 못 본다.
-    마을·대피소(U5-03)   같은 한계·같은 이유.
+    초소·순찰함(U5-02)   `post_code` 는 자유 문자열이라 그 자체로는 테넌트를 정하지
+                        못한다(두 지자체가 같은 코드 "P-12" 를 쓸 수 있다). 예전엔
+                        그래서 **등록한 사람 자신의 최신 값만** 냈다(`standby.py`·
+                        `liaison.my_latest_risk_forecast` 와 같은 한계 — 감사 표에
+                        테넌트 칼럼이 없다, `patrol.py` 머리말). **턴 AO 차선 O ·
+                        P-411 이 이 한계를 넘는다** — `apps/fws/audit_scope.py`
+                        곁표(`common.models.AuditScope`)가 「그 감사 행이 어느
+                        테넌트 것인가」를 따로 적어 두므로, 이제 **같은 테넌트의
+                        관리자 전원**이 서로의 등록을 본다(post_code 가 같아도
+                        테넌트가 다르면 섞이지 않는다 — 곁표가 그 둘을 가른다).
+    마을·대피소(U5-03)   같은 한계·같은 고침.
     알림 규칙(U5-04)     새 저장을 짓지 않는다 — `kernels.k2_notify.rule_admin`
                         (S-16 화면의 서버 면, `NotificationRule` 실재 표)을 **그대로
                         재사용**한다. 그 표는 처음부터 테넌트 칼럼(`group`)이 있다 —
@@ -49,6 +51,8 @@ from django.utils import timezone
 from common import audit_writer
 from common.evidence_chain import strip_chain
 from common.tenant_roles import is_global_admin, is_tenant_admin
+
+from apps.fws import audit_scope as fws_audit_scope
 
 LOGGER_NAME = "guardianx.fws.admin_u5"
 TAG = "[FWS-U5]"
@@ -260,21 +264,32 @@ def save_post(*, scope, post_code: str, name: str, patrol_zone: str = "",
     if len(label) > MAX_POST_NAME_CHARS:
         raise AdminInputRejected(f"name 이 {len(label)}자다. 상한은 {MAX_POST_NAME_CHARS}자")
     boxes = [b.strip() for b in (nfc_boxes or "").split(",") if b.strip()]
-    actor = scope.require_actor()
     payload = {
         "post_code": code, "name": label, "patrol_zone": (patrol_zone or "").strip(),
         "lat": lat, "lng": lng, "nfc_boxes": boxes, "saved_at": _now_iso(),
     }
-    _write(actor, ACTION_POST_SAVE, payload, f"초소 {code} 등록/갱신")
+    fws_audit_scope.record(
+        scope=scope, logger_name=LOGGER_NAME, tag=TAG, action=ACTION_POST_SAVE,
+        payload=payload, reason=f"초소 {code} 등록/갱신", kind=ACTION_POST_SAVE)
     return payload
 
 
+def _tenant_rows(scope, action: str):
+    """이 **테넌트**의 감사 전건 — 곁표(`audit_scope.py`)로 좁힌 `AuditLogs` 행
+    (`_latest_rows` 의 테넌트 판 · 턴 AO 차선 O · P-411)."""
+    ids = fws_audit_scope.tenant_audit_ids(scope=scope, kind=action)
+    if not ids:
+        return _model()._base_manager.none()
+    return _model()._base_manager.filter(
+        logger_name=LOGGER_NAME, api_name=action, id__in=ids).order_by("-id")
+
+
 def my_posts(*, scope) -> dict:
-    """**등록한 사람 자신이** 등록한 초소 전부 — 최신 코드당 한 줄(머리말의 한계 참고)."""
+    """이 **테넌트**의 관리자 전원이 등록한 초소 전부 — 최신 코드당 한 줄(턴 AO
+    차선 O · P-411, 예전엔 "등록한 사람 자신만" 이었다 · 머리말 참고)."""
     require_admin(scope)
-    actor = scope.require_actor()
     seen: dict[str, dict] = {}
-    for row in _latest_rows(action=ACTION_POST_SAVE, user_id=actor.pk):
+    for row in _tenant_rows(scope, ACTION_POST_SAVE):
         payload = strip_chain(row.data_after) if isinstance(row.data_after, dict) else {}
         code = payload.get("post_code") if isinstance(payload, dict) else None
         if isinstance(code, str) and code not in seen:
@@ -312,27 +327,29 @@ def save_evac_entity(*, scope, kind: str, name: str, headcount: int,
         raise AdminInputRejected(f"name 이 {len(label)}자다. 상한은 {MAX_EVAC_NAME_CHARS}자")
     if headcount < 0:
         raise AdminInputRejected("headcount 는 음수일 수 없다")
-    actor = scope.require_actor()
     payload = {
         "kind": kind, "name": label, "headcount": int(headcount),
         "note": note, "saved_at": _now_iso(),
     }
-    _write(actor, ACTION_EVAC_ENTITY_SAVE, payload,
-          f"대피 대상 등록/갱신 kind={kind} name={label}")
+    fws_audit_scope.record(
+        scope=scope, logger_name=LOGGER_NAME, tag=TAG, action=ACTION_EVAC_ENTITY_SAVE,
+        payload=payload, reason=f"대피 대상 등록/갱신 kind={kind} name={label}",
+        kind=ACTION_EVAC_ENTITY_SAVE)
     return payload
 
 
 def evac_targets(*, scope) -> dict:
-    """등록한 사람 자신의 마을·대피소·요양시설 전부 + **자동 산출한** 대피 대상 총원.
+    """이 **테넌트**의 관리자 전원이 등록한 마을·대피소·요양시설 전부 +
+    **자동 산출한** 대피 대상 총원(턴 AO 차선 O · P-411, 예전엔 "등록한 사람
+    자신만" 이었다 · 머리말 참고).
 
     "자동 산출"은 관리자가 총원을 손으로 입력하는 칸을 **아예 두지 않고**, 등록된
     마을·요양시설의 `headcount` 를 이 함수가 더해서 낸다는 뜻이다(annex 완결조건
     "대피 대상 자동 산출") — 합계 칸이 없으므로 등록 값과 어긋날 길이 없다(D-212).
     """
     require_admin(scope)
-    actor = scope.require_actor()
     seen: dict[tuple[str, str], dict] = {}
-    for row in _latest_rows(action=ACTION_EVAC_ENTITY_SAVE, user_id=actor.pk):
+    for row in _tenant_rows(scope, ACTION_EVAC_ENTITY_SAVE):
         payload = strip_chain(row.data_after) if isinstance(row.data_after, dict) else {}
         key = (payload.get("kind"), payload.get("name")) if isinstance(payload, dict) else (None, None)
         if key[0] and key[1] and key not in seen:

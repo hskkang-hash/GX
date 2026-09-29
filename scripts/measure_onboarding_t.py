@@ -1604,30 +1604,60 @@ def _count_rows(js) -> int:
     return -1
 
 
+#: ★ [P-409 · 턴 AO · Q] 실측: **서명 값 자체는 행에 안 남는다.**
+#:   `backend/stream_monitors/models.py::DeliveryRecord` 의 칸은 event·recipient·
+#:   recipient_address·channel·occurred_at·sent_at·succeeded·failure_reason·
+#:   retry_count 뿐이다 — headers·signature 칸이 없다(옛 코드가 읽던
+#:   `stream_monitors.WebhookOutbox` 등 세 모델도 이 저장소에 없다 — 그래서 이
+#:   함수는 늘 -1 이었다. 게다가 `get = orm()` 뒤 `get(label)` 도 애초에 호출
+#:   가능한 값이 아니었다 — `orm()` 은 django `apps` 레지스트리를 돌려준다).
+#:
+#:   그런데 **서명이 안 붙는 경로는 정확히 하나**다.
+#:   `backend/common/webhook_outbox.py::deliver_one()` 이 `signing_secret(ref)` 를
+#:   못 찾으면 POST 자체를 하지 않고 이 행을 남긴다(같은 파일 374~383행):
+#:     succeeded=False · sent_at=None ·
+#:     failure_reason="서명키 %r 의 값이 이 환경에 없습니다 — 서명 없이 내보내지
+#:     않습니다" % signing_key_ref
+#:   그 표식이 없는 행은(성공이든 · 상대가 거절했든 · 재시도가 다 소진됐든)
+#:   `outbound_headers(secret, ...)` 로 **이미 서명이 붙은 채** POST 가 나간 뒤에
+#:   남은 행이다 — secret 이 없으면 그 줄 자체에 못 닿기 때문이다(등록 단계
+#:   `register()` 도 같은 `signing_secret()` 이 비면 `UnknownSigningKey` 로 막아
+#:   애초에 무효한 `signing_key_ref` 로는 구독조차 못 만든다). 그래서 「서명 붙은
+#:   발송」은 `channel == CHANNEL` 행 중 이 표식이 **없는** 행 수로 잰다 — 대리
+#:   지표가 아니라 이 저장소에 실재하는 유일한 분기다.
+_NO_SIGNING_KEY_MARKER = "서명 없이 내보내지 않습니다"
+
+
 def _outbox_signed() -> int:
-    """[서버 기록] 서명이 붙은 웹훅 발송 행 수. **못 읽으면 -1** — 0 과 다르다."""
+    """[서버 기록] 서명이 붙은 웹훅 발송 행 수. **못 읽으면 -1** — 0 과 다르다.
+
+    옛 버전은 저장소에 없는 모델(`WebhookOutbox` 등)을 찾아 늘 -1 이었다 — 위
+    주석(P-409) 참고. 지금은 실제 표 `stream_monitors.DeliveryRecord` 를
+    `common/webhook_outbox.py::CHANNEL`("webhook")로 좁혀 읽는다.
+    """
     try:
-        get = orm()
+        apps_registry = orm()
+        from common.webhook_outbox import CHANNEL as _webhook_channel
     except Exception:                                   # noqa: BLE001
         return -1
-    for label in ("stream_monitors.WebhookOutbox", "stream_monitors.DsmWebhookOutbox",
-                  "stream_monitors.WebhookDelivery"):
-        try:
-            model = get(label)
-        except Exception:                               # noqa: BLE001
-            continue
-        try:
-            n = 0
-            for r in model.objects.all().order_by("-id")[:200]:
-                blob = (str(getattr(r, "headers", "") or "")
-                        + str(getattr(r, "signature", "") or "")
-                        + str(getattr(r, "signature_header", "") or ""))
-                if blob.strip():
-                    n += 1
-            return n
-        except Exception:                               # noqa: BLE001
-            continue
-    return -1
+    try:
+        Delivery = apps_registry.get_model("stream_monitors", "DeliveryRecord")
+    except Exception:                                   # noqa: BLE001
+        return -1
+    try:
+        n = 0
+        #: `_base_manager` — `objects` 는 스레드에 남은 요청을 보고 조용히
+        #:   비게 만드는 문지기 매니저를 거친다(MEMORY: 스레드에 남은 요청이
+        #:   거짓 초록을 만든다 · `webhook_outbox.py::mine()` 과 같은 이유).
+        rows = Delivery._base_manager.filter(
+            channel=_webhook_channel).order_by("-id")[:200]
+        for r in rows:
+            reason = str(getattr(r, "failure_reason", "") or "")
+            if _NO_SIGNING_KEY_MARKER not in reason:
+                n += 1
+        return n
+    except Exception:                                   # noqa: BLE001
+        return -1
 
 
 #: ★ [P-212 · 턴 Z] U6#4 가 오래 회색이던 까닭 하나는 **잴 것이 0**(`WEBHOOK_SIGNING_KEYS`
@@ -1799,11 +1829,18 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
             reverted = " · [되돌릴 것 없음] 422 는 핸들러 앞에서 떨어졌다 — 구독 0개 생성"
         else:
             reverted = " · **되돌리지 못했다** — 구독 id 를 못 찾았다(손으로 지운다)"
+        #: ★ [P-409 · 턴 AO · Q] 판정 문장을 정직하게 — **술어는 구독 등록 하나만
+        #:   본다.** 이 걸음은 새 사건을 만들지 않으므로(제품에 그 문이 없다)
+        #:   `signed`(서명 붙은 발송 행 수)는 이 요청 자체로는 절대 안 늘어난다 —
+        #:   옛 술어(`signed >= 1`)는 「이 걸음이 하지 않는 일」을 요구해 늘 빨강일
+        #:   운명이었다. `signed` 는 참고 수치로만 evidence 에 남긴다(0 은 이
+        #:   걸음의 자연스러운 값이지 결함이 아니다 · -1 은 표를 못 읽은 것).
         out.append(result("U6#4", "POST /webhook-subscriptions",
-                          r.status in (200, 201), (n1 > n0) and signed >= 1,
-                          "구독 %s · 목록 %d -> %d · [서버 기록] 서명이 붙은 발송 행 %d건"
-                          "(-1 은 표를 못 읽은 것이다)%s — 이 걸음은 **새 사건을 만들지 않는다**"
-                          "(제품에 그 문이 없다). 발송 갈래는 이미 남은 행으로 잰다"
+                          r.status in (200, 201), (n1 > n0),
+                          "구독 %s · 목록 %d -> %d(판정은 이 증가만 본다) · [서버 기록·참고] "
+                          "서명이 붙은 웹훅 발송 행 %d건(-1 은 표를 못 읽은 것 · 0 은 이 "
+                          "걸음이 **새 사건을 만들지 않아** 자연스러운 값이다 — 판정에 넣지 "
+                          "않는다)%s"
                           % (r.status, n0, n1, signed, reverted), screen_text=collect_screen_text()))
     guarded(out, "U6#4", "POST /webhook-subscriptions", _u6_4)
 

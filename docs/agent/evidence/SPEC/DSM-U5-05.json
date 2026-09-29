@@ -1,6 +1,6 @@
 {
   "id": "DSM-U5-05",
-  "measured_at": "2026-09-29T05:04:20.518327+00:00",
+  "measured_at": "2026-09-29T06:33:51.594249+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u5_05_evidence",
   "request": {
@@ -15,8 +15,8 @@
     "body": {
       "imported": 2,
       "row_ids": [
-        444,
-        445
+        43,
+        44
       ]
     }
   },
@@ -44,18 +44,18 @@
     },
     {
       "part": "인계 메모 근무자 자동",
-      "where": "자동 조회 함수는 섰으나 handover_service.py(다른 차선 소유)에 잇는 한 줄이 아직 없다 — 조율자 전달",
-      "status": "부분(연결 대기)"
+      "where": "[턴 AO] handover_service.build_draft() → shift_roster_service.current_workers() — 인계 초안 본문 5번째 줄과 on_duty 칸에 그대로 실린다(새 표 0 · HandoverRosterConnectionTest)",
+      "status": "있음(신규)"
     },
     {
       "part": "일지 근무자 자동",
-      "where": "관제일지(DSM-U1-04) 자체가 이 저장소에 없다",
+      "where": "관제일지(DSM-U1-04) 자체가 이 저장소에 없다 — 이 턴도 만들지 않았다(새 표 0 지시 · 별도 절)",
       "status": "없음(범위 밖 — 별도 절)"
     },
     {
       "part": "완결조건 「일지 근무자 = 편성표」",
-      "where": "근무자는 자동으로 나오나(위) 받을 일지가 없다",
-      "status": "부분(안쪽 사실만 충족)"
+      "where": "근무자는 자동으로 나와 인계 메모에 실리나(위) 명세가 부르는 「일지」자체가 이 제품에 없다",
+      "status": "부분(인계 메모로 대신 — 일지 자체는 미착수)"
     }
   ]
 }

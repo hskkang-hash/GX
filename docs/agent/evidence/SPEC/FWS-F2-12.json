@@ -25,5 +25,23 @@
       "total_minutes": 0.0
     }
   },
-  "what": "출동→도착→철수 한 임무 뒤 GET /missions/mine 에 그 임무가 1건, duration_minutes(투입 시간)와 함께 잡힌다 — 이력·수당 근거 실측"
+  "what": "출동→도착→철수 한 임무 뒤 GET /missions/mine 에 그 임무가 1건, duration_minutes(투입 시간)와 함께 잡힌다 — 이력·수당 근거 실측",
+  "title_parts": [
+    {
+      "part": "내 임무 이력(표)",
+      "where": "backend/apps/fws/missions.py:mine · GET /api/fws/missions/mine",
+      "status": "measured: tests.test_fws_f2.F2_12_MissionsMineTest.test_dispatch_arrive_release_are_counted_in_mine — 출동→도착→철수 뒤 GET, count=1·mission_id 일치 확인(SPEC/FWS-F2-12.json)"
+    },
+    {
+      "part": "투입 시간(duration_minutes/total_minutes)",
+      "where": "backend/apps/fws/missions.py:mine (duration_minutes, total_minutes 계산 296-304행)",
+      "status": "measured: 같은 시험 — row[\"duration_minutes\"] 가 not None 확인, evidence body 에 total_minutes 도 실림"
+    },
+    {
+      "part": "수당 근거로 쓰일 CSV 내보내기(완결조건 — 명세서 §5.2 167행 「표 · CSV」)",
+      "where": "backend/apps/fws/missions.py, backend/apps/fws/api.py — /missions/mine 경로에 대한 CSV 포맷 옵션 없음(grep 결과: fws 앱의 csv 관련 코드는 F6-01 산림청 연계 내보내기·F3-03 근무표 업로드뿐, missions/mine 에는 없음)",
+      "status": "없음 — GET /api/fws/missions/mine 은 JSON 만 낸다. backend/apps/fws/api.py:363-383(FWS-F6-01), office.py:339-362(FWS-F3-03) 에만 csv 처리가 있고 F2-12 몫의 CSV 내보내기는 코드에 없다"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 167행 완결조건 「표 · CSV」를 backend/apps/fws/missions.py:mine(275-304행) 및 backend/apps/fws/api.py 전체 csv grep 과 대조 — JSON 표는 실측, CSV 내보내기 엔드포인트는 존재하지 않음을 직접 확인(F6-01·F3-03 의 csv 코드와 혼동하지 않도록 대조)."
 }

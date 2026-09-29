@@ -1,0 +1,43 @@
+{
+  "id": "FWS-F4-07",
+  "title": "주불 진화 선언 · 진화완료 선언",
+  "title_parts": [
+    {
+      "part": "주불 진화 선언",
+      "where": "POST .../main-fire-out → 감사 한 줄(K1 에 없는 칸이라 App 층 선언, D-284)",
+      "status": "구현 — 실측"
+    },
+    {
+      "part": "진화완료 선언",
+      "where": "POST .../extinguished → 응답 response_state",
+      "status": "구현 — 실측"
+    },
+    {
+      "part": "종결 축(완결조건)",
+      "where": "dsm_services.advance_response(K1 closed) 재사용 — 응답 response_state=closed",
+      "status": "구현 — K1 종결 축을 실제로 옮긴 것을 실측"
+    }
+  ],
+  "measured_at": "2026-09-29T06:51:25.937201+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f4.F4_07_FireDeclarationTest.test_main_out_then_extinguished_closes_response_axis",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/command/incidents/8/extinguished?reason=%EC%A7%84%ED%99%94%EC%84%A0+%ED%99%95%EC%9D%B8%C2%B7%EA%B8%B0%EC%83%81+%EC%95%88%EC%A0%95",
+    "params": {
+      "reason": "진화선 확인·기상 안정"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "declaration_id": 18,
+      "event_id": 8,
+      "reason": "진화선 확인·기상 안정",
+      "declared_at": "2026-09-29T06:51:25.806942+00:00",
+      "declared_by": "dsm_user_a",
+      "response_state": "closed"
+    }
+  },
+  "what": "주불 진화 선언(감사) 뒤 진화완료 선언이 K1 종결 축(closed)을 실제로 옮긴다 — 실측"
+}

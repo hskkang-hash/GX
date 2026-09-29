@@ -28,5 +28,28 @@
       ]
     }
   },
-  "what": "POST 로 남긴 관할 이첩 기록이 GET 재조회에 1건으로 남는다 — 이첩 기록 실측"
+  "what": "POST 로 남긴 관할 이첩 기록이 GET 재조회에 1건으로 남는다 — 이첩 기록 실측",
+  "title_parts": [
+    {
+      "part": "국립공원 관할 이첩 기록",
+      "where": "backend/apps/fws/integration.py::transfer_jurisdiction (org_type=\"national_park\", POST /api/fws/liaison/fire-events/{id}/jurisdiction-transfer)",
+      "status": "있음 — test_transfer_then_list_by_event 가 org_type=national_park 로 직접 실측"
+    },
+    {
+      "part": "국유림관리소 관할 이첩 기록",
+      "where": "backend/apps/fws/integration.py::JURISDICTION_ORG_NATIONAL_FOREST_OFFICE=\"national_forest_office\" + transfer_jurisdiction(국립공원과 같은 함수, 코드 분기 없음)",
+      "status": "있음 — national_park 과 완전히 같은 범용 이첩 함수가 org_type 값만 다르게 받는다(JURISDICTION_ORG_TYPES 에 등재) · 다만 national_forest_office 값 자체를 HTTP 로 직접 두드린 전용 실측은 없다(test_unknown_org_type_is_422 는 잘못된 값만 검증) — 코드는 있고 같은 함수라 결과가 갈릴 지점이 없어 CLOSED 로 두되, 전용 실측 부재는 그대로 남긴다"
+    },
+    {
+      "part": "사건별 조회",
+      "where": "backend/apps/fws/integration.py::jurisdiction_transfers (GET /api/fws/liaison/fire-events/{id}/jurisdiction-transfer)",
+      "status": "있음 — test_transfer_then_list_by_event 실측(POST 후 GET 재조회 1건)"
+    },
+    {
+      "part": "상대 기관 시스템으로 실제 이관·수신 확인",
+      "where": "docs/agent/evidence/SPEC/N3_promotions.md:125-132 (FWS-F6-10 행) · backend/apps/fws/integration.py::transfer_jurisdiction 은 common.audit_writer 기록만 하고 외부 기관 API 호출이 없다",
+      "status": "없음 — annex 완결조건(\"이첩 기록\")은 내부 기록을 요구할 뿐 상대 시스템의 수신 확인이 아니다, 국립공원공단·국유림관리소 시스템과의 실제 사건 이관 연동은 짓지 않았다(외부 자격증명 필요, 범위 밖)"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: docs/design/FWS_산불감시App_명세서_v1.0_프로세스_사용자별_20260915.md §5.6 FWS-F6-10 행 ↔ docs/agent/evidence/SPEC/FWS-F6-10.json ↔ backend/tests/test_fws_f6.py::F6_10_JurisdictionTransferTest 두 시험 ↔ backend/apps/fws/integration.py::JURISDICTION_ORG_TYPES/transfer_jurisdiction 코드를 대조 — 제목이 부르는 두 기관 유형(국립공원·국유림관리소)이 같은 범용 함수로 모두 코드에 있음을 확인, '실제 이관·수신확인'은 완결조건이 요구하지 않는 초과 항목으로 OPEN 표기."
 }

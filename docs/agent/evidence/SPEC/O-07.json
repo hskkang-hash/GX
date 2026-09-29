@@ -1,0 +1,64 @@
+{
+  "id": "O-07",
+  "title": "백업·복구",
+  "measured_at": "2026-09-29T07:00:01.300941+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_ops_an.O07_BackupBoardTest.test_backup_and_restore_receipts_are_read_not_invented",
+  "request": {
+    "method": "GET",
+    "path": "/api/dsm/ops/backups",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "backup": {
+        "read": true,
+        "source": "/docs/agent/evidence/D-373/backup_last.json",
+        "measured_at": "2026-09-28T20:00:00+00:00",
+        "verdict": "OK",
+        "db_bytes": 193795338,
+        "destination": "local",
+        "fresh_within_24h": true
+      },
+      "restore_drill": {
+        "read": true,
+        "source": "/docs/agent/evidence/D-373/restore_drill_last.json",
+        "measured_at": "2026-09-26T23:00:00+00:00",
+        "verdict": "OK",
+        "rto_seconds": 16.0,
+        "tables_restored": 232,
+        "tables_source": 232,
+        "fresh_within_31d": true
+      }
+    }
+  },
+  "what": "GET /api/dsm/ops/backups 응답의 backup.measured_at·restore_drill.rto_seconds 가 docs/agent/evidence/D-373/backup_last.json·restore_drill_last.json 파일 값과 **바이트 단위로 같다** — 새 저장을 만들지 않고 이미 있는 회수증을 그대로 읽는다(완결조건 '회수증 자동 일 1 · 복원 시험 월 1'의 존재를 이미 있는 장부로 실측).",
+  "title_parts": [
+    {
+      "part": "테넌트별 덤프·회수증",
+      "where": "backup.measured_at/db_bytes",
+      "status": "measured"
+    },
+    {
+      "part": "복원 시험",
+      "where": "restore_drill.rto_seconds/tables_restored",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — 회수증 자동 일 1",
+      "where": "backup.fresh_within_24h",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — 복원 시험 월 1",
+      "where": "restore_drill.fresh_within_31d",
+      "status": "measured"
+    },
+    {
+      "part": "다른 호스트 목적지",
+      "where": "backup.destination",
+      "status": "measured — 지금 값은 local(다른 호스트로 자동 이관은 범위 밖, 값은 실측)"
+    }
+  ]
+}

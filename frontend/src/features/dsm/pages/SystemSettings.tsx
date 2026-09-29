@@ -39,7 +39,7 @@ import {
   type DsmSystemRequestRow,
   type DsmSystemRequests,
 } from '../api';
-import { userFacingError } from '../copy';
+import { safeFreeText, userFacingError } from '../copy';
 import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
@@ -533,7 +533,14 @@ export default function SystemSettings() {
             columns={[
               { title: '언제', dataIndex: 'created_at' },
               { title: '누가', dataIndex: 'requested_by' },
-              { title: '사유', dataIndex: 'reason' },
+              {
+                // ★ [P-408 · 턴 AO · 차선 L] 재시작 사유는 사람이 자유롭게 적는 문장이라
+                //   `dataIndex` 원문 그대로면 우리 대장 표기(절 ID 등)가 그대로 찍힌다 —
+                //   `safeFreeText` 로 그 표기만 지운다(문장은 버리지 않는다).
+                title: '사유',
+                dataIndex: 'reason',
+                render: (v: string) => safeFreeText(v),
+              },
               { title: '상태', dataIndex: 'status_label' },
             ]}
           />

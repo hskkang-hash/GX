@@ -26,5 +26,33 @@
       "count": 1
     }
   },
-  "what": "정찰 요청(반경 값)→수락→이륙→귀환 상태 전이가 내 대기열(mine)에 그대로 남는다 — 요청·상태 두 축 실측(K1 이벤트를 드론 쪽에서 본 것 · 새 표 없음)"
+  "what": "정찰 요청(반경 값)→수락→이륙→귀환 상태 전이가 내 대기열(mine)에 그대로 남는다 — 요청·상태 두 축 실측(K1 이벤트를 드론 쪽에서 본 것 · 새 표 없음)",
+  "title_parts": [
+    {
+      "part": "정찰 임무 수신(요청) — 요청 접수",
+      "where": "POST /api/fws/drone/missions/{event_id}/recon?action=request · backend/apps/fws/drone.py::recon() (RECON_REQUEST)",
+      "status": "measured: tests.test_fws_f5.F5_01_ReconTest.test_request_accept_airborne_return_and_mine_reflects_state — action=request 200, radius_m=300 그대로 응답"
+    },
+    {
+      "part": "반경(발화 추정 반경 값, radius_m)",
+      "where": "backend/apps/fws/drone.py::recon() radius_m 파라미터 · GET /api/fws/drone/missions/mine 응답 row.radius_m",
+      "status": "measured: 위 시험에서 radius_m=300 요청 → mine 재조회에서도 300.0 그대로 (docs/agent/evidence/SPEC/FWS-F5-01.json 의 response.body.requests[0].radius_m)"
+    },
+    {
+      "part": "발화 추정 좌표(사건의 위치 값)",
+      "where": "apps/dsm/services.py (event._entry: row.lat, row.lng) — recon()·recon_mine() 은 event_id 로 K1 사건을 참조할 뿐, 좌표 자체를 정찰 임무 응답에 실어 나르지 않는다",
+      "status": "부분(간접) — K1 이벤트에 lat/lng 칸은 존재하고 recon()이 event_detail()로 그 사건을 가리키지만, F5-01 자체의 요청/응답 어디에도 좌표 값이 실측되지 않는다(테스트가 좌표를 assert하지 않음). 좌표가 실제로 정찰 임무에 실려 나온다는 것은 확인되지 않았다"
+    },
+    {
+      "part": "→ 열화상 정찰 실행(상태 전이: 수락→이륙→귀환)",
+      "where": "POST .../recon?action=accept|airborne|return · backend/apps/fws/drone.py::recon() (_RECON_PREV 순서 강제) · GET /api/fws/drone/missions/mine",
+      "status": "measured: 같은 시험에서 accept·airborne·return 세 전이 모두 200, mine.state=\"return\" 확인. 순서 위반은 test_airborne_without_accept_is_409 로 409 실측"
+    },
+    {
+      "part": "열화상(thermal) 센서 데이터·프레임 자체",
+      "where": "backend/apps/fws/drone.py 머리말(P-387) — \"드론 0대\", 실제 열화상 프레임 수신/저장 코드 없음",
+      "status": "없음 — 이 절은 서류상 상태 전이(요청·상태)만 만든다고 머리말에 명시. 실제 열화상 센서 프레임을 수신·저장·판독하는 경로는 존재하지 않는다(연동 하드웨어 0대)"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:180 및 FWS_산불감시App_명세서_v1.0_..._20260915.md:221(완료조건 \"임무 생성·이륙\")의 제목을 backend/tests/test_fws_f5.py::F5_01_ReconTest 와 backend/apps/fws/drone.py::recon()/recon_mine()에 대조 — 요청·상태 전이는 실측, 좌표 전달과 실제 열화상 데이터는 코드에 없어 OPEN으로 남김"
 }

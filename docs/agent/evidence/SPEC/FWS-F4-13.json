@@ -1,0 +1,49 @@
+{
+  "id": "FWS-F4-13",
+  "title": "동시 다발 사건 우선순위(위험도 정렬)",
+  "title_parts": [
+    {
+      "part": "동시 다발 사건 목록",
+      "where": "GET /command/incidents?sort=risk → 응답 items(dsm_services.recent_events 재사용)",
+      "status": "구현 — 실측"
+    },
+    {
+      "part": "위험도 정렬(완결조건)",
+      "where": "응답 items 순서 (severity=critical 이 info 보다 앞)",
+      "status": "구현 — critical 사건이 info 사건보다 앞섬을 실측"
+    }
+  ],
+  "measured_at": "2026-09-29T06:51:37.340172+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f4.F4_13_PriorityQueueTest.test_critical_ranks_above_warning",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/command/incidents?sort=risk",
+    "params": {
+      "sort": "risk"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "count": 2,
+      "items": [
+        {
+          "event_id": 17,
+          "severity": "critical",
+          "response_state": "occurred",
+          "occurred_at": "2026-09-29T06:49:37.297013+00:00",
+          "address": null
+        },
+        {
+          "event_id": 16,
+          "severity": "info",
+          "response_state": "occurred",
+          "occurred_at": "2026-09-29T06:50:37.280639+00:00",
+          "address": null
+        }
+      ]
+    }
+  },
+  "what": "critical·info 두 사건을 만들고 GET .../incidents?sort=risk 가 critical 을 앞에 두는 것을 실측"
+}

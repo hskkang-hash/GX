@@ -19,5 +19,33 @@
       "as_of": "2026-09-29"
     }
   },
-  "what": "GET /api/fws/risk/today 가 오늘 날짜 기준 띠(level)·위기경보·입산통제 값을 낸다 — 띠 표시 실측(외부 기상 연동은 범위 밖, risk.py 머리말에 정직하게 남김)"
+  "what": "GET /api/fws/risk/today 가 오늘 날짜 기준 띠(level)·위기경보·입산통제 값을 낸다 — 띠 표시 실측(외부 기상 연동은 범위 밖, risk.py 머리말에 정직하게 남김)",
+  "title_parts": [
+    {
+      "part": "오늘 날짜 기준 위험 '띠'(level) 응답 계약(level/fire_alert/mountain_entry_banned/season/as_of 5칸)",
+      "where": "backend/apps/fws/risk.py::risk_today — GET /api/fws/risk/today",
+      "status": "measured: F1_03_RiskTodayTest.test_risk_band_has_the_contract_shape — 5칸 다 실리고 level이 LEVELS 안, as_of가 오늘 날짜"
+    },
+    {
+      "part": "4단계(관심/주의/경계/심각) 중 실제로 산출되는 값",
+      "where": "backend/apps/fws/risk.py:51 — level = '주의' if dry_season else '관심'",
+      "status": "부분: LEVELS 상수엔 4개가 선언돼 있으나 risk_today() 코드 경로가 실제로 내는 값은 '관심'·'주의' 둘뿐 — '경계'·'심각'에 도달하는 분기가 아예 없다"
+    },
+    {
+      "part": "위기경보(fire_alert) — 실제 정부 위기경보 발령 데이터 연동",
+      "where": "backend/apps/fws/risk.py:1-21 머리말 자백 · risk.py:54 fire_alert = dry_season",
+      "status": "근사: 산림청 실시간 위험예보(습도·풍속·강수) API 연동은 범위 밖이라고 파일 머리말이 스스로 밝히고, 대신 산불조심기간 달력 규칙(11.1~12.15·2.1~5.15)으로 fire_alert를 근사한다 — 실제 위기경보 피드가 아니다"
+    },
+    {
+      "part": "입산통제(mountain_entry_banned) 실측",
+      "where": "backend/apps/fws/risk.py:55",
+      "status": "없음: mountain_entry_banned 이 상수 False 로 고정돼 있다(코드 어디서도 True를 내는 경로가 없음) — 산불조심기간 '심각' 구간에 입산통제를 걸겠다는 머리말의 의도가 구현되지 않았다(level이 애초에 '심각'에 도달 못 하므로 이 필드는 사실상 죽은 필드)"
+    },
+    {
+      "part": "익명 사용자 차단(로그인 필요)",
+      "where": "backend/apps/fws/risk.py 호출부(api.py GET /risk/today), backend/tests/test_fws_app.py:271-273 test_anonymous_is_401",
+      "status": "measured: 익명 GET이 401"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:117행 · 원 명세서:138행('GET /fws/risk/today · 띠 표시')을 evidence FWS-F1-03.json·test_fws_app.py:250-273·risk.py 전체(58줄)와 대조 — 응답 계약은 실측, 위기경보·입산통제는 risk.py 머리말이 자백한 대로 달력 근사치·고정 False"
 }

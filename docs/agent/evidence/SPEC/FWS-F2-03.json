@@ -31,5 +31,28 @@
       "event_advanced": true
     }
   },
-  "what": "출동 탭 뒤 action=arrived 회신이 대응 진행을 in_progress 로 옮기고 elapsed_minutes(30분 시계)를 함께 낸다 — 도착 시각·30분 시계 실측"
+  "what": "출동 탭 뒤 action=arrived 회신이 대응 진행을 in_progress 로 옮기고 elapsed_minutes(30분 시계)를 함께 낸다 — 도착 시각·30분 시계 실측",
+  "title_parts": [
+    {
+      "part": "이동 회신(출동 확인 뒤 이동 중 상태)",
+      "where": "backend/apps/fws/missions.py:respond(action=\"dispatch\"→\"arrived\" 전이 순서) · POST /api/fws/missions/{event_id}/response?action=arrived",
+      "status": "부분 — 「출동」과 「도착」 사이의 이동 중이라는 별도 상태는 없다(K1 4상태 acknowledged→in_progress 로 바로 넘어간다, missions.py 26-28행). '이동'을 나타내는 별도 회신·상태는 미구현 — 이 파일이 재는 것은 도착 회신뿐이다"
+    },
+    {
+      "part": "도착 회신(GPS 좌표 포함)",
+      "where": "backend/apps/fws/missions.py:respond(action=\"arrived\", lat, lng) · POST /api/fws/missions/{event_id}/response?action=arrived&lat=...&lng=...",
+      "status": "measured: tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_mission_detail_dispatch_arrive_release_chain — lat=36.1,lng=127.2 로 POST, 200 · to=\"in_progress\" 확인(SPEC/FWS-F2-03.json)"
+    },
+    {
+      "part": "30분 시계(완결조건 — 명세서 §5.2 158행 「도달 시각 · 30분 시계」, P2 초기대응 30분 규칙)",
+      "where": "backend/apps/fws/missions.py:respond (elapsed_minutes, within_30_min 계산, 214-219행)",
+      "status": "measured: SPEC/FWS-F2-03.json response.body.elapsed_minutes=5.0, within_30_min=true — event.occurred_at 대비 경과분·30분 이내 여부가 응답에 실제로 계산되어 나옴"
+    },
+    {
+      "part": "GPS 좌표가 감사·현장 회신에 남는다",
+      "where": "backend/apps/fws/missions.py:respond → dsm_services.field_reply(text=f\"[도착] GPS lat={lat} lng={lng}...\") 208-210행 · 자기 감사 _write_own(ACTION_ARRIVED, {lat,lng,...}) 213-214행",
+      "status": "measured: 같은 실측 요청의 응답이 200 이고, 코드가 K1 현장 회신과 자체 감사 양쪽에 좌표를 기록함을 확인(field_reply 호출·감사 payload 모두 lat/lng 포함)"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 158행 「이동·도착 회신(GPS)」·완결조건 「도달 시각·30분 시계」를 backend/apps/fws/missions.py:respond 의 arrived 분기(200-223행)와 대조, evidence SPEC/FWS-F2-03.json 의 elapsed_minutes/within_30_min 실측값 확인 — '이동' 중간 상태는 없고 도착만 잡힌다는 것도 코드로 직접 확인."
 }

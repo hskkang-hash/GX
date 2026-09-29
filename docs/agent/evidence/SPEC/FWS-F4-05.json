@@ -1,0 +1,53 @@
+{
+  "id": "FWS-F4-05",
+  "title": "대피 명령 승인(즉시/준비) · 해제",
+  "title_parts": [
+    {
+      "part": "승인(즉시/준비)",
+      "where": "요청 urgency=immediate → 응답 status=approved",
+      "status": "구현 — 즉시 승인 실측"
+    },
+    {
+      "part": "CBS 초안 확정(완결조건)",
+      "where": "F3-11 초안(villages) → 응답 villages",
+      "status": "구현 — F3-11 문안을 다시 안 짓고 승인만 확정(D-212)"
+    },
+    {
+      "part": "푸시(완결조건)",
+      "where": "응답 notified_count(notify_event 재사용)",
+      "status": "구현 — 실측"
+    },
+    {
+      "part": "해제",
+      "where": "POST .../release → 응답 status=released",
+      "status": "구현 — 실측"
+    }
+  ],
+  "measured_at": "2026-09-29T06:51:21.323670+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f4.F4_05_EvacuationApprovalTest.test_approve_immediate_then_release",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/command/evacuations/5/approve?urgency=immediate",
+    "params": {
+      "urgency": "immediate"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "approval_id": 9,
+      "event_id": 5,
+      "urgency": "immediate",
+      "deadline_hours": 8.0,
+      "villages": [
+        "OO리"
+      ],
+      "note": "",
+      "approved_at": "2026-09-29T06:51:21.243244+00:00",
+      "notified_count": 1,
+      "status": "approved"
+    }
+  },
+  "what": "F3-11 초안 뒤 POST .../approve(즉시) 가 8시간 지시 대피로 확정하고 발송하며, POST .../release 가 해제한다 — 실측"
+}

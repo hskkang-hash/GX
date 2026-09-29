@@ -1,0 +1,166 @@
+{
+  "id": "O-11",
+  "title": "릴리스·배포",
+  "measured_at": "2026-09-29T06:49:41.496589+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_ops_an.O11_ReleaseBoardTest.test_reads_deploys_ledger",
+  "request": {
+    "method": "GET",
+    "path": "/api/dsm/ops/releases",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "read": true,
+      "source": "/docs/agent/evidence/OPS-27/deploys.jsonl",
+      "deploys": [
+        {
+          "at": "2026-09-29T13:45:23+09:00",
+          "reason": "턴 AN 창 ② · 2b097e6 · 산림과 F3 · 산불 설정 · 화면 말",
+          "commit": "2b097e6",
+          "build": "dist_an",
+          "backup": "C:/GuardianX/_spa_backups/20260929T134518",
+          "before": {
+            "files": 240,
+            "tree": "abc3dc2aa2dc",
+            "index": "index-BobdBWuq.js"
+          },
+          "new": {
+            "files": 244,
+            "tree": "25e143052902",
+            "index": "index-DQDWjTok.js"
+          },
+          "drill_ok": true,
+          "served_index": "index-DQDWjTok.js",
+          "tree_ok": true,
+          "text_ok": true,
+          "smoke_exit": 0,
+          "exit": 0,
+          "verdict": "초록 — 올라갔다 · 새 index · 새 문구 · 스모크 셋 200"
+        },
+        {
+          "at": "2026-09-28T19:07:44+09:00",
+          "reason": "P-374 둘째 배포(WO-16 §4 D) · b93cec0 빌드 — 드론 화면 · 상황실 번호 · 화면 말",
+          "commit": "b93cec0",
+          "build": "dist_am",
+          "backup": "C:/GuardianX/_spa_backups/20260928T190739",
+          "before": {
+            "files": 239,
+            "tree": "8e1ba7523f41",
+            "index": "index-ASg7Eciq.js"
+          },
+          "new": {
+            "files": 240,
+            "tree": "abc3dc2aa2dc",
+            "index": "index-BobdBWuq.js"
+          },
+          "drill_ok": true,
+          "served_index": "index-BobdBWuq.js",
+          "tree_ok": true,
+          "text_ok": true,
+          "smoke_exit": 0,
+          "exit": 0,
+          "verdict": "초록 — 올라갔다 · 새 index · 새 문구 · 스모크 셋 200"
+        },
+        {
+          "at": "2026-09-28T17:31:18+09:00",
+          "reason": "P-374 세종 판정 「dist_al 올려라」(WO-16 · 대표 09-28 위임 갱신) · f6405fc 빌드",
+          "commit": "ba2944e",
+          "build": "dist_al",
+          "backup": "C:/GuardianX/_spa_backups/20260928T173114",
+          "before": {
+            "files": 236,
+            "tree": "2767f1a78514",
+            "index": "index-CCKUiR7q.js"
+          },
+          "new": {
+            "files": 239,
+            "tree": "8e1ba7523f41",
+            "index": "index-ASg7Eciq.js"
+          },
+          "drill_ok": true,
+          "served_index": "index-ASg7Eciq.js",
+          "tree_ok": true,
+          "text_ok": true,
+          "smoke_exit": 0,
+          "exit": 0,
+          "verdict": "초록 — 올라갔다 · 새 index · 새 문구 · 스모크 셋 200"
+        },
+        {
+          "at": "2026-09-27T08:19:00+09:00",
+          "reason": "P-341 대표 09-27 「푸시하고 배포해」 · f3e7b10 빌드 dist_aj",
+          "commit": "c7a736f",
+          "build": "dist_aj",
+          "backup": "C:/GuardianX/_spa_backups/20260927T081854",
+          "before": {
+            "files": 238,
+            "tree": "99c63514c4e9",
+            "index": "index-CUuQMWok.js"
+          },
+          "new": {
+            "files": 236,
+            "tree": "2767f1a78514",
+            "index": "index-CCKUiR7q.js"
+          },
+          "drill_ok": true,
+          "served_index": "index-CCKUiR7q.js",
+          "tree_ok": true,
+          "text_ok": true,
+          "smoke_exit": 0,
+          "exit": 0,
+          "verdict": "초록 — 올라갔다 · 새 index · 새 문구 · 스모크 셋 200"
+        }
+      ],
+      "count": 4,
+      "latest": {
+        "at": "2026-09-29T13:45:23+09:00",
+        "reason": "턴 AN 창 ② · 2b097e6 · 산림과 F3 · 산불 설정 · 화면 말",
+        "commit": "2b097e6",
+        "build": "dist_an",
+        "backup": "C:/GuardianX/_spa_backups/20260929T134518",
+        "before": {
+          "files": 240,
+          "tree": "abc3dc2aa2dc",
+          "index": "index-BobdBWuq.js"
+        },
+        "new": {
+          "files": 244,
+          "tree": "25e143052902",
+          "index": "index-DQDWjTok.js"
+        },
+        "drill_ok": true,
+        "served_index": "index-DQDWjTok.js",
+        "tree_ok": true,
+        "text_ok": true,
+        "smoke_exit": 0,
+        "exit": 0,
+        "verdict": "초록 — 올라갔다 · 새 index · 새 문구 · 스모크 셋 200"
+      },
+      "latest_green": true
+    }
+  },
+  "what": "GET /api/dsm/ops/releases 의 latest.commit 이 docs/agent/evidence/OPS-27/deploys.jsonl 마지막 줄의 commit 과 같다 — 이미 있는 배포 장부를 그대로 읽는다(새 저장 0). 완결조건('deploy.sh exit 0 · 걷기 초록')은 latest_green(=exit 0) 으로 실측.",
+  "title_parts": [
+    {
+      "part": "릴리스 트레인·테넌트별 단계 배포",
+      "where": "deploys[]",
+      "status": "measured — 단일 배포 트랙(카나리 구분은 없음)"
+    },
+    {
+      "part": "완결조건 — deploy.sh exit 0",
+      "where": "latest_green",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — 걷기 초록",
+      "where": "latest.smoke_exit",
+      "status": "measured"
+    },
+    {
+      "part": "되돌리기 1회 시험",
+      "where": "",
+      "status": "없음 — 이번 턴 안 붙임(무엇이 없는가)"
+    }
+  ]
+}

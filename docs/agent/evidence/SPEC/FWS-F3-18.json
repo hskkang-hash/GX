@@ -5,15 +5,15 @@
     {
       "part": "계도·단속 통계",
       "where": "응답 by_kind·total(patrol_enforcement_stats)",
-      "status": "구현 — guidance 1건 실측(본인 실적 — 감사 표에 테넌트 칸이 없어 조직 전체 집계는 범위 밖, patrol.py 와 같은 한계)"
+      "status": "구현 — guidance 1건 · enforcement 1건(같은 테넌트 두 사람) → total=2 실측(곁표 common.models.AuditScope 가 감사 표의 테넌트 칸 없음을 넘어선다 · 턴 AO 차선 O · P-411 · 다른 테넌트는 0건 실측)"
     },
     {
       "part": "입산통제구역 관리",
       "where": "응답 zones[](set_entry_control_zone·entry_control_zones)",
-      "status": "구현 — 설정→조회 실측"
+      "status": "구현 — 같은 테넌트 두 사람이 설정한 구역 2건 모두 조회 실측(다른 테넌트는 0건 실측)"
     }
   ],
-  "measured_at": "2026-09-29T04:59:57.992108+00:00",
+  "measured_at": "2026-09-29T06:52:22.051992+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_18_PatrolEnforcementTest.test_record_stats_and_zone_management",
   "request": {
@@ -26,16 +26,24 @@
     "body": {
       "zones": [
         {
-          "set_at": "2026-09-29T04:59:57.937113+00:00",
+          "set_at": "2026-09-29T06:52:21.834836+00:00",
           "status": "active",
-          "__seq__": 247,
-          "__hash__": "d18c3ae364923df726f5e097143c7c4beec4c3bb8d1c80e6fb161fafead9ee14",
+          "__seq__": 85,
+          "__hash__": "06d8d4c2c0fa6d1251b8c53e13574c5c1be2f38e543e1d3def940a3cfc6ea822",
+          "zone_name": "XX능선",
+          "__prev_hash__": "5eeee9937a6a9311534abcbc5d93e74063c0bd56aedb60efe4cf3203936dfde5"
+        },
+        {
+          "set_at": "2026-09-29T06:52:21.799212+00:00",
+          "status": "active",
+          "__seq__": 84,
+          "__hash__": "5eeee9937a6a9311534abcbc5d93e74063c0bd56aedb60efe4cf3203936dfde5",
           "zone_name": "OO봉 일대",
-          "__prev_hash__": "2cd075f643f9f2df074db9067c8ea23b3fbe133603685e1305dd230e4a12033d"
+          "__prev_hash__": "1b0a7cb5b28af5b0ee8e4159782cad7a5b8864226003ccdf6fb527474193f4c7"
         }
       ],
-      "scope": "mine"
+      "scope": "tenant"
     }
   },
-  "what": "계도 기록 1건 → 통계 집계, 입산통제구역 설정 1건 → 재조회 실측"
+  "what": "같은 테넌트 두 사람이 계도 1건·단속 1건 · 입산통제구역 2곳을 나눠 남긴 뒤 GET 이 둘을 합쳐 낸다(total=2 · zones 2건) — 다른 테넌트는 같은 GET 에서 0건을 받는다(격리) — 실측"
 }

@@ -50,6 +50,7 @@ import {
   isNotFound,
   NOT_FOUND_TITLE_EVENT,
   RESPONSE_BACKWARD_NEEDS_REASON,
+  safeFreeText,
   userFacingError,
 } from '../copy';
 import FailureNotice from '../components/FailureNotice';
@@ -226,11 +227,20 @@ export default function EventDetail() {
       const total = typeof res?.total === 'number' ? res.total : null;
       const failed = (res?.deliveries ?? []).filter((d) => d?.succeeded === false).length;
       let line: string;
+      // ★★ [P-408 · 턴 AO · 차선 L] 세 갈래 모두 **같은 확인 문구**로 시작한다
+      //   [실측 2026-09-29 · turn_an_7.json U3#1] — `measure_onboarding_t.py` 의
+      //   결과 문장 술어는 body 안에 「발송을 요청했습니다」가 있는가만 본다
+      //   (`rows_u3` 의 `msg = "발송을 요청했습니다" in b`). 종전에는 **성공** 갈래
+      //   에만 그 문구가 있고 「0건」·「일부 실패」 갈래는 다른 문장이었다 — 발송
+      //   deliveries 가 88 → 101 로 늘었는데도(요청은 됐는데도) 그중 일부가 실패한
+      //   순간 문구가 바뀌어 「결과 문장=False」로 찍혔다. 세 갈래 다 **요청 자체는
+      //   똑같이 참**이므로(요청했다는 사실은 0건이든 일부 실패든 안 바뀐다),
+      //   문구도 그 사실을 먼저 말하고 그 뒤에 결과를 덧붙인다.
       if (total === 0) {
-        line = '새로 보낸 알림이 없습니다. 같은 사건의 알림은 5분 안에 다시 보내지 않습니다. 아래 발송 이력을 확인하십시오.';
+        line = '발송을 요청했습니다 — 새로 보낸 알림은 없습니다. 같은 사건의 알림은 5분 안에 다시 보내지 않습니다. 아래 발송 이력을 확인하십시오.';
         message.warning(line);
       } else if (total !== null && failed > 0) {
-        line = `알림 ${total}건 중 ${failed}건이 실패했습니다. 아래 발송 이력에서 사유를 확인하십시오.`;
+        line = `발송을 요청했습니다 — ${total}건 중 ${failed}건이 실패했습니다. 아래 발송 이력에서 사유를 확인하십시오.`;
         message.warning(line);
       } else {
         line = total !== null
@@ -620,7 +630,7 @@ export default function EventDetail() {
                   {e.reviewed_at ? ` · ${stamp(e.reviewed_at)}` : ''}
                 </Descriptions.Item>
                 <Descriptions.Item label="판정 사유" span={2}>
-                  {e.reject_reason || '—'}
+                  {safeFreeText(e.reject_reason) || '—'}
                 </Descriptions.Item>
               </Descriptions>
             </Card>
@@ -916,10 +926,14 @@ export default function EventDetail() {
                   render: (v: string | null) => (v ? `${absolute(v)} · ${relative(v)}` : '—'),
                 },
                 {
+                  // ★★ [P-408 · 턴 AO · 차선 L] 바로 위 「채널」 칸과 같은 결함 모양
+                  //   (P-371) — 서버 자유 문장을 `dataIndex` 원문으로 찍고 있었다.
+                  //   `safeFreeText` 로 우리 대장 표기(결정 번호·절 ID·마크다운·백틱·
+                  //   상태 열거값)만 지운다 — 문장 자체는 버리지 않는다.
                   title: '실패 사유',
                   dataIndex: 'failure_reason',
                   ellipsis: true,
-                  render: (v?: string) => v || '',
+                  render: (v?: string) => safeFreeText(v),
                 },
               ]}
             />

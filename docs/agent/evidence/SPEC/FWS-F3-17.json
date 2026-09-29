@@ -18,25 +18,25 @@
       "status": "구현 — 임계값 50 대비 결과 fail 저장 실측"
     }
   ],
-  "measured_at": "2026-09-29T04:59:56.340356+00:00",
+  "measured_at": "2026-09-29T06:52:18.809073+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_17_CameraFalseAlarmTest.test_rate_and_threshold_test",
   "request": {
     "method": "POST",
-    "path": "/api/fws/office2/stats/camera-false-alarms/threshold-test?stream_monitor_id=303&threshold_pct=50",
+    "path": "/api/fws/office2/stats/camera-false-alarms/threshold-test?stream_monitor_id=57&threshold_pct=50",
     "params": {
-      "stream_monitor_id": 303,
+      "stream_monitor_id": 57,
       "threshold_pct": 50
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "stream_monitor_id": 303,
+      "stream_monitor_id": 57,
       "threshold_pct": 50.0,
       "computed_false_alarm_rate_pct": 100.0,
       "result": "fail",
-      "tested_at": "2026-09-29T04:59:56.321078+00:00"
+      "tested_at": "2026-09-29T06:52:18.785853+00:00"
     }
   },
   "what": "오인 판정 1건 뒤 카메라별 오탐률 100%·사유(안개) 집계, 임계값 50% 시험이 fail 로 저장된다 — 실측"

@@ -17,5 +17,28 @@
       "assigned_post_code": "P-12"
     }
   },
-  "what": "POST 로 저장한 방해 금지 시간대·담당 초소가 이후 GET 재조회에 그대로 보인다 — 저장 실측(같은 시험 안 다른 요청으로 재조회)"
+  "what": "POST 로 저장한 방해 금지 시간대·담당 초소가 이후 GET 재조회에 그대로 보인다 — 저장 실측(같은 시험 안 다른 요청으로 재조회)",
+  "title_parts": [
+    {
+      "part": "저장(POST) 후 재조회(GET)에 방해 금지 시간대·담당 초소가 그대로 보인다",
+      "where": "backend/apps/fws/notify_prefs.py::save_prefs/get_prefs — POST/GET /api/fws/notify-prefs",
+      "status": "measured: F1_12_NotifyPrefsTest.test_save_then_read_back — quiet_hours_start='22:00', assigned_post_code='P-12' 재조회에서 그대로 실측"
+    },
+    {
+      "part": "'근무 외 알림 차단' — 저장한 방해 금지 시간대가 실제로 알림 발송을 억제하는가",
+      "where": "backend/kernels/k2_notify/webpush.py:230-258 _prefs_of()/_blocked_reason() — stream_monitors.DsmNotifyPrefs 모델만 읽음. backend/apps/fws/notify_prefs.py 는 감사로그(AuditLogs)에 씀. 둘을 잇는 코드 0건(grep 'notify_prefs.get_prefs' 전체 저장소 결과: api.py:144 echo-back 1건뿐)",
+      "status": "없음: FWS가 저장한 quiet_hours_start/end 는 K2의 발송 억제 로직(_blocked_reason)이 읽는 표(DSM의 DsmNotifyPrefs)와 완전히 다른 곳(FWS 감사로그)에 쓰인다 — 실제로 그 시간대에 알림을 '차단'하는 코드가 없다. 제목의 '차단'은 미구현이고, 지금 있는 것은 '저장·읽기'뿐이다"
+    },
+    {
+      "part": "'담당 초소 설정'이 다른 기능(예: 확인 요청 자동 배정)에 실제로 쓰이는가",
+      "where": "backend/apps/fws/office.py 등 — assigned_post_code grep 결과 notify_prefs.py·api.py·시험 파일 밖 사용처 0건",
+      "status": "없음: 저장·재조회 계약은 실측됐지만(위 항목), 담당 초소 값을 읽어 쓰는 다른 로직(예: F3-04 가장 가까운 감시원 배정)이 없다 — 저장만 되고 아무것도 참고하지 않는 값"
+    },
+    {
+      "part": "화면(설정 UI)",
+      "where": "frontend/src/features/fws — fwsEndpoint.notifyPrefs 는 api.ts:26에 등록만 되고 어떤 페이지도 호출하지 않음(grep 0건, MobileSettings.tsx는 DSM용 별개 엔드포인트)",
+      "status": "없음: F1 감시원이 실제로 시간대·초소를 입력할 화면이 없다"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:126행 · 원 명세서:147행('notify-prefs · 저장')을 evidence FWS-F1-12.json·test_fws_app.py:425-448·notify_prefs.py 와 대조, k2_notify/webpush.py:230-258 의 _prefs_of가 DsmNotifyPrefs(다른 모델)만 읽는 것을 확인해 '차단' 자체는 배선이 안 됐음을 특정"
 }

@@ -28,11 +28,24 @@
 
 ★ **새 표를 만들지 않는다** — 요청·승인·제공 셋을 감사 세 걸음으로 잇는다
 (`cbs_draft_service.py` 와 같은 모양 — 초안·승인·발송 → 요청·승인·제공).
+
+★ [턴 AO · P-407 · 차선 N1] **연간 통계(출력)** 채움 — 턴 AM 은 목록 조회(`list_
+  requests`)까지만 열었고, 명세 제목이 부르는 「연간 통계」 산출은 없었다
+  (`DSM-U4-07.json` 옛 title_parts 「목록 조회만 있고 연간 집계 배치는 없다」).
+  `annual_stats()` 가 **새 표 없이**(`GET /video-access-requests` 와 같은
+  감사 이력을 다시 읽는다) 한 해의 요청·승인·제공 건수와 월별 요청 건수를
+  집계해 낸다. **저장 시각 칸이 없는 감사 모델**(`audit_writer.read` 가 돌려주는
+  `AuditEntry` 에는 시각 칸이 없다 — 머리말 「분류 FK 는 비운다」와 같은 결의
+  판단)이라, `create_request`·`approve_request`·`provide` 가 이미 문장에 적어
+  둔 `접수=`·`시각=` 스탬프(`YYYY-MM-DD HH:MM`)를 되읽는다
+  (`shift_roster_service._parse_reason` 과 같은 방식 — 표를 새로 쪼개지 않고
+  이미 있는 감사 문장에서 뽑는다).
 """
 from __future__ import annotations
 
 import base64
 import hashlib
+import re
 from typing import Any
 
 from django.utils import timezone
@@ -53,6 +66,10 @@ SCAN_CAP = 1000
 #: **불변 문구** — 어느 제공 기록에도 이 말이 붙는다. 원본 파일 경로를 받는 매개변수
 #: 자체가 없으므로(구조로 막는다), 이 문구는 광고가 아니라 사실의 기록이다.
 ORIGINAL_NOT_RELEASED = "원본 미반출(마스킹본 제공)"
+
+#: [턴 AO · P-407] `create_request`·`approve_request`·`provide` 가 이미 적어 둔
+#: `접수=YYYY-MM-DD HH:MM` · `시각=YYYY-MM-DD HH:MM` 스탬프를 되읽는다.
+_STAMP_RE = re.compile(r"(?:접수|시각)=(\d{4})-(\d{2})-\d{2}")
 
 
 class VideoAccessRejected(Exception):
@@ -247,3 +264,47 @@ def list_requests(*, scope: TenantScope, limit: int = 200) -> list[dict[str, Any
             row["status"] = "승인"
     out = sorted(rows.values(), key=lambda r: r["request_id"], reverse=True)
     return out[:limit]
+
+
+def annual_stats(*, scope: TenantScope, year: int | None = None) -> dict[str, Any]:
+    """DSM-U4-07 「연간 통계(출력)」 — `GET /video-access-requests/annual-stats`.
+
+    제목이 부르는 것은 「제공 실적을 연 단위로 낸다」다. **새 표를 만들지 않고**
+    같은 감사 이력(`LOGGER_NAME`)을 연도(`year`, 생략하면 올해)로 걸러 요청·승인·
+    제공 건수와 월별 요청 건수를 낸다.
+
+    Raises:
+        ValueError: `year` 가 네 자리 연도가 아니다.
+        common.tenant_scope.SystemScopeCannotRead: 요청자가 없다(시스템 스코프).
+    """
+    actor = scope.require_actor()
+    group = get_user_group(actor)
+    year_val = int(year) if year is not None else timezone.localtime(
+        timezone.now()).year
+    if not (1000 <= year_val <= 9999):
+        raise ValueError(f"year 는 네 자리 연도여야 합니다: {year_val!r}")
+
+    by_month = {f"{m:02d}": 0 for m in range(1, 13)}
+    if group is None:
+        return {"year": year_val, "requested": 0, "approved": 0, "provided": 0,
+                "by_month": by_month}
+
+    entries = audit_writer.read(logger_name=LOGGER_NAME, limit=SCAN_CAP)
+    req_action = _request_action(group.pk)
+    appr_prefix = f"video_access_approve:{group.pk}:"
+    prov_prefix = f"video_access_provide:{group.pk}:"
+    requested = approved = provided = 0
+    for e in entries:
+        m = _STAMP_RE.search(e.reason or "")
+        if not m or int(m.group(1)) != year_val:
+            continue
+        month = m.group(2)
+        if e.action == req_action:
+            requested += 1
+            by_month[month] = by_month.get(month, 0) + 1
+        elif e.action.startswith(appr_prefix):
+            approved += 1
+        elif e.action.startswith(prov_prefix):
+            provided += 1
+    return {"year": year_val, "requested": requested, "approved": approved,
+            "provided": provided, "by_month": by_month}

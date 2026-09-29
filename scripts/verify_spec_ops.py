@@ -1,8 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""P-356·P-376 — OPS annex O-10(키·자격 회전)·O-04(모델 레지스트리) 승격 게이트.
-차선 O · 턴 AM. `scripts/verify_spec_fws.py` 의 구조를 그대로 베낀다(D-212 —
+"""P-356·P-376 — OPS annex O-01·02·05~12 승격 게이트. 차선 O(턴 AM) 가 O-10·O-04
+로 세웠고, 차선 N3(턴 AO · WO-18)가 **여덟을 더 얹었다**(O-01·02·06·07·08·09·11·12).
+`scripts/verify_spec_fws.py` 의 구조를 그대로 베낀다(D-212 —
 판정 모양은 한 곳에서 정한다. 분모가 다를 뿐 셋·짝·자기시험은 같다).
+
+★ [턴 AO · 차선 N3] 경로 접두어를 고친다 — **`/api/ops/` 가 아니라 `/api/dsm/ops/`**
+----------------------------------------------------------------------------------
+턴 AM 은 "OPS 앱이 서는 날을 위한 자리"라며 `judge_evidence` 에 `/api/ops/` 를
+박아 뒀다(그 날 아직 OPS 앱이 없어 `CLOSED_CLAUSES` 가 비어 있었다). 이번 턴
+실측하니 파일 소유 규약이 이미 정해 둔 자리는 `backend/apps/dsm/api_ops_an.py`
+— 즉 라우트는 `dsm_api`(`/api/dsm/` 로 mount) 아래 `/ops/...` 다. 새 OPS 전용
+Django app 을 세우는 일은 이 턴의 몫이 아니었다(파일 소유가 이미 `apps/dsm` 을
+가리켰다). 그래서 실제 경로는 `/api/dsm/ops/...` 이고, 판정식을 **실재에 맞춘다**
+(지어낸 계획에 실재를 맞추지 않는다 — D-284 계열).
 
 무엇을 재는가 — 셋 (FWS 게이트와 같다)
 ----------------------------------------
@@ -53,29 +64,59 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 BACKEND = ROOT / "backend"
+#: 턴 AM 의 길목(O-10·O-04 조사 기록 — 지금도 0건 통과라 CLOSED 가 없다).
 TESTS_REL = "tests/test_p356_ops_spec_promotions.py"
 TESTS = BACKEND / TESTS_REL
+#: [턴 AO · 차선 N3] 여덟을 닫는 길목 — 실제 HTTP 왕복(django_test_client).
+TESTS_REL_N3 = "tests/test_ops_an.py"
+TESTS_N3 = BACKEND / TESTS_REL_N3
 EVIDENCE_DIR = ROOT / "docs" / "agent" / "evidence" / "SPEC"
 SHELL_CONTAINER = "gx-shell"
 TAG = "[SPEC-OPS]"
 
 EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 
-#: 닫은 열 — **이번 턴은 비어 있다.** O-10·O-04 둘 다 P-356 넷(실제 엔드포인트 ·
-#: 증거 · 게이트 · 승격 제안)을 갖추지 못했다(`docs/agent/evidence/SPEC/O_promotions.md`
-#: 참조). 앞으로 누가 정말 닫으면 그 절 id 를 여기 올리고 `NOT_STARTED` 에서 뺀다.
-CLOSED_CLAUSES: tuple[str, ...] = ()
+#: 닫은 열 — 턴 AM 은 비웠다(O-10·O-04). 턴 AO · 차선 N3 가 **여덟을 얹는다.**
+#: 새 DB 모델 0(감사 스냅샷 재사용) · dj-core 는 읽기·호출만(`backend/apps/dsm/
+#: ops_an_service.py` 머리말 참조) — 각 절의 `docs/agent/evidence/SPEC/O-*.json`
+#: 의 `title_parts` 가 "제목이 부르는 것 ↔ 있는 것" 표를 낸다.
+CLOSED_CLAUSES: tuple[str, ...] = (
+    "O-01", "O-02", "O-05", "O-06", "O-07", "O-08", "O-09", "O-12",
+)
 
 #: annex 원문(플랫폼 구조설계서 §7) 제목 — 판정에는 안 쓴다(사람이 읽을 이름표).
 TITLES: dict[str, str] = {
+    "O-01": "테넌트 발급 — 테넌트(시군구) 생성 · 계층 · 초기 관리자 1 · 도메인·인증서 · "
+           "공개 URL",
+    "O-02": "앱 설치·버전 — 테넌트에 앱 설치·업그레이드·비활성 · 시드 소유권 · 유령 "
+           "시드 정리",
+    "O-05": "건강 보드(전 테넌트) — 완결조건: 테넌트 수 = 보드 행 수 · 빨강 → "
+           "인시던트 자동 생성",
+    "O-06": "인시던트 — 접수(테넌트·앱·심각도) → 1차 대응(4영업시간) → 에스컬레이션"
+           "(1영업일) → 종결·원인",
+    "O-07": "백업·복구 — 테넌트별 덤프·회수증 · 복원 시험 · 다른 호스트 목적지",
+    "O-08": "온보딩 관제 — 테넌트별 D-7~D+30 진행 · 역할별 진행률 6/6 · 48행 재측 "
+           "결과 · 막힌 카드",
+    "O-09": "감사(플랫폼) — 운영자 행위 전건 · 테넌트 감사 열람은 요청·승인 뒤",
     "O-10": "키·자격 회전 — API 키 · 서명키 · DB/MinIO 자격 · VAPID · 회전 주기 · "
            "재생성 창 runbook",
+    "O-11": "릴리스·배포 — 릴리스 트레인 · 테넌트별 단계 배포(카나리 1 → 전체) · "
+           "되돌리기 · 배포 창",
+    "O-12": "시드·훈련 데이터 — 테넌트에 검수 시드 심기·숨기기 · 훈련 시나리오 배포",
     "O-04": "모델 레지스트리 — 모델 버전·앱 태그·테넌트 배포·롤백 · 카메라별 바인딩 "
            "현황 · 성능(오탐률)",
 }
 
-#: 못 닫은 둘 — **「무엇이 없는가」**(P-358·P-376 형식). 빈 칸으로 두지 않는다(D-274).
+#: 못 닫은 것들 — **「무엇이 없는가」**(P-358·P-376 형식). 빈 칸으로 두지 않는다(D-274).
 NOT_STARTED: dict[str, str] = {
+    "O-11": "완결 조건은 3항 AND 다(「deploy.sh exit 0 · 걷기 초록 · 되돌리기 1회 "
+           "시험」). 앞 둘은 이미 있는 장부(`docs/agent/evidence/OPS-27/"
+           "deploys.jsonl`)를 그대로 읽어 실측한다(`GET /api/dsm/ops/releases` · "
+           "`tests/test_ops_an.py::O11_ReleaseBoardSmokeTest`). **되돌리기 1회 "
+           "시험만 없다** — 실제 배포 되돌리기(파일 스왑·컨테이너 재시작)는 HTTP "
+           "라운드트립 시험이 아니라 운영 집행이고, `deploys.jsonl` 에도 되돌리기 "
+           "항목이 0건이라(grep 0) 이미 있는 장부를 읽는 방식으로도 못 잰다. 반쪽"
+           "(3항 중 2항)이라 승격하지 않는다(P-417).",
     "O-10": "완결 조건은 AND 다(「회전 뒤 게이트 계정 로그인 4/4 · 옛 키 401」). "
            "뒤 반(옛 키 401)은 이미 있는 door(`kernels.k5_trust.inbound_keys."
            "rotate_key` · 들어오는 키(inbound_api_key) 회전 문)로 "
@@ -90,7 +131,14 @@ NOT_STARTED: dict[str, str] = {
            "콘솔/엔드포인트로 통합된 곳이 없고**, VAPID·DB/MinIO 자격은 표 ②에 "
            "아예 없다(`apps/dsm/notify_prefs.py` 에 따로 있다). "
            "`tests/test_p356_ops_spec_promotions.py::KeyRotationCoverageTest` 가 "
-           "이 흩어짐과 구조적 한계를 실측으로 고정한다.",
+           "이 흩어짐과 구조적 한계를 실측으로 고정한다. [턴 AO · 차선 N3 덧붙임] "
+           "콘솔 문은 이번 턴 하나 열었다 — `GET /api/dsm/ops/keys`(회전 대상 보드"
+           " · `docs/agent/evidence/D-373/key_rotation_last.json` 읽기) · "
+           "`POST /api/dsm/ops/keys/rotate`(`kernels.k5_trust.inbound_keys."
+           "rotate_key` 그대로 재사용). 그러나 앞 반(라이브 로그인 재검증)은 여전히 "
+           "이 저장소 규칙이 막아 결론은 바뀌지 않는다 — `tests/test_ops_an.py::"
+           "O10_KeyRotationSmokeTest` 가 그 자백(`gray_why`)이 응답에 실제로 실려 "
+           "있는지만 스모크로 확인한다(승격은 안 한다).",
     "O-04": "모델 버전·테넌트 배포·롤백·카메라별 바인딩을 담을 저장처가 전혀 없다"
            "(전수 grep 0건 — `ModelVersion`·`ModelRegistry`·`ModelDeployment`·"
            "`ModelBinding` 류 이름 0). 가장 가까운 기존 값(`kernels.k6_feedback."
@@ -136,12 +184,56 @@ def judge_gate_tests(summary: tuple[int, int, int] | None) -> tuple[int, str]:
     return EXIT_OK, "길목 시험 %d건 전부 통과" % passed
 
 
+#: [턴 AO §0.4 규약 · P-417] 닫힘으로 세는 `status` 접두어 — 이 밖의 값은 **열린
+#: 행**이다(반쪽). `excluded_by`(결정 번호) + `excluded_why` 가 있으면 그 행은
+#: 예외로 닫힘(P-406).
+_CLOSING_STATUS_PREFIXES = ("measured", "present", "있음", "구현 — ", "구현—")
+_OPEN_STATUS_PREFIXES = ("없음", "부분", "missing", "[미확인]", "대안", "근사", "대리")
+
+
+def _title_part_closed(part: dict) -> tuple[bool, str]:
+    if part.get("excluded_by") and (part.get("excluded_why") or "").strip():
+        return True, "excluded_by=%s" % part["excluded_by"]
+    status = (part.get("status") or "").strip()
+    if not status:
+        return False, "status 칸이 비었다"
+    if any(status.startswith(p) for p in _OPEN_STATUS_PREFIXES):
+        return False, "status=%r 는 열린 행이다" % status
+    if any(status.startswith(p) for p in _CLOSING_STATUS_PREFIXES):
+        return True, "status=%r" % status
+    #: 그 밖의 값(예: "measured — 대체 경로") — `measured` 로 시작하면 위에서 이미
+    #: 잡혔으므로 여기는 분류 밖 문자열이다. 안전하게 **연 것으로** 본다(D-274 —
+    #: 모르면 닫힘이라 말하지 않는다).
+    return False, "status=%r 를 분류 못 했다 — 열린 행으로 본다" % status
+
+
+def judge_title_parts(clause_id: str, payload: dict | None) -> tuple[int, str]:
+    """★ P-356 ② — 「제목이 부르는 것 ↔ 있는 것」 표가 **빈 칸 없이** 다 닫혔는가.
+
+    턴 AO §0.4 규약: "증거 안에 title_parts 표가 있어야 한다 — O 게이트가 빈 칸을
+    센다." 이 함수가 그 셈이다. 열린 행이 하나라도 있으면 그 절은 반쪽이다.
+    """
+    if payload is None:
+        return EXIT_UNDECIDABLE, "%s — 증거 파일이 없다(못 쟀다)" % clause_id
+    parts = payload.get("title_parts")
+    if not parts:
+        return EXIT_FAIL, "%s — title_parts 표가 없다(P-356 ② 위반)" % clause_id
+    open_rows = []
+    for part in parts:
+        ok, why = _title_part_closed(part)
+        if not ok:
+            open_rows.append("%s(%s)" % (part.get("part", "?"), why))
+    if open_rows:
+        return EXIT_FAIL, "%s — 반쪽(열린 행 %d): %s" % (clause_id, len(open_rows), "; ".join(open_rows))
+    return EXIT_OK, "%s — title_parts %d행 전부 닫힘" % (clause_id, len(parts))
+
+
 def judge_evidence(clause_id: str, payload: dict | None) -> tuple[int, str]:
     """이 절의 증거 한 건이 「HTTP 로 실제로 두드렸다」는 모양을 갖췄는가.
 
-    ★ `verify_spec_fws.py::judge_evidence` 와 판정식이 같다 — 경로 접두어만
-      `/api/ops/` 로 바꿨다(OPS 앱이 서는 날을 위한 자리 — 아직 아무 절도 이
-      경로를 쓰지 않는다, `CLOSED_CLAUSES` 가 비어 있는 것이 그 증거다).
+    ★ `verify_spec_fws.py::judge_evidence` 와 판정식이 같다. [턴 AO · 차선 N3]
+      경로 접두어를 실재에 맞춰 `/api/dsm/ops/` 로 고쳤다(머리말 참조 — 턴 AM 이
+      박아 둔 `/api/ops/` 는 그 날 아직 없던 앱을 가정한 자리였다).
     """
     if payload is None:
         return EXIT_UNDECIDABLE, "%s — 증거 파일이 없다(못 쟀다)" % clause_id
@@ -164,12 +256,15 @@ def judge_evidence(clause_id: str, payload: dict | None) -> tuple[int, str]:
     if not isinstance(status, int) or not (200 <= status <= 299):
         return EXIT_FAIL, "%s — 응답 상태가 2xx 가 아니다(status=%r)" % (clause_id, status)
     request = payload.get("request") or {}
-    if not (request.get("path") or "").startswith("/api/ops/"):
+    if not (request.get("path") or "").startswith("/api/dsm/ops/"):
         return (EXIT_FAIL,
-                "%s — 요청 경로(%r)가 /api/ops/ 가 아니다 — 다른 문을 잰 증거일 수 있다"
+                "%s — 요청 경로(%r)가 /api/dsm/ops/ 가 아니다 — 다른 문을 잰 증거일 수 있다"
                 % (clause_id, request.get("path")))
-    return EXIT_OK, "%s — 증거 성립(2xx · %s %s)" % (
-        clause_id, request.get("method"), request.get("path"))
+    tp_code, tp_verdict = judge_title_parts(clause_id, payload)
+    if tp_code != EXIT_OK:
+        return tp_code, tp_verdict
+    return EXIT_OK, "%s — 증거 성립(2xx · %s %s · %s)" % (
+        clause_id, request.get("method"), request.get("path"), tp_verdict)
 
 
 def combine(codes: list[int]) -> int:
@@ -190,7 +285,9 @@ def run_gate_tests(shell: str) -> str | None:
              "-e", "DJANGO_SETTINGS_MODULE=config.settings",
              "-e", "DB_TEST_NAME=test_gx_verify_spec_ops",
              "-w", "/app", shell,
-             "python", "-m", "pytest", TESTS_REL,
+             #: [턴 AO · 차선 N3] 둘 다 돈다 — 턴 AM 의 길목(O-10·O-04, 여전히 0
+             #: 통과) + 이 턴의 길목(여덟을 닫는 실제 HTTP 왕복).
+             "python", "-m", "pytest", TESTS_REL, TESTS_REL_N3,
              "-q", "--create-db", "-p", "no:randomly"],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             #: ★ `guardianx-lane-count-ceilings` — 공유 gx-shell 은 다른 차선과
@@ -241,11 +338,26 @@ def self_test() -> int:
     good = {
         "id": "O-10", "measured_at": "2026-09-28T00:00:00+00:00",
         "measured_by": "django_test_client", "test": "tests.test_p356_ops_spec_promotions.X.y",
-        "request": {"method": "POST", "path": "/api/ops/keys/rotate", "body": {}},
+        "request": {"method": "POST", "path": "/api/dsm/ops/keys/rotate", "body": {}},
         "response": {"status": 200, "body": {}}, "what": "실측",
+        "title_parts": [{"part": "회전", "where": "keys/rotate", "status": "measured"}],
     }
     code, _ = judge_evidence("O-10", good)
     check("증거 성립 표본 → 초록", code == EXIT_OK)
+
+    code, _ = judge_title_parts("O-10", good)
+    check("title_parts 전부 닫힘 → 초록", code == EXIT_OK)
+    code, _ = judge_title_parts("O-10", dict(good, title_parts=[
+        {"part": "회전", "where": "x", "status": "없음 — 아직"}]))
+    check("★ title_parts 에 열린 행 하나 → 빨강(반쪽을 닫힘으로 안 올린다)", code == EXIT_FAIL)
+    code, _ = judge_title_parts("O-10", dict(good, title_parts=[
+        {"part": "회전", "where": "x", "status": "없음", "excluded_by": "P-999",
+         "excluded_why": "결정으로 뺐다"}]))
+    check("excluded_by + excluded_why 있으면 열린 행이어도 닫힘(P-406)", code == EXIT_OK)
+    code, _ = judge_title_parts("O-10", dict(good, title_parts=[]))
+    check("title_parts 빈 목록 → 빨강", code == EXIT_FAIL)
+    code, _ = judge_title_parts("O-10", None)
+    check("title_parts 판정 — 증거 자체가 없으면 회색", code == EXIT_UNDECIDABLE)
 
     code, _ = judge_evidence("O-10", None)
     check("증거 파일 없음 → 회색(못 쟀다)", code == EXIT_UNDECIDABLE)
@@ -280,7 +392,8 @@ def self_test() -> int:
 
 # ═══════════════════════════════════════════════════════════════════════════
 def main() -> int:
-    ap = argparse.ArgumentParser(description="OPS O-10·O-04 별표 절 승격 게이트")
+    ap = argparse.ArgumentParser(
+        description="OPS O-01·02·05~12(N3)·O-10·O-04(O) 별표 절 승격 게이트")
     ap.add_argument("--self-test", action="store_true")
     #: [P-376 · 차선 O] **기본은 다시 안 돌린다** — `verify_spec_fws.py` 와 같은 이유
     #:   (증거 시각이 매번 바뀌면 측정 재현성이 깨진다). `--run` 이 pytest 를 다시 돌린다.
@@ -299,16 +412,19 @@ def main() -> int:
 
     if args.no_run:
         print("%s [입력] --no-run(기본) — pytest 를 다시 안 돌린다(지금 있는 evidence "
-             "파일만 · 이번 턴은 닫은 열 0건이라 볼 파일도 없다)" % TAG)
+             "파일만 본다)" % TAG)
     else:
-        if not TESTS.exists():
-            print("%s **판정 불가 · 회색** — 길목 시험 파일이 없다: %s" % (TAG, TESTS_REL))
+        missing_tests = [str(p) for p in (TESTS, TESTS_N3) if not p.exists()]
+        if missing_tests:
+            print("%s **판정 불가 · 회색** — 길목 시험 파일이 없다: %s"
+                 % (TAG, ", ".join(missing_tests)))
             return EXIT_UNDECIDABLE
         raw = run_gate_tests(args.shell)
         summary = parse_pytest_summary(raw) if raw is not None else None
         code1, verdict1 = judge_gate_tests(summary)
         codes.append(code1)
-        print("%s [입력] 길목 시험 = %s (gx-shell=%s)" % (TAG, TESTS_REL, args.shell))
+        print("%s [입력] 길목 시험 = %s · %s (gx-shell=%s)"
+             % (TAG, TESTS_REL, TESTS_REL_N3, args.shell))
         if summary is not None:
             print("%s [입력] pytest 요약 — 통과 %d · 실패 %d · 에러 %d"
                  % (TAG, summary[0], summary[1], summary[2]))
@@ -334,8 +450,9 @@ def main() -> int:
     final = combine(codes)
     closed_n = sum(1 for c in codes if c == EXIT_OK) if args.no_run else \
         sum(1 for c in codes[1:] if c == EXIT_OK)
-    print("%s ── 요약 — 닫은 열 %d/%d(분모 = annex 배정 2건) · 최종 %s ──"
+    print("%s ── 요약 — 닫은 열 %d/%d(분모 = annex 배정 %d건) · 최종 %s ──"
          % (TAG, closed_n, len(CLOSED_CLAUSES) + len(NOT_STARTED),
+            len(CLOSED_CLAUSES) + len(NOT_STARTED),
             {EXIT_OK: "PASS", EXIT_FAIL: "FAIL", EXIT_UNDECIDABLE: "GRAY"}[final]))
     return final
 
@@ -347,17 +464,20 @@ if __name__ == "__main__":
     gate_header(
         __file__,
         target="gx-shell(%s) 안 backend/tests/test_p356_ops_spec_promotions.py · "
+               "backend/tests/test_ops_an.py · apps.dsm.ops_an_service · "
                "kernels.k5_trust(inbound_keys·webhook_signing_keys·credentials) · "
                "scripts/rotate_shared_passwords.py · docs/agent/evidence/SPEC/*.json"
                % SHELL_CONTAINER,
         as_="pytest 는 자격증명 없이 --create-db 로 돈다 · 라이브 서버 로그인은 이번 "
-            "게이트가 하지 않는다(차선 공통 규칙 금지) — O-10 완결 조건의 그 반쪽이 "
-            "바로 이 이유로 못 닫힌다",
+            "게이트가 하지 않는다(차선 공통 규칙 금지) — O-10·O-11 완결 조건의 "
+            "라이브 절반이 바로 이 이유로 못 닫힌다",
         source="살아 있는 gx-shell 컨테이너(docker exec, `--run` 일 때만) · 정적으로는 "
               "저장소의 kernels·scripts 소스 그 자체(전수 grep — 사진·손으로 옮긴 값 "
               "아님)",
-        measured="닫은 열 0건 · 못 닫은 열 2건(O-10·O-04) — 분모 2, "
-                "`docs/agent/evidence/SPEC/O_promotions.md` 의 「무엇이 없는가」 표와 "
-                "일치",
+        measured="닫은 열 %d건(O-01·02·05·06·07·08·09·12) · 못 닫은 열 %d건"
+                "(O-10·O-11·O-04) — 분모 %d, `docs/agent/evidence/SPEC/"
+                "N3_promotions_ao.md` 의 「무엇이 없는가」 표와 일치"
+                % (len(CLOSED_CLAUSES), len(NOT_STARTED),
+                   len(CLOSED_CLAUSES) + len(NOT_STARTED)),
     )
     raise SystemExit(main())

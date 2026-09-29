@@ -1,0 +1,49 @@
+{
+  "id": "FWS-F4-06",
+  "title": "소방·경찰·군 협조 요청 기록",
+  "title_parts": [
+    {
+      "part": "소방 협조 요청 기록",
+      "where": "agency=fire_department 실측",
+      "status": "구현 — 실측"
+    },
+    {
+      "part": "경찰 협조 요청 기록",
+      "where": "agency=police 실측",
+      "status": "구현 — 실측"
+    },
+    {
+      "part": "군 협조 요청 기록",
+      "where": "agency=military 실측",
+      "status": "구현 — 실측"
+    },
+    {
+      "part": "기록(완결조건)",
+      "where": "GET .../agency-request → count=3",
+      "status": "구현 — 재조회로 3건 확인"
+    }
+  ],
+  "measured_at": "2026-09-29T06:51:22.963267+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f4.F4_06_AgencyCoordinationTest.test_record_three_agencies",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/command/incidents/6/agency-request?agency=military&request_detail=military+%ED%98%91%EC%A1%B0+%EC%9A%94%EC%B2%AD",
+    "params": {
+      "agency": "military"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "record_id": 13,
+      "event_id": 6,
+      "agency": "military",
+      "request_detail": "military 협조 요청",
+      "note": "",
+      "requested_at": "2026-09-29T06:51:22.907624+00:00",
+      "requested_by": "dsm_user_a"
+    }
+  },
+  "what": "소방·경찰·군 세 기관 협조 요청을 각각 POST 로 기록하고 GET 재조회로 3건을 확인한다 — 실측"
+}

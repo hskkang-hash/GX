@@ -1,33 +1,33 @@
 {
   "id": "FWS-F3-06",
   "title": "신고 접수 기록 — 119/산림청/시민 신고 접수 항목(시간·장소·시설·차량 진입·화세) · 신고 시각 = 30분 시계 시작",
-  "measured_at": "2026-09-29T04:59:40.350617+00:00",
+  "measured_at": "2026-09-29T06:51:58.095528+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_06_IntakeTest.test_intake_recorded_then_listed_starts_the_clock",
   "request": {
     "method": "GET",
-    "path": "/api/fws/office/fire-events/512/intake",
+    "path": "/api/fws/office/fire-events/25/intake",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 512,
+      "event_id": 25,
       "count": 1,
       "intakes": [
         {
           "note": "시민 최초 신고",
           "source": "citizen",
-          "__seq__": 223,
-          "__hash__": "7e74644077ee1c5673aadd7a754f4207780ac7dc6a9c4c5433d7e5f688d85f37",
-          "event_id": 512,
-          "reported_at": "2026-09-29T04:59:40.303457+00:00",
+          "__seq__": 59,
+          "__hash__": "5ad45d0da1245b83c271c7b6241cd6f80fb7e7e6f378b83895c1717300b6e333",
+          "event_id": 25,
+          "reported_at": "2026-09-29T06:51:58.033896+00:00",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "clock_minutes": 30,
           "facility_note": "인근 축사 있음",
           "fire_intensity": "중",
           "vehicle_access": true,
-          "clock_started_at": "2026-09-29T04:59:40.303457+00:00"
+          "clock_started_at": "2026-09-29T06:51:58.033896+00:00"
         }
       ]
     }

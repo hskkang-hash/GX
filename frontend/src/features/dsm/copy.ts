@@ -777,3 +777,60 @@ export const HOTLINE_ROOM_LABEL = '상황실 전화';
 export const HOTLINE_PSLTE_LABEL = 'PS-LTE 그룹통화';
 /** 번호가 아직 설정 안 된 테넌트에 뜨는 문장. **죽은 버튼을 그리지 않는다**(D-284). */
 export const HOTLINE_NOT_CONFIGURED = '아직 등록된 연락 번호가 없습니다.';
+
+/* ════════════════════════════════════════════════════════════════════════
+ * P-408 · 턴 AO · 차선 L — **서버가 채운 자유 문장에서 우리 대장 표기를 가린다**
+ * (`/dsm/events/:id` 판정 사유·발송 실패 사유 · `/dsm/audit` 사유 열 ·
+ * `/dsm/system` 재시작 사유 열).
+ *
+ * 왜 필요한가 — [실측 2026-09-29 · 턴 AO · turn_an_7.json] `scripts/verify_ui_copy.py
+ * --list` 는 dsm/mobile/login 스코프 잔여 **0건**을 말하는데, 같은 순간
+ * `measure_onboarding_t.py` 의 실제 화면 글자 스캔(`third_condition_violations`
+ * → 같은 `verify_ui_copy.scan_line`)은 U1#9 · U2#3 · U4#16 · U5#14 넷에서
+ * 「절 ID」·「마크다운 강조」·「상태 코드」를 계속 잡았다. 정적 검사는 **소스
+ * 문자열만** 본다 — `reason`·`failure_reason` 처럼 **서버가 채우고 화면이
+ * `dataIndex` 원문으로 그대로 옮기는 자유 문장**은 그 그물 밖이다.
+ *
+ * 근거: 같은 이벤트 상세의 발송 이력 표에서 **바로 옆 「채널」 칸**은 이미
+ * P-371(턴 AL)에서 `channelDisplayLabel()` 로 옮겨 이 문제를 한 번 풀었다
+ * (`EventDetail.tsx` 위 주석 「채널 코드를 그대로 잡았다」). 「실패 사유」 칸만
+ * 그 정정을 못 받고 `render: (v) => v || ''` 로 원문을 그대로 찍고 있었다
+ * (`EventDetail.tsx:918-923`). `AuditLog.tsx`(사유 열 · `:483`)와
+ * `SystemSettings.tsx`(재시작 사유 열 · `:536`)도 같은 모양이다.
+ *
+ * ★ 문장 자체는 **버리지 않는다** — 사람이 적은 사유는 그 사람의 것이다.
+ *   지우는 것은 우리 개발 대장의 표기(결정 번호·절 ID·마크다운·백틱)뿐이다.
+ *   `verify_ui_copy.py::PATTERNS` 의 「결정 번호」·「절 ID」·「백틱」·「마크다운
+ *   강조」 네 그물과 같은 정규식이다 — 그 파일은 스크립트(호스트에서 돎)라
+ *   번들이 가져올 수 없어 표현식만 그대로 옮긴다(두 벌이라는 것을 안다 —
+ *   양쪽 다 주석으로 서로를 가리킨다).
+ * ⚠ 라이브 서버를 두드려 실제 잔여 문자열을 확정하지 않았다(이 턴은 V 를
+ *   부르지 않는다) — 이 정정으로 넷이 전부 초록이 된다는 보장은 없고,
+ *   「대장 표기가 화면에 남지 않는다」는 보장만 준다. 다음 회차가 잰다.
+ */
+const FREE_TEXT_DECISION_NUMBER = /(?<![A-Za-z0-9])D-\d{3}(?!\d)/g;
+const FREE_TEXT_SECTION_ID =
+  /\b(?:UX|SEC|OPS|QA|LAW|PERF|ISO|F|P|W|AC|FR|NFR|DA)-\d{1,3}\b/g;
+const FREE_TEXT_BACKTICK = /`/g;
+const FREE_TEXT_MARKDOWN_EMPHASIS = /\*\*/g;
+/** 상태 열거값 맨몸(따옴표·등호 없이 선 자리) — `verify_ui_copy.py::AA_STATUS_CODES`. */
+const FREE_TEXT_STATUS_WORD =
+  /\b(?:occurred|acknowledged|in_progress|confirmed|rejected|resolved|pending|live|drill|seed)\b/g;
+
+/**
+ * 서버가 채운 자유 문장(사유·실패 사유)을 **사람이 읽는 그대로 두되**, 우리
+ * 개발 대장의 표기만 지운다. 빈 값은 빈 문자열 — 화면이 `|| '—'` 로 채운다.
+ */
+export function safeFreeText(raw: string | null | undefined): string {
+  const text = String(raw ?? '');
+  if (!text) return '';
+  const cleaned = text
+    .replace(FREE_TEXT_DECISION_NUMBER, '')
+    .replace(FREE_TEXT_SECTION_ID, '')
+    .replace(FREE_TEXT_BACKTICK, '')
+    .replace(FREE_TEXT_MARKDOWN_EMPHASIS, '')
+    .replace(FREE_TEXT_STATUS_WORD, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return cleaned;
+}

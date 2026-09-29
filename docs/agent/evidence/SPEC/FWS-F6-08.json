@@ -28,5 +28,23 @@
       ]
     }
   },
-  "what": "POST 로 남긴 경찰 협조 기록(교통통제)이 GET 재조회에 1건으로 남는다 — 협조 기록 실측"
+  "what": "POST 로 남긴 경찰 협조 기록(교통통제)이 GET 재조회에 1건으로 남는다 — 협조 기록 실측",
+  "title_parts": [
+    {
+      "part": "교통통제 협조 기록",
+      "where": "backend/apps/fws/integration.py::record_police_coordination (kind=\"traffic_control\", POST /api/fws/liaison/fire-events/{id}/police-coordination)",
+      "status": "있음 — test_record_then_list_by_event 실측(kind=traffic_control 로 기록 후 GET 재조회 1건)"
+    },
+    {
+      "part": "입산통제 협조 기록",
+      "where": "backend/apps/fws/integration.py::POLICE_COORDINATION_KIND_ENTRY_BAN=\"mountain_entry_control\" + record_police_coordination(교통통제와 같은 함수, 코드 분기 없음)",
+      "status": "있음 — traffic_control 과 완전히 같은 범용 기록 경로가 kind 값만 다르게 받는다(POLICE_COORDINATION_KINDS 에 등재) · 다만 mountain_entry_control 값 자체를 HTTP 로 직접 두드린 전용 실측은 없다(test_unknown_kind_is_422 는 잘못된 값만 검증) — 코드는 있고 같은 함수라 결과가 갈릴 지점이 없어 CLOSED 로 두되, 전용 실측 부재는 그대로 남긴다"
+    },
+    {
+      "part": "사건별 조회",
+      "where": "backend/apps/fws/integration.py::police_coordination_records (GET /api/fws/liaison/fire-events/{id}/police-coordination)",
+      "status": "있음 — 제출자를 가리지 않고 그 사건에 달린 기록 전부를 낸다 · test_record_then_list_by_event 실측"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: docs/design/FWS_산불감시App_명세서_v1.0_프로세스_사용자별_20260915.md §5.6 FWS-F6-08 행 ↔ docs/agent/evidence/SPEC/FWS-F6-08.json ↔ backend/tests/test_fws_f6.py::F6_08_PoliceCoordinationTest 두 시험 ↔ backend/apps/fws/integration.py::POLICE_COORDINATION_KINDS/record_police_coordination 코드를 대조 — 제목이 부르는 두 협조 종류(교통·입산)가 같은 범용 함수로 모두 코드에 있고, 이 절은 annex 완결조건('기록')을 넘는 실시간 경찰 시스템 연동을 요구하지 않아 세 행 모두 CLOSED 로 판단, 다만 mountain_entry_control 전용 HTTP 실측 부재는 status 문구에 남김."
 }

@@ -1,0 +1,77 @@
+{
+  "id": "O-08",
+  "title": "온보딩 관제",
+  "measured_at": "2026-09-29T07:00:03.230520+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_ops_an.O08_OnboardingBoardTest.test_reads_the_48_row_ledger",
+  "request": {
+    "method": "GET",
+    "path": "/api/dsm/ops/onboarding",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "read": true,
+      "source": "/docs/agent/evidence/ONB-T/turn_an_w1_u6.json",
+      "denominator": 48,
+      "score_over_denominator": "6.5/48",
+      "green": 6,
+      "half": 1,
+      "red": 1,
+      "role_progress_6": {
+        "U6": {
+          "green": 6,
+          "half": 1,
+          "red": 1,
+          "total": 8,
+          "ratio": 0.812
+        }
+      },
+      "role_count": 1,
+      "blocked_cards": [
+        {
+          "row": "U6#4",
+          "why": "구독 200 · 목록 1 -> 2 · [서버 기록] 서명이 붙은 발송 행 -1건(-1 은 표를 못 읽은 것이다) · [되돌림] DELETE 5 -> 200 — 이 걸음은 **새 사건을 만들지 않는다**(제품에 그 문이 없다). 발송 갈래는 이미 남은 행으로 잰다 · 셋째 조건 해당 없음(기계 사용자 — 화면이 없다 · 문구·술어 두 조건으로 매긴다 · P-377)"
+        }
+      ],
+      "tenants": [
+        {
+          "tenant_code": "",
+          "name": "dsm-tenant-A",
+          "day_n": 0,
+          "stage": "D-7~D0(착수)"
+        },
+        {
+          "tenant_code": "",
+          "name": "dsm-tenant-B",
+          "day_n": 0,
+          "stage": "D-7~D0(착수)"
+        }
+      ]
+    }
+  },
+  "what": "GET /api/dsm/ops/onboarding 이 docs/agent/evidence/ONB-T/turn_*.json(48행 재측 장부)의 최신 파일을 읽어 역할별(U1~U6) 진행률·막힌 카드·테넌트별 D-day 진행을 계산해 낸다 — 새 저장 0, 완결조건('테넌트별 D-7~D+30 진행 · 역할별 진행률 · 48행 재측 결과 · 막힌 카드') 실측.",
+  "title_parts": [
+    {
+      "part": "테넌트별 D-7~D+30 진행",
+      "where": "tenants[].day_n/stage",
+      "status": "measured"
+    },
+    {
+      "part": "역할별 진행률 6",
+      "where": "role_progress_6",
+      "status": "measured"
+    },
+    {
+      "part": "48행 재측 결과",
+      "where": "score_over_denominator/green/half/red",
+      "status": "measured"
+    },
+    {
+      "part": "막힌 카드",
+      "where": "blocked_cards",
+      "status": "measured"
+    }
+  ]
+}

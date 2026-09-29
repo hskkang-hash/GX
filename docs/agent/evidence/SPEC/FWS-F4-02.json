@@ -1,0 +1,52 @@
+{
+  "id": "FWS-F4-02",
+  "title": "대응단계 확정·상향(사유) · 지휘권 이양 기록(시군구→시도)",
+  "title_parts": [
+    {
+      "part": "대응단계 확정·상향",
+      "where": "요청 stage → 응답 stage",
+      "status": "구현 — 1단계 미설정 상태에서 2단계 확정 실측"
+    },
+    {
+      "part": "사유",
+      "where": "요청 reason → 응답 reason",
+      "status": "구현 — 감사 사유로 남음(재조회 history 로 확인)"
+    },
+    {
+      "part": "지휘권 이양 기록(시군구→시도)",
+      "where": "요청 command_level → 응답 command_level(감사 한 줄 — 세종 판정 P-414, 새 표 0)",
+      "status": "구현 — command_level=시도 실측"
+    },
+    {
+      "part": "배지·감사(완결조건)",
+      "where": "GET .../stage → history.current",
+      "status": "구현 — 재조회로 남는 배지값 실측"
+    }
+  ],
+  "measured_at": "2026-09-29T06:51:15.793867+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f4.F4_02_StageConfirmTest.test_confirm_stage_records_badge_and_command_level_transfer",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/command/incidents/1/stage?stage=2%EB%8B%A8%EA%B3%84&reason=%ED%92%8D%EC%86%8D+%EA%B8%89%EC%A6%9D&command_level=%EC%8B%9C%EB%8F%84",
+    "params": {
+      "stage": "2단계",
+      "reason": "풍속 급증",
+      "command_level": "시도"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "confirmation_id": 1,
+      "event_id": 1,
+      "stage": "2단계",
+      "prior_stage": null,
+      "reason": "풍속 급증",
+      "command_level": "시도",
+      "confirmed_at": "2026-09-29T06:51:15.740124+00:00",
+      "confirmed_by": "dsm_user_a"
+    }
+  },
+  "what": "POST .../stage 뒤 대응단계 2단계 확정 · 지휘권 시도 이양이 감사 한 줄로 남고, GET 재조회에 그대로 남는다 — 실측"
+}

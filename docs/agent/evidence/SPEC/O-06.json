@@ -1,0 +1,70 @@
+{
+  "id": "O-06",
+  "title": "인시던트",
+  "measured_at": "2026-09-29T06:59:59.160401+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_ops_an.O06_IncidentLifecycleTest.test_open_respond_escalate_close",
+  "request": {
+    "method": "POST",
+    "path": "/api/dsm/ops/incidents?tenant_code=t-ef48b321&app_code=dsm&severity=critical&summary=%EC%B9%B4%EB%A9%94%EB%9D%BC+%EA%B5%B0%EC%A7%91+%EB%91%90%EC%A0%88",
+    "params": {
+      "tenant_code": "t-ef48b321",
+      "app_code": "dsm",
+      "severity": "critical",
+      "summary": "카메라 군집 두절"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "incident_id": "4f819d64da96",
+      "tenant_code": "t-ef48b321",
+      "app_code": "dsm",
+      "severity": "critical",
+      "summary": "카메라 군집 두절",
+      "status": "open",
+      "opened_at": "2026-09-29T06:59:59.050696+00:00",
+      "sla_first_response_due": "2026-09-30T08:59:58.101392+00:00",
+      "sla_escalation_due": "2026-09-30T06:59:59.050696+00:00",
+      "acknowledged_at": null,
+      "escalated_at": null,
+      "closed_at": null,
+      "cause": "",
+      "prevention": "",
+      "closing_report": ""
+    }
+  },
+  "what": "POST .../ops/incidents(접수) → .../respond(1차 대응) → .../escalate(에스컬레이션) → .../close(종결·원인)까지 네 호출을 실제로 두드려 SLA 시계(영업시간 4h·영업일 1일 기한)와 종결 보고서 1을 실측한다 — 완결조건('SLA 시계 · 종결 보고서 1') 실측.",
+  "title_parts": [
+    {
+      "part": "접수(테넌트·앱·심각도)",
+      "where": "POST /ops/incidents",
+      "status": "measured"
+    },
+    {
+      "part": "1차 대응(4영업시간)",
+      "where": "sla_first_response_due",
+      "status": "measured"
+    },
+    {
+      "part": "에스컬레이션(1영업일)",
+      "where": "sla_escalation_due / escalate",
+      "status": "measured"
+    },
+    {
+      "part": "종결·원인",
+      "where": "close → cause/closing_report",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — SLA 시계",
+      "where": "business_hours_deadline/business_days_deadline",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — 종결 보고서 1",
+      "where": "closing_report",
+      "status": "measured"
+    }
+  ]
+}

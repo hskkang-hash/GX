@@ -1,0 +1,63 @@
+{
+  "id": "DSM-U6-01",
+  "title": "스마트시티 통합플랫폼 이벤트 연계",
+  "measured_at": "2026-09-29T06:48:37.297663+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_dsm_u36_an.U6_01_ExternalEventsTest.test_police_112_emergency_video_event_is_recorded_as_external",
+  "request": {
+    "method": "POST",
+    "path": "/api/dsm/external-events",
+    "params": {
+      "source": "police_112",
+      "event_type": "intrusion",
+      "severity": "critical",
+      "stream_monitor_id": 5,
+      "external_ref": "POL-2026-0001"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "event_id": 5,
+      "created": true,
+      "should_notify": true,
+      "folded_into_existing": false,
+      "source": "police_112",
+      "data_source": "external",
+      "external_ref": "POL-2026-0001"
+    }
+  },
+  "what": "112 긴급영상(사건+카메라 스트림) — 서명된 외부 이벤트가 F-05 읽기 문의 짝인 쓰기 문 하나로 들어와 data_source=external 로 적립된다",
+  "title_parts": [
+    {
+      "part": "112 긴급영상(사건+카메라 스트림 URL)",
+      "where": "source=police_112",
+      "status": "measured"
+    },
+    {
+      "part": "119 출동(화재 사건)",
+      "where": "source=fire_119",
+      "status": "measured"
+    },
+    {
+      "part": "재난상황 긴급대응(상황실 전송)",
+      "where": "source=smart_city",
+      "status": "measured"
+    },
+    {
+      "part": "CAP 1.2 프로파일(스키마 버전 검증)",
+      "where": "X-GX-Schema 헤더 부재 → 401",
+      "status": "measured"
+    },
+    {
+      "part": "서명 검증",
+      "where": "X-GX-Signature 불일치 → 401",
+      "status": "measured"
+    },
+    {
+      "part": "data_source=external 표식",
+      "where": "응답 data_source 칸",
+      "status": "measured"
+    }
+  ]
+}

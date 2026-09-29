@@ -16,5 +16,23 @@
       "forest_report": "042-481-4119"
     }
   },
-  "what": "GET /api/fws/emergency-contacts(로그인 뒤 · 익명은 닫힘)가 119·042-481-4119 를 낸다 — 화면은 이 값으로 tel: 링크를 만든다(1탭)"
+  "what": "GET /api/fws/emergency-contacts(로그인 뒤 · 익명은 닫힘)가 119·042-481-4119 를 낸다 — 화면은 이 값으로 tel: 링크를 만든다(1탭)",
+  "title_parts": [
+    {
+      "part": "서버가 119(화재)·042-481-4119(산림청) 두 번호를 낸다",
+      "where": "backend/apps/fws/contacts.py::emergency_contacts — GET /api/fws/emergency-contacts",
+      "status": "measured: F1_08_EmergencyContactsTest.test_numbers_come_from_the_server_not_the_screen — 두 값 실측"
+    },
+    {
+      "part": "익명 접근 차단(로그인한 감시원만)",
+      "where": "backend/tests/test_fws_app.py:340",
+      "status": "measured: 익명 GET이 401/403"
+    },
+    {
+      "part": "화면이 서버 값으로 tel: 링크(1탭 버튼) 를 실제로 만든다",
+      "where": "frontend/src/features/fws/pages/PatrolHome.tsx:136-144 — <a href={`tel:${contacts.fire_report}`}>, <a href={`tel:${contacts.forest_report}`}>",
+      "status": "measured: 서버 응답 타입을 그대로 받아 tel: 링크 두 버튼을 렌더 — 화면 코드로 직접 번호를 다시 적지 않고 서버 값만 쓴다(코드 확인)"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:122행 · 원 명세서:143행('tel: · 1탭')을 evidence FWS-F1-08.json·test_fws_app.py:337-353·contacts.py·PatrolHome.tsx:136-144 와 대조 — 이 10건 중 유일하게 서버+화면 3단이 전부 실측됨"
 }

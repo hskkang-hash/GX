@@ -17,5 +17,33 @@
       "flight_count": 2
     }
   },
-  "what": "비행 기록 두 건(15분·27.5분) 뒤 GET /drone/flights/minutes 의 flight_minutes_total 이 42.5 — F5-08 값을 세기만 한다(새 표 없음, 계량 실측)"
+  "what": "비행 기록 두 건(15분·27.5분) 뒤 GET /drone/flights/minutes 의 flight_minutes_total 이 42.5 — F5-08 값을 세기만 한다(새 표 없음, 계량 실측)",
+  "title_parts": [
+    {
+      "part": "비행 분 합계 계산(계량)",
+      "where": "GET /api/fws/drone/flights/minutes · backend/apps/fws/drone.py::flight_minutes_total()",
+      "status": "measured: tests.test_fws_f5.F5_10_FlightMinutesTest.test_flight_minutes_are_summed — 15분+27.5분 기록 후 flight_minutes_total=42.5 실측(docs/agent/evidence/SPEC/FWS-F5-10.json)"
+    },
+    {
+      "part": "비행 건수 집계(flight_count)",
+      "where": "backend/apps/fws/drone.py::flight_minutes_total() count 누적 · 동일 GET 응답",
+      "status": "measured: 같은 시험에서 flight_count=2 실측"
+    },
+    {
+      "part": "월별 필터(month 파라미터)",
+      "where": "backend/apps/fws/drone.py::flight_minutes_total(month=...) · GET /api/fws/drone/flights/minutes?month=",
+      "status": "부분 — month 파라미터와 logged_at.startswith(month) 필터 코드는 존재하나, F5-10 실측 시험은 month 를 넘기지 않아(응답 month=null) 실제 월별 필터링 동작 자체는 검증되지 않았다"
+    },
+    {
+      "part": "명세가 가리키는 커널/S-20 계량 체계(kernel metering, 예: apps.dsm.metering / common.billing_marks)와의 연계",
+      "where": "backend/apps/fws/drone.py 머리말(410행 부근) — \"커널도 새 표도 부르지 않는다\" 명시. backend/common/billing_marks.py·apps/dsm/metering.py 를 호출하는 코드는 F5-10 경로에 없음(grep 결과 무연계)",
+      "status": "근사 — flight_minutes_total() 은 F5-08 감사 로그(logger.AuditLogs)를 자체 집계하는 드론 전용 로컬 카운터다. 명세서가 지목한 S-20/metering(커널 계량) 표와 실제로 연결되지 않은 근사 대체 집계이며, 정식 계량 표에는 반영되지 않는다"
+    },
+    {
+      "part": "월 표(완료조건 — 월별 표 형태로 화면/보고서에 반영)",
+      "where": "frontend 화면 또는 관리자 보고서 — 코드베이스 내 해당 UI/리포트 탐색 결과 없음(GET 엔드포인트만 존재, 표 렌더링 소비처 미확인)",
+      "status": "없음 — API 는 합계 값을 반환하나, 명세가 요구하는 \"월 표\"(월별 표 형태의 표시/보고)를 만드는 화면이나 배치가 코드에 없다"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:189 및 명세서 5.5절(230행, 근거 \"S-20 metering\"·완료조건 \"월 표\")을 backend/tests/test_fws_f5.py::F5_10_FlightMinutesTest, backend/apps/fws/drone.py::flight_minutes_total() 및 커널 계량 모듈(backend/common/billing_marks.py, apps/dsm/metering.py) grep 결과와 대조 — 합계·건수는 실측 CLOSED, 월 필터·커널 계량 연계·월 표 렌더는 모두 OPEN(코드에 없거나 미검증)"
 }

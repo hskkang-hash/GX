@@ -46,7 +46,13 @@ import {
 } from '../api';
 import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
-import { CHANNEL_NAME_UNKNOWN, channelLabel, hasChannelLabel, userFacingError } from '../copy';
+import {
+  CHANNEL_NAME_UNKNOWN,
+  channelLabel,
+  hasChannelLabel,
+  safeFreeText,
+  userFacingError,
+} from '../copy';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { absolute, stamp } from '../time';
 import type { AuditItem, AuditPage } from '../types';
@@ -480,7 +486,15 @@ export default function AuditLog() {
                 width: 160,
                 render: (v: string, r) => (v ? `${v} (${r.actor_id ?? '—'})` : `번호 ${r.actor_id ?? '—'}`),
               },
-              { title: '사유', dataIndex: 'reason', ellipsis: true },
+              {
+                // ★ [P-408 · 턴 AO · 차선 L] 감사 사유는 서버 자유 문장이라 `dataIndex`
+                //   원문 그대로면 우리 대장 표기(결정 번호·절 ID·마크다운 등)가 그대로
+                //   찍힌다 — `safeFreeText` 로 그 표기만 지운다(문장은 버리지 않는다).
+                title: '사유',
+                dataIndex: 'reason',
+                ellipsis: true,
+                render: (v: string) => safeFreeText(v),
+              },
               {
                 title: '채널',
                 dataIndex: 'channel',

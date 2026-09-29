@@ -251,7 +251,21 @@ class EvidenceExportTest(U3AMFixture):
                 "P-356 ② DSM 별표 절 실측 증거 — pytest 가 방금 두드린 HTTP "
                 "왕복을 그대로 적는다(손으로 옮기지 않는다)"):
             EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
-            (EVIDENCE_DIR / f"{spec_id}.json").write_text(
+            out_path = EVIDENCE_DIR / f"{spec_id}.json"
+            #: [턴 AO · P-407] 다른 시험(소급 표 채움)이 이 증거 위에 더한
+            #: 「제목이 부르는 것 ↔ 있는 것」 표(`title_parts`)는 **보존한다** —
+            #: 이 시험은 HTTP 왕복만 다시 적는다. 안 그러면 전량 시험 순서에 따라
+            #: 표가 지워져 O 게이트가 옛 승격으로 오판한다(`test_fws_app.py::
+            #: _write_evidence` 와 같은 판단).
+            if out_path.is_file():
+                try:
+                    prev = json.loads(out_path.read_text(encoding="utf-8"))
+                except (ValueError, OSError):
+                    prev = {}
+                for keep in ("title_parts", "title_parts_note"):
+                    if keep in prev:
+                        payload[keep] = prev[keep]
+            out_path.write_text(
                 json.dumps(payload, ensure_ascii=False, indent=2, default=str),
                 encoding="utf-8")
 

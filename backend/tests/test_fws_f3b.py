@@ -20,6 +20,14 @@
 F3-10(확산예측)·F3-15(조사반·드론 피해면적)는 이 파일이 닫지 않는다 — L 규모,
 `scripts/verify_spec_fws_f3b.py`·`docs/agent/evidence/SPEC/N3_promotions_an.md`
 의 「무엇이 없는가」를 본다.
+
+★ [턴 AO 차선 O · WO-18 · 2026-09-29] F3-16 은 이 파일이 여전히 여덟 칸을 실측
+  하지만(발생·면적·원인·시간대·구역·오인율·확인 시간 + 골든타임 근사), 「골든
+  타임 준수율」 행이 대리 지표(확인 회신 30분 비율)라 이 턴의 더한 규약으로는
+  **열린 행**이다 — 나머지 일곱이 실측이어도 절 전체를 닫지 않는다
+  (`scripts/verify_spec_fws_f3b.py` 가 NOT_STARTED 로 옮겼다). F3-18(계도·단속
+  통계·입산통제구역)은 이 턴이 곁표(`common.models.AuditScope`)로 "본인만" 한계를
+  넘어 **같은 테넌트 전체**를 세도록 고쳤다 — 이제 반쪽이 아니다(CLOSED 유지).
 """
 from __future__ import annotations
 
@@ -448,44 +456,94 @@ class F3_17_CameraFalseAlarmTest(F3BHttpTest):
 # FWS-F3-18 계도·단속 통계 · 입산통제구역 관리
 # ═══════════════════════════════════════════════════════════════════════════
 class F3_18_PatrolEnforcementTest(F3BHttpTest):
+    def _second_tenant_a_user(self):
+        """`self.group_a` 소속 두 번째 사람 — 테넌트 전체 집계(곁표 · 턴 AO 차선 O ·
+        P-411)를 재려면 "한 사람" 이 아니라 "같은 테넌트 두 사람" 이 있어야 한다.
+        `self.role_a`(DsmFixture 가 이미 group_a 에 물린 역할)를 붙인다 — 역할 0
+        계정은 `common/role_gate.py`(P-105)가 쓰기 라우트를 통째로 막는다."""
+        from django.apps import apps as _apps
+
+        CoreUser = _apps.get_model("user", "CoreUser")
+        user = CoreUser.objects.create_user(
+            username="f3_18_second", password="test-only-not-a-secret",
+            is_active=True, email="f3_18_second@test.invalid")
+        link_field = CoreUser._meta.get_field("userprofilelink")
+        link_field.related_model.objects.create(
+            **{link_field.remote_field.name: user, "group": self.group_a})
+        user.roles.add(self.role_a)
+        return user
+
     def test_record_stats_and_zone_management(self) -> None:
         head = self._bearer(self.user_a)
+        head2 = self._bearer(self._second_tenant_a_user())
         params = {"kind": "guidance", "location": "OO등산로 입구",
                  "note": "입산 자제 안내"}
         resp = self.client.post(_qs(PATROL_ENFORCEMENT, **params), **head)
         self.assertEqual(200, resp.status_code, resp.content)
         self.assertIn("record_id", self._body(resp))
 
+        # ★ 턴 AO 차선 O · P-411 — 같은 테넌트의 **다른 사람**이 남긴 기록도
+        #   집계에 잡혀야 한다(곁표가 넘어선 "본인만" 한계). 종류를 달리 남겨
+        #   "합쳐졌다"를 두 kind 로 함께 실측한다.
+        params2 = {"kind": "enforcement", "location": "XX등산로 입구"}
+        resp2 = self.client.post(_qs(PATROL_ENFORCEMENT, **params2), **head2)
+        self.assertEqual(200, resp2.status_code, resp2.content)
+
         stats = self.client.get(PATROL_ENFORCEMENT_MINE, **head)
         self.assertEqual(200, stats.status_code)
         stats_body = self._body(stats)
         self.assertEqual(1, stats_body["by_kind"]["guidance"])
-        self.assertEqual(1, stats_body["total"])
+        self.assertEqual(1, stats_body["by_kind"]["enforcement"])
+        self.assertEqual(2, stats_body["total"],
+                         "같은 테넌트 두 사람의 계도·단속 기록이 합쳐지지 않았다")
+        self.assertEqual("tenant", stats_body["scope"])
 
         zone_params = {"zone_name": "OO봉 일대", "status": "active"}
         zone_resp = self.client.post(_qs(ENTRY_ZONES, **zone_params), **head)
         self.assertEqual(200, zone_resp.status_code, zone_resp.content)
+        # ★ 다른 사람(head2)이 설정한 구역도 같은 테넌트면 함께 보여야 한다.
+        zone_params2 = {"zone_name": "XX능선", "status": "active"}
+        zone_resp2 = self.client.post(_qs(ENTRY_ZONES, **zone_params2), **head2)
+        self.assertEqual(200, zone_resp2.status_code, zone_resp2.content)
 
         zones = self.client.get(ENTRY_ZONES, **head)
         self.assertEqual(200, zones.status_code)
         zones_body = self._body(zones)
-        self.assertEqual(1, len(zones_body["zones"]))
-        self.assertEqual("active", zones_body["zones"][0]["status"])
+        self.assertEqual(2, len(zones_body["zones"]),
+                         "같은 테넌트 두 사람의 입산통제구역이 합쳐지지 않았다")
+        names = {z["zone_name"] for z in zones_body["zones"]}
+        self.assertEqual({"OO봉 일대", "XX능선"}, names)
+        self.assertTrue(all(z["status"] == "active" for z in zones_body["zones"]))
+
+        # ★ 격리 — 다른 테넌트(user_b)는 이 테넌트의 기록을 하나도 못 본다.
+        head_b = self._bearer(self.user_b)
+        stats_b = self.client.get(PATROL_ENFORCEMENT_MINE, **head_b)
+        self.assertEqual(200, stats_b.status_code)
+        self.assertEqual(0, self._body(stats_b)["total"])
+        zones_b = self.client.get(ENTRY_ZONES, **head_b)
+        self.assertEqual(200, zones_b.status_code)
+        self.assertEqual([], self._body(zones_b)["zones"])
+
         _write_evidence2(
             "FWS-F3-18", title="계도·단속 통계 · 입산통제구역 관리",
             title_parts=[
                 {"part": "계도·단속 통계", "where": "응답 by_kind·total"
                                                "(patrol_enforcement_stats)",
-                "status": "구현 — guidance 1건 실측(본인 실적 — 감사 표에 테넌트 "
-                         "칸이 없어 조직 전체 집계는 범위 밖, patrol.py 와 같은 한계)"},
+                "status": "구현 — guidance 1건 · enforcement 1건(같은 테넌트 "
+                         "두 사람) → total=2 실측(곁표 common.models.AuditScope "
+                         "가 감사 표의 테넌트 칸 없음을 넘어선다 · 턴 AO 차선 O · "
+                         "P-411 · 다른 테넌트는 0건 실측)"},
                 {"part": "입산통제구역 관리", "where": "응답 zones[](set_entry_control_"
                                                  "zone·entry_control_zones)",
-                "status": "구현 — 설정→조회 실측"},
+                "status": "구현 — 같은 테넌트 두 사람이 설정한 구역 2건 모두 조회 "
+                         "실측(다른 테넌트는 0건 실측)"},
             ],
             test_ref="tests.test_fws_f3b.F3_18_PatrolEnforcementTest."
                     "test_record_stats_and_zone_management",
             method="GET", path=ENTRY_ZONES, request_params={}, response=zones,
-            what="계도 기록 1건 → 통계 집계, 입산통제구역 설정 1건 → 재조회 실측")
+            what="같은 테넌트 두 사람이 계도 1건·단속 1건 · 입산통제구역 2곳을 "
+                "나눠 남긴 뒤 GET 이 둘을 합쳐 낸다(total=2 · zones 2건) — 다른 "
+                "테넌트는 같은 GET 에서 0건을 받는다(격리) — 실측")
 
 
 # ═══════════════════════════════════════════════════════════════════════════

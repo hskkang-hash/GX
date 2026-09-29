@@ -21,5 +21,28 @@
       "checkpoint_count": 1
     }
   },
-  "what": "GPS 점 1건 뒤 순찰함 통과 1건을 보내면 track_count=1 · checkpoint_count=1 로 갈려 나온다 — 트랙 1 · 순찰함 통과 N 실측"
+  "what": "GPS 점 1건 뒤 순찰함 통과 1건을 보내면 track_count=1 · checkpoint_count=1 로 갈려 나온다 — 트랙 1 · 순찰함 통과 N 실측",
+  "title_parts": [
+    {
+      "part": "GPS 트랙 포인트가 누적 카운트된다(track_count)",
+      "where": "backend/apps/fws/patrol.py::track — POST /api/fws/patrol/track?lat=...&lng=...",
+      "status": "measured: F1_02_TrackTest.test_gps_point_and_checkpoint_pass_are_counted_separately — track_count=1 실측"
+    },
+    {
+      "part": "전자순찰함(체크포인트) 통과가 GPS 트랙과 별도 칸으로 카운트된다(checkpoint_count)",
+      "where": "backend/apps/fws/patrol.py::track — POST /api/fws/patrol/track?checkpoint_code=CHK-3",
+      "status": "measured: 같은 시험 — checkpoint_count=1, track_count는 그대로 1(섞이지 않음)"
+    },
+    {
+      "part": "순찰함 코드가 실재 등록된 순찰함 목록과 대조되는가(위조 NFC 코드 방지)",
+      "where": "backend/apps/fws/patrol.py::track — checkpoint_code는 트림만 하고 그대로 저장",
+      "status": "없음: checkpoint_code는 임의 문자열을 그대로 받아들인다 — 순찰함 레지스트리·유효성 검증이 없다(어떤 문자열을 보내도 '통과'로 집계됨)"
+    },
+    {
+      "part": "화면(F1 감시원 화면)에서 실제로 GPS 트랙/NFC 통과를 전송하는 자리",
+      "where": "frontend/src/features/fws — patrolTrack 엔드포인트는 api.ts:18에 등록만 되어 있고, PatrolHome.tsx·FieldHome.tsx 등 어떤 페이지도 fwsEndpoint.patrolTrack 을 호출하지 않음(grep 결과 0건)",
+      "status": "없음: 서버 API는 실측됐지만 F1 화면 어디에도 순찰 트랙 전송 UI가 없다"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:116행 · 원 명세서:137행('POST /fws/patrol/track · 트랙1·순찰함통과N')을 evidence FWS-F1-02.json·test_fws_app.py:221-244·patrol.py:99-142 와 대조, frontend/src/features/fws 전체를 grep해 patrolTrack 호출처가 없음을 확인"
 }

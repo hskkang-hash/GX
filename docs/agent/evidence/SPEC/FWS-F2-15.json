@@ -17,5 +17,23 @@
       "assigned_post_code": "ZONE-3"
     }
   },
-  "what": "F1-12 가 연 GET/POST /notify-prefs 를 F2 진화대도 그대로 써서 근무 외 차단 시간대·담당 구역이 저장 → 재조회에 남는다 — 새 문을 열지 않고 재사용 실측"
+  "what": "F1-12 가 연 GET/POST /notify-prefs 를 F2 진화대도 그대로 써서 근무 외 차단 시간대·담당 구역이 저장 → 재조회에 남는다 — 새 문을 열지 않고 재사용 실측",
+  "title_parts": [
+    {
+      "part": "근무 외 시간대 저장·재조회(quiet_hours)",
+      "where": "backend/apps/fws/notify_prefs.py:save_prefs/get_prefs · GET·POST /api/fws/notify-prefs",
+      "status": "measured: tests.test_fws_f2.F2_15_OffDutyBlockTest.test_off_duty_block_and_assigned_zone_save_then_read_back — quiet_hours_start=23:00 저장 뒤 재조회로 23:00 확인(SPEC/FWS-F2-15.json)"
+    },
+    {
+      "part": "담당 구역(assigned_post_code) 저장·재조회",
+      "where": "backend/apps/fws/notify_prefs.py:save_prefs/get_prefs (assigned_post_code)",
+      "status": "measured: 같은 시험 — assigned_post_code=\"ZONE-3\" 저장 뒤 재조회로 확인"
+    },
+    {
+      "part": "근무 외 '차단' — 저장한 시간대에 실제로 알림 발송이 억제되는가",
+      "where": "backend/kernels/k2_notify/webpush.py:_blocked_reason/_prefs_of (231-258행) — stream_monitors.DsmNotifyPrefs 모델만 읽는다",
+      "status": "없음 — 실제 발송 억제(QUIET_HOURS_REASON)는 backend/kernels/k2_notify/webpush.py:_prefs_of 가 `stream_monitors.DsmNotifyPrefs` 테이블을 읽어서 판정한다. 그런데 backend/apps/fws/notify_prefs.py 는(머리말 4-9행에 직접 적힘) 의도적으로 그 표를 안 쓰고 **자기 감사 로그**(`guardianx.fws.notify_prefs`)에 저장한다 — 두 저장소가 분리되어 있어 F2 진화대가 이 문으로 저장한 quiet_hours 는 실제 웹푸시 억제 로직에 전혀 연결되지 않는다(grep: guardianx.fws.notify_prefs 를 읽는 코드가 kernels/에 없음). 저장·재조회만 되고 '차단'은 실질적으로 작동하지 않음 — 근사/대리가 아니라 완전 미연결"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 170행 「근무 외 차단·담당 구역」을 backend/apps/fws/notify_prefs.py(전체 93행) 및 backend/kernels/k2_notify/webpush.py:_prefs_of(230-258행)와 대조 — 두 코드가 서로 다른 저장소(fws 자체 감사 로그 vs stream_monitors.DsmNotifyPrefs)를 쓰는 것을 grep 으로 확인해, 저장·재조회는 실측되지만 실제 알림 차단 기능은 이 문과 연결되어 있지 않음을 확인. evidence SPEC/FWS-F2-15.json 자체는 저장·재조회만 재고 차단 효과는 안 잰다."
 }

@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """P-356·358·392 — DSM U4 별표 절 승격 게이트 (WO-GX-20260925-15 §5 · 차선 N4 ·
-턴 AM(구현) · 차선 N1 · 턴 AN(P-392 「반쪽 여섯 채우기」).
+턴 AM(구현) · 차선 N1 · 턴 AN(P-392 「반쪽 여섯 채우기」) · 차선 N1 · 턴 AO(P-407
+「반쪽 잔여 셋」 — DSM-U4-07 「연간 통계(출력)」·`GET /video-access-requests/
+annual-stats` 신설 · DSM-U5-05 「인계 메모 근무자 자동」·`handover_service.py`
+연결. 둘 다 닫은 열 4건 안에 이미 있었다 — title_parts 행만 갱신했다).
 
 `scripts/verify_spec_dsm.py`(차선 N1 소유 · 이 턴은 그 파일을 고치지 않는다)와
 **같은 구조**로 복사해 세운 짝이다 — 두 게이트가 다른 모양이면 다음 사람이 파일

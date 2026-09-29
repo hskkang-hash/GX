@@ -130,7 +130,16 @@ class F6_07_WebpushDrillTest(FwsHttpTest):
                  "where": "liaison.evacuation_cbs_draft 감사", "status": "있음"},
                 {"part": "산림청 스마트산림재난 앱 실제 푸시 발송",
                  "where": "annex 원문 그대로 [미확인] — 열지 않는다",
-                 "status": "없음(세종 판정 · 결정 사항)"},
+                 "status": "없음(세종 판정 · 결정 사항)",
+                 #: [턴 AO · P-406 · 차선 N1] 결정으로 뺀 행 — 산림청
+                 #: 스마트산림재난 앱은 이 제품이 발송 권한도 연동 계약도 갖지
+                 #: 않은 제3자 앱이라, 실제 앱 푸시는 이 절의 범위 밖으로 정했다
+                 #: (세종 판정 · WO-GX-20260929-17 §2 두 번 물은 것 ①). 웹푸시
+                 #: 훈련 채널(위 행)이 이 절이 실제로 여는 앱 푸시 연계다.
+                 "excluded_by": "P-392",
+                 "excluded_why": "산림청 스마트산림재난 앱 실제 발송은 세종 "
+                                 "판정으로 F6-07 범위 밖 — 웹푸시 훈련 채널이 "
+                                 "이 절의 앱 푸시 연계다"},
                 {"part": "앱 푸시 연계(제목이 부르는 것)",
                  "where": "[턴 AN] POST .../evacuation-webpush-drill · "
                          "kernels.k2_notify.send_webpush · 제목 [훈련] 고정 · "

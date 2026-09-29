@@ -1,0 +1,51 @@
+{
+  "id": "O-12",
+  "title": "시드·훈련 데이터",
+  "measured_at": "2026-09-29T07:00:11.129376+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_ops_an.O12_SeedDataTest.test_plant_then_hide_and_data_source_is_marked",
+  "request": {
+    "method": "POST",
+    "path": "/api/dsm/ops/seed/toggle?tenant_code=t-87286fa6&action=plant&scenario_code=drill-01",
+    "params": {
+      "tenant_code": "t-87286fa6",
+      "action": "plant",
+      "scenario_code": "drill-01"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "tenant_code": "t-87286fa6",
+      "tenant_id": 25,
+      "scenario_code": "drill-01",
+      "action": "plant",
+      "note": "",
+      "data_source": "seed",
+      "at": "2026-09-29T07:00:11+00:00"
+    }
+  },
+  "what": "POST .../ops/seed/toggle(plant)로 시드를 심으면 data_source=seed 가 찍히고, hide 뒤 GET /ops/seed 목록의 최신 행(테넌트+시나리오별 접힘)이 hide 로 바뀐다 — 완결조건(\"data_source=seed 표기\") 실측.",
+  "title_parts": [
+    {
+      "part": "검수 시드 심기·숨기기",
+      "where": "toggle action=plant/hide",
+      "status": "measured"
+    },
+    {
+      "part": "훈련 시나리오 배포",
+      "where": "action=deploy_scenario (경로만 · 시나리오 몸체는 없음)",
+      "status": "measured — 토글 경로만(시나리오 데이터 생성기는 없음)"
+    },
+    {
+      "part": "완결조건 — data_source=seed 표기",
+      "where": "data_source",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — 실데이터 혼입 0",
+      "where": "GET /ops/seed → contamination_by_data_source",
+      "status": "measured"
+    }
+  ]
+}

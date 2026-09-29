@@ -22,5 +22,33 @@
       "amount": "1"
     }
   },
-  "what": "kind=helicopter 지원 요청이 K1 현장 회신으로 남고, 지휘 화면이 읽는 field_replies 목록에 그대로 도달한다(새 배지 위젯은 DSM 화면 소유라 범위 밖) — 지원 요청 도달 실측"
+  "what": "kind=helicopter 지원 요청이 K1 현장 회신으로 남고, 지휘 화면이 읽는 field_replies 목록에 그대로 도달한다(새 배지 위젯은 DSM 화면 소유라 범위 밖) — 지원 요청 도달 실측",
+  "title_parts": [
+    {
+      "part": "인력(personnel) 지원 요청",
+      "where": "backend/apps/fws/missions.py:request_support (SUPPORT_PERSONNEL) · POST /api/fws/missions/{event_id}/field-reply?kind=personnel",
+      "status": "measured: helicopter 로 실측된 것과 동일한 검증(SUPPORT_KINDS 튜플 멤버십 체크)·저장 경로를 탄다(missions.py 258-272행) — kind=personnel 전용 HTTP 실측은 없으나 같은 함수 안 같은 분기"
+    },
+    {
+      "part": "물(water) 지원 요청",
+      "where": "backend/apps/fws/missions.py:request_support (SUPPORT_WATER)",
+      "status": "measured: 위와 동일 — 같은 코드경로, kind=water 전용 HTTP 실측은 없음"
+    },
+    {
+      "part": "헬기(helicopter) 지원 요청",
+      "where": "backend/apps/fws/missions.py:request_support (SUPPORT_HELICOPTER) · POST /api/fws/missions/{event_id}/field-reply?kind=helicopter",
+      "status": "measured: tests.test_fws_f2.F2_05_SupportRequestTest.test_support_request_reaches_field_reply — 200, kind=\"helicopter\" 응답 확인, field_replies 목록 도달도 직접 조회로 확인(SPEC/FWS-F2-05.json)"
+    },
+    {
+      "part": "중장비(heavy_equipment) 지원 요청",
+      "where": "backend/apps/fws/missions.py:request_support (SUPPORT_HEAVY_EQUIPMENT)",
+      "status": "measured: 위와 동일 — 같은 코드경로, kind=heavy_equipment 전용 HTTP 실측은 없음"
+    },
+    {
+      "part": "지휘 화면 배지(완결조건 — 명세서 §5.2 160행)",
+      "where": "backend/apps/fws/missions.py:request_support 머리말(254-257행) — 명시적으로 범위 밖이라 적음",
+      "status": "없음(범위 밖) — 코드 머리말이 직접 「새 배지 위젯은 이 차선(App 서버 쪽)의 범위 밖이라 만들지 않는다(§0.4 인접 — DSM 화면은 lane L 소유)」라고 적음. field_replies 목록 도달까지만 실측, 지휘 화면 UI 배지 자체는 미실측·미구현"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 160행 「지원 요청(인력·물·헬기·중장비)」·완결조건 「지휘 화면 배지」를 backend/apps/fws/missions.py:request_support(252-272행)의 SUPPORT_KINDS 4값과 대조, evidence SPEC/FWS-F2-05.json 의 helicopter 실측 및 apps.dsm.services.field_replies 조회로 K1 현장 회신 도달까지 확인 — 배지 UI 는 코드 스스로 범위 밖이라 인정."
 }

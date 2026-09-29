@@ -1,0 +1,81 @@
+{
+  "id": "FWS-F4-15",
+  "title": "사후 보고서 1쪽(대응 시계·자원·대피·피해)",
+  "title_parts": [
+    {
+      "part": "PDF(완결조건)",
+      "where": "GET .../post-report.pdf(dsm_services.incident_report — UX-30 재사용) → Content-Type application/pdf",
+      "status": "구현 — PDF 바이트 실측(대응시계·판정·피해현황 포함)"
+    },
+    {
+      "part": "자원",
+      "where": "GET .../post-report/summary → resources",
+      "status": "구현 — F3-08 자원배정 재사용 실측"
+    },
+    {
+      "part": "대피",
+      "where": "GET .../post-report/summary → evacuation",
+      "status": "구현 — F3-11 대피현황 재사용 실측"
+    },
+    {
+      "part": "피해",
+      "where": "GET .../post-report/summary → damage.status",
+      "status": "구현 — '집계 전'을 정직하게 낸다(이 저장소에 피해집계 칸이 없다, incident_report.py::_damage_block 과 같은 정직함 — 0 으로 지어내지 않는다)"
+    }
+  ],
+  "measured_at": "2026-09-29T06:51:42.239020+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f4.F4_15_PostIncidentReportTest.test_pdf_and_summary_cover_clock_resources_and_evacuation",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/command/incidents/18/post-report/summary",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "event_id": 18,
+      "response_clock": {
+        "event_id": 18,
+        "stream_monitor_name": "dsm-stream-A",
+        "occurred_at": "2026-09-29T06:50:39.038141+00:00",
+        "acknowledged_at": null,
+        "arrived_at": null,
+        "closed_at": null,
+        "acknowledge_seconds": null,
+        "arrive_seconds": null,
+        "close_seconds": null,
+        "auto_closed": false,
+        "reopened": 0,
+        "elapsed_seconds": 63.185594,
+        "urgency_tier": 1,
+        "transitions": []
+      },
+      "response_state": "occurred",
+      "resources": [
+        {
+          "kind": "crew",
+          "note": "",
+          "__seq__": 38,
+          "__hash__": "86df82a898992a7de5fe4ae27b0e88462a5edc62912cd76d069a64a3057a9fd8",
+          "event_id": 18,
+          "reply_id": 37,
+          "assigned_at": "2026-09-29T06:51:39.216158+00:00",
+          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #18(주소 미상) 대응 바랍니다.",
+          "__prev_hash__": "d0cf3d95cb60e0aeeb48d7ea728157fd3d10cdbcb84727d49d332702d5291f02",
+          "resource_name": "1진화대",
+          "notified_count": 1
+        }
+      ],
+      "evacuation": {
+        "total_villages": 1,
+        "percent_complete": 0.0
+      },
+      "damage": {
+        "status": "집계 전",
+        "note": "이 저장소는 인명·재산 피해 집계 칸을 두지 않는다 — 현장 집계로 채운다(0 으로 지어내지 않는다)"
+      }
+    }
+  },
+  "what": "UX-30 PDF(대응시계 포함) 재사용 옆에 자원·대피 요약을 더하고, 피해는 정직하게 '집계 전'으로 낸다 — 실측"
+}

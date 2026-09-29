@@ -1,0 +1,58 @@
+{
+  "id": "O-01",
+  "title": "테넌트 발급",
+  "measured_at": "2026-09-29T06:59:52.698615+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_ops_an.O01_TenantIssuanceTest.test_issue_then_admin_logs_in_and_reaches_role_home",
+  "request": {
+    "method": "POST",
+    "path": "/api/dsm/ops/tenants?code=t-290c45e8&name=%EC%98%A8%EB%B3%B4%EB%94%A9+%EC%8B%9C%ED%97%98+%ED%85%8C%EB%84%8C%ED%8A%B8+t-290c45e8&admin_username=opsadmin_c5f2458a&admin_email=opsadmin_c5f2458a%40test.invalid&admin_password=Tenant-Admin-Pw-1%21",
+    "params": {
+      "code": "t-290c45e8",
+      "name": "온보딩 시험 테넌트 t-290c45e8",
+      "admin_username": "opsadmin_c5f2458a",
+      "admin_email": "opsadmin_c5f2458a@test.invalid",
+      "admin_password": "Tenant-Admin-Pw-1!"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "tenant_code": "t-290c45e8",
+      "tenant_id": 6,
+      "name": "온보딩 시험 테넌트 t-290c45e8",
+      "admin_username": "opsadmin_c5f2458a",
+      "admin_role": "admin",
+      "region": "",
+      "issued_at": "2026-09-29T06:59:52+00:00"
+    }
+  },
+  "what": "POST /api/dsm/ops/tenants 로 테넌트+초기 관리자 1을 발급한 뒤, 그 관리자 계정으로 실제 POST /api/v1/auth/login 을 두드려 200·access_token 을 받는다 — 완결 조건('테넌트 관리자가 로그인 → 역할 홈')의 앞 절반(로그인)을 발급과 분리된 실제 HTTP 로 증명한다. 뒤 절반(역할 홈)은 role='admin'이 K3 MANAGER 프리셋으로 이미 배선돼 있음을 config/k3_roles.py 가 보장한다(이 시험은 재확인하지 않는다 — 표를 두 벌 두지 않는다, D-212).",
+  "title_parts": [
+    {
+      "part": "테넌트(시군구) 생성",
+      "where": "tenant_code/name",
+      "status": "measured"
+    },
+    {
+      "part": "초기 관리자 1",
+      "where": "admin_username",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — 관리자 로그인",
+      "where": "POST /api/v1/auth/login → access_token",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — 역할 홈",
+      "where": "role=admin → K3 MANAGER(config/k3_roles.py, 기존 배선 재사용)",
+      "status": "measured — 기존 배선 재사용(새로 안 만든다)"
+    },
+    {
+      "part": "계층(시도→시군구→부서) · 도메인·인증서",
+      "where": "UserGroup.settings.domain/region",
+      "status": "measured — 값 칸만(인증서 자동 발급은 없음)"
+    }
+  ]
+}

@@ -20,5 +20,28 @@
       "actor_id": 593
     }
   },
-  "what": "상황실 번호·PS-LTE 그룹통화 번호 접수 1건을 실제로 남겼다 — 완결 조건(「1탭」)은 M2 화면이 이 값을 `tel:` 링크로 그리는 것이고, 번호 자체가 실제로 저장·조회되는 것을 이 왕복이 실측한다. 손으로 지어낸 값 0."
+  "what": "상황실 번호·PS-LTE 그룹통화 번호 접수 1건을 실제로 남겼다 — 완결 조건(「1탭」)은 M2 화면이 이 값을 `tel:` 링크로 그리는 것이고, 번호 자체가 실제로 저장·조회되는 것을 이 왕복이 실측한다. 손으로 지어낸 값 0.",
+  "title_parts": [
+    {
+      "part": "상황실 번호 저장/조회",
+      "where": "backend/apps/dsm/hotline_service.py::set_hotline / latest_hotline (POST|GET /api/dsm/hotline)",
+      "status": "measured: evidence body.situation_room_phone='031-120-2222' 저장·응답 확인"
+    },
+    {
+      "part": "PS-LTE 그룹통화 번호 저장/조회",
+      "where": "backend/apps/dsm/hotline_service.py::set_hotline / latest_hotline",
+      "status": "measured: evidence body.pslte_group_call='*911' 저장·응답 확인"
+    },
+    {
+      "part": "M2 화면 버튼(번호가 있을 때만 렌더)",
+      "where": "frontend/src/features/mobile/pages/MobileEventDetail.tsx 758~777행 (hotline.data.configured 로 게이트, tel: 버튼 렌더)",
+      "status": "present — 프런트 코드가 실재한다. situation_room_tel/pslte_group_call_tel 값이 있을 때만 버튼을 그리는 것을 코드로 확인(2026-09-28 턴 AM 추가분)"
+    },
+    {
+      "part": "완결 조건 「1탭」(tel: 링크 1회 클릭으로 다이얼)",
+      "where": "frontend/src/features/mobile/pages/MobileEventDetail.tsx 763~776행 <a href={`tel:${...}`}>",
+      "status": "present — tel: 앵커 1개가 곧 1탭 다이얼이다. hotline_service.py::to_tel() 이 공백·하이픈을 떼 유효한 tel URI를 만든다"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 §4.3 DSM-U3-04 행(완결조건 '1탭')을 hotline_service.py 와 frontend MobileEventDetail.tsx 758~777행 대조 — evidence 파일의 'what' 서술은 저장 왕복만 쟀다고 겸손하게 적었지만, 실제로는 프런트 tel: 버튼까지 이미 구현돼 있음을 확인(evidence 가 실물보다 인색하게 적힌 사례). 재난안전통신망 자체 연동(통화 성공 여부)은 이 저장소가 잴 수 없는 외부 영역이며 명세의 완결조건('1탭')이 요구하는 범위가 아니므로 이 그룹은 사실상 전부 닫힘 후보"
 }

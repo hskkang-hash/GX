@@ -1,0 +1,46 @@
+{
+  "id": "DSM-U3-02",
+  "title": "통제 실행 회신",
+  "measured_at": "2026-09-29T06:48:33.847385+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_dsm_u36_an.U3_02_ControlExecutedTest.test_reached_decided_executed_three_timestamps",
+  "request": {
+    "method": "POST",
+    "path": "/api/dsm/controls/4/executed",
+    "params": {
+      "note": "바리케이드 설치 완료"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "point_id": 4,
+      "stage": "실행",
+      "stage_id": 6,
+      "occurred_at": "2026-09-29T06:48:33.722Z"
+    }
+  },
+  "what": "도달(등록)→결정(advance)→실행(POST /controls/{id}/executed) 셋을 순서대로 남기면 현황판(GET /control-points)의 지점 행이 '실행' 단계를 보여준다 — 완결조건(3시각) 그대로",
+  "title_parts": [
+    {
+      "part": "통제 완료 버튼",
+      "where": "POST /controls/{id}/executed",
+      "status": "measured"
+    },
+    {
+      "part": "시각 기록",
+      "where": "advance() 감사 줄(occurred_at)",
+      "status": "measured"
+    },
+    {
+      "part": "통제 현황판 반영",
+      "where": "GET /control-points 지점 행 stage",
+      "status": "measured"
+    },
+    {
+      "part": "도달→결정→실행 3시각",
+      "where": "create_point→advance(결정)→POST /controls/{id}/executed 순서 검사",
+      "status": "measured"
+    }
+  ]
+}

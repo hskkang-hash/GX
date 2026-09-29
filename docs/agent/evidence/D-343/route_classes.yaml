@@ -238,6 +238,7 @@ routes:
   "POST /api/dsm/control-points": session_only
   "GET /api/dsm/control-points/daily-report": session_only
   "POST /api/dsm/control-points/{int:point_id}/advance": session_only
+  "POST /api/dsm/controls/{int:point_id}/executed": session_only
   "GET /api/dsm/dashboard/frame": session_only
   "GET /api/dsm/dashboard/link-state": session_only
   "GET /api/dsm/deliveries": session_only
@@ -255,6 +256,7 @@ routes:
   "POST /api/dsm/events/{int:event_id}/field-photo": session_only
   "GET /api/dsm/events/{int:event_id}/field-replies": session_only
   "POST /api/dsm/events/{int:event_id}/field-reply": session_only
+  "GET /api/dsm/events/{int:event_id}/m2-brief": session_only
   "GET /api/dsm/events/{int:event_id}/note": session_only
   "POST /api/dsm/events/{int:event_id}/note": session_only
   "POST /api/dsm/events/{int:event_id}/notify": session_only
@@ -268,6 +270,7 @@ routes:
   "GET /api/dsm/events/{int:event_id}/timeline": session_only
   "DELETE /api/dsm/events/{int:event_id}/upper-report": session_only
   "POST /api/dsm/events/{int:event_id}/upper-report": session_only
+  "POST /api/dsm/external-events": session_only
   "GET /api/dsm/handover/draft": session_only
   "POST /api/dsm/handover/draft": session_only
   "GET /api/dsm/handover/latest": session_only
@@ -294,7 +297,29 @@ routes:
   "GET /api/dsm/metering/csv": session_only
   "GET /api/dsm/metering/series": session_only
   "GET /api/dsm/onboarding/progress": session_only
+  "GET /api/dsm/ops/apps": session_only
+  "POST /api/dsm/ops/apps/install": session_only
+  "POST /api/dsm/ops/apps/status": session_only
+  "GET /api/dsm/ops/audit": session_only
+  "POST /api/dsm/ops/audit/access-requests": session_only
+  "POST /api/dsm/ops/audit/access-requests/{request_id}/approve": session_only
   "GET /api/dsm/ops/backup/declaration": session_only
+  "GET /api/dsm/ops/backups": session_only
+  "GET /api/dsm/ops/health": session_only
+  "GET /api/dsm/ops/incidents": session_only
+  "POST /api/dsm/ops/incidents": session_only
+  "POST /api/dsm/ops/incidents/{incident_id}/close": session_only
+  "POST /api/dsm/ops/incidents/{incident_id}/escalate": session_only
+  "POST /api/dsm/ops/incidents/{incident_id}/respond": session_only
+  "GET /api/dsm/ops/keys": session_only
+  "POST /api/dsm/ops/keys/rotate": session_only
+  "GET /api/dsm/ops/onboarding": session_only
+  "GET /api/dsm/ops/releases": session_only
+  "GET /api/dsm/ops/seed": session_only
+  "POST /api/dsm/ops/seed/toggle": session_only
+  "GET /api/dsm/ops/tenants": session_only
+  "POST /api/dsm/ops/tenants": session_only
+  "GET /api/dsm/ops/tenants/{tenant_code}/members": session_only
   "GET /api/dsm/push-subscriptions": session_only
   "POST /api/dsm/push-subscriptions": session_only
   "POST /api/dsm/push-subscriptions/test-send": session_only
@@ -308,6 +333,7 @@ routes:
   "GET /api/dsm/reports/runs/{int:run_id}.pdf": session_only
   "GET /api/dsm/reports/templates": session_only
   "GET /api/dsm/reports/{int:template_id}.pdf": session_only
+  "POST /api/dsm/search-requests": session_only
   "POST /api/dsm/settings/api-keys": session_only
   "DELETE /api/dsm/settings/api-keys/{int:key_id}": session_only
   "POST /api/dsm/settings/api-keys/{int:key_id}/rotate": session_only
@@ -360,6 +386,7 @@ routes:
   "POST /api/dsm/u5an/privacy-policy": session_only
   "GET /api/dsm/video-access-requests": session_only
   "POST /api/dsm/video-access-requests": session_only
+  "GET /api/dsm/video-access-requests/annual-stats": session_only
   "POST /api/dsm/video-access-requests/{int:request_id}/approve": session_only
   "POST /api/dsm/video-access-requests/{int:request_id}/provide": session_only
   "GET /api/dsm/webhook-subscriptions": session_only
@@ -384,6 +411,33 @@ routes:
   "POST /api/fws/admin/posts": session_only
   "GET /api/fws/alerts": session_only
   "POST /api/fws/alerts/{int:delivery_id}/ack": session_only
+  "POST /api/fws/command/evacuations/{int:event_id}/approve": session_only
+  "GET /api/fws/command/evacuations/{int:event_id}/command-status": session_only
+  "POST /api/fws/command/evacuations/{int:event_id}/release": session_only
+  "GET /api/fws/command/incidents": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/agency-request": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/agency-request": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/aircraft-request": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/aircraft-request": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/command": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/command-post": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/command-post": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/contacts": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/extinguished": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/fire-declarations": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/golden-time-reason": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/hourly-report/approve": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/hourly-report/approve": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/main-fire-out": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/meetings": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/meetings": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/night-status": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/post-report.pdf": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/post-report/summary": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/response-timeline": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/stage": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/stage": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/sunset": session_only
   "POST /api/fws/drone/flights": session_only
   "GET /api/fws/drone/flights/mine": session_only
   "GET /api/fws/drone/flights/minutes": session_only

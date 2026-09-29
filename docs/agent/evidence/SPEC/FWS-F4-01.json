@@ -1,0 +1,107 @@
+{
+  "id": "FWS-F4-01",
+  "title": "지휘 화면 — 사건 1건 전체(지도·화선·자원·시계·대피·단계)",
+  "title_parts": [
+    {
+      "part": "사건 1건",
+      "where": "GET .../command → 응답 event_id·incident",
+      "status": "구현 — 실측"
+    },
+    {
+      "part": "단계",
+      "where": "응답 stage(F4-02 재사용)",
+      "status": "구현 — 2단계 실측"
+    },
+    {
+      "part": "자원",
+      "where": "응답 resources(F3-08 재사용)",
+      "status": "구현 — 1건 실측"
+    },
+    {
+      "part": "시계",
+      "where": "응답 response_clock(F4-10 재사용)",
+      "status": "구현 — 실측"
+    },
+    {
+      "part": "대피",
+      "where": "응답 evacuation(F3-11 재사용)",
+      "status": "구현 — 1개 마을 실측"
+    },
+    {
+      "part": "한 화면(완결조건)",
+      "where": "GET /command/incidents/{id}/command 응답 하나에 위 다섯이 함께 실린다",
+      "status": "구현 — 단일 응답으로 실측(지도·화선 렌더는 §0.4 금지구역 밖 — 위치는 F4-03 주소 문자열로 대신하고, 화선 데이터 자체가 이 저장소에 없어(F3-10 확산예측 미착수) 이 절의 계약에서 뺐다)"
+    }
+  ],
+  "measured_at": "2026-09-29T06:51:44.269906+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f4.F4_01_CommandScreenTest.test_one_screen_bundles_stage_resources_clock_evacuation_post",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/command/incidents/19/command",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "event_id": 19,
+      "incident": {
+        "address": null,
+        "severity": "critical",
+        "response_state": "occurred",
+        "occurred_at": "2026-09-29T06:50:43.798232+00:00"
+      },
+      "stage": {
+        "stage": "2단계",
+        "reason": "확산 우려",
+        "__seq__": 41,
+        "__hash__": "fbaf356f679acabdbf4b2e7da37392eb102a9d774d06f13881d4f655795e755f",
+        "event_id": 19,
+        "prior_stage": null,
+        "confirmed_at": "2026-09-29T06:51:43.868743+00:00",
+        "confirmed_by": "dsm_user_a",
+        "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
+        "command_level": null
+      },
+      "resources": [
+        {
+          "kind": "crew",
+          "note": "",
+          "__seq__": 43,
+          "__hash__": "f3dffd36c2cc751d3e5e95a79a90bbea7a97e002dc72b04e8d953625dbfd3804",
+          "event_id": 19,
+          "reply_id": 42,
+          "assigned_at": "2026-09-29T06:51:43.975238+00:00",
+          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #19(주소 미상) 대응 바랍니다.",
+          "__prev_hash__": "e46452225a178cde551f208248f08ccf84d7aff5133da9bc17779263785024ff",
+          "resource_name": "1진화대",
+          "notified_count": 1
+        }
+      ],
+      "response_clock": {
+        "reported_at": "2026-09-29T06:50:43.798232+00:00",
+        "acknowledged_at": null,
+        "helicopter_dropped_at": null,
+        "main_fire_out_at": null,
+        "extinguished_at": null
+      },
+      "evacuation": {
+        "percent_complete": 0.0,
+        "total_villages": 1
+      },
+      "command_post": {
+        "note": "",
+        "__seq__": 46,
+        "address": "OO지휘소",
+        "__hash__": "db626194f9f3873bf912c66beb8588828b9b8b96b1e587c2695c3e6c3e7a85a1",
+        "event_id": 19,
+        "declared_at": "2026-09-29T06:51:44.110766+00:00",
+        "declared_by": "dsm_user_a",
+        "__prev_hash__": "1c4d1b31cb9df86687e516372656be4c8051495cc739f2315a9c65df58ff41f3",
+        "org_composition": "산림과·소방서",
+        "situation_room_phone": null
+      }
+    }
+  },
+  "what": "단계·자원·대응시계·대피·지휘소를 한 GET 응답으로 묶어 지휘 화면 완결조건('한 화면')을 실측"
+}

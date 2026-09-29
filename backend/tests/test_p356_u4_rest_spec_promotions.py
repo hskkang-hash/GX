@@ -585,7 +585,21 @@ class EvidenceExportTest(U4Fixture):
                 "P-356 ② DSM-U4 절 실측 증거(차선 N4·턴 AM) — pytest 가 방금 두드린 "
                 "HTTP 왕복을 그대로 적는다(손으로 옮기지 않는다)"):
             EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
-            (EVIDENCE_DIR / f"{spec_id}.json").write_text(
+            out_path = EVIDENCE_DIR / f"{spec_id}.json"
+            #: [턴 AO · P-407] `title_parts` 를 이 호출이 새로 안 준(`None`) 경우
+            #: 에만 이전 표를 보존한다 — 준 경우는 이 호출이 정본을 갱신하는
+            #: 것이므로 덮어쓴다. 안 그러면 전량 시험 순서에 따라 표가 지워져
+            #: O 게이트가 옛 승격으로 오판한다(`test_fws_app.py::_write_evidence`
+            #: 와 같은 판단).
+            if title_parts is None and out_path.is_file():
+                try:
+                    prev = json.loads(out_path.read_text(encoding="utf-8"))
+                except (ValueError, OSError):
+                    prev = {}
+                for keep in ("title_parts", "title_parts_note"):
+                    if keep in prev:
+                        payload[keep] = prev[keep]
+            out_path.write_text(
                 json.dumps(payload, ensure_ascii=False, indent=2, default=str),
                 encoding="utf-8")
 
@@ -709,8 +723,11 @@ class EvidenceExportTest(U4Fixture):
                  "where": "함수 어디에도 원본 파일 경로 매개변수가 없다(구조로 보장)",
                  "status": "있음"},
                 {"part": "연간 통계(출력)",
-                 "where": "목록 조회만 있고 연간 집계 배치는 없다",
-                 "status": "없음(범위 밖 — 별도 배치 필요)"},
+                 "where": "[턴 AO] GET /video-access-requests/annual-stats · "
+                         "video_access_ledger_service.annual_stats — 같은 감사 "
+                         "이력을 연도로 걸러 요청·승인·제공 건수·월별 요청 건수를 "
+                         "낸다(새 표 0 · VideoAccessAnnualStatsTest)",
+                 "status": "있음(신규)"},
             ])
 
     def test_dump_dsm_u5_05_evidence(self) -> None:
@@ -738,13 +755,17 @@ class EvidenceExportTest(U4Fixture):
                          "shift_roster_service.current_workers(ShiftOnDutyTest)",
                  "status": "있음(신규)"},
                 {"part": "인계 메모 근무자 자동",
-                 "where": "자동 조회 함수는 섰으나 handover_service.py(다른 차선 "
-                         "소유)에 잇는 한 줄이 아직 없다 — 조율자 전달",
-                 "status": "부분(연결 대기)"},
+                 "where": "[턴 AO] handover_service.build_draft() → "
+                         "shift_roster_service.current_workers() — 인계 초안 본문 "
+                         "5번째 줄과 on_duty 칸에 그대로 실린다(새 표 0 · "
+                         "HandoverRosterConnectionTest)",
+                 "status": "있음(신규)"},
                 {"part": "일지 근무자 자동",
-                 "where": "관제일지(DSM-U1-04) 자체가 이 저장소에 없다",
+                 "where": "관제일지(DSM-U1-04) 자체가 이 저장소에 없다 — 이 턴도 "
+                         "만들지 않았다(새 표 0 지시 · 별도 절)",
                  "status": "없음(범위 밖 — 별도 절)"},
                 {"part": "완결조건 「일지 근무자 = 편성표」",
-                 "where": "근무자는 자동으로 나오나(위) 받을 일지가 없다",
-                 "status": "부분(안쪽 사실만 충족)"},
+                 "where": "근무자는 자동으로 나와 인계 메모에 실리나(위) 명세가 "
+                         "부르는 「일지」자체가 이 제품에 없다",
+                 "status": "부분(인계 메모로 대신 — 일지 자체는 미착수)"},
             ])

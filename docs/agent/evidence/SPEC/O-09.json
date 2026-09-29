@@ -1,0 +1,49 @@
+{
+  "id": "O-09",
+  "title": "감사(플랫폼)",
+  "measured_at": "2026-09-29T07:00:05.918007+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_ops_an.O09_PlatformAuditTest.test_operator_actions_are_logged_and_tenant_view_needs_approval",
+  "request": {
+    "method": "GET",
+    "path": "/api/dsm/ops/tenants/t-35652821/members",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "tenant_code": "t-35652821",
+      "members": [
+        {
+          "name": "opsadmin_047c620e",
+          "employee_id": "GX-OPS-TENANT-t-35652821"
+        }
+      ],
+      "granted_by": "opsan_u0_e87dbde6",
+      "expires_at": "2026-09-29T07:30:05.867335+00:00"
+    }
+  },
+  "what": "테넌트 구성원 열람은 승인 전 403, 요청(POST .../access-requests) 뒤에도 403, 승인(POST .../approve) 뒤에만 200 — '테넌트 데이터 열람 0(승인 없이)'을 이 콘솔이 여는 유일한 원 데이터 문에서 실측한다. 발급·요청·승인 세 행위 모두 GET /ops/audit 의 total 을 늘린다 — '운영자 행위 전건' 실측.",
+  "title_parts": [
+    {
+      "part": "운영자 행위 전건",
+      "where": "GET /ops/audit → total 증가",
+      "status": "measured"
+    },
+    {
+      "part": "테넌트 접근·설치·배포·키 회전 계열",
+      "where": "ALL_OPS_LOGGERS",
+      "status": "measured"
+    },
+    {
+      "part": "테넌트 감사 열람은 요청·승인 뒤",
+      "where": "members 403→403→200(요청/승인 전후)",
+      "status": "measured"
+    },
+    {
+      "part": "완결조건 — 승인 없는 테넌트 데이터 열람 0",
+      "where": "members 403 (요청 전·요청 후 승인 전)",
+      "status": "measured"
+    }
+  ]
+}

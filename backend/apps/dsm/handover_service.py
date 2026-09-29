@@ -27,6 +27,18 @@
   만들지 않는다. 테넌트 칸은 `group`(FK) — `apps/dsm/field.py::save_field_photo`
   가 같은 표 계열(`TenantModel`)에서 확인한 것과 같은 이름이다(F-DB 차선의 선언이
   정본이다 — 새로 판정하지 않는다).
+
+★ [턴 AO · P-407 · 차선 N1] **DSM-U5-05 「인계 메모 근무자 자동」 연결** —
+  `shift_roster_service.current_workers()`(턴 AN 이 세운 함수)가 편성표에서
+  그 날짜의 조별 근무자를 이미 구조화해 낸다. 이 함수는 그것을 인계 초안의
+  **본문 한 줄**로 옮긴다(`draft.on_duty` 로도 구조째 낸다) — **새 표는 0**이다
+  (`DsmHandover` 에 칸을 더하지 않는다 · 위 「표 저장」 머리말과 같은 판단).
+  근무표가 그 날짜에 없으면(팀이 0) 「근무 편성 없음」을 그대로 적는다 —
+  지어내지 않는다(D-280).
+  ★ **여전히 닫지 않는 것**을 정직하게 남긴다 — 관제일지(DSM-U1-04) 자체가
+  이 저장소 어디에도 없다. 이 함수가 잇는 것은 「인계 메모가 근무자를 자동으로
+  담는다」는 사실 하나이지, 명세의 완결조건 「일지 근무자 = 편성표」 그 자체가
+  아니다(일지가 없으므로).
 """
 from __future__ import annotations
 
@@ -36,7 +48,7 @@ from typing import Any
 
 from django.utils import timezone
 
-from apps.dsm import services
+from apps.dsm import services, shift_roster_service
 from common.tenant_scope import TenantScope
 
 #: W1 「시스템」 프리셋(`api.py` events 목록 · U2#19)과 같은 목록이다. 여기서
@@ -88,6 +100,10 @@ class HandoverDraft:
     since: Any
     until: Any
     hours: int
+    #: [턴 AO · P-407] DSM-U5-05 「인계 메모 근무자 자동」 — 그 날짜의 조별
+    #: 근무자(`shift_roster_service.current_workers()` 그대로). 근무표가 없으면
+    #: `{"date": ..., "teams": [], "team_count": 0}`.
+    on_duty: dict
 
 
 def _actor_id(scope: TenantScope) -> int | None:
@@ -139,13 +155,36 @@ def build_draft(*, scope: TenantScope, hours: int = 24) -> HandoverDraft:
     unresolved_label = (f"{len(unresolved_ids)}건 이상" if unresolved_capped
                         else f"{len(unresolved_ids)}건")
 
-    #: ★ 본문 **4줄** — 닫는 조건의 그 수. 다섯째 줄(넘기는 말)은 사람의 자리다.
+    #: [턴 AO · P-407] DSM-U5-05 — 이 인계가 다루는 날짜(`until` 의 현지 날짜)의
+    #: 조별 근무자를 편성표에서 그대로 가져온다. 근무표가 없어도(팀 0) 예외를
+    #: 올리지 않는다 — 인계는 근무표가 없어도 성립한다(머리말 「셈은 여기서 하지
+    #: 않는다」와 같은 결의 판단 — 근무표가 비면 「없다」고 정직하게 적는다).
+    on_duty_date = timezone.localtime(until).date().isoformat()
+    try:
+        on_duty = shift_roster_service.current_workers(scope=scope, date=on_duty_date)
+    except ValueError:
+        on_duty = {"date": on_duty_date, "teams": [], "team_count": 0}
+
+    if on_duty["teams"]:
+        team_bits = [
+            f"{t['team']}({t['shift'] or '?'}) "
+            + (",".join(t["members"]) if t["members"] else "(명단 없음)")
+            for t in on_duty["teams"]
+        ]
+        roster_line = (f"근무 편성 {on_duty['team_count']}개 조 — "
+                       + " · ".join(team_bits))
+    else:
+        roster_line = "근무 편성 없음(등록된 근무표 없음)"
+
+    #: ★ 본문 **5줄** — 근무자 자동 줄(DSM-U5-05)을 더해 넷에서 다섯이 됐다.
+    #: 여섯째 줄(넘기는 말)은 여전히 사람의 자리다.
     body_lines = [
         f"[교대 인계 자동 초안] {stamp} (최근 {hours}시간)",
         f"미처리 {unresolved_label}{id_note}",
         f"시스템 사건 {len(system_events)}건",
         f"내가 처리한 사건 {len(handled)}건"
         + ("" if actor_id is not None else " (요청자를 특정할 수 없어 못 셌습니다)"),
+        roster_line,
     ]
     summary_line = (
         f"미처리 {unresolved_label} · 시스템 {len(system_events)} · "
@@ -160,6 +199,7 @@ def build_draft(*, scope: TenantScope, hours: int = 24) -> HandoverDraft:
         handled_count=len(handled),
         unresolved_event_ids=unresolved_ids,
         since=since, until=until, hours=hours,
+        on_duty=on_duty,
     )
 
 
@@ -175,6 +215,10 @@ def _as_dict(draft: HandoverDraft) -> dict:
         "since": draft.since,
         "until": draft.until,
         "hours": draft.hours,
+        #: [턴 AO · P-407] DSM-U5-05 — 근무자 자동(구조째). 저장된 것은 본문
+        #: 텍스트뿐(위 「새 표 0」) — 이 칸은 `preview`·`save` 응답에서 그 순간의
+        #: 계산값을 그대로 낸다.
+        "on_duty": draft.on_duty,
     }
 
 

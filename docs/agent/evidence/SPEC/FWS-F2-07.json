@@ -16,5 +16,28 @@
       "acknowledged": true
     }
   },
-  "what": "F2 안전 경보(풍향 급변 등)도 F1-10 이 연 GET /alerts·POST /alerts/{id}/ack 로 도달·확인된다 — 새 문을 열지 않고 재사용 실측(K2 발송은 채널·내용을 안 가린다)"
+  "what": "F2 안전 경보(풍향 급변 등)도 F1-10 이 연 GET /alerts·POST /alerts/{id}/ack 로 도달·확인된다 — 새 문을 열지 않고 재사용 실측(K2 발송은 채널·내용을 안 가린다)",
+  "title_parts": [
+    {
+      "part": "안전 경보 도달(내게 온 알림 목록)",
+      "where": "backend/apps/fws/alerts.py:my_alerts · GET /api/fws/alerts",
+      "status": "measured: tests.test_fws_f2.F2_07_SafetyAlertTest.test_wind_shift_alert_arrives_and_acks_via_shared_alerts_endpoint — GET 200, 발송된 delivery 가 목록에서 잡힘(acknowledged=false 로 시작)"
+    },
+    {
+      "part": "확인(ack)",
+      "where": "backend/apps/fws/alerts.py:ack_alert · POST /api/fws/alerts/{delivery_id}/ack",
+      "status": "measured: 같은 시험 — POST 200, acknowledged=true 확인(SPEC/FWS-F2-07.json)"
+    },
+    {
+      "part": "풍향 급변을 실제로 감지·발송하는 규칙",
+      "where": "backend/kernels/k2_notify (풍향/wind 관련 룰 grep 결과 없음)",
+      "status": "없음 — kernels/k2_notify 전체에 wind/풍향을 조건으로 하는 발송 규칙이 없다(grep 결과: 산불 앱 코드 중 풍향 언급은 apps/fws/missions.py 의 null 필드·apps/fws/alerts.py 파일 설명 문구뿐). 시험도 kernels.k2_notify.services.send() 를 임의 이벤트로 그냥 호출할 뿐, 「풍향 급변」이라는 조건은 만들지도 검증하지도 않는다 — evidence what 필드가 이미 「K2 발송은 채널·내용을 안 가린다」고 정직하게 적음"
+    },
+    {
+      "part": "헬기 투하 구역 이탈을 실제로 감지·발송하는 규칙",
+      "where": "backend/kernels/k2_notify (drop_zone/헬기 구역 관련 룰 grep 결과 없음)",
+      "status": "없음 — 위와 같은 이유. 해당 조건을 만드는 규칙·트리거가 코드 어디에도 없다"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 162행 「안전 경보 수신(풍향 급변·헬기 투하 구역 이탈)」을 backend/apps/fws/alerts.py 및 backend/kernels/k2_notify/*.py 전체 grep(풍향·wind·drop_zone)과 대조 — 도달·확인 배관(F1-10 재사용)은 실측되지만, 제목이 지목하는 두 구체 경보 조건(풍향 급변·투하구역 이탈)을 만드는 규칙 자체는 시스템에 없다. evidence what 필드도 '채널·내용을 안 가린다'며 이를 우회 표현으로 인정."
 }

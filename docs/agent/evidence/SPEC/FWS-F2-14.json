@@ -28,5 +28,23 @@
       "count": 1
     }
   },
-  "what": "POST /equipment/checks(등짐펌프 BP-7 · pass) 뒤 GET /equipment/checks/mine 의 count 가 1, 방금 남긴 장비 코드가 그대로 보인다 — 점검 1 실측"
+  "what": "POST /equipment/checks(등짐펌프 BP-7 · pass) 뒤 GET /equipment/checks/mine 의 count 가 1, 방금 남긴 장비 코드가 그대로 보인다 — 점검 1 실측",
+  "title_parts": [
+    {
+      "part": "등짐펌프(backpack_pump) 점검 체크",
+      "where": "backend/apps/fws/equipment.py:check · POST /api/fws/equipment/checks?equipment_type=backpack_pump",
+      "status": "measured: tests.test_fws_f2.F2_14_EquipmentCheckTest.test_check_is_recorded_and_read_back — equipment_type=\"backpack_pump\",equipment_code=\"BP-7\",result=\"pass\" POST 뒤 GET mine 에서 그대로 재조회(SPEC/FWS-F2-14.json)"
+    },
+    {
+      "part": "진화차(fire_truck) 점검 체크",
+      "where": "backend/apps/fws/equipment.py:check — equipment_type 은 자유 문자열(41-44행), 닫힌 목록이 아님",
+      "status": "measured: 코드가 equipment_type 을 자유 문자열로 받는다고 명시적으로 설계함(머리말 38-40행 「등짐펌프·진화차는 명세서의 예시이지 전체 목록이 아니다」) — 같은 검증 경로(빈 문자열만 거절)를 backpack_pump 로 실측했고 fire_truck 값 자체의 전용 HTTP 요청은 없음"
+    },
+    {
+      "part": "점검 1(완결조건 — 명세서 §5.2 169행)",
+      "where": "backend/apps/fws/equipment.py:mine (count) · GET /api/fws/equipment/checks/mine",
+      "status": "measured: 같은 시험 — mine_body[\"count\"]==1, 방금 남긴 equipment_code=\"BP-7\" 재조회로 확인"
+    }
+  ],
+  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 169행 「장비 점검 체크(등짐펌프·진화차)」·완결조건 「점검 1」을 backend/apps/fws/equipment.py(전체 81행)와 대조 — equipment_type 이 자유 문자열이라 두 예시 항목이 닫힌 목록이 아님을 코드 주석으로 직접 확인, evidence SPEC/FWS-F2-14.json 의 저장→재조회 실측 확인."
 }

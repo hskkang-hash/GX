@@ -1,0 +1,42 @@
+{
+  "id": "DSM-U3-01",
+  "title": "역할별 M2 문안",
+  "measured_at": "2026-09-29T06:48:29.931524+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_dsm_u36_an.U3_01_M2BriefTest.test_role_and_event_type_pick_the_exact_dictionary_line",
+  "request": {
+    "method": "GET",
+    "path": "/api/dsm/events/2/m2-brief?role=facility",
+    "params": {
+      "role": "facility"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "event_id": 2,
+      "role": "facility",
+      "role_label": "시설",
+      "event_type": "flood",
+      "text": "도로 통제 후 회신"
+    }
+  },
+  "what": "침수(flood) 사건에 시설 담당 역할로 M2 문안을 물으면 명세 원문의 예시 문장('도로 통제 후 회신')이 그대로 나온다 — 역할×유형 문안 표가 사전과 일치한다",
+  "title_parts": [
+    {
+      "part": "역할×유형 문안 표",
+      "where": "u36_an_service.M2_PHRASE_TABLE",
+      "status": "measured"
+    },
+    {
+      "part": "M2 상단 한 줄",
+      "where": "응답 text 칸",
+      "status": "measured"
+    },
+    {
+      "part": "문안 사전 일치",
+      "where": "시설+flood → '도로 통제 후 회신' (명세 원문 예시와 문자열 일치)",
+      "status": "measured"
+    }
+  ]
+}

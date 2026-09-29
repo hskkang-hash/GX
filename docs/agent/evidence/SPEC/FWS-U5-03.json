@@ -1,7 +1,7 @@
 {
   "id": "FWS-U5-03",
   "title": "마을·대피소·요양시설 등록(대피 대상 자동 산출)",
-  "measured_at": "2026-09-29T05:00:32.422348+00:00",
+  "measured_at": "2026-09-29T06:49:14.503842+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_u5.U5_03_EvacTargetsTest.test_registering_villages_and_shelters_auto_computes_targets",
   "request": {
@@ -17,21 +17,21 @@
           "kind": "shelter",
           "name": "만안초 체육관",
           "note": "",
-          "saved_at": "2026-09-29T05:00:32.385990+00:00",
+          "saved_at": "2026-09-29T06:49:14.292371+00:00",
           "headcount": 400
         },
         {
           "kind": "care_facility",
           "name": "○○요양원",
           "note": "",
-          "saved_at": "2026-09-29T05:00:32.354805+00:00",
+          "saved_at": "2026-09-29T06:49:13.218362+00:00",
           "headcount": 41
         },
         {
           "kind": "village",
           "name": "안양천마을",
           "note": "",
-          "saved_at": "2026-09-29T05:00:32.320807+00:00",
+          "saved_at": "2026-09-29T06:49:13.140934+00:00",
           "headcount": 312
         }
       ],
@@ -41,7 +41,7 @@
       "shelter_covers_target": true
     }
   },
-  "what": "마을·요양시설·대피소 셋을 등록한 뒤 GET .../admin/evac-targets 가 손으로 적는 합계 칸 없이 headcount 를 더해 대피 대상 총원을 자동 산출한다(312+41=353) — 완결조건(대피 대상 자동 산출) 실측",
+  "what": "같은 테넌트 두 관리자가 마을·요양시설·대피소를 나눠 등록한 뒤 GET .../admin/evac-targets 가 손으로 적는 합계 칸 없이 셋을 합쳐(count=3) headcount 를 더해 대피 대상 총원을 자동 산출한다(312+41=353, 곁표 common.models.AuditScope · 턴 AO 차선 O · P-411) — 완결조건(대피 대상 자동 산출) 실측, 다른 테넌트는 같은 GET 에서 0건을 받는다(격리)",
   "title_parts": [
     {
       "part": "마을",
@@ -62,6 +62,11 @@
       "part": "대피 대상 자동 산출",
       "where": "evacuee_target_total",
       "status": "measured"
+    },
+    {
+      "part": "테넌트 전체(같은 테넌트 여러 관리자)",
+      "where": "GET .../admin/evac-targets — count=3(두 관리자가 나눠 등록)",
+      "status": "구현 — 곁표(AuditScope)로 실측(다른 테넌트는 0건)"
     }
   ]
 }

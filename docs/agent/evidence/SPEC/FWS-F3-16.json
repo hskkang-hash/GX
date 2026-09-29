@@ -43,7 +43,7 @@
       "status": "근사 실측 — 확인 회신 30분 이내 비율로 근사(실제 헬기 투하·지상 도달 시각은 이 앱에 없다 · golden_time_note 에 명시, D-284)"
     }
   ],
-  "measured_at": "2026-09-29T04:59:54.645102+00:00",
+  "measured_at": "2026-09-29T06:52:16.624651+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_16_FireStatsTest.test_stats_covers_all_eight_parts",
   "request": {
@@ -58,7 +58,7 @@
       "until": null,
       "occurrence_count": 2,
       "by_hour": {
-        "4": 2
+        "6": 2
       },
       "by_zone": {
         "dsm-stream-A": 2

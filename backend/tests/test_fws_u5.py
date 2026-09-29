@@ -151,6 +151,23 @@ class U5_01_CameraFireMarkerTest(U5Fixture):
 # FWS-U5-02 — 초소·순찰함(NFC)·순찰 구역
 # ═══════════════════════════════════════════════════════════════════════════
 class U5_02_PostRegistryTest(U5Fixture):
+    def _second_tenant_a_admin(self):
+        """`self.group_a` 소속 두 번째 관리자 — 테넌트 전체 집계(곁표 · 턴 AO
+        차선 O · P-411)를 재려면 "한 사람" 이 아니라 "같은 테넌트 두 사람"
+        이어야 한다(U5 는 본래 관리자가 여럿일 수 있다 · `admin_settings.py`
+        머리말)."""
+        CoreUser = apps.get_model("user", "CoreUser")
+        Role = apps.get_model("role", "Role")
+        admin_role = Role.objects.get(code="admin")
+        user = CoreUser.objects.create_user(
+            username="u5_02_second", password="test-only-not-a-secret",
+            is_active=True, email="u5_02_second@test.invalid")
+        link_field = CoreUser._meta.get_field("userprofilelink")
+        link_field.related_model.objects.create(
+            **{link_field.remote_field.name: user, "group": self.group_a})
+        user.roles.add(admin_role)
+        return user
+
     def test_register_then_list_shows_the_same_post(self) -> None:
         head = self._bearer(self.user_a)
         params = {"post_code": "P-77", "name": "수리산 7번 초소",
@@ -162,11 +179,28 @@ class U5_02_PostRegistryTest(U5Fixture):
         self.assertEqual("수리산 7번 초소", body["name"])
         self.assertEqual(["NFC-1", "NFC-2"], body["nfc_boxes"])
 
+        # ★ 턴 AO 차선 O · P-411 — 같은 테넌트의 **다른 관리자**가 등록한 초소도
+        #   목록에 함께 보여야 한다(곁표가 넘어선 "등록한 사람 자신만" 한계).
+        head2 = self._bearer(self._second_tenant_a_admin())
+        params2 = {"post_code": "P-78", "name": "수리산 8번 초소",
+                  "patrol_zone": "수리산 남측"}
+        resp2 = self.client.post(_qs(POSTS, **params2), **head2)
+        self.assertEqual(200, resp2.status_code, resp2.content)
+
         listed = self.client.get(POSTS, **head)
         self.assertEqual(200, listed.status_code, listed.content)
         codes = {p["post_code"]: p for p in self._body(listed)["posts"]}
         self.assertIn("P-77", codes)
         self.assertEqual("수리산 북측", codes["P-77"]["patrol_zone"])
+        self.assertIn("P-78", codes,
+                      "같은 테넌트 다른 관리자가 등록한 초소가 목록에 없다")
+        self.assertEqual("수리산 남측", codes["P-78"]["patrol_zone"])
+
+        # ★ 격리 — 다른 테넌트(user_b)는 이 테넌트의 초소를 하나도 못 본다.
+        head_b = self._bearer(self.user_b)
+        listed_b = self.client.get(POSTS, **head_b)
+        self.assertEqual(200, listed_b.status_code, listed_b.content)
+        self.assertEqual([], self._body(listed_b)["posts"])
 
         _write_evidence(
             "FWS-U5-02", title="초소·순찰함(NFC)·순찰 구역",
@@ -175,11 +209,17 @@ class U5_02_PostRegistryTest(U5Fixture):
             method="POST", path=_qs(POSTS, **params), request_params=params,
             response=resp,
             what="POST .../admin/posts 로 등록한 초소 이름·순찰 구역·순찰함(NFC) 코드가 "
-                "GET .../admin/posts 목록에 그대로 보인다")
+                "GET .../admin/posts 목록에 그대로 보인다 — 같은 테넌트 다른 관리자가 "
+                "등록한 초소(P-78)도 함께 보이고(곁표 common.models.AuditScope · 턴 "
+                "AO 차선 O · P-411), 다른 테넌트는 같은 GET 에서 0건을 받는다(격리)")
         _add_title_parts("FWS-U5-02", [
             {"part": "초소", "where": "post_code/name", "status": "measured"},
             {"part": "순찰함(NFC)", "where": "nfc_boxes", "status": "measured"},
             {"part": "순찰 구역", "where": "patrol_zone", "status": "measured"},
+            {"part": "테넌트 전체(같은 테넌트 여러 관리자)", "where": "GET .../admin/"
+                                                          "posts — P-77·P-78 "
+                                                          "둘 다",
+            "status": "구현 — 곁표(AuditScope)로 실측(다른 테넌트는 0건)"},
         ])
 
     def test_blank_name_is_422(self) -> None:
@@ -192,37 +232,77 @@ class U5_02_PostRegistryTest(U5Fixture):
 # FWS-U5-03 — 마을·대피소·요양시설 등록(대피 대상 자동 산출)
 # ═══════════════════════════════════════════════════════════════════════════
 class U5_03_EvacTargetsTest(U5Fixture):
+    def _second_tenant_a_admin(self):
+        """`U5_02_PostRegistryTest._second_tenant_a_admin` 과 같은 판단 — 같은
+        테넌트 두 관리자가 나눠 등록해도 대피 대상 총원이 합쳐지는지 잰다."""
+        CoreUser = apps.get_model("user", "CoreUser")
+        Role = apps.get_model("role", "Role")
+        admin_role = Role.objects.get(code="admin")
+        user = CoreUser.objects.create_user(
+            username="u5_03_second", password="test-only-not-a-secret",
+            is_active=True, email="u5_03_second@test.invalid")
+        link_field = CoreUser._meta.get_field("userprofilelink")
+        link_field.related_model.objects.create(
+            **{link_field.remote_field.name: user, "group": self.group_a})
+        user.roles.add(admin_role)
+        return user
+
     def test_registering_villages_and_shelters_auto_computes_targets(self) -> None:
         head = self._bearer(self.user_a)
         village = {"kind": "village", "name": "안양천마을", "headcount": 312}
         care = {"kind": "care_facility", "name": "○○요양원", "headcount": 41}
-        shelter = {"kind": "shelter", "name": "만안초 체육관", "headcount": 400}
-        for params in (village, care, shelter):
+        for params in (village, care):
             resp = self.client.post(_qs(EVAC_TARGETS, **params), **head)
             self.assertEqual(200, resp.status_code, resp.content)
+
+        # ★ 턴 AO 차선 O · P-411 — 같은 테넌트의 **다른 관리자**가 등록한 대피소도
+        #   자동 산출 합계에 함께 들어가야 한다(곁표가 넘어선 "등록한 사람 자신만"
+        #   한계).
+        head2 = self._bearer(self._second_tenant_a_admin())
+        shelter = {"kind": "shelter", "name": "만안초 체육관", "headcount": 400}
+        resp = self.client.post(_qs(EVAC_TARGETS, **shelter), **head2)
+        self.assertEqual(200, resp.status_code, resp.content)
 
         listed = self.client.get(EVAC_TARGETS, **head)
         self.assertEqual(200, listed.status_code, listed.content)
         body = self._body(listed)
+        self.assertEqual(3, body["count"],
+                         "같은 테넌트 두 관리자가 나눠 등록한 3곳이 합쳐지지 않았다")
         self.assertEqual(312 + 41, body["evacuee_target_total"],
                          "대피 대상 자동 산출 — 마을+요양시설 headcount 합과 달라졌다")
         self.assertEqual(400, body["shelter_capacity_total"])
         self.assertTrue(body["shelter_covers_target"])
+
+        # ★ 격리 — 다른 테넌트(user_b, 이 픽스처에서 admin 역할 보유)는 이
+        #   테넌트의 등록을 하나도 못 본다.
+        head_b = self._bearer(self.user_b)
+        listed_b = self.client.get(EVAC_TARGETS, **head_b)
+        self.assertEqual(200, listed_b.status_code, listed_b.content)
+        body_b = self._body(listed_b)
+        self.assertEqual(0, body_b["count"])
+        self.assertEqual(0, body_b["evacuee_target_total"])
 
         _write_evidence(
             "FWS-U5-03", title="마을·대피소·요양시설 등록(대피 대상 자동 산출)",
             test_ref="tests.test_fws_u5.U5_03_EvacTargetsTest."
                     "test_registering_villages_and_shelters_auto_computes_targets",
             method="GET", path=EVAC_TARGETS, request_params={}, response=listed,
-            what="마을·요양시설·대피소 셋을 등록한 뒤 GET .../admin/evac-targets 가 "
-                "손으로 적는 합계 칸 없이 headcount 를 더해 대피 대상 총원을 자동 "
-                "산출한다(312+41=353) — 완결조건(대피 대상 자동 산출) 실측")
+            what="같은 테넌트 두 관리자가 마을·요양시설·대피소를 나눠 등록한 뒤 "
+                "GET .../admin/evac-targets 가 손으로 적는 합계 칸 없이 셋을 "
+                "합쳐(count=3) headcount 를 더해 대피 대상 총원을 자동 산출한다"
+                "(312+41=353, 곁표 common.models.AuditScope · 턴 AO 차선 O · "
+                "P-411) — 완결조건(대피 대상 자동 산출) 실측, 다른 테넌트는 같은 "
+                "GET 에서 0건을 받는다(격리)")
         _add_title_parts("FWS-U5-03", [
             {"part": "마을", "where": "kind=village", "status": "measured"},
             {"part": "대피소", "where": "kind=shelter", "status": "measured"},
             {"part": "요양시설", "where": "kind=care_facility", "status": "measured"},
             {"part": "대피 대상 자동 산출", "where": "evacuee_target_total",
              "status": "measured"},
+            {"part": "테넌트 전체(같은 테넌트 여러 관리자)", "where": "GET .../admin/"
+                                                          "evac-targets — count=3"
+                                                          "(두 관리자가 나눠 등록)",
+            "status": "구현 — 곁표(AuditScope)로 실측(다른 테넌트는 0건)"},
         ])
 
     def test_unknown_kind_is_422(self) -> None:

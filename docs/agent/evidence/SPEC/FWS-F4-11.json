@@ -1,0 +1,51 @@
+{
+  "id": "FWS-F4-11",
+  "title": "야간 전환(일몰) — 헬기 불가·야간 진화 자원 표시",
+  "title_parts": [
+    {
+      "part": "야간 전환(일몰)",
+      "where": "요청 sunset_at → 응답 is_night",
+      "status": "구현 — 과거 일몰 시각으로 야간 전환 실측"
+    },
+    {
+      "part": "헬기 불가",
+      "where": "응답 helicopter_badge",
+      "status": "구현 — '헬기 불가' 배지 실측"
+    },
+    {
+      "part": "야간 진화 자원 표시(완결조건 '배지')",
+      "where": "응답 night_resources[].available_at_night(F3-08 자원배정 재사용)",
+      "status": "구현 — 진화대 가능·드론 불가 실측"
+    }
+  ],
+  "measured_at": "2026-09-29T06:51:33.754049+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f4.F4_11_NightTransitionTest.test_sunset_in_the_past_marks_night_and_helicopter_unavailable",
+  "request": {
+    "method": "GET",
+    "path": "/api/fws/command/incidents/13/night-status",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "event_id": 13,
+      "sunset_at": "2026-09-29T05:51:33.675189+00:00",
+      "is_night": true,
+      "helicopter_badge": "헬기 불가",
+      "night_resources": [
+        {
+          "resource_name": "1진화대",
+          "kind": "crew",
+          "available_at_night": true
+        },
+        {
+          "resource_name": "D-1",
+          "kind": "drone",
+          "available_at_night": false
+        }
+      ]
+    }
+  },
+  "what": "일몰 시각을 과거로 기록하면 야간 전환·헬기 불가 배지·자원별 야간 가동 가능 여부가 실측된다"
+}

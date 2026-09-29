@@ -32,8 +32,9 @@ def _gate():
 _GOOD_EVIDENCE = {
     "id": "O-10", "measured_at": "2026-09-28T00:00:00+00:00",
     "measured_by": "django_test_client", "test": "tests.test_p356_ops_spec_promotions.X.y",
-    "request": {"method": "POST", "path": "/api/ops/keys/rotate", "body": {}},
+    "request": {"method": "POST", "path": "/api/dsm/ops/keys/rotate", "body": {}},
     "response": {"status": 200, "body": {}}, "what": "실측",
+    "title_parts": [{"part": "회전", "where": "x", "status": "measured"}],
 }
 
 
@@ -79,11 +80,16 @@ class TheSelfTestCanFail(SimpleTestCase):
         self.assertEqual(1, got, "500 응답을 통과시키는 판정식을 자기시험이 못 잡는다")
 
     def test_closed_clauses_is_honestly_empty_this_turn(self) -> None:
-        """★ 이 게이트만의 표식 — `CLOSED_CLAUSES` 가 비어 있어야 한다(P-376).
-        누가 실제로 O-10·O-04 를 닫으면 이 시험이 실패해서 「이제 채워야 한다」고
-        말한다 — 그때는 이 시험을 지우는 것이 아니라 값을 고치는 것이 맞다."""
+        """★ [턴 AO · 차선 N3 갱신] 이 절 자체가 예고한 대로 값을 고친다 — "누가
+        실제로 O-10·O-04 를 닫으면 이 시험이 실패해서 채우라고 말한다. 그때는
+        시험을 지우지 않고 값을 고치는 것이 맞다"(턴 AM 원문). N3 가 여덟을
+        닫았다(O-01·02·05·06·07·08·09·12) — O-10·O-04·O-11 은 여전히 AND 조건의
+        절반이 라이브 로그인/집행이라 못 닫는다(각자의 「무엇이 없는가」가 비지
+        않았는지는 여전히 잰다)."""
         g = _gate()
-        self.assertEqual((), g.CLOSED_CLAUSES)
-        self.assertEqual({"O-10", "O-04"}, set(g.NOT_STARTED))
+        self.assertEqual(
+            {"O-01", "O-02", "O-05", "O-06", "O-07", "O-08", "O-09", "O-12"},
+            set(g.CLOSED_CLAUSES))
+        self.assertEqual({"O-10", "O-04", "O-11"}, set(g.NOT_STARTED))
         for clause_id, why in g.NOT_STARTED.items():
             self.assertTrue(why.strip(), f"{clause_id}: 「무엇이 없는가」가 비었다.")
