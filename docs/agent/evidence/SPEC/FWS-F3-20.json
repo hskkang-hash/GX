@@ -13,7 +13,7 @@
       "status": "구현 — 7장 전부 두드린 뒤 100.0 실측"
     }
   ],
-  "measured_at": "2026-09-29T03:10:51.697014+00:00",
+  "measured_at": "2026-09-29T05:00:02.050258+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_20_OnboardingCardsTest.test_seven_cards_close_to_100_percent",
   "request": {

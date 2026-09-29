@@ -1,24 +1,24 @@
 {
   "id": "FWS-F6-01",
   "title": "산림청 시스템 입력 항목 내보내기(JSON/CSV · 항목 1:1)",
-  "measured_at": "2026-09-29T03:30:40.152339+00:00",
+  "measured_at": "2026-09-29T05:00:13.126923+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_01_KfsExportTest.test_json_export_carries_labeled_fields_one_to_one",
   "request": {
     "method": "GET",
-    "path": "/api/fws/liaison/fire-events/16/kfs-export",
+    "path": "/api/fws/liaison/fire-events/540/kfs-export",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
       "format": "json",
-      "event_id": 16,
+      "event_id": 540,
       "fields": [
         {
           "key": "occurred_at",
           "label": "신고일시",
-          "value": "2026-09-29T03:30:40.102719+00:00"
+          "value": "2026-09-29T05:00:13.044234+00:00"
         },
         {
           "key": "lat",

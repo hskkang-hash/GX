@@ -23,18 +23,18 @@
       "status": "구현 — 50.0 실측(2곳 중 1곳 완료)"
     }
   ],
-  "measured_at": "2026-09-29T03:10:39.532465+00:00",
+  "measured_at": "2026-09-29T04:59:49.647102+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_12_EvacuationProgressTest.test_progress_then_status_shows_percent_and_remaining",
   "request": {
     "method": "GET",
-    "path": "/api/fws/office2/evacuations/3/status",
+    "path": "/api/fws/office2/evacuations/522/status",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 3,
+      "event_id": 522,
       "plan_status": "pending_f4_approval",
       "villages": [
         {
@@ -42,14 +42,14 @@
           "completed": true,
           "remaining_residents": 0,
           "care_facility_cleared": true,
-          "recorded_at": "2026-09-29T03:10:39.458776+00:00"
+          "recorded_at": "2026-09-29T04:59:49.551539+00:00"
         },
         {
           "village": "서리",
           "completed": false,
           "remaining_residents": 3,
           "care_facility_cleared": false,
-          "recorded_at": "2026-09-29T03:10:39.489736+00:00"
+          "recorded_at": "2026-09-29T04:59:49.584595+00:00"
         }
       ],
       "total_villages": 2,

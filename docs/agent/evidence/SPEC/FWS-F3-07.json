@@ -1,31 +1,31 @@
 {
   "id": "FWS-F3-07",
   "title": "산림청 상황실 통보 기록(042-481-4119) · 헬기 요청 기록(요청 시각·기지·도착 예정)",
-  "measured_at": "2026-09-29T03:18:21.116448+00:00",
+  "measured_at": "2026-09-29T04:59:42.384958+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_07_AgencyNotifyTest.test_notify_records_the_reused_phone_number_and_helicopter_request",
   "request": {
     "method": "GET",
-    "path": "/api/fws/office/fire-events/9/agency-notify",
+    "path": "/api/fws/office/fire-events/515/agency-notify",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 9,
+      "event_id": 515,
       "count": 1,
       "notifications": [
         {
           "note": "산불 3단계 급수 요청",
-          "__seq__": 14,
-          "__hash__": "1d577131782b579ad09bcd8c374a39ad2701f8fc7fe7e6fd0eb344c6d38e622a",
-          "event_id": 9,
-          "notified_at": "2026-09-29T03:18:21.066788+00:00",
+          "__seq__": 224,
+          "__hash__": "a3cc490246afb0a7dc790b8f8dafa0bc6b0100789421562f33fdc2ab13a61f93",
+          "event_id": 515,
+          "notified_at": "2026-09-29T04:59:42.278765+00:00",
           "agency_phone": "042-481-4119",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "helicopter_eta": "2026-11-05T04:10:00+09:00",
           "helicopter_base": "원주기지",
-          "helicopter_requested_at": "2026-09-29T03:18:21.066788+00:00"
+          "helicopter_requested_at": "2026-09-29T04:59:42.278765+00:00"
         }
       ]
     }

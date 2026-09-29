@@ -1,7 +1,7 @@
 {
   "id": "FWS-F3-03",
   "title": "인력 배치 — 감시원·대응단 근무표(CSV) · 야간 5분대기조",
-  "measured_at": "2026-09-29T03:18:14.520958+00:00",
+  "measured_at": "2026-09-29T04:59:35.269523+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_03_RosterTest.test_csv_upload_then_readback_shows_night_standby_flag",
   "request": {
@@ -29,7 +29,7 @@
         }
       ],
       "count": 2,
-      "uploaded_at": "2026-09-29T03:18:14.440373+00:00"
+      "uploaded_at": "2026-09-29T04:59:35.230766+00:00"
     }
   },
   "what": "POST 로 올린 근무표 CSV(감시원·대응단 혼재)가 GET 배치판에 그대로 남고, night_standby_5min 칸이 야간 5분대기조 행만 참으로 읽힌다(저장 → 재조회 실측)",

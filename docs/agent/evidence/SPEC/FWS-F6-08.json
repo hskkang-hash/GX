@@ -1,27 +1,27 @@
 {
   "id": "FWS-F6-08",
   "title": "경찰 교통통제·입산통제 협조 기록",
-  "measured_at": "2026-09-29T03:30:49.646109+00:00",
+  "measured_at": "2026-09-29T05:00:23.319763+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_08_PoliceCoordinationTest.test_record_then_list_by_event",
   "request": {
     "method": "GET",
-    "path": "/api/fws/liaison/fire-events/27/police-coordination",
+    "path": "/api/fws/liaison/fire-events/551/police-coordination",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 27,
+      "event_id": 551,
       "count": 1,
       "records": [
         {
           "kind": "traffic_control",
           "note": "OO로 3km 구간 전면 통제",
-          "__seq__": 84,
-          "__hash__": "502e5f629de2c10c81c16f3277d2b58439af3108adf39af3b3e43832ce3d00d1",
-          "event_id": 27,
-          "recorded_at": "2026-09-29T03:30:49.522899+00:00",
+          "__seq__": 286,
+          "__hash__": "9a3e4b53c58720da732c97c8eb08fd6a236b3f4d5a2e357e247268c6daef1c1d",
+          "event_id": 551,
+          "recorded_at": "2026-09-29T05:00:23.274716+00:00",
           "recorded_by": "dsm_user_a",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000"
         }

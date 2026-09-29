@@ -1,12 +1,12 @@
 {
   "id": "FWS-F2-11",
   "title": "철수·복귀 회신",
-  "measured_at": "2026-09-28T10:42:44.593742+00:00",
+  "measured_at": "2026-09-29T04:59:19.898278+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_mission_detail_dispatch_arrive_release_chain",
   "request": {
     "method": "POST",
-    "path": "/api/fws/missions/497/response?action=released&note=%EC%B2%A0%EC%88%98+%EC%99%84%EB%A3%8C",
+    "path": "/api/fws/missions/499/response?action=released&note=%EC%B2%A0%EC%88%98+%EC%99%84%EB%A3%8C",
     "params": {
       "action": "released",
       "note": "철수 완료"
@@ -15,9 +15,9 @@
   "response": {
     "status": 200,
     "body": {
-      "mission_id": 497,
+      "mission_id": 499,
       "action": "released",
-      "released_at": "2026-09-28T10:42:44.552574+00:00",
+      "released_at": "2026-09-29T04:59:19.858018+00:00",
       "duration_minutes": 0.0,
       "to": "in_progress",
       "event_advanced": false

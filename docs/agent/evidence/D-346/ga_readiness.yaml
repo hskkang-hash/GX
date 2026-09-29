@@ -466,6 +466,11 @@ annex_2_spec:
       kind: unmeasurable
       hand: in
       src: FWS
+    - id: FWS-F6-07
+      status: 미착수
+      kind: unmeasurable
+      hand: in
+      src: FWS
     - id: FWS-F6-09
       status: 미착수
       kind: unmeasurable
@@ -3828,9 +3833,9 @@ areas:
         proof: backend/tests/test_fws_f6.py
         evidence: docs/agent/evidence/SPEC/FWS-F6-10.json
         origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-28
-      # ★★ [P-356 · P-392 · 2026-09-29 · 턴 AN · 조율자 창 ②] 별표 승격 21절 — 분모 293 불변(절 +21 · 별표 −21).
+      # ★★ [P-356 · P-392 · 2026-09-29 · 턴 AN · 조율자 창 ②] 별표 승격 20절 — 분모 293 불변(절 +20 · 별표 −20).
       #   반쪽(제목의 한 부분이 missing·대리 지표·본인 범위)은 올리지 않았다: FWS-F3-04 · F3-16 · F3-18 · FWS-U5-04 ·
-      #   DSM-U4-07 · U5-05 · FWS-F3-11(앱 푸시 미확인) · F3-13(면적 빈 칸) (보고서 §닫은 절). 이 턴 증거는 `title_parts` 표를 싣는다(verify_spec_title_parts).
+      #   DSM-U4-07 · U5-05 · FWS-F3-11(앱 푸시 미확인) · F3-13(면적 빈 칸) · FWS-F6-07(산림청 앱 실제 푸시 없음 — 세종 청구) (보고서 §닫은 절). 이 턴 증거는 `title_parts` 표를 싣는다(verify_spec_title_parts).
       - id: DSM-U4-03
         title: 재난문자(CBS) 초안
         status: 구현
@@ -3854,18 +3859,6 @@ areas:
         gate_args: --no-run
         proof: backend/tests/test_p356_u4_rest_spec_promotions.py
         evidence: docs/agent/evidence/SPEC/DSM-U4-04.json
-        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
-      - id: FWS-F6-07
-        title: 스마트산림재난 앱 대피 푸시 연계(산림청) [미확인] · 대안 CBS 초안
-        status: 구현
-        kind: closed
-        kind_why: |
-          [P-356 · 턴 AN · 차선 N1] 별표 승격 — 구현 · 증거 `docs/agent/evidence/SPEC/FWS-F6-07.json`(시험 클라이언트 실측 · title_parts 빈 칸 0) ·
-          게이트 `scripts/verify_spec_fws_f6.py` 행 PASS · 조율자 반쪽 판정 통과 · 분모 293 불변.
-        gate: scripts/verify_spec_fws_f6.py
-        gate_args: --no-run
-        proof: backend/tests/test_an_n1_f6_07_webpush.py
-        evidence: docs/agent/evidence/SPEC/FWS-F6-07.json
         origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-29
       - id: FWS-F3-01
         title: 산불 상황판 — 위험지수·위기경보·초소 근무·카메라 정상·진행 사건·자원 대기

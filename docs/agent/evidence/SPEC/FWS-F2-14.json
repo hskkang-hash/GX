@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-14",
   "title": "장비 점검 체크(등짐펌프·진화차)",
-  "measured_at": "2026-09-28T10:42:52.962018+00:00",
+  "measured_at": "2026-09-29T04:59:28.946646+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_14_EquipmentCheckTest.test_check_is_recorded_and_read_back",
   "request": {
@@ -14,12 +14,12 @@
     "body": {
       "checks": [
         {
-          "check_id": 204,
+          "check_id": 209,
           "note": "이상 없음",
           "result": "pass",
-          "__seq__": 204,
-          "__hash__": "a0acfaf8bb694971187ae7c77d28ee88fe3b645aaeb21d8226cc885e0784ec79",
-          "checked_at": "2026-09-28T10:42:52.924347+00:00",
+          "__seq__": 209,
+          "__hash__": "6018c9362c3b2a713433880922b07c35d26a85c65c3c630e76b0ebabe2008a0c",
+          "checked_at": "2026-09-29T04:59:28.908835+00:00",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "equipment_code": "BP-7",
           "equipment_type": "backpack_pump"

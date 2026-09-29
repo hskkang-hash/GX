@@ -1,7 +1,7 @@
 {
   "id": "DSM-U5-01",
   "title": "운영·관리 방침 항목 관리",
-  "measured_at": "2026-09-29T03:49:51.329220+00:00",
+  "measured_at": "2026-09-29T04:58:22.071485+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u5_an.U5_01_PrivacyPolicyTest.test_save_reread_and_retention_matches_destruction_policy",
   "request": {
@@ -30,7 +30,7 @@
       "installed_camera_count": 1,
       "retention_days": 30,
       "retention_source": "운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 P-67 · config/retention_seed.py)",
-      "saved_at": "2026-09-29T03:49:51.277672+00:00",
+      "saved_at": "2026-09-29T04:58:22.026875+00:00",
       "document_text": "GuardianX 재난안전관리 App — 영상정보 운영·관리 방침\n\n· 설치 목적: 산불 감시 및 방범\n· 설치 위치: 정문·주차장\n· 촬영 범위: 출입로 전방 30m\n· 관리책임자: 정보통신과장\n· 접근권한자: 정보통신과 담당자 2명\n· 촬영 시간: 24시간\n· 열람 절차: 열람청구서 접수 후 3일 이내 처리\n· 설치 대수: 1대(실측)\n· 보관 기간: 30일(파기 정책과 같은 값)"
     }
   },

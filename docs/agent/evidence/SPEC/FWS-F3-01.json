@@ -1,7 +1,7 @@
 {
   "id": "FWS-F3-01",
   "title": "산불 상황판 — 위험지수·위기경보·초소 근무·카메라 정상·진행 사건·자원 대기",
-  "measured_at": "2026-09-29T03:18:10.463648+00:00",
+  "measured_at": "2026-09-29T04:59:32.152298+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_01_DashboardTest.test_six_bands_present",
   "request": {
@@ -12,7 +12,7 @@
   "response": {
     "status": 200,
     "body": {
-      "as_of": "2026-09-29T03:18:10.401455+00:00",
+      "as_of": "2026-09-29T04:59:32.132640+00:00",
       "risk_index": {
         "level": "관심",
         "season": "평시"
@@ -34,10 +34,10 @@
         "count": 1,
         "items": [
           {
-            "event_id": 1,
+            "event_id": 507,
             "severity": "critical",
             "response_state": "occurred",
-            "occurred_at": "2026-09-29T03:17:10.323124+00:00"
+            "occurred_at": "2026-09-29T04:58:32.098336+00:00"
           }
         ]
       },

@@ -18,7 +18,7 @@
       "status": "구현 — 종료 보고서 실측"
     }
   ],
-  "measured_at": "2026-09-29T03:10:49.173219+00:00",
+  "measured_at": "2026-09-29T04:59:59.925544+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_19_DrillScenarioTest.test_start_status_end_real_channel_zero",
   "request": {
@@ -31,10 +31,10 @@
   "response": {
     "status": 200,
     "body": {
-      "group_id": 15,
+      "group_id": 302,
       "measurable": true,
-      "started_at": "2026-09-29T03:10:49.097Z",
-      "ended_at": "2026-09-29T03:10:49.156Z",
+      "started_at": "2026-09-29T04:59:59.853Z",
+      "ended_at": "2026-09-29T04:59:59.906Z",
       "in_progress": false,
       "data_source": "drill",
       "real_channel_sends": 0,

@@ -1,6 +1,6 @@
 {
   "id": "DSM-U2-05",
-  "measured_at": "2026-09-28T10:46:16.524045+00:00",
+  "measured_at": "2026-09-29T05:03:50.165700+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_dump_dsm_u2_05_evidence",
   "request": {
@@ -13,19 +13,19 @@
     "body": {
       "ack": {
         "id": 4,
-        "ack_id": 333,
+        "ack_id": 397,
         "acknowledged": true
       },
       "latest_after_ack": {
         "exists": true,
         "id": 4,
-        "body": "[교대 인계 자동 초안] 2026-09-28 17:46 (최근 24시간)\n미처리 0건\n시스템 사건 0건\n내가 처리한 사건 0건",
+        "body": "[교대 인계 자동 초안] 2026-09-29 12:03 (최근 24시간)\n미처리 0건\n시스템 사건 0건\n내가 처리한 사건 0건",
         "note": "",
         "unresolved_count": 0,
         "system_event_count": 0,
         "handled_count": 0,
         "unresolved_event_ids": [],
-        "created_at": "2026-09-28T10:46:16.410Z",
+        "created_at": "2026-09-29T05:03:50.060Z",
         "acknowledged": true
       }
     }

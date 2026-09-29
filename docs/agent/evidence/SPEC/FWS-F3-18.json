@@ -13,7 +13,7 @@
       "status": "구현 — 설정→조회 실측"
     }
   ],
-  "measured_at": "2026-09-29T03:10:47.628792+00:00",
+  "measured_at": "2026-09-29T04:59:57.992108+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_18_PatrolEnforcementTest.test_record_stats_and_zone_management",
   "request": {
@@ -26,12 +26,12 @@
     "body": {
       "zones": [
         {
-          "set_at": "2026-09-29T03:10:47.588549+00:00",
+          "set_at": "2026-09-29T04:59:57.937113+00:00",
           "status": "active",
-          "__seq__": 16,
-          "__hash__": "275c6a6550d1cf9215d25d4f6d4307ea158827ea3fd97034d59c84c9fda24242",
+          "__seq__": 247,
+          "__hash__": "d18c3ae364923df726f5e097143c7c4beec4c3bb8d1c80e6fb161fafead9ee14",
           "zone_name": "OO봉 일대",
-          "__prev_hash__": "afcdf0785b63293d77fa9a4988bebed6344c5438a4cea671ee2eb836aaaa15e2"
+          "__prev_hash__": "2cd075f643f9f2df074db9067c8ea23b3fbe133603685e1305dd230e4a12033d"
         }
       ],
       "scope": "mine"

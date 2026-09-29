@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-11",
   "title": "내 근무 기록·순찰 실적(일·주)",
-  "measured_at": "2026-09-29T03:30:35.675532+00:00",
+  "measured_at": "2026-09-29T04:59:13.536697+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_11_PatrolMineTest.test_todays_checkin_and_track_are_counted",
   "request": {
@@ -22,7 +22,7 @@
         "tracks": 1,
         "checkpoints": 0
       },
-      "as_of": "2026-09-29T03:30:35.666502+00:00"
+      "as_of": "2026-09-29T04:59:13.528102+00:00"
     }
   },
   "what": "체크인 1·트랙 1 뒤 GET /api/fws/patrol/mine 의 today 칸이 1·1 로 표에 실측된다(week 칸은 today 를 포함해 >=1)"
