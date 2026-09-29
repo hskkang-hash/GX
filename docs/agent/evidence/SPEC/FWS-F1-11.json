@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-11",
   "title": "내 근무 기록·순찰 실적(일·주)",
-  "measured_at": "2026-09-29T04:59:13.536697+00:00",
+  "measured_at": "2026-09-29T07:39:30.875444+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_11_PatrolMineTest.test_todays_checkin_and_track_are_counted",
   "request": {
@@ -22,7 +22,7 @@
         "tracks": 1,
         "checkpoints": 0
       },
-      "as_of": "2026-09-29T04:59:13.528102+00:00"
+      "as_of": "2026-09-29T07:39:30.867403+00:00"
     }
   },
   "what": "체크인 1·트랙 1 뒤 GET /api/fws/patrol/mine 의 today 칸이 1·1 로 표에 실측된다(week 칸은 today 를 포함해 >=1)",
@@ -42,6 +42,5 @@
       "where": "frontend/src/features/fws — fwsEndpoint.patrolMine 은 api.ts:19에 등록만 되고, 어떤 페이지도 호출하지 않음(grep 결과 0건)",
       "status": "없음: 서버 집계는 실측됐지만 F1 화면 어디에도 내 근무 기록·순찰 실적 표가 없다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:125행 · 원 명세서:146행('GET /fws/patrol/mine · 표')을 evidence FWS-F1-11.json·test_fws_app.py:399-419·patrol.py:145-168 과 대조, frontend/src/features/fws 전체를 grep해 patrolMine 호출처 없음을 확인"
+  ]
 }

@@ -1,6 +1,6 @@
 {
   "id": "P376_DSM-U5-02-permissions",
-  "measured_at": "2026-09-29T05:04:39.355402+00:00",
+  "measured_at": "2026-09-29T07:46:18.523247+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p376_half_clauses.AccessPermissionMatrixTest.test_sysop_sees_person_camera_and_feature_permissions",
   "request": {
@@ -13,9 +13,9 @@
     "body": {
       "items": [
         {
-          "person_id": 645,
+          "person_id": 740,
           "username": "dsm_user_a",
-          "group_id": 548,
+          "group_id": 624,
           "group_name": "dsm-tenant-A",
           "role_codes": [
             "dsm_watch_a"
@@ -24,7 +24,7 @@
           "preset": "OPERATOR",
           "cameras": [
             {
-              "camera_id": 524,
+              "camera_id": 591,
               "name": "dsm-stream-A"
             }
           ],
@@ -41,9 +41,9 @@
           }
         },
         {
-          "person_id": 647,
+          "person_id": 742,
           "username": "p376_manager_a",
-          "group_id": 548,
+          "group_id": 624,
           "group_name": "dsm-tenant-A",
           "role_codes": [
             "dsm_p376_mgr_a"
@@ -52,7 +52,7 @@
           "preset": "OPERATOR",
           "cameras": [
             {
-              "camera_id": 524,
+              "camera_id": 591,
               "name": "dsm-stream-A"
             }
           ],
@@ -69,9 +69,9 @@
           }
         },
         {
-          "person_id": 648,
+          "person_id": 743,
           "username": "p376_sysop_a",
-          "group_id": 548,
+          "group_id": 624,
           "group_name": "dsm-tenant-A",
           "role_codes": [
             "admin"
@@ -80,7 +80,7 @@
           "preset": "MANAGER",
           "cameras": [
             {
-              "camera_id": 524,
+              "camera_id": 591,
               "name": "dsm-stream-A"
             }
           ],

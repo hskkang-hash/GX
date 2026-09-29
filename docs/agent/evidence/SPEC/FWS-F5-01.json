@@ -1,7 +1,7 @@
 {
   "id": "FWS-F5-01",
   "title": "정찰 임무 수신(발화 추정 좌표·반경) → 열화상 정찰",
-  "measured_at": "2026-09-29T05:00:04.783949+00:00",
+  "measured_at": "2026-09-29T07:40:55.305965+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f5.F5_01_ReconTest.test_request_accept_airborne_return_and_mine_reflects_state",
   "request": {
@@ -14,13 +14,13 @@
     "body": {
       "requests": [
         {
-          "event_id": 532,
+          "event_id": 558,
           "state": "return",
           "radius_m": 300.0,
-          "requested_at": "2026-09-29T05:00:04.563961+00:00",
-          "accepted_at": "2026-09-29T05:00:04.618582+00:00",
-          "airborne_at": "2026-09-29T05:00:04.667761+00:00",
-          "returned_at": "2026-09-29T05:00:04.728437+00:00"
+          "requested_at": "2026-09-29T07:40:55.113899+00:00",
+          "accepted_at": "2026-09-29T07:40:55.171169+00:00",
+          "airborne_at": "2026-09-29T07:40:55.219358+00:00",
+          "returned_at": "2026-09-29T07:40:55.268496+00:00"
         }
       ],
       "count": 1
@@ -53,6 +53,5 @@
       "where": "backend/apps/fws/drone.py 머리말(P-387) — \"드론 0대\", 실제 열화상 프레임 수신/저장 코드 없음",
       "status": "없음 — 이 절은 서류상 상태 전이(요청·상태)만 만든다고 머리말에 명시. 실제 열화상 센서 프레임을 수신·저장·판독하는 경로는 존재하지 않는다(연동 하드웨어 0대)"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:180 및 FWS_산불감시App_명세서_v1.0_..._20260915.md:221(완료조건 \"임무 생성·이륙\")의 제목을 backend/tests/test_fws_f5.py::F5_01_ReconTest 와 backend/apps/fws/drone.py::recon()/recon_mine()에 대조 — 요청·상태 전이는 실측, 좌표 전달과 실제 열화상 데이터는 코드에 없어 OPEN으로 남김"
+  ]
 }

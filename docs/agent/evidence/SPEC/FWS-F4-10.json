@@ -33,24 +33,24 @@
       "status": "구현 — office2.GOLDEN_TIME_THRESHOLD_SEC 재사용, 헬기 투하로 false 실측"
     }
   ],
-  "measured_at": "2026-09-29T06:51:31.535225+00:00",
+  "measured_at": "2026-09-29T07:40:41.151177+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_10_ResponseTimelineTest.test_timeline_layers_fws_milestones_on_dsm_clock",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/12/response-timeline",
+    "path": "/api/fws/command/incidents/547/response-timeline",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 12,
+      "event_id": 547,
       "response_state": "in_progress",
       "timeline": {
-        "reported_at": "2026-09-29T06:51:31.124178+00:00",
-        "acknowledged_at": "2026-09-29T06:51:31.297038+00:00",
-        "helicopter_dropped_at": "2026-09-29T06:51:31.247547+00:00",
-        "main_fire_out_at": "2026-09-29T06:51:31.397773+00:00",
+        "reported_at": "2026-09-29T07:40:40.913161+00:00",
+        "acknowledged_at": "2026-09-29T07:40:41.009618+00:00",
+        "helicopter_dropped_at": "2026-09-29T07:40:40.979282+00:00",
+        "main_fire_out_at": "2026-09-29T07:40:41.075676+00:00",
         "extinguished_at": null
       },
       "golden_time_seconds": 1800,

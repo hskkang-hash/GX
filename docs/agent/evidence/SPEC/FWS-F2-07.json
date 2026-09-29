@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-07",
   "title": "안전 경보 수신(풍향 급변·헬기 투하 구역 이탈)",
-  "measured_at": "2026-09-29T04:59:24.194403+00:00",
+  "measured_at": "2026-09-29T07:39:42.540504+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_07_SafetyAlertTest.test_wind_shift_alert_arrives_and_acks_via_shared_alerts_endpoint",
   "request": {
@@ -38,6 +38,5 @@
       "where": "backend/kernels/k2_notify (drop_zone/헬기 구역 관련 룰 grep 결과 없음)",
       "status": "없음 — 위와 같은 이유. 해당 조건을 만드는 규칙·트리거가 코드 어디에도 없다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 162행 「안전 경보 수신(풍향 급변·헬기 투하 구역 이탈)」을 backend/apps/fws/alerts.py 및 backend/kernels/k2_notify/*.py 전체 grep(풍향·wind·drop_zone)과 대조 — 도달·확인 배관(F1-10 재사용)은 실측되지만, 제목이 지목하는 두 구체 경보 조건(풍향 급변·투하구역 이탈)을 만드는 규칙 자체는 시스템에 없다. evidence what 필드도 '채널·내용을 안 가린다'며 이를 우회 표현으로 인정."
+  ]
 }

@@ -80,3 +80,6 @@
 - [ ] 2026-09-30 · 세종 · **㉠ 실기기 웹푸시 도달 1(손 · 5분)** — 크롬 `http://localhost:8500` → `gxseed_u1_operator`(비밀번호 = `.env.gates` 의 `GX_SEED_ROLE_PASSWORD`) → `/m/settings` 「이 기기 알림」 켜기 → 시험 알림 → `[훈련]` 떴는지 한마디
 - [ ] 2026-09-30 · 세종 · **㉡ 감시기 삭제 확인** — 관리자 PowerShell `Get-ScheduledTask -TaskName "GuardianX-Yeongsil"` 없으면 `[x]` · 있으면 `Unregister-ScheduledTask … -Confirm:$false`
 - (열린 채) ㉣ 스테이징·운영 주소 — 열여덟 턴째
+
+## 2026-09-29 · 영실(턴 AO 보고)
+- [ ] 2026-09-29 · 영실 · **`gx-portfwd` 삭제 한 줄(대표 결정 09-29 있음 · 분류기가 대화창 한 줄을 요구)** — 기대던 게이트(SEC-17)는 8500 으로 옮겼다(`evidence/P-412`) · 대화창에서 「gx-portfwd 지워라」 → 조율자가 지우고 GA 재대조

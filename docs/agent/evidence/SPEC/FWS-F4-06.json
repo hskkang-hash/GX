@@ -23,12 +23,12 @@
       "status": "구현 — 재조회로 3건 확인"
     }
   ],
-  "measured_at": "2026-09-29T06:51:22.963267+00:00",
+  "measured_at": "2026-09-29T07:40:33.664364+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_06_AgencyCoordinationTest.test_record_three_agencies",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/6/agency-request?agency=military&request_detail=military+%ED%98%91%EC%A1%B0+%EC%9A%94%EC%B2%AD",
+    "path": "/api/fws/command/incidents/541/agency-request?agency=military&request_detail=military+%ED%98%91%EC%A1%B0+%EC%9A%94%EC%B2%AD",
     "params": {
       "agency": "military"
     }
@@ -36,12 +36,12 @@
   "response": {
     "status": 200,
     "body": {
-      "record_id": 13,
-      "event_id": 6,
+      "record_id": 315,
+      "event_id": 541,
       "agency": "military",
       "request_detail": "military 협조 요청",
       "note": "",
-      "requested_at": "2026-09-29T06:51:22.907624+00:00",
+      "requested_at": "2026-09-29T07:40:33.619162+00:00",
       "requested_by": "dsm_user_a"
     }
   },

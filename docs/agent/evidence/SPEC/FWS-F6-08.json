@@ -1,27 +1,27 @@
 {
   "id": "FWS-F6-08",
   "title": "경찰 교통통제·입산통제 협조 기록",
-  "measured_at": "2026-09-29T05:00:23.319763+00:00",
+  "measured_at": "2026-09-29T07:41:15.121414+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_08_PoliceCoordinationTest.test_record_then_list_by_event",
   "request": {
     "method": "GET",
-    "path": "/api/fws/liaison/fire-events/551/police-coordination",
+    "path": "/api/fws/liaison/fire-events/577/police-coordination",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 551,
+      "event_id": 577,
       "count": 1,
       "records": [
         {
           "kind": "traffic_control",
           "note": "OO로 3km 구간 전면 통제",
-          "__seq__": 286,
-          "__hash__": "9a3e4b53c58720da732c97c8eb08fd6a236b3f4d5a2e357e247268c6daef1c1d",
-          "event_id": 551,
-          "recorded_at": "2026-09-29T05:00:23.274716+00:00",
+          "__seq__": 375,
+          "__hash__": "37ece4667efffbc58263ae10f9cbf3c5d97ec24506dd7baddd57edad54dfe1fc",
+          "event_id": 577,
+          "recorded_at": "2026-09-29T07:41:15.073813+00:00",
           "recorded_by": "dsm_user_a",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000"
         }
@@ -45,6 +45,5 @@
       "where": "backend/apps/fws/integration.py::police_coordination_records (GET /api/fws/liaison/fire-events/{id}/police-coordination)",
       "status": "있음 — 제출자를 가리지 않고 그 사건에 달린 기록 전부를 낸다 · test_record_then_list_by_event 실측"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: docs/design/FWS_산불감시App_명세서_v1.0_프로세스_사용자별_20260915.md §5.6 FWS-F6-08 행 ↔ docs/agent/evidence/SPEC/FWS-F6-08.json ↔ backend/tests/test_fws_f6.py::F6_08_PoliceCoordinationTest 두 시험 ↔ backend/apps/fws/integration.py::POLICE_COORDINATION_KINDS/record_police_coordination 코드를 대조 — 제목이 부르는 두 협조 종류(교통·입산)가 같은 범용 함수로 모두 코드에 있고, 이 절은 annex 완결조건('기록')을 넘는 실시간 경찰 시스템 연동을 요구하지 않아 세 행 모두 CLOSED 로 판단, 다만 mountain_entry_control 전용 HTTP 실측 부재는 status 문구에 남김."
+  ]
 }

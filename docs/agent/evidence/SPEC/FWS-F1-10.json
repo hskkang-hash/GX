@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-10",
   "title": "안전 알림 수신(풍향 급변·대피 지시·철수)",
-  "measured_at": "2026-09-29T04:59:11.996887+00:00",
+  "measured_at": "2026-09-29T07:39:29.270893+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_10_AlertsTest.test_alert_arrives_and_can_be_acknowledged",
   "request": {
@@ -15,10 +15,10 @@
       "alerts": [
         {
           "delivery_id": 37,
-          "event_id": 497,
+          "event_id": 504,
           "channel": "email",
-          "occurred_at": "2026-09-29T04:58:11.894547+00:00",
-          "sent_at": "2026-09-29T04:59:11.946238+00:00",
+          "occurred_at": "2026-09-29T07:38:29.142645+00:00",
+          "sent_at": "2026-09-29T07:39:29.198831+00:00",
           "acknowledged": false
         }
       ]
@@ -51,6 +51,5 @@
       "where": "backend/apps/fws/integration.py, office2.py (draft_evacuation_notice·evacuation_webpush_drill 등은 F3/F6 쪽 문안·훈련 채널)",
       "status": "부분: 대피 문안 초안(F3-11)·웹푸시 훈련(F6)은 있으나, 그것이 F1의 GET /api/fws/alerts 목록에 '안전 알림'으로 뜨는 경로를 잇는 시험은 없다 — F1-10 시험은 범용 K2 send만 확인, 대피/철수 전용 트리거는 미실측"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:124행 · 원 명세서:145행('K2 · 도달·확인')을 evidence FWS-F1-10.json·test_fws_app.py:359-393·alerts.py·PatrolHome.tsx:149-169 와 대조, '풍향'·'wind' 문자열을 backend/apps/fws 전체에서 grep해 무일치 확인"
+  ]
 }

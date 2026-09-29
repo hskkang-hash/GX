@@ -23,22 +23,22 @@
       "status": "구현 — '집계 전'을 정직하게 낸다(이 저장소에 피해집계 칸이 없다, incident_report.py::_damage_block 과 같은 정직함 — 0 으로 지어내지 않는다)"
     }
   ],
-  "measured_at": "2026-09-29T06:51:42.239020+00:00",
+  "measured_at": "2026-09-29T07:40:50.765714+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_15_PostIncidentReportTest.test_pdf_and_summary_cover_clock_resources_and_evacuation",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/18/post-report/summary",
+    "path": "/api/fws/command/incidents/553/post-report/summary",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 18,
+      "event_id": 553,
       "response_clock": {
-        "event_id": 18,
+        "event_id": 553,
         "stream_monitor_name": "dsm-stream-A",
-        "occurred_at": "2026-09-29T06:50:39.038141+00:00",
+        "occurred_at": "2026-09-29T07:39:48.569733+00:00",
         "acknowledged_at": null,
         "arrived_at": null,
         "closed_at": null,
@@ -47,7 +47,7 @@
         "close_seconds": null,
         "auto_closed": false,
         "reopened": 0,
-        "elapsed_seconds": 63.185594,
+        "elapsed_seconds": 62.189584,
         "urgency_tier": 1,
         "transitions": []
       },
@@ -56,13 +56,13 @@
         {
           "kind": "crew",
           "note": "",
-          "__seq__": 38,
-          "__hash__": "86df82a898992a7de5fe4ae27b0e88462a5edc62912cd76d069a64a3057a9fd8",
-          "event_id": 18,
-          "reply_id": 37,
-          "assigned_at": "2026-09-29T06:51:39.216158+00:00",
-          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #18(주소 미상) 대응 바랍니다.",
-          "__prev_hash__": "d0cf3d95cb60e0aeeb48d7ea728157fd3d10cdbcb84727d49d332702d5291f02",
+          "__seq__": 340,
+          "__hash__": "a4a28e70168ae5d48c7c8069e8db45597692c7a41e34e337d7c0ff5e79df4c47",
+          "event_id": 553,
+          "reply_id": 339,
+          "assigned_at": "2026-09-29T07:40:48.686432+00:00",
+          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #553(주소 미상) 대응 바랍니다.",
+          "__prev_hash__": "ed29cdedeebe6506ee1401ea46b00a347a39e553411c91a3028ba8d90bdb6121",
           "resource_name": "1진화대",
           "notified_count": 1
         }

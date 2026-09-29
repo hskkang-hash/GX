@@ -23,12 +23,12 @@
       "status": "구현 — 재조회로 남는 배지값 실측"
     }
   ],
-  "measured_at": "2026-09-29T06:51:15.793867+00:00",
+  "measured_at": "2026-09-29T07:40:26.508198+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_02_StageConfirmTest.test_confirm_stage_records_badge_and_command_level_transfer",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/1/stage?stage=2%EB%8B%A8%EA%B3%84&reason=%ED%92%8D%EC%86%8D+%EA%B8%89%EC%A6%9D&command_level=%EC%8B%9C%EB%8F%84",
+    "path": "/api/fws/command/incidents/536/stage?stage=2%EB%8B%A8%EA%B3%84&reason=%ED%92%8D%EC%86%8D+%EA%B8%89%EC%A6%9D&command_level=%EC%8B%9C%EB%8F%84",
     "params": {
       "stage": "2단계",
       "reason": "풍속 급증",
@@ -38,13 +38,13 @@
   "response": {
     "status": 200,
     "body": {
-      "confirmation_id": 1,
-      "event_id": 1,
+      "confirmation_id": 303,
+      "event_id": 536,
       "stage": "2단계",
       "prior_stage": null,
       "reason": "풍속 급증",
       "command_level": "시도",
-      "confirmed_at": "2026-09-29T06:51:15.740124+00:00",
+      "confirmed_at": "2026-09-29T07:40:26.456995+00:00",
       "confirmed_by": "dsm_user_a"
     }
   },

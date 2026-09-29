@@ -1,7 +1,7 @@
 {
   "id": "FWS-F6-03",
   "title": "산불위험예보·위기경보 수신(산림과학원·산림청 API 또는 수동)",
-  "measured_at": "2026-09-29T05:00:16.759012+00:00",
+  "measured_at": "2026-09-29T07:41:08.225591+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_03_RiskForecastTest.test_record_then_read_back_band_from_p386_thresholds",
   "request": {
@@ -15,10 +15,10 @@
       "band": "경계",
       "note": "산림과학원 고시 대체 입력",
       "source": "manual",
-      "__seq__": 281,
-      "__hash__": "559d10211b2855bf6f47dfbc478f7f188bfd657e7007aa6166eb25cfcbd19815",
+      "__seq__": 370,
+      "__hash__": "6c3bdad1499d87efec3520b8d07e5fb87e3bb86a9c6d2dc25c22c0850fb49e0a",
       "risk_index": 70.0,
-      "recorded_at": "2026-09-29T05:00:16.723726+00:00",
+      "recorded_at": "2026-09-29T07:41:08.184772+00:00",
       "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000"
     }
   },
@@ -49,6 +49,5 @@
       "where": "backend/apps/fws/integration.py::my_latest_risk_forecast (user_id=actor.pk 로 좁힘, line 269-272)",
       "status": "없음 — 감사 로그에 테넌트 칸이 없어 본인이 넣은 최신 값만 보인다(standby.py·missions.py 와 같은 한계), 여러 사람의 입력을 합치는 로직은 없다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: docs/design/FWS_산불감시App_명세서_v1.0_프로세스_사용자별_20260915.md §5.6 FWS-F6-03 행 ↔ docs/agent/evidence/SPEC/FWS-F6-03.json ↔ backend/tests/test_fws_f6.py::F6_03_RiskForecastTest 두 시험 ↔ backend/apps/fws/integration.py::record_risk_forecast/my_latest_risk_forecast + constants.py::risk_index_band 코드를 대조 — 수동 입력·문턱 계산·재조회는 일치, 'API' 절반과 '지자체 전체 통합'은 코드에 없음을 my_latest_risk_forecast 의 user_id 필터에서 직접 확인."
+  ]
 }

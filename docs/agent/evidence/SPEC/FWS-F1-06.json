@@ -1,12 +1,12 @@
 {
   "id": "FWS-F1-06",
   "title": "현장 확인 회신(산불 맞음/소각·오인/접근 불가)",
-  "measured_at": "2026-09-29T04:59:08.678274+00:00",
+  "measured_at": "2026-09-29T07:39:26.143445+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_05_06_VerificationTest.test_verification_detail_and_fire_confirmed_reply",
   "request": {
     "method": "POST",
-    "path": "/api/fws/verifications/496/reply?result=fire_confirmed&note=%EC%97%B0%EA%B8%B0+%ED%99%95%EC%9D%B8%2C+%ED%99%94%EC%84%B8+%EB%B3%B4%ED%86%B5",
+    "path": "/api/fws/verifications/503/reply?result=fire_confirmed&note=%EC%97%B0%EA%B8%B0+%ED%99%95%EC%9D%B8%2C+%ED%99%94%EC%84%B8+%EB%B3%B4%ED%86%B5",
     "params": {
       "result": "fire_confirmed",
       "note": "연기 확인, 화세 보통"
@@ -15,8 +15,8 @@
   "response": {
     "status": 200,
     "body": {
-      "verification_id": 496,
-      "reply_id": 172,
+      "verification_id": 503,
+      "reply_id": 213,
       "result": "fire_confirmed",
       "reason_code": null,
       "verdict": "confirmed"
@@ -44,6 +44,5 @@
       "where": "backend/apps/fws/verification.py::reply_verification 시그니처(scope, verification_id, result, reason_code, note) — 비교: api.py:311-313 drone_confirm_result 는 attachment_ref 파라미터가 있음",
       "status": "없음: 원 명세서(FWS_산불감시App_명세서_v1.0_...20260915.md:141행)의 제목 원문은 \"「산불 맞음」/「소각·오인」(사유5택)/「접근 불가」+사진1\"인데, F1-06의 reply_verification에는 사진/첨부 파라미터가 아예 없다(드론용 병행 엔드포인트 drone_confirm_result만 attachment_ref를 받음) — evidence.json의 title 필드조차 이미 '+사진1'을 빼고 적어 놓았다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 원 명세서:141행 원문의 '+사진1'을 evidence FWS-F1-06.json의 title(사진 언급 없음)과 대조해 누락을 확인, test_fws_app.py:279-331 전체에서 'cannot_access' 문자열 grep으로 미실측 확인, verification.py vs api.py:308-320(drone 병행 엔드포인트의 attachment_ref)를 비교"
+  ]
 }

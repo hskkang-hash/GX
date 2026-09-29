@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-14",
   "title": "장비 점검 체크(등짐펌프·진화차)",
-  "measured_at": "2026-09-29T04:59:28.946646+00:00",
+  "measured_at": "2026-09-29T07:39:47.986345+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_14_EquipmentCheckTest.test_check_is_recorded_and_read_back",
   "request": {
@@ -14,12 +14,12 @@
     "body": {
       "checks": [
         {
-          "check_id": 209,
+          "check_id": 250,
           "note": "이상 없음",
           "result": "pass",
-          "__seq__": 209,
-          "__hash__": "6018c9362c3b2a713433880922b07c35d26a85c65c3c630e76b0ebabe2008a0c",
-          "checked_at": "2026-09-29T04:59:28.908835+00:00",
+          "__seq__": 250,
+          "__hash__": "70c7f75c3cb3d1c89b6e4313e9963432a9fd779dcd6d4b9ff52df40a34ea28fb",
+          "checked_at": "2026-09-29T07:39:47.947948+00:00",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "equipment_code": "BP-7",
           "equipment_type": "backpack_pump"
@@ -45,6 +45,5 @@
       "where": "backend/apps/fws/equipment.py:mine (count) · GET /api/fws/equipment/checks/mine",
       "status": "measured: 같은 시험 — mine_body[\"count\"]==1, 방금 남긴 equipment_code=\"BP-7\" 재조회로 확인"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 169행 「장비 점검 체크(등짐펌프·진화차)」·완결조건 「점검 1」을 backend/apps/fws/equipment.py(전체 81행)와 대조 — equipment_type 이 자유 문자열이라 두 예시 항목이 닫힌 목록이 아님을 코드 주석으로 직접 확인, evidence SPEC/FWS-F2-14.json 의 저장→재조회 실측 확인."
+  ]
 }

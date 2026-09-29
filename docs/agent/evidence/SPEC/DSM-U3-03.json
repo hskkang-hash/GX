@@ -1,18 +1,18 @@
 {
   "id": "DSM-U3-03",
-  "measured_at": "2026-09-29T05:03:59.190852+00:00",
+  "measured_at": "2026-09-29T07:45:36.506964+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u3u6_spec_promotions.EvidenceExportTest.test_dump_dsm_u3_03_evidence",
   "request": {
     "method": "GET",
-    "path": "/api/dsm/events/697/situation-report.docx",
+    "path": "/api/dsm/events/723/situation-report.docx",
     "body": {}
   },
   "response": {
     "status": 200,
     "body": {
       "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "byte_length": 38846,
+      "byte_length": 38847,
       "docx_attachment_line_contains_photo_count": true
     }
   },
@@ -38,6 +38,5 @@
       "where": "backend/apps/dsm/field.py 934행 주석 '첨부 칸. 파일을 붙이지 않는다 — 이름과 사유만 적는다(계약 11조 · 원본 무반출)'",
       "status": "없음(의도적 설계) — '첨부'는 건수 텍스트 한 줄일 뿐, 사진 파일 자체는 원본 무반출 정책(계약 11조)에 따라 문서에 실리지 않는다. 명세서 완결조건('첨부 1')은 만족하지만, 제목의 '증빙 자동 첨부'를 실물 첨부로 읽으면 이 부분은 열려 있다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 §4.3 DSM-U3-03 행(완결조건 '첨부 1')을 incident_report.py 의 ⑨ 첨부 렌더 코드·field.py 934행 주석과 test_p356_u3u6_spec_promotions.py 대조 — 건수 자동 반영은 실측 닫힘, 원본 파일 첨부는 정책상 의도적으로 안 함(법적 근거 있음, 결함 아님)"
+  ]
 }

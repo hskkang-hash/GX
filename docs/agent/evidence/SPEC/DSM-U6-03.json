@@ -1,7 +1,7 @@
 {
   "id": "DSM-U6-03",
   "title": "사회적약자(실종) 요청 수신 → 객체 검색 사건 생성",
-  "measured_at": "2026-09-29T06:48:40.974845+00:00",
+  "measured_at": "2026-09-29T07:38:34.934586+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u36_an.U6_03_SearchRequestTest.test_request_creates_exactly_one_case_and_one_audit_line",
   "request": {
@@ -10,14 +10,14 @@
     "params": {
       "requester_agency": "OO경찰서 여성청소년과",
       "subject_description": "70대 남성 · 회색 상의 · 지팡이 사용",
-      "last_seen_stream_monitor_id": 7,
+      "last_seen_stream_monitor_id": 222,
       "contact": "031-000-0000"
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 7,
+      "event_id": 159,
       "created": true,
       "should_notify": true,
       "folded_into_existing": false,

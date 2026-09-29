@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-13",
   "title": "오프라인 큐 — 산지 통신 불가 시 기록 저장 후 전송",
-  "measured_at": "2026-09-29T04:59:16.576809+00:00",
+  "measured_at": "2026-09-29T07:39:34.239603+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_13_OfflineReplayTest.test_replayed_checkin_with_same_key_is_not_double_counted",
   "request": {
@@ -20,7 +20,7 @@
       "post_code": "P-7",
       "status": "on_duty",
       "method": "gps",
-      "checked_in_at": "2026-09-29T04:59:16.518589+00:00",
+      "checked_in_at": "2026-09-29T07:39:34.178468+00:00",
       "location": {
         "lat": 1.0,
         "lng": 2.0
@@ -49,6 +49,5 @@
       "where": "원 명세서:148행 'FWS-F1-13 … | FM1 | 서비스워커 | 복귀 시 전송 N' vs frontend/src/features/fws/offlineQueue.ts:83-89 installAutoFlush() — window.addEventListener('online', …) 사용, service worker 파일(grep 'serviceWorker' 결과 frontend/src/features/mobile/push.ts·MobileShell.tsx 둘 뿐, fws 쪽 0건)",
       "status": "대리: 원 명세서는 '서비스워커'를 구현 수단으로 적었지만 실제로는 브라우저 탭이 열려 있을 때만 동작하는 window 'online' 이벤트 리스너 + localStorage다 — 탭이 닫힌 채 복귀하면 재전송되지 않는다(진짜 Service Worker의 Background Sync와 다른 약한 대안)"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:127행 · 원 명세서:148행('서비스워커 · 복귀 시 전송 N')을 evidence FWS-F1-13.json·test_fws_app.py:454-488·common/idempotency.py·offlineQueue.ts 전체(90줄)와 대조 — 서버 dedup은 실측, '서비스워커'라는 원문 구현 수단은 실제론 online 이벤트 리스너로 대체됐음을 확인"
+  ]
 }

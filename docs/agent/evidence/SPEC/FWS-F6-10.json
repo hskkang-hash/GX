@@ -1,29 +1,29 @@
 {
   "id": "FWS-F6-10",
   "title": "국립공원·국유림관리소 관할 사건 이첩",
-  "measured_at": "2026-09-29T05:00:25.058137+00:00",
+  "measured_at": "2026-09-29T07:41:17.160443+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_10_JurisdictionTransferTest.test_transfer_then_list_by_event",
   "request": {
     "method": "GET",
-    "path": "/api/fws/liaison/fire-events/553/jurisdiction-transfer",
+    "path": "/api/fws/liaison/fire-events/579/jurisdiction-transfer",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 553,
+      "event_id": 579,
       "count": 1,
       "transfers": [
         {
           "note": "발화지점 국립공원 경계 내",
-          "__seq__": 287,
-          "__hash__": "c8a2e58a17d4d34ce56639f3373cdb8835dc72fcc53052fb608526c1eab1537e",
-          "event_id": 553,
+          "__seq__": 376,
+          "__hash__": "00a3609d671c05036b728ffedfcce7edbae358fc6a71a8ca2523defac5933d42",
+          "event_id": 579,
           "org_type": "national_park",
           "target_org": "OO국립공원사무소",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
-          "transferred_at": "2026-09-29T05:00:24.968763+00:00"
+          "transferred_at": "2026-09-29T07:41:17.114530+00:00"
         }
       ]
     }
@@ -50,6 +50,5 @@
       "where": "docs/agent/evidence/SPEC/N3_promotions.md:125-132 (FWS-F6-10 행) · backend/apps/fws/integration.py::transfer_jurisdiction 은 common.audit_writer 기록만 하고 외부 기관 API 호출이 없다",
       "status": "없음 — annex 완결조건(\"이첩 기록\")은 내부 기록을 요구할 뿐 상대 시스템의 수신 확인이 아니다, 국립공원공단·국유림관리소 시스템과의 실제 사건 이관 연동은 짓지 않았다(외부 자격증명 필요, 범위 밖)"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: docs/design/FWS_산불감시App_명세서_v1.0_프로세스_사용자별_20260915.md §5.6 FWS-F6-10 행 ↔ docs/agent/evidence/SPEC/FWS-F6-10.json ↔ backend/tests/test_fws_f6.py::F6_10_JurisdictionTransferTest 두 시험 ↔ backend/apps/fws/integration.py::JURISDICTION_ORG_TYPES/transfer_jurisdiction 코드를 대조 — 제목이 부르는 두 기관 유형(국립공원·국유림관리소)이 같은 범용 함수로 모두 코드에 있음을 확인, '실제 이관·수신확인'은 완결조건이 요구하지 않는 초과 항목으로 OPEN 표기."
+  ]
 }

@@ -1,7 +1,7 @@
 {
   "id": "FWS-U5-04",
   "title": "산불 알림 규칙(등급별 수신: 진화대·산림과·지휘·산림청) · 야간 5분대기조 채널",
-  "measured_at": "2026-09-29T06:49:17.992328+00:00",
+  "measured_at": "2026-09-29T07:41:27.977612+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_u5.U5_04_NotifyRulesTest.test_overview_lists_role_suggestions_and_night_standby_zone",
   "request": {
@@ -42,10 +42,10 @@
       ],
       "rules": [
         {
-          "rule_id": 13,
+          "rule_id": 166,
           "severity": "critical",
           "role_code": "dsm_watch_a",
-          "role_id": 31,
+          "role_id": 524,
           "zone": null,
           "channels": [
             "email"

@@ -1,25 +1,25 @@
 {
   "id": "FWS-F2-02",
   "title": "임무 수신(출동 지시)",
-  "measured_at": "2026-09-29T04:59:19.673819+00:00",
+  "measured_at": "2026-09-29T07:39:37.617595+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_mission_detail_dispatch_arrive_release_chain",
   "request": {
     "method": "GET",
-    "path": "/api/fws/missions/499",
+    "path": "/api/fws/missions/506",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "mission_id": 499,
+      "mission_id": 506,
       "fire_origin": {
         "lat": null,
         "lng": null
       },
       "address": null,
       "severity": "critical",
-      "occurred_at": "2026-09-29T04:54:19.608132+00:00",
+      "occurred_at": "2026-09-29T07:34:37.550537+00:00",
       "snapshot_path": "minio://dsm/1.jpg",
       "response_state": "occurred",
       "status": "new",
@@ -71,6 +71,5 @@
       "where": "backend/apps/fws/missions.py:respond(action=\"dispatch\") · POST /api/fws/missions/{event_id}/response?action=dispatch",
       "status": "measured: 같은 시험 체인에서 dispatch POST → to=\"acknowledged\" 200 확인(F2-02 자체 evidence 파일에는 안 실리지만 같은 테스트 메서드 안에서 실측됨, 136-141행)"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 157행 「임무 수신 — 출동 지시(발화점·접근로·화세·풍향·집결지·지휘자)」의 6개 항목을 backend/apps/fws/missions.py:mission_detail 반환 딕셔너리(121-139행)와 1:1 대조 — 좌표·화세 2개만 실제 값, 나머지 4개(접근로·풍향·집결지·지휘자)는 코드가 항상 None 을 내는 것을 머리말 자체가 인정. evidence SPEC/FWS-F2-02.json 의 request/response 를 직접 읽고 확인."
+  ]
 }

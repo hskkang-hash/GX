@@ -1,12 +1,12 @@
 {
   "id": "FWS-F6-02",
   "title": "웹훅 이벤트 종류(fws.fire.confirmed/stage_changed/evacuation_ordered/extinguished)",
-  "measured_at": "2026-09-29T05:00:15.187706+00:00",
+  "measured_at": "2026-09-29T07:41:06.492555+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_02_WebhookEventsTest.test_notify_reaches_a_subscribed_situation_room_with_200",
   "request": {
     "method": "POST",
-    "path": "/api/fws/liaison/fire-events/545/webhook-notify?kind=fws.fire.confirmed&note=%ED%98%84%EC%9E%A5+%ED%99%95%EC%9D%B8+%EC%99%84%EB%A3%8C",
+    "path": "/api/fws/liaison/fire-events/571/webhook-notify?kind=fws.fire.confirmed&note=%ED%98%84%EC%9E%A5+%ED%99%95%EC%9D%B8+%EC%99%84%EB%A3%8C",
     "params": {
       "kind": "fws.fire.confirmed",
       "note": "현장 확인 완료"
@@ -15,7 +15,7 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 545,
+      "event_id": 571,
       "kind": "fws.fire.confirmed",
       "note": "현장 확인 완료",
       "total_deliveries": 2,
@@ -23,13 +23,13 @@
       "webhook_succeeded": 1,
       "deliveries": [
         {
-          "delivery_id": 42,
+          "delivery_id": 48,
           "channel": "email",
           "succeeded": true,
           "failure_reason": null
         },
         {
-          "delivery_id": 43,
+          "delivery_id": 49,
           "channel": "webhook",
           "succeeded": true,
           "failure_reason": null
@@ -59,6 +59,5 @@
       "where": "backend/common/webhook_outbox.py::_passes_filter (line 292-309) — event.event_type 은 K1 DetectionEvent 의 닫힌 열거값(fire/smoke/... )일 뿐, fws.fire.confirmed 같은 문자열이 아니다",
       "status": "없음 — kind(fws.fire.confirmed 등)는 발신 시점의 선언·FWS 자기 감사 라벨일 뿐, 실제 구독 필터는 여전히 K1 event_type 기준이라 이 네 이름으로는 걸러 받을 수 없다(common/webhook_outbox.py·common/cap_1_2.py 변경이 필요, 범위 밖 — integration.py:182-192 머리말이 같은 사실을 스스로 적어 둠)"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: docs/design/FWS_산불감시App_명세서_v1.0_프로세스_사용자별_20260915.md §5.6 FWS-F6-02 행(\"CAP 1.2 · 필터\" 포함 전문) ↔ docs/agent/evidence/SPEC/FWS-F6-02.json ↔ backend/tests/test_fws_f6.py::F6_02_WebhookEventsTest 두 시험 ↔ backend/common/webhook_outbox.py::_passes_filter 코드를 대조 — 카탈로그·CAP1.2 발송·200 수신은 일치, 제목이 괄호로 명시한 '필터'만 실제로 없음을 _passes_filter 소스에서 직접 확인."
+  ]
 }

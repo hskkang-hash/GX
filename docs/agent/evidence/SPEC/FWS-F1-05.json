@@ -1,20 +1,20 @@
 {
   "id": "FWS-F1-05",
   "title": "확인 요청 수신(카메라 사진·위치·거리·지도)",
-  "measured_at": "2026-09-29T04:59:08.618612+00:00",
+  "measured_at": "2026-09-29T07:39:26.024265+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_05_06_VerificationTest.test_verification_detail_and_fire_confirmed_reply",
   "request": {
     "method": "GET",
-    "path": "/api/fws/verifications/496",
+    "path": "/api/fws/verifications/503",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "verification_id": 496,
+      "verification_id": 503,
       "requested_action": "이 연기, 확인해 주세요",
-      "occurred_at": "2026-09-29T04:58:08.528713+00:00",
+      "occurred_at": "2026-09-29T07:38:25.911169+00:00",
       "snapshot_path": "minio://dsm/1.jpg",
       "lat": null,
       "lng": null,
@@ -56,6 +56,5 @@
       "where": "backend/tests/test_fws_app.py:280-296 (F1_05_06_VerificationTest) — 이미 존재하는 event_id를 알고 바로 GET",
       "status": "없음: F1-05 시험은 이벤트 id를 픽스처로 미리 알고 바로 GET한다 — K2 send()로 실제 발송돼 도달하는지는 이 시험이 재지 않는다(F1-10 시험만 도달·확인을 잰다). '확인 요청 수신'의 '수신(도달)' 절반이 미실측"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:119행·290행('FWS-F1-05 … 화면 코드 0줄' — 이 턴 이후 구현됨) · 원 명세서:140행('K2 발송 → GET /fws/verifications/{id} · 푸시 도달·화면')을 evidence FWS-F1-05.json·test_fws_app.py:279-311·verification.py·office.py:49-58·frontend grep(0건)과 대조"
+  ]
 }

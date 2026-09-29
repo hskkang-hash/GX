@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-12",
   "title": "근무 외 알림 차단·담당 초소 설정",
-  "measured_at": "2026-09-29T04:59:15.022205+00:00",
+  "measured_at": "2026-09-29T07:39:32.342701+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_12_NotifyPrefsTest.test_save_then_read_back",
   "request": {
@@ -39,6 +39,5 @@
       "where": "frontend/src/features/fws — fwsEndpoint.notifyPrefs 는 api.ts:26에 등록만 되고 어떤 페이지도 호출하지 않음(grep 0건, MobileSettings.tsx는 DSM용 별개 엔드포인트)",
       "status": "없음: F1 감시원이 실제로 시간대·초소를 입력할 화면이 없다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:126행 · 원 명세서:147행('notify-prefs · 저장')을 evidence FWS-F1-12.json·test_fws_app.py:425-448·notify_prefs.py 와 대조, k2_notify/webpush.py:230-258 의 _prefs_of가 DsmNotifyPrefs(다른 모델)만 읽는 것을 확인해 '차단' 자체는 배선이 안 됐음을 특정"
+  ]
 }

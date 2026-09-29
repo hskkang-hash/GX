@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-15",
   "title": "근무 외 차단·담당 구역",
-  "measured_at": "2026-09-29T04:59:30.490142+00:00",
+  "measured_at": "2026-09-29T07:39:49.716693+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_15_OffDutyBlockTest.test_off_duty_block_and_assigned_zone_save_then_read_back",
   "request": {
@@ -34,6 +34,5 @@
       "where": "backend/kernels/k2_notify/webpush.py:_blocked_reason/_prefs_of (231-258행) — stream_monitors.DsmNotifyPrefs 모델만 읽는다",
       "status": "없음 — 실제 발송 억제(QUIET_HOURS_REASON)는 backend/kernels/k2_notify/webpush.py:_prefs_of 가 `stream_monitors.DsmNotifyPrefs` 테이블을 읽어서 판정한다. 그런데 backend/apps/fws/notify_prefs.py 는(머리말 4-9행에 직접 적힘) 의도적으로 그 표를 안 쓰고 **자기 감사 로그**(`guardianx.fws.notify_prefs`)에 저장한다 — 두 저장소가 분리되어 있어 F2 진화대가 이 문으로 저장한 quiet_hours 는 실제 웹푸시 억제 로직에 전혀 연결되지 않는다(grep: guardianx.fws.notify_prefs 를 읽는 코드가 kernels/에 없음). 저장·재조회만 되고 '차단'은 실질적으로 작동하지 않음 — 근사/대리가 아니라 완전 미연결"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 170행 「근무 외 차단·담당 구역」을 backend/apps/fws/notify_prefs.py(전체 93행) 및 backend/kernels/k2_notify/webpush.py:_prefs_of(230-258행)와 대조 — 두 코드가 서로 다른 저장소(fws 자체 감사 로그 vs stream_monitors.DsmNotifyPrefs)를 쓰는 것을 grep 으로 확인해, 저장·재조회는 실측되지만 실제 알림 차단 기능은 이 문과 연결되어 있지 않음을 확인. evidence SPEC/FWS-F2-15.json 자체는 저장·재조회만 재고 차단 효과는 안 잰다."
+  ]
 }

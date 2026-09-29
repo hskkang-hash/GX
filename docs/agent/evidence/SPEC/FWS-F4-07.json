@@ -18,12 +18,12 @@
       "status": "구현 — K1 종결 축을 실제로 옮긴 것을 실측"
     }
   ],
-  "measured_at": "2026-09-29T06:51:25.937201+00:00",
+  "measured_at": "2026-09-29T07:40:35.504416+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_07_FireDeclarationTest.test_main_out_then_extinguished_closes_response_axis",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/8/extinguished?reason=%EC%A7%84%ED%99%94%EC%84%A0+%ED%99%95%EC%9D%B8%C2%B7%EA%B8%B0%EC%83%81+%EC%95%88%EC%A0%95",
+    "path": "/api/fws/command/incidents/543/extinguished?reason=%EC%A7%84%ED%99%94%EC%84%A0+%ED%99%95%EC%9D%B8%C2%B7%EA%B8%B0%EC%83%81+%EC%95%88%EC%A0%95",
     "params": {
       "reason": "진화선 확인·기상 안정"
     }
@@ -31,10 +31,10 @@
   "response": {
     "status": 200,
     "body": {
-      "declaration_id": 18,
-      "event_id": 8,
+      "declaration_id": 320,
+      "event_id": 543,
       "reason": "진화선 확인·기상 안정",
-      "declared_at": "2026-09-29T06:51:25.806942+00:00",
+      "declared_at": "2026-09-29T07:40:35.443492+00:00",
       "declared_by": "dsm_user_a",
       "response_state": "closed"
     }

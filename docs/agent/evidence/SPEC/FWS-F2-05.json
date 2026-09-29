@@ -1,12 +1,12 @@
 {
   "id": "FWS-F2-05",
   "title": "지원 요청(인력·물·헬기·중장비)",
-  "measured_at": "2026-09-29T04:59:22.585180+00:00",
+  "measured_at": "2026-09-29T07:39:40.876275+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_05_SupportRequestTest.test_support_request_reaches_field_reply",
   "request": {
     "method": "POST",
-    "path": "/api/fws/missions/503/field-reply?kind=helicopter&amount=1&note=%EC%82%B0%EB%B6%88+%EC%A7%84%ED%99%94+%ED%97%AC%EA%B8%B0+%EC%9A%94%EC%B2%AD",
+    "path": "/api/fws/missions/510/field-reply?kind=helicopter&amount=1&note=%EC%82%B0%EB%B6%88+%EC%A7%84%ED%99%94+%ED%97%AC%EA%B8%B0+%EC%9A%94%EC%B2%AD",
     "params": {
       "kind": "helicopter",
       "amount": "1",
@@ -16,8 +16,8 @@
   "response": {
     "status": 200,
     "body": {
-      "mission_id": 503,
-      "reply_id": 198,
+      "mission_id": 510,
+      "reply_id": 239,
       "kind": "helicopter",
       "amount": "1"
     }
@@ -49,6 +49,5 @@
       "where": "backend/apps/fws/missions.py:request_support 머리말(254-257행) — 명시적으로 범위 밖이라 적음",
       "status": "없음(범위 밖) — 코드 머리말이 직접 「새 배지 위젯은 이 차선(App 서버 쪽)의 범위 밖이라 만들지 않는다(§0.4 인접 — DSM 화면은 lane L 소유)」라고 적음. field_replies 목록 도달까지만 실측, 지휘 화면 UI 배지 자체는 미실측·미구현"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 160행 「지원 요청(인력·물·헬기·중장비)」·완결조건 「지휘 화면 배지」를 backend/apps/fws/missions.py:request_support(252-272행)의 SUPPORT_KINDS 4값과 대조, evidence SPEC/FWS-F2-05.json 의 helicopter 실측 및 apps.dsm.services.field_replies 조회로 K1 현장 회신 도달까지 확인 — 배지 UI 는 코드 스스로 범위 밖이라 인정."
+  ]
 }

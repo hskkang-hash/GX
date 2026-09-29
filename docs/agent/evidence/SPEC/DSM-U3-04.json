@@ -1,6 +1,6 @@
 {
   "id": "DSM-U3-04",
-  "measured_at": "2026-09-29T05:03:59.252001+00:00",
+  "measured_at": "2026-09-29T07:45:36.580870+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u3u6_spec_promotions.EvidenceExportTest.test_dump_dsm_u3_04_evidence",
   "request": {
@@ -14,10 +14,10 @@
   "response": {
     "status": 200,
     "body": {
-      "hotline_id": 401,
+      "hotline_id": 512,
       "situation_room_phone": "031-120-2222",
       "pslte_group_call": "*911",
-      "actor_id": 593
+      "actor_id": 688
     }
   },
   "what": "상황실 번호·PS-LTE 그룹통화 번호 접수 1건을 실제로 남겼다 — 완결 조건(「1탭」)은 M2 화면이 이 값을 `tel:` 링크로 그리는 것이고, 번호 자체가 실제로 저장·조회되는 것을 이 왕복이 실측한다. 손으로 지어낸 값 0.",
@@ -42,6 +42,5 @@
       "where": "frontend/src/features/mobile/pages/MobileEventDetail.tsx 763~776행 <a href={`tel:${...}`}>",
       "status": "present — tel: 앵커 1개가 곧 1탭 다이얼이다. hotline_service.py::to_tel() 이 공백·하이픈을 떼 유효한 tel URI를 만든다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 §4.3 DSM-U3-04 행(완결조건 '1탭')을 hotline_service.py 와 frontend MobileEventDetail.tsx 758~777행 대조 — evidence 파일의 'what' 서술은 저장 왕복만 쟀다고 겸손하게 적었지만, 실제로는 프런트 tel: 버튼까지 이미 구현돼 있음을 확인(evidence 가 실물보다 인색하게 적힌 사례). 재난안전통신망 자체 연동(통화 성공 여부)은 이 저장소가 잴 수 없는 외부 영역이며 명세의 완결조건('1탭')이 요구하는 범위가 아니므로 이 그룹은 사실상 전부 닫힘 후보"
+  ]
 }

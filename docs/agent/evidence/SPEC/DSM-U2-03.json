@@ -1,6 +1,6 @@
 {
   "id": "DSM-U2-03",
-  "measured_at": "2026-09-29T05:03:49.822516+00:00",
+  "measured_at": "2026-09-29T07:45:25.825697+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_dump_dsm_u2_03_evidence",
   "request": {
@@ -16,12 +16,12 @@
   "response": {
     "status": 200,
     "body": {
-      "meeting_id": 393,
+      "meeting_id": 504,
       "occurred_at": "2026-09-27T03:40:00+09:00",
       "attendees": "상황실장·팀장·U4",
       "decision": "통제 실시 · 비상 2단계 발령",
       "basis": "수위 182cm · 강우 41mm",
-      "actor_id": 583
+      "actor_id": 678
     }
   },
   "what": "상황판단회의 기록 1건을 실제로 남기고 응답을 그대로 옮겼다 — 손으로 지어낸 값 0.",
@@ -56,6 +56,5 @@
       "where": "backend/apps/dsm/situation_meeting_service.py (파일 전문 — record_meeting/list_meetings 뿐, latest()/상태 갱신 함수 없음)",
       "status": "없음 — 회의 기록은 감사 로그 한 줄로만 남고, 결정값이 테넌트의 어떤 상태 축(모드·경보 단계 등)도 바꾸지 않는다. 동일 차선의 alert_level_service.py 는 'latest_alert()'로 이 개념을 대신하지만 situation_meeting_service.py 에는 그런 read-back 함수 자체가 없다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 §4.2 DSM-U2-03 행(입력 4칸 + 완결조건 '테넌트 상태 축 변경')을 backend/apps/dsm/situation_meeting_service.py 전문 및 tests/test_p356_u2_spec_promotions.py 와 대조 — 입력 4칸은 실측 닫힘, 화면과 상태축 변경 완결조건은 코드 부재로 미착수"
+  ]
 }

@@ -1,7 +1,7 @@
 {
   "id": "O-08",
   "title": "온보딩 관제",
-  "measured_at": "2026-09-29T07:00:03.230520+00:00",
+  "measured_at": "2026-09-29T07:44:35.442607+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O08_OnboardingBoardTest.test_reads_the_48_row_ledger",
   "request": {

@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-03",
   "title": "오늘 위험지수·위기경보·입산통제 확인",
-  "measured_at": "2026-09-29T04:59:06.890924+00:00",
+  "measured_at": "2026-09-29T07:39:24.290924+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_03_RiskTodayTest.test_risk_band_has_the_contract_shape",
   "request": {
@@ -46,6 +46,5 @@
       "where": "backend/apps/fws/risk.py 호출부(api.py GET /risk/today), backend/tests/test_fws_app.py:271-273 test_anonymous_is_401",
       "status": "measured: 익명 GET이 401"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:117행 · 원 명세서:138행('GET /fws/risk/today · 띠 표시')을 evidence FWS-F1-03.json·test_fws_app.py:250-273·risk.py 전체(58줄)와 대조 — 응답 계약은 실측, 위기경보·입산통제는 risk.py 머리말이 자백한 대로 달력 근사치·고정 False"
+  ]
 }

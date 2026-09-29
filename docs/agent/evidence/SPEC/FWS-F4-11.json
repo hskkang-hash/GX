@@ -18,19 +18,19 @@
       "status": "구현 — 진화대 가능·드론 불가 실측"
     }
   ],
-  "measured_at": "2026-09-29T06:51:33.754049+00:00",
+  "measured_at": "2026-09-29T07:40:43.121279+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_11_NightTransitionTest.test_sunset_in_the_past_marks_night_and_helicopter_unavailable",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/13/night-status",
+    "path": "/api/fws/command/incidents/548/night-status",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 13,
-      "sunset_at": "2026-09-29T05:51:33.675189+00:00",
+      "event_id": 548,
+      "sunset_at": "2026-09-29T06:40:43.025900+00:00",
       "is_night": true,
       "helicopter_badge": "헬기 불가",
       "night_resources": [

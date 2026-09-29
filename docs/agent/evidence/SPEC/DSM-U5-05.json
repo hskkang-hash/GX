@@ -1,6 +1,6 @@
 {
   "id": "DSM-U5-05",
-  "measured_at": "2026-09-29T06:33:51.594249+00:00",
+  "measured_at": "2026-09-29T07:45:58.637247+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u5_05_evidence",
   "request": {
@@ -15,8 +15,8 @@
     "body": {
       "imported": 2,
       "row_ids": [
-        43,
-        44
+        555,
+        556
       ]
     }
   },

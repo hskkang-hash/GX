@@ -1,14 +1,14 @@
 {
   "id": "DSM-U2-04",
-  "measured_at": "2026-09-29T05:03:49.997091+00:00",
+  "measured_at": "2026-09-29T07:45:26.031355+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_dump_dsm_u2_04_evidence",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/thresholds/observe/395/decide",
+    "path": "/api/dsm/thresholds/observe/506/decide",
     "body": {
       "observe": {
-        "camera_id": 484,
+        "camera_id": 551,
         "key": "waterlevel.baseline",
         "value": 182
       },
@@ -23,17 +23,17 @@
       "observe": {
         "reached": true,
         "key": "waterlevel.baseline",
-        "camera_id": 484,
+        "camera_id": 551,
         "value": 182.0,
         "threshold": 180.0,
-        "observation_id": 395
+        "observation_id": 506
       },
       "decide": {
-        "observation_id": 395,
-        "decision_id": 396,
+        "observation_id": 506,
+        "decision_id": 507,
         "decision": "통제 실시",
         "key": "waterlevel.baseline",
-        "camera_id": 484
+        "camera_id": 551
       }
     }
   },
@@ -64,6 +64,5 @@
       "where": "backend/apps/dsm/threshold_alert_service.py::observe (threshold_reached 감사) + decide (threshold_decision 감사), test: tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_reach_then_decide_leaves_two_audit_rows",
       "status": "measured: 도달 감사(observation_id=395)·결정 감사(decision_id=396) 둘 다 별도 줄로 남는 것을 시험이 직접 확인"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 §4.2 DSM-U2-04 행(완결조건 '도달 시각·결정 시각 둘 다 감사')을 threshold_alert_service.py 전문 및 test_reach_then_decide_leaves_two_audit_rows 와 대조 — 감사 이원화는 닫힘, 제목이 명시한 '팀장·U4 알림'과 UI 카드는 미착수(코드 부재)"
+  ]
 }

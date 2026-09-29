@@ -1,24 +1,24 @@
 {
   "id": "FWS-F6-01",
   "title": "산림청 시스템 입력 항목 내보내기(JSON/CSV · 항목 1:1)",
-  "measured_at": "2026-09-29T05:00:13.126923+00:00",
+  "measured_at": "2026-09-29T07:41:04.115635+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_01_KfsExportTest.test_json_export_carries_labeled_fields_one_to_one",
   "request": {
     "method": "GET",
-    "path": "/api/fws/liaison/fire-events/540/kfs-export",
+    "path": "/api/fws/liaison/fire-events/566/kfs-export",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
       "format": "json",
-      "event_id": 540,
+      "event_id": 566,
       "fields": [
         {
           "key": "occurred_at",
           "label": "신고일시",
-          "value": "2026-09-29T05:00:13.044234+00:00"
+          "value": "2026-09-29T07:41:04.041588+00:00"
         },
         {
           "key": "lat",
@@ -90,6 +90,5 @@
       "where": "backend/apps/fws/integration.py:96-101 (머리말 주석 — 실제 입력 스키마 미확보를 스스로 적음)",
       "status": "없음 — 제목이 부르는 두 시스템(산불상황관제시스템/산림재난정보시스템)을 구분하지 않고 KFS_EXPORT_FIELDS 하나로 통칭 내보낸다. 상대 시스템의 실제 입력 스키마 문서·API 계약은 확보하지 못했고, 상대가 이 포맷을 실제로 받아들이는지도 검증되지 않았다(연동시험 범위 밖) — annex 완결조건(\"내보내기 1·항목 대조표\")은 형식만 요구하므로 이 갭이 완결조건 자체를 막지는 않지만, 제목이 이름을 댄 두 시스템 각각과의 대조는 아직 없다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: docs/design/FWS_산불감시App_명세서_v1.0_프로세스_사용자별_20260915.md §5.6 FWS-F6-01 행(제목 원문) ↔ docs/agent/evidence/SPEC/FWS-F6-01.json(실측 body) ↔ backend/tests/test_fws_f6.py::F6_01_KfsExportTest 5개 시험 ↔ backend/apps/fws/integration.py::export_kfs_feed/KFS_EXPORT_FIELDS 코드를 줄 단위로 대조— JSON/CSV/1:1 대조표/P-386 단계는 코드·시험이 일치, '산림청 산불상황관제시스템/산림재난정보시스템' 이원 스키마 대조만 빠짐을 integration.py 머리말 주석에서 직접 확인."
+  ]
 }

@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-02",
   "title": "순찰 경로 기록(GPS 트랙 · 전자순찰함 NFC)",
-  "measured_at": "2026-09-29T04:59:05.332051+00:00",
+  "measured_at": "2026-09-29T07:39:22.705723+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_02_TrackTest.test_gps_point_and_checkpoint_pass_are_counted_separately",
   "request": {
@@ -16,7 +16,7 @@
     "status": 200,
     "body": {
       "post_code": "P-12",
-      "recorded_at": "2026-09-29T04:59:05.309196+00:00",
+      "recorded_at": "2026-09-29T07:39:22.679273+00:00",
       "track_count": 1,
       "checkpoint_count": 1
     }
@@ -43,6 +43,5 @@
       "where": "frontend/src/features/fws — patrolTrack 엔드포인트는 api.ts:18에 등록만 되어 있고, PatrolHome.tsx·FieldHome.tsx 등 어떤 페이지도 fwsEndpoint.patrolTrack 을 호출하지 않음(grep 결과 0건)",
       "status": "없음: 서버 API는 실측됐지만 F1 화면 어디에도 순찰 트랙 전송 UI가 없다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:116행 · 원 명세서:137행('POST /fws/patrol/track · 트랙1·순찰함통과N')을 evidence FWS-F1-02.json·test_fws_app.py:221-244·patrol.py:99-142 와 대조, frontend/src/features/fws 전체를 grep해 patrolTrack 호출처가 없음을 확인"
+  ]
 }

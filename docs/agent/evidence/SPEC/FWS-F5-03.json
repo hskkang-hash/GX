@@ -1,12 +1,12 @@
 {
   "id": "FWS-F5-03",
   "title": "확인 회신(산불 맞음/오인 · 사진·열화상)",
-  "measured_at": "2026-09-29T05:00:08.297637+00:00",
+  "measured_at": "2026-09-29T07:40:59.125969+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f5.F5_03_ConfirmResultTest.test_fire_confirmed_requires_attachment_ref",
   "request": {
     "method": "POST",
-    "path": "/api/fws/drone/verifications/538/reply?result=fire_confirmed&attachment_ref=minio%3A%2F%2Fdrone%2F1.jpg",
+    "path": "/api/fws/drone/verifications/564/reply?result=fire_confirmed&attachment_ref=minio%3A%2F%2Fdrone%2F1.jpg",
     "params": {
       "result": "fire_confirmed",
       "attachment_ref": "minio://drone/1.jpg"
@@ -15,8 +15,8 @@
   "response": {
     "status": 200,
     "body": {
-      "verification_id": 538,
-      "reply_id": 276,
+      "verification_id": 564,
+      "reply_id": 365,
       "result": "fire_confirmed",
       "reason_code": null,
       "verdict": "confirmed",
@@ -50,6 +50,5 @@
       "where": "backend/apps/fws/drone.py::confirm_result() — attachment_ref 는 단일 문자열 필드 하나뿐, 사진/열화상을 구분하는 타입·필드 없음",
       "status": "부분 — attachment_ref 라는 단일 값이 사진·열화상 두 증빙을 구분 없이 대신한다. 열화상 전용 필드·형식 검증(예: 파일 타입, 두 번째 참조 슬롯)은 코드에 없다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:182 및 명세서 5.5절(223행, 완료조건 \"확정\")을 backend/tests/test_fws_f5.py::F5_03_ConfirmResultTest 두 시험과 backend/apps/fws/drone.py::confirm_result()·apps/fws/verification.py::reply_verification 대조 — 확인/오인 회신과 사진 참조 필수화는 실측 CLOSED, 사진·열화상 구분은 단일 필드라 OPEN"
+  ]
 }

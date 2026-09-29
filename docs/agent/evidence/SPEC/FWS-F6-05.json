@@ -1,28 +1,28 @@
 {
   "id": "FWS-F6-05",
   "title": "헬기 출동 요청·위치 수신(산림항공 · 수동 입력 대안)",
-  "measured_at": "2026-09-29T05:00:18.381744+00:00",
+  "measured_at": "2026-09-29T07:41:10.021372+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_05_HelicopterRequestTest.test_request_then_list_by_event",
   "request": {
     "method": "GET",
-    "path": "/api/fws/liaison/fire-events/548/helicopter-requests",
+    "path": "/api/fws/liaison/fire-events/574/helicopter-requests",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 548,
+      "event_id": 574,
       "count": 1,
       "requests": [
         {
           "lat": 37.3,
           "lng": 127.9,
           "note": "산불 3단계 급수 요청",
-          "__seq__": 282,
-          "__hash__": "fd88f3e22ad7d378b3382b5027f999ddd5b13e21412e0cf7c8ae8890ceb9b914",
-          "event_id": 548,
-          "requested_at": "2026-09-29T05:00:18.343958+00:00",
+          "__seq__": 371,
+          "__hash__": "59bfb0b3c0fbe979613f62fc0d7a94e069705ed8f9aada1b2a20c61311b109ec",
+          "event_id": 574,
+          "requested_at": "2026-09-29T07:41:09.981367+00:00",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "requesting_org": "산림항공본부 원주기지"
         }
@@ -51,6 +51,5 @@
       "where": "backend/apps/fws/integration.py:281-284 (머리말 주석 — 실시간 연동 없음, 수동 입력 대안만 지었다고 스스로 적음)",
       "status": "없음 — annex 가 허락한 '수동 입력 대안'만 지었다, 산림항공본부 시스템과의 실시간 API 연동 코드는 없다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: docs/design/FWS_산불감시App_명세서_v1.0_프로세스_사용자별_20260915.md §5.6 FWS-F6-05 행 ↔ docs/agent/evidence/SPEC/FWS-F6-05.json ↔ backend/tests/test_fws_f6.py::F6_05_HelicopterRequestTest 두 시험 ↔ backend/apps/fws/integration.py::request_helicopter/helicopter_requests 코드를 대조 — 수동 등록·값 좌표·사건별 조회는 일치, 실시간 연동 부재는 integration.py 머리말에서 직접 확인."
+  ]
 }

@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-01",
   "title": "근무 시작·초소 체크인(NFC/GPS)",
-  "measured_at": "2026-09-29T04:59:03.800636+00:00",
+  "measured_at": "2026-09-29T07:39:20.784229+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_01_CheckinTest.test_checkin_sets_on_duty_status_with_location",
   "request": {
@@ -20,7 +20,7 @@
       "post_code": "P-12",
       "status": "on_duty",
       "method": "gps",
-      "checked_in_at": "2026-09-29T04:59:03.774829+00:00",
+      "checked_in_at": "2026-09-29T07:39:20.762464+00:00",
       "location": {
         "lat": 36.35,
         "lng": 127.38
@@ -49,6 +49,5 @@
       "where": "frontend/src/features/fws/pages/PatrolHome.tsx:81-92 handleCheckin()",
       "status": "부분: 체크인 버튼은 있으나 { post_code: 'P-1', method: 'gps' } 를 하드코딩해서 보낸다 — navigator.geolocation 호출 없음(위치 좌표를 아예 안 보냄), NFC 탭 옵션 없음, 초소 선택 UI 없음. 서버 계약은 실측됐지만 화면은 실제 위치·NFC 태그를 읽지 않는다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:115행의 제목과 원 명세서(FWS_산불감시App_명세서_v1.0_...20260915.md:136행 'POST /fws/patrol/checkin · 초소 상태 「근무 중」·위치')를 evidence FWS-F1-01.json·test_fws_app.py:192-216·patrol.py:73-96·PatrolHome.tsx:81-92 와 대조 — 서버 계약(상태·GPS·NFC)은 실측, 화면의 실제 위치 캡처는 하드코딩이라 미흡"
+  ]
 }

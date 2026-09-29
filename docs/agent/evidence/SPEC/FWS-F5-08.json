@@ -1,7 +1,7 @@
 {
   "id": "FWS-F5-08",
   "title": "비행 기록·배터리·기체 상태",
-  "measured_at": "2026-09-29T05:00:10.025694+00:00",
+  "measured_at": "2026-09-29T07:41:00.948755+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f5.F5_08_FlightLogTest.test_log_is_recorded_and_read_back",
   "request": {
@@ -14,13 +14,13 @@
     "body": {
       "flights": [
         {
-          "flight_id": 277,
+          "flight_id": 366,
           "note": "",
           "source": "dji",
-          "__seq__": 277,
-          "__hash__": "474d9d6083d7eab07a06dffdae96c169238708d3c19fd3920b199ee3f0d94851",
+          "__seq__": 366,
+          "__hash__": "ae884e60606bba3dba02ebe5a699c2e93ee81fdac96f62c5b88caf759f5ca8e5",
           "event_id": null,
-          "logged_at": "2026-09-29T05:00:09.991485+00:00",
+          "logged_at": "2026-09-29T07:41:00.899603+00:00",
           "battery_pct": 68.5,
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "airframe_code": "M30T-7",
@@ -57,6 +57,5 @@
       "where": "backend/apps/fws/drone.py::log_flight() source 파라미터 — 어댑터 이름을 담는 값 자리뿐, 실제 외부 API 호출 코드 없음(머리말 14행 및 evidence 'what' 명시)",
       "status": "없음 — 실제 DJI 등 기체 연동 API 호출은 0건이다. source·battery_pct·airframe_code 는 모두 호출자가 수동으로 입력하는 값이며, 기체로부터 자동 수신되는 경로가 없다"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 기능명세_미포함표_20260925.md:187 및 명세서 5.5절(228행, 완료조건 \"표\"·메커니즘 \"커넥터\")을 backend/tests/test_fws_f5.py::F5_08_FlightLogTest 두 시험, backend/apps/fws/drone.py::log_flight()/flights_mine() 대조 — 값 기록·재조회·배터리 범위검증은 실측 CLOSED, 명세가 요구하는 실제 커넥터(기체 자동 연동)는 어댑터 값 자리뿐이라 OPEN"
+  ]
 }

@@ -48,12 +48,12 @@
       "status": "구현 — 신고일시 등 라벨 실측"
     }
   ],
-  "measured_at": "2026-09-29T06:52:11.594755+00:00",
+  "measured_at": "2026-09-29T07:40:13.286232+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_13_HourlyReportTest.test_draft_then_export_and_list",
   "request": {
     "method": "POST",
-    "path": "/api/fws/office2/reports/36/hourly?personnel_count=12&equipment_note=%EC%A7%84%ED%99%94%EC%B0%A8+2%EB%8C%80+%C2%B7+%EB%93%B1%EC%A7%90%ED%8E%8C%ED%94%84+8&casualties_count=0&facility_note=%EC%9D%B8%EA%B7%BC+%EB%AF%BC%EA%B0%80+3%EB%8F%99+%EC%9C%84%ED%97%98&weather_note=%ED%92%8D%EC%86%8D+4m%2Fs+%EB%82%A8%EC%84%9C%ED%92%8D",
+    "path": "/api/fws/office2/reports/530/hourly?personnel_count=12&equipment_note=%EC%A7%84%ED%99%94%EC%B0%A8+2%EB%8C%80+%C2%B7+%EB%93%B1%EC%A7%90%ED%8E%8C%ED%94%84+8&casualties_count=0&facility_note=%EC%9D%B8%EA%B7%BC+%EB%AF%BC%EA%B0%80+3%EB%8F%99+%EC%9C%84%ED%97%98&weather_note=%ED%92%8D%EC%86%8D+4m%2Fs+%EB%82%A8%EC%84%9C%ED%92%8D",
     "params": {
       "personnel_count": 12,
       "equipment_note": "진화차 2대 · 등짐펌프 8",
@@ -65,9 +65,9 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 36,
-      "hour": "2026-09-29T06:00",
-      "occurred_at": "2026-09-29T06:51:11.488994+00:00",
+      "event_id": 530,
+      "hour": "2026-09-29T07:00",
+      "occurred_at": "2026-09-29T07:39:13.123132+00:00",
       "lat": null,
       "lng": null,
       "address": null,
@@ -78,15 +78,15 @@
       "casualties_count": 0,
       "facility_note": "인근 민가 3동 위험",
       "weather_note": "풍속 4m/s 남서풍",
-      "drafted_at": "2026-09-29T06:52:11.540545+00:00",
+      "drafted_at": "2026-09-29T07:40:13.223104+00:00",
       "kfs_export": {
         "format": "json",
-        "event_id": 36,
+        "event_id": 530,
         "fields": [
           {
             "key": "occurred_at",
             "label": "신고일시",
-            "value": "2026-09-29T06:51:11.488994+00:00"
+            "value": "2026-09-29T07:39:13.123132+00:00"
           },
           {
             "key": "lat",

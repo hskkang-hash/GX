@@ -1,31 +1,31 @@
 {
   "id": "DSM-U2-05",
-  "measured_at": "2026-09-29T05:03:50.165700+00:00",
+  "measured_at": "2026-09-29T07:45:26.240887+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_dump_dsm_u2_05_evidence",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/handover/4/ack",
+    "path": "/api/dsm/handover/5/ack",
     "body": {}
   },
   "response": {
     "status": 200,
     "body": {
       "ack": {
-        "id": 4,
-        "ack_id": 397,
+        "id": 5,
+        "ack_id": 508,
         "acknowledged": true
       },
       "latest_after_ack": {
         "exists": true,
-        "id": 4,
-        "body": "[교대 인계 자동 초안] 2026-09-29 12:03 (최근 24시간)\n미처리 0건\n시스템 사건 0건\n내가 처리한 사건 0건",
+        "id": 5,
+        "body": "[교대 인계 자동 초안] 2026-09-29 14:45 (최근 24시간)\n미처리 0건\n시스템 사건 0건\n내가 처리한 사건 0건\n근무 편성 없음(등록된 근무표 없음)",
         "note": "",
         "unresolved_count": 0,
         "system_event_count": 0,
         "handled_count": 0,
         "unresolved_event_ids": [],
-        "created_at": "2026-09-29T05:03:50.060Z",
+        "created_at": "2026-09-29T07:45:26.115Z",
         "acknowledged": true
       }
     }
@@ -57,6 +57,5 @@
       "where": "backend/apps/dsm/handover_service.py::acknowledge → audit_writer.write(logger_name=_ACK_LOGGER_NAME)",
       "status": "measured: ack 마다 audit_writer 감사 줄 1건(evidence ack_id=397)"
     }
-  ],
-  "retro": "P-407 · 턴 AO 소급 · 사람 확인 1줄: 명세서 §4.2 DSM-U2-05 행을 handover_service.py::acknowledge/latest 전문과 test_p356_u2_spec_promotions.py 대조, 2026-09-25 미포함표 §3 이 적어 둔 'handover/{id}/ack 엔드포인트 자체가 아직 없다'는 09-29 자로 뒤집혔으나(엔드포인트는 생겼다), 시간창 강제와 홈 카드 UI 는 여전히 없음"
+  ]
 }

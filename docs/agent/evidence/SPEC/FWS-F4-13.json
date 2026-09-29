@@ -13,7 +13,7 @@
       "status": "구현 — critical 사건이 info 사건보다 앞섬을 실측"
     }
   ],
-  "measured_at": "2026-09-29T06:51:37.340172+00:00",
+  "measured_at": "2026-09-29T07:40:46.865891+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_13_PriorityQueueTest.test_critical_ranks_above_warning",
   "request": {
@@ -29,17 +29,17 @@
       "count": 2,
       "items": [
         {
-          "event_id": 17,
+          "event_id": 552,
           "severity": "critical",
           "response_state": "occurred",
-          "occurred_at": "2026-09-29T06:49:37.297013+00:00",
+          "occurred_at": "2026-09-29T07:38:46.813786+00:00",
           "address": null
         },
         {
-          "event_id": 16,
+          "event_id": 551,
           "severity": "info",
           "response_state": "occurred",
-          "occurred_at": "2026-09-29T06:50:37.280639+00:00",
+          "occurred_at": "2026-09-29T07:39:46.779173+00:00",
           "address": null
         }
       ]

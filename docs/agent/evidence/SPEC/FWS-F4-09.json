@@ -13,18 +13,18 @@
       "status": "구현 — 033-999-0000 등록 뒤 실측(미등록 시 null — 지어내지 않는다, D-284)"
     }
   ],
-  "measured_at": "2026-09-29T06:51:28.979666+00:00",
+  "measured_at": "2026-09-29T07:40:39.183856+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_09_ContactDirectoryTest.test_forest_number_always_present_provincial_from_command_post",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/10/contacts",
+    "path": "/api/fws/command/incidents/545/contacts",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 10,
+      "event_id": 545,
       "forest_service": {
         "phone": "042-481-4119"
       },
