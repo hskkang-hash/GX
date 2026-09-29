@@ -1,6 +1,6 @@
 {
   "id": "DSM-U4-05",
-  "measured_at": "2026-09-29T09:32:28.934752+00:00",
+  "measured_at": "2026-09-29T11:03:03.329860+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n4_u4_05_daily_report.DailyReportTest.test_disaster_status_counts_todays_events_and_control_status_reuses_u4_04",
   "request": {
@@ -11,7 +11,7 @@
   "response": {
     "status": 200,
     "body": {
-      "as_of": "2026-09-29T09:32:28.900051+00:00",
+      "as_of": "2026-09-29T11:03:03.314276+00:00",
       "day": "2026-09-29",
       "format": "json",
       "disaster_status": {
@@ -21,11 +21,11 @@
         },
         "unresolved_count": 1,
         "unresolved_event_ids": [
-          16
+          21
         ]
       },
       "control_status": {
-        "as_of": "2026-09-29T09:32:28.906Z",
+        "as_of": "2026-09-29T11:03:03.318Z",
         "reference": "통제현황",
         "point_count": 1,
         "by_stage": {
@@ -33,8 +33,8 @@
         },
         "points": [
           {
-            "point_id": 13,
-            "text": "개소=만안 지하차도 · 도달=2026-09-29 16:32 · 대피인원=3명 · 대피장소=만안체육관",
+            "point_id": 35,
+            "text": "개소=만안 지하차도 · 도달=2026-09-29 18:03 · 대피인원=3명 · 대피장소=만안체육관",
             "stage": "도달",
             "evacuee_count": 3,
             "evacuation_site": "만안체육관"

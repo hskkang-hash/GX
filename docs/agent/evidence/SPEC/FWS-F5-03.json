@@ -1,21 +1,21 @@
 {
   "id": "FWS-F5-03",
   "title": "확인 회신(산불 맞음/오인 · 사진·열화상)",
-  "measured_at": "2026-09-29T09:32:20.861686+00:00",
+  "measured_at": "2026-09-29T11:02:58.436786+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n4_f5_recon_coords_thermal.F5_03_ThermalAttachmentTest.test_thermal_ref_is_a_separate_slot_from_photo_attachment_ref",
   "request": {
     "method": "GET",
-    "path": "/api/fws/ap/drone/verifications/9/thermal-attachment",
+    "path": "/api/fws/ap/drone/verifications/14/thermal-attachment",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 9,
+      "event_id": 14,
       "attachments": [
         {
-          "thermal_id": 4,
+          "thermal_id": 29,
           "thermal_ref": "minio://drone/thermal.tiff"
         }
       ],

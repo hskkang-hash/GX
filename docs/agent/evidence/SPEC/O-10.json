@@ -1,24 +1,24 @@
 {
   "id": "O-10",
-  "measured_at": "2026-09-29T09:22:09.302456+00:00",
+  "measured_at": "2026-09-29T11:02:42.897193+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n3_o10_o11_ops.O10_KeyRotationProcedureTest.test_rotate_leaves_console_door_audit_line_and_next_due_date",
   "request": {
     "method": "POST",
     "path": "/api/dsm/ops/keys/rotate",
     "body": {
-      "tenant_code": "t-a99eac6c",
+      "tenant_code": "t-69dcd942",
       "key_id": 1
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "tenant_code": "t-a99eac6c",
-      "tenant_id": 3,
+      "tenant_code": "t-69dcd942",
+      "tenant_id": 14,
       "key_id": 1,
       "new_key_id": 2,
-      "rotated_at": "2026-09-29T09:22:09+00:00"
+      "rotated_at": "2026-09-29T11:02:42+00:00"
     }
   },
   "what": "콘솔 문(GET /ops/keys · POST /ops/keys/rotate)으로 실제 키를 회전하고, 회전 뒤 GET /ops/keys 가 감사 줄 1건(rotation_audit_count ≥ 1 · last_rotation_audit)과 다음 회전일(next_rotation_due_at)을 실제로 낸다는 것을 확인했다.",

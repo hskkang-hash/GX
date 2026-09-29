@@ -23,19 +23,19 @@
       "status": "없음(완전 미배선)"
     }
   ],
-  "measured_at": "2026-09-29T09:25:53.928605+00:00",
+  "measured_at": "2026-09-29T10:29:44.730556+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_11_NightTransitionTest.test_sunset_in_the_past_marks_night_and_helicopter_unavailable",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/13/night-status",
+    "path": "/api/fws/command/incidents/580/night-status",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 13,
-      "sunset_at": "2026-09-29T08:25:53.670732+00:00",
+      "event_id": 580,
+      "sunset_at": "2026-09-29T09:29:44.657384+00:00",
       "is_night": true,
       "helicopter_badge": "헬기 불가",
       "night_resources": [

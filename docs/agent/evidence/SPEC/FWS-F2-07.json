@@ -47,12 +47,12 @@
       "status": "없음 — F2 진화대 화면에 안전 경보 칸·확인 버튼이 없다(명세 FM3 「풍향 급변 경보 시 이 칸이 빨강」)"
     }
   ],
-  "measured_at": "2026-09-29T09:34:05.348769+00:00",
+  "measured_at": "2026-09-29T11:02:38.082071+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n2_fws_safety_alerts.DropZoneExitRuleTest.test_drop_zone_boundary_and_delivery",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/51/drop-zone-position",
+    "path": "/api/fws/command/incidents/6/drop-zone-position",
     "params": {
       "center": {
         "lat": 36.35,
@@ -64,7 +64,7 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 51,
+      "event_id": 6,
       "distance_m": 301.0,
       "radius_m": 300.0,
       "threshold_unset": false,

@@ -28,12 +28,12 @@
       "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T09:25:24.978479+00:00",
+  "measured_at": "2026-09-29T10:29:27.941849+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_02_StageConfirmTest.test_confirm_stage_records_badge_and_command_level_transfer",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/1/stage?stage=2%EB%8B%A8%EA%B3%84&reason=%ED%92%8D%EC%86%8D+%EA%B8%89%EC%A6%9D&command_level=%EC%8B%9C%EB%8F%84",
+    "path": "/api/fws/command/incidents/568/stage?stage=2%EB%8B%A8%EA%B3%84&reason=%ED%92%8D%EC%86%8D+%EA%B8%89%EC%A6%9D&command_level=%EC%8B%9C%EB%8F%84",
     "params": {
       "stage": "2단계",
       "reason": "풍속 급증",
@@ -43,13 +43,13 @@
   "response": {
     "status": 200,
     "body": {
-      "confirmation_id": 1,
-      "event_id": 1,
+      "confirmation_id": 346,
+      "event_id": 568,
       "stage": "2단계",
       "prior_stage": null,
       "reason": "풍속 급증",
       "command_level": "시도",
-      "confirmed_at": "2026-09-29T09:25:24.828956+00:00",
+      "confirmed_at": "2026-09-29T10:29:27.898460+00:00",
       "confirmed_by": "dsm_user_a"
     }
   },

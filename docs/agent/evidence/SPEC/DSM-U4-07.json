@@ -1,6 +1,6 @@
 {
   "id": "DSM-U4-07",
-  "measured_at": "2026-09-29T09:32:52.145058+00:00",
+  "measured_at": "2026-09-29T10:58:38.175563+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u4_07_evidence",
   "request": {
@@ -15,7 +15,7 @@
   "response": {
     "status": 200,
     "body": {
-      "request_id": 56,
+      "request_id": 44,
       "requester_org": "시흥경찰서",
       "doc_no": "형사과-2026-200",
       "purpose": "수사",
@@ -54,12 +54,6 @@
       "part": "연간 통계(출력)",
       "where": "[턴 AO] GET /video-access-requests/annual-stats · video_access_ledger_service.annual_stats — 같은 감사 이력을 연도로 걸러 요청·승인·제공 건수·월별 요청 건수를 낸다(새 표 0 · VideoAccessAnnualStatsTest)",
       "status": "있음(신규)"
-    },
-    {
-      "part": "화면(수사기관 요청·승인·마스킹본 열람·연간통계 열람 UI)",
-      "where": "frontend/src 전수 grep — video-access-requests* 5개 라우트(요청·승인·제공·목록·annual-stats) 어디서도 호출 0건. PrivacyRequests.tsx 는 LAW-07(청구인 본인 열람) 별도 절 화면이다",
-      "status": "없음(서버만 — 프런트 호출 0건, 이 절의 화면이 아예 없다)"
     }
-  ],
-  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 서버 로직(요청·승인·마스킹본·대장기재·원본반출0·연간통계)은 전부 실측 닫힘을 재확인했으나, 완결조건란의 '대장 표 · 연간 통계'가 실제로 볼 수 있는 화면이 있는지까지 대조하니 0건이었다 — 반쪽으로 내린다(P-419 화면 카테고리)."
+  ]
 }

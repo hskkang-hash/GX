@@ -1,26 +1,26 @@
 {
   "id": "DSM-U4-01",
-  "measured_at": "2026-09-29T09:32:51.929644+00:00",
+  "measured_at": "2026-09-29T10:58:37.968558+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u4_01_evidence",
   "request": {
     "method": "POST",
     "path": "/api/dsm/situation-reports",
     "body": {
-      "event_id": 25,
+      "event_id": 8,
       "kind": "최초"
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "report_id": 53,
-      "event_id": 25,
+      "report_id": 41,
+      "event_id": 8,
       "report_no": 1,
       "kind": "최초",
-      "issued_at": "2026-09-29T09:32:51.914Z",
+      "issued_at": "2026-09-29T10:58:37.954Z",
       "elapsed_minutes": 1.0,
-      "actor_id": 42
+      "actor_id": 24
     }
   },
   "what": "사건 하나에 제1보(최초)를 실제로 채번했다 — report_no=1 · elapsed_minutes 계산까지 응답에 실렸다. 손으로 지어낸 값 0.",

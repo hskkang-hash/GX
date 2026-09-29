@@ -591,12 +591,16 @@ class EvidenceExportTest(U4Fixture):
             #: 것이므로 덮어쓴다. 안 그러면 전량 시험 순서에 따라 표가 지워져
             #: O 게이트가 옛 승격으로 오판한다(`test_fws_app.py::_write_evidence`
             #: 와 같은 판단).
-            if title_parts is None and out_path.is_file():
+            #: [턴 AP · 조율자] 뒤 턴이 **채우거나 재판정한 표**(`retro` 칸이 있는 표)는
+            #: 이 옛 시험의 리터럴이 덮지 않는다 — DSM-U5-05 가 전량 순서에서 옛 반쪽 표로 되돌아갔다.
+            prev = {}
+            if out_path.is_file():
                 try:
                     prev = json.loads(out_path.read_text(encoding="utf-8"))
                 except (ValueError, OSError):
                     prev = {}
-                for keep in ("title_parts", "title_parts_note"):
+            if title_parts is None or "retro" in prev:
+                for keep in ("title_parts", "title_parts_note", "retro"):
                     if keep in prev:
                         payload[keep] = prev[keep]
             out_path.write_text(

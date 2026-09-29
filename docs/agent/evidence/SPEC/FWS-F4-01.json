@@ -48,32 +48,32 @@
       "status": "없음(버튼 미배선 — 서버 상태변화는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T09:26:06.973516+00:00",
+  "measured_at": "2026-09-29T10:29:54.662747+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_01_CommandScreenTest.test_one_screen_bundles_stage_resources_clock_evacuation_post",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/21/command",
+    "path": "/api/fws/command/incidents/588/command",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 21,
+      "event_id": 588,
       "incident": {
         "address": null,
         "severity": "critical",
         "response_state": "occurred",
-        "occurred_at": "2026-09-29T09:25:06.240480+00:00"
+        "occurred_at": "2026-09-29T10:28:54.276576+00:00"
       },
       "stage": {
         "stage": "2단계",
         "reason": "확산 우려",
-        "__seq__": 44,
-        "__hash__": "0166993594abeca5937cfcef943883b4f857f3045babc8e613b7987d91189b03",
-        "event_id": 21,
+        "__seq__": 389,
+        "__hash__": "96271f84be888c3aa01820b8d20d537a2de713deb01c5f330e94e9b3eb397559",
+        "event_id": 588,
         "prior_stage": null,
-        "confirmed_at": "2026-09-29T09:26:06.316240+00:00",
+        "confirmed_at": "2026-09-29T10:29:54.344060+00:00",
         "confirmed_by": "dsm_user_a",
         "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
         "command_level": null
@@ -82,19 +82,19 @@
         {
           "kind": "crew",
           "note": "",
-          "__seq__": 46,
-          "__hash__": "35ddeb73a32192e57a4ab8c77c28813c4c903335e6dfc9c56d8b15cf46210261",
-          "event_id": 21,
-          "reply_id": 45,
-          "assigned_at": "2026-09-29T09:26:06.433078+00:00",
-          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #21(주소 미상) 대응 바랍니다.",
-          "__prev_hash__": "8eebc552816392eb1f279543b7385588a13bb834f33cbaff62e5496030b43b69",
+          "__seq__": 391,
+          "__hash__": "ce80247a7672198d5c236dc7ced5ae72a1c2d20c60ae5f9e84d6b2ec8d7894e9",
+          "event_id": 588,
+          "reply_id": 390,
+          "assigned_at": "2026-09-29T10:29:54.433697+00:00",
+          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #588(주소 미상) 대응 바랍니다.",
+          "__prev_hash__": "4625da98231add1211feedbea9dd94a115bb4a6ca81a449da1002428788a8d33",
           "resource_name": "1진화대",
           "notified_count": 1
         }
       ],
       "response_clock": {
-        "reported_at": "2026-09-29T09:25:06.240480+00:00",
+        "reported_at": "2026-09-29T10:28:54.276576+00:00",
         "acknowledged_at": null,
         "helicopter_dropped_at": null,
         "main_fire_out_at": null,
@@ -106,13 +106,13 @@
       },
       "command_post": {
         "note": "",
-        "__seq__": 49,
+        "__seq__": 394,
         "address": "OO지휘소",
-        "__hash__": "92563e7136815d25b828beb7d9ebf078a58b756ad2a51c07093d761e611bd96c",
-        "event_id": 21,
-        "declared_at": "2026-09-29T09:26:06.611945+00:00",
+        "__hash__": "2759ef12a9487e0af19a98cec5d0d8d52a42419141da736dcb7dd32e9e105439",
+        "event_id": 588,
+        "declared_at": "2026-09-29T10:29:54.541097+00:00",
         "declared_by": "dsm_user_a",
-        "__prev_hash__": "387c518c7a62f0b0fb00d9be2e32d82c18a27720829109db79dcd5690d675757",
+        "__prev_hash__": "dbd7d95b28ee6a74a6a12ce8c8c2d6f1efb9beadc6913054a8f0443742e3bb63",
         "org_composition": "산림과·소방서",
         "situation_room_phone": null
       }

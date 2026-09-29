@@ -28,12 +28,12 @@
       "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T09:25:39.529547+00:00",
+  "measured_at": "2026-09-29T10:29:34.851256+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_06_AgencyCoordinationTest.test_record_three_agencies",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/6/agency-request?agency=military&request_detail=military+%ED%98%91%EC%A1%B0+%EC%9A%94%EC%B2%AD",
+    "path": "/api/fws/command/incidents/573/agency-request?agency=military&request_detail=military+%ED%98%91%EC%A1%B0+%EC%9A%94%EC%B2%AD",
     "params": {
       "agency": "military"
     }
@@ -41,12 +41,12 @@
   "response": {
     "status": 200,
     "body": {
-      "record_id": 13,
-      "event_id": 6,
+      "record_id": 358,
+      "event_id": 573,
       "agency": "military",
       "request_detail": "military 협조 요청",
       "note": "",
-      "requested_at": "2026-09-29T09:25:39.385756+00:00",
+      "requested_at": "2026-09-29T10:29:34.812506+00:00",
       "requested_by": "dsm_user_a"
     }
   },

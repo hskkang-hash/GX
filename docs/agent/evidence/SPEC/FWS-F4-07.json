@@ -23,12 +23,12 @@
       "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T09:25:43.403106+00:00",
+  "measured_at": "2026-09-29T10:29:36.898776+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_07_FireDeclarationTest.test_main_out_then_extinguished_closes_response_axis",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/8/extinguished?reason=%EC%A7%84%ED%99%94%EC%84%A0+%ED%99%95%EC%9D%B8%C2%B7%EA%B8%B0%EC%83%81+%EC%95%88%EC%A0%95",
+    "path": "/api/fws/command/incidents/575/extinguished?reason=%EC%A7%84%ED%99%94%EC%84%A0+%ED%99%95%EC%9D%B8%C2%B7%EA%B8%B0%EC%83%81+%EC%95%88%EC%A0%95",
     "params": {
       "reason": "진화선 확인·기상 안정"
     }
@@ -36,10 +36,10 @@
   "response": {
     "status": 200,
     "body": {
-      "declaration_id": 18,
-      "event_id": 8,
+      "declaration_id": 363,
+      "event_id": 575,
       "reason": "진화선 확인·기상 안정",
-      "declared_at": "2026-09-29T09:25:43.315492+00:00",
+      "declared_at": "2026-09-29T10:29:36.853023+00:00",
       "declared_by": "dsm_user_a",
       "response_state": "closed"
     }

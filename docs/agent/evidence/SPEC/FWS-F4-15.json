@@ -33,22 +33,22 @@
       "status": "없음(버튼 미배선)"
     }
   ],
-  "measured_at": "2026-09-29T09:26:03.717456+00:00",
+  "measured_at": "2026-09-29T10:29:52.362138+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_15_PostIncidentReportTest.test_pdf_and_summary_cover_clock_resources_and_evacuation",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/20/post-report/summary",
+    "path": "/api/fws/command/incidents/587/post-report/summary",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 20,
+      "event_id": 587,
       "response_clock": {
-        "event_id": 20,
+        "event_id": 587,
         "stream_monitor_name": "dsm-stream-A",
-        "occurred_at": "2026-09-29T09:25:00.710989+00:00",
+        "occurred_at": "2026-09-29T10:28:50.307308+00:00",
         "acknowledged_at": null,
         "arrived_at": null,
         "closed_at": null,
@@ -57,7 +57,7 @@
         "close_seconds": null,
         "auto_closed": false,
         "reopened": 0,
-        "elapsed_seconds": 62.991811,
+        "elapsed_seconds": 62.049335,
         "urgency_tier": 1,
         "transitions": []
       },
@@ -66,13 +66,13 @@
         {
           "kind": "crew",
           "note": "",
-          "__seq__": 41,
-          "__hash__": "591390614c2820f037b7c2c1c6245153643a8a4ac3e46c6ebbe4985d2b56260a",
-          "event_id": 20,
-          "reply_id": 40,
-          "assigned_at": "2026-09-29T09:26:00.855195+00:00",
-          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #20(주소 미상) 대응 바랍니다.",
-          "__prev_hash__": "98c970e90182db6be42fe85b1019c4a1bca40a55fc4edc4b27f500cc042b3e53",
+          "__seq__": 386,
+          "__hash__": "1a2eb44554a4d1e97654047c69c8de5e7debfbffb275b7452ed00a16cb0250c2",
+          "event_id": 587,
+          "reply_id": 385,
+          "assigned_at": "2026-09-29T10:29:50.440458+00:00",
+          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #587(주소 미상) 대응 바랍니다.",
+          "__prev_hash__": "c932fcd7bec01cd768fcd261f07e7da42fbb910fb574813ee39c1b159cb79ea2",
           "resource_name": "1진화대",
           "notified_count": 1
         }

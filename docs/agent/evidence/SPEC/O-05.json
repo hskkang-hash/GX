@@ -1,7 +1,7 @@
 {
   "id": "O-05",
   "title": "건강 보드(전 테넌트)",
-  "measured_at": "2026-09-29T09:06:53.336521+00:00",
+  "measured_at": "2026-09-29T10:33:49.567422+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O05_HealthBoardTest.test_tenant_count_equals_rows_and_red_opens_one_incident",
   "request": {
@@ -20,13 +20,13 @@
             "active": 1,
             "total": 1
           },
-          "queue_lag_sec": 0.0,
+          "queue_lag_sec": 7.6,
           "storage_used_pct": 0.0,
           "backup_receipt_at": "2026-09-28T20:00:00+00:00",
           "backup_verdict": "OK",
-          "survival_alert_late": 0,
-          "color": "green",
-          "auto_incident_id": null
+          "survival_alert_late": 10,
+          "color": "red",
+          "auto_incident_id": "5c4252b0380c"
         },
         {
           "tenant_code": "",
@@ -35,28 +35,28 @@
             "active": 1,
             "total": 1
           },
-          "queue_lag_sec": 0.0,
+          "queue_lag_sec": 7.6,
           "storage_used_pct": 0.0,
           "backup_receipt_at": "2026-09-28T20:00:00+00:00",
           "backup_verdict": "OK",
-          "survival_alert_late": 0,
-          "color": "green",
-          "auto_incident_id": null
+          "survival_alert_late": 10,
+          "color": "red",
+          "auto_incident_id": "e35ed0805618"
         },
         {
-          "tenant_code": "t-703432c3",
-          "name": "온보딩 시험 테넌트 t-703432c3",
+          "tenant_code": "t-6117f40d",
+          "name": "온보딩 시험 테넌트 t-6117f40d",
           "cameras": {
             "active": 0,
             "total": 1
           },
-          "queue_lag_sec": 0.0,
+          "queue_lag_sec": 7.6,
           "storage_used_pct": 0.0,
           "backup_receipt_at": "2026-09-28T20:00:00+00:00",
           "backup_verdict": "OK",
-          "survival_alert_late": 0,
+          "survival_alert_late": 10,
           "color": "red",
-          "auto_incident_id": "ed62571a0341"
+          "auto_incident_id": "4fa9f086f521"
         }
       ],
       "tenant_count": 3,

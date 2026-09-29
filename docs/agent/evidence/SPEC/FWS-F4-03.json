@@ -23,12 +23,12 @@
       "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T09:25:29.041230+00:00",
+  "measured_at": "2026-09-29T10:29:29.742999+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_03_CommandPostTest.test_declare_then_hourly_approval_reflects_it",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/3/command-post?address=OO%EA%B5%B0+OO%EB%A9%B4+%EC%82%B0%EB%B6%88%EB%8C%80%EC%9D%91%EC%84%BC%ED%84%B0&org_composition=%EC%82%B0%EB%A6%BC%EA%B3%BC%C2%B7%EC%86%8C%EB%B0%A9%EC%84%9C%C2%B7%EA%B2%BD%EC%B0%B0%EC%84%9C&situation_room_phone=033-123-4567",
+    "path": "/api/fws/command/incidents/570/command-post?address=OO%EA%B5%B0+OO%EB%A9%B4+%EC%82%B0%EB%B6%88%EB%8C%80%EC%9D%91%EC%84%BC%ED%84%B0&org_composition=%EC%82%B0%EB%A6%BC%EA%B3%BC%C2%B7%EC%86%8C%EB%B0%A9%EC%84%9C%C2%B7%EA%B2%BD%EC%B0%B0%EC%84%9C&situation_room_phone=033-123-4567",
     "params": {
       "address": "OO군 OO면 산불대응센터",
       "org_composition": "산림과·소방서·경찰서",
@@ -38,13 +38,13 @@
   "response": {
     "status": 200,
     "body": {
-      "post_id": 2,
-      "event_id": 3,
+      "post_id": 347,
+      "event_id": 570,
       "address": "OO군 OO면 산불대응센터",
       "org_composition": "산림과·소방서·경찰서",
       "situation_room_phone": "033-123-4567",
       "note": "",
-      "declared_at": "2026-09-29T09:25:28.468598+00:00",
+      "declared_at": "2026-09-29T10:29:29.590131+00:00",
       "declared_by": "dsm_user_a"
     }
   },

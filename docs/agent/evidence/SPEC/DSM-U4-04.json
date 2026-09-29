@@ -1,6 +1,6 @@
 {
   "id": "DSM-U4-04",
-  "measured_at": "2026-09-29T09:32:52.079922+00:00",
+  "measured_at": "2026-09-29T10:58:38.099478+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u4_04_evidence",
   "request": {
@@ -14,9 +14,9 @@
   "response": {
     "status": 200,
     "body": {
-      "point_id": 55,
+      "point_id": 43,
       "name": "하천산책로",
-      "reached_at": "2026-09-29T09:32:52.056Z",
+      "reached_at": "2026-09-29T10:58:38.082Z",
       "evacuee_count": 5,
       "evacuation_site": "",
       "stage": "도달"

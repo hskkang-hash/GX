@@ -1,7 +1,7 @@
 {
   "id": "FWS-F5-10",
   "title": "계량(비행 분)",
-  "measured_at": "2026-09-29T09:32:25.332558+00:00",
+  "measured_at": "2026-09-29T11:02:55.235673+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n4_f5_10_monthly.F5_10_MonthlyTableTest.test_monthly_table_groups_flights_by_month",
   "request": {

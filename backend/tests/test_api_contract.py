@@ -223,6 +223,14 @@ class PermissionDeniedStatusTest(_DeniedUserMixin, TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        #: [턴 AP 전량 · 조율자] 앞 시험이 스레드에 남긴 요청이 있으면 dj-core 가 그 사용자를
+        #:   `created_by` 로 채워 FK 위반이 난다(user 53 · 순서 오염). `DsmFixture` 와 같이 먼저 비운다.
+        import contextlib
+
+        with contextlib.suppress(Exception):
+            from core.middleware.refresh_token import thread_local
+
+            thread_local.request = None
         cls.user = cls._make_denied_user("contract_denied")
 
     def setUp(self):

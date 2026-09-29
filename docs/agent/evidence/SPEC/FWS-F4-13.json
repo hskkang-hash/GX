@@ -23,7 +23,7 @@
       "status": "없음 — 서버 정렬은 실측이지만 지휘 화면에 그 목록·지수 입력 칸이 없다(이 턴 범위 밖 · 화면 미배선)"
     }
   ],
-  "measured_at": "2026-09-29T09:25:57.849954+00:00",
+  "measured_at": "2026-09-29T10:29:48.695577+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_13_PriorityQueueTest.test_recorded_risk_index_orders_queue_not_severity",
   "request": {
@@ -39,43 +39,43 @@
       "count": 4,
       "items": [
         {
-          "event_id": 16,
+          "event_id": 583,
           "severity": "info",
           "risk_index": 86.0,
           "risk_band": "심각",
-          "risk_recorded_at": "2026-09-29T09:25:57.416542+00:00",
+          "risk_recorded_at": "2026-09-29T10:29:48.513524+00:00",
           "response_state": "occurred",
-          "occurred_at": "2026-09-29T09:24:57.201510+00:00",
+          "occurred_at": "2026-09-29T10:28:48.243859+00:00",
           "address": null
         },
         {
-          "event_id": 17,
+          "event_id": 584,
           "severity": "warning",
           "risk_index": 85.9,
           "risk_band": "경계",
-          "risk_recorded_at": "2026-09-29T09:25:57.543892+00:00",
+          "risk_recorded_at": "2026-09-29T10:29:48.571784+00:00",
           "response_state": "occurred",
-          "occurred_at": "2026-09-29T09:23:57.233566+00:00",
+          "occurred_at": "2026-09-29T10:27:48.320743+00:00",
           "address": null
         },
         {
-          "event_id": 18,
+          "event_id": 585,
           "severity": "critical",
           "risk_index": 51.0,
           "risk_band": "주의",
-          "risk_recorded_at": "2026-09-29T09:25:57.629114+00:00",
+          "risk_recorded_at": "2026-09-29T10:29:48.617801+00:00",
           "response_state": "occurred",
-          "occurred_at": "2026-09-29T09:22:57.261764+00:00",
+          "occurred_at": "2026-09-29T10:26:48.362762+00:00",
           "address": null
         },
         {
-          "event_id": 19,
+          "event_id": 586,
           "severity": "critical",
           "risk_index": null,
           "risk_band": null,
           "risk_recorded_at": null,
           "response_state": "occurred",
-          "occurred_at": "2026-09-29T09:21:57.311130+00:00",
+          "occurred_at": "2026-09-29T10:25:48.412888+00:00",
           "address": null
         }
       ],

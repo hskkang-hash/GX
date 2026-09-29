@@ -1,14 +1,14 @@
 {
   "id": "DSM-U2-04",
-  "measured_at": "2026-09-29T07:45:26.031355+00:00",
+  "measured_at": "2026-09-29T10:34:28.226940+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_dump_dsm_u2_04_evidence",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/thresholds/observe/506/decide",
+    "path": "/api/dsm/thresholds/observe/554/decide",
     "body": {
       "observe": {
-        "camera_id": 551,
+        "camera_id": 591,
         "key": "waterlevel.baseline",
         "value": 182
       },
@@ -23,17 +23,17 @@
       "observe": {
         "reached": true,
         "key": "waterlevel.baseline",
-        "camera_id": 551,
+        "camera_id": 591,
         "value": 182.0,
         "threshold": 180.0,
-        "observation_id": 506
+        "observation_id": 554
       },
       "decide": {
-        "observation_id": 506,
-        "decision_id": 507,
+        "observation_id": 554,
+        "decision_id": 555,
         "decision": "통제 실시",
         "key": "waterlevel.baseline",
-        "camera_id": 551
+        "camera_id": 591
       }
     }
   },

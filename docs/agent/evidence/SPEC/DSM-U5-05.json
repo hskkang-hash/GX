@@ -1,6 +1,6 @@
 {
   "id": "DSM-U5-05",
-  "measured_at": "2026-09-29T09:32:52.224914+00:00",
+  "measured_at": "2026-09-29T10:58:38.243501+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u5_05_evidence",
   "request": {
@@ -15,8 +15,8 @@
     "body": {
       "imported": 2,
       "row_ids": [
-        57,
-        58
+        45,
+        46
       ]
     }
   },
@@ -57,5 +57,6 @@
       "where": "backend/apps/dsm/handover_service.py::control_log",
       "status": "measured — 일지 근무자(control_log().on_duty) == 편성표(shift_roster_service.current_workers()) 를 HTTP 응답에서 실측 대조(항등 — 같은 호출 하나를 옮겨 쓸 뿐 다른 값을 낼 길이 없다). 인계 메모의 on_duty 와도 일치(두 벌로 안 센다). 시험: tests.test_ap_n3_u5_05_control_log.ControlLogTest.test_control_log_combines_handover_and_incident_timeline"
     }
-  ]
+  ],
+  "retro": "P-421 채움 · 관제일지(인계 메모 + 사건 타임라인) · 턴 AP 차선 N3"
 }

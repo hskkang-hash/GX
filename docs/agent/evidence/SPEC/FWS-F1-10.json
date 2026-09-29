@@ -40,12 +40,12 @@
       "status": "부분: 대피 문안·훈련 채널은 있으나 대피 지시·철수를 F1 안전 알림으로 보내는 트리거는 미실측(이 차선 범위 밖 — 턴 AO 소급 행 그대로)"
     }
   ],
-  "measured_at": "2026-09-29T09:34:03.864066+00:00",
+  "measured_at": "2026-09-29T11:02:36.250926+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n2_fws_safety_alerts.WindShiftRuleTest.test_wind_shift_boundary_and_delivery",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/50/wind-reading?direction_deg=101.0",
+    "path": "/api/fws/command/incidents/5/wind-reading?direction_deg=101.0",
     "params": {
       "direction_deg": 101.0
     }
@@ -53,7 +53,7 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 50,
+      "event_id": 5,
       "direction_deg": 101.0,
       "diff_deg": 46.0,
       "within_window": true,

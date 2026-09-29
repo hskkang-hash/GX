@@ -23,7 +23,7 @@
       "status": "없음 — 감시원·진화대가 시간대·담당 초소/구역을 입력할 화면이 없다(App.tsx·routes.ts·copy.ts 는 공용 파일이라 이 차선이 못 붙인다)"
     }
   ],
-  "measured_at": "2026-09-29T09:34:01.035297+00:00",
+  "measured_at": "2026-09-29T11:02:33.189289+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n2_fws_quiet_hours.QuietHoursBlockTest.test_off_duty_blocks_on_duty_delivers",
   "request": {
@@ -34,8 +34,8 @@
   "response": {
     "status": 200,
     "body": {
-      "quiet_hours_start": "20:34",
-      "quiet_hours_end": "21:34",
+      "quiet_hours_start": "22:02",
+      "quiet_hours_end": "23:02",
       "assigned_post_code": "ZONE-9"
     }
   },

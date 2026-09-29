@@ -1,23 +1,23 @@
 {
   "id": "FWS-F5-01",
   "title": "정찰 임무 수신(발화 추정 좌표·반경) → 열화상 정찰",
-  "measured_at": "2026-09-29T09:32:18.826675+00:00",
+  "measured_at": "2026-09-29T11:02:56.865654+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n4_f5_recon_coords_thermal.F5_01_ReconCoordsTest.test_recon_coords_carries_the_events_lat_lng_and_radius",
   "request": {
     "method": "GET",
-    "path": "/api/fws/ap/drone/missions/6/recon-coords",
+    "path": "/api/fws/ap/drone/missions/11/recon-coords",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 6,
+      "event_id": 11,
       "lat": 36.11,
       "lng": 127.21,
       "radius_m": 300.0,
       "state": "request",
-      "requested_at": "2026-09-29T09:32:18.770914+00:00"
+      "requested_at": "2026-09-29T11:02:56.766092+00:00"
     }
   },
   "what": "[턴 AP · 차선 N4] 반쪽 채움 — 정찰 임무의 발화 추정 좌표(K1 이벤트 lat/lng)가 반경과 한 응답에 실린다(drone.py 는 고치지 않고 그 위에 새 door 하나를 더했다)",

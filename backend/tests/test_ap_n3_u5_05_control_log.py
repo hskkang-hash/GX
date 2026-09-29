@@ -74,6 +74,8 @@ def _merge_title_parts(updates: dict[str, dict[str, str]]) -> None:
             raise AssertionError(
                 "DSM-U5-05.json 에 이 part 가 없다(오타 대조): %s" % missing)
         payload["title_parts"] = rows
+        #: [턴 AP · 조율자] 채운 표라는 표식 — 옛 시험(`test_p356_u4_rest_spec_promotions`)이 덮지 않는다.
+        payload["retro"] = "P-421 채움 · 관제일지(인계 메모 + 사건 타임라인) · 턴 AP 차선 N3"
         EVIDENCE_PATH.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2, default=str),
             encoding="utf-8")

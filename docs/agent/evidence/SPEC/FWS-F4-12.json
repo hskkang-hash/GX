@@ -18,12 +18,12 @@
       "status": "없음(미배선)"
     }
   ],
-  "measured_at": "2026-09-29T09:25:55.757880+00:00",
+  "measured_at": "2026-09-29T10:29:46.695816+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_12_SituationMeetingTest.test_record_then_list_is_scoped_to_this_event",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/14/meetings?attendees=%EC%82%B0%EB%A6%BC%EA%B3%BC%EC%9E%A5%C2%B7%EC%86%8C%EB%B0%A9%EC%84%9C%EC%9E%A5&decision=2%EB%8B%A8%EA%B3%84+%EC%9C%A0%EC%A7%80&basis=%ED%92%8D%EC%86%8D+4m%2Fs",
+    "path": "/api/fws/command/incidents/581/meetings?attendees=%EC%82%B0%EB%A6%BC%EA%B3%BC%EC%9E%A5%C2%B7%EC%86%8C%EB%B0%A9%EC%84%9C%EC%9E%A5&decision=2%EB%8B%A8%EA%B3%84+%EC%9C%A0%EC%A7%80&basis=%ED%92%8D%EC%86%8D+4m%2Fs",
     "params": {
       "attendees": "산림과장·소방서장",
       "decision": "2단계 유지",
@@ -33,13 +33,13 @@
   "response": {
     "status": 200,
     "body": {
-      "meeting_id": 35,
-      "occurred_at": "2026-09-29T09:25:55.675Z",
+      "meeting_id": 380,
+      "occurred_at": "2026-09-29T10:29:46.616Z",
       "attendees": "산림과장·소방서장",
       "decision": "2단계 유지",
       "basis": "풍속 4m/s",
-      "actor_id": 22,
-      "event_id": 14
+      "actor_id": 382,
+      "event_id": 581
     }
   },
   "what": "DSM-U2-03 회의 기록 문을 그대로 재사용하고, 사건별 표를 얹어 두 사건의 회의가 섞이지 않음을 실측",

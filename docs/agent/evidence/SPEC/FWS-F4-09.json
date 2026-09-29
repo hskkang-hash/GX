@@ -25,18 +25,18 @@
       "status": "없음 — 서버는 두 번호를 내지만 지휘 화면에 누를 버튼이 없다(이 턴 범위 밖 · 화면 미배선)"
     }
   ],
-  "measured_at": "2026-09-29T09:25:48.603395+00:00",
+  "measured_at": "2026-09-29T10:29:40.449234+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_09_ContactDirectoryTest.test_forest_number_always_present_provincial_from_command_post",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/10/contacts",
+    "path": "/api/fws/command/incidents/577/contacts",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 10,
+      "event_id": 577,
       "forest_service": {
         "phone": "042-481-4119"
       },
