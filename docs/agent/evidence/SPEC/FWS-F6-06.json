@@ -1,7 +1,7 @@
 {
   "id": "FWS-F6-06",
   "title": "소방 119 출동 사건 연동(재난안전 App DSM 통해)",
-  "measured_at": "2026-09-29T10:30:15.418216+00:00",
+  "measured_at": "2026-09-29T11:55:35.303032+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_06_FireDepartmentLinkTest.test_link_reaches_dsm_field_replies",
   "request": {
@@ -19,7 +19,7 @@
       "dispatch_no": "119-2026-0091",
       "note": "관할 소방서 출동",
       "reply_id": 418,
-      "linked_at": "2026-09-29T10:30:15.385481+00:00"
+      "linked_at": "2026-09-29T11:55:35.280165+00:00"
     }
   },
   "what": "출동번호 기록이 K1 현장 회신(DSM 카드가 읽는 자리)에 그대로 도달한다 — 새 표 없이 DSM 재사용 실측",

@@ -18,7 +18,7 @@
       "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:38.766383+00:00",
+  "measured_at": "2026-09-29T11:55:01.545895+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_08_HourlyReportApprovalTest.test_approve_latest_draft_and_sends",
   "request": {
@@ -31,8 +31,8 @@
     "body": {
       "approval_id": 365,
       "event_id": 576,
-      "hour": "2026-09-29T10:00",
-      "approved_at": "2026-09-29T10:29:38.729464+00:00",
+      "hour": "2026-09-29T11:00",
+      "approved_at": "2026-09-29T11:55:01.475930+00:00",
       "approved_by": "dsm_user_a",
       "note": "",
       "notified_count": 1,

@@ -1,30 +1,30 @@
 {
   "id": "O-01",
   "title": "테넌트 발급",
-  "measured_at": "2026-09-29T10:33:28.392176+00:00",
+  "measured_at": "2026-09-29T11:58:47.940472+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O01_TenantIssuanceTest.test_issue_then_admin_logs_in_and_reaches_role_home",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/ops/tenants?code=t-2ae893b8&name=%EC%98%A8%EB%B3%B4%EB%94%A9+%EC%8B%9C%ED%97%98+%ED%85%8C%EB%84%8C%ED%8A%B8+t-2ae893b8&admin_username=opsadmin_e8c99d11&admin_email=opsadmin_e8c99d11%40test.invalid&admin_password=Tenant-Admin-Pw-1%21",
+    "path": "/api/dsm/ops/tenants?code=t-334c1baa&name=%EC%98%A8%EB%B3%B4%EB%94%A9+%EC%8B%9C%ED%97%98+%ED%85%8C%EB%84%8C%ED%8A%B8+t-334c1baa&admin_username=opsadmin_8e35be74&admin_email=opsadmin_8e35be74%40test.invalid&admin_password=Tenant-Admin-Pw-1%21",
     "params": {
-      "code": "t-2ae893b8",
-      "name": "온보딩 시험 테넌트 t-2ae893b8",
-      "admin_username": "opsadmin_e8c99d11",
-      "admin_email": "opsadmin_e8c99d11@test.invalid",
+      "code": "t-334c1baa",
+      "name": "온보딩 시험 테넌트 t-334c1baa",
+      "admin_username": "opsadmin_8e35be74",
+      "admin_email": "opsadmin_8e35be74@test.invalid",
       "admin_password": "Tenant-Admin-Pw-1!"
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "tenant_code": "t-2ae893b8",
+      "tenant_code": "t-334c1baa",
       "tenant_id": 586,
-      "name": "온보딩 시험 테넌트 t-2ae893b8",
-      "admin_username": "opsadmin_e8c99d11",
+      "name": "온보딩 시험 테넌트 t-334c1baa",
+      "admin_username": "opsadmin_8e35be74",
       "admin_role": "admin",
       "region": "",
-      "issued_at": "2026-09-29T10:33:27+00:00"
+      "issued_at": "2026-09-29T11:58:47+00:00"
     }
   },
   "what": "POST /api/dsm/ops/tenants 로 테넌트+초기 관리자 1을 발급한 뒤, 그 관리자 계정으로 실제 POST /api/v1/auth/login 을 두드려 200·access_token 을 받는다 — 완결 조건('테넌트 관리자가 로그인 → 역할 홈')의 앞 절반(로그인)을 발급과 분리된 실제 HTTP 로 증명한다. 뒤 절반(역할 홈)은 role='admin'이 K3 MANAGER 프리셋으로 이미 배선돼 있음을 config/k3_roles.py 가 보장한다(이 시험은 재확인하지 않는다 — 표를 두 벌 두지 않는다, D-212).",

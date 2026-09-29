@@ -1,7 +1,7 @@
 {
   "id": "FWS-F3-09",
   "title": "대응단계 입력 3칸(면적·풍속·시설 우려) → 단계 제안 → F4 확정 요청",
-  "measured_at": "2026-09-29T10:29:08.351970+00:00",
+  "measured_at": "2026-09-29T11:54:30.350902+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_09_StageProposalTest.test_three_inputs_propose_stage_using_p386_constants",
   "request": {
@@ -20,10 +20,10 @@
           "status": "pending_f4_confirmation",
           "__seq__": 308,
           "area_ha": 150.0,
-          "__hash__": "2447fb0e9139125fafc85be176a176fff92160582c8a484a257ee5724c631074",
+          "__hash__": "82bdf51b74fc80dcdcd137957a5a82bfbf4b44a1c829411d4d2f50111fa29c8b",
           "event_id": 555,
           "wind_mps": 1.0,
-          "proposed_at": "2026-09-29T10:29:08.304599+00:00",
+          "proposed_at": "2026-09-29T11:54:30.285483+00:00",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "proposed_stage": "3단계",
           "buildings_at_risk": 0,

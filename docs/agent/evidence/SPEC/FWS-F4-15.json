@@ -33,7 +33,7 @@
       "status": "없음(버튼 미배선)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:52.362138+00:00",
+  "measured_at": "2026-09-29T11:55:14.627477+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_15_PostIncidentReportTest.test_pdf_and_summary_cover_clock_resources_and_evacuation",
   "request": {
@@ -48,7 +48,7 @@
       "response_clock": {
         "event_id": 587,
         "stream_monitor_name": "dsm-stream-A",
-        "occurred_at": "2026-09-29T10:28:50.307308+00:00",
+        "occurred_at": "2026-09-29T11:54:12.686047+00:00",
         "acknowledged_at": null,
         "arrived_at": null,
         "closed_at": null,
@@ -57,7 +57,7 @@
         "close_seconds": null,
         "auto_closed": false,
         "reopened": 0,
-        "elapsed_seconds": 62.049335,
+        "elapsed_seconds": 61.932098,
         "urgency_tier": 1,
         "transitions": []
       },
@@ -67,12 +67,12 @@
           "kind": "crew",
           "note": "",
           "__seq__": 386,
-          "__hash__": "1a2eb44554a4d1e97654047c69c8de5e7debfbffb275b7452ed00a16cb0250c2",
+          "__hash__": "a2317e7db76fabdbea0b012b15753cefa3422dc26156131dcdb3559765e08ab2",
           "event_id": 587,
           "reply_id": 385,
-          "assigned_at": "2026-09-29T10:29:50.440458+00:00",
+          "assigned_at": "2026-09-29T11:55:12.828298+00:00",
           "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #587(주소 미상) 대응 바랍니다.",
-          "__prev_hash__": "c932fcd7bec01cd768fcd261f07e7da42fbb910fb574813ee39c1b159cb79ea2",
+          "__prev_hash__": "402b919c5368ce9ad5bffb269dbfd54d7addb393ca9470f3ae9eb206bcb38890",
           "resource_name": "1진화대",
           "notified_count": 1
         }

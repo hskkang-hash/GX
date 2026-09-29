@@ -1,6 +1,6 @@
 {
   "id": "DSM-U4-08",
-  "measured_at": "2026-09-29T11:03:04.626123+00:00",
+  "measured_at": "2026-09-29T11:50:08.049251+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n4_u4_08_bundle.EvaluationBundleTest.test_bundle_zip_contains_seven_csv_sources_and_a_manifest",
   "request": {
@@ -22,7 +22,7 @@
         "video_access_requests.csv"
       ],
       "manifest": {
-        "generated_at": "2026-09-29T11:03:04.618173+00:00",
+        "generated_at": "2026-09-29T11:50:08.040855+00:00",
         "since": null,
         "until": null,
         "sources": {

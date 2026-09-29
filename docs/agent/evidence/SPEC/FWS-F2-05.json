@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-05",
   "title": "지원 요청(인력·물·헬기·중장비)",
-  "measured_at": "2026-09-29T10:28:41.832292+00:00",
+  "measured_at": "2026-09-29T11:54:05.069640+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_05_SupportRequestTest.test_support_request_reaches_field_reply",
   "request": {

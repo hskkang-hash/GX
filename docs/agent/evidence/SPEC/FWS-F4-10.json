@@ -38,7 +38,7 @@
       "status": "없음(부분 — 사유 입력·전용 타임라인 화면은 미배선, 기본 시계 카드는 표시됨)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:42.619234+00:00",
+  "measured_at": "2026-09-29T11:55:05.393758+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_10_ResponseTimelineTest.test_timeline_layers_fws_milestones_on_dsm_clock",
   "request": {
@@ -52,10 +52,10 @@
       "event_id": 579,
       "response_state": "in_progress",
       "timeline": {
-        "reported_at": "2026-09-29T10:29:42.384246+00:00",
-        "acknowledged_at": "2026-09-29T10:29:42.476958+00:00",
-        "helicopter_dropped_at": "2026-09-29T10:29:42.451457+00:00",
-        "main_fire_out_at": "2026-09-29T10:29:42.552852+00:00",
+        "reported_at": "2026-09-29T11:55:05.076530+00:00",
+        "acknowledged_at": "2026-09-29T11:55:05.194972+00:00",
+        "helicopter_dropped_at": "2026-09-29T11:55:05.152456+00:00",
+        "main_fire_out_at": "2026-09-29T11:55:05.284760+00:00",
         "extinguished_at": null
       },
       "golden_time_seconds": 1800,

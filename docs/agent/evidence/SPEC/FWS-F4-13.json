@@ -23,7 +23,7 @@
       "status": "없음 — 서버 정렬은 실측이지만 지휘 화면에 그 목록·지수 입력 칸이 없다(이 턴 범위 밖 · 화면 미배선)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:48.695577+00:00",
+  "measured_at": "2026-09-29T11:55:11.107496+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_13_PriorityQueueTest.test_recorded_risk_index_orders_queue_not_severity",
   "request": {
@@ -43,9 +43,9 @@
           "severity": "info",
           "risk_index": 86.0,
           "risk_band": "심각",
-          "risk_recorded_at": "2026-09-29T10:29:48.513524+00:00",
+          "risk_recorded_at": "2026-09-29T11:55:10.968888+00:00",
           "response_state": "occurred",
-          "occurred_at": "2026-09-29T10:28:48.243859+00:00",
+          "occurred_at": "2026-09-29T11:54:10.824641+00:00",
           "address": null
         },
         {
@@ -53,9 +53,9 @@
           "severity": "warning",
           "risk_index": 85.9,
           "risk_band": "경계",
-          "risk_recorded_at": "2026-09-29T10:29:48.571784+00:00",
+          "risk_recorded_at": "2026-09-29T11:55:11.011446+00:00",
           "response_state": "occurred",
-          "occurred_at": "2026-09-29T10:27:48.320743+00:00",
+          "occurred_at": "2026-09-29T11:53:10.860927+00:00",
           "address": null
         },
         {
@@ -63,9 +63,9 @@
           "severity": "critical",
           "risk_index": 51.0,
           "risk_band": "주의",
-          "risk_recorded_at": "2026-09-29T10:29:48.617801+00:00",
+          "risk_recorded_at": "2026-09-29T11:55:11.049139+00:00",
           "response_state": "occurred",
-          "occurred_at": "2026-09-29T10:26:48.362762+00:00",
+          "occurred_at": "2026-09-29T11:52:10.890956+00:00",
           "address": null
         },
         {
@@ -75,7 +75,7 @@
           "risk_band": null,
           "risk_recorded_at": null,
           "response_state": "occurred",
-          "occurred_at": "2026-09-29T10:25:48.412888+00:00",
+          "occurred_at": "2026-09-29T11:51:10.919287+00:00",
           "address": null
         }
       ],

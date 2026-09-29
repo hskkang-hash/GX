@@ -1,6 +1,6 @@
 {
   "id": "DSM-U2-04",
-  "measured_at": "2026-09-29T10:34:28.226940+00:00",
+  "measured_at": "2026-09-29T11:59:47.161227+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_dump_dsm_u2_04_evidence",
   "request": {

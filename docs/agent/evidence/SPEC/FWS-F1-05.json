@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-05",
   "title": "확인 요청 수신(카메라 사진·위치·거리·지도)",
-  "measured_at": "2026-09-29T10:28:27.244914+00:00",
+  "measured_at": "2026-09-29T11:53:50.661940+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_05_06_VerificationTest.test_verification_detail_and_fire_confirmed_reply",
   "request": {
@@ -14,7 +14,7 @@
     "body": {
       "verification_id": 532,
       "requested_action": "이 연기, 확인해 주세요",
-      "occurred_at": "2026-09-29T10:27:27.159328+00:00",
+      "occurred_at": "2026-09-29T11:52:50.556609+00:00",
       "snapshot_path": "minio://dsm/1.jpg",
       "lat": null,
       "lng": null,

@@ -1,26 +1,32 @@
 {
   "id": "FWS-F5-01",
   "title": "정찰 임무 수신(발화 추정 좌표·반경) → 열화상 정찰",
-  "measured_at": "2026-09-29T11:02:56.865654+00:00",
+  "measured_at": "2026-09-29T11:55:18.706653+00:00",
   "measured_by": "django_test_client",
-  "test": "tests.test_ap_n4_f5_recon_coords_thermal.F5_01_ReconCoordsTest.test_recon_coords_carries_the_events_lat_lng_and_radius",
+  "test": "tests.test_fws_f5.F5_01_ReconTest.test_request_accept_airborne_return_and_mine_reflects_state",
   "request": {
     "method": "GET",
-    "path": "/api/fws/ap/drone/missions/11/recon-coords",
+    "path": "/api/fws/drone/missions/mine",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 11,
-      "lat": 36.11,
-      "lng": 127.21,
-      "radius_m": 300.0,
-      "state": "request",
-      "requested_at": "2026-09-29T11:02:56.766092+00:00"
+      "requests": [
+        {
+          "event_id": 592,
+          "state": "return",
+          "radius_m": 300.0,
+          "requested_at": "2026-09-29T11:55:18.531348+00:00",
+          "accepted_at": "2026-09-29T11:55:18.580394+00:00",
+          "airborne_at": "2026-09-29T11:55:18.622410+00:00",
+          "returned_at": "2026-09-29T11:55:18.664050+00:00"
+        }
+      ],
+      "count": 1
     }
   },
-  "what": "[턴 AP · 차선 N4] 반쪽 채움 — 정찰 임무의 발화 추정 좌표(K1 이벤트 lat/lng)가 반경과 한 응답에 실린다(drone.py 는 고치지 않고 그 위에 새 door 하나를 더했다)",
+  "what": "정찰 요청(반경 값)→수락→이륙→귀환 상태 전이가 내 대기열(mine)에 그대로 남는다 — 요청·상태 두 축 실측(K1 이벤트를 드론 쪽에서 본 것 · 새 표 없음)",
   "title_parts": [
     {
       "part": "정찰 임무 수신(요청) — 요청 접수",

@@ -1,7 +1,7 @@
 {
   "id": "FWS-F3-04",
   "title": "탐지 확인 요청 1클릭 — 카드에서 가장 가까운 감시원/드론에 확인 요청 · 10분 시계",
-  "measured_at": "2026-09-29T10:28:58.208361+00:00",
+  "measured_at": "2026-09-29T11:54:20.852627+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_04_VerificationRequestTest.test_request_starts_a_ten_minute_clock_and_suggests_nearest_officer",
   "request": {
@@ -16,8 +16,8 @@
     "body": {
       "request_id": 296,
       "event_id": 545,
-      "requested_at": "2026-09-29T10:28:58.111618+00:00",
-      "deadline_at": "2026-09-29T10:38:58.111618+00:00",
+      "requested_at": "2026-09-29T11:54:20.771117+00:00",
+      "deadline_at": "2026-09-29T12:04:20.771117+00:00",
       "timeout_minutes": 10,
       "notified_count": 1,
       "note": "카드 확인",

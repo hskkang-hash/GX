@@ -1,7 +1,7 @@
 {
   "id": "DSM-U3-02",
   "title": "통제 실행 회신",
-  "measured_at": "2026-09-29T10:27:31.615324+00:00",
+  "measured_at": "2026-09-29T11:52:54.612939+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u36_an.U3_02_ControlExecutedTest.test_reached_decided_executed_three_timestamps",
   "request": {
@@ -17,7 +17,7 @@
       "point_id": 189,
       "stage": "실행",
       "stage_id": 191,
-      "occurred_at": "2026-09-29T10:27:31.556Z"
+      "occurred_at": "2026-09-29T11:52:54.550Z"
     }
   },
   "what": "도달(등록)→결정(advance)→실행(POST /controls/{id}/executed) 셋을 순서대로 남기면 현황판(GET /control-points)의 지점 행이 '실행' 단계를 보여준다 — 완결조건(3시각) 그대로",

@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-03",
   "title": "오늘 위험지수·위기경보·입산통제 확인",
-  "measured_at": "2026-09-29T10:28:25.236317+00:00",
+  "measured_at": "2026-09-29T11:53:48.684447+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_03_RiskTodayTest.test_risk_band_has_the_contract_shape",
   "request": {

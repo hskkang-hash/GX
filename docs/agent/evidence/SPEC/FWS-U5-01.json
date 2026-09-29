@@ -1,7 +1,7 @@
 {
   "id": "FWS-U5-01",
   "title": "산불 감시 카메라 등록(고지대·PTZ 프리셋·열화상 채널·감시 반경 폴리곤)",
-  "measured_at": "2026-09-29T10:30:24.289678+00:00",
+  "measured_at": "2026-09-29T11:55:45.059511+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_u5.U5_01_CameraFireMarkerTest.test_save_and_reread_carries_every_named_part",
   "request": {
@@ -34,7 +34,7 @@
           "lng": 127.3
         }
       ],
-      "saved_at": "2026-09-29T10:30:24.226843+00:00"
+      "saved_at": "2026-09-29T11:55:44.944438+00:00"
     }
   },
   "what": "POST .../cameras/{id}/fire-marker 로 저장한 고지대·열화상 채널·PTZ 프리셋·감시 반경 폴리곤이 재조회·목록 양쪽에 그대로 실려 온다 — 기존 DSM 카메라 모델(StreamMonitor)을 재사용하고 표식만 더했다",

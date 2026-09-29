@@ -23,7 +23,7 @@
       "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:29.742999+00:00",
+  "measured_at": "2026-09-29T11:54:51.752991+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_03_CommandPostTest.test_declare_then_hourly_approval_reflects_it",
   "request": {
@@ -44,7 +44,7 @@
       "org_composition": "산림과·소방서·경찰서",
       "situation_room_phone": "033-123-4567",
       "note": "",
-      "declared_at": "2026-09-29T10:29:29.590131+00:00",
+      "declared_at": "2026-09-29T11:54:51.579898+00:00",
       "declared_by": "dsm_user_a"
     }
   },

@@ -48,7 +48,7 @@
       "status": "없음 — 명세 §4.3 이 부르는 「헬기 투하」 시각이 저장소에 없어 그 기준의 준수율은 재지 못한다(응답 golden_time_note 에 명시 · 지어내지 않는다)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:18.038433+00:00",
+  "measured_at": "2026-09-29T11:54:40.441309+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_16_FireStatsTest.test_stats_covers_all_eight_parts",
   "request": {
@@ -63,8 +63,7 @@
       "until": null,
       "occurrence_count": 5,
       "by_hour": {
-        "9": 3,
-        "10": 2
+        "11": 5
       },
       "by_zone": {
         "dsm-stream-A": 5

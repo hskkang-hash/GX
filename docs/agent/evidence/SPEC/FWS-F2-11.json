@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-11",
   "title": "철수·복귀 회신",
-  "measured_at": "2026-09-29T10:28:38.858693+00:00",
+  "measured_at": "2026-09-29T11:54:02.231867+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_mission_detail_dispatch_arrive_release_chain",
   "request": {
@@ -17,7 +17,7 @@
     "body": {
       "mission_id": 535,
       "action": "released",
-      "released_at": "2026-09-29T10:28:38.812773+00:00",
+      "released_at": "2026-09-29T11:54:02.175530+00:00",
       "duration_minutes": 0.0,
       "to": "in_progress",
       "event_advanced": false

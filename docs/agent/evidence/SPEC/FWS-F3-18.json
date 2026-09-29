@@ -13,7 +13,7 @@
       "status": "구현 — 같은 테넌트 두 사람이 설정한 구역 2건 모두 조회 실측(다른 테넌트는 0건 실측)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:22.497703+00:00",
+  "measured_at": "2026-09-29T11:54:44.554462+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_18_PatrolEnforcementTest.test_record_stats_and_zone_management",
   "request": {
@@ -26,20 +26,20 @@
     "body": {
       "zones": [
         {
-          "set_at": "2026-09-29T10:29:22.380865+00:00",
+          "set_at": "2026-09-29T11:54:44.423743+00:00",
           "status": "active",
           "__seq__": 333,
-          "__hash__": "81c7134401a9ae8c3c65d8ee9442e0e66ba7f48b1216046295b09ba143e588e0",
+          "__hash__": "c290468435c026ab09efa6fc179fc0f33ee0a8d8580eee42e1152a082b51c041",
           "zone_name": "XX능선",
-          "__prev_hash__": "a7b0d066e835ab49cbba464c3c4457f84c0f3a8bfebc3af22badea0cd39b60e7"
+          "__prev_hash__": "4165d23836ffcf0ee305b5887c04601251cf012f3ea1b6b98bcd12a2e008a0f3"
         },
         {
-          "set_at": "2026-09-29T10:29:22.331456+00:00",
+          "set_at": "2026-09-29T11:54:44.381380+00:00",
           "status": "active",
           "__seq__": 332,
-          "__hash__": "a7b0d066e835ab49cbba464c3c4457f84c0f3a8bfebc3af22badea0cd39b60e7",
+          "__hash__": "4165d23836ffcf0ee305b5887c04601251cf012f3ea1b6b98bcd12a2e008a0f3",
           "zone_name": "OO봉 일대",
-          "__prev_hash__": "67d5be22999aa9682784cf52c40177b232627b4606c849d3d6991167171d5fa7"
+          "__prev_hash__": "9739231d0f412ebade91ba84cf2c7bd8d72135404d1d39f4ac8e1bb721651503"
         }
       ],
       "scope": "tenant"

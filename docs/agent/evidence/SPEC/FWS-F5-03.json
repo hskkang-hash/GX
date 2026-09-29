@@ -1,28 +1,29 @@
 {
   "id": "FWS-F5-03",
   "title": "확인 회신(산불 맞음/오인 · 사진·열화상)",
-  "measured_at": "2026-09-29T11:02:58.436786+00:00",
+  "measured_at": "2026-09-29T11:55:22.293859+00:00",
   "measured_by": "django_test_client",
-  "test": "tests.test_ap_n4_f5_recon_coords_thermal.F5_03_ThermalAttachmentTest.test_thermal_ref_is_a_separate_slot_from_photo_attachment_ref",
+  "test": "tests.test_fws_f5.F5_03_ConfirmResultTest.test_fire_confirmed_requires_attachment_ref",
   "request": {
-    "method": "GET",
-    "path": "/api/fws/ap/drone/verifications/14/thermal-attachment",
-    "params": {}
+    "method": "POST",
+    "path": "/api/fws/drone/verifications/598/reply?result=fire_confirmed&attachment_ref=minio%3A%2F%2Fdrone%2F1.jpg",
+    "params": {
+      "result": "fire_confirmed",
+      "attachment_ref": "minio://drone/1.jpg"
+    }
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 14,
-      "attachments": [
-        {
-          "thermal_id": 29,
-          "thermal_ref": "minio://drone/thermal.tiff"
-        }
-      ],
-      "count": 1
+      "verification_id": 598,
+      "reply_id": 411,
+      "result": "fire_confirmed",
+      "reason_code": null,
+      "verdict": "confirmed",
+      "attachment_ref": "minio://drone/1.jpg"
     }
   },
-  "what": "[턴 AP · 차선 N4] 반쪽 채움 — 사진 참조(attachment_ref, F1-06 재사용)와 열화상 참조(thermal_ref, 새 door)가 서로 다른 칸에 남는다. 판정은 여전히 F1-06/confirm_result 문 하나가 한다 (P-357, 두 번째 판정 문을 만들지 않았다)",
+  "what": "드론 확인 회신(산불 맞음 + 사진·열화상 참조)이 K1 사건의 verdict 를 confirmed 로 바꾼다 — F1-06 문 재사용(P-357) + 참조 값 필수화 실측(참조 없이 fire_confirmed 는 422)",
   "title_parts": [
     {
       "part": "확인 회신 행위(POST reply)",

@@ -1,14 +1,14 @@
 {
   "id": "O-06",
   "title": "인시던트",
-  "measured_at": "2026-09-29T10:33:34.590824+00:00",
+  "measured_at": "2026-09-29T11:58:54.060161+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O06_IncidentLifecycleTest.test_open_respond_escalate_close",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/ops/incidents?tenant_code=t-c82fe3c9&app_code=dsm&severity=critical&summary=%EC%B9%B4%EB%A9%94%EB%9D%BC+%EA%B5%B0%EC%A7%91+%EB%91%90%EC%A0%88",
+    "path": "/api/dsm/ops/incidents?tenant_code=t-bd504f02&app_code=dsm&severity=critical&summary=%EC%B9%B4%EB%A9%94%EB%9D%BC+%EA%B5%B0%EC%A7%91+%EB%91%90%EC%A0%88",
     "params": {
-      "tenant_code": "t-c82fe3c9",
+      "tenant_code": "t-bd504f02",
       "app_code": "dsm",
       "severity": "critical",
       "summary": "카메라 군집 두절"
@@ -17,13 +17,13 @@
   "response": {
     "status": 200,
     "body": {
-      "incident_id": "5dee0d7563c5",
-      "tenant_code": "t-c82fe3c9",
+      "incident_id": "212c397a9fa6",
+      "tenant_code": "t-bd504f02",
       "app_code": "dsm",
       "severity": "critical",
       "summary": "카메라 군집 두절",
       "status": "open",
-      "opened_at": "2026-09-29T10:33:34.439690+00:00",
+      "opened_at": "2026-09-29T11:58:53.931514+00:00",
       "sla_first_response_due": "2026-09-30T04:00:00+00:00",
       "sla_escalation_due": "2026-10-01T00:00:00+00:00",
       "acknowledged_at": null,

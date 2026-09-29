@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-06",
   "title": "현장 확인 회신(산불 맞음/소각·오인/접근 불가)",
-  "measured_at": "2026-09-29T10:28:27.302665+00:00",
+  "measured_at": "2026-09-29T11:53:50.754588+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_05_06_VerificationTest.test_verification_detail_and_fire_confirmed_reply",
   "request": {

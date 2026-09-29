@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-02",
   "title": "임무 수신(출동 지시)",
-  "measured_at": "2026-09-29T10:28:38.632038+00:00",
+  "measured_at": "2026-09-29T11:54:01.924625+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_mission_detail_dispatch_arrive_release_chain",
   "request": {
@@ -19,7 +19,7 @@
       },
       "address": null,
       "severity": "critical",
-      "occurred_at": "2026-09-29T10:23:38.566945+00:00",
+      "occurred_at": "2026-09-29T11:49:01.821864+00:00",
       "snapshot_path": "minio://dsm/1.jpg",
       "response_state": "occurred",
       "status": "new",

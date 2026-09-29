@@ -33,7 +33,7 @@
       "status": "구현 — 승인 대기 상태로 남는다(F4 확정은 F4 담당 몫)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:10.245409+00:00",
+  "measured_at": "2026-09-29T11:54:32.120286+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_11_EvacuationPlanTest.test_plan_drafts_cbs_text_per_village_and_waits_for_f4_approval",
   "request": {
@@ -60,7 +60,7 @@
           "shelter": "XX마을회관"
         }
       ],
-      "drafted_at": "2026-09-29T10:29:10.222574+00:00",
+      "drafted_at": "2026-09-29T11:54:32.102437+00:00",
       "drafts": [
         {
           "village": "OO면 OO리",
@@ -68,7 +68,7 @@
           "event_id": 557,
           "area_name": "OO면 OO리",
           "note": "대피소: OO경로당",
-          "drafted_at": "2026-09-29T10:29:10.196663+00:00",
+          "drafted_at": "2026-09-29T11:54:32.077678+00:00",
           "kind": "order",
           "deadline_hours": 8.0,
           "short": "[산불대피지시] OO면 OO리 8시간내 대피소 이동 바람. 문의 산림과·119.",
@@ -82,7 +82,7 @@
           "event_id": 557,
           "area_name": "OO면 XX리",
           "note": "대피소: XX마을회관",
-          "drafted_at": "2026-09-29T10:29:10.213486+00:00",
+          "drafted_at": "2026-09-29T11:54:32.093357+00:00",
           "kind": "order",
           "deadline_hours": 8.0,
           "short": "[산불대피지시] OO면 XX리 8시간내 대피소 이동 바람. 문의 산림과·119.",

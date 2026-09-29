@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-03",
   "title": "이동·도착 회신(GPS)",
-  "measured_at": "2026-09-29T10:28:38.789655+00:00",
+  "measured_at": "2026-09-29T11:54:02.134063+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_mission_detail_dispatch_arrive_release_chain",
   "request": {
@@ -18,7 +18,7 @@
     "body": {
       "mission_id": 535,
       "action": "arrived",
-      "arrived_at": "2026-09-29T10:28:38.712379+00:00",
+      "arrived_at": "2026-09-29T11:54:02.053465+00:00",
       "elapsed_minutes": 5.0,
       "within_30_min": true,
       "event_id": 535,

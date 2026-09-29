@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-01",
   "title": "근무 시작·초소 체크인(NFC/GPS)",
-  "measured_at": "2026-09-29T10:28:21.845871+00:00",
+  "measured_at": "2026-09-29T11:53:45.561513+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_01_CheckinTest.test_checkin_sets_on_duty_status_with_location",
   "request": {
@@ -20,7 +20,7 @@
       "post_code": "P-12",
       "status": "on_duty",
       "method": "gps",
-      "checked_in_at": "2026-09-29T10:28:21.829873+00:00",
+      "checked_in_at": "2026-09-29T11:53:45.542401+00:00",
       "location": {
         "lat": 36.35,
         "lng": 127.38

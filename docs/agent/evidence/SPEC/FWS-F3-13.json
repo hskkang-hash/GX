@@ -48,7 +48,7 @@
       "status": "구현 — 신고일시 등 라벨 실측"
     }
   ],
-  "measured_at": "2026-09-29T10:29:13.934257+00:00",
+  "measured_at": "2026-09-29T11:54:36.246271+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_13_HourlyReportTest.test_draft_then_export_and_list",
   "request": {
@@ -66,8 +66,8 @@
     "status": 200,
     "body": {
       "event_id": 559,
-      "hour": "2026-09-29T10:00",
-      "occurred_at": "2026-09-29T10:28:13.795257+00:00",
+      "hour": "2026-09-29T11:00",
+      "occurred_at": "2026-09-29T11:53:36.093118+00:00",
       "lat": null,
       "lng": null,
       "address": null,
@@ -78,7 +78,7 @@
       "casualties_count": 0,
       "facility_note": "인근 민가 3동 위험",
       "weather_note": "풍속 4m/s 남서풍",
-      "drafted_at": "2026-09-29T10:29:13.867356+00:00",
+      "drafted_at": "2026-09-29T11:54:36.178922+00:00",
       "kfs_export": {
         "format": "json",
         "event_id": 559,
@@ -86,7 +86,7 @@
           {
             "key": "occurred_at",
             "label": "신고일시",
-            "value": "2026-09-29T10:28:13.795257+00:00"
+            "value": "2026-09-29T11:53:36.093118+00:00"
           },
           {
             "key": "lat",

@@ -1,6 +1,22 @@
 {
   "id": "FWS-F2-07",
   "title": "안전 경보 수신(풍향 급변·헬기 투하 구역 이탈)",
+  "measured_at": "2026-09-29T11:54:07.038457+00:00",
+  "measured_by": "django_test_client",
+  "test": "tests.test_fws_f2.F2_07_SafetyAlertTest.test_wind_shift_alert_arrives_and_acks_via_shared_alerts_endpoint",
+  "request": {
+    "method": "POST",
+    "path": "/api/fws/alerts/42/ack",
+    "params": {}
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "delivery_id": 42,
+      "acknowledged": true
+    }
+  },
+  "what": "F2 안전 경보(풍향 급변 등)도 F1-10 이 연 GET /alerts·POST /alerts/{id}/ack 로 도달·확인된다 — 새 문을 열지 않고 재사용 실측(K2 발송은 채널·내용을 안 가린다)",
   "title_parts": [
     {
       "part": "안전 경보 도달(내게 온 알림 목록)",
@@ -47,33 +63,5 @@
       "status": "없음 — F2 진화대 화면에 안전 경보 칸·확인 버튼이 없다(명세 FM3 「풍향 급변 경보 시 이 칸이 빨강」)"
     }
   ],
-  "measured_at": "2026-09-29T11:02:38.082071+00:00",
-  "measured_by": "django_test_client",
-  "test": "tests.test_ap_n2_fws_safety_alerts.DropZoneExitRuleTest.test_drop_zone_boundary_and_delivery",
-  "request": {
-    "method": "POST",
-    "path": "/api/fws/command/incidents/6/drop-zone-position",
-    "params": {
-      "center": {
-        "lat": 36.35,
-        "lng": 127.38
-      },
-      "offset_m": 301.0
-    }
-  },
-  "response": {
-    "status": 200,
-    "body": {
-      "event_id": 6,
-      "distance_m": 301.0,
-      "radius_m": 300.0,
-      "threshold_unset": false,
-      "judged": true,
-      "alert_fired": true,
-      "alert_reason": "헬기 투하 구역 이탈 — 301m(문턱 300m 초과)",
-      "delivered_count": 1
-    }
-  },
-  "what": "F4-04 승인 투하 구역 중심에서 299m(경보 없음) → 301m(경보 발송 · GET /api/fws/alerts 도달) 실측. 풍향 급변(45도 그대로 없음 · 46도 발송 · ack)은 WindShiftRuleTest 가 같은 표로 잰다(F1-10 증거에 그 응답). 문턱은 시험 주입값(명세에 숫자 없음)",
   "retro": "P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 판정 규칙 (apps/fws/alerts.py::report_wind_direction·report_drop_zone_position)을 HTTP 로 두드려 문턱 아래는 경보 0 · 문턱 위는 notify_event→K2 발송→GET /api/fws/alerts 도달→ack 를 대조했다. 문턱 숫자는 명세에 없어 constants.py 에 이름만 요청했고 (값 None → judged=false), 시험은 주입값으로 경계를 쟀다 — 규정값 행은 열린 채 둔다."
 }

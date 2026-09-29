@@ -23,7 +23,7 @@
       "status": "구현 — 50.0 실측(2곳 중 1곳 완료)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:12.202828+00:00",
+  "measured_at": "2026-09-29T11:54:34.390884+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_12_EvacuationProgressTest.test_progress_then_status_shows_percent_and_remaining",
   "request": {
@@ -42,14 +42,14 @@
           "completed": true,
           "remaining_residents": 0,
           "care_facility_cleared": true,
-          "recorded_at": "2026-09-29T10:29:12.115087+00:00"
+          "recorded_at": "2026-09-29T11:54:34.256214+00:00"
         },
         {
           "village": "서리",
           "completed": false,
           "remaining_residents": 3,
           "care_facility_cleared": false,
-          "recorded_at": "2026-09-29T10:29:12.150476+00:00"
+          "recorded_at": "2026-09-29T11:54:34.329808+00:00"
         }
       ],
       "total_villages": 2,

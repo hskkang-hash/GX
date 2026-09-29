@@ -48,7 +48,7 @@
       "status": "없음(버튼 미배선 — 서버 상태변화는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:54.662747+00:00",
+  "measured_at": "2026-09-29T11:55:16.351328+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_01_CommandScreenTest.test_one_screen_bundles_stage_resources_clock_evacuation_post",
   "request": {
@@ -64,16 +64,16 @@
         "address": null,
         "severity": "critical",
         "response_state": "occurred",
-        "occurred_at": "2026-09-29T10:28:54.276576+00:00"
+        "occurred_at": "2026-09-29T11:54:16.000334+00:00"
       },
       "stage": {
         "stage": "2단계",
         "reason": "확산 우려",
         "__seq__": 389,
-        "__hash__": "96271f84be888c3aa01820b8d20d537a2de713deb01c5f330e94e9b3eb397559",
+        "__hash__": "1899b25a7aaf52099e6d38043011dd7e9ed1546454429af68a28c0f2defe22f1",
         "event_id": 588,
         "prior_stage": null,
-        "confirmed_at": "2026-09-29T10:29:54.344060+00:00",
+        "confirmed_at": "2026-09-29T11:55:16.066486+00:00",
         "confirmed_by": "dsm_user_a",
         "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
         "command_level": null
@@ -83,18 +83,18 @@
           "kind": "crew",
           "note": "",
           "__seq__": 391,
-          "__hash__": "ce80247a7672198d5c236dc7ced5ae72a1c2d20c60ae5f9e84d6b2ec8d7894e9",
+          "__hash__": "b996bc3fc6f2efb1f047e942c5b0d5ec2bb66fcdaa811e7aa0ed6d787b854e7c",
           "event_id": 588,
           "reply_id": 390,
-          "assigned_at": "2026-09-29T10:29:54.433697+00:00",
+          "assigned_at": "2026-09-29T11:55:16.151987+00:00",
           "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #588(주소 미상) 대응 바랍니다.",
-          "__prev_hash__": "4625da98231add1211feedbea9dd94a115bb4a6ca81a449da1002428788a8d33",
+          "__prev_hash__": "de52bb8a2b9482e255686d28a0e9c3a3e2ef99e7fb8319b6944f1c27a402ad09",
           "resource_name": "1진화대",
           "notified_count": 1
         }
       ],
       "response_clock": {
-        "reported_at": "2026-09-29T10:28:54.276576+00:00",
+        "reported_at": "2026-09-29T11:54:16.000334+00:00",
         "acknowledged_at": null,
         "helicopter_dropped_at": null,
         "main_fire_out_at": null,
@@ -108,11 +108,11 @@
         "note": "",
         "__seq__": 394,
         "address": "OO지휘소",
-        "__hash__": "2759ef12a9487e0af19a98cec5d0d8d52a42419141da736dcb7dd32e9e105439",
+        "__hash__": "dcd657c67851e56b0cfac6bb5d8c1e3dc6cf0a406739f9c86953b4dd19f15efd",
         "event_id": 588,
-        "declared_at": "2026-09-29T10:29:54.541097+00:00",
+        "declared_at": "2026-09-29T11:55:16.255734+00:00",
         "declared_by": "dsm_user_a",
-        "__prev_hash__": "dbd7d95b28ee6a74a6a12ce8c8c2d6f1efb9beadc6913054a8f0443742e3bb63",
+        "__prev_hash__": "feb929eecc7c41867c7ab4001e504de9b83e65eeddea4700dcdd02391cd4816b",
         "org_composition": "산림과·소방서",
         "situation_room_phone": null
       }

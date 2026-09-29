@@ -1,7 +1,7 @@
 {
   "id": "FWS-F6-02",
   "title": "웹훅 이벤트 종류(fws.fire.confirmed/stage_changed/evacuation_ordered/extinguished)",
-  "measured_at": "2026-09-29T10:30:09.553350+00:00",
+  "measured_at": "2026-09-29T11:55:29.753886+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_02_WebhookEventsTest.test_notify_reaches_a_subscribed_situation_room_with_200",
   "request": {

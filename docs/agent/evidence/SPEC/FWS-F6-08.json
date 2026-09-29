@@ -1,7 +1,7 @@
 {
   "id": "FWS-F6-08",
   "title": "경찰 교통통제·입산통제 협조 기록",
-  "measured_at": "2026-09-29T10:30:18.573912+00:00",
+  "measured_at": "2026-09-29T11:55:39.025239+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_08_PoliceCoordinationTest.test_record_then_list_by_event",
   "request": {
@@ -19,9 +19,9 @@
           "kind": "traffic_control",
           "note": "OO로 3km 구간 전면 통제",
           "__seq__": 421,
-          "__hash__": "202b91ec8365813faf5d948ad2136238a57d014f6f16a937a5472eca6742402f",
+          "__hash__": "d56a8e5b7fdb2d87da2575710f4e4b620a65cb245ad3ff0c955192c7f9296005",
           "event_id": 611,
-          "recorded_at": "2026-09-29T10:30:18.524604+00:00",
+          "recorded_at": "2026-09-29T11:55:38.974517+00:00",
           "recorded_by": "dsm_user_a",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000"
         }

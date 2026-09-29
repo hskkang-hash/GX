@@ -18,7 +18,7 @@
       "status": "없음(미배선)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:46.695816+00:00",
+  "measured_at": "2026-09-29T11:55:09.121751+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_12_SituationMeetingTest.test_record_then_list_is_scoped_to_this_event",
   "request": {
@@ -34,7 +34,7 @@
     "status": 200,
     "body": {
       "meeting_id": 380,
-      "occurred_at": "2026-09-29T10:29:46.616Z",
+      "occurred_at": "2026-09-29T11:55:09.039Z",
       "attendees": "산림과장·소방서장",
       "decision": "2단계 유지",
       "basis": "풍속 4m/s",

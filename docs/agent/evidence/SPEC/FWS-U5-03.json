@@ -1,7 +1,7 @@
 {
   "id": "FWS-U5-03",
   "title": "마을·대피소·요양시설 등록(대피 대상 자동 산출)",
-  "measured_at": "2026-09-29T10:30:29.260051+00:00",
+  "measured_at": "2026-09-29T11:55:49.966066+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_u5.U5_03_EvacTargetsTest.test_registering_villages_and_shelters_auto_computes_targets",
   "request": {
@@ -17,21 +17,21 @@
           "kind": "shelter",
           "name": "만안초 체육관",
           "note": "",
-          "saved_at": "2026-09-29T10:30:29.157056+00:00",
+          "saved_at": "2026-09-29T11:55:49.858879+00:00",
           "headcount": 400
         },
         {
           "kind": "care_facility",
           "name": "○○요양원",
           "note": "",
-          "saved_at": "2026-09-29T10:30:28.685895+00:00",
+          "saved_at": "2026-09-29T11:55:49.299711+00:00",
           "headcount": 41
         },
         {
           "kind": "village",
           "name": "안양천마을",
           "note": "",
-          "saved_at": "2026-09-29T10:30:28.644862+00:00",
+          "saved_at": "2026-09-29T11:55:49.236050+00:00",
           "headcount": 312
         }
       ],

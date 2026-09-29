@@ -28,7 +28,7 @@
       "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
     }
   ],
-  "measured_at": "2026-09-29T10:29:27.941849+00:00",
+  "measured_at": "2026-09-29T11:54:49.844243+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_02_StageConfirmTest.test_confirm_stage_records_badge_and_command_level_transfer",
   "request": {
@@ -49,7 +49,7 @@
       "prior_stage": null,
       "reason": "풍속 급증",
       "command_level": "시도",
-      "confirmed_at": "2026-09-29T10:29:27.898460+00:00",
+      "confirmed_at": "2026-09-29T11:54:49.792461+00:00",
       "confirmed_by": "dsm_user_a"
     }
   },

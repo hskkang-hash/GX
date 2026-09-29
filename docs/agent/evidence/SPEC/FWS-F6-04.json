@@ -1,25 +1,25 @@
 {
   "id": "FWS-F6-04",
   "title": "확산예측 결과 수신(API [미확인] 또는 업로드)",
-  "measured_at": "2026-09-29T11:03:00.026982+00:00",
+  "measured_at": "2026-09-29T11:50:03.392109+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n4_f6_spread_upload.F6_04_SpreadUploadTest.test_upload_then_list_reads_back_the_same_values",
   "request": {
     "method": "GET",
-    "path": "/api/fws/ap/incidents/17/spread-results",
+    "path": "/api/fws/ap/incidents/30/spread-results",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 17,
+      "event_id": 30,
       "results": [
         {
-          "spread_id": 30,
+          "spread_id": 67,
           "source": "upload",
           "image_ref": "minio://fws/spread-1.png",
           "arrival_note": "본촌리 08:00",
-          "uploaded_at": "2026-09-29T11:02:59.979109+00:00"
+          "uploaded_at": "2026-09-29T11:50:03.352721+00:00"
         }
       ],
       "count": 1

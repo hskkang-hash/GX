@@ -1,7 +1,7 @@
 {
   "id": "O-08",
   "title": "온보딩 관제",
-  "measured_at": "2026-09-29T10:33:38.880093+00:00",
+  "measured_at": "2026-09-29T11:58:58.047722+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O08_OnboardingBoardTest.test_reads_the_48_row_ledger",
   "request": {
@@ -13,7 +13,7 @@
     "status": 200,
     "body": {
       "read": true,
-      "source": "/docs/agent/evidence/ONB-T/turn_ao_8.json",
+      "source": "/docs/agent/evidence/ONB-T/turn_ap_9.json",
       "denominator": 48,
       "score_over_denominator": "34.5/48",
       "green": 31,
@@ -75,7 +75,7 @@
         },
         {
           "row": "U1#11",
-          "why": "큐 화면에 「실제로 확인 · 접수」 이 보이지 않는다 — 보이는 단추 ['종결하기'] · 초점 사건이 미처리가 아니면 이 단추는 없다(데이터 상태) · 본문 '지금 처리할 것\\n무슨 일 있었나\\n카메라 격자\\n인계 메모\\n처음이세요\\nGuardianX는 대응 시간을 잽니다.\\n지금 처리할 것 — 가장 급한 하나\\n?\\n단축키\\n소리 켜기\\n갱신 08:01'"
+          "why": "큐 화면에 「실제로 확인 · 접수」 이 보이지 않는다 — 보이는 단추 ['종결하기'] · 초점 사건이 미처리가 아니면 이 단추는 없다(데이터 상태) · 본문 '지금 처리할 것\\n무슨 일 있었나\\n카메라 격자\\n인계 메모\\n처음이세요\\nGuardianX는 대응 시간을 잽니다.\\n지금 처리할 것 — 가장 급한 하나\\n?\\n단축키\\n소리 켜기\\n갱신 11:25'"
         },
         {
           "row": "U2#2",
@@ -87,7 +87,7 @@
         },
         {
           "row": "U3#1",
-          "why": "POST notify [] · deliveries 0 → 13 · 결과 문장=False · /m/inbox 카드=False"
+          "why": "POST notify [] · deliveries 0 → 13 · 결과 문장=False · /m/inbox mine=true 호출 1건 (카드 유무는 안 본다 — 발신자=수신자 가정 제거 · P-425)"
         },
         {
           "row": "U3#14",

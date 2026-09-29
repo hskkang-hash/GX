@@ -1,7 +1,7 @@
 {
   "id": "DSM-U3-01",
   "title": "역할별 M2 문안",
-  "measured_at": "2026-09-29T10:27:29.757533+00:00",
+  "measured_at": "2026-09-29T11:52:52.790289+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u36_an.U3_01_M2BriefTest.test_role_and_event_type_pick_the_exact_dictionary_line",
   "request": {

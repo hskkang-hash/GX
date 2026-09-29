@@ -1,6 +1,6 @@
 {
   "id": "P376_DSM-U5-02-permissions",
-  "measured_at": "2026-09-29T10:35:18.834475+00:00",
+  "measured_at": "2026-09-29T12:00:36.328715+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p376_half_clauses.AccessPermissionMatrixTest.test_sysop_sees_person_camera_and_feature_permissions",
   "request": {
