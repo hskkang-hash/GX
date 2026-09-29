@@ -14,6 +14,7 @@ from apps.fws.api_office import FwsOfficeAPI
 from apps.fws.api_office2 import FwsOffice2API
 from apps.fws.api_n1 import FwsN1API
 from apps.fws.api_command import FwsCommandAPI
+from apps.fws.api_ap import FwsApAPI
 
 fws_api = NinjaExtraAPI(urls_namespace="fws")
 fws_api.register_controllers(FwsAPI)
@@ -21,6 +22,8 @@ fws_api.register_controllers(FwsAPI)
 fws_api.register_controllers(FwsOfficeAPI, FwsOffice2API, FwsAdminAPI, FwsN1API)
 # 턴 AO · 차선 N2
 fws_api.register_controllers(FwsCommandAPI)
+# 턴 AP · 차선 N4
+fws_api.register_controllers(FwsApAPI)
 
 urlpatterns = [
     path("", fws_api.urls),
