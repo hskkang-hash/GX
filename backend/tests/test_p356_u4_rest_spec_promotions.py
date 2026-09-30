@@ -575,8 +575,7 @@ class EvidenceExportTest(U4Fixture):
             "what": what,
         }
         #: [턴 AN · P-392] 「제목이 부르는 것 ↔ 있는 것」 표 — 빈 칸 0(협약 §끝낼 때).
-        if title_parts is not None:
-            payload["title_parts"] = title_parts
+        #: [턴 AQ · P-431 · 차선 Q] 표는 json 에 **안 쓴다** — 정본은 `SPEC/<id>.retro.md`(손으로만).
         #: [턴 AN · P-392 결정 ⑤] DSM-U4-01(HWPX) 처럼 **채우지 않기로 정한** 절은
         #: 전체 표 대신 사유 한 줄만 남긴다.
         if decision_note:
@@ -599,10 +598,7 @@ class EvidenceExportTest(U4Fixture):
                     prev = json.loads(out_path.read_text(encoding="utf-8"))
                 except (ValueError, OSError):
                     prev = {}
-            if title_parts is None or "retro" in prev:
-                for keep in ("title_parts", "title_parts_note", "retro"):
-                    if keep in prev:
-                        payload[keep] = prev[keep]
+            del prev    # [턴 AQ · P-431] 사람 표 키를 옮기지 않는다(.retro.md 가 정본)
             out_path.write_text(
                 json.dumps(payload, ensure_ascii=False, indent=2, default=str),
                 encoding="utf-8")

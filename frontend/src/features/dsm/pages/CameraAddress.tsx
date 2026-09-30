@@ -18,7 +18,7 @@
  *   같은 판정식을 지난다. 틀린 주소는 없는 주소보다 나쁘다: 그 주소가 알림에 그대로
  *   나가 사람을 엉뚱한 곳으로 보낸다.
  */
-import { Alert, Button, Card, Descriptions, Form, Input, Space, Table, Typography } from 'antd';
+import { Alert, Button, Card, Descriptions, Form, Input, Space, Table, Tag, Typography } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -66,6 +66,8 @@ interface AddressGap {
   total: number;
   with_address: number;
   without_address: number;
+  /** [턴 AQ · U5#5] 주소가 빈 카메라의 id — 이 행들을 표 위로 올리고 표식을 단다. */
+  without_address_ids?: number[];
   coverage: number;
   measurable: boolean;
 }
@@ -101,6 +103,14 @@ const ACTION_LABEL: Record<string, string> = {
  * ⚠ 쉼표·따옴표·줄바꿈이 든 값은 반드시 감싼다. 안 감싸면 주소 한가운데의 쉼표가
  *   칸을 하나 늘려 **엉뚱한 카메라의 주소**가 된다.
  */
+/** [턴 AQ · U5#5] 주소 없는 카메라를 표 맨 위로 — 「이 한 대 채우기」가 빈 행부터 채우게 한다.
+ *  id 목록을 못 받으면 순서를 건드리지 않는다(짐작하지 않는다). */
+function missingFirst(rows: CameraRow[], missing?: number[]): CameraRow[] {
+  if (!missing || missing.length === 0) return rows;
+  const set = new Set(missing);
+  return [...rows.filter((r) => set.has(r.id)), ...rows.filter((r) => !set.has(r.id))];
+}
+
 function oneRowCsv(name: string, address: string, detail: string): string {
   const cell = (v: string) => `"${v.replace(/"/g, '""')}"`;
   return `name,address,detail\n${cell(name)},${cell(address)},${cell(detail)}\n`;
@@ -250,9 +260,19 @@ export default function CameraAddress() {
               size="small"
               rowKey={(r) => r.id}
               pagination={{ pageSize: 10, size: 'small' }}
-              dataSource={cameras.data?.cameras ?? []}
+              dataSource={missingFirst(cameras.data?.cameras ?? [], gap.data?.without_address_ids)}
               columns={[
                 { title: '카메라', dataIndex: 'name' },
+                {
+                  title: '지금 주소',
+                  dataIndex: 'id',
+                  render: (id: number) =>
+                    (gap.data?.without_address_ids ?? []).includes(id) ? (
+                      <Tag color="orange" data-gx="camera-address-row-missing">주소 없음</Tag>
+                    ) : gap.data?.without_address_ids ? (
+                      <Tag>주소 있음</Tag>
+                    ) : null,
+                },
                 {
                   title: '도로명주소',
                   dataIndex: 'id',

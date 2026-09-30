@@ -1,7 +1,7 @@
 {
   "id": "DSM-U6-03",
   "title": "사회적약자(실종) 요청 수신 → 객체 검색 사건 생성",
-  "measured_at": "2026-09-29T11:52:58.384904+00:00",
+  "measured_at": "2026-09-30T05:23:19.737314+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u36_an.U6_03_SearchRequestTest.test_request_creates_exactly_one_case_and_one_audit_line",
   "request": {
@@ -10,14 +10,14 @@
     "params": {
       "requester_agency": "OO경찰서 여성청소년과",
       "subject_description": "70대 남성 · 회색 상의 · 지팡이 사용",
-      "last_seen_stream_monitor_id": 262,
+      "last_seen_stream_monitor_id": 319,
       "contact": "031-000-0000"
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 188,
+      "event_id": 213,
       "created": true,
       "should_notify": true,
       "folded_into_existing": false,
@@ -25,28 +25,5 @@
       "data_source": "external"
     }
   },
-  "what": "요청 → 사건 1(완결조건 그대로) — 재식별 AI 는 짓지 않고, 수색의 출발점이 되는 사건 하나와 감사 줄 하나(LAW-05 범위)를 남긴다",
-  "title_parts": [
-    {
-      "part": "사회적약자(실종) 요청 수신",
-      "where": "POST /search-requests",
-      "status": "measured"
-    },
-    {
-      "part": "객체 검색 사건 생성",
-      "where": "응답 event_id · created=true",
-      "status": "measured"
-    },
-    {
-      "part": "요청 → 사건 1",
-      "where": "감사 줄 수 diff == 1",
-      "status": "measured"
-    },
-    {
-      "part": "LAW-05 범위(감사 줄 1)",
-      "where": "audit.record_event_action",
-      "status": "measured"
-    }
-  ],
-  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 4행(요청수신·사건생성·요청→사건1·LAW-05 감사줄) 재대조 — 기능명세 미포함표가 이 절을 '새 외부 의존 없음'으로 명시한다(재식별 AI 를 짓지 않는다고 evidence what 도 스스로 적는다). 순수 인바운드·내부 사건 생성 절이라 외부 기관 실연동·화면 요구가 없다. 빈 칸·열린 행 없음 — 깨끗함 유지(이상 없음)."
+  "what": "요청 → 사건 1(완결조건 그대로) — 재식별 AI 는 짓지 않고, 수색의 출발점이 되는 사건 하나와 감사 줄 하나(LAW-05 범위)를 남긴다"
 }

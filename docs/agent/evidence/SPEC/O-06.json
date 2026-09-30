@@ -1,14 +1,14 @@
 {
   "id": "O-06",
   "title": "인시던트",
-  "measured_at": "2026-09-29T11:58:54.060161+00:00",
+  "measured_at": "2026-09-30T05:29:21.541325+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O06_IncidentLifecycleTest.test_open_respond_escalate_close",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/ops/incidents?tenant_code=t-bd504f02&app_code=dsm&severity=critical&summary=%EC%B9%B4%EB%A9%94%EB%9D%BC+%EA%B5%B0%EC%A7%91+%EB%91%90%EC%A0%88",
+    "path": "/api/dsm/ops/incidents?tenant_code=t-c2add649&app_code=dsm&severity=critical&summary=%EC%B9%B4%EB%A9%94%EB%9D%BC+%EA%B5%B0%EC%A7%91+%EB%91%90%EC%A0%88",
     "params": {
-      "tenant_code": "t-bd504f02",
+      "tenant_code": "t-c2add649",
       "app_code": "dsm",
       "severity": "critical",
       "summary": "카메라 군집 두절"
@@ -17,15 +17,15 @@
   "response": {
     "status": 200,
     "body": {
-      "incident_id": "212c397a9fa6",
-      "tenant_code": "t-bd504f02",
+      "incident_id": "77e9f4ad9c06",
+      "tenant_code": "t-c2add649",
       "app_code": "dsm",
       "severity": "critical",
       "summary": "카메라 군집 두절",
       "status": "open",
-      "opened_at": "2026-09-29T11:58:53.931514+00:00",
-      "sla_first_response_due": "2026-09-30T04:00:00+00:00",
-      "sla_escalation_due": "2026-10-01T00:00:00+00:00",
+      "opened_at": "2026-09-30T05:29:21.025841+00:00",
+      "sla_first_response_due": "2026-10-01T05:58:42.051682+00:00",
+      "sla_escalation_due": "2026-10-01T05:29:21.025841+00:00",
       "acknowledged_at": null,
       "escalated_at": null,
       "closed_at": null,
@@ -34,43 +34,5 @@
       "closing_report": ""
     }
   },
-  "what": "POST .../ops/incidents(접수) → .../respond(1차 대응) → .../escalate(에스컬레이션) → .../close(종결·원인)까지 네 호출을 실제로 두드려 SLA 시계(영업시간 4h·영업일 1일 기한)와 종결 보고서 1을 실측한다 — 완결조건('SLA 시계 · 종결 보고서 1') 실측.",
-  "title_parts": [
-    {
-      "part": "접수(테넌트·앱·심각도)",
-      "where": "POST /ops/incidents",
-      "status": "measured"
-    },
-    {
-      "part": "1차 대응(4영업시간)",
-      "where": "sla_first_response_due",
-      "status": "measured"
-    },
-    {
-      "part": "에스컬레이션(1영업일)",
-      "where": "sla_escalation_due / escalate",
-      "status": "measured"
-    },
-    {
-      "part": "종결·원인",
-      "where": "close → cause/closing_report",
-      "status": "measured"
-    },
-    {
-      "part": "완결조건 — SLA 시계",
-      "where": "business_hours_deadline/business_days_deadline",
-      "status": "measured"
-    },
-    {
-      "part": "완결조건 — 종결 보고서 1",
-      "where": "closing_report",
-      "status": "measured"
-    },
-    {
-      "part": "화면(조치 버튼)",
-      "where": "OpsHome.tsx:141-164 — 읽기 표만 그린다. 접수/1차응답/에스컬레이션/종결을 부르는 함수가 api.ts 에 없다",
-      "status": "없음(조치 버튼 미배선 — 읽기전용 화면)"
-    }
-  ],
-  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 접수·1차대응(4영업시간)·에스컬레이션(1영업일)·종결·SLA시계·종결보고서 6행은 실측 닫힘을 재확인했다(8건 중 서버 로직이 가장 깨끗한 절). 다만 화면에서 실제로 그 조치를 누를 자리가 없다 — 반쪽으로 내린다."
+  "what": "POST .../ops/incidents(접수) → .../respond(1차 대응) → .../escalate(에스컬레이션) → .../close(종결·원인)까지 네 호출을 실제로 두드려 SLA 시계(영업시간 4h·영업일 1일 기한)와 종결 보고서 1을 실측한다 — 완결조건('SLA 시계 · 종결 보고서 1') 실측."
 }

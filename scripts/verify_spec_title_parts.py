@@ -194,6 +194,291 @@ def check_rule_doc_sync(items: list[str] | None) -> dict:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# [턴 AQ · P-431 · 차선 Q] 게이트 1행 「사람 표 diff 0」 — 시험·쓰개가 `.retro.md` 를
+# 쓰면 빨강. 두 겹: ① 정적 — backend/tests·scripts 소스에서 `.retro` 경로로 가는
+# 쓰기 호출 ② 런타임 — `common.evidence_guard` 가 이름을 댄 예외 안에서도 `.retro.md`
+# 쓰기를 거절하는가.
+# ═══════════════════════════════════════════════════════════════════════════
+RETRO_SCAN_DIRS = (("backend/tests", "**/*.py"), ("scripts", "*.py"))
+_WRITE_ATTRS = frozenset({"write_text", "write_bytes", "touch", "unlink"})
+_MOVE_ATTRS = frozenset({"rename", "replace"})
+_OS_WRITE_FUNCS = frozenset({"replace", "rename", "remove", "unlink"})
+_SHUTIL_FUNCS = frozenset({"copy", "copy2", "copyfile", "move"})
+
+
+def scan_retro_writes(sources: dict) -> list:
+    """순수 함수 — `{파일 이름: 소스}` → `[(파일, 줄, 호출)]` (`.retro` 경로로 가는 쓰기).
+
+    「`.retro` 경로」 = 문자열 상수에 `.retro` 가 들어 있는 식 · `retro_path(...)` 호출 ·
+    그런 식을 대입받은 이름(파일 안에서 고정점까지 번진다). 읽기(`read_text` · `open(p)` ·
+    `open(p, "r")`)는 세지 않는다. 문자열 안의 소스 조각(자기시험 표본)은 호출이 아니다.
+    """
+    import ast  # noqa: PLC0415
+
+    hits = []
+    for name, src in sorted(sources.items()):
+        try:
+            import warnings  # noqa: PLC0415
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")      # 남의 소스의 잘못된 이스케이프 경고는 소음이다
+                tree = ast.parse(src)
+        except SyntaxError:
+            continue
+        tainted: set = set()
+
+        def is_t(node) -> bool:
+            for sub in ast.walk(node):
+                if isinstance(sub, ast.Constant) and isinstance(sub.value, str) \
+                        and ".retro" in sub.value:
+                    return True
+                if isinstance(sub, ast.Name) and sub.id in tainted:
+                    return True
+                if isinstance(sub, ast.Call):
+                    fn = sub.func
+                    fname = fn.attr if isinstance(fn, ast.Attribute) else \
+                        (fn.id if isinstance(fn, ast.Name) else "")
+                    if "retro_path" in fname:
+                        return True
+            return False
+
+        changed = True
+        while changed:
+            changed = False
+            for node in ast.walk(tree):
+                targets, value = [], None
+                if isinstance(node, ast.Assign):
+                    targets, value = node.targets, node.value
+                elif isinstance(node, (ast.AnnAssign, ast.AugAssign)) and node.value is not None:
+                    targets, value = [node.target], node.value
+                elif isinstance(node, (ast.For, ast.comprehension)):
+                    targets, value = [node.target], node.iter
+                elif isinstance(node, ast.withitem) and node.optional_vars is not None:
+                    targets, value = [node.optional_vars], node.context_expr
+                if value is None or not is_t(value):
+                    continue
+                for t in targets:
+                    for sub in ast.walk(t):
+                        if isinstance(sub, ast.Name) and sub.id not in tainted:
+                            tainted.add(sub.id)
+                            changed = True
+
+        def mode_writes(call, pos: int) -> bool:
+            mode = None
+            if len(call.args) > pos:
+                mode = call.args[pos]
+            for kw in call.keywords:
+                if kw.arg == "mode":
+                    mode = kw.value
+            if mode is None:
+                return False
+            if isinstance(mode, ast.Constant) and isinstance(mode.value, str):
+                return bool(set("wax+") & set(mode.value))
+            return True     # 모드를 식으로 준 것 — 쓰기일 수 있다고 본다
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            fn = node.func
+            what = None
+            if isinstance(fn, ast.Attribute):
+                recv = fn.value
+                recv_name = recv.id if isinstance(recv, ast.Name) else ""
+                if recv_name == "os" and fn.attr in _OS_WRITE_FUNCS:
+                    idx = 1 if fn.attr in ("replace", "rename") else 0
+                    if len(node.args) > idx and is_t(node.args[idx]):
+                        what = "os.%s" % fn.attr
+                elif recv_name == "shutil" and fn.attr in _SHUTIL_FUNCS:
+                    if len(node.args) > 1 and is_t(node.args[1]):
+                        what = "shutil.%s" % fn.attr
+                elif recv_name == "io" and fn.attr == "open":
+                    if node.args and is_t(node.args[0]) and mode_writes(node, 1):
+                        what = "io.open(쓰기)"
+                elif fn.attr in _WRITE_ATTRS and is_t(recv):
+                    what = ".%s()" % fn.attr
+                elif fn.attr in _MOVE_ATTRS and node.args and is_t(node.args[0]):
+                    what = ".%s(→ .retro)" % fn.attr
+                elif fn.attr == "open" and is_t(recv) and mode_writes(node, 0):
+                    what = "Path.open(쓰기)"
+            elif isinstance(fn, ast.Name):
+                if fn.id == "open" and node.args and is_t(node.args[0]) and mode_writes(node, 1):
+                    what = "open(쓰기)"
+                elif fn.id == "write_text_guarded" and node.args and is_t(node.args[0]):
+                    what = "write_text_guarded"
+            if what:
+                hits.append((name, getattr(node, "lineno", 0), what))
+    return hits
+
+
+def collect_scan_sources() -> dict:
+    out = {}
+    for rel, pat in RETRO_SCAN_DIRS:
+        base = ROOT / rel
+        if not base.is_dir():
+            continue
+        for p in sorted(base.glob(pat)):
+            try:
+                out[str(p.relative_to(ROOT)).replace(chr(92), "/")] = \
+                    p.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+    return out
+
+
+def probe_guard(guard) -> dict:
+    """런타임 짝 — `guard`(= `common.evidence_guard` 모듈 또는 같은 모양의 가짜)가
+    **이름을 댄 예외 안에서도** `.retro.md` 쓰기를 거절하는가. 순수에 가깝다(파일 안 씀)."""
+    if guard is None:
+        return {"verdict": "grey", "detail": "common.evidence_guard 를 못 불러왔다(못 쟀다)"}
+    probe = "docs/agent/evidence/SPEC/__probe__%s" % ".retro.md"
+    try:
+        with guard.allow_evidence_writes("P-431 사람 표 게이트 탐침"):
+            why = guard.blocked_reason(probe)
+    except Exception as exc:                                     # noqa: BLE001
+        return {"verdict": "grey", "detail": "가드 탐침이 예외를 냈다: %s" % exc}
+    if not why:
+        return {"verdict": "red",
+                "detail": "evidence_guard 가 allow_evidence_writes 안의 .retro.md 쓰기를 허락한다"}
+    return {"verdict": "ok", "detail": "evidence_guard 가 이름을 댄 예외 안에서도 .retro.md 쓰기를 거절한다"}
+
+
+def judge_retro_guard(hits: list, probe: dict) -> dict:
+    """순수 함수 — 정적 적중 + 런타임 탐침 → 한 줄 판정."""
+    if hits:
+        shown = ", ".join("%s:%d %s" % h for h in hits[:8]) + (" …" if len(hits) > 8 else "")
+        return {"verdict": "red",
+                "detail": "시험·쓰개 소스에 .retro 쓰기 %d곳 — %s (사람 표는 손으로만)" % (len(hits), shown)}
+    if probe["verdict"] != "ok":
+        return {"verdict": probe["verdict"], "detail": probe["detail"]}
+    return {"verdict": "ok",
+            "detail": "시험·쓰개 소스의 .retro 쓰기 0곳 · %s" % probe["detail"]}
+
+
+def load_guard_module():
+    try:
+        backend = str(ROOT / "backend")
+        if backend not in sys.path:
+            sys.path.insert(0, backend)
+        from common import evidence_guard  # noqa: PLC0415
+        return evidence_guard
+    except Exception:                                            # noqa: BLE001
+        return None
+
+
+def measure_retro_guard() -> dict:
+    sources = collect_scan_sources()
+    if not sources:
+        return {"verdict": "grey", "detail": "backend/tests·scripts 소스를 하나도 못 읽었다(못 쟀다)"}
+    rep = judge_retro_guard(scan_retro_writes(sources), probe_guard(load_guard_module()))
+    rep["detail"] = "소스 %d개 · %s" % (len(sources), rep["detail"])
+    return rep
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# [턴 AQ · 조율자 청 · 차선 Q] 게이트 1행 「화면 인용 = 화면 실재」 — 이 턴 불변
+# 「서버 문만 닫힌 절은 반쪽이다 — 제목의 버튼이 화면에 배선돼야 닫힘」의 기계 짝.
+# 승격(영역 7) 절의 `.retro.md` 행(`where`·`status`)에 적힌 data-gx 토큰마다
+# `frontend/src/**` 에 `data-gx="<토큰>"` 가 실제로 있어야 한다. 적어 놓고 화면에
+# 없으면 = 표만 바꾼 것 → 빨강. data-gx 를 하나도 안 적은 절은 정보 줄(서버 전용 절).
+#
+# 실물 형식(2026-09-30 · SPEC/FWS-F4-02.retro.md): `…CommandHome.tsx::data-gx=fws-f4-02-confirm
+# · fws-f4-02-stage · … — API POST …`. 그래서 `data-gx` 뒤부터 `—`·`(`·`)`·`;`·줄끝 앞까지를
+# 한 토막으로 보고, 그 안의 소문자-하이픈 토큰(`a-b[-c…]`)을 뽑는다. 백틱으로 싼 토큰도 같은
+# 토막 안에서는 뽑힌다(`data-gx="x"` · `` `x` `` 모양 모두).
+# ═══════════════════════════════════════════════════════════════════════════
+_GX_SEGMENT_RE = re.compile(r"data-gx(.*?)(?:—|\(|\)|;|$)", re.S)
+_GX_TOKEN_RE = re.compile(r"(?<![A-Za-z0-9_/.-])([a-z0-9]+(?:-[a-z0-9]+)+)(?![A-Za-z0-9_/.-])")
+_FRONT_GX_RE = re.compile(r"""data-gx\s*=\s*\{?\s*["'`]([^"'`$]+)["'`]""")
+#: 간접 배선 — `data-gx={f.gx}` 로 넘기는 설정 표(`gx: 'fws-threshold-…'`). 그 파일에
+#: `data-gx={` 가 **함께 있을 때만** 센다(실물 AdminHome.tsx:534 모양 · 2026-09-30).
+_FRONT_GX_INDIRECT_RE = re.compile(r"""(?<![A-Za-z0-9_-])gx\s*[:=]\s*\{?\s*["'`]([^"'`$]+)["'`]""")
+FRONTEND_SRC = ROOT / "frontend" / "src"
+
+
+def extract_gx_tokens(text) -> list:
+    """순수 함수 — 표 칸 글 → 인용된 data-gx 토큰(순서 유지 · 중복 제거)."""
+    if not isinstance(text, str) or "data-gx" not in text:
+        return []
+    out: list = []
+    for seg in _GX_SEGMENT_RE.findall(text):
+        for tok in _GX_TOKEN_RE.findall(seg):
+            if tok not in out:
+                out.append(tok)
+    return out
+
+
+def cited_tokens_of_table(table) -> list:
+    rows = (table or {}).get("title_parts") if isinstance(table, dict) else None
+    out: list = []
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        for key in ("where", "status"):
+            for tok in extract_gx_tokens(row.get(key)):
+                if tok not in out:
+                    out.append(tok)
+    return out
+
+
+def frontend_gx_tokens(sources: dict) -> set:
+    """순수 함수 — `{파일: 소스}` → 화면에 실제로 박힌 `data-gx` 값 집합."""
+    found: set = set()
+    for src in sources.values():
+        for tok in _FRONT_GX_RE.findall(src or ""):
+            found.add(tok.strip())
+        if "data-gx={" in (src or ""):
+            for tok in _FRONT_GX_INDIRECT_RE.findall(src or ""):
+                found.add(tok.strip())
+    return found
+
+
+def judge_screen_citations(cited: dict, present) -> dict:
+    """순수 함수 — `{절: [토큰]}` + 화면 토큰 집합 → 판정.
+
+    red   — 인용 토큰 중 화면에 없는 것이 1+ (적어 놓고 배선 안 됨 = 표만 바꿈)
+    grey  — 화면 소스를 못 읽었다(present is None)
+    ok    — 인용 토큰이 전부 화면에 있다(인용 없는 절 수는 정보로만)
+    """
+    n_cite = sum(len(v) for v in cited.values())
+    uncited = sorted(c for c, v in cited.items() if not v)
+    if present is None:
+        return {"verdict": "grey", "n_cited": n_cite, "n_found": 0, "missing": [],
+                "uncited": uncited, "detail": "frontend/src 를 못 읽었다(못 쟀다)"}
+    missing = [(c, t) for c, v in cited.items() for t in v if t not in present]
+    n_found = n_cite - len(missing)
+    head = ("인용 토큰 %d · 화면에서 발견 %d · 화면 인용 없음 %d건(서버 전용 절 · 정보)"
+            % (n_cite, n_found, len(uncited)))
+    if missing:
+        shown = ", ".join("%s:%s" % m for m in missing[:8]) + (" …" if len(missing) > 8 else "")
+        return {"verdict": "red", "n_cited": n_cite, "n_found": n_found, "missing": missing,
+                "uncited": uncited,
+                "detail": "%s — 화면에 없는 인용 %d: %s (적어 놓고 배선 안 된 것 = 표만 바꾼 것)"
+                          % (head, len(missing), shown)}
+    return {"verdict": "ok", "n_cited": n_cite, "n_found": n_found, "missing": [],
+            "uncited": uncited, "detail": head}
+
+
+def collect_frontend_sources() -> dict | None:
+    if not FRONTEND_SRC.is_dir():
+        return None
+    out = {}
+    for pat in ("*.tsx", "*.ts", "*.jsx", "*.js"):
+        for p in FRONTEND_SRC.rglob(pat):
+            if "node_modules" in p.parts:
+                continue
+            try:
+                out[str(p)] = p.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+    return out
+
+
+def measure_screen_citations(ids: list) -> dict:
+    cited = {cid: cited_tokens_of_table(_retro().load_retro(cid, EVIDENCE_DIR)) for cid in ids}
+    srcs = collect_frontend_sources()
+    return judge_screen_citations(cited, None if srcs is None else frontend_gx_tokens(srcs))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # ① 대장을 읽는다 — promoted_ids() 의 읽는 방식을 베낀다(출처는 머리글)
 # ═══════════════════════════════════════════════════════════════════════════
 def load_ledger() -> tuple[dict | None, str]:
@@ -328,11 +613,32 @@ def classify_payload(clause_id: str, payload) -> dict:
 
 
 def classify_clause(clause_id: str) -> dict:
+    """[턴 AQ · P-431 · 차선 Q] 표는 **사람 파일 `<id>.retro.md`** 에서만 읽는다.
+
+    기계 파일 `<id>.json` 은 「증거가 있는가」(없으면 회색 · 못 쟀다)만 본다 — json 에
+    `title_parts`·`retro*` 가 남아 있어도 **무시한다**(`_retro_table.overlay` 가 버린다).
+    `.retro.md` 가 없으면 옛 json 표로 떨어지지 않고 「표 없음 → 회색」 그대로다.
+    `.retro.md` 는 있는데 json 블록을 못 읽으면(블록 수 ≠ 1 · id 불일치) 「표 모양 이상」 회색.
+    """
     payload, why = _load_evidence(clause_id)
+    if isinstance(payload, dict):
+        table, rwhy, exists = _retro().read_retro(clause_id, EVIDENCE_DIR)
+        if exists and table is None:
+            return {"id": clause_id, "verdict": "grey", "bucket": "malformed",
+                    "detail": "사람 표 %s" % rwhy}
+        payload = _retro().overlay(payload, clause_id, EVIDENCE_DIR)
     rep = classify_payload(clause_id, payload)
     if payload is None and why:
         rep["detail"] = why
     return rep
+
+
+def _retro():
+    here = str(Path(__file__).resolve().parent)
+    if here not in sys.path:
+        sys.path.insert(0, here)
+    import _retro_table  # noqa: PLC0415
+    return _retro_table
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -350,7 +656,10 @@ def measure() -> dict:
     buckets: dict[str, list] = {"ok": [], "half": [], "legacy_no_table": [],
                                 "no_evidence": [], "malformed": []}
     for r in results:
-        buckets.setdefault(r["bucket"], []).append(r)
+        #: [턴 AQ · Q] 깨끗한 절의 bucket 이름은 "clean" 인데 모으는 칸은 "ok" 였다 —
+        #: 그래서 「표 있고 깨끗함」이 늘 0 으로 찍혔다(판정·exit 에는 영향 없음). 칸을 맞춘다.
+        key = "ok" if r["bucket"] == "clean" else r["bucket"]
+        buckets.setdefault(key, []).append(r)
     return {"ok": True, "promoted_n": len(in7), "ids": in7, "outside7": outside7,
             "results": results, "buckets": buckets}
 
@@ -358,7 +667,8 @@ def measure() -> dict:
 # ═══════════════════════════════════════════════════════════════════════════
 # 출력
 # ═══════════════════════════════════════════════════════════════════════════
-def report(rep: dict, *, list_all: bool = False, rule_check: dict | None = None) -> int:
+def report(rep: dict, *, list_all: bool = False, rule_check: dict | None = None,
+           retro_check: dict | None = None, screen_check: dict | None = None) -> int:
     #: [턴 AP · P-419] 눈금 문서 대조를 먼저 알린다 — 이 게이트 자신의 눈금이
     #: 문서와 갈리면(빨강) 또는 문서가 없으면(회색) 절 판정보다 먼저 적는다.
     rule_exit = None
@@ -369,6 +679,24 @@ def report(rep: dict, *, list_all: bool = False, rule_check: dict | None = None)
         if rv == "red":
             rule_exit = EXIT_RED
         elif rv == "grey":
+            rule_exit = EXIT_GREY
+    #: [턴 AQ · P-431] 「사람 표 diff 0」 — 시험·쓰개가 .retro.md 를 쓰면 빨강.
+    if retro_check is not None:
+        xv = retro_check["verdict"]
+        print("%s %s [사람 표 diff 0] %s"
+              % (TAG, {"ok": "O   ", "red": "X   ", "grey": "?   "}[xv], retro_check["detail"]))
+        if xv == "red":
+            rule_exit = EXIT_RED
+        elif xv == "grey" and rule_exit is None:
+            rule_exit = EXIT_GREY
+    #: [턴 AQ] 「화면 인용 = 화면 실재」 — 표에 적은 data-gx 가 화면에 없으면 빨강.
+    if screen_check is not None:
+        sv = screen_check["verdict"]
+        print("%s %s [화면 인용] %s"
+              % (TAG, {"ok": "O   ", "red": "X   ", "grey": "?   "}[sv], screen_check["detail"]))
+        if sv == "red":
+            rule_exit = EXIT_RED
+        elif sv == "grey" and rule_exit is None:
             rule_exit = EXIT_GREY
 
     if not rep.get("ok"):
@@ -586,6 +914,95 @@ def self_test() -> int:
     ok("★ 영역 7 이 대장에 아예 없으면 found=False(0건과 다르다 — D-301)",
        _found is False and _in7 == [])
 
+    # ── [턴 AQ · P-431 · 차선 Q] 「사람 표 diff 0」 — 정적 짝 · 런타임 짝 ─────────
+    #: ★ 출생 표본 — 턴 AP 쓰개(`test_ap_n3_u5_05_control_log.py::_merge_title_parts`)가
+    #:   사람 표를 읽어 행을 고쳐 다시 썼다(조율자 스냅숏 25 복원). 이 턴부터 사람 표는
+    #:   `.retro.md` 이므로, 같은 쓰개가 `.retro.md` 를 다시 쓰면 이 행이 빨강이어야 한다.
+    def _src(*lines):
+        return chr(10).join(lines) + chr(10)
+
+    _birth_src = _src(
+        "import json",
+        "from pathlib import Path",
+        "SPEC = Path('docs/agent/evidence/SPEC')",
+        "def _merge_title_parts(updates):",
+        "    path = SPEC / 'DSM-U5-05.retro.md'",
+        "    body = path.read_text(encoding='utf-8')",
+        "    path.write_text(body + 'x', encoding='utf-8')")
+    ok("★★ 출생 표본 — 쓰개가 `<id>.retro.md` 를 다시 쓴다(이름 번짐 path=…retro.md) → 적중",
+       len(scan_retro_writes({"t.py": _birth_src})) == 1)
+    ok("★ open(<.retro 경로>, 'w') · json.dump 로 쓰기 → 적중",
+       len(scan_retro_writes({"t.py": _src("import json", "rp = 'a.retro.md'",
+                                           "json.dump({}, open(rp, 'w'))")})) == 1)
+    ok("★ retro_path(...) 가 준 경로의 write_text → 적중",
+       len(scan_retro_writes({"t.py": _src("from _retro_table import retro_path",
+                                           "retro_path('X').write_text('y')")})) == 1)
+    ok("★ os.replace(tmp, '<id>.retro.md') → 적중",
+       len(scan_retro_writes({"t.py": _src("import os",
+                                           "os.replace('t', 'X.retro.md')")})) == 1)
+    ok("반례 — 읽기(read_text · open(p) · open(p, 'r'))는 적중 아님",
+       scan_retro_writes({"t.py": _src("p = 'X.retro.md'", "open(p).read()", "open(p, 'r')",
+                                       "from pathlib import Path", "Path(p).read_text()")}) == [])
+    ok("반례 — 기계 json 쓰기는 적중 아님",
+       scan_retro_writes({"t.py": _src("from pathlib import Path",
+                                       "Path('SPEC/X.json').write_text('{}')")}) == [])
+    ok("반례 — 문자열 안의 소스 조각(자기시험 표본)은 호출이 아니다",
+       scan_retro_writes({"t.py": _src("S = " + repr("Path('X.retro.md').write_text('y')"))}) == [])
+
+    class _GuardAllows:                     # 망가진 가드 — 이름을 대면 .retro 도 연다
+        @staticmethod
+        def allow_evidence_writes(who):
+            import contextlib  # noqa: PLC0415
+            return contextlib.nullcontext()
+
+        @staticmethod
+        def blocked_reason(path, **kw):
+            return None
+
+    class _GuardBlocks(_GuardAllows):
+        @staticmethod
+        def blocked_reason(path, **kw):
+            return "사람 표" if str(path).endswith(".retro.md") else None
+
+    ok("★★ 런타임 짝 — allow_evidence_writes 안에서 .retro.md 를 허락하는 가드 → red",
+       probe_guard(_GuardAllows)["verdict"] == "red")
+    ok("런타임 짝 — 거절하는 가드 → ok", probe_guard(_GuardBlocks)["verdict"] == "ok")
+    ok("런타임 짝 — 가드를 못 불러옴 → grey", probe_guard(None)["verdict"] == "grey")
+    ok("★ 판정 — 정적 적중 1 이면 가드가 멀쩡해도 red",
+       judge_retro_guard([("t.py", 3, ".write_text()")],
+                         probe_guard(_GuardBlocks))["verdict"] == "red")
+    ok("판정 — 적중 0 · 가드 ok → ok",
+       judge_retro_guard([], probe_guard(_GuardBlocks))["verdict"] == "ok")
+
+    # ── [턴 AQ] 「화면 인용 = 화면 실재」 짝 ─────────────────────────────────
+    #: 실물 형식 표본(SPEC/FWS-F4-02.retro.md 의 where 칸 모양 그대로 · 2026-09-30).
+    _where = ("frontend/src/features/fws/pages/CommandHome.tsx::data-gx=fws-f4-02-confirm · "
+              "fws-f4-02-stage — API POST /api/fws/command/incidents/{id}/stage")
+    ok("★ 실물 형식에서 토큰 둘을 뽑는다(— 뒤 API 경로·파일 경로는 안 뽑는다)",
+       extract_gx_tokens(_where) == ["fws-f4-02-confirm", "fws-f4-02-stage"])
+    ok("data-gx 가 없는 칸은 인용 0", extract_gx_tokens("GET /api/fws/x · measured") == [])
+    ok("백틱 · 따옴표 모양도 뽑는다",
+       extract_gx_tokens('data-gx="o-board-reload" · `o-board-save`')
+       == ["o-board-reload", "o-board-save"])
+    _front = {"a.tsx": '<Button data-gx="fws-f4-02-confirm" /> <Input data-gx={"fws-f4-02-stage"} />'}
+    _present = frontend_gx_tokens(_front)
+    ok("화면 소스에서 data-gx 값을 뽑는다(\"…\" · {\"…\"})",
+       _present == {"fws-f4-02-confirm", "fws-f4-02-stage"})
+    ok("간접 배선(gx: '…' + data-gx={f.gx})도 센다 · data-gx={ 없는 파일의 gx: 는 안 센다",
+       frontend_gx_tokens({"b.tsx": "const F=[{gx: 'fws-threshold-a'}]; <I data-gx={f.gx} />"})
+       == {"fws-threshold-a"}
+       and frontend_gx_tokens({"c.ts": "const F=[{gx: 'fws-threshold-a'}]"}) == set())
+    ok("인용 전부 화면에 있음 → ok",
+       judge_screen_citations({"FWS-F4-02": extract_gx_tokens(_where)}, _present)["verdict"] == "ok")
+    ok("★★ 없는 토큰을 적은 표본 → red(적어 놓고 화면에 없음 = 표만 바꿈)",
+       judge_screen_citations({"FWS-F4-02": ["fws-f4-02-confirm", "fws-f4-02-ghost"]},
+                              _present)["verdict"] == "red")
+    _j = judge_screen_citations({"O-05": [], "FWS-F4-02": ["fws-f4-02-confirm"]}, _present)
+    ok("인용 없는 절은 빨강이 아니라 정보(uncited 로만 센다)",
+       _j["verdict"] == "ok" and _j["uncited"] == ["O-05"] and _j["n_cited"] == 1)
+    ok("화면 소스를 못 읽음 → grey",
+       judge_screen_citations({"X": ["a-b"]}, None)["verdict"] == "grey")
+
     fails = [n for n, g in cases if not g]
     for name, good in cases:
         print("  %-4s %s" % ("OK" if good else "FAIL", name))
@@ -610,7 +1027,9 @@ def main() -> int:
     rule_check = check_rule_doc_sync(rule_items)
     if rule_check["verdict"] == "grey" and rule_why:
         rule_check = dict(rule_check, detail=rule_why)
-    return report(rep, list_all=args.list, rule_check=rule_check)
+    return report(rep, list_all=args.list, rule_check=rule_check,
+                  retro_check=measure_retro_guard(),
+                  screen_check=(measure_screen_citations(rep["ids"]) if rep.get("ok") else None))
 
 
 if __name__ == "__main__":
@@ -627,12 +1046,12 @@ if __name__ == "__main__":
 
     gate_header(
         __file__,
-        target="`%s` + `%s/*.json`" % (
+        target="`%s` + `%s/*.json`(증거 유무) + `*.retro.md`(사람 표 · P-431)" % (
             str(LEDGER.relative_to(ROOT)).replace("\\", "/"),
             str(EVIDENCE_DIR.relative_to(ROOT)).replace("\\", "/")),
         as_="(자격증명 없음 — 대장 YAML 과 증거 JSON 파일만 읽는다)",
         source="저장소 작업본의 대장 · SPEC 증거 디렉터리(지금 읽는다 · docker·HTTP 없음)",
         measured=("영역 7(annex 승격) 의 DSM-/FWS-/O- 접두 절마다 증거의 "
-                  "`title_parts` 표를 재어 빈 칸·열린 행을 센다 — **분모 %s건**" % _n),
+                  "`title_parts` 표(.retro.md)를 재어 빈 칸·열린 행을 센다 — **분모 %s건**" % _n),
     )
     sys.exit(main())

@@ -70,7 +70,7 @@ def _write_evidence(clause_id: str, *, title: str, test_ref: str, method: str,
             "request": {"method": method, "path": path, "params": request_params},
             "response": {"status": response.status_code, "body": body},
             "what": what,
-            "title_parts": title_parts,
+            #: [턴 AQ · P-431 · 차선 Q] title_parts 는 json 에 안 쓴다(정본 <id>.retro.md).
         }
         out = EVIDENCE_DIR / f"{clause_id}.json"
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",

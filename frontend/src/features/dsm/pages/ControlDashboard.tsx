@@ -20,6 +20,7 @@ import { Main } from 'rj-core';
 
 import { dsmEndpoint, dsmGet } from '../api';
 import AutoAnalysisNotice from '../components/AutoAnalysisNotice';
+import ControlPointsBoard from '../components/ControlPointsBoard';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
 import { useDetectionPing } from '../hooks/useDetectionPing';
@@ -466,6 +467,9 @@ export default function ControlDashboard() {
             />
           </StateBoundary>
         </Card>
+
+        {/* [턴 AQ · 차선 N3 · DSM-U3-02 · U4-04] 통제·대피 현황판 — 도달→결정→통제 완료→해제 */}
+        <ControlPointsBoard />
 
         <Text type="secondary">{TIMEZONE_NOTE}</Text>
       </Space>

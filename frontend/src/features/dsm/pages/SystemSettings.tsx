@@ -253,7 +253,9 @@ export default function SystemSettings() {
               )}
             </Descriptions.Item>
             <Descriptions.Item label="누가 정했나">
-              {policy?.source || UNDECLARED}
+              {/* [P-441 · 턴 AQ · L] 보존 정책의 출처도 같은 설정 문장을 품는다
+                  (`retention.retention_source()` → RETENTION_DECLARATION_SOURCE). */}
+              {safeFreeText(policy?.source) || UNDECLARED}
             </Descriptions.Item>
             <Descriptions.Item label="자동으로 도는가">
               {policy?.enforced ? (
@@ -324,8 +326,16 @@ export default function SystemSettings() {
                 <NoSignal />
               )}
             </Descriptions.Item>
+            {/*
+              [P-441 · 턴 AQ · 차선 L] 온보딩 U5#14 「셋째 조건 — 절 ID」의 다섯째 자리.
+              턴 AP 는 reason·capacity_source·note 넷을 거르고 이 칸을 빠뜨렸다 —
+              서버 값 `source` 는 `settings.RETENTION_DECLARATION_SOURCE` 원문이고
+              개발·스테이징 선언이면 그 안에 대장 절 ID 가 들어 있다(settings.py).
+              측정기가 보는 것은 이 화면 본문 전체(`collect_screen_text`)라 한 칸만
+              남아도 ◐ 다. 뜻은 그대로 두고 대장 표기만 뗀다(safeFreeText).
+            */}
             <Descriptions.Item label="누가 정했나">
-              {backupReadable ? back?.source || UNDECLARED : NO_SIGNAL}
+              {backupReadable ? safeFreeText(back?.source) || UNDECLARED : NO_SIGNAL}
             </Descriptions.Item>
             {/*
               ★ [턴 W · WS-26 과 같은 원칙] **어디를 고치면 되는지 이름으로 적는다.**

@@ -1,59 +1,25 @@
 {
   "id": "O-10",
-  "measured_at": "2026-09-29T11:49:46.570138+00:00",
+  "measured_at": "2026-09-30T05:19:18.157796+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n3_o10_o11_ops.O10_KeyRotationProcedureTest.test_rotate_leaves_console_door_audit_line_and_next_due_date",
   "request": {
     "method": "POST",
     "path": "/api/dsm/ops/keys/rotate",
     "body": {
-      "tenant_code": "t-b00f2c08",
+      "tenant_code": "t-4a90ac1a",
       "key_id": 1
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "tenant_code": "t-b00f2c08",
+      "tenant_code": "t-4a90ac1a",
       "tenant_id": 30,
       "key_id": 1,
       "new_key_id": 2,
-      "rotated_at": "2026-09-29T11:49:46+00:00"
+      "rotated_at": "2026-09-30T05:19:18+00:00"
     }
   },
-  "what": "콘솔 문(GET /ops/keys · POST /ops/keys/rotate)으로 실제 키를 회전하고, 회전 뒤 GET /ops/keys 가 감사 줄 1건(rotation_audit_count ≥ 1 · last_rotation_audit)과 다음 회전일(next_rotation_due_at)을 실제로 낸다는 것을 확인했다.",
-  "title_parts": [
-    {
-      "part": "콘솔 문(회전 보드·회전 실행)",
-      "where": "GET /api/dsm/ops/keys · POST /api/dsm/ops/keys/rotate (ops_an_service.key_rotation_board · rotate_api_key)",
-      "status": "measured — 실제 HTTP 로 두드려 회전 완료(new_key_id 실측)"
-    },
-    {
-      "part": "감사 줄",
-      "where": "ops_an_service.LOG_KEYS(guardianx.ops.keys) · key_rotation_board()['last_rotation_audit']",
-      "status": "measured — 회전 뒤 rotation_audit_count ≥ 1"
-    },
-    {
-      "part": "다음 회전일",
-      "where": "ops_an_service.key_rotation_board()['keys'][*]['next_rotation_due_at'] (policy_days − age_days)",
-      "status": "measured — 정책 주기(policy_days)가 있는 키마다 계산됨"
-    },
-    {
-      "part": "완결조건 — 회전 뒤 게이트 계정 로그인 4/4(라이브 절반)",
-      "where": "게이트 계정 실회전 + 실제 운영 서버 로그인",
-      "status": "없음 — 이 저장소 차선 공통 규칙이 라이브 서버 로그인을 금지한다(구조적으로 이 환경에서 못 잰다)",
-      "excluded_by": "P-428",
-      "excluded_why": "운영 집행(게이트 계정 실회전·실 서버 로그인)은 차선이 실행하지 않는다 — 절차·기록(콘솔 문·감사 줄·다음 회전일)까지가 이 턴의 범위다(WO-19 §5 P-421 ⑤)."
-    },
-    {
-      "part": "완결조건 — 옛 키 401",
-      "where": "kernels.k5_trust.inbound_keys.rotate_key — 옛 키를 ROTATED·is_active=False 로 바꾼다(같은 커널 함수, 이전 턴부터 있던 door)",
-      "status": "measured — 기존 배선 재사용(새로 안 만든다)"
-    },
-    {
-      "part": "화면(회전 보드)",
-      "where": "frontend/src/features/ops/api.ts — opsEndpoint 에 keys/keys-rotate 자체가 없다(grep 0). OpsHome.tsx 도 회전 보드를 그리지 않는다.",
-      "status": "없음 — 콘솔 화면이 안 배선돼 있다(N1 의 같은 눈금 재판정이 O-01·02·05·06·07·08·09·12 여덟에서 찾은 것과 같은 결손 · frontend 파일은 이 차선(N3, backend/apps/dsm 소유) 밖이라 이번 턴은 못 붙인다 — 화면 미배선은 운영 집행·외부 실연동이 아니라서 P-428 로 뺄 수 없다, TITLE_PARTS_RULE.md §3)."
-    }
-  ]
+  "what": "콘솔 문(GET /ops/keys · POST /ops/keys/rotate)으로 실제 키를 회전하고, 회전 뒤 GET /ops/keys 가 감사 줄 1건(rotation_audit_count ≥ 1 · last_rotation_audit)과 다음 회전일(next_rotation_due_at)을 실제로 낸다는 것을 확인했다."
 }

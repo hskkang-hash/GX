@@ -523,6 +523,7 @@ EVENT_ENTRY_SURFACE: frozenset[tuple[str, str]] = frozenset({
     ("POST", "/api/dsm/situation-meetings"),                                  # DSM-U2-03 기록 ★쓰기(감사 한 줄)
     ("POST", "/api/dsm/thresholds/observe"),                                  # DSM-U2-04 관측값 → 기준 도달 카드 ★쓰기
     ("POST", "/api/dsm/thresholds/observe/{int:observation_id}/decide"),      # DSM-U2-04 판단 기록 ★쓰기
+    ("GET", "/api/dsm/thresholds/alerts"),                                    # DSM-U2-04 도달 카드 목록(팀장·U4 홈) · 턴 AQ W2B
     ("POST", "/api/dsm/handover/{int:handover_id}/ack"),                      # DSM-U2-05 인수인계 합동 확인 ★쓰기
     # ★ [P-356 · 2026-09-28 · 턴 AL · 차선 N1] 기능명세 별표 승격 — DSM-U4-06 · DSM-U5-02
     #   (`api_u24.py`). 넷 다 JWT · `@tenant_scoped` · 새 표 0(감사 한 줄이 정본).

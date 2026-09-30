@@ -192,6 +192,20 @@ def _UserProfileLink():
     return apps.get_model("user", "UserProfileLink")
 
 
+def _Department():
+    return apps.get_model("user", "Department")
+
+
+def _split_departments(raw: str) -> list[str]:
+    """쉼표로 가른 부서 이름 — 빈 이름·중복은 버린다(입력 순서 유지)."""
+    out: list[str] = []
+    for part in (raw or "").split(","):
+        name = part.strip()
+        if name and name not in out:
+            out.append(name)
+    return out
+
+
 def _Role():
     return apps.get_model("role", "Role")
 
@@ -225,6 +239,11 @@ def list_tenants(actor: Any) -> dict:
             "public_url": settings.get("public_url", ""),
             "domain": settings.get("domain", ""),
             "issued_via_ops": bool(settings.get("issued_via_ops")),
+            #: [턴 AQ · N2] 계층 — 시도(settings.region) → 시군구(이 테넌트) → 부서
+            #:   (user.Department · group=이 테넌트). 화면 테넌트 표가 그대로 그린다.
+            "region": settings.get("region", ""),
+            "departments": [d.department_name for d in
+                            _Department()._base_manager.filter(group_id=g.id).order_by("id")],
             "created_at": _tenant_created_at(g).isoformat() if _tenant_created_at(g) else None,
         })
     return {"tenants": rows, "count": len(rows)}
@@ -272,8 +291,14 @@ def _forwarded_auth_age_seconds(auth_header: str) -> float | None:
 
 def issue_tenant(actor: Any, *, code: str, name: str, admin_username: str,
                  admin_email: str, admin_password: str, region: str = "",
-                 public_url: str = "", domain: str = "", auth_header: str = "") -> dict:
+                 public_url: str = "", domain: str = "", auth_header: str = "",
+                 departments: str = "") -> dict:
     """테넌트(시군구) 생성 + 초기 관리자 1 — O-01.
+
+    ★ [턴 AQ · 차선 N2] `departments` — 쉼표로 가른 부서 이름. 계층(시도 →
+      시군구 → 부서)의 셋째 층을 dj-core `user.Department`(group=이 테넌트)
+      행으로 **실제로 만든다**(시도는 `region` 칸 · 시군구는 테넌트 자신).
+      비우면 부서 0 — 기본 부서를 지어 넣지 않는다.
 
     완결 조건("테넌트 관리자가 로그인 → 역할 홈")은 이 함수가 스스로 증명하지 않는다
     — 이 함수는 **발급**만 하고, 그 관리자로 실제 `/api/v1/auth/login` 을 두드려
@@ -361,9 +386,15 @@ def issue_tenant(actor: Any, *, code: str, name: str, admin_username: str,
             "초기 관리자 발급이 실패했습니다(status=%s) — 테넌트 발급을 되돌립니다."
             % resp.status_code)
 
+    Department = _Department()
+    dept_names = _split_departments(departments)
+    for i, dept_name in enumerate(dept_names, start=1):
+        Department._base_manager.create(
+            department_name=dept_name, code="%s-%02d" % (code, i), group_id=tenant.id)
+
     after = {"tenant_code": code, "tenant_id": tenant.id, "name": name,
              "admin_username": admin_username, "admin_role": "admin",
-             "region": region, "issued_at": _now_iso()}
+             "region": region, "departments": dept_names, "issued_at": _now_iso()}
     _audit(actor, LOG_TENANTS, "[OPS-TENANT]", "issue", "테넌트 발급 · 초기 관리자 1",
           after=after)
     return after
@@ -1015,18 +1046,55 @@ def seed_board(actor: Any) -> dict:
             "unknown_or_live": StreamMonitor._base_manager
                 .exclude(data_source="seed").count(),
         }
-    return {"toggles": latest, "count": len(latest), "contamination_by_data_source": contamination}
+    #: [턴 AQ · 차선 N2] 테넌트별 훈련 상태 — 「훈련 시나리오 배포」가 실제로 켠
+    #:   스위치(stream_monitors drill)를 그대로 읽는다(새 저장 0).
+    from common.tenant_scope import TenantScope
+    from stream_monitors.services import drill
+
+    scope = TenantScope.of(actor)
+    drill_rows = []
+    for g in _UserGroup()._base_manager.all().order_by("id"):
+        state = drill.drill_state(scope=scope, group_id=g.id)
+        drill_rows.append({
+            "tenant_code": g.code, "name": g.name, "drill_mode": state.enabled,
+            "since": state.since.isoformat() if state.since else None,
+            "by": state.by, "reason": state.reason,
+        })
+    return {"toggles": latest, "count": len(latest), "contamination_by_data_source": contamination,
+            "drill_by_tenant": drill_rows}
 
 
 def toggle_seed(actor: Any, *, tenant_code: str, action: str, scenario_code: str = "",
                 note: str = "") -> dict:
     _require_operator(actor)
-    if action not in ("plant", "hide", "deploy_scenario"):
-        raise OpsAnInputRejected("action 은 plant·hide·deploy_scenario 만 받습니다.")
+    if action not in ("plant", "hide", "deploy_scenario", "end_scenario"):
+        raise OpsAnInputRejected(
+            "action 은 plant·hide·deploy_scenario·end_scenario 만 받습니다.")
     tenant = _get_tenant(tenant_code)
     after = {"tenant_code": tenant_code, "tenant_id": tenant.id,
              "scenario_code": scenario_code or "default", "action": action,
              "note": note, "data_source": "seed", "at": _now_iso()}
+    #: [턴 AQ · 차선 N2] **훈련 시나리오 배포 = 그 테넌트 훈련 모드를 실제로 켠다**
+    #:   (설계서 OF-1 3단계 「훈련 켬」 · 7단계 「훈련 끔」). 스위치는 새로 만들지
+    #:   않는다 — FWS-F3-19 가 쓰는 그 스위치(`stream_monitors.services.drill`)를
+    #:   그대로 부르고, 켜져 있는 동안 그 테넌트 알림은 실채널이 아니라 훈련
+    #:   채널로 간다(스위치 자신의 규약). U0 는 전역 운영자라 `group_id` 로
+    #:   대상 테넌트를 지정할 수 있다(drill._target_group 의 문지기 그대로).
+    if action in ("deploy_scenario", "end_scenario"):
+        from common.tenant_scope import TenantScope
+        from stream_monitors.services import drill
+
+        reason = (note or "").strip() or (
+            "플랫폼 운영 — 훈련 시나리오 %s %s"
+            % (scenario_code or "default", "배포" if action == "deploy_scenario" else "종료"))
+        try:
+            switched = drill.set_drill_mode(
+                scope=TenantScope.of(actor), enabled=(action == "deploy_scenario"),
+                reason=reason, group_id=tenant.id)
+        except ValueError as exc:
+            raise OpsAnInputRejected(str(exc))
+        after["drill_mode"] = bool(switched.get("drill_mode"))
+        after["drill_changed"] = bool(switched.get("changed", True))
     _audit(actor, LOG_SEED, "[OPS-SEED]", action,
           "%s 시드 %s(%s)" % (tenant_code, action, scenario_code or "default"), after=after)
     return after

@@ -40,17 +40,13 @@ SEARCH_REQUESTS = "/api/dsm/search-requests"
 
 def _add_title_parts(clause_id: str, parts: list[dict]) -> None:
     """`test_dsm_u5_an.py::_add_title_parts` 와 같은 모양 — 이미 찍은 증거 파일을
-    다시 열어 `title_parts` 칸만 얹는다(공용 `_write_evidence` 를 고치지 않는다)."""
-    with allow_evidence_writes(
-            "P-356 ② title_parts — 제목이 부르는 부분과 실측 상태를 표로 남긴다"):
-        path = EVIDENCE_DIR / f"{clause_id}.json"
-        body = json.loads(path.read_text(encoding="utf-8"))
-        #: [P-419 · 턴 AP] 재판정 표(`retro` 칸이 있는 표)는 사람이 확인한 표다 — 시험 리터럴로
-        #:   덮지 않는다. 요청/응답 기록은 `_write_evidence` 가 이미 갱신했다.
-        if "retro" not in body:
-            body["title_parts"] = parts
-        path.write_text(json.dumps(body, ensure_ascii=False, indent=2) + "\n",
-                        encoding="utf-8")
+    다시 열어 `title_parts` 칸만 얹는다(공용 `_write_evidence` 를 고치지 않는다).
+
+    [턴 AQ · P-431 · 차선 Q] 사람 표는 `SPEC/<id>.retro.md`(손으로만) — json 에
+    `title_parts` 를 **쓰지 않는다**. 표 모양(빈 칸 0)만 여기서 본다."""
+    for part in parts:
+        missing = [k for k in ("part", "where", "status") if not (part.get(k) or "").strip()]
+        assert not missing, f"{clause_id} title_parts 에 빈 칸: {part!r} ({missing})"
 
 
 def _hdr(headers: dict) -> dict:
@@ -201,13 +197,14 @@ class U3_02_ControlExecutedTest(U36AnFixture):
 # ═══════════════════════════════════════════════════════════════════════════
 SECRET_AGENCY = "test-only-agency-secret-not-real"  # noqa: S105
 
-#: [P-427] 서명키는 웹훅 서명키 표의 `agency` 하나를 재사용한다(새 자격 0).
+#: [P-432] 서명 비밀 = 그 기관의 **들어오는 키** 자체. 웹훅 서명키 `agency` 는 표에 있어도
+#: 쓰이지 않는다 — 그것을 증명하려고 표에 일부러 넣어 둔다(`test_agency_key_signature_is_401`).
 _SIGNING_KEYS = {"agency": SECRET_AGENCY}
 
 
 @override_settings(WEBHOOK_SIGNING_KEYS=_SIGNING_KEYS, INBOUND_API_KEY_REQUIRE_HTTPS=False)
 class U6_01_ExternalEventsTest(U36AnFixture):
-    """DSM-U6-01 — 인증 = 들어오는 키(범위 `events:ingest`) + HMAC(P-427)."""
+    """DSM-U6-01 — 인증 = 들어오는 키(범위 `events:ingest`) + HMAC(서명 비밀 = 그 키 · P-432)."""
 
     def tearDown(self) -> None:
         import contextlib
@@ -225,12 +222,15 @@ class U6_01_ExternalEventsTest(U36AnFixture):
         set_key_scopes(scope=scope, key_id=issued.view.key_id, scopes=scopes)
         return issued.secret
 
-    def _post(self, body: dict, *, secret: str = SECRET_AGENCY, key: str | None = "",
+    def _post(self, body: dict, *, secret: str | None = None, key: str | None = "",
               timestamp: str | None = None, bearer_user=None):
+        """`secret` 을 안 주면 **들고 가는 키 자체로** 서명한다(P-432 의 정상 모양)."""
         raw = json.dumps(body, ensure_ascii=False).encode("utf-8")
-        headers = _hdr(outbound_headers(secret, raw, timestamp=timestamp))
         if key == "":
             key = self._key(self.scope_a)
+        if secret is None:
+            secret = key if key is not None else "no-key-no-secret"  # noqa: S105
+        headers = _hdr(outbound_headers(secret, raw, timestamp=timestamp))
         if key is not None:
             headers["HTTP_X_API_KEY"] = key
         if bearer_user is not None:
@@ -257,7 +257,8 @@ class U6_01_ExternalEventsTest(U36AnFixture):
             test_ref="tests.test_dsm_u36_an.U6_01_ExternalEventsTest."
                     "test_police_112_emergency_video_event_is_recorded_as_external",
             method="POST", path=EXTERNAL_EVENTS, request_params=body, response=resp,
-            what="112 긴급영상(사건+카메라 스트림) — 들어오는 키(events:ingest) + HMAC(agency) "
+            what="112 긴급영상(사건+카메라 스트림) — 들어오는 키(events:ingest) + HMAC(서명 비밀 = "
+                "그 들어오는 키 · P-432) "
                 "로 서명된 외부 이벤트가 쓰기 문 하나로 들어와 data_source=external 로 적립된다")
 
     def test_fire_119_dispatch_event_is_recorded(self) -> None:
@@ -285,7 +286,18 @@ class U6_01_ExternalEventsTest(U36AnFixture):
         self.assertEqual(401, resp.status_code, resp.content[:300])
 
     def test_bad_signature_is_401(self) -> None:
-        resp = self._post(self._body_112(), secret="wrong-secret-not-agency")
+        resp = self._post(self._body_112(), secret="wrong-secret-not-the-key")
+        self.assertEqual(401, resp.status_code, resp.content[:300])
+
+    def test_agency_key_signature_is_401(self) -> None:
+        """[P-432] 웹훅 서명키 `agency` 로 서명하면 거절 — 방향이 반대인 옛 모양(P-427)이 닫혔다."""
+        resp = self._post(self._body_112(), secret=SECRET_AGENCY)
+        self.assertEqual(401, resp.status_code, resp.content[:300])
+
+    def test_another_valid_key_cannot_sign_for_this_key(self) -> None:
+        """[P-432] 같은 테넌트의 다른 유효 키로 서명해도 거절 — 서명 비밀은 **이 요청의** 키다."""
+        other = self._key(self.scope_a)
+        resp = self._post(self._body_112(), secret=other)
         self.assertEqual(401, resp.status_code, resp.content[:300])
 
     def test_replayed_old_timestamp_is_401(self) -> None:
@@ -304,9 +316,10 @@ class U6_01_ExternalEventsTest(U36AnFixture):
     def test_missing_schema_header_is_401(self) -> None:
         body = self._body_112()
         raw = json.dumps(body, ensure_ascii=False).encode("utf-8")
-        headers = _hdr(outbound_headers(SECRET_AGENCY, raw))
+        key = self._key(self.scope_a)
+        headers = _hdr(outbound_headers(key, raw))
         del headers["HTTP_X_GX_SCHEMA"]
-        headers["HTTP_X_API_KEY"] = self._key(self.scope_a)
+        headers["HTTP_X_API_KEY"] = key
         resp = self.client.post(EXTERNAL_EVENTS, data=raw,
                                 content_type="application/json", **headers)
         self.assertEqual(401, resp.status_code, resp.content[:300])
@@ -325,8 +338,9 @@ class U6_01_ExternalEventsTest(U36AnFixture):
              "status": "measured"},
             {"part": "CAP 1.2 프로파일(스키마 버전 검증)",
              "where": "X-GX-Schema 헤더 부재 → 401", "status": "measured"},
-            {"part": "서명 검증(웹훅 서명키 agency 재사용 · P-427)",
-             "where": "X-GX-Signature 불일치 → 401 · 시각 창 밖 → 401", "status": "measured"},
+            {"part": "서명 검증(서명 비밀 = 그 기관의 들어오는 키 · P-432)",
+             "where": "X-GX-Signature 불일치 → 401 · agency 서명 → 401 · 다른 키 서명 → 401 · "
+                      "시각 창 밖 → 401", "status": "measured"},
             {"part": "기관 인증(들어오는 키 · events:ingest)",
              "where": "키 없음/JWT → 401 · 읽기 키 → 403 · 남의 테넌트 카메라 → 404",
              "status": "measured"},

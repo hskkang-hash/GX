@@ -1,40 +1,18 @@
 {
   "id": "FWS-F3-12",
   "title": "대피 이행 확인(마을별 완료·잔류자·요양시설)",
-  "title_parts": [
-    {
-      "part": "마을별 완료",
-      "where": "요청 completed → 응답 villages[].completed",
-      "status": "구현 — 동리 완료 · 서리 미완료 실측"
-    },
-    {
-      "part": "잔류자",
-      "where": "요청 remaining_residents → 응답 remaining_residents_total",
-      "status": "구현 — 3명 실측"
-    },
-    {
-      "part": "요양시설",
-      "where": "요청 care_facility_cleared → 응답 care_facilities_open",
-      "status": "구현 — 미해제 1건 실측"
-    },
-    {
-      "part": "이행 %(완결조건)",
-      "where": "응답 percent_complete",
-      "status": "구현 — 50.0 실측(2곳 중 1곳 완료)"
-    }
-  ],
-  "measured_at": "2026-09-29T11:54:34.390884+00:00",
+  "measured_at": "2026-09-30T05:24:51.719917+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_12_EvacuationProgressTest.test_progress_then_status_shows_percent_and_remaining",
   "request": {
     "method": "GET",
-    "path": "/api/fws/office2/evacuations/558/status",
+    "path": "/api/fws/office2/evacuations/583/status",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 558,
+      "event_id": 583,
       "plan_status": "pending_f4_approval",
       "villages": [
         {
@@ -42,14 +20,14 @@
           "completed": true,
           "remaining_residents": 0,
           "care_facility_cleared": true,
-          "recorded_at": "2026-09-29T11:54:34.256214+00:00"
+          "recorded_at": "2026-09-30T05:24:51.638340+00:00"
         },
         {
           "village": "서리",
           "completed": false,
           "remaining_residents": 3,
           "care_facility_cleared": false,
-          "recorded_at": "2026-09-29T11:54:34.329808+00:00"
+          "recorded_at": "2026-09-30T05:24:51.677060+00:00"
         }
       ],
       "total_villages": 2,

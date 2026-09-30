@@ -567,7 +567,7 @@ class DsmU4API:
     def evaluation_bundle(self, request, since: str | None = None,
                           until: str | None = None):
         """`GET /evaluation-bundle.zip` — 일곱 원천(상황보고·CBS·통제·회의·열람
-        대장·훈련·접속기록)을 CSV 로 묶은 ZIP(PDF 는 미채움 · P-392 재사용)."""
+        대장·훈련·접속기록)을 CSV 로 묶은 ZIP + PDF 요약 한 장 동봉(P-436 · 턴 AQ)."""
         from django.http import HttpResponse
 
         try:

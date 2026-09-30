@@ -196,6 +196,7 @@ import EditTemplate from './features/waybillTemplate/EditTemplate';
 import './index.css';
 import { CustomRoutes } from './services/API';
 import BuildVersion from './features/dsm/components/BuildVersion';
+import AlertLevelBand from './features/dsm/components/AlertLevelBand';
 import { KICK_SENTENCE } from './features/dsm/constants/kick';
 import { dsm2Routes } from './features/dsm/routes';
 import { opsRoutes } from './features/ops/routes';
@@ -594,6 +595,8 @@ const PrivateLayout = () => {
         표시는 흐름 밖(`fixed`)이라 어느 화면의 배치도 밀지 않는다.
         ⚠ 이 표시는 화면당 한 번만 떠야 한다 — 화면마다 따로 넣으면 겹쳐 그린다.
       */}
+      {/* [턴 AQ · W2B · DSM-U4-06] 위기경보·비상 단계 상단 띠 — `/dsm` 화면에서만 · 접수 0 이면 안 그린다 */}
+      <AlertLevelBand global />
       <BuildVersion />
     </>
   );

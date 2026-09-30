@@ -87,6 +87,25 @@ CLOSED_PREFIXES = measured, present,있음, 구현
 부분은 닫힘으로, 못 채운 부분은 정직하게 열어 둔다. 하나라도 열려 있으면
 그 절은 반쪽이다.
 
+## 4-1. 파일 둘 — 사람 표와 기계 표 (P-431 · 턴 AQ · 차선 Q)
+
+| 파일 | 무엇 | 누가 쓰나 |
+|---|---|---|
+| `SPEC/<id>.json` | 기계 실측 — `request`·`response`·`what`·`test`·`measured_at` | 시험 쓰개(덮어도 된다) |
+| `SPEC/<id>.retro.md` | 사람이 확인한 제목 부분 표 — json 코드 블록 **하나** `{"id", "title_parts", "title_parts_note"?, "retro"?, "retro_*"?}` | **손(Edit)만** |
+
+- 표(`title_parts`)·`title_parts_note`·`retro*` 는 **`.retro.md` 에만** 둔다. json 에는 쓰지
+  않는다 — 남아 있어도 게이트는 **무시한다**(`scripts/_retro_table.overlay`).
+- `.retro.md` 가 없으면 「표 없음 → 회색」 그대로다(옛 json 표로 떨어지지 않는다).
+  블록이 하나가 아니거나 블록의 `id` 가 파일 이름과 다르면 「표 모양 이상 → 회색」.
+- 모든 `verify_spec_*.py` 는 표를 `scripts/_retro_table.py` 로 읽는다(한 읽개).
+- 게이트 1행 **「사람 표 diff 0」**(`verify_spec_title_parts.py`): ① `backend/tests/**`·
+  `scripts/*.py` 소스에 `.retro` 경로로 가는 쓰기 호출이 하나라도 있으면 빨강(정적) ②
+  `common.evidence_guard` 가 `allow_evidence_writes("…")` 안에서도 `.retro.md` 쓰기를
+  거절하지 않으면 빨강(런타임). 시험이 사람 표를 **읽어** 대조하는 것은 된다.
+- 쓰개 시험이 옛 모양으로 json 에 표를 다시 쓰면 `python scripts/strip_spec_human_keys.py
+  --apply` 로 다시 걷는다(멱등 · `.retro.md` 없는 json 은 걷지 않고 보류).
+
 ## 5. 자기시험 짝 (O 게이트가 이 문서를 읽는 것 자체를 시험한다)
 
 `scripts/verify_spec_title_parts.py --self-test` 안에 이 문서에 대한 짝이

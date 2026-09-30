@@ -49,6 +49,7 @@ from typing import Any, Iterable
 
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models import Q
 
 import adapters.juso as juso
 from common.tenant_filters import get_user_group, require_user_group
@@ -373,7 +374,13 @@ def address_gap(*, scope: TenantScope, group_id: int | None = None) -> dict:
         install_address="").count()
     blank_but_marked = qs.filter(address_source=ADDRESS_SOURCE_MANUAL).filter(
         install_address="").count()
+    #: [턴 AQ · U5#5] 화면이 「어느 카메라가 비었나」를 알아야 그 행부터 채우게 한다 —
+    #:   수만 주면 사람(과 측정기)이 이미 주소 있는 행을 덮어쓴다. id 만 · 카메라 수만큼.
+    missing_ids = list(
+        qs.filter(Q(install_address__isnull=True) | Q(install_address=""))
+        .order_by("pk").values_list("pk", flat=True))
     return {
+        "without_address_ids": missing_ids,
         "total": total,
         "with_address": filled,
         "without_address": total - filled,

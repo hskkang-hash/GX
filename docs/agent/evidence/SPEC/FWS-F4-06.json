@@ -1,39 +1,12 @@
 {
   "id": "FWS-F4-06",
   "title": "소방·경찰·군 협조 요청 기록",
-  "title_parts": [
-    {
-      "part": "소방 협조 요청 기록",
-      "where": "agency=fire_department 실측",
-      "status": "구현 — 실측"
-    },
-    {
-      "part": "경찰 협조 요청 기록",
-      "where": "agency=police 실측",
-      "status": "구현 — 실측"
-    },
-    {
-      "part": "군 협조 요청 기록",
-      "where": "agency=military 실측",
-      "status": "구현 — 실측"
-    },
-    {
-      "part": "기록(완결조건)",
-      "where": "GET .../agency-request → count=3",
-      "status": "구현 — 재조회로 3건 확인"
-    },
-    {
-      "part": "화면 버튼(FW-04 완결조건)",
-      "where": "frontend/src/features/fws/pages/CommandHome.tsx — 조회 카드만 그린다, 이 절에 해당하는 버튼 문구는 copy_command.ts 에 준비돼 있으나 렌더 0건(공통 결손 — F4-01 감사에서 확인)",
-      "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
-    }
-  ],
-  "measured_at": "2026-09-29T11:54:57.260095+00:00",
+  "measured_at": "2026-09-30T05:25:14.390620+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_06_AgencyCoordinationTest.test_record_three_agencies",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/573/agency-request?agency=military&request_detail=military+%ED%98%91%EC%A1%B0+%EC%9A%94%EC%B2%AD",
+    "path": "/api/fws/command/incidents/598/agency-request?agency=military&request_detail=military+%ED%98%91%EC%A1%B0+%EC%9A%94%EC%B2%AD",
     "params": {
       "agency": "military"
     }
@@ -41,15 +14,14 @@
   "response": {
     "status": 200,
     "body": {
-      "record_id": 358,
-      "event_id": 573,
+      "record_id": 447,
+      "event_id": 598,
       "agency": "military",
       "request_detail": "military 협조 요청",
       "note": "",
-      "requested_at": "2026-09-29T11:54:57.181027+00:00",
+      "requested_at": "2026-09-30T05:25:14.330999+00:00",
       "requested_by": "dsm_user_a"
     }
   },
-  "what": "소방·경찰·군 세 기관 협조 요청을 각각 POST 로 기록하고 GET 재조회로 3건을 확인한다 — 실측",
-  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 서버 로직은 실측 닫힘을 재확인했으나 화면 버튼이 미배선이다 — 반쪽으로 내린다."
+  "what": "소방·경찰·군 세 기관 협조 요청을 각각 POST 로 기록하고 GET 재조회로 3건을 확인한다 — 실측"
 }

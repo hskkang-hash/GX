@@ -306,6 +306,36 @@ def pytest_configure(config) -> None:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# P-439 — **스레드에 남은 요청을 매 시험 전후로 비운다** (턴 AQ · 차선 Q)
+#
+# 무엇이 있었나: 턴 AP 전량 1회차 실패 — HTTP 를 때린 시험 뒤 `core.middleware.
+#   refresh_token.thread_local.request` 에 **앞 시험의 요청**(`created_by=53`)이 남아,
+#   뒤 시험의 `objects` 가 그 사용자의 테넌트로 좁혀졌다(빈 목록 · 404 를 기대한 시험이
+#   오염으로 초록). 가해 시험은 특정하지 못했다 → **피해 시험마다 고치지 않고** 여기서
+#   한 번에 막는다(WO-20 §5 P-439).
+#
+# ★ 모듈(rj-core 쪽 · site-packages)을 못 들이면 조용히 지나간다 — Django 없는 시험도 있다.
+# ★ 전후 둘 다 비운다: 앞(= 앞 시험이 남긴 것) · 뒤(= 이 시험이 남긴 것을 다음에 안 넘긴다).
+#   `setUpTestData` 안의 HTTP 는 클래스 단위라 이 픽스처보다 먼저 돈다 — 그 자리는 규칙
+#   파일대로 `setUpTestData` 첫 줄에서 비운다(이 픽스처가 대신하지 않는다).
+# ═══════════════════════════════════════════════════════════════════════════
+def _clear_thread_request() -> None:
+    try:
+        from core.middleware.refresh_token import thread_local
+    except Exception:                    # noqa: BLE001 — 못 들이면 비울 것도 없다
+        return
+    thread_local.request = None
+
+
+@pytest.fixture(autouse=True)
+def clear_thread_request():
+    """P-439 — 매 시험 전후 `refresh_token.thread_local.request = None`."""
+    _clear_thread_request()
+    yield
+    _clear_thread_request()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # P-87 4 — **시험이 운영 증거를 덮었다** (2026-09-06 · 턴 I · 차선 Q)
 #
 # 무엇이 있었나 [실측 2026-09-06 · 턴 H · 차선 E]

@@ -139,6 +139,35 @@ class JwtOrInboundKey(CustomJWTAuth):
         return super().__call__(request)
 
 
+def _raw_inbound_key(request: HttpRequest) -> str:
+    """요청에 실린 들어오는 키 원문. **이 모듈 밖으로 내보내지 않는다**(규약 ④) —
+    `inbound_key_id`(정수)와 `verify_signed_with_request_key`(참/거짓·사유)만 이것을 쓴다."""
+    raw = request.headers.get(INBOUND_KEY_HEADER) or ""
+    if not raw:
+        authn_header = request.headers.get("Authorization", "") or ""
+        head, _, rest = authn_header.partition(" ")
+        if head.lower() in INBOUND_AUTHORIZATION_SCHEMES:
+            raw = rest
+    return raw.strip()
+
+
+def verify_signed_with_request_key(request: HttpRequest, raw_body: bytes,
+                                   headers) -> tuple[bool, str]:
+    """[P-432] 본문 서명을 **이 요청이 들고 온 들어오는 키**로 검증한다.
+
+    들어오는 키는 상대 기관이 쥔 값이고, 서명도 그 값으로 한다 — 우리가 남을 부를 때
+    쓰는 웹훅 서명키(`agency`)를 재사용하면 방향이 반대다(턴 AP N4 반론 · 세종 P-432).
+    새 자격 체계 0: 키 표(`apikey_account`)와 범위(`events:ingest`)는 인증 단계
+    (`JwtOrInboundKey` · `assert_path_scope`)가 이미 확인했다.
+
+    ★ 키 값을 돌려주지 않는다 — `(ok, reason)` 만. 사유에도 키를 넣지 않는다.
+    ★ 판정식은 `common.webhook_contract.verify` 그대로(서명·스키마·시각 창).
+    """
+    from common import webhook_contract
+
+    return webhook_contract.verify(_raw_inbound_key(request), raw_body, headers)
+
+
 def inbound_key_id(request: HttpRequest) -> int | None:
     """이 요청이 들고 온 **들어오는 키의 id.** 못 찾으면 `None`.
 
@@ -148,13 +177,7 @@ def inbound_key_id(request: HttpRequest) -> int | None:
     ★ dj-core 표는 **읽기만** 한다 (§0.4 · D-207). `apps.get_model` 로 가져온다 —
       `kernels/k5_trust/inbound_keys.py` 와 같은 규약이다.
     """
-    raw = request.headers.get(INBOUND_KEY_HEADER) or ""
-    if not raw:
-        authn_header = request.headers.get("Authorization", "") or ""
-        head, _, rest = authn_header.partition(" ")
-        if head.lower() in INBOUND_AUTHORIZATION_SCHEMES:
-            raw = rest
-    raw = raw.strip()
+    raw = _raw_inbound_key(request)
     if not raw:
         return None
 

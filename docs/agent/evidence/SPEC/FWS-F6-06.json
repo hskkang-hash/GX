@@ -1,12 +1,12 @@
 {
   "id": "FWS-F6-06",
   "title": "소방 119 출동 사건 연동(재난안전 App DSM 통해)",
-  "measured_at": "2026-09-29T11:55:35.303032+00:00",
+  "measured_at": "2026-09-30T05:25:55.309455+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_06_FireDepartmentLinkTest.test_link_reaches_dsm_field_replies",
   "request": {
     "method": "POST",
-    "path": "/api/fws/liaison/fire-events/609/fire-department-link?dispatch_no=119-2026-0091&note=%EA%B4%80%ED%95%A0+%EC%86%8C%EB%B0%A9%EC%84%9C+%EC%B6%9C%EB%8F%99",
+    "path": "/api/fws/liaison/fire-events/634/fire-department-link?dispatch_no=119-2026-0091&note=%EA%B4%80%ED%95%A0+%EC%86%8C%EB%B0%A9%EC%84%9C+%EC%B6%9C%EB%8F%99",
     "params": {
       "dispatch_no": "119-2026-0091",
       "note": "관할 소방서 출동"
@@ -15,29 +15,12 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 609,
+      "event_id": 634,
       "dispatch_no": "119-2026-0091",
       "note": "관할 소방서 출동",
-      "reply_id": 418,
-      "linked_at": "2026-09-29T11:55:35.280165+00:00"
+      "reply_id": 507,
+      "linked_at": "2026-09-30T05:25:55.282458+00:00"
     }
   },
-  "what": "출동번호 기록이 K1 현장 회신(DSM 카드가 읽는 자리)에 그대로 도달한다 — 새 표 없이 DSM 재사용 실측",
-  "title_parts": [
-    {
-      "part": "119 출동번호·연동 기록",
-      "where": "backend/apps/fws/integration.py::link_fire_department (POST /api/fws/liaison/fire-events/{id}/fire-department-link)",
-      "status": "있음 — dispatch_no·note 를 받아 기록한다"
-    },
-    {
-      "part": "DSM 통해 전달(완결조건: DSM 카드가 읽는 자리)",
-      "where": "backend/apps/fws/integration.py::link_fire_department → apps.dsm.services.field_reply",
-      "status": "있음 — 새 표·새 배지를 만들지 않고 K1 현장 회신(field_reply)에 실어 DSM 이 읽는 자리로 보낸다 · test_link_reaches_dsm_field_replies 가 apps.dsm.services.field_replies() 재조회로 dispatch_no 문자열이 실제 도달함을 실측"
-    },
-    {
-      "part": "재난안전 App(국가 재난안전통신망) 실제 API 연동",
-      "where": "docs/agent/evidence/SPEC/N3_promotions.md:99-105 (FWS-F6-06 행 — 코드에 국가망 호출이 없음을 명문화) · backend/apps/fws/integration.py 는 dsm_services 만 부르고 외부 HTTP 호출이 없다",
-      "status": "없음 — 제목의 '재난안전 App DSM 통해'에서 'DSM'은 이 저장소 내부 DSM App(지휘 화면)을 가리킨다(annex 문맥), 국가 재난안전통신망 자체·소방 119 종합상황실 시스템과의 실제 연동은 짓지 않았다"
-    }
-  ]
+  "what": "출동번호 기록이 K1 현장 회신(DSM 카드가 읽는 자리)에 그대로 도달한다 — 새 표 없이 DSM 재사용 실측"
 }

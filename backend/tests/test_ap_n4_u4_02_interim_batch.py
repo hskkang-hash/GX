@@ -31,7 +31,7 @@ def _write_evidence(spec_id: str, *, test: str, method: str, path: str,
         "measured_by": "django_test_client", "test": test,
         "request": {"method": method, "path": path, "params": {}},
         "response": {"status": status, "body": resp_body}, "what": what,
-        "title_parts": title_parts,
+        #: [턴 AQ · P-431 · 차선 Q] title_parts 는 json 에 안 쓴다 — 사람 표는 `<id>.retro.md`.
     }
     with allow_evidence_writes("P-356 ② DSM-U4 별표 절 실측 증거 — pytest 가 "
                               "방금 두드린 HTTP 왕복을 그대로 적는다"):

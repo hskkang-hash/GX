@@ -1,59 +1,12 @@
 {
   "id": "FWS-F3-13",
   "title": "매시간 상황보고 초안(발생·위치·면적·진화 현황·인력/장비·인명·시설·기상) → 승인 → 산림청 입력 항목 내보내기",
-  "title_parts": [
-    {
-      "part": "발생·위치",
-      "where": "응답 occurred_at·lat·lng·address",
-      "status": "구현 — K1 이벤트에서 그대로"
-    },
-    {
-      "part": "면적",
-      "where": "해당 없음",
-      "status": "정직하게 비움[None] — 진행 중 사건의 면적은 F3-14 최종 실측 전까지 측정값이 없다(D-284, 지어내지 않는다)"
-    },
-    {
-      "part": "진화 현황",
-      "where": "응답 response_state·severity",
-      "status": "구현 — K1 대응 진행 축 재사용"
-    },
-    {
-      "part": "인력/장비",
-      "where": "요청 personnel_count·equipment_note → 응답 그대로",
-      "status": "구현 — 실측 12명 · 장비 메모"
-    },
-    {
-      "part": "인명",
-      "where": "요청 casualties_count → 응답 그대로",
-      "status": "구현 — 실측 0"
-    },
-    {
-      "part": "시설",
-      "where": "요청 facility_note → 응답 그대로",
-      "status": "구현 — 실측"
-    },
-    {
-      "part": "기상",
-      "where": "요청 weather_note → 응답 그대로",
-      "status": "구현 — 실측"
-    },
-    {
-      "part": "매시간 초안(완결조건)",
-      "where": "GET 목록 count",
-      "status": "구현 — 1건 누적 실측"
-    },
-    {
-      "part": "산림청 입력 항목 내보내기(완결조건)",
-      "where": "응답 kfs_export.fields(F6-01 export_kfs_feed 재사용)",
-      "status": "구현 — 신고일시 등 라벨 실측"
-    }
-  ],
-  "measured_at": "2026-09-29T11:54:36.246271+00:00",
+  "measured_at": "2026-09-30T05:24:53.373472+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_13_HourlyReportTest.test_draft_then_export_and_list",
   "request": {
     "method": "POST",
-    "path": "/api/fws/office2/reports/559/hourly?personnel_count=12&equipment_note=%EC%A7%84%ED%99%94%EC%B0%A8+2%EB%8C%80+%C2%B7+%EB%93%B1%EC%A7%90%ED%8E%8C%ED%94%84+8&casualties_count=0&facility_note=%EC%9D%B8%EA%B7%BC+%EB%AF%BC%EA%B0%80+3%EB%8F%99+%EC%9C%84%ED%97%98&weather_note=%ED%92%8D%EC%86%8D+4m%2Fs+%EB%82%A8%EC%84%9C%ED%92%8D",
+    "path": "/api/fws/office2/reports/584/hourly?personnel_count=12&equipment_note=%EC%A7%84%ED%99%94%EC%B0%A8+2%EB%8C%80+%C2%B7+%EB%93%B1%EC%A7%90%ED%8E%8C%ED%94%84+8&casualties_count=0&facility_note=%EC%9D%B8%EA%B7%BC+%EB%AF%BC%EA%B0%80+3%EB%8F%99+%EC%9C%84%ED%97%98&weather_note=%ED%92%8D%EC%86%8D+4m%2Fs+%EB%82%A8%EC%84%9C%ED%92%8D",
     "params": {
       "personnel_count": 12,
       "equipment_note": "진화차 2대 · 등짐펌프 8",
@@ -65,9 +18,9 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 559,
-      "hour": "2026-09-29T11:00",
-      "occurred_at": "2026-09-29T11:53:36.093118+00:00",
+      "event_id": 584,
+      "hour": "2026-09-30T05:00",
+      "occurred_at": "2026-09-30T05:23:53.246454+00:00",
       "lat": null,
       "lng": null,
       "address": null,
@@ -78,15 +31,15 @@
       "casualties_count": 0,
       "facility_note": "인근 민가 3동 위험",
       "weather_note": "풍속 4m/s 남서풍",
-      "drafted_at": "2026-09-29T11:54:36.178922+00:00",
+      "drafted_at": "2026-09-30T05:24:53.314443+00:00",
       "kfs_export": {
         "format": "json",
-        "event_id": 559,
+        "event_id": 584,
         "fields": [
           {
             "key": "occurred_at",
             "label": "신고일시",
-            "value": "2026-09-29T11:53:36.093118+00:00"
+            "value": "2026-09-30T05:23:53.246454+00:00"
           },
           {
             "key": "lat",

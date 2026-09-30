@@ -59,11 +59,50 @@ def get_verification(*, scope, verification_id: int) -> dict:
         "severity": event.severity,
         "status": event.status,
         "verdict": event.verdict,
+        # ★ [턴 AQ · 차선 W2A] 누른 뒤 재조회가 회신(결과·사진)을 보이게 — K1 현장 회신
+        #   공개 면(`field_replies`)을 읽어 **이 파일이 쓴 모양**만 되짚는다(새 표 0).
+        "replies": _parsed_replies(scope, event.event_id),
     }
 
 
+#: 회신 한 줄 안의 사진 표식 — `reply_verification` 이 쓰고 `_parsed_replies` 가 읽는다.
+PHOTO_MARK = "[사진:"
+
+
+def _parsed_replies(scope, event_id: int) -> list[dict]:
+    """이 확인 요청에 달린 회신 중 **결과 3택으로 시작하는 줄**만 — 최신순."""
+    out = []
+    for reply in dsm_services.field_replies(scope=scope, event_id=event_id, limit=50):
+        text = reply.text or ""
+        head = text.split(" ", 1)[0]
+        if head not in RESULTS:
+            continue
+        photo_id = None
+        if PHOTO_MARK in text:
+            tail = text.split(PHOTO_MARK, 1)[1].split("]", 1)[0]
+            photo_id = int(tail) if tail.isdigit() else None
+        out.append({"reply_id": reply.reply_id, "result": head, "photo_id": photo_id})
+    return out
+
+
+def _require_photo_of(event_id: int, photo_id: int) -> None:
+    """그 사진이 **이 사건에** 올라온 것인가. 사건 문지기(K1 `get_event`)는 호출자가
+    먼저 지났다 — 그래서 사건 번호로 좁히면 곧 테넌트로 좁힌 것이다.
+
+    사진 저장은 `POST /api/dsm/events/{id}/field-photo`(`apps/dsm/field.py`) 한 곳이다 —
+    이 파일은 새 업로드 문을 만들지 않고 그 행의 번호만 회신에 묶는다(D-212).
+    """
+    from django.apps import apps
+
+    photo_model = apps.get_model("stream_monitors", "DsmFieldPhoto")
+    if not photo_model._base_manager.filter(pk=photo_id, event_id=event_id).exists():
+        raise VerificationReplyRejected(
+            f"photo_id={photo_id} 는 이 확인 요청에 올라온 사진이 아니다")
+
+
 def reply_verification(*, scope, verification_id: int, result: str,
-                       reason_code: str = "", note: str = "") -> dict:
+                       reason_code: str = "", note: str = "",
+                       photo_id: int | None = None) -> dict:
     """FWS-F1-06 — 현장 확인 회신. 결과가 사건의 판정을 바꾼다(「사건 확정/오인」)."""
     if result not in RESULTS:
         raise VerificationReplyRejected(
@@ -77,7 +116,14 @@ def reply_verification(*, scope, verification_id: int, result: str,
                 f"허용: {FALSE_ALARM_REASONS}")
         reason_label = f"[{reason_code}] "
 
-    text = f"{result} {reason_label}{note}".strip()
+    photo_label = ""
+    if photo_id is not None:
+        # 사건 문지기를 먼저 지난다(남의 사건이면 여기서 404) — 그 뒤에 사진을 본다.
+        dsm_services.event_detail(scope=scope, event_id=verification_id)
+        _require_photo_of(verification_id, photo_id)
+        photo_label = f"{PHOTO_MARK}{photo_id}] "
+
+    text = f"{result} {reason_label}{photo_label}{note}".strip()
     try:
         reply = dsm_services.field_reply(
             scope=scope, event_id=verification_id, text=text)
@@ -99,4 +145,5 @@ def reply_verification(*, scope, verification_id: int, result: str,
         "result": result,
         "reason_code": reason_code or None,
         "verdict": verdict,
+        "photo_id": photo_id,
     }

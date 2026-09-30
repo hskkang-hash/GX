@@ -65,14 +65,14 @@ class DsmOpsAnAPI:
     @tenant_scoped(reason="O-01 테넌트 발급 — U0 전용")
     def ops_tenants_issue(self, request, code: str, name: str, admin_username: str,
                           admin_email: str, admin_password: str, region: str = "",
-                          public_url: str = "", domain: str = ""):
+                          public_url: str = "", domain: str = "", departments: str = ""):
         from apps.dsm import ops_an_service as svc
 
         try:
             return svc.issue_tenant(
                 actor=_actor(request), code=code, name=name, admin_username=admin_username,
                 admin_email=admin_email, admin_password=admin_password, region=region,
-                public_url=public_url, domain=domain,
+                public_url=public_url, domain=domain, departments=departments,
                 auth_header=request.META.get("HTTP_AUTHORIZATION", ""))
         except Exception as exc:  # noqa: BLE001
             raise _translate(exc)

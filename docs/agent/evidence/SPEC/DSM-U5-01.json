@@ -1,7 +1,7 @@
 {
   "id": "DSM-U5-01",
   "title": "운영·관리 방침 항목 관리",
-  "measured_at": "2026-09-29T11:53:00.514496+00:00",
+  "measured_at": "2026-09-30T05:23:22.150776+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u5_an.U5_01_PrivacyPolicyTest.test_save_reread_and_retention_matches_destruction_policy",
   "request": {
@@ -30,61 +30,9 @@
       "installed_camera_count": 1,
       "retention_days": 30,
       "retention_source": "운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 P-67 · config/retention_seed.py)",
-      "saved_at": "2026-09-29T11:53:00.468238+00:00",
+      "saved_at": "2026-09-30T05:23:22.111077+00:00",
       "document_text": "GuardianX 재난안전관리 App — 영상정보 운영·관리 방침\n\n· 설치 목적: 산불 감시 및 방범\n· 설치 위치: 정문·주차장\n· 촬영 범위: 출입로 전방 30m\n· 관리책임자: 정보통신과장\n· 접근권한자: 정보통신과 담당자 2명\n· 촬영 시간: 24시간\n· 열람 절차: 열람청구서 접수 후 3일 이내 처리\n· 설치 대수: 1대(실측)\n· 보관 기간: 30일(파기 정책과 같은 값)"
     }
   },
-  "what": "POST .../u5an/privacy-policy 로 저장한 항목이 재조회에 그대로 보이고, retention_days 는 손으로 적는 칸이 아니라 apps.dsm.retention.retention_days()(파기가 실제로 보는 값)를 그대로 읽는다 — 완결조건 실측(VIDEO_RETENTION_DAYS=30 선언 시 방침의 보관 기간도 30)",
-  "title_parts": [
-    {
-      "part": "설치 목적",
-      "where": "purpose",
-      "status": "measured"
-    },
-    {
-      "part": "대수",
-      "where": "installed_camera_count",
-      "status": "measured"
-    },
-    {
-      "part": "위치",
-      "where": "install_locations",
-      "status": "measured"
-    },
-    {
-      "part": "촬영 범위",
-      "where": "filming_scope",
-      "status": "measured"
-    },
-    {
-      "part": "관리책임자",
-      "where": "responsible_person",
-      "status": "measured"
-    },
-    {
-      "part": "접근권한자",
-      "where": "access_grantees",
-      "status": "measured"
-    },
-    {
-      "part": "촬영 시간",
-      "where": "filming_hours",
-      "status": "measured"
-    },
-    {
-      "part": "보관 기간",
-      "where": "retention_days",
-      "status": "measured"
-    },
-    {
-      "part": "열람 절차",
-      "where": "viewing_procedure",
-      "status": "measured"
-    },
-    {
-      "part": "방침 문서 자동 생성",
-      "where": "document_text",
-      "status": "measured"
-    }
-  ]
+  "what": "POST .../u5an/privacy-policy 로 저장한 항목이 재조회에 그대로 보이고, retention_days 는 손으로 적는 칸이 아니라 apps.dsm.retention.retention_days()(파기가 실제로 보는 값)를 그대로 읽는다 — 완결조건 실측(VIDEO_RETENTION_DAYS=30 선언 시 방침의 보관 기간도 30)"
 }

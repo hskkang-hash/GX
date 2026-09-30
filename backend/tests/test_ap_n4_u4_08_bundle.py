@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """DSM-U4-08 — 재난관리평가·감사 자료 묶음(ZIP) 실측 (턴 AP · WO-19 · 차선 N4).
-PDF 는 이번 턴 만들지 않는다(P-392 결정 재사용) — 이 시험은 CSV 일곱 + manifest
-가 실제로 담기는지만 잰다."""
+[턴 AQ · P-436] PDF 는 차선 N4 가 구현했다 — manifest 의 `pdf.status` 가 "ok" 인지
+본다(옛 「PDF 안 만듦」 결정 인용은 번호 오용이라 걷었다). CSV 일곱 + manifest 가 실제로 담기는지 잰다."""
 from __future__ import annotations
 
 import io
@@ -32,7 +32,7 @@ def _write_evidence(spec_id: str, *, test: str, method: str, path: str,
         "measured_by": "django_test_client", "test": test,
         "request": {"method": method, "path": path, "params": {}},
         "response": {"status": status, "body": resp_body}, "what": what,
-        "title_parts": title_parts,
+        #: [턴 AQ · P-431 · 차선 Q] title_parts 는 json 에 안 쓴다 — 사람 표는 `<id>.retro.md`.
     }
     with allow_evidence_writes("P-356 ② DSM-U4 별표 절 실측 증거"):
         EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
@@ -71,7 +71,7 @@ class EvaluationBundleTest(DsmFixture):
 
         manifest = json.loads(zf.read("manifest.json").decode("utf-8"))
         self.assertIn("pdf", manifest)
-        self.assertIn("not_generated", manifest["pdf"])
+        self.assertEqual("ok", manifest["pdf"]["status"])
 
         _write_evidence(
             "DSM-U4-08",
@@ -81,7 +81,7 @@ class EvaluationBundleTest(DsmFixture):
             resp_body={"zip_entries": sorted(names), "manifest": manifest},
             what="[턴 AP · 차선 N4] 일곱 CSV 원천 + manifest.json 이 ZIP 하나에 "
                 "담긴다 — CBS 초안 CSV 에 방금 만든 초안 값이 실려 있음을 실측. "
-                "PDF 는 만들지 않는다(P-392 결정 재사용)",
+                "[턴 AQ] manifest.pdf.status == ok 실측",
             title_parts=[
                 {"part": "상황보고 발송 이력",
                  "where": "situation_reports.csv · apps/dsm/u4_evaluation_bundle_"
@@ -116,13 +116,6 @@ class EvaluationBundleTest(DsmFixture):
                  "status": "measured: 이 시험 — ZIP 1건에 여덟 항목 실측(완결 조건 "
                          "「ZIP 1」)"},
                 {"part": "ZIP(PDF+CSV) — PDF 부분",
-                 "where": "u4_evaluation_bundle_service.py 머리말 — PDF 렌더 코드 없음",
-                 "status": "없음 — PDF 는 이번 턴 만들지 않는다",
-                 "excluded_by": "P-392",
-                 "excluded_why": "이미 있는 결정을 재사용한다 — "
-                                "`situation_report_ledger_service.py` 머리말의 "
-                                "「HWPX 는 채우지 않는다」와 같은 결정 번호(HWPX/PDF "
-                                "같은 문서 렌더링을 새 의존성으로 들이지 않는다). "
-                                "CSV(구조화 원자료)는 전부 실려 있다 — PDF 는 그 "
-                                "위의 사람이 읽을 서식일 뿐이다."},
+                 "where": "manifest.json 의 pdf{name,status} — 차선 N4(턴 AQ) 구현",
+                 "status": "measured: 이 시험 — manifest.pdf.status == ok 실측"},
             ])

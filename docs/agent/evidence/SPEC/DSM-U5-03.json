@@ -1,7 +1,7 @@
 {
   "id": "DSM-U5-03",
   "title": "연계 설정 — 스마트시티 통합플랫폼·112·119·NDMS",
-  "measured_at": "2026-09-29T11:53:02.508848+00:00",
+  "measured_at": "2026-09-30T05:23:23.790728+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u5_an.U5_03_IntegrationsTest.test_save_test_and_status_word_progression",
   "request": {
@@ -18,52 +18,10 @@
       "label": "NDMS(재난관리시스템)",
       "endpoint_name": "ndms-prod-gateway",
       "outbound_api_key_ref": "NDMS_OUTBOUND_KEY_REF",
-      "saved_at": "2026-09-29T11:53:02.443339+00:00",
+      "saved_at": "2026-09-30T05:23:23.733410+00:00",
       "status": "정상",
-      "tested_at": "2026-09-29T11:53:02.485016+00:00"
+      "tested_at": "2026-09-30T05:23:23.766553+00:00"
     }
   },
-  "what": "네 연계서비스(스마트시티 통합플랫폼·112·119·NDMS)가 목록에 있고, 끝점 이름·자격 참조명(값 아님)을 저장하면 상태가 '대기'였다가 연결 시험 뒤 '정상'이 된다 — 시험은 설정 완결성만 보고 실제로는 밖으로 나가지 않는다(WO-17 경계)",
-  "title_parts": [
-    {
-      "part": "스마트시티 통합플랫폼",
-      "where": "service=smart_city",
-      "status": "measured"
-    },
-    {
-      "part": "112",
-      "where": "service=police_112",
-      "status": "measured"
-    },
-    {
-      "part": "119",
-      "where": "service=fire_119",
-      "status": "measured"
-    },
-    {
-      "part": "NDMS",
-      "where": "service=ndms",
-      "status": "measured"
-    },
-    {
-      "part": "엔드포인트",
-      "where": "endpoint_name",
-      "status": "measured"
-    },
-    {
-      "part": "자격 참조명",
-      "where": "outbound_api_key_ref",
-      "status": "measured"
-    },
-    {
-      "part": "연결 시험",
-      "where": "POST /u5an/integrations/test",
-      "status": "measured"
-    },
-    {
-      "part": "상태 한 단어",
-      "where": "status",
-      "status": "measured"
-    }
-  ]
+  "what": "네 연계서비스(스마트시티 통합플랫폼·112·119·NDMS)가 목록에 있고, 끝점 이름·자격 참조명(값 아님)을 저장하면 상태가 '대기'였다가 연결 시험 뒤 '정상'이 된다 — 시험은 설정 완결성만 보고 실제로는 밖으로 나가지 않는다(WO-17 경계)"
 }

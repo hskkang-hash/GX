@@ -1,7 +1,7 @@
 {
   "id": "O-05",
   "title": "건강 보드(전 테넌트)",
-  "measured_at": "2026-09-29T11:59:08.225770+00:00",
+  "measured_at": "2026-09-30T05:29:37.265833+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O05_HealthBoardTest.test_tenant_count_equals_rows_and_red_opens_one_incident",
   "request": {
@@ -22,11 +22,11 @@
           },
           "queue_lag_sec": 0.0,
           "storage_used_pct": 0.0,
-          "backup_receipt_at": "2026-09-28T20:00:00+00:00",
+          "backup_receipt_at": "2026-09-29T20:00:02+00:00",
           "backup_verdict": "OK",
-          "survival_alert_late": 10,
-          "color": "red",
-          "auto_incident_id": "311edbdcd815"
+          "survival_alert_late": 0,
+          "color": "green",
+          "auto_incident_id": null
         },
         {
           "tenant_code": "",
@@ -37,26 +37,26 @@
           },
           "queue_lag_sec": 0.0,
           "storage_used_pct": 0.0,
-          "backup_receipt_at": "2026-09-28T20:00:00+00:00",
+          "backup_receipt_at": "2026-09-29T20:00:02+00:00",
           "backup_verdict": "OK",
-          "survival_alert_late": 10,
-          "color": "red",
-          "auto_incident_id": "8b5ae2b8d823"
+          "survival_alert_late": 0,
+          "color": "green",
+          "auto_incident_id": null
         },
         {
-          "tenant_code": "t-08ef3925",
-          "name": "온보딩 시험 테넌트 t-08ef3925",
+          "tenant_code": "t-840368e2",
+          "name": "온보딩 시험 테넌트 t-840368e2",
           "cameras": {
             "active": 0,
             "total": 1
           },
           "queue_lag_sec": 0.0,
           "storage_used_pct": 0.0,
-          "backup_receipt_at": "2026-09-28T20:00:00+00:00",
+          "backup_receipt_at": "2026-09-29T20:00:02+00:00",
           "backup_verdict": "OK",
-          "survival_alert_late": 10,
+          "survival_alert_late": 0,
           "color": "red",
-          "auto_incident_id": "50639dd8ca11"
+          "auto_incident_id": "8349c4c1fab9"
         }
       ],
       "tenant_count": 3,
@@ -70,53 +70,5 @@
       }
     }
   },
-  "what": "GET /api/dsm/ops/health 의 tenant_count 가 tenants 행 수와 같고, 카메라 활성 0(총 1)인 테넌트 행이 색=red 이며 open_incident() 를 재사용해 실제 인시던트 하나를 연다(auto_incident_id) — 재호출해도 같은 id(중복 생성 0). §7 완결조건('테넌트 수 = 보드 행 수 · 빨강 → 인시던트 자동 생성')을 그대로 실측한다(설명 칸의 5xx·게이트16색은 완결조건이 아니라 응답의 not_measured 로 정직하게 비운다).",
-  "title_parts": [
-    {
-      "part": "완결조건 — 테넌트 수 = 보드 행 수",
-      "where": "tenant_count/tenants",
-      "status": "measured"
-    },
-    {
-      "part": "완결조건 — 빨강 → 인시던트 자동 생성",
-      "where": "auto_incident_id",
-      "status": "measured"
-    },
-    {
-      "part": "완결조건 — 중복 생성 방지",
-      "where": "재호출 시 같은 auto_incident_id",
-      "status": "measured"
-    },
-    {
-      "part": "카메라 맥박(명사 부분)",
-      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
-      "status": "구현 — OpsHome.tsx:113-139 화면 렌더 확인(카메라 상태 색 열)"
-    },
-    {
-      "part": "큐 지연(명사 부분)",
-      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
-      "status": "없음(응답 바디엔 있으나 OpsHome.tsx 화면에 렌더되지 않는다)"
-    },
-    {
-      "part": "저장 %(명사 부분)",
-      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
-      "status": "없음(응답 바디엔 있으나 화면에 렌더되지 않는다)"
-    },
-    {
-      "part": "백업 회수증(명사 부분)",
-      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
-      "status": "없음(응답 바디엔 있으나 화면에 렌더되지 않는다)"
-    },
-    {
-      "part": "생존 알림(명사 부분)",
-      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
-      "status": "없음(응답 바디엔 있으나 화면에 렌더되지 않는다)"
-    },
-    {
-      "part": "5xx·게이트 16색(명사 부분)",
-      "where": "OpsHome.tsx 건강 보드 카드 — 전 테넌트 응답 바디 대조",
-      "status": "없음(서버 응답이 스스로 not_measured 라 자백한다 — 측정 안 됨)"
-    }
-  ],
-  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 완결조건 3행(테넌트수=보드행수·빨강→인시던트·중복방지)은 실측 닫힘을 재확인했다. 그러나 표에 제목이 부르는 명사 부분(카메라 맥박·큐 지연·저장%·백업 회수증·생존 알림·5xx/16색) 자체가 행으로 없었다 — 화면은 카메라·상태색 2열만 그린다. 나머지는 빠진 행 이었다(P-419 §1 종류 목록) — 반쪽으로 내린다."
+  "what": "GET /api/dsm/ops/health 의 tenant_count 가 tenants 행 수와 같고, 카메라 활성 0(총 1)인 테넌트 행이 색=red 이며 open_incident() 를 재사용해 실제 인시던트 하나를 연다(auto_incident_id) — 재호출해도 같은 id(중복 생성 0). §7 완결조건('테넌트 수 = 보드 행 수 · 빨강 → 인시던트 자동 생성')을 그대로 실측한다(설명 칸의 5xx·게이트16색은 완결조건이 아니라 응답의 not_measured 로 정직하게 비운다)."
 }

@@ -14,8 +14,8 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "특정 시간대(08~09시) 인계 창",
-      "where": "backend/apps/dsm/handover_service.py (파일 전문 — build_draft 는 hours 롤링 창만 받고, 시각(00~24) 제약 코드 없음)",
-      "status": "없음 — '08~09시'를 강제하는 코드가 없다. 아무 때나 ack 가능(관행 서술일 뿐 검증 로직 아님, 코드 전문 확인)"
+      "where": "backend/apps/dsm/handover_service.py::HANDOVER_WINDOW_START_HOUR=8 · HANDOVER_WINDOW_END_HOUR=9(명세 §4.2 84행 원문 숫자) · handover_window() → GET /api/dsm/handover/latest 의 handover_window · acknowledge() 감사 줄에 「인계 창 08:00~09:00 안/밖」 · 화면 frontend/src/features/dsm/components/HandoverAckCard.tsx::data-gx=dsm-u2-05-window",
+      "status": "measured: tests.test_aq_w2b_dsm_screens.HandoverAckScreenTest.test_window_bounds_are_the_spec_hours(08:30 안 · 07:59·09:00 밖 — 서버 현지 시각 settings.TIME_ZONE) · test_ack_then_refetch_shows_check_and_window(재조회 응답에 창 08:00~09:00 · 확인 감사 문장에 창 안/밖). 창 밖 확인은 막지 않고 「밖」으로 남긴다 — 명세는 관행 시간대를 적었지 거절을 요구하지 않는다"
     },
     {
       "part": "팀장이 「확인」 체크(ack)",
@@ -24,14 +24,15 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "홈 카드 「인계 확인 ✓」 UI",
-      "where": "backend/apps/dsm/handover_service.py::latest 함수 docstring 234행 '★ 화면에 그리는 것은 F 차선의 몫이다 — 여기서는 라우트와 응답만 연다'; frontend/src 전수 grep — DSM 교대인계(DsmHandover) 카드를 그리는 화면 없음(매칭된 'handover ack' 프런트 2건은 무관한 인사/근무 Handover 기능(features/Handover/...)이다)",
-      "status": "없음 — 백엔드는 acknowledged 플래그를 내려줄 뿐, 그 값을 읽어 체크 표시를 그리는 DSM 홈 카드 코드가 없다"
+      "where": "frontend/src/features/dsm/components/HandoverAckCard.tsx::data-gx=dsm-u2-05-card · dsm-u2-05-ack(「인계 확인」 버튼) · dsm-u2-05-acked(「인계 확인 ✓」) — 팀장(U2) 홈 pages/Home.tsx 의 DecisionHandoverRow · POST /api/dsm/handover/{id}/ack → GET /api/dsm/handover/latest",
+      "status": "measured: tests.test_aq_w2b_dsm_screens.HandoverAckScreenTest.test_ack_then_refetch_shows_check_and_window — 누르기 전 acknowledged=false · 누른 뒤 같은 GET 재조회 acknowledged=true(카드가 ✓ 로 바뀜) · 남의 테넌트 인계는 내 카드에 안 옴 · ScreenStaticTest(data-gx 글자 대조)"
     },
     {
       "part": "완결 조건 「감사」",
       "where": "backend/apps/dsm/handover_service.py::acknowledge → audit_writer.write(logger_name=_ACK_LOGGER_NAME)",
       "status": "measured: ack 마다 audit_writer 감사 줄 1건(evidence ack_id=397)"
     }
-  ]
+  ],
+  "retro": "턴 AQ 차선 W2B · 화면 배선 · 사람 확인 · 2026-09-30 · 팀장 홈에 「인계 확인 ✓」 카드 + 명세 원문 08~09시 인계 창(표시·감사) · 누른 뒤 GET /handover/latest 재조회."
 }
 ```

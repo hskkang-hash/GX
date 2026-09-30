@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-11",
   "title": "내 근무 기록·순찰 실적(일·주)",
-  "measured_at": "2026-09-29T11:53:55.333242+00:00",
+  "measured_at": "2026-09-30T05:47:42.672320+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_11_PatrolMineTest.test_todays_checkin_and_track_are_counted",
   "request": {
@@ -22,25 +22,8 @@
         "tracks": 1,
         "checkpoints": 0
       },
-      "as_of": "2026-09-29T11:53:55.323728+00:00"
+      "as_of": "2026-09-30T05:47:42.663588+00:00"
     }
   },
-  "what": "체크인 1·트랙 1 뒤 GET /api/fws/patrol/mine 의 today 칸이 1·1 로 표에 실측된다(week 칸은 today 를 포함해 >=1)",
-  "title_parts": [
-    {
-      "part": "오늘(today) 칸 — 체크인·트랙·순찰함 통과 카운트",
-      "where": "backend/apps/fws/patrol.py::mine — GET /api/fws/patrol/mine",
-      "status": "measured: F1_11_PatrolMineTest.test_todays_checkin_and_track_are_counted — today.checkins=1, today.tracks=1 실측"
-    },
-    {
-      "part": "주(week) 칸",
-      "where": "backend/apps/fws/patrol.py::mine — week_start = today_start - timedelta(주 시작 월요일)",
-      "status": "measured: 같은 시험, week.checkins>=1 로 확인(오늘 값을 포함해 최소 1) — 다만 이번 주 중 오늘이 아닌 다른 날짜의 기록이 실제로 week 칸에 누적되는지는 이 시험이 따로 재지 않음(오늘 하루치만 넣고 확인)"
-    },
-    {
-      "part": "화면에 표(일·주 실적)로 보여주는 자리",
-      "where": "frontend/src/features/fws — fwsEndpoint.patrolMine 은 api.ts:19에 등록만 되고, 어떤 페이지도 호출하지 않음(grep 결과 0건)",
-      "status": "없음: 서버 집계는 실측됐지만 F1 화면 어디에도 내 근무 기록·순찰 실적 표가 없다"
-    }
-  ]
+  "what": "체크인 1·트랙 1 뒤 GET /api/fws/patrol/mine 의 today 칸이 1·1 로 표에 실측된다(week 칸은 today 를 포함해 >=1)"
 }

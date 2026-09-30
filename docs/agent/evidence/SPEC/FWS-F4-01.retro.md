@@ -49,10 +49,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "화면 버튼(FW-04 완결조건)",
-      "where": "frontend/src/features/fws/pages/CommandHome.tsx(169줄) — copy_command.ts 의 버튼 문구(stage·commandPost·aircraft·evacuation·agency·fireDeclaration·hourlyReport·night·meeting·postReport)는 준비돼 있으나 렌더 0건, 조회 카드만 그린다(파일 자신의 머리말도 자백)",
-      "status": "없음(버튼 미배선 — 서버 상태변화는 실측됐으나 화면에서 누를 자리가 없다)"
+      "where": "frontend/src/features/fws/pages/CommandHome.tsx::data-gx=fws-f4-01-load · fws-f4-01-screen(+ 같은 화면의 fws-f4-02~12·15 버튼) — API GET /api/fws/command/incidents/{id}/command",
+      "status": "구현 — 화면 배선 · 사건 개요·단계·지휘본부·자원·대피를 한 카드에 그리고 그 아래 절별 버튼을 같은 화면에 배선, 누를 때마다 이 GET 을 다시 부른다 · 누른 뒤 재조회 시험 backend/tests/test_aq_n1_f4_command_wiring.py::AqN1F4CommandWiringTest::test_f4_01_screen_rereads_stage_and_post_after_press · 정적 대조 AqN1F4ScreenSourceTest::test_screen_declares_data_gx_and_calls_each_path"
     }
   ],
-  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 명사 부분 6개 중 지도·화선 2개가 excluded_by 없이 조용히 빠졌고, 완결조건(한 화면)도 버튼이 아니라 조회 카드뿐이다 — 반쪽으로 내린다."
+  "retro": "턴 AQ 차선 N1 · 화면 배선 · 사람 확인 · 2026-09-30 · CommandHome.tsx 에 한 화면 카드와 절별 버튼을 배선하고 누른 뒤 조회 GET(캐시 우회) 재호출을 test_f4_01_screen_rereads_stage_and_post_after_press 로 실측했다 · 남은 열린 행: 한 화면(완결조건 — 지도·화선 없이 그린다) · 지도 · 화선(결정 번호 없음 — §3 상 excluded_by 로 뺄 수 있는 범주(운영 집행·외부 실연동)도 아니다) — 반쪽 유지 · 앞 판: P-419 재판정(턴 AP · N1) · 2026-09-29 · 명사 부분 6개 중 지도·화선 2개가 excluded_by 없이 조용히 빠졌고, 완결조건(한 화면)도 버튼이 아니라 조회 카드뿐이다 — 반쪽으로 내린다."
 }
 ```

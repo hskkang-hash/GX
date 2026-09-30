@@ -78,6 +78,11 @@ EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 CLOSED_CLAUSES: tuple[str, ...] = (
     "FWS-F3-11", "FWS-F3-12", "FWS-F3-13", "FWS-F3-14",
     "FWS-F3-17", "FWS-F3-18", "FWS-F3-19", "FWS-F3-20",
+    #: [턴 AQ · 조율자 창 ② · P-435] 차선 N3 가 헬기 투하 시각 저장(POST/GET
+    #: `…/command/incidents/{id}/helicopter-drop` · 지휘 화면 F4-04 자리)과 준수율
+    #: (`fire_stats.heli_drop_compliance_pct` · 기관 통계 화면)을 배선 — 대리 지표가 걷혔다.
+    #: 증거 `SPEC/FWS-F3-16.retro.md` 9/9 · 시험 `test_aq_n3_screens.FwsF3_16HeliDropScreenTest`.
+    "FWS-F3-16",
 )
 
 #: annex 원문(§5.3 Table) 제목 — `docs/design/FWS_산불감시App_명세서_v1.0_…
@@ -104,20 +109,6 @@ TITLES: dict[str, str] = {
 
 #: 못 닫은 셋 — **「무엇이 없는가」 한 줄** (P-358 형식). 빈 칸으로 두지 않는다(D-274).
 NOT_STARTED: dict[str, str] = {
-    "FWS-F3-16": "골든타임 준수율(annex §4.3 「헬기 투하·지상 도달 30분」) — "
-                "이 앱이 실제로 가진 것은 확인 회신(occurred_at→reviewed_at) "
-                "30분 이내 비율뿐이다(응답 golden_time_note 에 그대로 밝힌다 · "
-                "D-284). 나머지 일곱 칸(발생·면적·원인·시간대·구역·오인율·확인 "
-                "시간)은 전부 실측이지만 이 한 칸이 대리 지표라 절 전체가 "
-                "반쪽이다(턴 AO WO-18 — 대리 지표는 열린 행). [실측 2026-09-29 "
-                "· 턴 AO 차선 O] `stream_monitors/services/response_clock.py` "
-                "가 사건별 `arrived_at`(현장 도착/조치 착수 전이 시각 — 감사를 "
-                "읽어 세운 값)을 낸다는 것은 찾았으나, 그것도 annex 가 부르는 "
-                "\"헬기 투하\" 시각은 아니다(대응 상태 넷 occurred/acknowledged/"
-                "in_progress/closed 안에 헬기 투하를 가리키는 상태·칸이 없다) — "
-                "지어내지 않고 열어 둔다. office2.fire_stats 의 근사 계산 자체를 "
-                "바꾸는 일은 이 차선(파일 소유는 office2.py 지만 이번 일감은 "
-                "곁표·테넌트 범위뿐)의 일감 밖이다.",
     "FWS-F3-10": "확산예측 — 풍향장·지형·연료(임상)를 쓰는 확산예측 모델이나 그 "
                 "결과를 낼 산림과학원 외부 API 가 이 차선에 없다. annex 가 스스로 "
                 "허락한 대안(「업로드」)도 짓지 않았다 — 업로드 결과(폴리곤·좌표)를 "
@@ -259,9 +250,16 @@ def _load_evidence(clause_id: str) -> dict | None:
     if not path.is_file():
         return None
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except (ValueError, OSError):
         return None
+    #: [턴 AQ · P-431 · 차선 Q] 제목 부분 표(title_parts·retro*)는 사람 파일
+    #: `<id>.retro.md` 에서만 온다 — json 에 남은 그 키는 버린다(판정식은 그대로).
+    _here = str(Path(__file__).resolve().parent)
+    if _here not in sys.path:
+        sys.path.insert(0, _here)
+    from _retro_table import overlay  # noqa: PLC0415
+    return overlay(payload, clause_id, EVIDENCE_DIR)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

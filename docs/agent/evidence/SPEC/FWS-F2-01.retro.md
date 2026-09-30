@@ -24,9 +24,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "자원 배치판에 표시(완결조건 — 명세서 §5.2 156행)",
-      "where": "backend/apps/fws/standby.py 머리말(10-14행) — 명시적으로 범위 밖이라 적음",
-      "status": "없음(범위 밖) — standby.py 머리말이 직접 「그 배치판은 F3(산림과 담당) 화면이고 §0.4 인접 — 다른 차선 소유, 화면은 짓지 않는다」고 적어 둠. 이 파일은 GET 문 하나만 낸다. F3 쪽 화면·위젯 실측 없음"
+      "where": "frontend/src/features/fws/pages/W2cCommandCards.tsx::ResourceBoardCard (지휘 화면 CommandHome.tsx 에 붙음 · data-gx=fws-f2-01-board · fws-f2-01-board-refresh · fws-f2-01-standby-counts · fws-f2-01-count-day · fws-f2-01-count-night · fws-f2-01-standby-list) · GET /api/fws/resources/board · backend/apps/fws/resource_board.py::standby_roster (standby.set_status 가 테넌트 곁표를 붙여 남긴 줄 · 사람마다 최신 한 줄)",
+      "status": "구현 — 대원 대기 상태 등록 뒤 지휘 화면 refreshAll 이 GET /resources/board 를 다시 불러 대기 인원·주간/야간 수·사람별 상태·위치를 그린다. 다른 기관 대원은 섞이지 않는다. tests.test_aq_w2c_command_admin_drone.W2cResourceBoardTest.test_f2_01_standby_then_board_rereads_people_and_counts · tests.test_aq_w2c_command_admin_drone.W2cScreenStaticTest.test_command_board_and_withdrawal_are_wired (곁표 이전에 쓴 옛 대기 줄은 기관을 모르므로 세지 않는다)"
     }
-  ]
+  ],
+  "retro": "턴 AQ 차선 W2C · 화면 배선 · 사람 확인 — 지휘 화면에 자원 배치판(대기 인원·주간/야간·위치)을 그렸다 · 서버는 대기 저장에 기관 곁표를 붙이고 배치판 GET 하나를 더했다."
 }
 ```

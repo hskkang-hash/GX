@@ -28,12 +28,18 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
       "status": "measured: 동일 시험에서 POST 후 GET mine 에 count=1, 값 일치 실측"
     },
     {
+      "part": "화면 — 비행 기록 입력(연동 구분·기체·배터리·비행 분) · 내 비행 기록 표",
+      "where": "frontend/src/features/fws/pages/DroneHome.tsx::FlightLogCard (data-gx=fws-f5-08-card · fws-f5-08-source · fws-f5-08-airframe · fws-f5-08-battery · fws-f5-08-minutes · fws-f5-08-save · fws-f5-08-minutes-total · fws-f5-08-flights) · POST /api/fws/drone/flights · GET /api/fws/drone/flights/mine · GET /api/fws/drone/flights/minutes",
+      "status": "구현 — 저장 뒤 reloadFlights() 가 새 GET(flights/mine · minutes, 캐시 우회)으로 배터리·기체·비행 분 표를 다시 그린다. tests.test_aq_w2c_command_admin_drone.W2cAdminDroneTest.test_f5_08_flight_log_then_mine_rereads_battery_and_airframe · tests.test_aq_w2c_command_admin_drone.W2cScreenStaticTest.test_drone_flight_card_is_wired"
+    },
+    {
       "part": "실제 기체·배터리 연동(DJI 등 외부 드론 커넥터로부터 실시간 상태 수신)",
       "where": "backend/apps/fws/drone.py::log_flight() source 파라미터 — 어댑터 이름을 담는 값 자리뿐, 실제 외부 API 호출 코드 없음(머리말 14행 및 evidence 'what' 명시)",
       "status": "없음 — 실제 DJI 등 기체 연동 API 호출은 0건이다. source·battery_pct·airframe_code 는 모두 호출자가 수동으로 입력하는 값이며, 기체로부터 자동 수신되는 경로가 없다",
       "excluded_by": "P-428",
       "excluded_why": "실제 기체(DJI 등)로부터의 실시간 자동 수신은 드론 커넥터 — 외부 하드웨어 실연동이다. WO-19 §「외부 실연동·드론 커넥터·지도 렌더는 하지 않는다」가 이 턴 범위 밖으로 명시했다. 제목이 부르는 「비행 기록·배터리·기체 상태」 자체(기록·검증·재조회)는 사람이 입력한 값으로 완결됐다 — 자동 수신은 그 위에 얹는 별도 어댑터 작업이다."
     }
-  ]
+  ],
+  "retro": "턴 AQ 차선 W2C · 화면 배선 · 사람 확인 — 드론 화면 비행 기록 카드에 data-gx 와 「내 비행 기록」 재조회 표를 달았다. 외부 기체 실연동 행은 P-428 그대로."
 }
 ```

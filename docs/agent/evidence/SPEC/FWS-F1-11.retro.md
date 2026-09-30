@@ -19,9 +19,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "화면에 표(일·주 실적)로 보여주는 자리",
-      "where": "frontend/src/features/fws — fwsEndpoint.patrolMine 은 api.ts:19에 등록만 되고, 어떤 페이지도 호출하지 않음(grep 결과 0건)",
-      "status": "없음: 서버 집계는 실측됐지만 F1 화면 어디에도 내 근무 기록·순찰 실적 표가 없다"
+      "where": "frontend/src/features/fws/pages/PatrolW2aCards.tsx::data-gx=\"fws-f1-11-table\"(오늘·이번 주 × 근무 시작·GPS 트랙·순찰함 통과) · data-gx=\"fws-f1-11-refresh\" — PatrolHome.tsx 에 마운트(체크인 뒤 mineKey 로 재조회) · GET /api/fws/patrol/mine(fwsGetFresh)",
+      "status": "measured: tests.test_aq_w2a_field_screens.F1_11_PatrolMineScreenTest.test_checkin_then_refetch_shows_in_today_and_week_row — 체크인 POST 뒤 새 GET 재조회에서 today.checkins=1·week.checkins=1 · 격리 test_other_tenant_record_does_not_enter_my_table · 화면 정적 대조 test_screen_draws_the_table_from_patrol_mine"
     }
-  ]
+  ],
+  "retro": "턴 AQ 차선 W2A · 화면 배선 · 사람 확인 — F1 화면에 일·주 실적 표를 달고 체크인·트랙 뒤 같은 GET 을 다시 불러 그린다"
 }
 ```

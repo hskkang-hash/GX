@@ -42,6 +42,7 @@ import { useNavigate } from 'react-router-dom';
 import { Main, useUserInfo } from 'rj-core';
 
 import { dsmEndpoint, dsmGet, dsmHomeEndpoint } from '../api';
+import DecisionHandoverRow from '../components/DecisionHandoverRow';
 import StateBoundary from '../components/StateBoundary';
 import {
   HANDOVER_COPY,
@@ -571,6 +572,9 @@ export default function RoleHome() {
             </StateBoundary>
           </Card>
         ) : null}
+
+        {/* 턴 AQ · W2B — 판단·인계 줄(DSM-U2-03·04·05 · U4-06) */}
+        <DecisionHandoverRow bucket={bucket} />
 
         {/* ── U2 카드 넷 ─────────────────────────────────────────────── */}
         {bucket === 'U2' ? (

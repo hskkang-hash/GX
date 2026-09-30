@@ -19,10 +19,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "화면(버튼)",
-      "where": "command.py:631(DSM-U2-03 재사용) — DSM 쪽 원본도 N1 감사(턴 AO)에서 '화면 0'로 이미 지적된 결손이 FWS 재사용에도 그대로 상속된다",
-      "status": "없음(미배선)"
+      "where": "frontend/src/features/fws/pages/CommandHome.tsx::data-gx=fws-f4-12-record · fws-f4-12-attendees · fws-f4-12-decision · fws-f4-12-basis · fws-f4-12-meetings — API POST /api/fws/command/incidents/{id}/meetings · GET /api/fws/command/incidents/{id}/meetings",
+      "status": "구현 — 화면 배선 · 참석자·결정·근거 칸과 기록 버튼 → 재조회 이 사건의 회의 목록이 그려진다 · 누른 뒤 재조회 시험 backend/tests/test_aq_n1_f4_command_wiring.py::AqN1F4CommandWiringTest::test_f4_12_record_then_reread_meetings · 정적 대조 AqN1F4ScreenSourceTest::test_screen_declares_data_gx_and_calls_each_path"
     }
   ],
-  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 회의 기록·사건별 구분은 서버에서 실측 닫힘을 재확인했으나 화면 버튼이 없다(DSM 원본의 결손을 재사용이 그대로 물려받았다) — 반쪽으로 내린다."
+  "retro": "턴 AQ 차선 N1 · 화면 배선 · 사람 확인 · 2026-09-30 · CommandHome.tsx 에 회의 기록 칸·버튼과 회의 목록을 배선하고 누른 뒤 조회 GET(캐시 우회) 재호출을 test_f4_12_record_then_reread_meetings 로 실측했다(테넌트 B 쓰기 404 · 주인 재조회 불변 · DSM 원본 화면 결손은 이 절 밖) · 앞 판: P-419 재판정(턴 AP · N1) · 2026-09-29 · 회의 기록·사건별 구분은 서버에서 실측 닫힘을 재확인했으나 화면 버튼이 없다(DSM 원본의 결손을 재사용이 그대로 물려받았다) — 반쪽으로 내린다."
 }
 ```

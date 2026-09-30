@@ -49,11 +49,15 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "ZIP(PDF+CSV) — PDF 부분",
-      "where": "u4_evaluation_bundle_service.py 머리말 — PDF 렌더 코드 없음",
-      "status": "없음 — PDF 는 이번 턴 만들지 않는다",
-      "excluded_by": "P-392",
-      "excluded_why": "이미 있는 결정을 재사용한다 — `situation_report_ledger_service.py` 머리말의 「HWPX 는 채우지 않는다」와 같은 결정 번호(HWPX/PDF 같은 문서 렌더링을 새 의존성으로 들이지 않는다). CSV(구조화 원자료)는 전부 실려 있다 — PDF 는 그 위의 사람이 읽을 서식일 뿐이다."
+      "where": "backend/apps/dsm/u4_evaluation_bundle_service.py::_render_summary_pdf → kernels.k4_report.render_html(공개 면 · D-278) · GET /api/dsm/evaluation-bundle.zip 안 evaluation_bundle.pdf(기간·생성 시각·일곱 원천별 줄 수·상태 요약 한 장) · manifest.json pdf.status",
+      "status": "구현: tests.test_aq_n4_u4_08_pdf.EvaluationBundlePdfTest.test_bundle_zip_carries_a_real_pdf — ZIP 안 PDF 바이트가 %PDF 로 시작 · 쪽 ≥1 · manifest pdf.status=ok · CSV 일곱 그대로. 예전 excluded_by: P-392 는 번호 오용이라 지웠다(P-392 는 HWPX·F6-07 결정)"
+    },
+    {
+      "part": "화면 — 기간 선택 → 묶음(ZIP) 내려받기 버튼",
+      "where": "frontend/src/features/dsm/components/VideoAccessLedgerPanel.tsx(보고서 화면 Reports.tsx)::data-gx=dsm-u4-08-since · dsm-u4-08-until(기간 칸) · dsm-u4-08-download(묶음 내려받기 · 인증 헤더가 실리는 downloadDsmFile) · GET /api/dsm/evaluation-bundle.zip?since=&until=",
+      "status": "measured: tests.test_aq_n3_screens.DsmU4_07_08ScreenTest.test_bundle_download_is_a_zip_for_the_chosen_period — 오늘~오늘 기간으로 200 · application/zip · ZIP 항목 ≥1 · 소스 정적 대조(test_screen_wires_ledger_stats_and_bundle)"
     }
-  ]
+  ],
+  "retro": "턴 AQ 차선 N4 · 사람 확인 — P-436: PDF 행의 excluded_by: P-392 (번호 오용)를 지우고 K4 render_html 로 요약 PDF 를 ZIP 에 함께 싣는다. 화면 버튼은 아직 없다(grep 0 · 열린 행으로 남김). | 턴 AQ 차선 N3 · 화면 배선 · 사람 확인 · 2026-09-30 · 기간 칸 둘 + 묶음 내려받기 버튼을 보고서 화면에 배선했다."
 }
 ```

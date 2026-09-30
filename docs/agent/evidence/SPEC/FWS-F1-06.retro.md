@@ -19,14 +19,15 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "result=cannot_access('접근 불가')",
-      "where": "backend/apps/fws/verification.py:29-30,94 RESULT_CANNOT_ACCESS — 판정을 안 바꾸는 분기",
-      "status": "없음: 코드에는 존재하나(RESULTS 3택에 포함, verdict=None으로 남기는 분기) backend/tests/test_fws_app.py 전체에 'cannot_access'를 실제로 POST하는 시험이 0건 — HTTP 실측이 없다(grep 결과 무일치)"
+      "where": "backend/apps/fws/verification.py RESULT_CANNOT_ACCESS(판정을 안 바꾸는 분기) · POST /api/fws/verifications/{id}/reply?result=cannot_access · 화면 frontend/src/features/fws/pages/PatrolW2aCards.tsx::data-gx=\"fws-f1-06-cannot-access\"(PatrolHome.tsx 에 마운트) · 누른 뒤 GET /api/fws/verifications/{id} 재조회 ; data-gx=\"fws-f1-06-verdict\" · \"fws-f1-06-replies\"",
+      "status": "measured: tests.test_aq_w2a_field_screens.F1_06_ReplyScreenTest.test_cannot_access_with_photo_then_refetch_shows_reply — cannot_access POST 200 · verdict=None · 새 GET 재조회에서 verdict=None 그대로·replies[0].result=cannot_access · 격리 test_other_tenant_cannot_read_or_reply(404) · 화면 정적 대조 test_screen_offers_cannot_access_and_photo"
     },
     {
       "part": "회신 + 사진 1장 첨부",
-      "where": "backend/apps/fws/verification.py::reply_verification 시그니처(scope, verification_id, result, reason_code, note) — 비교: api.py:311-313 drone_confirm_result 는 attachment_ref 파라미터가 있음",
-      "status": "없음: 원 명세서(FWS_산불감시App_명세서_v1.0_...20260915.md:141행)의 제목 원문은 \"「산불 맞음」/「소각·오인」(사유5택)/「접근 불가」+사진1\"인데, F1-06의 reply_verification에는 사진/첨부 파라미터가 아예 없다(드론용 병행 엔드포인트 drone_confirm_result만 attachment_ref를 받음) — evidence.json의 title 필드조차 이미 '+사진1'을 빼고 적어 놓았다"
+      "where": "사진 저장은 기존 DSM 현장 사진 문 POST /api/dsm/events/{id}/field-photo(apps/dsm/api_u3.py::upload_field_photo) · 회신에 묶기 backend/apps/fws/verification.py::reply_verification(photo_id — 그 사건에 올라온 사진인지 대조, 아니면 422) · api.py::reply_verification(photo_id) · 화면 PatrolW2aCards.tsx::data-gx=\"fws-f1-06-photo\"(1장 · 회신 버튼이 올린 뒤 photo_id 를 실어 보냄) · api_w2a.ts::uploadFieldPhoto",
+      "status": "measured: tests.test_aq_w2a_field_screens.F1_06_ReplyScreenTest.test_cannot_access_with_photo_then_refetch_shows_reply — 사진 업로드(저장소 _upload_bytes 만 patch) → photo_id 로 회신 → 새 GET 재조회 replies[0].photo_id 일치 · 다른 사건의 사진은 422(test_photo_of_another_event_is_422)"
     }
-  ]
+  ],
+  "retro": "턴 AQ 차선 W2A · 화면 배선 · 사람 확인 — 감시원 화면에 회신 3택(접근 불가 포함)·사진 1장 칸을 달고 누른 뒤 확인 요청을 다시 불러 판정·회신을 그린다"
 }
 ```

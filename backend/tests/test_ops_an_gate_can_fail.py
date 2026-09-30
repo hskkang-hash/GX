@@ -99,5 +99,8 @@ class TheSelfTestCanFail(SimpleTestCase):
             path = evidence_dir / ("%s.json" % clause_id)
             self.assertTrue(path.is_file(), f"{clause_id}: 증거 파일이 없다")
             payload = json.loads(path.read_text(encoding="utf-8"))
+            #: [턴 AQ · P-431 · 차선 Q] 표는 사람 파일 `<id>.retro.md` 에서 — 판정기와 같은 읽개.
+            from _retro_table import overlay  # noqa: PLC0415
+            payload = overlay(payload, clause_id, evidence_dir)
             code, verdict = g.judge_evidence(clause_id, payload)
             self.assertEqual(g.EXIT_OK, code, f"{clause_id}: {verdict}")

@@ -118,9 +118,11 @@ EXIT_OK, EXIT_FAIL, EXIT_UNDECIDABLE = 0, 1, 2
 #: 이 id 들의 evidence json 을 계속 실측 대조하게 하려는 것이다 — 빼면 그 id 는
 #: 아예 판정 밖으로 사라진다(D-274 — 「모른다」가 「없다」로 읽히는 것을 막는다).
 CLOSED_CLAUSES: tuple[str, ...] = (
-    #: [턴 AP · 조율자 병합 · P-419] **비었다.** 턴 AO 에 올렸던 여덟(O-01·02·05·06·07·08·09·12)과
-    #: 이 턴 N3 가 채운 O-10·O-11 은 같은 눈금 재판정에서 전부 반쪽이다(대개 화면 미배선 —
-    #: `docs/agent/evidence/SPEC/N1_rejudge_ap.md` §1). 대장에서도 내렸다. 서버 쪽 실측은 그대로 남는다.
+    #: [턴 AP · 조율자 병합 · P-419] 비웠다 — 같은 눈금 재판정에서 전부 반쪽(화면 미배선).
+    #: [턴 AQ · 조율자 창 ② · P-435] 차선 N2 가 `/ops` 보드 열을 배선(누름 → 같은 보드 GET 재조회 ·
+    #: data-gx · `backend/tests/test_aq_n2_ops_boards.py` 22 통과)하고 `.retro.md` 사람 표의
+    #: 열린 행이 0 이 된 여덟을 되올린다. O-02·O-05 는 열린 행이 남아 NOT_STARTED 그대로.
+    "O-01", "O-06", "O-07", "O-08", "O-09", "O-10", "O-11", "O-12",
 )
 
 #: annex 원문(플랫폼 구조설계서 §7) 제목 — 판정에는 안 쓴다(사람이 읽을 이름표).
@@ -148,16 +150,8 @@ TITLES: dict[str, str] = {
 
 #: 못 닫은 것들 — **「무엇이 없는가」**(P-358·P-376 형식). 빈 칸으로 두지 않는다(D-274).
 NOT_STARTED: dict[str, str] = {
-    "O-01": "P-419 같은 눈금 재판정 — 서버 문·감사는 실측으로 닫혔으나 제목이 부르는 화면(또는 값) 부분이 열려 있다. 절별 무엇이 없는가는 docs/agent/evidence/SPEC/N1_rejudge_ap.md §1 · N3_promotions_ap.md",
-    "O-02": "P-419 같은 눈금 재판정 — 서버 문·감사는 실측으로 닫혔으나 제목이 부르는 화면(또는 값) 부분이 열려 있다. 절별 무엇이 없는가는 docs/agent/evidence/SPEC/N1_rejudge_ap.md §1 · N3_promotions_ap.md",
-    "O-05": "P-419 같은 눈금 재판정 — 서버 문·감사는 실측으로 닫혔으나 제목이 부르는 화면(또는 값) 부분이 열려 있다. 절별 무엇이 없는가는 docs/agent/evidence/SPEC/N1_rejudge_ap.md §1 · N3_promotions_ap.md",
-    "O-06": "P-419 같은 눈금 재판정 — 서버 문·감사는 실측으로 닫혔으나 제목이 부르는 화면(또는 값) 부분이 열려 있다. 절별 무엇이 없는가는 docs/agent/evidence/SPEC/N1_rejudge_ap.md §1 · N3_promotions_ap.md",
-    "O-07": "P-419 같은 눈금 재판정 — 서버 문·감사는 실측으로 닫혔으나 제목이 부르는 화면(또는 값) 부분이 열려 있다. 절별 무엇이 없는가는 docs/agent/evidence/SPEC/N1_rejudge_ap.md §1 · N3_promotions_ap.md",
-    "O-08": "P-419 같은 눈금 재판정 — 서버 문·감사는 실측으로 닫혔으나 제목이 부르는 화면(또는 값) 부분이 열려 있다. 절별 무엇이 없는가는 docs/agent/evidence/SPEC/N1_rejudge_ap.md §1 · N3_promotions_ap.md",
-    "O-09": "P-419 같은 눈금 재판정 — 서버 문·감사는 실측으로 닫혔으나 제목이 부르는 화면(또는 값) 부분이 열려 있다. 절별 무엇이 없는가는 docs/agent/evidence/SPEC/N1_rejudge_ap.md §1 · N3_promotions_ap.md",
-    "O-12": "P-419 같은 눈금 재판정 — 서버 문·감사는 실측으로 닫혔으나 제목이 부르는 화면(또는 값) 부분이 열려 있다. 절별 무엇이 없는가는 docs/agent/evidence/SPEC/N1_rejudge_ap.md §1 · N3_promotions_ap.md",
-    "O-10": "P-419 같은 눈금 재판정 — 서버 문·감사는 실측으로 닫혔으나 제목이 부르는 화면(또는 값) 부분이 열려 있다. 절별 무엇이 없는가는 docs/agent/evidence/SPEC/N1_rejudge_ap.md §1 · N3_promotions_ap.md",
-    "O-11": "P-419 같은 눈금 재판정 — 서버 문·감사는 실측으로 닫혔으나 제목이 부르는 화면(또는 값) 부분이 열려 있다. 절별 무엇이 없는가는 docs/agent/evidence/SPEC/N1_rejudge_ap.md §1 · N3_promotions_ap.md",
+    "O-02": "[턴 AQ · N2] 화면(설치·업그레이드·비활성)은 배선됐다. 없는 것: 「유령 시드 정리」의 자동 탐지·주기 실행 · 「시드 소유권」 행(코드 결손 · P-428 대상 아님) — SPEC/O-02.retro.md 열린 행 2",
+    "O-05": "[턴 AQ · N2] 건강 보드는 배선됐다. 없는 것: 5xx 비율 · 테넌트별 16색 게이트 격자를 서버가 아직 재지 않는다(`not_measured` · 화면 「아직 재지 않습니다」) — SPEC/O-05.retro.md 열린 행 1",
 
     "O-04": "모델 버전·테넌트 배포·롤백·카메라별 바인딩을 담을 저장처가 전혀 없다"
            "(전수 grep 0건 — `ModelVersion`·`ModelRegistry`·`ModelDeployment`·"
@@ -324,9 +318,16 @@ def _load_evidence(clause_id: str) -> dict | None:
     if not path.is_file():
         return None
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except (ValueError, OSError):
         return None
+    #: [턴 AQ · P-431 · 차선 Q] 제목 부분 표(title_parts·retro*)는 사람 파일
+    #: `<id>.retro.md` 에서만 온다 — json 에 남은 그 키는 버린다(판정식은 그대로).
+    _here = str(Path(__file__).resolve().parent)
+    if _here not in sys.path:
+        sys.path.insert(0, _here)
+    from _retro_table import overlay  # noqa: PLC0415
+    return overlay(payload, clause_id, EVIDENCE_DIR)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

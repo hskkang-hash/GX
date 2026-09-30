@@ -181,3 +181,32 @@ class FwsAdminAPI:
             raise HttpError(409, str(exc))
         except InvalidNotifyInput as exc:
             raise HttpError(400, str(exc))
+
+    # ═══════════════════════════════════════════════════════════════════
+    # FWS-F2-07 · F1-10 안전경보 문턱 — 기관 설정값(턴 AQ · 차선 N4 · P-434)
+    # 읽기는 그 기관 사용자 누구나(미설정 칸은 「대기」) · 쓰기는 U5(기관 관리자)만.
+    # ═══════════════════════════════════════════════════════════════════
+    @route.get("/admin/safety-thresholds", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="P-434 안전경보 문턱 조회 — 요청자 기관의 값만(다른 기관 값이 새면 "
+                         "그 기관 경보가 우리 판정에 섞인다)")
+    def admin_safety_thresholds_get(self, request):
+        from apps.fws import safety_thresholds
+
+        return safety_thresholds.read_thresholds(scope=_scope(request))
+
+    @route.post("/admin/safety-thresholds", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="P-434 안전경보 문턱 저장 — U5 만 · 자기 기관 값만 바꾼다(쓰기 IDOR)")
+    def admin_safety_thresholds_save(self, request, wind_shift_angle_deg: str = "",
+                                     wind_shift_window_minutes: str = "",
+                                     drop_zone_exit_radius_m: str = ""):
+        from apps.fws import safety_thresholds
+
+        try:
+            return safety_thresholds.save_thresholds(
+                scope=_scope(request), wind_shift_angle_deg=wind_shift_angle_deg,
+                wind_shift_window_minutes=wind_shift_window_minutes,
+                drop_zone_exit_radius_m=drop_zone_exit_radius_m)
+        except safety_thresholds.AdminPermissionDenied as exc:
+            raise HttpError(403, str(exc))
+        except safety_thresholds.AdminInputRejected as exc:
+            raise HttpError(422, str(exc))

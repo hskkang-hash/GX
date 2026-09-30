@@ -24,9 +24,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "화면(F1 감시원 화면)에서 실제로 GPS 트랙/NFC 통과를 전송하는 자리",
-      "where": "frontend/src/features/fws — patrolTrack 엔드포인트는 api.ts:18에 등록만 되어 있고, PatrolHome.tsx·FieldHome.tsx 등 어떤 페이지도 fwsEndpoint.patrolTrack 을 호출하지 않음(grep 결과 0건)",
-      "status": "없음: 서버 API는 실측됐지만 F1 화면 어디에도 순찰 트랙 전송 UI가 없다"
+      "where": "frontend/src/features/fws/pages/PatrolW2aCards.tsx::data-gx=\"fws-f1-02-gps\"(이 기기 위치 한 점) · data-gx=\"fws-f1-02-checkpoint-code\" + data-gx=\"fws-f1-02-checkpoint\"(순찰함 번호 입력 · NFC 실기기 읽기는 없음) · data-gx=\"fws-f1-02-post\" — PatrolHome.tsx 에 마운트 · POST /api/fws/patrol/track 뒤 GET /api/fws/patrol/mine 재조회(fws-f1-11-table)",
+      "status": "measured: tests.test_aq_w2a_field_screens.F1_02_TrackScreenTest.test_gps_and_checkpoint_press_then_refetch_mine — GPS 1점·순찰함 1건 POST 뒤 새 GET 재조회 today.tracks=1·checkpoints=1 · 남의 테넌트 0 · 화면 정적 대조 test_screen_sends_track_and_refetches"
     }
-  ]
+  ],
+  "retro": "턴 AQ 차선 W2A · 화면 배선 · 사람 확인 — 화면 전송 칸은 닫았다. 순찰함 등록 목록 대조(위조 코드 방지) 행은 등록 목록이 코드에 없어 열린 채 둔다"
 }
 ```

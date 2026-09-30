@@ -17,6 +17,8 @@ import { Alert, Button, Card, List, Space, Typography } from 'antd';
 
 import { fwsEndpoint, fwsGet, fwsPostQuery } from '../api';
 import { FWS_COPY, FWS_UNKNOWN } from '../copy';
+import NotifyPrefsCard from './NotifyPrefsCard';
+import PatrolW2aCards from './PatrolW2aCards';
 import { checkinOrQueue, installAutoFlush, pendingCount } from '../offlineQueue';
 
 interface RiskToday {
@@ -49,6 +51,8 @@ export default function PatrolHome(): JSX.Element {
   const [alerts, setAlerts] = useState<AlertRow[]>([]);
   const [checkedIn, setCheckedIn] = useState(false);
   const [queuedCount, setQueuedCount] = useState(0);
+  // [턴 AQ · 차선 W2A] 체크인 뒤 F1-11 실적 표를 다시 불러오게 하는 신호
+  const [mineKey, setMineKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -85,6 +89,7 @@ export default function PatrolHome(): JSX.Element {
         setQueuedCount(pendingCount());
       } else {
         setCheckedIn(true);
+        setMineKey((k) => k + 1);
       }
     } catch {
       setError(FWS_COPY.error.generic);
@@ -167,6 +172,12 @@ export default function PatrolHome(): JSX.Element {
           )}
         />
       </Card>
+
+      {/* [턴 AQ · 차선 W2A] F1-11 실적 표 · F1-02 순찰 경로 기록 · F1-06 현장 확인 회신 */}
+      <PatrolW2aCards refreshKey={mineKey} />
+
+      {/* [턴 AQ · 차선 N3] F1-12 M4 근무 외 알림 차단 칸 */}
+      <NotifyPrefsCard gxPrefix="fws-f1-12-quiet" />
     </Space>
   );
 }

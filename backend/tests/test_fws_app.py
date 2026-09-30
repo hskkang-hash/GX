@@ -113,7 +113,7 @@ def _write_evidence(clause_id: str, *, title: str, test_ref: str, method: str,
                 prev = json.loads(out.read_text(encoding="utf-8"))
             except (ValueError, OSError):
                 prev = {}
-            for keep in ("title_parts", "title_parts_note", "retro", "retro_ap"):
+            for keep in ():  #: [턴 AQ · P-431 · 차선 Q] 사람 표 키는 json 에 옮기지 않는다 — 정본은 <id>.retro.md
                 if keep in prev:
                     payload[keep] = prev[keep]
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",

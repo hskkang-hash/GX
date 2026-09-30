@@ -1,53 +1,36 @@
 {
   "id": "FWS-F3-06",
   "title": "신고 접수 기록 — 119/산림청/시민 신고 접수 항목(시간·장소·시설·차량 진입·화세) · 신고 시각 = 30분 시계 시작",
-  "measured_at": "2026-09-29T11:54:24.401566+00:00",
+  "measured_at": "2026-09-30T05:24:42.292557+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_06_IntakeTest.test_intake_recorded_then_listed_starts_the_clock",
   "request": {
     "method": "GET",
-    "path": "/api/fws/office/fire-events/548/intake",
+    "path": "/api/fws/office/fire-events/573/intake",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 548,
+      "event_id": 573,
       "count": 1,
       "intakes": [
         {
           "note": "시민 최초 신고",
           "source": "citizen",
-          "__seq__": 300,
-          "__hash__": "a8f711be50351503306d69ad0a855701ce6af137f40f4c24b265746845abd7c4",
-          "event_id": 548,
-          "reported_at": "2026-09-29T11:54:24.356992+00:00",
+          "__seq__": 389,
+          "__hash__": "30f2512255b1a30f08e4a82c73842e04039f6c7e0ec503b2ad5ec6014cec4fda",
+          "event_id": 573,
+          "reported_at": "2026-09-30T05:24:42.232491+00:00",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "clock_minutes": 30,
           "facility_note": "인근 축사 있음",
           "fire_intensity": "중",
           "vehicle_access": true,
-          "clock_started_at": "2026-09-29T11:54:24.356992+00:00"
+          "clock_started_at": "2026-09-30T05:24:42.232491+00:00"
         }
       ]
     }
   },
-  "what": "POST 로 남긴 신고 접수 기록(출처 citizen·시설·차량진입·화세)이 GET 재조회에 그대로 남고, 신고 시각이 30분 시계의 시작값으로 함께 저장됨을 실측",
-  "title_parts": [
-    {
-      "part": "신고 출처(119/산림청/시민)",
-      "where": "request.source(REPORT_SOURCES 3택)",
-      "status": "present"
-    },
-    {
-      "part": "접수 항목(시간·장소·시설·차량진입·화세)",
-      "where": "response.{reported_at,facility_note,vehicle_access,fire_intensity}(장소는 사건의 좌표·주소를 그대로 쓴다 — event_detail 재사용)",
-      "status": "present"
-    },
-    {
-      "part": "신고 시각 = 30분 시계 시작",
-      "where": "response.clock_started_at = reported_at · clock_minutes=30",
-      "status": "present"
-    }
-  ]
+  "what": "POST 로 남긴 신고 접수 기록(출처 citizen·시설·차량진입·화세)이 GET 재조회에 그대로 남고, 신고 시각이 30분 시계의 시작값으로 함께 저장됨을 실측"
 }

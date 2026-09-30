@@ -123,14 +123,19 @@ class DsmU36AnAPI:
         먼저 파싱하지 않는다(`request.body` 그대로 `u36_an_service` 에 넘긴다)."""
         from django.http import Http404
 
-        from common.inbound_api_key import carries_inbound_key
+        from common.inbound_api_key import (
+            carries_inbound_key, verify_signed_with_request_key,
+        )
 
         if not carries_inbound_key(request):
             raise HttpError(401, "외부 이벤트 연계는 들어오는 키로만 받습니다(P-427).")
         try:
             return u36_an_service.intake_external_event(
                 scope=_scope(request), headers=request.headers,
-                raw_body=request.body)
+                raw_body=request.body,
+                # [P-432] 서명 비밀 = 이 요청의 들어오는 키 — 값은 HTTP 층 밖으로 안 나간다
+                verify_signature=lambda body, hdrs: verify_signed_with_request_key(
+                    request, body, hdrs))
         except u36_an_service.ExternalEventRejected as exc:
             raise HttpError(401, str(exc))
         except u36_an_service.ExternalEventInvalid as exc:

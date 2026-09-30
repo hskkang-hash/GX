@@ -311,7 +311,7 @@ class EvidenceExportTest(U2Fixture):
                     prev = json.loads(out_path.read_text(encoding="utf-8"))
                 except (ValueError, OSError):
                     prev = {}
-                for keep in ("title_parts", "title_parts_note"):
+                for keep in ():  #: [턴 AQ · P-431 · 차선 Q] 사람 표 키는 json 에 옮기지 않는다 — 정본은 <id>.retro.md
                     if keep in prev:
                         payload[keep] = prev[keep]
             out_path.write_text(

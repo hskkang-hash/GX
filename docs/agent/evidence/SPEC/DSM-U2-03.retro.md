@@ -29,14 +29,15 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "「한 화면」— 위 4칸을 한 폼에서 입력하는 프런트 화면",
-      "where": "frontend/src (situation-meetings 문자열 grep 전수 0건 — 화면 코드 없음)",
-      "status": "없음 — 프런트에 이 엔드포인트를 부르는 화면이 전혀 없다(grep 0건, 2026-09-29 재확인)"
+      "where": "frontend/src/features/dsm/components/SituationMeetingCard.tsx::data-gx=dsm-u2-03-occurred-at · dsm-u2-03-attendees · dsm-u2-03-decision · dsm-u2-03-alert-level · dsm-u2-03-basis · dsm-u2-03-submit · dsm-u2-03-list — 팀장(U2) 홈 pages/Home.tsx 의 DecisionHandoverRow 에 붙음 · POST /api/dsm/situation-meetings → GET /api/dsm/situation-meetings",
+      "status": "measured: tests.test_aq_w2b_dsm_screens.SituationMeetingScreenTest.test_meeting_decision_moves_alert_level_axis_then_refetch — 네 칸을 한 폼으로 보내고 같은 목록 GET 을 캐시 우회로 다시 불러 새 기록을 그린다 · ScreenStaticTest(화면 요소 이름 글자 대조 · 쓰기 뒤 reload)"
     },
     {
       "part": "완결 조건 「결정 → 테넌트 상태 축 변경」",
-      "where": "backend/apps/dsm/situation_meeting_service.py (파일 전문 — record_meeting/list_meetings 뿐, latest()/상태 갱신 함수 없음)",
-      "status": "없음 — 회의 기록은 감사 로그 한 줄로만 남고, 결정값이 테넌트의 어떤 상태 축(모드·경보 단계 등)도 바꾸지 않는다. 동일 차선의 alert_level_service.py 는 'latest_alert()'로 이 개념을 대신하지만 situation_meeting_service.py 에는 그런 read-back 함수 자체가 없다"
+      "where": "backend/apps/dsm/situation_meeting_service.py::record_meeting(alert_level) → alert_level_service.record_alert (위기경보·비상 단계 축 · latest_alert()/GET /api/dsm/alert-level 첫 행이 지금 단계) · 화면 SituationMeetingCard.tsx::data-gx=dsm-u2-03-alert-level ; 띠 AlertLevelBand.tsx::data-gx=dsm-u4-06-band 가 다시 읽음",
+      "status": "measured: tests.test_aq_w2b_dsm_screens.SituationMeetingScreenTest — 회의가 「경계」를 정하면 GET /api/dsm/alert-level?limit=1 첫 행 level 이 경계로 바뀐다(doc_no=상황판단회의 기록 #id) · 단계를 안 고른 회의는 축 그대로 · 4단계 밖 400(아무것도 안 남음) · 남의 테넌트 축은 안 바뀜. 상태 축은 이미 있던 U4-06 위기경보·비상 단계 축이다(새 칸 0) — 통제·대피 결정은 자유 문장으로 남고 축을 바꾸지 않는다"
     }
-  ]
+  ],
+  "retro": "턴 AQ 차선 W2B · 화면 배선 · 사람 확인 · 2026-09-30 · 네 칸 한 폼(팀장 홈) + 회의가 정한 비상 단계를 기존 위기경보·비상 단계 축에 반영 · 누른 뒤 목록·축 GET 재조회."
 }
 ```

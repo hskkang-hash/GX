@@ -10,12 +10,14 @@
  *   FormRoute.tsx) 밖에 남긴다. 열점·화선은 좌표 목록 **값**(JSON)으로만 다룬다.
  * ★ 문구는 전부 `../copy.ts` 에서 온다 — 화면에 문자열을 직접 짓지 않는다.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { Alert, Button, Card, Input, InputNumber, List, Radio, Space, Typography } from 'antd';
+import { Alert, Button, Card, Input, InputNumber, List, Radio, Space, Tag, Typography } from 'antd';
 
-import { fwsEndpoint, fwsGet, fwsPostQuery } from '../api';
+import { fwsEndpoint, fwsGet, fwsGetFresh, fwsPostQuery } from '../api';
+import { fetchMyFlights, type DroneFlightRow } from '../api_w2c';
 import { FWS_COPY, FWS_UNKNOWN } from '../copy';
+import { FWS_DRONE_W2C_COPY as W } from '../copy_w2c';
 
 const { Title, Text } = Typography;
 
@@ -225,6 +227,22 @@ function FlightLogCard({ onDone, onError }: { onDone: () => void; onError: () =>
   const [batteryPct, setBatteryPct] = useState<number | null>(null);
   const [flightMinutes, setFlightMinutes] = useState<number | null>(null);
   const [total, setTotal] = useState<number | null>(null);
+  // [턴 AQ · W2C] F5-08 — 저장 뒤 「내 비행 기록」을 새 GET 으로 다시 읽어 그린다.
+  const [flights, setFlights] = useState<DroneFlightRow[]>([]);
+
+  async function reloadFlights(): Promise<void> {
+    const [mine, minutes] = await Promise.all([
+      fetchMyFlights(),
+      fwsGetFresh<{ flight_minutes_total: number }>(fwsEndpoint.droneFlightMinutes),
+    ]);
+    setFlights(mine.flights);
+    setTotal(minutes.flight_minutes_total);
+  }
+
+  useEffect(() => {
+    reloadFlights().catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSave(): Promise<void> {
     try {
@@ -234,8 +252,7 @@ function FlightLogCard({ onDone, onError }: { onDone: () => void; onError: () =>
         battery_pct: batteryPct ?? undefined,
         flight_minutes: flightMinutes ?? undefined,
       });
-      const minutes = await fwsGet<{ flight_minutes_total: number }>(fwsEndpoint.droneFlightMinutes);
-      setTotal(minutes.flight_minutes_total);
+      await reloadFlights();
       onDone();
     } catch {
       onError();
@@ -243,38 +260,72 @@ function FlightLogCard({ onDone, onError }: { onDone: () => void; onError: () =>
   }
 
   return (
-    <Card title={FWS_COPY.drone.flightLogTitle}>
-      <Space direction="vertical">
-        <Radio.Group value={source} onChange={(e) => setSource(e.target.value)}>
-          <Radio.Button value="manual">manual</Radio.Button>
-          <Radio.Button value="dji">dji</Radio.Button>
+    <Card title={FWS_COPY.drone.flightLogTitle} data-gx="fws-f5-08-card">
+      <Space direction="vertical" style={{ width: '100%' }}>
+        <Radio.Group value={source} onChange={(e) => setSource(e.target.value)} data-gx="fws-f5-08-source">
+          <Radio.Button value="manual">{W.sourceManual}</Radio.Button>
+          <Radio.Button value="dji">{W.sourceDji}</Radio.Button>
         </Radio.Group>
         <Input
           placeholder={FWS_COPY.drone.flightAirframePlaceholder}
           value={airframeCode}
           onChange={(e) => setAirframeCode(e.target.value)}
           style={{ width: 200 }}
+          data-gx="fws-f5-08-airframe"
         />
         <Space>
           <InputNumber
             placeholder={FWS_COPY.drone.flightBatteryPlaceholder}
             value={batteryPct}
             onChange={setBatteryPct}
+            min={0}
+            max={100}
+            data-gx="fws-f5-08-battery"
           />
           <InputNumber
             placeholder={FWS_COPY.drone.flightMinutesPlaceholder}
             value={flightMinutes}
             onChange={setFlightMinutes}
+            min={0}
+            data-gx="fws-f5-08-minutes"
           />
         </Space>
-        <Button type="primary" onClick={handleSave}>
+        <Button type="primary" onClick={handleSave} data-gx="fws-f5-08-save">
           {FWS_COPY.drone.flightSaveButton}
         </Button>
         {total != null && (
-          <Text>
+          <Text data-gx="fws-f5-08-minutes-total">
             {FWS_COPY.drone.flightMinutesTotalPrefix}: {total}
           </Text>
         )}
+        <Text strong>{W.myFlightsTitle}</Text>
+        <List
+          size="small"
+          data-gx="fws-f5-08-flights"
+          dataSource={flights}
+          locale={{ emptyText: W.empty }}
+          renderItem={(f) => (
+            <List.Item>
+              <Space wrap>
+                <Tag>{f.source === 'dji' ? W.sourceDji : f.source === 'manual' ? W.sourceManual : f.source}</Tag>
+                <Text>
+                  {W.airframeLabel} {f.airframe_code || FWS_UNKNOWN}
+                </Text>
+                <Text>
+                  {W.batteryLabel} {f.battery_pct != null ? `${f.battery_pct}%` : FWS_UNKNOWN}
+                </Text>
+                <Text>
+                  {W.minutesLabel} {f.flight_minutes != null ? `${f.flight_minutes}${W.minutesUnit}` : FWS_UNKNOWN}
+                </Text>
+                {f.logged_at ? (
+                  <Text type="secondary">
+                    {W.loggedAtLabel} {f.logged_at}
+                  </Text>
+                ) : null}
+              </Space>
+            </List.Item>
+          )}
+        />
       </Space>
     </Card>
   );

@@ -1,42 +1,25 @@
 {
   "id": "FWS-F3-17",
   "title": "카메라별 오탐률(안개·소각 …)·임계값 시험(K6·QA-12)",
-  "title_parts": [
-    {
-      "part": "카메라별 오탐률",
-      "where": "응답 cameras[].false_alarm_rate_pct",
-      "status": "구현 — 100.0 실측(오인 1/판정 1)"
-    },
-    {
-      "part": "안개·소각 등 사유",
-      "where": "응답 cameras[].reason_breakdown(verification.FALSE_ALARM_REASONS 재사용)",
-      "status": "구현 — fog_or_cloud 1건 실측"
-    },
-    {
-      "part": "임계값 시험(완결조건: 저장)",
-      "where": "응답 result·computed_false_alarm_rate_pct(감사에 저장)",
-      "status": "구현 — 임계값 50 대비 결과 fail 저장 실측"
-    }
-  ],
-  "measured_at": "2026-09-29T11:54:42.057078+00:00",
+  "measured_at": "2026-09-30T05:24:58.710898+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_17_CameraFalseAlarmTest.test_rate_and_threshold_test",
   "request": {
     "method": "POST",
-    "path": "/api/fws/office2/stats/camera-false-alarms/threshold-test?stream_monitor_id=359&threshold_pct=50",
+    "path": "/api/fws/office2/stats/camera-false-alarms/threshold-test?stream_monitor_id=416&threshold_pct=50",
     "params": {
-      "stream_monitor_id": 359,
+      "stream_monitor_id": 416,
       "threshold_pct": 50
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "stream_monitor_id": 359,
+      "stream_monitor_id": 416,
       "threshold_pct": 50.0,
       "computed_false_alarm_rate_pct": 100.0,
       "result": "fail",
-      "tested_at": "2026-09-29T11:54:42.038952+00:00"
+      "tested_at": "2026-09-30T05:24:58.693725+00:00"
     }
   },
   "what": "오인 판정 1건 뒤 카메라별 오탐률 100%·사유(안개) 집계, 임계값 50% 시험이 fail 로 저장된다 — 실측"

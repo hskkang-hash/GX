@@ -27,29 +27,20 @@ U6-03(사회적약자 요청 → 객체 검색 사건) — 명세 §3.3·§3.6 �
   probe/drill 판정식과 한 커밋에서 갈릴 위험이 생긴다, D-212). 세종 판정이 이
   낱말을 못박았다 — 「세종 판정: … data_source=external」.
 
-★ U6-01 인증 — **`JwtOrInboundKey` 는 쓰되 `inbound_key=True` 는 주지 않는다.**
-  `tests/test_f05_inbound_api_key.py::ReadOnlyTest::test_no_write_route_accepts_
-  an_inbound_key` 가 「쓰기 라우트에 들어오는 키를 연 것이 0건」을 강제한다(D-335
-  ③ 읽기 전용부터) — 그 시험은 `common/access_gate.py::INBOUND_KEY_ALLOWED` ·
-  `docs/agent/evidence/D-343/route_classes.yaml` 과 세 벌로 맞물려 있어(그 파일
-  머리말의 "삼각형"), 한 차선이 손대면 다른 두 벌과 갈릴 위험이 크다. 그래서
-  이 문은 **JWT**(연계 시스템 몫의 서비스 계정 로그인)로 테넌트를 정하고, **서명
-  검증**(HMAC, `common/webhook_contract.verify`)을 위조 방지의 실제 문지기로
-  세운다 — "JwtOrInboundKey 클래스를 쓴다"는 지시를 문자 그대로 지키면서
-  D-335 ③ 래칫을 깨지 않는 절충이다. 최종 보고 ⑤에 이 판단을 적는다(스스로
-  의심하는 점 — 세종 판정이 정말 `inbound_key=True` 까지 원했다면 이 절충은
-  반쪽이다).
+★ U6-01 인증 — 들어오는 키(범위 `events:ingest` · `inbound_key=True` · D-335 래칫 예외 1 ·
+  P-427) + 본문 HMAC. **서명 비밀은 그 기관의 들어오는 키 자체다**(P-432 · 턴 AQ) —
+  우리가 남을 부를 때의 웹훅 서명키 `agency` 를 재사용하던 P-427 모양은 방향이 반대라
+  걷어냈다(턴 AP N4 반론). 이 서비스는 키 값을 모른다: HTTP 층이
+  `common.inbound_api_key.verify_signed_with_request_key` 를 `verify_signature` 로 넘긴다.
 """
 from __future__ import annotations
 
 import json
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
-from django.conf import settings
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from common import webhook_contract
 from common.tenant_scope import TenantScope
 
 from apps.dsm.u5_an_service import SERVICE_FIRE_119, SERVICE_POLICE_112, SERVICE_SMART_CITY
@@ -200,22 +191,15 @@ EXTERNAL_EVENT_SOURCES: tuple[str, ...] = (
 )
 
 
-#: [P-427] 서명키는 **웹훅 서명키 표를 재사용**한다 — 새 자격 체계 0. 외부 기관 몫의 이름은
-#: `agency`(창 2b · 2026-09-29 에 두 통 env-file 로 실렸다 · 값은 금고).
-EXTERNAL_EVENT_SIGNING_KEY_REF = "agency"
-
-
-def _signing_secret(source: str) -> str:
-    """`settings.WEBHOOK_SIGNING_KEYS[EXTERNAL_EVENT_SIGNING_KEY_REF]` 하나만 본다(P-427).
-    `source` 는 본문 검증(셋 중 하나)에만 쓰고 키 선택에는 안 쓴다 — 기관마다 키를 따로
-    두는 것은 새 자격 체계라 이 턴에 만들지 않는다. 키가 없으면 빈 문자열 —
-    `webhook_contract.verify` 가 `REJECT_NO_SECRET` 으로 거절한다."""
-    table = getattr(settings, "WEBHOOK_SIGNING_KEYS", None) or {}
-    return table.get(EXTERNAL_EVENT_SIGNING_KEY_REF, "")
+#: [P-432] 서명 비밀 = **그 기관의 들어오는 키**(범위 `events:ingest`). 우리가 남을 부를 때의
+#: 웹훅 서명키(`agency`) 재사용(P-427)은 방향이 반대라 폐지했다 · 새 자격 체계 0.
+#: 서비스는 키 값을 모른다 — HTTP 층이 `verify_signature` 로 검증만 넘긴다(값 전달 0).
+SignatureVerifier = Callable[[bytes, Mapping[str, str]], "tuple[bool, str]"]
 
 
 def intake_external_event(
     *, scope: TenantScope, headers: Mapping[str, str], raw_body: bytes,
+    verify_signature: SignatureVerifier,
 ) -> dict[str, Any]:
     """`POST /external-events` — DSM-U6-01.
 
@@ -253,7 +237,7 @@ def intake_external_event(
         raise ExternalEventInvalid(
             f"source={source!r} 는 연계 대상이 아닙니다. 허용: {EXTERNAL_EVENT_SOURCES}")
 
-    ok, reason = webhook_contract.verify(_signing_secret(source), raw_body, headers)
+    ok, reason = verify_signature(raw_body, headers)
     if not ok:
         raise ExternalEventRejected(f"서명 검증 실패 — {reason}")
 

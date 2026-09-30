@@ -32,7 +32,6 @@ import json
 
 from django.utils import timezone
 
-from common.evidence_guard import allow_evidence_writes
 from tests.test_api_contract import _bearer
 from tests.test_dsm_app import DsmFixture
 
@@ -57,28 +56,18 @@ def _today() -> str:
 
 
 def _merge_title_parts(updates: dict[str, dict[str, str]]) -> None:
-    with allow_evidence_writes(
-            "P-421 ② DSM-U5-05 title_parts 갱신 — 코드로 다시 실측한 행만 고친다"):
-        payload = json.loads(EVIDENCE_PATH.read_text(encoding="utf-8"))
-        rows = payload.get("title_parts") or []
-        touched = set()
-        for row in rows:
-            part = row.get("part")
-            if part in updates:
-                row["status"] = updates[part]["status"]
-                if "where" in updates[part]:
-                    row["where"] = updates[part]["where"]
-                touched.add(part)
-        missing = set(updates) - touched
-        if missing:
-            raise AssertionError(
-                "DSM-U5-05.json 에 이 part 가 없다(오타 대조): %s" % missing)
-        payload["title_parts"] = rows
-        #: [턴 AP · 조율자] 채운 표라는 표식 — 옛 시험(`test_p356_u4_rest_spec_promotions`)이 덮지 않는다.
-        payload["retro"] = "P-421 채움 · 관제일지(인계 메모 + 사건 타임라인) · 턴 AP 차선 N3"
-        EVIDENCE_PATH.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2, default=str),
-            encoding="utf-8")
+    """[턴 AQ · P-431 · 차선 Q] 사람 표는 `DSM-U5-05.retro.md`(손으로만) — 이 시험은
+    표를 **쓰지 않고**(옛: json 의 title_parts·retro 를 고쳐 썼다), 고치려던 `part`
+    행이 사람 표에 있는지만 **읽어** 대조한다."""
+    rp = EVIDENCE_PATH.with_name("DSM-U5-05.retro.md")
+    if not rp.is_file():
+        return      # 이 환경에 사람 표가 안 보인다 — 쓰지도 단언하지도 않는다
+    block = rp.read_text(encoding="utf-8").split("```json", 1)[1].split("```", 1)[0]
+    parts = {row.get("part") for row in (json.loads(block).get("title_parts") or [])}
+    missing = set(updates) - parts
+    if missing:
+        raise AssertionError(
+            "DSM-U5-05.retro.md 에 이 part 가 없다(오타 대조): %s" % missing)
 
 
 class ControlLogTest(DsmFixture):

@@ -109,12 +109,16 @@ class FwsAPI:
     @tenant_scoped(reason="남의 테넌트 이벤트에 회신·판정을 쓸 수 없다")
     @idempotent("fws.verifications.reply")
     def reply_verification(self, request, verification_id: int, result: str,
-                           reason_code: str = "", note: str = ""):
+                           reason_code: str = "", note: str = "",
+                           photo_id: int | None = None):
+        # [턴 AQ · 차선 W2A] `photo_id` — 「+ 사진 1」(명세서 §5.1). 사진은 DSM 현장 사진 문
+        #   (`POST /api/dsm/events/{id}/field-photo`)이 올리고, 여기서는 그 번호를 묶는다.
         from django.http import Http404
         try:
             return verification.reply_verification(
                 scope=_scope(request), verification_id=verification_id,
-                result=result, reason_code=reason_code, note=note)
+                result=result, reason_code=reason_code, note=note,
+                photo_id=photo_id)
         except Http404:
             raise HttpError(404, "그런 확인 요청이 없습니다.")
         except SystemScopeCannotRead as exc:
@@ -172,6 +176,20 @@ class FwsAPI:
     def get_standby_status(self, request):
         return standby.my_status(scope=_scope(request))
 
+    # ── FWS-F2-01 자원 배치판 · FWS-F2-05 지휘 화면 배지(턴 AQ · 차선 W2C — 읽기만) ──
+    @route.get("/resources/board", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="이 기관의 대기 인원과 이 기관 사건의 지원 요청만 읽는다")
+    def resource_board(self, request, event_id: int | None = None):
+        from django.http import Http404
+
+        from apps.fws import resource_board
+        try:
+            return resource_board.board(scope=_scope(request), event_id=event_id)
+        except Http404:
+            raise HttpError(404, "그런 사건이 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
     # ── FWS-F2-13 훈련 임무 수신(훈련 배지) ───────────────────────────────
     @route.get("/training/mission", auth=JwtOrInboundKey())
     @tenant_scoped(reason="훈련 배지는 이 사람 테넌트의 훈련 상태를 본다 — DSM 훈련 "
@@ -202,6 +220,18 @@ class FwsAPI:
     @tenant_scoped(reason="본인 임무 이력만 읽는다")
     def my_missions(self, request):
         return missions.mine(scope=_scope(request))
+
+    # ── FWS-F2-12 내 임무 이력 CSV(수당 근거) — [턴 AQ · 차선 W2A] ──────────
+    #   ⚠ 경로 순서: 리터럴 `/missions/mine/export` 는 `{int:event_id}` 보다 위(라우트 삼킴 함정).
+    @route.get("/missions/mine/export", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="본인 임무 이력만 내보낸다")
+    def my_missions_export(self, request):
+        from django.http import HttpResponse
+
+        resp = HttpResponse(missions.mine_csv(scope=_scope(request)),
+                            content_type="text/csv; charset=utf-8")
+        resp["Content-Disposition"] = 'attachment; filename="my-missions.csv"'
+        return resp
 
     @route.get("/missions/{int:event_id}", auth=JwtOrInboundKey())
     @tenant_scoped(reason="남의 테넌트 사건을 임무로 읽을 수 없다")

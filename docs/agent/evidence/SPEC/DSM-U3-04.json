@@ -1,6 +1,6 @@
 {
   "id": "DSM-U3-04",
-  "measured_at": "2026-09-29T11:59:56.230261+00:00",
+  "measured_at": "2026-09-30T05:30:25.584271+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u3u6_spec_promotions.EvidenceExportTest.test_dump_dsm_u3_04_evidence",
   "request": {
@@ -14,33 +14,11 @@
   "response": {
     "status": 200,
     "body": {
-      "hotline_id": 560,
+      "hotline_id": 647,
       "situation_room_phone": "031-120-2222",
       "pslte_group_call": "*911",
-      "actor_id": 741
+      "actor_id": 821
     }
   },
-  "what": "상황실 번호·PS-LTE 그룹통화 번호 접수 1건을 실제로 남겼다 — 완결 조건(「1탭」)은 M2 화면이 이 값을 `tel:` 링크로 그리는 것이고, 번호 자체가 실제로 저장·조회되는 것을 이 왕복이 실측한다. 손으로 지어낸 값 0.",
-  "title_parts": [
-    {
-      "part": "상황실 번호 저장/조회",
-      "where": "backend/apps/dsm/hotline_service.py::set_hotline / latest_hotline (POST|GET /api/dsm/hotline)",
-      "status": "measured: evidence body.situation_room_phone='031-120-2222' 저장·응답 확인"
-    },
-    {
-      "part": "PS-LTE 그룹통화 번호 저장/조회",
-      "where": "backend/apps/dsm/hotline_service.py::set_hotline / latest_hotline",
-      "status": "measured: evidence body.pslte_group_call='*911' 저장·응답 확인"
-    },
-    {
-      "part": "M2 화면 버튼(번호가 있을 때만 렌더)",
-      "where": "frontend/src/features/mobile/pages/MobileEventDetail.tsx 758~777행 (hotline.data.configured 로 게이트, tel: 버튼 렌더)",
-      "status": "present — 프런트 코드가 실재한다. situation_room_tel/pslte_group_call_tel 값이 있을 때만 버튼을 그리는 것을 코드로 확인(2026-09-28 턴 AM 추가분)"
-    },
-    {
-      "part": "완결 조건 「1탭」(tel: 링크 1회 클릭으로 다이얼)",
-      "where": "frontend/src/features/mobile/pages/MobileEventDetail.tsx 763~776행 <a href={`tel:${...}`}>",
-      "status": "present — tel: 앵커 1개가 곧 1탭 다이얼이다. hotline_service.py::to_tel() 이 공백·하이픈을 떼 유효한 tel URI를 만든다"
-    }
-  ]
+  "what": "상황실 번호·PS-LTE 그룹통화 번호 접수 1건을 실제로 남겼다 — 완결 조건(「1탭」)은 M2 화면이 이 값을 `tel:` 링크로 그리는 것이고, 번호 자체가 실제로 저장·조회되는 것을 이 왕복이 실측한다. 손으로 지어낸 값 0."
 }

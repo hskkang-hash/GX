@@ -20,13 +20,11 @@
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from django.apps import apps
 from django.core.cache import cache
 
-from common.evidence_guard import allow_evidence_writes
 from tests.test_fws_app import FwsHttpTest, _qs, _write_evidence
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,13 +36,11 @@ INTEGRATIONS_TEST = "/api/dsm/u5an/integrations/test"
 
 
 def _add_title_parts(clause_id: str, parts: list[dict]) -> None:
-    with allow_evidence_writes(
-            "P-356 ② title_parts — 제목이 부르는 부분과 실측 상태를 표로 남긴다"):
-        path = EVIDENCE_DIR / f"{clause_id}.json"
-        body = json.loads(path.read_text(encoding="utf-8"))
-        body["title_parts"] = parts
-        path.write_text(json.dumps(body, ensure_ascii=False, indent=2) + "\n",
-                        encoding="utf-8")
+    """[턴 AQ · P-431 · 차선 Q] 사람 표는 `SPEC/<id>.retro.md`(손으로만) — json 에
+    `title_parts` 를 **쓰지 않는다**. 표 모양(빈 칸 0)만 여기서 본다."""
+    for part in parts:
+        missing = [k for k in ("part", "where", "status") if not (part.get(k) or "").strip()]
+        assert not missing, f"{clause_id} title_parts 에 빈 칸: {part!r} ({missing})"
 
 
 class U5AnFixture(FwsHttpTest):

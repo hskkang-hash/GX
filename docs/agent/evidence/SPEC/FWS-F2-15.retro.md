@@ -29,10 +29,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "화면(M4 설정 화면)",
-      "where": "frontend/src/features/fws/api.ts 의 notifyPrefs 는 등록만 되고 PatrolHome·FieldHome 어느 페이지도 부르지 않는다(grep)",
-      "status": "없음 — 감시원·진화대가 시간대·담당 초소/구역을 입력할 화면이 없다(App.tsx·routes.ts·copy.ts 는 공용 파일이라 이 차선이 못 붙인다)"
+      "where": "frontend/src/features/fws/pages/NotifyPrefsCard.tsx(FieldHome.tsx(진화대 F2) 에 붙음)::data-gx=fws-f2-15-quiet-start · fws-f2-15-quiet-end(근무 외 차단 시각) · fws-f2-15-quiet-post(담당 초소·구역) · fws-f2-15-quiet-save · fws-f2-15-quiet-saved(저장된 값 표시) · GET·POST /api/fws/notify-prefs",
+      "status": "measured: tests.test_aq_n3_screens.FwsQuietHoursScreenTest — 저장 뒤 같은 GET 을 캐시 우회로 다시 불러 22:00~06:00·초소 값이 보이고, 바꾸면(23:30) 재조회에 바뀐 값 · 다른 사람 설정은 빈 값 · 소스 정적 대조(PatrolHome·FieldHome 두 화면)"
     }
   ],
-  "retro": "P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 저장값(감사 로그 guardianx.fws.notify_prefs)을 K2 webpush._blocked_reason 이 실제로 되읽어 근무 외 warning 을 막고(quiet_hours) 근무 중은 통과함을 같은 시험 두 발송으로 대조했다. 앞 판이 지어낸 critical 예외는 DSM 차단 계약을 깨서 뺐다. 담당 초소/구역 값의 쓰임과 M4 화면은 여전히 없다 — 열린 두 행으로 남긴다."
+  "retro": "P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 저장값(감사 로그 guardianx.fws.notify_prefs)을 K2 webpush._blocked_reason 이 실제로 되읽어 근무 외 warning 을 막고(quiet_hours) 근무 중은 통과함을 같은 시험 두 발송으로 대조했다. 앞 판이 지어낸 critical 예외는 DSM 차단 계약을 깨서 뺐다. 담당 초소/구역 값의 쓰임과 M4 화면은 여전히 없다 — 열린 두 행으로 남긴다. | 턴 AQ 차선 N3 · 화면 배선 · 사람 확인 · 2026-09-30 · M4 근무 외 차단 칸을 화면에 그려 저장값을 읽어 보인다(화면 행 닫음). 담당 초소/구역 값을 다른 로직이 읽는 행은 여전히 없다 — 열린 채 둔다."
 }
 ```

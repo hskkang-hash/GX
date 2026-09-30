@@ -39,10 +39,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "화면(골든타임 초과 사유 입력·대응시계 타임라인)",
-      "where": "POST .../golden-time-reason · GET .../response-timeline — 프런트 호출 0건(기본 시계 카드는 F4-01 CommandHome.tsx 재사용으로 표시된다 — 그 부분만 화면이 있다)",
-      "status": "없음(부분 — 사유 입력·전용 타임라인 화면은 미배선, 기본 시계 카드는 표시됨)"
+      "where": "frontend/src/features/fws/pages/CommandHome.tsx::data-gx=fws-f4-10-timeline · fws-f4-10-golden · fws-f4-10-reason · fws-f4-10-golden-reason — API GET /api/fws/command/incidents/{id}/response-timeline · POST /api/fws/command/incidents/{id}/golden-time-reason",
+      "status": "구현 — 화면 배선 · 대응 시계 다섯 칸(신고·확인·헬기 투하·주불·진화완료)을 response-timeline GET 으로 그리고, 사유 기록 버튼 → 재조회에서 초과 표시가 풀리고 기록된 사유가 그려진다 · 누른 뒤 재조회 시험 backend/tests/test_aq_n1_f4_command_wiring.py::AqN1F4CommandWiringTest::test_f4_10_reason_then_reread_timeline · 정적 대조 AqN1F4ScreenSourceTest::test_screen_declares_data_gx_and_calls_each_path"
     }
   ],
-  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 6개 시계 칸·골든타임 문턱(선언 30분==설정 1800초)은 서버에서 실측 닫힘을 재확인했다. 다만 골든타임 초과 사유 입력·전용 타임라인 화면은 미배선이다 — 반쪽으로 내린다."
+  "retro": "턴 AQ 차선 N1 · 화면 배선 · 사람 확인 · 2026-09-30 · CommandHome.tsx 에 전용 대응 시계 카드(response-timeline GET)와 골든타임 초과 사유 칸·버튼을 배선하고 누른 뒤 조회 GET(캐시 우회) 재호출을 test_f4_10_reason_then_reread_timeline 로 실측했다(초과 true → 사유 기록 뒤 false · 테넌트 B 쓰기 404 · 주인 재조회 불변) · 앞 판: P-419 재판정(턴 AP · N1) · 2026-09-29 · 6개 시계 칸·골든타임 문턱(선언 30분==설정 1800초)은 서버에서 실측 닫힘을 재확인했다. 다만 골든타임 초과 사유 입력·전용 타임라인 화면은 미배선이다 — 반쪽으로 내린다."
 }
 ```

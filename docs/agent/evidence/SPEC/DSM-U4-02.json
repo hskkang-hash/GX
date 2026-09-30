@@ -1,6 +1,6 @@
 {
   "id": "DSM-U4-02",
-  "measured_at": "2026-09-29T11:50:05.014329+00:00",
+  "measured_at": "2026-09-30T05:19:34.104788+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n4_u4_02_interim_batch.InterimBatchTest.test_batch_issues_interim_reports_for_open_events_and_dedupes_same_slot",
   "request": {
@@ -12,7 +12,7 @@
     "status": 200,
     "body": {
       "slot": "17:00",
-      "date": "2026-09-29",
+      "date": "2026-09-30",
       "issued": [],
       "skipped": [
         31
@@ -21,22 +21,5 @@
       "skipped_count": 1
     }
   },
-  "what": "[턴 AP · 차선 N4] 08시/17시 슬롯 배치가 미종결 사건에 중간 보고를 채번하고, 같은 슬롯·같은 날 재호출은 건너뛴다 — 실측",
-  "title_parts": [
-    {
-      "part": "08시·17시 기준 응급조치 보고 자동 초안(1일 2회)",
-      "where": "POST /api/dsm/situation-reports/interim-batch · apps/dsm/u4_interim_report_service.py::issue_interim_batch()(슬롯 판정 `_slot_for` · 기존 situation_report_ledger_service.issue_report(kind=중간) 재사용)",
-      "status": "measured: 이 시험 — 미종결 사건이 배치로 채번됨(issued)"
-    },
-    {
-      "part": "같은 슬롯·같은 날 중복 채번 방지",
-      "where": "u4_interim_report_service.py::_batch_marker_action() 감사 마커",
-      "status": "measured: 이 시험 — 재호출 시 같은 사건이 skipped 로 빠짐(slot 값도 같음)"
-    },
-    {
-      "part": "NDMS 입력용 표 내보내기(항목 1:1)",
-      "where": "GET /api/dsm/situation-reports/ndms-export.csv · u4_interim_report_service.py::export_ndms_csv()",
-      "status": "measured: tests.test_ap_n4_u4_02_interim_batch.InterimBatchTest.test_ndms_export_csv_lists_issued_reports — CSV 에 방금 채번된 사건번호·report_id 열이 실측됨"
-    }
-  ]
+  "what": "[턴 AP · 차선 N4] 08시/17시 슬롯 배치가 미종결 사건에 중간 보고를 채번하고, 같은 슬롯·같은 날 재호출은 건너뛴다 — 실측"
 }

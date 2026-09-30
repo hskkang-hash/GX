@@ -120,12 +120,34 @@ WIND_SHIFT_WINDOW_NAME = "WIND_SHIFT_WINDOW_MINUTES"
 DROP_ZONE_EXIT_RADIUS_NAME = "DROP_ZONE_EXIT_RADIUS_M"
 
 
-def _threshold(name: str):
-    """규정값 모듈에서 문턱 하나를 **부를 때마다** 읽는다(모듈 적재 때 굳히지
-    않는다 — 세종 결정으로 값이 들어오는 날 이 파일은 안 바뀐다)."""
-    from apps.fws import constants as fws_constants
+#: [P-434 · 턴 AQ · 차선 N4] 규정값 이름 → 기관 설정 칸 이름(`safety_thresholds.NAMES`).
+_TENANT_FIELD = {
+    WIND_SHIFT_ANGLE_NAME: "wind_shift_angle_deg",
+    WIND_SHIFT_WINDOW_NAME: "wind_shift_window_minutes",
+    DROP_ZONE_EXIT_RADIUS_NAME: "drop_zone_exit_radius_m",
+}
 
-    value = getattr(fws_constants, name, None)
+#: 문턱이 없을 때 응답·화면이 쓰는 말(「안 쐈다」가 아니라 「기관이 아직 안 정했다」).
+THRESHOLD_STATUS_WAITING = "대기"
+THRESHOLD_STATUS_SET = "설정됨"
+
+
+def _threshold(scope, name: str):
+    """문턱 하나를 **부를 때마다** 읽는다(모듈 적재 때 굳히지 않는다).
+
+    [P-434 · 턴 AQ · 차선 N4] 세종 판정 「명세에 없는 숫자는 기본값이 아니라 기관
+    설정이다 — 미설정은 「대기」로 보인다」. 읽는 순서:
+        ① 요청자 기관(테넌트)의 설정값 — `apps.fws.safety_thresholds`(U5 산불 설정 탭)
+        ② 규정값 모듈 `apps.fws.constants` 의 같은 이름 — 법령·고시가 숫자를 정하는
+           날을 위한 자리일 뿐, 지금은 `None` 이다(기본값을 짓지 않는다 · D-284).
+    둘 다 없으면 `None` → 판정 0 · `threshold_status="대기"`.
+    """
+    from apps.fws import constants as fws_constants
+    from apps.fws import safety_thresholds
+
+    value = safety_thresholds.tenant_values(scope).get(_TENANT_FIELD[name])
+    if value is None:
+        value = getattr(fws_constants, name, None)
     return None if value is None else float(value)
 
 
@@ -193,8 +215,8 @@ def report_wind_direction(*, scope, event_id: int, direction_deg: float) -> dict
     actor = scope.require_actor()
     now = timezone.now()
 
-    angle = _threshold(WIND_SHIFT_ANGLE_NAME)
-    window = _threshold(WIND_SHIFT_WINDOW_NAME)
+    angle = _threshold(scope, WIND_SHIFT_ANGLE_NAME)
+    window = _threshold(scope, WIND_SHIFT_WINDOW_NAME)
     threshold_unset = angle is None or window is None
     prior = _latest_wind_reading(event_id)
     diff_deg = None
@@ -234,6 +256,8 @@ def report_wind_direction(*, scope, event_id: int, direction_deg: float) -> dict
         "diff_deg": diff_deg, "within_window": within_window,
         "threshold_deg": angle, "window_minutes": window,
         "threshold_unset": threshold_unset,
+        "threshold_status": (THRESHOLD_STATUS_WAITING if threshold_unset
+                             else THRESHOLD_STATUS_SET),
         "judged": (not threshold_unset) and within_window,
         "alert_fired": alert_fired,
         "alert_reason": alert_reason, "delivered_count": delivered,
@@ -272,7 +296,7 @@ def report_drop_zone_position(*, scope, event_id: int, lat: float, lng: float) -
         raise AlertInputRejected(
             "이 사건에 등록된 헬기 투하 구역(F4-04 승인)이 없다 — 판정할 중심이 없다")
     distance_m = _haversine_m(center["lat"], center["lng"], lat, lng)
-    radius = _threshold(DROP_ZONE_EXIT_RADIUS_NAME)
+    radius = _threshold(scope, DROP_ZONE_EXIT_RADIUS_NAME)
     threshold_unset = radius is None
     alert_fired = (not threshold_unset) and distance_m > radius
     actor = scope.require_actor()
@@ -299,6 +323,53 @@ def report_drop_zone_position(*, scope, event_id: int, lat: float, lng: float) -
     return {
         "event_id": event_id, "distance_m": round(distance_m, 1),
         "radius_m": radius, "threshold_unset": threshold_unset,
+        "threshold_status": (THRESHOLD_STATUS_WAITING if threshold_unset
+                             else THRESHOLD_STATUS_SET),
         "judged": not threshold_unset, "alert_fired": alert_fired,
         "alert_reason": alert_reason, "delivered_count": delivered,
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FWS-F1-10 「철수」 — 지휘가 내린 철수 지시를 현장 안전 알림으로 보낸다
+# (턴 AQ · 2물결 차선 W2C)
+#
+# 「대피 지시」는 F4-05 승인(`command.approve_evacuation`)이 이미
+# `dsm_services.notify_event` 로 쏜다 — 받는 사람의 GET /api/fws/alerts 에 도달한다
+# (시험 `tests/test_aq_w2c_command_admin_drone.py` 가 그 연결을 잰다). 「철수」는
+# 지휘 쪽 결정 자리가 없었다 — 이 함수가 그 결정 한 줄을 남기고 **같은 문**
+# (`_fire_safety_alert` → notify_event → K2 send)으로 쏜다. 새 채널 0.
+# ═══════════════════════════════════════════════════════════════════════════
+KIND_WITHDRAWAL = "withdrawal"
+MAX_WITHDRAWAL_REASON_CHARS = 300
+
+
+def order_withdrawal(*, scope, event_id: int, reason: str) -> dict:
+    """철수 지시 — 사유 필수. 발송은 기존 안전경보 경로를 그대로 탄다."""
+    reason = (reason or "").strip()
+    if not reason:
+        raise AlertInputRejected("reason(철수 사유)이 비었다")
+    if len(reason) > MAX_WITHDRAWAL_REASON_CHARS:
+        raise AlertInputRejected(
+            f"reason 이 {len(reason)}자다. 상한은 {MAX_WITHDRAWAL_REASON_CHARS}자")
+    dsm_services.event_detail(scope=scope, event_id=event_id)  # 404 게이트(테넌트)
+    actor = scope.require_actor()
+    delivered = _fire_safety_alert(
+        scope=scope, event_id=event_id, actor=actor, kind=KIND_WITHDRAWAL,
+        reason=f"철수 지시 — {reason}",
+        detail={"reason": reason, "ordered_by": getattr(actor, "username", "")})
+    return {"event_id": event_id, "kind": KIND_WITHDRAWAL, "reason": reason,
+           "delivered_count": delivered}
+
+
+def withdrawal_orders(*, scope, event_id: int) -> dict:
+    """이 사건의 철수 지시 전건(오래된 것부터) — 지휘 화면이 누른 뒤 다시 읽는다."""
+    dsm_services.event_detail(scope=scope, event_id=event_id)  # 404 게이트(테넌트)
+    items = [
+        {"reason": p.get("reason"), "delivered": p.get("delivered"),
+         "ordered_at": p.get("fired_at")}
+        for p in _safety_rows_for_event(ACTION_SAFETY_ALERT_FIRED, event_id)
+        if p.get("kind") == KIND_WITHDRAWAL
+    ]
+    return {"event_id": event_id, "count": len(items), "orders": items,
+           "latest": items[-1] if items else None}

@@ -114,3 +114,83 @@ def decide(*, scope: TenantScope, observation_id: int,
     )
     return {"observation_id": observation_id, "decision_id": entry.audit_id,
             "decision": decision, "key": key, "camera_id": camera_id}
+
+
+#: [턴 AQ · 차선 W2B] 도달 카드 문구 — 명세 §4.2 DSM-U2-04 원문
+#: 「기준 도달 03:40 · 통제 여부 결정 필요」의 모양 그대로(시각만 실제 도달 시각).
+NOTICE_FMT = "기준 도달 {hhmm} · 통제 여부 결정 필요"
+
+
+def list_alerts(*, scope: TenantScope, limit: int = 50) -> list[dict[str, Any]]:
+    """팀장·U4 홈의 **도달 카드** 목록 — 최신 먼저 · **내 테넌트 카메라 것만**.
+
+    도달 줄(`threshold_reached:*`)마다 그 뒤 결정 줄(`threshold_decision:{id}`)이
+    있으면 결정됨으로 읽는다. 새 표를 만들지 않는다 — `observe`/`decide` 가 남긴
+    감사 두 줄이 곧 카드의 전부다.
+
+    ★ 테넌트 문지기를 새로 세우지 않는다 — `decide()` 와 같은
+      `common.tenant_filters.assert_scoped`(StreamMonitor) 가 남의 카메라면
+      Http404 를 던지고, 그 줄은 목록에서 빠진다(존재를 안 알린다).
+
+    Raises:
+        common.tenant_scope.SystemScopeCannotRead: 요청자가 없다(시스템 스코프).
+    """
+    from django.apps import apps
+    from django.http import Http404
+    from django.utils import timezone
+
+    from common.tenant_filters import assert_scoped
+
+    actor = scope.require_actor()
+    rows = audit_writer.read(logger_name=LOGGER_NAME, limit=500)
+    decisions = {}
+    for e in rows:
+        if e.action.startswith("threshold_decision:"):
+            obs = int(e.action.rsplit(":", 1)[1])
+            decisions.setdefault(obs, e)  # 최신이 먼저 — 첫 것이 마지막 결정
+
+    stream_model = apps.get_model("stream_monitors", "StreamMonitor")
+    allowed: dict[int, bool] = {}
+    reached = []
+    for e in rows:
+        match = _REACHED_RE.match(e.action)
+        if not match:
+            continue
+        camera_id = int(match.group("camera_id"))
+        if camera_id not in allowed:
+            try:
+                assert_scoped(stream_model, camera_id, actor)
+                allowed[camera_id] = True
+            except Http404:
+                allowed[camera_id] = False
+        if allowed[camera_id]:
+            reached.append((e, match.group("key"), camera_id))
+        if len(reached) >= limit:
+            break
+
+    log_model = apps.get_model("logger", "AuditLogs")
+    ids = [e.audit_id for e, _, _ in reached] + [
+        d.audit_id for d in decisions.values()]
+    stamps = dict(log_model._base_manager.filter(pk__in=ids)
+                  .values_list("pk", "created_on"))
+
+    def _hhmm(pk):
+        at = stamps.get(pk)
+        return timezone.localtime(at).strftime("%H:%M") if at else ""
+
+    out = []
+    for e, key, camera_id in reached:
+        d = decisions.get(e.audit_id)
+        reached_hhmm = _hhmm(e.audit_id)
+        out.append({
+            "observation_id": e.audit_id,
+            "key": key,
+            "camera_id": camera_id,
+            "reached_at": stamps.get(e.audit_id),
+            "notice": NOTICE_FMT.format(hhmm=reached_hhmm or "--:--"),
+            "detail": e.reason,
+            "decided": d is not None,
+            "decision": (d.reason.split("결정: ", 1)[-1] if d else ""),
+            "decided_at": stamps.get(d.audit_id) if d else None,
+        })
+    return out

@@ -84,6 +84,15 @@ def is_evidence_path(path) -> bool:
                for i in range(max(0, len(parts) - n + 1)))
 
 
+#: [턴 AQ · P-431 · 차선 Q] 사람이 확인한 제목 부분 표 — `SPEC/<id>.retro.md`.
+HUMAN_TABLE_SUFFIX = ".retro.md"
+
+
+def is_human_table_path(path) -> bool:
+    """이 경로가 사람 표(`*.retro.md`)인가. 대소문자 무시."""
+    return str(path).replace("\\", "/").lower().endswith(HUMAN_TABLE_SUFFIX)
+
+
 def under_pytest() -> bool:
     """지금 시험이 돌고 있는가. **깃발 둘을 다 본다** (하나는 시험 안, 하나는 세션)."""
     return bool(os.environ.get("PYTEST_CURRENT_TEST")) or \
@@ -168,6 +177,10 @@ def blocked_reason(path, *, who: str = "", db_name: str = "") -> str | None:
     if not is_evidence_path(path):
         return None
     tail = f" ({who})" if who else ""
+    if is_human_table_path(path):
+        return (f"**사람 표**(`.retro.md`)는 손으로만 고친다{tail} — {path}. "
+                "시험·쓰개·도구는 이름을 대도(`allow_evidence_writes`) 못 쓴다 — "
+                "쓰개가 사람의 재판정 표를 덮었다(턴 AP · 스냅숏 25 복원 · P-431)")
     if synthetic_active():
         return (f"**지어낸 상태**에서 난 수는 증거가 아니다{tail} — {path}. "
                 f"지금 열려 있는 것: {getattr(_local, 'synthetic_who', '?')}. "

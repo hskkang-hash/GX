@@ -1,176 +1,81 @@
 /**
- * 플랫폼 운영(U0) — `/ops`. 턴 AO · WO-18 · 차선 N3 단독 소유.
+ * 플랫폼 운영(U0) — `/ops`. 턴 AO · WO-18 · 차선 N3 → 턴 AQ · 차선 N2 보드 배선.
  *
- * 테넌트 목록·건강 보드·인시던트·온보딩 요약을 **읽어서 그린다**(P-415 — 새 저장
- * 0, 이미 있는 장부를 읽는다). U0 아닌 계정이 오면 서버가 403 을 주고, 이 화면은
- * 그 사실을 그대로 보여 준다(대리 판정을 화면에서 다시 하지 않는다).
+ * 보드 열 개를 탭으로 둔다(테넌트 발급 · 앱 설치·버전 · 건강 · 인시던트 · 백업·복구 ·
+ * 온보딩 관제 · 플랫폼 감사 · 키·자격 회전 · 릴리스·배포 · 시드·훈련). 각 보드는
+ * `components/*Board.tsx` 에 있고, 이미 있는 장부를 **읽어 그리고** 제목이 부르는 누르는
+ * 자리를 서버 문에 잇는다 — 누른 뒤에는 같은 보드의 GET 을 다시 불러 새 값을 그린다.
+ *
+ * U0 아닌 계정이 오면 서버가 403 을 준다 — 이 화면은 먼저 테넌트 목록 한 번으로 그것을
+ * 확인하고, 거절이면 보드를 하나도 그리지 않는다(대리 판정을 화면에서 다시 하지 않는다).
  */
-import { Alert, Card, Col, Row, Spin, Table, Tag, Typography } from 'antd';
+import { Alert, Spin, Tabs, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 
-import {
-  fetchHealthBoard,
-  fetchIncidents,
-  fetchOnboardingBoard,
-  fetchTenants,
-  type OpsHealthRow,
-  type OpsIncidentRow,
-  type OpsTenantRow,
-} from '../api';
-import {
-  OPS_ERROR_PREFIX,
-  OPS_FORBIDDEN,
-  OPS_HEALTH_COLOR_LABEL,
-  OPS_INCIDENT_STATUS_LABEL,
-  OPS_SECTION_LABEL,
-  OPS_SEVERITY_LABEL,
-  OPS_TITLE,
-} from '../copy';
+import { fetchTenants, opsErrorStatus, opsErrorText } from '../api';
+import AppsBoard from '../components/AppsBoard';
+import AuditBoard from '../components/AuditBoard';
+import BackupBoard from '../components/BackupBoard';
+import HealthBoard from '../components/HealthBoard';
+import IncidentsBoard from '../components/IncidentsBoard';
+import KeysBoard from '../components/KeysBoard';
+import OnboardingBoard from '../components/OnboardingBoard';
+import ReleasesBoard from '../components/ReleasesBoard';
+import SeedBoard from '../components/SeedBoard';
+import TenantsBoard from '../components/TenantsBoard';
+import { OPS_ERROR_PREFIX, OPS_FORBIDDEN, OPS_TAB_LABEL, OPS_TITLE } from '../copy';
 
 const { Title } = Typography;
 
-interface Loaded {
-  tenants: OpsTenantRow[];
-  health: OpsHealthRow[];
-  incidents: OpsIncidentRow[];
-  onboarding: Record<string, unknown> | null;
-}
+type Gate = 'checking' | 'open' | 'forbidden' | 'error';
 
 export default function OpsHome() {
-  const [data, setData] = useState<Loaded | null>(null);
+  const [gate, setGate] = useState<Gate>('checking');
   const [error, setError] = useState<string | null>(null);
-  const [forbidden, setForbidden] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-    (async () => {
-      try {
-        const [tenants, health, incidents, onboarding] = await Promise.all([
-          fetchTenants(),
-          fetchHealthBoard(),
-          fetchIncidents('open'),
-          fetchOnboardingBoard().catch(() => null),
-        ]);
+    fetchTenants()
+      .then(() => {
+        if (alive) setGate('open');
+      })
+      .catch((e) => {
         if (!alive) return;
-        setData({
-          tenants: tenants.tenants,
-          health: health.tenants,
-          incidents: incidents.incidents,
-          onboarding,
-        });
-      } catch (e) {
-        if (!alive) return;
-        const status = (e as { response?: { status?: number } })?.response?.status;
+        const status = opsErrorStatus(e);
         if (status === 401 || status === 403) {
-          setForbidden(true);
+          setGate('forbidden');
         } else {
-          setError(e instanceof Error ? e.message : String(e));
+          setError(opsErrorText(e));
+          setGate('error');
         }
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
+      });
     return () => {
       alive = false;
     };
   }, []);
 
-  if (forbidden) {
-    return (
-      <div style={{ padding: 24 }}>
-        <Title level={3}>{OPS_TITLE}</Title>
-        <Alert type="warning" showIcon message={OPS_FORBIDDEN} />
-      </div>
-    );
-  }
-
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: 24 }} data-gx="ops-home">
       <Title level={3}>{OPS_TITLE}</Title>
-
-      {loading && <Spin />}
-      {error && <Alert type="error" showIcon message={`${OPS_ERROR_PREFIX}${error}`} />}
-
-      {data && (
-        <Row gutter={[16, 16]}>
-          <Col span={24}>
-            <Card title={`${OPS_SECTION_LABEL.tenants} (${data.tenants.length})`}>
-              <Table
-                rowKey="tenant_code"
-                size="small"
-                pagination={false}
-                dataSource={data.tenants}
-                columns={[
-                  { title: '테넌트', dataIndex: 'name' },
-                  { title: '코드', dataIndex: 'tenant_code' },
-                  { title: '구성원', dataIndex: 'member_count' },
-                ]}
-              />
-            </Card>
-          </Col>
-
-          <Col span={12}>
-            <Card title={OPS_SECTION_LABEL.health}>
-              <Table
-                rowKey="tenant_code"
-                size="small"
-                pagination={false}
-                dataSource={data.health}
-                columns={[
-                  { title: '테넌트', dataIndex: 'name' },
-                  {
-                    title: '카메라',
-                    render: (_: unknown, row: OpsHealthRow) =>
-                      `${row.cameras.active}/${row.cameras.total}`,
-                  },
-                  {
-                    title: '상태',
-                    dataIndex: 'color',
-                    render: (color: string) => (
-                      <Tag color={color === 'red' ? 'red' : 'green'}>
-                        {OPS_HEALTH_COLOR_LABEL[color] ?? color}
-                      </Tag>
-                    ),
-                  },
-                ]}
-              />
-            </Card>
-          </Col>
-
-          <Col span={12}>
-            <Card title={`${OPS_SECTION_LABEL.incidents} (${data.incidents.length})`}>
-              <Table
-                rowKey="incident_id"
-                size="small"
-                pagination={false}
-                dataSource={data.incidents}
-                columns={[
-                  { title: '테넌트', dataIndex: 'tenant_code' },
-                  {
-                    title: '심각도',
-                    dataIndex: 'severity',
-                    render: (s: string) => OPS_SEVERITY_LABEL[s] ?? s,
-                  },
-                  {
-                    title: '상태',
-                    dataIndex: 'status',
-                    render: (s: string) => OPS_INCIDENT_STATUS_LABEL[s] ?? s,
-                  },
-                  { title: '요약', dataIndex: 'summary' },
-                ]}
-              />
-            </Card>
-          </Col>
-
-          {data.onboarding && (
-            <Col span={24}>
-              <Card title={OPS_SECTION_LABEL.onboarding}>
-                {String(data.onboarding.score_over_denominator ?? '')}
-              </Card>
-            </Col>
-          )}
-        </Row>
+      {gate === 'checking' && <Spin />}
+      {gate === 'forbidden' && <Alert type="warning" showIcon message={OPS_FORBIDDEN} />}
+      {gate === 'error' && <Alert type="error" showIcon message={`${OPS_ERROR_PREFIX}${error}`} />}
+      {gate === 'open' && (
+        <Tabs
+          data-gx="ops-tabs"
+          items={[
+            { key: 'o-01', label: OPS_TAB_LABEL.tenants, children: <TenantsBoard /> },
+            { key: 'o-02', label: OPS_TAB_LABEL.apps, children: <AppsBoard /> },
+            { key: 'o-05', label: OPS_TAB_LABEL.health, children: <HealthBoard /> },
+            { key: 'o-06', label: OPS_TAB_LABEL.incidents, children: <IncidentsBoard /> },
+            { key: 'o-07', label: OPS_TAB_LABEL.backups, children: <BackupBoard /> },
+            { key: 'o-08', label: OPS_TAB_LABEL.onboarding, children: <OnboardingBoard /> },
+            { key: 'o-09', label: OPS_TAB_LABEL.audit, children: <AuditBoard /> },
+            { key: 'o-10', label: OPS_TAB_LABEL.keys, children: <KeysBoard /> },
+            { key: 'o-11', label: OPS_TAB_LABEL.releases, children: <ReleasesBoard /> },
+            { key: 'o-12', label: OPS_TAB_LABEL.seed, children: <SeedBoard /> },
+          ]}
+        />
       )}
     </div>
   );

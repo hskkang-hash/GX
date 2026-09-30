@@ -1,7 +1,7 @@
 {
   "id": "FWS-F3-02",
   "title": "조심기간·특별대책기간 설정 · 초소·순찰 구역 등록",
-  "measured_at": "2026-09-29T11:54:17.429434+00:00",
+  "measured_at": "2026-09-30T05:24:35.488830+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_02_SeasonAndPostsTest.test_season_save_then_read_back",
   "request": {
@@ -16,21 +16,21 @@
         "special_measures": {
           "kind": "special_measures",
           "note": "",
-          "set_at": "2026-09-29T11:54:17.384212+00:00",
+          "set_at": "2026-09-30T05:24:35.441850+00:00",
           "set_by": "dsm_user_a",
-          "__seq__": 293,
-          "__hash__": "51e6dc7be98cff9c898289c5f793e43e894f675114cb59c35236cc247c7f1ddc",
+          "__seq__": 382,
+          "__hash__": "82486c8fae2e145b072e45dba909e74f164f8cad7012f0c061073b8db5524d5b",
           "end_date": "2027-03-15",
           "start_date": "2027-02-01",
-          "__prev_hash__": "edcf6642038d0e243242b9105cae935d12678d7e3a6e05f5b8fe9f8ab29f88ad"
+          "__prev_hash__": "06d4309e0d46fe0d5d8c959a18cef53c50d576a6a56b1ea10e4fb818a243b9c0"
         },
         "dry_season": {
           "kind": "dry_season",
           "note": "",
-          "set_at": "2026-09-29T11:54:17.346850+00:00",
+          "set_at": "2026-09-30T05:24:35.402585+00:00",
           "set_by": "dsm_user_a",
-          "__seq__": 292,
-          "__hash__": "edcf6642038d0e243242b9105cae935d12678d7e3a6e05f5b8fe9f8ab29f88ad",
+          "__seq__": 381,
+          "__hash__": "06d4309e0d46fe0d5d8c959a18cef53c50d576a6a56b1ea10e4fb818a243b9c0",
           "end_date": "2026-12-15",
           "start_date": "2026-11-01",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000"
@@ -38,27 +38,5 @@
       }
     }
   },
-  "what": "POST 로 조심기간·특별대책기간을 저장하면 GET 재조회에 둘 다 남는다(저장 → 재조회 실측). 초소·순찰 구역 등록은 같은 클래스의 다른 시험이 잰다",
-  "title_parts": [
-    {
-      "part": "조심기간 설정",
-      "where": "POST/GET .../office/season(kind=dry_season)",
-      "status": "present"
-    },
-    {
-      "part": "특별대책기간 설정",
-      "where": "POST/GET .../office/season(kind=special_measures)",
-      "status": "present"
-    },
-    {
-      "part": "초소 등록",
-      "where": "POST/GET .../office/posts(kind=watchpost)",
-      "status": "present"
-    },
-    {
-      "part": "순찰 구역 등록",
-      "where": "POST/GET .../office/posts(kind=patrol_zone)",
-      "status": "present"
-    }
-  ]
+  "what": "POST 로 조심기간·특별대책기간을 저장하면 GET 재조회에 둘 다 남는다(저장 → 재조회 실측). 초소·순찰 구역 등록은 같은 클래스의 다른 시험이 잰다"
 }

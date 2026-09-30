@@ -14,11 +14,12 @@
  *   고치지 않는다) — 경로 문자열은 이 화면이 직접 들고 있다(`/office2/...` 접두어
  *   — 같은 턴 차선 N2 의 `api_office.py` 경로와 겹치지 않는다).
  */
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Alert, Button, Card, Checkbox, Input, InputNumber, List, Radio, Space, Typography } from 'antd';
 
-import { fwsGet, fwsPostQuery } from '../api';
+import { fwsGet, fwsGetFresh, fwsPostQuery } from '../api';
+import { FWS_AQ_N3_COPY } from '../copy_aq_n3';
 import { FWS_OFFICE2_COPY as T, FWS_OFFICE2_UNKNOWN } from '../copy_office2';
 
 const { Title, Text } = Typography;
@@ -47,6 +48,13 @@ interface EvacStatus {
   percent_complete: number | null;
   remaining_residents_total: number | null;
   care_facilities_open: number;
+}
+
+interface EnforcementStats {
+  by_kind: Record<string, number>;
+  total: number;
+  since: string | null;
+  until: string | null;
 }
 
 export default function OfficeReport(): JSX.Element {
@@ -348,6 +356,12 @@ function StatsCard({ onError }: { onError: () => void }): JSX.Element {
             {T.stats.goldenTimeLabel}: {String(stats.golden_time_compliance_pct ?? FWS_OFFICE2_UNKNOWN)}%
           </Text>
         )}
+        {stats && (
+          <Text data-gx="fws-f3-16-heli-drop-pct">
+            {FWS_AQ_N3_COPY.heliDropStats.label}: {String(stats.heli_drop_compliance_pct ?? FWS_OFFICE2_UNKNOWN)}% (
+            {String(stats.heli_drop_compliant_n ?? 0)}/{String(stats.heli_drop_measured_n ?? 0)})
+          </Text>
+        )}
         {stats && <Text type="secondary">{T.stats.goldenTimeNote}</Text>}
       </Space>
     </Card>
@@ -401,6 +415,31 @@ function PatrolCard({
   const [kind, setKind] = useState<'guidance' | 'enforcement'>('guidance');
   const [location, setLocation] = useState('');
   const [zoneName, setZoneName] = useState('');
+  // [턴 AQ · 차선 N3 · F3-18] 계도·단속 통계 — 기간 칸을 바꾸면 · 기록한 뒤 다시 부른다.
+  const [since, setSince] = useState('');
+  const [until, setUntil] = useState('');
+  const [enfStats, setEnfStats] = useState<EnforcementStats | null>(null);
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
+
+  const reloadStats = useCallback(async (): Promise<void> => {
+    const qs = new URLSearchParams();
+    if (since) qs.set('since', since);
+    // 종료일은 그날 끝까지 센다(날짜만 주면 00:00 이라 그날 기록이 빠진다).
+    if (until) qs.set('until', `${until}T23:59:59`);
+    const q = qs.toString();
+    try {
+      setEnfStats(await fwsGetFresh<EnforcementStats>(
+        q ? `${office2.patrolEnforcementMine}?${q}` : office2.patrolEnforcementMine));
+    } catch {
+      setEnfStats(null);
+      onErrorRef.current();
+    }
+  }, [since, until]);
+
+  useEffect(() => {
+    void reloadStats();
+  }, [reloadStats]);
 
   async function handleRecord(): Promise<void> {
     try {
@@ -408,6 +447,8 @@ function PatrolCard({
       onDone(T.patrol.recordButton);
     } catch {
       onError();
+    } finally {
+      await reloadStats();
     }
   }
 
@@ -435,8 +476,22 @@ function PatrolCard({
             onChange={(e) => setLocation(e.target.value)}
             style={{ width: 200 }}
           />
-          <Button onClick={handleRecord}>{T.patrol.recordButton}</Button>
+          <Button onClick={handleRecord} data-gx="fws-f3-18-record">{T.patrol.recordButton}</Button>
         </Space>
+        <Text strong>{FWS_AQ_N3_COPY.enforcementStats.title}</Text>
+        <Space wrap>
+          <Text>{FWS_AQ_N3_COPY.enforcementStats.sinceLabel}</Text>
+          <Input type="date" value={since} onChange={(e) => setSince(e.target.value)}
+            style={{ width: 160 }} data-gx="fws-f3-18-since" />
+          <Text>{FWS_AQ_N3_COPY.enforcementStats.untilLabel}</Text>
+          <Input type="date" value={until} onChange={(e) => setUntil(e.target.value)}
+            style={{ width: 160 }} data-gx="fws-f3-18-until" />
+        </Space>
+        <Text data-gx="fws-f3-18-stats">
+          {FWS_AQ_N3_COPY.enforcementStats.guidance} {enfStats?.by_kind.guidance ?? 0} ·{' '}
+          {FWS_AQ_N3_COPY.enforcementStats.enforcement} {enfStats?.by_kind.enforcement ?? 0} ·{' '}
+          {FWS_AQ_N3_COPY.enforcementStats.totalLabel} {enfStats?.total ?? 0}
+        </Text>
         <Space wrap>
           <Input
             placeholder={T.patrol.zoneNameLabel}

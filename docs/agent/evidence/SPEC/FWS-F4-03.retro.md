@@ -24,10 +24,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "화면 버튼(FW-04 완결조건)",
-      "where": "frontend/src/features/fws/pages/CommandHome.tsx — 조회 카드만 그린다, 이 절에 해당하는 버튼 문구는 copy_command.ts 에 준비돼 있으나 렌더 0건(공통 결손 — F4-01 감사에서 확인)",
-      "status": "없음(버튼 미배선 — 서버 상태변화·감사는 실측됐으나 화면에서 누를 자리가 없다)"
+      "where": "frontend/src/features/fws/pages/CommandHome.tsx::data-gx=fws-f4-03-declare · fws-f4-03-address · fws-f4-03-org · fws-f4-03-phone · fws-f4-03-current — API POST /api/fws/command/incidents/{id}/command-post · GET /api/fws/command/incidents/{id}/command-post",
+      "status": "구현 — 화면 배선 · 설치 선언 버튼 → 재조회 post(위치·구성·상황실 번호)가 그려진다 · 누른 뒤 재조회 시험 backend/tests/test_aq_n1_f4_command_wiring.py::AqN1F4CommandWiringTest::test_f4_03_declare_then_reread_post · 정적 대조 AqN1F4ScreenSourceTest::test_screen_declares_data_gx_and_calls_each_path"
     }
   ],
-  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 서버 로직은 실측 닫힘을 재확인했으나 화면 버튼이 미배선이다 — 반쪽으로 내린다."
+  "retro": "턴 AQ 차선 N1 · 화면 배선 · 사람 확인 · 2026-09-30 · CommandHome.tsx 에 위치·구성 칸과 설치 선언 버튼을 배선하고 누른 뒤 조회 GET(캐시 우회) 재호출을 test_f4_03_declare_then_reread_post 로 실측했다(테넌트 B 쓰기 404 · 주인 재조회 불변) · 앞 판: P-419 재판정(턴 AP · N1) · 2026-09-29 · 서버 로직은 실측 닫힘을 재확인했으나 화면 버튼이 미배선이다 — 반쪽으로 내린다."
 }
 ```

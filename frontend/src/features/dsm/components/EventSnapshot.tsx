@@ -160,8 +160,17 @@ export default function EventSnapshot({
   }
   return (
     <figure style={{ margin: 0 }}>
+      {/*
+        [P-441 · 턴 AQ · 차선 L] **그림 주소가 자기가 무엇인지 말한다.**
+        objectURL 은 `blob:<출처>/<uuid>` 라 주소만 보고는 이 그림이 사건 사진인지
+        알 수 없다 — 온보딩 U2#4 술어(`measure_onboarding_t.py::rows_u2`)는
+        `img` 중 `naturalWidth > 0` 이고 **src 에 `snapshot` 이 든 것**을 센다
+        (턴 AP 가 단 `data-gx` 는 그 술어가 안 보는 칸이었다). blob 주소의 조각(`#…`)
+        은 바이트를 찾을 때 무시되므로(URL 표준 · blob URL 해석) 그림은 그대로이고,
+        되돌리기(`revoke`)는 조각 없는 원래 주소로 한다(위 effect).
+      */}
       <img
-        src={url ?? ''}
+        src={url ? `${url}#snapshot-${eventId}` : ''}
         alt={alt}
         data-gx={dataGx}
         style={{

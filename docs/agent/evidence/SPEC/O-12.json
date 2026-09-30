@@ -1,14 +1,14 @@
 {
   "id": "O-12",
   "title": "시드·훈련 데이터",
-  "measured_at": "2026-09-29T11:59:05.246798+00:00",
+  "measured_at": "2026-09-30T05:29:34.380367+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O12_SeedDataTest.test_plant_then_hide_and_data_source_is_marked",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/ops/seed/toggle?tenant_code=t-6d75c362&action=plant&scenario_code=drill-01",
+    "path": "/api/dsm/ops/seed/toggle?tenant_code=t-32192322&action=plant&scenario_code=drill-01",
     "params": {
-      "tenant_code": "t-6d75c362",
+      "tenant_code": "t-32192322",
       "action": "plant",
       "scenario_code": "drill-01"
     }
@@ -16,37 +16,14 @@
   "response": {
     "status": 200,
     "body": {
-      "tenant_code": "t-6d75c362",
-      "tenant_id": 605,
+      "tenant_code": "t-32192322",
+      "tenant_id": 670,
       "scenario_code": "drill-01",
       "action": "plant",
       "note": "",
       "data_source": "seed",
-      "at": "2026-09-29T11:59:05+00:00"
+      "at": "2026-09-30T05:29:34+00:00"
     }
   },
-  "what": "POST .../ops/seed/toggle(plant)로 시드를 심으면 data_source=seed 가 찍히고, hide 뒤 GET /ops/seed 목록의 최신 행(테넌트+시나리오별 접힘)이 hide 로 바뀐다 — 완결조건(\"data_source=seed 표기\") 실측.",
-  "title_parts": [
-    {
-      "part": "검수 시드 심기·숨기기",
-      "where": "toggle action=plant/hide",
-      "status": "measured"
-    },
-    {
-      "part": "훈련 시나리오 배포",
-      "where": "action=deploy_scenario (경로만 · 시나리오 몸체는 없음)",
-      "status": "부분(토글 경로만 — 시나리오 데이터 생성기는 없음, excluded_by 번호 없음. 내부 기능 결손이라 P-428 비대상 — 그냥 열린 행)"
-    },
-    {
-      "part": "완결조건 — data_source=seed 표기",
-      "where": "data_source",
-      "status": "measured"
-    },
-    {
-      "part": "완결조건 — 실데이터 혼입 0",
-      "where": "GET /ops/seed → contamination_by_data_source",
-      "status": "measured"
-    }
-  ],
-  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 검수 시드 심기·숨기기·data_source=seed 표기·실데이터 혼입0은 실측 닫힘을 재확인했다. 훈련 시나리오 배포는 토글뿐 실제 생성기가 없다(§9 12화면표에 O-12 전용 화면 요구가 없어 화면 행은 해당 없음) — 반쪽으로 내린다."
+  "what": "POST .../ops/seed/toggle(plant)로 시드를 심으면 data_source=seed 가 찍히고, hide 뒤 GET /ops/seed 목록의 최신 행(테넌트+시나리오별 접힘)이 hide 로 바뀐다 — 완결조건(\"data_source=seed 표기\") 실측."
 }

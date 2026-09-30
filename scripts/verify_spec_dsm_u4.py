@@ -250,9 +250,16 @@ def _load_evidence(clause_id: str) -> dict | None:
     if not path.is_file():
         return None
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except (ValueError, OSError):
         return None
+    #: [턴 AQ · P-431 · 차선 Q] 제목 부분 표(title_parts·retro*)는 사람 파일
+    #: `<id>.retro.md` 에서만 온다 — json 에 남은 그 키는 버린다(판정식은 그대로).
+    _here = str(Path(__file__).resolve().parent)
+    if _here not in sys.path:
+        sys.path.insert(0, _here)
+    from _retro_table import overlay  # noqa: PLC0415
+    return overlay(payload, clause_id, EVIDENCE_DIR)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

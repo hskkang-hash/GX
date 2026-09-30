@@ -1,7 +1,7 @@
 {
   "id": "FWS-U5-04",
   "title": "산불 알림 규칙(등급별 수신: 진화대·산림과·지휘·산림청) · 야간 5분대기조 채널",
-  "measured_at": "2026-09-29T11:55:52.044650+00:00",
+  "measured_at": "2026-09-30T05:45:55.315346+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_u5.U5_04_NotifyRulesTest.test_overview_lists_role_suggestions_and_night_standby_zone",
   "request": {
@@ -42,10 +42,10 @@
       ],
       "rules": [
         {
-          "rule_id": 187,
+          "rule_id": 38,
           "severity": "critical",
           "role_code": "dsm_watch_a",
-          "role_id": 572,
+          "role_id": 83,
           "zone": null,
           "channels": [
             "email"
@@ -125,37 +125,5 @@
       "night_standby_zone": "fws_night_standby"
     }
   },
-  "what": "GET .../admin/notify-rules 가 K2 rule_admin.notify_rule_overview 를 그대로 재사용하며 진화대·산림과·지휘·산림청 네 역할 제안과 야간 5분대기조 구역 이름을 함께 낸다",
-  "title_parts": [
-    {
-      "part": "등급별 수신",
-      "where": "severities/rules",
-      "status": "measured"
-    },
-    {
-      "part": "진화대",
-      "where": "role_suggestions[fws_response_team]",
-      "status": "measured"
-    },
-    {
-      "part": "산림과",
-      "where": "role_suggestions[fws_forestry_dept]",
-      "status": "measured"
-    },
-    {
-      "part": "지휘",
-      "where": "role_suggestions[fws_command]",
-      "status": "measured"
-    },
-    {
-      "part": "산림청",
-      "where": "role_suggestions[fws_kfs_liaison]",
-      "status": "measured"
-    },
-    {
-      "part": "야간 5분대기조 채널",
-      "where": "night_standby_zone",
-      "status": "measured"
-    }
-  ]
+  "what": "GET .../admin/notify-rules 가 K2 rule_admin.notify_rule_overview 를 그대로 재사용하며 진화대·산림과·지휘·산림청 네 역할 제안과 야간 5분대기조 구역 이름을 함께 낸다"
 }

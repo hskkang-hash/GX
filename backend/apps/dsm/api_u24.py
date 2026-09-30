@@ -99,6 +99,9 @@ class SituationMeetingIn(Schema):
     #: 안 보인다. 「결정이 비었다」는 스키마의 판단이 아니라 서비스의 판단이다.
     decision: str = ""
     basis: str = ""
+    #: [턴 AQ · W2B] 회의가 정한 비상 단계(관심·주의·경계·심각 · 비우면 축 그대로) —
+    #: 완결 조건 「결정 → 테넌트 상태 축 변경」. 값 검증은 서비스가 한다(400).
+    alert_level: str = ""
 
 
 class ThresholdObserveIn(Schema):
@@ -641,7 +644,7 @@ class DsmU24API:
             return situation_meeting_service.record_meeting(
                 scope=_scope(request), occurred_at=payload.occurred_at,
                 attendees=payload.attendees, decision=payload.decision,
-                basis=payload.basis)
+                basis=payload.basis, alert_level=payload.alert_level)
         except ValueError as exc:
             raise HttpError(400, str(exc))
         except SystemScopeCannotRead as exc:
@@ -684,6 +687,19 @@ class DsmU24API:
             raise HttpError(404, "그런 카메라가 없습니다.")
         except (ThresholdNotDefined, ThresholdNotSet) as exc:
             raise HttpError(400, str(exc))
+
+    @route.get("/thresholds/alerts", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="임계값 도달 카드 — 남의 테넌트 카메라 도달이 보이면 격리 실패다")
+    def list_threshold_alerts(self, request, limit: int = 50):
+        """`GET /thresholds/alerts` — [턴 AQ · W2B] 팀장·U4 홈의 도달 카드
+        (「기준 도달 hh:mm · 통제 여부 결정 필요」 + 결정 여부). 최신 먼저."""
+        from common.tenant_scope import SystemScopeCannotRead
+
+        try:
+            return threshold_alert_service.list_alerts(
+                scope=_scope(request), limit=max(1, min(limit, 200)))
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
 
     @route.post("/thresholds/observe/{int:observation_id}/decide",
                auth=JwtOrInboundKey())

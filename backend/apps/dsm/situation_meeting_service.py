@@ -22,6 +22,7 @@ from typing import Any
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+from apps.dsm import alert_level_service
 from common import audit_writer
 from common.tenant_filters import get_user_group
 from common.tenant_scope import TenantScope
@@ -51,8 +52,15 @@ def _fmt(*, occurred_at, attendees: str, decision: str, basis: str) -> str:
 
 def record_meeting(*, scope: TenantScope, occurred_at: str | None = None,
                    attendees: str = "", decision: str = "",
-                   basis: str = "") -> dict[str, Any]:
+                   basis: str = "", alert_level: str = "") -> dict[str, Any]:
     """회의 한 건을 감사 줄로 남긴다.
+
+    ★ [턴 AQ · 차선 W2B] 완결 조건 「결정 → 테넌트 상태 축 변경」 — `alert_level`
+      (비상 단계, `alert_level_service.LEVELS` 중 하나)를 함께 보내면 같은 요청에서
+      **위기경보·비상 단계 축**(`alert_level_service.record_alert` · `latest_alert()` 가
+      읽는 그 축)에 한 줄을 더한다. 새 상태 칸을 만들지 않는다 — 그 축이 이미 이
+      테넌트의 「지금 단계」 정본이다(그 파일 머리말). 비우면 축은 그대로다
+      (통제·대피만 정한 회의는 단계를 바꾸지 않는다).
 
     Raises:
         ValueError: `decision` 이 비었거나 상한을 넘었다 · `occurred_at` 이 있는데
@@ -63,6 +71,10 @@ def record_meeting(*, scope: TenantScope, occurred_at: str | None = None,
     decision = (decision or "").strip()
     if not decision:
         raise ValueError("결정(통제·대피·비상 단계)이 비어 있습니다.")
+    alert_level = (alert_level or "").strip()
+    if alert_level and alert_level not in alert_level_service.LEVELS:
+        raise ValueError(
+            f"비상 단계는 {'·'.join(alert_level_service.LEVELS)} 중 하나입니다.")
 
     when = timezone.now()
     if occurred_at:
@@ -87,6 +99,12 @@ def record_meeting(*, scope: TenantScope, occurred_at: str | None = None,
         action=_action(group.pk), outcome=audit_writer.ALLOWED,
         reason=text, api_method="POST",
     )
+    applied = None
+    if alert_level:
+        # 같은 테넌트 · 같은 요청자 — 축의 문지기는 그 함수가 다시 선다.
+        applied = alert_level_service.record_alert(
+            scope=scope, level=alert_level, occurred_at=when.isoformat(),
+            doc_no=f"상황판단회의 기록 #{entry.audit_id}")
     return {
         "meeting_id": entry.audit_id,
         "occurred_at": when,
@@ -94,6 +112,8 @@ def record_meeting(*, scope: TenantScope, occurred_at: str | None = None,
         "decision": decision,
         "basis": (basis or "").strip(),
         "actor_id": entry.actor_id,
+        #: 상태 축에 더한 한 줄 — 단계를 정하지 않은 회의면 None.
+        "alert_level": applied,
     }
 
 

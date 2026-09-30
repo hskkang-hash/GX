@@ -1,12 +1,12 @@
 {
   "id": "FWS-F2-11",
   "title": "철수·복귀 회신",
-  "measured_at": "2026-09-29T11:54:02.231867+00:00",
+  "measured_at": "2026-09-30T05:47:24.371667+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_mission_detail_dispatch_arrive_release_chain",
   "request": {
     "method": "POST",
-    "path": "/api/fws/missions/535/response?action=released&note=%EC%B2%A0%EC%88%98+%EC%99%84%EB%A3%8C",
+    "path": "/api/fws/missions/2/response?action=released&note=%EC%B2%A0%EC%88%98+%EC%99%84%EB%A3%8C",
     "params": {
       "action": "released",
       "note": "철수 완료"
@@ -15,35 +15,13 @@
   "response": {
     "status": 200,
     "body": {
-      "mission_id": 535,
+      "mission_id": 2,
       "action": "released",
-      "released_at": "2026-09-29T11:54:02.175530+00:00",
+      "released_at": "2026-09-30T05:47:24.341572+00:00",
       "duration_minutes": 0.0,
       "to": "in_progress",
       "event_advanced": false
     }
   },
-  "what": "action=released 회신이 이 진화대의 철수를 기록하고 도착~철수 duration_minutes 를 낸다 — **사건 상태는 안 옮긴다**(in_progress 그대로 · 닫는 것은 지휘의 일) · 철수·복귀 회신 실측",
-  "title_parts": [
-    {
-      "part": "철수 회신",
-      "where": "backend/apps/fws/missions.py:respond(action=\"released\") · POST /api/fws/missions/{event_id}/response?action=released",
-      "status": "measured: tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_mission_detail_dispatch_arrive_release_chain — 200, duration_minutes 계산·감사 기록 확인(SPEC/FWS-F2-11.json)"
-    },
-    {
-      "part": "복귀 회신(자원 배치판 해제로 이어지는 신호)",
-      "where": "backend/apps/fws/missions.py:respond released 분기(225-249행) — 사건 상태는 그대로 둠",
-      "status": "부분 — '복귀' 자체 기록(released_at, duration_minutes)은 남지만, 명세서 완결조건 「자원 배치판 해제」(F3 화면 몫)로 실제 이어지는지는 F2 쪽에서 검증되지 않는다. 표준 자원 배치 상태(standby.py 의 대기 상태)를 released 가 자동으로 되돌리는 연결 코드가 없다 — missions.py 와 standby.py 는 서로 다른 감사 로거를 쓰고 연결되지 않음(grep 결과 두 모듈 간 직접 호출 없음)"
-    },
-    {
-      "part": "순서 보장(도착 없이 철수 시 거절)",
-      "where": "backend/apps/fws/missions.py:_require_own(actor, event_id, ACTION_ARRIVED, ...) 226행",
-      "status": "measured: tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_releasing_before_arriving_is_409 — 도착 없이 철수 시도 시 409 확인"
-    },
-    {
-      "part": "사건 상태 보존(다른 진화대 안전)",
-      "where": "backend/apps/fws/missions.py:respond released 분기(227-228행) — event_advanced=False, 사건 상태 안 옮김",
-      "status": "measured: tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_second_crew_joins_without_409_and_release_keeps_event_open — 첫 진화대 철수 뒤에도 사건이 in_progress 로 유지됨을 확인"
-    }
-  ]
+  "what": "action=released 회신이 이 진화대의 철수를 기록하고 도착~철수 duration_minutes 를 낸다 — **사건 상태는 안 옮긴다**(in_progress 그대로 · 닫는 것은 지휘의 일) · 철수·복귀 회신 실측"
 }

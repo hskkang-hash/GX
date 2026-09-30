@@ -26,10 +26,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "화면 — 지휘 화면(FW-04)의 연락 버튼(tel: 1클릭)",
-      "where": "frontend/src/features/fws/pages/CommandHome.tsx — /command/incidents/{id}/contacts 를 부르지 않고 tel: 링크도 없다(grep · tel: 은 F1 PatrolHome 에만 있다)",
-      "status": "없음 — 서버는 두 번호를 내지만 지휘 화면에 누를 버튼이 없다(이 턴 범위 밖 · 화면 미배선)"
+      "where": "frontend/src/features/fws/pages/CommandHome.tsx 연락처 카드::data-gx=fws-f4-09-contacts · fws-f4-09-call-forest · fws-f4-09-call-provincial(href=tel: 1클릭) · 미등록이면 fws-f4-09-unregistered-* · GET /api/fws/command/incidents/{id}/contacts(refreshAll 안)",
+      "status": "measured: tests.test_aq_n3_screens.FwsF4_09_13ScreenTest.test_contacts_refetch_after_command_post_phone_registered — 산림청 번호 있음·시도 null → 지휘본부 설치 선언(시도 상황실 번호) 뒤 재조회에 그 번호 · 다른 테넌트 404 · tel: 링크 정적 대조. 통화 기록 문은 서버에 없어 배선하지 않았다(지어내지 않음)"
     }
   ],
-  "retro": "P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 「화상」 행에 excluded_by P-428 + 사유를 붙이고, 제목의 「버튼」을 화면 행으로 세워 CommandHome.tsx 를 grep 했다(연락 버튼·tel: 0건 — 열린 행). 전화 두 번호는 서버 HTTP 로 실측."
+  "retro": "P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 「화상」 행에 excluded_by P-428 + 사유를 붙이고, 제목의 「버튼」을 화면 행으로 세워 CommandHome.tsx 를 grep 했다(연락 버튼·tel: 0건 — 열린 행). 전화 두 번호는 서버 HTTP 로 실측. | 턴 AQ 차선 N3 · 화면 배선 · 사람 확인 · 2026-09-30 · 지휘 화면에 tel: 전화 버튼 둘을 그렸다(누른 뒤 재조회는 refreshAll)."
 }
 ```

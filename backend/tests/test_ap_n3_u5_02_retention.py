@@ -42,7 +42,6 @@ import time
 from django.apps import apps
 from django.core.cache import cache
 
-from common.evidence_guard import allow_evidence_writes
 from tests.test_api_contract import _bearer
 from tests.test_p356_u4_spec_promotions import ACCESS_LOG, EVIDENCE_DIR, U4Fixture
 
@@ -80,27 +79,19 @@ def _adminconfig_clear() -> None:
 
 
 def _merge_title_parts(updates: dict[str, dict[str, str]]) -> None:
-    """`part` 로 골라 `status`(필수) · `where`(있으면) 만 갱신한다. 나머지는 보존."""
-    with allow_evidence_writes(
-            "P-421 ④ DSM-U5-02 title_parts 갱신 — 코드로 다시 실측한 행만 고친다"):
-        payload = json.loads(EVIDENCE_PATH.read_text(encoding="utf-8"))
-        rows = payload.get("title_parts") or []
-        touched = set()
-        for row in rows:
-            part = row.get("part")
-            if part in updates:
-                row["status"] = updates[part]["status"]
-                if "where" in updates[part]:
-                    row["where"] = updates[part]["where"]
-                touched.add(part)
-        missing = set(updates) - touched
-        if missing:
-            raise AssertionError(
-                "DSM-U5-02.json 에 이 part 가 없다(오타 대조): %s" % missing)
-        payload["title_parts"] = rows
-        EVIDENCE_PATH.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2, default=str),
-            encoding="utf-8")
+    """`part` 로 골라 `status`(필수) · `where`(있으면) 만 갱신한다. 나머지는 보존.
+
+    [턴 AQ · P-431 · 차선 Q] 사람 표는 `DSM-U5-02.retro.md`(손으로만) — 이 시험은
+    표를 **쓰지 않고**, 고치려던 `part` 행이 사람 표에 있는지만 **읽어** 대조한다."""
+    rp = EVIDENCE_PATH.with_name("DSM-U5-02.retro.md")
+    if not rp.is_file():
+        return      # 이 환경에 사람 표가 안 보인다 — 쓰지도 단언하지도 않는다
+    block = rp.read_text(encoding="utf-8").split("```json", 1)[1].split("```", 1)[0]
+    parts = {row.get("part") for row in (json.loads(block).get("title_parts") or [])}
+    missing = set(updates) - parts
+    if missing:
+        raise AssertionError(
+            "DSM-U5-02.retro.md 에 이 part 가 없다(오타 대조): %s" % missing)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

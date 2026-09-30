@@ -1471,7 +1471,9 @@ S1 은 이제 **30.5/48(63.5%)** 로 내려가는 것이 옳다.
 
 ---
 
-## ★ 턴 AN 갈래 표(P-396) — 여섯째 회차(`turn_am_6.json`) 빨강·반 25행 전부
+## ★ 턴 AN 갈래 표(P-396) — 여섯째 회차(`turn_am_6.json`) 빨강·반 25행 전부 〔역사〕
+
+> 〔역사 · 턴 AQ P-433〕 이 절의 c 표는 **옛 회차의 것**이다 — 지우지 않고 남긴다. 지금의 c 는 맨 끝 「c 확정 표 — 최신(턴 AQ)」 절 **하나**만 읽는다.
 
 턴 AN 차선 L. 여섯째 회차(29.0/48 · 빨강 13 · 반 12) 25행 전부에 갈래 하나씩을 단다.
 갈래는 셋: **(a) 말·술어**(L 이 화면 문구·계측 술어를 고치면 오르는 행) ·
@@ -1552,7 +1554,9 @@ dsm/mobile/login 만 본다고 선을 그어 두었다) · **표본/데이터 �
 
 ---
 
-## ★ 턴 AO 재갈래 표(P-408)
+## ★ 턴 AO 재갈래 표(P-408) 〔역사〕
+
+> 〔역사 · 턴 AQ P-433〕 이 절의 c 표는 **옛 회차의 것**이다 — 지우지 않고 남긴다. 지금의 c 는 맨 끝 「c 확정 표 — 최신(턴 AQ)」 절 **하나**만 읽는다.
 
 턴 AO 차선 L. 세종 P-408 이 요구한 것 — 턴 AN 이 「(c) 16」으로 한데 묶어 둔 상한 표를
 **c1(dj-core 화면 · §0.4 · 못 올림) / c2(인수 자산 · 우리 메뉴에서 뗄 수 있음) /
@@ -1653,7 +1657,7 @@ tests/test_ao_l_screen_language.py -q -p no:randomly --create-db` → **13 passe
 
 ### c 확정 행 목록 — c1 + c3 만(상한 분모 제외 대상)
 
-c_rows: U1#2, U1#4, U1#11, U3#7, U3#14, U4#9
+c_rows(역사 · 턴 AO — 읽지 않는다): U1#2, U1#4, U1#11, U3#7, U3#14, U4#9
 
 ---
 
@@ -1688,7 +1692,9 @@ c_rows: U1#2, U1#4, U1#11, U3#7, U3#14, U4#9
 
 ---
 
-## ★ 턴 AP c 확정 표(P-420) — 2026-09-29 · 차선 L
+## ★ 턴 AP c 확정 표(P-420) — 2026-09-29 · 차선 L 〔역사〕
+
+> 〔역사 · 턴 AQ P-433〕 이 절의 c 표는 **옛 회차의 것**이다 — 지우지 않고 남긴다. 지금의 c 는 맨 끝 「c 확정 표 — 최신(턴 AQ)」 절 **하나**만 읽는다.
 
 세종 판정 **P-420**(WO-19 §5): *"메뉴에서 뗀 행은 c 로 — 분모에서 빼지 않는다. U2#6 ·
 U5#2 는 `NAV_ACQUIRED_HIDDEN` 결정(이 번호)으로 c2 → c(결정 번호 붙음) · 48 기준 수는
@@ -1743,7 +1749,7 @@ P-420 의 대상이 아니다 — U4#11 은 c 밖에 남아 정상 카운트되�
   - `scripts/onboarding_two_numbers.py --c-rows U1#2,U1#4,U1#11,U2#6,U3#14,U4#9,U5#2`
     (Q 차선이 산출기를 부를 때 쓸 줄 — 이 파일은 산출기를 고치지 않는다).
 
-c_rows: U1#2, U1#4, U1#11, U2#6, U3#14, U4#9, U5#2
+c_rows(역사 · 턴 AP — 읽지 않는다): U1#2, U1#4, U1#11, U2#6, U3#14, U4#9, U5#2
 
 ---
 
@@ -1759,3 +1765,66 @@ c_rows: U1#2, U1#4, U1#11, U2#6, U3#14, U4#9, U5#2
   - ② 상한 기준 **34.5/41 = 84.1 %** — c = 7: U1#2 · U1#4 · U1#11 · U2#6 · U3#14 · U4#9 · U5#2(P-420 확정표 · `--c-rows` 명시).
   - 기본 호출은 **회색**(c 미명시)이다 — P-422 그대로.
   - ⚠ `--c-from-ledger` 는 장부의 **옛**(턴 AN) (c) 16행 표를 읽어 **107.8 %**(분모 32)를 냈다 — 새 거짓 초록이다. 이 회차는 쓰지 않았다.
+
+---
+
+## ★ c 확정 표 — 최신(턴 AQ) · 2026-09-30 · 차선 L (P-433 · P-441)
+
+--c-rows U1#2,U1#4,U1#11,U2#6,U3#14,U4#9,U5#2
+
+c_rows: U1#2, U1#4, U1#11, U2#6, U3#14, U4#9, U5#2
+
+- **이 절이 장부의 c 표 하나다(P-433).** 위의 옛 c 표 절(턴 AN · AO · AP)은 「역사」로 남긴다 — 지우지 않는다. V 는 위 `--c-rows` 한 줄을 그대로 옮겨 적는다.
+- c = **7 · 변동 없음.** 늘리려면 행마다 결정 번호가 있어야 한다 — 이번 턴에 새로 붙은 번호는 **0** 이다.
+
+| 행 | 갈래 | 결정 번호 |
+|---|---|---|
+| U1#2 `/dsm/dashboard` | c3 | D-444 |
+| U1#4 `/multi-stream-monitor` | c1 | §0.4 인접(rj-core 화면 · P-205 「정본 없음」 유지) |
+| U1#11 `/dsm/queue` | c3 | D-399 |
+| U2#6 `/report-template` | c2 | P-420 |
+| U3#14 `/m/events/:id` 실시간 | c3 | D-306 |
+| U4#9 `/dsm/events/:id` 증빙 영상 | c3 | D-306 |
+| U5#2 `/roles` | c2 | P-420 |
+
+- **c 후보(안 넣었다)**: U6#3 — 정본이 「D-371 의 의도된 절반」이라 적지만 `docs/agent/decisions.yaml` 의 D-371 은 다른 뜻(「두 벌은 반드시 어긋난다」)이다 · 같은 파일 4278행 대응표(지시서 D-371 → 트리 D-373)도 이 행을 말하지 않는다. 번호가 확인되기 전에는 넣지 않는다.
+
+### ① P-441 표 — 아홉째 회차(`ONB-T/turn_ap_9.json`) 반 7 · 빨강 10 전부
+
+술어는 전부 `scripts/measure_onboarding_t.py` 를 직접 읽고 적었다(추측 0). 「셋째 조건」 = `result()` → `third_condition_violations()` → `verify_ui_copy.scan_line` 이 **그 행 화면 본문 전체**를 본다(`collect_screen_text(page=page)`).
+
+| 행 | 색 | 술어가 보는 칸 (`measure_onboarding_t.py`) | 지난 턴 고친 칸 | 같은가 | 갈래 |
+|---|---|---|---|---|---|
+| U1#2 | ◐ | `rows_u1` · 본문의 연계 배지 + `GET /api/dsm/dashboard/frame` 200 · `json.link` — **`cap_half=True` 고정**(정본 표기) | 없음 | — | c (D-444) |
+| U2#4 | ◐ | `rows_u2` · `img` 중 `naturalWidth>0` 이고 **`src` 에 `snapshot`** + snapshot GET 200 jpeg + 주소 칸 | `EventDetail.tsx` 에 `dataGx="snapshot"`(`img[data-gx]`) | **다름** — 술어는 `data-gx` 를 안 본다 · src 가 `blob:` 이라 0 | **a — 이번 턴 고침**(아래 ②) |
+| U4#8 | ◐ | `rows_u4` · 「지난 12시간 보기」 뒤 `GET /api/dsm/events?…since=` 200 — **`cap_half=True` 고정**(「조합 검색 없음」 정본 표기) | `EventList.tsx` 사건번호 칸(P-424 · N4) | **다름** — 상한이 측정기에 박혀 있어 제품으로는 못 올린다 | 조율자 — 정본 U4#8 행의 ◐ 표기 해제 + 측정기 상한 해제(Q) · 결정 번호 없음 → c 아님 |
+| U5#2 | ◐ | `rows_u5` · `/roles` 표 행 ≥1 + `Add New Role` + 셋째 조건(자기표지 `ADMIN_HEADER` → 영문 메뉴) | 없음 | — | c (P-420) |
+| U5#15 | ◐ | `rows_u5` · `GET /api/dsm/metering` 200 + **본문에 `%`**(없으면 ◐) | 없음 | — | **a — 이번 턴 고침**(아래 ②) |
+| U5#14 | ◐ | `rows_u5` · 재시작 요청 POST 200 · `executed=false` · 행 +1(**참**) + 셋째 조건 「절 ID」(본문 전체) | 턴 AP: 같은 화면의 서버 문장 넷(백업 사유 · 회수증 사유 · 저장 용량 사유·출처·주석)에 `safeFreeText` | **다름** — 절 ID 는 「누가 정했나」 두 칸(`policy.source` · `back.source` = `settings.RETENTION_DECLARATION_SOURCE` 원문 「… 세종 P-67 …」)에서 나왔다 | **a — 이번 턴 고침**(아래 ②) |
+| U6#3 | ◐ | `rows_u6` · JWT 200 · 키 401/403 → `cap_half=ok`(정본 「의도된 절반」) | 없음 | — | c 후보(번호 확인 필요 · 위) |
+| U1#4 | ○ | `rows_u1::_u1_4` · `video, canvas, [class*=stream], [id*=stream]` ≥1 또는 단언 글자 | 없음 | — | c (§0.4 인접) |
+| U1#8 | ○ | `rows_u1` · `/dsm/events`(기본 프리셋 = 미처리) `table td` 글자 ∈ {미처리·접수·조치 중·종결} ≥1 | 없음(턴 AP: 「씨앗을 넓힌다」 제안) | **다름** — 씨앗(`capture_screens.seed_events`)은 `track_id` 에 **probe 표식**을 달고, 고객 목록은 probe 를 뺀다(`api.py /events` `include_probe=False` · P-220). 씨앗을 더 심어도 이 표의 행은 0 이다 | b — 자료: 그 테넌트에 **probe 아닌** 미처리 사건 1건 이상(조율자에게) |
+| U1#11 | ○ | `rows_u1` · `/dsm/queue` 「실제로 확인 · 접수」 → POST review(-and-acknowledge) 200 → 재조회 verdict | 씨앗 `--unjudged`(Q · P-426) | **다름** — 초점 큐도 probe 를 뺀다(P-193) · 씨앗은 초점이 될 수 없다 | c (D-399) · 술어 자리는 Q(P-437) |
+| U2#2 | ○ | `rows_u2` · `GET …response_state=occurred` 200 + `table td` 처리 단계 전부 「미처리」(≥1) | 없음 | U1#8 과 같은 뿌리(서버 0건 · probe 제외) | b — 위와 같다 |
+| U2#6 | ○ | `rows_u2` · `GET /api/dsm/reports/templates` 200(표 행 0 이면 ◐) — 이번 회차 200 **아님** | 없음(메뉴에서 뗌 · P-420) | — | c (P-420) |
+| U3#1 | ○ | `rows_u3` · 「알림 보내기」 뒤 **8,000ms 안에** 받은 `POST /api/dsm/events/{id}/notify` 응답 200 + 발송 행 증가 + `/m/inbox` 의 `mine=` 호출 | 턴 AO: 결과 문장 · 턴 AP: 술어 `mine=`(Q · P-425) | **다름** — 이번 회차 `POST notify []`(응답 0건)인데 발송 행은 0 → 13. 응답이 창 안에 안 왔다 — 발송이 요청 안에서 동기로 돈다(`services.notify_event` → K2 `send` · 채널 시한 메일·웹푸시 각 10초 바닥값) · 화면 쪽 시한도 10초(`LOAD_TIMEOUT_MS`) | 조율자 — 커널 K2 발송 시간(이 차선 밖 · 실측 전 가설) |
+| U3#14 | ○ | `rows_u3::_u3_14` · 모바일 실시간 자리 >0 | 없음 | — | c (D-306) |
+| U4#11 | ○ | `rows_u4` · `/device` `table tbody tr` ≥1(U4 읽기 전용 계정) | 없음 | — | 인수 자산(`/device` · 메뉴 유지) — c 밖 · 번호 없음 |
+| U4#15 | ○ | `rows_u4` · `/dsm/events`(기본 프리셋) 본문의 「보고 표시」/「보고함」 → POST upper-report 200 → flags ≥1 | 없음 | U1#8 과 같은 뿌리(행 0 이라 토글 0) + U4 는 읽기 전용(`role_gate.is_read_only` · D-212)이라 쓰기가 막힐 수 있다 | b + 세종 판정 청구(행의 사람과 권한) |
+| U4#9 | ○ | `rows_u4::_u4_9` · 본문 「영상 구간」 + **브라우저가 부른** `GET …/clip` 이 200·404(화면이 안 부르면 측정기가 인증 없이 불러 401) · `cap_half=True` | 없음 | — | c (D-306) · **a — 이번 턴 고침**(○ → ◐ 까지 · 상한 ◐) |
+
+### ② 이번 턴 고친 칸 — 「술어가 보는 칸 == 고친 칸」인 넷만
+
+| 행 | 고친 칸(제품) | 술어가 보는 칸 | 기대 |
+|---|---|---|---|
+| U5#14 | `frontend/src/features/dsm/pages/SystemSettings.tsx` 「누가 정했나」 두 칸 → `safeFreeText(policy?.source)` · `safeFreeText(back?.source)` | 본문 전체 셋째 조건 「절 ID」 | ◐ → ● |
+| U2#4 | `frontend/src/features/dsm/components/EventSnapshot.tsx` `<img src>` = `blob:…#snapshot-<사건번호>`(blob 조각은 바이트 조회에 안 쓰인다 · revoke 는 원래 주소) | `img` src 에 `snapshot` · `naturalWidth>0` | ◐ → ● |
+| U5#15 | `frontend/src/features/dsm/pages/Metering.tsx` 「저장 용량 — 상한 대비」 칸(`GET /api/dsm/system/storage` 의 `used_pct` · 판정 하나 `ops_tasks.storage_declaration()` · 미선언이면 % 없이 서버 사유) + 서버 문장 두 자리(`why` · 정의) `safeFreeText` | 본문의 `%` | ◐ → ●(라이브 환경에 상한 선언이 있어야 한다 — gx-shell 에서 `declared=True · verdict=OK` 를 이름·참거짓만 확인했다) |
+| U4#9 | `frontend/src/features/dsm/pages/EventDetail.tsx` 영상 구간 칸이 `GET /api/dsm/events/{id}/clip` 을 부른다(404 = 참조 없음 · 200 = 구간 시작·길이 · 재생기는 안 그린다 · 휴대전화 상세와 같은 모양) | 브라우저의 clip 호출 200·404 | ○ → ◐(상한 ◐ · c 행) |
+
+시험: `backend/tests/test_aq_l_onboarding_cells.py` — 행마다 **측정기 소스가 그 칸을 여전히 보는지** 먼저 대조하고(바뀌면 빨강 · 헛칸 경보), 그다음 제품 칸을 본다. U5#14 는 `settings.RETENTION_DECLARATION_SOURCE` 문장을 `scan_line` 이 「절 ID」로 잡고 `copy.ts` 정규식(소스에서 꺼냄)을 지나면 0 이 됨을 보인다. U4#9 는 HTTP(JWT) 로 문이 200·404 를 내고 인증 없이는 401 임을 보인다.
+
+### ③ 수 — 약속하지 않는다(V 가 잰다)
+
+- 넷이 다 서면 34.5 → **36.5**/48(76.0 %) · 상한 36.5/41 = 89.0 %. 48 기준 ≥ 37 에는 **0.5 모자란다** — 남은 것은 b(자료) 셋(U1#8 · U2#2 · U4#15)이고 그 셋은 코드가 아니라 테넌트의 **probe 아닌 미처리 사건**이 있어야 선다.
+- 라이브 재측 없이 적은 기대다 — 지어낸 수가 아니라 「그렇게 고쳤다」까지가 이 턴의 책임이다.

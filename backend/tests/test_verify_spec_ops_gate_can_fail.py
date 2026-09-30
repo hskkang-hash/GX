@@ -87,9 +87,10 @@ class TheSelfTestCanFail(SimpleTestCase):
         절반이 라이브 로그인/집행이라 못 닫는다(각자의 「무엇이 없는가」가 비지
         않았는지는 여전히 잰다)."""
         g = _gate()
-        #: [턴 AP · 조율자] 같은 눈금(P-419) 재판정 뒤 닫힌 O 절은 0 — 값을 고친다(지우지 않는다).
-        self.assertEqual(set(), set(g.CLOSED_CLAUSES))
-        self.assertEqual({"O-01", "O-02", "O-05", "O-06", "O-07", "O-08", "O-09", "O-12",
-                          "O-10", "O-04", "O-11"}, set(g.NOT_STARTED))
+        #: [턴 AP · 조율자] 같은 눈금(P-419) 재판정 뒤 닫힌 O 절은 0 이었다.
+        #: [턴 AQ · 조율자 · P-435] N2 가 보드를 배선해 여덟을 되올렸다 — 값을 고친다(지우지 않는다).
+        self.assertEqual({"O-01", "O-06", "O-07", "O-08", "O-09", "O-10", "O-11", "O-12"},
+                         set(g.CLOSED_CLAUSES))
+        self.assertEqual({"O-02", "O-05", "O-04"}, set(g.NOT_STARTED))
         for clause_id, why in g.NOT_STARTED.items():
             self.assertTrue(why.strip(), f"{clause_id}: 「무엇이 없는가」가 비었다.")

@@ -1198,6 +1198,47 @@ def _cell_call(flow, o):
     return False, None
 
 
+#: ★★ [P-437 · 턴 AQ · 차선 Q] **U1#11 의 술어 자리** — 표본은 **탐침 포함 목록**에서 고른다.
+#:   [실측 2026-09-30 · gx-shell ORM · 읽기만] 턴 AP 회차(2026-09-29 11:18Z)에서 씨앗 4건
+#:   (575509~575512 · 그룹 4 · 카메라 `gxprobe-D384-screen-CAM`)이 **전부 미판정**인데도
+#:   U1#11 은 「표본 25건 전부 판정됨」 회색이었다. 까닭: 씨앗은 `track_id =
+#:   data_source=probe;run=…` 로 심기고, `GET /api/dsm/events` 는 P-220(턴 AA)부터
+#:   **기본이 탐침 제외**(`include_probe=False`)다. 같은 그룹을 최신순으로 보면
+#:   전체 상위 = [575509, 575510, 575511, 575512, …] · 탐침 제외 상위 = [446155, 342448, …]
+#:   — 게이트가 집은 공용 표본이 바로 446155 였다. 곧 **술어가 보는 갈래(고객 목록)와
+#:   씨앗이 들어간 자리(탐침 칸)가 달랐다.** P-156 의 「지난 회 씨앗 빼고 이번 회 씨앗
+#:   남기기」 필터는 P-220 뒤로 **한 번도 걸릴 것이 없는 죽은 줄**이었다.
+#:   ⇒ U1#11 표본만 `include_probe=true`(운영자 전용 목록 · api.py `/events`)로 다시 읽어
+#:     **이 함수**로 고른다. 공용 `EVENT`·다른 흐름의 표본은 건드리지 않는다(좁게).
+#:   드라이버(딴 프로세스)에는 이 원문이 그대로 심긴다(`_DRIVER_SLOT` · 한 벌).
+def pick_unjudged(rows, probe_tag, keep_ids):
+    """목록 행 → U1#11 이 누를 미판정 사건 id 들(목록 순서 그대로).
+
+    지난 회 탐침 씨앗(카메라 이름이 `probe_tag` 로 시작하고 이번 회 `keep_ids` 에 없는 것)은
+    뺀다 — `scripts/probe_marks.py` 의 규약 그대로. `verdict` 가 비어 있어야 미판정이다.
+    """
+    keep = set(int(x) for x in (keep_ids or []))
+    out = []
+    for e in rows or []:
+        name = str(e.get("stream_monitor_name") or "")
+        eid = int(e.get("event_id") or 0)
+        if probe_tag and name.startswith(probe_tag) and eid not in keep:
+            continue
+        if not e.get("verdict"):
+            out.append(e.get("event_id"))
+    return out
+
+
+#: U1#11 표본을 고를 때 읽는 목록 — **탐침 포함**이어야 씨앗이 보인다(위 주석).
+U1_11_PICK_PATH = "/api/dsm/events?limit=50&include_probe=true"
+
+
+def _shared_driver_src() -> str:
+    """드라이버(딴 프로세스)에 심는 공용 원문 — **한 벌**(`inspect.getsource`)."""
+    import inspect as _insp  # noqa: PLC0415
+    return _insp.getsource(server_gave_value) + chr(10) + chr(10) + _insp.getsource(pick_unjudged)
+
+
 def server_gave_value(after) -> bool:
     """서버가 그 칸에 **무언가를 냈는가.** ★ **`0` 은 값이다.**
 
@@ -1912,8 +1953,7 @@ def self_test() -> int:
         else:
             print("%s O ★ 드라이버에 술어를 심는 표식이 **정확히 한 곳**이다 "
                   "(브라우저 없이 확인 — 턴 X 는 이 사실을 measure() 안에서만 물었다)" % TAG)
-        _src = DRIVER.replace(_DRIVER_SLOT,
-                              _inspect.getsource(server_gave_value))
+        _src = DRIVER.replace(_DRIVER_SLOT, _shared_driver_src())
         _tree = ast.parse(_src)
         _known = set(dir(builtins))
         for _n in ast.walk(_tree):
@@ -2162,6 +2202,26 @@ def self_test() -> int:
             print("%s X %s" % (TAG, line))
 
     _settings_self_test(say)
+
+    # ── ★ 출생 표본 [P-437 · 턴 AQ · 차선 Q] — U1#11 씨앗 4/4 미판정인데 회색 ──────────
+    #   2026-09-29 11:18Z: 탐침 제외 목록 상위 = 446155(판정됨)… · 씨앗 575509~575512 는
+    #   탐침 칸(`track_id=data_source=probe;…`)이라 그 목록에 없었다. 탐침 포함 목록에서
+    #   고르면 이번 회 씨앗이 잡혀야 하고, 지난 회 씨앗은 빠져야 한다.
+    _tag = "gxprobe-D384-screen"
+    _seed_rows = [
+        {"event_id": 575509, "stream_monitor_name": _tag + " 캡처용 카메라", "verdict": None},
+        {"event_id": 561608, "stream_monitor_name": _tag + " 캡처용 카메라", "verdict": None},
+        {"event_id": 446155, "stream_monitor_name": "GX-SEED-DSM", "verdict": "confirmed"},
+    ]
+    say(pick_unjudged(_seed_rows, _tag, [575509]) == [575509],
+        "★ 출생 표본 P-437 — 탐침 포함 목록에서 이번 회 씨앗(575509)을 U1#11 표본으로 고른다 "
+        "(지난 회 씨앗 561608 · 판정된 446155 는 뺀다)")
+    say(pick_unjudged(_seed_rows[2:], _tag, [575509]) == [],
+        "P-437 짝 — 탐침 제외 목록(씨앗 없음 · 전부 판정)이면 표본 0 → 회색(옛 관측 그대로)")
+    say(U1_11_PICK_PATH in DRIVER and "include_probe=true" in U1_11_PICK_PATH,
+        "P-437 — 드라이버가 U1#11 표본을 **탐침 포함 목록**(%s)에서 읽는다" % U1_11_PICK_PATH)
+    say("def pick_unjudged" in _shared_driver_src(),
+        "P-437 — `pick_unjudged` 원문이 드라이버에 심긴다(딴 프로세스 · 한 벌)")
     if _fail:
         ok = False
 
@@ -3306,19 +3366,28 @@ print("[P-118] U3#3 표본: %s (snapshot_path 있는 사건 %d건)"
 #   ⇒ `unv` 가 **없으면** 여기서 곧장 회색을 적어 둔다(`walk()` 의 새 빗장이 이 자리를
 #     다시 안 덮는다) — 빨강을 회색으로 낮추는 것이 아니라, **누를 것이 없는 회를 빨강으로
 #     세지 않는 것**이다(§ 색의 규칙 · D-301 「분모 0 인 초록은 초록이 아니다」의 거울상).
-if unv:
-    SPEC["event_by_flow"]["U1#11"] = unv[0]
-    print("[P-118] U1#11 표본: %s (미판정 사건 %d건 중 첫째)" % (unv[0], len(unv)), file=sys.stderr)
+# ★★ [P-437 · 턴 AQ · 차선 Q] 위 `unv` 는 **탐침 제외 목록**(P-220 기본)에서 나왔다 — 씨앗은
+#   탐침 칸에 심기므로 거기 없다. U1#11 표본은 **탐침 포함 목록**을 다시 읽어 고른다
+#   (`pick_unjudged` · 바깥 모듈의 원문이 심긴다). 못 읽으면 옛 `unv` 그대로.
+_c11, _ev11 = get("/api/dsm/events?limit=50&include_probe=true", tok0)
+_rows11 = list((_ev11 or {}).get("events", [])) if _c11 == 200 else []
+unv11 = pick_unjudged(_rows11, _ptag, _keep) if _c11 == 200 else list(unv)
+print("[P-437] U1#11 표본 목록: 탐침 포함 %s건(응답 %s) · 미판정 %d건 · 이번 회 씨앗 %d"
+      % (len(_rows11), _c11, len(unv11), len(_keep)), file=sys.stderr)
+if unv11:
+    SPEC["event_by_flow"]["U1#11"] = unv11[0]
+    print("[P-118] U1#11 표본: %s (미판정 사건 %d건 중 첫째)" % (unv11[0], len(unv11)),
+          file=sys.stderr)
 else:
     print("[P-118] U1#11 표본: 없음 — 이번 회 미판정 사건 0건(전량 판정됨) · 회색으로 적는다",
           file=sys.stderr)
     note("U1#11", control={
         "found": False,
-        "why": ("이번 회에 미판정(verdict 없음) 사건이 없다(표본 %d건 전부 판정됨) — "
+        "why": ("이번 회에 미판정(verdict 없음) 사건이 없다(탐침 포함 목록 %d건 · 전부 판정됨) — "
                 "새 씨앗이 이번 회에 심기지 않았거나 전부 이미 판정된 상태다. 이미 판정된 "
                 "사건을 다시 눌러 값이 안 바뀐 것을 제품의 빨강으로 적으면 표본 부재를 "
                 "제품 결함으로 파는 것이다 (P-118 A · 턴 AF 실측 2026-09-23 · event_id 342448 "
-                "사례)") % len(_rows)})
+                "사례)") % (len(_rows11) if _c11 == 200 else len(_rows))})
 
 for persona in SPEC["order"]:
     p = SPEC["personas"][persona]
@@ -3488,9 +3557,9 @@ def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://loca
         print("%s 드라이버 심는 자리가 %d 곳이다 — **정확히 하나**여야 한다 (턴 X)"
               % (TAG, DRIVER.count(_DRIVER_SLOT)))
         return EXIT_UNDECIDABLE
-    shared_src = inspect.getsource(server_gave_value)
+    shared_src = _shared_driver_src()
     driver_src = DRIVER.replace(_DRIVER_SLOT, shared_src)
-    if "def server_gave_value" not in driver_src:
+    if "def server_gave_value" not in driver_src or "def pick_unjudged" not in driver_src:
         print("%s 드라이버에 공용 술어를 못 심었다 — `# __SHARED_HELPERS__` 자리가 "
               "사라졌다. 심지 않고 재면 측정만 죽는다 (턴 X)" % TAG)
         return EXIT_UNDECIDABLE

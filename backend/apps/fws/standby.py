@@ -7,18 +7,18 @@
 (patrol.py 머리말과 같은 뜻), 새 표 + 마이그레이션을 세우지 않는다. 「지금 상태」는
 **최신 줄이 답한다**(`notify_prefs.py`·`drill.py` 와 같은 형).
 
-「자원 배치판에 표시」(완결조건)는 이번 차선 범위 밖
-------------------------------------------------------
-그 배치판은 F3(산림과 담당) 화면이고 §0.4 인접 — 다른 차선(DSM 쪽 화면) 소유다.
-이 파일이 실제로 내는 것은 **그 판이 읽을 수 있는 문 하나**(GET) 뿐이다 — 화면은
-짓지 않는다.
+「자원 배치판에 표시」(완결조건)
+--------------------------------
+턴 AQ 차선 W2C — 저장 줄에 테넌트 곁표를 붙이고(`audit_scope.record`), 배치판
+읽기는 `resource_board.py`(GET /api/fws/resources/board)가 한다. 화면은 지휘
+화면(`CommandHome.tsx` 자원 배치판 카드).
 """
 from __future__ import annotations
 
 from django.apps import apps
 from django.utils import timezone
 
-from common import audit_writer
+from apps.fws import audit_scope as fws_audit_scope
 
 LOGGER_NAME = "guardianx.fws.standby"
 TAG = "[FWS-STANDBY]"
@@ -59,11 +59,12 @@ def set_status(*, scope, status: str, lat: float | None = None,
     now = timezone.now()
     location = {"lat": lat, "lng": lng} if (lat is not None and lng is not None) else None
     payload = {"status": status, "lat": lat, "lng": lng, "set_at": now.isoformat()}
-    audit_writer.write(
-        logger_name=LOGGER_NAME, tag=TAG, actor=actor, action=ACTION_SAVE,
-        outcome=audit_writer.ALLOWED,
-        reason=f"대기 상태 {status}" + (f" · 위치 {lat},{lng}" if location else ""),
-        after=payload, api_name=ACTION_SAVE, api_method="POST")
+    # 턴 AQ 차선 W2C — 테넌트 곁표(`audit_scope.record`)로 남긴다: 지휘 화면의 자원
+    # 배치판(`resource_board.py`)이 「이 기관의 대기 인원」을 묻는 자리다.
+    fws_audit_scope.record(
+        scope=scope, logger_name=LOGGER_NAME, tag=TAG, action=ACTION_SAVE,
+        payload=payload, kind=ACTION_SAVE,
+        reason=f"대기 상태 {status}" + (f" · 위치 {lat},{lng}" if location else ""))
     return {"status": status, "location": location, "set_at": now.isoformat()}
 
 

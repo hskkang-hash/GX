@@ -153,7 +153,11 @@ def draft_evacuation_text(*, area_name: str, kind: str = EVACUATION_KIND_ORDER) 
 
 #: [P-421 · 턴 AP · 차선 N2b] 안전경보 두 규칙(FWS-F2-07 · F1-10)의 문턱 — **명세에 숫자가 없다.**
 #:   값을 짓지 않는다(D-284): None 인 동안 `alerts.py` 는 판정하지 않고 `threshold_unset=true` 를 낸다.
-#:   값은 운영(산림청 지침 · 기관 규정)이 정한다 — 정해지면 여기 한 줄씩.
+#:   값은 운영(산림청 지침 · 기관 규정)이 정한다.
+#: [P-434 · 턴 AQ · 차선 N4] 세종 판정 「명세에 없는 숫자는 기본값이 아니라 기관 설정이다 —
+#:   미설정은 「대기」로 보인다」. 운영 값은 **기관별**로 `apps/fws/safety_thresholds.py`
+#:   (U5 산불 설정 탭 · GET/POST /api/fws/admin/safety-thresholds)에 산다. 이 세 이름은
+#:   법령·고시가 전국 공통 숫자를 정하는 날을 위한 두 번째 층일 뿐 — 지금도 None 이다.
 WIND_SHIFT_ANGLE_DEG: float | None = None
 WIND_SHIFT_WINDOW_MINUTES: float | None = None
 DROP_ZONE_EXIT_RADIUS_M: float | None = None

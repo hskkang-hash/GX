@@ -9,8 +9,8 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
   "title_parts": [
     {
       "part": "이동 회신(출동 확인 뒤 이동 중 상태)",
-      "where": "backend/apps/fws/missions.py:respond(action=\"dispatch\"→\"arrived\" 전이 순서) · POST /api/fws/missions/{event_id}/response?action=arrived",
-      "status": "부분 — 「출동」과 「도착」 사이의 이동 중이라는 별도 상태는 없다(K1 4상태 acknowledged→in_progress 로 바로 넘어간다, missions.py 26-28행). '이동'을 나타내는 별도 회신·상태는 미구현 — 이 파일이 재는 것은 도착 회신뿐이다"
+      "where": "backend/apps/fws/missions.py:respond(action=\"en_route\" — 출동한 진화대만 · 사건 상태는 안 옮김 · K1 현장 회신 [이동] GPS + 자기 감사 mission.en_route) · mission_detail.my_progress · POST /api/fws/missions/{event_id}/response?action=en_route&lat=&lng= · 화면 frontend/src/features/fws/pages/FieldHome.tsx::data-gx=\"fws-f2-03-en-route\" → GET /api/fws/missions/{id} 재조회 ; data-gx=\"fws-f2-03-progress\"(「이동 중」)",
+      "status": "measured: tests.test_aq_w2a_field_screens.F2_03_EnRouteScreenTest.test_dispatch_en_route_then_refetch_shows_my_progress — 출동 뒤 en_route POST 200 · 새 GET 재조회 my_progress=en_route · response_state=acknowledged 유지 · /missions/mine en_route_at 기록 · 출동 없이 409(test_en_route_without_dispatch_is_409) · 격리 404(test_other_tenant_en_route_is_404) · 화면 정적 대조 test_screen_has_en_route_button_and_progress"
     },
     {
       "part": "도착 회신(GPS 좌표 포함)",
@@ -27,6 +27,7 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
       "where": "backend/apps/fws/missions.py:respond → dsm_services.field_reply(text=f\"[도착] GPS lat={lat} lng={lng}...\") 208-210행 · 자기 감사 _write_own(ACTION_ARRIVED, {lat,lng,...}) 213-214행",
       "status": "measured: 같은 실측 요청의 응답이 200 이고, 코드가 K1 현장 회신과 자체 감사 양쪽에 좌표를 기록함을 확인(field_reply 호출·감사 payload 모두 lat/lng 포함)"
     }
-  ]
+  ],
+  "retro": "턴 AQ 차선 W2A · 화면 배선 · 사람 확인 — 이동 중 회신(en_route)을 진화대 자신의 기록으로 더하고 화면 버튼·내 진행 칸을 달았다(누른 뒤 임무 재조회)"
 }
 ```

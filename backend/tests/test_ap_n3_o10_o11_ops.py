@@ -63,18 +63,11 @@ def _write_evidence(spec_id: str, *, test: str, method: str, path: str,
         "request": {"method": method, "path": path, "body": req_body},
         "response": {"status": status, "body": resp_body}, "what": what,
     }
-    path_obj = EVIDENCE_DIR / f"{spec_id}.json"
-    existing_parts: list[dict] = []
-    if path_obj.is_file():
-        try:
-            existing_parts = (json.loads(path_obj.read_text(encoding="utf-8"))
-                              .get("title_parts") or [])
-        except (ValueError, OSError):
-            existing_parts = []
-    by_part = {row.get("part"): row for row in existing_parts}
+    #: [턴 AQ · P-431 · 차선 Q] 사람 표는 `SPEC/<id>.retro.md`(손으로만) — json 에
+    #: `title_parts` 를 병합해 쓰던 것을 멈춘다. 표 모양(빈 칸 0)만 여기서 본다.
     for row in title_parts:
-        by_part[row.get("part")] = row
-    payload["title_parts"] = list(by_part.values())
+        missing = [k for k in ("part", "where", "status") if not (row.get(k) or "").strip()]
+        assert not missing, f"{spec_id} title_parts 에 빈 칸: {row!r} ({missing})"
     with allow_evidence_writes(
             "P-421 ⑤ O-10/O-11 증거 — pytest 가 방금 두드린 HTTP 왕복 그대로"):
         EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
@@ -85,23 +78,17 @@ def _write_evidence(spec_id: str, *, test: str, method: str, path: str,
 
 def _merge_o11_title_parts(status_for_rollback_row: str, where: str) -> None:
     """O-11.json 은 **이미 있다**(턴 AO) — 그 파일의 「되돌리기 1회 시험」 행 하나만
-    고친다. 다른 행·다른 칸은 그대로 둔다(P-358 소급 보존 규약)."""
-    with allow_evidence_writes(
-            "P-421 ⑤ O-11 title_parts 갱신 — 되돌리기 행만 코드로 다시 실측"):
-        path = EVIDENCE_DIR / "O-11.json"
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        rows = payload.get("title_parts") or []
-        touched = False
-        for row in rows:
-            if row.get("part") == "되돌리기 1회 시험":
-                row["status"] = status_for_rollback_row
-                row["where"] = where
-                touched = True
-        if not touched:
-            raise AssertionError("O-11.json 에 「되돌리기 1회 시험」 행이 없다")
-        payload["title_parts"] = rows
-        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=str),
-                        encoding="utf-8")
+    고친다. 다른 행·다른 칸은 그대로 둔다(P-358 소급 보존 규약).
+
+    [턴 AQ · P-431 · 차선 Q] 사람 표는 `SPEC/O-11.retro.md`(손으로만) — 이 시험은
+    더 이상 표를 **쓰지 않고**, 그 행이 사람 표에 있는지만 **읽어** 확인한다."""
+    rp = EVIDENCE_DIR / "O-11.retro.md"
+    if not rp.is_file():
+        return      # 이 환경에 사람 표가 안 보인다(gx-shell 마운트) — 쓰지도 단언하지도 않는다
+    block = rp.read_text(encoding="utf-8").split("```json", 1)[1].split("```", 1)[0]
+    rows = json.loads(block).get("title_parts") or []
+    if not any(row.get("part") == "되돌리기 1회 시험" for row in rows):
+        raise AssertionError("O-11.retro.md 에 「되돌리기 1회 시험」 행이 없다")
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -24,10 +24,17 @@ import {
   List,
   Select,
   Space,
+  Tag,
   Typography,
 } from 'antd';
 
-import { fwsGet, fwsPostQuery } from '../api';
+import { fwsGet, fwsGetFresh, fwsPostQuery } from '../api';
+import {
+  getSafetyThresholds,
+  saveSafetyThresholds,
+  type SafetyThresholdName,
+  type SafetyThresholdsBody,
+} from '../api_admin_thresholds';
 import { FWS_ADMIN_COPY, FWS_ADMIN_UNKNOWN } from '../copy_admin';
 
 const { Title, Text } = Typography;
@@ -81,7 +88,16 @@ interface NotifyRuleRow {
   channels: string[];
 }
 
+interface SeverityReach {
+  severity: string;
+  label: string;
+  rule_count: number;
+  recipient_count: number;
+  reaches_people: boolean;
+}
+
 interface NotifyOverview {
+  severities: SeverityReach[];
   role_suggestions: RoleSuggestion[];
   night_standby_zone: string;
   rules: NotifyRuleRow[];
@@ -110,6 +126,7 @@ export default function AdminHome(): JSX.Element {
       <PostCard onDone={onDone} onError={onError} />
       <EvacCard onDone={onDone} onError={onError} />
       <NotifyCard onDone={onDone} onError={onError} />
+      <SafetyThresholdCard onDone={onDone} onError={onError} />
     </Space>
   );
 }
@@ -416,7 +433,7 @@ function NotifyCard({
 
   async function reload(): Promise<void> {
     try {
-      const body = await fwsGet<NotifyOverview>(NOTIFY_RULES);
+      const body = await fwsGetFresh<NotifyOverview>(NOTIFY_RULES);
       setOverview(body);
       if (!roleCode && body.role_suggestions.length > 0) {
         setRoleCode(body.role_suggestions[0].role_code);
@@ -447,6 +464,14 @@ function NotifyCard({
     }
   }
 
+  function severityLabel(code: string): string {
+    return overview?.severities.find((s) => s.severity === code)?.label ?? code;
+  }
+
+  function roleLabel(code: string): string {
+    return overview?.role_suggestions.find((r) => r.role_code === code)?.label ?? code;
+  }
+
   async function handleTest(): Promise<void> {
     try {
       const body = await fwsPostQuery<{ sent: number }>(NOTIFY_RULES_TEST, { severity });
@@ -457,7 +482,7 @@ function NotifyCard({
   }
 
   return (
-    <Card title={copy.title}>
+    <Card title={copy.title} data-gx="fws-u5-04-card">
       <Space direction="vertical" style={{ width: '100%' }}>
         {overview?.critical_blocked && (
           <Alert type="warning" showIcon message={copy.criticalBlockedWarning} />
@@ -467,13 +492,15 @@ function NotifyCard({
             value={severity}
             onChange={setSeverity}
             style={{ width: 140 }}
-            options={['critical', 'high', 'medium', 'low'].map((s) => ({ value: s, label: s }))}
+            data-gx="fws-u5-04-severity"
+            options={(overview?.severities ?? []).map((s) => ({ value: s.severity, label: s.label }))}
           />
           <Select
             value={roleCode || undefined}
             onChange={setRoleCode}
             placeholder={copy.roleLabel}
             style={{ width: 180 }}
+            data-gx="fws-u5-04-role"
             options={(overview?.role_suggestions ?? []).map((r) => ({
               value: r.role_code,
               label: r.label,
@@ -484,26 +511,192 @@ function NotifyCard({
             value={channels}
             onChange={(e) => setChannels(e.target.value)}
             style={{ width: 220 }}
+            data-gx="fws-u5-04-channels"
           />
-          <Checkbox checked={nightStandby} onChange={(e) => setNightStandby(e.target.checked)}>
+          <Checkbox
+            checked={nightStandby}
+            onChange={(e) => setNightStandby(e.target.checked)}
+            data-gx="fws-u5-04-night-standby"
+          >
             {copy.nightStandbyLabel}
           </Checkbox>
         </Space>
         <Space>
-          <Button type="primary" onClick={handleSave}>
+          <Button type="primary" onClick={handleSave} data-gx="fws-u5-04-save">
             {copy.saveButton}
           </Button>
-          <Button onClick={handleTest}>{copy.testButton}</Button>
+          <Button onClick={handleTest} data-gx="fws-u5-04-test">
+            {copy.testButton}
+          </Button>
         </Space>
+        <Text strong>{copy.reachTitle}</Text>
+        <Space wrap data-gx="fws-u5-04-reach">
+          {(overview?.severities ?? []).map((s) => (
+            <Tag key={s.severity} color={s.reaches_people ? 'green' : 'red'}>
+              {s.label} · {s.recipient_count}
+              {copy.reachRecipientsSuffix} · {s.reaches_people ? copy.reachOk : copy.reachBlocked}
+            </Tag>
+          ))}
+        </Space>
+        <Text strong>{copy.rulesTitle}</Text>
         <List
+          data-gx="fws-u5-04-rules"
           dataSource={overview?.rules ?? []}
           locale={{ emptyText: FWS_ADMIN_UNKNOWN }}
           renderItem={(row) => (
             <List.Item>
-              {row.severity} · {row.role_code} · {row.zone ?? '-'} · {row.channels.join(',')}
+              <Space wrap>
+                <Text>{severityLabel(row.severity)}</Text>
+                <Text>{roleLabel(row.role_code)}</Text>
+                {row.zone && row.zone === overview?.night_standby_zone ? (
+                  <Tag color="purple">{copy.nightStandbyTag}</Tag>
+                ) : (
+                  <Tag>{row.zone ?? copy.dayTag}</Tag>
+                )}
+                <Text type="secondary">{row.channels.join(', ')}</Text>
+              </Space>
             </List.Item>
           )}
         />
+      </Space>
+    </Card>
+  );
+}
+
+/**
+ * 안전경보 기준(턴 AQ · 차선 N4 · P-434) — 명세에 숫자가 없으므로 기관이 정한다.
+ * 칸이 비어 있으면 「대기」 배지와 안내 문구를 보인다(기본값·권장값을 채워 넣지 않는다).
+ * 저장 뒤에는 조회를 새로 불러 서버가 가진 값을 그린다.
+ */
+const THRESHOLD_FIELDS: Array<{
+  name: SafetyThresholdName;
+  gx: string;
+  label: string;
+  unit: string;
+  max: number | null;
+}> = [
+  {
+    name: 'wind_shift_angle_deg',
+    gx: 'fws-threshold-wind-shift-angle',
+    label: FWS_ADMIN_COPY.thresholds.windShiftAngle,
+    unit: FWS_ADMIN_COPY.thresholds.unitDeg,
+    max: 180,
+  },
+  {
+    name: 'wind_shift_window_minutes',
+    gx: 'fws-threshold-wind-shift-window',
+    label: FWS_ADMIN_COPY.thresholds.windShiftWindow,
+    unit: FWS_ADMIN_COPY.thresholds.unitMinute,
+    max: null,
+  },
+  {
+    name: 'drop_zone_exit_radius_m',
+    gx: 'fws-threshold-drop-zone-exit-radius',
+    label: FWS_ADMIN_COPY.thresholds.dropZoneExitRadius,
+    unit: FWS_ADMIN_COPY.thresholds.unitMeter,
+    max: null,
+  },
+];
+
+type ThresholdDraft = Record<SafetyThresholdName, number | null>;
+
+const EMPTY_DRAFT: ThresholdDraft = {
+  wind_shift_angle_deg: null,
+  wind_shift_window_minutes: null,
+  drop_zone_exit_radius_m: null,
+};
+
+function rangeError(value: number | null, max: number | null): string | null {
+  if (value == null) return null;
+  if (!(value > 0)) return max == null ? FWS_ADMIN_COPY.thresholds.rangePositive : FWS_ADMIN_COPY.thresholds.rangeAngle;
+  if (max != null && value > max) return FWS_ADMIN_COPY.thresholds.rangeAngle;
+  return null;
+}
+
+function SafetyThresholdCard({
+  onDone,
+  onError,
+}: {
+  onDone: (m: string) => void;
+  onError: () => void;
+}): JSX.Element {
+  const copy = FWS_ADMIN_COPY.thresholds;
+  const [saved, setSaved] = useState<SafetyThresholdsBody | null>(null);
+  const [draft, setDraft] = useState<ThresholdDraft>(EMPTY_DRAFT);
+
+  async function reload(): Promise<void> {
+    try {
+      const body = await getSafetyThresholds();
+      setSaved(body);
+      const next: ThresholdDraft = { ...EMPTY_DRAFT };
+      body.fields.forEach((f) => {
+        next[f.name] = f.value;
+      });
+      setDraft(next);
+    } catch {
+      onError();
+    }
+  }
+
+  useEffect(() => {
+    void reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const errors = THRESHOLD_FIELDS.map((f) => rangeError(draft[f.name], f.max));
+  const invalid = errors.some((e) => e !== null);
+
+  async function handleSave(): Promise<void> {
+    if (invalid) return;
+    try {
+      await saveSafetyThresholds(draft);
+      onDone(copy.savedNotice);
+      await reload();
+    } catch {
+      onError();
+    }
+  }
+
+  return (
+    <Card title={copy.title} data-gx="fws-threshold-card">
+      <Space direction="vertical" style={{ width: '100%' }}>
+        <Text type="secondary">{copy.intro}</Text>
+        {THRESHOLD_FIELDS.map((f, i) => {
+          const savedValue = saved?.fields.find((x) => x.name === f.name)?.value ?? null;
+          const waiting = savedValue == null;
+          return (
+            <Space key={f.name} wrap data-gx={f.gx}>
+              <Text strong style={{ minWidth: 160, display: 'inline-block' }}>
+                {f.label}
+              </Text>
+              <InputNumber
+                data-gx={`${f.gx}-input`}
+                value={draft[f.name]}
+                onChange={(v) => setDraft({ ...draft, [f.name]: v ?? null })}
+                addonAfter={f.unit}
+                status={errors[i] ? 'error' : undefined}
+                style={{ width: 180 }}
+              />
+              {waiting ? (
+                <>
+                  <Tag color="default" data-gx={`${f.gx}-waiting`}>
+                    {copy.waitingBadge}
+                  </Tag>
+                  <Text type="secondary">{copy.waitingHint}</Text>
+                </>
+              ) : (
+                <Tag color="green" data-gx={`${f.gx}-saved`}>
+                  {copy.setBadge} · {savedValue}
+                  {f.unit}
+                </Tag>
+              )}
+              {errors[i] && <Text type="danger">{errors[i]}</Text>}
+            </Space>
+          );
+        })}
+        <Button type="primary" onClick={handleSave} disabled={invalid} data-gx="fws-threshold-save">
+          {copy.saveButton}
+        </Button>
       </Space>
     </Card>
   );

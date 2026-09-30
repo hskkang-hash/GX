@@ -437,6 +437,87 @@ def _golden_time_from_response_clock(*, scope, rows) -> dict:
     return {"pct": pct, "n": n, "compliant": compliant, "auto_closed": auto_closed}
 
 
+# ── [턴 AQ · 차선 N3] F3-16 「헬기 물 투하 시각」 — 저장 칸과 그 기준의 준수율 ──
+#: 지휘 화면(F4-04 헬기 카드)의 「투하 시각 저장」 칸이 이 기록을 남긴다. 30분은
+#: 위 `GOLDEN_TIME_THRESHOLD_SEC` 그대로(새 숫자 0).
+ACTION_HELI_DROP = "office2.helicopter.water_drop"
+
+
+def _aware_dt(value):
+    if value is not None and timezone.is_naive(value):
+        return timezone.make_aware(value)
+    return value
+
+
+def record_helicopter_drop(*, scope, event_id: int, dropped_at: str = "") -> dict:
+    """F3-16 — 헬기 물 투하 시각 한 건. `dropped_at` 을 비우면 지금 시각.
+
+    Raises:
+        django.http.Http404: 그런 사건이 없다 · 남의 테넌트다(F-05 문지기).
+        Office2InputRejected: 시각을 못 읽는다 · 미래 시각이다.
+    """
+    dsm_services.event_detail(scope=scope, event_id=event_id)  # 404 게이트
+    actor = scope.require_actor()
+    now = _now()
+    raw = (dropped_at or "").strip()
+    if raw:
+        when = _aware_dt(_parse_dt(raw))
+        if when is None:
+            raise Office2InputRejected(f"dropped_at={raw!r} 는 시각(ISO)이 아니다")
+        if when > now:
+            raise Office2InputRejected("투하 시각이 지금보다 뒤다")
+    else:
+        when = now
+    payload = {"event_id": event_id, "dropped_at": when.isoformat(),
+              "recorded_at": now.isoformat()}
+    entry = _write(actor, ACTION_HELI_DROP, payload,
+                  f"헬기 물 투하 시각 · 사건#{event_id} · {when.isoformat()}")
+    return {"record_id": entry.audit_id, **payload}
+
+
+def helicopter_drops(*, scope, event_id: int) -> dict:
+    """F3-16 — 이 사건의 투하 시각 기록(시간순) · 첫 투하 시각."""
+    dsm_services.event_detail(scope=scope, event_id=event_id)  # 404 게이트
+    items = [r.data_after for r in _rows_for_event(ACTION_HELI_DROP, event_id)
+             if isinstance(r.data_after, dict)]
+    firsts = sorted(i["dropped_at"] for i in items if i.get("dropped_at"))
+    return {"event_id": event_id, "count": len(items), "drops": items,
+            "first_dropped_at": firsts[0] if firsts else None,
+            "golden_time_threshold_sec": GOLDEN_TIME_THRESHOLD_SEC}
+
+
+def _golden_time_from_heli_drops(*, scope, rows) -> dict:
+    """F3-16 골든타임 준수율 — 신고 접수(F3-06, 없으면 발생) → **첫 헬기 물 투하**
+    30분 이내 비율. 투하 기록이 없는 사건은 분모에서 뺀다(지어내지 않는다)."""
+    from apps.fws import office as fws_office
+
+    by_id = {r.event_id: r for r in rows}
+    first_drop: dict = {}
+    for row in _rows_for_events(ACTION_HELI_DROP, set(by_id)):
+        payload = row.data_after if isinstance(row.data_after, dict) else {}
+        eid = payload.get("event_id")
+        at = _aware_dt(_parse_dt(payload.get("dropped_at")))
+        if eid is None or at is None:
+            continue
+        if eid not in first_drop or at < first_drop[eid]:
+            first_drop[eid] = at
+    n = compliant = 0
+    for eid, dropped in first_drop.items():
+        start = by_id[eid].occurred_at
+        intakes = fws_office.intake_records(scope=scope, event_id=eid)["intakes"]
+        if intakes and intakes[0].get("clock_started_at"):
+            parsed = _aware_dt(_parse_dt(intakes[0]["clock_started_at"]))
+            if parsed is not None:
+                start = parsed
+        if start is None:
+            continue
+        n += 1
+        if (dropped - start).total_seconds() <= GOLDEN_TIME_THRESHOLD_SEC:
+            compliant += 1
+    pct = round(compliant / n * 100, 1) if n else None
+    return {"pct": pct, "n": n, "compliant": compliant}
+
+
 def fire_stats(*, scope, since: str = "", until: str = "") -> dict:
     """FWS-F3-16 — 통계 표. `dsm_services.recent_events`(K1 · F-05 문 하나)로
     테넌트 안 사건을 모으고, 면적·원인은 F3-14 최종보고 기록에서 되짚는다."""
@@ -466,6 +547,7 @@ def fire_stats(*, scope, since: str = "", until: str = "") -> dict:
     verify_avg = (round(sum(verify_seconds) / len(verify_seconds), 1)
                  if verify_seconds else None)
     golden = _golden_time_from_response_clock(scope=scope, rows=rows)
+    heli_golden = _golden_time_from_heli_drops(scope=scope, rows=rows)
 
     event_ids = {r.event_id for r in rows}
     latest_final: dict = {}
@@ -496,11 +578,17 @@ def fire_stats(*, scope, since: str = "", until: str = "") -> dict:
         "golden_time_compliant_n": golden["compliant"],
         "golden_time_excluded_auto_closed": golden["auto_closed"],
         "golden_time_basis": "response_clock:reported_or_occurred->arrived_at",
+        #: [턴 AQ · N3] 명세의 다른 기준 — 신고 → 헬기 물 투하 30분(지휘 화면
+        #: 투하 시각 저장 칸이 남긴 기록). 기록 없는 사건은 분모 밖.
+        "heli_drop_compliance_pct": heli_golden["pct"],
+        "heli_drop_measured_n": heli_golden["n"],
+        "heli_drop_compliant_n": heli_golden["compliant"],
+        "heli_drop_basis": "reported_or_occurred->first_helicopter_water_drop",
         "golden_time_note": (
             "대응 시계 실측 — 신고 접수(F3-06 기록, 없으면 발생) → 현장 도착"
             "(arrived_at) 30분 이내 비율. 오탐 자동 종결은 분모에서 뺐다. 명세의 "
-            "다른 기준인 헬기 물 투하 시각은 이 저장소에 없어(승인 시각만 있다) "
-            "이 수에 들지 않는다."),
+            "다른 기준인 헬기 물 투하 시각은 따로 heli_drop_* 칸에 잰다(지휘 화면의 "
+            "투하 시각 저장 기록 · 기록 없는 사건은 분모 밖)."),
     }
 
 
@@ -635,16 +723,37 @@ def _rows_for_tenant(scope, action: str):
         .order_by("-id")[:2000])
 
 
-def patrol_enforcement_stats(*, scope) -> dict:
+def patrol_enforcement_stats(*, scope, since: str = "", until: str = "") -> dict:
     """FWS-F3-18 — 계도·단속 통계. **같은 테넌트 전체**(곁표로 좁힌 감사 전건 ·
-    턴 AO 차선 O · P-411 — 예전엔 "본인이 남긴 기록만" 이었다)."""
+    턴 AO 차선 O · P-411 — 예전엔 "본인이 남긴 기록만" 이었다).
+
+    [턴 AQ · 차선 N3] 기관 통계 화면의 기간 칸 — `since`/`until`(ISO 날짜·시각)을
+    주면 기록 시각(`recorded_at`)이 그 창 안인 것만 센다. 둘 다 비우면 전건(옛 계약).
+
+    Raises:
+        Office2InputRejected: 기간 값을 못 읽는다.
+    """
+    since_dt = _aware_dt(_parse_dt(since)) if since else None
+    until_dt = _aware_dt(_parse_dt(until)) if until else None
+    if (since and since_dt is None) or (until and until_dt is None):
+        raise Office2InputRejected("기간(since/until)은 ISO 날짜·시각이다")
     rows = _rows_for_tenant(scope, ACTION_PATROL_ENFORCEMENT)
     counts: Counter = Counter()
     for row in rows:
         payload = row.data_after if isinstance(row.data_after, dict) else {}
-        if payload.get("kind"):
-            counts[payload["kind"]] += 1
-    return {"by_kind": dict(counts), "total": sum(counts.values()), "scope": "tenant"}
+        if not payload.get("kind"):
+            continue
+        if since_dt is not None or until_dt is not None:
+            at = _aware_dt(_parse_dt(payload.get("recorded_at")))
+            if at is None:
+                continue
+            if since_dt is not None and at < since_dt:
+                continue
+            if until_dt is not None and at > until_dt:
+                continue
+        counts[payload["kind"]] += 1
+    return {"by_kind": dict(counts), "total": sum(counts.values()), "scope": "tenant",
+            "since": since or None, "until": until or None}
 
 
 def set_entry_control_zone(*, scope, zone_name: str, status: str) -> dict:

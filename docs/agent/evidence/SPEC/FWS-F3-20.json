@@ -1,19 +1,7 @@
 {
   "id": "FWS-F3-20",
   "title": "온보딩 카드 7(조심기간 전)",
-  "title_parts": [
-    {
-      "part": "카드 7",
-      "where": "응답 cards(길이 7 · F3_CARD_KEYS)",
-      "status": "구현 — 7장 실측(대피 초안·이행 확인·상황보고·최종보고·카메라 임계값·계도단속·훈련)"
-    },
-    {
-      "part": "진행률 100(완결조건)",
-      "where": "응답 percent",
-      "status": "구현 — 7장 전부 두드린 뒤 100.0 실측"
-    }
-  ],
-  "measured_at": "2026-09-29T11:54:48.229192+00:00",
+  "measured_at": "2026-09-30T05:25:04.941809+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_20_OnboardingCardsTest.test_seven_cards_close_to_100_percent",
   "request": {

@@ -2,13 +2,12 @@
 """P-408 — `scripts/onboarding_two_numbers.py` 짝 시험 (턴 AO · 차선 Q).
 
 순수 시험(`test_p343_third_condition_wiring.py` 와 같은 모양) — Django 도 DB 도
-필요 없다. 이 도구의 핵심 함수 셋(`c_rows_from_markdown` · `parse_c_rows_arg` ·
+필요 없다. 이 도구의 핵심 함수 둘(`parse_c_rows_arg` ·
 `two_numbers`)을 직접 부른다.
 
 이 시험이 못박는 것
 --------------------
-① `onboarding_48.md` 의 `**(c)**` 표에서 행 id 를 뽑는다 — 갈래 칸이 아니면(비고에
-   "(c)" 라는 낱말이 있어도) 안 센다. 같은 행이 여러 절에 반복돼도 한 번만 센다.
+① [턴 AQ · P-433] 장부 표를 읽는 함수(`c_rows_from_markdown`)는 옵션과 함께 없앴다.
 ② 두 수의 **분자는 하나다** — 48 기준이든 상한 기준이든 N 이 갈리지 않는다.
    (c 를 바꿔 상한만 낮아지고 점수가 따라 오르는 착시를 만들지 않는다.)
 ③ c=0(상한 표를 못 찾음)이면 ②(상한 기준)를 **지어내지 않는다** — `by_cap`
@@ -48,33 +47,6 @@ def _load_module():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
-
-
-class CRowsFromMarkdownTest:
-    """① — 표 갈래 칸만 센다."""
-
-    def setup_method(self) -> None:
-        self.onb2n = _load_module()
-
-    def test_only_the_gallae_column_counts(self) -> None:
-        md = (
-            "| U1#4 `/x` | 증거 | **(c)** | 비고 |\n"
-            "| U1#9 `/y` | 증거 | **(a)** | (c) 라는 낱말이 비고에 있어도 갈래 칸이 아니면 "
-            "안 센다 |\n"
-        )
-        assert self.onb2n.c_rows_from_markdown(md) == {"U1#4"}
-
-    def test_repeated_row_across_sections_counts_once(self) -> None:
-        md = (
-            "| U1#4 `/x` | 첫 절 | **(c)** | 비고 |\n"
-            "| U1#4 `/x` | 재측 절에도 또 나온다 | **(c)** | 비고 |\n"
-            "| U2#3 `/z` | 증거 | **(c)** | 비고 |\n"
-        )
-        assert self.onb2n.c_rows_from_markdown(md) == {"U1#4", "U2#3"}
-
-    def test_no_c_rows_is_empty_set_not_an_error(self) -> None:
-        md = "| U1#4 `/x` | 증거 | **(a)** | 비고 |\n"
-        assert self.onb2n.c_rows_from_markdown(md) == set()
 
 
 class ParseCRowsArgTest:

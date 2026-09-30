@@ -19,9 +19,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "수당 근거로 쓰일 CSV 내보내기(완결조건 — 명세서 §5.2 167행 「표 · CSV」)",
-      "where": "backend/apps/fws/missions.py, backend/apps/fws/api.py — /missions/mine 경로에 대한 CSV 포맷 옵션 없음(grep 결과: fws 앱의 csv 관련 코드는 F6-01 산림청 연계 내보내기·F3-03 근무표 업로드뿐, missions/mine 에는 없음)",
-      "status": "없음 — GET /api/fws/missions/mine 은 JSON 만 낸다. backend/apps/fws/api.py:363-383(FWS-F6-01), office.py:339-362(FWS-F3-03) 에만 csv 처리가 있고 F2-12 몫의 CSV 내보내기는 코드에 없다"
+      "where": "backend/apps/fws/missions.py::mine_csv(mine() 값을 그대로 옮김 · 마지막 줄 total) · backend/apps/fws/api.py::my_missions_export — GET /api/fws/missions/mine/export(text/csv) · 화면 frontend/src/features/fws/pages/FieldHome.tsx::data-gx=\"fws-f2-12-csv\"(내려받은 뒤 reload) · \"fws-f2-12-table\" · \"fws-f2-12-total\" · api_w2a.ts::downloadMyMissionsCsv",
+      "status": "measured: tests.test_aq_w2a_field_screens.F2_12_CsvScreenTest.test_export_matches_mine_after_release — 출동→도착→철수 뒤 CSV 머리줄 6칸·임무 줄·total 줄이 새 GET /missions/mine 의 count·total_minutes 와 같다 · 격리 test_other_tenant_export_has_no_rows_of_mine · 화면 정적 대조 test_screen_has_csv_button"
     }
-  ]
+  ],
+  "retro": "턴 AQ 차선 W2A · 화면 배선 · 사람 확인 — 수당 근거 CSV 문을 더하고 진화대 화면 이력 칸에 내려받기 버튼을 달았다(누른 뒤 이력 재조회)"
 }
 ```

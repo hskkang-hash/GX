@@ -105,6 +105,7 @@ import type { ChangeEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
+import M2BriefLine from '../../dsm/components/M2BriefLine';
 import EventSnapshot from '../../dsm/components/EventSnapshot';
 import StateBoundary from '../../dsm/components/StateBoundary';
 import { useDsmResource } from '../../dsm/hooks/useDsmResource';
@@ -683,6 +684,9 @@ export default function MobileEventDetail() {
             size={10}
             style={{ width: '100%' }}
           >
+            {/* [턴 AQ · 차선 N3 · DSM-U3-01] M2 상단 한 줄 — 역할별 「지금 할 일」 */}
+            <M2BriefLine eventId={e.event_id} />
+
             {/* ① 무엇이 일어났나 */}
             <Card
               size="small"

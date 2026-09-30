@@ -24,10 +24,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "화면 — 지휘 화면(FW-01)의 우선순위 목록",
-      "where": "frontend/src/features/fws/pages/CommandHome.tsx — /command/incidents?sort=risk 와 /risk-index 를 부르지 않는다(grep)",
-      "status": "없음 — 서버 정렬은 실측이지만 지휘 화면에 그 목록·지수 입력 칸이 없다(이 턴 범위 밖 · 화면 미배선)"
+      "where": "frontend/src/features/fws/pages/CommandHome.tsx 우선순위 카드::data-gx=fws-f4-13-list · fws-f4-13-risk(지수·구간) · fws-f4-13-risk-input · fws-f4-13-record · fws-f4-13-refresh · fws-f4-13-open · GET /api/fws/command/incidents?sort=risk · POST .../{id}/risk-index",
+      "status": "measured: tests.test_aq_n3_screens.FwsF4_09_13ScreenTest.test_risk_record_then_list_refetch_reorders — 51·86 기록 뒤 목록 재조회 86 > 51 · 51 이던 사건을 90 으로 고치면 재조회 순서가 뒤집힘 · 다른 테넌트 목록에 없음 · 소스 정적 대조(기록 뒤 refreshPriority)"
     }
   ],
-  "retro": "P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 정렬 키를 K1 등급(→문턱 근사)에서 사건별 기록 지수로 바꾸고, 등급을 거꾸로 심은 네 사건으로 등급 정렬이면 빨강이 되게 쟀다. 86/85.9 경계 확인. 지휘 화면 목록은 없다(열린 행)."
+  "retro": "P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 정렬 키를 K1 등급(→문턱 근사)에서 사건별 기록 지수로 바꾸고, 등급을 거꾸로 심은 네 사건으로 등급 정렬이면 빨강이 되게 쟀다. 86/85.9 경계 확인. 지휘 화면 목록은 없다(열린 행). | 턴 AQ 차선 N3 · 화면 배선 · 사람 확인 · 2026-09-30 · 지휘 화면에 위험도 목록과 지수 입력 칸을 그렸다(기록 뒤 목록 재조회)."
 }
 ```

@@ -49,10 +49,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "골든타임 준수율 — 헬기 물 투하 시각(신고 → 투하 30분)",
-      "where": "저장소에 투하 시각 자체가 없다 — F4-04 는 승인 시각(approved_at)만 적고, 대응 시계 네 시각에도 투하는 없다",
-      "status": "없음 — 명세 §4.3 이 부르는 「헬기 투하」 시각이 저장소에 없어 그 기준의 준수율은 재지 못한다(응답 golden_time_note 에 명시 · 지어내지 않는다)"
+      "where": "저장 칸: frontend/src/features/fws/pages/CommandHome.tsx F4-04 헬기 카드::data-gx=fws-f3-16-dropped-at · fws-f3-16-drop-save · fws-f3-16-drops(재조회 표시) · POST·GET /api/fws/command/incidents/{id}/helicopter-drop → backend/apps/fws/office2.py::record_helicopter_drop·helicopter_drops · 집계: office2.fire_stats heli_drop_compliance_pct·heli_drop_measured_n·heli_drop_compliant_n(신고 접수 F3-06, 없으면 발생 → 첫 투하 · 30분 = GOLDEN_TIME_THRESHOLD_SEC 그대로) · 통계 화면 OfficeReport.tsx::fws-f3-16-heli-drop-pct",
+      "status": "measured: tests.test_aq_n3_screens.FwsF3_16HeliDropScreenTest — 저장 뒤 GET 재조회에 count 1·first_dropped_at · 발생 20분 전·투하 5분 전(준수) + 발생 2시간 전·투하 10분 전(초과) + 기록 없음(분모 밖) → 2건 중 1 = 50.0% · 미래 시각 422 · 다른 테넌트 404·통계 0"
     }
   ],
-  "retro": "P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 골든타임을 「확인 회신 30분」 근사에서 대응 시계 arrived_at 실측으로 바꾸고, 신고 접수 기준이 실제로 읽히는지(66.7% vs 발생 기준 33.3%) 대조했다. 헬기 투하 시각은 저장소에 없어 열린 행으로 남긴다 — 앞 판의 excluded_by P-428 은 뺐다(코드 결손이지 외부 실연동이 아니다 · TITLE_PARTS §3)."
+  "retro": "P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 골든타임을 「확인 회신 30분」 근사에서 대응 시계 arrived_at 실측으로 바꾸고, 신고 접수 기준이 실제로 읽히는지(66.7% vs 발생 기준 33.3%) 대조했다. 헬기 투하 시각은 저장소에 없어 열린 행으로 남긴다 — 앞 판의 excluded_by P-428 은 뺐다(코드 결손이지 외부 실연동이 아니다 · TITLE_PARTS §3). | 턴 AQ 차선 N3 · 화면 배선 · 사람 확인 · 2026-09-30 · 헬기 물 투하 시각이 저장소에 없던 결손을 지휘 화면 F4-04 카드의 저장 칸으로 채우고, 그 기록을 읽는 준수율을 따로 낸다(새 숫자 0)."
 }
 ```

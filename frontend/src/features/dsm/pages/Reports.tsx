@@ -40,6 +40,7 @@ import {
   type ReportRunRow,
 } from '../api';
 import FailureNotice from '../components/FailureNotice';
+import VideoAccessLedgerPanel from '../components/VideoAccessLedgerPanel';
 import StateBoundary from '../components/StateBoundary';
 import { userFacingError } from '../copy';
 import { useDsmResource } from '../hooks/useDsmResource';
@@ -449,6 +450,9 @@ export default function Reports() {
           />
         </StateBoundary>
       </Card>
+
+      {/* [턴 AQ · 차선 N3 · DSM-U4-07 · U4-08] 영상 제공 대장·연간 통계 · 평가 자료 묶음 */}
+      <VideoAccessLedgerPanel />
 
       <Text type="secondary" style={{ fontSize: 12 }}>
         정본은 DOCX 입니다(한글에서 열립니다). PDF 는 같은 글자를 찍은 병행본입니다.

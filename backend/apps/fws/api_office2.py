@@ -199,8 +199,12 @@ class FwsOffice2API:
 
     @route.get("/patrol/enforcement/mine", auth=JwtOrInboundKey())
     @tenant_scoped(reason="이 테넌트의 계도·단속 실적을 읽는다(곁표 audit_scope · 다른 테넌트 0 · 경로 이름 /mine 은 라우트 대장 때문에 그대로)")
-    def patrol_enforcement_stats(self, request):
-        return office2.patrol_enforcement_stats(scope=_scope(request))
+    def patrol_enforcement_stats(self, request, since: str = "", until: str = ""):
+        try:
+            return office2.patrol_enforcement_stats(
+                scope=_scope(request), since=since, until=until)
+        except office2.Office2InputRejected as exc:
+            raise HttpError(422, str(exc))
 
     @route.post("/entry-control-zones", auth=JwtOrInboundKey())
     @tenant_scoped(reason="입산통제구역 설정은 이 테넌트에 남긴다(곁표 audit_scope · P-411)")

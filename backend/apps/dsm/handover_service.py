@@ -102,6 +102,51 @@ def _is_acknowledged(handover_id: int) -> bool:
         logger_name=_ACK_LOGGER_NAME, action=action, limit=1))
 
 
+#: [턴 AQ · 차선 W2B] DSM-U2-05 **인계 창** — 명세(`DSM_재난안전관리App_명세서_v1.1`
+#: §4.2 84행) 원문 「08~09시 인계 메모를 팀장이 확인 체크」의 두 숫자 그대로다.
+#: 지어낸 값이 아니다(해운대 합동 인수인계 관행 — 명세의 근거 칸).
+#: ★ 창 밖 확인을 **막지 않는다** — 명세는 관행을 적었지 거절을 요구하지 않고, 늦은
+#:   확인을 막으면 확인 자체가 사라진다. 대신 창 안/밖을 감사 줄과 홈 카드에 남긴다
+#:   (늦은 확인이 「보인다」 — 궁평2 의 도달 vs 조치 구별과 같은 결).
+HANDOVER_WINDOW_START_HOUR = 8
+HANDOVER_WINDOW_END_HOUR = 9
+#: [턴 AQ · 조율자] 인계 창은 **한국 시각**으로 잰다 — 앱 전역 `TIME_ZONE` 은 Asia/Ho_Chi_Minh
+#: (UTC+7)라 전역으로 재면 08~09시가 한국 10~11시가 된다. 전역은 그대로 두고 이 항목만
+#: Asia/Seoul 로 읽는다(P-260 `config/celery.py` 와 같은 규약).
+HANDOVER_WINDOW_TZ = "Asia/Seoul"
+
+
+def handover_window(now=None) -> dict:
+    """지금이 인계 창(08:00~09:00, 한국 시각) 안인가."""
+    from zoneinfo import ZoneInfo
+
+    from django.utils import timezone
+
+    local = timezone.localtime(now or timezone.now(), ZoneInfo(HANDOVER_WINDOW_TZ))
+    inside = HANDOVER_WINDOW_START_HOUR <= local.hour < HANDOVER_WINDOW_END_HOUR
+    return {
+        "start": f"{HANDOVER_WINDOW_START_HOUR:02d}:00",
+        "end": f"{HANDOVER_WINDOW_END_HOUR:02d}:00",
+        "open": inside,
+    }
+
+
+def _ack_row(handover_id: int):
+    """확인 감사 줄(가장 최근) — 시각·창 안/밖 문구를 홈 카드가 읽는다."""
+    from django.apps import apps
+
+    from common import audit_writer
+
+    rows = audit_writer.read(
+        logger_name=_ACK_LOGGER_NAME, action=_ack_action(handover_id), limit=1)
+    if not rows:
+        return None
+    at = (apps.get_model("logger", "AuditLogs")._base_manager
+          .filter(pk=rows[0].audit_id).values_list("created_on", flat=True).first())
+    return {"ack_id": rows[0].audit_id, "reason": rows[0].reason,
+            "actor_id": rows[0].actor_id, "at": at}
+
+
 @dataclass(frozen=True)
 class HandoverDraft:
     body: str
@@ -307,8 +352,9 @@ def latest(*, scope: TenantScope) -> dict:
     DsmHandover = apps.get_model("stream_monitors", "DsmHandover")
     row = DsmHandover.objects.filter(group=group).order_by("-id").first()
     if row is None:
-        return {"exists": False}
+        return {"exists": False, "handover_window": handover_window()}
 
+    ack = _ack_row(row.pk)
     return {
         "exists": True,
         "id": row.pk,
@@ -320,7 +366,10 @@ def latest(*, scope: TenantScope) -> dict:
         "unresolved_event_ids": row.unresolved_event_ids,
         "created_at": row.created_on,
         #: DSM-U2-05 — 홈 카드 「인계 확인 ✓」가 읽는 칸.
-        "acknowledged": _is_acknowledged(row.pk),
+        "acknowledged": ack is not None,
+        #: [턴 AQ · W2B] 확인 시각·창 안/밖 문구(없으면 None) · 인계 창(명세 08~09시).
+        "acknowledgement": ack,
+        "handover_window": handover_window(),
     }
 
 
@@ -417,9 +466,13 @@ def acknowledge(*, scope: TenantScope, handover_id: int) -> dict:
     if row is None:
         raise Http404("그런 인계 메모가 없습니다.")
 
+    window = handover_window()
     entry = audit_writer.write(
         logger_name=_ACK_LOGGER_NAME, tag=_ACK_TAG, actor=actor,
         action=_ack_action(handover_id), outcome=audit_writer.ALLOWED,
-        reason="교대 인수인계 합동 확인", api_method="POST",
+        reason=(f"교대 인수인계 합동 확인 · 인계 창 {window['start']}~{window['end']} "
+                f"{'안' if window['open'] else '밖'}"),
+        api_method="POST",
     )
-    return {"id": handover_id, "ack_id": entry.audit_id, "acknowledged": True}
+    return {"id": handover_id, "ack_id": entry.audit_id, "acknowledged": True,
+            "in_window": window["open"]}

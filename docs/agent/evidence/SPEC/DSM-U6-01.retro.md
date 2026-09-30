@@ -28,9 +28,9 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
       "status": "measured"
     },
     {
-      "part": "서명 검증(웹훅 서명키 agency 재사용 · P-427)",
-      "where": "X-GX-Signature 불일치 → 401 · 시각 창 밖 → 401",
-      "status": "measured"
+      "part": "서명 검증(서명 비밀 = 그 기관의 들어오는 키 · P-432)",
+      "where": "common/inbound_api_key.py::verify_signed_with_request_key · X-GX-Signature 불일치 → 401 · agency 서명 → 401 · 같은 테넌트 다른 키 서명 → 401 · 시각 창 밖 → 401",
+      "status": "measured — tests.test_dsm_u36_an.U6_01_ExternalEventsTest(test_bad_signature_is_401 · test_agency_key_signature_is_401 · test_another_valid_key_cannot_sign_for_this_key · test_replayed_old_timestamp_is_401) · 턴 AQ 조율자 E 손 확인"
     },
     {
       "part": "기관 인증(들어오는 키 · events:ingest)",

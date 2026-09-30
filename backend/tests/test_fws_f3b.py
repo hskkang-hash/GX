@@ -71,7 +71,8 @@ def _write_evidence2(clause_id: str, *, title: str, title_parts: list, test_ref:
         except (ValueError, TypeError):
             body = {"_raw": (response.content or b"").decode("utf-8", "replace")}
         payload = {
-            "id": clause_id, "title": title, "title_parts": title_parts,
+            #: [턴 AQ · P-431 · 차선 Q] title_parts·retro 는 json 에 안 쓴다(정본 <id>.retro.md).
+            "id": clause_id, "title": title,
             "measured_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
             "measured_by": "django_test_client", "test": test_ref,
             "request": {"method": method, "path": path, "params": request_params},
@@ -79,20 +80,6 @@ def _write_evidence2(clause_id: str, *, title: str, title_parts: list, test_ref:
             "what": what,
         }
         out = EVIDENCE_DIR / f"{clause_id}.json"
-        prev: dict = {}
-        if out.is_file():
-            try:
-                prev = json.loads(out.read_text(encoding="utf-8"))
-            except (ValueError, OSError):
-                prev = {}
-        if retro:
-            payload["retro"] = retro
-        elif "retro" in prev:
-            payload["title_parts"] = prev.get("title_parts", title_parts)
-            payload["retro"] = prev["retro"]
-            for keep in ("title_parts_note", "retro_ap"):
-                if keep in prev:
-                    payload[keep] = prev[keep]
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
                        encoding="utf-8")
 

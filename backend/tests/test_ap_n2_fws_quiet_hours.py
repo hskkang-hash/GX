@@ -57,17 +57,16 @@ def _write_evidence_full(clause_id: str, *, title: str, title_parts: list,
             body = json.loads((response.content or b"{}").decode("utf-8", "replace"))
         except (ValueError, TypeError):
             body = {"_raw": (response.content or b"").decode("utf-8", "replace")}
+        #: [턴 AQ · P-431 · 차선 Q] 사람 표(`title_parts`·`retro`)는 `SPEC/<id>.retro.md`
+        #: (손으로만) — 이 쓰개는 json(기계 실측)에 그 키를 쓰지 않는다.
         payload = {
-            "id": clause_id, "title": title, "title_parts": title_parts,
+            "id": clause_id, "title": title,
             "measured_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
             "measured_by": "django_test_client", "test": test_ref,
             "request": {"method": method, "path": path, "params": request_params},
             "response": {"status": response.status_code, "body": body},
             "what": what,
         }
-        if retro:
-            #: 이 차선이 표를 새로 채웠다는 사람 확인 1줄(TITLE_PARTS_RULE §4).
-            payload["retro"] = retro
         out = EVIDENCE_DIR / f"{clause_id}.json"
         out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
                        encoding="utf-8")

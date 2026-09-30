@@ -72,6 +72,7 @@ LOGGER_NAME = "guardianx.fws.mission"
 TAG = "[FWS-MISSION]"
 
 ACTION_DISPATCH = "mission.dispatch"
+ACTION_EN_ROUTE = "mission.en_route"
 ACTION_ARRIVED = "mission.arrived"
 ACTION_RELEASED = "mission.released"
 ACTION_SUPPORT = "mission.support_request"
@@ -86,7 +87,9 @@ SUPPORT_HEAVY_EQUIPMENT = "heavy_equipment"
 SUPPORT_KINDS = (SUPPORT_PERSONNEL, SUPPORT_WATER, SUPPORT_HELICOPTER,
                 SUPPORT_HEAVY_EQUIPMENT)
 
-RESPONSE_ACTIONS = ("dispatch", "arrived", "released")
+#: ★ [턴 AQ · 차선 W2A] F2-03 「이동」 회신(`en_route`) — K1 4상태에 이동 칸이 없으므로
+#:   사건 상태는 **안 옮긴다**(철수와 같은 판단). 그 진화대 자신의 기록만 남긴다.
+RESPONSE_ACTIONS = ("dispatch", "en_route", "arrived", "released")
 
 
 class MissionActionRejected(Exception):
@@ -131,12 +134,44 @@ def mission_detail(*, scope, event_id: int) -> dict:
         "snapshot_path": event.snapshot_path,
         "response_state": event.response_state,
         "status": event.status,
+        # ★ [턴 AQ · 차선 W2A] F2-03 이동 중 — **이 진화대 자신의** 마지막 회신(사건 칸이 아니다).
+        "my_progress": _my_progress(scope, event.event_id),
+        # ★ [턴 AQ · 차선 W2A] F2-13 — 이 사건이 훈련 창에 든 것인가. 판정은 DSM 공개 면
+        #   `event_data_source` 한 곳(P-201) — 여기서 다시 재지 않는다.
+        "data_source": _data_source(event),
+        "training_badge": _training_badge(event),
         # ★ 정직하게 빈 값 — 지어내지 않는다(D-284, 위 머리말).
         "access_route": None,
         "wind_direction": None,
         "muster_point": None,
         "commander": None,
     }
+
+
+#: 진화대 자신의 진행 — 감사 행위 이름 → 화면이 읽을 한 낱말.
+_PROGRESS_WORD = {
+    ACTION_DISPATCH: "dispatched",
+    ACTION_EN_ROUTE: "en_route",
+    ACTION_ARRIVED: "arrived",
+    ACTION_RELEASED: "released",
+}
+
+
+def _my_progress(scope, event_id: int) -> str | None:
+    """이 사람이 이 임무에 남긴 마지막 회신 한 낱말 — 없으면 `None`(D-284)."""
+    actor = scope.require_actor()
+    rows = _own_rows(actor.pk, event_id=event_id, actions=tuple(_PROGRESS_WORD))
+    return _PROGRESS_WORD.get(rows[-1].api_name) if rows else None
+
+
+def _data_source(event) -> str:
+    return dsm_services.event_data_source(view=event)
+
+
+def _training_badge(event) -> str | None:
+    from apps.fws.training import BADGE_TRAINING
+
+    return BADGE_TRAINING if _data_source(event) == "drill" else None
 
 
 #: 사건 대응 진행의 앞뒤 — 「아직 그 앞일 때만 민다」를 가르는 순서(K1 표와 같은 네 값).
@@ -196,6 +231,22 @@ def respond(*, scope, event_id: int, action: str,
         _write_own(actor, ACTION_DISPATCH, event_id, {"at": now.isoformat()},
                   "임무 출동 탭")
         return {"mission_id": event_id, "action": action, **result}
+
+    if action == "en_route":
+        #: F2-03 「이동」 — 출동한 진화대만 · 사건 상태는 그대로(K1 에 이동 칸이 없다).
+        #: ★ 사건 문지기(남의 것이면 404)를 **먼저** — 순서 검사(409)를 앞세우면 남의 사건 번호의 존재가 샌다.
+        event = dsm_services.event_detail(scope=scope, event_id=event_id)
+        _require_own(actor, event_id, ACTION_DISPATCH, "출동 탭 없이 이동을 알릴 수 없다(이 진화대의 출동 기록이 없다)")
+        text = f"[이동] GPS lat={lat} lng={lng}" + (f" · {note}" if note else "")
+        try:
+            dsm_services.field_reply(scope=scope, event_id=event_id, text=text)
+        except InvalidEventInput as exc:
+            raise MissionActionRejected(str(exc)) from exc
+        _write_own(actor, ACTION_EN_ROUTE, event_id,
+                  {"lat": lat, "lng": lng, "at": now.isoformat()}, "이동 중 회신")
+        return {"mission_id": event_id, "action": action,
+               "en_route_at": now.isoformat(),
+               "to": event.response_state or "occurred", "event_advanced": False}
 
     if action == "arrived":
         #: ★ **순서가 뜻이다.** 전이 문지기(`_advance`)를 먼저 지나고 나서야 회신·
@@ -276,8 +327,8 @@ def mine(*, scope) -> dict:
     """FWS-F2-12 — 내 임무 이력·투입 시간(수당 근거). **이 파일의 자기 감사만**
     읽는다(머리말 참조) — K1 감사를 다시 훑지 않는다."""
     actor = scope.require_actor()
-    rows = _own_rows(actor.pk, actions=(ACTION_DISPATCH, ACTION_ARRIVED,
-                                       ACTION_RELEASED))
+    rows = _own_rows(actor.pk, actions=(ACTION_DISPATCH, ACTION_EN_ROUTE,
+                                       ACTION_ARRIVED, ACTION_RELEASED))
     by_event: dict[int, dict] = {}
     for row in rows:
         payload = row.data_after if isinstance(row.data_after, dict) else {}
@@ -285,10 +336,12 @@ def mine(*, scope) -> dict:
         if event_id is None:
             continue
         entry = by_event.setdefault(event_id, {
-            "mission_id": event_id, "dispatched_at": None,
+            "mission_id": event_id, "dispatched_at": None, "en_route_at": None,
             "arrived_at": None, "released_at": None, "duration_minutes": None})
         if row.api_name == ACTION_DISPATCH:
             entry["dispatched_at"] = payload.get("at")
+        elif row.api_name == ACTION_EN_ROUTE:
+            entry["en_route_at"] = payload.get("at")
         elif row.api_name == ACTION_ARRIVED:
             entry["arrived_at"] = payload.get("at")
         elif row.api_name == ACTION_RELEASED:
@@ -302,3 +355,27 @@ def mine(*, scope) -> dict:
                         if isinstance(m["duration_minutes"], (int, float)))
     return {"missions": missions, "count": len(missions),
            "total_minutes": round(total_minutes, 1) if missions else 0}
+
+
+#: F2-12 CSV 칸 — `mine()` 한 줄의 칸 그대로(새 값을 짓지 않는다).
+CSV_COLUMNS = ("mission_id", "dispatched_at", "en_route_at", "arrived_at",
+               "released_at", "duration_minutes")
+
+
+def mine_csv(*, scope) -> str:
+    """FWS-F2-12 — 내 임무 이력·투입 시간 CSV(수당 근거 · 명세서 §5.2 「표 · CSV」).
+
+    ★ 다시 세지 않는다 — `mine()` 이 낸 값을 그대로 옮긴다(두 벌은 갈린다 · D-212).
+      마지막 줄은 `mine()["total_minutes"]` 합계 한 줄이다.
+    """
+    import csv
+    import io
+
+    data = mine(scope=scope)
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(CSV_COLUMNS)
+    for m in data["missions"]:
+        writer.writerow(["" if m.get(c) is None else m.get(c) for c in CSV_COLUMNS])
+    writer.writerow(["total", "", "", "", "", data["total_minutes"]])
+    return buf.getvalue()

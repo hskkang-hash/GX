@@ -1,44 +1,12 @@
 {
   "id": "FWS-F3-11",
   "title": "대피 초안 — 대상 마을·대피소·문안(CBS 90/157자·마을방송문·앱 푸시) 자동 → F4 승인 요청",
-  "title_parts": [
-    {
-      "part": "대상 마을",
-      "where": "요청 villages_json 목록 → 응답 drafts[].village",
-      "status": "구현 — 실측 2건"
-    },
-    {
-      "part": "대피소",
-      "where": "요청 villages_json.shelter → 응답 drafts[].shelter",
-      "status": "구현 — 실측 2건"
-    },
-    {
-      "part": "문안(CBS 90/157자)",
-      "where": "응답 drafts[].short/long (F6-07 integration.draft_evacuation_notice 재사용)",
-      "status": "구현 — 90/157자 상한 실측"
-    },
-    {
-      "part": "마을방송문",
-      "where": "drafts[].long — annex 가 CBS 문안과 마을방송문을 같은 문안으로 대안(§5.1 F6-07 대안)",
-      "status": "F6-07 대안 그대로 — 별도 필드 없음(문안 공용)"
-    },
-    {
-      "part": "앱 푸시",
-      "where": "해당 없음",
-      "status": "[미확인] — 산림청 스마트산림재난 앱 연동은 F6-07 이 이미 범위 밖으로 남겼다(외부 자격증명 필요) · 이 절도 같은 한계를 물려받는다"
-    },
-    {
-      "part": "F4 승인 요청",
-      "where": "응답 status=pending_f4_approval",
-      "status": "구현 — 승인 대기 상태로 남는다(F4 확정은 F4 담당 몫)"
-    }
-  ],
-  "measured_at": "2026-09-29T11:54:32.120286+00:00",
+  "measured_at": "2026-09-30T05:24:49.738810+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_11_EvacuationPlanTest.test_plan_drafts_cbs_text_per_village_and_waits_for_f4_approval",
   "request": {
     "method": "POST",
-    "path": "/api/fws/office2/evacuations/557/plan?villages_json=%5B%7B%22village%22%3A+%22OO%EB%A9%B4+OO%EB%A6%AC%22%2C+%22shelter%22%3A+%22OO%EA%B2%BD%EB%A1%9C%EB%8B%B9%22%7D%2C+%7B%22village%22%3A+%22OO%EB%A9%B4+XX%EB%A6%AC%22%2C+%22shelter%22%3A+%22XX%EB%A7%88%EC%9D%84%ED%9A%8C%EA%B4%80%22%7D%5D&kind=order",
+    "path": "/api/fws/office2/evacuations/582/plan?villages_json=%5B%7B%22village%22%3A+%22OO%EB%A9%B4+OO%EB%A6%AC%22%2C+%22shelter%22%3A+%22OO%EA%B2%BD%EB%A1%9C%EB%8B%B9%22%7D%2C+%7B%22village%22%3A+%22OO%EB%A9%B4+XX%EB%A6%AC%22%2C+%22shelter%22%3A+%22XX%EB%A7%88%EC%9D%84%ED%9A%8C%EA%B4%80%22%7D%5D&kind=order",
     "params": {
       "villages_json": "[{\"village\": \"OO면 OO리\", \"shelter\": \"OO경로당\"}, {\"village\": \"OO면 XX리\", \"shelter\": \"XX마을회관\"}]",
       "kind": "order"
@@ -47,7 +15,7 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 557,
+      "event_id": 582,
       "kind": "order",
       "status": "pending_f4_approval",
       "villages": [
@@ -60,15 +28,15 @@
           "shelter": "XX마을회관"
         }
       ],
-      "drafted_at": "2026-09-29T11:54:32.102437+00:00",
+      "drafted_at": "2026-09-30T05:24:49.717768+00:00",
       "drafts": [
         {
           "village": "OO면 OO리",
           "shelter": "OO경로당",
-          "event_id": 557,
+          "event_id": 582,
           "area_name": "OO면 OO리",
           "note": "대피소: OO경로당",
-          "drafted_at": "2026-09-29T11:54:32.077678+00:00",
+          "drafted_at": "2026-09-30T05:24:49.688166+00:00",
           "kind": "order",
           "deadline_hours": 8.0,
           "short": "[산불대피지시] OO면 OO리 8시간내 대피소 이동 바람. 문의 산림과·119.",
@@ -79,10 +47,10 @@
         {
           "village": "OO면 XX리",
           "shelter": "XX마을회관",
-          "event_id": 557,
+          "event_id": 582,
           "area_name": "OO면 XX리",
           "note": "대피소: XX마을회관",
-          "drafted_at": "2026-09-29T11:54:32.093357+00:00",
+          "drafted_at": "2026-09-30T05:24:49.707046+00:00",
           "kind": "order",
           "deadline_hours": 8.0,
           "short": "[산불대피지시] OO면 XX리 8시간내 대피소 이동 바람. 문의 산림과·119.",

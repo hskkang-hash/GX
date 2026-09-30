@@ -383,6 +383,7 @@ routes:
   "POST /api/dsm/system/requests/{int:request_id}/handled": session_only
   "POST /api/dsm/system/restart-request": session_only
   "GET /api/dsm/system/storage": session_only
+  "GET /api/dsm/thresholds/alerts": session_only
   "POST /api/dsm/thresholds/observe": session_only
   "POST /api/dsm/thresholds/observe/{int:observation_id}/decide": session_only
   "GET /api/dsm/u5an/control-log": session_only
@@ -416,6 +417,8 @@ routes:
   "POST /api/fws/admin/notify-rules/test": session_only
   "GET /api/fws/admin/posts": session_only
   "POST /api/fws/admin/posts": session_only
+  "GET /api/fws/admin/safety-thresholds": session_only
+  "POST /api/fws/admin/safety-thresholds": session_only
   "GET /api/fws/alerts": session_only
   "POST /api/fws/alerts/{int:delivery_id}/ack": session_only
   "GET /api/fws/ap/drone/flights/minutes/monthly-table": session_only
@@ -440,6 +443,8 @@ routes:
   "POST /api/fws/command/incidents/{int:event_id}/extinguished": session_only
   "GET /api/fws/command/incidents/{int:event_id}/fire-declarations": session_only
   "POST /api/fws/command/incidents/{int:event_id}/golden-time-reason": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/helicopter-drop": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/helicopter-drop": session_only
   "GET /api/fws/command/incidents/{int:event_id}/hourly-report/approve": session_only
   "POST /api/fws/command/incidents/{int:event_id}/hourly-report/approve": session_only
   "POST /api/fws/command/incidents/{int:event_id}/main-fire-out": session_only
@@ -454,6 +459,8 @@ routes:
   "POST /api/fws/command/incidents/{int:event_id}/stage": session_only
   "POST /api/fws/command/incidents/{int:event_id}/sunset": session_only
   "POST /api/fws/command/incidents/{int:event_id}/wind-reading": session_only
+  "GET /api/fws/command/incidents/{int:event_id}/withdrawal-order": session_only
+  "POST /api/fws/command/incidents/{int:event_id}/withdrawal-order": session_only
   "POST /api/fws/drone/flights": session_only
   "GET /api/fws/drone/flights/mine": session_only
   "GET /api/fws/drone/flights/minutes": session_only
@@ -481,6 +488,7 @@ routes:
   "GET /api/fws/liaison/risk-forecast/mine": session_only
   "GET /api/fws/liaison/webhook-events/catalog": session_only
   "GET /api/fws/missions/mine": session_only
+  "GET /api/fws/missions/mine/export": session_only
   "GET /api/fws/missions/{int:event_id}": session_only
   "POST /api/fws/missions/{int:event_id}/field-reply": session_only
   "POST /api/fws/missions/{int:event_id}/response": session_only
@@ -524,6 +532,7 @@ routes:
   "POST /api/fws/patrol/checkin": session_only
   "GET /api/fws/patrol/mine": session_only
   "POST /api/fws/patrol/track": session_only
+  "GET /api/fws/resources/board": session_only
   "GET /api/fws/resources/me/status": session_only
   "POST /api/fws/resources/me/status": session_only
   "GET /api/fws/risk/today": session_only

@@ -149,6 +149,33 @@ class FwsCommandAPI:
         except fws_alerts.AlertInputRejected as exc:
             raise HttpError(422, str(exc))
 
+    # ── FWS-F1-10 철수 지시 → 현장 안전 알림(턴 AQ · 차선 W2C — 기존 notify_event 재사용) ──
+    @route.post("/incidents/{int:event_id}/withdrawal-order", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="남의 테넌트 사건에 철수 지시를 내릴 수 없다")
+    @idempotent("fws.command.withdrawal_order")
+    def order_withdrawal(self, request, event_id: int, reason: str = ""):
+        from apps.fws import alerts as fws_alerts
+        try:
+            return fws_alerts.order_withdrawal(
+                scope=_scope(request), event_id=event_id, reason=reason)
+        except Http404:
+            raise HttpError(404, "그런 사건이 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except fws_alerts.AlertInputRejected as exc:
+            raise HttpError(422, str(exc))
+
+    @route.get("/incidents/{int:event_id}/withdrawal-order", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="남의 테넌트 사건의 철수 지시를 읽을 수 없다")
+    def withdrawal_orders(self, request, event_id: int):
+        from apps.fws import alerts as fws_alerts
+        try:
+            return fws_alerts.withdrawal_orders(scope=_scope(request), event_id=event_id)
+        except Http404:
+            raise HttpError(404, "그런 사건이 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+
     # ── FWS-F4-05 대피 명령 승인(즉시/준비)·해제 ─────────────────────────
     @route.post("/evacuations/{int:event_id}/approve", auth=JwtOrInboundKey())
     @tenant_scoped(reason="남의 테넌트 사건의 대피 명령을 승인할 수 없다")
@@ -429,3 +456,33 @@ class FwsCommandAPI:
             raise HttpError(403, str(exc))
         except SettingNotAvailable as exc:
             raise HttpError(409, str(exc))
+
+    # ── FWS-F3-16 헬기 물 투하 시각(지휘 화면 F4-04 카드와 한 자리) ────────
+    # [턴 AQ · 차선 N3] 기록·집계는 `office2`(F3-16 통계의 원천)가 쥔다 — 이 문은
+    # 지휘 화면이 부르는 HTTP 면만 준다. 경로 끝 조각 `helicopter-drop` 은 이
+    # 컨트롤러의 다른 `/incidents/{id}/...` 리터럴과 겹치지 않는다.
+    @route.post("/incidents/{int:event_id}/helicopter-drop", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="남의 테넌트 사건에 헬기 투하 시각을 남길 수 없다")
+    @idempotent("fws.command.helicopter_drop")
+    def record_helicopter_drop(self, request, event_id: int, dropped_at: str = ""):
+        from apps.fws import office2 as fws_office2
+        try:
+            return fws_office2.record_helicopter_drop(
+                scope=_scope(request), event_id=event_id, dropped_at=dropped_at)
+        except Http404:
+            raise HttpError(404, "그런 사건이 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))
+        except fws_office2.Office2InputRejected as exc:
+            raise HttpError(422, str(exc))
+
+    @route.get("/incidents/{int:event_id}/helicopter-drop", auth=JwtOrInboundKey())
+    @tenant_scoped(reason="남의 테넌트 사건의 헬기 투하 시각을 읽을 수 없다")
+    def helicopter_drops(self, request, event_id: int):
+        from apps.fws import office2 as fws_office2
+        try:
+            return fws_office2.helicopter_drops(scope=_scope(request), event_id=event_id)
+        except Http404:
+            raise HttpError(404, "그런 사건이 없습니다.")
+        except SystemScopeCannotRead as exc:
+            raise HttpError(403, str(exc))

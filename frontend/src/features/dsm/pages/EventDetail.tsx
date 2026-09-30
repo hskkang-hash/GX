@@ -33,6 +33,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Main } from 'rj-core';
 
 import {
+  DsmApiError,
   dsmDelete,
   dsmEndpoint,
   dsmGet,
@@ -137,6 +138,29 @@ export default function EventDetail() {
     () => dsmGet<EventDetailView>(dsmEndpoint.eventDetail(id!)),
     [id],
     { enabled: Boolean(id) },
+  );
+
+  /**
+   * ★ [P-441 · 턴 AQ · 차선 L] **영상 구간 칸이 구간 문(`GET …/clip`)에 직접 묻는다**
+   *   (온보딩 U4#9 「증빙 영상 확인」 — 정본 경로가 바로 이 문이다).
+   *   종전에는 상세 응답의 `clip_path` 한 칸만 보고 「있음/설정 안 됨」을 그렸고,
+   *   이 화면은 구간 문을 한 번도 부르지 않았다 — 그래서 「문이 사는가」를 재는
+   *   쪽이 화면 밖에서(인증 없이) 두드려 401 을 받았다. 휴대전화 상세
+   *   (`MobileEventDetail.tsx` `clip`)가 이미 같은 문을 같은 모양으로 부른다 —
+   *   두 벌 규칙을 만들지 않고 그 모양을 그대로 옮긴다.
+   *   · 404 = 「이 사건에는 구간 참조가 없다」 — 오류가 아니라 빈 값(null)이다.
+   *   · 200 = 구간에 묶인 만료 티켓. **재생기는 그리지 않는다**(계약 11조 · D-306).
+   *     구간(시작·길이)만 적는다.
+   */
+  const clip = useDsmResource<{ start_offset: number; duration: number } | null>(
+    () =>
+      dsmGet<{ start_offset: number; duration: number }>(`/api/dsm/events/${id}/clip`)
+        .catch((err: unknown) => {
+          if (err instanceof DsmApiError && err.status === 404) return null;
+          throw err;
+        }),
+    [id],
+    { enabled: Boolean(id), isEmpty: (v) => v === null },
   );
 
   const deliveries = useDsmResource<{ total: number; deliveries: DeliveryRow[] }>(
@@ -619,7 +643,11 @@ export default function EventDetail() {
                     없는 것과 같은 무게가 된다.
                 */}
                 <Descriptions.Item label="영상 구간" span={2}>
-                  {e.clip_path ? (
+                  {clip.data ? (
+                    <span data-gx="clip-window">
+                      {CLIP_PRESENT} — 시작 {clip.data.start_offset}초 · 길이 {clip.data.duration}초
+                    </span>
+                  ) : e.clip_path ? (
                     CLIP_PRESENT
                   ) : (
                     <Text type="secondary" data-gx="clip-missing">{CLIP_MISSING_REASON}</Text>

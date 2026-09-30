@@ -32,7 +32,6 @@ from django.test import override_settings
 from django.urls import path
 from ninja_extra import NinjaExtraAPI
 
-from common.evidence_guard import allow_evidence_writes
 from tests.test_fws_app import FwsHttpTest
 
 from apps.fws.api_n1 import FwsN1API
@@ -71,18 +70,13 @@ def _drill_path(event_id) -> str:
 def _merge_title_parts(clause_id: str, title_parts: list) -> None:
     """`title_parts`(제목이 부르는 것 ↔ 있는 것 표)를 **기존 실측 증거 위에** 더한다
     — `request`·`response`·`test`(F6_07_EvacuationCbsDraftTest 의 실측)는 그대로
-    두고 표만 더한다(협약 §별표 절 승격 ②)."""
-    path_ = EVIDENCE_DIR / f"{clause_id}.json"
-    with allow_evidence_writes(
-            "P-356 ② FWS-F6-07 title_parts 보강(차선 N1 · 턴 AN · P-392) — "
-            "기존 CBS 초안 실측 위에 웹푸시 훈련 채널 반쪽 채움 표를 더한다"):
-        existing = (json.loads(path_.read_text(encoding="utf-8"))
-                   if path_.is_file() else {"id": clause_id})
-        existing["title_parts"] = title_parts
-        EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
-        path_.write_text(
-            json.dumps(existing, ensure_ascii=False, indent=2, default=str) + "\n",
-            encoding="utf-8")
+    두고 표만 더한다(협약 §별표 절 승격 ②).
+
+    [턴 AQ · P-431 · 차선 Q] 사람 표는 이제 `SPEC/<id>.retro.md`(손으로만)다 — 이
+    쓰개는 json 에 `title_parts` 를 **쓰지 않는다**. 표 모양(빈 칸 0)만 여기서 본다."""
+    for part in title_parts:
+        missing = [k for k in ("part", "where", "status") if not (part.get(k) or "").strip()]
+        assert not missing, f"{clause_id} title_parts 에 빈 칸: {part!r} ({missing})"
 
 
 @override_settings(ROOT_URLCONF=__name__)

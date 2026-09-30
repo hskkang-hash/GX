@@ -1,46 +1,34 @@
 {
   "id": "FWS-F3-07",
   "title": "산림청 상황실 통보 기록(042-481-4119) · 헬기 요청 기록(요청 시각·기지·도착 예정)",
-  "measured_at": "2026-09-29T11:54:26.228039+00:00",
+  "measured_at": "2026-09-30T05:24:44.213675+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_07_AgencyNotifyTest.test_notify_records_the_reused_phone_number_and_helicopter_request",
   "request": {
     "method": "GET",
-    "path": "/api/fws/office/fire-events/551/agency-notify",
+    "path": "/api/fws/office/fire-events/576/agency-notify",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 551,
+      "event_id": 576,
       "count": 1,
       "notifications": [
         {
           "note": "산불 3단계 급수 요청",
-          "__seq__": 301,
-          "__hash__": "7ecd528feca31a6b37ae807dec227fb54b92ba7d2d6637236d0bf2b8cb361a84",
-          "event_id": 551,
-          "notified_at": "2026-09-29T11:54:26.180540+00:00",
+          "__seq__": 390,
+          "__hash__": "42ff259fae8adb546f3c23f593589c04f4599c2ab9929d44fe00a8d795fd89c5",
+          "event_id": 576,
+          "notified_at": "2026-09-30T05:24:44.174836+00:00",
           "agency_phone": "042-481-4119",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "helicopter_eta": "2026-11-05T04:10:00+09:00",
           "helicopter_base": "원주기지",
-          "helicopter_requested_at": "2026-09-29T11:54:26.180540+00:00"
+          "helicopter_requested_at": "2026-09-30T05:24:44.174836+00:00"
         }
       ]
     }
   },
-  "what": "POST 로 남긴 산림청 통보(번호는 F1-08 contacts.FOREST_REPORT_NUMBER 재사용)와 헬기 요청(기지·도착예정)이 GET 재조회에 그대로 남는다",
-  "title_parts": [
-    {
-      "part": "산림청 상황실 통보 기록(042-481-4119)",
-      "where": "response.agency_phone(contacts.FOREST_REPORT_NUMBER 재사용) · notified_at",
-      "status": "present"
-    },
-    {
-      "part": "헬기 요청 기록(요청시각·기지·도착예정)",
-      "where": "response.{helicopter_requested_at,helicopter_base,helicopter_eta}",
-      "status": "present"
-    }
-  ]
+  "what": "POST 로 남긴 산림청 통보(번호는 F1-08 contacts.FOREST_REPORT_NUMBER 재사용)와 헬기 요청(기지·도착예정)이 GET 재조회에 그대로 남는다"
 }

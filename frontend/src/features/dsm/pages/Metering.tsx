@@ -26,7 +26,14 @@
 import { Alert, Button, Card, Col, Row, Space, Table, Tag, Typography } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 
-import { DsmApiError, dsmGet, dsmMeteringEndpoint } from '../api';
+import {
+  DsmApiError,
+  dsmGet,
+  dsmMeteringEndpoint,
+  dsmU56AdminEndpoint,
+  type DsmStorageDeclaration,
+} from '../api';
+import { safeFreeText } from '../copy';
 import FailureNotice from '../components/FailureNotice';
 import StateBoundary from '../components/StateBoundary';
 import { useDsmResource } from '../hooks/useDsmResource';
@@ -97,6 +104,18 @@ export default function Metering() {
   );
   const series = useDsmResource<UsageSeries>(
     () => dsmGet<UsageSeries>(dsmMeteringEndpoint.usageSeries, { months: MONTHS }),
+    [],
+  );
+  /**
+   * ★ [P-441 · 턴 AQ · 차선 L] **저장 용량을 「상한 대비 몇 %」로도 말한다** (온보딩 U5#15).
+   *   「저장 용량 확인」의 사람은 이 화면에서 바이트 수를 보고 「그래서 얼마나 찼나」를
+   *   다시 묻는다 — 그 답(%)은 `/dsm/system` 에만 있었다. **새 셈을 만들지 않는다**:
+   *   같은 판정 하나(`GET /api/dsm/system/storage` · `ops_tasks.storage_declaration()`)를
+   *   그대로 읽는다. 상한이 선언되지 않았거나 사용량을 못 쟀으면 **% 를 지어내지 않고**
+   *   서버가 준 사유를 그린다(D-301 과 같은 결).
+   */
+  const storagePct = useDsmResource<DsmStorageDeclaration>(
+    () => dsmGet<DsmStorageDeclaration>(dsmU56AdminEndpoint.storage),
     [],
   );
 
@@ -215,9 +234,10 @@ export default function Metering() {
                         cellText(cell)
                       )}
                     </div>
+                    {/* [P-441 · 턴 AQ · L] 서버 자유 문장 — 대장 표기(강조 별표 등)만 뗀다. */}
                     {cell.why && (
                       <Text type="warning" style={{ fontSize: 11 }}>
-                        {cell.why}
+                        {safeFreeText(cell.why)}
                       </Text>
                     )}
                   </Card>
@@ -225,6 +245,32 @@ export default function Metering() {
               ))}
             </Row>
           </>
+        </StateBoundary>
+
+        {/* [P-441 · 턴 AQ · L] 저장 용량 — 상한 대비. 위 `storagePct` 머리말. */}
+        <StateBoundary
+          state={storagePct.state}
+          reason={storagePct.reason} status={storagePct.status}
+          onRetry={storagePct.reload}
+        >
+          <Card size="small" title="저장 용량 — 상한 대비" data-gx="u5-15-storage-pct">
+            {storagePct.data?.declared
+              && typeof storagePct.data.used_pct === 'number' ? (
+                <Space direction="vertical" size={2}>
+                  <Text strong style={{ fontSize: 20 }}>
+                    {storagePct.data.used_pct}%
+                  </Text>
+                  <Text type="secondary">
+                    상한 {storagePct.data.capacity_gb} GB 중 {storagePct.data.used_gb} GB 사용
+                  </Text>
+                </Space>
+              ) : (
+                <Text type="secondary">
+                  {safeFreeText(storagePct.data?.reason)
+                    || '상한 대비 비율을 아직 낼 수 없습니다. 저장 상한은 운영 담당에게 문의하십시오.'}
+                </Text>
+              )}
+          </Card>
         </StateBoundary>
 
         {/* 못 잰 칸이 있으면 **말한다.** 조용히 0으로 두면 「안 썼다」가 된다. */}
@@ -270,7 +316,7 @@ export default function Metering() {
             <Paragraph key={cell.key} style={{ marginBottom: 4 }}>
               <Tag>{cell.label}</Tag>
               <Text type="secondary" style={{ fontSize: 12 }}>
-                {usage.data?.definitions?.[cell.key]}
+                {safeFreeText(usage.data?.definitions?.[cell.key])}
               </Text>
             </Paragraph>
           ))}

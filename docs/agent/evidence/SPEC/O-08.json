@@ -1,7 +1,7 @@
 {
   "id": "O-08",
   "title": "온보딩 관제",
-  "measured_at": "2026-09-29T11:58:58.047722+00:00",
+  "measured_at": "2026-09-30T05:29:25.794048+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O08_OnboardingBoardTest.test_reads_the_48_row_ledger",
   "request": {
@@ -122,33 +122,5 @@
       ]
     }
   },
-  "what": "GET /api/dsm/ops/onboarding 이 docs/agent/evidence/ONB-T/turn_*.json(48행 재측 장부)의 최신 파일을 읽어 역할별(U1~U6) 진행률·막힌 카드·테넌트별 D-day 진행을 계산해 낸다 — 새 저장 0, 완결조건('테넌트별 D-7~D+30 진행 · 역할별 진행률 · 48행 재측 결과 · 막힌 카드') 실측.",
-  "title_parts": [
-    {
-      "part": "테넌트별 D-7~D+30 진행",
-      "where": "tenants[].day_n/stage",
-      "status": "measured"
-    },
-    {
-      "part": "역할별 진행률 6",
-      "where": "role_progress_6",
-      "status": "measured"
-    },
-    {
-      "part": "48행 재측 결과",
-      "where": "score_over_denominator/green/half/red",
-      "status": "measured"
-    },
-    {
-      "part": "막힌 카드",
-      "where": "blocked_cards",
-      "status": "measured"
-    },
-    {
-      "part": "화면(D-7~D+30 표·역할별 진행률·막힌 카드)",
-      "where": "OpsHome.tsx:166-172 — score_over_denominator 문자열 1개만 렌더",
-      "status": "없음(설계가 요구한 표·진행률·막힌카드가 화면에 없다)"
-    }
-  ],
-  "retro": "P-419 재판정(턴 AP · N1) · 2026-09-29 · 테넌트별 진행·역할별 6종·48행 재측·막힌 카드 API 는 실측 닫힘을 재확인했다. 화면은 숫자 하나만 보여준다 — 반쪽으로 내린다."
+  "what": "GET /api/dsm/ops/onboarding 이 docs/agent/evidence/ONB-T/turn_*.json(48행 재측 장부)의 최신 파일을 읽어 역할별(U1~U6) 진행률·막힌 카드·테넌트별 D-day 진행을 계산해 낸다 — 새 저장 0, 완결조건('테넌트별 D-7~D+30 진행 · 역할별 진행률 · 48행 재측 결과 · 막힌 카드') 실측."
 }
