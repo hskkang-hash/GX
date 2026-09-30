@@ -1,7 +1,7 @@
 {
   "id": "O-07",
   "title": "백업·복구",
-  "measured_at": "2026-09-30T05:29:23.558376+00:00",
+  "measured_at": "2026-09-30T06:26:31.650226+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O07_BackupBoardTest.test_backup_and_restore_receipts_are_read_not_invented",
   "request": {

@@ -1,12 +1,12 @@
 {
   "id": "FWS-F2-05",
   "title": "지원 요청(인력·물·헬기·중장비)",
-  "measured_at": "2026-09-30T05:47:26.581878+00:00",
+  "measured_at": "2026-09-30T06:19:49.623209+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_05_SupportRequestTest.test_support_request_reaches_field_reply",
   "request": {
     "method": "POST",
-    "path": "/api/fws/missions/6/field-reply?kind=helicopter&amount=1&note=%EC%82%B0%EB%B6%88+%EC%A7%84%ED%99%94+%ED%97%AC%EA%B8%B0+%EC%9A%94%EC%B2%AD",
+    "path": "/api/fws/missions/581/field-reply?kind=helicopter&amount=1&note=%EC%82%B0%EB%B6%88+%EC%A7%84%ED%99%94+%ED%97%AC%EA%B8%B0+%EC%9A%94%EC%B2%AD",
     "params": {
       "kind": "helicopter",
       "amount": "1",
@@ -16,8 +16,8 @@
   "response": {
     "status": 200,
     "body": {
-      "mission_id": 6,
-      "reply_id": 21,
+      "mission_id": 581,
+      "reply_id": 428,
       "kind": "helicopter",
       "amount": "1"
     }

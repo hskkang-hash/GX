@@ -1,7 +1,7 @@
 {
   "id": "FWS-F3-16",
   "title": "통계 — 발생·면적·원인·시간대·구역·오인율·확인 시간·골든타임 준수율",
-  "measured_at": "2026-09-30T05:24:57.154539+00:00",
+  "measured_at": "2026-09-30T06:20:50.000699+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_16_FireStatsTest.test_stats_covers_all_eight_parts",
   "request": {
@@ -16,8 +16,8 @@
       "until": null,
       "occurrence_count": 5,
       "by_hour": {
-        "4": 3,
-        "5": 2
+        "5": 3,
+        "6": 2
       },
       "by_zone": {
         "dsm-stream-A": 5

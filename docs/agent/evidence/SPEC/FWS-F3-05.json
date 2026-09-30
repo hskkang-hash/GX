@@ -1,12 +1,12 @@
 {
   "id": "FWS-F3-05",
   "title": "오인 종결(사유) · 산불 확정",
-  "measured_at": "2026-09-30T05:24:40.640955+00:00",
+  "measured_at": "2026-09-30T06:20:07.314866+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_05_MisjudgeOrConfirmReuseTest.test_office_actor_confirms_fire_via_existing_f1_06_door",
   "request": {
     "method": "POST",
-    "path": "/api/fws/verifications/572/reply?result=fire_confirmed",
+    "path": "/api/fws/verifications/589/reply?result=fire_confirmed",
     "params": {
       "result": "fire_confirmed"
     }
@@ -14,11 +14,12 @@
   "response": {
     "status": 200,
     "body": {
-      "verification_id": 572,
-      "reply_id": 388,
+      "verification_id": 589,
+      "reply_id": 452,
       "result": "fire_confirmed",
       "reason_code": null,
-      "verdict": "confirmed"
+      "verdict": "confirmed",
+      "photo_id": null
     }
   },
   "what": "산림과 담당(user_a)이 **새 라우트 없이** 기존 F1-06 문(`/api/fws/verifications/{id}/reply`)을 그대로 두드려 산불을 확정한다(verdict=confirmed) — 오인 종결(사유)은 result=false_alarm+reason_code 로 같은 문이 이미 받는다(P-397 재사용, 새 코드 0줄)"

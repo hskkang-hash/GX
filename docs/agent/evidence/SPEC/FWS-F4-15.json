@@ -1,22 +1,22 @@
 {
   "id": "FWS-F4-15",
   "title": "사후 보고서 1쪽(대응 시계·자원·대피·피해)",
-  "measured_at": "2026-09-30T05:25:31.359454+00:00",
+  "measured_at": "2026-09-30T06:21:26.567763+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_15_PostIncidentReportTest.test_pdf_and_summary_cover_clock_resources_and_evacuation",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/612/post-report/summary",
+    "path": "/api/fws/command/incidents/629/post-report/summary",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 612,
+      "event_id": 629,
       "response_clock": {
-        "event_id": 612,
+        "event_id": 629,
         "stream_monitor_name": "dsm-stream-A",
-        "occurred_at": "2026-09-30T05:24:30.287976+00:00",
+        "occurred_at": "2026-09-30T06:20:25.586455+00:00",
         "acknowledged_at": null,
         "arrived_at": null,
         "closed_at": null,
@@ -25,7 +25,7 @@
         "close_seconds": null,
         "auto_closed": false,
         "reopened": 0,
-        "elapsed_seconds": 61.063184,
+        "elapsed_seconds": 60.973575,
         "urgency_tier": 1,
         "transitions": []
       },
@@ -34,13 +34,13 @@
         {
           "kind": "crew",
           "note": "",
-          "__seq__": 475,
-          "__hash__": "7891490b3416308f460e7954914988547ce08bceb9267e5552885d36e00c5455",
-          "event_id": 612,
-          "reply_id": 474,
-          "assigned_at": "2026-09-30T05:25:30.430161+00:00",
-          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #612(주소 미상) 대응 바랍니다.",
-          "__prev_hash__": "d01c32b7ab8bda752d8b013f284e8d2e205174ee16e69bb852e3123ed13d77dd",
+          "__seq__": 539,
+          "__hash__": "9efbc59ba022142fdd9947dbb3641f1da68bd0b61398a7e119cf4ccb31bc37bf",
+          "event_id": 629,
+          "reply_id": 538,
+          "assigned_at": "2026-09-30T06:21:25.695255+00:00",
+          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #629(주소 미상) 대응 바랍니다.",
+          "__prev_hash__": "f3d2b50889a95c8569f33d3fbaf92b81e9189eaec984b6274a564dd6662d4be4",
           "resource_name": "1진화대",
           "notified_count": 1
         }

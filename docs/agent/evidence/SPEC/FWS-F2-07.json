@@ -1,18 +1,18 @@
 {
   "id": "FWS-F2-07",
   "title": "안전 경보 수신(풍향 급변·헬기 투하 구역 이탈)",
-  "measured_at": "2026-09-30T05:47:27.892945+00:00",
+  "measured_at": "2026-09-30T06:19:51.300790+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_07_SafetyAlertTest.test_wind_shift_alert_arrives_and_acks_via_shared_alerts_endpoint",
   "request": {
     "method": "POST",
-    "path": "/api/fws/alerts/1/ack",
+    "path": "/api/fws/alerts/52/ack",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "delivery_id": 1,
+      "delivery_id": 52,
       "acknowledged": true
     }
   },

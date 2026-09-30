@@ -1,12 +1,12 @@
 {
   "id": "FWS-U5-01",
   "title": "산불 감시 카메라 등록(고지대·PTZ 프리셋·열화상 채널·감시 반경 폴리곤)",
-  "measured_at": "2026-09-30T05:45:49.069143+00:00",
+  "measured_at": "2026-09-30T06:21:57.872395+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_u5.U5_01_CameraFireMarkerTest.test_save_and_reread_carries_every_named_part",
   "request": {
     "method": "POST",
-    "path": "/api/fws/admin/cameras/63/fire-marker?is_highland=True&thermal_channel=thermal-1&ptz_presets=north%2Csouth&radius_polygon_json=%5B%7B%22lat%22%3A36.1%2C%22lng%22%3A127.2%7D%2C%7B%22lat%22%3A36.2%2C%22lng%22%3A127.3%7D%5D",
+    "path": "/api/fws/admin/cameras/508/fire-marker?is_highland=True&thermal_channel=thermal-1&ptz_presets=north%2Csouth&radius_polygon_json=%5B%7B%22lat%22%3A36.1%2C%22lng%22%3A127.2%7D%2C%7B%22lat%22%3A36.2%2C%22lng%22%3A127.3%7D%5D",
     "params": {
       "is_highland": true,
       "thermal_channel": "thermal-1",
@@ -17,7 +17,7 @@
   "response": {
     "status": 200,
     "body": {
-      "camera_id": 63,
+      "camera_id": 508,
       "is_highland": true,
       "thermal_channel": "thermal-1",
       "ptz_presets": [
@@ -34,7 +34,7 @@
           "lng": 127.3
         }
       ],
-      "saved_at": "2026-09-30T05:45:49.004991+00:00"
+      "saved_at": "2026-09-30T06:21:57.669345+00:00"
     }
   },
   "what": "POST .../cameras/{id}/fire-marker 로 저장한 고지대·열화상 채널·PTZ 프리셋·감시 반경 폴리곤이 재조회·목록 양쪽에 그대로 실려 온다 — 기존 DSM 카메라 모델(StreamMonitor)을 재사용하고 표식만 더했다"

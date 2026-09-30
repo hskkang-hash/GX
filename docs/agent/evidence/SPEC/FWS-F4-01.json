@@ -1,32 +1,32 @@
 {
   "id": "FWS-F4-01",
   "title": "지휘 화면 — 사건 1건 전체(지도·화선·자원·시계·대피·단계)",
-  "measured_at": "2026-09-30T05:25:33.287235+00:00",
+  "measured_at": "2026-09-30T06:21:28.423197+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_01_CommandScreenTest.test_one_screen_bundles_stage_resources_clock_evacuation_post",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/613/command",
+    "path": "/api/fws/command/incidents/630/command",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 613,
+      "event_id": 630,
       "incident": {
         "address": null,
         "severity": "critical",
         "response_state": "occurred",
-        "occurred_at": "2026-09-30T05:24:32.900715+00:00"
+        "occurred_at": "2026-09-30T06:20:27.912280+00:00"
       },
       "stage": {
         "stage": "2단계",
         "reason": "확산 우려",
-        "__seq__": 478,
-        "__hash__": "506dcf24ff3afe42b5bd169901f50cba89ea05aab69c94d06bc80c7d11bf762e",
-        "event_id": 613,
+        "__seq__": 542,
+        "__hash__": "d249536c1fccbe80575f6523777800cbac220d22c4af1797094825c892fd7cd8",
+        "event_id": 630,
         "prior_stage": null,
-        "confirmed_at": "2026-09-30T05:25:32.986008+00:00",
+        "confirmed_at": "2026-09-30T06:21:27.970145+00:00",
         "confirmed_by": "dsm_user_a",
         "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
         "command_level": null
@@ -35,19 +35,19 @@
         {
           "kind": "crew",
           "note": "",
-          "__seq__": 480,
-          "__hash__": "7d9bea0271e46ae68f8d11f0d4c6ed6576ecb12d99fa74ec1fb23129c68fdb15",
-          "event_id": 613,
-          "reply_id": 479,
-          "assigned_at": "2026-09-30T05:25:33.079013+00:00",
-          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #613(주소 미상) 대응 바랍니다.",
-          "__prev_hash__": "645abcd04bb9a495cfb9fe4fd5c287c319aa714822855f5b52ad62db7443db53",
+          "__seq__": 544,
+          "__hash__": "82d9f7bde31efae993a4f7e585bf63a9607ffc81a80d3af69ea49ce6cfc4d2ec",
+          "event_id": 630,
+          "reply_id": 543,
+          "assigned_at": "2026-09-30T06:21:28.056730+00:00",
+          "mission_text": "[자원배정] 진화대 '1진화대' 배정 — 사건 #630(주소 미상) 대응 바랍니다.",
+          "__prev_hash__": "376c392077897c254d476fceb10c5ef2a0a1e3d9d97c1cf04bfef2c7540a3652",
           "resource_name": "1진화대",
           "notified_count": 1
         }
       ],
       "response_clock": {
-        "reported_at": "2026-09-30T05:24:32.900715+00:00",
+        "reported_at": "2026-09-30T06:20:27.912280+00:00",
         "acknowledged_at": null,
         "helicopter_dropped_at": null,
         "main_fire_out_at": null,
@@ -59,13 +59,13 @@
       },
       "command_post": {
         "note": "",
-        "__seq__": 483,
+        "__seq__": 547,
         "address": "OO지휘소",
-        "__hash__": "e4af12ebae8b580ae419f6aa1b7a9b7e5f48a2e9387336c7acb3bfee8eec7b26",
-        "event_id": 613,
-        "declared_at": "2026-09-30T05:25:33.176588+00:00",
+        "__hash__": "7491cd7f887f7c441f3cf48ff165e70bdb3dd4d5388f92ffbe65aa958ce39260",
+        "event_id": 630,
+        "declared_at": "2026-09-30T06:21:28.226865+00:00",
         "declared_by": "dsm_user_a",
-        "__prev_hash__": "afa2e134987073e37510503f3fbd4e51872f535e8e72c8c293994767ae7ab3b9",
+        "__prev_hash__": "46ef81a2a94463369d8b1770c31527d1f36df699e6330eb9df274630e7c67828",
         "org_composition": "산림과·소방서",
         "situation_room_phone": null
       }

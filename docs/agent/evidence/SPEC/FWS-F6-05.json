@@ -1,28 +1,28 @@
 {
   "id": "FWS-F6-05",
   "title": "헬기 출동 요청·위치 수신(산림항공 · 수동 입력 대안)",
-  "measured_at": "2026-09-30T05:25:53.019685+00:00",
+  "measured_at": "2026-09-30T06:21:47.420191+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_05_HelicopterRequestTest.test_request_then_list_by_event",
   "request": {
     "method": "GET",
-    "path": "/api/fws/liaison/fire-events/633/helicopter-requests",
+    "path": "/api/fws/liaison/fire-events/650/helicopter-requests",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 633,
+      "event_id": 650,
       "count": 1,
       "requests": [
         {
           "lat": 37.3,
           "lng": 127.9,
           "note": "산불 3단계 급수 요청",
-          "__seq__": 506,
-          "__hash__": "2f8465cc24a20b7744bc4b5f47cea54db8b32539f1ad155da976db13e5ecd915",
-          "event_id": 633,
-          "requested_at": "2026-09-30T05:25:52.974756+00:00",
+          "__seq__": 570,
+          "__hash__": "e8020a1fc48951d6ab5f49dbff314db2ab2e8ff0a0d4e1c88396bec9f9fc998b",
+          "event_id": 650,
+          "requested_at": "2026-09-30T06:21:47.377057+00:00",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "requesting_org": "산림항공본부 원주기지"
         }

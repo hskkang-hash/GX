@@ -1,12 +1,12 @@
 {
   "id": "FWS-F3-04",
   "title": "탐지 확인 요청 1클릭 — 카드에서 가장 가까운 감시원/드론에 확인 요청 · 10분 시계",
-  "measured_at": "2026-09-30T05:24:38.805496+00:00",
+  "measured_at": "2026-09-30T06:20:03.642121+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_04_VerificationRequestTest.test_request_starts_a_ten_minute_clock_and_suggests_nearest_officer",
   "request": {
     "method": "POST",
-    "path": "/api/fws/office/fire-events/570/verification-request?note=%EC%B9%B4%EB%93%9C+%ED%99%95%EC%9D%B8",
+    "path": "/api/fws/office/fire-events/587/verification-request?note=%EC%B9%B4%EB%93%9C+%ED%99%95%EC%9D%B8",
     "params": {
       "note": "카드 확인"
     }
@@ -14,16 +14,16 @@
   "response": {
     "status": 200,
     "body": {
-      "request_id": 385,
-      "event_id": 570,
-      "requested_at": "2026-09-30T05:24:38.721052+00:00",
-      "deadline_at": "2026-09-30T05:34:38.721052+00:00",
+      "request_id": 449,
+      "event_id": 587,
+      "requested_at": "2026-09-30T06:20:03.542570+00:00",
+      "deadline_at": "2026-09-30T06:30:03.542570+00:00",
       "timeout_minutes": 10,
       "notified_count": 1,
       "note": "카드 확인",
       "suggested_officers": [
         {
-          "user_id": 411,
+          "user_id": 451,
           "post_code": "P-7",
           "distance_km": 0.14
         }

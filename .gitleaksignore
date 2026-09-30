@@ -50,3 +50,9 @@ docs/agent/evidence/P-64/배치_완주_20260905_TF_조율자.md:gx-agent-docs-he
 # 같은 파일의 다른 카드 키 여섯은 엔트로피가 낮아 안 걸렸다. ⚠ 시험이 증거를 다시 쓰며 줄 번호가
 # 밀리면 이 줄은 안 맞는다 — 그때는 줄을 새로 읽고 고친다(값 모양이 카드 키인지 먼저 본다).
 docs/agent/evidence/SPEC/FWS-F3-20.json:generic-api-key:29
+# 턴 AQ(2026-09-30 · 조율자): P-431 로 json 의 사람 표 키를 걷어 같은 카드 키 칸이 17행으로 올라왔다 — 값 모양을 다시 읽었다(카드 식별자).
+docs/agent/evidence/SPEC/FWS-F3-20.json:generic-api-key:17
+# 같은 지문의 Windows 모양(gitleaks --no-git 이 호스트에서 내는 역슬래시 경로 · 턴 AQ 실측) — 슬래시 줄만으로는 안 맞았다.
+docs\agent\evidence\SPEC\FWS-F3-20.json:generic-api-key:17
+# verify_secret_scan.py 는 --source 에 절대 경로를 넘겨 파일 면 지문이 절대 경로로 나온다(턴 AQ 실측) — 이 저장소 자리의 같은 지문. 판정기 쪽 고침은 회차 뒤(보고).
+C:\GuardianX\guardianx-source\docs\agent\evidence\SPEC\FWS-F3-20.json:generic-api-key:17

@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-10",
   "title": "안전 알림 수신(풍향 급변·대피 지시·철수)",
-  "measured_at": "2026-09-30T05:47:41.195643+00:00",
+  "measured_at": "2026-09-30T06:19:38.964986+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_10_AlertsTest.test_alert_arrives_and_can_be_acknowledged",
   "request": {
@@ -14,11 +14,11 @@
     "body": {
       "alerts": [
         {
-          "delivery_id": 2,
-          "event_id": 13,
+          "delivery_id": 51,
+          "event_id": 575,
           "channel": "email",
-          "occurred_at": "2026-09-30T05:46:41.132485+00:00",
-          "sent_at": "2026-09-30T05:47:41.162054+00:00",
+          "occurred_at": "2026-09-30T06:18:38.875735+00:00",
+          "sent_at": "2026-09-30T06:19:38.920095+00:00",
           "acknowledged": false
         }
       ]

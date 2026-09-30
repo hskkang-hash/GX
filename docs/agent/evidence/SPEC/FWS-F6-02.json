@@ -1,12 +1,12 @@
 {
   "id": "FWS-F6-02",
   "title": "웹훅 이벤트 종류(fws.fire.confirmed/stage_changed/evacuation_ordered/extinguished)",
-  "measured_at": "2026-09-30T05:25:48.829165+00:00",
+  "measured_at": "2026-09-30T06:21:44.205602+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_02_WebhookEventsTest.test_notify_reaches_a_subscribed_situation_room_with_200",
   "request": {
     "method": "POST",
-    "path": "/api/fws/liaison/fire-events/630/webhook-notify?kind=fws.fire.confirmed&note=%ED%98%84%EC%9E%A5+%ED%99%95%EC%9D%B8+%EC%99%84%EB%A3%8C",
+    "path": "/api/fws/liaison/fire-events/647/webhook-notify?kind=fws.fire.confirmed&note=%ED%98%84%EC%9E%A5+%ED%99%95%EC%9D%B8+%EC%99%84%EB%A3%8C",
     "params": {
       "kind": "fws.fire.confirmed",
       "note": "현장 확인 완료"
@@ -15,7 +15,7 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 630,
+      "event_id": 647,
       "kind": "fws.fire.confirmed",
       "note": "현장 확인 완료",
       "total_deliveries": 2,
@@ -23,13 +23,13 @@
       "webhook_succeeded": 1,
       "deliveries": [
         {
-          "delivery_id": 58,
+          "delivery_id": 62,
           "channel": "email",
           "succeeded": true,
           "failure_reason": null
         },
         {
-          "delivery_id": 59,
+          "delivery_id": 63,
           "channel": "webhook",
           "succeeded": true,
           "failure_reason": null

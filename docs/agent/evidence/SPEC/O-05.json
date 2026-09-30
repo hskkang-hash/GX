@@ -1,7 +1,7 @@
 {
   "id": "O-05",
   "title": "건강 보드(전 테넌트)",
-  "measured_at": "2026-09-30T05:29:37.265833+00:00",
+  "measured_at": "2026-09-30T06:26:42.675386+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O05_HealthBoardTest.test_tenant_count_equals_rows_and_red_opens_one_incident",
   "request": {
@@ -44,8 +44,8 @@
           "auto_incident_id": null
         },
         {
-          "tenant_code": "t-840368e2",
-          "name": "온보딩 시험 테넌트 t-840368e2",
+          "tenant_code": "t-5ef40567",
+          "name": "온보딩 시험 테넌트 t-5ef40567",
           "cameras": {
             "active": 0,
             "total": 1
@@ -56,7 +56,7 @@
           "backup_verdict": "OK",
           "survival_alert_late": 0,
           "color": "red",
-          "auto_incident_id": "8349c4c1fab9"
+          "auto_incident_id": "ea3dce7504d7"
         }
       ],
       "tenant_count": 3,

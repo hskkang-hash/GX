@@ -1,12 +1,12 @@
 {
   "id": "FWS-F6-07",
   "title": "스마트산림재난 앱 대피 푸시 연계(산림청) [미확인] · 대안 CBS 초안",
-  "measured_at": "2026-09-30T05:25:57.408418+00:00",
+  "measured_at": "2026-09-30T06:21:50.265924+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_07_EvacuationCbsDraftTest.test_draft_respects_p386_deadline_and_char_limits",
   "request": {
     "method": "POST",
-    "path": "/api/fws/liaison/fire-events/635/evacuation-cbs-draft?area_name=OO%EB%A9%B4+OO%EB%A6%AC+1~5%EA%B5%AC&kind=order",
+    "path": "/api/fws/liaison/fire-events/652/evacuation-cbs-draft?area_name=OO%EB%A9%B4+OO%EB%A6%AC+1~5%EA%B5%AC&kind=order",
     "params": {
       "area_name": "OO면 OO리 1~5구",
       "kind": "order"
@@ -15,10 +15,10 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 635,
+      "event_id": 652,
       "area_name": "OO면 OO리 1~5구",
       "note": "",
-      "drafted_at": "2026-09-30T05:25:57.382904+00:00",
+      "drafted_at": "2026-09-30T06:21:50.242274+00:00",
       "kind": "order",
       "deadline_hours": 8.0,
       "short": "[산불대피지시] OO면 OO리 1~5구 8시간내 대피소 이동 바람. 문의 산림과·119.",

@@ -1,38 +1,38 @@
 {
   "id": "DSM-U2-05",
-  "measured_at": "2026-09-30T05:42:32.938151+00:00",
+  "measured_at": "2026-09-30T06:27:17.734704+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_dump_dsm_u2_05_evidence",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/handover/5/ack",
+    "path": "/api/dsm/handover/7/ack",
     "body": {}
   },
   "response": {
     "status": 200,
     "body": {
       "ack": {
-        "id": 5,
-        "ack_id": 30,
+        "id": 7,
+        "ack_id": 707,
         "acknowledged": true,
         "in_window": false
       },
       "latest_after_ack": {
         "exists": true,
-        "id": 5,
-        "body": "[교대 인계 자동 초안] 2026-09-30 12:42 (최근 24시간)\n미처리 0건\n시스템 사건 0건\n내가 처리한 사건 0건\n근무 편성 없음(등록된 근무표 없음)",
+        "id": 7,
+        "body": "[교대 인계 자동 초안] 2026-09-30 13:27 (최근 24시간)\n미처리 0건\n시스템 사건 0건\n내가 처리한 사건 0건\n근무 편성 없음(등록된 근무표 없음)",
         "note": "",
         "unresolved_count": 0,
         "system_event_count": 0,
         "handled_count": 0,
         "unresolved_event_ids": [],
-        "created_at": "2026-09-30T05:42:32.828Z",
+        "created_at": "2026-09-30T06:27:17.662Z",
         "acknowledged": true,
         "acknowledgement": {
-          "ack_id": 30,
+          "ack_id": 707,
           "reason": "교대 인수인계 합동 확인 · 인계 창 08:00~09:00 밖",
-          "actor_id": 32,
-          "at": "2026-09-30T05:42:32.878Z"
+          "actor_id": 851,
+          "at": "2026-09-30T06:27:17.694Z"
         },
         "handover_window": {
           "start": "08:00",

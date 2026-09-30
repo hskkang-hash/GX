@@ -1,7 +1,7 @@
 {
   "id": "FWS-F5-01",
   "title": "정찰 임무 수신(발화 추정 좌표·반경) → 열화상 정찰",
-  "measured_at": "2026-09-30T05:51:01.496341+00:00",
+  "measured_at": "2026-09-30T06:21:31.072508+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f5.F5_01_ReconTest.test_request_accept_airborne_return_and_mine_reflects_state",
   "request": {
@@ -14,13 +14,13 @@
     "body": {
       "requests": [
         {
-          "event_id": 4,
+          "event_id": 634,
           "state": "return",
           "radius_m": 300.0,
-          "requested_at": "2026-09-30T05:51:01.368164+00:00",
-          "accepted_at": "2026-09-30T05:51:01.409209+00:00",
-          "airborne_at": "2026-09-30T05:51:01.437802+00:00",
-          "returned_at": "2026-09-30T05:51:01.466840+00:00"
+          "requested_at": "2026-09-30T06:21:30.708897+00:00",
+          "accepted_at": "2026-09-30T06:21:30.817495+00:00",
+          "airborne_at": "2026-09-30T06:21:30.925649+00:00",
+          "returned_at": "2026-09-30T06:21:30.983142+00:00"
         }
       ],
       "count": 1
