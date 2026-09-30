@@ -244,7 +244,7 @@ export function FirstCards({ chapter, kick }: { chapter?: string; kick?: KickVie
                 <Alert
                   type="warning"
                   showIcon
-                  message="아직 재지 못합니다 — 이 칸은 0 이 아니라 회색입니다"
+                  message="아직 확인하지 못했습니다 — 못 한 것이 아니라 아직 모르는 칸입니다"
                   description={card.why}
                 />
               ) : null}
