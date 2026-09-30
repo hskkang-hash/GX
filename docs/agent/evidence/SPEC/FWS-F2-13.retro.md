@@ -1,0 +1,27 @@
+# FWS-F2-13 — 사람이 확인한 제목 부분 표
+
+P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 반쪽 게이트가 빨강이다.
+기계 실측(요청/응답)은 옆 파일 `FWS-F2-13.json` 이다. 아래 json 블록 하나가 정본이다.
+
+```json
+{
+  "id": "FWS-F2-13",
+  "title_parts": [
+    {
+      "part": "훈련 배지(drill_mode 상태 표시)",
+      "where": "backend/apps/fws/training.py:training_mission_badge · GET /api/fws/training/mission",
+      "status": "measured: tests.test_fws_f2.F2_13_TrainingBadgeTest.test_badge_and_zero_real_channel_when_drill_mode_is_on — drill_mode=true 일 때 badge=\"훈련\" 확인, 꺼져있을 때 badge=None 도 별도 시험(test_no_badge_when_drill_mode_is_off)으로 확인"
+    },
+    {
+      "part": "실채널 0(완결조건 — 명세서 §5.2 168행)",
+      "where": "backend/apps/fws/training.py:training_mission_badge (real_channel_sends = drill_report()[\"real_channel_sends\"]) 40-42행",
+      "status": "measured: 같은 시험 — real_channel_sends=0 확인(SPEC/FWS-F2-13.json), apps.dsm.services.drill_report 값을 그대로 재사용해 다시 세지 않음"
+    },
+    {
+      "part": "훈련 '임무'(가상 사건) 자체 수신 — 실제 발화점·화세 등을 담은 모의 임무가 F2 에게 전달되는가",
+      "where": "backend/apps/fws/training.py — training_mission_badge 반환값에 mission_id·fire_origin 등 임무 내용 없음. backend/apps/fws/missions.py:mission_detail 과의 연결 코드도 없음(grep: drill 관련 이벤트 태깅 코드 없음)",
+      "status": "부분 — 이 엔드포인트는 '배지+실채널0' 상태 플래그만 낸다. 명세서 원문(design doc 331행)이 말하는 「가상 사건 → FF-2~FF-6 왕복」 같은 실제 모의 임무 컨텐츠(발화점 등)가 F2-02 의 mission_detail 과 엮여 훈련 배지가 함께 뜨는지는 코드·시험 어디서도 확인되지 않는다 — apps/dsm/services.set_drill_mode 는 테넌트 단위 스위치일 뿐 특정 K1 이벤트에 훈련 표식을 붙이지 않는다"
+    }
+  ]
+}
+```

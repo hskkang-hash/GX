@@ -1,0 +1,50 @@
+# FWS-F1-10 — 사람이 확인한 제목 부분 표
+
+P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 반쪽 게이트가 빨강이다.
+기계 실측(요청/응답)은 옆 파일 `FWS-F1-10.json` 이다. 아래 json 블록 하나가 정본이다.
+
+```json
+{
+  "id": "FWS-F1-10",
+  "title_parts": [
+    {
+      "part": "K2 발송이 내 목록(GET /api/fws/alerts)에 '도달'로 나타난다",
+      "where": "backend/apps/fws/alerts.py::my_alerts — GET /api/fws/alerts",
+      "status": "measured: 풍향 급변 경보 발송 뒤 목록에 새 delivery"
+    },
+    {
+      "part": "확인(ack) 처리",
+      "where": "backend/apps/fws/alerts.py::ack_alert — POST /api/fws/alerts/{id}/ack",
+      "status": "measured: 같은 시험 — ack 200 · acknowledged=true"
+    },
+    {
+      "part": "화면에서 알림 목록 표시 + 확인 버튼",
+      "where": "frontend/src/features/fws/pages/PatrolHome.tsx(List + ackButton · handleAck 가 alertAck 엔드포인트를 부른다)",
+      "status": "present: 턴 AO 소급이 코드로 확인한 행 그대로(이 차선은 화면을 바꾸지 않았다)"
+    },
+    {
+      "part": "'풍향 급변' 판정 → 안전 경보 자동 발송",
+      "where": "backend/apps/fws/alerts.py::report_wind_direction → _fire_safety_alert → dsm_services.notify_event → K2 send · POST /api/fws/command/incidents/{id}/wind-reading",
+      "status": "measured: 문턱값 그대로(45도 변화)는 alert_fired=false·알림 0 · 46도 변화는 alert_fired=true·delivered_count>=1·GET /api/fws/alerts 에 새 행 · ack 200(시험 주입 문턱 — 규정값은 아래 열린 행)"
+    },
+    {
+      "part": "문턱 규정값(선언 == 설정) — 풍향 급변 각도·시간창 · 투하 구역 반경",
+      "where": "backend/apps/fws/alerts.py::_threshold 가 apps.fws.constants 의 WIND_SHIFT_ANGLE_DEG·WIND_SHIFT_WINDOW_MINUTES·DROP_ZONE_EXIT_RADIUS_M 를 이름으로 읽는다 — 명세 §5.1 F1-10·F2-07 은 말만 있고 숫자가 없다",
+      "status": "없음 — 명세·조사 메모에 숫자가 없어 값을 짓지 않았다(이름만 · 값 None → 운영에서 judged=false). 세종 결정으로 값이 들어와야 운영 판정이 돈다(시험은 주입값으로 경계만 쟀다)"
+    },
+    {
+      "part": "풍향 실측원 — 기상 관측(기상청·산림청 AWS) 실연동",
+      "where": "입력 문은 POST /api/fws/command/incidents/{id}/wind-reading (수동·연계용) 하나뿐",
+      "excluded_by": "P-428",
+      "excluded_why": "외부 기관 실연동(기상 관측 API)은 이 턴이 채우지 않는다 — 판정 규칙은 들어온 판독을 읽어 실제로 쏜다",
+      "status": "excluded_by: P-428 — 외부 기상 관측 실연동 부분만 결정 제외"
+    },
+    {
+      "part": "'대피 지시'·'철수' 전용 알림이 F1 감시원의 /alerts 목록에 뜨는가",
+      "where": "backend/apps/fws/integration.py·office2.py(대피 문안 초안·웹푸시 훈련은 F3/F6 쪽) — F1 /alerts 로 잇는 트리거·시험 없음",
+      "status": "부분: 대피 문안·훈련 채널은 있으나 대피 지시·철수를 F1 안전 알림으로 보내는 트리거는 미실측(이 차선 범위 밖 — 턴 AO 소급 행 그대로)"
+    }
+  ],
+  "retro": "P-421 채움 · 확인한 것 — 턴 AP 차선 N2b · 2026-09-29 · 판정 규칙 (apps/fws/alerts.py::report_wind_direction·report_drop_zone_position)을 HTTP 로 두드려 문턱 아래는 경보 0 · 문턱 위는 notify_event→K2 발송→GET /api/fws/alerts 도달→ack 를 대조했다. 문턱 숫자는 명세에 없어 constants.py 에 이름만 요청했고 (값 None → judged=false), 시험은 주입값으로 경계를 쟀다 — 규정값 행은 열린 채 둔다."
+}
+```

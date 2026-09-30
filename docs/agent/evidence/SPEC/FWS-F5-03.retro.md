@@ -1,0 +1,37 @@
+# FWS-F5-03 — 사람이 확인한 제목 부분 표
+
+P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 반쪽 게이트가 빨강이다.
+기계 실측(요청/응답)은 옆 파일 `FWS-F5-03.json` 이다. 아래 json 블록 하나가 정본이다.
+
+```json
+{
+  "id": "FWS-F5-03",
+  "title_parts": [
+    {
+      "part": "확인 회신 행위(POST reply)",
+      "where": "POST /api/fws/drone/verifications/{event_id}/reply · backend/apps/fws/drone.py::confirm_result() → apps/fws/verification.py::reply_verification()",
+      "status": "measured: tests.test_fws_f5.F5_03_ConfirmResultTest.test_fire_confirmed_requires_attachment_ref — 200, reply_id·verdict 실측"
+    },
+    {
+      "part": "산불 맞음(fire_confirmed) 결과 처리 → 사건 verdict=confirmed",
+      "where": "backend/apps/fws/drone.py::confirm_result() result=fire_confirmed 경로 · docs/agent/evidence/SPEC/FWS-F5-03.json response.body.verdict",
+      "status": "measured: 동일 시험에서 result=fire_confirmed → verdict=\"confirmed\" 그대로 응답(F1-06 verification.reply_verification 재사용)"
+    },
+    {
+      "part": "오인(false_alarm) 결과 처리(사유 코드)",
+      "where": "backend/apps/fws/drone.py::confirm_result() result=false_alarm 경로 · backend/tests/test_fws_f5.py F5_03_ConfirmResultTest.test_false_alarm_does_not_require_attachment_ref",
+      "status": "measured: test_false_alarm_does_not_require_attachment_ref 실행 결과 200, attachment_ref=None 확인(이 케이스는 별도 evidence json을 쓰지 않으나 같은 파일의 실제 pytest로 검증됨)"
+    },
+    {
+      "part": "사진 참조 첨부(산불 맞음 시 필수)",
+      "where": "backend/apps/fws/drone.py::confirm_result() attachment_ref 필수화 로직(참조 없이 fire_confirmed 는 422)",
+      "status": "measured: docs/agent/evidence/SPEC/FWS-F5-03.json — attachment_ref 없이 요청 시 422, 값(minio://drone/1.jpg) 제출 시 200 및 응답에 그대로 echo"
+    },
+    {
+      "part": "열화상 참조(사진과 구분되는 별도 증빙 유형)",
+      "where": "POST·GET /api/fws/ap/drone/verifications/{event_id}/thermal-attachment · backend/apps/fws/ap_f5.py::attach_thermal()/thermal_attachments() [턴 AP · 차선 N4 신설 — drone.py 는 고치지 않았다]",
+      "status": "measured: tests.test_ap_n4_f5_recon_coords_thermal.F5_03_ThermalAttachmentTest.test_thermal_ref_is_a_separate_slot_from_photo_attachment_ref — 사진(attachment_ref)과 열화상(thermal_ref)을 같은 사건에 각각 등록 → 서로 다른 칸으로 재조회됨을 실측(200, thermal_ref=minio://drone/thermal.tiff)"
+    }
+  ]
+}
+```

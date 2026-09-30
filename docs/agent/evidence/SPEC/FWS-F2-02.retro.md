@@ -1,0 +1,52 @@
+# FWS-F2-02 — 사람이 확인한 제목 부분 표
+
+P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 반쪽 게이트가 빨강이다.
+기계 실측(요청/응답)은 옆 파일 `FWS-F2-02.json` 이다. 아래 json 블록 하나가 정본이다.
+
+```json
+{
+  "id": "FWS-F2-02",
+  "title_parts": [
+    {
+      "part": "출동 지시 수신(임무를 GET 으로 받는다)",
+      "where": "backend/apps/fws/missions.py:mission_detail · GET /api/fws/missions/{event_id}",
+      "status": "measured: tests.test_fws_f2.F2_02_03_11_MissionResponseTest.test_mission_detail_dispatch_arrive_release_chain — GET 200, response_state=occurred 확인(SPEC/FWS-F2-02.json)"
+    },
+    {
+      "part": "발화점(좌표)",
+      "where": "backend/apps/fws/missions.py:mission_detail (fire_origin={lat,lng}, event.lat/event.lng)",
+      "status": "부분 — 코드 경로는 있으나(K1 event.lat/event.lng, kernels/k1_event/services.py 176-177행에 실 필드 존재) 이 실측 캡처(SPEC/FWS-F2-02.json response.body.fire_origin)는 lat:null,lng:null 이다 — 시험 픽스처(tests/test_dsm_app.py:_event → record_detection)가 좌표를 안 넘겨서다. 좌표 있는 이벤트로 다시 찍은 실측 없음"
+    },
+    {
+      "part": "화세(severity)",
+      "where": "backend/apps/fws/missions.py:mission_detail (severity=event.severity)",
+      "status": "measured: SPEC/FWS-F2-02.json response.body.severity=\"critical\" — 시험이 severity=\"critical\" 로 이벤트를 만들고 그대로 응답에 실림"
+    },
+    {
+      "part": "접근로(access_route)",
+      "where": "backend/apps/fws/missions.py:mission_detail 135행 — access_route: None 하드코딩",
+      "status": "없음 — missions.py 머리말(11-17행)이 직접 적음: 「접근로·풍향·집결지·지휘자는 K1 이벤트 스키마에 없다」·「App 은 커널을 소비만 한다(DA-04)」라 새 칸을 못 만든다. 코드가 항상 None 을 낸다(구조적 한계, 테스트와 무관)"
+    },
+    {
+      "part": "풍향(wind_direction)",
+      "where": "backend/apps/fws/missions.py:mission_detail 136행 — wind_direction: None 하드코딩",
+      "status": "없음 — 위 접근로와 같은 이유(K1 스키마 밖), 항상 null"
+    },
+    {
+      "part": "집결지(muster_point)",
+      "where": "backend/apps/fws/missions.py:mission_detail 137행 — muster_point: None 하드코딩",
+      "status": "없음 — 위와 같은 이유, 항상 null"
+    },
+    {
+      "part": "지휘자(commander)",
+      "where": "backend/apps/fws/missions.py:mission_detail 138행 — commander: None 하드코딩",
+      "status": "없음 — 위와 같은 이유, 항상 null"
+    },
+    {
+      "part": "「도달·「출동」 1탭」(완결조건 — 명세서 §5.2 157행)",
+      "where": "backend/apps/fws/missions.py:respond(action=\"dispatch\") · POST /api/fws/missions/{event_id}/response?action=dispatch",
+      "status": "measured: 같은 시험 체인에서 dispatch POST → to=\"acknowledged\" 200 확인(F2-02 자체 evidence 파일에는 안 실리지만 같은 테스트 메서드 안에서 실측됨, 136-141행)"
+    }
+  ]
+}
+```

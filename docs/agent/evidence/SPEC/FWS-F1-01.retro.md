@@ -1,0 +1,32 @@
+# FWS-F1-01 — 사람이 확인한 제목 부분 표
+
+P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 반쪽 게이트가 빨강이다.
+기계 실측(요청/응답)은 옆 파일 `FWS-F1-01.json` 이다. 아래 json 블록 하나가 정본이다.
+
+```json
+{
+  "id": "FWS-F1-01",
+  "title_parts": [
+    {
+      "part": "체크인 요청 뒤 초소 상태가 '근무 중'(on_duty)으로 바뀐다",
+      "where": "backend/apps/fws/patrol.py::checkin — POST /api/fws/patrol/checkin",
+      "status": "measured: F1_01_CheckinTest.test_checkin_sets_on_duty_status_with_location — status=on_duty 실측(docs/agent/evidence/SPEC/FWS-F1-01.json)"
+    },
+    {
+      "part": "GPS 방식(method=gps) 체크인 — 좌표가 응답에 그대로 실린다",
+      "where": "backend/apps/fws/patrol.py::checkin (lat/lng echo) — POST /api/fws/patrol/checkin?method=gps&lat=...&lng=...",
+      "status": "measured: 같은 시험, location={lat:36.35,lng:127.38} 응답에 그대로 실림"
+    },
+    {
+      "part": "NFC 방식(method=nfc) 체크인",
+      "where": "backend/apps/fws/patrol.py:38 ALLOWED_CHECKIN_METHODS=('nfc','gps') · backend/tests/test_fws_app.py:402 (F1_11_PatrolMineTest, method='nfc' 로 같은 엔드포인트 200)",
+      "status": "measured: F1-01 전용 시험은 gps만 재지만, 같은 파일의 F1-11 시험이 method='nfc' 로 /api/fws/patrol/checkin 을 실제로 두드려 200을 받는다(교차 실측 — F1-01 자신의 evidence.json에는 안 실림)"
+    },
+    {
+      "part": "화면이 기기 GPS/NFC를 실제로 읽어 체크인 요청에 싣는다(사람이 쓰는 1탭 체크인)",
+      "where": "frontend/src/features/fws/pages/PatrolHome.tsx:81-92 handleCheckin()",
+      "status": "부분: 체크인 버튼은 있으나 { post_code: 'P-1', method: 'gps' } 를 하드코딩해서 보낸다 — navigator.geolocation 호출 없음(위치 좌표를 아예 안 보냄), NFC 탭 옵션 없음, 초소 선택 UI 없음. 서버 계약은 실측됐지만 화면은 실제 위치·NFC 태그를 읽지 않는다"
+    }
+  ]
+}
+```

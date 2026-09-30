@@ -1,0 +1,37 @@
+# FWS-F6-01 — 사람이 확인한 제목 부분 표
+
+P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 반쪽 게이트가 빨강이다.
+기계 실측(요청/응답)은 옆 파일 `FWS-F6-01.json` 이다. 아래 json 블록 하나가 정본이다.
+
+```json
+{
+  "id": "FWS-F6-01",
+  "title_parts": [
+    {
+      "part": "JSON 포맷 내보내기",
+      "where": "backend/apps/fws/integration.py::export_kfs_feed (GET /api/fws/liaison/fire-events/{id}/kfs-export, fmt=json 기본)",
+      "status": "있음 — 9항목 한글 라벨·값 쌍을 낸다 · test_json_export_carries_labeled_fields_one_to_one 실측"
+    },
+    {
+      "part": "CSV 포맷 내보내기",
+      "where": "backend/apps/fws/integration.py::export_kfs_feed (fmt=\"csv\" 분기, line 157-165; GET .../kfs-export?fmt=csv)",
+      "status": "있음 — 머리글 1행 + 값 1행 · test_csv_export_has_a_header_row_and_a_value_row 실측"
+    },
+    {
+      "part": "항목 1:1 대조표(정본 하나)",
+      "where": "backend/apps/fws/integration.py::KFS_EXPORT_FIELDS (line 106-116)",
+      "status": "있음 — K1 필드↔산림청 한글 항목명 9쌍 정본 하나를 JSON·CSV 가 같이 쓴다(라벨 중복 없음, test_json_export_... 의 assertEqual(len(labels), len(set(labels))) 로 실측)"
+    },
+    {
+      "part": "산불대응단계(P-386) 값 포함",
+      "where": "backend/apps/fws/integration.py::export_kfs_feed → apps.fws.constants.compute_fire_stage",
+      "status": "있음(선택 입력) — 면적·풍속·지속시간·건물수 중 하나라도 주면 P-386 규정값으로 계산해 싣고, 하나도 안 주면 fire_stage=null(측정 안 한 값을 지어내지 않는다·D-284) · test_stage_uses_p386_constants_when_measurements_given·test_stage_is_null_when_no_measurement_is_given 실측"
+    },
+    {
+      "part": "산림청 산불상황관제시스템·산림재난정보시스템 — 두 상대 시스템 각각의 실제 입력 스키마 대조 및 수용 여부",
+      "where": "backend/apps/fws/integration.py:96-101 (머리말 주석 — 실제 입력 스키마 미확보를 스스로 적음)",
+      "status": "없음 — 제목이 부르는 두 시스템(산불상황관제시스템/산림재난정보시스템)을 구분하지 않고 KFS_EXPORT_FIELDS 하나로 통칭 내보낸다. 상대 시스템의 실제 입력 스키마 문서·API 계약은 확보하지 못했고, 상대가 이 포맷을 실제로 받아들이는지도 검증되지 않았다(연동시험 범위 밖) — annex 완결조건(\"내보내기 1·항목 대조표\")은 형식만 요구하므로 이 갭이 완결조건 자체를 막지는 않지만, 제목이 이름을 댄 두 시스템 각각과의 대조는 아직 없다"
+    }
+  ]
+}
+```
