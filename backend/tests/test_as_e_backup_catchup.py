@@ -75,3 +75,19 @@ class CatchupOnBeatStartTest(SimpleTestCase):
         import config.celery as cc
         receivers = [r[1]() for r in beat_init.receivers]
         self.assertIn(cc.backup_catchup_on_beat_init, receivers)
+
+    def test_beat_only_sends_the_check_task(self):
+        """beat 컨테이너에는 증거 폴더가 없다(10-01 실측) — beat 는 판단 태스크만 보낸다."""
+        import config.celery as cc
+        with mock.patch.object(cc.app, "send_task") as send:
+            cc.backup_catchup_on_beat_init()
+        send.assert_called_once_with("common.ops_backup_catchup_check")
+
+    def test_check_task_runs_backup_inline_when_stale(self):
+        stale = {"invoked_by": "beat", "verdict": "OK",
+                 "measured_at": (datetime.now(timezone.utc) - timedelta(hours=30)).isoformat()}
+        with (mock.patch.object(ops_tasks, "backup_schedule_enabled", return_value=True),
+              mock.patch.object(ops_tasks.Path, "read_text", return_value=json.dumps(stale)),
+              mock.patch.object(ops_tasks, "ops_backup_beat") as run):
+            ops_tasks.ops_backup_catchup_check()
+        run.assert_called_once_with(invoked_by="beat_catchup")

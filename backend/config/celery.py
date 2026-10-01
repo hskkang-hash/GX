@@ -293,15 +293,14 @@ def close_db_connections_after_task(**kwargs):
 
 # [P-469 · 턴 AS] 백업 따라잡기 — beat 가 뜰 때 한 번.
 #   대표 PC 는 서버가 아니라 05:00 에 꺼져 있을 수 있다(10-01 실례). 켜져서 beat 가 뜨면
-#   마지막 beat 계열 덤프가 24h 를 넘었는지 보고, 넘었으면 `invoked_by=beat_catchup` 으로
-#   정시 백업과 같은 태스크를 **보낸다**. 사람이 부르지 않았으므로 「저절로」다(anacron 결).
+#   일꾼이 마지막 beat 계열 덤프가 24h 를 넘었는지 보고, 넘었으면 `invoked_by=beat_catchup` 으로
+#   정시 백업과 같은 일을 한다. 사람이 부르지 않았으므로 「저절로」다(anacron 결).
 @beat_init.connect
 def backup_catchup_on_beat_init(sender=None, **kwargs):
     try:
-        from common.ops_tasks import backup_catchup_on_beat_start
-
-        backup_catchup_on_beat_start(lambda: app.send_task(
-            "common.ops_backup_beat", kwargs={"invoked_by": "beat_catchup"}))
+        # ★ 판단은 일꾼이 한다 — beat 컨테이너에는 증거 폴더가 없다(10-01 실측 ·
+        #   ops_tasks.ops_backup_catchup_check 머리말). beat 는 판단 태스크만 보낸다.
+        app.send_task("common.ops_backup_catchup_check")
     except Exception:                              # noqa: BLE001
         # beat 를 죽이지 않는다 — 따라잡기가 실패해도 정시 일정은 돌아야 한다.
         import logging

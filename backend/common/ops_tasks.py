@@ -418,6 +418,18 @@ def backup_catchup_on_beat_start(send) -> str | None:
     return why
 
 
+@shared_task(name="common.ops_backup_catchup_check")
+def ops_backup_catchup_check() -> str | None:
+    """beat 가 뜰 때 보내는 **판단 태스크** — 일꾼 안에서 판정문을 읽고 필요하면 따라잡는다.
+
+    ★ 왜 beat 안에서 판단하지 않나 [실측 2026-10-01 21:21 · 턴 AS]: `gx-beat-e` 에는
+      증거 폴더(`/docs`)가 붙어 있지 않다(일꾼 `gx-celery-e` 에는 있다). beat 안에서 읽으면
+      판정문이 늘 「없다」로 읽혀 **beat 가 뜰 때마다** 따라잡았다(그날은 실제로 28h 가
+      지나 결과만 맞았다). 판단은 판정문을 보는 자리에서 한다.
+    """
+    return backup_catchup_on_beat_start(lambda: ops_backup_beat(invoked_by="beat_catchup"))
+
+
 @shared_task(name="common.ops_backup_beat")
 def ops_backup_beat(invoked_by: str = "manual") -> dict:
     """백업을 뜬다 — **켜져 있을 때만.**

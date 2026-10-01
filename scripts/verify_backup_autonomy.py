@@ -175,6 +175,15 @@ def self_test() -> int:
     cases.append(("★★ 출생 표본: 같은 실물에 invoked_by=beat 만 더하면 초록",
                   _bak.judge_beat_dump(vault_today, raw_today_beat, now)["state"] == "OK"))
 
+    # ★★ [P-469 · 턴 AS] 출생 표본 — 10-01 실물: PC 가 09:05 에 켜져 05:00 정시가 없었다.
+    #   켜진 뒤 beat 가 스스로 따라잡은 덤프(`beat_catchup`)는 저절로다 → 초록.
+    raw_catchup = {"invoked_by": "beat_catchup", "manifest": {"db": {"file": fresh_name}}}
+    cases.append(("★★ 출생 표본(P-469): invoked_by=beat_catchup · 파일 일치 · 신선 → 초록",
+                  _bak.judge_beat_dump(vault_fresh, raw_catchup, now)["state"] == "OK"))
+    raw_manual_fresh = {"invoked_by": "manual", "manifest": {"db": {"file": fresh_name}}}
+    cases.append(("음성(P-469): 같은 자리에 손 덤프(manual)면 여전히 빨강",
+                  _bak.judge_beat_dump(vault_fresh, raw_manual_fresh, now)["state"] == "FAIL"))
+
     bad = 0
     for label, ok in cases:
         print("  [%s] %s" % ("통과" if ok else "**실패**", label))

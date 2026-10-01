@@ -1,24 +1,24 @@
 {
-  "measured_at": "2026-09-29T20:00:02+00:00",
-  "invoked_by": "beat",
+  "measured_at": "2026-10-01T12:21:46+00:00",
+  "invoked_by": "beat_catchup",
   "verdict": "OK",
   "reason": "",
   "manifest": {
-    "measured_at": "2026-09-29T20:00:02+00:00",
+    "measured_at": "2026-10-01T12:21:46+00:00",
     "db": {
-      "file": "db_database_guardianx_20260929T200002Z.dump",
-      "bytes": 208560707,
-      "sha256": "9997b6fa9f0998868122d28d7765a6a3a9b751b510a5f38e17ecef1c95a05d37",
+      "file": "db_database_guardianx_20261001T122146Z.dump",
+      "bytes": 221003725,
+      "sha256": "a9b3957f3a758fcc5d8e94532a040e04361bf254b8dbf886040e9ea0e3d6120b",
       "via": "local",
       "client_version": "pg_dump (PostgreSQL) 18.6 (Debian 18.6-1.pgdg13+2)",
       "command": [
-        "pg_dump -Fc -h postgres -p 5432 -U postgres -d database_guardianx -f /backup/20260929/db_database_guardianx_20260929T200002Z.dump"
+        "pg_dump -Fc -h postgres -p 5432 -U postgres -d database_guardianx -f /backup/20261001/db_database_guardianx_20261001T122146Z.dump"
       ],
       "rows": {
-        "stream_monitors_streammonitor": 66,
-        "stream_monitors_detectionevent": 50,
-        "stream_monitors_eventclip": 50,
-        "user_coreuser": 135,
+        "stream_monitors_streammonitor": 69,
+        "stream_monitors_detectionevent": 58,
+        "stream_monitors_eventclip": 58,
+        "user_coreuser": 139,
         "auth_group": 0
       }
     },
@@ -29,7 +29,7 @@
       "endpoint": "minio:9000",
       "scope": "event_bound",
       "retention_days": 90,
-      "skipped_not_event_bound": 53,
+      "skipped_not_event_bound": 57,
       "event_bound_expected": 0,
       "missing_in_bucket": [],
       "missing_count": 0,
@@ -37,7 +37,7 @@
       "keys": []
     }
   },
-  "out_dir": "/backup/20260929",
+  "out_dir": "/backup/20261001",
   "_written_from": {
     "db": "database_guardianx",
     "under_pytest": false
