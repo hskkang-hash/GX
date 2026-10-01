@@ -645,10 +645,11 @@ FLOWS = (
     #: ★ [P-132] `/device` 는 **드론·로봇 장비 등록** 화면이다(`App.tsx:769` 제목 그대로).
     #:  카메라 수를 **분모와 함께** 적는 자리는 `CameraAddress.tsx:134` 「카메라 {total}대」이고
     #:  그 수의 출처가 이미 이 행이 쓰던 `/api/dsm/cameras/address-gap` 이다.
-    F("U4#11", "카메라 설치 현황", "u4", "/dsm/cameras/address", goto(),
-      ("GET", r"/api/dsm/cameras/address-gap"),
-      srv_reflect("/api/dsm/cameras/address-gap", "total"),
-      ["카메라", "주소 있음", "주소 없음"]),
+    #: ★ [P-486 · 턴 AS · 대표 「P-486 그대로」 10-01] 세종 표: 지자체(U4)는 「주소 없는 카메라」 0 —
+    #:  화면·API 둘 다 U4 에게 닫혔다(role_gate ③ · roleScreens.json). 그래서 이 행은 U4 로
+    #:  ● 가 될 수 없다 → **선언된 회색**(U4#9 와 같은 결). 같은 화면은 U5#5 가 관리자 축에서 잰다.
+    F("U4#11", "카메라 설치 현황", "u4", None, None, None, None, [],
+      note="P-486: 지자체(U4)는 주소 없는 카메라 화면·API 대상 아님 — 관리자 축 U5#5 가 같은 화면을 잰다"),
     #: ★★ [P-190 · 턴 W] **이 행은 U4 로 ● 가 될 수 없다 — U2 축에서 잰다.**
     #:  [실측 2026-09-19 · 차선 U24 · `tests/test_u24_law07_authz.py::U4CannotBeGreenOnUpperReportTest`]
     #:  U4 의 역할 코드는 글자 그대로 `view_only_-_anyang` 이고, 읽기 전용 관문
@@ -1544,7 +1545,7 @@ def score(rows):
 #:   `client_measured` — 지금까지의 판정(위 `judge`) 그대로. 절 닫힘은 이 열로 한다.
 #:   `browser_clicked` — **사람이 쓰는 브라우저로 그 버튼을 눌렀는가.** 7칸 ④ 「누른 뒤」와 G3 은 이 열로 센다.
 #:   두 열을 **한 열에 섞지 않는다.** browser 열은 증거 파일이 없으면 전부 회색이다(지어내지 않는다).
-#:   증거 파일: BROWSER_OBSERVED — `scripts/browser_click_22.py` 가 쓴다(V 몫 · 지금은 뼈대뿐).
+#:   증거 파일: BROWSER_OBSERVED — `scripts/browser_click.py` 가 쓴다(턴 AS · B 가 지었다 · 정식 측정은 V).
 BROWSER_OBSERVED = EVIDENCE / "click_completes_browser.json"
 
 #: 브라우저 누름 대상 22 — 턴 AQ 보고 「화면 배선 되올림 22」의 대표 data-gx(F4 12 + O 10).
@@ -3476,6 +3477,25 @@ def walk(persona, account, viewport, flows, event_id):
                     st["on_screen"] = server_gave_value(a) and (str(a) in hay or any(
                         w.lower() in hay.lower() for w in ["행", "건", "개"]) and len(hay) > 400)
 
+        # ── ★ [턴 AS · P-470 · 차선 B] **브라우저 열 — 새로고침한 화면 글자** ───────────
+        #   「누른 뒤」의 browser 열은 네트워크 재조회가 아니라 **페이지를 새로고침한 뒤 화면에
+        #   떠 있는 글자**다. 날것 두 장(누르기 전 본문 · 새로고침 뒤 본문)만 남기고 판정은
+        #   `scripts/browser_click.py::verdict_48` 이 한다(여기서 색을 내지 않는다).
+        #   되돌리기 **앞**에서 읽는다 — 되돌린 뒤에 읽으면 처음 값이 돌아와 있다.
+        reload_obs = {"ok": False, "why": "새로고침하지 않았다"}
+        try:
+            page.reload(wait_until="domcontentloaded", timeout=45000)
+            page.wait_for_timeout(2500)
+            if "/login" in page.url:
+                reload_obs = {"ok": False, "url": page.url,
+                              "why": "다시 열자 로그인 화면으로 튕겼다"}
+            else:
+                reload_obs = {"ok": True, "url": page.url,
+                              "before_text": (body_before or "")[:6000],
+                              "after_text": page.inner_text("body")[:6000]}
+        except Exception as exc:                        # noqa: BLE001
+            reload_obs = {"ok": False, "why": "새로고침이 터졌다: %s" % type(exc).__name__}
+
         # ── ★ [턴 U · 절 4] **되돌리기 — 판정에 쓸 것을 다 읽은 뒤에** ──────────
         #   게이트가 제품의 상태를 남기면 다음 게이트가 제품 대신 우리를 잰다
         #   (턴 T · U5#9 → `verify_seed_roles` K2 수신자 0명).
@@ -3537,6 +3557,7 @@ def walk(persona, account, viewport, flows, event_id):
                            "prepared": prep_done},
              calls=got, state=st, text_after=(text_after or "")[:6000],
              **({"img": img_obs} if img_obs is not None else {}),
+             reload=reload_obs,
              **({"revert": rev} if rev is not None else {}))
 
     ctx.close()

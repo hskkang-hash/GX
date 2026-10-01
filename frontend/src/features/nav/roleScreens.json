@@ -164,10 +164,9 @@
    "iconName": "BsBoxes",
    "api": "/api/dsm/cameras/address-gap",
    "sensitive": true,
-   "note": "API 는 관제팀장도 읽는다(홈의 주소 배지) — 화면은 관리자 몫",
+   "note": "API 는 관제팀장도 읽는다(홈의 주소 배지) — 화면은 관리자 몫 · P-486: 지자체 0",
    "api_open_to": [
-    "U2",
-    "U4"
+    "U2"
    ]
   },
   {
@@ -183,11 +182,7 @@
    "iconName": "BsDatabase",
    "api": "/api/dsm/metering",
    "sensitive": true,
-   "note": "사용량 읽기는 관제팀장·재난안전과도 허용(선언) — 화면은 관리자 몫",
-   "api_open_to": [
-    "U2",
-    "U4"
-   ]
+   "note": "P-486: 사용량(계량)은 관리자(U5)·플랫폼(U0)만"
   },
   {
    "path": "/dsm/system",
@@ -328,11 +323,11 @@
    "path": "/dsm/team-status",
    "owners": [
     "U2",
-    "U4",
     "U5"
    ],
    "api": "/api/dsm/stats/by-reviewer",
-   "sensitive": true
+   "sensitive": true,
+   "note": "P-486: 검토자별 통계는 팀장·관리자만 · 지자체 0"
   },
   {
    "path": "/dsm/notify",
@@ -371,12 +366,11 @@
   {
    "path": "/dsm/cameras/address",
    "owners": [
-    "U4",
     "U5"
    ],
    "api": "/api/dsm/cameras/address-gap",
    "sensitive": true,
-   "note": "U4#11 카메라 설치 현황이 연다(읽기)",
+   "note": "P-486: 주소 없는 카메라는 팀장·관리자만 · 지자체 0 — ⚠ 온보딩 U4#11 이 이 화면을 연다(세종 청구)",
    "api_open_to": [
     "U2"
    ]
