@@ -321,9 +321,11 @@ repos:
       #   pre-commit 은 훅을 병렬로 돌리므로 **손으로 부르면 초록, 훅이 부르면 빨강**이
       #   났다 — 갈린 것은 제품이 아니라 **누가 먼저 세션을 잡았는가**다.
       #   `require_serial` 이 그 자리다. 판정기는 한 자도 안 고친다.
+      # ★ [P-468 · 턴 AS] 이 커밋이 만든 빨강만 막는다 — 등재된 운영 빨강은 빨강으로 적고 통과.
+      #   회색(rc 2) 처리는 전과 같다(P-70). 가르는 법은 scripts/ga_commit_gate.py 머리말.
       - id: gx-ga-readiness
-        name: 상용 오픈 기준 8영역 검사 (D-346)
-        entry: bash -c 'python scripts/verify_ga_readiness.py; rc=$?; if [ "$rc" = "1" ]; then exit 1; fi; if [ "$rc" != "0" ]; then echo "[HOOK] 위는 회색(exit $rc)이다 — 커밋을 막지 않는다(P-70). 초록이라는 뜻이 아니다."; fi; exit 0'
+        name: 상용 오픈 기준 8영역 검사 (D-346 · P-468 이 커밋의 빨강만)
+        entry: python scripts/ga_commit_gate.py
         language: system
         pass_filenames: false
         require_serial: true

@@ -209,6 +209,7 @@ import {
   wallTokenLegacyQuery,
 } from './features/dsm/wallToken';
 import { ClearStoreOnRouteChange } from './utils/ClearStoreOnRouteChange';
+import { withRoleGuard } from './features/nav/withRoleGuard';
 
 dayjs.extend(customParseFormat);
 
@@ -619,7 +620,7 @@ function App() {
    */
   const wallByToken = adoptWallToken();
 
-  const router = createBrowserRouter([
+  const router = createBrowserRouter(withRoleGuard(<Sidebar />, [
     /**
      * UX-03 온보딩 — **관문 밖에 서는 유일한 화면.**
      *
@@ -1341,7 +1342,7 @@ function App() {
         },
       ],
     },
-  ]);
+  ]));
 
   return (
     <AuthProvider>

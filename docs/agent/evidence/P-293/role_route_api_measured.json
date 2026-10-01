@@ -1,0 +1,414 @@
+{
+ "base": "http://gx-nginx-e:8500",
+ "at": "2026-10-01T01:32:30+0000",
+ "roles": {
+  "U1": {
+   "login": 200,
+   "logout": 200,
+   "apis": {
+    "/api/devices/devices-management": {
+     "status": 403,
+     "bytes": 328
+    },
+    "/api/dsm/audit": {
+     "status": 403,
+     "bytes": 187
+    },
+    "/api/dsm/cameras/address-gap": {
+     "status": 200,
+     "bytes": 179
+    },
+    "/api/dsm/cameras/pulse": {
+     "status": 200,
+     "bytes": 1640
+    },
+    "/api/dsm/dashboard/frame": {
+     "status": 200,
+     "bytes": 683
+    },
+    "/api/dsm/drill/report": {
+     "status": 200,
+     "bytes": 217
+    },
+    "/api/dsm/events/queue?limit=1": {
+     "status": 200,
+     "bytes": 215
+    },
+    "/api/dsm/events?limit=1": {
+     "status": 200,
+     "bytes": 410
+    },
+    "/api/dsm/law/privacy-requests": {
+     "status": 403,
+     "bytes": 199
+    },
+    "/api/dsm/me": {
+     "status": 200,
+     "bytes": 518
+    },
+    "/api/dsm/metering": {
+     "status": 200,
+     "bytes": 2643
+    },
+    "/api/dsm/onboarding/progress": {
+     "status": 200,
+     "bytes": 3686
+    },
+    "/api/dsm/reports/runs": {
+     "status": 403,
+     "bytes": 217
+    },
+    "/api/dsm/settings/api_keys": {
+     "status": 403,
+     "bytes": 107
+    },
+    "/api/dsm/settings/notify-rules/list": {
+     "status": 403,
+     "bytes": 84
+    },
+    "/api/dsm/settings/thresholds": {
+     "status": 403,
+     "bytes": 107
+    },
+    "/api/dsm/stats/by-reviewer": {
+     "status": 200,
+     "bytes": 537
+    },
+    "/api/dsm/stats/camera-thresholds": {
+     "status": 200,
+     "bytes": 333
+    },
+    "/api/dsm/stats/false-positive/by-camera": {
+     "status": 200,
+     "bytes": 419
+    },
+    "/api/dsm/stats/summary": {
+     "status": 200,
+     "bytes": 463
+    },
+    "/api/dsm/system/storage": {
+     "status": 403,
+     "bytes": 84
+    },
+    "/api/report-template/": {
+     "status": 403,
+     "bytes": 328
+    },
+    "/api/roles/": {
+     "status": 403,
+     "bytes": 328
+    },
+    "/api/v1/user/list": {
+     "status": 200,
+     "bytes": 44370
+    }
+   }
+  },
+  "U2": {
+   "login": 200,
+   "logout": 200,
+   "apis": {
+    "/api/devices/devices-management": {
+     "status": 403,
+     "bytes": 328
+    },
+    "/api/dsm/audit": {
+     "status": 200,
+     "bytes": 27387
+    },
+    "/api/dsm/cameras/address-gap": {
+     "status": 200,
+     "bytes": 179
+    },
+    "/api/dsm/cameras/pulse": {
+     "status": 200,
+     "bytes": 1640
+    },
+    "/api/dsm/dashboard/frame": {
+     "status": 200,
+     "bytes": 682
+    },
+    "/api/dsm/drill/report": {
+     "status": 200,
+     "bytes": 217
+    },
+    "/api/dsm/events/queue?limit=1": {
+     "status": 200,
+     "bytes": 215
+    },
+    "/api/dsm/events?limit=1": {
+     "status": 200,
+     "bytes": 410
+    },
+    "/api/dsm/law/privacy-requests": {
+     "status": 403,
+     "bytes": 199
+    },
+    "/api/dsm/me": {
+     "status": 200,
+     "bytes": 468
+    },
+    "/api/dsm/metering": {
+     "status": 200,
+     "bytes": 2643
+    },
+    "/api/dsm/onboarding/progress": {
+     "status": 200,
+     "bytes": 3081
+    },
+    "/api/dsm/reports/runs": {
+     "status": 200,
+     "bytes": 7231
+    },
+    "/api/dsm/settings/api_keys": {
+     "status": 403,
+     "bytes": 107
+    },
+    "/api/dsm/settings/notify-rules/list": {
+     "status": 200,
+     "bytes": 3909
+    },
+    "/api/dsm/settings/thresholds": {
+     "status": 403,
+     "bytes": 107
+    },
+    "/api/dsm/stats/by-reviewer": {
+     "status": 200,
+     "bytes": 537
+    },
+    "/api/dsm/stats/camera-thresholds": {
+     "status": 200,
+     "bytes": 333
+    },
+    "/api/dsm/stats/false-positive/by-camera": {
+     "status": 200,
+     "bytes": 419
+    },
+    "/api/dsm/stats/summary": {
+     "status": 200,
+     "bytes": 463
+    },
+    "/api/dsm/system/storage": {
+     "status": 403,
+     "bytes": 84
+    },
+    "/api/report-template/": {
+     "status": 403,
+     "bytes": 328
+    },
+    "/api/roles/": {
+     "status": 403,
+     "bytes": 328
+    },
+    "/api/v1/user/list": {
+     "status": 200,
+     "bytes": 44370
+    }
+   }
+  },
+  "U4": {
+   "login": 200,
+   "logout": 200,
+   "apis": {
+    "/api/devices/devices-management": {
+     "status": 403,
+     "bytes": 328
+    },
+    "/api/dsm/audit": {
+     "status": 200,
+     "bytes": 27389
+    },
+    "/api/dsm/cameras/address-gap": {
+     "status": 200,
+     "bytes": 179
+    },
+    "/api/dsm/cameras/pulse": {
+     "status": 200,
+     "bytes": 1640
+    },
+    "/api/dsm/dashboard/frame": {
+     "status": 200,
+     "bytes": 684
+    },
+    "/api/dsm/drill/report": {
+     "status": 200,
+     "bytes": 217
+    },
+    "/api/dsm/events/queue?limit=1": {
+     "status": 200,
+     "bytes": 215
+    },
+    "/api/dsm/events?limit=1": {
+     "status": 200,
+     "bytes": 410
+    },
+    "/api/dsm/law/privacy-requests": {
+     "status": 200,
+     "bytes": 1098
+    },
+    "/api/dsm/me": {
+     "status": 200,
+     "bytes": 412
+    },
+    "/api/dsm/metering": {
+     "status": 200,
+     "bytes": 2643
+    },
+    "/api/dsm/onboarding/progress": {
+     "status": 200,
+     "bytes": 3483
+    },
+    "/api/dsm/reports/runs": {
+     "status": 200,
+     "bytes": 7231
+    },
+    "/api/dsm/settings/api_keys": {
+     "status": 403,
+     "bytes": 107
+    },
+    "/api/dsm/settings/notify-rules/list": {
+     "status": 403,
+     "bytes": 84
+    },
+    "/api/dsm/settings/thresholds": {
+     "status": 403,
+     "bytes": 107
+    },
+    "/api/dsm/stats/by-reviewer": {
+     "status": 200,
+     "bytes": 537
+    },
+    "/api/dsm/stats/camera-thresholds": {
+     "status": 200,
+     "bytes": 333
+    },
+    "/api/dsm/stats/false-positive/by-camera": {
+     "status": 200,
+     "bytes": 419
+    },
+    "/api/dsm/stats/summary": {
+     "status": 200,
+     "bytes": 463
+    },
+    "/api/dsm/system/storage": {
+     "status": 403,
+     "bytes": 84
+    },
+    "/api/report-template/": {
+     "status": 403,
+     "bytes": 328
+    },
+    "/api/roles/": {
+     "status": 403,
+     "bytes": 328
+    },
+    "/api/v1/user/list": {
+     "status": 200,
+     "bytes": 44370
+    }
+   }
+  },
+  "U5": {
+   "login": 200,
+   "logout": 200,
+   "apis": {
+    "/api/devices/devices-management": {
+     "status": 200,
+     "bytes": 3775
+    },
+    "/api/dsm/audit": {
+     "status": 200,
+     "bytes": 27377
+    },
+    "/api/dsm/cameras/address-gap": {
+     "status": 200,
+     "bytes": 179
+    },
+    "/api/dsm/cameras/pulse": {
+     "status": 200,
+     "bytes": 1640
+    },
+    "/api/dsm/dashboard/frame": {
+     "status": 200,
+     "bytes": 982
+    },
+    "/api/dsm/drill/report": {
+     "status": 200,
+     "bytes": 217
+    },
+    "/api/dsm/events/queue?limit=1": {
+     "status": 200,
+     "bytes": 215
+    },
+    "/api/dsm/events?limit=1": {
+     "status": 200,
+     "bytes": 410
+    },
+    "/api/dsm/law/privacy-requests": {
+     "status": 200,
+     "bytes": 1098
+    },
+    "/api/dsm/me": {
+     "status": 200,
+     "bytes": 297
+    },
+    "/api/dsm/metering": {
+     "status": 200,
+     "bytes": 2643
+    },
+    "/api/dsm/onboarding/progress": {
+     "status": 200,
+     "bytes": 3722
+    },
+    "/api/dsm/reports/runs": {
+     "status": 200,
+     "bytes": 7231
+    },
+    "/api/dsm/settings/api_keys": {
+     "status": 200,
+     "bytes": 24294
+    },
+    "/api/dsm/settings/notify-rules/list": {
+     "status": 200,
+     "bytes": 3909
+    },
+    "/api/dsm/settings/thresholds": {
+     "status": 200,
+     "bytes": 10888
+    },
+    "/api/dsm/stats/by-reviewer": {
+     "status": 200,
+     "bytes": 537
+    },
+    "/api/dsm/stats/camera-thresholds": {
+     "status": 200,
+     "bytes": 333
+    },
+    "/api/dsm/stats/false-positive/by-camera": {
+     "status": 200,
+     "bytes": 419
+    },
+    "/api/dsm/stats/summary": {
+     "status": 200,
+     "bytes": 463
+    },
+    "/api/dsm/system/storage": {
+     "status": 200,
+     "bytes": 1025
+    },
+    "/api/report-template/": {
+     "status": 200,
+     "bytes": 10427
+    },
+    "/api/roles/": {
+     "status": 200,
+     "bytes": 6932
+    },
+    "/api/v1/user/list": {
+     "status": 200,
+     "bytes": 44370
+    }
+   }
+  }
+ }
+}

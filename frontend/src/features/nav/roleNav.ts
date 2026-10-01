@@ -45,6 +45,8 @@
  * 한국어로 바꿔 부른다. DB 의 `menu_name` 은 건드리지 않는다.
  */
 
+import roleScreensTable from './roleScreens.json';
+
 /** CPO 의 사람 넷. 코드는 `backend/config/k3_roles.py` 의 실측 매핑과 같은 말이다. */
 export type NavBucket = 'U1' | 'U2' | 'U4' | 'U5';
 
@@ -81,80 +83,120 @@ export interface NavRow {
 }
 
 /**
- * ① 표 — **CPO 가 정한 자리다.** 순서가 곧 사이드바 순서다.
+ * ① 표 — **CPO 가 정한 자리다. 그리고 이제 한 곳에서만 적는다** (P-471 · 턴 AS · 차선 S).
+ *
+ * 줄을 `roleScreens.json` 에 적는다. 거기서 **두 가지가 함께** 나온다:
+ *   · 사이드바 줄  = `menu` 칸이 있는 역할 (`NAV_ALLOW` — 아래)
+ *   · 라우트 가드  = `owners` 에 든 역할    (`routeVerdict` — `RoleRouteGuard.tsx` 가 부른다)
+ * 메뉴와 가드를 손으로 따로 적으면 반드시 어긋난다(D-212·D-369) — P-293 이 그 값이다:
+ * 관제요원이 메뉴 밖 10 라우트를 거절 없이 열었다(메뉴는 5줄, 가드는 없었다).
  *
  * 열쇠는 `path` 다. 같은 경로의 dj-core 행이 있으면 **그 행을 쓰고 이름만 바꾼다**
- * (행을 새로 만들지 않는다). 없으면 아래 `menuId`·`iconName` 으로 한 줄을 세운다.
+ * (행을 새로 만들지 않는다). 없으면 `menuId`·`iconName` 으로 한 줄을 세운다.
+ * 사이드바 순서는 `menu.<역할>` 의 번호다.
+ *
+ * 이전 표의 주석(U4 의 「보고서」「처리 기록」이 턴 AC 에 menuId 143·144 로 섰다 ·
+ * U5 의 「사람」은 `/users` 인수 화면 #3 · U5 에서 뗀 「지금 처리할 것」「인계 메모」는
+ * 교대 근무자의 자리다 · 목표 ≤ 7줄·영어 0)는 내용 그대로 JSON 의 `menu` 번호와
+ * `owners` 에 옮겼다. 이 줄을 늘리면 가드도 함께 는다 — 한 번에 두 곳을 고칠 일이 없다.
  */
-const U1_ROWS: readonly NavRow[] = [
-  { path: '/dsm/queue', label: '지금 처리할 것', menuId: 132, iconName: 'Bs1Square' },
-  { path: '/dsm/events', label: '무슨 일 있었나', menuId: 133, iconName: 'BsColumnsGap' },
-  { path: '/dsm/cameras/grid', label: '카메라 격자', menuId: 134, iconName: 'BsCameraVideo' },
-  { path: '/handover', label: '인계 메모', menuId: 135, iconName: 'BsPeople' },
-  { path: '/start', label: '처음이세요', menuId: 136, iconName: 'BsCompass' },
-];
+interface ScreenEntry {
+  path: string;
+  owners: readonly string[];
+  label?: string;
+  menu?: Partial<Record<NavBucket, number>>;
+  menuId?: number;
+  iconName?: string;
+  prefix?: boolean;
+  ownerLabel?: string;
+  exempt?: boolean;
+}
+
+interface ScreenTable {
+  owner_names: Record<string, string>;
+  default_owner_label: string;
+  screens: readonly ScreenEntry[];
+}
+
+const SCREEN_TABLE = roleScreensTable as unknown as ScreenTable;
+
+const NAV_BUCKETS: readonly NavBucket[] = ['U1', 'U2', 'U4', 'U5'];
+
+function menuRowsOf(bucket: NavBucket): readonly NavRow[] {
+  return SCREEN_TABLE.screens
+    .filter((s) => s.menu && s.menu[bucket] !== undefined && s.label)
+    .sort((a, b) => (a.menu![bucket] as number) - (b.menu![bucket] as number))
+    .map((s) => ({
+      path: s.path,
+      label: s.label as string,
+      menuId: s.menuId,
+      iconName: s.iconName,
+    }));
+}
 
 export const NAV_ALLOW: Record<NavBucket, readonly NavRow[]> = {
-  /** 관제요원 5 — 이미 이 모양이었다. 표에 적어 두는 이유는 **지켜야 할 것**이기 때문이다. */
-  U1: U1_ROWS,
-
-  /** 관제팀장 7 — U1 의 다섯 + 관제 현황 + 훈련 모드. */
-  U2: [
-    ...U1_ROWS,
-    { path: '/dsm/dashboard', label: '관제 현황', menuId: 137, iconName: 'BsBarChartLine' },
-    { path: '/dsm/drill', label: '훈련 모드', menuId: 138, iconName: 'BsBinoculars' },
-  ],
-
-  /**
-   * 재난안전과 4 — 무슨 일 있었나 · 보고서 · 처리 기록 · 열람·삭제 청구.
-   *
-   * ★★ **「넷 중 둘은 화면이 없다」는 이제 틀린 말이다** [실측 2026-09-10 · 턴 O 의
-   *   주장을 실측 2026-09-22 · 턴 AC 가 뒤집는다].
-   *   「보고서」(`/dsm/reports`)와 「처리 기록」(`/dsm/audit`)은 턴 T·U 에 라우터에
-   *   섰고(`frontend/src/App.tsx` 의 `dsmU24Routes.reports`·`dsmU24Routes.auditLog`),
-   *   서버 권한도 U4 에 이미 열려 있었다(`backend/apps/dsm/api_u24.py:358`·`:428`).
-   *   막혔던 것은 `menuId` 였다 — `menu.Menu` 에 그 두 경로의 행이 없어서
-   *   `filterNav` 가 (아래 `menuId` 규약대로) 그 줄을 세울 수 없었다.
-   *   [실측 2026-09-22 · 턴 AC · ORM] 시더로 실재 행을 세웠다:
-   *   `backend/common/product_menus.py::PRODUCT_MENUS` 에 두 자리를 더하고
-   *   `ensure_product_menus()` 를 돌렸다 — `/dsm/reports` → id **143**,
-   *   `/dsm/audit` → id **144**(둘 다 `group=None` · U4 역할에 `permit_read` 켬).
-   *   `P61_NO_SCREEN_YET` 의 그 두 자리는 `P61_SCREEN_ARRIVED` 로 옮겼다.
-   */
-  U4: [
-    { path: '/dsm/events', label: '무슨 일 있었나', menuId: 133, iconName: 'BsColumnsGap' },
-    { path: '/dsm/reports', label: '보고서', menuId: 143, iconName: 'BsFileEarmarkText' },
-    { path: '/dsm/audit', label: '처리 기록', menuId: 144, iconName: 'BsClockHistory' },
-    { path: '/dsm/privacy-requests', label: '열람·삭제 청구', menuId: 139, iconName: 'BsSearch' },
-  ],
-
-  /**
-   * 관리자 9 — U1 의 다섯 + 사람 + 카메라 등록 + 백업·보존 + 이번 달 사용량.
-   *
-   * ★ 「사람」은 인수 화면 `/users`(dj-core 행 #3 『User Management』)다. **행을 그대로
-   *   쓰고 이름만 한국어로 부른다** — DB 의 `menu_name` 은 한 자도 안 고친다.
-   * ★ U1 의 다섯 중 넷(`/dsm/queue` · `/dsm/events` · `/dsm/cameras/grid` · `/start`)은
-   *   서버가 `admin` 역할에 **안 준다**(`RoleMenu` 연결이 없다 — 실측). 그 넷은 여기서
-   *   세운다. 라우트는 이미 서 있고 서버 권한도 이미 열려 있다(같은 `/api/dsm/*` 문을
-   *   `/dsm/drill`·`/dsm/metering` 이 이 역할로 이미 쓰고 있다).
-   * ★★ 「알림 받는 사람」은 **화면이 없다** — `P61_NO_SCREEN_YET` 의 「알림 규칙·채널」.
-   *   그래서 CPO 의 열 자리 중 아홉만 선다. 안 건 자리는 위 U4 와 같은 규율로 적는다.
-   */
-  U5: [
-    // ★★ [턴 AA · U56] **아홉에서 일곱으로.** 뺀 둘은 관제요원의 일이다 —
-    //   「지금 처리할 것」(단일 초점 큐)과 「인계 메모」는 교대 근무하는 사람의
-    //   자리이지 기관 관리자의 자리가 아니다. 둘 다 **라우트는 그대로**이고
-    //   주소를 치면 열린다 — 메뉴에서 떼는 것은 화면 결정이지 권한 결정이 아니다.
-    //   목표는 **역할별 메뉴 ≤ 7 · 영어 칸 0** 이다(턴 AA 귀약).
-    { path: '/dsm/events', label: '무슨 일 있었나', menuId: 133, iconName: 'BsColumnsGap' },
-    { path: '/dsm/cameras/grid', label: '카메라 격자', menuId: 134, iconName: 'BsCameraVideo' },
-    { path: '/dsm/cameras/import', label: '카메라 등록', menuId: 140, iconName: 'BsBoxes' },
-    { path: '/users', label: '사람', menuId: 3, iconName: 'BsPeople' },
-    { path: '/dsm/system', label: '백업·보존', menuId: 142, iconName: 'BsGear' },
-    { path: '/dsm/metering', label: '이번 달 사용량', menuId: 141, iconName: 'BsDatabase' },
-    { path: '/start', label: '처음이세요', menuId: 136, iconName: 'BsCompass' },
-  ],
+  U1: menuRowsOf('U1'),
+  U2: menuRowsOf('U2'),
+  U4: menuRowsOf('U4'),
+  U5: menuRowsOf('U5'),
 };
+
+function patternOf(entry: ScreenEntry): RegExp {
+  const esc = entry.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/:[A-Za-z_]+/g, '[^/]+');
+  return new RegExp(`^${esc}${entry.prefix ? '(/.*)?' : ''}/?$`);
+}
+
+const SCREEN_PATTERNS: readonly { entry: ScreenEntry; rx: RegExp }[] = SCREEN_TABLE.screens.map(
+  (entry) => ({ entry, rx: patternOf(entry) }),
+);
+
+/** 이 주소가 표의 어느 줄인가. 정확한 줄(접두 아님)을 먼저, 그다음 긴 접두. */
+export function screenEntryOf(pathname: string): ScreenEntry | null {
+  const p = String(pathname ?? '').split('?')[0].split('#')[0] || '/';
+  let best: ScreenEntry | null = null;
+  let bestScore = -1;
+  for (const { entry, rx } of SCREEN_PATTERNS) {
+    if (!rx.test(p)) continue;
+    const score = (entry.prefix ? 0 : 10000) + entry.path.length;
+    if (score > bestScore) {
+      best = entry;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+export interface RouteVerdict {
+  allowed: boolean;
+  /** 안내문에 쓸 주인 이름들 (「관제팀장 · 기관 관리자」 같은). */
+  ownerText: string;
+}
+
+/**
+ * 가드 판정. **순수 함수다.** 사람(버킷)을 모르면 막지 않는다 — 모르는 것을 막는 길은
+ * 빈 화면이 되는 사고다(`bucketOf` 의 `null` 과 같은 규율). 표에 없는 주소는
+ * 「플랫폼 운영자 화면」으로 센다(인수 자산이 늘어도 조용히 열리지 않는다).
+ * `exempt` 줄은 항상 통과한다.
+ */
+export function routeVerdict(bucket: NavBucket | null, pathname: string): RouteVerdict {
+  if (!bucket) return { allowed: true, ownerText: '' };
+  const entry = screenEntryOf(pathname);
+  if (entry?.exempt) return { allowed: true, ownerText: '' };
+  const owners = entry ? entry.owners : [];
+  // U6(외부 연계)는 U5 계정으로 연다 — 사람 버킷은 U5 하나다.
+  const mine = bucket === 'U5' ? ['U5', 'U6'] : [bucket];
+  if (owners.some((o) => mine.includes(o))) return { allowed: true, ownerText: '' };
+  const names = SCREEN_TABLE.owner_names;
+  const text = owners.length
+    ? owners.filter((o) => o !== 'U3' && o !== 'U6').map((o) => names[o] ?? o).join(' · ')
+    : '';
+  return {
+    allowed: false,
+    ownerText: text || entry?.ownerLabel || SCREEN_TABLE.default_owner_label,
+  };
+}
+
+export { NAV_BUCKETS };
 
 /**
  * ★★ ⑤ **인수 자산 화면 넷 — 메뉴에서 뗀다. 라우트는 남긴다**

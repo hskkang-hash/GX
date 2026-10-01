@@ -1,0 +1,493 @@
+{
+ "_why": "메뉴와 라우트 가드의 같은 출처(P-471). roleNav.ts 는 NAV_ALLOW 를 여기서 만들고, RoleRouteGuard 는 여기서 판정한다. 둘을 손으로 따로 적지 않는다.",
+ "owner_names": {
+  "U1": "관제요원",
+  "U2": "관제팀장",
+  "U3": "현장 대원",
+  "U4": "재난안전과",
+  "U5": "기관 관리자",
+  "U6": "외부 연계"
+ },
+ "default_owner_label": "플랫폼 운영자",
+ "screens": [
+  {
+   "path": "/dsm/queue",
+   "owners": [
+    "U1",
+    "U2"
+   ],
+   "label": "지금 처리할 것",
+   "menu": {
+    "U1": 0,
+    "U2": 0
+   },
+   "menuId": 132,
+   "iconName": "Bs1Square",
+   "api": "/api/dsm/events/queue?limit=1"
+  },
+  {
+   "path": "/dsm/events",
+   "owners": [
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5"
+   ],
+   "label": "무슨 일 있었나",
+   "menu": {
+    "U1": 1,
+    "U2": 1,
+    "U4": 0,
+    "U5": 0
+   },
+   "menuId": 133,
+   "iconName": "BsColumnsGap",
+   "api": "/api/dsm/events?limit=1"
+  },
+  {
+   "path": "/dsm/events/:id",
+   "owners": [
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5"
+   ],
+   "api": "/api/dsm/events?limit=1",
+   "note": "상세는 id 가 필요해 목록 문으로 대리 측정"
+  },
+  {
+   "path": "/dsm/cameras/grid",
+   "owners": [
+    "U1",
+    "U2",
+    "U5"
+   ],
+   "label": "카메라 격자",
+   "menu": {
+    "U1": 2,
+    "U2": 2,
+    "U5": 1
+   },
+   "menuId": 134,
+   "iconName": "BsCameraVideo",
+   "api": "/api/dsm/cameras/pulse"
+  },
+  {
+   "path": "/handover",
+   "owners": [
+    "U1",
+    "U2"
+   ],
+   "label": "인계 메모",
+   "menu": {
+    "U1": 3,
+    "U2": 3
+   },
+   "menuId": 135,
+   "iconName": "BsPeople",
+   "prefix": true,
+   "note": "인계 API 는 이번에 못 쟀다"
+  },
+  {
+   "path": "/start",
+   "owners": [
+    "U1",
+    "U2",
+    "U4",
+    "U5",
+    "U6"
+   ],
+   "label": "처음이세요",
+   "menu": {
+    "U1": 4,
+    "U2": 4,
+    "U5": 6
+   },
+   "menuId": 136,
+   "iconName": "BsCompass",
+   "api": "/api/dsm/onboarding/progress"
+  },
+  {
+   "path": "/dsm/dashboard",
+   "owners": [
+    "U1",
+    "U2"
+   ],
+   "label": "관제 현황",
+   "menu": {
+    "U2": 5
+   },
+   "menuId": 137,
+   "iconName": "BsBarChartLine",
+   "api": "/api/dsm/dashboard/frame"
+  },
+  {
+   "path": "/dsm/drill",
+   "owners": [
+    "U2",
+    "U5"
+   ],
+   "label": "훈련 모드",
+   "menu": {
+    "U2": 6
+   },
+   "menuId": 138,
+   "iconName": "BsBinoculars",
+   "api": "/api/dsm/drill/report"
+  },
+  {
+   "path": "/dsm/privacy-requests",
+   "owners": [
+    "U4",
+    "U5"
+   ],
+   "label": "열람·삭제 청구",
+   "menu": {
+    "U4": 3
+   },
+   "menuId": 139,
+   "iconName": "BsSearch",
+   "api": "/api/dsm/law/privacy-requests"
+  },
+  {
+   "path": "/dsm/cameras/import",
+   "owners": [
+    "U5"
+   ],
+   "label": "카메라 등록",
+   "menu": {
+    "U5": 2
+   },
+   "menuId": 140,
+   "iconName": "BsBoxes",
+   "api": "/api/dsm/cameras/address-gap",
+   "sensitive": true,
+   "note": "API 는 관제팀장도 읽는다(홈의 주소 배지) — 화면은 관리자 몫",
+   "api_open_to": [
+    "U2",
+    "U4"
+   ]
+  },
+  {
+   "path": "/dsm/metering",
+   "owners": [
+    "U5"
+   ],
+   "label": "이번 달 사용량",
+   "menu": {
+    "U5": 5
+   },
+   "menuId": 141,
+   "iconName": "BsDatabase",
+   "api": "/api/dsm/metering",
+   "sensitive": true,
+   "note": "사용량 읽기는 관제팀장·재난안전과도 허용(선언) — 화면은 관리자 몫",
+   "api_open_to": [
+    "U2",
+    "U4"
+   ]
+  },
+  {
+   "path": "/dsm/system",
+   "owners": [
+    "U5"
+   ],
+   "label": "백업·보존",
+   "menu": {
+    "U5": 4
+   },
+   "menuId": 142,
+   "iconName": "BsGear",
+   "api": "/api/dsm/system/storage",
+   "sensitive": true
+  },
+  {
+   "path": "/dsm/reports",
+   "owners": [
+    "U2",
+    "U4",
+    "U5"
+   ],
+   "label": "보고서",
+   "menu": {
+    "U4": 1
+   },
+   "menuId": 143,
+   "iconName": "BsFileEarmarkText",
+   "api": "/api/dsm/reports/runs",
+   "sensitive": true
+  },
+  {
+   "path": "/dsm/audit",
+   "owners": [
+    "U2",
+    "U4",
+    "U5"
+   ],
+   "label": "처리 기록",
+   "menu": {
+    "U4": 2
+   },
+   "menuId": 144,
+   "iconName": "BsClockHistory",
+   "api": "/api/dsm/audit",
+   "sensitive": true
+  },
+  {
+   "path": "/users",
+   "owners": [
+    "U5"
+   ],
+   "label": "사람",
+   "menu": {
+    "U5": 3
+   },
+   "menuId": 3,
+   "iconName": "BsPeople",
+   "prefix": true,
+   "api": "/api/v1/user/list",
+   "sensitive": true
+  },
+  {
+   "path": "/dsm/home",
+   "owners": [
+    "U2",
+    "U4",
+    "U5"
+   ],
+   "api": "/api/dsm/stats/summary"
+  },
+  {
+   "path": "/dsm/me",
+   "owners": [
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5",
+    "U6"
+   ],
+   "api": "/api/dsm/me"
+  },
+  {
+   "path": "/profile",
+   "owners": [
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5",
+    "U6"
+   ],
+   "note": "인수 자산(rj-core) 프로필 — 모든 역할"
+  },
+  {
+   "path": "/",
+   "owners": [
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5",
+    "U6"
+   ],
+   "note": "루트 리다이렉트"
+  },
+  {
+   "path": "/dsm/stats",
+   "owners": [
+    "U2",
+    "U4",
+    "U5"
+   ],
+   "api": "/api/dsm/stats/summary",
+   "note": "집계 수치 — 관제요원도 같은 수를 큐에서 본다(선언)"
+  },
+  {
+   "path": "/dsm/stats/false-positive",
+   "owners": [
+    "U2",
+    "U4",
+    "U5"
+   ],
+   "api": "/api/dsm/stats/false-positive/by-camera",
+   "note": "집계 수치(선언)"
+  },
+  {
+   "path": "/dsm/cameras/tuning",
+   "owners": [
+    "U2",
+    "U5"
+   ],
+   "api": "/api/dsm/stats/camera-thresholds",
+   "note": "읽기는 집계 수준(선언) · 쓰기는 설정 문지기"
+  },
+  {
+   "path": "/dsm/team-status",
+   "owners": [
+    "U2",
+    "U4",
+    "U5"
+   ],
+   "api": "/api/dsm/stats/by-reviewer",
+   "sensitive": true
+  },
+  {
+   "path": "/dsm/notify",
+   "owners": [
+    "U2",
+    "U5"
+   ],
+   "api": "/api/dsm/settings/notify-rules/list",
+   "sensitive": true
+  },
+  {
+   "path": "/dsm/people",
+   "owners": [
+    "U5"
+   ],
+   "sensitive": true,
+   "note": "쓰기 전용 화면(POST people/create) — 코드로 확인: guard_setting 이 관리자만 통과"
+  },
+  {
+   "path": "/dsm/settings/rules",
+   "owners": [
+    "U5"
+   ],
+   "api": "/api/dsm/settings/thresholds",
+   "sensitive": true
+  },
+  {
+   "path": "/dsm/integrations",
+   "owners": [
+    "U5",
+    "U6"
+   ],
+   "api": "/api/dsm/settings/api_keys",
+   "sensitive": true
+  },
+  {
+   "path": "/dsm/cameras/address",
+   "owners": [
+    "U4",
+    "U5"
+   ],
+   "api": "/api/dsm/cameras/address-gap",
+   "sensitive": true,
+   "note": "U4#11 카메라 설치 현황이 연다(읽기)",
+   "api_open_to": [
+    "U2"
+   ]
+  },
+  {
+   "path": "/m/inbox",
+   "owners": [
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5"
+   ],
+   "note": "모바일 — U3 현장 대원은 뷰어 계정으로 열린다"
+  },
+  {
+   "path": "/m/events/:id",
+   "owners": [
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5"
+   ]
+  },
+  {
+   "path": "/m/settings",
+   "owners": [
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5"
+   ]
+  },
+  {
+   "path": "/qr-code",
+   "owners": [
+    "U1",
+    "U2",
+    "U5"
+   ],
+   "note": "QR 스캔 모바일 화면"
+  },
+  {
+   "path": "/users/add",
+   "owners": [
+    "U5"
+   ]
+  },
+  {
+   "path": "/roles",
+   "owners": [
+    "U5"
+   ],
+   "api": "/api/roles/",
+   "sensitive": true,
+   "note": "인수 자산 — 메뉴에서 뗀 화면(NAV_ACQUIRED_HIDDEN)이지만 온보딩 U5#2(역할 부여·변경)가 연다"
+  },
+  {
+   "path": "/device",
+   "owners": [],
+   "prefix": true,
+   "api": "/api/devices/devices-management",
+   "sensitive": true,
+   "ownerLabel": "플랫폼 운영자",
+   "api_open_to": [
+    "U5"
+   ]
+  },
+  {
+   "path": "/report-template",
+   "owners": [],
+   "prefix": true,
+   "api": "/api/report-template/",
+   "sensitive": true,
+   "ownerLabel": "플랫폼 운영자",
+   "api_open_to": [
+    "U5"
+   ]
+  },
+  {
+   "path": "/operation-settings",
+   "owners": [],
+   "prefix": true,
+   "ownerLabel": "플랫폼 운영자"
+  },
+  {
+   "path": "/menu",
+   "owners": [],
+   "prefix": true,
+   "ownerLabel": "플랫폼 운영자"
+  },
+  {
+   "path": "/configuration-management",
+   "owners": [],
+   "prefix": true,
+   "ownerLabel": "플랫폼 운영자"
+  },
+  {
+   "path": "/fws",
+   "owners": [],
+   "prefix": true,
+   "note": "별도 제품 면 — API 는 이번에 못 쟀다",
+   "ownerLabel": "산불감시(FWS) 현장"
+  },
+  {
+   "path": "/ops",
+   "owners": [],
+   "prefix": true,
+   "ownerLabel": "플랫폼 운영자(U0)"
+  }
+ ]
+}

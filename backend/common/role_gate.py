@@ -412,11 +412,190 @@ def denial_response() -> JsonResponse:
     return JsonResponse(denial_payload(), status=403)
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ★★ P-471 / P-293 [2026-10-01 턴 AS · 차선 S] — **역할 밖 읽기 면** (권한 누수)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# 출생 표본 [실측 2026-10-01 · 8500 · 같은 순간 네 계정 · GET 만 · 값은 안 적는다]
+#   P-293: 관제요원(U1)이 메뉴 밖 10 라우트를 열었다 — 화면 6 은 거절 없이 열림.
+#   그래서 그 10 화면이 부르는 API 를 U1 토큰으로 직접 불렀다.
+#
+#     /api/v1/user/list                  U1 200 · U2 200 · U4 200 · U5 200  (count=54, 44KB)
+#     /api/v1/user/get-user-detail/115   U1 200 · U2 200 · U4 200 · U5 200  (남의 계정 전문 5KB)
+#     /api/dsm/stats/by-reviewer         U1 200  (요원별 실적 — 관제팀장의 화면)
+#     /api/dsm/cameras/address-gap       U1 200
+#     /api/dsm/webhook-subscriptions     U1 200  (구독 13건 · 주소)
+#     /api/dsm/metering                  U1 200  (이번 달 사용량 — 관리자의 화면)
+#     나머지(reports/runs · system/* · notify-rules · roles · devices · report-template)
+#                                        U1 403 — 이미 옳게 닫혀 있었다.
+#
+#   즉 **화면이 열린 것이 아니라 자료가 나갔다.** 사람 목록은 `/users` 화면(인수 자산,
+#   dj-core `user/list`)이 부르는 문이고, 이 문은 메뉴 권한 문지기(`/api/roles/` 앞의 것)
+#   밖에 있었다. dj-core 는 못 고친다(§0.4) — 그래서 **이 겹**에서 건다.
+#
+# 규칙: 「이 자리를 읽어도 되는 역할 종류」를 손으로 적는다(아래 표). 역할은 넷으로 센다 —
+#   admin(U5 · 전역/테넌트 관리자 · is_staff/is_superuser) · manager(U2) · executive(U4) ·
+#   operator(U1). 표에 없는 역할(배송·드론 등)이 섞인 계정은 **이 규칙의 일이 아니다**
+#   (모르는 것을 막지 않는다 — D-301). 역할 0 은 위 `judge` 가 먼저 막는다.
+#
+# 역할 판정식은 복사하지 않는다 — `config/k3_roles.py` 표와 `common/tenant_roles.py`
+# 를 그대로 읽는다(D-212).
+#
+# 되돌리기: `ROLE_SURFACE_GATE_ENABLED = False` — **다른 두 스위치와 따로다.**
+
+SURFACE_FLAG = "ROLE_SURFACE_GATE_ENABLED"
+
+KIND_ADMIN = "admin"
+KIND_MANAGER = "manager"
+KIND_EXECUTIVE = "executive"
+KIND_OPERATOR = "operator"
+
+SURFACE_DENIAL_CODE = "role_surface"
+SURFACE_MESSAGE_KO = "이 계정의 역할로는 볼 수 없는 자료입니다."
+SURFACE_MESSAGE_EN = "This role is not allowed to view this data."
+
+#: 읽기 메서드에만 건다 — 쓰기는 각 문이 이미 `guard_setting` 등으로 닫고 있다.
+SURFACE_METHODS: frozenset = frozenset({"GET", "HEAD"})
+
+_ALL_BUT_OPERATOR = frozenset({KIND_ADMIN, KIND_MANAGER, KIND_EXECUTIVE})
+
+#: (이름, 경로 모양, 읽어도 되는 종류, 자기 id 면 통과하는 조각 번호 또는 0)
+#: ★ 이름이 아니라 **모양**이지만 한 칸(`[^/]+`)까지만이다.
+SURFACE_RULES: tuple = (
+    ("user_list", re.compile(r"^/api/v1/user/list$"),
+     frozenset({KIND_ADMIN}), 0),
+    ("user_detail", re.compile(r"^/api/v1/user/get-user-detail/([^/]+)$"),
+     frozenset({KIND_ADMIN}), 1),
+    ("stats_by_reviewer", re.compile(r"^/api/dsm/stats/by-reviewer$"),
+     _ALL_BUT_OPERATOR, 0),
+    ("camera_address_gap", re.compile(r"^/api/dsm/cameras/address-gap$"),
+     _ALL_BUT_OPERATOR, 0),
+    ("webhook_subscriptions", re.compile(r"^/api/dsm/webhook-subscriptions$"),
+     _ALL_BUT_OPERATOR, 0),
+    ("metering", re.compile(r"^/api/dsm/metering(/[^/]+)?$"),
+     _ALL_BUT_OPERATOR, 0),
+)
+
+
+def surface_enabled() -> bool:
+    """P-471 규칙이 켜져 있는가. 기본은 **켜짐**."""
+    return bool(getattr(settings, SURFACE_FLAG, True))
+
+
+def match_surface_rule(method: str, path: str):
+    """이 요청이 걸리는 표의 줄을 돌려준다. 없으면 None. **순수 함수다.**"""
+    if str(method or "").upper() not in SURFACE_METHODS:
+        return None
+    p = _normalize(path)
+    for name, rx, allowed, self_group in SURFACE_RULES:
+        m = rx.match(p)
+        if m:
+            return name, allowed, (m.group(self_group) if self_group else None)
+    return None
+
+
+def kinds_from_codes(codes, *, is_admin_flag: bool = False) -> frozenset:
+    """역할 코드 묶음 -> 종류 묶음. 표에 없는 코드가 하나라도 있으면 `other` 를 단다.
+
+    **순수 함수다.** `other` 는 「모르는 역할이 섞였다」 — 이 규칙은 그 계정을 막지 않는다.
+    """
+    from config.k3_roles import (
+        K3_ROLE_EXECUTIVES, K3_ROLE_MANAGERS, K3_ROLE_OPERATORS, K3_ROLE_SYSOPS)
+
+    table = (
+        (KIND_ADMIN, K3_ROLE_SYSOPS),
+        (KIND_MANAGER, K3_ROLE_MANAGERS),
+        (KIND_EXECUTIVE, K3_ROLE_EXECUTIVES),
+        (KIND_OPERATOR, K3_ROLE_OPERATORS),
+    )
+    out = set()
+    if is_admin_flag:
+        out.add(KIND_ADMIN)
+    for code in codes:
+        c = str(code or "").strip().lower()
+        if not c:
+            continue
+        for kind, members in table:
+            if c in members:
+                out.add(kind)
+                break
+        else:
+            out.add("other")
+    return frozenset(out)
+
+
+def account_kinds(user) -> frozenset:
+    """계정의 종류 묶음. 역할 0 이면 빈 묶음(= 이 규칙의 일이 아니다)."""
+    if user is None or not getattr(user, "is_authenticated", False):
+        return frozenset()
+    flag = bool(getattr(user, "is_superuser", False) or getattr(user, "is_staff", False))
+    roles = getattr(user, "roles", None)
+    codes = []
+    if roles is not None:
+        try:
+            codes = list(roles.values_list("code", flat=True))
+        except Exception:                                   # pragma: no cover
+            logger.warning("[ROLE_GATE] roles 를 못 읽었다 — 막지 않고 넘긴다")
+            return frozenset({"other"})
+    kinds = kinds_from_codes(codes, is_admin_flag=flag)
+    if KIND_ADMIN not in kinds and codes:
+        # 테넌트 관리자(`tenant_admin_<그룹>`)도 관리자다 — 판정식은 한 곳에서만 낸다.
+        try:
+            from common.tenant_roles import is_global_admin, is_tenant_admin
+            if is_global_admin(user) or is_tenant_admin(user):
+                kinds = kinds | {KIND_ADMIN}
+        except Exception:                                   # pragma: no cover
+            return frozenset({"other"})
+    return kinds
+
+
+def judge_surface(*, method: str, path: str, kinds, user_id=None):
+    """거절 사유를 돌려준다. 통과면 None. **요청 객체 없이 시험할 수 있다.**
+
+    ① 끄면 안 막는다 ② 표에 안 걸리면 안 본다 ③ 종류가 비었거나 `other` 가 섞였으면
+    이 규칙의 일이 아니다 ④ 자기 자신의 상세는 연다(프로필) ⑤ 허용 종류가 하나라도
+    있으면 통과 ⑥ 아니면 거절.
+    """
+    if not surface_enabled():
+        return None
+    if not str(path or "").startswith(API_PREFIX):
+        return None
+    hit = match_surface_rule(method, path)
+    if hit is None:
+        return None
+    _name, allowed, tail = hit
+    kinds = frozenset(kinds or ())
+    if not kinds or "other" in kinds:
+        return None
+    if tail is not None and user_id is not None and str(tail) == str(user_id):
+        return None
+    if kinds & allowed:
+        return None
+    return SURFACE_DENIAL_CODE
+
+
+def surface_denial_payload() -> dict:
+    """밖으로 나가는 본문 한 벌. **테넌트 자료가 한 자도 없다.**"""
+    return {
+        "success": False,
+        "status_code": 403,
+        "code": SURFACE_DENIAL_CODE,
+        "detail": "Forbidden",
+        "message": {"ko": SURFACE_MESSAGE_KO, "en": SURFACE_MESSAGE_EN},
+    }
+
+
+def surface_denial_response() -> JsonResponse:
+    """거절 하나. **403 으로 나간다** — 200 봉투에 담지 않는다."""
+    return JsonResponse(surface_denial_payload(), status=403)
+
+
 class RoleGateMiddleware:
-    """역할로 끊는 **규칙 둘**을 한 자리에서 건다. **기본값은 거절이다.**
+    """역할로 끊는 **규칙 셋**을 한 자리에서 건다. **기본값은 거절이다.**
 
       ① 역할 0 계정 -> 403 (P-105) — 스위치 `ROLE_GATE_ENABLED`
       ② 읽기 전용 역할의 **쓰기** -> 403 (P-119) — 스위치 `READONLY_ROLE_GATE_ENABLED`
+      ③ 역할 밖 읽기 면 -> 403 (P-471) — 스위치 `ROLE_SURFACE_GATE_ENABLED`
 
     두 스위치는 **따로다.** 하나를 끄려다 둘이 꺼지면 그날 구멍이 하나 열린다.
 
@@ -459,5 +638,15 @@ class RoleGateMiddleware:
                 logger.info("[ROLE_GATE] 읽기 전용 거절 %s %s — %s",
                             method, path, verdict)
                 return readonly_denial_response()
+
+        # ③ 역할 밖 읽기 면 (P-471). 표에 걸리는 GET 에서만 역할 질의를 만든다.
+        if surface_enabled() and match_surface_rule(method, path) is not None:
+            verdict = judge_surface(method=method, path=path,
+                                    kinds=account_kinds(user),
+                                    user_id=getattr(user, "id", None))
+            if verdict is not None:
+                logger.info("[ROLE_GATE] 역할 밖 읽기 거절 %s %s — %s",
+                            method, path, verdict)
+                return surface_denial_response()
 
         return self.get_response(request)
