@@ -1,7 +1,7 @@
 {
   "id": "DSM-U6-01",
   "title": "스마트시티 통합플랫폼 이벤트 연계",
-  "measured_at": "2026-09-30T06:18:11.318862+00:00",
+  "measured_at": "2026-09-30T11:15:59.273935+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u36_an.U6_01_ExternalEventsTest.test_police_112_emergency_video_event_is_recorded_as_external",
   "request": {
@@ -11,14 +11,14 @@
       "source": "police_112",
       "event_type": "intrusion",
       "severity": "critical",
-      "stream_monitor_id": 345,
+      "stream_monitor_id": 564,
       "external_ref": "POL-2026-0001"
     }
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 228,
+      "event_id": 328,
       "created": true,
       "should_notify": true,
       "folded_into_existing": false,

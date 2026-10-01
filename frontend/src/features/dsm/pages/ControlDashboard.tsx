@@ -13,6 +13,7 @@
  * ★ 「끊김」이어도 **이 화면은 계속 동작한다** (DA-03 §2-3). SDN 표시만 낮춘다.
  *   그것이 계약 §2.2-2 「일방 장애 시 타방 단독 동작」을 사람이 눈으로 보는 자리다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Badge, Button, Card, Col, Popover, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -251,12 +252,12 @@ export default function ControlDashboard() {
                         title="화면 점검 내역"
                         content={
                           <Space direction="vertical" size={2} style={{ maxWidth: 320 }}>
-                            <Text type="secondary" style={{ fontSize: 12 }}>
+                            <Text type="secondary" style={{ fontSize: FONT_SM }}>
                               각 칸이 다섯 상태 중 어디에 있는지 셉니다. 분모는 전체 칸 수
                               {' '}{frame.data?.panel_total ?? 0}입니다.
                             </Text>
                             {(frame.data?.five_states ?? []).map((s) => (
-                              <Text key={s} style={{ fontSize: 12 }}>
+                              <Text key={s} style={{ fontSize: FONT_SM }}>
                                 {PANEL_STATE_LABEL[s] ?? s}{' '}
                                 {frame.data?.state_counts?.[s] ?? 0} / {frame.data?.panel_total ?? 0}
                               </Text>
@@ -356,13 +357,13 @@ export default function ControlDashboard() {
                         title="정상과 이상을 무엇으로 가르나"
                         content={
                           <Space direction="vertical" size={2} style={{ maxWidth: 340 }}>
-                            <Text style={{ fontSize: 12 }}>
+                            <Text style={{ fontSize: FONT_SM }}>
                               카메라가 보낸 화면이 마지막으로 도착한 시각으로 가릅니다.
                               {pulseTimeoutMin > 0
                                 ? ` ${pulseTimeoutMin}분 넘게 아무것도 오지 않으면 「이상」입니다.`
                                 : ''}
                             </Text>
-                            <Text style={{ fontSize: 12 }}>
+                            <Text style={{ fontSize: FONT_SM }}>
                               「이상」은 카메라가 꺼졌을 수도, 회선이 끊겼을 수도
                               있습니다. 어느 카메라인지는 「카메라 격자」에서 한 대씩
                               보입니다.

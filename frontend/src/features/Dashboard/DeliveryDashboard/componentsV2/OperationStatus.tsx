@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import { Box, Tooltip } from '@mui/material';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -407,7 +408,7 @@ const OperationStatus: React.FC<Props> = ({ panel }) => {
                                 <span
                                   style={{
                                     fontWeight: '600',
-                                    fontSize: '12px',
+                                    fontSize: FONT_SM,
                                   }}
                                 >
                                   {weight}
@@ -467,7 +468,7 @@ const OperationStatus: React.FC<Props> = ({ panel }) => {
                                         <span
                                           style={{
                                             marginLeft: '0.6rem',
-                                            fontSize: '12px',
+                                            fontSize: FONT_SM,
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap',
@@ -529,7 +530,7 @@ const OperationStatus: React.FC<Props> = ({ panel }) => {
                                 <span
                                   style={{
                                     fontWeight: '600',
-                                    fontSize: '12px',
+                                    fontSize: FONT_SM,
                                   }}
                                 >
                                   {weight}
@@ -588,7 +589,7 @@ const OperationStatus: React.FC<Props> = ({ panel }) => {
                                         <span
                                           style={{
                                             marginLeft: '0.6rem',
-                                            fontSize: '12px',
+                                            fontSize: FONT_SM,
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap',

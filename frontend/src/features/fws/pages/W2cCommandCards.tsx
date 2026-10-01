@@ -87,6 +87,17 @@ export function ResourceBoardCard({
                     </Text>
                   ) : null}
                   {p.set_at ? <Text type="secondary">{p.set_at}</Text> : null}
+                  {p.mission_state === 'deployed' ? (
+                    <Tag color="red" data-gx="fws-f2-11-deployed">
+                      {C.board.deployedLabel}
+                    </Tag>
+                  ) : null}
+                  {p.mission_state === 'released' ? (
+                    <Tag color="green" data-gx="fws-f2-11-released">
+                      {C.board.releasedLabel}
+                      {p.released_at ? ` ${p.released_at}` : ''}
+                    </Tag>
+                  ) : null}
                 </Space>
               </List.Item>
             )}

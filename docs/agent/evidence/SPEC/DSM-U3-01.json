@@ -1,12 +1,12 @@
 {
   "id": "DSM-U3-01",
   "title": "역할별 M2 문안",
-  "measured_at": "2026-09-30T06:18:07.856296+00:00",
+  "measured_at": "2026-09-30T11:15:55.616140+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u36_an.U3_01_M2BriefTest.test_role_and_event_type_pick_the_exact_dictionary_line",
   "request": {
     "method": "GET",
-    "path": "/api/dsm/events/225/m2-brief?role=facility",
+    "path": "/api/dsm/events/325/m2-brief?role=facility",
     "params": {
       "role": "facility"
     }
@@ -14,7 +14,7 @@
   "response": {
     "status": 200,
     "body": {
-      "event_id": 225,
+      "event_id": 325,
       "role": "facility",
       "role_label": "시설",
       "event_type": "flood",

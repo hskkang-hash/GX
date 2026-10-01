@@ -258,6 +258,9 @@ function PostsCard({
         <Radio.Group value={kind} onChange={(e) => setKind(e.target.value)}>
           <Radio.Button value="watchpost">{FWS_OFFICE_COPY.posts.kindWatchpost}</Radio.Button>
           <Radio.Button value="patrol_zone">{FWS_OFFICE_COPY.posts.kindPatrolZone}</Radio.Button>
+        <Radio.Button value="checkpoint" data-gx="fws-f1-02-kind-checkpoint">
+          {FWS_OFFICE_COPY.posts.kindCheckpoint}
+        </Radio.Button>
         </Radio.Group>
         <Space>
           <Input

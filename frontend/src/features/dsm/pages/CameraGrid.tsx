@@ -26,6 +26,7 @@
  *   못 여는 주소이고, 그것을 여는 길은 이 턴에 재지 못했다. 없는 것을 있는 척
  *   그리지 않는다 — 타일은 카메라의 **상태**를 말하고, 그 이상을 말하지 않는다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Button, Card, Col, Row, Space, Tag, Typography } from 'antd';
 import { useEffect } from 'react';
 import { Main } from 'rj-core';
@@ -69,11 +70,11 @@ function CameraTile({ row, now }: { row: CameraPulseRow; now: Date }) {
         {/* 「없다」와 「언제부터 없다」를 가른다 — 한 번도 응답이 없으면 이 줄이 없다.
             없는 것을 「0분 전」으로 그리면 방금 등록한 카메라가 방금 끊긴 카메라가 된다. */}
         {row.last_seen_at ? (
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" style={{ fontSize: FONT_SM }}>
             마지막 응답 {relative(row.last_seen_at, now)}
           </Text>
         ) : (
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" style={{ fontSize: FONT_SM }}>
             응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.
           </Text>
         )}
@@ -125,7 +126,7 @@ export default function CameraGridPage() {
                   않는다. 건너뛴 사실을 침묵하지 않는다 — 조용히 건너뛰면
                   「순회가 이상하게 짧다」로만 보인다. */}
               {grid.rotating && grid.skippedAllDeadPages > 0 ? (
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" style={{ fontSize: FONT_SM }}>
                   온통 무응답인 {grid.skippedAllDeadPages}쪽은 순회에서 건너뜁니다.
                 </Text>
               ) : null}
@@ -187,7 +188,7 @@ export default function CameraGridPage() {
           </Row>
         </StateBoundary>
 
-        <Text type="secondary" style={{ fontSize: 12 }}>
+        <Text type="secondary" style={{ fontSize: FONT_SM }}>
           {/* 멈춘 화면은 「사건이 없다」와 구별되지 않는다 — 화면이 스스로 말한다. */}
           자동 갱신 중 · 마지막 갱신 {relative(pulse.loadedAt)} · {TIMEZONE_NOTE}
         </Text>

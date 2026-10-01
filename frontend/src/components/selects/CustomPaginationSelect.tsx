@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import { theme as antdTheme, Checkbox, ConfigProvider } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -60,7 +61,7 @@ const CustomOption = (props: any) => {
               onChange?.(e.target.checked);
             }}
           >
-            <label style={{ fontSize: 12 }}>{label}</label>
+            <label style={{ fontSize: FONT_SM }}>{label}</label>
           </Checkbox>
         </ConfigProvider>
       </div>

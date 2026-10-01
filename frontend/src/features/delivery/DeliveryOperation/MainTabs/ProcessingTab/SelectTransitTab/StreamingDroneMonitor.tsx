@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import { Box, IconButton } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -367,7 +368,7 @@ export default function StreamingDroneMonitor({
               color: 'white',
               padding: '4px 8px',
               borderRadius: 1,
-              fontSize: '12px',
+              fontSize: FONT_SM,
               zIndex: 10,
             }}
           >

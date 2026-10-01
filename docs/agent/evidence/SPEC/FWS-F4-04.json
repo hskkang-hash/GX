@@ -1,12 +1,12 @@
 {
   "id": "FWS-F4-04",
   "title": "헬기 요청 승인·투하 구역 지정",
-  "measured_at": "2026-09-30T06:21:09.869501+00:00",
+  "measured_at": "2026-09-30T11:17:53.386882+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_04_HelicopterApprovalTest.test_approve_sets_drop_zone_and_thirty_minute_clock",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/613/aircraft-request?requesting_org=OO%EC%86%8C%EB%B0%A9%EC%84%9C&drop_zone_lat=36.35&drop_zone_lng=127.38&base=OO%EA%B3%B5%ED%95%AD&eta=15%EB%B6%84",
+    "path": "/api/fws/command/incidents/713/aircraft-request?requesting_org=OO%EC%86%8C%EB%B0%A9%EC%84%9C&drop_zone_lat=36.35&drop_zone_lng=127.38&base=OO%EA%B3%B5%ED%95%AD&eta=15%EB%B6%84",
     "params": {
       "requesting_org": "OO소방서",
       "drop_zone_lat": 36.35,
@@ -18,9 +18,9 @@
   "response": {
     "status": 200,
     "body": {
-      "approval_id": 504,
-      "event_id": 613,
-      "request_id": 503,
+      "approval_id": 801,
+      "event_id": 713,
+      "request_id": 800,
       "requesting_org": "OO소방서",
       "drop_zone": {
         "lat": 36.35,
@@ -28,8 +28,8 @@
       },
       "base": "OO공항",
       "eta": "15분",
-      "approved_at": "2026-09-30T06:21:09.827862+00:00",
-      "deadline_at": "2026-09-30T06:51:09.827862+00:00",
+      "approved_at": "2026-09-30T11:17:53.345121+00:00",
+      "deadline_at": "2026-09-30T11:47:53.345121+00:00",
       "timeout_minutes": 30
     }
   },

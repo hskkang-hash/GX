@@ -185,6 +185,11 @@ def put(placeholder, text, *, restore=False):
             "restore": restore}
 
 
+def csv_suffix(suffix):
+    """[턴 AR · Q②] 준비 단계 — 글상자(`textarea`)의 CSV `code` 열에 회차 접미를 붙인다."""
+    return {"kind": "csv_suffix", "suffix": suffix}
+
+
 def fill_label(label, text, *, restore=False):
     """[P-423 · 턴 AP · 차선 Q] AntD `Form.Item label=` 칸을 **라벨로** 채운다.
 
@@ -301,6 +306,10 @@ def srv_reflect(get, field):
 #: 두 번 만들면 서버가 중복으로 막는다 — U5#4·U5#5 note 가 이미 적어 둔 "매번 새
 #: 시험 자료가 필요하다"는 문제의 거울상이다.
 _U5_1_SUFFIX = datetime.now().strftime("%Y%m%d%H%M%S")
+#: [턴 AR · Q②] U5#4 회차 표식 — 예시 CSV 의 code 에 붙는 접미. 매 회 새 카메라가 생기고,
+#: 생긴 카메라는 회 끝에 탐침 표식이 달린다(`probe_mark_snippet`). 지난 회 잔여 8871·8872 는
+#: 이미 표식됨 — 지우지 않는다.
+_U5_4_SUFFIX = "r" + datetime.now().strftime("%m%d%H%M%S")
 
 FLOWS = (
     # ── U1 · 관제요원 ────────────────────────────────────────────────────
@@ -514,8 +523,8 @@ FLOWS = (
       srv_change("/api/dsm/me/notify-prefs", "quiet_start"),
       ["언제는 안 받나", "부터", "까지", "설정 저장"],
       prepare=[
-          put("22:00", "21:47", restore=True),
-          put("07:00", "06:13", restore=True),
+          put("22:00", "{clock:21:47}", restore=True),
+          put("07:00", "{clock:06:13}", restore=True),
       ],
       revert=revert_redo("시간대 저장은 같은 단추를 한 번 더 눌러도 **같은 값을 또 쓴다** — "
                          "되돌림이 아니라 반복이다. 처음 값(원래 있던 시간대)으로 한 번 더 "
@@ -763,6 +772,7 @@ FLOWS = (
       ["카메라", "적용", "등록"],
       prepare=[
           press("예시 채우기"),
+          csv_suffix(_U5_4_SUFFIX),
           press("표 먼저 보기", gx="camera-import-dryrun", wait_ms=2500),
       ],
       revert=no_revert("카메라 등록은 **새로 만드는 문**이다 — CSV 적용은 지우는 짝이 "
@@ -1233,10 +1243,94 @@ def pick_unjudged(rows, probe_tag, keep_ids):
 U1_11_PICK_PATH = "/api/dsm/events?limit=50&include_probe=true"
 
 
+def next_clock(want, was):
+    """[턴 AR · Q②] 「지금 값 +1」 — 근무 외 시각 칸(`HH:MM`)에 쓸 값을 고른다.
+
+    `want` 가 지금 칸에 든 값(`was`)과 같으면 서버가 「바뀐 것 없음」으로 보아 before == after
+    (거짓 빨강)가 된다 — 그러면 `want` 에 **1분을 더해** 쓴다(24시간 순환). 다르면 `want` 그대로.
+    시각으로 못 읽으면 `want` 를 그대로 돌려준다(지어내지 않는다).
+    """
+    def _mins(t):
+        try:
+            h, m = str(t).strip().split(":")[:2]
+            h, m = int(h), int(m)
+        except (ValueError, TypeError):
+            return None
+        return h * 60 + m if 0 <= h < 24 and 0 <= m < 60 else None
+    w, c = _mins(want), _mins(was)
+    if w is None or c is None or w != c:
+        return str(want)
+    n = (w + 1) % 1440
+    return "%02d:%02d" % (n // 60, n % 60)
+
+
+def suffix_csv_codes(text, suffix):
+    """[턴 AR · Q②] 카메라 CSV 의 `code` 열에 **회차 접미**를 붙인다(`GATE-01` → `GATE-01-<suffix>`).
+
+    머리줄에 `code` 가 없으면 그대로 돌려준다(못 붙이면 지어내지 않는다).
+    같은 표를 두 번 적용하면 `unchanged` 라 수가 안 는다 — 회차마다 새 code 가 필요하다.
+    """
+    lines = str(text or "").splitlines()
+    if not lines:
+        return str(text or "")
+    head = [h.strip().lower() for h in lines[0].split(",")]
+    if "code" not in head:
+        return str(text)
+    i = head.index("code")
+    out = [lines[0]]
+    for ln in lines[1:]:
+        cells = ln.split(",")
+        if len(cells) > i and cells[i].strip():
+            cells[i] = cells[i].strip() + "-" + str(suffix)
+        out.append(",".join(cells))
+    return chr(10).join(out)
+
+
+def probe_mark_snippet(suffix) -> str:
+    """[턴 AR · Q②] 이번 회 U5#4 가 만든 카메라(code 가 `-<suffix>` 로 끝남)에 탐침 표식을 다는 파이썬.
+
+    `python manage.py mark_probe` 가 쓰는 것과 **같은 경로**(`common.billing_marks.mark_unbillable`)
+    로 곁표에 `probe` 한 줄만 적는다 — 카메라 행은 안 고친다. 이미 다른 낱말(seed·drill·live)로
+    표식된 행은 덮어쓰지 않는다. 출력 첫 줄은 `PROBE_MARKED <n>`.
+    """
+    sfx = "-" + str(suffix)
+    return chr(10).join([
+        "from stream_monitors.models import StreamMonitor as M",
+        "from common.billing_marks import mark_unbillable, _mark_model",
+        "Mark = _mark_model()",
+        "n = 0",
+        "for o in M._base_manager.filter(code__endswith=%r):" % sfx,
+        "    ex = Mark._base_manager.filter(model_label=o._meta.label_lower, object_id=str(o.pk)).first()",
+        "    if ex is not None and ex.data_source != 'probe':",
+        "        continue",
+        "    mark_unbillable(o, 'probe', reason='verify_click_completes U5#4 회차 표식 (AR·Q)')",
+        "    n += 1",
+        "print('PROBE_MARKED', n)",
+        ""])
+
+
+def mark_probe_cameras(container, suffix, env) -> int:
+    """측정 회 끝에 새 카메라를 탐침 표식한다(gx-shell 안 · 곁표 쓰기). 못 하면 -1."""
+    p = subprocess.run(["docker", "exec", "-i", "-e", "DJANGO_SETTINGS_MODULE=config.settings",
+                        "-w", "/app", container, "python", "manage.py", "shell"],
+                       input=probe_mark_snippet(suffix).encode("utf-8"),
+                       capture_output=True, env=env)
+    out = p.stdout.decode("utf-8", "replace")
+    for ln in out.splitlines():
+        if ln.startswith("PROBE_MARKED"):
+            try:
+                return int(ln.split()[1])
+            except (IndexError, ValueError):
+                return -1
+    return -1
+
+
 def _shared_driver_src() -> str:
     """드라이버(딴 프로세스)에 심는 공용 원문 — **한 벌**(`inspect.getsource`)."""
     import inspect as _insp  # noqa: PLC0415
-    return _insp.getsource(server_gave_value) + chr(10) + chr(10) + _insp.getsource(pick_unjudged)
+    return (_insp.getsource(server_gave_value) + chr(10) + chr(10) + _insp.getsource(pick_unjudged)
+            + chr(10) + chr(10) + _insp.getsource(next_clock)
+            + chr(10) + chr(10) + _insp.getsource(suffix_csv_codes))
 
 
 def server_gave_value(after) -> bool:
@@ -1444,6 +1538,78 @@ def score(rows):
     r = sum(1 for _, c, _, _, _ in rows if c == RED)
     y = sum(1 for _, c, _, _, _ in rows if c == GREY)
     return g, r, y
+
+
+#: ══ [턴 AR · P-458 · 차선 Q] **두 열 — 시험 클라이언트 닫힘 ≠ 브라우저 닫힘** ══════════════
+#:   `client_measured` — 지금까지의 판정(위 `judge`) 그대로. 절 닫힘은 이 열로 한다.
+#:   `browser_clicked` — **사람이 쓰는 브라우저로 그 버튼을 눌렀는가.** 7칸 ④ 「누른 뒤」와 G3 은 이 열로 센다.
+#:   두 열을 **한 열에 섞지 않는다.** browser 열은 증거 파일이 없으면 전부 회색이다(지어내지 않는다).
+#:   증거 파일: BROWSER_OBSERVED — `scripts/browser_click_22.py` 가 쓴다(V 몫 · 지금은 뼈대뿐).
+BROWSER_OBSERVED = EVIDENCE / "click_completes_browser.json"
+
+#: 브라우저 누름 대상 22 — 턴 AQ 보고 「화면 배선 되올림 22」의 대표 data-gx(F4 12 + O 10).
+#: ⚠ 보고서의 O 줄에는 토큰이 11개 적혀 있다(`o-12-deploy-scenario` · `end-scenario` 가 한 「행」).
+#:   행 수 10 대 토큰 11 의 어긋남은 V 가 확정한다 — 여기서는 보고서의 글자를 그대로 옮긴다.
+BROWSER_TARGETS = (
+    ("FWS-F4-02", "fws-f4-02-confirm"), ("FWS-F4-03", "fws-f4-03-declare"),
+    ("FWS-F4-04", "fws-f4-04-approve"), ("FWS-F4-05", "fws-f4-05-approve"),
+    ("FWS-F4-05", "fws-f4-05-release"), ("FWS-F4-06", "fws-f4-06-record"),
+    ("FWS-F4-07", "fws-f4-07-main-out"), ("FWS-F4-07", "fws-f4-07-extinguished"),
+    ("FWS-F4-08", "fws-f4-08-approve"), ("FWS-F4-10", "fws-f4-10-golden-reason"),
+    ("FWS-F4-11", "fws-f4-11-sunset"), ("FWS-F4-12", "fws-f4-12-record"),
+    ("O-01", "o-01-issue"), ("O-06", "o-06-respond"), ("O-06", "o-06-escalate"),
+    ("O-06", "o-06-close"), ("O-07", "o-07-receipt"), ("O-08", "o-08-tenants"),
+    ("O-09", "o-09-approve"), ("O-10", "o-10-rotate"), ("O-11", "o-11-deploys"),
+    ("O-12", "o-12-deploy-scenario"), ("O-12", "o-12-end-scenario"),
+)
+
+
+def two_columns(rows, browser_doc):
+    """[P-458] 판정 행 + 브라우저 증거 → [{key, client_measured, browser_clicked}].
+
+    `client_measured` 는 `judge` 의 색 그대로(green/red/grey). `browser_clicked` 는 브라우저 증거
+    파일의 그 키 `verdict`(green/red)가 있을 때만 — 없으면 grey(못 쟀다). 클라이언트 초록이
+    브라우저 열을 채우지 않는다(한 열에 섞지 않는다).
+    """
+    obs = (browser_doc or {}).get("observations") or {}
+    out = []
+    for key, color, _why, _cells, _flow in rows:
+        v = (obs.get(key) or {}).get("verdict")
+        out.append({"key": key, "client_measured": color,
+                    "browser_clicked": v if v in (GREEN, RED) else GREY})
+    return out
+
+
+def browser_targets_column(browser_doc):
+    """브라우저 누름 22 대상 → [{clause, gx, browser_clicked}]. 증거가 없으면 전부 grey."""
+    obs = (browser_doc or {}).get("observations") or {}
+    res = []
+    for clause, gx in BROWSER_TARGETS:
+        v = (obs.get(gx) or {}).get("verdict")
+        res.append({"clause": clause, "gx": gx,
+                    "client_measured": GREY,
+                    "browser_clicked": v if v in (GREEN, RED) else GREY})
+    return res
+
+
+def two_column_report(tag, rows) -> None:
+    """두 열 요약을 찍는다(스키마 · browser 열은 증거가 없으면 회색)."""
+    try:
+        bdoc = json.loads(BROWSER_OBSERVED.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        bdoc = None
+    cols = two_columns(rows, bdoc)
+    tg = browser_targets_column(bdoc)
+    n = lambda seq, col, c: sum(1 for x in seq if x[col] == c)     # noqa: E731
+    print("")
+    print("%s [두 열 · P-458] client_measured 초록 %d/%d · browser_clicked 초록 %d/%d (회색 %d) — "
+          "절 닫힘은 client 열 · 7칸 ④ 「누른 뒤」와 G3 은 browser 열"
+          % (tag, n(cols, "client_measured", GREEN), len(cols),
+             n(cols, "browser_clicked", GREEN), len(cols), n(cols, "browser_clicked", GREY)))
+    print("%s [두 열] 브라우저 누름 대상 %d행 — 초록 %d · 빨강 %d · 회색 %d %s"
+          % (tag, len(tg), n(tg, "browser_clicked", GREEN), n(tg, "browser_clicked", RED),
+             n(tg, "browser_clicked", GREY),
+             "" if bdoc else "(증거 %s 없음 = 회색 · V 가 재야 채워진다)" % BROWSER_OBSERVED.name))
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -2220,6 +2386,36 @@ def self_test() -> int:
         "P-437 짝 — 탐침 제외 목록(씨앗 없음 · 전부 판정)이면 표본 0 → 회색(옛 관측 그대로)")
     say(U1_11_PICK_PATH in DRIVER and "include_probe=true" in U1_11_PICK_PATH,
         "P-437 — 드라이버가 U1#11 표본을 **탐침 포함 목록**(%s)에서 읽는다" % U1_11_PICK_PATH)
+    _tc = two_columns([("U1#1", GREEN, "", {}, {}), ("U1#2", RED, "", {}, {})],
+                      {"observations": {"U1#2": {"verdict": GREEN}}})
+    say(_tc == [{"key": "U1#1", "client_measured": GREEN, "browser_clicked": GREY},
+                {"key": "U1#2", "client_measured": RED, "browser_clicked": GREEN}]
+        and all(c["browser_clicked"] == GREY for c in two_columns([("U1#1", GREEN, "", {}, {})], None))
+        and len(BROWSER_TARGETS) == 23
+        and all(x["browser_clicked"] == GREY for x in browser_targets_column(None)),
+        "★ [AR·P-458] 두 열 — client 초록이 browser 열을 안 채운다 · 증거 없으면 browser 전부 회색 · 대상 목록 고정")
+    say(next_clock("21:47", "21:47") == "21:48" and next_clock("21:47", "20:00") == "21:47"
+        and next_clock("23:59", "23:59") == "00:00" and next_clock("06:13", "") == "06:13",
+        "★ [AR·Q②] U3#16 「지금 값 +1」 — 지난 회 값과 같으면 +1분(23:59→00:00) · 다르면 그대로 · 못 읽으면 그대로")
+    say(suffix_csv_codes("name,code,ip_source" + chr(10) + "a,GATE-01,rtsp://x" + chr(10) + "b,F3-01,rtsp://y", "r1")
+        == "name,code,ip_source" + chr(10) + "a,GATE-01-r1,rtsp://x" + chr(10) + "b,F3-01-r1,rtsp://y"
+        and suffix_csv_codes("a,b" + chr(10) + "1,2", "r1") == "a,b" + chr(10) + "1,2",
+        "★ [AR·Q②] U5#4 회차 표식 — code 열에만 접미 · code 열 없으면 그대로")
+    _u5 = next(f for f in FLOWS if f["key"] == "U5#4")
+    _u316 = next(f for f in FLOWS if f["key"] == "U3#16")
+    say(any(st.get("kind") == "csv_suffix" for st in _u5["prepare"])
+        and all(st["text"].startswith("{clock:") for st in _u316["prepare"]),
+        "[AR·Q②] 두 행이 새 규칙을 실제로 쓴다(U5#4 csv_suffix · U3#16 {clock:…})")
+    _snip = probe_mark_snippet("r0930")
+    try:
+        compile(_snip, "<probe>", "exec")
+        _snip_ok = ("mark_unbillable(o, 'probe'" in _snip and "-r0930" in _snip
+                    and chr(92) not in _snip)
+    except SyntaxError:
+        _snip_ok = False
+    say(_snip_ok, "[AR·Q②] 탐침 표식 스니펫이 구문상 서고 mark_unbillable(probe) 경로를 쓴다")
+    say("def next_clock" in _shared_driver_src() and "def suffix_csv_codes" in _shared_driver_src(),
+        "[AR·Q②] 새 도우미 원문이 드라이버에 심긴다(딴 프로세스 · 한 벌)")
     say("def pick_unjudged" in _shared_driver_src(),
         "P-437 — `pick_unjudged` 원문이 드라이버에 심긴다(딴 프로세스 · 한 벌)")
     if _fail:
@@ -2745,6 +2941,9 @@ def prepare_steps(page, steps):
                 except (TypeError, ValueError):
                     return (False, done, restore,
                             "「%s」 에 든 것이 수가 아니다 (%r) — 더할 수 없다" % (ph, was))
+            if what.startswith("{clock:") and what.endswith("}"):
+                #: [턴 AR · Q②] 근무 외 시각 칸 — 지금 값과 같으면 +1분 (거짓 빨강 방지).
+                what = next_clock(what[7:-1], was)
             try:
                 box.first.fill(what)
                 page.wait_for_timeout(400)
@@ -2776,6 +2975,21 @@ def prepare_steps(page, steps):
             done.append({"kind": "fill_label", "label": label, "wrote": what, "was": was})
             if s.get("restore"):
                 restore.append({"kind": "fill_label", "label": label, "back_to": was})
+        elif kind == "csv_suffix":
+            #: [턴 AR · Q②] 예시 CSV 의 code 에 회차 접미 — 새 카메라가 실제로 생기게.
+            try:
+                ta = page.locator("textarea")
+                if not ta.count():
+                    return False, done, restore, "CSV 글상자(textarea)가 없다"
+                was = ta.first.input_value() or ""
+                what = suffix_csv_codes(was, s.get("suffix"))
+                if what == was:
+                    return False, done, restore, "CSV 에 code 열이 없어 접미를 못 붙였다"
+                ta.first.fill(what)
+                page.wait_for_timeout(400)
+            except Exception:
+                return False, done, restore, "CSV 글상자를 못 고쳤다"
+            done.append({"kind": "csv_suffix", "suffix": s.get("suffix")})
         elif kind == "button_prepare":
             #: [P-423 · 턴 AP · 차선 Q] **버튼을 눌러야만 열리는 다음 걸음** — 예:
             #: `CameraImport.tsx` 의 「예시 채우기」(글상자를 대신 채워 준다) →
@@ -3573,6 +3787,11 @@ def measure(container="gx-shell", api="http://gx-nginx-e:8500", spa="http://loca
                        input=json.dumps(spec).encode("utf-8"), capture_output=True, env=env)
     sys.stderr.write(p.stderr.decode("utf-8", "replace")[-4000:])
     print(p.stdout.decode("utf-8", "replace")[-2000:])
+    if table != "settings":
+        #: [턴 AR · Q②] 이번 회 U5#4 가 만든 카메라는 회 끝에 탐침 표식 — 잔여가 안 쌓인다.
+        _nm = mark_probe_cameras(container, _U5_4_SUFFIX, env)
+        print("%s U5#4 회차 표식: %s" % (TAG, ("탐침 %d대" % _nm) if _nm >= 0
+                                          else "표식하지 못했다(회색 — 잔여가 남았을 수 있다)"))
     if p.returncode != 0:
         print("%s 드라이버가 끊겼다 (rc=%d) — **못 잰 것은 회색이다**" % (TAG, p.returncode))
     got = subprocess.run(["docker", "exec", container, "cat", spec["out"]],
@@ -3942,6 +4161,8 @@ def main() -> int:
         print("%s 회색 %d건 — **못 쟀다. 초록이 아니다.** 이름을 적는다:" % (TAG, len(greys)))
         for k, w in greys:
             print("      %-7s %s" % (k, w))
+
+    two_column_report(TAG, rows)
 
     # ══ [P-219 · 턴 AA · 차선 A] **설정 다섯 — 분모를 48 과 뭉치지 않는다** ══════
     sg, sr, sy = settings_report(TAG)

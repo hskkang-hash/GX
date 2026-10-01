@@ -1,26 +1,26 @@
 {
   "id": "O-09",
   "title": "감사(플랫폼)",
-  "measured_at": "2026-09-30T06:26:35.604901+00:00",
+  "measured_at": "2026-09-30T11:21:39.363296+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O09_PlatformAuditTest.test_operator_actions_are_logged_and_tenant_view_needs_approval",
   "request": {
     "method": "GET",
-    "path": "/api/dsm/ops/tenants/t-d4d45e80/members",
+    "path": "/api/dsm/ops/tenants/t-bb9baa2c/members",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "tenant_code": "t-d4d45e80",
+      "tenant_code": "t-bb9baa2c",
       "members": [
         {
-          "name": "opsadmin_3437a88a",
-          "employee_id": "GX-OPS-TENANT-t-d4d45e80"
+          "name": "opsadmin_363b4805",
+          "employee_id": "GX-OPS-TENANT-t-bb9baa2c"
         }
       ],
-      "granted_by": "opsan_u0_b5ef7fa5",
-      "expires_at": "2026-09-30T06:56:35.548974+00:00"
+      "granted_by": "opsan_u0_64cfd0c4",
+      "expires_at": "2026-09-30T11:51:39.297159+00:00"
     }
   },
   "what": "테넌트 구성원 열람은 승인 전 403, 요청(POST .../access-requests) 뒤에도 403, 승인(POST .../approve) 뒤에만 200 — '테넌트 데이터 열람 0(승인 없이)'을 이 콘솔이 여는 유일한 원 데이터 문에서 실측한다. 발급·요청·승인 세 행위 모두 GET /ops/audit 의 total 을 늘린다 — '운영자 행위 전건' 실측."

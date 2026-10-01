@@ -58,6 +58,19 @@ export default function AppsBoard() {
       outcome={outcome}
       onReload={() => void board.reload()}
     >
+      <div style={{ marginBottom: 12 }}>
+        <Tag data-gx="o-02-marked">
+          {C.markedProbe}{' '}
+          {board.data?.marked == null ? C.markedUnknown : board.data.marked}
+        </Tag>
+        {board.data?.marked != null ? (
+          <span data-gx="o-02-marked-split">
+            {C.markedProbeLabel} {board.data.marked_probe ?? 0} · {C.markedSeedLabel}{' '}
+            {board.data.marked_seed ?? 0}{' '}
+          </span>
+        ) : null}
+        <span>{C.markedHint}</span>
+      </div>
       <Form
         form={form}
         layout="inline"

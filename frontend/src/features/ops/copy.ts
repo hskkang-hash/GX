@@ -84,6 +84,11 @@ export const OPS_APP_COPY = {
   activate: '활성화',
   deactivate: '비활성화',
   upgradedFrom: '이전 버전',
+  markedProbe: '표식됨',
+  markedUnknown: '못 쟀다',
+  markedProbeLabel: '탐침',
+  markedSeedLabel: '씨앗',
+  markedHint: '유령 시드는 지우지 않고 표식합니다(삭제는 대표).',
 };
 
 export const OPS_APP_STATUS_LABEL: Record<string, string> = {
@@ -100,6 +105,9 @@ export const OPS_HEALTH_COPY = {
   color: '상태',
   autoIncident: '자동 인시던트',
   notMeasured: '측정하지 않는 항목',
+  fiveXx: '서버 오류(5xx) 최근 24시간',
+  fiveXxUnmeasured: '아직 재지 못했습니다(카운터가 켜진 뒤 요청이 없거나 읽지 못함)',
+  fiveXxScope: '앞문이 낸 응답 기준 — 프록시가 스스로 낸 502·504 는 빠집니다',
 };
 
 export const OPS_HEALTH_NOT_MEASURED_LABEL: Record<string, string> = {

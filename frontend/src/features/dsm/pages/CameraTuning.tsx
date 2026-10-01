@@ -40,6 +40,7 @@
  *   통계 축 — 오탐률 표만) · `mode="tuning"`(`/dsm/cameras/tuning` · 카메라 축 — 표는
  *   고르는 자리이고 시뮬·저장이 본문). 파일은 하나다 — 두 벌을 두지 않는다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import {
   Alert,
   Button,
@@ -250,7 +251,7 @@ export default function CameraTuning({ mode = 'tuning' }: { mode?: CameraTuningM
       <Title level={4} style={{ margin: 0 }}>
         {isFpOnly ? '카메라 오탐률' : '카메라 임계값 튜닝'}
       </Title>
-      <Text type="secondary" style={{ fontSize: 12 }}>
+      <Text type="secondary" style={{ fontSize: FONT_SM }}>
         {isFpOnly
           ? '통계 축의 화면입니다 — 오탐률 표만 있습니다. 문턱을 옮기거나 저장하려면 카메라 축의 「임계값 튜닝」으로 갑니다.'
           : '카메라 축의 화면입니다 — 위 표에서 카메라를 고르고 아래에서 문턱을 옮겨 보고(시뮬 축) 저장합니다(저장 축). 두 축은 다른 칸입니다.'}
@@ -297,7 +298,7 @@ export default function CameraTuning({ mode = 'tuning' }: { mode?: CameraTuningM
                   ? ` (한 번에 ${cameras.data.camera_cap}대까지 봅니다)`
                   : ''}
               </Text>
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: FONT_SM }}>
                 오탐률이 높은 차례로 놓았습니다. 판정이 한 건도 없는 카메라는 맨
                 아래에 있습니다 — 오탐이 없는 것이 아니라 아직 잴 수 없는 것입니다.
               </Text>
@@ -429,7 +430,7 @@ export default function CameraTuning({ mode = 'tuning' }: { mode?: CameraTuningM
                   </Descriptions.Item>
                 </Descriptions>
                 {sim.sample_capped && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type="secondary" style={{ fontSize: FONT_SM }}>
                     한 번에 보는 사건 수에 상한이 있어, 이 기간의 오래된 사건 일부는
                     위 계산에 들어가지 않았습니다.
                   </Text>
@@ -489,7 +490,7 @@ export default function CameraTuning({ mode = 'tuning' }: { mode?: CameraTuningM
             </Space>
 
             {selectedKey && (
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: FONT_SM }}>
                 이 항목의 단위는 「{selectedKey.unit}」입니다. 위 슬라이더는 확신도를
                 끄는 칸이라 단위가 다를 수 있습니다 — 옮겨 담기 전에 확인해 주십시오.
               </Text>

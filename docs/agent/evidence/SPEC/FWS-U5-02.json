@@ -1,7 +1,7 @@
 {
   "id": "FWS-U5-02",
   "title": "초소·순찰함(NFC)·순찰 구역",
-  "measured_at": "2026-09-30T06:22:04.099574+00:00",
+  "measured_at": "2026-09-30T11:18:39.816194+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_u5.U5_02_PostRegistryTest.test_register_then_list_shows_the_same_post",
   "request": {
@@ -28,7 +28,7 @@
         "NFC-1",
         "NFC-2"
       ],
-      "saved_at": "2026-09-30T06:22:02.791820+00:00"
+      "saved_at": "2026-09-30T11:18:39.340234+00:00"
     }
   },
   "what": "POST .../admin/posts 로 등록한 초소 이름·순찰 구역·순찰함(NFC) 코드가 GET .../admin/posts 목록에 그대로 보인다 — 같은 테넌트 다른 관리자가 등록한 초소(P-78)도 함께 보이고(곁표 common.models.AuditScope · 턴 AO 차선 O · P-411), 다른 테넌트는 같은 GET 에서 0건을 받는다(격리)"

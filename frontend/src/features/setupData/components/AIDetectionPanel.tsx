@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import {
   WarningOutlined,
   CheckCircleOutlined,
@@ -297,7 +298,7 @@ const AIDetectionPanel: React.FC<AIDetectionPanelProps> = ({
           <Text
             type="secondary"
             style={{
-              fontSize: '12px',
+              fontSize: FONT_SM,
               display: 'block',
               color: theme === 'dark' ? '#ffffff' : '#000000',
             }}
@@ -379,7 +380,7 @@ const AIDetectionPanel: React.FC<AIDetectionPanelProps> = ({
                     <div
                       key={droneId}
                       style={{
-                        fontSize: '12px',
+                        fontSize: FONT_SM,
                         color: statusColors[status],
                         fontWeight: 'bold',
                       }}

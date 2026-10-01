@@ -50,7 +50,8 @@ HWP 가 열게 하려고 지키는 것 넷
 ----------------------
 · 파일을 저장하지 않는다(경로 0 · 객체 저장소 0). 바이트를 돌려줄 뿐이고, 저장 여부는
   부르는 쪽의 결정이다. 「특이사항」을 고치면 다음 내려받기가 다시 만든다.
-· 원본 영상·스냅샷을 담지 않는다(계약 11조 · 원본 무반출). 이 문서에 그림은 0장이다.
+· 원본 영상·스냅샷을 담지 않는다(계약 11조 · 원본 무반출). 그림은 상황보고서 ⑨ 첨부의
+  현장 사진 **축소본(긴 변 <= 640 px) + 워터마크**뿐이다(P-451 · `photo_thumb.py`).
 """
 import io
 import re
@@ -104,6 +105,42 @@ def _set_korean_font(document) -> None:
     fonts.set(qn("w:hAnsi"), FONT_NAME)
 
 
+def _allow_data_uri_images(converter_cls) -> None:
+    """`htmldocx` 는 `<img src="data:...">` 를 파일 경로로 읽어 실패한다.
+
+    P-451(사진 축소본 + 워터마크)이 상황보고서에 축소본을 data URI 로 싣기 때문에, 이
+    한 갈래만 디코드해 넘긴다. 그 밖의 `<img>` 는 원래 동작 그대로다(원본 그림 0).
+    ★ 표 칸 안의 그림은 `htmldocx` 가 **새 파서(기본 클래스)** 로 다시 읽으므로 하위
+      클래스가 아니라 **클래스 자체**에 한 번만 감싼다(이미 감쌌으면 다시 안 감싼다).
+    """
+    if getattr(converter_cls.handle_img, "_gx_data_uri", False):
+        return
+    import base64
+
+    original = converter_cls.handle_img
+
+    def handle_img(self, current_attrs):
+        src = current_attrs.get("src", "")
+        if not src.startswith("data:image/") or not getattr(self, "include_images", True):
+            return original(self, current_attrs)
+        try:
+            raw = base64.b64decode(src.split(",", 1)[1])
+            stream = io.BytesIO(raw)
+            import docx as _docx
+            from docx.shared import Inches
+
+            #: 종이 폭을 넘지 않게 4.5 인치로 맞춘다(축소본의 픽셀 수는 그대로다).
+            if isinstance(self.doc, _docx.document.Document):
+                self.doc.add_picture(stream, width=Inches(4.5))
+            else:
+                self.doc.add_paragraph().add_run().add_picture(stream, width=Inches(4.5))
+        except Exception:                           # noqa: BLE001
+            self.doc.add_paragraph("<image>")
+
+    handle_img._gx_data_uri = True
+    converter_cls.handle_img = handle_img
+
+
 def html_to_docx_bytes(html: str, *, title: str | None = None,
                        header: str = "") -> bytes:
     """HTML 한 장 → DOCX 바이트. **0바이트는 성공이 아니다.**
@@ -131,6 +168,7 @@ def html_to_docx_bytes(html: str, *, title: str | None = None,
         para = document.sections[0].header.paragraphs[0]
         para.text = header
 
+    _allow_data_uri_images(HtmlToDocx)
     parser = HtmlToDocx()
     #: 표에 테두리를 준다 — 결재에 올라가는 표는 선이 있어야 칸이 읽힌다.
     parser.table_style = "Table Grid"

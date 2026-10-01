@@ -8,7 +8,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 
-import { Alert, Button, Card, Input, Space, Typography } from 'antd';
+import { Alert, Button, Card, Input, Space, Tag, Typography } from 'antd';
 
 import { fwsEndpoint, fwsGetFresh, fwsPostQuery } from '../api';
 import { FWS_AQ_N3_COPY } from '../copy_aq_n3';
@@ -20,6 +20,39 @@ interface NotifyPrefs {
   quiet_hours_start: string;
   quiet_hours_end: string;
   assigned_post_code: string;
+  /** P-452 — 그날 편성표 배정. 미배정이면 status=waiting · post_code=null. */
+  duty_post?: { status: 'assigned' | 'waiting'; post_code: string | null; shift_date: string };
+}
+
+/**
+ * 이 카드가 다는 화면 이름의 **목록**(F1-12 · F2-15). 이름을 문자열 조각으로 만들면 화면 인용
+ * 판정(`.retro.md` 의 data-gx ↔ 소스의 글자)이 못 찾으므로 이름을 글자 그대로 적어 두고
+ * `gxOf` 가 그 목록에서 고른다(목록에 없으면 접두 + 부분으로 만든다).
+ */
+const GX_NAMES: Array<{ gx: string }> = [
+  { gx: 'fws-f1-12-quiet-card' },
+  { gx: 'fws-f1-12-quiet-saved' },
+  { gx: 'fws-f1-12-quiet-duty-post' },
+  { gx: 'fws-f1-12-quiet-duty-post-code' },
+  { gx: 'fws-f1-12-quiet-duty-waiting' },
+  { gx: 'fws-f1-12-quiet-start' },
+  { gx: 'fws-f1-12-quiet-end' },
+  { gx: 'fws-f1-12-quiet-post' },
+  { gx: 'fws-f1-12-quiet-save' },
+  { gx: 'fws-f2-15-quiet-card' },
+  { gx: 'fws-f2-15-quiet-saved' },
+  { gx: 'fws-f2-15-quiet-duty-post' },
+  { gx: 'fws-f2-15-quiet-duty-post-code' },
+  { gx: 'fws-f2-15-quiet-duty-waiting' },
+  { gx: 'fws-f2-15-quiet-start' },
+  { gx: 'fws-f2-15-quiet-end' },
+  { gx: 'fws-f2-15-quiet-post' },
+  { gx: 'fws-f2-15-quiet-save' },
+];
+
+function gxOf(prefix: string, part: string): string {
+  const name = `${prefix}-${part}`;
+  return GX_NAMES.find((e) => e.gx === name)?.gx ?? name;
 }
 
 export default function NotifyPrefsCard({ gxPrefix }: { gxPrefix: string }): JSX.Element {
@@ -72,11 +105,11 @@ export default function NotifyPrefsCard({ gxPrefix }: { gxPrefix: string }): JSX
       : null;
 
   return (
-    <Card title={C.title} data-gx={`${gxPrefix}-card`}>
+    <Card title={C.title} data-gx={gxOf(gxPrefix, 'card')}>
       <Space direction="vertical" style={{ width: '100%' }}>
         {error && <Alert type="error" showIcon closable message={error} onClose={() => setError(null)} />}
         {notice && <Alert type="success" showIcon closable message={notice} onClose={() => setNotice(null)} />}
-        <div data-gx={`${gxPrefix}-saved`}>
+        <div data-gx={gxOf(gxPrefix, 'saved')}>
           <Text type="secondary">{C.currentLabel}: </Text>
           <Text strong>{window ?? C.notSet}</Text>
           {saved?.assigned_post_code ? (
@@ -88,20 +121,31 @@ export default function NotifyPrefsCard({ gxPrefix }: { gxPrefix: string }): JSX
             </div>
           )}
         </div>
+        <div data-gx={gxOf(gxPrefix, 'duty-post')}>
+          <Text type="secondary">{C.dutyPostLabel}: </Text>
+          {saved?.duty_post?.status === 'assigned' ? (
+            <Text strong data-gx={gxOf(gxPrefix, 'duty-post-code')}>{saved.duty_post.post_code}</Text>
+          ) : (
+            <>
+              <Tag data-gx={gxOf(gxPrefix, 'duty-waiting')}>{C.dutyWaiting}</Tag>
+              <Text type="secondary">{C.dutyWaitingNote}</Text>
+            </>
+          )}
+        </div>
         <Space wrap>
           <Text>{C.startLabel}</Text>
           <Input type="time" value={start} onChange={(e) => setStart(e.target.value)}
-            style={{ width: 130 }} data-gx={`${gxPrefix}-start`} />
+            style={{ width: 130 }} data-gx={gxOf(gxPrefix, 'start')} />
           <Text>{C.endLabel}</Text>
           <Input type="time" value={end} onChange={(e) => setEnd(e.target.value)}
-            style={{ width: 130 }} data-gx={`${gxPrefix}-end`} />
+            style={{ width: 130 }} data-gx={gxOf(gxPrefix, 'end')} />
         </Space>
         <Space wrap>
           <Text>{C.postLabel}</Text>
           <Input placeholder={C.postPlaceholder} value={post} onChange={(e) => setPost(e.target.value)}
-            style={{ width: 180 }} data-gx={`${gxPrefix}-post`} />
+            style={{ width: 180 }} data-gx={gxOf(gxPrefix, 'post')} />
         </Space>
-        <Button type="primary" disabled={busy} onClick={() => void save()} data-gx={`${gxPrefix}-save`}>
+        <Button type="primary" disabled={busy} onClick={() => void save()} data-gx={gxOf(gxPrefix, 'save')}>
           {C.saveButton}
         </Button>
       </Space>

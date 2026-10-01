@@ -1919,6 +1919,11 @@ def rows_u6(api, api_base, out, *, token, admin_token, seed_b,
 # ---------------------------------------------------------------------------
 # U4 · 재난안전과 (1440)
 # ---------------------------------------------------------------------------
+#: [턴 AR · Q④] U4#8 반 상한 — 조합 검색(사건번호·주소·유형)이 섰다(턴 AP · P-424 · `EventList.tsx`).
+#: 정본 문서(`onboarding_48.md` 턴 T 표 U4 #8 행)와 **함께** 풀었다. 되돌리려면 둘을 함께 되돌린다.
+U4_8_CAP_HALF = False
+
+
 def rows_u4(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, probe_user=""):
     # #8 특정 사건 이력: 「지난 12시간 보기」 → GET events?since=… 200 — 조합 검색 없음 · ◐ 상한
     m = net.mark()
@@ -1926,15 +1931,18 @@ def rows_u4(page, net, web, out, lg, *, snap_event, seed_a, seed_b, probe_cam, p
     seen = visible_text(page, "지난 12시간 보기")
     pred, evidence = False, ""
     if seen:
+        #: 조합 검색의 세 번째 칸 — 「사건번호」 입력이 화면에 실재해야 상한을 풀 자격이 있다.
+        combo_box = page.get_by_placeholder("사건번호").count() > 0
         click_button(page, "지난 12시간 보기")
         page.wait_for_timeout(6_000)
         g = [r for r in net.find("GET", "/api/dsm/events?", m) if "since=" in r["url"] and r["status"] == 200]
-        pred = bool(g)
-        evidence = f"GET events?since= 200={bool(g)} · 조합 검색(사건번호·주소·유형) 없음 → ◐ 상한(정본 표기)"
+        pred = bool(g) and (combo_box or U4_8_CAP_HALF)
+        evidence = (f"GET events?since= 200={bool(g)} · 사건번호 칸={combo_box} · 조합 검색(사건번호·주소·유형) "
+                    + ("없음 → ◐ 상한(정본 표기)" if U4_8_CAP_HALF else "섬 → 반 상한 해제(턴 AR · 정본과 함께)"))
         url = page.url
     else:
         evidence = "「지난 12시간 보기」 단추가 안 보인다"
-    out.append(result("U4#8", "/dsm/events", seen, pred, evidence, cap_half=True, url=url, screen_text=collect_screen_text(page=page)))
+    out.append(result("U4#8", "/dsm/events", seen, pred, evidence, cap_half=U4_8_CAP_HALF, url=url, screen_text=collect_screen_text(page=page)))
 
     # #11 카메라 설치 현황: /device · 「드론·로봇 장비 등록」 + 머리줄 · 표 행 ≥1 (view_only 로 0행이면 빨강)
     url = goto(page, web, "/device", settle_ms=12_000)

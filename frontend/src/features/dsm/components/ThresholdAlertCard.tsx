@@ -6,6 +6,7 @@
  * `POST /api/dsm/thresholds/observe/{id}/decide` 한 번 → **`GET /api/dsm/thresholds/alerts`
  * 를 다시 불러** 결정됨을 그린다. 도달 시각·결정 시각은 서버에 각각 감사 줄로 남는다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Button, Card, Input, Space, Tag, Typography } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -84,7 +85,7 @@ export default function ThresholdAlertCard() {
               <Text strong data-gx="dsm-u2-04-notice">
                 {r.notice}
               </Text>
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: FONT_SM }}>
                 {r.detail}
               </Text>
               {r.decided ? (

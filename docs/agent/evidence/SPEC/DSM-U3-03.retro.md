@@ -24,10 +24,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "사진 원본 파일(바이트) 자체가 문서에 첨부되는가",
-      "where": "backend/apps/dsm/field.py 934행 주석 '첨부 칸. 파일을 붙이지 않는다 — 이름과 사유만 적는다(계약 11조 · 원본 무반출)'",
-      "status": "없음(의도적 설계) — '첨부'는 건수 텍스트 한 줄일 뿐, 사진 파일 자체는 원본 무반출 정책(계약 11조)에 따라 문서에 실리지 않는다. 명세서 완결조건('첨부 1')은 만족하지만, 제목의 '증빙 자동 첨부'를 실물 첨부로 읽으면 이 부분은 열려 있다. [턴 AQ · W2B 판정] 이 행은 명세 제목과 맞는다 — 명세 §4.2 92행의 처리 칸이 「상황보고 사진란」(사진이 들어가는 칸)이고 제목이 「증빙 자동 첨부」라, 건수 한 줄은 사진란이 아니다. 원본 무반출(계약 11조)이 사진란을 막는다는 결정 번호(P-###)가 없으므로 excluded_by 로 빼지 않고 열어 둔다 — 닫으려면 ① 축소본·워터마크본을 사진란에 싣는 것이 무반출에 안 걸린다는 결정, 또는 ② 이 행을 빼는 결정 번호 둘 중 하나가 필요하다"
+      "where": "backend/apps/dsm/photo_thumb.py(긴 변 <= 640 축소 JPEG + 워터마크 한 줄: 기관명 · 사건번호 · 시각) → backend/apps/dsm/incident_report.py ⑨ 첨부 「현장 사진」 칸 · backend/apps/dsm/docx_export.py(data URI 그림을 DOCX 에 싣는 한 갈래)",
+      "status": "measured: P-451 — 문서에는 축소본(긴 변 <= 640 px) + 워터마크만 실린다. 원본 객체 키·링크·해시는 문서 어디에도 없고(zip 전체 바이트 대조) 원본은 서버(MinIO)에만 둔다. 저장소가 안 열리면 축소본 없이 수만 적는다 · client_measured: backend/tests/test_ar_n1_half_remaining.py::PhotoThumbnailTest::test_report_embeds_thumbnail_without_original_link_or_hash · ::test_thumbnail_long_side_and_watermark_are_applied · ::test_without_storage_the_paper_keeps_count_only"
     }
   ],
-  "retro": "턴 AQ 차선 W2B · 사람 확인 · 2026-09-30 · 「의도적 설계」 행은 명세 제목(증빙 자동 첨부 · 상황보고 사진란)과 맞는다 — 결정 번호가 없어 열어 둔다(배선 없음)."
+  "retro": "턴 AQ 차선 W2B · 사람 확인 · 2026-09-30 · 「의도적 설계」 행은 명세 제목(증빙 자동 첨부 · 상황보고 사진란)과 맞는다 — 결정 번호가 없어 열어 둔다(배선 없음). | 턴 AR 차선 N1 · 2026-09-30 · P-451(축소본 + 워터마크, 원본 링크·해시 0)로 「사진란」 행을 닫았다 — 계약 11조는 원본 무반출이라 축소본은 반출이 아니다. 열린 행 0(client_measured)."
 }
 ```

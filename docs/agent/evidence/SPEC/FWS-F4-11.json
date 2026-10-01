@@ -1,19 +1,19 @@
 {
   "id": "FWS-F4-11",
   "title": "야간 전환(일몰) — 헬기 불가·야간 진화 자원 표시",
-  "measured_at": "2026-09-30T06:21:21.121891+00:00",
+  "measured_at": "2026-09-30T11:18:05.204247+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_11_NightTransitionTest.test_sunset_in_the_past_marks_night_and_helicopter_unavailable",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/622/night-status",
+    "path": "/api/fws/command/incidents/722/night-status",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 622,
-      "sunset_at": "2026-09-30T05:21:21.044755+00:00",
+      "event_id": 722,
+      "sunset_at": "2026-09-30T10:18:05.117555+00:00",
       "is_night": true,
       "helicopter_badge": "헬기 불가",
       "night_resources": [

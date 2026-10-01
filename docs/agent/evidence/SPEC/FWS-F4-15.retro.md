@@ -29,8 +29,10 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
     },
     {
       "part": "HWPX 산출물(명세 완결조건)",
-      "where": "(없음)",
-      "status": "없음(PDF만 있음 — HWPX 자체가 없다, excluded_by 번호 없음. DSM 쪽 situation_report_ledger_service.py 는 같은 결손을 P-392 로 명시 인용하나 이 절은 인용이 없다)"
+      "where": "(없음 — DOCX 정본 · HWPX 는 v1.2 옵션 · 「안 산다」)",
+      "status": "없음(결정으로 제외) — 세종 판정 P-449: 이 절의 HWPX 산출물 행은 excluded_by D-404 로 닫는다 · PDF(post-report.pdf)와 DOCX 정본(DSM 상황보고서 situation-report.docx — 이 절에 별도 DOCX 라우트는 없다)으로 채운다",
+      "excluded_by": "D-404",
+      "excluded_why": "P-449 — DOCX 정본 · HWPX v1.2 옵션 · 「안 산다」(decisions.yaml D-404). P-392 는 U4-01 의 결정이라 이 자리의 번호가 아니다"
     },
     {
       "part": "화면(PDF 다운로드 버튼)",
@@ -38,6 +40,6 @@ P-431 · **손으로만 고친다** — 시험·쓰개가 이 파일을 쓰면 �
       "status": "구현 — 화면 배선 · 요약 보기 버튼 → 자원·대피·피해(집계 전) 칸, PDF 내려받기 버튼 → 1쪽 PDF · 시험 backend/tests/test_aq_n1_f4_command_wiring.py::AqN1F4CommandWiringTest::test_f4_15_summary_and_pdf_reflect_written_resource(자원 기록 뒤 요약 재조회에 보임 · PDF 200 %PDF) · 정적 대조 AqN1F4ScreenSourceTest::test_screen_declares_data_gx_and_calls_each_path"
     }
   ],
-  "retro": "턴 AQ 차선 N1 · 화면 배선 · 사람 확인 · 2026-09-30 · CommandHome.tsx 에 요약 보기·PDF 내려받기 버튼을 배선하고 test_f4_15_summary_and_pdf_reflect_written_resource 로 실측했다 · 남은 열린 행: HWPX 산출물(P-392 는 U4-01 의 결정이라 이 절에 붙이지 않는다 — P-436 번호 오용 금지) — 반쪽 유지 · 앞 판: P-419 재판정(턴 AP · N1) · 2026-09-29 · PDF·자원·대피·피해(정직한 '집계 전')는 실측 닫힘을 재확인했다. 명세 완결조건이 부르는 HWPX 산출물이 표에 없었고(인용 없는 결손), 다운로드 버튼도 미배선이다 — 반쪽으로 내린다."
+  "retro": "턴 AQ 차선 N1 · 화면 배선 · 사람 확인 · 2026-09-30 · CommandHome.tsx 에 요약 보기·PDF 내려받기 버튼을 배선하고 test_f4_15_summary_and_pdf_reflect_written_resource 로 실측했다 · 남은 열린 행: HWPX 산출물(P-392 는 U4-01 의 결정이라 이 절에 붙이지 않는다 — P-436 번호 오용 금지) — 반쪽 유지 · 앞 판: P-419 재판정(턴 AP · N1) · 2026-09-29 · PDF·자원·대피·피해(정직한 '집계 전')는 실측 닫힘을 재확인했다. 명세 완결조건이 부르는 HWPX 산출물이 표에 없었고(인용 없는 결손), 다운로드 버튼도 미배선이다 — 반쪽으로 내린다. | 턴 AR 차선 N1 · 2026-09-30 · P-449 로 HWPX 행을 excluded_by D-404 로 닫았다(PDF + DOCX 정본). 다른 행은 그대로 — 반쪽 잔여 0."
 }
 ```

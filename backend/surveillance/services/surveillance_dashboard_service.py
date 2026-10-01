@@ -64,9 +64,9 @@ class SurveillanceDashboardService:
         """
         Get drone status overview statistics.
         Returns counts for: Active, On Mission, Warning, Inactive
-        
+
         Performance optimized with single aggregation query.
-        
+
         Returns:
             Dict containing status counts
         """
@@ -75,15 +75,15 @@ class SurveillanceDashboardService:
             active_statuses = DeviceStatus.objects.filter(
                 code__in=['available', 'operational']
             ).values_list('id', flat=True)
-            
+
             on_mission_status = DeviceStatus.objects.filter(
                 code='on_mission'
             ).values_list('id', flat=True).first()
-            
+
             warning_status = DeviceStatus.objects.filter(
                 code='warning'
             ).values_list('id', flat=True).first()
-            
+
             inactive_status = DeviceStatus.objects.filter(
                 code='inactive'
             ).values_list('id', flat=True).first()
@@ -91,27 +91,27 @@ class SurveillanceDashboardService:
             # Single optimized query with aggregation
             # Only count active devices (active=True)
             queryset = Device.objects.all()
-            
+
             # Use aggregation for better performance
             aggregation_filters = {
                 'active': Q(status_id__in=list(active_statuses)),
             }
-            
+
             if on_mission_status:
                 aggregation_filters['on_mission'] = Q(status_id=on_mission_status)
             else:
                 aggregation_filters['on_mission'] = Q(pk__isnull=True)  # Always false
-            
+
             if warning_status:
                 aggregation_filters['warning'] = Q(status_id=warning_status)
             else:
                 aggregation_filters['warning'] = Q(pk__isnull=True)  # Always false
-            
+
             if inactive_status:
                 aggregation_filters['inactive'] = Q(status_id=inactive_status)
             else:
                 aggregation_filters['inactive'] = Q(pk__isnull=True)  # Always false
-            
+
             status_counts = queryset.aggregate(
                 active=Count('id', filter=aggregation_filters['active']),
                 on_mission=Count('id', filter=aggregation_filters['on_mission']),
@@ -139,14 +139,14 @@ class SurveillanceDashboardService:
         """
         Get daily surveillance profile overview statistics.
         Returns counts for: Total, Completed, Processing
-        
+
         Performance optimized with date filtering and aggregation.
-        
+
         Args:
             selected_date: UTC datetime string in ISO 8601 format (e.g., '2025-12-08T17:00:00+00:00')
                           Will be converted to system timezone before extracting date.
                           If None, uses today's date in system timezone
-        
+
         Returns:
             Dict containing profile counts and date
         """
@@ -160,14 +160,14 @@ class SurveillanceDashboardService:
                     if dt_utc is None:
                         # Try with fromisoformat as fallback
                         dt_utc = datetime.fromisoformat(selected_date.replace('Z', '+00:00'))
-                    
+
                     # Ensure datetime is timezone-aware
                     if timezone.is_naive(dt_utc):
                         dt_utc = timezone.make_aware(dt_utc, dt_timezone.utc)
-                    
+
                     # Convert UTC to system timezone
                     dt_system = timezone.localtime(dt_utc)
-                    
+
                     # Extract date from system timezone
                     target_date = dt_system.date()
                 except (ValueError, AttributeError, TypeError) as e:
@@ -180,7 +180,7 @@ class SurveillanceDashboardService:
             completed_status = SurveillanceStatus.objects.filter(
                 code='completed'
             ).values_list('id', flat=True).first()
-            
+
             processing_statuses = SurveillanceStatus.objects.filter(
                 code__in=['in_progress', 'approved', 'pending_device_check']
             ).values_list('id', flat=True)
@@ -233,19 +233,19 @@ class SurveillanceDashboardService:
         """
         Process detection data and count by label.
         Also collects detailed detection information for messages.
-        
+
         Args:
             detection_data: List of detection records
             start_datetime: Start datetime for filtering
             end_datetime: End datetime for filtering
             drone_name: Name of the drone that detected this
-        
+
         Returns:
             Tuple of (Counter with label counts, List of detailed detection records)
         """
         label_counter = Counter()
         detailed_detections = []
-        
+
         # Map label to category
         label_to_category = {
             'smoke': 'fire_smoke',
@@ -258,7 +258,7 @@ class SurveillanceDashboardService:
             'truck': 'vehicle',
             'anomaly': 'anomaly',
         }
-        
+
         # Process all detections in one pass
         for record in detection_data:
             try:
@@ -266,26 +266,26 @@ class SurveillanceDashboardService:
                 record_datetime_str = record.get('datetime', '')
                 if not record_datetime_str:
                     continue
-                
+
                 # Parse datetime (format: "2025-11-11 04:21:43")
                 try:
                     record_dt = datetime.strptime(record_datetime_str, '%Y-%m-%d %H:%M:%S')
                     # Make timezone-aware (assuming UTC)
                     if timezone.is_naive(record_dt):
                         record_dt = timezone.make_aware(record_dt, dt_timezone.utc)
-                    
+
                     # Convert to system timezone for comparison
                     record_dt_system = timezone.localtime(record_dt)
                     start_dt_system = timezone.localtime(start_datetime)
                     end_dt_system = timezone.localtime(end_datetime)
-                    
+
                     # Filter by date range
                     if not (start_dt_system <= record_dt_system <= end_dt_system):
                         continue
                 except (ValueError, TypeError):
                     # If datetime parsing fails, skip this record
                     continue
-                
+
                 # Process detections in this record
                 detections = record.get('detections', [])
                 if not detections:
@@ -299,7 +299,7 @@ class SurveillanceDashboardService:
                     or record.get('file_url')
                     or record.get('detected_image_path')
                 )
-                
+
                 # Group detections by category for this record
                 record_categories = Counter()
                 for det in detections:
@@ -308,7 +308,7 @@ class SurveillanceDashboardService:
                         category = label_to_category.get(label, 'anomaly')
                         record_categories[category] += 1
                         label_counter[category] += 1
-                
+
                 # Store detailed detection info
                 if record_categories:
                     obj = minio_client.get_metadata(image_url)
@@ -322,32 +322,32 @@ class SurveillanceDashboardService:
                         'image_lon':obj.get('x-amz-meta-gps-longitude') or record.get('drone_location',{}).get('longitude')
 
                     })
-                    
+
             except Exception as e:
                 logger.warning(f"Error processing detection record: {str(e)}")
                 continue
-        
+
         return label_counter, detailed_detections
 
     @staticmethod
     def _get_relative_time(detection_datetime: datetime, user_language: str = Language.EN) -> str:
         """
         Calculate relative time string like "10 minutes ago" in user's language.
-        
+
         Args:
             detection_datetime: Detection datetime in system timezone
             user_language: User's language code (default: Language.EN)
-        
+
         Returns:
             Relative time string in user's language (e.g., "10 minutes ago", "2 hours ago", "1 day ago")
         """
         now = timezone.now()
         diff = now - detection_datetime
-        
+
         # Get translations for user's language
         just_now = MESSAGE_ENUM.RELATIVE_TIME_JUST_NOW.get(user_language, MESSAGE_ENUM.RELATIVE_TIME_JUST_NOW[Language.EN])
         ago = MESSAGE_ENUM.RELATIVE_TIME_AGO.get(user_language, MESSAGE_ENUM.RELATIVE_TIME_AGO[Language.EN])
-        
+
         if diff.total_seconds() < 60:
             seconds = int(diff.total_seconds())
             if seconds <= 1:
@@ -380,10 +380,10 @@ class SurveillanceDashboardService:
         """
         Get color code for detection category.
         Colors match the notification style: warning (orange) for alerts, success (green) for normal.
-        
+
         Args:
             category: Detection category
-        
+
         Returns:
             Hex color code
         """
@@ -400,10 +400,10 @@ class SurveillanceDashboardService:
     def _get_category_icon_type(category: str) -> str:
         """
         Get icon type for detection category.
-        
+
         Args:
             category: Detection category
-        
+
         Returns:
             Icon type: 'warning' or 'info'
         """
@@ -415,10 +415,10 @@ class SurveillanceDashboardService:
         """
         Get user format settings (date format, time format, timezone) optimized with single query.
         Uses select_related to avoid N+1 queries.
-        
+
         Args:
             user: CoreUser object (optional, will try to get from request context if not provided)
-        
+
         Returns:
             Dictionary with keys: date_format_str, time_format_str, user_timezone
         """
@@ -431,19 +431,20 @@ class SurveillanceDashboardService:
                     user = request.user
             except Exception:
                 pass
-        
+
         # Default formats
         date_format_str = '%Y-%m-%d'
         time_format_str = '%H:%M:%S'
-        user_timezone = pytz.timezone('Asia/Ho_Chi_Minh')
-        
+        from django.conf import settings
+        user_timezone = pytz.timezone(settings.TIME_ZONE)  # P-447: 전역 시간대를 따른다
+
         if not user:
             return {
                 'date_format_str': date_format_str,
                 'time_format_str': time_format_str,
                 'user_timezone': user_timezone,
             }
-        
+
         # Get user settings with select_related to optimize query
         user_settings = None
         try:
@@ -458,7 +459,7 @@ class SurveillanceDashboardService:
                 ).filter(user=user).first()
         except Exception:
             pass
-        
+
         # Get timezone from user (already loaded if user was prefetched)
         if hasattr(user, 'timezone') and user.timezone:
             try:
@@ -467,7 +468,7 @@ class SurveillanceDashboardService:
                     user_timezone = pytz.timezone(tz_code)
             except Exception:
                 pass
-        
+
         # Get user's language for locale-based defaults
         if hasattr(user, 'language') and user.language:
             lang_code = getattr(user.language, 'code', 'en')
@@ -475,20 +476,20 @@ class SurveillanceDashboardService:
                 date_format_str = '%Y-%m-%d'
             elif lang_code == 'th':
                 date_format_str = '%d/%m/%Y'
-        
+
         # Get date format from user settings (already loaded via select_related)
         if user_settings:
             try:
                 if hasattr(user_settings, 'date_format') and user_settings.date_format:
                     if hasattr(user_settings.date_format, 'format_string'):
                         date_format_str = user_settings.date_format.format_string
-                
+
                 if hasattr(user_settings, 'time_format') and user_settings.time_format:
                     if hasattr(user_settings.time_format, 'format_string'):
                         time_format_str = user_settings.time_format.format_string
             except Exception:
                 pass
-        
+
         return {
             'date_format_str': date_format_str,
             'time_format_str': time_format_str,
@@ -499,13 +500,13 @@ class SurveillanceDashboardService:
     def _replace_month_names_with_translations(formatted_str: str, month_number: int, user_language: str, is_abbreviation: bool = False) -> str:
         """
         Replace month names in formatted string with translations based on user language.
-        
+
         Args:
             formatted_str: Formatted date string that may contain month names
             month_number: Month number (1-12)
             user_language: User's language code
             is_abbreviation: Whether to use abbreviated month names (%b) or full names (%B)
-        
+
         Returns:
             String with month names replaced by translations
         """
@@ -524,7 +525,7 @@ class SurveillanceDashboardService:
             11: MESSAGE_ENUM.MONTH_NOVEMBER,
             12: MESSAGE_ENUM.MONTH_DECEMBER,
         }
-        
+
         month_abbr_names = {
             1: MESSAGE_ENUM.MONTH_ABBR_JANUARY,
             2: MESSAGE_ENUM.MONTH_ABBR_FEBRUARY,
@@ -539,39 +540,39 @@ class SurveillanceDashboardService:
             11: MESSAGE_ENUM.MONTH_ABBR_NOVEMBER,
             12: MESSAGE_ENUM.MONTH_ABBR_DECEMBER,
         }
-        
+
         # Get the appropriate month name dictionary
         month_dict = month_abbr_names if is_abbreviation else month_full_names
-        
+
         # Get English month name (default from strftime) and translated version
         english_month_dict = month_dict.get(month_number, {})
         english_month = english_month_dict.get(Language.EN, '')
-        
+
         if not english_month:
             return formatted_str
-        
+
         # Get translated month name
         translated_month = english_month_dict.get(user_language, english_month_dict.get(Language.EN, english_month))
-        
+
         # If language is English, no replacement needed
         if user_language == Language.EN:
             return formatted_str
-        
+
         # Replace English month name with translated version
         # Handle different capitalization: full match, lowercase, capitalized, uppercase
         result = formatted_str
-        
+
         # Full match (most common case)
         if english_month in result:
             result = result.replace(english_month, translated_month)
-        
+
         # Lowercase version
         if english_month.lower() in result.lower():
             # Preserve original capitalization context
             import re
             pattern = re.compile(re.escape(english_month.lower()), re.IGNORECASE)
             result = pattern.sub(translated_month, result)
-        
+
         return result
 
     @staticmethod
@@ -587,20 +588,20 @@ class SurveillanceDashboardService:
         Supports multilingual month names when format contains %B or %b.
         This method is optimized to avoid repeated queries - format settings should be
         obtained once via _get_user_format_settings() and reused.
-        
+
         Args:
             dt: datetime object to format
             date_format_str: Date format string (e.g., '%Y-%m-%d', '%B %d, %Y')
             time_format_str: Time format string (e.g., '%H:%M:%S')
             user_timezone: pytz timezone object
             user_language: User's language code (default: Language.EN)
-        
+
         Returns:
             Formatted datetime string according to provided settings with translated month names
         """
         if dt is None:
             return ''
-        
+
         try:
             # Ensure datetime is timezone-aware
             if dt.tzinfo is None:
@@ -609,18 +610,18 @@ class SurveillanceDashboardService:
             elif dt.tzinfo != pytz.UTC:
                 # Convert to UTC first if not already UTC
                 dt = dt.astimezone(pytz.UTC)
-            
+
             # Convert to user timezone
             localized = dt.astimezone(user_timezone)
-            
+
             # Check if format contains month names
             has_full_month = '%B' in date_format_str
             has_abbr_month = '%b' in date_format_str
-            
+
             # Format date and time parts
             date_part = localized.date().strftime(date_format_str)
             time_part = localized.time().strftime(time_format_str)
-            
+
             # Replace month names with translations if needed
             if has_full_month or has_abbr_month:
                 month_number = localized.month
@@ -632,9 +633,9 @@ class SurveillanceDashboardService:
                     date_part = SurveillanceDashboardService._replace_month_names_with_translations(
                         date_part, month_number, user_language, is_abbreviation=True
                     )
-            
+
             result = f"{date_part} {time_part}"
-            
+
             return result
         except Exception as e:
             logger.warning(f"Error formatting datetime with user settings: {str(e)}, falling back to ISO format")
@@ -647,18 +648,18 @@ class SurveillanceDashboardService:
         Generate user-friendly messages from detailed detection data.
         Format: "Drone {drone_name} detected {detect_name} at {time}"
         Messages are returned in user's preferred language (from request context).
-        
+
         Args:
             detailed_detections: List of detection records with datetime, categories, and drone_name
-        
+
         Returns:
             List of message dictionaries, each as a separate notification item with message in user's language
         """
         if not detailed_detections:
             return []
-        
+
         messages = []
-        
+
         # Map category to message template enum
         category_template_map = {
             'fire_smoke': MESSAGE_ENUM.DETECTION_MESSAGE_TEMPLATE_FIRE_SMOKE,
@@ -667,7 +668,7 @@ class SurveillanceDashboardService:
             'vehicle': MESSAGE_ENUM.DETECTION_MESSAGE_TEMPLATE_VEHICLE,
             'anomaly': MESSAGE_ENUM.DETECTION_MESSAGE_TEMPLATE_ANOMALY,
         }
-        
+
         # Map category to detection name enum
         category_name_map = {
             'fire_smoke': MESSAGE_ENUM.DETECTION_NAME_FIRE_SMOKE,
@@ -676,7 +677,7 @@ class SurveillanceDashboardService:
             'vehicle': MESSAGE_ENUM.DETECTION_NAME_VEHICLE,
             'anomaly': MESSAGE_ENUM.DETECTION_NAME_ANOMALY,
         }
-        
+
         # Get user and language from request context
         user = None
         user_language = Language.EN
@@ -689,17 +690,17 @@ class SurveillanceDashboardService:
                     user_language = request.user.language.code
         except Exception:
             pass
-        
+
         # Default to English if no language preference found
         if user_language not in [Language.EN, Language.KR, Language.TH]:
             user_language = Language.EN
-        
+
         # Get user format settings once (optimized query with select_related)
         format_settings = SurveillanceDashboardService._get_user_format_settings(user)
         date_format_str = format_settings['date_format_str']
         time_format_str = format_settings['time_format_str']
         user_timezone = format_settings['user_timezone']
-        
+
         # Create individual messages for each detection record
         for det in detailed_detections:
             detection_datetime = det['datetime']
@@ -718,33 +719,33 @@ class SurveillanceDashboardService:
                 user_timezone,
                 user_language
             )
-            
+
             # Create a separate message for each category in this detection
             for category, count in categories.items():
                 # Get message template and detection name for user's language
                 message_template = category_template_map.get(category, MESSAGE_ENUM.DETECTION_MESSAGE_TEMPLATE_ANOMALY)
                 detect_name_dict = category_name_map.get(category, MESSAGE_ENUM.DETECTION_NAME_ANOMALY)
-                
+
                 # Get template and detection name in user's language
                 template = message_template.get(user_language, message_template[Language.EN])
                 detect_name = detect_name_dict.get(user_language, detect_name_dict[Language.EN])
-                
+
                 # Format message in user's language
                 message_text = template.format(
                     drone_name=drone_name,
                     detect_name=detect_name,
                     time=time_str
                 )
-                
+
                 date_str = detection_datetime.strftime('%Y-%m-%d')
-                
+
                 # Calculate relative time in user's language
                 relative_time = SurveillanceDashboardService._get_relative_time(detection_datetime, user_language)
-                
+
                 # Get color and icon type
                 color = SurveillanceDashboardService._get_category_color(category)
                 icon_type = SurveillanceDashboardService._get_category_icon_type(category)
-                
+
                 messages.append({
                     "id": f"{detection_datetime.isoformat()}_{category}_{count}",  # Unique ID
                     "message": message_text,  # Message in user's preferred language
@@ -759,10 +760,10 @@ class SurveillanceDashboardService:
                     "image_lat":det.get('image_lat'),
                     "image_lng":det.get('image_lon')
                 })
-        
+
         # Sort by datetime (newest first)
         messages.sort(key=lambda x: x['datetime'], reverse=True)
-        
+
         return messages
 
     @staticmethod
@@ -770,12 +771,12 @@ class SurveillanceDashboardService:
         """
         Internal method to fetch detection data from JSON files.
         Optimized for performance with early filtering and batch processing.
-        
+
         Args:
             start_date: UTC datetime string in ISO 8601 format
             end_date: UTC datetime string in ISO 8601 format
             limit_files: Optional limit on number of files to process (for performance)
-        
+
         Returns:
             Tuple of (detailed_detections, start_dt, end_dt)
         """
@@ -783,21 +784,21 @@ class SurveillanceDashboardService:
         start_dt = parse_datetime(start_date)
         if start_dt is None:
             start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-        
+
         end_dt = parse_datetime(end_date)
         if end_dt is None:
             end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-        
+
         # Ensure timezone-aware
         if timezone.is_naive(start_dt):
             start_dt = timezone.make_aware(start_dt, dt_timezone.utc)
         if timezone.is_naive(end_dt):
             end_dt = timezone.make_aware(end_dt, dt_timezone.utc)
-        
+
         # Convert to system timezone for comparison
         start_dt_system = timezone.localtime(start_dt)
         end_dt_system = timezone.localtime(end_dt)
-        
+
         # Optimized query: Only get files that definitely overlap with date range
         # Use select_related/prefetch_related if needed, and limit results
         video_analyses_qs = VideoAnalysis.objects.filter(
@@ -810,10 +811,10 @@ class SurveillanceDashboardService:
             # More precise date filtering - only files that definitely overlap
             Q(created_at__lte=end_dt_system, created_at__gte=start_dt_system)
         ).order_by('-start_time')  # Order by newest first
-        
+
         # Get analysis_paths with drone_name (must be before slice)
         video_analyses_data = video_analyses_qs.values('analysis_path','drone_name').distinct()
-       
+
         # Create mapping of analysis_path to drone_name
         file_to_drone = {}
         file_paths = []
@@ -826,18 +827,18 @@ class SurveillanceDashboardService:
         # Limit number of files if specified (for performance)
         if limit_files:
             file_paths = file_paths[:limit_files]
-        
+
         if not file_paths:
             return [], start_dt, end_dt
-        
+
         # Optimize: Process files in smaller batches to avoid memory issues
         all_detailed_detections = []
         batch_size = 50  # Process 50 files at a time
         max_workers = min(10, batch_size)
-        
+
         for i in range(0, len(file_paths), batch_size):
             batch_files = file_paths[i:i + batch_size]
-            
+
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 future_to_file = {
                     executor.submit(
@@ -846,7 +847,7 @@ class SurveillanceDashboardService:
                     ): file_path
                     for file_path in batch_files
                 }
-                
+
                 for future in as_completed(future_to_file):
                     file_url = future_to_file[future]
                     drone_name = file_to_drone.get(file_url, 'Unknown')
@@ -862,19 +863,19 @@ class SurveillanceDashboardService:
                     except Exception as e:
                         logger.warning(f"Error processing file {file_url}: {str(e)}")
                         continue
-        
+
         return all_detailed_detections, start_dt, end_dt
 
     @staticmethod
     def _paginate_list(items: List[Any], page: int, page_size: int) -> Dict[str, Any]:
         """
         Paginate a list of items.
-        
+
         Args:
             items: List of items to paginate
             page: Page number (1-indexed)
             page_size: Number of items per page
-        
+
         Returns:
             Dict with paginated items and pagination info
         """
@@ -886,23 +887,23 @@ class SurveillanceDashboardService:
                 "page_size": page_size,
                 "total_pages": 0,
             }
-        
+
         # Validate and normalize page
         page = max(1, page)
         page_size = max(1, min(page_size, 100))  # Max 100 items per page
-        
+
         # Calculate pagination
         total = len(items)
         total_pages = (total + page_size - 1) // page_size  # Ceiling division
         page = min(page, total_pages) if total_pages > 0 else 1
-        
+
         # Calculate slice indices
         start_index = (page - 1) * page_size
         end_index = start_index + page_size
-        
+
         # Get paginated items
         paginated_items = items[start_index:end_index]
-        
+
         return {
             "items": paginated_items,
             "total": total,
@@ -913,8 +914,8 @@ class SurveillanceDashboardService:
 
     @staticmethod
     def get_abnormal_signs_messages(
-        start_date: str, 
-        end_date: str, 
+        start_date: str,
+        end_date: str,
         limit: Optional[int] = 100,
         page: Optional[int] = 1,
         page_size: Optional[int] = 10
@@ -922,23 +923,23 @@ class SurveillanceDashboardService:
         """
         Get detailed detection messages from detection JSON files with pagination.
         Optimized for performance with pagination and batch processing.
-        
+
         **IMPORTANT: This API always fetches fresh data.**
         - Universal cache middleware is bypassed
         - Always returns the latest detection data from files
         - No service-level cache is used
         - Processes synchronously with pagination (no background processing needed)
-        
+
         Uses thread lock to prevent concurrent execution and avoid server crash.
         Prepared for real-time socket integration.
-        
+
         Args:
             start_date: UTC datetime string in ISO 8601 format (e.g., '2025-07-15T00:00:00+00:00')
             end_date: UTC datetime string in ISO 8601 format (e.g., '2025-07-18T23:59:59+00:00')
             limit: Maximum number of messages to fetch (default: 100, for performance)
             page: Page number for pagination (default: 1, 1-indexed)
             page_size: Number of messages per page (default: 10, max: 100)
-        
+
         Returns:
             Dict with paginated 'messages' list, pagination info, and 'status'
         """
@@ -1009,28 +1010,28 @@ class SurveillanceDashboardService:
             # Performance optimization: Limit number of files processed
             date_range_days = (end_dt - start_dt).days if end_dt and start_dt else 7
             max_files = min(200, max(50, date_range_days * 10))
-            
+
             # Fetch detection data with file limit
             detailed_detections, _, _ = SurveillanceDashboardService._fetch_detection_data(
-                start_date, 
-                end_date, 
+                start_date,
+                end_date,
                 limit_files=max_files
             )
-            
+
             # Generate messages
             messages = SurveillanceDashboardService._generate_detection_messages(detailed_detections)
-            
+
             # Apply limit (get newest messages)
             if limit and len(messages) > limit:
                 messages = messages[:limit]
-            
+
             # Apply pagination with fixed page_size=5
             pagination_result = SurveillanceDashboardService._paginate_list(
                 messages, page, page_size
             )
-            
+
             logger.info(f"Processed {len(messages)} messages, returning page {page} with {len(pagination_result['items'])} items")
-            
+
             return {
                 "messages": pagination_result["items"],
                 "status": "completed",
@@ -1064,11 +1065,11 @@ class SurveillanceDashboardService:
         """
         Get regions that have surveillance missions scheduled for today with their drones.
         Group missions by region and include unique drones per mission.
-        
+
         Args:
             page: Page number for pagination (default: 1, 1-indexed)
             page_size: Number of regions per page (default: 4, max: 100)
-        
+
         Returns:
             Dict with paginated regions and pagination info
         """
@@ -1181,7 +1182,7 @@ class SurveillanceDashboardService:
             pagination_result = SurveillanceDashboardService._paginate_list(
                 result, page, page_size
             )
-            
+
             return {
                 "items": pagination_result["items"],
                 "total": pagination_result["total"],
@@ -1205,17 +1206,17 @@ class SurveillanceDashboardService:
     def get_abnormal_signs_overview(start_date: Optional[str] = None, end_date: Optional[str] = None) -> Dict[str, Any]:
         """
         Get abnormal signs overview statistics from detection JSON files.
-        
+
         Performance optimized with:
         - Concurrent file reading using ThreadPoolExecutor
         - Counter-based aggregation instead of loops
         - Batch processing
         - Thread lock to prevent concurrent execution and avoid server crash
-        
+
         Args:
             start_date: UTC datetime string in ISO 8601 format (e.g., '2025-07-15T00:00:00+00:00')
             end_date: UTC datetime string in ISO 8601 format (e.g., '2025-07-18T23:59:59+00:00')
-        
+
         Returns:
             Dict containing detection counts by category
         """
@@ -1225,19 +1226,19 @@ class SurveillanceDashboardService:
         try:
             # Parse UTC datetime strings
             start_dt = parse_datetime(start_date) if start_date else None
-                
+
             end_dt = parse_datetime(end_date) if end_date else None
-            
+
             # Ensure timezone-aware
             if start_dt and timezone.is_naive(start_dt):
                 start_dt = timezone.make_aware(start_dt, dt_timezone.utc)
             if end_dt and timezone.is_naive(end_dt):
                 end_dt = timezone.make_aware(end_dt, dt_timezone.utc)
-            
+
             # Convert to system timezone for comparison
             start_dt_system = timezone.localtime(start_dt) if start_dt else None
             end_dt_system = timezone.localtime(end_dt) if end_dt else None
-            
+
             # Query VideoAnalysis for detection JSON files
             # Filter by analysis_path not null and date range
             video_analyses_qs = VideoAnalysis.objects.filter(
@@ -1251,10 +1252,10 @@ class SurveillanceDashboardService:
             # If both are None, get all records (no date filtering)
             if start_dt_system and end_dt_system:
                 date_filter = Q(
-                    Q(created_at__lte=end_dt_system, created_at__gte=start_dt_system) 
+                    Q(created_at__lte=end_dt_system, created_at__gte=start_dt_system)
                 )
                 video_analyses_qs = video_analyses_qs.filter(date_filter)
-            
+
             video_analyses = video_analyses_qs.values_list('analysis_path', flat=True).distinct()
             if not video_analyses.exists():
                 return {
@@ -1264,26 +1265,26 @@ class SurveillanceDashboardService:
                     "vehicle": 0,
                     "anomaly": 0,
                 }
-            
+
 
             # Get all file paths - no limit, read ALL files in the date range
             # Use iterator to avoid loading all into memory at once
             # Whether date range is provided or not, we read ALL matching files
             file_paths_iterator = iter(video_analyses)
-            
+
             # Optimize batch size and workers for concurrent processing
             # Larger batch size and more workers for better performance
             batch_size = 200  # Process more files per batch
             max_workers = min(20, batch_size)  # More concurrent workers
-            
+
             # Read files concurrently using ThreadPoolExecutor with batch processing
             # Use iterator to process files in batches without loading all into memory
             all_counters = []
-            
+
             # Prepare datetime range for processing
             process_start_dt = start_dt if start_dt else datetime(1900, 1, 1, tzinfo=dt_timezone.utc)
             process_end_dt = end_dt if end_dt else datetime(2100, 12, 31, 23, 59, 59, tzinfo=dt_timezone.utc)
-            
+
             # Process files in batches using iterator to avoid memory issues
             batch_files = []
             for file_path in file_paths_iterator:
@@ -1299,7 +1300,7 @@ class SurveillanceDashboardService:
                             ): file_path
                             for file_path in batch_files
                         }
-                        
+
                         # Process results as they complete
                         for future in as_completed(future_to_file):
                             file_url = future_to_file[future]
@@ -1316,10 +1317,10 @@ class SurveillanceDashboardService:
                             except Exception as e:
                                 logger.warning(f"Error processing file {file_url}: {str(e)}")
                                 continue
-                    
+
                     # Clear batch for next iteration
                     batch_files = []
-            
+
             # Process remaining files in the last batch (if any)
             if batch_files:
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -1331,7 +1332,7 @@ class SurveillanceDashboardService:
                         ): file_path
                         for file_path in batch_files
                     }
-                    
+
                     # Process results as they complete
                     for future in as_completed(future_to_file):
                         file_url = future_to_file[future]
@@ -1348,10 +1349,10 @@ class SurveillanceDashboardService:
                         except Exception as e:
                             logger.warning(f"Error processing file {file_url}: {str(e)}")
                             continue
-            
+
             # Combine all counters
             total_counter = sum(all_counters, Counter())
-            
+
             return {
                 "fire_smoke": total_counter.get('fire_smoke', 0),
                 "animals": total_counter.get('animals', 0),
@@ -1381,12 +1382,12 @@ class SurveillanceDashboardService:
         Get polygon data for all surveillance profiles starting today.
         Deduplicates polygons by mission_id - if multiple profiles share the same mission,
         only one polygon is returned.
-        
+
         Performance optimized with:
         - Single query with select_related and prefetch_related
         - Efficient polygon extraction
         - Mission-based deduplication
-        
+
         Returns:
             List of dictionaries containing profile polygon data (unique by mission)
         """
@@ -1423,28 +1424,28 @@ class SurveillanceDashboardService:
             )
             if not profiles.exists():
                 return []
-            
+
             # Process profiles and extract polygon data
             # Use mission_id as key to avoid duplicates
             polygons_by_mission = {}
-            
+
             for profile in profiles:
                 mission = profile.mission
                 if not mission or mission.id in polygons_by_mission:
                     # Skip if no mission or mission already processed
                     continue
-                
+
                 # Determine if line mission: check if any waypoint has terminal_id
                 waypoints = list(mission.waypoints.all())
                 is_line_mission = any(wp.terminal_id for wp in waypoints) if waypoints else False
-                
+
                 # Alternative check: if no polygon, it's a line mission
                 if not is_line_mission and not (mission.polygon and len(mission.polygon) > 0):
                     is_line_mission = True
-                
+
                 # Extract polygon/waypoints
                 polygon_points = None
-                
+
                 if is_line_mission:
                     # For line mission, get waypoints
                     if waypoints:
@@ -1459,7 +1460,7 @@ class SurveillanceDashboardService:
                     # For polygon mission, get polygon from mission
                     if mission.polygon and isinstance(mission.polygon, list):
                         polygon_points = mission.polygon
-                
+
                 # Only add if polygon_points exists and is valid
                 if polygon_points and len(polygon_points) > 0:
                     # Store polygon data keyed by mission_id to avoid duplicates
@@ -1475,10 +1476,10 @@ class SurveillanceDashboardService:
                         "status_code": profile.status.code if profile.status else None,
                         "status_name": profile.status.name if profile.status else None,
                     }
-            
+
             # Return list of unique polygons (one per mission)
             return list(polygons_by_mission.values())
-            
+
         except Exception as e:
             logger.error(f"Error getting today profiles polygon: {str(e)}", exc_info=True)
             return []
@@ -1487,10 +1488,10 @@ class SurveillanceDashboardService:
     def broadcast_detection_message(message_data: Dict[str, Any]) -> None:
         """
         Broadcast detection message via WebSocket to connected clients.
-        
+
         **🔌 SOCKET INTEGRATION POINT:**
         Call this method when a new detection is found to push real-time updates to clients.
-        
+
         **Example usage:**
             # When new detection is found (e.g., in VideoAnalysis signal or after processing):
             message = {
@@ -1505,12 +1506,12 @@ class SurveillanceDashboardService:
                 "icon_type": "info"
             }
             SurveillanceDashboardService.broadcast_detection_message(message)
-        
+
         **Where to call this:**
         1. In VideoAnalysis post_save signal when analysis_path is updated
         2. After processing new detection JSON file
         3. In background task that processes detection files
-        
+
         Args:
             message_data: Dictionary containing detection message data (same format as returned by _generate_detection_messages)
         """
@@ -1518,17 +1519,16 @@ class SurveillanceDashboardService:
         if not channel_layer:
             logger.warning("[SURVEILLANCE][DASHBOARD] Channel layer not configured; skip detection message broadcast")
             return
-        
+
         event = {
             "type": "detection_message",
             "timestamp": timezone.now().isoformat(),
             "message": message_data,
         }
-        
+
         try:
             # Broadcast to global surveillance group
             async_to_sync(channel_layer.group_send)("surveillance_profiles_global", event)
             logger.info(f"[SURVEILLANCE][DASHBOARD] Broadcast detection message: {message_data.get('id', 'unknown')}")
         except Exception as exc:
             logger.exception(f"[SURVEILLANCE][DASHBOARD] Failed to broadcast detection message: {exc}")
-

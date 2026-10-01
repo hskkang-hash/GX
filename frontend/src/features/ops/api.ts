@@ -112,7 +112,14 @@ export interface OpsAppInstallRow {
   upgraded_from?: string | null;
 }
 
-export function fetchAppInstalls(): Promise<{ installs: OpsAppInstallRow[]; count: number }> {
+export function fetchAppInstalls(): Promise<{
+  installs: OpsAppInstallRow[];
+  count: number;
+  /** P-453 곁표(probe + seed) 줄 수 — null 이면 못 쟀다. */
+  marked: number | null;
+  marked_probe: number | null;
+  marked_seed: number | null;
+}> {
   return opsGet(opsEndpoint.apps);
 }
 
@@ -151,6 +158,16 @@ export interface OpsHealthBoard {
   tenant_count: number;
   monitor_read: boolean;
   backup_read: boolean;
+  /** 턴 AR · O-05 — 앞문 응답 카운터(서버 집계). measured=false 면 못 쟀다. */
+  front_door?: {
+    measured: boolean;
+    window_hours: number;
+    total?: number;
+    '5xx'?: number;
+    rate_pct?: number;
+    since?: number | null;
+    scope?: string;
+  };
   not_measured?: Record<string, string>;
 }
 

@@ -23,6 +23,7 @@
  * ★ **읽기 전용이다.** 이 화면은 아무것도 만들지 않는다 — 계량이 이벤트를 만들면
  *   그 수로 청구하게 된다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Button, Card, Col, Row, Space, Table, Tag, Typography } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -222,7 +223,7 @@ export default function Metering() {
               {cells.map((cell) => (
                 <Col key={cell.key} flex="1 1 180px">
                   <Card size="small">
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" style={{ fontSize: FONT_SM }}>
                       {cell.label}
                     </Text>
                     <div style={{ fontSize: 22, fontWeight: 600, marginTop: 4 }}>
@@ -315,7 +316,7 @@ export default function Metering() {
           {cells.map((cell) => (
             <Paragraph key={cell.key} style={{ marginBottom: 4 }}>
               <Tag>{cell.label}</Tag>
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: FONT_SM }}>
                 {safeFreeText(usage.data?.definitions?.[cell.key])}
               </Text>
             </Paragraph>

@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import React, {
   useRef,
   useEffect,
@@ -346,7 +347,7 @@ const AIStreamView: React.FC<AIStreamViewProps> = ({
             left: '50%',
             transform: 'translate(-50%, -50%)',
             color: '#ff6b35',
-            fontSize: '12px',
+            fontSize: FONT_SM,
             textAlign: 'center',
             zIndex: 5,
             padding: '8px',

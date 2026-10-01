@@ -9,6 +9,7 @@
  *   `alert_level` 칸으로 보낸다. 서버가 위기경보·비상 단계 축에 한 줄을 더하고
  *   (`situation_meeting_service.record_meeting`), 띠·위기경보 카드가 다시 읽는다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Button, Card, Input, Select, Space, Typography } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -140,7 +141,7 @@ export default function SituationMeetingCard() {
         {rows.length > 0 ? (
           <Space direction="vertical" size={2} data-gx="dsm-u2-03-list">
             {rows.map((r) => (
-              <Text key={r.meeting_id} type="secondary" style={{ fontSize: 12 }}>
+              <Text key={r.meeting_id} type="secondary" style={{ fontSize: FONT_SM }}>
                 {r.text}
               </Text>
             ))}

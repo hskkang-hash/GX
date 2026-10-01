@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import { ConfigProvider, Dropdown, MenuProps } from 'antd';
 import React, {
   RefObject,
@@ -972,7 +973,7 @@ const MultiStreamMonitor = () => {
                   border: 'none',
                   borderRadius: '6px',
                   cursor: selectedVideos.size > 0 ? 'pointer' : 'not-allowed',
-                  fontSize: '12px',
+                  fontSize: FONT_SM,
                   fontWeight: 'bold',
                   opacity: selectedVideos.size > 0 ? 1 : 0.5,
                 }}

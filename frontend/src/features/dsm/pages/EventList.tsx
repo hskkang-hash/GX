@@ -18,6 +18,7 @@
  *
  * ★ 등급은 색 + 아이콘 + 라벨 셋으로 낸다. 색만 쓰면 색각 이상이 못 읽는다 (DA-03 §2-2).
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import {
   Alert, Badge, Button, Card, Col, DatePicker, Input, Modal, Popover, Row, Segmented,
   Select, Space, Table, Tag, Typography, message,
@@ -885,7 +886,7 @@ export default function EventList() {
                   }}
                 />
               )}
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: FONT_SM }}>
                 보고 있는 기간: {win.label}
               </Text>
             </Space>
@@ -947,11 +948,11 @@ export default function EventList() {
                 ★ 여기 적는 것은 **서버로 실제로 나간 조건뿐**이다. 화면이 거르는 조건은
                   하나도 없다(이 파일에 `rows.filter(...)` 가 없다 — 머리말 규약). */}
             <Space wrap size={4} align="center">
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: FONT_SM }}>
                 지금 걸린 조건
               </Text>
               {activeFilters.length === 0 ? (
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" style={{ fontSize: FONT_SM }}>
                   없음 — 기간만 봅니다
                 </Text>
               ) : (
@@ -971,7 +972,7 @@ export default function EventList() {
             {/* ★ 주소로 좁혔을 때만 뜬다. 0 건일 때 늘 적으면 「이 검색은 원래 안 맞는다」로
                 읽히고, 안 적으면 0 건이 「그 주소에 사건이 없다」로 읽힌다 — 둘 다 거짓이다. */}
             {address && (
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: FONT_SM }}>
                 {ADDRESS_SEARCH_NOTE}
               </Text>
             )}
@@ -1211,7 +1212,7 @@ export default function EventList() {
                     return (
                       <Space size={4} onClick={(ev) => ev.stopPropagation()}>
                         {!known ? (
-                          <Text type="secondary" style={{ fontSize: 12 }}>
+                          <Text type="secondary" style={{ fontSize: FONT_SM }}>
                             {flags.state === 'loading' ? '확인 중' : '확인 못 함'}
                           </Text>
                         ) : (

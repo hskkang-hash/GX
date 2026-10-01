@@ -34,7 +34,7 @@ interface UseAbnormalSignsWebSocketOptions {
   onMessage: (message: AbnormalSignMessage) => void;
 
   /**
-   * Base WebSocket URL (e.g., 'ws://localhost:8000' or 'wss://api.example.com')
+   * Base WebSocket URL (e.g., 'wss://api.example.com'; 비우면 화면이 온 곳)
    */
   wsBaseUrl?: string;
 }

@@ -1,7 +1,7 @@
 {
   "id": "FWS-F6-03",
   "title": "산불위험예보·위기경보 수신(산림과학원·산림청 API 또는 수동)",
-  "measured_at": "2026-09-30T06:21:45.812720+00:00",
+  "measured_at": "2026-09-30T11:18:26.744079+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f6.F6_03_RiskForecastTest.test_record_then_read_back_band_from_p386_thresholds",
   "request": {
@@ -15,10 +15,10 @@
       "band": "경계",
       "note": "산림과학원 고시 대체 입력",
       "source": "manual",
-      "__seq__": 569,
-      "__hash__": "27a2283e6827538dd0162d3bee83add065a054341079d4a174d7751f25ad6745",
+      "__seq__": 866,
+      "__hash__": "bc483e217f2dc03a68efbb38c5b030b0a3d79bd863265f7b21b88675f7084f45",
       "risk_index": 70.0,
-      "recorded_at": "2026-09-30T06:21:45.768166+00:00",
+      "recorded_at": "2026-09-30T11:18:26.706319+00:00",
       "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000"
     }
   },

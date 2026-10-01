@@ -53,6 +53,7 @@
  * ★ 자리: **기관 관리자.** 권한이 없는 계정에는 조회가 403 이고, 그 403 은 이 화면이
  *   자기 자리에서 말한다(위에서 내려오는 띠가 상태 칸의 단추를 덮지 않게).
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSearchParams } from 'react-router-dom';
@@ -359,7 +360,7 @@ function ZonesTab() {
   return (
     <Space direction="vertical" size="middle" style={{ width: '100%' }}>
       <Card size="small" title="새 구역 만들기">
-        <Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 8 }}>
+        <Paragraph type="secondary" style={{ fontSize: FONT_SM, marginBottom: 8 }}>
           카메라 묶음 구역을 만듭니다. 폴리곤 구역은 이 화면에서 만들지 않습니다.
         </Paragraph>
         <Space wrap>
@@ -564,7 +565,7 @@ function ThresholdsTab() {
           </Button>
         </Space>
         {current?.contract_fixed ? (
-          <Paragraph type="secondary" style={{ fontSize: 12, marginTop: 8, marginBottom: 0 }}>
+          <Paragraph type="secondary" style={{ fontSize: FONT_SM, marginTop: 8, marginBottom: 0 }}>
             계약이 정한 값이라 이 화면에서 바꿀 수 없습니다. 바꾸려면 계약 담당자에게 문의하십시오.
           </Paragraph>
         ) : null}
@@ -873,7 +874,7 @@ export default function SettingsRules() {
       <Title level={4} style={{ margin: 0 }}>
         설정 — 구역 · 임계값 · 등급규칙
       </Title>
-      <Text type="secondary" style={{ fontSize: 12 }}>
+      <Text type="secondary" style={{ fontSize: FONT_SM }}>
         기관 관리자의 자리입니다. 세 가지를 바꾸면 그 자리에서 다시 읽어 지금 값을 보여 줍니다.
       </Text>
 

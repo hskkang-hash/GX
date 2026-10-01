@@ -25,6 +25,7 @@
  *   그것이 옳다 — 그 사람의 자리는 **내려받기**이고, 자동본은 배치가 만들어 둔다.
  *   403 은 상태 칸에 그대로 적힌다(숨기지 않는다 · 단추를 지우지도 않는다).
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Button, Card, Col, Input, Row, Space, Table, Tag, Typography } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -245,7 +246,7 @@ export default function Reports() {
         {FORMS.map((f) => (
           <Col key={f.kind} xs={24} md={6}>
             <Card size="small" title={f.label} style={{ height: '100%' }}>
-              <Paragraph type="secondary" style={{ fontSize: 12 }}>
+              <Paragraph type="secondary" style={{ fontSize: FONT_SM }}>
                 {f.what}
               </Paragraph>
               {f.needsEvent && (
@@ -272,7 +273,7 @@ export default function Reports() {
         {/* ★ [턴 AB · WO-04 §4-3 · U2#6] 별지 제1호 — **위 셋과 다른 길**(머리말). */}
         <Col xs={24} md={6}>
           <Card size="small" title={SITUATION_LABEL} style={{ height: '100%' }}>
-            <Paragraph type="secondary" style={{ fontSize: 12 }}>
+            <Paragraph type="secondary" style={{ fontSize: FONT_SM }}>
               {SITUATION_WHAT}
             </Paragraph>
             <Input
@@ -441,7 +442,7 @@ export default function Reports() {
                     </Space>
                   ) : (
                     // 실패한 실행은 파일을 못 낸다 — 죽은 단추를 그리지 않고 사유를 적는다.
-                    <Text type="danger" style={{ fontSize: 12 }}>
+                    <Text type="danger" style={{ fontSize: FONT_SM }}>
                       {r.failure_reason || '사유 미기재'}
                     </Text>
                   ),
@@ -454,7 +455,7 @@ export default function Reports() {
       {/* [턴 AQ · 차선 N3 · DSM-U4-07 · U4-08] 영상 제공 대장·연간 통계 · 평가 자료 묶음 */}
       <VideoAccessLedgerPanel />
 
-      <Text type="secondary" style={{ fontSize: 12 }}>
+      <Text type="secondary" style={{ fontSize: FONT_SM }}>
         정본은 DOCX 입니다(한글에서 열립니다). PDF 는 같은 글자를 찍은 병행본입니다.
         파일은 누를 때마다 서버가 이 실행 기록에서 다시 만듭니다 — 「특이사항」을 고치면
         다음 내려받기부터 반영됩니다.

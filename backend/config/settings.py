@@ -112,6 +112,11 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # ★ [턴 AR · N1 · O-05 5xx] 앞문 응답 카운터 — **줄을 새로 넣었다**(기존 줄은 한 자도
+    #   안 고쳤다). 맨 위: 안쪽 어느 겹이 응답을 만들든(캐시 적중 · 관문 401 · 5xx) 지난다.
+    #   응답·상태줄은 안 만진다. 저장소는 기존 캐시의 정수 키뿐(새 표 0).
+    #   되돌리기는 `FRONT_DOOR_COUNTER_ENABLED = False` 한 줄이다.
+    "common.front_door_counter.FrontDoorCounterMiddleware",
     # ★ [P-164 · 2026-09-17 턴 T · 차선 U56] 스키마 버전 헤더 `X-GX-Schema: 1.1` 한 겹.
     #   **줄을 새로 넣었다**(기존 줄은 한 자도 안 고쳤다). 자리는 **맨 위** — 바깥일수록
     #   안쪽 어느 겹이 답하든(캐시 적중 · 관문 401 · 5xx 표지) 전부 지난다.
@@ -204,6 +209,8 @@ MIDDLEWARE = [
     #   반경 [실측 2026-09-07 · 런타임 열거]: 705 오퍼레이션 / 578 경로 / 876 URL 패턴.
     #   되돌리기는 `ROLE_GATE_ENABLED = False` 한 줄이다.
     "common.role_gate.RoleGateMiddleware",
+    # ★ [P-454 · 턴 AR · N4] API 문서 문. GX_API_DOCS 꺼짐(기본)이면 익명 404 · U0 로그인은 200.
+    "common.docs_gate.DocsGateMiddleware",
     # ★ [UX-24 · 2026-09-05 턴 E · 차선 S] 동시 세션 상한 한 겹. **줄을 새로 넣었다**
     #   (기존 줄은 한 자도 안 고쳤다). 자리는 `ApiContractStatusMiddleware` 바로 위 —
     #   같은 두 조건을 만족해야 한다: 캐시보다 바깥 · GZip 보다 안쪽(본문을 JSON 으로
@@ -865,7 +872,9 @@ AUTHENTICATION_BACKENDS = (
 
 # Internationalization
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = env("TIME_ZONE", default="Asia/Ho_Chi_Minh")
+#: [P-447 · 턴 AR] 고객(안양·산림청) 시각이 정본 — 저장은 UTC(USE_TZ) 그대로 · 바뀌는 것은 표시와 beat.
+#: beat 발화 KST 는 전후 대조로 불변(config/celery.py) · 되돌리기 = 환경 TIME_ZONE 한 줄.
+TIME_ZONE = env("TIME_ZONE", default="Asia/Seoul")
 USE_I18N = True
 USE_TZ = True
 

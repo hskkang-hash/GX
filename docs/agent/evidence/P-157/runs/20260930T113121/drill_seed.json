@@ -1,0 +1,50 @@
+{
+  "run": "20260930T113121",
+  "drill": {
+    "run": "20260930T113121",
+    "monitor_code": "gxdrill-seed-CAM",
+    "group_id": 4,
+    "event_ids": [
+      587276,
+      587277,
+      587278,
+      587279
+    ],
+    "billing": "곁표 drill (청구 0)",
+    "note": "P-456 — 탐침이 아닌 훈련 표식 미처리 씨앗 · 고객 면에 보인다"
+  },
+  "events": [
+    {
+      "event_id": 587276,
+      "event_type": "fire",
+      "severity": "critical",
+      "track_id": "data_source=drill;run=20260930T113121",
+      "occurred_at": "2026-09-30T11:28:26+00:00",
+      "data_source": "drill"
+    },
+    {
+      "event_id": 587277,
+      "event_type": "flood",
+      "severity": "warning",
+      "track_id": "data_source=drill;run=20260930T113121",
+      "occurred_at": "2026-09-30T11:25:26+00:00",
+      "data_source": "drill"
+    },
+    {
+      "event_id": 587278,
+      "event_type": "fire",
+      "severity": "critical",
+      "track_id": "data_source=drill;run=20260930T113121",
+      "occurred_at": "2026-09-30T11:22:26+00:00",
+      "data_source": "drill"
+    },
+    {
+      "event_id": 587279,
+      "event_type": "flood",
+      "severity": "warning",
+      "track_id": "data_source=drill;run=20260930T113121",
+      "occurred_at": "2026-09-30T11:19:26+00:00",
+      "data_source": "drill"
+    }
+  ]
+}

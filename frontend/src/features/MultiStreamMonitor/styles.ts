@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import { RefObject } from 'react';
 
 // Theme-aware styles for MultiStreamMonitor
@@ -40,7 +41,7 @@ export const getThemeStyles = (
     borderRadius: '8px',
     cursor: 'pointer',
     transition: 'all 0.2s',
-    fontSize: '12px',
+    fontSize: FONT_SM,
     backgroundColor: 'transparent',
     border: 'none',
     color: theme === 'dark' ? '#888' : '#666',
@@ -123,7 +124,7 @@ export const getThemeStyles = (
     border: 'none',
     borderRadius: '4px',
     cursor: 'pointer',
-    fontSize: '12px',
+    fontSize: FONT_SM,
     transition: 'all 0.2s',
   },
   performanceInfo: {
@@ -175,7 +176,7 @@ export const getThemeStyles = (
     color: theme === 'dark' ? '#9C9D9D' : '#6c757d',
     padding: '6px 10px',
     borderRadius: '4px',
-    fontSize: '12px',
+    fontSize: FONT_SM,
     fontWeight: 'bold',
     zIndex: 1000,
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',

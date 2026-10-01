@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaUsers } from 'react-icons/fa';
@@ -78,7 +79,7 @@ export const StatusInfo: React.FC<StatusInfoProps> = ({
               color: 'white',
               padding: '8px 12px',
               borderRadius: '8px',
-              fontSize: '12px',
+              fontSize: FONT_SM,
               zIndex: 999,
               display: 'flex',
               alignItems: 'center',
@@ -145,7 +146,7 @@ export const StatusInfo: React.FC<StatusInfoProps> = ({
           color: 'black',
           padding: '1rem 2rem 1rem 0.875rem',
           borderRadius: '8px',
-          fontSize: '12px',
+          fontSize: FONT_SM,
           zIndex: 11000,
         }}
       >
@@ -170,7 +171,7 @@ export const StatusInfo: React.FC<StatusInfoProps> = ({
               key={`${index}`}
               style={{
                 padding: '4px 0',
-                fontSize: '12px',
+                fontSize: FONT_SM,
               }}
             >
               • {user?.user}
@@ -190,7 +191,7 @@ export const StatusInfo: React.FC<StatusInfoProps> = ({
           color: 'rgba(255, 255, 255, 0.8)',
           padding: '8px 12px',
           borderRadius: '8px',
-          fontSize: '12px',
+          fontSize: FONT_SM,
           zIndex: 11000,
         }}
       >

@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import { EnvironmentOutlined } from '@ant-design/icons';
 import { Box, styled } from '@mui/material';
 import {
@@ -828,7 +829,7 @@ const CustomSearchMapAnYang: React.FC<CustomSearchMapProps> = ({
                   </div>
                   <div
                     style={{
-                      fontSize: '12px',
+                      fontSize: FONT_SM,
                       color: suggestion.disabled ? '#ccc' : '#8c8c8c',
                     }}
                   >
@@ -868,7 +869,7 @@ const CustomSearchMapAnYang: React.FC<CustomSearchMapProps> = ({
         item?.structured_formatting?.secondary_text +
         ')',
       weather: item?.weatherData ? (
-        `${item.weatherData.temperature} ${item.weatherData.temperature_unit}, ${item.weatherData.region}, 
+        `${item.weatherData.temperature} ${item.weatherData.temperature_unit}, ${item.weatherData.region},
         ${item.weatherData.wind_speed_unit.includes('km/h') ? `${(item.weatherData.wind_speed * 0.27778).toFixed(2) + ' m/s'}` : `${item.weatherData.wind_speed}${item.weatherData.wind_speed_unit}`}`
       ) : weatherLoadingIds.includes(item.id) ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -957,7 +958,7 @@ const CustomSearchMapAnYang: React.FC<CustomSearchMapProps> = ({
                 color: theme === 'dark' ? '#fff' : '#1677ff',
                 padding: '4px 8px',
                 borderRadius: '4px',
-                fontSize: '12px',
+                fontSize: FONT_SM,
                 fontWeight: 500,
                 border: `1px solid ${theme === 'dark' ? '#1677ff' : '#91d5ff'}`,
                 zIndex: 10,
@@ -977,7 +978,7 @@ const CustomSearchMapAnYang: React.FC<CustomSearchMapProps> = ({
               : antdTheme.defaultAlgorithm,
           token: {
             fontSizeIcon: 16,
-            fontSize: 12,
+            fontSize: FONT_SM,
           },
         }}
       >

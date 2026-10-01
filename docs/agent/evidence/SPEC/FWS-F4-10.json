@@ -1,24 +1,24 @@
 {
   "id": "FWS-F4-10",
   "title": "대응 시계 — 신고·확인·헬기 투하·주불·진화완료 + 골든타임 초과 사유",
-  "measured_at": "2026-09-30T06:21:19.564642+00:00",
+  "measured_at": "2026-09-30T11:18:03.512208+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_10_ResponseTimelineTest.test_timeline_layers_fws_milestones_on_dsm_clock",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/621/response-timeline",
+    "path": "/api/fws/command/incidents/721/response-timeline",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 621,
+      "event_id": 721,
       "response_state": "in_progress",
       "timeline": {
-        "reported_at": "2026-09-30T06:21:19.394872+00:00",
-        "acknowledged_at": "2026-09-30T06:21:19.455095+00:00",
-        "helicopter_dropped_at": "2026-09-30T06:21:19.436027+00:00",
-        "main_fire_out_at": "2026-09-30T06:21:19.502599+00:00",
+        "reported_at": "2026-09-30T11:18:03.303213+00:00",
+        "acknowledged_at": "2026-09-30T11:18:03.374341+00:00",
+        "helicopter_dropped_at": "2026-09-30T11:18:03.353423+00:00",
+        "main_fire_out_at": "2026-09-30T11:18:03.439134+00:00",
         "extinguished_at": null
       },
       "golden_time_seconds": 1800,

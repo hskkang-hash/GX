@@ -4,6 +4,8 @@
 > 감시기가 5분 안에 읽어 영실에게 넘긴다. **값(비밀)은 여기 적지 않는다** — 금고 경로만.
 
 ## 열린 질문
+- [ ] 2026-09-30 · 세종 · **턴 AR 배포 한마디(P-462)** — Code 창에 「dist_ar 8500 에 올려라 · 백업 먼저」 · 백업·자동 복원 있는 배포라 되돌릴 수 있음 · D-404 는 세종 오류 ㉕ → HWPX 결정은 새 D-515 로(P-461)
+- [ ] 2026-09-30 · 영실 · **㉢ 재부팅 예약(P-285) 한 줄 준비됨** — 관리자 PowerShell 에서 1회: `schtasks /Create /TN "GuardianX\NightlyReboot" /TR "shutdown.exe /r /f /t 60" /SC DAILY /ST 04:30 /RU SYSTEM /RL HIGHEST /F` · 되돌리기 `schtasks /Delete /TN "GuardianX\NightlyReboot" /F` · ⚠ 자동 로그인 결정(P-303) 없으면 재부팅 뒤 05:00 백업이 안 돈다 · 문안 `runbook/P-285_예약재부팅.md` · 했으면 `[x]`
 - [x] 2026-09-30 · 대표 · **「8871·8872 탐침 표식 적어라」 집행(P-457 · 19:2x KST)** — `manage.py mark_probe --id 8871 8872 --reason …` · 곁표 `common.BillingMark` probe 2줄 · 카메라 행 무변경(`data_source=live` 그대로) · 그룹 4 격자 6 → 4 · 되돌리기 `mark_probe --id 8871 8872 --undo` · 증거 `evidence/P-445/grid_cameras_group4.md` 끝 절
 - [ ] 2026-09-30 · 세종 · **턴 AR 지시서 나감(WO-GX-20261001-21 · P-447~P-460)** — 대표 손 넷: ~~㉠ 「8871·8872 탐침 표식 적어라」~~(09-30 집행 · 위 줄) ㉡ 실기기 웹푸시 ㉢ 재부팅 예약 한 줄(관리자) ㉣ 도메인 한마디 + `cloudflared tunnel login` · 착수는 「RESUME_NEXT 읽고 시작」
 - [ ] 2026-09-30 · 세종 · **바깥 주소 먼저 — 초대제 터널(P-443 · 손 1회)** — 서버 구매 전에 대표 PC 8500 을 Cloudflare 터널 + Access(허용 메일만)로 HTTPS 한 주소로 냅니다. 대표 손은 `cloudflared tunnel login` 브라우저 인증 한 번(쓸 도메인 이름 하나를 이 줄에 · 값·비번은 적지 않음). 끄기는 서비스 정지 한 줄. 「터널 하지 마라」면 이 줄에

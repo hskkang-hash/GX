@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import React, {
   useCallback,
   useEffect,
@@ -1289,7 +1290,7 @@ const DroneCameraView: React.FC<DroneCameraViewProps> = ({
               color: 'white',
               padding: '8px',
               cursor: 'pointer',
-              fontSize: '12px',
+              fontSize: FONT_SM,
               zIndex: 100,
             }}
             onClick={() => setShowStreamControls(!showStreamControls)}

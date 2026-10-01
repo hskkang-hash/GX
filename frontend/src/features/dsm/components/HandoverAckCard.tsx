@@ -6,6 +6,7 @@
  * 인계 창(08~09시 · 명세 원문)은 서버가 내 준 `handover_window` 를 그대로 보인다 —
  * 화면이 시각을 따로 정하지 않는다. 창 밖 확인도 받되 그렇게 남는다(서버 감사 줄).
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Button, Card, Space, Tag, Typography } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -70,7 +71,7 @@ export default function HandoverAckCard() {
         ) : null}
         {data?.exists ? (
           <>
-            <Text style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{data.body}</Text>
+            <Text style={{ whiteSpace: 'pre-wrap', fontSize: FONT_SM }}>{data.body}</Text>
             {data.note ? <Text type="secondary">특이사항: {data.note}</Text> : null}
             {data.acknowledged ? (
               <Space direction="vertical" size={2}>
@@ -78,7 +79,7 @@ export default function HandoverAckCard() {
                   인계 확인 ✓
                 </Tag>
                 {data.acknowledgement?.reason ? (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type="secondary" style={{ fontSize: FONT_SM }}>
                     {data.acknowledgement.reason}
                   </Text>
                 ) : null}

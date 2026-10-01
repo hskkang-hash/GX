@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -513,7 +514,7 @@ const CustomSearchMapGoogleInternal: React.FC<CustomSearchMapGoogleProps> = ({
                 </div>
                 <div
                   style={{
-                    fontSize: '12px',
+                    fontSize: FONT_SM,
                     color: '#999',
                   }}
                 >
@@ -539,7 +540,7 @@ const CustomSearchMapGoogleInternal: React.FC<CustomSearchMapGoogleProps> = ({
               padding: '4px',
               borderRadius: '2px',
               color: '#999',
-              fontSize: '12px',
+              fontSize: FONT_SM,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

@@ -100,6 +100,7 @@
  *   ★ 새 탭/외부 앱으로 연다(`target="_blank"`) — 이 화면을 잃지 않는다. 이동 중인
  *     사람이 지도를 본 뒤 다시 돌아와 다음 버튼을 눌러야 한다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Button, Card, Collapse, Descriptions, Input, Modal, Space, Tag, Typography, message } from 'antd';
 import type { ChangeEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -824,11 +825,11 @@ export default function MobileEventDetail() {
                         size="small"
                         items={[{
                           key: 'ref',
-                          label: <Text style={{ fontSize: 12 }}>참조 보기</Text>,
+                          label: <Text style={{ fontSize: FONT_SM }}>참조 보기</Text>,
                           children: (
                             <Paragraph
                               copyable={{ text: e.snapshot_path }}
-                              style={{ fontSize: 12, marginBottom: 0, wordBreak: 'break-all' }}
+                              style={{ fontSize: FONT_SM, marginBottom: 0, wordBreak: 'break-all' }}
                             >
                               {e.snapshot_path}
                             </Paragraph>
@@ -837,7 +838,7 @@ export default function MobileEventDetail() {
                       />
                     </>
                   ) : (
-                    <Paragraph type="secondary" style={{ fontSize: 12 }}>
+                    <Paragraph type="secondary" style={{ fontSize: FONT_SM }}>
                       이 이벤트에는 스냅샷 참조가 없습니다. 잠시 뒤 다시 보십시오.
                     </Paragraph>
                   )}
@@ -886,7 +887,7 @@ export default function MobileEventDetail() {
               data-gx="same-camera-7d"
             >
               <Space direction="vertical" size={6} style={{ width: '100%' }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" style={{ fontSize: FONT_SM }}>
                   {e.stream_monitor_name || '카메라 미상'} · 지난 {SAME_CAMERA_DAYS}일 ·{' '}
                   {sameCamera.data ? `${sameCamera.data.total}건 (이 페이지 · 최대 ${SAME_CAMERA_LIMIT})` : '—'}
                 </Text>
@@ -906,8 +907,8 @@ export default function MobileEventDetail() {
                           <Link to={mobileEventDetailPath(row.event_id)}>#{row.event_id}</Link>
                         )}
                         <Tag color={SEVERITY_COLOR[row.severity]}>{labelOf(SEVERITY_LABEL, row.severity)}</Tag>
-                        <Text style={{ fontSize: 12 }}>{labelOf(EVENT_TYPE_LABEL, row.event_type)}</Text>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
+                        <Text style={{ fontSize: FONT_SM }}>{labelOf(EVENT_TYPE_LABEL, row.event_type)}</Text>
+                        <Text type="secondary" style={{ fontSize: FONT_SM }}>
                           {relative(row.occurred_at)} · {labelOf(RESPONSE_STATE_LABEL, row.response_state)}
                         </Text>
                       </Space>
@@ -1000,7 +1001,7 @@ export default function MobileEventDetail() {
                 </Descriptions>
 
                 {(e.allowed_next ?? []).length === 0 ? (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type="secondary" style={{ fontSize: FONT_SM }}>
                     지금 이 계정이 옮길 수 있는 다음 단계가 없습니다. 권한이 바뀌면 단추가 나타납니다.
                   </Text>
                 ) : (
@@ -1087,7 +1088,7 @@ export default function MobileEventDetail() {
                     >
                       사진 올리기
                     </Button>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" style={{ fontSize: FONT_SM }}>
                       {photoCount > 0
                         ? `이번 화면에서 ${photoCount}장을 올렸습니다.`
                         : '선택입니다 — 안 올려도 다음으로 갑니다.'}
@@ -1123,7 +1124,7 @@ export default function MobileEventDetail() {
                     >
                       <Space direction="vertical" size={4} style={{ width: '100%' }}>
                         {(replies.data?.replies ?? []).map((r) => (
-                          <Text key={r.reply_id} style={{ fontSize: 12 }}>
+                          <Text key={r.reply_id} style={{ fontSize: FONT_SM }}>
                             {r.author_name || '이름 없음'} · {r.text}
                           </Text>
                         ))}

@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaRegCirclePlay } from 'react-icons/fa6';
@@ -81,7 +82,7 @@ export const RecordingOverlay: React.FC<RecordingOverlayProps> = ({
           color: 'white',
           padding: '4px 8px',
           borderRadius: '4px',
-          fontSize: '12px',
+          fontSize: FONT_SM,
           fontWeight: 'bold',
         }}
       >

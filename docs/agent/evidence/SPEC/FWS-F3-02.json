@@ -1,7 +1,7 @@
 {
   "id": "FWS-F3-02",
   "title": "조심기간·특별대책기간 설정 · 초소·순찰 구역 등록",
-  "measured_at": "2026-09-30T06:20:00.163445+00:00",
+  "measured_at": "2026-09-30T11:17:19.110035+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_02_SeasonAndPostsTest.test_season_save_then_read_back",
   "request": {
@@ -16,21 +16,21 @@
         "special_measures": {
           "kind": "special_measures",
           "note": "",
-          "set_at": "2026-09-30T06:20:00.130054+00:00",
+          "set_at": "2026-09-30T11:17:19.067583+00:00",
           "set_by": "dsm_user_a",
-          "__seq__": 446,
-          "__hash__": "72e48a420d2c4309d07800e240b04febbca6fa8f73321b1dfca87af112553267",
+          "__seq__": 743,
+          "__hash__": "f729a4deec693173069163998f97ddb66b3476b9e8d34092200edd1636f92fb9",
           "end_date": "2027-03-15",
           "start_date": "2027-02-01",
-          "__prev_hash__": "0ea1a3bf8ba7af0e31533bf867f00ec4b5d04fe4e3bc53d307ff1a7cbccbd714"
+          "__prev_hash__": "503c0d76c9f482e4547ef17b95db68c67b4ed06fd010ed2863862931c5396728"
         },
         "dry_season": {
           "kind": "dry_season",
           "note": "",
-          "set_at": "2026-09-30T06:20:00.099147+00:00",
+          "set_at": "2026-09-30T11:17:19.032857+00:00",
           "set_by": "dsm_user_a",
-          "__seq__": 445,
-          "__hash__": "0ea1a3bf8ba7af0e31533bf867f00ec4b5d04fe4e3bc53d307ff1a7cbccbd714",
+          "__seq__": 742,
+          "__hash__": "503c0d76c9f482e4547ef17b95db68c67b4ed06fd010ed2863862931c5396728",
           "end_date": "2026-12-15",
           "start_date": "2026-11-01",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000"

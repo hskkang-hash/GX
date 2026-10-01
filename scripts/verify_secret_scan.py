@@ -163,6 +163,65 @@ def rel(path: str) -> str:
     return p[len(root):] if p.startswith(root) else p.lstrip("/")
 
 
+_BS = chr(92)
+
+
+def norm_fingerprint(fp: str, root: Path | str | None = None) -> str:
+    """[턴 AR · Q③] 지문을 **상대 · 슬래시 모양 하나로** 맞춘다.
+
+    파일 면(`--no-git --source <ROOT 절대>`)의 지문은 `C:` + 역슬래시 + … + `X.json:rule:17` 모양(절대)이고
+    `.gitleaksignore` 는 흔히 `docs/…/X.json:rule:17`(상대)이다 — 글자 그대로 견주면 어긋난다
+    (턴 AQ 실측 · SEC-05 FAIL). 그래서 양쪽을 역슬래시→슬래시, ROOT 접두 제거로 맞춘 뒤 견준다.
+    이력 면 지문(`커밋:파일:rule:줄`)도 같은 규칙으로 파일 부분만 맞춘다. 상대·절대 **둘 다** 맞는다.
+    """
+    r = str(root if root is not None else ROOT).replace(_BS, "/").rstrip("/") + "/"
+    f = str(fp).strip().replace(_BS, "/")
+    if f.lower().startswith(r.lower()):
+        f = f[len(r):]
+    else:
+        i = f.lower().find(":" + r.lower())          # `커밋:C:/…/파일:rule:줄` 모양
+        if i >= 0:
+            f = f[:i + 1] + f[i + 1 + len(r):]
+    return f
+
+
+def load_ignored(path: Path | None = None) -> set[str]:
+    """`.gitleaksignore` 의 지문 줄(주석·빈 줄 뺀)을 정규화해 모은다. 못 읽으면 빈 집합(= 아무것도 안 가린다)."""
+    try:
+        text = (path or ROOT / ".gitleaksignore").read_text(encoding="utf-8")
+    except OSError:
+        return set()
+    return {norm_fingerprint(ln) for ln in text.splitlines()
+            if ln.strip() and not ln.lstrip().startswith("#")}
+
+
+def drop_ignored(hits: list[dict], ignored: set[str], root=None) -> tuple[list[dict], int]:
+    """정규화 지문이 고정 목록에 있는 건을 뺀다 → (남은 것, 뺀 수). 뺀 수는 출력에 남긴다."""
+    keep = [h for h in hits if norm_fingerprint(h.get("Fingerprint", ""), root) not in ignored]
+    return keep, len(hits) - len(keep)
+
+
+def _fingerprint_self_test() -> list[str]:
+    bad: list[str] = []
+    root = Path("C:" + _BS + "GuardianX" + _BS + "guardianx-source")
+    ab = "C:" + _BS + "GuardianX" + _BS + "guardianx-source" + _BS + "docs" + _BS + "a" + _BS + "X.json:slack-webhook-url:17"
+    rl = "docs/a/X.json:slack-webhook-url:17"
+    if norm_fingerprint(ab, root) != rl or norm_fingerprint(rl, root) != rl:
+        bad.append("지문 정규화 — 절대(역슬래시)와 상대(슬래시)가 같은 모양으로 안 모인다")
+    if norm_fingerprint("abc123:" + ab, root) != "abc123:" + rl:
+        bad.append("지문 정규화 — 이력 면 `커밋:절대경로:rule:줄` 을 못 맞춘다")
+    if norm_fingerprint("docs/a/X.json:slack-webhook-url:18", root) == rl:
+        bad.append("지문 정규화 — 줄 번호가 다른데 같다고 본다(과잉 가림)")
+    hits = [{"Fingerprint": ab}, {"Fingerprint": "docs/a/X.json:slack-webhook-url:18"}]
+    keep, n = drop_ignored(hits, {rl}, root)
+    if n != 1 or len(keep) != 1 or keep[0]["Fingerprint"].endswith(":17"):
+        bad.append("고정 목록 가리기 — 상대 줄 하나가 절대 지문 건을 못 가리거나 다른 줄까지 가린다")
+    keep2, n2 = drop_ignored([{"Fingerprint": rl}], {norm_fingerprint(ab, root)}, root)
+    if n2 != 1:
+        bad.append("고정 목록 가리기 — 절대 줄이 상대 지문 건을 못 가린다")
+    return bad
+
+
 def carried_by_git(paths: list[str]) -> dict[str, bool]:
     """git 이 이 파일을 나르는가 — 무시되면 아니다. **한 번에 물어본다.**"""
     if not paths:
@@ -189,7 +248,7 @@ def carried_by_git(paths: list[str]) -> dict[str, bool]:
 
 def self_test(exe: Path) -> int:
     """**심어 보고 잡는지 본다.** 안 심어 본 탐지기는 눈이 멀어도 초록이다 (D-289)."""
-    bad: list[str] = []
+    bad: list[str] = _fingerprint_self_test()
 
     # ── 출생 표본 ① 스캔 면 (D-310) ────────────────────────────────────────
     #   그날의 세 수가 서로 어긋나지 않는지부터 본다. 「저장소가 나르던 것」이
@@ -313,6 +372,12 @@ def main() -> int:
     if disk is None:
         print("[SECRETS] 파일 면을 훑지 못했다 — **판정 불가**")
         return EXIT_UNDECIDABLE
+    # [턴 AR · Q③] 고정 목록(.gitleaksignore)을 상대·절대 둘 다 맞게 견주어 가린다.
+    ignored = load_ignored()
+    disk, n_dropped = drop_ignored(disk, ignored)
+    if n_dropped:
+        print("[SECRETS] 파일 면: 고정 목록(.gitleaksignore)과 정규화 지문이 맞아 " + str(n_dropped)
+              + "건 뺐다(상대·절대 경로 모양 차이 · 턴 AR)")
     carried = carried_by_git([h["File"] for h in disk])
     inside = [h for h in disk if carried.get(h["File"], True)]
     outside = [h for h in disk if not carried.get(h["File"], True)]
@@ -322,6 +387,7 @@ def main() -> int:
     if hist is None:
         print("[SECRETS] 이력 면을 훑지 못했다 — **판정 불가**")
         return EXIT_UNDECIDABLE
+    hist, _n_h = drop_ignored(hist, ignored)
 
     print("[SECRETS] [입력] " + str(len(disk)) + "건 — 파일 면 검출 "
           "(저장소가 나르는 것 " + str(len(inside)) + " · 저장소 밖 " + str(len(outside)) + ")")

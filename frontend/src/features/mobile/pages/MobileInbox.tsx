@@ -34,6 +34,7 @@
  * ★ 한 줄을 누르면 목록의 값을 물려주지 않고 **상세를 서버에 다시 묻는다** —
  *   물려 쓰면 문지기가 목록에만 서고 상세에 안 선다(IDOR 이 나는 자리).
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Badge, Card, Empty, Segmented, Space, Tag, Typography } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -344,7 +345,7 @@ export default function MobileInbox() {
             data-gx="inbox-mine"
           />
           <Text
-            style={{ fontSize: 12 }}
+            style={{ fontSize: FONT_SM }}
             data-gx="inbox-scope"
           >
             {mine
@@ -479,15 +480,15 @@ export default function MobileInbox() {
                       </Tag>
                     ) : null}
                     <Text strong>{labelOf(EVENT_TYPE_LABEL, e.event_type)}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>#{e.event_id}</Text>
+                    <Text type="secondary" style={{ fontSize: FONT_SM }}>#{e.event_id}</Text>
                     <Tag>{labelOf(RESPONSE_STATE_LABEL, e.response_state)}</Tag>
                   </Space>
                   <Text style={{ fontSize: 13 }}>{e.stream_monitor_name || '카메라 미상'}</Text>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type="secondary" style={{ fontSize: FONT_SM }}>
                     발생 {relative(e.occurred_at)} ({shortAbsolute(e.occurred_at)})
                     {e.last_reply_at ? ` · 내 회신 ${shortAbsolute(e.last_reply_at)}` : ''}
                   </Text>
-                  <Text style={{ fontSize: 12 }}>
+                  <Text style={{ fontSize: FONT_SM }}>
                     [{e.last_reply_kind}] {e.last_reply_text || '(본문 없음)'}
                   </Text>
                 </Space>
@@ -589,7 +590,7 @@ export default function MobileInbox() {
                     <Text strong>
                       {event ? labelOf(EVENT_TYPE_LABEL, event.event_type) : '유형 미상'}
                     </Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" style={{ fontSize: FONT_SM }}>
                       #{group.eventId}
                     </Text>
                     {/*
@@ -614,7 +615,7 @@ export default function MobileInbox() {
                       // ★ 「없음」이 아니라 「이 페이지에서 못 찾음」이다 — 다른 사실이다.
                       <Tag color="default">이벤트 속성 미조회</Tag>
                     )}
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" style={{ fontSize: FONT_SM }}>
                       발생 {event ? relative(event.occurred_at) : '—'}
                       {event ? ` (${shortAbsolute(event.occurred_at)})` : ''}
                     </Text>
@@ -668,7 +669,7 @@ export default function MobileInbox() {
                               ★ 실패는 시각 칸이 「—」다. 0초가 아니다 — 못 보낸 것은
                                 빠른 것이 아니다. 사유를 **그대로** 적는다.
                             */
-                            <Text type="danger" style={{ fontSize: 12 }}>
+                            <Text type="danger" style={{ fontSize: FONT_SM }}>
                               발송 실패 — {d.failure_reason || '사유 없음'}
                             </Text>
                           ) : !reachesAPerson(d.channel) ? (
@@ -680,14 +681,14 @@ export default function MobileInbox() {
                             */
                             <Text
                               type="warning"
-                              style={{ fontSize: 12 }}
+                              style={{ fontSize: FONT_SM }}
                               /* ⑤ 「사람에게 안 감」은 여기 — 「?」 뒤다. 본문이 아니다. */
                               title={LOG_CHANNEL_NOTE}
                             >
                               {OUTCOME_NOT_DELIVERED} {shortAbsolute(d.sent_at)}
                             </Text>
                           ) : (
-                            <Text type="secondary" style={{ fontSize: 12 }}>
+                            <Text type="secondary" style={{ fontSize: FONT_SM }}>
                               {/* ★ 이 라우트는 이름이 아니라 `recipient_id` 만 낸다 —
                                   없으면 「받는 사람 없음」이라 적고, 이름을 지어내지 않는다.
                                   ★ [턴 AB] 그 꼬리말도 **정본에서 온다**

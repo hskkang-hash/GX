@@ -113,7 +113,9 @@ def track(*, scope, post_code: str, lat: float | None = None, lng: float | None 
             "GPS 좌표도 순찰함 코드도 없다 — 무엇을 지났는지 없이는 트랙이 아니다")
 
     now = timezone.now()
+    registry = "none"
     if checkpoint:
+        registry = _check_registered_checkpoint(scope, checkpoint)
         audit_writer.write(
             logger_name=LOGGER_NAME, tag=TAG, actor=actor,
             action=ACTION_TRACK_CHECKPOINT, outcome=audit_writer.ALLOWED,
@@ -139,7 +141,31 @@ def track(*, scope, post_code: str, lat: float | None = None, lng: float | None 
         "recorded_at": now.isoformat(),
         "track_count": track_count,
         "checkpoint_count": checkpoint_count,
+        "checkpoint_registry": registry,
     }
+
+
+REGISTRY_NONE = "none"          # 이번 요청은 순찰함 통과가 아니다
+REGISTRY_EMPTY = "empty"        # 이 기관에 등록된 순찰함이 아직 없다 — 대조 못 함(막지 않는다)
+REGISTRY_MATCHED = "matched"    # 등록 목록에 있는 순찰함이다
+
+
+def _check_registered_checkpoint(scope, checkpoint: str) -> str:
+    """FWS-F1-02 — 순찰함 코드를 **등록 목록**(사무실 등록 · kind=checkpoint)과 대조한다.
+
+    * 이 기관에 등록된 순찰함이 있으면 목록에 없는 코드는 거절한다(위조 코드 방지 · 422).
+    * 등록이 하나도 없으면 대조할 것이 없다 — 막지 않고 `empty` 로 **밝힌다**(초록으로 덮지 않는다).
+    """
+    from apps.fws import office            # office 가 patrol 을 들이므로 함수 안에서
+
+    posts = office.registered_posts(scope=scope, kind=office.POST_KIND_CHECKPOINT)
+    codes = {p.get("code") for p in posts.get("posts", [])}
+    if not codes:
+        return REGISTRY_EMPTY
+    if checkpoint not in codes:
+        raise PatrolInputRejected(
+            f"순찰함 {checkpoint!r} 는 등록된 순찰함이 아니다 — 등록된 순찰함만 통과로 셈한다")
+    return REGISTRY_MATCHED
 
 
 def mine(*, scope) -> dict:

@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import React from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useTranslation } from 'react-i18next';
@@ -86,14 +87,14 @@ const DroneStatusChart: React.FC<DroneStatusChartProps> = ({ data, isLoading = f
             <XAxis
               dataKey="label"
               tickLine={false}
-              fontSize={12}
+              fontSize={FONT_SM}
               stroke={theme === 'dark' ? Colors.Gray8 : '#666'}
               tick={false}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              fontSize={12}
+              fontSize={FONT_SM}
               domain={[0, 25]}
               ticks={[0, 10, 25]}
               stroke={theme === 'dark' ? Colors.Gray3 : '#666'}
@@ -113,7 +114,7 @@ const DroneStatusChart: React.FC<DroneStatusChartProps> = ({ data, isLoading = f
               <LabelList
                 dataKey="value"
                 position="top"
-                fontSize={12}
+                fontSize={FONT_SM}
                 fill={theme === 'dark' ? Colors.Gray3 : '#666'}
               />
             </Bar>
@@ -162,4 +163,3 @@ const DroneStatusChart: React.FC<DroneStatusChartProps> = ({ data, isLoading = f
 };
 
 export default DroneStatusChart;
-

@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -227,10 +228,10 @@ const SurveillanceDashboard: React.FC = () => {
                 marginTop: 5,
               }}
             >
-              <span style={{ fontSize: 12, color: '#999' }}>
+              <span style={{ fontSize: FONT_SM, color: '#999' }}>
                 {t('Operating rate')}
               </span>
-              <span style={{ fontSize: 12, color: '#1D9BE2' }}>
+              <span style={{ fontSize: FONT_SM, color: '#1D9BE2' }}>
                 {operatingRate}%
               </span>
             </div>
@@ -369,7 +370,7 @@ const SurveillanceDashboard: React.FC = () => {
               </div>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: FONT_SM,
                   color: theme === 'dark' ? Colors.Gray5 : '#999',
                 }}
               >
@@ -393,7 +394,7 @@ const SurveillanceDashboard: React.FC = () => {
               </div>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: FONT_SM,
                   color: theme === 'dark' ? Colors.Gray5 : '#999',
                 }}
               >
@@ -459,7 +460,7 @@ const SurveillanceDashboard: React.FC = () => {
               </div>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: FONT_SM,
                   color: theme === 'dark' ? Colors.Gray5 : '#999',
                 }}
               >
@@ -481,7 +482,7 @@ const SurveillanceDashboard: React.FC = () => {
               </div>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: FONT_SM,
                   color: theme === 'dark' ? Colors.Gray5 : '#999',
                 }}
               >
@@ -505,7 +506,7 @@ const SurveillanceDashboard: React.FC = () => {
               </div>
               <div
                 style={{
-                  fontSize: 12,
+                  fontSize: FONT_SM,
                   color: theme === 'dark' ? Colors.Gray5 : '#999',
                 }}
               >
@@ -584,7 +585,7 @@ const SurveillanceDashboard: React.FC = () => {
                     <div>{t(alert.msg)}</div>
                     <div
                       className="alert-time"
-                      style={{ color: '#666', fontSize: 12 }}
+                      style={{ color: '#666', fontSize: FONT_SM }}
                     >
                       {alert.time}
                     </div>

@@ -233,6 +233,10 @@ def timezone_note() -> str:
         고칠 자리는 배포 설정 한 줄(`TIME_ZONE=Asia/Seoul`)이고 그것은 운영의 결정이다.
       대신 **어느 시계로 적었는지를 종이가 스스로 말한다.** 설정을 바꾸면 이 줄도 함께
       바뀐다 — 손으로 고칠 자리가 없다.
+
+    ★ [P-447 · 턴 AR · 2026-09-30] **닫혔다** — 전역 `TIME_ZONE` 이 `Asia/Seoul` 이 되어
+      종이 시각 = 한국 시각이다. 위 실측은 그때의 사실로 남긴다. 이 줄은 그대로 둔다 —
+      설정이 다시 바뀌면 종이가 여전히 스스로 말해야 하기 때문이다.
     """
     from django.conf import settings
     from django.utils import timezone
@@ -982,7 +986,8 @@ def _damage_block() -> str:
 
 def build_situation_html(*, event, clock: dict, actions, tenant: str, issued_by: str,
                          plan: str = "", sources_failed=(),
-                         data_source: str = "", field_photo_count: int = 0) -> str:
+                         data_source: str = "", field_photo_count: int = 0,
+                         photo_thumbs=()) -> str:
     """별지 제1호 **재난 상황보고**의 HTML — 세종 §4-3 의 **10칸**.
 
     Args:
@@ -998,6 +1003,8 @@ def build_situation_html(*, event, clock: dict, actions, tenant: str, issued_by:
         field_photo_count: DSM-U3-03 — 이 사건에 달린 현장 사진 수(`DsmFieldPhoto`).
             **바이트는 안 싣는다** — 영상 구간과 같은 규약(⑨ 첨부는 이름·수만 적는다,
             계약 11조). 0 이면 「없다」고 적는다 — 칸을 빼지 않는다(D-301).
+        photo_thumbs: P-451 — 워터마크가 얹힌 **축소본**(긴 변 <= 640 px)의 data URI 들.
+            원본 링크·해시는 없다. 비면 예전 문구(수만)를 그대로 적는다.
 
     ★ 칸 번호 ①~⑨ 는 **종이에 찍힌다.** 받는 사람이 「⑥이 비었다」고 전화로 말할 수
       있어야 하고, 번호가 없으면 그 말을 할 수 없다.
@@ -1111,11 +1118,20 @@ def build_situation_html(*, event, clock: dict, actions, tenant: str, issued_by:
     #:   서식이 스스로 센다. 바이트는 안 싣는다(위 영상 구간과 같은 규약 — 원본은
     #:   이 종이에 붙이지 않는다). 0 장이어도 칸은 남는다 — 「없다」와 「집계 안
     #:   함」을 가른다(`_damage_block` 과 같은 규율).
-    parts.append(_row(
-        "현장 사진",
-        (f"{field_photo_count}장이 이 사건에 자동 첨부되었습니다 — 원본은 이 종이에 "
-         "붙이지 않습니다(계약 11조), 현장 회신 화면에서 확인하십시오.")
-        if field_photo_count > 0 else "이 사건에 올라온 현장 사진이 없습니다."))
+    if photo_thumbs and field_photo_count > 0:
+        #: P-451 — 축소본(긴 변 <= 640 px) + 워터마크(기관명·사건번호·시각). 원본 링크·해시 0.
+        imgs = "".join(f'<img src="{escape(u)}" alt="현장 사진 축소본"/><br/>' for u in photo_thumbs)
+        parts.append(
+            "<tr><th>현장 사진</th><td class=\"wide\" colspan=\"3\">"
+            f"{escape(f'{field_photo_count}장 중 {len(photo_thumbs)}장의 축소본을 실었습니다')}"
+            " — 원본은 이 종이에 붙이지 않습니다(계약 11조 · 축소본과 워터마크만).<br/>"
+            f"{imgs}</td></tr>")
+    else:
+        parts.append(_row(
+            "현장 사진",
+            (f"{field_photo_count}장이 이 사건에 자동 첨부되었습니다 — 원본은 이 종이에 "
+             "붙이지 않습니다(계약 11조), 현장 회신 화면에서 확인하십시오.")
+            if field_photo_count > 0 else "이 사건에 올라온 현장 사진이 없습니다."))
     parts.append("</table>")
 
     parts.append(
@@ -1177,10 +1193,22 @@ def build_situation_report(*, scope, event_id: int, plan: str = "") -> str:
         photo_count = _field_photo_count(events[0].event_id)
     except Exception:                       # noqa: BLE001 — 사진 집계가 종이를 죽이지 않는다
         photo_count = 0
+    photo_thumbs: tuple = ()
+    if photo_count > 0:
+        try:
+            from django.utils import timezone as _tz
+
+            from apps.dsm import photo_thumb
+
+            photo_thumbs = tuple(photo_thumb.thumbnails_for_event(
+                events[0].event_id, org=tenant_name(actor), at=_tz.localtime(_tz.now())))
+        except Exception:                   # noqa: BLE001 — 축소본이 종이를 죽이지 않는다
+            photo_thumbs = ()
     return build_situation_html(
         event=events[0],
         clock=services.response_clock(scope=scope, event_id=event_id),
         actions=context.actions, tenant=tenant_name(actor),
         issued_by=person_label(actor), plan=plan,
         sources_failed=tuple(context.sources_failed),
-        data_source=source, field_photo_count=photo_count)
+        data_source=source, field_photo_count=photo_count,
+        photo_thumbs=photo_thumbs)

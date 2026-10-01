@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConfigGroupSystem } from 'rj-core';
@@ -75,7 +76,7 @@ const Map: React.FC<MapProps> = ({ operatingMarkers, standbyMarkers }) => {
           alignItems: 'center',
         }}
         overlayContent={
-          <div style={{ fontSize: 12, color: '#666' }}>
+          <div style={{ fontSize: FONT_SM, color: '#666' }}>
             <div
               style={{ display: 'flex', alignItems: 'center', marginBottom: 5 }}
             >
@@ -88,7 +89,7 @@ const Map: React.FC<MapProps> = ({ operatingMarkers, standbyMarkers }) => {
                   marginRight: 5,
                 }}
               />
-              <span style={{ fontSize: 12 }}>{t('도시')}</span>
+              <span style={{ fontSize: FONT_SM }}>{t('도시')}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <div
@@ -99,7 +100,7 @@ const Map: React.FC<MapProps> = ({ operatingMarkers, standbyMarkers }) => {
                   marginRight: 5,
                 }}
               />
-              <span style={{ fontSize: 12 }}>{t('드론 경로')}</span>
+              <span style={{ fontSize: FONT_SM }}>{t('드론 경로')}</span>
             </div>
           </div>
         }
@@ -134,7 +135,7 @@ const Map: React.FC<MapProps> = ({ operatingMarkers, standbyMarkers }) => {
         alignItems: 'center',
       }}
       overlayContent={
-        <div style={{ fontSize: 12, color: '#666' }}>
+        <div style={{ fontSize: FONT_SM, color: '#666' }}>
           <div
             style={{ display: 'flex', alignItems: 'center', marginBottom: 5 }}
           >
@@ -147,7 +148,7 @@ const Map: React.FC<MapProps> = ({ operatingMarkers, standbyMarkers }) => {
                 marginRight: 5,
               }}
             />
-            <span style={{ fontSize: 12 }}>{t('도시')}</span>
+            <span style={{ fontSize: FONT_SM }}>{t('도시')}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <div
@@ -158,7 +159,7 @@ const Map: React.FC<MapProps> = ({ operatingMarkers, standbyMarkers }) => {
                 marginRight: 5,
               }}
             />
-            <span style={{ fontSize: 12 }}>{t('드론 경로')}</span>
+            <span style={{ fontSize: FONT_SM }}>{t('드론 경로')}</span>
           </div>
         </div>
       }

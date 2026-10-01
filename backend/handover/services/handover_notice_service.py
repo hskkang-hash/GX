@@ -11,7 +11,6 @@ from typing import Tuple, Optional, List, Dict
 from datetime import datetime
 from dateutil import parser
 import pytz
-import os
 import csv
 import io
 import threading
@@ -225,7 +224,7 @@ class HandoverNoticeService:
         processing_notice_list = apply_dynamic_filters(processing_notice_list, request, [], request.GET.get("sort_obj"))
         processing_notice_list = processing_notice_list.values(*selected_fields)
         # Format datetime fields
-        tz = pytz.timezone(os.getenv('TIME_ZONE', 'Asia/Ho_Chi_Minh'))
+        tz = pytz.timezone(settings.TIME_ZONE)  # P-447: 설정 하나만 읽는다(env 기본값 두 벌 0)
         for data in processing_notice_list:
             if isinstance(data.get('created_time'), datetime):
                 data['created_time'] = PrintFormatService._format_datetime_with_user_settings(data.get('created_time'), user_settings)

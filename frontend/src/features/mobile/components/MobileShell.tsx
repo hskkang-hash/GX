@@ -9,6 +9,7 @@
  * ★ 「언제 것인가」를 머리에 적는다. 이동 중에는 화면이 오래 켜져 있고, 낡은 줄을
  *   모르는 화면은 **낡은 판단**을 만든다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Button, Space, Typography } from 'antd';
 import { ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -97,7 +98,7 @@ export default function MobileShell({
 
         <Text
           type="secondary"
-          style={{ fontSize: 12 }}
+          style={{ fontSize: FONT_SM }}
         >
           {/* ★ 「아직 못 받음」과 「0건」을 가른다 — 빈칸은 둘을 같아 보이게 한다. */}
           {loadedAt ? `기준 ${stamp(loadedAt)}` : '아직 값을 받지 못했습니다'} · {TIMEZONE_NOTE}

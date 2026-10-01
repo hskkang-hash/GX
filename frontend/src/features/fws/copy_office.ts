@@ -34,6 +34,7 @@ export const FWS_OFFICE_COPY = {
     title: '초소·순찰 구역 등록',
     kindWatchpost: '초소',
     kindPatrolZone: '순찰 구역',
+    kindCheckpoint: '순찰함',
     codePlaceholder: '코드',
     namePlaceholder: '이름',
     registerButton: '등록',

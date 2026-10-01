@@ -409,7 +409,30 @@ def list_app_installs(actor: Any, tenant_code: str | None = None) -> dict:
     latest = _latest_by_key(rows, key_fn=lambda r: (r.get("tenant_code"), r.get("app_code")))
     if tenant_code:
         latest = [r for r in latest if r.get("tenant_code") == tenant_code]
-    return {"installs": latest, "count": len(latest)}
+    marks = _marked_counts()
+    return {"installs": latest, "count": len(latest), "marked": marks["marked"],
+            "marked_probe": marks["probe"], "marked_seed": marks["seed"]}
+
+
+def _marked_counts() -> dict:
+    """P-453 「표식됨 N」 — 곁표 `common.BillingMark` 에서 `probe`·`seed` 로 적힌 줄 수.
+
+    유령 시드는 **지우지 않고 표식한다**(지우는 것은 대표). 이 수는 그 곁표를 그대로
+    센다 — 새 저장소 0 · 가리키는 행은 안 건드린다. 곁표를 못 읽으면 0 이 아니라
+    None(못 쟀다)을 돌려 화면이 「못 쟀다」로 그린다(D-301).
+    """
+    none = {"marked": None, "probe": None, "seed": None}
+    try:
+        from common.billing_marks import NOT_COUNTED_SOURCES, SEED_SOURCE, _mark_model
+
+        Mark = _mark_model()
+        if Mark is None:
+            return none
+        probe = Mark._base_manager.filter(data_source=NOT_COUNTED_SOURCES[0]).count()
+        seed = Mark._base_manager.filter(data_source=SEED_SOURCE).count()
+        return {"marked": probe + seed, "probe": probe, "seed": seed}
+    except Exception:  # noqa: BLE001
+        return none
 
 
 def install_app(actor: Any, *, tenant_code: str, app_code: str, version: str) -> dict:
@@ -457,6 +480,12 @@ def set_app_status(actor: Any, *, tenant_code: str, app_code: str, status: str) 
 # ═══════════════════════════════════════════════════════════════════════════
 # O-05 — 건강 보드(전 테넌트) — 이미 있는 집계만 읽는다(새 저장 0)
 # ═══════════════════════════════════════════════════════════════════════════
+def _front_door_snapshot() -> dict:
+    from common import front_door_counter
+
+    return front_door_counter.snapshot()
+
+
 def health_board(actor: Any) -> dict:
     """건강 보드(전 테넌트) — O-05.
 
@@ -521,9 +550,10 @@ def health_board(actor: Any) -> dict:
         "backup_source": backup_path, "backup_read": backup is not None,
         #: ★ 정직하게 비운다 — 설명 칸의 일곱 중 둘은 이 차선이 못 잰다
         #:   (D-274·P-418 「무엇이 없는가」). 완결 조건(위 docstring)에는 없다.
+        #: [턴 AR · N1] 5xx 는 앞문 응답 카운터(`common/front_door_counter.py` · 새 저장소 0)가
+        #: 서버에서 센다. 못 재면 `measured=False` 가 그대로 나간다(0 으로 덮지 않는다).
+        "front_door": _front_door_snapshot(),
         "not_measured": {
-            "5xx": "가용성(5xx)는 scripts/verify_front_line_502.py 한 자리에서만 잰다"
-                  "(P-84) — 라이브 로그인이 필요해 이 차선(라이브 로그인 금지)은 못 읽는다.",
             "gate_16_colors": "ga_readiness.yaml 의 절별 색은 있으나 '게이트 16색'"
                               "(테넌트별 게이트 격자)은 이번 턴에 안 붙였다 — 무엇이 없는가로 남긴다.",
         },

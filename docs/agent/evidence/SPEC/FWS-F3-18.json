@@ -1,7 +1,7 @@
 {
   "id": "FWS-F3-18",
   "title": "계도·단속 통계 · 입산통제구역 관리",
-  "measured_at": "2026-09-30T06:21:00.354127+00:00",
+  "measured_at": "2026-09-30T11:17:44.222686+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_18_PatrolEnforcementTest.test_record_stats_and_zone_management",
   "request": {
@@ -14,20 +14,20 @@
     "body": {
       "zones": [
         {
-          "set_at": "2026-09-30T06:21:00.113597+00:00",
+          "set_at": "2026-09-30T11:17:44.081209+00:00",
           "status": "active",
-          "__seq__": 486,
-          "__hash__": "c39128a68c5399f0df3b7050705c5d57ea88295f91a5695d64a79b2ef8689510",
+          "__seq__": 783,
+          "__hash__": "5486e3871e28df47db07f4ac2de3d5da0f6e4ea191f1661bd1d17edd3889df32",
           "zone_name": "XX능선",
-          "__prev_hash__": "d2040beb221007847ba8d20a50c0bf8d47494f5bb8a6cc4e2cfa0f2bd871b92a"
+          "__prev_hash__": "d467d6e6ed837bdd17c1e54ea45eb481e1a98d41151e5f8598e77d76b728c2a0"
         },
         {
-          "set_at": "2026-09-30T06:21:00.054558+00:00",
+          "set_at": "2026-09-30T11:17:44.041966+00:00",
           "status": "active",
-          "__seq__": 485,
-          "__hash__": "d2040beb221007847ba8d20a50c0bf8d47494f5bb8a6cc4e2cfa0f2bd871b92a",
+          "__seq__": 782,
+          "__hash__": "d467d6e6ed837bdd17c1e54ea45eb481e1a98d41151e5f8598e77d76b728c2a0",
           "zone_name": "OO봉 일대",
-          "__prev_hash__": "4f0e9d2b48b020961c9ce8dcb22db3a6820dda8057801e40a4d30a842165424e"
+          "__prev_hash__": "a6e97c53e7cf77f8c8156b127e598ced8214cce52b2cb77eed85080032298fb6"
         }
       ],
       "scope": "tenant"

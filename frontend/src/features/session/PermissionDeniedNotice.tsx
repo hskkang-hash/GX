@@ -47,6 +47,7 @@
  *      ⚠ 선언하지 않은 화면은 **종전 그대로 띠가 그린다** — 조용히 삼키는 길을
  *        기본으로 만들지 않는다(이 파일이 태어난 이유가 바로 그 침묵이다).
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { useEffect, useState } from 'react';
 
 import {
@@ -133,7 +134,7 @@ export function PermissionDeniedNotice() {
         <div
           style={{
             marginTop: 6,
-            fontSize: 12,
+            fontSize: FONT_SM,
             color: '#a16207',
             wordBreak: 'break-all',
           }}

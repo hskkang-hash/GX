@@ -1,12 +1,12 @@
 {
   "id": "FWS-F3-05",
   "title": "오인 종결(사유) · 산불 확정",
-  "measured_at": "2026-09-30T06:20:07.314866+00:00",
+  "measured_at": "2026-09-30T11:17:24.606862+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_05_MisjudgeOrConfirmReuseTest.test_office_actor_confirms_fire_via_existing_f1_06_door",
   "request": {
     "method": "POST",
-    "path": "/api/fws/verifications/589/reply?result=fire_confirmed",
+    "path": "/api/fws/verifications/689/reply?result=fire_confirmed",
     "params": {
       "result": "fire_confirmed"
     }
@@ -14,8 +14,8 @@
   "response": {
     "status": 200,
     "body": {
-      "verification_id": 589,
-      "reply_id": 452,
+      "verification_id": 689,
+      "reply_id": 749,
       "result": "fire_confirmed",
       "reason_code": null,
       "verdict": "confirmed",

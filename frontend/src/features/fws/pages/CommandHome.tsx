@@ -43,6 +43,7 @@ import {
   type WithdrawalOrdersBody,
 } from '../api_w2c';
 import { FWS_COMMAND_COPY as C } from '../copy_command';
+import IncidentMapOverlayCard from './IncidentMapOverlayCard';
 import { FieldSafetyAlertCard, ResourceBoardCard } from './W2cCommandCards';
 
 const { Title, Text } = Typography;
@@ -665,6 +666,14 @@ export default function CommandHome(): JSX.Element {
               board={board}
               busy={busy}
               onRefresh={() => void refreshAll(activeId)}
+            />
+          </Col>
+
+          {/* ── [턴 AR · N1] F4-01 지도 겹침 — 정찰 좌표 · 업로드 결과 · 대피 구역 (P-448) ── */}
+          <Col xs={24} lg={12}>
+            <IncidentMapOverlayCard
+              eventId={activeId ?? ''}
+              evacVillages={data.evac?.latest_approval?.villages ?? []}
             />
           </Col>
 

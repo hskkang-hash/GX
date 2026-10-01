@@ -78,6 +78,9 @@ def _driver_functions(*names):
     src = mod.DRIVER
     tree = ast.parse(src)
     ns = {"re": re}
+    #: [턴 AR · Q②] 공용 도우미 — 실물에서는 `_shared_driver_src()` 가 DRIVER 에 심는 원문이다.
+    ns["next_clock"] = mod.next_clock
+    ns["suffix_csv_codes"] = mod.suffix_csv_codes
     wanted = set(names)
     found = set()
     for node in tree.body:
@@ -238,12 +241,16 @@ class PrepareStepsNewKindsTest(unittest.TestCase):
         dryrun_btn = _FakeElement(name="dryrun")
         page.buttons.append(("예시 채우기", sample_btn))
         page.gx_map["camera-import-dryrun"] = [dryrun_btn]
+        #: [턴 AR · Q②] 예시 채우기 뒤 글상자의 code 열에 회차 접미가 붙는다.
+        page.textarea = _FakeInput("name,code,ip_source" + chr(10) + "정문카메라,GATE-01,rtsp://x")
         flows = _flows_by_key(self.mod)
         ok, done, restore, why = self.prepare_steps(page, flows["U5#4"]["prepare"])
         self.assertTrue(ok, why)
         self.assertEqual(sample_btn.clicked, 1)
         self.assertEqual(dryrun_btn.clicked, 1)
-        self.assertEqual([d["kind"] for d in done], ["button_prepare", "button_prepare"])
+        self.assertEqual([d["kind"] for d in done],
+                         ["button_prepare", "csv_suffix", "button_prepare"])
+        self.assertIn("GATE-01-" + self.mod._U5_4_SUFFIX, page.textarea.filled_with)
 
     def test_u5_1_prepare_sequence_fills_all_four_labels(self) -> None:
         page = _FakePage()
@@ -367,8 +374,11 @@ class _FakePage:
         self.form_items: dict[str, _FakeFormItem] = {}
         self.placeholder_map: dict[str, list[_FakeInput]] = {}
         self.wait_calls: list[int] = []
+        self.textarea = None
 
     def locator(self, selector, has=None):
+        if selector == "textarea":
+            return _FakeLocator([self.textarea] if self.textarea is not None else [])
         m = _GX_SELECTOR_RE.match(selector)
         if m:
             return _FakeLocator(self.gx_map.get(m.group(1), []))

@@ -19,6 +19,7 @@
  * ★ 이 집계는 최대 60초 지난 값일 수 있다 — 화면이 그 사실을 아래에 적는다.
  * ★ 기간을 안 주면 서버 기본값(30일)을 받고, 서버가 돌려준 두 끝을 그대로 적는다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import {
   Alert,
   Button,
@@ -232,7 +233,7 @@ export default function Stats() {
                           <Space size={6}>
                             <span>{title}</span>
                             {axis === 'hour' && (
-                              <Text type="secondary" style={{ fontSize: 12 }}>
+                              <Text type="secondary" style={{ fontSize: FONT_SM }}>
                                 ({axes.data!.hour_tz} 기준)
                               </Text>
                             )}
@@ -266,7 +267,7 @@ export default function Stats() {
         </StateBoundary>
       </Card>
 
-      <Text type="secondary" style={{ fontSize: 12 }}>
+      <Text type="secondary" style={{ fontSize: FONT_SM }}>
         이 집계는 최대 60초 지난 값일 수 있습니다. 「표 내려받기」는 서버가 같은 집계를
         그대로 파일로 낸 것입니다(한글이 깨지지 않게 UTF-8 BOM). 구역 축은 사건 행에
         구역 칸이 없어 이 화면에 없습니다.

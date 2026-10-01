@@ -1,14 +1,14 @@
 {
   "id": "O-12",
   "title": "시드·훈련 데이터",
-  "measured_at": "2026-09-30T06:26:39.492423+00:00",
+  "measured_at": "2026-09-30T11:21:44.152364+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O12_SeedDataTest.test_plant_then_hide_and_data_source_is_marked",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/ops/seed/toggle?tenant_code=t-ae5f797d&action=plant&scenario_code=drill-01",
+    "path": "/api/dsm/ops/seed/toggle?tenant_code=t-dd4740fd&action=plant&scenario_code=drill-01",
     "params": {
-      "tenant_code": "t-ae5f797d",
+      "tenant_code": "t-dd4740fd",
       "action": "plant",
       "scenario_code": "drill-01"
     }
@@ -16,13 +16,13 @@
   "response": {
     "status": 200,
     "body": {
-      "tenant_code": "t-ae5f797d",
-      "tenant_id": 698,
+      "tenant_code": "t-dd4740fd",
+      "tenant_id": 932,
       "scenario_code": "drill-01",
       "action": "plant",
       "note": "",
       "data_source": "seed",
-      "at": "2026-09-30T06:26:39+00:00"
+      "at": "2026-09-30T11:21:44+00:00"
     }
   },
   "what": "POST .../ops/seed/toggle(plant)로 시드를 심으면 data_source=seed 가 찍히고, hide 뒤 GET /ops/seed 목록의 최신 행(테넌트+시나리오별 접힘)이 hide 로 바뀐다 — 완결조건(\"data_source=seed 표기\") 실측."

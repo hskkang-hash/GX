@@ -1,6 +1,6 @@
 {
   "id": "DSM-U4-06",
-  "measured_at": "2026-09-30T06:28:53.171405+00:00",
+  "measured_at": "2026-09-30T11:23:04.060948+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_spec_promotions.EvidenceExportTest.test_dump_dsm_u4_06_evidence",
   "request": {
@@ -15,12 +15,12 @@
   "response": {
     "status": 200,
     "body": {
-      "alert_id": 770,
+      "alert_id": 1069,
       "level": "경계",
-      "occurred_at": "2026-09-30T06:28:53.155Z",
+      "occurred_at": "2026-09-30T11:23:04.023Z",
       "doc_no": "제3호",
       "staffing": 24,
-      "actor_id": 901
+      "actor_id": 1211
     }
   },
   "what": "위기경보 접수 1건을 실제로 남기고 응답을 그대로 옮겼다 — 완결 조건(변경 감사)은 이 감사 줄 자체다. 손으로 지어낸 값 0."

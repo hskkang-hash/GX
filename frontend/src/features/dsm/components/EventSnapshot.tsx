@@ -17,6 +17,7 @@
  * ★ 세 상태를 **가른다**: 없다(경로 자체가 빈 문자열) · 못 받았다 · 받았다.
  *   셋을 한 그림으로 그리면 저장소 장애가 「스냅샷 없는 이벤트」로 보인다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Button, Skeleton, Typography } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -185,7 +186,7 @@ export default function EventSnapshot({
       />
       <figcaption>
         {/* ★ [UX-20] 절 ID(P-25)를 뺐다 — 절 이름은 사용자 본문의 자리가 아니다. */}
-        <Text type="secondary" style={{ fontSize: 12 }}>
+        <Text type="secondary" style={{ fontSize: FONT_SM }}>
           이 사진에는 기관명과 열람 시각이 찍혀 있습니다.
         </Text>
       </figcaption>

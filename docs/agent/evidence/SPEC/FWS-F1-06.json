@@ -1,12 +1,12 @@
 {
   "id": "FWS-F1-06",
   "title": "현장 확인 회신(산불 맞음/소각·오인/접근 불가)",
-  "measured_at": "2026-09-30T06:19:35.963901+00:00",
+  "measured_at": "2026-09-30T11:16:53.394980+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_05_06_VerificationTest.test_verification_detail_and_fire_confirmed_reply",
   "request": {
     "method": "POST",
-    "path": "/api/fws/verifications/574/reply?result=fire_confirmed&note=%EC%97%B0%EA%B8%B0+%ED%99%95%EC%9D%B8%2C+%ED%99%94%EC%84%B8+%EB%B3%B4%ED%86%B5",
+    "path": "/api/fws/verifications/674/reply?result=fire_confirmed&note=%EC%97%B0%EA%B8%B0+%ED%99%95%EC%9D%B8%2C+%ED%99%94%EC%84%B8+%EB%B3%B4%ED%86%B5",
     "params": {
       "result": "fire_confirmed",
       "note": "연기 확인, 화세 보통"
@@ -15,8 +15,8 @@
   "response": {
     "status": 200,
     "body": {
-      "verification_id": 574,
-      "reply_id": 402,
+      "verification_id": 674,
+      "reply_id": 699,
       "result": "fire_confirmed",
       "reason_code": null,
       "verdict": "confirmed",

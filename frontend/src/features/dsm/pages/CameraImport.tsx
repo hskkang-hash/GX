@@ -21,6 +21,7 @@
  *     CSV 에 좌표를 실으면 어댑터를 **정말 부르고** 그 답(`disabled`)을 표에 적는다 —
  *     「없는 척」과 「불러 봤더니 없다」는 다른 사실이다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Button, Card, Col, Input, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
 import { useCallback, useState } from 'react';
 import { Main } from 'rj-core';
@@ -114,7 +115,7 @@ export default function CameraImportPage() {
         return (
           <Space direction="vertical" size={0}>
             {keys.map((k) => (
-              <Text key={k} style={{ fontSize: 12 }}>
+              <Text key={k} style={{ fontSize: FONT_SM }}>
                 <b>{k}</b>: {String(changes[k][0] ?? '(없음)')} → {String(changes[k][1] ?? '(없음)')}
               </Text>
             ))}

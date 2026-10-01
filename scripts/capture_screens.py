@@ -603,20 +603,9 @@ def _seed_snapshot(monitor, group, occurred_at, *, seq: int, event_id=None):
     return (path or ""), ("" if path else (reason or "사유 미기재"))
 
 
-def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
-    """★ 씨앗은 **그 계정이 실제로 볼 수 있는 자리**에 심는다.
-
-    `address` — 씨앗 카메라의 설치 주소 (턴 U · P-169 절 6 · U3#2).
-      · `None`(기본) = **DB 의 실재 카메라 주소를 재사용**한다(`_borrow_real_address`).
-        한 대도 없으면 빈 채로 두고 씨앗 명세(`SEED_SPEC`)에 「빌릴 주소 없음」을 적는다.
-      · 문자열 = 부르는 쪽이 정한 주소(V 가 특정 주소로 재야 할 때만). 지어낸 값을
-        기본으로 삼지 않는다 — 기본값은 언제나 **실재 재사용**이다.
-
-    1차판은 `group` 없이 심었고, 그래서 세 화면이 전부 「0건」·「404」로 찍혔다 —
-    테넌트 좁히기가 **제대로 걸린 결과**다(F-09). 격리를 끄고 찍으면 그것은 고객이 볼
-    화면이 아니므로, 끄는 대신 **계정에 소속을 주고 그 소속으로 심는다.**
-    격리는 그대로 두고, 보이는 것만 진짜로 만든다.
-    """
+def _seed_group_of(username: str):
+    """씨앗을 심을 **소속**을 정한다 → (apps, user, group, gid). `seed_events` 와 `seed_drill_events` 가 함께 쓴다
+    (두 벌을 두지 않는다 · D-369). 소속이 없으면 첫 UserGroup 을 붙인다(아래 원문 그대로)."""
     apps = _django()
     from django.contrib.auth import get_user_model
 
@@ -645,6 +634,24 @@ def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
         if group is None:
             raise RuntimeError("소속을 붙였는데도 제품이 읽지 못한다 — 두 경로가 갈라졌다")
     gid = group.pk
+    return apps, user, group, gid
+
+
+def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
+    """★ 씨앗은 **그 계정이 실제로 볼 수 있는 자리**에 심는다.
+
+    `address` — 씨앗 카메라의 설치 주소 (턴 U · P-169 절 6 · U3#2).
+      · `None`(기본) = **DB 의 실재 카메라 주소를 재사용**한다(`_borrow_real_address`).
+        한 대도 없으면 빈 채로 두고 씨앗 명세(`SEED_SPEC`)에 「빌릴 주소 없음」을 적는다.
+      · 문자열 = 부르는 쪽이 정한 주소(V 가 특정 주소로 재야 할 때만). 지어낸 값을
+        기본으로 삼지 않는다 — 기본값은 언제나 **실재 재사용**이다.
+
+    1차판은 `group` 없이 심었고, 그래서 세 화면이 전부 「0건」·「404」로 찍혔다 —
+    테넌트 좁히기가 **제대로 걸린 결과**다(F-09). 격리를 끄고 찍으면 그것은 고객이 볼
+    화면이 아니므로, 끄는 대신 **계정에 소속을 주고 그 소속으로 심는다.**
+    격리는 그대로 두고, 보이는 것만 진짜로 만든다.
+    """
+    apps, user, group, gid = _seed_group_of(username)
     _assert_owned("stream_monitors.StreamMonitor", gid)
     _assert_owned("stream_monitors.DetectionEvent", gid)
     SM = apps.get_model("stream_monitors", "StreamMonitor")
@@ -799,17 +806,103 @@ def seed_events(username: str, n: int = 2, address: str | None = None) -> int:
     return first
 
 
+#: [턴 AR · P-456] 훈련 표식 씨앗의 카메라 코드 접미 — `PROBE_TAG` 로 시작하지 **않는다**
+#: (`clean_events` · `probe_marks` 의 탐침 제외 규칙이 이 카메라를 삼키면 안 된다 — 이 씨앗의 목적이
+#: 「고객 면에 보이는 미처리 사건」이기 때문이다).
+DRILL_SEED_CODE = "gxdrill-seed-CAM"
+
+
+def drill_seed_plan(n: int, run_stamp: str) -> list:
+    """순수 함수 — 훈련 표식 미처리 사건 N 건의 계획. 심지 않는다(시험이 이 함수를 본다).
+
+    각 항목: 유형 · 등급 · 몇 분 전 · `track_id`(= 훈련 표식 + **회차 표식** `run=…`).
+    시각을 3분씩 벌린다 — 같은 (stream, type) 이 10초 안에 다시 오면 K1 이 접는다(F-04).
+    유형은 두 가지를 번갈아 쓴다(첫 건은 critical).
+    """
+    from common.probe_marker import drill_mark
+
+    if n <= 0:
+        raise ValueError("n 은 1 이상이어야 한다")
+    mark = drill_mark(run_stamp)            # 길이 검사는 정본이 한다
+    kinds = (("fire", "critical"), ("flood", "warning"))
+    return [{"event_type": kinds[i % 2][0], "severity": kinds[i % 2][1],
+             "minutes_ago": 3 * (i + 1), "track_id": mark} for i in range(n)]
+
+
+def seed_drill_events(username: str, n: int = 3, run_stamp: str | None = None) -> list:
+    """★ [턴 AR · P-456] **훈련 표식 미처리 사건** N 건을 그 계정이 보는 소속에 심는다.
+
+    `seed_events` 의 씨앗은 탐침 표식이라 고객 목록·확인 큐에서 **설계상 빠진다** — 온보딩 행
+    (U1#8 · U2#2 · U4#15)이 보는 것은 고객 면이라 그 씨앗으로는 안 움직인다. 이 씨앗은 다르다:
+
+      · 표식  `data_source=drill;run=<회차>`  — 제품이 **센다**(훈련 배너·배지) · 회차 표식이 붙는다
+      · 청구  카메라 곁표에 `drill`(`mark_unbillable`) — 청구 0
+      · 미처리  `verdict` 없음 — K1 `record_detection` 실제 경로(직접 INSERT 는 모형이다)
+
+    ⚠ **이 함수를 부르는 것은 라이브 DB 쓰기다** — 이번 턴에는 심지 않았다(V 몫).
+    카메라는 `DRILL_SEED_CODE` 하나를 재사용한다(get_or_create). 정리는 사람이 한다(지우지 않는다).
+    """
+    from common.billing_marks import mark_unbillable
+    from common.probe_marker import DRILL_MARKER
+    from common.tenant_scope import TenantScope
+    from kernels.k1_event import record_detection
+
+    stamp = run_stamp or RUN_STAMP
+    plan = drill_seed_plan(n, stamp)
+    apps, _user, _group, gid = _seed_group_of(username)
+    _assert_owned("stream_monitors.StreamMonitor", gid)
+    _assert_owned("stream_monitors.DetectionEvent", gid)
+    SM = apps.get_model("stream_monitors", "StreamMonitor")
+    monitor, _ = SM._base_manager.get_or_create(
+        code=DRILL_SEED_CODE,
+        defaults=dict(name="훈련 씨앗 카메라(gxdrill)", ip_source="127.0.0.1",
+                      is_active=False, is_visualize=False, order=9997,
+                      is_external=False, address_source="", group_id=gid))
+    if monitor.group_id != gid:
+        monitor.group_id = gid
+        monitor.save(update_fields=["group"])
+    #: 청구 0 — 발급 순간에 곁표로 `drill`(정본 낱말은 probe_marker 에서 뗀다).
+    mark_unbillable(monitor, DRILL_MARKER.split("=", 1)[1],
+                    reason="capture_screens.seed_drill_events — 훈련 표식 씨앗(P-456 · 회차 %s)" % stamp)
+    scope = TenantScope.system(reason="훈련 씨앗 — 탐지 파이프라인에는 요청자가 없다")
+    now = datetime.now(timezone.utc)
+    ids: list = []
+    spec = []
+    for item in plan:
+        occurred = now - timedelta(minutes=item["minutes_ago"])
+        result = record_detection(
+            scope=scope, stream_monitor_id=monitor.pk,
+            event_type=item["event_type"], severity=item["severity"],
+            occurred_at=occurred, snapshot_path="", track_id=item["track_id"])
+        ids.append(result.event_id)
+        spec.append({"event_id": result.event_id, "event_type": item["event_type"],
+                     "severity": item["severity"], "track_id": item["track_id"],
+                     "occurred_at": occurred.replace(microsecond=0).isoformat(),
+                     "data_source": _event_data_source_of(result.event_id)})
+    SEED_SPEC["drill_events"] = spec
+    SEED_SPEC["drill"] = {"run": stamp, "monitor_code": DRILL_SEED_CODE, "group_id": gid,
+                          "event_ids": ids, "billing": "곁표 drill (청구 0)",
+                          "note": "P-456 — 탐침이 아닌 훈련 표식 미처리 씨앗 · 고객 면에 보인다"}
+    print(f"[SHOT] 훈련 씨앗 {len(ids)}건 (미처리 · 훈련 표식 · 청구 0) → {ids}")
+    return ids
+
+
 def _event_data_source_of(event_id: int):
     """제품이 이 행을 뭐라 부르는가 — **`live` / `drill`**. 못 읽으면 `None` 이다.
 
     ★ 우리가 판정하지 않는다. `dsm.services.event_data_source` 하나가 판정하고(두 축 ·
       P-201), 우리는 그 답을 **옮겨 적기만** 한다 — 두 벌을 두면 어긋나고, 어긋난 쪽이
       조용히 이긴다(D-369).
+
+    ★ [턴 AR · Q] 종전에는 `kernels.k1_event.models.DetectionEvent` 를 불렀는데 **그런 모듈이 없다**
+      (`kernels/k1_event/` 에 models.py 가 없다) — 예외를 삼키고 언제나 `None` 을 냈다. 그래서 씨앗
+      명세의 `data_source` 는 한 번도 안 채워졌다. 모델은 앱 레지스트리에서 얻는다.
     """
     try:
+        from django.apps import apps as _apps
         from apps.dsm import services as _dsm_services
-        from kernels.k1_event.models import DetectionEvent
-        view = DetectionEvent.objects.filter(pk=event_id).first()
+        DetectionEvent = _apps.get_model("stream_monitors", "DetectionEvent")
+        view = DetectionEvent._base_manager.filter(pk=event_id).first()
         if view is None:
             return None
         return _dsm_services.event_data_source(view=view)

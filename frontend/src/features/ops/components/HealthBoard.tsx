@@ -88,6 +88,22 @@ export default function HealthBoard() {
           },
         ]}
       />
+      <div style={{ marginTop: 12 }} data-gx="o-05-5xx">
+        <Typography.Text strong>{C.fiveXx}: </Typography.Text>
+        {board.data?.front_door?.measured ? (
+          <Typography.Text data-gx="o-05-5xx-value">
+            {board.data.front_door['5xx']} / {board.data.front_door.total} (
+            {board.data.front_door.rate_pct}%)
+          </Typography.Text>
+        ) : (
+          <Typography.Text type="secondary" data-gx="o-05-5xx-unmeasured">
+            {C.fiveXxUnmeasured}
+          </Typography.Text>
+        )}
+        <div>
+          <Typography.Text type="secondary">{C.fiveXxScope}</Typography.Text>
+        </div>
+      </div>
       {notMeasured.length > 0 && (
         <div style={{ marginTop: 12 }} data-gx="o-05-not-measured">
           <Typography.Text type="secondary">{C.notMeasured}</Typography.Text>

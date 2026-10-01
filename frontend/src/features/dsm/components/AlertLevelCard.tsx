@@ -5,6 +5,7 @@
  * `POST /api/dsm/alert-level` 한 번 → **`GET /api/dsm/alert-level` 을 다시 불러** 지금 단계와
  * 최근 접수를 그린다. 띠(`AlertLevelBand`)도 같은 신호로 다시 읽는다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Button, Card, Input, InputNumber, Select, Space, Tag, Typography } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -131,7 +132,7 @@ export default function AlertLevelCard() {
         {rows.length > 0 ? (
           <Space direction="vertical" size={2} data-gx="dsm-u4-06-list">
             {rows.map((r) => (
-              <Text key={r.alert_id} type="secondary" style={{ fontSize: 12 }}>
+              <Text key={r.alert_id} type="secondary" style={{ fontSize: FONT_SM }}>
                 {r.text}
               </Text>
             ))}

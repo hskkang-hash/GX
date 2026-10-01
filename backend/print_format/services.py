@@ -39,16 +39,16 @@ from core.user.models import UserSettings, CoreUser
 HOST = os.getenv('HOST','http://localhost:8000')
 class PrintFormatService:
     # Danh sách các field nhạy cảm cần loại trừ
-    
+
     @staticmethod
     def _get_drone_battery_levels(drone_queryset):
         """Lấy battery levels từ drone queryset"""
         if not drone_queryset:
             return []
-        
+
         from devices.models import Measurement, Device
         from django.contrib.contenttypes.models import ContentType
-        
+
         battery_levels = []
         for drone in drone_queryset:
             # Lấy cargo compartments của drone
@@ -68,10 +68,10 @@ class PrintFormatService:
         try:
             if not drone_queryset:
                 return []
-            
+
             from devices.models import Measurement, Device
             from django.contrib.contenttypes.models import ContentType
-            
+
             wind_resistance_ms = []
             for drone in drone_queryset:
                 if drone.flight_performance and drone.flight_performance.measurements.filter(measurement_type='wind_resistance').exists():
@@ -88,10 +88,10 @@ class PrintFormatService:
         try:
             if not drone_queryset:
                 return []
-            
+
             from devices.models import Measurement, Device
             from django.contrib.contenttypes.models import ContentType
-            
+
             flight_times = []
             for drone in drone_queryset:
                 if drone.propulsion_system:
@@ -113,7 +113,7 @@ class PrintFormatService:
             """Lấy manufacturer name từ drone queryset"""
             if not drone_queryset:
                 return []
-        
+
             manufacturer_names = []
             for drone in drone_queryset:
                 if drone.manufacturer_information:
@@ -132,26 +132,26 @@ class PrintFormatService:
             """Lấy registration number từ drone queryset"""
             if not drone_queryset:
                 return []
-        
+
             registration_numbers = []
             for drone in drone_queryset:
                 if drone.manufacturer_information:
                     manufacturer_information = drone.manufacturer_information
                     print('manufacturer_information registration_number', manufacturer_information.registration_number)
-                    if manufacturer_information.registration_number:    
+                    if manufacturer_information.registration_number:
                         registration_numbers.append(manufacturer_information.registration_number)
             print('registration_numbers', registration_numbers)
             return registration_numbers
         except Exception as e:
             return []
-    
+
     @staticmethod
     def _get_drone_weight(drone_queryset):
         """Lấy weight từ drone queryset"""
         try:
             if not drone_queryset:
                 return []
-            
+
             wind_resistance_ms = []
             for drone in drone_queryset:
                 if drone.dimensions_and_weight and drone.dimensions_and_weight.measurements.filter(measurement_type='empty_weight').exists():
@@ -168,10 +168,10 @@ class PrintFormatService:
             """Lấy weight từ drone queryset"""
             if not drone_queryset:
                 return []
-            
+
             from devices.models import Measurement, Device
             from django.contrib.contenttypes.models import ContentType
-            
+
             weight_capacities = []
             for drone in drone_queryset:
                 # Lấy cargo compartments của drone
@@ -193,10 +193,10 @@ class PrintFormatService:
         try:
             if not drone_queryset:
                 return []
-            
+
             from devices.models import Measurement, Device
             from django.contrib.contenttypes.models import ContentType
-            
+
             temperatures = []
             for drone in drone_queryset:
                 # Lấy cargo compartments của drone
@@ -227,7 +227,7 @@ class PrintFormatService:
                 'drone__manufacturer_name': '',
                 'drone__registration_number': ''
             }
-        
+
         try:
             # Lấy data dưới dạng list trước
             ids = list(drone_queryset.values_list('id', flat=True))
@@ -311,9 +311,9 @@ class PrintFormatService:
                 'drone__temperature': '',
                 'drone__manufacturer_name': ''
             }
-        
+
         from devices.models import Device
-        
+
         # Tạo queryset từ single object để tái sử dụng logic
         single_drone_qs = Device._base_manager.filter(id=drone_obj.id)
         return PrintFormatService._get_drone_data_from_queryset(single_drone_qs)
@@ -414,18 +414,18 @@ class PrintFormatService:
         """
         Format datetime/date/time using user settings.
         This ensures consistent formatting with user preferences across the application.
-        
+
         Args:
             value: datetime, date, or time object
             user_settings: User settings object (optional)
             instance: Model instance to get user from created_by (optional, takes priority over user_settings)
-        
+
         Returns:
             Formatted string according to user settings, system defaults, or language fallback
         """
         if value is None:
             return None
-        
+
         # Priority 1: Get user from instance.created_by if instance is provided
         user = None
         if instance and hasattr(instance, 'created_by') and instance.created_by:
@@ -439,11 +439,11 @@ class PrintFormatService:
                         user_settings = user.usersettings
                 except Exception:
                     pass
-        
+
         # Priority 2: Get user from user_settings if available
         if user is None and user_settings and hasattr(user_settings, 'user'):
             user = user_settings.user
-        
+
         # If still no user_settings but we have user, try to fetch it
         if user_settings is None and user:
             try:
@@ -452,12 +452,13 @@ class PrintFormatService:
                 ).filter(user=user).first()
             except Exception:
                 pass
-        
+
         # Default formats
         date_format_str = '%Y-%m-%d'
         time_format_str = '%H:%M:%S'
-        user_timezone = pytz.timezone('Asia/Ho_Chi_Minh')
-        
+        from django.conf import settings
+        user_timezone = pytz.timezone(settings.TIME_ZONE)  # P-447: 전역 시간대를 따른다
+
         # Get user's language for locale-based defaults
         if user and hasattr(user, 'language') and user.language:
             try:
@@ -468,7 +469,7 @@ class PrintFormatService:
                     date_format_str = '%d/%m/%Y'
             except Exception:
                 pass
-        
+
         # Get timezone from user
         if user and hasattr(user, 'timezone') and user.timezone:
             try:
@@ -477,20 +478,20 @@ class PrintFormatService:
                     user_timezone = pytz.timezone(tz_code)
             except Exception:
                 pass
-        
+
         # Get date format and time format from user settings
         if user_settings:
             try:
                 if hasattr(user_settings, 'date_format') and user_settings.date_format:
                     if hasattr(user_settings.date_format, 'format_string'):
                         date_format_str = user_settings.date_format.format_string
-                
+
                 if hasattr(user_settings, 'time_format') and user_settings.time_format:
                     if hasattr(user_settings.time_format, 'format_string'):
                         time_format_str = user_settings.time_format.format_string
             except Exception:
                 pass
-        
+
         # Format the value according to type
         try:
             if isinstance(value, datetime):
@@ -502,24 +503,24 @@ class PrintFormatService:
                     # Convert to UTC first if not already UTC
                     if value.tzinfo != pytz.UTC:
                         value = value.astimezone(pytz.UTC)
-                
+
                 # Convert to user timezone
                 localized = value.astimezone(user_timezone)
-                
+
                 # Format date and time parts
                 date_part = localized.date().strftime(date_format_str)
                 time_part = localized.time().strftime(time_format_str)
                 result = f"{date_part} {time_part}"
                 return result
-            
+
             elif isinstance(value, date):
                 result = value.strftime(date_format_str)
                 return result
-            
+
             elif isinstance(value, time):
                 result = value.strftime(time_format_str)
                 return result
-            
+
             else:
                 return str(value)
         except Exception as e:
@@ -537,13 +538,13 @@ class PrintFormatService:
         """Format time according to locale preferences"""
         if t is None:
             return None
-        
+
         # Define format patterns for different locales
         time_formats = {
             'en': '%I:%M:%S %p',  # US format: 12-hour with AM/PM
             'ko': '%H:%M:%S',     # Korean format: 24-hour
         }
-        
+
         format_pattern = time_formats.get(language, time_formats['en'])
         return t.strftime(format_pattern)
 
@@ -562,7 +563,7 @@ class PrintFormatService:
     def get_field_example(field_type: str, field_name: str) -> Any:
         """Generate example data based on field type with comprehensive examples"""
         field_name_lower = field_name.lower()
-        
+
         if field_type == 'text':
             if 'name' in field_name_lower:
                 if 'status' in field_name_lower:
@@ -631,7 +632,7 @@ class PrintFormatService:
                     return 'Ward Name'
             else:
                 return 'Sample text data'
-                
+
         elif field_type == 'number':
             if 'id' in field_name_lower:
                 if 'order' in field_name_lower:
@@ -675,7 +676,7 @@ class PrintFormatService:
                 return '65%'
             else:
                 return 100
-                
+
         elif field_type == 'date':
             if 'created' in field_name_lower:
                 return '08-17-2025'
@@ -687,7 +688,7 @@ class PrintFormatService:
                 return '08-18-2025'
             else:
                 return '2025-08-18'
-                
+
         elif field_type == 'datetime':
             if 'created' in field_name_lower:
                 return '08-17-2025 12:28:43'
@@ -699,7 +700,7 @@ class PrintFormatService:
                 return '08-18-2025 10:30:00'
             else:
                 return '2025-08-18 10:30:00'
-                
+
         elif field_type == 'boolean':
             if 'is_checked' in field_name_lower:
                 return True
@@ -709,7 +710,7 @@ class PrintFormatService:
                 return True
             else:
                 return True
-                
+
         elif field_type == 'foreign_key':
             if 'drone' in field_name_lower:
                 return {
@@ -729,7 +730,7 @@ class PrintFormatService:
                     'id': 1,
                     'name': 'Sample Reference'
                 }
-                
+
         elif field_type == 'table':
             if 'checklist' in field_name_lower:
                 return [
@@ -746,10 +747,10 @@ class PrintFormatService:
                 ]
             else:
                 return []
-                
+
         elif field_type == 'qr_code':
             return f"{HOST}/landing/order/ORDER123"
-            
+
         return None
 
     @staticmethod
@@ -773,13 +774,13 @@ class PrintFormatService:
             """Build fields for model with limited nested relationship support for performance"""
             if depth >= max_depth:
                 return []
-                
+
             fields = []
             for field in m._meta.fields:
                 # Kiểm tra field có nằm trong danh sách sensitive không
                 if field.name.lower() in PrintFormatService.SENSITIVE_FIELDS:
                     continue
-                    
+
                 if isinstance(field, models.ForeignKey):
                     rel_model = field.related_model
                     # Chỉ lấy các field quan trọng từ related model
@@ -804,7 +805,7 @@ class PrintFormatService:
                             'is_required': not rel_field.null and not rel_field.blank,
                             'data_example': PrintFormatService.get_field_example(field_type, name)
                         })
-                    
+
                     # Không traverse sâu hơn để tránh data explosion
                 else:
                     name = field.name
@@ -833,7 +834,7 @@ class PrintFormatService:
                 'data_example': f"{HOST}/landing/order/ORDER123"
             }
         ]
-        
+
         # Add hard-coded checklist fields for DeliveryOperation to improve performance
         if model_name.lower() == 'deliveryoperation':
             special_fields = [
@@ -1121,12 +1122,12 @@ class PrintFormatService:
                 },
             ]
             system_fields.extend(special_fields)
-        
+
         main_fields.extend(system_fields)
 
         # Related tables (OneToMany và ManyToMany) - Giới hạn để tránh data explosion
         related_tables = []
-        
+
         # 1. OneToMany relationships (reverse foreign keys) - Chỉ lấy các relationship quan trọng
         important_relationships = ['items', 'approvals', 'status_history', 'returns', 'cancellations']
         for rel in model._meta.related_objects:
@@ -1134,7 +1135,7 @@ class PrintFormatService:
             # Chỉ lấy các relationship quan trọng
             if rel_name.lower() not in important_relationships:
                 continue
-                
+
             rel_model = rel.related_model
             # Giới hạn fields cho related model
             rel_fields = []
@@ -1150,7 +1151,7 @@ class PrintFormatService:
                         'is_required': not field.null and not field.blank,
                         'data_example': PrintFormatService.get_field_example(PrintFormatService.get_field_type(field), field.name)
                     })
-            
+
             related_tables.append({
                 'name': rel_name,
                 'field_type': 'table',
@@ -1158,7 +1159,7 @@ class PrintFormatService:
                 'fields': rel_fields,
                 'data_example': []
             })
-        
+
         # 2. ManyToMany relationships - Bỏ qua để giảm complexity
         # for field in model._meta.many_to_many:
         #     if field.name.lower() in PrintFormatService.SENSITIVE_FIELDS:
@@ -1204,7 +1205,7 @@ class PrintFormatService:
     def get_field_options(field: models.Field) -> Dict[str, Any]:
         """Lấy các options của field"""
         options = {}
-        
+
         if isinstance(field, models.ForeignKey):
             options['model'] = field.related_model._meta.model_name
             options['label_field'] = 'name'  # hoặc field nào bạn muốn hiển thị
@@ -1213,7 +1214,7 @@ class PrintFormatService:
         elif hasattr(field, 'related_name'):
             options['model'] = field.related_model._meta.model_name
             options['columns'] = PrintFormatService.get_child_table_columns(field.related_model)
-            
+
         return options
 
     @staticmethod
@@ -1237,7 +1238,7 @@ class PrintFormatService:
         """Xử lý giá trị enum và model instances"""
         if value is None:
             return None
-            
+
         # Kiểm tra nếu là model instance
         if hasattr(value, '_meta'):
             # Nếu là foreign key, trả về dict với id và name
@@ -1247,7 +1248,7 @@ class PrintFormatService:
                     'name': str(value)
                 }
             return str(value)
-            
+
         # Kiểm tra nếu là enum
         if hasattr(value, '__class__'):
             # Kiểm tra nếu là enum Django
@@ -1261,7 +1262,7 @@ class PrintFormatService:
                 return value.label
             # Nếu không có thuộc tính nào phù hợp, trả về string representation
             return str(value)
-                
+
         return value
 
     @staticmethod
@@ -1314,7 +1315,7 @@ class PrintFormatService:
             else:
                 # Use locale-aware formatting when no custom format is specified
                 return PrintFormatService._format_datetime_by_locale(value, language)
-            
+
         return str(value) if value is not None else None
 
     @staticmethod
@@ -1346,7 +1347,7 @@ class PrintFormatService:
             for item in instance.delivery_operation.items.all()  :
                 if item:
                     qr_status = instance.delivery_operation.current_status.code
-                    
+
                     if instance.delivery_option.code == 'delivery_to_door':
                         qr_terminal_name = f'{instance.recipient_address.full_address}'
                     elif instance.delivery_option.code == 'collect_at_location':
@@ -1354,7 +1355,7 @@ class PrintFormatService:
                     qr_code_list.append({
                         'qr_package_id': item.id,
                         'qr_order_code': instance.order_code,
-                        'qr_status': qr_status, 
+                        'qr_status': qr_status,
                         'qr_terminal_name': qr_terminal_name
                     })
         return {
@@ -1377,12 +1378,12 @@ class PrintFormatService:
                     user_settings = instance.created_by.usersettings
             except Exception:
                 pass
-        
+
         def to_json_value(val):
             """Convert any value to JSON serializable format with user settings-aware datetime formatting"""
             if val is None:
                 return None
-            
+
             # Using dictionary mapping with type checking for cleaner code
             type_handlers = {
                 dict: lambda v: f"{v['value']} {v['unit']}" if 'value' in v and 'unit' in v else v,
@@ -1395,22 +1396,22 @@ class PrintFormatService:
                 date: lambda v: PrintFormatService._format_datetime_with_user_settings(v, user_settings, instance),
                 time: lambda v: PrintFormatService._format_datetime_with_user_settings(v, user_settings, instance),
             }
-            
+
             # Check for exact type match first
             for type_class, handler in type_handlers.items():
                 if isinstance(val, type_class):
                     return handler(val)
-                    
+
             # Handle special cases
             if hasattr(val, '_meta'):  # Model instance
                 return str(val)
             if hasattr(val, 'name') and hasattr(val, 'value'):  # Enum
                 return str(val.value)
-                
+
             return str(val)
-            
+
         data = {}
-        
+
         # Field trực tiếp - using dictionary comprehension for more concise code
         data.update({
             f'{field.name}__{rel_field.name}': to_json_value(getattr(getattr(instance, field.name, None), rel_field.name, None))
@@ -1418,13 +1419,13 @@ class PrintFormatService:
             if isinstance(field, models.ForeignKey) and getattr(instance, field.name, None) is not None and not field.name.lower() in PrintFormatService.SENSITIVE_FIELDS
             for rel_field in field.related_model._meta.fields
         })
-        
+
         data.update({
             field.name: to_json_value(getattr(instance, field.name, None))
             for field in instance._meta.fields
             if not isinstance(field, models.ForeignKey) and not field.name.lower() in PrintFormatService.SENSITIVE_FIELDS
         })
-        
+
         # Quan hệ 1-nhiều - using generator expressions for improved performance
         def get_regular_fields(rel_model, rel_obj):
             return {
@@ -1432,7 +1433,7 @@ class PrintFormatService:
                 for rel_field in rel_model._meta.fields
                 if not isinstance(rel_field, models.ForeignKey) and not rel_field.name.lower() in PrintFormatService.SENSITIVE_FIELDS
             }
-        
+
         def get_foreign_key_fields(rel_model, rel_obj):
             return {
                 f'{rel_field.name}__{fk_field.name}': to_json_value(getattr(getattr(rel_obj, rel_field.name, None), fk_field.name, None))
@@ -1440,15 +1441,15 @@ class PrintFormatService:
                 if isinstance(rel_field, models.ForeignKey) and getattr(rel_obj, rel_field.name, None) is not None and not rel_field.name.lower() in PrintFormatService.SENSITIVE_FIELDS
                 for fk_field in rel_field.related_model._meta.fields
             }
-        
+
         def process_relation(rel):
             accessor = rel.get_accessor_name()
             rel_manager = getattr(instance, accessor, None)
-            
+
             if rel_manager is None:
                 return None
-    
-            
+
+
             # Handle both queryset and single object cases
             if hasattr(rel_manager, 'all'):
                 # It's a queryset
@@ -1456,7 +1457,7 @@ class PrintFormatService:
             else:
                 # It's a single object
                 items = [rel_manager] if rel_manager else []
-                
+
             return (
                 accessor,
                 list(map(
@@ -1467,10 +1468,10 @@ class PrintFormatService:
                     items
                 ))
             )
-        
+
         relations = filter(None, map(process_relation, instance._meta.related_objects))
-        data.update(dict(relations)) 
-                
+        data.update(dict(relations))
+
         # Thêm biến hệ thống
         data.update(PrintFormatService.get_system_fields(instance, model_name))
         return data
@@ -1492,14 +1493,14 @@ class PrintFormatService:
                     user_settings = instance.created_by.usersettings
             except Exception:
                 pass
-        
+
         def to_json_value(val):
             """Convert any value to JSON serializable format with user settings-aware datetime formatting"""
             if val is None:
                 return None
-                
-            
-            
+
+
+
             # Using dictionary mapping with type checking for cleaner code
             type_handlers = {
                 dict: lambda v: f"{v['value']} {v['unit']}" if 'value' in v and 'unit' in v else v,
@@ -1516,12 +1517,12 @@ class PrintFormatService:
                 tuple: lambda v: [to_json_value(item) for item in v] if v else [],
                 set: lambda v: [to_json_value(item) for item in v] if v else [],
             }
-            
+
             # Check for exact type match first
             for type_class, handler in type_handlers.items():
                 if isinstance(val, type_class):
                     return handler(val)
-                    
+
             # Handle special cases - Chuyển đổi FK objects thành giá trị có thể serialize
             if val is None:
                 return None
@@ -1538,11 +1539,11 @@ class PrintFormatService:
                     return [to_json_value(item) for item in val]
                 except:
                     return str(val)
-                
+
             return str(val)
-            
+
         data = {}
-        
+
         # Field trực tiếp - using dictionary comprehension for more concise code
         data.update({
             f'{field.name}__{rel_field.name}': to_json_value(getattr(getattr(instance, field.name, None), rel_field.name, None))
@@ -1550,13 +1551,13 @@ class PrintFormatService:
             if isinstance(field, models.ForeignKey) and getattr(instance, field.name, None) is not None and not field.name.lower() in PrintFormatService.SENSITIVE_FIELDS
             for rel_field in field.related_model._meta.fields
         })
-        
+
         data.update({
             field.name: to_json_value(getattr(instance, field.name, None))
             for field in instance._meta.fields
             if not isinstance(field, models.ForeignKey) and not field.name.lower() in PrintFormatService.SENSITIVE_FIELDS
         })
-        
+
         # Quan hệ 1-nhiều - using generator expressions for improved performance
         def get_regular_fields(rel_model, rel_obj):
             return {
@@ -1564,7 +1565,7 @@ class PrintFormatService:
                 for rel_field in rel_model._meta.fields
                 if not isinstance(rel_field, models.ForeignKey) and not rel_field.name.lower() in PrintFormatService.SENSITIVE_FIELDS
             }
-        
+
         def get_foreign_key_fields(rel_model, rel_obj):
             return {
                 f'{rel_field.name}__{fk_field.name}': to_json_value(getattr(getattr(rel_obj, rel_field.name, None), fk_field.name, None))
@@ -1572,15 +1573,15 @@ class PrintFormatService:
                 if isinstance(rel_field, models.ForeignKey) and getattr(rel_obj, rel_field.name, None) is not None and not rel_field.name.lower() in PrintFormatService.SENSITIVE_FIELDS
                 for fk_field in rel_field.related_model._meta.fields
             }
-        
+
         def process_relation(rel):
             accessor = rel.get_accessor_name()
             rel_manager = getattr(instance, accessor, None)
-            
+
             if rel_manager is None:
                 return None
-    
-            
+
+
             # Handle both queryset and single object cases
             if hasattr(rel_manager, 'all'):
                 # It's a queryset
@@ -1588,7 +1589,7 @@ class PrintFormatService:
             else:
                 # It's a single object
                 items = [rel_manager] if rel_manager else []
-                
+
             return (
                 accessor,
                 list(map(
@@ -1599,7 +1600,7 @@ class PrintFormatService:
                     items
                 ))
             )
-        
+
         relations = filter(None, map(process_relation, instance._meta.related_objects))
         for accessor, items in relations:
             if items:
@@ -1612,46 +1613,46 @@ class PrintFormatService:
                     serializable_items.append(serializable_item)
                 data[accessor] = serializable_items
             else:
-                data[accessor] = [] 
-        
+                data[accessor] = []
+
         # Xử lý tất cả FK fields một cách linh động
-        processed_objects = set()  
-        
+        processed_objects = set()
+
         def process_foreign_key_fields(obj, prefix='', depth=0, max_depth=3):
-            
+
             if not obj or not hasattr(obj, '_meta'):
                 return
-            
-            
+
+
             if depth >= max_depth:
                 return
-            
+
             # Tạo unique key cho object (model_name + id)
             obj_key = f"{obj._meta.model.__name__}_{obj.pk}" if hasattr(obj, 'pk') and obj.pk else None
-            
+
             # Kiểm tra xem object đã được xử lý chưa để tránh chu trình
             if obj_key and obj_key in processed_objects:
                 return
-            
+
             # Đánh dấu object đã được xử lý
             if obj_key:
                 processed_objects.add(obj_key)
-            
+
             for field in obj._meta.fields:
                 # Kiểm tra cả field name và pattern *__field_name
                 field_name = field.name.lower()
                 if field_name in PrintFormatService.SENSITIVE_FIELDS:
                     continue
-                
+
                 # Kiểm tra pattern *__field_name - chỉ loại bỏ created_by và modified_by từ nested models
                 if prefix:
                     full_field_name = f'{prefix}{field_name}'
                     # Chỉ loại bỏ created_by và modified_by từ nested models
                     if field_name in ['created_by', 'modified_by']:
                         continue
-                    
+
                 field_value = getattr(obj, field.name, None)
-                
+
                 if isinstance(field, models.ForeignKey) and field_value is not None:
                     # Xử lý FK field - lấy tất cả fields của related object
                     if hasattr(field_value, '_meta'):
@@ -1659,14 +1660,14 @@ class PrintFormatService:
                             fk_field_name = fk_field.name.lower()
                             if fk_field_name not in PrintFormatService.SENSITIVE_FIELDS:
                                 field_key = f'{prefix}{field.name}__{fk_field.name}' if prefix else f'{field.name}__{fk_field.name}'
-                                
+
                                 # Kiểm tra pattern *__field_name cho field_key - chỉ loại bỏ created_by và modified_by từ nested models
                                 if not (field_key.lower().endswith('__created_by') or field_key.lower().endswith('__modified_by')):
                                     data[field_key] = to_json_value(getattr(field_value, fk_field.name, None))
-                        
+
                         # Đệ quy xử lý FK fields của FK object (nested FK) với kiểm tra depth
                         process_foreign_key_fields(
-                            field_value, 
+                            field_value,
                             f'{prefix}{field.name}__' if prefix else f'{field.name}__',
                             depth=depth + 1,
                             max_depth=max_depth
@@ -1674,22 +1675,22 @@ class PrintFormatService:
                 else:
                     # Field thường - thêm vào data
                     field_key = f'{prefix}{field.name}' if prefix else field.name
-                    
+
                     # Kiểm tra pattern *__field_name cho field_key - chỉ loại bỏ created_by và modified_by từ nested models
                     if not (field_key.lower().endswith('__created_by') or field_key.lower().endswith('__modified_by')):
                         data[field_key] = to_json_value(field_value)
-        
+
         # Xử lý tất cả FK fields của instance chính
         process_foreign_key_fields(instance)
-        
+
         # Xử lý các related objects (OneToOne, OneToMany, ManyToMany)
         for rel in instance._meta.related_objects:
             accessor = rel.get_accessor_name()
             rel_manager = getattr(instance, accessor, None)
-            
+
             if rel_manager is None:
                 continue
-            
+
             # Xử lý cả queryset và single object
             if hasattr(rel_manager, 'all'):
                 # Queryset (OneToMany, ManyToMany)
@@ -1698,7 +1699,7 @@ class PrintFormatService:
                     # Lấy item đầu tiên để xử lý fields
                     first_item = items[0]
                     process_foreign_key_fields(first_item, f'{accessor}__', depth=1)
-                    
+
                     # Thêm danh sách items - chỉ lấy ID để tránh serialization issues
                     data[accessor] = [item.id for item in items if hasattr(item, 'id')]
                 else:
@@ -1711,29 +1712,29 @@ class PrintFormatService:
                     data[accessor] = rel_manager.id if hasattr(rel_manager, 'id') else None
                 else:
                     data[accessor] = None
-                
+
         # Thêm biến hệ thống
         data.update(PrintFormatService.get_system_fields(instance, model_name))
-        
+
         if model_name and ('deliveryoperation' in model_name.lower() or 'delivery.deliveryoperation' in model_name.lower()):
             # Kiểm tra template content để quyết định có xử lý expensive operations hay không
             template_content = report_template.template if report_template else ""
             template_content = decode_template_html_entities(template_content)
-            
+
             # Conditional processing dựa trên template content
             needs_weather = any(key in template_content for key in ['weather', 'summary_weather', 'temperature', 'wind_speed'])
             needs_map = 'map_delivery' in template_content
-            
+
             checklist_data = PrintFormatService._get_checklist_data(
                 instance, group, template_content, needs_weather, needs_map, user_settings, language
             )
             data.update(checklist_data)
-        
+
         # Thêm thông tin report template nếu cần
         if report_template:
             data['report_template_name'] = report_template.name
             data['report_template_id'] = report_template.id
-        
+
         # Đảm bảo tất cả các giá trị trong data đều có thể serialize được
         serializable_data = {}
         for key, value in data.items():
@@ -1745,13 +1746,13 @@ class PrintFormatService:
                 logger = logging.getLogger(__name__)
                 logger.warning(f"Could not serialize field {key}: {str(e)}")
                 continue
-        
+
         return serializable_data
 
     @staticmethod
     def normalize_template_content(template_str: str) -> str:
         """Remove invisible characters and normalize template variables that can break Django template parsing.
-        
+
         - Zero-width characters: \u200b, \u200c, \u200d
         - BOM: \ufeff
         - Non-breaking space: \u00A0
@@ -1767,23 +1768,23 @@ class PrintFormatService:
         invisible_chars = ["\u200b", "\u200c", "\u200d", "\ufeff", "\u00A0"]
         for ch in invisible_chars:
             template_str = template_str.replace(ch, "")
-        
+
         # Remove escaped quotes that break CSS styling
         template_str = template_str.replace('\\"', '"')  # Remove escaped quotes
         template_str = template_str.replace("\\'", "'")  # Remove escaped single quotes
-        
+
         # Remove all carriage returns and line feeds
         template_str = template_str.replace('\r\n', ' ')  # Replace \r\n with space
         template_str = template_str.replace('\r', ' ')    # Replace remaining \r with space
         template_str = template_str.replace('\n', ' ')    # Replace remaining \n with space
-        
+
         # Clean up multiple spaces
         import re
         template_str = re.sub(r'\s+', ' ', template_str)  # Replace multiple spaces with single space
-        
+
         # Normalize template variables - ensure proper spacing
         template_str = re.sub(r'\{\{\s*([^}]+?)\s*\}\}', lambda m: '{{ ' + m.group(1).strip() + ' }}', template_str)
-        
+
         return template_str
 
     @staticmethod
@@ -1810,18 +1811,18 @@ class PrintFormatService:
         # """Xử lý checklist data cho DeliveryOperation với conditional processing"""
         # try:
             from checklist_setting.models import ChecklistSetting, ChecklistSettingCategory
-            
+
             # Lấy drone thực tế đã chở operation này
             drone = None
             drone_ids = set()
-            
+
             # Thử lấy từ DeliveryOperationItem trước
             delivery_items = DeliveryOperationItem._base_manager.filter(delivery_operation=instance)
-          
+
             if delivery_items:
                 item_drone_ids = delivery_items.all().values_list('drone_id', flat=True)
                 drone_ids.update([d_id for d_id in item_drone_ids if d_id is not None])
-            
+
             # Nếu không có, thử lấy từ DeliveryOperationApproval
             if not drone_ids:
                 approvals = getattr(instance, 'approvals', None)
@@ -1829,7 +1830,7 @@ class PrintFormatService:
                     for approval in approvals.all():
                         if approval.drone and approval.drone.id:
                             drone_ids.add(approval.drone.id)
-            
+
             # Tạo QuerySet từ drone_ids
             if drone_ids:
                 drone = Device._base_manager.filter(id__in=list(drone_ids))
@@ -1837,52 +1838,52 @@ class PrintFormatService:
             # Nếu không có drone nào, trả về mock data
 
             # Lấy checklist settings được nhóm theo category (filter theo group)
-            all_checklist_settings = ChecklistSetting._base_manager.select_related('category').filter(group=group, deleted__isnull=True, is_active=True) 
-            
+            all_checklist_settings = ChecklistSetting._base_manager.select_related('category').filter(group=group, deleted__isnull=True, is_active=True)
+
             # Lấy TẤT CẢ categories (không filter theo group) để đảm bảo hiển thị đầy đủ
             all_category_checklist_settings = ChecklistSettingCategory._base_manager.filter(deleted__isnull=True)
-            
+
             # Lấy approvals của delivery operation để kiểm tra item nào đã được check
             approvals = DeliveryOperationApproval._base_manager.filter(delivery_operation=instance)
             checked_checklist_ids = set()
-           
+
             if approvals:
                 for approval in approvals:
                     # Chỉ lấy checklist của drone thực tế
                     if approval.drone and drone and approval.drone.id in drone.values_list('id', flat=True):
                         checklists = DeliveryOperationApprovalChecklist._base_manager.filter(approval=approval)
-      
+
                         if checklists:
                             for checklist in checklists.all():
                                 checklist_setting = getattr(checklist, 'checklist', None)
                                 if checklist_setting:
                                     checked_checklist_ids.add(checklist_setting.id)
-            
+
             # Khởi tạo checklist_by_category với tất cả categories (mảng rỗng)
             checklist_by_category = {}
             for category in all_category_checklist_settings:
                 category_name = category.get_translation('name', language) if category.get_translation('name', language) else category.name if category else 'Uncategorized'
                 if category_name not in checklist_by_category:
                     checklist_by_category[category_name] = []
-            
+
             # Map checklist settings vào các categories tương ứng
             total_items = 0
             checked_items = 0
-            
+
             for checklist_setting in all_checklist_settings:
                 category = checklist_setting.category
                 category_name = category.get_translation('name', language) if category.get_translation('name', language) else category.name if category else 'Uncategorized'
-                
+
                 # Đảm bảo category có trong checklist_by_category (nếu category không có trong all_category_checklist_settings)
                 if category_name not in checklist_by_category:
                     checklist_by_category[category_name] = []
-                
+
                 # Kiểm tra xem item này đã được check chưa
                 is_checked = checklist_setting.id in checked_checklist_ids
                 if is_checked:
                     checked_items += 1
                 total_items += 1
-                
+
                 # Tạo item data
                 item_data = {
                     'item_name': checklist_setting.get_translation('item_name', language) if checklist_setting.get_translation('item_name', language) else checklist_setting.item_name,
@@ -1890,15 +1891,15 @@ class PrintFormatService:
                     'category_code': category.code if category else 'N/A',
                     'checked_by_drones': []
                 }
-                
+
                 # Lấy thông tin drone approval nếu item đã được check
                 if is_checked and approvals:
-         
+
                     for approval in approvals.all():
                         # Chỉ lấy thông tin của drone thực tế
                         if approval.drone and drone and approval.drone.id in drone.values_list('id', flat=True):
                             checklists = getattr(approval, 'checklists', None)
-                          
+
                             if checklists:
                                 for checklist in checklists.all():
                                     if checklist.checklist_id == checklist_setting.id:
@@ -1907,11 +1908,11 @@ class PrintFormatService:
                                             'drone_id': approval.drone.id if approval.drone.id else None,
                                             'approved_at': approval.created_on if approval.created_on else None
                                         })
-                
+
                 checklist_by_category[category_name].append(item_data)
-            
+
             unchecked_items = total_items - checked_items
-            
+
             # Thêm delivery operation fields mới
             delivery_data = {
                 'total_checklist_items': total_items,
@@ -1948,7 +1949,7 @@ class PrintFormatService:
                             delivery_data['drone__city_province'] = drone_data['drone__city_province']
                             delivery_data.update(drone_data)
                             break
-            
+
             # Thêm delivery items nếu có
             delivery_items = getattr(instance, 'items', None)
             if delivery_items:
@@ -1965,23 +1966,23 @@ class PrintFormatService:
                         'is_delivered': item.is_delivered,
                         'delivered_at': PrintFormatService._format_datetime_with_user_settings(item.delivered_at, user_settings, instance) if item.delivered_at else None,
                     }
-                    
+
                     # Thêm thông tin drone nếu có
                     if item.drone:
                         drone_data = PrintFormatService._get_drone_data_from_single_object(item.drone)
                         item_info.update(drone_data)
-                    
+
                     # Thêm thông tin order item nếu có
                     if item.order_item:
                         item_info['order_item__id'] = item.order_item.id
                         item_info['order_item__name'] = item.order_item.name if item.order_item.name else item.order_item.item_type.name
                         item_info['order_item__description'] = item.order_item.note if item.order_item.note else None
                         item_info['order_item__quantity'] = 1
-                    
+
                     items_data.append(item_info)
-                
+
                 delivery_data['items'] = items_data
-            
+
             # Thêm route information nếu có
             route = getattr(instance, 'route', None)
             delivery_data['route__total_distance'] = None
@@ -2010,7 +2011,7 @@ class PrintFormatService:
                     # Nếu không thể lấy terminals, bỏ qua
                     pass
                 delivery_data['route__total_distance'] = route.measurements.filter(measurement_type='total_distance').first().get_formatted_value() if route.measurements.filter(measurement_type='total_distance').first() else None
-            
+
             # Thêm process history nếu có
             order = getattr(instance, 'order', None)
             process_history_data = []
@@ -2095,10 +2096,10 @@ class PrintFormatService:
                                 'weight': item.weight if item.weight else None,
                             }
                             items_data.append(item_info)
-                        
+
                         # Thêm vào delivery_data với key phù hợp cho template
                         delivery_data['order__items'] = items_data
-                        
+
                         # Thêm order__items__name cho template (lấy tên item đầu tiên)
                         if order_items:
                             delivery_data['order__items__name'] = [item.name if item.name else item.item_type.name for item in order_items]
@@ -2112,36 +2113,36 @@ class PrintFormatService:
                 # Nếu không thể lấy order items, bỏ qua
                 delivery_data['order__items__name'] = 'N/A'
                 pass
-            
+
             # Conditional weather processing - chỉ xử lý khi template cần
             if needs_weather:
                 try:
                     # Lấy tọa độ từ delivery operation
                     coordinates = WeatherService.get_coordinates_from_delivery_operation(instance)
-                    
+
                     if coordinates and instance.modified_on:
                         latitude, longitude = coordinates
-                        
+
                         # Lấy thông tin thời tiết tại thời điểm modified_on
                         weather_data = WeatherService.get_weather_at_time(
                             latitude=latitude,
-                            longitude=longitude, 
+                            longitude=longitude,
                             target_datetime=instance.modified_on
                         )
-                        
+
                         # Lấy ngôn ngữ từ user language
                         lang = instance.created_by.language.code if instance.created_by and hasattr(instance.created_by, 'language') and instance.created_by.language else 'en'
                         if weather_data:
                             # Format weather data cho cả 2 ngôn ngữ
                             formatted_weather = WeatherService.format_weather_for_display(weather_data, lang)
-                            
+
                             # Tạo summary_weather cho template (format ngắn gọn như ảnh)
                             temp_value = weather_data.get('temperature')
                             wind_value = weather_data.get('wind_speed')
-                            
+
                             # Convert wind speed từ km/h sang m/s
                             wind_ms = round(wind_value / 3.6, 2) if wind_value else None
-                            
+
                             # Tạo summary_weather format với icon dễ nhận biết
                             if temp_value and wind_ms:
                                 summary_weather = f"🌤 {temp_value}°C 💨 {wind_ms} m/s"
@@ -2151,7 +2152,7 @@ class PrintFormatService:
                                 summary_weather = f"💨 {wind_ms} m/s"
                             else:
                                 summary_weather = "Weather data unavailable"
-                            
+
                             # Thêm weather check vào delivery_data (hỗ trợ đa ngôn ngữ)
                             delivery_data.update({
                                 # Default format
@@ -2163,10 +2164,10 @@ class PrintFormatService:
                                 'weather_coordinates': formatted_weather['coordinates'],
                                 'weather_timestamp': weather_data.get('timestamp'),
                                 'weather_check_status': 'completed',
-                                
+
                                 # Summary weather cho template (format ngắn gọn)
                                 'summary_weather': summary_weather,
-                                
+
                                 # Multi-language support
                                 'weather_multilang': {
                                     'en': {
@@ -2179,16 +2180,16 @@ class PrintFormatService:
                                     }
                                 }
                             })
-                            
+
                             # Update checklist by category
                             delivery_data['checklist_by_category'] = checklist_by_category
-                        
+
                     else:
                         # Không lấy được weather data (đa ngôn ngữ)
                         delivery_data.update({
                             'weather_conditions': 'No weather data available',
                             'temperature': 'N/A',
-                            'humidity': 'N/A', 
+                            'humidity': 'N/A',
                             'wind_speed': 'N/A',
                             'weather_description': 'Unknown',
                             'weather_coordinates': None,
@@ -2204,13 +2205,13 @@ class PrintFormatService:
                                     'weather_description': '알 수 없음'
                                 }
                             }
-                        })   
+                        })
                 except Exception as e:
                     # Log error nếu có lỗi khi lấy weather data
                     import logging
                     logger = logging.getLogger(__name__)
                     logger.error(f"Error getting weather data for delivery operation {instance.id}: {str(e)}")
-                    
+
                     # Fallback weather data (đa ngôn ngữ)
                     delivery_data.update({
                         'weather_conditions': 'Error retrieving weather data',
@@ -2244,7 +2245,7 @@ class PrintFormatService:
                     'weather_check_status': 'skipped',
                     'summary_weather': 'N/A - template doesn\'t require weather data'
                 })
-            
+
             # Conditional map processing - chỉ xử lý khi template cần
             # if needs_map:
             #     try:
@@ -2252,15 +2253,15 @@ class PrintFormatService:
             #         logger = logging.getLogger(__name__)
             #         map_data = MapService.format_map_data_for_template(instance)
             #         delivery_data.update(map_data)
-                    
+
             #         logger.info(f"Map data generated for delivery operation {instance.id}: {map_data.get('map_status')}")
-                    
+
             #     except Exception as e:
             #         # Log error nếu có lỗi khi tạo map
             #         import logging
             #         logger = logging.getLogger(__name__)
             #         logger.error(f"Error generating map for delivery operation {instance.id}: {str(e)}")
-                    
+
             #         # Fallback map data
             #         delivery_data.update({
             #             'map_delivery': None,
@@ -2276,9 +2277,9 @@ class PrintFormatService:
 
                 'map_message': 'Map processing skipped - not required by template'
             })
-            
+
             return delivery_data
-            
+
         # except Exception as e:
         #     # Log error và trả về data mặc định
         #     import logging
@@ -2336,7 +2337,7 @@ class PrintFormatService:
     @staticmethod
     def get_list_template(request):
         data = PrintFormat.objects.all().order_by('-id')
-        
+
         data = apply_dynamic_filters(data, request, [], request.GET.get('sort_obj',None))
         page_size = int(request.GET.get('page_size', 25))
         current_page = int(request.GET.get('current_page', 1))
@@ -2451,7 +2452,7 @@ class PrintFormatService:
             # Flight Information
             'drone__flight_time': '2025-08-18 08:00:00',
             'weather_conditions': 'Trời quang, Gió: 5-10 km/h, Nhiệt độ: 25°C, Độ ẩm: 65%',
-            
+
             # Operator Information
             'created_by__first_name': 'Nguyễn',
             'created_by__last_name': 'Văn C',
@@ -2461,7 +2462,7 @@ class PrintFormatService:
             'current_status__name': 'completed',
             'is_partial_approved': False,
             'confirmation_photo': '/media/delivery_confirmations/sample_photo.jpg',
-            
+
             # Route Information
             'route__id': 25,
             'route__name': 'Route TP.HCM - Hà Nội',
@@ -2491,7 +2492,7 @@ class PrintFormatService:
                     'ward_town_township': 'Phường Phúc Xá'
                 }
             ],
-            
+
             # Delivery Items
             'items': [
                 {
@@ -2597,4 +2598,3 @@ class PrintFormatService:
             'drone__weight_capacity': 10,
             'drone__temperature': 10
         }
-

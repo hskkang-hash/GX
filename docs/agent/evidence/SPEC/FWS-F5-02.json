@@ -1,21 +1,21 @@
 {
   "id": "FWS-F5-02",
   "title": "열점·화선 표시(열화상 프레임 → 지도 폴리라인)",
-  "measured_at": "2026-09-30T06:21:34.598305+00:00",
+  "measured_at": "2026-09-30T11:18:17.129152+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f5.F5_02_HotspotsTest.test_submit_points_and_fireline_then_read_back",
   "request": {
     "method": "GET",
-    "path": "/api/fws/drone/missions/638/hotspots/mine",
+    "path": "/api/fws/drone/missions/738/hotspots/mine",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 638,
+      "event_id": 738,
       "batches": [
         {
-          "batch_id": 561,
+          "batch_id": 858,
           "points": [
             {
               "lat": 36.11,
@@ -36,7 +36,7 @@
               "lng": 127.23
             }
           ],
-          "submitted_at": "2026-09-30T06:21:34.475818+00:00"
+          "submitted_at": "2026-09-30T11:18:17.056455+00:00"
         }
       ],
       "count": 1

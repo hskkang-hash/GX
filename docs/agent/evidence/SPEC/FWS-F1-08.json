@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-08",
   "title": "119·산림청 신고 번호 버튼",
-  "measured_at": "2026-09-30T06:19:37.521938+00:00",
+  "measured_at": "2026-09-30T11:16:54.773164+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_08_EmergencyContactsTest.test_numbers_come_from_the_server_not_the_screen",
   "request": {

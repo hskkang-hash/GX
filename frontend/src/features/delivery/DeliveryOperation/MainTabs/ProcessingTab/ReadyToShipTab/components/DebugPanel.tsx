@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import React, { useEffect, useRef } from 'react';
 
 interface DebugPanelProps {
@@ -72,7 +73,7 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({
         border: '1px solid #ccc',
         borderRadius: '4px',
         zIndex: 9999,
-        fontSize: '12px',
+        fontSize: FONT_SM,
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
       }}
     >

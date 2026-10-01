@@ -1,18 +1,18 @@
 {
   "id": "FWS-F4-09",
   "title": "산림청·시도 상황실 화상/전화 연락 버튼",
-  "measured_at": "2026-09-30T06:21:17.464553+00:00",
+  "measured_at": "2026-09-30T11:18:01.661567+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_09_ContactDirectoryTest.test_forest_number_always_present_provincial_from_command_post",
   "request": {
     "method": "GET",
-    "path": "/api/fws/command/incidents/619/contacts",
+    "path": "/api/fws/command/incidents/719/contacts",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 619,
+      "event_id": 719,
       "forest_service": {
         "phone": "042-481-4119"
       },

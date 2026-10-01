@@ -25,6 +25,7 @@
  *   않고 서버가 돌려준 두 끝을 그대로 문장으로 적는다 — 두 곳에서 창을 계산하면
  *   어긋난 창이 안 보인다(목록 화면과 같은 규약).
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Button, Card, Descriptions, Segmented, Space, Table, Tag, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -227,7 +228,7 @@ export default function TeamStatus() {
         </Space>
       </Card>
 
-      <Text type="secondary" style={{ fontSize: 12 }}>
+      <Text type="secondary" style={{ fontSize: FONT_SM }}>
         이 집계는 최대 60초 지난 값일 수 있습니다. 사람 이름은 아직 이 화면에
         없습니다 — 요원 번호로 구분합니다.
       </Text>

@@ -20,6 +20,7 @@
  *   그 사실이 상태 상자에 적힌다(`StateBoundary` 의 forbidden).
  * ★ 사람 이름은 서버가 준 `actor`(username)만 적는다 — 지어내지 않는다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import {
   Button,
   Card,
@@ -551,7 +552,7 @@ export default function AuditLog() {
         *   사건이 있다」로 읽힌다. 분모는 위 상태 칸이 **0 이어도** 그대로 말한다.
         */}
       {targets && ((targets.gone ?? 0) > 0 || (targets.deleted_by_decision ?? 0) > 0) && (
-        <Text type="secondary" style={{ fontSize: 12 }}>
+        <Text type="secondary" style={{ fontSize: FONT_SM }}>
           「사라진 사건」·「삭제된 사건」은 그 사건이 지금 조회되지 않는다는 뜻입니다.
           감사 기록은 지우지 않으므로 그 행은 그대로 남아 있습니다 — 화면 오류가 아닙니다.
         </Text>
@@ -562,19 +563,19 @@ export default function AuditLog() {
           한 문장에 담으면 읽는 사람이 둘을 같은 일로 읽는다.
       */}
       {targets && (targets.denied_attempt ?? 0) > 0 && (
-        <Text type="secondary" style={{ fontSize: 12 }}>
+        <Text type="secondary" style={{ fontSize: FONT_SM }}>
           「열리지 않은 사건 번호」는 그 번호로 사건을 열지 못해 서버가 요청을 막은
           기록입니다. 있던 사건이 없어진 것과는 다른 일입니다.
         </Text>
       )}
       {targetsCapped && (
-        <Text type="secondary" style={{ fontSize: 12 }}>
+        <Text type="secondary" style={{ fontSize: FONT_SM }}>
           이 쪽에는 사건을 가리키는 행이 많아 일부 행의 대상을 확인하지 못했습니다.
           「확인 못 함」은 그 사건이 없다는 뜻이 아닙니다 — 기간을 좁혀 다시 보십시오.
         </Text>
       )}
 
-      <Text type="secondary" style={{ fontSize: 12 }}>
+      <Text type="secondary" style={{ fontSize: FONT_SM }}>
         이 표는 서버가 우리 조직의 행위자로 좁혀 준 것입니다. 성공과 막힌 시도가 함께
         있습니다 — 막힌 시도가 안 보이면 「시도가 없었다」와 「막혔다」를 가를 수 없습니다.
       </Text>

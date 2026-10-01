@@ -44,16 +44,51 @@ def _defaults() -> dict:
     return {"quiet_hours_start": "", "quiet_hours_end": "", "assigned_post_code": ""}
 
 
+DUTY_ASSIGNED = "assigned"
+DUTY_WAITING = "waiting"
+
+
+def duty_post(*, scope) -> dict:
+    """P-452 — 담당 초소 = **그날 편성표(근무표)의 배정.**
+
+    저장한 `assigned_post_code` 는 본인이 적은 메모일 뿐 담당이 아니다. 담당은 기관이
+    올린 근무표(`office.upload_roster`)에서 **오늘 날짜 + 내 이름**의 줄이 들고 있는
+    `post_code` 다. 편성 줄이 없거나 초소 칸이 비면 차단하지 않고 `waiting`(「대기」
+    배지)을 낸다 — 초소를 지어내지 않는다.
+    """
+    from apps.fws import office
+    from django.utils import timezone
+
+    actor = scope.require_actor()
+    today = timezone.localtime(timezone.now()).date().isoformat()
+    names = {n.strip().lower() for n in (
+        getattr(actor, "username", "") or "",
+        (actor.get_full_name() or "") if hasattr(actor, "get_full_name") else "")
+        if n and n.strip()}
+    rows = office.current_roster(scope=scope).get("rows", [])
+    mine = [r for r in rows
+            if (r.get("shift_date") or "").strip() == today
+            and (r.get("name") or "").strip().lower() in names]
+    for r in mine:
+        code = (r.get("post_code") or "").strip()
+        if code:
+            return {"status": DUTY_ASSIGNED, "post_code": code, "shift_date": today,
+                    "shift_type": r.get("shift_type") or "", "source": "roster"}
+    return {"status": DUTY_WAITING, "post_code": None, "shift_date": today,
+            "shift_type": (mine[0].get("shift_type") if mine else "") or "",
+            "source": "roster"}
+
+
 def get_prefs(*, scope) -> dict:
     """FWS-F1-12 읽기 — 아직 아무 것도 저장한 적 없으면 **빈 기본값**(회색이 아니라
-    「아직 안 정했다」는 뜻 있는 값이다)."""
+    「아직 안 정했다」는 뜻 있는 값이다). `duty_post` 는 그날 편성표의 배정(P-452)."""
     actor = scope.require_actor()
     row = _latest_row(actor.pk)
-    if row is None:
-        return _defaults()
-    payload = row.data_after if isinstance(row.data_after, dict) else {}
     out = _defaults()
-    out.update({k: payload.get(k, "") for k in out})
+    if row is not None:
+        payload = row.data_after if isinstance(row.data_after, dict) else {}
+        out.update({k: payload.get(k, "") for k in out})
+    out["duty_post"] = duty_post(scope=scope)
     return out
 
 

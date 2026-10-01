@@ -18,6 +18,7 @@
  *   같은 판정식을 지난다. 틀린 주소는 없는 주소보다 나쁘다: 그 주소가 알림에 그대로
  *   나가 사람을 엉뚱한 곳으로 보낸다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Alert, Button, Card, Descriptions, Form, Input, Space, Table, Tag, Typography } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -329,7 +330,7 @@ export default function CameraAddress() {
                 },
               ]}
             />
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text type="secondary" style={{ fontSize: FONT_SM }}>
               이 표는 켜져 있는 카메라만 보여 줍니다. 꺼 둔 카메라는 여기 없습니다 —
               「없다」가 아니라 「이 표의 밖」입니다.
             </Text>
@@ -380,7 +381,7 @@ export default function CameraAddress() {
               </Button>
             </Space>
           </Form>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" style={{ fontSize: FONT_SM }}>
             표를 본 뒤에만 채웁니다. 틀린 주소는 없는 주소보다 나쁩니다 — 알림에 그대로
             나가 사람을 엉뚱한 곳으로 보냅니다.
           </Text>

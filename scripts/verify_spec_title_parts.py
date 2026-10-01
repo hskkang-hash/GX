@@ -391,6 +391,11 @@ _FRONT_GX_RE = re.compile(r"""data-gx\s*=\s*\{?\s*["'`]([^"'`$]+)["'`]""")
 #: 간접 배선 — `data-gx={f.gx}` 로 넘기는 설정 표(`gx: 'fws-threshold-…'`). 그 파일에
 #: `data-gx={` 가 **함께 있을 때만** 센다(실물 AdminHome.tsx:534 모양 · 2026-09-30).
 _FRONT_GX_INDIRECT_RE = re.compile(r"""(?<![A-Za-z0-9_-])gx\s*[:=]\s*\{?\s*["'`]([^"'`$]+)["'`]""")
+#: [턴 AR · Q①] 「→ 뒤 이름」 — `data-gx=a → b` · `… → Foo.tsx::b` 처럼 화살표 뒤에 이어 적은 이름도
+#: 화면 인용이다. 앞에 파일 경로(`x/y.tsx::`)가 붙어도 좋다. 밑줄 이름(함수)·`GET /api/…` 는 안 뽑는다.
+_GX_ARROW_RE = re.compile(
+    r"→\s*(?:[A-Za-z0-9_./-]+::)?"
+    r"(?<![A-Za-z0-9_/.-])([a-z0-9]+(?:-[a-z0-9]+)+)(?![A-Za-z0-9_/.\-])")
 FRONTEND_SRC = ROOT / "frontend" / "src"
 
 
@@ -403,6 +408,10 @@ def extract_gx_tokens(text) -> list:
         for tok in _GX_TOKEN_RE.findall(seg):
             if tok not in out:
                 out.append(tok)
+    tail = text[text.index("data-gx"):]
+    for tok in _GX_ARROW_RE.findall(tail):
+        if tok not in out:
+            out.append(tok)
     return out
 
 
@@ -980,6 +989,10 @@ def self_test() -> int:
               "fws-f4-02-stage — API POST /api/fws/command/incidents/{id}/stage")
     ok("★ 실물 형식에서 토큰 둘을 뽑는다(— 뒤 API 경로·파일 경로는 안 뽑는다)",
        extract_gx_tokens(_where) == ["fws-f4-02-confirm", "fws-f4-02-stage"])
+    ok("★ [AR·Q①] → 뒤 이름도 뽑는다(파일 접두 허용 · GET 경로·밑줄 이름은 안 뽑는다)",
+       extract_gx_tokens('X.tsx::data-gx=a-b-1 → c-d-2 · 재조회 → GET /api/x-y/z → f.py::rec_drop')
+       == ["a-b-1", "c-d-2"]
+       and extract_gx_tokens('data-gx=a-b-1(버튼) → Off.tsx::fws-f3-16-heli-pct') == ["a-b-1", "fws-f3-16-heli-pct"])
     ok("data-gx 가 없는 칸은 인용 0", extract_gx_tokens("GET /api/fws/x · measured") == [])
     ok("백틱 · 따옴표 모양도 뽑는다",
        extract_gx_tokens('data-gx="o-board-reload" · `o-board-save`')

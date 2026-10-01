@@ -26,9 +26,15 @@ export interface ResourceBoardBody {
       status: StandbyStatus | null;
       location: { lat: number; lng: number } | null;
       set_at: string | null;
+      /** F2-11 — 출동 중(deployed) · 철수해 해제됨(released) · 없음. */
+      mission_state?: 'deployed' | 'released' | null;
+      mission_event_id?: number | null;
+      released_at?: string | null;
     }>;
     counts: Record<StandbyStatus, number>;
     on_standby: number;
+    deployed?: number;
+    released?: number;
   };
   support: {
     event_id: number;

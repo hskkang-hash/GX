@@ -198,7 +198,7 @@ const StreamControlsComponent: React.FC<StreamControlsProps> = ({
           background: rgba(0, 0, 0, 0.8);
           border-radius: 8px;
           color: white;
-          font-size: 12px;
+          font-size: 13px;
           min-width: 200px;
         }
 

@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import React from 'react';
 import { Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
@@ -84,7 +85,7 @@ const MissionChart: React.FC<MissionChartProps> = ({ missionData }) => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            fontSize: 12,
+            fontSize: FONT_SM,
             color: theme === 'dark' ? Colors.Gray3 : '#666',
           }}
         >
@@ -105,7 +106,7 @@ const MissionChart: React.FC<MissionChartProps> = ({ missionData }) => {
           style={{
             display: 'flex',
             alignItems: 'center',
-            fontSize: 12,
+            fontSize: FONT_SM,
             color: theme === 'dark' ? Colors.Gray3 : '#666',
           }}
         >

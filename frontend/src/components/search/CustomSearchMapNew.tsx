@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import {
   EnvironmentOutlined,
   LeftOutlined,
@@ -530,7 +531,7 @@ const CustomSearchMapNew: React.FC<CustomSearchMapProps> = ({
               </div>
               <div
                 style={{
-                  fontSize: '12px',
+                  fontSize: FONT_SM,
                   color: suggestion.disabled ? '#ccc' : '#8c8c8c',
                 }}
               >
@@ -604,7 +605,7 @@ const CustomSearchMapNew: React.FC<CustomSearchMapProps> = ({
                 color: theme === 'dark' ? '#fff' : '#1677ff',
                 padding: '4px 8px',
                 borderRadius: '4px',
-                fontSize: '12px',
+                fontSize: FONT_SM,
                 fontWeight: 500,
                 border: `1px solid ${theme === 'dark' ? '#1677ff' : '#91d5ff'} `,
                 zIndex: 10,
@@ -626,7 +627,7 @@ const CustomSearchMapNew: React.FC<CustomSearchMapProps> = ({
           token: {
             colorBgContainer: theme === 'dark' ? 'transparent' : '#ffffff',
             fontSizeIcon: 16,
-            fontSize: 12,
+            fontSize: FONT_SM,
             colorBgBase: theme === 'dark' ? '#18191a' : '#ffffff',
           },
         }}

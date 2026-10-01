@@ -1,18 +1,18 @@
 {
   "id": "DSM-U3-03",
-  "measured_at": "2026-09-30T06:27:34.377425+00:00",
+  "measured_at": "2026-09-30T11:22:31.969797+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u3u6_spec_promotions.EvidenceExportTest.test_dump_dsm_u3_03_evidence",
   "request": {
     "method": "GET",
-    "path": "/api/dsm/events/799/situation-report.docx",
+    "path": "/api/dsm/events/899/situation-report.docx",
     "body": {}
   },
   "response": {
     "status": 200,
     "body": {
       "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "byte_length": 38847,
+      "byte_length": 38837,
       "docx_attachment_line_contains_photo_count": true
     }
   },

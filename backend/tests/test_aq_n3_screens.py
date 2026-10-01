@@ -235,7 +235,11 @@ class FwsQuietHoursScreenTest(AqN3Fixture):
     def test_screen_wires_card_on_patrol_and_field(self) -> None:
         card = _src("features/fws/pages/NotifyPrefsCard.tsx")
         for suffix in ("start", "end", "post", "save", "saved"):
-            self.assertIn(f"data-gx={{`${{gxPrefix}}-{suffix}`}}", card)
+            #: [턴 AR · N1] 이름은 `gxOf(gxPrefix, '<부분>')` 로 단다 — 목록(GX_NAMES)에 글자 그대로
+            #: 적혀 있어 화면 인용 판정이 찾는다.
+            self.assertIn(f"gxOf(gxPrefix, '{suffix}')", card)
+            for pre in ("fws-f1-12-quiet", "fws-f2-15-quiet"):
+                self.assertIn(f"gx: '{pre}-{suffix}'", card)
         self.assertIn("fwsEndpoint.notifyPrefs", card)
         self.assertIn("fwsGetFresh<NotifyPrefs>", card)
         self.assertIn("await reload()", card)

@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -78,13 +79,13 @@ const DeliveryStats: React.FC<Props> = ({ panel }) => {
               tickFormatter={(tick) => t(tick as string)}
               tickLine={false}
               // axisLine={false}
-              fontSize={12}
+              fontSize={FONT_SM}
               stroke={textLabel[theme === 'dark' ? 'dark' : 'light']}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              fontSize={12}
+              fontSize={FONT_SM}
               ticks={ticks}
               domain={[0, yAxisTop]}
               stroke={textLabel[theme === 'dark' ? 'dark' : 'light']}
@@ -102,7 +103,7 @@ const DeliveryStats: React.FC<Props> = ({ panel }) => {
               <LabelList
                 dataKey="value"
                 position="top"
-                fontSize={12}
+                fontSize={FONT_SM}
                 fill={textLabel[theme === 'dark' ? 'dark' : 'light']}
               />
             </Bar>

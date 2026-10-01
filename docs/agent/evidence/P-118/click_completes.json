@@ -1,9 +1,9 @@
 {
-  "measured_at": "2026-09-30T06:51:57Z",
-  "event_id": 446155,
+  "measured_at": "2026-09-30T11:39:47Z",
+  "event_id": 587276,
   "event_by_flow": {
     "U3#3": 4798,
-    "U1#11": 587272
+    "U1#11": 587276
   },
   "api": "http://gx-nginx-e:8500",
   "spa": "http://gx-nginx-e:8500",
@@ -62,6 +62,36 @@
         },
         {
           "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/util.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/places_impl.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/places.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/controls.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/common.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/main.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
           "url": "http://gx-nginx-e:8500/api/user-groups/gen-schema?group_id=4&raw=false",
           "status": 200
         },
@@ -87,57 +117,27 @@
         },
         {
           "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/util.js",
+          "url": "http://gx-nginx-e:8500/assets/FocusQueue-_g2irEMi.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/controls.js",
+          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-DqZhWXkP.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/places.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseClock-7janPh8l.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/places_impl.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/common.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "https://maps.googleapis.com/maps-api-v3/api/js/66/6c/main.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/FocusQueue-DJIeSm6a.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-Cr6MYgst.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseClock-CrHjH43f.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
@@ -157,17 +157,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-DRmSLVzE.js",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/queue?limit=200",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/alert-level?limit=1",
+          "url": "http://gx-nginx-e:8500/assets/index-CzMfV1mW.js",
           "status": 200
         },
         {
@@ -182,7 +172,17 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/queue/field-signals?event_ids=446155,326411",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/queue?limit=200",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/dsm/alert-level?limit=1",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/dsm/queue/field-signals?event_ids=446155,587278,326411,587279,587277,587276",
           "status": 200
         }
       ],
@@ -191,8 +191,8 @@
         "before": "http://gx-nginx-e:8500/login",
         "after": "http://gx-nginx-e:8500/dsm/queue"
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\nGuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 끄기\n갱신 06:47 · 0초 전 · 표기 시간대: Asia/Seoul\n이벤트(원본 건수)\n29\n카드(5분 창 묶음)\n13\n같은 카메라·같은 유형이 5분 창 안에 연속으로 나면 카드 한 장에 「×N」으로 묶입니다. 이벤트는 접지 않습니다 — 위 두 수가 다른 것이 그 약속의 증거이고, 통계는 왼쪽 수(이벤트 원본 건수)를 셉니다.\n■ 심각\n훈련\n화재\n시드 카메라 (검수용)\n조치 중\n상세 열기\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n대응 시계 · 발생 07:14 · 6일 전\n6일 경과 · 종결 검토\n8분 넘음\n경과 2번째 (시계가 도는 2건 중)\n종결하기 (3)\n종결 확인 — 현장이 조치를 마쳤다고 알린 사건\n조치를 마쳤다고 알려 온 사건이 없습니다. 현장에서 「조치 완료」를 보내면 이 자리에 섭니다.\n배선 대기\n회신 6건이 왔지만 「지원 요청」·「조치 완료」 표시가 붙은 것은 0건입니다 — 현장의 표시를 기다리십시오. 지원 요청 표시는 현장 회신이 그 표시를 달고 올 때 이 자리에 뜹니다.\n대기 카드 1장\n경과 순위는 시계가 도는 2건(초점 카드 포함) 중에서 셉니다.\n▲ 경계\n훈련\n카메라 군집 두절\n[훈련] 안양천 시험카메라 1\n조치 중\n발생 03:30 · 9일 전\n종결하기\n9일 경과 · 종결 검토\n8분 넘음\n가장 오래 기다린 사건 (시계가 도는 2건 중 1번째)\n열기\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:47:15Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\nGuardianX는 대응 시간을 잽니다.\n지금 처리할 것 — 가장 급한 하나\n?\n단축키\n소리 끄기\n갱신 11:35 · 0초 전 · 표기 시간대: Asia/Seoul\n이벤트(원본 건수)\n33\n카드(5분 창 묶음)\n17\n같은 카메라·같은 유형이 5분 창 안에 연속으로 나면 카드 한 장에 「×N」으로 묶입니다. 이벤트는 접지 않습니다 — 위 두 수가 다른 것이 그 약속의 증거이고, 통계는 왼쪽 수(이벤트 원본 건수)를 셉니다.\n■ 심각\n훈련\n화재\n시드 카메라 (검수용)\n조치 중\n상세 열기\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n대응 시계 · 발생 07:14 · 7일 전\n7일 경과 · 종결 검토\n8분 넘음\n경과 2번째 (시계가 도는 6건 중)\n종결하기 (3)\n종결 확인 — 현장이 조치를 마쳤다고 알린 사건\n조치를 마쳤다고 알려 온 사건이 없습니다. 현장에서 「조치 완료」를 보내면 이 자리에 섭니다.\n배선 대기\n회신 7건이 왔지만 「지원 요청」·「조치 완료」 표시가 붙은 것은 0건입니다 — 현장의 표시를 기다리십시오. 지원 요청 표시는 현장 회신이 그 표시를 달고 올 때 이 자리에 뜹니다.\n대기 카드 5장\n경과 순위는 시계가 도는 6건(초점 카드 포함) 중에서 셉니다.\n■ 심각\n훈련\n화재\n훈련 씨앗 카메라(gxdrill)\n미처리\n발생 11:22 · 12분 전\n실제로 확인 · 접수\n오탐으로 판정\n12분 46초\n8분 넘음\n경과 4번째 (시계가 도는 6건 중)\n열기\n▲ 경계\n훈련\n카메라 군집 두절\n[훈련] 안양천 시험카메라 1\n조치 중\n발생 03:30 · 9일 전\n종결하기\n9일 경과 · 종결 검토\n8분 넘음\n가장 오래 기다린 사건 (시계가 도는 6건 중 1번째)\n열기\n▲ 경계\n훈련\n침수\n훈련 씨앗 카메라(gxdrill)\n미처리\n발생 11:19 · 15분 전\n실제로 확인 · 접수\n오탐으로 판정\n15분 46초\n8분 넘음\n경과 3번째 (시계가 도는 6건 중)\n열기\n▲ 경계\n훈련\n침수\n훈련 씨앗 카메라(gxdrill)\n미처리\n발생 11:25 · 9분 전\n실제로 확인 · 접수\n오탐으로 판정\n9분 46초\n8분 넘음\n경과 5번째 (시계가 도는 6건 중)\n열기\n■ 심각\n훈련\n화재\n훈련 씨앗 카메라(gxdrill)\n접수\n발생 11:28 · 6분 전\n조치 시작\n오탐으로 판정\n6분 46초\n5분 넘음\n경과 6번째 (시계가 도는 6건 중)\n열기\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:35:12Z"
     },
     "U1#2": {
       "control": {
@@ -214,7 +214,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -229,22 +229,22 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ControlDashboard-CeMOQG_x.js",
+          "url": "http://gx-nginx-e:8500/assets/ControlDashboard-BzG5BNXq.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/AutoAnalysisNotice-CTyoIUkW.js",
+          "url": "http://gx-nginx-e:8500/assets/AutoAnalysisNotice-Coli98-F.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
@@ -259,12 +259,12 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-DRmSLVzE.js",
+          "url": "http://gx-nginx-e:8500/assets/index-CzMfV1mW.js",
           "status": 200
         },
         {
@@ -346,8 +346,8 @@
         "after": 2,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n자동 분석 안내\n이 알림은 자동 분석 결과이며, 관제요원이 최종 확인합니다.\n관제 대시보드\n?\n연계 대기\n갱신 06:47 · 0초 전\n화면 구성\n관제요원 화면역할에 맞춰 설정됨\n화면 점검\n화면 2칸이 정상적으로 그려졌습니다.\n?\n카메라 정상 / 이상\n카메라 격자\n카메라 6대 중 응답 0 — 카메라 연결 확인으로\n설치한 뒤 아직 한 번도 화면이 오지 않았습니다. 아래에서 카메라 주소를 확인하십시오.\n카메라 주소 채우기\n최근 이벤트\n전체 목록\n등급\t유형\t카메라\t발생\n■ 심각\t\n화재\n훈련\n\t시드 카메라 (검수용)\t07:14 · 6일 전\n■ 심각\t\n화재\n훈련\n\t[훈련] 안양천 시험카메라 1\t08:42 · 8일 전\n▲ 경계\t\n카메라 군집 두절\n훈련\n\t[훈련] 안양천 시험카메라 1\t03:30 · 9일 전\n■ 심각\t\n침입\n훈련\n\tgxprobe-D384-screen 캡처용 카메라\t08:24 · 9일 전\n■ 심각\t\n화재\n훈련\n\tgxprobe-D384-screen 캡처용 카메라\t08:17 · 9일 전\n▲ 경계\t\n침입\n훈련\n\tgxprobe-D384-screen 캡처용 카메라\t08:10 · 9일 전\n▲ 경계\t\n화재\n훈련\n\tgxprobe-D384-screen 캡처용 카메라\t08:03 · 9일 전\n■ 심각\t\n화재\n시드(검수용)\n\t시드 카메라 (검수용)\t13:14 · 26일 전\n■ 심각\t\n화재\n시드(검수용)\n\t시드 카메라 (검수용)\t13:11 · 26일 전\n■ 심각\t\n화재\n시드(검수용)\n\t시드 카메라 (검수용)\t13:08 · 26일 전\n통제·대피 현황판\n기준 도달 기록\n지금 단계\t지점 · 도달 시각\t대피\t누르기\n등록된 통제 지점이 없습니다\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:47:19Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n자동 분석 안내\n이 알림은 자동 분석 결과이며, 관제요원이 최종 확인합니다.\n관제 대시보드\n?\n연계 대기\n갱신 11:35 · 0초 전\n화면 구성\n관제요원 화면역할에 맞춰 설정됨\n화면 점검\n화면 2칸이 정상적으로 그려졌습니다.\n?\n카메라 정상 / 이상\n카메라 격자\n카메라 4대 중 응답 0 — 카메라 연결 확인으로\n설치한 뒤 아직 한 번도 화면이 오지 않았습니다. 아래에서 카메라 주소를 확인하십시오.\n카메라 주소 채우기\n최근 이벤트\n전체 목록\n등급\t유형\t카메라\t발생\n■ 심각\t\n화재\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t11:28 · 6분 전\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t11:25 · 9분 전\n■ 심각\t\n화재\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t11:22 · 12분 전\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t11:19 · 15분 전\n■ 심각\t\n화재\n훈련\n\t시드 카메라 (검수용)\t07:14 · 7일 전\n■ 심각\t\n화재\n훈련\n\t[훈련] 안양천 시험카메라 1\t08:42 · 9일 전\n▲ 경계\t\n카메라 군집 두절\n훈련\n\t[훈련] 안양천 시험카메라 1\t03:30 · 9일 전\n■ 심각\t\n침입\n훈련\n\tgxprobe-D384-screen 캡처용 카메라\t08:24 · 10일 전\n■ 심각\t\n화재\n훈련\n\tgxprobe-D384-screen 캡처용 카메라\t08:17 · 10일 전\n▲ 경계\t\n침입\n훈련\n\tgxprobe-D384-screen 캡처용 카메라\t08:10 · 10일 전\n통제·대피 현황판\n기준 도달 기록\n지금 단계\t지점 · 도달 시각\t대피\t누르기\n등록된 통제 지점이 없습니다\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:35:16Z"
     },
     "U1#3": {
       "control": {
@@ -369,7 +369,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -384,22 +384,22 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/CameraGrid-BBR1xrLC.js",
+          "url": "http://gx-nginx-e:8500/assets/CameraGrid-BbzlT235.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
@@ -462,19 +462,19 @@
         "kind": "server_reflect",
         "get": "/api/dsm/cameras/pulse",
         "field": "total",
-        "before": 6,
-        "after": 6,
+        "before": 4,
+        "after": 4,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n카메라 격자\n1 / 1\n자동 순회\n응답 없음 6대 (전체 6대)\n그중 6대는 응답을 받은 적이 없습니다. 연결을 확인하십시오.\n정문카메라\n응답 없음\n응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.\n안양천서로카메라\n응답 없음\n응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.\n3층복도\n응답 없음\n응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.\nGD-150Q\n응답 없음\n응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.\nH40\n응답 없음\n응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.\nNBP-DR-P2\n응답 없음\n응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.\n자동 갱신 중 · 마지막 갱신 0초 전 · 표기 시간대: Asia/Seoul\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:47:22Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n카메라 격자\n1 / 1\n자동 순회\n응답 없음 4대 (전체 4대)\n그중 4대는 응답을 받은 적이 없습니다. 연결을 확인하십시오.\n안양천서로카메라\n응답 없음\n응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.\nGD-150Q\n응답 없음\n응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.\nH40\n응답 없음\n응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.\nNBP-DR-P2\n응답 없음\n응답을 받은 적이 없습니다. 카메라 연결을 확인하십시오.\n자동 갱신 중 · 마지막 갱신 0초 전 · 표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:35:19Z"
     },
     "U1#4": {
       "control": {
         "found": false,
         "why": "이 도구가 누를 자리를 선언하지 않았다 — 정본 없음 — 인수 스트림 화면에 서버 값이 드러나는 칸이 없다 (실측: GET /api/stream-monitors/stream-monitors · 화면은 이름 타일뿐)"
       },
-      "measured_at": "2026-09-30T06:47:22Z"
+      "measured_at": "2026-09-30T11:35:19Z"
     },
     "U1#8": {
       "control": {
@@ -496,7 +496,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -511,17 +511,17 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventList-BxHK541p.js",
+          "url": "http://gx-nginx-e:8500/assets/EventList-OmjMbLDa.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-B1AMgNIu.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-D08dc8Vs.js",
           "status": 200
         },
         {
@@ -531,7 +531,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
@@ -541,7 +541,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
@@ -601,6 +601,11 @@
         },
         {
           "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/upper-report/flags?event_ids=587277,587278,587279",
+          "status": 200
+        },
+        {
+          "method": "GET",
           "url": "http://gx-nginx-e:8500/Inter/Inter-VariableFont_opsz,wght.ttf",
           "status": 200
         }
@@ -613,8 +618,8 @@
         "after": 20,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n이벤트 목록\n갱신 06:47 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 — 사건을 판정한 뒤 다시 보십시오 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n찾기\n찾기\n지금 걸린 조건\n없음 — 기간만 봅니다\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n미처리가 0건입니다 — 지금 손댈 것이 없습니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 모든 사건에 누군가 손을 댔습니다. 어디까지 갔는지는 「전체 보기」의 「처리 단계」 칸에서 확인하십시오.\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:47:26Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n이벤트 목록\n갱신 11:35 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 3건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 — 사건을 판정한 뒤 다시 보십시오 · 미판정 4건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n찾기\n찾기\n지금 걸린 조건\n없음 — 기간만 봅니다\n등급 전체\n유형 전체\n새로고침\n3건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t상급 보고\t발생\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:25 · 9분 전\n■ 심각\t\n화재\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:22 · 12분 전\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:19 · 15분 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:35:23Z"
     },
     "U1#9": {
       "control": {
@@ -626,7 +631,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/dsm/events/446155",
+          "url": "http://gx-nginx-e:8500/dsm/events/587276",
           "status": 200
         },
         {
@@ -636,7 +641,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -651,27 +656,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventDetail-C1rZ74_A.js",
+          "url": "http://gx-nginx-e:8500/assets/EventDetail-BbPso7Ph.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BtQCU8jX.js",
+          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BzSUQiH-.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/deliveryOutcome-wVJGzI9B.js",
+          "url": "http://gx-nginx-e:8500/assets/deliveryOutcome-BFgeU9WV.js",
           "status": 200
         },
         {
@@ -681,27 +686,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-Cr6MYgst.js",
+          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-DqZhWXkP.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseClock-CrHjH43f.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseClock-7janPh8l.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-B1AMgNIu.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-D08dc8Vs.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-DpRWR1qS.js",
+          "url": "http://gx-nginx-e:8500/assets/index-CT2i0afX.js",
           "status": 200
         },
         {
@@ -711,27 +716,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/clip",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/clip",
           "status": 404
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/deliveries?event_id=446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/deliveries?event_id=587276",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/upper-report/flags?event_ids=446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/upper-report/flags?event_ids=587276",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/timeline",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/timeline",
           "status": 200
         },
         {
@@ -784,12 +789,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/events/{event}",
         "field": "event_id",
-        "before": 446155,
-        "after": 446155,
+        "before": 587276,
+        "after": 587276,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #446155\n알림 보내기\n등급\t■ 심각\t유형\t\n화재\n훈련\n\t처리 단계\t조치 중\n판정\t실제\t발생 시각\t2026-09-23 07:14:52 · 6일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t이 카메라는 사건 구간 저장이 아직 켜지지 않았습니다 (관리자 → 카메라 등록)\n판정자\t#110 · 07:51 · 6일 전\t판정 사유\t게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n6일 경과 · 종결 검토\n8분 넘음 · 폴백 문턱\n한 번 닫혔다가 다시 열렸습니다 (6회).\n종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다. 사건을 종결하면 채워집니다.\n① 발생\t2026-09-23 07:14:52\t② 접수 확인\t2026-09-23 07:52:48 · +37분 56초\t③ 조치 착수\t2026-09-23 07:54:27 · +39분 35초\n④ 종결\t아직 열려 있습니다\n전이 14건 — 2026-09-23 07:52:48 미처리→접수 (gxseed_u1_operator) · 2026-09-23 07:54:27 접수→조치 중 (gxprobe_q) · 2026-09-23 10:05:31 조치 중→종결 (gxseed_u1_operator) · 2026-09-27 00:34:29 종결→조치 중 (gxseed_u2_manager) · 2026-09-27 00:35:19 조치 중→종결 (gxseed_u1_operator) · 2026-09-27 00:36:54 종결→조치 중 (gxprobe_q) · 2026-09-28 09:15:16 조치 중→종결 (gxseed_u1_operator) · 2026-09-28 09:16:47 종결→조치 중 (gxprobe_q) · 2026-09-29 05:34:24 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 05:36:25 종결→조치 중 (gxprobe_q) · 2026-09-29 07:58:01 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 08:00:01 종결→조치 중 (gxprobe_q) · 2026-09-29 11:19:59 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 11:23:02 종결→조치 중 (gxprobe_q)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n등급 재판정\n■ 심각\n▲ 경계\n● 주의\n현재 등급\n■ 심각\n다음 단계\n종결하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n상급기관 제출\n제출로 표시\n아직 제출 표시 없음\n이 체크는 「우리가 상급기관에 이 사건을 알렸다」는 표시일 뿐입니다 — 아래 「발송 이력」(알림 발송)과는 다른 사실입니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x793e5c441\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x793e5ccb6\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x7db858805\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:09 · 1일 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:07 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:15:00 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:15:00 · 1일 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-27 00:35:04 · 3일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-27 00:35:03 · 3일 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다(). 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-27 00:35:03 · 3일 전\t\n기록만\t",
-      "measured_at": "2026-09-30T06:47:29Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #587276\n알림 보내기\n등급\t■ 심각\t유형\t\n화재\n훈련\n\t처리 단계\t접수\n판정\t미판정\t발생 시각\t2026-09-30 11:28:26 · 6분 전\t마지막 관측\t—\n카메라\t훈련 씨앗 카메라(gxdrill)\t확신도\t—\t좌표\t—\n주소\t— (조회 대상 아님 (좌표 없음))\t영상 구간\t이 카메라는 사건 구간 저장이 아직 켜지지 않았습니다 (관리자 → 카메라 등록)\n판정자\t아직 아무도 판정하지 않음\t판정 사유\t—\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n7분\n5분 넘음 · 폴백 문턱\n① 발생\t2026-09-30 11:28:26\t② 접수 확인\t2026-09-30 11:33:57 · +5분 32초\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 1건 — 2026-09-30 11:33:57 미처리→접수 (gxprobe_q)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n미판정\n등급 재판정\n■ 심각\n▲ 경계\n● 주의\n현재 등급\n■ 심각\n다음 단계\n조치 시작\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n상급기관 제출\n제출로 표시\n아직 제출 표시 없음\n이 체크는 「우리가 상급기관에 이 사건을 알렸다」는 표시일 뿐입니다 — 아래 「발송 이력」(알림 발송)과는 다른 사실입니다.\n발송 이력\n발송 기록이 없습니다. 알림 보내기를 누르면 여기에 남습니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:35:26Z"
     },
     "U1#11": {
       "control": {
@@ -801,12 +806,12 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/587272/review?verdict=confirmed&reason=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/review?verdict=confirmed&reason=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/587272",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276",
           "status": 200
         }
       ],
@@ -817,8 +822,8 @@
         "before": null,
         "after": "confirmed"
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #587272\n알림 보내기\n등급\t■ 심각\t유형\t\n화재\n\t처리 단계\t미처리\n판정\t실제\t발생 시각\t2026-09-30 06:44:43 · 2분 전\t마지막 관측\t—\n카메라\tgxprobe-D384-screen 캡처용 카메라\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (조회됨)\t영상 구간\t이 카메라는 사건 구간 저장이 아직 켜지지 않았습니다 (관리자 → 카메라 등록)\n판정자\t#110 · 06:47 · 0초 전\t판정 사유\t게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n2분 54초\n2분 넘음 · 폴백 문턱\n① 발생\t2026-09-30 06:44:43\t② 접수 확인\t아직 아무도 접수하지 않았습니다\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 0건 — 아직 한 칸도 움직이지 않았습니다.\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n1미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n등급 재판정\n■ 심각\n▲ 경계\n● 주의\n현재 등급\n■ 심각\n다음 단계\n접수하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n상급기관 제출\n제출로 표시\n아직 제출 표시 없음\n이 체크는 「우리가 상급기관에 이 사건을 알렸다」는 표시일 뿐입니다 — 아래 「발송 이력」(알림 발송)과는 다른 사실입니다.\n발송 이력\n발송 기록이 없습니다. 알림 보내기를 누르면 여기에 남습니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:47:38Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n← 목록\n이벤트 상세 #587276\n알림 보내기\n등급\t■ 심각\t유형\t\n화재\n훈련\n\t처리 단계\t접수\n판정\t실제\t발생 시각\t2026-09-30 11:28:26 · 7분 전\t마지막 관측\t—\n카메라\t훈련 씨앗 카메라(gxdrill)\t확신도\t—\t좌표\t—\n주소\t— (조회 대상 아님 (좌표 없음))\t영상 구간\t이 카메라는 사건 구간 저장이 아직 켜지지 않았습니다 (관리자 → 카메라 등록)\n판정자\t#110 · 11:35 · 0초 전\t판정 사유\t게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n7분 10초\n5분 넘음 · 폴백 문턱\n① 발생\t2026-09-30 11:28:26\t② 접수 확인\t2026-09-30 11:33:57 · +5분 32초\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 1건 — 2026-09-30 11:33:57 미처리→접수 (gxprobe_q)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n등급 재판정\n■ 심각\n▲ 경계\n● 주의\n현재 등급\n■ 심각\n다음 단계\n조치 시작\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n상급기관 제출\n제출로 표시\n아직 제출 표시 없음\n이 체크는 「우리가 상급기관에 이 사건을 알렸다」는 표시일 뿐입니다 — 아래 「발송 이력」(알림 발송)과는 다른 사실입니다.\n발송 이력\n발송 기록이 없습니다. 알림 보내기를 누르면 여기에 남습니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:35:35Z"
     },
     "U1#19": {
       "control": {
@@ -840,7 +845,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -855,7 +860,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
@@ -918,12 +923,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/events/summary?hours=24",
         "field": "unhandled",
-        "before": 0,
-        "after": 0,
+        "before": 3,
+        "after": 3,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n인계 메모\n아직 인계 메모가 없습니다.\n이 자리에 지난 교대가 남긴 말이 뜹니다. 지금은 남긴 말이 없습니다. (사이드바의 「인계 메모」로 들어오면 탭이 함께 뜹니다)\n인계 메모 쓰기\n교대 마무리 초안\n[교대 인계 초안] 2026. 9. 30. 오전 6:47:39\n미처리: 0건\n오늘 판정: 0건 (아직 안 본 것 0건)\n\n넘기는 말:\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:47:42Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n인계 메모\n아직 인계 메모가 없습니다.\n이 자리에 지난 교대가 남긴 말이 뜹니다. 지금은 남긴 말이 없습니다. (사이드바의 「인계 메모」로 들어오면 탭이 함께 뜹니다)\n인계 메모 쓰기\n교대 마무리 초안\n[교대 인계 초안] 2026. 9. 30. 오전 11:35:36\n미처리: 3건\n오늘 판정: 1건 (아직 안 본 것 3건)\n\n넘기는 말:\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:35:39Z"
     },
     "U2#1": {
       "control": {
@@ -945,7 +950,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -960,17 +965,17 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventList-BxHK541p.js",
+          "url": "http://gx-nginx-e:8500/assets/EventList-OmjMbLDa.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-B1AMgNIu.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-D08dc8Vs.js",
           "status": 200
         },
         {
@@ -980,7 +985,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
@@ -990,7 +995,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
@@ -1050,6 +1055,11 @@
         },
         {
           "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/upper-report/flags?event_ids=587277,587278,587279",
+          "status": 200
+        },
+        {
+          "method": "GET",
           "url": "http://gx-nginx-e:8500/Inter/Inter-VariableFont_opsz,wght.ttf",
           "status": 200
         }
@@ -1058,12 +1068,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/events/summary?hours=12",
         "field": "unhandled",
-        "before": 0,
-        "after": 0,
+        "before": 3,
+        "after": 3,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 06:47 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 — 사건을 판정한 뒤 다시 보십시오 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n찾기\n찾기\n지금 걸린 조건\n없음 — 기간만 봅니다\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n미처리가 0건입니다 — 지금 손댈 것이 없습니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 모든 사건에 누군가 손을 댔습니다. 어디까지 갔는지는 「전체 보기」의 「처리 단계」 칸에서 확인하십시오.\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:47:53Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 11:35 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 3건 · 오탐 0건 / 판정 1건 · 오탐률 0.0% · 미판정 3건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n찾기\n찾기\n지금 걸린 조건\n없음 — 기간만 봅니다\n등급 전체\n유형 전체\n새로고침\n3건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t상급 보고\t발생\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:25 · 10분 전\n■ 심각\t\n화재\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:22 · 13분 전\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:19 · 16분 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:35:51Z"
     },
     "U2#2": {
       "control": {
@@ -1085,7 +1095,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -1100,17 +1110,17 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventList-BxHK541p.js",
+          "url": "http://gx-nginx-e:8500/assets/EventList-OmjMbLDa.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-B1AMgNIu.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-D08dc8Vs.js",
           "status": 200
         },
         {
@@ -1120,7 +1130,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
@@ -1130,7 +1140,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
@@ -1192,28 +1202,33 @@
           "method": "GET",
           "url": "http://gx-nginx-e:8500/Inter/Inter-VariableFont_opsz,wght.ttf",
           "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/upper-report/flags?event_ids=587277,587278,587279",
+          "status": 200
         }
       ],
       "state": {
         "kind": "server_reflect",
         "get": "/api/dsm/events?limit=50&response_state=occurred",
         "field": "events",
-        "before": 0,
-        "after": 0,
+        "before": 3,
+        "after": 3,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 06:47 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 — 사건을 판정한 뒤 다시 보십시오 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n찾기\n찾기\n지금 걸린 조건\n없음 — 기간만 봅니다\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n미처리가 0건입니다 — 지금 손댈 것이 없습니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 모든 사건에 누군가 손을 댔습니다. 어디까지 갔는지는 「전체 보기」의 「처리 단계」 칸에서 확인하십시오.\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:47:57Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 11:35 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 3건 · 오탐 0건 / 판정 1건 · 오탐률 0.0% · 미판정 3건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n찾기\n찾기\n지금 걸린 조건\n없음 — 기간만 봅니다\n등급 전체\n유형 전체\n새로고침\n3건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t상급 보고\t발생\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:25 · 10분 전\n■ 심각\t\n화재\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:22 · 13분 전\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:19 · 16분 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:35:54Z"
     },
     "U2#3": {
       "control": {
         "found": false,
-        "why": "「되돌리기 \\(사유 필수\\)」를 화면에서 못 찾았다 (/dsm/events/446155)"
+        "why": "「되돌리기 \\(사유 필수\\)」를 화면에서 못 찾았다 (/dsm/events/587276)"
       },
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/dsm/events/446155",
+          "url": "http://gx-nginx-e:8500/dsm/events/587276",
           "status": 200
         },
         {
@@ -1223,7 +1238,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -1238,27 +1253,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventDetail-C1rZ74_A.js",
+          "url": "http://gx-nginx-e:8500/assets/EventDetail-BbPso7Ph.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BtQCU8jX.js",
+          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BzSUQiH-.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/deliveryOutcome-wVJGzI9B.js",
+          "url": "http://gx-nginx-e:8500/assets/deliveryOutcome-BFgeU9WV.js",
           "status": 200
         },
         {
@@ -1268,27 +1283,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-Cr6MYgst.js",
+          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-DqZhWXkP.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseClock-CrHjH43f.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseClock-7janPh8l.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-B1AMgNIu.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-D08dc8Vs.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-DpRWR1qS.js",
+          "url": "http://gx-nginx-e:8500/assets/index-CT2i0afX.js",
           "status": 200
         },
         {
@@ -1298,27 +1313,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/clip",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/clip",
           "status": 404
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/deliveries?event_id=446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/deliveries?event_id=587276",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/upper-report/flags?event_ids=446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/upper-report/flags?event_ids=587276",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/timeline",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/timeline",
           "status": 200
         },
         {
@@ -1367,7 +1382,7 @@
           "status": 200
         }
       ],
-      "measured_at": "2026-09-30T06:48:00Z"
+      "measured_at": "2026-09-30T11:35:58Z"
     },
     "U2#4": {
       "control": {
@@ -1379,7 +1394,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/dsm/events/446155",
+          "url": "http://gx-nginx-e:8500/dsm/events/587276",
           "status": 200
         },
         {
@@ -1389,7 +1404,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -1404,27 +1419,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventDetail-C1rZ74_A.js",
+          "url": "http://gx-nginx-e:8500/assets/EventDetail-BbPso7Ph.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BtQCU8jX.js",
+          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BzSUQiH-.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/deliveryOutcome-wVJGzI9B.js",
+          "url": "http://gx-nginx-e:8500/assets/deliveryOutcome-BFgeU9WV.js",
           "status": 200
         },
         {
@@ -1434,27 +1449,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-Cr6MYgst.js",
+          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-DqZhWXkP.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseClock-CrHjH43f.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseClock-7janPh8l.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-B1AMgNIu.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-D08dc8Vs.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-DpRWR1qS.js",
+          "url": "http://gx-nginx-e:8500/assets/index-CT2i0afX.js",
           "status": 200
         },
         {
@@ -1464,27 +1479,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/clip",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/clip",
           "status": 404
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/deliveries?event_id=446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/deliveries?event_id=587276",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/upper-report/flags?event_ids=446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/upper-report/flags?event_ids=587276",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/timeline",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/timeline",
           "status": 200
         },
         {
@@ -1541,8 +1556,8 @@
         "after": "critical",
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n← 목록\n이벤트 상세 #446155\n알림 보내기\n등급\t■ 심각\t유형\t\n화재\n훈련\n\t처리 단계\t조치 중\n판정\t실제\t발생 시각\t2026-09-23 07:14:52 · 6일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t이 카메라는 사건 구간 저장이 아직 켜지지 않았습니다 (관리자 → 카메라 등록)\n판정자\t#110 · 07:51 · 6일 전\t판정 사유\t게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n6일 경과 · 종결 검토\n8분 넘음 · 폴백 문턱\n한 번 닫혔다가 다시 열렸습니다 (6회).\n종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다. 사건을 종결하면 채워집니다.\n① 발생\t2026-09-23 07:14:52\t② 접수 확인\t2026-09-23 07:52:48 · +37분 56초\t③ 조치 착수\t2026-09-23 07:54:27 · +39분 35초\n④ 종결\t아직 열려 있습니다\n전이 14건 — 2026-09-23 07:52:48 미처리→접수 (gxseed_u1_operator) · 2026-09-23 07:54:27 접수→조치 중 (gxprobe_q) · 2026-09-23 10:05:31 조치 중→종결 (gxseed_u1_operator) · 2026-09-27 00:34:29 종결→조치 중 (gxseed_u2_manager) · 2026-09-27 00:35:19 조치 중→종결 (gxseed_u1_operator) · 2026-09-27 00:36:54 종결→조치 중 (gxprobe_q) · 2026-09-28 09:15:16 조치 중→종결 (gxseed_u1_operator) · 2026-09-28 09:16:47 종결→조치 중 (gxprobe_q) · 2026-09-29 05:34:24 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 05:36:25 종결→조치 중 (gxprobe_q) · 2026-09-29 07:58:01 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 08:00:01 종결→조치 중 (gxprobe_q) · 2026-09-29 11:19:59 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 11:23:02 종결→조치 중 (gxprobe_q)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n등급 재판정\n■ 심각\n▲ 경계\n● 주의\n현재 등급\n■ 심각\n다음 단계\n종결하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n상급기관 제출\n제출로 표시\n아직 제출 표시 없음\n이 체크는 「우리가 상급기관에 이 사건을 알렸다」는 표시일 뿐입니다 — 아래 「발송 이력」(알림 발송)과는 다른 사실입니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x793e5c441\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x793e5ccb6\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x7db858805\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:09 · 1일 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:07 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:15:00 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:15:00 · 1일 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-27 00:35:04 · 3일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-27 00:35:03 · 3일 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다(). 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-27 00:35:03 ",
-      "measured_at": "2026-09-30T06:48:04Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n← 목록\n이벤트 상세 #587276\n알림 보내기\n등급\t■ 심각\t유형\t\n화재\n훈련\n\t처리 단계\t접수\n판정\t실제\t발생 시각\t2026-09-30 11:28:26 · 7분 전\t마지막 관측\t—\n카메라\t훈련 씨앗 카메라(gxdrill)\t확신도\t—\t좌표\t—\n주소\t— (조회 대상 아님 (좌표 없음))\t영상 구간\t이 카메라는 사건 구간 저장이 아직 켜지지 않았습니다 (관리자 → 카메라 등록)\n판정자\t#110 · 11:35 · 28초 전\t판정 사유\t게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n7분 35초\n5분 넘음 · 폴백 문턱\n① 발생\t2026-09-30 11:28:26\t② 접수 확인\t2026-09-30 11:33:57 · +5분 32초\t③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 1건 — 2026-09-30 11:33:57 미처리→접수 (gxprobe_q)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n등급 재판정\n■ 심각\n▲ 경계\n● 주의\n현재 등급\n■ 심각\n다음 단계\n조치 시작\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n상급기관 제출\n제출로 표시\n아직 제출 표시 없음\n이 체크는 「우리가 상급기관에 이 사건을 알렸다」는 표시일 뿐입니다 — 아래 「발송 이력」(알림 발송)과는 다른 사실입니다.\n발송 이력\n발송 기록이 없습니다. 알림 보내기를 누르면 여기에 남습니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:36:01Z"
     },
     "U2#6": {
       "control": {
@@ -1567,11 +1582,11 @@
         "kind": "server_change",
         "get": "/api/dsm/reports/runs?kind=incident&limit=200",
         "field": "total",
-        "before": 17,
-        "after": 18
+        "before": 18,
+        "after": 19
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n보고서\n사건 보고서\n사건 한 건을 1쪽으로 — 개요 · 대응 시계 네 시각 · 판정 · 조치 이력.\n만들기\n이번 달 우리 센터\n이번 달 1일부터 지금까지 — 등급별 · 유형별 · 카메라별 · 시간대별 · 대응 진행.\n만들기\n상급기관 제출용\n상급 보고로 체크한 사건만 모아 — 제출 요약과 사건 목록.\n만들기\n상황보고서 (별지 제1호)\n지자체·상급기관에 올리는 재난 상황보고 서식입니다 — 보고 구분 · 재난 종류 · 발생 장소 · 피해 현황 · 조치 사항(시각 순) · 향후 계획 · 첨부.\nDOCX 내려받기\n이 서식은 실행 기록에 줄을 남기지 않습니다 — 누를 때마다 사건 기록에서 바로 만들어 내려줍니다. 아래 표에 안 보이는 것이 정상입니다.\n특이사항 (자동본에 사람이 더하는 한 줄)\n만들었습니다\n사건 보고서 · 실행 22 · 사람\nDOCX 내려받기\nPDF 내려받기\n실행 기록\n새로고침\n서식\t만든 쪽\t결과\t시각\t집계 구간 / 사건\t파일\n사건 보고서\t사람\t생성됨\t06:48 · 0초 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t11:19 · 19시간 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:57 · 22시간 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:33 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t09:14 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t00:34 · 3일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:52 · 6일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:29 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t13:13 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t14:43 · 8일 전\t사건 326411\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t08:12 · 9일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:07 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:58 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:50 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t04:45 · 10일 전\t사건 4798\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:52 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:10 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:40 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n이번 달 우리 센터\t자동\t생성됨\t03:47 · 12일 전\t17:00 · 29일 전 ~ 03:47 · 12일 전\t\nDOCX\nPDF\n영상 제공 연간 통계\n연도\n요청\n0\n승인\n0\n제공(마스킹본)\n0\n월별 요청: 10월 0 · 11월 0 · 12월 0 · 1월 0 · 2월 0 · 3월 0 · 4월 0 · 5월 0 · 6월 0 · 7월 0 · 8월 0 · 9월 0\n개인영상정보 제공 대장\n요청 접수\n상태\t내용\t누르기\n대장에 기록이 없습니다. 위에서 열람 요청을 등록하십시오\n재난관리평가·감사 자료 묶음\n기간\n~\n묶음 내려받기(ZIP)\n정본은 DOCX 입니다(한글에서 열립니다). PDF 는 같은 글자를 찍은 병행본입니다. 파일은 누를 때마다 서버가 이 실행 기록에서 다시 만듭니다 — 「특이사항」을 고치면 다음 내려받기부터 반영됩니다.\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:48:13Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n보고서\n사건 보고서\n사건 한 건을 1쪽으로 — 개요 · 대응 시계 네 시각 · 판정 · 조치 이력.\n만들기\n이번 달 우리 센터\n이번 달 1일부터 지금까지 — 등급별 · 유형별 · 카메라별 · 시간대별 · 대응 진행.\n만들기\n상급기관 제출용\n상급 보고로 체크한 사건만 모아 — 제출 요약과 사건 목록.\n만들기\n상황보고서 (별지 제1호)\n지자체·상급기관에 올리는 재난 상황보고 서식입니다 — 보고 구분 · 재난 종류 · 발생 장소 · 피해 현황 · 조치 사항(시각 순) · 향후 계획 · 첨부.\nDOCX 내려받기\n이 서식은 실행 기록에 줄을 남기지 않습니다 — 누를 때마다 사건 기록에서 바로 만들어 내려줍니다. 아래 표에 안 보이는 것이 정상입니다.\n특이사항 (자동본에 사람이 더하는 한 줄)\n만들었습니다\n사건 보고서 · 실행 23 · 사람\nDOCX 내려받기\nPDF 내려받기\n실행 기록\n새로고침\n서식\t만든 쪽\t결과\t시각\t집계 구간 / 사건\t파일\n사건 보고서\t사람\t생성됨\t11:36 · 0초 전\t사건 587276\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:48 · 4시간 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t11:19 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:57 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:33 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t09:14 · 2일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t00:34 · 3일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:52 · 7일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:29 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t13:13 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t14:43 · 8일 전\t사건 326411\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t08:12 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:07 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:58 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:50 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t04:45 · 10일 전\t사건 4798\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:52 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:10 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:40 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n이번 달 우리 센터\t자동\t생성됨\t03:47 · 12일 전\t17:00 · 29일 전 ~ 03:47 · 12일 전\t\nDOCX\nPDF\n영상 제공 연간 통계\n연도\n요청\n0\n승인\n0\n제공(마스킹본)\n0\n월별 요청: 10월 0 · 11월 0 · 12월 0 · 1월 0 · 2월 0 · 3월 0 · 4월 0 · 5월 0 · 6월 0 · 7월 0 · 8월 0 · 9월 0\n개인영상정보 제공 대장\n요청 접수\n상태\t내용\t누르기\n대장에 기록이 없습니다. 위에서 열람 요청을 등록하십시오\n재난관리평가·감사 자료 묶음\n기간\n~\n묶음 내려받기(ZIP)\n정본은 DOCX 입니다(한글에서 열립니다). PDF 는 같은 글자를 찍은 병행본입니다. 파일은 누를 때마다 서버가 이 실행 기록에서 다시 만듭니다 — 「특이사항」을 고치면 다음 내려받기부터 반영됩니다.\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:36:11Z"
     },
     "U2#9": {
       "control": {
@@ -1593,7 +1608,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -1608,27 +1623,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/TeamStatus-DDF9glJU.js",
+          "url": "http://gx-nginx-e:8500/assets/TeamStatus-Crg3rNL6.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-DpRWR1qS.js",
+          "url": "http://gx-nginx-e:8500/assets/index-CT2i0afX.js",
           "status": 200
         },
         {
@@ -1691,12 +1706,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/stats/by-reviewer",
         "field": "total_reviewed",
-        "before": 25,
-        "after": 25,
+        "before": 26,
+        "after": 26,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n요원별 현황\n기간\n기본 기간\n7일\n30일\n새로고침\n2026-08-31 06:48:00 ~ 2026-09-30 06:48:00 · 판정 25건 · 요원 3명\n합계가 맞습니다 — 위 판정 25건 = 아래 3명의 합 25건\n행을 펴서 각 요원의 판정 건수를 더하면 위에 적힌 수와 같습니다.\n\t요원\t판정 건수\t종결\t오탐 판정\t평균 대응(발생에서 판정까지)\n\t요원 105\t12\t0\t4\t34분 32초\n\t요원 108\t1\t0\t0\t46시간 36분\n\t요원 110\t12\t0\t0\t222시간 59분\n\t합 25건\t0건\t4건\t\t\n내가 판정한 사건 보기\n위 표는 사람별 건수입니다. 사건 하나하나를 보려면 사건 목록에서 봅니다 — 다만 자기 것만 볼 수 있습니다. 남이 판정한 사건의 목록을 사번으로 열어 보는 길은 열려 있지 않습니다.\n내가 판정한 사건 열기\n이 집계는 최대 60초 지난 값일 수 있습니다. 사람 이름은 아직 이 화면에 없습니다 — 요원 번호로 구분합니다.\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:48:17Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n요원별 현황\n기간\n기본 기간\n7일\n30일\n새로고침\n2026-08-31 11:36:00 ~ 2026-09-30 11:36:00 · 판정 26건 · 요원 3명\n합계가 맞습니다 — 위 판정 26건 = 아래 3명의 합 26건\n행을 펴서 각 요원의 판정 건수를 더하면 위에 적힌 수와 같습니다.\n\t요원\t판정 건수\t종결\t오탐 판정\t평균 대응(발생에서 판정까지)\n\t요원 105\t12\t0\t4\t34분 32초\n\t요원 108\t1\t0\t0\t46시간 36분\n\t요원 110\t13\t0\t0\t205시간 50분\n\t합 26건\t0건\t4건\t\t\n내가 판정한 사건 보기\n위 표는 사람별 건수입니다. 사건 하나하나를 보려면 사건 목록에서 봅니다 — 다만 자기 것만 볼 수 있습니다. 남이 판정한 사건의 목록을 사번으로 열어 보는 길은 열려 있지 않습니다.\n내가 판정한 사건 열기\n이 집계는 최대 60초 지난 값일 수 있습니다. 사람 이름은 아직 이 화면에 없습니다 — 요원 번호로 구분합니다.\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:36:14Z"
     },
     "U2#16": {
       "control": {
@@ -1718,7 +1733,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -1733,17 +1748,17 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/NotifySettings-DkZurPWD.js",
+          "url": "http://gx-nginx-e:8500/assets/NotifySettings-CZbyOVAR.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
@@ -1816,7 +1831,7 @@
         "on_screen": true
       },
       "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n알림 받는 사람·채널\n등급별로 누가 · 무슨 채널로 받는지 정하는 화면입니다. 규칙은 사람이 아니라 역할을 가리킵니다 — 인사이동이 있어도 규칙을 고치지 않아도 됩니다.\n심각 경보를 받는 사람 13명 · 이메일로 닿습니다\n심각 등급은 최소 한 사람에게, 사람에게 닿는 채널로 갑니다.\n등급별 수신 현황\n등급\t규칙\t받는 사람\t사람에게 도달\t시험 발송\n주의\t2건\t22명\t닿지 않음\t\n시험 발송\n\n경계\t3건\t23명\t닿지 않음\t\n시험 발송\n\n심각\t3건\t13명\t이메일\t\n시험 발송\n시험 발송은 훈련 채널(기록(훈련))로만 나갑니다 — 실제 수신함·휴대전화로는 한 건도 가지 않습니다.\n규칙 — 등급 × 역할 × 채널\n등급\t역할\t구역\t채널\t켜짐\t\n심각\t관제요원\t모든 구역\t기록(훈련)\t\n켜짐\n끄기\n\t\n아래에서 고치기\n\n심각\t운영 담당\t모든 구역\t기록(훈련)\t\n꺼짐\n켜기\n\t\n아래에서 고치기\n\n심각\t관제팀장\t모든 구역\t기록(훈련) · 이메일\t\n켜짐\n끄기\n\t\n아래에서 고치기\n\n심각\t지자체 담당\t모든 구역\t기록(훈련)\t\n켜짐\n끄기\n\t\n아래에서 고치기\n\n주의\t관제요원\t모든 구역\t기록(훈련)\t\n켜짐\n끄기\n\t\n아래에서 고치기\n\n주의\t운영 담당\t모든 구역\t기록(훈련)\t\n켜짐\n끄기\n\t\n아래에서 고치기\n\n경계\t관제요원\t모든 구역\t기록(훈련)\t\n켜짐\n끄기\n\t\n아래에서 고치기\n\n경계\t운영 담당\t모든 구역\t기록(훈련)\t\n켜짐\n끄기\n\t\n아래에서 고치기\n\n경계\t관제팀장\t모든 구역\t기록(훈련)\t\n켜짐\n끄기\n\t\n아래에서 고치기\n규칙 세우기 · 고치기\n등급\n역할 코드\n규칙은 사람이 아니라 역할을 가리킵니다 — 인사이동이 있어도 규칙을 고치지 않아도 됩니다. 코드를 모르시면 위 규칙 표에서 「아래에서 고치기」를 누르십시오. 이 칸이 그 역할의 코드로 채워집니다.\n채널\n「사람에게 안 감」은 훈련·검수용 채널입니다. 운영 규칙에 넣으면 당직자가 못 받습니다.\n구역\n비우면 모든 구역에 적용됩니다.\n켜짐\n저장\n새 규칙으로\n채널\n이메일\n쓸 수 있음\n이메일 — 지금 붙어 있는 유일한 실채널\n기록(훈련)\n쓸 수 있음\n사람에게 안 감\n훈련 채널 — 사람이 아니라 로그에 도달한다. 운영 규칙에 넣으면 당직자가 못 받는다\n앱 푸시\n고를 수는 있으나 아직 안 나감\n앱 푸시 — 모바일 클라이언트 배포와 함께 온다\n문자\n고를 수는 있으나 아직 안 나감\n문자 — 발송 업체 미선정(대표 결정 대기)\n웹훅\n고를 수는 있으나 아직 안 나감\n웹훅 — 상대 시스템으로. 구독·서명키가 선행\n웹푸시\n쓸 수 있음\n웹푸시 — 브라우저 잠금화면. 발송기는 U3 차선이 짓는다\n「고를 수는 있으나 아직 안 나감」은 규칙에 저장은 되지만 발송기가 아직 없다는 뜻입니다 — 그 채널만으로는 알림이 도달하지 않습니다.\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:48:20Z"
+      "measured_at": "2026-09-30T11:36:18Z"
     },
     "U2#19": {
       "control": {
@@ -1838,7 +1853,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -1853,17 +1868,17 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventList-BxHK541p.js",
+          "url": "http://gx-nginx-e:8500/assets/EventList-OmjMbLDa.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-B1AMgNIu.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-D08dc8Vs.js",
           "status": 200
         },
         {
@@ -1873,7 +1888,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
@@ -1883,7 +1898,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
@@ -1948,12 +1963,12 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/upper-report/flags?event_ids=4818,4819",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/upper-report/flags?event_ids=4818,4819",
+          "url": "http://gx-nginx-e:8500/Inter/Inter-VariableFont_opsz,wght.ttf",
           "status": 200
         }
       ],
@@ -1965,8 +1980,8 @@
         "after": 2,
         "on_screen": true
       },
-      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 06:48 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 — 사건을 판정한 뒤 다시 보십시오 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n찾기\n찾기\n지금 걸린 조건\n없음 — 기간만 봅니다\n등급 전체\n유형 전체\n새로고침\n2건\n?\n시스템 — 설비 자신이 낸 신호\n현장에서 난 일이 아니라 카메라·저장 장치 같은 설비 자신의 상태입니다. 아래 「연계 상태」는 지난 일이 아니라 지금 이 순간의 신호라 따로 놓았습니다.\n연계 상태 (지금 이 순간)\n연계 대기\n이 목록은 설비 자신이 낸 신호입니다. 카메라 응답 여부와 저장 용량은 아직 이 화면에서 볼 수 없습니다 — 여기 없는 것은 아직 없는 것입니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t상급 보고\t발생\n▲ 경계\t\n카메라 무응답\n시드(검수용)\n\t시드 카메라 (검수용)\t종결\t\n실제\n\t\n실제\n오탐\n\t\n보고 표시\n\t12:14 · 26일 전\n▲ 경계\t\n저장 용량 임계\n시드(검수용)\n\t시드 카메라 (검수용)\t종결\t\n실제\n\t\n실제\n오탐\n\t\n보고 표시\n\t12:11 · 26일 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:48:24Z"
+      "text_after": "지금 처리할 것\n무슨 일 있었나\n카메라 격자\n인계 메모\n처음이세요\n관제 현황\n훈련 모드\n이벤트 목록\n갱신 11:36 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 3건 · 오탐 0건 / 판정 1건 · 오탐률 0.0% · 미판정 3건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 전체 기간 — 시간으로 거르지 않습니다\n열기\n찾기\n찾기\n지금 걸린 조건\n없음 — 기간만 봅니다\n등급 전체\n유형 전체\n새로고침\n2건\n?\n시스템 — 설비 자신이 낸 신호\n현장에서 난 일이 아니라 카메라·저장 장치 같은 설비 자신의 상태입니다. 아래 「연계 상태」는 지난 일이 아니라 지금 이 순간의 신호라 따로 놓았습니다.\n연계 상태 (지금 이 순간)\n연계 대기\n이 목록은 설비 자신이 낸 신호입니다. 카메라 응답 여부와 저장 용량은 아직 이 화면에서 볼 수 없습니다 — 여기 없는 것은 아직 없는 것입니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t상급 보고\t발생\n▲ 경계\t\n카메라 무응답\n시드(검수용)\n\t시드 카메라 (검수용)\t종결\t\n실제\n\t\n실제\n오탐\n\t\n보고 표시\n\t12:14 · 26일 전\n▲ 경계\t\n저장 용량 임계\n시드(검수용)\n\t시드 카메라 (검수용)\t종결\t\n실제\n\t\n실제\n오탐\n\t\n보고 표시\n\t12:11 · 26일 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:36:21Z"
     },
     "U3#1": {
       "control": {
@@ -1978,7 +1993,7 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/notify",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/notify",
           "status": null
         }
       ],
@@ -1986,11 +2001,11 @@
         "kind": "server_change",
         "get": "/api/dsm/deliveries?event_id={event}&limit=500",
         "field": "total",
-        "before": 83,
-        "after": 96
+        "before": 0,
+        "after": 13
       },
-      "text_after": "← 목록\n이벤트 상세 #446155\n알림 보내기\n등급\t■ 심각\n유형\t\n화재\n훈련\n\n처리 단계\t조치 중\n판정\t실제\n발생 시각\t2026-09-23 07:14:52 · 6일 전\n마지막 관측\t—\n카메라\t시드 카메라 (검수용)\n확신도\t—\n좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\n영상 구간\t이 카메라는 사건 구간 저장이 아직 켜지지 않았습니다 (관리자 → 카메라 등록)\n판정자\t#110 · 07:51 · 6일 전\n판정 사유\t게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n6일 경과 · 종결 검토\n8분 넘음 · 폴백 문턱\n한 번 닫혔다가 다시 열렸습니다 (6회).\n종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다. 사건을 종결하면 채워집니다.\n① 발생\t2026-09-23 07:14:52\n② 접수 확인\t2026-09-23 07:52:48 · +37분 56초\n③ 조치 착수\t2026-09-23 07:54:27 · +39분 35초\n④ 종결\t아직 열려 있습니다\n전이 14건 — 2026-09-23 07:52:48 미처리→접수 (gxseed_u1_operator) · 2026-09-23 07:54:27 접수→조치 중 (gxprobe_q) · 2026-09-23 10:05:31 조치 중→종결 (gxseed_u1_operator) · 2026-09-27 00:34:29 종결→조치 중 (gxseed_u2_manager) · 2026-09-27 00:35:19 조치 중→종결 (gxseed_u1_operator) · 2026-09-27 00:36:54 종결→조치 중 (gxprobe_q) · 2026-09-28 09:15:16 조치 중→종결 (gxseed_u1_operator) · 2026-09-28 09:16:47 종결→조치 중 (gxprobe_q) · 2026-09-29 05:34:24 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 05:36:25 종결→조치 중 (gxprobe_q) · 2026-09-29 07:58:01 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 08:00:01 종결→조치 중 (gxprobe_q) · 2026-09-29 11:19:59 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 11:23:02 종결→조치 중 (gxprobe_q)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n등급 재판정\n■ 심각\n▲ 경계\n● 주의\n현재 등급\n■ 심각\n다음 단계\n종결하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n상급기관 제출\n제출로 표시\n아직 제출 표시 없음\n이 체크는 「우리가 상급기관에 이 사건을 알렸다」는 표시일 뿐입니다 — 아래 「발송 이력」(알림 발송)과는 다른 사실입니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x793e5c441\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x793e5ccb6\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x7db858805\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:09 · 1일 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:08 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:07 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:15:00 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:15:00 · 1일 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-28 09:14:59 · 1일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-27 00:35:04 · 3일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-27 00:35:03 · 3일 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다(). 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-27 00:35:03 · 3일 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-27",
-      "measured_at": "2026-09-30T06:48:41Z"
+      "text_after": "← 목록\n이벤트 상세 #587276\n알림 보내기\n등급\t■ 심각\n유형\t\n화재\n훈련\n\n처리 단계\t접수\n판정\t실제\n발생 시각\t2026-09-30 11:28:26 · 8분 전\n마지막 관측\t—\n카메라\t훈련 씨앗 카메라(gxdrill)\n확신도\t—\n좌표\t—\n주소\t— (조회 대상 아님 (좌표 없음))\n영상 구간\t이 카메라는 사건 구간 저장이 아직 켜지지 않았습니다 (관리자 → 카메라 등록)\n판정자\t#110 · 11:35 · 1분 전\n판정 사유\t게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n8분 13초\n8분 넘음 · 폴백 문턱\n① 발생\t2026-09-30 11:28:26\n② 접수 확인\t2026-09-30 11:33:57 · +5분 32초\n③ 조치 착수\t아직 조치가 시작되지 않았습니다\n④ 종결\t아직 열려 있습니다\n전이 1건 — 2026-09-30 11:33:57 미처리→접수 (gxprobe_q)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n2접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n등급 재판정\n■ 심각\n▲ 경계\n● 주의\n현재 등급\n■ 심각\n다음 단계\n조치 시작\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n상급기관 제출\n제출로 표시\n아직 제출 표시 없음\n이 체크는 「우리가 상급기관에 이 사건을 알렸다」는 표시일 뿐입니다 — 아래 「발송 이력」(알림 발송)과는 다른 사실입니다.\n발송 이력\n발송 기록이 없습니다. 알림 보내기를 누르면 여기에 남습니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:36:39Z"
     },
     "U3#2": {
       "control": {
@@ -2002,7 +2017,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/m/events/446155",
+          "url": "http://gx-nginx-e:8500/m/events/587276",
           "status": 200
         },
         {
@@ -2012,7 +2027,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -2027,27 +2042,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/MobileEventDetail-BEeYt1DL.js",
+          "url": "http://gx-nginx-e:8500/assets/MobileEventDetail-CiCCoeAW.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-Cr6MYgst.js",
+          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-DqZhWXkP.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-B1AMgNIu.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-D08dc8Vs.js",
           "status": 200
         },
         {
@@ -2057,12 +2072,12 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/MobileShell-khNL_Ekk.js",
+          "url": "http://gx-nginx-e:8500/assets/MobileShell-BxwE5S3u.js",
           "status": 200
         },
         {
@@ -2072,12 +2087,12 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-DpRWR1qS.js",
+          "url": "http://gx-nginx-e:8500/assets/index-CT2i0afX.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276",
           "status": 200
         },
         {
@@ -2087,12 +2102,12 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/clip",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/clip",
           "status": 404
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/field-replies",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/field-replies",
           "status": 200
         },
         {
@@ -2122,12 +2137,12 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/m2-brief?role=police",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/m2-brief?role=police",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events?stream_monitor_id=119&since=2026-09-23T06:48:43.136Z&limit=20",
+          "url": "http://gx-nginx-e:8500/api/dsm/events?stream_monitor_id=9040&since=2026-09-23T11:36:40.293Z&limit=20",
           "status": 200
         }
       ],
@@ -2135,12 +2150,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/events/{event}",
         "field": "address",
-        "before": "경기도 안양시 만안구 안양천서로 100 (시드 카메라)",
-        "after": "경기도 안양시 만안구 안양천서로 100 (시드 카메라)",
-        "on_screen": true
+        "before": null,
+        "after": null,
+        "on_screen": false
       },
-      "text_after": "← 목록\n#446155 현장 상세\n새로고침\n기준 06:48 · 0초 전 · 표기 시간대: Asia/Seoul\n지금 할 일 (역할별)\n상주 경찰관\n119\n시설\n당직\n상주 경찰관\n대피 유도 후 상황실 보고\n■ 심각\n화재\n조치 중\n실제\n발생 6일 전 (2026-09-23 07:14:52)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n지도에서 보기\n무엇을 보나\n스냅샷\n이 이벤트에는 스냅샷 참조가 없습니다. 잠시 뒤 다시 보십시오.\n구간 티켓\n저장된 구간이 없습니다. 보관 기간 안이면 잠시 뒤 다시 보십시오. — 이 사건은 영상이 저장되지 않았습니다. 현장에서 본 것을 아래 「현장 회신」에 적어 주십시오.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n이 카메라 7일\n시드 카메라 (검수용) · 지난 7일 · 1건 (이 페이지 · 최대 20)\n이 사건\n심각\n화재\n6일 전 · 조치 중\n현장 조치\n미처리\n접수\n3조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t6건\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n종결하기\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:48:45Z"
+      "text_after": "← 목록\n#587276 현장 상세\n새로고침\n기준 11:36 · 0초 전 · 표기 시간대: Asia/Seoul\n지금 할 일 (역할별)\n상주 경찰관\n119\n시설\n당직\n상주 경찰관\n대피 유도 후 상황실 보고\n■ 심각\n화재\n접수\n실제\n발생 8분 전 (2026-09-30 11:28:26)\n어디로 가나\n카메라\n훈련 씨앗 카메라(gxdrill)\n\n\n설치 주소\n미입력 — 조회 대상 아님 (좌표 없음)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 이벤트에는 스냅샷 참조가 없습니다. 잠시 뒤 다시 보십시오.\n구간 티켓\n저장된 구간이 없습니다. 보관 기간 안이면 잠시 뒤 다시 보십시오. — 이 사건은 영상이 저장되지 않았습니다. 현장에서 본 것을 아래 「현장 회신」에 적어 주십시오.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n이 카메라 7일\n훈련 씨앗 카메라(gxdrill) · 지난 7일 · 4건 (이 페이지 · 최대 20)\n이 사건\n심각\n화재\n8분 전 · 접수\n#587277\n경계\n침수\n11분 전 · 미처리\n#587278\n심각\n화재\n14분 전 · 미처리\n#587279\n경계\n침수\n17분 전 · 미처리\n현장 조치\n미처리\n2접수\n3조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t아직\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n조치 시작\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\n아직 회신이 없습니다. 현장의 회신을 기다리십시오.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:36:42Z"
     },
     "U3#3": {
       "control": {
@@ -2162,7 +2177,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -2177,27 +2192,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/MobileEventDetail-BEeYt1DL.js",
+          "url": "http://gx-nginx-e:8500/assets/MobileEventDetail-CiCCoeAW.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-Cr6MYgst.js",
+          "url": "http://gx-nginx-e:8500/assets/EventSnapshot-DqZhWXkP.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-B1AMgNIu.js",
+          "url": "http://gx-nginx-e:8500/assets/ResponseSteps-D08dc8Vs.js",
           "status": 200
         },
         {
@@ -2207,12 +2222,12 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/MobileShell-khNL_Ekk.js",
+          "url": "http://gx-nginx-e:8500/assets/MobileShell-BxwE5S3u.js",
           "status": 200
         },
         {
@@ -2222,7 +2237,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-DpRWR1qS.js",
+          "url": "http://gx-nginx-e:8500/assets/index-CT2i0afX.js",
           "status": 200
         },
         {
@@ -2267,6 +2282,11 @@
         },
         {
           "method": "GET",
+          "url": "http://gx-nginx-e:8500/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
           "url": "http://gx-nginx-e:8500/api/dsm/events/4798/m2-brief?role=police",
           "status": 200
         },
@@ -2277,12 +2297,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events?stream_monitor_id=119&since=2026-09-23T06:48:46.541Z&limit=20",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "url": "http://gx-nginx-e:8500/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "url": "http://gx-nginx-e:8500/api/dsm/events?stream_monitor_id=119&since=2026-09-23T11:36:43.748Z&limit=20",
           "status": 200
         }
       ],
@@ -2294,7 +2309,7 @@
         "after": "guardianx-dev/detections/119/20260903/131431_580118.jpg",
         "on_screen": true
       },
-      "text_after": "← 목록\n#4798 현장 상세\n새로고침\n기준 06:48 · 0초 전 · 표기 시간대: Asia/Seoul\n지금 할 일 (역할별)\n상주 경찰관\n119\n시설\n당직\n상주 경찰관\n대피 유도 후 상황실 보고\n■ 심각\n화재\n종결\n실제\n발생 26일 전 (2026-09-03 13:14:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n지도에서 보기\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n저장된 구간이 없습니다. 보관 기간 안이면 잠시 뒤 다시 보십시오. — 이 사건은 영상이 저장되지 않았습니다. 위의 「스냅샷」으로 확인하십시오.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n이 카메라 7일\n시드 카메라 (검수용) · 지난 7일 · 1건 (이 페이지 · 최대 20)\n#446155\n심각\n화재\n6일 전 · 조치 중\n현장 조치\n미처리\n접수\n조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t6건\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n되돌리기 → 조치 시작\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음",
+      "text_after": "← 목록\n#4798 현장 상세\n새로고침\n기준 11:36 · 0초 전 · 표기 시간대: Asia/Seoul\n지금 할 일 (역할별)\n상주 경찰관\n119\n시설\n당직\n상주 경찰관\n대피 유도 후 상황실 보고\n■ 심각\n화재\n종결\n실제\n발생 26일 전 (2026-09-03 13:14:31)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n지도에서 보기\n무엇을 보나\n스냅샷\n이 사진에는 기관명과 열람 시각이 찍혀 있습니다.\n참조 보기\n구간 티켓\n저장된 구간이 없습니다. 보관 기간 안이면 잠시 뒤 다시 보십시오. — 이 사건은 영상이 저장되지 않았습니다. 위의 「스냅샷」으로 확인하십시오.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n이 카메라 7일\n시드 카메라 (검수용) · 지난 7일 · 0건 (이 페이지 · 최대 20)\n이 카메라에서 지난 7일 동안 다른 사건이 0건입니다. 기간을 넓혀 보십시오.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n현장 조치\n미처리\n접수\n조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t6건\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n되돌리기 → 조치 시작\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음",
       "img": {
         "count": 1,
         "natural_width": 640,
@@ -2303,7 +2318,7 @@
           "content_type": "image/jpeg"
         }
       },
-      "measured_at": "2026-09-30T06:48:48Z"
+      "measured_at": "2026-09-30T11:36:46Z"
     },
     "U3#7": {
       "control": {
@@ -2315,12 +2330,12 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/response?to_state=closed&reason=",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/response?to_state=in_progress&reason=",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276",
           "status": 200
         }
       ],
@@ -2328,11 +2343,11 @@
         "kind": "server_change",
         "get": "/api/dsm/events/{event}",
         "field": "response_state",
-        "before": "in_progress",
-        "after": "closed"
+        "before": "acknowledged",
+        "after": "in_progress"
       },
-      "text_after": "← 목록\n#446155 현장 상세\n새로고침\n기준 06:48 · 0초 전 · 표기 시간대: Asia/Seoul\n지금 할 일 (역할별)\n상주 경찰관\n119\n시설\n당직\n상주 경찰관\n대피 유도 후 상황실 보고\n■ 심각\n화재\n종결\n실제\n발생 6일 전 (2026-09-23 07:14:52)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n지도에서 보기\n무엇을 보나\n스냅샷\n이 이벤트에는 스냅샷 참조가 없습니다. 잠시 뒤 다시 보십시오.\n구간 티켓\n저장된 구간이 없습니다. 보관 기간 안이면 잠시 뒤 다시 보십시오. — 이 사건은 영상이 저장되지 않았습니다. 현장에서 본 것을 아래 「현장 회신」에 적어 주십시오.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n이 카메라 7일\n시드 카메라 (검수용) · 지난 7일 · 1건 (이 페이지 · 최대 20)\n이 사건\n심각\n화재\n6일 전 · 조치 중\n현장 조치\n미처리\n접수\n조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t6건\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n되돌리기 → 조치 시작\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:48:58Z"
+      "text_after": "← 목록\n#587276 현장 상세\n새로고침\n기준 11:36 · 0초 전 · 표기 시간대: Asia/Seoul\n지금 할 일 (역할별)\n상주 경찰관\n119\n시설\n당직\n상주 경찰관\n대피 유도 후 상황실 보고\n■ 심각\n화재\n조치 중\n실제\n발생 8분 전 (2026-09-30 11:28:26)\n어디로 가나\n카메라\n훈련 씨앗 카메라(gxdrill)\n\n\n설치 주소\n미입력 — 조회 대상 아님 (좌표 없음)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 이벤트에는 스냅샷 참조가 없습니다. 잠시 뒤 다시 보십시오.\n구간 티켓\n저장된 구간이 없습니다. 보관 기간 안이면 잠시 뒤 다시 보십시오. — 이 사건은 영상이 저장되지 않았습니다. 현장에서 본 것을 아래 「현장 회신」에 적어 주십시오.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n이 카메라 7일\n훈련 씨앗 카메라(gxdrill) · 지난 7일 · 4건 (이 페이지 · 최대 20)\n이 사건\n심각\n화재\n8분 전 · 접수\n#587277\n경계\n침수\n11분 전 · 미처리\n#587278\n심각\n화재\n14분 전 · 미처리\n#587279\n경계\n침수\n17분 전 · 미처리\n현장 조치\n미처리\n접수\n3조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t아직\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n종결하기\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\n아직 회신이 없습니다. 현장의 회신을 기다리십시오.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:36:55Z"
     },
     "U3#9": {
       "control": {
@@ -2344,12 +2359,12 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/field-reply?kind=note&text=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29+%E2%80%94+%ED%98%84%EC%9E%A5+%EC%9D%B4%EC%83%81+%EC%97%86%EC%9D%8C",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/field-reply?kind=note&text=P-118+%EA%B2%8C%EC%9D%B4%ED%8A%B8+%EC%B8%A1%EC%A0%95+%28%EC%9E%90%EB%8F%99%29+%E2%80%94+%ED%98%84%EC%9E%A5+%EC%9D%B4%EC%83%81+%EC%97%86%EC%9D%8C",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/field-replies",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/field-replies",
           "status": 200
         }
       ],
@@ -2357,18 +2372,18 @@
         "kind": "server_change",
         "get": "/api/dsm/events/{event}/field-replies",
         "field": "replies",
-        "before": 6,
-        "after": 7
+        "before": 0,
+        "after": 1
       },
-      "text_after": "← 목록\n#446155 현장 상세\n새로고침\n기준 06:48 · 4초 전 · 표기 시간대: Asia/Seoul\n지금 할 일 (역할별)\n상주 경찰관\n119\n시설\n당직\n상주 경찰관\n대피 유도 후 상황실 보고\n■ 심각\n화재\n종결\n실제\n발생 6일 전 (2026-09-23 07:14:52)\n어디로 가나\n카메라\n시드 카메라 (검수용)\n\n\n설치 주소\n경기도 안양시 만안구 안양천서로 100 (시드 카메라)\n\n\n좌표\n없음\n지도에서 보기\n무엇을 보나\n스냅샷\n이 이벤트에는 스냅샷 참조가 없습니다. 잠시 뒤 다시 보십시오.\n구간 티켓\n저장된 구간이 없습니다. 보관 기간 안이면 잠시 뒤 다시 보십시오. — 이 사건은 영상이 저장되지 않았습니다. 현장에서 본 것을 아래 「현장 회신」에 적어 주십시오.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n이 카메라 7일\n시드 카메라 (검수용) · 지난 7일 · 1건 (이 페이지 · 최대 20)\n이 사건\n심각\n화재\n6일 전 · 종결\n현장 조치\n미처리\n접수\n조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t7건\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n되돌리기 → 조치 시작\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:49:08Z"
+      "text_after": "← 목록\n#587276 현장 상세\n새로고침\n기준 11:36 · 4초 전 · 표기 시간대: Asia/Seoul\n지금 할 일 (역할별)\n상주 경찰관\n119\n시설\n당직\n상주 경찰관\n대피 유도 후 상황실 보고\n■ 심각\n화재\n조치 중\n실제\n발생 8분 전 (2026-09-30 11:28:26)\n어디로 가나\n카메라\n훈련 씨앗 카메라(gxdrill)\n\n\n설치 주소\n미입력 — 조회 대상 아님 (좌표 없음)\n\n\n좌표\n없음\n무엇을 보나\n스냅샷\n이 이벤트에는 스냅샷 참조가 없습니다. 잠시 뒤 다시 보십시오.\n구간 티켓\n저장된 구간이 없습니다. 보관 기간 안이면 잠시 뒤 다시 보십시오. — 이 사건은 영상이 저장되지 않았습니다. 현장에서 본 것을 아래 「현장 회신」에 적어 주십시오.\n요청은 성공했고 보여 줄 것이 0건입니다. 새 자료가 생기면 이 자리에 나타납니다.\n이 카메라 7일\n훈련 씨앗 카메라(gxdrill) · 지난 7일 · 4건 (이 페이지 · 최대 20)\n이 사건\n심각\n화재\n8분 전 · 조치 중\n#587277\n경계\n침수\n11분 전 · 미처리\n#587278\n심각\n화재\n14분 전 · 미처리\n#587279\n경계\n침수\n17분 전 · 미처리\n현장 조치\n미처리\n접수\n3조치 중\n4종결\n도착\t아직\n사진\t아직\n한 줄\t1건\n오탐 사유\t아직\n지원 요청\t아직\n조치 완료\t아직\n종결하기\n도착 보고\n지원 요청\n조치 완료\n현장 사진 — 한 장 올리기\n사진 올리기\n선택입니다 — 안 올려도 다음으로 갑니다.\n현장 회신 — 본 것을 한 줄로\n회신 보내기\ngxseed_u1_operator · P-118 게이트 측정 (자동) — 현장 이상 없음\n오탐 — 가 보니 아무것도 없음\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:37:05Z"
     },
     "U3#14": {
       "control": {
         "found": false,
         "why": "이 도구가 누를 자리를 선언하지 않았다 — 정본: 없음 — 구간 티켓은 계약 11조 잠김"
       },
-      "measured_at": "2026-09-30T06:49:08Z"
+      "measured_at": "2026-09-30T11:37:05Z"
     },
     "U3#16": {
       "control": {
@@ -2379,13 +2394,13 @@
           {
             "kind": "fill",
             "placeholder": "22:00",
-            "wrote": "21:47",
+            "wrote": "21:48",
             "was": "21:47"
           },
           {
             "kind": "fill",
             "placeholder": "07:00",
-            "wrote": "06:13",
+            "wrote": "06:14",
             "was": "06:13"
           }
         ]
@@ -2393,7 +2408,7 @@
       "calls": [
         {
           "method": "PUT",
-          "url": "http://gx-nginx-e:8500/api/dsm/me/notify-prefs?quiet_start=21%3A47&quiet_end=06%3A13&zone_ids=&channels=",
+          "url": "http://gx-nginx-e:8500/api/dsm/me/notify-prefs?quiet_start=21%3A48&quiet_end=06%3A14&zone_ids=&channels=",
           "status": 200
         },
         {
@@ -2407,16 +2422,16 @@
         "get": "/api/dsm/me/notify-prefs",
         "field": "quiet_start",
         "before": "21:47",
-        "after": "21:47"
+        "after": "21:48"
       },
-      "text_after": "← 목록\n내 알림 설정\n새로고침\n기준 06:49 · 0초 전 · 표기 시간대: Asia/Seoul\n이 기기 알림\n이 기기\n켤 수 없음\n\n\n등록된 기기\n1대\n이 브라우저는 서비스워커를 지원하지 않습니다.\nWin32 · 2026. 9. 17.\n끄기\n언제는 안 받나\n부터\n까지\n둘 다 비우면 차단 없음입니다. 한쪽만 채울 수는 없습니다 — 언제부터 언제까지 안 받는지 정해지지 않기 때문입니다.\n어디를 맡고 있나\n비우면 전 구역입니다. (구역을 이름으로 고르는 칸은 다음 파에서 옵니다 — 지금은 번호로 받습니다.)\n어느 채널로 받나\n메일\n이 기기 알림(웹푸시)\n빈 칸은 「좁히지 않는다」는 뜻입니다 — 이 설정은 규칙이 고른 수신을 좁히기만 하고 넓히지 못합니다.\n설정 저장\n저장됨 — 서버에 반영된 값으로 다시 읽었습니다.\n저장됨 — 이미 정한 값이 있습니다.\n관리자 승인 필요\n승인 상태\n승인 필요 없음\n이 설정의 항목은 본인이 정합니다 — 관리자 승인이 필요한 항목이 지금은 없습니다.\n버전 알 수 없음",
+      "text_after": "← 목록\n내 알림 설정\n새로고침\n기준 11:37 · 0초 전 · 표기 시간대: Asia/Seoul\n이 기기 알림\n이 기기\n켤 수 없음\n\n\n등록된 기기\n1대\n이 브라우저는 서비스워커를 지원하지 않습니다.\nWin32 · 2026. 9. 17.\n끄기\n언제는 안 받나\n부터\n까지\n둘 다 비우면 차단 없음입니다. 한쪽만 채울 수는 없습니다 — 언제부터 언제까지 안 받는지 정해지지 않기 때문입니다.\n어디를 맡고 있나\n비우면 전 구역입니다. (구역을 이름으로 고르는 칸은 다음 파에서 옵니다 — 지금은 번호로 받습니다.)\n어느 채널로 받나\n메일\n이 기기 알림(웹푸시)\n빈 칸은 「좁히지 않는다」는 뜻입니다 — 이 설정은 규칙이 고른 수신을 좁히기만 하고 넓히지 못합니다.\n설정 저장\n저장됨 — 서버에 반영된 값으로 다시 읽었습니다.\n저장됨 — 이미 정한 값이 있습니다.\n관리자 승인 필요\n승인 상태\n승인 필요 없음\n이 설정의 항목은 본인이 정합니다 — 관리자 승인이 필요한 항목이 지금은 없습니다.\n버전 알 수 없음",
       "revert": {
         "kind": "redo",
         "clicked": true,
         "restored": true,
         "after": "21:47"
       },
-      "measured_at": "2026-09-30T06:49:24Z"
+      "measured_at": "2026-09-30T11:37:22Z"
     },
     "U3#19": {
       "control": {
@@ -2438,7 +2453,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -2453,22 +2468,22 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/MobileInbox-DIfrooVb.js",
+          "url": "http://gx-nginx-e:8500/assets/MobileInbox-BmBqS_Ev.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/deliveryOutcome-wVJGzI9B.js",
+          "url": "http://gx-nginx-e:8500/assets/deliveryOutcome-BFgeU9WV.js",
           "status": 200
         },
         {
@@ -2478,12 +2493,12 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/MobileShell-khNL_Ekk.js",
+          "url": "http://gx-nginx-e:8500/assets/MobileShell-BxwE5S3u.js",
           "status": 200
         },
         {
@@ -2540,8 +2555,8 @@
         "after": 20,
         "on_screen": true
       },
-      "text_after": "내게 온 이벤트\n새로고침\n기준 06:49 · 0초 전 · 표기 시간대: Asia/Seoul\n내게 온 이벤트\n처리함 13\n내게 온 것만\n기관 전체\n지금 보는 것: 나에게 간 발송만 (서버가 골라 줍니다).\n22\n사건 10건 · 발송 기록 22건 (이 페이지 · 최대 50)\n발송 실패 0건\n■ 심각\n훈련\n화재\n#446155\n시드 카메라 (검수용)\n종결\n발생 6일 전 (07:14)\n이 사건에 나간 발송 7건\n이 사건의 알림 7건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 06:48\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 11:19\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 07:57\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 05:34\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 09:14\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 00:35\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 07:52\n■ 심각\n훈련\n화재\n#342448\n[훈련] 안양천 시험카메라 1\n종결\n발생 8일 전 (08:42)\n이 사건에 나간 발송 3건\n이 사건의 알림 3건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 06:29\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 13:14\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 08:55\n▲ 경계\n훈련\n카메라 군집 두절\n#326411\n[훈련] 안양천 시험카메라 1\n조치 중\n발생 9일 전 (03:30)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 14:44\n■ 심각\n시드(검수용)\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 26일 전 (13:14)\n이 사건에 나간 발송 4건\n이 사건의 알림 3건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 08:01\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 06:14\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 12:54\n✓ 웹푸시\n발송 08:15\n■ 심각\n시드(검수용)\n화재\n#4802\n시드 카메라 (검수용)\n종결\n발생 26일 전 (13:02)\n이 사건에 나간 발송 2건\n이 사건의 알림 2건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 13:29\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 13:29\n▲ 경계\n시드(검수용)\n침입\n#4808\n시드 카메라 (검수용)\n종결\n발생 26일 전 (12:44)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 06:53\n▲ 경계\n시드(검수용)\n침입\n#4809\n시드 카메라 (검수용)\n종결\n발생 26일 전 (12:41)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 12:23\n● 주의\n시드(검수용)\n사람\n#4813\n시드 카메라 (검수용)\n종결\n발생 26일 전 (12:29)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 04:23\n● 주의\n시드(검수용)\n사람\n#4814\n시드 카메라 (검수용)\n종결\n발생 26일 전 (12:26)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 01:18\n▲ 경계\n시드(검수용)\n저장 용량 임계\n#4819\n시드 카메라 (검수용)\n종결\n발생 26일 전 (12:11)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 01:35\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:49:28Z"
+      "text_after": "내게 온 이벤트\n새로고침\n기준 11:37 · 0초 전 · 표기 시간대: Asia/Seoul\n내게 온 이벤트\n처리함 15\n내게 온 것만\n기관 전체\n지금 보는 것: 나에게 간 발송만 (서버가 골라 줍니다).\n23\n사건 11건 · 발송 기록 23건 (이 페이지 · 최대 50)\n발송 실패 0건\n■ 심각\n훈련\n화재\n#587276\n훈련 씨앗 카메라(gxdrill)\n조치 중\n발생 8분 전 (11:28)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 11:36\n■ 심각\n훈련\n화재\n#446155\n시드 카메라 (검수용)\n조치 중\n발생 7일 전 (07:14)\n이 사건에 나간 발송 7건\n이 사건의 알림 7건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 06:48\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 11:19\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 07:57\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 05:34\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 09:14\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 00:35\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 07:52\n■ 심각\n훈련\n화재\n#342448\n[훈련] 안양천 시험카메라 1\n종결\n발생 9일 전 (08:42)\n이 사건에 나간 발송 3건\n이 사건의 알림 3건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 06:29\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 13:14\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 08:55\n▲ 경계\n훈련\n카메라 군집 두절\n#326411\n[훈련] 안양천 시험카메라 1\n조치 중\n발생 9일 전 (03:30)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 14:44\n■ 심각\n시드(검수용)\n화재\n#4798\n시드 카메라 (검수용)\n종결\n발생 26일 전 (13:14)\n이 사건에 나간 발송 4건\n이 사건의 알림 3건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 08:01\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 06:14\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 12:54\n✓ 웹푸시\n발송 08:15\n■ 심각\n시드(검수용)\n화재\n#4802\n시드 카메라 (검수용)\n종결\n발생 26일 전 (13:02)\n이 사건에 나간 발송 2건\n이 사건의 알림 2건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 13:29\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 13:29\n▲ 경계\n시드(검수용)\n침입\n#4808\n시드 카메라 (검수용)\n종결\n발생 26일 전 (12:44)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 06:53\n▲ 경계\n시드(검수용)\n침입\n#4809\n시드 카메라 (검수용)\n종결\n발생 26일 전 (12:41)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 12:23\n● 주의\n시드(검수용)\n사람\n#4813\n시드 카메라 (검수용)\n종결\n발생 26일 전 (12:29)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 04:23\n● 주의\n시드(검수용)\n사람\n#4814\n시드 카메라 (검수용)\n종결\n발생 26일 전 (12:26)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 01:18\n▲ 경계\n시드(검수용)\n저장 용량 임계\n#4819\n시드 카메라 (검수용)\n종결\n발생 26일 전 (12:11)\n이 사건에 나간 발송 1건\n이 사건의 알림 1건이 기록에만 남았습니다 — 관리자에게 알림 채널 등록을 요청하십시오.\n▲ 기록만\n사람에게 안 갔습니다 — 기록에만 남았습니다 01:35\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:37:25Z"
     },
     "U4#1": {
       "control": {
@@ -2553,7 +2568,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events?limit=50&response_state=occurred&since=2026-09-23T06:49:40.056Z&until=2026-09-30T06:49:40.056Z",
+          "url": "http://gx-nginx-e:8500/api/dsm/events?limit=50&response_state=occurred&since=2026-09-23T11:37:37.107Z&until=2026-09-30T11:37:37.107Z",
           "status": 200
         }
       ],
@@ -2565,8 +2580,8 @@
         "after": 20,
         "on_screen": true
       },
-      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n이벤트 목록\n갱신 06:49 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 — 사건을 판정한 뒤 다시 보십시오 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 2026-09-23 06:49 ~ 2026-09-30 06:49\n열기\n찾기\n찾기\n지금 걸린 조건\n기간 2026-09-23 06:49 ~ 2026-09-30 06:49\n조건 모두 지우기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n걸어 놓은 조건 1개에 맞는 사건이 0건입니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 사건이 없는 것이 아니라 조건이 겹쳤을 수 있습니다 — 위의 「조건 모두 지우기」를 눌러 보십시오.\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:49:45Z"
+      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n이벤트 목록\n갱신 11:37 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 3건 · 오탐 0건 / 판정 1건 · 오탐률 0.0% · 미판정 3건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 2026-09-23 11:37 ~ 2026-09-30 11:37\n열기\n찾기\n찾기\n지금 걸린 조건\n기간 2026-09-23 11:37 ~ 2026-09-30 11:37\n조건 모두 지우기\n등급 전체\n유형 전체\n새로고침\n3건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t상급 보고\t발생\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:25 · 12분 전\n■ 심각\t\n화재\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:22 · 15분 전\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:19 · 18분 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:37:42Z"
     },
     "U4#5": {
       "control": {
@@ -2588,8 +2603,8 @@
         "field": "403",
         "after": "403"
       },
-      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n보고서\n사건 보고서\n사건 한 건을 1쪽으로 — 개요 · 대응 시계 네 시각 · 판정 · 조치 이력.\n만들기\n이번 달 우리 센터\n이번 달 1일부터 지금까지 — 등급별 · 유형별 · 카메라별 · 시간대별 · 대응 진행.\n만들기\n상급기관 제출용\n상급 보고로 체크한 사건만 모아 — 제출 요약과 사건 목록.\n만들기\n상황보고서 (별지 제1호)\n지자체·상급기관에 올리는 재난 상황보고 서식입니다 — 보고 구분 · 재난 종류 · 발생 장소 · 피해 현황 · 조치 사항(시각 순) · 향후 계획 · 첨부.\nDOCX 내려받기\n이 서식은 실행 기록에 줄을 남기지 않습니다 — 누를 때마다 사건 기록에서 바로 만들어 내려줍니다. 아래 표에 안 보이는 것이 정상입니다.\n특이사항 (자동본에 사람이 더하는 한 줄)\n보고서를 만들지 못했습니다.\n읽기 전용 계정입니다 — 이 작업은 수행할 수 없습니다.\n다시 로그인하면 보일 수 있습니다. 그래도 안 보이면 관리자에게 역할을 요청하십시오.\n다시 시도\n실행 기록\n새로고침\n서식\t만든 쪽\t결과\t시각\t집계 구간 / 사건\t파일\n사건 보고서\t사람\t생성됨\t06:48 · 1분 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t11:19 · 19시간 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:57 · 22시간 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:33 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t09:14 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t00:34 · 3일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:52 · 6일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:29 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t13:13 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t14:43 · 8일 전\t사건 326411\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t08:12 · 9일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:07 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:58 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:50 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t04:45 · 10일 전\t사건 4798\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:52 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:10 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:40 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n이번 달 우리 센터\t자동\t생성됨\t03:47 · 12일 전\t17:00 · 29일 전 ~ 03:47 · 12일 전\t\nDOCX\nPDF\n영상 제공 연간 통계\n연도\n요청\n0\n승인\n0\n제공(마스킹본)\n0\n월별 요청: 10월 0 · 11월 0 · 12월 0 · 1월 0 · 2월 0 · 3월 0 · 4월 0 · 5월 0 · 6월 0 · 7월 0 · 8월 0 · 9월 0\n개인영상정보 제공 대장\n요청 접수\n상태\t내용\t누르기\n대장에 기록이 없습니다. 위에서 열람 요청을 등록하십시오\n재난관리평가·감사 자료 묶음\n기간\n~\n묶음 내려받기(ZIP)\n정본은 DOCX 입니다(한글에서 열립니다). PDF 는 같은 글자를 찍은 병행본입니다. 파일은 누를 때마다 서버가 이 실행 기록에서 다시 만듭니다 — 「특이사항」을 고치면 다음 내려받기부터 반영됩니다.\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:49:55Z"
+      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n보고서\n사건 보고서\n사건 한 건을 1쪽으로 — 개요 · 대응 시계 네 시각 · 판정 · 조치 이력.\n만들기\n이번 달 우리 센터\n이번 달 1일부터 지금까지 — 등급별 · 유형별 · 카메라별 · 시간대별 · 대응 진행.\n만들기\n상급기관 제출용\n상급 보고로 체크한 사건만 모아 — 제출 요약과 사건 목록.\n만들기\n상황보고서 (별지 제1호)\n지자체·상급기관에 올리는 재난 상황보고 서식입니다 — 보고 구분 · 재난 종류 · 발생 장소 · 피해 현황 · 조치 사항(시각 순) · 향후 계획 · 첨부.\nDOCX 내려받기\n이 서식은 실행 기록에 줄을 남기지 않습니다 — 누를 때마다 사건 기록에서 바로 만들어 내려줍니다. 아래 표에 안 보이는 것이 정상입니다.\n특이사항 (자동본에 사람이 더하는 한 줄)\n보고서를 만들지 못했습니다.\n읽기 전용 계정입니다 — 이 작업은 수행할 수 없습니다.\n다시 로그인하면 보일 수 있습니다. 그래도 안 보이면 관리자에게 역할을 요청하십시오.\n다시 시도\n실행 기록\n새로고침\n서식\t만든 쪽\t결과\t시각\t집계 구간 / 사건\t파일\n사건 보고서\t사람\t생성됨\t11:36 · 1분 전\t사건 587276\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:48 · 4시간 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t11:19 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:57 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:33 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t09:14 · 2일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t00:34 · 3일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:52 · 7일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:29 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t13:13 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t14:43 · 8일 전\t사건 326411\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t08:12 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:07 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:58 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:50 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t04:45 · 10일 전\t사건 4798\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:52 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:10 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:40 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n이번 달 우리 센터\t자동\t생성됨\t03:47 · 12일 전\t17:00 · 29일 전 ~ 03:47 · 12일 전\t\nDOCX\nPDF\n영상 제공 연간 통계\n연도\n요청\n0\n승인\n0\n제공(마스킹본)\n0\n월별 요청: 10월 0 · 11월 0 · 12월 0 · 1월 0 · 2월 0 · 3월 0 · 4월 0 · 5월 0 · 6월 0 · 7월 0 · 8월 0 · 9월 0\n개인영상정보 제공 대장\n요청 접수\n상태\t내용\t누르기\n대장에 기록이 없습니다. 위에서 열람 요청을 등록하십시오\n재난관리평가·감사 자료 묶음\n기간\n~\n묶음 내려받기(ZIP)\n정본은 DOCX 입니다(한글에서 열립니다). PDF 는 같은 글자를 찍은 병행본입니다. 파일은 누를 때마다 서버가 이 실행 기록에서 다시 만듭니다 — 「특이사항」을 고치면 다음 내려받기부터 반영됩니다.\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:37:52Z"
     },
     "U4#7": {
       "control": {
@@ -2601,7 +2616,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/reports/runs/22.docx",
+          "url": "http://gx-nginx-e:8500/api/dsm/reports/runs/23.docx",
           "status": 200
         }
       ],
@@ -2613,8 +2628,8 @@
         "after": 1,
         "on_screen": true
       },
-      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n보고서\n사건 보고서\n사건 한 건을 1쪽으로 — 개요 · 대응 시계 네 시각 · 판정 · 조치 이력.\n만들기\n이번 달 우리 센터\n이번 달 1일부터 지금까지 — 등급별 · 유형별 · 카메라별 · 시간대별 · 대응 진행.\n만들기\n상급기관 제출용\n상급 보고로 체크한 사건만 모아 — 제출 요약과 사건 목록.\n만들기\n상황보고서 (별지 제1호)\n지자체·상급기관에 올리는 재난 상황보고 서식입니다 — 보고 구분 · 재난 종류 · 발생 장소 · 피해 현황 · 조치 사항(시각 순) · 향후 계획 · 첨부.\nDOCX 내려받기\n이 서식은 실행 기록에 줄을 남기지 않습니다 — 누를 때마다 사건 기록에서 바로 만들어 내려줍니다. 아래 표에 안 보이는 것이 정상입니다.\n특이사항 (자동본에 사람이 더하는 한 줄)\n내려받았습니다\n실행 22 · DOCX · 38,974바이트\n실행 기록\n새로고침\n서식\t만든 쪽\t결과\t시각\t집계 구간 / 사건\t파일\n사건 보고서\t사람\t생성됨\t06:48 · 1분 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t11:19 · 19시간 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:57 · 22시간 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:33 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t09:14 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t00:34 · 3일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:52 · 6일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:29 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t13:13 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t14:43 · 8일 전\t사건 326411\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t08:12 · 9일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:07 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:58 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:50 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t04:45 · 10일 전\t사건 4798\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:52 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:10 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:40 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n이번 달 우리 센터\t자동\t생성됨\t03:47 · 12일 전\t17:00 · 29일 전 ~ 03:47 · 12일 전\t\nDOCX\nPDF\n영상 제공 연간 통계\n연도\n요청\n0\n승인\n0\n제공(마스킹본)\n0\n월별 요청: 10월 0 · 11월 0 · 12월 0 · 1월 0 · 2월 0 · 3월 0 · 4월 0 · 5월 0 · 6월 0 · 7월 0 · 8월 0 · 9월 0\n개인영상정보 제공 대장\n요청 접수\n상태\t내용\t누르기\n대장에 기록이 없습니다. 위에서 열람 요청을 등록하십시오\n재난관리평가·감사 자료 묶음\n기간\n~\n묶음 내려받기(ZIP)\n정본은 DOCX 입니다(한글에서 열립니다). PDF 는 같은 글자를 찍은 병행본입니다. 파일은 누를 때마다 서버가 이 실행 기록에서 다시 만듭니다 — 「특이사항」을 고치면 다음 내려받기부터 반영됩니다.\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:50:04Z"
+      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n보고서\n사건 보고서\n사건 한 건을 1쪽으로 — 개요 · 대응 시계 네 시각 · 판정 · 조치 이력.\n만들기\n이번 달 우리 센터\n이번 달 1일부터 지금까지 — 등급별 · 유형별 · 카메라별 · 시간대별 · 대응 진행.\n만들기\n상급기관 제출용\n상급 보고로 체크한 사건만 모아 — 제출 요약과 사건 목록.\n만들기\n상황보고서 (별지 제1호)\n지자체·상급기관에 올리는 재난 상황보고 서식입니다 — 보고 구분 · 재난 종류 · 발생 장소 · 피해 현황 · 조치 사항(시각 순) · 향후 계획 · 첨부.\nDOCX 내려받기\n이 서식은 실행 기록에 줄을 남기지 않습니다 — 누를 때마다 사건 기록에서 바로 만들어 내려줍니다. 아래 표에 안 보이는 것이 정상입니다.\n특이사항 (자동본에 사람이 더하는 한 줄)\n내려받았습니다\n실행 23 · DOCX · 38,816바이트\n실행 기록\n새로고침\n서식\t만든 쪽\t결과\t시각\t집계 구간 / 사건\t파일\n사건 보고서\t사람\t생성됨\t11:36 · 1분 전\t사건 587276\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:48 · 4시간 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t11:19 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:57 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:33 · 1일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t09:14 · 2일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t00:34 · 3일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t07:52 · 7일 전\t사건 446155\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:29 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t13:13 · 7일 전\t사건 342448\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t14:43 · 8일 전\t사건 326411\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t08:12 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t06:07 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:58 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:50 · 10일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t04:45 · 10일 전\t사건 4798\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:52 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t10:10 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n사건 보고서\t사람\t생성됨\t05:40 · 11일 전\t사건 —\t\nDOCX\nPDF\n\n이번 달 우리 센터\t자동\t생성됨\t03:47 · 12일 전\t17:00 · 29일 전 ~ 03:47 · 12일 전\t\nDOCX\nPDF\n영상 제공 연간 통계\n연도\n요청\n0\n승인\n0\n제공(마스킹본)\n0\n월별 요청: 10월 0 · 11월 0 · 12월 0 · 1월 0 · 2월 0 · 3월 0 · 4월 0 · 5월 0 · 6월 0 · 7월 0 · 8월 0 · 9월 0\n개인영상정보 제공 대장\n요청 접수\n상태\t내용\t누르기\n대장에 기록이 없습니다. 위에서 열람 요청을 등록하십시오\n재난관리평가·감사 자료 묶음\n기간\n~\n묶음 내려받기(ZIP)\n정본은 DOCX 입니다(한글에서 열립니다). PDF 는 같은 글자를 찍은 병행본입니다. 파일은 누를 때마다 서버가 이 실행 기록에서 다시 만듭니다 — 「특이사항」을 고치면 다음 내려받기부터 반영됩니다.\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:38:01Z"
     },
     "U4#8": {
       "control": {
@@ -2626,7 +2641,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events?limit=50&response_state=occurred&since=2026-09-23T06:50:07.970Z&until=2026-09-30T06:50:07.970Z",
+          "url": "http://gx-nginx-e:8500/api/dsm/events?limit=50&response_state=occurred&since=2026-09-23T11:38:04.903Z&until=2026-09-30T11:38:04.903Z",
           "status": 200
         }
       ],
@@ -2638,15 +2653,15 @@
         "after": 20,
         "on_screen": true
       },
-      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n이벤트 목록\n갱신 06:50 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 0건 · 오탐 0건 / 판정 0건 · 아직 판정한 이벤트가 없습니다 — 사건을 판정한 뒤 다시 보십시오 · 미판정 0건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 2026-09-23 06:50 ~ 2026-09-30 06:50\n열기\n찾기\n찾기\n지금 걸린 조건\n기간 2026-09-23 06:50 ~ 2026-09-30 06:50\n조건 모두 지우기\n등급 전체\n유형 전체\n새로고침\n0건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n걸어 놓은 조건 1개에 맞는 사건이 0건입니다.\n요청은 성공했고 보여 줄 것이 0건입니다. 사건이 없는 것이 아니라 조건이 겹쳤을 수 있습니다 — 위의 「조건 모두 지우기」를 눌러 보십시오.\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:50:13Z"
+      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n이벤트 목록\n갱신 11:38 · 0초 전\n요약 한 줄 · 지난 12시간\n미처리 3건 · 오탐 0건 / 판정 1건 · 오탐률 0.0% · 미판정 3건\n전체 보기\n미처리 보기\n지난 12시간 보기\n내 담당 보기\n시스템 보기\n기간\n전체 기간\n오늘\n7일\n30일\n직접 입력\n보고 있는 기간: 2026-09-23 11:38 ~ 2026-09-30 11:38\n열기\n찾기\n찾기\n지금 걸린 조건\n기간 2026-09-23 11:38 ~ 2026-09-30 11:38\n조건 모두 지우기\n등급 전체\n유형 전체\n새로고침\n3건\n?\n미처리 — 아직 아무도 손대지 않은 것\n처리 단계가 「미처리」인 이벤트만 서버가 골라 준 목록입니다. 화면이 받아서 거른 것이 아니므로, 아래 표에 안 보이는 오래된 건도 빠지지 않습니다.\n등급\t유형\t카메라\t처리 단계\t판정\t재판정\t상급 보고\t발생\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:25 · 12분 전\n■ 심각\t\n화재\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:22 · 15분 전\n▲ 경계\t\n침수\n훈련\n\t훈련 씨앗 카메라(gxdrill)\t미처리\t\n미판정\n\t\n실제\n오탐\n\t\n보고 표시\n\t11:19 · 18분 전\n1\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:38:10Z"
     },
     "U4#9": {
       "control": {
         "found": false,
         "why": "이 도구가 누를 자리를 선언하지 않았다 — 정본: 추출은 계약 11조 설계 잠금(영구) — 이 행은 ●가 될 수 없다 · 화면에 단추가 없다(EventDetail.tsx:345 는 표의 이름칸 「영상 구간」이다)"
       },
-      "measured_at": "2026-09-30T06:50:13Z"
+      "measured_at": "2026-09-30T11:38:10Z"
     },
     "U4#11": {
       "control": {
@@ -2668,7 +2683,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -2683,27 +2698,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/CameraAddress-DEjXLsEv.js",
+          "url": "http://gx-nginx-e:8500/assets/CameraAddress-UzTb2Sfk.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BtQCU8jX.js",
+          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BzSUQiH-.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-DpRWR1qS.js",
+          "url": "http://gx-nginx-e:8500/assets/index-CT2i0afX.js",
           "status": 200
         },
         {
@@ -2771,12 +2786,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/cameras/address-gap",
         "field": "total",
-        "before": 30,
-        "after": 30,
+        "before": 32,
+        "after": 32,
         "on_screen": true
       },
-      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n카메라 주소 채우기 — 한 대씩\n카메라\n30대\n\t\n주소 있음\n25대\n\t\n주소 없음\n5대\n등록된 카메라 — 행마다 한 대씩 채웁니다\n카메라\t지금 주소\t도로명주소\t\nH40\t주소 없음\t\t\n이 한 대 채우기\n\nNBP-DR-P2\t주소 없음\t\t\n이 한 대 채우기\n\n정문카메라\t주소 있음\t\t\n이 한 대 채우기\n\n안양천서로카메라\t주소 있음\t\t\n이 한 대 채우기\n\n3층복도\t주소 있음\t\t\n이 한 대 채우기\n\nGD-150Q\t주소 있음\t\t\n이 한 대 채우기\n1\n이 표는 켜져 있는 카메라만 보여 줍니다. 꺼 둔 카메라는 여기 없습니다 — 「없다」가 아니라 「이 표의 밖」입니다.\n아직 없는 카메라를 이름으로 넣습니다\n카메라 이름\n도로명주소\n현장 표현\n표 먼저 보기\n채우기\n표를 본 뒤에만 채웁니다. 틀린 주소는 없는 주소보다 나쁩니다 — 알림에 그대로 나가 사람을 엉뚱한 곳으로 보냅니다.\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:50:17Z"
+      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n카메라 주소 채우기 — 한 대씩\n카메라\n32대\n\t\n주소 있음\n27대\n\t\n주소 없음\n5대\n등록된 카메라 — 행마다 한 대씩 채웁니다\n카메라\t지금 주소\t도로명주소\t\nNBP-DR-P2\t주소 없음\t\t\n이 한 대 채우기\n\n안양천서로카메라\t주소 있음\t\t\n이 한 대 채우기\n\nGD-150Q\t주소 있음\t\t\n이 한 대 채우기\n\nH40\t주소 있음\t\t\n이 한 대 채우기\n1\n이 표는 켜져 있는 카메라만 보여 줍니다. 꺼 둔 카메라는 여기 없습니다 — 「없다」가 아니라 「이 표의 밖」입니다.\n아직 없는 카메라를 이름으로 넣습니다\n카메라 이름\n도로명주소\n현장 표현\n표 먼저 보기\n채우기\n표를 본 뒤에만 채웁니다. 틀린 주소는 없는 주소보다 나쁩니다 — 알림에 그대로 나가 사람을 엉뚱한 곳으로 보냅니다.\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:38:14Z"
     },
     "U4#15": {
       "control": {
@@ -2788,7 +2803,7 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/upper-report?",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/upper-report?",
           "status": 403
         }
       ],
@@ -2798,8 +2813,8 @@
         "field": "403",
         "after": "403"
       },
-      "text_after": "읽기 전용 계정입니다 — 이 작업은 수행할 수 없습니다.\n이 자료는 지금 계정의 권한으로 고칠 수 없습니다.\n/api/dsm/events/446155/upper-report?\n닫기\n무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n← 목록\n이벤트 상세 #446155\n알림 보내기\n등급\t■ 심각\t유형\t\n화재\n훈련\n\t처리 단계\t종결\n판정\t실제\t발생 시각\t2026-09-23 07:14:52 · 6일 전\t마지막 관측\t—\n카메라\t시드 카메라 (검수용)\t확신도\t—\t좌표\t—\n주소\t경기도 안양시 만안구 안양천서로 100 (시드 카메라) (조회됨)\t영상 구간\t이 카메라는 사건 구간 저장이 아직 켜지지 않았습니다 (관리자 → 카메라 등록)\n판정자\t#110 · 07:51 · 6일 전\t판정 사유\t게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n총 167시간 33분\n종결됨 · 시계 멈춤\n한 번 닫혔다가 다시 열렸습니다 (6회).\n종결 시각은 마지막 종결이고, 아직 안 닫혔으면 비어 있습니다. 사건을 종결하면 채워집니다.\n① 발생\t2026-09-23 07:14:52\t② 접수 확인\t2026-09-23 07:52:48 · +37분 56초\t③ 조치 착수\t2026-09-23 07:54:27 · +39분 35초\n④ 종결\t2026-09-30 06:48:52 · +167시간 33분\n전이 15건 — 2026-09-23 07:52:48 미처리→접수 (gxseed_u1_operator) · 2026-09-23 07:54:27 접수→조치 중 (gxprobe_q) · 2026-09-23 10:05:31 조치 중→종결 (gxseed_u1_operator) · 2026-09-27 00:34:29 종결→조치 중 (gxseed_u2_manager) · 2026-09-27 00:35:19 조치 중→종결 (gxseed_u1_operator) · 2026-09-27 00:36:54 종결→조치 중 (gxprobe_q) · 2026-09-28 09:15:16 조치 중→종결 (gxseed_u1_operator) · 2026-09-28 09:16:47 종결→조치 중 (gxprobe_q) · 2026-09-29 05:34:24 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 05:36:25 종결→조치 중 (gxprobe_q) · 2026-09-29 07:58:01 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 08:00:01 종결→조치 중 (gxprobe_q) · 2026-09-29 11:19:59 조치 중→종결 (gxseed_u1_operator) · 2026-09-29 11:23:02 종결→조치 중 (gxprobe_q) · 2026-09-30 06:48:52 조치 중→종결 (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n등급 재판정\n■ 심각\n▲ 경계\n● 주의\n현재 등급\n■ 심각\n다음 단계\n되돌리기 (사유 필수)\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n상급기관 제출\n제출로 표시\n아직 제출 표시 없음\n상급기관 제출 표시를 바꾸지 못했습니다.\n읽기 전용 계정입니다 — 이 작업은 수행할 수 없습니다.\n연결을 확인한 뒤 다시 시도해 주십시오.\n다시 시도\n이 체크는 「우리가 상급기관에 이 사건을 알렸다」는 표시일 뿐입니다 — 아래 「발송 이력」(알림 발송)과는 다른 사실입니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x7e4c731a8\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x7e4c73131\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x7e4c73196\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 06:48:36 · 1분 전\t\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x793e5c441\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x793e5ccb6\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:43 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 11:19:42 · 19시간 전\t\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x7db858805\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:45 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 07:57:44 · 22시간 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-29 05:34:09 · 1일 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .in",
-      "measured_at": "2026-09-30T06:50:26Z"
+      "text_after": "읽기 전용 계정입니다 — 이 작업은 수행할 수 없습니다.\n이 자료는 지금 계정의 권한으로 고칠 수 없습니다.\n/api/dsm/events/587276/upper-report?\n닫기\n무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n← 목록\n이벤트 상세 #587276\n알림 보내기\n등급\t■ 심각\t유형\t\n화재\n훈련\n\t처리 단계\t조치 중\n판정\t실제\t발생 시각\t2026-09-30 11:28:26 · 9분 전\t마지막 관측\t—\n카메라\t훈련 씨앗 카메라(gxdrill)\t확신도\t—\t좌표\t—\n주소\t— (조회 대상 아님 (좌표 없음))\t영상 구간\t이 카메라는 사건 구간 저장이 아직 켜지지 않았습니다 (관리자 → 카메라 등록)\n판정자\t#110 · 11:35 · 2분 전\t판정 사유\t게이트 측정 (자동)\n대응 시계 — 미처리 → 접수 → 조치 중 → 종결\n이 이벤트에는 저장된 스냅샷 경로가 없습니다 — 못 가져온 것이 아니라 없습니다.\n9분 56초\n8분 넘음 · 폴백 문턱\n① 발생\t2026-09-30 11:28:26\t② 접수 확인\t2026-09-30 11:33:57 · +5분 32초\t③ 조치 착수\t2026-09-30 11:36:49 · +8분 23초\n④ 종결\t아직 열려 있습니다\n전이 2건 — 2026-09-30 11:33:57 미처리→접수 (gxprobe_q) · 2026-09-30 11:36:49 접수→조치 중 (gxseed_u1_operator)\n네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는 칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.\n처리 단계 · 진위 판정\n미처리\n접수\n3조치 중\n4종결\n진위 판정\n실제로 판정\n오탐으로 판정\n현재 판정\n실제\n등급 재판정\n■ 심각\n▲ 경계\n● 주의\n현재 등급\n■ 심각\n다음 단계\n종결하기\n처리 단계가 바뀐 기록은 남습니다. 다만 이 화면에서는 아직 볼 수 없어 지금 단계와 다음에 할 수 있는 것만 보여 줍니다 — 지난 기록은 여기 없습니다.\n상급기관 제출\n제출로 표시\n아직 제출 표시 없음\n상급기관 제출 표시를 바꾸지 못했습니다.\n읽기 전용 계정입니다 — 이 작업은 수행할 수 없습니다.\n연결을 확인한 뒤 다시 시도해 주십시오.\n다시 시도\n이 체크는 「우리가 상급기관에 이 사건을 알렸다」는 표시일 뿐입니다 — 아래 「발송 이력」(알림 발송)과는 다른 사실입니다.\n발송 이력\n채널\t수신자\t결과\t발송 시각\t실패 사유\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 1/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x72520d13d\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 1/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x72520d180\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x72520d039\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x72520d030\n웹훅\t(수신자 없음)\t실패\t—\tattempts_exhausted · 5/5회 · 마지막 응답 없음 · ConnectionError: HTTPSConnectionPool(host='p118-gate.invalid', port=443): Max retries exceeded with url: /p118 (Caused by NameResolutionError(\"<urllib3.connection.HTTPSConnection object at 0x72520d2ba\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:34 · 1분 전\t\n이메일\t(수신자 없음)\t실패\t—\t실발송 차단 — 로그 어댑터로 떨어뜨렸다. .invalid 는 실발송 허용 도메인 목록 밖이다. 허용된 것: gmail.com\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:34 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:33 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:33 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:33 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:33 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:33 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:33 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:33 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:33 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:33 · 1분 전\t\n기록만\t(수신자 없음)\t기록만 · 사람에게 안 갔습니다\t2026-09-30 11:36:33 · 1분 전\t\n심각 등급은 발생 후 30초 안에 발송 기록이 남아야 합니다.\n위 발생 시각과 아래 발송 시각을 대조하십시오. 실패한 발송에는 시각이 찍히지 않습니다 — 그래야 30초를 지킨 것처럼 보이는 일이 없습니다.\n표기 시간대: Asia/Seoul\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:38:23Z"
     },
     "U4#16": {
       "control": {
@@ -2821,7 +2836,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -2836,27 +2851,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/AuditLog-Z8Z7S7MU.js",
+          "url": "http://gx-nginx-e:8500/assets/AuditLog-DNKa3tM2.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BtQCU8jX.js",
+          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BzSUQiH-.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/time-BpHrHWFw.js",
+          "url": "http://gx-nginx-e:8500/assets/time-B-woIbqL.js",
           "status": 200
         },
         {
@@ -2919,12 +2934,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/audit?page_size=1",
         "field": "total",
-        "before": 5028,
-        "after": 5028,
+        "before": 5110,
+        "after": 5110,
         "on_screen": true
       },
-      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n감사 기록\n기간\n행위자 번호\n행위 종류\n전부\n상급 보고\n설정 변경\n새로고침\n표 내려받기\n첫 응답\n0.2초 · 60초 안\n전체 5028건 · 1/101쪽\n해시 체인\n이어짐 50 · 끊김 0\n대상\n사건 가리킴 2 · 살아 있음 2 · 삭제된 사건 0 · 열리지 않은 번호 0 · 사라짐 0 · 확인 못 함 0\n시각\t결과\t행위\t대상\t행위자\t사유\t채널\tHTTP\t해시 체인\n06:49 · 1분 전\t성공\tfield_reply\t\n사건 #446155\n\tgxseed_u1_operator (110)\t[FIELD:note] 게이트 측정 (자동) — 현장 이상 없음\t현장 회신\t\t\n체인 이어짐\n301c9b356ecb → f6be0d5e9d2c\n\n06:48 · 1분 전\t성공\tdsm.events.response\t\n사건 #446155\n\tgxseed_u1_operator (110)\t대응 진행 조치 중 → 종결\t대응 처리\t200\t\n체인 이어짐\n5b8c90e808db → 301c9b356ecb\n\n06:48 · 2분 전\t성공\tread:notify-rules\t—\tgxseed_u2_manager (108)\t관제 관리자 역할(알림 규칙 읽기 전용 — )\t설정 변경\t200\t\n체인 이어짐\ndc58e7f36edc → 5b8c90e808db\n\n06:48 · 2분 전\t성공\tread:notify-rules\t—\tgxseed_u2_manager (108)\t관제 관리자 역할(알림 규칙 읽기 전용 — )\t설정 변경\t200\t\n체인 이어짐\ne61f75142a45 → dc58e7f36edc\n\n06:48 · 2분 전\t성공\tread:notify-rules\t—\tgxseed_u2_manager (108)\t관제 관리자 역할(알림 규칙 읽기 전용 — )\t설정 변경\t200\t\n체인 이어짐\n642efe4376b7 → e61f75142a45\n\n06:42 · 7분 전\t막힘\tread:inbound-api-key:scopes:987654321\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\nd57a86c87472 → 1aec057b8a29\n\n06:42 · 7분 전\t막힘\tread:system:storage\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n29c02d26f0c7 → d57a86c87472\n\n06:42 · 7분 전\t막힘\tread:system:requests\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n1c691afe510b → 29c02d26f0c7\n\n06:42 · 7분 전\t막힘\tread:system:backup-receipts\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\ne2c15a0080d0 → 1c691afe510b\n\n06:42 · 7분 전\t막힘\tread:zones\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\ne241c951f433 → e2c15a0080d0\n\n06:42 · 7분 전\t막힘\tread:thresholds\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n355ef3ac20c9 → e241c951f433\n\n06:42 · 7분 전\t막힘\tread:notify-rules\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n000c862bd382 → 355ef3ac20c9\n\n06:42 · 7분 전\t막힘\tread:system:backup-declaration\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n10d9abe986e4 → 000c862bd382\n\n06:40 · 10분 전\t막힘\tread:inbound-api-key:scopes:987654321\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n07a8a229bd42 → c34d1763315e\n\n06:40 · 10분 전\t막힘\tread:system:storage\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\ne899799f5543 → 07a8a229bd42\n\n06:40 · 10분 전\t막힘\tread:system:requests\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n836b51301389 → e899799f5543\n\n06:40 · 10분 전\t막힘\tread:system:backup-receipts\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n1cf36c015746 → 836b51301389\n\n06:40 · 10분 전\t막힘\tread:zones\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n049c14774c39 → 1cf36c015746\n\n06:40 · 10분 전\t막힘\tread:thresholds\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n3d09e502916e → 049c14774c39\n\n06:40 · 10분 전\t막힘\tread:notify-rules\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\ndfb08c01f00a → 3d09e502916e\n\n06:40 · 10분 전\t막힘\tread:system:backup-declaration\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\nd0dfaf047edc → dfb08c01f00a\n\n06:37 · 12분 전\t막힘\tread:inbound-api-key:scopes:987654321\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\ne2d32ffbca66 → 44b378b10974\n\n06:37 · 13분 전\t막힘\tread:system:storage\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\ndd73cc9c1720 → e2d32ffbca66\n\n06:37 · 13분 전\t막힘\tread:system:requests\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n2ca4041d30c8 → dd73cc9c1720\n\n06:37 · 13분 전\t막힘\tread:system:backup-receipts\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n193e2f788fea → 2ca4041d30c8\n\n06:37 · 13분 전\t막힘\tread:zones\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\ncb0434175f10 → 193e2f788fea\n\n06:37 · 13분 전\t막힘\tread:thresholds\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n487086f21ecb → cb0434175f10\n\n06:37 · 13분 전\t막힘\tread:notify-rules\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n892d9f847642 → 487086f21ecb\n\n06:37 · 13분 전\t막힘\tread:system:backup-declaration\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n8ae107cc1b87 → 892d9f847642\n\n06:27 · 23분 전\t막힘\tread:inbound-api-key:scopes:987654321\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\na5c038c0d6ba → 06970ef522b8\n\n06:27 · 23분 전\t막힘\tread:system:storage\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\nb4f47eee288c → a5c038c0d6ba\n\n06:27 · 23분 전\t막힘\tread:system:requests\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\nebde9e4313fb → b4f47eee288c\n\n06:27 · 23분 전\t막힘\tread:system:backup-receipts\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\naba656956780 → ebde9e4313fb\n\n06:27 · 23분 전\t막힘\tread:zones\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n9cd043227d3f → aba656956780\n\n06:27 · 23분 전\t막힘\tread:thresholds\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\nb5366d75fe07 → 9cd043227d3f\n\n06:27 · 23분 전\t막힘\tread:notify-rules\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\nab05a0f821e3 → b5366d75fe07\n\n06:27 · 23분 전\t막힘\tread:system:backup-declaration\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\nd1522eca9d62 → ab05a0f821e3\n\n06:11 · 38분 전\t막힘\tread:inbound-api-key:scopes:987654321\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n8d4448495554 → a58ea952c1fc\n\n06:11 · 38분 전\t막힘\tread:system:storage\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\ne89c12ccdec4 → 8d4448495554\n\n06:11 · 38분 전\t막힘\tread:system:requests\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n8e07f4b68153 → e89c12ccdec4\n\n06:11 · 38분 전\t막힘\tread:system:backup-receipts\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n0fcd658f1b47 → 8e07f4b68153\n\n06:11 · 38분 전\t막힘\tread:zones\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\n901be16dae11 → 0fcd658f1b47\n\n06:11 · 38분 전\t막힘\tread:thresholds\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\ne9167a26b295 → 901be16dae11\n\n06:11 · 38분 전\t막힘\tread:notify-rules\t—\tgxseed_u4_official (109)\t설정 변경 권한이 없는 계정\t설정 변경\t403\t\n체인 이어짐\nb630d096d2b4 → e9167a26b295\n\n06:11 · 38분 전\t막힘\tread:system:backup-d",
-      "measured_at": "2026-09-30T06:50:29Z"
+      "text_after": "무슨 일 있었나\n보고서\n처리 기록\n열람·삭제 청구\n감사 기록\n기간\n행위자 번호\n행위 종류\n전부\n상급 보고\n설정 변경\n새로고침\n표 내려받기\n첫 응답\n0.2초 · 60초 안\n전체 5110건 · 1/103쪽\n해시 체인\n이어짐 50 · 끊김 0\n대상\n사건 가리킴 6 · 살아 있음 6 · 삭제된 사건 0 · 열리지 않은 번호 0 · 사라짐 0 · 확인 못 함 0\n시각\t결과\t행위\t대상\t행위자\t사유\t채널\tHTTP\t해시 체인\n11:37 · 1분 전\t성공\tfield_reply\t\n사건 #587276\n\tgxseed_u1_operator (110)\t[FIELD:note] 게이트 측정 (자동) — 현장 이상 없음\t현장 회신\t\t\n체인 이어짐\n7528a46792ca → ced17257430c\n\n11:36 · 1분 전\t성공\tdsm.events.response\t\n사건 #587276\n\tgxseed_u1_operator (110)\t대응 진행 접수 → 조치 중\t대응 처리\t200\t\n체인 이어짐\n18c0c6f041e5 → 7528a46792ca\n\n11:36 · 2분 전\t성공\tread:notify-rules\t—\tgxseed_u2_manager (108)\t관제 관리자 역할(알림 규칙 읽기 전용 — )\t설정 변경\t200\t\n체인 이어짐\n54b0fb491f3b → 18c0c6f041e5\n\n11:36 · 2분 전\t성공\tread:notify-rules\t—\tgxseed_u2_manager (108)\t관제 관리자 역할(알림 규칙 읽기 전용 — )\t설정 변경\t200\t\n체인 이어짐\nd661c586a939 → 54b0fb491f3b\n\n11:36 · 2분 전\t성공\tread:notify-rules\t—\tgxseed_u2_manager (108)\t관제 관리자 역할(알림 규칙 읽기 전용 — )\t설정 변경\t200\t\n체인 이어짐\n91e90aeebd9f → d661c586a939\n\n11:33 · 4분 전\t성공\tdsm.events.response\t\n사건 #587276\n\tgxprobe_q (112)\t\t대응 처리\t200\t\n체인 이어짐\n1383a92756ac → 91e90aeebd9f\n\n11:33 · 4분 전\t성공\tread:api_keys\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n39dba7f920a9 → 1383a92756ac\n\n11:33 · 4분 전\t성공\twrite:inbound_api_key:issue:p118-gate\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\nfa177f0ca0ba → 39dba7f920a9\n\n11:33 · 4분 전\t성공\tread:api_keys\t—\tgxprobe_q (112)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n0a2e2d9e6b6c → fa177f0ca0ba\n\n11:30 · 7분 전\t성공\tread:system:backup-declaration\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\nec2b3ab843f1 → 0a2e2d9e6b6c\n\n11:30 · 7분 전\t성공\tread:system:storage\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n45e53280cf32 → ec2b3ab843f1\n\n11:30 · 7분 전\t성공\tread:system:backup-receipts\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\nf76b7d650ed1 → 45e53280cf32\n\n11:30 · 7분 전\t성공\tread:system:requests\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\nff5b6b56aeb5 → f76b7d650ed1\n\n11:30 · 7분 전\t성공\tread:notify-rules\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n9775b1e04e96 → ff5b6b56aeb5\n\n07:09 · 4시간 전\t성공\twrite:inbound_api_key:revoke:126\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\ncb50a04c5fdf → 9775b1e04e96\n\n07:09 · 4시간 전\t성공\twrite:inbound_api_key:issue:onb-U6-140950\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\ncecf9fca51db → cb50a04c5fdf\n\n07:08 · 4시간 전\t성공\tread:system:storage\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n98da3a2ad02e → cecf9fca51db\n\n07:08 · 4시간 전\t성공\tread:system:backup-receipts\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n74838427d9dc → 98da3a2ad02e\n\n07:08 · 4시간 전\t성공\tread:system:backup-declaration\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n177d1dda6220 → 74838427d9dc\n\n07:08 · 4시간 전\t성공\tread:system:requests\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\ndedb52ab6517 → 177d1dda6220\n\n07:08 · 4시간 전\t성공\tread:system:requests\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\nf5248577c4d7 → dedb52ab6517\n\n07:08 · 4시간 전\t성공\twrite:system:restart-request\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n5d314cd6fb60 → f5248577c4d7\n\n07:08 · 4시간 전\t성공\tread:system:backup-declaration\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n33720413f9a6 → 5d314cd6fb60\n\n07:08 · 4시간 전\t성공\tread:system:backup-receipts\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n06a54001978a → 33720413f9a6\n\n07:08 · 4시간 전\t성공\tread:system:requests\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n22acd39f9693 → 06a54001978a\n\n07:08 · 4시간 전\t성공\tread:system:storage\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\nd095fe337819 → 22acd39f9693\n\n07:08 · 4시간 전\t성공\tread:notify-rules\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n762b3c4dd6f5 → d095fe337819\n\n07:08 · 4시간 전\t성공\tread:notify-rules\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n6ac818c27e5e → 762b3c4dd6f5\n\n07:08 · 4시간 전\t성공\tdsm.notify.save_rule_guarded:9\t—\tgxseed_u5_sysop (115)\t알림 규칙 저장 — critical/fire_user · 저장 뒤 심각 수신자 13명\t알림 발송\t200\t\n체인 이어짐\n9717b2a0d74f → 6ac818c27e5e\n\n07:08 · 4시간 전\t성공\tdsm.notify.save_rule:9\t—\tgxseed_u5_sysop (115)\t알림 규칙 수정 — critical/fire_user/* 채널 log\t알림 발송\t200\t\n체인 이어짐\na613e6cc509c → 9717b2a0d74f\n\n07:08 · 4시간 전\t성공\twrite:notify-rules:critical:fire_user\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n5b138b12bf33 → a613e6cc509c\n\n07:07 · 4시간 전\t성공\tread:notify-rules\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n30cac8d85dbf → 5b138b12bf33\n\n07:07 · 4시간 전\t성공\tread:notify-rules\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\ncc04a8d7ec78 → 30cac8d85dbf\n\n07:07 · 4시간 전\t성공\tdsm.notify.save_rule_guarded:9\t—\tgxseed_u5_sysop (115)\t알림 규칙 저장 — critical/fire_user · 저장 뒤 심각 수신자 3명\t알림 발송\t200\t\n체인 이어짐\n7d44255428e5 → cc04a8d7ec78\n\n07:07 · 4시간 전\t성공\tdsm.notify.save_rule:9\t—\tgxseed_u5_sysop (115)\t알림 규칙 수정 — critical/fire_user/* 채널 log\t알림 발송\t200\t\n체인 이어짐\nd8f93569df1c → 7d44255428e5\n\n07:07 · 4시간 전\t성공\twrite:notify-rules:critical:fire_user\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n831e4ea790ca → d8f93569df1c\n\n07:07 · 4시간 전\t성공\tread:notify-rules\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\n44897add87d8 → 831e4ea790ca\n\n07:05 · 4시간 전\t성공\twrite:people:create:gxprobe_onb_20260930T065228\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\nde8fac48775d → 44897add87d8\n\n07:05 · 4시간 전\t성공\tread:system:storage\t—\tgxseed_u5_sysop (115)\t테넌트 운영 역할\t설정 변경\t200\t\n체인 이어짐\nb9005c8ca38c → de8fac48775d\n\n06:59 · 4시간 전\t성공\tfield_reply\t\n사건 #587273\n\tgxseed_u1_operator (110)\t[FIELD:note] V 단독 셋째 술어 실측 13:59:06 — 현장 이상 없음\t현장 회신\t\t\n체인 이어짐\n9981a441dac3 → b9005c8ca38c\n\n06:58 · 4시간 전\t성공\tdsm.events.response\t\n사건 #587273\n\tgxseed_u1_operator (110)\t대응 진행 미처리 → 접수\t대응 처리\t200\t\n체인 이어짐\nbe95a251e177 → 9981a441dac3\n\n06:56 · 4시간 전\t성공\tread:notify-rules\t—\tgxseed_u2_manager (108)\t관제 관리자 역할(알림 규칙 읽기 전용 — )\t설정 변경\t200\t\n체인 이어짐\n53b413f06ea9 → be95a251e177\n\n06:56 · 4시간 전\t성공\tseverity:set:587272\t—\tgxseed_u2_manager (108)\t등급 재판정\t사건 행위\t200\t\n체인 이어짐\n134f960f33f4 → 53b413f06ea9\n\n06:55 · 4시간 전\t성공\tseverity:set:587272\t—\tgxseed_u2_manager (108)\t등급 재판정\t사건 행위\t200\t\n체인 이어짐\n0fcbab824f89 → 134f960f33f4\n\n06:51 · 4시간 전\t성공\tdsm.events.response\t\n사건 #446155\n\tgxprobe_q (112)\t\t대응 처리\t200\t\n체인 이어짐\ne7645d355afd → 0fcbab",
+      "measured_at": "2026-09-30T11:38:26Z"
     },
     "U5#1": {
       "control": {
@@ -2935,13 +2950,13 @@
           {
             "kind": "fill_label",
             "label": "아이디",
-            "wrote": "gxprobe-u51-20260930154704",
+            "wrote": "gxprobe-u51-20260930203502",
             "was": ""
           },
           {
             "kind": "fill_label",
             "label": "이메일",
-            "wrote": "gxprobe-u51-20260930154704@example.invalid",
+            "wrote": "gxprobe-u51-20260930203502@example.invalid",
             "was": ""
           },
           {
@@ -2961,7 +2976,7 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/settings/people/create?username=gxprobe-u51-20260930154704&email=gxprobe-u51-20260930154704%40example.invalid&password=REDACTED-자격은-증거에-적지-않는다&group_id=4&display_name=",
+          "url": "http://gx-nginx-e:8500/api/dsm/settings/people/create?username=gxprobe-u51-20260930203502&email=gxprobe-u51-20260930203502%40example.invalid&password=REDACTED-자격은-증거에-적지-않는다&group_id=4&display_name=",
           "status": 200
         }
       ],
@@ -2969,11 +2984,11 @@
         "kind": "server_change",
         "get": "/api/dsm/audit?page_size=1",
         "field": "total",
-        "before": 5028,
-        "after": 5029
+        "before": 5110,
+        "after": 5111
       },
-      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n사람·역할 — 계정 만들기 · 비활성화\n이 화면은 관리자 역할만 지납니다. 비밀번호는 만들 때 한 번만 입력하고, 서버 응답에는 담겨 오지 않습니다.\n계정 만들기\n아이디\n이메일\n비밀번호\n소속(테넌트) ID\n표시 이름\n계정 만들기\n만들었습니다 — 사용자 번호 243 · gxprobe-u51-20260930154704\n감사 #461083\n계정 비활성화\n행을 지우지 않습니다 — 로그인만 막습니다. 이미 발급된 토큰도 이 순간부터 거절됩니다(dj-core 의 기존 인증 경로).\n비활성화\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:50:50Z"
+      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n사람·역할 — 계정 만들기 · 비활성화\n이 화면은 관리자 역할만 지납니다. 비밀번호는 만들 때 한 번만 입력하고, 서버 응답에는 담겨 오지 않습니다.\n계정 만들기\n아이디\n이메일\n비밀번호\n소속(테넌트) ID\n표시 이름\n계정 만들기\n만들었습니다 — 사용자 번호 245 · gxprobe-u51-20260930203502\n감사 #465561\n계정 비활성화\n행을 지우지 않습니다 — 로그인만 막습니다. 이미 발급된 토큰도 이 순간부터 거절됩니다(dj-core 의 기존 인증 경로).\n비활성화\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:38:45Z"
     },
     "U5#2": {
       "control": {
@@ -2995,7 +3010,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -3010,7 +3025,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
@@ -3088,47 +3103,126 @@
         "on_screen": true
       },
       "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\nRoles Management\n역할 관리 · 관리자 전용 화면입니다. 아래 표기는 아직 영문입니다.\n서버에는 역할 16개가 있습니다.\n아래 표가 비어 있다면 그것은 「없다」가 아니라 이 화면이 목록을 그리지 못한 것입니다. 새로 고쳐도 같으면 관리자에게 알려 주십시오.\nRoles Management\nAdd New Role\nDelete\n5\n10\n25\n50\n1 - 16 of 16\nSetting\n|\n\t\nRole Name\n\t\nId\n\t\nCode\n\t\nRelated Users\n\t\nRole Menu\n\n\n\tUser\t3\tuser\t, anyang, ghbongs, GX, Kim, V 온보딩 실측 씨앗\t\nMenu Permission\nSelect User\n\n\n\tSuperUser\t1\tsuperuser\t한혁, 심재철, 이대규, Admin, Gaion, kimchi, kimchi1, Man, ...\t\nMenu Permission\nSelect User\n\n\n\ttenant_admin_4\t28\ttenant_admin_4\tGX\t\nMenu Permission\nSelect User\n\n\n\tdelivery admin\t22\tdelivery_admin\tAnyang01, Anyang02, anyang03, anyang04, anyang05, ...\t\nMenu Permission\nSelect User\n\n\n\tSurveillance Operation\t18\tsurveillance_operation\t\t\nMenu Permission\nSelect User\n\n\n\tSurveillance Order\t17\tsurveillance_order\t\t\nMenu Permission\nSelect User\n\n\n\tfire_admin\t13\tfire_admin\t이대규, 조한혁, fire_user1, [시드] U2 관제팀장/상황실장\t\nMenu Permission\nSelect User\n\n\n\tfire_user\t12\tfire_user\t신규, 이대규, 조한혁, 배송 접수 관리자 01, fire, fire_user1, fire...\t\nMenu Permission\nSelect User\n\n\n\tdrone_robot_admin\t11\tdrone_robot_admin\t한혁, 이대규, dronerobot_user_1, dronerobot_user_3, gai...\t\nMenu Permission\nSelect User\n\n\n\tdrone_robot_user\t10\tdrone_robot_user\tdronerobot_user_2, gaion\t\nMenu Permission\nSelect User\n\n\n\tView Only - Anyang\t9\tview_only_-_anyang\t[시드] 스모크 전용(읽기), anyang_sv, gongju_sv, [시드] U4 재난안...\t\nMenu Permission\nSelect User\n\n\n\tdelivery order\t8\tdelivery_order\tGaion, gongju\t\nMenu Permission\nSelect User\n\n\n\tdelivery operation\t7\tdelivery_operation\t김수용, 윤상문, gongju\t\nMenu Permission\nSelect User\n\n\n\torder_etri\t6\torder\t배송 접수 관리자, [시드] U56 표밖역할(order) 측정용\t\nMenu Permission\nSelect User\n\n\n\toperator_etri\t5\toperator\t배송 운영 관리자, 배송 운영 관리자 01, Operator, oper_geumsan\t\nMenu Permission\nSelect User\n\n\n\tadmin\t4\tadmin\t신규, 한혁, Chi, Huy, Phat, Son, Thanh, Thao, Tuan, [시...\t\nMenu Permission\nSelect User\n1\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:50:53Z"
+      "measured_at": "2026-09-30T11:38:49Z"
     },
     "U5#4": {
       "control": {
-        "found": true,
-        "clicked": true,
-        "name": "이 표대로 적용",
-        "prepared": [
-          {
-            "kind": "button_prepare",
-            "name": "예시 채우기",
-            "gx": null
-          },
-          {
-            "kind": "button_prepare",
-            "name": "표 먼저 보기",
-            "gx": "camera-import-dryrun"
-          }
-        ]
+        "found": false,
+        "why": "「이 표대로 적용」를 화면에서 못 찾았다 (/dsm/cameras/import)"
       },
       "calls": [
         {
-          "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/cameras/import?csv_text=name%2Ccode%2Cip_source%2Caddress%2Cdetail%0A%EC%A0%95%EB%AC%B8%EC%B9%B4%EB%A9%94%EB%9D%BC%2CGATE-01%2Crtsp%3A%2F%2F10.0.0.11%2Fstream%2C%EA%B2%BD%EA%B8%B0%EB%8F%84+%EC%95%88%EC%96%91%EC%8B%9C+%EB%A7%8C%EC%95%88%EA%B5%AC+%EC%95%88%EC%96%91%EB%A1%9C+123%2C%EC%A0%95%EB%AC%B8%0A3%EC%B8%B5%EB%B3%B5%EB%8F%84%2CF3-01%2Crtsp%3A%2F%2F10.0.0.12%2Fstream%2C%EA%B2%BD%EA%B8%B0%EB%8F%84+%EC%95%88%EC%96%91%EC%8B%9C+%EB%A7%8C%EC%95%88%EA%B5%AC+%EC%95%88%EC%96%91%EB%A1%9C+123%2C3%EC%B8%B5+%EB%B3%B5%EB%8F%84&dry_run=false",
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/dsm/cameras/import",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://dapi.kakao.com/v2/maps/sdk.js?appkey=REDACTED-자격은-증거에-적지-않는다&libraries=services,clusterer,drawing,geometry",
+          "status": null
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/assets/router-DVUMBcBr.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/assets/index-DCBePWO_.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/assets/CameraImport-BU7yEglK.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BzSUQiH-.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/assets/index-CzMfV1mW.js",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/assets/logo-full-black-BH8-vGjx.png",
           "status": 200
         },
         {
           "method": "GET",
           "url": "http://gx-nginx-e:8500/api/dsm/cameras/address-gap",
           "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/menu/menus?page_size=10000",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/advanced-table/select-data?model_name=theme&distinct=true",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/dsm/alert-level?limit=1",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/config-management/list-optimized",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/user-groups/gen-schema?group_id=4&raw=false",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/api/user-groups/gen-schema?group_id=4&raw=true",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/fonts/Inter-Variable.ttf",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://gx-nginx-e:8500/Inter/Inter-VariableFont_opsz,wght.ttf",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "url": "http://gx-nginx-e:8500/api/dsm/cameras/import?csv_text=name%2Ccode%2Cip_source%2Caddress%2Cdetail%0A%EC%A0%95%EB%AC%B8%EC%B9%B4%EB%A9%94%EB%9D%BC%2CGATE-01-r0930203502%2Crtsp%3A%2F%2F10.0.0.11%2Fstream%2C%EA%B2%BD%EA%B8%B0%EB%8F%84+%EC%95%88%EC%96%91%EC%8B%9C+%EB%A7%8C%EC%95%88%EA%B5%AC+%EC%95%88%EC%96%91%EB%A1%9C+123%2C%EC%A0%95%EB%AC%B8%0A3%EC%B8%B5%EB%B3%B5%EB%8F%84%2CF3-01-r0930203502%2Crtsp%3A%2F%2F10.0.0.12%2Fstream%2C%EA%B2%BD%EA%B8%B0%EB%8F%84+%EC%95%88%EC%96%91%EC%8B%9C+%EB%A7%8C%EC%95%88%EA%B5%AC+%EC%95%88%EC%96%91%EB%A1%9C+123%2C3%EC%B8%B5+%EB%B3%B5%EB%8F%84&dry_run=true",
+          "status": 200
         }
       ],
-      "state": {
-        "kind": "server_change",
-        "get": "/api/dsm/cameras/pulse",
-        "field": "total",
-        "before": 6,
-        "after": 6
-      },
-      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n카메라 일괄 등록 — 표를 먼저 봅니다\n주소 없는 카메라\n5/ 30대\n「5대」만 보면 그것이 40 중 39인지 400 중 39인지 모릅니다 — 앞은 거의 전부이고 뒤는 10%입니다. 그래서 분모를 함께 냅니다. 지금 채워진 비율 83%.\n카메라는 CSV 파일로 한 번에 등록합니다.\n카메라 주소는 CSV 의 「주소」 칸으로 들어옵니다. 좌표만 있는 카메라는 주소를 자동으로 채울 수 없어 「주소 없음」으로 표시됩니다.\n① CSV 붙여넣기\n예시 채우기\n② 표 먼저 보기 (dry-run)\n적용 완료 — 생성 0 · 수정 1\n새로 만듦\n0\n바뀜\n1\n변화 없음\n1\n못 씀\n0\n행\t이름\t판정\t무엇이 바뀌나\t사유\t주소 조회\n2\t정문카메라\t바뀜\t\ninstall_address: 서울시 강남구 테스트로 1(P-118 자동측정) → 경기도 안양시 만안구 안양로 123\ninstall_address_detail: (없음) → 정문\n\t2개 칸이 바뀝니다.\t—\n3\t3층복도\t변화 없음\t—\t바뀌는 칸이 없습니다.\t—\n1\n이 표는 실제로 저장될 내용 그대로입니다. 표에 없던 일은 일어나지 않습니다.\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:51:06Z"
+      "measured_at": "2026-09-30T11:38:57Z"
     },
     "U5#5": {
       "control": {
@@ -3152,7 +3246,7 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/cameras/15/address?address=%EC%84%9C%EC%9A%B8%EC%8B%9C+%EA%B0%95%EB%82%A8%EA%B5%AC+%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%A1%9C+1%28P-118+%EC%9E%90%EB%8F%99%EC%B8%A1%EC%A0%95%29",
+          "url": "http://gx-nginx-e:8500/api/dsm/cameras/17/address?address=%EC%84%9C%EC%9A%B8%EC%8B%9C+%EA%B0%95%EB%82%A8%EA%B5%AC+%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%A1%9C+1%28P-118+%EC%9E%90%EB%8F%99%EC%B8%A1%EC%A0%95%29",
           "status": 200
         },
         {
@@ -3168,8 +3262,8 @@
         "before": 5,
         "after": 4
       },
-      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n카메라 주소 채우기 — 한 대씩\n카메라\n30대\n\t\n주소 있음\n26대\n\t\n주소 없음\n4대\n등록된 카메라 — 행마다 한 대씩 채웁니다\nH40 — 주소를 채웠습니다\n서울시 강남구 테스트로 1(P-118 자동측정)\n카메라\t지금 주소\t도로명주소\t\nNBP-DR-P2\t주소 없음\t\t\n이 한 대 채우기\n\n정문카메라\t주소 있음\t\t\n이 한 대 채우기\n\n안양천서로카메라\t주소 있음\t\t\n이 한 대 채우기\n\n3층복도\t주소 있음\t\t\n이 한 대 채우기\n\nGD-150Q\t주소 있음\t\t\n이 한 대 채우기\n\nH40\t주소 있음\t\t\n이 한 대 채우기\n1\n이 표는 켜져 있는 카메라만 보여 줍니다. 꺼 둔 카메라는 여기 없습니다 — 「없다」가 아니라 「이 표의 밖」입니다.\n아직 없는 카메라를 이름으로 넣습니다\n카메라 이름\n도로명주소\n현장 표현\n표 먼저 보기\n채우기\n표를 본 뒤에만 채웁니다. 틀린 주소는 없는 주소보다 나쁩니다 — 알림에 그대로 나가 사람을 엉뚱한 곳으로 보냅니다.\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:51:17Z"
+      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n카메라 주소 채우기 — 한 대씩\n카메라\n32대\n\t\n주소 있음\n28대\n\t\n주소 없음\n4대\n등록된 카메라 — 행마다 한 대씩 채웁니다\nNBP-DR-P2 — 주소를 채웠습니다\n서울시 강남구 테스트로 1(P-118 자동측정)\n카메라\t지금 주소\t도로명주소\t\n안양천서로카메라\t주소 있음\t\t\n이 한 대 채우기\n\nGD-150Q\t주소 있음\t\t\n이 한 대 채우기\n\nH40\t주소 있음\t\t\n이 한 대 채우기\n\nNBP-DR-P2\t주소 있음\t\t\n이 한 대 채우기\n1\n이 표는 켜져 있는 카메라만 보여 줍니다. 꺼 둔 카메라는 여기 없습니다 — 「없다」가 아니라 「이 표의 밖」입니다.\n아직 없는 카메라를 이름으로 넣습니다\n카메라 이름\n도로명주소\n현장 표현\n표 먼저 보기\n채우기\n표를 본 뒤에만 채웁니다. 틀린 주소는 없는 주소보다 나쁩니다 — 알림에 그대로 나가 사람을 엉뚱한 곳으로 보냅니다.\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:39:08Z"
     },
     "U5#9": {
       "control": {
@@ -3205,7 +3299,7 @@
         "restored": true,
         "after": 9
       },
-      "measured_at": "2026-09-30T06:51:31Z"
+      "measured_at": "2026-09-30T11:39:22Z"
     },
     "U5#10": {
       "control": {
@@ -3241,7 +3335,7 @@
         "restored": true,
         "after": 9
       },
-      "measured_at": "2026-09-30T06:51:46Z"
+      "measured_at": "2026-09-30T11:39:36Z"
     },
     "U5#14": {
       "control": {
@@ -3263,7 +3357,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -3278,27 +3372,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/SystemSettings-CknAznp3.js",
+          "url": "http://gx-nginx-e:8500/assets/SystemSettings-DgO-IYRL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BtQCU8jX.js",
+          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BzSUQiH-.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-DpRWR1qS.js",
+          "url": "http://gx-nginx-e:8500/assets/index-CT2i0afX.js",
           "status": 200
         },
         {
@@ -3385,8 +3479,8 @@
         "after": "waiting",
         "on_screen": true
       },
-      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n보존·백업 설정 — 선언하지 않으면 돌지 않습니다\n보존 일수와 백업은 코드가 정하지 않습니다. 선언한 사람과 환경이 있어야 돌아갑니다. 아래에 빨강 배지가 있으면 그 항목은 아직 아무도 정하지 않았고, 그 상태에서는 파기도 백업도 실행되지 않습니다.\n영상 보관 기간\n보관 기간\t30일\n누가 정했나\t운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 · config/retention_seed.py)\n자동으로 도는가\t매일 자동으로 지웁니다\n백업\n백업 목적지\t/backup\n백업 일정\t매일 05:00 (beat: common.ops_backup_beat)\n백업 보관 기간\t14일\n복구 시험\t주 1회 일요일 06:00 (beat: common.ops_restore_drill_beat)\n누가 정했나\t개발·스테이징 선언 (세종 · config/retention_seed.py)\n어디서 선언하나\tOPS_BACKUP_SCHEDULE_ENABLED · OPS_BACKUP_DIR · OPS_BACKUP_RETENTION_DAYS · OPS_RESTORE_DRILL_ENABLED\n백업 회수증 — 마지막으로 남은 것\n마지막 회수증\t회수증 없음 — 여기서 읽히지 않습니다\n파일\t—\n복구를 판정할 수 있는가\t회수증 없음 — 여기서 읽히지 않습니다\n다음 예정\t주기가 켜져 있습니다 — 다음 예정은 beat 일정이 정합니다.\n찾은 회수증\t0장\n회수증을 한 장도 못 찾았습니다.\n회수증(대조표)을 한 장도 못 찾았습니다 — 백업이 0건이라는 뜻이 아니라 이 자리에서 읽히지 않는다는 뜻입니다. 0 을 초록으로 적지 않습니다.\n저장 용량\n상한\t\n50 GB\n상한은 선언값입니다(잰 값이 아닙니다) — GX_STORAGE_CAPACITY_GB 에 사람이 적은 수입니다. 사용량은 객체저장 버킷 합계라 상한과 같은 그릇을 재지 않습니다. 그래서 이 %는 「디스크가 몇 % 찼나」가 아니라 「선언한 상한 대비 객체저장이 얼마나 쓰는가」입니다.\n\n쓰는 중\t0.0015 GB\n사용률\t\n0%\n센 것: 객체저장 버킷 합계\n\n어디서 선언하나\t\nGX_STORAGE_CAPACITY_GB\n환경 선언 — GX_STORAGE_CAPACITY_GB (컨테이너 환경에 적혀 있습니다)\n재시작 요청 — 기록만 남습니다\n이 단추는 서버를 내리지 않습니다. 누가·언제·왜 재시작이 필요하다고 했는지를 기록할 뿐이고, 실제 재시작은 점검 창에서 사람이 합니다. 「눌렀다」와 「일어났다」를 한 칸에 두지 않기 위해서입니다.\n재시작을 요청합니다\n언제\t누가\t사유\t상태\n2026-09-29T11:40:01.488071+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-29T08:16:55.780837+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-29T05:30:14.758630+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-28T09:11:42.135055+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-27T00:30:41.957776+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T10:21:12.252905+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T10:01:00.885796+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T09:42:35.367513+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T09:23:15.158880+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-23T08:11:54.482283+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-23T06:25:14.146505+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-22T13:04:09.209122+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-21T15:07:29.989871+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-20T08:29:15.136507+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-20T05:06:10.101373+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-19T10:30:04.924680+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-19T06:09:40.706007+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:51:49Z"
+      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n보존·백업 설정 — 선언하지 않으면 돌지 않습니다\n보존 일수와 백업은 코드가 정하지 않습니다. 선언한 사람과 환경이 있어야 돌아갑니다. 아래에 빨강 배지가 있으면 그 항목은 아직 아무도 정하지 않았고, 그 상태에서는 파기도 백업도 실행되지 않습니다.\n영상 보관 기간\n보관 기간\t30일\n누가 정했나\t운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 · config/retention_seed.py)\n자동으로 도는가\t매일 자동으로 지웁니다\n백업\n백업 목적지\t/backup\n백업 일정\t매일 05:00 (beat: common.ops_backup_beat)\n백업 보관 기간\t14일\n복구 시험\t주 1회 일요일 08:00 (beat: common.ops_restore_drill_beat)\n누가 정했나\t개발·스테이징 선언 (세종 · config/retention_seed.py)\n어디서 선언하나\tOPS_BACKUP_SCHEDULE_ENABLED · OPS_BACKUP_DIR · OPS_BACKUP_RETENTION_DAYS · OPS_RESTORE_DRILL_ENABLED\n백업 회수증 — 마지막으로 남은 것\n마지막 회수증\t회수증 없음 — 여기서 읽히지 않습니다\n파일\t—\n복구를 판정할 수 있는가\t회수증 없음 — 여기서 읽히지 않습니다\n다음 예정\t주기가 켜져 있습니다 — 다음 예정은 beat 일정이 정합니다.\n찾은 회수증\t0장\n회수증을 한 장도 못 찾았습니다.\n회수증(대조표)을 한 장도 못 찾았습니다 — 백업이 0건이라는 뜻이 아니라 이 자리에서 읽히지 않는다는 뜻입니다. 0 을 초록으로 적지 않습니다.\n저장 용량\n상한\t\n50 GB\n상한은 선언값입니다(잰 값이 아닙니다) — GX_STORAGE_CAPACITY_GB 에 사람이 적은 수입니다. 사용량은 객체저장 버킷 합계라 상한과 같은 그릇을 재지 않습니다. 그래서 이 %는 「디스크가 몇 % 찼나」가 아니라 「선언한 상한 대비 객체저장이 얼마나 쓰는가」입니다.\n\n쓰는 중\t0.0015 GB\n사용률\t\n0%\n센 것: 객체저장 버킷 합계\n\n어디서 선언하나\t\nGX_STORAGE_CAPACITY_GB\n환경 선언 — GX_STORAGE_CAPACITY_GB (컨테이너 환경에 적혀 있습니다)\n재시작 요청 — 기록만 남습니다\n이 단추는 서버를 내리지 않습니다. 누가·언제·왜 재시작이 필요하다고 했는지를 기록할 뿐이고, 실제 재시작은 점검 창에서 사람이 합니다. 「눌렀다」와 「일어났다」를 한 칸에 두지 않기 위해서입니다.\n재시작을 요청합니다\n언제\t누가\t사유\t상태\n2026-09-30T07:08:30.789840+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-29T11:40:01.488071+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-29T08:16:55.780837+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-29T05:30:14.758630+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-28T09:11:42.135055+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-27T00:30:41.957776+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T10:21:12.252905+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T10:01:00.885796+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T09:42:35.367513+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T09:23:15.158880+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-23T08:11:54.482283+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-23T06:25:14.146505+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-22T13:04:09.209122+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-21T15:07:29.989871+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-20T08:29:15.136507+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-20T05:06:10.101373+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-19T10:30:04.924680+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-19T06:09:40.706007+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:39:40Z"
     },
     "U5#15": {
       "control": {
@@ -3408,7 +3502,7 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-vNcOyUrg.js",
+          "url": "http://gx-nginx-e:8500/assets/index-DSK_HYeU.js",
           "status": 200
         },
         {
@@ -3423,27 +3517,27 @@
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-NeQDDufY.js",
+          "url": "http://gx-nginx-e:8500/assets/ConfigDataWrap-Em_K8SjI.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/SystemSettings-CknAznp3.js",
+          "url": "http://gx-nginx-e:8500/assets/SystemSettings-DgO-IYRL.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BtQCU8jX.js",
+          "url": "http://gx-nginx-e:8500/assets/FailureNotice-BzSUQiH-.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/StateBoundary-ByByRVsY.js",
+          "url": "http://gx-nginx-e:8500/assets/StateBoundary-BehFx0Xm.js",
           "status": 200
         },
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/assets/index-DpRWR1qS.js",
+          "url": "http://gx-nginx-e:8500/assets/index-CT2i0afX.js",
           "status": 200
         },
         {
@@ -3530,8 +3624,8 @@
         "after": "waiting",
         "on_screen": true
       },
-      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n보존·백업 설정 — 선언하지 않으면 돌지 않습니다\n보존 일수와 백업은 코드가 정하지 않습니다. 선언한 사람과 환경이 있어야 돌아갑니다. 아래에 빨강 배지가 있으면 그 항목은 아직 아무도 정하지 않았고, 그 상태에서는 파기도 백업도 실행되지 않습니다.\n영상 보관 기간\n보관 기간\t30일\n누가 정했나\t운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 · config/retention_seed.py)\n자동으로 도는가\t매일 자동으로 지웁니다\n백업\n백업 목적지\t/backup\n백업 일정\t매일 05:00 (beat: common.ops_backup_beat)\n백업 보관 기간\t14일\n복구 시험\t주 1회 일요일 06:00 (beat: common.ops_restore_drill_beat)\n누가 정했나\t개발·스테이징 선언 (세종 · config/retention_seed.py)\n어디서 선언하나\tOPS_BACKUP_SCHEDULE_ENABLED · OPS_BACKUP_DIR · OPS_BACKUP_RETENTION_DAYS · OPS_RESTORE_DRILL_ENABLED\n백업 회수증 — 마지막으로 남은 것\n마지막 회수증\t회수증 없음 — 여기서 읽히지 않습니다\n파일\t—\n복구를 판정할 수 있는가\t회수증 없음 — 여기서 읽히지 않습니다\n다음 예정\t주기가 켜져 있습니다 — 다음 예정은 beat 일정이 정합니다.\n찾은 회수증\t0장\n회수증을 한 장도 못 찾았습니다.\n회수증(대조표)을 한 장도 못 찾았습니다 — 백업이 0건이라는 뜻이 아니라 이 자리에서 읽히지 않는다는 뜻입니다. 0 을 초록으로 적지 않습니다.\n저장 용량\n상한\t\n50 GB\n상한은 선언값입니다(잰 값이 아닙니다) — GX_STORAGE_CAPACITY_GB 에 사람이 적은 수입니다. 사용량은 객체저장 버킷 합계라 상한과 같은 그릇을 재지 않습니다. 그래서 이 %는 「디스크가 몇 % 찼나」가 아니라 「선언한 상한 대비 객체저장이 얼마나 쓰는가」입니다.\n\n쓰는 중\t0.0015 GB\n사용률\t\n0%\n센 것: 객체저장 버킷 합계\n\n어디서 선언하나\t\nGX_STORAGE_CAPACITY_GB\n환경 선언 — GX_STORAGE_CAPACITY_GB (컨테이너 환경에 적혀 있습니다)\n재시작 요청 — 기록만 남습니다\n이 단추는 서버를 내리지 않습니다. 누가·언제·왜 재시작이 필요하다고 했는지를 기록할 뿐이고, 실제 재시작은 점검 창에서 사람이 합니다. 「눌렀다」와 「일어났다」를 한 칸에 두지 않기 위해서입니다.\n재시작을 요청합니다\n언제\t누가\t사유\t상태\n2026-09-29T11:40:01.488071+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-29T08:16:55.780837+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-29T05:30:14.758630+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-28T09:11:42.135055+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-27T00:30:41.957776+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T10:21:12.252905+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T10:01:00.885796+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T09:42:35.367513+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T09:23:15.158880+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-23T08:11:54.482283+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-23T06:25:14.146505+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-22T13:04:09.209122+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-21T15:07:29.989871+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-20T08:29:15.136507+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-20T05:06:10.101373+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-19T10:30:04.924680+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-19T06:09:40.706007+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n버전 알 수 없음",
-      "measured_at": "2026-09-30T06:51:53Z"
+      "text_after": "무슨 일 있었나\n카메라 격자\n카메라 등록\n사람\n백업·보존\n이번 달 사용량\n처음이세요\n보존·백업 설정 — 선언하지 않으면 돌지 않습니다\n보존 일수와 백업은 코드가 정하지 않습니다. 선언한 사람과 환경이 있어야 돌아갑니다. 아래에 빨강 배지가 있으면 그 항목은 아직 아무도 정하지 않았고, 그 상태에서는 파기도 백업도 실행되지 않습니다.\n영상 보관 기간\n보관 기간\t30일\n누가 정했나\t운영 설정 VIDEO_RETENTION_DAYS · 개발·스테이징 선언 (세종 · config/retention_seed.py)\n자동으로 도는가\t매일 자동으로 지웁니다\n백업\n백업 목적지\t/backup\n백업 일정\t매일 05:00 (beat: common.ops_backup_beat)\n백업 보관 기간\t14일\n복구 시험\t주 1회 일요일 08:00 (beat: common.ops_restore_drill_beat)\n누가 정했나\t개발·스테이징 선언 (세종 · config/retention_seed.py)\n어디서 선언하나\tOPS_BACKUP_SCHEDULE_ENABLED · OPS_BACKUP_DIR · OPS_BACKUP_RETENTION_DAYS · OPS_RESTORE_DRILL_ENABLED\n백업 회수증 — 마지막으로 남은 것\n마지막 회수증\t회수증 없음 — 여기서 읽히지 않습니다\n파일\t—\n복구를 판정할 수 있는가\t회수증 없음 — 여기서 읽히지 않습니다\n다음 예정\t주기가 켜져 있습니다 — 다음 예정은 beat 일정이 정합니다.\n찾은 회수증\t0장\n회수증을 한 장도 못 찾았습니다.\n회수증(대조표)을 한 장도 못 찾았습니다 — 백업이 0건이라는 뜻이 아니라 이 자리에서 읽히지 않는다는 뜻입니다. 0 을 초록으로 적지 않습니다.\n저장 용량\n상한\t\n50 GB\n상한은 선언값입니다(잰 값이 아닙니다) — GX_STORAGE_CAPACITY_GB 에 사람이 적은 수입니다. 사용량은 객체저장 버킷 합계라 상한과 같은 그릇을 재지 않습니다. 그래서 이 %는 「디스크가 몇 % 찼나」가 아니라 「선언한 상한 대비 객체저장이 얼마나 쓰는가」입니다.\n\n쓰는 중\t0.0015 GB\n사용률\t\n0%\n센 것: 객체저장 버킷 합계\n\n어디서 선언하나\t\nGX_STORAGE_CAPACITY_GB\n환경 선언 — GX_STORAGE_CAPACITY_GB (컨테이너 환경에 적혀 있습니다)\n재시작 요청 — 기록만 남습니다\n이 단추는 서버를 내리지 않습니다. 누가·언제·왜 재시작이 필요하다고 했는지를 기록할 뿐이고, 실제 재시작은 점검 창에서 사람이 합니다. 「눌렀다」와 「일어났다」를 한 칸에 두지 않기 위해서입니다.\n재시작을 요청합니다\n언제\t누가\t사유\t상태\n2026-09-30T07:08:30.789840+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-29T11:40:01.488071+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-29T08:16:55.780837+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-29T05:30:14.758630+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-28T09:11:42.135055+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-27T00:30:41.957776+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T10:21:12.252905+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T10:01:00.885796+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T09:42:35.367513+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-24T09:23:15.158880+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-23T08:11:54.482283+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-23T06:25:14.146505+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-22T13:04:09.209122+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-21T15:07:29.989871+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-20T08:29:15.136507+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-20T05:06:10.101373+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-19T10:30:04.924680+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n2026-09-19T06:09:40.706007+00:00\tgxseed_u5_sysop\tV 온보딩 실측 (자동) — 실행하지 않는다. 기록만 남긴다\t요청됨 — 실행은 점검 창에서\n버전 알 수 없음",
+      "measured_at": "2026-09-30T11:39:43Z"
     },
     "U6#1": {
       "control": {
@@ -3550,12 +3644,12 @@
         "kind": "server_change",
         "get": "/api/dsm/settings/api_keys",
         "field": "inbound",
-        "before": 45,
-        "after": 46,
+        "before": 48,
+        "after": 49,
         "on_screen": true
       },
-      "text_after": "{\"key_id\": 125, \"name\": \"p118-gate\", \"prefix\": \"1hKzzzQP\", \"api_type\": \"GuardianX \\uc7ac\\ub09c \\uc774\\ubca4\\ud2b8 OpenAPI (\\uacc4\\uc57d F-05)\", \"capability\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\u00b7 \\ub2ff\\ub294 \\uc790\\ub9ac 3\\uacf3 \\u2014 GET /api/dsm/cameras/pulse \\u00b7 GET /api/dsm/events \\u00b7 POST /api/dsm/external-events\", \"status\": \"typed\", \"status_label\": \"\\uc0ac\\uc6a9 \\uc911\", \"data_source\": \"",
-      "measured_at": "2026-09-30T06:51:55Z"
+      "text_after": "{\"key_id\": 128, \"name\": \"p118-gate\", \"prefix\": \"6OiKZxle\", \"api_type\": \"GuardianX \\uc7ac\\ub09c \\uc774\\ubca4\\ud2b8 OpenAPI (\\uacc4\\uc57d F-05)\", \"capability\": \"\\uc77d\\uae30 \\uc804\\uc6a9 \\u00b7 \\ub2ff\\ub294 \\uc790\\ub9ac 3\\uacf3 \\u2014 GET /api/dsm/cameras/pulse \\u00b7 GET /api/dsm/events \\u00b7 POST /api/dsm/external-events\", \"status\": \"typed\", \"status_label\": \"\\uc0ac\\uc6a9 \\uc911\", \"data_source\": \"",
+      "measured_at": "2026-09-30T11:39:46Z"
     },
     "U6#2": {
       "control": {
@@ -3578,8 +3672,8 @@
         "after": 5,
         "on_screen": true
       },
-      "text_after": "{\"total\": 5, \"events\": [{\"event_id\": 446155, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-23T07:14:52.859Z\", \"last_seen_at\": null, \"stream_monitor_id\": 119, \"stream_monitor_name\": \"\\uc2dc\\ub4dc \\uce74\\uba54\\ub77c (\\uac80\\uc218\\uc6a9)\", \"lat\": null, \"lng\": null, \"snapshot_path\": \"\", \"response_state\": \"closed\", \"data_source\": \"d",
-      "measured_at": "2026-09-30T06:51:55Z"
+      "text_after": "{\"total\": 5, \"events\": [{\"event_id\": 587276, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-30T11:28:26.153Z\", \"last_seen_at\": null, \"stream_monitor_id\": 9040, \"stream_monitor_name\": \"\\ud6c8\\ub828 \\uc528\\uc557 \\uce74\\uba54\\ub77c(gxdrill)\", \"lat\": null, \"lng\": null, \"snapshot_path\": \"\", \"response_state\": \"in_progress\", \"data_sour",
+      "measured_at": "2026-09-30T11:39:46Z"
     },
     "U6#3": {
       "control": {
@@ -3590,7 +3684,7 @@
       "calls": [
         {
           "method": "GET",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276",
           "status": 200
         }
       ],
@@ -3598,12 +3692,12 @@
         "kind": "server_reflect",
         "get": "/api/dsm/events/{event}",
         "field": "event_id",
-        "before": 446155,
-        "after": 446155,
+        "before": 587276,
+        "after": 587276,
         "on_screen": true
       },
-      "text_after": "{\"event_id\": 446155, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-23T07:14:52.859Z\", \"last_seen_at\": null, \"stream_monitor_id\": 119, \"stream_monitor_name\": \"\\uc2dc\\ub4dc \\uce74\\uba54\\ub77c (\\uac80\\uc218\\uc6a9)\", \"confidence\": null, \"bbox\": null, \"snapshot_path\": \"\", \"clip_path\": null, \"address\": \"\\uacbd\\uae30\\ub3c4 \\uc548\\uc59",
-      "measured_at": "2026-09-30T06:51:56Z"
+      "text_after": "{\"event_id\": 587276, \"event_type\": \"fire\", \"severity\": \"critical\", \"status\": \"confirmed\", \"verdict\": \"confirmed\", \"occurred_at\": \"2026-09-30T11:28:26.153Z\", \"last_seen_at\": null, \"stream_monitor_id\": 9040, \"stream_monitor_name\": \"\\ud6c8\\ub828 \\uc528\\uc557 \\uce74\\uba54\\ub77c(gxdrill)\", \"confidence\": null, \"bbox\": null, \"snapshot_path\": \"\", \"clip_path\": null, \"address\": null, \"address_status\": \"disa",
+      "measured_at": "2026-09-30T11:39:46Z"
     },
     "U6#4": {
       "control": {
@@ -3622,12 +3716,12 @@
         "kind": "server_change",
         "get": "/api/dsm/webhook-subscriptions",
         "field": "total",
-        "before": 8,
-        "after": 9,
+        "before": 11,
+        "after": 12,
         "on_screen": true
       },
-      "text_after": "{\"subscription_id\": 12, \"endpoint_url\": \"https://p118-gate.invalid/p118\", \"signing_key_ref\": \"p118-gate\", \"event_types\": [\"fire\"], \"min_severity\": \"\", \"payload_format\": \"json\", \"is_active\": true, \"last_delivered_at\": null}",
-      "measured_at": "2026-09-30T06:51:56Z"
+      "text_after": "{\"subscription_id\": 15, \"endpoint_url\": \"https://p118-gate.invalid/p118\", \"signing_key_ref\": \"p118-gate\", \"event_types\": [\"fire\"], \"min_severity\": \"\", \"payload_format\": \"json\", \"is_active\": true, \"last_delivered_at\": null}",
+      "measured_at": "2026-09-30T11:39:46Z"
     },
     "U6#9": {
       "control": {
@@ -3638,7 +3732,7 @@
       "calls": [
         {
           "method": "POST",
-          "url": "http://gx-nginx-e:8500/api/dsm/events/446155/response?to_state=in_progress&reason=P-118",
+          "url": "http://gx-nginx-e:8500/api/dsm/events/587276/response?to_state=closed&reason=P-118",
           "status": 200
         }
       ],
@@ -3646,12 +3740,12 @@
         "kind": "server_change",
         "get": "/api/dsm/events/{event}",
         "field": "response_state",
-        "before": "closed",
-        "after": "in_progress",
+        "before": "in_progress",
+        "after": "closed",
         "on_screen": true
       },
-      "text_after": "{\"event_id\": 446155, \"from\": \"closed\", \"to\": \"in_progress\", \"allowed_next\": [\"closed\"], \"audit_id\": 461308}",
-      "measured_at": "2026-09-30T06:51:56Z"
+      "text_after": "{\"event_id\": 587276, \"from\": \"in_progress\", \"to\": \"closed\", \"allowed_next\": [\"in_progress\"], \"audit_id\": 465759}",
+      "measured_at": "2026-09-30T11:39:46Z"
     },
     "U6#12": {
       "control": {
@@ -3673,14 +3767,14 @@
         "after": "401"
       },
       "text_after": "{\"detail\": \"Unauthorized\"}",
-      "measured_at": "2026-09-30T06:51:56Z"
+      "measured_at": "2026-09-30T11:39:46Z"
     },
     "U6#14": {
       "control": {
         "found": false,
         "why": "기계 흐름의 호출 경로가 선언되지 않았다"
       },
-      "measured_at": "2026-09-30T06:51:56Z"
+      "measured_at": "2026-09-30T11:39:46Z"
     },
     "U6#15": {
       "control": {
@@ -3704,7 +3798,7 @@
         "on_screen": true
       },
       "text_after": "{\"status\": \"waiting\", \"detail\": \"\\uc678\\ubd80 \\uc5f0\\uacc4 \\uaddc\\uaca9\\uc744 \\uc544\\uc9c1 \\ubc1b\\uc9c0 \\ubabb\\ud588\\uc2b5\\ub2c8\\ub2e4. \\uc900\\ube44\\ub418\\uba74 \\uc790\\ub3d9\\uc73c\\ub85c \\uc5f0\\uacb0\\ub418\\uba70, \\uadf8\\ub54c\\uae4c\\uc9c0 \\ub2e4\\ub978 \\uae30\\ub2a5\\uc740 \\uadf8\\ub300\\ub85c \\ub3d9\\uc791\\ud569\\ub2c8\\ub2e4.\"}",
-      "measured_at": "2026-09-30T06:51:56Z"
+      "measured_at": "2026-09-30T11:39:46Z"
     }
   }
 }

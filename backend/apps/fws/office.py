@@ -289,7 +289,8 @@ def current_seasons(*, scope) -> dict:
 
 POST_KIND_WATCHPOST = "watchpost"       # 초소
 POST_KIND_PATROL_ZONE = "patrol_zone"   # 순찰 구역
-POST_KINDS = (POST_KIND_WATCHPOST, POST_KIND_PATROL_ZONE)
+POST_KIND_CHECKPOINT = "checkpoint"     # 순찰함(전자순찰함 · F1-02 등록 목록)
+POST_KINDS = (POST_KIND_WATCHPOST, POST_KIND_PATROL_ZONE, POST_KIND_CHECKPOINT)
 
 ACTION_POST_REGISTER = "office.post.register"
 
@@ -374,9 +375,13 @@ def upload_roster(*, scope, csv_text: str) -> dict:
         if not name or not role or not shift_date:
             raise OfficeInputRejected(f"근무표 {i+1}행에 name·role·shift_date 가 없다")
         night_flag = (row.get("night_standby_5min") or "").strip().lower() in _TRUTHY
+        #: P-452 — 담당 초소는 **그날 편성표의 배정**이다. 선택 칸 `post_code`(초소 코드)를
+        #: 그대로 싣는다. 비어 있으면 「미배정」이다 — 지어내지 않는다.
+        post_code = (row.get("post_code") or "").strip()[:MAX_CODE_CHARS]
         entries.append({
             "name": name, "role": role, "shift_date": shift_date,
             "shift_type": shift_type, "night_standby_5min": night_flag,
+            "post_code": post_code,
         })
 
     actor = scope.require_actor()

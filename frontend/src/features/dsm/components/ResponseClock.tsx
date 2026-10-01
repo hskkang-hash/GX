@@ -17,6 +17,7 @@
  * ★ **닫힌 이벤트는 시계가 멈춘다.** 계속 커지면 화면이 「급한 것」을 잘못 가리킨다.
  *   멈춘 시계는 커지지 않고 **총 대응 시간**을 적는다 — 다른 사실이므로 다른 글자다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import { Space, Tooltip, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 
@@ -93,7 +94,7 @@ export default function ResponseClock({
         <Text style={{ fontSize: compact ? 13 : 16 }}>
           총 {duration(total)}
         </Text>
-        <Text type="secondary" style={{ fontSize: 12 }}>
+        <Text type="secondary" style={{ fontSize: FONT_SM }}>
           {autoClosed ? '자동 종결 — 대응 시간 통계에서 제외됨' : '종결됨 · 시계 멈춤'}
         </Text>
       </Space>

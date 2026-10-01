@@ -319,7 +319,7 @@ def _parse_metadata_datetime(value: Optional[str]) -> Optional[datetime]:
     # Normalize về UTC để đảm bảo tính toán nhất quán
     if timezone.is_naive(parsed):
         parsed = timezone.make_aware(parsed, timezone.get_current_timezone())
-    
+
     # Convert về UTC nếu chưa phải UTC
     if parsed.tzinfo != pytz.UTC:
         parsed = parsed.astimezone(pytz.UTC)
@@ -330,19 +330,19 @@ def _parse_metadata_datetime(value: Optional[str]) -> Optional[datetime]:
 def _get_overdue_profile_hours() -> float:
     """
     Lấy thời gian overdue từ AdminConfig 'Overdue Profile', mặc định 24 giờ.
-    
+
     NOTE: close_old_connections() đã được gọi tự động bởi task_prerun signal trong celery.py
     Chỉ gọi lại khi retry sau SSL/connection errors
     """
     from django.db.utils import OperationalError, InterfaceError
-    
+
     default_hours = 24.0
     max_retries = 3
-    
+
     for attempt in range(max_retries):
         try:
             from core.configuration.models import AdminConfig
-            
+
             # Use _base_manager to avoid group filter in background tasks
             config = AdminConfig._base_manager.filter(name='Overdue Profile').first()
             if config and isinstance(getattr(config, 'settings', None), dict):
@@ -390,7 +390,7 @@ def _get_overdue_profile_hours() -> float:
                 default_hours
             )
             return default_hours
-    
+
     return default_hours
 
 
@@ -470,13 +470,13 @@ def activate_surveillance_profile(self, profile_id: int) -> None:
             start_time = profile.start_time
             if timezone.is_naive(start_time):
                 start_time = timezone.make_aware(start_time, timezone.get_current_timezone())
-            
+
             now = timezone.now()
             if now.tzinfo != pytz.UTC:
                 now = now.astimezone(pytz.UTC)
             if start_time.tzinfo != pytz.UTC:
                 start_time = start_time.astimezone(pytz.UTC)
-            
+
             # Cho phép chênh lệch 30 giây để tránh race condition với process_auto_launch
             if start_time > now + timedelta(seconds=30):
                 logger.info(
@@ -775,7 +775,7 @@ def check_surveillance_profile_overdue(self, profile_id: int) -> None:
     from surveillance.services.surveillance_profile_service import SurveillanceProfileService
 
     from django.db import transaction
-    
+
     try:
         # Lock profile để tránh race condition với các task khác hoặc user cancel thủ công
         with transaction.atomic():
@@ -785,7 +785,7 @@ def check_surveillance_profile_overdue(self, profile_id: int) -> None:
                 .select_related("status", "created_by__language")
                 .get(id=profile_id)
             )
-            
+
             status_code = profile.status.code if profile.status else None
             if status_code not in IN_PROCESS_STATUS_CODES:
                 logger.info(
@@ -800,7 +800,7 @@ def check_surveillance_profile_overdue(self, profile_id: int) -> None:
                 profile.metadata = metadata
                 profile.save(update_fields=["metadata", "modified_on"])
                 return
-            
+
             if profile.actual_end_time:
                 logger.info(
                     "[SURVEILLANCE][OVERDUE] Profile %s đã có actual_end_time, bỏ qua hủy tự động",
@@ -820,18 +820,18 @@ def check_surveillance_profile_overdue(self, profile_id: int) -> None:
                 profile.metadata = metadata
                 profile.save(update_fields=["metadata", "modified_on"])
                 return
-            
+
             overdue_hours = _get_overdue_profile_hours()
             now = timezone.now()
             if now.tzinfo != pytz.UTC:
                 now = now.astimezone(pytz.UTC)
-            
+
             actual_start = profile.actual_start_time
             if timezone.is_naive(actual_start):
                 actual_start = timezone.make_aware(actual_start, timezone.get_current_timezone())
             if actual_start.tzinfo != pytz.UTC:
                 actual_start = actual_start.astimezone(pytz.UTC)
-            
+
             check_time = actual_start + timedelta(hours=overdue_hours)
             if check_time > now:
                 logger.info(
@@ -897,14 +897,14 @@ def process_surveillance_profile_overdue(self) -> None:
     """
     Task chạy định kỳ để tự động hủy profile quá hạn theo lịch
     Chạy mỗi phút để kiểm tra và hủy ngay khi quá hạn (backup/fallback)
-    
+
     NOTE: close_old_connections() đã được gọi tự động bởi task_prerun signal trong celery.py
     Chỉ cần gọi lại khi retry sau SSL/connection errors
     """
     from surveillance.models import SurveillanceProfile
     from surveillance.services.surveillance_profile_service import SurveillanceProfileService
     from django.db.utils import OperationalError, InterfaceError
-    
+
     # Normalize now về UTC để so sánh nhất quán
     now = timezone.now()
     if now.tzinfo != pytz.UTC:
@@ -950,27 +950,27 @@ def process_surveillance_profile_overdue(self) -> None:
                     raise
             else:
                 raise
-    
+
     if profiles is None:
         logger.error("[SURVEILLANCE][OVERDUE] Không thể query profiles sau %s attempts", max_query_retries)
         return
-    
+
     for profile in profiles.iterator(chunk_size=50):
         try:
             actual_start = profile.actual_start_time
             if not actual_start:
                 continue
-            
+
             if timezone.is_naive(actual_start):
                 actual_start = timezone.make_aware(actual_start, timezone.get_current_timezone())
             if actual_start.tzinfo != pytz.UTC:
                 actual_start = actual_start.astimezone(pytz.UTC)
-            
+
             check_time = actual_start + timedelta(hours=overdue_hours)
-            
+
             if check_time <= now:
                 from django.db import transaction
-                
+
                 try:
                     with transaction.atomic():
                         # Không dùng select_related với select_for_update vì có thể gây lỗi với nullable relationship
@@ -984,29 +984,29 @@ def process_surveillance_profile_overdue(self) -> None:
                         locked_profile.status
                         if locked_profile.created_by:
                             locked_profile.created_by.language
-                        
+
                         if locked_profile.actual_end_time:
                             continue
                         if locked_profile.status.code not in IN_PROCESS_STATUS_CODES:
                             continue
-                        
+
                         locked_actual_start = locked_profile.actual_start_time
                         if not locked_actual_start:
                             continue
-                        
+
                         if timezone.is_naive(locked_actual_start):
                             locked_actual_start = timezone.make_aware(locked_actual_start, timezone.get_current_timezone())
                         if locked_actual_start.tzinfo != pytz.UTC:
                             locked_actual_start = locked_actual_start.astimezone(pytz.UTC)
-                        
+
                         locked_check_time = locked_actual_start + timedelta(hours=overdue_hours)
                         if locked_check_time > now:
                             continue
-                        
+
                         language_code = None
                         if locked_profile.created_by and getattr(locked_profile.created_by, "language", None):
                             language_code = getattr(locked_profile.created_by.language, "code", None)
-                        
+
                         reason = _resolve_auto_cancel_reason(language_code)
                         success, _ = SurveillanceProfileService.cancel_profile(
                             profile_id=locked_profile.id,
@@ -1022,7 +1022,7 @@ def process_surveillance_profile_overdue(self) -> None:
                                 "overdue_check_source": "backup_task",
                             },
                         )
-                        
+
                         if success:
                             cancelled_count += 1
                             logger.info(
@@ -1051,7 +1051,7 @@ def process_surveillance_profile_overdue(self) -> None:
                 str(e),
             )
             continue
-    
+
     if cancelled_count > 0 or error_count > 0:
         logger.info(
             "[SURVEILLANCE][OVERDUE] Backup task cancelled %s profiles, errors %s (task=%s)",
@@ -1085,17 +1085,17 @@ def schedule_surveillance_profile_overdue_checks(self) -> None:
 
     scheduled_count = 0
     skipped_count = 0
-    
+
     for profile in profiles:
         actual_start = profile.actual_start_time
         if not actual_start:
             continue
-        
+
         if timezone.is_naive(actual_start):
             actual_start = timezone.make_aware(actual_start, timezone.get_current_timezone())
         if actual_start.tzinfo != pytz.UTC:
             actual_start = actual_start.astimezone(pytz.UTC)
-        
+
         check_time = actual_start + timedelta(hours=overdue_hours)
         metadata = dict(profile.metadata or {})
         scheduled_time = _parse_metadata_datetime(metadata.get("overdue_check_eta"))
@@ -1113,16 +1113,16 @@ def schedule_surveillance_profile_overdue_checks(self) -> None:
                 )
                 # Load status sau khi lock để tránh lỗi
                 locked_profile.status
-                
+
                 if locked_profile.actual_end_time:
                     continue
                 if locked_profile.status.code not in IN_PROCESS_STATUS_CODES:
                     continue
-                
+
                 locked_metadata = dict(locked_profile.metadata or {})
                 locked_scheduled_time = _parse_metadata_datetime(locked_metadata.get("overdue_check_eta"))
                 locked_scheduled_task_id = locked_metadata.get("overdue_check_task_id")
-                
+
                 if locked_scheduled_time and locked_scheduled_task_id:
                     # Nếu scheduled_time đã quá hạn, cần schedule lại
                     if locked_scheduled_time < now:
@@ -1211,7 +1211,7 @@ def schedule_surveillance_profile_overdue_checks(self) -> None:
                             expires=expires_time,
                             priority=0,  # Priority cao nhất để được xử lý trước các task khác
                         )
-                        
+
                         # Verify task đã được schedule thành công
                         try:
                             from celery.result import AsyncResult
@@ -1263,7 +1263,7 @@ def schedule_surveillance_profile_overdue_checks(self) -> None:
                 profile.id,
             )
             continue
-    
+
     if scheduled_count > 0 or skipped_count > 0:
         logger.info(
             "[SURVEILLANCE][OVERDUE] Đã xử lý %s profiles (scheduled=%s, skipped=%s, overdue_hours=%.1f)",
@@ -1315,13 +1315,13 @@ def _process_import_routes_in_thread(
     from task_status.services.task_status_service import TaskStatusService
     from core.user.models import CoreUser
     from common.constant import MESSAGE_ENUM, get_message
-    
+
     try:
         logger.info(f"🔄 Starting import routes to mission processing for task {import_task_id}")
-        
+
         # Get user
         user = CoreUser.objects.get(id=user_id)
-        
+
         # Update status to processing
         processing_message = get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_IMPORT_STARTED)
         TaskStatusService.update_status(
@@ -1333,7 +1333,7 @@ def _process_import_routes_in_thread(
             trigger_source='survey.mission.import_routes',
             progress=10.0,
         )
-        
+
         # Gọi service method
         success, result = SurveyMissionService.import_routes_to_mission(
             name=name,
@@ -1364,11 +1364,11 @@ def _process_import_routes_in_thread(
             created_by_user=user,
             group_id=user.userprofilelink.group.id if user and user.userprofilelink and user.userprofilelink.group else None,
         )
-        
+
         if not success:
             error_msg = result if isinstance(result, str) else "Failed to create mission"
             logger.error(f"❌ Import routes to mission failed: {error_msg}")
-            
+
             TaskStatusService.update_status(
                 import_task_id,
                 status=TaskStatus.Status.FAILED,
@@ -1378,9 +1378,9 @@ def _process_import_routes_in_thread(
                 error_details={'error': error_msg},
             )
             return
-        
+
         logger.info(f"✅ Import routes to mission completed - Task ID: {import_task_id}, Mission ID: {result.id}")
-        
+
         success_message = get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_CREATED)
         TaskStatusService.update_status(
             import_task_id,
@@ -1394,10 +1394,10 @@ def _process_import_routes_in_thread(
             related_model='surveillance.SurveyMission',
             related_object_id=str(result.id),
         )
-        
+
     except Exception as e:
         logger.exception(f"❌ Error processing import routes to mission for task {import_task_id}: {e}")
-        
+
         try:
             user = CoreUser.objects.get(id=user_id)
             error_message = f"{get_message(MESSAGE_ENUM.MESSAGE_OPERATION_FAILED)}: {str(e)}"
@@ -1502,7 +1502,8 @@ def _process_download_video_analysis_reports_in_thread(
                 except Exception:
                     pass
             # 3) Fallback
-            return pytz.timezone("Asia/Ho_Chi_Minh")
+            from django.conf import settings
+            return pytz.timezone(settings.TIME_ZONE)  # P-447: 전역 시간대를 따른다
 
         def _resolve_format_strings_for_user() -> tuple[str, str]:
             """
@@ -2355,13 +2356,13 @@ def _process_import_routes_simple_in_thread(
     from task_status.services.task_status_service import TaskStatusService
     from core.user.models import CoreUser
     from common.constant import MESSAGE_ENUM, get_message
-    
+
     try:
         logger.info(f"🔄 Starting import routes to mission simple processing for task {import_task_id}")
-        
+
         # Get user
         user = CoreUser.objects.get(id=user_id)
-        
+
         # Update status to processing
         processing_message = get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_IMPORT_STARTED)
         TaskStatusService.update_status(
@@ -2373,7 +2374,7 @@ def _process_import_routes_simple_in_thread(
             trigger_source='survey.mission.import_routes_simple',
             progress=10.0,
         )
-        
+
         # Gọi service method
         success, result = SurveyMissionService.import_routes_to_mission_simple(
             name=name,
@@ -2392,11 +2393,11 @@ def _process_import_routes_simple_in_thread(
             estimated_time=estimated_time,
             created_by_user=user
         )
-        
+
         if not success:
             error_msg = result if isinstance(result, str) else "Failed to create mission"
             logger.error(f"❌ Import routes to mission simple failed: {error_msg}")
-            
+
             TaskStatusService.update_status(
                 import_task_id,
                 status=TaskStatus.Status.FAILED,
@@ -2406,9 +2407,9 @@ def _process_import_routes_simple_in_thread(
                 error_details={'error': error_msg},
             )
             return
-        
+
         logger.info(f"✅ Import routes to mission simple completed - Task ID: {import_task_id}, Mission ID: {result.id}")
-        
+
         success_message = get_message(MESSAGE_ENUM.MESSAGE_SURVEY_MISSION_CREATED)
         TaskStatusService.update_status(
             import_task_id,
@@ -2422,10 +2423,10 @@ def _process_import_routes_simple_in_thread(
             related_model='surveillance.SurveyMission',
             related_object_id=str(result.id),
         )
-        
+
     except Exception as e:
         logger.exception(f"❌ Error processing import routes to mission simple for task {import_task_id}: {e}")
-        
+
         try:
             user = CoreUser.objects.get(id=user_id)
             error_message = f"{get_message(MESSAGE_ENUM.MESSAGE_OPERATION_FAILED)}: {str(e)}"

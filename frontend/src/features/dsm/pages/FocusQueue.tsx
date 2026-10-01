@@ -118,6 +118,7 @@
  * ★ **분모를 손으로 적지 않는다.** 「N건 중 k번째」의 N 은 시계가 도는 카드를 센
  *   수다. 동률이면 동률이라고 적는다 — 한 장에만 붙는 사실을 두 장에 붙이지 않는다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import {
   Alert, Badge, Button, Card, Col, Input, Row, Space, Statistic, Tag, Typography,
 } from 'antd';
@@ -655,7 +656,7 @@ export default function FocusQueuePage() {
             이 문장은 사건이 아니라 **제품이 무엇을 하는 물건인지**를 말한다.
           ★ 작고 흐리다. 관제 화면의 주인공은 언제나 카드다.
         */}
-        <Text type="secondary" style={{ fontSize: 12 }}>
+        <Text type="secondary" style={{ fontSize: FONT_SM }}>
           {KICK_SENTENCE}
         </Text>
 
@@ -921,7 +922,7 @@ export default function FocusQueuePage() {
                       사람은 그것을 「대기 카드 수」로 읽는다 — 다른 수다(종결된 카드는
                       시계가 멈춰 순위에 들지 않는다). 0 이면 **0 이라고 적는다.**
                   */}
-                  <Text type="secondary" style={{ fontSize: 12 }} data-gx="rank-denominator">
+                  <Text type="secondary" style={{ fontSize: FONT_SM }} data-gx="rank-denominator">
                     {rankTotal === 0
                       ? '시계가 도는 사건이 0건입니다 — 사건이 오면 순위가 생기니 기다리시면 됩니다.'
                       : `경과 순위는 시계가 도는 ${rankTotal}건(초점 카드 포함) 중에서 셉니다.`}
@@ -948,7 +949,7 @@ export default function FocusQueuePage() {
                           <Col flex="auto">
                             <CardHead card={card} signal={signals.byEvent.get(card.event_id)} />
                             <div>
-                              <Text type="secondary" style={{ fontSize: 12 }}>
+                              <Text type="secondary" style={{ fontSize: FONT_SM }}>
                                 발생 {stamp(card.occurred_at)}
                               </Text>
                             </div>

@@ -23,6 +23,7 @@
  * ★ 왜 별 화면인가: M3 는 「이 사건 앞에서 지금 하는 일」이라 한 화면의 한 순서지만,
  *   알림 설정은 사건과 무관하고 **한 번 정하면 오래 가는 값**이다(`routes.ts` 주석).
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import {
   Alert,
   Button,
@@ -316,13 +317,13 @@ export default function MobileSettings() {
                   testResult ? (
                     <Space direction="vertical" size={2} style={{ width: '100%' }}>
                       {testResult.results.map((r) => (
-                        <Text key={r.endpoint_sha12} style={{ fontSize: 12 }}>
+                        <Text key={r.endpoint_sha12} style={{ fontSize: FONT_SM }}>
                           {r.label} — {r.succeeded ? '보냄' : `못 보냄: ${r.failure_reason ?? r.reason}`}
                           {r.delivery_id ? ` · 이력 #${r.delivery_id}` : ''}
                         </Text>
                       ))}
                       {testResult.drill_mode ? (
-                        <Text type="secondary" style={{ fontSize: 12 }}>
+                        <Text type="secondary" style={{ fontSize: FONT_SM }}>
                           훈련 모드 — 제목이 [훈련] 으로 시작합니다.
                         </Text>
                       ) : null}
@@ -342,7 +343,7 @@ export default function MobileSettings() {
               <Space direction="vertical" size={4} style={{ width: '100%' }}>
                 {rows.map((r) => (
                   <Space key={r.subscription_id} size={6} wrap>
-                    <Text style={{ fontSize: 12 }}>{r.label || '이름 없는 기기'}</Text>
+                    <Text style={{ fontSize: FONT_SM }}>{r.label || '이름 없는 기기'}</Text>
                     {r.endpoint_sha12 === thisDevice ? <Tag color="blue">이 기기</Tag> : null}
                     <Button
                       size="small"
@@ -385,7 +386,7 @@ export default function MobileSettings() {
                   />
                   <Text>까지</Text>
                 </Space>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" style={{ fontSize: FONT_SM }}>
                   둘 다 비우면 차단 없음입니다. 한쪽만 채울 수는 없습니다 — 언제부터
                   언제까지 안 받는지 정해지지 않기 때문입니다.
                 </Text>
@@ -399,7 +400,7 @@ export default function MobileSettings() {
                   value={zones}
                   onChange={(ev) => setZones(ev.target.value)}
                 />
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" style={{ fontSize: FONT_SM }}>
                   비우면 전 구역입니다. (구역을 이름으로 고르는 칸은 다음 파에서 옵니다 —
                   지금은 번호로 받습니다.)
                 </Text>
@@ -421,7 +422,7 @@ export default function MobileSettings() {
                   </Space>
                 </Checkbox.Group>
                 {/* ★ 서버가 준 말을 그대로 적는다 — 판정식도 문구도 두 벌로 두지 않는다. */}
-                <Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 0 }}>
+                <Paragraph type="secondary" style={{ fontSize: FONT_SM, marginBottom: 0 }}>
                   {prefs.data?.note}
                 </Paragraph>
               </Space>
@@ -462,7 +463,7 @@ export default function MobileSettings() {
                   못 잡았다. 같은 사실(저장이 되어 있다)을 **같은 낱말**로 말한다 — 두
                   벌을 두지 않는다(D-369 계열과 같은 자리).
               */}
-              <Text type="secondary" style={{ fontSize: 12 }} data-gx="prefs-saved-state">
+              <Text type="secondary" style={{ fontSize: FONT_SM }} data-gx="prefs-saved-state">
                 {prefs.data?.saved
                   ? '저장됨 — 이미 정한 값이 있습니다.'
                   : '아직 정하지 않았습니다 — 규칙이 정한 대로 받습니다.'}
@@ -478,7 +479,7 @@ export default function MobileSettings() {
               {/* ★ 서버가 낸 값만 적는다 — 화면이 「승인 필요」를 판정하지 않는다. */}
               <Space direction="vertical" size={4} style={{ width: '100%' }}>
                 <Space size={6} wrap>
-                  <Text style={{ fontSize: 12 }}>승인 상태</Text>
+                  <Text style={{ fontSize: FONT_SM }}>승인 상태</Text>
                   <Tag color={prefs.data?.approval?.status === 'not_required' ? 'default' : 'orange'}>
                     {prefs.data?.approval?.status === 'not_required'
                       ? '승인 필요 없음'
@@ -486,11 +487,11 @@ export default function MobileSettings() {
                   </Tag>
                 </Space>
                 {(prefs.data?.approval?.items ?? []).length > 0 ? (
-                  <Text style={{ fontSize: 12 }}>
+                  <Text style={{ fontSize: FONT_SM }}>
                     승인 대기 항목: {(prefs.data?.approval?.items ?? []).join(', ')}
                   </Text>
                 ) : null}
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" style={{ fontSize: FONT_SM }}>
                   {prefs.data?.approval?.note}
                 </Text>
               </Space>

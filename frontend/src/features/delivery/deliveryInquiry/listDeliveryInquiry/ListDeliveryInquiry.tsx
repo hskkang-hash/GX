@@ -30,6 +30,7 @@ import useAPI from '../useAPI';
 import { formatStatusDeliveryInquiry } from '../utils/StatusColorInquiry';
 import convertInfoNotification from '../utils/convertInfoNotification';
 import './ListDeliveryInquiry.scss';
+import { wsBase } from '@/services/wsBase';
 import { getDashboardLocation } from '@/utils/requestLocationPermission';
 import { NominatimResponse, OpenMeteoResponse } from '@/features/Dashboard/SurveillanceDashboard/components/WeatherInfoSurveillance';
 
@@ -67,7 +68,7 @@ const ListDeliveryInquiry = () => {
   });
 
   const { isConnected, message } = useWebSocketDeliveryInquiry({
-    socketUrl: `${import.meta.env.VITE_STREAMING_WS}/ws/orders/notifications/`,
+    socketUrl: `${wsBase()}/ws/orders/notifications/`,
   });
 
   const handleViewDetailDevice = useCallback(

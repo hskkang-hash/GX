@@ -287,7 +287,7 @@ def format_datetime_for_download(value, user: CoreUser, preserve_in_excel: bool 
     # Default formats
     date_format_str = '%m-%d-%Y'
     time_format_str = '%H:%M:%S'
-    user_timezone = pytz.timezone('Asia/Ho_Chi_Minh')
+    user_timezone = pytz.timezone(settings.TIME_ZONE)  # P-447: 전역 시간대를 따른다
 
     # Get user's language for locale-based defaults
     if hasattr(user, 'language') and user.language:

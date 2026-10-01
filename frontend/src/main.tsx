@@ -14,7 +14,10 @@
 //     `scripts/verify_click_completes.py` 가 빨강을 낸다.
 import '@ant-design/v5-patch-for-react-19';
 
+import { ConfigProvider } from 'antd';
 import { createRoot } from 'react-dom/client';
+
+import { FONT_BASE } from './configs/fontTokens';
 
 // import { scan } from 'react-scan';
 
@@ -30,6 +33,9 @@ import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   // <StrictMode>
-  <App />,
+  // P-454: 전역 글씨 토큰 — 기본 14 (보조는 FONT_SM 13)
+  <ConfigProvider theme={{ token: { fontSize: FONT_BASE } }}>
+    <App />
+  </ConfigProvider>,
   // </StrictMode>
 );

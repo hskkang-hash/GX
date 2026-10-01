@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import { EnvironmentOutlined, SearchOutlined } from '@ant-design/icons';
 import { AutoComplete, ConfigProvider, Spin, theme as antdTheme } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -465,7 +466,7 @@ const CustomSearchMap: React.FC<CustomSearchMapProps> = ({
               >
                 {suggestion.structured_formatting.main_text}
               </div>
-              <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+              <div style={{ fontSize: FONT_SM, color: '#8c8c8c' }}>
                 {suggestion.structured_formatting.secondary_text}
               </div>
             </>
@@ -500,7 +501,7 @@ const CustomSearchMap: React.FC<CustomSearchMapProps> = ({
               >
                 {suggestion.structured_formatting.main_text}
               </div>
-              <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+              <div style={{ fontSize: FONT_SM, color: '#8c8c8c' }}>
                 {suggestion.structured_formatting.secondary_text}
               </div>
             </>
@@ -546,7 +547,7 @@ const CustomSearchMap: React.FC<CustomSearchMapProps> = ({
           token: {
             colorBgContainer: theme === 'dark' ? 'transparent' : '#ffffff',
             fontSizeIcon: 16,
-            fontSize: 12,
+            fontSize: FONT_SM,
 
             colorBgBase: theme === 'dark' ? '' : '#ffffff',
           },
@@ -639,7 +640,7 @@ const CustomSearchMap: React.FC<CustomSearchMapProps> = ({
               token: {
                 colorBgContainer: theme === 'dark' ? 'transparent' : '#ffffff',
                 fontSizeIcon: 16,
-                fontSize: 12,
+                fontSize: FONT_SM,
                 colorBgBase: theme === 'dark' ? '' : '#ffffff',
               },
             }}

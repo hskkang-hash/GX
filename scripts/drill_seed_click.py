@@ -93,6 +93,24 @@ def plant(username: str, n: int, address: str | None):
     return cs, first, seed_path
 
 
+def plant_drill(username: str, n: int):
+    """[턴 AR · P-456] **훈련 표식** 미처리 사건 N 건 — 탐침이 아니라 고객 면에 보이는 씨앗.
+
+    규칙은 `capture_screens.seed_drill_events` 한 곳에만 있다. 명세는 `runs/<stamp>/drill_seed.json`
+    (탐침 씨앗의 seed.json 과 **따로** — 뒤 도구가 탐침 표본과 섞어 읽지 않게).
+    """
+    import json
+
+    import capture_screens as cs
+
+    cs._django()
+    ids = cs.seed_drill_events(username, n=n)
+    cs._keep_run_copy("drill_seed.json", json.dumps(
+        {"run": cs.RUN_STAMP, "drill": cs.SEED_SPEC.get("drill"),
+         "events": cs.SEED_SPEC.get("drill_events")}, ensure_ascii=False, indent=2))
+    return cs, ids, cs.RUNS_DIR / cs.RUN_STAMP / "drill_seed.json"
+
+
 #: [P-426 · 턴 AP · 차선 Q] `--unjudged` 확인이 쓰는 잣대 — **`verify_click_completes.py`
 #: 의 그 줄과 같은 잣대**(`unv = [... if not e.get("verdict")]`, 이 파일 근처 3076행)를
 #: ORM 으로 재현한다. 두 벌을 따로 두면 갈릴 수 있어 여기 주석에 그 출처를 못박는다 —
@@ -140,6 +158,9 @@ def main(argv=None) -> int:
                          "코드로 확인한다. **기본값 불변**: 이 옵션이 없으면 심는 동작은 "
                          "전과 같고(seed_events 는 애초에 verdict 를 안 준다), 확인 단계만 "
                          "빠진다")
+    ap.add_argument("--drill", action="store_true",
+                    help="[턴 AR · P-456] 탐침 씨앗 대신 **훈련 표식** 미처리 사건 N 건을 심는다"
+                         "(청구 0 · 훈련 배너 · 회차 표식). ⚠ 라이브 DB 쓰기 — V 가 부른다")
     args = ap.parse_args(argv)
 
     if args.n <= 0:
@@ -152,6 +173,25 @@ def main(argv=None) -> int:
         print("%s capture_screens 를 못 들였다(scripts/ 옆에 있는가?) — %s: %s"
               % (TAG, type(exc).__name__, exc))
         return EXIT_UNDECIDABLE
+
+    if args.drill:
+        try:
+            cs, ids, spec_path = plant_drill(args.user, args.n)
+        except ModuleNotFoundError as exc:
+            print("%s Django 를 못 세웠다 — gx-shell **안**에서 불렀는가? %s: %s"
+                  % (TAG, type(exc).__name__, exc))
+            return EXIT_UNDECIDABLE
+        except Exception as exc:                        # noqa: BLE001
+            print("%s 훈련 씨앗을 못 심었다 — %s: %s" % (TAG, type(exc).__name__, exc))
+            return EXIT_FAIL
+        print("%s 훈련 표식 씨앗 %d건 %s · 명세 → %s" % (TAG, len(ids), ids, spec_path))
+        if args.unjudged:
+            check = verify_unjudged(ids)
+            if check["judged"] or check["missing"]:
+                print("%s --unjudged 확인 실패 — %s" % (TAG, check))
+                return EXIT_FAIL
+            print("%s --unjudged 확인 — %d건 전부 미판정" % (TAG, len(check["unjudged"])))
+        return EXIT_OK
 
     try:
         cs, first, seed_path = plant(args.user, args.n, args.address)

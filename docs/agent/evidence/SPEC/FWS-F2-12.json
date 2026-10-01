@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-12",
   "title": "내 임무 이력·투입 시간(수당 근거)",
-  "measured_at": "2026-09-30T06:19:53.054262+00:00",
+  "measured_at": "2026-09-30T11:17:10.760011+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_12_MissionsMineTest.test_dispatch_arrive_release_are_counted_in_mine",
   "request": {
@@ -14,11 +14,11 @@
     "body": {
       "missions": [
         {
-          "mission_id": 584,
-          "dispatched_at": "2026-09-30T06:19:52.859804+00:00",
+          "mission_id": 684,
+          "dispatched_at": "2026-09-30T11:17:10.473625+00:00",
           "en_route_at": null,
-          "arrived_at": "2026-09-30T06:19:52.923071+00:00",
-          "released_at": "2026-09-30T06:19:53.005606+00:00",
+          "arrived_at": "2026-09-30T11:17:10.563255+00:00",
+          "released_at": "2026-09-30T11:17:10.660255+00:00",
           "duration_minutes": 0.0
         }
       ],

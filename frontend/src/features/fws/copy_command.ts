@@ -199,6 +199,8 @@ export const FWS_COMMAND_COPY = {
     statusNight: '야간 5분대기조',
     statusOff: '근무 외',
     noPeople: '대기 상태를 등록한 대원이 없습니다',
+    deployedLabel: '출동 중',
+    releasedLabel: '철수·해제',
     locationLabel: '위치',
     supportTitle: '지원 요청',
     supportPersonnel: '인력',

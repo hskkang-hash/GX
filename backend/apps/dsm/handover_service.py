@@ -113,6 +113,8 @@ HANDOVER_WINDOW_END_HOUR = 9
 #: [턴 AQ · 조율자] 인계 창은 **한국 시각**으로 잰다 — 앱 전역 `TIME_ZONE` 은 Asia/Ho_Chi_Minh
 #: (UTC+7)라 전역으로 재면 08~09시가 한국 10~11시가 된다. 전역은 그대로 두고 이 항목만
 #: Asia/Seoul 로 읽는다(P-260 `config/celery.py` 와 같은 규약).
+#: [P-447 · 턴 AR] 전역이 Asia/Seoul 이 되어 P-260 규약은 폐지 — 이 상수는 전역과 같은 값이다.
+#: 남겨 둔 이유: 인계 창은 명세가 한국 시각으로 정한 것이라 전역 설정이 바뀌어도 움직이면 안 된다.
 HANDOVER_WINDOW_TZ = "Asia/Seoul"
 
 

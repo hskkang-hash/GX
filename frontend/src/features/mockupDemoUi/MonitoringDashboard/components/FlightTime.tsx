@@ -1,3 +1,4 @@
+import { FONT_SM } from '@/configs/fontTokens';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'rj-core';
@@ -53,7 +54,7 @@ const FlightTime: React.FC = () => {
           <div
             style={{
               color: theme === 'dark' ? Colors.Gray3 : '#666',
-              fontSize: 12,
+              fontSize: FONT_SM,
             }}
           >
             {t('hours')}
@@ -90,7 +91,7 @@ const FlightTime: React.FC = () => {
           <div
             style={{
               color: theme === 'dark' ? Colors.Gray3 : '#666',
-              fontSize: 12,
+              fontSize: FONT_SM,
             }}
           >
             {t('hours')}
@@ -127,7 +128,7 @@ const FlightTime: React.FC = () => {
           <div
             style={{
               color: theme === 'dark' ? Colors.Gray3 : '#666',
-              fontSize: 12,
+              fontSize: FONT_SM,
             }}
           >
             {t('hours/day')}

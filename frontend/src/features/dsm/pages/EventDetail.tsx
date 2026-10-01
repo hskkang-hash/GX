@@ -13,6 +13,7 @@
  * ★ 「없는 것은 없다고 적는다」 (D-290): `address_status` 가 `disabled` 면
  *   「조회 대상 아님」이라고 적는다. 빈칸으로 두면 「아직 조회 중」과 같아진다.
  */
+import { FONT_SM } from '@/configs/fontTokens';
 import {
   Alert,
   Button,
@@ -748,7 +749,7 @@ export default function EventDetail() {
                             : '아직 열려 있습니다'}
                         </Descriptions.Item>
                       </Descriptions>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
+                      <Text type="secondary" style={{ fontSize: FONT_SM }}>
                         {/* ★★ [P-371 · 턴 AM · 차선 L] **상태 코드가 여기 있었다.**
                             셋째 조건 실측(U1#9 · U2#3)이 걸어 둔 「상태 코드」 네
                             갈래 중 남은 하나 — `t.from`·`t.to` 가 `response_state`
@@ -776,7 +777,7 @@ export default function EventDetail() {
                           (내부 사실 · 화면에 적지 않는다: 네 시각은 대응 전이 감사에서
                            세운다 — 모델에 칸을 새로 만들지 않았다. 새 칸은 태어나는 순간
                            과거가 비어 있고, 빈 과거는 「대응이 빨랐다」로 읽힌다.) */}
-                      <Text type="secondary" style={{ fontSize: 12 }}>
+                      <Text type="secondary" style={{ fontSize: FONT_SM }}>
                         네 시각은 실제로 기록된 처리 이력에서 세웠습니다 — 기록이 없는
                         칸은 비어 있고, 비어 있는 것은 「빨랐다」가 아니라 「아직」입니다.
                       </Text>
