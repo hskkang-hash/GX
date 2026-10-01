@@ -357,6 +357,67 @@ def _iter_verdicts(report) -> list[str]:
     return found
 
 
+#: [P-469 · 턴 AS] beat 계열 호출자 — 둘 다 「저절로」다(사람이 부르지 않았다).
+#:   `beat` = 05:00 정시 · `beat_catchup` = 꺼졌던 기계가 켜져 beat 가 스스로 따라잡은 것.
+BEAT_INVOKERS = ("beat", "beat_catchup")
+#: 마지막 beat 계열 덤프가 이보다 오래되면 따라잡는다. 판정기 문턱(26h)보다 짧게 둔다 —
+#:   문턱을 넘기 전에 따라잡아야 OPS-19 가 빨강이 될 틈이 없다.
+CATCHUP_AFTER_HOURS = 24
+
+
+def backup_catchup_reason(last: dict | None, now: datetime | None = None) -> str | None:
+    """따라잡아야 하면 그 까닭 한 줄, 아니면 `None`. **순수 함수** — 시험이 직접 부른다.
+
+    `last` 는 `D-373/backup_last.json` 의 내용이다. 손 덤프(`manual`)가 마지막이면 그것은
+    「저절로」가 아니므로 따라잡는다 — 손 덤프가 정시 백업을 대신하지 못한다(P-264).
+    """
+    now = now or datetime.now(timezone.utc)
+    if not last:
+        return "판정문이 없다"
+    if last.get("invoked_by") not in BEAT_INVOKERS:
+        return f"마지막 판정문의 호출자가 beat 계열이 아니다({last.get('invoked_by')!r})"
+    if last.get("verdict") != "OK":
+        return f"마지막 beat 계열 판정이 OK 가 아니다({last.get('verdict')!r})"
+    try:
+        at = datetime.fromisoformat(str(last.get("measured_at")))
+    except ValueError:
+        return "판정문 시각을 못 읽었다"
+    age_h = (now - at).total_seconds() / 3600
+    if age_h > CATCHUP_AFTER_HOURS:
+        return f"마지막 beat 계열 덤프가 {age_h:.1f}시간 전이다(> {CATCHUP_AFTER_HOURS}h)"
+    return None
+
+
+def backup_catchup_on_beat_start(send) -> str | None:
+    """beat 가 뜰 때 한 번 — 따라잡을 까닭이 있으면 `send()` 로 백업 태스크를 **보낸다**.
+
+    ★ beat 프로세스 안에서 덤프를 뜨지 않는다 — 태스크를 보내고 일꾼이 뜬다(정시 백업과
+      같은 길). ★ 꺼져 있으면(`OPS_BACKUP_SCHEDULE_ENABLED`) 보내지 않는다 — 정시도 안 도는
+      자리에서 따라잡기만 돌면 「꺼짐」의 뜻이 없어진다.
+    ★ 잠금: 캐시 `add` 한 줄(6시간) — beat 가 짧은 사이에 두 번 다시 떠도 한 번만 보낸다.
+    """
+    if not backup_schedule_enabled():
+        return None
+    path = Path(EVIDENCE_DIR) / "backup_last.json"
+    try:
+        last = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        last = None
+    why = backup_catchup_reason(last)
+    if why is None:
+        return None
+    try:
+        from django.core.cache import cache
+        if not cache.add("gx:ops:backup_catchup_lock", "1", timeout=6 * 3600):
+            logger.info("[OPS][BACKUP] 따라잡기 잠금이 이미 있다 — 보내지 않는다")
+            return None
+    except Exception:                              # noqa: BLE001
+        logger.warning("[OPS][BACKUP] 따라잡기 잠금을 못 걸었다 — 그래도 한 번 보낸다")
+    logger.warning("[OPS][BACKUP] 따라잡기 — %s", why)
+    send()
+    return why
+
+
 @shared_task(name="common.ops_backup_beat")
 def ops_backup_beat(invoked_by: str = "manual") -> dict:
     """백업을 뜬다 — **켜져 있을 때만.**

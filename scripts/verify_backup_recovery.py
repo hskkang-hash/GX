@@ -284,6 +284,8 @@ def judge_verdict(path=VERDICT_FILE, now=None):
 #: 문턱은 하루(24h) + 여유 2h. 옛 ㉡(`judge_vault` 의 state, 48h)은 「덤프가 있냐」만
 #: 잴 때의 문턱이었다 — 이제 「beat 가 오늘 불렀냐」를 재므로 이틀치 여유를 둘 이유가 없다.
 FRESH_BEAT_DUMP_HOURS = 26
+#: [P-469] beat 계열 호출자 — 정시 · 따라잡기. 판정 칸 「정시 / 따라잡기」 두 열이 이 둘이다.
+BEAT_INVOKERS = ("beat", "beat_catchup")
 
 
 def judge_beat_dump(vault: dict, raw_verdict: dict, now=None) -> dict:
@@ -308,9 +310,11 @@ def judge_beat_dump(vault: dict, raw_verdict: dict, now=None) -> dict:
     """
     now = now or utcnow()
     invoked_by = raw_verdict.get("invoked_by")
-    if invoked_by != "beat":
+    #: [P-469 · 턴 AS] 「저절로」는 둘이다 — 05:00 정시(`beat`)와, 꺼졌던 기계가 켜져
+    #:   beat 가 스스로 따라잡은 것(`beat_catchup`). 사람이 부른 것(`manual`)은 여전히 아니다.
+    if invoked_by not in BEAT_INVOKERS:
         return {"state": "FAIL", "invoked_by": invoked_by,
-                "why": ("판정문의 호출자가 'beat' 가 아니다(%r) — 손으로 뜬 덤프는 "
+                "why": ("판정문의 호출자가 beat 계열이 아니다(%r) — 손으로 뜬 덤프는 "
                         "이 술어를 채우지 못한다(P-264)" % (invoked_by,))}
 
     newest_at_s = vault.get("newest_at")
@@ -333,8 +337,9 @@ def judge_beat_dump(vault: dict, raw_verdict: dict, now=None) -> dict:
         return {"state": "FAIL", "invoked_by": invoked_by, "age_hours": age_hours,
                 "why": ("beat 가 부른 마지막 덤프가 %.1f시간 전이다 (한도 %dh) — "
                         "정기 백업이 돌지 않고 있다" % (age_hours, FRESH_BEAT_DUMP_HOURS))}
-    return {"state": "OK", "invoked_by": invoked_by, "age_hours": age_hours,
-            "why": "beat 가 부른 덤프가 %.1f시간 전에 있다" % age_hours}
+    kind = "정시" if invoked_by == "beat" else "따라잡기"
+    return {"state": "OK", "invoked_by": invoked_by, "age_hours": age_hours, "kind": kind,
+            "why": "beat 가 부른 덤프(%s · %s)가 %.1f시간 전에 있다" % (kind, invoked_by, age_hours)}
 
 
 def count_inputs(rows):

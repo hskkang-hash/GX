@@ -370,17 +370,7 @@ annex_2_spec:
       src: OPS
     # ★ [P-407 · 2026-09-30 · 턴 AO · 조율자 창 ②] 소급 표에서 반쪽으로 나와 **내린** 35절 — 영역 7 → 별표.
     #   무엇이 없는가는 각 증거 `docs/agent/evidence/SPEC/<id>.json` 의 title_parts · 요약 `SPEC/N1_promotions_ao.md` §2-2.
-    - id: DSM-U3-03
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: DSM
     - id: FWS-F1-01
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F1-02
       status: 미착수
       kind: unmeasurable
       hand: in
@@ -395,27 +385,12 @@ annex_2_spec:
       kind: unmeasurable
       hand: in
       src: FWS
-    - id: FWS-F1-12
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
     - id: FWS-F1-13
       status: 미착수
       kind: unmeasurable
       hand: in
       src: FWS
     - id: FWS-F2-02
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F2-11
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F2-15
       status: 미착수
       kind: unmeasurable
       hand: in
@@ -458,11 +433,6 @@ annex_2_spec:
     # ★ [P-419 · 2026-10-01 · 턴 AP · 조율자 창 ②] 같은 눈금 재판정에서 반쪽으로 나와 **내린** 24절 — 영역 7 → 별표.
     #   무엇이 없는가는 각 증거 title_parts · 요약 `SPEC/N1_rejudge_ap.md` §1 (대개 화면 버튼 미배선).
     - id: FWS-F4-01
-      status: 미착수
-      kind: unmeasurable
-      hand: in
-      src: FWS
-    - id: FWS-F4-15
       status: 미착수
       kind: unmeasurable
       hand: in
@@ -4492,6 +4462,78 @@ areas:
         gate_args: --no-run
         proof: backend/tests/test_aq_w2a_field_screens.py
         evidence: docs/agent/evidence/SPEC/FWS-F2-13.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-30
+      - id: FWS-F4-15
+        title: 사후 보고서 1쪽(대응 시계·자원·대피·피해)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [턴 AR · 차선 N1 · P-449 · HWPX 행 excluded_by D-404 · PDF + DOCX 로 닫음] 반쪽 잔여를 §5 결정으로 닫음 — 증거 `docs/agent/evidence/SPEC/FWS-F4-15.json`(기계) + `.retro.md`(사람) ·
+          게이트 `scripts/verify_spec_fws_f4.py` 행 OK(2026-09-30 21:1x · --no-run) · 분모 293 불변.
+        gate: scripts/verify_spec_fws_f4.py
+        gate_args: --no-run
+        proof: backend/tests/test_aq_n1_f4_command_wiring.py
+        evidence: docs/agent/evidence/SPEC/FWS-F4-15.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-30
+      - id: FWS-F1-12
+        title: 근무 외 알림 차단·담당 초소 설정
+        status: 구현
+        kind: closed
+        kind_why: |
+          [턴 AR · 차선 N1 · P-452 · 담당 초소 = 그날 편성표 배정 · 미배정은 「대기」] 반쪽 잔여를 §5 결정으로 닫음 — 증거 `docs/agent/evidence/SPEC/FWS-F1-12.json`(기계) + `.retro.md`(사람) ·
+          게이트 `scripts/verify_spec_fws.py` 행 OK(2026-09-30 21:1x · --no-run) · 분모 293 불변.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_ar_n1_half_remaining.py
+        evidence: docs/agent/evidence/SPEC/FWS-F1-12.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-30
+      - id: FWS-F2-15
+        title: 근무 외 차단·담당 구역
+        status: 구현
+        kind: closed
+        kind_why: |
+          [턴 AR · 차선 N1 · P-452 · 담당 구역 = 그날 편성표 배정 · 미배정은 「대기」] 반쪽 잔여를 §5 결정으로 닫음 — 증거 `docs/agent/evidence/SPEC/FWS-F2-15.json`(기계) + `.retro.md`(사람) ·
+          게이트 `scripts/verify_spec_fws.py` 행 OK(2026-09-30 21:1x · --no-run) · 분모 293 불변.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_ar_n1_half_remaining.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-15.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-30
+      - id: DSM-U3-03
+        title: 현장 사진 → 보고서 증빙 자동 첨부
+        status: 구현
+        kind: closed
+        kind_why: |
+          [턴 AR · 차선 N1 · P-451 · 축소본 ≤ 640px + 워터마크 · 원본 링크·해시 0] 반쪽 잔여를 §5 결정으로 닫음 — 증거 `docs/agent/evidence/SPEC/DSM-U3-03.json`(기계) + `.retro.md`(사람) ·
+          게이트 `scripts/verify_spec_dsm.py` 행 OK(2026-09-30 21:1x · --no-run) · 분모 293 불변.
+        gate: scripts/verify_spec_dsm.py
+        gate_args: --no-run
+        proof: backend/tests/test_ar_n1_half_remaining.py
+        evidence: docs/agent/evidence/SPEC/DSM-U3-03.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-30
+      - id: FWS-F1-02
+        title: 순찰 경로 기록(GPS 트랙 · 전자순찰함 NFC)
+        status: 구현
+        kind: closed
+        kind_why: |
+          [턴 AR · 차선 N1 · 순찰함 등록 목록 대조 · 미등록 코드 422] 반쪽 잔여를 §5 결정으로 닫음 — 증거 `docs/agent/evidence/SPEC/FWS-F1-02.json`(기계) + `.retro.md`(사람) ·
+          게이트 `scripts/verify_spec_fws.py` 행 OK(2026-09-30 21:1x · --no-run) · 분모 293 불변.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_ar_n1_half_remaining.py
+        evidence: docs/agent/evidence/SPEC/FWS-F1-02.json
+        origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-30
+      - id: FWS-F2-11
+        title: 철수·복귀 회신
+        status: 구현
+        kind: closed
+        kind_why: |
+          [턴 AR · 차선 N1 · 철수 회신이 배치판을 해제(대기 복귀)] 반쪽 잔여를 §5 결정으로 닫음 — 증거 `docs/agent/evidence/SPEC/FWS-F2-11.json`(기계) + `.retro.md`(사람) ·
+          게이트 `scripts/verify_spec_fws.py` 행 OK(2026-09-30 21:1x · --no-run) · 분모 293 불변.
+        gate: scripts/verify_spec_fws.py
+        gate_args: --no-run
+        proof: backend/tests/test_ar_n1_half_remaining.py
+        evidence: docs/agent/evidence/SPEC/FWS-F2-11.json
         origin: 기능명세 별표(annex_2_spec) → 승격 2026-09-30
       - id: FWS-F1-08
         title: 119·산림청 신고 번호 버튼

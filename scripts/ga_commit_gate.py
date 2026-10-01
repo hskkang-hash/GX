@@ -25,6 +25,7 @@ GA 가 rc 1 인데 FAIL 줄을 하나도 못 읽으면 가를 수 없다 → 막
 """
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -83,8 +84,17 @@ def _git(*args) -> str:
 
 
 def main() -> int:
+    #: Windows 콘솔(cp949)은 GA 출력의 글자(↳ 등)를 못 쓴다 — 훅 안에서 죽으면 「모르면 막는다」가
+    #: 아니라 「아무것도 못 말하고 막는다」가 된다. 자식과 자기 출력을 UTF-8 로 맞춘다.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+    env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
     proc = subprocess.run([sys.executable, "scripts/verify_ga_readiness.py"], cwd=ROOT,
-                          capture_output=True, text=True, encoding="utf-8")
+                          capture_output=True, text=True, encoding="utf-8", errors="replace",
+                          env=env)
     sys.stdout.write(proc.stdout)
     sys.stderr.write(proc.stderr)
     if proc.returncode != 1:
