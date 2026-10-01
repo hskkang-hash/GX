@@ -458,6 +458,7 @@ SURFACE_MESSAGE_EN = "This role is not allowed to view this data."
 SURFACE_METHODS: frozenset = frozenset({"GET", "HEAD"})
 
 _ALL_BUT_OPERATOR = frozenset({KIND_ADMIN, KIND_MANAGER, KIND_EXECUTIVE})
+_ADMIN_AND_MANAGER = frozenset({KIND_ADMIN, KIND_MANAGER})
 
 #: (이름, 경로 모양, 읽어도 되는 종류, 자기 id 면 통과하는 조각 번호 또는 0)
 #: ★ 이름이 아니라 **모양**이지만 한 칸(`[^/]+`)까지만이다.
@@ -466,14 +467,16 @@ SURFACE_RULES: tuple = (
      frozenset({KIND_ADMIN}), 0),
     ("user_detail", re.compile(r"^/api/v1/user/get-user-detail/([^/]+)$"),
      frozenset({KIND_ADMIN}), 1),
+    # [P-486 · 세종 표] 관제요원(U1) 0 · 팀장(U2) 검토자별 통계·주소 없는 카메라만 ·
+    #   지자체(U4) 0 · 웹훅 구독·계량은 관리자(U5)·플랫폼(U0)만.
     ("stats_by_reviewer", re.compile(r"^/api/dsm/stats/by-reviewer$"),
-     _ALL_BUT_OPERATOR, 0),
+     _ADMIN_AND_MANAGER, 0),
     ("camera_address_gap", re.compile(r"^/api/dsm/cameras/address-gap$"),
-     _ALL_BUT_OPERATOR, 0),
+     _ADMIN_AND_MANAGER, 0),
     ("webhook_subscriptions", re.compile(r"^/api/dsm/webhook-subscriptions$"),
-     _ALL_BUT_OPERATOR, 0),
+     frozenset({KIND_ADMIN}), 0),
     ("metering", re.compile(r"^/api/dsm/metering(/[^/]+)?$"),
-     _ALL_BUT_OPERATOR, 0),
+     frozenset({KIND_ADMIN}), 0),
 )
 
 
@@ -574,6 +577,63 @@ def judge_surface(*, method: str, path: str, kinds, user_id=None):
     return SURFACE_DENIAL_CODE
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# ④ 사람 쓰기 = 관리자만 (P-484 · 턴 AS) — dj-core 0줄 (P-274 결)
+# ═══════════════════════════════════════════════════════════════════════════
+# 출생 표본 [실측 2026-10-01 · 시험 DB · tests/test_p484_user_write_doors.py]:
+#   dj-core `update-user` · `delete-user` 는 주석에 「관리자 권한 확인」이라 적고 실제로는
+#   `is_authenticated` 만 본다. 관제요원(U1) · 팀장(U2) 토큰으로 **남의 계정을 고치고 지웠다**
+#   (200 · 실제로 바뀜 · CSRF 검사를 켜도 같음). 지자체(U4)는 ② 읽기 전용 규칙이 막았다.
+PEOPLE_WRITE_FLAG = "ROLE_PEOPLE_WRITE_GATE_ENABLED"
+PEOPLE_WRITE_DENIAL_CODE = "role_people_write"
+PEOPLE_WRITE_MESSAGE_KO = "사람 계정을 바꾸는 일은 관리자만 할 수 있습니다."
+PEOPLE_WRITE_MESSAGE_EN = "Only administrators can change user accounts."
+_PEOPLE_UPDATE = re.compile(r"^/api/v1/user/update-user/([^/]+)/([^/]+)$")
+_PEOPLE_ADMIN_ONLY = re.compile(
+    r"^/api/v1/user/(delete-user/[^/]+|reject-user|activate-user|deactivate-user)$")
+
+
+def people_write_enabled() -> bool:
+    """P-484 규칙이 켜져 있는가. 기본은 **켜짐** — 다른 스위치와 따로다."""
+    return bool(getattr(settings, PEOPLE_WRITE_FLAG, True))
+
+
+def is_people_write(method: str, path: str) -> bool:
+    if not is_write_method(method):
+        return False
+    p = _normalize(path)
+    return bool(_PEOPLE_UPDATE.match(p) or _PEOPLE_ADMIN_ONLY.match(p))
+
+
+def judge_people_write(*, method: str, path: str, kinds, user_id=None):
+    """거절 사유 또는 None. **요청 객체 없이 시험할 수 있다.**
+
+    ① 끄면 안 막는다 ② 사람 쓰기 문이 아니면 안 본다 ③ 관리자면 통과
+    ④ 자기 프로필 수정(`update-user/{자기}/true`)은 연다 — 프로필 화면이 부른다
+       (자기라도 `profile=false` 관리자 양식은 역할 칸을 바꿀 수 있어 막는다)
+    ⑤ 그 밖은 거절 — 종류를 모르는 계정(`other` · 빈 묶음)도 거절한다.
+       ★ ③ 규칙(읽기)과 다르다: 읽기는 모르면 안 막지만, **남의 계정을 바꾸는 쓰기는
+         모르면 막는다.**
+    """
+    if not people_write_enabled() or not is_people_write(method, path):
+        return None
+    if KIND_ADMIN in frozenset(kinds or ()):
+        return None
+    m = _PEOPLE_UPDATE.match(_normalize(path))
+    own = (m is not None and user_id is not None and str(m.group(1)) == str(user_id))
+    if own and str(m.group(2)).lower() in ("true", "1"):
+        return None
+    return PEOPLE_WRITE_DENIAL_CODE
+
+
+def people_write_denial_response() -> JsonResponse:
+    return JsonResponse({
+        "success": False, "status_code": 403, "code": PEOPLE_WRITE_DENIAL_CODE,
+        "detail": "Forbidden",
+        "message": {"ko": PEOPLE_WRITE_MESSAGE_KO, "en": PEOPLE_WRITE_MESSAGE_EN},
+    }, status=403)
+
+
 def surface_denial_payload() -> dict:
     """밖으로 나가는 본문 한 벌. **테넌트 자료가 한 자도 없다.**"""
     return {
@@ -596,6 +656,7 @@ class RoleGateMiddleware:
       ① 역할 0 계정 -> 403 (P-105) — 스위치 `ROLE_GATE_ENABLED`
       ② 읽기 전용 역할의 **쓰기** -> 403 (P-119) — 스위치 `READONLY_ROLE_GATE_ENABLED`
       ③ 역할 밖 읽기 면 -> 403 (P-471) — 스위치 `ROLE_SURFACE_GATE_ENABLED`
+      ④ 사람 쓰기(남의 계정 고침·지움·활성) -> 관리자만 (P-484) — 스위치 `ROLE_PEOPLE_WRITE_GATE_ENABLED`
 
     두 스위치는 **따로다.** 하나를 끄려다 둘이 꺼지면 그날 구멍이 하나 열린다.
 
@@ -648,5 +709,14 @@ class RoleGateMiddleware:
                 logger.info("[ROLE_GATE] 역할 밖 읽기 거절 %s %s — %s",
                             method, path, verdict)
                 return surface_denial_response()
+
+        # ④ 사람 쓰기 = 관리자만 (P-484). 그 문에서만 역할 질의를 만든다.
+        if people_write_enabled() and is_people_write(method, path):
+            verdict = judge_people_write(method=method, path=path,
+                                         kinds=account_kinds(user),
+                                         user_id=getattr(user, "id", None))
+            if verdict is not None:
+                logger.info("[ROLE_GATE] 사람 쓰기 거절 %s %s — %s", method, path, verdict)
+                return people_write_denial_response()
 
         return self.get_response(request)

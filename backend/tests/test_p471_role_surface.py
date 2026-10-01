@@ -46,10 +46,11 @@ PASSWORD = "p471-test-only-not-a-secret"
 FORMERLY_OPEN_TO_OPERATOR = (
     ("/api/v1/user/list", {"admin"}),
     ("/api/v1/user/get-user-detail/115", {"admin"}),
-    ("/api/dsm/stats/by-reviewer", {"admin", "manager", "executive"}),
-    ("/api/dsm/cameras/address-gap", {"admin", "manager", "executive"}),
-    ("/api/dsm/webhook-subscriptions", {"admin", "manager", "executive"}),
-    ("/api/dsm/metering", {"admin", "manager", "executive"}),
+    # [P-486 · 세종 표] 팀장은 통계·주소 둘만 · 지자체 0 · 웹훅·계량은 관리자만
+    ("/api/dsm/stats/by-reviewer", {"admin", "manager"}),
+    ("/api/dsm/cameras/address-gap", {"admin", "manager"}),
+    ("/api/dsm/webhook-subscriptions", {"admin"}),
+    ("/api/dsm/metering", {"admin"}),
 )
 
 #: 이미 403 이던 자리 — 이 규칙의 표에 **없어야** 한다(중복 문을 만들지 않는다).
