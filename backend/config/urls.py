@@ -110,6 +110,10 @@ urlpatterns = [
     path("api/fws/", include("apps.fws.urls")),  # 산불감시 현장 App (WO-15 §5 P-356~358)
 ]
 
+# WO-GRDX-20261002-06 — 없는 주소 · 서버 오류는 고객 말로(화면) · JSON(/api/). DEBUG=False 일 때만 장고가 부른다.
+handler404 = "common.not_found.page_not_found"
+handler500 = "common.not_found.server_error"
+
 # Serve static and media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
