@@ -85,3 +85,18 @@ html[data-gx-prelogin] .background-login p.text-white {
   color: rgba(0, 0, 0, 0.65) !important;
   font-size: 13px !important;
 }
+
+/* 비밀번호 찾기(인수 rj-core 화면 · 소스 없음) — 오류 글씨는 인라인 `color: rgb(255, 77, 79)`(3.27 : 1),
+   「뒤로」는 #1d9be2(3.07 : 1) [실측 22:2x]. 같은 값으로 덮는다(오류 5.57 · 링크 4.58). */
+html[data-gx-prelogin] .background-login [style*='rgb(255, 77, 79)'] {
+  color: #cf1322 !important;
+  font-size: 13px !important;
+}
+html[data-gx-prelogin] .forgot-password-card .back-button {
+  color: #177cb5 !important;
+}
+@media (min-width: 1200px) {
+  html[data-gx-prelogin] .forgot-password-container {
+    width: 100% !important;
+  }
+}
