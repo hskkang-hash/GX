@@ -23,6 +23,7 @@
 import { Alert, Card, Space, Tabs, Tag, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useUserInfo } from 'rj-core';
 
 import { dsmGet, dsmHomeEndpoint } from '../api';
 import { useDsmResource } from '../hooks/useDsmResource';
@@ -176,10 +177,15 @@ interface ProgressView {
  */
 export function FirstCards({ chapter, kick }: { chapter?: string; kick?: KickView }) {
   const persona = CHAPTER_TO_PERSONA[chapter ?? ''] ?? '';
+  // ★ [WO-GRDX-20261002-06 AC-1] 익명이면 **부르지도 않는다.** 그리지 않는 것만으로는 모자랐다 —
+  //   [실측 2026-10-02 20:5x · 8500 · 익명] `/start` → `GET …/onboarding/progress` 401 → 전역 401 처리기
+  //   (`services/API.ts` 의 `window.location.href = '/login'`)가 화면째 로그인으로 보냈다.
+  //   그래서 로그인 화면의 「처음이세요?」가 눌러도 · 쳐도 · 새로고침해도 로그인 화면이었다.
+  const signedIn = Boolean(useUserInfo());
   const progress = useDsmResource<ProgressView>(
     () => dsmGet(dsmHomeEndpoint.onboardingProgress, persona ? { persona } : undefined),
     [persona],
-    { enabled: !kick },
+    { enabled: !kick && signedIn },
   );
   const view = kick ?? (progress.state === 'data' ? progress.data?.kick : undefined);
   if (!view || view.total === 0) return null;

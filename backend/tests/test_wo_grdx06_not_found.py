@@ -62,3 +62,38 @@ def test_server_error_bodies_carry_nothing_internal():
     api = not_found.server_error(rf.get("/api/dsm/anything"))
     assert api.status_code == 500
     assert json.loads(api.content) == {"detail": "Internal Server Error"}
+
+
+# ── AC-1 · AC-6 — 프런트 시험 실행기가 없어 소스를 읽는다(test_p342 와 같은 관례) ──
+from pathlib import Path  # noqa: E402
+
+
+def _frontend_src():
+    for base in (Path("/repo/frontend/src"), *(p / "frontend" / "src" for p in Path(__file__).resolve().parents)):
+        if (base / "App.tsx").exists():
+            return base
+    return None
+
+
+def _read(rel):
+    src = _frontend_src()
+    assert src is not None, "frontend/src 를 못 찾았다 — 판정 불가를 초록으로 두지 않는다"
+    return (src / rel).read_text(encoding="utf-8")
+
+
+def test_onboarding_does_not_call_server_when_anonymous():
+    # 출생 표본: 익명 /start → onboarding/progress 401 → 전역 401 처리기가 /login 으로 보냈다.
+    body = _read("features/dsm/pages/Onboarding.tsx")
+    assert "enabled: !kick && signedIn" in body
+    assert "Boolean(useUserInfo())" in body
+
+
+def test_login_screens_read_return_path_and_say_why():
+    helper = _read("features/login/returnTo.ts")
+    assert "export const LOGIN_REQUIRED = '로그인이 필요합니다';" in helper
+    assert "startsWith('//')" in helper
+    for rel in ("features/login/LoginDesktop.tsx", "features/LoginMobile/LoginMobile.tsx"):
+        body = _read(rel)
+        assert "returnPathFrom(location.state)" in body, rel
+        assert "{LOGIN_REQUIRED}" in body, rel
+        assert "navigate(back, { replace: true })" in body, rel

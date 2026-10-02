@@ -56,6 +56,7 @@ import {
   SUBMITTING,
 } from './loginCopy';
 import { loginInFlight, requestLogin } from './loginRequest';
+import { LOGIN_REQUIRED, returnPathFrom } from './returnTo';
 
 interface AuthStatus {
   existing_session?: boolean;
@@ -128,6 +129,12 @@ export default function LoginDesktop({ logoImage }: { logoImage: string }) {
         navigate(`${CustomRoutes.qrCode}?dataQRCode=${qr}`);
         return;
       }
+      // ★ [WO-GRDX-20261002-06 AC-6] 관문이 보낸 사람은 **가려던 화면으로** 돌아간다(`returnTo.ts` 머리말).
+      const back = returnPathFrom(location.state);
+      if (back) {
+        navigate(back, { replace: true });
+        return;
+      }
       // ★ [P-141 · 턴 Q · 차선 F] 첫 화면은 `features/nav/roleHome.ts` **한 곳**이 정한다 —
       //   ① 고른 홈 ② 역할의 홈 ③ `/profile`. 역할은 **프로필 응답(`info`)** 에만 실린다
       //   (로그인 응답 `user` 에는 `roles` 가 없다 — roleHome.ts 머리말). 그래서 `info` 가 먼저다.
@@ -144,6 +151,7 @@ export default function LoginDesktop({ logoImage }: { logoImage: string }) {
       getProfileAPI,
       i18n,
       location.search,
+      location.state,
       login,
       navigate,
       saveProfile,
@@ -238,6 +246,12 @@ export default function LoginDesktop({ logoImage }: { logoImage: string }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1em' }}>
           <img className="logo-image" src={logoImage} alt="logo-img" />
         </div>
+        {/* [WO-GRDX-20261002-06 AC-6] 관문이 보낸 사람에게만 — 왜 여기 왔는지 한 줄. */}
+        {returnPathFrom(location.state) ? (
+          <div role="status" data-testid="login-required">
+            {LOGIN_REQUIRED}
+          </div>
+        ) : null}
         <form
           style={{ display: 'flex', flexDirection: 'column', gap: '.5em' }}
           onSubmit={(ev) => {

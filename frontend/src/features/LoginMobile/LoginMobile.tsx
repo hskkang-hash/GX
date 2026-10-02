@@ -26,6 +26,7 @@ import {
 } from '@/features/login/loginCopy';
 import { loginInFlight, requestLogin } from '@/features/login/loginRequest';
 import { resolveHome } from '@/features/nav/roleHome';
+import { LOGIN_REQUIRED, returnPathFrom } from '@/features/login/returnTo';
 
 interface FormData {
   username: string;
@@ -104,8 +105,12 @@ const LoginMobile = ({ logoImage }: { logoImage: string }) => {
         const currentParams = new URLSearchParams(location.search);
         const dataValue = currentParams.get('dataQRCode');
 
+        const back = returnPathFrom(location.state);
         if (dataValue) {
           navigate(`${CustomRoutes.qrCode}?dataQRCode=${dataValue}`);
+        } else if (back) {
+          // ★ [WO-GRDX-20261002-06 AC-6] 관문이 보낸 사람은 가려던 화면으로(`returnTo.ts`).
+          navigate(back, { replace: true });
         } else {
           // ★ [P-141 · 턴 Q · 차선 F] 첫 화면은 `features/nav/roleHome.ts` 한 곳이 정한다.
           //   휴대전화의 U1 → `/m/inbox`, 나머지는 지금 가던 곳(QR). 역할은 **받은 프로필**에서
@@ -152,6 +157,12 @@ const LoginMobile = ({ logoImage }: { logoImage: string }) => {
         />
         <p className="login-description">{t('Login Description')}</p>
       </div>
+      {/* [WO-GRDX-20261002-06 AC-6] 관문이 보낸 사람에게만 — 왜 여기 왔는지 한 줄. */}
+      {returnPathFrom(location.state) ? (
+        <div role="status" data-testid="login-required">
+          {LOGIN_REQUIRED}
+        </div>
+      ) : null}
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="d-flex flex-column gap-3 mt-3">
           <CustomInputHookForm
