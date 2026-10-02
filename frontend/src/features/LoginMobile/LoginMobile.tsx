@@ -139,7 +139,7 @@ const LoginMobile = ({ logoImage }: { logoImage: string }) => {
   };
 
   return (
-    <div
+    <main
       className="p-3"
       id="login-mobile"
     >
@@ -150,11 +150,14 @@ const LoginMobile = ({ logoImage }: { logoImage: string }) => {
           gap: '1em',
         }}
       >
-        <img
-          className="logo-image"
-          src={logoImage || logoImageDefault}
-          alt="logo-img"
-        />
+        {/* [WO-GRDX-20261002-07 AC-5] 화면 제목 하나 = 로고(대체 글 GuardianX). */}
+        <h1 className="gx-prelogin-h1">
+          <img
+            className="logo-image"
+            src={logoImage || logoImageDefault}
+            alt="GuardianX"
+          />
+        </h1>
         <p className="login-description">{t('Login Description')}</p>
       </div>
       {/* [WO-GRDX-20261002-06 AC-6] 관문이 보낸 사람에게만 — 왜 여기 왔는지 한 줄. */}
@@ -238,7 +241,7 @@ const LoginMobile = ({ logoImage }: { logoImage: string }) => {
           ]}
         />
       </CustomModal>
-    </div>
+    </main>
   );
 };
 

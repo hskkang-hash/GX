@@ -241,10 +241,13 @@ export default function LoginDesktop({ logoImage }: { logoImage: string }) {
   }
 
   return (
-    <div className="login-container" id="login-page">
+    <main className="login-container" id="login-page">
       <div className="login-card">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1em' }}>
-          <img className="logo-image" src={logoImage} alt="logo-img" />
+          {/* [WO-GRDX-20261002-07 AC-5] 화면 제목 하나 = 로고 — 글자를 새로 짓지 않는다. */}
+          <h1 className="gx-prelogin-h1">
+            <img className="logo-image" src={logoImage} alt="GuardianX" />
+          </h1>
         </div>
         {/* [WO-GRDX-20261002-06 AC-6] 관문이 보낸 사람에게만 — 왜 여기 왔는지 한 줄. */}
         {returnPathFrom(location.state) ? (
@@ -374,6 +377,6 @@ export default function LoginDesktop({ logoImage }: { logoImage: string }) {
           ]}
         />
       </CustomModal>
-    </div>
+    </main>
   );
 }

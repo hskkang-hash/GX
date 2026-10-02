@@ -196,6 +196,7 @@ import EditTemplate from './features/waybillTemplate/EditTemplate';
 import './index.css';
 import { CustomRoutes } from './services/API';
 import BuildVersion from './features/dsm/components/BuildVersion';
+import { usePreloginRoot } from './features/login/usePreloginRoot';
 import AlertLevelBand from './features/dsm/components/AlertLevelBand';
 import { KICK_SENTENCE } from './features/dsm/constants/kick';
 import { dsm2Routes } from './features/dsm/routes';
@@ -388,6 +389,8 @@ const EditPacking = lazy(
 
 const Background = () => {
   const { isMobile } = useMobileContext();
+  // [WO-GRDX-20261002-07 AC-1] 로그인 전 화면(로그인 · 가입 · 비밀번호 찾기 · 재설정)에서만 글씨 뿌리를 폭에서 푼다.
+  usePreloginRoot();
   return isMobile ? (
     <Outlet />
   ) : (
@@ -418,7 +421,7 @@ const Sidebar = () => {
  *   그것은 「있다」이지 「쓴다」가 아니다.
  */
 const FirstTimeLink = () => (
-  <div style={{ textAlign: 'center', padding: '12px 0' }}>
+  <div className="gx-first-time" style={{ textAlign: 'center', padding: '12px 0' }}>
     {/*
       P-52 킥 문장 — **세 자리에 같은 글자**를 둔다(로그인 · 지금 처리할 것 상단 ·
       월간 1쪽 첫 줄). 제품이 무엇을 하는 물건인지 한 문장으로 말하는 자리이고,
@@ -428,7 +431,7 @@ const FirstTimeLink = () => (
         (`features/dsm/constants/kick.ts`). 자리마다 적으면 한 자리를 고치는 날
         나머지가 옛말이 되고, 옛말이 된 것은 화면에서 안 보인다.
     */}
-    <p style={{ margin: '0 0 8px', fontSize: 13, opacity: 0.75 }}>
+    <p style={{ margin: '0 0 8px', fontSize: 13 }}>
       {KICK_SENTENCE}
     </p>
     <a href={dsm2Routes.onboarding.path}>처음이세요?</a>
@@ -452,7 +455,7 @@ const Login = () => {
       <>
         <LoginMobile logoImage={logoExpandedLightModeDefault} />
         <FirstTimeLink />
-        <BuildVersion />
+        <BuildVersion hideWhenUnknown />
       </>
     );
   }
@@ -474,7 +477,7 @@ const Login = () => {
       */}
       <LoginDesktop logoImage={logoExpandedLightModeDefault} />
       <FirstTimeLink />
-      <BuildVersion />
+      <BuildVersion hideWhenUnknown />
     </>
   );
 };

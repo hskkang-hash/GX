@@ -1,0 +1,87 @@
+/*
+ * 로그인 전 화면(로그인 · 비밀번호 찾기 · 재설정)을 읽을 수 있게 — WO-GRDX-20261002-07 AC-1·2·6.
+ *
+ * 출생 표본 [실측 2026-10-02 22:1x · 8500 · 익명 · getComputedStyle]
+ *   뿌리 글씨 12 → 10.6 → 9.56 px (폭 1440 → 768 → 375) — `index.css`·`Global.scss` 의
+ *   `html { font-size: calc(... vw) !important }` 가 앱 전체의 뿌리를 폭에 묶는다.
+ *   주 단추 #1d9be2 위 흰 글씨 3.07 : 1 · 바닥 글 3.36 : 1 · 1440 폭에서 카드 중심 x 432 / 표어 720.
+ *
+ * 범위: `html[data-gx-prelogin]` 일 때만(로그인 전 화면이 떠 있는 동안 `usePreloginRoot` 가 단다).
+ *   로그인 뒤 화면의 겉모습은 바꾸지 않는다(지시서 §4 금지).
+ * 값: 새 색을 짓지 않는다 — 주 색은 지금 색(#1d9be2)의 **같은 색상·채도에서 명도만** 내려
+ *   흰 글씨 대비 4.5 를 처음 넘는 값(#177cb5 · 4.58 : 1). 오류는 Ant Design 붉은 7단(#cf1322 · 5.57),
+ *   보조 글은 Ant Design `colorTextSecondary`(rgba(0,0,0,.65) · 7.0). 글씨는 Ant Design 기본
+ *   `fontSize` 14 · `fontSizeSM` 12 대신 지시서가 정한 13.
+ */
+html[data-gx-prelogin] {
+  font-size: 16px !important;
+}
+
+html[data-gx-prelogin] body {
+  font-family: Inter, 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+}
+
+/* 본문 · 라벨 · 입력 · 단추 = 14 */
+html[data-gx-prelogin] .login-card,
+html[data-gx-prelogin] .login-card label,
+html[data-gx-prelogin] .login-card input,
+html[data-gx-prelogin] .login-card button,
+html[data-gx-prelogin] #login-mobile,
+html[data-gx-prelogin] #login-mobile input,
+html[data-gx-prelogin] #login-mobile button,
+html[data-gx-prelogin] .background-login input,
+html[data-gx-prelogin] .background-login label,
+html[data-gx-prelogin] .background-login button {
+  font-size: 14px !important;
+}
+
+/* 보조 · 링크 · 오류 = 13 이상 */
+html[data-gx-prelogin] .error-message,
+html[data-gx-prelogin] .ant-form-item-explain-error,
+html[data-gx-prelogin] .gx-first-time a,
+html[data-gx-prelogin] .login-card a,
+html[data-gx-prelogin] .login-card [role='status'],
+html[data-gx-prelogin] .background-login a {
+  font-size: 13px !important;
+}
+
+/* 주 단추 · 링크 — 대비 4.5 이상 */
+html[data-gx-prelogin] .ant-btn-primary:not(:disabled) {
+  background-color: #177cb5 !important;
+  border-color: #177cb5 !important;
+  color: #fff !important;
+}
+html[data-gx-prelogin] .gx-first-time a,
+html[data-gx-prelogin] .login-card a {
+  color: #177cb5 !important;
+}
+html[data-gx-prelogin] .error-message,
+html[data-gx-prelogin] .ant-form-item-explain-error {
+  color: #cf1322 !important;
+}
+html[data-gx-prelogin] .gx-prelogin-footnote {
+  color: rgba(0, 0, 0, 0.65) !important;
+  opacity: 1 !important;
+  font-size: 13px !important;
+}
+
+/* 넓은 화면 — 카드와 표어가 같은 가운데 축(배경 레이아웃의 오른쪽 빈 열을 걷는다) */
+@media (min-width: 1200px) {
+  html[data-gx-prelogin] .login-container {
+    width: 100% !important;
+  }
+}
+
+/* 제목은 로고 하나 — 글자를 새로 짓지 않는다(대체 글 「GuardianX」가 제목이다) */
+html[data-gx-prelogin] h1.gx-prelogin-h1 {
+  margin: 0;
+  font-size: inherit;
+  line-height: 0;
+}
+
+/* 바닥 저작권 줄 — 인수 배경(rj-core)이 흰 바탕 위에 `text-white` 를 쓴다 [실측 대비 1.18 : 1].
+   보조 글자색(colorTextSecondary · 7.0 : 1)으로. */
+html[data-gx-prelogin] .background-login p.text-white {
+  color: rgba(0, 0, 0, 0.65) !important;
+  font-size: 13px !important;
+}

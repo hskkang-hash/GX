@@ -32,11 +32,17 @@
  * ★ 「알 수 없음」이 뜨는 경우가 있다. 그것은 결함 표시가 **아니라 정직한 표시**다 —
  *   커밋을 못 읽은 빌드다(`vite.config.ts` 머리말의 ③). 지어낸 해시보다 낫다.
  */
-import { SUPPORT_LABEL, VERSION_LABEL } from '../constants/build';
+import { GX_COMMIT, SUPPORT_LABEL, VERSION_LABEL } from '../constants/build';
 
-export default function BuildVersion() {
+/**
+ * `hideWhenUnknown` — [WO-GRDX-20261002-07 AC-5] 로그인 전 화면에서는 버전이 없으면 아무것도 안 보인다.
+ *   처음 온 사람에게 「버전 알 수 없음」은 읽을 수 없는 말이다. 관문 안(운영자)에서는 위 규약 그대로.
+ */
+export default function BuildVersion({ hideWhenUnknown = false }: { hideWhenUnknown?: boolean }) {
+  if (hideWhenUnknown && !GX_COMMIT) return null;
   return (
     <div
+      className={hideWhenUnknown ? 'gx-prelogin-footnote' : undefined}
       style={{
         position: 'fixed',
         right: 8,
