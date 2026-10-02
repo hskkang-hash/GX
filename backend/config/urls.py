@@ -108,6 +108,8 @@ urlpatterns = [
     #   `/fws/*` 라우트 · DSM 커널(K1 이벤트·K2 알림) 공유. Django 앱이 아니다
     #   (모델이 없다 — 위 DSM 줄과 같은 이유로 INSTALLED_APPS 를 건드리지 않는다).
     path("api/fws/", include("apps.fws.urls")),  # 산불감시 현장 App (WO-15 §5 P-356~358)
+    # ★ WO-GRDX-20261002-10 — GCS(드론 제어) 경유. 화면은 GCS 키를 들지 않는다(서버가 제 자격으로 부른다).
+    path("api/gcs/", include("apps.gcs.urls")),
 ]
 
 # WO-GRDX-20261002-06 — 없는 주소 · 서버 오류는 고객 말로(화면) · JSON(/api/). DEBUG=False 일 때만 장고가 부른다.

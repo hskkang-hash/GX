@@ -8,6 +8,8 @@ import { Container, CustomBreadcrumb, Main, useTheme } from 'rj-core';
 
 import { useConvertDate } from '@/features/Dashboard/utils/formatDateTime';
 import i18n from '@/i18n';
+
+import { gcsAccessKey } from './gcsAccess';
 import { CustomRoutes } from '@/services/API';
 
 import AIDetectionPanel from './components/AIDetectionPanel';
@@ -28,7 +30,8 @@ const SurveillanceGCSPage: React.FC = () => {
   const profileId = searchParams.get('profileId');
   const groupId = searchParams.get('groupId');
   const missionName = searchParams.get('mission');
-  const accessKey = searchParams.get('accessKey') ?? import.meta.env.VITE_CGS_APIKEY ?? undefined;
+  // [WO-GRDX-20261002-10] GCS 키는 화면에 없다 — 우리 로그인 토큰 + 같은 출처 경유(`gcsAccess.ts`).
+  const accessKey = gcsAccessKey();
   const { timeZoneFormat } = useConvertDate();
   // Get AI stream URL from environment
   const aiStreamUrl =

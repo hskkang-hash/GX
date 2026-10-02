@@ -2,10 +2,11 @@ import { GCSFlight } from '@GCS';
 import '@GCS/pages/flight/styles/index.scss';
 // import '@GCS/pages/flight/styles/scoped-wrapper.scss';
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { Container, useTheme } from 'rj-core';
 
 import i18n from '@/i18n';
+
+import { gcsAccessKey } from './gcsAccess';
 
 /**
  * GCS (Ground Control Station) Page Component
@@ -14,10 +15,10 @@ import i18n from '@/i18n';
 const GCSPage: React.FC = () => {
   const [theme] = useTheme();
   const lng = i18n.language || 'en';
-  const [searchParams] = useSearchParams();
 
   // Get accessKey from URL params or environment variable
-  const accessKey = searchParams.get('accessKey') ?? import.meta.env.VITE_CGS_APIKEY ?? undefined;
+  // [WO-GRDX-20261002-10] GCS 키는 화면에 없다 — 우리 로그인 토큰 + 같은 출처 경유(`gcsAccess.ts`).
+  const accessKey = gcsAccessKey();
 
   return (
     <Container
