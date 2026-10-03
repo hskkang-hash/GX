@@ -1232,6 +1232,10 @@ STREAM_URL = env("STREAM_URL", default="http://streaming.internal.example")
 # GCS API Configuration
 GCS_APIKEY = env("GCS_APIKEY", default="")
 FLIGHTBRID_URL = env("FLIGHTBRID_URL", default="http://localhost:8009")
+
+# ── WO-GRDX-20261002-09 · 규격 09 M1 — QA 빌드 스위치. 참일 때만 `/qa/*` 가 등록된다(config/urls.py).
+#   기본값 거짓 — 운영·8500 은 이 이름을 선언하지 않는다. QA 전용 compose 프로젝트(`guardianx-qa`)만 참을 준다.
+QA_BUILD = env.bool("QA_BUILD", default=False)
 CAPTURE_URL = f"{STREAM_URL}/stream/api/streams/capture"
 RECORD_URL = f"{STREAM_URL}/stream/api/streams/record"
 RTSP_URL = env("RTSP_URL", default="rtsp://rtsp.internal.example:8554")

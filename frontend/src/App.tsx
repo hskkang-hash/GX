@@ -638,6 +638,14 @@ function App() {
      */
     { path: dsm2Routes.onboarding.path, element: <DsmOnboarding /> },
     /*
+     * WO-GRDX-20261002-09 · 규격 09 M1 — QA 빌드에서만 `/qa/*` 가 생긴다.
+     * ★ 조건은 **빌드 때 상수**다(`import.meta.env.VITE_QA_BUILD`). 스위치 없이 지으면 Vite 가 이 분기를 지우고
+     *   동적 import 대상(`features/qa/*`)이 산출물에 실리지 않는다 — 검증은 운영 번들의 `qa/as` 0건.
+     */
+    ...(import.meta.env.VITE_QA_BUILD === 'true'
+      ? [{ path: '/qa/*', lazy: () => import('./features/qa/QaEntry').then((m) => ({ Component: m.default })) }]
+      : []),
+    /*
      * UX-24c 월 모드 — **월 표시 토큰이 있을 때만** 관문 밖에 선다.
      *
      * ⚠ 라우터는 먼저 선언된 자리를 고른다. 그래서 이 줄이 있으면 아래 관문 안의

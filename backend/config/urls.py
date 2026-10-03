@@ -112,6 +112,11 @@ urlpatterns = [
     path("api/gcs/", include("apps.gcs.urls")),
 ]
 
+# WO-GRDX-20261002-09 · 규격 09 M1 잠금 ① — QA 빌드에서만 `/qa/*` 를 등록한다(운영에는 라우트 자체가 없다).
+#   잠금 ② 는 뷰 안(`apps/qa/views.py` 가 요청마다 다시 본다).
+if settings.QA_BUILD:
+    urlpatterns += [path("qa/", include("apps.qa.urls"))]
+
 # WO-GRDX-20261002-06 — 없는 주소 · 서버 오류는 고객 말로(화면) · JSON(/api/). DEBUG=False 일 때만 장고가 부른다.
 handler404 = "common.not_found.page_not_found"
 handler500 = "common.not_found.server_error"
