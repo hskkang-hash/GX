@@ -427,3 +427,7 @@ python manage.py makemigrations stream_monitors --dry-run     # W2-1
 
 - `GuardianX build` 와 `guardianx-source` 가 "같은 내용"인지 **diff 로 실측** — 코드 부분만: `git diff --no-index` 요약. 다르면 무엇이 다른지 10줄 이내 보고 (운영서버 대조의 대체재).
 - 발견한 사본의 dj-core 버전 문자열 기록 (향후 탈출 설계의 기준점).
+
+## 화면(SPA) 배포 한 줄 — 직전 세대 자산 남김
+
+`scripts/deploy_spa_8500.py` 는 교체 뒤 직전 세대의 `assets/` 해시 파일을 한 세대만 남긴다(전에 열어 둔 탭이 404 로 흰 화면이 되지 않게 · 두 세대 전 것과 키 모양이 든 옛 번들은 지운다). 앞문 머리(`index.html` no-cache · `/assets/` immutable)는 `nginx/gx-front.conf` 가 정한다 — WO-GRDX-20261002-11.

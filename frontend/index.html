@@ -25,6 +25,52 @@
         })();
       });
     </script>
+    <!-- WO-GRDX-20261002-11 AC-1b: 새 판이 나와 옛 번들이 없어졌을 때 흰 화면 대신 안내를 띄운다.
+         번들에 기대지 않는 인라인 줄이다(외부 자원 0). 정상 적재에서는 아무것도 하지 않는다.
+         - 메인 모듈 스크립트 적재 실패(404 등) · 동적 청크 적재 실패(vite:preloadError) → 안내 + 자동 새로고침 1회
+         - 20초가 지나도 #root 가 비어 있으면 → 안내만(자동 새로고침 없음)
+         자동 새로고침은 sessionStorage 표시로 탭당 1회뿐이다 — 되풀이(무한 새로고침) 금지. -->
+    <script>
+      (function () {
+        var KEY = 'gx_stale_reload';
+        function shown() { return !!document.getElementById('gx-stale-notice'); }
+        function notice() {
+          if (shown() || !document.body) { return; }
+          var d = document.createElement('div');
+          d.id = 'gx-stale-notice';
+          d.setAttribute('role', 'alert');
+          d.style.cssText = 'position:fixed;left:0;right:0;top:35%;margin:0 auto;max-width:360px;padding:20px;' +
+            'text-align:center;font:16px/1.5 sans-serif;background:#fff;color:#111;border:1px solid #ccc;' +
+            'border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.2);z-index:2147483647';
+          d.appendChild(document.createTextNode('새 판이 나왔습니다 · 새로고침'));
+          d.appendChild(document.createElement('br'));
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = '새로고침';
+          b.style.cssText = 'margin-top:12px;padding:8px 20px;font-size:16px;cursor:pointer';
+          b.onclick = function () { location.reload(); };
+          d.appendChild(b);
+          document.body.appendChild(d);
+        }
+        function stale(autoReload) {
+          if (autoReload) {
+            var done = false;
+            try { done = sessionStorage.getItem(KEY) === '1'; sessionStorage.setItem(KEY, '1'); } catch (e) { done = true; }
+            if (!done) { location.reload(); return; }
+          }
+          if (document.body) { notice(); } else { document.addEventListener('DOMContentLoaded', notice); }
+        }
+        window.addEventListener('error', function (e) {
+          var t = e.target;
+          if (t && t.tagName === 'SCRIPT' && t.type === 'module') { stale(true); }
+        }, true);
+        window.addEventListener('vite:preloadError', function () { stale(true); });
+        setTimeout(function () {
+          var r = document.getElementById('root');
+          if (r && !r.firstChild) { stale(false); }
+        }, 20000);
+      })();
+    </script>
     <!-- Kakao Maps SDK -->
     <script
       type="text/javascript"

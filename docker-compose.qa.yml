@@ -1,0 +1,139 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# WO-GRDX-20261003-04 레인 B — QA 판 `guardianx-qa` (규격 09 M1·M5·M7 · L3 · 이 PC 안에서만)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+#   띄우기:  sh scripts/qa/qa_up.sh            (env 생성 → 화면 번들 확인 → compose up)
+#   끄기:    docker compose -p guardianx-qa -f docker-compose.qa.yml down        (DB 볼륨은 남는다)
+#   초기화:  ... down -v  뒤 다시 qa_up.sh     (새 DB · 시드 다시)
+#
+# ★ 운영과 섞이지 않는 것 셋 (M5)
+#   ① **DB 가 다르다** — 새 볼륨 `qa-pgdata` 의 새 postgres. 운영 `postgres` 컨테이너·`gx-main-network`
+#      에 **붙지 않는다**(이 파일의 기본 망만 쓴다 · 운영 컨테이너 이름이 풀리지 않는다).
+#   ② **env 값을 복사하지 않는다** — 비밀은 `scripts/qa/qa_env.py` 가 **새로 지은 난수**(저장소 밖
+#      `../qa-runtime/qa.env`)이고, 나머지는 아래 `environment:` 의 가짜·.invalid 값이다.
+#      `backend/.env`(운영 모양 값)는 설정이 `read_env` 로 읽으므로 **빈 파일로 덮어** 못 읽게 한다.
+#   ③ **바깥에 열지 않는다** — 앞문만 `127.0.0.1:8510`. 메일은 QA 메일함(mailpit · 바깥 중계 0)에만.
+#
+# ★ `QA_BUILD=true` 는 이 파일에만 있다. 8500(운영 모양)은 이 이름을 선언하지 않는다.
+
+name: guardianx-qa
+
+x-backend: &backend
+  image: guardianx-backend:pg18
+  restart: unless-stopped
+  working_dir: /app
+  env_file:
+    - ${GX_QA_ENV_FILE:-../qa-runtime/qa.env}
+  environment:
+    QA_BUILD: "true"
+    GUARDIANX_ENVIRONMENT: qa
+    DJANGO_SETTINGS_MODULE: config.settings
+    DJANGO_DEBUG: "false"
+    DJANGO_CSRF_TRUSTED_ORIGINS: http://localhost:8510,http://127.0.0.1:8510
+    BACKEND_URL: http://localhost:8510
+    FRONTEND_BASE_URL: http://localhost:8510
+    DB_HOST: qa-db
+    DB_PORT: "5432"
+    DB_NAME: guardianx_qa
+    DB_USER: postgres
+    REDIS_HOST: redis://qa-redis:6379
+    REDIS_DB: "0"
+    # 메일 — QA 메일함(mailpit)만. 바깥 중계 설정 0. `/qa/outbox` 가 요약을 읽는다.
+    EMAIL_HOST: qa-mailpit
+    EMAIL_PORT: "1025"
+    EMAIL_USE_TLS: "false"
+    EMAIL_HOST_USER: ""
+    EMAIL_HOST_PASSWORD: ""
+    SMTP_SERVER: qa-mailpit
+    SMTP_PORT: "1025"
+    SMTP_TLS: "false"
+    SMTP_USERNAME: ""
+    SMTP_PASSWORD: ""
+    DEFAULT_FROM_EMAIL: noreply@qa.guardianx.invalid
+    SENDER_EMAIL: noreply@qa.guardianx.invalid
+    QA_OUTBOX_URL: http://qa-mailpit:8025
+    # 바깥 연동 — 전부 가짜 · .invalid (닿지 않는다 = 비활성). 목록은 qa/GRDX/ENV.md ⑤.
+    MINIO_ENDPOINT: minio.invalid:9000
+    MINIO_USE_HTTPS: "false"
+    MINIO_BUCKET_NAME: fake-qa
+    GCS_APIKEY: FAKE_qa_gcs
+    KAKAO_API_KEY: FAKE_qa_kakao
+    KAKAO_JS_API_KEY: FAKE_qa_kakao_js
+    ANYANG_SERVICE_KEY: FAKE_qa_anyang
+    OPENSEARCH_HOST: https://opensearch.invalid:9200
+    OPENSEARCH_USERNAME: fake
+    OPENSEARCH_PASSWORD: fake
+    STREAM_URL: http://streaming.invalid
+    RTSP_URL: rtsp://rtsp.invalid:8554
+    AI_ANALYSIS_URL: http://ai.invalid
+    AI_GRPC_URL: ai.invalid:50051
+    FLIGHTBRID_URL: http://flightbrid.invalid
+    GX_VAPID_PUBLIC_KEY: ""
+    GX_VAPID_PRIVATE_KEY: ""
+    WEBHOOK_SIGNING_KEYS: ""
+    PYTHONDONTWRITEBYTECODE: "1"
+    PYTHONUNBUFFERED: "1"
+  volumes:
+    - ./backend:/app:ro
+    - ./scripts/qa/empty.env:/app/.env:ro
+  depends_on:
+    qa-db:
+      condition: service_healthy
+    qa-redis:
+      condition: service_started
+
+services:
+  qa-db:
+    image: postgres:latest
+    restart: unless-stopped
+    env_file:
+      - ${GX_QA_ENV_FILE:-../qa-runtime/qa.env}
+    environment:
+      POSTGRES_DB: guardianx_qa
+      POSTGRES_USER: postgres
+    volumes:
+      - qa-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d guardianx_qa"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  qa-redis:
+    image: redis:latest
+    restart: unless-stopped
+
+  qa-mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+
+  qa-backend:
+    <<: *backend
+    # 기동마다: 마이그레이트 → 시드(다시 돌려도 같은 결과) → gunicorn. 시드가 실패하면 서지 않는다.
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py qa_seed &&
+             exec python -m gunicorn config.wsgi:application --bind 0.0.0.0:8000
+             --workers 2 --threads 4 --worker-class gthread --timeout 120
+             --access-logfile - --error-logfile -"
+
+  qa-worker:
+    <<: *backend
+    command: ["python", "-m", "celery", "-A", "config", "worker", "-l", "info", "--concurrency", "2"]
+    depends_on:
+      qa-backend:
+        condition: service_started
+
+  qa-front:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8510:80"
+    volumes:
+      - ./scripts/qa/qa-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${GX_QA_SPA_DIR:-../gx-spa-qa}:/usr/share/nginx/qa-spa:ro
+    depends_on:
+      - qa-backend
+
+volumes:
+  qa-pgdata:

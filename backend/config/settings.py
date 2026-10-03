@@ -110,6 +110,10 @@ INSTALLED_APPS = [
     "handover",  # Handover Management APIs
     "task_status",  # Task status tracking for socket workflows
 ]
+# WO-GRDX-20261003-04 — QA 판(`guardianx-qa`)에서만 `apps.qa` 를 앱으로 올린다(시드 명령 `qa_seed` 의 자리).
+#   운영·8500 은 `QA_BUILD` 를 선언하지 않는다 → 명령도 없다. 라우트 잠금은 아래 `QA_BUILD` 와 `config/urls.py`.
+if env.bool("QA_BUILD", default=False):
+    INSTALLED_APPS.append("apps.qa")
 
 MIDDLEWARE = [
     # ★ [턴 AR · N1 · O-05 5xx] 앞문 응답 카운터 — **줄을 새로 넣었다**(기존 줄은 한 자도
@@ -1236,6 +1240,8 @@ FLIGHTBRID_URL = env("FLIGHTBRID_URL", default="http://localhost:8009")
 # ── WO-GRDX-20261002-09 · 규격 09 M1 — QA 빌드 스위치. 참일 때만 `/qa/*` 가 등록된다(config/urls.py).
 #   기본값 거짓 — 운영·8500 은 이 이름을 선언하지 않는다. QA 전용 compose 프로젝트(`guardianx-qa`)만 참을 준다.
 QA_BUILD = env.bool("QA_BUILD", default=False)
+#   QA 판의 메일함(mailpit · 바깥으로 안 나간다) — `/qa/outbox` 가 요약만 읽는다(규격 09 M7). 운영은 비워 둔다.
+QA_OUTBOX_URL = env("QA_OUTBOX_URL", default="")
 CAPTURE_URL = f"{STREAM_URL}/stream/api/streams/capture"
 RECORD_URL = f"{STREAM_URL}/stream/api/streams/record"
 RTSP_URL = env("RTSP_URL", default="rtsp://rtsp.internal.example:8554")

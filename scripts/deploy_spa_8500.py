@@ -22,6 +22,8 @@
 
 지키는 선
 ---------
+- **직전 세대 자산 남김** (WO-GRDX-20261002-11 AC-1b): 교체 뒤 직전 세대의 `assets/` 해시 파일을 한 세대만 되살린다
+  (옛 탭이 가리키는 번들이 404 가 되어 흰 화면이 되는 것을 막는다 · 두 세대 전 것은 지운다 · 키 모양이 든 옛 번들은 안 남긴다).
 - 자리는 하나다: `LIVE`(인자로 다른 폴더를 받지 않는다 · 시험만 함수 인자로 바꾼다).
 - 백업은 지우지 않는다(덧붙이기만) · 로그 줄도 지우지 않는다.
 - 값 0 — 로그인 자격은 `smoke_live` 가 제 규칙으로 읽고, 여기는 이름도 안 적는다.
@@ -65,6 +67,9 @@ SITE = "http://localhost:8500"
 LOG = ROOT / "docs" / "agent" / "evidence" / "OPS-27" / "deploys.jsonl"
 KST = dt.timezone(dt.timedelta(hours=9))
 INDEX_RE = re.compile(r"assets/(index-[A-Za-z0-9_-]+\.js)")
+GEN_FILE = ".gx-spa-gen.json"  # 배포 때마다 「이번 세대가 가져온 자산 이름」을 적는다 — 한 세대 남김의 장부
+# 키가 든 옛 번들은 남기지 않는다(WO-GRDX-20261002-11 AC-1b ①). 모양만 보는 거친 그물 — 값은 적지 않는다.
+KEY_RE = re.compile(rb"AIza[0-9A-Za-z_-]{35}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----")
 
 
 # ── 순수 함수(시험이 부른다) ──────────────────────────────────────────────────────
@@ -101,6 +106,49 @@ def replace_contents(src: Path, dst: Path) -> None:
             shutil.copytree(child, target)
         else:
             shutil.copy2(child, target)
+
+
+def carry_previous(old: Path, stage: Path, live: Path) -> tuple[list[str], list[str]]:
+    """**직전 세대 해시 자산을 한 세대만 남긴다** (WO-GRDX-20261002-11 AC-1b ①).
+
+    배포가 `assets/` 를 통째로 바꾸면, 전에 열어 둔 탭이 가리키는 옛 번들이 404 가 되어 흰 화면이 된다.
+    그래서 `old`(배포 직전의 8500 = 백업)의 자산 중 **직전 세대가 가져온 것**을 새 `live/assets` 에 되살린다.
+    - 직전 세대 = `old/GEN_FILE` 의 `current` 목록. 장부가 없으면(첫 적용) `old/assets` 전부.
+    - 두 세대 전 것(옛 장부에 없고 직전에 남겨진 것)은 되살리지 않는다 → 저절로 지워진다.
+    - 새 세대에도 있는 이름은 건드리지 않는다. 키 모양이 든 옛 파일은 남기지 않는다(`KEY_RE`).
+    반환: (남긴 이름들, 키 때문에 버린 이름들). 새 장부(`live/GEN_FILE`)도 여기서 쓴다."""
+    new_assets = stage / "assets"
+    cur = sorted(p.name for p in new_assets.iterdir() if p.is_file()) if new_assets.is_dir() else []
+    kept: list[str] = []
+    dropped: list[str] = []
+    old_assets = old / "assets"
+    if old_assets.is_dir():
+        try:
+            prev = set(json.loads((old / GEN_FILE).read_text(encoding="utf-8"))["current"])
+        except (OSError, ValueError, KeyError, TypeError):
+            prev = {p.name for p in old_assets.iterdir() if p.is_file()}
+        for name in sorted(prev):
+            src = old_assets / name
+            if name in cur or not src.is_file():
+                continue
+            if KEY_RE.search(src.read_bytes()):
+                dropped.append(name)
+                continue
+            (live / "assets").mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, live / "assets" / name)
+            kept.append(name)
+    (live / GEN_FILE).write_text(json.dumps({"current": cur}, ensure_ascii=False), encoding="utf-8")
+    return kept, dropped
+
+
+def live_matches_stage(stage: Path, live: Path, kept: list[str]) -> bool:
+    """배포본이 스테이징과 같다 — 단, 남긴 옛 자산과 장부 파일은 덤으로 허용한다(그 밖의 덤은 빨강)."""
+    extra_ok = {f"assets/{n}" for n in kept} | {GEN_FILE}
+    want = {p.relative_to(stage).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in stage.rglob("*") if p.is_file()}
+    got = {p.relative_to(live).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+           for p in live.rglob("*") if p.is_file()}
+    return all(got.get(k) == v for k, v in want.items()) and set(got) - set(want) <= extra_ok
 
 
 def judge(*, drill_ok: bool, tree_ok: bool, served_ok: bool, text_ok: bool | None,
@@ -226,17 +274,20 @@ def deploy(dist: str, expect_text: str | None, reason: str, no_smoke: bool) -> i
         return code
 
     replace_contents(stage, LIVE)
-    tree_ok = tree(LIVE) == new_tree
+    kept, dropped = carry_previous(backup, stage, LIVE)
+    print(f"{TAG} 직전 세대 자산 {len(kept)} 개 남김 · 키 모양이라 버린 것 {len(dropped)} 개")
+    tree_ok = live_matches_stage(stage, LIVE, kept)
     served = _served_index()
     served_ok = served is not None and served == new_index and served != before_index
     text_ok = None
     if expect_text:
         text_ok = any(expect_text.encode("utf-8") in p.read_bytes()
-                      for p in (LIVE / "assets").glob("*.js"))
+                      for p in (stage / "assets").glob("*.js"))
     smoke_exit = None if no_smoke else _smoke()
     code, verdict = judge(drill_ok=True, tree_ok=tree_ok, served_ok=served_ok,
                           text_ok=text_ok, smoke_exit=smoke_exit)
-    line.update(served_index=served, tree_ok=tree_ok, text_ok=text_ok, smoke_exit=smoke_exit)
+    line.update(kept_prev_assets=len(kept), dropped_key_assets=len(dropped),
+                served_index=served, tree_ok=tree_ok, text_ok=text_ok, smoke_exit=smoke_exit)
     if code == EXIT_FAIL:
         replace_contents(backup, LIVE)
         line["restored_ok"] = tree(LIVE) == before_tree
@@ -299,7 +350,51 @@ def self_test() -> int:
         check("되돌리기 연습 — 같은 백업이면 같다", drill(a, tree(a)))
         (a / "assets" / "index-AAA.js").write_text("y", encoding="utf-8")
         check("되돌리기 연습 — 내용이 한 바이트 달라도 다르다", not drill(a, tree(b)))
-    print(f"{TAG} 자기시험 {10 - fails}/10")
+    # ── 한 세대 남김 (AC-1b ①) ──
+    with tempfile.TemporaryDirectory() as tmp:
+        t = Path(tmp)
+
+        def gen(name: str, files: dict[str, str]) -> Path:
+            d = t / name
+            (d / "assets").mkdir(parents=True)
+            (d / "index.html").write_text("<script src=/assets/index-%s.js></script>" % name, encoding="utf-8")
+            for fn, body in files.items():
+                (d / "assets" / fn).write_text(body, encoding="utf-8")
+            return d
+
+        def deploy_sim(live: Path, stage: Path) -> tuple[list[str], list[str]]:
+            before = t / ("bk_" + stage.name)
+            shutil.copytree(live, before)
+            replace_contents(stage, live)
+            return carry_previous(before, stage, live)
+
+        live = t / "live"
+        live.mkdir()
+        g1 = gen("g1", {"index-g1.js": "one"})
+        g2 = gen("g2", {"index-g2.js": "two", "same.js": "s"})
+        g3 = gen("g3", {"index-g3.js": "three"})
+        replace_contents(g1, live)  # 장부 없는 첫 세대
+        k2, _ = deploy_sim(live, g2)
+        check("배포 뒤에도 직전 세대 자산이 서빙 자리에 있다", (live / "assets" / "index-g1.js").is_file()
+              and (live / "assets" / "index-g2.js").is_file() and k2 == ["index-g1.js"])
+        check("남긴 옛 자산을 덤으로 허용하고 나머지는 스테이징과 같다", live_matches_stage(g2, live, k2))
+        k3, _ = deploy_sim(live, g3)
+        check("두 세대 전 자산은 지워진다", not (live / "assets" / "index-g1.js").exists()
+              and (live / "assets" / "index-g2.js").is_file() and (live / "assets" / "same.js").is_file()
+              and k3 == ["index-g2.js", "same.js"])
+        g4 = gen("g4", {"index-g4.js": "four", "same.js": "s2"})
+        deploy_sim(live, g4)
+        check("같은 이름은 새 세대 내용이다", (live / "assets" / "same.js").read_text(encoding="utf-8") == "s2")
+        # 키 모양이 든 옛 번들은 남기지 않는다
+        fake = "AIza" + "x" * 35
+        g5 = gen("g5", {"index-g5.js": "five", "leaky.js": "var k='" + fake + "'"})
+        replace_contents(g5, live)
+        carry_previous(g5, g5, live)  # 장부를 g5 로 맞춘다
+        g6 = gen("g6", {"index-g6.js": "six"})
+        k6, d6 = deploy_sim(live, g6)
+        check("키가 든 옛 번들은 남기지 않는다", "leaky.js" in d6 and not (live / "assets" / "leaky.js").exists()
+              and "index-g5.js" in k6)
+    print(f"{TAG} 자기시험 {15 - fails}/15")
     return EXIT_OK if fails == 0 else EXIT_FAIL
 
 

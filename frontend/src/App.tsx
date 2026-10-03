@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/th';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { createElement, lazy } from 'react';
+import { createElement, lazy, Suspense } from 'react';
 import type { ComponentType } from 'react';
 import {
   createBrowserRouter,
@@ -605,6 +605,12 @@ const PrivateLayout = () => {
     </>
   );
 };
+
+/* 규격 09 M4 — QA 바. M1 과 같은 빌드 상수 + 동적 import: 운영 번들에는 실리지 않는다(`qa/as` 0건). */
+const QaBar =
+  import.meta.env.VITE_QA_BUILD === 'true'
+    ? lazy(() => import('./features/qa/QaBar'))
+    : null;
 
 function App() {
   initialServices(import.meta.env.VITE_API_URL);
@@ -1369,6 +1375,11 @@ function App() {
             <MobileProvider>
               <FormDirtyProvider>
                 <RouterProvider router={router} />
+                {QaBar ? (
+                  <Suspense fallback={null}>
+                    <QaBar router={router} />
+                  </Suspense>
+                ) : null}
               </FormDirtyProvider>
             </MobileProvider>
           </ConfigSystemProvider>

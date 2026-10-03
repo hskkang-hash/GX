@@ -33,3 +33,10 @@ proxy_next_upstream error timeout http_502;
 #     근거: `docs/agent/evidence/OPS-13a/README.md` §3 ④.
 proxy_next_upstream_tries 3;
 proxy_next_upstream_timeout 15s;
+
+# ★ [WO-GRDX-20261002-11 AC-1c] 보안 머리는 앞단 한 벌(`gx-headers.inc`)이 정한다. 뒷단(장고)도 같은 이름을
+#   내므로(`X-Frame-Options: DENY` · `Referrer-Policy: same-origin`) 가리지 않으면 **한 응답에 같은 머리가 둘**,
+#   값이 엇갈려 브라우저가 더 엄한 쪽(DENY)을 따른다 — 같은 출처 틀(드론 화면 등)이 깨진다. 그래서 뒷단 것은 가린다.
+proxy_hide_header X-Frame-Options;
+proxy_hide_header X-Content-Type-Options;
+proxy_hide_header Referrer-Policy;
