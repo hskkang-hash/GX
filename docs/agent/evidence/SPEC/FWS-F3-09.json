@@ -1,29 +1,29 @@
 {
   "id": "FWS-F3-09",
   "title": "대응단계 입력 3칸(면적·풍속·시설 우려) → 단계 제안 → F4 확정 요청",
-  "measured_at": "2026-09-30T11:17:31.180134+00:00",
+  "measured_at": "2026-10-07T12:43:31.097361+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3a.F3_09_StageProposalTest.test_three_inputs_propose_stage_using_p386_constants",
   "request": {
     "method": "GET",
-    "path": "/api/fws/office/fire-events/697/stage-proposal",
+    "path": "/api/fws/office/fire-events/603/stage-proposal",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 697,
+      "event_id": 603,
       "count": 1,
       "proposals": [
         {
           "note": "",
           "status": "pending_f4_confirmation",
-          "__seq__": 758,
+          "__seq__": 482,
           "area_ha": 150.0,
-          "__hash__": "c04c2a7f90acfbb4461146ef988e8d9815d4759f38ffe40d7cb0040791764c59",
-          "event_id": 697,
+          "__hash__": "7c3276dd051dbfa87230f1cb7d73a82383cbecbfe55327f69f33b3571f34e905",
+          "event_id": 603,
           "wind_mps": 1.0,
-          "proposed_at": "2026-09-30T11:17:31.123921+00:00",
+          "proposed_at": "2026-10-07T12:43:31.050185+00:00",
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "proposed_stage": "3단계",
           "buildings_at_risk": 0,

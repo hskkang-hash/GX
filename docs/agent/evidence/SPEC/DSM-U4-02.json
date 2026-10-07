@@ -1,6 +1,6 @@
 {
   "id": "DSM-U4-02",
-  "measured_at": "2026-09-30T11:09:45.860171+00:00",
+  "measured_at": "2026-10-07T12:37:49.118058+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n4_u4_02_interim_batch.InterimBatchTest.test_batch_issues_interim_reports_for_open_events_and_dedupes_same_slot",
   "request": {
@@ -12,10 +12,10 @@
     "status": 200,
     "body": {
       "slot": "17:00",
-      "date": "2026-09-30",
+      "date": "2026-10-07",
       "issued": [],
       "skipped": [
-        125
+        31
       ],
       "issued_count": 0,
       "skipped_count": 1

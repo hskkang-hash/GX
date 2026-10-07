@@ -1,6 +1,6 @@
 {
   "id": "DSM-U4-09",
-  "measured_at": "2026-09-30T11:09:51.840193+00:00",
+  "measured_at": "2026-10-07T12:37:54.848181+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ap_n4_u4_09_safety_index.SafetyIndexAxisTest.test_fire_events_land_in_the_fire_field_and_mapping_table_is_returned",
   "request": {
@@ -11,8 +11,8 @@
   "response": {
     "status": 200,
     "body": {
-      "since": "2026-08-31T11:09:00+00:00",
-      "until": "2026-09-30T11:09:00+00:00",
+      "since": "2026-09-07T12:37:00+00:00",
+      "until": "2026-10-07T12:37:00+00:00",
       "total": 2,
       "by": "safety_index",
       "safety_index": [

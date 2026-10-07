@@ -1,12 +1,12 @@
 {
   "id": "FWS-F4-05",
   "title": "대피 명령 승인(즉시/준비) · 해제",
-  "measured_at": "2026-09-30T11:17:55.043247+00:00",
+  "measured_at": "2026-10-07T12:43:53.445846+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_05_EvacuationApprovalTest.test_approve_immediate_then_release",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/evacuations/714/approve?urgency=immediate",
+    "path": "/api/fws/command/evacuations/620/approve?urgency=immediate",
     "params": {
       "urgency": "immediate"
     }
@@ -14,15 +14,15 @@
   "response": {
     "status": 200,
     "body": {
-      "approval_id": 804,
-      "event_id": 714,
+      "approval_id": 528,
+      "event_id": 620,
       "urgency": "immediate",
       "deadline_hours": 8.0,
       "villages": [
         "OO리"
       ],
       "note": "",
-      "approved_at": "2026-09-30T11:17:54.929939+00:00",
+      "approved_at": "2026-10-07T12:43:53.382246+00:00",
       "notified_count": 1,
       "status": "approved"
     }

@@ -1,18 +1,18 @@
 {
   "id": "FWS-F3-12",
   "title": "대피 이행 확인(마을별 완료·잔류자·요양시설)",
-  "measured_at": "2026-09-30T11:17:35.302604+00:00",
+  "measured_at": "2026-10-07T12:43:34.299157+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_12_EvacuationProgressTest.test_progress_then_status_shows_percent_and_remaining",
   "request": {
     "method": "GET",
-    "path": "/api/fws/office2/evacuations/700/status",
+    "path": "/api/fws/office2/evacuations/606/status",
     "params": {}
   },
   "response": {
     "status": 200,
     "body": {
-      "event_id": 700,
+      "event_id": 606,
       "plan_status": "pending_f4_approval",
       "villages": [
         {
@@ -20,14 +20,14 @@
           "completed": true,
           "remaining_residents": 0,
           "care_facility_cleared": true,
-          "recorded_at": "2026-09-30T11:17:35.207411+00:00"
+          "recorded_at": "2026-10-07T12:43:34.220130+00:00"
         },
         {
           "village": "서리",
           "completed": false,
           "remaining_residents": 3,
           "care_facility_cleared": false,
-          "recorded_at": "2026-09-30T11:17:35.251200+00:00"
+          "recorded_at": "2026-10-07T12:43:34.254713+00:00"
         }
       ],
       "total_villages": 2,

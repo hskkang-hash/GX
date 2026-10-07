@@ -1,14 +1,14 @@
 {
   "id": "P376_DSM-U2-04-rainfall",
-  "measured_at": "2026-09-30T11:23:09.418576+00:00",
+  "measured_at": "2026-10-07T12:51:28.060974+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p376_half_clauses.RainfallThresholdKeyTest.test_observe_decide_takes_rainfall_key_with_zero_code_changes",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/thresholds/observe/1073/decide",
+    "path": "/api/dsm/thresholds/observe/797/decide",
     "body": {
       "observe": {
-        "camera_id": 933,
+        "camera_id": 731,
         "key": "rainfall.baseline",
         "value": 62
       },
@@ -23,17 +23,17 @@
       "observe": {
         "reached": true,
         "key": "rainfall.baseline",
-        "camera_id": 933,
+        "camera_id": 731,
         "value": 62.0,
         "threshold": 50.0,
-        "observation_id": 1073
+        "observation_id": 797
       },
       "decide": {
-        "observation_id": 1073,
-        "decision_id": 1074,
+        "observation_id": 797,
+        "decision_id": 798,
         "decision": "통제 실시",
         "key": "rainfall.baseline",
-        "camera_id": 933
+        "camera_id": 731
       }
     }
   },

@@ -1,6 +1,6 @@
 {
   "id": "DSM-U2-03",
-  "measured_at": "2026-09-30T11:22:23.255723+00:00",
+  "measured_at": "2026-10-07T12:50:42.854694+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u2_spec_promotions.EvidenceExportTest.test_dump_dsm_u2_03_evidence",
   "request": {
@@ -16,12 +16,12 @@
   "response": {
     "status": 200,
     "body": {
-      "meeting_id": 1002,
+      "meeting_id": 726,
       "occurred_at": "2026-09-27T03:40:00+09:00",
       "attendees": "상황실장·팀장·U4",
       "decision": "통제 실시 · 비상 2단계 발령",
       "basis": "수위 182cm · 강우 41mm",
-      "actor_id": 1161,
+      "actor_id": 875,
       "alert_level": null
     }
   },

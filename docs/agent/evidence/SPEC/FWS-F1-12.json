@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-12",
   "title": "근무 외 알림 차단·담당 초소 설정",
-  "measured_at": "2026-09-30T11:16:59.349859+00:00",
+  "measured_at": "2026-10-07T12:42:59.543770+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_12_NotifyPrefsTest.test_save_then_read_back",
   "request": {
@@ -18,7 +18,7 @@
       "duty_post": {
         "status": "waiting",
         "post_code": null,
-        "shift_date": "2026-09-30",
+        "shift_date": "2026-10-07",
         "shift_type": "",
         "source": "roster"
       }

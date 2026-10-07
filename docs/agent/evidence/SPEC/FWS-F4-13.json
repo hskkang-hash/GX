@@ -1,7 +1,7 @@
 {
   "id": "FWS-F4-13",
   "title": "동시 다발 사건 우선순위(위험도 정렬)",
-  "measured_at": "2026-09-30T11:18:08.559342+00:00",
+  "measured_at": "2026-10-07T12:44:06.932899+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_13_PriorityQueueTest.test_recorded_risk_index_orders_queue_not_severity",
   "request": {
@@ -17,43 +17,43 @@
       "count": 4,
       "items": [
         {
-          "event_id": 725,
+          "event_id": 631,
           "severity": "info",
           "risk_index": 86.0,
           "risk_band": "심각",
-          "risk_recorded_at": "2026-09-30T11:18:08.405519+00:00",
+          "risk_recorded_at": "2026-10-07T12:44:06.754530+00:00",
           "response_state": "occurred",
-          "occurred_at": "2026-09-30T11:17:08.245406+00:00",
+          "occurred_at": "2026-10-07T12:43:06.613901+00:00",
           "address": null
         },
         {
-          "event_id": 726,
+          "event_id": 632,
           "severity": "warning",
           "risk_index": 85.9,
           "risk_band": "경계",
-          "risk_recorded_at": "2026-09-30T11:18:08.442668+00:00",
+          "risk_recorded_at": "2026-10-07T12:44:06.801674+00:00",
           "response_state": "occurred",
-          "occurred_at": "2026-09-30T11:16:08.280951+00:00",
+          "occurred_at": "2026-10-07T12:42:06.650120+00:00",
           "address": null
         },
         {
-          "event_id": 727,
+          "event_id": 633,
           "severity": "critical",
           "risk_index": 51.0,
           "risk_band": "주의",
-          "risk_recorded_at": "2026-09-30T11:18:08.478436+00:00",
+          "risk_recorded_at": "2026-10-07T12:44:06.852335+00:00",
           "response_state": "occurred",
-          "occurred_at": "2026-09-30T11:15:08.317769+00:00",
+          "occurred_at": "2026-10-07T12:41:06.677902+00:00",
           "address": null
         },
         {
-          "event_id": 728,
+          "event_id": 634,
           "severity": "critical",
           "risk_index": null,
           "risk_band": null,
           "risk_recorded_at": null,
           "response_state": "occurred",
-          "occurred_at": "2026-09-30T11:14:08.355371+00:00",
+          "occurred_at": "2026-10-07T12:40:06.704925+00:00",
           "address": null
         }
       ],

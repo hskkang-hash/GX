@@ -1,12 +1,12 @@
 {
   "id": "FWS-F4-02",
   "title": "대응단계 확정·상향(사유) · 지휘권 이양 기록(시군구→시도)",
-  "measured_at": "2026-09-30T11:17:49.901750+00:00",
+  "measured_at": "2026-10-07T12:43:47.905608+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_02_StageConfirmTest.test_confirm_stage_records_badge_and_command_level_transfer",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/710/stage?stage=2%EB%8B%A8%EA%B3%84&reason=%ED%92%8D%EC%86%8D+%EA%B8%89%EC%A6%9D&command_level=%EC%8B%9C%EB%8F%84",
+    "path": "/api/fws/command/incidents/616/stage?stage=2%EB%8B%A8%EA%B3%84&reason=%ED%92%8D%EC%86%8D+%EA%B8%89%EC%A6%9D&command_level=%EC%8B%9C%EB%8F%84",
     "params": {
       "stage": "2단계",
       "reason": "풍속 급증",
@@ -16,13 +16,13 @@
   "response": {
     "status": 200,
     "body": {
-      "confirmation_id": 796,
-      "event_id": 710,
+      "confirmation_id": 520,
+      "event_id": 616,
       "stage": "2단계",
       "prior_stage": null,
       "reason": "풍속 급증",
       "command_level": "시도",
-      "confirmed_at": "2026-09-30T11:17:49.819914+00:00",
+      "confirmed_at": "2026-10-07T12:43:47.864713+00:00",
       "confirmed_by": "dsm_user_a"
     }
   },

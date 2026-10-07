@@ -1,6 +1,6 @@
 {
   "id": "DSM-U4-07",
-  "measured_at": "2026-09-30T11:22:53.752753+00:00",
+  "measured_at": "2026-10-07T12:51:13.972828+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_p356_u4_rest_spec_promotions.EvidenceExportTest.test_dump_dsm_u4_07_evidence",
   "request": {
@@ -15,7 +15,7 @@
   "response": {
     "status": 200,
     "body": {
-      "request_id": 1052,
+      "request_id": 776,
       "requester_org": "시흥경찰서",
       "doc_no": "형사과-2026-200",
       "purpose": "수사",

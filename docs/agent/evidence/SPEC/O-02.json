@@ -1,14 +1,14 @@
 {
   "id": "O-02",
   "title": "앱 설치·버전",
-  "measured_at": "2026-09-30T11:21:30.437680+00:00",
+  "measured_at": "2026-10-07T12:47:42.098321+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O02_AppInstallTest.test_install_list_and_conflict_free",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/ops/apps/install?tenant_code=t-f5a1b191&app_code=dsm&version=1.1",
+    "path": "/api/dsm/ops/apps/install?tenant_code=t-9256831b&app_code=dsm&version=1.1",
     "params": {
-      "tenant_code": "t-f5a1b191",
+      "tenant_code": "t-9256831b",
       "app_code": "dsm",
       "version": "1.1"
     }
@@ -16,12 +16,12 @@
   "response": {
     "status": 200,
     "body": {
-      "tenant_code": "t-f5a1b191",
-      "tenant_group_id": 917,
+      "tenant_code": "t-9256831b",
+      "tenant_group_id": 699,
       "app_code": "dsm",
       "version": "1.1",
       "status": "active",
-      "installed_at": "2026-09-30T11:21:30+00:00",
+      "installed_at": "2026-10-07T12:47:41+00:00",
       "upgraded_from": null
     }
   },

@@ -1,7 +1,7 @@
 {
   "id": "FWS-F1-02",
   "title": "순찰 경로 기록(GPS 트랙 · 전자순찰함 NFC)",
-  "measured_at": "2026-09-30T11:16:50.206302+00:00",
+  "measured_at": "2026-10-07T12:42:50.575996+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_app.F1_02_TrackTest.test_gps_point_and_checkpoint_pass_are_counted_separately",
   "request": {
@@ -16,7 +16,7 @@
     "status": 200,
     "body": {
       "post_code": "P-12",
-      "recorded_at": "2026-09-30T11:16:50.182855+00:00",
+      "recorded_at": "2026-10-07T12:42:50.552587+00:00",
       "track_count": 1,
       "checkpoint_count": 1,
       "checkpoint_registry": "empty"

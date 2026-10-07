@@ -1,7 +1,7 @@
 {
   "id": "FWS-F3-19",
   "title": "훈련 시나리오 실행(가상 사건 · 실채널 0)",
-  "measured_at": "2026-09-30T11:17:45.972630+00:00",
+  "measured_at": "2026-10-07T12:43:44.491640+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f3b.F3_19_DrillScenarioTest.test_start_status_end_real_channel_zero",
   "request": {
@@ -14,10 +14,10 @@
   "response": {
     "status": 200,
     "body": {
-      "group_id": 689,
+      "group_id": 471,
       "measurable": true,
-      "started_at": "2026-09-30T11:17:45.898Z",
-      "ended_at": "2026-09-30T11:17:45.953Z",
+      "started_at": "2026-10-07T12:43:44.417Z",
+      "ended_at": "2026-10-07T12:43:44.471Z",
       "in_progress": false,
       "data_source": "drill",
       "real_channel_sends": 0,

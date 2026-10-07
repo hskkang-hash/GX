@@ -1,12 +1,12 @@
 {
   "id": "DSM-U3-02",
   "title": "통제 실행 회신",
-  "measured_at": "2026-09-30T11:15:57.456439+00:00",
+  "measured_at": "2026-10-07T12:42:00.774874+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_dsm_u36_an.U3_02_ControlExecutedTest.test_reached_decided_executed_three_timestamps",
   "request": {
     "method": "POST",
-    "path": "/api/dsm/controls/639/executed",
+    "path": "/api/dsm/controls/363/executed",
     "params": {
       "note": "바리케이드 설치 완료"
     }
@@ -14,10 +14,10 @@
   "response": {
     "status": 200,
     "body": {
-      "point_id": 639,
+      "point_id": 363,
       "stage": "실행",
-      "stage_id": 641,
-      "occurred_at": "2026-09-30T11:15:57.362Z"
+      "stage_id": 365,
+      "occurred_at": "2026-10-07T12:42:00.713Z"
     }
   },
   "what": "도달(등록)→결정(advance)→실행(POST /controls/{id}/executed) 셋을 순서대로 남기면 현황판(GET /control-points)의 지점 행이 '실행' 단계를 보여준다 — 완결조건(3시각) 그대로"

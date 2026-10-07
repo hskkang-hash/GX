@@ -1,7 +1,7 @@
 {
   "id": "FWS-F5-08",
   "title": "비행 기록·배터리·기체 상태",
-  "measured_at": "2026-09-30T11:18:20.220610+00:00",
+  "measured_at": "2026-10-07T12:44:18.721314+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f5.F5_08_FlightLogTest.test_log_is_recorded_and_read_back",
   "request": {
@@ -14,13 +14,13 @@
     "body": {
       "flights": [
         {
-          "flight_id": 862,
+          "flight_id": 586,
           "note": "",
           "source": "dji",
-          "__seq__": 862,
-          "__hash__": "e1e46c4c53cb0fcd143895759abcd6b8b4d60cbdc434f2efe75229dd67644dbe",
+          "__seq__": 586,
+          "__hash__": "b980e8819e9b5c7f1d7966c4aae41f48df501c73d6762a9d5081667a71889f86",
           "event_id": null,
-          "logged_at": "2026-09-30T11:18:20.180827+00:00",
+          "logged_at": "2026-10-07T12:44:18.684345+00:00",
           "battery_pct": 68.5,
           "__prev_hash__": "0000000000000000000000000000000000000000000000000000000000000000",
           "airframe_code": "M30T-7",

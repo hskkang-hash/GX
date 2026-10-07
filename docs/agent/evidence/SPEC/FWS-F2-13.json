@@ -1,7 +1,7 @@
 {
   "id": "FWS-F2-13",
   "title": "훈련 임무 수신(훈련 배지)",
-  "measured_at": "2026-09-30T11:17:12.628513+00:00",
+  "measured_at": "2026-10-07T12:43:12.771848+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f2.F2_13_TrainingBadgeTest.test_badge_and_zero_real_channel_when_drill_mode_is_on",
   "request": {
@@ -15,7 +15,7 @@
       "badge": "훈련",
       "drill_mode": true,
       "channel_while_drilling": "log",
-      "since": "2026-09-30T11:17:12.581724+00:00",
+      "since": "2026-10-07T12:43:12.683385+00:00",
       "real_channel_sends": 0,
       "measurable": true
     }

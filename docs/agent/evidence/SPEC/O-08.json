@@ -1,7 +1,7 @@
 {
   "id": "O-08",
   "title": "온보딩 관제",
-  "measured_at": "2026-09-30T11:21:36.780468+00:00",
+  "measured_at": "2026-10-07T12:47:48.462784+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_ops_an.O08_OnboardingBoardTest.test_reads_the_48_row_ledger",
   "request": {
@@ -13,26 +13,26 @@
     "status": 200,
     "body": {
       "read": true,
-      "source": "/docs/agent/evidence/ONB-T/turn_aq_10.json",
+      "source": "/docs/agent/evidence/ONB-T/turn_ar_11.json",
       "denominator": 48,
-      "score_over_denominator": "36.5/48",
-      "green": 34,
-      "half": 5,
-      "red": 9,
+      "score_over_denominator": "40.0/48",
+      "green": 38,
+      "half": 4,
+      "red": 6,
       "role_progress_6": {
         "U1": {
-          "green": 4,
+          "green": 6,
           "half": 1,
-          "red": 3,
+          "red": 1,
           "total": 8,
-          "ratio": 0.562
+          "ratio": 0.812
         },
         "U2": {
-          "green": 6,
+          "green": 7,
           "half": 0,
-          "red": 2,
+          "red": 1,
           "total": 8,
-          "ratio": 0.75
+          "ratio": 0.875
         },
         "U3": {
           "green": 6,
@@ -42,11 +42,11 @@
           "ratio": 0.75
         },
         "U4": {
-          "green": 4,
-          "half": 2,
+          "green": 5,
+          "half": 1,
           "red": 2,
           "total": 8,
-          "ratio": 0.625
+          "ratio": 0.688
         },
         "U5": {
           "green": 7,
@@ -70,24 +70,12 @@
           "why": "도달=True (url=http://gx-nginx-e:8500/multi-stream-monitor) · 스트림 자리(video/canvas/stream) 0개 · 단언 글자=False · 본문 857자 — 도달만 하고 자리가 0이면 빨강(P-205)"
         },
         {
-          "row": "U1#8",
-          "why": "단추=['미처리 보기', '지난 12시간 보기', '내 담당 보기', '시스템 보기'] · GET events 200=True · 처리 단계 값 0칸 []"
-        },
-        {
-          "row": "U1#11",
-          "why": "큐 화면에 「실제로 확인 · 접수」 이 보이지 않는다 — 보이는 단추 ['종결하기'] · 초점 사건이 미처리가 아니면 이 단추는 없다(데이터 상태) · 본문 '지금 처리할 것\\n무슨 일 있었나\\n카메라 격자\\n인계 메모\\n처음이세요\\nGuardianX는 대응 시간을 잽니다.\\n지금 처리할 것 — 가장 급한 하나\\n?\\n단축키\\n소리 켜기\\n갱신 06:53'"
-        },
-        {
-          "row": "U2#2",
-          "why": "GET …response_state=occurred 200=True (서버 0건) · 처리 단계 칸 0 전부 미처리=False []"
-        },
-        {
           "row": "U2#6",
           "why": "templates 200=False · 표 행 0 (0 이면 ◐) · 보고서 서식=True 머리줄=True · url=http://gx-nginx-e:8500/report-template"
         },
         {
           "row": "U3#1",
-          "why": "POST notify [] · deliveries 0 → 13 · 결과 문장=False · /m/inbox mine=true 호출 1건 (카드 유무는 안 본다 — 발신자=수신자 가정 제거 · P-425)"
+          "why": "POST notify [] · deliveries 17 → 30 · 결과 문장=False · /m/inbox mine=true 호출 1건 (카드 유무는 안 본다 — 발신자=수신자 가정 제거 · P-425)"
         },
         {
           "row": "U3#14",
@@ -99,7 +87,7 @@
         },
         {
           "row": "U4#15",
-          "why": "「보고 표시」·「보고함」 둘 다 화면에 없다 (EventList.tsx 행마다 그리는 토글)"
+          "why": "「보고 표시」 누름=True · POST upper-report [403] · 재조회 flags 200=True 체크 0건 · [되돌림] 「보고함」 다시 누름=False DELETE [] · ⚠ 관문이 거절했다(읽기 전용 U4) — 제품이 옳게 막은 자리다"
         }
       ],
       "tenants": [

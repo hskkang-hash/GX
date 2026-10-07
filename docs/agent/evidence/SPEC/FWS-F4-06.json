@@ -1,12 +1,12 @@
 {
   "id": "FWS-F4-06",
   "title": "소방·경찰·군 협조 요청 기록",
-  "measured_at": "2026-09-30T11:17:56.698627+00:00",
+  "measured_at": "2026-10-07T12:43:55.067629+00:00",
   "measured_by": "django_test_client",
   "test": "tests.test_fws_f4.F4_06_AgencyCoordinationTest.test_record_three_agencies",
   "request": {
     "method": "POST",
-    "path": "/api/fws/command/incidents/715/agency-request?agency=military&request_detail=military+%ED%98%91%EC%A1%B0+%EC%9A%94%EC%B2%AD",
+    "path": "/api/fws/command/incidents/621/agency-request?agency=military&request_detail=military+%ED%98%91%EC%A1%B0+%EC%9A%94%EC%B2%AD",
     "params": {
       "agency": "military"
     }
@@ -14,12 +14,12 @@
   "response": {
     "status": 200,
     "body": {
-      "record_id": 808,
-      "event_id": 715,
+      "record_id": 532,
+      "event_id": 621,
       "agency": "military",
       "request_detail": "military 협조 요청",
       "note": "",
-      "requested_at": "2026-09-30T11:17:56.658357+00:00",
+      "requested_at": "2026-10-07T12:43:55.027626+00:00",
       "requested_by": "dsm_user_a"
     }
   },
