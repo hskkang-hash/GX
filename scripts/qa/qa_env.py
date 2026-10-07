@@ -65,6 +65,10 @@ def check_ops(values: dict[str, str], container: str) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    try:  # Windows 콘솔(cp949)에서 「—」 를 찍다 죽지 않게
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
     ap = argparse.ArgumentParser()
     ap.add_argument("--env-file", default=os.environ.get("GX_QA_ENV_FILE", str(DEFAULT_ENV)))
     ap.add_argument("--check-ops", metavar="CONTAINER")

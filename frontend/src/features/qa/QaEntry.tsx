@@ -56,7 +56,10 @@ export default function QaEntry() {
       ]);
       if (extra?.success && extra.data) saveProfile(extra.data);
       if (!profile?.success) {
-        setLine(`${data.key} 로 로그인은 됐지만 사용자 정보를 불러오지 못했습니다.`);
+        // 역할 없는 계정(`newcomer_pending_01`)은 뒷단 역할 관문이 프로필을 403(role_required)으로 막는다 —
+        // 설계대로다. 역할 0 으로 적고 관문 안으로 보내면 `PrivateLayout` 이 「역할 대기」 화면을 그린다.
+        updateUserInfo({ ...user, roles: [] });
+        navigate(CustomRouters.profile.path, { replace: true });
         return;
       }
       updateUserInfo(profile.data);

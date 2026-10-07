@@ -20,6 +20,9 @@ name: guardianx-qa
 
 x-backend: &backend
   image: guardianx-backend:pg18
+  # 이미지 기본 entrypoint 는 무조건 `migrate`(기본 순서 · dj-core logger/0009 에서 죽는다)와 celery 를 먼저 띄운다
+  # (D-283) — 운영 gx-gunicorn-e 처럼 비우고 아래 command 가 순서를 정한다(migrate_bootstrap).
+  entrypoint: []
   restart: unless-stopped
   working_dir: /app
   env_file:
@@ -34,7 +37,7 @@ x-backend: &backend
     FRONTEND_BASE_URL: http://localhost:8510
     DB_HOST: qa-db
     DB_PORT: "5432"
-    DB_NAME: guardianx_qa
+    DB_NAME: guardianx_qa_t2
     DB_USER: postgres
     REDIS_HOST: redis://qa-redis:6379
     REDIS_DB: "0"
@@ -110,12 +113,9 @@ services:
   qa-backend:
     <<: *backend
     # 기동마다: 마이그레이트 → 시드(다시 돌려도 같은 결과) → gunicorn. 시드가 실패하면 서지 않는다.
-    command: >
-      sh -c "python manage.py migrate --noinput &&
-             python manage.py qa_seed &&
-             exec python -m gunicorn config.wsgi:application --bind 0.0.0.0:8000
-             --workers 2 --threads 4 --worker-class gthread --timeout 120
-             --access-logfile - --error-logfile -"
+    #   ★ 한 줄 목록으로 둔다 — 접는 블록(`>`)은 더 들여쓴 줄의 줄바꿈을 남겨, gunicorn 플래그가 떨어지고
+    #     `gunicorn.conf.py` 의 uvicorn 워커가 WSGI 앱을 불러 500 이 났다(2026-10-07 21:3x 실측).
+    command: ["sh", "-c", "(python manage.py migrate_bootstrap || python manage.py migrate --noinput) && python manage.py qa_seed && exec python -m gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 4 --worker-class gthread --timeout 120 --access-logfile - --error-logfile -"]
 
   qa-worker:
     <<: *backend
